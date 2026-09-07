@@ -1,0 +1,162 @@
+classDiagram
+    %% grepple:package-default grepple/internal/grepplecli
+    %% grepple:language-default go
+    direction LR
+    note "Package grepplecli implements the user-facing combined local/remote search, terminal and JSON presentation, and the get and tree command-line workflows. | package grepple/internal/grepplecli | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=17, declarations=12, exportedTypes=0, internalTypes=12, members=92, exportedFunctions=11, fiberRoutes=0, relations=0"
+    namespace data_contracts {
+        class config {
+            +RefreshExpiry: int64
+            +RefreshToken: string
+            +Server: string
+            +Token: string
+            +TokenExpiry: int64
+            +User: string
+        }
+        <<struct>> config
+        class deviceCodeResponse {
+            +DeviceCode: string
+            +Error: string
+            +ErrorDescription: string
+            +ExpiresIn: int
+            +Interval: int
+            +UserCode: string
+            +VerificationURI: string
+        }
+        <<struct>> deviceCodeResponse
+        class deviceTokenResponse {
+            +AccessToken: string
+            +Error: string
+            +ErrorDescription: string
+            +ExpiresIn: int
+            +Interval: int
+            +RefreshToken: string
+            +RefreshTokenExpiresIn: int
+            +Scope: string
+            +TokenType: string
+        }
+        <<struct>> deviceTokenResponse
+        class getArgs {
+            +Depth: int
+            +JSON: bool
+            +Lines: string
+            +Outline: bool
+            +Path: string
+            +Repo: string
+            +Server: string
+        }
+        <<struct>> getArgs
+        class loginConfig {
+            +ClientID: string
+            +Scopes: string
+        }
+        <<struct>> loginConfig
+        class reposArgs {
+            +Filter: string
+            +JSON: bool
+            +Server: string
+        }
+        <<struct>> reposArgs
+        class rulesAddArgs {
+            +ExcludeRepo: []string
+            +Files: bool
+            +Globs: []string
+            +ID: string
+            +IgnoreCase: bool
+            +JSON: bool
+            +Mode: string
+            +Name: string
+            +Pattern: string
+            +Regex: bool
+            +Repo: []string
+            +Server: string
+        }
+        <<struct>> rulesAddArgs
+        class searchArgs {
+            +Context: int
+            +Count: bool
+            +Depth: int
+            +Files: bool
+            +FilesWithMatches: bool
+            +Fixed: bool
+            +Globs: []string
+            +IgnoreCase: bool
+            +JSON: bool
+            +JSONMatches: bool
+            +Limit: int
+            +LineNumber: bool
+            +LineOnly: bool
+            +Local: bool
+            +MaxFiles: int
+            +MaxSegments: int
+            +Outline: bool
+            +Query: string
+            +Regex: bool
+            +Remote: bool
+            +Repos: []string
+            +Server: string
+            +Skip: int
+        }
+        <<struct>> searchArgs
+        class treeArgs {
+            +Depth: int
+            +JSON: bool
+            +Path: string
+            +Repo: string
+            +Server: string
+        }
+        <<struct>> treeArgs
+    }
+    namespace internal_types {
+        class cliOptions
+        <<struct>> cliOptions
+        class errBrokenPipe
+        <<struct>> errBrokenPipe
+        class treeNode
+        <<struct>> treeNode
+    }
+    namespace operations {
+        class Collapsed {
+            +Collapsed(int): string
+        }
+        <<function>> Collapsed
+        class FlatMatches {
+            +FlatMatches([]api.FileResult): []map[string]any
+        }
+        <<function>> FlatMatches
+        class JSONWrite {
+            +JSONWrite(any): error
+        }
+        <<function>> JSONWrite
+        class PrintContext {
+            +PrintContext(string, []api.ContextLine, bool): tuple~bool&#44;error~
+        }
+        <<function>> PrintContext
+        class PrintCount {
+            +PrintCount([]api.FileResult, bool): error
+        }
+        <<function>> PrintCount
+        class PrintRepoCounts {
+            +PrintRepoCounts([]api.RepoCount, bool): error
+        }
+        <<function>> PrintRepoCounts
+        class PrintSegments {
+            +PrintSegments(string, []parser.Segment): error
+        }
+        <<function>> PrintSegments
+        class RenderOutline {
+            +RenderOutline(parser.FileOutline): string
+        }
+        <<function>> RenderOutline
+        class RenderOutlineOrContent {
+            +RenderOutlineOrContent(parser.FileOutline, string): string
+        }
+        <<function>> RenderOutlineOrContent
+        class Run {
+            +Run([]string): error
+        }
+        <<function>> Run
+        class SafeWrite {
+            +SafeWrite(string): error
+        }
+        <<function>> SafeWrite
+    }

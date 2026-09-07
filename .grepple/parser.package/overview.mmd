@@ -1,0 +1,66 @@
+classDiagram
+    %% grepple:package-default grepple/internal/parser
+    %% grepple:language-default go
+    direction LR
+    note "Package parser provides application source classification and structural parsing. | package grepple/internal/parser | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=7, declarations=10, exportedTypes=3, internalTypes=7, members=40, exportedFunctions=4, fiberRoutes=0, relations=15"
+    namespace data_contracts {
+        class FileOutline {
+            +Language: string
+            +Path: string
+            +Symbols: []Symbol
+        }
+        <<struct>> FileOutline
+        class Symbol {
+            +Children: []Symbol
+            +End: int
+            +Kind: string
+            +Name: string
+            +Signature: string
+            +Start: int
+        }
+        <<struct>> Symbol
+    }
+    namespace exported_types {
+        class Segment
+        <<struct>> Segment
+    }
+    namespace internal_types {
+        class fenceTracker
+        <<struct>> fenceTracker
+        class languageConfig
+        <<struct>> languageConfig
+        class matchLines
+        <<struct>> matchLines
+        class mdHeading
+        <<struct>> mdHeading
+        class mdNode
+        <<struct>> mdNode
+        class pooledParser
+        <<struct>> pooledParser
+        class stringSet["stringSet = map&#91;string&#93;struct&#123;&#125;"]
+        <<type>> stringSet
+    }
+    namespace operations {
+        class BuildSegments {
+            +BuildSegments(string, string, map[int]bool, int): []Segment
+        }
+        <<function>> BuildSegments
+        class LanguageFor {
+            +LanguageFor(string): string
+        }
+        <<function>> LanguageFor
+        class OutlineFile {
+            +OutlineFile(string, string): FileOutline
+        }
+        <<function>> OutlineFile
+        class OutlineFileDepth {
+            +OutlineFileDepth(string, string, int): FileOutline
+        }
+        <<function>> OutlineFileDepth
+    }
+    BuildSegments "1" ..> "*" Segment : result 1
+    FileOutline "1" --> "*" Symbol : field Symbols
+    OutlineFile "1" ..> "1" FileOutline : result 1
+    OutlineFileDepth "1" ..> "1" FileOutline : result 1
+    languageConfig "1" --> "1" stringSet : field=10
+    mdNode "1" --> "1" Symbol : field sym

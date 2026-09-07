@@ -1,0 +1,901 @@
+{
+  "formatVersion": 1,
+  "package": {
+    "name": "api",
+    "importPath": "grepple/internal/api",
+    "sourceDirectory": "internal/api",
+    "documentation": "Package api defines Grepple-controlled HTTP request and response contracts."
+  },
+  "scope": {
+    "types": "all",
+    "functions": "exported",
+    "variables": "excluded",
+    "constants": "excluded",
+    "tests": "excluded",
+    "buildTags": "syntactic-union-conflicts-rejected",
+    "syntacticBuildTagUnion": []
+  },
+  "summary": {
+    "sourceFiles": 1,
+    "declarations": 18,
+    "exportedTypes": 18,
+    "internalTypes": 0,
+    "members": 80,
+    "exportedFunctions": 0,
+    "fiberRoutes": 0,
+    "relations": 11
+  },
+  "semanticModelDigest": "sha256:574213ddecfc96e3416542c434a296fc5d6794187266798d68442169ecfece9f",
+  "sourceFiles": [
+    {
+      "path": "internal/api/model.go"
+    }
+  ],
+  "declarations": [
+    {
+      "name": "ContextLine",
+      "kind": "struct",
+      "file": "internal/api/model.go",
+      "underlyingType": "struct{Line int`json:\"line\"`;Text string`json:\"text\"`;Match bool`json:\"match\"`;}",
+      "members": [
+        {
+          "name": "Line",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "json:\"line\""
+          }
+        },
+        {
+          "name": "Match",
+          "kind": "property",
+          "result": "bool",
+          "structTag": {
+            "value": "json:\"match\""
+          }
+        },
+        {
+          "name": "Text",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"text\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "FileResult",
+      "kind": "struct",
+      "file": "internal/api/model.go",
+      "underlyingType": "struct{Path string`json:\"path\"`;Repo string`json:\"repo,omitempty\"`;Language string`json:\"language\"`;Matches[]ResultMatch`json:\"matches\"`;Segments[]ResultSegment`json:\"segments\"`;Context[]ContextLine`json:\"context,omitempty\"`;}",
+      "members": [
+        {
+          "name": "Context",
+          "kind": "property",
+          "result": "[]ContextLine",
+          "structTag": {
+            "value": "json:\"context,omitempty\""
+          }
+        },
+        {
+          "name": "Language",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"language\""
+          }
+        },
+        {
+          "name": "Matches",
+          "kind": "property",
+          "result": "[]ResultMatch",
+          "structTag": {
+            "value": "json:\"matches\""
+          }
+        },
+        {
+          "name": "Path",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"path\""
+          }
+        },
+        {
+          "name": "Repo",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"repo,omitempty\""
+          }
+        },
+        {
+          "name": "Segments",
+          "kind": "property",
+          "result": "[]ResultSegment",
+          "structTag": {
+            "value": "json:\"segments\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "IndexListResponse",
+      "kind": "struct",
+      "file": "internal/api/model.go",
+      "underlyingType": "struct{Repos[]RepoInfo`json:\"repos\"`;}",
+      "members": [
+        {
+          "name": "Repos",
+          "kind": "property",
+          "result": "[]RepoInfo",
+          "structTag": {
+            "value": "json:\"repos\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "RepoCount",
+      "kind": "struct",
+      "file": "internal/api/model.go",
+      "underlyingType": "struct{Repo string`json:\"repo\"`;Files int`json:\"files\"`;Matches int`json:\"matches\"`;}",
+      "members": [
+        {
+          "name": "Files",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "json:\"files\""
+          }
+        },
+        {
+          "name": "Matches",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "json:\"matches\""
+          }
+        },
+        {
+          "name": "Repo",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"repo\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "RepoInfo",
+      "kind": "struct",
+      "file": "internal/api/model.go",
+      "underlyingType": "struct{Repo string`json:\"repo\"`;URL string`json:\"url\"`;Ref string`json:\"ref\"`;Dir string`json:\"dir\"`;Head*string`json:\"head\"`;IndexedAt string`json:\"indexedAt\"`;}",
+      "members": [
+        {
+          "name": "Dir",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"dir\""
+          }
+        },
+        {
+          "name": "Head",
+          "kind": "property",
+          "result": "*string",
+          "structTag": {
+            "value": "json:\"head\""
+          }
+        },
+        {
+          "name": "IndexedAt",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"indexedAt\""
+          }
+        },
+        {
+          "name": "Ref",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"ref\""
+          }
+        },
+        {
+          "name": "Repo",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"repo\""
+          }
+        },
+        {
+          "name": "URL",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"url\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "RepoListEntry",
+      "kind": "struct",
+      "file": "internal/api/model.go",
+      "underlyingType": "struct{Repo string`json:\"repo\"`;Shard string`json:\"shard,omitempty\"`;Ref string`json:\"ref,omitempty\"`;Head*string`json:\"head,omitempty\"`;IndexedAt string`json:\"indexedAt,omitempty\"`;}",
+      "members": [
+        {
+          "name": "Head",
+          "kind": "property",
+          "result": "*string",
+          "structTag": {
+            "value": "json:\"head,omitempty\""
+          }
+        },
+        {
+          "name": "IndexedAt",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"indexedAt,omitempty\""
+          }
+        },
+        {
+          "name": "Ref",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"ref,omitempty\""
+          }
+        },
+        {
+          "name": "Repo",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"repo\""
+          }
+        },
+        {
+          "name": "Shard",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"shard,omitempty\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "RepoRef",
+      "kind": "struct",
+      "file": "internal/api/model.go",
+      "underlyingType": "struct{Repo string`json:\"repo\"`;URL string`json:\"url,omitempty\"`;Ref string`json:\"ref,omitempty\"`;}",
+      "members": [
+        {
+          "name": "Ref",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"ref,omitempty\""
+          }
+        },
+        {
+          "name": "Repo",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"repo\""
+          }
+        },
+        {
+          "name": "URL",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"url,omitempty\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "ReposResponse",
+      "kind": "struct",
+      "file": "internal/api/model.go",
+      "underlyingType": "struct{OK bool`json:\"ok\"`;Count int`json:\"count\"`;Repos[]RepoListEntry`json:\"repos\"`;}",
+      "members": [
+        {
+          "name": "Count",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "json:\"count\""
+          }
+        },
+        {
+          "name": "OK",
+          "kind": "property",
+          "result": "bool",
+          "structTag": {
+            "value": "json:\"ok\""
+          }
+        },
+        {
+          "name": "Repos",
+          "kind": "property",
+          "result": "[]RepoListEntry",
+          "structTag": {
+            "value": "json:\"repos\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "ResultMatch",
+      "kind": "struct",
+      "file": "internal/api/model.go",
+      "underlyingType": "struct{Line int`json:\"line\"`;Text string`json:\"text\"`;}",
+      "members": [
+        {
+          "name": "Line",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "json:\"line\""
+          }
+        },
+        {
+          "name": "Text",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"text\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "ResultSegment",
+      "kind": "struct",
+      "file": "internal/api/model.go",
+      "underlyingType": "struct{Kind string`json:\"kind\"`;Start int`json:\"start\"`;End int`json:\"end\"`;Text string`json:\"text\"`;}",
+      "members": [
+        {
+          "name": "End",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "json:\"end\""
+          }
+        },
+        {
+          "name": "Kind",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"kind\""
+          }
+        },
+        {
+          "name": "Start",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "json:\"start\""
+          }
+        },
+        {
+          "name": "Text",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"text\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "Rule",
+      "kind": "struct",
+      "file": "internal/api/model.go",
+      "underlyingType": "struct{ID string`json:\"id\"`;Name string`json:\"name,omitempty\"`;Mode string`json:\"mode\"`;Request SearchRequest`json:\"request\"`;CreatedAt string`json:\"createdAt,omitempty\"`;UpdatedAt string`json:\"updatedAt,omitempty\"`;}",
+      "members": [
+        {
+          "name": "CreatedAt",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"createdAt,omitempty\""
+          }
+        },
+        {
+          "name": "ID",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"id\""
+          }
+        },
+        {
+          "name": "Mode",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"mode\""
+          }
+        },
+        {
+          "name": "Name",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"name,omitempty\""
+          }
+        },
+        {
+          "name": "Request",
+          "kind": "property",
+          "result": "SearchRequest",
+          "structTag": {
+            "value": "json:\"request\""
+          }
+        },
+        {
+          "name": "UpdatedAt",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"updatedAt,omitempty\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "RuleRepoResult",
+      "kind": "struct",
+      "file": "internal/api/model.go",
+      "underlyingType": "struct{Repo string`json:\"repo\"`;Files int`json:\"files\"`;Matches int`json:\"matches\"`;Paths[]string`json:\"paths,omitempty\"`;Head string`json:\"head,omitempty\"`;EvaluatedAt string`json:\"evaluatedAt,omitempty\"`;}",
+      "members": [
+        {
+          "name": "EvaluatedAt",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"evaluatedAt,omitempty\""
+          }
+        },
+        {
+          "name": "Files",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "json:\"files\""
+          }
+        },
+        {
+          "name": "Head",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"head,omitempty\""
+          }
+        },
+        {
+          "name": "Matches",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "json:\"matches\""
+          }
+        },
+        {
+          "name": "Paths",
+          "kind": "property",
+          "result": "[]string",
+          "structTag": {
+            "value": "json:\"paths,omitempty\""
+          }
+        },
+        {
+          "name": "Repo",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"repo\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "RuleResults",
+      "kind": "struct",
+      "file": "internal/api/model.go",
+      "underlyingType": "struct{Rule string`json:\"rule\"`;Mode string`json:\"mode,omitempty\"`;Generation int64`json:\"generation,omitempty\"`;Repos[]RuleRepoResult`json:\"repos\"`;Truncated bool`json:\"truncated,omitempty\"`;}",
+      "members": [
+        {
+          "name": "Generation",
+          "kind": "property",
+          "result": "int64",
+          "structTag": {
+            "value": "json:\"generation,omitempty\""
+          }
+        },
+        {
+          "name": "Mode",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"mode,omitempty\""
+          }
+        },
+        {
+          "name": "Repos",
+          "kind": "property",
+          "result": "[]RuleRepoResult",
+          "structTag": {
+            "value": "json:\"repos\""
+          }
+        },
+        {
+          "name": "Rule",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"rule\""
+          }
+        },
+        {
+          "name": "Truncated",
+          "kind": "property",
+          "result": "bool",
+          "structTag": {
+            "value": "json:\"truncated,omitempty\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "RuleSet",
+      "kind": "struct",
+      "file": "internal/api/model.go",
+      "underlyingType": "struct{Generation int64`json:\"generation\"`;Rules[]Rule`json:\"rules\"`;}",
+      "members": [
+        {
+          "name": "Generation",
+          "kind": "property",
+          "result": "int64",
+          "structTag": {
+            "value": "json:\"generation\""
+          }
+        },
+        {
+          "name": "Rules",
+          "kind": "property",
+          "result": "[]Rule",
+          "structTag": {
+            "value": "json:\"rules\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "SearchRequest",
+      "kind": "struct",
+      "file": "internal/api/model.go",
+      "underlyingType": "struct{Query*string`json:\"query,omitempty\"`;Globs[]string`json:\"globs,omitempty\"`;Regex*bool`json:\"regex,omitempty\"`;IgnoreCase*bool`json:\"ignoreCase,omitempty\"`;MaxFiles*int`json:\"maxFiles,omitempty\"`;MaxSegments*int`json:\"maxSegments,omitempty\"`;Skip*int`json:\"skip,omitempty\"`;Limit*int`json:\"limit,omitempty\"`;Repo any`json:\"repo,omitempty\"`;ExcludeRepo any`json:\"excludeRepo,omitempty\"`;Files bool`json:\"files,omitempty\"`;Context any`json:\"context,omitempty\"`;SkipSegments bool`json:\"skipSegments,omitempty\"`;CountByRepo bool`json:\"countByRepo,omitempty\"`;}",
+      "members": [
+        {
+          "name": "Context",
+          "kind": "property",
+          "result": "any",
+          "structTag": {
+            "value": "json:\"context,omitempty\""
+          }
+        },
+        {
+          "name": "CountByRepo",
+          "kind": "property",
+          "result": "bool",
+          "structTag": {
+            "value": "json:\"countByRepo,omitempty\""
+          }
+        },
+        {
+          "name": "ExcludeRepo",
+          "kind": "property",
+          "result": "any",
+          "structTag": {
+            "value": "json:\"excludeRepo,omitempty\""
+          }
+        },
+        {
+          "name": "Files",
+          "kind": "property",
+          "result": "bool",
+          "structTag": {
+            "value": "json:\"files,omitempty\""
+          }
+        },
+        {
+          "name": "Globs",
+          "kind": "property",
+          "result": "[]string",
+          "structTag": {
+            "value": "json:\"globs,omitempty\""
+          }
+        },
+        {
+          "name": "IgnoreCase",
+          "kind": "property",
+          "result": "*bool",
+          "structTag": {
+            "value": "json:\"ignoreCase,omitempty\""
+          }
+        },
+        {
+          "name": "Limit",
+          "kind": "property",
+          "result": "*int",
+          "structTag": {
+            "value": "json:\"limit,omitempty\""
+          }
+        },
+        {
+          "name": "MaxFiles",
+          "kind": "property",
+          "result": "*int",
+          "structTag": {
+            "value": "json:\"maxFiles,omitempty\""
+          }
+        },
+        {
+          "name": "MaxSegments",
+          "kind": "property",
+          "result": "*int",
+          "structTag": {
+            "value": "json:\"maxSegments,omitempty\""
+          }
+        },
+        {
+          "name": "Query",
+          "kind": "property",
+          "result": "*string",
+          "structTag": {
+            "value": "json:\"query,omitempty\""
+          }
+        },
+        {
+          "name": "Regex",
+          "kind": "property",
+          "result": "*bool",
+          "structTag": {
+            "value": "json:\"regex,omitempty\""
+          }
+        },
+        {
+          "name": "Repo",
+          "kind": "property",
+          "result": "any",
+          "structTag": {
+            "value": "json:\"repo,omitempty\""
+          }
+        },
+        {
+          "name": "Skip",
+          "kind": "property",
+          "result": "*int",
+          "structTag": {
+            "value": "json:\"skip,omitempty\""
+          }
+        },
+        {
+          "name": "SkipSegments",
+          "kind": "property",
+          "result": "bool",
+          "structTag": {
+            "value": "json:\"skipSegments,omitempty\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "SearchResponse",
+      "kind": "struct",
+      "file": "internal/api/model.go",
+      "underlyingType": "struct{Results[]FileResult`json:\"results\"`;RepoCounts[]RepoCount`json:\"repoCounts,omitempty\"`;ShardErrors[]string`json:\"shardErrors,omitempty\"`;Truncated bool`json:\"truncated,omitempty\"`;}",
+      "members": [
+        {
+          "name": "RepoCounts",
+          "kind": "property",
+          "result": "[]RepoCount",
+          "structTag": {
+            "value": "json:\"repoCounts,omitempty\""
+          }
+        },
+        {
+          "name": "Results",
+          "kind": "property",
+          "result": "[]FileResult",
+          "structTag": {
+            "value": "json:\"results\""
+          }
+        },
+        {
+          "name": "ShardErrors",
+          "kind": "property",
+          "result": "[]string",
+          "structTag": {
+            "value": "json:\"shardErrors,omitempty\""
+          }
+        },
+        {
+          "name": "Truncated",
+          "kind": "property",
+          "result": "bool",
+          "structTag": {
+            "value": "json:\"truncated,omitempty\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "TreeEntry",
+      "kind": "struct",
+      "file": "internal/api/model.go",
+      "underlyingType": "struct{Path string`json:\"path\"`;Dir bool`json:\"dir\"`;}",
+      "members": [
+        {
+          "name": "Dir",
+          "kind": "property",
+          "result": "bool",
+          "structTag": {
+            "value": "json:\"dir\""
+          }
+        },
+        {
+          "name": "Path",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"path\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "TreeResponse",
+      "kind": "struct",
+      "file": "internal/api/model.go",
+      "underlyingType": "struct{Repo string`json:\"repo\"`;Path string`json:\"path\"`;Depth int`json:\"depth\"`;Commit*string`json:\"commit\"`;Entries[]TreeEntry`json:\"entries\"`;}",
+      "members": [
+        {
+          "name": "Commit",
+          "kind": "property",
+          "result": "*string",
+          "structTag": {
+            "value": "json:\"commit\""
+          }
+        },
+        {
+          "name": "Depth",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "json:\"depth\""
+          }
+        },
+        {
+          "name": "Entries",
+          "kind": "property",
+          "result": "[]TreeEntry",
+          "structTag": {
+            "value": "json:\"entries\""
+          }
+        },
+        {
+          "name": "Path",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"path\""
+          }
+        },
+        {
+          "name": "Repo",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"repo\""
+          }
+        }
+      ]
+    }
+  ],
+  "exportedFunctions": [],
+  "fiberRoutes": [],
+  "relations": [
+    {
+      "from": "FileResult",
+      "to": "ContextLine",
+      "kind": "association",
+      "via": "field Context",
+      "cardinality": "many"
+    },
+    {
+      "from": "FileResult",
+      "to": "ResultMatch",
+      "kind": "association",
+      "via": "field Matches",
+      "cardinality": "many"
+    },
+    {
+      "from": "FileResult",
+      "to": "ResultSegment",
+      "kind": "association",
+      "via": "field Segments",
+      "cardinality": "many"
+    },
+    {
+      "from": "IndexListResponse",
+      "to": "RepoInfo",
+      "kind": "association",
+      "via": "field Repos",
+      "cardinality": "many"
+    },
+    {
+      "from": "ReposResponse",
+      "to": "RepoListEntry",
+      "kind": "association",
+      "via": "field Repos",
+      "cardinality": "many"
+    },
+    {
+      "from": "Rule",
+      "to": "SearchRequest",
+      "kind": "association",
+      "via": "field Request",
+      "cardinality": "one"
+    },
+    {
+      "from": "RuleResults",
+      "to": "RuleRepoResult",
+      "kind": "association",
+      "via": "field Repos",
+      "cardinality": "many"
+    },
+    {
+      "from": "RuleSet",
+      "to": "Rule",
+      "kind": "association",
+      "via": "field Rules",
+      "cardinality": "many"
+    },
+    {
+      "from": "SearchResponse",
+      "to": "FileResult",
+      "kind": "association",
+      "via": "field Results",
+      "cardinality": "many"
+    },
+    {
+      "from": "SearchResponse",
+      "to": "RepoCount",
+      "kind": "association",
+      "via": "field RepoCounts",
+      "cardinality": "many"
+    },
+    {
+      "from": "TreeResponse",
+      "to": "TreeEntry",
+      "kind": "association",
+      "via": "field Entries",
+      "cardinality": "many"
+    }
+  ]
+}

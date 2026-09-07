@@ -1,0 +1,523 @@
+{
+  "formatVersion": 1,
+  "package": {
+    "name": "parser",
+    "importPath": "grepple/internal/parser",
+    "sourceDirectory": "internal/parser",
+    "documentation": "Package parser provides application source classification and structural parsing."
+  },
+  "scope": {
+    "types": "all",
+    "functions": "exported",
+    "variables": "excluded",
+    "constants": "excluded",
+    "tests": "excluded",
+    "buildTags": "syntactic-union-conflicts-rejected",
+    "syntacticBuildTagUnion": []
+  },
+  "summary": {
+    "sourceFiles": 7,
+    "declarations": 10,
+    "exportedTypes": 3,
+    "internalTypes": 7,
+    "members": 40,
+    "exportedFunctions": 4,
+    "fiberRoutes": 0,
+    "relations": 15
+  },
+  "semanticModelDigest": "sha256:6679af229406d6ca4a3d1db842bde4b814ec1723a0e1f1a66fc222878efdcd38",
+  "sourceFiles": [
+    {
+      "path": "internal/parser/analyze.go"
+    },
+    {
+      "path": "internal/parser/content.go"
+    },
+    {
+      "path": "internal/parser/doc.go"
+    },
+    {
+      "path": "internal/parser/model.go"
+    },
+    {
+      "path": "internal/parser/outline.go"
+    },
+    {
+      "path": "internal/parser/segments.go"
+    },
+    {
+      "path": "internal/parser/tree_sitter.go"
+    }
+  ],
+  "declarations": [
+    {
+      "name": "FileOutline",
+      "kind": "struct",
+      "file": "internal/parser/model.go",
+      "underlyingType": "struct{Path string`json:\"path\"`;Language string`json:\"language\"`;Symbols[]Symbol`json:\"symbols\"`;}",
+      "members": [
+        {
+          "name": "Language",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"language\""
+          }
+        },
+        {
+          "name": "Path",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"path\""
+          }
+        },
+        {
+          "name": "Symbols",
+          "kind": "property",
+          "result": "[]Symbol",
+          "structTag": {
+            "value": "json:\"symbols\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "Segment",
+      "kind": "struct",
+      "file": "internal/parser/model.go",
+      "underlyingType": "struct{Kind string;Start,End int;Text string;}",
+      "members": [
+        {
+          "name": "End",
+          "kind": "property",
+          "result": "int"
+        },
+        {
+          "name": "Kind",
+          "kind": "property",
+          "result": "string"
+        },
+        {
+          "name": "Start",
+          "kind": "property",
+          "result": "int"
+        },
+        {
+          "name": "Text",
+          "kind": "property",
+          "result": "string"
+        }
+      ]
+    },
+    {
+      "name": "Symbol",
+      "kind": "struct",
+      "file": "internal/parser/model.go",
+      "underlyingType": "struct{Kind string`json:\"kind\"`;Name string`json:\"name\"`;Signature string`json:\"signature,omitempty\"`;Start int`json:\"start\"`;End int`json:\"end\"`;Children[]Symbol`json:\"children,omitempty\"`;}",
+      "members": [
+        {
+          "name": "Children",
+          "kind": "property",
+          "result": "[]Symbol",
+          "structTag": {
+            "value": "json:\"children,omitempty\""
+          }
+        },
+        {
+          "name": "End",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "json:\"end\""
+          }
+        },
+        {
+          "name": "Kind",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"kind\""
+          }
+        },
+        {
+          "name": "Name",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"name\""
+          }
+        },
+        {
+          "name": "Signature",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"signature,omitempty\""
+          }
+        },
+        {
+          "name": "Start",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "json:\"start\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "fenceTracker",
+      "kind": "struct",
+      "file": "internal/parser/outline.go",
+      "underlyingType": "struct{inside bool;marker byte;}",
+      "members": [
+        {
+          "name": "skip",
+          "kind": "method",
+          "parameters": [
+            "string"
+          ],
+          "result": "bool"
+        },
+        {
+          "name": "inside",
+          "kind": "property",
+          "result": "bool"
+        },
+        {
+          "name": "marker",
+          "kind": "property",
+          "result": "byte"
+        }
+      ]
+    },
+    {
+      "name": "languageConfig",
+      "kind": "struct",
+      "file": "internal/parser/tree_sitter.go",
+      "underlyingType": "struct{id string;grammar*sitter.Language;structuralTypes stringSet;contextTypes stringSet;containerTypes stringSet;classDeclarationTypes stringSet;classBodyTypes stringSet;exportTypes stringSet;functionLikeTypes stringSet;blockTypes stringSet;jsxElementTypes stringSet;nameFieldCandidates stringSet;}",
+      "members": [
+        {
+          "name": "blockTypes",
+          "kind": "property",
+          "result": "stringSet"
+        },
+        {
+          "name": "classBodyTypes",
+          "kind": "property",
+          "result": "stringSet"
+        },
+        {
+          "name": "classDeclarationTypes",
+          "kind": "property",
+          "result": "stringSet"
+        },
+        {
+          "name": "containerTypes",
+          "kind": "property",
+          "result": "stringSet"
+        },
+        {
+          "name": "contextTypes",
+          "kind": "property",
+          "result": "stringSet"
+        },
+        {
+          "name": "exportTypes",
+          "kind": "property",
+          "result": "stringSet"
+        },
+        {
+          "name": "functionLikeTypes",
+          "kind": "property",
+          "result": "stringSet"
+        },
+        {
+          "name": "grammar",
+          "kind": "property",
+          "result": "*sitter.Language"
+        },
+        {
+          "name": "id",
+          "kind": "property",
+          "result": "string"
+        },
+        {
+          "name": "jsxElementTypes",
+          "kind": "property",
+          "result": "stringSet"
+        },
+        {
+          "name": "nameFieldCandidates",
+          "kind": "property",
+          "result": "stringSet"
+        },
+        {
+          "name": "structuralTypes",
+          "kind": "property",
+          "result": "stringSet"
+        }
+      ]
+    },
+    {
+      "name": "matchLines",
+      "kind": "struct",
+      "file": "internal/parser/tree_sitter.go",
+      "underlyingType": "struct{set map[int]bool;sorted[]int;}",
+      "members": [
+        {
+          "name": "hitsRange",
+          "kind": "method",
+          "parameters": [
+            "int",
+            "int"
+          ],
+          "result": "bool"
+        },
+        {
+          "name": "set",
+          "kind": "property",
+          "result": "map[int]bool"
+        },
+        {
+          "name": "sorted",
+          "kind": "property",
+          "result": "[]int"
+        }
+      ]
+    },
+    {
+      "name": "mdHeading",
+      "kind": "struct",
+      "file": "internal/parser/outline.go",
+      "underlyingType": "struct{level int;line int;title string;}",
+      "members": [
+        {
+          "name": "level",
+          "kind": "property",
+          "result": "int"
+        },
+        {
+          "name": "line",
+          "kind": "property",
+          "result": "int"
+        },
+        {
+          "name": "title",
+          "kind": "property",
+          "result": "string"
+        }
+      ]
+    },
+    {
+      "name": "mdNode",
+      "kind": "struct",
+      "file": "internal/parser/outline.go",
+      "underlyingType": "struct{level int;sym Symbol;kids[]*mdNode;}",
+      "members": [
+        {
+          "name": "kids",
+          "kind": "property",
+          "result": "[]*mdNode"
+        },
+        {
+          "name": "level",
+          "kind": "property",
+          "result": "int"
+        },
+        {
+          "name": "sym",
+          "kind": "property",
+          "result": "Symbol"
+        }
+      ]
+    },
+    {
+      "name": "pooledParser",
+      "kind": "struct",
+      "file": "internal/parser/tree_sitter.go",
+      "underlyingType": "struct{p*sitter.Parser;lang*sitter.Language;}",
+      "members": [
+        {
+          "name": "lang",
+          "kind": "property",
+          "result": "*sitter.Language"
+        },
+        {
+          "name": "p",
+          "kind": "property",
+          "result": "*sitter.Parser"
+        }
+      ]
+    },
+    {
+      "name": "stringSet",
+      "kind": "type",
+      "file": "internal/parser/tree_sitter.go",
+      "underlyingType": "map[string]struct{}",
+      "members": [
+        {
+          "name": "contains",
+          "kind": "method",
+          "parameters": [
+            "string"
+          ],
+          "result": "bool"
+        }
+      ]
+    }
+  ],
+  "exportedFunctions": [
+    {
+      "name": "BuildSegments",
+      "kind": "function",
+      "file": "internal/parser/segments.go",
+      "parameters": [
+        "string",
+        "string",
+        "map[int]bool",
+        "int"
+      ],
+      "result": "[]Segment"
+    },
+    {
+      "name": "LanguageFor",
+      "kind": "function",
+      "file": "internal/parser/content.go",
+      "parameters": [
+        "string"
+      ],
+      "result": "string"
+    },
+    {
+      "name": "OutlineFile",
+      "kind": "function",
+      "file": "internal/parser/outline.go",
+      "parameters": [
+        "string",
+        "string"
+      ],
+      "result": "FileOutline"
+    },
+    {
+      "name": "OutlineFileDepth",
+      "kind": "function",
+      "file": "internal/parser/outline.go",
+      "parameters": [
+        "string",
+        "string",
+        "int"
+      ],
+      "result": "FileOutline"
+    }
+  ],
+  "fiberRoutes": [],
+  "relations": [
+    {
+      "from": "BuildSegments",
+      "to": "Segment",
+      "kind": "dependency",
+      "via": "result 1",
+      "cardinality": "many"
+    },
+    {
+      "from": "FileOutline",
+      "to": "Symbol",
+      "kind": "association",
+      "via": "field Symbols",
+      "cardinality": "many"
+    },
+    {
+      "from": "OutlineFile",
+      "to": "FileOutline",
+      "kind": "dependency",
+      "via": "result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "OutlineFileDepth",
+      "to": "FileOutline",
+      "kind": "dependency",
+      "via": "result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "languageConfig",
+      "to": "stringSet",
+      "kind": "association",
+      "via": "field blockTypes",
+      "cardinality": "one"
+    },
+    {
+      "from": "languageConfig",
+      "to": "stringSet",
+      "kind": "association",
+      "via": "field classBodyTypes",
+      "cardinality": "one"
+    },
+    {
+      "from": "languageConfig",
+      "to": "stringSet",
+      "kind": "association",
+      "via": "field classDeclarationTypes",
+      "cardinality": "one"
+    },
+    {
+      "from": "languageConfig",
+      "to": "stringSet",
+      "kind": "association",
+      "via": "field containerTypes",
+      "cardinality": "one"
+    },
+    {
+      "from": "languageConfig",
+      "to": "stringSet",
+      "kind": "association",
+      "via": "field contextTypes",
+      "cardinality": "one"
+    },
+    {
+      "from": "languageConfig",
+      "to": "stringSet",
+      "kind": "association",
+      "via": "field exportTypes",
+      "cardinality": "one"
+    },
+    {
+      "from": "languageConfig",
+      "to": "stringSet",
+      "kind": "association",
+      "via": "field functionLikeTypes",
+      "cardinality": "one"
+    },
+    {
+      "from": "languageConfig",
+      "to": "stringSet",
+      "kind": "association",
+      "via": "field jsxElementTypes",
+      "cardinality": "one"
+    },
+    {
+      "from": "languageConfig",
+      "to": "stringSet",
+      "kind": "association",
+      "via": "field nameFieldCandidates",
+      "cardinality": "one"
+    },
+    {
+      "from": "languageConfig",
+      "to": "stringSet",
+      "kind": "association",
+      "via": "field structuralTypes",
+      "cardinality": "one"
+    },
+    {
+      "from": "mdNode",
+      "to": "Symbol",
+      "kind": "association",
+      "via": "field sym",
+      "cardinality": "one"
+    }
+  ]
+}

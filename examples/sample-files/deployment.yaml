@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grepple-shard
+  labels:
+    app: grepple
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: grepple
+  template:
+    metadata:
+      labels:
+        app: grepple
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+        appArmorProfile:
+          type: RuntimeDefault
+      containers:
+        - name: shard
+          image: grepple/shard:1.4.0
+          ports:
+            - containerPort: 8080
+          env:
+            - name: LOG_LEVEL
+              value: info
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            privileged: false
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
+            appArmorProfile:
+              type: RuntimeDefault

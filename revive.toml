@@ -1,0 +1,45 @@
+# revive configuration: the default recommended rule set, made explicit and
+# pinned so a revive upgrade never silently changes what is enforced.
+#
+# The prebuilt pi Stop hook (`make -C hooks run-lint-check`) runs `revive
+# -formatter json -config revive.toml <packages>` after every agent turn and feeds violations
+# back one rule-group at a time. Run manually with:
+#
+#   revive -config revive.toml ./...
+#
+# Rule guides for the agent live in hooks/guides/<rule-name>.md.
+
+ignoreGeneratedHeader = false
+# All rules report as errors so `make lint` (and CI) fails while any diagnostic
+# remains; the pi Stop hook parses the JSON report regardless of exit code.
+severity = "error"
+confidence = 0.8
+errorCode = 1
+warningCode = 0
+
+[rule.blank-imports]
+[rule.context-as-argument]
+[rule.context-keys-type]
+[rule.dot-imports]
+[rule.error-return]
+[rule.error-strings]
+[rule.error-naming]
+[rule.exported]
+[rule.if-return]
+[rule.increment-decrement]
+[rule.var-naming]
+[rule.var-declaration]
+[rule.package-comments]
+[rule.range]
+[rule.receiver-naming]
+[rule.time-naming]
+[rule.unexported-return]
+[rule.indent-error-flow]
+[rule.errorf]
+[rule.empty-block]
+[rule.superfluous-else]
+[rule.unused-parameter]
+[rule.unreachable-code]
+[rule.redefines-builtin-id]
+[rule.cognitive-complexity]
+  arguments = [15]

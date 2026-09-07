@@ -1,0 +1,152 @@
+classDiagram
+    %% grepple:package-default grepple/internal/api
+    %% grepple:language-default go
+    direction LR
+    note "Package api defines Grepple-controlled HTTP request and response contracts. | package grepple/internal/api | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=1, declarations=18, exportedTypes=18, internalTypes=0, members=80, exportedFunctions=0, fiberRoutes=0, relations=11"
+    namespace data_contracts {
+        class ContextLine {
+            +Line: int
+            +Match: bool
+            +Text: string
+        }
+        <<struct>> ContextLine
+        class FileResult {
+            +Context: []ContextLine
+            +Language: string
+            +Matches: []ResultMatch
+            +Path: string
+            +Repo: string
+            +Segments: []ResultSegment
+        }
+        <<struct>> FileResult
+        class IndexListResponse {
+            +Repos: []RepoInfo
+        }
+        <<struct>> IndexListResponse
+        class RepoCount {
+            +Files: int
+            +Matches: int
+            +Repo: string
+        }
+        <<struct>> RepoCount
+        class RepoInfo {
+            +Dir: string
+            +Head: *string
+            +IndexedAt: string
+            +Ref: string
+            +Repo: string
+            +URL: string
+        }
+        <<struct>> RepoInfo
+        class RepoListEntry {
+            +Head: *string
+            +IndexedAt: string
+            +Ref: string
+            +Repo: string
+            +Shard: string
+        }
+        <<struct>> RepoListEntry
+        class RepoRef {
+            +Ref: string
+            +Repo: string
+            +URL: string
+        }
+        <<struct>> RepoRef
+        class ReposResponse {
+            +Count: int
+            +OK: bool
+            +Repos: []RepoListEntry
+        }
+        <<struct>> ReposResponse
+        class ResultMatch {
+            +Line: int
+            +Text: string
+        }
+        <<struct>> ResultMatch
+        class ResultSegment {
+            +End: int
+            +Kind: string
+            +Start: int
+            +Text: string
+        }
+        <<struct>> ResultSegment
+        class Rule {
+            +CreatedAt: string
+            +ID: string
+            +Mode: string
+            +Name: string
+            +Request: SearchRequest
+            +UpdatedAt: string
+        }
+        <<struct>> Rule
+        class RuleRepoResult {
+            +EvaluatedAt: string
+            +Files: int
+            +Head: string
+            +Matches: int
+            +Paths: []string
+            +Repo: string
+        }
+        <<struct>> RuleRepoResult
+        class RuleResults {
+            +Generation: int64
+            +Mode: string
+            +Repos: []RuleRepoResult
+            +Rule: string
+            +Truncated: bool
+        }
+        <<struct>> RuleResults
+        class RuleSet {
+            +Generation: int64
+            +Rules: []Rule
+        }
+        <<struct>> RuleSet
+        class SearchRequest {
+            +Context: any
+            +CountByRepo: bool
+            +ExcludeRepo: any
+            +Files: bool
+            +Globs: []string
+            +IgnoreCase: *bool
+            +Limit: *int
+            +MaxFiles: *int
+            +MaxSegments: *int
+            +Query: *string
+            +Regex: *bool
+            +Repo: any
+            +Skip: *int
+            +SkipSegments: bool
+        }
+        <<struct>> SearchRequest
+        class SearchResponse {
+            +RepoCounts: []RepoCount
+            +Results: []FileResult
+            +ShardErrors: []string
+            +Truncated: bool
+        }
+        <<struct>> SearchResponse
+        class TreeEntry {
+            +Dir: bool
+            +Path: string
+        }
+        <<struct>> TreeEntry
+        class TreeResponse {
+            +Commit: *string
+            +Depth: int
+            +Entries: []TreeEntry
+            +Path: string
+            +Repo: string
+        }
+        <<struct>> TreeResponse
+    }
+    FileResult "1" --> "*" ContextLine : field Context
+    FileResult "1" --> "*" ResultMatch : field Matches
+    FileResult "1" --> "*" ResultSegment : field Segments
+    IndexListResponse "1" --> "*" RepoInfo : field Repos
+    ReposResponse "1" --> "*" RepoListEntry : field Repos
+    Rule "1" --> "1" SearchRequest : field Request
+    RuleResults "1" --> "*" RuleRepoResult : field Repos
+    RuleSet "1" --> "*" Rule : field Rules
+    SearchResponse "1" --> "*" FileResult : field Results
+    SearchResponse "1" --> "*" RepoCount : field RepoCounts
+    TreeResponse "1" --> "*" TreeEntry : field Entries

@@ -1,0 +1,40 @@
+# Helm-style values for the grepple shard chart.
+# Long descriptive values make the file larger than its key/type outline.
+image:
+  repository: registry.example.com/grepple/shard
+  tag: "1.4.0-rc.3-with-a-fairly-long-descriptive-suffix"
+  pullPolicy: IfNotPresent
+  pullSecrets:
+    - name: registry-credentials-primary
+    - name: registry-credentials-fallback
+service:
+  type: ClusterIP
+  port: 8080
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/path: /metrics
+    prometheus.io/port: "8080"
+resources:
+  requests:
+    cpu: "500m"
+    memory: "512Mi"
+  limits:
+    cpu: "2000m"
+    memory: "2048Mi"
+autoscaling:
+  enabled: true
+  minReplicas: 3
+  maxReplicas: 12
+  targetCPUUtilizationPercentage: 70
+persistence:
+  enabled: true
+  storageClass: fast-ssd-retain-on-delete
+  size: 100Gi
+  mountPath: /var/lib/grepple/index-cache-directory
+env:
+  logLevel: "info — set to debug only for short-lived troubleshooting sessions"
+  cacheDir: /var/lib/grepple/index-cache-directory/shard-local-scratch-space
+  extraFlags: "--max-files=200 --timeout=30s --reindex-interval=15m --verbose"
+nodeSelector:
+  kubernetes.io/os: linux
+  node.example.com/pool: search-workloads-dedicated-high-memory-pool

@@ -1,0 +1,154 @@
+package mermaidcode
+
+import (
+	"fmt"
+	"strings"
+)
+
+type selectedGoSymbol struct {
+	symbol *Symbol
+	depth  int
+}
+
+func generateGoFlowchart(entry string, entrySource Source, sources []Source, depth, nodeLimit int) (string, error) {
+	analysis, err := Analyze(sources)
+	if err != nil {
+		return "", err
+	}
+	entrySymbol := goEntrySymbol(analysis, entry, entrySource.Path)
+	if entrySymbol == nil {
+		return "", fmt.Errorf("Function or method '%s' was not found in entry file %s", entry, entrySource.Path)
+	}
+	selected, err := selectGoSymbols(analysis, entrySymbol, depth, nodeLimit)
+	if err != nil {
+		return "", err
+	}
+	diagram, err := renderGoFlow(entry, selected, analysis, depth, nodeLimit)
+	if err != nil {
+		return "", err
+	}
+	diagnostics, err := CheckFlowchartWithAnalysis(diagram, analysis)
+	if err != nil {
+		return "", err
+	}
+	if len(diagnostics) > 0 {
+		return "", fmt.Errorf("Generated flowchart failed validation:\n%s", formatDiagnostics(diagnostics))
+	}
+	return diagram, nil
+}
+
+func goEntrySymbol(analysis *Analysis, name, entryPath string) *Symbol {
+	for _, key := range sortedKeys(analysis.GoSymbolIndex) {
+		symbol := analysis.GoSymbolIndex[key]
+		if symbol.Name != name {
+			continue
+		}
+		for _, location := range symbol.Locations {
+			if absolutePath(location.Path) == absolutePath(entryPath) {
+				return symbol
+			}
+		}
+	}
+	return nil
+}
+
+func selectGoSymbols(analysis *Analysis, entry *Symbol, depth, nodeLimit int) ([]selectedGoSymbol, error) {
+	pending := []selectedGoSymbol{{entry, 0}}
+	seen := map[string]bool{}
+	var result []selectedGoSymbol
+	for len(pending) > 0 {
+		current := pending[0]
+		pending = pending[1:]
+		if seen[current.symbol.Key] {
+			continue
+		}
+		if len(result) >= nodeLimit {
+			return nil, fmt.Errorf("Go flow exceeds --max-nodes %d while including resolvable call to %s", nodeLimit, current.symbol.Name)
+		}
+		seen[current.symbol.Key] = true
+		result = append(result, current)
+		if current.depth < depth {
+			pending = appendResolvedGoCalls(pending, analysis, current, seen)
+		}
+	}
+	return result, nil
+}
+
+func appendResolvedGoCalls(pending []selectedGoSymbol, analysis *Analysis, current selectedGoSymbol, seen map[string]bool) []selectedGoSymbol {
+	queued := map[string]bool{}
+	for _, item := range pending {
+		queued[item.symbol.Key] = true
+	}
+	for _, called := range resolvedGoCalls(analysis, current.symbol) {
+		if !seen[called.Key] && !queued[called.Key] {
+			pending = append(pending, selectedGoSymbol{called, current.depth + 1})
+			queued[called.Key] = true
+		}
+	}
+	return pending
+}
+
+func renderGoFlow(entry string, selected []selectedGoSymbol, analysis *Analysis, depth, nodeLimit int) (string, error) {
+	identifiers := goFlowNodeIDs(selected)
+	lines := []string{"flowchart TD", fmt.Sprintf("    %%%% grepple:generated entry %s depth %d max-nodes %d", entry, depth, nodeLimit)}
+	for _, item := range selected {
+		lines = append(lines, fmt.Sprintf("    %s[\"%s\"]", identifiers[item.symbol.Key], flowLabel(item.symbol.Name)))
+	}
+	lines = append(lines, "")
+	for _, item := range selected {
+		lines = append(lines, goFlowMetadata(item.symbol, identifiers[item.symbol.Key], analysis)...)
+	}
+	lines = append(lines, "")
+	edges, err := goFlowEdges(selected, identifiers, analysis, depth)
+	if err != nil {
+		return "", err
+	}
+	lines = append(lines, edges...)
+	return strings.TrimRight(strings.Join(lines, "\n"), "\n") + "\n", nil
+}
+
+func goFlowNodeIDs(selected []selectedGoSymbol) map[string]string {
+	result, used := map[string]string{}, map[string]bool{}
+	for _, item := range selected {
+		base := flowIDBase(item.symbol.Name)
+		identifier := base
+		for suffix := 2; used[identifier]; suffix++ {
+			identifier = fmt.Sprintf("%s_%d", base, suffix)
+		}
+		used[identifier] = true
+		result[item.symbol.Key] = identifier
+	}
+	return result
+}
+
+func goFlowMetadata(symbol *Symbol, identifier string, analysis *Analysis) []string {
+	scope := goPackageScope(symbol.PackageID, symbol.Package, analysis)
+	result := []string{fmt.Sprintf("    %%%% grepple:symbol %s %s", identifier, symbol.Name), fmt.Sprintf("    %%%% grepple:language %s go", identifier)}
+	return append(result, fmt.Sprintf("    %%%% grepple:package %s %s", identifier, scope))
+}
+
+func goFlowEdges(selected []selectedGoSymbol, identifiers map[string]string, analysis *Analysis, depth int) ([]string, error) {
+	chosen, edges := map[string]bool{}, map[string]bool{}
+	for _, item := range selected {
+		chosen[item.symbol.Key] = true
+	}
+	for _, item := range selected {
+		if err := addGoFlowEdges(item, identifiers, chosen, edges, analysis, depth); err != nil {
+			return nil, err
+		}
+	}
+	return sortedKeys(edges), nil
+}
+
+func addGoFlowEdges(item selectedGoSymbol, identifiers map[string]string, chosen, edges map[string]bool, analysis *Analysis, depth int) error {
+	for _, called := range resolvedGoCalls(analysis, item.symbol) {
+		if !chosen[called.Key] {
+			if item.depth < depth {
+				return fmt.Errorf("generated Go flow omitted resolvable call from %s to %s", item.symbol.Name, called.Name)
+			}
+			continue
+		}
+		edges[fmt.Sprintf("    %s --> %s", identifiers[item.symbol.Key], identifiers[called.Key])] = true
+	}
+	return nil
+}

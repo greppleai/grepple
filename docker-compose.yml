@@ -1,0 +1,116 @@
+# Local sharded grepple cluster: one router in front of two shards.
+#
+#   cp .env.example .env
+#   docker compose up --build -d
+#
+# Router API: http://localhost:8080
+# Shard debug endpoints: http://127.0.0.1:8787 and :8788
+
+x-grepple-build: &grepple-build
+  context: .
+  network: "${GREPPLE_BUILD_NETWORK:-default}"
+
+services:
+  shard-a:
+    build: *grepple-build
+    entrypoint: ["shard"]
+    command: ["--host", "0.0.0.0", "--port", "8787", "--root", "/workspace", "--zoekt-index", "/zoekt-index"]
+    environment:
+      GREPPLE_WORKERS: "${GREPPLE_WORKERS:-8}"
+      GREPPLE_LOG_LEVEL: "${GREPPLE_LOG_LEVEL:-info}"
+    volumes:
+      - shard-a-workspace:/workspace
+      - shard-a-zoekt:/zoekt-index
+    ports:
+      - "127.0.0.1:${GREPPLE_SHARD_A_PORT:-8787}:8787"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8787/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 30s
+    restart: unless-stopped
+
+  shard-b:
+    build: *grepple-build
+    entrypoint: ["shard"]
+    command: ["--host", "0.0.0.0", "--port", "8787", "--root", "/workspace", "--zoekt-index", "/zoekt-index"]
+    environment:
+      GREPPLE_WORKERS: "${GREPPLE_WORKERS:-8}"
+      GREPPLE_LOG_LEVEL: "${GREPPLE_LOG_LEVEL:-info}"
+    volumes:
+      - shard-b-workspace:/workspace
+      - shard-b-zoekt:/zoekt-index
+    ports:
+      - "127.0.0.1:${GREPPLE_SHARD_B_PORT:-8788}:8787"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8787/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 30s
+    restart: unless-stopped
+
+  router:
+    build: *grepple-build
+    entrypoint: ["router"]
+    command: ["--host", "0.0.0.0", "--port", "8080"]
+    environment:
+      SHARD_HOSTS: "http://shard-a:8787,http://shard-b:8787"
+      GREPPLE_WEBHOOK_SECRET: "${GREPPLE_WEBHOOK_SECRET:-}"
+      GREPPLE_WEBHOOK_CONCURRENCY: "${GREPPLE_WEBHOOK_CONCURRENCY:-4}"
+      GITHUB_TOKEN: "${GITHUB_TOKEN:-}"
+      # GitHub OAuth/App client ID (public, not a secret). Advertised to CLIs at
+      # GET /auth/config so `grepple login --url <server>` needs no local client ID.
+      GITHUB_CLIENT_ID: "${GITHUB_CLIENT_ID:-}"
+      # GitHub App client secret (secret!) enabling POST /auth/refresh so the CLI
+      # silently renews an expiring login token. Only needed when the App expires
+      # user tokens. Leave empty to disable refresh (login still works).
+      GITHUB_CLIENT_SECRET: "${GITHUB_CLIENT_SECRET:-}"
+      # Require a `grepple login` token whose user belongs to an authorized org for
+      # the CLI-facing /public/* endpoints. Off by default for local dev. When
+      # GREPPLE_AUTH_ORGS is empty the allowed orgs are derived from discovery.
+      GREPPLE_REQUIRE_AUTH: "${GREPPLE_REQUIRE_AUTH:-false}"
+      GREPPLE_AUTH_ORGS: "${GREPPLE_AUTH_ORGS:-}"
+      WATCH_REPOS: "${WATCH_REPOS:-}"
+      WATCH_ORGS: "${WATCH_ORGS:-}"
+      # info surfaces the periodic reconcile discovery summary and webhook
+      # actions locally; set to error to mirror production quiet.
+      GREPPLE_LOG_LEVEL: "${GREPPLE_LOG_LEVEL:-info}"
+      # Optional GitHub App discovery/auth (org:installationId pairs).
+      GITHUB_APP_ID: "${GITHUB_APP_ID:-}"
+      GITHUB_APP_INSTALLATIONS: "${GITHUB_APP_INSTALLATIONS:-}"
+      # App private key: inline PEM via GITHUB_APP_PRIVATE_KEY, or (preferred) a
+      # mounted file. For the file option, uncomment GITHUB_APP_PRIVATE_KEY_FILE
+      # and the volume mount below. By default it mounts github-app.pem from the
+      # repo root (gitignored); override with GITHUB_APP_PRIVATE_KEY_PATH in .env.
+      # Inline wins if both are set.
+      # GITHUB_APP_PRIVATE_KEY: "${GITHUB_APP_PRIVATE_KEY:-}"
+      GITHUB_APP_PRIVATE_KEY_FILE: "/etc/grepple/github-app/private-key.pem"
+    volumes:
+      - "${GITHUB_APP_PRIVATE_KEY_PATH:-./github-app.pem}:/etc/grepple/github-app/private-key.pem:ro"
+    ports:
+      - "127.0.0.1:${GREPPLE_ROUTER_PORT:-8080}:8080"
+    depends_on:
+      shard-a:
+        condition: service_healthy
+      shard-b:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          wget -q -O /dev/null http://127.0.0.1:8080/health &&
+          wget -q -O /dev/null http://shard-a:8787/health &&
+          wget -q -O /dev/null http://shard-b:8787/health
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+    restart: unless-stopped
+
+volumes:
+  shard-a-workspace:
+  shard-b-workspace:
+  shard-a-zoekt:
+  shard-b-zoekt:
