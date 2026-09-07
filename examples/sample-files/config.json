@@ -1,0 +1,17 @@
+{
+  "name": "grepple-demo",
+  "version": "1.4.0",
+  "server": {
+    "host": "0.0.0.0",
+    "port": 8080,
+    "tls": {
+      "enabled": true,
+      "minVersion": "1.2"
+    }
+  },
+  "features": ["search", "outline", "count"],
+  "limits": {
+    "maxFiles": 200,
+    "timeoutSeconds": 30
+  }
+}

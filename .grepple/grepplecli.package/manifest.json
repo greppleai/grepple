@@ -1,0 +1,971 @@
+{
+  "formatVersion": 1,
+  "package": {
+    "name": "grepplecli",
+    "importPath": "grepple/internal/grepplecli",
+    "sourceDirectory": "internal/grepplecli",
+    "documentation": "Package grepplecli implements the user-facing combined local/remote search, terminal and JSON presentation, and the get and tree command-line workflows."
+  },
+  "scope": {
+    "types": "all",
+    "functions": "exported",
+    "variables": "excluded",
+    "constants": "excluded",
+    "tests": "excluded",
+    "buildTags": "syntactic-union-conflicts-rejected",
+    "syntacticBuildTagUnion": []
+  },
+  "summary": {
+    "sourceFiles": 17,
+    "declarations": 12,
+    "exportedTypes": 0,
+    "internalTypes": 12,
+    "members": 92,
+    "exportedFunctions": 11,
+    "fiberRoutes": 0,
+    "relations": 0
+  },
+  "semanticModelDigest": "sha256:a35669772ac553363ea70cb745be48114ddd2f67df80cf325ee80baaf7a27857",
+  "sourceFiles": [
+    {
+      "path": "internal/grepplecli/cli_args.go"
+    },
+    {
+      "path": "internal/grepplecli/cli_client.go"
+    },
+    {
+      "path": "internal/grepplecli/cli_get.go"
+    },
+    {
+      "path": "internal/grepplecli/cli_local.go"
+    },
+    {
+      "path": "internal/grepplecli/cli_login.go"
+    },
+    {
+      "path": "internal/grepplecli/cli_outline.go"
+    },
+    {
+      "path": "internal/grepplecli/cli_repos.go"
+    },
+    {
+      "path": "internal/grepplecli/cli_rules.go"
+    },
+    {
+      "path": "internal/grepplecli/cli_tree.go"
+    },
+    {
+      "path": "internal/grepplecli/config.go"
+    },
+    {
+      "path": "internal/grepplecli/doc.go"
+    },
+    {
+      "path": "internal/grepplecli/git_context.go"
+    },
+    {
+      "path": "internal/grepplecli/model.go"
+    },
+    {
+      "path": "internal/grepplecli/render_context.go"
+    },
+    {
+      "path": "internal/grepplecli/render_outline.go"
+    },
+    {
+      "path": "internal/grepplecli/render_output.go"
+    },
+    {
+      "path": "internal/grepplecli/render_result.go"
+    }
+  ],
+  "declarations": [
+    {
+      "name": "cliOptions",
+      "kind": "struct",
+      "file": "internal/grepplecli/model.go",
+      "underlyingType": "struct{Params search.Params;LineOnly bool;JSON string;Count bool;FilesWithMatches bool;Outline bool;Depth int;Stdin bool;}",
+      "members": [
+        {
+          "name": "Count",
+          "kind": "property",
+          "result": "bool"
+        },
+        {
+          "name": "Depth",
+          "kind": "property",
+          "result": "int"
+        },
+        {
+          "name": "FilesWithMatches",
+          "kind": "property",
+          "result": "bool"
+        },
+        {
+          "name": "JSON",
+          "kind": "property",
+          "result": "string"
+        },
+        {
+          "name": "LineOnly",
+          "kind": "property",
+          "result": "bool"
+        },
+        {
+          "name": "Outline",
+          "kind": "property",
+          "result": "bool"
+        },
+        {
+          "name": "Params",
+          "kind": "property",
+          "result": "search.Params"
+        },
+        {
+          "name": "Stdin",
+          "kind": "property",
+          "result": "bool"
+        }
+      ]
+    },
+    {
+      "name": "config",
+      "kind": "struct",
+      "file": "internal/grepplecli/config.go",
+      "underlyingType": "struct{Server string`json:\"server,omitempty\"`;Token string`json:\"token,omitempty\"`;RefreshToken string`json:\"refresh_token,omitempty\"`;TokenExpiry int64`json:\"token_expiry,omitempty\"`;RefreshExpiry int64`json:\"refresh_expiry,omitempty\"`;User string`json:\"user,omitempty\"`;}",
+      "members": [
+        {
+          "name": "RefreshExpiry",
+          "kind": "property",
+          "result": "int64",
+          "structTag": {
+            "value": "json:\"refresh_expiry,omitempty\""
+          }
+        },
+        {
+          "name": "RefreshToken",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"refresh_token,omitempty\""
+          }
+        },
+        {
+          "name": "Server",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"server,omitempty\""
+          }
+        },
+        {
+          "name": "Token",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"token,omitempty\""
+          }
+        },
+        {
+          "name": "TokenExpiry",
+          "kind": "property",
+          "result": "int64",
+          "structTag": {
+            "value": "json:\"token_expiry,omitempty\""
+          }
+        },
+        {
+          "name": "User",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"user,omitempty\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "deviceCodeResponse",
+      "kind": "struct",
+      "file": "internal/grepplecli/cli_login.go",
+      "underlyingType": "struct{DeviceCode string`json:\"device_code\"`;UserCode string`json:\"user_code\"`;VerificationURI string`json:\"verification_uri\"`;ExpiresIn int`json:\"expires_in\"`;Interval int`json:\"interval\"`;Error string`json:\"error\"`;ErrorDescription string`json:\"error_description\"`;}",
+      "members": [
+        {
+          "name": "DeviceCode",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"device_code\""
+          }
+        },
+        {
+          "name": "Error",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"error\""
+          }
+        },
+        {
+          "name": "ErrorDescription",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"error_description\""
+          }
+        },
+        {
+          "name": "ExpiresIn",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "json:\"expires_in\""
+          }
+        },
+        {
+          "name": "Interval",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "json:\"interval\""
+          }
+        },
+        {
+          "name": "UserCode",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"user_code\""
+          }
+        },
+        {
+          "name": "VerificationURI",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"verification_uri\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "deviceTokenResponse",
+      "kind": "struct",
+      "file": "internal/grepplecli/cli_login.go",
+      "underlyingType": "struct{AccessToken string`json:\"access_token\"`;TokenType string`json:\"token_type\"`;Scope string`json:\"scope\"`;ExpiresIn int`json:\"expires_in\"`;RefreshToken string`json:\"refresh_token\"`;RefreshTokenExpiresIn int`json:\"refresh_token_expires_in\"`;Error string`json:\"error\"`;ErrorDescription string`json:\"error_description\"`;Interval int`json:\"interval\"`;}",
+      "members": [
+        {
+          "name": "AccessToken",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"access_token\""
+          }
+        },
+        {
+          "name": "Error",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"error\""
+          }
+        },
+        {
+          "name": "ErrorDescription",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"error_description\""
+          }
+        },
+        {
+          "name": "ExpiresIn",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "json:\"expires_in\""
+          }
+        },
+        {
+          "name": "Interval",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "json:\"interval\""
+          }
+        },
+        {
+          "name": "RefreshToken",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"refresh_token\""
+          }
+        },
+        {
+          "name": "RefreshTokenExpiresIn",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "json:\"refresh_token_expires_in\""
+          }
+        },
+        {
+          "name": "Scope",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"scope\""
+          }
+        },
+        {
+          "name": "TokenType",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"token_type\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "errBrokenPipe",
+      "kind": "struct",
+      "file": "internal/grepplecli/render_output.go",
+      "underlyingType": "struct{}",
+      "members": [
+        {
+          "name": "Error",
+          "kind": "method",
+          "result": "string"
+        },
+        {
+          "name": "Unwrap",
+          "kind": "method",
+          "result": "error"
+        }
+      ]
+    },
+    {
+      "name": "getArgs",
+      "kind": "struct",
+      "file": "internal/grepplecli/cli_get.go",
+      "underlyingType": "struct{Server string`arg:\"-s,--server\" placeholder:\"URL\" help:\"remote shard/router URL\"`;Lines string`arg:\"--lines\" placeholder:\"A:B\" help:\"inclusive 1-based line range\"`;JSON bool`arg:\"--json\" help:\"print repository metadata and content as JSON\"`;Outline bool`arg:\"-O,--outline\" help:\"print the file's structural outline (classes, funcs, ...) instead of its contents\"`;Depth int`arg:\"--depth\" placeholder:\"N\" help:\"outline: cap nesting depth for JSON/YAML (0 = unlimited)\"`;Repo string`arg:\"positional,required\" placeholder:\"OWNER/REPOSITORY\"`;Path string`arg:\"positional,required\" placeholder:\"PATH\"`;}",
+      "members": [
+        {
+          "name": "Description",
+          "kind": "method",
+          "result": "string"
+        },
+        {
+          "name": "Depth",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "arg:\"--depth\" placeholder:\"N\" help:\"outline: cap nesting depth for JSON/YAML (0 = unlimited)\""
+          }
+        },
+        {
+          "name": "JSON",
+          "kind": "property",
+          "result": "bool",
+          "structTag": {
+            "value": "arg:\"--json\" help:\"print repository metadata and content as JSON\""
+          }
+        },
+        {
+          "name": "Lines",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "arg:\"--lines\" placeholder:\"A:B\" help:\"inclusive 1-based line range\""
+          }
+        },
+        {
+          "name": "Outline",
+          "kind": "property",
+          "result": "bool",
+          "structTag": {
+            "value": "arg:\"-O,--outline\" help:\"print the file's structural outline (classes, funcs, ...) instead of its contents\""
+          }
+        },
+        {
+          "name": "Path",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "arg:\"positional,required\" placeholder:\"PATH\""
+          }
+        },
+        {
+          "name": "Repo",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "arg:\"positional,required\" placeholder:\"OWNER/REPOSITORY\""
+          }
+        },
+        {
+          "name": "Server",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "arg:\"-s,--server\" placeholder:\"URL\" help:\"remote shard/router URL\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "loginConfig",
+      "kind": "struct",
+      "file": "internal/grepplecli/cli_login.go",
+      "underlyingType": "struct{ClientID string`json:\"clientId\"`;Scopes string`json:\"scopes\"`;}",
+      "members": [
+        {
+          "name": "ClientID",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"clientId\""
+          }
+        },
+        {
+          "name": "Scopes",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"scopes\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "reposArgs",
+      "kind": "struct",
+      "file": "internal/grepplecli/cli_repos.go",
+      "underlyingType": "struct{Server string`arg:\"-s,--server\" placeholder:\"URL\" help:\"remote shard/router URL\"`;JSON bool`arg:\"--json\" help:\"print raw JSON\"`;Filter string`arg:\"positional\" placeholder:\"SUBSTRING\" help:\"only repos whose OWNER/REPO contains this (case-insensitive)\"`;}",
+      "members": [
+        {
+          "name": "Description",
+          "kind": "method",
+          "result": "string"
+        },
+        {
+          "name": "Filter",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "arg:\"positional\" placeholder:\"SUBSTRING\" help:\"only repos whose OWNER/REPO contains this (case-insensitive)\""
+          }
+        },
+        {
+          "name": "JSON",
+          "kind": "property",
+          "result": "bool",
+          "structTag": {
+            "value": "arg:\"--json\" help:\"print raw JSON\""
+          }
+        },
+        {
+          "name": "Server",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "arg:\"-s,--server\" placeholder:\"URL\" help:\"remote shard/router URL\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "rulesAddArgs",
+      "kind": "struct",
+      "file": "internal/grepplecli/cli_rules.go",
+      "underlyingType": "struct{Server string`arg:\"-s,--server\" placeholder:\"URL\" help:\"remote router URL\"`;ID string`arg:\"--id\" placeholder:\"ID\" help:\"stable rule id (default: slug of --name)\"`;Name string`arg:\"--name\" placeholder:\"NAME\" help:\"human-readable name\"`;Mode string`arg:\"--mode\" placeholder:\"MODE\" help:\"count | files\"`;Files bool`arg:\"-l,--files\" help:\"files mode (store matching paths)\"`;Regex bool`arg:\"--regex\" help:\"treat PATTERN as a regular expression\"`;IgnoreCase bool`arg:\"-i,--ignore-case\" help:\"case-insensitive match\"`;Repo[]string`arg:\"--repo,separate\" placeholder:\"PATTERN\" help:\"limit to matching repos\"`;ExcludeRepo[]string`arg:\"--exclude-repo,separate\" placeholder:\"PATTERN\" help:\"exclude matching repos\"`;JSON bool`arg:\"--json\" help:\"print the created rule as JSON\"`;Pattern string`arg:\"positional\" placeholder:\"PATTERN\"`;Globs[]string`arg:\"positional\" placeholder:\"GLOB\"`;}",
+      "members": [
+        {
+          "name": "Description",
+          "kind": "method",
+          "result": "string"
+        },
+        {
+          "name": "ExcludeRepo",
+          "kind": "property",
+          "result": "[]string",
+          "structTag": {
+            "value": "arg:\"--exclude-repo,separate\" placeholder:\"PATTERN\" help:\"exclude matching repos\""
+          }
+        },
+        {
+          "name": "Files",
+          "kind": "property",
+          "result": "bool",
+          "structTag": {
+            "value": "arg:\"-l,--files\" help:\"files mode (store matching paths)\""
+          }
+        },
+        {
+          "name": "Globs",
+          "kind": "property",
+          "result": "[]string",
+          "structTag": {
+            "value": "arg:\"positional\" placeholder:\"GLOB\""
+          }
+        },
+        {
+          "name": "ID",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "arg:\"--id\" placeholder:\"ID\" help:\"stable rule id (default: slug of --name)\""
+          }
+        },
+        {
+          "name": "IgnoreCase",
+          "kind": "property",
+          "result": "bool",
+          "structTag": {
+            "value": "arg:\"-i,--ignore-case\" help:\"case-insensitive match\""
+          }
+        },
+        {
+          "name": "JSON",
+          "kind": "property",
+          "result": "bool",
+          "structTag": {
+            "value": "arg:\"--json\" help:\"print the created rule as JSON\""
+          }
+        },
+        {
+          "name": "Mode",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "arg:\"--mode\" placeholder:\"MODE\" help:\"count | files\""
+          }
+        },
+        {
+          "name": "Name",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "arg:\"--name\" placeholder:\"NAME\" help:\"human-readable name\""
+          }
+        },
+        {
+          "name": "Pattern",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "arg:\"positional\" placeholder:\"PATTERN\""
+          }
+        },
+        {
+          "name": "Regex",
+          "kind": "property",
+          "result": "bool",
+          "structTag": {
+            "value": "arg:\"--regex\" help:\"treat PATTERN as a regular expression\""
+          }
+        },
+        {
+          "name": "Repo",
+          "kind": "property",
+          "result": "[]string",
+          "structTag": {
+            "value": "arg:\"--repo,separate\" placeholder:\"PATTERN\" help:\"limit to matching repos\""
+          }
+        },
+        {
+          "name": "Server",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "arg:\"-s,--server\" placeholder:\"URL\" help:\"remote router URL\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "searchArgs",
+      "kind": "struct",
+      "file": "internal/grepplecli/cli_args.go",
+      "underlyingType": "struct{Local bool`arg:\"--local\" help:\"search only the local working directory (this is the default)\"`;Remote bool`arg:\"-R,--remote\" help:\"also query the remote shard/router (default: local only)\"`;Server string`arg:\"-s,--server\" placeholder:\"URL\" help:\"remote shard/router URL (implies --remote)\"`;LineNumber bool`arg:\"-n,--line-number\" help:\"include line numbers (enabled by default)\"`;LineOnly bool`arg:\"--line-only\" help:\"print only matching lines\"`;Files bool`arg:\"-l,--files\" help:\"list files whose PATH matches the glob (filename search, not contents); a bare directory scopes the glob\"`;FilesWithMatches bool`arg:\"--files-with-matches\" help:\"list paths of files whose CONTENTS match, like grep -l\"`;Outline bool`arg:\"-O,--outline\" help:\"print each file's structural outline (classes, funcs, interfaces) instead of searching\"`;Depth int`arg:\"--depth\" placeholder:\"N\" help:\"outline: cap nesting depth for JSON/YAML (0 = unlimited)\"`;Count bool`arg:\"-c,--count\" help:\"print match counts\"`;JSON bool`arg:\"--json\" help:\"print full JSON results\"`;JSONMatches bool`arg:\"--json-matches\" help:\"print compact JSON matches\"`;Regex bool`arg:\"--regex\" help:\"treat the pattern as a regular expression (default)\"`;Fixed bool`arg:\"-F,--fixed-strings\" help:\"treat the pattern as a literal string\"`;IgnoreCase bool`arg:\"-i,--ignore-case\" help:\"ignore case distinctions\"`;Context int`arg:\"-C,--context\" placeholder:\"N\" help:\"print N lines around matches\"`;MaxFiles int`arg:\"--max-files\" placeholder:\"N\" help:\"limit matching files\"`;MaxSegments int`arg:\"--max-segments\" placeholder:\"N\" help:\"limit result segments\"`;Skip int`arg:\"--skip\" placeholder:\"N\" help:\"skip the first N ranked result files\"`;Limit int`arg:\"--limit\" placeholder:\"N\" help:\"return at most N ranked result files (default 20; 0 = all local; servers cap a page at 100 — page further with --skip)\"`;Repos[]string`arg:\"--repo,separate\" placeholder:\"PATTERN\" help:\"restrict remote repositories; repeatable\"`;Query string`arg:\"positional\" placeholder:\"PATTERN\"`;Globs[]string`arg:\"positional\" placeholder:\"GLOB\"`;}",
+      "members": [
+        {
+          "name": "Description",
+          "kind": "method",
+          "result": "string"
+        },
+        {
+          "name": "Context",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "arg:\"-C,--context\" placeholder:\"N\" help:\"print N lines around matches\""
+          }
+        },
+        {
+          "name": "Count",
+          "kind": "property",
+          "result": "bool",
+          "structTag": {
+            "value": "arg:\"-c,--count\" help:\"print match counts\""
+          }
+        },
+        {
+          "name": "Depth",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "arg:\"--depth\" placeholder:\"N\" help:\"outline: cap nesting depth for JSON/YAML (0 = unlimited)\""
+          }
+        },
+        {
+          "name": "Files",
+          "kind": "property",
+          "result": "bool",
+          "structTag": {
+            "value": "arg:\"-l,--files\" help:\"list files whose PATH matches the glob (filename search, not contents); a bare directory scopes the glob\""
+          }
+        },
+        {
+          "name": "FilesWithMatches",
+          "kind": "property",
+          "result": "bool",
+          "structTag": {
+            "value": "arg:\"--files-with-matches\" help:\"list paths of files whose CONTENTS match, like grep -l\""
+          }
+        },
+        {
+          "name": "Fixed",
+          "kind": "property",
+          "result": "bool",
+          "structTag": {
+            "value": "arg:\"-F,--fixed-strings\" help:\"treat the pattern as a literal string\""
+          }
+        },
+        {
+          "name": "Globs",
+          "kind": "property",
+          "result": "[]string",
+          "structTag": {
+            "value": "arg:\"positional\" placeholder:\"GLOB\""
+          }
+        },
+        {
+          "name": "IgnoreCase",
+          "kind": "property",
+          "result": "bool",
+          "structTag": {
+            "value": "arg:\"-i,--ignore-case\" help:\"ignore case distinctions\""
+          }
+        },
+        {
+          "name": "JSON",
+          "kind": "property",
+          "result": "bool",
+          "structTag": {
+            "value": "arg:\"--json\" help:\"print full JSON results\""
+          }
+        },
+        {
+          "name": "JSONMatches",
+          "kind": "property",
+          "result": "bool",
+          "structTag": {
+            "value": "arg:\"--json-matches\" help:\"print compact JSON matches\""
+          }
+        },
+        {
+          "name": "Limit",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "arg:\"--limit\" placeholder:\"N\" help:\"return at most N ranked result files (default 20; 0 = all local; servers cap a page at 100 — page further with --skip)\""
+          }
+        },
+        {
+          "name": "LineNumber",
+          "kind": "property",
+          "result": "bool",
+          "structTag": {
+            "value": "arg:\"-n,--line-number\" help:\"include line numbers (enabled by default)\""
+          }
+        },
+        {
+          "name": "LineOnly",
+          "kind": "property",
+          "result": "bool",
+          "structTag": {
+            "value": "arg:\"--line-only\" help:\"print only matching lines\""
+          }
+        },
+        {
+          "name": "Local",
+          "kind": "property",
+          "result": "bool",
+          "structTag": {
+            "value": "arg:\"--local\" help:\"search only the local working directory (this is the default)\""
+          }
+        },
+        {
+          "name": "MaxFiles",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "arg:\"--max-files\" placeholder:\"N\" help:\"limit matching files\""
+          }
+        },
+        {
+          "name": "MaxSegments",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "arg:\"--max-segments\" placeholder:\"N\" help:\"limit result segments\""
+          }
+        },
+        {
+          "name": "Outline",
+          "kind": "property",
+          "result": "bool",
+          "structTag": {
+            "value": "arg:\"-O,--outline\" help:\"print each file's structural outline (classes, funcs, interfaces) instead of searching\""
+          }
+        },
+        {
+          "name": "Query",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "arg:\"positional\" placeholder:\"PATTERN\""
+          }
+        },
+        {
+          "name": "Regex",
+          "kind": "property",
+          "result": "bool",
+          "structTag": {
+            "value": "arg:\"--regex\" help:\"treat the pattern as a regular expression (default)\""
+          }
+        },
+        {
+          "name": "Remote",
+          "kind": "property",
+          "result": "bool",
+          "structTag": {
+            "value": "arg:\"-R,--remote\" help:\"also query the remote shard/router (default: local only)\""
+          }
+        },
+        {
+          "name": "Repos",
+          "kind": "property",
+          "result": "[]string",
+          "structTag": {
+            "value": "arg:\"--repo,separate\" placeholder:\"PATTERN\" help:\"restrict remote repositories; repeatable\""
+          }
+        },
+        {
+          "name": "Server",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "arg:\"-s,--server\" placeholder:\"URL\" help:\"remote shard/router URL (implies --remote)\""
+          }
+        },
+        {
+          "name": "Skip",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "arg:\"--skip\" placeholder:\"N\" help:\"skip the first N ranked result files\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "treeArgs",
+      "kind": "struct",
+      "file": "internal/grepplecli/cli_tree.go",
+      "underlyingType": "struct{Server string`arg:\"-s,--server\" placeholder:\"URL\" help:\"remote shard/router URL\"`;Depth int`arg:\"--depth\" default:\"2\" placeholder:\"N\" help:\"levels to descend\"`;JSON bool`arg:\"--json\" help:\"print raw JSON\"`;Repo string`arg:\"positional,required\" placeholder:\"OWNER/REPOSITORY\"`;Path string`arg:\"positional\" placeholder:\"PATH\"`;}",
+      "members": [
+        {
+          "name": "Description",
+          "kind": "method",
+          "result": "string"
+        },
+        {
+          "name": "Depth",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "arg:\"--depth\" default:\"2\" placeholder:\"N\" help:\"levels to descend\""
+          }
+        },
+        {
+          "name": "JSON",
+          "kind": "property",
+          "result": "bool",
+          "structTag": {
+            "value": "arg:\"--json\" help:\"print raw JSON\""
+          }
+        },
+        {
+          "name": "Path",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "arg:\"positional\" placeholder:\"PATH\""
+          }
+        },
+        {
+          "name": "Repo",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "arg:\"positional,required\" placeholder:\"OWNER/REPOSITORY\""
+          }
+        },
+        {
+          "name": "Server",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "arg:\"-s,--server\" placeholder:\"URL\" help:\"remote shard/router URL\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "treeNode",
+      "kind": "struct",
+      "file": "internal/grepplecli/cli_tree.go",
+      "underlyingType": "struct{name string;dir bool;children map[string]*treeNode;}",
+      "members": [
+        {
+          "name": "children",
+          "kind": "property",
+          "result": "map[string]*treeNode"
+        },
+        {
+          "name": "dir",
+          "kind": "property",
+          "result": "bool"
+        },
+        {
+          "name": "name",
+          "kind": "property",
+          "result": "string"
+        }
+      ]
+    }
+  ],
+  "exportedFunctions": [
+    {
+      "name": "Collapsed",
+      "kind": "function",
+      "file": "internal/grepplecli/render_output.go",
+      "parameters": [
+        "int"
+      ],
+      "result": "string"
+    },
+    {
+      "name": "FlatMatches",
+      "kind": "function",
+      "file": "internal/grepplecli/render_result.go",
+      "parameters": [
+        "[]api.FileResult"
+      ],
+      "result": "[]map[string]any"
+    },
+    {
+      "name": "JSONWrite",
+      "kind": "function",
+      "file": "internal/grepplecli/render_output.go",
+      "parameters": [
+        "any"
+      ],
+      "result": "error"
+    },
+    {
+      "name": "PrintContext",
+      "kind": "function",
+      "file": "internal/grepplecli/render_context.go",
+      "parameters": [
+        "string",
+        "[]api.ContextLine",
+        "bool"
+      ],
+      "result": "tuple\u003cbool,error\u003e"
+    },
+    {
+      "name": "PrintCount",
+      "kind": "function",
+      "file": "internal/grepplecli/render_output.go",
+      "parameters": [
+        "[]api.FileResult",
+        "bool"
+      ],
+      "result": "error"
+    },
+    {
+      "name": "PrintRepoCounts",
+      "kind": "function",
+      "file": "internal/grepplecli/render_output.go",
+      "parameters": [
+        "[]api.RepoCount",
+        "bool"
+      ],
+      "result": "error"
+    },
+    {
+      "name": "PrintSegments",
+      "kind": "function",
+      "file": "internal/grepplecli/render_output.go",
+      "parameters": [
+        "string",
+        "[]parser.Segment"
+      ],
+      "result": "error"
+    },
+    {
+      "name": "RenderOutline",
+      "kind": "function",
+      "file": "internal/grepplecli/render_outline.go",
+      "parameters": [
+        "parser.FileOutline"
+      ],
+      "result": "string"
+    },
+    {
+      "name": "RenderOutlineOrContent",
+      "kind": "function",
+      "file": "internal/grepplecli/render_outline.go",
+      "parameters": [
+        "parser.FileOutline",
+        "string"
+      ],
+      "result": "string"
+    },
+    {
+      "name": "Run",
+      "kind": "function",
+      "file": "internal/grepplecli/cli_args.go",
+      "parameters": [
+        "[]string"
+      ],
+      "result": "error"
+    },
+    {
+      "name": "SafeWrite",
+      "kind": "function",
+      "file": "internal/grepplecli/render_output.go",
+      "parameters": [
+        "string"
+      ],
+      "result": "error"
+    }
+  ],
+  "fiberRoutes": [],
+  "relations": []
+}

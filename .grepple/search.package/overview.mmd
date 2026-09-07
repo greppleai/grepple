@@ -1,0 +1,141 @@
+classDiagram
+    %% grepple:package-default grepple/internal/search
+    %% grepple:language-default go
+    direction LR
+    note "Package search provides file discovery, query and repository filtering, paging, match workers, context, and wire-result construction. | package grepple/internal/search | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=9, declarations=8, exportedTypes=3, internalTypes=5, members=49, exportedFunctions=20, fiberRoutes=0, relations=18"
+    namespace data_contracts {
+        class Params {
+            +Context: int
+            +CountByRepo: bool
+            +ExcludeRepo: []string
+            +Files: bool
+            +Globs: []string
+            +IgnoreCase: bool
+            +Limit: int
+            +MaxFiles: int
+            +MaxSegments: int
+            +Query: string
+            +Regex: bool
+            +Repo: []string
+            +Root: string
+            +Skip: int
+            +SkipSegments: bool
+        }
+        <<struct>> Params
+    }
+    namespace exported_types {
+        class FileMatch
+        <<struct>> FileMatch
+        class RepoFilter
+        <<struct>> RepoFilter
+    }
+    namespace internal_types {
+        class candidateCollector
+        <<struct>> candidateCollector
+        class candidateScan
+        <<struct>> candidateScan
+        class candidateWalker
+        <<struct>> candidateWalker
+        class gitignoreCache["gitignoreCache = map&#91;string&#93;&#91;&#93;string"]
+        <<type>> gitignoreCache
+        class repoPattern
+        <<struct>> repoPattern
+    }
+    namespace operations {
+        class AggregateRepoCounts {
+            +AggregateRepoCounts([]FileMatch): []api.RepoCount
+        }
+        <<function>> AggregateRepoCounts
+        class BuildResults {
+            +BuildResults([]FileMatch, int, int, bool): []api.FileResult
+        }
+        <<function>> BuildResults
+        class CollectFilesUnder {
+            +CollectFilesUnder([]string, string): tuple~[]string&#44;error~
+        }
+        <<function>> CollectFilesUnder
+        class Content {
+            +Content(Params, string, []byte): tuple~*FileMatch&#44;error~
+        }
+        <<function>> Content
+        class ContextLines {
+            +ContextLines(string, map[int]bool, int, int): []api.ContextLine
+        }
+        <<function>> ContextLines
+        class EnforcePageLimit {
+            +EnforcePageLimit(*Params, api.SearchRequest)
+        }
+        <<function>> EnforcePageLimit
+        class Files {
+            +Files(Params, []string): tuple~[]FileMatch&#44;error~
+        }
+        <<function>> Files
+        class ListFilePaths {
+            +ListFilePaths(Params, []string): tuple~[]string&#44;error~
+        }
+        <<function>> ListFilePaths
+        class NewRepoFilter {
+            +NewRepoFilter([]string, []string): *RepoFilter
+        }
+        <<function>> NewRepoFilter
+        class NormalizeRule {
+            +NormalizeRule(api.Rule): tuple~api.Rule&#44;error~
+        }
+        <<function>> NormalizeRule
+        class PathMatchesGlobs {
+            +PathMatchesGlobs(string, []string): bool
+        }
+        <<function>> PathMatchesGlobs
+        class RepoID {
+            +RepoID(string): string
+        }
+        <<function>> RepoID
+        class RepoMatches {
+            +RepoMatches(string, []string): bool
+        }
+        <<function>> RepoMatches
+        class RepoMatchesAny {
+            +RepoMatchesAny(string, []string): bool
+        }
+        <<function>> RepoMatchesAny
+        class ResolveRequest {
+            +ResolveRequest(api.SearchRequest): tuple~Params&#44;error~
+        }
+        <<function>> ResolveRequest
+        class SortRepoCounts {
+            +SortRepoCounts([]api.RepoCount)
+        }
+        <<function>> SortRepoCounts
+        class SortRuleRepoResults {
+            +SortRuleRepoResults([]api.RuleRepoResult)
+        }
+        <<function>> SortRuleRepoResults
+        class SplitLines {
+            +SplitLines(string): []string
+        }
+        <<function>> SplitLines
+        class ToResult {
+            +ToResult(FileMatch, []parser.Segment, int, int): api.FileResult
+        }
+        <<function>> ToResult
+        class WorkerCount {
+            +WorkerCount(): int
+        }
+        <<function>> WorkerCount
+    }
+    AggregateRepoCounts "1" ..> "*" FileMatch : parameter 1
+    BuildResults "1" ..> "*" FileMatch : parameter 1
+    Content "1" ..> "1" FileMatch : result 1
+    Content "1" ..> "1" Params : parameter 1
+    EnforcePageLimit "1" ..> "1" Params : parameter 1
+    Files "1" ..> "*" FileMatch : result 1
+    Files "1" ..> "1" Params : parameter 1
+    ListFilePaths "1" ..> "1" Params : parameter 1
+    NewRepoFilter "1" ..> "1" RepoFilter : result 1
+    RepoFilter "1" --> "*" repoPattern : field exclude; field include
+    ResolveRequest "1" ..> "1" Params : result 1
+    ToResult "1" ..> "1" FileMatch : parameter 1
+    candidateCollector "1" --> "1" gitignoreCache : field ignoreCache
+    candidateScan "1" ..> "*" FileMatch : method scanAll result 1; method scanWindowed result 1
+    candidateScan "1" --> "1" Params : field p
+    candidateScan "1" --> "1" RepoFilter : field repoFilter

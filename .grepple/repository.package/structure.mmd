@@ -1,0 +1,41 @@
+classDiagram
+    %% grepple:complete-package grepple/internal/repository
+    %% grepple:package-default grepple/internal/repository
+    %% grepple:language-default go
+    %% grepple:exact-default
+    class Registry {
+        +Add(string, string, string, string): tuple~api.RepoInfo&#44;error~
+        +Dir(string): string
+        +Get(string): tuple~api.RepoInfo&#44;bool~
+        +Init(): error
+        +List(): []api.RepoInfo
+        +Pull(string, string, string, string): tuple~api.RepoInfo&#44;error~
+        +Record(string, string, string, string): api.RepoInfo
+        +Remove(string): tuple~bool&#44;error~
+        -mu: sync.RWMutex
+        -repos: map[string]api.RepoInfo
+        -root: string
+    }
+    <<struct>> Registry
+    %% grepple:file Registry internal/repository/registry.go
+    class DefaultGithubURL {
+        +DefaultGithubURL(string): string
+    }
+    <<function>> DefaultGithubURL
+    %% grepple:file DefaultGithubURL internal/repository/repository_paths.go
+    class NewRegistry {
+        +NewRegistry(string): *Registry
+    }
+    <<function>> NewRegistry
+    %% grepple:file NewRegistry internal/repository/registry.go
+    class SafeRepoFilePath {
+        +SafeRepoFilePath(string, string): tuple~string&#44;bool~
+    }
+    <<function>> SafeRepoFilePath
+    %% grepple:file SafeRepoFilePath internal/repository/repository_paths.go
+    class WalkTree {
+        +WalkTree(string, int): []api.TreeEntry
+    }
+    <<function>> WalkTree
+    %% grepple:file WalkTree internal/repository/repository_paths.go
+    NewRegistry "1" ..> "1" Registry : result 1

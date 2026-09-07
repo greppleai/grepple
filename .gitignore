@@ -1,0 +1,11 @@
+bin/
+.grepple-index/
+.zoekt-index/
+repos/
+
+# Local environment / secrets (never commit)
+.env
+# GitHub App private key mounted into the router (never commit)
+github-app.pem
+dist/
+grepple-linux-*

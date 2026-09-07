@@ -1,0 +1,28 @@
+classDiagram
+    %% grepple:package-default grepple/internal/repository
+    %% grepple:language-default go
+    direction LR
+    note "Package repository manages checked-out repositories and safe filesystem access for the shard and router control plane. | package grepple/internal/repository | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=5, declarations=1, exportedTypes=1, internalTypes=0, members=11, exportedFunctions=4, fiberRoutes=0, relations=1"
+    namespace exported_types {
+        class Registry
+        <<struct>> Registry
+    }
+    namespace operations {
+        class DefaultGithubURL {
+            +DefaultGithubURL(string): string
+        }
+        <<function>> DefaultGithubURL
+        class NewRegistry {
+            +NewRegistry(string): *Registry
+        }
+        <<function>> NewRegistry
+        class SafeRepoFilePath {
+            +SafeRepoFilePath(string, string): tuple~string&#44;bool~
+        }
+        <<function>> SafeRepoFilePath
+        class WalkTree {
+            +WalkTree(string, int): []api.TreeEntry
+        }
+        <<function>> WalkTree
+    }
+    NewRegistry "1" ..> "1" Registry : result 1

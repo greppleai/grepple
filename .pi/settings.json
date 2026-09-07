@@ -1,0 +1,30 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "make",
+            "args": ["--no-print-directory", "-C", "hooks", "run-grep-guard"],
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "make",
+            "args": ["--no-print-directory", "-C", "hooks", "run-lint-check"],
+            "timeout": 120,
+            "statusMessage": "Running revive lint checks"
+          }
+        ]
+      }
+    ]
+  }
+}

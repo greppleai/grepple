@@ -1,0 +1,774 @@
+{
+  "formatVersion": 1,
+  "package": {
+    "name": "search",
+    "importPath": "grepple/internal/search",
+    "sourceDirectory": "internal/search",
+    "documentation": "Package search provides file discovery, query and repository filtering, paging, match workers, context, and wire-result construction."
+  },
+  "scope": {
+    "types": "all",
+    "functions": "exported",
+    "variables": "excluded",
+    "constants": "excluded",
+    "tests": "excluded",
+    "buildTags": "syntactic-union-conflicts-rejected",
+    "syntacticBuildTagUnion": []
+  },
+  "summary": {
+    "sourceFiles": 9,
+    "declarations": 8,
+    "exportedTypes": 3,
+    "internalTypes": 5,
+    "members": 49,
+    "exportedFunctions": 20,
+    "fiberRoutes": 0,
+    "relations": 18
+  },
+  "semanticModelDigest": "sha256:ee09bb850c29bab4a9bab9bbfe45489c3fb2fcad4320a1cc40f970f283e49001",
+  "sourceFiles": [
+    {
+      "path": "internal/search/context.go"
+    },
+    {
+      "path": "internal/search/doc.go"
+    },
+    {
+      "path": "internal/search/model.go"
+    },
+    {
+      "path": "internal/search/result.go"
+    },
+    {
+      "path": "internal/search/rules.go"
+    },
+    {
+      "path": "internal/search/search_engine.go"
+    },
+    {
+      "path": "internal/search/search_glob.go"
+    },
+    {
+      "path": "internal/search/search_params.go"
+    },
+    {
+      "path": "internal/search/workers.go"
+    }
+  ],
+  "declarations": [
+    {
+      "name": "FileMatch",
+      "kind": "struct",
+      "file": "internal/search/model.go",
+      "underlyingType": "struct{File,DisplayPath,Content,Language string;MatchLines map[int]bool;Segments[]parser.Segment;SegmentsReady bool;}",
+      "members": [
+        {
+          "name": "Content",
+          "kind": "property",
+          "result": "string"
+        },
+        {
+          "name": "DisplayPath",
+          "kind": "property",
+          "result": "string"
+        },
+        {
+          "name": "File",
+          "kind": "property",
+          "result": "string"
+        },
+        {
+          "name": "Language",
+          "kind": "property",
+          "result": "string"
+        },
+        {
+          "name": "MatchLines",
+          "kind": "property",
+          "result": "map[int]bool"
+        },
+        {
+          "name": "Segments",
+          "kind": "property",
+          "result": "[]parser.Segment"
+        },
+        {
+          "name": "SegmentsReady",
+          "kind": "property",
+          "result": "bool"
+        }
+      ]
+    },
+    {
+      "name": "Params",
+      "kind": "struct",
+      "file": "internal/search/model.go",
+      "underlyingType": "struct{Query string`json:\"query\"`;Globs[]string`json:\"globs\"`;Regex bool`json:\"regex\"`;IgnoreCase bool`json:\"ignoreCase\"`;MaxFiles int`json:\"maxFiles,omitempty\"`;MaxSegments int`json:\"maxSegments\"`;Skip int`json:\"skip,omitempty\"`;Limit int`json:\"limit,omitempty\"`;Repo[]string`json:\"repo,omitempty\"`;ExcludeRepo[]string`json:\"excludeRepo,omitempty\"`;Files bool`json:\"files,omitempty\"`;Context int`json:\"context,omitempty\"`;SkipSegments bool`json:\"-\"`;Root string`json:\"-\"`;CountByRepo bool`json:\"-\"`;}",
+      "members": [
+        {
+          "name": "Context",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "json:\"context,omitempty\""
+          }
+        },
+        {
+          "name": "CountByRepo",
+          "kind": "property",
+          "result": "bool",
+          "structTag": {
+            "value": "json:\"-\""
+          }
+        },
+        {
+          "name": "ExcludeRepo",
+          "kind": "property",
+          "result": "[]string",
+          "structTag": {
+            "value": "json:\"excludeRepo,omitempty\""
+          }
+        },
+        {
+          "name": "Files",
+          "kind": "property",
+          "result": "bool",
+          "structTag": {
+            "value": "json:\"files,omitempty\""
+          }
+        },
+        {
+          "name": "Globs",
+          "kind": "property",
+          "result": "[]string",
+          "structTag": {
+            "value": "json:\"globs\""
+          }
+        },
+        {
+          "name": "IgnoreCase",
+          "kind": "property",
+          "result": "bool",
+          "structTag": {
+            "value": "json:\"ignoreCase\""
+          }
+        },
+        {
+          "name": "Limit",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "json:\"limit,omitempty\""
+          }
+        },
+        {
+          "name": "MaxFiles",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "json:\"maxFiles,omitempty\""
+          }
+        },
+        {
+          "name": "MaxSegments",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "json:\"maxSegments\""
+          }
+        },
+        {
+          "name": "Query",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"query\""
+          }
+        },
+        {
+          "name": "Regex",
+          "kind": "property",
+          "result": "bool",
+          "structTag": {
+            "value": "json:\"regex\""
+          }
+        },
+        {
+          "name": "Repo",
+          "kind": "property",
+          "result": "[]string",
+          "structTag": {
+            "value": "json:\"repo,omitempty\""
+          }
+        },
+        {
+          "name": "Root",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"-\""
+          }
+        },
+        {
+          "name": "Skip",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "json:\"skip,omitempty\""
+          }
+        },
+        {
+          "name": "SkipSegments",
+          "kind": "property",
+          "result": "bool",
+          "structTag": {
+            "value": "json:\"-\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "RepoFilter",
+      "kind": "struct",
+      "file": "internal/search/search_engine.go",
+      "underlyingType": "struct{include[]repoPattern;exclude[]repoPattern;}",
+      "members": [
+        {
+          "name": "Allow",
+          "kind": "method",
+          "parameters": [
+            "string"
+          ],
+          "result": "bool"
+        },
+        {
+          "name": "exclude",
+          "kind": "property",
+          "result": "[]repoPattern"
+        },
+        {
+          "name": "include",
+          "kind": "property",
+          "result": "[]repoPattern"
+        }
+      ]
+    },
+    {
+      "name": "candidateCollector",
+      "kind": "struct",
+      "file": "internal/search/search_glob.go",
+      "underlyingType": "struct{root,cwd string;ignoreCache gitignoreCache;seen map[string]bool;files[]string;}",
+      "members": [
+        {
+          "name": "add",
+          "kind": "method",
+          "parameters": [
+            "string"
+          ]
+        },
+        {
+          "name": "addPlainGlob",
+          "kind": "method",
+          "parameters": [
+            "string"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "addRecursiveGlob",
+          "kind": "method",
+          "parameters": [
+            "string"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "addSubtree",
+          "kind": "method",
+          "parameters": [
+            "string"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "cwd",
+          "kind": "property",
+          "result": "string"
+        },
+        {
+          "name": "files",
+          "kind": "property",
+          "result": "[]string"
+        },
+        {
+          "name": "ignoreCache",
+          "kind": "property",
+          "result": "gitignoreCache"
+        },
+        {
+          "name": "root",
+          "kind": "property",
+          "result": "string"
+        },
+        {
+          "name": "seen",
+          "kind": "property",
+          "result": "map[string]bool"
+        }
+      ]
+    },
+    {
+      "name": "candidateScan",
+      "kind": "struct",
+      "file": "internal/search/search_engine.go",
+      "underlyingType": "struct{p Params;m func(string)bool;repoFilter*RepoFilter;fromIndex bool;}",
+      "members": [
+        {
+          "name": "scanAll",
+          "kind": "method",
+          "parameters": [
+            "[]string"
+          ],
+          "result": "[]FileMatch"
+        },
+        {
+          "name": "scanWindowed",
+          "kind": "method",
+          "parameters": [
+            "[]string",
+            "int"
+          ],
+          "result": "[]FileMatch"
+        },
+        {
+          "name": "fromIndex",
+          "kind": "property",
+          "result": "bool"
+        },
+        {
+          "name": "m",
+          "kind": "property",
+          "result": "func(string)bool"
+        },
+        {
+          "name": "p",
+          "kind": "property",
+          "result": "Params"
+        },
+        {
+          "name": "repoFilter",
+          "kind": "property",
+          "result": "*RepoFilter"
+        }
+      ]
+    },
+    {
+      "name": "candidateWalker",
+      "kind": "struct",
+      "file": "internal/search/search_glob.go",
+      "underlyingType": "struct{root string;ignorePatterns map[string][]string;files[]string;}",
+      "members": [
+        {
+          "name": "walk",
+          "kind": "method",
+          "parameters": [
+            "string",
+            "fs.DirEntry",
+            "error"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "walkDir",
+          "kind": "method",
+          "parameters": [
+            "string",
+            "string"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "files",
+          "kind": "property",
+          "result": "[]string"
+        },
+        {
+          "name": "ignorePatterns",
+          "kind": "property",
+          "result": "map[string][]string"
+        },
+        {
+          "name": "root",
+          "kind": "property",
+          "result": "string"
+        }
+      ]
+    },
+    {
+      "name": "gitignoreCache",
+      "kind": "type",
+      "file": "internal/search/search_glob.go",
+      "underlyingType": "map[string][]string",
+      "members": [
+        {
+          "name": "patterns",
+          "kind": "method",
+          "parameters": [
+            "string"
+          ],
+          "result": "[]string"
+        }
+      ]
+    },
+    {
+      "name": "repoPattern",
+      "kind": "struct",
+      "file": "internal/search/search_engine.go",
+      "underlyingType": "struct{glob string;re*regexp.Regexp;}",
+      "members": [
+        {
+          "name": "match",
+          "kind": "method",
+          "parameters": [
+            "string"
+          ],
+          "result": "bool"
+        },
+        {
+          "name": "glob",
+          "kind": "property",
+          "result": "string"
+        },
+        {
+          "name": "re",
+          "kind": "property",
+          "result": "*regexp.Regexp"
+        }
+      ]
+    }
+  ],
+  "exportedFunctions": [
+    {
+      "name": "AggregateRepoCounts",
+      "kind": "function",
+      "file": "internal/search/search_engine.go",
+      "parameters": [
+        "[]FileMatch"
+      ],
+      "result": "[]api.RepoCount"
+    },
+    {
+      "name": "BuildResults",
+      "kind": "function",
+      "file": "internal/search/result.go",
+      "parameters": [
+        "[]FileMatch",
+        "int",
+        "int",
+        "bool"
+      ],
+      "result": "[]api.FileResult"
+    },
+    {
+      "name": "CollectFilesUnder",
+      "kind": "function",
+      "file": "internal/search/search_glob.go",
+      "parameters": [
+        "[]string",
+        "string"
+      ],
+      "result": "tuple\u003c[]string,error\u003e"
+    },
+    {
+      "name": "Content",
+      "kind": "function",
+      "file": "internal/search/search_engine.go",
+      "parameters": [
+        "Params",
+        "string",
+        "[]byte"
+      ],
+      "result": "tuple\u003c*FileMatch,error\u003e"
+    },
+    {
+      "name": "ContextLines",
+      "kind": "function",
+      "file": "internal/search/context.go",
+      "parameters": [
+        "string",
+        "map[int]bool",
+        "int",
+        "int"
+      ],
+      "result": "[]api.ContextLine"
+    },
+    {
+      "name": "EnforcePageLimit",
+      "kind": "function",
+      "file": "internal/search/search_params.go",
+      "parameters": [
+        "*Params",
+        "api.SearchRequest"
+      ]
+    },
+    {
+      "name": "Files",
+      "kind": "function",
+      "file": "internal/search/search_engine.go",
+      "parameters": [
+        "Params",
+        "[]string"
+      ],
+      "result": "tuple\u003c[]FileMatch,error\u003e"
+    },
+    {
+      "name": "ListFilePaths",
+      "kind": "function",
+      "file": "internal/search/search_engine.go",
+      "parameters": [
+        "Params",
+        "[]string"
+      ],
+      "result": "tuple\u003c[]string,error\u003e"
+    },
+    {
+      "name": "NewRepoFilter",
+      "kind": "function",
+      "file": "internal/search/search_engine.go",
+      "parameters": [
+        "[]string",
+        "[]string"
+      ],
+      "result": "*RepoFilter"
+    },
+    {
+      "name": "NormalizeRule",
+      "kind": "function",
+      "file": "internal/search/rules.go",
+      "parameters": [
+        "api.Rule"
+      ],
+      "result": "tuple\u003capi.Rule,error\u003e"
+    },
+    {
+      "name": "PathMatchesGlobs",
+      "kind": "function",
+      "file": "internal/search/search_glob.go",
+      "parameters": [
+        "string",
+        "[]string"
+      ],
+      "result": "bool"
+    },
+    {
+      "name": "RepoID",
+      "kind": "function",
+      "file": "internal/search/search_engine.go",
+      "parameters": [
+        "string"
+      ],
+      "result": "string"
+    },
+    {
+      "name": "RepoMatches",
+      "kind": "function",
+      "file": "internal/search/search_params.go",
+      "parameters": [
+        "string",
+        "[]string"
+      ],
+      "result": "bool"
+    },
+    {
+      "name": "RepoMatchesAny",
+      "kind": "function",
+      "file": "internal/search/search_params.go",
+      "parameters": [
+        "string",
+        "[]string"
+      ],
+      "result": "bool"
+    },
+    {
+      "name": "ResolveRequest",
+      "kind": "function",
+      "file": "internal/search/search_params.go",
+      "parameters": [
+        "api.SearchRequest"
+      ],
+      "result": "tuple\u003cParams,error\u003e"
+    },
+    {
+      "name": "SortRepoCounts",
+      "kind": "function",
+      "file": "internal/search/search_engine.go",
+      "parameters": [
+        "[]api.RepoCount"
+      ]
+    },
+    {
+      "name": "SortRuleRepoResults",
+      "kind": "function",
+      "file": "internal/search/rules.go",
+      "parameters": [
+        "[]api.RuleRepoResult"
+      ]
+    },
+    {
+      "name": "SplitLines",
+      "kind": "function",
+      "file": "internal/search/search_engine.go",
+      "parameters": [
+        "string"
+      ],
+      "result": "[]string"
+    },
+    {
+      "name": "ToResult",
+      "kind": "function",
+      "file": "internal/search/result.go",
+      "parameters": [
+        "FileMatch",
+        "[]parser.Segment",
+        "int",
+        "int"
+      ],
+      "result": "api.FileResult"
+    },
+    {
+      "name": "WorkerCount",
+      "kind": "function",
+      "file": "internal/search/workers.go",
+      "result": "int"
+    }
+  ],
+  "fiberRoutes": [],
+  "relations": [
+    {
+      "from": "AggregateRepoCounts",
+      "to": "FileMatch",
+      "kind": "dependency",
+      "via": "parameter 1",
+      "cardinality": "many"
+    },
+    {
+      "from": "BuildResults",
+      "to": "FileMatch",
+      "kind": "dependency",
+      "via": "parameter 1",
+      "cardinality": "many"
+    },
+    {
+      "from": "Content",
+      "to": "FileMatch",
+      "kind": "dependency",
+      "via": "result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "Content",
+      "to": "Params",
+      "kind": "dependency",
+      "via": "parameter 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "EnforcePageLimit",
+      "to": "Params",
+      "kind": "dependency",
+      "via": "parameter 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "Files",
+      "to": "FileMatch",
+      "kind": "dependency",
+      "via": "result 1",
+      "cardinality": "many"
+    },
+    {
+      "from": "Files",
+      "to": "Params",
+      "kind": "dependency",
+      "via": "parameter 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "ListFilePaths",
+      "to": "Params",
+      "kind": "dependency",
+      "via": "parameter 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "NewRepoFilter",
+      "to": "RepoFilter",
+      "kind": "dependency",
+      "via": "result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "RepoFilter",
+      "to": "repoPattern",
+      "kind": "association",
+      "via": "field exclude",
+      "cardinality": "many"
+    },
+    {
+      "from": "RepoFilter",
+      "to": "repoPattern",
+      "kind": "association",
+      "via": "field include",
+      "cardinality": "many"
+    },
+    {
+      "from": "ResolveRequest",
+      "to": "Params",
+      "kind": "dependency",
+      "via": "result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "ToResult",
+      "to": "FileMatch",
+      "kind": "dependency",
+      "via": "parameter 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "candidateCollector",
+      "to": "gitignoreCache",
+      "kind": "association",
+      "via": "field ignoreCache",
+      "cardinality": "one"
+    },
+    {
+      "from": "candidateScan",
+      "to": "FileMatch",
+      "kind": "dependency",
+      "via": "method scanAll result 1",
+      "cardinality": "many"
+    },
+    {
+      "from": "candidateScan",
+      "to": "FileMatch",
+      "kind": "dependency",
+      "via": "method scanWindowed result 1",
+      "cardinality": "many"
+    },
+    {
+      "from": "candidateScan",
+      "to": "Params",
+      "kind": "association",
+      "via": "field p",
+      "cardinality": "one"
+    },
+    {
+      "from": "candidateScan",
+      "to": "RepoFilter",
+      "kind": "association",
+      "via": "field repoFilter",
+      "cardinality": "one"
+    }
+  ]
+}

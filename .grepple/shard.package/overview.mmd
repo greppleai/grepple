@@ -1,0 +1,183 @@
+classDiagram
+    %% grepple:package-default grepple/internal/shard
+    %% grepple:language-default go
+    direction LR
+    note "Package shard implements the repository search shard, including its own command-line parser and required per-shard Zoekt integration. | package grepple/internal/shard | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=12, declarations=27, exportedTypes=4, internalTypes=23, members=208, exportedFunctions=2, fiberRoutes=10, relations=38"
+    namespace transport {
+        class healthController
+        <<struct>> healthController
+        class ruleController
+        <<struct>> ruleController
+        class shardController
+        <<struct>> shardController
+    }
+    namespace interfaces {
+        class HealthService {
+            +Root(): string
+            +ZoektRunning(): bool
+        }
+        <<interface>> HealthService
+        class RuleService {
+            +ApplyRules(api.RuleSet): bool
+            +RuleResults(string): tuple~string&#44;[]api.RuleRepoResult~
+            +RulesGeneration(): int64
+            +RulesSnapshot(): []api.Rule
+        }
+        <<interface>> RuleService
+        class Service {
+            +CreateRepo(api.RepoRef, string): tuple~api.RepoInfo&#44;error~
+            +GetRepo(string): tuple~api.RepoInfo&#44;bool~
+            +ListRepos(): []api.RepoInfo
+            +RefreshRepo(api.RepoRef, string): tuple~api.RepoInfo&#44;error~
+            +RemoveRepo(string): tuple~bool&#44;error~
+            +Search(api.SearchRequest, string): tuple~api.SearchResponse&#44;error~
+        }
+        <<interface>> Service
+        class ruleService {
+            -apply(api.RuleSet): bool
+            -currentGeneration(): int64
+            -enqueueRepo(string)
+            -forgetRepo(string)
+            -resultsFor(string): tuple~string&#44;[]api.RuleRepoResult~
+            -run(context.Context)
+            -snapshotRules(): []api.Rule
+        }
+        <<interface>> ruleService
+        class shard {
+            +Handler(): *fiber.App
+            +Run(): error
+            -indexedHead(string): tuple~string&#44;bool~
+            +ApplyRules(api.RuleSet): bool
+            +CreateRepo(api.RepoRef, string): tuple~api.RepoInfo&#44;error~
+            +GetRepo(string): tuple~api.RepoInfo&#44;bool~
+            +ListRepos(): []api.RepoInfo
+            +RefreshRepo(api.RepoRef, string): tuple~api.RepoInfo&#44;error~
+            +RemoveRepo(string): tuple~bool&#44;error~
+            +Root(): string
+            +RuleResults(string): tuple~string&#44;[]api.RuleRepoResult~
+            +RulesGeneration(): int64
+            +RulesSnapshot(): []api.Rule
+            +Search(api.SearchRequest, string): tuple~api.SearchResponse&#44;error~
+            +ZoektRunning(): bool
+        }
+        <<interface>> shard
+        class zoektService {
+            -candidates(string, string, []api.RepoInfo): tuple~[]string&#44;bool&#44;error~
+            -coverageFor(string): tuple~zoektCoverage&#44;bool~
+            -done(): chan struct&#123;&#125;
+            -err(): error
+            -index(api.RepoInfo): error
+            -indexedHead(string): tuple~string&#44;bool~
+            -primeCoverage([]api.RepoInfo)
+            -remove(string): error
+            -repoCounts(string, []api.RepoInfo, []string): tuple~[]api.RepoCount&#44;bool&#44;error~
+            -running(): bool
+            -setCoverage(string, zoektCoverage)
+            -shardExists(string): bool
+            -start(): error
+            -stop()
+            -upToDate(api.RepoInfo): bool
+        }
+        <<interface>> zoektService
+    }
+    namespace data_contracts {
+        class directoryFile {
+            +Repos: []directoryRepo
+        }
+        <<struct>> directoryFile
+        class directoryRepo {
+            +Head: string
+            +Repo: string
+        }
+        <<struct>> directoryRepo
+        class ruleStateFile {
+            +Generation: int64
+            +Results: map[string]map[string]api.RuleRepoResult
+            +Rules: []api.Rule
+        }
+        <<struct>> ruleStateFile
+        class shardArgs {
+            +Host: string
+            +Port: int
+            +Root: string
+            +ZoektBin: string
+            +ZoektIndex: string
+            +ZoektPort: int
+        }
+        <<struct>> shardArgs
+    }
+    namespace exported_types {
+        class StatusError
+        <<struct>> StatusError
+    }
+    namespace internal_types {
+        class directory
+        <<struct>> directory
+        class evalJob
+        <<struct>> evalJob
+        class fallbackScan
+        <<struct>> fallbackScan
+        class ruleServiceImpl
+        <<struct>> ruleServiceImpl
+        class searchTimings
+        <<struct>> searchTimings
+        class shardImpl
+        <<struct>> shardImpl
+        class shardOptions
+        <<struct>> shardOptions
+        class trackedFileDisposition["trackedFileDisposition = int"]
+        <<type>> trackedFileDisposition
+        class zoektChunkedFile
+        <<struct>> zoektChunkedFile
+        class zoektCoverage
+        <<struct>> zoektCoverage
+        class zoektOptions
+        <<struct>> zoektOptions
+        class zoektProcess
+        <<struct>> zoektProcess
+        class zoektServiceImpl
+        <<struct>> zoektServiceImpl
+    }
+    namespace operations {
+        class Register {
+            +Register(*fiber.App, HealthService, Service, RuleService)
+        }
+        <<function>> Register
+        class Run {
+            +Run([]string): error
+        }
+        <<function>> Run
+    }
+    Register "1" ..> "1" HealthService : parameter 2
+    Register "1" ..> "1" RuleService : parameter 4
+    Register "1" ..> "1" Service : parameter 3
+    directoryFile "1" --> "*" directoryRepo : field Repos
+    healthController "1" --> "1" HealthService : field service
+    ruleController "1" --> "1" RuleService : field rules
+    ruleServiceImpl "1" --> "*" evalJob : field evalCh
+    ruleServiceImpl "1" ..> "1" evalJob : method enqueue parameter 1
+    ruleService <|.. ruleServiceImpl : implements
+    ruleServiceImpl "1" --> "1" shard : field s
+    HealthService <|-- shard : embedded type
+    RuleService <|-- shard : embedded type
+    Service <|-- shard : embedded type
+    shardController "1" --> "1" Service : field state
+    HealthService <|.. shardImpl : implements
+    RuleService <|.. shardImpl : implements
+    Service <|.. shardImpl : implements
+    shardImpl "1" --> "1" ruleService : field rules
+    shardImpl "1" ..> "1" searchTimings : method-parameter=7
+    shard <|.. shardImpl : implements
+    shardImpl "1" --> "1" shardOptions : field options
+    shardImpl "1" --> "1" zoektService : field zoektService
+    shardOptions "1" --> "1" zoektOptions : field zoekt
+    zoektService "1" ..> "1" zoektCoverage : method coverageFor result 1; method setCoverage parameter 2
+    zoektServiceImpl "1" --> "1" directory : field directory
+    zoektServiceImpl "1" --> "*" zoektCoverage : field coverage
+    zoektServiceImpl "1" ..> "1" zoektCoverage : method coverageFor result 1; method setCoverage parameter 2
+    zoektServiceImpl "1" --> "1" zoektOptions : field options
+    zoektServiceImpl "1" --> "1" zoektProcess : field process
+    zoektService <|.. zoektServiceImpl : implements
+    note for healthController "routes: GET / -&gt; healthController.ready; GET /health -&gt; healthController.health; GET /ready -&gt; healthController.ready"
+    note for ruleController "routes: GET /rules -&gt; ruleController.handleRulesList; GET /rules/:id/results -&gt; ruleController.handleRuleResults; PUT /rules -&gt; ruleController.handleRulesPut"
+    note for shardController "routes: ALL /index -&gt; shardController.handleIndex; GET /raw -&gt; shardController.handleRaw; GET /tree -&gt; shardController.handleTree; POST /search -&gt; shardController.handleSearch"

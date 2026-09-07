@@ -1,0 +1,2027 @@
+{
+  "formatVersion": 1,
+  "package": {
+    "name": "shard",
+    "importPath": "grepple/internal/shard",
+    "sourceDirectory": "internal/shard",
+    "documentation": "Package shard implements the repository search shard, including its own command-line parser and required per-shard Zoekt integration."
+  },
+  "scope": {
+    "types": "all",
+    "functions": "exported",
+    "variables": "excluded",
+    "constants": "excluded",
+    "tests": "excluded",
+    "buildTags": "syntactic-union-conflicts-rejected",
+    "syntacticBuildTagUnion": []
+  },
+  "summary": {
+    "sourceFiles": 12,
+    "declarations": 27,
+    "exportedTypes": 4,
+    "internalTypes": 23,
+    "members": 208,
+    "exportedFunctions": 2,
+    "fiberRoutes": 10,
+    "relations": 38
+  },
+  "semanticModelDigest": "sha256:7f06323240a19e74a26a9da383405fd46215dab5288dd7e5aa9311a33ed38d5d",
+  "sourceFiles": [
+    {
+      "path": "internal/shard/cli_args.go"
+    },
+    {
+      "path": "internal/shard/directory.go"
+    },
+    {
+      "path": "internal/shard/doc.go"
+    },
+    {
+      "path": "internal/shard/health_controller.go"
+    },
+    {
+      "path": "internal/shard/http_controller.go"
+    },
+    {
+      "path": "internal/shard/logging.go"
+    },
+    {
+      "path": "internal/shard/rule_controller.go"
+    },
+    {
+      "path": "internal/shard/rules.go"
+    },
+    {
+      "path": "internal/shard/shard.go"
+    },
+    {
+      "path": "internal/shard/shard_controller.go"
+    },
+    {
+      "path": "internal/shard/zoekt.go"
+    },
+    {
+      "path": "internal/shard/zoekt_service.go"
+    }
+  ],
+  "declarations": [
+    {
+      "name": "HealthService",
+      "kind": "interface",
+      "file": "internal/shard/http_controller.go",
+      "underlyingType": "interface{Root()string;ZoektRunning()bool;}",
+      "members": [
+        {
+          "name": "Root",
+          "kind": "method",
+          "result": "string"
+        },
+        {
+          "name": "ZoektRunning",
+          "kind": "method",
+          "result": "bool"
+        }
+      ]
+    },
+    {
+      "name": "RuleService",
+      "kind": "interface",
+      "file": "internal/shard/http_controller.go",
+      "underlyingType": "interface{ApplyRules(api.RuleSet)bool;RulesGeneration()int64;RulesSnapshot()[]api.Rule;RuleResults(string)(string,[]api.RuleRepoResult);}",
+      "members": [
+        {
+          "name": "ApplyRules",
+          "kind": "method",
+          "parameters": [
+            "api.RuleSet"
+          ],
+          "result": "bool"
+        },
+        {
+          "name": "RuleResults",
+          "kind": "method",
+          "parameters": [
+            "string"
+          ],
+          "result": "tuple\u003cstring,[]api.RuleRepoResult\u003e"
+        },
+        {
+          "name": "RulesGeneration",
+          "kind": "method",
+          "result": "int64"
+        },
+        {
+          "name": "RulesSnapshot",
+          "kind": "method",
+          "result": "[]api.Rule"
+        }
+      ]
+    },
+    {
+      "name": "Service",
+      "kind": "interface",
+      "file": "internal/shard/http_controller.go",
+      "underlyingType": "interface{Search(api.SearchRequest,string)(api.SearchResponse,error);ListRepos()[]api.RepoInfo;GetRepo(string)(api.RepoInfo,bool);CreateRepo(api.RepoRef,string)(api.RepoInfo,error);RefreshRepo(api.RepoRef,string)(api.RepoInfo,error);RemoveRepo(string)(bool,error);}",
+      "members": [
+        {
+          "name": "CreateRepo",
+          "kind": "method",
+          "parameters": [
+            "api.RepoRef",
+            "string"
+          ],
+          "result": "tuple\u003capi.RepoInfo,error\u003e"
+        },
+        {
+          "name": "GetRepo",
+          "kind": "method",
+          "parameters": [
+            "string"
+          ],
+          "result": "tuple\u003capi.RepoInfo,bool\u003e"
+        },
+        {
+          "name": "ListRepos",
+          "kind": "method",
+          "result": "[]api.RepoInfo"
+        },
+        {
+          "name": "RefreshRepo",
+          "kind": "method",
+          "parameters": [
+            "api.RepoRef",
+            "string"
+          ],
+          "result": "tuple\u003capi.RepoInfo,error\u003e"
+        },
+        {
+          "name": "RemoveRepo",
+          "kind": "method",
+          "parameters": [
+            "string"
+          ],
+          "result": "tuple\u003cbool,error\u003e"
+        },
+        {
+          "name": "Search",
+          "kind": "method",
+          "parameters": [
+            "api.SearchRequest",
+            "string"
+          ],
+          "result": "tuple\u003capi.SearchResponse,error\u003e"
+        }
+      ]
+    },
+    {
+      "name": "StatusError",
+      "kind": "struct",
+      "file": "internal/shard/http_controller.go",
+      "underlyingType": "struct{Status int;Err error;}",
+      "members": [
+        {
+          "name": "Error",
+          "kind": "method",
+          "result": "string"
+        },
+        {
+          "name": "Err",
+          "kind": "property",
+          "result": "error"
+        },
+        {
+          "name": "Status",
+          "kind": "property",
+          "result": "int"
+        }
+      ]
+    },
+    {
+      "name": "directory",
+      "kind": "struct",
+      "file": "internal/shard/directory.go",
+      "underlyingType": "struct{path string;mu sync.Mutex;entries map[string]string;}",
+      "members": [
+        {
+          "name": "head",
+          "kind": "method",
+          "parameters": [
+            "string"
+          ],
+          "result": "tuple\u003cstring,bool\u003e"
+        },
+        {
+          "name": "remove",
+          "kind": "method",
+          "parameters": [
+            "string"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "save",
+          "kind": "method",
+          "result": "error"
+        },
+        {
+          "name": "set",
+          "kind": "method",
+          "parameters": [
+            "string",
+            "string"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "entries",
+          "kind": "property",
+          "result": "map[string]string"
+        },
+        {
+          "name": "mu",
+          "kind": "property",
+          "result": "sync.Mutex"
+        },
+        {
+          "name": "path",
+          "kind": "property",
+          "result": "string"
+        }
+      ]
+    },
+    {
+      "name": "directoryFile",
+      "kind": "struct",
+      "file": "internal/shard/directory.go",
+      "underlyingType": "struct{Repos[]directoryRepo`json:\"repos\"`;}",
+      "members": [
+        {
+          "name": "Repos",
+          "kind": "property",
+          "result": "[]directoryRepo",
+          "structTag": {
+            "value": "json:\"repos\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "directoryRepo",
+      "kind": "struct",
+      "file": "internal/shard/directory.go",
+      "underlyingType": "struct{Repo string`json:\"repo\"`;Head string`json:\"head\"`;}",
+      "members": [
+        {
+          "name": "Head",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"head\""
+          }
+        },
+        {
+          "name": "Repo",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"repo\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "evalJob",
+      "kind": "struct",
+      "file": "internal/shard/rules.go",
+      "underlyingType": "struct{repo string;ruleID string;}",
+      "members": [
+        {
+          "name": "repo",
+          "kind": "property",
+          "result": "string"
+        },
+        {
+          "name": "ruleID",
+          "kind": "property",
+          "result": "string"
+        }
+      ]
+    },
+    {
+      "name": "fallbackScan",
+      "kind": "struct",
+      "file": "internal/shard/zoekt.go",
+      "underlyingType": "struct{seen map[[3]rune]struct{};previous[2]rune;count int;invalidUTF8 bool;tooManyTrigrams bool;}",
+      "members": [
+        {
+          "name": "add",
+          "kind": "method",
+          "parameters": [
+            "rune",
+            "int"
+          ],
+          "result": "bool"
+        },
+        {
+          "name": "count",
+          "kind": "property",
+          "result": "int"
+        },
+        {
+          "name": "invalidUTF8",
+          "kind": "property",
+          "result": "bool"
+        },
+        {
+          "name": "previous",
+          "kind": "property",
+          "result": "[2]rune"
+        },
+        {
+          "name": "seen",
+          "kind": "property",
+          "result": "map[[3]rune]struct{}"
+        },
+        {
+          "name": "tooManyTrigrams",
+          "kind": "property",
+          "result": "bool"
+        }
+      ]
+    },
+    {
+      "name": "healthController",
+      "kind": "struct",
+      "file": "internal/shard/health_controller.go",
+      "underlyingType": "struct{service HealthService}",
+      "members": [
+        {
+          "name": "health",
+          "kind": "method",
+          "parameters": [
+            "fiber.Ctx"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "ready",
+          "kind": "method",
+          "parameters": [
+            "fiber.Ctx"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "register",
+          "kind": "method",
+          "parameters": [
+            "*fiber.App"
+          ]
+        },
+        {
+          "name": "service",
+          "kind": "property",
+          "result": "HealthService"
+        }
+      ]
+    },
+    {
+      "name": "ruleController",
+      "kind": "struct",
+      "file": "internal/shard/rule_controller.go",
+      "underlyingType": "struct{rules RuleService}",
+      "members": [
+        {
+          "name": "handleRuleResults",
+          "kind": "method",
+          "parameters": [
+            "fiber.Ctx"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "handleRulesList",
+          "kind": "method",
+          "parameters": [
+            "fiber.Ctx"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "handleRulesPut",
+          "kind": "method",
+          "parameters": [
+            "fiber.Ctx"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "register",
+          "kind": "method",
+          "parameters": [
+            "*fiber.App"
+          ]
+        },
+        {
+          "name": "rules",
+          "kind": "property",
+          "result": "RuleService"
+        }
+      ]
+    },
+    {
+      "name": "ruleService",
+      "kind": "interface",
+      "file": "internal/shard/rules.go",
+      "underlyingType": "interface{apply(api.RuleSet)bool;snapshotRules()[]api.Rule;currentGeneration()int64;resultsFor(string)(string,[]api.RuleRepoResult);enqueueRepo(string);forgetRepo(string);run(context.Context);}",
+      "members": [
+        {
+          "name": "apply",
+          "kind": "method",
+          "parameters": [
+            "api.RuleSet"
+          ],
+          "result": "bool"
+        },
+        {
+          "name": "currentGeneration",
+          "kind": "method",
+          "result": "int64"
+        },
+        {
+          "name": "enqueueRepo",
+          "kind": "method",
+          "parameters": [
+            "string"
+          ]
+        },
+        {
+          "name": "forgetRepo",
+          "kind": "method",
+          "parameters": [
+            "string"
+          ]
+        },
+        {
+          "name": "resultsFor",
+          "kind": "method",
+          "parameters": [
+            "string"
+          ],
+          "result": "tuple\u003cstring,[]api.RuleRepoResult\u003e"
+        },
+        {
+          "name": "run",
+          "kind": "method",
+          "parameters": [
+            "context.Context"
+          ]
+        },
+        {
+          "name": "snapshotRules",
+          "kind": "method",
+          "result": "[]api.Rule"
+        }
+      ]
+    },
+    {
+      "name": "ruleServiceImpl",
+      "kind": "struct",
+      "file": "internal/shard/rules.go",
+      "fileLocal": true,
+      "underlyingType": "struct{mu sync.RWMutex;generation int64;rules map[string]api.Rule;results map[string]map[string]api.RuleRepoResult;s shard;path string;evalCh chan evalJob;log*zap.Logger;}",
+      "members": [
+        {
+          "name": "apply",
+          "kind": "method",
+          "parameters": [
+            "api.RuleSet"
+          ],
+          "result": "bool"
+        },
+        {
+          "name": "backfillRule",
+          "kind": "method",
+          "parameters": [
+            "string"
+          ]
+        },
+        {
+          "name": "currentGeneration",
+          "kind": "method",
+          "result": "int64"
+        },
+        {
+          "name": "enqueue",
+          "kind": "method",
+          "parameters": [
+            "evalJob"
+          ]
+        },
+        {
+          "name": "enqueueRepo",
+          "kind": "method",
+          "parameters": [
+            "string"
+          ]
+        },
+        {
+          "name": "evaluate",
+          "kind": "method",
+          "parameters": [
+            "api.Rule",
+            "api.SearchRequest"
+          ],
+          "result": "map[string]api.RuleRepoResult"
+        },
+        {
+          "name": "evaluateRepo",
+          "kind": "method",
+          "parameters": [
+            "string"
+          ]
+        },
+        {
+          "name": "forgetRepo",
+          "kind": "method",
+          "parameters": [
+            "string"
+          ]
+        },
+        {
+          "name": "load",
+          "kind": "method"
+        },
+        {
+          "name": "resultsFor",
+          "kind": "method",
+          "parameters": [
+            "string"
+          ],
+          "result": "tuple\u003cstring,[]api.RuleRepoResult\u003e"
+        },
+        {
+          "name": "run",
+          "kind": "method",
+          "parameters": [
+            "context.Context"
+          ]
+        },
+        {
+          "name": "save",
+          "kind": "method"
+        },
+        {
+          "name": "setResult",
+          "kind": "method",
+          "parameters": [
+            "string",
+            "string",
+            "api.RuleRepoResult",
+            "bool"
+          ]
+        },
+        {
+          "name": "snapshotRules",
+          "kind": "method",
+          "result": "[]api.Rule"
+        },
+        {
+          "name": "evalCh",
+          "kind": "property",
+          "result": "chan evalJob"
+        },
+        {
+          "name": "generation",
+          "kind": "property",
+          "result": "int64"
+        },
+        {
+          "name": "log",
+          "kind": "property",
+          "result": "*zap.Logger"
+        },
+        {
+          "name": "mu",
+          "kind": "property",
+          "result": "sync.RWMutex"
+        },
+        {
+          "name": "path",
+          "kind": "property",
+          "result": "string"
+        },
+        {
+          "name": "results",
+          "kind": "property",
+          "result": "map[string]map[string]api.RuleRepoResult"
+        },
+        {
+          "name": "rules",
+          "kind": "property",
+          "result": "map[string]api.Rule"
+        },
+        {
+          "name": "s",
+          "kind": "property",
+          "result": "shard"
+        }
+      ]
+    },
+    {
+      "name": "ruleStateFile",
+      "kind": "struct",
+      "file": "internal/shard/rules.go",
+      "underlyingType": "struct{Generation int64`json:\"generation\"`;Rules[]api.Rule`json:\"rules\"`;Results map[string]map[string]api.RuleRepoResult`json:\"results\"`;}",
+      "members": [
+        {
+          "name": "Generation",
+          "kind": "property",
+          "result": "int64",
+          "structTag": {
+            "value": "json:\"generation\""
+          }
+        },
+        {
+          "name": "Results",
+          "kind": "property",
+          "result": "map[string]map[string]api.RuleRepoResult",
+          "structTag": {
+            "value": "json:\"results\""
+          }
+        },
+        {
+          "name": "Rules",
+          "kind": "property",
+          "result": "[]api.Rule",
+          "structTag": {
+            "value": "json:\"rules\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "searchTimings",
+      "kind": "struct",
+      "file": "internal/shard/shard.go",
+      "underlyingType": "struct{total,lock,filter,supplement,zoekt,search,segments int64}",
+      "members": [
+        {
+          "name": "filter",
+          "kind": "property",
+          "result": "int64"
+        },
+        {
+          "name": "lock",
+          "kind": "property",
+          "result": "int64"
+        },
+        {
+          "name": "search",
+          "kind": "property",
+          "result": "int64"
+        },
+        {
+          "name": "segments",
+          "kind": "property",
+          "result": "int64"
+        },
+        {
+          "name": "supplement",
+          "kind": "property",
+          "result": "int64"
+        },
+        {
+          "name": "total",
+          "kind": "property",
+          "result": "int64"
+        },
+        {
+          "name": "zoekt",
+          "kind": "property",
+          "result": "int64"
+        }
+      ]
+    },
+    {
+      "name": "shard",
+      "kind": "interface",
+      "file": "internal/shard/shard.go",
+      "underlyingType": "interface{HealthService;Service;RuleService;Handler()*fiber.App;Run()error;indexedHead(string)(string,bool);}",
+      "members": [
+        {
+          "name": "Handler",
+          "kind": "method",
+          "result": "*fiber.App"
+        },
+        {
+          "name": "Run",
+          "kind": "method",
+          "result": "error"
+        },
+        {
+          "name": "indexedHead",
+          "kind": "method",
+          "parameters": [
+            "string"
+          ],
+          "result": "tuple\u003cstring,bool\u003e"
+        },
+        {
+          "name": "ApplyRules",
+          "kind": "method",
+          "file": "internal/shard/http_controller.go",
+          "parameters": [
+            "api.RuleSet"
+          ],
+          "result": "bool"
+        },
+        {
+          "name": "CreateRepo",
+          "kind": "method",
+          "file": "internal/shard/http_controller.go",
+          "parameters": [
+            "api.RepoRef",
+            "string"
+          ],
+          "result": "tuple\u003capi.RepoInfo,error\u003e"
+        },
+        {
+          "name": "GetRepo",
+          "kind": "method",
+          "file": "internal/shard/http_controller.go",
+          "parameters": [
+            "string"
+          ],
+          "result": "tuple\u003capi.RepoInfo,bool\u003e"
+        },
+        {
+          "name": "ListRepos",
+          "kind": "method",
+          "file": "internal/shard/http_controller.go",
+          "result": "[]api.RepoInfo"
+        },
+        {
+          "name": "RefreshRepo",
+          "kind": "method",
+          "file": "internal/shard/http_controller.go",
+          "parameters": [
+            "api.RepoRef",
+            "string"
+          ],
+          "result": "tuple\u003capi.RepoInfo,error\u003e"
+        },
+        {
+          "name": "RemoveRepo",
+          "kind": "method",
+          "file": "internal/shard/http_controller.go",
+          "parameters": [
+            "string"
+          ],
+          "result": "tuple\u003cbool,error\u003e"
+        },
+        {
+          "name": "Root",
+          "kind": "method",
+          "file": "internal/shard/http_controller.go",
+          "result": "string"
+        },
+        {
+          "name": "RuleResults",
+          "kind": "method",
+          "file": "internal/shard/http_controller.go",
+          "parameters": [
+            "string"
+          ],
+          "result": "tuple\u003cstring,[]api.RuleRepoResult\u003e"
+        },
+        {
+          "name": "RulesGeneration",
+          "kind": "method",
+          "file": "internal/shard/http_controller.go",
+          "result": "int64"
+        },
+        {
+          "name": "RulesSnapshot",
+          "kind": "method",
+          "file": "internal/shard/http_controller.go",
+          "result": "[]api.Rule"
+        },
+        {
+          "name": "Search",
+          "kind": "method",
+          "file": "internal/shard/http_controller.go",
+          "parameters": [
+            "api.SearchRequest",
+            "string"
+          ],
+          "result": "tuple\u003capi.SearchResponse,error\u003e"
+        },
+        {
+          "name": "ZoektRunning",
+          "kind": "method",
+          "file": "internal/shard/http_controller.go",
+          "result": "bool"
+        }
+      ]
+    },
+    {
+      "name": "shardArgs",
+      "kind": "struct",
+      "file": "internal/shard/cli_args.go",
+      "underlyingType": "struct{Host string`arg:\"--host\" placeholder:\"HOST\" help:\"bind host\"`;Port int`arg:\"--port\" placeholder:\"PORT\" help:\"bind port\"`;Root string`arg:\"--root\" placeholder:\"DIRECTORY\" help:\"repository workspace\"`;ZoektIndex string`arg:\"--zoekt-index\" placeholder:\"PATH\" help:\"Zoekt index directory\"`;ZoektPort int`arg:\"--zoekt-port\" placeholder:\"PORT\" help:\"embedded Zoekt server port\"`;ZoektBin string`arg:\"--zoekt-bin\" placeholder:\"PATH\" help:\"Zoekt executable directory\"`;}",
+      "members": [
+        {
+          "name": "Description",
+          "kind": "method",
+          "result": "string"
+        },
+        {
+          "name": "Host",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "arg:\"--host\" placeholder:\"HOST\" help:\"bind host\""
+          }
+        },
+        {
+          "name": "Port",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "arg:\"--port\" placeholder:\"PORT\" help:\"bind port\""
+          }
+        },
+        {
+          "name": "Root",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "arg:\"--root\" placeholder:\"DIRECTORY\" help:\"repository workspace\""
+          }
+        },
+        {
+          "name": "ZoektBin",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "arg:\"--zoekt-bin\" placeholder:\"PATH\" help:\"Zoekt executable directory\""
+          }
+        },
+        {
+          "name": "ZoektIndex",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "arg:\"--zoekt-index\" placeholder:\"PATH\" help:\"Zoekt index directory\""
+          }
+        },
+        {
+          "name": "ZoektPort",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "arg:\"--zoekt-port\" placeholder:\"PORT\" help:\"embedded Zoekt server port\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "shardController",
+      "kind": "struct",
+      "file": "internal/shard/shard_controller.go",
+      "underlyingType": "struct{state Service}",
+      "members": [
+        {
+          "name": "handleIndex",
+          "kind": "method",
+          "parameters": [
+            "fiber.Ctx"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "handleIndexGet",
+          "kind": "method",
+          "parameters": [
+            "fiber.Ctx"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "handleRaw",
+          "kind": "method",
+          "parameters": [
+            "fiber.Ctx"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "handleSearch",
+          "kind": "method",
+          "parameters": [
+            "fiber.Ctx"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "handleTree",
+          "kind": "method",
+          "parameters": [
+            "fiber.Ctx"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "indexCreate",
+          "kind": "method",
+          "parameters": [
+            "fiber.Ctx",
+            "api.RepoRef",
+            "string"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "indexRefresh",
+          "kind": "method",
+          "parameters": [
+            "fiber.Ctx",
+            "api.RepoRef",
+            "string"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "indexRemove",
+          "kind": "method",
+          "parameters": [
+            "fiber.Ctx",
+            "api.RepoRef"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "register",
+          "kind": "method",
+          "parameters": [
+            "*fiber.App"
+          ]
+        },
+        {
+          "name": "state",
+          "kind": "property",
+          "result": "Service"
+        }
+      ]
+    },
+    {
+      "name": "shardImpl",
+      "kind": "struct",
+      "file": "internal/shard/shard.go",
+      "fileLocal": true,
+      "underlyingType": "struct{options shardOptions;registry*repository.Registry;root string;zoektService zoektService;repositoryMux sync.RWMutex;logger*zap.Logger;rules ruleService;}",
+      "members": [
+        {
+          "name": "ApplyRules",
+          "kind": "method",
+          "parameters": [
+            "api.RuleSet"
+          ],
+          "result": "bool"
+        },
+        {
+          "name": "CreateRepo",
+          "kind": "method",
+          "parameters": [
+            "api.RepoRef",
+            "string"
+          ],
+          "result": "tuple\u003capi.RepoInfo,error\u003e"
+        },
+        {
+          "name": "GetRepo",
+          "kind": "method",
+          "parameters": [
+            "string"
+          ],
+          "result": "tuple\u003capi.RepoInfo,bool\u003e"
+        },
+        {
+          "name": "Handler",
+          "kind": "method",
+          "result": "*fiber.App"
+        },
+        {
+          "name": "ListRepos",
+          "kind": "method",
+          "result": "[]api.RepoInfo"
+        },
+        {
+          "name": "RefreshRepo",
+          "kind": "method",
+          "parameters": [
+            "api.RepoRef",
+            "string"
+          ],
+          "result": "tuple\u003capi.RepoInfo,error\u003e"
+        },
+        {
+          "name": "RemoveRepo",
+          "kind": "method",
+          "parameters": [
+            "string"
+          ],
+          "result": "tuple\u003cbool,error\u003e"
+        },
+        {
+          "name": "Root",
+          "kind": "method",
+          "result": "string"
+        },
+        {
+          "name": "RuleResults",
+          "kind": "method",
+          "parameters": [
+            "string"
+          ],
+          "result": "tuple\u003cstring,[]api.RuleRepoResult\u003e"
+        },
+        {
+          "name": "RulesGeneration",
+          "kind": "method",
+          "result": "int64"
+        },
+        {
+          "name": "RulesSnapshot",
+          "kind": "method",
+          "result": "[]api.Rule"
+        },
+        {
+          "name": "Run",
+          "kind": "method",
+          "result": "error"
+        },
+        {
+          "name": "Search",
+          "kind": "method",
+          "parameters": [
+            "api.SearchRequest",
+            "string"
+          ],
+          "result": "tuple\u003capi.SearchResponse,error\u003e"
+        },
+        {
+          "name": "ZoektRunning",
+          "kind": "method",
+          "result": "bool"
+        },
+        {
+          "name": "annotateResultRepo",
+          "kind": "method",
+          "parameters": [
+            "*api.FileResult"
+          ]
+        },
+        {
+          "name": "backgroundReindex",
+          "kind": "method",
+          "parameters": [
+            "context.Context"
+          ]
+        },
+        {
+          "name": "buildResultResponse",
+          "kind": "method",
+          "parameters": [
+            "search.Params",
+            "[]search.FileMatch",
+            "[]string",
+            "bool",
+            "int",
+            "[]string",
+            "time.Time",
+            "*searchTimings",
+            "string"
+          ],
+          "result": "api.SearchResponse"
+        },
+        {
+          "name": "countRepos",
+          "kind": "method",
+          "parameters": [
+            "search.Params"
+          ],
+          "result": "[]api.RepoInfo"
+        },
+        {
+          "name": "filterMatchingRepos",
+          "kind": "method",
+          "parameters": [
+            "search.Params",
+            "*searchTimings"
+          ],
+          "result": "[]string"
+        },
+        {
+          "name": "gatherCandidates",
+          "kind": "method",
+          "parameters": [
+            "search.Params",
+            "*searchTimings",
+            "string"
+          ],
+          "result": "tuple\u003c[]string,bool,int,[]string\u003e"
+        },
+        {
+          "name": "indexRepo",
+          "kind": "method",
+          "parameters": [
+            "api.RepoInfo"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "indexedHead",
+          "kind": "method",
+          "parameters": [
+            "string"
+          ],
+          "result": "tuple\u003cstring,bool\u003e"
+        },
+        {
+          "name": "lockRepositories",
+          "kind": "method",
+          "parameters": [
+            "*searchTimings"
+          ]
+        },
+        {
+          "name": "log",
+          "kind": "method",
+          "result": "*zap.Logger"
+        },
+        {
+          "name": "logSearch",
+          "kind": "method",
+          "parameters": [
+            "string",
+            "search.Params",
+            "searchTimings",
+            "int",
+            "int",
+            "bool",
+            "int",
+            "[]string"
+          ]
+        },
+        {
+          "name": "primeCoverage",
+          "kind": "method"
+        },
+        {
+          "name": "reconcileRepoIndex",
+          "kind": "method",
+          "parameters": [
+            "api.RepoInfo"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "runFilesRequest",
+          "kind": "method",
+          "parameters": [
+            "search.Params",
+            "[]string",
+            "time.Time",
+            "*searchTimings",
+            "string"
+          ],
+          "result": "tuple\u003capi.SearchResponse,error\u003e"
+        },
+        {
+          "name": "runSearchRequest",
+          "kind": "method",
+          "parameters": [
+            "api.SearchRequest",
+            "string"
+          ],
+          "result": "tuple\u003capi.SearchResponse,error\u003e"
+        },
+        {
+          "name": "tryZoektCount",
+          "kind": "method",
+          "parameters": [
+            "search.Params",
+            "time.Time",
+            "*searchTimings",
+            "string"
+          ],
+          "result": "tuple\u003capi.SearchResponse,bool\u003e"
+        },
+        {
+          "name": "unlockRepositories",
+          "kind": "method"
+        },
+        {
+          "name": "zoektSupplementalCandidates",
+          "kind": "method",
+          "result": "tuple\u003c[]string,[]string,[]string\u003e"
+        },
+        {
+          "name": "logger",
+          "kind": "property",
+          "result": "*zap.Logger"
+        },
+        {
+          "name": "options",
+          "kind": "property",
+          "result": "shardOptions"
+        },
+        {
+          "name": "registry",
+          "kind": "property",
+          "result": "*repository.Registry"
+        },
+        {
+          "name": "repositoryMux",
+          "kind": "property",
+          "result": "sync.RWMutex"
+        },
+        {
+          "name": "root",
+          "kind": "property",
+          "result": "string"
+        },
+        {
+          "name": "rules",
+          "kind": "property",
+          "result": "ruleService"
+        },
+        {
+          "name": "zoektService",
+          "kind": "property",
+          "result": "zoektService"
+        }
+      ]
+    },
+    {
+      "name": "shardOptions",
+      "kind": "struct",
+      "file": "internal/shard/cli_args.go",
+      "underlyingType": "struct{host string;port int;root string;zoekt zoektOptions;}",
+      "members": [
+        {
+          "name": "host",
+          "kind": "property",
+          "result": "string"
+        },
+        {
+          "name": "port",
+          "kind": "property",
+          "result": "int"
+        },
+        {
+          "name": "root",
+          "kind": "property",
+          "result": "string"
+        },
+        {
+          "name": "zoekt",
+          "kind": "property",
+          "result": "zoektOptions"
+        }
+      ]
+    },
+    {
+      "name": "trackedFileDisposition",
+      "kind": "type",
+      "file": "internal/shard/zoekt.go",
+      "underlyingType": "int"
+    },
+    {
+      "name": "zoektChunkedFile",
+      "kind": "struct",
+      "file": "internal/shard/zoekt.go",
+      "underlyingType": "struct{Repository string;FileName string;ChunkMatches[]struct{Ranges[]struct{Start struct{LineNumber int}};};}",
+      "members": [
+        {
+          "name": "ChunkMatches",
+          "kind": "property",
+          "result": "[]struct{Ranges[]struct{Start struct{LineNumber int}};}"
+        },
+        {
+          "name": "FileName",
+          "kind": "property",
+          "result": "string"
+        },
+        {
+          "name": "Repository",
+          "kind": "property",
+          "result": "string"
+        }
+      ]
+    },
+    {
+      "name": "zoektCoverage",
+      "kind": "struct",
+      "file": "internal/shard/zoekt.go",
+      "underlyingType": "struct{known bool;indexed bool;fallback[]string;}",
+      "members": [
+        {
+          "name": "fallback",
+          "kind": "property",
+          "result": "[]string"
+        },
+        {
+          "name": "indexed",
+          "kind": "property",
+          "result": "bool"
+        },
+        {
+          "name": "known",
+          "kind": "property",
+          "result": "bool"
+        }
+      ]
+    },
+    {
+      "name": "zoektOptions",
+      "kind": "struct",
+      "file": "internal/shard/zoekt.go",
+      "underlyingType": "struct{indexDir string;repoRoot string;port int;binDir string;}",
+      "members": [
+        {
+          "name": "binDir",
+          "kind": "property",
+          "result": "string"
+        },
+        {
+          "name": "indexDir",
+          "kind": "property",
+          "result": "string"
+        },
+        {
+          "name": "port",
+          "kind": "property",
+          "result": "int"
+        },
+        {
+          "name": "repoRoot",
+          "kind": "property",
+          "result": "string"
+        }
+      ]
+    },
+    {
+      "name": "zoektProcess",
+      "kind": "struct",
+      "file": "internal/shard/zoekt.go",
+      "underlyingType": "struct{cancel context.CancelFunc;done chan struct{};mu sync.Mutex;waitErr error;}",
+      "members": [
+        {
+          "name": "err",
+          "kind": "method",
+          "result": "error"
+        },
+        {
+          "name": "running",
+          "kind": "method",
+          "result": "bool"
+        },
+        {
+          "name": "stop",
+          "kind": "method"
+        },
+        {
+          "name": "cancel",
+          "kind": "property",
+          "result": "context.CancelFunc"
+        },
+        {
+          "name": "done",
+          "kind": "property",
+          "result": "chan struct{}"
+        },
+        {
+          "name": "mu",
+          "kind": "property",
+          "result": "sync.Mutex"
+        },
+        {
+          "name": "waitErr",
+          "kind": "property",
+          "result": "error"
+        }
+      ]
+    },
+    {
+      "name": "zoektService",
+      "kind": "interface",
+      "file": "internal/shard/zoekt_service.go",
+      "underlyingType": "interface{index(api.RepoInfo)error;remove(string)error;running()bool;upToDate(api.RepoInfo)bool;setCoverage(string,zoektCoverage);shardExists(string)bool;coverageFor(string)(zoektCoverage,bool);primeCoverage([]api.RepoInfo);start()error;stop();done()chan struct{};err()error;indexedHead(string)(string,bool);repoCounts(string,[]api.RepoInfo,[]string)([]api.RepoCount,bool,error);candidates(string,string,[]api.RepoInfo)([]string,bool,error);}",
+      "members": [
+        {
+          "name": "candidates",
+          "kind": "method",
+          "parameters": [
+            "string",
+            "string",
+            "[]api.RepoInfo"
+          ],
+          "result": "tuple\u003c[]string,bool,error\u003e"
+        },
+        {
+          "name": "coverageFor",
+          "kind": "method",
+          "parameters": [
+            "string"
+          ],
+          "result": "tuple\u003czoektCoverage,bool\u003e"
+        },
+        {
+          "name": "done",
+          "kind": "method",
+          "result": "chan struct{}"
+        },
+        {
+          "name": "err",
+          "kind": "method",
+          "result": "error"
+        },
+        {
+          "name": "index",
+          "kind": "method",
+          "parameters": [
+            "api.RepoInfo"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "indexedHead",
+          "kind": "method",
+          "parameters": [
+            "string"
+          ],
+          "result": "tuple\u003cstring,bool\u003e"
+        },
+        {
+          "name": "primeCoverage",
+          "kind": "method",
+          "parameters": [
+            "[]api.RepoInfo"
+          ]
+        },
+        {
+          "name": "remove",
+          "kind": "method",
+          "parameters": [
+            "string"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "repoCounts",
+          "kind": "method",
+          "parameters": [
+            "string",
+            "[]api.RepoInfo",
+            "[]string"
+          ],
+          "result": "tuple\u003c[]api.RepoCount,bool,error\u003e"
+        },
+        {
+          "name": "running",
+          "kind": "method",
+          "result": "bool"
+        },
+        {
+          "name": "setCoverage",
+          "kind": "method",
+          "parameters": [
+            "string",
+            "zoektCoverage"
+          ]
+        },
+        {
+          "name": "shardExists",
+          "kind": "method",
+          "parameters": [
+            "string"
+          ],
+          "result": "bool"
+        },
+        {
+          "name": "start",
+          "kind": "method",
+          "result": "error"
+        },
+        {
+          "name": "stop",
+          "kind": "method"
+        },
+        {
+          "name": "upToDate",
+          "kind": "method",
+          "parameters": [
+            "api.RepoInfo"
+          ],
+          "result": "bool"
+        }
+      ]
+    },
+    {
+      "name": "zoektServiceImpl",
+      "kind": "struct",
+      "file": "internal/shard/zoekt_service.go",
+      "fileLocal": true,
+      "underlyingType": "struct{options zoektOptions;process*zoektProcess;indexMux sync.Mutex;coverage map[string]zoektCoverage;directory*directory;}",
+      "members": [
+        {
+          "name": "candidates",
+          "kind": "method",
+          "parameters": [
+            "string",
+            "string",
+            "[]api.RepoInfo"
+          ],
+          "result": "tuple\u003c[]string,bool,error\u003e"
+        },
+        {
+          "name": "coverageFor",
+          "kind": "method",
+          "parameters": [
+            "string"
+          ],
+          "result": "tuple\u003czoektCoverage,bool\u003e"
+        },
+        {
+          "name": "done",
+          "kind": "method",
+          "result": "chan struct{}"
+        },
+        {
+          "name": "err",
+          "kind": "method",
+          "result": "error"
+        },
+        {
+          "name": "index",
+          "kind": "method",
+          "parameters": [
+            "api.RepoInfo"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "indexedHead",
+          "kind": "method",
+          "parameters": [
+            "string"
+          ],
+          "result": "tuple\u003cstring,bool\u003e"
+        },
+        {
+          "name": "primeCoverage",
+          "kind": "method",
+          "parameters": [
+            "[]api.RepoInfo"
+          ]
+        },
+        {
+          "name": "remove",
+          "kind": "method",
+          "parameters": [
+            "string"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "repoCounts",
+          "kind": "method",
+          "parameters": [
+            "string",
+            "[]api.RepoInfo",
+            "[]string"
+          ],
+          "result": "tuple\u003c[]api.RepoCount,bool,error\u003e"
+        },
+        {
+          "name": "running",
+          "kind": "method",
+          "result": "bool"
+        },
+        {
+          "name": "setCoverage",
+          "kind": "method",
+          "parameters": [
+            "string",
+            "zoektCoverage"
+          ]
+        },
+        {
+          "name": "shardExists",
+          "kind": "method",
+          "parameters": [
+            "string"
+          ],
+          "result": "bool"
+        },
+        {
+          "name": "start",
+          "kind": "method",
+          "result": "error"
+        },
+        {
+          "name": "stop",
+          "kind": "method"
+        },
+        {
+          "name": "upToDate",
+          "kind": "method",
+          "parameters": [
+            "api.RepoInfo"
+          ],
+          "result": "bool"
+        },
+        {
+          "name": "coverage",
+          "kind": "property",
+          "result": "map[string]zoektCoverage"
+        },
+        {
+          "name": "directory",
+          "kind": "property",
+          "result": "*directory"
+        },
+        {
+          "name": "indexMux",
+          "kind": "property",
+          "result": "sync.Mutex"
+        },
+        {
+          "name": "options",
+          "kind": "property",
+          "result": "zoektOptions"
+        },
+        {
+          "name": "process",
+          "kind": "property",
+          "result": "*zoektProcess"
+        }
+      ]
+    }
+  ],
+  "exportedFunctions": [
+    {
+      "name": "Register",
+      "kind": "function",
+      "file": "internal/shard/http_controller.go",
+      "parameters": [
+        "*fiber.App",
+        "HealthService",
+        "Service",
+        "RuleService"
+      ]
+    },
+    {
+      "name": "Run",
+      "kind": "function",
+      "file": "internal/shard/shard.go",
+      "parameters": [
+        "[]string"
+      ],
+      "result": "error"
+    }
+  ],
+  "fiberRoutes": [
+    {
+      "method": "ALL",
+      "path": "/index",
+      "handler": "shardController.handleIndex",
+      "file": "internal/shard/shard_controller.go"
+    },
+    {
+      "method": "GET",
+      "path": "/",
+      "handler": "healthController.ready",
+      "file": "internal/shard/health_controller.go"
+    },
+    {
+      "method": "GET",
+      "path": "/health",
+      "handler": "healthController.health",
+      "file": "internal/shard/health_controller.go"
+    },
+    {
+      "method": "GET",
+      "path": "/raw",
+      "handler": "shardController.handleRaw",
+      "file": "internal/shard/shard_controller.go"
+    },
+    {
+      "method": "GET",
+      "path": "/ready",
+      "handler": "healthController.ready",
+      "file": "internal/shard/health_controller.go"
+    },
+    {
+      "method": "GET",
+      "path": "/rules",
+      "handler": "ruleController.handleRulesList",
+      "file": "internal/shard/rule_controller.go"
+    },
+    {
+      "method": "GET",
+      "path": "/rules/:id/results",
+      "handler": "ruleController.handleRuleResults",
+      "file": "internal/shard/rule_controller.go"
+    },
+    {
+      "method": "GET",
+      "path": "/tree",
+      "handler": "shardController.handleTree",
+      "file": "internal/shard/shard_controller.go"
+    },
+    {
+      "method": "POST",
+      "path": "/search",
+      "handler": "shardController.handleSearch",
+      "file": "internal/shard/shard_controller.go"
+    },
+    {
+      "method": "PUT",
+      "path": "/rules",
+      "handler": "ruleController.handleRulesPut",
+      "file": "internal/shard/rule_controller.go"
+    }
+  ],
+  "relations": [
+    {
+      "from": "Register",
+      "to": "HealthService",
+      "kind": "dependency",
+      "via": "parameter 2",
+      "cardinality": "one"
+    },
+    {
+      "from": "Register",
+      "to": "RuleService",
+      "kind": "dependency",
+      "via": "parameter 4",
+      "cardinality": "one"
+    },
+    {
+      "from": "Register",
+      "to": "Service",
+      "kind": "dependency",
+      "via": "parameter 3",
+      "cardinality": "one"
+    },
+    {
+      "from": "directoryFile",
+      "to": "directoryRepo",
+      "kind": "association",
+      "via": "field Repos",
+      "cardinality": "many"
+    },
+    {
+      "from": "healthController",
+      "to": "HealthService",
+      "kind": "association",
+      "via": "field service",
+      "cardinality": "one"
+    },
+    {
+      "from": "ruleController",
+      "to": "RuleService",
+      "kind": "association",
+      "via": "field rules",
+      "cardinality": "one"
+    },
+    {
+      "from": "ruleServiceImpl",
+      "to": "evalJob",
+      "kind": "association",
+      "via": "field evalCh",
+      "cardinality": "many"
+    },
+    {
+      "from": "ruleServiceImpl",
+      "to": "evalJob",
+      "kind": "dependency",
+      "via": "method enqueue parameter 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "ruleServiceImpl",
+      "to": "ruleService",
+      "kind": "implementation",
+      "via": "implements",
+      "cardinality": "one"
+    },
+    {
+      "from": "ruleServiceImpl",
+      "to": "shard",
+      "kind": "association",
+      "via": "field s",
+      "cardinality": "one"
+    },
+    {
+      "from": "shard",
+      "to": "HealthService",
+      "kind": "inheritance",
+      "via": "embedded type",
+      "cardinality": "one"
+    },
+    {
+      "from": "shard",
+      "to": "RuleService",
+      "kind": "inheritance",
+      "via": "embedded type",
+      "cardinality": "one"
+    },
+    {
+      "from": "shard",
+      "to": "Service",
+      "kind": "inheritance",
+      "via": "embedded type",
+      "cardinality": "one"
+    },
+    {
+      "from": "shardController",
+      "to": "Service",
+      "kind": "association",
+      "via": "field state",
+      "cardinality": "one"
+    },
+    {
+      "from": "shardImpl",
+      "to": "HealthService",
+      "kind": "implementation",
+      "via": "implements",
+      "cardinality": "one"
+    },
+    {
+      "from": "shardImpl",
+      "to": "RuleService",
+      "kind": "implementation",
+      "via": "implements",
+      "cardinality": "one"
+    },
+    {
+      "from": "shardImpl",
+      "to": "Service",
+      "kind": "implementation",
+      "via": "implements",
+      "cardinality": "one"
+    },
+    {
+      "from": "shardImpl",
+      "to": "ruleService",
+      "kind": "association",
+      "via": "field rules",
+      "cardinality": "one"
+    },
+    {
+      "from": "shardImpl",
+      "to": "searchTimings",
+      "kind": "dependency",
+      "via": "method buildResultResponse parameter 8",
+      "cardinality": "one"
+    },
+    {
+      "from": "shardImpl",
+      "to": "searchTimings",
+      "kind": "dependency",
+      "via": "method filterMatchingRepos parameter 2",
+      "cardinality": "one"
+    },
+    {
+      "from": "shardImpl",
+      "to": "searchTimings",
+      "kind": "dependency",
+      "via": "method gatherCandidates parameter 2",
+      "cardinality": "one"
+    },
+    {
+      "from": "shardImpl",
+      "to": "searchTimings",
+      "kind": "dependency",
+      "via": "method lockRepositories parameter 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "shardImpl",
+      "to": "searchTimings",
+      "kind": "dependency",
+      "via": "method logSearch parameter 3",
+      "cardinality": "one"
+    },
+    {
+      "from": "shardImpl",
+      "to": "searchTimings",
+      "kind": "dependency",
+      "via": "method runFilesRequest parameter 4",
+      "cardinality": "one"
+    },
+    {
+      "from": "shardImpl",
+      "to": "searchTimings",
+      "kind": "dependency",
+      "via": "method tryZoektCount parameter 3",
+      "cardinality": "one"
+    },
+    {
+      "from": "shardImpl",
+      "to": "shard",
+      "kind": "implementation",
+      "via": "implements",
+      "cardinality": "one"
+    },
+    {
+      "from": "shardImpl",
+      "to": "shardOptions",
+      "kind": "association",
+      "via": "field options",
+      "cardinality": "one"
+    },
+    {
+      "from": "shardImpl",
+      "to": "zoektService",
+      "kind": "association",
+      "via": "field zoektService",
+      "cardinality": "one"
+    },
+    {
+      "from": "shardOptions",
+      "to": "zoektOptions",
+      "kind": "association",
+      "via": "field zoekt",
+      "cardinality": "one"
+    },
+    {
+      "from": "zoektService",
+      "to": "zoektCoverage",
+      "kind": "dependency",
+      "via": "method coverageFor result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "zoektService",
+      "to": "zoektCoverage",
+      "kind": "dependency",
+      "via": "method setCoverage parameter 2",
+      "cardinality": "one"
+    },
+    {
+      "from": "zoektServiceImpl",
+      "to": "directory",
+      "kind": "association",
+      "via": "field directory",
+      "cardinality": "one"
+    },
+    {
+      "from": "zoektServiceImpl",
+      "to": "zoektCoverage",
+      "kind": "association",
+      "via": "field coverage",
+      "cardinality": "many"
+    },
+    {
+      "from": "zoektServiceImpl",
+      "to": "zoektCoverage",
+      "kind": "dependency",
+      "via": "method coverageFor result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "zoektServiceImpl",
+      "to": "zoektCoverage",
+      "kind": "dependency",
+      "via": "method setCoverage parameter 2",
+      "cardinality": "one"
+    },
+    {
+      "from": "zoektServiceImpl",
+      "to": "zoektOptions",
+      "kind": "association",
+      "via": "field options",
+      "cardinality": "one"
+    },
+    {
+      "from": "zoektServiceImpl",
+      "to": "zoektProcess",
+      "kind": "association",
+      "via": "field process",
+      "cardinality": "one"
+    },
+    {
+      "from": "zoektServiceImpl",
+      "to": "zoektService",
+      "kind": "implementation",
+      "via": "implements",
+      "cardinality": "one"
+    }
+  ]
+}

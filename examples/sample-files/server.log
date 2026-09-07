@@ -1,0 +1,6 @@
+2026-08-31T09:15:01Z INFO  server starting addr=0.0.0.0:8080
+2026-08-31T09:15:01Z INFO  loaded 12 routes
+2026-08-31T09:15:42Z WARN  slow request path=/search duration=812ms
+2026-08-31T09:16:03Z ERROR upstream timeout path=/index status=504
+2026-08-31T09:16:03Z INFO  retrying request path=/index attempt=2
+2026-08-31T09:16:04Z INFO  request ok path=/index status=200

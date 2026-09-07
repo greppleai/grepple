@@ -1,0 +1,86 @@
+flowchart LR
+    classDef entrypoint fill:#fff4cc,stroke:#8a6d00,stroke-width:3px
+    subgraph module_0["grepple"]
+        package_0(["grepple/cmd/grepple&lt;br/&gt;files=1 declarations=0 exportedFunctions=0 routes=0"])
+        class package_0 entrypoint
+        package_1(["grepple/cmd/router&lt;br/&gt;files=1 declarations=0 exportedFunctions=0 routes=0"])
+        class package_1 entrypoint
+        package_2(["grepple/cmd/shard&lt;br/&gt;files=1 declarations=0 exportedFunctions=0 routes=0"])
+        class package_2 entrypoint
+        package_3["grepple/examples/sample-files&lt;br/&gt;files=1 declarations=2 exportedFunctions=1 routes=0"]
+        package_4["grepple/internal/api&lt;br/&gt;files=1 declarations=18 exportedFunctions=0 routes=0"]
+        package_5["grepple/internal/command&lt;br/&gt;files=1 declarations=0 exportedFunctions=1 routes=0"]
+        package_6["grepple/internal/grepplecli&lt;br/&gt;files=17 declarations=12 exportedFunctions=11 routes=0"]
+        package_7["grepple/internal/parser&lt;br/&gt;files=7 declarations=10 exportedFunctions=4 routes=0"]
+        package_8["grepple/internal/repository&lt;br/&gt;files=5 declarations=1 exportedFunctions=4 routes=0"]
+        package_9["grepple/internal/router&lt;br/&gt;files=18 declarations=23 exportedFunctions=1 routes=20"]
+        package_10["grepple/internal/search&lt;br/&gt;files=9 declarations=8 exportedFunctions=20 routes=0"]
+        package_11["grepple/internal/shard&lt;br/&gt;files=12 declarations=27 exportedFunctions=2 routes=10"]
+        package_12["grepple/testdata/go&lt;br/&gt;files=1 declarations=2 exportedFunctions=1 routes=0"]
+    end
+    subgraph module_1["grepple/hooks"]
+        package_13(["grepple/hooks/cmd/mermaid-code&lt;br/&gt;files=1 declarations=1 exportedFunctions=0 routes=0"])
+        class package_13 entrypoint
+        package_14(["grepple/hooks/cmd/pi-hook&lt;br/&gt;files=1 declarations=0 exportedFunctions=0 routes=0"])
+        class package_14 entrypoint
+        package_15["grepple/hooks/internal/mermaidcode&lt;br/&gt;files=18 declarations=55 exportedFunctions=24 routes=0"]
+        package_16["grepple/hooks/internal/pihooks&lt;br/&gt;files=5 declarations=12 exportedFunctions=12 routes=0"]
+    end
+    package_0 --> package_5
+    package_0 --> package_6
+    package_1 --> package_5
+    package_1 --> package_9
+    package_2 --> package_5
+    package_2 --> package_11
+    package_6 --> package_4
+    package_6 --> package_7
+    package_6 --> package_10
+    package_8 --> package_4
+    package_9 --> package_4
+    package_9 --> package_8
+    package_9 --> package_10
+    package_10 --> package_4
+    package_10 --> package_7
+    package_11 --> package_4
+    package_11 --> package_8
+    package_11 --> package_10
+    package_13 --> package_15
+    package_14 --> package_16
+    package_16 --> package_15
+    subgraph external_dependencies["external modules"]
+        external_0["github.com/alexflint/go-arg"]
+        external_1["github.com/gofiber/fiber/v3"]
+        external_2["github.com/tree-sitter-grammars/tree-sitter-kotlin"]
+        external_3["github.com/tree-sitter/go-tree-sitter"]
+        external_4["github.com/tree-sitter/tree-sitter-bash"]
+        external_5["github.com/tree-sitter/tree-sitter-go"]
+        external_6["github.com/tree-sitter/tree-sitter-java"]
+        external_7["github.com/tree-sitter/tree-sitter-javascript"]
+        external_8["github.com/tree-sitter/tree-sitter-typescript"]
+        external_9["go.uber.org/zap"]
+        external_10["go.yaml.in/yaml/v3"]
+    end
+    package_6 -.-> external_0
+    package_9 -.-> external_0
+    package_11 -.-> external_0
+    package_9 -.-> external_1
+    package_11 -.-> external_1
+    package_7 -.-> external_2
+    package_15 -.-> external_3
+    package_16 -.-> external_3
+    package_7 -.-> external_3
+    package_16 -.-> external_4
+    package_15 -.-> external_5
+    package_16 -.-> external_5
+    package_7 -.-> external_5
+    package_7 -.-> external_6
+    package_7 -.-> external_7
+    package_15 -.-> external_8
+    package_7 -.-> external_8
+    package_9 -.-> external_9
+    package_11 -.-> external_9
+    package_7 -.-> external_10
+    routes_0["ALL /index -&gt; routerState.handleIndex&lt;br/&gt;DELETE /public/rules/:id -&gt; routerState.handleRuleDelete&lt;br/&gt;GET / -&gt; routerState.handleOverview&lt;br/&gt;GET /auth/config -&gt; routerState.handleAuthConfig&lt;br/&gt;GET /backends -&gt; routerState.handleBackends&lt;br/&gt;+15 more"]
+    package_9 --- routes_0
+    routes_1["ALL /index -&gt; shardController.handleIndex&lt;br/&gt;GET / -&gt; healthController.ready&lt;br/&gt;GET /health -&gt; healthController.health&lt;br/&gt;GET /raw -&gt; shardController.handleRaw&lt;br/&gt;GET /ready -&gt; healthController.ready&lt;br/&gt;+5 more"]
+    package_11 --- routes_1

@@ -1,0 +1,394 @@
+classDiagram
+    %% grepple:complete-package grepple/internal/shard
+    %% grepple:package-default grepple/internal/shard
+    %% grepple:language-default go
+    %% grepple:exact-default
+    class HealthService {
+        +Root(): string
+        +ZoektRunning(): bool
+    }
+    <<interface>> HealthService
+    %% grepple:file HealthService internal/shard/http_controller.go
+    class RuleService {
+        +ApplyRules(api.RuleSet): bool
+        +RuleResults(string): tuple~string&#44;[]api.RuleRepoResult~
+        +RulesGeneration(): int64
+        +RulesSnapshot(): []api.Rule
+    }
+    <<interface>> RuleService
+    %% grepple:file RuleService internal/shard/http_controller.go
+    class Service {
+        +CreateRepo(api.RepoRef, string): tuple~api.RepoInfo&#44;error~
+        +GetRepo(string): tuple~api.RepoInfo&#44;bool~
+        +ListRepos(): []api.RepoInfo
+        +RefreshRepo(api.RepoRef, string): tuple~api.RepoInfo&#44;error~
+        +RemoveRepo(string): tuple~bool&#44;error~
+        +Search(api.SearchRequest, string): tuple~api.SearchResponse&#44;error~
+    }
+    <<interface>> Service
+    %% grepple:file Service internal/shard/http_controller.go
+    class StatusError {
+        +Error(): string
+        +Err: error
+        +Status: int
+    }
+    <<struct>> StatusError
+    %% grepple:file StatusError internal/shard/http_controller.go
+    class directory {
+        -head(string): tuple~string&#44;bool~
+        -remove(string): error
+        -save(): error
+        -set(string, string): error
+        -entries: map[string]string
+        -mu: sync.Mutex
+        -path: string
+    }
+    <<struct>> directory
+    %% grepple:file directory internal/shard/directory.go
+    class directoryFile {
+        +Repos: []directoryRepo
+    }
+    <<struct>> directoryFile
+    %% grepple:file directoryFile internal/shard/directory.go
+    %% grepple:struct-tag directoryFile Repos "json:\"repos\""
+    class directoryRepo {
+        +Head: string
+        +Repo: string
+    }
+    <<struct>> directoryRepo
+    %% grepple:file directoryRepo internal/shard/directory.go
+    %% grepple:struct-tag directoryRepo Head "json:\"head\""
+    %% grepple:struct-tag directoryRepo Repo "json:\"repo\""
+    class evalJob {
+        -repo: string
+        -ruleID: string
+    }
+    <<struct>> evalJob
+    %% grepple:file evalJob internal/shard/rules.go
+    class fallbackScan {
+        -add(rune, int): bool
+        -count: int
+        -invalidUTF8: bool
+        -previous: [2]rune
+        -seen: map[[3]rune]struct&#123;&#125;
+        -tooManyTrigrams: bool
+    }
+    <<struct>> fallbackScan
+    %% grepple:file fallbackScan internal/shard/zoekt.go
+    class healthController {
+        -health(fiber.Ctx): error
+        -ready(fiber.Ctx): error
+        -register(*fiber.App)
+        -service: HealthService
+    }
+    <<struct>> healthController
+    %% grepple:file healthController internal/shard/health_controller.go
+    %% grepple:route GET / healthController.ready
+    %% grepple:route GET /health healthController.health
+    %% grepple:route GET /ready healthController.ready
+    class ruleController {
+        -handleRuleResults(fiber.Ctx): error
+        -handleRulesList(fiber.Ctx): error
+        -handleRulesPut(fiber.Ctx): error
+        -register(*fiber.App)
+        -rules: RuleService
+    }
+    <<struct>> ruleController
+    %% grepple:file ruleController internal/shard/rule_controller.go
+    %% grepple:route GET /rules ruleController.handleRulesList
+    %% grepple:route GET /rules/:id/results ruleController.handleRuleResults
+    %% grepple:route PUT /rules ruleController.handleRulesPut
+    class ruleService {
+        -apply(api.RuleSet): bool
+        -currentGeneration(): int64
+        -enqueueRepo(string)
+        -forgetRepo(string)
+        -resultsFor(string): tuple~string&#44;[]api.RuleRepoResult~
+        -run(context.Context)
+        -snapshotRules(): []api.Rule
+    }
+    <<interface>> ruleService
+    %% grepple:file ruleService internal/shard/rules.go
+    class ruleServiceImpl {
+        -apply(api.RuleSet): bool
+        -backfillRule(string)
+        -currentGeneration(): int64
+        -enqueue(evalJob)
+        -enqueueRepo(string)
+        -evaluate(api.Rule, api.SearchRequest): map[string]api.RuleRepoResult
+        -evaluateRepo(string)
+        -forgetRepo(string)
+        -load()
+        -resultsFor(string): tuple~string&#44;[]api.RuleRepoResult~
+        -run(context.Context)
+        -save()
+        -setResult(string, string, api.RuleRepoResult, bool)
+        -snapshotRules(): []api.Rule
+        -evalCh: chan evalJob
+        -generation: int64
+        -log: *zap.Logger
+        -mu: sync.RWMutex
+        -path: string
+        -results: map[string]map[string]api.RuleRepoResult
+        -rules: map[string]api.Rule
+        -s: shard
+    }
+    <<struct>> ruleServiceImpl
+    %% grepple:file ruleServiceImpl internal/shard/rules.go
+    %% grepple:filelocal ruleServiceImpl
+    class ruleStateFile {
+        +Generation: int64
+        +Results: map[string]map[string]api.RuleRepoResult
+        +Rules: []api.Rule
+    }
+    <<struct>> ruleStateFile
+    %% grepple:file ruleStateFile internal/shard/rules.go
+    %% grepple:struct-tag ruleStateFile Generation "json:\"generation\""
+    %% grepple:struct-tag ruleStateFile Results "json:\"results\""
+    %% grepple:struct-tag ruleStateFile Rules "json:\"rules\""
+    class searchTimings {
+        -filter: int64
+        -lock: int64
+        -search: int64
+        -segments: int64
+        -supplement: int64
+        -total: int64
+        -zoekt: int64
+    }
+    <<struct>> searchTimings
+    %% grepple:file searchTimings internal/shard/shard.go
+    class shard {
+        +Handler(): *fiber.App
+        +Run(): error
+        -indexedHead(string): tuple~string&#44;bool~
+        +ApplyRules(api.RuleSet): bool
+        +CreateRepo(api.RepoRef, string): tuple~api.RepoInfo&#44;error~
+        +GetRepo(string): tuple~api.RepoInfo&#44;bool~
+        +ListRepos(): []api.RepoInfo
+        +RefreshRepo(api.RepoRef, string): tuple~api.RepoInfo&#44;error~
+        +RemoveRepo(string): tuple~bool&#44;error~
+        +Root(): string
+        +RuleResults(string): tuple~string&#44;[]api.RuleRepoResult~
+        +RulesGeneration(): int64
+        +RulesSnapshot(): []api.Rule
+        +Search(api.SearchRequest, string): tuple~api.SearchResponse&#44;error~
+        +ZoektRunning(): bool
+    }
+    <<interface>> shard
+    %% grepple:file shard internal/shard/shard.go
+    class shardArgs {
+        +Description(): string
+        +Host: string
+        +Port: int
+        +Root: string
+        +ZoektBin: string
+        +ZoektIndex: string
+        +ZoektPort: int
+    }
+    <<struct>> shardArgs
+    %% grepple:file shardArgs internal/shard/cli_args.go
+    %% grepple:struct-tag shardArgs Host "arg:\"--host\" placeholder:\"HOST\" help:\"bind host\""
+    %% grepple:struct-tag shardArgs Port "arg:\"--port\" placeholder:\"PORT\" help:\"bind port\""
+    %% grepple:struct-tag shardArgs Root "arg:\"--root\" placeholder:\"DIRECTORY\" help:\"repository workspace\""
+    %% grepple:struct-tag shardArgs ZoektBin "arg:\"--zoekt-bin\" placeholder:\"PATH\" help:\"Zoekt executable directory\""
+    %% grepple:struct-tag shardArgs ZoektIndex "arg:\"--zoekt-index\" placeholder:\"PATH\" help:\"Zoekt index directory\""
+    %% grepple:struct-tag shardArgs ZoektPort "arg:\"--zoekt-port\" placeholder:\"PORT\" help:\"embedded Zoekt server port\""
+    class shardController {
+        -handleIndex(fiber.Ctx): error
+        -handleIndexGet(fiber.Ctx): error
+        -handleRaw(fiber.Ctx): error
+        -handleSearch(fiber.Ctx): error
+        -handleTree(fiber.Ctx): error
+        -indexCreate(fiber.Ctx, api.RepoRef, string): error
+        -indexRefresh(fiber.Ctx, api.RepoRef, string): error
+        -indexRemove(fiber.Ctx, api.RepoRef): error
+        -register(*fiber.App)
+        -state: Service
+    }
+    <<struct>> shardController
+    %% grepple:file shardController internal/shard/shard_controller.go
+    %% grepple:route ALL /index shardController.handleIndex
+    %% grepple:route GET /raw shardController.handleRaw
+    %% grepple:route GET /tree shardController.handleTree
+    %% grepple:route POST /search shardController.handleSearch
+    class shardImpl {
+        +ApplyRules(api.RuleSet): bool
+        +CreateRepo(api.RepoRef, string): tuple~api.RepoInfo&#44;error~
+        +GetRepo(string): tuple~api.RepoInfo&#44;bool~
+        +Handler(): *fiber.App
+        +ListRepos(): []api.RepoInfo
+        +RefreshRepo(api.RepoRef, string): tuple~api.RepoInfo&#44;error~
+        +RemoveRepo(string): tuple~bool&#44;error~
+        +Root(): string
+        +RuleResults(string): tuple~string&#44;[]api.RuleRepoResult~
+        +RulesGeneration(): int64
+        +RulesSnapshot(): []api.Rule
+        +Run(): error
+        +Search(api.SearchRequest, string): tuple~api.SearchResponse&#44;error~
+        +ZoektRunning(): bool
+        -annotateResultRepo(*api.FileResult)
+        -backgroundReindex(context.Context)
+        -buildResultResponse(search.Params, []search.FileMatch, []string, bool, int, []string, time.Time, *searchTimings, string): api.SearchResponse
+        -countRepos(search.Params): []api.RepoInfo
+        -filterMatchingRepos(search.Params, *searchTimings): []string
+        -gatherCandidates(search.Params, *searchTimings, string): tuple~[]string&#44;bool&#44;int&#44;[]string~
+        -indexRepo(api.RepoInfo): error
+        -indexedHead(string): tuple~string&#44;bool~
+        -lockRepositories(*searchTimings)
+        -log(): *zap.Logger
+        -logSearch(string, search.Params, searchTimings, int, int, bool, int, []string)
+        -primeCoverage()
+        -reconcileRepoIndex(api.RepoInfo): error
+        -runFilesRequest(search.Params, []string, time.Time, *searchTimings, string): tuple~api.SearchResponse&#44;error~
+        -runSearchRequest(api.SearchRequest, string): tuple~api.SearchResponse&#44;error~
+        -tryZoektCount(search.Params, time.Time, *searchTimings, string): tuple~api.SearchResponse&#44;bool~
+        -unlockRepositories()
+        -zoektSupplementalCandidates(): tuple~[]string&#44;[]string&#44;[]string~
+        -logger: *zap.Logger
+        -options: shardOptions
+        -registry: *repository.Registry
+        -repositoryMux: sync.RWMutex
+        -root: string
+        -rules: ruleService
+        -zoektService: zoektService
+    }
+    <<struct>> shardImpl
+    %% grepple:file shardImpl internal/shard/shard.go
+    %% grepple:filelocal shardImpl
+    class shardOptions {
+        -host: string
+        -port: int
+        -root: string
+        -zoekt: zoektOptions
+    }
+    <<struct>> shardOptions
+    %% grepple:file shardOptions internal/shard/cli_args.go
+    class trackedFileDisposition["trackedFileDisposition = int"]
+    <<type>> trackedFileDisposition
+    %% grepple:underlying trackedFileDisposition int
+    %% grepple:file trackedFileDisposition internal/shard/zoekt.go
+    class zoektChunkedFile {
+        +ChunkMatches: []struct&#123;Ranges[]struct&#123;Start struct&#123;LineNumber int&#125;&#125;&#59;&#125;
+        +FileName: string
+        +Repository: string
+    }
+    <<struct>> zoektChunkedFile
+    %% grepple:file zoektChunkedFile internal/shard/zoekt.go
+    class zoektCoverage {
+        -fallback: []string
+        -indexed: bool
+        -known: bool
+    }
+    <<struct>> zoektCoverage
+    %% grepple:file zoektCoverage internal/shard/zoekt.go
+    class zoektOptions {
+        -binDir: string
+        -indexDir: string
+        -port: int
+        -repoRoot: string
+    }
+    <<struct>> zoektOptions
+    %% grepple:file zoektOptions internal/shard/zoekt.go
+    class zoektProcess {
+        -err(): error
+        -running(): bool
+        -stop()
+        -cancel: context.CancelFunc
+        -done: chan struct&#123;&#125;
+        -mu: sync.Mutex
+        -waitErr: error
+    }
+    <<struct>> zoektProcess
+    %% grepple:file zoektProcess internal/shard/zoekt.go
+    class zoektService {
+        -candidates(string, string, []api.RepoInfo): tuple~[]string&#44;bool&#44;error~
+        -coverageFor(string): tuple~zoektCoverage&#44;bool~
+        -done(): chan struct&#123;&#125;
+        -err(): error
+        -index(api.RepoInfo): error
+        -indexedHead(string): tuple~string&#44;bool~
+        -primeCoverage([]api.RepoInfo)
+        -remove(string): error
+        -repoCounts(string, []api.RepoInfo, []string): tuple~[]api.RepoCount&#44;bool&#44;error~
+        -running(): bool
+        -setCoverage(string, zoektCoverage)
+        -shardExists(string): bool
+        -start(): error
+        -stop()
+        -upToDate(api.RepoInfo): bool
+    }
+    <<interface>> zoektService
+    %% grepple:file zoektService internal/shard/zoekt_service.go
+    class zoektServiceImpl {
+        -candidates(string, string, []api.RepoInfo): tuple~[]string&#44;bool&#44;error~
+        -coverageFor(string): tuple~zoektCoverage&#44;bool~
+        -done(): chan struct&#123;&#125;
+        -err(): error
+        -index(api.RepoInfo): error
+        -indexedHead(string): tuple~string&#44;bool~
+        -primeCoverage([]api.RepoInfo)
+        -remove(string): error
+        -repoCounts(string, []api.RepoInfo, []string): tuple~[]api.RepoCount&#44;bool&#44;error~
+        -running(): bool
+        -setCoverage(string, zoektCoverage)
+        -shardExists(string): bool
+        -start(): error
+        -stop()
+        -upToDate(api.RepoInfo): bool
+        -coverage: map[string]zoektCoverage
+        -directory: *directory
+        -indexMux: sync.Mutex
+        -options: zoektOptions
+        -process: *zoektProcess
+    }
+    <<struct>> zoektServiceImpl
+    %% grepple:file zoektServiceImpl internal/shard/zoekt_service.go
+    %% grepple:filelocal zoektServiceImpl
+    class Register {
+        +Register(*fiber.App, HealthService, Service, RuleService)
+    }
+    <<function>> Register
+    %% grepple:file Register internal/shard/http_controller.go
+    class Run {
+        +Run([]string): error
+    }
+    <<function>> Run
+    %% grepple:file Run internal/shard/shard.go
+    Register "1" ..> "1" HealthService : parameter 2
+    Register "1" ..> "1" RuleService : parameter 4
+    Register "1" ..> "1" Service : parameter 3
+    directoryFile "1" --> "*" directoryRepo : field Repos
+    healthController "1" --> "1" HealthService : field service
+    ruleController "1" --> "1" RuleService : field rules
+    ruleServiceImpl "1" --> "*" evalJob : field evalCh
+    ruleServiceImpl "1" ..> "1" evalJob : method enqueue parameter 1
+    ruleService <|.. ruleServiceImpl : implements
+    ruleServiceImpl "1" --> "1" shard : field s
+    HealthService <|-- shard : embedded type
+    RuleService <|-- shard : embedded type
+    Service <|-- shard : embedded type
+    shardController "1" --> "1" Service : field state
+    HealthService <|.. shardImpl : implements
+    RuleService <|.. shardImpl : implements
+    Service <|.. shardImpl : implements
+    shardImpl "1" --> "1" ruleService : field rules
+    shardImpl "1" ..> "1" searchTimings : method buildResultResponse parameter 8
+    shardImpl "1" ..> "1" searchTimings : method filterMatchingRepos parameter 2
+    shardImpl "1" ..> "1" searchTimings : method gatherCandidates parameter 2
+    shardImpl "1" ..> "1" searchTimings : method lockRepositories parameter 1
+    shardImpl "1" ..> "1" searchTimings : method logSearch parameter 3
+    shardImpl "1" ..> "1" searchTimings : method runFilesRequest parameter 4
+    shardImpl "1" ..> "1" searchTimings : method tryZoektCount parameter 3
+    shard <|.. shardImpl : implements
+    shardImpl "1" --> "1" shardOptions : field options
+    shardImpl "1" --> "1" zoektService : field zoektService
+    shardOptions "1" --> "1" zoektOptions : field zoekt
+    zoektService "1" ..> "1" zoektCoverage : method coverageFor result 1
+    zoektService "1" ..> "1" zoektCoverage : method setCoverage parameter 2
+    zoektServiceImpl "1" --> "1" directory : field directory
+    zoektServiceImpl "1" --> "*" zoektCoverage : field coverage
+    zoektServiceImpl "1" ..> "1" zoektCoverage : method coverageFor result 1
+    zoektServiceImpl "1" ..> "1" zoektCoverage : method setCoverage parameter 2
+    zoektServiceImpl "1" --> "1" zoektOptions : field options
+    zoektServiceImpl "1" --> "1" zoektProcess : field process
+    zoektService <|.. zoektServiceImpl : implements
