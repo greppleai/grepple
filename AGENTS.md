@@ -2,15 +2,14 @@
 
 ## Project
 
-Grepple is a Go code-search system. The main packages are under `internal/`:
+Grepple is the public Go code-search engine and CLI. Shared packages are importable by the private sibling backend:
 
 - `api`: dependency-free HTTP DTOs
 - `parser`: language detection, tree-sitter parsing, segments, and outlines
 - `search`: discovery, matching, filtering, paging, and result construction
-- `grepplecli`: CLI workflows and output rendering
-- `router`, `shard`, `repository`: distributed search and repository management
+- `internal/cli`: CLI workflows and output rendering
 
-Keep dependencies directed toward `api` and `parser`; do not make server packages depend on `grepplecli`.
+Keep dependencies directed toward `api` and `parser`. Distributed router, shard, and repository-management code lives in `../grepple-backend`; this public module must not depend on it.
 
 ## Architecture artifacts
 
@@ -20,7 +19,6 @@ Canonical generated architecture documentation is under `.grepple/`:
 - `.grepple/<package>.package/overview.mmd`: compact package view
 - `.grepple/<package>.package/structure.mmd`: exhaustive package structure
 - `.grepple/<package>.package/manifest.json`: machine-readable model
-- `.grepple/shard-lifecycle.flow.mmd`: shard lifecycle flow
 
 Do not edit generated artifacts manually. Run `make schema-generate` after structural changes and `make schema-check` to verify them.
 

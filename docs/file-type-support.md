@@ -4,10 +4,10 @@
 
 `grepple` searches text first and adds structural context when an application parser is available.
 
-1. `internal/search` discovers files, applies path/repository filters, reads text files, and matches lines.
+1. `search` discovers files, applies path/repository filters, reads text files, and matches lines.
 2. Unreadable files and files containing a NUL byte are skipped; invalid UTF-8 is replaced before matching.
-3. `internal/parser.LanguageFor` classifies a filename by extension.
-4. `internal/parser.BuildSegments` uses tree-sitter for configured source languages, a heading scanner for Markdown, and one-line segments for plain text or parse failures.
+3. `parser.LanguageFor` classifies a filename by extension.
+4. `parser.BuildSegments` uses tree-sitter for configured source languages, a heading scanner for Markdown, and one-line segments for plain text or parse failures.
 
 Language detection is extension-based; MIME types and shebangs are not inspected. `--files` only reports discovered paths and does not read content, so it can include binary or unreadable files.
 
@@ -19,35 +19,47 @@ Language detection is extension-based; MIME types and shebangs are not inspected
 | `tsx` | `.tsx` | tree-sitter TSX |
 | `javascript` | `.js`, `.jsx` | tree-sitter JavaScript |
 | `go` | `.go` | tree-sitter Go |
+| `python` | `.py`, `.pyi`, `.pyw` | tree-sitter Python |
 | `java` | `.java` | tree-sitter Java |
 | `kotlin` | `.kt`, `.kts` | tree-sitter Kotlin |
+| `csharp` | `.cs` | tree-sitter C# |
+| `c` | `.c`, `.h` | tree-sitter C |
+| `cpp` | `.cc`, `.cpp`, `.cxx`, `.hpp`, `.hh`, `.hxx` | tree-sitter C++ |
+| `rust` | `.rs` | tree-sitter Rust |
+| `shell` | `.sh`, `.bash`, `.zsh` | tree-sitter Bash |
 | `markdown` | `.md`, `.markdown`, `.mdown`, `.mkd` | heading scanner |
 
 Everything else remains searchable through the plain-text fallback. JSON (`.json`) and YAML (`.yaml`, `.yml`) additionally have lightweight outline support, but search segments use the plain-text fallback.
 
+Structural source segments include comments attached immediately before a declaration, including JSDoc, Go documentation comments, Python comments, Rust doc comments, and equivalent forms in the other supported languages. One blank line is allowed between the comment and declaration. Attributes, annotations, and decorators between them are included; trailing comments attached to an earlier statement are not.
+
 ## Package boundaries
 
-- `internal/api` — dependency-free Grepple HTTP contract types and shared wire constants; it contains no validation, transport, persistence, or application logic.
-- `internal/parser/content.go` — language detection and parser-local content helpers.
-- `internal/parser/tree_sitter.go` — grammar imports, language configuration, parser pool, and AST helpers.
-- `internal/parser/segments.go` — AST and plain-text structural segments.
-- `internal/parser/outline.go` — source, Markdown, JSON, and YAML outlines.
-- `internal/search/search_engine.go` — discovery, filtering, reading, and line matching; it passes only content, language, and hit lines to parser.
-- `internal/search/result.go` — construction of `api.FileResult` values from internal matches and parser segments.
+- `api` — dependency-free Grepple HTTP contract types and shared wire constants; it contains no validation, transport, persistence, or application logic.
+- `parser/content.go` — language detection and parser-local content helpers.
+- `parser/language.go` — source-language adapter interface, registry, and shared structural rules.
+- `parser/language_<name>.go` — grammar selection, structural rules, and outline implementation for one source language.
+- `parser/language_ecmascript.go` — outline helpers shared by JavaScript and TypeScript.
+- `parser/tree_sitter.go` — parser pool and language-independent AST helpers.
+- `parser/segments.go` — shared AST and plain-text structural segment construction.
+- `parser/markdown.go` and `parser/structured.go` — specialized non-tree-sitter parsing.
+- `parser/outline.go` — public outline orchestration and shared symbol helpers.
+- `search/search_engine.go` — discovery, filtering, reading, and line matching; it passes only content, language, and hit lines to parser.
+- `search/result.go` — construction of `api.FileResult` values from internal matches and parser segments.
 
-`internal/api` must not import an application package. `internal/parser` must not import `internal/search` or `internal/grepplecli`. Router, shard, CLI, repository, and search consumers import shared endpoint DTOs directly from `internal/api`; search keeps resolved `Params`, validation, and internal file matches. The CLI may use parser directly for outlines.
+`api` must not import an application package. `parser` must not import `search` or `internal/cli`. Backend and CLI consumers import shared endpoint DTOs directly from `api`; search keeps resolved `Params`, validation, and internal file matches. The CLI may use parser directly for outlines.
 
 ## Adding a tree-sitter-backed file type
 
 1. Add and pin a grammar dependency with Go bindings compatible with `github.com/tree-sitter/go-tree-sitter`.
-2. Import the grammar only in `internal/parser/tree_sitter.go` and add a `languageConfig` entry. Configure the smallest useful sets of structural, context, container, body, function, and name node kinds.
-3. Map the exact supported extensions in `internal/parser.LanguageFor`.
+2. Add a `languageAdapter` implementation in `parser/language_<name>.go`; keep its grammar, structural rules, and outline logic in that file.
+3. Register the adapter in `parser/language.go` and map the exact supported extensions in `parser.LanguageFor`.
 4. Add representative fixtures under `testdata/<language>/` covering declarations, containers, body matches, unrelated declarations, and language-specific syntax.
-5. Extend `TestTreeSitterLanguageParity` in `internal/parser/tree_sitter_test.go` and add exact segment/outline assertions where appropriate.
+5. Extend `TestTreeSitterLanguageParity` in `parser/tree_sitter_test.go` and add exact segment/outline assertions where appropriate.
 6. Run:
 
 ```bash
-gofmt -w internal/parser internal/search
+gofmt -w parser search
 go test ./...
 go vet ./...
 ```

@@ -1,6 +1,6 @@
 classDiagram
-    %% grepple:complete-package grepple/internal/search
-    %% grepple:package-default grepple/internal/search
+    %% grepple:complete-package github.com/greppleai/grepple/search
+    %% grepple:package-default github.com/greppleai/grepple/search
     %% grepple:language-default go
     %% grepple:exact-default
     class FileMatch {
@@ -13,7 +13,7 @@ classDiagram
         +SegmentsReady: bool
     }
     <<struct>> FileMatch
-    %% grepple:file FileMatch internal/search/model.go
+    %% grepple:file FileMatch search/model.go
     class Params {
         +AfterContext: int
         +BeforeContext: int
@@ -35,7 +35,7 @@ classDiagram
         +SkipSegments: bool
     }
     <<struct>> Params
-    %% grepple:file Params internal/search/model.go
+    %% grepple:file Params search/model.go
     %% grepple:struct-tag Params AfterContext "json:\"afterContext,omitempty\""
     %% grepple:struct-tag Params BeforeContext "json:\"beforeContext,omitempty\""
     %% grepple:struct-tag Params Context "json:\"context,omitempty\""
@@ -60,7 +60,7 @@ classDiagram
         -include: []repoPattern
     }
     <<struct>> RepoFilter
-    %% grepple:file RepoFilter internal/search/search_engine.go
+    %% grepple:file RepoFilter search/search_engine.go
     class candidateCollector {
         -add(string)
         -addPlainGlob(string): error
@@ -73,7 +73,7 @@ classDiagram
         -seen: map[string]bool
     }
     <<struct>> candidateCollector
-    %% grepple:file candidateCollector internal/search/search_glob.go
+    %% grepple:file candidateCollector search/search_glob.go
     class candidateScan {
         -scanAll([]string): []FileMatch
         -scanWindowed([]string, int): []FileMatch
@@ -83,7 +83,7 @@ classDiagram
         -repoFilter: *RepoFilter
     }
     <<struct>> candidateScan
-    %% grepple:file candidateScan internal/search/search_engine.go
+    %% grepple:file candidateScan search/search_engine.go
     class candidateWalker {
         -walk(string, fs.DirEntry, error): error
         -walkDir(string, string): error
@@ -92,120 +92,110 @@ classDiagram
         -root: string
     }
     <<struct>> candidateWalker
-    %% grepple:file candidateWalker internal/search/search_glob.go
+    %% grepple:file candidateWalker search/search_glob.go
     class gitignoreCache["gitignoreCache = map&#91;string&#93;&#91;&#93;string"] {
         -patterns(string): []string
     }
     <<type>> gitignoreCache
     %% grepple:underlying gitignoreCache map[string][]string
-    %% grepple:file gitignoreCache internal/search/search_glob.go
+    %% grepple:file gitignoreCache search/search_glob.go
     class repoPattern {
         -match(string): bool
         -glob: string
         -re: *regexp.Regexp
     }
     <<struct>> repoPattern
-    %% grepple:file repoPattern internal/search/search_engine.go
+    %% grepple:file repoPattern search/search_engine.go
     class AggregateRepoCounts {
         +AggregateRepoCounts([]FileMatch): []api.RepoCount
     }
     <<function>> AggregateRepoCounts
-    %% grepple:file AggregateRepoCounts internal/search/search_engine.go
+    %% grepple:file AggregateRepoCounts search/search_engine.go
     class BuildResults {
         +BuildResults([]FileMatch, int, int, int, bool): []api.FileResult
     }
     <<function>> BuildResults
-    %% grepple:file BuildResults internal/search/result.go
+    %% grepple:file BuildResults search/result.go
     class CollectFilesUnder {
         +CollectFilesUnder([]string, string): tuple~[]string&#44;error~
     }
     <<function>> CollectFilesUnder
-    %% grepple:file CollectFilesUnder internal/search/search_glob.go
+    %% grepple:file CollectFilesUnder search/search_glob.go
     class Content {
         +Content(Params, string, []byte): tuple~*FileMatch&#44;error~
     }
     <<function>> Content
-    %% grepple:file Content internal/search/search_engine.go
+    %% grepple:file Content search/search_engine.go
     class ContextLines {
         +ContextLines(string, map[int]bool, int, int, int): []api.ContextLine
     }
     <<function>> ContextLines
-    %% grepple:file ContextLines internal/search/context.go
+    %% grepple:file ContextLines search/context.go
     class EnforcePageLimit {
         +EnforcePageLimit(*Params, api.SearchRequest)
     }
     <<function>> EnforcePageLimit
-    %% grepple:file EnforcePageLimit internal/search/search_params.go
+    %% grepple:file EnforcePageLimit search/search_params.go
     class Files {
         +Files(Params, []string): tuple~[]FileMatch&#44;error~
     }
     <<function>> Files
-    %% grepple:file Files internal/search/search_engine.go
+    %% grepple:file Files search/search_engine.go
     class ListFilePaths {
         +ListFilePaths(Params, []string): tuple~[]string&#44;error~
     }
     <<function>> ListFilePaths
-    %% grepple:file ListFilePaths internal/search/search_engine.go
+    %% grepple:file ListFilePaths search/search_engine.go
     class NewRepoFilter {
         +NewRepoFilter([]string, []string): *RepoFilter
     }
     <<function>> NewRepoFilter
-    %% grepple:file NewRepoFilter internal/search/search_engine.go
-    class NormalizeRule {
-        +NormalizeRule(api.Rule): tuple~api.Rule&#44;error~
-    }
-    <<function>> NormalizeRule
-    %% grepple:file NormalizeRule internal/search/rules.go
+    %% grepple:file NewRepoFilter search/search_engine.go
     class PathMatchesGlobs {
         +PathMatchesGlobs(string, []string): bool
     }
     <<function>> PathMatchesGlobs
-    %% grepple:file PathMatchesGlobs internal/search/search_glob.go
+    %% grepple:file PathMatchesGlobs search/search_glob.go
     class RepoID {
         +RepoID(string): string
     }
     <<function>> RepoID
-    %% grepple:file RepoID internal/search/search_engine.go
+    %% grepple:file RepoID search/search_engine.go
     class RepoMatches {
         +RepoMatches(string, []string): bool
     }
     <<function>> RepoMatches
-    %% grepple:file RepoMatches internal/search/search_params.go
+    %% grepple:file RepoMatches search/search_params.go
     class RepoMatchesAny {
         +RepoMatchesAny(string, []string): bool
     }
     <<function>> RepoMatchesAny
-    %% grepple:file RepoMatchesAny internal/search/search_params.go
+    %% grepple:file RepoMatchesAny search/search_params.go
     class ResolveRequest {
         +ResolveRequest(api.SearchRequest): tuple~Params&#44;error~
     }
     <<function>> ResolveRequest
-    %% grepple:file ResolveRequest internal/search/search_params.go
+    %% grepple:file ResolveRequest search/search_params.go
     class SortRepoCounts {
         +SortRepoCounts([]api.RepoCount)
     }
     <<function>> SortRepoCounts
-    %% grepple:file SortRepoCounts internal/search/search_engine.go
-    class SortRuleRepoResults {
-        +SortRuleRepoResults([]api.RuleRepoResult)
-    }
-    <<function>> SortRuleRepoResults
-    %% grepple:file SortRuleRepoResults internal/search/rules.go
+    %% grepple:file SortRepoCounts search/search_engine.go
     class SplitLines {
         +SplitLines(string): []string
     }
     <<function>> SplitLines
-    %% grepple:file SplitLines internal/search/search_engine.go
+    %% grepple:file SplitLines search/search_engine.go
     class ToResult {
         +ToResult(FileMatch, []parser.Segment, int, int, int): api.FileResult
     }
     <<function>> ToResult
-    %% grepple:file ToResult internal/search/result.go
+    %% grepple:file ToResult search/result.go
     class WorkerCount {
         +WorkerCount(): int
     }
     <<function>> WorkerCount
-    %% grepple:file WorkerCount internal/search/workers.go
+    %% grepple:file WorkerCount search/workers.go
     AggregateRepoCounts "1" ..> "*" FileMatch : parameter 1
     BuildResults "1" ..> "*" FileMatch : parameter 1
     Content "1" ..> "1" FileMatch : result 1

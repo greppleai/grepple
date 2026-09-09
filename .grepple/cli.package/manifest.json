@@ -1,0 +1,1353 @@
+{
+  "formatVersion": 1,
+  "package": {
+    "name": "cli",
+    "importPath": "github.com/greppleai/grepple/internal/cli",
+    "sourceDirectory": "internal/cli",
+    "documentation": "Package cli implements the user-facing combined local/remote search, terminal and JSON presentation, and the get and tree command-line workflows."
+  },
+  "scope": {
+    "types": "all",
+    "functions": "exported",
+    "variables": "excluded",
+    "constants": "excluded",
+    "tests": "excluded",
+    "buildTags": "syntactic-union-conflicts-rejected",
+    "syntacticBuildTagUnion": []
+  },
+  "summary": {
+    "sourceFiles": 23,
+    "declarations": 22,
+    "exportedTypes": 0,
+    "internalTypes": 22,
+    "members": 130,
+    "exportedFunctions": 3,
+    "fiberRoutes": 0,
+    "relations": 15
+  },
+  "semanticModelDigest": "sha256:4f8b9636b096f9e627988cd2240e25edd0a7cfc3489bd5b7304f52927fc98be8",
+  "sourceFiles": [
+    {
+      "path": "internal/cli/args.go"
+    },
+    {
+      "path": "internal/cli/client.go"
+    },
+    {
+      "path": "internal/cli/config.go"
+    },
+    {
+      "path": "internal/cli/doc.go"
+    },
+    {
+      "path": "internal/cli/get.go"
+    },
+    {
+      "path": "internal/cli/git_context.go"
+    },
+    {
+      "path": "internal/cli/local.go"
+    },
+    {
+      "path": "internal/cli/login.go"
+    },
+    {
+      "path": "internal/cli/model.go"
+    },
+    {
+      "path": "internal/cli/outline.go"
+    },
+    {
+      "path": "internal/cli/outline_renderer.go"
+    },
+    {
+      "path": "internal/cli/output.go"
+    },
+    {
+      "path": "internal/cli/renderer.go"
+    },
+    {
+      "path": "internal/cli/renderer_context.go"
+    },
+    {
+      "path": "internal/cli/renderer_count.go"
+    },
+    {
+      "path": "internal/cli/renderer_files.go"
+    },
+    {
+      "path": "internal/cli/renderer_json.go"
+    },
+    {
+      "path": "internal/cli/renderer_matches.go"
+    },
+    {
+      "path": "internal/cli/renderer_repo_count.go"
+    },
+    {
+      "path": "internal/cli/renderer_segments.go"
+    },
+    {
+      "path": "internal/cli/repos.go"
+    },
+    {
+      "path": "internal/cli/rules.go"
+    },
+    {
+      "path": "internal/cli/tree.go"
+    }
+  ],
+  "declarations": [
+    {
+      "name": "cliOptions",
+      "kind": "struct",
+      "file": "internal/cli/model.go",
+      "underlyingType": "struct{Params search.Params;LineOnly bool;OnlyMatching bool;JSON string;Count bool;CountByRepo bool;FilesWithMatches bool;Outline bool;Depth int;Stdin bool;}",
+      "members": [
+        {
+          "name": "Count",
+          "kind": "property",
+          "result": "bool"
+        },
+        {
+          "name": "CountByRepo",
+          "kind": "property",
+          "result": "bool"
+        },
+        {
+          "name": "Depth",
+          "kind": "property",
+          "result": "int"
+        },
+        {
+          "name": "FilesWithMatches",
+          "kind": "property",
+          "result": "bool"
+        },
+        {
+          "name": "JSON",
+          "kind": "property",
+          "result": "string"
+        },
+        {
+          "name": "LineOnly",
+          "kind": "property",
+          "result": "bool"
+        },
+        {
+          "name": "OnlyMatching",
+          "kind": "property",
+          "result": "bool"
+        },
+        {
+          "name": "Outline",
+          "kind": "property",
+          "result": "bool"
+        },
+        {
+          "name": "Params",
+          "kind": "property",
+          "result": "search.Params"
+        },
+        {
+          "name": "Stdin",
+          "kind": "property",
+          "result": "bool"
+        }
+      ]
+    },
+    {
+      "name": "config",
+      "kind": "struct",
+      "file": "internal/cli/config.go",
+      "underlyingType": "struct{Server string`json:\"server,omitempty\"`;Token string`json:\"token,omitempty\"`;RefreshToken string`json:\"refresh_token,omitempty\"`;TokenExpiry int64`json:\"token_expiry,omitempty\"`;RefreshExpiry int64`json:\"refresh_expiry,omitempty\"`;User string`json:\"user,omitempty\"`;}",
+      "members": [
+        {
+          "name": "RefreshExpiry",
+          "kind": "property",
+          "result": "int64",
+          "structTag": {
+            "value": "json:\"refresh_expiry,omitempty\""
+          }
+        },
+        {
+          "name": "RefreshToken",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"refresh_token,omitempty\""
+          }
+        },
+        {
+          "name": "Server",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"server,omitempty\""
+          }
+        },
+        {
+          "name": "Token",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"token,omitempty\""
+          }
+        },
+        {
+          "name": "TokenExpiry",
+          "kind": "property",
+          "result": "int64",
+          "structTag": {
+            "value": "json:\"token_expiry,omitempty\""
+          }
+        },
+        {
+          "name": "User",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"user,omitempty\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "contextRenderer",
+      "kind": "struct",
+      "file": "internal/cli/renderer_context.go",
+      "underlyingType": "struct{output*outputWriter}",
+      "members": [
+        {
+          "name": "Render",
+          "kind": "method",
+          "parameters": [
+            "[]api.FileResult"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "output",
+          "kind": "property",
+          "result": "*outputWriter"
+        }
+      ]
+    },
+    {
+      "name": "countRenderer",
+      "kind": "struct",
+      "file": "internal/cli/renderer_count.go",
+      "underlyingType": "struct{output*outputWriter;json bool;}",
+      "members": [
+        {
+          "name": "Render",
+          "kind": "method",
+          "parameters": [
+            "[]api.FileResult"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "json",
+          "kind": "property",
+          "result": "bool"
+        },
+        {
+          "name": "output",
+          "kind": "property",
+          "result": "*outputWriter"
+        }
+      ]
+    },
+    {
+      "name": "deviceCodeResponse",
+      "kind": "struct",
+      "file": "internal/cli/login.go",
+      "underlyingType": "struct{DeviceCode string`json:\"device_code\"`;UserCode string`json:\"user_code\"`;VerificationURI string`json:\"verification_uri\"`;ExpiresIn int`json:\"expires_in\"`;Interval int`json:\"interval\"`;Error string`json:\"error\"`;ErrorDescription string`json:\"error_description\"`;}",
+      "members": [
+        {
+          "name": "DeviceCode",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"device_code\""
+          }
+        },
+        {
+          "name": "Error",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"error\""
+          }
+        },
+        {
+          "name": "ErrorDescription",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"error_description\""
+          }
+        },
+        {
+          "name": "ExpiresIn",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "json:\"expires_in\""
+          }
+        },
+        {
+          "name": "Interval",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "json:\"interval\""
+          }
+        },
+        {
+          "name": "UserCode",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"user_code\""
+          }
+        },
+        {
+          "name": "VerificationURI",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"verification_uri\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "deviceTokenResponse",
+      "kind": "struct",
+      "file": "internal/cli/login.go",
+      "underlyingType": "struct{AccessToken string`json:\"access_token\"`;TokenType string`json:\"token_type\"`;Scope string`json:\"scope\"`;ExpiresIn int`json:\"expires_in\"`;RefreshToken string`json:\"refresh_token\"`;RefreshTokenExpiresIn int`json:\"refresh_token_expires_in\"`;Error string`json:\"error\"`;ErrorDescription string`json:\"error_description\"`;Interval int`json:\"interval\"`;}",
+      "members": [
+        {
+          "name": "AccessToken",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"access_token\""
+          }
+        },
+        {
+          "name": "Error",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"error\""
+          }
+        },
+        {
+          "name": "ErrorDescription",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"error_description\""
+          }
+        },
+        {
+          "name": "ExpiresIn",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "json:\"expires_in\""
+          }
+        },
+        {
+          "name": "Interval",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "json:\"interval\""
+          }
+        },
+        {
+          "name": "RefreshToken",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"refresh_token\""
+          }
+        },
+        {
+          "name": "RefreshTokenExpiresIn",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "json:\"refresh_token_expires_in\""
+          }
+        },
+        {
+          "name": "Scope",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"scope\""
+          }
+        },
+        {
+          "name": "TokenType",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"token_type\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "errBrokenPipe",
+      "kind": "struct",
+      "file": "internal/cli/output.go",
+      "underlyingType": "struct{}",
+      "members": [
+        {
+          "name": "Error",
+          "kind": "method",
+          "result": "string"
+        },
+        {
+          "name": "Unwrap",
+          "kind": "method",
+          "result": "error"
+        }
+      ]
+    },
+    {
+      "name": "filesRenderer",
+      "kind": "struct",
+      "file": "internal/cli/renderer_files.go",
+      "underlyingType": "struct{output*outputWriter;json bool;}",
+      "members": [
+        {
+          "name": "Render",
+          "kind": "method",
+          "parameters": [
+            "[]api.FileResult"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "json",
+          "kind": "property",
+          "result": "bool"
+        },
+        {
+          "name": "output",
+          "kind": "property",
+          "result": "*outputWriter"
+        }
+      ]
+    },
+    {
+      "name": "getArgs",
+      "kind": "struct",
+      "file": "internal/cli/get.go",
+      "underlyingType": "struct{Server string`arg:\"-s,--server\" placeholder:\"URL\" help:\"remote shard/router URL\"`;Lines string`arg:\"--lines\" placeholder:\"A:B\" help:\"inclusive 1-based line range\"`;JSON bool`arg:\"--json\" help:\"print repository metadata and content as JSON\"`;Outline bool`arg:\"-O,--outline\" help:\"print the file's structural outline (classes, funcs, ...) instead of its contents\"`;Depth int`arg:\"--depth\" placeholder:\"N\" help:\"outline: cap nesting depth for JSON/YAML (0 = unlimited)\"`;Repo string`arg:\"positional,required\" placeholder:\"OWNER/REPOSITORY\"`;Path string`arg:\"positional,required\" placeholder:\"PATH\"`;}",
+      "members": [
+        {
+          "name": "Description",
+          "kind": "method",
+          "result": "string"
+        },
+        {
+          "name": "Depth",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "arg:\"--depth\" placeholder:\"N\" help:\"outline: cap nesting depth for JSON/YAML (0 = unlimited)\""
+          }
+        },
+        {
+          "name": "JSON",
+          "kind": "property",
+          "result": "bool",
+          "structTag": {
+            "value": "arg:\"--json\" help:\"print repository metadata and content as JSON\""
+          }
+        },
+        {
+          "name": "Lines",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "arg:\"--lines\" placeholder:\"A:B\" help:\"inclusive 1-based line range\""
+          }
+        },
+        {
+          "name": "Outline",
+          "kind": "property",
+          "result": "bool",
+          "structTag": {
+            "value": "arg:\"-O,--outline\" help:\"print the file's structural outline (classes, funcs, ...) instead of its contents\""
+          }
+        },
+        {
+          "name": "Path",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "arg:\"positional,required\" placeholder:\"PATH\""
+          }
+        },
+        {
+          "name": "Repo",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "arg:\"positional,required\" placeholder:\"OWNER/REPOSITORY\""
+          }
+        },
+        {
+          "name": "Server",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "arg:\"-s,--server\" placeholder:\"URL\" help:\"remote shard/router URL\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "jsonResultRenderer",
+      "kind": "struct",
+      "file": "internal/cli/renderer_json.go",
+      "underlyingType": "struct{output*outputWriter;matchesOnly bool;}",
+      "members": [
+        {
+          "name": "Render",
+          "kind": "method",
+          "parameters": [
+            "[]api.FileResult"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "matchesOnly",
+          "kind": "property",
+          "result": "bool"
+        },
+        {
+          "name": "output",
+          "kind": "property",
+          "result": "*outputWriter"
+        }
+      ]
+    },
+    {
+      "name": "lineRenderer",
+      "kind": "struct",
+      "file": "internal/cli/renderer_matches.go",
+      "underlyingType": "struct{output*outputWriter;maxLines int;}",
+      "members": [
+        {
+          "name": "Render",
+          "kind": "method",
+          "parameters": [
+            "[]api.FileResult"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "maxLines",
+          "kind": "property",
+          "result": "int"
+        },
+        {
+          "name": "output",
+          "kind": "property",
+          "result": "*outputWriter"
+        }
+      ]
+    },
+    {
+      "name": "loginConfig",
+      "kind": "struct",
+      "file": "internal/cli/login.go",
+      "underlyingType": "struct{ClientID string`json:\"clientId\"`;Scopes string`json:\"scopes\"`;}",
+      "members": [
+        {
+          "name": "ClientID",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"clientId\""
+          }
+        },
+        {
+          "name": "Scopes",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"scopes\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "onlyMatchingRenderer",
+      "kind": "struct",
+      "file": "internal/cli/renderer_matches.go",
+      "underlyingType": "struct{output*outputWriter;maxLines int;matcher*regexp.Regexp;}",
+      "members": [
+        {
+          "name": "Render",
+          "kind": "method",
+          "parameters": [
+            "[]api.FileResult"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "matcher",
+          "kind": "property",
+          "result": "*regexp.Regexp"
+        },
+        {
+          "name": "maxLines",
+          "kind": "property",
+          "result": "int"
+        },
+        {
+          "name": "output",
+          "kind": "property",
+          "result": "*outputWriter"
+        }
+      ]
+    },
+    {
+      "name": "outputWriter",
+      "kind": "struct",
+      "file": "internal/cli/output.go",
+      "underlyingType": "struct{writer io.Writer}",
+      "members": [
+        {
+          "name": "writeJSON",
+          "kind": "method",
+          "parameters": [
+            "any"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "writeString",
+          "kind": "method",
+          "parameters": [
+            "string"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "writer",
+          "kind": "property",
+          "result": "io.Writer"
+        }
+      ]
+    },
+    {
+      "name": "repoCountRenderer",
+      "kind": "struct",
+      "file": "internal/cli/renderer_repo_count.go",
+      "underlyingType": "struct{output*outputWriter;json bool;}",
+      "members": [
+        {
+          "name": "Render",
+          "kind": "method",
+          "parameters": [
+            "[]api.RepoCount"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "renderJSON",
+          "kind": "method",
+          "parameters": [
+            "[]api.RepoCount",
+            "int",
+            "int"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "renderText",
+          "kind": "method",
+          "parameters": [
+            "[]api.RepoCount",
+            "int",
+            "int"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "json",
+          "kind": "property",
+          "result": "bool"
+        },
+        {
+          "name": "output",
+          "kind": "property",
+          "result": "*outputWriter"
+        }
+      ]
+    },
+    {
+      "name": "reposArgs",
+      "kind": "struct",
+      "file": "internal/cli/repos.go",
+      "underlyingType": "struct{Server string`arg:\"-s,--server\" placeholder:\"URL\" help:\"remote shard/router URL\"`;JSON bool`arg:\"--json\" help:\"print raw JSON\"`;Filter string`arg:\"positional\" placeholder:\"SUBSTRING\" help:\"only repos whose OWNER/REPO contains this (case-insensitive)\"`;}",
+      "members": [
+        {
+          "name": "Description",
+          "kind": "method",
+          "result": "string"
+        },
+        {
+          "name": "Filter",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "arg:\"positional\" placeholder:\"SUBSTRING\" help:\"only repos whose OWNER/REPO contains this (case-insensitive)\""
+          }
+        },
+        {
+          "name": "JSON",
+          "kind": "property",
+          "result": "bool",
+          "structTag": {
+            "value": "arg:\"--json\" help:\"print raw JSON\""
+          }
+        },
+        {
+          "name": "Server",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "arg:\"-s,--server\" placeholder:\"URL\" help:\"remote shard/router URL\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "resultRenderer",
+      "kind": "interface",
+      "file": "internal/cli/renderer.go",
+      "underlyingType": "interface{Render([]api.FileResult)error}",
+      "members": [
+        {
+          "name": "Render",
+          "kind": "method",
+          "parameters": [
+            "[]api.FileResult"
+          ],
+          "result": "error"
+        }
+      ]
+    },
+    {
+      "name": "rulesAddArgs",
+      "kind": "struct",
+      "file": "internal/cli/rules.go",
+      "underlyingType": "struct{Server string`arg:\"-s,--server\" placeholder:\"URL\" help:\"remote router URL\"`;ID string`arg:\"--id\" placeholder:\"ID\" help:\"stable rule id (default: slug of --name)\"`;Name string`arg:\"--name\" placeholder:\"NAME\" help:\"human-readable name\"`;Mode string`arg:\"--mode\" placeholder:\"MODE\" help:\"count | files\"`;Files bool`arg:\"-l,--files\" help:\"files mode (store matching paths)\"`;Regex bool`arg:\"--regex\" help:\"treat PATTERN as a regular expression\"`;IgnoreCase bool`arg:\"-i,--ignore-case\" help:\"case-insensitive match\"`;Repo[]string`arg:\"--repo,separate\" placeholder:\"PATTERN\" help:\"limit to matching repos\"`;ExcludeRepo[]string`arg:\"--exclude-repo,separate\" placeholder:\"PATTERN\" help:\"exclude matching repos\"`;JSON bool`arg:\"--json\" help:\"print the created rule as JSON\"`;Pattern string`arg:\"positional\" placeholder:\"PATTERN\"`;Globs[]string`arg:\"positional\" placeholder:\"GLOB\"`;}",
+      "members": [
+        {
+          "name": "Description",
+          "kind": "method",
+          "result": "string"
+        },
+        {
+          "name": "ExcludeRepo",
+          "kind": "property",
+          "result": "[]string",
+          "structTag": {
+            "value": "arg:\"--exclude-repo,separate\" placeholder:\"PATTERN\" help:\"exclude matching repos\""
+          }
+        },
+        {
+          "name": "Files",
+          "kind": "property",
+          "result": "bool",
+          "structTag": {
+            "value": "arg:\"-l,--files\" help:\"files mode (store matching paths)\""
+          }
+        },
+        {
+          "name": "Globs",
+          "kind": "property",
+          "result": "[]string",
+          "structTag": {
+            "value": "arg:\"positional\" placeholder:\"GLOB\""
+          }
+        },
+        {
+          "name": "ID",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "arg:\"--id\" placeholder:\"ID\" help:\"stable rule id (default: slug of --name)\""
+          }
+        },
+        {
+          "name": "IgnoreCase",
+          "kind": "property",
+          "result": "bool",
+          "structTag": {
+            "value": "arg:\"-i,--ignore-case\" help:\"case-insensitive match\""
+          }
+        },
+        {
+          "name": "JSON",
+          "kind": "property",
+          "result": "bool",
+          "structTag": {
+            "value": "arg:\"--json\" help:\"print the created rule as JSON\""
+          }
+        },
+        {
+          "name": "Mode",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "arg:\"--mode\" placeholder:\"MODE\" help:\"count | files\""
+          }
+        },
+        {
+          "name": "Name",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "arg:\"--name\" placeholder:\"NAME\" help:\"human-readable name\""
+          }
+        },
+        {
+          "name": "Pattern",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "arg:\"positional\" placeholder:\"PATTERN\""
+          }
+        },
+        {
+          "name": "Regex",
+          "kind": "property",
+          "result": "bool",
+          "structTag": {
+            "value": "arg:\"--regex\" help:\"treat PATTERN as a regular expression\""
+          }
+        },
+        {
+          "name": "Repo",
+          "kind": "property",
+          "result": "[]string",
+          "structTag": {
+            "value": "arg:\"--repo,separate\" placeholder:\"PATTERN\" help:\"limit to matching repos\""
+          }
+        },
+        {
+          "name": "Server",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "arg:\"-s,--server\" placeholder:\"URL\" help:\"remote router URL\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "searchArgs",
+      "kind": "struct",
+      "file": "internal/cli/args.go",
+      "underlyingType": "struct{Local bool`arg:\"--local\" help:\"search only the local working directory (this is the default)\"`;Remote bool`arg:\"-R,--remote\" help:\"also query the remote shard/router (default: local only)\"`;Server string`arg:\"-s,--server\" placeholder:\"URL\" help:\"remote shard/router URL (implies --remote)\"`;LineNumber bool`arg:\"-n,--line-number\" help:\"include line numbers (enabled by default)\"`;LineOnly bool`arg:\"--line-only\" help:\"print only matching lines\"`;OnlyMatching bool`arg:\"-o,--only-matching\" help:\"print each matched substring\"`;Files bool`arg:\"-l,--files\" help:\"recursively list files under optional PATHs; glob PATHs filter the listing\"`;FilesWithMatches bool`arg:\"--files-with-matches\" help:\"list paths whose contents match; accepts multiple file, directory, or glob PATHs\"`;Outline bool`arg:\"-O,--outline\" help:\"print each file's structural outline (classes, funcs, interfaces) instead of searching\"`;Depth int`arg:\"--depth\" placeholder:\"N\" help:\"outline: cap nesting depth for JSON/YAML (0 = unlimited)\"`;Count bool`arg:\"-c,--count\" help:\"print matching-line counts per file\"`;CountByRepo bool`arg:\"--count-by-repo\" help:\"print aggregate file and matching-line counts per repository\"`;JSON bool`arg:\"--json\" help:\"print full JSON results\"`;JSONMatches bool`arg:\"--json-matches\" help:\"print compact JSON matches\"`;Regex bool`arg:\"--regex\" help:\"treat the pattern as a regular expression (default)\"`;Fixed bool`arg:\"-F,--fixed-strings\" help:\"treat the pattern as a literal string\"`;IgnoreCase bool`arg:\"-i,--ignore-case\" help:\"ignore case distinctions\"`;InvertMatch bool`arg:\"-v,--invert-match\" help:\"select lines that do not match\"`;Context int`arg:\"-C,--context\" placeholder:\"N\" help:\"print N lines before and after matches\"`;AfterContext int`arg:\"-A,--after-context\" placeholder:\"N\" help:\"print N lines after matches\"`;BeforeContext int`arg:\"-B,--before-context\" placeholder:\"N\" help:\"print N lines before matches\"`;MaxFiles int`arg:\"--max-files\" placeholder:\"N\" help:\"limit matching files\"`;MaxSegments int`arg:\"--max-segments\" placeholder:\"N\" help:\"limit result segments\"`;Skip int`arg:\"--skip\" placeholder:\"N\" help:\"skip the first N ranked result files\"`;Limit int`arg:\"--limit\" placeholder:\"N\" help:\"return at most N ranked result files (default 20; 0 = all local; servers cap a page at 100 — page further with --skip)\"`;Repos[]string`arg:\"--repo,separate\" placeholder:\"PATTERN\" help:\"restrict remote repositories; repeatable\"`;Query string`arg:\"positional\" placeholder:\"PATTERN\"`;Globs[]string`arg:\"positional\" placeholder:\"PATH\" help:\"file, directory, or glob to search; repeat for multiple roots\"`;}",
+      "members": [
+        {
+          "name": "Description",
+          "kind": "method",
+          "result": "string"
+        },
+        {
+          "name": "AfterContext",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "arg:\"-A,--after-context\" placeholder:\"N\" help:\"print N lines after matches\""
+          }
+        },
+        {
+          "name": "BeforeContext",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "arg:\"-B,--before-context\" placeholder:\"N\" help:\"print N lines before matches\""
+          }
+        },
+        {
+          "name": "Context",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "arg:\"-C,--context\" placeholder:\"N\" help:\"print N lines before and after matches\""
+          }
+        },
+        {
+          "name": "Count",
+          "kind": "property",
+          "result": "bool",
+          "structTag": {
+            "value": "arg:\"-c,--count\" help:\"print matching-line counts per file\""
+          }
+        },
+        {
+          "name": "CountByRepo",
+          "kind": "property",
+          "result": "bool",
+          "structTag": {
+            "value": "arg:\"--count-by-repo\" help:\"print aggregate file and matching-line counts per repository\""
+          }
+        },
+        {
+          "name": "Depth",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "arg:\"--depth\" placeholder:\"N\" help:\"outline: cap nesting depth for JSON/YAML (0 = unlimited)\""
+          }
+        },
+        {
+          "name": "Files",
+          "kind": "property",
+          "result": "bool",
+          "structTag": {
+            "value": "arg:\"-l,--files\" help:\"recursively list files under optional PATHs; glob PATHs filter the listing\""
+          }
+        },
+        {
+          "name": "FilesWithMatches",
+          "kind": "property",
+          "result": "bool",
+          "structTag": {
+            "value": "arg:\"--files-with-matches\" help:\"list paths whose contents match; accepts multiple file, directory, or glob PATHs\""
+          }
+        },
+        {
+          "name": "Fixed",
+          "kind": "property",
+          "result": "bool",
+          "structTag": {
+            "value": "arg:\"-F,--fixed-strings\" help:\"treat the pattern as a literal string\""
+          }
+        },
+        {
+          "name": "Globs",
+          "kind": "property",
+          "result": "[]string",
+          "structTag": {
+            "value": "arg:\"positional\" placeholder:\"PATH\" help:\"file, directory, or glob to search; repeat for multiple roots\""
+          }
+        },
+        {
+          "name": "IgnoreCase",
+          "kind": "property",
+          "result": "bool",
+          "structTag": {
+            "value": "arg:\"-i,--ignore-case\" help:\"ignore case distinctions\""
+          }
+        },
+        {
+          "name": "InvertMatch",
+          "kind": "property",
+          "result": "bool",
+          "structTag": {
+            "value": "arg:\"-v,--invert-match\" help:\"select lines that do not match\""
+          }
+        },
+        {
+          "name": "JSON",
+          "kind": "property",
+          "result": "bool",
+          "structTag": {
+            "value": "arg:\"--json\" help:\"print full JSON results\""
+          }
+        },
+        {
+          "name": "JSONMatches",
+          "kind": "property",
+          "result": "bool",
+          "structTag": {
+            "value": "arg:\"--json-matches\" help:\"print compact JSON matches\""
+          }
+        },
+        {
+          "name": "Limit",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "arg:\"--limit\" placeholder:\"N\" help:\"return at most N ranked result files (default 20; 0 = all local; servers cap a page at 100 — page further with --skip)\""
+          }
+        },
+        {
+          "name": "LineNumber",
+          "kind": "property",
+          "result": "bool",
+          "structTag": {
+            "value": "arg:\"-n,--line-number\" help:\"include line numbers (enabled by default)\""
+          }
+        },
+        {
+          "name": "LineOnly",
+          "kind": "property",
+          "result": "bool",
+          "structTag": {
+            "value": "arg:\"--line-only\" help:\"print only matching lines\""
+          }
+        },
+        {
+          "name": "Local",
+          "kind": "property",
+          "result": "bool",
+          "structTag": {
+            "value": "arg:\"--local\" help:\"search only the local working directory (this is the default)\""
+          }
+        },
+        {
+          "name": "MaxFiles",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "arg:\"--max-files\" placeholder:\"N\" help:\"limit matching files\""
+          }
+        },
+        {
+          "name": "MaxSegments",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "arg:\"--max-segments\" placeholder:\"N\" help:\"limit result segments\""
+          }
+        },
+        {
+          "name": "OnlyMatching",
+          "kind": "property",
+          "result": "bool",
+          "structTag": {
+            "value": "arg:\"-o,--only-matching\" help:\"print each matched substring\""
+          }
+        },
+        {
+          "name": "Outline",
+          "kind": "property",
+          "result": "bool",
+          "structTag": {
+            "value": "arg:\"-O,--outline\" help:\"print each file's structural outline (classes, funcs, interfaces) instead of searching\""
+          }
+        },
+        {
+          "name": "Query",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "arg:\"positional\" placeholder:\"PATTERN\""
+          }
+        },
+        {
+          "name": "Regex",
+          "kind": "property",
+          "result": "bool",
+          "structTag": {
+            "value": "arg:\"--regex\" help:\"treat the pattern as a regular expression (default)\""
+          }
+        },
+        {
+          "name": "Remote",
+          "kind": "property",
+          "result": "bool",
+          "structTag": {
+            "value": "arg:\"-R,--remote\" help:\"also query the remote shard/router (default: local only)\""
+          }
+        },
+        {
+          "name": "Repos",
+          "kind": "property",
+          "result": "[]string",
+          "structTag": {
+            "value": "arg:\"--repo,separate\" placeholder:\"PATTERN\" help:\"restrict remote repositories; repeatable\""
+          }
+        },
+        {
+          "name": "Server",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "arg:\"-s,--server\" placeholder:\"URL\" help:\"remote shard/router URL (implies --remote)\""
+          }
+        },
+        {
+          "name": "Skip",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "arg:\"--skip\" placeholder:\"N\" help:\"skip the first N ranked result files\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "segmentRenderer",
+      "kind": "struct",
+      "file": "internal/cli/renderer_segments.go",
+      "underlyingType": "struct{output*outputWriter}",
+      "members": [
+        {
+          "name": "Render",
+          "kind": "method",
+          "parameters": [
+            "[]api.FileResult"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "renderFile",
+          "kind": "method",
+          "parameters": [
+            "api.FileResult"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "renderSegment",
+          "kind": "method",
+          "parameters": [
+            "api.ResultSegment",
+            "int"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "output",
+          "kind": "property",
+          "result": "*outputWriter"
+        }
+      ]
+    },
+    {
+      "name": "treeArgs",
+      "kind": "struct",
+      "file": "internal/cli/tree.go",
+      "underlyingType": "struct{Server string`arg:\"-s,--server\" placeholder:\"URL\" help:\"remote shard/router URL\"`;Depth int`arg:\"--depth\" default:\"2\" placeholder:\"N\" help:\"levels to descend\"`;JSON bool`arg:\"--json\" help:\"print raw JSON\"`;Repo string`arg:\"positional,required\" placeholder:\"OWNER/REPOSITORY\"`;Path string`arg:\"positional\" placeholder:\"PATH\"`;}",
+      "members": [
+        {
+          "name": "Description",
+          "kind": "method",
+          "result": "string"
+        },
+        {
+          "name": "Depth",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "arg:\"--depth\" default:\"2\" placeholder:\"N\" help:\"levels to descend\""
+          }
+        },
+        {
+          "name": "JSON",
+          "kind": "property",
+          "result": "bool",
+          "structTag": {
+            "value": "arg:\"--json\" help:\"print raw JSON\""
+          }
+        },
+        {
+          "name": "Path",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "arg:\"positional\" placeholder:\"PATH\""
+          }
+        },
+        {
+          "name": "Repo",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "arg:\"positional,required\" placeholder:\"OWNER/REPOSITORY\""
+          }
+        },
+        {
+          "name": "Server",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "arg:\"-s,--server\" placeholder:\"URL\" help:\"remote shard/router URL\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "treeNode",
+      "kind": "struct",
+      "file": "internal/cli/tree.go",
+      "underlyingType": "struct{name string;dir bool;children map[string]*treeNode;}",
+      "members": [
+        {
+          "name": "children",
+          "kind": "property",
+          "result": "map[string]*treeNode"
+        },
+        {
+          "name": "dir",
+          "kind": "property",
+          "result": "bool"
+        },
+        {
+          "name": "name",
+          "kind": "property",
+          "result": "string"
+        }
+      ]
+    }
+  ],
+  "exportedFunctions": [
+    {
+      "name": "RenderOutline",
+      "kind": "function",
+      "file": "internal/cli/outline_renderer.go",
+      "parameters": [
+        "parser.FileOutline"
+      ],
+      "result": "string"
+    },
+    {
+      "name": "RenderOutlineOrContent",
+      "kind": "function",
+      "file": "internal/cli/outline_renderer.go",
+      "parameters": [
+        "parser.FileOutline",
+        "string"
+      ],
+      "result": "string"
+    },
+    {
+      "name": "Run",
+      "kind": "function",
+      "file": "internal/cli/args.go",
+      "parameters": [
+        "[]string"
+      ],
+      "result": "error"
+    }
+  ],
+  "fiberRoutes": [],
+  "relations": [
+    {
+      "from": "contextRenderer",
+      "to": "outputWriter",
+      "kind": "association",
+      "via": "field output",
+      "cardinality": "one"
+    },
+    {
+      "from": "contextRenderer",
+      "to": "resultRenderer",
+      "kind": "implementation",
+      "via": "implements",
+      "cardinality": "one"
+    },
+    {
+      "from": "countRenderer",
+      "to": "outputWriter",
+      "kind": "association",
+      "via": "field output",
+      "cardinality": "one"
+    },
+    {
+      "from": "countRenderer",
+      "to": "resultRenderer",
+      "kind": "implementation",
+      "via": "implements",
+      "cardinality": "one"
+    },
+    {
+      "from": "filesRenderer",
+      "to": "outputWriter",
+      "kind": "association",
+      "via": "field output",
+      "cardinality": "one"
+    },
+    {
+      "from": "filesRenderer",
+      "to": "resultRenderer",
+      "kind": "implementation",
+      "via": "implements",
+      "cardinality": "one"
+    },
+    {
+      "from": "jsonResultRenderer",
+      "to": "outputWriter",
+      "kind": "association",
+      "via": "field output",
+      "cardinality": "one"
+    },
+    {
+      "from": "jsonResultRenderer",
+      "to": "resultRenderer",
+      "kind": "implementation",
+      "via": "implements",
+      "cardinality": "one"
+    },
+    {
+      "from": "lineRenderer",
+      "to": "outputWriter",
+      "kind": "association",
+      "via": "field output",
+      "cardinality": "one"
+    },
+    {
+      "from": "lineRenderer",
+      "to": "resultRenderer",
+      "kind": "implementation",
+      "via": "implements",
+      "cardinality": "one"
+    },
+    {
+      "from": "onlyMatchingRenderer",
+      "to": "outputWriter",
+      "kind": "association",
+      "via": "field output",
+      "cardinality": "one"
+    },
+    {
+      "from": "onlyMatchingRenderer",
+      "to": "resultRenderer",
+      "kind": "implementation",
+      "via": "implements",
+      "cardinality": "one"
+    },
+    {
+      "from": "repoCountRenderer",
+      "to": "outputWriter",
+      "kind": "association",
+      "via": "field output",
+      "cardinality": "one"
+    },
+    {
+      "from": "segmentRenderer",
+      "to": "outputWriter",
+      "kind": "association",
+      "via": "field output",
+      "cardinality": "one"
+    },
+    {
+      "from": "segmentRenderer",
+      "to": "resultRenderer",
+      "kind": "implementation",
+      "via": "implements",
+      "cardinality": "one"
+    }
+  ]
+}
