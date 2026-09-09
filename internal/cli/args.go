@@ -219,6 +219,8 @@ func Run(args []string) error {
 			return runLogout(args[1:])
 		case "rules":
 			return runRules(args[1:])
+		case "grit":
+			return runGrit(args[1:])
 		}
 	}
 	return runSearch(args)

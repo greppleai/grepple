@@ -2,6 +2,7 @@ package cli
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/greppleai/grepple/api"
@@ -38,6 +39,59 @@ func searchRemote(options *cliOptions, server string) ([]api.FileResult, error) 
 	}
 	warnPartialResults(result)
 	return dropExcludedRepos(result.Results, options.Params.ExcludeRepo), nil
+}
+
+func requestGritRemote(ctx context.Context, request api.GritRequest, server string) (api.GritResponse, error) {
+	body, err := json.Marshal(request)
+	if err != nil {
+		return api.GritResponse{}, err
+	}
+	if len(body) > api.MaxGritRequestBodyBytes {
+		return api.GritResponse{}, fmt.Errorf("structural request exceeds its maximum encoded size")
+	}
+	httpRequest, err := authorizedRequest(http.MethodPost, strings.TrimRight(server, "/")+"/public/grit", "application/json", bytes.NewReader(body))
+	if err != nil {
+		return api.GritResponse{}, err
+	}
+	httpRequest = httpRequest.WithContext(ctx)
+	response, err := http.DefaultClient.Do(httpRequest)
+	if err != nil {
+		return api.GritResponse{}, err
+	}
+	defer response.Body.Close()
+	if response.StatusCode < http.StatusOK || response.StatusCode >= http.StatusMultipleChoices {
+		message, _ := io.ReadAll(io.LimitReader(response.Body, 64<<10))
+		return api.GritResponse{}, fmt.Errorf("server %s returned %d: %s", server, response.StatusCode, string(message))
+	}
+	payload, err := io.ReadAll(io.LimitReader(response.Body, (64<<20)+1))
+	if err != nil {
+		return api.GritResponse{}, err
+	}
+	if len(payload) > 64<<20 {
+		return api.GritResponse{}, fmt.Errorf("server structural response exceeds its maximum size")
+	}
+	var result api.GritResponse
+	decoder := json.NewDecoder(bytes.NewReader(payload))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&result); err != nil {
+		return api.GritResponse{}, err
+	}
+	if err := decoder.Decode(&struct{}{}); err != io.EOF {
+		return api.GritResponse{}, fmt.Errorf("server structural response must contain exactly one JSON value")
+	}
+	if result.Findings == nil {
+		result.Findings = []api.GritFinding{}
+	}
+	if result.Diagnostics == nil {
+		result.Diagnostics = []api.GritDiagnostic{}
+	}
+	if result.Truncations == nil {
+		result.Truncations = []api.GritTruncation{}
+	}
+	if result.ShardErrors == nil {
+		result.ShardErrors = []string{}
+	}
+	return result, nil
 }
 
 // searchRequestFromParams converts resolved CLI parameters into the wire
