@@ -50,6 +50,11 @@ schema-generate: hook-build
 schema-check: hook-build
 	@for bundle in $(PACKAGE_BUNDLES); do hooks/bin/mermaid-code check package $$bundle || exit $$?; done
 	@for bundle in $(WORKSPACE_BUNDLES); do hooks/bin/mermaid-code check workspace $$bundle || exit $$?; done
+
+# Opt-in final-image smoke gate; requires a running Docker daemon and is not part of test.
+docker-smoke:
+	./scripts/docker-smoke.sh
+
 install: build
 	install -d $(DESTDIR)$(PREFIX)/bin
 	for command in $(COMMANDS); do \

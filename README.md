@@ -31,6 +31,8 @@ make build
 make install
 ```
 
+Docker-capable hosts can run the opt-in native-only image gate with `make docker-smoke`. It builds and exercises the final image, runs a structural query, verifies that Node/npm/npx, Rust/Cargo, and upstream `grit`/`gritql` executables are absent, and removes the temporary image. This check is intentionally separate from `make test`.
+
 Linting uses [revive](https://github.com/mgechev/revive) with the pinned rule set in `revive.toml` (the documented default rules, made explicit, plus `cognitive-complexity` capped at 15):
 `make lint` runs revive plus the standalone pi hook module's lint and tests. Pi executes a cached `hooks/bin/pi-hook` binary; the lightweight Make targets in `.pi/settings.json` rebuild it only when its Go sources or module files change. The Stop hook runs
 on every agent Stop: it auto-fixes formatting with `gofmt -w`, then feeds one revive rule-group (worst file first, one
