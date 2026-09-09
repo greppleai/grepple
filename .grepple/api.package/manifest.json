@@ -20,12 +20,12 @@
     "declarations": 18,
     "exportedTypes": 18,
     "internalTypes": 0,
-    "members": 82,
+    "members": 83,
     "exportedFunctions": 0,
     "fiberRoutes": 0,
     "relations": 11
   },
-  "semanticModelDigest": "sha256:1bd0770acd9f5dae91e9024b6977bd1b34454c70fb029ce64aef3f8f044bc8d3",
+  "semanticModelDigest": "sha256:b9dc8c81fbbb59a5b7633c16c36e6c730e3113ee79f9c939239b060c8ce430c2",
   "sourceFiles": [
     {
       "path": "internal/api/model.go"
@@ -588,7 +588,7 @@
       "name": "SearchRequest",
       "kind": "struct",
       "file": "internal/api/model.go",
-      "underlyingType": "struct{Query*string`json:\"query,omitempty\"`;Globs[]string`json:\"globs,omitempty\"`;Regex*bool`json:\"regex,omitempty\"`;IgnoreCase*bool`json:\"ignoreCase,omitempty\"`;MaxFiles*int`json:\"maxFiles,omitempty\"`;MaxSegments*int`json:\"maxSegments,omitempty\"`;Skip*int`json:\"skip,omitempty\"`;Limit*int`json:\"limit,omitempty\"`;Repo any`json:\"repo,omitempty\"`;ExcludeRepo any`json:\"excludeRepo,omitempty\"`;Files bool`json:\"files,omitempty\"`;Context any`json:\"context,omitempty\"`;BeforeContext*int`json:\"beforeContext,omitempty\"`;AfterContext*int`json:\"afterContext,omitempty\"`;SkipSegments bool`json:\"skipSegments,omitempty\"`;CountByRepo bool`json:\"countByRepo,omitempty\"`;}",
+      "underlyingType": "struct{Query*string`json:\"query,omitempty\"`;Globs[]string`json:\"globs,omitempty\"`;Regex*bool`json:\"regex,omitempty\"`;IgnoreCase*bool`json:\"ignoreCase,omitempty\"`;InvertMatch*bool`json:\"invertMatch,omitempty\"`;MaxFiles*int`json:\"maxFiles,omitempty\"`;MaxSegments*int`json:\"maxSegments,omitempty\"`;Skip*int`json:\"skip,omitempty\"`;Limit*int`json:\"limit,omitempty\"`;Repo any`json:\"repo,omitempty\"`;ExcludeRepo any`json:\"excludeRepo,omitempty\"`;Files bool`json:\"files,omitempty\"`;Context any`json:\"context,omitempty\"`;BeforeContext*int`json:\"beforeContext,omitempty\"`;AfterContext*int`json:\"afterContext,omitempty\"`;SkipSegments bool`json:\"skipSegments,omitempty\"`;CountByRepo bool`json:\"countByRepo,omitempty\"`;}",
       "members": [
         {
           "name": "AfterContext",
@@ -652,6 +652,14 @@
           "result": "*bool",
           "structTag": {
             "value": "json:\"ignoreCase,omitempty\""
+          }
+        },
+        {
+          "name": "InvertMatch",
+          "kind": "property",
+          "result": "*bool",
+          "structTag": {
+            "value": "json:\"invertMatch,omitempty\""
           }
         },
         {

@@ -44,6 +44,21 @@ func TestRunSearchPipedStdinLineOnly(t *testing.T) {
 	}
 }
 
+func TestRunSearchPipedStdinInvertMatch(t *testing.T) {
+	chdirTemp(t)
+	out := captureStdout(t, func() {
+		withStdin(t, "keep\nskip\nalso keep\n", func() {
+			if err := runSearch([]string{"--line-only", "-v", "skip"}); err != nil {
+				t.Fatal(err)
+			}
+		})
+	})
+	want := "<stdin>:1:keep\n<stdin>:3:also keep\n"
+	if out != want {
+		t.Fatalf("expected %q, got %q", want, out)
+	}
+}
+
 func TestRunSearchPipedStdinOnlyMatching(t *testing.T) {
 	chdirTemp(t)
 	out := captureStdout(t, func() {

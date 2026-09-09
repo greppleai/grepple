@@ -35,6 +35,7 @@ type searchArgs struct {
 	Regex            bool     `arg:"--regex" help:"treat the pattern as a regular expression (default)"`
 	Fixed            bool     `arg:"-F,--fixed-strings" help:"treat the pattern as a literal string"`
 	IgnoreCase       bool     `arg:"-i,--ignore-case" help:"ignore case distinctions"`
+	InvertMatch      bool     `arg:"-v,--invert-match" help:"select lines that do not match"`
 	Context          int      `arg:"-C,--context" placeholder:"N" help:"print N lines before and after matches"`
 	AfterContext     int      `arg:"-A,--after-context" placeholder:"N" help:"print N lines after matches"`
 	BeforeContext    int      `arg:"-B,--before-context" placeholder:"N" help:"print N lines before matches"`
@@ -116,6 +117,9 @@ func validateSearchArgs(values *searchArgs) error {
 	if values.Regex && values.Fixed {
 		return fmt.Errorf("--regex and --fixed-strings cannot be used together")
 	}
+	if values.InvertMatch && values.OnlyMatching {
+		return fmt.Errorf("--invert-match and --only-matching cannot be used together")
+	}
 	if values.Files && values.FilesWithMatches {
 		return fmt.Errorf("--files (filename glob) and --files-with-matches (content) cannot be used together")
 	}
@@ -145,6 +149,7 @@ func buildSearchParams(parser *arg.Parser, values *searchArgs) (search.Params, e
 		Globs:         values.Globs,
 		Regex:         !values.Fixed,
 		IgnoreCase:    values.IgnoreCase,
+		InvertMatch:   values.InvertMatch,
 		Files:         values.Files,
 		Context:       values.Context,
 		BeforeContext: values.Context,

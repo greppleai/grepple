@@ -13,6 +13,7 @@ type Params struct {
 	Globs         []string `json:"globs"`
 	Regex         bool     `json:"regex"`
 	IgnoreCase    bool     `json:"ignoreCase"`
+	InvertMatch   bool     `json:"invertMatch,omitempty"`
 	MaxFiles      int      `json:"maxFiles,omitempty"`
 	MaxSegments   int      `json:"maxSegments"`
 	Skip          int      `json:"skip,omitempty"`

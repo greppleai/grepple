@@ -338,7 +338,7 @@ func scanContent(p Params, m func(string) bool, contentBytes []byte, file, displ
 	}
 	hits := map[int]bool{}
 	for lineIndex, line := range subject {
-		if m(line) {
+		if m(line) != p.InvertMatch {
 			hits[lineIndex+1] = true
 		}
 	}

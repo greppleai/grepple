@@ -491,7 +491,7 @@ func (s *shardImpl) runFilesRequest(p search.Params, matchingRepos []string, sta
 // (no filesystem reads), reporting ok=false when the shard must fall through
 // to the scan-based count (no index, query too short, or an index error).
 func (s *shardImpl) tryZoektCount(p search.Params, start time.Time, t *searchTimings, reqID string) (api.SearchResponse, bool) {
-	if !p.CountByRepo || s == nil || !s.ZoektRunning() {
+	if !p.CountByRepo || p.InvertMatch || s == nil || !s.ZoektRunning() {
 		return api.SearchResponse{}, false
 	}
 	q := zoektQuery(p)
@@ -518,7 +518,7 @@ func (s *shardImpl) tryZoektCount(p search.Params, start time.Time, t *searchTim
 // the supplemental fallback files; nil candidates mean a full scan. Also
 // reports whether the index truncated and which repos fell back to scanning.
 func (s *shardImpl) gatherCandidates(p search.Params, t *searchTimings, reqID string) (candidates []string, truncated bool, scanFallbackRepos int, uncoveredRepos []string) {
-	if s == nil || !s.ZoektRunning() {
+	if p.InvertMatch || s == nil || !s.ZoektRunning() {
 		return nil, false, 0, nil
 	}
 	q := zoektQuery(p)

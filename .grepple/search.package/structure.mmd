@@ -23,6 +23,7 @@ classDiagram
         +Files: bool
         +Globs: []string
         +IgnoreCase: bool
+        +InvertMatch: bool
         +Limit: int
         +MaxFiles: int
         +MaxSegments: int
@@ -43,6 +44,7 @@ classDiagram
     %% grepple:struct-tag Params Files "json:\"files,omitempty\""
     %% grepple:struct-tag Params Globs "json:\"globs\""
     %% grepple:struct-tag Params IgnoreCase "json:\"ignoreCase\""
+    %% grepple:struct-tag Params InvertMatch "json:\"invertMatch,omitempty\""
     %% grepple:struct-tag Params Limit "json:\"limit,omitempty\""
     %% grepple:struct-tag Params MaxFiles "json:\"maxFiles,omitempty\""
     %% grepple:struct-tag Params MaxSegments "json:\"maxSegments\""
