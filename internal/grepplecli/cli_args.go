@@ -23,6 +23,7 @@ type searchArgs struct {
 	Server           string   `arg:"-s,--server" placeholder:"URL" help:"remote shard/router URL (implies --remote)"`
 	LineNumber       bool     `arg:"-n,--line-number" help:"include line numbers (enabled by default)"`
 	LineOnly         bool     `arg:"--line-only" help:"print only matching lines"`
+	OnlyMatching     bool     `arg:"-o,--only-matching" help:"print each matched substring"`
 	Files            bool     `arg:"-l,--files" help:"list files whose PATH matches the glob (filename search, not contents); a bare directory scopes the glob"`
 	FilesWithMatches bool     `arg:"--files-with-matches" help:"list paths of files whose CONTENTS match, like grep -l"`
 	Outline          bool     `arg:"-O,--outline" help:"print each file's structural outline (classes, funcs, interfaces) instead of searching"`
@@ -72,7 +73,7 @@ func parseSearchArgs(args []string) (*cliOptions, string, bool, error) {
 
 	// Structural parsing is only needed when we render segments (the default
 	// display and full --json). Skip it for match-line-only output modes.
-	params.SkipSegments = values.Files || values.FilesWithMatches || values.Count || values.LineOnly || values.JSONMatches || values.Context > 0
+	params.SkipSegments = values.Files || values.FilesWithMatches || values.Count || values.LineOnly || values.OnlyMatching || values.JSONMatches || values.Context > 0
 
 	// Local-first: only reach out to the shard/router when the user explicitly opts
 	// in with --remote or by passing a --server URL. A configured GREPPLE_SERVER / config
@@ -81,6 +82,7 @@ func parseSearchArgs(args []string) (*cliOptions, string, bool, error) {
 	return &cliOptions{
 		Params:           params,
 		LineOnly:         values.LineOnly,
+		OnlyMatching:     values.OnlyMatching,
 		JSON:             jsonModeFor(values),
 		Count:            values.Count,
 		FilesWithMatches: values.FilesWithMatches,
