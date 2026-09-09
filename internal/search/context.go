@@ -6,9 +6,9 @@ import (
 )
 
 // ContextLines selects the matching lines (capped at limit, in line order)
-// plus n lines of context around each, merging overlaps; each returned line is
-// flagged as a match or context.
-func ContextLines(content string, hits map[int]bool, n, limit int) []api.ContextLine {
+// plus the requested lines before and after each, merging overlaps; each returned
+// line is flagged as a match or context.
+func ContextLines(content string, hits map[int]bool, before, after, limit int) []api.ContextLine {
 	lines := SplitLines(content)
 	var hs []int
 	for x := range hits {
@@ -22,7 +22,7 @@ func ContextLines(content string, hits map[int]bool, n, limit int) []api.Context
 	inc := map[int]bool{}
 	for _, x := range hs {
 		chosen[x] = true
-		for i := max(1, x-n); i <= min(len(lines), x+n); i++ {
+		for i := max(1, x-before); i <= min(len(lines), x+after); i++ {
 			inc[i] = true
 		}
 	}

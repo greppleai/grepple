@@ -170,6 +170,8 @@ classDiagram
     %% grepple:struct-tag RuleSet Generation "json:\"generation\""
     %% grepple:struct-tag RuleSet Rules "json:\"rules\""
     class SearchRequest {
+        +AfterContext: *int
+        +BeforeContext: *int
         +Context: any
         +CountByRepo: bool
         +ExcludeRepo: any
@@ -187,6 +189,8 @@ classDiagram
     }
     <<struct>> SearchRequest
     %% grepple:file SearchRequest internal/api/model.go
+    %% grepple:struct-tag SearchRequest AfterContext "json:\"afterContext,omitempty\""
+    %% grepple:struct-tag SearchRequest BeforeContext "json:\"beforeContext,omitempty\""
     %% grepple:struct-tag SearchRequest Context "json:\"context,omitempty\""
     %% grepple:struct-tag SearchRequest CountByRepo "json:\"countByRepo,omitempty\""
     %% grepple:struct-tag SearchRequest ExcludeRepo "json:\"excludeRepo,omitempty\""

@@ -10,7 +10,7 @@ import (
 
 // ToResult converts one internal match into the shared wire api.FileResult: sorted
 // match lines, structural segments, and optional context lines capped at maxWindows.
-func ToResult(m FileMatch, segs []parser.Segment, context, maxWindows int) api.FileResult {
+func ToResult(m FileMatch, segs []parser.Segment, beforeContext, afterContext, maxWindows int) api.FileResult {
 	lines := SplitLines(m.Content)
 	var ns []int
 	for n := range m.MatchLines {
@@ -30,14 +30,14 @@ func ToResult(m FileMatch, segs []parser.Segment, context, maxWindows int) api.F
 		rs = append(rs, api.ResultSegment{Kind: s.Kind, Start: s.Start, End: s.End, Text: text})
 	}
 	r := api.FileResult{Path: m.DisplayPath, Language: m.Language, Matches: matches, Segments: rs}
-	if context > 0 {
-		r.Context = ContextLines(m.Content, m.MatchLines, context, maxWindows)
+	if beforeContext > 0 || afterContext > 0 {
+		r.Context = ContextLines(m.Content, m.MatchLines, beforeContext, afterContext, maxWindows)
 	}
 	return r
 }
 
 // BuildResults converts matches concurrently while preserving their ranked order.
-func BuildResults(matches []FileMatch, context, maxSegments int, includeSegments bool) []api.FileResult {
+func BuildResults(matches []FileMatch, beforeContext, afterContext, maxSegments int, includeSegments bool) []api.FileResult {
 	results := make([]api.FileResult, len(matches))
 	runParallel(len(matches), func(index int) {
 		var segments []parser.Segment
@@ -47,7 +47,7 @@ func BuildResults(matches []FileMatch, context, maxSegments int, includeSegments
 				segments = parser.BuildSegments(matches[index].Content, matches[index].Language, matches[index].MatchLines, maxSegments)
 			}
 		}
-		results[index] = ToResult(matches[index], segments, context, maxSegments)
+		results[index] = ToResult(matches[index], segments, beforeContext, afterContext, maxSegments)
 	})
 	return results
 }

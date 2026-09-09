@@ -2,9 +2,11 @@ classDiagram
     %% grepple:package-default grepple/internal/search
     %% grepple:language-default go
     direction LR
-    note "Package search provides file discovery, query and repository filtering, paging, match workers, context, and wire-result construction. | package grepple/internal/search | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=9, declarations=8, exportedTypes=3, internalTypes=5, members=49, exportedFunctions=20, fiberRoutes=0, relations=18"
+    note "Package search provides file discovery, query and repository filtering, paging, match workers, context, and wire-result construction. | package grepple/internal/search | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=9, declarations=8, exportedTypes=3, internalTypes=5, members=51, exportedFunctions=20, fiberRoutes=0, relations=18"
     namespace data_contracts {
         class Params {
+            +AfterContext: int
+            +BeforeContext: int
             +Context: int
             +CountByRepo: bool
             +ExcludeRepo: []string
@@ -47,7 +49,7 @@ classDiagram
         }
         <<function>> AggregateRepoCounts
         class BuildResults {
-            +BuildResults([]FileMatch, int, int, bool): []api.FileResult
+            +BuildResults([]FileMatch, int, int, int, bool): []api.FileResult
         }
         <<function>> BuildResults
         class CollectFilesUnder {
@@ -59,7 +61,7 @@ classDiagram
         }
         <<function>> Content
         class ContextLines {
-            +ContextLines(string, map[int]bool, int, int): []api.ContextLine
+            +ContextLines(string, map[int]bool, int, int, int): []api.ContextLine
         }
         <<function>> ContextLines
         class EnforcePageLimit {
@@ -115,7 +117,7 @@ classDiagram
         }
         <<function>> SplitLines
         class ToResult {
-            +ToResult(FileMatch, []parser.Segment, int, int): api.FileResult
+            +ToResult(FileMatch, []parser.Segment, int, int, int): api.FileResult
         }
         <<function>> ToResult
         class WorkerCount {

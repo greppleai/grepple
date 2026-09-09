@@ -53,3 +53,20 @@ func TestResolveRequestStaysUncapped(t *testing.T) {
 		t.Fatalf("ResolveRequest clamped an internal window: got %d, want 5000", p.Limit)
 	}
 }
+
+func TestResolveRequestAsymmetricContext(t *testing.T) {
+	query := "deploy"
+	before, after := 1, 5
+	p, err := ResolveRequest(api.SearchRequest{
+		Query:         &query,
+		Context:       float64(3),
+		BeforeContext: &before,
+		AfterContext:  &after,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if p.Context != 3 || p.BeforeContext != 1 || p.AfterContext != 5 {
+		t.Fatalf("unexpected resolved context: %#v", p)
+	}
+}

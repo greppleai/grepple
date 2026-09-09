@@ -38,7 +38,7 @@ func TestSegmentsAreBuiltOnceInSearch(t *testing.T) {
 	// asking parser to reconstruct them.
 	matches[0].Segments[0].Kind = "summary"
 	matches[0].Segments[0].Text = "precomputed sentinel"
-	results := BuildResults(matches, 0, DefaultMaxSegments, true)
+	results := BuildResults(matches, 0, 0, DefaultMaxSegments, true)
 	if len(results) != 1 || len(results[0].Segments) == 0 {
 		t.Fatalf("expected 1 result with segments, got %d results", len(results))
 	}
