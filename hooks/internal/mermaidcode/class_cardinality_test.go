@@ -55,20 +55,25 @@ func TestAssociationTargetMultiplicityMatchesReferenceSyntax(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			diagnostics, err := CheckClassDiagram(cardinalityDiagram(test.relation), []Source{{"cardinality.ts", cardinalitySource}})
-			if err != nil {
-				t.Fatal(err)
-			}
-			if test.valid {
-				if len(diagnostics) != 0 {
-					t.Fatalf("valid association produced diagnostics: %+v", diagnostics)
-				}
-				return
-			}
-			if len(diagnostics) != 1 || !strings.Contains(diagnostics[0].Message, test.message) {
-				t.Fatalf("expected diagnostic containing %q, got %+v", test.message, diagnostics)
-			}
+			assertAssociationCardinality(t, test.relation, test.valid, test.message)
 		})
+	}
+}
+
+func assertAssociationCardinality(t *testing.T, relation string, valid bool, message string) {
+	t.Helper()
+	diagnostics, err := CheckClassDiagram(cardinalityDiagram(relation), []Source{{"cardinality.ts", cardinalitySource}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if valid {
+		if len(diagnostics) != 0 {
+			t.Fatalf("valid association produced diagnostics: %+v", diagnostics)
+		}
+		return
+	}
+	if len(diagnostics) != 1 || !strings.Contains(diagnostics[0].Message, message) {
+		t.Fatalf("expected diagnostic containing %q, got %+v", message, diagnostics)
 	}
 }
 

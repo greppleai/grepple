@@ -9,44 +9,9 @@ import (
 )
 
 func TestWorkspaceBundleNestedModulesImportsRoutesAndCanonicalCheck(t *testing.T) {
-	root := t.TempDir()
-	writeScopeFile(t, filepath.Join(root, "go.mod"), `module example.com/root
-require (
- github.com/gofiber/fiber/v2 v2.0.0
- github.com/acme/lib v1.0.0
- github.com/acme/lib/sub v1.0.0
-)
-`)
-	writeScopeFile(t, filepath.Join(root, "main.go"), `// Package main starts the command. This is not copied.
-package main
-import (
- "fmt"
- "example.com/root/service"
- "github.com/acme/lib/sub/client"
-)
-func main() { fmt.Println(service.Name) }
-`)
-	writeScopeFile(t, filepath.Join(root, "service", "service.go"), `// Package service provides exact things. More text.
-package service
-import "github.com/gofiber/fiber/v2"
-const Name = "service"
-type Handler struct{}
-func Exported() {}
-func (h *Handler) Register(app *fiber.App) { app.Get("/things", h.List) }
-func (h *Handler) List(*fiber.Ctx) error { return nil }
-`)
-	writeScopeFile(t, filepath.Join(root, "service", "service_test.go"), "package service\nfunc TestIgnored() {}\n")
-	writeScopeFile(t, filepath.Join(root, "nested", "go.mod"), "module example.com/nested\nrequire github.com/acme/lib v1.0.0\n")
-	writeScopeFile(t, filepath.Join(root, "nested", "model", "model.go"), "package model\nimport _ \"github.com/acme/lib/plugin\"\ntype Model struct{}\n")
-
-	first, err := GenerateWorkspaceBundle(root)
-	if err != nil {
-		t.Fatal(err)
-	}
-	second, err := GenerateWorkspaceBundle(root)
-	if err != nil {
-		t.Fatal(err)
-	}
+	root := nestedWorkspaceFixture(t)
+	first := generateWorkspaceBundleForTest(t, root)
+	second := generateWorkspaceBundleForTest(t, root)
 	if string(first.Manifest) != string(second.Manifest) || string(first.Overview) != string(second.Overview) {
 		t.Fatal("workspace bundle is not deterministic")
 	}
@@ -54,6 +19,34 @@ func (h *Handler) List(*fiber.Ctx) error { return nil }
 	if err := json.Unmarshal(first.Manifest, &manifest); err != nil {
 		t.Fatal(err)
 	}
+	assertNestedWorkspaceManifest(t, manifest)
+	assertNestedWorkspaceOverview(t, first.Overview)
+	assertWorkspaceBundleCheckAndDrift(t, root, first)
+}
+
+func nestedWorkspaceFixture(t *testing.T) string {
+	t.Helper()
+	root := t.TempDir()
+	writeScopeFile(t, filepath.Join(root, "go.mod"), "module example.com/root\nrequire (\n github.com/gofiber/fiber/v2 v2.0.0\n github.com/acme/lib v1.0.0\n github.com/acme/lib/sub v1.0.0\n)\n")
+	writeScopeFile(t, filepath.Join(root, "main.go"), "// Package main starts the command. This is not copied.\npackage main\nimport (\n \"fmt\"\n \"example.com/root/service\"\n \"github.com/acme/lib/sub/client\"\n)\nfunc main() { fmt.Println(service.Name) }\n")
+	writeScopeFile(t, filepath.Join(root, "service", "service.go"), "// Package service provides exact things. More text.\npackage service\nimport \"github.com/gofiber/fiber/v2\"\nconst Name = \"service\"\ntype Handler struct{}\nfunc Exported() {}\nfunc (h *Handler) Register(app *fiber.App) { app.Get(\"/things\", h.List) }\nfunc (h *Handler) List(*fiber.Ctx) error { return nil }\n")
+	writeScopeFile(t, filepath.Join(root, "service", "service_test.go"), "package service\nfunc TestIgnored() {}\n")
+	writeScopeFile(t, filepath.Join(root, "nested", "go.mod"), "module example.com/nested\nrequire github.com/acme/lib v1.0.0\n")
+	writeScopeFile(t, filepath.Join(root, "nested", "model", "model.go"), "package model\nimport _ \"github.com/acme/lib/plugin\"\ntype Model struct{}\n")
+	return root
+}
+
+func generateWorkspaceBundleForTest(t *testing.T, root string) *WorkspaceBundle {
+	t.Helper()
+	bundle, err := GenerateWorkspaceBundle(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return bundle
+}
+
+func assertNestedWorkspaceManifest(t *testing.T, manifest WorkspaceIR) {
+	t.Helper()
 	if manifest.Summary.Modules != 2 || manifest.Summary.Packages != 3 || manifest.Summary.FiberRoutes != 1 {
 		t.Fatalf("summary = %+v", manifest.Summary)
 	}
@@ -67,11 +60,20 @@ func (h *Handler) List(*fiber.Ctx) error { return nil }
 	if len(mainPackage.ExternalImports) != 1 || mainPackage.ExternalImports[0].ModulePath != "github.com/acme/lib/sub" {
 		t.Fatalf("longest external mapping = %+v", mainPackage.ExternalImports)
 	}
-	if !strings.Contains(string(first.Overview), "flowchart LR") || !strings.Contains(string(first.Overview), "class package_0 entrypoint") || !strings.Contains(string(first.Overview), "GET /things -&gt; Handler.List") {
-		t.Fatalf("overview facts missing:\n%s", first.Overview)
+}
+
+func assertNestedWorkspaceOverview(t *testing.T, overview []byte) {
+	t.Helper()
+	text := string(overview)
+	if !strings.Contains(text, "flowchart LR") || !strings.Contains(text, "class package_0 entrypoint") || !strings.Contains(text, "GET /things -&gt; Handler.List") {
+		t.Fatalf("overview facts missing:\n%s", overview)
 	}
+}
+
+func assertWorkspaceBundleCheckAndDrift(t *testing.T, root string, bundle *WorkspaceBundle) {
+	t.Helper()
 	output := filepath.Join(root, "docs", "project.workspace")
-	if err := WriteWorkspaceBundle(output, first); err != nil {
+	if err := WriteWorkspaceBundle(output, bundle); err != nil {
 		t.Fatal(err)
 	}
 	entries, err := os.ReadDir(output)
@@ -81,7 +83,7 @@ func (h *Handler) List(*fiber.Ctx) error { return nil }
 	if err := CheckWorkspaceBundle(output, ""); err != nil {
 		t.Fatalf("self-locating check: %v", err)
 	}
-	if err := os.WriteFile(filepath.Join(output, "overview.mmd"), append(first.Overview, ' '), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(output, "overview.mmd"), append(bundle.Overview, ' '), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	if err := CheckWorkspaceBundle(output, root); err == nil || !strings.Contains(err.Error(), "overview.mmd") {

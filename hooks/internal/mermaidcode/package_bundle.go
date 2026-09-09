@@ -16,6 +16,7 @@ import (
 	"strings"
 )
 
+// PackageBundleFormatVersion identifies the canonical package-bundle schema version.
 const PackageBundleFormatVersion = 1
 
 var packageBundleFiles = []string{"manifest.json", "overview.mmd", "structure.mmd"}
@@ -35,6 +36,7 @@ type PackageIR struct {
 	Relations           []PackageRelation    `json:"relations"`
 }
 
+// PackageIdentity identifies the package represented by a bundle.
 type PackageIdentity struct {
 	Name            string `json:"name"`
 	ImportPath      string `json:"importPath"`
@@ -42,6 +44,7 @@ type PackageIdentity struct {
 	Documentation   string `json:"documentation,omitempty"`
 }
 
+// PackageScope records the source constructs included in a package bundle.
 type PackageScope struct {
 	Types     string   `json:"types"`
 	Functions string   `json:"functions"`
@@ -52,11 +55,13 @@ type PackageScope struct {
 	TagUnion  []string `json:"syntacticBuildTagUnion"`
 }
 
+// PackageSourceFile records a source path and its syntactic build tags.
 type PackageSourceFile struct {
 	Path      string   `json:"path"`
 	BuildTags []string `json:"buildTags,omitempty"`
 }
 
+// PackageDeclaration describes one type declaration in the package model.
 type PackageDeclaration struct {
 	Name       string          `json:"name"`
 	Kind       string          `json:"kind"`
@@ -66,6 +71,7 @@ type PackageDeclaration struct {
 	Members    []PackageMember `json:"members,omitempty"`
 }
 
+// PackageMember describes a declaration member or exported package function.
 type PackageMember struct {
 	Name       string            `json:"name"`
 	Kind       string            `json:"kind"`
@@ -75,10 +81,12 @@ type PackageMember struct {
 	StructTag  *PackageStructTag `json:"structTag,omitempty"`
 }
 
+// PackageStructTag preserves the exact source spelling of a Go struct tag.
 type PackageStructTag struct {
 	Value string `json:"value"`
 }
 
+// PackageRoute describes a statically discovered Fiber route.
 type PackageRoute struct {
 	Method  string `json:"method"`
 	Path    string `json:"path"`
@@ -86,6 +94,7 @@ type PackageRoute struct {
 	File    string `json:"file"`
 }
 
+// PackageRelation describes one directed relation between declarations.
 type PackageRelation struct {
 	From        string `json:"from"`
 	To          string `json:"to"`
@@ -94,6 +103,7 @@ type PackageRelation struct {
 	Cardinality string `json:"cardinality"`
 }
 
+// PackageSummary contains aggregate counts for the package model.
 type PackageSummary struct {
 	SourceFiles       int `json:"sourceFiles"`
 	Declarations      int `json:"declarations"`
@@ -134,12 +144,7 @@ func BuildPackageIR(directory string) (*PackageIR, []Source, error) {
 	if importPath == "" {
 		return nil, nil, fmt.Errorf("cannot resolve Go import path for selected directory %s (no enclosing go.mod with a module path)", directory)
 	}
-	declarations := map[string]*Declaration{}
-	for _, declaration := range analysis.GoDeclarations {
-		if declaration.PackageID == id {
-			declarations[declaration.Name] = declaration
-		}
-	}
+	declarations := packageDeclarations(analysis, id)
 	inferGoImplementations(declarations)
 
 	sourceDirectory, err := normalizedPackageSourceDirectory(directory)
@@ -152,68 +157,110 @@ func BuildPackageIR(directory string) (*PackageIR, []Source, error) {
 		Scope:         PackageScope{Types: "all", Functions: "exported", Variables: "excluded", Constants: "excluded", Tests: "excluded", BuildTags: "syntactic-union-conflicts-rejected", TagUnion: []string{}},
 		SourceFiles:   []PackageSourceFile{}, Declarations: []PackageDeclaration{}, ExportedFunctions: []PackageMember{}, Routes: []PackageRoute{}, Relations: []PackageRelation{},
 	}
+	if err := populatePackageSourceFiles(ir, sources, analysis); err != nil {
+		return nil, nil, err
+	}
+
+	ir.Declarations = packageIRDeclarations(declarations)
+	ir.ExportedFunctions, err = packageIRFunctions(analysis, id)
+	if err != nil {
+		return nil, nil, err
+	}
+	ir.Routes = packageIRRoutes(analysis, id)
+	ir.Relations = packageIRRelations(ir, declarations)
+	ir.Summary = packageSummary(ir)
+	ir.SemanticModelDigest, err = packageIRDigest(ir)
+	if err != nil {
+		return nil, nil, err
+	}
+	return ir, sources, nil
+}
+func packageDeclarations(analysis *Analysis, id string) map[string]*Declaration {
+	declarations := map[string]*Declaration{}
+	for _, declaration := range analysis.GoDeclarations {
+		if declaration.PackageID == id {
+			declarations[declaration.Name] = declaration
+		}
+	}
+	return declarations
+}
+
+func populatePackageSourceFiles(ir *PackageIR, sources []Source, analysis *Analysis) error {
 	allTags := map[string]bool{}
 	for _, source := range sources {
-		file := analysis.SourcePaths[absolutePath(source.Path)]
-		tags, tagErr := syntacticBuildConstraints(source)
-		if tagErr != nil {
-			return nil, nil, tagErr
+		tags, err := syntacticBuildConstraints(source)
+		if err != nil {
+			return err
 		}
 		for _, tag := range tags {
 			allTags[tag] = true
 		}
-		ir.SourceFiles = append(ir.SourceFiles, PackageSourceFile{Path: file, BuildTags: tags})
+		ir.SourceFiles = append(ir.SourceFiles, PackageSourceFile{Path: analysis.SourcePaths[absolutePath(source.Path)], BuildTags: tags})
 	}
 	sort.Slice(ir.SourceFiles, func(i, j int) bool { return ir.SourceFiles[i].Path < ir.SourceFiles[j].Path })
 	ir.Scope.TagUnion = sortedKeys(allTags)
+	return nil
+}
 
+func packageIRDeclarations(declarations map[string]*Declaration) []PackageDeclaration {
+	result := make([]PackageDeclaration, 0, len(declarations))
 	for _, name := range sortedKeys(declarations) {
 		declaration := declarations[name]
 		item := PackageDeclaration{Name: name, Kind: declaration.Kind, File: declaration.File, FileLocal: declaration.FileLocal, Underlying: declaration.Underlying, Members: []PackageMember{}}
 		for _, member := range declaration.Members {
-			converted := packageMember(member)
-			if converted.File == item.File {
-				converted.File = ""
-			}
-			if member.Kind == "property" {
-				tag := declaration.StructTags[member.Name]
-				if tag.Present {
-					converted.StructTag = &PackageStructTag{Value: tag.Value}
-				}
-			}
-			item.Members = append(item.Members, converted)
+			item.Members = append(item.Members, packageDeclarationMember(item.File, member, declaration.StructTags[member.Name]))
 		}
 		sortPackageMembers(item.Members)
-		ir.Declarations = append(ir.Declarations, item)
+		result = append(result, item)
 	}
+	return result
+}
+
+func packageDeclarationMember(declarationFile string, member Member, tag GoStructTag) PackageMember {
+	converted := packageMember(member)
+	if converted.File == declarationFile {
+		converted.File = ""
+	}
+	if member.Kind == "property" && tag.Present {
+		converted.StructTag = &PackageStructTag{Value: tag.Value}
+	}
+	return converted
+}
+
+func packageIRFunctions(analysis *Analysis, id string) ([]PackageMember, error) {
+	result := []PackageMember{}
 	for _, name := range packageFunctionNames(analysis, id) {
 		functions := analysis.GoFunctions[id+":"+name]
 		if len(functions) != 1 {
-			return nil, nil, fmt.Errorf("exported package function %q is ambiguous", name)
+			return nil, fmt.Errorf("exported package function %q is ambiguous", name)
 		}
 		converted := packageMember(functions[0])
 		converted.Kind = "function"
-		ir.ExportedFunctions = append(ir.ExportedFunctions, converted)
+		result = append(result, converted)
 	}
+	return result, nil
+}
+
+func packageIRRoutes(analysis *Analysis, id string) []PackageRoute {
+	routes := []PackageRoute{}
 	for _, route := range analysis.GoFiberRoutes {
-		if route.PackageID != id {
-			continue
+		if route.PackageID == id {
+			routes = append(routes, PackageRoute{Method: route.Method, Path: route.Path, Handler: route.Handler, File: normalizeBundleFile(route.Location.Path, analysis)})
 		}
-		ir.Routes = append(ir.Routes, PackageRoute{Method: route.Method, Path: route.Path, Handler: route.Handler, File: normalizeBundleFile(route.Location.Path, analysis)})
 	}
-	sort.Slice(ir.Routes, func(i, j int) bool { return routeSortKey(ir.Routes[i]) < routeSortKey(ir.Routes[j]) })
-	ir.Routes = uniqueRoutes(ir.Routes)
-	ir.Relations = packageIRRelations(ir, declarations)
-	ir.Summary = packageSummary(ir)
+	sort.Slice(routes, func(i, j int) bool { return routeSortKey(routes[i]) < routeSortKey(routes[j]) })
+	return uniqueRoutes(routes)
+}
+
+func packageIRDigest(ir *PackageIR) (string, error) {
 	digestModel := *ir
 	digestModel.SemanticModelDigest = ""
 	digestBytes, err := json.Marshal(digestModel)
 	if err != nil {
-		return nil, nil, err
+		return "", err
 	}
 	sum := sha256.Sum256(digestBytes)
-	ir.SemanticModelDigest = "sha256:" + hex.EncodeToString(sum[:])
-	return ir, sources, nil
+	return "sha256:" + hex.EncodeToString(sum[:]), nil
 }
 
 func packageMember(member Member) PackageMember {
@@ -309,31 +356,36 @@ func goBuildHeader(text string) (string, string, error) {
 			}
 			goBuild = line
 		}
-		remaining := line
-		for remaining != "" {
-			if inBlock {
-				end := strings.Index(remaining, "*/")
-				if end < 0 {
-					remaining = ""
-					continue
-				}
-				inBlock = false
-				remaining = strings.TrimSpace(remaining[end+2:])
-				continue
-			}
-			switch {
-			case strings.HasPrefix(remaining, "//"):
-				remaining = ""
-			case strings.HasPrefix(remaining, "/*"):
-				inBlock = true
-				remaining = strings.TrimSpace(remaining[2:])
-			default:
-				return content[:headerEnd], goBuild, nil
-			}
+		if buildHeaderEnded(strings.TrimSpace(line), &inBlock) {
+			return content[:headerEnd], goBuild, nil
 		}
 		offset += len(raw)
 	}
 	return content[:headerEnd], goBuild, nil
+}
+
+func buildHeaderEnded(remaining string, inBlock *bool) bool {
+	for remaining != "" {
+		if *inBlock {
+			end := strings.Index(remaining, "*/")
+			if end < 0 {
+				return false
+			}
+			*inBlock = false
+			remaining = strings.TrimSpace(remaining[end+2:])
+			continue
+		}
+		switch {
+		case strings.HasPrefix(remaining, "//"):
+			return false
+		case strings.HasPrefix(remaining, "/*"):
+			*inBlock = true
+			remaining = strings.TrimSpace(remaining[2:])
+		default:
+			return true
+		}
+	}
+	return false
 }
 
 var knownFilenameGOOS = map[string]bool{
@@ -414,52 +466,65 @@ func packageIRRelations(ir *PackageIR, declarations map[string]*Declaration) []P
 		local[declaration.Name] = true
 	}
 	result := []PackageRelation{}
-	add := func(from, to, kind, via, cardinality string) {
-		if from == to || !local[to] {
-			return
-		}
-		result = append(result, PackageRelation{From: from, To: to, Kind: kind, Via: via, Cardinality: cardinality})
-	}
 	for _, declaration := range ir.Declarations {
-		raw := declarations[declaration.Name]
-		for _, parent := range sortedKeys(raw.Extends) {
-			if local[parent] {
-				add(declaration.Name, parent, "inheritance", "embedded type", "one")
-			}
-		}
-		for _, parent := range sortedKeys(raw.Implements) {
-			if local[parent] {
-				add(declaration.Name, parent, "implementation", "implements", "one")
-			}
-		}
-		if declaration.Kind == "alias" || declaration.Kind == "type" {
-			for _, target := range sortedKeys(local) {
-				if cardinality, found := packageGoTypeCardinality(declaration.Underlying, target); found {
-					add(declaration.Name, target, "dependency", "underlying type", cardinality)
-				}
-			}
-		}
-		for _, member := range declaration.Members {
-			if member.Kind == "property" {
-				addTypeRelations(&result, local, declaration.Name, member.Result, "association", "field "+member.Name)
-				continue
-			}
-			for index, parameter := range member.Parameters {
-				addTypeRelations(&result, local, declaration.Name, parameter, "dependency", fmt.Sprintf("method %s parameter %d", member.Name, index+1))
-			}
-			for index, value := range resultTypes(member.Result) {
-				addTypeRelations(&result, local, declaration.Name, value, "dependency", fmt.Sprintf("method %s result %d", member.Name, index+1))
-			}
-		}
+		result = append(result, packageDeclarationRelations(declaration, declarations[declaration.Name], local)...)
 	}
 	for _, function := range ir.ExportedFunctions {
-		for index, parameter := range function.Parameters {
-			addTypeRelations(&result, local, function.Name, parameter, "dependency", fmt.Sprintf("parameter %d", index+1))
-		}
-		for index, value := range resultTypes(function.Result) {
-			addTypeRelations(&result, local, function.Name, value, "dependency", fmt.Sprintf("result %d", index+1))
-		}
+		result = append(result, packageFunctionRelations(function, local)...)
 	}
+	return uniquePackageRelations(result)
+}
+
+func packageDeclarationRelations(declaration PackageDeclaration, raw *Declaration, local map[string]bool) []PackageRelation {
+	result := []PackageRelation{}
+	for _, parent := range sortedKeys(raw.Extends) {
+		addPackageRelation(&result, local, declaration.Name, parent, "inheritance", "embedded type", "one")
+	}
+	for _, parent := range sortedKeys(raw.Implements) {
+		addPackageRelation(&result, local, declaration.Name, parent, "implementation", "implements", "one")
+	}
+	if declaration.Kind == "alias" || declaration.Kind == "type" {
+		addTypeRelations(&result, local, declaration.Name, declaration.Underlying, "dependency", "underlying type")
+	}
+	for _, member := range declaration.Members {
+		result = append(result, packageMemberRelations(declaration.Name, member, local)...)
+	}
+	return result
+}
+
+func packageMemberRelations(owner string, member PackageMember, local map[string]bool) []PackageRelation {
+	result := []PackageRelation{}
+	if member.Kind == "property" {
+		addTypeRelations(&result, local, owner, member.Result, "association", "field "+member.Name)
+		return result
+	}
+	for index, parameter := range member.Parameters {
+		addTypeRelations(&result, local, owner, parameter, "dependency", fmt.Sprintf("method %s parameter %d", member.Name, index+1))
+	}
+	for index, value := range resultTypes(member.Result) {
+		addTypeRelations(&result, local, owner, value, "dependency", fmt.Sprintf("method %s result %d", member.Name, index+1))
+	}
+	return result
+}
+
+func packageFunctionRelations(function PackageMember, local map[string]bool) []PackageRelation {
+	result := []PackageRelation{}
+	for index, parameter := range function.Parameters {
+		addTypeRelations(&result, local, function.Name, parameter, "dependency", fmt.Sprintf("parameter %d", index+1))
+	}
+	for index, value := range resultTypes(function.Result) {
+		addTypeRelations(&result, local, function.Name, value, "dependency", fmt.Sprintf("result %d", index+1))
+	}
+	return result
+}
+
+func addPackageRelation(result *[]PackageRelation, local map[string]bool, from, to, kind, via, cardinality string) {
+	if from != to && local[to] {
+		*result = append(*result, PackageRelation{From: from, To: to, Kind: kind, Via: via, Cardinality: cardinality})
+	}
+}
+
+func uniquePackageRelations(result []PackageRelation) []PackageRelation {
 	sort.Slice(result, func(i, j int) bool { return relationSortKey(result[i]) < relationSortKey(result[j]) })
 	out := result[:0]
 	last := ""
@@ -618,62 +683,66 @@ func renderIRDeclaration(declaration PackageDeclaration, ir *PackageIR, exact bo
 	if !exact {
 		indent = "        "
 	}
-	members := declaration.Members
-	if !exact {
-		members = nil
-		switch {
-		case declaration.Kind == "interface":
-			for _, member := range declaration.Members {
-				if member.Kind != "property" {
-					members = append(members, member)
-				}
-			}
-		case declaration.Kind == "struct" && hasPresentTag(declaration):
-			for _, member := range declaration.Members {
-				if member.Kind == "property" {
-					members = append(members, member)
-				}
-			}
-		}
-	}
-	classSyntax := "class " + declaration.Name
-	if declaration.Kind == "alias" || declaration.Kind == "type" {
-		classSyntax += "[\"" + mermaidDisplayLabel(declaration.Name+" = "+declaration.Underlying) + "\"]"
-	}
-	lines := []string{}
-	if len(members) > 0 {
-		lines = append(lines, indent+classSyntax+" {")
-		for _, member := range members {
-			lines = append(lines, indent+"    "+renderPackageIRMember(member))
-		}
-		lines = append(lines, indent+"}")
-	} else {
-		lines = append(lines, indent+classSyntax)
-	}
+	members := renderedIRMembers(declaration, exact)
+	lines := renderIRClassBody(declaration, members, indent)
 	if declaration.Kind == "interface" {
 		lines = append(lines, indent+"<<interface>> "+declaration.Name)
 	} else {
 		lines = append(lines, indent+"<<"+declaration.Kind+">> "+declaration.Name)
 	}
-	if exact && (declaration.Kind == "alias" || declaration.Kind == "type") {
+	if exact {
+		lines = append(lines, renderExactIRMetadata(declaration, ir, indent)...)
+	}
+	return lines
+}
+
+func renderedIRMembers(declaration PackageDeclaration, exact bool) []PackageMember {
+	if exact {
+		return declaration.Members
+	}
+	members := []PackageMember{}
+	for _, member := range declaration.Members {
+		if declaration.Kind == "interface" && member.Kind != "property" || declaration.Kind == "struct" && hasPresentTag(declaration) && member.Kind == "property" {
+			members = append(members, member)
+		}
+	}
+	return members
+}
+
+func renderIRClassBody(declaration PackageDeclaration, members []PackageMember, indent string) []string {
+	classSyntax := "class " + declaration.Name
+	if declaration.Kind == "alias" || declaration.Kind == "type" {
+		classSyntax += "[\"" + mermaidDisplayLabel(declaration.Name+" = "+declaration.Underlying) + "\"]"
+	}
+	if len(members) == 0 {
+		return []string{indent + classSyntax}
+	}
+	lines := []string{indent + classSyntax + " {"}
+	for _, member := range members {
+		lines = append(lines, indent+"    "+renderPackageIRMember(member))
+	}
+	return append(lines, indent+"}")
+}
+
+func renderExactIRMetadata(declaration PackageDeclaration, ir *PackageIR, indent string) []string {
+	lines := []string{}
+	if declaration.Kind == "alias" || declaration.Kind == "type" {
 		lines = append(lines, indent+"%% grepple:underlying "+declaration.Name+" "+declaration.Underlying)
 	}
-	if exact {
-		lines = append(lines, indent+"%% grepple:file "+declaration.Name+" "+declaration.File)
-		if declaration.Kind == "struct" {
-			for _, member := range declaration.Members {
-				if member.StructTag != nil {
-					lines = append(lines, fmt.Sprintf("%s%%%% grepple:struct-tag %s %s %q", indent, declaration.Name, member.Name, member.StructTag.Value))
-				}
+	lines = append(lines, indent+"%% grepple:file "+declaration.Name+" "+declaration.File)
+	if declaration.Kind == "struct" {
+		for _, member := range declaration.Members {
+			if member.StructTag != nil {
+				lines = append(lines, fmt.Sprintf("%s%%%% grepple:struct-tag %s %s %q", indent, declaration.Name, member.Name, member.StructTag.Value))
 			}
 		}
-		if declaration.FileLocal {
-			lines = append(lines, indent+"%% grepple:filelocal "+declaration.Name)
-		}
-		for _, route := range ir.Routes {
-			if strings.HasPrefix(route.Handler, declaration.Name+".") {
-				lines = append(lines, fmt.Sprintf("%s%%%% grepple:route %s %s %s", indent, route.Method, route.Path, route.Handler))
-			}
+	}
+	if declaration.FileLocal {
+		lines = append(lines, indent+"%% grepple:filelocal "+declaration.Name)
+	}
+	for _, route := range ir.Routes {
+		if strings.HasPrefix(route.Handler, declaration.Name+".") {
+			lines = append(lines, fmt.Sprintf("%s%%%% grepple:route %s %s %s", indent, route.Method, route.Path, route.Handler))
 		}
 	}
 	return lines
@@ -682,9 +751,11 @@ func renderPackageIRMember(member PackageMember) string {
 	visibility := goVisibility(member.Name)
 	return renderMember(Member{Kind: member.Kind, Name: member.Name, Visibility: visibility, Type: member.Result, Parameters: member.Parameters})
 }
+
 func renderIRFunction(function PackageMember, _ string) []string {
 	return []string{"    class " + function.Name + " {", "        " + renderPackageIRMember(function), "    }", "    <<function>> " + function.Name, "    %% grepple:file " + function.Name + " " + function.File}
 }
+
 func renderIRFunctionOverview(function PackageMember, _ string) []string {
 	return []string{"        class " + function.Name + " {", "            " + renderPackageIRMember(function), "        }", "        <<function>> " + function.Name}
 }
@@ -803,9 +874,9 @@ func collapseOverviewRelations(relations []PackageRelation) []PackageRelation {
 		key := relation.From + "\x00" + relation.To + "\x00" + relation.Kind + "\x00" + relation.Cardinality
 		group := groups[key]
 		if group == nil {
-			copy := relation
-			copy.Via = ""
-			group = &relationGroup{relation: copy}
+			collapsed := relation
+			collapsed.Via = ""
+			group = &relationGroup{relation: collapsed}
 			groups[key] = group
 		}
 		group.vias = append(group.vias, relation.Via)
@@ -874,31 +945,11 @@ var (
 
 // WritePackageBundle transactionally replaces only the three generated files.
 func WritePackageBundle(output string, bundle *PackageBundle) error {
-	if output == "" {
-		return fmt.Errorf("bundle output directory is required")
-	}
-	output = filepath.Clean(output)
-	parent, base := filepath.Dir(output), filepath.Base(output)
-	if base == "." || base == string(filepath.Separator) {
-		return fmt.Errorf("bundle output directory is invalid")
-	}
-	if err := os.MkdirAll(parent, 0o755); err != nil {
+	output, parent, base, exists, err := preparePackageBundleOutput(output)
+	if err != nil {
 		return err
 	}
-	exists := false
-	if info, err := os.Lstat(output); err == nil {
-		exists = true
-		if info.Mode()&os.ModeSymlink != 0 || !info.IsDir() {
-			return fmt.Errorf("bundle output path is not a directory")
-		}
-		if err := validateWritableBundleDirectory(output); err != nil {
-			return err
-		}
-	} else if !os.IsNotExist(err) {
-		return err
-	}
-
-	temporary, err := os.MkdirTemp(parent, "."+base+".tmp-")
+	temporary, err := writeTemporaryPackageBundle(parent, base, bundle)
 	if err != nil {
 		return err
 	}
@@ -908,23 +959,67 @@ func WritePackageBundle(output string, bundle *PackageBundle) error {
 			_ = os.RemoveAll(temporary)
 		}
 	}()
-	if err := os.Chmod(temporary, 0o755); err != nil {
+	if err := commitPackageBundle(output, temporary, exists); err != nil {
 		return err
+	}
+	removeTemporary = false
+	return nil
+}
+
+func preparePackageBundleOutput(output string) (string, string, string, bool, error) {
+	if output == "" {
+		return "", "", "", false, fmt.Errorf("bundle output directory is required")
+	}
+	output = filepath.Clean(output)
+	parent, base := filepath.Dir(output), filepath.Base(output)
+	if base == "." || base == string(filepath.Separator) {
+		return "", "", "", false, fmt.Errorf("bundle output directory is invalid")
+	}
+	if err := os.MkdirAll(parent, 0o755); err != nil {
+		return "", "", "", false, err
+	}
+	info, err := os.Lstat(output)
+	if os.IsNotExist(err) {
+		return output, parent, base, false, nil
+	}
+	if err != nil {
+		return "", "", "", false, err
+	}
+	if info.Mode()&os.ModeSymlink != 0 || !info.IsDir() {
+		return "", "", "", false, fmt.Errorf("bundle output path is not a directory")
+	}
+	if err := validateWritableBundleDirectory(output); err != nil {
+		return "", "", "", false, err
+	}
+	return output, parent, base, true, nil
+}
+
+func writeTemporaryPackageBundle(parent, base string, bundle *PackageBundle) (string, error) {
+	temporary, err := os.MkdirTemp(parent, "."+base+".tmp-")
+	if err != nil {
+		return "", err
+	}
+	if err := os.Chmod(temporary, 0o755); err != nil {
+		_ = os.RemoveAll(temporary)
+		return "", err
 	}
 	files := map[string][]byte{"manifest.json": bundle.Manifest, "overview.mmd": bundle.Overview, "structure.mmd": bundle.Structure}
 	for _, name := range packageBundleFiles {
 		if err := bundleWriteFile(filepath.Join(temporary, name), files[name], 0o644); err != nil {
-			return fmt.Errorf("write temporary bundle file %s: %w", name, err)
+			_ = os.RemoveAll(temporary)
+			return "", fmt.Errorf("write temporary bundle file %s: %w", name, err)
 		}
 	}
+	return temporary, nil
+}
+
+func commitPackageBundle(output, temporary string, exists bool) error {
 	if !exists {
 		if err := bundleRename(temporary, output); err != nil {
 			return fmt.Errorf("commit package bundle: %w", err)
 		}
-		removeTemporary = false
 		return nil
 	}
-
 	backup := temporary + "-previous"
 	if err := bundleRename(output, backup); err != nil {
 		return fmt.Errorf("prepare package bundle replacement: %w", err)
@@ -935,7 +1030,6 @@ func WritePackageBundle(output string, bundle *PackageBundle) error {
 		}
 		return fmt.Errorf("commit package bundle: %w", err)
 	}
-	removeTemporary = false
 	if err := os.RemoveAll(backup); err != nil {
 		return fmt.Errorf("remove replaced package bundle backup: %w", err)
 	}
@@ -1047,21 +1141,44 @@ func CheckPackageBundle(bundleDirectory, sourceDirectory string) error {
 	if err != nil {
 		return err
 	}
-	entries, err := os.ReadDir(bundleDirectory)
+	actualNames, err := packageBundleEntryNames(bundleDirectory)
 	if err != nil {
-		return fmt.Errorf("read package bundle: %w", err)
+		return err
 	}
-	actualNames := map[string]bool{}
+	if err := validatePackageBundleNames(actualNames); err != nil {
+		return err
+	}
+	wanted := map[string][]byte{"manifest.json": expected.Manifest, "overview.mmd": expected.Overview, "structure.mmd": expected.Structure}
+	actual, err := readPackageBundleFiles(bundleDirectory)
+	if err != nil {
+		return err
+	}
+	if err := validatePackageBundleDiagrams(actual, sources); err != nil {
+		return err
+	}
+	return comparePackageBundleFiles(actual, wanted)
+}
+
+func packageBundleEntryNames(directory string) (map[string]bool, error) {
+	entries, err := os.ReadDir(directory)
+	if err != nil {
+		return nil, fmt.Errorf("read package bundle: %w", err)
+	}
+	names := map[string]bool{}
 	for _, entry := range entries {
-		actualNames[entry.Name()] = true
+		names[entry.Name()] = true
 	}
+	return names, nil
+}
+
+func validatePackageBundleNames(names map[string]bool) error {
 	for _, name := range packageBundleFiles {
-		if !actualNames[name] {
+		if !names[name] {
 			return fmt.Errorf("package bundle missing required file: %s", name)
 		}
 	}
 	extra := []string{}
-	for name := range actualNames {
+	for name := range names {
 		if name != "manifest.json" && name != "overview.mmd" && name != "structure.mmd" {
 			extra = append(extra, name)
 		}
@@ -1070,24 +1187,35 @@ func CheckPackageBundle(bundleDirectory, sourceDirectory string) error {
 	if len(extra) > 0 {
 		return fmt.Errorf("package bundle contains unexpected file: %s", extra[0])
 	}
-	wanted := map[string][]byte{"manifest.json": expected.Manifest, "overview.mmd": expected.Overview, "structure.mmd": expected.Structure}
+	return nil
+}
+
+func readPackageBundleFiles(directory string) (map[string][]byte, error) {
 	actual := map[string][]byte{}
 	for _, name := range packageBundleFiles {
-		content, e := os.ReadFile(filepath.Join(bundleDirectory, name))
-		if e != nil {
-			return fmt.Errorf("read package bundle file %s: %w", name, e)
+		content, err := os.ReadFile(filepath.Join(directory, name))
+		if err != nil {
+			return nil, fmt.Errorf("read package bundle file %s: %w", name, err)
 		}
 		actual[name] = content
 	}
+	return actual, nil
+}
+
+func validatePackageBundleDiagrams(actual map[string][]byte, sources []Source) error {
 	for _, name := range []string{"overview.mmd", "structure.mmd"} {
-		diagnostics, e := checkPackageBundleDiagram(string(actual[name]), sources)
-		if e != nil {
-			return fmt.Errorf("validate package bundle %s: %w", name, e)
+		diagnostics, err := checkPackageBundleDiagram(string(actual[name]), sources)
+		if err != nil {
+			return fmt.Errorf("validate package bundle %s: %w", name, err)
 		}
 		if len(diagnostics) > 0 {
 			return fmt.Errorf("validate package bundle %s: %s", name, diagnostics[0].Message)
 		}
 	}
+	return nil
+}
+
+func comparePackageBundleFiles(actual, wanted map[string][]byte) error {
 	for _, name := range packageBundleFiles {
 		if !bytes.Equal(actual[name], wanted[name]) {
 			return fmt.Errorf("package bundle artifact differs from canonical generated content: %s", name)

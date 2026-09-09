@@ -163,6 +163,13 @@ func renderClass(name string, declaration *Declaration, analysis *Analysis) ([]s
 		return nil, err
 	}
 	lines := renderClassBody(name, members)
+	lines = append(lines, renderClassMetadata(name, declaration, analysis)...)
+	lines = append(lines, renderClassExports(name, declaration, analysis)...)
+	return append(lines, ""), nil
+}
+
+func renderClassMetadata(name string, declaration *Declaration, analysis *Analysis) []string {
+	lines := []string{}
 	if declaration.Kind == "interface" {
 		lines = append(lines, "    <<interface>> "+name)
 	} else if isExplicitGoDeclarationKind(declaration.Kind) {
@@ -182,32 +189,40 @@ func renderClass(name string, declaration *Declaration, analysis *Analysis) ([]s
 		lines = append(lines, "    %% grepple:file "+name+" "+declaration.File)
 	}
 	if declaration.Language == "go" && declaration.Kind == "struct" {
-		for _, field := range sortedKeys(declaration.StructTags) {
-			tag := declaration.StructTags[field]
-			if tag.Present {
-				lines = append(lines, "    %% grepple:struct-tag "+name+" "+field+" "+strconv.Quote(tag.Value))
-			}
-		}
+		lines = append(lines, renderStructTagMetadata(name, declaration.StructTags)...)
 	}
 	if declaration.Language == "go" && declaration.FileLocal {
 		lines = append(lines, "    %% grepple:filelocal "+name)
 	}
+	return lines
+}
+
+func renderStructTagMetadata(name string, tags map[string]GoStructTag) []string {
+	lines := []string{}
+	for _, field := range sortedKeys(tags) {
+		tag := tags[field]
+		if tag.Present {
+			lines = append(lines, "    %% grepple:struct-tag "+name+" "+field+" "+strconv.Quote(tag.Value))
+		}
+	}
+	return lines
+}
+
+func renderClassExports(name string, declaration *Declaration, analysis *Analysis) []string {
 	exported := analysis.Exports[name]
 	defaultExported := analysis.DefaultExports[name]
 	if declaration.Language == "typescript" {
 		exported = analysis.TSExports[declaration.ModuleID][name]
 		defaultExported = analysis.TSDefaultExports[declaration.ModuleID] == name
 	}
-	if exported {
+	lines := []string{}
+	if exported || defaultExported {
 		lines = append(lines, "    <<export>> "+name)
 	}
 	if defaultExported {
-		if !exported {
-			lines = append(lines, "    <<export>> "+name)
-		}
 		lines = append(lines, "    %% grepple:default-export "+name)
 	}
-	return append(lines, ""), nil
+	return lines
 }
 
 func renderedMembers(owner string, members []Member) ([]string, error) {

@@ -10,89 +10,114 @@ import (
 )
 
 func TestPackageBundleCanonicalFactsAndCheck(t *testing.T) {
-	root := t.TempDir()
-	writeScopeFile(t, filepath.Join(root, "go.mod"), "module example.com/bundle\n")
-	directory := filepath.Join(root, "api")
-	writeScopeFile(t, filepath.Join(directory, "b.go"), `// Package api exposes records. Additional package details.
-package api
-func Build(ID) *Record { return nil }
-func Ping() {}
-`)
-	writeScopeFile(t, filepath.Join(directory, "a.go"), `//go:build linux
-package api
-import "github.com/gofiber/fiber/v2"
-type ID string
-type Alias = ID
-type Contract interface { Find(ID) (*Record, error) }
-type Record struct { ID ID `+"`json:\"id\"`"+`; Untagged ID }
-type handler struct { Record *Record }
-func (h *handler) Register(app *fiber.App) { app.Post("/records", h.Create); app.Get("/records", h.List) }
-func (h *handler) List(*fiber.Ctx) error { return nil }
-func (h *handler) Create(*fiber.Ctx) error { return nil }
-`)
-
-	first, err := GeneratePackageBundle(directory)
-	if err != nil {
-		t.Fatal(err)
-	}
-	second, err := GeneratePackageBundle(directory)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if string(first.Manifest) != string(second.Manifest) || string(first.Overview) != string(second.Overview) || string(first.Structure) != string(second.Structure) {
-		t.Fatal("bundle is not deterministic")
-	}
+	root, directory := canonicalPackageFixture(t)
+	first := generatePackageBundleForTest(t, directory)
+	second := generatePackageBundleForTest(t, directory)
+	assertPackageBundleDeterministic(t, first, second)
 	var manifest PackageIR
 	if err := json.Unmarshal(first.Manifest, &manifest); err != nil {
 		t.Fatal(err)
 	}
+	assertCanonicalPackageManifest(t, manifest)
+	assertCanonicalPackageArtifacts(t, first)
+	assertPackageBundleCheckAndDrift(t, root, directory, first)
+}
+
+func canonicalPackageFixture(t *testing.T) (string, string) {
+	t.Helper()
+	root := t.TempDir()
+	writeScopeFile(t, filepath.Join(root, "go.mod"), "module example.com/bundle\n")
+	directory := filepath.Join(root, "api")
+	writeScopeFile(t, filepath.Join(directory, "b.go"), "// Package api exposes records. Additional package details.\npackage api\nfunc Build(ID) *Record { return nil }\nfunc Ping() {}\n")
+	writeScopeFile(t, filepath.Join(directory, "a.go"), "//go:build linux\npackage api\nimport \"github.com/gofiber/fiber/v2\"\ntype ID string\ntype Alias = ID\ntype Contract interface { Find(ID) (*Record, error) }\ntype Record struct { ID ID `json:\"id\"`; Untagged ID }\ntype handler struct { Record *Record }\nfunc (h *handler) Register(app *fiber.App) { app.Post(\"/records\", h.Create); app.Get(\"/records\", h.List) }\nfunc (h *handler) List(*fiber.Ctx) error { return nil }\nfunc (h *handler) Create(*fiber.Ctx) error { return nil }\n")
+	return root, directory
+}
+
+func generatePackageBundleForTest(t *testing.T, directory string) *PackageBundle {
+	t.Helper()
+	bundle, err := GeneratePackageBundle(directory)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return bundle
+}
+
+func assertPackageBundleDeterministic(t *testing.T, first, second *PackageBundle) {
+	t.Helper()
+	if string(first.Manifest) != string(second.Manifest) || string(first.Overview) != string(second.Overview) || string(first.Structure) != string(second.Structure) {
+		t.Fatal("bundle is not deterministic")
+	}
+}
+
+func assertCanonicalPackageManifest(t *testing.T, manifest PackageIR) {
+	t.Helper()
 	if manifest.Package.ImportPath != "example.com/bundle/api" || manifest.Package.SourceDirectory != "api" || manifest.Package.Documentation != "Package api exposes records." || manifest.Summary.Declarations != 5 || manifest.Summary.ExportedFunctions != 2 || manifest.Summary.FiberRoutes != 2 {
 		t.Fatalf("manifest facts: %+v", manifest)
 	}
 	if !strings.HasPrefix(manifest.SemanticModelDigest, "sha256:") || len(manifest.SemanticModelDigest) != 71 {
 		t.Fatalf("digest = %q", manifest.SemanticModelDigest)
 	}
-	if !strings.Contains(string(first.Structure), `Record "1" --> "1" ID : field ID`) || !strings.Contains(string(first.Structure), `Build "1" ..> "1" ID : parameter 1`) {
-		t.Fatalf("missing evidenced relations:\n%s", first.Structure)
+}
+
+func assertCanonicalPackageArtifacts(t *testing.T, bundle *PackageBundle) {
+	t.Helper()
+	structure, overview := string(bundle.Structure), string(bundle.Overview)
+	if !strings.Contains(structure, `Record "1" --> "1" ID : field ID`) || !strings.Contains(structure, `Build "1" ..> "1" ID : parameter 1`) {
+		t.Fatalf("missing evidenced relations:\n%s", structure)
 	}
-	overview := string(first.Overview)
 	if !strings.Contains(overview, "direction LR") || !strings.Contains(overview, "namespace transport") || !strings.Contains(overview, "namespace data_contracts") {
-		t.Fatalf("overview projection:\n%s", first.Overview)
+		t.Fatalf("overview projection:\n%s", overview)
 	}
-	for name, artifact := range map[string]string{"overview": overview, "structure": string(first.Structure)} {
+	assertCanonicalPackageMetadata(t, overview, structure)
+	assertTextFragments(t, "overview", overview, []string{
+		`note "Package api exposes records. | package example.com/bundle/api | scope:`,
+		`class Alias["Alias = ID"]`, `class ID["ID = string"]`,
+		`note for handler "routes: GET /records -&gt; handler.List; POST /records -&gt; handler.Create"`,
+		`+Build(ID): *Record`, `+Ping()`,
+	})
+}
+
+func assertCanonicalPackageMetadata(t *testing.T, overview, structure string) {
+	t.Helper()
+	for name, artifact := range map[string]string{"overview": overview, "structure": structure} {
 		if strings.Count(artifact, "%% grepple:package-default example.com/bundle/api") != 1 || strings.Count(artifact, "%% grepple:language-default go") != 1 {
 			t.Fatalf("%s defaults missing or duplicated:\n%s", name, artifact)
 		}
-		for _, redundant := range []string{"%% grepple:package Alias ", "<<go>>", "<<export>>"} {
-			if strings.Contains(artifact, redundant) {
-				t.Fatalf("%s contains redundant metadata %q:\n%s", name, redundant, artifact)
-			}
-		}
+		assertTextExcludes(t, name, artifact, []string{"%% grepple:package Alias ", "<<go>>", "<<export>>"})
 	}
-	if strings.Count(string(first.Structure), "%% grepple:exact-default") != 1 || strings.Contains(overview, "%% grepple:exact-default") {
+	if strings.Count(structure, "%% grepple:exact-default") != 1 || strings.Contains(overview, "%% grepple:exact-default") {
 		t.Fatalf("exact-default must occur only once in structure")
 	}
-	for _, visible := range []string{
-		`note "Package api exposes records. | package example.com/bundle/api | scope:`,
-		`class Alias["Alias = ID"]`,
-		`class ID["ID = string"]`,
-		`note for handler "routes: GET /records -&gt; handler.List; POST /records -&gt; handler.Create"`,
-		`+Build(ID): *Record`,
-		`+Ping()`,
-	} {
-		if !strings.Contains(overview, visible) {
-			t.Errorf("overview missing %q:\n%s", visible, overview)
+}
+
+func assertTextFragments(t *testing.T, name, text string, fragments []string) {
+	t.Helper()
+	for _, fragment := range fragments {
+		if !strings.Contains(text, fragment) {
+			t.Errorf("%s missing %q:\n%s", name, fragment, text)
 		}
 	}
+}
 
+func assertTextExcludes(t *testing.T, name, text string, fragments []string) {
+	t.Helper()
+	for _, fragment := range fragments {
+		if strings.Contains(text, fragment) {
+			t.Fatalf("%s contains redundant metadata %q:\n%s", name, fragment, text)
+		}
+	}
+}
+
+func assertPackageBundleCheckAndDrift(t *testing.T, root, directory string, bundle *PackageBundle) {
+	t.Helper()
 	output := filepath.Join(root, "bundle")
-	if err := WritePackageBundle(output, first); err != nil {
+	if err := WritePackageBundle(output, bundle); err != nil {
 		t.Fatal(err)
 	}
 	if err := CheckPackageBundle(output, directory); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(output, "manifest.json"), append(first.Manifest, ' '), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(output, "manifest.json"), append(bundle.Manifest, ' '), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	if err := CheckPackageBundle(output, directory); err == nil || !strings.Contains(err.Error(), "manifest.json") {

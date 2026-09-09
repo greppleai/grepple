@@ -48,40 +48,43 @@ func AnalyzeMermaidSchemas(root string) ([]Diagnostic, error) {
 func discoverMermaidSchemas(root string) ([]string, []string, []string, error) {
 	var diagrams, packageBundles, workspaceBundles []string
 	err := filepath.WalkDir(root, func(path string, entry os.DirEntry, walkErr error) error {
-		if walkErr != nil {
-			return walkErr
-		}
-		if entry.IsDir() && path != root && mermaidExcludedDirectories[entry.Name()] {
-			return filepath.SkipDir
-		}
-		if entry.Type()&os.ModeSymlink != 0 {
-			if entry.IsDir() {
-				return filepath.SkipDir
-			}
-			return nil
-		}
-		if entry.IsDir() {
-			suffix := filepath.Ext(entry.Name())
-			switch suffix {
-			case ".package":
-				packageBundles = append(packageBundles, path)
-				return filepath.SkipDir
-			case ".workspace":
-				workspaceBundles = append(workspaceBundles, path)
-				return filepath.SkipDir
-			default:
-				return nil
-			}
-		}
-		if isMermaidSchema(entry.Name()) {
-			diagrams = append(diagrams, path)
-		}
-		return nil
+		return visitMermaidSchema(root, path, entry, walkErr, &diagrams, &packageBundles, &workspaceBundles)
 	})
 	sort.Strings(diagrams)
 	sort.Strings(packageBundles)
 	sort.Strings(workspaceBundles)
 	return diagrams, packageBundles, workspaceBundles, err
+}
+
+func visitMermaidSchema(root, path string, entry os.DirEntry, walkErr error, diagrams, packageBundles, workspaceBundles *[]string) error {
+	if walkErr != nil {
+		return walkErr
+	}
+	if entry.IsDir() && path != root && mermaidExcludedDirectories[entry.Name()] {
+		return filepath.SkipDir
+	}
+	if entry.Type()&os.ModeSymlink != 0 {
+		if entry.IsDir() {
+			return filepath.SkipDir
+		}
+		return nil
+	}
+	if entry.IsDir() {
+		switch filepath.Ext(entry.Name()) {
+		case ".package":
+			*packageBundles = append(*packageBundles, path)
+			return filepath.SkipDir
+		case ".workspace":
+			*workspaceBundles = append(*workspaceBundles, path)
+			return filepath.SkipDir
+		default:
+			return nil
+		}
+	}
+	if isMermaidSchema(entry.Name()) {
+		*diagrams = append(*diagrams, path)
+	}
+	return nil
 }
 
 func isMermaidSchema(name string) bool {

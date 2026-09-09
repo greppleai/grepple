@@ -377,103 +377,112 @@ func (parser *classParser) parseMetadata(value string, line int) error {
 	if generatedMetadataRE.MatchString(value) {
 		return nil
 	}
-	if match := completePackageMetadataRE.FindStringSubmatch(value); match != nil {
-		if !parser.sawHeader {
-			return nil
-		}
-		return parser.applyCompletePackageMetadata(match[1], line)
+	directive, arguments := matchClassMetadata(value)
+	if directive == "" {
+		return validateNamespacedClassMetadata(value, line)
 	}
-	if match := packageDefaultMetadataRE.FindStringSubmatch(value); match != nil {
-		return parser.applyPackageDefault(match[1], line)
+	if classMetadataRequiresHeader(directive) && !parser.sawHeader {
+		return nil
 	}
-	if match := languageDefaultMetadataRE.FindStringSubmatch(value); match != nil {
-		return parser.applyLanguageDefault(match[1], line)
-	}
-	if exactDefaultMetadataRE.MatchString(value) {
+	switch directive {
+	case "complete-package":
+		return parser.applyCompletePackageMetadata(arguments[0], line)
+	case "package-default":
+		return parser.applyPackageDefault(arguments[0], line)
+	case "language-default":
+		return parser.applyLanguageDefault(arguments[0], line)
+	case "exact-default":
 		return parser.applyExactDefault(line)
+	case "struct-tag":
+		return parser.applyStructTagMetadata(arguments[0], arguments[1], arguments[2], line)
+	case "underlying":
+		return parser.applyUnderlyingMetadata(arguments[0], arguments[1], line)
+	case "route":
+		return parser.applyRouteMetadata(arguments[0], arguments[1], arguments[2], arguments[3], line)
+	case "package":
+		return parser.applyClassScope(arguments[0], arguments[1], "go", line)
+	case "module":
+		return parser.applyClassScope(arguments[0], arguments[1], "typescript", line)
+	case "file":
+		return parser.applyFileMetadata(arguments[0], arguments[1], line)
+	case "filelocal":
+		return parser.applyFileLocalMetadata(arguments[0], line)
+	case "import":
+		return parser.applyImportMetadata(arguments[0], arguments[1]+arguments[2]+arguments[3], line)
+	default:
+		return parser.applyDefaultExportMetadata(arguments[0], line)
 	}
-	if match := structTagMetadataRE.FindStringSubmatch(value); match != nil {
-		if !parser.sawHeader {
-			return nil
-		}
-		return parser.applyStructTagMetadata(match[1], match[2], match[3], line)
+}
+
+func matchClassMetadata(value string) (string, []string) {
+	directives := []struct {
+		name string
+		expr *regexp.Regexp
+	}{
+		{"complete-package", completePackageMetadataRE}, {"package-default", packageDefaultMetadataRE},
+		{"language-default", languageDefaultMetadataRE}, {"exact-default", exactDefaultMetadataRE},
+		{"struct-tag", structTagMetadataRE}, {"underlying", underlyingMetadataRE}, {"route", routeMetadataRE},
+		{"package", packageMetadataRE}, {"module", moduleMetadataRE}, {"file", fileMetadataRE},
+		{"filelocal", fileLocalMetadataRE}, {"import", importMetadataRE}, {"default-export", defaultExportRE},
 	}
-	if match := underlyingMetadataRE.FindStringSubmatch(value); match != nil {
-		if !parser.sawHeader {
-			return nil
+	for _, directive := range directives {
+		if match := directive.expr.FindStringSubmatch(value); match != nil {
+			return directive.name, match[1:]
 		}
-		return parser.applyUnderlyingMetadata(match[1], match[2], line)
 	}
-	if match := routeMetadataRE.FindStringSubmatch(value); match != nil {
-		if !parser.sawHeader {
-			return nil
-		}
-		return parser.applyRouteMetadata(match[1], match[2], match[3], match[4], line)
+	return "", nil
+}
+
+func classMetadataRequiresHeader(directive string) bool {
+	return directive != "package-default" && directive != "language-default" && directive != "exact-default"
+}
+
+func (parser *classParser) applyFileMetadata(target, file string, line int) error {
+	class, err := parser.metadataTarget(target, line)
+	if err != nil {
+		return err
 	}
-	if match := packageMetadataRE.FindStringSubmatch(value); match != nil {
-		if !parser.sawHeader {
-			return nil
-		}
-		return parser.applyClassScope(match[1], match[2], "go", line)
-	} else if match := moduleMetadataRE.FindStringSubmatch(value); match != nil {
-		if !parser.sawHeader {
-			return nil
-		}
-		return parser.applyClassScope(match[1], match[2], "typescript", line)
-	} else if match := fileMetadataRE.FindStringSubmatch(value); match != nil {
-		if !parser.sawHeader {
-			return nil
-		}
-		class, err := parser.metadataTarget(match[1], line)
-		if err != nil {
-			return err
-		}
-		if class.FileLine != 0 {
-			return fmt.Errorf("Line %d: duplicate file directive for '%s'", line, class.Name)
-		}
-		class.File, class.FileLine = normalizeFileMetadata(match[2]), line
-		return nil
-	} else if match := fileLocalMetadataRE.FindStringSubmatch(value); match != nil {
-		if !parser.sawHeader {
-			return nil
-		}
-		class, err := parser.metadataTarget(match[1], line)
-		if err != nil {
-			return err
-		}
-		if class.FileLocalLine != 0 {
-			return fmt.Errorf("Line %d: duplicate filelocal directive for '%s'", line, class.Name)
-		}
-		class.FileLocal, class.FileLocalLine = true, line
-		return nil
-	} else if match := importMetadataRE.FindStringSubmatch(value); match != nil {
-		if !parser.sawHeader {
-			return nil
-		}
-		class, err := parser.metadataTarget(match[1], line)
-		if err != nil {
-			return err
-		}
-		if class.ImportLine != 0 {
-			return fmt.Errorf("Line %d: duplicate import directive for '%s'", line, class.Name)
-		}
-		class.Import, class.ImportSource, class.ImportLine = true, match[2]+match[3]+match[4], line
-		return nil
-	} else if match := defaultExportRE.FindStringSubmatch(value); match != nil {
-		if !parser.sawHeader {
-			return nil
-		}
-		class, err := parser.metadataTarget(match[1], line)
-		if err != nil {
-			return err
-		}
-		if class.DefaultExportLine != 0 {
-			return fmt.Errorf("Line %d: duplicate default-export directive for '%s'", line, class.Name)
-		}
-		class.Exported, class.DefaultExport, class.DefaultExportLine = true, true, line
-		return nil
+	if class.FileLine != 0 {
+		return fmt.Errorf("Line %d: duplicate file directive for '%s'", line, class.Name)
 	}
-	return validateNamespacedClassMetadata(value, line)
+	class.File, class.FileLine = normalizeFileMetadata(file), line
+	return nil
+}
+
+func (parser *classParser) applyFileLocalMetadata(target string, line int) error {
+	class, err := parser.metadataTarget(target, line)
+	if err != nil {
+		return err
+	}
+	if class.FileLocalLine != 0 {
+		return fmt.Errorf("Line %d: duplicate filelocal directive for '%s'", line, class.Name)
+	}
+	class.FileLocal, class.FileLocalLine = true, line
+	return nil
+}
+
+func (parser *classParser) applyImportMetadata(target, source string, line int) error {
+	class, err := parser.metadataTarget(target, line)
+	if err != nil {
+		return err
+	}
+	if class.ImportLine != 0 {
+		return fmt.Errorf("Line %d: duplicate import directive for '%s'", line, class.Name)
+	}
+	class.Import, class.ImportSource, class.ImportLine = true, source, line
+	return nil
+}
+
+func (parser *classParser) applyDefaultExportMetadata(target string, line int) error {
+	class, err := parser.metadataTarget(target, line)
+	if err != nil {
+		return err
+	}
+	if class.DefaultExportLine != 0 {
+		return fmt.Errorf("Line %d: duplicate default-export directive for '%s'", line, class.Name)
+	}
+	class.Exported, class.DefaultExport, class.DefaultExportLine = true, true, line
+	return nil
 }
 
 func validateNamespacedClassMetadata(value string, line int) error {
@@ -672,31 +681,16 @@ func (parser *classParser) parseTopLevel(value string, line int) error {
 		return parser.parseNote(value, line)
 	}
 	if value == "}" {
-		if parser.namespace == "" {
-			return fmt.Errorf("Line %d: unexpected '}'", line)
-		}
-		parser.namespace, parser.namespaceLine = "", 0
-		return nil
+		return parser.closeNamespace(line)
 	}
 	if match := classDirectionRE.FindStringSubmatch(value); match != nil {
-		if parser.namespace != "" {
-			return fmt.Errorf("Line %d: direction is only allowed at diagram top level", line)
-		}
-		if parser.diagram.Direction != "" {
-			return fmt.Errorf("Line %d: duplicate direction statement", line)
-		}
-		parser.diagram.Direction = match[1]
-		return nil
+		return parser.setDirection(match[1], line)
 	}
 	if strings.HasPrefix(value, "direction ") || value == "direction" {
 		return fmt.Errorf("Line %d: malformed direction; expected 'direction LR|RL|TB|BT'", line)
 	}
 	if match := namespaceRE.FindStringSubmatch(value); match != nil {
-		if parser.namespace != "" {
-			return fmt.Errorf("Line %d: nested namespaces are not supported", line)
-		}
-		parser.namespace, parser.namespaceLine = match[1], line
-		return nil
+		return parser.openNamespace(match[1], line)
 	}
 	if strings.HasPrefix(value, "namespace ") || value == "namespace" {
 		return fmt.Errorf("Line %d: malformed namespace; expected 'namespace <identifier> {'", line)
@@ -708,16 +702,46 @@ func (parser *classParser) parseTopLevel(value string, line int) error {
 		return parser.applyExternalStereotype(match[2], match[1], line)
 	}
 	if match := relationRE.FindStringSubmatch(value); match != nil {
-		if parser.namespace != "" {
-			return fmt.Errorf("Line %d: relations are not allowed inside namespaces", line)
-		}
-		parser.diagram.Relations = append(parser.diagram.Relations, Relation{
-			Left: match[1], LeftMultiplicity: match[2], Operator: match[3],
-			RightMultiplicity: match[4], Right: match[5], Label: strings.TrimSpace(match[6]), Line: line,
-		})
-		return nil
+		return parser.addRelation(match, line)
 	}
 	return fmt.Errorf("Line %d: unsupported class diagram syntax: %s", line, value)
+}
+func (parser *classParser) closeNamespace(line int) error {
+	if parser.namespace == "" {
+		return fmt.Errorf("Line %d: unexpected '}'", line)
+	}
+	parser.namespace, parser.namespaceLine = "", 0
+	return nil
+}
+
+func (parser *classParser) setDirection(direction string, line int) error {
+	if parser.namespace != "" {
+		return fmt.Errorf("Line %d: direction is only allowed at diagram top level", line)
+	}
+	if parser.diagram.Direction != "" {
+		return fmt.Errorf("Line %d: duplicate direction statement", line)
+	}
+	parser.diagram.Direction = direction
+	return nil
+}
+
+func (parser *classParser) openNamespace(namespace string, line int) error {
+	if parser.namespace != "" {
+		return fmt.Errorf("Line %d: nested namespaces are not supported", line)
+	}
+	parser.namespace, parser.namespaceLine = namespace, line
+	return nil
+}
+
+func (parser *classParser) addRelation(match []string, line int) error {
+	if parser.namespace != "" {
+		return fmt.Errorf("Line %d: relations are not allowed inside namespaces", line)
+	}
+	parser.diagram.Relations = append(parser.diagram.Relations, Relation{
+		Left: match[1], LeftMultiplicity: match[2], Operator: match[3],
+		RightMultiplicity: match[4], Right: match[5], Label: strings.TrimSpace(match[6]), Line: line,
+	})
+	return nil
 }
 
 func (parser *classParser) parseNote(value string, line int) error {
@@ -836,31 +860,55 @@ func applyClassDefaults(diagram *ClassDiagram) error {
 		return fmt.Errorf("Line %d: package-default conflicts with language-default 'typescript'", diagram.LanguageDefaultLine)
 	}
 	for _, name := range diagram.Order {
-		class := diagram.Classes[name]
-		if diagram.PackageDefault != "" {
-			if class.Module != "" {
-				return fmt.Errorf("Line %d: module directive for '%s' conflicts with package-default", class.ModuleLine, name)
-			}
-			if class.Package != "" && class.Package != diagram.PackageDefault {
-				return fmt.Errorf("Line %d: package directive for '%s' conflicts with package-default", class.PackageLine, name)
-			}
-			if class.Package == "" {
-				class.Package = diagram.PackageDefault
-			}
+		if err := applyClassDefault(diagram, name); err != nil {
+			return err
 		}
-		if diagram.LanguageDefault != "" {
-			if class.Language != "" && class.Language != diagram.LanguageDefault {
-				return fmt.Errorf("Line %d: explicit metadata for '%s' conflicts with language-default", class.Line, name)
-			}
-			if class.Language == "" {
-				class.Language = diagram.LanguageDefault
-			}
-		} else if diagram.PackageDefault != "" && class.Language == "" {
+	}
+	return nil
+}
+
+func applyClassDefault(diagram *ClassDiagram, name string) error {
+	class := diagram.Classes[name]
+	if err := applyPackageDefaultToClass(diagram, class, name); err != nil {
+		return err
+	}
+	if err := applyLanguageDefaultToClass(diagram, class, name); err != nil {
+		return err
+	}
+	if diagram.ExactDefault && !class.Function && (class.Kind == "struct" || class.Kind == "interface") {
+		class.Exact = true
+	}
+	return nil
+}
+
+func applyPackageDefaultToClass(diagram *ClassDiagram, class *DiagramClass, name string) error {
+	if diagram.PackageDefault == "" {
+		return nil
+	}
+	if class.Module != "" {
+		return fmt.Errorf("Line %d: module directive for '%s' conflicts with package-default", class.ModuleLine, name)
+	}
+	if class.Package != "" && class.Package != diagram.PackageDefault {
+		return fmt.Errorf("Line %d: package directive for '%s' conflicts with package-default", class.PackageLine, name)
+	}
+	if class.Package == "" {
+		class.Package = diagram.PackageDefault
+	}
+	return nil
+}
+
+func applyLanguageDefaultToClass(diagram *ClassDiagram, class *DiagramClass, name string) error {
+	if diagram.LanguageDefault == "" {
+		if diagram.PackageDefault != "" && class.Language == "" {
 			class.Language = "go"
 		}
-		if diagram.ExactDefault && !class.Function && (class.Kind == "struct" || class.Kind == "interface") {
-			class.Exact = true
-		}
+		return nil
+	}
+	if class.Language != "" && class.Language != diagram.LanguageDefault {
+		return fmt.Errorf("Line %d: explicit metadata for '%s' conflicts with language-default", class.Line, name)
+	}
+	if class.Language == "" {
+		class.Language = diagram.LanguageDefault
 	}
 	return nil
 }
@@ -946,12 +994,7 @@ func identifierTypeByte(value byte) bool {
 
 func collectionReferences(memberType, target string) bool {
 	if strings.HasPrefix(memberType, "tuple<") && strings.HasSuffix(memberType, ">") {
-		for _, component := range splitParameters(memberType[len("tuple<") : len(memberType)-1]) {
-			if collectionReferences(component, target) {
-				return true
-			}
-		}
-		return false
+		return tupleReferences(memberType[len("tuple<"):len(memberType)-1], target)
 	}
 	if strings.HasSuffix(memberType, "[]") {
 		return typeReferences(strings.TrimSuffix(memberType, "[]"), target)
@@ -959,15 +1002,8 @@ func collectionReferences(memberType, target string) bool {
 	if strings.HasPrefix(memberType, "[]") {
 		return typeReferences(memberType[2:], target)
 	}
-	if strings.HasPrefix(memberType, "[") {
-		if closing := strings.Index(memberType, "]"); closing >= 0 {
-			return typeReferences(memberType[closing+1:], target)
-		}
-	}
-	if strings.HasPrefix(memberType, "map[") {
-		if closing := strings.Index(memberType, "]"); closing >= 0 {
-			return typeReferences(memberType[closing+1:], target)
-		}
+	if element, recognized := collectionElementType(memberType); recognized {
+		return typeReferences(element, target)
 	}
 	for _, collection := range []string{"ReadonlyArray", "Set"} {
 		prefix := collection + "<"
@@ -975,10 +1011,30 @@ func collectionReferences(memberType, target string) bool {
 			return typeReferences(memberType[len(prefix):len(memberType)-1], target)
 		}
 	}
-	if strings.Contains(memberType, "[") && strings.HasSuffix(memberType, "]") {
-		return typeReferences(memberType, target)
+	return strings.Contains(memberType, "[") && strings.HasSuffix(memberType, "]") && typeReferences(memberType, target)
+}
+
+func tupleReferences(components, target string) bool {
+	for _, component := range splitParameters(components) {
+		if collectionReferences(component, target) {
+			return true
+		}
 	}
 	return false
+}
+
+func collectionElementType(memberType string) (string, bool) {
+	if strings.HasPrefix(memberType, "[") {
+		if closing := strings.Index(memberType, "]"); closing >= 0 {
+			return memberType[closing+1:], true
+		}
+	}
+	if strings.HasPrefix(memberType, "map[") {
+		if closing := strings.Index(memberType, "]"); closing >= 0 {
+			return memberType[closing+1:], true
+		}
+	}
+	return "", false
 }
 
 type classValidator struct {
@@ -1002,35 +1058,9 @@ func (validator *classValidator) checkCompletePackage() {
 	if importPath == "" {
 		return
 	}
-	var uncovered []packageCompletenessItem
-	for _, declaration := range validator.analysis.GoDeclarations {
-		if validator.analysis.GoPackagePaths[declaration.PackageID] != importPath || validator.completePackageContains(declaration) {
-			continue
-		}
-		uncovered = append(uncovered, packageCompletenessItem{name: declaration.Name, kind: declaration.Kind, location: declaration.Location})
-	}
-	for _, functions := range validator.analysis.GoFunctions {
-		for _, function := range functions {
-			if !exportedGoName(function.Name) || validator.analysis.GoPackagePaths[function.PackageID] != importPath || validator.completePackageContainsFunction(function) {
-				continue
-			}
-			uncovered = append(uncovered, packageCompletenessItem{name: function.Name, kind: "function", location: function.Location})
-		}
-	}
+	uncovered := validator.uncoveredPackageItems(importPath)
 	sort.Slice(uncovered, func(left, right int) bool {
-		leftItem, rightItem := uncovered[left], uncovered[right]
-		leftPath := normalizeFileMetadata(leftItem.location.Path)
-		rightPath := normalizeFileMetadata(rightItem.location.Path)
-		if leftPath != rightPath {
-			return leftPath < rightPath
-		}
-		if leftItem.location.Line != rightItem.location.Line {
-			return leftItem.location.Line < rightItem.location.Line
-		}
-		if leftItem.name != rightItem.name {
-			return leftItem.name < rightItem.name
-		}
-		return leftItem.kind < rightItem.kind
+		return packageCompletenessLess(uncovered[left], uncovered[right])
 	})
 	for _, item := range uncovered {
 		path := normalizeFileMetadata(item.location.Path)
@@ -1040,6 +1070,46 @@ func (validator *classValidator) checkCompletePackage() {
 			sortPath: path, sortLine: item.location.Line, sortName: item.name,
 		})
 	}
+}
+
+func (validator *classValidator) uncoveredPackageItems(importPath string) []packageCompletenessItem {
+	var uncovered []packageCompletenessItem
+	for _, declaration := range validator.analysis.GoDeclarations {
+		if validator.analysis.GoPackagePaths[declaration.PackageID] != importPath || validator.completePackageContains(declaration) {
+			continue
+		}
+		uncovered = append(uncovered, packageCompletenessItem{name: declaration.Name, kind: declaration.Kind, location: declaration.Location})
+	}
+	for _, functions := range validator.analysis.GoFunctions {
+		uncovered = append(uncovered, validator.uncoveredFunctions(importPath, functions)...)
+	}
+	return uncovered
+}
+
+func (validator *classValidator) uncoveredFunctions(importPath string, functions []Member) []packageCompletenessItem {
+	var uncovered []packageCompletenessItem
+	for _, function := range functions {
+		if !exportedGoName(function.Name) || validator.analysis.GoPackagePaths[function.PackageID] != importPath || validator.completePackageContainsFunction(function) {
+			continue
+		}
+		uncovered = append(uncovered, packageCompletenessItem{name: function.Name, kind: "function", location: function.Location})
+	}
+	return uncovered
+}
+
+func packageCompletenessLess(leftItem, rightItem packageCompletenessItem) bool {
+	leftPath := normalizeFileMetadata(leftItem.location.Path)
+	rightPath := normalizeFileMetadata(rightItem.location.Path)
+	if leftPath != rightPath {
+		return leftPath < rightPath
+	}
+	if leftItem.location.Line != rightItem.location.Line {
+		return leftItem.location.Line < rightItem.location.Line
+	}
+	if leftItem.name != rightItem.name {
+		return leftItem.name < rightItem.name
+	}
+	return leftItem.kind < rightItem.kind
 }
 
 func (validator *classValidator) completePackageContains(declaration *Declaration) bool {
@@ -1119,10 +1189,8 @@ func (validator *classValidator) checkFunction(class *DiagramClass) {
 	}
 	signature, ok := functionSignature(class)
 	if !ok {
-		for _, candidate := range validator.analysis.Functions[class.Name] {
-			if validator.memberScopeMatches(class, candidate) && (class.File == "" || normalizeFileMetadata(candidate.File) == class.File) {
-				return
-			}
+		if validator.hasUnspecifiedFunction(class) {
+			return
 		}
 		validator.add(class.Line, fmt.Sprintf("Missing function '%s'.", class.Name))
 		return
@@ -1133,16 +1201,31 @@ func (validator *classValidator) checkFunction(class *DiagramClass) {
 		validator.add(class.Line, fmt.Sprintf("Missing %sfunction '%s'.", asyncMarker(signature.Async), class.Name))
 		return
 	}
-	for _, candidate := range candidates {
-		if validator.memberScopeMatches(class, candidate) && (class.File == "" || normalizeFileMetadata(candidate.File) == class.File) && signaturesMatch(signature.Member, candidate) {
-			return
-		}
+	if validator.hasMatchingFunction(class, signature, candidates) {
+		return
 	}
 	memberType := signature.Type
 	if memberType == "" {
 		memberType = "unspecified"
 	}
 	validator.add(signature.Line, fmt.Sprintf("Expected %sfunction %s(%s): %s.", asyncMarker(signature.Async), class.Name, strings.Join(signature.Parameters, ", "), memberType))
+}
+func (validator *classValidator) hasUnspecifiedFunction(class *DiagramClass) bool {
+	for _, candidate := range validator.analysis.Functions[class.Name] {
+		if validator.memberScopeMatches(class, candidate) && (class.File == "" || normalizeFileMetadata(candidate.File) == class.File) {
+			return true
+		}
+	}
+	return false
+}
+
+func (validator *classValidator) hasMatchingFunction(class *DiagramClass, signature DiagramMember, candidates []Member) bool {
+	for _, candidate := range candidates {
+		if validator.memberScopeMatches(class, candidate) && (class.File == "" || normalizeFileMetadata(candidate.File) == class.File) && signaturesMatch(signature.Member, candidate) {
+			return true
+		}
+	}
+	return false
 }
 
 func asyncMarker(async bool) string {
@@ -1622,53 +1705,57 @@ func (validator *classValidator) memberReferences(member Member, target, multipl
 func (validator *classValidator) functionReferences(class *DiagramClass, target string, targetDeclaration *Declaration, multiplicity string) bool {
 	signature, ok := functionSignature(class)
 	if !ok {
-		for _, candidate := range validator.analysis.Functions[class.Name] {
-			if validator.memberScopeMatches(class, candidate) && validator.memberReferences(candidate, target, multiplicity) {
-				return true
-			}
-		}
-		return false
+		return validator.unspecifiedFunctionReferences(class, target, multiplicity)
 	}
-	signature.Async = signature.Async || class.Async
 	for _, candidate := range validator.analysis.Functions[class.Name] {
-		if !validator.memberScopeMatches(class, candidate) || class.File != "" && normalizeFileMetadata(candidate.File) != class.File || !signaturesMatch(signature.Member, candidate) {
-			continue
-		}
-		if validator.memberReferences(candidate, target, multiplicity) {
-			return true
-		}
-		ownerDeclaration := &Declaration{Language: candidate.Language, ModuleID: candidate.ModuleID}
-		reference := typeScriptReferenceName(ownerDeclaration, targetDeclaration, validator.analysis)
-		if reference != "" && memberReferences(candidate, reference, multiplicity) {
+		if validator.functionCandidateReferences(class, signature, candidate, target, targetDeclaration, multiplicity) {
 			return true
 		}
 	}
 	return false
 }
 
+func (validator *classValidator) unspecifiedFunctionReferences(class *DiagramClass, target, multiplicity string) bool {
+	for _, candidate := range validator.analysis.Functions[class.Name] {
+		if validator.memberScopeMatches(class, candidate) && validator.memberReferences(candidate, target, multiplicity) {
+			return true
+		}
+	}
+	return false
+}
+
+func (validator *classValidator) functionCandidateReferences(class *DiagramClass, signature DiagramMember, candidate Member, target string, targetDeclaration *Declaration, multiplicity string) bool {
+	if !validator.memberScopeMatches(class, candidate) || class.File != "" && normalizeFileMetadata(candidate.File) != class.File || !signaturesMatch(signature.Member, candidate) {
+		return false
+	}
+	if validator.memberReferences(candidate, target, multiplicity) {
+		return true
+	}
+	ownerDeclaration := &Declaration{Language: candidate.Language, ModuleID: candidate.ModuleID}
+	reference := typeScriptReferenceName(ownerDeclaration, targetDeclaration, validator.analysis)
+	return reference != "" && memberReferences(candidate, reference, multiplicity)
+}
+func (validator *classValidator) associationSatisfied(ownerClass *DiagramClass, owner, target string, targetDeclaration *Declaration, multiplicity string) bool {
+	if ownerClass.Function {
+		return validator.functionReferences(ownerClass, target, targetDeclaration, multiplicity)
+	}
+	declaration := validator.declaration(owner)
+	if declaration == nil {
+		return true
+	}
+	if declaration.Language == "go" {
+		return packageDeclarationReferences(declaration, target, multiplicity)
+	}
+	reference := typeScriptReferenceName(declaration, targetDeclaration, validator.analysis)
+	return declarationReferences(declaration, target, multiplicity) || reference != "" && declarationReferences(declaration, reference, multiplicity)
+}
+
 func (validator *classValidator) checkAssociation(relation Relation) {
 	owner, target, multiplicity := associationSides(relation)
 	ownerClass := validator.diagram.Classes[owner]
 	targetDeclaration := validator.declaration(target)
-	if ownerClass.Function {
-		if validator.functionReferences(ownerClass, target, targetDeclaration, multiplicity) {
-			return
-		}
-	} else {
-		declaration := validator.declaration(owner)
-		if declaration == nil {
-			return
-		}
-		if declaration.Language == "go" {
-			if packageDeclarationReferences(declaration, target, multiplicity) {
-				return
-			}
-		} else {
-			reference := typeScriptReferenceName(declaration, targetDeclaration, validator.analysis)
-			if declarationReferences(declaration, target, multiplicity) || reference != "" && declarationReferences(declaration, reference, multiplicity) {
-				return
-			}
-		}
+	if validator.associationSatisfied(ownerClass, owner, target, targetDeclaration, multiplicity) {
+		return
 	}
 	cardinality := "a reference to"
 	if multiplicity == "*" {

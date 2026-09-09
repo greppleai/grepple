@@ -65,9 +65,31 @@ func Process(jobs chan evalJob, callback func(job evalJob) error) (chan struct{}
 	if worker == nil {
 		t.Fatal("Worker declaration not analyzed")
 	}
+	assertWorkerComplexTypes(t, worker)
+
+	process := analysis.Functions["Process"][0]
+	if got, want := process.Parameters, []string{"chan evalJob", "func(job evalJob)error"}; len(got) != len(want) || got[0] != want[0] || got[1] != want[1] {
+		t.Fatalf("Process parameters = %#v, want %#v", got, want)
+	}
+	if got, want := process.Type, "tuple<chan struct{},struct{Value evalJob}>"; got != want {
+		t.Fatalf("Process result = %q, want %q", got, want)
+	}
+
+	diagram, err := GenerateClassDiagram("Worker", source, []Source{source}, GenerateOptions{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertDiagramFragments(t, diagram, []string{"chan evalJob", "chan struct&#123;&#125;", "struct&#123;Value evalJob&#59;Ready bool&#59;&#125;", "func&#40;job evalJob&#44;done chan struct&#123;&#125;&#41;chan evalJob"})
+	diagnostics, err := CheckClassDiagram(diagram, []Source{source})
+	if err != nil || len(diagnostics) != 0 {
+		t.Fatalf("complex Go types did not round trip: %v %+v\n%s", err, diagnostics, diagram)
+	}
+}
+
+func assertWorkerComplexTypes(t *testing.T, worker *Declaration) {
+	t.Helper()
 	wantFields := map[string]string{
-		"Jobs":     "chan evalJob",
-		"Done":     "chan struct{}",
+		"Jobs": "chan evalJob", "Done": "chan struct{}",
 		"State":    "struct{Value evalJob;Ready bool;}",
 		"Evaluate": "func(job evalJob,done chan struct{})chan evalJob",
 	}
@@ -82,26 +104,13 @@ func Process(jobs chan evalJob, callback func(job evalJob) error) (chan struct{}
 	if len(wantFields) != 0 {
 		t.Fatalf("missing fields: %v", wantFields)
 	}
+}
 
-	process := analysis.Functions["Process"][0]
-	if got, want := process.Parameters, []string{"chan evalJob", "func(job evalJob)error"}; len(got) != len(want) || got[0] != want[0] || got[1] != want[1] {
-		t.Fatalf("Process parameters = %#v, want %#v", got, want)
-	}
-	if got, want := process.Type, "tuple<chan struct{},struct{Value evalJob}>"; got != want {
-		t.Fatalf("Process result = %q, want %q", got, want)
-	}
-
-	diagram, err := GenerateClassDiagram("Worker", source, []Source{source}, GenerateOptions{})
-	if err != nil {
-		t.Fatal(err)
-	}
-	for _, fragment := range []string{"chan evalJob", "chan struct&#123;&#125;", "struct&#123;Value evalJob&#59;Ready bool&#59;&#125;", "func&#40;job evalJob&#44;done chan struct&#123;&#125;&#41;chan evalJob"} {
+func assertDiagramFragments(t *testing.T, diagram string, fragments []string) {
+	t.Helper()
+	for _, fragment := range fragments {
 		if !strings.Contains(diagram, fragment) {
 			t.Errorf("generated diagram missing %q:\n%s", fragment, diagram)
 		}
-	}
-	diagnostics, err := CheckClassDiagram(diagram, []Source{source})
-	if err != nil || len(diagnostics) != 0 {
-		t.Fatalf("complex Go types did not round trip: %v %+v\n%s", err, diagnostics, diagram)
 	}
 }

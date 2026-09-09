@@ -162,35 +162,39 @@ func goVisibility(name string) string {
 
 func (analyzer *goSourceAnalyzer) analyzeTypes(declaration *sitter.Node) {
 	for _, spec := range namedChildren(declaration) {
-		if spec.Kind() != "type_spec" && spec.Kind() != "type_alias" {
-			continue
-		}
-		name := nodeText(spec.ChildByFieldName("name"), analyzer.text)
-		typeNode := spec.ChildByFieldName("type")
-		kind := goDeclarationKind(spec, typeNode)
-		if name == "" || kind == "" {
-			continue
-		}
-		position := spec.StartPosition()
-		underlying, ok := normalizeGoUnderlyingType(nodeText(typeNode, analyzer.text))
-		if !ok {
-			continue
-		}
-		result := &Declaration{Name: name, Kind: kind, Language: "go", Package: analyzer.packageName, PackageID: analyzer.packageID, File: analyzer.result.SourcePaths[absolutePath(analyzer.source.Path)], Underlying: underlying, FileLocal: hasGoFileLocalMarker(analyzer.source.Text, int(position.Row)), Location: Location{Path: analyzer.result.SourcePaths[absolutePath(analyzer.source.Path)], Line: int(position.Row) + 1, Column: int(position.Column) + 1}, Extends: map[string]bool{}, Implements: map[string]bool{}, StructTags: map[string]GoStructTag{}}
-		if kind == "struct" || kind == "interface" {
-			analyzer.collectGoMembers(typeNode, result)
-		}
-		key := analyzer.packageID + ":" + name
-		if existing := analyzer.result.GoDeclarations[key]; existing != nil {
-			analyzer.addDuplicateGoError("package-level type", name, existing.Location, result.Location)
-		} else if functions := analyzer.result.GoFunctions[key]; len(functions) > 0 {
-			analyzer.addDuplicateGoError("package-level type/function", name, functions[0].Location, result.Location)
-		}
-		analyzer.result.GoDeclarations[key] = result
-		analyzer.addGoSymbol(name, "class", spec, nil, "", name)
-		if exportedGoName(name) {
-			analyzer.recordGoExport(name)
-		}
+		analyzer.analyzeTypeSpec(spec)
+	}
+}
+
+func (analyzer *goSourceAnalyzer) analyzeTypeSpec(spec *sitter.Node) {
+	if spec.Kind() != "type_spec" && spec.Kind() != "type_alias" {
+		return
+	}
+	name := nodeText(spec.ChildByFieldName("name"), analyzer.text)
+	typeNode := spec.ChildByFieldName("type")
+	kind := goDeclarationKind(spec, typeNode)
+	if name == "" || kind == "" {
+		return
+	}
+	position := spec.StartPosition()
+	underlying, ok := normalizeGoUnderlyingType(nodeText(typeNode, analyzer.text))
+	if !ok {
+		return
+	}
+	result := &Declaration{Name: name, Kind: kind, Language: "go", Package: analyzer.packageName, PackageID: analyzer.packageID, File: analyzer.result.SourcePaths[absolutePath(analyzer.source.Path)], Underlying: underlying, FileLocal: hasGoFileLocalMarker(analyzer.source.Text, int(position.Row)), Location: Location{Path: analyzer.result.SourcePaths[absolutePath(analyzer.source.Path)], Line: int(position.Row) + 1, Column: int(position.Column) + 1}, Extends: map[string]bool{}, Implements: map[string]bool{}, StructTags: map[string]GoStructTag{}}
+	if kind == "struct" || kind == "interface" {
+		analyzer.collectGoMembers(typeNode, result)
+	}
+	key := analyzer.packageID + ":" + name
+	if existing := analyzer.result.GoDeclarations[key]; existing != nil {
+		analyzer.addDuplicateGoError("package-level type", name, existing.Location, result.Location)
+	} else if functions := analyzer.result.GoFunctions[key]; len(functions) > 0 {
+		analyzer.addDuplicateGoError("package-level type/function", name, functions[0].Location, result.Location)
+	}
+	analyzer.result.GoDeclarations[key] = result
+	analyzer.addGoSymbol(name, "class", spec, nil, "", name)
+	if exportedGoName(name) {
+		analyzer.recordGoExport(name)
 	}
 }
 
@@ -760,31 +764,34 @@ func goCalledSymbol(expression *sitter.Node, source []byte, receiver, owner stri
 }
 
 func (analyzer *goSourceAnalyzer) analyzeImports(node *sitter.Node) {
-	walkTree(node, func(spec *sitter.Node) {
-		if spec.Kind() != "import_spec" {
-			return
+	walkTree(node, analyzer.analyzeImportSpec)
+}
+
+func (analyzer *goSourceAnalyzer) analyzeImportSpec(spec *sitter.Node) {
+	if spec.Kind() != "import_spec" {
+		return
+	}
+	pathNode := spec.ChildByFieldName("path")
+	if pathNode == nil && spec.NamedChildCount() > 0 {
+		pathNode = spec.NamedChild(spec.NamedChildCount() - 1)
+	}
+	module, err := strconv.Unquote(nodeText(pathNode, analyzer.text))
+	if err != nil {
+		return
+	}
+	name := nodeText(spec.ChildByFieldName("name"), analyzer.text)
+	if name == "" {
+		name = path.Base(module)
+		if module == "github.com/gofiber/fiber/v2" || module == "github.com/gofiber/fiber/v3" {
+			name = "fiber"
 		}
-		pathNode := spec.ChildByFieldName("path")
-		if pathNode == nil && spec.NamedChildCount() > 0 {
-			pathNode = spec.NamedChild(spec.NamedChildCount() - 1)
-		}
-		module, err := strconv.Unquote(nodeText(pathNode, analyzer.text))
-		if err != nil {
-			return
-		}
-		name := nodeText(spec.ChildByFieldName("name"), analyzer.text)
-		if name == "" {
-			name = path.Base(module)
-			if module == "github.com/gofiber/fiber/v2" || module == "github.com/gofiber/fiber/v3" {
-				name = "fiber"
-			}
-		}
-		if name != "_" && name != "." {
-			analyzer.imports[name] = module
-			analyzer.result.Imports[name] = append(analyzer.result.Imports[name], Import{Source: module, Language: "go", Package: analyzer.packageName, PackageID: analyzer.packageID, File: analyzer.result.SourcePaths[absolutePath(analyzer.source.Path)]})
-			analyzer.result.GoPackageImports[analyzer.packageID][name] = module
-		}
-	})
+	}
+	if name == "_" || name == "." {
+		return
+	}
+	analyzer.imports[name] = module
+	analyzer.result.Imports[name] = append(analyzer.result.Imports[name], Import{Source: module, Language: "go", Package: analyzer.packageName, PackageID: analyzer.packageID, File: analyzer.result.SourcePaths[absolutePath(analyzer.source.Path)]})
+	analyzer.result.GoPackageImports[analyzer.packageID][name] = module
 }
 
 func mergeGoMethods(result *Analysis, methods map[string][]Member) {

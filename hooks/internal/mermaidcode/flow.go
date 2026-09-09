@@ -62,37 +62,41 @@ func (parser *flowParser) parseMetadata(value string, line int) error {
 	if generatedMetadataRE.MatchString(value) {
 		return nil
 	}
-	if match := symbolRE.FindStringSubmatch(value); match != nil {
-		if !parser.sawHeader {
-			return nil
-		}
-		return parser.applySymbol(match[1], match[2], line)
+	directive, arguments := matchFlowMetadata(value)
+	if directive == "" {
+		return validateNamespacedFlowMetadata(value, line)
 	}
-	if match := packageRE.FindStringSubmatch(value); match != nil {
-		if !parser.sawHeader {
-			return nil
-		}
-		return parser.applyPackage(match[1], match[2], line)
+	if !parser.sawHeader {
+		return nil
 	}
-	if match := moduleRE.FindStringSubmatch(value); match != nil {
-		if !parser.sawHeader {
-			return nil
-		}
-		return parser.applyModule(match[1], match[2], line)
+	switch directive {
+	case "symbol":
+		return parser.applySymbol(arguments[0], arguments[1], line)
+	case "package":
+		return parser.applyPackage(arguments[0], arguments[1], line)
+	case "module":
+		return parser.applyModule(arguments[0], arguments[1], line)
+	case "language":
+		return parser.applyLanguage(arguments[0], arguments[1], line)
+	default:
+		return parser.applyConcept(arguments[0], line)
 	}
-	if match := languageRE.FindStringSubmatch(value); match != nil {
-		if !parser.sawHeader {
-			return nil
-		}
-		return parser.applyLanguage(match[1], match[2], line)
+}
+
+func matchFlowMetadata(value string) (string, []string) {
+	directives := []struct {
+		name string
+		expr *regexp.Regexp
+	}{
+		{"symbol", symbolRE}, {"package", packageRE}, {"module", moduleRE},
+		{"language", languageRE}, {"concept", conceptRE},
 	}
-	if match := conceptRE.FindStringSubmatch(value); match != nil {
-		if !parser.sawHeader {
-			return nil
+	for _, directive := range directives {
+		if match := directive.expr.FindStringSubmatch(value); match != nil {
+			return directive.name, match[1:]
 		}
-		return parser.applyConcept(match[1], line)
 	}
-	return validateNamespacedFlowMetadata(value, line)
+	return "", nil
 }
 
 func validateNamespacedFlowMetadata(value string, line int) error {
