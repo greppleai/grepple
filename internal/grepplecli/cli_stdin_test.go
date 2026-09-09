@@ -114,8 +114,8 @@ func TestRunSearchPipedStdinCount(t *testing.T) {
 			}
 		})
 	})
-	if !strings.Contains(out, "<stdin>\t1 files\t2 matches") {
-		t.Fatalf("expected a <stdin> count row, got %q", out)
+	if out != "<stdin>\t2\n" {
+		t.Fatalf("expected a per-file matching-line count, got %q", out)
 	}
 }
 

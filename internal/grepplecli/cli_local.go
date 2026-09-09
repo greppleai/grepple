@@ -22,10 +22,10 @@ func runSearch(args []string) error {
 	if options.Outline {
 		return runOutline(options)
 	}
-	if options.Count {
-		// --count is a compact per-repository probe: aggregate the full match set
+	if options.CountByRepo {
+		// --count-by-repo is a compact per-repository probe: aggregate the full match set
 		// server-side (and locally) rather than shipping and windowing file bodies.
-		return runCount(options, explicitServer, remote)
+		return runCountByRepo(options, explicitServer, remote)
 	}
 
 	// A server never returns more than search.MaxPageLimit files per page. When a
@@ -325,10 +325,10 @@ func filePathObjects(results []api.FileResult) []map[string]string {
 	return objects
 }
 
-// runCount produces per-repository match tallies. Counts must be complete, so
+// runCountByRepo produces per-repository match tallies. Counts must be complete, so
 // the local scan and the remote probe both run unbounded (no skip/limit window)
 // and the remote side aggregates on the shards to keep the payload tiny.
-func runCount(options *cliOptions, explicitServer string, remote bool) error {
+func runCountByRepo(options *cliOptions, explicitServer string, remote bool) error {
 	type agg struct{ files, matches int }
 	repos := map[string]*agg{}
 	add := func(repo string, files, matches int) {

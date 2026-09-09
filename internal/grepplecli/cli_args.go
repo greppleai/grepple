@@ -28,7 +28,8 @@ type searchArgs struct {
 	FilesWithMatches bool     `arg:"--files-with-matches" help:"list paths of files whose CONTENTS match, like grep -l"`
 	Outline          bool     `arg:"-O,--outline" help:"print each file's structural outline (classes, funcs, interfaces) instead of searching"`
 	Depth            int      `arg:"--depth" placeholder:"N" help:"outline: cap nesting depth for JSON/YAML (0 = unlimited)"`
-	Count            bool     `arg:"-c,--count" help:"print match counts"`
+	Count            bool     `arg:"-c,--count" help:"print matching-line counts per file"`
+	CountByRepo      bool     `arg:"--count-by-repo" help:"print aggregate file and matching-line counts per repository"`
 	JSON             bool     `arg:"--json" help:"print full JSON results"`
 	JSONMatches      bool     `arg:"--json-matches" help:"print compact JSON matches"`
 	Regex            bool     `arg:"--regex" help:"treat the pattern as a regular expression (default)"`
@@ -73,7 +74,7 @@ func parseSearchArgs(args []string) (*cliOptions, string, bool, error) {
 
 	// Structural parsing is only needed when we render segments (the default
 	// display and full --json). Skip it for match-line-only output modes.
-	params.SkipSegments = values.Files || values.FilesWithMatches || values.Count || values.LineOnly || values.OnlyMatching || values.JSONMatches || values.Context > 0
+	params.SkipSegments = values.Files || values.FilesWithMatches || values.Count || values.CountByRepo || values.LineOnly || values.OnlyMatching || values.JSONMatches || values.Context > 0
 
 	// Local-first: only reach out to the shard/router when the user explicitly opts
 	// in with --remote or by passing a --server URL. A configured GREPPLE_SERVER / config
@@ -85,6 +86,7 @@ func parseSearchArgs(args []string) (*cliOptions, string, bool, error) {
 		OnlyMatching:     values.OnlyMatching,
 		JSON:             jsonModeFor(values),
 		Count:            values.Count,
+		CountByRepo:      values.CountByRepo,
 		FilesWithMatches: values.FilesWithMatches,
 		Outline:          values.Outline,
 		Depth:            values.Depth,
@@ -108,6 +110,9 @@ func validateSearchArgs(values *searchArgs) error {
 	}
 	if values.Files && values.FilesWithMatches {
 		return fmt.Errorf("--files (filename glob) and --files-with-matches (content) cannot be used together")
+	}
+	if values.Count && values.CountByRepo {
+		return fmt.Errorf("--count and --count-by-repo cannot be used together")
 	}
 	if values.Local && values.Remote {
 		return fmt.Errorf("--local and --remote cannot be used together")
@@ -153,8 +158,8 @@ func buildSearchParams(parser *arg.Parser, values *searchArgs) (search.Params, e
 		parser.WriteUsage(os.Stderr)
 		return params, fmt.Errorf("search requires a pattern")
 	}
-	if values.Outline && (values.Count || values.FilesWithMatches) {
-		return params, fmt.Errorf("--outline cannot be combined with --count or --files-with-matches")
+	if values.Outline && (values.Count || values.CountByRepo || values.FilesWithMatches) {
+		return params, fmt.Errorf("--outline cannot be combined with --count, --count-by-repo, or --files-with-matches")
 	}
 	return params, nil
 }

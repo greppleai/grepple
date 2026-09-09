@@ -9,7 +9,7 @@ import (
 	"testing"
 )
 
-// TestCountByRepoRendersSortedTable verifies that --count issues a compact
+// TestCountByRepoRendersSortedTable verifies that --count-by-repo issues a compact
 // unbounded CountByRepo probe and renders the per-repo tallies (hottest first)
 // plus a total.
 func TestCountByRepoRendersSortedTable(t *testing.T) {
@@ -26,7 +26,7 @@ func TestCountByRepoRendersSortedTable(t *testing.T) {
 	defer server.Close()
 
 	out := captureStdout(t, func() {
-		if err := runSearch([]string{"--server", server.URL, "--count", "ping"}); err != nil {
+		if err := runSearch([]string{"--server", server.URL, "--count-by-repo", "ping"}); err != nil {
 			t.Fatal(err)
 		}
 	})
