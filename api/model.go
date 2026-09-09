@@ -109,16 +109,22 @@ const (
 	RuleModeCount = "count"
 	// RuleModeFiles additionally stores matching file paths.
 	RuleModeFiles = "files"
+	// RuleEngineText identifies legacy literal or regular-expression rules. The empty engine is also text.
+	RuleEngineText = "text"
+	// RuleEngineGritQL identifies native structural rules.
+	RuleEngineGritQL = "gritql"
 )
 
 // Rule is a saved search materialized per repository.
 type Rule struct {
-	ID        string        `json:"id"`
-	Name      string        `json:"name,omitempty"`
-	Mode      string        `json:"mode"`
-	Request   SearchRequest `json:"request"`
-	CreatedAt string        `json:"createdAt,omitempty"`
-	UpdatedAt string        `json:"updatedAt,omitempty"`
+	ID         string        `json:"id"`
+	Name       string        `json:"name,omitempty"`
+	Mode       string        `json:"mode"`
+	Engine     string        `json:"engine,omitempty"`
+	Request    SearchRequest `json:"request"`
+	Structural *GritRequest  `json:"structural,omitempty"`
+	CreatedAt  string        `json:"createdAt,omitempty"`
+	UpdatedAt  string        `json:"updatedAt,omitempty"`
 }
 
 // RuleRepoResult is a rule's materialized result for one repository.

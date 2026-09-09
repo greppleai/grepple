@@ -5,6 +5,7 @@ import (
 	"github.com/greppleai/grepple/api"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 )
@@ -98,5 +99,73 @@ func TestRulesListRenders(t *testing.T) {
 	})
 	if !strings.Contains(out, "a\tcount\tAlpha") {
 		t.Fatalf("unexpected list output: %q", out)
+	}
+}
+
+func TestRulesAddPostsStructuralRule(t *testing.T) {
+	isolateCLIAuth(t)
+	queryPath := t.TempDir() + "/rule.grit"
+	if err := os.WriteFile(queryPath, []byte("language go\n`target($x)`"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	var got api.Rule
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, request *http.Request) {
+		if err := json.NewDecoder(request.Body).Decode(&got); err != nil {
+			t.Error(err)
+		}
+		got.ID = "calls"
+		got.Mode = api.RuleModeFiles
+		w.WriteHeader(http.StatusCreated)
+		_ = json.NewEncoder(w).Encode(got)
+	}))
+	defer server.Close()
+
+	out := captureStdout(t, func() {
+		err := runRules([]string{"add", "--server", server.URL, "--grit", "--files", "--query-file", queryPath, "--repo", "owner/*", "**/*.go"})
+		if err != nil {
+			t.Fatal(err)
+		}
+	})
+	if got.Engine != api.RuleEngineGritQL || got.Structural == nil {
+		t.Fatalf("structural rule not sent: %#v", got)
+	}
+	if got.Structural.Query != "language go\n`target($x)`" || got.Structural.Compatibility != api.GritCompatibilityV1 {
+		t.Fatalf("structural query not sent: %#v", got.Structural)
+	}
+	if len(got.Structural.Repositories) != 1 || got.Structural.Repositories[0] != "owner/*" || len(got.Structural.Globs) != 1 {
+		t.Fatalf("structural scope not sent: %#v", got.Structural)
+	}
+	if !strings.Contains(out, "created structural rule calls") {
+		t.Fatalf("unexpected output: %q", out)
+	}
+}
+
+func TestRulesAddRejectsInvalidStructuralQueryBeforeTransport(t *testing.T) {
+	isolateCLIAuth(t)
+	called := false
+	server := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { called = true }))
+	defer server.Close()
+	err := runRules([]string{"add", "--server", server.URL, "--engine", "gritql", "language go\n`unterminated"})
+	if err == nil {
+		t.Fatal("expected invalid structural query to fail")
+	}
+	if called {
+		t.Fatal("invalid structural rule reached the server")
+	}
+}
+
+func TestRulesListLabelsStructuralRules(t *testing.T) {
+	isolateCLIAuth(t)
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_ = json.NewEncoder(w).Encode(api.RuleSet{Rules: []api.Rule{{ID: "calls", Mode: api.RuleModeCount, Engine: api.RuleEngineGritQL, Name: "Calls"}}})
+	}))
+	defer server.Close()
+	out := captureStdout(t, func() {
+		if err := runRules([]string{"list", "--server", server.URL}); err != nil {
+			t.Fatal(err)
+		}
+	})
+	if !strings.Contains(out, "calls\tcount\tgritql\tCalls") {
+		t.Fatalf("structural engine not rendered: %q", out)
 	}
 }
