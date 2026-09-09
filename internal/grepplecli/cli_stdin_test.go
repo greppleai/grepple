@@ -74,6 +74,32 @@ func TestRunSearchPipedStdinOnlyMatchingFixedIgnoreCase(t *testing.T) {
 	}
 }
 
+func TestRunSearchPipedStdinAsymmetricContext(t *testing.T) {
+	chdirTemp(t)
+	content := "one\ntwo\nneedle\nfour\nfive\nsix\n"
+	out := captureStdout(t, func() {
+		withStdin(t, content, func() {
+			if err := runSearch([]string{"-B", "2", "-A", "1", "needle"}); err != nil {
+				t.Fatal(err)
+			}
+		})
+	})
+	want := "<stdin>-1-one\n<stdin>-2-two\n<stdin>:3:needle\n<stdin>-4-four\n"
+	if out != want {
+		t.Fatalf("expected %q, got %q", want, out)
+	}
+}
+
+func TestContextSetsBothSidesAndAsymmetricFlagsOverride(t *testing.T) {
+	options, _, _, err := parseSearchArgs([]string{"-C", "2", "-A", "4", "needle"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if options.Params.BeforeContext != 2 || options.Params.AfterContext != 4 {
+		t.Fatalf("unexpected context: before=%d after=%d", options.Params.BeforeContext, options.Params.AfterContext)
+	}
+}
+
 func TestRunSearchPipedStdinDefaultSegments(t *testing.T) {
 	chdirTemp(t)
 	out := captureStdout(t, func() {

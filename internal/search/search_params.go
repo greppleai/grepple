@@ -18,6 +18,13 @@ func ResolveRequest(r api.SearchRequest) (Params, error) {
 	}
 	applyOptionalFields(&p, r)
 	p.Context = resolveContext(r.Context)
+	p.BeforeContext, p.AfterContext = p.Context, p.Context
+	if r.BeforeContext != nil && *r.BeforeContext >= 0 {
+		p.BeforeContext = *r.BeforeContext
+	}
+	if r.AfterContext != nil && *r.AfterContext >= 0 {
+		p.AfterContext = *r.AfterContext
+	}
 	p.SkipSegments = r.SkipSegments
 	if r.CountByRepo {
 		// A count probe never needs structural segments.

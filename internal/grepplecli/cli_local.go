@@ -174,13 +174,13 @@ func searchLocal(options *cliOptions) ([]api.FileResult, error) {
 		if err != nil {
 			return nil, err
 		}
-		return search.BuildResults(matches, params.Context, params.MaxSegments, !params.SkipSegments), nil
+		return search.BuildResults(matches, params.BeforeContext, params.AfterContext, params.MaxSegments, !params.SkipSegments), nil
 	}
 	matches, err := search.Files(params, nil)
 	if err != nil {
 		return nil, err
 	}
-	return search.BuildResults(matches, params.Context, params.MaxSegments, !params.SkipSegments), nil
+	return search.BuildResults(matches, params.BeforeContext, params.AfterContext, params.MaxSegments, !params.SkipSegments), nil
 }
 
 func renderResults(options *cliOptions, results []api.FileResult) error {
@@ -212,7 +212,7 @@ func renderResults(options *cliOptions, results []api.FileResult) error {
 	printed := 0
 	contextPrinted := false
 	for _, result := range results {
-		if params.Context > 0 {
+		if params.BeforeContext > 0 || params.AfterContext > 0 {
 			didPrint, err := PrintContext(result.Path, result.Context, contextPrinted)
 			if err != nil {
 				return err

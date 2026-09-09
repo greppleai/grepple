@@ -35,7 +35,9 @@ type searchArgs struct {
 	Regex            bool     `arg:"--regex" help:"treat the pattern as a regular expression (default)"`
 	Fixed            bool     `arg:"-F,--fixed-strings" help:"treat the pattern as a literal string"`
 	IgnoreCase       bool     `arg:"-i,--ignore-case" help:"ignore case distinctions"`
-	Context          int      `arg:"-C,--context" placeholder:"N" help:"print N lines around matches"`
+	Context          int      `arg:"-C,--context" placeholder:"N" help:"print N lines before and after matches"`
+	AfterContext     int      `arg:"-A,--after-context" placeholder:"N" help:"print N lines after matches"`
+	BeforeContext    int      `arg:"-B,--before-context" placeholder:"N" help:"print N lines before matches"`
 	MaxFiles         int      `arg:"--max-files" placeholder:"N" help:"limit matching files"`
 	MaxSegments      int      `arg:"--max-segments" placeholder:"N" help:"limit result segments"`
 	Skip             int      `arg:"--skip" placeholder:"N" help:"skip the first N ranked result files"`
@@ -74,7 +76,7 @@ func parseSearchArgs(args []string) (*cliOptions, string, bool, error) {
 
 	// Structural parsing is only needed when we render segments (the default
 	// display and full --json). Skip it for match-line-only output modes.
-	params.SkipSegments = values.Files || values.FilesWithMatches || values.Count || values.CountByRepo || values.LineOnly || values.OnlyMatching || values.JSONMatches || values.Context > 0
+	params.SkipSegments = values.Files || values.FilesWithMatches || values.Count || values.CountByRepo || values.LineOnly || values.OnlyMatching || values.JSONMatches || params.BeforeContext > 0 || params.AfterContext > 0
 
 	// Local-first: only reach out to the shard/router when the user explicitly opts
 	// in with --remote or by passing a --server URL. A configured GREPPLE_SERVER / config
@@ -98,6 +100,12 @@ func parseSearchArgs(args []string) (*cliOptions, string, bool, error) {
 func validateSearchArgs(values *searchArgs) error {
 	if values.Context < 0 {
 		return fmt.Errorf("--context requires a non-negative integer")
+	}
+	if values.BeforeContext < 0 {
+		return fmt.Errorf("--before-context requires a non-negative integer")
+	}
+	if values.AfterContext < 0 {
+		return fmt.Errorf("--after-context requires a non-negative integer")
 	}
 	if values.MaxFiles < 0 {
 		return fmt.Errorf("--max-files must be a positive number")
@@ -133,17 +141,25 @@ func validateSearchArgs(values *searchArgs) error {
 // --files/--outline positionals are path globs, not a content pattern.
 func buildSearchParams(parser *arg.Parser, values *searchArgs) (search.Params, error) {
 	params := search.Params{
-		Query:       values.Query,
-		Globs:       values.Globs,
-		Regex:       !values.Fixed,
-		IgnoreCase:  values.IgnoreCase,
-		Files:       values.Files,
-		Context:     values.Context,
-		MaxFiles:    values.MaxFiles,
-		MaxSegments: values.MaxSegments,
-		Skip:        values.Skip,
-		Limit:       values.Limit,
-		Repo:        values.Repos,
+		Query:         values.Query,
+		Globs:         values.Globs,
+		Regex:         !values.Fixed,
+		IgnoreCase:    values.IgnoreCase,
+		Files:         values.Files,
+		Context:       values.Context,
+		BeforeContext: values.Context,
+		AfterContext:  values.Context,
+		MaxFiles:      values.MaxFiles,
+		MaxSegments:   values.MaxSegments,
+		Skip:          values.Skip,
+		Limit:         values.Limit,
+		Repo:          values.Repos,
+	}
+	if values.BeforeContext > 0 {
+		params.BeforeContext = values.BeforeContext
+	}
+	if values.AfterContext > 0 {
+		params.AfterContext = values.AfterContext
 	}
 	if values.Regex {
 		params.Regex = true

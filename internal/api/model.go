@@ -8,20 +8,22 @@ package api
 // SearchRequest is the on-the-wire search request. Nil pointer fields mean
 // "unset", allowing each HTTP surface to apply its defaults.
 type SearchRequest struct {
-	Query        *string  `json:"query,omitempty"`
-	Globs        []string `json:"globs,omitempty"`
-	Regex        *bool    `json:"regex,omitempty"`
-	IgnoreCase   *bool    `json:"ignoreCase,omitempty"`
-	MaxFiles     *int     `json:"maxFiles,omitempty"`
-	MaxSegments  *int     `json:"maxSegments,omitempty"`
-	Skip         *int     `json:"skip,omitempty"`
-	Limit        *int     `json:"limit,omitempty"`
-	Repo         any      `json:"repo,omitempty"`
-	ExcludeRepo  any      `json:"excludeRepo,omitempty"`
-	Files        bool     `json:"files,omitempty"`
-	Context      any      `json:"context,omitempty"`
-	SkipSegments bool     `json:"skipSegments,omitempty"`
-	CountByRepo  bool     `json:"countByRepo,omitempty"`
+	Query         *string  `json:"query,omitempty"`
+	Globs         []string `json:"globs,omitempty"`
+	Regex         *bool    `json:"regex,omitempty"`
+	IgnoreCase    *bool    `json:"ignoreCase,omitempty"`
+	MaxFiles      *int     `json:"maxFiles,omitempty"`
+	MaxSegments   *int     `json:"maxSegments,omitempty"`
+	Skip          *int     `json:"skip,omitempty"`
+	Limit         *int     `json:"limit,omitempty"`
+	Repo          any      `json:"repo,omitempty"`
+	ExcludeRepo   any      `json:"excludeRepo,omitempty"`
+	Files         bool     `json:"files,omitempty"`
+	Context       any      `json:"context,omitempty"`
+	BeforeContext *int     `json:"beforeContext,omitempty"`
+	AfterContext  *int     `json:"afterContext,omitempty"`
+	SkipSegments  bool     `json:"skipSegments,omitempty"`
+	CountByRepo   bool     `json:"countByRepo,omitempty"`
 }
 
 // ResultMatch is one matching line inside a file.

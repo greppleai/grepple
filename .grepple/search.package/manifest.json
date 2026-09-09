@@ -20,12 +20,12 @@
     "declarations": 8,
     "exportedTypes": 3,
     "internalTypes": 5,
-    "members": 49,
+    "members": 51,
     "exportedFunctions": 20,
     "fiberRoutes": 0,
     "relations": 18
   },
-  "semanticModelDigest": "sha256:ee09bb850c29bab4a9bab9bbfe45489c3fb2fcad4320a1cc40f970f283e49001",
+  "semanticModelDigest": "sha256:491b153adb144d8ac022ea3ad090c23094614fcc392c44964aab91942832bff9",
   "sourceFiles": [
     {
       "path": "internal/search/context.go"
@@ -103,8 +103,24 @@
       "name": "Params",
       "kind": "struct",
       "file": "internal/search/model.go",
-      "underlyingType": "struct{Query string`json:\"query\"`;Globs[]string`json:\"globs\"`;Regex bool`json:\"regex\"`;IgnoreCase bool`json:\"ignoreCase\"`;MaxFiles int`json:\"maxFiles,omitempty\"`;MaxSegments int`json:\"maxSegments\"`;Skip int`json:\"skip,omitempty\"`;Limit int`json:\"limit,omitempty\"`;Repo[]string`json:\"repo,omitempty\"`;ExcludeRepo[]string`json:\"excludeRepo,omitempty\"`;Files bool`json:\"files,omitempty\"`;Context int`json:\"context,omitempty\"`;SkipSegments bool`json:\"-\"`;Root string`json:\"-\"`;CountByRepo bool`json:\"-\"`;}",
+      "underlyingType": "struct{Query string`json:\"query\"`;Globs[]string`json:\"globs\"`;Regex bool`json:\"regex\"`;IgnoreCase bool`json:\"ignoreCase\"`;MaxFiles int`json:\"maxFiles,omitempty\"`;MaxSegments int`json:\"maxSegments\"`;Skip int`json:\"skip,omitempty\"`;Limit int`json:\"limit,omitempty\"`;Repo[]string`json:\"repo,omitempty\"`;ExcludeRepo[]string`json:\"excludeRepo,omitempty\"`;Files bool`json:\"files,omitempty\"`;Context int`json:\"context,omitempty\"`;BeforeContext int`json:\"beforeContext,omitempty\"`;AfterContext int`json:\"afterContext,omitempty\"`;SkipSegments bool`json:\"-\"`;Root string`json:\"-\"`;CountByRepo bool`json:\"-\"`;}",
       "members": [
+        {
+          "name": "AfterContext",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "json:\"afterContext,omitempty\""
+          }
+        },
+        {
+          "name": "BeforeContext",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "json:\"beforeContext,omitempty\""
+          }
+        },
         {
           "name": "Context",
           "kind": "property",
@@ -465,6 +481,7 @@
         "[]FileMatch",
         "int",
         "int",
+        "int",
         "bool"
       ],
       "result": "[]api.FileResult"
@@ -497,6 +514,7 @@
       "parameters": [
         "string",
         "map[int]bool",
+        "int",
         "int",
         "int"
       ],
@@ -630,6 +648,7 @@
       "parameters": [
         "FileMatch",
         "[]parser.Segment",
+        "int",
         "int",
         "int"
       ],

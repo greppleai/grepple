@@ -71,6 +71,12 @@ func searchRequestFromParams(params search.Params) api.SearchRequest {
 	if params.Context > 0 {
 		request.Context = params.Context
 	}
+	if params.BeforeContext != params.Context {
+		request.BeforeContext = &params.BeforeContext
+	}
+	if params.AfterContext != params.Context {
+		request.AfterContext = &params.AfterContext
+	}
 	if params.SkipSegments {
 		request.SkipSegments = true
 	}

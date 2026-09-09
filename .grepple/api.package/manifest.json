@@ -20,12 +20,12 @@
     "declarations": 18,
     "exportedTypes": 18,
     "internalTypes": 0,
-    "members": 80,
+    "members": 82,
     "exportedFunctions": 0,
     "fiberRoutes": 0,
     "relations": 11
   },
-  "semanticModelDigest": "sha256:574213ddecfc96e3416542c434a296fc5d6794187266798d68442169ecfece9f",
+  "semanticModelDigest": "sha256:1bd0770acd9f5dae91e9024b6977bd1b34454c70fb029ce64aef3f8f044bc8d3",
   "sourceFiles": [
     {
       "path": "internal/api/model.go"
@@ -588,8 +588,24 @@
       "name": "SearchRequest",
       "kind": "struct",
       "file": "internal/api/model.go",
-      "underlyingType": "struct{Query*string`json:\"query,omitempty\"`;Globs[]string`json:\"globs,omitempty\"`;Regex*bool`json:\"regex,omitempty\"`;IgnoreCase*bool`json:\"ignoreCase,omitempty\"`;MaxFiles*int`json:\"maxFiles,omitempty\"`;MaxSegments*int`json:\"maxSegments,omitempty\"`;Skip*int`json:\"skip,omitempty\"`;Limit*int`json:\"limit,omitempty\"`;Repo any`json:\"repo,omitempty\"`;ExcludeRepo any`json:\"excludeRepo,omitempty\"`;Files bool`json:\"files,omitempty\"`;Context any`json:\"context,omitempty\"`;SkipSegments bool`json:\"skipSegments,omitempty\"`;CountByRepo bool`json:\"countByRepo,omitempty\"`;}",
+      "underlyingType": "struct{Query*string`json:\"query,omitempty\"`;Globs[]string`json:\"globs,omitempty\"`;Regex*bool`json:\"regex,omitempty\"`;IgnoreCase*bool`json:\"ignoreCase,omitempty\"`;MaxFiles*int`json:\"maxFiles,omitempty\"`;MaxSegments*int`json:\"maxSegments,omitempty\"`;Skip*int`json:\"skip,omitempty\"`;Limit*int`json:\"limit,omitempty\"`;Repo any`json:\"repo,omitempty\"`;ExcludeRepo any`json:\"excludeRepo,omitempty\"`;Files bool`json:\"files,omitempty\"`;Context any`json:\"context,omitempty\"`;BeforeContext*int`json:\"beforeContext,omitempty\"`;AfterContext*int`json:\"afterContext,omitempty\"`;SkipSegments bool`json:\"skipSegments,omitempty\"`;CountByRepo bool`json:\"countByRepo,omitempty\"`;}",
       "members": [
+        {
+          "name": "AfterContext",
+          "kind": "property",
+          "result": "*int",
+          "structTag": {
+            "value": "json:\"afterContext,omitempty\""
+          }
+        },
+        {
+          "name": "BeforeContext",
+          "kind": "property",
+          "result": "*int",
+          "structTag": {
+            "value": "json:\"beforeContext,omitempty\""
+          }
+        },
         {
           "name": "Context",
           "kind": "property",

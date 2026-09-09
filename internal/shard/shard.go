@@ -559,7 +559,7 @@ func (s *shardImpl) gatherCandidates(p search.Params, t *searchTimings, reqID st
 // segments (unless skipped), repo attribution per file, and the search log.
 func (s *shardImpl) buildResultResponse(p search.Params, ms []search.FileMatch, candidates []string, truncated bool, scanFallbackRepos int, uncoveredRepos []string, start time.Time, t *searchTimings, reqID string) api.SearchResponse {
 	segmentsStart := time.Now()
-	rs := search.BuildResults(ms, p.Context, p.MaxSegments, !p.SkipSegments)
+	rs := search.BuildResults(ms, p.BeforeContext, p.AfterContext, p.MaxSegments, !p.SkipSegments)
 	for index := range rs {
 		s.annotateResultRepo(&rs[index])
 	}
