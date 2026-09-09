@@ -1,0 +1,1490 @@
+classDiagram
+    %% grepple:complete-package github.com/greppleai/grepple/internal/gritql
+    %% grepple:package-default github.com/greppleai/grepple/internal/gritql
+    %% grepple:language-default go
+    %% grepple:exact-default
+    class AnchorPlan {
+        +HasSafeAnchor(): bool
+        +RequiredLiterals(): []string
+        -required: []string
+    }
+    <<struct>> AnchorPlan
+    %% grepple:file AnchorPlan internal/gritql/anchor.go
+    class BatchScanResult {
+        +Programs(): []ProgramScanResult
+        +Stats(): BatchScanStats
+        -programs: []ProgramScanResult
+        -stats: BatchScanStats
+    }
+    <<struct>> BatchScanResult
+    %% grepple:file BatchScanResult internal/gritql/scanner_batch.go
+    class BatchScanStats {
+        +FilesParsed: int
+        +FilesRead: int
+    }
+    <<struct>> BatchScanStats
+    %% grepple:file BatchScanStats internal/gritql/scanner_batch.go
+    class BindingKind["BindingKind = uint8"] {
+        +String(): string
+    }
+    <<type>> BindingKind
+    %% grepple:underlying BindingKind uint8
+    %% grepple:file BindingKind internal/gritql/matcher.go
+    class BindingSet {
+        +All(): []BoundValue
+        +Len(): int
+        +Lookup(VariableID): tuple~BoundValue&#44;bool~
+        -values: map[VariableID]*bindingValue
+    }
+    <<struct>> BindingSet
+    %% grepple:file BindingSet internal/gritql/matcher.go
+    class BoundValue {
+        +Kind(): BindingKind
+        +Range(): parser.Range
+        +Ranges(): []parser.Range
+        +Structural(): []StructuralNode
+        +Text(): string
+        +Valid(): bool
+        +Variable(): VariableRef
+        -value: *bindingValue
+    }
+    <<struct>> BoundValue
+    %% grepple:file BoundValue internal/gritql/matcher.go
+    class CompileError {
+        +Error(): string
+        +Unwrap(): error
+        +Class: string
+        +Code: string
+        +Message: string
+        +Range: *Range
+        -cause: error
+    }
+    <<struct>> CompileError
+    %% grepple:file CompileError internal/gritql/compiler.go
+    class CompileOptions {
+        +MaxDepth: int
+        +MaxPatternBytes: int
+        +MaxRegexBytes: int
+        +MaxRegexInstructions: int
+    }
+    <<struct>> CompileOptions
+    %% grepple:file CompileOptions internal/gritql/compiler.go
+    class Constraint {
+        +LHS(): VariableRef
+        +RHS(): Expression
+        +Range(): Range
+        -c: *constraint
+    }
+    <<struct>> Constraint
+    %% grepple:file Constraint internal/gritql/compiler.go
+    class Diagnostic {
+        +Class(): string
+        +Code(): string
+        +MarshalJSON(): tuple~[]byte&#44;error~
+        +Message(): string
+        +Path(): tuple~string&#44;bool~
+        +PatternID(): tuple~string&#44;bool~
+        +Range(): tuple~parser.Range&#44;bool~
+        +Severity(): string
+        -class: string
+        -code: string
+        -message: string
+        -path: *string
+        -patternID: *string
+        -rng: *parser.Range
+        -severity: string
+    }
+    <<struct>> Diagnostic
+    %% grepple:file Diagnostic internal/gritql/finding.go
+    class DocumentInput {
+        +Message: string
+        +Path: string
+        +PatternID: string
+    }
+    <<struct>> DocumentInput
+    %% grepple:file DocumentInput internal/gritql/finding.go
+    class EffectiveLimits {
+        +ASTSteps: int
+        +BatchTimeMillis: int64
+        +Candidates: int
+        +FileTimeMillis: int64
+        +Findings: int
+        +MemoryBytes: int
+        +ParseDepth: int
+        +PatternBytes: int
+        +RegexBytes: int
+        +RegexInstructions: int
+        +SourceBytes: int
+    }
+    <<struct>> EffectiveLimits
+    %% grepple:file EffectiveLimits internal/gritql/finding.go
+    %% grepple:struct-tag EffectiveLimits ASTSteps "json:\"ast_steps\""
+    %% grepple:struct-tag EffectiveLimits BatchTimeMillis "json:\"batch_time_ms\""
+    %% grepple:struct-tag EffectiveLimits Candidates "json:\"candidates\""
+    %% grepple:struct-tag EffectiveLimits FileTimeMillis "json:\"file_time_ms\""
+    %% grepple:struct-tag EffectiveLimits Findings "json:\"findings\""
+    %% grepple:struct-tag EffectiveLimits MemoryBytes "json:\"memory_bytes\""
+    %% grepple:struct-tag EffectiveLimits ParseDepth "json:\"parse_depth\""
+    %% grepple:struct-tag EffectiveLimits PatternBytes "json:\"pattern_bytes\""
+    %% grepple:struct-tag EffectiveLimits RegexBytes "json:\"regex_bytes\""
+    %% grepple:struct-tag EffectiveLimits RegexInstructions "json:\"regex_instructions\""
+    %% grepple:struct-tag EffectiveLimits SourceBytes "json:\"source_bytes\""
+    class EvaluateOptions {
+        +Deadline: time.Time
+        +MaxBatchElapsed: time.Duration
+        +MaxCandidates: int
+        +MaxDepth: int
+        +MaxElapsed: time.Duration
+        +MaxFindings: int
+        +MaxMemoryBytes: int
+        +MaxSourceBytes: int
+        +MaxSteps: int
+    }
+    <<struct>> EvaluateOptions
+    %% grepple:file EvaluateOptions internal/gritql/evaluator.go
+    class EvaluationError {
+        +Error(): string
+        +Unwrap(): error
+        +Class: string
+        +Code: string
+        +Message: string
+        -cause: error
+    }
+    <<struct>> EvaluationError
+    %% grepple:file EvaluationError internal/gritql/evaluator.go
+    class EvaluationMatch {
+        +Bindings(): BindingSet
+        +Range(): parser.Range
+        +String(): string
+        -bindings: BindingSet
+        -rng: parser.Range
+    }
+    <<struct>> EvaluationMatch
+    %% grepple:file EvaluationMatch internal/gritql/evaluator.go
+    class EvaluationMetadata {
+        +Contract: string
+        +GoGrammar: string
+        +Limits: EffectiveLimits
+        +TreeSitterGrammar: string
+    }
+    <<struct>> EvaluationMetadata
+    %% grepple:file EvaluationMetadata internal/gritql/finding.go
+    %% grepple:struct-tag EvaluationMetadata Contract "json:\"contract\""
+    %% grepple:struct-tag EvaluationMetadata GoGrammar "json:\"go_grammar\""
+    %% grepple:struct-tag EvaluationMetadata Limits "json:\"limits\""
+    %% grepple:struct-tag EvaluationMetadata TreeSitterGrammar "json:\"-\""
+    class EvaluationOptions["EvaluationOptions = EvaluateOptions"]
+    <<alias>> EvaluationOptions
+    %% grepple:underlying EvaluationOptions EvaluateOptions
+    %% grepple:file EvaluationOptions internal/gritql/evaluator.go
+    class Expression {
+        +Children(): []Expression
+        +Constraints(): []Constraint
+        +Kind(): Kind
+        +MatchRegex(string): bool
+        +Range(): Range
+        +Template(): Template
+        +Text(): string
+        +Variables(): []VariableRef
+        -e: *expression
+    }
+    <<struct>> Expression
+    %% grepple:file Expression internal/gritql/compiler.go
+    class FeatureSet["FeatureSet = uint32"] {
+        +Has(FeatureSet): bool
+    }
+    <<type>> FeatureSet
+    %% grepple:underlying FeatureSet uint32
+    %% grepple:file FeatureSet internal/gritql/compiler.go
+    class FileEvaluation {
+        +Diagnostics(): []Diagnostic
+        +Findings(): []Finding
+        +MarshalJSON(): tuple~[]byte&#44;error~
+        +Metadata(): EvaluationMetadata
+        -diagnostics: []Diagnostic
+        -findings: []Finding
+        -metadata: EvaluationMetadata
+    }
+    <<struct>> FileEvaluation
+    %% grepple:file FileEvaluation internal/gritql/finding.go
+    class FileInput {
+        +Content: []byte
+        +Language: string
+        +Message: string
+        +Path: string
+        +PatternID: string
+    }
+    <<struct>> FileInput
+    %% grepple:file FileInput internal/gritql/finding.go
+    class Finding {
+        +Bindings(): []FindingBinding
+        +Compatibility(): string
+        +End(): parser.Position
+        +EndByte(): int
+        +Grammar(): string
+        +Language(): string
+        +MarshalJSON(): tuple~[]byte&#44;error~
+        +Message(): string
+        +Path(): string
+        +PatternID(): string
+        +Range(): parser.Range
+        +Start(): parser.Position
+        +StartByte(): int
+        +Text(): string
+        -bindingJSON: []byte
+        -bindings: []FindingBinding
+        -canonicalJSON: []byte
+        -compatibility: string
+        -grammar: string
+        -language: string
+        -message: string
+        -path: string
+        -patternID: string
+        -rng: parser.Range
+        -text: string
+    }
+    <<struct>> Finding
+    %% grepple:file Finding internal/gritql/finding.go
+    class FindingBinding {
+        +Elements(): []StructuralNode
+        +Kind(): BindingKind
+        +MarshalJSON(): tuple~[]byte&#44;error~
+        +Name(): string
+        +Node(): tuple~StructuralNode&#44;bool~
+        +Range(): parser.Range
+        +Ranges(): []parser.Range
+        +Structural(): []StructuralNode
+        -kind: BindingKind
+        -name: string
+        -ranges: []parser.Range
+        -rng: parser.Range
+        -structural: []StructuralNode
+    }
+    <<struct>> FindingBinding
+    %% grepple:file FindingBinding internal/gritql/finding.go
+    class Kind["Kind = uint8"] {
+        +String(): string
+    }
+    <<type>> Kind
+    %% grepple:underlying Kind uint8
+    %% grepple:file Kind internal/gritql/compiler.go
+    class LanguageDeclaration {
+        +Name: string
+        +Range: Range
+    }
+    <<struct>> LanguageDeclaration
+    %% grepple:file LanguageDeclaration internal/gritql/compiler.go
+    class MatchResult {
+        +Bindings(): BindingSet
+        +Range(): parser.Range
+        -bindings: BindingSet
+        -rng: parser.Range
+    }
+    <<struct>> MatchResult
+    %% grepple:file MatchResult internal/gritql/matcher.go
+    class MatchTarget {
+        -childEnd: int
+        -childStart: int
+        -field: string
+        -kind: string
+        -node: parser.Node
+        -parent: parser.Node
+        -sequence: bool
+    }
+    <<struct>> MatchTarget
+    %% grepple:file MatchTarget internal/gritql/matcher.go
+    class ParsedEvaluationInput {
+        +Document: *parser.Document
+        +Input: DocumentInput
+    }
+    <<struct>> ParsedEvaluationInput
+    %% grepple:file ParsedEvaluationInput internal/gritql/batch.go
+    class Position {
+        +Column: int
+        +Line: int
+    }
+    <<struct>> Position
+    %% grepple:file Position internal/gritql/compiler.go
+    class Program {
+        +Compatibility(): string
+        +Declaration(): LanguageDeclaration
+        +Features(): FeatureSet
+        +Language(): string
+        +Range(): Range
+        +Root(): Expression
+        +Variables(): []Variable
+        -compileLimits: CompileOptions
+        -declaration: LanguageDeclaration
+        -features: FeatureSet
+        -rng: Range
+        -root: *expression
+        -variables: []Variable
+    }
+    <<struct>> Program
+    %% grepple:file Program internal/gritql/compiler.go
+    class ProgramScan {
+        +Message: string
+        +PatternID: string
+        +Program: *Program
+    }
+    <<struct>> ProgramScan
+    %% grepple:file ProgramScan internal/gritql/scanner_batch.go
+    class ProgramScanResult {
+        +PatternID: string
+        +Result: ScanResult
+    }
+    <<struct>> ProgramScanResult
+    %% grepple:file ProgramScanResult internal/gritql/scanner_batch.go
+    class Range {
+        +End: Position
+        +EndByte: int
+        +Start: Position
+        +StartByte: int
+    }
+    <<struct>> Range
+    %% grepple:file Range internal/gritql/compiler.go
+    class ScanCandidate {
+        +Language: string
+        +Path: string
+        +ReadPath: string
+    }
+    <<struct>> ScanCandidate
+    %% grepple:file ScanCandidate internal/gritql/scanner.go
+    class ScanOptions {
+        +EvaluateOptions: EvaluateOptions
+        +ExcludeGlobs: []string
+        +IncludeGlobs: []string
+        +MaxFiles: int
+        +MaxTotalBytes: int64
+        +Message: string
+        +PatternID: string
+        +Workers: int
+    }
+    <<struct>> ScanOptions
+    %% grepple:file ScanOptions internal/gritql/scanner.go
+    class ScanResult {
+        +Diagnostics(): []Diagnostic
+        +Findings(): []Finding
+        +MarshalJSON(): tuple~[]byte&#44;error~
+        +Metadata(): EvaluationMetadata
+        +Stats(): ScanStats
+        +Truncations(): []ScanTruncation
+        -evaluation: FileEvaluation
+        -stats: ScanStats
+        -truncations: []ScanTruncation
+    }
+    <<struct>> ScanResult
+    %% grepple:file ScanResult internal/gritql/scanner.go
+    class ScanStats {
+        +BytesRead: int64
+        +Candidates: int
+        +Eligible: int
+        +Evaluated: int
+        +SkippedBinary: int
+        +SkippedGlob: int
+        +SkippedLanguage: int
+    }
+    <<struct>> ScanStats
+    %% grepple:file ScanStats internal/gritql/scanner.go
+    %% grepple:struct-tag ScanStats BytesRead "json:\"bytes_read\""
+    %% grepple:struct-tag ScanStats Candidates "json:\"candidates\""
+    %% grepple:struct-tag ScanStats Eligible "json:\"eligible\""
+    %% grepple:struct-tag ScanStats Evaluated "json:\"evaluated\""
+    %% grepple:struct-tag ScanStats SkippedBinary "json:\"skipped_binary\""
+    %% grepple:struct-tag ScanStats SkippedGlob "json:\"skipped_glob\""
+    %% grepple:struct-tag ScanStats SkippedLanguage "json:\"skipped_language\""
+    class ScanTruncation {
+        +Limit: int64
+        +Reason: string
+        +Skipped: int
+    }
+    <<struct>> ScanTruncation
+    %% grepple:file ScanTruncation internal/gritql/scanner.go
+    %% grepple:struct-tag ScanTruncation Limit "json:\"limit\""
+    %% grepple:struct-tag ScanTruncation Reason "json:\"reason\""
+    %% grepple:struct-tag ScanTruncation Skipped "json:\"skipped\""
+    class SlotCardinality["SlotCardinality = uint8"]
+    <<type>> SlotCardinality
+    %% grepple:underlying SlotCardinality uint8
+    %% grepple:file SlotCardinality internal/gritql/template.go
+    class SnippetContext["SnippetContext = uint8"] {
+        +String(): string
+    }
+    <<type>> SnippetContext
+    %% grepple:underlying SnippetContext uint8
+    %% grepple:file SnippetContext internal/gritql/template.go
+    class StructuralNode {
+        +Children(): []StructuralNode
+        +IsToken(): bool
+        +Kind(): string
+        +Lexeme(): string
+        +MarshalJSON(): tuple~[]byte&#44;error~
+        +NodeKind(): string
+        +TokenKind(): string
+        +Valid(): bool
+        -node: *normalizedNode
+    }
+    <<struct>> StructuralNode
+    %% grepple:file StructuralNode internal/gritql/matcher.go
+    class Template {
+        +Context(): SnippetContext
+        +Root(): TemplateNode
+        +RootSlot(): TemplateSlot
+        +Valid(): bool
+        -context: SnippetContext
+        -root: *templateNode
+        -rootSlot: *templateSlot
+    }
+    <<struct>> Template
+    %% grepple:file Template internal/gritql/template.go
+    class TemplateChild {
+        +Field(): string
+        +IsSlot(): bool
+        +Node(): TemplateNode
+        +Slot(): TemplateSlot
+        -child: *templateChild
+    }
+    <<struct>> TemplateChild
+    %% grepple:file TemplateChild internal/gritql/template.go
+    class TemplateNode {
+        +Children(): []TemplateChild
+        +Kind(): string
+        +Named(): bool
+        +Token(): string
+        +Valid(): bool
+        -node: *templateNode
+    }
+    <<struct>> TemplateNode
+    %% grepple:file TemplateNode internal/gritql/template.go
+    class TemplateSlot {
+        +Cardinality(): SlotCardinality
+        +Valid(): bool
+        +Variable(): VariableRef
+        -slot: *templateSlot
+    }
+    <<struct>> TemplateSlot
+    %% grepple:file TemplateSlot internal/gritql/template.go
+    class Variable {
+        +ID: VariableID
+        +Name: string
+        +Range: Range
+    }
+    <<struct>> Variable
+    %% grepple:file Variable internal/gritql/compiler.go
+    class VariableID["VariableID = uint32"]
+    <<type>> VariableID
+    %% grepple:underlying VariableID uint32
+    %% grepple:file VariableID internal/gritql/compiler.go
+    class VariableRef {
+        +Anonymous: bool
+        +ID: VariableID
+        +Name: string
+        +Range: Range
+    }
+    <<struct>> VariableRef
+    %% grepple:file VariableRef internal/gritql/compiler.go
+    class bindingValue {
+        -equality: []normalizedNode
+        -kind: BindingKind
+        -ranges: []parser.Range
+        -rng: parser.Range
+        -sourceKinds: []string
+        -sourceRanges: []parser.Range
+        -structural: []normalizedNode
+        -text: string
+        -variable: VariableRef
+    }
+    <<struct>> bindingValue
+    %% grepple:file bindingValue internal/gritql/matcher.go
+    class constraint {
+        -lhs: VariableRef
+        -rhs: *expression
+        -rng: Range
+    }
+    <<struct>> constraint
+    %% grepple:file constraint internal/gritql/compiler.go
+    class decodedSnippet {
+        -placeholders: []snippetPlaceholder
+        -text: string
+    }
+    <<struct>> decodedSnippet
+    %% grepple:file decodedSnippet internal/gritql/template.go
+    class diagnosticJSON {
+        +Class: string
+        +Code: string
+        +Message: string
+        +Path: *string
+        +PatternID: *string
+        +Range: *rangeJSON
+        +Severity: string
+    }
+    <<struct>> diagnosticJSON
+    %% grepple:file diagnosticJSON internal/gritql/finding_json.go
+    %% grepple:struct-tag diagnosticJSON Class "json:\"class\""
+    %% grepple:struct-tag diagnosticJSON Code "json:\"code\""
+    %% grepple:struct-tag diagnosticJSON Message "json:\"message\""
+    %% grepple:struct-tag diagnosticJSON Path "json:\"path\""
+    %% grepple:struct-tag diagnosticJSON PatternID "json:\"pattern_id\""
+    %% grepple:struct-tag diagnosticJSON Range "json:\"range\""
+    %% grepple:struct-tag diagnosticJSON Severity "json:\"severity\""
+    class evalCandidate {
+        -ancestors: []parser.Node
+        -elements: []parser.Node
+        -node: parser.Node
+        -parent: parser.Node
+        -rng: parser.Range
+        -sequence: bool
+        -target: MatchTarget
+    }
+    <<struct>> evalCandidate
+    %% grepple:file evalCandidate internal/gritql/evaluator.go
+    class evaluationBudget {
+        -take(): bool
+        -ctx: context.Context
+        -deadline: time.Time
+        -err: *EvaluationError
+        -maxSteps: int
+        -steps: int
+    }
+    <<struct>> evaluationBudget
+    %% grepple:file evaluationBudget internal/gritql/evaluator.go
+    class evaluationTraversalItem {
+        -ancestors: []parser.Node
+        -depth: int
+        -node: parser.Node
+    }
+    <<struct>> evaluationTraversalItem
+    %% grepple:file evaluationTraversalItem internal/gritql/evaluator.go
+    class expression {
+        -children: []*expression
+        -constraints: []constraint
+        -kind: Kind
+        -re: *regexp.Regexp
+        -refs: []VariableRef
+        -rng: Range
+        -template: Template
+        -text: string
+    }
+    <<struct>> expression
+    %% grepple:file expression internal/gritql/compiler.go
+    class findingJSON {
+        +Bindings: map[string]json.RawMessage
+        +EndByte: int
+        +EndColumn: int
+        +EndLine: int
+        +Message: string
+        +Path: string
+        +PatternID: string
+        +StartByte: int
+        +StartColumn: int
+        +StartLine: int
+    }
+    <<struct>> findingJSON
+    %% grepple:file findingJSON internal/gritql/finding_json.go
+    %% grepple:struct-tag findingJSON Bindings "json:\"bindings\""
+    %% grepple:struct-tag findingJSON Message "json:\"message\""
+    %% grepple:struct-tag findingJSON Path "json:\"path\""
+    %% grepple:struct-tag findingJSON PatternID "json:\"pattern_id\""
+    class frozenMatchTarget {
+        -anchor: parser.Range
+        -children: []parser.SyntaxNode
+        -field: string
+        -kind: string
+        -node: parser.SyntaxNode
+        -sequence: bool
+    }
+    <<struct>> frozenMatchTarget
+    %% grepple:file frozenMatchTarget internal/gritql/matcher.go
+    class generatedPlaceholder {
+        -end: int
+        -index: int
+        -ref: VariableRef
+        -role: placeholderRole
+        -start: int
+    }
+    <<struct>> generatedPlaceholder
+    %% grepple:file generatedPlaceholder internal/gritql/template.go
+    class inferredEvaluation {
+        -tmpl: Template
+        -tooDeep: bool
+        -valid: bool
+    }
+    <<struct>> inferredEvaluation
+    %% grepple:file inferredEvaluation internal/gritql/template.go
+    class noCopy {
+        +Lock()
+    }
+    <<struct>> noCopy
+    %% grepple:file noCopy internal/gritql/query_syntax.go
+    class normalizationCheckpoint["normalizationCheckpoint = uint8"]
+    <<type>> normalizationCheckpoint
+    %% grepple:underlying normalizationCheckpoint uint8
+    %% grepple:file normalizationCheckpoint internal/gritql/batch.go
+    class normalizationCheckpointHook["normalizationCheckpointHook = func(normalizationCheckpoint)*EvaluationError"]
+    <<type>> normalizationCheckpointHook
+    %% grepple:underlying normalizationCheckpointHook func(normalizationCheckpoint)*EvaluationError
+    %% grepple:file normalizationCheckpointHook internal/gritql/batch.go
+    class normalizationCheckpointKey
+    <<struct>> normalizationCheckpointKey
+    %% grepple:file normalizationCheckpointKey internal/gritql/batch.go
+    class normalizedNode {
+        +MarshalJSON(): tuple~[]byte&#44;error~
+        -children: []normalizedNode
+        -kind: string
+        -lexeme: string
+        -named: bool
+    }
+    <<struct>> normalizedNode
+    %% grepple:file normalizedNode internal/gritql/matcher.go
+    class occurrenceRestoration {
+        -seenExactlyOnce(): bool
+        -visitChildren([]*templateNode, []templateChild): []*templateNode
+        -visitSlot(*templateSlot)
+        -visitTree(*templateNode)
+        -indices: map[VariableRef]int
+        -seen: []int
+        -valid: bool
+    }
+    <<struct>> occurrenceRestoration
+    %% grepple:file occurrenceRestoration internal/gritql/template.go
+    class placeholderInference {
+        -assignments: [][]placeholderRole
+        -ok: bool
+        -tooDeep: bool
+    }
+    <<struct>> placeholderInference
+    %% grepple:file placeholderInference internal/gritql/template.go
+    class placeholderInfo {
+        -ancestors: roleAncestorSet
+        -errorRange: parser.Range
+        -foundNode: bool
+        -topLevelValue: bool
+    }
+    <<struct>> placeholderInfo
+    %% grepple:file placeholderInfo internal/gritql/template.go
+    class placeholderInfoCollector {
+        -inspect(placeholderWalkItem): placeholderWalkItem
+        -record(int, placeholderWalkItem)
+        -bySpan: map[spanKey]int
+        -infos: []placeholderInfo
+    }
+    <<struct>> placeholderInfoCollector
+    %% grepple:file placeholderInfoCollector internal/gritql/template.go
+    class placeholderRole["placeholderRole = uint8"]
+    <<type>> placeholderRole
+    %% grepple:underlying placeholderRole uint8
+    %% grepple:file placeholderRole internal/gritql/template.go
+    class placeholderRoleSolver {
+        -allResolved(): bool
+        -resolveErrorRegion(int)
+        -resolveErrorRegions()
+        -resolveImport(int, parser.Range, map[spanKey]bool)
+        -resolveImports()
+        -resolveTopLevelValues()
+        -resolveTypedNodes()
+        -resolveWholeSpec(int)
+        -resolveWholeSpecs()
+        -infos: []placeholderInfo
+        -ps: []generatedPlaceholder
+        -resolved: []bool
+        -roles: []placeholderRole
+        -separators: structuralSeparators
+        -source: string
+    }
+    <<struct>> placeholderRoleSolver
+    %% grepple:file placeholderRoleSolver internal/gritql/template.go
+    class placeholderWalkItem {
+        -ancestors: roleAncestorSet
+        -depth: int
+        -errorRange: parser.Range
+        -inError: bool
+        -n: parser.Node
+        -parent: parser.Node
+    }
+    <<struct>> placeholderWalkItem
+    %% grepple:file placeholderWalkItem internal/gritql/template.go
+    class preparedScanCandidate {
+        -language: string
+        -path: string
+        -readPath: string
+    }
+    <<struct>> preparedScanCandidate
+    %% grepple:file preparedScanCandidate internal/gritql/scanner.go
+    class queryDocument {
+        -bytes(): []byte
+        -close()
+        -diagnostics(): []queryParseDiagnostic
+        -hasUnsupportedConstruct(): bool
+        -rangeForBytes(int, int): queryRange
+        -root(): queryNode
+        -lineStarts: []int
+        -mu: sync.RWMutex
+        -noCopy: noCopy
+        -source: []byte
+        -tree: *sitter.Tree
+    }
+    <<struct>> queryDocument
+    %% grepple:file queryDocument internal/gritql/query_syntax.go
+    class queryErrorKind["queryErrorKind = uint8"]
+    <<type>> queryErrorKind
+    %% grepple:underlying queryErrorKind uint8
+    %% grepple:file queryErrorKind internal/gritql/query_syntax.go
+    class queryNode {
+        -byteRange(): queryRange
+        -childByFieldName(string): queryNode
+        -children(): []queryNode
+        -error(): bool
+        -extra(): bool
+        -fieldName(): string
+        -kind(): string
+        -missing(): bool
+        -named(): bool
+        -namedChildren(): []queryNode
+        -read(func&#40;&#41;)
+        -sexp(): string
+        -text(): string
+        -valid(): bool
+        -doc: *queryDocument
+        -field: string
+        -raw: *sitter.Node
+    }
+    <<struct>> queryNode
+    %% grepple:file queryNode internal/gritql/query_syntax.go
+    class queryParseDiagnostic {
+        +Kind: string
+        +Message: string
+        +Range: queryRange
+    }
+    <<struct>> queryParseDiagnostic
+    %% grepple:file queryParseDiagnostic internal/gritql/query_syntax.go
+    class queryPosition {
+        +Column: int
+        +Line: int
+    }
+    <<struct>> queryPosition
+    %% grepple:file queryPosition internal/gritql/query_syntax.go
+    class queryRange {
+        +End: queryPosition
+        +EndByte: int
+        +Start: queryPosition
+        +StartByte: int
+    }
+    <<struct>> queryRange
+    %% grepple:file queryRange internal/gritql/query_syntax.go
+    class queryRecord {
+        -bindings: BindingSet
+        -rng: parser.Range
+    }
+    <<struct>> queryRecord
+    %% grepple:file queryRecord internal/gritql/evaluator.go
+    class querySyntaxError {
+        +Error(): string
+        +Kind: queryErrorKind
+        +Message: string
+        +Range: queryRange
+    }
+    <<struct>> querySyntaxError
+    %% grepple:file querySyntaxError internal/gritql/query_syntax.go
+    class rangeJSON {
+        +EndByte: int
+        +EndColumn: int
+        +EndLine: int
+        +StartByte: int
+        +StartColumn: int
+        +StartLine: int
+    }
+    <<struct>> rangeJSON
+    %% grepple:file rangeJSON internal/gritql/finding_json.go
+    %% grepple:struct-tag rangeJSON EndByte "json:\"end_byte\""
+    %% grepple:struct-tag rangeJSON EndColumn "json:\"end_column\""
+    %% grepple:struct-tag rangeJSON EndLine "json:\"end_line\""
+    %% grepple:struct-tag rangeJSON StartByte "json:\"start_byte\""
+    %% grepple:struct-tag rangeJSON StartColumn "json:\"start_column\""
+    %% grepple:struct-tag rangeJSON StartLine "json:\"start_line\""
+    class roleAlternative {
+        -component: spanKey
+        -index: int
+        -role: placeholderRole
+    }
+    <<struct>> roleAlternative
+    %% grepple:file roleAlternative internal/gritql/template.go
+    class roleAncestorSet {
+        -add(string, parser.Range)
+        -get(string): tuple~parser.Range&#44;bool~
+        -ranges: [8]parser.Range
+        -set: [8]bool
+    }
+    <<struct>> roleAncestorSet
+    %% grepple:file roleAncestorSet internal/gritql/template.go
+    class scanByteAccount {
+        -read(context.Context, fs.FS, string, int, ScanOptions): scanReadResult
+        -readNext(context.Context, fs.FS, string, ScanOptions): scanReadResult
+        -signalLocked()
+        -maximum: int64
+        -mu: sync.Mutex
+        -next: int
+        -notify: chan struct&#123;&#125;
+        -stopped: bool
+        -total: int64
+    }
+    <<struct>> scanByteAccount
+    %% grepple:file scanByteAccount internal/gritql/scanner.go
+    class scanCandidateDisposition["scanCandidateDisposition = uint8"]
+    <<type>> scanCandidateDisposition
+    %% grepple:underlying scanCandidateDisposition uint8
+    %% grepple:file scanCandidateDisposition internal/gritql/scanner.go
+    class scanJob {
+        -candidate: preparedScanCandidate
+        -index: int
+    }
+    <<struct>> scanJob
+    %% grepple:file scanJob internal/gritql/scanner.go
+    class scanLimitKind["scanLimitKind = uint8"]
+    <<type>> scanLimitKind
+    %% grepple:underlying scanLimitKind uint8
+    %% grepple:file scanLimitKind internal/gritql/scanner.go
+    class scanMemoryAccount {
+        -acquire(context.Context, int64): bool
+        -discard(int, int64)
+        -release(int64)
+        -replace(context.Context, int, int64, int64): bool
+        -retain(int, int64)
+        -signalLocked()
+        -capacity: int64
+        -current: int64
+        -mu: sync.Mutex
+        -next: int
+        -notify: chan struct&#123;&#125;
+        -retained: int64
+    }
+    <<struct>> scanMemoryAccount
+    %% grepple:file scanMemoryAccount internal/gritql/scanner.go
+    class scanOutcome {
+        -binary: bool
+        -bytesRead: int64
+        -evaluation: FileEvaluation
+        -index: int
+        -reserved: int64
+        -totalTruncated: bool
+    }
+    <<struct>> scanOutcome
+    %% grepple:file scanOutcome internal/gritql/scanner.go
+    class scanReadResult {
+        -content: []byte
+        -err: error
+        -limit: scanLimitKind
+    }
+    <<struct>> scanReadResult
+    %% grepple:file scanReadResult internal/gritql/scanner.go
+    class scanSegmentMatcher {
+        -match(int, int): bool
+        -matchDoubleStar(int, int): bool
+        -matchUncached(int, int): bool
+        -name: []string
+        -pattern: []string
+        -seen: map[scanSegmentState]bool
+        -values: map[scanSegmentState]bool
+    }
+    <<struct>> scanSegmentMatcher
+    %% grepple:file scanSegmentMatcher internal/gritql/scanner.go
+    class scanSegmentState {
+        -name: int
+        -pattern: int
+    }
+    <<struct>> scanSegmentState
+    %% grepple:file scanSegmentState internal/gritql/scanner.go
+    class scanState {
+        -commit(*Program, scanOutcome)
+        -scan(context.Context, fs.FS, *Program, []preparedScanCandidate)
+        -account: *scanMemoryAccount
+        -bytes: *scanByteAccount
+        -candidateCount: int
+        -evaluations: []FileEvaluation
+        -options: ScanOptions
+        -retained: int64
+        -started: time.Time
+        -stats: ScanStats
+        -stop: bool
+        -totalSkipped: int
+        -totalTruncated: bool
+    }
+    <<struct>> scanState
+    %% grepple:file scanState internal/gritql/scanner.go
+    class selectedRoot {
+        -node: parser.Node
+        -sequenceKind: string
+    }
+    <<struct>> selectedRoot
+    %% grepple:file selectedRoot internal/gritql/template.go
+    class separatorLexState["separatorLexState = uint8"]
+    <<type>> separatorLexState
+    %% grepple:underlying separatorLexState uint8
+    %% grepple:file separatorLexState internal/gritql/template.go
+    class separatorScanner {
+        -addBothSeparator(int)
+        -beginComment(): bool
+        -scan()
+        -scanBlockComment()
+        -scanCurrentByte()
+        -scanLineComment()
+        -scanNormalByte()
+        -scanQuotedLiteral()
+        -scanRawString()
+        -blockCommentHasNewline: bool
+        -blockCommentStart: int
+        -index: int
+        -result: structuralSeparators
+        -source: string
+        -state: separatorLexState
+    }
+    <<struct>> separatorScanner
+    %% grepple:file separatorScanner internal/gritql/template.go
+    class sequencePosition {
+        -field: string
+        -indexes: []int
+    }
+    <<struct>> sequencePosition
+    %% grepple:file sequencePosition internal/gritql/evaluator.go
+    class significantRangeFrame {
+        -children: []parser.Node
+        -first: parser.Range
+        -has: bool
+        -last: parser.Range
+        -next: int
+        -node: parser.Node
+    }
+    <<struct>> significantRangeFrame
+    %% grepple:file significantRangeFrame internal/gritql/evaluator.go
+    class slotTarget {
+        -cardinality: SlotCardinality
+        -kind: string
+        -p: generatedPlaceholder
+    }
+    <<struct>> slotTarget
+    %% grepple:file slotTarget internal/gritql/template.go
+    class slotTargetWalkItem {
+        -depth: int
+        -n: parser.Node
+        -parent: parser.Node
+    }
+    <<struct>> slotTargetWalkItem
+    %% grepple:file slotTargetWalkItem internal/gritql/template.go
+    class snippetAttempt {
+        -context: SnippetContext
+        -prefix: string
+        -selectRoot: func&#40;parser.Node&#44;int&#44;int&#41;&#40;selectedRoot&#44;bool&#41;
+        -suffix: string
+    }
+    <<struct>> snippetAttempt
+    %% grepple:file snippetAttempt internal/gritql/template.go
+    class snippetPlaceholder {
+        -end: int
+        -ref: VariableRef
+        -start: int
+    }
+    <<struct>> snippetPlaceholder
+    %% grepple:file snippetPlaceholder internal/gritql/template.go
+    class sourceInspectionItem {
+        -depth: int
+        -node: parser.Node
+    }
+    <<struct>> sourceInspectionItem
+    %% grepple:file sourceInspectionItem internal/gritql/evaluator.go
+    class spanKey {
+        -end: int
+        -start: int
+    }
+    <<struct>> spanKey
+    %% grepple:file spanKey internal/gritql/template.go
+    class structuralSeparators {
+        -left: []int
+        -right: []int
+    }
+    <<struct>> structuralSeparators
+    %% grepple:file structuralSeparators internal/gritql/template.go
+    class templateChild {
+        -field: string
+        -node: *templateNode
+        -slot: *templateSlot
+    }
+    <<struct>> templateChild
+    %% grepple:file templateChild internal/gritql/template.go
+    class templateFreezeFrame {
+        -children: []parser.Node
+        -depth: int
+        -kept: []templateChild
+        -next: int
+        -src: parser.Node
+    }
+    <<struct>> templateFreezeFrame
+    %% grepple:file templateFreezeFrame internal/gritql/template.go
+    class templateFreezer {
+        -build(): tuple~templateChild&#44;error~
+        -concreteChild(*templateFreezeFrame, bool): templateChild
+        -descend(*templateFreezeFrame)
+        -finishFrame(int, templateChild): tuple~templateChild&#44;bool&#44;error~
+        -keptChildren(parser.Node): []parser.Node
+        -slotChild(parser.Node): tuple~templateChild&#44;bool~
+        -step(): tuple~templateChild&#44;bool&#44;error~
+        -clipEnd: int
+        -clipStart: int
+        -maxDepth: int
+        -sequenceKind: string
+        -stack: []templateFreezeFrame
+        -targets: map[spanKey]slotTarget
+    }
+    <<struct>> templateFreezer
+    %% grepple:file templateFreezer internal/gritql/template.go
+    class templateNode {
+        -children: []templateChild
+        -kind: string
+        -named: bool
+        -token: string
+    }
+    <<struct>> templateNode
+    %% grepple:file templateNode internal/gritql/template.go
+    class templateSlot {
+        -cardinality: SlotCardinality
+        -ref: VariableRef
+    }
+    <<struct>> templateSlot
+    %% grepple:file templateSlot internal/gritql/template.go
+    class treeCompiler {
+        -acceptDocumentField(queryNode, *queryNode, *queryNode): *CompileError
+        -closedFailure(string): *CompileError
+        -compileBlock(queryNode, Kind, FeatureSet, string): tuple~*expression&#44;*CompileError~
+        -compileBlockChildren([]queryNode, string): tuple~[]*expression&#44;bool&#44;*CompileError~
+        -compileConstraint(queryNode): tuple~constraint&#44;*CompileError~
+        -compileConstraintBlock(queryNode): tuple~[]constraint&#44;*CompileError~
+        -compileConstraintItems([]queryNode): tuple~[]constraint&#44;*CompileError~
+        -compileDecodedRegex([]byte): tuple~*regexp.Regexp&#44;*CompileError~
+        -compileDocumentFields(queryNode, *Range): tuple~queryNode&#44;queryNode&#44;*CompileError~
+        -compileExpression(queryNode, bool): tuple~*expression&#44;*CompileError~
+        -compileLanguage(queryNode): *CompileError
+        -compileRegex(queryNode): tuple~*expression&#44;*CompileError~
+        -compileSnippet(queryNode): tuple~*expression&#44;*CompileError~
+        -compileUnary(queryNode, Kind, FeatureSet, string): tuple~*expression&#44;*CompileError~
+        -compileWhere(queryNode): tuple~*expression&#44;*CompileError~
+        -decodeRegex([]byte): tuple~[]byte&#44;*CompileError~
+        -decodeRegexEscape([]byte, int, int): tuple~[]byte&#44;int&#44;*CompileError~
+        -decodeRegexHexEscape([]byte, int, int): tuple~[]byte&#44;int&#44;*CompileError~
+        -decodeSnippet(queryNode): tuple~[]byte&#44;[]VariableRef&#44;[]snippetPlaceholder&#44;*CompileError~
+        -failure(string, string, string, error): *CompileError
+        -regexPayload(queryNode): tuple~[]byte&#44;*CompileError~
+        -snippetLeaf(queryNode): tuple~queryNode&#44;*CompileError~
+        -snippetMetavariableEnd([]byte, int): tuple~int&#44;*CompileError~
+        -variable(string, int, int): VariableRef
+        -whereChildren(queryNode): tuple~[]queryNode&#44;*CompileError~
+        -doc: *queryDocument
+        -features: FeatureSet
+        -languageRange: Range
+        -names: map[string]VariableID
+        -options: CompileOptions
+        -variables: []Variable
+    }
+    <<struct>> treeCompiler
+    %% grepple:file treeCompiler internal/gritql/compiler.go
+    class v1NodeValidator["v1NodeValidator = func(queryNode,&#91;&#93;queryNode)bool"]
+    <<type>> v1NodeValidator
+    %% grepple:underlying v1NodeValidator func(queryNode,[]queryNode)bool
+    %% grepple:file v1NodeValidator internal/gritql/query_syntax.go
+    class v1ValidationWork {
+        -depth: int
+        -node: queryNode
+    }
+    <<struct>> v1ValidationWork
+    %% grepple:file v1ValidationWork internal/gritql/query_syntax.go
+    class variableScope["variableScope = map&#91;VariableID&#93;bool"]
+    <<type>> variableScope
+    %% grepple:underlying variableScope map[VariableID]bool
+    %% grepple:file variableScope internal/gritql/compiler.go
+    class AnalyzeAnchors {
+        +AnalyzeAnchors(*Program): AnchorPlan
+    }
+    <<function>> AnalyzeAnchors
+    %% grepple:file AnalyzeAnchors internal/gritql/anchor.go
+    class Compile {
+        +Compile([]byte, CompileOptions): tuple~*Program&#44;error~
+    }
+    <<function>> Compile
+    %% grepple:file Compile internal/gritql/compiler.go
+    class Evaluate {
+        +Evaluate(context.Context, *Program, *parser.Document, EvaluateOptions): tuple~[]EvaluationMatch&#44;error~
+    }
+    <<function>> Evaluate
+    %% grepple:file Evaluate internal/gritql/evaluator.go
+    class EvaluateDocument {
+        +EvaluateDocument(context.Context, *Program, *parser.Document, EvaluateOptions): tuple~[]EvaluationMatch&#44;error~
+    }
+    <<function>> EvaluateDocument
+    %% grepple:file EvaluateDocument internal/gritql/evaluator.go
+    class EvaluateDocumentFindings {
+        +EvaluateDocumentFindings(context.Context, *Program, *parser.Document, DocumentInput, EvaluateOptions): tuple~FileEvaluation~
+    }
+    <<function>> EvaluateDocumentFindings
+    %% grepple:file EvaluateDocumentFindings internal/gritql/finding.go
+    class EvaluateDocuments {
+        +EvaluateDocuments(context.Context, *Program, []ParsedEvaluationInput, EvaluateOptions): FileEvaluation
+    }
+    <<function>> EvaluateDocuments
+    %% grepple:file EvaluateDocuments internal/gritql/batch.go
+    class EvaluateFile {
+        +EvaluateFile(context.Context, *Program, FileInput, EvaluateOptions): tuple~FileEvaluation~
+    }
+    <<function>> EvaluateFile
+    %% grepple:file EvaluateFile internal/gritql/finding.go
+    class MatchNode {
+        +MatchNode(Template, parser.Node): tuple~MatchResult&#44;bool~
+    }
+    <<function>> MatchNode
+    %% grepple:file MatchNode internal/gritql/matcher.go
+    class MatchTemplate {
+        +MatchTemplate(Template, MatchTarget): tuple~MatchResult&#44;bool~
+    }
+    <<function>> MatchTemplate
+    %% grepple:file MatchTemplate internal/gritql/matcher.go
+    class MatchTemplateWithBindings {
+        +MatchTemplateWithBindings(Template, MatchTarget, BindingSet): tuple~MatchResult&#44;bool~
+    }
+    <<function>> MatchTemplateWithBindings
+    %% grepple:file MatchTemplateWithBindings internal/gritql/matcher.go
+    class NodeTarget {
+        +NodeTarget(parser.Node): MatchTarget
+    }
+    <<function>> NodeTarget
+    %% grepple:file NodeTarget internal/gritql/matcher.go
+    class NormalizeEvaluations {
+        +NormalizeEvaluations(context.Context, []FileEvaluation, EvaluateOptions): FileEvaluation
+    }
+    <<function>> NormalizeEvaluations
+    %% grepple:file NormalizeEvaluations internal/gritql/batch.go
+    class RepeatedSequenceTarget {
+        +RepeatedSequenceTarget(parser.Node, string, int, int): MatchTarget
+    }
+    <<function>> RepeatedSequenceTarget
+    %% grepple:file RepeatedSequenceTarget internal/gritql/matcher.go
+    class ScanFiles {
+        +ScanFiles(context.Context, fs.FS, *Program, []ScanCandidate, ScanOptions): ScanResult
+    }
+    <<function>> ScanFiles
+    %% grepple:file ScanFiles internal/gritql/scanner.go
+    class ScanFilesPrograms {
+        +ScanFilesPrograms(context.Context, fs.FS, []ProgramScan, []ScanCandidate, ScanOptions): BatchScanResult
+    }
+    <<function>> ScanFilesPrograms
+    %% grepple:file ScanFilesPrograms internal/gritql/scanner_batch.go
+    class SequenceTarget {
+        +SequenceTarget(string, parser.Node, int, int): MatchTarget
+    }
+    <<function>> SequenceTarget
+    %% grepple:file SequenceTarget internal/gritql/matcher.go
+    class ValidateGlobs {
+        +ValidateGlobs([]string, []string): error
+    }
+    <<function>> ValidateGlobs
+    %% grepple:file ValidateGlobs internal/gritql/scanner.go
+    AnalyzeAnchors "1" ..> "1" AnchorPlan : result 1
+    AnalyzeAnchors "1" ..> "1" Program : parameter 1
+    BatchScanResult "1" --> "1" BatchScanStats : field stats
+    BatchScanResult "1" ..> "1" BatchScanStats : method Stats result 1
+    BatchScanResult "1" --> "*" ProgramScanResult : field programs
+    BatchScanResult "1" ..> "*" ProgramScanResult : method Programs result 1
+    BindingSet "1" ..> "*" BoundValue : method All result 1
+    BindingSet "1" ..> "1" BoundValue : method Lookup result 1
+    BindingSet "1" --> "*" VariableID : field values
+    BindingSet "1" ..> "1" VariableID : method Lookup parameter 1
+    BindingSet "1" --> "*" bindingValue : field values
+    BoundValue "1" ..> "1" BindingKind : method Kind result 1
+    BoundValue "1" ..> "*" StructuralNode : method Structural result 1
+    BoundValue "1" ..> "1" VariableRef : method Variable result 1
+    BoundValue "1" --> "1" bindingValue : field value
+    Compile "1" ..> "1" CompileOptions : parameter 2
+    Compile "1" ..> "1" Program : result 1
+    CompileError "1" --> "1" Range : field Range
+    Constraint "1" ..> "1" Expression : method RHS result 1
+    Constraint "1" ..> "1" Range : method Range result 1
+    Constraint "1" ..> "1" VariableRef : method LHS result 1
+    Constraint "1" --> "1" constraint : field c
+    Evaluate "1" ..> "1" EvaluateOptions : parameter 4
+    Evaluate "1" ..> "*" EvaluationMatch : result 1
+    Evaluate "1" ..> "1" Program : parameter 2
+    EvaluateDocument "1" ..> "1" EvaluateOptions : parameter 4
+    EvaluateDocument "1" ..> "*" EvaluationMatch : result 1
+    EvaluateDocument "1" ..> "1" Program : parameter 2
+    EvaluateDocumentFindings "1" ..> "1" DocumentInput : parameter 4
+    EvaluateDocumentFindings "1" ..> "1" EvaluateOptions : parameter 5
+    EvaluateDocumentFindings "1" ..> "1" FileEvaluation : result 1
+    EvaluateDocumentFindings "1" ..> "1" Program : parameter 2
+    EvaluateDocuments "1" ..> "1" EvaluateOptions : parameter 4
+    EvaluateDocuments "1" ..> "1" FileEvaluation : result 1
+    EvaluateDocuments "1" ..> "*" ParsedEvaluationInput : parameter 3
+    EvaluateDocuments "1" ..> "1" Program : parameter 2
+    EvaluateFile "1" ..> "1" EvaluateOptions : parameter 4
+    EvaluateFile "1" ..> "1" FileEvaluation : result 1
+    EvaluateFile "1" ..> "1" FileInput : parameter 3
+    EvaluateFile "1" ..> "1" Program : parameter 2
+    EvaluationMatch "1" --> "1" BindingSet : field bindings
+    EvaluationMatch "1" ..> "1" BindingSet : method Bindings result 1
+    EvaluationMetadata "1" --> "1" EffectiveLimits : field Limits
+    EvaluationOptions "1" ..> "1" EvaluateOptions : underlying type
+    Expression "1" ..> "*" Constraint : method Constraints result 1
+    Expression "1" ..> "1" Kind : method Kind result 1
+    Expression "1" ..> "1" Range : method Range result 1
+    Expression "1" ..> "1" Template : method Template result 1
+    Expression "1" ..> "*" VariableRef : method Variables result 1
+    Expression "1" --> "1" expression : field e
+    FileEvaluation "1" --> "*" Diagnostic : field diagnostics
+    FileEvaluation "1" ..> "*" Diagnostic : method Diagnostics result 1
+    FileEvaluation "1" --> "1" EvaluationMetadata : field metadata
+    FileEvaluation "1" ..> "1" EvaluationMetadata : method Metadata result 1
+    FileEvaluation "1" --> "*" Finding : field findings
+    FileEvaluation "1" ..> "*" Finding : method Findings result 1
+    Finding "1" --> "*" FindingBinding : field bindings
+    Finding "1" ..> "*" FindingBinding : method Bindings result 1
+    FindingBinding "1" --> "1" BindingKind : field kind
+    FindingBinding "1" ..> "1" BindingKind : method Kind result 1
+    FindingBinding "1" --> "*" StructuralNode : field structural
+    FindingBinding "1" ..> "*" StructuralNode : method Elements result 1
+    FindingBinding "1" ..> "1" StructuralNode : method Node result 1
+    FindingBinding "1" ..> "*" StructuralNode : method Structural result 1
+    LanguageDeclaration "1" --> "1" Range : field Range
+    MatchNode "1" ..> "1" MatchResult : result 1
+    MatchNode "1" ..> "1" Template : parameter 1
+    MatchResult "1" --> "1" BindingSet : field bindings
+    MatchResult "1" ..> "1" BindingSet : method Bindings result 1
+    MatchTemplate "1" ..> "1" MatchResult : result 1
+    MatchTemplate "1" ..> "1" MatchTarget : parameter 2
+    MatchTemplate "1" ..> "1" Template : parameter 1
+    MatchTemplateWithBindings "1" ..> "1" BindingSet : parameter 3
+    MatchTemplateWithBindings "1" ..> "1" MatchResult : result 1
+    MatchTemplateWithBindings "1" ..> "1" MatchTarget : parameter 2
+    MatchTemplateWithBindings "1" ..> "1" Template : parameter 1
+    NodeTarget "1" ..> "1" MatchTarget : result 1
+    NormalizeEvaluations "1" ..> "1" EvaluateOptions : parameter 3
+    NormalizeEvaluations "1" ..> "*" FileEvaluation : parameter 2
+    NormalizeEvaluations "1" ..> "1" FileEvaluation : result 1
+    ParsedEvaluationInput "1" --> "1" DocumentInput : field Input
+    Program "1" --> "1" CompileOptions : field compileLimits
+    Program "1" ..> "1" Expression : method Root result 1
+    Program "1" --> "1" FeatureSet : field features
+    Program "1" ..> "1" FeatureSet : method Features result 1
+    Program "1" --> "1" LanguageDeclaration : field declaration
+    Program "1" ..> "1" LanguageDeclaration : method Declaration result 1
+    Program "1" --> "1" Range : field rng
+    Program "1" ..> "1" Range : method Range result 1
+    Program "1" --> "*" Variable : field variables
+    Program "1" ..> "*" Variable : method Variables result 1
+    Program "1" --> "1" expression : field root
+    ProgramScan "1" --> "1" Program : field Program
+    ProgramScanResult "1" --> "1" ScanResult : field Result
+    Range "1" --> "1" Position : field End
+    Range "1" --> "1" Position : field Start
+    RepeatedSequenceTarget "1" ..> "1" MatchTarget : result 1
+    ScanFiles "1" ..> "1" Program : parameter 3
+    ScanFiles "1" ..> "*" ScanCandidate : parameter 4
+    ScanFiles "1" ..> "1" ScanOptions : parameter 5
+    ScanFiles "1" ..> "1" ScanResult : result 1
+    ScanFilesPrograms "1" ..> "1" BatchScanResult : result 1
+    ScanFilesPrograms "1" ..> "*" ProgramScan : parameter 3
+    ScanFilesPrograms "1" ..> "*" ScanCandidate : parameter 4
+    ScanFilesPrograms "1" ..> "1" ScanOptions : parameter 5
+    ScanOptions "1" --> "1" EvaluateOptions : field EvaluateOptions
+    ScanResult "1" ..> "*" Diagnostic : method Diagnostics result 1
+    ScanResult "1" ..> "1" EvaluationMetadata : method Metadata result 1
+    ScanResult "1" --> "1" FileEvaluation : field evaluation
+    ScanResult "1" ..> "*" Finding : method Findings result 1
+    ScanResult "1" --> "1" ScanStats : field stats
+    ScanResult "1" ..> "1" ScanStats : method Stats result 1
+    ScanResult "1" --> "*" ScanTruncation : field truncations
+    ScanResult "1" ..> "*" ScanTruncation : method Truncations result 1
+    SequenceTarget "1" ..> "1" MatchTarget : result 1
+    StructuralNode "1" --> "1" normalizedNode : field node
+    Template "1" --> "1" SnippetContext : field context
+    Template "1" ..> "1" SnippetContext : method Context result 1
+    Template "1" ..> "1" TemplateNode : method Root result 1
+    Template "1" ..> "1" TemplateSlot : method RootSlot result 1
+    Template "1" --> "1" templateNode : field root
+    Template "1" --> "1" templateSlot : field rootSlot
+    TemplateChild "1" ..> "1" TemplateNode : method Node result 1
+    TemplateChild "1" ..> "1" TemplateSlot : method Slot result 1
+    TemplateChild "1" --> "1" templateChild : field child
+    TemplateNode "1" ..> "*" TemplateChild : method Children result 1
+    TemplateNode "1" --> "1" templateNode : field node
+    TemplateSlot "1" ..> "1" SlotCardinality : method Cardinality result 1
+    TemplateSlot "1" ..> "1" VariableRef : method Variable result 1
+    TemplateSlot "1" --> "1" templateSlot : field slot
+    Variable "1" --> "1" Range : field Range
+    Variable "1" --> "1" VariableID : field ID
+    VariableRef "1" --> "1" Range : field Range
+    VariableRef "1" --> "1" VariableID : field ID
+    bindingValue "1" --> "1" BindingKind : field kind
+    bindingValue "1" --> "1" VariableRef : field variable
+    bindingValue "1" --> "*" normalizedNode : field equality
+    bindingValue "1" --> "*" normalizedNode : field structural
+    constraint "1" --> "1" Range : field rng
+    constraint "1" --> "1" VariableRef : field lhs
+    constraint "1" --> "1" expression : field rhs
+    decodedSnippet "1" --> "*" snippetPlaceholder : field placeholders
+    diagnosticJSON "1" --> "1" rangeJSON : field Range
+    evalCandidate "1" --> "1" MatchTarget : field target
+    evaluationBudget "1" --> "1" EvaluationError : field err
+    expression "1" --> "1" Kind : field kind
+    expression "1" --> "1" Range : field rng
+    expression "1" --> "1" Template : field template
+    expression "1" --> "*" VariableRef : field refs
+    expression "1" --> "*" constraint : field constraints
+    rangeJSON <|-- findingJSON : embedded type
+    generatedPlaceholder "1" --> "1" VariableRef : field ref
+    generatedPlaceholder "1" --> "1" placeholderRole : field role
+    inferredEvaluation "1" --> "1" Template : field tmpl
+    normalizationCheckpointHook "1" ..> "1" EvaluationError : underlying type
+    normalizationCheckpointHook "1" ..> "1" normalizationCheckpoint : underlying type
+    occurrenceRestoration "1" --> "*" VariableRef : field indices
+    occurrenceRestoration "1" ..> "*" templateChild : method visitChildren parameter 2
+    occurrenceRestoration "1" ..> "*" templateNode : method visitChildren parameter 1
+    occurrenceRestoration "1" ..> "*" templateNode : method visitChildren result 1
+    occurrenceRestoration "1" ..> "1" templateNode : method visitTree parameter 1
+    occurrenceRestoration "1" ..> "1" templateSlot : method visitSlot parameter 1
+    placeholderInference "1" --> "*" placeholderRole : field assignments
+    placeholderInfo "1" --> "1" roleAncestorSet : field ancestors
+    placeholderInfoCollector "1" --> "*" placeholderInfo : field infos
+    placeholderInfoCollector "1" ..> "1" placeholderWalkItem : method inspect parameter 1
+    placeholderInfoCollector "1" ..> "1" placeholderWalkItem : method inspect result 1
+    placeholderInfoCollector "1" ..> "1" placeholderWalkItem : method record parameter 2
+    placeholderInfoCollector "1" --> "*" spanKey : field bySpan
+    placeholderRoleSolver "1" --> "*" generatedPlaceholder : field ps
+    placeholderRoleSolver "1" --> "*" placeholderInfo : field infos
+    placeholderRoleSolver "1" --> "*" placeholderRole : field roles
+    placeholderRoleSolver "1" ..> "*" spanKey : method resolveImport parameter 3
+    placeholderRoleSolver "1" --> "1" structuralSeparators : field separators
+    placeholderWalkItem "1" --> "1" roleAncestorSet : field ancestors
+    queryDocument "1" --> "1" noCopy : field noCopy
+    queryDocument "1" ..> "1" queryNode : method root result 1
+    queryDocument "1" ..> "*" queryParseDiagnostic : method diagnostics result 1
+    queryDocument "1" ..> "1" queryRange : method rangeForBytes result 1
+    queryNode "1" --> "1" queryDocument : field doc
+    queryNode "1" ..> "1" queryRange : method byteRange result 1
+    queryParseDiagnostic "1" --> "1" queryRange : field Range
+    queryRange "1" --> "1" queryPosition : field End
+    queryRange "1" --> "1" queryPosition : field Start
+    queryRecord "1" --> "1" BindingSet : field bindings
+    querySyntaxError "1" --> "1" queryErrorKind : field Kind
+    querySyntaxError "1" --> "1" queryRange : field Range
+    roleAlternative "1" --> "1" placeholderRole : field role
+    roleAlternative "1" --> "1" spanKey : field component
+    scanByteAccount "1" ..> "1" ScanOptions : method read parameter 5
+    scanByteAccount "1" ..> "1" ScanOptions : method readNext parameter 4
+    scanByteAccount "1" ..> "1" scanReadResult : method read result 1
+    scanByteAccount "1" ..> "1" scanReadResult : method readNext result 1
+    scanJob "1" --> "1" preparedScanCandidate : field candidate
+    scanOutcome "1" --> "1" FileEvaluation : field evaluation
+    scanReadResult "1" --> "1" scanLimitKind : field limit
+    scanSegmentMatcher "1" --> "*" scanSegmentState : field seen
+    scanSegmentMatcher "1" --> "*" scanSegmentState : field values
+    scanState "1" --> "*" FileEvaluation : field evaluations
+    scanState "1" ..> "1" Program : method commit parameter 1
+    scanState "1" ..> "1" Program : method scan parameter 3
+    scanState "1" --> "1" ScanOptions : field options
+    scanState "1" --> "1" ScanStats : field stats
+    scanState "1" ..> "*" preparedScanCandidate : method scan parameter 4
+    scanState "1" --> "1" scanByteAccount : field bytes
+    scanState "1" --> "1" scanMemoryAccount : field account
+    scanState "1" ..> "1" scanOutcome : method commit parameter 2
+    separatorScanner "1" --> "1" separatorLexState : field state
+    separatorScanner "1" --> "1" structuralSeparators : field result
+    slotTarget "1" --> "1" SlotCardinality : field cardinality
+    slotTarget "1" --> "1" generatedPlaceholder : field p
+    snippetAttempt "1" --> "1" SnippetContext : field context
+    snippetAttempt "1" --> "1" selectedRoot : field selectRoot
+    snippetPlaceholder "1" --> "1" VariableRef : field ref
+    templateChild "1" --> "1" templateNode : field node
+    templateChild "1" --> "1" templateSlot : field slot
+    templateFreezeFrame "1" --> "*" templateChild : field kept
+    templateFreezer "1" --> "*" slotTarget : field targets
+    templateFreezer "1" --> "*" spanKey : field targets
+    templateFreezer "1" ..> "1" templateChild : method build result 1
+    templateFreezer "1" ..> "1" templateChild : method concreteChild result 1
+    templateFreezer "1" ..> "1" templateChild : method finishFrame parameter 2
+    templateFreezer "1" ..> "1" templateChild : method finishFrame result 1
+    templateFreezer "1" ..> "1" templateChild : method slotChild result 1
+    templateFreezer "1" ..> "1" templateChild : method step result 1
+    templateFreezer "1" --> "*" templateFreezeFrame : field stack
+    templateFreezer "1" ..> "1" templateFreezeFrame : method concreteChild parameter 1
+    templateFreezer "1" ..> "1" templateFreezeFrame : method descend parameter 1
+    templateNode "1" --> "*" templateChild : field children
+    templateSlot "1" --> "1" SlotCardinality : field cardinality
+    templateSlot "1" --> "1" VariableRef : field ref
+    treeCompiler "1" ..> "1" CompileError : method acceptDocumentField result 1
+    treeCompiler "1" ..> "1" CompileError : method closedFailure result 1
+    treeCompiler "1" ..> "1" CompileError : method compileBlock result 2
+    treeCompiler "1" ..> "1" CompileError : method compileBlockChildren result 3
+    treeCompiler "1" ..> "1" CompileError : method compileConstraint result 2
+    treeCompiler "1" ..> "1" CompileError : method compileConstraintBlock result 2
+    treeCompiler "1" ..> "1" CompileError : method compileConstraintItems result 2
+    treeCompiler "1" ..> "1" CompileError : method compileDecodedRegex result 2
+    treeCompiler "1" ..> "1" CompileError : method compileDocumentFields result 3
+    treeCompiler "1" ..> "1" CompileError : method compileExpression result 2
+    treeCompiler "1" ..> "1" CompileError : method compileLanguage result 1
+    treeCompiler "1" ..> "1" CompileError : method compileRegex result 2
+    treeCompiler "1" ..> "1" CompileError : method compileSnippet result 2
+    treeCompiler "1" ..> "1" CompileError : method compileUnary result 2
+    treeCompiler "1" ..> "1" CompileError : method compileWhere result 2
+    treeCompiler "1" ..> "1" CompileError : method decodeRegex result 2
+    treeCompiler "1" ..> "1" CompileError : method decodeRegexEscape result 3
+    treeCompiler "1" ..> "1" CompileError : method decodeRegexHexEscape result 3
+    treeCompiler "1" ..> "1" CompileError : method decodeSnippet result 4
+    treeCompiler "1" ..> "1" CompileError : method failure result 1
+    treeCompiler "1" ..> "1" CompileError : method regexPayload result 2
+    treeCompiler "1" ..> "1" CompileError : method snippetLeaf result 2
+    treeCompiler "1" ..> "1" CompileError : method snippetMetavariableEnd result 2
+    treeCompiler "1" ..> "1" CompileError : method whereChildren result 2
+    treeCompiler "1" --> "1" CompileOptions : field options
+    treeCompiler "1" --> "1" FeatureSet : field features
+    treeCompiler "1" ..> "1" FeatureSet : method compileBlock parameter 3
+    treeCompiler "1" ..> "1" FeatureSet : method compileUnary parameter 3
+    treeCompiler "1" ..> "1" Kind : method compileBlock parameter 2
+    treeCompiler "1" ..> "1" Kind : method compileUnary parameter 2
+    treeCompiler "1" --> "1" Range : field languageRange
+    treeCompiler "1" ..> "1" Range : method compileDocumentFields parameter 2
+    treeCompiler "1" --> "*" Variable : field variables
+    treeCompiler "1" --> "*" VariableID : field names
+    treeCompiler "1" ..> "*" VariableRef : method decodeSnippet result 2
+    treeCompiler "1" ..> "1" VariableRef : method variable result 1
+    treeCompiler "1" ..> "1" constraint : method compileConstraint result 1
+    treeCompiler "1" ..> "*" constraint : method compileConstraintBlock result 1
+    treeCompiler "1" ..> "*" constraint : method compileConstraintItems result 1
+    treeCompiler "1" ..> "1" expression : method compileBlock result 1
+    treeCompiler "1" ..> "*" expression : method compileBlockChildren result 1
+    treeCompiler "1" ..> "1" expression : method compileExpression result 1
+    treeCompiler "1" ..> "1" expression : method compileRegex result 1
+    treeCompiler "1" ..> "1" expression : method compileSnippet result 1
+    treeCompiler "1" ..> "1" expression : method compileUnary result 1
+    treeCompiler "1" ..> "1" expression : method compileWhere result 1
+    treeCompiler "1" --> "1" queryDocument : field doc
+    treeCompiler "1" ..> "1" queryNode : method acceptDocumentField parameter 1
+    treeCompiler "1" ..> "1" queryNode : method acceptDocumentField parameter 2
+    treeCompiler "1" ..> "1" queryNode : method acceptDocumentField parameter 3
+    treeCompiler "1" ..> "1" queryNode : method compileBlock parameter 1
+    treeCompiler "1" ..> "*" queryNode : method compileBlockChildren parameter 1
+    treeCompiler "1" ..> "1" queryNode : method compileConstraint parameter 1
+    treeCompiler "1" ..> "1" queryNode : method compileConstraintBlock parameter 1
+    treeCompiler "1" ..> "*" queryNode : method compileConstraintItems parameter 1
+    treeCompiler "1" ..> "1" queryNode : method compileDocumentFields parameter 1
+    treeCompiler "1" ..> "1" queryNode : method compileDocumentFields result 1
+    treeCompiler "1" ..> "1" queryNode : method compileDocumentFields result 2
+    treeCompiler "1" ..> "1" queryNode : method compileExpression parameter 1
+    treeCompiler "1" ..> "1" queryNode : method compileLanguage parameter 1
+    treeCompiler "1" ..> "1" queryNode : method compileRegex parameter 1
+    treeCompiler "1" ..> "1" queryNode : method compileSnippet parameter 1
+    treeCompiler "1" ..> "1" queryNode : method compileUnary parameter 1
+    treeCompiler "1" ..> "1" queryNode : method compileWhere parameter 1
+    treeCompiler "1" ..> "1" queryNode : method decodeSnippet parameter 1
+    treeCompiler "1" ..> "1" queryNode : method regexPayload parameter 1
+    treeCompiler "1" ..> "1" queryNode : method snippetLeaf parameter 1
+    treeCompiler "1" ..> "1" queryNode : method snippetLeaf result 1
+    treeCompiler "1" ..> "1" queryNode : method whereChildren parameter 1
+    treeCompiler "1" ..> "*" queryNode : method whereChildren result 1
+    treeCompiler "1" ..> "*" snippetPlaceholder : method decodeSnippet result 3
+    v1NodeValidator "1" ..> "*" queryNode : underlying type
+    v1ValidationWork "1" --> "1" queryNode : field node
+    variableScope "1" ..> "*" VariableID : underlying type

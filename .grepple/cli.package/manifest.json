@@ -16,16 +16,16 @@
     "syntacticBuildTagUnion": []
   },
   "summary": {
-    "sourceFiles": 23,
-    "declarations": 22,
+    "sourceFiles": 26,
+    "declarations": 23,
     "exportedTypes": 0,
-    "internalTypes": 22,
-    "members": 130,
+    "internalTypes": 23,
+    "members": 164,
     "exportedFunctions": 3,
     "fiberRoutes": 0,
     "relations": 15
   },
-  "semanticModelDigest": "sha256:4f8b9636b096f9e627988cd2240e25edd0a7cfc3489bd5b7304f52927fc98be8",
+  "semanticModelDigest": "sha256:d9528a3af31a2673a88986d732c446072644f72dbf4aea5cb5eef8ec7c7baa25",
   "sourceFiles": [
     {
       "path": "internal/cli/args.go"
@@ -44,6 +44,15 @@
     },
     {
       "path": "internal/cli/git_context.go"
+    },
+    {
+      "path": "internal/cli/grit.go"
+    },
+    {
+      "path": "internal/cli/grit_merge.go"
+    },
+    {
+      "path": "internal/cli/grit_remote.go"
     },
     {
       "path": "internal/cli/local.go"
@@ -517,6 +526,251 @@
       ]
     },
     {
+      "name": "gritArgs",
+      "kind": "struct",
+      "file": "internal/cli/grit.go",
+      "underlyingType": "struct{Local bool`arg:\"--local\" help:\"search only the local working directory (the default)\"`;Remote bool`arg:\"-R,--remote\" help:\"also query the remote shard/router and merge with local findings\"`;Server string`arg:\"-s,--server\" placeholder:\"URL\" help:\"remote shard/router URL (implies --remote)\"`;QueryFile string`arg:\"-f,--query-file\" placeholder:\"PATH\" help:\"read the GritQL query from PATH (- for stdin)\"`;Compatibility string`arg:\"--compatibility\" placeholder:\"VERSION\" help:\"structural compatibility version\"`;PatternID string`arg:\"--pattern-id\" placeholder:\"ID\" help:\"attach a pattern identifier to findings\"`;Message string`arg:\"--message\" placeholder:\"TEXT\" help:\"attach a message to findings\"`;JSON bool`arg:\"--json\" help:\"print the complete structural response as JSON\"`;ExcludeGlobs[]string`arg:\"--exclude-glob,separate\" placeholder:\"GLOB\" help:\"exclude a Go path; repeatable\"`;Repositories[]string`arg:\"--repo,separate\" placeholder:\"PATTERN\" help:\"restrict remote repositories; repeatable\"`;ExcludeRepositories[]string`arg:\"--exclude-repo,separate\" placeholder:\"PATTERN\" help:\"exclude remote repositories; repeatable\"`;Skip int`arg:\"--skip\" placeholder:\"N\" help:\"skip the first N ordered findings\"`;Limit int`arg:\"--limit\" placeholder:\"N\" help:\"return at most N findings (default 20; 0 = all local)\"`;MaxFiles int`arg:\"--max-files\" placeholder:\"N\" help:\"bound eligible source files\"`;MaxTotalBytes int64`arg:\"--max-total-bytes\" placeholder:\"N\" help:\"bound aggregate source bytes\"`;MaxPatternBytes int`arg:\"--max-pattern-bytes\" placeholder:\"N\" help:\"bound query source bytes during compilation\"`;MaxRegexBytes int`arg:\"--max-regex-bytes\" placeholder:\"N\" help:\"bound one regex constraint\"`;MaxRegexInstructions int`arg:\"--max-regex-instructions\" placeholder:\"N\" help:\"bound compiled regex instructions\"`;MaxParseDepth int`arg:\"--max-parse-depth\" placeholder:\"N\" help:\"bound query and structural recursion depth\"`;MaxSourceBytes int`arg:\"--max-source-bytes\" placeholder:\"N\" help:\"bound one source file\"`;MaxCandidates int`arg:\"--max-candidates\" placeholder:\"N\" help:\"bound structural candidates per file\"`;MaxASTSteps int`arg:\"--max-ast-steps\" placeholder:\"N\" help:\"bound structural evaluation steps per file\"`;MaxFindings int`arg:\"--max-findings\" placeholder:\"N\" help:\"bound retained findings before paging\"`;MaxMemoryBytes int`arg:\"--max-memory-bytes\" placeholder:\"N\" help:\"bound live scanner memory\"`;MaxFileMilliseconds int64`arg:\"--max-file-time-ms\" placeholder:\"N\" help:\"bound evaluation time per file\"`;Workers int`arg:\"--workers\" placeholder:\"N\" help:\"bound concurrent file evaluations\"`;TimeoutMilliseconds int64`arg:\"--timeout-ms\" placeholder:\"N\" help:\"bound the complete structural scan in milliseconds\"`;Query string`arg:\"positional\" placeholder:\"QUERY\"`;Globs[]string`arg:\"positional\" placeholder:\"GLOB\"`;}",
+      "members": [
+        {
+          "name": "Description",
+          "kind": "method",
+          "result": "string"
+        },
+        {
+          "name": "Compatibility",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "arg:\"--compatibility\" placeholder:\"VERSION\" help:\"structural compatibility version\""
+          }
+        },
+        {
+          "name": "ExcludeGlobs",
+          "kind": "property",
+          "result": "[]string",
+          "structTag": {
+            "value": "arg:\"--exclude-glob,separate\" placeholder:\"GLOB\" help:\"exclude a Go path; repeatable\""
+          }
+        },
+        {
+          "name": "ExcludeRepositories",
+          "kind": "property",
+          "result": "[]string",
+          "structTag": {
+            "value": "arg:\"--exclude-repo,separate\" placeholder:\"PATTERN\" help:\"exclude remote repositories; repeatable\""
+          }
+        },
+        {
+          "name": "Globs",
+          "kind": "property",
+          "result": "[]string",
+          "structTag": {
+            "value": "arg:\"positional\" placeholder:\"GLOB\""
+          }
+        },
+        {
+          "name": "JSON",
+          "kind": "property",
+          "result": "bool",
+          "structTag": {
+            "value": "arg:\"--json\" help:\"print the complete structural response as JSON\""
+          }
+        },
+        {
+          "name": "Limit",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "arg:\"--limit\" placeholder:\"N\" help:\"return at most N findings (default 20; 0 = all local)\""
+          }
+        },
+        {
+          "name": "Local",
+          "kind": "property",
+          "result": "bool",
+          "structTag": {
+            "value": "arg:\"--local\" help:\"search only the local working directory (the default)\""
+          }
+        },
+        {
+          "name": "MaxASTSteps",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "arg:\"--max-ast-steps\" placeholder:\"N\" help:\"bound structural evaluation steps per file\""
+          }
+        },
+        {
+          "name": "MaxCandidates",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "arg:\"--max-candidates\" placeholder:\"N\" help:\"bound structural candidates per file\""
+          }
+        },
+        {
+          "name": "MaxFileMilliseconds",
+          "kind": "property",
+          "result": "int64",
+          "structTag": {
+            "value": "arg:\"--max-file-time-ms\" placeholder:\"N\" help:\"bound evaluation time per file\""
+          }
+        },
+        {
+          "name": "MaxFiles",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "arg:\"--max-files\" placeholder:\"N\" help:\"bound eligible source files\""
+          }
+        },
+        {
+          "name": "MaxFindings",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "arg:\"--max-findings\" placeholder:\"N\" help:\"bound retained findings before paging\""
+          }
+        },
+        {
+          "name": "MaxMemoryBytes",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "arg:\"--max-memory-bytes\" placeholder:\"N\" help:\"bound live scanner memory\""
+          }
+        },
+        {
+          "name": "MaxParseDepth",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "arg:\"--max-parse-depth\" placeholder:\"N\" help:\"bound query and structural recursion depth\""
+          }
+        },
+        {
+          "name": "MaxPatternBytes",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "arg:\"--max-pattern-bytes\" placeholder:\"N\" help:\"bound query source bytes during compilation\""
+          }
+        },
+        {
+          "name": "MaxRegexBytes",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "arg:\"--max-regex-bytes\" placeholder:\"N\" help:\"bound one regex constraint\""
+          }
+        },
+        {
+          "name": "MaxRegexInstructions",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "arg:\"--max-regex-instructions\" placeholder:\"N\" help:\"bound compiled regex instructions\""
+          }
+        },
+        {
+          "name": "MaxSourceBytes",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "arg:\"--max-source-bytes\" placeholder:\"N\" help:\"bound one source file\""
+          }
+        },
+        {
+          "name": "MaxTotalBytes",
+          "kind": "property",
+          "result": "int64",
+          "structTag": {
+            "value": "arg:\"--max-total-bytes\" placeholder:\"N\" help:\"bound aggregate source bytes\""
+          }
+        },
+        {
+          "name": "Message",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "arg:\"--message\" placeholder:\"TEXT\" help:\"attach a message to findings\""
+          }
+        },
+        {
+          "name": "PatternID",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "arg:\"--pattern-id\" placeholder:\"ID\" help:\"attach a pattern identifier to findings\""
+          }
+        },
+        {
+          "name": "Query",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "arg:\"positional\" placeholder:\"QUERY\""
+          }
+        },
+        {
+          "name": "QueryFile",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "arg:\"-f,--query-file\" placeholder:\"PATH\" help:\"read the GritQL query from PATH (- for stdin)\""
+          }
+        },
+        {
+          "name": "Remote",
+          "kind": "property",
+          "result": "bool",
+          "structTag": {
+            "value": "arg:\"-R,--remote\" help:\"also query the remote shard/router and merge with local findings\""
+          }
+        },
+        {
+          "name": "Repositories",
+          "kind": "property",
+          "result": "[]string",
+          "structTag": {
+            "value": "arg:\"--repo,separate\" placeholder:\"PATTERN\" help:\"restrict remote repositories; repeatable\""
+          }
+        },
+        {
+          "name": "Server",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "arg:\"-s,--server\" placeholder:\"URL\" help:\"remote shard/router URL (implies --remote)\""
+          }
+        },
+        {
+          "name": "Skip",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "arg:\"--skip\" placeholder:\"N\" help:\"skip the first N ordered findings\""
+          }
+        },
+        {
+          "name": "TimeoutMilliseconds",
+          "kind": "property",
+          "result": "int64",
+          "structTag": {
+            "value": "arg:\"--timeout-ms\" placeholder:\"N\" help:\"bound the complete structural scan in milliseconds\""
+          }
+        },
+        {
+          "name": "Workers",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "arg:\"--workers\" placeholder:\"N\" help:\"bound concurrent file evaluations\""
+          }
+        }
+      ]
+    },
+    {
       "name": "jsonResultRenderer",
       "kind": "struct",
       "file": "internal/cli/renderer_json.go",
@@ -755,12 +1009,28 @@
       "name": "rulesAddArgs",
       "kind": "struct",
       "file": "internal/cli/rules.go",
-      "underlyingType": "struct{Server string`arg:\"-s,--server\" placeholder:\"URL\" help:\"remote router URL\"`;ID string`arg:\"--id\" placeholder:\"ID\" help:\"stable rule id (default: slug of --name)\"`;Name string`arg:\"--name\" placeholder:\"NAME\" help:\"human-readable name\"`;Mode string`arg:\"--mode\" placeholder:\"MODE\" help:\"count | files\"`;Files bool`arg:\"-l,--files\" help:\"files mode (store matching paths)\"`;Regex bool`arg:\"--regex\" help:\"treat PATTERN as a regular expression\"`;IgnoreCase bool`arg:\"-i,--ignore-case\" help:\"case-insensitive match\"`;Repo[]string`arg:\"--repo,separate\" placeholder:\"PATTERN\" help:\"limit to matching repos\"`;ExcludeRepo[]string`arg:\"--exclude-repo,separate\" placeholder:\"PATTERN\" help:\"exclude matching repos\"`;JSON bool`arg:\"--json\" help:\"print the created rule as JSON\"`;Pattern string`arg:\"positional\" placeholder:\"PATTERN\"`;Globs[]string`arg:\"positional\" placeholder:\"GLOB\"`;}",
+      "underlyingType": "struct{Server string`arg:\"-s,--server\" placeholder:\"URL\" help:\"remote router URL\"`;ID string`arg:\"--id\" placeholder:\"ID\" help:\"stable rule id (default: slug of --name)\"`;Name string`arg:\"--name\" placeholder:\"NAME\" help:\"human-readable name\"`;Mode string`arg:\"--mode\" placeholder:\"MODE\" help:\"count | files\"`;Engine string`arg:\"--engine\" placeholder:\"ENGINE\" help:\"text | gritql\"`;Grit bool`arg:\"--grit\" help:\"create a gritql structural rule\"`;QueryFile string`arg:\"-f,--query-file\" placeholder:\"PATH\" help:\"read structural query from PATH (- for stdin)\"`;Compatibility string`arg:\"--compatibility\" placeholder:\"VERSION\" help:\"structural compatibility version\"`;Files bool`arg:\"-l,--files\" help:\"files mode (store matching paths)\"`;Regex bool`arg:\"--regex\" help:\"treat PATTERN as a regular expression\"`;IgnoreCase bool`arg:\"-i,--ignore-case\" help:\"case-insensitive match\"`;Repo[]string`arg:\"--repo,separate\" placeholder:\"PATTERN\" help:\"limit to matching repos\"`;ExcludeRepo[]string`arg:\"--exclude-repo,separate\" placeholder:\"PATTERN\" help:\"exclude matching repos\"`;JSON bool`arg:\"--json\" help:\"print the created rule as JSON\"`;Pattern string`arg:\"positional\" placeholder:\"PATTERN\"`;Globs[]string`arg:\"positional\" placeholder:\"GLOB\"`;}",
       "members": [
         {
           "name": "Description",
           "kind": "method",
           "result": "string"
+        },
+        {
+          "name": "Compatibility",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "arg:\"--compatibility\" placeholder:\"VERSION\" help:\"structural compatibility version\""
+          }
+        },
+        {
+          "name": "Engine",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "arg:\"--engine\" placeholder:\"ENGINE\" help:\"text | gritql\""
+          }
         },
         {
           "name": "ExcludeRepo",
@@ -784,6 +1054,14 @@
           "result": "[]string",
           "structTag": {
             "value": "arg:\"positional\" placeholder:\"GLOB\""
+          }
+        },
+        {
+          "name": "Grit",
+          "kind": "property",
+          "result": "bool",
+          "structTag": {
+            "value": "arg:\"--grit\" help:\"create a gritql structural rule\""
           }
         },
         {
@@ -832,6 +1110,14 @@
           "result": "string",
           "structTag": {
             "value": "arg:\"positional\" placeholder:\"PATTERN\""
+          }
+        },
+        {
+          "name": "QueryFile",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "arg:\"-f,--query-file\" placeholder:\"PATH\" help:\"read structural query from PATH (- for stdin)\""
           }
         },
         {

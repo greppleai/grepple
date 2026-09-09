@@ -8,11 +8,12 @@ COMMANDS := grepple
 SOURCES := $(shell find cmd internal api parser search -type f -name '*.go') go.mod go.sum
 SCHEMA_DIR := .grepple
 SCHEMA_CORE_PACKAGES := api parser search
-SCHEMA_PACKAGES := $(SCHEMA_CORE_PACKAGES) cli
+SCHEMA_INTERNAL_PACKAGES := cli gritql gritqlapi rulespec
+SCHEMA_PACKAGES := $(SCHEMA_CORE_PACKAGES) $(SCHEMA_INTERNAL_PACKAGES)
 PACKAGE_BUNDLES := $(addsuffix .package,$(addprefix $(SCHEMA_DIR)/,$(SCHEMA_PACKAGES)))
 WORKSPACE_BUNDLES := $(SCHEMA_DIR)/project.workspace
 
-.PHONY: build test lint revive-lint hook-build hook-lint hook-test schema-generate schema-check install clean
+.PHONY: build test lint revive-lint hook-build hook-lint hook-test schema-generate schema-check docker-smoke install clean
 
 build: $(addprefix $(BIN_DIR)/,$(COMMANDS)) hook-build
 
@@ -44,7 +45,7 @@ hook-test:
 
 schema-generate: hook-build
 	@for package in $(SCHEMA_CORE_PACKAGES); do hooks/bin/mermaid-code generate package $$package --format bundle --output $(SCHEMA_DIR)/$$package.package || exit $$?; done
-	@hooks/bin/mermaid-code generate package internal/cli --format bundle --output $(SCHEMA_DIR)/cli.package
+	@for package in $(SCHEMA_INTERNAL_PACKAGES); do hooks/bin/mermaid-code generate package internal/$$package --format bundle --output $(SCHEMA_DIR)/$$package.package || exit $$?; done
 	@hooks/bin/mermaid-code generate workspace . --output $(WORKSPACE_BUNDLES)
 
 schema-check: hook-build

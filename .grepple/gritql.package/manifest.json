@@ -1,0 +1,6565 @@
+{
+  "formatVersion": 1,
+  "package": {
+    "name": "gritql",
+    "importPath": "github.com/greppleai/grepple/internal/gritql",
+    "sourceDirectory": "internal/gritql",
+    "documentation": "Package gritql implements Grepple's native, read-only gritql-go-v1 structural-search compiler, matcher, evaluator, and bounded scanner."
+  },
+  "scope": {
+    "types": "all",
+    "functions": "exported",
+    "variables": "excluded",
+    "constants": "excluded",
+    "tests": "excluded",
+    "buildTags": "syntactic-union-conflicts-rejected",
+    "syntacticBuildTagUnion": []
+  },
+  "summary": {
+    "sourceFiles": 12,
+    "declarations": 115,
+    "exportedTypes": 48,
+    "internalTypes": 67,
+    "members": 590,
+    "exportedFunctions": 17,
+    "fiberRoutes": 0,
+    "relations": 305
+  },
+  "semanticModelDigest": "sha256:3cde2c6aee982f0f2ac838df23b4f6a8d6232ab22aab960bfc44ae2344d20bcd",
+  "sourceFiles": [
+    {
+      "path": "internal/gritql/anchor.go"
+    },
+    {
+      "path": "internal/gritql/batch.go"
+    },
+    {
+      "path": "internal/gritql/compiler.go"
+    },
+    {
+      "path": "internal/gritql/doc.go"
+    },
+    {
+      "path": "internal/gritql/evaluator.go"
+    },
+    {
+      "path": "internal/gritql/finding.go"
+    },
+    {
+      "path": "internal/gritql/finding_json.go"
+    },
+    {
+      "path": "internal/gritql/matcher.go"
+    },
+    {
+      "path": "internal/gritql/query_syntax.go"
+    },
+    {
+      "path": "internal/gritql/scanner.go"
+    },
+    {
+      "path": "internal/gritql/scanner_batch.go"
+    },
+    {
+      "path": "internal/gritql/template.go"
+    }
+  ],
+  "declarations": [
+    {
+      "name": "AnchorPlan",
+      "kind": "struct",
+      "file": "internal/gritql/anchor.go",
+      "underlyingType": "struct{required[]string}",
+      "members": [
+        {
+          "name": "HasSafeAnchor",
+          "kind": "method",
+          "result": "bool"
+        },
+        {
+          "name": "RequiredLiterals",
+          "kind": "method",
+          "result": "[]string"
+        },
+        {
+          "name": "required",
+          "kind": "property",
+          "result": "[]string"
+        }
+      ]
+    },
+    {
+      "name": "BatchScanResult",
+      "kind": "struct",
+      "file": "internal/gritql/scanner_batch.go",
+      "underlyingType": "struct{programs[]ProgramScanResult;stats BatchScanStats;}",
+      "members": [
+        {
+          "name": "Programs",
+          "kind": "method",
+          "result": "[]ProgramScanResult"
+        },
+        {
+          "name": "Stats",
+          "kind": "method",
+          "result": "BatchScanStats"
+        },
+        {
+          "name": "programs",
+          "kind": "property",
+          "result": "[]ProgramScanResult"
+        },
+        {
+          "name": "stats",
+          "kind": "property",
+          "result": "BatchScanStats"
+        }
+      ]
+    },
+    {
+      "name": "BatchScanStats",
+      "kind": "struct",
+      "file": "internal/gritql/scanner_batch.go",
+      "underlyingType": "struct{FilesRead int;FilesParsed int;}",
+      "members": [
+        {
+          "name": "FilesParsed",
+          "kind": "property",
+          "result": "int"
+        },
+        {
+          "name": "FilesRead",
+          "kind": "property",
+          "result": "int"
+        }
+      ]
+    },
+    {
+      "name": "BindingKind",
+      "kind": "type",
+      "file": "internal/gritql/matcher.go",
+      "underlyingType": "uint8",
+      "members": [
+        {
+          "name": "String",
+          "kind": "method",
+          "result": "string"
+        }
+      ]
+    },
+    {
+      "name": "BindingSet",
+      "kind": "struct",
+      "file": "internal/gritql/matcher.go",
+      "underlyingType": "struct{values map[VariableID]*bindingValue}",
+      "members": [
+        {
+          "name": "All",
+          "kind": "method",
+          "result": "[]BoundValue"
+        },
+        {
+          "name": "Len",
+          "kind": "method",
+          "result": "int"
+        },
+        {
+          "name": "Lookup",
+          "kind": "method",
+          "parameters": [
+            "VariableID"
+          ],
+          "result": "tuple\u003cBoundValue,bool\u003e"
+        },
+        {
+          "name": "values",
+          "kind": "property",
+          "result": "map[VariableID]*bindingValue"
+        }
+      ]
+    },
+    {
+      "name": "BoundValue",
+      "kind": "struct",
+      "file": "internal/gritql/matcher.go",
+      "underlyingType": "struct{value*bindingValue}",
+      "members": [
+        {
+          "name": "Kind",
+          "kind": "method",
+          "result": "BindingKind"
+        },
+        {
+          "name": "Range",
+          "kind": "method",
+          "result": "parser.Range"
+        },
+        {
+          "name": "Ranges",
+          "kind": "method",
+          "result": "[]parser.Range"
+        },
+        {
+          "name": "Structural",
+          "kind": "method",
+          "result": "[]StructuralNode"
+        },
+        {
+          "name": "Text",
+          "kind": "method",
+          "result": "string"
+        },
+        {
+          "name": "Valid",
+          "kind": "method",
+          "result": "bool"
+        },
+        {
+          "name": "Variable",
+          "kind": "method",
+          "result": "VariableRef"
+        },
+        {
+          "name": "value",
+          "kind": "property",
+          "result": "*bindingValue"
+        }
+      ]
+    },
+    {
+      "name": "CompileError",
+      "kind": "struct",
+      "file": "internal/gritql/compiler.go",
+      "underlyingType": "struct{Code string;Class string;Message string;Range*Range;cause error;}",
+      "members": [
+        {
+          "name": "Error",
+          "kind": "method",
+          "result": "string"
+        },
+        {
+          "name": "Unwrap",
+          "kind": "method",
+          "result": "error"
+        },
+        {
+          "name": "Class",
+          "kind": "property",
+          "result": "string"
+        },
+        {
+          "name": "Code",
+          "kind": "property",
+          "result": "string"
+        },
+        {
+          "name": "Message",
+          "kind": "property",
+          "result": "string"
+        },
+        {
+          "name": "Range",
+          "kind": "property",
+          "result": "*Range"
+        },
+        {
+          "name": "cause",
+          "kind": "property",
+          "result": "error"
+        }
+      ]
+    },
+    {
+      "name": "CompileOptions",
+      "kind": "struct",
+      "file": "internal/gritql/compiler.go",
+      "underlyingType": "struct{MaxPatternBytes int;MaxRegexBytes int;MaxRegexInstructions int;MaxDepth int;}",
+      "members": [
+        {
+          "name": "MaxDepth",
+          "kind": "property",
+          "result": "int"
+        },
+        {
+          "name": "MaxPatternBytes",
+          "kind": "property",
+          "result": "int"
+        },
+        {
+          "name": "MaxRegexBytes",
+          "kind": "property",
+          "result": "int"
+        },
+        {
+          "name": "MaxRegexInstructions",
+          "kind": "property",
+          "result": "int"
+        }
+      ]
+    },
+    {
+      "name": "Constraint",
+      "kind": "struct",
+      "file": "internal/gritql/compiler.go",
+      "underlyingType": "struct{c*constraint}",
+      "members": [
+        {
+          "name": "LHS",
+          "kind": "method",
+          "result": "VariableRef"
+        },
+        {
+          "name": "RHS",
+          "kind": "method",
+          "result": "Expression"
+        },
+        {
+          "name": "Range",
+          "kind": "method",
+          "result": "Range"
+        },
+        {
+          "name": "c",
+          "kind": "property",
+          "result": "*constraint"
+        }
+      ]
+    },
+    {
+      "name": "Diagnostic",
+      "kind": "struct",
+      "file": "internal/gritql/finding.go",
+      "underlyingType": "struct{code,class,severity,message string;patternID,path*string;rng*parser.Range;}",
+      "members": [
+        {
+          "name": "Class",
+          "kind": "method",
+          "result": "string"
+        },
+        {
+          "name": "Code",
+          "kind": "method",
+          "result": "string"
+        },
+        {
+          "name": "MarshalJSON",
+          "kind": "method",
+          "result": "tuple\u003c[]byte,error\u003e"
+        },
+        {
+          "name": "Message",
+          "kind": "method",
+          "result": "string"
+        },
+        {
+          "name": "Path",
+          "kind": "method",
+          "result": "tuple\u003cstring,bool\u003e"
+        },
+        {
+          "name": "PatternID",
+          "kind": "method",
+          "result": "tuple\u003cstring,bool\u003e"
+        },
+        {
+          "name": "Range",
+          "kind": "method",
+          "result": "tuple\u003cparser.Range,bool\u003e"
+        },
+        {
+          "name": "Severity",
+          "kind": "method",
+          "result": "string"
+        },
+        {
+          "name": "class",
+          "kind": "property",
+          "result": "string"
+        },
+        {
+          "name": "code",
+          "kind": "property",
+          "result": "string"
+        },
+        {
+          "name": "message",
+          "kind": "property",
+          "result": "string"
+        },
+        {
+          "name": "path",
+          "kind": "property",
+          "result": "*string"
+        },
+        {
+          "name": "patternID",
+          "kind": "property",
+          "result": "*string"
+        },
+        {
+          "name": "rng",
+          "kind": "property",
+          "result": "*parser.Range"
+        },
+        {
+          "name": "severity",
+          "kind": "property",
+          "result": "string"
+        }
+      ]
+    },
+    {
+      "name": "DocumentInput",
+      "kind": "struct",
+      "file": "internal/gritql/finding.go",
+      "underlyingType": "struct{Path string;PatternID string;Message string;}",
+      "members": [
+        {
+          "name": "Message",
+          "kind": "property",
+          "result": "string"
+        },
+        {
+          "name": "Path",
+          "kind": "property",
+          "result": "string"
+        },
+        {
+          "name": "PatternID",
+          "kind": "property",
+          "result": "string"
+        }
+      ]
+    },
+    {
+      "name": "EffectiveLimits",
+      "kind": "struct",
+      "file": "internal/gritql/finding.go",
+      "underlyingType": "struct{PatternBytes int`json:\"pattern_bytes\"`;SourceBytes int`json:\"source_bytes\"`;ParseDepth int`json:\"parse_depth\"`;Candidates int`json:\"candidates\"`;ASTSteps int`json:\"ast_steps\"`;Findings int`json:\"findings\"`;FileTimeMillis int64`json:\"file_time_ms\"`;BatchTimeMillis int64`json:\"batch_time_ms\"`;MemoryBytes int`json:\"memory_bytes\"`;RegexBytes int`json:\"regex_bytes\"`;RegexInstructions int`json:\"regex_instructions\"`;}",
+      "members": [
+        {
+          "name": "ASTSteps",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "json:\"ast_steps\""
+          }
+        },
+        {
+          "name": "BatchTimeMillis",
+          "kind": "property",
+          "result": "int64",
+          "structTag": {
+            "value": "json:\"batch_time_ms\""
+          }
+        },
+        {
+          "name": "Candidates",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "json:\"candidates\""
+          }
+        },
+        {
+          "name": "FileTimeMillis",
+          "kind": "property",
+          "result": "int64",
+          "structTag": {
+            "value": "json:\"file_time_ms\""
+          }
+        },
+        {
+          "name": "Findings",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "json:\"findings\""
+          }
+        },
+        {
+          "name": "MemoryBytes",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "json:\"memory_bytes\""
+          }
+        },
+        {
+          "name": "ParseDepth",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "json:\"parse_depth\""
+          }
+        },
+        {
+          "name": "PatternBytes",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "json:\"pattern_bytes\""
+          }
+        },
+        {
+          "name": "RegexBytes",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "json:\"regex_bytes\""
+          }
+        },
+        {
+          "name": "RegexInstructions",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "json:\"regex_instructions\""
+          }
+        },
+        {
+          "name": "SourceBytes",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "json:\"source_bytes\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "EvaluateOptions",
+      "kind": "struct",
+      "file": "internal/gritql/evaluator.go",
+      "underlyingType": "struct{MaxDepth int;MaxCandidates int;MaxSteps int;MaxFindings int;MaxSourceBytes int;MaxMemoryBytes int;MaxElapsed time.Duration;MaxBatchElapsed time.Duration;Deadline time.Time;}",
+      "members": [
+        {
+          "name": "Deadline",
+          "kind": "property",
+          "result": "time.Time"
+        },
+        {
+          "name": "MaxBatchElapsed",
+          "kind": "property",
+          "result": "time.Duration"
+        },
+        {
+          "name": "MaxCandidates",
+          "kind": "property",
+          "result": "int"
+        },
+        {
+          "name": "MaxDepth",
+          "kind": "property",
+          "result": "int"
+        },
+        {
+          "name": "MaxElapsed",
+          "kind": "property",
+          "result": "time.Duration"
+        },
+        {
+          "name": "MaxFindings",
+          "kind": "property",
+          "result": "int"
+        },
+        {
+          "name": "MaxMemoryBytes",
+          "kind": "property",
+          "result": "int"
+        },
+        {
+          "name": "MaxSourceBytes",
+          "kind": "property",
+          "result": "int"
+        },
+        {
+          "name": "MaxSteps",
+          "kind": "property",
+          "result": "int"
+        }
+      ]
+    },
+    {
+      "name": "EvaluationError",
+      "kind": "struct",
+      "file": "internal/gritql/evaluator.go",
+      "underlyingType": "struct{Code string;Class string;Message string;cause error;}",
+      "members": [
+        {
+          "name": "Error",
+          "kind": "method",
+          "result": "string"
+        },
+        {
+          "name": "Unwrap",
+          "kind": "method",
+          "result": "error"
+        },
+        {
+          "name": "Class",
+          "kind": "property",
+          "result": "string"
+        },
+        {
+          "name": "Code",
+          "kind": "property",
+          "result": "string"
+        },
+        {
+          "name": "Message",
+          "kind": "property",
+          "result": "string"
+        },
+        {
+          "name": "cause",
+          "kind": "property",
+          "result": "error"
+        }
+      ]
+    },
+    {
+      "name": "EvaluationMatch",
+      "kind": "struct",
+      "file": "internal/gritql/evaluator.go",
+      "underlyingType": "struct{rng parser.Range;bindings BindingSet;}",
+      "members": [
+        {
+          "name": "Bindings",
+          "kind": "method",
+          "result": "BindingSet"
+        },
+        {
+          "name": "Range",
+          "kind": "method",
+          "result": "parser.Range"
+        },
+        {
+          "name": "String",
+          "kind": "method",
+          "result": "string"
+        },
+        {
+          "name": "bindings",
+          "kind": "property",
+          "result": "BindingSet"
+        },
+        {
+          "name": "rng",
+          "kind": "property",
+          "result": "parser.Range"
+        }
+      ]
+    },
+    {
+      "name": "EvaluationMetadata",
+      "kind": "struct",
+      "file": "internal/gritql/finding.go",
+      "underlyingType": "struct{Contract string`json:\"contract\"`;GoGrammar string`json:\"go_grammar\"`;Limits EffectiveLimits`json:\"limits\"`;TreeSitterGrammar string`json:\"-\"`;}",
+      "members": [
+        {
+          "name": "Contract",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"contract\""
+          }
+        },
+        {
+          "name": "GoGrammar",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"go_grammar\""
+          }
+        },
+        {
+          "name": "Limits",
+          "kind": "property",
+          "result": "EffectiveLimits",
+          "structTag": {
+            "value": "json:\"limits\""
+          }
+        },
+        {
+          "name": "TreeSitterGrammar",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"-\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "EvaluationOptions",
+      "kind": "alias",
+      "file": "internal/gritql/evaluator.go",
+      "underlyingType": "EvaluateOptions"
+    },
+    {
+      "name": "Expression",
+      "kind": "struct",
+      "file": "internal/gritql/compiler.go",
+      "underlyingType": "struct{e*expression}",
+      "members": [
+        {
+          "name": "Children",
+          "kind": "method",
+          "result": "[]Expression"
+        },
+        {
+          "name": "Constraints",
+          "kind": "method",
+          "result": "[]Constraint"
+        },
+        {
+          "name": "Kind",
+          "kind": "method",
+          "result": "Kind"
+        },
+        {
+          "name": "MatchRegex",
+          "kind": "method",
+          "parameters": [
+            "string"
+          ],
+          "result": "bool"
+        },
+        {
+          "name": "Range",
+          "kind": "method",
+          "result": "Range"
+        },
+        {
+          "name": "Template",
+          "kind": "method",
+          "result": "Template"
+        },
+        {
+          "name": "Text",
+          "kind": "method",
+          "result": "string"
+        },
+        {
+          "name": "Variables",
+          "kind": "method",
+          "result": "[]VariableRef"
+        },
+        {
+          "name": "e",
+          "kind": "property",
+          "result": "*expression"
+        }
+      ]
+    },
+    {
+      "name": "FeatureSet",
+      "kind": "type",
+      "file": "internal/gritql/compiler.go",
+      "underlyingType": "uint32",
+      "members": [
+        {
+          "name": "Has",
+          "kind": "method",
+          "parameters": [
+            "FeatureSet"
+          ],
+          "result": "bool"
+        }
+      ]
+    },
+    {
+      "name": "FileEvaluation",
+      "kind": "struct",
+      "file": "internal/gritql/finding.go",
+      "underlyingType": "struct{findings[]Finding;diagnostics[]Diagnostic;metadata EvaluationMetadata;}",
+      "members": [
+        {
+          "name": "Diagnostics",
+          "kind": "method",
+          "result": "[]Diagnostic"
+        },
+        {
+          "name": "Findings",
+          "kind": "method",
+          "result": "[]Finding"
+        },
+        {
+          "name": "MarshalJSON",
+          "kind": "method",
+          "result": "tuple\u003c[]byte,error\u003e"
+        },
+        {
+          "name": "Metadata",
+          "kind": "method",
+          "result": "EvaluationMetadata"
+        },
+        {
+          "name": "diagnostics",
+          "kind": "property",
+          "result": "[]Diagnostic"
+        },
+        {
+          "name": "findings",
+          "kind": "property",
+          "result": "[]Finding"
+        },
+        {
+          "name": "metadata",
+          "kind": "property",
+          "result": "EvaluationMetadata"
+        }
+      ]
+    },
+    {
+      "name": "FileInput",
+      "kind": "struct",
+      "file": "internal/gritql/finding.go",
+      "underlyingType": "struct{Path string;Language string;Content[]byte;PatternID string;Message string;}",
+      "members": [
+        {
+          "name": "Content",
+          "kind": "property",
+          "result": "[]byte"
+        },
+        {
+          "name": "Language",
+          "kind": "property",
+          "result": "string"
+        },
+        {
+          "name": "Message",
+          "kind": "property",
+          "result": "string"
+        },
+        {
+          "name": "Path",
+          "kind": "property",
+          "result": "string"
+        },
+        {
+          "name": "PatternID",
+          "kind": "property",
+          "result": "string"
+        }
+      ]
+    },
+    {
+      "name": "Finding",
+      "kind": "struct",
+      "file": "internal/gritql/finding.go",
+      "underlyingType": "struct{path string;language string;compatibility string;grammar string;rng parser.Range;text string;patternID string;message string;bindings[]FindingBinding;bindingJSON[]byte;canonicalJSON[]byte;}",
+      "members": [
+        {
+          "name": "Bindings",
+          "kind": "method",
+          "result": "[]FindingBinding"
+        },
+        {
+          "name": "Compatibility",
+          "kind": "method",
+          "result": "string"
+        },
+        {
+          "name": "End",
+          "kind": "method",
+          "result": "parser.Position"
+        },
+        {
+          "name": "EndByte",
+          "kind": "method",
+          "result": "int"
+        },
+        {
+          "name": "Grammar",
+          "kind": "method",
+          "result": "string"
+        },
+        {
+          "name": "Language",
+          "kind": "method",
+          "result": "string"
+        },
+        {
+          "name": "MarshalJSON",
+          "kind": "method",
+          "result": "tuple\u003c[]byte,error\u003e"
+        },
+        {
+          "name": "Message",
+          "kind": "method",
+          "result": "string"
+        },
+        {
+          "name": "Path",
+          "kind": "method",
+          "result": "string"
+        },
+        {
+          "name": "PatternID",
+          "kind": "method",
+          "result": "string"
+        },
+        {
+          "name": "Range",
+          "kind": "method",
+          "result": "parser.Range"
+        },
+        {
+          "name": "Start",
+          "kind": "method",
+          "result": "parser.Position"
+        },
+        {
+          "name": "StartByte",
+          "kind": "method",
+          "result": "int"
+        },
+        {
+          "name": "Text",
+          "kind": "method",
+          "result": "string"
+        },
+        {
+          "name": "bindingJSON",
+          "kind": "property",
+          "result": "[]byte"
+        },
+        {
+          "name": "bindings",
+          "kind": "property",
+          "result": "[]FindingBinding"
+        },
+        {
+          "name": "canonicalJSON",
+          "kind": "property",
+          "result": "[]byte"
+        },
+        {
+          "name": "compatibility",
+          "kind": "property",
+          "result": "string"
+        },
+        {
+          "name": "grammar",
+          "kind": "property",
+          "result": "string"
+        },
+        {
+          "name": "language",
+          "kind": "property",
+          "result": "string"
+        },
+        {
+          "name": "message",
+          "kind": "property",
+          "result": "string"
+        },
+        {
+          "name": "path",
+          "kind": "property",
+          "result": "string"
+        },
+        {
+          "name": "patternID",
+          "kind": "property",
+          "result": "string"
+        },
+        {
+          "name": "rng",
+          "kind": "property",
+          "result": "parser.Range"
+        },
+        {
+          "name": "text",
+          "kind": "property",
+          "result": "string"
+        }
+      ]
+    },
+    {
+      "name": "FindingBinding",
+      "kind": "struct",
+      "file": "internal/gritql/finding.go",
+      "underlyingType": "struct{name string;kind BindingKind;rng parser.Range;ranges[]parser.Range;structural[]StructuralNode;}",
+      "members": [
+        {
+          "name": "Elements",
+          "kind": "method",
+          "result": "[]StructuralNode"
+        },
+        {
+          "name": "Kind",
+          "kind": "method",
+          "result": "BindingKind"
+        },
+        {
+          "name": "MarshalJSON",
+          "kind": "method",
+          "result": "tuple\u003c[]byte,error\u003e"
+        },
+        {
+          "name": "Name",
+          "kind": "method",
+          "result": "string"
+        },
+        {
+          "name": "Node",
+          "kind": "method",
+          "result": "tuple\u003cStructuralNode,bool\u003e"
+        },
+        {
+          "name": "Range",
+          "kind": "method",
+          "result": "parser.Range"
+        },
+        {
+          "name": "Ranges",
+          "kind": "method",
+          "result": "[]parser.Range"
+        },
+        {
+          "name": "Structural",
+          "kind": "method",
+          "result": "[]StructuralNode"
+        },
+        {
+          "name": "kind",
+          "kind": "property",
+          "result": "BindingKind"
+        },
+        {
+          "name": "name",
+          "kind": "property",
+          "result": "string"
+        },
+        {
+          "name": "ranges",
+          "kind": "property",
+          "result": "[]parser.Range"
+        },
+        {
+          "name": "rng",
+          "kind": "property",
+          "result": "parser.Range"
+        },
+        {
+          "name": "structural",
+          "kind": "property",
+          "result": "[]StructuralNode"
+        }
+      ]
+    },
+    {
+      "name": "Kind",
+      "kind": "type",
+      "file": "internal/gritql/compiler.go",
+      "underlyingType": "uint8",
+      "members": [
+        {
+          "name": "String",
+          "kind": "method",
+          "result": "string"
+        }
+      ]
+    },
+    {
+      "name": "LanguageDeclaration",
+      "kind": "struct",
+      "file": "internal/gritql/compiler.go",
+      "underlyingType": "struct{Name string;Range Range;}",
+      "members": [
+        {
+          "name": "Name",
+          "kind": "property",
+          "result": "string"
+        },
+        {
+          "name": "Range",
+          "kind": "property",
+          "result": "Range"
+        }
+      ]
+    },
+    {
+      "name": "MatchResult",
+      "kind": "struct",
+      "file": "internal/gritql/matcher.go",
+      "underlyingType": "struct{rng parser.Range;bindings BindingSet;}",
+      "members": [
+        {
+          "name": "Bindings",
+          "kind": "method",
+          "result": "BindingSet"
+        },
+        {
+          "name": "Range",
+          "kind": "method",
+          "result": "parser.Range"
+        },
+        {
+          "name": "bindings",
+          "kind": "property",
+          "result": "BindingSet"
+        },
+        {
+          "name": "rng",
+          "kind": "property",
+          "result": "parser.Range"
+        }
+      ]
+    },
+    {
+      "name": "MatchTarget",
+      "kind": "struct",
+      "file": "internal/gritql/matcher.go",
+      "underlyingType": "struct{node parser.Node;parent parser.Node;kind string;field string;childStart int;childEnd int;sequence bool;}",
+      "members": [
+        {
+          "name": "childEnd",
+          "kind": "property",
+          "result": "int"
+        },
+        {
+          "name": "childStart",
+          "kind": "property",
+          "result": "int"
+        },
+        {
+          "name": "field",
+          "kind": "property",
+          "result": "string"
+        },
+        {
+          "name": "kind",
+          "kind": "property",
+          "result": "string"
+        },
+        {
+          "name": "node",
+          "kind": "property",
+          "result": "parser.Node"
+        },
+        {
+          "name": "parent",
+          "kind": "property",
+          "result": "parser.Node"
+        },
+        {
+          "name": "sequence",
+          "kind": "property",
+          "result": "bool"
+        }
+      ]
+    },
+    {
+      "name": "ParsedEvaluationInput",
+      "kind": "struct",
+      "file": "internal/gritql/batch.go",
+      "underlyingType": "struct{Document*parser.Document;Input DocumentInput;}",
+      "members": [
+        {
+          "name": "Document",
+          "kind": "property",
+          "result": "*parser.Document"
+        },
+        {
+          "name": "Input",
+          "kind": "property",
+          "result": "DocumentInput"
+        }
+      ]
+    },
+    {
+      "name": "Position",
+      "kind": "struct",
+      "file": "internal/gritql/compiler.go",
+      "underlyingType": "struct{Line int;Column int;}",
+      "members": [
+        {
+          "name": "Column",
+          "kind": "property",
+          "result": "int"
+        },
+        {
+          "name": "Line",
+          "kind": "property",
+          "result": "int"
+        }
+      ]
+    },
+    {
+      "name": "Program",
+      "kind": "struct",
+      "file": "internal/gritql/compiler.go",
+      "underlyingType": "struct{declaration LanguageDeclaration;rng Range;root*expression;variables[]Variable;features FeatureSet;compileLimits CompileOptions;}",
+      "members": [
+        {
+          "name": "Compatibility",
+          "kind": "method",
+          "result": "string"
+        },
+        {
+          "name": "Declaration",
+          "kind": "method",
+          "result": "LanguageDeclaration"
+        },
+        {
+          "name": "Features",
+          "kind": "method",
+          "result": "FeatureSet"
+        },
+        {
+          "name": "Language",
+          "kind": "method",
+          "result": "string"
+        },
+        {
+          "name": "Range",
+          "kind": "method",
+          "result": "Range"
+        },
+        {
+          "name": "Root",
+          "kind": "method",
+          "result": "Expression"
+        },
+        {
+          "name": "Variables",
+          "kind": "method",
+          "result": "[]Variable"
+        },
+        {
+          "name": "compileLimits",
+          "kind": "property",
+          "result": "CompileOptions"
+        },
+        {
+          "name": "declaration",
+          "kind": "property",
+          "result": "LanguageDeclaration"
+        },
+        {
+          "name": "features",
+          "kind": "property",
+          "result": "FeatureSet"
+        },
+        {
+          "name": "rng",
+          "kind": "property",
+          "result": "Range"
+        },
+        {
+          "name": "root",
+          "kind": "property",
+          "result": "*expression"
+        },
+        {
+          "name": "variables",
+          "kind": "property",
+          "result": "[]Variable"
+        }
+      ]
+    },
+    {
+      "name": "ProgramScan",
+      "kind": "struct",
+      "file": "internal/gritql/scanner_batch.go",
+      "underlyingType": "struct{Program*Program;PatternID string;Message string;}",
+      "members": [
+        {
+          "name": "Message",
+          "kind": "property",
+          "result": "string"
+        },
+        {
+          "name": "PatternID",
+          "kind": "property",
+          "result": "string"
+        },
+        {
+          "name": "Program",
+          "kind": "property",
+          "result": "*Program"
+        }
+      ]
+    },
+    {
+      "name": "ProgramScanResult",
+      "kind": "struct",
+      "file": "internal/gritql/scanner_batch.go",
+      "underlyingType": "struct{PatternID string;Result ScanResult;}",
+      "members": [
+        {
+          "name": "PatternID",
+          "kind": "property",
+          "result": "string"
+        },
+        {
+          "name": "Result",
+          "kind": "property",
+          "result": "ScanResult"
+        }
+      ]
+    },
+    {
+      "name": "Range",
+      "kind": "struct",
+      "file": "internal/gritql/compiler.go",
+      "underlyingType": "struct{StartByte int;EndByte int;Start Position;End Position;}",
+      "members": [
+        {
+          "name": "End",
+          "kind": "property",
+          "result": "Position"
+        },
+        {
+          "name": "EndByte",
+          "kind": "property",
+          "result": "int"
+        },
+        {
+          "name": "Start",
+          "kind": "property",
+          "result": "Position"
+        },
+        {
+          "name": "StartByte",
+          "kind": "property",
+          "result": "int"
+        }
+      ]
+    },
+    {
+      "name": "ScanCandidate",
+      "kind": "struct",
+      "file": "internal/gritql/scanner.go",
+      "underlyingType": "struct{ReadPath string;Path string;Language string;}",
+      "members": [
+        {
+          "name": "Language",
+          "kind": "property",
+          "result": "string"
+        },
+        {
+          "name": "Path",
+          "kind": "property",
+          "result": "string"
+        },
+        {
+          "name": "ReadPath",
+          "kind": "property",
+          "result": "string"
+        }
+      ]
+    },
+    {
+      "name": "ScanOptions",
+      "kind": "struct",
+      "file": "internal/gritql/scanner.go",
+      "underlyingType": "struct{EvaluateOptions EvaluateOptions;PatternID string;Message string;IncludeGlobs[]string;ExcludeGlobs[]string;Workers int;MaxFiles int;MaxTotalBytes int64;}",
+      "members": [
+        {
+          "name": "EvaluateOptions",
+          "kind": "property",
+          "result": "EvaluateOptions"
+        },
+        {
+          "name": "ExcludeGlobs",
+          "kind": "property",
+          "result": "[]string"
+        },
+        {
+          "name": "IncludeGlobs",
+          "kind": "property",
+          "result": "[]string"
+        },
+        {
+          "name": "MaxFiles",
+          "kind": "property",
+          "result": "int"
+        },
+        {
+          "name": "MaxTotalBytes",
+          "kind": "property",
+          "result": "int64"
+        },
+        {
+          "name": "Message",
+          "kind": "property",
+          "result": "string"
+        },
+        {
+          "name": "PatternID",
+          "kind": "property",
+          "result": "string"
+        },
+        {
+          "name": "Workers",
+          "kind": "property",
+          "result": "int"
+        }
+      ]
+    },
+    {
+      "name": "ScanResult",
+      "kind": "struct",
+      "file": "internal/gritql/scanner.go",
+      "underlyingType": "struct{evaluation FileEvaluation;truncations[]ScanTruncation;stats ScanStats;}",
+      "members": [
+        {
+          "name": "Diagnostics",
+          "kind": "method",
+          "result": "[]Diagnostic"
+        },
+        {
+          "name": "Findings",
+          "kind": "method",
+          "result": "[]Finding"
+        },
+        {
+          "name": "MarshalJSON",
+          "kind": "method",
+          "result": "tuple\u003c[]byte,error\u003e"
+        },
+        {
+          "name": "Metadata",
+          "kind": "method",
+          "result": "EvaluationMetadata"
+        },
+        {
+          "name": "Stats",
+          "kind": "method",
+          "result": "ScanStats"
+        },
+        {
+          "name": "Truncations",
+          "kind": "method",
+          "result": "[]ScanTruncation"
+        },
+        {
+          "name": "evaluation",
+          "kind": "property",
+          "result": "FileEvaluation"
+        },
+        {
+          "name": "stats",
+          "kind": "property",
+          "result": "ScanStats"
+        },
+        {
+          "name": "truncations",
+          "kind": "property",
+          "result": "[]ScanTruncation"
+        }
+      ]
+    },
+    {
+      "name": "ScanStats",
+      "kind": "struct",
+      "file": "internal/gritql/scanner.go",
+      "underlyingType": "struct{Candidates int`json:\"candidates\"`;Eligible int`json:\"eligible\"`;Evaluated int`json:\"evaluated\"`;BytesRead int64`json:\"bytes_read\"`;SkippedLanguage int`json:\"skipped_language\"`;SkippedGlob int`json:\"skipped_glob\"`;SkippedBinary int`json:\"skipped_binary\"`;}",
+      "members": [
+        {
+          "name": "BytesRead",
+          "kind": "property",
+          "result": "int64",
+          "structTag": {
+            "value": "json:\"bytes_read\""
+          }
+        },
+        {
+          "name": "Candidates",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "json:\"candidates\""
+          }
+        },
+        {
+          "name": "Eligible",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "json:\"eligible\""
+          }
+        },
+        {
+          "name": "Evaluated",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "json:\"evaluated\""
+          }
+        },
+        {
+          "name": "SkippedBinary",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "json:\"skipped_binary\""
+          }
+        },
+        {
+          "name": "SkippedGlob",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "json:\"skipped_glob\""
+          }
+        },
+        {
+          "name": "SkippedLanguage",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "json:\"skipped_language\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "ScanTruncation",
+      "kind": "struct",
+      "file": "internal/gritql/scanner.go",
+      "underlyingType": "struct{Reason string`json:\"reason\"`;Limit int64`json:\"limit\"`;Skipped int`json:\"skipped\"`;}",
+      "members": [
+        {
+          "name": "Limit",
+          "kind": "property",
+          "result": "int64",
+          "structTag": {
+            "value": "json:\"limit\""
+          }
+        },
+        {
+          "name": "Reason",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"reason\""
+          }
+        },
+        {
+          "name": "Skipped",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "json:\"skipped\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "SlotCardinality",
+      "kind": "type",
+      "file": "internal/gritql/template.go",
+      "underlyingType": "uint8"
+    },
+    {
+      "name": "SnippetContext",
+      "kind": "type",
+      "file": "internal/gritql/template.go",
+      "underlyingType": "uint8",
+      "members": [
+        {
+          "name": "String",
+          "kind": "method",
+          "result": "string"
+        }
+      ]
+    },
+    {
+      "name": "StructuralNode",
+      "kind": "struct",
+      "file": "internal/gritql/matcher.go",
+      "underlyingType": "struct{node*normalizedNode}",
+      "members": [
+        {
+          "name": "Children",
+          "kind": "method",
+          "result": "[]StructuralNode"
+        },
+        {
+          "name": "IsToken",
+          "kind": "method",
+          "result": "bool"
+        },
+        {
+          "name": "Kind",
+          "kind": "method",
+          "result": "string"
+        },
+        {
+          "name": "Lexeme",
+          "kind": "method",
+          "result": "string"
+        },
+        {
+          "name": "MarshalJSON",
+          "kind": "method",
+          "result": "tuple\u003c[]byte,error\u003e"
+        },
+        {
+          "name": "NodeKind",
+          "kind": "method",
+          "result": "string"
+        },
+        {
+          "name": "TokenKind",
+          "kind": "method",
+          "result": "string"
+        },
+        {
+          "name": "Valid",
+          "kind": "method",
+          "result": "bool"
+        },
+        {
+          "name": "node",
+          "kind": "property",
+          "result": "*normalizedNode"
+        }
+      ]
+    },
+    {
+      "name": "Template",
+      "kind": "struct",
+      "file": "internal/gritql/template.go",
+      "underlyingType": "struct{context SnippetContext;root*templateNode;rootSlot*templateSlot;}",
+      "members": [
+        {
+          "name": "Context",
+          "kind": "method",
+          "result": "SnippetContext"
+        },
+        {
+          "name": "Root",
+          "kind": "method",
+          "result": "TemplateNode"
+        },
+        {
+          "name": "RootSlot",
+          "kind": "method",
+          "result": "TemplateSlot"
+        },
+        {
+          "name": "Valid",
+          "kind": "method",
+          "result": "bool"
+        },
+        {
+          "name": "context",
+          "kind": "property",
+          "result": "SnippetContext"
+        },
+        {
+          "name": "root",
+          "kind": "property",
+          "result": "*templateNode"
+        },
+        {
+          "name": "rootSlot",
+          "kind": "property",
+          "result": "*templateSlot"
+        }
+      ]
+    },
+    {
+      "name": "TemplateChild",
+      "kind": "struct",
+      "file": "internal/gritql/template.go",
+      "underlyingType": "struct{child*templateChild}",
+      "members": [
+        {
+          "name": "Field",
+          "kind": "method",
+          "result": "string"
+        },
+        {
+          "name": "IsSlot",
+          "kind": "method",
+          "result": "bool"
+        },
+        {
+          "name": "Node",
+          "kind": "method",
+          "result": "TemplateNode"
+        },
+        {
+          "name": "Slot",
+          "kind": "method",
+          "result": "TemplateSlot"
+        },
+        {
+          "name": "child",
+          "kind": "property",
+          "result": "*templateChild"
+        }
+      ]
+    },
+    {
+      "name": "TemplateNode",
+      "kind": "struct",
+      "file": "internal/gritql/template.go",
+      "underlyingType": "struct{node*templateNode}",
+      "members": [
+        {
+          "name": "Children",
+          "kind": "method",
+          "result": "[]TemplateChild"
+        },
+        {
+          "name": "Kind",
+          "kind": "method",
+          "result": "string"
+        },
+        {
+          "name": "Named",
+          "kind": "method",
+          "result": "bool"
+        },
+        {
+          "name": "Token",
+          "kind": "method",
+          "result": "string"
+        },
+        {
+          "name": "Valid",
+          "kind": "method",
+          "result": "bool"
+        },
+        {
+          "name": "node",
+          "kind": "property",
+          "result": "*templateNode"
+        }
+      ]
+    },
+    {
+      "name": "TemplateSlot",
+      "kind": "struct",
+      "file": "internal/gritql/template.go",
+      "underlyingType": "struct{slot*templateSlot}",
+      "members": [
+        {
+          "name": "Cardinality",
+          "kind": "method",
+          "result": "SlotCardinality"
+        },
+        {
+          "name": "Valid",
+          "kind": "method",
+          "result": "bool"
+        },
+        {
+          "name": "Variable",
+          "kind": "method",
+          "result": "VariableRef"
+        },
+        {
+          "name": "slot",
+          "kind": "property",
+          "result": "*templateSlot"
+        }
+      ]
+    },
+    {
+      "name": "Variable",
+      "kind": "struct",
+      "file": "internal/gritql/compiler.go",
+      "underlyingType": "struct{ID VariableID;Name string;Range Range;}",
+      "members": [
+        {
+          "name": "ID",
+          "kind": "property",
+          "result": "VariableID"
+        },
+        {
+          "name": "Name",
+          "kind": "property",
+          "result": "string"
+        },
+        {
+          "name": "Range",
+          "kind": "property",
+          "result": "Range"
+        }
+      ]
+    },
+    {
+      "name": "VariableID",
+      "kind": "type",
+      "file": "internal/gritql/compiler.go",
+      "underlyingType": "uint32"
+    },
+    {
+      "name": "VariableRef",
+      "kind": "struct",
+      "file": "internal/gritql/compiler.go",
+      "underlyingType": "struct{ID VariableID;Name string;Anonymous bool;Range Range;}",
+      "members": [
+        {
+          "name": "Anonymous",
+          "kind": "property",
+          "result": "bool"
+        },
+        {
+          "name": "ID",
+          "kind": "property",
+          "result": "VariableID"
+        },
+        {
+          "name": "Name",
+          "kind": "property",
+          "result": "string"
+        },
+        {
+          "name": "Range",
+          "kind": "property",
+          "result": "Range"
+        }
+      ]
+    },
+    {
+      "name": "bindingValue",
+      "kind": "struct",
+      "file": "internal/gritql/matcher.go",
+      "underlyingType": "struct{variable VariableRef;kind BindingKind;rng parser.Range;ranges[]parser.Range;structural[]normalizedNode;equality[]normalizedNode;sourceRanges[]parser.Range;sourceKinds[]string;text string;}",
+      "members": [
+        {
+          "name": "equality",
+          "kind": "property",
+          "result": "[]normalizedNode"
+        },
+        {
+          "name": "kind",
+          "kind": "property",
+          "result": "BindingKind"
+        },
+        {
+          "name": "ranges",
+          "kind": "property",
+          "result": "[]parser.Range"
+        },
+        {
+          "name": "rng",
+          "kind": "property",
+          "result": "parser.Range"
+        },
+        {
+          "name": "sourceKinds",
+          "kind": "property",
+          "result": "[]string"
+        },
+        {
+          "name": "sourceRanges",
+          "kind": "property",
+          "result": "[]parser.Range"
+        },
+        {
+          "name": "structural",
+          "kind": "property",
+          "result": "[]normalizedNode"
+        },
+        {
+          "name": "text",
+          "kind": "property",
+          "result": "string"
+        },
+        {
+          "name": "variable",
+          "kind": "property",
+          "result": "VariableRef"
+        }
+      ]
+    },
+    {
+      "name": "constraint",
+      "kind": "struct",
+      "file": "internal/gritql/compiler.go",
+      "underlyingType": "struct{lhs VariableRef;rhs*expression;rng Range;}",
+      "members": [
+        {
+          "name": "lhs",
+          "kind": "property",
+          "result": "VariableRef"
+        },
+        {
+          "name": "rhs",
+          "kind": "property",
+          "result": "*expression"
+        },
+        {
+          "name": "rng",
+          "kind": "property",
+          "result": "Range"
+        }
+      ]
+    },
+    {
+      "name": "decodedSnippet",
+      "kind": "struct",
+      "file": "internal/gritql/template.go",
+      "underlyingType": "struct{text string;placeholders[]snippetPlaceholder;}",
+      "members": [
+        {
+          "name": "placeholders",
+          "kind": "property",
+          "result": "[]snippetPlaceholder"
+        },
+        {
+          "name": "text",
+          "kind": "property",
+          "result": "string"
+        }
+      ]
+    },
+    {
+      "name": "diagnosticJSON",
+      "kind": "struct",
+      "file": "internal/gritql/finding_json.go",
+      "underlyingType": "struct{Code string`json:\"code\"`;Class string`json:\"class\"`;Severity string`json:\"severity\"`;Message string`json:\"message\"`;PatternID*string`json:\"pattern_id\"`;Path*string`json:\"path\"`;Range*rangeJSON`json:\"range\"`;}",
+      "members": [
+        {
+          "name": "Class",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"class\""
+          }
+        },
+        {
+          "name": "Code",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"code\""
+          }
+        },
+        {
+          "name": "Message",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"message\""
+          }
+        },
+        {
+          "name": "Path",
+          "kind": "property",
+          "result": "*string",
+          "structTag": {
+            "value": "json:\"path\""
+          }
+        },
+        {
+          "name": "PatternID",
+          "kind": "property",
+          "result": "*string",
+          "structTag": {
+            "value": "json:\"pattern_id\""
+          }
+        },
+        {
+          "name": "Range",
+          "kind": "property",
+          "result": "*rangeJSON",
+          "structTag": {
+            "value": "json:\"range\""
+          }
+        },
+        {
+          "name": "Severity",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"severity\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "evalCandidate",
+      "kind": "struct",
+      "file": "internal/gritql/evaluator.go",
+      "underlyingType": "struct{target MatchTarget;rng parser.Range;node parser.Node;ancestors[]parser.Node;sequence bool;parent parser.Node;elements[]parser.Node;}",
+      "members": [
+        {
+          "name": "ancestors",
+          "kind": "property",
+          "result": "[]parser.Node"
+        },
+        {
+          "name": "elements",
+          "kind": "property",
+          "result": "[]parser.Node"
+        },
+        {
+          "name": "node",
+          "kind": "property",
+          "result": "parser.Node"
+        },
+        {
+          "name": "parent",
+          "kind": "property",
+          "result": "parser.Node"
+        },
+        {
+          "name": "rng",
+          "kind": "property",
+          "result": "parser.Range"
+        },
+        {
+          "name": "sequence",
+          "kind": "property",
+          "result": "bool"
+        },
+        {
+          "name": "target",
+          "kind": "property",
+          "result": "MatchTarget"
+        }
+      ]
+    },
+    {
+      "name": "evaluationBudget",
+      "kind": "struct",
+      "file": "internal/gritql/evaluator.go",
+      "underlyingType": "struct{ctx context.Context;deadline time.Time;steps int;maxSteps int;err*EvaluationError;}",
+      "members": [
+        {
+          "name": "take",
+          "kind": "method",
+          "result": "bool"
+        },
+        {
+          "name": "ctx",
+          "kind": "property",
+          "result": "context.Context"
+        },
+        {
+          "name": "deadline",
+          "kind": "property",
+          "result": "time.Time"
+        },
+        {
+          "name": "err",
+          "kind": "property",
+          "result": "*EvaluationError"
+        },
+        {
+          "name": "maxSteps",
+          "kind": "property",
+          "result": "int"
+        },
+        {
+          "name": "steps",
+          "kind": "property",
+          "result": "int"
+        }
+      ]
+    },
+    {
+      "name": "evaluationTraversalItem",
+      "kind": "struct",
+      "file": "internal/gritql/evaluator.go",
+      "underlyingType": "struct{node parser.Node;depth int;ancestors[]parser.Node;}",
+      "members": [
+        {
+          "name": "ancestors",
+          "kind": "property",
+          "result": "[]parser.Node"
+        },
+        {
+          "name": "depth",
+          "kind": "property",
+          "result": "int"
+        },
+        {
+          "name": "node",
+          "kind": "property",
+          "result": "parser.Node"
+        }
+      ]
+    },
+    {
+      "name": "expression",
+      "kind": "struct",
+      "file": "internal/gritql/compiler.go",
+      "underlyingType": "struct{kind Kind;rng Range;text string;refs[]VariableRef;children[]*expression;constraints[]constraint;re*regexp.Regexp;template Template;}",
+      "members": [
+        {
+          "name": "children",
+          "kind": "property",
+          "result": "[]*expression"
+        },
+        {
+          "name": "constraints",
+          "kind": "property",
+          "result": "[]constraint"
+        },
+        {
+          "name": "kind",
+          "kind": "property",
+          "result": "Kind"
+        },
+        {
+          "name": "re",
+          "kind": "property",
+          "result": "*regexp.Regexp"
+        },
+        {
+          "name": "refs",
+          "kind": "property",
+          "result": "[]VariableRef"
+        },
+        {
+          "name": "rng",
+          "kind": "property",
+          "result": "Range"
+        },
+        {
+          "name": "template",
+          "kind": "property",
+          "result": "Template"
+        },
+        {
+          "name": "text",
+          "kind": "property",
+          "result": "string"
+        }
+      ]
+    },
+    {
+      "name": "findingJSON",
+      "kind": "struct",
+      "file": "internal/gritql/finding_json.go",
+      "underlyingType": "struct{Path string`json:\"path\"`;rangeJSON;PatternID string`json:\"pattern_id\"`;Message string`json:\"message\"`;Bindings map[string]json.RawMessage`json:\"bindings\"`;}",
+      "members": [
+        {
+          "name": "Bindings",
+          "kind": "property",
+          "result": "map[string]json.RawMessage",
+          "structTag": {
+            "value": "json:\"bindings\""
+          }
+        },
+        {
+          "name": "EndByte",
+          "kind": "property",
+          "result": "int"
+        },
+        {
+          "name": "EndColumn",
+          "kind": "property",
+          "result": "int"
+        },
+        {
+          "name": "EndLine",
+          "kind": "property",
+          "result": "int"
+        },
+        {
+          "name": "Message",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"message\""
+          }
+        },
+        {
+          "name": "Path",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"path\""
+          }
+        },
+        {
+          "name": "PatternID",
+          "kind": "property",
+          "result": "string",
+          "structTag": {
+            "value": "json:\"pattern_id\""
+          }
+        },
+        {
+          "name": "StartByte",
+          "kind": "property",
+          "result": "int"
+        },
+        {
+          "name": "StartColumn",
+          "kind": "property",
+          "result": "int"
+        },
+        {
+          "name": "StartLine",
+          "kind": "property",
+          "result": "int"
+        }
+      ]
+    },
+    {
+      "name": "frozenMatchTarget",
+      "kind": "struct",
+      "file": "internal/gritql/matcher.go",
+      "underlyingType": "struct{node parser.SyntaxNode;kind string;field string;children[]parser.SyntaxNode;anchor parser.Range;sequence bool;}",
+      "members": [
+        {
+          "name": "anchor",
+          "kind": "property",
+          "result": "parser.Range"
+        },
+        {
+          "name": "children",
+          "kind": "property",
+          "result": "[]parser.SyntaxNode"
+        },
+        {
+          "name": "field",
+          "kind": "property",
+          "result": "string"
+        },
+        {
+          "name": "kind",
+          "kind": "property",
+          "result": "string"
+        },
+        {
+          "name": "node",
+          "kind": "property",
+          "result": "parser.SyntaxNode"
+        },
+        {
+          "name": "sequence",
+          "kind": "property",
+          "result": "bool"
+        }
+      ]
+    },
+    {
+      "name": "generatedPlaceholder",
+      "kind": "struct",
+      "file": "internal/gritql/template.go",
+      "underlyingType": "struct{start,end,index int;ref VariableRef;role placeholderRole;}",
+      "members": [
+        {
+          "name": "end",
+          "kind": "property",
+          "result": "int"
+        },
+        {
+          "name": "index",
+          "kind": "property",
+          "result": "int"
+        },
+        {
+          "name": "ref",
+          "kind": "property",
+          "result": "VariableRef"
+        },
+        {
+          "name": "role",
+          "kind": "property",
+          "result": "placeholderRole"
+        },
+        {
+          "name": "start",
+          "kind": "property",
+          "result": "int"
+        }
+      ]
+    },
+    {
+      "name": "inferredEvaluation",
+      "kind": "struct",
+      "file": "internal/gritql/template.go",
+      "underlyingType": "struct{tmpl Template;valid,tooDeep bool;}",
+      "members": [
+        {
+          "name": "tmpl",
+          "kind": "property",
+          "result": "Template"
+        },
+        {
+          "name": "tooDeep",
+          "kind": "property",
+          "result": "bool"
+        },
+        {
+          "name": "valid",
+          "kind": "property",
+          "result": "bool"
+        }
+      ]
+    },
+    {
+      "name": "noCopy",
+      "kind": "struct",
+      "file": "internal/gritql/query_syntax.go",
+      "underlyingType": "struct{}",
+      "members": [
+        {
+          "name": "Lock",
+          "kind": "method"
+        }
+      ]
+    },
+    {
+      "name": "normalizationCheckpoint",
+      "kind": "type",
+      "file": "internal/gritql/batch.go",
+      "underlyingType": "uint8"
+    },
+    {
+      "name": "normalizationCheckpointHook",
+      "kind": "type",
+      "file": "internal/gritql/batch.go",
+      "underlyingType": "func(normalizationCheckpoint)*EvaluationError"
+    },
+    {
+      "name": "normalizationCheckpointKey",
+      "kind": "struct",
+      "file": "internal/gritql/batch.go",
+      "underlyingType": "struct{}"
+    },
+    {
+      "name": "normalizedNode",
+      "kind": "struct",
+      "file": "internal/gritql/matcher.go",
+      "underlyingType": "struct{kind string;lexeme string;named bool;children[]normalizedNode;}",
+      "members": [
+        {
+          "name": "MarshalJSON",
+          "kind": "method",
+          "result": "tuple\u003c[]byte,error\u003e"
+        },
+        {
+          "name": "children",
+          "kind": "property",
+          "result": "[]normalizedNode"
+        },
+        {
+          "name": "kind",
+          "kind": "property",
+          "result": "string"
+        },
+        {
+          "name": "lexeme",
+          "kind": "property",
+          "result": "string"
+        },
+        {
+          "name": "named",
+          "kind": "property",
+          "result": "bool"
+        }
+      ]
+    },
+    {
+      "name": "occurrenceRestoration",
+      "kind": "struct",
+      "file": "internal/gritql/template.go",
+      "underlyingType": "struct{seen[]int;indices map[VariableRef]int;valid bool;}",
+      "members": [
+        {
+          "name": "seenExactlyOnce",
+          "kind": "method",
+          "result": "bool"
+        },
+        {
+          "name": "visitChildren",
+          "kind": "method",
+          "parameters": [
+            "[]*templateNode",
+            "[]templateChild"
+          ],
+          "result": "[]*templateNode"
+        },
+        {
+          "name": "visitSlot",
+          "kind": "method",
+          "parameters": [
+            "*templateSlot"
+          ]
+        },
+        {
+          "name": "visitTree",
+          "kind": "method",
+          "parameters": [
+            "*templateNode"
+          ]
+        },
+        {
+          "name": "indices",
+          "kind": "property",
+          "result": "map[VariableRef]int"
+        },
+        {
+          "name": "seen",
+          "kind": "property",
+          "result": "[]int"
+        },
+        {
+          "name": "valid",
+          "kind": "property",
+          "result": "bool"
+        }
+      ]
+    },
+    {
+      "name": "placeholderInference",
+      "kind": "struct",
+      "file": "internal/gritql/template.go",
+      "underlyingType": "struct{assignments[][]placeholderRole;ok bool;tooDeep bool;}",
+      "members": [
+        {
+          "name": "assignments",
+          "kind": "property",
+          "result": "[][]placeholderRole"
+        },
+        {
+          "name": "ok",
+          "kind": "property",
+          "result": "bool"
+        },
+        {
+          "name": "tooDeep",
+          "kind": "property",
+          "result": "bool"
+        }
+      ]
+    },
+    {
+      "name": "placeholderInfo",
+      "kind": "struct",
+      "file": "internal/gritql/template.go",
+      "underlyingType": "struct{foundNode bool;topLevelValue bool;ancestors roleAncestorSet;errorRange parser.Range;}",
+      "members": [
+        {
+          "name": "ancestors",
+          "kind": "property",
+          "result": "roleAncestorSet"
+        },
+        {
+          "name": "errorRange",
+          "kind": "property",
+          "result": "parser.Range"
+        },
+        {
+          "name": "foundNode",
+          "kind": "property",
+          "result": "bool"
+        },
+        {
+          "name": "topLevelValue",
+          "kind": "property",
+          "result": "bool"
+        }
+      ]
+    },
+    {
+      "name": "placeholderInfoCollector",
+      "kind": "struct",
+      "file": "internal/gritql/template.go",
+      "underlyingType": "struct{bySpan map[spanKey]int;infos[]placeholderInfo;}",
+      "members": [
+        {
+          "name": "inspect",
+          "kind": "method",
+          "parameters": [
+            "placeholderWalkItem"
+          ],
+          "result": "placeholderWalkItem"
+        },
+        {
+          "name": "record",
+          "kind": "method",
+          "parameters": [
+            "int",
+            "placeholderWalkItem"
+          ]
+        },
+        {
+          "name": "bySpan",
+          "kind": "property",
+          "result": "map[spanKey]int"
+        },
+        {
+          "name": "infos",
+          "kind": "property",
+          "result": "[]placeholderInfo"
+        }
+      ]
+    },
+    {
+      "name": "placeholderRole",
+      "kind": "type",
+      "file": "internal/gritql/template.go",
+      "underlyingType": "uint8"
+    },
+    {
+      "name": "placeholderRoleSolver",
+      "kind": "struct",
+      "file": "internal/gritql/template.go",
+      "underlyingType": "struct{source string;ps[]generatedPlaceholder;separators structuralSeparators;infos[]placeholderInfo;roles[]placeholderRole;resolved[]bool;}",
+      "members": [
+        {
+          "name": "allResolved",
+          "kind": "method",
+          "result": "bool"
+        },
+        {
+          "name": "resolveErrorRegion",
+          "kind": "method",
+          "parameters": [
+            "int"
+          ]
+        },
+        {
+          "name": "resolveErrorRegions",
+          "kind": "method"
+        },
+        {
+          "name": "resolveImport",
+          "kind": "method",
+          "parameters": [
+            "int",
+            "parser.Range",
+            "map[spanKey]bool"
+          ]
+        },
+        {
+          "name": "resolveImports",
+          "kind": "method"
+        },
+        {
+          "name": "resolveTopLevelValues",
+          "kind": "method"
+        },
+        {
+          "name": "resolveTypedNodes",
+          "kind": "method"
+        },
+        {
+          "name": "resolveWholeSpec",
+          "kind": "method",
+          "parameters": [
+            "int"
+          ]
+        },
+        {
+          "name": "resolveWholeSpecs",
+          "kind": "method"
+        },
+        {
+          "name": "infos",
+          "kind": "property",
+          "result": "[]placeholderInfo"
+        },
+        {
+          "name": "ps",
+          "kind": "property",
+          "result": "[]generatedPlaceholder"
+        },
+        {
+          "name": "resolved",
+          "kind": "property",
+          "result": "[]bool"
+        },
+        {
+          "name": "roles",
+          "kind": "property",
+          "result": "[]placeholderRole"
+        },
+        {
+          "name": "separators",
+          "kind": "property",
+          "result": "structuralSeparators"
+        },
+        {
+          "name": "source",
+          "kind": "property",
+          "result": "string"
+        }
+      ]
+    },
+    {
+      "name": "placeholderWalkItem",
+      "kind": "struct",
+      "file": "internal/gritql/template.go",
+      "underlyingType": "struct{n parser.Node;parent parser.Node;depth int;ancestors roleAncestorSet;inError bool;errorRange parser.Range;}",
+      "members": [
+        {
+          "name": "ancestors",
+          "kind": "property",
+          "result": "roleAncestorSet"
+        },
+        {
+          "name": "depth",
+          "kind": "property",
+          "result": "int"
+        },
+        {
+          "name": "errorRange",
+          "kind": "property",
+          "result": "parser.Range"
+        },
+        {
+          "name": "inError",
+          "kind": "property",
+          "result": "bool"
+        },
+        {
+          "name": "n",
+          "kind": "property",
+          "result": "parser.Node"
+        },
+        {
+          "name": "parent",
+          "kind": "property",
+          "result": "parser.Node"
+        }
+      ]
+    },
+    {
+      "name": "preparedScanCandidate",
+      "kind": "struct",
+      "file": "internal/gritql/scanner.go",
+      "underlyingType": "struct{readPath string;path string;language string;}",
+      "members": [
+        {
+          "name": "language",
+          "kind": "property",
+          "result": "string"
+        },
+        {
+          "name": "path",
+          "kind": "property",
+          "result": "string"
+        },
+        {
+          "name": "readPath",
+          "kind": "property",
+          "result": "string"
+        }
+      ]
+    },
+    {
+      "name": "queryDocument",
+      "kind": "struct",
+      "file": "internal/gritql/query_syntax.go",
+      "underlyingType": "struct{noCopy noCopy;mu sync.RWMutex;source[]byte;lineStarts[]int;tree*sitter.Tree;}",
+      "members": [
+        {
+          "name": "bytes",
+          "kind": "method",
+          "result": "[]byte"
+        },
+        {
+          "name": "close",
+          "kind": "method"
+        },
+        {
+          "name": "diagnostics",
+          "kind": "method",
+          "result": "[]queryParseDiagnostic"
+        },
+        {
+          "name": "hasUnsupportedConstruct",
+          "kind": "method",
+          "result": "bool"
+        },
+        {
+          "name": "rangeForBytes",
+          "kind": "method",
+          "parameters": [
+            "int",
+            "int"
+          ],
+          "result": "queryRange"
+        },
+        {
+          "name": "root",
+          "kind": "method",
+          "result": "queryNode"
+        },
+        {
+          "name": "lineStarts",
+          "kind": "property",
+          "result": "[]int"
+        },
+        {
+          "name": "mu",
+          "kind": "property",
+          "result": "sync.RWMutex"
+        },
+        {
+          "name": "noCopy",
+          "kind": "property",
+          "result": "noCopy"
+        },
+        {
+          "name": "source",
+          "kind": "property",
+          "result": "[]byte"
+        },
+        {
+          "name": "tree",
+          "kind": "property",
+          "result": "*sitter.Tree"
+        }
+      ]
+    },
+    {
+      "name": "queryErrorKind",
+      "kind": "type",
+      "file": "internal/gritql/query_syntax.go",
+      "underlyingType": "uint8"
+    },
+    {
+      "name": "queryNode",
+      "kind": "struct",
+      "file": "internal/gritql/query_syntax.go",
+      "underlyingType": "struct{doc*queryDocument;raw*sitter.Node;field string;}",
+      "members": [
+        {
+          "name": "byteRange",
+          "kind": "method",
+          "result": "queryRange"
+        },
+        {
+          "name": "childByFieldName",
+          "kind": "method",
+          "parameters": [
+            "string"
+          ],
+          "result": "queryNode"
+        },
+        {
+          "name": "children",
+          "kind": "method",
+          "result": "[]queryNode"
+        },
+        {
+          "name": "error",
+          "kind": "method",
+          "result": "bool"
+        },
+        {
+          "name": "extra",
+          "kind": "method",
+          "result": "bool"
+        },
+        {
+          "name": "fieldName",
+          "kind": "method",
+          "result": "string"
+        },
+        {
+          "name": "kind",
+          "kind": "method",
+          "result": "string"
+        },
+        {
+          "name": "missing",
+          "kind": "method",
+          "result": "bool"
+        },
+        {
+          "name": "named",
+          "kind": "method",
+          "result": "bool"
+        },
+        {
+          "name": "namedChildren",
+          "kind": "method",
+          "result": "[]queryNode"
+        },
+        {
+          "name": "read",
+          "kind": "method",
+          "parameters": [
+            "func()"
+          ]
+        },
+        {
+          "name": "sexp",
+          "kind": "method",
+          "result": "string"
+        },
+        {
+          "name": "text",
+          "kind": "method",
+          "result": "string"
+        },
+        {
+          "name": "valid",
+          "kind": "method",
+          "result": "bool"
+        },
+        {
+          "name": "doc",
+          "kind": "property",
+          "result": "*queryDocument"
+        },
+        {
+          "name": "field",
+          "kind": "property",
+          "result": "string"
+        },
+        {
+          "name": "raw",
+          "kind": "property",
+          "result": "*sitter.Node"
+        }
+      ]
+    },
+    {
+      "name": "queryParseDiagnostic",
+      "kind": "struct",
+      "file": "internal/gritql/query_syntax.go",
+      "underlyingType": "struct{Kind string;Message string;Range queryRange;}",
+      "members": [
+        {
+          "name": "Kind",
+          "kind": "property",
+          "result": "string"
+        },
+        {
+          "name": "Message",
+          "kind": "property",
+          "result": "string"
+        },
+        {
+          "name": "Range",
+          "kind": "property",
+          "result": "queryRange"
+        }
+      ]
+    },
+    {
+      "name": "queryPosition",
+      "kind": "struct",
+      "file": "internal/gritql/query_syntax.go",
+      "underlyingType": "struct{Line int;Column int;}",
+      "members": [
+        {
+          "name": "Column",
+          "kind": "property",
+          "result": "int"
+        },
+        {
+          "name": "Line",
+          "kind": "property",
+          "result": "int"
+        }
+      ]
+    },
+    {
+      "name": "queryRange",
+      "kind": "struct",
+      "file": "internal/gritql/query_syntax.go",
+      "underlyingType": "struct{StartByte int;EndByte int;Start queryPosition;End queryPosition;}",
+      "members": [
+        {
+          "name": "End",
+          "kind": "property",
+          "result": "queryPosition"
+        },
+        {
+          "name": "EndByte",
+          "kind": "property",
+          "result": "int"
+        },
+        {
+          "name": "Start",
+          "kind": "property",
+          "result": "queryPosition"
+        },
+        {
+          "name": "StartByte",
+          "kind": "property",
+          "result": "int"
+        }
+      ]
+    },
+    {
+      "name": "queryRecord",
+      "kind": "struct",
+      "file": "internal/gritql/evaluator.go",
+      "underlyingType": "struct{rng parser.Range;bindings BindingSet;}",
+      "members": [
+        {
+          "name": "bindings",
+          "kind": "property",
+          "result": "BindingSet"
+        },
+        {
+          "name": "rng",
+          "kind": "property",
+          "result": "parser.Range"
+        }
+      ]
+    },
+    {
+      "name": "querySyntaxError",
+      "kind": "struct",
+      "file": "internal/gritql/query_syntax.go",
+      "underlyingType": "struct{Kind queryErrorKind;Message string;Range queryRange;}",
+      "members": [
+        {
+          "name": "Error",
+          "kind": "method",
+          "result": "string"
+        },
+        {
+          "name": "Kind",
+          "kind": "property",
+          "result": "queryErrorKind"
+        },
+        {
+          "name": "Message",
+          "kind": "property",
+          "result": "string"
+        },
+        {
+          "name": "Range",
+          "kind": "property",
+          "result": "queryRange"
+        }
+      ]
+    },
+    {
+      "name": "rangeJSON",
+      "kind": "struct",
+      "file": "internal/gritql/finding_json.go",
+      "underlyingType": "struct{StartByte int`json:\"start_byte\"`;EndByte int`json:\"end_byte\"`;StartLine int`json:\"start_line\"`;StartColumn int`json:\"start_column\"`;EndLine int`json:\"end_line\"`;EndColumn int`json:\"end_column\"`;}",
+      "members": [
+        {
+          "name": "EndByte",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "json:\"end_byte\""
+          }
+        },
+        {
+          "name": "EndColumn",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "json:\"end_column\""
+          }
+        },
+        {
+          "name": "EndLine",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "json:\"end_line\""
+          }
+        },
+        {
+          "name": "StartByte",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "json:\"start_byte\""
+          }
+        },
+        {
+          "name": "StartColumn",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "json:\"start_column\""
+          }
+        },
+        {
+          "name": "StartLine",
+          "kind": "property",
+          "result": "int",
+          "structTag": {
+            "value": "json:\"start_line\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "roleAlternative",
+      "kind": "struct",
+      "file": "internal/gritql/template.go",
+      "underlyingType": "struct{component spanKey;index int;role placeholderRole;}",
+      "members": [
+        {
+          "name": "component",
+          "kind": "property",
+          "result": "spanKey"
+        },
+        {
+          "name": "index",
+          "kind": "property",
+          "result": "int"
+        },
+        {
+          "name": "role",
+          "kind": "property",
+          "result": "placeholderRole"
+        }
+      ]
+    },
+    {
+      "name": "roleAncestorSet",
+      "kind": "struct",
+      "file": "internal/gritql/template.go",
+      "underlyingType": "struct{ranges[8]parser.Range;set[8]bool;}",
+      "members": [
+        {
+          "name": "add",
+          "kind": "method",
+          "parameters": [
+            "string",
+            "parser.Range"
+          ]
+        },
+        {
+          "name": "get",
+          "kind": "method",
+          "parameters": [
+            "string"
+          ],
+          "result": "tuple\u003cparser.Range,bool\u003e"
+        },
+        {
+          "name": "ranges",
+          "kind": "property",
+          "result": "[8]parser.Range"
+        },
+        {
+          "name": "set",
+          "kind": "property",
+          "result": "[8]bool"
+        }
+      ]
+    },
+    {
+      "name": "scanByteAccount",
+      "kind": "struct",
+      "file": "internal/gritql/scanner.go",
+      "underlyingType": "struct{mu sync.Mutex;notify chan struct{};next int;total int64;maximum int64;stopped bool;}",
+      "members": [
+        {
+          "name": "read",
+          "kind": "method",
+          "parameters": [
+            "context.Context",
+            "fs.FS",
+            "string",
+            "int",
+            "ScanOptions"
+          ],
+          "result": "scanReadResult"
+        },
+        {
+          "name": "readNext",
+          "kind": "method",
+          "parameters": [
+            "context.Context",
+            "fs.FS",
+            "string",
+            "ScanOptions"
+          ],
+          "result": "scanReadResult"
+        },
+        {
+          "name": "signalLocked",
+          "kind": "method"
+        },
+        {
+          "name": "maximum",
+          "kind": "property",
+          "result": "int64"
+        },
+        {
+          "name": "mu",
+          "kind": "property",
+          "result": "sync.Mutex"
+        },
+        {
+          "name": "next",
+          "kind": "property",
+          "result": "int"
+        },
+        {
+          "name": "notify",
+          "kind": "property",
+          "result": "chan struct{}"
+        },
+        {
+          "name": "stopped",
+          "kind": "property",
+          "result": "bool"
+        },
+        {
+          "name": "total",
+          "kind": "property",
+          "result": "int64"
+        }
+      ]
+    },
+    {
+      "name": "scanCandidateDisposition",
+      "kind": "type",
+      "file": "internal/gritql/scanner.go",
+      "underlyingType": "uint8"
+    },
+    {
+      "name": "scanJob",
+      "kind": "struct",
+      "file": "internal/gritql/scanner.go",
+      "underlyingType": "struct{index int;candidate preparedScanCandidate;}",
+      "members": [
+        {
+          "name": "candidate",
+          "kind": "property",
+          "result": "preparedScanCandidate"
+        },
+        {
+          "name": "index",
+          "kind": "property",
+          "result": "int"
+        }
+      ]
+    },
+    {
+      "name": "scanLimitKind",
+      "kind": "type",
+      "file": "internal/gritql/scanner.go",
+      "underlyingType": "uint8"
+    },
+    {
+      "name": "scanMemoryAccount",
+      "kind": "struct",
+      "file": "internal/gritql/scanner.go",
+      "underlyingType": "struct{mu sync.Mutex;notify chan struct{};capacity int64;current int64;retained int64;next int;}",
+      "members": [
+        {
+          "name": "acquire",
+          "kind": "method",
+          "parameters": [
+            "context.Context",
+            "int64"
+          ],
+          "result": "bool"
+        },
+        {
+          "name": "discard",
+          "kind": "method",
+          "parameters": [
+            "int",
+            "int64"
+          ]
+        },
+        {
+          "name": "release",
+          "kind": "method",
+          "parameters": [
+            "int64"
+          ]
+        },
+        {
+          "name": "replace",
+          "kind": "method",
+          "parameters": [
+            "context.Context",
+            "int",
+            "int64",
+            "int64"
+          ],
+          "result": "bool"
+        },
+        {
+          "name": "retain",
+          "kind": "method",
+          "parameters": [
+            "int",
+            "int64"
+          ]
+        },
+        {
+          "name": "signalLocked",
+          "kind": "method"
+        },
+        {
+          "name": "capacity",
+          "kind": "property",
+          "result": "int64"
+        },
+        {
+          "name": "current",
+          "kind": "property",
+          "result": "int64"
+        },
+        {
+          "name": "mu",
+          "kind": "property",
+          "result": "sync.Mutex"
+        },
+        {
+          "name": "next",
+          "kind": "property",
+          "result": "int"
+        },
+        {
+          "name": "notify",
+          "kind": "property",
+          "result": "chan struct{}"
+        },
+        {
+          "name": "retained",
+          "kind": "property",
+          "result": "int64"
+        }
+      ]
+    },
+    {
+      "name": "scanOutcome",
+      "kind": "struct",
+      "file": "internal/gritql/scanner.go",
+      "underlyingType": "struct{index int;evaluation FileEvaluation;bytesRead int64;reserved int64;binary bool;totalTruncated bool;}",
+      "members": [
+        {
+          "name": "binary",
+          "kind": "property",
+          "result": "bool"
+        },
+        {
+          "name": "bytesRead",
+          "kind": "property",
+          "result": "int64"
+        },
+        {
+          "name": "evaluation",
+          "kind": "property",
+          "result": "FileEvaluation"
+        },
+        {
+          "name": "index",
+          "kind": "property",
+          "result": "int"
+        },
+        {
+          "name": "reserved",
+          "kind": "property",
+          "result": "int64"
+        },
+        {
+          "name": "totalTruncated",
+          "kind": "property",
+          "result": "bool"
+        }
+      ]
+    },
+    {
+      "name": "scanReadResult",
+      "kind": "struct",
+      "file": "internal/gritql/scanner.go",
+      "underlyingType": "struct{content[]byte;err error;limit scanLimitKind;}",
+      "members": [
+        {
+          "name": "content",
+          "kind": "property",
+          "result": "[]byte"
+        },
+        {
+          "name": "err",
+          "kind": "property",
+          "result": "error"
+        },
+        {
+          "name": "limit",
+          "kind": "property",
+          "result": "scanLimitKind"
+        }
+      ]
+    },
+    {
+      "name": "scanSegmentMatcher",
+      "kind": "struct",
+      "file": "internal/gritql/scanner.go",
+      "underlyingType": "struct{pattern[]string;name[]string;seen map[scanSegmentState]bool;values map[scanSegmentState]bool;}",
+      "members": [
+        {
+          "name": "match",
+          "kind": "method",
+          "parameters": [
+            "int",
+            "int"
+          ],
+          "result": "bool"
+        },
+        {
+          "name": "matchDoubleStar",
+          "kind": "method",
+          "parameters": [
+            "int",
+            "int"
+          ],
+          "result": "bool"
+        },
+        {
+          "name": "matchUncached",
+          "kind": "method",
+          "parameters": [
+            "int",
+            "int"
+          ],
+          "result": "bool"
+        },
+        {
+          "name": "name",
+          "kind": "property",
+          "result": "[]string"
+        },
+        {
+          "name": "pattern",
+          "kind": "property",
+          "result": "[]string"
+        },
+        {
+          "name": "seen",
+          "kind": "property",
+          "result": "map[scanSegmentState]bool"
+        },
+        {
+          "name": "values",
+          "kind": "property",
+          "result": "map[scanSegmentState]bool"
+        }
+      ]
+    },
+    {
+      "name": "scanSegmentState",
+      "kind": "struct",
+      "file": "internal/gritql/scanner.go",
+      "underlyingType": "struct{pattern int;name int;}",
+      "members": [
+        {
+          "name": "name",
+          "kind": "property",
+          "result": "int"
+        },
+        {
+          "name": "pattern",
+          "kind": "property",
+          "result": "int"
+        }
+      ]
+    },
+    {
+      "name": "scanState",
+      "kind": "struct",
+      "file": "internal/gritql/scanner.go",
+      "underlyingType": "struct{options ScanOptions;started time.Time;evaluations[]FileEvaluation;retained int64;stats ScanStats;account*scanMemoryAccount;bytes*scanByteAccount;candidateCount int;stop bool;totalTruncated bool;totalSkipped int;}",
+      "members": [
+        {
+          "name": "commit",
+          "kind": "method",
+          "parameters": [
+            "*Program",
+            "scanOutcome"
+          ]
+        },
+        {
+          "name": "scan",
+          "kind": "method",
+          "parameters": [
+            "context.Context",
+            "fs.FS",
+            "*Program",
+            "[]preparedScanCandidate"
+          ]
+        },
+        {
+          "name": "account",
+          "kind": "property",
+          "result": "*scanMemoryAccount"
+        },
+        {
+          "name": "bytes",
+          "kind": "property",
+          "result": "*scanByteAccount"
+        },
+        {
+          "name": "candidateCount",
+          "kind": "property",
+          "result": "int"
+        },
+        {
+          "name": "evaluations",
+          "kind": "property",
+          "result": "[]FileEvaluation"
+        },
+        {
+          "name": "options",
+          "kind": "property",
+          "result": "ScanOptions"
+        },
+        {
+          "name": "retained",
+          "kind": "property",
+          "result": "int64"
+        },
+        {
+          "name": "started",
+          "kind": "property",
+          "result": "time.Time"
+        },
+        {
+          "name": "stats",
+          "kind": "property",
+          "result": "ScanStats"
+        },
+        {
+          "name": "stop",
+          "kind": "property",
+          "result": "bool"
+        },
+        {
+          "name": "totalSkipped",
+          "kind": "property",
+          "result": "int"
+        },
+        {
+          "name": "totalTruncated",
+          "kind": "property",
+          "result": "bool"
+        }
+      ]
+    },
+    {
+      "name": "selectedRoot",
+      "kind": "struct",
+      "file": "internal/gritql/template.go",
+      "underlyingType": "struct{node parser.Node;sequenceKind string;}",
+      "members": [
+        {
+          "name": "node",
+          "kind": "property",
+          "result": "parser.Node"
+        },
+        {
+          "name": "sequenceKind",
+          "kind": "property",
+          "result": "string"
+        }
+      ]
+    },
+    {
+      "name": "separatorLexState",
+      "kind": "type",
+      "file": "internal/gritql/template.go",
+      "underlyingType": "uint8"
+    },
+    {
+      "name": "separatorScanner",
+      "kind": "struct",
+      "file": "internal/gritql/template.go",
+      "underlyingType": "struct{source string;result structuralSeparators;state separatorLexState;index int;blockCommentStart int;blockCommentHasNewline bool;}",
+      "members": [
+        {
+          "name": "addBothSeparator",
+          "kind": "method",
+          "parameters": [
+            "int"
+          ]
+        },
+        {
+          "name": "beginComment",
+          "kind": "method",
+          "result": "bool"
+        },
+        {
+          "name": "scan",
+          "kind": "method"
+        },
+        {
+          "name": "scanBlockComment",
+          "kind": "method"
+        },
+        {
+          "name": "scanCurrentByte",
+          "kind": "method"
+        },
+        {
+          "name": "scanLineComment",
+          "kind": "method"
+        },
+        {
+          "name": "scanNormalByte",
+          "kind": "method"
+        },
+        {
+          "name": "scanQuotedLiteral",
+          "kind": "method"
+        },
+        {
+          "name": "scanRawString",
+          "kind": "method"
+        },
+        {
+          "name": "blockCommentHasNewline",
+          "kind": "property",
+          "result": "bool"
+        },
+        {
+          "name": "blockCommentStart",
+          "kind": "property",
+          "result": "int"
+        },
+        {
+          "name": "index",
+          "kind": "property",
+          "result": "int"
+        },
+        {
+          "name": "result",
+          "kind": "property",
+          "result": "structuralSeparators"
+        },
+        {
+          "name": "source",
+          "kind": "property",
+          "result": "string"
+        },
+        {
+          "name": "state",
+          "kind": "property",
+          "result": "separatorLexState"
+        }
+      ]
+    },
+    {
+      "name": "sequencePosition",
+      "kind": "struct",
+      "file": "internal/gritql/evaluator.go",
+      "underlyingType": "struct{field string;indexes[]int;}",
+      "members": [
+        {
+          "name": "field",
+          "kind": "property",
+          "result": "string"
+        },
+        {
+          "name": "indexes",
+          "kind": "property",
+          "result": "[]int"
+        }
+      ]
+    },
+    {
+      "name": "significantRangeFrame",
+      "kind": "struct",
+      "file": "internal/gritql/evaluator.go",
+      "underlyingType": "struct{node parser.Node;children[]parser.Node;next int;first,last parser.Range;has bool;}",
+      "members": [
+        {
+          "name": "children",
+          "kind": "property",
+          "result": "[]parser.Node"
+        },
+        {
+          "name": "first",
+          "kind": "property",
+          "result": "parser.Range"
+        },
+        {
+          "name": "has",
+          "kind": "property",
+          "result": "bool"
+        },
+        {
+          "name": "last",
+          "kind": "property",
+          "result": "parser.Range"
+        },
+        {
+          "name": "next",
+          "kind": "property",
+          "result": "int"
+        },
+        {
+          "name": "node",
+          "kind": "property",
+          "result": "parser.Node"
+        }
+      ]
+    },
+    {
+      "name": "slotTarget",
+      "kind": "struct",
+      "file": "internal/gritql/template.go",
+      "underlyingType": "struct{p generatedPlaceholder;cardinality SlotCardinality;kind string;}",
+      "members": [
+        {
+          "name": "cardinality",
+          "kind": "property",
+          "result": "SlotCardinality"
+        },
+        {
+          "name": "kind",
+          "kind": "property",
+          "result": "string"
+        },
+        {
+          "name": "p",
+          "kind": "property",
+          "result": "generatedPlaceholder"
+        }
+      ]
+    },
+    {
+      "name": "slotTargetWalkItem",
+      "kind": "struct",
+      "file": "internal/gritql/template.go",
+      "underlyingType": "struct{n,parent parser.Node;depth int;}",
+      "members": [
+        {
+          "name": "depth",
+          "kind": "property",
+          "result": "int"
+        },
+        {
+          "name": "n",
+          "kind": "property",
+          "result": "parser.Node"
+        },
+        {
+          "name": "parent",
+          "kind": "property",
+          "result": "parser.Node"
+        }
+      ]
+    },
+    {
+      "name": "snippetAttempt",
+      "kind": "struct",
+      "file": "internal/gritql/template.go",
+      "underlyingType": "struct{context SnippetContext;prefix,suffix string;selectRoot func(parser.Node,int,int)(selectedRoot,bool);}",
+      "members": [
+        {
+          "name": "context",
+          "kind": "property",
+          "result": "SnippetContext"
+        },
+        {
+          "name": "prefix",
+          "kind": "property",
+          "result": "string"
+        },
+        {
+          "name": "selectRoot",
+          "kind": "property",
+          "result": "func(parser.Node,int,int)(selectedRoot,bool)"
+        },
+        {
+          "name": "suffix",
+          "kind": "property",
+          "result": "string"
+        }
+      ]
+    },
+    {
+      "name": "snippetPlaceholder",
+      "kind": "struct",
+      "file": "internal/gritql/template.go",
+      "underlyingType": "struct{start,end int;ref VariableRef;}",
+      "members": [
+        {
+          "name": "end",
+          "kind": "property",
+          "result": "int"
+        },
+        {
+          "name": "ref",
+          "kind": "property",
+          "result": "VariableRef"
+        },
+        {
+          "name": "start",
+          "kind": "property",
+          "result": "int"
+        }
+      ]
+    },
+    {
+      "name": "sourceInspectionItem",
+      "kind": "struct",
+      "file": "internal/gritql/evaluator.go",
+      "underlyingType": "struct{node parser.Node;depth int;}",
+      "members": [
+        {
+          "name": "depth",
+          "kind": "property",
+          "result": "int"
+        },
+        {
+          "name": "node",
+          "kind": "property",
+          "result": "parser.Node"
+        }
+      ]
+    },
+    {
+      "name": "spanKey",
+      "kind": "struct",
+      "file": "internal/gritql/template.go",
+      "underlyingType": "struct{start,end int}",
+      "members": [
+        {
+          "name": "end",
+          "kind": "property",
+          "result": "int"
+        },
+        {
+          "name": "start",
+          "kind": "property",
+          "result": "int"
+        }
+      ]
+    },
+    {
+      "name": "structuralSeparators",
+      "kind": "struct",
+      "file": "internal/gritql/template.go",
+      "underlyingType": "struct{left[]int;right[]int;}",
+      "members": [
+        {
+          "name": "left",
+          "kind": "property",
+          "result": "[]int"
+        },
+        {
+          "name": "right",
+          "kind": "property",
+          "result": "[]int"
+        }
+      ]
+    },
+    {
+      "name": "templateChild",
+      "kind": "struct",
+      "file": "internal/gritql/template.go",
+      "underlyingType": "struct{field string;node*templateNode;slot*templateSlot;}",
+      "members": [
+        {
+          "name": "field",
+          "kind": "property",
+          "result": "string"
+        },
+        {
+          "name": "node",
+          "kind": "property",
+          "result": "*templateNode"
+        },
+        {
+          "name": "slot",
+          "kind": "property",
+          "result": "*templateSlot"
+        }
+      ]
+    },
+    {
+      "name": "templateFreezeFrame",
+      "kind": "struct",
+      "file": "internal/gritql/template.go",
+      "underlyingType": "struct{src parser.Node;depth int;children[]parser.Node;next int;kept[]templateChild;}",
+      "members": [
+        {
+          "name": "children",
+          "kind": "property",
+          "result": "[]parser.Node"
+        },
+        {
+          "name": "depth",
+          "kind": "property",
+          "result": "int"
+        },
+        {
+          "name": "kept",
+          "kind": "property",
+          "result": "[]templateChild"
+        },
+        {
+          "name": "next",
+          "kind": "property",
+          "result": "int"
+        },
+        {
+          "name": "src",
+          "kind": "property",
+          "result": "parser.Node"
+        }
+      ]
+    },
+    {
+      "name": "templateFreezer",
+      "kind": "struct",
+      "file": "internal/gritql/template.go",
+      "underlyingType": "struct{targets map[spanKey]slotTarget;maxDepth,clipStart int;clipEnd int;sequenceKind string;stack[]templateFreezeFrame;}",
+      "members": [
+        {
+          "name": "build",
+          "kind": "method",
+          "result": "tuple\u003ctemplateChild,error\u003e"
+        },
+        {
+          "name": "concreteChild",
+          "kind": "method",
+          "parameters": [
+            "*templateFreezeFrame",
+            "bool"
+          ],
+          "result": "templateChild"
+        },
+        {
+          "name": "descend",
+          "kind": "method",
+          "parameters": [
+            "*templateFreezeFrame"
+          ]
+        },
+        {
+          "name": "finishFrame",
+          "kind": "method",
+          "parameters": [
+            "int",
+            "templateChild"
+          ],
+          "result": "tuple\u003ctemplateChild,bool,error\u003e"
+        },
+        {
+          "name": "keptChildren",
+          "kind": "method",
+          "parameters": [
+            "parser.Node"
+          ],
+          "result": "[]parser.Node"
+        },
+        {
+          "name": "slotChild",
+          "kind": "method",
+          "parameters": [
+            "parser.Node"
+          ],
+          "result": "tuple\u003ctemplateChild,bool\u003e"
+        },
+        {
+          "name": "step",
+          "kind": "method",
+          "result": "tuple\u003ctemplateChild,bool,error\u003e"
+        },
+        {
+          "name": "clipEnd",
+          "kind": "property",
+          "result": "int"
+        },
+        {
+          "name": "clipStart",
+          "kind": "property",
+          "result": "int"
+        },
+        {
+          "name": "maxDepth",
+          "kind": "property",
+          "result": "int"
+        },
+        {
+          "name": "sequenceKind",
+          "kind": "property",
+          "result": "string"
+        },
+        {
+          "name": "stack",
+          "kind": "property",
+          "result": "[]templateFreezeFrame"
+        },
+        {
+          "name": "targets",
+          "kind": "property",
+          "result": "map[spanKey]slotTarget"
+        }
+      ]
+    },
+    {
+      "name": "templateNode",
+      "kind": "struct",
+      "file": "internal/gritql/template.go",
+      "underlyingType": "struct{kind string;named bool;token string;children[]templateChild;}",
+      "members": [
+        {
+          "name": "children",
+          "kind": "property",
+          "result": "[]templateChild"
+        },
+        {
+          "name": "kind",
+          "kind": "property",
+          "result": "string"
+        },
+        {
+          "name": "named",
+          "kind": "property",
+          "result": "bool"
+        },
+        {
+          "name": "token",
+          "kind": "property",
+          "result": "string"
+        }
+      ]
+    },
+    {
+      "name": "templateSlot",
+      "kind": "struct",
+      "file": "internal/gritql/template.go",
+      "underlyingType": "struct{ref VariableRef;cardinality SlotCardinality;}",
+      "members": [
+        {
+          "name": "cardinality",
+          "kind": "property",
+          "result": "SlotCardinality"
+        },
+        {
+          "name": "ref",
+          "kind": "property",
+          "result": "VariableRef"
+        }
+      ]
+    },
+    {
+      "name": "treeCompiler",
+      "kind": "struct",
+      "file": "internal/gritql/compiler.go",
+      "underlyingType": "struct{doc*queryDocument;options CompileOptions;names map[string]VariableID;variables[]Variable;features FeatureSet;languageRange Range;}",
+      "members": [
+        {
+          "name": "acceptDocumentField",
+          "kind": "method",
+          "parameters": [
+            "queryNode",
+            "*queryNode",
+            "*queryNode"
+          ],
+          "result": "*CompileError"
+        },
+        {
+          "name": "closedFailure",
+          "kind": "method",
+          "parameters": [
+            "string"
+          ],
+          "result": "*CompileError"
+        },
+        {
+          "name": "compileBlock",
+          "kind": "method",
+          "parameters": [
+            "queryNode",
+            "Kind",
+            "FeatureSet",
+            "string"
+          ],
+          "result": "tuple\u003c*expression,*CompileError\u003e"
+        },
+        {
+          "name": "compileBlockChildren",
+          "kind": "method",
+          "parameters": [
+            "[]queryNode",
+            "string"
+          ],
+          "result": "tuple\u003c[]*expression,bool,*CompileError\u003e"
+        },
+        {
+          "name": "compileConstraint",
+          "kind": "method",
+          "parameters": [
+            "queryNode"
+          ],
+          "result": "tuple\u003cconstraint,*CompileError\u003e"
+        },
+        {
+          "name": "compileConstraintBlock",
+          "kind": "method",
+          "parameters": [
+            "queryNode"
+          ],
+          "result": "tuple\u003c[]constraint,*CompileError\u003e"
+        },
+        {
+          "name": "compileConstraintItems",
+          "kind": "method",
+          "parameters": [
+            "[]queryNode"
+          ],
+          "result": "tuple\u003c[]constraint,*CompileError\u003e"
+        },
+        {
+          "name": "compileDecodedRegex",
+          "kind": "method",
+          "parameters": [
+            "[]byte"
+          ],
+          "result": "tuple\u003c*regexp.Regexp,*CompileError\u003e"
+        },
+        {
+          "name": "compileDocumentFields",
+          "kind": "method",
+          "parameters": [
+            "queryNode",
+            "*Range"
+          ],
+          "result": "tuple\u003cqueryNode,queryNode,*CompileError\u003e"
+        },
+        {
+          "name": "compileExpression",
+          "kind": "method",
+          "parameters": [
+            "queryNode",
+            "bool"
+          ],
+          "result": "tuple\u003c*expression,*CompileError\u003e"
+        },
+        {
+          "name": "compileLanguage",
+          "kind": "method",
+          "parameters": [
+            "queryNode"
+          ],
+          "result": "*CompileError"
+        },
+        {
+          "name": "compileRegex",
+          "kind": "method",
+          "parameters": [
+            "queryNode"
+          ],
+          "result": "tuple\u003c*expression,*CompileError\u003e"
+        },
+        {
+          "name": "compileSnippet",
+          "kind": "method",
+          "parameters": [
+            "queryNode"
+          ],
+          "result": "tuple\u003c*expression,*CompileError\u003e"
+        },
+        {
+          "name": "compileUnary",
+          "kind": "method",
+          "parameters": [
+            "queryNode",
+            "Kind",
+            "FeatureSet",
+            "string"
+          ],
+          "result": "tuple\u003c*expression,*CompileError\u003e"
+        },
+        {
+          "name": "compileWhere",
+          "kind": "method",
+          "parameters": [
+            "queryNode"
+          ],
+          "result": "tuple\u003c*expression,*CompileError\u003e"
+        },
+        {
+          "name": "decodeRegex",
+          "kind": "method",
+          "parameters": [
+            "[]byte"
+          ],
+          "result": "tuple\u003c[]byte,*CompileError\u003e"
+        },
+        {
+          "name": "decodeRegexEscape",
+          "kind": "method",
+          "parameters": [
+            "[]byte",
+            "int",
+            "int"
+          ],
+          "result": "tuple\u003c[]byte,int,*CompileError\u003e"
+        },
+        {
+          "name": "decodeRegexHexEscape",
+          "kind": "method",
+          "parameters": [
+            "[]byte",
+            "int",
+            "int"
+          ],
+          "result": "tuple\u003c[]byte,int,*CompileError\u003e"
+        },
+        {
+          "name": "decodeSnippet",
+          "kind": "method",
+          "parameters": [
+            "queryNode"
+          ],
+          "result": "tuple\u003c[]byte,[]VariableRef,[]snippetPlaceholder,*CompileError\u003e"
+        },
+        {
+          "name": "failure",
+          "kind": "method",
+          "parameters": [
+            "string",
+            "string",
+            "string",
+            "error"
+          ],
+          "result": "*CompileError"
+        },
+        {
+          "name": "regexPayload",
+          "kind": "method",
+          "parameters": [
+            "queryNode"
+          ],
+          "result": "tuple\u003c[]byte,*CompileError\u003e"
+        },
+        {
+          "name": "snippetLeaf",
+          "kind": "method",
+          "parameters": [
+            "queryNode"
+          ],
+          "result": "tuple\u003cqueryNode,*CompileError\u003e"
+        },
+        {
+          "name": "snippetMetavariableEnd",
+          "kind": "method",
+          "parameters": [
+            "[]byte",
+            "int"
+          ],
+          "result": "tuple\u003cint,*CompileError\u003e"
+        },
+        {
+          "name": "variable",
+          "kind": "method",
+          "parameters": [
+            "string",
+            "int",
+            "int"
+          ],
+          "result": "VariableRef"
+        },
+        {
+          "name": "whereChildren",
+          "kind": "method",
+          "parameters": [
+            "queryNode"
+          ],
+          "result": "tuple\u003c[]queryNode,*CompileError\u003e"
+        },
+        {
+          "name": "doc",
+          "kind": "property",
+          "result": "*queryDocument"
+        },
+        {
+          "name": "features",
+          "kind": "property",
+          "result": "FeatureSet"
+        },
+        {
+          "name": "languageRange",
+          "kind": "property",
+          "result": "Range"
+        },
+        {
+          "name": "names",
+          "kind": "property",
+          "result": "map[string]VariableID"
+        },
+        {
+          "name": "options",
+          "kind": "property",
+          "result": "CompileOptions"
+        },
+        {
+          "name": "variables",
+          "kind": "property",
+          "result": "[]Variable"
+        }
+      ]
+    },
+    {
+      "name": "v1NodeValidator",
+      "kind": "type",
+      "file": "internal/gritql/query_syntax.go",
+      "underlyingType": "func(queryNode,[]queryNode)bool"
+    },
+    {
+      "name": "v1ValidationWork",
+      "kind": "struct",
+      "file": "internal/gritql/query_syntax.go",
+      "underlyingType": "struct{node queryNode;depth int;}",
+      "members": [
+        {
+          "name": "depth",
+          "kind": "property",
+          "result": "int"
+        },
+        {
+          "name": "node",
+          "kind": "property",
+          "result": "queryNode"
+        }
+      ]
+    },
+    {
+      "name": "variableScope",
+      "kind": "type",
+      "file": "internal/gritql/compiler.go",
+      "underlyingType": "map[VariableID]bool"
+    }
+  ],
+  "exportedFunctions": [
+    {
+      "name": "AnalyzeAnchors",
+      "kind": "function",
+      "file": "internal/gritql/anchor.go",
+      "parameters": [
+        "*Program"
+      ],
+      "result": "AnchorPlan"
+    },
+    {
+      "name": "Compile",
+      "kind": "function",
+      "file": "internal/gritql/compiler.go",
+      "parameters": [
+        "[]byte",
+        "CompileOptions"
+      ],
+      "result": "tuple\u003c*Program,error\u003e"
+    },
+    {
+      "name": "Evaluate",
+      "kind": "function",
+      "file": "internal/gritql/evaluator.go",
+      "parameters": [
+        "context.Context",
+        "*Program",
+        "*parser.Document",
+        "EvaluateOptions"
+      ],
+      "result": "tuple\u003c[]EvaluationMatch,error\u003e"
+    },
+    {
+      "name": "EvaluateDocument",
+      "kind": "function",
+      "file": "internal/gritql/evaluator.go",
+      "parameters": [
+        "context.Context",
+        "*Program",
+        "*parser.Document",
+        "EvaluateOptions"
+      ],
+      "result": "tuple\u003c[]EvaluationMatch,error\u003e"
+    },
+    {
+      "name": "EvaluateDocumentFindings",
+      "kind": "function",
+      "file": "internal/gritql/finding.go",
+      "parameters": [
+        "context.Context",
+        "*Program",
+        "*parser.Document",
+        "DocumentInput",
+        "EvaluateOptions"
+      ],
+      "result": "tuple\u003cFileEvaluation\u003e"
+    },
+    {
+      "name": "EvaluateDocuments",
+      "kind": "function",
+      "file": "internal/gritql/batch.go",
+      "parameters": [
+        "context.Context",
+        "*Program",
+        "[]ParsedEvaluationInput",
+        "EvaluateOptions"
+      ],
+      "result": "FileEvaluation"
+    },
+    {
+      "name": "EvaluateFile",
+      "kind": "function",
+      "file": "internal/gritql/finding.go",
+      "parameters": [
+        "context.Context",
+        "*Program",
+        "FileInput",
+        "EvaluateOptions"
+      ],
+      "result": "tuple\u003cFileEvaluation\u003e"
+    },
+    {
+      "name": "MatchNode",
+      "kind": "function",
+      "file": "internal/gritql/matcher.go",
+      "parameters": [
+        "Template",
+        "parser.Node"
+      ],
+      "result": "tuple\u003cMatchResult,bool\u003e"
+    },
+    {
+      "name": "MatchTemplate",
+      "kind": "function",
+      "file": "internal/gritql/matcher.go",
+      "parameters": [
+        "Template",
+        "MatchTarget"
+      ],
+      "result": "tuple\u003cMatchResult,bool\u003e"
+    },
+    {
+      "name": "MatchTemplateWithBindings",
+      "kind": "function",
+      "file": "internal/gritql/matcher.go",
+      "parameters": [
+        "Template",
+        "MatchTarget",
+        "BindingSet"
+      ],
+      "result": "tuple\u003cMatchResult,bool\u003e"
+    },
+    {
+      "name": "NodeTarget",
+      "kind": "function",
+      "file": "internal/gritql/matcher.go",
+      "parameters": [
+        "parser.Node"
+      ],
+      "result": "MatchTarget"
+    },
+    {
+      "name": "NormalizeEvaluations",
+      "kind": "function",
+      "file": "internal/gritql/batch.go",
+      "parameters": [
+        "context.Context",
+        "[]FileEvaluation",
+        "EvaluateOptions"
+      ],
+      "result": "FileEvaluation"
+    },
+    {
+      "name": "RepeatedSequenceTarget",
+      "kind": "function",
+      "file": "internal/gritql/matcher.go",
+      "parameters": [
+        "parser.Node",
+        "string",
+        "int",
+        "int"
+      ],
+      "result": "MatchTarget"
+    },
+    {
+      "name": "ScanFiles",
+      "kind": "function",
+      "file": "internal/gritql/scanner.go",
+      "parameters": [
+        "context.Context",
+        "fs.FS",
+        "*Program",
+        "[]ScanCandidate",
+        "ScanOptions"
+      ],
+      "result": "ScanResult"
+    },
+    {
+      "name": "ScanFilesPrograms",
+      "kind": "function",
+      "file": "internal/gritql/scanner_batch.go",
+      "parameters": [
+        "context.Context",
+        "fs.FS",
+        "[]ProgramScan",
+        "[]ScanCandidate",
+        "ScanOptions"
+      ],
+      "result": "BatchScanResult"
+    },
+    {
+      "name": "SequenceTarget",
+      "kind": "function",
+      "file": "internal/gritql/matcher.go",
+      "parameters": [
+        "string",
+        "parser.Node",
+        "int",
+        "int"
+      ],
+      "result": "MatchTarget"
+    },
+    {
+      "name": "ValidateGlobs",
+      "kind": "function",
+      "file": "internal/gritql/scanner.go",
+      "parameters": [
+        "[]string",
+        "[]string"
+      ],
+      "result": "error"
+    }
+  ],
+  "fiberRoutes": [],
+  "relations": [
+    {
+      "from": "AnalyzeAnchors",
+      "to": "AnchorPlan",
+      "kind": "dependency",
+      "via": "result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "AnalyzeAnchors",
+      "to": "Program",
+      "kind": "dependency",
+      "via": "parameter 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "BatchScanResult",
+      "to": "BatchScanStats",
+      "kind": "association",
+      "via": "field stats",
+      "cardinality": "one"
+    },
+    {
+      "from": "BatchScanResult",
+      "to": "BatchScanStats",
+      "kind": "dependency",
+      "via": "method Stats result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "BatchScanResult",
+      "to": "ProgramScanResult",
+      "kind": "association",
+      "via": "field programs",
+      "cardinality": "many"
+    },
+    {
+      "from": "BatchScanResult",
+      "to": "ProgramScanResult",
+      "kind": "dependency",
+      "via": "method Programs result 1",
+      "cardinality": "many"
+    },
+    {
+      "from": "BindingSet",
+      "to": "BoundValue",
+      "kind": "dependency",
+      "via": "method All result 1",
+      "cardinality": "many"
+    },
+    {
+      "from": "BindingSet",
+      "to": "BoundValue",
+      "kind": "dependency",
+      "via": "method Lookup result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "BindingSet",
+      "to": "VariableID",
+      "kind": "association",
+      "via": "field values",
+      "cardinality": "many"
+    },
+    {
+      "from": "BindingSet",
+      "to": "VariableID",
+      "kind": "dependency",
+      "via": "method Lookup parameter 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "BindingSet",
+      "to": "bindingValue",
+      "kind": "association",
+      "via": "field values",
+      "cardinality": "many"
+    },
+    {
+      "from": "BoundValue",
+      "to": "BindingKind",
+      "kind": "dependency",
+      "via": "method Kind result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "BoundValue",
+      "to": "StructuralNode",
+      "kind": "dependency",
+      "via": "method Structural result 1",
+      "cardinality": "many"
+    },
+    {
+      "from": "BoundValue",
+      "to": "VariableRef",
+      "kind": "dependency",
+      "via": "method Variable result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "BoundValue",
+      "to": "bindingValue",
+      "kind": "association",
+      "via": "field value",
+      "cardinality": "one"
+    },
+    {
+      "from": "Compile",
+      "to": "CompileOptions",
+      "kind": "dependency",
+      "via": "parameter 2",
+      "cardinality": "one"
+    },
+    {
+      "from": "Compile",
+      "to": "Program",
+      "kind": "dependency",
+      "via": "result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "CompileError",
+      "to": "Range",
+      "kind": "association",
+      "via": "field Range",
+      "cardinality": "one"
+    },
+    {
+      "from": "Constraint",
+      "to": "Expression",
+      "kind": "dependency",
+      "via": "method RHS result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "Constraint",
+      "to": "Range",
+      "kind": "dependency",
+      "via": "method Range result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "Constraint",
+      "to": "VariableRef",
+      "kind": "dependency",
+      "via": "method LHS result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "Constraint",
+      "to": "constraint",
+      "kind": "association",
+      "via": "field c",
+      "cardinality": "one"
+    },
+    {
+      "from": "Evaluate",
+      "to": "EvaluateOptions",
+      "kind": "dependency",
+      "via": "parameter 4",
+      "cardinality": "one"
+    },
+    {
+      "from": "Evaluate",
+      "to": "EvaluationMatch",
+      "kind": "dependency",
+      "via": "result 1",
+      "cardinality": "many"
+    },
+    {
+      "from": "Evaluate",
+      "to": "Program",
+      "kind": "dependency",
+      "via": "parameter 2",
+      "cardinality": "one"
+    },
+    {
+      "from": "EvaluateDocument",
+      "to": "EvaluateOptions",
+      "kind": "dependency",
+      "via": "parameter 4",
+      "cardinality": "one"
+    },
+    {
+      "from": "EvaluateDocument",
+      "to": "EvaluationMatch",
+      "kind": "dependency",
+      "via": "result 1",
+      "cardinality": "many"
+    },
+    {
+      "from": "EvaluateDocument",
+      "to": "Program",
+      "kind": "dependency",
+      "via": "parameter 2",
+      "cardinality": "one"
+    },
+    {
+      "from": "EvaluateDocumentFindings",
+      "to": "DocumentInput",
+      "kind": "dependency",
+      "via": "parameter 4",
+      "cardinality": "one"
+    },
+    {
+      "from": "EvaluateDocumentFindings",
+      "to": "EvaluateOptions",
+      "kind": "dependency",
+      "via": "parameter 5",
+      "cardinality": "one"
+    },
+    {
+      "from": "EvaluateDocumentFindings",
+      "to": "FileEvaluation",
+      "kind": "dependency",
+      "via": "result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "EvaluateDocumentFindings",
+      "to": "Program",
+      "kind": "dependency",
+      "via": "parameter 2",
+      "cardinality": "one"
+    },
+    {
+      "from": "EvaluateDocuments",
+      "to": "EvaluateOptions",
+      "kind": "dependency",
+      "via": "parameter 4",
+      "cardinality": "one"
+    },
+    {
+      "from": "EvaluateDocuments",
+      "to": "FileEvaluation",
+      "kind": "dependency",
+      "via": "result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "EvaluateDocuments",
+      "to": "ParsedEvaluationInput",
+      "kind": "dependency",
+      "via": "parameter 3",
+      "cardinality": "many"
+    },
+    {
+      "from": "EvaluateDocuments",
+      "to": "Program",
+      "kind": "dependency",
+      "via": "parameter 2",
+      "cardinality": "one"
+    },
+    {
+      "from": "EvaluateFile",
+      "to": "EvaluateOptions",
+      "kind": "dependency",
+      "via": "parameter 4",
+      "cardinality": "one"
+    },
+    {
+      "from": "EvaluateFile",
+      "to": "FileEvaluation",
+      "kind": "dependency",
+      "via": "result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "EvaluateFile",
+      "to": "FileInput",
+      "kind": "dependency",
+      "via": "parameter 3",
+      "cardinality": "one"
+    },
+    {
+      "from": "EvaluateFile",
+      "to": "Program",
+      "kind": "dependency",
+      "via": "parameter 2",
+      "cardinality": "one"
+    },
+    {
+      "from": "EvaluationMatch",
+      "to": "BindingSet",
+      "kind": "association",
+      "via": "field bindings",
+      "cardinality": "one"
+    },
+    {
+      "from": "EvaluationMatch",
+      "to": "BindingSet",
+      "kind": "dependency",
+      "via": "method Bindings result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "EvaluationMetadata",
+      "to": "EffectiveLimits",
+      "kind": "association",
+      "via": "field Limits",
+      "cardinality": "one"
+    },
+    {
+      "from": "EvaluationOptions",
+      "to": "EvaluateOptions",
+      "kind": "dependency",
+      "via": "underlying type",
+      "cardinality": "one"
+    },
+    {
+      "from": "Expression",
+      "to": "Constraint",
+      "kind": "dependency",
+      "via": "method Constraints result 1",
+      "cardinality": "many"
+    },
+    {
+      "from": "Expression",
+      "to": "Kind",
+      "kind": "dependency",
+      "via": "method Kind result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "Expression",
+      "to": "Range",
+      "kind": "dependency",
+      "via": "method Range result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "Expression",
+      "to": "Template",
+      "kind": "dependency",
+      "via": "method Template result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "Expression",
+      "to": "VariableRef",
+      "kind": "dependency",
+      "via": "method Variables result 1",
+      "cardinality": "many"
+    },
+    {
+      "from": "Expression",
+      "to": "expression",
+      "kind": "association",
+      "via": "field e",
+      "cardinality": "one"
+    },
+    {
+      "from": "FileEvaluation",
+      "to": "Diagnostic",
+      "kind": "association",
+      "via": "field diagnostics",
+      "cardinality": "many"
+    },
+    {
+      "from": "FileEvaluation",
+      "to": "Diagnostic",
+      "kind": "dependency",
+      "via": "method Diagnostics result 1",
+      "cardinality": "many"
+    },
+    {
+      "from": "FileEvaluation",
+      "to": "EvaluationMetadata",
+      "kind": "association",
+      "via": "field metadata",
+      "cardinality": "one"
+    },
+    {
+      "from": "FileEvaluation",
+      "to": "EvaluationMetadata",
+      "kind": "dependency",
+      "via": "method Metadata result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "FileEvaluation",
+      "to": "Finding",
+      "kind": "association",
+      "via": "field findings",
+      "cardinality": "many"
+    },
+    {
+      "from": "FileEvaluation",
+      "to": "Finding",
+      "kind": "dependency",
+      "via": "method Findings result 1",
+      "cardinality": "many"
+    },
+    {
+      "from": "Finding",
+      "to": "FindingBinding",
+      "kind": "association",
+      "via": "field bindings",
+      "cardinality": "many"
+    },
+    {
+      "from": "Finding",
+      "to": "FindingBinding",
+      "kind": "dependency",
+      "via": "method Bindings result 1",
+      "cardinality": "many"
+    },
+    {
+      "from": "FindingBinding",
+      "to": "BindingKind",
+      "kind": "association",
+      "via": "field kind",
+      "cardinality": "one"
+    },
+    {
+      "from": "FindingBinding",
+      "to": "BindingKind",
+      "kind": "dependency",
+      "via": "method Kind result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "FindingBinding",
+      "to": "StructuralNode",
+      "kind": "association",
+      "via": "field structural",
+      "cardinality": "many"
+    },
+    {
+      "from": "FindingBinding",
+      "to": "StructuralNode",
+      "kind": "dependency",
+      "via": "method Elements result 1",
+      "cardinality": "many"
+    },
+    {
+      "from": "FindingBinding",
+      "to": "StructuralNode",
+      "kind": "dependency",
+      "via": "method Node result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "FindingBinding",
+      "to": "StructuralNode",
+      "kind": "dependency",
+      "via": "method Structural result 1",
+      "cardinality": "many"
+    },
+    {
+      "from": "LanguageDeclaration",
+      "to": "Range",
+      "kind": "association",
+      "via": "field Range",
+      "cardinality": "one"
+    },
+    {
+      "from": "MatchNode",
+      "to": "MatchResult",
+      "kind": "dependency",
+      "via": "result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "MatchNode",
+      "to": "Template",
+      "kind": "dependency",
+      "via": "parameter 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "MatchResult",
+      "to": "BindingSet",
+      "kind": "association",
+      "via": "field bindings",
+      "cardinality": "one"
+    },
+    {
+      "from": "MatchResult",
+      "to": "BindingSet",
+      "kind": "dependency",
+      "via": "method Bindings result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "MatchTemplate",
+      "to": "MatchResult",
+      "kind": "dependency",
+      "via": "result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "MatchTemplate",
+      "to": "MatchTarget",
+      "kind": "dependency",
+      "via": "parameter 2",
+      "cardinality": "one"
+    },
+    {
+      "from": "MatchTemplate",
+      "to": "Template",
+      "kind": "dependency",
+      "via": "parameter 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "MatchTemplateWithBindings",
+      "to": "BindingSet",
+      "kind": "dependency",
+      "via": "parameter 3",
+      "cardinality": "one"
+    },
+    {
+      "from": "MatchTemplateWithBindings",
+      "to": "MatchResult",
+      "kind": "dependency",
+      "via": "result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "MatchTemplateWithBindings",
+      "to": "MatchTarget",
+      "kind": "dependency",
+      "via": "parameter 2",
+      "cardinality": "one"
+    },
+    {
+      "from": "MatchTemplateWithBindings",
+      "to": "Template",
+      "kind": "dependency",
+      "via": "parameter 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "NodeTarget",
+      "to": "MatchTarget",
+      "kind": "dependency",
+      "via": "result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "NormalizeEvaluations",
+      "to": "EvaluateOptions",
+      "kind": "dependency",
+      "via": "parameter 3",
+      "cardinality": "one"
+    },
+    {
+      "from": "NormalizeEvaluations",
+      "to": "FileEvaluation",
+      "kind": "dependency",
+      "via": "parameter 2",
+      "cardinality": "many"
+    },
+    {
+      "from": "NormalizeEvaluations",
+      "to": "FileEvaluation",
+      "kind": "dependency",
+      "via": "result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "ParsedEvaluationInput",
+      "to": "DocumentInput",
+      "kind": "association",
+      "via": "field Input",
+      "cardinality": "one"
+    },
+    {
+      "from": "Program",
+      "to": "CompileOptions",
+      "kind": "association",
+      "via": "field compileLimits",
+      "cardinality": "one"
+    },
+    {
+      "from": "Program",
+      "to": "Expression",
+      "kind": "dependency",
+      "via": "method Root result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "Program",
+      "to": "FeatureSet",
+      "kind": "association",
+      "via": "field features",
+      "cardinality": "one"
+    },
+    {
+      "from": "Program",
+      "to": "FeatureSet",
+      "kind": "dependency",
+      "via": "method Features result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "Program",
+      "to": "LanguageDeclaration",
+      "kind": "association",
+      "via": "field declaration",
+      "cardinality": "one"
+    },
+    {
+      "from": "Program",
+      "to": "LanguageDeclaration",
+      "kind": "dependency",
+      "via": "method Declaration result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "Program",
+      "to": "Range",
+      "kind": "association",
+      "via": "field rng",
+      "cardinality": "one"
+    },
+    {
+      "from": "Program",
+      "to": "Range",
+      "kind": "dependency",
+      "via": "method Range result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "Program",
+      "to": "Variable",
+      "kind": "association",
+      "via": "field variables",
+      "cardinality": "many"
+    },
+    {
+      "from": "Program",
+      "to": "Variable",
+      "kind": "dependency",
+      "via": "method Variables result 1",
+      "cardinality": "many"
+    },
+    {
+      "from": "Program",
+      "to": "expression",
+      "kind": "association",
+      "via": "field root",
+      "cardinality": "one"
+    },
+    {
+      "from": "ProgramScan",
+      "to": "Program",
+      "kind": "association",
+      "via": "field Program",
+      "cardinality": "one"
+    },
+    {
+      "from": "ProgramScanResult",
+      "to": "ScanResult",
+      "kind": "association",
+      "via": "field Result",
+      "cardinality": "one"
+    },
+    {
+      "from": "Range",
+      "to": "Position",
+      "kind": "association",
+      "via": "field End",
+      "cardinality": "one"
+    },
+    {
+      "from": "Range",
+      "to": "Position",
+      "kind": "association",
+      "via": "field Start",
+      "cardinality": "one"
+    },
+    {
+      "from": "RepeatedSequenceTarget",
+      "to": "MatchTarget",
+      "kind": "dependency",
+      "via": "result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "ScanFiles",
+      "to": "Program",
+      "kind": "dependency",
+      "via": "parameter 3",
+      "cardinality": "one"
+    },
+    {
+      "from": "ScanFiles",
+      "to": "ScanCandidate",
+      "kind": "dependency",
+      "via": "parameter 4",
+      "cardinality": "many"
+    },
+    {
+      "from": "ScanFiles",
+      "to": "ScanOptions",
+      "kind": "dependency",
+      "via": "parameter 5",
+      "cardinality": "one"
+    },
+    {
+      "from": "ScanFiles",
+      "to": "ScanResult",
+      "kind": "dependency",
+      "via": "result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "ScanFilesPrograms",
+      "to": "BatchScanResult",
+      "kind": "dependency",
+      "via": "result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "ScanFilesPrograms",
+      "to": "ProgramScan",
+      "kind": "dependency",
+      "via": "parameter 3",
+      "cardinality": "many"
+    },
+    {
+      "from": "ScanFilesPrograms",
+      "to": "ScanCandidate",
+      "kind": "dependency",
+      "via": "parameter 4",
+      "cardinality": "many"
+    },
+    {
+      "from": "ScanFilesPrograms",
+      "to": "ScanOptions",
+      "kind": "dependency",
+      "via": "parameter 5",
+      "cardinality": "one"
+    },
+    {
+      "from": "ScanOptions",
+      "to": "EvaluateOptions",
+      "kind": "association",
+      "via": "field EvaluateOptions",
+      "cardinality": "one"
+    },
+    {
+      "from": "ScanResult",
+      "to": "Diagnostic",
+      "kind": "dependency",
+      "via": "method Diagnostics result 1",
+      "cardinality": "many"
+    },
+    {
+      "from": "ScanResult",
+      "to": "EvaluationMetadata",
+      "kind": "dependency",
+      "via": "method Metadata result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "ScanResult",
+      "to": "FileEvaluation",
+      "kind": "association",
+      "via": "field evaluation",
+      "cardinality": "one"
+    },
+    {
+      "from": "ScanResult",
+      "to": "Finding",
+      "kind": "dependency",
+      "via": "method Findings result 1",
+      "cardinality": "many"
+    },
+    {
+      "from": "ScanResult",
+      "to": "ScanStats",
+      "kind": "association",
+      "via": "field stats",
+      "cardinality": "one"
+    },
+    {
+      "from": "ScanResult",
+      "to": "ScanStats",
+      "kind": "dependency",
+      "via": "method Stats result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "ScanResult",
+      "to": "ScanTruncation",
+      "kind": "association",
+      "via": "field truncations",
+      "cardinality": "many"
+    },
+    {
+      "from": "ScanResult",
+      "to": "ScanTruncation",
+      "kind": "dependency",
+      "via": "method Truncations result 1",
+      "cardinality": "many"
+    },
+    {
+      "from": "SequenceTarget",
+      "to": "MatchTarget",
+      "kind": "dependency",
+      "via": "result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "StructuralNode",
+      "to": "normalizedNode",
+      "kind": "association",
+      "via": "field node",
+      "cardinality": "one"
+    },
+    {
+      "from": "Template",
+      "to": "SnippetContext",
+      "kind": "association",
+      "via": "field context",
+      "cardinality": "one"
+    },
+    {
+      "from": "Template",
+      "to": "SnippetContext",
+      "kind": "dependency",
+      "via": "method Context result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "Template",
+      "to": "TemplateNode",
+      "kind": "dependency",
+      "via": "method Root result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "Template",
+      "to": "TemplateSlot",
+      "kind": "dependency",
+      "via": "method RootSlot result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "Template",
+      "to": "templateNode",
+      "kind": "association",
+      "via": "field root",
+      "cardinality": "one"
+    },
+    {
+      "from": "Template",
+      "to": "templateSlot",
+      "kind": "association",
+      "via": "field rootSlot",
+      "cardinality": "one"
+    },
+    {
+      "from": "TemplateChild",
+      "to": "TemplateNode",
+      "kind": "dependency",
+      "via": "method Node result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "TemplateChild",
+      "to": "TemplateSlot",
+      "kind": "dependency",
+      "via": "method Slot result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "TemplateChild",
+      "to": "templateChild",
+      "kind": "association",
+      "via": "field child",
+      "cardinality": "one"
+    },
+    {
+      "from": "TemplateNode",
+      "to": "TemplateChild",
+      "kind": "dependency",
+      "via": "method Children result 1",
+      "cardinality": "many"
+    },
+    {
+      "from": "TemplateNode",
+      "to": "templateNode",
+      "kind": "association",
+      "via": "field node",
+      "cardinality": "one"
+    },
+    {
+      "from": "TemplateSlot",
+      "to": "SlotCardinality",
+      "kind": "dependency",
+      "via": "method Cardinality result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "TemplateSlot",
+      "to": "VariableRef",
+      "kind": "dependency",
+      "via": "method Variable result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "TemplateSlot",
+      "to": "templateSlot",
+      "kind": "association",
+      "via": "field slot",
+      "cardinality": "one"
+    },
+    {
+      "from": "Variable",
+      "to": "Range",
+      "kind": "association",
+      "via": "field Range",
+      "cardinality": "one"
+    },
+    {
+      "from": "Variable",
+      "to": "VariableID",
+      "kind": "association",
+      "via": "field ID",
+      "cardinality": "one"
+    },
+    {
+      "from": "VariableRef",
+      "to": "Range",
+      "kind": "association",
+      "via": "field Range",
+      "cardinality": "one"
+    },
+    {
+      "from": "VariableRef",
+      "to": "VariableID",
+      "kind": "association",
+      "via": "field ID",
+      "cardinality": "one"
+    },
+    {
+      "from": "bindingValue",
+      "to": "BindingKind",
+      "kind": "association",
+      "via": "field kind",
+      "cardinality": "one"
+    },
+    {
+      "from": "bindingValue",
+      "to": "VariableRef",
+      "kind": "association",
+      "via": "field variable",
+      "cardinality": "one"
+    },
+    {
+      "from": "bindingValue",
+      "to": "normalizedNode",
+      "kind": "association",
+      "via": "field equality",
+      "cardinality": "many"
+    },
+    {
+      "from": "bindingValue",
+      "to": "normalizedNode",
+      "kind": "association",
+      "via": "field structural",
+      "cardinality": "many"
+    },
+    {
+      "from": "constraint",
+      "to": "Range",
+      "kind": "association",
+      "via": "field rng",
+      "cardinality": "one"
+    },
+    {
+      "from": "constraint",
+      "to": "VariableRef",
+      "kind": "association",
+      "via": "field lhs",
+      "cardinality": "one"
+    },
+    {
+      "from": "constraint",
+      "to": "expression",
+      "kind": "association",
+      "via": "field rhs",
+      "cardinality": "one"
+    },
+    {
+      "from": "decodedSnippet",
+      "to": "snippetPlaceholder",
+      "kind": "association",
+      "via": "field placeholders",
+      "cardinality": "many"
+    },
+    {
+      "from": "diagnosticJSON",
+      "to": "rangeJSON",
+      "kind": "association",
+      "via": "field Range",
+      "cardinality": "one"
+    },
+    {
+      "from": "evalCandidate",
+      "to": "MatchTarget",
+      "kind": "association",
+      "via": "field target",
+      "cardinality": "one"
+    },
+    {
+      "from": "evaluationBudget",
+      "to": "EvaluationError",
+      "kind": "association",
+      "via": "field err",
+      "cardinality": "one"
+    },
+    {
+      "from": "expression",
+      "to": "Kind",
+      "kind": "association",
+      "via": "field kind",
+      "cardinality": "one"
+    },
+    {
+      "from": "expression",
+      "to": "Range",
+      "kind": "association",
+      "via": "field rng",
+      "cardinality": "one"
+    },
+    {
+      "from": "expression",
+      "to": "Template",
+      "kind": "association",
+      "via": "field template",
+      "cardinality": "one"
+    },
+    {
+      "from": "expression",
+      "to": "VariableRef",
+      "kind": "association",
+      "via": "field refs",
+      "cardinality": "many"
+    },
+    {
+      "from": "expression",
+      "to": "constraint",
+      "kind": "association",
+      "via": "field constraints",
+      "cardinality": "many"
+    },
+    {
+      "from": "findingJSON",
+      "to": "rangeJSON",
+      "kind": "inheritance",
+      "via": "embedded type",
+      "cardinality": "one"
+    },
+    {
+      "from": "generatedPlaceholder",
+      "to": "VariableRef",
+      "kind": "association",
+      "via": "field ref",
+      "cardinality": "one"
+    },
+    {
+      "from": "generatedPlaceholder",
+      "to": "placeholderRole",
+      "kind": "association",
+      "via": "field role",
+      "cardinality": "one"
+    },
+    {
+      "from": "inferredEvaluation",
+      "to": "Template",
+      "kind": "association",
+      "via": "field tmpl",
+      "cardinality": "one"
+    },
+    {
+      "from": "normalizationCheckpointHook",
+      "to": "EvaluationError",
+      "kind": "dependency",
+      "via": "underlying type",
+      "cardinality": "one"
+    },
+    {
+      "from": "normalizationCheckpointHook",
+      "to": "normalizationCheckpoint",
+      "kind": "dependency",
+      "via": "underlying type",
+      "cardinality": "one"
+    },
+    {
+      "from": "occurrenceRestoration",
+      "to": "VariableRef",
+      "kind": "association",
+      "via": "field indices",
+      "cardinality": "many"
+    },
+    {
+      "from": "occurrenceRestoration",
+      "to": "templateChild",
+      "kind": "dependency",
+      "via": "method visitChildren parameter 2",
+      "cardinality": "many"
+    },
+    {
+      "from": "occurrenceRestoration",
+      "to": "templateNode",
+      "kind": "dependency",
+      "via": "method visitChildren parameter 1",
+      "cardinality": "many"
+    },
+    {
+      "from": "occurrenceRestoration",
+      "to": "templateNode",
+      "kind": "dependency",
+      "via": "method visitChildren result 1",
+      "cardinality": "many"
+    },
+    {
+      "from": "occurrenceRestoration",
+      "to": "templateNode",
+      "kind": "dependency",
+      "via": "method visitTree parameter 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "occurrenceRestoration",
+      "to": "templateSlot",
+      "kind": "dependency",
+      "via": "method visitSlot parameter 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "placeholderInference",
+      "to": "placeholderRole",
+      "kind": "association",
+      "via": "field assignments",
+      "cardinality": "many"
+    },
+    {
+      "from": "placeholderInfo",
+      "to": "roleAncestorSet",
+      "kind": "association",
+      "via": "field ancestors",
+      "cardinality": "one"
+    },
+    {
+      "from": "placeholderInfoCollector",
+      "to": "placeholderInfo",
+      "kind": "association",
+      "via": "field infos",
+      "cardinality": "many"
+    },
+    {
+      "from": "placeholderInfoCollector",
+      "to": "placeholderWalkItem",
+      "kind": "dependency",
+      "via": "method inspect parameter 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "placeholderInfoCollector",
+      "to": "placeholderWalkItem",
+      "kind": "dependency",
+      "via": "method inspect result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "placeholderInfoCollector",
+      "to": "placeholderWalkItem",
+      "kind": "dependency",
+      "via": "method record parameter 2",
+      "cardinality": "one"
+    },
+    {
+      "from": "placeholderInfoCollector",
+      "to": "spanKey",
+      "kind": "association",
+      "via": "field bySpan",
+      "cardinality": "many"
+    },
+    {
+      "from": "placeholderRoleSolver",
+      "to": "generatedPlaceholder",
+      "kind": "association",
+      "via": "field ps",
+      "cardinality": "many"
+    },
+    {
+      "from": "placeholderRoleSolver",
+      "to": "placeholderInfo",
+      "kind": "association",
+      "via": "field infos",
+      "cardinality": "many"
+    },
+    {
+      "from": "placeholderRoleSolver",
+      "to": "placeholderRole",
+      "kind": "association",
+      "via": "field roles",
+      "cardinality": "many"
+    },
+    {
+      "from": "placeholderRoleSolver",
+      "to": "spanKey",
+      "kind": "dependency",
+      "via": "method resolveImport parameter 3",
+      "cardinality": "many"
+    },
+    {
+      "from": "placeholderRoleSolver",
+      "to": "structuralSeparators",
+      "kind": "association",
+      "via": "field separators",
+      "cardinality": "one"
+    },
+    {
+      "from": "placeholderWalkItem",
+      "to": "roleAncestorSet",
+      "kind": "association",
+      "via": "field ancestors",
+      "cardinality": "one"
+    },
+    {
+      "from": "queryDocument",
+      "to": "noCopy",
+      "kind": "association",
+      "via": "field noCopy",
+      "cardinality": "one"
+    },
+    {
+      "from": "queryDocument",
+      "to": "queryNode",
+      "kind": "dependency",
+      "via": "method root result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "queryDocument",
+      "to": "queryParseDiagnostic",
+      "kind": "dependency",
+      "via": "method diagnostics result 1",
+      "cardinality": "many"
+    },
+    {
+      "from": "queryDocument",
+      "to": "queryRange",
+      "kind": "dependency",
+      "via": "method rangeForBytes result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "queryNode",
+      "to": "queryDocument",
+      "kind": "association",
+      "via": "field doc",
+      "cardinality": "one"
+    },
+    {
+      "from": "queryNode",
+      "to": "queryRange",
+      "kind": "dependency",
+      "via": "method byteRange result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "queryParseDiagnostic",
+      "to": "queryRange",
+      "kind": "association",
+      "via": "field Range",
+      "cardinality": "one"
+    },
+    {
+      "from": "queryRange",
+      "to": "queryPosition",
+      "kind": "association",
+      "via": "field End",
+      "cardinality": "one"
+    },
+    {
+      "from": "queryRange",
+      "to": "queryPosition",
+      "kind": "association",
+      "via": "field Start",
+      "cardinality": "one"
+    },
+    {
+      "from": "queryRecord",
+      "to": "BindingSet",
+      "kind": "association",
+      "via": "field bindings",
+      "cardinality": "one"
+    },
+    {
+      "from": "querySyntaxError",
+      "to": "queryErrorKind",
+      "kind": "association",
+      "via": "field Kind",
+      "cardinality": "one"
+    },
+    {
+      "from": "querySyntaxError",
+      "to": "queryRange",
+      "kind": "association",
+      "via": "field Range",
+      "cardinality": "one"
+    },
+    {
+      "from": "roleAlternative",
+      "to": "placeholderRole",
+      "kind": "association",
+      "via": "field role",
+      "cardinality": "one"
+    },
+    {
+      "from": "roleAlternative",
+      "to": "spanKey",
+      "kind": "association",
+      "via": "field component",
+      "cardinality": "one"
+    },
+    {
+      "from": "scanByteAccount",
+      "to": "ScanOptions",
+      "kind": "dependency",
+      "via": "method read parameter 5",
+      "cardinality": "one"
+    },
+    {
+      "from": "scanByteAccount",
+      "to": "ScanOptions",
+      "kind": "dependency",
+      "via": "method readNext parameter 4",
+      "cardinality": "one"
+    },
+    {
+      "from": "scanByteAccount",
+      "to": "scanReadResult",
+      "kind": "dependency",
+      "via": "method read result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "scanByteAccount",
+      "to": "scanReadResult",
+      "kind": "dependency",
+      "via": "method readNext result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "scanJob",
+      "to": "preparedScanCandidate",
+      "kind": "association",
+      "via": "field candidate",
+      "cardinality": "one"
+    },
+    {
+      "from": "scanOutcome",
+      "to": "FileEvaluation",
+      "kind": "association",
+      "via": "field evaluation",
+      "cardinality": "one"
+    },
+    {
+      "from": "scanReadResult",
+      "to": "scanLimitKind",
+      "kind": "association",
+      "via": "field limit",
+      "cardinality": "one"
+    },
+    {
+      "from": "scanSegmentMatcher",
+      "to": "scanSegmentState",
+      "kind": "association",
+      "via": "field seen",
+      "cardinality": "many"
+    },
+    {
+      "from": "scanSegmentMatcher",
+      "to": "scanSegmentState",
+      "kind": "association",
+      "via": "field values",
+      "cardinality": "many"
+    },
+    {
+      "from": "scanState",
+      "to": "FileEvaluation",
+      "kind": "association",
+      "via": "field evaluations",
+      "cardinality": "many"
+    },
+    {
+      "from": "scanState",
+      "to": "Program",
+      "kind": "dependency",
+      "via": "method commit parameter 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "scanState",
+      "to": "Program",
+      "kind": "dependency",
+      "via": "method scan parameter 3",
+      "cardinality": "one"
+    },
+    {
+      "from": "scanState",
+      "to": "ScanOptions",
+      "kind": "association",
+      "via": "field options",
+      "cardinality": "one"
+    },
+    {
+      "from": "scanState",
+      "to": "ScanStats",
+      "kind": "association",
+      "via": "field stats",
+      "cardinality": "one"
+    },
+    {
+      "from": "scanState",
+      "to": "preparedScanCandidate",
+      "kind": "dependency",
+      "via": "method scan parameter 4",
+      "cardinality": "many"
+    },
+    {
+      "from": "scanState",
+      "to": "scanByteAccount",
+      "kind": "association",
+      "via": "field bytes",
+      "cardinality": "one"
+    },
+    {
+      "from": "scanState",
+      "to": "scanMemoryAccount",
+      "kind": "association",
+      "via": "field account",
+      "cardinality": "one"
+    },
+    {
+      "from": "scanState",
+      "to": "scanOutcome",
+      "kind": "dependency",
+      "via": "method commit parameter 2",
+      "cardinality": "one"
+    },
+    {
+      "from": "separatorScanner",
+      "to": "separatorLexState",
+      "kind": "association",
+      "via": "field state",
+      "cardinality": "one"
+    },
+    {
+      "from": "separatorScanner",
+      "to": "structuralSeparators",
+      "kind": "association",
+      "via": "field result",
+      "cardinality": "one"
+    },
+    {
+      "from": "slotTarget",
+      "to": "SlotCardinality",
+      "kind": "association",
+      "via": "field cardinality",
+      "cardinality": "one"
+    },
+    {
+      "from": "slotTarget",
+      "to": "generatedPlaceholder",
+      "kind": "association",
+      "via": "field p",
+      "cardinality": "one"
+    },
+    {
+      "from": "snippetAttempt",
+      "to": "SnippetContext",
+      "kind": "association",
+      "via": "field context",
+      "cardinality": "one"
+    },
+    {
+      "from": "snippetAttempt",
+      "to": "selectedRoot",
+      "kind": "association",
+      "via": "field selectRoot",
+      "cardinality": "one"
+    },
+    {
+      "from": "snippetPlaceholder",
+      "to": "VariableRef",
+      "kind": "association",
+      "via": "field ref",
+      "cardinality": "one"
+    },
+    {
+      "from": "templateChild",
+      "to": "templateNode",
+      "kind": "association",
+      "via": "field node",
+      "cardinality": "one"
+    },
+    {
+      "from": "templateChild",
+      "to": "templateSlot",
+      "kind": "association",
+      "via": "field slot",
+      "cardinality": "one"
+    },
+    {
+      "from": "templateFreezeFrame",
+      "to": "templateChild",
+      "kind": "association",
+      "via": "field kept",
+      "cardinality": "many"
+    },
+    {
+      "from": "templateFreezer",
+      "to": "slotTarget",
+      "kind": "association",
+      "via": "field targets",
+      "cardinality": "many"
+    },
+    {
+      "from": "templateFreezer",
+      "to": "spanKey",
+      "kind": "association",
+      "via": "field targets",
+      "cardinality": "many"
+    },
+    {
+      "from": "templateFreezer",
+      "to": "templateChild",
+      "kind": "dependency",
+      "via": "method build result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "templateFreezer",
+      "to": "templateChild",
+      "kind": "dependency",
+      "via": "method concreteChild result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "templateFreezer",
+      "to": "templateChild",
+      "kind": "dependency",
+      "via": "method finishFrame parameter 2",
+      "cardinality": "one"
+    },
+    {
+      "from": "templateFreezer",
+      "to": "templateChild",
+      "kind": "dependency",
+      "via": "method finishFrame result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "templateFreezer",
+      "to": "templateChild",
+      "kind": "dependency",
+      "via": "method slotChild result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "templateFreezer",
+      "to": "templateChild",
+      "kind": "dependency",
+      "via": "method step result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "templateFreezer",
+      "to": "templateFreezeFrame",
+      "kind": "association",
+      "via": "field stack",
+      "cardinality": "many"
+    },
+    {
+      "from": "templateFreezer",
+      "to": "templateFreezeFrame",
+      "kind": "dependency",
+      "via": "method concreteChild parameter 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "templateFreezer",
+      "to": "templateFreezeFrame",
+      "kind": "dependency",
+      "via": "method descend parameter 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "templateNode",
+      "to": "templateChild",
+      "kind": "association",
+      "via": "field children",
+      "cardinality": "many"
+    },
+    {
+      "from": "templateSlot",
+      "to": "SlotCardinality",
+      "kind": "association",
+      "via": "field cardinality",
+      "cardinality": "one"
+    },
+    {
+      "from": "templateSlot",
+      "to": "VariableRef",
+      "kind": "association",
+      "via": "field ref",
+      "cardinality": "one"
+    },
+    {
+      "from": "treeCompiler",
+      "to": "CompileError",
+      "kind": "dependency",
+      "via": "method acceptDocumentField result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "treeCompiler",
+      "to": "CompileError",
+      "kind": "dependency",
+      "via": "method closedFailure result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "treeCompiler",
+      "to": "CompileError",
+      "kind": "dependency",
+      "via": "method compileBlock result 2",
+      "cardinality": "one"
+    },
+    {
+      "from": "treeCompiler",
+      "to": "CompileError",
+      "kind": "dependency",
+      "via": "method compileBlockChildren result 3",
+      "cardinality": "one"
+    },
+    {
+      "from": "treeCompiler",
+      "to": "CompileError",
+      "kind": "dependency",
+      "via": "method compileConstraint result 2",
+      "cardinality": "one"
+    },
+    {
+      "from": "treeCompiler",
+      "to": "CompileError",
+      "kind": "dependency",
+      "via": "method compileConstraintBlock result 2",
+      "cardinality": "one"
+    },
+    {
+      "from": "treeCompiler",
+      "to": "CompileError",
+      "kind": "dependency",
+      "via": "method compileConstraintItems result 2",
+      "cardinality": "one"
+    },
+    {
+      "from": "treeCompiler",
+      "to": "CompileError",
+      "kind": "dependency",
+      "via": "method compileDecodedRegex result 2",
+      "cardinality": "one"
+    },
+    {
+      "from": "treeCompiler",
+      "to": "CompileError",
+      "kind": "dependency",
+      "via": "method compileDocumentFields result 3",
+      "cardinality": "one"
+    },
+    {
+      "from": "treeCompiler",
+      "to": "CompileError",
+      "kind": "dependency",
+      "via": "method compileExpression result 2",
+      "cardinality": "one"
+    },
+    {
+      "from": "treeCompiler",
+      "to": "CompileError",
+      "kind": "dependency",
+      "via": "method compileLanguage result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "treeCompiler",
+      "to": "CompileError",
+      "kind": "dependency",
+      "via": "method compileRegex result 2",
+      "cardinality": "one"
+    },
+    {
+      "from": "treeCompiler",
+      "to": "CompileError",
+      "kind": "dependency",
+      "via": "method compileSnippet result 2",
+      "cardinality": "one"
+    },
+    {
+      "from": "treeCompiler",
+      "to": "CompileError",
+      "kind": "dependency",
+      "via": "method compileUnary result 2",
+      "cardinality": "one"
+    },
+    {
+      "from": "treeCompiler",
+      "to": "CompileError",
+      "kind": "dependency",
+      "via": "method compileWhere result 2",
+      "cardinality": "one"
+    },
+    {
+      "from": "treeCompiler",
+      "to": "CompileError",
+      "kind": "dependency",
+      "via": "method decodeRegex result 2",
+      "cardinality": "one"
+    },
+    {
+      "from": "treeCompiler",
+      "to": "CompileError",
+      "kind": "dependency",
+      "via": "method decodeRegexEscape result 3",
+      "cardinality": "one"
+    },
+    {
+      "from": "treeCompiler",
+      "to": "CompileError",
+      "kind": "dependency",
+      "via": "method decodeRegexHexEscape result 3",
+      "cardinality": "one"
+    },
+    {
+      "from": "treeCompiler",
+      "to": "CompileError",
+      "kind": "dependency",
+      "via": "method decodeSnippet result 4",
+      "cardinality": "one"
+    },
+    {
+      "from": "treeCompiler",
+      "to": "CompileError",
+      "kind": "dependency",
+      "via": "method failure result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "treeCompiler",
+      "to": "CompileError",
+      "kind": "dependency",
+      "via": "method regexPayload result 2",
+      "cardinality": "one"
+    },
+    {
+      "from": "treeCompiler",
+      "to": "CompileError",
+      "kind": "dependency",
+      "via": "method snippetLeaf result 2",
+      "cardinality": "one"
+    },
+    {
+      "from": "treeCompiler",
+      "to": "CompileError",
+      "kind": "dependency",
+      "via": "method snippetMetavariableEnd result 2",
+      "cardinality": "one"
+    },
+    {
+      "from": "treeCompiler",
+      "to": "CompileError",
+      "kind": "dependency",
+      "via": "method whereChildren result 2",
+      "cardinality": "one"
+    },
+    {
+      "from": "treeCompiler",
+      "to": "CompileOptions",
+      "kind": "association",
+      "via": "field options",
+      "cardinality": "one"
+    },
+    {
+      "from": "treeCompiler",
+      "to": "FeatureSet",
+      "kind": "association",
+      "via": "field features",
+      "cardinality": "one"
+    },
+    {
+      "from": "treeCompiler",
+      "to": "FeatureSet",
+      "kind": "dependency",
+      "via": "method compileBlock parameter 3",
+      "cardinality": "one"
+    },
+    {
+      "from": "treeCompiler",
+      "to": "FeatureSet",
+      "kind": "dependency",
+      "via": "method compileUnary parameter 3",
+      "cardinality": "one"
+    },
+    {
+      "from": "treeCompiler",
+      "to": "Kind",
+      "kind": "dependency",
+      "via": "method compileBlock parameter 2",
+      "cardinality": "one"
+    },
+    {
+      "from": "treeCompiler",
+      "to": "Kind",
+      "kind": "dependency",
+      "via": "method compileUnary parameter 2",
+      "cardinality": "one"
+    },
+    {
+      "from": "treeCompiler",
+      "to": "Range",
+      "kind": "association",
+      "via": "field languageRange",
+      "cardinality": "one"
+    },
+    {
+      "from": "treeCompiler",
+      "to": "Range",
+      "kind": "dependency",
+      "via": "method compileDocumentFields parameter 2",
+      "cardinality": "one"
+    },
+    {
+      "from": "treeCompiler",
+      "to": "Variable",
+      "kind": "association",
+      "via": "field variables",
+      "cardinality": "many"
+    },
+    {
+      "from": "treeCompiler",
+      "to": "VariableID",
+      "kind": "association",
+      "via": "field names",
+      "cardinality": "many"
+    },
+    {
+      "from": "treeCompiler",
+      "to": "VariableRef",
+      "kind": "dependency",
+      "via": "method decodeSnippet result 2",
+      "cardinality": "many"
+    },
+    {
+      "from": "treeCompiler",
+      "to": "VariableRef",
+      "kind": "dependency",
+      "via": "method variable result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "treeCompiler",
+      "to": "constraint",
+      "kind": "dependency",
+      "via": "method compileConstraint result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "treeCompiler",
+      "to": "constraint",
+      "kind": "dependency",
+      "via": "method compileConstraintBlock result 1",
+      "cardinality": "many"
+    },
+    {
+      "from": "treeCompiler",
+      "to": "constraint",
+      "kind": "dependency",
+      "via": "method compileConstraintItems result 1",
+      "cardinality": "many"
+    },
+    {
+      "from": "treeCompiler",
+      "to": "expression",
+      "kind": "dependency",
+      "via": "method compileBlock result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "treeCompiler",
+      "to": "expression",
+      "kind": "dependency",
+      "via": "method compileBlockChildren result 1",
+      "cardinality": "many"
+    },
+    {
+      "from": "treeCompiler",
+      "to": "expression",
+      "kind": "dependency",
+      "via": "method compileExpression result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "treeCompiler",
+      "to": "expression",
+      "kind": "dependency",
+      "via": "method compileRegex result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "treeCompiler",
+      "to": "expression",
+      "kind": "dependency",
+      "via": "method compileSnippet result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "treeCompiler",
+      "to": "expression",
+      "kind": "dependency",
+      "via": "method compileUnary result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "treeCompiler",
+      "to": "expression",
+      "kind": "dependency",
+      "via": "method compileWhere result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "treeCompiler",
+      "to": "queryDocument",
+      "kind": "association",
+      "via": "field doc",
+      "cardinality": "one"
+    },
+    {
+      "from": "treeCompiler",
+      "to": "queryNode",
+      "kind": "dependency",
+      "via": "method acceptDocumentField parameter 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "treeCompiler",
+      "to": "queryNode",
+      "kind": "dependency",
+      "via": "method acceptDocumentField parameter 2",
+      "cardinality": "one"
+    },
+    {
+      "from": "treeCompiler",
+      "to": "queryNode",
+      "kind": "dependency",
+      "via": "method acceptDocumentField parameter 3",
+      "cardinality": "one"
+    },
+    {
+      "from": "treeCompiler",
+      "to": "queryNode",
+      "kind": "dependency",
+      "via": "method compileBlock parameter 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "treeCompiler",
+      "to": "queryNode",
+      "kind": "dependency",
+      "via": "method compileBlockChildren parameter 1",
+      "cardinality": "many"
+    },
+    {
+      "from": "treeCompiler",
+      "to": "queryNode",
+      "kind": "dependency",
+      "via": "method compileConstraint parameter 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "treeCompiler",
+      "to": "queryNode",
+      "kind": "dependency",
+      "via": "method compileConstraintBlock parameter 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "treeCompiler",
+      "to": "queryNode",
+      "kind": "dependency",
+      "via": "method compileConstraintItems parameter 1",
+      "cardinality": "many"
+    },
+    {
+      "from": "treeCompiler",
+      "to": "queryNode",
+      "kind": "dependency",
+      "via": "method compileDocumentFields parameter 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "treeCompiler",
+      "to": "queryNode",
+      "kind": "dependency",
+      "via": "method compileDocumentFields result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "treeCompiler",
+      "to": "queryNode",
+      "kind": "dependency",
+      "via": "method compileDocumentFields result 2",
+      "cardinality": "one"
+    },
+    {
+      "from": "treeCompiler",
+      "to": "queryNode",
+      "kind": "dependency",
+      "via": "method compileExpression parameter 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "treeCompiler",
+      "to": "queryNode",
+      "kind": "dependency",
+      "via": "method compileLanguage parameter 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "treeCompiler",
+      "to": "queryNode",
+      "kind": "dependency",
+      "via": "method compileRegex parameter 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "treeCompiler",
+      "to": "queryNode",
+      "kind": "dependency",
+      "via": "method compileSnippet parameter 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "treeCompiler",
+      "to": "queryNode",
+      "kind": "dependency",
+      "via": "method compileUnary parameter 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "treeCompiler",
+      "to": "queryNode",
+      "kind": "dependency",
+      "via": "method compileWhere parameter 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "treeCompiler",
+      "to": "queryNode",
+      "kind": "dependency",
+      "via": "method decodeSnippet parameter 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "treeCompiler",
+      "to": "queryNode",
+      "kind": "dependency",
+      "via": "method regexPayload parameter 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "treeCompiler",
+      "to": "queryNode",
+      "kind": "dependency",
+      "via": "method snippetLeaf parameter 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "treeCompiler",
+      "to": "queryNode",
+      "kind": "dependency",
+      "via": "method snippetLeaf result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "treeCompiler",
+      "to": "queryNode",
+      "kind": "dependency",
+      "via": "method whereChildren parameter 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "treeCompiler",
+      "to": "queryNode",
+      "kind": "dependency",
+      "via": "method whereChildren result 1",
+      "cardinality": "many"
+    },
+    {
+      "from": "treeCompiler",
+      "to": "snippetPlaceholder",
+      "kind": "dependency",
+      "via": "method decodeSnippet result 3",
+      "cardinality": "many"
+    },
+    {
+      "from": "v1NodeValidator",
+      "to": "queryNode",
+      "kind": "dependency",
+      "via": "underlying type",
+      "cardinality": "many"
+    },
+    {
+      "from": "v1ValidationWork",
+      "to": "queryNode",
+      "kind": "association",
+      "via": "field node",
+      "cardinality": "one"
+    },
+    {
+      "from": "variableScope",
+      "to": "VariableID",
+      "kind": "dependency",
+      "via": "underlying type",
+      "cardinality": "many"
+    }
+  ]
+}

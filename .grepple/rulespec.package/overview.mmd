@@ -1,0 +1,15 @@
+classDiagram
+    %% grepple:package-default github.com/greppleai/grepple/internal/rulespec
+    %% grepple:language-default go
+    direction LR
+    note "Package rulespec normalizes saved text and structural rule definitions while preserving the legacy text-rule wire shape. | package github.com/greppleai/grepple/internal/rulespec | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=2, declarations=0, exportedTypes=0, internalTypes=0, members=0, exportedFunctions=2, fiberRoutes=0, relations=0"
+    namespace operations {
+        class Engine {
+            +Engine(api.Rule): string
+        }
+        <<function>> Engine
+        class Normalize {
+            +Normalize(api.Rule): tuple~api.Rule&#44;error~
+        }
+        <<function>> Normalize
+    }

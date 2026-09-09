@@ -118,6 +118,69 @@ classDiagram
     %% grepple:struct-tag getArgs Path "arg:\"positional,required\" placeholder:\"PATH\""
     %% grepple:struct-tag getArgs Repo "arg:\"positional,required\" placeholder:\"OWNER/REPOSITORY\""
     %% grepple:struct-tag getArgs Server "arg:\"-s,--server\" placeholder:\"URL\" help:\"remote shard/router URL\""
+    class gritArgs {
+        +Description(): string
+        +Compatibility: string
+        +ExcludeGlobs: []string
+        +ExcludeRepositories: []string
+        +Globs: []string
+        +JSON: bool
+        +Limit: int
+        +Local: bool
+        +MaxASTSteps: int
+        +MaxCandidates: int
+        +MaxFileMilliseconds: int64
+        +MaxFiles: int
+        +MaxFindings: int
+        +MaxMemoryBytes: int
+        +MaxParseDepth: int
+        +MaxPatternBytes: int
+        +MaxRegexBytes: int
+        +MaxRegexInstructions: int
+        +MaxSourceBytes: int
+        +MaxTotalBytes: int64
+        +Message: string
+        +PatternID: string
+        +Query: string
+        +QueryFile: string
+        +Remote: bool
+        +Repositories: []string
+        +Server: string
+        +Skip: int
+        +TimeoutMilliseconds: int64
+        +Workers: int
+    }
+    <<struct>> gritArgs
+    %% grepple:file gritArgs internal/cli/grit.go
+    %% grepple:struct-tag gritArgs Compatibility "arg:\"--compatibility\" placeholder:\"VERSION\" help:\"structural compatibility version\""
+    %% grepple:struct-tag gritArgs ExcludeGlobs "arg:\"--exclude-glob,separate\" placeholder:\"GLOB\" help:\"exclude a Go path; repeatable\""
+    %% grepple:struct-tag gritArgs ExcludeRepositories "arg:\"--exclude-repo,separate\" placeholder:\"PATTERN\" help:\"exclude remote repositories; repeatable\""
+    %% grepple:struct-tag gritArgs Globs "arg:\"positional\" placeholder:\"GLOB\""
+    %% grepple:struct-tag gritArgs JSON "arg:\"--json\" help:\"print the complete structural response as JSON\""
+    %% grepple:struct-tag gritArgs Limit "arg:\"--limit\" placeholder:\"N\" help:\"return at most N findings (default 20; 0 = all local)\""
+    %% grepple:struct-tag gritArgs Local "arg:\"--local\" help:\"search only the local working directory (the default)\""
+    %% grepple:struct-tag gritArgs MaxASTSteps "arg:\"--max-ast-steps\" placeholder:\"N\" help:\"bound structural evaluation steps per file\""
+    %% grepple:struct-tag gritArgs MaxCandidates "arg:\"--max-candidates\" placeholder:\"N\" help:\"bound structural candidates per file\""
+    %% grepple:struct-tag gritArgs MaxFileMilliseconds "arg:\"--max-file-time-ms\" placeholder:\"N\" help:\"bound evaluation time per file\""
+    %% grepple:struct-tag gritArgs MaxFiles "arg:\"--max-files\" placeholder:\"N\" help:\"bound eligible source files\""
+    %% grepple:struct-tag gritArgs MaxFindings "arg:\"--max-findings\" placeholder:\"N\" help:\"bound retained findings before paging\""
+    %% grepple:struct-tag gritArgs MaxMemoryBytes "arg:\"--max-memory-bytes\" placeholder:\"N\" help:\"bound live scanner memory\""
+    %% grepple:struct-tag gritArgs MaxParseDepth "arg:\"--max-parse-depth\" placeholder:\"N\" help:\"bound query and structural recursion depth\""
+    %% grepple:struct-tag gritArgs MaxPatternBytes "arg:\"--max-pattern-bytes\" placeholder:\"N\" help:\"bound query source bytes during compilation\""
+    %% grepple:struct-tag gritArgs MaxRegexBytes "arg:\"--max-regex-bytes\" placeholder:\"N\" help:\"bound one regex constraint\""
+    %% grepple:struct-tag gritArgs MaxRegexInstructions "arg:\"--max-regex-instructions\" placeholder:\"N\" help:\"bound compiled regex instructions\""
+    %% grepple:struct-tag gritArgs MaxSourceBytes "arg:\"--max-source-bytes\" placeholder:\"N\" help:\"bound one source file\""
+    %% grepple:struct-tag gritArgs MaxTotalBytes "arg:\"--max-total-bytes\" placeholder:\"N\" help:\"bound aggregate source bytes\""
+    %% grepple:struct-tag gritArgs Message "arg:\"--message\" placeholder:\"TEXT\" help:\"attach a message to findings\""
+    %% grepple:struct-tag gritArgs PatternID "arg:\"--pattern-id\" placeholder:\"ID\" help:\"attach a pattern identifier to findings\""
+    %% grepple:struct-tag gritArgs Query "arg:\"positional\" placeholder:\"QUERY\""
+    %% grepple:struct-tag gritArgs QueryFile "arg:\"-f,--query-file\" placeholder:\"PATH\" help:\"read the GritQL query from PATH (- for stdin)\""
+    %% grepple:struct-tag gritArgs Remote "arg:\"-R,--remote\" help:\"also query the remote shard/router and merge with local findings\""
+    %% grepple:struct-tag gritArgs Repositories "arg:\"--repo,separate\" placeholder:\"PATTERN\" help:\"restrict remote repositories; repeatable\""
+    %% grepple:struct-tag gritArgs Server "arg:\"-s,--server\" placeholder:\"URL\" help:\"remote shard/router URL (implies --remote)\""
+    %% grepple:struct-tag gritArgs Skip "arg:\"--skip\" placeholder:\"N\" help:\"skip the first N ordered findings\""
+    %% grepple:struct-tag gritArgs TimeoutMilliseconds "arg:\"--timeout-ms\" placeholder:\"N\" help:\"bound the complete structural scan in milliseconds\""
+    %% grepple:struct-tag gritArgs Workers "arg:\"--workers\" placeholder:\"N\" help:\"bound concurrent file evaluations\""
     class jsonResultRenderer {
         +Render([]api.FileResult): error
         -matchesOnly: bool
@@ -182,30 +245,38 @@ classDiagram
     %% grepple:file resultRenderer internal/cli/renderer.go
     class rulesAddArgs {
         +Description(): string
+        +Compatibility: string
+        +Engine: string
         +ExcludeRepo: []string
         +Files: bool
         +Globs: []string
+        +Grit: bool
         +ID: string
         +IgnoreCase: bool
         +JSON: bool
         +Mode: string
         +Name: string
         +Pattern: string
+        +QueryFile: string
         +Regex: bool
         +Repo: []string
         +Server: string
     }
     <<struct>> rulesAddArgs
     %% grepple:file rulesAddArgs internal/cli/rules.go
+    %% grepple:struct-tag rulesAddArgs Compatibility "arg:\"--compatibility\" placeholder:\"VERSION\" help:\"structural compatibility version\""
+    %% grepple:struct-tag rulesAddArgs Engine "arg:\"--engine\" placeholder:\"ENGINE\" help:\"text | gritql\""
     %% grepple:struct-tag rulesAddArgs ExcludeRepo "arg:\"--exclude-repo,separate\" placeholder:\"PATTERN\" help:\"exclude matching repos\""
     %% grepple:struct-tag rulesAddArgs Files "arg:\"-l,--files\" help:\"files mode (store matching paths)\""
     %% grepple:struct-tag rulesAddArgs Globs "arg:\"positional\" placeholder:\"GLOB\""
+    %% grepple:struct-tag rulesAddArgs Grit "arg:\"--grit\" help:\"create a gritql structural rule\""
     %% grepple:struct-tag rulesAddArgs ID "arg:\"--id\" placeholder:\"ID\" help:\"stable rule id (default: slug of --name)\""
     %% grepple:struct-tag rulesAddArgs IgnoreCase "arg:\"-i,--ignore-case\" help:\"case-insensitive match\""
     %% grepple:struct-tag rulesAddArgs JSON "arg:\"--json\" help:\"print the created rule as JSON\""
     %% grepple:struct-tag rulesAddArgs Mode "arg:\"--mode\" placeholder:\"MODE\" help:\"count | files\""
     %% grepple:struct-tag rulesAddArgs Name "arg:\"--name\" placeholder:\"NAME\" help:\"human-readable name\""
     %% grepple:struct-tag rulesAddArgs Pattern "arg:\"positional\" placeholder:\"PATTERN\""
+    %% grepple:struct-tag rulesAddArgs QueryFile "arg:\"-f,--query-file\" placeholder:\"PATH\" help:\"read structural query from PATH (- for stdin)\""
     %% grepple:struct-tag rulesAddArgs Regex "arg:\"--regex\" help:\"treat PATTERN as a regular expression\""
     %% grepple:struct-tag rulesAddArgs Repo "arg:\"--repo,separate\" placeholder:\"PATTERN\" help:\"limit to matching repos\""
     %% grepple:struct-tag rulesAddArgs Server "arg:\"-s,--server\" placeholder:\"URL\" help:\"remote router URL\""

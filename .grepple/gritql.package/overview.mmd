@@ -1,0 +1,602 @@
+classDiagram
+    %% grepple:package-default github.com/greppleai/grepple/internal/gritql
+    %% grepple:language-default go
+    direction LR
+    note "Package gritql implements Grepple's native, read-only gritql-go-v1 structural-search compiler, matcher, evaluator, and bounded scanner. | package github.com/greppleai/grepple/internal/gritql | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=12, declarations=115, exportedTypes=48, internalTypes=67, members=590, exportedFunctions=17, fiberRoutes=0, relations=305"
+    namespace data_contracts {
+        class EffectiveLimits {
+            +ASTSteps: int
+            +BatchTimeMillis: int64
+            +Candidates: int
+            +FileTimeMillis: int64
+            +Findings: int
+            +MemoryBytes: int
+            +ParseDepth: int
+            +PatternBytes: int
+            +RegexBytes: int
+            +RegexInstructions: int
+            +SourceBytes: int
+        }
+        <<struct>> EffectiveLimits
+        class EvaluationMetadata {
+            +Contract: string
+            +GoGrammar: string
+            +Limits: EffectiveLimits
+            +TreeSitterGrammar: string
+        }
+        <<struct>> EvaluationMetadata
+        class ScanStats {
+            +BytesRead: int64
+            +Candidates: int
+            +Eligible: int
+            +Evaluated: int
+            +SkippedBinary: int
+            +SkippedGlob: int
+            +SkippedLanguage: int
+        }
+        <<struct>> ScanStats
+        class ScanTruncation {
+            +Limit: int64
+            +Reason: string
+            +Skipped: int
+        }
+        <<struct>> ScanTruncation
+        class diagnosticJSON {
+            +Class: string
+            +Code: string
+            +Message: string
+            +Path: *string
+            +PatternID: *string
+            +Range: *rangeJSON
+            +Severity: string
+        }
+        <<struct>> diagnosticJSON
+        class findingJSON {
+            +Bindings: map[string]json.RawMessage
+            +EndByte: int
+            +EndColumn: int
+            +EndLine: int
+            +Message: string
+            +Path: string
+            +PatternID: string
+            +StartByte: int
+            +StartColumn: int
+            +StartLine: int
+        }
+        <<struct>> findingJSON
+        class rangeJSON {
+            +EndByte: int
+            +EndColumn: int
+            +EndLine: int
+            +StartByte: int
+            +StartColumn: int
+            +StartLine: int
+        }
+        <<struct>> rangeJSON
+    }
+    namespace exported_types {
+        class AnchorPlan
+        <<struct>> AnchorPlan
+        class BatchScanResult
+        <<struct>> BatchScanResult
+        class BatchScanStats
+        <<struct>> BatchScanStats
+        class BindingKind["BindingKind = uint8"]
+        <<type>> BindingKind
+        class BindingSet
+        <<struct>> BindingSet
+        class BoundValue
+        <<struct>> BoundValue
+        class CompileError
+        <<struct>> CompileError
+        class CompileOptions
+        <<struct>> CompileOptions
+        class Constraint
+        <<struct>> Constraint
+        class Diagnostic
+        <<struct>> Diagnostic
+        class DocumentInput
+        <<struct>> DocumentInput
+        class EvaluateOptions
+        <<struct>> EvaluateOptions
+        class EvaluationError
+        <<struct>> EvaluationError
+        class EvaluationMatch
+        <<struct>> EvaluationMatch
+        class EvaluationOptions["EvaluationOptions = EvaluateOptions"]
+        <<alias>> EvaluationOptions
+        class Expression
+        <<struct>> Expression
+        class FeatureSet["FeatureSet = uint32"]
+        <<type>> FeatureSet
+        class FileEvaluation
+        <<struct>> FileEvaluation
+        class FileInput
+        <<struct>> FileInput
+        class Finding
+        <<struct>> Finding
+        class FindingBinding
+        <<struct>> FindingBinding
+        class Kind["Kind = uint8"]
+        <<type>> Kind
+        class LanguageDeclaration
+        <<struct>> LanguageDeclaration
+        class MatchResult
+        <<struct>> MatchResult
+        class MatchTarget
+        <<struct>> MatchTarget
+        class ParsedEvaluationInput
+        <<struct>> ParsedEvaluationInput
+        class Position
+        <<struct>> Position
+        class Program
+        <<struct>> Program
+        class ProgramScan
+        <<struct>> ProgramScan
+        class ProgramScanResult
+        <<struct>> ProgramScanResult
+        class Range
+        <<struct>> Range
+        class ScanCandidate
+        <<struct>> ScanCandidate
+        class ScanOptions
+        <<struct>> ScanOptions
+        class ScanResult
+        <<struct>> ScanResult
+        class SlotCardinality["SlotCardinality = uint8"]
+        <<type>> SlotCardinality
+        class SnippetContext["SnippetContext = uint8"]
+        <<type>> SnippetContext
+        class StructuralNode
+        <<struct>> StructuralNode
+        class Template
+        <<struct>> Template
+        class TemplateChild
+        <<struct>> TemplateChild
+        class TemplateNode
+        <<struct>> TemplateNode
+        class TemplateSlot
+        <<struct>> TemplateSlot
+        class Variable
+        <<struct>> Variable
+        class VariableID["VariableID = uint32"]
+        <<type>> VariableID
+        class VariableRef
+        <<struct>> VariableRef
+    }
+    namespace internal_types {
+        class bindingValue
+        <<struct>> bindingValue
+        class constraint
+        <<struct>> constraint
+        class decodedSnippet
+        <<struct>> decodedSnippet
+        class evalCandidate
+        <<struct>> evalCandidate
+        class evaluationBudget
+        <<struct>> evaluationBudget
+        class evaluationTraversalItem
+        <<struct>> evaluationTraversalItem
+        class expression
+        <<struct>> expression
+        class frozenMatchTarget
+        <<struct>> frozenMatchTarget
+        class generatedPlaceholder
+        <<struct>> generatedPlaceholder
+        class inferredEvaluation
+        <<struct>> inferredEvaluation
+        class noCopy
+        <<struct>> noCopy
+        class normalizationCheckpoint["normalizationCheckpoint = uint8"]
+        <<type>> normalizationCheckpoint
+        class normalizationCheckpointHook["normalizationCheckpointHook = func(normalizationCheckpoint)*EvaluationError"]
+        <<type>> normalizationCheckpointHook
+        class normalizationCheckpointKey
+        <<struct>> normalizationCheckpointKey
+        class normalizedNode
+        <<struct>> normalizedNode
+        class occurrenceRestoration
+        <<struct>> occurrenceRestoration
+        class placeholderInference
+        <<struct>> placeholderInference
+        class placeholderInfo
+        <<struct>> placeholderInfo
+        class placeholderInfoCollector
+        <<struct>> placeholderInfoCollector
+        class placeholderRole["placeholderRole = uint8"]
+        <<type>> placeholderRole
+        class placeholderRoleSolver
+        <<struct>> placeholderRoleSolver
+        class placeholderWalkItem
+        <<struct>> placeholderWalkItem
+        class preparedScanCandidate
+        <<struct>> preparedScanCandidate
+        class queryDocument
+        <<struct>> queryDocument
+        class queryErrorKind["queryErrorKind = uint8"]
+        <<type>> queryErrorKind
+        class queryNode
+        <<struct>> queryNode
+        class queryParseDiagnostic
+        <<struct>> queryParseDiagnostic
+        class queryPosition
+        <<struct>> queryPosition
+        class queryRange
+        <<struct>> queryRange
+        class queryRecord
+        <<struct>> queryRecord
+        class querySyntaxError
+        <<struct>> querySyntaxError
+        class roleAlternative
+        <<struct>> roleAlternative
+        class roleAncestorSet
+        <<struct>> roleAncestorSet
+        class scanByteAccount
+        <<struct>> scanByteAccount
+        class scanCandidateDisposition["scanCandidateDisposition = uint8"]
+        <<type>> scanCandidateDisposition
+        class scanJob
+        <<struct>> scanJob
+        class scanLimitKind["scanLimitKind = uint8"]
+        <<type>> scanLimitKind
+        class scanMemoryAccount
+        <<struct>> scanMemoryAccount
+        class scanOutcome
+        <<struct>> scanOutcome
+        class scanReadResult
+        <<struct>> scanReadResult
+        class scanSegmentMatcher
+        <<struct>> scanSegmentMatcher
+        class scanSegmentState
+        <<struct>> scanSegmentState
+        class scanState
+        <<struct>> scanState
+        class selectedRoot
+        <<struct>> selectedRoot
+        class separatorLexState["separatorLexState = uint8"]
+        <<type>> separatorLexState
+        class separatorScanner
+        <<struct>> separatorScanner
+        class sequencePosition
+        <<struct>> sequencePosition
+        class significantRangeFrame
+        <<struct>> significantRangeFrame
+        class slotTarget
+        <<struct>> slotTarget
+        class slotTargetWalkItem
+        <<struct>> slotTargetWalkItem
+        class snippetAttempt
+        <<struct>> snippetAttempt
+        class snippetPlaceholder
+        <<struct>> snippetPlaceholder
+        class sourceInspectionItem
+        <<struct>> sourceInspectionItem
+        class spanKey
+        <<struct>> spanKey
+        class structuralSeparators
+        <<struct>> structuralSeparators
+        class templateChild
+        <<struct>> templateChild
+        class templateFreezeFrame
+        <<struct>> templateFreezeFrame
+        class templateFreezer
+        <<struct>> templateFreezer
+        class templateNode
+        <<struct>> templateNode
+        class templateSlot
+        <<struct>> templateSlot
+        class treeCompiler
+        <<struct>> treeCompiler
+        class v1NodeValidator["v1NodeValidator = func(queryNode,&#91;&#93;queryNode)bool"]
+        <<type>> v1NodeValidator
+        class v1ValidationWork
+        <<struct>> v1ValidationWork
+        class variableScope["variableScope = map&#91;VariableID&#93;bool"]
+        <<type>> variableScope
+    }
+    namespace operations {
+        class AnalyzeAnchors {
+            +AnalyzeAnchors(*Program): AnchorPlan
+        }
+        <<function>> AnalyzeAnchors
+        class Compile {
+            +Compile([]byte, CompileOptions): tuple~*Program&#44;error~
+        }
+        <<function>> Compile
+        class Evaluate {
+            +Evaluate(context.Context, *Program, *parser.Document, EvaluateOptions): tuple~[]EvaluationMatch&#44;error~
+        }
+        <<function>> Evaluate
+        class EvaluateDocument {
+            +EvaluateDocument(context.Context, *Program, *parser.Document, EvaluateOptions): tuple~[]EvaluationMatch&#44;error~
+        }
+        <<function>> EvaluateDocument
+        class EvaluateDocumentFindings {
+            +EvaluateDocumentFindings(context.Context, *Program, *parser.Document, DocumentInput, EvaluateOptions): tuple~FileEvaluation~
+        }
+        <<function>> EvaluateDocumentFindings
+        class EvaluateDocuments {
+            +EvaluateDocuments(context.Context, *Program, []ParsedEvaluationInput, EvaluateOptions): FileEvaluation
+        }
+        <<function>> EvaluateDocuments
+        class EvaluateFile {
+            +EvaluateFile(context.Context, *Program, FileInput, EvaluateOptions): tuple~FileEvaluation~
+        }
+        <<function>> EvaluateFile
+        class MatchNode {
+            +MatchNode(Template, parser.Node): tuple~MatchResult&#44;bool~
+        }
+        <<function>> MatchNode
+        class MatchTemplate {
+            +MatchTemplate(Template, MatchTarget): tuple~MatchResult&#44;bool~
+        }
+        <<function>> MatchTemplate
+        class MatchTemplateWithBindings {
+            +MatchTemplateWithBindings(Template, MatchTarget, BindingSet): tuple~MatchResult&#44;bool~
+        }
+        <<function>> MatchTemplateWithBindings
+        class NodeTarget {
+            +NodeTarget(parser.Node): MatchTarget
+        }
+        <<function>> NodeTarget
+        class NormalizeEvaluations {
+            +NormalizeEvaluations(context.Context, []FileEvaluation, EvaluateOptions): FileEvaluation
+        }
+        <<function>> NormalizeEvaluations
+        class RepeatedSequenceTarget {
+            +RepeatedSequenceTarget(parser.Node, string, int, int): MatchTarget
+        }
+        <<function>> RepeatedSequenceTarget
+        class ScanFiles {
+            +ScanFiles(context.Context, fs.FS, *Program, []ScanCandidate, ScanOptions): ScanResult
+        }
+        <<function>> ScanFiles
+        class ScanFilesPrograms {
+            +ScanFilesPrograms(context.Context, fs.FS, []ProgramScan, []ScanCandidate, ScanOptions): BatchScanResult
+        }
+        <<function>> ScanFilesPrograms
+        class SequenceTarget {
+            +SequenceTarget(string, parser.Node, int, int): MatchTarget
+        }
+        <<function>> SequenceTarget
+        class ValidateGlobs {
+            +ValidateGlobs([]string, []string): error
+        }
+        <<function>> ValidateGlobs
+    }
+    AnalyzeAnchors "1" ..> "1" AnchorPlan : result 1
+    AnalyzeAnchors "1" ..> "1" Program : parameter 1
+    BatchScanResult "1" --> "1" BatchScanStats : field stats
+    BatchScanResult "1" ..> "1" BatchScanStats : method Stats result 1
+    BatchScanResult "1" --> "*" ProgramScanResult : field programs
+    BatchScanResult "1" ..> "*" ProgramScanResult : method Programs result 1
+    BindingSet "1" ..> "*" BoundValue : method All result 1
+    BindingSet "1" ..> "1" BoundValue : method Lookup result 1
+    BindingSet "1" --> "*" VariableID : field values
+    BindingSet "1" ..> "1" VariableID : method Lookup parameter 1
+    BindingSet "1" --> "*" bindingValue : field values
+    BoundValue "1" ..> "1" BindingKind : method Kind result 1
+    BoundValue "1" ..> "*" StructuralNode : method Structural result 1
+    BoundValue "1" ..> "1" VariableRef : method Variable result 1
+    BoundValue "1" --> "1" bindingValue : field value
+    Compile "1" ..> "1" CompileOptions : parameter 2
+    Compile "1" ..> "1" Program : result 1
+    CompileError "1" --> "1" Range : field Range
+    Constraint "1" ..> "1" Expression : method RHS result 1
+    Constraint "1" ..> "1" Range : method Range result 1
+    Constraint "1" ..> "1" VariableRef : method LHS result 1
+    Constraint "1" --> "1" constraint : field c
+    Evaluate "1" ..> "1" EvaluateOptions : parameter 4
+    Evaluate "1" ..> "*" EvaluationMatch : result 1
+    Evaluate "1" ..> "1" Program : parameter 2
+    EvaluateDocument "1" ..> "1" EvaluateOptions : parameter 4
+    EvaluateDocument "1" ..> "*" EvaluationMatch : result 1
+    EvaluateDocument "1" ..> "1" Program : parameter 2
+    EvaluateDocumentFindings "1" ..> "1" DocumentInput : parameter 4
+    EvaluateDocumentFindings "1" ..> "1" EvaluateOptions : parameter 5
+    EvaluateDocumentFindings "1" ..> "1" FileEvaluation : result 1
+    EvaluateDocumentFindings "1" ..> "1" Program : parameter 2
+    EvaluateDocuments "1" ..> "1" EvaluateOptions : parameter 4
+    EvaluateDocuments "1" ..> "1" FileEvaluation : result 1
+    EvaluateDocuments "1" ..> "*" ParsedEvaluationInput : parameter 3
+    EvaluateDocuments "1" ..> "1" Program : parameter 2
+    EvaluateFile "1" ..> "1" EvaluateOptions : parameter 4
+    EvaluateFile "1" ..> "1" FileEvaluation : result 1
+    EvaluateFile "1" ..> "1" FileInput : parameter 3
+    EvaluateFile "1" ..> "1" Program : parameter 2
+    EvaluationMatch "1" --> "1" BindingSet : field bindings
+    EvaluationMatch "1" ..> "1" BindingSet : method Bindings result 1
+    EvaluationMetadata "1" --> "1" EffectiveLimits : field Limits
+    EvaluationOptions "1" ..> "1" EvaluateOptions : underlying type
+    Expression "1" ..> "*" Constraint : method Constraints result 1
+    Expression "1" ..> "1" Kind : method Kind result 1
+    Expression "1" ..> "1" Range : method Range result 1
+    Expression "1" ..> "1" Template : method Template result 1
+    Expression "1" ..> "*" VariableRef : method Variables result 1
+    Expression "1" --> "1" expression : field e
+    FileEvaluation "1" --> "*" Diagnostic : field diagnostics
+    FileEvaluation "1" ..> "*" Diagnostic : method Diagnostics result 1
+    FileEvaluation "1" --> "1" EvaluationMetadata : field metadata
+    FileEvaluation "1" ..> "1" EvaluationMetadata : method Metadata result 1
+    FileEvaluation "1" --> "*" Finding : field findings
+    FileEvaluation "1" ..> "*" Finding : method Findings result 1
+    Finding "1" --> "*" FindingBinding : field bindings
+    Finding "1" ..> "*" FindingBinding : method Bindings result 1
+    FindingBinding "1" --> "1" BindingKind : field kind
+    FindingBinding "1" ..> "1" BindingKind : method Kind result 1
+    FindingBinding "1" --> "*" StructuralNode : field structural
+    FindingBinding "1" ..> "*" StructuralNode : method Elements result 1; method Structural result 1
+    FindingBinding "1" ..> "1" StructuralNode : method Node result 1
+    LanguageDeclaration "1" --> "1" Range : field Range
+    MatchNode "1" ..> "1" MatchResult : result 1
+    MatchNode "1" ..> "1" Template : parameter 1
+    MatchResult "1" --> "1" BindingSet : field bindings
+    MatchResult "1" ..> "1" BindingSet : method Bindings result 1
+    MatchTemplate "1" ..> "1" MatchResult : result 1
+    MatchTemplate "1" ..> "1" MatchTarget : parameter 2
+    MatchTemplate "1" ..> "1" Template : parameter 1
+    MatchTemplateWithBindings "1" ..> "1" BindingSet : parameter 3
+    MatchTemplateWithBindings "1" ..> "1" MatchResult : result 1
+    MatchTemplateWithBindings "1" ..> "1" MatchTarget : parameter 2
+    MatchTemplateWithBindings "1" ..> "1" Template : parameter 1
+    NodeTarget "1" ..> "1" MatchTarget : result 1
+    NormalizeEvaluations "1" ..> "1" EvaluateOptions : parameter 3
+    NormalizeEvaluations "1" ..> "*" FileEvaluation : parameter 2
+    NormalizeEvaluations "1" ..> "1" FileEvaluation : result 1
+    ParsedEvaluationInput "1" --> "1" DocumentInput : field Input
+    Program "1" --> "1" CompileOptions : field compileLimits
+    Program "1" ..> "1" Expression : method Root result 1
+    Program "1" --> "1" FeatureSet : field features
+    Program "1" ..> "1" FeatureSet : method Features result 1
+    Program "1" --> "1" LanguageDeclaration : field declaration
+    Program "1" ..> "1" LanguageDeclaration : method Declaration result 1
+    Program "1" --> "1" Range : field rng
+    Program "1" ..> "1" Range : method Range result 1
+    Program "1" --> "*" Variable : field variables
+    Program "1" ..> "*" Variable : method Variables result 1
+    Program "1" --> "1" expression : field root
+    ProgramScan "1" --> "1" Program : field Program
+    ProgramScanResult "1" --> "1" ScanResult : field Result
+    Range "1" --> "1" Position : field End; field Start
+    RepeatedSequenceTarget "1" ..> "1" MatchTarget : result 1
+    ScanFiles "1" ..> "1" Program : parameter 3
+    ScanFiles "1" ..> "*" ScanCandidate : parameter 4
+    ScanFiles "1" ..> "1" ScanOptions : parameter 5
+    ScanFiles "1" ..> "1" ScanResult : result 1
+    ScanFilesPrograms "1" ..> "1" BatchScanResult : result 1
+    ScanFilesPrograms "1" ..> "*" ProgramScan : parameter 3
+    ScanFilesPrograms "1" ..> "*" ScanCandidate : parameter 4
+    ScanFilesPrograms "1" ..> "1" ScanOptions : parameter 5
+    ScanOptions "1" --> "1" EvaluateOptions : field EvaluateOptions
+    ScanResult "1" ..> "*" Diagnostic : method Diagnostics result 1
+    ScanResult "1" ..> "1" EvaluationMetadata : method Metadata result 1
+    ScanResult "1" --> "1" FileEvaluation : field evaluation
+    ScanResult "1" ..> "*" Finding : method Findings result 1
+    ScanResult "1" --> "1" ScanStats : field stats
+    ScanResult "1" ..> "1" ScanStats : method Stats result 1
+    ScanResult "1" --> "*" ScanTruncation : field truncations
+    ScanResult "1" ..> "*" ScanTruncation : method Truncations result 1
+    SequenceTarget "1" ..> "1" MatchTarget : result 1
+    StructuralNode "1" --> "1" normalizedNode : field node
+    Template "1" --> "1" SnippetContext : field context
+    Template "1" ..> "1" SnippetContext : method Context result 1
+    Template "1" ..> "1" TemplateNode : method Root result 1
+    Template "1" ..> "1" TemplateSlot : method RootSlot result 1
+    Template "1" --> "1" templateNode : field root
+    Template "1" --> "1" templateSlot : field rootSlot
+    TemplateChild "1" ..> "1" TemplateNode : method Node result 1
+    TemplateChild "1" ..> "1" TemplateSlot : method Slot result 1
+    TemplateChild "1" --> "1" templateChild : field child
+    TemplateNode "1" ..> "*" TemplateChild : method Children result 1
+    TemplateNode "1" --> "1" templateNode : field node
+    TemplateSlot "1" ..> "1" SlotCardinality : method Cardinality result 1
+    TemplateSlot "1" ..> "1" VariableRef : method Variable result 1
+    TemplateSlot "1" --> "1" templateSlot : field slot
+    Variable "1" --> "1" Range : field Range
+    Variable "1" --> "1" VariableID : field ID
+    VariableRef "1" --> "1" Range : field Range
+    VariableRef "1" --> "1" VariableID : field ID
+    bindingValue "1" --> "1" BindingKind : field kind
+    bindingValue "1" --> "1" VariableRef : field variable
+    bindingValue "1" --> "*" normalizedNode : field equality; field structural
+    constraint "1" --> "1" Range : field rng
+    constraint "1" --> "1" VariableRef : field lhs
+    constraint "1" --> "1" expression : field rhs
+    decodedSnippet "1" --> "*" snippetPlaceholder : field placeholders
+    diagnosticJSON "1" --> "1" rangeJSON : field Range
+    evalCandidate "1" --> "1" MatchTarget : field target
+    evaluationBudget "1" --> "1" EvaluationError : field err
+    expression "1" --> "1" Kind : field kind
+    expression "1" --> "1" Range : field rng
+    expression "1" --> "1" Template : field template
+    expression "1" --> "*" VariableRef : field refs
+    expression "1" --> "*" constraint : field constraints
+    rangeJSON <|-- findingJSON : embedded type
+    generatedPlaceholder "1" --> "1" VariableRef : field ref
+    generatedPlaceholder "1" --> "1" placeholderRole : field role
+    inferredEvaluation "1" --> "1" Template : field tmpl
+    normalizationCheckpointHook "1" ..> "1" EvaluationError : underlying type
+    normalizationCheckpointHook "1" ..> "1" normalizationCheckpoint : underlying type
+    occurrenceRestoration "1" --> "*" VariableRef : field indices
+    occurrenceRestoration "1" ..> "*" templateChild : method visitChildren parameter 2
+    occurrenceRestoration "1" ..> "*" templateNode : method visitChildren parameter 1; method visitChildren result 1
+    occurrenceRestoration "1" ..> "1" templateNode : method visitTree parameter 1
+    occurrenceRestoration "1" ..> "1" templateSlot : method visitSlot parameter 1
+    placeholderInference "1" --> "*" placeholderRole : field assignments
+    placeholderInfo "1" --> "1" roleAncestorSet : field ancestors
+    placeholderInfoCollector "1" --> "*" placeholderInfo : field infos
+    placeholderInfoCollector "1" ..> "1" placeholderWalkItem : method inspect parameter 1; method inspect result 1; method record parameter 2
+    placeholderInfoCollector "1" --> "*" spanKey : field bySpan
+    placeholderRoleSolver "1" --> "*" generatedPlaceholder : field ps
+    placeholderRoleSolver "1" --> "*" placeholderInfo : field infos
+    placeholderRoleSolver "1" --> "*" placeholderRole : field roles
+    placeholderRoleSolver "1" ..> "*" spanKey : method resolveImport parameter 3
+    placeholderRoleSolver "1" --> "1" structuralSeparators : field separators
+    placeholderWalkItem "1" --> "1" roleAncestorSet : field ancestors
+    queryDocument "1" --> "1" noCopy : field noCopy
+    queryDocument "1" ..> "1" queryNode : method root result 1
+    queryDocument "1" ..> "*" queryParseDiagnostic : method diagnostics result 1
+    queryDocument "1" ..> "1" queryRange : method rangeForBytes result 1
+    queryNode "1" --> "1" queryDocument : field doc
+    queryNode "1" ..> "1" queryRange : method byteRange result 1
+    queryParseDiagnostic "1" --> "1" queryRange : field Range
+    queryRange "1" --> "1" queryPosition : field End; field Start
+    queryRecord "1" --> "1" BindingSet : field bindings
+    querySyntaxError "1" --> "1" queryErrorKind : field Kind
+    querySyntaxError "1" --> "1" queryRange : field Range
+    roleAlternative "1" --> "1" placeholderRole : field role
+    roleAlternative "1" --> "1" spanKey : field component
+    scanByteAccount "1" ..> "1" ScanOptions : method read parameter 5; method readNext parameter 4
+    scanByteAccount "1" ..> "1" scanReadResult : method read result 1; method readNext result 1
+    scanJob "1" --> "1" preparedScanCandidate : field candidate
+    scanOutcome "1" --> "1" FileEvaluation : field evaluation
+    scanReadResult "1" --> "1" scanLimitKind : field limit
+    scanSegmentMatcher "1" --> "*" scanSegmentState : field seen; field values
+    scanState "1" --> "*" FileEvaluation : field evaluations
+    scanState "1" ..> "1" Program : method commit parameter 1; method scan parameter 3
+    scanState "1" --> "1" ScanOptions : field options
+    scanState "1" --> "1" ScanStats : field stats
+    scanState "1" ..> "*" preparedScanCandidate : method scan parameter 4
+    scanState "1" --> "1" scanByteAccount : field bytes
+    scanState "1" --> "1" scanMemoryAccount : field account
+    scanState "1" ..> "1" scanOutcome : method commit parameter 2
+    separatorScanner "1" --> "1" separatorLexState : field state
+    separatorScanner "1" --> "1" structuralSeparators : field result
+    slotTarget "1" --> "1" SlotCardinality : field cardinality
+    slotTarget "1" --> "1" generatedPlaceholder : field p
+    snippetAttempt "1" --> "1" SnippetContext : field context
+    snippetAttempt "1" --> "1" selectedRoot : field selectRoot
+    snippetPlaceholder "1" --> "1" VariableRef : field ref
+    templateChild "1" --> "1" templateNode : field node
+    templateChild "1" --> "1" templateSlot : field slot
+    templateFreezeFrame "1" --> "*" templateChild : field kept
+    templateFreezer "1" --> "*" slotTarget : field targets
+    templateFreezer "1" --> "*" spanKey : field targets
+    templateFreezer "1" ..> "1" templateChild : method-parameter=1; method-result=5
+    templateFreezer "1" --> "*" templateFreezeFrame : field stack
+    templateFreezer "1" ..> "1" templateFreezeFrame : method concreteChild parameter 1; method descend parameter 1
+    templateNode "1" --> "*" templateChild : field children
+    templateSlot "1" --> "1" SlotCardinality : field cardinality
+    templateSlot "1" --> "1" VariableRef : field ref
+    treeCompiler "1" ..> "1" CompileError : method-result=24
+    treeCompiler "1" --> "1" CompileOptions : field options
+    treeCompiler "1" --> "1" FeatureSet : field features
+    treeCompiler "1" ..> "1" FeatureSet : method compileBlock parameter 3; method compileUnary parameter 3
+    treeCompiler "1" ..> "1" Kind : method compileBlock parameter 2; method compileUnary parameter 2
+    treeCompiler "1" --> "1" Range : field languageRange
+    treeCompiler "1" ..> "1" Range : method compileDocumentFields parameter 2
+    treeCompiler "1" --> "*" Variable : field variables
+    treeCompiler "1" --> "*" VariableID : field names
+    treeCompiler "1" ..> "*" VariableRef : method decodeSnippet result 2
+    treeCompiler "1" ..> "1" VariableRef : method variable result 1
+    treeCompiler "1" ..> "*" constraint : method compileConstraintBlock result 1; method compileConstraintItems result 1
+    treeCompiler "1" ..> "1" constraint : method compileConstraint result 1
+    treeCompiler "1" ..> "*" expression : method compileBlockChildren result 1
+    treeCompiler "1" ..> "1" expression : method-result=6
+    treeCompiler "1" --> "1" queryDocument : field doc
+    treeCompiler "1" ..> "*" queryNode : method compileBlockChildren parameter 1; method compileConstraintItems parameter 1; method whereChildren result 1
+    treeCompiler "1" ..> "1" queryNode : method-parameter=17; method-result=3
+    treeCompiler "1" ..> "*" snippetPlaceholder : method decodeSnippet result 3
+    v1NodeValidator "1" ..> "*" queryNode : underlying type
+    v1ValidationWork "1" --> "1" queryNode : field node
+    variableScope "1" ..> "*" VariableID : underlying type

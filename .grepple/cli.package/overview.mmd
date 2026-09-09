@@ -2,7 +2,7 @@ classDiagram
     %% grepple:package-default github.com/greppleai/grepple/internal/cli
     %% grepple:language-default go
     direction LR
-    note "Package cli implements the user-facing combined local/remote search, terminal and JSON presentation, and the get and tree command-line workflows. | package github.com/greppleai/grepple/internal/cli | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=23, declarations=22, exportedTypes=0, internalTypes=22, members=130, exportedFunctions=3, fiberRoutes=0, relations=15"
+    note "Package cli implements the user-facing combined local/remote search, terminal and JSON presentation, and the get and tree command-line workflows. | package github.com/greppleai/grepple/internal/cli | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=26, declarations=23, exportedTypes=0, internalTypes=23, members=164, exportedFunctions=3, fiberRoutes=0, relations=15"
     namespace interfaces {
         class resultRenderer {
             +Render([]api.FileResult): error
@@ -51,6 +51,38 @@ classDiagram
             +Server: string
         }
         <<struct>> getArgs
+        class gritArgs {
+            +Compatibility: string
+            +ExcludeGlobs: []string
+            +ExcludeRepositories: []string
+            +Globs: []string
+            +JSON: bool
+            +Limit: int
+            +Local: bool
+            +MaxASTSteps: int
+            +MaxCandidates: int
+            +MaxFileMilliseconds: int64
+            +MaxFiles: int
+            +MaxFindings: int
+            +MaxMemoryBytes: int
+            +MaxParseDepth: int
+            +MaxPatternBytes: int
+            +MaxRegexBytes: int
+            +MaxRegexInstructions: int
+            +MaxSourceBytes: int
+            +MaxTotalBytes: int64
+            +Message: string
+            +PatternID: string
+            +Query: string
+            +QueryFile: string
+            +Remote: bool
+            +Repositories: []string
+            +Server: string
+            +Skip: int
+            +TimeoutMilliseconds: int64
+            +Workers: int
+        }
+        <<struct>> gritArgs
         class loginConfig {
             +ClientID: string
             +Scopes: string
@@ -63,15 +95,19 @@ classDiagram
         }
         <<struct>> reposArgs
         class rulesAddArgs {
+            +Compatibility: string
+            +Engine: string
             +ExcludeRepo: []string
             +Files: bool
             +Globs: []string
+            +Grit: bool
             +ID: string
             +IgnoreCase: bool
             +JSON: bool
             +Mode: string
             +Name: string
             +Pattern: string
+            +QueryFile: string
             +Regex: bool
             +Repo: []string
             +Server: string

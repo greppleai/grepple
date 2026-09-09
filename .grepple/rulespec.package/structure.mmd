@@ -1,0 +1,15 @@
+classDiagram
+    %% grepple:complete-package github.com/greppleai/grepple/internal/rulespec
+    %% grepple:package-default github.com/greppleai/grepple/internal/rulespec
+    %% grepple:language-default go
+    %% grepple:exact-default
+    class Engine {
+        +Engine(api.Rule): string
+    }
+    <<function>> Engine
+    %% grepple:file Engine internal/rulespec/rule.go
+    class Normalize {
+        +Normalize(api.Rule): tuple~api.Rule&#44;error~
+    }
+    <<function>> Normalize
+    %% grepple:file Normalize internal/rulespec/rule.go

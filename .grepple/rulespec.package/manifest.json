@@ -1,0 +1,60 @@
+{
+  "formatVersion": 1,
+  "package": {
+    "name": "rulespec",
+    "importPath": "github.com/greppleai/grepple/internal/rulespec",
+    "sourceDirectory": "internal/rulespec",
+    "documentation": "Package rulespec normalizes saved text and structural rule definitions while preserving the legacy text-rule wire shape."
+  },
+  "scope": {
+    "types": "all",
+    "functions": "exported",
+    "variables": "excluded",
+    "constants": "excluded",
+    "tests": "excluded",
+    "buildTags": "syntactic-union-conflicts-rejected",
+    "syntacticBuildTagUnion": []
+  },
+  "summary": {
+    "sourceFiles": 2,
+    "declarations": 0,
+    "exportedTypes": 0,
+    "internalTypes": 0,
+    "members": 0,
+    "exportedFunctions": 2,
+    "fiberRoutes": 0,
+    "relations": 0
+  },
+  "semanticModelDigest": "sha256:c5b7d1c8bb3d7b6e87569eda4ffdeda231d378a3cd9921c8ba870610680f46bc",
+  "sourceFiles": [
+    {
+      "path": "internal/rulespec/doc.go"
+    },
+    {
+      "path": "internal/rulespec/rule.go"
+    }
+  ],
+  "declarations": [],
+  "exportedFunctions": [
+    {
+      "name": "Engine",
+      "kind": "function",
+      "file": "internal/rulespec/rule.go",
+      "parameters": [
+        "api.Rule"
+      ],
+      "result": "string"
+    },
+    {
+      "name": "Normalize",
+      "kind": "function",
+      "file": "internal/rulespec/rule.go",
+      "parameters": [
+        "api.Rule"
+      ],
+      "result": "tuple\u003capi.Rule,error\u003e"
+    }
+  ],
+  "fiberRoutes": [],
+  "relations": []
+}
