@@ -8,9 +8,12 @@ Structure-aware grep for agents, implemented in Go. Search works across text fil
 .grepple/          Canonical machine-generated architecture artifacts
 api/               Dependency-free HTTP request and response contracts
 cmd/grepple/       Minimal executable entry point
-docs/              User and file-type documentation
+docs/              User, file-type, and structural compatibility documentation
 hooks/             Project-local Pi hooks and architecture tooling
 internal/cli/      CLI workflows and output rendering
+internal/gritql/   Native Go-only structural compiler, matcher, and scanner
+internal/gritqlapi/ Structural result conversion to API DTOs
+internal/rulespec/ Engine-neutral saved-rule normalization
 parser/            Language detection, tree-sitter parsing, segments, and outlines
 search/            Discovery, matching, filtering, paging, and result construction
 ```
@@ -70,6 +73,40 @@ File patterns use Go's `filepath.Glob` syntax, extended with `**` to match acros
 
 **Pipes work like `grep`/`rg`:** when standard input is piped (or redirected) and no path/glob argument is given, grepple searches the stream instead of the filesystem — `cat build.log | grepple "ERROR"` or `go test ./... | grepple -F "FAIL"`. The stream is reported under the virtual path `<stdin>` in every output mode (`--json`, `-c`, `--files-with-matches`, `--line-only`, default segments). It uses the plain-text fallback (no filename, so no tree-sitter structure), NUL-containing input is treated as binary and skipped, and no match exits 1 as usual. `--files` and `--outline` always operate on the filesystem, and passing any path/glob selects the filesystem over stdin.
 
+## Native structural search
+
+`grepple grit` runs the native, read-only `gritql-go-v1` engine over Go syntax trees. It is separate from legacy text/regex search and has no Rust/Node runtime, subprocess, rewrite engine, or fallback interpreter. The supported detection subset includes snippets, metavariables and repeated-binding equality, `where`, `contains`, `within`, `and`, `or`, `not`, `maybe`, and RE2 constraints.
+
+```bash
+# Inline local query; quote it so the shell does not expand $args.
+grepple grit $'language go\n`exec.Command($args)`' '**/*.go'
+
+# Query files make multiline patterns easier to maintain.
+cat > /tmp/exec-command.grit <<'EOF'
+language go
+`exec.Command($args)` where { $args <: r"^ctx," }
+EOF
+grepple grit --query-file /tmp/exec-command.grit --json '**/*.go'
+
+# Merge local-checkout findings with findings from the authenticated router.
+grepple grit --remote --repo 'acme/*' --query-file /tmp/exec-command.grit '**/*.go'
+```
+
+Findings contain exact half-open byte ranges, one-based Unicode-scalar line/column positions, matched text, and sorted metavariable bindings. Output is deterministic. `--skip` and `--limit` page the globally ordered, deduplicated local-plus-remote finding set; resource flags such as `--max-files`, `--max-source-bytes`, `--max-ast-steps`, `--max-findings`, and `--timeout-ms` can lower the bounded defaults.
+
+Explicit `--remote` (or `--server`) runs both the local scan and authenticated remote search. When the checkout has a canonical Git remote, Grepple excludes that repository from the router request and defensively drops any returned findings attributed to it. Local and remote findings are normalized, sorted, and exactly deduplicated before one global `--skip`/`--limit` window is applied. Remote pages are fetched only as needed and never exceed the server page cap. Successful responses with shard errors remain visible as partial results in JSON; transport, authentication, and incompatible-response failures remain command errors.
+
+Remote structural search requires a compatible backend implementing `/public/grit`; this repository provides the client and contracts, not that server. The authenticated HTTP request is:
+
+```bash
+curl -H "Authorization: Bearer $GREPPLE_TOKEN" \
+  -H 'Content-Type: application/json' \
+  -d '{"query":"language go\n`exec.Command($args)`","compatibility":"gritql-go-v1","globs":["**/*.go"],"repositories":["acme/*"],"limits":{"findings":100}}' \
+  "$GREPPLE_SERVER/public/grit"
+```
+
+The compatibility identifier is mandatory on the wire. Unknown versions, non-Go languages, rewrites such as `=>`, imports, multifile patterns, foreign functions, and other out-of-contract syntax fail closed with ranged `PATTERN_*` diagnostics. Candidate anchors are conservative; patterns without a provably mandatory literal scan the complete scoped Go candidate set rather than risk false negatives. See [`docs/gritql-compatibility.md`](docs/gritql-compatibility.md) for exact syntax, operators, ranges, limits, diagnostics, security guarantees, fallback behavior, versioning policy, fuzz commands, and benchmark gates.
+
 ## Outline
 
 `--outline` (`-O`) prints a file's structural map instead of searching its contents:
@@ -120,6 +157,9 @@ re-scanning the corpus.
 ```bash
 # Create a rule (add takes the same options as search; mode is count or files).
 grepple rules add --name "Uses Checkout" "uses: actions/checkout" ".github/workflows/*.yml"
+# Structural rules compile before persistence and retain canonical query source.
+grepple rules add --grit --name "Exec Command" --mode files \
+  --query-file /tmp/exec-command.grit '**/*.go'
 grepple rules list
 grepple rules results uses-checkout          # per-repo tally (--json for machine output)
 grepple rules rm uses-checkout
@@ -134,19 +174,24 @@ How it works:
 - Each **shard** evaluates rules for the repos it owns and stores the results
   (`rules.json` on the shard). On a repo reindex it re-evaluates that one repo; on a
   rule change it backfills across all its repos.
+- Structural rule requests carry canonical query source and require a backend that
+  implements native structural-rule evaluation. Server-side compilation, caching,
+  and materialization are outside this public module.
 - `GET /public/rules/:id/results` aggregates the per-repo rows across shards.
 
 Results are eventually consistent: each repo's row is stamped with the commit it
 reflects (`head`) and when it was computed (`evaluatedAt`). Modes: `count` (per-repo
-`{files, matches}`) and `files` (matching paths, capped per repo). The `POST
-/public/rules` body embeds a full search request, so any option the CLI/search API
-supports is available to a rule.
+`{files, matches}`) and `files` (matching paths, capped per repo). Text-rule `POST
+/public/rules` bodies retain the legacy `{name, mode, request, id?}` shape. Structural
+rules add `"engine":"gritql"` and a `structural` `GritRequest`; an omitted engine
+continues to mean text, preserving existing `rules.json` files.
 
 REST API (all under the org-authed `/public` gate):
 
 | Method | Path | Purpose |
 | --- | --- | --- |
-| POST | `/public/rules` | create/replace a rule (body: `{name, mode, request, id?}`) |
+| POST | `/public/grit` | bounded native structural search (body: `GritRequest`) |
+| POST | `/public/rules` | create/replace a text or structural rule |
 | GET | `/public/rules` | list definitions (+ generation) |
 | GET | `/public/rules/:id` | one definition |
 | DELETE | `/public/rules/:id` | delete a rule |
