@@ -24,8 +24,8 @@ type searchArgs struct {
 	LineNumber       bool     `arg:"-n,--line-number" help:"include line numbers (enabled by default)"`
 	LineOnly         bool     `arg:"--line-only" help:"print only matching lines"`
 	OnlyMatching     bool     `arg:"-o,--only-matching" help:"print each matched substring"`
-	Files            bool     `arg:"-l,--files" help:"list files whose PATH matches the glob (filename search, not contents); a bare directory scopes the glob"`
-	FilesWithMatches bool     `arg:"--files-with-matches" help:"list paths of files whose CONTENTS match, like grep -l"`
+	Files            bool     `arg:"-l,--files" help:"recursively list files under optional PATHs; glob PATHs filter the listing"`
+	FilesWithMatches bool     `arg:"--files-with-matches" help:"list paths whose contents match; accepts multiple file, directory, or glob PATHs"`
 	Outline          bool     `arg:"-O,--outline" help:"print each file's structural outline (classes, funcs, interfaces) instead of searching"`
 	Depth            int      `arg:"--depth" placeholder:"N" help:"outline: cap nesting depth for JSON/YAML (0 = unlimited)"`
 	Count            bool     `arg:"-c,--count" help:"print matching-line counts per file"`
@@ -44,11 +44,11 @@ type searchArgs struct {
 	Limit            int      `arg:"--limit" placeholder:"N" help:"return at most N ranked result files (default 20; 0 = all local; servers cap a page at 100 — page further with --skip)"`
 	Repos            []string `arg:"--repo,separate" placeholder:"PATTERN" help:"restrict remote repositories; repeatable"`
 	Query            string   `arg:"positional" placeholder:"PATTERN"`
-	Globs            []string `arg:"positional" placeholder:"GLOB"`
+	Globs            []string `arg:"positional" placeholder:"PATH" help:"file, directory, or glob to search; repeat for multiple roots"`
 }
 
 func (searchArgs) Description() string {
-	return "Search the local working directory (or piped stdin when no path/glob is given); add --remote (or --server) to also query the shard/router."
+	return "Search the local working directory, one or more PATHs, or piped stdin; add --remote (or --server) to also query the shard/router."
 }
 
 func parseSearchArgs(args []string) (*cliOptions, string, bool, error) {
