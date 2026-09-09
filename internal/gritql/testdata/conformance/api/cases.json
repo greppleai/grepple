@@ -1,0 +1,279 @@
+{
+  "schema_version": 1,
+  "suite": "api",
+  "provenance": {
+    "kind": "grepple-original",
+    "note": "Grepple-original fixture derived solely from docs/gritql-compatibility.md; no upstream source text was copied."
+  },
+  "cases": [
+    {
+      "name": "api/finding-order-and-dedup",
+      "description": "Findings use the complete order key and byte-identical duplicates collapse.",
+      "features": [
+        "positive",
+        "ordering",
+        "dedup"
+      ],
+      "pattern_id": "r",
+      "message": "m",
+      "pattern": "language go\nor { `x`, `x` }",
+      "sources": [
+        {
+          "path": "z.go",
+          "text": "package p\nvar x=2\n"
+        },
+        {
+          "path": "a.go",
+          "text": "package p\nvar x=1\n"
+        }
+      ],
+      "execution": {
+        "mode": "local"
+      },
+      "expected": {
+        "findings": [
+          {
+            "path": "a.go",
+            "start_byte": 14,
+            "end_byte": 15,
+            "start_line": 2,
+            "start_column": 5,
+            "end_line": 2,
+            "end_column": 6,
+            "pattern_id": "r",
+            "message": "m",
+            "bindings": {}
+          },
+          {
+            "path": "z.go",
+            "start_byte": 14,
+            "end_byte": 15,
+            "start_line": 2,
+            "start_column": 5,
+            "end_line": 2,
+            "end_column": 6,
+            "pattern_id": "r",
+            "message": "m",
+            "bindings": {}
+          }
+        ],
+        "diagnostics": []
+      }
+    },
+    {
+      "name": "api/path-normalized-input",
+      "description": "Repository-relative slash paths are retained in normalized form.",
+      "features": [
+        "positive"
+      ],
+      "pattern_id": "rule",
+      "message": "match",
+      "pattern": "language go\n`x`",
+      "sources": [
+        {
+          "path": "a.go",
+          "text": "package p\nvar x=1\n"
+        }
+      ],
+      "execution": {
+        "mode": "local"
+      },
+      "expected": {
+        "findings": [
+          {
+            "path": "a.go",
+            "start_byte": 14,
+            "end_byte": 15,
+            "start_line": 2,
+            "start_column": 5,
+            "end_line": 2,
+            "end_column": 6,
+            "pattern_id": "rule",
+            "message": "match",
+            "bindings": {}
+          }
+        ],
+        "diagnostics": []
+      }
+    },
+    {
+      "name": "api/diagnostic-order",
+      "description": "Diagnostics have deterministic null-first ordering.",
+      "features": [
+        "negative",
+        "ordering"
+      ],
+      "pattern_id": "a",
+      "message": "match",
+      "pattern": "language go\n(",
+      "sources": [],
+      "execution": {
+        "mode": "local"
+      },
+      "expected": {
+        "findings": [],
+        "diagnostics": [
+          {
+            "code": "PATTERN_PARSE",
+            "class": "pattern",
+            "severity": "error",
+            "message": "a message",
+            "pattern_id": "a",
+            "path": null,
+            "range": {
+              "start_byte": 0,
+              "end_byte": 13,
+              "start_line": 1,
+              "start_column": 1,
+              "end_line": 2,
+              "end_column": 2
+            }
+          },
+          {
+            "code": "PATTERN_PARSE",
+            "class": "pattern",
+            "severity": "error",
+            "message": "z message",
+            "pattern_id": "z",
+            "path": null,
+            "range": {
+              "start_byte": 0,
+              "end_byte": 13,
+              "start_line": 1,
+              "start_column": 1,
+              "end_line": 2,
+              "end_column": 2
+            }
+          }
+        ]
+      },
+      "additional_patterns": [
+        {
+          "pattern_id": "z",
+          "message": "match",
+          "pattern": "language go\n)"
+        }
+      ]
+    },
+    {
+      "name": "api/evaluation-metadata",
+      "description": "Metadata publishes the contract, Go grammar, and every effective default limit.",
+      "features": [
+        "positive"
+      ],
+      "pattern_id": "rule",
+      "message": "match",
+      "pattern": "language go\n`absent`",
+      "sources": [],
+      "execution": {
+        "mode": "local"
+      },
+      "expected": {
+        "findings": [],
+        "diagnostics": [],
+        "metadata": {
+          "contract": "gritql-go-v1",
+          "go_grammar": "go1.25",
+          "limits": {
+            "pattern_bytes": 262144,
+            "source_bytes": 10485760,
+            "parse_depth": 256,
+            "candidates": 250000,
+            "findings": 10000,
+            "file_time_ms": 2000,
+            "batch_time_ms": 30000,
+            "memory_bytes": 134217728,
+            "regex_bytes": 16384,
+            "regex_instructions": 100000,
+            "ast_steps": 10000000
+          }
+        }
+      }
+    },
+    {
+      "name": "api/finding-limit",
+      "description": "The cap applies after global sorting and deduplication.",
+      "features": [
+        "negative",
+        "limit-findings"
+      ],
+      "pattern_id": "r",
+      "message": "m",
+      "pattern": "language go\n`x`",
+      "sources": [
+        {
+          "path": "a.go",
+          "text": "package p\nvar x=1\n"
+        },
+        {
+          "path": "z.go",
+          "text": "package p\nvar x=2\n"
+        }
+      ],
+      "execution": {
+        "mode": "local",
+        "limits": {
+          "findings": 1
+        }
+      },
+      "expected": {
+        "findings": [
+          {
+            "path": "a.go",
+            "start_byte": 14,
+            "end_byte": 15,
+            "start_line": 2,
+            "start_column": 5,
+            "end_line": 2,
+            "end_column": 6,
+            "pattern_id": "r",
+            "message": "m",
+            "bindings": {}
+          }
+        ],
+        "diagnostics": [
+          {
+            "code": "LIMIT_FINDINGS",
+            "class": "resource",
+            "severity": "error",
+            "message": "rule finding limit reached",
+            "pattern_id": "r",
+            "path": null,
+            "range": null
+          }
+        ]
+      }
+    },
+    {
+      "name": "api/path-invalid",
+      "description": "Explicit unsafe path inputs are rejected before source admission with a pathless PATH_INVALID diagnostic.",
+      "features": [
+        "negative"
+      ],
+      "pattern_id": "rule",
+      "message": "match",
+      "pattern": "language go\n`x`",
+      "sources": [],
+      "execution": {
+        "mode": "local"
+      },
+      "expected": {
+        "findings": [],
+        "diagnostics": [
+          {
+            "code": "PATH_INVALID",
+            "class": "source",
+            "severity": "error",
+            "message": "path is not a safe repository-relative path",
+            "pattern_id": "rule",
+            "path": null,
+            "range": null
+          }
+        ]
+      },
+      "rejected_paths": [
+        "../outside.go"
+      ]
+    }
+  ]
+}

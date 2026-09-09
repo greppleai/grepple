@@ -25,16 +25,16 @@
   },
   "summary": {
     "modules": 2,
-    "packages": 11,
-    "sourceFiles": 83,
-    "declarations": 139,
-    "exportedFunctions": 63,
+    "packages": 13,
+    "sourceFiles": 97,
+    "declarations": 260,
+    "exportedFunctions": 82,
     "fiberRoutes": 0,
-    "localImports": 9,
-    "standardLibraryImports": 86,
-    "externalModuleEdges": 20
+    "localImports": 11,
+    "standardLibraryImports": 109,
+    "externalModuleEdges": 21
   },
-  "semanticModelDigest": "sha256:0f77c6d7e6250e4ffcc7191d31a44a2215b502aa8b21d6189c182e5584da5c81",
+  "semanticModelDigest": "sha256:da34eaf966fee40bc75aa422941f052762788b4e804198608c1b3a74b9b0c665",
   "modules": [
     {
       "path": "github.com/greppleai/grepple",
@@ -142,14 +142,78 @@
           "unmappedExternalImports": []
         },
         {
+          "importPath": "github.com/greppleai/grepple/internal/gritql",
+          "directory": "internal/gritql",
+          "name": "gritql",
+          "documentation": "Package gritql implements Grepple's native, read-only gritql-go-v1 structural-search compiler, matcher, evaluator, and bounded scanner.",
+          "main": false,
+          "sourceFiles": 12,
+          "declarations": 115,
+          "exportedFunctions": 17,
+          "fiberRoutes": 0,
+          "routes": [],
+          "localImports": [
+            "github.com/greppleai/grepple/internal/gritql/internal/gritgrammar",
+            "github.com/greppleai/grepple/parser"
+          ],
+          "standardLibraryImports": [
+            "bytes",
+            "context",
+            "encoding/json",
+            "errors",
+            "fmt",
+            "io",
+            "io/fs",
+            "path",
+            "path/filepath",
+            "reflect",
+            "regexp",
+            "regexp/syntax",
+            "runtime",
+            "sort",
+            "strconv",
+            "strings",
+            "sync",
+            "time",
+            "unicode",
+            "unicode/utf8"
+          ],
+          "externalImports": [
+            {
+              "importPath": "github.com/tree-sitter/go-tree-sitter",
+              "modulePath": "github.com/tree-sitter/go-tree-sitter"
+            }
+          ],
+          "unmappedExternalImports": []
+        },
+        {
+          "importPath": "github.com/greppleai/grepple/internal/gritql/internal/gritgrammar",
+          "directory": "internal/gritql/internal/gritgrammar",
+          "name": "gritgrammar",
+          "documentation": "Package gritgrammar binds the pinned, generated tree-sitter GritQL grammar.",
+          "main": false,
+          "sourceFiles": 1,
+          "declarations": 0,
+          "exportedFunctions": 1,
+          "fiberRoutes": 0,
+          "routes": [],
+          "localImports": [],
+          "standardLibraryImports": [
+            "C",
+            "unsafe"
+          ],
+          "externalImports": [],
+          "unmappedExternalImports": []
+        },
+        {
           "importPath": "github.com/greppleai/grepple/parser",
           "directory": "parser",
           "name": "parser",
           "documentation": "Package parser provides application source classification and structural parsing.",
           "main": false,
-          "sourceFiles": 23,
-          "declarations": 22,
-          "exportedFunctions": 4,
+          "sourceFiles": 24,
+          "declarations": 28,
+          "exportedFunctions": 5,
           "fiberRoutes": 0,
           "routes": [],
           "localImports": [],
@@ -160,7 +224,8 @@
             "sort",
             "strings",
             "sync",
-            "sync/atomic"
+            "sync/atomic",
+            "unicode/utf8"
           ],
           "externalImports": [
             {
@@ -465,6 +530,7 @@
     {
       "path": "github.com/tree-sitter/go-tree-sitter",
       "importedBy": [
+        "github.com/greppleai/grepple/internal/gritql",
         "github.com/greppleai/grepple/parser",
         "grepple/hooks/internal/mermaidcode",
         "grepple/hooks/internal/pihooks"

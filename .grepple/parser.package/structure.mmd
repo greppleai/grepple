@@ -3,6 +3,23 @@ classDiagram
     %% grepple:package-default github.com/greppleai/grepple/parser
     %% grepple:language-default go
     %% grepple:exact-default
+    class Document {
+        +Close()
+        +Diagnostics(): []ParseDiagnostic
+        +Language(): string
+        +ParseDiagnostics(): []ParseDiagnostic
+        +Root(): Node
+        +Source(): string
+        +Text(): string
+        -nodeRangeLocked(*sitter.Node): Range
+        -language: string
+        -lineStarts: []int
+        -mu: sync.RWMutex
+        -source: string
+        -tree: *sitter.Tree
+    }
+    <<struct>> Document
+    %% grepple:file Document parser/document.go
     class FileOutline {
         +Language: string
         +Path: string
@@ -13,6 +30,59 @@ classDiagram
     %% grepple:struct-tag FileOutline Language "json:\"language\""
     %% grepple:struct-tag FileOutline Path "json:\"path\""
     %% grepple:struct-tag FileOutline Symbols "json:\"symbols\""
+    class Node {
+        +Child(int): Node
+        +ChildByFieldName(string): Node
+        +ChildCount(): int
+        +Children(): []Node
+        +FieldName(): string
+        +FieldNameForChild(int): string
+        +HasError(): bool
+        +IsError(): bool
+        +IsExtra(): bool
+        +IsMissing(): bool
+        +IsNamed(): bool
+        +IsValid(): bool
+        +Kind(): string
+        +NamedChild(int): Node
+        +NamedChildCount(): int
+        +NamedChildren(): []Node
+        +Parent(): Node
+        +Range(): Range
+        +Snapshot(): tuple~SyntaxNode&#44;bool~
+        +Source(): string
+        +Text(): string
+        +TextRange(int, int): string
+        +Valid(): bool
+        -read(func&#40;&#41;)
+        -snapshotLocked(): SyntaxNode
+        -doc: *Document
+        -fieldName: string
+        -raw: *sitter.Node
+    }
+    <<struct>> Node
+    %% grepple:file Node parser/document.go
+    class ParseDiagnostic {
+        +Kind: string
+        +Message: string
+        +Range: Range
+    }
+    <<struct>> ParseDiagnostic
+    %% grepple:file ParseDiagnostic parser/document.go
+    class Position {
+        +Column: int
+        +Line: int
+    }
+    <<struct>> Position
+    %% grepple:file Position parser/document.go
+    class Range {
+        +End: Position
+        +EndByte: int
+        +Start: Position
+        +StartByte: int
+    }
+    <<struct>> Range
+    %% grepple:file Range parser/document.go
     class Segment {
         +End: int
         +Kind: string
@@ -37,6 +107,30 @@ classDiagram
     %% grepple:struct-tag Symbol Name "json:\"name\""
     %% grepple:struct-tag Symbol Signature "json:\"signature,omitempty\""
     %% grepple:struct-tag Symbol Start "json:\"start\""
+    class SyntaxNode {
+        +Children(): []SyntaxNode
+        +FieldName(): string
+        +HasError(): bool
+        +IsExtra(): bool
+        +IsNamed(): bool
+        +Kind(): string
+        +Range(): Range
+        +Text(): string
+        +TextRange(int, int): string
+        +Valid(): bool
+        -children: []SyntaxNode
+        -extra: bool
+        -fieldName: string
+        -hasError: bool
+        -kind: string
+        -named: bool
+        -rng: Range
+        -source: string
+        -text: string
+        -valid: bool
+    }
+    <<struct>> SyntaxNode
+    %% grepple:file SyntaxNode parser/document.go
     class cLanguage {
         +Grammar(): *sitter.Language
         +ID(): string
@@ -230,10 +324,29 @@ classDiagram
     }
     <<function>> OutlineFileDepth
     %% grepple:file OutlineFileDepth parser/outline.go
+    class ParseDocument {
+        +ParseDocument(string, string): tuple~*Document&#44;error~
+    }
+    <<function>> ParseDocument
+    %% grepple:file ParseDocument parser/document.go
     BuildSegments "1" ..> "*" Segment : result 1
+    Document "1" ..> "1" Node : method Root result 1
+    Document "1" ..> "*" ParseDiagnostic : method Diagnostics result 1
+    Document "1" ..> "*" ParseDiagnostic : method ParseDiagnostics result 1
+    Document "1" ..> "1" Range : method nodeRangeLocked result 1
     FileOutline "1" --> "*" Symbol : field Symbols
+    Node "1" --> "1" Document : field doc
+    Node "1" ..> "1" Range : method Range result 1
+    Node "1" ..> "1" SyntaxNode : method Snapshot result 1
+    Node "1" ..> "1" SyntaxNode : method snapshotLocked result 1
     OutlineFile "1" ..> "1" FileOutline : result 1
     OutlineFileDepth "1" ..> "1" FileOutline : result 1
+    ParseDiagnostic "1" --> "1" Range : field Range
+    ParseDocument "1" ..> "1" Document : result 1
+    Range "1" --> "1" Position : field End
+    Range "1" --> "1" Position : field Start
+    SyntaxNode "1" --> "1" Range : field rng
+    SyntaxNode "1" ..> "1" Range : method Range result 1
     cLanguage "1" ..> "*" Symbol : method Outline result 1
     languageAdapter <|.. cLanguage : implements
     cLanguage "1" --> "1" structureRules : field rules

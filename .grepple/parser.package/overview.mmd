@@ -2,7 +2,7 @@ classDiagram
     %% grepple:package-default github.com/greppleai/grepple/parser
     %% grepple:language-default go
     direction LR
-    note "Package parser provides application source classification and structural parsing. | package github.com/greppleai/grepple/parser | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=23, declarations=22, exportedTypes=3, internalTypes=19, members=109, exportedFunctions=4, fiberRoutes=0, relations=61"
+    note "Package parser provides application source classification and structural parsing. | package github.com/greppleai/grepple/parser | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=24, declarations=28, exportedTypes=9, internalTypes=19, members=179, exportedFunctions=5, fiberRoutes=0, relations=75"
     namespace interfaces {
         class languageAdapter {
             +Grammar(): *sitter.Language
@@ -30,8 +30,20 @@ classDiagram
         <<struct>> Symbol
     }
     namespace exported_types {
+        class Document
+        <<struct>> Document
+        class Node
+        <<struct>> Node
+        class ParseDiagnostic
+        <<struct>> ParseDiagnostic
+        class Position
+        <<struct>> Position
+        class Range
+        <<struct>> Range
         class Segment
         <<struct>> Segment
+        class SyntaxNode
+        <<struct>> SyntaxNode
     }
     namespace internal_types {
         class cLanguage
@@ -88,11 +100,26 @@ classDiagram
             +OutlineFileDepth(string, string, int): FileOutline
         }
         <<function>> OutlineFileDepth
+        class ParseDocument {
+            +ParseDocument(string, string): tuple~*Document&#44;error~
+        }
+        <<function>> ParseDocument
     }
     BuildSegments "1" ..> "*" Segment : result 1
+    Document "1" ..> "1" Node : method Root result 1
+    Document "1" ..> "*" ParseDiagnostic : method Diagnostics result 1; method ParseDiagnostics result 1
+    Document "1" ..> "1" Range : method nodeRangeLocked result 1
     FileOutline "1" --> "*" Symbol : field Symbols
+    Node "1" --> "1" Document : field doc
+    Node "1" ..> "1" Range : method Range result 1
+    Node "1" ..> "1" SyntaxNode : method Snapshot result 1; method snapshotLocked result 1
     OutlineFile "1" ..> "1" FileOutline : result 1
     OutlineFileDepth "1" ..> "1" FileOutline : result 1
+    ParseDiagnostic "1" --> "1" Range : field Range
+    ParseDocument "1" ..> "1" Document : result 1
+    Range "1" --> "1" Position : field End; field Start
+    SyntaxNode "1" --> "1" Range : field rng
+    SyntaxNode "1" ..> "1" Range : method Range result 1
     cLanguage "1" ..> "*" Symbol : method Outline result 1
     languageAdapter <|.. cLanguage : implements
     cLanguage "1" --> "1" structureRules : field rules

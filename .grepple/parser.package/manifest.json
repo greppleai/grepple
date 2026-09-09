@@ -16,16 +16,16 @@
     "syntacticBuildTagUnion": []
   },
   "summary": {
-    "sourceFiles": 23,
-    "declarations": 22,
-    "exportedTypes": 3,
+    "sourceFiles": 24,
+    "declarations": 28,
+    "exportedTypes": 9,
     "internalTypes": 19,
-    "members": 109,
-    "exportedFunctions": 4,
+    "members": 179,
+    "exportedFunctions": 5,
     "fiberRoutes": 0,
-    "relations": 61
+    "relations": 75
   },
-  "semanticModelDigest": "sha256:d69eb8187873c802ef76d2a6a0f9a37861896b99a7cfaac8b2466b020a372af2",
+  "semanticModelDigest": "sha256:f1df721a62fccc818a7ed8d43fbf54972c86c1480d43547bf483f606e8a9733a",
   "sourceFiles": [
     {
       "path": "parser/analyze.go"
@@ -35,6 +35,9 @@
     },
     {
       "path": "parser/doc.go"
+    },
+    {
+      "path": "parser/document.go"
     },
     {
       "path": "parser/language.go"
@@ -99,6 +102,81 @@
   ],
   "declarations": [
     {
+      "name": "Document",
+      "kind": "struct",
+      "file": "parser/document.go",
+      "underlyingType": "struct{mu sync.RWMutex;language string;source string;lineStarts[]int;tree*sitter.Tree;}",
+      "members": [
+        {
+          "name": "Close",
+          "kind": "method"
+        },
+        {
+          "name": "Diagnostics",
+          "kind": "method",
+          "result": "[]ParseDiagnostic"
+        },
+        {
+          "name": "Language",
+          "kind": "method",
+          "result": "string"
+        },
+        {
+          "name": "ParseDiagnostics",
+          "kind": "method",
+          "result": "[]ParseDiagnostic"
+        },
+        {
+          "name": "Root",
+          "kind": "method",
+          "result": "Node"
+        },
+        {
+          "name": "Source",
+          "kind": "method",
+          "result": "string"
+        },
+        {
+          "name": "Text",
+          "kind": "method",
+          "result": "string"
+        },
+        {
+          "name": "nodeRangeLocked",
+          "kind": "method",
+          "parameters": [
+            "*sitter.Node"
+          ],
+          "result": "Range"
+        },
+        {
+          "name": "language",
+          "kind": "property",
+          "result": "string"
+        },
+        {
+          "name": "lineStarts",
+          "kind": "property",
+          "result": "[]int"
+        },
+        {
+          "name": "mu",
+          "kind": "property",
+          "result": "sync.RWMutex"
+        },
+        {
+          "name": "source",
+          "kind": "property",
+          "result": "string"
+        },
+        {
+          "name": "tree",
+          "kind": "property",
+          "result": "*sitter.Tree"
+        }
+      ]
+    },
+    {
       "name": "FileOutline",
       "kind": "struct",
       "file": "parser/model.go",
@@ -127,6 +205,241 @@
           "structTag": {
             "value": "json:\"symbols\""
           }
+        }
+      ]
+    },
+    {
+      "name": "Node",
+      "kind": "struct",
+      "file": "parser/document.go",
+      "underlyingType": "struct{doc*Document;raw*sitter.Node;fieldName string;}",
+      "members": [
+        {
+          "name": "Child",
+          "kind": "method",
+          "parameters": [
+            "int"
+          ],
+          "result": "Node"
+        },
+        {
+          "name": "ChildByFieldName",
+          "kind": "method",
+          "parameters": [
+            "string"
+          ],
+          "result": "Node"
+        },
+        {
+          "name": "ChildCount",
+          "kind": "method",
+          "result": "int"
+        },
+        {
+          "name": "Children",
+          "kind": "method",
+          "result": "[]Node"
+        },
+        {
+          "name": "FieldName",
+          "kind": "method",
+          "result": "string"
+        },
+        {
+          "name": "FieldNameForChild",
+          "kind": "method",
+          "parameters": [
+            "int"
+          ],
+          "result": "string"
+        },
+        {
+          "name": "HasError",
+          "kind": "method",
+          "result": "bool"
+        },
+        {
+          "name": "IsError",
+          "kind": "method",
+          "result": "bool"
+        },
+        {
+          "name": "IsExtra",
+          "kind": "method",
+          "result": "bool"
+        },
+        {
+          "name": "IsMissing",
+          "kind": "method",
+          "result": "bool"
+        },
+        {
+          "name": "IsNamed",
+          "kind": "method",
+          "result": "bool"
+        },
+        {
+          "name": "IsValid",
+          "kind": "method",
+          "result": "bool"
+        },
+        {
+          "name": "Kind",
+          "kind": "method",
+          "result": "string"
+        },
+        {
+          "name": "NamedChild",
+          "kind": "method",
+          "parameters": [
+            "int"
+          ],
+          "result": "Node"
+        },
+        {
+          "name": "NamedChildCount",
+          "kind": "method",
+          "result": "int"
+        },
+        {
+          "name": "NamedChildren",
+          "kind": "method",
+          "result": "[]Node"
+        },
+        {
+          "name": "Parent",
+          "kind": "method",
+          "result": "Node"
+        },
+        {
+          "name": "Range",
+          "kind": "method",
+          "result": "Range"
+        },
+        {
+          "name": "Snapshot",
+          "kind": "method",
+          "result": "tuple\u003cSyntaxNode,bool\u003e"
+        },
+        {
+          "name": "Source",
+          "kind": "method",
+          "result": "string"
+        },
+        {
+          "name": "Text",
+          "kind": "method",
+          "result": "string"
+        },
+        {
+          "name": "TextRange",
+          "kind": "method",
+          "parameters": [
+            "int",
+            "int"
+          ],
+          "result": "string"
+        },
+        {
+          "name": "Valid",
+          "kind": "method",
+          "result": "bool"
+        },
+        {
+          "name": "read",
+          "kind": "method",
+          "parameters": [
+            "func()"
+          ]
+        },
+        {
+          "name": "snapshotLocked",
+          "kind": "method",
+          "result": "SyntaxNode"
+        },
+        {
+          "name": "doc",
+          "kind": "property",
+          "result": "*Document"
+        },
+        {
+          "name": "fieldName",
+          "kind": "property",
+          "result": "string"
+        },
+        {
+          "name": "raw",
+          "kind": "property",
+          "result": "*sitter.Node"
+        }
+      ]
+    },
+    {
+      "name": "ParseDiagnostic",
+      "kind": "struct",
+      "file": "parser/document.go",
+      "underlyingType": "struct{Message string;Kind string;Range Range;}",
+      "members": [
+        {
+          "name": "Kind",
+          "kind": "property",
+          "result": "string"
+        },
+        {
+          "name": "Message",
+          "kind": "property",
+          "result": "string"
+        },
+        {
+          "name": "Range",
+          "kind": "property",
+          "result": "Range"
+        }
+      ]
+    },
+    {
+      "name": "Position",
+      "kind": "struct",
+      "file": "parser/document.go",
+      "underlyingType": "struct{Line int;Column int;}",
+      "members": [
+        {
+          "name": "Column",
+          "kind": "property",
+          "result": "int"
+        },
+        {
+          "name": "Line",
+          "kind": "property",
+          "result": "int"
+        }
+      ]
+    },
+    {
+      "name": "Range",
+      "kind": "struct",
+      "file": "parser/document.go",
+      "underlyingType": "struct{StartByte int;EndByte int;Start Position;End Position;}",
+      "members": [
+        {
+          "name": "End",
+          "kind": "property",
+          "result": "Position"
+        },
+        {
+          "name": "EndByte",
+          "kind": "property",
+          "result": "int"
+        },
+        {
+          "name": "Start",
+          "kind": "property",
+          "result": "Position"
+        },
+        {
+          "name": "StartByte",
+          "kind": "property",
+          "result": "int"
         }
       ]
     },
@@ -211,6 +524,118 @@
           "structTag": {
             "value": "json:\"start\""
           }
+        }
+      ]
+    },
+    {
+      "name": "SyntaxNode",
+      "kind": "struct",
+      "file": "parser/document.go",
+      "underlyingType": "struct{valid bool;kind string;text string;source string;fieldName string;named bool;extra bool;hasError bool;rng Range;children[]SyntaxNode;}",
+      "members": [
+        {
+          "name": "Children",
+          "kind": "method",
+          "result": "[]SyntaxNode"
+        },
+        {
+          "name": "FieldName",
+          "kind": "method",
+          "result": "string"
+        },
+        {
+          "name": "HasError",
+          "kind": "method",
+          "result": "bool"
+        },
+        {
+          "name": "IsExtra",
+          "kind": "method",
+          "result": "bool"
+        },
+        {
+          "name": "IsNamed",
+          "kind": "method",
+          "result": "bool"
+        },
+        {
+          "name": "Kind",
+          "kind": "method",
+          "result": "string"
+        },
+        {
+          "name": "Range",
+          "kind": "method",
+          "result": "Range"
+        },
+        {
+          "name": "Text",
+          "kind": "method",
+          "result": "string"
+        },
+        {
+          "name": "TextRange",
+          "kind": "method",
+          "parameters": [
+            "int",
+            "int"
+          ],
+          "result": "string"
+        },
+        {
+          "name": "Valid",
+          "kind": "method",
+          "result": "bool"
+        },
+        {
+          "name": "children",
+          "kind": "property",
+          "result": "[]SyntaxNode"
+        },
+        {
+          "name": "extra",
+          "kind": "property",
+          "result": "bool"
+        },
+        {
+          "name": "fieldName",
+          "kind": "property",
+          "result": "string"
+        },
+        {
+          "name": "hasError",
+          "kind": "property",
+          "result": "bool"
+        },
+        {
+          "name": "kind",
+          "kind": "property",
+          "result": "string"
+        },
+        {
+          "name": "named",
+          "kind": "property",
+          "result": "bool"
+        },
+        {
+          "name": "rng",
+          "kind": "property",
+          "result": "Range"
+        },
+        {
+          "name": "source",
+          "kind": "property",
+          "result": "string"
+        },
+        {
+          "name": "text",
+          "kind": "property",
+          "result": "string"
+        },
+        {
+          "name": "valid",
+          "kind": "property",
+          "result": "bool"
         }
       ]
     },
@@ -947,6 +1372,16 @@
         "int"
       ],
       "result": "FileOutline"
+    },
+    {
+      "name": "ParseDocument",
+      "kind": "function",
+      "file": "parser/document.go",
+      "parameters": [
+        "string",
+        "string"
+      ],
+      "result": "tuple\u003c*Document,error\u003e"
     }
   ],
   "fiberRoutes": [],
@@ -959,11 +1394,67 @@
       "cardinality": "many"
     },
     {
+      "from": "Document",
+      "to": "Node",
+      "kind": "dependency",
+      "via": "method Root result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "Document",
+      "to": "ParseDiagnostic",
+      "kind": "dependency",
+      "via": "method Diagnostics result 1",
+      "cardinality": "many"
+    },
+    {
+      "from": "Document",
+      "to": "ParseDiagnostic",
+      "kind": "dependency",
+      "via": "method ParseDiagnostics result 1",
+      "cardinality": "many"
+    },
+    {
+      "from": "Document",
+      "to": "Range",
+      "kind": "dependency",
+      "via": "method nodeRangeLocked result 1",
+      "cardinality": "one"
+    },
+    {
       "from": "FileOutline",
       "to": "Symbol",
       "kind": "association",
       "via": "field Symbols",
       "cardinality": "many"
+    },
+    {
+      "from": "Node",
+      "to": "Document",
+      "kind": "association",
+      "via": "field doc",
+      "cardinality": "one"
+    },
+    {
+      "from": "Node",
+      "to": "Range",
+      "kind": "dependency",
+      "via": "method Range result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "Node",
+      "to": "SyntaxNode",
+      "kind": "dependency",
+      "via": "method Snapshot result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "Node",
+      "to": "SyntaxNode",
+      "kind": "dependency",
+      "via": "method snapshotLocked result 1",
+      "cardinality": "one"
     },
     {
       "from": "OutlineFile",
@@ -977,6 +1468,48 @@
       "to": "FileOutline",
       "kind": "dependency",
       "via": "result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "ParseDiagnostic",
+      "to": "Range",
+      "kind": "association",
+      "via": "field Range",
+      "cardinality": "one"
+    },
+    {
+      "from": "ParseDocument",
+      "to": "Document",
+      "kind": "dependency",
+      "via": "result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "Range",
+      "to": "Position",
+      "kind": "association",
+      "via": "field End",
+      "cardinality": "one"
+    },
+    {
+      "from": "Range",
+      "to": "Position",
+      "kind": "association",
+      "via": "field Start",
+      "cardinality": "one"
+    },
+    {
+      "from": "SyntaxNode",
+      "to": "Range",
+      "kind": "association",
+      "via": "field rng",
+      "cardinality": "one"
+    },
+    {
+      "from": "SyntaxNode",
+      "to": "Range",
+      "kind": "dependency",
+      "via": "method Range result 1",
       "cardinality": "one"
     },
     {
