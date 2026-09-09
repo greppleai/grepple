@@ -1,8 +1,17 @@
 classDiagram
-    %% grepple:package-default grepple/internal/parser
+    %% grepple:package-default github.com/greppleai/grepple/parser
     %% grepple:language-default go
     direction LR
-    note "Package parser provides application source classification and structural parsing. | package grepple/internal/parser | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=7, declarations=10, exportedTypes=3, internalTypes=7, members=40, exportedFunctions=4, fiberRoutes=0, relations=15"
+    note "Package parser provides application source classification and structural parsing. | package github.com/greppleai/grepple/parser | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=23, declarations=22, exportedTypes=3, internalTypes=19, members=109, exportedFunctions=4, fiberRoutes=0, relations=61"
+    namespace interfaces {
+        class languageAdapter {
+            +Grammar(): *sitter.Language
+            +ID(): string
+            +Outline(*sitter.Node, string): []Symbol
+            +Rules(): *structureRules
+        }
+        <<interface>> languageAdapter
+    }
     namespace data_contracts {
         class FileOutline {
             +Language: string
@@ -25,10 +34,22 @@ classDiagram
         <<struct>> Segment
     }
     namespace internal_types {
+        class cLanguage
+        <<struct>> cLanguage
+        class cSharpLanguage
+        <<struct>> cSharpLanguage
+        class cppLanguage
+        <<struct>> cppLanguage
         class fenceTracker
         <<struct>> fenceTracker
-        class languageConfig
-        <<struct>> languageConfig
+        class goLanguage
+        <<struct>> goLanguage
+        class javaLanguage
+        <<struct>> javaLanguage
+        class javaScriptLanguage
+        <<struct>> javaScriptLanguage
+        class kotlinLanguage
+        <<struct>> kotlinLanguage
         class matchLines
         <<struct>> matchLines
         class mdHeading
@@ -37,8 +58,18 @@ classDiagram
         <<struct>> mdNode
         class pooledParser
         <<struct>> pooledParser
+        class pythonLanguage
+        <<struct>> pythonLanguage
+        class rustLanguage
+        <<struct>> rustLanguage
+        class shellLanguage
+        <<struct>> shellLanguage
         class stringSet["stringSet = map&#91;string&#93;struct&#123;&#125;"]
         <<type>> stringSet
+        class structureRules
+        <<struct>> structureRules
+        class typeScriptLanguage
+        <<struct>> typeScriptLanguage
     }
     namespace operations {
         class BuildSegments {
@@ -62,5 +93,51 @@ classDiagram
     FileOutline "1" --> "*" Symbol : field Symbols
     OutlineFile "1" ..> "1" FileOutline : result 1
     OutlineFileDepth "1" ..> "1" FileOutline : result 1
-    languageConfig "1" --> "1" stringSet : field=10
+    cLanguage "1" ..> "*" Symbol : method Outline result 1
+    languageAdapter <|.. cLanguage : implements
+    cLanguage "1" --> "1" structureRules : field rules
+    cLanguage "1" ..> "1" structureRules : method Rules result 1
+    cSharpLanguage "1" ..> "*" Symbol : method Outline result 1
+    languageAdapter <|.. cSharpLanguage : implements
+    cSharpLanguage "1" --> "1" structureRules : field rules
+    cSharpLanguage "1" ..> "1" structureRules : method Rules result 1
+    cppLanguage "1" ..> "*" Symbol : method Outline result 1
+    languageAdapter <|.. cppLanguage : implements
+    cppLanguage "1" --> "1" structureRules : field rules
+    cppLanguage "1" ..> "1" structureRules : method Rules result 1
+    goLanguage "1" ..> "*" Symbol : method Outline result 1
+    languageAdapter <|.. goLanguage : implements
+    goLanguage "1" --> "1" structureRules : field rules
+    goLanguage "1" ..> "1" structureRules : method Rules result 1
+    javaLanguage "1" ..> "*" Symbol : method Outline result 1
+    languageAdapter <|.. javaLanguage : implements
+    javaLanguage "1" --> "1" structureRules : field rules
+    javaLanguage "1" ..> "1" structureRules : method Rules result 1
+    javaScriptLanguage "1" ..> "*" Symbol : method Outline result 1
+    languageAdapter <|.. javaScriptLanguage : implements
+    javaScriptLanguage "1" --> "1" structureRules : field rules
+    javaScriptLanguage "1" ..> "1" structureRules : method Rules result 1
+    kotlinLanguage "1" ..> "*" Symbol : method Outline result 1
+    languageAdapter <|.. kotlinLanguage : implements
+    kotlinLanguage "1" --> "1" structureRules : field rules
+    kotlinLanguage "1" ..> "1" structureRules : method Rules result 1
+    languageAdapter "1" ..> "*" Symbol : method Outline result 1
+    languageAdapter "1" ..> "1" structureRules : method Rules result 1
     mdNode "1" --> "1" Symbol : field sym
+    pythonLanguage "1" ..> "*" Symbol : method Outline result 1
+    languageAdapter <|.. pythonLanguage : implements
+    pythonLanguage "1" --> "1" structureRules : field rules
+    pythonLanguage "1" ..> "1" structureRules : method Rules result 1
+    rustLanguage "1" ..> "*" Symbol : method Outline result 1
+    languageAdapter <|.. rustLanguage : implements
+    rustLanguage "1" --> "1" structureRules : field rules
+    rustLanguage "1" ..> "1" structureRules : method Rules result 1
+    shellLanguage "1" ..> "*" Symbol : method Outline result 1
+    languageAdapter <|.. shellLanguage : implements
+    shellLanguage "1" --> "1" structureRules : field rules
+    shellLanguage "1" ..> "1" structureRules : method Rules result 1
+    structureRules "1" --> "1" stringSet : field=10
+    typeScriptLanguage "1" ..> "*" Symbol : method Outline result 1
+    languageAdapter <|.. typeScriptLanguage : implements
+    typeScriptLanguage "1" --> "1" structureRules : field rules
+    typeScriptLanguage "1" ..> "1" structureRules : method Rules result 1

@@ -110,7 +110,7 @@ orienting in an unfamiliar or **large** file cheaply (it shows structure, not ev
 line) — especially big config/data files where you want the shape, not the payload.
 
 ```bash
-grepple --outline internal/search/rules.go     # one local file
+grepple --outline search/search_engine.go     # one local file
 grepple --outline "internal/**/*.go"           # every file matching the glob
 grepple --outline --json src/app.ts            # machine-readable {"files":[...]}
 grepple --outline values.yaml                  # JSON/YAML: key tree, values omitted
@@ -121,14 +121,14 @@ Output is `START-END<TAB>KIND<TAB>NAME`, nested members indented under their
 container:
 
 ```
-internal/router/rules.go	go
-20-28	struct	ruleRegistry
-112-130	method	(*ruleRegistry).upsert
-216-262	method	(*ruleRegistry).fetchResults
+search/search_engine.go	go
+229-234	struct	candidateScan
+240-249	method	(candidateScan).scanAll
+254-277	method	(candidateScan).scanWindowed
 ```
 
-- **Languages:** the tree-sitter set (Go, TypeScript/TSX, JavaScript/JSX, Java,
-  Kotlin) get full symbol outlines; **Markdown** gets a heading outline (`h1`…`h6`,
+- **Languages:** Go, JavaScript/TypeScript, Python, Java, Kotlin, C#, C, C++, Rust,
+  and Shell get full tree-sitter symbol outlines; **Markdown** gets a heading outline (`h1`…`h6`,
   code-fence aware); **JSON/YAML** get a key/type tree (`object`/`array`/`string`/
   `number`/`bool`/`null`). Other file types produce an empty outline.
 - **JSON/YAML specifics:** values are omitted (keys + types only); arrays show a
@@ -148,8 +148,8 @@ internal/router/rules.go	go
 - **Piping INTO grepple works like grep/rg**: `cat build.log | grepple "ERROR"` or `go test ./... | grepple -F "FAIL"` — when stdin is piped and no path/glob argument is given, the stream is searched and reported as `<stdin>` (plain-text matching only). This is the blessed way to filter command output. Passing any path/glob selects the filesystem instead.
 - Binary files and files with a NUL byte are skipped during content search but can
   still appear under `--files`.
-- Supported tree-sitter languages get structural context/segments: `.ts/.tsx`,
-  `.js/.jsx`, `.go`, `.java`, `.kt/.kts`. **Markdown** (`.md`) gets heading-section
+- Supported tree-sitter languages get structural context/segments: Go, JavaScript/TypeScript,
+  Python, Java, Kotlin, C#, C, C++, Rust, and Shell. **Markdown** (`.md`) gets heading-section
   context (the enclosing `#`…`######` breadcrumb). Everything else uses plain-text
   line matching. (This shapes result *segments*, not ordering — there is no ranking.)
 - To search repositories you have **not** cloned, fetch a remote file, browse a repo

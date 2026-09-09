@@ -1,0 +1,332 @@
+classDiagram
+    %% grepple:complete-package github.com/greppleai/grepple/internal/cli
+    %% grepple:package-default github.com/greppleai/grepple/internal/cli
+    %% grepple:language-default go
+    %% grepple:exact-default
+    class cliOptions {
+        +Count: bool
+        +CountByRepo: bool
+        +Depth: int
+        +FilesWithMatches: bool
+        +JSON: string
+        +LineOnly: bool
+        +OnlyMatching: bool
+        +Outline: bool
+        +Params: search.Params
+        +Stdin: bool
+    }
+    <<struct>> cliOptions
+    %% grepple:file cliOptions internal/cli/model.go
+    class config {
+        +RefreshExpiry: int64
+        +RefreshToken: string
+        +Server: string
+        +Token: string
+        +TokenExpiry: int64
+        +User: string
+    }
+    <<struct>> config
+    %% grepple:file config internal/cli/config.go
+    %% grepple:struct-tag config RefreshExpiry "json:\"refresh_expiry,omitempty\""
+    %% grepple:struct-tag config RefreshToken "json:\"refresh_token,omitempty\""
+    %% grepple:struct-tag config Server "json:\"server,omitempty\""
+    %% grepple:struct-tag config Token "json:\"token,omitempty\""
+    %% grepple:struct-tag config TokenExpiry "json:\"token_expiry,omitempty\""
+    %% grepple:struct-tag config User "json:\"user,omitempty\""
+    class contextRenderer {
+        +Render([]api.FileResult): error
+        -output: *outputWriter
+    }
+    <<struct>> contextRenderer
+    %% grepple:file contextRenderer internal/cli/renderer_context.go
+    class countRenderer {
+        +Render([]api.FileResult): error
+        -json: bool
+        -output: *outputWriter
+    }
+    <<struct>> countRenderer
+    %% grepple:file countRenderer internal/cli/renderer_count.go
+    class deviceCodeResponse {
+        +DeviceCode: string
+        +Error: string
+        +ErrorDescription: string
+        +ExpiresIn: int
+        +Interval: int
+        +UserCode: string
+        +VerificationURI: string
+    }
+    <<struct>> deviceCodeResponse
+    %% grepple:file deviceCodeResponse internal/cli/login.go
+    %% grepple:struct-tag deviceCodeResponse DeviceCode "json:\"device_code\""
+    %% grepple:struct-tag deviceCodeResponse Error "json:\"error\""
+    %% grepple:struct-tag deviceCodeResponse ErrorDescription "json:\"error_description\""
+    %% grepple:struct-tag deviceCodeResponse ExpiresIn "json:\"expires_in\""
+    %% grepple:struct-tag deviceCodeResponse Interval "json:\"interval\""
+    %% grepple:struct-tag deviceCodeResponse UserCode "json:\"user_code\""
+    %% grepple:struct-tag deviceCodeResponse VerificationURI "json:\"verification_uri\""
+    class deviceTokenResponse {
+        +AccessToken: string
+        +Error: string
+        +ErrorDescription: string
+        +ExpiresIn: int
+        +Interval: int
+        +RefreshToken: string
+        +RefreshTokenExpiresIn: int
+        +Scope: string
+        +TokenType: string
+    }
+    <<struct>> deviceTokenResponse
+    %% grepple:file deviceTokenResponse internal/cli/login.go
+    %% grepple:struct-tag deviceTokenResponse AccessToken "json:\"access_token\""
+    %% grepple:struct-tag deviceTokenResponse Error "json:\"error\""
+    %% grepple:struct-tag deviceTokenResponse ErrorDescription "json:\"error_description\""
+    %% grepple:struct-tag deviceTokenResponse ExpiresIn "json:\"expires_in\""
+    %% grepple:struct-tag deviceTokenResponse Interval "json:\"interval\""
+    %% grepple:struct-tag deviceTokenResponse RefreshToken "json:\"refresh_token\""
+    %% grepple:struct-tag deviceTokenResponse RefreshTokenExpiresIn "json:\"refresh_token_expires_in\""
+    %% grepple:struct-tag deviceTokenResponse Scope "json:\"scope\""
+    %% grepple:struct-tag deviceTokenResponse TokenType "json:\"token_type\""
+    class errBrokenPipe {
+        +Error(): string
+        +Unwrap(): error
+    }
+    <<struct>> errBrokenPipe
+    %% grepple:file errBrokenPipe internal/cli/output.go
+    class filesRenderer {
+        +Render([]api.FileResult): error
+        -json: bool
+        -output: *outputWriter
+    }
+    <<struct>> filesRenderer
+    %% grepple:file filesRenderer internal/cli/renderer_files.go
+    class getArgs {
+        +Description(): string
+        +Depth: int
+        +JSON: bool
+        +Lines: string
+        +Outline: bool
+        +Path: string
+        +Repo: string
+        +Server: string
+    }
+    <<struct>> getArgs
+    %% grepple:file getArgs internal/cli/get.go
+    %% grepple:struct-tag getArgs Depth "arg:\"--depth\" placeholder:\"N\" help:\"outline: cap nesting depth for JSON/YAML (0 = unlimited)\""
+    %% grepple:struct-tag getArgs JSON "arg:\"--json\" help:\"print repository metadata and content as JSON\""
+    %% grepple:struct-tag getArgs Lines "arg:\"--lines\" placeholder:\"A:B\" help:\"inclusive 1-based line range\""
+    %% grepple:struct-tag getArgs Outline "arg:\"-O,--outline\" help:\"print the file's structural outline (classes, funcs, ...) instead of its contents\""
+    %% grepple:struct-tag getArgs Path "arg:\"positional,required\" placeholder:\"PATH\""
+    %% grepple:struct-tag getArgs Repo "arg:\"positional,required\" placeholder:\"OWNER/REPOSITORY\""
+    %% grepple:struct-tag getArgs Server "arg:\"-s,--server\" placeholder:\"URL\" help:\"remote shard/router URL\""
+    class jsonResultRenderer {
+        +Render([]api.FileResult): error
+        -matchesOnly: bool
+        -output: *outputWriter
+    }
+    <<struct>> jsonResultRenderer
+    %% grepple:file jsonResultRenderer internal/cli/renderer_json.go
+    class lineRenderer {
+        +Render([]api.FileResult): error
+        -maxLines: int
+        -output: *outputWriter
+    }
+    <<struct>> lineRenderer
+    %% grepple:file lineRenderer internal/cli/renderer_matches.go
+    class loginConfig {
+        +ClientID: string
+        +Scopes: string
+    }
+    <<struct>> loginConfig
+    %% grepple:file loginConfig internal/cli/login.go
+    %% grepple:struct-tag loginConfig ClientID "json:\"clientId\""
+    %% grepple:struct-tag loginConfig Scopes "json:\"scopes\""
+    class onlyMatchingRenderer {
+        +Render([]api.FileResult): error
+        -matcher: *regexp.Regexp
+        -maxLines: int
+        -output: *outputWriter
+    }
+    <<struct>> onlyMatchingRenderer
+    %% grepple:file onlyMatchingRenderer internal/cli/renderer_matches.go
+    class outputWriter {
+        -writeJSON(any): error
+        -writeString(string): error
+        -writer: io.Writer
+    }
+    <<struct>> outputWriter
+    %% grepple:file outputWriter internal/cli/output.go
+    class repoCountRenderer {
+        +Render([]api.RepoCount): error
+        -renderJSON([]api.RepoCount, int, int): error
+        -renderText([]api.RepoCount, int, int): error
+        -json: bool
+        -output: *outputWriter
+    }
+    <<struct>> repoCountRenderer
+    %% grepple:file repoCountRenderer internal/cli/renderer_repo_count.go
+    class reposArgs {
+        +Description(): string
+        +Filter: string
+        +JSON: bool
+        +Server: string
+    }
+    <<struct>> reposArgs
+    %% grepple:file reposArgs internal/cli/repos.go
+    %% grepple:struct-tag reposArgs Filter "arg:\"positional\" placeholder:\"SUBSTRING\" help:\"only repos whose OWNER/REPO contains this (case-insensitive)\""
+    %% grepple:struct-tag reposArgs JSON "arg:\"--json\" help:\"print raw JSON\""
+    %% grepple:struct-tag reposArgs Server "arg:\"-s,--server\" placeholder:\"URL\" help:\"remote shard/router URL\""
+    class resultRenderer {
+        +Render([]api.FileResult): error
+    }
+    <<interface>> resultRenderer
+    %% grepple:file resultRenderer internal/cli/renderer.go
+    class rulesAddArgs {
+        +Description(): string
+        +ExcludeRepo: []string
+        +Files: bool
+        +Globs: []string
+        +ID: string
+        +IgnoreCase: bool
+        +JSON: bool
+        +Mode: string
+        +Name: string
+        +Pattern: string
+        +Regex: bool
+        +Repo: []string
+        +Server: string
+    }
+    <<struct>> rulesAddArgs
+    %% grepple:file rulesAddArgs internal/cli/rules.go
+    %% grepple:struct-tag rulesAddArgs ExcludeRepo "arg:\"--exclude-repo,separate\" placeholder:\"PATTERN\" help:\"exclude matching repos\""
+    %% grepple:struct-tag rulesAddArgs Files "arg:\"-l,--files\" help:\"files mode (store matching paths)\""
+    %% grepple:struct-tag rulesAddArgs Globs "arg:\"positional\" placeholder:\"GLOB\""
+    %% grepple:struct-tag rulesAddArgs ID "arg:\"--id\" placeholder:\"ID\" help:\"stable rule id (default: slug of --name)\""
+    %% grepple:struct-tag rulesAddArgs IgnoreCase "arg:\"-i,--ignore-case\" help:\"case-insensitive match\""
+    %% grepple:struct-tag rulesAddArgs JSON "arg:\"--json\" help:\"print the created rule as JSON\""
+    %% grepple:struct-tag rulesAddArgs Mode "arg:\"--mode\" placeholder:\"MODE\" help:\"count | files\""
+    %% grepple:struct-tag rulesAddArgs Name "arg:\"--name\" placeholder:\"NAME\" help:\"human-readable name\""
+    %% grepple:struct-tag rulesAddArgs Pattern "arg:\"positional\" placeholder:\"PATTERN\""
+    %% grepple:struct-tag rulesAddArgs Regex "arg:\"--regex\" help:\"treat PATTERN as a regular expression\""
+    %% grepple:struct-tag rulesAddArgs Repo "arg:\"--repo,separate\" placeholder:\"PATTERN\" help:\"limit to matching repos\""
+    %% grepple:struct-tag rulesAddArgs Server "arg:\"-s,--server\" placeholder:\"URL\" help:\"remote router URL\""
+    class searchArgs {
+        +Description(): string
+        +AfterContext: int
+        +BeforeContext: int
+        +Context: int
+        +Count: bool
+        +CountByRepo: bool
+        +Depth: int
+        +Files: bool
+        +FilesWithMatches: bool
+        +Fixed: bool
+        +Globs: []string
+        +IgnoreCase: bool
+        +InvertMatch: bool
+        +JSON: bool
+        +JSONMatches: bool
+        +Limit: int
+        +LineNumber: bool
+        +LineOnly: bool
+        +Local: bool
+        +MaxFiles: int
+        +MaxSegments: int
+        +OnlyMatching: bool
+        +Outline: bool
+        +Query: string
+        +Regex: bool
+        +Remote: bool
+        +Repos: []string
+        +Server: string
+        +Skip: int
+    }
+    <<struct>> searchArgs
+    %% grepple:file searchArgs internal/cli/args.go
+    %% grepple:struct-tag searchArgs AfterContext "arg:\"-A,--after-context\" placeholder:\"N\" help:\"print N lines after matches\""
+    %% grepple:struct-tag searchArgs BeforeContext "arg:\"-B,--before-context\" placeholder:\"N\" help:\"print N lines before matches\""
+    %% grepple:struct-tag searchArgs Context "arg:\"-C,--context\" placeholder:\"N\" help:\"print N lines before and after matches\""
+    %% grepple:struct-tag searchArgs Count "arg:\"-c,--count\" help:\"print matching-line counts per file\""
+    %% grepple:struct-tag searchArgs CountByRepo "arg:\"--count-by-repo\" help:\"print aggregate file and matching-line counts per repository\""
+    %% grepple:struct-tag searchArgs Depth "arg:\"--depth\" placeholder:\"N\" help:\"outline: cap nesting depth for JSON/YAML (0 = unlimited)\""
+    %% grepple:struct-tag searchArgs Files "arg:\"-l,--files\" help:\"recursively list files under optional PATHs; glob PATHs filter the listing\""
+    %% grepple:struct-tag searchArgs FilesWithMatches "arg:\"--files-with-matches\" help:\"list paths whose contents match; accepts multiple file, directory, or glob PATHs\""
+    %% grepple:struct-tag searchArgs Fixed "arg:\"-F,--fixed-strings\" help:\"treat the pattern as a literal string\""
+    %% grepple:struct-tag searchArgs Globs "arg:\"positional\" placeholder:\"PATH\" help:\"file, directory, or glob to search; repeat for multiple roots\""
+    %% grepple:struct-tag searchArgs IgnoreCase "arg:\"-i,--ignore-case\" help:\"ignore case distinctions\""
+    %% grepple:struct-tag searchArgs InvertMatch "arg:\"-v,--invert-match\" help:\"select lines that do not match\""
+    %% grepple:struct-tag searchArgs JSON "arg:\"--json\" help:\"print full JSON results\""
+    %% grepple:struct-tag searchArgs JSONMatches "arg:\"--json-matches\" help:\"print compact JSON matches\""
+    %% grepple:struct-tag searchArgs Limit "arg:\"--limit\" placeholder:\"N\" help:\"return at most N ranked result files (default 20; 0 = all local; servers cap a page at 100 — page further with --skip)\""
+    %% grepple:struct-tag searchArgs LineNumber "arg:\"-n,--line-number\" help:\"include line numbers (enabled by default)\""
+    %% grepple:struct-tag searchArgs LineOnly "arg:\"--line-only\" help:\"print only matching lines\""
+    %% grepple:struct-tag searchArgs Local "arg:\"--local\" help:\"search only the local working directory (this is the default)\""
+    %% grepple:struct-tag searchArgs MaxFiles "arg:\"--max-files\" placeholder:\"N\" help:\"limit matching files\""
+    %% grepple:struct-tag searchArgs MaxSegments "arg:\"--max-segments\" placeholder:\"N\" help:\"limit result segments\""
+    %% grepple:struct-tag searchArgs OnlyMatching "arg:\"-o,--only-matching\" help:\"print each matched substring\""
+    %% grepple:struct-tag searchArgs Outline "arg:\"-O,--outline\" help:\"print each file's structural outline (classes, funcs, interfaces) instead of searching\""
+    %% grepple:struct-tag searchArgs Query "arg:\"positional\" placeholder:\"PATTERN\""
+    %% grepple:struct-tag searchArgs Regex "arg:\"--regex\" help:\"treat the pattern as a regular expression (default)\""
+    %% grepple:struct-tag searchArgs Remote "arg:\"-R,--remote\" help:\"also query the remote shard/router (default: local only)\""
+    %% grepple:struct-tag searchArgs Repos "arg:\"--repo,separate\" placeholder:\"PATTERN\" help:\"restrict remote repositories; repeatable\""
+    %% grepple:struct-tag searchArgs Server "arg:\"-s,--server\" placeholder:\"URL\" help:\"remote shard/router URL (implies --remote)\""
+    %% grepple:struct-tag searchArgs Skip "arg:\"--skip\" placeholder:\"N\" help:\"skip the first N ranked result files\""
+    class segmentRenderer {
+        +Render([]api.FileResult): error
+        -renderFile(api.FileResult): error
+        -renderSegment(api.ResultSegment, int): error
+        -output: *outputWriter
+    }
+    <<struct>> segmentRenderer
+    %% grepple:file segmentRenderer internal/cli/renderer_segments.go
+    class treeArgs {
+        +Description(): string
+        +Depth: int
+        +JSON: bool
+        +Path: string
+        +Repo: string
+        +Server: string
+    }
+    <<struct>> treeArgs
+    %% grepple:file treeArgs internal/cli/tree.go
+    %% grepple:struct-tag treeArgs Depth "arg:\"--depth\" default:\"2\" placeholder:\"N\" help:\"levels to descend\""
+    %% grepple:struct-tag treeArgs JSON "arg:\"--json\" help:\"print raw JSON\""
+    %% grepple:struct-tag treeArgs Path "arg:\"positional\" placeholder:\"PATH\""
+    %% grepple:struct-tag treeArgs Repo "arg:\"positional,required\" placeholder:\"OWNER/REPOSITORY\""
+    %% grepple:struct-tag treeArgs Server "arg:\"-s,--server\" placeholder:\"URL\" help:\"remote shard/router URL\""
+    class treeNode {
+        -children: map[string]*treeNode
+        -dir: bool
+        -name: string
+    }
+    <<struct>> treeNode
+    %% grepple:file treeNode internal/cli/tree.go
+    class RenderOutline {
+        +RenderOutline(parser.FileOutline): string
+    }
+    <<function>> RenderOutline
+    %% grepple:file RenderOutline internal/cli/outline_renderer.go
+    class RenderOutlineOrContent {
+        +RenderOutlineOrContent(parser.FileOutline, string): string
+    }
+    <<function>> RenderOutlineOrContent
+    %% grepple:file RenderOutlineOrContent internal/cli/outline_renderer.go
+    class Run {
+        +Run([]string): error
+    }
+    <<function>> Run
+    %% grepple:file Run internal/cli/args.go
+    contextRenderer "1" --> "1" outputWriter : field output
+    resultRenderer <|.. contextRenderer : implements
+    countRenderer "1" --> "1" outputWriter : field output
+    resultRenderer <|.. countRenderer : implements
+    filesRenderer "1" --> "1" outputWriter : field output
+    resultRenderer <|.. filesRenderer : implements
+    jsonResultRenderer "1" --> "1" outputWriter : field output
+    resultRenderer <|.. jsonResultRenderer : implements
+    lineRenderer "1" --> "1" outputWriter : field output
+    resultRenderer <|.. lineRenderer : implements
+    onlyMatchingRenderer "1" --> "1" outputWriter : field output
+    resultRenderer <|.. onlyMatchingRenderer : implements
+    repoCountRenderer "1" --> "1" outputWriter : field output
+    segmentRenderer "1" --> "1" outputWriter : field output
+    resultRenderer <|.. segmentRenderer : implements

@@ -2,8 +2,8 @@
   "formatVersion": 1,
   "package": {
     "name": "parser",
-    "importPath": "grepple/internal/parser",
-    "sourceDirectory": "internal/parser",
+    "importPath": "github.com/greppleai/grepple/parser",
+    "sourceDirectory": "parser",
     "documentation": "Package parser provides application source classification and structural parsing."
   },
   "scope": {
@@ -16,44 +16,92 @@
     "syntacticBuildTagUnion": []
   },
   "summary": {
-    "sourceFiles": 7,
-    "declarations": 10,
+    "sourceFiles": 23,
+    "declarations": 22,
     "exportedTypes": 3,
-    "internalTypes": 7,
-    "members": 40,
+    "internalTypes": 19,
+    "members": 109,
     "exportedFunctions": 4,
     "fiberRoutes": 0,
-    "relations": 15
+    "relations": 61
   },
-  "semanticModelDigest": "sha256:6679af229406d6ca4a3d1db842bde4b814ec1723a0e1f1a66fc222878efdcd38",
+  "semanticModelDigest": "sha256:d69eb8187873c802ef76d2a6a0f9a37861896b99a7cfaac8b2466b020a372af2",
   "sourceFiles": [
     {
-      "path": "internal/parser/analyze.go"
+      "path": "parser/analyze.go"
     },
     {
-      "path": "internal/parser/content.go"
+      "path": "parser/content.go"
     },
     {
-      "path": "internal/parser/doc.go"
+      "path": "parser/doc.go"
     },
     {
-      "path": "internal/parser/model.go"
+      "path": "parser/language.go"
     },
     {
-      "path": "internal/parser/outline.go"
+      "path": "parser/language_c.go"
     },
     {
-      "path": "internal/parser/segments.go"
+      "path": "parser/language_c_family.go"
     },
     {
-      "path": "internal/parser/tree_sitter.go"
+      "path": "parser/language_cpp.go"
+    },
+    {
+      "path": "parser/language_csharp.go"
+    },
+    {
+      "path": "parser/language_ecmascript.go"
+    },
+    {
+      "path": "parser/language_go.go"
+    },
+    {
+      "path": "parser/language_java.go"
+    },
+    {
+      "path": "parser/language_javascript.go"
+    },
+    {
+      "path": "parser/language_kotlin.go"
+    },
+    {
+      "path": "parser/language_python.go"
+    },
+    {
+      "path": "parser/language_rust.go"
+    },
+    {
+      "path": "parser/language_shell.go"
+    },
+    {
+      "path": "parser/language_typescript.go"
+    },
+    {
+      "path": "parser/markdown.go"
+    },
+    {
+      "path": "parser/model.go"
+    },
+    {
+      "path": "parser/outline.go"
+    },
+    {
+      "path": "parser/segments.go"
+    },
+    {
+      "path": "parser/structured.go"
+    },
+    {
+      "path": "parser/tree_sitter.go"
     }
   ],
   "declarations": [
     {
       "name": "FileOutline",
       "kind": "struct",
-      "file": "internal/parser/model.go",
+      "file": "parser/model.go",
       "underlyingType": "struct{Path string`json:\"path\"`;Language string`json:\"language\"`;Symbols[]Symbol`json:\"symbols\"`;}",
       "members": [
         {
@@ -85,7 +133,7 @@
     {
       "name": "Segment",
       "kind": "struct",
-      "file": "internal/parser/model.go",
+      "file": "parser/model.go",
       "underlyingType": "struct{Kind string;Start,End int;Text string;}",
       "members": [
         {
@@ -113,7 +161,7 @@
     {
       "name": "Symbol",
       "kind": "struct",
-      "file": "internal/parser/model.go",
+      "file": "parser/model.go",
       "underlyingType": "struct{Kind string`json:\"kind\"`;Name string`json:\"name\"`;Signature string`json:\"signature,omitempty\"`;Start int`json:\"start\"`;End int`json:\"end\"`;Children[]Symbol`json:\"children,omitempty\"`;}",
       "members": [
         {
@@ -167,9 +215,135 @@
       ]
     },
     {
+      "name": "cLanguage",
+      "kind": "struct",
+      "file": "parser/language_c.go",
+      "underlyingType": "struct{grammar*sitter.Language;rules structureRules;}",
+      "members": [
+        {
+          "name": "Grammar",
+          "kind": "method",
+          "result": "*sitter.Language"
+        },
+        {
+          "name": "ID",
+          "kind": "method",
+          "result": "string"
+        },
+        {
+          "name": "Outline",
+          "kind": "method",
+          "parameters": [
+            "*sitter.Node",
+            "string"
+          ],
+          "result": "[]Symbol"
+        },
+        {
+          "name": "Rules",
+          "kind": "method",
+          "result": "*structureRules"
+        },
+        {
+          "name": "grammar",
+          "kind": "property",
+          "result": "*sitter.Language"
+        },
+        {
+          "name": "rules",
+          "kind": "property",
+          "result": "structureRules"
+        }
+      ]
+    },
+    {
+      "name": "cSharpLanguage",
+      "kind": "struct",
+      "file": "parser/language_csharp.go",
+      "underlyingType": "struct{grammar*sitter.Language;rules structureRules;}",
+      "members": [
+        {
+          "name": "Grammar",
+          "kind": "method",
+          "result": "*sitter.Language"
+        },
+        {
+          "name": "ID",
+          "kind": "method",
+          "result": "string"
+        },
+        {
+          "name": "Outline",
+          "kind": "method",
+          "parameters": [
+            "*sitter.Node",
+            "string"
+          ],
+          "result": "[]Symbol"
+        },
+        {
+          "name": "Rules",
+          "kind": "method",
+          "result": "*structureRules"
+        },
+        {
+          "name": "grammar",
+          "kind": "property",
+          "result": "*sitter.Language"
+        },
+        {
+          "name": "rules",
+          "kind": "property",
+          "result": "structureRules"
+        }
+      ]
+    },
+    {
+      "name": "cppLanguage",
+      "kind": "struct",
+      "file": "parser/language_cpp.go",
+      "underlyingType": "struct{grammar*sitter.Language;rules structureRules;}",
+      "members": [
+        {
+          "name": "Grammar",
+          "kind": "method",
+          "result": "*sitter.Language"
+        },
+        {
+          "name": "ID",
+          "kind": "method",
+          "result": "string"
+        },
+        {
+          "name": "Outline",
+          "kind": "method",
+          "parameters": [
+            "*sitter.Node",
+            "string"
+          ],
+          "result": "[]Symbol"
+        },
+        {
+          "name": "Rules",
+          "kind": "method",
+          "result": "*structureRules"
+        },
+        {
+          "name": "grammar",
+          "kind": "property",
+          "result": "*sitter.Language"
+        },
+        {
+          "name": "rules",
+          "kind": "property",
+          "result": "structureRules"
+        }
+      ]
+    },
+    {
       "name": "fenceTracker",
       "kind": "struct",
-      "file": "internal/parser/outline.go",
+      "file": "parser/markdown.go",
       "underlyingType": "struct{inside bool;marker byte;}",
       "members": [
         {
@@ -193,10 +367,443 @@
       ]
     },
     {
-      "name": "languageConfig",
+      "name": "goLanguage",
       "kind": "struct",
-      "file": "internal/parser/tree_sitter.go",
-      "underlyingType": "struct{id string;grammar*sitter.Language;structuralTypes stringSet;contextTypes stringSet;containerTypes stringSet;classDeclarationTypes stringSet;classBodyTypes stringSet;exportTypes stringSet;functionLikeTypes stringSet;blockTypes stringSet;jsxElementTypes stringSet;nameFieldCandidates stringSet;}",
+      "file": "parser/language_go.go",
+      "underlyingType": "struct{grammar*sitter.Language;rules structureRules;}",
+      "members": [
+        {
+          "name": "Grammar",
+          "kind": "method",
+          "result": "*sitter.Language"
+        },
+        {
+          "name": "ID",
+          "kind": "method",
+          "result": "string"
+        },
+        {
+          "name": "Outline",
+          "kind": "method",
+          "parameters": [
+            "*sitter.Node",
+            "string"
+          ],
+          "result": "[]Symbol"
+        },
+        {
+          "name": "Rules",
+          "kind": "method",
+          "result": "*structureRules"
+        },
+        {
+          "name": "grammar",
+          "kind": "property",
+          "result": "*sitter.Language"
+        },
+        {
+          "name": "rules",
+          "kind": "property",
+          "result": "structureRules"
+        }
+      ]
+    },
+    {
+      "name": "javaLanguage",
+      "kind": "struct",
+      "file": "parser/language_java.go",
+      "underlyingType": "struct{grammar*sitter.Language;rules structureRules;}",
+      "members": [
+        {
+          "name": "Grammar",
+          "kind": "method",
+          "result": "*sitter.Language"
+        },
+        {
+          "name": "ID",
+          "kind": "method",
+          "result": "string"
+        },
+        {
+          "name": "Outline",
+          "kind": "method",
+          "parameters": [
+            "*sitter.Node",
+            "string"
+          ],
+          "result": "[]Symbol"
+        },
+        {
+          "name": "Rules",
+          "kind": "method",
+          "result": "*structureRules"
+        },
+        {
+          "name": "grammar",
+          "kind": "property",
+          "result": "*sitter.Language"
+        },
+        {
+          "name": "rules",
+          "kind": "property",
+          "result": "structureRules"
+        }
+      ]
+    },
+    {
+      "name": "javaScriptLanguage",
+      "kind": "struct",
+      "file": "parser/language_javascript.go",
+      "underlyingType": "struct{grammar*sitter.Language;rules structureRules;}",
+      "members": [
+        {
+          "name": "Grammar",
+          "kind": "method",
+          "result": "*sitter.Language"
+        },
+        {
+          "name": "ID",
+          "kind": "method",
+          "result": "string"
+        },
+        {
+          "name": "Outline",
+          "kind": "method",
+          "parameters": [
+            "*sitter.Node",
+            "string"
+          ],
+          "result": "[]Symbol"
+        },
+        {
+          "name": "Rules",
+          "kind": "method",
+          "result": "*structureRules"
+        },
+        {
+          "name": "grammar",
+          "kind": "property",
+          "result": "*sitter.Language"
+        },
+        {
+          "name": "rules",
+          "kind": "property",
+          "result": "structureRules"
+        }
+      ]
+    },
+    {
+      "name": "kotlinLanguage",
+      "kind": "struct",
+      "file": "parser/language_kotlin.go",
+      "underlyingType": "struct{grammar*sitter.Language;rules structureRules;}",
+      "members": [
+        {
+          "name": "Grammar",
+          "kind": "method",
+          "result": "*sitter.Language"
+        },
+        {
+          "name": "ID",
+          "kind": "method",
+          "result": "string"
+        },
+        {
+          "name": "Outline",
+          "kind": "method",
+          "parameters": [
+            "*sitter.Node",
+            "string"
+          ],
+          "result": "[]Symbol"
+        },
+        {
+          "name": "Rules",
+          "kind": "method",
+          "result": "*structureRules"
+        },
+        {
+          "name": "grammar",
+          "kind": "property",
+          "result": "*sitter.Language"
+        },
+        {
+          "name": "rules",
+          "kind": "property",
+          "result": "structureRules"
+        }
+      ]
+    },
+    {
+      "name": "languageAdapter",
+      "kind": "interface",
+      "file": "parser/language.go",
+      "underlyingType": "interface{ID()string;Grammar()*sitter.Language;Rules()*structureRules;Outline(root*sitter.Node,content string)[]Symbol;}",
+      "members": [
+        {
+          "name": "Grammar",
+          "kind": "method",
+          "result": "*sitter.Language"
+        },
+        {
+          "name": "ID",
+          "kind": "method",
+          "result": "string"
+        },
+        {
+          "name": "Outline",
+          "kind": "method",
+          "parameters": [
+            "*sitter.Node",
+            "string"
+          ],
+          "result": "[]Symbol"
+        },
+        {
+          "name": "Rules",
+          "kind": "method",
+          "result": "*structureRules"
+        }
+      ]
+    },
+    {
+      "name": "matchLines",
+      "kind": "struct",
+      "file": "parser/tree_sitter.go",
+      "underlyingType": "struct{set map[int]bool;sorted[]int;}",
+      "members": [
+        {
+          "name": "hitsRange",
+          "kind": "method",
+          "parameters": [
+            "int",
+            "int"
+          ],
+          "result": "bool"
+        },
+        {
+          "name": "set",
+          "kind": "property",
+          "result": "map[int]bool"
+        },
+        {
+          "name": "sorted",
+          "kind": "property",
+          "result": "[]int"
+        }
+      ]
+    },
+    {
+      "name": "mdHeading",
+      "kind": "struct",
+      "file": "parser/markdown.go",
+      "underlyingType": "struct{level int;line int;title string;}",
+      "members": [
+        {
+          "name": "level",
+          "kind": "property",
+          "result": "int"
+        },
+        {
+          "name": "line",
+          "kind": "property",
+          "result": "int"
+        },
+        {
+          "name": "title",
+          "kind": "property",
+          "result": "string"
+        }
+      ]
+    },
+    {
+      "name": "mdNode",
+      "kind": "struct",
+      "file": "parser/markdown.go",
+      "underlyingType": "struct{level int;sym Symbol;kids[]*mdNode;}",
+      "members": [
+        {
+          "name": "kids",
+          "kind": "property",
+          "result": "[]*mdNode"
+        },
+        {
+          "name": "level",
+          "kind": "property",
+          "result": "int"
+        },
+        {
+          "name": "sym",
+          "kind": "property",
+          "result": "Symbol"
+        }
+      ]
+    },
+    {
+      "name": "pooledParser",
+      "kind": "struct",
+      "file": "parser/tree_sitter.go",
+      "underlyingType": "struct{p*sitter.Parser;lang*sitter.Language;}",
+      "members": [
+        {
+          "name": "lang",
+          "kind": "property",
+          "result": "*sitter.Language"
+        },
+        {
+          "name": "p",
+          "kind": "property",
+          "result": "*sitter.Parser"
+        }
+      ]
+    },
+    {
+      "name": "pythonLanguage",
+      "kind": "struct",
+      "file": "parser/language_python.go",
+      "underlyingType": "struct{grammar*sitter.Language;rules structureRules;}",
+      "members": [
+        {
+          "name": "Grammar",
+          "kind": "method",
+          "result": "*sitter.Language"
+        },
+        {
+          "name": "ID",
+          "kind": "method",
+          "result": "string"
+        },
+        {
+          "name": "Outline",
+          "kind": "method",
+          "parameters": [
+            "*sitter.Node",
+            "string"
+          ],
+          "result": "[]Symbol"
+        },
+        {
+          "name": "Rules",
+          "kind": "method",
+          "result": "*structureRules"
+        },
+        {
+          "name": "grammar",
+          "kind": "property",
+          "result": "*sitter.Language"
+        },
+        {
+          "name": "rules",
+          "kind": "property",
+          "result": "structureRules"
+        }
+      ]
+    },
+    {
+      "name": "rustLanguage",
+      "kind": "struct",
+      "file": "parser/language_rust.go",
+      "underlyingType": "struct{grammar*sitter.Language;rules structureRules;}",
+      "members": [
+        {
+          "name": "Grammar",
+          "kind": "method",
+          "result": "*sitter.Language"
+        },
+        {
+          "name": "ID",
+          "kind": "method",
+          "result": "string"
+        },
+        {
+          "name": "Outline",
+          "kind": "method",
+          "parameters": [
+            "*sitter.Node",
+            "string"
+          ],
+          "result": "[]Symbol"
+        },
+        {
+          "name": "Rules",
+          "kind": "method",
+          "result": "*structureRules"
+        },
+        {
+          "name": "grammar",
+          "kind": "property",
+          "result": "*sitter.Language"
+        },
+        {
+          "name": "rules",
+          "kind": "property",
+          "result": "structureRules"
+        }
+      ]
+    },
+    {
+      "name": "shellLanguage",
+      "kind": "struct",
+      "file": "parser/language_shell.go",
+      "underlyingType": "struct{grammar*sitter.Language;rules structureRules;}",
+      "members": [
+        {
+          "name": "Grammar",
+          "kind": "method",
+          "result": "*sitter.Language"
+        },
+        {
+          "name": "ID",
+          "kind": "method",
+          "result": "string"
+        },
+        {
+          "name": "Outline",
+          "kind": "method",
+          "parameters": [
+            "*sitter.Node",
+            "string"
+          ],
+          "result": "[]Symbol"
+        },
+        {
+          "name": "Rules",
+          "kind": "method",
+          "result": "*structureRules"
+        },
+        {
+          "name": "grammar",
+          "kind": "property",
+          "result": "*sitter.Language"
+        },
+        {
+          "name": "rules",
+          "kind": "property",
+          "result": "structureRules"
+        }
+      ]
+    },
+    {
+      "name": "stringSet",
+      "kind": "type",
+      "file": "parser/language.go",
+      "underlyingType": "map[string]struct{}",
+      "members": [
+        {
+          "name": "contains",
+          "kind": "method",
+          "parameters": [
+            "string"
+          ],
+          "result": "bool"
+        }
+      ]
+    },
+    {
+      "name": "structureRules",
+      "kind": "struct",
+      "file": "parser/language.go",
+      "underlyingType": "struct{structuralTypes stringSet;contextTypes stringSet;containerTypes stringSet;classDeclarationTypes stringSet;classBodyTypes stringSet;exportTypes stringSet;functionLikeTypes stringSet;blockTypes stringSet;jsxElementTypes stringSet;nameFieldCandidates stringSet;}",
       "members": [
         {
           "name": "blockTypes",
@@ -234,16 +841,6 @@
           "result": "stringSet"
         },
         {
-          "name": "grammar",
-          "kind": "property",
-          "result": "*sitter.Language"
-        },
-        {
-          "name": "id",
-          "kind": "property",
-          "result": "string"
-        },
-        {
           "name": "jsxElementTypes",
           "kind": "property",
           "result": "stringSet"
@@ -261,109 +858,49 @@
       ]
     },
     {
-      "name": "matchLines",
+      "name": "typeScriptLanguage",
       "kind": "struct",
-      "file": "internal/parser/tree_sitter.go",
-      "underlyingType": "struct{set map[int]bool;sorted[]int;}",
+      "file": "parser/language_typescript.go",
+      "underlyingType": "struct{id string;grammar*sitter.Language;rules structureRules;}",
       "members": [
         {
-          "name": "hitsRange",
+          "name": "Grammar",
+          "kind": "method",
+          "result": "*sitter.Language"
+        },
+        {
+          "name": "ID",
+          "kind": "method",
+          "result": "string"
+        },
+        {
+          "name": "Outline",
           "kind": "method",
           "parameters": [
-            "int",
-            "int"
+            "*sitter.Node",
+            "string"
           ],
-          "result": "bool"
+          "result": "[]Symbol"
         },
         {
-          "name": "set",
-          "kind": "property",
-          "result": "map[int]bool"
+          "name": "Rules",
+          "kind": "method",
+          "result": "*structureRules"
         },
         {
-          "name": "sorted",
-          "kind": "property",
-          "result": "[]int"
-        }
-      ]
-    },
-    {
-      "name": "mdHeading",
-      "kind": "struct",
-      "file": "internal/parser/outline.go",
-      "underlyingType": "struct{level int;line int;title string;}",
-      "members": [
-        {
-          "name": "level",
-          "kind": "property",
-          "result": "int"
-        },
-        {
-          "name": "line",
-          "kind": "property",
-          "result": "int"
-        },
-        {
-          "name": "title",
-          "kind": "property",
-          "result": "string"
-        }
-      ]
-    },
-    {
-      "name": "mdNode",
-      "kind": "struct",
-      "file": "internal/parser/outline.go",
-      "underlyingType": "struct{level int;sym Symbol;kids[]*mdNode;}",
-      "members": [
-        {
-          "name": "kids",
-          "kind": "property",
-          "result": "[]*mdNode"
-        },
-        {
-          "name": "level",
-          "kind": "property",
-          "result": "int"
-        },
-        {
-          "name": "sym",
-          "kind": "property",
-          "result": "Symbol"
-        }
-      ]
-    },
-    {
-      "name": "pooledParser",
-      "kind": "struct",
-      "file": "internal/parser/tree_sitter.go",
-      "underlyingType": "struct{p*sitter.Parser;lang*sitter.Language;}",
-      "members": [
-        {
-          "name": "lang",
+          "name": "grammar",
           "kind": "property",
           "result": "*sitter.Language"
         },
         {
-          "name": "p",
+          "name": "id",
           "kind": "property",
-          "result": "*sitter.Parser"
-        }
-      ]
-    },
-    {
-      "name": "stringSet",
-      "kind": "type",
-      "file": "internal/parser/tree_sitter.go",
-      "underlyingType": "map[string]struct{}",
-      "members": [
+          "result": "string"
+        },
         {
-          "name": "contains",
-          "kind": "method",
-          "parameters": [
-            "string"
-          ],
-          "result": "bool"
+          "name": "rules",
+          "kind": "property",
+          "result": "structureRules"
         }
       ]
     }
@@ -372,7 +909,7 @@
     {
       "name": "BuildSegments",
       "kind": "function",
-      "file": "internal/parser/segments.go",
+      "file": "parser/segments.go",
       "parameters": [
         "string",
         "string",
@@ -384,7 +921,7 @@
     {
       "name": "LanguageFor",
       "kind": "function",
-      "file": "internal/parser/content.go",
+      "file": "parser/content.go",
       "parameters": [
         "string"
       ],
@@ -393,7 +930,7 @@
     {
       "name": "OutlineFile",
       "kind": "function",
-      "file": "internal/parser/outline.go",
+      "file": "parser/outline.go",
       "parameters": [
         "string",
         "string"
@@ -403,7 +940,7 @@
     {
       "name": "OutlineFileDepth",
       "kind": "function",
-      "file": "internal/parser/outline.go",
+      "file": "parser/outline.go",
       "parameters": [
         "string",
         "string",
@@ -443,73 +980,213 @@
       "cardinality": "one"
     },
     {
-      "from": "languageConfig",
-      "to": "stringSet",
-      "kind": "association",
-      "via": "field blockTypes",
+      "from": "cLanguage",
+      "to": "Symbol",
+      "kind": "dependency",
+      "via": "method Outline result 1",
+      "cardinality": "many"
+    },
+    {
+      "from": "cLanguage",
+      "to": "languageAdapter",
+      "kind": "implementation",
+      "via": "implements",
       "cardinality": "one"
     },
     {
-      "from": "languageConfig",
-      "to": "stringSet",
+      "from": "cLanguage",
+      "to": "structureRules",
       "kind": "association",
-      "via": "field classBodyTypes",
+      "via": "field rules",
       "cardinality": "one"
     },
     {
-      "from": "languageConfig",
-      "to": "stringSet",
-      "kind": "association",
-      "via": "field classDeclarationTypes",
+      "from": "cLanguage",
+      "to": "structureRules",
+      "kind": "dependency",
+      "via": "method Rules result 1",
       "cardinality": "one"
     },
     {
-      "from": "languageConfig",
-      "to": "stringSet",
-      "kind": "association",
-      "via": "field containerTypes",
+      "from": "cSharpLanguage",
+      "to": "Symbol",
+      "kind": "dependency",
+      "via": "method Outline result 1",
+      "cardinality": "many"
+    },
+    {
+      "from": "cSharpLanguage",
+      "to": "languageAdapter",
+      "kind": "implementation",
+      "via": "implements",
       "cardinality": "one"
     },
     {
-      "from": "languageConfig",
-      "to": "stringSet",
+      "from": "cSharpLanguage",
+      "to": "structureRules",
       "kind": "association",
-      "via": "field contextTypes",
+      "via": "field rules",
       "cardinality": "one"
     },
     {
-      "from": "languageConfig",
-      "to": "stringSet",
-      "kind": "association",
-      "via": "field exportTypes",
+      "from": "cSharpLanguage",
+      "to": "structureRules",
+      "kind": "dependency",
+      "via": "method Rules result 1",
       "cardinality": "one"
     },
     {
-      "from": "languageConfig",
-      "to": "stringSet",
-      "kind": "association",
-      "via": "field functionLikeTypes",
+      "from": "cppLanguage",
+      "to": "Symbol",
+      "kind": "dependency",
+      "via": "method Outline result 1",
+      "cardinality": "many"
+    },
+    {
+      "from": "cppLanguage",
+      "to": "languageAdapter",
+      "kind": "implementation",
+      "via": "implements",
       "cardinality": "one"
     },
     {
-      "from": "languageConfig",
-      "to": "stringSet",
+      "from": "cppLanguage",
+      "to": "structureRules",
       "kind": "association",
-      "via": "field jsxElementTypes",
+      "via": "field rules",
       "cardinality": "one"
     },
     {
-      "from": "languageConfig",
-      "to": "stringSet",
-      "kind": "association",
-      "via": "field nameFieldCandidates",
+      "from": "cppLanguage",
+      "to": "structureRules",
+      "kind": "dependency",
+      "via": "method Rules result 1",
       "cardinality": "one"
     },
     {
-      "from": "languageConfig",
-      "to": "stringSet",
+      "from": "goLanguage",
+      "to": "Symbol",
+      "kind": "dependency",
+      "via": "method Outline result 1",
+      "cardinality": "many"
+    },
+    {
+      "from": "goLanguage",
+      "to": "languageAdapter",
+      "kind": "implementation",
+      "via": "implements",
+      "cardinality": "one"
+    },
+    {
+      "from": "goLanguage",
+      "to": "structureRules",
       "kind": "association",
-      "via": "field structuralTypes",
+      "via": "field rules",
+      "cardinality": "one"
+    },
+    {
+      "from": "goLanguage",
+      "to": "structureRules",
+      "kind": "dependency",
+      "via": "method Rules result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "javaLanguage",
+      "to": "Symbol",
+      "kind": "dependency",
+      "via": "method Outline result 1",
+      "cardinality": "many"
+    },
+    {
+      "from": "javaLanguage",
+      "to": "languageAdapter",
+      "kind": "implementation",
+      "via": "implements",
+      "cardinality": "one"
+    },
+    {
+      "from": "javaLanguage",
+      "to": "structureRules",
+      "kind": "association",
+      "via": "field rules",
+      "cardinality": "one"
+    },
+    {
+      "from": "javaLanguage",
+      "to": "structureRules",
+      "kind": "dependency",
+      "via": "method Rules result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "javaScriptLanguage",
+      "to": "Symbol",
+      "kind": "dependency",
+      "via": "method Outline result 1",
+      "cardinality": "many"
+    },
+    {
+      "from": "javaScriptLanguage",
+      "to": "languageAdapter",
+      "kind": "implementation",
+      "via": "implements",
+      "cardinality": "one"
+    },
+    {
+      "from": "javaScriptLanguage",
+      "to": "structureRules",
+      "kind": "association",
+      "via": "field rules",
+      "cardinality": "one"
+    },
+    {
+      "from": "javaScriptLanguage",
+      "to": "structureRules",
+      "kind": "dependency",
+      "via": "method Rules result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "kotlinLanguage",
+      "to": "Symbol",
+      "kind": "dependency",
+      "via": "method Outline result 1",
+      "cardinality": "many"
+    },
+    {
+      "from": "kotlinLanguage",
+      "to": "languageAdapter",
+      "kind": "implementation",
+      "via": "implements",
+      "cardinality": "one"
+    },
+    {
+      "from": "kotlinLanguage",
+      "to": "structureRules",
+      "kind": "association",
+      "via": "field rules",
+      "cardinality": "one"
+    },
+    {
+      "from": "kotlinLanguage",
+      "to": "structureRules",
+      "kind": "dependency",
+      "via": "method Rules result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "languageAdapter",
+      "to": "Symbol",
+      "kind": "dependency",
+      "via": "method Outline result 1",
+      "cardinality": "many"
+    },
+    {
+      "from": "languageAdapter",
+      "to": "structureRules",
+      "kind": "dependency",
+      "via": "method Rules result 1",
       "cardinality": "one"
     },
     {
@@ -517,6 +1194,188 @@
       "to": "Symbol",
       "kind": "association",
       "via": "field sym",
+      "cardinality": "one"
+    },
+    {
+      "from": "pythonLanguage",
+      "to": "Symbol",
+      "kind": "dependency",
+      "via": "method Outline result 1",
+      "cardinality": "many"
+    },
+    {
+      "from": "pythonLanguage",
+      "to": "languageAdapter",
+      "kind": "implementation",
+      "via": "implements",
+      "cardinality": "one"
+    },
+    {
+      "from": "pythonLanguage",
+      "to": "structureRules",
+      "kind": "association",
+      "via": "field rules",
+      "cardinality": "one"
+    },
+    {
+      "from": "pythonLanguage",
+      "to": "structureRules",
+      "kind": "dependency",
+      "via": "method Rules result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "rustLanguage",
+      "to": "Symbol",
+      "kind": "dependency",
+      "via": "method Outline result 1",
+      "cardinality": "many"
+    },
+    {
+      "from": "rustLanguage",
+      "to": "languageAdapter",
+      "kind": "implementation",
+      "via": "implements",
+      "cardinality": "one"
+    },
+    {
+      "from": "rustLanguage",
+      "to": "structureRules",
+      "kind": "association",
+      "via": "field rules",
+      "cardinality": "one"
+    },
+    {
+      "from": "rustLanguage",
+      "to": "structureRules",
+      "kind": "dependency",
+      "via": "method Rules result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "shellLanguage",
+      "to": "Symbol",
+      "kind": "dependency",
+      "via": "method Outline result 1",
+      "cardinality": "many"
+    },
+    {
+      "from": "shellLanguage",
+      "to": "languageAdapter",
+      "kind": "implementation",
+      "via": "implements",
+      "cardinality": "one"
+    },
+    {
+      "from": "shellLanguage",
+      "to": "structureRules",
+      "kind": "association",
+      "via": "field rules",
+      "cardinality": "one"
+    },
+    {
+      "from": "shellLanguage",
+      "to": "structureRules",
+      "kind": "dependency",
+      "via": "method Rules result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "structureRules",
+      "to": "stringSet",
+      "kind": "association",
+      "via": "field blockTypes",
+      "cardinality": "one"
+    },
+    {
+      "from": "structureRules",
+      "to": "stringSet",
+      "kind": "association",
+      "via": "field classBodyTypes",
+      "cardinality": "one"
+    },
+    {
+      "from": "structureRules",
+      "to": "stringSet",
+      "kind": "association",
+      "via": "field classDeclarationTypes",
+      "cardinality": "one"
+    },
+    {
+      "from": "structureRules",
+      "to": "stringSet",
+      "kind": "association",
+      "via": "field containerTypes",
+      "cardinality": "one"
+    },
+    {
+      "from": "structureRules",
+      "to": "stringSet",
+      "kind": "association",
+      "via": "field contextTypes",
+      "cardinality": "one"
+    },
+    {
+      "from": "structureRules",
+      "to": "stringSet",
+      "kind": "association",
+      "via": "field exportTypes",
+      "cardinality": "one"
+    },
+    {
+      "from": "structureRules",
+      "to": "stringSet",
+      "kind": "association",
+      "via": "field functionLikeTypes",
+      "cardinality": "one"
+    },
+    {
+      "from": "structureRules",
+      "to": "stringSet",
+      "kind": "association",
+      "via": "field jsxElementTypes",
+      "cardinality": "one"
+    },
+    {
+      "from": "structureRules",
+      "to": "stringSet",
+      "kind": "association",
+      "via": "field nameFieldCandidates",
+      "cardinality": "one"
+    },
+    {
+      "from": "structureRules",
+      "to": "stringSet",
+      "kind": "association",
+      "via": "field structuralTypes",
+      "cardinality": "one"
+    },
+    {
+      "from": "typeScriptLanguage",
+      "to": "Symbol",
+      "kind": "dependency",
+      "via": "method Outline result 1",
+      "cardinality": "many"
+    },
+    {
+      "from": "typeScriptLanguage",
+      "to": "languageAdapter",
+      "kind": "implementation",
+      "via": "implements",
+      "cardinality": "one"
+    },
+    {
+      "from": "typeScriptLanguage",
+      "to": "structureRules",
+      "kind": "association",
+      "via": "field rules",
+      "cardinality": "one"
+    },
+    {
+      "from": "typeScriptLanguage",
+      "to": "structureRules",
+      "kind": "dependency",
+      "via": "method Rules result 1",
       "cardinality": "one"
     }
   ]

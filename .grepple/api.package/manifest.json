@@ -2,8 +2,8 @@
   "formatVersion": 1,
   "package": {
     "name": "api",
-    "importPath": "grepple/internal/api",
-    "sourceDirectory": "internal/api",
+    "importPath": "github.com/greppleai/grepple/api",
+    "sourceDirectory": "api",
     "documentation": "Package api defines Grepple-controlled HTTP request and response contracts."
   },
   "scope": {
@@ -17,25 +17,25 @@
   },
   "summary": {
     "sourceFiles": 1,
-    "declarations": 18,
-    "exportedTypes": 18,
+    "declarations": 15,
+    "exportedTypes": 15,
     "internalTypes": 0,
-    "members": 83,
+    "members": 73,
     "exportedFunctions": 0,
     "fiberRoutes": 0,
-    "relations": 11
+    "relations": 10
   },
-  "semanticModelDigest": "sha256:b9dc8c81fbbb59a5b7633c16c36e6c730e3113ee79f9c939239b060c8ce430c2",
+  "semanticModelDigest": "sha256:06046923488270ac78bf9087e64fb722f91d9cceb1dcf6c27ffcd19ce705d09b",
   "sourceFiles": [
     {
-      "path": "internal/api/model.go"
+      "path": "api/model.go"
     }
   ],
   "declarations": [
     {
       "name": "ContextLine",
       "kind": "struct",
-      "file": "internal/api/model.go",
+      "file": "api/model.go",
       "underlyingType": "struct{Line int`json:\"line\"`;Text string`json:\"text\"`;Match bool`json:\"match\"`;}",
       "members": [
         {
@@ -67,7 +67,7 @@
     {
       "name": "FileResult",
       "kind": "struct",
-      "file": "internal/api/model.go",
+      "file": "api/model.go",
       "underlyingType": "struct{Path string`json:\"path\"`;Repo string`json:\"repo,omitempty\"`;Language string`json:\"language\"`;Matches[]ResultMatch`json:\"matches\"`;Segments[]ResultSegment`json:\"segments\"`;Context[]ContextLine`json:\"context,omitempty\"`;}",
       "members": [
         {
@@ -121,25 +121,9 @@
       ]
     },
     {
-      "name": "IndexListResponse",
-      "kind": "struct",
-      "file": "internal/api/model.go",
-      "underlyingType": "struct{Repos[]RepoInfo`json:\"repos\"`;}",
-      "members": [
-        {
-          "name": "Repos",
-          "kind": "property",
-          "result": "[]RepoInfo",
-          "structTag": {
-            "value": "json:\"repos\""
-          }
-        }
-      ]
-    },
-    {
       "name": "RepoCount",
       "kind": "struct",
-      "file": "internal/api/model.go",
+      "file": "api/model.go",
       "underlyingType": "struct{Repo string`json:\"repo\"`;Files int`json:\"files\"`;Matches int`json:\"matches\"`;}",
       "members": [
         {
@@ -169,65 +153,9 @@
       ]
     },
     {
-      "name": "RepoInfo",
-      "kind": "struct",
-      "file": "internal/api/model.go",
-      "underlyingType": "struct{Repo string`json:\"repo\"`;URL string`json:\"url\"`;Ref string`json:\"ref\"`;Dir string`json:\"dir\"`;Head*string`json:\"head\"`;IndexedAt string`json:\"indexedAt\"`;}",
-      "members": [
-        {
-          "name": "Dir",
-          "kind": "property",
-          "result": "string",
-          "structTag": {
-            "value": "json:\"dir\""
-          }
-        },
-        {
-          "name": "Head",
-          "kind": "property",
-          "result": "*string",
-          "structTag": {
-            "value": "json:\"head\""
-          }
-        },
-        {
-          "name": "IndexedAt",
-          "kind": "property",
-          "result": "string",
-          "structTag": {
-            "value": "json:\"indexedAt\""
-          }
-        },
-        {
-          "name": "Ref",
-          "kind": "property",
-          "result": "string",
-          "structTag": {
-            "value": "json:\"ref\""
-          }
-        },
-        {
-          "name": "Repo",
-          "kind": "property",
-          "result": "string",
-          "structTag": {
-            "value": "json:\"repo\""
-          }
-        },
-        {
-          "name": "URL",
-          "kind": "property",
-          "result": "string",
-          "structTag": {
-            "value": "json:\"url\""
-          }
-        }
-      ]
-    },
-    {
       "name": "RepoListEntry",
       "kind": "struct",
-      "file": "internal/api/model.go",
+      "file": "api/model.go",
       "underlyingType": "struct{Repo string`json:\"repo\"`;Shard string`json:\"shard,omitempty\"`;Ref string`json:\"ref,omitempty\"`;Head*string`json:\"head,omitempty\"`;IndexedAt string`json:\"indexedAt,omitempty\"`;}",
       "members": [
         {
@@ -273,41 +201,9 @@
       ]
     },
     {
-      "name": "RepoRef",
-      "kind": "struct",
-      "file": "internal/api/model.go",
-      "underlyingType": "struct{Repo string`json:\"repo\"`;URL string`json:\"url,omitempty\"`;Ref string`json:\"ref,omitempty\"`;}",
-      "members": [
-        {
-          "name": "Ref",
-          "kind": "property",
-          "result": "string",
-          "structTag": {
-            "value": "json:\"ref,omitempty\""
-          }
-        },
-        {
-          "name": "Repo",
-          "kind": "property",
-          "result": "string",
-          "structTag": {
-            "value": "json:\"repo\""
-          }
-        },
-        {
-          "name": "URL",
-          "kind": "property",
-          "result": "string",
-          "structTag": {
-            "value": "json:\"url,omitempty\""
-          }
-        }
-      ]
-    },
-    {
       "name": "ReposResponse",
       "kind": "struct",
-      "file": "internal/api/model.go",
+      "file": "api/model.go",
       "underlyingType": "struct{OK bool`json:\"ok\"`;Count int`json:\"count\"`;Repos[]RepoListEntry`json:\"repos\"`;}",
       "members": [
         {
@@ -339,7 +235,7 @@
     {
       "name": "ResultMatch",
       "kind": "struct",
-      "file": "internal/api/model.go",
+      "file": "api/model.go",
       "underlyingType": "struct{Line int`json:\"line\"`;Text string`json:\"text\"`;}",
       "members": [
         {
@@ -363,7 +259,7 @@
     {
       "name": "ResultSegment",
       "kind": "struct",
-      "file": "internal/api/model.go",
+      "file": "api/model.go",
       "underlyingType": "struct{Kind string`json:\"kind\"`;Start int`json:\"start\"`;End int`json:\"end\"`;Text string`json:\"text\"`;}",
       "members": [
         {
@@ -403,7 +299,7 @@
     {
       "name": "Rule",
       "kind": "struct",
-      "file": "internal/api/model.go",
+      "file": "api/model.go",
       "underlyingType": "struct{ID string`json:\"id\"`;Name string`json:\"name,omitempty\"`;Mode string`json:\"mode\"`;Request SearchRequest`json:\"request\"`;CreatedAt string`json:\"createdAt,omitempty\"`;UpdatedAt string`json:\"updatedAt,omitempty\"`;}",
       "members": [
         {
@@ -459,7 +355,7 @@
     {
       "name": "RuleRepoResult",
       "kind": "struct",
-      "file": "internal/api/model.go",
+      "file": "api/model.go",
       "underlyingType": "struct{Repo string`json:\"repo\"`;Files int`json:\"files\"`;Matches int`json:\"matches\"`;Paths[]string`json:\"paths,omitempty\"`;Head string`json:\"head,omitempty\"`;EvaluatedAt string`json:\"evaluatedAt,omitempty\"`;}",
       "members": [
         {
@@ -515,7 +411,7 @@
     {
       "name": "RuleResults",
       "kind": "struct",
-      "file": "internal/api/model.go",
+      "file": "api/model.go",
       "underlyingType": "struct{Rule string`json:\"rule\"`;Mode string`json:\"mode,omitempty\"`;Generation int64`json:\"generation,omitempty\"`;Repos[]RuleRepoResult`json:\"repos\"`;Truncated bool`json:\"truncated,omitempty\"`;}",
       "members": [
         {
@@ -563,7 +459,7 @@
     {
       "name": "RuleSet",
       "kind": "struct",
-      "file": "internal/api/model.go",
+      "file": "api/model.go",
       "underlyingType": "struct{Generation int64`json:\"generation\"`;Rules[]Rule`json:\"rules\"`;}",
       "members": [
         {
@@ -587,7 +483,7 @@
     {
       "name": "SearchRequest",
       "kind": "struct",
-      "file": "internal/api/model.go",
+      "file": "api/model.go",
       "underlyingType": "struct{Query*string`json:\"query,omitempty\"`;Globs[]string`json:\"globs,omitempty\"`;Regex*bool`json:\"regex,omitempty\"`;IgnoreCase*bool`json:\"ignoreCase,omitempty\"`;InvertMatch*bool`json:\"invertMatch,omitempty\"`;MaxFiles*int`json:\"maxFiles,omitempty\"`;MaxSegments*int`json:\"maxSegments,omitempty\"`;Skip*int`json:\"skip,omitempty\"`;Limit*int`json:\"limit,omitempty\"`;Repo any`json:\"repo,omitempty\"`;ExcludeRepo any`json:\"excludeRepo,omitempty\"`;Files bool`json:\"files,omitempty\"`;Context any`json:\"context,omitempty\"`;BeforeContext*int`json:\"beforeContext,omitempty\"`;AfterContext*int`json:\"afterContext,omitempty\"`;SkipSegments bool`json:\"skipSegments,omitempty\"`;CountByRepo bool`json:\"countByRepo,omitempty\"`;}",
       "members": [
         {
@@ -731,7 +627,7 @@
     {
       "name": "SearchResponse",
       "kind": "struct",
-      "file": "internal/api/model.go",
+      "file": "api/model.go",
       "underlyingType": "struct{Results[]FileResult`json:\"results\"`;RepoCounts[]RepoCount`json:\"repoCounts,omitempty\"`;ShardErrors[]string`json:\"shardErrors,omitempty\"`;Truncated bool`json:\"truncated,omitempty\"`;}",
       "members": [
         {
@@ -771,7 +667,7 @@
     {
       "name": "TreeEntry",
       "kind": "struct",
-      "file": "internal/api/model.go",
+      "file": "api/model.go",
       "underlyingType": "struct{Path string`json:\"path\"`;Dir bool`json:\"dir\"`;}",
       "members": [
         {
@@ -795,7 +691,7 @@
     {
       "name": "TreeResponse",
       "kind": "struct",
-      "file": "internal/api/model.go",
+      "file": "api/model.go",
       "underlyingType": "struct{Repo string`json:\"repo\"`;Path string`json:\"path\"`;Depth int`json:\"depth\"`;Commit*string`json:\"commit\"`;Entries[]TreeEntry`json:\"entries\"`;}",
       "members": [
         {
@@ -863,13 +759,6 @@
       "to": "ResultSegment",
       "kind": "association",
       "via": "field Segments",
-      "cardinality": "many"
-    },
-    {
-      "from": "IndexListResponse",
-      "to": "RepoInfo",
-      "kind": "association",
-      "via": "field Repos",
       "cardinality": "many"
     },
     {

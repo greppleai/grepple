@@ -1,0 +1,67 @@
+package parser
+
+import "testing"
+
+func TestLanguageForMinimumSupportedSet(t *testing.T) {
+	tests := map[string]string{
+		"main.go": "go", "app.js": "javascript", "app.ts": "typescript", "app.tsx": "tsx",
+		"app.py": "python", "types.pyi": "python", "Main.java": "java", "Main.kt": "kotlin",
+		"Program.cs": "csharp", "main.c": "c", "header.h": "c", "main.cpp": "cpp",
+		"header.hpp": "cpp", "main.rs": "rust", "build.sh": "shell", "build.zsh": "shell",
+	}
+	for path, want := range tests {
+		t.Run(path, func(t *testing.T) {
+			if got := LanguageFor(path); got != want {
+				t.Fatalf("LanguageFor(%q) = %q, want %q", path, got, want)
+			}
+		})
+	}
+}
+
+func TestNewLanguageOutlines(t *testing.T) {
+	tests := []struct {
+		path    string
+		content string
+		kind    string
+		name    string
+	}{
+		{path: "app.py", content: "class Service:\n    def run(self):\n        return 1\n", kind: "function", name: "run"},
+		{path: "App.cs", content: "namespace App { public class Service { public int Run() { return 1; } } }", kind: "method", name: "Run"},
+		{path: "app.c", content: "typedef struct Item { int value; } Item;\nint run(int x) { return x; }\n", kind: "function", name: "run"},
+		{path: "app.cpp", content: "namespace app { class Service { public: int run() { return 1; } }; }\n", kind: "method", name: "run"},
+		{path: "app.rs", content: "trait Runner { fn run(&self); }\nimpl Runner for Service { fn run(&self) {} }\n", kind: "method", name: "run"},
+		{path: "build.sh", content: "build() { echo build; }\n", kind: "function", name: "build"},
+	}
+	for _, test := range tests {
+		t.Run(test.path, func(t *testing.T) {
+			outline := OutlineFile(test.path, test.content)
+			mustFind(t, outline.Symbols, test.kind, test.name)
+		})
+	}
+}
+
+func TestNewLanguagesBuildStructuralSegments(t *testing.T) {
+	tests := []struct {
+		language string
+		content  string
+		hitLine  int
+	}{
+		{language: "python", content: "def run():\n    return 1\n", hitLine: 2},
+		{language: "csharp", content: "class App { int Run() {\n return 1;\n} }\n", hitLine: 2},
+		{language: "c", content: "int run() {\n return 1;\n}\n", hitLine: 2},
+		{language: "cpp", content: "int run() {\n return 1;\n}\n", hitLine: 2},
+		{language: "rust", content: "fn run() {\n  return;\n}\n", hitLine: 2},
+		{language: "shell", content: "run() {\n  echo yes\n}\n", hitLine: 2},
+	}
+	for _, test := range tests {
+		t.Run(test.language, func(t *testing.T) {
+			segments := BuildSegments(test.content, test.language, map[int]bool{test.hitLine: true}, 20)
+			if len(segments) == 0 {
+				t.Fatal("expected structural segments")
+			}
+			if len(segments) == 1 && segments[0].Start == test.hitLine && segments[0].End == test.hitLine {
+				t.Fatalf("expected structural context around hit line, got %#v", segments)
+			}
+		})
+	}
+}

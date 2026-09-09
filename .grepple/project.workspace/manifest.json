@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "workspace": {
     "rootDirectory": ".",
-    "anchorModulePath": "grepple"
+    "anchorModulePath": "github.com/greppleai/grepple"
   },
   "scope": {
     "packages": "direct-non-test-go-packages",
@@ -25,26 +25,42 @@
   },
   "summary": {
     "modules": 2,
-    "packages": 17,
-    "sourceFiles": 100,
-    "declarations": 171,
-    "exportedFunctions": 81,
-    "fiberRoutes": 30,
-    "localImports": 21,
-    "standardLibraryImports": 153,
+    "packages": 11,
+    "sourceFiles": 83,
+    "declarations": 139,
+    "exportedFunctions": 63,
+    "fiberRoutes": 0,
+    "localImports": 9,
+    "standardLibraryImports": 86,
     "externalModuleEdges": 20
   },
-  "semanticModelDigest": "sha256:8c0a3568f059e1d4074cdb85ae2684db185764f2dceb96425d46034723305273",
+  "semanticModelDigest": "sha256:0f77c6d7e6250e4ffcc7191d31a44a2215b502aa8b21d6189c182e5584da5c81",
   "modules": [
     {
-      "path": "grepple",
+      "path": "github.com/greppleai/grepple",
       "directory": ".",
       "packages": [
         {
-          "importPath": "grepple/cmd/grepple",
+          "importPath": "github.com/greppleai/grepple/api",
+          "directory": "api",
+          "name": "api",
+          "documentation": "Package api defines Grepple-controlled HTTP request and response contracts.",
+          "main": false,
+          "sourceFiles": 1,
+          "declarations": 15,
+          "exportedFunctions": 0,
+          "fiberRoutes": 0,
+          "routes": [],
+          "localImports": [],
+          "standardLibraryImports": [],
+          "externalImports": [],
+          "unmappedExternalImports": []
+        },
+        {
+          "importPath": "github.com/greppleai/grepple/cmd/grepple",
           "directory": "cmd/grepple",
           "name": "main",
-          "documentation": "Package main is the grepple CLI entry point: a single query is routed to the local shard (spawning one if needed), searched locally, or fanned out through a remote router depending on the flags and config.",
+          "documentation": "Package main is the process entry point for the Grepple CLI.",
           "main": true,
           "sourceFiles": 1,
           "declarations": 0,
@@ -52,10 +68,11 @@
           "fiberRoutes": 0,
           "routes": [],
           "localImports": [
-            "grepple/internal/command",
-            "grepple/internal/grepplecli"
+            "github.com/greppleai/grepple/internal/cli"
           ],
           "standardLibraryImports": [
+            "errors",
+            "fmt",
             "os",
             "os/signal",
             "syscall"
@@ -64,49 +81,7 @@
           "unmappedExternalImports": []
         },
         {
-          "importPath": "grepple/cmd/router",
-          "directory": "cmd/router",
-          "name": "main",
-          "documentation": "Package main runs the grepple router: the control plane that discovers, assigns, and rebalances shards, ingests GitHub webhooks, authenticates the CLI, and fans searches out to the shard backends.",
-          "main": true,
-          "sourceFiles": 1,
-          "declarations": 0,
-          "exportedFunctions": 0,
-          "fiberRoutes": 0,
-          "routes": [],
-          "localImports": [
-            "grepple/internal/command",
-            "grepple/internal/router"
-          ],
-          "standardLibraryImports": [
-            "os"
-          ],
-          "externalImports": [],
-          "unmappedExternalImports": []
-        },
-        {
-          "importPath": "grepple/cmd/shard",
-          "directory": "cmd/shard",
-          "name": "main",
-          "documentation": "Package main runs the grepple shard: the per-shard binary that keeps a checkout base fresh, serves search over it, and (when configured) maintains a zoekt trigram index.",
-          "main": true,
-          "sourceFiles": 1,
-          "declarations": 0,
-          "exportedFunctions": 0,
-          "fiberRoutes": 0,
-          "routes": [],
-          "localImports": [
-            "grepple/internal/command",
-            "grepple/internal/shard"
-          ],
-          "standardLibraryImports": [
-            "os"
-          ],
-          "externalImports": [],
-          "unmappedExternalImports": []
-        },
-        {
-          "importPath": "grepple/examples/sample-files",
+          "importPath": "github.com/greppleai/grepple/examples/sample-files",
           "directory": "examples/sample-files",
           "name": "server",
           "main": false,
@@ -124,57 +99,20 @@
           "unmappedExternalImports": []
         },
         {
-          "importPath": "grepple/internal/api",
-          "directory": "internal/api",
-          "name": "api",
-          "documentation": "Package api defines Grepple-controlled HTTP request and response contracts.",
+          "importPath": "github.com/greppleai/grepple/internal/cli",
+          "directory": "internal/cli",
+          "name": "cli",
+          "documentation": "Package cli implements the user-facing combined local/remote search, terminal and JSON presentation, and the get and tree command-line workflows.",
           "main": false,
-          "sourceFiles": 1,
-          "declarations": 18,
-          "exportedFunctions": 0,
-          "fiberRoutes": 0,
-          "routes": [],
-          "localImports": [],
-          "standardLibraryImports": [],
-          "externalImports": [],
-          "unmappedExternalImports": []
-        },
-        {
-          "importPath": "grepple/internal/command",
-          "directory": "internal/command",
-          "name": "command",
-          "documentation": "Package command provides the shared process boundary for grepple binaries.",
-          "main": false,
-          "sourceFiles": 1,
-          "declarations": 0,
-          "exportedFunctions": 1,
-          "fiberRoutes": 0,
-          "routes": [],
-          "localImports": [],
-          "standardLibraryImports": [
-            "errors",
-            "fmt",
-            "os",
-            "syscall"
-          ],
-          "externalImports": [],
-          "unmappedExternalImports": []
-        },
-        {
-          "importPath": "grepple/internal/grepplecli",
-          "directory": "internal/grepplecli",
-          "name": "grepplecli",
-          "documentation": "Package grepplecli implements the user-facing combined local/remote search, terminal and JSON presentation, and the get and tree command-line workflows.",
-          "main": false,
-          "sourceFiles": 17,
-          "declarations": 12,
-          "exportedFunctions": 11,
+          "sourceFiles": 23,
+          "declarations": 22,
+          "exportedFunctions": 3,
           "fiberRoutes": 0,
           "routes": [],
           "localImports": [
-            "grepple/internal/api",
-            "grepple/internal/parser",
-            "grepple/internal/search"
+            "github.com/greppleai/grepple/api",
+            "github.com/greppleai/grepple/parser",
+            "github.com/greppleai/grepple/search"
           ],
           "standardLibraryImports": [
             "bytes",
@@ -204,13 +142,13 @@
           "unmappedExternalImports": []
         },
         {
-          "importPath": "grepple/internal/parser",
-          "directory": "internal/parser",
+          "importPath": "github.com/greppleai/grepple/parser",
+          "directory": "parser",
           "name": "parser",
           "documentation": "Package parser provides application source classification and structural parsing.",
           "main": false,
-          "sourceFiles": 7,
-          "declarations": 10,
+          "sourceFiles": 23,
+          "declarations": 22,
           "exportedFunctions": 4,
           "fiberRoutes": 0,
           "routes": [],
@@ -234,6 +172,22 @@
               "modulePath": "github.com/tree-sitter/go-tree-sitter"
             },
             {
+              "importPath": "github.com/tree-sitter/tree-sitter-bash/bindings/go",
+              "modulePath": "github.com/tree-sitter/tree-sitter-bash"
+            },
+            {
+              "importPath": "github.com/tree-sitter/tree-sitter-c-sharp/bindings/go",
+              "modulePath": "github.com/tree-sitter/tree-sitter-c-sharp"
+            },
+            {
+              "importPath": "github.com/tree-sitter/tree-sitter-c/bindings/go",
+              "modulePath": "github.com/tree-sitter/tree-sitter-c"
+            },
+            {
+              "importPath": "github.com/tree-sitter/tree-sitter-cpp/bindings/go",
+              "modulePath": "github.com/tree-sitter/tree-sitter-cpp"
+            },
+            {
               "importPath": "github.com/tree-sitter/tree-sitter-go/bindings/go",
               "modulePath": "github.com/tree-sitter/tree-sitter-go"
             },
@@ -244,6 +198,14 @@
             {
               "importPath": "github.com/tree-sitter/tree-sitter-javascript/bindings/go",
               "modulePath": "github.com/tree-sitter/tree-sitter-javascript"
+            },
+            {
+              "importPath": "github.com/tree-sitter/tree-sitter-python/bindings/go",
+              "modulePath": "github.com/tree-sitter/tree-sitter-python"
+            },
+            {
+              "importPath": "github.com/tree-sitter/tree-sitter-rust/bindings/go",
+              "modulePath": "github.com/tree-sitter/tree-sitter-rust"
             },
             {
               "importPath": "github.com/tree-sitter/tree-sitter-typescript/bindings/go",
@@ -257,247 +219,22 @@
           "unmappedExternalImports": []
         },
         {
-          "importPath": "grepple/internal/repository",
-          "directory": "internal/repository",
-          "name": "repository",
-          "documentation": "Package repository manages checked-out repositories and safe filesystem access for the shard and router control plane.",
-          "main": false,
-          "sourceFiles": 5,
-          "declarations": 1,
-          "exportedFunctions": 4,
-          "fiberRoutes": 0,
-          "routes": [],
-          "localImports": [
-            "grepple/internal/api"
-          ],
-          "standardLibraryImports": [
-            "encoding/base64",
-            "fmt",
-            "os",
-            "os/exec",
-            "path/filepath",
-            "regexp",
-            "sort",
-            "strings",
-            "sync",
-            "time"
-          ],
-          "externalImports": [],
-          "unmappedExternalImports": []
-        },
-        {
-          "importPath": "grepple/internal/router",
-          "directory": "internal/router",
-          "name": "router",
-          "documentation": "Package router implements the distributed search router, including its own command-line parser, index jobs, webhooks, and reconciliation.",
-          "main": false,
-          "sourceFiles": 18,
-          "declarations": 23,
-          "exportedFunctions": 1,
-          "fiberRoutes": 20,
-          "routes": [
-            {
-              "method": "ALL",
-              "path": "/index",
-              "handler": "routerState.handleIndex",
-              "file": "internal/router/router_http.go"
-            },
-            {
-              "method": "DELETE",
-              "path": "/public/rules/:id",
-              "handler": "routerState.handleRuleDelete",
-              "file": "internal/router/router_http.go"
-            },
-            {
-              "method": "GET",
-              "path": "/",
-              "handler": "routerState.handleOverview",
-              "file": "internal/router/router_http.go"
-            },
-            {
-              "method": "GET",
-              "path": "/auth/config",
-              "handler": "routerState.handleAuthConfig",
-              "file": "internal/router/router_http.go"
-            },
-            {
-              "method": "GET",
-              "path": "/backends",
-              "handler": "routerState.handleBackends",
-              "file": "internal/router/router_http.go"
-            },
-            {
-              "method": "GET",
-              "path": "/health",
-              "handler": "routerState.handleHealth",
-              "file": "internal/router/router_http.go"
-            },
-            {
-              "method": "GET",
-              "path": "/jobs",
-              "handler": "routerState.handleJobs",
-              "file": "internal/router/router_http.go"
-            },
-            {
-              "method": "GET",
-              "path": "/livez",
-              "handler": "routerState.handleLivez",
-              "file": "internal/router/router_http.go"
-            },
-            {
-              "method": "GET",
-              "path": "/public/raw",
-              "handler": "routerState.proxyRaw",
-              "file": "internal/router/router_http.go"
-            },
-            {
-              "method": "GET",
-              "path": "/public/repos",
-              "handler": "routerState.handleRepos",
-              "file": "internal/router/router_http.go"
-            },
-            {
-              "method": "GET",
-              "path": "/public/rules",
-              "handler": "routerState.handleRuleList",
-              "file": "internal/router/router_http.go"
-            },
-            {
-              "method": "GET",
-              "path": "/public/rules/:id",
-              "handler": "routerState.handleRuleGet",
-              "file": "internal/router/router_http.go"
-            },
-            {
-              "method": "GET",
-              "path": "/public/rules/:id/results",
-              "handler": "routerState.handleRuleResults",
-              "file": "internal/router/router_http.go"
-            },
-            {
-              "method": "GET",
-              "path": "/public/tree",
-              "handler": "routerState.proxyTree",
-              "file": "internal/router/router_http.go"
-            },
-            {
-              "method": "POST",
-              "path": "/auth/refresh",
-              "handler": "routerState.handleAuthRefresh",
-              "file": "internal/router/router_http.go"
-            },
-            {
-              "method": "POST",
-              "path": "/github/webhook",
-              "handler": "routerState.webhook",
-              "file": "internal/router/router_http.go"
-            },
-            {
-              "method": "POST",
-              "path": "/public/rules",
-              "handler": "routerState.handleRuleCreate",
-              "file": "internal/router/router_http.go"
-            },
-            {
-              "method": "POST",
-              "path": "/public/search",
-              "handler": "routerState.handlePublicSearch",
-              "file": "internal/router/router_http.go"
-            },
-            {
-              "method": "POST",
-              "path": "/rebalance",
-              "handler": "routerState.handleRebalance",
-              "file": "internal/router/router_http.go"
-            },
-            {
-              "method": "POST",
-              "path": "/reconcile",
-              "handler": "routerState.handleReconcile",
-              "file": "internal/router/router_http.go"
-            }
-          ],
-          "localImports": [
-            "grepple/internal/api",
-            "grepple/internal/repository",
-            "grepple/internal/search"
-          ],
-          "standardLibraryImports": [
-            "bytes",
-            "context",
-            "crypto",
-            "crypto/hmac",
-            "crypto/rand",
-            "crypto/rsa",
-            "crypto/sha256",
-            "crypto/x509",
-            "encoding/base64",
-            "encoding/binary",
-            "encoding/hex",
-            "encoding/json",
-            "encoding/pem",
-            "errors",
-            "fmt",
-            "io",
-            "net",
-            "net/http",
-            "net/url",
-            "os",
-            "os/signal",
-            "sort",
-            "strconv",
-            "strings",
-            "sync",
-            "syscall",
-            "time"
-          ],
-          "externalImports": [
-            {
-              "importPath": "github.com/alexflint/go-arg",
-              "modulePath": "github.com/alexflint/go-arg"
-            },
-            {
-              "importPath": "github.com/gofiber/fiber/v3",
-              "modulePath": "github.com/gofiber/fiber/v3"
-            },
-            {
-              "importPath": "github.com/gofiber/fiber/v3/middleware/proxy",
-              "modulePath": "github.com/gofiber/fiber/v3"
-            },
-            {
-              "importPath": "github.com/gofiber/fiber/v3/middleware/recover",
-              "modulePath": "github.com/gofiber/fiber/v3"
-            },
-            {
-              "importPath": "go.uber.org/zap",
-              "modulePath": "go.uber.org/zap"
-            },
-            {
-              "importPath": "go.uber.org/zap/zapcore",
-              "modulePath": "go.uber.org/zap"
-            }
-          ],
-          "unmappedExternalImports": []
-        },
-        {
-          "importPath": "grepple/internal/search",
-          "directory": "internal/search",
+          "importPath": "github.com/greppleai/grepple/search",
+          "directory": "search",
           "name": "search",
           "documentation": "Package search provides file discovery, query and repository filtering, paging, match workers, context, and wire-result construction.",
           "main": false,
-          "sourceFiles": 9,
+          "sourceFiles": 8,
           "declarations": 8,
-          "exportedFunctions": 20,
+          "exportedFunctions": 18,
           "fiberRoutes": 0,
           "routes": [],
           "localImports": [
-            "grepple/internal/api",
-            "grepple/internal/parser"
+            "github.com/greppleai/grepple/api",
+            "github.com/greppleai/grepple/parser"
           ],
           "standardLibraryImports": [
             "bytes",
-            "crypto/rand",
-            "encoding/hex",
             "fmt",
             "io/fs",
             "os",
@@ -514,134 +251,7 @@
           "unmappedExternalImports": []
         },
         {
-          "importPath": "grepple/internal/shard",
-          "directory": "internal/shard",
-          "name": "shard",
-          "documentation": "Package shard implements the repository search shard, including its own command-line parser and required per-shard Zoekt integration.",
-          "main": false,
-          "sourceFiles": 12,
-          "declarations": 27,
-          "exportedFunctions": 2,
-          "fiberRoutes": 10,
-          "routes": [
-            {
-              "method": "ALL",
-              "path": "/index",
-              "handler": "shardController.handleIndex",
-              "file": "internal/shard/shard_controller.go"
-            },
-            {
-              "method": "GET",
-              "path": "/",
-              "handler": "healthController.ready",
-              "file": "internal/shard/health_controller.go"
-            },
-            {
-              "method": "GET",
-              "path": "/health",
-              "handler": "healthController.health",
-              "file": "internal/shard/health_controller.go"
-            },
-            {
-              "method": "GET",
-              "path": "/raw",
-              "handler": "shardController.handleRaw",
-              "file": "internal/shard/shard_controller.go"
-            },
-            {
-              "method": "GET",
-              "path": "/ready",
-              "handler": "healthController.ready",
-              "file": "internal/shard/health_controller.go"
-            },
-            {
-              "method": "GET",
-              "path": "/rules",
-              "handler": "ruleController.handleRulesList",
-              "file": "internal/shard/rule_controller.go"
-            },
-            {
-              "method": "GET",
-              "path": "/rules/:id/results",
-              "handler": "ruleController.handleRuleResults",
-              "file": "internal/shard/rule_controller.go"
-            },
-            {
-              "method": "GET",
-              "path": "/tree",
-              "handler": "shardController.handleTree",
-              "file": "internal/shard/shard_controller.go"
-            },
-            {
-              "method": "POST",
-              "path": "/search",
-              "handler": "shardController.handleSearch",
-              "file": "internal/shard/shard_controller.go"
-            },
-            {
-              "method": "PUT",
-              "path": "/rules",
-              "handler": "ruleController.handleRulesPut",
-              "file": "internal/shard/rule_controller.go"
-            }
-          ],
-          "localImports": [
-            "grepple/internal/api",
-            "grepple/internal/repository",
-            "grepple/internal/search"
-          ],
-          "standardLibraryImports": [
-            "bufio",
-            "bytes",
-            "context",
-            "crypto/sha1",
-            "crypto/sha256",
-            "encoding/json",
-            "errors",
-            "fmt",
-            "io",
-            "net",
-            "net/http",
-            "net/url",
-            "os",
-            "os/exec",
-            "os/signal",
-            "path/filepath",
-            "regexp",
-            "sort",
-            "strconv",
-            "strings",
-            "sync",
-            "syscall",
-            "time",
-            "unicode/utf8"
-          ],
-          "externalImports": [
-            {
-              "importPath": "github.com/alexflint/go-arg",
-              "modulePath": "github.com/alexflint/go-arg"
-            },
-            {
-              "importPath": "github.com/gofiber/fiber/v3",
-              "modulePath": "github.com/gofiber/fiber/v3"
-            },
-            {
-              "importPath": "github.com/gofiber/fiber/v3/middleware/recover",
-              "modulePath": "github.com/gofiber/fiber/v3"
-            },
-            {
-              "importPath": "go.uber.org/zap",
-              "modulePath": "go.uber.org/zap"
-            },
-            {
-              "importPath": "go.uber.org/zap/zapcore",
-              "modulePath": "go.uber.org/zap"
-            }
-          ],
-          "unmappedExternalImports": []
-        },
-        {
-          "importPath": "grepple/testdata/go",
+          "importPath": "github.com/greppleai/grepple/testdata/go",
           "directory": "testdata/go",
           "name": "testdata",
           "main": false,
@@ -661,32 +271,21 @@
       "requiredModules": [
         "github.com/alexflint/go-arg",
         "github.com/alexflint/go-scalar",
-        "github.com/andybalholm/brotli",
-        "github.com/gofiber/fiber/v3",
-        "github.com/gofiber/schema",
-        "github.com/gofiber/utils/v2",
-        "github.com/google/uuid",
-        "github.com/klauspost/compress",
-        "github.com/mattn/go-colorable",
-        "github.com/mattn/go-isatty",
         "github.com/mattn/go-pointer",
-        "github.com/philhofer/fwd",
-        "github.com/tinylib/msgp",
+        "github.com/stretchr/testify",
         "github.com/tree-sitter-grammars/tree-sitter-kotlin",
         "github.com/tree-sitter/go-tree-sitter",
+        "github.com/tree-sitter/tree-sitter-bash",
+        "github.com/tree-sitter/tree-sitter-c",
+        "github.com/tree-sitter/tree-sitter-c-sharp",
+        "github.com/tree-sitter/tree-sitter-cpp",
         "github.com/tree-sitter/tree-sitter-go",
         "github.com/tree-sitter/tree-sitter-java",
         "github.com/tree-sitter/tree-sitter-javascript",
+        "github.com/tree-sitter/tree-sitter-python",
+        "github.com/tree-sitter/tree-sitter-rust",
         "github.com/tree-sitter/tree-sitter-typescript",
-        "github.com/valyala/bytebufferpool",
-        "github.com/valyala/fasthttp",
-        "go.uber.org/multierr",
-        "go.uber.org/zap",
-        "go.yaml.in/yaml/v3",
-        "golang.org/x/crypto",
-        "golang.org/x/net",
-        "golang.org/x/sys",
-        "golang.org/x/text"
+        "go.yaml.in/yaml/v3"
       ]
     },
     {
@@ -848,30 +447,16 @@
     {
       "path": "github.com/alexflint/go-arg",
       "importedBy": [
-        "grepple/internal/grepplecli",
-        "grepple/internal/router",
-        "grepple/internal/shard"
+        "github.com/greppleai/grepple/internal/cli"
       ],
       "packages": [
         "github.com/alexflint/go-arg"
       ]
     },
     {
-      "path": "github.com/gofiber/fiber/v3",
-      "importedBy": [
-        "grepple/internal/router",
-        "grepple/internal/shard"
-      ],
-      "packages": [
-        "github.com/gofiber/fiber/v3",
-        "github.com/gofiber/fiber/v3/middleware/proxy",
-        "github.com/gofiber/fiber/v3/middleware/recover"
-      ]
-    },
-    {
       "path": "github.com/tree-sitter-grammars/tree-sitter-kotlin",
       "importedBy": [
-        "grepple/internal/parser"
+        "github.com/greppleai/grepple/parser"
       ],
       "packages": [
         "github.com/tree-sitter-grammars/tree-sitter-kotlin/bindings/go"
@@ -880,9 +465,9 @@
     {
       "path": "github.com/tree-sitter/go-tree-sitter",
       "importedBy": [
+        "github.com/greppleai/grepple/parser",
         "grepple/hooks/internal/mermaidcode",
-        "grepple/hooks/internal/pihooks",
-        "grepple/internal/parser"
+        "grepple/hooks/internal/pihooks"
       ],
       "packages": [
         "github.com/tree-sitter/go-tree-sitter"
@@ -891,6 +476,7 @@
     {
       "path": "github.com/tree-sitter/tree-sitter-bash",
       "importedBy": [
+        "github.com/greppleai/grepple/parser",
         "grepple/hooks/internal/pihooks"
       ],
       "packages": [
@@ -898,11 +484,38 @@
       ]
     },
     {
+      "path": "github.com/tree-sitter/tree-sitter-c",
+      "importedBy": [
+        "github.com/greppleai/grepple/parser"
+      ],
+      "packages": [
+        "github.com/tree-sitter/tree-sitter-c/bindings/go"
+      ]
+    },
+    {
+      "path": "github.com/tree-sitter/tree-sitter-c-sharp",
+      "importedBy": [
+        "github.com/greppleai/grepple/parser"
+      ],
+      "packages": [
+        "github.com/tree-sitter/tree-sitter-c-sharp/bindings/go"
+      ]
+    },
+    {
+      "path": "github.com/tree-sitter/tree-sitter-cpp",
+      "importedBy": [
+        "github.com/greppleai/grepple/parser"
+      ],
+      "packages": [
+        "github.com/tree-sitter/tree-sitter-cpp/bindings/go"
+      ]
+    },
+    {
       "path": "github.com/tree-sitter/tree-sitter-go",
       "importedBy": [
+        "github.com/greppleai/grepple/parser",
         "grepple/hooks/internal/mermaidcode",
-        "grepple/hooks/internal/pihooks",
-        "grepple/internal/parser"
+        "grepple/hooks/internal/pihooks"
       ],
       "packages": [
         "github.com/tree-sitter/tree-sitter-go/bindings/go"
@@ -911,7 +524,7 @@
     {
       "path": "github.com/tree-sitter/tree-sitter-java",
       "importedBy": [
-        "grepple/internal/parser"
+        "github.com/greppleai/grepple/parser"
       ],
       "packages": [
         "github.com/tree-sitter/tree-sitter-java/bindings/go"
@@ -920,37 +533,44 @@
     {
       "path": "github.com/tree-sitter/tree-sitter-javascript",
       "importedBy": [
-        "grepple/internal/parser"
+        "github.com/greppleai/grepple/parser"
       ],
       "packages": [
         "github.com/tree-sitter/tree-sitter-javascript/bindings/go"
       ]
     },
     {
+      "path": "github.com/tree-sitter/tree-sitter-python",
+      "importedBy": [
+        "github.com/greppleai/grepple/parser"
+      ],
+      "packages": [
+        "github.com/tree-sitter/tree-sitter-python/bindings/go"
+      ]
+    },
+    {
+      "path": "github.com/tree-sitter/tree-sitter-rust",
+      "importedBy": [
+        "github.com/greppleai/grepple/parser"
+      ],
+      "packages": [
+        "github.com/tree-sitter/tree-sitter-rust/bindings/go"
+      ]
+    },
+    {
       "path": "github.com/tree-sitter/tree-sitter-typescript",
       "importedBy": [
-        "grepple/hooks/internal/mermaidcode",
-        "grepple/internal/parser"
+        "github.com/greppleai/grepple/parser",
+        "grepple/hooks/internal/mermaidcode"
       ],
       "packages": [
         "github.com/tree-sitter/tree-sitter-typescript/bindings/go"
       ]
     },
     {
-      "path": "go.uber.org/zap",
-      "importedBy": [
-        "grepple/internal/router",
-        "grepple/internal/shard"
-      ],
-      "packages": [
-        "go.uber.org/zap",
-        "go.uber.org/zap/zapcore"
-      ]
-    },
-    {
       "path": "go.yaml.in/yaml/v3",
       "importedBy": [
-        "grepple/internal/parser"
+        "github.com/greppleai/grepple/parser"
       ],
       "packages": [
         "go.yaml.in/yaml/v3"

@@ -1,6 +1,6 @@
 classDiagram
-    %% grepple:complete-package grepple/internal/api
-    %% grepple:package-default grepple/internal/api
+    %% grepple:complete-package github.com/greppleai/grepple/api
+    %% grepple:package-default github.com/greppleai/grepple/api
     %% grepple:language-default go
     %% grepple:exact-default
     class ContextLine {
@@ -9,7 +9,7 @@ classDiagram
         +Text: string
     }
     <<struct>> ContextLine
-    %% grepple:file ContextLine internal/api/model.go
+    %% grepple:file ContextLine api/model.go
     %% grepple:struct-tag ContextLine Line "json:\"line\""
     %% grepple:struct-tag ContextLine Match "json:\"match\""
     %% grepple:struct-tag ContextLine Text "json:\"text\""
@@ -22,45 +22,23 @@ classDiagram
         +Segments: []ResultSegment
     }
     <<struct>> FileResult
-    %% grepple:file FileResult internal/api/model.go
+    %% grepple:file FileResult api/model.go
     %% grepple:struct-tag FileResult Context "json:\"context,omitempty\""
     %% grepple:struct-tag FileResult Language "json:\"language\""
     %% grepple:struct-tag FileResult Matches "json:\"matches\""
     %% grepple:struct-tag FileResult Path "json:\"path\""
     %% grepple:struct-tag FileResult Repo "json:\"repo,omitempty\""
     %% grepple:struct-tag FileResult Segments "json:\"segments\""
-    class IndexListResponse {
-        +Repos: []RepoInfo
-    }
-    <<struct>> IndexListResponse
-    %% grepple:file IndexListResponse internal/api/model.go
-    %% grepple:struct-tag IndexListResponse Repos "json:\"repos\""
     class RepoCount {
         +Files: int
         +Matches: int
         +Repo: string
     }
     <<struct>> RepoCount
-    %% grepple:file RepoCount internal/api/model.go
+    %% grepple:file RepoCount api/model.go
     %% grepple:struct-tag RepoCount Files "json:\"files\""
     %% grepple:struct-tag RepoCount Matches "json:\"matches\""
     %% grepple:struct-tag RepoCount Repo "json:\"repo\""
-    class RepoInfo {
-        +Dir: string
-        +Head: *string
-        +IndexedAt: string
-        +Ref: string
-        +Repo: string
-        +URL: string
-    }
-    <<struct>> RepoInfo
-    %% grepple:file RepoInfo internal/api/model.go
-    %% grepple:struct-tag RepoInfo Dir "json:\"dir\""
-    %% grepple:struct-tag RepoInfo Head "json:\"head\""
-    %% grepple:struct-tag RepoInfo IndexedAt "json:\"indexedAt\""
-    %% grepple:struct-tag RepoInfo Ref "json:\"ref\""
-    %% grepple:struct-tag RepoInfo Repo "json:\"repo\""
-    %% grepple:struct-tag RepoInfo URL "json:\"url\""
     class RepoListEntry {
         +Head: *string
         +IndexedAt: string
@@ -69,29 +47,19 @@ classDiagram
         +Shard: string
     }
     <<struct>> RepoListEntry
-    %% grepple:file RepoListEntry internal/api/model.go
+    %% grepple:file RepoListEntry api/model.go
     %% grepple:struct-tag RepoListEntry Head "json:\"head,omitempty\""
     %% grepple:struct-tag RepoListEntry IndexedAt "json:\"indexedAt,omitempty\""
     %% grepple:struct-tag RepoListEntry Ref "json:\"ref,omitempty\""
     %% grepple:struct-tag RepoListEntry Repo "json:\"repo\""
     %% grepple:struct-tag RepoListEntry Shard "json:\"shard,omitempty\""
-    class RepoRef {
-        +Ref: string
-        +Repo: string
-        +URL: string
-    }
-    <<struct>> RepoRef
-    %% grepple:file RepoRef internal/api/model.go
-    %% grepple:struct-tag RepoRef Ref "json:\"ref,omitempty\""
-    %% grepple:struct-tag RepoRef Repo "json:\"repo\""
-    %% grepple:struct-tag RepoRef URL "json:\"url,omitempty\""
     class ReposResponse {
         +Count: int
         +OK: bool
         +Repos: []RepoListEntry
     }
     <<struct>> ReposResponse
-    %% grepple:file ReposResponse internal/api/model.go
+    %% grepple:file ReposResponse api/model.go
     %% grepple:struct-tag ReposResponse Count "json:\"count\""
     %% grepple:struct-tag ReposResponse OK "json:\"ok\""
     %% grepple:struct-tag ReposResponse Repos "json:\"repos\""
@@ -100,7 +68,7 @@ classDiagram
         +Text: string
     }
     <<struct>> ResultMatch
-    %% grepple:file ResultMatch internal/api/model.go
+    %% grepple:file ResultMatch api/model.go
     %% grepple:struct-tag ResultMatch Line "json:\"line\""
     %% grepple:struct-tag ResultMatch Text "json:\"text\""
     class ResultSegment {
@@ -110,7 +78,7 @@ classDiagram
         +Text: string
     }
     <<struct>> ResultSegment
-    %% grepple:file ResultSegment internal/api/model.go
+    %% grepple:file ResultSegment api/model.go
     %% grepple:struct-tag ResultSegment End "json:\"end\""
     %% grepple:struct-tag ResultSegment Kind "json:\"kind\""
     %% grepple:struct-tag ResultSegment Start "json:\"start\""
@@ -124,7 +92,7 @@ classDiagram
         +UpdatedAt: string
     }
     <<struct>> Rule
-    %% grepple:file Rule internal/api/model.go
+    %% grepple:file Rule api/model.go
     %% grepple:struct-tag Rule CreatedAt "json:\"createdAt,omitempty\""
     %% grepple:struct-tag Rule ID "json:\"id\""
     %% grepple:struct-tag Rule Mode "json:\"mode\""
@@ -140,7 +108,7 @@ classDiagram
         +Repo: string
     }
     <<struct>> RuleRepoResult
-    %% grepple:file RuleRepoResult internal/api/model.go
+    %% grepple:file RuleRepoResult api/model.go
     %% grepple:struct-tag RuleRepoResult EvaluatedAt "json:\"evaluatedAt,omitempty\""
     %% grepple:struct-tag RuleRepoResult Files "json:\"files\""
     %% grepple:struct-tag RuleRepoResult Head "json:\"head,omitempty\""
@@ -155,7 +123,7 @@ classDiagram
         +Truncated: bool
     }
     <<struct>> RuleResults
-    %% grepple:file RuleResults internal/api/model.go
+    %% grepple:file RuleResults api/model.go
     %% grepple:struct-tag RuleResults Generation "json:\"generation,omitempty\""
     %% grepple:struct-tag RuleResults Mode "json:\"mode,omitempty\""
     %% grepple:struct-tag RuleResults Repos "json:\"repos\""
@@ -166,7 +134,7 @@ classDiagram
         +Rules: []Rule
     }
     <<struct>> RuleSet
-    %% grepple:file RuleSet internal/api/model.go
+    %% grepple:file RuleSet api/model.go
     %% grepple:struct-tag RuleSet Generation "json:\"generation\""
     %% grepple:struct-tag RuleSet Rules "json:\"rules\""
     class SearchRequest {
@@ -189,7 +157,7 @@ classDiagram
         +SkipSegments: bool
     }
     <<struct>> SearchRequest
-    %% grepple:file SearchRequest internal/api/model.go
+    %% grepple:file SearchRequest api/model.go
     %% grepple:struct-tag SearchRequest AfterContext "json:\"afterContext,omitempty\""
     %% grepple:struct-tag SearchRequest BeforeContext "json:\"beforeContext,omitempty\""
     %% grepple:struct-tag SearchRequest Context "json:\"context,omitempty\""
@@ -214,7 +182,7 @@ classDiagram
         +Truncated: bool
     }
     <<struct>> SearchResponse
-    %% grepple:file SearchResponse internal/api/model.go
+    %% grepple:file SearchResponse api/model.go
     %% grepple:struct-tag SearchResponse RepoCounts "json:\"repoCounts,omitempty\""
     %% grepple:struct-tag SearchResponse Results "json:\"results\""
     %% grepple:struct-tag SearchResponse ShardErrors "json:\"shardErrors,omitempty\""
@@ -224,7 +192,7 @@ classDiagram
         +Path: string
     }
     <<struct>> TreeEntry
-    %% grepple:file TreeEntry internal/api/model.go
+    %% grepple:file TreeEntry api/model.go
     %% grepple:struct-tag TreeEntry Dir "json:\"dir\""
     %% grepple:struct-tag TreeEntry Path "json:\"path\""
     class TreeResponse {
@@ -235,7 +203,7 @@ classDiagram
         +Repo: string
     }
     <<struct>> TreeResponse
-    %% grepple:file TreeResponse internal/api/model.go
+    %% grepple:file TreeResponse api/model.go
     %% grepple:struct-tag TreeResponse Commit "json:\"commit\""
     %% grepple:struct-tag TreeResponse Depth "json:\"depth\""
     %% grepple:struct-tag TreeResponse Entries "json:\"entries\""
@@ -244,7 +212,6 @@ classDiagram
     FileResult "1" --> "*" ContextLine : field Context
     FileResult "1" --> "*" ResultMatch : field Matches
     FileResult "1" --> "*" ResultSegment : field Segments
-    IndexListResponse "1" --> "*" RepoInfo : field Repos
     ReposResponse "1" --> "*" RepoListEntry : field Repos
     Rule "1" --> "1" SearchRequest : field Request
     RuleResults "1" --> "*" RuleRepoResult : field Repos

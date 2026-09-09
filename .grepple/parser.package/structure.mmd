@@ -1,6 +1,6 @@
 classDiagram
-    %% grepple:complete-package grepple/internal/parser
-    %% grepple:package-default grepple/internal/parser
+    %% grepple:complete-package github.com/greppleai/grepple/parser
+    %% grepple:package-default github.com/greppleai/grepple/parser
     %% grepple:language-default go
     %% grepple:exact-default
     class FileOutline {
@@ -9,7 +9,7 @@ classDiagram
         +Symbols: []Symbol
     }
     <<struct>> FileOutline
-    %% grepple:file FileOutline internal/parser/model.go
+    %% grepple:file FileOutline parser/model.go
     %% grepple:struct-tag FileOutline Language "json:\"language\""
     %% grepple:struct-tag FileOutline Path "json:\"path\""
     %% grepple:struct-tag FileOutline Symbols "json:\"symbols\""
@@ -20,7 +20,7 @@ classDiagram
         +Text: string
     }
     <<struct>> Segment
-    %% grepple:file Segment internal/parser/model.go
+    %% grepple:file Segment parser/model.go
     class Symbol {
         +Children: []Symbol
         +End: int
@@ -30,21 +30,162 @@ classDiagram
         +Start: int
     }
     <<struct>> Symbol
-    %% grepple:file Symbol internal/parser/model.go
+    %% grepple:file Symbol parser/model.go
     %% grepple:struct-tag Symbol Children "json:\"children,omitempty\""
     %% grepple:struct-tag Symbol End "json:\"end\""
     %% grepple:struct-tag Symbol Kind "json:\"kind\""
     %% grepple:struct-tag Symbol Name "json:\"name\""
     %% grepple:struct-tag Symbol Signature "json:\"signature,omitempty\""
     %% grepple:struct-tag Symbol Start "json:\"start\""
+    class cLanguage {
+        +Grammar(): *sitter.Language
+        +ID(): string
+        +Outline(*sitter.Node, string): []Symbol
+        +Rules(): *structureRules
+        -grammar: *sitter.Language
+        -rules: structureRules
+    }
+    <<struct>> cLanguage
+    %% grepple:file cLanguage parser/language_c.go
+    class cSharpLanguage {
+        +Grammar(): *sitter.Language
+        +ID(): string
+        +Outline(*sitter.Node, string): []Symbol
+        +Rules(): *structureRules
+        -grammar: *sitter.Language
+        -rules: structureRules
+    }
+    <<struct>> cSharpLanguage
+    %% grepple:file cSharpLanguage parser/language_csharp.go
+    class cppLanguage {
+        +Grammar(): *sitter.Language
+        +ID(): string
+        +Outline(*sitter.Node, string): []Symbol
+        +Rules(): *structureRules
+        -grammar: *sitter.Language
+        -rules: structureRules
+    }
+    <<struct>> cppLanguage
+    %% grepple:file cppLanguage parser/language_cpp.go
     class fenceTracker {
         -skip(string): bool
         -inside: bool
         -marker: byte
     }
     <<struct>> fenceTracker
-    %% grepple:file fenceTracker internal/parser/outline.go
-    class languageConfig {
+    %% grepple:file fenceTracker parser/markdown.go
+    class goLanguage {
+        +Grammar(): *sitter.Language
+        +ID(): string
+        +Outline(*sitter.Node, string): []Symbol
+        +Rules(): *structureRules
+        -grammar: *sitter.Language
+        -rules: structureRules
+    }
+    <<struct>> goLanguage
+    %% grepple:file goLanguage parser/language_go.go
+    class javaLanguage {
+        +Grammar(): *sitter.Language
+        +ID(): string
+        +Outline(*sitter.Node, string): []Symbol
+        +Rules(): *structureRules
+        -grammar: *sitter.Language
+        -rules: structureRules
+    }
+    <<struct>> javaLanguage
+    %% grepple:file javaLanguage parser/language_java.go
+    class javaScriptLanguage {
+        +Grammar(): *sitter.Language
+        +ID(): string
+        +Outline(*sitter.Node, string): []Symbol
+        +Rules(): *structureRules
+        -grammar: *sitter.Language
+        -rules: structureRules
+    }
+    <<struct>> javaScriptLanguage
+    %% grepple:file javaScriptLanguage parser/language_javascript.go
+    class kotlinLanguage {
+        +Grammar(): *sitter.Language
+        +ID(): string
+        +Outline(*sitter.Node, string): []Symbol
+        +Rules(): *structureRules
+        -grammar: *sitter.Language
+        -rules: structureRules
+    }
+    <<struct>> kotlinLanguage
+    %% grepple:file kotlinLanguage parser/language_kotlin.go
+    class languageAdapter {
+        +Grammar(): *sitter.Language
+        +ID(): string
+        +Outline(*sitter.Node, string): []Symbol
+        +Rules(): *structureRules
+    }
+    <<interface>> languageAdapter
+    %% grepple:file languageAdapter parser/language.go
+    class matchLines {
+        -hitsRange(int, int): bool
+        -set: map[int]bool
+        -sorted: []int
+    }
+    <<struct>> matchLines
+    %% grepple:file matchLines parser/tree_sitter.go
+    class mdHeading {
+        -level: int
+        -line: int
+        -title: string
+    }
+    <<struct>> mdHeading
+    %% grepple:file mdHeading parser/markdown.go
+    class mdNode {
+        -kids: []*mdNode
+        -level: int
+        -sym: Symbol
+    }
+    <<struct>> mdNode
+    %% grepple:file mdNode parser/markdown.go
+    class pooledParser {
+        -lang: *sitter.Language
+        -p: *sitter.Parser
+    }
+    <<struct>> pooledParser
+    %% grepple:file pooledParser parser/tree_sitter.go
+    class pythonLanguage {
+        +Grammar(): *sitter.Language
+        +ID(): string
+        +Outline(*sitter.Node, string): []Symbol
+        +Rules(): *structureRules
+        -grammar: *sitter.Language
+        -rules: structureRules
+    }
+    <<struct>> pythonLanguage
+    %% grepple:file pythonLanguage parser/language_python.go
+    class rustLanguage {
+        +Grammar(): *sitter.Language
+        +ID(): string
+        +Outline(*sitter.Node, string): []Symbol
+        +Rules(): *structureRules
+        -grammar: *sitter.Language
+        -rules: structureRules
+    }
+    <<struct>> rustLanguage
+    %% grepple:file rustLanguage parser/language_rust.go
+    class shellLanguage {
+        +Grammar(): *sitter.Language
+        +ID(): string
+        +Outline(*sitter.Node, string): []Symbol
+        +Rules(): *structureRules
+        -grammar: *sitter.Language
+        -rules: structureRules
+    }
+    <<struct>> shellLanguage
+    %% grepple:file shellLanguage parser/language_shell.go
+    class stringSet["stringSet = map&#91;string&#93;struct&#123;&#125;"] {
+        -contains(string): bool
+    }
+    <<type>> stringSet
+    %% grepple:underlying stringSet map[string]struct{}
+    %% grepple:file stringSet parser/language.go
+    class structureRules {
         -blockTypes: stringSet
         -classBodyTypes: stringSet
         -classDeclarationTypes: stringSet
@@ -52,79 +193,101 @@ classDiagram
         -contextTypes: stringSet
         -exportTypes: stringSet
         -functionLikeTypes: stringSet
-        -grammar: *sitter.Language
-        -id: string
         -jsxElementTypes: stringSet
         -nameFieldCandidates: stringSet
         -structuralTypes: stringSet
     }
-    <<struct>> languageConfig
-    %% grepple:file languageConfig internal/parser/tree_sitter.go
-    class matchLines {
-        -hitsRange(int, int): bool
-        -set: map[int]bool
-        -sorted: []int
+    <<struct>> structureRules
+    %% grepple:file structureRules parser/language.go
+    class typeScriptLanguage {
+        +Grammar(): *sitter.Language
+        +ID(): string
+        +Outline(*sitter.Node, string): []Symbol
+        +Rules(): *structureRules
+        -grammar: *sitter.Language
+        -id: string
+        -rules: structureRules
     }
-    <<struct>> matchLines
-    %% grepple:file matchLines internal/parser/tree_sitter.go
-    class mdHeading {
-        -level: int
-        -line: int
-        -title: string
-    }
-    <<struct>> mdHeading
-    %% grepple:file mdHeading internal/parser/outline.go
-    class mdNode {
-        -kids: []*mdNode
-        -level: int
-        -sym: Symbol
-    }
-    <<struct>> mdNode
-    %% grepple:file mdNode internal/parser/outline.go
-    class pooledParser {
-        -lang: *sitter.Language
-        -p: *sitter.Parser
-    }
-    <<struct>> pooledParser
-    %% grepple:file pooledParser internal/parser/tree_sitter.go
-    class stringSet["stringSet = map&#91;string&#93;struct&#123;&#125;"] {
-        -contains(string): bool
-    }
-    <<type>> stringSet
-    %% grepple:underlying stringSet map[string]struct{}
-    %% grepple:file stringSet internal/parser/tree_sitter.go
+    <<struct>> typeScriptLanguage
+    %% grepple:file typeScriptLanguage parser/language_typescript.go
     class BuildSegments {
         +BuildSegments(string, string, map[int]bool, int): []Segment
     }
     <<function>> BuildSegments
-    %% grepple:file BuildSegments internal/parser/segments.go
+    %% grepple:file BuildSegments parser/segments.go
     class LanguageFor {
         +LanguageFor(string): string
     }
     <<function>> LanguageFor
-    %% grepple:file LanguageFor internal/parser/content.go
+    %% grepple:file LanguageFor parser/content.go
     class OutlineFile {
         +OutlineFile(string, string): FileOutline
     }
     <<function>> OutlineFile
-    %% grepple:file OutlineFile internal/parser/outline.go
+    %% grepple:file OutlineFile parser/outline.go
     class OutlineFileDepth {
         +OutlineFileDepth(string, string, int): FileOutline
     }
     <<function>> OutlineFileDepth
-    %% grepple:file OutlineFileDepth internal/parser/outline.go
+    %% grepple:file OutlineFileDepth parser/outline.go
     BuildSegments "1" ..> "*" Segment : result 1
     FileOutline "1" --> "*" Symbol : field Symbols
     OutlineFile "1" ..> "1" FileOutline : result 1
     OutlineFileDepth "1" ..> "1" FileOutline : result 1
-    languageConfig "1" --> "1" stringSet : field blockTypes
-    languageConfig "1" --> "1" stringSet : field classBodyTypes
-    languageConfig "1" --> "1" stringSet : field classDeclarationTypes
-    languageConfig "1" --> "1" stringSet : field containerTypes
-    languageConfig "1" --> "1" stringSet : field contextTypes
-    languageConfig "1" --> "1" stringSet : field exportTypes
-    languageConfig "1" --> "1" stringSet : field functionLikeTypes
-    languageConfig "1" --> "1" stringSet : field jsxElementTypes
-    languageConfig "1" --> "1" stringSet : field nameFieldCandidates
-    languageConfig "1" --> "1" stringSet : field structuralTypes
+    cLanguage "1" ..> "*" Symbol : method Outline result 1
+    languageAdapter <|.. cLanguage : implements
+    cLanguage "1" --> "1" structureRules : field rules
+    cLanguage "1" ..> "1" structureRules : method Rules result 1
+    cSharpLanguage "1" ..> "*" Symbol : method Outline result 1
+    languageAdapter <|.. cSharpLanguage : implements
+    cSharpLanguage "1" --> "1" structureRules : field rules
+    cSharpLanguage "1" ..> "1" structureRules : method Rules result 1
+    cppLanguage "1" ..> "*" Symbol : method Outline result 1
+    languageAdapter <|.. cppLanguage : implements
+    cppLanguage "1" --> "1" structureRules : field rules
+    cppLanguage "1" ..> "1" structureRules : method Rules result 1
+    goLanguage "1" ..> "*" Symbol : method Outline result 1
+    languageAdapter <|.. goLanguage : implements
+    goLanguage "1" --> "1" structureRules : field rules
+    goLanguage "1" ..> "1" structureRules : method Rules result 1
+    javaLanguage "1" ..> "*" Symbol : method Outline result 1
+    languageAdapter <|.. javaLanguage : implements
+    javaLanguage "1" --> "1" structureRules : field rules
+    javaLanguage "1" ..> "1" structureRules : method Rules result 1
+    javaScriptLanguage "1" ..> "*" Symbol : method Outline result 1
+    languageAdapter <|.. javaScriptLanguage : implements
+    javaScriptLanguage "1" --> "1" structureRules : field rules
+    javaScriptLanguage "1" ..> "1" structureRules : method Rules result 1
+    kotlinLanguage "1" ..> "*" Symbol : method Outline result 1
+    languageAdapter <|.. kotlinLanguage : implements
+    kotlinLanguage "1" --> "1" structureRules : field rules
+    kotlinLanguage "1" ..> "1" structureRules : method Rules result 1
+    languageAdapter "1" ..> "*" Symbol : method Outline result 1
+    languageAdapter "1" ..> "1" structureRules : method Rules result 1
     mdNode "1" --> "1" Symbol : field sym
+    pythonLanguage "1" ..> "*" Symbol : method Outline result 1
+    languageAdapter <|.. pythonLanguage : implements
+    pythonLanguage "1" --> "1" structureRules : field rules
+    pythonLanguage "1" ..> "1" structureRules : method Rules result 1
+    rustLanguage "1" ..> "*" Symbol : method Outline result 1
+    languageAdapter <|.. rustLanguage : implements
+    rustLanguage "1" --> "1" structureRules : field rules
+    rustLanguage "1" ..> "1" structureRules : method Rules result 1
+    shellLanguage "1" ..> "*" Symbol : method Outline result 1
+    languageAdapter <|.. shellLanguage : implements
+    shellLanguage "1" --> "1" structureRules : field rules
+    shellLanguage "1" ..> "1" structureRules : method Rules result 1
+    structureRules "1" --> "1" stringSet : field blockTypes
+    structureRules "1" --> "1" stringSet : field classBodyTypes
+    structureRules "1" --> "1" stringSet : field classDeclarationTypes
+    structureRules "1" --> "1" stringSet : field containerTypes
+    structureRules "1" --> "1" stringSet : field contextTypes
+    structureRules "1" --> "1" stringSet : field exportTypes
+    structureRules "1" --> "1" stringSet : field functionLikeTypes
+    structureRules "1" --> "1" stringSet : field jsxElementTypes
+    structureRules "1" --> "1" stringSet : field nameFieldCandidates
+    structureRules "1" --> "1" stringSet : field structuralTypes
+    typeScriptLanguage "1" ..> "*" Symbol : method Outline result 1
+    languageAdapter <|.. typeScriptLanguage : implements
+    typeScriptLanguage "1" --> "1" structureRules : field rules
+    typeScriptLanguage "1" ..> "1" structureRules : method Rules result 1

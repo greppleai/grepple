@@ -1,19 +1,24 @@
-// Package main is the grepple CLI entry point: a single query is routed to
-// the local shard (spawning one if needed), searched locally, or fanned out
-// through a remote router depending on the flags and config.
+// Package main is the process entry point for the Grepple CLI.
 package main
 
 import (
+	"errors"
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
 
-	"grepple/internal/command"
-	"grepple/internal/grepplecli"
+	"github.com/greppleai/grepple/internal/cli"
 )
 
 func main() {
 	// Convert a downstream pipe closing into EPIPE so the CLI can return cleanly.
 	signal.Ignore(syscall.SIGPIPE)
-	command.Run(os.Args[1:], grepplecli.Run)
+	if err := cli.Run(os.Args[1:]); err != nil {
+		if errors.Is(err, syscall.EPIPE) {
+			return
+		}
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(2)
+	}
 }

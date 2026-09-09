@@ -1,2 +1,8 @@
 bin/
 .git/
+.env
+github-app.pem
+node_modules/
+sandbox/
+package.json
+package-lock.json

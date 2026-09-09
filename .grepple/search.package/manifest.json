@@ -2,8 +2,8 @@
   "formatVersion": 1,
   "package": {
     "name": "search",
-    "importPath": "grepple/internal/search",
-    "sourceDirectory": "internal/search",
+    "importPath": "github.com/greppleai/grepple/search",
+    "sourceDirectory": "search",
     "documentation": "Package search provides file discovery, query and repository filtering, paging, match workers, context, and wire-result construction."
   },
   "scope": {
@@ -16,50 +16,47 @@
     "syntacticBuildTagUnion": []
   },
   "summary": {
-    "sourceFiles": 9,
+    "sourceFiles": 8,
     "declarations": 8,
     "exportedTypes": 3,
     "internalTypes": 5,
     "members": 52,
-    "exportedFunctions": 20,
+    "exportedFunctions": 18,
     "fiberRoutes": 0,
     "relations": 18
   },
-  "semanticModelDigest": "sha256:d26f7b387e640c0cb26232b4b8c345deca96878de27c9fd03c9a92bf5e863039",
+  "semanticModelDigest": "sha256:5e65f1e743c118cf04f605b4cb159e894059c0bf8741eca22167eca8be76a090",
   "sourceFiles": [
     {
-      "path": "internal/search/context.go"
+      "path": "search/context.go"
     },
     {
-      "path": "internal/search/doc.go"
+      "path": "search/doc.go"
     },
     {
-      "path": "internal/search/model.go"
+      "path": "search/model.go"
     },
     {
-      "path": "internal/search/result.go"
+      "path": "search/result.go"
     },
     {
-      "path": "internal/search/rules.go"
+      "path": "search/search_engine.go"
     },
     {
-      "path": "internal/search/search_engine.go"
+      "path": "search/search_glob.go"
     },
     {
-      "path": "internal/search/search_glob.go"
+      "path": "search/search_params.go"
     },
     {
-      "path": "internal/search/search_params.go"
-    },
-    {
-      "path": "internal/search/workers.go"
+      "path": "search/workers.go"
     }
   ],
   "declarations": [
     {
       "name": "FileMatch",
       "kind": "struct",
-      "file": "internal/search/model.go",
+      "file": "search/model.go",
       "underlyingType": "struct{File,DisplayPath,Content,Language string;MatchLines map[int]bool;Segments[]parser.Segment;SegmentsReady bool;}",
       "members": [
         {
@@ -102,7 +99,7 @@
     {
       "name": "Params",
       "kind": "struct",
-      "file": "internal/search/model.go",
+      "file": "search/model.go",
       "underlyingType": "struct{Query string`json:\"query\"`;Globs[]string`json:\"globs\"`;Regex bool`json:\"regex\"`;IgnoreCase bool`json:\"ignoreCase\"`;InvertMatch bool`json:\"invertMatch,omitempty\"`;MaxFiles int`json:\"maxFiles,omitempty\"`;MaxSegments int`json:\"maxSegments\"`;Skip int`json:\"skip,omitempty\"`;Limit int`json:\"limit,omitempty\"`;Repo[]string`json:\"repo,omitempty\"`;ExcludeRepo[]string`json:\"excludeRepo,omitempty\"`;Files bool`json:\"files,omitempty\"`;Context int`json:\"context,omitempty\"`;BeforeContext int`json:\"beforeContext,omitempty\"`;AfterContext int`json:\"afterContext,omitempty\"`;SkipSegments bool`json:\"-\"`;Root string`json:\"-\"`;CountByRepo bool`json:\"-\"`;}",
       "members": [
         {
@@ -254,7 +251,7 @@
     {
       "name": "RepoFilter",
       "kind": "struct",
-      "file": "internal/search/search_engine.go",
+      "file": "search/search_engine.go",
       "underlyingType": "struct{include[]repoPattern;exclude[]repoPattern;}",
       "members": [
         {
@@ -280,7 +277,7 @@
     {
       "name": "candidateCollector",
       "kind": "struct",
-      "file": "internal/search/search_glob.go",
+      "file": "search/search_glob.go",
       "underlyingType": "struct{root,cwd string;ignoreCache gitignoreCache;seen map[string]bool;files[]string;}",
       "members": [
         {
@@ -344,7 +341,7 @@
     {
       "name": "candidateScan",
       "kind": "struct",
-      "file": "internal/search/search_engine.go",
+      "file": "search/search_engine.go",
       "underlyingType": "struct{p Params;m func(string)bool;repoFilter*RepoFilter;fromIndex bool;}",
       "members": [
         {
@@ -389,7 +386,7 @@
     {
       "name": "candidateWalker",
       "kind": "struct",
-      "file": "internal/search/search_glob.go",
+      "file": "search/search_glob.go",
       "underlyingType": "struct{root string;ignorePatterns map[string][]string;files[]string;}",
       "members": [
         {
@@ -431,7 +428,7 @@
     {
       "name": "gitignoreCache",
       "kind": "type",
-      "file": "internal/search/search_glob.go",
+      "file": "search/search_glob.go",
       "underlyingType": "map[string][]string",
       "members": [
         {
@@ -447,7 +444,7 @@
     {
       "name": "repoPattern",
       "kind": "struct",
-      "file": "internal/search/search_engine.go",
+      "file": "search/search_engine.go",
       "underlyingType": "struct{glob string;re*regexp.Regexp;}",
       "members": [
         {
@@ -475,7 +472,7 @@
     {
       "name": "AggregateRepoCounts",
       "kind": "function",
-      "file": "internal/search/search_engine.go",
+      "file": "search/search_engine.go",
       "parameters": [
         "[]FileMatch"
       ],
@@ -484,7 +481,7 @@
     {
       "name": "BuildResults",
       "kind": "function",
-      "file": "internal/search/result.go",
+      "file": "search/result.go",
       "parameters": [
         "[]FileMatch",
         "int",
@@ -497,7 +494,7 @@
     {
       "name": "CollectFilesUnder",
       "kind": "function",
-      "file": "internal/search/search_glob.go",
+      "file": "search/search_glob.go",
       "parameters": [
         "[]string",
         "string"
@@ -507,7 +504,7 @@
     {
       "name": "Content",
       "kind": "function",
-      "file": "internal/search/search_engine.go",
+      "file": "search/search_engine.go",
       "parameters": [
         "Params",
         "string",
@@ -518,7 +515,7 @@
     {
       "name": "ContextLines",
       "kind": "function",
-      "file": "internal/search/context.go",
+      "file": "search/context.go",
       "parameters": [
         "string",
         "map[int]bool",
@@ -531,7 +528,7 @@
     {
       "name": "EnforcePageLimit",
       "kind": "function",
-      "file": "internal/search/search_params.go",
+      "file": "search/search_params.go",
       "parameters": [
         "*Params",
         "api.SearchRequest"
@@ -540,7 +537,7 @@
     {
       "name": "Files",
       "kind": "function",
-      "file": "internal/search/search_engine.go",
+      "file": "search/search_engine.go",
       "parameters": [
         "Params",
         "[]string"
@@ -550,7 +547,7 @@
     {
       "name": "ListFilePaths",
       "kind": "function",
-      "file": "internal/search/search_engine.go",
+      "file": "search/search_engine.go",
       "parameters": [
         "Params",
         "[]string"
@@ -560,7 +557,7 @@
     {
       "name": "NewRepoFilter",
       "kind": "function",
-      "file": "internal/search/search_engine.go",
+      "file": "search/search_engine.go",
       "parameters": [
         "[]string",
         "[]string"
@@ -568,18 +565,9 @@
       "result": "*RepoFilter"
     },
     {
-      "name": "NormalizeRule",
-      "kind": "function",
-      "file": "internal/search/rules.go",
-      "parameters": [
-        "api.Rule"
-      ],
-      "result": "tuple\u003capi.Rule,error\u003e"
-    },
-    {
       "name": "PathMatchesGlobs",
       "kind": "function",
-      "file": "internal/search/search_glob.go",
+      "file": "search/search_glob.go",
       "parameters": [
         "string",
         "[]string"
@@ -589,7 +577,7 @@
     {
       "name": "RepoID",
       "kind": "function",
-      "file": "internal/search/search_engine.go",
+      "file": "search/search_engine.go",
       "parameters": [
         "string"
       ],
@@ -598,7 +586,7 @@
     {
       "name": "RepoMatches",
       "kind": "function",
-      "file": "internal/search/search_params.go",
+      "file": "search/search_params.go",
       "parameters": [
         "string",
         "[]string"
@@ -608,7 +596,7 @@
     {
       "name": "RepoMatchesAny",
       "kind": "function",
-      "file": "internal/search/search_params.go",
+      "file": "search/search_params.go",
       "parameters": [
         "string",
         "[]string"
@@ -618,7 +606,7 @@
     {
       "name": "ResolveRequest",
       "kind": "function",
-      "file": "internal/search/search_params.go",
+      "file": "search/search_params.go",
       "parameters": [
         "api.SearchRequest"
       ],
@@ -627,23 +615,15 @@
     {
       "name": "SortRepoCounts",
       "kind": "function",
-      "file": "internal/search/search_engine.go",
+      "file": "search/search_engine.go",
       "parameters": [
         "[]api.RepoCount"
       ]
     },
     {
-      "name": "SortRuleRepoResults",
-      "kind": "function",
-      "file": "internal/search/rules.go",
-      "parameters": [
-        "[]api.RuleRepoResult"
-      ]
-    },
-    {
       "name": "SplitLines",
       "kind": "function",
-      "file": "internal/search/search_engine.go",
+      "file": "search/search_engine.go",
       "parameters": [
         "string"
       ],
@@ -652,7 +632,7 @@
     {
       "name": "ToResult",
       "kind": "function",
-      "file": "internal/search/result.go",
+      "file": "search/result.go",
       "parameters": [
         "FileMatch",
         "[]parser.Segment",
@@ -665,7 +645,7 @@
     {
       "name": "WorkerCount",
       "kind": "function",
-      "file": "internal/search/workers.go",
+      "file": "search/workers.go",
       "result": "int"
     }
   ],

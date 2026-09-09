@@ -9,7 +9,7 @@ pattern-match `s.` as "the receiver".
 ## Preferred approach
 
 1. Look at the type's other methods and pick the majority receiver name:
-   `grepple "func (.*shard)" internal/shard --line-only`.
+	`grepple 'func \([a-z]+ \*TypeName\)' path/to/package --line-only`.
 2. Rename the outlier method's receiver to match, updating its body
    references only.
 3. Keep it short (1–2 letters derived from the type), never `this`/`self`.
