@@ -2,7 +2,7 @@ classDiagram
     %% grepple:package-default grepple/internal/api
     %% grepple:language-default go
     direction LR
-    note "Package api defines Grepple-controlled HTTP request and response contracts. | package grepple/internal/api | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=1, declarations=18, exportedTypes=18, internalTypes=0, members=82, exportedFunctions=0, fiberRoutes=0, relations=11"
+    note "Package api defines Grepple-controlled HTTP request and response contracts. | package grepple/internal/api | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=1, declarations=18, exportedTypes=18, internalTypes=0, members=83, exportedFunctions=0, fiberRoutes=0, relations=11"
     namespace data_contracts {
         class ContextLine {
             +Line: int
@@ -110,6 +110,7 @@ classDiagram
             +Files: bool
             +Globs: []string
             +IgnoreCase: *bool
+            +InvertMatch: *bool
             +Limit: *int
             +MaxFiles: *int
             +MaxSegments: *int

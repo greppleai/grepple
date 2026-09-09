@@ -6,6 +6,7 @@ func TestParseSearchArgs(t *testing.T) {
 	options, server, remote, err := parseSearchArgs([]string{
 		"--line-only",
 		"--ignore-case",
+		"--invert-match",
 		"--max-files", "5",
 		"--server", "http://search.example",
 		"needle",
@@ -21,10 +22,14 @@ func TestParseSearchArgs(t *testing.T) {
 	if server != "http://search.example" || !remote {
 		t.Fatalf("unexpected target options: server=%q remote=%v", server, remote)
 	}
-	if !options.LineOnly || !options.Params.IgnoreCase || options.Params.MaxFiles != 5 {
+	if !options.LineOnly || !options.Params.IgnoreCase || !options.Params.InvertMatch || options.Params.MaxFiles != 5 {
 		t.Fatalf("unexpected options: %#v", options)
 	}
 	if options.Params.Query != "needle" || len(options.Params.Globs) != 1 {
 		t.Fatalf("unexpected search parameters: %#v", options.Params)
+	}
+	request := searchRequestFromParams(options.Params)
+	if request.InvertMatch == nil || !*request.InvertMatch {
+		t.Fatalf("invert-match was not preserved in the remote request: %#v", request)
 	}
 }

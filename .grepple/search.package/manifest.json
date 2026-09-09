@@ -20,12 +20,12 @@
     "declarations": 8,
     "exportedTypes": 3,
     "internalTypes": 5,
-    "members": 51,
+    "members": 52,
     "exportedFunctions": 20,
     "fiberRoutes": 0,
     "relations": 18
   },
-  "semanticModelDigest": "sha256:491b153adb144d8ac022ea3ad090c23094614fcc392c44964aab91942832bff9",
+  "semanticModelDigest": "sha256:d26f7b387e640c0cb26232b4b8c345deca96878de27c9fd03c9a92bf5e863039",
   "sourceFiles": [
     {
       "path": "internal/search/context.go"
@@ -103,7 +103,7 @@
       "name": "Params",
       "kind": "struct",
       "file": "internal/search/model.go",
-      "underlyingType": "struct{Query string`json:\"query\"`;Globs[]string`json:\"globs\"`;Regex bool`json:\"regex\"`;IgnoreCase bool`json:\"ignoreCase\"`;MaxFiles int`json:\"maxFiles,omitempty\"`;MaxSegments int`json:\"maxSegments\"`;Skip int`json:\"skip,omitempty\"`;Limit int`json:\"limit,omitempty\"`;Repo[]string`json:\"repo,omitempty\"`;ExcludeRepo[]string`json:\"excludeRepo,omitempty\"`;Files bool`json:\"files,omitempty\"`;Context int`json:\"context,omitempty\"`;BeforeContext int`json:\"beforeContext,omitempty\"`;AfterContext int`json:\"afterContext,omitempty\"`;SkipSegments bool`json:\"-\"`;Root string`json:\"-\"`;CountByRepo bool`json:\"-\"`;}",
+      "underlyingType": "struct{Query string`json:\"query\"`;Globs[]string`json:\"globs\"`;Regex bool`json:\"regex\"`;IgnoreCase bool`json:\"ignoreCase\"`;InvertMatch bool`json:\"invertMatch,omitempty\"`;MaxFiles int`json:\"maxFiles,omitempty\"`;MaxSegments int`json:\"maxSegments\"`;Skip int`json:\"skip,omitempty\"`;Limit int`json:\"limit,omitempty\"`;Repo[]string`json:\"repo,omitempty\"`;ExcludeRepo[]string`json:\"excludeRepo,omitempty\"`;Files bool`json:\"files,omitempty\"`;Context int`json:\"context,omitempty\"`;BeforeContext int`json:\"beforeContext,omitempty\"`;AfterContext int`json:\"afterContext,omitempty\"`;SkipSegments bool`json:\"-\"`;Root string`json:\"-\"`;CountByRepo bool`json:\"-\"`;}",
       "members": [
         {
           "name": "AfterContext",
@@ -167,6 +167,14 @@
           "result": "bool",
           "structTag": {
             "value": "json:\"ignoreCase\""
+          }
+        },
+        {
+          "name": "InvertMatch",
+          "kind": "property",
+          "result": "bool",
+          "structTag": {
+            "value": "json:\"invertMatch,omitempty\""
           }
         },
         {

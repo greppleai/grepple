@@ -50,6 +50,7 @@ func searchRequestFromParams(params search.Params) api.SearchRequest {
 		Globs:       params.Globs,
 		Regex:       &params.Regex,
 		IgnoreCase:  &params.IgnoreCase,
+		InvertMatch: &params.InvertMatch,
 		MaxSegments: &params.MaxSegments,
 		Files:       params.Files,
 	}
@@ -123,6 +124,7 @@ func countRemote(options *cliOptions, server string) ([]api.RepoCount, error) {
 		Globs:        params.Globs,
 		Regex:        &params.Regex,
 		IgnoreCase:   &params.IgnoreCase,
+		InvertMatch:  &params.InvertMatch,
 		CountByRepo:  true,
 		SkipSegments: true,
 	}

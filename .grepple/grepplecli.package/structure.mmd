@@ -159,6 +159,7 @@ classDiagram
         +Fixed: bool
         +Globs: []string
         +IgnoreCase: bool
+        +InvertMatch: bool
         +JSON: bool
         +JSONMatches: bool
         +Limit: int
@@ -189,6 +190,7 @@ classDiagram
     %% grepple:struct-tag searchArgs Fixed "arg:\"-F,--fixed-strings\" help:\"treat the pattern as a literal string\""
     %% grepple:struct-tag searchArgs Globs "arg:\"positional\" placeholder:\"PATH\" help:\"file, directory, or glob to search; repeat for multiple roots\""
     %% grepple:struct-tag searchArgs IgnoreCase "arg:\"-i,--ignore-case\" help:\"ignore case distinctions\""
+    %% grepple:struct-tag searchArgs InvertMatch "arg:\"-v,--invert-match\" help:\"select lines that do not match\""
     %% grepple:struct-tag searchArgs JSON "arg:\"--json\" help:\"print full JSON results\""
     %% grepple:struct-tag searchArgs JSONMatches "arg:\"--json-matches\" help:\"print compact JSON matches\""
     %% grepple:struct-tag searchArgs Limit "arg:\"--limit\" placeholder:\"N\" help:\"return at most N ranked result files (default 20; 0 = all local; servers cap a page at 100 — page further with --skip)\""

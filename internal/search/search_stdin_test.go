@@ -54,6 +54,17 @@ func TestSearchContentIgnoreCaseFixed(t *testing.T) {
 	}
 }
 
+func TestSearchContentInvertMatch(t *testing.T) {
+	p := Params{Query: "skip", Regex: true, InvertMatch: true, MaxSegments: DefaultMaxSegments}
+	fm, err := Content(p, StdinPath, []byte("keep one\nskip this\nkeep two\n"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if fm == nil || !fm.MatchLines[1] || fm.MatchLines[2] || !fm.MatchLines[3] || len(fm.MatchLines) != 2 {
+		t.Fatalf("expected non-matching lines 1 and 3, got %#v", fm)
+	}
+}
+
 func TestSearchContentInvalidRegex(t *testing.T) {
 	p := Params{Query: "([", Regex: true, MaxSegments: DefaultMaxSegments}
 	if _, err := Content(p, StdinPath, []byte("x\n")); err == nil {

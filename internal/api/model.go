@@ -12,6 +12,7 @@ type SearchRequest struct {
 	Globs         []string `json:"globs,omitempty"`
 	Regex         *bool    `json:"regex,omitempty"`
 	IgnoreCase    *bool    `json:"ignoreCase,omitempty"`
+	InvertMatch   *bool    `json:"invertMatch,omitempty"`
 	MaxFiles      *int     `json:"maxFiles,omitempty"`
 	MaxSegments   *int     `json:"maxSegments,omitempty"`
 	Skip          *int     `json:"skip,omitempty"`

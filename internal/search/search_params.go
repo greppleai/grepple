@@ -46,6 +46,9 @@ func applyOptionalFields(p *Params, r api.SearchRequest) {
 	if r.IgnoreCase != nil {
 		p.IgnoreCase = *r.IgnoreCase
 	}
+	if r.InvertMatch != nil {
+		p.InvertMatch = *r.InvertMatch
+	}
 	if r.MaxFiles != nil && *r.MaxFiles >= 1 {
 		p.MaxFiles = *r.MaxFiles
 	}
