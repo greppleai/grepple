@@ -20,12 +20,12 @@
     "declarations": 12,
     "exportedTypes": 0,
     "internalTypes": 12,
-    "members": 94,
+    "members": 96,
     "exportedFunctions": 11,
     "fiberRoutes": 0,
     "relations": 0
   },
-  "semanticModelDigest": "sha256:5bfc762ef51bc51f9fe6323eb6ca7a4a36ec994532dcb0d03ae4381cff8a5099",
+  "semanticModelDigest": "sha256:edb52d19ed165dab6e90eeb0629609f16e6e1cfd7c5a85b05579533496cf8cd9",
   "sourceFiles": [
     {
       "path": "internal/grepplecli/cli_args.go"
@@ -84,10 +84,15 @@
       "name": "cliOptions",
       "kind": "struct",
       "file": "internal/grepplecli/model.go",
-      "underlyingType": "struct{Params search.Params;LineOnly bool;OnlyMatching bool;JSON string;Count bool;FilesWithMatches bool;Outline bool;Depth int;Stdin bool;}",
+      "underlyingType": "struct{Params search.Params;LineOnly bool;OnlyMatching bool;JSON string;Count bool;CountByRepo bool;FilesWithMatches bool;Outline bool;Depth int;Stdin bool;}",
       "members": [
         {
           "name": "Count",
+          "kind": "property",
+          "result": "bool"
+        },
+        {
+          "name": "CountByRepo",
           "kind": "property",
           "result": "bool"
         },
@@ -594,7 +599,7 @@
       "name": "searchArgs",
       "kind": "struct",
       "file": "internal/grepplecli/cli_args.go",
-      "underlyingType": "struct{Local bool`arg:\"--local\" help:\"search only the local working directory (this is the default)\"`;Remote bool`arg:\"-R,--remote\" help:\"also query the remote shard/router (default: local only)\"`;Server string`arg:\"-s,--server\" placeholder:\"URL\" help:\"remote shard/router URL (implies --remote)\"`;LineNumber bool`arg:\"-n,--line-number\" help:\"include line numbers (enabled by default)\"`;LineOnly bool`arg:\"--line-only\" help:\"print only matching lines\"`;OnlyMatching bool`arg:\"-o,--only-matching\" help:\"print each matched substring\"`;Files bool`arg:\"-l,--files\" help:\"list files whose PATH matches the glob (filename search, not contents); a bare directory scopes the glob\"`;FilesWithMatches bool`arg:\"--files-with-matches\" help:\"list paths of files whose CONTENTS match, like grep -l\"`;Outline bool`arg:\"-O,--outline\" help:\"print each file's structural outline (classes, funcs, interfaces) instead of searching\"`;Depth int`arg:\"--depth\" placeholder:\"N\" help:\"outline: cap nesting depth for JSON/YAML (0 = unlimited)\"`;Count bool`arg:\"-c,--count\" help:\"print match counts\"`;JSON bool`arg:\"--json\" help:\"print full JSON results\"`;JSONMatches bool`arg:\"--json-matches\" help:\"print compact JSON matches\"`;Regex bool`arg:\"--regex\" help:\"treat the pattern as a regular expression (default)\"`;Fixed bool`arg:\"-F,--fixed-strings\" help:\"treat the pattern as a literal string\"`;IgnoreCase bool`arg:\"-i,--ignore-case\" help:\"ignore case distinctions\"`;Context int`arg:\"-C,--context\" placeholder:\"N\" help:\"print N lines around matches\"`;MaxFiles int`arg:\"--max-files\" placeholder:\"N\" help:\"limit matching files\"`;MaxSegments int`arg:\"--max-segments\" placeholder:\"N\" help:\"limit result segments\"`;Skip int`arg:\"--skip\" placeholder:\"N\" help:\"skip the first N ranked result files\"`;Limit int`arg:\"--limit\" placeholder:\"N\" help:\"return at most N ranked result files (default 20; 0 = all local; servers cap a page at 100 — page further with --skip)\"`;Repos[]string`arg:\"--repo,separate\" placeholder:\"PATTERN\" help:\"restrict remote repositories; repeatable\"`;Query string`arg:\"positional\" placeholder:\"PATTERN\"`;Globs[]string`arg:\"positional\" placeholder:\"GLOB\"`;}",
+      "underlyingType": "struct{Local bool`arg:\"--local\" help:\"search only the local working directory (this is the default)\"`;Remote bool`arg:\"-R,--remote\" help:\"also query the remote shard/router (default: local only)\"`;Server string`arg:\"-s,--server\" placeholder:\"URL\" help:\"remote shard/router URL (implies --remote)\"`;LineNumber bool`arg:\"-n,--line-number\" help:\"include line numbers (enabled by default)\"`;LineOnly bool`arg:\"--line-only\" help:\"print only matching lines\"`;OnlyMatching bool`arg:\"-o,--only-matching\" help:\"print each matched substring\"`;Files bool`arg:\"-l,--files\" help:\"list files whose PATH matches the glob (filename search, not contents); a bare directory scopes the glob\"`;FilesWithMatches bool`arg:\"--files-with-matches\" help:\"list paths of files whose CONTENTS match, like grep -l\"`;Outline bool`arg:\"-O,--outline\" help:\"print each file's structural outline (classes, funcs, interfaces) instead of searching\"`;Depth int`arg:\"--depth\" placeholder:\"N\" help:\"outline: cap nesting depth for JSON/YAML (0 = unlimited)\"`;Count bool`arg:\"-c,--count\" help:\"print matching-line counts per file\"`;CountByRepo bool`arg:\"--count-by-repo\" help:\"print aggregate file and matching-line counts per repository\"`;JSON bool`arg:\"--json\" help:\"print full JSON results\"`;JSONMatches bool`arg:\"--json-matches\" help:\"print compact JSON matches\"`;Regex bool`arg:\"--regex\" help:\"treat the pattern as a regular expression (default)\"`;Fixed bool`arg:\"-F,--fixed-strings\" help:\"treat the pattern as a literal string\"`;IgnoreCase bool`arg:\"-i,--ignore-case\" help:\"ignore case distinctions\"`;Context int`arg:\"-C,--context\" placeholder:\"N\" help:\"print N lines around matches\"`;MaxFiles int`arg:\"--max-files\" placeholder:\"N\" help:\"limit matching files\"`;MaxSegments int`arg:\"--max-segments\" placeholder:\"N\" help:\"limit result segments\"`;Skip int`arg:\"--skip\" placeholder:\"N\" help:\"skip the first N ranked result files\"`;Limit int`arg:\"--limit\" placeholder:\"N\" help:\"return at most N ranked result files (default 20; 0 = all local; servers cap a page at 100 — page further with --skip)\"`;Repos[]string`arg:\"--repo,separate\" placeholder:\"PATTERN\" help:\"restrict remote repositories; repeatable\"`;Query string`arg:\"positional\" placeholder:\"PATTERN\"`;Globs[]string`arg:\"positional\" placeholder:\"GLOB\"`;}",
       "members": [
         {
           "name": "Description",
@@ -614,7 +619,15 @@
           "kind": "property",
           "result": "bool",
           "structTag": {
-            "value": "arg:\"-c,--count\" help:\"print match counts\""
+            "value": "arg:\"-c,--count\" help:\"print matching-line counts per file\""
+          }
+        },
+        {
+          "name": "CountByRepo",
+          "kind": "property",
+          "result": "bool",
+          "structTag": {
+            "value": "arg:\"--count-by-repo\" help:\"print aggregate file and matching-line counts per repository\""
           }
         },
         {

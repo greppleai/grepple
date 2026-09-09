@@ -8,6 +8,7 @@ type cliOptions struct {
 	OnlyMatching     bool
 	JSON             string
 	Count            bool
+	CountByRepo      bool
 	FilesWithMatches bool
 	Outline          bool
 	Depth            int

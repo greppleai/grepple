@@ -5,6 +5,7 @@ classDiagram
     %% grepple:exact-default
     class cliOptions {
         +Count: bool
+        +CountByRepo: bool
         +Depth: int
         +FilesWithMatches: bool
         +JSON: string
@@ -149,6 +150,7 @@ classDiagram
         +Description(): string
         +Context: int
         +Count: bool
+        +CountByRepo: bool
         +Depth: int
         +Files: bool
         +FilesWithMatches: bool
@@ -175,7 +177,8 @@ classDiagram
     <<struct>> searchArgs
     %% grepple:file searchArgs internal/grepplecli/cli_args.go
     %% grepple:struct-tag searchArgs Context "arg:\"-C,--context\" placeholder:\"N\" help:\"print N lines around matches\""
-    %% grepple:struct-tag searchArgs Count "arg:\"-c,--count\" help:\"print match counts\""
+    %% grepple:struct-tag searchArgs Count "arg:\"-c,--count\" help:\"print matching-line counts per file\""
+    %% grepple:struct-tag searchArgs CountByRepo "arg:\"--count-by-repo\" help:\"print aggregate file and matching-line counts per repository\""
     %% grepple:struct-tag searchArgs Depth "arg:\"--depth\" placeholder:\"N\" help:\"outline: cap nesting depth for JSON/YAML (0 = unlimited)\""
     %% grepple:struct-tag searchArgs Files "arg:\"-l,--files\" help:\"list files whose PATH matches the glob (filename search, not contents); a bare directory scopes the glob\""
     %% grepple:struct-tag searchArgs FilesWithMatches "arg:\"--files-with-matches\" help:\"list paths of files whose CONTENTS match, like grep -l\""

@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"sort"
 	"syscall"
 
 	"grepple/internal/api"
@@ -105,44 +104,27 @@ func JSONWrite(value any) error {
 	return SafeWrite(output.String())
 }
 
-// PrintCount renders a windowed result set's per-repo and total tallies in
-// the text (`name\tN files\tN matches`) or JSON count format. Counts reflect
-// only the results passed in — see PrintRepoCounts for complete tallies.
+// PrintCount renders one matching-line count per file. This intentionally follows
+// grep/rg count semantics rather than the repository aggregation provided by
+// PrintRepoCounts.
 func PrintCount(results []api.FileResult, jsonMode bool) error {
-	type count struct {
-		Files   int `json:"files"`
-		Matches int `json:"matches"`
+	type fileCount struct {
+		Path  string `json:"path"`
+		Count int    `json:"count"`
 	}
-	repos := map[string]count{}
-	total := count{}
+	counts := make([]fileCount, 0, len(results))
 	for _, result := range results {
-		current := repos[result.Repo]
-		current.Files++
-		current.Matches += len(result.Matches)
-		repos[result.Repo] = current
-		total.Files++
-		total.Matches += len(result.Matches)
+		counts = append(counts, fileCount{Path: result.Path, Count: len(result.Matches)})
 	}
 	if jsonMode {
-		return JSONWrite(map[string]any{"count": map[string]any{"files": total.Files, "matches": total.Matches, "repos": repos}})
+		return JSONWrite(map[string]any{"counts": counts})
 	}
-	var keys []string
-	for repo := range repos {
-		if repo != "" {
-			keys = append(keys, repo)
+	for _, count := range counts {
+		if err := SafeWrite(fmt.Sprintf("%s\t%d\n", count.Path, count.Count)); err != nil {
+			return err
 		}
 	}
-	sort.Strings(keys)
-	if len(keys) > 0 {
-		for _, repo := range keys {
-			current := repos[repo]
-			if err := SafeWrite(fmt.Sprintf("%s\t%d files\t%d matches\n", repo, current.Files, current.Matches)); err != nil {
-				return err
-			}
-		}
-		return SafeWrite(fmt.Sprintf("total\t%d files\t%d matches\n", total.Files, total.Matches))
-	}
-	return SafeWrite(fmt.Sprintf("%d files\t%d matches\n", total.Files, total.Matches))
+	return nil
 }
 
 // PrintRepoCounts renders already-summed per-repository tallies plus a total, in
