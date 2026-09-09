@@ -44,6 +44,36 @@ func TestRunSearchPipedStdinLineOnly(t *testing.T) {
 	}
 }
 
+func TestRunSearchPipedStdinOnlyMatching(t *testing.T) {
+	chdirTemp(t)
+	out := captureStdout(t, func() {
+		withStdin(t, "ids: abc-12 and def-34\nnone\n", func() {
+			if err := runSearch([]string{"--only-matching", `[a-z]+-[0-9]+`}); err != nil {
+				t.Fatal(err)
+			}
+		})
+	})
+	want := "<stdin>:1:abc-12\n<stdin>:1:def-34\n"
+	if out != want {
+		t.Fatalf("expected %q, got %q", want, out)
+	}
+}
+
+func TestRunSearchPipedStdinOnlyMatchingFixedIgnoreCase(t *testing.T) {
+	chdirTemp(t)
+	out := captureStdout(t, func() {
+		withStdin(t, "Hi HELLO hello\n", func() {
+			if err := runSearch([]string{"-o", "-F", "-i", "hello"}); err != nil {
+				t.Fatal(err)
+			}
+		})
+	})
+	want := "<stdin>:1:HELLO\n<stdin>:1:hello\n"
+	if out != want {
+		t.Fatalf("expected %q, got %q", want, out)
+	}
+}
+
 func TestRunSearchPipedStdinDefaultSegments(t *testing.T) {
 	chdirTemp(t)
 	out := captureStdout(t, func() {

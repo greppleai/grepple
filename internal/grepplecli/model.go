@@ -5,6 +5,7 @@ import "grepple/internal/search"
 type cliOptions struct {
 	Params           search.Params
 	LineOnly         bool
+	OnlyMatching     bool
 	JSON             string
 	Count            bool
 	FilesWithMatches bool

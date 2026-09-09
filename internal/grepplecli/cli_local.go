@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"regexp"
 	"sort"
 
 	"grepple/internal/api"
@@ -196,6 +197,17 @@ func renderResults(options *cliOptions, results []api.FileResult) error {
 	if options.JSON != "off" {
 		return renderJSONMode(options, results)
 	}
+	var onlyMatcher *regexp.Regexp
+	if options.OnlyMatching {
+		pattern := options.Params.Query
+		if !options.Params.Regex {
+			pattern = regexp.QuoteMeta(pattern)
+		}
+		if options.Params.IgnoreCase {
+			pattern = "(?i)" + pattern
+		}
+		onlyMatcher, _ = regexp.Compile(pattern) // validated by the search engine
+	}
 
 	printed := 0
 	contextPrinted := false
@@ -208,7 +220,7 @@ func renderResults(options *cliOptions, results []api.FileResult) error {
 			contextPrinted = contextPrinted || didPrint
 			continue
 		}
-		if err := printMatchedResult(options, result, printed); err != nil {
+		if err := printMatchedResult(options, result, printed, onlyMatcher); err != nil {
 			return err
 		}
 		printed++
@@ -250,15 +262,26 @@ func renderJSONMode(options *cliOptions, results []api.FileResult) error {
 
 // printMatchedResult renders one result in line-only or segment mode, with a
 // blank line separating segment output.
-func printMatchedResult(options *cliOptions, result api.FileResult, printed int) error {
-	if printed > 0 && !options.LineOnly {
+func printMatchedResult(options *cliOptions, result api.FileResult, printed int, onlyMatcher *regexp.Regexp) error {
+	if printed > 0 && !options.LineOnly && !options.OnlyMatching {
 		if err := SafeWrite("\n"); err != nil {
 			return err
 		}
 	}
-	if options.LineOnly {
+	if options.LineOnly || options.OnlyMatching {
 		limit := min(len(result.Matches), options.Params.MaxSegments)
 		for _, match := range result.Matches[:limit] {
+			if options.OnlyMatching {
+				for _, text := range onlyMatcher.FindAllString(match.Text, -1) {
+					if text == "" {
+						continue
+					}
+					if err := SafeWrite(fmt.Sprintf("%s:%d:%s\n", result.Path, match.Line, text)); err != nil {
+						return err
+					}
+				}
+				continue
+			}
 			if err := SafeWrite(fmt.Sprintf("%s:%d:%s\n", result.Path, match.Line, match.Text)); err != nil {
 				return err
 			}

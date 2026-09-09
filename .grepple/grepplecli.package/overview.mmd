@@ -2,7 +2,7 @@ classDiagram
     %% grepple:package-default grepple/internal/grepplecli
     %% grepple:language-default go
     direction LR
-    note "Package grepplecli implements the user-facing combined local/remote search, terminal and JSON presentation, and the get and tree command-line workflows. | package grepple/internal/grepplecli | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=17, declarations=12, exportedTypes=0, internalTypes=12, members=92, exportedFunctions=11, fiberRoutes=0, relations=0"
+    note "Package grepplecli implements the user-facing combined local/remote search, terminal and JSON presentation, and the get and tree command-line workflows. | package grepple/internal/grepplecli | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=17, declarations=12, exportedTypes=0, internalTypes=12, members=94, exportedFunctions=11, fiberRoutes=0, relations=0"
     namespace data_contracts {
         class config {
             +RefreshExpiry: int64
@@ -88,6 +88,7 @@ classDiagram
             +Local: bool
             +MaxFiles: int
             +MaxSegments: int
+            +OnlyMatching: bool
             +Outline: bool
             +Query: string
             +Regex: bool
