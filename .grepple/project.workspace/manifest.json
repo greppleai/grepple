@@ -25,16 +25,16 @@
   },
   "summary": {
     "modules": 2,
-    "packages": 11,
-    "sourceFiles": 83,
-    "declarations": 139,
-    "exportedFunctions": 63,
+    "packages": 12,
+    "sourceFiles": 84,
+    "declarations": 141,
+    "exportedFunctions": 64,
     "fiberRoutes": 0,
     "localImports": 9,
-    "standardLibraryImports": 86,
+    "standardLibraryImports": 88,
     "externalModuleEdges": 20
   },
-  "semanticModelDigest": "sha256:0f77c6d7e6250e4ffcc7191d31a44a2215b502aa8b21d6189c182e5584da5c81",
+  "semanticModelDigest": "sha256:4ab11ba0ec44e35554ea2ccae3f20105145d734b520c651451ab4abd17486896",
   "modules": [
     {
       "path": "github.com/greppleai/grepple",
@@ -76,6 +76,24 @@
             "os",
             "os/signal",
             "syscall"
+          ],
+          "externalImports": [],
+          "unmappedExternalImports": []
+        },
+        {
+          "importPath": "github.com/greppleai/grepple/examples/advanced-files",
+          "directory": "examples/advanced-files",
+          "name": "advanced",
+          "main": false,
+          "sourceFiles": 1,
+          "declarations": 2,
+          "exportedFunctions": 1,
+          "fiberRoutes": 0,
+          "routes": [],
+          "localImports": [],
+          "standardLibraryImports": [
+            "context",
+            "fmt"
           ],
           "externalImports": [],
           "unmappedExternalImports": []
