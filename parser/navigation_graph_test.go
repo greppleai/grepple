@@ -143,14 +143,53 @@ const local = new Client();
 	}
 	nestedReference := `import { Client } from "./worker";
 function run(): void {
-if (true) { const hidden = new Client(); }
+if (true) {
+const hidden = new Client();
+hidden.load();
+}
 hidden.load();
 }
 `
-	nestedCall := navigationCallsByDisplay(BuildNavigationGraph(nestedReference, "typescript", "src/nested.ts").Calls)["hidden.load"]
-	if nestedCall.ReceiverType != "" || nestedCall.ImportPath != "" {
-		t.Fatalf("nested local binding leaked outside its lexical scope: %+v", nestedCall)
+	nestedCalls := BuildNavigationGraph(nestedReference, "typescript", "src/nested.ts").Calls
+	insideCall := navigationCallAtLine(nestedCalls, "hidden.load", 5)
+	if insideCall.ReceiverType != "Client" || insideCall.ImportPath != "./worker" {
+		t.Fatalf("nested local binding was not applied inside its lexical scope: %+v", insideCall)
 	}
+	outsideCall := navigationCallAtLine(nestedCalls, "hidden.load", 7)
+	if outsideCall.ReceiverType != "" || outsideCall.ImportPath != "" {
+		t.Fatalf("nested local binding leaked outside its lexical scope: %+v", outsideCall)
+	}
+}
+
+func TestNavigationGraphPropagatesNestedGoBindings(t *testing.T) {
+	content := `package app
+import workers "example.com/project/worker"
+func Run() {
+{
+local := &workers.Client{}
+local.Load()
+}
+local.Load()
+}
+`
+	calls := BuildNavigationGraph(content, "go", "app/run.go").Calls
+	insideCall := navigationCallAtLine(calls, "local.Load", 6)
+	if insideCall.ReceiverType != "Client" || insideCall.ImportPath != "example.com/project/worker" {
+		t.Fatalf("nested Go binding was not applied inside its lexical scope: %+v", insideCall)
+	}
+	outsideCall := navigationCallAtLine(calls, "local.Load", 8)
+	if outsideCall.ReceiverType != "" || outsideCall.ImportPath != "" {
+		t.Fatalf("nested Go binding leaked outside its lexical scope: %+v", outsideCall)
+	}
+}
+
+func navigationCallAtLine(calls []NavigationCall, display string, line int) NavigationCall {
+	for _, call := range calls {
+		if call.Display == display && call.Line == line {
+			return call
+		}
+	}
+	return NavigationCall{}
 }
 
 func navigationCallsByDisplay(calls []NavigationCall) map[string]NavigationCall {

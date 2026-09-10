@@ -240,6 +240,10 @@ fetch();
 client.load();
 local.load();
 this.client.load(); // CALLER_NEEDLE
+if (true) {
+const nested = new Client();
+nested.load(); // NESTED_CALLER_NEEDLE
+}
 }
 }
 `), 0o600); err != nil {
@@ -259,6 +263,8 @@ this.client.load(); // CALLER_NEEDLE
 		t.Fatalf("unexpected TypeScript receiver resolution: %#v", method)
 	}
 
+	assertNestedTypeScriptReceiverResolution(t, files)
+
 	secondMatches, err := Files(Params{Query: "SECOND_NEEDLE", MaxSegments: 20, Related: true}, files)
 	if err != nil {
 		t.Fatal(err)
@@ -272,6 +278,18 @@ this.client.load(); // CALLER_NEEDLE
 	}
 	if len(secondMethodMatches) != 1 || len(secondMethodMatches[0].Related) != 0 {
 		t.Fatalf("receiver-resolved call was attributed to the other module: %#v", secondMethodMatches)
+	}
+}
+
+func assertNestedTypeScriptReceiverResolution(t *testing.T, files []string) {
+	t.Helper()
+	matches, err := Files(Params{Query: "NESTED_CALLER_NEEDLE", MaxSegments: 20, Related: true}, files)
+	if err != nil {
+		t.Fatal(err)
+	}
+	nested := findRelatedPoint(t, matches[0].Related, "nested.load → Client.load", "callee")
+	if nested.Confidence != "import-resolved" || !strings.HasSuffix(nested.Path, "first.ts") {
+		t.Fatalf("unexpected nested TypeScript receiver resolution: %#v", nested)
 	}
 }
 

@@ -145,9 +145,20 @@ type navigationWalkContext struct {
 }
 
 func (c *navigationCollector) walk(node *sitter.Node, context navigationWalkContext) {
+	if navigationNestedBindingScope(node.Kind()) && context.callable != nil {
+		context.bindings = cloneNavigationBindings(context.bindings)
+	}
 	current := c.enterNavigationNode(node, context)
 	c.recordNavigationCall(node, current.callable, current.bindings)
 	c.walkNavigationChildren(node, current)
+}
+
+func cloneNavigationBindings(bindings map[string]navigationBinding) map[string]navigationBinding {
+	cloned := make(map[string]navigationBinding, len(bindings))
+	for name, binding := range bindings {
+		cloned[name] = binding
+	}
+	return cloned
 }
 
 func (c *navigationCollector) enterNavigationNode(node *sitter.Node, context navigationWalkContext) navigationWalkContext {
@@ -217,6 +228,7 @@ func (c *navigationCollector) walkNavigationChildren(node *sitter.Node, context 
 			childContext.envelope = &navigationEnvelope{start: leadingCommentStart(child), end: nodeEnd(child)}
 		}
 		c.walk(child, childContext)
+		mergeNavigationBindingsAfterNode(context.bindings, child, c.content, c.language, c.imports, c.rules)
 	}
 }
 func (c *navigationCollector) wrapperEnvelope(node *sitter.Node, inherited *navigationEnvelope) *navigationEnvelope {

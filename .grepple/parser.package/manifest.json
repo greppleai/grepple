@@ -1108,8 +1108,8 @@
         {
           "name": "callName",
           "kind": "method",
-          "line": 358,
-          "endLine": 380,
+          "line": 370,
+          "endLine": 392,
           "parameters": [
             "*sitter.Node"
           ],
@@ -1118,8 +1118,8 @@
         {
           "name": "containerName",
           "kind": "method",
-          "line": 264,
-          "endLine": 271,
+          "line": 276,
+          "endLine": 283,
           "parameters": [
             "*sitter.Node",
             "*navigationEnvelope"
@@ -1129,8 +1129,8 @@
         {
           "name": "declarationName",
           "kind": "method",
-          "line": 273,
-          "endLine": 284,
+          "line": 285,
+          "endLine": 296,
           "parameters": [
             "*sitter.Node",
             "*navigationEnvelope"
@@ -1140,8 +1140,8 @@
         {
           "name": "enterNavigationNode",
           "kind": "method",
-          "line": 153,
-          "endLine": 182,
+          "line": 164,
+          "endLine": 193,
           "parameters": [
             "*sitter.Node",
             "navigationWalkContext"
@@ -1151,8 +1151,8 @@
         {
           "name": "isCall",
           "kind": "method",
-          "line": 336,
-          "endLine": 356,
+          "line": 348,
+          "endLine": 368,
           "parameters": [
             "string"
           ],
@@ -1161,8 +1161,8 @@
         {
           "name": "isCallableNode",
           "kind": "method",
-          "line": 234,
-          "endLine": 246,
+          "line": 246,
+          "endLine": 258,
           "parameters": [
             "*sitter.Node"
           ],
@@ -1171,8 +1171,8 @@
         {
           "name": "isGoTypeMemberNode",
           "kind": "method",
-          "line": 248,
-          "endLine": 253,
+          "line": 260,
+          "endLine": 265,
           "parameters": [
             "*sitter.Node"
           ],
@@ -1181,8 +1181,8 @@
         {
           "name": "isNavigationContainer",
           "kind": "method",
-          "line": 254,
-          "endLine": 262,
+          "line": 266,
+          "endLine": 274,
           "parameters": [
             "string"
           ],
@@ -1191,8 +1191,8 @@
         {
           "name": "navigationDeclarationKind",
           "kind": "method",
-          "line": 317,
-          "endLine": 334,
+          "line": 329,
+          "endLine": 346,
           "parameters": [
             "*sitter.Node",
             "string"
@@ -1202,8 +1202,8 @@
         {
           "name": "navigationDeclarationRange",
           "kind": "method",
-          "line": 184,
-          "endLine": 189,
+          "line": 195,
+          "endLine": 200,
           "parameters": [
             "*sitter.Node",
             "*navigationEnvelope"
@@ -1213,8 +1213,8 @@
         {
           "name": "recordNavigationCall",
           "kind": "method",
-          "line": 191,
-          "endLine": 206,
+          "line": 202,
+          "endLine": 217,
           "parameters": [
             "*sitter.Node",
             "*NavigationDeclaration",
@@ -1225,7 +1225,7 @@
           "name": "walk",
           "kind": "method",
           "line": 147,
-          "endLine": 151,
+          "endLine": 154,
           "parameters": [
             "*sitter.Node",
             "navigationWalkContext"
@@ -1234,8 +1234,8 @@
         {
           "name": "walkNavigationChildren",
           "kind": "method",
-          "line": 208,
-          "endLine": 221,
+          "line": 219,
+          "endLine": 233,
           "parameters": [
             "*sitter.Node",
             "navigationWalkContext"
@@ -1244,8 +1244,8 @@
         {
           "name": "wrapperEnvelope",
           "kind": "method",
-          "line": 222,
-          "endLine": 232,
+          "line": 234,
+          "endLine": 244,
           "parameters": [
             "*sitter.Node",
             "*navigationEnvelope"

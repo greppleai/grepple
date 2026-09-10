@@ -190,6 +190,18 @@ func addNavigationLocalBindings(bindings map[string]navigationBinding, root *sit
 	}
 }
 
+func mergeNavigationBindingsAfterNode(bindings map[string]navigationBinding, node *sitter.Node, content, language string, imports map[string]navigationImport, rules *structureRules) {
+	if bindings == nil || navigationBindingCallable(node.Kind(), language, rules) || navigationNestedBindingScope(node.Kind()) {
+		return
+	}
+	discovered := make(map[string]navigationBinding)
+	addNavigationVariableBinding(discovered, node, content, imports)
+	addNavigationLocalBindings(discovered, node, content, language, imports, rules)
+	for name, binding := range discovered {
+		bindings[name] = binding
+	}
+}
+
 func navigationBindingCallable(kind, language string, rules *structureRules) bool {
 	if rules.functionLikeTypes.contains(kind) {
 		return true
@@ -199,7 +211,7 @@ func navigationBindingCallable(kind, language string, rules *structureRules) boo
 
 func navigationNestedBindingScope(kind string) bool {
 	switch kind {
-	case "block", "statement_block", "if_statement", "for_statement", "for_in_statement", "while_statement", "do_statement", "switch_statement", "expression_switch_statement", "type_switch_statement", "select_statement", "try_statement", "catch_clause", "finally_clause":
+	case "block", "statement_block", "if_statement", "for_statement", "for_in_statement", "while_statement", "do_statement", "switch_statement", "expression_switch_statement", "type_switch_statement", "select_statement", "try_statement", "catch_clause", "finally_clause", "expression_case", "type_case", "communication_case", "switch_case", "switch_default", "case_clause", "default_clause":
 		return true
 	}
 	return false

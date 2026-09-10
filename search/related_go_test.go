@@ -255,6 +255,10 @@ workers.Start()
 client.Load()
 local.Load()
 runner.client.Load() // CALLER_NEEDLE
+if true {
+nested := &workers.Client{}
+nested.Load() // NESTED_CALLER_NEEDLE
+}
 }
 `)
 	files := []string{caller, other, worker}
@@ -271,6 +275,8 @@ runner.client.Load() // CALLER_NEEDLE
 		t.Fatalf("unexpected receiver resolution: %#v", load)
 	}
 
+	assertNestedGoReceiverResolution(t, files)
+
 	otherMatches, err := Files(Params{Query: "OTHER_NEEDLE", MaxSegments: 20, Related: true}, files)
 	if err != nil {
 		t.Fatal(err)
@@ -284,6 +290,18 @@ runner.client.Load() // CALLER_NEEDLE
 	}
 	if len(otherMethodMatches) != 1 || len(otherMethodMatches[0].Related) != 0 {
 		t.Fatalf("receiver-resolved call was attributed to the other package: %#v", otherMethodMatches)
+	}
+}
+
+func assertNestedGoReceiverResolution(t *testing.T, files []string) {
+	t.Helper()
+	matches, err := Files(Params{Query: "NESTED_CALLER_NEEDLE", MaxSegments: 20, Related: true}, files)
+	if err != nil {
+		t.Fatal(err)
+	}
+	nested := findRelatedPoint(t, matches[0].Related, "nested.Load → Client.Load", "callee")
+	if nested.Confidence != "import-resolved" || !strings.HasSuffix(nested.Path, "worker/worker.go") {
+		t.Fatalf("unexpected nested receiver resolution: %#v", nested)
 	}
 }
 
