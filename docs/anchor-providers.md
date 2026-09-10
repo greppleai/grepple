@@ -55,7 +55,7 @@ The command is executed directly, never through a shell. Its executable must be 
 
 ## Provider protocol v1
 
-Grepple launches one provider process for the complete output batch. This avoids per-line process cost and lets stateful providers update their stores serially.
+Grepple launches one provider process for each non-empty output batch. It does not start the provider when search produces no anchorable source rows. This avoids per-line process cost and lets stateful providers update their stores serially.
 
 The provider receives one JSON object on stdin:
 

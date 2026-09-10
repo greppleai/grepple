@@ -145,8 +145,8 @@
         {
           "name": "line",
           "kind": "method",
-          "line": 300,
-          "endLine": 302,
+          "line": 307,
+          "endLine": 309,
           "parameters": [
             "string",
             "int"
@@ -1104,15 +1104,15 @@
       "name": "limitedAnchorBuffer",
       "kind": "struct",
       "file": "internal/cli/anchors.go",
-      "line": 214,
-      "endLine": 217,
+      "line": 221,
+      "endLine": 224,
       "underlyingType": "struct{bytes.Buffer;limit int;}",
       "members": [
         {
           "name": "Write",
           "kind": "method",
-          "line": 219,
-          "endLine": 224,
+          "line": 226,
+          "endLine": 231,
           "parameters": [
             "[]byte"
           ],
@@ -1121,8 +1121,8 @@
         {
           "name": "limit",
           "kind": "property",
-          "line": 216,
-          "endLine": 216,
+          "line": 223,
+          "endLine": 223,
           "result": "int"
         }
       ]
@@ -1131,15 +1131,15 @@
       "name": "limitedStderrWriter",
       "kind": "struct",
       "file": "internal/cli/anchors.go",
-      "line": 226,
-      "endLine": 229,
+      "line": 233,
+      "endLine": 236,
       "underlyingType": "struct{buffer*bytes.Buffer;limit int;}",
       "members": [
         {
           "name": "Write",
           "kind": "method",
-          "line": 231,
-          "endLine": 237,
+          "line": 238,
+          "endLine": 244,
           "parameters": [
             "[]byte"
           ],
@@ -1148,15 +1148,15 @@
         {
           "name": "buffer",
           "kind": "property",
-          "line": 227,
-          "endLine": 227,
+          "line": 234,
+          "endLine": 234,
           "result": "*bytes.Buffer"
         },
         {
           "name": "limit",
           "kind": "property",
-          "line": 228,
-          "endLine": 228,
+          "line": 235,
+          "endLine": 235,
           "result": "int"
         }
       ]

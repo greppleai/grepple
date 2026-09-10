@@ -66,11 +66,15 @@ func prepareResultAnchors(options *cliOptions, results []api.FileResult) error {
 	if !options.Anchors {
 		return nil
 	}
-	_, provider, err := resolveAnchorProvider(options.AnchorProvider)
+	request, displayPaths, err := buildAnchorRequest(options, results)
 	if err != nil {
 		return err
 	}
-	request, displayPaths, err := buildAnchorRequest(options, results)
+	if len(request.Files) == 0 {
+		options.AnchorLines = make(anchorLookup)
+		return nil
+	}
+	_, provider, err := resolveAnchorProvider(options.AnchorProvider)
 	if err != nil {
 		return err
 	}
@@ -88,7 +92,10 @@ func prepareResultAnchors(options *cliOptions, results []api.FileResult) error {
 
 func buildAnchorRequest(options *cliOptions, results []api.FileResult) (anchorProtocolRequest, map[string]string, error) {
 	selections := collectAnchorSelections(options, results)
-	request := anchorProtocolRequest{ProtocolVersion: anchorProtocolVersion}
+	request := anchorProtocolRequest{
+		ProtocolVersion: anchorProtocolVersion,
+		Files:           make([]anchorProtocolRequestFile, 0, len(selections)),
+	}
 	displayPaths := make(map[string]string, len(selections))
 	for _, selection := range selections {
 		file, err := anchorRequestFile(selection)

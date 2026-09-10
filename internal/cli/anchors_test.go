@@ -60,6 +60,31 @@ func TestAnchorProviderProcess(_ *testing.T) {
 	os.Exit(0)
 }
 
+func TestEmptyAnchorRequestUsesJSONArrays(t *testing.T) {
+	request, _, err := buildAnchorRequest(&cliOptions{}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	encoded, err := json.Marshal(request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(encoded) != `{"protocol_version":1,"files":[]}` {
+		t.Fatalf("empty request = %s", encoded)
+	}
+}
+
+func TestNoAnchorableResultsSkipProvider(t *testing.T) {
+	t.Setenv("GREPPLE_SETTINGS", filepath.Join(t.TempDir(), "missing.json"))
+	options := &cliOptions{Anchors: true}
+	if err := prepareResultAnchors(options, nil); err != nil {
+		t.Fatal(err)
+	}
+	if options.AnchorLines == nil {
+		t.Fatal("expected initialized empty anchor lookup")
+	}
+}
+
 func TestSegmentRendererEmitsHashLineContentRows(t *testing.T) {
 	var output strings.Builder
 	renderer := segmentRenderer{

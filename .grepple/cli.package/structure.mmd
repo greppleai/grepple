@@ -16,7 +16,7 @@ classDiagram
     <<type>> anchorLookup
     %% grepple:underlying anchorLookup map[string]map[int]string
     %% grepple:file anchorLookup internal/cli/anchors.go
-    note for anchorLookup "defined: internal/cli/anchors.go:30; line@internal/cli/anchors.go:300-302"
+    note for anchorLookup "defined: internal/cli/anchors.go:30; line@internal/cli/anchors.go:307-309"
     class anchorProtocolLine {
         +Anchor: string
         +Line: int
@@ -252,7 +252,7 @@ classDiagram
     }
     <<struct>> limitedAnchorBuffer
     %% grepple:file limitedAnchorBuffer internal/cli/anchors.go
-    note for limitedAnchorBuffer "defined: internal/cli/anchors.go:214-217; Write@internal/cli/anchors.go:219-224; limit@internal/cli/anchors.go:216"
+    note for limitedAnchorBuffer "defined: internal/cli/anchors.go:221-224; Write@internal/cli/anchors.go:226-231; limit@internal/cli/anchors.go:223"
     class limitedStderrWriter {
         +Write([]byte): tuple~int&#44;error~
         -buffer: *bytes.Buffer
@@ -260,7 +260,7 @@ classDiagram
     }
     <<struct>> limitedStderrWriter
     %% grepple:file limitedStderrWriter internal/cli/anchors.go
-    note for limitedStderrWriter "defined: internal/cli/anchors.go:226-229; Write@internal/cli/anchors.go:231-237; buffer@internal/cli/anchors.go:227; limit@internal/cli/anchors.go:228"
+    note for limitedStderrWriter "defined: internal/cli/anchors.go:233-236; Write@internal/cli/anchors.go:238-244; buffer@internal/cli/anchors.go:234; limit@internal/cli/anchors.go:235"
     class lineRenderer {
         +Render([]api.FileResult): error
         -renderAnchored([]api.FileResult): error
