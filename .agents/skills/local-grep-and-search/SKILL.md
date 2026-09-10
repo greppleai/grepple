@@ -40,11 +40,11 @@ Use navigation deliberately rather than everywhere:
 
 Navigation is syntax-based, not type-checked:
 
-- `exact` means a qualified callable identity matched directly; `context-resolved` means declaration kind or file locality safely narrowed candidates; `unique-terminal` means only one same-language terminal-name declaration was found.
+- `exact` means a qualified callable identity matched directly; `import-resolved` means an explicit Go or TypeScript import identified the target package/module; `context-resolved` means declaration kind, file locality, or a direct receiver type safely narrowed candidates; `unique-terminal` means only one same-language terminal-name declaration was found.
 - `[candidate; try --at PATH:LINE]` means ambiguity remains; use the suggested declaration location and verify rather than treating it as an exact call graph.
 - `→` is a callee and `←` is a potential caller.
 - Selected paths/globs define the navigation universe; include the relevant directory for cross-file edges.
-- TypeScript and TSX share a namespace. Other languages are isolated.
+- TypeScript and TSX share a namespace. Other languages are isolated. Import and receiver-type resolution is syntax-based; inferred local variables and multi-hop member chains may remain candidates.
 - Expansion is bounded (two resolved callees per level, depth ≤3, cycle protection, shared line budget).
 
 Navigation works locally in default structural output or full `--json` for Go, JavaScript/JSX, TypeScript/TSX, Python, Java, Kotlin, C#, C, C++, Rust, and Shell. It does not benefit Markdown, config, logs, or plain text.

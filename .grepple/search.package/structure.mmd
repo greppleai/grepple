@@ -141,38 +141,46 @@ classDiagram
     note for gitignoreCache "defined: search/search_glob.go:428; patterns@search/search_glob.go:430-438"
     class navigationCall {
         -display: string
+        -file: string
+        -importDirectory: string
+        -importPath: string
         -line: int
+        -moduleKnown: bool
         -name: string
+        -qualifier: string
+        -receiverType: string
+        -resolvedName: string
     }
     <<struct>> navigationCall
     %% grepple:file navigationCall search/related.go
-    note for navigationCall "defined: search/related.go:36-39; display@search/related.go:37; line@search/related.go:38; name@search/related.go:37"
+    note for navigationCall "defined: search/related.go:37-44; display@search/related.go:38; file@search/related.go:40; importDirectory@search/related.go:41; importPath@search/related.go:39; line@search/related.go:43; moduleKnown@search/related.go:42; name@search/related.go:38; qualifier@search/related.go:39; receiverType@search/related.go:40; resolvedName@search/related.go:38"
     class navigationCaller {
-        -callLine: int
+        -call: navigationCall
         -declaration: navigationDeclaration
-        -display: string
     }
     <<struct>> navigationCaller
     %% grepple:file navigationCaller search/related.go
-    note for navigationCaller "defined: search/related.go:30-34; callLine@search/related.go:33; declaration@search/related.go:31; display@search/related.go:32"
+    note for navigationCaller "defined: search/related.go:32-35; call@search/related.go:34; declaration@search/related.go:33"
     class navigationCandidateResolution {
         -candidates: []navigationDeclaration
         -confidence: string
     }
     <<struct>> navigationCandidateResolution
     %% grepple:file navigationCandidateResolution search/related.go
-    note for navigationCandidateResolution "defined: search/related.go:210-213; candidates@search/related.go:211; confidence@search/related.go:212"
+    note for navigationCandidateResolution "defined: search/related.go:227-230; candidates@search/related.go:228; confidence@search/related.go:229"
     class navigationDeclaration {
+        -container: string
         -file: string
         -id: string
         -language: string
         -matchStart: int
+        -packageName: string
         -point: RelatedPoint
         -terminal: string
     }
     <<struct>> navigationDeclaration
     %% grepple:file navigationDeclaration search/related.go
-    note for navigationDeclaration "defined: search/related.go:21-28; file@search/related.go:25; id@search/related.go:22; language@search/related.go:24; matchStart@search/related.go:26; point@search/related.go:27; terminal@search/related.go:23"
+    note for navigationDeclaration "defined: search/related.go:21-30; container@search/related.go:24; file@search/related.go:27; id@search/related.go:22; language@search/related.go:26; matchStart@search/related.go:28; packageName@search/related.go:25; point@search/related.go:29; terminal@search/related.go:23"
     class navigationIndex {
         -addCalls([]parser.NavigationCall, []navigationDeclaration, string)
         -addDeclarations([]parser.NavigationDeclaration, string, string, string): []navigationDeclaration
@@ -186,7 +194,7 @@ classDiagram
     }
     <<struct>> navigationIndex
     %% grepple:file navigationIndex search/related.go
-    note for navigationIndex "defined: search/related.go:41-48; addCalls@search/related.go:144-159; addDeclarations@search/related.go:124-142; addFile@search/related.go:103-122; byFile@search/related.go:45; byLocation@search/related.go:46; callers@search/related.go:43; calls@search/related.go:44; contents@search/related.go:47; declarations@search/related.go:42"
+    note for navigationIndex "defined: search/related.go:46-53; addCalls@search/related.go:149-168; addDeclarations@search/related.go:129-147; addFile@search/related.go:108-127; byFile@search/related.go:50; byLocation@search/related.go:51; callers@search/related.go:48; calls@search/related.go:49; contents@search/related.go:52; declarations@search/related.go:47"
     class repoPattern {
         -match(string): bool
         -glob: string
@@ -332,6 +340,7 @@ classDiagram
     candidateScan "1" ..> "*" FileMatch : method scanWindowed result 1
     candidateScan "1" --> "1" Params : field p
     candidateScan "1" --> "1" RepoFilter : field repoFilter
+    navigationCaller "1" --> "1" navigationCall : field call
     navigationCaller "1" --> "1" navigationDeclaration : field declaration
     navigationCandidateResolution "1" --> "*" navigationDeclaration : field candidates
     navigationDeclaration "1" --> "1" RelatedPoint : field point

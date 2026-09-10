@@ -34,6 +34,8 @@ type NavigationCall struct {
 	Name           string
 	Display        string
 	Qualifier      string
+	ImportPath     string
+	ReceiverType   string
 	ResolvedName   string
 	Confidence     string
 	Language       string
@@ -94,7 +96,8 @@ func NavigationGraphFromTree(root *sitter.Node, content, language, path string) 
 	if adapter == nil || root == nil {
 		return NavigationGraph{}
 	}
-	collector := navigationCollector{content: content, language: language, path: path, rules: adapter.Rules()}
+	imports, packageName := navigationSourceFacts(root, content, language)
+	collector := navigationCollector{content: content, language: language, path: path, rules: adapter.Rules(), imports: imports, packageName: packageName}
 	collector.walk(root, navigationWalkContext{})
 	return NavigationGraph{Declarations: collector.declarations, Calls: collector.calls}
 }
@@ -121,6 +124,8 @@ type navigationCollector struct {
 	language     string
 	path         string
 	rules        *structureRules
+	imports      map[string]navigationImport
+	packageName  string
 	declarations []NavigationDeclaration
 	calls        []NavigationCall
 }
@@ -134,12 +139,13 @@ type navigationEnvelope struct {
 type navigationWalkContext struct {
 	envelope  *navigationEnvelope
 	container string
+	bindings  map[string]navigationBinding
 	callable  *NavigationDeclaration
 }
 
 func (c *navigationCollector) walk(node *sitter.Node, context navigationWalkContext) {
 	current := c.enterNavigationNode(node, context)
-	c.recordNavigationCall(node, current.callable)
+	c.recordNavigationCall(node, current.callable, current.bindings)
 	c.walkNavigationChildren(node, current)
 }
 
@@ -165,11 +171,12 @@ func (c *navigationCollector) enterNavigationNode(node *sitter.Node, context nav
 		name = current.container + "." + name
 	}
 	declaration := NavigationDeclaration{
-		Name: name, Kind: c.navigationDeclarationKind(node, current.container), Language: c.language, Path: c.path, Container: current.container, Start: start, End: end,
+		Name: name, Kind: c.navigationDeclarationKind(node, current.container), Language: c.language, Path: c.path, Container: current.container, Package: c.packageName, Start: start, End: end,
 	}
 	declaration.ID = navigationStableID("declaration", declaration.Language, declaration.Path, declaration.Name, declaration.Kind, strconv.Itoa(start), strconv.Itoa(end))
 	c.declarations = append(c.declarations, declaration)
 	current.callable = &c.declarations[len(c.declarations)-1]
+	current.bindings = navigationCallableBindings(node, c.content, c.language, current.container, c.imports)
 	return current
 }
 
@@ -180,7 +187,7 @@ func (c *navigationCollector) navigationDeclarationRange(node *sitter.Node, enve
 	return nodeStart(node), nodeEnd(node)
 }
 
-func (c *navigationCollector) recordNavigationCall(node *sitter.Node, callable *NavigationDeclaration) {
+func (c *navigationCollector) recordNavigationCall(node *sitter.Node, callable *NavigationDeclaration, bindings map[string]navigationBinding) {
 	if !c.isCall(node.Kind()) || callable == nil {
 		return
 	}
@@ -192,6 +199,7 @@ func (c *navigationCollector) recordNavigationCall(node *sitter.Node, callable *
 		Name: name, Display: display, Qualifier: navigationCallQualifier(display), Language: c.language, Path: c.path, Line: nodeStart(node),
 		CallerID: callable.ID, EnclosingStart: callable.Start, EnclosingEnd: callable.End,
 	}
+	applyNavigationCallContext(&call, c.imports, bindings)
 	call.ID = navigationStableID("call", call.CallerID, strconv.Itoa(call.Line), call.Display, strconv.Itoa(len(c.calls)))
 	c.calls = append(c.calls, call)
 }

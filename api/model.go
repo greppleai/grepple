@@ -51,9 +51,11 @@ type ContextLine struct {
 }
 
 // RelatedSymbol points between matched code and a project-local declaration.
-// Confidence is "exact" for a qualified identity match, "context-resolved" when
-// declaration kind or file context disambiguates it, "unique-terminal" when only
-// one declaration has the terminal name, and "candidate" when ambiguity remains.
+// Confidence is "exact" for a qualified identity match, "import-resolved" when an
+// explicit Go or TypeScript import identifies the target module, "context-resolved"
+// when declaration kind, file context, or receiver type disambiguates it,
+// "unique-terminal" when only one declaration has the terminal name, and
+// "candidate" when ambiguity remains.
 type RelatedSymbol struct {
 	Name       string          `json:"name"`
 	Path       string          `json:"path"`

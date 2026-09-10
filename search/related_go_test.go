@@ -223,6 +223,66 @@ func findRelatedPoint(t *testing.T, points []RelatedPoint, name, direction strin
 	return RelatedPoint{}
 }
 
+func TestRelatedGoCallsUseImportAndReceiverTypeContext(t *testing.T) {
+	directory := t.TempDir()
+	if err := os.WriteFile(filepath.Join(directory, "go.mod"), []byte("module example.com/project\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	workerDirectory := filepath.Join(directory, "worker")
+	otherDirectory := filepath.Join(directory, "other")
+	appDirectory := filepath.Join(directory, "app")
+	for _, path := range []string{workerDirectory, otherDirectory, appDirectory} {
+		if err := os.MkdirAll(path, 0o755); err != nil {
+			t.Fatal(err)
+		}
+	}
+	worker := writeGoFixture(t, workerDirectory, "worker.go", `package worker
+func Start() {}
+type Client struct{}
+func (*Client) Load() {}
+`)
+	other := writeGoFixture(t, otherDirectory, "other.go", `package worker
+func Start() { _ = "OTHER_NEEDLE" }
+type Client struct{}
+func (*Client) Load() { _ = "OTHER_METHOD_NEEDLE" }
+`)
+	caller := writeGoFixture(t, appDirectory, "caller.go", `package app
+import workers "example.com/project/worker"
+func run(client *workers.Client) {
+workers.Start()
+client.Load() // CALLER_NEEDLE
+}
+`)
+	files := []string{caller, other, worker}
+	matches, err := Files(Params{Query: "CALLER_NEEDLE", MaxSegments: 20, Related: true}, files)
+	if err != nil {
+		t.Fatal(err)
+	}
+	start := findRelatedPoint(t, matches[0].Related, "workers.Start → Start", "callee")
+	if start.Confidence != "import-resolved" || !strings.HasSuffix(start.Path, "worker/worker.go") {
+		t.Fatalf("unexpected imported function resolution: %#v", start)
+	}
+	load := findRelatedPoint(t, matches[0].Related, "client.Load → Client.Load", "callee")
+	if load.Confidence != "import-resolved" || !strings.HasSuffix(load.Path, "worker/worker.go") {
+		t.Fatalf("unexpected receiver resolution: %#v", load)
+	}
+
+	otherMatches, err := Files(Params{Query: "OTHER_NEEDLE", MaxSegments: 20, Related: true}, files)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(otherMatches) != 1 || len(otherMatches[0].Related) != 0 {
+		t.Fatalf("import-resolved call was attributed to the other package: %#v", otherMatches)
+	}
+	otherMethodMatches, err := Files(Params{Query: "OTHER_METHOD_NEEDLE", MaxSegments: 20, Related: true}, files)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(otherMethodMatches) != 1 || len(otherMethodMatches[0].Related) != 0 {
+		t.Fatalf("receiver-resolved call was attributed to the other package: %#v", otherMethodMatches)
+	}
+}
+
 func writeGoFixture(t *testing.T, directory, name, content string) string {
 	t.Helper()
 	path := filepath.Join(directory, name)

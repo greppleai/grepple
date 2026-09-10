@@ -211,8 +211,61 @@ func TestRelatedNavigationResolvesTypeScriptInterfaceMethods(t *testing.T) {
 		t.Fatal(err)
 	}
 	point := findRelatedPoint(t, matches[0].Related, "clock.now → Clock.now", "callee")
-	if point.Kind != "method" || point.Confidence != "unique-terminal" {
+	if point.Kind != "method" || point.Confidence != "context-resolved" {
 		t.Fatalf("unexpected interface method point: %#v", point)
+	}
+}
+
+func TestRelatedTypeScriptCallsUseImportAndReceiverTypeContext(t *testing.T) {
+	directory := t.TempDir()
+	first := filepath.Join(directory, "first.ts")
+	second := filepath.Join(directory, "second.ts")
+	caller := filepath.Join(directory, "caller.ts")
+	if err := os.WriteFile(first, []byte(`export function load(): void {}
+export class Client { load(): void {} }
+`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(second, []byte(`export function load(): void { const marker = "SECOND_NEEDLE"; }
+export class Client { load(): void { const marker = "SECOND_METHOD_NEEDLE"; } }
+`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(caller, []byte(`import { load as fetch, Client } from "./first";
+export function run(client: Client): void {
+fetch();
+client.load(); // CALLER_NEEDLE
+}
+`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	files := []string{caller, first, second}
+	matches, err := Files(Params{Query: "CALLER_NEEDLE", MaxSegments: 20, Related: true}, files)
+	if err != nil {
+		t.Fatal(err)
+	}
+	imported := findRelatedPoint(t, matches[0].Related, "fetch → load", "callee")
+	if imported.Confidence != "import-resolved" || !strings.HasSuffix(imported.Path, "first.ts") {
+		t.Fatalf("unexpected named import resolution: %#v", imported)
+	}
+	method := findRelatedPoint(t, matches[0].Related, "client.load → Client.load", "callee")
+	if method.Confidence != "import-resolved" || !strings.HasSuffix(method.Path, "first.ts") {
+		t.Fatalf("unexpected TypeScript receiver resolution: %#v", method)
+	}
+
+	secondMatches, err := Files(Params{Query: "SECOND_NEEDLE", MaxSegments: 20, Related: true}, files)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(secondMatches) != 1 || len(secondMatches[0].Related) != 0 {
+		t.Fatalf("import-resolved call was attributed to the other module: %#v", secondMatches)
+	}
+	secondMethodMatches, err := Files(Params{Query: "SECOND_METHOD_NEEDLE", MaxSegments: 20, Related: true}, files)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(secondMethodMatches) != 1 || len(secondMethodMatches[0].Related) != 0 {
+		t.Fatalf("receiver-resolved call was attributed to the other module: %#v", secondMethodMatches)
 	}
 }
 

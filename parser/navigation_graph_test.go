@@ -34,3 +34,68 @@ func TestNavigationCompatibilityUsesNormalizedGraph(t *testing.T) {
 		t.Fatalf("compatibility result differs from graph: graph=%+v declarations=%+v calls=%+v", graph, declarations, calls)
 	}
 }
+
+func TestNavigationGraphCapturesGoImportAndReceiverContext(t *testing.T) {
+	content := `package app
+import workers "example.com/project/worker"
+type Service struct{}
+func (service *Service) Run(client *workers.Client) {
+client.Load()
+workers.Start()
+service.Stop()
+}
+`
+	graph := BuildNavigationGraph(content, "go", "app/service.go")
+	calls := navigationCallsByDisplay(graph.Calls)
+	if call := calls["client.Load"]; call.ReceiverType != "Client" || call.ImportPath != "example.com/project/worker" {
+		t.Fatalf("client receiver context = %+v", calls["client.Load"])
+	}
+	if calls["workers.Start"].ImportPath != "example.com/project/worker" {
+		t.Fatalf("worker import context = %+v", calls["workers.Start"])
+	}
+	if calls["service.Stop"].ReceiverType != "Service" {
+		t.Fatalf("method receiver context = %+v", calls["service.Stop"])
+	}
+	for _, declaration := range graph.Declarations {
+		if declaration.Package != "app" {
+			t.Fatalf("declaration package context = %+v", declaration)
+		}
+	}
+}
+
+func TestNavigationGraphCapturesTypeScriptImportAndReceiverContext(t *testing.T) {
+	content := `import { load as fetch, Client } from "./worker";
+import * as worker from "./worker";
+class Runner {
+run(client: Client): void {
+fetch();
+worker.load();
+client.load();
+this.stop();
+}
+stop(): void {}
+}
+`
+	graph := BuildNavigationGraph(content, "typescript", "src/runner.ts")
+	calls := navigationCallsByDisplay(graph.Calls)
+	if call := calls["fetch"]; call.ImportPath != "./worker" || call.ResolvedName != "load" {
+		t.Fatalf("named import context = %+v", call)
+	}
+	if call := calls["worker.load"]; call.ImportPath != "./worker" || call.ResolvedName != "load" {
+		t.Fatalf("namespace import context = %+v", call)
+	}
+	if call := calls["client.load"]; call.ReceiverType != "Client" || call.ImportPath != "./worker" {
+		t.Fatalf("parameter receiver context = %+v", calls["client.load"])
+	}
+	if calls["this.stop"].ReceiverType != "Runner" {
+		t.Fatalf("this receiver context = %+v", calls["this.stop"])
+	}
+}
+
+func navigationCallsByDisplay(calls []NavigationCall) map[string]NavigationCall {
+	result := make(map[string]NavigationCall, len(calls))
+	for _, call := range calls {
+		result[call.Display] = call
+	}
+	return result
+}
