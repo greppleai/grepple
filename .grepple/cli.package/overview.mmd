@@ -2,7 +2,7 @@ classDiagram
     %% grepple:package-default github.com/greppleai/grepple/internal/cli
     %% grepple:language-default go
     direction LR
-    note "Package cli implements Grepple's search, extraction, repository inspection, authentication, rules, and terminal/JSON presentation workflows. | package github.com/greppleai/grepple/internal/cli | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=27, declarations=35, exportedTypes=0, internalTypes=35, members=188, exportedFunctions=3, fiberRoutes=0, relations=23"
+    note "Package cli implements Grepple's search, extraction, repository inspection, authentication, rules, and terminal/JSON presentation workflows. | package github.com/greppleai/grepple/internal/cli | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=27, declarations=35, exportedTypes=0, internalTypes=35, members=191, exportedFunctions=3, fiberRoutes=0, relations=23"
     namespace interfaces {
         class resultRenderer["resultRenderer · internal/cli/renderer.go:9-11"] {
             +Render([]api.FileResult): error
@@ -38,13 +38,14 @@ classDiagram
             +SHA256: string
         }
         <<struct>> anchorProtocolResponseFile
-        class anchorProviderSettings["anchorProviderSettings · internal/cli/settings.go:26-29"] {
+        class anchorProviderSettings["anchorProviderSettings · internal/cli/settings.go:27-30"] {
             +Command: []string
             +TimeoutMS: int
         }
         <<struct>> anchorProviderSettings
-        class anchorSettings["anchorSettings · internal/cli/settings.go:21-24"] {
+        class anchorSettings["anchorSettings · internal/cli/settings.go:21-25"] {
             +DefaultProvider: string
+            +EnabledByDefault: bool
             +Providers: map[string]anchorProviderSettings
         }
         <<struct>> anchorSettings
@@ -127,7 +128,7 @@ classDiagram
             +Server: string
         }
         <<struct>> rulesAddArgs
-        class searchArgs["searchArgs · internal/cli/args.go:24-60"] {
+        class searchArgs["searchArgs · internal/cli/args.go:24-61"] {
             +AfterContext: int
             +AnchorProvider: string
             +Anchors: bool
@@ -153,6 +154,7 @@ classDiagram
             +MaxFiles: int
             +MaxOutputBytes: int
             +MaxSegments: int
+            +NoAnchors: bool
             +OnlyMatching: bool
             +Outline: bool
             +Query: string
@@ -183,7 +185,7 @@ classDiagram
         <<struct>> anchorFileSelection
         class anchorLookup["anchorLookup = map&#91;string&#93;map&#91;int&#93;string · internal/cli/anchors.go:30"]
         <<type>> anchorLookup
-        class cliOptions["cliOptions · internal/cli/model.go:5-22"]
+        class cliOptions["cliOptions · internal/cli/model.go:5-23"]
         <<struct>> cliOptions
         class contextRenderer["contextRenderer · internal/cli/renderer_context.go:9-11"]
         <<struct>> contextRenderer
@@ -221,7 +223,7 @@ classDiagram
             +RenderOutlineOrContent(parser.FileOutline, string): string
         }
         <<function>> RenderOutlineOrContent
-        class Run["Run · internal/cli/args.go:308-332"] {
+        class Run["Run · internal/cli/args.go:341-365"] {
             +Run([]string): error
         }
         <<function>> Run

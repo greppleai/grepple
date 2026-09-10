@@ -11,7 +11,7 @@ import (
 	"github.com/greppleai/grepple/api"
 )
 
-func TestAnchoredLineOutputUsesConfiguredProvider(t *testing.T) {
+func TestAnchorsEnabledBySettingsUseConfiguredProvider(t *testing.T) {
 	directory := t.TempDir()
 	t.Chdir(directory)
 	if err := os.WriteFile("sample.go", []byte("package sample\r\n// needle\r\nfunc run() {}\r\n"), 0o600); err != nil {
@@ -19,7 +19,8 @@ func TestAnchoredLineOutputUsesConfiguredProvider(t *testing.T) {
 	}
 	settingsPath := filepath.Join(directory, "settings.json")
 	settings := userSettings{Anchors: anchorSettings{
-		DefaultProvider: "test",
+		EnabledByDefault: true,
+		DefaultProvider:  "test",
 		Providers: map[string]anchorProviderSettings{
 			"test": {Command: []string{os.Args[0], "-test.run=TestAnchorProviderProcess"}},
 		},
@@ -29,7 +30,7 @@ func TestAnchoredLineOutputUsesConfiguredProvider(t *testing.T) {
 	t.Setenv("GREPPLE_TEST_ANCHOR_PROVIDER", "1")
 
 	output := captureStdout(t, func() {
-		if err := Run([]string{"--anchors", "--line-only", "needle", "sample.go"}); err != nil {
+		if err := Run([]string{"--line-only", "needle", "sample.go"}); err != nil {
 			t.Fatal(err)
 		}
 	})

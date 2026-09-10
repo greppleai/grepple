@@ -79,6 +79,36 @@ func TestAnchorProviderFlagEnablesAnchoredOutput(t *testing.T) {
 	}
 }
 
+func TestSettingsEnableAnchorsByDefault(t *testing.T) {
+	settingsPath := t.TempDir() + "/settings.json"
+	writeJSONFile(t, settingsPath, userSettings{Anchors: anchorSettings{EnabledByDefault: true, DefaultProvider: "pi"}})
+	t.Setenv("GREPPLE_SETTINGS", settingsPath)
+
+	options, _, _, err := parseSearchArgs([]string{"--line-only", "needle", "sample.go"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !options.Anchors || !options.AnchorsDefaulted {
+		t.Fatalf("settings did not enable anchors: %#v", options)
+	}
+
+	disabled, _, _, err := parseSearchArgs([]string{"--no-anchors", "--line-only", "needle", "sample.go"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if disabled.Anchors || disabled.AnchorsDefaulted {
+		t.Fatalf("--no-anchors did not disable the setting: %#v", disabled)
+	}
+
+	count, _, _, err := parseSearchArgs([]string{"--count", "needle", "sample.go"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if count.Anchors {
+		t.Fatalf("settings enabled anchors for unsupported count output: %#v", count)
+	}
+}
+
 func TestFollowRelatedImpliesNavigation(t *testing.T) {
 	options, _, _, err := parseSearchArgs([]string{"--follow-related", "2", "needle"})
 	if err != nil {
@@ -114,6 +144,8 @@ func TestRelatedGoNavigationRejectsUnsupportedModes(t *testing.T) {
 		{"--anchors", "--json", "needle"},
 		{"--anchors", "--only-matching", "needle"},
 		{"--anchors", "--outline", "sample.go"},
+		{"--anchors", "--no-anchors", "needle"},
+		{"--anchor-provider", "pi", "--no-anchors", "needle"},
 	} {
 		if _, _, _, err := parseSearchArgs(args); err == nil {
 			t.Fatalf("parseSearchArgs(%q) succeeded, want an error", args)

@@ -76,20 +76,23 @@ classDiagram
     %% grepple:file anchorProviderSettings internal/cli/settings.go
     %% grepple:struct-tag anchorProviderSettings Command "json:\"command\""
     %% grepple:struct-tag anchorProviderSettings TimeoutMS "json:\"timeout_ms,omitempty\""
-    note for anchorProviderSettings "defined: internal/cli/settings.go:26-29; Command@internal/cli/settings.go:27; TimeoutMS@internal/cli/settings.go:28"
+    note for anchorProviderSettings "defined: internal/cli/settings.go:27-30; Command@internal/cli/settings.go:28; TimeoutMS@internal/cli/settings.go:29"
     class anchorSettings {
         +DefaultProvider: string
+        +EnabledByDefault: bool
         +Providers: map[string]anchorProviderSettings
     }
     <<struct>> anchorSettings
     %% grepple:file anchorSettings internal/cli/settings.go
     %% grepple:struct-tag anchorSettings DefaultProvider "json:\"default_provider\""
+    %% grepple:struct-tag anchorSettings EnabledByDefault "json:\"enabled_by_default\""
     %% grepple:struct-tag anchorSettings Providers "json:\"providers\""
-    note for anchorSettings "defined: internal/cli/settings.go:21-24; DefaultProvider@internal/cli/settings.go:22; Providers@internal/cli/settings.go:23"
+    note for anchorSettings "defined: internal/cli/settings.go:21-25; DefaultProvider@internal/cli/settings.go:23; EnabledByDefault@internal/cli/settings.go:22; Providers@internal/cli/settings.go:24"
     class cliOptions {
         +AnchorLines: anchorLookup
         +AnchorProvider: string
         +Anchors: bool
+        +AnchorsDefaulted: bool
         +Count: bool
         +CountByRepo: bool
         +Depth: int
@@ -104,7 +107,7 @@ classDiagram
     }
     <<struct>> cliOptions
     %% grepple:file cliOptions internal/cli/model.go
-    note for cliOptions "defined: internal/cli/model.go:5-22; AnchorLines@internal/cli/model.go:18; AnchorProvider@internal/cli/model.go:17; Anchors@internal/cli/model.go:16; Count@internal/cli/model.go:10; CountByRepo@internal/cli/model.go:11; Depth@internal/cli/model.go:14; FilesWithMatches@internal/cli/model.go:12; JSON@internal/cli/model.go:9; LineOnly@internal/cli/model.go:7; MaxOutputBytes@internal/cli/model.go:15; OnlyMatching@internal/cli/model.go:8; Outline@internal/cli/model.go:13; Params@internal/cli/model.go:6; Stdin@internal/cli/model.go:21"
+    note for cliOptions "defined: internal/cli/model.go:5-23; AnchorLines@internal/cli/model.go:19; AnchorProvider@internal/cli/model.go:18; Anchors@internal/cli/model.go:16; AnchorsDefaulted@internal/cli/model.go:17; Count@internal/cli/model.go:10; CountByRepo@internal/cli/model.go:11; Depth@internal/cli/model.go:14; FilesWithMatches@internal/cli/model.go:12; JSON@internal/cli/model.go:9; LineOnly@internal/cli/model.go:7; MaxOutputBytes@internal/cli/model.go:15; OnlyMatching@internal/cli/model.go:8; Outline@internal/cli/model.go:13; Params@internal/cli/model.go:6; Stdin@internal/cli/model.go:22"
     class config {
         +RefreshExpiry: int64
         +RefreshToken: string
@@ -385,6 +388,7 @@ classDiagram
         +MaxFiles: int
         +MaxOutputBytes: int
         +MaxSegments: int
+        +NoAnchors: bool
         +OnlyMatching: bool
         +Outline: bool
         +Query: string
@@ -423,6 +427,7 @@ classDiagram
     %% grepple:struct-tag searchArgs MaxFiles "arg:\"--max-files\" placeholder:\"N\" help:\"limit matching files\""
     %% grepple:struct-tag searchArgs MaxOutputBytes "arg:\"--max-output-bytes\" placeholder:\"N\" help:\"cap human-readable output (default 40960; 0 = unlimited; JSON is uncapped)\""
     %% grepple:struct-tag searchArgs MaxSegments "arg:\"--max-segments\" placeholder:\"N\" help:\"limit result segments\""
+    %% grepple:struct-tag searchArgs NoAnchors "arg:\"--no-anchors\" help:\"disable anchors enabled by user settings\""
     %% grepple:struct-tag searchArgs OnlyMatching "arg:\"-o,--only-matching\" help:\"print each matched substring\""
     %% grepple:struct-tag searchArgs Outline "arg:\"-O,--outline\" help:\"print each file's structural outline (classes, funcs, interfaces) instead of searching\""
     %% grepple:struct-tag searchArgs Query "arg:\"positional\" placeholder:\"PATTERN\""
@@ -433,7 +438,7 @@ classDiagram
     %% grepple:struct-tag searchArgs Repos "arg:\"--repo,separate\" placeholder:\"PATTERN\" help:\"restrict remote repositories; repeatable\""
     %% grepple:struct-tag searchArgs Server "arg:\"-s,--server\" placeholder:\"URL\" help:\"remote shard/router URL (implies --remote)\""
     %% grepple:struct-tag searchArgs Skip "arg:\"--skip\" placeholder:\"N\" help:\"skip the first N ranked result files\""
-    note for searchArgs "defined: internal/cli/args.go:24-60; Description@internal/cli/args.go:62-64; AfterContext@internal/cli/args.go:45; AnchorProvider@internal/cli/args.go:51; Anchors@internal/cli/args.go:50; At@internal/cli/args.go:54; BeforeContext@internal/cli/args.go:46; Context@internal/cli/args.go:44; Count@internal/cli/args.go:36; CountByRepo@internal/cli/args.go:37; Depth@internal/cli/args.go:35; Files@internal/cli/args.go:32; FilesWithMatches@internal/cli/args.go:33; Fixed@internal/cli/args.go:41; FollowRelated@internal/cli/args.go:53; Globs@internal/cli/args.go:59; IgnoreCase@internal/cli/args.go:42; InvertMatch@internal/cli/args.go:43; JSON@internal/cli/args.go:38; JSONMatches@internal/cli/args.go:39; Limit@internal/cli/args.go:56; LineNumber@internal/cli/args.go:29; LineOnly@internal/cli/args.go:30; Local@internal/cli/args.go:25; MaxFiles@internal/cli/args.go:47; MaxOutputBytes@internal/cli/args.go:49; MaxSegments@internal/cli/args.go:48; OnlyMatching@internal/cli/args.go:31; Outline@internal/cli/args.go:34; Query@internal/cli/args.go:58; Recursive@internal/cli/args.go:27; Regex@internal/cli/args.go:40; Related@internal/cli/args.go:52; Remote@internal/cli/args.go:26; Repos@internal/cli/args.go:57; Server@internal/cli/args.go:28; Skip@internal/cli/args.go:55"
+    note for searchArgs "defined: internal/cli/args.go:24-61; Description@internal/cli/args.go:63-65; AfterContext@internal/cli/args.go:45; AnchorProvider@internal/cli/args.go:52; Anchors@internal/cli/args.go:50; At@internal/cli/args.go:55; BeforeContext@internal/cli/args.go:46; Context@internal/cli/args.go:44; Count@internal/cli/args.go:36; CountByRepo@internal/cli/args.go:37; Depth@internal/cli/args.go:35; Files@internal/cli/args.go:32; FilesWithMatches@internal/cli/args.go:33; Fixed@internal/cli/args.go:41; FollowRelated@internal/cli/args.go:54; Globs@internal/cli/args.go:60; IgnoreCase@internal/cli/args.go:42; InvertMatch@internal/cli/args.go:43; JSON@internal/cli/args.go:38; JSONMatches@internal/cli/args.go:39; Limit@internal/cli/args.go:57; LineNumber@internal/cli/args.go:29; LineOnly@internal/cli/args.go:30; Local@internal/cli/args.go:25; MaxFiles@internal/cli/args.go:47; MaxOutputBytes@internal/cli/args.go:49; MaxSegments@internal/cli/args.go:48; NoAnchors@internal/cli/args.go:51; OnlyMatching@internal/cli/args.go:31; Outline@internal/cli/args.go:34; Query@internal/cli/args.go:59; Recursive@internal/cli/args.go:27; Regex@internal/cli/args.go:40; Related@internal/cli/args.go:53; Remote@internal/cli/args.go:26; Repos@internal/cli/args.go:58; Server@internal/cli/args.go:28; Skip@internal/cli/args.go:56"
     class segmentRenderer {
         +Render([]api.FileResult): error
         -renderFile(api.FileResult): error
@@ -497,7 +502,7 @@ classDiagram
     }
     <<function>> Run
     %% grepple:file Run internal/cli/args.go
-    note for Run "defined: internal/cli/args.go:308-332"
+    note for Run "defined: internal/cli/args.go:341-365"
     anchorProtocolRequest "1" --> "*" anchorProtocolRequestFile : field Files
     anchorProtocolResponse "1" --> "*" anchorProtocolResponseFile : field Files
     anchorProtocolResponseFile "1" --> "*" anchorProtocolLine : field Anchors

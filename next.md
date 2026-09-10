@@ -94,9 +94,10 @@ Acceptance criteria met for generic call discovery: one parser-owned graph suppl
 2. [x] Add a versioned whole-file batch protocol with digest checks, timeout/output limits, strict response validation, and direct process execution without a shell.
 3. [x] Emit unambiguous `HASH│LINE│content` rows from local structural and `--line-only` output while retaining synthetic summary markers.
 4. [x] Add a Pi adapter that imports Pi's own hashline implementation and verify a Grepple-emitted anchor equals Pi Read for the same source line.
-5. [ ] Stabilize Pi-side distribution so settings do not point at an internal `dist` module that may move during upgrades.
-6. [ ] Add `grepple anchors doctor` (or equivalent) to report provider identity/protocol, test a temporary file, and diagnose stale configuration.
-7. [ ] Evaluate anchors for related previews and context output only if dogfooding shows they save additional tool calls; keep JSON provider-neutral.
+5. [x] Allow user settings to enable anchors by default for compatible output, with `--no-anchors` as a per-command escape hatch and automatic fallback for incompatible modes.
+6. [ ] Stabilize Pi-side distribution so settings do not point at an internal `dist` module that may move during upgrades.
+7. [ ] Add `grepple anchors doctor` (or equivalent) to report provider identity/protocol, test a temporary file, and diagnose stale configuration.
+8. [ ] Evaluate anchors for related previews and context output only if dogfooding shows they save additional tool calls; keep JSON provider-neutral.
 
 
 ### D. Expand hardening and performance coverage

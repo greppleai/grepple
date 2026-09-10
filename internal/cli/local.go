@@ -16,11 +16,8 @@ func runSearch(args []string) error {
 	if err != nil || options == nil {
 		return err
 	}
-	// Piped stdin with no path/glob argument switches the local source from the
-	// filesystem to the stream (grep/ripgrep behavior).
-	options.Stdin = stdinSearch(options)
-	if options.Anchors && options.Stdin {
-		return fmt.Errorf("--anchors requires local files and cannot anchor piped stdin")
+	if err := configureStdinSearch(options); err != nil {
+		return err
 	}
 	if options.Outline {
 		return runOutline(options)
@@ -62,6 +59,21 @@ func runSearch(args []string) error {
 	}
 	// Group the selected page by repo/path for readable output.
 	return renderResults(options, sortByPath(results))
+}
+
+func configureStdinSearch(options *cliOptions) error {
+	// Piped stdin with no path/glob argument switches the local source from the
+	// filesystem to the stream (grep/ripgrep behavior). Automatic anchors are
+	// disabled because stdin has no stable path; an explicit --anchors remains an error.
+	options.Stdin = stdinSearch(options)
+	if options.AnchorsDefaulted && options.Stdin {
+		options.Anchors = false
+		options.AnchorsDefaulted = false
+	}
+	if options.Anchors && options.Stdin {
+		return fmt.Errorf("--anchors requires local files and cannot anchor piped stdin")
+	}
+	return nil
 }
 
 func appendRemoteResults(results []api.FileResult, options *cliOptions, explicitServer string, remote bool) ([]api.FileResult, error) {

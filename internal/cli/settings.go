@@ -19,8 +19,9 @@ type userSettings struct {
 }
 
 type anchorSettings struct {
-	DefaultProvider string                            `json:"default_provider"`
-	Providers       map[string]anchorProviderSettings `json:"providers"`
+	EnabledByDefault bool                              `json:"enabled_by_default"`
+	DefaultProvider  string                            `json:"default_provider"`
+	Providers        map[string]anchorProviderSettings `json:"providers"`
 }
 
 type anchorProviderSettings struct {

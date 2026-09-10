@@ -68,7 +68,7 @@ Supported search options:
 - `--repo PATTERN` (repeatable)
 - `--max-files N`, `--max-segments N`
 - `--max-output-bytes N` caps human-readable output before common agent tool limits (default `40960`; `0` disables the cap). JSON output is never partially truncated.
-- `--anchors` emits configured edit anchors as `HASH│LINE│content`; `--anchor-provider NAME` selects a provider from `~/.grepple/settings.json`
+- `--anchors` emits configured edit anchors as `HASH│LINE│content`; `--anchor-provider NAME` selects a provider, while `--no-anchors` disables `anchors.enabled_by_default` from `~/.grepple/settings.json`
 - `--related` (experimental: show bounded project-local callees and callers for structurally supported source languages)
 - `--at PATH:LINE` (retrieve the declaration containing an exact local location; related `PATH:START-END` ranges are accepted too)
 - `--follow-related N` (expand up to two unique callees per level, depth 1-3; implies `--related`)
@@ -82,10 +82,10 @@ For agent edits, Grepple can either locate lines for a normal Read step or emit 
 
 ```text
 grepple --line-only or structural search → Read exact PATH:LINE → Edit with hash anchors
-grepple --anchors search                  → Edit directly with emitted HASH│LINE│content rows
+grepple search (with anchors enabled in settings) → Edit directly with emitted HASH│LINE│content rows
 ```
 
-`HASH` is the edit key and `LINE` is the 1-indexed orientation/fallback location used by Read and `--at`. Both must be refreshed after source changes. Anchor commands are configured only in user-owned `~/.grepple/settings.json`, execute without a shell, and receive a versioned batch JSON protocol. See [Edit-anchor providers](docs/anchor-providers.md), including the reference Pi adapter.
+`HASH` is the edit key and `LINE` is the 1-indexed orientation/fallback location used by Read and `--at`. Both must be refreshed after source changes. Anchor commands and `enabled_by_default` are configured only in user-owned `~/.grepple/settings.json`; incompatible output modes remain unanchored automatically, and `--no-anchors` disables the default for one invocation. Providers execute without a shell and receive a versioned batch JSON protocol. See [Edit-anchor providers](docs/anchor-providers.md), including the reference Pi adapter.
 
 Default structural output shows enclosing declarations and may collapse unrelated lines. If a segment limit omits matching lines, Grepple reports the omitted count and recommends `--line-only`. Broad human-readable output is bounded before common tool-result limits and ends with narrowing guidance; tighten the path/glob or use `--limit`, `--line-only`, `-l`, or `--count`.
 

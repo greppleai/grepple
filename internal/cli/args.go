@@ -48,6 +48,7 @@ type searchArgs struct {
 	MaxSegments      int      `arg:"--max-segments" placeholder:"N" help:"limit result segments"`
 	MaxOutputBytes   int      `arg:"--max-output-bytes" placeholder:"N" help:"cap human-readable output (default 40960; 0 = unlimited; JSON is uncapped)"`
 	Anchors          bool     `arg:"--anchors" help:"emit configured edit anchors as HASH│LINE│content rows (local structural or --line-only output)"`
+	NoAnchors        bool     `arg:"--no-anchors" help:"disable anchors enabled by user settings"`
 	AnchorProvider   string   `arg:"--anchor-provider" placeholder:"NAME" help:"use a named anchor provider from ~/.grepple/settings.json (implies --anchors)"`
 	Related          bool     `arg:"--related" help:"show project-local callees and callers for supported source languages (local search only)"`
 	FollowRelated    int      `arg:"--follow-related" placeholder:"N" help:"expand up to two unique callees per level (1-3; implies --related)"`
@@ -82,8 +83,15 @@ func parseSearchArgs(args []string) (*cliOptions, string, bool, error) {
 		}
 		return nil, "", false, err
 	}
+	if values.NoAnchors && (values.Anchors || values.AnchorProvider != "") {
+		return nil, "", false, fmt.Errorf("--no-anchors cannot be combined with --anchors or --anchor-provider")
+	}
 	if values.AnchorProvider != "" {
 		values.Anchors = true
+	}
+	anchorsDefaulted, err := applyAnchorSettingsDefault(&values)
+	if err != nil {
+		return nil, "", false, err
 	}
 	if values.FollowRelated > 0 {
 		values.Related = true
@@ -116,8 +124,33 @@ func parseSearchArgs(args []string) (*cliOptions, string, bool, error) {
 		Depth:            values.Depth,
 		MaxOutputBytes:   values.MaxOutputBytes,
 		Anchors:          values.Anchors,
+		AnchorsDefaulted: anchorsDefaulted,
 		AnchorProvider:   values.AnchorProvider,
 	}, values.Server, remoteEnabled, nil
+}
+
+func applyAnchorSettingsDefault(values *searchArgs) (bool, error) {
+	if values.Anchors || values.NoAnchors || !supportsDefaultAnchors(values) {
+		return false, nil
+	}
+	settings, err := loadUserSettings()
+	if err != nil {
+		return false, err
+	}
+	if !settings.Anchors.EnabledByDefault {
+		return false, nil
+	}
+	values.Anchors = true
+	return true, nil
+}
+
+func supportsDefaultAnchors(values *searchArgs) bool {
+	if values.Remote || values.Server != "" || values.JSON || values.JSONMatches {
+		return false
+	}
+	unsupportedCompact := values.Files || values.FilesWithMatches || values.Outline || values.Count || values.CountByRepo || values.OnlyMatching
+	contextOutput := values.Context > 0 || values.BeforeContext > 0 || values.AfterContext > 0
+	return !unsupportedCompact && !contextOutput
 }
 
 func usesCompactSearchOutput(values *searchArgs) bool {
