@@ -4,7 +4,7 @@ Grepple should stabilize for one or two iterations before adding more languages.
 
 ## Recommended next milestone
 
-> Complete graph unification, improve resolution confidence, and make large results easier to consume.
+> Improve resolution confidence, stabilize edit-anchor distribution, and make large graph results easier to consume.
 
 ## Findings from dogfooding
 
@@ -19,7 +19,7 @@ Grepple should stabilize for one or two iterations before adding more languages.
 
 ### Remaining friction
 
-- External LLM dogfooding confirmed the intended Grepple locate/orient → Read exact range → Edit loop, but also exposed grep-flag muscle memory, edit-target lines omitted by segment limits, and broad output reaching the agent harness limit.
+- External LLM dogfooding confirmed the Grepple locate/orient → anchored Edit loop, while also exposing grep-flag muscle memory, edit-target lines omitted by segment limits, broad output reaching the agent harness limit, and the need for anchor-provider diagnostics.
 - The shared `parser.NavigationGraph` is now the sole source of generic call edges for Go and TypeScript flow selection, rendering, validation, `--at`, and `--related`; the next graph issue is richer resolution rather than duplicate discovery.
 - Larger diagrams are dominated by validation metadata when viewed as plain text.
 - Agent edit anchors are provider-specific, not generic line hashes: Pi uses file-wide collision handling and a persistent hash store. Grepple now delegates through a user-owned, versioned batch provider instead of copying Pi's algorithm.
@@ -46,7 +46,7 @@ Grepple should stabilize for one or two iterations before adding more languages.
 - [x] Use safe declaration-kind, exact-qualifier, and same-file context to reduce terminal-name ambiguity; continue with package, receiver, module, and import-aware resolution.
 - [x] Accept safe grep compatibility aliases: `-E` explicitly selects the default JavaScript-regex mode and `-r` is a no-op because directory search is already recursive.
 - [x] Bound human-readable output below common agent limits with actionable narrowing guidance while keeping JSON valid and uncapped.
-- [x] Report matching lines omitted by `--max-segments` and direct edit-oriented searches to `--line-only` followed by Read for hash anchors.
+- [x] Report matching lines omitted by `--max-segments` and direct edit-oriented searches to `--line-only`, which emits configured anchors or supplies exact lines for Read fallback.
 - [ ] Consider a compact presentation mode that hides validation metadata while retaining it in generated artifacts.
 
 ### 3. Harden source handling
@@ -121,7 +121,7 @@ Before expanding scope, require:
 - [x] Generated diagrams round-trip through their checker.
 - [x] Repeated generation is byte-deterministic in current tests.
 - [ ] Output is verified deterministic across supported operating systems.
-- [ ] `--at`, `--related`, and focused flow use one graph and agree exactly on declarations, edges, and source ranges.
+- [x] `--at`, `--related`, and focused Go/TypeScript flow use one graph and agree through parity tests on declarations, edges, and source ranges.
 - [x] `go test -race ./...` remains green.
 - [ ] Benchmarks cover parsing, navigation-index construction, package extraction, and workspace extraction.
 - [ ] Performance budgets catch repeated parsing and significant regressions.
@@ -130,7 +130,7 @@ Before expanding scope, require:
 
 ## UX improvements after stabilization
 
-- [ ] Improve ambiguity diagnostics with suggested `--at PATH:LINE` locations.
+- [x] Improve ambiguity diagnostics with suggested `--at PATH:LINE` locations.
 - [ ] Add a concise architecture-summary command that does not expose Mermaid validation metadata.
 - [x] Emit explicit truncation markers in bounded structures and flows.
 - [x] Expose reproducible release/source, revision, commit-time, toolchain, and platform metadata through `--version`.
