@@ -23,9 +23,9 @@ func newResultRenderer(options *cliOptions, output *outputWriter) resultRenderer
 	case options.OnlyMatching:
 		return onlyMatchingRenderer{output: output, maxLines: options.Params.MaxSegments, matcher: compileOnlyMatcher(options)}
 	case options.LineOnly:
-		return lineRenderer{output: output, maxLines: options.Params.MaxSegments}
+		return lineRenderer{output: output, maxLines: options.Params.MaxSegments, anchors: options.AnchorLines}
 	default:
-		return segmentRenderer{output: output}
+		return segmentRenderer{output: output, anchors: options.AnchorLines}
 	}
 }
 

@@ -47,6 +47,8 @@ type searchArgs struct {
 	MaxFiles         int      `arg:"--max-files" placeholder:"N" help:"limit matching files"`
 	MaxSegments      int      `arg:"--max-segments" placeholder:"N" help:"limit result segments"`
 	MaxOutputBytes   int      `arg:"--max-output-bytes" placeholder:"N" help:"cap human-readable output (default 40960; 0 = unlimited; JSON is uncapped)"`
+	Anchors          bool     `arg:"--anchors" help:"emit configured edit anchors as HASH│LINE│content rows (local structural or --line-only output)"`
+	AnchorProvider   string   `arg:"--anchor-provider" placeholder:"NAME" help:"use a named anchor provider from ~/.grepple/settings.json (implies --anchors)"`
 	Related          bool     `arg:"--related" help:"show project-local callees and callers for supported source languages (local search only)"`
 	FollowRelated    int      `arg:"--follow-related" placeholder:"N" help:"expand up to two unique callees per level (1-3; implies --related)"`
 	At               string   `arg:"--at" placeholder:"PATH:LINE" help:"retrieve the declaration containing a local source location"`
@@ -80,6 +82,9 @@ func parseSearchArgs(args []string) (*cliOptions, string, bool, error) {
 		}
 		return nil, "", false, err
 	}
+	if values.AnchorProvider != "" {
+		values.Anchors = true
+	}
 	if values.FollowRelated > 0 {
 		values.Related = true
 	}
@@ -110,6 +115,8 @@ func parseSearchArgs(args []string) (*cliOptions, string, bool, error) {
 		Outline:          values.Outline,
 		Depth:            values.Depth,
 		MaxOutputBytes:   values.MaxOutputBytes,
+		Anchors:          values.Anchors,
+		AnchorProvider:   values.AnchorProvider,
 	}, values.Server, remoteEnabled, nil
 }
 
@@ -130,6 +137,24 @@ func validateRelatedArgs(values *searchArgs) error {
 	contextOutput := values.Context > 0 || values.BeforeContext > 0 || values.AfterContext > 0
 	if compactOutput || contextOutput {
 		return fmt.Errorf("--related requires default structural output or --json")
+	}
+	return nil
+}
+
+func validateAnchorArgs(values *searchArgs) error {
+	if !values.Anchors {
+		return nil
+	}
+	if values.Remote || values.Server != "" {
+		return fmt.Errorf("--anchors currently supports local files only")
+	}
+	if values.JSON || values.JSONMatches {
+		return fmt.Errorf("--anchors cannot be combined with JSON output")
+	}
+	unsupportedCompact := values.Files || values.FilesWithMatches || values.Outline || values.Count || values.CountByRepo || values.OnlyMatching
+	contextOutput := values.Context > 0 || values.BeforeContext > 0 || values.AfterContext > 0
+	if unsupportedCompact || contextOutput {
+		return fmt.Errorf("--anchors requires default structural output or --line-only")
 	}
 	return nil
 }
@@ -158,6 +183,9 @@ func validateSearchArgs(values *searchArgs) error {
 		return err
 	}
 	if err := validateRelatedArgs(values); err != nil {
+		return err
+	}
+	if err := validateAnchorArgs(values); err != nil {
 		return err
 	}
 	if err := validateAtArgs(values); err != nil {

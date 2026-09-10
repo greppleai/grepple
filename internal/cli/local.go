@@ -19,6 +19,9 @@ func runSearch(args []string) error {
 	// Piped stdin with no path/glob argument switches the local source from the
 	// filesystem to the stream (grep/ripgrep behavior).
 	options.Stdin = stdinSearch(options)
+	if options.Anchors && options.Stdin {
+		return fmt.Errorf("--anchors requires local files and cannot anchor piped stdin")
+	}
 	if options.Outline {
 		return runOutline(options)
 	}
@@ -47,22 +50,33 @@ func runSearch(args []string) error {
 	if err != nil {
 		return err
 	}
-	if remote {
-		server := serverDefault(explicitServer)
-		if repo := currentGitRepoID(); repo != "" {
-			child.Params.ExcludeRepo = appendUnique(child.Params.ExcludeRepo, repo)
-		}
-		remoteResults, err := searchRemote(&child, server)
-		if err != nil {
-			return err
-		}
-		results = append(results, remoteResults...)
+	results, err = appendRemoteResults(results, &child, explicitServer, remote)
+	if err != nil {
+		return err
 	}
 
 	results = windowResults(sortByPath(results), options.Params)
 	noteDefaultLimitCap(options, results)
+	if err := prepareResultAnchors(options, results); err != nil {
+		return err
+	}
 	// Group the selected page by repo/path for readable output.
 	return renderResults(options, sortByPath(results))
+}
+
+func appendRemoteResults(results []api.FileResult, options *cliOptions, explicitServer string, remote bool) ([]api.FileResult, error) {
+	if !remote {
+		return results, nil
+	}
+	server := serverDefault(explicitServer)
+	if repo := currentGitRepoID(); repo != "" {
+		options.Params.ExcludeRepo = appendUnique(options.Params.ExcludeRepo, repo)
+	}
+	remoteResults, err := searchRemote(options, server)
+	if err != nil {
+		return nil, err
+	}
+	return append(results, remoteResults...), nil
 }
 
 // childWindowParams returns source-query parameters that fetch the top

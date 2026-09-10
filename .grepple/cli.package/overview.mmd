@@ -2,7 +2,7 @@ classDiagram
     %% grepple:package-default github.com/greppleai/grepple/internal/cli
     %% grepple:language-default go
     direction LR
-    note "Package cli implements Grepple's search, extraction, repository inspection, authentication, rules, and terminal/JSON presentation workflows. | package github.com/greppleai/grepple/internal/cli | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=25, declarations=23, exportedTypes=0, internalTypes=23, members=153, exportedFunctions=3, fiberRoutes=0, relations=15"
+    note "Package cli implements Grepple's search, extraction, repository inspection, authentication, rules, and terminal/JSON presentation workflows. | package github.com/greppleai/grepple/internal/cli | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=27, declarations=35, exportedTypes=0, internalTypes=35, members=188, exportedFunctions=3, fiberRoutes=0, relations=23"
     namespace interfaces {
         class resultRenderer["resultRenderer · internal/cli/renderer.go:9-11"] {
             +Render([]api.FileResult): error
@@ -10,6 +10,44 @@ classDiagram
         <<interface>> resultRenderer
     }
     namespace data_contracts {
+        class anchorProtocolLine["anchorProtocolLine · internal/cli/anchors.go:55-58"] {
+            +Anchor: string
+            +Line: int
+        }
+        <<struct>> anchorProtocolLine
+        class anchorProtocolRequest["anchorProtocolRequest · internal/cli/anchors.go:32-35"] {
+            +Files: []anchorProtocolRequestFile
+            +ProtocolVersion: int
+        }
+        <<struct>> anchorProtocolRequest
+        class anchorProtocolRequestFile["anchorProtocolRequestFile · internal/cli/anchors.go:37-42"] {
+            +Content: string
+            +Lines: []int
+            +Path: string
+            +SHA256: string
+        }
+        <<struct>> anchorProtocolRequestFile
+        class anchorProtocolResponse["anchorProtocolResponse · internal/cli/anchors.go:44-47"] {
+            +Files: []anchorProtocolResponseFile
+            +ProtocolVersion: int
+        }
+        <<struct>> anchorProtocolResponse
+        class anchorProtocolResponseFile["anchorProtocolResponseFile · internal/cli/anchors.go:49-53"] {
+            +Anchors: []anchorProtocolLine
+            +Path: string
+            +SHA256: string
+        }
+        <<struct>> anchorProtocolResponseFile
+        class anchorProviderSettings["anchorProviderSettings · internal/cli/settings.go:26-29"] {
+            +Command: []string
+            +TimeoutMS: int
+        }
+        <<struct>> anchorProviderSettings
+        class anchorSettings["anchorSettings · internal/cli/settings.go:21-24"] {
+            +DefaultProvider: string
+            +Providers: map[string]anchorProviderSettings
+        }
+        <<struct>> anchorSettings
         class config["config · internal/cli/config.go:10-17"] {
             +RefreshExpiry: int64
             +RefreshToken: string
@@ -89,8 +127,10 @@ classDiagram
             +Server: string
         }
         <<struct>> rulesAddArgs
-        class searchArgs["searchArgs · internal/cli/args.go:24-58"] {
+        class searchArgs["searchArgs · internal/cli/args.go:24-60"] {
             +AfterContext: int
+            +AnchorProvider: string
+            +Anchors: bool
             +At: string
             +BeforeContext: int
             +Context: int
@@ -133,9 +173,17 @@ classDiagram
             +Server: string
         }
         <<struct>> treeArgs
+        class userSettings["userSettings · internal/cli/settings.go:17-19"] {
+            +Anchors: anchorSettings
+        }
+        <<struct>> userSettings
     }
     namespace internal_types {
-        class cliOptions["cliOptions · internal/cli/model.go:5-19"]
+        class anchorFileSelection["anchorFileSelection · internal/cli/anchors.go:60-63"]
+        <<struct>> anchorFileSelection
+        class anchorLookup["anchorLookup = map&#91;string&#93;map&#91;int&#93;string · internal/cli/anchors.go:30"]
+        <<type>> anchorLookup
+        class cliOptions["cliOptions · internal/cli/model.go:5-22"]
         <<struct>> cliOptions
         class contextRenderer["contextRenderer · internal/cli/renderer_context.go:9-11"]
         <<struct>> contextRenderer
@@ -147,15 +195,19 @@ classDiagram
         <<struct>> filesRenderer
         class jsonResultRenderer["jsonResultRenderer · internal/cli/renderer_json.go:5-8"]
         <<struct>> jsonResultRenderer
-        class lineRenderer["lineRenderer · internal/cli/renderer_matches.go:10-13"]
+        class limitedAnchorBuffer["limitedAnchorBuffer · internal/cli/anchors.go:214-217"]
+        <<struct>> limitedAnchorBuffer
+        class limitedStderrWriter["limitedStderrWriter · internal/cli/anchors.go:226-229"]
+        <<struct>> limitedStderrWriter
+        class lineRenderer["lineRenderer · internal/cli/renderer_matches.go:10-14"]
         <<struct>> lineRenderer
-        class onlyMatchingRenderer["onlyMatchingRenderer · internal/cli/renderer_matches.go:27-31"]
+        class onlyMatchingRenderer["onlyMatchingRenderer · internal/cli/renderer_matches.go:53-57"]
         <<struct>> onlyMatchingRenderer
         class outputWriter["outputWriter · internal/cli/output.go:24-28"]
         <<struct>> outputWriter
         class repoCountRenderer["repoCountRenderer · internal/cli/renderer_repo_count.go:10-13"]
         <<struct>> repoCountRenderer
-        class segmentRenderer["segmentRenderer · internal/cli/renderer_segments.go:11-13"]
+        class segmentRenderer["segmentRenderer · internal/cli/renderer_segments.go:11-14"]
         <<struct>> segmentRenderer
         class treeNode["treeNode · internal/cli/tree.go:30-34"]
         <<struct>> treeNode
@@ -169,11 +221,16 @@ classDiagram
             +RenderOutlineOrContent(parser.FileOutline, string): string
         }
         <<function>> RenderOutlineOrContent
-        class Run["Run · internal/cli/args.go:280-304"] {
+        class Run["Run · internal/cli/args.go:308-332"] {
             +Run([]string): error
         }
         <<function>> Run
     }
+    anchorProtocolRequest "1" --> "*" anchorProtocolRequestFile : field Files
+    anchorProtocolResponse "1" --> "*" anchorProtocolResponseFile : field Files
+    anchorProtocolResponseFile "1" --> "*" anchorProtocolLine : field Anchors
+    anchorSettings "1" --> "*" anchorProviderSettings : field Providers
+    cliOptions "1" --> "1" anchorLookup : field AnchorLines
     contextRenderer "1" --> "1" outputWriter : field output
     resultRenderer <|.. contextRenderer : implements
     countRenderer "1" --> "1" outputWriter : field output
@@ -182,10 +239,13 @@ classDiagram
     resultRenderer <|.. filesRenderer : implements
     jsonResultRenderer "1" --> "1" outputWriter : field output
     resultRenderer <|.. jsonResultRenderer : implements
+    lineRenderer "1" --> "1" anchorLookup : field anchors
     lineRenderer "1" --> "1" outputWriter : field output
     resultRenderer <|.. lineRenderer : implements
     onlyMatchingRenderer "1" --> "1" outputWriter : field output
     resultRenderer <|.. onlyMatchingRenderer : implements
     repoCountRenderer "1" --> "1" outputWriter : field output
+    segmentRenderer "1" --> "1" anchorLookup : field anchors
     segmentRenderer "1" --> "1" outputWriter : field output
     resultRenderer <|.. segmentRenderer : implements
+    userSettings "1" --> "1" anchorSettings : field Anchors

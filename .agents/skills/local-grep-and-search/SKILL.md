@@ -13,7 +13,7 @@ Use Grepple to minimize retrieval turns and tokens, not merely as a grep replace
 - **Need candidate paths:** use `--files-with-matches`; use `--files` only when matching filenames/globs.
 - **Need file structure:** use `--outline` before reading a large or unfamiliar file.
 - **Need implementation context:** default search returns enclosing structural segments and collapses unrelated code.
-- **Need edit-ready context:** first locate exact `PATH:LINE` evidence with `--line-only` or structural output, then use Read on the smallest range to obtain hash anchors. Grepple discovers; Read prepares edits.
+- **Need edit-ready context:** when a compatible provider is configured, add `--anchors` to emit `HASH│LINE│content` and edit directly. Otherwise locate `PATH:LINE` with `--line-only` or structural output, then use Read on the smallest range. `HASH` mutates; 1-indexed `LINE` orients and composes with `--at`. Refresh both after edits.
 - **Need only evidence lines:** use `--line-only` or bounded context; this avoids structural parsing and saves tokens.
 - **Know a navigation location:** use `--at PATH:LINE` (also accepts `PATH:START-END`) to retrieve the exact callable declaration instead of reading the file broadly.
 - **Need the next code hop:** add `--related` to expose bounded callees and potential callers. This often avoids a second symbol search.
@@ -69,6 +69,7 @@ grepple --outline path/to/file.go           # orient cheaply
 grepple -F 'Symbol' src --limit 5           # retrieve bounded structure
 grepple --related -F 'Symbol(' src          # choose caller/callee next hops
 grepple --line-only -F 'Symbol' src/file.go # locate exact lines before Read
+grepple --anchors -F 'Symbol' src/file.go   # skip Read when an edit-anchor provider is configured
 grepple --at src/file.go:40-58               # retrieve a listed declaration
 grepple --follow-related 1 -F 'Symbol(' src # inline one deliberate hop
 ```

@@ -16,17 +16,20 @@
     "syntacticBuildTagUnion": []
   },
   "summary": {
-    "sourceFiles": 25,
-    "declarations": 23,
+    "sourceFiles": 27,
+    "declarations": 35,
     "exportedTypes": 0,
-    "internalTypes": 23,
-    "members": 153,
+    "internalTypes": 35,
+    "members": 188,
     "exportedFunctions": 3,
     "fiberRoutes": 0,
-    "relations": 15
+    "relations": 23
   },
-  "semanticModelDigest": "sha256:801438548a76f20d0cb959c2579dd8753638eca74c16b9b4dc3e952def670278",
+  "semanticModelDigest": "sha256:5c0a0d639029b69f77cf7f6ef852b64ca6951e5a7efe24eb66942af3bca1876d",
   "sourceFiles": [
+    {
+      "path": "internal/cli/anchors.go"
+    },
     {
       "path": "internal/cli/args.go"
     },
@@ -97,6 +100,9 @@
       "path": "internal/cli/rules.go"
     },
     {
+      "path": "internal/cli/settings.go"
+    },
+    {
       "path": "internal/cli/tree.go"
     },
     {
@@ -105,13 +111,319 @@
   ],
   "declarations": [
     {
+      "name": "anchorFileSelection",
+      "kind": "struct",
+      "file": "internal/cli/anchors.go",
+      "line": 60,
+      "endLine": 63,
+      "underlyingType": "struct{displayPath string;lines map[int]string;}",
+      "members": [
+        {
+          "name": "displayPath",
+          "kind": "property",
+          "line": 61,
+          "endLine": 61,
+          "result": "string"
+        },
+        {
+          "name": "lines",
+          "kind": "property",
+          "line": 62,
+          "endLine": 62,
+          "result": "map[int]string"
+        }
+      ]
+    },
+    {
+      "name": "anchorLookup",
+      "kind": "type",
+      "file": "internal/cli/anchors.go",
+      "line": 30,
+      "endLine": 30,
+      "underlyingType": "map[string]map[int]string",
+      "members": [
+        {
+          "name": "line",
+          "kind": "method",
+          "line": 300,
+          "endLine": 302,
+          "parameters": [
+            "string",
+            "int"
+          ],
+          "result": "string"
+        }
+      ]
+    },
+    {
+      "name": "anchorProtocolLine",
+      "kind": "struct",
+      "file": "internal/cli/anchors.go",
+      "line": 55,
+      "endLine": 58,
+      "underlyingType": "struct{Line int`json:\"line\"`;Anchor string`json:\"anchor\"`;}",
+      "members": [
+        {
+          "name": "Anchor",
+          "kind": "property",
+          "line": 57,
+          "endLine": 57,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"anchor\""
+          }
+        },
+        {
+          "name": "Line",
+          "kind": "property",
+          "line": 56,
+          "endLine": 56,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"line\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "anchorProtocolRequest",
+      "kind": "struct",
+      "file": "internal/cli/anchors.go",
+      "line": 32,
+      "endLine": 35,
+      "underlyingType": "struct{ProtocolVersion int`json:\"protocol_version\"`;Files[]anchorProtocolRequestFile`json:\"files\"`;}",
+      "members": [
+        {
+          "name": "Files",
+          "kind": "property",
+          "line": 34,
+          "endLine": 34,
+          "result": "[]anchorProtocolRequestFile",
+          "structTag": {
+            "value": "json:\"files\""
+          }
+        },
+        {
+          "name": "ProtocolVersion",
+          "kind": "property",
+          "line": 33,
+          "endLine": 33,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"protocol_version\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "anchorProtocolRequestFile",
+      "kind": "struct",
+      "file": "internal/cli/anchors.go",
+      "line": 37,
+      "endLine": 42,
+      "underlyingType": "struct{Path string`json:\"path\"`;Content string`json:\"content\"`;SHA256 string`json:\"sha256\"`;Lines[]int`json:\"lines\"`;}",
+      "members": [
+        {
+          "name": "Content",
+          "kind": "property",
+          "line": 39,
+          "endLine": 39,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"content\""
+          }
+        },
+        {
+          "name": "Lines",
+          "kind": "property",
+          "line": 41,
+          "endLine": 41,
+          "result": "[]int",
+          "structTag": {
+            "value": "json:\"lines\""
+          }
+        },
+        {
+          "name": "Path",
+          "kind": "property",
+          "line": 38,
+          "endLine": 38,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"path\""
+          }
+        },
+        {
+          "name": "SHA256",
+          "kind": "property",
+          "line": 40,
+          "endLine": 40,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"sha256\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "anchorProtocolResponse",
+      "kind": "struct",
+      "file": "internal/cli/anchors.go",
+      "line": 44,
+      "endLine": 47,
+      "underlyingType": "struct{ProtocolVersion int`json:\"protocol_version\"`;Files[]anchorProtocolResponseFile`json:\"files\"`;}",
+      "members": [
+        {
+          "name": "Files",
+          "kind": "property",
+          "line": 46,
+          "endLine": 46,
+          "result": "[]anchorProtocolResponseFile",
+          "structTag": {
+            "value": "json:\"files\""
+          }
+        },
+        {
+          "name": "ProtocolVersion",
+          "kind": "property",
+          "line": 45,
+          "endLine": 45,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"protocol_version\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "anchorProtocolResponseFile",
+      "kind": "struct",
+      "file": "internal/cli/anchors.go",
+      "line": 49,
+      "endLine": 53,
+      "underlyingType": "struct{Path string`json:\"path\"`;SHA256 string`json:\"sha256\"`;Anchors[]anchorProtocolLine`json:\"anchors\"`;}",
+      "members": [
+        {
+          "name": "Anchors",
+          "kind": "property",
+          "line": 52,
+          "endLine": 52,
+          "result": "[]anchorProtocolLine",
+          "structTag": {
+            "value": "json:\"anchors\""
+          }
+        },
+        {
+          "name": "Path",
+          "kind": "property",
+          "line": 50,
+          "endLine": 50,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"path\""
+          }
+        },
+        {
+          "name": "SHA256",
+          "kind": "property",
+          "line": 51,
+          "endLine": 51,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"sha256\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "anchorProviderSettings",
+      "kind": "struct",
+      "file": "internal/cli/settings.go",
+      "line": 26,
+      "endLine": 29,
+      "underlyingType": "struct{Command[]string`json:\"command\"`;TimeoutMS int`json:\"timeout_ms,omitempty\"`;}",
+      "members": [
+        {
+          "name": "Command",
+          "kind": "property",
+          "line": 27,
+          "endLine": 27,
+          "result": "[]string",
+          "structTag": {
+            "value": "json:\"command\""
+          }
+        },
+        {
+          "name": "TimeoutMS",
+          "kind": "property",
+          "line": 28,
+          "endLine": 28,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"timeout_ms,omitempty\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "anchorSettings",
+      "kind": "struct",
+      "file": "internal/cli/settings.go",
+      "line": 21,
+      "endLine": 24,
+      "underlyingType": "struct{DefaultProvider string`json:\"default_provider\"`;Providers map[string]anchorProviderSettings`json:\"providers\"`;}",
+      "members": [
+        {
+          "name": "DefaultProvider",
+          "kind": "property",
+          "line": 22,
+          "endLine": 22,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"default_provider\""
+          }
+        },
+        {
+          "name": "Providers",
+          "kind": "property",
+          "line": 23,
+          "endLine": 23,
+          "result": "map[string]anchorProviderSettings",
+          "structTag": {
+            "value": "json:\"providers\""
+          }
+        }
+      ]
+    },
+    {
       "name": "cliOptions",
       "kind": "struct",
       "file": "internal/cli/model.go",
       "line": 5,
-      "endLine": 19,
-      "underlyingType": "struct{Params search.Params;LineOnly bool;OnlyMatching bool;JSON string;Count bool;CountByRepo bool;FilesWithMatches bool;Outline bool;Depth int;MaxOutputBytes int;Stdin bool;}",
+      "endLine": 22,
+      "underlyingType": "struct{Params search.Params;LineOnly bool;OnlyMatching bool;JSON string;Count bool;CountByRepo bool;FilesWithMatches bool;Outline bool;Depth int;MaxOutputBytes int;Anchors bool;AnchorProvider string;AnchorLines anchorLookup;Stdin bool;}",
       "members": [
+        {
+          "name": "AnchorLines",
+          "kind": "property",
+          "line": 18,
+          "endLine": 18,
+          "result": "anchorLookup"
+        },
+        {
+          "name": "AnchorProvider",
+          "kind": "property",
+          "line": 17,
+          "endLine": 17,
+          "result": "string"
+        },
+        {
+          "name": "Anchors",
+          "kind": "property",
+          "line": 16,
+          "endLine": 16,
+          "result": "bool"
+        },
         {
           "name": "Count",
           "kind": "property",
@@ -185,8 +497,8 @@
         {
           "name": "Stdin",
           "kind": "property",
-          "line": 18,
-          "endLine": 18,
+          "line": 21,
+          "endLine": 21,
           "result": "bool"
         }
       ]
@@ -789,22 +1101,100 @@
       ]
     },
     {
+      "name": "limitedAnchorBuffer",
+      "kind": "struct",
+      "file": "internal/cli/anchors.go",
+      "line": 214,
+      "endLine": 217,
+      "underlyingType": "struct{bytes.Buffer;limit int;}",
+      "members": [
+        {
+          "name": "Write",
+          "kind": "method",
+          "line": 219,
+          "endLine": 224,
+          "parameters": [
+            "[]byte"
+          ],
+          "result": "tuple\u003cint,error\u003e"
+        },
+        {
+          "name": "limit",
+          "kind": "property",
+          "line": 216,
+          "endLine": 216,
+          "result": "int"
+        }
+      ]
+    },
+    {
+      "name": "limitedStderrWriter",
+      "kind": "struct",
+      "file": "internal/cli/anchors.go",
+      "line": 226,
+      "endLine": 229,
+      "underlyingType": "struct{buffer*bytes.Buffer;limit int;}",
+      "members": [
+        {
+          "name": "Write",
+          "kind": "method",
+          "line": 231,
+          "endLine": 237,
+          "parameters": [
+            "[]byte"
+          ],
+          "result": "tuple\u003cint,error\u003e"
+        },
+        {
+          "name": "buffer",
+          "kind": "property",
+          "line": 227,
+          "endLine": 227,
+          "result": "*bytes.Buffer"
+        },
+        {
+          "name": "limit",
+          "kind": "property",
+          "line": 228,
+          "endLine": 228,
+          "result": "int"
+        }
+      ]
+    },
+    {
       "name": "lineRenderer",
       "kind": "struct",
       "file": "internal/cli/renderer_matches.go",
       "line": 10,
-      "endLine": 13,
-      "underlyingType": "struct{output*outputWriter;maxLines int;}",
+      "endLine": 14,
+      "underlyingType": "struct{output*outputWriter;maxLines int;anchors anchorLookup;}",
       "members": [
         {
           "name": "Render",
           "kind": "method",
-          "line": 15,
-          "endLine": 25,
+          "line": 16,
+          "endLine": 29,
           "parameters": [
             "[]api.FileResult"
           ],
           "result": "error"
+        },
+        {
+          "name": "renderAnchored",
+          "kind": "method",
+          "line": 31,
+          "endLine": 51,
+          "parameters": [
+            "[]api.FileResult"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "anchors",
+          "kind": "property",
+          "line": 13,
+          "endLine": 13,
+          "result": "anchorLookup"
         },
         {
           "name": "maxLines",
@@ -856,15 +1246,15 @@
       "name": "onlyMatchingRenderer",
       "kind": "struct",
       "file": "internal/cli/renderer_matches.go",
-      "line": 27,
-      "endLine": 31,
+      "line": 53,
+      "endLine": 57,
       "underlyingType": "struct{output*outputWriter;maxLines int;matcher*regexp.Regexp;}",
       "members": [
         {
           "name": "Render",
           "kind": "method",
-          "line": 33,
-          "endLine": 48,
+          "line": 59,
+          "endLine": 74,
           "parameters": [
             "[]api.FileResult"
           ],
@@ -873,22 +1263,22 @@
         {
           "name": "matcher",
           "kind": "property",
-          "line": 30,
-          "endLine": 30,
+          "line": 56,
+          "endLine": 56,
           "result": "*regexp.Regexp"
         },
         {
           "name": "maxLines",
           "kind": "property",
-          "line": 29,
-          "endLine": 29,
+          "line": 55,
+          "endLine": 55,
           "result": "int"
         },
         {
           "name": "output",
           "kind": "property",
-          "line": 28,
-          "endLine": 28,
+          "line": 54,
+          "endLine": 54,
           "result": "*outputWriter"
         }
       ]
@@ -1221,14 +1611,14 @@
       "kind": "struct",
       "file": "internal/cli/args.go",
       "line": 24,
-      "endLine": 58,
-      "underlyingType": "struct{Local bool`arg:\"--local\" help:\"search only the local working directory (this is the default)\"`;Remote bool`arg:\"-R,--remote\" help:\"also query the remote shard/router (default: local only)\"`;Recursive bool`arg:\"-r,--recursive\" help:\"search directories recursively (compatibility alias; already the default)\"`;Server string`arg:\"-s,--server\" placeholder:\"URL\" help:\"remote shard/router URL (implies --remote)\"`;LineNumber bool`arg:\"-n,--line-number\" help:\"include line numbers (enabled by default)\"`;LineOnly bool`arg:\"--line-only\" help:\"print only matching lines\"`;OnlyMatching bool`arg:\"-o,--only-matching\" help:\"print each matched substring\"`;Files bool`arg:\"-l,--files\" help:\"recursively list files under optional PATHs; glob PATHs filter the listing\"`;FilesWithMatches bool`arg:\"--files-with-matches\" help:\"list paths whose contents match; accepts multiple file, directory, or glob PATHs\"`;Outline bool`arg:\"-O,--outline\" help:\"print each file's structural outline (classes, funcs, interfaces) instead of searching\"`;Depth int`arg:\"--depth\" placeholder:\"N\" help:\"outline: cap nesting depth for JSON/YAML (0 = unlimited)\"`;Count bool`arg:\"-c,--count\" help:\"print matching-line counts per file\"`;CountByRepo bool`arg:\"--count-by-repo\" help:\"print aggregate file and matching-line counts per repository\"`;JSON bool`arg:\"--json\" help:\"print full JSON results\"`;JSONMatches bool`arg:\"--json-matches\" help:\"print compact JSON matches\"`;Regex bool`arg:\"-E,--regex\" help:\"use JavaScript regular expressions (default; -E is a compatibility alias)\"`;Fixed bool`arg:\"-F,--fixed-strings\" help:\"treat the pattern as a literal string\"`;IgnoreCase bool`arg:\"-i,--ignore-case\" help:\"ignore case distinctions\"`;InvertMatch bool`arg:\"-v,--invert-match\" help:\"select lines that do not match\"`;Context int`arg:\"-C,--context\" placeholder:\"N\" help:\"print N lines before and after matches\"`;AfterContext int`arg:\"-A,--after-context\" placeholder:\"N\" help:\"print N lines after matches\"`;BeforeContext int`arg:\"-B,--before-context\" placeholder:\"N\" help:\"print N lines before matches\"`;MaxFiles int`arg:\"--max-files\" placeholder:\"N\" help:\"limit matching files\"`;MaxSegments int`arg:\"--max-segments\" placeholder:\"N\" help:\"limit result segments\"`;MaxOutputBytes int`arg:\"--max-output-bytes\" placeholder:\"N\" help:\"cap human-readable output (default 40960; 0 = unlimited; JSON is uncapped)\"`;Related bool`arg:\"--related\" help:\"show project-local callees and callers for supported source languages (local search only)\"`;FollowRelated int`arg:\"--follow-related\" placeholder:\"N\" help:\"expand up to two unique callees per level (1-3; implies --related)\"`;At string`arg:\"--at\" placeholder:\"PATH:LINE\" help:\"retrieve the declaration containing a local source location\"`;Skip int`arg:\"--skip\" placeholder:\"N\" help:\"skip the first N ranked result files\"`;Limit int`arg:\"--limit\" placeholder:\"N\" help:\"return at most N ranked result files (default 20; 0 = all local; servers cap a page at 100 — page further with --skip)\"`;Repos[]string`arg:\"--repo,separate\" placeholder:\"PATTERN\" help:\"restrict remote repositories; repeatable\"`;Query string`arg:\"positional\" placeholder:\"PATTERN\"`;Globs[]string`arg:\"positional\" placeholder:\"PATH\" help:\"file, directory, or glob to search; repeat for multiple roots\"`;}",
+      "endLine": 60,
+      "underlyingType": "struct{Local bool`arg:\"--local\" help:\"search only the local working directory (this is the default)\"`;Remote bool`arg:\"-R,--remote\" help:\"also query the remote shard/router (default: local only)\"`;Recursive bool`arg:\"-r,--recursive\" help:\"search directories recursively (compatibility alias; already the default)\"`;Server string`arg:\"-s,--server\" placeholder:\"URL\" help:\"remote shard/router URL (implies --remote)\"`;LineNumber bool`arg:\"-n,--line-number\" help:\"include line numbers (enabled by default)\"`;LineOnly bool`arg:\"--line-only\" help:\"print only matching lines\"`;OnlyMatching bool`arg:\"-o,--only-matching\" help:\"print each matched substring\"`;Files bool`arg:\"-l,--files\" help:\"recursively list files under optional PATHs; glob PATHs filter the listing\"`;FilesWithMatches bool`arg:\"--files-with-matches\" help:\"list paths whose contents match; accepts multiple file, directory, or glob PATHs\"`;Outline bool`arg:\"-O,--outline\" help:\"print each file's structural outline (classes, funcs, interfaces) instead of searching\"`;Depth int`arg:\"--depth\" placeholder:\"N\" help:\"outline: cap nesting depth for JSON/YAML (0 = unlimited)\"`;Count bool`arg:\"-c,--count\" help:\"print matching-line counts per file\"`;CountByRepo bool`arg:\"--count-by-repo\" help:\"print aggregate file and matching-line counts per repository\"`;JSON bool`arg:\"--json\" help:\"print full JSON results\"`;JSONMatches bool`arg:\"--json-matches\" help:\"print compact JSON matches\"`;Regex bool`arg:\"-E,--regex\" help:\"use JavaScript regular expressions (default; -E is a compatibility alias)\"`;Fixed bool`arg:\"-F,--fixed-strings\" help:\"treat the pattern as a literal string\"`;IgnoreCase bool`arg:\"-i,--ignore-case\" help:\"ignore case distinctions\"`;InvertMatch bool`arg:\"-v,--invert-match\" help:\"select lines that do not match\"`;Context int`arg:\"-C,--context\" placeholder:\"N\" help:\"print N lines before and after matches\"`;AfterContext int`arg:\"-A,--after-context\" placeholder:\"N\" help:\"print N lines after matches\"`;BeforeContext int`arg:\"-B,--before-context\" placeholder:\"N\" help:\"print N lines before matches\"`;MaxFiles int`arg:\"--max-files\" placeholder:\"N\" help:\"limit matching files\"`;MaxSegments int`arg:\"--max-segments\" placeholder:\"N\" help:\"limit result segments\"`;MaxOutputBytes int`arg:\"--max-output-bytes\" placeholder:\"N\" help:\"cap human-readable output (default 40960; 0 = unlimited; JSON is uncapped)\"`;Anchors bool`arg:\"--anchors\" help:\"emit configured edit anchors as HASH│LINE│content rows (local structural or --line-only output)\"`;AnchorProvider string`arg:\"--anchor-provider\" placeholder:\"NAME\" help:\"use a named anchor provider from ~/.grepple/settings.json (implies --anchors)\"`;Related bool`arg:\"--related\" help:\"show project-local callees and callers for supported source languages (local search only)\"`;FollowRelated int`arg:\"--follow-related\" placeholder:\"N\" help:\"expand up to two unique callees per level (1-3; implies --related)\"`;At string`arg:\"--at\" placeholder:\"PATH:LINE\" help:\"retrieve the declaration containing a local source location\"`;Skip int`arg:\"--skip\" placeholder:\"N\" help:\"skip the first N ranked result files\"`;Limit int`arg:\"--limit\" placeholder:\"N\" help:\"return at most N ranked result files (default 20; 0 = all local; servers cap a page at 100 — page further with --skip)\"`;Repos[]string`arg:\"--repo,separate\" placeholder:\"PATTERN\" help:\"restrict remote repositories; repeatable\"`;Query string`arg:\"positional\" placeholder:\"PATTERN\"`;Globs[]string`arg:\"positional\" placeholder:\"PATH\" help:\"file, directory, or glob to search; repeat for multiple roots\"`;}",
       "members": [
         {
           "name": "Description",
           "kind": "method",
-          "line": 60,
-          "endLine": 62,
+          "line": 62,
+          "endLine": 64,
           "result": "string"
         },
         {
@@ -1242,10 +1632,30 @@
           }
         },
         {
+          "name": "AnchorProvider",
+          "kind": "property",
+          "line": 51,
+          "endLine": 51,
+          "result": "string",
+          "structTag": {
+            "value": "arg:\"--anchor-provider\" placeholder:\"NAME\" help:\"use a named anchor provider from ~/.grepple/settings.json (implies --anchors)\""
+          }
+        },
+        {
+          "name": "Anchors",
+          "kind": "property",
+          "line": 50,
+          "endLine": 50,
+          "result": "bool",
+          "structTag": {
+            "value": "arg:\"--anchors\" help:\"emit configured edit anchors as HASH│LINE│content rows (local structural or --line-only output)\""
+          }
+        },
+        {
           "name": "At",
           "kind": "property",
-          "line": 52,
-          "endLine": 52,
+          "line": 54,
+          "endLine": 54,
           "result": "string",
           "structTag": {
             "value": "arg:\"--at\" placeholder:\"PATH:LINE\" help:\"retrieve the declaration containing a local source location\""
@@ -1334,8 +1744,8 @@
         {
           "name": "FollowRelated",
           "kind": "property",
-          "line": 51,
-          "endLine": 51,
+          "line": 53,
+          "endLine": 53,
           "result": "int",
           "structTag": {
             "value": "arg:\"--follow-related\" placeholder:\"N\" help:\"expand up to two unique callees per level (1-3; implies --related)\""
@@ -1344,8 +1754,8 @@
         {
           "name": "Globs",
           "kind": "property",
-          "line": 57,
-          "endLine": 57,
+          "line": 59,
+          "endLine": 59,
           "result": "[]string",
           "structTag": {
             "value": "arg:\"positional\" placeholder:\"PATH\" help:\"file, directory, or glob to search; repeat for multiple roots\""
@@ -1394,8 +1804,8 @@
         {
           "name": "Limit",
           "kind": "property",
-          "line": 54,
-          "endLine": 54,
+          "line": 56,
+          "endLine": 56,
           "result": "int",
           "structTag": {
             "value": "arg:\"--limit\" placeholder:\"N\" help:\"return at most N ranked result files (default 20; 0 = all local; servers cap a page at 100 — page further with --skip)\""
@@ -1484,8 +1894,8 @@
         {
           "name": "Query",
           "kind": "property",
-          "line": 56,
-          "endLine": 56,
+          "line": 58,
+          "endLine": 58,
           "result": "string",
           "structTag": {
             "value": "arg:\"positional\" placeholder:\"PATTERN\""
@@ -1514,8 +1924,8 @@
         {
           "name": "Related",
           "kind": "property",
-          "line": 50,
-          "endLine": 50,
+          "line": 52,
+          "endLine": 52,
           "result": "bool",
           "structTag": {
             "value": "arg:\"--related\" help:\"show project-local callees and callers for supported source languages (local search only)\""
@@ -1534,8 +1944,8 @@
         {
           "name": "Repos",
           "kind": "property",
-          "line": 55,
-          "endLine": 55,
+          "line": 57,
+          "endLine": 57,
           "result": "[]string",
           "structTag": {
             "value": "arg:\"--repo,separate\" placeholder:\"PATTERN\" help:\"restrict remote repositories; repeatable\""
@@ -1554,8 +1964,8 @@
         {
           "name": "Skip",
           "kind": "property",
-          "line": 53,
-          "endLine": 53,
+          "line": 55,
+          "endLine": 55,
           "result": "int",
           "structTag": {
             "value": "arg:\"--skip\" placeholder:\"N\" help:\"skip the first N ranked result files\""
@@ -1568,14 +1978,14 @@
       "kind": "struct",
       "file": "internal/cli/renderer_segments.go",
       "line": 11,
-      "endLine": 13,
-      "underlyingType": "struct{output*outputWriter}",
+      "endLine": 14,
+      "underlyingType": "struct{output*outputWriter;anchors anchorLookup;}",
       "members": [
         {
           "name": "Render",
           "kind": "method",
-          "line": 15,
-          "endLine": 27,
+          "line": 16,
+          "endLine": 28,
           "parameters": [
             "[]api.FileResult"
           ],
@@ -1584,8 +1994,8 @@
         {
           "name": "renderFile",
           "kind": "method",
-          "line": 29,
-          "endLine": 56,
+          "line": 30,
+          "endLine": 57,
           "parameters": [
             "api.FileResult"
           ],
@@ -1594,8 +2004,8 @@
         {
           "name": "renderRelated",
           "kind": "method",
-          "line": 57,
-          "endLine": 65,
+          "line": 58,
+          "endLine": 66,
           "parameters": [
             "[]api.RelatedSymbol"
           ],
@@ -1604,8 +2014,8 @@
         {
           "name": "renderRelatedPoint",
           "kind": "method",
-          "line": 76,
-          "endLine": 103,
+          "line": 77,
+          "endLine": 104,
           "parameters": [
             "api.RelatedSymbol",
             "int"
@@ -1615,8 +2025,8 @@
         {
           "name": "renderRelatedPoints",
           "kind": "method",
-          "line": 67,
-          "endLine": 74,
+          "line": 68,
+          "endLine": 75,
           "parameters": [
             "[]api.RelatedSymbol",
             "int"
@@ -1626,8 +2036,8 @@
         {
           "name": "renderRelatedSegments",
           "kind": "method",
-          "line": 105,
-          "endLine": 117,
+          "line": 106,
+          "endLine": 118,
           "parameters": [
             "[]api.ResultSegment",
             "int"
@@ -1637,13 +2047,34 @@
         {
           "name": "renderSegment",
           "kind": "method",
-          "line": 119,
-          "endLine": 129,
+          "line": 120,
+          "endLine": 131,
           "parameters": [
+            "string",
             "api.ResultSegment",
             "int"
           ],
           "result": "error"
+        },
+        {
+          "name": "renderSourceLine",
+          "kind": "method",
+          "line": 133,
+          "endLine": 138,
+          "parameters": [
+            "string",
+            "int",
+            "string",
+            "int"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "anchors",
+          "kind": "property",
+          "line": 13,
+          "endLine": 13,
+          "result": "anchorLookup"
         },
         {
           "name": "output",
@@ -1751,6 +2182,26 @@
           "result": "string"
         }
       ]
+    },
+    {
+      "name": "userSettings",
+      "kind": "struct",
+      "file": "internal/cli/settings.go",
+      "line": 17,
+      "endLine": 19,
+      "underlyingType": "struct{Anchors anchorSettings`json:\"anchors\"`;}",
+      "members": [
+        {
+          "name": "Anchors",
+          "kind": "property",
+          "line": 18,
+          "endLine": 18,
+          "result": "anchorSettings",
+          "structTag": {
+            "value": "json:\"anchors\""
+          }
+        }
+      ]
     }
   ],
   "exportedFunctions": [
@@ -1781,8 +2232,8 @@
       "name": "Run",
       "kind": "function",
       "file": "internal/cli/args.go",
-      "line": 280,
-      "endLine": 304,
+      "line": 308,
+      "endLine": 332,
       "parameters": [
         "[]string"
       ],
@@ -1792,6 +2243,41 @@
   "fiberRoutes": [],
   "relations": [
     {
+      "from": "anchorProtocolRequest",
+      "to": "anchorProtocolRequestFile",
+      "kind": "association",
+      "via": "field Files",
+      "cardinality": "many"
+    },
+    {
+      "from": "anchorProtocolResponse",
+      "to": "anchorProtocolResponseFile",
+      "kind": "association",
+      "via": "field Files",
+      "cardinality": "many"
+    },
+    {
+      "from": "anchorProtocolResponseFile",
+      "to": "anchorProtocolLine",
+      "kind": "association",
+      "via": "field Anchors",
+      "cardinality": "many"
+    },
+    {
+      "from": "anchorSettings",
+      "to": "anchorProviderSettings",
+      "kind": "association",
+      "via": "field Providers",
+      "cardinality": "many"
+    },
+    {
+      "from": "cliOptions",
+      "to": "anchorLookup",
+      "kind": "association",
+      "via": "field AnchorLines",
+      "cardinality": "one"
+    },
+    {
       "from": "contextRenderer",
       "to": "outputWriter",
       "kind": "association",
@@ -1845,6 +2331,13 @@
       "to": "resultRenderer",
       "kind": "implementation",
       "via": "implements",
+      "cardinality": "one"
+    },
+    {
+      "from": "lineRenderer",
+      "to": "anchorLookup",
+      "kind": "association",
+      "via": "field anchors",
       "cardinality": "one"
     },
     {
@@ -1884,6 +2377,13 @@
     },
     {
       "from": "segmentRenderer",
+      "to": "anchorLookup",
+      "kind": "association",
+      "via": "field anchors",
+      "cardinality": "one"
+    },
+    {
+      "from": "segmentRenderer",
       "to": "outputWriter",
       "kind": "association",
       "via": "field output",
@@ -1894,6 +2394,13 @@
       "to": "resultRenderer",
       "kind": "implementation",
       "via": "implements",
+      "cardinality": "one"
+    },
+    {
+      "from": "userSettings",
+      "to": "anchorSettings",
+      "kind": "association",
+      "via": "field Anchors",
       "cardinality": "one"
     }
   ]

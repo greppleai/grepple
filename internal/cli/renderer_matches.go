@@ -10,13 +10,39 @@ import (
 type lineRenderer struct {
 	output   *outputWriter
 	maxLines int
+	anchors  anchorLookup
 }
 
 func (renderer lineRenderer) Render(results []api.FileResult) error {
+	if renderer.anchors != nil {
+		return renderer.renderAnchored(results)
+	}
 	for _, result := range results {
 		limit := min(len(result.Matches), renderer.maxLines)
 		for _, match := range result.Matches[:limit] {
 			if err := renderer.output.writeString(fmt.Sprintf("%s:%d:%s\n", result.Path, match.Line, match.Text)); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func (renderer lineRenderer) renderAnchored(results []api.FileResult) error {
+	for resultIndex, result := range results {
+		if resultIndex > 0 {
+			if err := renderer.output.writeString("\n"); err != nil {
+				return err
+			}
+		}
+		if err := renderer.output.writeString(result.Path + "\n\n"); err != nil {
+			return err
+		}
+		limit := min(len(result.Matches), renderer.maxLines)
+		for _, match := range result.Matches[:limit] {
+			anchor := renderer.anchors.line(result.Path, match.Line)
+			row := fmt.Sprintf("%s%s%d%s%s\n", anchor, anchorOutputSeparator, match.Line, anchorOutputSeparator, normalizeRenderedAnchorLine(match.Text))
+			if err := renderer.output.writeString(row); err != nil {
 				return err
 			}
 		}

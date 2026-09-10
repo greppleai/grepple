@@ -68,6 +68,7 @@ Supported search options:
 - `--repo PATTERN` (repeatable)
 - `--max-files N`, `--max-segments N`
 - `--max-output-bytes N` caps human-readable output before common agent tool limits (default `40960`; `0` disables the cap). JSON output is never partially truncated.
+- `--anchors` emits configured edit anchors as `HASH│LINE│content`; `--anchor-provider NAME` selects a provider from `~/.grepple/settings.json`
 - `--related` (experimental: show bounded project-local callees and callers for structurally supported source languages)
 - `--at PATH:LINE` (retrieve the declaration containing an exact local location; related `PATH:START-END` ranges are accepted too)
 - `--follow-related N` (expand up to two unique callees per level, depth 1-3; implies `--related`)
@@ -77,11 +78,14 @@ Supported search options:
 
 Grepple is not a complete GNU/BSD grep flag emulation layer. Patterns use JavaScript regular-expression syntax by default; `-E` is accepted as an explicit alias for that default, while `-r` is accepted because filesystem searches are already recursive. Use `-F` when the pattern must be literal. Other unsupported grep flags should be translated to Grepple's output model rather than copied mechanically.
 
-For agent edits, use Grepple as the discovery step and the agent's Read tool as the edit-preparation step:
+For agent edits, Grepple can either locate lines for a normal Read step or emit harness-compatible edit anchors through a user-configured provider:
 
 ```text
-grepple --line-only or structural search → Read the exact PATH:LINE range → Edit with hash anchors
+grepple --line-only or structural search → Read exact PATH:LINE → Edit with hash anchors
+grepple --anchors search                  → Edit directly with emitted HASH│LINE│content rows
 ```
+
+`HASH` is the edit key and `LINE` is the 1-indexed orientation/fallback location used by Read and `--at`. Both must be refreshed after source changes. Anchor commands are configured only in user-owned `~/.grepple/settings.json`, execute without a shell, and receive a versioned batch JSON protocol. See [Edit-anchor providers](docs/anchor-providers.md), including the reference Pi adapter.
 
 Default structural output shows enclosing declarations and may collapse unrelated lines. If a segment limit omits matching lines, Grepple reports the omitted count and recommends `--line-only`. Broad human-readable output is bounded before common tool-result limits and ends with narrowing guidance; tighten the path/glob or use `--limit`, `--line-only`, `-l`, or `--count`.
 

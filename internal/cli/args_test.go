@@ -69,6 +69,16 @@ func TestParseSearchArgsEnablesRelatedGoNavigation(t *testing.T) {
 	}
 }
 
+func TestAnchorProviderFlagEnablesAnchoredOutput(t *testing.T) {
+	options, _, remote, err := parseSearchArgs([]string{"--anchor-provider", "pi", "--line-only", "needle"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if remote || !options.Anchors || options.AnchorProvider != "pi" {
+		t.Fatalf("anchor provider was not enabled: remote=%v options=%#v", remote, options)
+	}
+}
+
 func TestFollowRelatedImpliesNavigation(t *testing.T) {
 	options, _, _, err := parseSearchArgs([]string{"--follow-related", "2", "needle"})
 	if err != nil {
@@ -100,6 +110,10 @@ func TestRelatedGoNavigationRejectsUnsupportedModes(t *testing.T) {
 		{"--related", "-C", "2", "needle"},
 		{"--follow-related", "4", "needle"},
 		{"--at", "search/result.go:47", "needle"},
+		{"--anchors", "--remote", "needle"},
+		{"--anchors", "--json", "needle"},
+		{"--anchors", "--only-matching", "needle"},
+		{"--anchors", "--outline", "sample.go"},
 	} {
 		if _, _, _, err := parseSearchArgs(args); err == nil {
 			t.Fatalf("parseSearchArgs(%q) succeeded, want an error", args)

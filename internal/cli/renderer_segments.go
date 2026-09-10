@@ -9,7 +9,8 @@ import (
 )
 
 type segmentRenderer struct {
-	output *outputWriter
+	output  *outputWriter
+	anchors anchorLookup
 }
 
 func (renderer segmentRenderer) Render(results []api.FileResult) error {
@@ -41,7 +42,7 @@ func (renderer segmentRenderer) renderFile(result api.FileResult) error {
 				return err
 			}
 		}
-		if err := renderer.renderSegment(segment, width); err != nil {
+		if err := renderer.renderSegment(result.Path, segment, width); err != nil {
 			return err
 		}
 		cursor = segment.End + 1
@@ -116,16 +117,24 @@ func (renderer segmentRenderer) renderRelatedSegments(segments []api.ResultSegme
 	return nil
 }
 
-func (renderer segmentRenderer) renderSegment(segment api.ResultSegment, width int) error {
+func (renderer segmentRenderer) renderSegment(path string, segment api.ResultSegment, width int) error {
 	if segment.Kind == "summary" {
 		return renderer.output.writeString(fmt.Sprintf("%*d   %s\n", width, segment.Start, segment.Text))
 	}
 	for index, line := range strings.Split(segment.Text, "\n") {
-		if err := renderer.output.writeString(fmt.Sprintf("%*d   %s\n", width, segment.Start+index, line)); err != nil {
+		lineNumber := segment.Start + index
+		if err := renderer.renderSourceLine(path, lineNumber, normalizeRenderedAnchorLine(line), width); err != nil {
 			return err
 		}
 	}
 	return nil
+}
+
+func (renderer segmentRenderer) renderSourceLine(path string, line int, content string, width int) error {
+	if anchor := renderer.anchors.line(path, line); anchor != "" {
+		return renderer.output.writeString(fmt.Sprintf("%s%s%d%s%s\n", anchor, anchorOutputSeparator, line, anchorOutputSeparator, content))
+	}
+	return renderer.output.writeString(fmt.Sprintf("%*d   %s\n", width, line, content))
 }
 
 func omittedMatchLines(result api.FileResult) int {

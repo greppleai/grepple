@@ -22,6 +22,7 @@ Grepple should stabilize for one or two iterations before adding more languages.
 - External LLM dogfooding confirmed the intended Grepple locate/orient → Read exact range → Edit loop, but also exposed grep-flag muscle memory, edit-target lines omitted by segment limits, and broad output reaching the agent harness limit.
 - The shared `parser.NavigationGraph` is now the sole source of generic call edges for Go and TypeScript flow selection, rendering, validation, `--at`, and `--related`; the next graph issue is richer resolution rather than duplicate discovery.
 - Larger diagrams are dominated by validation metadata when viewed as plain text.
+- Agent edit anchors are provider-specific, not generic line hashes: Pi uses file-wide collision handling and a persistent hash store. Grepple now delegates through a user-owned, versioned batch provider instead of copying Pi's algorithm.
 - Explicit Go and TypeScript imports, direct parameters/receivers, source-ordered top-level typed or constructor/composite-literal locals, and same-file typed field chains now resolve before terminal-name fallback. Nested lexical bindings, call-return inference, cross-file field chains, embedded/promoted methods, re-exports, and default imports still need richer binding propagation.
 - Architecture extraction remains richer for Go than TypeScript and other languages.
 - Cross-language fixtures prove the baseline but do not yet cover enough malformed, nested, generic, decorated, or multiline syntax.
@@ -86,6 +87,17 @@ Acceptance criteria met for generic call discovery: one parser-owned graph suppl
 3. Preserve source ranges, node identity, edge confidence, and truncation warnings.
 4. Add normalized JSON graph output so agents do not need to parse Mermaid.
 5. Test that compact and JSON projections come from the same graph as canonical Mermaid.
+
+### C2. Remove the redundant Read call for edits
+
+1. [x] Add user-owned `~/.grepple/settings.json` anchor-provider configuration; never execute repository-controlled provider commands.
+2. [x] Add a versioned whole-file batch protocol with digest checks, timeout/output limits, strict response validation, and direct process execution without a shell.
+3. [x] Emit unambiguous `HASH│LINE│content` rows from local structural and `--line-only` output while retaining synthetic summary markers.
+4. [x] Add a Pi adapter that imports Pi's own hashline implementation and verify a Grepple-emitted anchor equals Pi Read for the same source line.
+5. [ ] Stabilize Pi-side distribution so settings do not point at an internal `dist` module that may move during upgrades.
+6. [ ] Add `grepple anchors doctor` (or equivalent) to report provider identity/protocol, test a temporary file, and diagnose stale configuration.
+7. [ ] Evaluate anchors for related previews and context output only if dogfooding shows they save additional tool calls; keep JSON provider-neutral.
+
 
 ### D. Expand hardening and performance coverage
 

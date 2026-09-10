@@ -13,6 +13,9 @@ type cliOptions struct {
 	Outline          bool
 	Depth            int
 	MaxOutputBytes   int
+	Anchors          bool
+	AnchorProvider   string
+	AnchorLines      anchorLookup
 	// Stdin is true when the search reads piped standard input instead of
 	// walking the filesystem (see stdinSearch).
 	Stdin bool
