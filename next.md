@@ -22,7 +22,7 @@ Grepple should stabilize for one or two iterations before adding more languages.
 - External LLM dogfooding confirmed the intended Grepple locate/orient → Read exact range → Edit loop, but also exposed grep-flag muscle memory, edit-target lines omitted by segment limits, and broad output reaching the agent harness limit.
 - The shared `parser.NavigationGraph` is now the sole source of generic call edges for Go and TypeScript flow selection, rendering, validation, `--at`, and `--related`; the next graph issue is richer resolution rather than duplicate discovery.
 - Larger diagrams are dominated by validation metadata when viewed as plain text.
-- Explicit Go and TypeScript imports plus direct parameter and method-receiver types now resolve before terminal-name fallback. Inferred locals, embedded/promoted methods, re-exports, default imports, and multi-hop member chains still need richer binding propagation.
+- Explicit Go and TypeScript imports, direct parameters/receivers, source-ordered top-level typed or constructor/composite-literal locals, and same-file typed field chains now resolve before terminal-name fallback. Nested lexical bindings, call-return inference, cross-file field chains, embedded/promoted methods, re-exports, and default imports still need richer binding propagation.
 - Architecture extraction remains richer for Go than TypeScript and other languages.
 - Cross-language fixtures prove the baseline but do not yet cover enough malformed, nested, generic, decorated, or multiline syntax.
 - Canonical mismatch errors identify the artifact but should eventually report the first semantic difference.
@@ -72,10 +72,12 @@ Acceptance criteria met for generic call discovery: one parser-owned graph suppl
 
 1. [x] Resolve explicit Go package imports and TypeScript named/namespace imports before terminal-name fallback.
 2. [x] Record direct parameter, Go method-receiver, and TypeScript `this` containing-type context for method calls.
-   - Next: propagate inferred local-variable, field/member-chain, embedded/promoted-method, re-export, and default-import bindings.
-3. [x] Distinguish exact, context-resolved, unique-terminal, and candidate confidence.
+   - [x] Propagate source-ordered top-level typed locals, constructor/composite-literal inference, and same-file typed field/member chains without leaking future or nested bindings.
+   - Next: propagate nested lexical scopes, call-return inference, cross-file field chains, embedded/promoted methods, re-exports, and default imports.
+3. [x] Distinguish exact, import-resolved, context-resolved, unique-terminal, and candidate confidence.
 4. [x] Rank unresolved candidates deterministically and suggest `--at PATH:LINE` locations.
-5. Add fixtures for same-name package functions, methods, interfaces, overloads, inheritance, TypeScript aliases, and TS/TSX imports.
+5. [x] Add duplicate same-name package/module function and method fixtures covering Go aliases and TypeScript named imports.
+6. Add ambiguity fixtures for interfaces, overloads, inheritance, re-exports, default imports, and TS/TSX path aliases.
 
 ### C. Add compact agent-facing output
 

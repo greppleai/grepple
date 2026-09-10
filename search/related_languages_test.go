@@ -232,9 +232,15 @@ export class Client { load(): void { const marker = "SECOND_METHOD_NEEDLE"; } }
 		t.Fatal(err)
 	}
 	if err := os.WriteFile(caller, []byte(`import { load as fetch, Client } from "./first";
-export function run(client: Client): void {
+export class Runner {
+client: Client;
+run(client: Client): void {
+const local = new Client();
 fetch();
-client.load(); // CALLER_NEEDLE
+client.load();
+local.load();
+this.client.load(); // CALLER_NEEDLE
+}
 }
 `), 0o600); err != nil {
 		t.Fatal(err)
@@ -248,7 +254,7 @@ client.load(); // CALLER_NEEDLE
 	if imported.Confidence != "import-resolved" || !strings.HasSuffix(imported.Path, "first.ts") {
 		t.Fatalf("unexpected named import resolution: %#v", imported)
 	}
-	method := findRelatedPoint(t, matches[0].Related, "client.load → Client.load", "callee")
+	method := findRelatedPoint(t, matches[0].Related, "this.client.load → Client.load", "callee")
 	if method.Confidence != "import-resolved" || !strings.HasSuffix(method.Path, "first.ts") {
 		t.Fatalf("unexpected TypeScript receiver resolution: %#v", method)
 	}

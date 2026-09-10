@@ -2,7 +2,7 @@ classDiagram
     %% grepple:package-default github.com/greppleai/grepple/parser
     %% grepple:language-default go
     direction LR
-    note "Package parser provides application source classification and structural parsing. | package github.com/greppleai/grepple/parser | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=25, declarations=30, exportedTypes=6, internalTypes=24, members=173, exportedFunctions=8, fiberRoutes=0, relations=85"
+    note "Package parser provides application source classification and structural parsing. | package github.com/greppleai/grepple/parser | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=25, declarations=30, exportedTypes=6, internalTypes=24, members=175, exportedFunctions=8, fiberRoutes=0, relations=86"
     namespace interfaces {
         class languageAdapter["languageAdapter · parser/language.go:33-38"] {
             +Grammar(): *sitter.Language
@@ -62,15 +62,15 @@ classDiagram
         <<struct>> mdHeading
         class mdNode["mdNode · parser/markdown.go:135-139"]
         <<struct>> mdNode
-        class navigationBinding["navigationBinding · parser/navigation_context.go:16-19"]
+        class navigationBinding["navigationBinding · parser/navigation_context.go:16-20"]
         <<struct>> navigationBinding
-        class navigationCollector["navigationCollector · parser/navigation.go:122-131"]
+        class navigationCollector["navigationCollector · parser/navigation.go:122-132"]
         <<struct>> navigationCollector
-        class navigationEnvelope["navigationEnvelope · parser/navigation.go:133-137"]
+        class navigationEnvelope["navigationEnvelope · parser/navigation.go:134-138"]
         <<struct>> navigationEnvelope
         class navigationImport["navigationImport · parser/navigation_context.go:11-14"]
         <<struct>> navigationImport
-        class navigationWalkContext["navigationWalkContext · parser/navigation.go:139-144"]
+        class navigationWalkContext["navigationWalkContext · parser/navigation.go:140-145"]
         <<struct>> navigationWalkContext
         class pooledParser["pooledParser · parser/tree_sitter.go:21-24"]
         <<struct>> pooledParser
@@ -165,6 +165,7 @@ classDiagram
     navigationCollector "1" --> "*" NavigationCall : field calls
     navigationCollector "1" --> "*" NavigationDeclaration : field declarations
     navigationCollector "1" ..> "1" NavigationDeclaration : method recordNavigationCall parameter 2
+    navigationCollector "1" --> "*" navigationBinding : field fields
     navigationCollector "1" ..> "*" navigationBinding : method recordNavigationCall parameter 3
     navigationCollector "1" ..> "1" navigationEnvelope : method-parameter=4; method-result=1
     navigationCollector "1" --> "*" navigationImport : field imports

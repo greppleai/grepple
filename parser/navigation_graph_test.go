@@ -92,6 +92,67 @@ stop(): void {}
 	}
 }
 
+func TestNavigationGraphPropagatesLocalAndFieldBindings(t *testing.T) {
+	goContent := `package app
+import workers "example.com/project/worker"
+type Service struct { client *workers.Client }
+func (service *Service) Run() {
+local := &workers.Client{}
+var explicit *workers.Client
+local.Load()
+explicit.Load()
+service.client.Load()
+}
+`
+	goCalls := navigationCallsByDisplay(BuildNavigationGraph(goContent, "go", "app/service.go").Calls)
+	for _, display := range []string{"local.Load", "explicit.Load", "service.client.Load"} {
+		call := goCalls[display]
+		if call.ReceiverType != "Client" || call.ImportPath != "example.com/project/worker" {
+			t.Fatalf("Go %s binding context = %+v", display, call)
+		}
+	}
+
+	typeScriptContent := `import { Client } from "./worker";
+class Runner {
+client: Client;
+run(): void {
+const local = new Client();
+let explicit: Client;
+local.load();
+explicit.load();
+this.client.load();
+}
+}
+`
+	typeScriptCalls := navigationCallsByDisplay(BuildNavigationGraph(typeScriptContent, "typescript", "src/runner.ts").Calls)
+	for _, display := range []string{"local.load", "explicit.load", "this.client.load"} {
+		call := typeScriptCalls[display]
+		if call.ReceiverType != "Client" || call.ImportPath != "./worker" {
+			t.Fatalf("TypeScript %s binding context = %+v", display, call)
+		}
+	}
+	forwardReference := `import { Client } from "./worker";
+function run(): void {
+local.load();
+const local = new Client();
+}
+`
+	forwardCall := navigationCallsByDisplay(BuildNavigationGraph(forwardReference, "typescript", "src/forward.ts").Calls)["local.load"]
+	if forwardCall.ReceiverType != "" || forwardCall.ImportPath != "" {
+		t.Fatalf("future local declaration leaked into earlier call: %+v", forwardCall)
+	}
+	nestedReference := `import { Client } from "./worker";
+function run(): void {
+if (true) { const hidden = new Client(); }
+hidden.load();
+}
+`
+	nestedCall := navigationCallsByDisplay(BuildNavigationGraph(nestedReference, "typescript", "src/nested.ts").Calls)["hidden.load"]
+	if nestedCall.ReceiverType != "" || nestedCall.ImportPath != "" {
+		t.Fatalf("nested local binding leaked outside its lexical scope: %+v", nestedCall)
+	}
+}
+
 func navigationCallsByDisplay(calls []NavigationCall) map[string]NavigationCall {
 	result := make(map[string]NavigationCall, len(calls))
 	for _, call := range calls {

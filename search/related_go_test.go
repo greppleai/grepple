@@ -248,9 +248,13 @@ func (*Client) Load() { _ = "OTHER_METHOD_NEEDLE" }
 `)
 	caller := writeGoFixture(t, appDirectory, "caller.go", `package app
 import workers "example.com/project/worker"
-func run(client *workers.Client) {
+type Runner struct { client *workers.Client }
+func (runner *Runner) run(client *workers.Client) {
+local := &workers.Client{}
 workers.Start()
-client.Load() // CALLER_NEEDLE
+client.Load()
+local.Load()
+runner.client.Load() // CALLER_NEEDLE
 }
 `)
 	files := []string{caller, other, worker}
@@ -262,7 +266,7 @@ client.Load() // CALLER_NEEDLE
 	if start.Confidence != "import-resolved" || !strings.HasSuffix(start.Path, "worker/worker.go") {
 		t.Fatalf("unexpected imported function resolution: %#v", start)
 	}
-	load := findRelatedPoint(t, matches[0].Related, "client.Load → Client.Load", "callee")
+	load := findRelatedPoint(t, matches[0].Related, "runner.client.Load → Client.Load", "callee")
 	if load.Confidence != "import-resolved" || !strings.HasSuffix(load.Path, "worker/worker.go") {
 		t.Fatalf("unexpected receiver resolution: %#v", load)
 	}

@@ -96,8 +96,8 @@ func NavigationGraphFromTree(root *sitter.Node, content, language, path string) 
 	if adapter == nil || root == nil {
 		return NavigationGraph{}
 	}
-	imports, packageName := navigationSourceFacts(root, content, language)
-	collector := navigationCollector{content: content, language: language, path: path, rules: adapter.Rules(), imports: imports, packageName: packageName}
+	imports, packageName, fields := navigationSourceFacts(root, content, language)
+	collector := navigationCollector{content: content, language: language, path: path, rules: adapter.Rules(), imports: imports, fields: fields, packageName: packageName}
 	collector.walk(root, navigationWalkContext{})
 	return NavigationGraph{Declarations: collector.declarations, Calls: collector.calls}
 }
@@ -125,6 +125,7 @@ type navigationCollector struct {
 	path         string
 	rules        *structureRules
 	imports      map[string]navigationImport
+	fields       map[string]map[string]navigationBinding
 	packageName  string
 	declarations []NavigationDeclaration
 	calls        []NavigationCall
@@ -176,7 +177,7 @@ func (c *navigationCollector) enterNavigationNode(node *sitter.Node, context nav
 	declaration.ID = navigationStableID("declaration", declaration.Language, declaration.Path, declaration.Name, declaration.Kind, strconv.Itoa(start), strconv.Itoa(end))
 	c.declarations = append(c.declarations, declaration)
 	current.callable = &c.declarations[len(c.declarations)-1]
-	current.bindings = navigationCallableBindings(node, c.content, c.language, current.container, c.imports)
+	current.bindings = navigationCallableBindings(node, c.content, c.language, current.container, c.imports, c.rules)
 	return current
 }
 
@@ -199,7 +200,7 @@ func (c *navigationCollector) recordNavigationCall(node *sitter.Node, callable *
 		Name: name, Display: display, Qualifier: navigationCallQualifier(display), Language: c.language, Path: c.path, Line: nodeStart(node),
 		CallerID: callable.ID, EnclosingStart: callable.Start, EnclosingEnd: callable.End,
 	}
-	applyNavigationCallContext(&call, c.imports, bindings)
+	applyNavigationCallContext(&call, c.imports, bindings, c.fields)
 	call.ID = navigationStableID("call", call.CallerID, strconv.Itoa(call.Line), call.Display, strconv.Itoa(len(c.calls)))
 	c.calls = append(c.calls, call)
 }

@@ -44,7 +44,7 @@ Navigation is syntax-based, not type-checked:
 - `[candidate; try --at PATH:LINE]` means ambiguity remains; use the suggested declaration location and verify rather than treating it as an exact call graph.
 - `→` is a callee and `←` is a potential caller.
 - Selected paths/globs define the navigation universe; include the relevant directory for cross-file edges.
-- TypeScript and TSX share a namespace. Other languages are isolated. Import and receiver-type resolution is syntax-based; inferred local variables and multi-hop member chains may remain candidates.
+- TypeScript and TSX share a namespace. Other languages are isolated. Go and TypeScript propagate direct types, source-ordered top-level local construction, and same-file typed member chains; nested lexical bindings, call-return inference, and cross-file field chains may remain candidates.
 - Expansion is bounded (two resolved callees per level, depth ≤3, cycle protection, shared line budget).
 
 Navigation works locally in default structural output or full `--json` for Go, JavaScript/JSX, TypeScript/TSX, Python, Java, Kotlin, C#, C, C++, Rust, and Shell. It does not benefit Markdown, config, logs, or plain text.
