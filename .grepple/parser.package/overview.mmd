@@ -2,7 +2,7 @@ classDiagram
     %% grepple:package-default github.com/greppleai/grepple/parser
     %% grepple:language-default go
     direction LR
-    note "Package parser provides application source classification and structural parsing. | package github.com/greppleai/grepple/parser | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=24, declarations=27, exportedTypes=5, internalTypes=22, members=143, exportedFunctions=6, fiberRoutes=0, relations=78"
+    note "Package parser provides application source classification and structural parsing. | package github.com/greppleai/grepple/parser | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=24, declarations=28, exportedTypes=6, internalTypes=22, members=164, exportedFunctions=8, fiberRoutes=0, relations=82"
     namespace interfaces {
         class languageAdapter["languageAdapter · parser/language.go:33-38"] {
             +Grammar(): *sitter.Language
@@ -30,10 +30,12 @@ classDiagram
         <<struct>> Symbol
     }
     namespace exported_types {
-        class NavigationCall["NavigationCall · parser/navigation.go:18-24"]
+        class NavigationCall["NavigationCall · parser/navigation.go:30-44"]
         <<struct>> NavigationCall
-        class NavigationDeclaration["NavigationDeclaration · parser/navigation.go:10-15"]
+        class NavigationDeclaration["NavigationDeclaration · parser/navigation.go:13-27"]
         <<struct>> NavigationDeclaration
+        class NavigationGraph["NavigationGraph · parser/navigation.go:49-52"]
+        <<struct>> NavigationGraph
         class Segment["Segment · parser/model.go:5-9"]
         <<struct>> Segment
     }
@@ -60,11 +62,11 @@ classDiagram
         <<struct>> mdHeading
         class mdNode["mdNode · parser/markdown.go:135-139"]
         <<struct>> mdNode
-        class navigationCollector["navigationCollector · parser/navigation.go:65-71"]
+        class navigationCollector["navigationCollector · parser/navigation.go:119-126"]
         <<struct>> navigationCollector
-        class navigationEnvelope["navigationEnvelope · parser/navigation.go:73-77"]
+        class navigationEnvelope["navigationEnvelope · parser/navigation.go:128-132"]
         <<struct>> navigationEnvelope
-        class navigationWalkContext["navigationWalkContext · parser/navigation.go:79-83"]
+        class navigationWalkContext["navigationWalkContext · parser/navigation.go:134-138"]
         <<struct>> navigationWalkContext
         class pooledParser["pooledParser · parser/tree_sitter.go:21-24"]
         <<struct>> pooledParser
@@ -82,11 +84,15 @@ classDiagram
         <<struct>> typeScriptLanguage
     }
     namespace operations {
+        class BuildNavigationGraph["BuildNavigationGraph · parser/navigation.go:77-88"] {
+            +BuildNavigationGraph(string, string, string): NavigationGraph
+        }
+        <<function>> BuildNavigationGraph
         class BuildSegments["BuildSegments · parser/segments.go:13-26"] {
             +BuildSegments(string, string, map[int]bool, int): []Segment
         }
         <<function>> BuildSegments
-        class DeclarationRangeAt["DeclarationRangeAt · parser/navigation.go:49-63"] {
+        class DeclarationRangeAt["DeclarationRangeAt · parser/navigation.go:103-117"] {
             +DeclarationRangeAt(string, string, int): tuple~int&#44;int&#44;bool~
         }
         <<function>> DeclarationRangeAt
@@ -94,10 +100,14 @@ classDiagram
             +LanguageFor(string): string
         }
         <<function>> LanguageFor
-        class Navigation["Navigation · parser/navigation.go:28-46"] {
+        class Navigation["Navigation · parser/navigation.go:71-74"] {
             +Navigation(string, string): tuple~[]NavigationDeclaration&#44;[]NavigationCall~
         }
         <<function>> Navigation
+        class NavigationGraphFromTree["NavigationGraphFromTree · parser/navigation.go:92-100"] {
+            +NavigationGraphFromTree(*sitter.Node, string, string, string): NavigationGraph
+        }
+        <<function>> NavigationGraphFromTree
         class OutlineFile["OutlineFile · parser/outline.go:14-16"] {
             +OutlineFile(string, string): FileOutline
         }
@@ -107,10 +117,14 @@ classDiagram
         }
         <<function>> OutlineFileDepth
     }
+    BuildNavigationGraph "1" ..> "1" NavigationGraph : result 1
     BuildSegments "1" ..> "*" Segment : result 1
     FileOutline "1" --> "*" Symbol : field Symbols
     Navigation "1" ..> "*" NavigationCall : result 2
     Navigation "1" ..> "*" NavigationDeclaration : result 1
+    NavigationGraph "1" --> "*" NavigationCall : field Calls
+    NavigationGraph "1" --> "*" NavigationDeclaration : field Declarations
+    NavigationGraphFromTree "1" ..> "1" NavigationGraph : result 1
     OutlineFile "1" ..> "1" FileOutline : result 1
     OutlineFileDepth "1" ..> "1" FileOutline : result 1
     cLanguage "1" ..> "*" Symbol : method Outline result 1

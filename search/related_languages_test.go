@@ -89,7 +89,7 @@ func testRelatedLanguageFixture(t *testing.T, fixture navigationFixture) {
 		t.Fatalf("expected caller match, got %#v", callerMatches)
 	}
 	callee := findRelatedPoint(t, callerMatches[0].Related, expectedHelperName(fixture.name), "callee")
-	if callee.Confidence != "unique" {
+	if callee.Confidence != "unique-terminal" {
 		t.Fatalf("expected unique callee, got %#v", callee)
 	}
 
@@ -98,7 +98,7 @@ func testRelatedLanguageFixture(t *testing.T, fixture navigationFixture) {
 		t.Fatal(err)
 	}
 	caller := findRelatedPoint(t, declarationMatches[0].Related, expectedCallerName(fixture.name), "caller")
-	if caller.Confidence != "unique" {
+	if caller.Confidence != "unique-terminal" {
 		t.Fatalf("expected unique caller, got %#v", caller)
 	}
 
@@ -128,7 +128,7 @@ class Runner { Object run() { return new Widget(); /* needle */ } }
 		t.Fatal(err)
 	}
 	point := findRelatedPoint(t, matches[0].Related, "Widget → Widget.Widget", "callee")
-	if point.Kind != "constructor" || point.Confidence != "unique" {
+	if point.Kind != "constructor" || point.Confidence != "unique-terminal" {
 		t.Fatalf("unexpected constructor navigation: %#v", point)
 	}
 }
@@ -172,7 +172,7 @@ func TestRelatedNamesAreUniqueWithinLanguage(t *testing.T) {
 		t.Fatal(err)
 	}
 	point := findRelatedPoint(t, matches[0].Related, "helper", "callee")
-	if point.Confidence != "unique" {
+	if point.Confidence != "unique-terminal" {
 		t.Fatalf("cross-language declaration changed confidence: %#v", point)
 	}
 }
@@ -192,7 +192,7 @@ func TestRelatedNavigationConnectsTypeScriptAndTSX(t *testing.T) {
 		t.Fatal(err)
 	}
 	point := findRelatedPoint(t, matches[0].Related, "helper", "callee")
-	if point.Confidence != "unique" || !strings.HasSuffix(point.Path, "helper.ts") {
+	if point.Confidence != "unique-terminal" || !strings.HasSuffix(point.Path, "helper.ts") {
 		t.Fatalf("unexpected TypeScript-family point: %#v", point)
 	}
 }
@@ -211,7 +211,7 @@ func TestRelatedNavigationResolvesTypeScriptInterfaceMethods(t *testing.T) {
 		t.Fatal(err)
 	}
 	point := findRelatedPoint(t, matches[0].Related, "clock.now → Clock.now", "callee")
-	if point.Kind != "method" || point.Confidence != "unique" {
+	if point.Kind != "method" || point.Confidence != "unique-terminal" {
 		t.Fatalf("unexpected interface method point: %#v", point)
 	}
 }

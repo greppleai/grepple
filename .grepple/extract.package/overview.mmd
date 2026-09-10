@@ -2,7 +2,7 @@ classDiagram
     %% grepple:package-default github.com/greppleai/grepple/extract
     %% grepple:language-default go
     direction LR
-    note "Package extract validates and generates source-linked Mermaid structure and flow diagrams. | package github.com/greppleai/grepple/extract | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=22, declarations=63, exportedTypes=42, internalTypes=21, members=496, exportedFunctions=26, fiberRoutes=0, relations=177"
+    note "Package extract validates and generates source-linked Mermaid structure and flow diagrams. | package github.com/greppleai/grepple/extract | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=23, declarations=63, exportedTypes=42, internalTypes=21, members=500, exportedFunctions=26, fiberRoutes=0, relations=180"
     namespace interfaces {
         class languageAnalysis["languageAnalysis · extract/language.go:16-19"] {
             +Analyze(Source): error
@@ -176,11 +176,11 @@ classDiagram
         <<struct>> WorkspaceSummary
     }
     namespace exported_types {
-        class Analysis["Analysis · extract/analyze.go:77-105"]
+        class Analysis["Analysis · extract/analyze.go:80-111"]
         <<struct>> Analysis
         class ClassDiagram["ClassDiagram · extract/class.go:70-84"]
         <<struct>> ClassDiagram
-        class Declaration["Declaration · extract/analyze.go:39-47"]
+        class Declaration["Declaration · extract/analyze.go:40-48"]
         <<struct>> Declaration
         class Diagnostic["Diagnostic · extract/class.go:14-20"]
         <<struct>> Diagnostic
@@ -190,7 +190,7 @@ classDiagram
         <<struct>> DiagramMember
         class DiagramNote["DiagramNote · extract/class.go:63-67"]
         <<struct>> DiagramNote
-        class FiberRoute["FiberRoute · extract/analyze.go:26-29"]
+        class FiberRoute["FiberRoute · extract/analyze.go:27-30"]
         <<struct>> FiberRoute
         class FlowEdge["FlowEdge · extract/flow.go:20-23"]
         <<struct>> FlowEdge
@@ -200,15 +200,15 @@ classDiagram
         <<struct>> Flowchart
         class GenerateOptions["GenerateOptions · extract/generate.go:11-15"]
         <<struct>> GenerateOptions
-        class GoStructTag["GoStructTag · extract/analyze.go:33-36"]
+        class GoStructTag["GoStructTag · extract/analyze.go:34-37"]
         <<struct>> GoStructTag
-        class Import["Import · extract/analyze.go:50-54"]
+        class Import["Import · extract/analyze.go:51-55"]
         <<struct>> Import
         class Language["Language · extract/language.go:11-14"]
         <<struct>> Language
-        class Location["Location · extract/analyze.go:57-61"]
+        class Location["Location · extract/analyze.go:58-62"]
         <<struct>> Location
-        class Member["Member · extract/analyze.go:18-23"]
+        class Member["Member · extract/analyze.go:19-24"]
         <<struct>> Member
         class PackageBundle["PackageBundle · extract/package_bundle.go:126-130"]
         <<struct>> PackageBundle
@@ -216,23 +216,23 @@ classDiagram
         <<struct>> Relation
         class RouteRequirement["RouteRequirement · extract/class.go:35-38"]
         <<struct>> RouteRequirement
-        class Source["Source · extract/analyze.go:15"]
+        class Source["Source · extract/analyze.go:16"]
         <<struct>> Source
         class StructTagRequirement["StructTagRequirement · extract/class.go:29-32"]
         <<struct>> StructTagRequirement
-        class Symbol["Symbol · extract/analyze.go:69-74"]
+        class Symbol["Symbol · extract/analyze.go:70-77"]
         <<struct>> Symbol
         class WorkspaceBundle["WorkspaceBundle · extract/workspace_bundle.go:107-110"]
         <<struct>> WorkspaceBundle
     }
     namespace internal_types {
-        class classParser["classParser · extract/class.go:346-352"]
+        class classParser["classParser · extract/class.go:347-353"]
         <<struct>> classParser
-        class classValidator["classValidator · extract/class.go:1043-1048"]
+        class classValidator["classValidator · extract/class.go:1044-1049"]
         <<struct>> classValidator
         class discoveredModule["discoveredModule · extract/workspace_bundle.go:112-115"]
         <<struct>> discoveredModule
-        class fiberRouter["fiberRouter · extract/go_analyze.go:459-461"]
+        class fiberRouter["fiberRouter · extract/go_analyze.go:461-463"]
         <<struct>> fiberRouter
         class flowParser["flowParser · extract/flow.go:42-45"]
         <<struct>> flowParser
@@ -240,7 +240,7 @@ classDiagram
         <<struct>> goAnalysis
         class goBuildHeaderState["goBuildHeaderState · extract/package_bundle.go:392-397"]
         <<struct>> goBuildHeaderState
-        class goSourceAnalyzer["goSourceAnalyzer · extract/go_analyze.go:18-25"]
+        class goSourceAnalyzer["goSourceAnalyzer · extract/go_analyze.go:19-26"]
         <<struct>> goSourceAnalyzer
         class goTypeOccurrences["goTypeOccurrences · extract/package_bundle_go_relations.go:9-12"]
         <<struct>> goTypeOccurrences
@@ -248,11 +248,13 @@ classDiagram
         <<struct>> languageDefinition
         class modulePackageCollector["modulePackageCollector · extract/workspace_bundle.go:311-315"]
         <<struct>> modulePackageCollector
-        class packageCompletenessItem["packageCompletenessItem · extract/class.go:1054-1057"]
+        class packageCompletenessItem["packageCompletenessItem · extract/class.go:1055-1058"]
         <<struct>> packageCompletenessItem
-        class selectedGoSymbol["selectedGoSymbol · extract/go_generate_flow.go:8-11"]
-        <<struct>> selectedGoSymbol
-        class sourceAnalyzer["sourceAnalyzer · extract/analyze.go:107-112"]
+        class selectedGoSymbol["selectedGoSymbol = selectedNavigationSymbol · extract/go_generate_flow.go:8"]
+        <<alias>> selectedGoSymbol
+        class selectedNavigationSymbol["selectedNavigationSymbol · extract/navigation.go:126-129"]
+        <<struct>> selectedNavigationSymbol
+        class sourceAnalyzer["sourceAnalyzer · extract/analyze.go:113-118"]
         <<struct>> sourceAnalyzer
         class sourceCollector["sourceCollector · extract/files.go:25"]
         <<struct>> sourceCollector
@@ -262,13 +264,11 @@ classDiagram
         <<struct>> typeScriptAnalysis
         class typeScriptClassItem["typeScriptClassItem · extract/ts_generate.go:8-11"]
         <<struct>> typeScriptClassItem
-        class typeScriptFlowItem["typeScriptFlowItem · extract/ts_generate_flow.go:8-11"]
-        <<struct>> typeScriptFlowItem
         class workspaceModuleCollector["workspaceModuleCollector · extract/workspace_bundle.go:242-245"]
         <<struct>> workspaceModuleCollector
     }
     namespace operations {
-        class Analyze["Analyze · extract/analyze.go:664-692"] {
+        class Analyze["Analyze · extract/analyze.go:618-647"] {
             +Analyze([]Source): tuple~*Analysis&#44;error~
         }
         <<function>> Analyze
@@ -280,11 +280,11 @@ classDiagram
             +BuildWorkspaceIR(string): tuple~*WorkspaceIR&#44;error~
         }
         <<function>> BuildWorkspaceIR
-        class CheckClassDiagram["CheckClassDiagram · extract/class.go:1785-1791"] {
+        class CheckClassDiagram["CheckClassDiagram · extract/class.go:1786-1792"] {
             +CheckClassDiagram(string, []Source): tuple~[]Diagnostic&#44;error~
         }
         <<function>> CheckClassDiagram
-        class CheckClassDiagramWithAnalysis["CheckClassDiagramWithAnalysis · extract/class.go:1794-1796"] {
+        class CheckClassDiagramWithAnalysis["CheckClassDiagramWithAnalysis · extract/class.go:1795-1797"] {
             +CheckClassDiagramWithAnalysis(string, *Analysis): tuple~[]Diagnostic&#44;error~
         }
         <<function>> CheckClassDiagramWithAnalysis
@@ -296,11 +296,11 @@ classDiagram
             +CheckFlowPaths(string, []string): tuple~[]Diagnostic&#44;[]string&#44;error~
         }
         <<function>> CheckFlowPaths
-        class CheckFlowchart["CheckFlowchart · extract/flow.go:440-446"] {
+        class CheckFlowchart["CheckFlowchart · extract/flow.go:391-397"] {
             +CheckFlowchart(string, []Source): tuple~[]Diagnostic&#44;error~
         }
         <<function>> CheckFlowchart
-        class CheckFlowchartWithAnalysis["CheckFlowchartWithAnalysis · extract/flow.go:449-462"] {
+        class CheckFlowchartWithAnalysis["CheckFlowchartWithAnalysis · extract/flow.go:400-413"] {
             +CheckFlowchartWithAnalysis(string, *Analysis): tuple~[]Diagnostic&#44;error~
         }
         <<function>> CheckFlowchartWithAnalysis
@@ -316,11 +316,11 @@ classDiagram
             +DiscoverSources([]string): tuple~[]string&#44;error~
         }
         <<function>> DiscoverSources
-        class GenerateClassDiagram["GenerateClassDiagram · extract/generate.go:345-351"] {
+        class GenerateClassDiagram["GenerateClassDiagram · extract/generate.go:348-354"] {
             +GenerateClassDiagram(string, Source, []Source, GenerateOptions): tuple~string&#44;error~
         }
         <<function>> GenerateClassDiagram
-        class GenerateFlowchart["GenerateFlowchart · extract/generate.go:542-553"] {
+        class GenerateFlowchart["GenerateFlowchart · extract/generate.go:475-486"] {
             +GenerateFlowchart(string, string, []Source, GenerateOptions): tuple~string&#44;error~
         }
         <<function>> GenerateFlowchart
@@ -348,7 +348,7 @@ classDiagram
             +ParseClassDiagram(string): tuple~*ClassDiagram&#44;error~
         }
         <<function>> ParseClassDiagram
-        class ParseFlowchart["ParseFlowchart · extract/flow.go:234-245"] {
+        class ParseFlowchart["ParseFlowchart · extract/flow.go:235-246"] {
             +ParseFlowchart(string): tuple~*Flowchart&#44;error~
         }
         <<function>> ParseFlowchart
@@ -378,7 +378,7 @@ classDiagram
     Analysis "1" --> "*" Import : field Imports; field TSImportBindings
     Analysis "1" --> "*" Location : field GoTypeReferences
     Analysis "1" --> "*" Member : field Functions; field GoFunctions
-    Analysis "1" --> "*" Symbol : field=4
+    Analysis "1" --> "*" Symbol : field=6
     Analyze "1" ..> "1" Analysis : result 1
     Analyze "1" ..> "*" Source : parameter 1
     BuildPackageIR "1" ..> "1" PackageIR : result 1
@@ -484,7 +484,8 @@ classDiagram
     modulePackageCollector "1" --> "*" discoveredModule : field all
     modulePackageCollector "1" --> "1" discoveredModule : field module
     packageCompletenessItem "1" --> "1" Location : field location
-    selectedGoSymbol "1" --> "1" Symbol : field symbol
+    selectedGoSymbol "1" ..> "1" selectedNavigationSymbol : underlying type
+    selectedNavigationSymbol "1" --> "1" Symbol : field symbol
     sourceAnalyzer "1" --> "1" Analysis : field result
     sourceAnalyzer "1" ..> "1" Declaration : method collectMembers parameter 2
     sourceAnalyzer "1" ..> "1" Location : method location result 1

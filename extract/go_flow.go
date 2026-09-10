@@ -28,13 +28,7 @@ func hasGoCallPath(analysis *Analysis, source, target *Symbol) bool {
 }
 
 func resolvedGoCalls(analysis *Analysis, symbol *Symbol) []*Symbol {
-	var result []*Symbol
-	for _, call := range symbol.CallOrder {
-		if resolved := resolveGoCall(analysis, symbol.PackageID, call); resolved != nil {
-			result = append(result, resolved)
-		}
-	}
-	return result
+	return resolvedNavigationCalls(analysis, symbol)
 }
 
 func resolveGoCall(analysis *Analysis, packageID, call string) *Symbol {

@@ -20,8 +20,11 @@ func generateTypeScriptClass(entry string, entrySource Source, sources []Source,
 		return "", fmt.Errorf("Class or interface '%s' was not found in entry file %s", entry, entrySource.Path)
 	}
 	depth, limit := classOptions(options)
-	selected := selectTypeScriptClasses(entryKey, analysis, depth, limit)
+	selected, truncated := selectTypeScriptClasses(entryKey, analysis, depth, limit)
 	lines := []string{"classDiagram", fmt.Sprintf("    %%%% grepple:generated entry %s depth %d max-nodes %d", entry, depth, limit)}
+	if truncated {
+		lines = append(lines, fmt.Sprintf("    %%%% grepple:truncated max-nodes %d", limit))
+	}
 	declarations := map[string]*Declaration{}
 	for _, key := range selected {
 		declaration := analysis.TSDeclarations[key]
@@ -47,15 +50,18 @@ func generateTypeScriptClass(entry string, entrySource Source, sources []Source,
 	return diagram, nil
 }
 
-func selectTypeScriptClasses(entry string, analysis *Analysis, depth, limit int) []string {
+func selectTypeScriptClasses(entry string, analysis *Analysis, depth, limit int) ([]string, bool) {
 	pending := []typeScriptClassItem{{entry, 0}}
 	seen := map[string]bool{}
 	result := []string{}
-	for len(pending) > 0 && len(result) < limit {
+	for len(pending) > 0 {
 		item := pending[0]
 		pending = pending[1:]
 		if seen[item.key] || analysis.TSDeclarations[item.key] == nil {
 			continue
+		}
+		if len(result) >= limit {
+			return result, true
 		}
 		seen[item.key], result = true, append(result, item.key)
 		if item.depth >= depth {
@@ -67,7 +73,7 @@ func selectTypeScriptClasses(entry string, analysis *Analysis, depth, limit int)
 			}
 		}
 	}
-	return result
+	return result, false
 }
 
 func typeScriptDeclarationDependencies(declaration *Declaration, analysis *Analysis) []string {
@@ -106,8 +112,13 @@ func typeScriptDeclarationReferences(declaration *Declaration, name string) bool
 		return true
 	}
 	for _, member := range declaration.Members {
-		if member.Kind == "property" && typeReferences(member.Type, name) {
+		if typeReferences(member.Type, name) {
 			return true
+		}
+		for _, parameter := range member.Parameters {
+			if typeReferences(parameter, name) {
+				return true
+			}
 		}
 	}
 	return false
@@ -139,5 +150,26 @@ func addTypeScriptRelation(owner, target *Declaration, alias string, result map[
 	}
 	if found, many := propertyReference(owner.Members, alias); found {
 		result[associationRelation(owner.Name, target.Name, many)] = true
+		return
 	}
+	if methodReferences(owner.Members, alias) {
+		result[fmt.Sprintf("    %s ..> %s", owner.Name, target.Name)] = true
+	}
+}
+
+func methodReferences(members []Member, target string) bool {
+	for _, member := range members {
+		if member.Kind == "property" {
+			continue
+		}
+		if typeReferences(member.Type, target) {
+			return true
+		}
+		for _, parameter := range member.Parameters {
+			if typeReferences(parameter, target) {
+				return true
+			}
+		}
+	}
+	return false
 }

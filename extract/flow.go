@@ -59,7 +59,7 @@ func (parser *flowParser) node(identifier string, line int) *FlowNode {
 }
 
 func (parser *flowParser) parseMetadata(value string, line int) error {
-	if generatedMetadataRE.MatchString(value) {
+	if generatedMetadataRE.MatchString(value) || truncatedMetadataRE.MatchString(value) {
 		return nil
 	}
 	if !parser.sawHeader && recognizedFlowMetadata(value) {
@@ -110,6 +110,7 @@ func validateNamespacedFlowMetadata(value string, line int) error {
 		"language":  "%% grepple:language <target> <language>",
 		"concept":   "%% grepple:concept <target>",
 		"generated": "%% grepple:generated entry <symbol> depth <depth> max-nodes <limit>",
+		"truncated": "%% grepple:truncated max-nodes <limit>",
 	}
 	if syntax, known := expected[directive]; known {
 		return fmt.Errorf("Line %d: malformed %s directive; expected '%s'", line, directive, syntax)
@@ -242,56 +243,6 @@ func ParseFlowchart(source string) (*Flowchart, error) {
 		return nil, fmt.Errorf("Flowchart is empty")
 	}
 	return parser.flowchart, nil
-}
-
-func hasCallPath(symbols map[string]*Symbol, source, target string) bool {
-	if source == target {
-		return true
-	}
-	visited := map[string]bool{source: true}
-	pending := []string{source}
-	for len(pending) > 0 {
-		current := pending[0]
-		pending = pending[1:]
-		for _, called := range symbolCalls(symbols[current]) {
-			if called == target {
-				return true
-			}
-			if symbols[called] != nil && !visited[called] {
-				visited[called] = true
-				pending = append(pending, called)
-			}
-		}
-	}
-	return false
-}
-
-func symbolCalls(symbol *Symbol) []string {
-	if symbol == nil {
-		return nil
-	}
-	return sortedKeys(symbol.Calls)
-}
-
-func hasOrderedPhasePath(symbols map[string]*Symbol, source, target string) bool {
-	for _, name := range sortedKeys(symbols) {
-		if callsInOrder(symbols[name].CallOrder, source, target) {
-			return true
-		}
-	}
-	return false
-}
-
-func callsInOrder(calls []string, source, target string) bool {
-	sawSource := false
-	for _, called := range calls {
-		if called == source {
-			sawSource = true
-		} else if sawSource && called == target {
-			return true
-		}
-	}
-	return false
 }
 
 func checkFlowNodes(flowchart *Flowchart, analysis *Analysis) []Diagnostic {

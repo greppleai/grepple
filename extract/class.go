@@ -102,6 +102,7 @@ var languageDefaultMetadataRE = regexp.MustCompile(`^%%\s*(?:grepple|pi):languag
 var exactDefaultMetadataRE = regexp.MustCompile(`^%%\s*(?:grepple|pi):exact-default\s*$`)
 var defaultExportRE = regexp.MustCompile(`^%%\s*(?:grepple|pi):default-export\s+(\w+)\s*$`)
 var generatedMetadataRE = regexp.MustCompile(`^%%\s*(?:grepple|pi):generated\s+entry\s+\S+\s+depth\s+\d+\s+max-nodes\s+\d+\s*$`)
+var truncatedMetadataRE = regexp.MustCompile(`^%%\s*(?:grepple|pi):truncated\s+max-nodes\s+\d+\s*$`)
 var metadataNamespaceRE = regexp.MustCompile(`^%%\s*(?:grepple|pi):`)
 var typeAliases = []struct{ diagram, typescript string }{
 	{"String", "string"}, {"Boolean", "boolean"}, {"Number", "number"},
@@ -393,7 +394,7 @@ func (parser *classParser) parseMetadata(value string, line int) error {
 }
 
 func (parser *classParser) parseDiagramMetadata(value string, line int) (bool, error) {
-	if generatedMetadataRE.MatchString(value) {
+	if generatedMetadataRE.MatchString(value) || truncatedMetadataRE.MatchString(value) {
 		return true, nil
 	}
 	if match := completePackageMetadataRE.FindStringSubmatch(value); match != nil {

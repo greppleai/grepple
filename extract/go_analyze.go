@@ -11,6 +11,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
+	codeparser "github.com/greppleai/grepple/parser"
 	sitter "github.com/tree-sitter/go-tree-sitter"
 	golang "github.com/tree-sitter/tree-sitter-go/bindings/go"
 )
@@ -54,6 +55,7 @@ func analyzeGoSource(source Source, result *Analysis, methods map[string][]Membe
 		}
 	}
 	analyzer.collectGoTypeReferences(tree.RootNode())
+	result.Navigation.Merge(codeparser.NavigationGraphFromTree(tree.RootNode(), source.Text, "go", source.Path))
 	return nil
 }
 
@@ -709,60 +711,14 @@ func fiberRouteMethod(method string) bool {
 	}
 }
 
-func (analyzer *goSourceAnalyzer) addGoSymbol(name, kind string, node, body *sitter.Node, receiver, owner string) {
+func (analyzer *goSourceAnalyzer) addGoSymbol(name, kind string, node, _ *sitter.Node, receiver, owner string) {
 	key := analyzer.packageID + ":" + name
 	symbol := analyzer.result.GoSymbolIndex[key]
 	if symbol == nil {
-		symbol = &Symbol{Name: name, Kind: kind, Language: "go", Package: analyzer.packageName, PackageID: analyzer.packageID, Key: analyzer.packageID + ":" + name, Calls: map[string]bool{}}
+		symbol = &Symbol{Name: name, Kind: kind, Language: "go", Package: analyzer.packageName, PackageID: analyzer.packageID, Key: analyzer.packageID + ":" + name, Owner: owner, Receiver: receiver, Calls: map[string]bool{}}
 		analyzer.result.GoSymbolIndex[symbol.Key] = symbol
 	}
 	symbol.Locations = append(symbol.Locations, syntaxLocation(analyzer.source.Path, node))
-	if body == nil {
-		return
-	}
-	order, calls := collectGoCalls(body, analyzer.text, receiver, owner)
-	symbol.CallOrder = append(symbol.CallOrder, order...)
-	for _, called := range sortedKeys(calls) {
-		symbol.Calls[called] = true
-	}
-}
-
-func collectGoCalls(body *sitter.Node, source []byte, receiver, owner string) ([]string, map[string]bool) {
-	var order []string
-	calls := map[string]bool{}
-	walkTree(body, func(node *sitter.Node) {
-		if node.Kind() != "call_expression" {
-			return
-		}
-		name := goCalledSymbol(node.ChildByFieldName("function"), source, receiver, owner)
-		if name != "" {
-			order = append(order, name)
-			calls[name] = true
-		}
-	})
-	return order, calls
-}
-
-func goCalledSymbol(expression *sitter.Node, source []byte, receiver, owner string) string {
-	if expression == nil {
-		return ""
-	}
-	if expression.Kind() == "identifier" {
-		return nodeText(expression, source)
-	}
-	if expression.Kind() != "selector_expression" {
-		return ""
-	}
-	operand := expression.ChildByFieldName("operand")
-	field := expression.ChildByFieldName("field")
-	object := nodeText(operand, source)
-	if object == receiver && owner != "" {
-		return owner + "." + nodeText(field, source)
-	}
-	if object != "" {
-		return object + "." + nodeText(field, source)
-	}
-	return ""
 }
 
 func (analyzer *goSourceAnalyzer) analyzeImports(node *sitter.Node) {

@@ -7,6 +7,7 @@ import (
 	"sort"
 	"strings"
 
+	codeparser "github.com/greppleai/grepple/parser"
 	sitter "github.com/tree-sitter/go-tree-sitter"
 	typescript "github.com/tree-sitter/tree-sitter-typescript/bindings/go"
 )
@@ -65,12 +66,14 @@ func syntaxLocation(path string, node *sitter.Node) Location {
 	return Location{Path: path, Line: int(start.Row) + 1, Column: int(start.Column) + 1, EndLine: int(end.Row) + 1, EndColumn: int(end.Column) + 1}
 }
 
-// Symbol describes a callable code symbol and its static calls.
+// Symbol describes a callable code symbol linked to its parser-owned navigation declaration.
 type Symbol struct {
 	Name, Kind, Language, Package, PackageID, ModuleID, Key string
-	Calls                                                   map[string]bool
-	CallOrder                                               []string
-	Locations                                               []Location
+	Owner, Receiver, NavigationID                           string
+	// Calls and CallOrder are compatibility projections derived from Navigation.
+	Calls     map[string]bool
+	CallOrder []string
+	Locations []Location
 }
 
 // Analysis contains the structure and call graph extracted from sources.
@@ -101,6 +104,9 @@ type Analysis struct {
 	TSDefaultExports                      map[string]string
 	TSExports                             map[string]map[string]bool
 	TSExportNames                         map[string]map[string]string
+	Navigation                            codeparser.NavigationGraph
+	navigationSymbols                     map[string]*Symbol
+	navigationCalls                       map[string][]*Symbol
 	duplicateErrors                       []string
 }
 
@@ -147,6 +153,8 @@ func newAnalysis() *Analysis {
 		TSDefaultExports:      map[string]string{},
 		TSExports:             map[string]map[string]bool{},
 		TSExportNames:         map[string]map[string]string{},
+		navigationSymbols:     map[string]*Symbol{},
+		navigationCalls:       map[string][]*Symbol{},
 	}
 }
 
@@ -304,68 +312,14 @@ func walkTree(node *sitter.Node, visit func(*sitter.Node)) {
 	}
 }
 
-func calledSymbolName(expression *sitter.Node, source []byte, owner string) string {
-	if expression.Kind() == "identifier" {
-		return nodeText(expression, source)
-	}
-	if expression.Kind() != "member_expression" {
-		return ""
-	}
-	object := expression.ChildByFieldName("object")
-	property := expression.ChildByFieldName("property")
-	if object == nil || property == nil {
-		return ""
-	}
-	objectName := nodeText(object, source)
-	if objectName == "this" && owner != "" {
-		return owner + "." + nodeText(property, source)
-	}
-	if startsUppercaseASCII(objectName) {
-		return objectName + "." + nodeText(property, source)
-	}
-	return ""
-}
-
-func startsUppercaseASCII(value string) bool {
-	return len(value) > 0 && value[0] >= 'A' && value[0] <= 'Z'
-}
-
-func collectCalls(body *sitter.Node, source []byte, owner string) ([]string, map[string]bool) {
-	order := []string{}
-	calls := map[string]bool{}
-	walkTree(body, func(node *sitter.Node) {
-		if node.Kind() != "call_expression" {
-			return
-		}
-		expression := node.ChildByFieldName("function")
-		if expression == nil {
-			return
-		}
-		name := calledSymbolName(expression, source, owner)
-		if name != "" {
-			calls[name] = true
-			order = append(order, name)
-		}
-	})
-	return order, calls
-}
-
-func (analyzer *sourceAnalyzer) addSymbol(name, kind string, node, body *sitter.Node, owner string) {
+func (analyzer *sourceAnalyzer) addSymbol(name, kind string, node, _ *sitter.Node, owner string) {
 	key := analyzer.moduleID + ":" + name
 	symbol := analyzer.result.TSSymbolIndex[key]
 	if symbol == nil {
-		symbol = &Symbol{Name: name, Kind: kind, Language: "typescript", ModuleID: analyzer.moduleID, Key: key, Calls: map[string]bool{}}
+		symbol = &Symbol{Name: name, Kind: kind, Language: "typescript", ModuleID: analyzer.moduleID, Key: key, Owner: owner, Calls: map[string]bool{}}
 		analyzer.result.TSSymbolIndex[key] = symbol
 	}
 	symbol.Locations = append(symbol.Locations, syntaxLocation(analyzer.source.Path, node))
-	if body == nil {
-		return
-	}
-	order, calls := collectCalls(body, analyzer.text, owner)
-	symbol.CallOrder = append(symbol.CallOrder, order...)
-	for _, called := range sortedKeys(calls) {
-		symbol.Calls[called] = true
-	}
 }
 
 func (analyzer *sourceAnalyzer) addImport(name, imported, module string, defaultImport, typeOnly bool) {
@@ -688,6 +642,7 @@ func Analyze(sources []Source) (*Analysis, error) {
 		}
 	}
 	removeAmbiguousGenericEntries(result)
+	enrichNavigationGraph(result)
 	return result, nil
 }
 
@@ -763,6 +718,8 @@ func analyzeTypeScriptSource(source Source, result *Analysis) error {
 	for _, statement := range namedChildren(tree.RootNode()) {
 		analyzer.analyzeTopLevel(statement)
 	}
+	language := codeparser.LanguageFor(source.Path)
+	result.Navigation.Merge(codeparser.NavigationGraphFromTree(tree.RootNode(), source.Text, language, source.Path))
 	return nil
 }
 

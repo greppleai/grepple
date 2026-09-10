@@ -56,6 +56,22 @@ func TestOutlineLocalRenders(t *testing.T) {
 	}
 }
 
+func TestOutlineHumanOutputIsBounded(t *testing.T) {
+	dir := chdirTemp(t)
+	src := "package p\n\n" + strings.Repeat("func Example() {}\n", 100)
+	if err := os.WriteFile(filepath.Join(dir, "many.go"), []byte(src), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	out := captureStdout(t, func() {
+		if err := runSearch([]string{"--local", "--outline", "--max-output-bytes", "256", "many.go"}); err != nil {
+			t.Fatal(err)
+		}
+	})
+	if len(out) > 256 || !strings.Contains(out, "grepple output truncated") {
+		t.Fatalf("outline output was not cleanly bounded (%d bytes): %q", len(out), out)
+	}
+}
+
 func TestOutlineLocalJSON(t *testing.T) {
 	dir := chdirTemp(t)
 	src := "package p\n\nfunc Only() {}\n"

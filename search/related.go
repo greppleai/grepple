@@ -19,6 +19,7 @@ const (
 )
 
 type navigationDeclaration struct {
+	id         string
 	terminal   string
 	language   string
 	file       string
@@ -28,6 +29,7 @@ type navigationDeclaration struct {
 
 type navigationCaller struct {
 	declaration navigationDeclaration
+	display     string
 	callLine    int
 }
 
@@ -91,7 +93,9 @@ func buildNavigationIndex(files []string) *navigationIndex {
 		byLocation: make(map[string]navigationDeclaration), contents: make(map[string]string),
 	}
 	cwd, _ := os.Getwd()
-	for _, path := range files {
+	paths := append([]string(nil), files...)
+	sort.Strings(paths)
+	for _, path := range paths {
 		index.addFile(path, cwd)
 	}
 	return index
@@ -106,15 +110,15 @@ func (index *navigationIndex) addFile(path, cwd string) {
 		return
 	}
 	content := strings.ToValidUTF8(string(contentBytes), "\uFFFD")
-	declarations, calls := parser.Navigation(content, language)
-	if len(declarations) == 0 {
+	cleanPath := filepath.Clean(path)
+	graph := parser.BuildNavigationGraph(content, language, cleanPath)
+	if len(graph.Declarations) == 0 {
 		return
 	}
-	cleanPath := filepath.Clean(path)
 	displayPath := displayPathFrom(path, cwd)
 	index.contents[cleanPath] = content
-	indexed := index.addDeclarations(declarations, language, cleanPath, displayPath)
-	index.addCalls(calls, indexed, language)
+	indexed := index.addDeclarations(graph.Declarations, language, cleanPath, displayPath)
+	index.addCalls(graph.Calls, indexed, language)
 }
 
 func (index *navigationIndex) addDeclarations(declarations []parser.NavigationDeclaration, language, path, displayPath string) []navigationDeclaration {
@@ -125,7 +129,7 @@ func (index *navigationIndex) addDeclarations(declarations []parser.NavigationDe
 			continue
 		}
 		item := navigationDeclaration{
-			terminal: terminal, language: language, file: path, matchStart: declaration.Start,
+			id: declaration.ID, terminal: terminal, language: language, file: path, matchStart: declaration.Start,
 			point: RelatedPoint{Name: declaration.Name, Path: displayPath, File: path, Kind: declaration.Kind, Start: declaration.Start, End: declaration.End},
 		}
 		indexed = append(indexed, item)
@@ -138,25 +142,20 @@ func (index *navigationIndex) addDeclarations(declarations []parser.NavigationDe
 }
 
 func (index *navigationIndex) addCalls(calls []parser.NavigationCall, declarations []navigationDeclaration, language string) {
+	byID := map[string]navigationDeclaration{}
+	for _, declaration := range declarations {
+		byID[declaration.id] = declaration
+	}
 	for _, call := range calls {
-		caller, ok := enclosingNavigationDeclaration(declarations, call.EnclosingStart, call.EnclosingEnd)
+		caller, ok := byID[call.CallerID]
 		if !ok {
 			continue
 		}
 		location := relatedLocationKey(caller.point)
 		index.calls[location] = append(index.calls[location], navigationCall{name: call.Name, display: call.Display, line: call.Line})
 		key := navigationSymbolKey(language, call.Name)
-		index.callers[key] = append(index.callers[key], navigationCaller{declaration: caller, callLine: call.Line})
+		index.callers[key] = append(index.callers[key], navigationCaller{declaration: caller, display: call.Display, callLine: call.Line})
 	}
-}
-
-func enclosingNavigationDeclaration(declarations []navigationDeclaration, start, end int) (navigationDeclaration, bool) {
-	for _, declaration := range declarations {
-		if declaration.point.Start == start && declaration.point.End == end {
-			return declaration, true
-		}
-	}
-	return navigationDeclaration{}, false
 }
 
 func relatedPoints(match FileMatch, navigation *navigationIndex) []RelatedPoint {
@@ -187,38 +186,100 @@ func relatedCallees(match FileMatch, declarations []navigationDeclaration, navig
 	return limitRelatedPoints(uniqueRelatedPoints(related))
 }
 func resolveCallee(call navigationCall, language string, matched []navigationDeclaration, navigation *navigationIndex) []RelatedPoint {
-	candidates := navigation.declarations[navigationSymbolKey(language, call.name)]
-	confidence := "candidate"
-	if len(candidates) == 1 {
-		confidence = "unique"
-	}
-	resolved := make([]RelatedPoint, 0, len(candidates))
-	for _, declaration := range candidates {
+	resolution := resolveNavigationCandidates(call, navigation.declarations[navigationSymbolKey(language, call.name)], matched)
+	resolved := make([]RelatedPoint, 0, len(resolution.candidates))
+	for _, declaration := range resolution.candidates {
 		if !sameNavigationLanguage(declaration.language, language) || declarationIsMatched(declaration, matched) {
 			continue
 		}
 		point := declaration.point
 		point.Direction = "callee"
 		point.CallLine = call.line
-		point.Confidence = confidence
+		point.Confidence = resolution.confidence
 		if call.display != "" && call.display != point.Name {
 			point.Name = call.display + " → " + point.Name
 		}
 		resolved = append(resolved, point)
-		if confidence == "candidate" && len(resolved) >= maxRelatedCandidatesPerCall {
+		if resolution.confidence == "candidate" && len(resolved) >= maxRelatedCandidatesPerCall {
 			break
 		}
 	}
 	return resolved
 }
 
+type navigationCandidateResolution struct {
+	candidates []navigationDeclaration
+	confidence string
+}
+
+func resolveNavigationCandidates(call navigationCall, candidates, matched []navigationDeclaration) navigationCandidateResolution {
+	if exact := exactNavigationCandidates(call, candidates); len(exact) == 1 {
+		return navigationCandidateResolution{exact, "exact"}
+	} else if len(exact) > 1 {
+		candidates = exact
+	}
+	originalCount := len(candidates)
+	if functions := unqualifiedFunctionCandidates(call, candidates); len(functions) > 0 {
+		candidates = functions
+		if len(candidates) == 1 && originalCount > 1 {
+			return navigationCandidateResolution{candidates, "context-resolved"}
+		}
+	}
+	beforeLocal := len(candidates)
+	if local := candidatesInMatchedFiles(candidates, matched); len(local) > 0 {
+		candidates = local
+		if len(candidates) == 1 && beforeLocal > 1 {
+			return navigationCandidateResolution{candidates, "context-resolved"}
+		}
+	}
+	if len(candidates) == 1 {
+		return navigationCandidateResolution{candidates, "unique-terminal"}
+	}
+	return navigationCandidateResolution{candidates, "candidate"}
+}
+
+func exactNavigationCandidates(call navigationCall, candidates []navigationDeclaration) []navigationDeclaration {
+	if !strings.ContainsAny(call.display, ".:#") {
+		return nil
+	}
+	return filterNavigationCandidates(candidates, func(candidate navigationDeclaration) bool {
+		return candidate.point.Name == call.display
+	})
+}
+
+func unqualifiedFunctionCandidates(call navigationCall, candidates []navigationDeclaration) []navigationDeclaration {
+	if strings.Contains(call.display, ".") {
+		return nil
+	}
+	return filterNavigationCandidates(candidates, func(candidate navigationDeclaration) bool {
+		return candidate.point.Kind == "func" || candidate.point.Kind == "function"
+	})
+}
+
+func filterNavigationCandidates(candidates []navigationDeclaration, keep func(navigationDeclaration) bool) []navigationDeclaration {
+	result := make([]navigationDeclaration, 0, len(candidates))
+	for _, candidate := range candidates {
+		if keep(candidate) {
+			result = append(result, candidate)
+		}
+	}
+	return result
+}
+
+func candidatesInMatchedFiles(candidates, matched []navigationDeclaration) []navigationDeclaration {
+	files := map[string]bool{}
+	for _, declaration := range matched {
+		files[declaration.file] = true
+	}
+	return filterNavigationCandidates(candidates, func(candidate navigationDeclaration) bool {
+		return files[candidate.file]
+	})
+}
+
 func navigationCallers(targets []navigationDeclaration, navigation *navigationIndex) []RelatedPoint {
 	var related []RelatedPoint
 	for _, target := range targets {
-		confidence := "candidate"
-		if len(navigation.declarations[navigationSymbolKey(target.language, target.terminal)]) == 1 {
-			confidence = "unique"
-		}
+		terminalCandidates := navigation.declarations[navigationSymbolKey(target.language, target.terminal)]
 		for _, caller := range navigation.callers[navigationSymbolKey(target.language, target.terminal)] {
 			if !sameNavigationLanguage(caller.declaration.language, target.language) || relatedLocationKey(caller.declaration.point) == relatedLocationKey(target.point) {
 				continue
@@ -226,7 +287,7 @@ func navigationCallers(targets []navigationDeclaration, navigation *navigationIn
 			point := caller.declaration.point
 			point.Direction = "caller"
 			point.CallLine = caller.callLine
-			point.Confidence = confidence
+			point.Confidence = navigationCallerConfidence(target, caller, len(terminalCandidates))
 			related = append(related, point)
 		}
 	}
@@ -242,6 +303,20 @@ func navigationCallers(targets []navigationDeclaration, navigation *navigationIn
 		return related[i].CallLine < related[j].CallLine
 	})
 	return limitRelatedPoints(uniqueRelatedPoints(related))
+}
+
+func navigationCallerConfidence(target navigationDeclaration, caller navigationCaller, terminalCandidates int) string {
+	if strings.ContainsAny(caller.display, ".:#") && caller.display == target.point.Name {
+		return "exact"
+	}
+	if terminalCandidates == 1 {
+		return "unique-terminal"
+	}
+	return "candidate"
+}
+
+func resolvedNavigationConfidence(confidence string) bool {
+	return confidence == "exact" || confidence == "context-resolved" || confidence == "unique-terminal" || confidence == "unique"
 }
 
 func matchedDeclarations(match FileMatch, navigation *navigationIndex) []navigationDeclaration {
@@ -289,7 +364,7 @@ func expandRelated(points []RelatedPoint, navigation *navigationIndex, depth int
 	followed := 0
 	for index := range points {
 		point := &points[index]
-		if followed >= maxFollowedPerLevel || point.Direction != "callee" || point.Confidence != "unique" {
+		if followed >= maxFollowedPerLevel || point.Direction != "callee" || !resolvedNavigationConfidence(point.Confidence) {
 			continue
 		}
 		key := relatedLocationKey(*point)

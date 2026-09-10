@@ -15,24 +15,49 @@ classDiagram
     %% grepple:struct-tag FileOutline Symbols "json:\"symbols\""
     note for FileOutline "defined: parser/model.go:22-26; Language@parser/model.go:24; Path@parser/model.go:23; Symbols@parser/model.go:25"
     class NavigationCall {
+        +CallerID: string
+        +Confidence: string
         +Display: string
         +EnclosingEnd: int
         +EnclosingStart: int
+        +ID: string
+        +Language: string
         +Line: int
         +Name: string
+        +Path: string
+        +Qualifier: string
+        +ResolvedName: string
+        +TargetID: string
     }
     <<struct>> NavigationCall
     %% grepple:file NavigationCall parser/navigation.go
-    note for NavigationCall "defined: parser/navigation.go:18-24; Display@parser/navigation.go:20; EnclosingEnd@parser/navigation.go:23; EnclosingStart@parser/navigation.go:22; Line@parser/navigation.go:21; Name@parser/navigation.go:19"
+    note for NavigationCall "defined: parser/navigation.go:30-44; CallerID@parser/navigation.go:32; Confidence@parser/navigation.go:38; Display@parser/navigation.go:35; EnclosingEnd@parser/navigation.go:43; EnclosingStart@parser/navigation.go:42; ID@parser/navigation.go:31; Language@parser/navigation.go:39; Line@parser/navigation.go:41; Name@parser/navigation.go:34; Path@parser/navigation.go:40; Qualifier@parser/navigation.go:36; ResolvedName@parser/navigation.go:37; TargetID@parser/navigation.go:33"
     class NavigationDeclaration {
+        +Container: string
         +End: int
+        +ID: string
         +Kind: string
+        +Language: string
+        +ModuleID: string
         +Name: string
+        +Package: string
+        +PackageID: string
+        +Path: string
+        +Receiver: string
+        +Scope: string
         +Start: int
     }
     <<struct>> NavigationDeclaration
     %% grepple:file NavigationDeclaration parser/navigation.go
-    note for NavigationDeclaration "defined: parser/navigation.go:10-15; End@parser/navigation.go:14; Kind@parser/navigation.go:12; Name@parser/navigation.go:11; Start@parser/navigation.go:13"
+    note for NavigationDeclaration "defined: parser/navigation.go:13-27; Container@parser/navigation.go:19; End@parser/navigation.go:26; ID@parser/navigation.go:14; Kind@parser/navigation.go:16; Language@parser/navigation.go:17; ModuleID@parser/navigation.go:23; Name@parser/navigation.go:15; Package@parser/navigation.go:21; PackageID@parser/navigation.go:22; Path@parser/navigation.go:18; Receiver@parser/navigation.go:20; Scope@parser/navigation.go:24; Start@parser/navigation.go:25"
+    class NavigationGraph {
+        +Merge(NavigationGraph)
+        +Calls: []NavigationCall
+        +Declarations: []NavigationDeclaration
+    }
+    <<struct>> NavigationGraph
+    %% grepple:file NavigationGraph parser/navigation.go
+    note for NavigationGraph "defined: parser/navigation.go:49-52; Merge@parser/navigation.go:55-58; Calls@parser/navigation.go:51; Declarations@parser/navigation.go:50"
     class Segment {
         +End: int
         +Kind: string
@@ -196,11 +221,12 @@ classDiagram
         -content: string
         -declarations: []NavigationDeclaration
         -language: string
+        -path: string
         -rules: *structureRules
     }
     <<struct>> navigationCollector
     %% grepple:file navigationCollector parser/navigation.go
-    note for navigationCollector "defined: parser/navigation.go:65-71; callName@parser/navigation.go:289-311; containerName@parser/navigation.go:195-202; declarationName@parser/navigation.go:204-215; enterNavigationNode@parser/navigation.go:91-116; isCall@parser/navigation.go:267-287; isCallableNode@parser/navigation.go:165-177; isGoTypeMemberNode@parser/navigation.go:179-184; isNavigationContainer@parser/navigation.go:185-193; navigationDeclarationKind@parser/navigation.go:248-265; navigationDeclarationRange@parser/navigation.go:118-123; recordNavigationCall@parser/navigation.go:125-137; walk@parser/navigation.go:85-89; walkNavigationChildren@parser/navigation.go:139-152; wrapperEnvelope@parser/navigation.go:153-163; calls@parser/navigation.go:70; content@parser/navigation.go:66; declarations@parser/navigation.go:69; language@parser/navigation.go:67; rules@parser/navigation.go:68"
+    note for navigationCollector "defined: parser/navigation.go:119-126; callName@parser/navigation.go:349-371; containerName@parser/navigation.go:255-262; declarationName@parser/navigation.go:264-275; enterNavigationNode@parser/navigation.go:146-174; isCall@parser/navigation.go:327-347; isCallableNode@parser/navigation.go:225-237; isGoTypeMemberNode@parser/navigation.go:239-244; isNavigationContainer@parser/navigation.go:245-253; navigationDeclarationKind@parser/navigation.go:308-325; navigationDeclarationRange@parser/navigation.go:176-181; recordNavigationCall@parser/navigation.go:183-197; walk@parser/navigation.go:140-144; walkNavigationChildren@parser/navigation.go:199-212; wrapperEnvelope@parser/navigation.go:213-223; calls@parser/navigation.go:125; content@parser/navigation.go:120; declarations@parser/navigation.go:124; language@parser/navigation.go:121; path@parser/navigation.go:122; rules@parser/navigation.go:123"
     class navigationEnvelope {
         -assignedName: string
         -end: int
@@ -208,7 +234,7 @@ classDiagram
     }
     <<struct>> navigationEnvelope
     %% grepple:file navigationEnvelope parser/navigation.go
-    note for navigationEnvelope "defined: parser/navigation.go:73-77; assignedName@parser/navigation.go:76; end@parser/navigation.go:75; start@parser/navigation.go:74"
+    note for navigationEnvelope "defined: parser/navigation.go:128-132; assignedName@parser/navigation.go:131; end@parser/navigation.go:130; start@parser/navigation.go:129"
     class navigationWalkContext {
         -callable: *NavigationDeclaration
         -container: string
@@ -216,7 +242,7 @@ classDiagram
     }
     <<struct>> navigationWalkContext
     %% grepple:file navigationWalkContext parser/navigation.go
-    note for navigationWalkContext "defined: parser/navigation.go:79-83; callable@parser/navigation.go:82; container@parser/navigation.go:81; envelope@parser/navigation.go:80"
+    note for navigationWalkContext "defined: parser/navigation.go:134-138; callable@parser/navigation.go:137; container@parser/navigation.go:136; envelope@parser/navigation.go:135"
     class pooledParser {
         -lang: *sitter.Language
         -p: *sitter.Parser
@@ -291,6 +317,12 @@ classDiagram
     <<struct>> typeScriptLanguage
     %% grepple:file typeScriptLanguage parser/language_typescript.go
     note for typeScriptLanguage "defined: parser/language_typescript.go:21-25; Grammar@parser/language_typescript.go:51; ID@parser/language_typescript.go:50; Outline@parser/language_typescript.go:53-55; Rules@parser/language_typescript.go:52; grammar@parser/language_typescript.go:23; id@parser/language_typescript.go:22; rules@parser/language_typescript.go:24"
+    class BuildNavigationGraph {
+        +BuildNavigationGraph(string, string, string): NavigationGraph
+    }
+    <<function>> BuildNavigationGraph
+    %% grepple:file BuildNavigationGraph parser/navigation.go
+    note for BuildNavigationGraph "defined: parser/navigation.go:77-88"
     class BuildSegments {
         +BuildSegments(string, string, map[int]bool, int): []Segment
     }
@@ -302,7 +334,7 @@ classDiagram
     }
     <<function>> DeclarationRangeAt
     %% grepple:file DeclarationRangeAt parser/navigation.go
-    note for DeclarationRangeAt "defined: parser/navigation.go:49-63"
+    note for DeclarationRangeAt "defined: parser/navigation.go:103-117"
     class LanguageFor {
         +LanguageFor(string): string
     }
@@ -314,7 +346,13 @@ classDiagram
     }
     <<function>> Navigation
     %% grepple:file Navigation parser/navigation.go
-    note for Navigation "defined: parser/navigation.go:28-46"
+    note for Navigation "defined: parser/navigation.go:71-74"
+    class NavigationGraphFromTree {
+        +NavigationGraphFromTree(*sitter.Node, string, string, string): NavigationGraph
+    }
+    <<function>> NavigationGraphFromTree
+    %% grepple:file NavigationGraphFromTree parser/navigation.go
+    note for NavigationGraphFromTree "defined: parser/navigation.go:92-100"
     class OutlineFile {
         +OutlineFile(string, string): FileOutline
     }
@@ -327,10 +365,14 @@ classDiagram
     <<function>> OutlineFileDepth
     %% grepple:file OutlineFileDepth parser/outline.go
     note for OutlineFileDepth "defined: parser/outline.go:21-41"
+    BuildNavigationGraph "1" ..> "1" NavigationGraph : result 1
     BuildSegments "1" ..> "*" Segment : result 1
     FileOutline "1" --> "*" Symbol : field Symbols
     Navigation "1" ..> "*" NavigationCall : result 2
     Navigation "1" ..> "*" NavigationDeclaration : result 1
+    NavigationGraph "1" --> "*" NavigationCall : field Calls
+    NavigationGraph "1" --> "*" NavigationDeclaration : field Declarations
+    NavigationGraphFromTree "1" ..> "1" NavigationGraph : result 1
     OutlineFile "1" ..> "1" FileOutline : result 1
     OutlineFileDepth "1" ..> "1" FileOutline : result 1
     cLanguage "1" ..> "*" Symbol : method Outline result 1

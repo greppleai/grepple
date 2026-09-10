@@ -2,6 +2,7 @@ package cli
 
 import (
 	"bytes"
+	"errors"
 	"reflect"
 	"strings"
 	"testing"
@@ -70,10 +71,45 @@ func TestSegmentRendererPrintsRelatedGoPoints(t *testing.T) {
 	if err := renderer.Render(results); err != nil {
 		t.Fatal(err)
 	}
-	want := "  → service.Load → (*Store).Load  store.go:12-24  call:8 [candidate]\n"
+	want := "  → service.Load → (*Store).Load  store.go:12-24  call:8 [candidate; try --at store.go:12]\n"
 	caller := "  ← handle  handler.go:30-40  call:35\n"
 	preview := "    12   func (s *Store) Load() {\n    13   }\n    next:\n      → validate"
 	if !strings.Contains(output.String(), "Next points (code navigation):\n") || !strings.Contains(output.String(), want) || !strings.Contains(output.String(), caller) || !strings.Contains(output.String(), preview) {
 		t.Fatalf("related navigation missing from output:\n%s", output.String())
+	}
+}
+
+func TestSegmentRendererReportsMatchesOmittedBySegmentLimit(t *testing.T) {
+	var output bytes.Buffer
+	renderer := segmentRenderer{output: newOutputWriter(&output)}
+	results := []api.FileResult{{
+		Path:     "example.go",
+		Matches:  []api.ResultMatch{{Line: 3, Text: "needle"}, {Line: 40, Text: "needle"}},
+		Segments: []api.ResultSegment{{Kind: "lines", Start: 1, End: 5, Text: "package example"}},
+	}}
+
+	if err := renderer.Render(results); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(output.String(), "1 matching lines omitted") || !strings.Contains(output.String(), "use --line-only") {
+		t.Fatalf("missing omitted-match guidance:\n%s", output.String())
+	}
+}
+
+func TestBoundedOutputWriterStopsBeforeAgentToolLimit(t *testing.T) {
+	var output bytes.Buffer
+	writer := newBoundedOutputWriter(&output, 256)
+	err := writer.writeString(strings.Repeat("a", 500))
+	if !errors.Is(err, errOutputTruncated) {
+		t.Fatalf("write error = %v, want output truncation", err)
+	}
+	if output.Len() > 256 {
+		t.Fatalf("bounded output wrote %d bytes, want at most 256", output.Len())
+	}
+	if !strings.Contains(output.String(), "grepple output truncated") {
+		t.Fatalf("missing actionable truncation marker: %q", output.String())
+	}
+	if strings.Contains(output.String(), "aaaa") {
+		t.Fatalf("truncation left a partial output line: %q", output.String())
 	}
 }

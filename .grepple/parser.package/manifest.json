@@ -17,15 +17,15 @@
   },
   "summary": {
     "sourceFiles": 24,
-    "declarations": 27,
-    "exportedTypes": 5,
+    "declarations": 28,
+    "exportedTypes": 6,
     "internalTypes": 22,
-    "members": 143,
-    "exportedFunctions": 6,
+    "members": 164,
+    "exportedFunctions": 8,
     "fiberRoutes": 0,
-    "relations": 78
+    "relations": 82
   },
-  "semanticModelDigest": "sha256:cb19a6a9881ecd18184636e652aee7ffdb6ccb44707cf9e23340a2539fd4f1ae",
+  "semanticModelDigest": "sha256:4f3aba4ee2788e2a1b59c8020b0ac8bad083c98523c3406f4ae12abd31d24041",
   "sourceFiles": [
     {
       "path": "parser/analyze.go"
@@ -145,43 +145,99 @@
       "name": "NavigationCall",
       "kind": "struct",
       "file": "parser/navigation.go",
-      "line": 18,
-      "endLine": 24,
-      "underlyingType": "struct{Name string;Display string;Line int;EnclosingStart int;EnclosingEnd int;}",
+      "line": 30,
+      "endLine": 44,
+      "underlyingType": "struct{ID string;CallerID string;TargetID string;Name string;Display string;Qualifier string;ResolvedName string;Confidence string;Language string;Path string;Line int;EnclosingStart int;EnclosingEnd int;}",
       "members": [
+        {
+          "name": "CallerID",
+          "kind": "property",
+          "line": 32,
+          "endLine": 32,
+          "result": "string"
+        },
+        {
+          "name": "Confidence",
+          "kind": "property",
+          "line": 38,
+          "endLine": 38,
+          "result": "string"
+        },
         {
           "name": "Display",
           "kind": "property",
-          "line": 20,
-          "endLine": 20,
+          "line": 35,
+          "endLine": 35,
           "result": "string"
         },
         {
           "name": "EnclosingEnd",
           "kind": "property",
-          "line": 23,
-          "endLine": 23,
+          "line": 43,
+          "endLine": 43,
           "result": "int"
         },
         {
           "name": "EnclosingStart",
           "kind": "property",
-          "line": 22,
-          "endLine": 22,
+          "line": 42,
+          "endLine": 42,
           "result": "int"
+        },
+        {
+          "name": "ID",
+          "kind": "property",
+          "line": 31,
+          "endLine": 31,
+          "result": "string"
+        },
+        {
+          "name": "Language",
+          "kind": "property",
+          "line": 39,
+          "endLine": 39,
+          "result": "string"
         },
         {
           "name": "Line",
           "kind": "property",
-          "line": 21,
-          "endLine": 21,
+          "line": 41,
+          "endLine": 41,
           "result": "int"
         },
         {
           "name": "Name",
           "kind": "property",
-          "line": 19,
-          "endLine": 19,
+          "line": 34,
+          "endLine": 34,
+          "result": "string"
+        },
+        {
+          "name": "Path",
+          "kind": "property",
+          "line": 40,
+          "endLine": 40,
+          "result": "string"
+        },
+        {
+          "name": "Qualifier",
+          "kind": "property",
+          "line": 36,
+          "endLine": 36,
+          "result": "string"
+        },
+        {
+          "name": "ResolvedName",
+          "kind": "property",
+          "line": 37,
+          "endLine": 37,
+          "result": "string"
+        },
+        {
+          "name": "TargetID",
+          "kind": "property",
+          "line": 33,
+          "endLine": 33,
           "result": "string"
         }
       ]
@@ -190,37 +246,133 @@
       "name": "NavigationDeclaration",
       "kind": "struct",
       "file": "parser/navigation.go",
-      "line": 10,
-      "endLine": 15,
-      "underlyingType": "struct{Name string;Kind string;Start int;End int;}",
+      "line": 13,
+      "endLine": 27,
+      "underlyingType": "struct{ID string;Name string;Kind string;Language string;Path string;Container string;Receiver string;Package string;PackageID string;ModuleID string;Scope string;Start int;End int;}",
       "members": [
+        {
+          "name": "Container",
+          "kind": "property",
+          "line": 19,
+          "endLine": 19,
+          "result": "string"
+        },
         {
           "name": "End",
           "kind": "property",
+          "line": 26,
+          "endLine": 26,
+          "result": "int"
+        },
+        {
+          "name": "ID",
+          "kind": "property",
           "line": 14,
           "endLine": 14,
-          "result": "int"
+          "result": "string"
         },
         {
           "name": "Kind",
           "kind": "property",
-          "line": 12,
-          "endLine": 12,
+          "line": 16,
+          "endLine": 16,
+          "result": "string"
+        },
+        {
+          "name": "Language",
+          "kind": "property",
+          "line": 17,
+          "endLine": 17,
+          "result": "string"
+        },
+        {
+          "name": "ModuleID",
+          "kind": "property",
+          "line": 23,
+          "endLine": 23,
           "result": "string"
         },
         {
           "name": "Name",
           "kind": "property",
-          "line": 11,
-          "endLine": 11,
+          "line": 15,
+          "endLine": 15,
+          "result": "string"
+        },
+        {
+          "name": "Package",
+          "kind": "property",
+          "line": 21,
+          "endLine": 21,
+          "result": "string"
+        },
+        {
+          "name": "PackageID",
+          "kind": "property",
+          "line": 22,
+          "endLine": 22,
+          "result": "string"
+        },
+        {
+          "name": "Path",
+          "kind": "property",
+          "line": 18,
+          "endLine": 18,
+          "result": "string"
+        },
+        {
+          "name": "Receiver",
+          "kind": "property",
+          "line": 20,
+          "endLine": 20,
+          "result": "string"
+        },
+        {
+          "name": "Scope",
+          "kind": "property",
+          "line": 24,
+          "endLine": 24,
           "result": "string"
         },
         {
           "name": "Start",
           "kind": "property",
-          "line": 13,
-          "endLine": 13,
+          "line": 25,
+          "endLine": 25,
           "result": "int"
+        }
+      ]
+    },
+    {
+      "name": "NavigationGraph",
+      "kind": "struct",
+      "file": "parser/navigation.go",
+      "line": 49,
+      "endLine": 52,
+      "underlyingType": "struct{Declarations[]NavigationDeclaration;Calls[]NavigationCall;}",
+      "members": [
+        {
+          "name": "Merge",
+          "kind": "method",
+          "line": 55,
+          "endLine": 58,
+          "parameters": [
+            "NavigationGraph"
+          ]
+        },
+        {
+          "name": "Calls",
+          "kind": "property",
+          "line": 51,
+          "endLine": 51,
+          "result": "[]NavigationCall"
+        },
+        {
+          "name": "Declarations",
+          "kind": "property",
+          "line": 50,
+          "endLine": 50,
+          "result": "[]NavigationDeclaration"
         }
       ]
     },
@@ -901,15 +1053,15 @@
       "name": "navigationCollector",
       "kind": "struct",
       "file": "parser/navigation.go",
-      "line": 65,
-      "endLine": 71,
-      "underlyingType": "struct{content string;language string;rules*structureRules;declarations[]NavigationDeclaration;calls[]NavigationCall;}",
+      "line": 119,
+      "endLine": 126,
+      "underlyingType": "struct{content string;language string;path string;rules*structureRules;declarations[]NavigationDeclaration;calls[]NavigationCall;}",
       "members": [
         {
           "name": "callName",
           "kind": "method",
-          "line": 289,
-          "endLine": 311,
+          "line": 349,
+          "endLine": 371,
           "parameters": [
             "*sitter.Node"
           ],
@@ -918,8 +1070,8 @@
         {
           "name": "containerName",
           "kind": "method",
-          "line": 195,
-          "endLine": 202,
+          "line": 255,
+          "endLine": 262,
           "parameters": [
             "*sitter.Node",
             "*navigationEnvelope"
@@ -929,8 +1081,8 @@
         {
           "name": "declarationName",
           "kind": "method",
-          "line": 204,
-          "endLine": 215,
+          "line": 264,
+          "endLine": 275,
           "parameters": [
             "*sitter.Node",
             "*navigationEnvelope"
@@ -940,8 +1092,8 @@
         {
           "name": "enterNavigationNode",
           "kind": "method",
-          "line": 91,
-          "endLine": 116,
+          "line": 146,
+          "endLine": 174,
           "parameters": [
             "*sitter.Node",
             "navigationWalkContext"
@@ -951,8 +1103,8 @@
         {
           "name": "isCall",
           "kind": "method",
-          "line": 267,
-          "endLine": 287,
+          "line": 327,
+          "endLine": 347,
           "parameters": [
             "string"
           ],
@@ -961,8 +1113,8 @@
         {
           "name": "isCallableNode",
           "kind": "method",
-          "line": 165,
-          "endLine": 177,
+          "line": 225,
+          "endLine": 237,
           "parameters": [
             "*sitter.Node"
           ],
@@ -971,8 +1123,8 @@
         {
           "name": "isGoTypeMemberNode",
           "kind": "method",
-          "line": 179,
-          "endLine": 184,
+          "line": 239,
+          "endLine": 244,
           "parameters": [
             "*sitter.Node"
           ],
@@ -981,8 +1133,8 @@
         {
           "name": "isNavigationContainer",
           "kind": "method",
-          "line": 185,
-          "endLine": 193,
+          "line": 245,
+          "endLine": 253,
           "parameters": [
             "string"
           ],
@@ -991,8 +1143,8 @@
         {
           "name": "navigationDeclarationKind",
           "kind": "method",
-          "line": 248,
-          "endLine": 265,
+          "line": 308,
+          "endLine": 325,
           "parameters": [
             "*sitter.Node",
             "string"
@@ -1002,8 +1154,8 @@
         {
           "name": "navigationDeclarationRange",
           "kind": "method",
-          "line": 118,
-          "endLine": 123,
+          "line": 176,
+          "endLine": 181,
           "parameters": [
             "*sitter.Node",
             "*navigationEnvelope"
@@ -1013,8 +1165,8 @@
         {
           "name": "recordNavigationCall",
           "kind": "method",
-          "line": 125,
-          "endLine": 137,
+          "line": 183,
+          "endLine": 197,
           "parameters": [
             "*sitter.Node",
             "*NavigationDeclaration"
@@ -1023,8 +1175,8 @@
         {
           "name": "walk",
           "kind": "method",
-          "line": 85,
-          "endLine": 89,
+          "line": 140,
+          "endLine": 144,
           "parameters": [
             "*sitter.Node",
             "navigationWalkContext"
@@ -1033,8 +1185,8 @@
         {
           "name": "walkNavigationChildren",
           "kind": "method",
-          "line": 139,
-          "endLine": 152,
+          "line": 199,
+          "endLine": 212,
           "parameters": [
             "*sitter.Node",
             "navigationWalkContext"
@@ -1043,8 +1195,8 @@
         {
           "name": "wrapperEnvelope",
           "kind": "method",
-          "line": 153,
-          "endLine": 163,
+          "line": 213,
+          "endLine": 223,
           "parameters": [
             "*sitter.Node",
             "*navigationEnvelope"
@@ -1054,36 +1206,43 @@
         {
           "name": "calls",
           "kind": "property",
-          "line": 70,
-          "endLine": 70,
+          "line": 125,
+          "endLine": 125,
           "result": "[]NavigationCall"
         },
         {
           "name": "content",
           "kind": "property",
-          "line": 66,
-          "endLine": 66,
+          "line": 120,
+          "endLine": 120,
           "result": "string"
         },
         {
           "name": "declarations",
           "kind": "property",
-          "line": 69,
-          "endLine": 69,
+          "line": 124,
+          "endLine": 124,
           "result": "[]NavigationDeclaration"
         },
         {
           "name": "language",
           "kind": "property",
-          "line": 67,
-          "endLine": 67,
+          "line": 121,
+          "endLine": 121,
+          "result": "string"
+        },
+        {
+          "name": "path",
+          "kind": "property",
+          "line": 122,
+          "endLine": 122,
           "result": "string"
         },
         {
           "name": "rules",
           "kind": "property",
-          "line": 68,
-          "endLine": 68,
+          "line": 123,
+          "endLine": 123,
           "result": "*structureRules"
         }
       ]
@@ -1092,29 +1251,29 @@
       "name": "navigationEnvelope",
       "kind": "struct",
       "file": "parser/navigation.go",
-      "line": 73,
-      "endLine": 77,
+      "line": 128,
+      "endLine": 132,
       "underlyingType": "struct{start int;end int;assignedName string;}",
       "members": [
         {
           "name": "assignedName",
           "kind": "property",
-          "line": 76,
-          "endLine": 76,
+          "line": 131,
+          "endLine": 131,
           "result": "string"
         },
         {
           "name": "end",
           "kind": "property",
-          "line": 75,
-          "endLine": 75,
+          "line": 130,
+          "endLine": 130,
           "result": "int"
         },
         {
           "name": "start",
           "kind": "property",
-          "line": 74,
-          "endLine": 74,
+          "line": 129,
+          "endLine": 129,
           "result": "int"
         }
       ]
@@ -1123,29 +1282,29 @@
       "name": "navigationWalkContext",
       "kind": "struct",
       "file": "parser/navigation.go",
-      "line": 79,
-      "endLine": 83,
+      "line": 134,
+      "endLine": 138,
       "underlyingType": "struct{envelope*navigationEnvelope;container string;callable*NavigationDeclaration;}",
       "members": [
         {
           "name": "callable",
           "kind": "property",
-          "line": 82,
-          "endLine": 82,
+          "line": 137,
+          "endLine": 137,
           "result": "*NavigationDeclaration"
         },
         {
           "name": "container",
           "kind": "property",
-          "line": 81,
-          "endLine": 81,
+          "line": 136,
+          "endLine": 136,
           "result": "string"
         },
         {
           "name": "envelope",
           "kind": "property",
-          "line": 80,
-          "endLine": 80,
+          "line": 135,
+          "endLine": 135,
           "result": "*navigationEnvelope"
         }
       ]
@@ -1508,6 +1667,19 @@
   ],
   "exportedFunctions": [
     {
+      "name": "BuildNavigationGraph",
+      "kind": "function",
+      "file": "parser/navigation.go",
+      "line": 77,
+      "endLine": 88,
+      "parameters": [
+        "string",
+        "string",
+        "string"
+      ],
+      "result": "NavigationGraph"
+    },
+    {
       "name": "BuildSegments",
       "kind": "function",
       "file": "parser/segments.go",
@@ -1525,8 +1697,8 @@
       "name": "DeclarationRangeAt",
       "kind": "function",
       "file": "parser/navigation.go",
-      "line": 49,
-      "endLine": 63,
+      "line": 103,
+      "endLine": 117,
       "parameters": [
         "string",
         "string",
@@ -1549,13 +1721,27 @@
       "name": "Navigation",
       "kind": "function",
       "file": "parser/navigation.go",
-      "line": 28,
-      "endLine": 46,
+      "line": 71,
+      "endLine": 74,
       "parameters": [
         "string",
         "string"
       ],
       "result": "tuple\u003c[]NavigationDeclaration,[]NavigationCall\u003e"
+    },
+    {
+      "name": "NavigationGraphFromTree",
+      "kind": "function",
+      "file": "parser/navigation.go",
+      "line": 92,
+      "endLine": 100,
+      "parameters": [
+        "*sitter.Node",
+        "string",
+        "string",
+        "string"
+      ],
+      "result": "NavigationGraph"
     },
     {
       "name": "OutlineFile",
@@ -1586,6 +1772,13 @@
   "fiberRoutes": [],
   "relations": [
     {
+      "from": "BuildNavigationGraph",
+      "to": "NavigationGraph",
+      "kind": "dependency",
+      "via": "result 1",
+      "cardinality": "one"
+    },
+    {
       "from": "BuildSegments",
       "to": "Segment",
       "kind": "dependency",
@@ -1612,6 +1805,27 @@
       "kind": "dependency",
       "via": "result 1",
       "cardinality": "many"
+    },
+    {
+      "from": "NavigationGraph",
+      "to": "NavigationCall",
+      "kind": "association",
+      "via": "field Calls",
+      "cardinality": "many"
+    },
+    {
+      "from": "NavigationGraph",
+      "to": "NavigationDeclaration",
+      "kind": "association",
+      "via": "field Declarations",
+      "cardinality": "many"
+    },
+    {
+      "from": "NavigationGraphFromTree",
+      "to": "NavigationGraph",
+      "kind": "dependency",
+      "via": "result 1",
+      "cardinality": "one"
     },
     {
       "from": "OutlineFile",

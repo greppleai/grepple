@@ -1,6 +1,9 @@
 package parser
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
+	"strconv"
 	"strings"
 
 	sitter "github.com/tree-sitter/go-tree-sitter"
@@ -8,41 +11,92 @@ import (
 
 // NavigationDeclaration describes a callable declaration found by a language adapter.
 type NavigationDeclaration struct {
-	Name  string
-	Kind  string
-	Start int
-	End   int
+	ID        string
+	Name      string
+	Kind      string
+	Language  string
+	Path      string
+	Container string
+	Receiver  string
+	Package   string
+	PackageID string
+	ModuleID  string
+	Scope     string
+	Start     int
+	End       int
 }
 
 // NavigationCall describes a call and the callable declaration containing it.
 type NavigationCall struct {
+	ID             string
+	CallerID       string
+	TargetID       string
 	Name           string
 	Display        string
+	Qualifier      string
+	ResolvedName   string
+	Confidence     string
+	Language       string
+	Path           string
 	Line           int
 	EnclosingStart int
 	EnclosingEnd   int
 }
 
+// NavigationGraph is the normalized, language-neutral callable and call model.
+// Language-specific consumers may enrich its syntax facts with package, module,
+// import, receiver, or type information.
+type NavigationGraph struct {
+	Declarations []NavigationDeclaration
+	Calls        []NavigationCall
+}
+
+// Merge appends another source graph while preserving source and syntax order.
+func (graph *NavigationGraph) Merge(other NavigationGraph) {
+	graph.Declarations = append(graph.Declarations, other.Declarations...)
+	graph.Calls = append(graph.Calls, other.Calls...)
+}
+
+func navigationStableID(parts ...string) string {
+	hash := sha256.New()
+	for _, part := range parts {
+		_, _ = hash.Write([]byte(part))
+		_, _ = hash.Write([]byte{0})
+	}
+	return hex.EncodeToString(hash.Sum(nil))
+}
+
 // Navigation extracts callable declarations and calls for a structurally supported language.
 // Resolution is intentionally syntax-based; callers decide whether a name is unique.
 func Navigation(content, language string) ([]NavigationDeclaration, []NavigationCall) {
+	graph := BuildNavigationGraph(content, language, "")
+	return graph.Declarations, graph.Calls
+}
+
+// BuildNavigationGraph parses one source into the shared navigation graph.
+func BuildNavigationGraph(content, language, path string) NavigationGraph {
 	adapter := adapterForLanguage(language)
 	if adapter == nil {
-		return nil, nil
+		return NavigationGraph{}
 	}
 	tree, err := parseTree(adapter, content)
 	if err != nil {
-		return nil, nil
+		return NavigationGraph{}
 	}
 	defer tree.Close()
+	return NavigationGraphFromTree(tree.RootNode(), content, language, path)
+}
 
-	collector := navigationCollector{
-		content:  content,
-		language: language,
-		rules:    adapter.Rules(),
+// NavigationGraphFromTree builds a graph from an already parsed compatible tree.
+// It allows analyzers to share navigation extraction without parsing source twice.
+func NavigationGraphFromTree(root *sitter.Node, content, language, path string) NavigationGraph {
+	adapter := adapterForLanguage(language)
+	if adapter == nil || root == nil {
+		return NavigationGraph{}
 	}
-	collector.walk(tree.RootNode(), navigationWalkContext{})
-	return collector.declarations, collector.calls
+	collector := navigationCollector{content: content, language: language, path: path, rules: adapter.Rules()}
+	collector.walk(root, navigationWalkContext{})
+	return NavigationGraph{Declarations: collector.declarations, Calls: collector.calls}
 }
 
 // DeclarationRangeAt returns the narrowest callable declaration containing line.
@@ -65,6 +119,7 @@ func DeclarationRangeAt(content, language string, line int) (int, int, bool) {
 type navigationCollector struct {
 	content      string
 	language     string
+	path         string
 	rules        *structureRules
 	declarations []NavigationDeclaration
 	calls        []NavigationCall
@@ -109,7 +164,10 @@ func (c *navigationCollector) enterNavigationNode(node *sitter.Node, context nav
 	if current.container != "" && !strings.Contains(name, ".") {
 		name = current.container + "." + name
 	}
-	declaration := NavigationDeclaration{Name: name, Kind: c.navigationDeclarationKind(node, current.container), Start: start, End: end}
+	declaration := NavigationDeclaration{
+		Name: name, Kind: c.navigationDeclarationKind(node, current.container), Language: c.language, Path: c.path, Container: current.container, Start: start, End: end,
+	}
+	declaration.ID = navigationStableID("declaration", declaration.Language, declaration.Path, declaration.Name, declaration.Kind, strconv.Itoa(start), strconv.Itoa(end))
 	c.declarations = append(c.declarations, declaration)
 	current.callable = &c.declarations[len(c.declarations)-1]
 	return current
@@ -130,10 +188,12 @@ func (c *navigationCollector) recordNavigationCall(node *sitter.Node, callable *
 	if name == "" {
 		return
 	}
-	c.calls = append(c.calls, NavigationCall{
-		Name: name, Display: display, Line: nodeStart(node),
-		EnclosingStart: callable.Start, EnclosingEnd: callable.End,
-	})
+	call := NavigationCall{
+		Name: name, Display: display, Qualifier: navigationCallQualifier(display), Language: c.language, Path: c.path, Line: nodeStart(node),
+		CallerID: callable.ID, EnclosingStart: callable.Start, EnclosingEnd: callable.End,
+	}
+	call.ID = navigationStableID("call", call.CallerID, strconv.Itoa(call.Line), call.Display, strconv.Itoa(len(c.calls)))
+	c.calls = append(c.calls, call)
 }
 
 func (c *navigationCollector) walkNavigationChildren(node *sitter.Node, context navigationWalkContext) {
@@ -308,6 +368,14 @@ func (c *navigationCollector) callName(node *sitter.Node) (string, string) {
 		display = display[:77] + "..."
 	}
 	return name, display
+}
+
+func navigationCallQualifier(display string) string {
+	display = strings.Join(strings.Fields(display), "")
+	if index := strings.Index(display, "."); index > 0 {
+		return strings.TrimSuffix(display[:index], "?")
+	}
+	return ""
 }
 
 func navigationTerminalName(node *sitter.Node, content string) string {

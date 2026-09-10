@@ -165,9 +165,12 @@ func local() { Finish() }
 	if err != nil || len(diagnostics) != 0 {
 		t.Fatalf("package flow: %v %+v", err, diagnostics)
 	}
-	_, limitedErr := GenerateFlowchart("start", app.Path, []Source{app, helper}, GenerateOptions{MaxNodes: 1})
-	if limitedErr == nil || !strings.Contains(limitedErr.Error(), "exceeds --max-nodes") {
-		t.Fatalf("missing flow coverage failure: %v", limitedErr)
+	limited, limitedErr := GenerateFlowchart("start", app.Path, []Source{app, helper}, GenerateOptions{MaxNodes: 1})
+	if limitedErr != nil {
+		t.Fatalf("bounded flow generation: %v", limitedErr)
+	}
+	if !strings.Contains(limited, "%% grepple:truncated max-nodes 1") {
+		t.Fatalf("bounded flow missing truncation warning:\n%s", limited)
 	}
 	generated, generateErr := GenerateFlowchart("start", app.Path, []Source{app, helper}, GenerateOptions{})
 	if generateErr != nil {

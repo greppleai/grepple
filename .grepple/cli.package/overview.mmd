@@ -2,9 +2,9 @@ classDiagram
     %% grepple:package-default github.com/greppleai/grepple/internal/cli
     %% grepple:language-default go
     direction LR
-    note "Package cli implements Grepple's search, extraction, repository inspection, authentication, rules, and terminal/JSON presentation workflows. | package github.com/greppleai/grepple/internal/cli | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=24, declarations=23, exportedTypes=0, internalTypes=23, members=147, exportedFunctions=3, fiberRoutes=0, relations=15"
+    note "Package cli implements Grepple's search, extraction, repository inspection, authentication, rules, and terminal/JSON presentation workflows. | package github.com/greppleai/grepple/internal/cli | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=25, declarations=23, exportedTypes=0, internalTypes=23, members=153, exportedFunctions=3, fiberRoutes=0, relations=15"
     namespace interfaces {
-        class resultRenderer["resultRenderer · internal/cli/renderer.go:5-7"] {
+        class resultRenderer["resultRenderer · internal/cli/renderer.go:9-11"] {
             +Render([]api.FileResult): error
         }
         <<interface>> resultRenderer
@@ -89,7 +89,7 @@ classDiagram
             +Server: string
         }
         <<struct>> rulesAddArgs
-        class searchArgs["searchArgs · internal/cli/args.go:20-52"] {
+        class searchArgs["searchArgs · internal/cli/args.go:24-58"] {
             +AfterContext: int
             +At: string
             +BeforeContext: int
@@ -111,10 +111,12 @@ classDiagram
             +LineOnly: bool
             +Local: bool
             +MaxFiles: int
+            +MaxOutputBytes: int
             +MaxSegments: int
             +OnlyMatching: bool
             +Outline: bool
             +Query: string
+            +Recursive: bool
             +Regex: bool
             +Related: bool
             +Remote: bool
@@ -133,7 +135,7 @@ classDiagram
         <<struct>> treeArgs
     }
     namespace internal_types {
-        class cliOptions["cliOptions · internal/cli/model.go:5-18"]
+        class cliOptions["cliOptions · internal/cli/model.go:5-19"]
         <<struct>> cliOptions
         class contextRenderer["contextRenderer · internal/cli/renderer_context.go:9-11"]
         <<struct>> contextRenderer
@@ -149,7 +151,7 @@ classDiagram
         <<struct>> lineRenderer
         class onlyMatchingRenderer["onlyMatchingRenderer · internal/cli/renderer_matches.go:27-31"]
         <<struct>> onlyMatchingRenderer
-        class outputWriter["outputWriter · internal/cli/output.go:20-22"]
+        class outputWriter["outputWriter · internal/cli/output.go:24-28"]
         <<struct>> outputWriter
         class repoCountRenderer["repoCountRenderer · internal/cli/renderer_repo_count.go:10-13"]
         <<struct>> repoCountRenderer
@@ -167,7 +169,7 @@ classDiagram
             +RenderOutlineOrContent(parser.FileOutline, string): string
         }
         <<function>> RenderOutlineOrContent
-        class Run["Run · internal/cli/args.go:266-286"] {
+        class Run["Run · internal/cli/args.go:280-304"] {
             +Run([]string): error
         }
         <<function>> Run

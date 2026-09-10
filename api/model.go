@@ -51,8 +51,9 @@ type ContextLine struct {
 }
 
 // RelatedSymbol points between matched code and a project-local declaration.
-// Confidence is "unique" when only one declaration with that name exists in the
-// searched files and "candidate" when more than one declaration shares the name.
+// Confidence is "exact" for a qualified identity match, "context-resolved" when
+// declaration kind or file context disambiguates it, "unique-terminal" when only
+// one declaration has the terminal name, and "candidate" when ambiguity remains.
 type RelatedSymbol struct {
 	Name       string          `json:"name"`
 	Path       string          `json:"path"`

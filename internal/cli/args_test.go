@@ -34,6 +34,27 @@ func TestParseSearchArgs(t *testing.T) {
 	}
 }
 
+func TestParseSearchArgsAcceptsSafeGrepCompatibilityAliases(t *testing.T) {
+	options, _, _, err := parseSearchArgs([]string{"-r", "-E", "needle", "src"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if options.Params.Query != "needle" || !options.Params.Regex {
+		t.Fatalf("compatibility aliases produced unexpected options: %#v", options.Params)
+	}
+	if options.MaxOutputBytes != DefaultTextOutputBytes {
+		t.Fatalf("default output cap = %d, want %d", options.MaxOutputBytes, DefaultTextOutputBytes)
+	}
+
+	unbounded, _, _, err := parseSearchArgs([]string{"--max-output-bytes", "0", "needle"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if unbounded.MaxOutputBytes != 0 {
+		t.Fatalf("--max-output-bytes 0 = %d, want unbounded", unbounded.MaxOutputBytes)
+	}
+}
+
 func TestParseSearchArgsEnablesRelatedGoNavigation(t *testing.T) {
 	options, _, remote, err := parseSearchArgs([]string{"--related", "needle", "**/*.go"})
 	if err != nil {

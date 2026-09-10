@@ -5,10 +5,7 @@ import (
 	"strings"
 )
 
-type selectedGoSymbol struct {
-	symbol *Symbol
-	depth  int
-}
+type selectedGoSymbol = selectedNavigationSymbol
 
 func generateGoFlowchart(entry string, entrySource Source, sources []Source, depth, nodeLimit int) (string, error) {
 	analysis, err := Analyze(sources)
@@ -19,11 +16,8 @@ func generateGoFlowchart(entry string, entrySource Source, sources []Source, dep
 	if entrySymbol == nil {
 		return "", fmt.Errorf("Function or method '%s' was not found in entry file %s", entry, entrySource.Path)
 	}
-	selected, err := selectGoSymbols(analysis, entrySymbol, depth, nodeLimit)
-	if err != nil {
-		return "", err
-	}
-	diagram, err := renderGoFlow(entry, selected, analysis, depth, nodeLimit)
+	selected, truncated := selectGoSymbols(analysis, entrySymbol, depth, nodeLimit)
+	diagram, err := renderGoFlow(entry, selected, analysis, depth, nodeLimit, truncated)
 	if err != nil {
 		return "", err
 	}
@@ -52,45 +46,16 @@ func goEntrySymbol(analysis *Analysis, name, entryPath string) *Symbol {
 	return nil
 }
 
-func selectGoSymbols(analysis *Analysis, entry *Symbol, depth, nodeLimit int) ([]selectedGoSymbol, error) {
-	pending := []selectedGoSymbol{{entry, 0}}
-	seen := map[string]bool{}
-	var result []selectedGoSymbol
-	for len(pending) > 0 {
-		current := pending[0]
-		pending = pending[1:]
-		if seen[current.symbol.Key] {
-			continue
-		}
-		if len(result) >= nodeLimit {
-			return nil, fmt.Errorf("Go flow exceeds --max-nodes %d while including resolvable call to %s", nodeLimit, current.symbol.Name)
-		}
-		seen[current.symbol.Key] = true
-		result = append(result, current)
-		if current.depth < depth {
-			pending = appendResolvedGoCalls(pending, analysis, current, seen)
-		}
-	}
-	return result, nil
+func selectGoSymbols(analysis *Analysis, entry *Symbol, depth, nodeLimit int) ([]selectedGoSymbol, bool) {
+	return selectNavigationSymbols(analysis, entry, depth, nodeLimit)
 }
 
-func appendResolvedGoCalls(pending []selectedGoSymbol, analysis *Analysis, current selectedGoSymbol, seen map[string]bool) []selectedGoSymbol {
-	queued := map[string]bool{}
-	for _, item := range pending {
-		queued[item.symbol.Key] = true
-	}
-	for _, called := range resolvedGoCalls(analysis, current.symbol) {
-		if !seen[called.Key] && !queued[called.Key] {
-			pending = append(pending, selectedGoSymbol{called, current.depth + 1})
-			queued[called.Key] = true
-		}
-	}
-	return pending
-}
-
-func renderGoFlow(entry string, selected []selectedGoSymbol, analysis *Analysis, depth, nodeLimit int) (string, error) {
+func renderGoFlow(entry string, selected []selectedGoSymbol, analysis *Analysis, depth, nodeLimit int, truncated bool) (string, error) {
 	identifiers := goFlowNodeIDs(selected)
 	lines := []string{"flowchart TD", fmt.Sprintf("    %%%% grepple:generated entry %s depth %d max-nodes %d", entry, depth, nodeLimit)}
+	if truncated {
+		lines = append(lines, fmt.Sprintf("    %%%% grepple:truncated max-nodes %d", nodeLimit))
+	}
 	for _, item := range selected {
 		label := flowLabel(item.symbol.Name)
 		if location := symbolFlowLocation(item.symbol, analysis); location != "" {
@@ -103,7 +68,7 @@ func renderGoFlow(entry string, selected []selectedGoSymbol, analysis *Analysis,
 		lines = append(lines, goFlowMetadata(item.symbol, identifiers[item.symbol.Key], analysis)...)
 	}
 	lines = append(lines, "")
-	edges, err := goFlowEdges(selected, identifiers, analysis, depth)
+	edges, err := goFlowEdges(selected, identifiers, analysis, depth, truncated)
 	if err != nil {
 		return "", err
 	}
@@ -142,23 +107,23 @@ func goFlowMetadata(symbol *Symbol, identifier string, analysis *Analysis) []str
 	return append(result, fmt.Sprintf("    %%%% grepple:package %s %s", identifier, scope))
 }
 
-func goFlowEdges(selected []selectedGoSymbol, identifiers map[string]string, analysis *Analysis, depth int) ([]string, error) {
+func goFlowEdges(selected []selectedGoSymbol, identifiers map[string]string, analysis *Analysis, depth int, truncated bool) ([]string, error) {
 	chosen, edges := map[string]bool{}, map[string]bool{}
 	for _, item := range selected {
 		chosen[item.symbol.Key] = true
 	}
 	for _, item := range selected {
-		if err := addGoFlowEdges(item, identifiers, chosen, edges, analysis, depth); err != nil {
+		if err := addGoFlowEdges(item, identifiers, chosen, edges, analysis, depth, truncated); err != nil {
 			return nil, err
 		}
 	}
 	return sortedKeys(edges), nil
 }
 
-func addGoFlowEdges(item selectedGoSymbol, identifiers map[string]string, chosen, edges map[string]bool, analysis *Analysis, depth int) error {
+func addGoFlowEdges(item selectedGoSymbol, identifiers map[string]string, chosen, edges map[string]bool, analysis *Analysis, depth int, truncated bool) error {
 	for _, called := range resolvedGoCalls(analysis, item.symbol) {
 		if !chosen[called.Key] {
-			if item.depth < depth {
+			if item.depth < depth && !truncated {
 				return fmt.Errorf("generated Go flow omitted resolvable call from %s to %s", item.symbol.Name, called.Name)
 			}
 			continue

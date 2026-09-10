@@ -1,8 +1,7 @@
 # Mermaid code schemas
 
 The main Grepple `extract` package checks and generates class/structure diagrams and call flowcharts
-from source parsed with Tree-sitter. The CLI currently exposes Go extraction; the shared checker
-retains existing schema compatibility. Malformed source reports its path and first syntax error location.
+from source parsed with Tree-sitter. Focused extraction supports Go and TypeScript-family sources; canonical package and workspace bundles remain Go-specific. Generic callable declarations and calls use the normalized `parser.NavigationGraph` shared with local code navigation. Malformed source reports its path and first syntax error location.
 
 ## Automatic Stop validation
 
@@ -33,6 +32,8 @@ bin/grepple extract check package .grepple/service.package
 bin/grepple extract structure service.go --entry Service --source . --output .grepple/service.structure.mmd
 bin/grepple extract flow service.go --entry Service.Run --source . --output .grepple/service.flow.mmd
 ```
+
+Focused flow generation is deterministically bounded. When resolvable calls exceed `--max-nodes`, generation keeps the selected prefix and emits `%% grepple:truncated max-nodes N`; the checker accepts this explicit warning while continuing to validate every emitted node and edge.
 
 `extract structure <source-directory>` generates the complete package diagram. Add `--entry`
 for a focused type diagram. The `--bundle` form

@@ -224,8 +224,8 @@ func callableAt(path string, line int) (string, error) {
 	if language == "" {
 		return "", fmt.Errorf("extract does not support the source language for %s", path)
 	}
-	declarations, _ := codeparser.Navigation(string(content), language)
-	for _, declaration := range declarations {
+	graph := codeparser.BuildNavigationGraph(string(content), language, path)
+	for _, declaration := range graph.Declarations {
 		if line >= declaration.Start && line <= declaration.End {
 			return declaration.Name, nil
 		}

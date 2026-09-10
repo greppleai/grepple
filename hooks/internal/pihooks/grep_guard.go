@@ -302,10 +302,12 @@ func nodeSource(node *sitter.Node, source []byte) string {
 // DenialReason builds the tool-result feedback for a blocked command.
 func DenialReason(hit string) string {
 	return strings.Join([]string{
-		fmt.Sprintf("Blocked: '%s' is disabled for searching in this repository. Use the grepple CLI instead (see the local-grep-and-search skill):", hit),
-		`  content search:    grepple "pattern" ["**/*.go"] [--count | --files-with-matches | --limit N]`,
+		fmt.Sprintf("Blocked: '%s' is disabled for local search. Use the grepple CLI instead (see the local-grep-and-search skill):", hit),
+		`  content search:    grepple "pattern" ["**/*.go"] [--line-only | --count | --files-with-matches | --limit N]`,
 		`  list filenames:    grepple -l "**/*.go" [dir]`,
 		`  file outline:      grepple --outline <file-or-glob>`,
+		`Grepple uses JavaScript regex by default; -E is accepted for that mode, -F selects literals, and -r is unnecessary but accepted.`,
+		`For edits: Grepple locates PATH:LINE, then Read supplies hash-anchored context for Edit.`,
 		`Never use find/grep/rg/ag/ack/fd for content search, file listing by name, or match counting in the working directory.`,
 		`Filtering COMMAND OUTPUT also works with grepple (pipe support): 'go test ./... | grepple -F FAIL'. If you truly need the legacy tool, re-run with '# ` + AllowMarker + `' appended.`,
 	}, "\n")

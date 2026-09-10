@@ -10,6 +10,7 @@ classDiagram
         +FilesWithMatches: bool
         +JSON: string
         +LineOnly: bool
+        +MaxOutputBytes: int
         +OnlyMatching: bool
         +Outline: bool
         +Params: search.Params
@@ -17,7 +18,7 @@ classDiagram
     }
     <<struct>> cliOptions
     %% grepple:file cliOptions internal/cli/model.go
-    note for cliOptions "defined: internal/cli/model.go:5-18; Count@internal/cli/model.go:10; CountByRepo@internal/cli/model.go:11; Depth@internal/cli/model.go:14; FilesWithMatches@internal/cli/model.go:12; JSON@internal/cli/model.go:9; LineOnly@internal/cli/model.go:7; OnlyMatching@internal/cli/model.go:8; Outline@internal/cli/model.go:13; Params@internal/cli/model.go:6; Stdin@internal/cli/model.go:17"
+    note for cliOptions "defined: internal/cli/model.go:5-19; Count@internal/cli/model.go:10; CountByRepo@internal/cli/model.go:11; Depth@internal/cli/model.go:14; FilesWithMatches@internal/cli/model.go:12; JSON@internal/cli/model.go:9; LineOnly@internal/cli/model.go:7; MaxOutputBytes@internal/cli/model.go:15; OnlyMatching@internal/cli/model.go:8; Outline@internal/cli/model.go:13; Params@internal/cli/model.go:6; Stdin@internal/cli/model.go:18"
     class config {
         +RefreshExpiry: int64
         +RefreshToken: string
@@ -186,13 +187,16 @@ classDiagram
     %% grepple:file onlyMatchingRenderer internal/cli/renderer_matches.go
     note for onlyMatchingRenderer "defined: internal/cli/renderer_matches.go:27-31; Render@internal/cli/renderer_matches.go:33-48; matcher@internal/cli/renderer_matches.go:30; maxLines@internal/cli/renderer_matches.go:29; output@internal/cli/renderer_matches.go:28"
     class outputWriter {
+        -writeDirect(string): error
         -writeJSON(any): error
         -writeString(string): error
+        -maxBytes: int
         -writer: io.Writer
+        -written: int
     }
     <<struct>> outputWriter
     %% grepple:file outputWriter internal/cli/output.go
-    note for outputWriter "defined: internal/cli/output.go:20-22; writeJSON@internal/cli/output.go:40-49; writeString@internal/cli/output.go:32-38; writer@internal/cli/output.go:21"
+    note for outputWriter "defined: internal/cli/output.go:24-28; writeDirect@internal/cli/output.go:64-71; writeJSON@internal/cli/output.go:95-104; writeString@internal/cli/output.go:42-62; maxBytes@internal/cli/output.go:26; writer@internal/cli/output.go:25; written@internal/cli/output.go:27"
     class repoCountRenderer {
         +Render([]api.RepoCount): error
         -renderJSON([]api.RepoCount, int, int): error
@@ -220,7 +224,7 @@ classDiagram
     }
     <<interface>> resultRenderer
     %% grepple:file resultRenderer internal/cli/renderer.go
-    note for resultRenderer "defined: internal/cli/renderer.go:5-7; Render@internal/cli/renderer.go:6"
+    note for resultRenderer "defined: internal/cli/renderer.go:9-11; Render@internal/cli/renderer.go:10"
     class rulesAddArgs {
         +Description(): string
         +ExcludeRepo: []string
@@ -274,10 +278,12 @@ classDiagram
         +LineOnly: bool
         +Local: bool
         +MaxFiles: int
+        +MaxOutputBytes: int
         +MaxSegments: int
         +OnlyMatching: bool
         +Outline: bool
         +Query: string
+        +Recursive: bool
         +Regex: bool
         +Related: bool
         +Remote: bool
@@ -308,17 +314,19 @@ classDiagram
     %% grepple:struct-tag searchArgs LineOnly "arg:\"--line-only\" help:\"print only matching lines\""
     %% grepple:struct-tag searchArgs Local "arg:\"--local\" help:\"search only the local working directory (this is the default)\""
     %% grepple:struct-tag searchArgs MaxFiles "arg:\"--max-files\" placeholder:\"N\" help:\"limit matching files\""
+    %% grepple:struct-tag searchArgs MaxOutputBytes "arg:\"--max-output-bytes\" placeholder:\"N\" help:\"cap human-readable output (default 40960; 0 = unlimited; JSON is uncapped)\""
     %% grepple:struct-tag searchArgs MaxSegments "arg:\"--max-segments\" placeholder:\"N\" help:\"limit result segments\""
     %% grepple:struct-tag searchArgs OnlyMatching "arg:\"-o,--only-matching\" help:\"print each matched substring\""
     %% grepple:struct-tag searchArgs Outline "arg:\"-O,--outline\" help:\"print each file's structural outline (classes, funcs, interfaces) instead of searching\""
     %% grepple:struct-tag searchArgs Query "arg:\"positional\" placeholder:\"PATTERN\""
-    %% grepple:struct-tag searchArgs Regex "arg:\"--regex\" help:\"treat the pattern as a regular expression (default)\""
+    %% grepple:struct-tag searchArgs Recursive "arg:\"-r,--recursive\" help:\"search directories recursively (compatibility alias; already the default)\""
+    %% grepple:struct-tag searchArgs Regex "arg:\"-E,--regex\" help:\"use JavaScript regular expressions (default; -E is a compatibility alias)\""
     %% grepple:struct-tag searchArgs Related "arg:\"--related\" help:\"show project-local callees and callers for supported source languages (local search only)\""
     %% grepple:struct-tag searchArgs Remote "arg:\"-R,--remote\" help:\"also query the remote shard/router (default: local only)\""
     %% grepple:struct-tag searchArgs Repos "arg:\"--repo,separate\" placeholder:\"PATTERN\" help:\"restrict remote repositories; repeatable\""
     %% grepple:struct-tag searchArgs Server "arg:\"-s,--server\" placeholder:\"URL\" help:\"remote shard/router URL (implies --remote)\""
     %% grepple:struct-tag searchArgs Skip "arg:\"--skip\" placeholder:\"N\" help:\"skip the first N ranked result files\""
-    note for searchArgs "defined: internal/cli/args.go:20-52; Description@internal/cli/args.go:54-56; AfterContext@internal/cli/args.go:40; At@internal/cli/args.go:46; BeforeContext@internal/cli/args.go:41; Context@internal/cli/args.go:39; Count@internal/cli/args.go:31; CountByRepo@internal/cli/args.go:32; Depth@internal/cli/args.go:30; Files@internal/cli/args.go:27; FilesWithMatches@internal/cli/args.go:28; Fixed@internal/cli/args.go:36; FollowRelated@internal/cli/args.go:45; Globs@internal/cli/args.go:51; IgnoreCase@internal/cli/args.go:37; InvertMatch@internal/cli/args.go:38; JSON@internal/cli/args.go:33; JSONMatches@internal/cli/args.go:34; Limit@internal/cli/args.go:48; LineNumber@internal/cli/args.go:24; LineOnly@internal/cli/args.go:25; Local@internal/cli/args.go:21; MaxFiles@internal/cli/args.go:42; MaxSegments@internal/cli/args.go:43; OnlyMatching@internal/cli/args.go:26; Outline@internal/cli/args.go:29; Query@internal/cli/args.go:50; Regex@internal/cli/args.go:35; Related@internal/cli/args.go:44; Remote@internal/cli/args.go:22; Repos@internal/cli/args.go:49; Server@internal/cli/args.go:23; Skip@internal/cli/args.go:47"
+    note for searchArgs "defined: internal/cli/args.go:24-58; Description@internal/cli/args.go:60-62; AfterContext@internal/cli/args.go:45; At@internal/cli/args.go:52; BeforeContext@internal/cli/args.go:46; Context@internal/cli/args.go:44; Count@internal/cli/args.go:36; CountByRepo@internal/cli/args.go:37; Depth@internal/cli/args.go:35; Files@internal/cli/args.go:32; FilesWithMatches@internal/cli/args.go:33; Fixed@internal/cli/args.go:41; FollowRelated@internal/cli/args.go:51; Globs@internal/cli/args.go:57; IgnoreCase@internal/cli/args.go:42; InvertMatch@internal/cli/args.go:43; JSON@internal/cli/args.go:38; JSONMatches@internal/cli/args.go:39; Limit@internal/cli/args.go:54; LineNumber@internal/cli/args.go:29; LineOnly@internal/cli/args.go:30; Local@internal/cli/args.go:25; MaxFiles@internal/cli/args.go:47; MaxOutputBytes@internal/cli/args.go:49; MaxSegments@internal/cli/args.go:48; OnlyMatching@internal/cli/args.go:31; Outline@internal/cli/args.go:34; Query@internal/cli/args.go:56; Recursive@internal/cli/args.go:27; Regex@internal/cli/args.go:40; Related@internal/cli/args.go:50; Remote@internal/cli/args.go:26; Repos@internal/cli/args.go:55; Server@internal/cli/args.go:28; Skip@internal/cli/args.go:53"
     class segmentRenderer {
         +Render([]api.FileResult): error
         -renderFile(api.FileResult): error
@@ -331,7 +339,7 @@ classDiagram
     }
     <<struct>> segmentRenderer
     %% grepple:file segmentRenderer internal/cli/renderer_segments.go
-    note for segmentRenderer "defined: internal/cli/renderer_segments.go:11-13; Render@internal/cli/renderer_segments.go:15-27; renderFile@internal/cli/renderer_segments.go:29-50; renderRelated@internal/cli/renderer_segments.go:51-59; renderRelatedPoint@internal/cli/renderer_segments.go:70-97; renderRelatedPoints@internal/cli/renderer_segments.go:61-68; renderRelatedSegments@internal/cli/renderer_segments.go:99-111; renderSegment@internal/cli/renderer_segments.go:113-123; output@internal/cli/renderer_segments.go:12"
+    note for segmentRenderer "defined: internal/cli/renderer_segments.go:11-13; Render@internal/cli/renderer_segments.go:15-27; renderFile@internal/cli/renderer_segments.go:29-56; renderRelated@internal/cli/renderer_segments.go:57-65; renderRelatedPoint@internal/cli/renderer_segments.go:76-103; renderRelatedPoints@internal/cli/renderer_segments.go:67-74; renderRelatedSegments@internal/cli/renderer_segments.go:105-117; renderSegment@internal/cli/renderer_segments.go:119-129; output@internal/cli/renderer_segments.go:12"
     class treeArgs {
         +Description(): string
         +Depth: int
@@ -373,7 +381,7 @@ classDiagram
     }
     <<function>> Run
     %% grepple:file Run internal/cli/args.go
-    note for Run "defined: internal/cli/args.go:266-286"
+    note for Run "defined: internal/cli/args.go:280-304"
     contextRenderer "1" --> "1" outputWriter : field output
     resultRenderer <|.. contextRenderer : implements
     countRenderer "1" --> "1" outputWriter : field output

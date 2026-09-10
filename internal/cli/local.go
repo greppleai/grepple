@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -273,8 +274,8 @@ func runCountByRepo(options *cliOptions, explicitServer string, remote bool) err
 	for repo, a := range repos {
 		out = append(out, api.RepoCount{Repo: repo, Files: a.files, Matches: a.matches})
 	}
-	renderer := repoCountRenderer{output: stdoutWriter(), json: options.JSON != "off"}
-	if err := renderer.Render(out); err != nil {
+	renderer := repoCountRenderer{output: outputForOptions(options), json: options.JSON != "off"}
+	if err := renderer.Render(out); err != nil && !errors.Is(err, errOutputTruncated) {
 		return err
 	}
 	if len(out) == 0 {

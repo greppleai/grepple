@@ -46,6 +46,12 @@ func (renderer segmentRenderer) renderFile(result api.FileResult) error {
 		}
 		cursor = segment.End + 1
 	}
+	if omitted := omittedMatchLines(result); omitted > 0 {
+		message := fmt.Sprintf("\n// … %d matching lines omitted by --max-segments; use --line-only to locate every match or raise --max-segments …\n", omitted)
+		if err := renderer.output.writeString(message); err != nil {
+			return err
+		}
+	}
 	return renderer.renderRelated(result.Related)
 }
 func (renderer segmentRenderer) renderRelated(related []api.RelatedSymbol) error {
@@ -74,8 +80,8 @@ func (renderer segmentRenderer) renderRelatedPoint(point api.RelatedSymbol, dept
 		arrow = "←"
 	}
 	suffix := ""
-	if point.Confidence != "unique" {
-		suffix = " [candidate]"
+	if point.Confidence == "candidate" {
+		suffix = fmt.Sprintf(" [candidate; try --at %s:%d]", point.Path, point.Start)
 	}
 	line := fmt.Sprintf("%s%s %s  %s:%d-%d  call:%d%s\n", indent, arrow, point.Name, point.Path, point.Start, point.End, point.CallLine, suffix)
 	if err := renderer.output.writeString(line); err != nil {
@@ -120,6 +126,23 @@ func (renderer segmentRenderer) renderSegment(segment api.ResultSegment, width i
 		}
 	}
 	return nil
+}
+
+func omittedMatchLines(result api.FileResult) int {
+	omitted := make(map[int]struct{})
+	for _, match := range result.Matches {
+		covered := false
+		for _, segment := range result.Segments {
+			if match.Line >= segment.Start && match.Line <= segment.End {
+				covered = true
+				break
+			}
+		}
+		if !covered {
+			omitted[match.Line] = struct{}{}
+		}
+	}
+	return len(omitted)
 }
 
 func segmentLineWidth(segments []api.ResultSegment) int {

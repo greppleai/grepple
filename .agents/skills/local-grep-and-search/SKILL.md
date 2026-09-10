@@ -13,6 +13,7 @@ Use Grepple to minimize retrieval turns and tokens, not merely as a grep replace
 - **Need candidate paths:** use `--files-with-matches`; use `--files` only when matching filenames/globs.
 - **Need file structure:** use `--outline` before reading a large or unfamiliar file.
 - **Need implementation context:** default search returns enclosing structural segments and collapses unrelated code.
+- **Need edit-ready context:** first locate exact `PATH:LINE` evidence with `--line-only` or structural output, then use Read on the smallest range to obtain hash anchors. Grepple discovers; Read prepares edits.
 - **Need only evidence lines:** use `--line-only` or bounded context; this avoids structural parsing and saves tokens.
 - **Know a navigation location:** use `--at PATH:LINE` (also accepts `PATH:START-END`) to retrieve the exact callable declaration instead of reading the file broadly.
 - **Need the next code hop:** add `--related` to expose bounded callees and potential callers. This often avoids a second symbol search.
@@ -39,19 +40,21 @@ Use navigation deliberately rather than everywhere:
 
 Navigation is syntax-based, not type-checked:
 
-- `unique` means one same-language terminal-name declaration was found.
-- `[candidate]` means ambiguity; verify rather than treating it as an exact call graph.
+- `exact` means a qualified callable identity matched directly; `context-resolved` means declaration kind or file locality safely narrowed candidates; `unique-terminal` means only one same-language terminal-name declaration was found.
+- `[candidate; try --at PATH:LINE]` means ambiguity remains; use the suggested declaration location and verify rather than treating it as an exact call graph.
 - `→` is a callee and `←` is a potential caller.
 - Selected paths/globs define the navigation universe; include the relevant directory for cross-file edges.
 - TypeScript and TSX share a namespace. Other languages are isolated.
-- Expansion is bounded (two unique callees per level, depth ≤3, cycle protection, shared line budget).
+- Expansion is bounded (two resolved callees per level, depth ≤3, cycle protection, shared line budget).
 
 Navigation works locally in default structural output or full `--json` for Go, JavaScript/JSX, TypeScript/TSX, Python, Java, Kotlin, C#, C, C++, Rust, and Shell. It does not benefit Markdown, config, logs, or plain text.
 
 ## Narrowing rules
 
 - Default `--limit` is 20. Keep it bounded; use `--limit 0` only when completeness is necessary.
-- Prefer `-F` for literal identifiers/snippets; regex is the default.
+- Human-readable output is capped at 40960 bytes by default. If the truncation marker appears, narrow the path/glob or use `--limit`, `--line-only`, `-l`, or `--count`; use `--max-output-bytes 0` only when unbounded output is genuinely required.
+- Prefer `-F` for literal identifiers/snippets; JavaScript regex is the default.
+- Grepple is not a complete grep flag clone. `-E` explicitly selects the default JavaScript-regex mode, and `-r` is accepted as a no-op because directory search is already recursive. Translate other grep flags to Grepple's output modes.
 - Scope with a file, directory, or glob. `**` crosses directories.
 - `--files` matches paths; `--files-with-matches` matches contents.
 - `.git` and ignored files are excluded.
@@ -65,6 +68,7 @@ grepple -F 'Symbol' --files-with-matches    # identify candidate files
 grepple --outline path/to/file.go           # orient cheaply
 grepple -F 'Symbol' src --limit 5           # retrieve bounded structure
 grepple --related -F 'Symbol(' src          # choose caller/callee next hops
+grepple --line-only -F 'Symbol' src/file.go # locate exact lines before Read
 grepple --at src/file.go:40-58               # retrieve a listed declaration
 grepple --follow-related 1 -F 'Symbol(' src # inline one deliberate hop
 ```

@@ -12,6 +12,7 @@ type cliOptions struct {
 	FilesWithMatches bool
 	Outline          bool
 	Depth            int
+	MaxOutputBytes   int
 	// Stdin is true when the search reads piped standard input instead of
 	// walking the filesystem (see stdinSearch).
 	Stdin bool

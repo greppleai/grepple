@@ -1,6 +1,10 @@
 package cli
 
-import "github.com/greppleai/grepple/api"
+import (
+	"errors"
+
+	"github.com/greppleai/grepple/api"
+)
 
 type resultRenderer interface {
 	Render([]api.FileResult) error
@@ -25,9 +29,17 @@ func newResultRenderer(options *cliOptions, output *outputWriter) resultRenderer
 	}
 }
 
+func outputForOptions(options *cliOptions) *outputWriter {
+	output := stdoutWriter()
+	if options.JSON == "off" && options.MaxOutputBytes > 0 {
+		return newBoundedOutputWriter(output.writer, options.MaxOutputBytes)
+	}
+	return output
+}
+
 func renderResults(options *cliOptions, results []api.FileResult) error {
-	renderer := newResultRenderer(options, stdoutWriter())
-	if err := renderer.Render(results); err != nil {
+	renderer := newResultRenderer(options, outputForOptions(options))
+	if err := renderer.Render(results); err != nil && !errors.Is(err, errOutputTruncated) {
 		return err
 	}
 	return setSearchExit(results)

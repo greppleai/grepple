@@ -35,7 +35,7 @@ func ignored() {}
 		t.Fatalf("related = %#v, want one helper", matches[0].Related)
 	}
 	point := matches[0].Related[0]
-	if point.Name != "helper" || point.Kind != "func" || point.Confidence != "unique" || point.CallLine != 4 {
+	if point.Name != "helper" || point.Kind != "func" || point.Confidence != "unique-terminal" || point.CallLine != 4 {
 		t.Fatalf("unexpected related point %#v", point)
 	}
 	if !strings.HasSuffix(point.Path, "helper.go") || point.Start != 2 || point.End != 4 {
@@ -47,24 +47,49 @@ func ignored() {}
 		t.Fatalf("related result was not preserved: %#v", results[0].Related)
 	}
 }
-
-func TestRelatedGoCallsAreFoundWhenDocumentationMatches(t *testing.T) {
+func TestRelatedGoCallsPreferFunctionForUnqualifiedCall(t *testing.T) {
 	directory := t.TempDir()
-	caller := writeGoFixture(t, directory, "caller.go", `package related
-// Locate this documented function.
-func run() { helper() }
+	path := writeGoFixture(t, directory, "analysis.go", `package related
+type First struct{}
+func (First) Analyze() {}
+type Second struct{}
+func (Second) Analyze() {}
+func Analyze() {}
+func run() { Analyze() } // needle
 `)
-	helper := writeGoFixture(t, directory, "helper.go", `package related
-func helper() {}
-`)
-
-	params := Params{Query: "Locate this", MaxSegments: 20, Related: true}
-	matches, err := Files(params, []string{caller, helper})
+	params := Params{Query: "needle", MaxSegments: 20, Related: true}
+	matches, err := Files(params, []string{path})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(matches) != 1 || len(matches[0].Related) != 1 || matches[0].Related[0].Name != "helper" {
-		t.Fatalf("document match did not produce helper navigation: %#v", matches)
+	if len(matches) != 1 || len(matches[0].Related) != 1 {
+		t.Fatalf("expected one contextual candidate: %#v", matches)
+	}
+	point := matches[0].Related[0]
+	if point.Name != "Analyze" || point.Kind != "func" || point.Confidence != "context-resolved" {
+		t.Fatalf("unexpected contextual resolution: %#v", point)
+	}
+}
+
+func TestRelatedGoCallsUseExactQualifiedIdentity(t *testing.T) {
+	directory := t.TempDir()
+	path := writeGoFixture(t, directory, "qualified.go", `package related
+type First struct{}
+func (First) Load() {}
+type Second struct{}
+func (Second) Load() {}
+func run() { First.Load(); /* needle */ }
+`)
+	matches, err := Files(Params{Query: "needle", MaxSegments: 20, Related: true}, []string{path})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(matches) != 1 || len(matches[0].Related) != 1 {
+		t.Fatalf("expected one exact qualified target: %#v", matches)
+	}
+	point := matches[0].Related[0]
+	if point.Name != "First.Load" || point.Confidence != "exact" {
+		t.Fatalf("unexpected exact qualified resolution: %#v", point)
 	}
 }
 
@@ -95,6 +120,19 @@ func (*Second) Load() error { return nil }
 	for _, point := range matches[0].Related {
 		if point.Confidence != "candidate" || !strings.HasPrefix(point.Name, "service.Load → ") {
 			t.Fatalf("unexpected ambiguous method point %#v", point)
+		}
+	}
+	reversed, err := Files(params, []string{second, first, caller})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(reversed) != 1 || len(reversed[0].Related) != len(matches[0].Related) {
+		t.Fatalf("reversed candidate shape changed: %#v", reversed)
+	}
+	for index, point := range matches[0].Related {
+		other := reversed[0].Related[index]
+		if point.Name != other.Name || point.Path != other.Path || point.Confidence != other.Confidence {
+			t.Fatalf("candidate order depends on input order: first=%#v reversed=%#v", matches[0].Related, reversed[0].Related)
 		}
 	}
 }

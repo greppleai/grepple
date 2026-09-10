@@ -6,10 +6,10 @@ flowchart LR
         class package_1 entrypoint
         package_2["github.com/greppleai/grepple/examples/advanced-files&lt;br/&gt;files=1 declarations=2 exportedFunctions=1 routes=0"]
         package_3["github.com/greppleai/grepple/examples/sample-files&lt;br/&gt;files=1 declarations=2 exportedFunctions=1 routes=0"]
-        package_4["github.com/greppleai/grepple/extract&lt;br/&gt;files=22 declarations=63 exportedFunctions=26 routes=0"]
-        package_5["github.com/greppleai/grepple/internal/cli&lt;br/&gt;files=24 declarations=23 exportedFunctions=3 routes=0"]
-        package_6["github.com/greppleai/grepple/parser&lt;br/&gt;files=24 declarations=27 exportedFunctions=6 routes=0"]
-        package_7["github.com/greppleai/grepple/search&lt;br/&gt;files=10 declarations=14 exportedFunctions=19 routes=0"]
+        package_4["github.com/greppleai/grepple/extract&lt;br/&gt;files=23 declarations=63 exportedFunctions=26 routes=0"]
+        package_5["github.com/greppleai/grepple/internal/cli&lt;br/&gt;files=25 declarations=23 exportedFunctions=3 routes=0"]
+        package_6["github.com/greppleai/grepple/parser&lt;br/&gt;files=24 declarations=28 exportedFunctions=8 routes=0"]
+        package_7["github.com/greppleai/grepple/search&lt;br/&gt;files=10 declarations=15 exportedFunctions=19 routes=0"]
         package_8["github.com/greppleai/grepple/testdata/go&lt;br/&gt;files=1 declarations=2 exportedFunctions=1 routes=0"]
     end
     subgraph module_1["grepple/hooks"]
@@ -18,6 +18,7 @@ flowchart LR
         package_10["grepple/hooks/internal/pihooks&lt;br/&gt;files=5 declarations=12 exportedFunctions=12 routes=0"]
     end
     package_1 --> package_5
+    package_4 --> package_6
     package_5 --> package_0
     package_5 --> package_4
     package_5 --> package_6

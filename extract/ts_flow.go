@@ -9,11 +9,7 @@ func hasTypeScriptCallPath(analysis *Analysis, source, target *Symbol) bool {
 	for len(pending) > 0 {
 		current := pending[0]
 		pending = pending[1:]
-		for _, call := range current.CallOrder {
-			called := resolveTypeScriptCall(analysis, current, call)
-			if called == nil {
-				continue
-			}
+		for _, called := range resolvedTypeScriptCalls(analysis, current) {
 			if called.Key == target.Key {
 				return true
 			}
@@ -60,7 +56,23 @@ func hasTypeScriptOrderedPath(analysis *Analysis, source, target *Symbol) bool {
 		if owner.ModuleID != source.ModuleID || owner.ModuleID != target.ModuleID {
 			continue
 		}
-		if callsInOrder(owner.CallOrder, source.Name, target.Name) {
+		if navigationSymbolsInOrder(resolvedTypeScriptCalls(analysis, owner), source.Key, target.Key) {
+			return true
+		}
+	}
+	return false
+}
+
+func resolvedTypeScriptCalls(analysis *Analysis, symbol *Symbol) []*Symbol {
+	return resolvedNavigationCalls(analysis, symbol)
+}
+
+func navigationSymbolsInOrder(calls []*Symbol, sourceKey, targetKey string) bool {
+	sawSource := false
+	for _, call := range calls {
+		if call.Key == sourceKey {
+			sawSource = true
+		} else if sawSource && call.Key == targetKey {
 			return true
 		}
 	}

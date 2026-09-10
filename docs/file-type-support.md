@@ -33,7 +33,7 @@ Everything else remains searchable through the plain-text fallback. JSON (`.json
 
 Structural source segments include comments attached immediately before a declaration, including JSDoc, Go documentation comments, Python comments, Rust doc comments, and equivalent forms in the other supported languages. One blank line is allowed between the comment and declaration. Attributes, annotations, and decorators between them are included; trailing comments attached to an earlier statement are not.
 
-Every tree-sitter-backed language in the table supports local syntax-based navigation. `--related` reports bounded outgoing callees and potential callers, `--at PATH:LINE` retrieves a callable declaration by location, and `--follow-related N` expands up to two unique callees per level under a shared 400-line budget. Names are resolved only among files of the same language and are intentionally labeled as unique-name or candidate resolution rather than a type-checked call graph. Go additionally recognizes interface methods and function-valued struct fields.
+Every tree-sitter-backed language in the table supports local syntax-based navigation. `--related` reports bounded outgoing callees and potential callers, `--at PATH:LINE` retrieves a callable declaration by location, and `--follow-related N` expands up to two resolved callees per level under a shared 400-line budget. Confidence distinguishes qualified `exact`, safely narrowed `context-resolved`, globally `unique-terminal`, and unresolved `candidate` matches; candidate text includes an explicit `--at PATH:LINE` suggestion. Resolution remains syntax-based rather than a type-checked call graph. Go additionally recognizes interface methods and function-valued struct fields.
 
 ## Package boundaries
 

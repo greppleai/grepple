@@ -22,9 +22,9 @@ Dependency note: C# is intentionally pinned to `tree-sitter-c-sharp` `v0.23.4`. 
 
 ## Navigation baseline
 
-All languages in the minimum set support `--at`, bounded callees and potential callers through `--related`, and recursive unique-callee expansion through `--follow-related`. TypeScript and TSX share one declaration namespace. Other language boundaries remain isolated.
+All languages in the minimum set support `--at`, bounded callees and potential callers through `--related`, and recursive unique-callee expansion through `--follow-related`. TypeScript and TSX share one declaration namespace. Other language boundaries remain isolated. Generic callable declarations and calls are represented by `parser.NavigationGraph`; search consumes that graph directly, and extraction records the same graph from its already parsed trees for semantic enrichment and flow-parity checks.
 
-Go additionally recognizes interface methods and function-valued struct fields. Navigation remains syntax-based; type-checked dispatch, inheritance-aware overrides, imports, overload selection, dynamic calls, and potential cross-language FFI edges are future hardening work.
+Go additionally recognizes interface methods and function-valued struct fields. Navigation remains syntax-based; package/import, receiver, and declaration-kind context is used when it can narrow candidates safely, while type-checked dispatch, inheritance-aware overrides, overload selection, dynamic calls, and potential cross-language FFI edges remain future hardening work.
 
 ## Baseline hardening
 

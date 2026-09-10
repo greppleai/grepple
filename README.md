@@ -32,6 +32,8 @@ make build
 make install
 ```
 
+`grepple --version` (also `grepple version`) prints the release/source version, full commit revision, source commit timestamp, Go toolchain, and target platform. Make builds inject `git describe`, `git rev-parse HEAD`, and the commit timestamp; release builders can override `VERSION`, `COMMIT`, and `BUILD_DATE`. The source timestamp is used instead of the wall-clock build time to preserve reproducibility.
+
 Linting uses [revive](https://github.com/mgechev/revive) with the pinned rule set in `revive.toml` (the documented default rules, made explicit, plus `cognitive-complexity` capped at 15):
 `make lint` runs revive plus the standalone pi hook module's lint and tests. Pi executes a cached `hooks/bin/pi-hook` binary; the lightweight Make targets in `.pi/settings.json` rebuild it only when its Go sources or module files change. The Stop hook runs
 on every agent Stop: it auto-fixes formatting with `gofmt -w`, then feeds one revive rule-group (worst file first, one
@@ -51,22 +53,37 @@ The default Linux build links the CGO tree-sitter runtime and all grammars into 
 ```bash
 grepple "console\\.log" "src/*.ts"
 grepple -F "console.log" src
+grepple -E "console\\.(log|warn)" -r src
 grepple --files "config/*.yaml" "config/*.yml"
 grepple --count "httpRoute"
 ```
 
 Supported search options:
 
-- `--regex` (default), `-F`/`--fixed-strings`, `-i`/`--ignore-case`
+- `-E`/`--regex` (JavaScript regular expressions; this is already the default), `-F`/`--fixed-strings`, `-i`/`--ignore-case`
+- `-r`/`--recursive` is accepted as a compatibility no-op because directory searches are recursive by default
 - `-n`/`--line-number`, `--line-only`, `-C`/`--context N`
 - `-l`/`--files` (list files whose **path** matches the glob), `--files-with-matches` (list paths of files whose **contents** match, like `grep -l`), `-c`/`--count`
 - `--json`, `--json-matches`
 - `--repo PATTERN` (repeatable)
 - `--max-files N`, `--max-segments N`
+- `--max-output-bytes N` caps human-readable output before common agent tool limits (default `40960`; `0` disables the cap). JSON output is never partially truncated.
 - `--related` (experimental: show bounded project-local callees and callers for structurally supported source languages)
 - `--at PATH:LINE` (retrieve the declaration containing an exact local location; related `PATH:START-END` ranges are accepted too)
 - `--follow-related N` (expand up to two unique callees per level, depth 1-3; implies `--related`)
 - `--skip N`, `--limit N` (page through results in deterministic path order: skip the first `N` files / return at most `N`; **`--limit` defaults to `20`**, use `--limit 0` for all). A server never returns more than **100 files per page** — `--limit 0` or a larger value gets the maximum page, and you page further with `--skip N`; local-only searches stay uncapped
+
+### Grep migration and editing workflow
+
+Grepple is not a complete GNU/BSD grep flag emulation layer. Patterns use JavaScript regular-expression syntax by default; `-E` is accepted as an explicit alias for that default, while `-r` is accepted because filesystem searches are already recursive. Use `-F` when the pattern must be literal. Other unsupported grep flags should be translated to Grepple's output model rather than copied mechanically.
+
+For agent edits, use Grepple as the discovery step and the agent's Read tool as the edit-preparation step:
+
+```text
+grepple --line-only or structural search → Read the exact PATH:LINE range → Edit with hash anchors
+```
+
+Default structural output shows enclosing declarations and may collapse unrelated lines. If a segment limit omits matching lines, Grepple reports the omitted count and recommends `--line-only`. Broad human-readable output is bounded before common tool-result limits and ends with narrowing guidance; tighten the path/glob or use `--limit`, `--line-only`, `-l`, or `--count`.
 
 ### Source call navigation
 
@@ -82,7 +99,7 @@ Next points (code navigation):
   → g.deliver → Gateway.deliver  examples/advanced-files/gateway.go:18-18  call:35
 ```
 
-Grepple indexes declarations only within the files selected by the search paths/globs, and resolves names only within the same language. `→` marks callees and `←` marks potential callers. Functions, methods, and constructors are indexed across supported languages; Go additionally indexes interface methods and function-valued struct fields. A callable whose terminal name occurs once is marked `unique` in JSON; ambiguous names are emitted as `[candidate]` in text. This is syntax-based navigation, not a type-checked call graph. Standard-library and external calls are omitted because they have no declaration in the selected files. Callees and callers are each capped at five points per declaration, with at most three candidates for one ambiguous call. Production callers are preferred over conventional test filenames.
+Grepple indexes declarations only within the files selected by the search paths/globs and resolves names only within the same language. `→` marks callees and `←` marks potential callers. Functions, methods, and constructors are indexed across supported languages; Go additionally indexes interface methods and function-valued struct fields. JSON confidence is `exact` for a qualified identity match, `context-resolved` when declaration kind or file locality safely narrows candidates, `unique-terminal` when only one declaration has the terminal name, and `candidate` when ambiguity remains. Text output gives candidates an explicit `--at PATH:LINE` suggestion. This is syntax-based navigation, not a type-checked call graph. Standard-library and external calls are omitted because they have no declaration in the selected files. Callees and callers are each capped at five points per declaration, with at most three candidates for one ambiguous call. Production callers are preferred over conventional test filenames.
 
 Retrieve one declaration directly from a navigation location:
 
@@ -96,7 +113,7 @@ Or explicitly spend more tokens to inline a bounded call chain:
 grepple --follow-related 1 -F "attachRelated(out" search
 ```
 
-Each level expands at most two unique outgoing callees; callers and ambiguous candidates remain compact hints. Expansion depth is capped at three, cycles are not expanded again, and expanded declarations share a 400-line budget per root result. Every expansion remains available structurally in full `--json`. These experimental navigation modes currently support local default structural output and full JSON only.
+Each level expands at most two resolved outgoing callees; callers and ambiguous candidates remain compact hints. Expansion depth is capped at three, cycles are not expanded again, and expanded declarations share a 400-line budget per root result. Every expansion remains available structurally in full `--json`. These experimental navigation modes currently support local default structural output and full JSON only.
 
 File patterns use Go's `filepath.Glob` syntax, extended with `**` to match across directory boundaries (for example `**/*.yaml` or `charts/**/values.yaml`). Omit globs to search recursively from the working directory; a matched directory is also searched recursively. `.git` directories and repository `.gitignore` entries are excluded. Shard searches are confined to the served repository root, so client-supplied globs and paths cannot escape it. Globs compose with every output mode, including `-c`/`--count`. When a Zoekt index is available the globs are translated into a `file:` atom and pushed down to the index (a deliberate superset — the shard still applies the exact glob matcher to what the index returns), so the index pre-filters by path instead of shipping every content match for the shard to discard.
 
@@ -143,7 +160,7 @@ produce an empty outline. Go methods are shown at top level as `(*Type).Method`.
 
 ## Architecture and flow extraction
 
-`grepple extract` creates deterministic, self-validated Mermaid navigation maps from Tree-sitter source analysis. Focused structure and flow extraction support Go, TypeScript, and TSX; canonical package and workspace bundles remain Go-specific. Internally, source detection, project-root resolution, analysis lifecycle, type normalization, structure/flow generation, and flow validation are selected through one language adapter registry; the normalized graph and Mermaid parsers remain shared.
+`grepple extract` creates deterministic, self-validated Mermaid navigation maps from Tree-sitter source analysis. Focused structure and flow extraction support Go, TypeScript, and TSX; canonical package and workspace bundles remain Go-specific. Generic callable declarations and calls use the normalized `parser.NavigationGraph` shared with `--at` and `--related`. Extraction enriches graph declarations and edges with stable identities, package/module scope, receiver/container context, imports, resolved targets, and confidence; focused flow generation and validation consume those enriched edges directly.
 
 ```bash
 grepple extract structure internal/cli
@@ -155,7 +172,7 @@ grepple extract structure api --bundle --output .grepple/api.package
 grepple extract structure . --workspace --output .grepple/project.workspace
 ```
 
-`structure` without an entry generates the complete Go package class diagram for the selected file or directory. `--entry` or `--at PATH:LINE` produces a bounded, language-adapted type structure. `flow` requires one of those selectors and follows statically resolved outgoing calls. `--source` can be repeated to define the analysis roots; `--depth`, `--max-nodes`, and `--output` control projection and writing.
+`structure` without an entry generates the complete Go package class diagram for the selected file or directory. `--entry` or `--at PATH:LINE` produces a bounded, language-adapted type structure. `flow` requires one of those selectors and follows statically resolved outgoing calls. `--source` can be repeated to define the analysis roots; `--depth`, `--max-nodes`, and `--output` control projection and writing. A flow that reaches `--max-nodes` remains valid and deterministic, and includes `%% grepple:truncated max-nodes N` instead of failing after useful nodes have already been selected.
 
 Every generated type/function node includes its exact `PATH:START-END` definition range; type notes also list exact member ranges. Flow nodes display their definition range directly. Generated diagrams are checked against the same source analysis before being returned.
 

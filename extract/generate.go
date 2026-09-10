@@ -60,15 +60,18 @@ type traversalItem struct {
 	depth int
 }
 
-func selectClasses(entry string, all map[string]*Declaration, depth, nodeLimit int) []string {
+func selectClasses(entry string, all map[string]*Declaration, depth, nodeLimit int) ([]string, bool) {
 	pending := []traversalItem{{entry, 0}}
 	seen := map[string]bool{}
 	var result []string
-	for len(pending) > 0 && len(result) < nodeLimit {
+	for len(pending) > 0 {
 		current := pending[0]
 		pending = pending[1:]
 		if seen[current.name] || all[current.name] == nil {
 			continue
+		}
+		if len(result) >= nodeLimit {
+			return result, true
 		}
 		seen[current.name] = true
 		result = append(result, current.name)
@@ -76,7 +79,7 @@ func selectClasses(entry string, all map[string]*Declaration, depth, nodeLimit i
 			pending = appendDependencies(pending, declarationDependencies(all[current.name], all), current.depth, seen)
 		}
 	}
-	return result
+	return result, false
 }
 
 func appendDependencies(pending []traversalItem, names []string, depth int, seen map[string]bool) []traversalItem {
@@ -371,8 +374,11 @@ func generateGoClass(entry string, entrySource Source, sources []Source, options
 		}
 	}
 	inferGoImplementations(declarations)
-	selected := selectClasses(entry, declarations, depth, nodeLimit)
+	selected, truncated := selectClasses(entry, declarations, depth, nodeLimit)
 	lines := []string{"classDiagram", fmt.Sprintf("    %%%% grepple:generated entry %s depth %d max-nodes %d", entry, depth, nodeLimit)}
+	if truncated {
+		lines = append(lines, fmt.Sprintf("    %%%% grepple:truncated max-nodes %d", nodeLimit))
+	}
 	for _, name := range selected {
 		rendered, renderErr := renderClass(name, declarations[name], analysis)
 		if renderErr != nil {
@@ -435,37 +441,6 @@ func formatDiagnostics(diagnostics []Diagnostic) string {
 	return strings.Join(result, "\n")
 }
 
-func selectSymbols(entry string, all map[string]*Symbol, depth, nodeLimit int) []string {
-	pending := []traversalItem{{entry, 0}}
-	seen := map[string]bool{}
-	var result []string
-	for len(pending) > 0 && len(result) < nodeLimit {
-		current := pending[0]
-		pending = pending[1:]
-		if seen[current.name] || all[current.name] == nil {
-			continue
-		}
-		seen[current.name] = true
-		result = append(result, current.name)
-		if current.depth < depth {
-			pending = appendDependencies(pending, uniqueKnownCalls(all[current.name], all), current.depth, seen)
-		}
-	}
-	return result
-}
-
-func uniqueKnownCalls(symbol *Symbol, all map[string]*Symbol) []string {
-	seen := map[string]bool{}
-	var result []string
-	for _, called := range symbol.CallOrder {
-		if all[called] != nil && !seen[called] {
-			seen[called] = true
-			result = append(result, called)
-		}
-	}
-	return result
-}
-
 func validateFlowEntry(entry, entryPath string, symbol *Symbol) error {
 	if symbol == nil || symbol.Kind == "class" {
 		return fmt.Errorf("Function or method '%s' was not found", entry)
@@ -485,19 +460,6 @@ func validateFlowEntry(entry, entryPath string, symbol *Symbol) error {
 
 var nonIdentifierCharacter = regexp.MustCompile(`[^A-Za-z0-9_]`)
 
-func flowNodeIDs(selected []string) map[string]string {
-	result, used := map[string]string{}, map[string]bool{}
-	for _, name := range selected {
-		base := flowIDBase(name)
-		identifier := base
-		for suffix := 2; used[identifier]; suffix++ {
-			identifier = fmt.Sprintf("%s_%d", base, suffix)
-		}
-		used[identifier] = true
-		result[name] = identifier
-	}
-	return result
-}
 func flowIDBase(name string) string {
 	base := nonIdentifierCharacter.ReplaceAllString(name, "_")
 	if base == "" || base[0] >= '0' && base[0] <= '9' {
@@ -507,35 +469,6 @@ func flowIDBase(name string) string {
 }
 func flowLabel(name string) string {
 	return strings.ReplaceAll(strings.ReplaceAll(name+"()", "&", "&amp;"), "\"", "&quot;")
-}
-
-func renderFlow(entry string, depth, nodeLimit int, selected []string, identifiers map[string]string, symbols map[string]*Symbol) string {
-	lines := []string{"flowchart TD", fmt.Sprintf("    %%%% grepple:generated entry %s depth %d max-nodes %d", entry, depth, nodeLimit)}
-	for _, name := range selected {
-		lines = append(lines, fmt.Sprintf("    %s[\"%s\"]", identifiers[name], flowLabel(name)))
-	}
-	lines = append(lines, "")
-	for _, name := range selected {
-		lines = append(lines, fmt.Sprintf("    %%%% grepple:symbol %s %s", identifiers[name], name))
-		lines = append(lines, fmt.Sprintf("    %%%% grepple:language %s %s", identifiers[name], symbols[name].Language))
-		if symbols[name].Language == "go" {
-			lines = append(lines, fmt.Sprintf("    %%%% grepple:package %s %s", identifiers[name], symbols[name].Package))
-		}
-	}
-	lines = append(lines, "")
-	return strings.TrimRight(strings.Join(append(lines, flowEdges(selected, identifiers, symbols)...), "\n"), "\n") + "\n"
-}
-
-func flowEdges(selected []string, identifiers map[string]string, symbols map[string]*Symbol) []string {
-	chosen, edges := stringSet(selected), map[string]bool{}
-	for _, name := range selected {
-		for _, target := range symbols[name].CallOrder {
-			if chosen[target] {
-				edges[fmt.Sprintf("    %s --> %s", identifiers[name], identifiers[target])] = true
-			}
-		}
-	}
-	return sortedKeys(edges)
 }
 
 // GenerateFlowchart deterministically generates and validates a call flowchart.

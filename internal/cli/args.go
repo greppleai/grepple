@@ -17,9 +17,14 @@ import (
 // in sync.
 const DefaultResultLimit = search.DefaultPageLimit
 
+// DefaultTextOutputBytes keeps human-readable search output below common agent
+// tool-result limits. JSON remains uncapped so it is never emitted partially.
+const DefaultTextOutputBytes = 40 * 1024
+
 type searchArgs struct {
 	Local            bool     `arg:"--local" help:"search only the local working directory (this is the default)"`
 	Remote           bool     `arg:"-R,--remote" help:"also query the remote shard/router (default: local only)"`
+	Recursive        bool     `arg:"-r,--recursive" help:"search directories recursively (compatibility alias; already the default)"`
 	Server           string   `arg:"-s,--server" placeholder:"URL" help:"remote shard/router URL (implies --remote)"`
 	LineNumber       bool     `arg:"-n,--line-number" help:"include line numbers (enabled by default)"`
 	LineOnly         bool     `arg:"--line-only" help:"print only matching lines"`
@@ -32,7 +37,7 @@ type searchArgs struct {
 	CountByRepo      bool     `arg:"--count-by-repo" help:"print aggregate file and matching-line counts per repository"`
 	JSON             bool     `arg:"--json" help:"print full JSON results"`
 	JSONMatches      bool     `arg:"--json-matches" help:"print compact JSON matches"`
-	Regex            bool     `arg:"--regex" help:"treat the pattern as a regular expression (default)"`
+	Regex            bool     `arg:"-E,--regex" help:"use JavaScript regular expressions (default; -E is a compatibility alias)"`
 	Fixed            bool     `arg:"-F,--fixed-strings" help:"treat the pattern as a literal string"`
 	IgnoreCase       bool     `arg:"-i,--ignore-case" help:"ignore case distinctions"`
 	InvertMatch      bool     `arg:"-v,--invert-match" help:"select lines that do not match"`
@@ -41,6 +46,7 @@ type searchArgs struct {
 	BeforeContext    int      `arg:"-B,--before-context" placeholder:"N" help:"print N lines before matches"`
 	MaxFiles         int      `arg:"--max-files" placeholder:"N" help:"limit matching files"`
 	MaxSegments      int      `arg:"--max-segments" placeholder:"N" help:"limit result segments"`
+	MaxOutputBytes   int      `arg:"--max-output-bytes" placeholder:"N" help:"cap human-readable output (default 40960; 0 = unlimited; JSON is uncapped)"`
 	Related          bool     `arg:"--related" help:"show project-local callees and callers for supported source languages (local search only)"`
 	FollowRelated    int      `arg:"--follow-related" placeholder:"N" help:"expand up to two unique callees per level (1-3; implies --related)"`
 	At               string   `arg:"--at" placeholder:"PATH:LINE" help:"retrieve the declaration containing a local source location"`
@@ -56,9 +62,13 @@ func (searchArgs) Description() string {
 }
 
 func parseSearchArgs(args []string) (*cliOptions, string, bool, error) {
-	// Limit defaults to DefaultResultLimit so broad queries don't dump every match;
-	// pass --limit 0 to opt back into unbounded results.
-	values := searchArgs{MaxSegments: search.DefaultMaxSegments, Limit: DefaultResultLimit}
+	// Limit and text output default to bounded values so broad queries do not
+	// overflow agent tool results. Pass zero explicitly to opt out of either cap.
+	values := searchArgs{
+		MaxSegments:    search.DefaultMaxSegments,
+		MaxOutputBytes: DefaultTextOutputBytes,
+		Limit:          DefaultResultLimit,
+	}
 	parser, err := arg.NewParser(arg.Config{Program: "grepple"}, &values)
 	if err != nil {
 		return nil, "", false, err
@@ -99,6 +109,7 @@ func parseSearchArgs(args []string) (*cliOptions, string, bool, error) {
 		FilesWithMatches: values.FilesWithMatches,
 		Outline:          values.Outline,
 		Depth:            values.Depth,
+		MaxOutputBytes:   values.MaxOutputBytes,
 	}, values.Server, remoteEnabled, nil
 }
 
@@ -201,6 +212,9 @@ func validateSearchBounds(values *searchArgs) error {
 	if values.MaxSegments < 1 {
 		return fmt.Errorf("--max-segments must be a positive number")
 	}
+	if values.MaxOutputBytes < 0 {
+		return fmt.Errorf("--max-output-bytes must not be negative")
+	}
 	return nil
 }
 
@@ -264,6 +278,10 @@ func jsonModeFor(values searchArgs) string {
 
 // Run executes a Grepple command.
 func Run(args []string) error {
+	if len(args) == 1 && (args[0] == "--version" || args[0] == "version") {
+		fmt.Fprintln(os.Stdout, versionString())
+		return nil
+	}
 	if len(args) > 0 {
 		switch args[0] {
 		case "get":

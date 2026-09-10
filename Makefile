@@ -3,6 +3,10 @@ BIN_DIR ?= bin
 LDFLAGS ?= -s -w -linkmode external -extldflags -static
 CGO_ENABLED ?= 1
 GO_TAGS ?= netgo,osusergo
+VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
+COMMIT ?= $(shell git rev-parse HEAD 2>/dev/null || echo unknown)
+BUILD_DATE ?= $(shell git show -s --format=%cI HEAD 2>/dev/null || echo unknown)
+VERSION_LDFLAGS := -X github.com/greppleai/grepple/internal/cli.Version=$(VERSION) -X github.com/greppleai/grepple/internal/cli.Commit=$(COMMIT) -X github.com/greppleai/grepple/internal/cli.BuildDate=$(BUILD_DATE)
 
 COMMANDS := grepple
 SOURCES := $(shell find cmd internal api extract parser search -type f -name '*.go') go.mod go.sum
@@ -20,7 +24,7 @@ $(BIN_DIR):
 	mkdir -p $@
 
 $(BIN_DIR)/grepple: $(SOURCES) | $(BIN_DIR)
-	CGO_ENABLED=$(CGO_ENABLED) go build -tags='$(GO_TAGS)' -trimpath -ldflags='$(LDFLAGS)' -o $@ ./cmd/grepple
+	CGO_ENABLED=$(CGO_ENABLED) go build -tags='$(GO_TAGS)' -trimpath -ldflags='$(LDFLAGS) $(VERSION_LDFLAGS)' -o $@ ./cmd/grepple
 
 test: schema-check
 	go test ./...

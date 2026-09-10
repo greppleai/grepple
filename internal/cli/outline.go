@@ -2,6 +2,7 @@ package cli
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"os"
 
@@ -23,14 +24,15 @@ func runOutline(options *cliOptions) error {
 		fmt.Fprintf(os.Stderr, "note: outlining the first %d files (default --limit); pass --limit N or --limit 0 for all\n", DefaultResultLimit)
 	}
 
-	outlines, printedAny, err := outlineFiles(options.Depth, paths, jsonMode)
-	if err != nil {
+	output := outputForOptions(options)
+	outlines, printedAny, err := outlineFiles(options.Depth, paths, jsonMode, output)
+	if err != nil && !errors.Is(err, errOutputTruncated) {
 		return err
 	}
 	if jsonMode {
-		return stdoutWriter().writeJSON(map[string]any{"files": outlines})
+		return output.writeJSON(map[string]any{"files": outlines})
 	}
-	if !printedAny {
+	if !printedAny && err == nil {
 		setExit(1)
 	}
 	return nil
@@ -38,7 +40,7 @@ func runOutline(options *cliOptions) error {
 
 // outlineFiles walks the matched files, collecting every outline in JSON mode
 // or printing non-empty ones (blank-line separated) in human mode.
-func outlineFiles(depth int, paths []string, jsonMode bool) ([]parser.FileOutline, bool, error) {
+func outlineFiles(depth int, paths []string, jsonMode bool, output *outputWriter) ([]parser.FileOutline, bool, error) {
 	outlines := make([]parser.FileOutline, 0, len(paths))
 	printedAny := false
 	for _, path := range paths {
@@ -54,11 +56,11 @@ func outlineFiles(depth int, paths []string, jsonMode bool) ([]parser.FileOutlin
 			continue // no definitions to show in human mode
 		}
 		if printedAny {
-			if err := stdoutWriter().writeString("\n"); err != nil {
+			if err := output.writeString("\n"); err != nil {
 				return nil, false, err
 			}
 		}
-		if err := stdoutWriter().writeString(RenderOutlineOrContent(outline, string(data))); err != nil {
+		if err := output.writeString(RenderOutlineOrContent(outline, string(data))); err != nil {
 			return nil, false, err
 		}
 		printedAny = true
