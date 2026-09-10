@@ -10,7 +10,7 @@ With `--anchors`, or when anchors are enabled by user settings, full source rows
 HASH│LINE│content
 ```
 
-`│` is U+2502. `LINE` is the same 1-indexed absolute file line used by `grepple --at PATH:LINE` and Pi Read. File headers identify paths, so `:` is never overloaded as an anchor delimiter.
+`│` is U+2502. `LINE` is the same 1-indexed absolute file line used by `grepple --at PATH:LINE` and common source-editing tools. File headers identify paths, so `:` is never overloaded as an anchor delimiter.
 
 `HASH` is the edit key; `LINE` is for orientation, cross-references, and recovery. Neither should be treated as durable after the file changes. Re-run Grepple or Read before a follow-up edit.
 
@@ -24,12 +24,11 @@ Commands are configured only in the user-owned `~/.grepple/settings.json`. Repos
 {
   "anchors": {
     "enabled_by_default": true,
-    "default_provider": "pi",
+    "default_provider": "editor",
     "providers": {
-      "pi": {
+      "editor": {
         "command": [
-          "/absolute/path/to/pi-anchor-provider.mjs",
-          "/absolute/path/to/pi/packages/coding-agent/dist/core/tools/hashline/hash.js"
+          "/absolute/path/to/editor-anchor-provider"
         ],
         "timeout_ms": 5000
       }
@@ -48,7 +47,7 @@ Disable the setting for one invocation, or select a different provider explicitl
 
 ```bash
 grepple --no-anchors --line-only -F 'Symbol' src/file.go
-grepple --anchor-provider pi --line-only -F 'Symbol' src/file.go
+grepple --anchor-provider editor --line-only -F 'Symbol' src/file.go
 ```
 
 The command is executed directly, never through a shell. Its executable must be an absolute path. Grepple applies a timeout, caps provider stdout and stderr, rejects malformed/duplicate/missing anchors, and validates source digests before rendering. A provider is trusted user code with the same filesystem permissions as Grepple.
@@ -96,10 +95,4 @@ The provider writes one JSON object to stdout:
 
 Every requested file and line must appear exactly once. The response must echo the request path and digest. Anchors are opaque non-empty strings up to 128 bytes and cannot contain CR, LF, or `│`.
 
-Grepple sends whole-file content because anchor algorithms may require file-wide collision handling, duplicate-line disambiguation, or persistent snapshots. A line-at-a-time script is insufficient for Pi: Pi computes three-character xxHash anchors across the entire file and persists them so its Edit tool can resolve the same keys.
-
-## Pi adapter
-
-[`scripts/pi-anchor-provider.mjs`](../scripts/pi-anchor-provider.mjs) is a reference adapter. It imports Pi's own `initHasher` and `lineHashes` exports rather than duplicating the algorithm. This preserves Pi's exact three-character alphabet, duplicate-line collision behavior, normalized line numbering, and persistent hash store.
-
-Point the adapter at the compiled `dist/core/tools/hashline/hash.js` belonging to the Pi installation that will perform the Edit. Keeping the algorithm adapter on the Pi side prevents Grepple from silently drifting when Pi changes its anchor implementation.
+Grepple sends whole-file content because anchor algorithms may require file-wide collision handling, duplicate-line disambiguation, or persistent snapshots. Keeping editor-specific algorithms in user-configured providers prevents Grepple from coupling its public distribution to one editing harness.
