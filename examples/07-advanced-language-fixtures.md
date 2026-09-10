@@ -78,6 +78,22 @@ grepple -F "await self._execute" advanced-files/worker.py
 
 The result attaches the comment and `@traced` decorator to the complete async `process` method rather than returning only the matching line.
 
+## Try Go call navigation
+
+The Go fixture contains an interface method and an injected function field. `--related` resolves both calls to their declarations without expanding their bodies. The same flags also navigate functions, methods, and constructors in the JavaScript/TypeScript, Python, Java, Kotlin, C#, C/C++, Rust, and Shell fixtures:
+
+```bash
+grepple --related -F "g.auditor.Record" advanced-files
+```
+
+```text
+Next points (code navigation):
+  → g.auditor.Record → Auditor.Record  advanced-files/gateway.go:12-12  call:32
+  → g.deliver → Gateway.deliver  advanced-files/gateway.go:18-18  call:35
+```
+
+The paths passed to the command define the declaration index. Search a directory or source glob when you want cross-file navigation; searching one file intentionally limits related points to that file. Use `grepple --at advanced-files/gateway.go:12-12` to retrieve a listed declaration exactly, or add `--follow-related 1` to inline up to two unique callees and show their own next points. Matching a function declaration also emits compact `←` caller locations.
+
 ## Run the fixtures as regression tests
 
 From the repository root:

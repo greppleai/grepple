@@ -41,6 +41,9 @@ type searchArgs struct {
 	BeforeContext    int      `arg:"-B,--before-context" placeholder:"N" help:"print N lines before matches"`
 	MaxFiles         int      `arg:"--max-files" placeholder:"N" help:"limit matching files"`
 	MaxSegments      int      `arg:"--max-segments" placeholder:"N" help:"limit result segments"`
+	Related          bool     `arg:"--related" help:"show project-local callees and callers for supported source languages (local search only)"`
+	FollowRelated    int      `arg:"--follow-related" placeholder:"N" help:"expand up to two unique callees per level (1-3; implies --related)"`
+	At               string   `arg:"--at" placeholder:"PATH:LINE" help:"retrieve the declaration containing a local source location"`
 	Skip             int      `arg:"--skip" placeholder:"N" help:"skip the first N ranked result files"`
 	Limit            int      `arg:"--limit" placeholder:"N" help:"return at most N ranked result files (default 20; 0 = all local; servers cap a page at 100 — page further with --skip)"`
 	Repos            []string `arg:"--repo,separate" placeholder:"PATTERN" help:"restrict remote repositories; repeatable"`
@@ -66,6 +69,9 @@ func parseSearchArgs(args []string) (*cliOptions, string, bool, error) {
 			return nil, "", false, nil
 		}
 		return nil, "", false, err
+	}
+	if values.FollowRelated > 0 {
+		values.Related = true
 	}
 	if err := validateSearchArgs(&values); err != nil {
 		return nil, "", false, err
@@ -96,12 +102,59 @@ func parseSearchArgs(args []string) (*cliOptions, string, bool, error) {
 	}, values.Server, remoteEnabled, nil
 }
 
+func usesCompactSearchOutput(values *searchArgs) bool {
+	return values.Files || values.FilesWithMatches || values.Outline || values.Count || values.CountByRepo || values.LineOnly || values.OnlyMatching || values.JSONMatches
+}
+
+// validateRelatedArgs keeps experimental source navigation scoped to modes
+// that render structural or full JSON results.
+func validateRelatedArgs(values *searchArgs) error {
+	if !values.Related {
+		return nil
+	}
+	if values.Remote || values.Server != "" {
+		return fmt.Errorf("--related currently supports local searches only")
+	}
+	compactOutput := usesCompactSearchOutput(values)
+	contextOutput := values.Context > 0 || values.BeforeContext > 0 || values.AfterContext > 0
+	if compactOutput || contextOutput {
+		return fmt.Errorf("--related requires default structural output or --json")
+	}
+	return nil
+}
+
+func validateAtArgs(values *searchArgs) error {
+	if values.At == "" {
+		return nil
+	}
+	if values.Remote || values.Server != "" {
+		return fmt.Errorf("--at currently supports local files only")
+	}
+	if values.Query != "" || len(values.Globs) > 0 {
+		return fmt.Errorf("--at cannot be combined with a search pattern or path")
+	}
+	contextOutput := values.Context > 0 || values.BeforeContext > 0 || values.AfterContext > 0
+	if usesCompactSearchOutput(values) || contextOutput {
+		return fmt.Errorf("--at requires default structural output or --json")
+	}
+	return nil
+}
+
 // validateSearchArgs rejects contradictory or out-of-range flag combinations
 // before any searching starts.
 func validateSearchArgs(values *searchArgs) error {
 	if err := validateSearchBounds(values); err != nil {
 		return err
 	}
+	if err := validateRelatedArgs(values); err != nil {
+		return err
+	}
+	if err := validateAtArgs(values); err != nil {
+		return err
+	}
+	return validateSearchCombinations(values)
+}
+func validateSearchCombinations(values *searchArgs) error {
 	if values.Regex && values.Fixed {
 		return fmt.Errorf("--regex and --fixed-strings cannot be used together")
 	}
@@ -125,6 +178,9 @@ func validateSearchArgs(values *searchArgs) error {
 	}
 	if values.Depth < 0 {
 		return fmt.Errorf("--depth must not be negative")
+	}
+	if values.FollowRelated < 0 || values.FollowRelated > 3 {
+		return fmt.Errorf("--follow-related must be between 1 and 3")
 	}
 	return nil
 }
@@ -163,6 +219,9 @@ func buildSearchParams(parser *arg.Parser, values *searchArgs) (search.Params, e
 		AfterContext:  values.Context,
 		MaxFiles:      values.MaxFiles,
 		MaxSegments:   values.MaxSegments,
+		Related:       values.Related,
+		FollowRelated: values.FollowRelated,
+		At:            values.At,
 		Skip:          values.Skip,
 		Limit:         values.Limit,
 		Repo:          values.Repos,
@@ -182,7 +241,7 @@ func buildSearchParams(parser *arg.Parser, values *searchArgs) (search.Params, e
 			params.Globs = append([]string{params.Query}, params.Globs...)
 			params.Query = ""
 		}
-	} else if params.Query == "" {
+	} else if params.Query == "" && params.At == "" {
 		parser.WriteUsage(os.Stderr)
 		return params, fmt.Errorf("search requires a pattern")
 	}
@@ -203,7 +262,7 @@ func jsonModeFor(values searchArgs) string {
 	return "off"
 }
 
-// Run executes the grepple search/get/tree command.
+// Run executes a Grepple command.
 func Run(args []string) error {
 	if len(args) > 0 {
 		switch args[0] {
@@ -219,6 +278,8 @@ func Run(args []string) error {
 			return runLogout(args[1:])
 		case "rules":
 			return runRules(args[1:])
+		case "extract":
+			return runExtract(args[1:])
 		}
 	}
 	return runSearch(args)

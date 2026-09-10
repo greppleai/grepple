@@ -3,6 +3,7 @@ package cli
 import (
 	"bytes"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/greppleai/grepple/api"
@@ -47,5 +48,32 @@ func TestLineRendererWritesToInjectedOutput(t *testing.T) {
 	}
 	if got, want := output.String(), "example.go:7:needle\n"; got != want {
 		t.Fatalf("expected %q, got %q", want, got)
+	}
+}
+
+func TestSegmentRendererPrintsRelatedGoPoints(t *testing.T) {
+	var output bytes.Buffer
+	renderer := segmentRenderer{output: newOutputWriter(&output)}
+	results := []api.FileResult{{
+		Path: "caller.go",
+		Related: []api.RelatedSymbol{
+			{
+				Name: "service.Load → (*Store).Load", Path: "store.go", Kind: "method", Direction: "callee",
+				Start: 12, End: 24, CallLine: 8, Confidence: "candidate",
+				Segments: []api.ResultSegment{{Kind: "lines", Start: 12, End: 13, Text: "func (s *Store) Load() {\n}"}},
+				Related:  []api.RelatedSymbol{{Name: "validate", Path: "validate.go", Direction: "callee", Start: 3, End: 7, CallLine: 13, Confidence: "unique"}},
+			},
+			{Name: "handle", Path: "handler.go", Kind: "func", Direction: "caller", Start: 30, End: 40, CallLine: 35, Confidence: "unique"},
+		},
+	}}
+
+	if err := renderer.Render(results); err != nil {
+		t.Fatal(err)
+	}
+	want := "  → service.Load → (*Store).Load  store.go:12-24  call:8 [candidate]\n"
+	caller := "  ← handle  handler.go:30-40  call:35\n"
+	preview := "    12   func (s *Store) Load() {\n    13   }\n    next:\n      → validate"
+	if !strings.Contains(output.String(), "Next points (code navigation):\n") || !strings.Contains(output.String(), want) || !strings.Contains(output.String(), caller) || !strings.Contains(output.String(), preview) {
+		t.Fatalf("related navigation missing from output:\n%s", output.String())
 	}
 }

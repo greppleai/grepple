@@ -1,8 +1,8 @@
 # Mermaid code schemas
 
-`mermaid-code` checks and generates class/structure diagrams and call flowcharts
-from Go, TypeScript, and TSX source parsed with tree-sitter. Malformed source is
-rejected with the source path and first tree-sitter error location.
+The main Grepple `extract` package checks and generates class/structure diagrams and call flowcharts
+from source parsed with Tree-sitter. The CLI currently exposes Go extraction; the shared checker
+retains existing schema compatibility. Malformed source reports its path and first syntax error location.
 
 ## Automatic Stop validation
 
@@ -24,21 +24,21 @@ source-analysis failures are returned as bounded Stop feedback.
 ## CLI
 
 ```bash
-hooks/bin/mermaid-code check class .grepple/model.class.mmd .
-hooks/bin/mermaid-code check structure .grepple/model.structure.mmd .
-hooks/bin/mermaid-code check flow .grepple/calls.flow.mmd .
+bin/grepple extract check structure .grepple/model.class.mmd .
+bin/grepple extract check structure .grepple/model.structure.mmd .
+bin/grepple extract check flow .grepple/calls.flow.mmd .
 
-hooks/bin/mermaid-code generate package internal/service --format bundle --output .grepple/service.package
-hooks/bin/mermaid-code check package .grepple/service.package
-hooks/bin/mermaid-code generate structure service.go Service --source . --output .grepple/service.structure.mmd
-hooks/bin/mermaid-code generate flow service.go Service.Run --source . --output .grepple/service.flow.mmd
+bin/grepple extract structure internal/service --bundle --output .grepple/service.package
+bin/grepple extract check package .grepple/service.package
+bin/grepple extract structure service.go --entry Service --source . --output .grepple/service.structure.mmd
+bin/grepple extract flow service.go --entry Service.Run --source . --output .grepple/service.flow.mmd
 ```
 
-`structure` is a CLI alias for `class`. Package generation also retains its legacy
-single-file form, `generate package <source-directory> [--output file]`. The bundle form
+`extract structure <source-directory>` generates the complete package diagram. Add `--entry`
+for a focused type diagram. The `--bundle` form
 always contains exactly `manifest.json`, `overview.mmd`, and `structure.mmd`. The manifest
 records the normalized package source directory relative to its `go.mod` root. Thus
-`check package <bundle-directory> [source-directory]` can safely self-locate its source when the
+`extract check package <bundle-directory> [source-directory]` can safely self-locate its source when the
 second argument is omitted; an explicit source must reproduce the canonical manifest. Checking
 regenerates and byte-compares all three canonical artifacts. Bundle writes stage all
 artifacts in a sibling temporary directory, then rename the complete directory into place; an

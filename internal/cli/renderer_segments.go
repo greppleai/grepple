@@ -46,6 +46,67 @@ func (renderer segmentRenderer) renderFile(result api.FileResult) error {
 		}
 		cursor = segment.End + 1
 	}
+	return renderer.renderRelated(result.Related)
+}
+func (renderer segmentRenderer) renderRelated(related []api.RelatedSymbol) error {
+	if len(related) == 0 {
+		return nil
+	}
+	if err := renderer.output.writeString("\nNext points (code navigation):\n"); err != nil {
+		return err
+	}
+	return renderer.renderRelatedPoints(related, 1)
+}
+
+func (renderer segmentRenderer) renderRelatedPoints(related []api.RelatedSymbol, depth int) error {
+	for _, point := range related {
+		if err := renderer.renderRelatedPoint(point, depth); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (renderer segmentRenderer) renderRelatedPoint(point api.RelatedSymbol, depth int) error {
+	indent := strings.Repeat("  ", depth)
+	arrow := "→"
+	if point.Direction == "caller" {
+		arrow = "←"
+	}
+	suffix := ""
+	if point.Confidence != "unique" {
+		suffix = " [candidate]"
+	}
+	line := fmt.Sprintf("%s%s %s  %s:%d-%d  call:%d%s\n", indent, arrow, point.Name, point.Path, point.Start, point.End, point.CallLine, suffix)
+	if err := renderer.output.writeString(line); err != nil {
+		return err
+	}
+	if len(point.Segments) == 0 {
+		return nil
+	}
+	if err := renderer.renderRelatedSegments(point.Segments, depth+1); err != nil {
+		return err
+	}
+	if len(point.Related) > 0 {
+		if err := renderer.output.writeString(strings.Repeat("  ", depth+1) + "next:\n"); err != nil {
+			return err
+		}
+		return renderer.renderRelatedPoints(point.Related, depth+2)
+	}
+	return nil
+}
+
+func (renderer segmentRenderer) renderRelatedSegments(segments []api.ResultSegment, depth int) error {
+	indent := strings.Repeat("  ", depth)
+	width := segmentLineWidth(segments)
+	for _, segment := range segments {
+		for index, line := range strings.Split(segment.Text, "\n") {
+			output := fmt.Sprintf("%s%*d   %s\n", indent, width, segment.Start+index, line)
+			if err := renderer.output.writeString(output); err != nil {
+				return err
+			}
+		}
+	}
 	return nil
 }
 

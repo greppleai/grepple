@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"grepple/hooks/internal/mermaidcode"
+	mermaidcode "github.com/greppleai/grepple/extract"
 )
 
 func TestAnalyzeMermaidSchemasClassAndFlowMismatches(t *testing.T) {

@@ -25,15 +25,34 @@ type Params struct {
 	BeforeContext int      `json:"beforeContext,omitempty"`
 	AfterContext  int      `json:"afterContext,omitempty"`
 	SkipSegments  bool     `json:"-"`
+	Related       bool     `json:"related,omitempty"`
+	FollowRelated int      `json:"followRelated,omitempty"`
+	At            string   `json:"-"`
 	Root          string   `json:"-"`
 	CountByRepo   bool     `json:"-"`
 }
 
+// RelatedPreview is an optionally expanded declaration and its next navigation
+// points. Content stays internal and is converted to wire segments at the boundary.
+type RelatedPreview struct {
+	Content    string
+	Start, End int
+	Related    []RelatedPoint
+}
+
+// RelatedPoint is an internal navigation hint between matched source declarations.
+type RelatedPoint struct {
+	Name, Path, File, Kind, Direction, Confidence string
+	Start, End, CallLine, Distance                int
+	Preview                                       *RelatedPreview
+}
+
 // FileMatch is the engine's internal per-file match: content, matching lines,
-// and parser-produced structural segments.
+// parser-produced structural segments, and optional related declarations.
 type FileMatch struct {
 	File, DisplayPath, Content, Language string
 	MatchLines                           map[int]bool
 	Segments                             []parser.Segment
+	Related                              []RelatedPoint
 	SegmentsReady                        bool
 }

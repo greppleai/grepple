@@ -5,9 +5,9 @@ CGO_ENABLED ?= 1
 GO_TAGS ?= netgo,osusergo
 
 COMMANDS := grepple
-SOURCES := $(shell find cmd internal api parser search -type f -name '*.go') go.mod go.sum
+SOURCES := $(shell find cmd internal api extract parser search -type f -name '*.go') go.mod go.sum
 SCHEMA_DIR := .grepple
-SCHEMA_CORE_PACKAGES := api parser search
+SCHEMA_CORE_PACKAGES := api extract parser search
 SCHEMA_PACKAGES := $(SCHEMA_CORE_PACKAGES) cli
 PACKAGE_BUNDLES := $(addsuffix .package,$(addprefix $(SCHEMA_DIR)/,$(SCHEMA_PACKAGES)))
 WORKSPACE_BUNDLES := $(SCHEMA_DIR)/project.workspace
@@ -42,14 +42,14 @@ hook-lint:
 hook-test:
 	$(MAKE) -C hooks test
 
-schema-generate: hook-build
-	@for package in $(SCHEMA_CORE_PACKAGES); do hooks/bin/mermaid-code generate package $$package --format bundle --output $(SCHEMA_DIR)/$$package.package || exit $$?; done
-	@hooks/bin/mermaid-code generate package internal/cli --format bundle --output $(SCHEMA_DIR)/cli.package
-	@hooks/bin/mermaid-code generate workspace . --output $(WORKSPACE_BUNDLES)
+schema-generate: $(BIN_DIR)/grepple
+	@for package in $(SCHEMA_CORE_PACKAGES); do $(BIN_DIR)/grepple extract structure $$package --bundle --output $(SCHEMA_DIR)/$$package.package || exit $$?; done
+	@$(BIN_DIR)/grepple extract structure internal/cli --bundle --output $(SCHEMA_DIR)/cli.package
+	@$(BIN_DIR)/grepple extract structure . --workspace --output $(WORKSPACE_BUNDLES)
 
-schema-check: hook-build
-	@for bundle in $(PACKAGE_BUNDLES); do hooks/bin/mermaid-code check package $$bundle || exit $$?; done
-	@for bundle in $(WORKSPACE_BUNDLES); do hooks/bin/mermaid-code check workspace $$bundle || exit $$?; done
+schema-check: $(BIN_DIR)/grepple
+	@for bundle in $(PACKAGE_BUNDLES); do $(BIN_DIR)/grepple extract check package $$bundle || exit $$?; done
+	@for bundle in $(WORKSPACE_BUNDLES); do $(BIN_DIR)/grepple extract check workspace $$bundle || exit $$?; done
 install: build
 	install -d $(DESTDIR)$(PREFIX)/bin
 	for command in $(COMMANDS); do \

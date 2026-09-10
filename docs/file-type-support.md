@@ -33,6 +33,8 @@ Everything else remains searchable through the plain-text fallback. JSON (`.json
 
 Structural source segments include comments attached immediately before a declaration, including JSDoc, Go documentation comments, Python comments, Rust doc comments, and equivalent forms in the other supported languages. One blank line is allowed between the comment and declaration. Attributes, annotations, and decorators between them are included; trailing comments attached to an earlier statement are not.
 
+Every tree-sitter-backed language in the table supports local syntax-based navigation. `--related` reports bounded outgoing callees and potential callers, `--at PATH:LINE` retrieves a callable declaration by location, and `--follow-related N` expands up to two unique callees per level under a shared 400-line budget. Names are resolved only among files of the same language and are intentionally labeled as unique-name or candidate resolution rather than a type-checked call graph. Go additionally recognizes interface methods and function-valued struct fields.
+
 ## Package boundaries
 
 - `api` — dependency-free Grepple HTTP contract types and shared wire constants; it contains no validation, transport, persistence, or application logic.
@@ -42,9 +44,11 @@ Structural source segments include comments attached immediately before a declar
 - `parser/language_ecmascript.go` — outline helpers shared by JavaScript and TypeScript.
 - `parser/tree_sitter.go` — parser pool and language-independent AST helpers.
 - `parser/segments.go` — shared AST and plain-text structural segment construction.
+- `parser/navigation.go` — language-neutral callable declaration and call extraction using each adapter's structural rules.
 - `parser/markdown.go` and `parser/structured.go` — specialized non-tree-sitter parsing.
 - `parser/outline.go` — public outline orchestration and shared symbol helpers.
 - `search/search_engine.go` — discovery, filtering, reading, and line matching; it passes only content, language, and hit lines to parser.
+- `search/related.go` — shared declaration indexing, syntax-based resolution, ranking, callers, and bounded recursive expansion for every navigable language.
 - `search/result.go` — construction of `api.FileResult` values from internal matches and parser segments.
 
 `api` must not import an application package. `parser` must not import `search` or `internal/cli`. Backend and CLI consumers import shared endpoint DTOs directly from `api`; search keeps resolved `Params`, validation, and internal file matches. The CLI may use parser directly for outlines.

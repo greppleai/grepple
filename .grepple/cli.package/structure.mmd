@@ -17,6 +17,7 @@ classDiagram
     }
     <<struct>> cliOptions
     %% grepple:file cliOptions internal/cli/model.go
+    note for cliOptions "defined: internal/cli/model.go:5-18; Count@internal/cli/model.go:10; CountByRepo@internal/cli/model.go:11; Depth@internal/cli/model.go:14; FilesWithMatches@internal/cli/model.go:12; JSON@internal/cli/model.go:9; LineOnly@internal/cli/model.go:7; OnlyMatching@internal/cli/model.go:8; Outline@internal/cli/model.go:13; Params@internal/cli/model.go:6; Stdin@internal/cli/model.go:17"
     class config {
         +RefreshExpiry: int64
         +RefreshToken: string
@@ -33,12 +34,14 @@ classDiagram
     %% grepple:struct-tag config Token "json:\"token,omitempty\""
     %% grepple:struct-tag config TokenExpiry "json:\"token_expiry,omitempty\""
     %% grepple:struct-tag config User "json:\"user,omitempty\""
+    note for config "defined: internal/cli/config.go:10-17; RefreshExpiry@internal/cli/config.go:15; RefreshToken@internal/cli/config.go:13; Server@internal/cli/config.go:11; Token@internal/cli/config.go:12; TokenExpiry@internal/cli/config.go:14; User@internal/cli/config.go:16"
     class contextRenderer {
         +Render([]api.FileResult): error
         -output: *outputWriter
     }
     <<struct>> contextRenderer
     %% grepple:file contextRenderer internal/cli/renderer_context.go
+    note for contextRenderer "defined: internal/cli/renderer_context.go:9-11; Render@internal/cli/renderer_context.go:13-23; output@internal/cli/renderer_context.go:10"
     class countRenderer {
         +Render([]api.FileResult): error
         -json: bool
@@ -46,6 +49,7 @@ classDiagram
     }
     <<struct>> countRenderer
     %% grepple:file countRenderer internal/cli/renderer_count.go
+    note for countRenderer "defined: internal/cli/renderer_count.go:9-12; Render@internal/cli/renderer_count.go:14-32; json@internal/cli/renderer_count.go:11; output@internal/cli/renderer_count.go:10"
     class deviceCodeResponse {
         +DeviceCode: string
         +Error: string
@@ -64,6 +68,7 @@ classDiagram
     %% grepple:struct-tag deviceCodeResponse Interval "json:\"interval\""
     %% grepple:struct-tag deviceCodeResponse UserCode "json:\"user_code\""
     %% grepple:struct-tag deviceCodeResponse VerificationURI "json:\"verification_uri\""
+    note for deviceCodeResponse "defined: internal/cli/login.go:21-29; DeviceCode@internal/cli/login.go:22; Error@internal/cli/login.go:27; ErrorDescription@internal/cli/login.go:28; ExpiresIn@internal/cli/login.go:25; Interval@internal/cli/login.go:26; UserCode@internal/cli/login.go:23; VerificationURI@internal/cli/login.go:24"
     class deviceTokenResponse {
         +AccessToken: string
         +Error: string
@@ -86,12 +91,38 @@ classDiagram
     %% grepple:struct-tag deviceTokenResponse RefreshTokenExpiresIn "json:\"refresh_token_expires_in\""
     %% grepple:struct-tag deviceTokenResponse Scope "json:\"scope\""
     %% grepple:struct-tag deviceTokenResponse TokenType "json:\"token_type\""
+    note for deviceTokenResponse "defined: internal/cli/login.go:31-41; AccessToken@internal/cli/login.go:32; Error@internal/cli/login.go:38; ErrorDescription@internal/cli/login.go:39; ExpiresIn@internal/cli/login.go:35; Interval@internal/cli/login.go:40; RefreshToken@internal/cli/login.go:36; RefreshTokenExpiresIn@internal/cli/login.go:37; Scope@internal/cli/login.go:34; TokenType@internal/cli/login.go:33"
     class errBrokenPipe {
         +Error(): string
         +Unwrap(): error
     }
     <<struct>> errBrokenPipe
     %% grepple:file errBrokenPipe internal/cli/output.go
+    note for errBrokenPipe "defined: internal/cli/output.go:12; Error@internal/cli/output.go:14; Unwrap@internal/cli/output.go:18"
+    class extractArgs {
+        +Description(): string
+        +At: string
+        +Bundle: bool
+        +Depth: int
+        +Entry: string
+        +MaxNodes: int
+        +Output: string
+        +Paths: []string
+        +Source: []string
+        +Workspace: bool
+    }
+    <<struct>> extractArgs
+    %% grepple:file extractArgs internal/cli/extract.go
+    %% grepple:struct-tag extractArgs At "arg:\"--at\" placeholder:\"PATH:LINE\" help:\"infer the entry declaration from a source location\""
+    %% grepple:struct-tag extractArgs Bundle "arg:\"--bundle\" help:\"structure: generate a canonical package bundle\""
+    %% grepple:struct-tag extractArgs Depth "arg:\"--depth\" default:\"3\" placeholder:\"N\" help:\"dependency or call depth\""
+    %% grepple:struct-tag extractArgs Entry "arg:\"--entry\" placeholder:\"SYMBOL\" help:\"entry type, function, or method\""
+    %% grepple:struct-tag extractArgs MaxNodes "arg:\"--max-nodes\" default:\"200\" placeholder:\"N\" help:\"maximum diagram nodes\""
+    %% grepple:struct-tag extractArgs Output "arg:\"--output\" placeholder:\"PATH\" help:\"write output instead of stdout\""
+    %% grepple:struct-tag extractArgs Paths "arg:\"positional\" placeholder:\"PATH\" help:\"source file or directory\""
+    %% grepple:struct-tag extractArgs Source "arg:\"--source,separate\" placeholder:\"PATH\" help:\"source root; repeatable\""
+    %% grepple:struct-tag extractArgs Workspace "arg:\"--workspace\" help:\"structure: generate a canonical workspace bundle\""
+    note for extractArgs "defined: internal/cli/extract.go:16-26; Description@internal/cli/extract.go:28-30; At@internal/cli/extract.go:18; Bundle@internal/cli/extract.go:23; Depth@internal/cli/extract.go:20; Entry@internal/cli/extract.go:17; MaxNodes@internal/cli/extract.go:21; Output@internal/cli/extract.go:22; Paths@internal/cli/extract.go:25; Source@internal/cli/extract.go:19; Workspace@internal/cli/extract.go:24"
     class filesRenderer {
         +Render([]api.FileResult): error
         -json: bool
@@ -99,6 +130,7 @@ classDiagram
     }
     <<struct>> filesRenderer
     %% grepple:file filesRenderer internal/cli/renderer_files.go
+    note for filesRenderer "defined: internal/cli/renderer_files.go:5-8; Render@internal/cli/renderer_files.go:10-20; json@internal/cli/renderer_files.go:7; output@internal/cli/renderer_files.go:6"
     class getArgs {
         +Description(): string
         +Depth: int
@@ -118,6 +150,7 @@ classDiagram
     %% grepple:struct-tag getArgs Path "arg:\"positional,required\" placeholder:\"PATH\""
     %% grepple:struct-tag getArgs Repo "arg:\"positional,required\" placeholder:\"OWNER/REPOSITORY\""
     %% grepple:struct-tag getArgs Server "arg:\"-s,--server\" placeholder:\"URL\" help:\"remote shard/router URL\""
+    note for getArgs "defined: internal/cli/get.go:17-25; Description@internal/cli/get.go:27-29; Depth@internal/cli/get.go:22; JSON@internal/cli/get.go:20; Lines@internal/cli/get.go:19; Outline@internal/cli/get.go:21; Path@internal/cli/get.go:24; Repo@internal/cli/get.go:23; Server@internal/cli/get.go:18"
     class jsonResultRenderer {
         +Render([]api.FileResult): error
         -matchesOnly: bool
@@ -125,6 +158,7 @@ classDiagram
     }
     <<struct>> jsonResultRenderer
     %% grepple:file jsonResultRenderer internal/cli/renderer_json.go
+    note for jsonResultRenderer "defined: internal/cli/renderer_json.go:5-8; Render@internal/cli/renderer_json.go:10-15; matchesOnly@internal/cli/renderer_json.go:7; output@internal/cli/renderer_json.go:6"
     class lineRenderer {
         +Render([]api.FileResult): error
         -maxLines: int
@@ -132,6 +166,7 @@ classDiagram
     }
     <<struct>> lineRenderer
     %% grepple:file lineRenderer internal/cli/renderer_matches.go
+    note for lineRenderer "defined: internal/cli/renderer_matches.go:10-13; Render@internal/cli/renderer_matches.go:15-25; maxLines@internal/cli/renderer_matches.go:12; output@internal/cli/renderer_matches.go:11"
     class loginConfig {
         +ClientID: string
         +Scopes: string
@@ -140,6 +175,7 @@ classDiagram
     %% grepple:file loginConfig internal/cli/login.go
     %% grepple:struct-tag loginConfig ClientID "json:\"clientId\""
     %% grepple:struct-tag loginConfig Scopes "json:\"scopes\""
+    note for loginConfig "defined: internal/cli/login.go:177-180; ClientID@internal/cli/login.go:178; Scopes@internal/cli/login.go:179"
     class onlyMatchingRenderer {
         +Render([]api.FileResult): error
         -matcher: *regexp.Regexp
@@ -148,6 +184,7 @@ classDiagram
     }
     <<struct>> onlyMatchingRenderer
     %% grepple:file onlyMatchingRenderer internal/cli/renderer_matches.go
+    note for onlyMatchingRenderer "defined: internal/cli/renderer_matches.go:27-31; Render@internal/cli/renderer_matches.go:33-48; matcher@internal/cli/renderer_matches.go:30; maxLines@internal/cli/renderer_matches.go:29; output@internal/cli/renderer_matches.go:28"
     class outputWriter {
         -writeJSON(any): error
         -writeString(string): error
@@ -155,6 +192,7 @@ classDiagram
     }
     <<struct>> outputWriter
     %% grepple:file outputWriter internal/cli/output.go
+    note for outputWriter "defined: internal/cli/output.go:20-22; writeJSON@internal/cli/output.go:40-49; writeString@internal/cli/output.go:32-38; writer@internal/cli/output.go:21"
     class repoCountRenderer {
         +Render([]api.RepoCount): error
         -renderJSON([]api.RepoCount, int, int): error
@@ -164,6 +202,7 @@ classDiagram
     }
     <<struct>> repoCountRenderer
     %% grepple:file repoCountRenderer internal/cli/renderer_repo_count.go
+    note for repoCountRenderer "defined: internal/cli/renderer_repo_count.go:10-13; Render@internal/cli/renderer_repo_count.go:15-26; renderJSON@internal/cli/renderer_repo_count.go:28-38; renderText@internal/cli/renderer_repo_count.go:40-55; json@internal/cli/renderer_repo_count.go:12; output@internal/cli/renderer_repo_count.go:11"
     class reposArgs {
         +Description(): string
         +Filter: string
@@ -175,11 +214,13 @@ classDiagram
     %% grepple:struct-tag reposArgs Filter "arg:\"positional\" placeholder:\"SUBSTRING\" help:\"only repos whose OWNER/REPO contains this (case-insensitive)\""
     %% grepple:struct-tag reposArgs JSON "arg:\"--json\" help:\"print raw JSON\""
     %% grepple:struct-tag reposArgs Server "arg:\"-s,--server\" placeholder:\"URL\" help:\"remote shard/router URL\""
+    note for reposArgs "defined: internal/cli/repos.go:16-20; Description@internal/cli/repos.go:22-24; Filter@internal/cli/repos.go:19; JSON@internal/cli/repos.go:18; Server@internal/cli/repos.go:17"
     class resultRenderer {
         +Render([]api.FileResult): error
     }
     <<interface>> resultRenderer
     %% grepple:file resultRenderer internal/cli/renderer.go
+    note for resultRenderer "defined: internal/cli/renderer.go:5-7; Render@internal/cli/renderer.go:6"
     class rulesAddArgs {
         +Description(): string
         +ExcludeRepo: []string
@@ -209,9 +250,11 @@ classDiagram
     %% grepple:struct-tag rulesAddArgs Regex "arg:\"--regex\" help:\"treat PATTERN as a regular expression\""
     %% grepple:struct-tag rulesAddArgs Repo "arg:\"--repo,separate\" placeholder:\"PATTERN\" help:\"limit to matching repos\""
     %% grepple:struct-tag rulesAddArgs Server "arg:\"-s,--server\" placeholder:\"URL\" help:\"remote router URL\""
+    note for rulesAddArgs "defined: internal/cli/rules.go:58-71; Description@internal/cli/rules.go:73-75; ExcludeRepo@internal/cli/rules.go:67; Files@internal/cli/rules.go:63; Globs@internal/cli/rules.go:70; ID@internal/cli/rules.go:60; IgnoreCase@internal/cli/rules.go:65; JSON@internal/cli/rules.go:68; Mode@internal/cli/rules.go:62; Name@internal/cli/rules.go:61; Pattern@internal/cli/rules.go:69; Regex@internal/cli/rules.go:64; Repo@internal/cli/rules.go:66; Server@internal/cli/rules.go:59"
     class searchArgs {
         +Description(): string
         +AfterContext: int
+        +At: string
         +BeforeContext: int
         +Context: int
         +Count: bool
@@ -220,6 +263,7 @@ classDiagram
         +Files: bool
         +FilesWithMatches: bool
         +Fixed: bool
+        +FollowRelated: int
         +Globs: []string
         +IgnoreCase: bool
         +InvertMatch: bool
@@ -235,6 +279,7 @@ classDiagram
         +Outline: bool
         +Query: string
         +Regex: bool
+        +Related: bool
         +Remote: bool
         +Repos: []string
         +Server: string
@@ -243,6 +288,7 @@ classDiagram
     <<struct>> searchArgs
     %% grepple:file searchArgs internal/cli/args.go
     %% grepple:struct-tag searchArgs AfterContext "arg:\"-A,--after-context\" placeholder:\"N\" help:\"print N lines after matches\""
+    %% grepple:struct-tag searchArgs At "arg:\"--at\" placeholder:\"PATH:LINE\" help:\"retrieve the declaration containing a local source location\""
     %% grepple:struct-tag searchArgs BeforeContext "arg:\"-B,--before-context\" placeholder:\"N\" help:\"print N lines before matches\""
     %% grepple:struct-tag searchArgs Context "arg:\"-C,--context\" placeholder:\"N\" help:\"print N lines before and after matches\""
     %% grepple:struct-tag searchArgs Count "arg:\"-c,--count\" help:\"print matching-line counts per file\""
@@ -251,6 +297,7 @@ classDiagram
     %% grepple:struct-tag searchArgs Files "arg:\"-l,--files\" help:\"recursively list files under optional PATHs; glob PATHs filter the listing\""
     %% grepple:struct-tag searchArgs FilesWithMatches "arg:\"--files-with-matches\" help:\"list paths whose contents match; accepts multiple file, directory, or glob PATHs\""
     %% grepple:struct-tag searchArgs Fixed "arg:\"-F,--fixed-strings\" help:\"treat the pattern as a literal string\""
+    %% grepple:struct-tag searchArgs FollowRelated "arg:\"--follow-related\" placeholder:\"N\" help:\"expand up to two unique callees per level (1-3; implies --related)\""
     %% grepple:struct-tag searchArgs Globs "arg:\"positional\" placeholder:\"PATH\" help:\"file, directory, or glob to search; repeat for multiple roots\""
     %% grepple:struct-tag searchArgs IgnoreCase "arg:\"-i,--ignore-case\" help:\"ignore case distinctions\""
     %% grepple:struct-tag searchArgs InvertMatch "arg:\"-v,--invert-match\" help:\"select lines that do not match\""
@@ -266,18 +313,25 @@ classDiagram
     %% grepple:struct-tag searchArgs Outline "arg:\"-O,--outline\" help:\"print each file's structural outline (classes, funcs, interfaces) instead of searching\""
     %% grepple:struct-tag searchArgs Query "arg:\"positional\" placeholder:\"PATTERN\""
     %% grepple:struct-tag searchArgs Regex "arg:\"--regex\" help:\"treat the pattern as a regular expression (default)\""
+    %% grepple:struct-tag searchArgs Related "arg:\"--related\" help:\"show project-local callees and callers for supported source languages (local search only)\""
     %% grepple:struct-tag searchArgs Remote "arg:\"-R,--remote\" help:\"also query the remote shard/router (default: local only)\""
     %% grepple:struct-tag searchArgs Repos "arg:\"--repo,separate\" placeholder:\"PATTERN\" help:\"restrict remote repositories; repeatable\""
     %% grepple:struct-tag searchArgs Server "arg:\"-s,--server\" placeholder:\"URL\" help:\"remote shard/router URL (implies --remote)\""
     %% grepple:struct-tag searchArgs Skip "arg:\"--skip\" placeholder:\"N\" help:\"skip the first N ranked result files\""
+    note for searchArgs "defined: internal/cli/args.go:20-52; Description@internal/cli/args.go:54-56; AfterContext@internal/cli/args.go:40; At@internal/cli/args.go:46; BeforeContext@internal/cli/args.go:41; Context@internal/cli/args.go:39; Count@internal/cli/args.go:31; CountByRepo@internal/cli/args.go:32; Depth@internal/cli/args.go:30; Files@internal/cli/args.go:27; FilesWithMatches@internal/cli/args.go:28; Fixed@internal/cli/args.go:36; FollowRelated@internal/cli/args.go:45; Globs@internal/cli/args.go:51; IgnoreCase@internal/cli/args.go:37; InvertMatch@internal/cli/args.go:38; JSON@internal/cli/args.go:33; JSONMatches@internal/cli/args.go:34; Limit@internal/cli/args.go:48; LineNumber@internal/cli/args.go:24; LineOnly@internal/cli/args.go:25; Local@internal/cli/args.go:21; MaxFiles@internal/cli/args.go:42; MaxSegments@internal/cli/args.go:43; OnlyMatching@internal/cli/args.go:26; Outline@internal/cli/args.go:29; Query@internal/cli/args.go:50; Regex@internal/cli/args.go:35; Related@internal/cli/args.go:44; Remote@internal/cli/args.go:22; Repos@internal/cli/args.go:49; Server@internal/cli/args.go:23; Skip@internal/cli/args.go:47"
     class segmentRenderer {
         +Render([]api.FileResult): error
         -renderFile(api.FileResult): error
+        -renderRelated([]api.RelatedSymbol): error
+        -renderRelatedPoint(api.RelatedSymbol, int): error
+        -renderRelatedPoints([]api.RelatedSymbol, int): error
+        -renderRelatedSegments([]api.ResultSegment, int): error
         -renderSegment(api.ResultSegment, int): error
         -output: *outputWriter
     }
     <<struct>> segmentRenderer
     %% grepple:file segmentRenderer internal/cli/renderer_segments.go
+    note for segmentRenderer "defined: internal/cli/renderer_segments.go:11-13; Render@internal/cli/renderer_segments.go:15-27; renderFile@internal/cli/renderer_segments.go:29-50; renderRelated@internal/cli/renderer_segments.go:51-59; renderRelatedPoint@internal/cli/renderer_segments.go:70-97; renderRelatedPoints@internal/cli/renderer_segments.go:61-68; renderRelatedSegments@internal/cli/renderer_segments.go:99-111; renderSegment@internal/cli/renderer_segments.go:113-123; output@internal/cli/renderer_segments.go:12"
     class treeArgs {
         +Description(): string
         +Depth: int
@@ -293,6 +347,7 @@ classDiagram
     %% grepple:struct-tag treeArgs Path "arg:\"positional\" placeholder:\"PATH\""
     %% grepple:struct-tag treeArgs Repo "arg:\"positional,required\" placeholder:\"OWNER/REPOSITORY\""
     %% grepple:struct-tag treeArgs Server "arg:\"-s,--server\" placeholder:\"URL\" help:\"remote shard/router URL\""
+    note for treeArgs "defined: internal/cli/tree.go:18-24; Description@internal/cli/tree.go:26-28; Depth@internal/cli/tree.go:20; JSON@internal/cli/tree.go:21; Path@internal/cli/tree.go:23; Repo@internal/cli/tree.go:22; Server@internal/cli/tree.go:19"
     class treeNode {
         -children: map[string]*treeNode
         -dir: bool
@@ -300,21 +355,25 @@ classDiagram
     }
     <<struct>> treeNode
     %% grepple:file treeNode internal/cli/tree.go
+    note for treeNode "defined: internal/cli/tree.go:30-34; children@internal/cli/tree.go:33; dir@internal/cli/tree.go:32; name@internal/cli/tree.go:31"
     class RenderOutline {
         +RenderOutline(parser.FileOutline): string
     }
     <<function>> RenderOutline
     %% grepple:file RenderOutline internal/cli/outline_renderer.go
+    note for RenderOutline "defined: internal/cli/outline_renderer.go:11-19"
     class RenderOutlineOrContent {
         +RenderOutlineOrContent(parser.FileOutline, string): string
     }
     <<function>> RenderOutlineOrContent
     %% grepple:file RenderOutlineOrContent internal/cli/outline_renderer.go
+    note for RenderOutlineOrContent "defined: internal/cli/outline_renderer.go:24-34"
     class Run {
         +Run([]string): error
     }
     <<function>> Run
     %% grepple:file Run internal/cli/args.go
+    note for Run "defined: internal/cli/args.go:266-286"
     contextRenderer "1" --> "1" outputWriter : field output
     resultRenderer <|.. contextRenderer : implements
     countRenderer "1" --> "1" outputWriter : field output

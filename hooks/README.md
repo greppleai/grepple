@@ -1,15 +1,14 @@
 # Grepple project hooks
 
-This directory is a standalone Go module containing the project-local Pi hooks.
-It intentionally does not import the main `grepple` module, so the hook runtime
-can be replaced or removed without restructuring application packages.
+This directory is a small Go module containing project-local Pi hook orchestration.
+Mermaid analysis is imported from the main module's `extract` package so CLI generation,
+canonical checks, and automatic Stop validation share one implementation.
 
 ## Layout
 
 - `cmd/pi-hook` — command-hook protocol entry point.
-- `cmd/mermaid-code` — standalone Mermaid structure and flow checker/generator.
-- `internal/pihooks` — grep guard, lint orchestration, feedback, and analyzers.
-- `internal/mermaidcode` — tree-sitter Go/TypeScript schema analysis.
+- `internal/pihooks` — grep guard, lint orchestration, feedback, schema discovery, and adapters.
+- `../extract` — shared Tree-sitter Mermaid generation and validation engine.
 - `guides` — remediation text returned by the Stop hook.
 
 Pi invokes `make -C hooks run-…` from `.pi/settings.json`. In Go modules the
@@ -34,21 +33,20 @@ as bounded `mermaid-code` diagnostics at diagram lines or bundle manifests.
 ## Mermaid CLI
 
 ```bash
-make -C hooks build
+make build
 
-hooks/bin/mermaid-code check structure .grepple/service.structure.mmd .
-hooks/bin/mermaid-code check flow .grepple/service.flow.mmd .
-hooks/bin/mermaid-code generate package internal/service --output .grepple/service.package.mmd
-hooks/bin/mermaid-code generate package internal/service --format bundle --output .grepple/service.package
-hooks/bin/mermaid-code check package .grepple/service.package
-hooks/bin/mermaid-code generate workspace . --output .grepple/project.workspace
-hooks/bin/mermaid-code check workspace .grepple/project.workspace
-hooks/bin/mermaid-code generate class internal/service/service.go Service --source . --output .grepple/service.class.mmd
-hooks/bin/mermaid-code generate flow internal/service/service.go Service.Run --source . --output .grepple/service.flow.mmd
+bin/grepple extract check structure .grepple/service.structure.mmd .
+bin/grepple extract check flow .grepple/service.flow.mmd .
+bin/grepple extract structure internal/service --bundle --output .grepple/service.package
+bin/grepple extract check package .grepple/service.package
+bin/grepple extract structure . --workspace --output .grepple/project.workspace
+bin/grepple extract check workspace .grepple/project.workspace
+bin/grepple extract structure internal/service --entry Service --source . --output .grepple/service.class.mmd
+bin/grepple extract flow internal/service --entry Service.Run --source . --output .grepple/service.flow.mmd
 ```
 
-`generate package <source-directory> [--output file]` retains the legacy one-file output.
-Adding `--format bundle --output <bundle-directory>` writes a canonical machine-generated
+`extract structure <source-directory>` writes the package diagram to stdout or `--output`.
+Adding `--bundle --output <bundle-directory>` writes a canonical machine-generated
 package bundle containing exactly `manifest.json`, `overview.mmd`, and `structure.mmd`.
 The manifest is stable JSON for one syntax-derived semantic IR. Its package identity includes
 a normalized `sourceDirectory`, mechanically relative to the selected package's `go.mod` root.
@@ -64,7 +62,7 @@ other declarations remain compact. Overview relations sharing from/to/kind/cardi
 are collapsed (up to three exact evidence labels, then deterministic per-category counts),
 while the manifest and structure retain every exact relation. A mechanically extracted
 first sentence from a conventional Go `Package name ...` comment is included when present.
-`check package <bundle-directory> [source-directory]` regenerates and validates the bundle,
+`extract check package <bundle-directory> [source-directory]` regenerates and validates the bundle,
 using the manifest's strict project-relative source metadata when source is omitted. An explicit
 source remains supported and only succeeds when it produces the same canonical artifacts. It
 rejects missing or extra files and byte-compares every artifact. Bundle generation requires
@@ -72,7 +70,7 @@ and rename/rollback. It refuses unexpected existing entries instead of deleting 
 Package selection rejects empty, mixed-package, non-directory, module-less, and
 TypeScript-only selectors.
 
-`generate workspace <root> --output <bundle-directory>` writes exactly `manifest.json` and
+`extract structure <root> --workspace --output <bundle-directory>` writes exactly `manifest.json` and
 `overview.mmd`. It recursively discovers root and nested `go.mod` files, but scans each module
 without crossing into a nested module, and inventories directories containing direct non-test
 Go files. The stable manifest records module/import paths and root-relative directories, exact
@@ -85,7 +83,7 @@ directories/symlinks. Its digest covers the semantic model with only the digest 
 The deterministic `flowchart LR` overview groups packages by module, marks `package main`
 entrypoints mechanically, renders local edges, collapses each package-to-external-module edge,
 and attaches at most five exact route facts plus a machine count for any remainder. It contains
-no inferred descriptions. `check workspace <bundle-directory> [root]` strictly regenerates and
+no inferred descriptions. `extract check workspace <bundle-directory> [root]` strictly regenerates and
 byte-compares both files, rejecting missing/extra entries. When root is omitted it uses strict
 root metadata anchored to the containing Go module. Workspace writes use directory-level
 temporary generation and rename/rollback and refuse symlink outputs or unknown existing files.

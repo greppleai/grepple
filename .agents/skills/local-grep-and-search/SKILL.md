@@ -1,156 +1,72 @@
 ---
 name: local-grep-and-search
-description: Use for any local text/content search, file listing by name/glob, or match counting in the current working directory — instead of grep, rg/ripgrep, ag, or find-for-content. Do not fall back to those tools. For repos you have not cloned or any remote/cross-repo target, use remote-grep-and-search.
+description: Use for local content search, filename listing, match counting, structural orientation, exact declaration retrieval, and code navigation—instead of grep, rg/ripgrep, ag, or find-for-content. Do not fall back to those tools. Use remote-grep-and-search when the target is not in the current checkout.
 ---
 
-# grepple — local search
+# Local Grepple
 
-`grepple` is a structure-aware grep for agents. By default it searches the **current
-working directory** (it stays local unless you opt into remote — see the
-`remote-grep-and-search` skill). It works on **any text file** — code, Markdown,
-config, prose, logs — searching line-by-line, and adds tree-sitter structural
-context so a match is shown in context:
+Use Grepple to minimize retrieval turns and tokens, not merely as a grep replacement. Results are deterministic path order, not relevance-ranked; narrow deliberately instead of trusting the first hit.
 
-- For supported **code** languages the enclosing function/class is shown, unrelated
-  lines collapsed (`// … N lines collapsed …`).
-- For **Markdown** the enclosing heading chain (`# Doc › ## Section › ### Sub`)
-  precedes the matched line.
-- Other text files fall back to plain matching lines.
+## Choose the cheapest useful shape
 
-Results are in **deterministic path order** (`dir/file`) — there is no relevance
-ranking, so you refine by narrowing (globs, `--repo`, a tighter pattern), not by
-trusting a score. `.gitignore` entries and `.git` directories are excluded.
+- **Unknown scope:** start with `--count` to learn where a term concentrates without retrieving bodies.
+- **Need candidate paths:** use `--files-with-matches`; use `--files` only when matching filenames/globs.
+- **Need file structure:** use `--outline` before reading a large or unfamiliar file.
+- **Need implementation context:** default search returns enclosing structural segments and collapses unrelated code.
+- **Need only evidence lines:** use `--line-only` or bounded context; this avoids structural parsing and saves tokens.
+- **Know a navigation location:** use `--at PATH:LINE` (also accepts `PATH:START-END`) to retrieve the exact callable declaration instead of reading the file broadly.
+- **Need the next code hop:** add `--related` to expose bounded callees and potential callers. This often avoids a second symbol search.
+- **Need a short call chain:** use `--follow-related 1` first. Increase to 2–3 only when the extra inline context is worth the tokens.
+- **Assessing a refactor, package split, ownership boundary, or impact:** do not stop at outlines and occurrence searches. Run `--related` on entry points and apparently shared helpers across the proposed scope; use `--follow-related 1` when one bounded inline hop can replace separate declaration searches and file reads.
 
-## Token-efficient narrowing (recommended workflow)
+## Why navigation saves tool-call cycles
 
-Prefer cheap, bounded probes before dumping file bodies — it keeps output (and token
-use) small and lets you zero in fast:
+A normal text-search investigation often becomes a loop: locate an identifier, read its declaration, search each newly discovered call, then read those declarations. `--related` combines the first several hops into one bounded result: the enclosing declaration plus likely callers and callees. `--follow-related` can inline the next declarations as well. This reduces round trips and preserves the dependency neighborhood in one model-visible response.
 
-1. **Locate** — `grepple PATTERN --count` returns a per-directory/repo tally
-   (`name<TAB>N files<TAB>N matches`, hottest first) over the *complete* match set,
-   with a tiny fixed-size payload. Use it to see *where* a term concentrates.
-2. **List** — `grepple PATTERN --files-with-matches` lists matching file paths
-   (`grep -l`) with no bodies.
-3. **Read** — pull only what you need with a bounded search:
-   `grepple PATTERN --limit 5`, or open the file at a known line.
+Navigation also improves architectural understanding. Occurrence searches show where names appear; callers and callees show how responsibilities connect. For package extraction, command decomposition, shared-helper ownership, or change-impact analysis, those edges expose hidden coupling and challenge boundaries that look clean from filenames or outlines alone.
 
-Rules of thumb:
-- Default `--limit` is **20**; broad content searches are capped (with a stderr hint).
-  Pass `--limit 0` only when you truly need everything (remote pages are capped at
-  100 regardless — see the remote skill).
-- Prefer `--count` / `--files-with-matches` / `--line-only` over the default segment
-  output when you don't need surrounding code — they skip tree-sitter parsing and
-  return far fewer tokens.
+Use navigation deliberately rather than everywhere:
 
-## Search flags
+- Start with an outline when you only need inventory.
+- Use a literal search when you only need occurrences.
+- Use `--related` whenever the question involves control flow, coupling, ownership, impact, or the next code hop.
+- For an architectural recommendation, inspect both feature entry points and shared-looking helpers before concluding that a boundary is viable.
+- Prefer one scoped `--follow-related 1` call over a sequence of search → read → search calls when its bounded expansion answers the same question.
 
-| Flag | Meaning |
-| --- | --- |
-| `--regex` | Treat PATTERN as a regex (this is the **default**) |
-| `-F`, `--fixed-strings` | Treat PATTERN as a literal string (substring match) |
-| `-i`, `--ignore-case` | Case-insensitive matching |
-| `-n`, `--line-number` | Include line numbers (on by default) |
-| `--line-only` | Print only the matching lines |
-| `-C N`, `--context N` | Print N lines of context around matches |
-| `-l`, `--files` | List files whose **path** matches the glob (filename search, **not** contents) |
-| `--files-with-matches` | List paths of files whose **contents** match, like `grep -l` |
-| `-c`, `--count` | Per-directory/repo match tally (`name\tfiles\tmatches` + total), compact — best first probe. Composes with a glob, e.g. `grepple -F "react" "**/package.json" --count` |
-| `--json` | Full JSON results; `--json-matches` for compact JSON |
-| `--max-files N`, `--max-segments N` | Limit matching files / result segments per file |
-| `--skip N` | Skip the first N result files (deterministic path order; default `0`) |
-| `--limit N` | Return at most N result files (**default `20`**; `--limit 0` = all local results; a remote server caps each page at **100**) |
-| `-O`, `--outline` | Print each file's structural outline instead of searching (see below) |
+## Why navigation is opt-in
 
-> `grepple` is local-first: it only contacts a server if you pass `--remote`/`--server`
-> (see the `remote-grep-and-search` skill). `--local` forces local-only (the default).
+`--related` and `--follow-related` parse the selected source set to build a project-local declaration index. They are valuable for impact analysis and unfamiliar control flow, but wasteful for simple text checks.
 
-## Glob / path rules
+Navigation is syntax-based, not type-checked:
 
-- Globs use Go `filepath.Glob` syntax, extended with `**` to cross directories
-  (e.g. `**/*.yaml`, `charts/**/values.yaml`).
-- Omit globs to search recursively from the CWD; matching a directory searches it recursively.
-- `-l/--files` is a **filename** search: the positional is a **glob** matched against the whole path, and `*` does **not** cross `/` — use `**/*ping*` (not `ping` or `*ping*`). To list files **containing** text, use `--files-with-matches` instead.
-- With `-l`/`-O` you can combine a filtering glob with a **directory** to scope it: `grepple -l "**/*.tsx" testdata` lists `.tsx` files **under** `testdata` (a bare directory acts as a scope root; a glob acts as a filter). A directory on its own still lists everything beneath it.
-- `--regex` and `--fixed-strings` are mutually exclusive.
+- `unique` means one same-language terminal-name declaration was found.
+- `[candidate]` means ambiguity; verify rather than treating it as an exact call graph.
+- `→` is a callee and `←` is a potential caller.
+- Selected paths/globs define the navigation universe; include the relevant directory for cross-file edges.
+- TypeScript and TSX share a namespace. Other languages are isolated.
+- Expansion is bounded (two unique callees per level, depth ≤3, cycle protection, shared line budget).
 
-## Example calls
+Navigation works locally in default structural output or full `--json` for Go, JavaScript/JSX, TypeScript/TSX, Python, Java, Kotlin, C#, C, C++, Rust, and Shell. It does not benefit Markdown, config, logs, or plain text.
+
+## Narrowing rules
+
+- Default `--limit` is 20. Keep it bounded; use `--limit 0` only when completeness is necessary.
+- Prefer `-F` for literal identifiers/snippets; regex is the default.
+- Scope with a file, directory, or glob. `**` crosses directories.
+- `--files` matches paths; `--files-with-matches` matches contents.
+- `.git` and ignored files are excluded.
+- Pipe command output into Grepple instead of grep: `go test ./... | grepple -F FAIL`.
+
+## Minimal patterns
 
 ```bash
-grepple "console\\.log" "src/*.ts"    # regex (default) within a glob
-grepple -F "TODO(" internal            # literal search under internal/
-grepple -i -C 2 "timeout" "**/*.go"    # case-insensitive, 2 lines of context
-grepple -l "**/*.yaml"                 # list files whose NAME matches (glob, not a pattern)
-grepple ping --files-with-matches      # list files whose CONTENTS contain ping (grep -l)
-grepple -c "func "                     # where do matches concentrate? (tally)
-grepple "bar" --limit 20               # first 20 files in path order (cheap; see note)
-grepple "bar" --skip 20 --limit 20     # next page of 20 files (path order)
-grepple "client secret" README.md      # Markdown: match shown under its heading chain
+grepple -F 'Symbol' --count                 # locate concentration
+grepple -F 'Symbol' --files-with-matches    # identify candidate files
+grepple --outline path/to/file.go           # orient cheaply
+grepple -F 'Symbol' src --limit 5           # retrieve bounded structure
+grepple --related -F 'Symbol(' src          # choose caller/callee next hops
+grepple --at src/file.go:40-58               # retrieve a listed declaration
+grepple --follow-related 1 -F 'Symbol(' src # inline one deliberate hop
 ```
 
-## Paging & performance (`--skip` / `--limit`)
-
-Results are returned in **deterministic path order** (`dir/file`) — no relevance
-ranking — then paged. Defaults: `--skip 0`, **`--limit 20`** (broad queries are
-capped so they don't dump every match; when the default cap is hit, grepple prints a
-hint to stderr). Pass `--limit 0` for unbounded local results (a remote server caps
-each page at 100 — page with `--skip N --limit 100`), or page: `--limit N` for the
-first page, `--skip N --limit N` for subsequent pages.
-
-Prefer `--limit` for broad queries. grepple only tree-sitter-parses the files it
-actually returns, so a small `--limit` makes broad searches (e.g. very common
-substrings like `bar`) far cheaper.
-
-## Outline (structural map of a file)
-
-`--outline` (`-O`) prints the structure of a file instead of searching its contents:
-for code the definitions — classes, interfaces, functions, methods, structs/types,
-fields — and for **JSON/YAML** the key/shape skeleton with values omitted, each with
-its **line ranges**. Think of it as a generated header / `ctags` view. Great for
-orienting in an unfamiliar or **large** file cheaply (it shows structure, not every
-line) — especially big config/data files where you want the shape, not the payload.
-
-```bash
-grepple --outline search/search_engine.go     # one local file
-grepple --outline "internal/**/*.go"           # every file matching the glob
-grepple --outline --json src/app.ts            # machine-readable {"files":[...]}
-grepple --outline values.yaml                  # JSON/YAML: key tree, values omitted
-grepple --outline --depth 2 large-config.json  # cap nesting (JSON/YAML only)
-```
-
-Output is `START-END<TAB>KIND<TAB>NAME`, nested members indented under their
-container:
-
-```
-search/search_engine.go	go
-229-234	struct	candidateScan
-240-249	method	(candidateScan).scanAll
-254-277	method	(candidateScan).scanWindowed
-```
-
-- **Languages:** Go, JavaScript/TypeScript, Python, Java, Kotlin, C#, C, C++, Rust,
-  and Shell get full tree-sitter symbol outlines; **Markdown** gets a heading outline (`h1`…`h6`,
-  code-fence aware); **JSON/YAML** get a key/type tree (`object`/`array`/`string`/
-  `number`/`bool`/`null`). Other file types produce an empty outline.
-- **JSON/YAML specifics:** values are omitted (keys + types only); arrays show a
-  `[N]` length and recurse only into object/array elements (scalar lists collapse to
-  one line); scalars are typed via the resolved YAML tag. **Multi-document YAML**
-  (`---`) is supported — each document is a `document [i]` node. `--depth N` caps
-  nesting (0 = unlimited) for these formats.
-- **Tiny files:** when the outline would be larger than the file itself (common for very small JSON/YAML), the plain-text `--outline` prints the raw file instead (same `path<TAB>language` header, then the contents) so you never spend more tokens than just reading it. `--json` always returns the structured symbols.
-- Go methods appear at top level as `(*Type).Method` (faithful to source order).
-- Composes with `--limit`/`--skip`; like search it defaults to the first `--limit 20`
-  files (pass `--limit 0` for all). Cannot be combined with `--count` or
-  `--files-with-matches`.
-
-## Gotchas
-
-- Piping `grepple ... | head` can exit 141 (SIGPIPE); the search still succeeded.
-- **Piping INTO grepple works like grep/rg**: `cat build.log | grepple "ERROR"` or `go test ./... | grepple -F "FAIL"` — when stdin is piped and no path/glob argument is given, the stream is searched and reported as `<stdin>` (plain-text matching only). This is the blessed way to filter command output. Passing any path/glob selects the filesystem instead.
-- Binary files and files with a NUL byte are skipped during content search but can
-  still appear under `--files`.
-- Supported tree-sitter languages get structural context/segments: Go, JavaScript/TypeScript,
-  Python, Java, Kotlin, C#, C, C++, Rust, and Shell. **Markdown** (`.md`) gets heading-section
-  context (the enclosing `#`…`######` breadcrumb). Everything else uses plain-text
-  line matching. (This shapes result *segments*, not ordering — there is no ranking.)
-- To search repositories you have **not** cloned, fetch a remote file, browse a repo
-  tree, or run org-wide saved searches, use the **`remote-grep-and-search`** skill.
+For repositories or files not present in this checkout, use `remote-grep-and-search`; do not clone merely to inspect them.

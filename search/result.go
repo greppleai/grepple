@@ -21,19 +21,41 @@ func ToResult(m FileMatch, segs []parser.Segment, beforeContext, afterContext, m
 	for _, n := range ns {
 		matches = append(matches, api.ResultMatch{Line: n, Text: lines[n-1]})
 	}
-	rs := make([]api.ResultSegment, 0, len(segs))
-	for _, s := range segs {
-		text := s.Text
-		if s.Kind == "lines" {
-			text = strings.Join(lines[s.Start-1:s.End], "\n")
-		}
-		rs = append(rs, api.ResultSegment{Kind: s.Kind, Start: s.Start, End: s.End, Text: text})
-	}
-	r := api.FileResult{Path: m.DisplayPath, Language: m.Language, Matches: matches, Segments: rs}
+	rs := resultSegments(m.Content, segs)
+	related := relatedSymbols(m.Related)
+	r := api.FileResult{Path: m.DisplayPath, Language: m.Language, Matches: matches, Segments: rs, Related: related}
 	if beforeContext > 0 || afterContext > 0 {
 		r.Context = ContextLines(m.Content, m.MatchLines, beforeContext, afterContext, maxWindows)
 	}
 	return r
+}
+func resultSegments(content string, segments []parser.Segment) []api.ResultSegment {
+	lines := SplitLines(content)
+	result := make([]api.ResultSegment, 0, len(segments))
+	for _, segment := range segments {
+		text := segment.Text
+		if segment.Kind == "lines" {
+			text = strings.Join(lines[segment.Start-1:segment.End], "\n")
+		}
+		result = append(result, api.ResultSegment{Kind: segment.Kind, Start: segment.Start, End: segment.End, Text: text})
+	}
+	return result
+}
+
+func relatedSymbols(points []RelatedPoint) []api.RelatedSymbol {
+	related := make([]api.RelatedSymbol, 0, len(points))
+	for _, point := range points {
+		symbol := api.RelatedSymbol{
+			Name: point.Name, Path: point.Path, Kind: point.Kind, Direction: point.Direction,
+			Start: point.Start, End: point.End, CallLine: point.CallLine, Confidence: point.Confidence,
+		}
+		if point.Preview != nil {
+			symbol.Segments = resultSegments(point.Preview.Content, []parser.Segment{{Kind: "lines", Start: point.Preview.Start, End: point.Preview.End}})
+			symbol.Related = relatedSymbols(point.Preview.Related)
+		}
+		related = append(related, symbol)
+	}
+	return related
 }
 
 // BuildResults converts matches concurrently while preserving their ranked order.

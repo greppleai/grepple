@@ -1,6 +1,6 @@
 # Language support roadmap
 
-Grepple searches every text file. The items below refer to structural Tree-sitter support: language detection, enclosing-code segments, and symbol outlines.
+Grepple searches every text file. The items below refer to structural Tree-sitter support: language detection, enclosing-code segments, symbol outlines, exact callable retrieval, and syntax-based call navigation.
 
 ## Minimum language set
 
@@ -19,6 +19,12 @@ Grepple searches every text file. The items below refer to structural Tree-sitte
 Markdown has heading-aware segments and outlines. JSON and YAML have lightweight structural outlines; their search results currently use plain-text segments.
 
 Dependency note: C# is intentionally pinned to `tree-sitter-c-sharp` `v0.23.4`. The `v0.23.5` `bindings/go` nested module declares a mismatched module path and excludes the parent `src/parser.c` from its module archive. Recheck upstream packaging before upgrading.
+
+## Navigation baseline
+
+All languages in the minimum set support `--at`, bounded callees and potential callers through `--related`, and recursive unique-callee expansion through `--follow-related`. TypeScript and TSX share one declaration namespace. Other language boundaries remain isolated.
+
+Go additionally recognizes interface methods and function-valued struct fields. Navigation remains syntax-based; type-checked dispatch, inheritance-aware overrides, imports, overload selection, dynamic calls, and potential cross-language FFI edges are future hardening work.
 
 ## Baseline hardening
 
@@ -55,5 +61,6 @@ Dependency note: C# is intentionally pinned to `tree-sitter-c-sharp` `v0.23.4`. 
 - [ ] Map only extensions covered by tests.
 - [ ] Configure structural, context, container, function, block, and name node kinds.
 - [ ] Implement useful top-level and nested symbol outlines.
+- [ ] Configure callable declarations and call-expression extraction for `--at` and related navigation.
 - [ ] Add language detection, outline, segment, malformed-source, and parse-once coverage.
 - [ ] Document any ambiguous extensions or unsupported syntax.

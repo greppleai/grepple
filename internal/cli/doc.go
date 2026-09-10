@@ -1,3 +1,3 @@
-// Package cli implements the user-facing combined local/remote search,
-// terminal and JSON presentation, and the get and tree command-line workflows.
+// Package cli implements Grepple's search, extraction, repository inspection,
+// authentication, rules, and terminal/JSON presentation workflows.
 package cli

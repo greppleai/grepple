@@ -25,16 +25,16 @@
   },
   "summary": {
     "modules": 2,
-    "packages": 12,
-    "sourceFiles": 84,
-    "declarations": 141,
-    "exportedFunctions": 64,
+    "packages": 11,
+    "sourceFiles": 91,
+    "declarations": 161,
+    "exportedFunctions": 69,
     "fiberRoutes": 0,
     "localImports": 9,
-    "standardLibraryImports": 88,
+    "standardLibraryImports": 85,
     "externalModuleEdges": 20
   },
-  "semanticModelDigest": "sha256:4ab11ba0ec44e35554ea2ccae3f20105145d734b520c651451ab4abd17486896",
+  "semanticModelDigest": "sha256:b3a764f96c4d5f5349267393b40832fc10f12d8ef8e55d954e5008bd24792999",
   "modules": [
     {
       "path": "github.com/greppleai/grepple",
@@ -47,7 +47,7 @@
           "documentation": "Package api defines Grepple-controlled HTTP request and response contracts.",
           "main": false,
           "sourceFiles": 1,
-          "declarations": 15,
+          "declarations": 16,
           "exportedFunctions": 0,
           "fiberRoutes": 0,
           "routes": [],
@@ -117,18 +117,70 @@
           "unmappedExternalImports": []
         },
         {
+          "importPath": "github.com/greppleai/grepple/extract",
+          "directory": "extract",
+          "name": "extract",
+          "documentation": "Package extract validates and generates source-linked Mermaid structure and flow diagrams.",
+          "main": false,
+          "sourceFiles": 22,
+          "declarations": 63,
+          "exportedFunctions": 26,
+          "fiberRoutes": 0,
+          "routes": [],
+          "localImports": [],
+          "standardLibraryImports": [
+            "bytes",
+            "crypto/sha256",
+            "encoding/hex",
+            "encoding/json",
+            "fmt",
+            "go/ast",
+            "go/build/constraint",
+            "go/format",
+            "go/parser",
+            "go/scanner",
+            "go/token",
+            "html",
+            "os",
+            "path",
+            "path/filepath",
+            "regexp",
+            "sort",
+            "strconv",
+            "strings",
+            "unicode",
+            "unicode/utf8"
+          ],
+          "externalImports": [
+            {
+              "importPath": "github.com/tree-sitter/go-tree-sitter",
+              "modulePath": "github.com/tree-sitter/go-tree-sitter"
+            },
+            {
+              "importPath": "github.com/tree-sitter/tree-sitter-go/bindings/go",
+              "modulePath": "github.com/tree-sitter/tree-sitter-go"
+            },
+            {
+              "importPath": "github.com/tree-sitter/tree-sitter-typescript/bindings/go",
+              "modulePath": "github.com/tree-sitter/tree-sitter-typescript"
+            }
+          ],
+          "unmappedExternalImports": []
+        },
+        {
           "importPath": "github.com/greppleai/grepple/internal/cli",
           "directory": "internal/cli",
           "name": "cli",
-          "documentation": "Package cli implements the user-facing combined local/remote search, terminal and JSON presentation, and the get and tree command-line workflows.",
+          "documentation": "Package cli implements Grepple's search, extraction, repository inspection, authentication, rules, and terminal/JSON presentation workflows.",
           "main": false,
-          "sourceFiles": 23,
-          "declarations": 22,
+          "sourceFiles": 24,
+          "declarations": 23,
           "exportedFunctions": 3,
           "fiberRoutes": 0,
           "routes": [],
           "localImports": [
             "github.com/greppleai/grepple/api",
+            "github.com/greppleai/grepple/extract",
             "github.com/greppleai/grepple/parser",
             "github.com/greppleai/grepple/search"
           ],
@@ -147,6 +199,7 @@
             "regexp",
             "runtime",
             "sort",
+            "strconv",
             "strings",
             "syscall",
             "time"
@@ -165,9 +218,9 @@
           "name": "parser",
           "documentation": "Package parser provides application source classification and structural parsing.",
           "main": false,
-          "sourceFiles": 23,
-          "declarations": 22,
-          "exportedFunctions": 4,
+          "sourceFiles": 24,
+          "declarations": 27,
+          "exportedFunctions": 6,
           "fiberRoutes": 0,
           "routes": [],
           "localImports": [],
@@ -242,9 +295,9 @@
           "name": "search",
           "documentation": "Package search provides file discovery, query and repository filtering, paging, match workers, context, and wire-result construction.",
           "main": false,
-          "sourceFiles": 8,
-          "declarations": 8,
-          "exportedFunctions": 18,
+          "sourceFiles": 10,
+          "declarations": 14,
+          "exportedFunctions": 19,
           "fiberRoutes": 0,
           "routes": [],
           "localImports": [
@@ -311,28 +364,6 @@
       "directory": "hooks",
       "packages": [
         {
-          "importPath": "grepple/hooks/cmd/mermaid-code",
-          "directory": "hooks/cmd/mermaid-code",
-          "name": "main",
-          "main": true,
-          "sourceFiles": 1,
-          "declarations": 1,
-          "exportedFunctions": 0,
-          "fiberRoutes": 0,
-          "routes": [],
-          "localImports": [
-            "grepple/hooks/internal/mermaidcode"
-          ],
-          "standardLibraryImports": [
-            "fmt",
-            "os",
-            "path/filepath",
-            "strconv"
-          ],
-          "externalImports": [],
-          "unmappedExternalImports": []
-        },
-        {
           "importPath": "grepple/hooks/cmd/pi-hook",
           "directory": "hooks/cmd/pi-hook",
           "name": "main",
@@ -355,57 +386,6 @@
           "unmappedExternalImports": []
         },
         {
-          "importPath": "grepple/hooks/internal/mermaidcode",
-          "directory": "hooks/internal/mermaidcode",
-          "name": "mermaidcode",
-          "documentation": "Package mermaidcode validates and generates Mermaid diagrams from Go, TypeScript, and TSX code.",
-          "main": false,
-          "sourceFiles": 18,
-          "declarations": 55,
-          "exportedFunctions": 24,
-          "fiberRoutes": 0,
-          "routes": [],
-          "localImports": [],
-          "standardLibraryImports": [
-            "bytes",
-            "crypto/sha256",
-            "encoding/hex",
-            "encoding/json",
-            "fmt",
-            "go/ast",
-            "go/build/constraint",
-            "go/format",
-            "go/parser",
-            "go/scanner",
-            "go/token",
-            "html",
-            "os",
-            "path",
-            "path/filepath",
-            "regexp",
-            "sort",
-            "strconv",
-            "strings",
-            "unicode",
-            "unicode/utf8"
-          ],
-          "externalImports": [
-            {
-              "importPath": "github.com/tree-sitter/go-tree-sitter",
-              "modulePath": "github.com/tree-sitter/go-tree-sitter"
-            },
-            {
-              "importPath": "github.com/tree-sitter/tree-sitter-go/bindings/go",
-              "modulePath": "github.com/tree-sitter/tree-sitter-go"
-            },
-            {
-              "importPath": "github.com/tree-sitter/tree-sitter-typescript/bindings/go",
-              "modulePath": "github.com/tree-sitter/tree-sitter-typescript"
-            }
-          ],
-          "unmappedExternalImports": []
-        },
-        {
           "importPath": "grepple/hooks/internal/pihooks",
           "directory": "hooks/internal/pihooks",
           "name": "pihooks",
@@ -417,7 +397,7 @@
           "fiberRoutes": 0,
           "routes": [],
           "localImports": [
-            "grepple/hooks/internal/mermaidcode"
+            "github.com/greppleai/grepple/extract"
           ],
           "standardLibraryImports": [
             "bytes",
@@ -453,6 +433,7 @@
         }
       ],
       "requiredModules": [
+        "github.com/greppleai/grepple",
         "github.com/mattn/go-pointer",
         "github.com/tree-sitter/go-tree-sitter",
         "github.com/tree-sitter/tree-sitter-bash",
@@ -483,8 +464,8 @@
     {
       "path": "github.com/tree-sitter/go-tree-sitter",
       "importedBy": [
+        "github.com/greppleai/grepple/extract",
         "github.com/greppleai/grepple/parser",
-        "grepple/hooks/internal/mermaidcode",
         "grepple/hooks/internal/pihooks"
       ],
       "packages": [
@@ -531,8 +512,8 @@
     {
       "path": "github.com/tree-sitter/tree-sitter-go",
       "importedBy": [
+        "github.com/greppleai/grepple/extract",
         "github.com/greppleai/grepple/parser",
-        "grepple/hooks/internal/mermaidcode",
         "grepple/hooks/internal/pihooks"
       ],
       "packages": [
@@ -578,8 +559,8 @@
     {
       "path": "github.com/tree-sitter/tree-sitter-typescript",
       "importedBy": [
-        "github.com/greppleai/grepple/parser",
-        "grepple/hooks/internal/mermaidcode"
+        "github.com/greppleai/grepple/extract",
+        "github.com/greppleai/grepple/parser"
       ],
       "packages": [
         "github.com/tree-sitter/tree-sitter-typescript/bindings/go"

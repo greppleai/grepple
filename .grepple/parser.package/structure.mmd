@@ -13,6 +13,26 @@ classDiagram
     %% grepple:struct-tag FileOutline Language "json:\"language\""
     %% grepple:struct-tag FileOutline Path "json:\"path\""
     %% grepple:struct-tag FileOutline Symbols "json:\"symbols\""
+    note for FileOutline "defined: parser/model.go:22-26; Language@parser/model.go:24; Path@parser/model.go:23; Symbols@parser/model.go:25"
+    class NavigationCall {
+        +Display: string
+        +EnclosingEnd: int
+        +EnclosingStart: int
+        +Line: int
+        +Name: string
+    }
+    <<struct>> NavigationCall
+    %% grepple:file NavigationCall parser/navigation.go
+    note for NavigationCall "defined: parser/navigation.go:18-24; Display@parser/navigation.go:20; EnclosingEnd@parser/navigation.go:23; EnclosingStart@parser/navigation.go:22; Line@parser/navigation.go:21; Name@parser/navigation.go:19"
+    class NavigationDeclaration {
+        +End: int
+        +Kind: string
+        +Name: string
+        +Start: int
+    }
+    <<struct>> NavigationDeclaration
+    %% grepple:file NavigationDeclaration parser/navigation.go
+    note for NavigationDeclaration "defined: parser/navigation.go:10-15; End@parser/navigation.go:14; Kind@parser/navigation.go:12; Name@parser/navigation.go:11; Start@parser/navigation.go:13"
     class Segment {
         +End: int
         +Kind: string
@@ -21,6 +41,7 @@ classDiagram
     }
     <<struct>> Segment
     %% grepple:file Segment parser/model.go
+    note for Segment "defined: parser/model.go:5-9; End@parser/model.go:7; Kind@parser/model.go:6; Start@parser/model.go:7; Text@parser/model.go:8"
     class Symbol {
         +Children: []Symbol
         +End: int
@@ -37,6 +58,7 @@ classDiagram
     %% grepple:struct-tag Symbol Name "json:\"name\""
     %% grepple:struct-tag Symbol Signature "json:\"signature,omitempty\""
     %% grepple:struct-tag Symbol Start "json:\"start\""
+    note for Symbol "defined: parser/model.go:12-19; Children@parser/model.go:18; End@parser/model.go:17; Kind@parser/model.go:13; Name@parser/model.go:14; Signature@parser/model.go:15; Start@parser/model.go:16"
     class cLanguage {
         +Grammar(): *sitter.Language
         +ID(): string
@@ -47,6 +69,7 @@ classDiagram
     }
     <<struct>> cLanguage
     %% grepple:file cLanguage parser/language_c.go
+    note for cLanguage "defined: parser/language_c.go:8-11; Grammar@parser/language_c.go:21; ID@parser/language_c.go:20; Outline@parser/language_c.go:23-25; Rules@parser/language_c.go:22; grammar@parser/language_c.go:9; rules@parser/language_c.go:10"
     class cSharpLanguage {
         +Grammar(): *sitter.Language
         +ID(): string
@@ -57,6 +80,7 @@ classDiagram
     }
     <<struct>> cSharpLanguage
     %% grepple:file cSharpLanguage parser/language_csharp.go
+    note for cSharpLanguage "defined: parser/language_csharp.go:8-11; Grammar@parser/language_csharp.go:33; ID@parser/language_csharp.go:32; Outline@parser/language_csharp.go:35-37; Rules@parser/language_csharp.go:34; grammar@parser/language_csharp.go:9; rules@parser/language_csharp.go:10"
     class cppLanguage {
         +Grammar(): *sitter.Language
         +ID(): string
@@ -67,6 +91,7 @@ classDiagram
     }
     <<struct>> cppLanguage
     %% grepple:file cppLanguage parser/language_cpp.go
+    note for cppLanguage "defined: parser/language_cpp.go:8-11; Grammar@parser/language_cpp.go:21; ID@parser/language_cpp.go:20; Outline@parser/language_cpp.go:23-25; Rules@parser/language_cpp.go:22; grammar@parser/language_cpp.go:9; rules@parser/language_cpp.go:10"
     class fenceTracker {
         -skip(string): bool
         -inside: bool
@@ -74,6 +99,7 @@ classDiagram
     }
     <<struct>> fenceTracker
     %% grepple:file fenceTracker parser/markdown.go
+    note for fenceTracker "defined: parser/markdown.go:33-36; skip@parser/markdown.go:40-50; inside@parser/markdown.go:34; marker@parser/markdown.go:35"
     class goLanguage {
         +Grammar(): *sitter.Language
         +ID(): string
@@ -84,6 +110,7 @@ classDiagram
     }
     <<struct>> goLanguage
     %% grepple:file goLanguage parser/language_go.go
+    note for goLanguage "defined: parser/language_go.go:8-11; Grammar@parser/language_go.go:32; ID@parser/language_go.go:31; Outline@parser/language_go.go:34-36; Rules@parser/language_go.go:33; grammar@parser/language_go.go:9; rules@parser/language_go.go:10"
     class javaLanguage {
         +Grammar(): *sitter.Language
         +ID(): string
@@ -94,6 +121,7 @@ classDiagram
     }
     <<struct>> javaLanguage
     %% grepple:file javaLanguage parser/language_java.go
+    note for javaLanguage "defined: parser/language_java.go:8-11; Grammar@parser/language_java.go:32; ID@parser/language_java.go:31; Outline@parser/language_java.go:34-36; Rules@parser/language_java.go:33; grammar@parser/language_java.go:9; rules@parser/language_java.go:10"
     class javaScriptLanguage {
         +Grammar(): *sitter.Language
         +ID(): string
@@ -104,6 +132,7 @@ classDiagram
     }
     <<struct>> javaScriptLanguage
     %% grepple:file javaScriptLanguage parser/language_javascript.go
+    note for javaScriptLanguage "defined: parser/language_javascript.go:19-22; Grammar@parser/language_javascript.go:43; ID@parser/language_javascript.go:42; Outline@parser/language_javascript.go:45-47; Rules@parser/language_javascript.go:44; grammar@parser/language_javascript.go:20; rules@parser/language_javascript.go:21"
     class kotlinLanguage {
         +Grammar(): *sitter.Language
         +ID(): string
@@ -114,6 +143,7 @@ classDiagram
     }
     <<struct>> kotlinLanguage
     %% grepple:file kotlinLanguage parser/language_kotlin.go
+    note for kotlinLanguage "defined: parser/language_kotlin.go:10-13; Grammar@parser/language_kotlin.go:34; ID@parser/language_kotlin.go:33; Outline@parser/language_kotlin.go:36-38; Rules@parser/language_kotlin.go:35; grammar@parser/language_kotlin.go:11; rules@parser/language_kotlin.go:12"
     class languageAdapter {
         +Grammar(): *sitter.Language
         +ID(): string
@@ -122,6 +152,7 @@ classDiagram
     }
     <<interface>> languageAdapter
     %% grepple:file languageAdapter parser/language.go
+    note for languageAdapter "defined: parser/language.go:33-38; Grammar@parser/language.go:35; ID@parser/language.go:34; Outline@parser/language.go:37; Rules@parser/language.go:36"
     class matchLines {
         -hitsRange(int, int): bool
         -set: map[int]bool
@@ -129,6 +160,7 @@ classDiagram
     }
     <<struct>> matchLines
     %% grepple:file matchLines parser/tree_sitter.go
+    note for matchLines "defined: parser/tree_sitter.go:98-101; hitsRange@parser/tree_sitter.go:113-116; set@parser/tree_sitter.go:99; sorted@parser/tree_sitter.go:100"
     class mdHeading {
         -level: int
         -line: int
@@ -136,6 +168,7 @@ classDiagram
     }
     <<struct>> mdHeading
     %% grepple:file mdHeading parser/markdown.go
+    note for mdHeading "defined: parser/markdown.go:9-13; level@parser/markdown.go:10; line@parser/markdown.go:11; title@parser/markdown.go:12"
     class mdNode {
         -kids: []*mdNode
         -level: int
@@ -143,12 +176,54 @@ classDiagram
     }
     <<struct>> mdNode
     %% grepple:file mdNode parser/markdown.go
+    note for mdNode "defined: parser/markdown.go:135-139; kids@parser/markdown.go:138; level@parser/markdown.go:136; sym@parser/markdown.go:137"
+    class navigationCollector {
+        -callName(*sitter.Node): tuple~string&#44;string~
+        -containerName(*sitter.Node, *navigationEnvelope): string
+        -declarationName(*sitter.Node, *navigationEnvelope): string
+        -enterNavigationNode(*sitter.Node, navigationWalkContext): navigationWalkContext
+        -isCall(string): bool
+        -isCallableNode(*sitter.Node): bool
+        -isGoTypeMemberNode(*sitter.Node): bool
+        -isNavigationContainer(string): bool
+        -navigationDeclarationKind(*sitter.Node, string): string
+        -navigationDeclarationRange(*sitter.Node, *navigationEnvelope): tuple~int&#44;int~
+        -recordNavigationCall(*sitter.Node, *NavigationDeclaration)
+        -walk(*sitter.Node, navigationWalkContext)
+        -walkNavigationChildren(*sitter.Node, navigationWalkContext)
+        -wrapperEnvelope(*sitter.Node, *navigationEnvelope): *navigationEnvelope
+        -calls: []NavigationCall
+        -content: string
+        -declarations: []NavigationDeclaration
+        -language: string
+        -rules: *structureRules
+    }
+    <<struct>> navigationCollector
+    %% grepple:file navigationCollector parser/navigation.go
+    note for navigationCollector "defined: parser/navigation.go:65-71; callName@parser/navigation.go:289-311; containerName@parser/navigation.go:195-202; declarationName@parser/navigation.go:204-215; enterNavigationNode@parser/navigation.go:91-116; isCall@parser/navigation.go:267-287; isCallableNode@parser/navigation.go:165-177; isGoTypeMemberNode@parser/navigation.go:179-184; isNavigationContainer@parser/navigation.go:185-193; navigationDeclarationKind@parser/navigation.go:248-265; navigationDeclarationRange@parser/navigation.go:118-123; recordNavigationCall@parser/navigation.go:125-137; walk@parser/navigation.go:85-89; walkNavigationChildren@parser/navigation.go:139-152; wrapperEnvelope@parser/navigation.go:153-163; calls@parser/navigation.go:70; content@parser/navigation.go:66; declarations@parser/navigation.go:69; language@parser/navigation.go:67; rules@parser/navigation.go:68"
+    class navigationEnvelope {
+        -assignedName: string
+        -end: int
+        -start: int
+    }
+    <<struct>> navigationEnvelope
+    %% grepple:file navigationEnvelope parser/navigation.go
+    note for navigationEnvelope "defined: parser/navigation.go:73-77; assignedName@parser/navigation.go:76; end@parser/navigation.go:75; start@parser/navigation.go:74"
+    class navigationWalkContext {
+        -callable: *NavigationDeclaration
+        -container: string
+        -envelope: *navigationEnvelope
+    }
+    <<struct>> navigationWalkContext
+    %% grepple:file navigationWalkContext parser/navigation.go
+    note for navigationWalkContext "defined: parser/navigation.go:79-83; callable@parser/navigation.go:82; container@parser/navigation.go:81; envelope@parser/navigation.go:80"
     class pooledParser {
         -lang: *sitter.Language
         -p: *sitter.Parser
     }
     <<struct>> pooledParser
     %% grepple:file pooledParser parser/tree_sitter.go
+    note for pooledParser "defined: parser/tree_sitter.go:21-24; lang@parser/tree_sitter.go:23; p@parser/tree_sitter.go:22"
     class pythonLanguage {
         +Grammar(): *sitter.Language
         +ID(): string
@@ -159,6 +234,7 @@ classDiagram
     }
     <<struct>> pythonLanguage
     %% grepple:file pythonLanguage parser/language_python.go
+    note for pythonLanguage "defined: parser/language_python.go:8-11; Grammar@parser/language_python.go:32; ID@parser/language_python.go:31; Outline@parser/language_python.go:34-36; Rules@parser/language_python.go:33; grammar@parser/language_python.go:9; rules@parser/language_python.go:10"
     class rustLanguage {
         +Grammar(): *sitter.Language
         +ID(): string
@@ -169,6 +245,7 @@ classDiagram
     }
     <<struct>> rustLanguage
     %% grepple:file rustLanguage parser/language_rust.go
+    note for rustLanguage "defined: parser/language_rust.go:8-11; Grammar@parser/language_rust.go:32; ID@parser/language_rust.go:31; Outline@parser/language_rust.go:34-36; Rules@parser/language_rust.go:33; grammar@parser/language_rust.go:9; rules@parser/language_rust.go:10"
     class shellLanguage {
         +Grammar(): *sitter.Language
         +ID(): string
@@ -179,12 +256,14 @@ classDiagram
     }
     <<struct>> shellLanguage
     %% grepple:file shellLanguage parser/language_shell.go
+    note for shellLanguage "defined: parser/language_shell.go:8-11; Grammar@parser/language_shell.go:32; ID@parser/language_shell.go:31; Outline@parser/language_shell.go:34-42; Rules@parser/language_shell.go:33; grammar@parser/language_shell.go:9; rules@parser/language_shell.go:10"
     class stringSet["stringSet = map&#91;string&#93;struct&#123;&#125;"] {
         -contains(string): bool
     }
     <<type>> stringSet
     %% grepple:underlying stringSet map[string]struct{}
     %% grepple:file stringSet parser/language.go
+    note for stringSet "defined: parser/language.go:5; contains@parser/language.go:15-18"
     class structureRules {
         -blockTypes: stringSet
         -classBodyTypes: stringSet
@@ -199,6 +278,7 @@ classDiagram
     }
     <<struct>> structureRules
     %% grepple:file structureRules parser/language.go
+    note for structureRules "defined: parser/language.go:20-31; blockTypes@parser/language.go:28; classBodyTypes@parser/language.go:25; classDeclarationTypes@parser/language.go:24; containerTypes@parser/language.go:23; contextTypes@parser/language.go:22; exportTypes@parser/language.go:26; functionLikeTypes@parser/language.go:27; jsxElementTypes@parser/language.go:29; nameFieldCandidates@parser/language.go:30; structuralTypes@parser/language.go:21"
     class typeScriptLanguage {
         +Grammar(): *sitter.Language
         +ID(): string
@@ -210,28 +290,47 @@ classDiagram
     }
     <<struct>> typeScriptLanguage
     %% grepple:file typeScriptLanguage parser/language_typescript.go
+    note for typeScriptLanguage "defined: parser/language_typescript.go:21-25; Grammar@parser/language_typescript.go:51; ID@parser/language_typescript.go:50; Outline@parser/language_typescript.go:53-55; Rules@parser/language_typescript.go:52; grammar@parser/language_typescript.go:23; id@parser/language_typescript.go:22; rules@parser/language_typescript.go:24"
     class BuildSegments {
         +BuildSegments(string, string, map[int]bool, int): []Segment
     }
     <<function>> BuildSegments
     %% grepple:file BuildSegments parser/segments.go
+    note for BuildSegments "defined: parser/segments.go:13-26"
+    class DeclarationRangeAt {
+        +DeclarationRangeAt(string, string, int): tuple~int&#44;int&#44;bool~
+    }
+    <<function>> DeclarationRangeAt
+    %% grepple:file DeclarationRangeAt parser/navigation.go
+    note for DeclarationRangeAt "defined: parser/navigation.go:49-63"
     class LanguageFor {
         +LanguageFor(string): string
     }
     <<function>> LanguageFor
     %% grepple:file LanguageFor parser/content.go
+    note for LanguageFor "defined: parser/content.go:10-40"
+    class Navigation {
+        +Navigation(string, string): tuple~[]NavigationDeclaration&#44;[]NavigationCall~
+    }
+    <<function>> Navigation
+    %% grepple:file Navigation parser/navigation.go
+    note for Navigation "defined: parser/navigation.go:28-46"
     class OutlineFile {
         +OutlineFile(string, string): FileOutline
     }
     <<function>> OutlineFile
     %% grepple:file OutlineFile parser/outline.go
+    note for OutlineFile "defined: parser/outline.go:14-16"
     class OutlineFileDepth {
         +OutlineFileDepth(string, string, int): FileOutline
     }
     <<function>> OutlineFileDepth
     %% grepple:file OutlineFileDepth parser/outline.go
+    note for OutlineFileDepth "defined: parser/outline.go:21-41"
     BuildSegments "1" ..> "*" Segment : result 1
     FileOutline "1" --> "*" Symbol : field Symbols
+    Navigation "1" ..> "*" NavigationCall : result 2
+    Navigation "1" ..> "*" NavigationDeclaration : result 1
     OutlineFile "1" ..> "1" FileOutline : result 1
     OutlineFileDepth "1" ..> "1" FileOutline : result 1
     cLanguage "1" ..> "*" Symbol : method Outline result 1
@@ -265,6 +364,21 @@ classDiagram
     languageAdapter "1" ..> "*" Symbol : method Outline result 1
     languageAdapter "1" ..> "1" structureRules : method Rules result 1
     mdNode "1" --> "1" Symbol : field sym
+    navigationCollector "1" --> "*" NavigationCall : field calls
+    navigationCollector "1" --> "*" NavigationDeclaration : field declarations
+    navigationCollector "1" ..> "1" NavigationDeclaration : method recordNavigationCall parameter 2
+    navigationCollector "1" ..> "1" navigationEnvelope : method containerName parameter 2
+    navigationCollector "1" ..> "1" navigationEnvelope : method declarationName parameter 2
+    navigationCollector "1" ..> "1" navigationEnvelope : method navigationDeclarationRange parameter 2
+    navigationCollector "1" ..> "1" navigationEnvelope : method wrapperEnvelope parameter 2
+    navigationCollector "1" ..> "1" navigationEnvelope : method wrapperEnvelope result 1
+    navigationCollector "1" ..> "1" navigationWalkContext : method enterNavigationNode parameter 2
+    navigationCollector "1" ..> "1" navigationWalkContext : method enterNavigationNode result 1
+    navigationCollector "1" ..> "1" navigationWalkContext : method walk parameter 2
+    navigationCollector "1" ..> "1" navigationWalkContext : method walkNavigationChildren parameter 2
+    navigationCollector "1" --> "1" structureRules : field rules
+    navigationWalkContext "1" --> "1" NavigationDeclaration : field callable
+    navigationWalkContext "1" --> "1" navigationEnvelope : field envelope
     pythonLanguage "1" ..> "*" Symbol : method Outline result 1
     languageAdapter <|.. pythonLanguage : implements
     pythonLanguage "1" --> "1" structureRules : field rules

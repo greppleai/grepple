@@ -2,15 +2,15 @@ classDiagram
     %% grepple:package-default github.com/greppleai/grepple/internal/cli
     %% grepple:language-default go
     direction LR
-    note "Package cli implements the user-facing combined local/remote search, terminal and JSON presentation, and the get and tree command-line workflows. | package github.com/greppleai/grepple/internal/cli | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=23, declarations=22, exportedTypes=0, internalTypes=22, members=130, exportedFunctions=3, fiberRoutes=0, relations=15"
+    note "Package cli implements Grepple's search, extraction, repository inspection, authentication, rules, and terminal/JSON presentation workflows. | package github.com/greppleai/grepple/internal/cli | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=24, declarations=23, exportedTypes=0, internalTypes=23, members=147, exportedFunctions=3, fiberRoutes=0, relations=15"
     namespace interfaces {
-        class resultRenderer {
+        class resultRenderer["resultRenderer · internal/cli/renderer.go:5-7"] {
             +Render([]api.FileResult): error
         }
         <<interface>> resultRenderer
     }
     namespace data_contracts {
-        class config {
+        class config["config · internal/cli/config.go:10-17"] {
             +RefreshExpiry: int64
             +RefreshToken: string
             +Server: string
@@ -19,7 +19,7 @@ classDiagram
             +User: string
         }
         <<struct>> config
-        class deviceCodeResponse {
+        class deviceCodeResponse["deviceCodeResponse · internal/cli/login.go:21-29"] {
             +DeviceCode: string
             +Error: string
             +ErrorDescription: string
@@ -29,7 +29,7 @@ classDiagram
             +VerificationURI: string
         }
         <<struct>> deviceCodeResponse
-        class deviceTokenResponse {
+        class deviceTokenResponse["deviceTokenResponse · internal/cli/login.go:31-41"] {
             +AccessToken: string
             +Error: string
             +ErrorDescription: string
@@ -41,7 +41,19 @@ classDiagram
             +TokenType: string
         }
         <<struct>> deviceTokenResponse
-        class getArgs {
+        class extractArgs["extractArgs · internal/cli/extract.go:16-26"] {
+            +At: string
+            +Bundle: bool
+            +Depth: int
+            +Entry: string
+            +MaxNodes: int
+            +Output: string
+            +Paths: []string
+            +Source: []string
+            +Workspace: bool
+        }
+        <<struct>> extractArgs
+        class getArgs["getArgs · internal/cli/get.go:17-25"] {
             +Depth: int
             +JSON: bool
             +Lines: string
@@ -51,18 +63,18 @@ classDiagram
             +Server: string
         }
         <<struct>> getArgs
-        class loginConfig {
+        class loginConfig["loginConfig · internal/cli/login.go:177-180"] {
             +ClientID: string
             +Scopes: string
         }
         <<struct>> loginConfig
-        class reposArgs {
+        class reposArgs["reposArgs · internal/cli/repos.go:16-20"] {
             +Filter: string
             +JSON: bool
             +Server: string
         }
         <<struct>> reposArgs
-        class rulesAddArgs {
+        class rulesAddArgs["rulesAddArgs · internal/cli/rules.go:58-71"] {
             +ExcludeRepo: []string
             +Files: bool
             +Globs: []string
@@ -77,8 +89,9 @@ classDiagram
             +Server: string
         }
         <<struct>> rulesAddArgs
-        class searchArgs {
+        class searchArgs["searchArgs · internal/cli/args.go:20-52"] {
             +AfterContext: int
+            +At: string
             +BeforeContext: int
             +Context: int
             +Count: bool
@@ -87,6 +100,7 @@ classDiagram
             +Files: bool
             +FilesWithMatches: bool
             +Fixed: bool
+            +FollowRelated: int
             +Globs: []string
             +IgnoreCase: bool
             +InvertMatch: bool
@@ -102,13 +116,14 @@ classDiagram
             +Outline: bool
             +Query: string
             +Regex: bool
+            +Related: bool
             +Remote: bool
             +Repos: []string
             +Server: string
             +Skip: int
         }
         <<struct>> searchArgs
-        class treeArgs {
+        class treeArgs["treeArgs · internal/cli/tree.go:18-24"] {
             +Depth: int
             +JSON: bool
             +Path: string
@@ -118,41 +133,41 @@ classDiagram
         <<struct>> treeArgs
     }
     namespace internal_types {
-        class cliOptions
+        class cliOptions["cliOptions · internal/cli/model.go:5-18"]
         <<struct>> cliOptions
-        class contextRenderer
+        class contextRenderer["contextRenderer · internal/cli/renderer_context.go:9-11"]
         <<struct>> contextRenderer
-        class countRenderer
+        class countRenderer["countRenderer · internal/cli/renderer_count.go:9-12"]
         <<struct>> countRenderer
-        class errBrokenPipe
+        class errBrokenPipe["errBrokenPipe · internal/cli/output.go:12"]
         <<struct>> errBrokenPipe
-        class filesRenderer
+        class filesRenderer["filesRenderer · internal/cli/renderer_files.go:5-8"]
         <<struct>> filesRenderer
-        class jsonResultRenderer
+        class jsonResultRenderer["jsonResultRenderer · internal/cli/renderer_json.go:5-8"]
         <<struct>> jsonResultRenderer
-        class lineRenderer
+        class lineRenderer["lineRenderer · internal/cli/renderer_matches.go:10-13"]
         <<struct>> lineRenderer
-        class onlyMatchingRenderer
+        class onlyMatchingRenderer["onlyMatchingRenderer · internal/cli/renderer_matches.go:27-31"]
         <<struct>> onlyMatchingRenderer
-        class outputWriter
+        class outputWriter["outputWriter · internal/cli/output.go:20-22"]
         <<struct>> outputWriter
-        class repoCountRenderer
+        class repoCountRenderer["repoCountRenderer · internal/cli/renderer_repo_count.go:10-13"]
         <<struct>> repoCountRenderer
-        class segmentRenderer
+        class segmentRenderer["segmentRenderer · internal/cli/renderer_segments.go:11-13"]
         <<struct>> segmentRenderer
-        class treeNode
+        class treeNode["treeNode · internal/cli/tree.go:30-34"]
         <<struct>> treeNode
     }
     namespace operations {
-        class RenderOutline {
+        class RenderOutline["RenderOutline · internal/cli/outline_renderer.go:11-19"] {
             +RenderOutline(parser.FileOutline): string
         }
         <<function>> RenderOutline
-        class RenderOutlineOrContent {
+        class RenderOutlineOrContent["RenderOutlineOrContent · internal/cli/outline_renderer.go:24-34"] {
             +RenderOutlineOrContent(parser.FileOutline, string): string
         }
         <<function>> RenderOutlineOrContent
-        class Run {
+        class Run["Run · internal/cli/args.go:266-286"] {
             +Run([]string): error
         }
         <<function>> Run

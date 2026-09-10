@@ -24,6 +24,8 @@ type SearchRequest struct {
 	BeforeContext *int     `json:"beforeContext,omitempty"`
 	AfterContext  *int     `json:"afterContext,omitempty"`
 	SkipSegments  bool     `json:"skipSegments,omitempty"`
+	Related       bool     `json:"related,omitempty"`
+	FollowRelated int      `json:"followRelated,omitempty"`
 	CountByRepo   bool     `json:"countByRepo,omitempty"`
 }
 
@@ -48,6 +50,22 @@ type ContextLine struct {
 	Match bool   `json:"match"`
 }
 
+// RelatedSymbol points between matched code and a project-local declaration.
+// Confidence is "unique" when only one declaration with that name exists in the
+// searched files and "candidate" when more than one declaration shares the name.
+type RelatedSymbol struct {
+	Name       string          `json:"name"`
+	Path       string          `json:"path"`
+	Kind       string          `json:"kind"`
+	Direction  string          `json:"direction"`
+	Start      int             `json:"start"`
+	End        int             `json:"end"`
+	CallLine   int             `json:"callLine"`
+	Confidence string          `json:"confidence"`
+	Segments   []ResultSegment `json:"segments,omitempty"`
+	Related    []RelatedSymbol `json:"related,omitempty"`
+}
+
 // FileResult is one matching file.
 type FileResult struct {
 	Path     string          `json:"path"`
@@ -56,6 +74,7 @@ type FileResult struct {
 	Matches  []ResultMatch   `json:"matches"`
 	Segments []ResultSegment `json:"segments"`
 	Context  []ContextLine   `json:"context,omitempty"`
+	Related  []RelatedSymbol `json:"related,omitempty"`
 }
 
 // RepoCount is a per-repository tally of matching files and lines.

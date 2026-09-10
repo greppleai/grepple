@@ -45,13 +45,15 @@ func searchRemote(options *cliOptions, server string) ([]api.FileResult, error) 
 func searchRequestFromParams(params search.Params) api.SearchRequest {
 	query := params.Query
 	request := api.SearchRequest{
-		Query:       &query,
-		Globs:       params.Globs,
-		Regex:       &params.Regex,
-		IgnoreCase:  &params.IgnoreCase,
-		InvertMatch: &params.InvertMatch,
-		MaxSegments: &params.MaxSegments,
-		Files:       params.Files,
+		Query:         &query,
+		Globs:         params.Globs,
+		Regex:         &params.Regex,
+		IgnoreCase:    &params.IgnoreCase,
+		InvertMatch:   &params.InvertMatch,
+		MaxSegments:   &params.MaxSegments,
+		Files:         params.Files,
+		Related:       params.Related,
+		FollowRelated: params.FollowRelated,
 	}
 	if len(params.Repo) > 0 {
 		request.Repo = params.Repo

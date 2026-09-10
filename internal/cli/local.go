@@ -123,7 +123,7 @@ func windowResults(results []api.FileResult, params search.Params) []api.FileRes
 // Filename listing (--files) and --outline always operate on the filesystem,
 // as does any search with an explicit path/glob.
 func stdinSearch(o *cliOptions) bool {
-	if o.Outline || o.Params.Files || len(o.Params.Globs) > 0 {
+	if o.Outline || o.Params.Files || o.Params.At != "" || len(o.Params.Globs) > 0 {
 		return false
 	}
 	info, err := os.Stdin.Stat()
@@ -150,6 +150,13 @@ func searchStdin(params search.Params) ([]search.FileMatch, error) {
 
 func searchLocal(options *cliOptions) ([]api.FileResult, error) {
 	params := options.Params
+	if params.At != "" {
+		match, err := search.At(params)
+		if err != nil {
+			return nil, err
+		}
+		return search.BuildResults([]search.FileMatch{*match}, 0, 0, params.MaxSegments, true), nil
+	}
 	if params.Files {
 		// Filename glob listing only. --files-with-matches is a content search, so
 		// it falls through to Files below and renders paths from the matches.

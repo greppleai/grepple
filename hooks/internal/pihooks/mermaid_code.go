@@ -7,7 +7,7 @@ import (
 	"sort"
 	"strings"
 
-	"grepple/hooks/internal/mermaidcode"
+	mermaidcode "github.com/greppleai/grepple/extract"
 )
 
 const mermaidCodeRule = "mermaid-code"

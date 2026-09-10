@@ -33,3 +33,55 @@ func TestParseSearchArgs(t *testing.T) {
 		t.Fatalf("invert-match was not preserved in the remote request: %#v", request)
 	}
 }
+
+func TestParseSearchArgsEnablesRelatedGoNavigation(t *testing.T) {
+	options, _, remote, err := parseSearchArgs([]string{"--related", "needle", "**/*.go"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if remote || options == nil || !options.Params.Related {
+		t.Fatalf("related navigation was not enabled: remote=%v options=%#v", remote, options)
+	}
+	request := searchRequestFromParams(options.Params)
+	if !request.Related {
+		t.Fatalf("related navigation was not preserved in request: %#v", request)
+	}
+}
+
+func TestFollowRelatedImpliesNavigation(t *testing.T) {
+	options, _, _, err := parseSearchArgs([]string{"--follow-related", "2", "needle"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !options.Params.Related || options.Params.FollowRelated != 2 {
+		t.Fatalf("follow navigation was not enabled: %#v", options.Params)
+	}
+	request := searchRequestFromParams(options.Params)
+	if !request.Related || request.FollowRelated != 2 {
+		t.Fatalf("follow navigation was not preserved in request: %#v", request)
+	}
+}
+
+func TestParseAtLocationWithoutQuery(t *testing.T) {
+	options, _, remote, err := parseSearchArgs([]string{"--at", "search/result.go:47"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if remote || options.Params.At != "search/result.go:47" || options.Params.Query != "" {
+		t.Fatalf("unexpected --at options: %#v", options)
+	}
+}
+
+func TestRelatedGoNavigationRejectsUnsupportedModes(t *testing.T) {
+	for _, args := range [][]string{
+		{"--related", "--remote", "needle"},
+		{"--related", "--line-only", "needle"},
+		{"--related", "-C", "2", "needle"},
+		{"--follow-related", "4", "needle"},
+		{"--at", "search/result.go:47", "needle"},
+	} {
+		if _, _, _, err := parseSearchArgs(args); err == nil {
+			t.Fatalf("parseSearchArgs(%q) succeeded, want an error", args)
+		}
+	}
+}

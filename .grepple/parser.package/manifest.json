@@ -16,16 +16,16 @@
     "syntacticBuildTagUnion": []
   },
   "summary": {
-    "sourceFiles": 23,
-    "declarations": 22,
-    "exportedTypes": 3,
-    "internalTypes": 19,
-    "members": 109,
-    "exportedFunctions": 4,
+    "sourceFiles": 24,
+    "declarations": 27,
+    "exportedTypes": 5,
+    "internalTypes": 22,
+    "members": 143,
+    "exportedFunctions": 6,
     "fiberRoutes": 0,
-    "relations": 61
+    "relations": 78
   },
-  "semanticModelDigest": "sha256:d69eb8187873c802ef76d2a6a0f9a37861896b99a7cfaac8b2466b020a372af2",
+  "semanticModelDigest": "sha256:cb19a6a9881ecd18184636e652aee7ffdb6ccb44707cf9e23340a2539fd4f1ae",
   "sourceFiles": [
     {
       "path": "parser/analyze.go"
@@ -85,6 +85,9 @@
       "path": "parser/model.go"
     },
     {
+      "path": "parser/navigation.go"
+    },
+    {
       "path": "parser/outline.go"
     },
     {
@@ -102,11 +105,15 @@
       "name": "FileOutline",
       "kind": "struct",
       "file": "parser/model.go",
+      "line": 22,
+      "endLine": 26,
       "underlyingType": "struct{Path string`json:\"path\"`;Language string`json:\"language\"`;Symbols[]Symbol`json:\"symbols\"`;}",
       "members": [
         {
           "name": "Language",
           "kind": "property",
+          "line": 24,
+          "endLine": 24,
           "result": "string",
           "structTag": {
             "value": "json:\"language\""
@@ -115,6 +122,8 @@
         {
           "name": "Path",
           "kind": "property",
+          "line": 23,
+          "endLine": 23,
           "result": "string",
           "structTag": {
             "value": "json:\"path\""
@@ -123,6 +132,8 @@
         {
           "name": "Symbols",
           "kind": "property",
+          "line": 25,
+          "endLine": 25,
           "result": "[]Symbol",
           "structTag": {
             "value": "json:\"symbols\""
@@ -131,29 +142,122 @@
       ]
     },
     {
-      "name": "Segment",
+      "name": "NavigationCall",
       "kind": "struct",
-      "file": "parser/model.go",
-      "underlyingType": "struct{Kind string;Start,End int;Text string;}",
+      "file": "parser/navigation.go",
+      "line": 18,
+      "endLine": 24,
+      "underlyingType": "struct{Name string;Display string;Line int;EnclosingStart int;EnclosingEnd int;}",
+      "members": [
+        {
+          "name": "Display",
+          "kind": "property",
+          "line": 20,
+          "endLine": 20,
+          "result": "string"
+        },
+        {
+          "name": "EnclosingEnd",
+          "kind": "property",
+          "line": 23,
+          "endLine": 23,
+          "result": "int"
+        },
+        {
+          "name": "EnclosingStart",
+          "kind": "property",
+          "line": 22,
+          "endLine": 22,
+          "result": "int"
+        },
+        {
+          "name": "Line",
+          "kind": "property",
+          "line": 21,
+          "endLine": 21,
+          "result": "int"
+        },
+        {
+          "name": "Name",
+          "kind": "property",
+          "line": 19,
+          "endLine": 19,
+          "result": "string"
+        }
+      ]
+    },
+    {
+      "name": "NavigationDeclaration",
+      "kind": "struct",
+      "file": "parser/navigation.go",
+      "line": 10,
+      "endLine": 15,
+      "underlyingType": "struct{Name string;Kind string;Start int;End int;}",
       "members": [
         {
           "name": "End",
           "kind": "property",
+          "line": 14,
+          "endLine": 14,
           "result": "int"
         },
         {
           "name": "Kind",
           "kind": "property",
+          "line": 12,
+          "endLine": 12,
+          "result": "string"
+        },
+        {
+          "name": "Name",
+          "kind": "property",
+          "line": 11,
+          "endLine": 11,
           "result": "string"
         },
         {
           "name": "Start",
           "kind": "property",
+          "line": 13,
+          "endLine": 13,
+          "result": "int"
+        }
+      ]
+    },
+    {
+      "name": "Segment",
+      "kind": "struct",
+      "file": "parser/model.go",
+      "line": 5,
+      "endLine": 9,
+      "underlyingType": "struct{Kind string;Start,End int;Text string;}",
+      "members": [
+        {
+          "name": "End",
+          "kind": "property",
+          "line": 7,
+          "endLine": 7,
+          "result": "int"
+        },
+        {
+          "name": "Kind",
+          "kind": "property",
+          "line": 6,
+          "endLine": 6,
+          "result": "string"
+        },
+        {
+          "name": "Start",
+          "kind": "property",
+          "line": 7,
+          "endLine": 7,
           "result": "int"
         },
         {
           "name": "Text",
           "kind": "property",
+          "line": 8,
+          "endLine": 8,
           "result": "string"
         }
       ]
@@ -162,11 +266,15 @@
       "name": "Symbol",
       "kind": "struct",
       "file": "parser/model.go",
+      "line": 12,
+      "endLine": 19,
       "underlyingType": "struct{Kind string`json:\"kind\"`;Name string`json:\"name\"`;Signature string`json:\"signature,omitempty\"`;Start int`json:\"start\"`;End int`json:\"end\"`;Children[]Symbol`json:\"children,omitempty\"`;}",
       "members": [
         {
           "name": "Children",
           "kind": "property",
+          "line": 18,
+          "endLine": 18,
           "result": "[]Symbol",
           "structTag": {
             "value": "json:\"children,omitempty\""
@@ -175,6 +283,8 @@
         {
           "name": "End",
           "kind": "property",
+          "line": 17,
+          "endLine": 17,
           "result": "int",
           "structTag": {
             "value": "json:\"end\""
@@ -183,6 +293,8 @@
         {
           "name": "Kind",
           "kind": "property",
+          "line": 13,
+          "endLine": 13,
           "result": "string",
           "structTag": {
             "value": "json:\"kind\""
@@ -191,6 +303,8 @@
         {
           "name": "Name",
           "kind": "property",
+          "line": 14,
+          "endLine": 14,
           "result": "string",
           "structTag": {
             "value": "json:\"name\""
@@ -199,6 +313,8 @@
         {
           "name": "Signature",
           "kind": "property",
+          "line": 15,
+          "endLine": 15,
           "result": "string",
           "structTag": {
             "value": "json:\"signature,omitempty\""
@@ -207,6 +323,8 @@
         {
           "name": "Start",
           "kind": "property",
+          "line": 16,
+          "endLine": 16,
           "result": "int",
           "structTag": {
             "value": "json:\"start\""
@@ -218,21 +336,29 @@
       "name": "cLanguage",
       "kind": "struct",
       "file": "parser/language_c.go",
+      "line": 8,
+      "endLine": 11,
       "underlyingType": "struct{grammar*sitter.Language;rules structureRules;}",
       "members": [
         {
           "name": "Grammar",
           "kind": "method",
+          "line": 21,
+          "endLine": 21,
           "result": "*sitter.Language"
         },
         {
           "name": "ID",
           "kind": "method",
+          "line": 20,
+          "endLine": 20,
           "result": "string"
         },
         {
           "name": "Outline",
           "kind": "method",
+          "line": 23,
+          "endLine": 25,
           "parameters": [
             "*sitter.Node",
             "string"
@@ -242,16 +368,22 @@
         {
           "name": "Rules",
           "kind": "method",
+          "line": 22,
+          "endLine": 22,
           "result": "*structureRules"
         },
         {
           "name": "grammar",
           "kind": "property",
+          "line": 9,
+          "endLine": 9,
           "result": "*sitter.Language"
         },
         {
           "name": "rules",
           "kind": "property",
+          "line": 10,
+          "endLine": 10,
           "result": "structureRules"
         }
       ]
@@ -260,21 +392,29 @@
       "name": "cSharpLanguage",
       "kind": "struct",
       "file": "parser/language_csharp.go",
+      "line": 8,
+      "endLine": 11,
       "underlyingType": "struct{grammar*sitter.Language;rules structureRules;}",
       "members": [
         {
           "name": "Grammar",
           "kind": "method",
+          "line": 33,
+          "endLine": 33,
           "result": "*sitter.Language"
         },
         {
           "name": "ID",
           "kind": "method",
+          "line": 32,
+          "endLine": 32,
           "result": "string"
         },
         {
           "name": "Outline",
           "kind": "method",
+          "line": 35,
+          "endLine": 37,
           "parameters": [
             "*sitter.Node",
             "string"
@@ -284,16 +424,22 @@
         {
           "name": "Rules",
           "kind": "method",
+          "line": 34,
+          "endLine": 34,
           "result": "*structureRules"
         },
         {
           "name": "grammar",
           "kind": "property",
+          "line": 9,
+          "endLine": 9,
           "result": "*sitter.Language"
         },
         {
           "name": "rules",
           "kind": "property",
+          "line": 10,
+          "endLine": 10,
           "result": "structureRules"
         }
       ]
@@ -302,21 +448,29 @@
       "name": "cppLanguage",
       "kind": "struct",
       "file": "parser/language_cpp.go",
+      "line": 8,
+      "endLine": 11,
       "underlyingType": "struct{grammar*sitter.Language;rules structureRules;}",
       "members": [
         {
           "name": "Grammar",
           "kind": "method",
+          "line": 21,
+          "endLine": 21,
           "result": "*sitter.Language"
         },
         {
           "name": "ID",
           "kind": "method",
+          "line": 20,
+          "endLine": 20,
           "result": "string"
         },
         {
           "name": "Outline",
           "kind": "method",
+          "line": 23,
+          "endLine": 25,
           "parameters": [
             "*sitter.Node",
             "string"
@@ -326,16 +480,22 @@
         {
           "name": "Rules",
           "kind": "method",
+          "line": 22,
+          "endLine": 22,
           "result": "*structureRules"
         },
         {
           "name": "grammar",
           "kind": "property",
+          "line": 9,
+          "endLine": 9,
           "result": "*sitter.Language"
         },
         {
           "name": "rules",
           "kind": "property",
+          "line": 10,
+          "endLine": 10,
           "result": "structureRules"
         }
       ]
@@ -344,11 +504,15 @@
       "name": "fenceTracker",
       "kind": "struct",
       "file": "parser/markdown.go",
+      "line": 33,
+      "endLine": 36,
       "underlyingType": "struct{inside bool;marker byte;}",
       "members": [
         {
           "name": "skip",
           "kind": "method",
+          "line": 40,
+          "endLine": 50,
           "parameters": [
             "string"
           ],
@@ -357,11 +521,15 @@
         {
           "name": "inside",
           "kind": "property",
+          "line": 34,
+          "endLine": 34,
           "result": "bool"
         },
         {
           "name": "marker",
           "kind": "property",
+          "line": 35,
+          "endLine": 35,
           "result": "byte"
         }
       ]
@@ -370,21 +538,29 @@
       "name": "goLanguage",
       "kind": "struct",
       "file": "parser/language_go.go",
+      "line": 8,
+      "endLine": 11,
       "underlyingType": "struct{grammar*sitter.Language;rules structureRules;}",
       "members": [
         {
           "name": "Grammar",
           "kind": "method",
+          "line": 32,
+          "endLine": 32,
           "result": "*sitter.Language"
         },
         {
           "name": "ID",
           "kind": "method",
+          "line": 31,
+          "endLine": 31,
           "result": "string"
         },
         {
           "name": "Outline",
           "kind": "method",
+          "line": 34,
+          "endLine": 36,
           "parameters": [
             "*sitter.Node",
             "string"
@@ -394,16 +570,22 @@
         {
           "name": "Rules",
           "kind": "method",
+          "line": 33,
+          "endLine": 33,
           "result": "*structureRules"
         },
         {
           "name": "grammar",
           "kind": "property",
+          "line": 9,
+          "endLine": 9,
           "result": "*sitter.Language"
         },
         {
           "name": "rules",
           "kind": "property",
+          "line": 10,
+          "endLine": 10,
           "result": "structureRules"
         }
       ]
@@ -412,21 +594,29 @@
       "name": "javaLanguage",
       "kind": "struct",
       "file": "parser/language_java.go",
+      "line": 8,
+      "endLine": 11,
       "underlyingType": "struct{grammar*sitter.Language;rules structureRules;}",
       "members": [
         {
           "name": "Grammar",
           "kind": "method",
+          "line": 32,
+          "endLine": 32,
           "result": "*sitter.Language"
         },
         {
           "name": "ID",
           "kind": "method",
+          "line": 31,
+          "endLine": 31,
           "result": "string"
         },
         {
           "name": "Outline",
           "kind": "method",
+          "line": 34,
+          "endLine": 36,
           "parameters": [
             "*sitter.Node",
             "string"
@@ -436,16 +626,22 @@
         {
           "name": "Rules",
           "kind": "method",
+          "line": 33,
+          "endLine": 33,
           "result": "*structureRules"
         },
         {
           "name": "grammar",
           "kind": "property",
+          "line": 9,
+          "endLine": 9,
           "result": "*sitter.Language"
         },
         {
           "name": "rules",
           "kind": "property",
+          "line": 10,
+          "endLine": 10,
           "result": "structureRules"
         }
       ]
@@ -454,21 +650,29 @@
       "name": "javaScriptLanguage",
       "kind": "struct",
       "file": "parser/language_javascript.go",
+      "line": 19,
+      "endLine": 22,
       "underlyingType": "struct{grammar*sitter.Language;rules structureRules;}",
       "members": [
         {
           "name": "Grammar",
           "kind": "method",
+          "line": 43,
+          "endLine": 43,
           "result": "*sitter.Language"
         },
         {
           "name": "ID",
           "kind": "method",
+          "line": 42,
+          "endLine": 42,
           "result": "string"
         },
         {
           "name": "Outline",
           "kind": "method",
+          "line": 45,
+          "endLine": 47,
           "parameters": [
             "*sitter.Node",
             "string"
@@ -478,16 +682,22 @@
         {
           "name": "Rules",
           "kind": "method",
+          "line": 44,
+          "endLine": 44,
           "result": "*structureRules"
         },
         {
           "name": "grammar",
           "kind": "property",
+          "line": 20,
+          "endLine": 20,
           "result": "*sitter.Language"
         },
         {
           "name": "rules",
           "kind": "property",
+          "line": 21,
+          "endLine": 21,
           "result": "structureRules"
         }
       ]
@@ -496,21 +706,29 @@
       "name": "kotlinLanguage",
       "kind": "struct",
       "file": "parser/language_kotlin.go",
+      "line": 10,
+      "endLine": 13,
       "underlyingType": "struct{grammar*sitter.Language;rules structureRules;}",
       "members": [
         {
           "name": "Grammar",
           "kind": "method",
+          "line": 34,
+          "endLine": 34,
           "result": "*sitter.Language"
         },
         {
           "name": "ID",
           "kind": "method",
+          "line": 33,
+          "endLine": 33,
           "result": "string"
         },
         {
           "name": "Outline",
           "kind": "method",
+          "line": 36,
+          "endLine": 38,
           "parameters": [
             "*sitter.Node",
             "string"
@@ -520,16 +738,22 @@
         {
           "name": "Rules",
           "kind": "method",
+          "line": 35,
+          "endLine": 35,
           "result": "*structureRules"
         },
         {
           "name": "grammar",
           "kind": "property",
+          "line": 11,
+          "endLine": 11,
           "result": "*sitter.Language"
         },
         {
           "name": "rules",
           "kind": "property",
+          "line": 12,
+          "endLine": 12,
           "result": "structureRules"
         }
       ]
@@ -538,21 +762,29 @@
       "name": "languageAdapter",
       "kind": "interface",
       "file": "parser/language.go",
+      "line": 33,
+      "endLine": 38,
       "underlyingType": "interface{ID()string;Grammar()*sitter.Language;Rules()*structureRules;Outline(root*sitter.Node,content string)[]Symbol;}",
       "members": [
         {
           "name": "Grammar",
           "kind": "method",
+          "line": 35,
+          "endLine": 35,
           "result": "*sitter.Language"
         },
         {
           "name": "ID",
           "kind": "method",
+          "line": 34,
+          "endLine": 34,
           "result": "string"
         },
         {
           "name": "Outline",
           "kind": "method",
+          "line": 37,
+          "endLine": 37,
           "parameters": [
             "*sitter.Node",
             "string"
@@ -562,6 +794,8 @@
         {
           "name": "Rules",
           "kind": "method",
+          "line": 36,
+          "endLine": 36,
           "result": "*structureRules"
         }
       ]
@@ -570,11 +804,15 @@
       "name": "matchLines",
       "kind": "struct",
       "file": "parser/tree_sitter.go",
+      "line": 98,
+      "endLine": 101,
       "underlyingType": "struct{set map[int]bool;sorted[]int;}",
       "members": [
         {
           "name": "hitsRange",
           "kind": "method",
+          "line": 113,
+          "endLine": 116,
           "parameters": [
             "int",
             "int"
@@ -584,11 +822,15 @@
         {
           "name": "set",
           "kind": "property",
+          "line": 99,
+          "endLine": 99,
           "result": "map[int]bool"
         },
         {
           "name": "sorted",
           "kind": "property",
+          "line": 100,
+          "endLine": 100,
           "result": "[]int"
         }
       ]
@@ -597,21 +839,29 @@
       "name": "mdHeading",
       "kind": "struct",
       "file": "parser/markdown.go",
+      "line": 9,
+      "endLine": 13,
       "underlyingType": "struct{level int;line int;title string;}",
       "members": [
         {
           "name": "level",
           "kind": "property",
+          "line": 10,
+          "endLine": 10,
           "result": "int"
         },
         {
           "name": "line",
           "kind": "property",
+          "line": 11,
+          "endLine": 11,
           "result": "int"
         },
         {
           "name": "title",
           "kind": "property",
+          "line": 12,
+          "endLine": 12,
           "result": "string"
         }
       ]
@@ -620,22 +870,283 @@
       "name": "mdNode",
       "kind": "struct",
       "file": "parser/markdown.go",
+      "line": 135,
+      "endLine": 139,
       "underlyingType": "struct{level int;sym Symbol;kids[]*mdNode;}",
       "members": [
         {
           "name": "kids",
           "kind": "property",
+          "line": 138,
+          "endLine": 138,
           "result": "[]*mdNode"
         },
         {
           "name": "level",
           "kind": "property",
+          "line": 136,
+          "endLine": 136,
           "result": "int"
         },
         {
           "name": "sym",
           "kind": "property",
+          "line": 137,
+          "endLine": 137,
           "result": "Symbol"
+        }
+      ]
+    },
+    {
+      "name": "navigationCollector",
+      "kind": "struct",
+      "file": "parser/navigation.go",
+      "line": 65,
+      "endLine": 71,
+      "underlyingType": "struct{content string;language string;rules*structureRules;declarations[]NavigationDeclaration;calls[]NavigationCall;}",
+      "members": [
+        {
+          "name": "callName",
+          "kind": "method",
+          "line": 289,
+          "endLine": 311,
+          "parameters": [
+            "*sitter.Node"
+          ],
+          "result": "tuple\u003cstring,string\u003e"
+        },
+        {
+          "name": "containerName",
+          "kind": "method",
+          "line": 195,
+          "endLine": 202,
+          "parameters": [
+            "*sitter.Node",
+            "*navigationEnvelope"
+          ],
+          "result": "string"
+        },
+        {
+          "name": "declarationName",
+          "kind": "method",
+          "line": 204,
+          "endLine": 215,
+          "parameters": [
+            "*sitter.Node",
+            "*navigationEnvelope"
+          ],
+          "result": "string"
+        },
+        {
+          "name": "enterNavigationNode",
+          "kind": "method",
+          "line": 91,
+          "endLine": 116,
+          "parameters": [
+            "*sitter.Node",
+            "navigationWalkContext"
+          ],
+          "result": "navigationWalkContext"
+        },
+        {
+          "name": "isCall",
+          "kind": "method",
+          "line": 267,
+          "endLine": 287,
+          "parameters": [
+            "string"
+          ],
+          "result": "bool"
+        },
+        {
+          "name": "isCallableNode",
+          "kind": "method",
+          "line": 165,
+          "endLine": 177,
+          "parameters": [
+            "*sitter.Node"
+          ],
+          "result": "bool"
+        },
+        {
+          "name": "isGoTypeMemberNode",
+          "kind": "method",
+          "line": 179,
+          "endLine": 184,
+          "parameters": [
+            "*sitter.Node"
+          ],
+          "result": "bool"
+        },
+        {
+          "name": "isNavigationContainer",
+          "kind": "method",
+          "line": 185,
+          "endLine": 193,
+          "parameters": [
+            "string"
+          ],
+          "result": "bool"
+        },
+        {
+          "name": "navigationDeclarationKind",
+          "kind": "method",
+          "line": 248,
+          "endLine": 265,
+          "parameters": [
+            "*sitter.Node",
+            "string"
+          ],
+          "result": "string"
+        },
+        {
+          "name": "navigationDeclarationRange",
+          "kind": "method",
+          "line": 118,
+          "endLine": 123,
+          "parameters": [
+            "*sitter.Node",
+            "*navigationEnvelope"
+          ],
+          "result": "tuple\u003cint,int\u003e"
+        },
+        {
+          "name": "recordNavigationCall",
+          "kind": "method",
+          "line": 125,
+          "endLine": 137,
+          "parameters": [
+            "*sitter.Node",
+            "*NavigationDeclaration"
+          ]
+        },
+        {
+          "name": "walk",
+          "kind": "method",
+          "line": 85,
+          "endLine": 89,
+          "parameters": [
+            "*sitter.Node",
+            "navigationWalkContext"
+          ]
+        },
+        {
+          "name": "walkNavigationChildren",
+          "kind": "method",
+          "line": 139,
+          "endLine": 152,
+          "parameters": [
+            "*sitter.Node",
+            "navigationWalkContext"
+          ]
+        },
+        {
+          "name": "wrapperEnvelope",
+          "kind": "method",
+          "line": 153,
+          "endLine": 163,
+          "parameters": [
+            "*sitter.Node",
+            "*navigationEnvelope"
+          ],
+          "result": "*navigationEnvelope"
+        },
+        {
+          "name": "calls",
+          "kind": "property",
+          "line": 70,
+          "endLine": 70,
+          "result": "[]NavigationCall"
+        },
+        {
+          "name": "content",
+          "kind": "property",
+          "line": 66,
+          "endLine": 66,
+          "result": "string"
+        },
+        {
+          "name": "declarations",
+          "kind": "property",
+          "line": 69,
+          "endLine": 69,
+          "result": "[]NavigationDeclaration"
+        },
+        {
+          "name": "language",
+          "kind": "property",
+          "line": 67,
+          "endLine": 67,
+          "result": "string"
+        },
+        {
+          "name": "rules",
+          "kind": "property",
+          "line": 68,
+          "endLine": 68,
+          "result": "*structureRules"
+        }
+      ]
+    },
+    {
+      "name": "navigationEnvelope",
+      "kind": "struct",
+      "file": "parser/navigation.go",
+      "line": 73,
+      "endLine": 77,
+      "underlyingType": "struct{start int;end int;assignedName string;}",
+      "members": [
+        {
+          "name": "assignedName",
+          "kind": "property",
+          "line": 76,
+          "endLine": 76,
+          "result": "string"
+        },
+        {
+          "name": "end",
+          "kind": "property",
+          "line": 75,
+          "endLine": 75,
+          "result": "int"
+        },
+        {
+          "name": "start",
+          "kind": "property",
+          "line": 74,
+          "endLine": 74,
+          "result": "int"
+        }
+      ]
+    },
+    {
+      "name": "navigationWalkContext",
+      "kind": "struct",
+      "file": "parser/navigation.go",
+      "line": 79,
+      "endLine": 83,
+      "underlyingType": "struct{envelope*navigationEnvelope;container string;callable*NavigationDeclaration;}",
+      "members": [
+        {
+          "name": "callable",
+          "kind": "property",
+          "line": 82,
+          "endLine": 82,
+          "result": "*NavigationDeclaration"
+        },
+        {
+          "name": "container",
+          "kind": "property",
+          "line": 81,
+          "endLine": 81,
+          "result": "string"
+        },
+        {
+          "name": "envelope",
+          "kind": "property",
+          "line": 80,
+          "endLine": 80,
+          "result": "*navigationEnvelope"
         }
       ]
     },
@@ -643,16 +1154,22 @@
       "name": "pooledParser",
       "kind": "struct",
       "file": "parser/tree_sitter.go",
+      "line": 21,
+      "endLine": 24,
       "underlyingType": "struct{p*sitter.Parser;lang*sitter.Language;}",
       "members": [
         {
           "name": "lang",
           "kind": "property",
+          "line": 23,
+          "endLine": 23,
           "result": "*sitter.Language"
         },
         {
           "name": "p",
           "kind": "property",
+          "line": 22,
+          "endLine": 22,
           "result": "*sitter.Parser"
         }
       ]
@@ -661,21 +1178,29 @@
       "name": "pythonLanguage",
       "kind": "struct",
       "file": "parser/language_python.go",
+      "line": 8,
+      "endLine": 11,
       "underlyingType": "struct{grammar*sitter.Language;rules structureRules;}",
       "members": [
         {
           "name": "Grammar",
           "kind": "method",
+          "line": 32,
+          "endLine": 32,
           "result": "*sitter.Language"
         },
         {
           "name": "ID",
           "kind": "method",
+          "line": 31,
+          "endLine": 31,
           "result": "string"
         },
         {
           "name": "Outline",
           "kind": "method",
+          "line": 34,
+          "endLine": 36,
           "parameters": [
             "*sitter.Node",
             "string"
@@ -685,16 +1210,22 @@
         {
           "name": "Rules",
           "kind": "method",
+          "line": 33,
+          "endLine": 33,
           "result": "*structureRules"
         },
         {
           "name": "grammar",
           "kind": "property",
+          "line": 9,
+          "endLine": 9,
           "result": "*sitter.Language"
         },
         {
           "name": "rules",
           "kind": "property",
+          "line": 10,
+          "endLine": 10,
           "result": "structureRules"
         }
       ]
@@ -703,21 +1234,29 @@
       "name": "rustLanguage",
       "kind": "struct",
       "file": "parser/language_rust.go",
+      "line": 8,
+      "endLine": 11,
       "underlyingType": "struct{grammar*sitter.Language;rules structureRules;}",
       "members": [
         {
           "name": "Grammar",
           "kind": "method",
+          "line": 32,
+          "endLine": 32,
           "result": "*sitter.Language"
         },
         {
           "name": "ID",
           "kind": "method",
+          "line": 31,
+          "endLine": 31,
           "result": "string"
         },
         {
           "name": "Outline",
           "kind": "method",
+          "line": 34,
+          "endLine": 36,
           "parameters": [
             "*sitter.Node",
             "string"
@@ -727,16 +1266,22 @@
         {
           "name": "Rules",
           "kind": "method",
+          "line": 33,
+          "endLine": 33,
           "result": "*structureRules"
         },
         {
           "name": "grammar",
           "kind": "property",
+          "line": 9,
+          "endLine": 9,
           "result": "*sitter.Language"
         },
         {
           "name": "rules",
           "kind": "property",
+          "line": 10,
+          "endLine": 10,
           "result": "structureRules"
         }
       ]
@@ -745,21 +1290,29 @@
       "name": "shellLanguage",
       "kind": "struct",
       "file": "parser/language_shell.go",
+      "line": 8,
+      "endLine": 11,
       "underlyingType": "struct{grammar*sitter.Language;rules structureRules;}",
       "members": [
         {
           "name": "Grammar",
           "kind": "method",
+          "line": 32,
+          "endLine": 32,
           "result": "*sitter.Language"
         },
         {
           "name": "ID",
           "kind": "method",
+          "line": 31,
+          "endLine": 31,
           "result": "string"
         },
         {
           "name": "Outline",
           "kind": "method",
+          "line": 34,
+          "endLine": 42,
           "parameters": [
             "*sitter.Node",
             "string"
@@ -769,16 +1322,22 @@
         {
           "name": "Rules",
           "kind": "method",
+          "line": 33,
+          "endLine": 33,
           "result": "*structureRules"
         },
         {
           "name": "grammar",
           "kind": "property",
+          "line": 9,
+          "endLine": 9,
           "result": "*sitter.Language"
         },
         {
           "name": "rules",
           "kind": "property",
+          "line": 10,
+          "endLine": 10,
           "result": "structureRules"
         }
       ]
@@ -787,11 +1346,15 @@
       "name": "stringSet",
       "kind": "type",
       "file": "parser/language.go",
+      "line": 5,
+      "endLine": 5,
       "underlyingType": "map[string]struct{}",
       "members": [
         {
           "name": "contains",
           "kind": "method",
+          "line": 15,
+          "endLine": 18,
           "parameters": [
             "string"
           ],
@@ -803,56 +1366,78 @@
       "name": "structureRules",
       "kind": "struct",
       "file": "parser/language.go",
+      "line": 20,
+      "endLine": 31,
       "underlyingType": "struct{structuralTypes stringSet;contextTypes stringSet;containerTypes stringSet;classDeclarationTypes stringSet;classBodyTypes stringSet;exportTypes stringSet;functionLikeTypes stringSet;blockTypes stringSet;jsxElementTypes stringSet;nameFieldCandidates stringSet;}",
       "members": [
         {
           "name": "blockTypes",
           "kind": "property",
+          "line": 28,
+          "endLine": 28,
           "result": "stringSet"
         },
         {
           "name": "classBodyTypes",
           "kind": "property",
+          "line": 25,
+          "endLine": 25,
           "result": "stringSet"
         },
         {
           "name": "classDeclarationTypes",
           "kind": "property",
+          "line": 24,
+          "endLine": 24,
           "result": "stringSet"
         },
         {
           "name": "containerTypes",
           "kind": "property",
+          "line": 23,
+          "endLine": 23,
           "result": "stringSet"
         },
         {
           "name": "contextTypes",
           "kind": "property",
+          "line": 22,
+          "endLine": 22,
           "result": "stringSet"
         },
         {
           "name": "exportTypes",
           "kind": "property",
+          "line": 26,
+          "endLine": 26,
           "result": "stringSet"
         },
         {
           "name": "functionLikeTypes",
           "kind": "property",
+          "line": 27,
+          "endLine": 27,
           "result": "stringSet"
         },
         {
           "name": "jsxElementTypes",
           "kind": "property",
+          "line": 29,
+          "endLine": 29,
           "result": "stringSet"
         },
         {
           "name": "nameFieldCandidates",
           "kind": "property",
+          "line": 30,
+          "endLine": 30,
           "result": "stringSet"
         },
         {
           "name": "structuralTypes",
           "kind": "property",
+          "line": 21,
+          "endLine": 21,
           "result": "stringSet"
         }
       ]
@@ -861,21 +1446,29 @@
       "name": "typeScriptLanguage",
       "kind": "struct",
       "file": "parser/language_typescript.go",
+      "line": 21,
+      "endLine": 25,
       "underlyingType": "struct{id string;grammar*sitter.Language;rules structureRules;}",
       "members": [
         {
           "name": "Grammar",
           "kind": "method",
+          "line": 51,
+          "endLine": 51,
           "result": "*sitter.Language"
         },
         {
           "name": "ID",
           "kind": "method",
+          "line": 50,
+          "endLine": 50,
           "result": "string"
         },
         {
           "name": "Outline",
           "kind": "method",
+          "line": 53,
+          "endLine": 55,
           "parameters": [
             "*sitter.Node",
             "string"
@@ -885,21 +1478,29 @@
         {
           "name": "Rules",
           "kind": "method",
+          "line": 52,
+          "endLine": 52,
           "result": "*structureRules"
         },
         {
           "name": "grammar",
           "kind": "property",
+          "line": 23,
+          "endLine": 23,
           "result": "*sitter.Language"
         },
         {
           "name": "id",
           "kind": "property",
+          "line": 22,
+          "endLine": 22,
           "result": "string"
         },
         {
           "name": "rules",
           "kind": "property",
+          "line": 24,
+          "endLine": 24,
           "result": "structureRules"
         }
       ]
@@ -910,6 +1511,8 @@
       "name": "BuildSegments",
       "kind": "function",
       "file": "parser/segments.go",
+      "line": 13,
+      "endLine": 26,
       "parameters": [
         "string",
         "string",
@@ -919,18 +1522,47 @@
       "result": "[]Segment"
     },
     {
+      "name": "DeclarationRangeAt",
+      "kind": "function",
+      "file": "parser/navigation.go",
+      "line": 49,
+      "endLine": 63,
+      "parameters": [
+        "string",
+        "string",
+        "int"
+      ],
+      "result": "tuple\u003cint,int,bool\u003e"
+    },
+    {
       "name": "LanguageFor",
       "kind": "function",
       "file": "parser/content.go",
+      "line": 10,
+      "endLine": 40,
       "parameters": [
         "string"
       ],
       "result": "string"
     },
     {
+      "name": "Navigation",
+      "kind": "function",
+      "file": "parser/navigation.go",
+      "line": 28,
+      "endLine": 46,
+      "parameters": [
+        "string",
+        "string"
+      ],
+      "result": "tuple\u003c[]NavigationDeclaration,[]NavigationCall\u003e"
+    },
+    {
       "name": "OutlineFile",
       "kind": "function",
       "file": "parser/outline.go",
+      "line": 14,
+      "endLine": 16,
       "parameters": [
         "string",
         "string"
@@ -941,6 +1573,8 @@
       "name": "OutlineFileDepth",
       "kind": "function",
       "file": "parser/outline.go",
+      "line": 21,
+      "endLine": 41,
       "parameters": [
         "string",
         "string",
@@ -963,6 +1597,20 @@
       "to": "Symbol",
       "kind": "association",
       "via": "field Symbols",
+      "cardinality": "many"
+    },
+    {
+      "from": "Navigation",
+      "to": "NavigationCall",
+      "kind": "dependency",
+      "via": "result 2",
+      "cardinality": "many"
+    },
+    {
+      "from": "Navigation",
+      "to": "NavigationDeclaration",
+      "kind": "dependency",
+      "via": "result 1",
       "cardinality": "many"
     },
     {
@@ -1194,6 +1842,111 @@
       "to": "Symbol",
       "kind": "association",
       "via": "field sym",
+      "cardinality": "one"
+    },
+    {
+      "from": "navigationCollector",
+      "to": "NavigationCall",
+      "kind": "association",
+      "via": "field calls",
+      "cardinality": "many"
+    },
+    {
+      "from": "navigationCollector",
+      "to": "NavigationDeclaration",
+      "kind": "association",
+      "via": "field declarations",
+      "cardinality": "many"
+    },
+    {
+      "from": "navigationCollector",
+      "to": "NavigationDeclaration",
+      "kind": "dependency",
+      "via": "method recordNavigationCall parameter 2",
+      "cardinality": "one"
+    },
+    {
+      "from": "navigationCollector",
+      "to": "navigationEnvelope",
+      "kind": "dependency",
+      "via": "method containerName parameter 2",
+      "cardinality": "one"
+    },
+    {
+      "from": "navigationCollector",
+      "to": "navigationEnvelope",
+      "kind": "dependency",
+      "via": "method declarationName parameter 2",
+      "cardinality": "one"
+    },
+    {
+      "from": "navigationCollector",
+      "to": "navigationEnvelope",
+      "kind": "dependency",
+      "via": "method navigationDeclarationRange parameter 2",
+      "cardinality": "one"
+    },
+    {
+      "from": "navigationCollector",
+      "to": "navigationEnvelope",
+      "kind": "dependency",
+      "via": "method wrapperEnvelope parameter 2",
+      "cardinality": "one"
+    },
+    {
+      "from": "navigationCollector",
+      "to": "navigationEnvelope",
+      "kind": "dependency",
+      "via": "method wrapperEnvelope result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "navigationCollector",
+      "to": "navigationWalkContext",
+      "kind": "dependency",
+      "via": "method enterNavigationNode parameter 2",
+      "cardinality": "one"
+    },
+    {
+      "from": "navigationCollector",
+      "to": "navigationWalkContext",
+      "kind": "dependency",
+      "via": "method enterNavigationNode result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "navigationCollector",
+      "to": "navigationWalkContext",
+      "kind": "dependency",
+      "via": "method walk parameter 2",
+      "cardinality": "one"
+    },
+    {
+      "from": "navigationCollector",
+      "to": "navigationWalkContext",
+      "kind": "dependency",
+      "via": "method walkNavigationChildren parameter 2",
+      "cardinality": "one"
+    },
+    {
+      "from": "navigationCollector",
+      "to": "structureRules",
+      "kind": "association",
+      "via": "field rules",
+      "cardinality": "one"
+    },
+    {
+      "from": "navigationWalkContext",
+      "to": "NavigationDeclaration",
+      "kind": "association",
+      "via": "field callable",
+      "cardinality": "one"
+    },
+    {
+      "from": "navigationWalkContext",
+      "to": "navigationEnvelope",
+      "kind": "association",
+      "via": "field envelope",
       "cardinality": "one"
     },
     {

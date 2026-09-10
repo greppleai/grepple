@@ -1,0 +1,6524 @@
+{
+  "formatVersion": 1,
+  "package": {
+    "name": "extract",
+    "importPath": "github.com/greppleai/grepple/extract",
+    "sourceDirectory": "extract",
+    "documentation": "Package extract validates and generates source-linked Mermaid structure and flow diagrams."
+  },
+  "scope": {
+    "types": "all",
+    "functions": "exported",
+    "variables": "excluded",
+    "constants": "excluded",
+    "tests": "excluded",
+    "buildTags": "syntactic-union-conflicts-rejected",
+    "syntacticBuildTagUnion": []
+  },
+  "summary": {
+    "sourceFiles": 22,
+    "declarations": 63,
+    "exportedTypes": 42,
+    "internalTypes": 21,
+    "members": 496,
+    "exportedFunctions": 26,
+    "fiberRoutes": 0,
+    "relations": 177
+  },
+  "semanticModelDigest": "sha256:83301c7b5be4cd152c76a6cd65f89b69db8b0e98c8f1572bb609f7cccaedce66",
+  "sourceFiles": [
+    {
+      "path": "extract/analyze.go"
+    },
+    {
+      "path": "extract/class.go"
+    },
+    {
+      "path": "extract/class_parser.go"
+    },
+    {
+      "path": "extract/files.go"
+    },
+    {
+      "path": "extract/flow.go"
+    },
+    {
+      "path": "extract/generate.go"
+    },
+    {
+      "path": "extract/go_analyze.go"
+    },
+    {
+      "path": "extract/go_expand.go"
+    },
+    {
+      "path": "extract/go_flow.go"
+    },
+    {
+      "path": "extract/go_generate_flow.go"
+    },
+    {
+      "path": "extract/go_language.go"
+    },
+    {
+      "path": "extract/go_type.go"
+    },
+    {
+      "path": "extract/language.go"
+    },
+    {
+      "path": "extract/package_bundle.go"
+    },
+    {
+      "path": "extract/package_bundle_go_relations.go"
+    },
+    {
+      "path": "extract/package_generate.go"
+    },
+    {
+      "path": "extract/scope.go"
+    },
+    {
+      "path": "extract/ts_flow.go"
+    },
+    {
+      "path": "extract/ts_generate.go"
+    },
+    {
+      "path": "extract/ts_generate_flow.go"
+    },
+    {
+      "path": "extract/typescript_language.go"
+    },
+    {
+      "path": "extract/workspace_bundle.go"
+    }
+  ],
+  "declarations": [
+    {
+      "name": "Analysis",
+      "kind": "struct",
+      "file": "extract/analyze.go",
+      "line": 77,
+      "endLine": 105,
+      "underlyingType": "struct{Declarations map[string]*Declaration;DeclarationVariants map[string]*Declaration;Functions map[string][]Member;Imports map[string][]Import;Exports,DefaultExports map[string]bool;ExportVariants,DefaultExportVariants map[string]bool;Symbols map[string]*Symbol;SymbolVariants map[string]*Symbol;TSDeclarations map[string]*Declaration;GoDeclarations map[string]*Declaration;GoTypeReferences map[string][]Location;GoFunctions map[string][]Member;TSSymbolIndex map[string]*Symbol;GoSymbolIndex map[string]*Symbol;GoPackageNames map[string]string;GoFiberRoutes[]FiberRoute;GoPackageImports map[string]map[string]string;GoImportPathIndex map[string]string;GoPackagePaths map[string]string;GoFallbackScopes map[string]string;TSModulePaths,SourcePaths map[string]string;TSModuleIndex map[string]string;TSImportBindings map[string]map[string]Import;TSDefaultExports map[string]string;TSExports map[string]map[string]bool;TSExportNames map[string]map[string]string;duplicateErrors[]string;}",
+      "members": [
+        {
+          "name": "DeclarationVariants",
+          "kind": "property",
+          "line": 79,
+          "endLine": 79,
+          "result": "map[string]*Declaration"
+        },
+        {
+          "name": "Declarations",
+          "kind": "property",
+          "line": 78,
+          "endLine": 78,
+          "result": "map[string]*Declaration"
+        },
+        {
+          "name": "DefaultExportVariants",
+          "kind": "property",
+          "line": 83,
+          "endLine": 83,
+          "result": "map[string]bool"
+        },
+        {
+          "name": "DefaultExports",
+          "kind": "property",
+          "line": 82,
+          "endLine": 82,
+          "result": "map[string]bool"
+        },
+        {
+          "name": "ExportVariants",
+          "kind": "property",
+          "line": 83,
+          "endLine": 83,
+          "result": "map[string]bool"
+        },
+        {
+          "name": "Exports",
+          "kind": "property",
+          "line": 82,
+          "endLine": 82,
+          "result": "map[string]bool"
+        },
+        {
+          "name": "Functions",
+          "kind": "property",
+          "line": 80,
+          "endLine": 80,
+          "result": "map[string][]Member"
+        },
+        {
+          "name": "GoDeclarations",
+          "kind": "property",
+          "line": 87,
+          "endLine": 87,
+          "result": "map[string]*Declaration"
+        },
+        {
+          "name": "GoFallbackScopes",
+          "kind": "property",
+          "line": 97,
+          "endLine": 97,
+          "result": "map[string]string"
+        },
+        {
+          "name": "GoFiberRoutes",
+          "kind": "property",
+          "line": 93,
+          "endLine": 93,
+          "result": "[]FiberRoute"
+        },
+        {
+          "name": "GoFunctions",
+          "kind": "property",
+          "line": 89,
+          "endLine": 89,
+          "result": "map[string][]Member"
+        },
+        {
+          "name": "GoImportPathIndex",
+          "kind": "property",
+          "line": 95,
+          "endLine": 95,
+          "result": "map[string]string"
+        },
+        {
+          "name": "GoPackageImports",
+          "kind": "property",
+          "line": 94,
+          "endLine": 94,
+          "result": "map[string]map[string]string"
+        },
+        {
+          "name": "GoPackageNames",
+          "kind": "property",
+          "line": 92,
+          "endLine": 92,
+          "result": "map[string]string"
+        },
+        {
+          "name": "GoPackagePaths",
+          "kind": "property",
+          "line": 96,
+          "endLine": 96,
+          "result": "map[string]string"
+        },
+        {
+          "name": "GoSymbolIndex",
+          "kind": "property",
+          "line": 91,
+          "endLine": 91,
+          "result": "map[string]*Symbol"
+        },
+        {
+          "name": "GoTypeReferences",
+          "kind": "property",
+          "line": 88,
+          "endLine": 88,
+          "result": "map[string][]Location"
+        },
+        {
+          "name": "Imports",
+          "kind": "property",
+          "line": 81,
+          "endLine": 81,
+          "result": "map[string][]Import"
+        },
+        {
+          "name": "SourcePaths",
+          "kind": "property",
+          "line": 98,
+          "endLine": 98,
+          "result": "map[string]string"
+        },
+        {
+          "name": "SymbolVariants",
+          "kind": "property",
+          "line": 85,
+          "endLine": 85,
+          "result": "map[string]*Symbol"
+        },
+        {
+          "name": "Symbols",
+          "kind": "property",
+          "line": 84,
+          "endLine": 84,
+          "result": "map[string]*Symbol"
+        },
+        {
+          "name": "TSDeclarations",
+          "kind": "property",
+          "line": 86,
+          "endLine": 86,
+          "result": "map[string]*Declaration"
+        },
+        {
+          "name": "TSDefaultExports",
+          "kind": "property",
+          "line": 101,
+          "endLine": 101,
+          "result": "map[string]string"
+        },
+        {
+          "name": "TSExportNames",
+          "kind": "property",
+          "line": 103,
+          "endLine": 103,
+          "result": "map[string]map[string]string"
+        },
+        {
+          "name": "TSExports",
+          "kind": "property",
+          "line": 102,
+          "endLine": 102,
+          "result": "map[string]map[string]bool"
+        },
+        {
+          "name": "TSImportBindings",
+          "kind": "property",
+          "line": 100,
+          "endLine": 100,
+          "result": "map[string]map[string]Import"
+        },
+        {
+          "name": "TSModuleIndex",
+          "kind": "property",
+          "line": 99,
+          "endLine": 99,
+          "result": "map[string]string"
+        },
+        {
+          "name": "TSModulePaths",
+          "kind": "property",
+          "line": 98,
+          "endLine": 98,
+          "result": "map[string]string"
+        },
+        {
+          "name": "TSSymbolIndex",
+          "kind": "property",
+          "line": 90,
+          "endLine": 90,
+          "result": "map[string]*Symbol"
+        },
+        {
+          "name": "duplicateErrors",
+          "kind": "property",
+          "line": 104,
+          "endLine": 104,
+          "result": "[]string"
+        }
+      ]
+    },
+    {
+      "name": "ClassDiagram",
+      "kind": "struct",
+      "file": "extract/class.go",
+      "line": 70,
+      "endLine": 84,
+      "underlyingType": "struct{Classes map[string]*DiagramClass;Order[]string;Relations[]Relation;Notes[]DiagramNote;Direction string;CompletePackage string;CompletePackageLine int;PackageDefault string;PackageDefaultLine int;LanguageDefault string;LanguageDefaultLine int;ExactDefault bool;ExactDefaultLine int;}",
+      "members": [
+        {
+          "name": "Classes",
+          "kind": "property",
+          "line": 71,
+          "endLine": 71,
+          "result": "map[string]*DiagramClass"
+        },
+        {
+          "name": "CompletePackage",
+          "kind": "property",
+          "line": 76,
+          "endLine": 76,
+          "result": "string"
+        },
+        {
+          "name": "CompletePackageLine",
+          "kind": "property",
+          "line": 77,
+          "endLine": 77,
+          "result": "int"
+        },
+        {
+          "name": "Direction",
+          "kind": "property",
+          "line": 75,
+          "endLine": 75,
+          "result": "string"
+        },
+        {
+          "name": "ExactDefault",
+          "kind": "property",
+          "line": 82,
+          "endLine": 82,
+          "result": "bool"
+        },
+        {
+          "name": "ExactDefaultLine",
+          "kind": "property",
+          "line": 83,
+          "endLine": 83,
+          "result": "int"
+        },
+        {
+          "name": "LanguageDefault",
+          "kind": "property",
+          "line": 80,
+          "endLine": 80,
+          "result": "string"
+        },
+        {
+          "name": "LanguageDefaultLine",
+          "kind": "property",
+          "line": 81,
+          "endLine": 81,
+          "result": "int"
+        },
+        {
+          "name": "Notes",
+          "kind": "property",
+          "line": 74,
+          "endLine": 74,
+          "result": "[]DiagramNote"
+        },
+        {
+          "name": "Order",
+          "kind": "property",
+          "line": 72,
+          "endLine": 72,
+          "result": "[]string"
+        },
+        {
+          "name": "PackageDefault",
+          "kind": "property",
+          "line": 78,
+          "endLine": 78,
+          "result": "string"
+        },
+        {
+          "name": "PackageDefaultLine",
+          "kind": "property",
+          "line": 79,
+          "endLine": 79,
+          "result": "int"
+        },
+        {
+          "name": "Relations",
+          "kind": "property",
+          "line": 73,
+          "endLine": 73,
+          "result": "[]Relation"
+        }
+      ]
+    },
+    {
+      "name": "Declaration",
+      "kind": "struct",
+      "file": "extract/analyze.go",
+      "line": 39,
+      "endLine": 47,
+      "underlyingType": "struct{Name,Kind,Language,Package,PackageID,ModuleID,File string;Underlying string;Members[]Member;Extends,Implements map[string]bool;StructTags map[string]GoStructTag;FileLocal bool;Location Location;}",
+      "members": [
+        {
+          "name": "Extends",
+          "kind": "property",
+          "line": 43,
+          "endLine": 43,
+          "result": "map[string]bool"
+        },
+        {
+          "name": "File",
+          "kind": "property",
+          "line": 40,
+          "endLine": 40,
+          "result": "string"
+        },
+        {
+          "name": "FileLocal",
+          "kind": "property",
+          "line": 45,
+          "endLine": 45,
+          "result": "bool"
+        },
+        {
+          "name": "Implements",
+          "kind": "property",
+          "line": 43,
+          "endLine": 43,
+          "result": "map[string]bool"
+        },
+        {
+          "name": "Kind",
+          "kind": "property",
+          "line": 40,
+          "endLine": 40,
+          "result": "string"
+        },
+        {
+          "name": "Language",
+          "kind": "property",
+          "line": 40,
+          "endLine": 40,
+          "result": "string"
+        },
+        {
+          "name": "Location",
+          "kind": "property",
+          "line": 46,
+          "endLine": 46,
+          "result": "Location"
+        },
+        {
+          "name": "Members",
+          "kind": "property",
+          "line": 42,
+          "endLine": 42,
+          "result": "[]Member"
+        },
+        {
+          "name": "ModuleID",
+          "kind": "property",
+          "line": 40,
+          "endLine": 40,
+          "result": "string"
+        },
+        {
+          "name": "Name",
+          "kind": "property",
+          "line": 40,
+          "endLine": 40,
+          "result": "string"
+        },
+        {
+          "name": "Package",
+          "kind": "property",
+          "line": 40,
+          "endLine": 40,
+          "result": "string"
+        },
+        {
+          "name": "PackageID",
+          "kind": "property",
+          "line": 40,
+          "endLine": 40,
+          "result": "string"
+        },
+        {
+          "name": "StructTags",
+          "kind": "property",
+          "line": 44,
+          "endLine": 44,
+          "result": "map[string]GoStructTag"
+        },
+        {
+          "name": "Underlying",
+          "kind": "property",
+          "line": 41,
+          "endLine": 41,
+          "result": "string"
+        }
+      ]
+    },
+    {
+      "name": "Diagnostic",
+      "kind": "struct",
+      "file": "extract/class.go",
+      "line": 14,
+      "endLine": 20,
+      "underlyingType": "struct{Line int;Message string;sortPath,sortName string;sortLine int;}",
+      "members": [
+        {
+          "name": "Line",
+          "kind": "property",
+          "line": 15,
+          "endLine": 15,
+          "result": "int"
+        },
+        {
+          "name": "Message",
+          "kind": "property",
+          "line": 16,
+          "endLine": 16,
+          "result": "string"
+        },
+        {
+          "name": "sortLine",
+          "kind": "property",
+          "line": 19,
+          "endLine": 19,
+          "result": "int"
+        },
+        {
+          "name": "sortName",
+          "kind": "property",
+          "line": 18,
+          "endLine": 18,
+          "result": "string"
+        },
+        {
+          "name": "sortPath",
+          "kind": "property",
+          "line": 18,
+          "endLine": 18,
+          "result": "string"
+        }
+      ]
+    },
+    {
+      "name": "DiagramClass",
+      "kind": "struct",
+      "file": "extract/class.go",
+      "line": 41,
+      "endLine": 52,
+      "underlyingType": "struct{Name,DisplayLabel,Kind,Language,Package,Module,File,Underlying string;Members[]DiagramMember;StructTags map[string]StructTagRequirement;Routes[]RouteRequirement;Line,FileLine,FileLocalLine,UnderlyingLine int;PackageLine,ModuleLine,ImportLine int;DefaultExportLine int;Function,Exported,DefaultExport,Async,Import bool;Exact,FileLocal bool;ImportSource string;}",
+      "members": [
+        {
+          "name": "Async",
+          "kind": "property",
+          "line": 49,
+          "endLine": 49,
+          "result": "bool"
+        },
+        {
+          "name": "DefaultExport",
+          "kind": "property",
+          "line": 49,
+          "endLine": 49,
+          "result": "bool"
+        },
+        {
+          "name": "DefaultExportLine",
+          "kind": "property",
+          "line": 48,
+          "endLine": 48,
+          "result": "int"
+        },
+        {
+          "name": "DisplayLabel",
+          "kind": "property",
+          "line": 42,
+          "endLine": 42,
+          "result": "string"
+        },
+        {
+          "name": "Exact",
+          "kind": "property",
+          "line": 50,
+          "endLine": 50,
+          "result": "bool"
+        },
+        {
+          "name": "Exported",
+          "kind": "property",
+          "line": 49,
+          "endLine": 49,
+          "result": "bool"
+        },
+        {
+          "name": "File",
+          "kind": "property",
+          "line": 42,
+          "endLine": 42,
+          "result": "string"
+        },
+        {
+          "name": "FileLine",
+          "kind": "property",
+          "line": 46,
+          "endLine": 46,
+          "result": "int"
+        },
+        {
+          "name": "FileLocal",
+          "kind": "property",
+          "line": 50,
+          "endLine": 50,
+          "result": "bool"
+        },
+        {
+          "name": "FileLocalLine",
+          "kind": "property",
+          "line": 46,
+          "endLine": 46,
+          "result": "int"
+        },
+        {
+          "name": "Function",
+          "kind": "property",
+          "line": 49,
+          "endLine": 49,
+          "result": "bool"
+        },
+        {
+          "name": "Import",
+          "kind": "property",
+          "line": 49,
+          "endLine": 49,
+          "result": "bool"
+        },
+        {
+          "name": "ImportLine",
+          "kind": "property",
+          "line": 47,
+          "endLine": 47,
+          "result": "int"
+        },
+        {
+          "name": "ImportSource",
+          "kind": "property",
+          "line": 51,
+          "endLine": 51,
+          "result": "string"
+        },
+        {
+          "name": "Kind",
+          "kind": "property",
+          "line": 42,
+          "endLine": 42,
+          "result": "string"
+        },
+        {
+          "name": "Language",
+          "kind": "property",
+          "line": 42,
+          "endLine": 42,
+          "result": "string"
+        },
+        {
+          "name": "Line",
+          "kind": "property",
+          "line": 46,
+          "endLine": 46,
+          "result": "int"
+        },
+        {
+          "name": "Members",
+          "kind": "property",
+          "line": 43,
+          "endLine": 43,
+          "result": "[]DiagramMember"
+        },
+        {
+          "name": "Module",
+          "kind": "property",
+          "line": 42,
+          "endLine": 42,
+          "result": "string"
+        },
+        {
+          "name": "ModuleLine",
+          "kind": "property",
+          "line": 47,
+          "endLine": 47,
+          "result": "int"
+        },
+        {
+          "name": "Name",
+          "kind": "property",
+          "line": 42,
+          "endLine": 42,
+          "result": "string"
+        },
+        {
+          "name": "Package",
+          "kind": "property",
+          "line": 42,
+          "endLine": 42,
+          "result": "string"
+        },
+        {
+          "name": "PackageLine",
+          "kind": "property",
+          "line": 47,
+          "endLine": 47,
+          "result": "int"
+        },
+        {
+          "name": "Routes",
+          "kind": "property",
+          "line": 45,
+          "endLine": 45,
+          "result": "[]RouteRequirement"
+        },
+        {
+          "name": "StructTags",
+          "kind": "property",
+          "line": 44,
+          "endLine": 44,
+          "result": "map[string]StructTagRequirement"
+        },
+        {
+          "name": "Underlying",
+          "kind": "property",
+          "line": 42,
+          "endLine": 42,
+          "result": "string"
+        },
+        {
+          "name": "UnderlyingLine",
+          "kind": "property",
+          "line": 46,
+          "endLine": 46,
+          "result": "int"
+        }
+      ]
+    },
+    {
+      "name": "DiagramMember",
+      "kind": "struct",
+      "file": "extract/class.go",
+      "line": 23,
+      "endLine": 26,
+      "underlyingType": "struct{Member;Line int;}",
+      "members": [
+        {
+          "name": "Line",
+          "kind": "property",
+          "line": 25,
+          "endLine": 25,
+          "result": "int"
+        },
+        {
+          "name": "Async",
+          "kind": "property",
+          "file": "extract/analyze.go",
+          "line": 20,
+          "endLine": 20,
+          "result": "bool"
+        },
+        {
+          "name": "File",
+          "kind": "property",
+          "file": "extract/analyze.go",
+          "line": 19,
+          "endLine": 19,
+          "result": "string"
+        },
+        {
+          "name": "Kind",
+          "kind": "property",
+          "file": "extract/analyze.go",
+          "line": 19,
+          "endLine": 19,
+          "result": "string"
+        },
+        {
+          "name": "Language",
+          "kind": "property",
+          "file": "extract/analyze.go",
+          "line": 19,
+          "endLine": 19,
+          "result": "string"
+        },
+        {
+          "name": "Location",
+          "kind": "property",
+          "file": "extract/analyze.go",
+          "line": 22,
+          "endLine": 22,
+          "result": "Location"
+        },
+        {
+          "name": "ModuleID",
+          "kind": "property",
+          "file": "extract/analyze.go",
+          "line": 19,
+          "endLine": 19,
+          "result": "string"
+        },
+        {
+          "name": "Name",
+          "kind": "property",
+          "file": "extract/analyze.go",
+          "line": 19,
+          "endLine": 19,
+          "result": "string"
+        },
+        {
+          "name": "Package",
+          "kind": "property",
+          "file": "extract/analyze.go",
+          "line": 19,
+          "endLine": 19,
+          "result": "string"
+        },
+        {
+          "name": "PackageID",
+          "kind": "property",
+          "file": "extract/analyze.go",
+          "line": 19,
+          "endLine": 19,
+          "result": "string"
+        },
+        {
+          "name": "Parameters",
+          "kind": "property",
+          "file": "extract/analyze.go",
+          "line": 21,
+          "endLine": 21,
+          "result": "[]string"
+        },
+        {
+          "name": "Static",
+          "kind": "property",
+          "file": "extract/analyze.go",
+          "line": 20,
+          "endLine": 20,
+          "result": "bool"
+        },
+        {
+          "name": "Type",
+          "kind": "property",
+          "file": "extract/analyze.go",
+          "line": 19,
+          "endLine": 19,
+          "result": "string"
+        },
+        {
+          "name": "Visibility",
+          "kind": "property",
+          "file": "extract/analyze.go",
+          "line": 19,
+          "endLine": 19,
+          "result": "string"
+        }
+      ]
+    },
+    {
+      "name": "DiagramNote",
+      "kind": "struct",
+      "file": "extract/class.go",
+      "line": 63,
+      "endLine": 67,
+      "underlyingType": "struct{Text string;Target string;Line int;}",
+      "members": [
+        {
+          "name": "Line",
+          "kind": "property",
+          "line": 66,
+          "endLine": 66,
+          "result": "int"
+        },
+        {
+          "name": "Target",
+          "kind": "property",
+          "line": 65,
+          "endLine": 65,
+          "result": "string"
+        },
+        {
+          "name": "Text",
+          "kind": "property",
+          "line": 64,
+          "endLine": 64,
+          "result": "string"
+        }
+      ]
+    },
+    {
+      "name": "FiberRoute",
+      "kind": "struct",
+      "file": "extract/analyze.go",
+      "line": 26,
+      "endLine": 29,
+      "underlyingType": "struct{Method,Path,Handler,PackageID string;Location Location;}",
+      "members": [
+        {
+          "name": "Handler",
+          "kind": "property",
+          "line": 27,
+          "endLine": 27,
+          "result": "string"
+        },
+        {
+          "name": "Location",
+          "kind": "property",
+          "line": 28,
+          "endLine": 28,
+          "result": "Location"
+        },
+        {
+          "name": "Method",
+          "kind": "property",
+          "line": 27,
+          "endLine": 27,
+          "result": "string"
+        },
+        {
+          "name": "PackageID",
+          "kind": "property",
+          "line": 27,
+          "endLine": 27,
+          "result": "string"
+        },
+        {
+          "name": "Path",
+          "kind": "property",
+          "line": 27,
+          "endLine": 27,
+          "result": "string"
+        }
+      ]
+    },
+    {
+      "name": "FlowEdge",
+      "kind": "struct",
+      "file": "extract/flow.go",
+      "line": 20,
+      "endLine": 23,
+      "underlyingType": "struct{Source,Target,Operator,Label string;Line int;}",
+      "members": [
+        {
+          "name": "Label",
+          "kind": "property",
+          "line": 21,
+          "endLine": 21,
+          "result": "string"
+        },
+        {
+          "name": "Line",
+          "kind": "property",
+          "line": 22,
+          "endLine": 22,
+          "result": "int"
+        },
+        {
+          "name": "Operator",
+          "kind": "property",
+          "line": 21,
+          "endLine": 21,
+          "result": "string"
+        },
+        {
+          "name": "Source",
+          "kind": "property",
+          "line": 21,
+          "endLine": 21,
+          "result": "string"
+        },
+        {
+          "name": "Target",
+          "kind": "property",
+          "line": 21,
+          "endLine": 21,
+          "result": "string"
+        }
+      ]
+    },
+    {
+      "name": "FlowNode",
+      "kind": "struct",
+      "file": "extract/flow.go",
+      "line": 11,
+      "endLine": 17,
+      "underlyingType": "struct{ID,Symbol,Language,Package,Module string;Line int;Concept bool;symbolLine,languageLine int;packageLine,moduleLine,conceptLine int;}",
+      "members": [
+        {
+          "name": "Concept",
+          "kind": "property",
+          "line": 14,
+          "endLine": 14,
+          "result": "bool"
+        },
+        {
+          "name": "ID",
+          "kind": "property",
+          "line": 12,
+          "endLine": 12,
+          "result": "string"
+        },
+        {
+          "name": "Language",
+          "kind": "property",
+          "line": 12,
+          "endLine": 12,
+          "result": "string"
+        },
+        {
+          "name": "Line",
+          "kind": "property",
+          "line": 13,
+          "endLine": 13,
+          "result": "int"
+        },
+        {
+          "name": "Module",
+          "kind": "property",
+          "line": 12,
+          "endLine": 12,
+          "result": "string"
+        },
+        {
+          "name": "Package",
+          "kind": "property",
+          "line": 12,
+          "endLine": 12,
+          "result": "string"
+        },
+        {
+          "name": "Symbol",
+          "kind": "property",
+          "line": 12,
+          "endLine": 12,
+          "result": "string"
+        },
+        {
+          "name": "conceptLine",
+          "kind": "property",
+          "line": 16,
+          "endLine": 16,
+          "result": "int"
+        },
+        {
+          "name": "languageLine",
+          "kind": "property",
+          "line": 15,
+          "endLine": 15,
+          "result": "int"
+        },
+        {
+          "name": "moduleLine",
+          "kind": "property",
+          "line": 16,
+          "endLine": 16,
+          "result": "int"
+        },
+        {
+          "name": "packageLine",
+          "kind": "property",
+          "line": 16,
+          "endLine": 16,
+          "result": "int"
+        },
+        {
+          "name": "symbolLine",
+          "kind": "property",
+          "line": 15,
+          "endLine": 15,
+          "result": "int"
+        }
+      ]
+    },
+    {
+      "name": "Flowchart",
+      "kind": "struct",
+      "file": "extract/flow.go",
+      "line": 26,
+      "endLine": 30,
+      "underlyingType": "struct{Nodes map[string]*FlowNode;Order[]string;Edges[]FlowEdge;}",
+      "members": [
+        {
+          "name": "Edges",
+          "kind": "property",
+          "line": 29,
+          "endLine": 29,
+          "result": "[]FlowEdge"
+        },
+        {
+          "name": "Nodes",
+          "kind": "property",
+          "line": 27,
+          "endLine": 27,
+          "result": "map[string]*FlowNode"
+        },
+        {
+          "name": "Order",
+          "kind": "property",
+          "line": 28,
+          "endLine": 28,
+          "result": "[]string"
+        }
+      ]
+    },
+    {
+      "name": "GenerateOptions",
+      "kind": "struct",
+      "file": "extract/generate.go",
+      "line": 11,
+      "endLine": 15,
+      "underlyingType": "struct{Depth,MaxNodes int;DepthSet bool;}",
+      "members": [
+        {
+          "name": "Depth",
+          "kind": "property",
+          "line": 12,
+          "endLine": 12,
+          "result": "int"
+        },
+        {
+          "name": "DepthSet",
+          "kind": "property",
+          "line": 14,
+          "endLine": 14,
+          "result": "bool"
+        },
+        {
+          "name": "MaxNodes",
+          "kind": "property",
+          "line": 12,
+          "endLine": 12,
+          "result": "int"
+        }
+      ]
+    },
+    {
+      "name": "GoStructTag",
+      "kind": "struct",
+      "file": "extract/analyze.go",
+      "line": 33,
+      "endLine": 36,
+      "underlyingType": "struct{Value string;Present bool;}",
+      "members": [
+        {
+          "name": "Present",
+          "kind": "property",
+          "line": 35,
+          "endLine": 35,
+          "result": "bool"
+        },
+        {
+          "name": "Value",
+          "kind": "property",
+          "line": 34,
+          "endLine": 34,
+          "result": "string"
+        }
+      ]
+    },
+    {
+      "name": "Import",
+      "kind": "struct",
+      "file": "extract/analyze.go",
+      "line": 50,
+      "endLine": 54,
+      "underlyingType": "struct{Source,Imported,Resolved,ModuleID,ImporterModuleID,File string;Default,TypeOnly bool;Language,Package,PackageID string;}",
+      "members": [
+        {
+          "name": "Default",
+          "kind": "property",
+          "line": 52,
+          "endLine": 52,
+          "result": "bool"
+        },
+        {
+          "name": "File",
+          "kind": "property",
+          "line": 51,
+          "endLine": 51,
+          "result": "string"
+        },
+        {
+          "name": "Imported",
+          "kind": "property",
+          "line": 51,
+          "endLine": 51,
+          "result": "string"
+        },
+        {
+          "name": "ImporterModuleID",
+          "kind": "property",
+          "line": 51,
+          "endLine": 51,
+          "result": "string"
+        },
+        {
+          "name": "Language",
+          "kind": "property",
+          "line": 53,
+          "endLine": 53,
+          "result": "string"
+        },
+        {
+          "name": "ModuleID",
+          "kind": "property",
+          "line": 51,
+          "endLine": 51,
+          "result": "string"
+        },
+        {
+          "name": "Package",
+          "kind": "property",
+          "line": 53,
+          "endLine": 53,
+          "result": "string"
+        },
+        {
+          "name": "PackageID",
+          "kind": "property",
+          "line": 53,
+          "endLine": 53,
+          "result": "string"
+        },
+        {
+          "name": "Resolved",
+          "kind": "property",
+          "line": 51,
+          "endLine": 51,
+          "result": "string"
+        },
+        {
+          "name": "Source",
+          "kind": "property",
+          "line": 51,
+          "endLine": 51,
+          "result": "string"
+        },
+        {
+          "name": "TypeOnly",
+          "kind": "property",
+          "line": 52,
+          "endLine": 52,
+          "result": "bool"
+        }
+      ]
+    },
+    {
+      "name": "Language",
+      "kind": "struct",
+      "file": "extract/language.go",
+      "line": 11,
+      "endLine": 14,
+      "underlyingType": "struct{ID string;Extensions[]string;}",
+      "members": [
+        {
+          "name": "Extensions",
+          "kind": "property",
+          "line": 13,
+          "endLine": 13,
+          "result": "[]string"
+        },
+        {
+          "name": "ID",
+          "kind": "property",
+          "line": 12,
+          "endLine": 12,
+          "result": "string"
+        }
+      ]
+    },
+    {
+      "name": "Location",
+      "kind": "struct",
+      "file": "extract/analyze.go",
+      "line": 57,
+      "endLine": 61,
+      "underlyingType": "struct{Path string;Line,Column int;EndLine,EndColumn int;}",
+      "members": [
+        {
+          "name": "Column",
+          "kind": "property",
+          "line": 59,
+          "endLine": 59,
+          "result": "int"
+        },
+        {
+          "name": "EndColumn",
+          "kind": "property",
+          "line": 60,
+          "endLine": 60,
+          "result": "int"
+        },
+        {
+          "name": "EndLine",
+          "kind": "property",
+          "line": 60,
+          "endLine": 60,
+          "result": "int"
+        },
+        {
+          "name": "Line",
+          "kind": "property",
+          "line": 59,
+          "endLine": 59,
+          "result": "int"
+        },
+        {
+          "name": "Path",
+          "kind": "property",
+          "line": 58,
+          "endLine": 58,
+          "result": "string"
+        }
+      ]
+    },
+    {
+      "name": "Member",
+      "kind": "struct",
+      "file": "extract/analyze.go",
+      "line": 18,
+      "endLine": 23,
+      "underlyingType": "struct{Kind,Name,Visibility,Type,Language,Package,PackageID,ModuleID,File string;Static,Async bool;Parameters[]string;Location Location;}",
+      "members": [
+        {
+          "name": "Async",
+          "kind": "property",
+          "line": 20,
+          "endLine": 20,
+          "result": "bool"
+        },
+        {
+          "name": "File",
+          "kind": "property",
+          "line": 19,
+          "endLine": 19,
+          "result": "string"
+        },
+        {
+          "name": "Kind",
+          "kind": "property",
+          "line": 19,
+          "endLine": 19,
+          "result": "string"
+        },
+        {
+          "name": "Language",
+          "kind": "property",
+          "line": 19,
+          "endLine": 19,
+          "result": "string"
+        },
+        {
+          "name": "Location",
+          "kind": "property",
+          "line": 22,
+          "endLine": 22,
+          "result": "Location"
+        },
+        {
+          "name": "ModuleID",
+          "kind": "property",
+          "line": 19,
+          "endLine": 19,
+          "result": "string"
+        },
+        {
+          "name": "Name",
+          "kind": "property",
+          "line": 19,
+          "endLine": 19,
+          "result": "string"
+        },
+        {
+          "name": "Package",
+          "kind": "property",
+          "line": 19,
+          "endLine": 19,
+          "result": "string"
+        },
+        {
+          "name": "PackageID",
+          "kind": "property",
+          "line": 19,
+          "endLine": 19,
+          "result": "string"
+        },
+        {
+          "name": "Parameters",
+          "kind": "property",
+          "line": 21,
+          "endLine": 21,
+          "result": "[]string"
+        },
+        {
+          "name": "Static",
+          "kind": "property",
+          "line": 20,
+          "endLine": 20,
+          "result": "bool"
+        },
+        {
+          "name": "Type",
+          "kind": "property",
+          "line": 19,
+          "endLine": 19,
+          "result": "string"
+        },
+        {
+          "name": "Visibility",
+          "kind": "property",
+          "line": 19,
+          "endLine": 19,
+          "result": "string"
+        }
+      ]
+    },
+    {
+      "name": "PackageBundle",
+      "kind": "struct",
+      "file": "extract/package_bundle.go",
+      "line": 126,
+      "endLine": 130,
+      "underlyingType": "struct{Manifest[]byte;Overview[]byte;Structure[]byte;}",
+      "members": [
+        {
+          "name": "Manifest",
+          "kind": "property",
+          "line": 127,
+          "endLine": 127,
+          "result": "[]byte"
+        },
+        {
+          "name": "Overview",
+          "kind": "property",
+          "line": 128,
+          "endLine": 128,
+          "result": "[]byte"
+        },
+        {
+          "name": "Structure",
+          "kind": "property",
+          "line": 129,
+          "endLine": 129,
+          "result": "[]byte"
+        }
+      ]
+    },
+    {
+      "name": "PackageDeclaration",
+      "kind": "struct",
+      "file": "extract/package_bundle.go",
+      "line": 66,
+      "endLine": 75,
+      "underlyingType": "struct{Name string`json:\"name\"`;Kind string`json:\"kind\"`;File string`json:\"file\"`;Line int`json:\"line,omitempty\"`;EndLine int`json:\"endLine,omitempty\"`;FileLocal bool`json:\"fileLocal,omitempty\"`;Underlying string`json:\"underlyingType\"`;Members[]PackageMember`json:\"members,omitempty\"`;}",
+      "members": [
+        {
+          "name": "EndLine",
+          "kind": "property",
+          "line": 71,
+          "endLine": 71,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"endLine,omitempty\""
+          }
+        },
+        {
+          "name": "File",
+          "kind": "property",
+          "line": 69,
+          "endLine": 69,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"file\""
+          }
+        },
+        {
+          "name": "FileLocal",
+          "kind": "property",
+          "line": 72,
+          "endLine": 72,
+          "result": "bool",
+          "structTag": {
+            "value": "json:\"fileLocal,omitempty\""
+          }
+        },
+        {
+          "name": "Kind",
+          "kind": "property",
+          "line": 68,
+          "endLine": 68,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"kind\""
+          }
+        },
+        {
+          "name": "Line",
+          "kind": "property",
+          "line": 70,
+          "endLine": 70,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"line,omitempty\""
+          }
+        },
+        {
+          "name": "Members",
+          "kind": "property",
+          "line": 74,
+          "endLine": 74,
+          "result": "[]PackageMember",
+          "structTag": {
+            "value": "json:\"members,omitempty\""
+          }
+        },
+        {
+          "name": "Name",
+          "kind": "property",
+          "line": 67,
+          "endLine": 67,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"name\""
+          }
+        },
+        {
+          "name": "Underlying",
+          "kind": "property",
+          "line": 73,
+          "endLine": 73,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"underlyingType\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "PackageIR",
+      "kind": "struct",
+      "file": "extract/package_bundle.go",
+      "line": 27,
+      "endLine": 38,
+      "underlyingType": "struct{FormatVersion int`json:\"formatVersion\"`;Package PackageIdentity`json:\"package\"`;Scope PackageScope`json:\"scope\"`;Summary PackageSummary`json:\"summary\"`;SemanticModelDigest string`json:\"semanticModelDigest\"`;SourceFiles[]PackageSourceFile`json:\"sourceFiles\"`;Declarations[]PackageDeclaration`json:\"declarations\"`;ExportedFunctions[]PackageMember`json:\"exportedFunctions\"`;Routes[]PackageRoute`json:\"fiberRoutes\"`;Relations[]PackageRelation`json:\"relations\"`;}",
+      "members": [
+        {
+          "name": "Declarations",
+          "kind": "property",
+          "line": 34,
+          "endLine": 34,
+          "result": "[]PackageDeclaration",
+          "structTag": {
+            "value": "json:\"declarations\""
+          }
+        },
+        {
+          "name": "ExportedFunctions",
+          "kind": "property",
+          "line": 35,
+          "endLine": 35,
+          "result": "[]PackageMember",
+          "structTag": {
+            "value": "json:\"exportedFunctions\""
+          }
+        },
+        {
+          "name": "FormatVersion",
+          "kind": "property",
+          "line": 28,
+          "endLine": 28,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"formatVersion\""
+          }
+        },
+        {
+          "name": "Package",
+          "kind": "property",
+          "line": 29,
+          "endLine": 29,
+          "result": "PackageIdentity",
+          "structTag": {
+            "value": "json:\"package\""
+          }
+        },
+        {
+          "name": "Relations",
+          "kind": "property",
+          "line": 37,
+          "endLine": 37,
+          "result": "[]PackageRelation",
+          "structTag": {
+            "value": "json:\"relations\""
+          }
+        },
+        {
+          "name": "Routes",
+          "kind": "property",
+          "line": 36,
+          "endLine": 36,
+          "result": "[]PackageRoute",
+          "structTag": {
+            "value": "json:\"fiberRoutes\""
+          }
+        },
+        {
+          "name": "Scope",
+          "kind": "property",
+          "line": 30,
+          "endLine": 30,
+          "result": "PackageScope",
+          "structTag": {
+            "value": "json:\"scope\""
+          }
+        },
+        {
+          "name": "SemanticModelDigest",
+          "kind": "property",
+          "line": 32,
+          "endLine": 32,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"semanticModelDigest\""
+          }
+        },
+        {
+          "name": "SourceFiles",
+          "kind": "property",
+          "line": 33,
+          "endLine": 33,
+          "result": "[]PackageSourceFile",
+          "structTag": {
+            "value": "json:\"sourceFiles\""
+          }
+        },
+        {
+          "name": "Summary",
+          "kind": "property",
+          "line": 31,
+          "endLine": 31,
+          "result": "PackageSummary",
+          "structTag": {
+            "value": "json:\"summary\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "PackageIdentity",
+      "kind": "struct",
+      "file": "extract/package_bundle.go",
+      "line": 41,
+      "endLine": 46,
+      "underlyingType": "struct{Name string`json:\"name\"`;ImportPath string`json:\"importPath\"`;SourceDirectory string`json:\"sourceDirectory\"`;Documentation string`json:\"documentation,omitempty\"`;}",
+      "members": [
+        {
+          "name": "Documentation",
+          "kind": "property",
+          "line": 45,
+          "endLine": 45,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"documentation,omitempty\""
+          }
+        },
+        {
+          "name": "ImportPath",
+          "kind": "property",
+          "line": 43,
+          "endLine": 43,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"importPath\""
+          }
+        },
+        {
+          "name": "Name",
+          "kind": "property",
+          "line": 42,
+          "endLine": 42,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"name\""
+          }
+        },
+        {
+          "name": "SourceDirectory",
+          "kind": "property",
+          "line": 44,
+          "endLine": 44,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"sourceDirectory\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "PackageMember",
+      "kind": "struct",
+      "file": "extract/package_bundle.go",
+      "line": 78,
+      "endLine": 87,
+      "underlyingType": "struct{Name string`json:\"name\"`;Kind string`json:\"kind\"`;File string`json:\"file,omitempty\"`;Line int`json:\"line,omitempty\"`;EndLine int`json:\"endLine,omitempty\"`;Parameters[]string`json:\"parameters,omitempty\"`;Result string`json:\"result,omitempty\"`;StructTag*PackageStructTag`json:\"structTag,omitempty\"`;}",
+      "members": [
+        {
+          "name": "EndLine",
+          "kind": "property",
+          "line": 83,
+          "endLine": 83,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"endLine,omitempty\""
+          }
+        },
+        {
+          "name": "File",
+          "kind": "property",
+          "line": 81,
+          "endLine": 81,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"file,omitempty\""
+          }
+        },
+        {
+          "name": "Kind",
+          "kind": "property",
+          "line": 80,
+          "endLine": 80,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"kind\""
+          }
+        },
+        {
+          "name": "Line",
+          "kind": "property",
+          "line": 82,
+          "endLine": 82,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"line,omitempty\""
+          }
+        },
+        {
+          "name": "Name",
+          "kind": "property",
+          "line": 79,
+          "endLine": 79,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"name\""
+          }
+        },
+        {
+          "name": "Parameters",
+          "kind": "property",
+          "line": 84,
+          "endLine": 84,
+          "result": "[]string",
+          "structTag": {
+            "value": "json:\"parameters,omitempty\""
+          }
+        },
+        {
+          "name": "Result",
+          "kind": "property",
+          "line": 85,
+          "endLine": 85,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"result,omitempty\""
+          }
+        },
+        {
+          "name": "StructTag",
+          "kind": "property",
+          "line": 86,
+          "endLine": 86,
+          "result": "*PackageStructTag",
+          "structTag": {
+            "value": "json:\"structTag,omitempty\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "PackageRelation",
+      "kind": "struct",
+      "file": "extract/package_bundle.go",
+      "line": 105,
+      "endLine": 111,
+      "underlyingType": "struct{From string`json:\"from\"`;To string`json:\"to\"`;Kind string`json:\"kind\"`;Via string`json:\"via\"`;Cardinality string`json:\"cardinality\"`;}",
+      "members": [
+        {
+          "name": "Cardinality",
+          "kind": "property",
+          "line": 110,
+          "endLine": 110,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"cardinality\""
+          }
+        },
+        {
+          "name": "From",
+          "kind": "property",
+          "line": 106,
+          "endLine": 106,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"from\""
+          }
+        },
+        {
+          "name": "Kind",
+          "kind": "property",
+          "line": 108,
+          "endLine": 108,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"kind\""
+          }
+        },
+        {
+          "name": "To",
+          "kind": "property",
+          "line": 107,
+          "endLine": 107,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"to\""
+          }
+        },
+        {
+          "name": "Via",
+          "kind": "property",
+          "line": 109,
+          "endLine": 109,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"via\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "PackageRoute",
+      "kind": "struct",
+      "file": "extract/package_bundle.go",
+      "line": 95,
+      "endLine": 102,
+      "underlyingType": "struct{Method string`json:\"method\"`;Path string`json:\"path\"`;Handler string`json:\"handler\"`;File string`json:\"file\"`;Line int`json:\"line,omitempty\"`;EndLine int`json:\"endLine,omitempty\"`;}",
+      "members": [
+        {
+          "name": "EndLine",
+          "kind": "property",
+          "line": 101,
+          "endLine": 101,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"endLine,omitempty\""
+          }
+        },
+        {
+          "name": "File",
+          "kind": "property",
+          "line": 99,
+          "endLine": 99,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"file\""
+          }
+        },
+        {
+          "name": "Handler",
+          "kind": "property",
+          "line": 98,
+          "endLine": 98,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"handler\""
+          }
+        },
+        {
+          "name": "Line",
+          "kind": "property",
+          "line": 100,
+          "endLine": 100,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"line,omitempty\""
+          }
+        },
+        {
+          "name": "Method",
+          "kind": "property",
+          "line": 96,
+          "endLine": 96,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"method\""
+          }
+        },
+        {
+          "name": "Path",
+          "kind": "property",
+          "line": 97,
+          "endLine": 97,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"path\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "PackageScope",
+      "kind": "struct",
+      "file": "extract/package_bundle.go",
+      "line": 49,
+      "endLine": 57,
+      "underlyingType": "struct{Types string`json:\"types\"`;Functions string`json:\"functions\"`;Variables string`json:\"variables\"`;Constants string`json:\"constants\"`;Tests string`json:\"tests\"`;BuildTags string`json:\"buildTags\"`;TagUnion[]string`json:\"syntacticBuildTagUnion\"`;}",
+      "members": [
+        {
+          "name": "BuildTags",
+          "kind": "property",
+          "line": 55,
+          "endLine": 55,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"buildTags\""
+          }
+        },
+        {
+          "name": "Constants",
+          "kind": "property",
+          "line": 53,
+          "endLine": 53,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"constants\""
+          }
+        },
+        {
+          "name": "Functions",
+          "kind": "property",
+          "line": 51,
+          "endLine": 51,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"functions\""
+          }
+        },
+        {
+          "name": "TagUnion",
+          "kind": "property",
+          "line": 56,
+          "endLine": 56,
+          "result": "[]string",
+          "structTag": {
+            "value": "json:\"syntacticBuildTagUnion\""
+          }
+        },
+        {
+          "name": "Tests",
+          "kind": "property",
+          "line": 54,
+          "endLine": 54,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"tests\""
+          }
+        },
+        {
+          "name": "Types",
+          "kind": "property",
+          "line": 50,
+          "endLine": 50,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"types\""
+          }
+        },
+        {
+          "name": "Variables",
+          "kind": "property",
+          "line": 52,
+          "endLine": 52,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"variables\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "PackageSourceFile",
+      "kind": "struct",
+      "file": "extract/package_bundle.go",
+      "line": 60,
+      "endLine": 63,
+      "underlyingType": "struct{Path string`json:\"path\"`;BuildTags[]string`json:\"buildTags,omitempty\"`;}",
+      "members": [
+        {
+          "name": "BuildTags",
+          "kind": "property",
+          "line": 62,
+          "endLine": 62,
+          "result": "[]string",
+          "structTag": {
+            "value": "json:\"buildTags,omitempty\""
+          }
+        },
+        {
+          "name": "Path",
+          "kind": "property",
+          "line": 61,
+          "endLine": 61,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"path\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "PackageStructTag",
+      "kind": "struct",
+      "file": "extract/package_bundle.go",
+      "line": 90,
+      "endLine": 92,
+      "underlyingType": "struct{Value string`json:\"value\"`;}",
+      "members": [
+        {
+          "name": "Value",
+          "kind": "property",
+          "line": 91,
+          "endLine": 91,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"value\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "PackageSummary",
+      "kind": "struct",
+      "file": "extract/package_bundle.go",
+      "line": 114,
+      "endLine": 123,
+      "underlyingType": "struct{SourceFiles int`json:\"sourceFiles\"`;Declarations int`json:\"declarations\"`;ExportedTypes int`json:\"exportedTypes\"`;InternalTypes int`json:\"internalTypes\"`;Members int`json:\"members\"`;ExportedFunctions int`json:\"exportedFunctions\"`;FiberRoutes int`json:\"fiberRoutes\"`;Relations int`json:\"relations\"`;}",
+      "members": [
+        {
+          "name": "Declarations",
+          "kind": "property",
+          "line": 116,
+          "endLine": 116,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"declarations\""
+          }
+        },
+        {
+          "name": "ExportedFunctions",
+          "kind": "property",
+          "line": 120,
+          "endLine": 120,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"exportedFunctions\""
+          }
+        },
+        {
+          "name": "ExportedTypes",
+          "kind": "property",
+          "line": 117,
+          "endLine": 117,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"exportedTypes\""
+          }
+        },
+        {
+          "name": "FiberRoutes",
+          "kind": "property",
+          "line": 121,
+          "endLine": 121,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"fiberRoutes\""
+          }
+        },
+        {
+          "name": "InternalTypes",
+          "kind": "property",
+          "line": 118,
+          "endLine": 118,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"internalTypes\""
+          }
+        },
+        {
+          "name": "Members",
+          "kind": "property",
+          "line": 119,
+          "endLine": 119,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"members\""
+          }
+        },
+        {
+          "name": "Relations",
+          "kind": "property",
+          "line": 122,
+          "endLine": 122,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"relations\""
+          }
+        },
+        {
+          "name": "SourceFiles",
+          "kind": "property",
+          "line": 115,
+          "endLine": 115,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"sourceFiles\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "Relation",
+      "kind": "struct",
+      "file": "extract/class.go",
+      "line": 55,
+      "endLine": 59,
+      "underlyingType": "struct{Left,Right,Operator,LeftMultiplicity,RightMultiplicity string;Label string;Line int;}",
+      "members": [
+        {
+          "name": "Label",
+          "kind": "property",
+          "line": 57,
+          "endLine": 57,
+          "result": "string"
+        },
+        {
+          "name": "Left",
+          "kind": "property",
+          "line": 56,
+          "endLine": 56,
+          "result": "string"
+        },
+        {
+          "name": "LeftMultiplicity",
+          "kind": "property",
+          "line": 56,
+          "endLine": 56,
+          "result": "string"
+        },
+        {
+          "name": "Line",
+          "kind": "property",
+          "line": 58,
+          "endLine": 58,
+          "result": "int"
+        },
+        {
+          "name": "Operator",
+          "kind": "property",
+          "line": 56,
+          "endLine": 56,
+          "result": "string"
+        },
+        {
+          "name": "Right",
+          "kind": "property",
+          "line": 56,
+          "endLine": 56,
+          "result": "string"
+        },
+        {
+          "name": "RightMultiplicity",
+          "kind": "property",
+          "line": 56,
+          "endLine": 56,
+          "result": "string"
+        }
+      ]
+    },
+    {
+      "name": "RouteRequirement",
+      "kind": "struct",
+      "file": "extract/class.go",
+      "line": 35,
+      "endLine": 38,
+      "underlyingType": "struct{Method,Path,Handler string;Line int;}",
+      "members": [
+        {
+          "name": "Handler",
+          "kind": "property",
+          "line": 36,
+          "endLine": 36,
+          "result": "string"
+        },
+        {
+          "name": "Line",
+          "kind": "property",
+          "line": 37,
+          "endLine": 37,
+          "result": "int"
+        },
+        {
+          "name": "Method",
+          "kind": "property",
+          "line": 36,
+          "endLine": 36,
+          "result": "string"
+        },
+        {
+          "name": "Path",
+          "kind": "property",
+          "line": 36,
+          "endLine": 36,
+          "result": "string"
+        }
+      ]
+    },
+    {
+      "name": "Source",
+      "kind": "struct",
+      "file": "extract/analyze.go",
+      "line": 15,
+      "endLine": 15,
+      "underlyingType": "struct{Path,Text string}",
+      "members": [
+        {
+          "name": "Path",
+          "kind": "property",
+          "line": 15,
+          "endLine": 15,
+          "result": "string"
+        },
+        {
+          "name": "Text",
+          "kind": "property",
+          "line": 15,
+          "endLine": 15,
+          "result": "string"
+        }
+      ]
+    },
+    {
+      "name": "StructTagRequirement",
+      "kind": "struct",
+      "file": "extract/class.go",
+      "line": 29,
+      "endLine": 32,
+      "underlyingType": "struct{Value string;Line int;}",
+      "members": [
+        {
+          "name": "Line",
+          "kind": "property",
+          "line": 31,
+          "endLine": 31,
+          "result": "int"
+        },
+        {
+          "name": "Value",
+          "kind": "property",
+          "line": 30,
+          "endLine": 30,
+          "result": "string"
+        }
+      ]
+    },
+    {
+      "name": "Symbol",
+      "kind": "struct",
+      "file": "extract/analyze.go",
+      "line": 69,
+      "endLine": 74,
+      "underlyingType": "struct{Name,Kind,Language,Package,PackageID,ModuleID,Key string;Calls map[string]bool;CallOrder[]string;Locations[]Location;}",
+      "members": [
+        {
+          "name": "CallOrder",
+          "kind": "property",
+          "line": 72,
+          "endLine": 72,
+          "result": "[]string"
+        },
+        {
+          "name": "Calls",
+          "kind": "property",
+          "line": 71,
+          "endLine": 71,
+          "result": "map[string]bool"
+        },
+        {
+          "name": "Key",
+          "kind": "property",
+          "line": 70,
+          "endLine": 70,
+          "result": "string"
+        },
+        {
+          "name": "Kind",
+          "kind": "property",
+          "line": 70,
+          "endLine": 70,
+          "result": "string"
+        },
+        {
+          "name": "Language",
+          "kind": "property",
+          "line": 70,
+          "endLine": 70,
+          "result": "string"
+        },
+        {
+          "name": "Locations",
+          "kind": "property",
+          "line": 73,
+          "endLine": 73,
+          "result": "[]Location"
+        },
+        {
+          "name": "ModuleID",
+          "kind": "property",
+          "line": 70,
+          "endLine": 70,
+          "result": "string"
+        },
+        {
+          "name": "Name",
+          "kind": "property",
+          "line": 70,
+          "endLine": 70,
+          "result": "string"
+        },
+        {
+          "name": "Package",
+          "kind": "property",
+          "line": 70,
+          "endLine": 70,
+          "result": "string"
+        },
+        {
+          "name": "PackageID",
+          "kind": "property",
+          "line": 70,
+          "endLine": 70,
+          "result": "string"
+        }
+      ]
+    },
+    {
+      "name": "WorkspaceBundle",
+      "kind": "struct",
+      "file": "extract/workspace_bundle.go",
+      "line": 107,
+      "endLine": 110,
+      "underlyingType": "struct{Manifest[]byte;Overview[]byte;}",
+      "members": [
+        {
+          "name": "Manifest",
+          "kind": "property",
+          "line": 108,
+          "endLine": 108,
+          "result": "[]byte"
+        },
+        {
+          "name": "Overview",
+          "kind": "property",
+          "line": 109,
+          "endLine": 109,
+          "result": "[]byte"
+        }
+      ]
+    },
+    {
+      "name": "WorkspaceExternalImport",
+      "kind": "struct",
+      "file": "extract/workspace_bundle.go",
+      "line": 94,
+      "endLine": 97,
+      "underlyingType": "struct{ImportPath string`json:\"importPath\"`;ModulePath string`json:\"modulePath\"`;}",
+      "members": [
+        {
+          "name": "ImportPath",
+          "kind": "property",
+          "line": 95,
+          "endLine": 95,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"importPath\""
+          }
+        },
+        {
+          "name": "ModulePath",
+          "kind": "property",
+          "line": 96,
+          "endLine": 96,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"modulePath\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "WorkspaceExternalModule",
+      "kind": "struct",
+      "file": "extract/workspace_bundle.go",
+      "line": 100,
+      "endLine": 104,
+      "underlyingType": "struct{Path string`json:\"path\"`;ImportedBy[]string`json:\"importedBy\"`;Packages[]string`json:\"packages\"`;}",
+      "members": [
+        {
+          "name": "ImportedBy",
+          "kind": "property",
+          "line": 102,
+          "endLine": 102,
+          "result": "[]string",
+          "structTag": {
+            "value": "json:\"importedBy\""
+          }
+        },
+        {
+          "name": "Packages",
+          "kind": "property",
+          "line": 103,
+          "endLine": 103,
+          "result": "[]string",
+          "structTag": {
+            "value": "json:\"packages\""
+          }
+        },
+        {
+          "name": "Path",
+          "kind": "property",
+          "line": 101,
+          "endLine": 101,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"path\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "WorkspaceIR",
+      "kind": "struct",
+      "file": "extract/workspace_bundle.go",
+      "line": 25,
+      "endLine": 33,
+      "underlyingType": "struct{FormatVersion int`json:\"formatVersion\"`;Workspace WorkspaceIdentity`json:\"workspace\"`;Scope WorkspaceScope`json:\"scope\"`;Summary WorkspaceSummary`json:\"summary\"`;SemanticModelDigest string`json:\"semanticModelDigest\"`;Modules[]WorkspaceModule`json:\"modules\"`;ExternalModules[]WorkspaceExternalModule`json:\"externalModules\"`;}",
+      "members": [
+        {
+          "name": "ExternalModules",
+          "kind": "property",
+          "line": 32,
+          "endLine": 32,
+          "result": "[]WorkspaceExternalModule",
+          "structTag": {
+            "value": "json:\"externalModules\""
+          }
+        },
+        {
+          "name": "FormatVersion",
+          "kind": "property",
+          "line": 26,
+          "endLine": 26,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"formatVersion\""
+          }
+        },
+        {
+          "name": "Modules",
+          "kind": "property",
+          "line": 31,
+          "endLine": 31,
+          "result": "[]WorkspaceModule",
+          "structTag": {
+            "value": "json:\"modules\""
+          }
+        },
+        {
+          "name": "Scope",
+          "kind": "property",
+          "line": 28,
+          "endLine": 28,
+          "result": "WorkspaceScope",
+          "structTag": {
+            "value": "json:\"scope\""
+          }
+        },
+        {
+          "name": "SemanticModelDigest",
+          "kind": "property",
+          "line": 30,
+          "endLine": 30,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"semanticModelDigest\""
+          }
+        },
+        {
+          "name": "Summary",
+          "kind": "property",
+          "line": 29,
+          "endLine": 29,
+          "result": "WorkspaceSummary",
+          "structTag": {
+            "value": "json:\"summary\""
+          }
+        },
+        {
+          "name": "Workspace",
+          "kind": "property",
+          "line": 27,
+          "endLine": 27,
+          "result": "WorkspaceIdentity",
+          "structTag": {
+            "value": "json:\"workspace\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "WorkspaceIdentity",
+      "kind": "struct",
+      "file": "extract/workspace_bundle.go",
+      "line": 36,
+      "endLine": 39,
+      "underlyingType": "struct{RootDirectory string`json:\"rootDirectory\"`;AnchorModulePath string`json:\"anchorModulePath\"`;}",
+      "members": [
+        {
+          "name": "AnchorModulePath",
+          "kind": "property",
+          "line": 38,
+          "endLine": 38,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"anchorModulePath\""
+          }
+        },
+        {
+          "name": "RootDirectory",
+          "kind": "property",
+          "line": 37,
+          "endLine": 37,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"rootDirectory\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "WorkspaceModule",
+      "kind": "struct",
+      "file": "extract/workspace_bundle.go",
+      "line": 68,
+      "endLine": 73,
+      "underlyingType": "struct{Path string`json:\"path\"`;Directory string`json:\"directory\"`;Packages[]WorkspacePackage`json:\"packages\"`;Require[]string`json:\"requiredModules\"`;}",
+      "members": [
+        {
+          "name": "Directory",
+          "kind": "property",
+          "line": 70,
+          "endLine": 70,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"directory\""
+          }
+        },
+        {
+          "name": "Packages",
+          "kind": "property",
+          "line": 71,
+          "endLine": 71,
+          "result": "[]WorkspacePackage",
+          "structTag": {
+            "value": "json:\"packages\""
+          }
+        },
+        {
+          "name": "Path",
+          "kind": "property",
+          "line": 69,
+          "endLine": 69,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"path\""
+          }
+        },
+        {
+          "name": "Require",
+          "kind": "property",
+          "line": 72,
+          "endLine": 72,
+          "result": "[]string",
+          "structTag": {
+            "value": "json:\"requiredModules\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "WorkspacePackage",
+      "kind": "struct",
+      "file": "extract/workspace_bundle.go",
+      "line": 76,
+      "endLine": 91,
+      "underlyingType": "struct{ImportPath string`json:\"importPath\"`;Directory string`json:\"directory\"`;Name string`json:\"name\"`;Documentation string`json:\"documentation,omitempty\"`;Main bool`json:\"main\"`;SourceFiles int`json:\"sourceFiles\"`;Declarations int`json:\"declarations\"`;ExportedFunctions int`json:\"exportedFunctions\"`;FiberRoutes int`json:\"fiberRoutes\"`;Routes[]PackageRoute`json:\"routes\"`;LocalImports[]string`json:\"localImports\"`;StandardLibraryImports[]string`json:\"standardLibraryImports\"`;ExternalImports[]WorkspaceExternalImport`json:\"externalImports\"`;UnmappedImports[]string`json:\"unmappedExternalImports\"`;}",
+      "members": [
+        {
+          "name": "Declarations",
+          "kind": "property",
+          "line": 83,
+          "endLine": 83,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"declarations\""
+          }
+        },
+        {
+          "name": "Directory",
+          "kind": "property",
+          "line": 78,
+          "endLine": 78,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"directory\""
+          }
+        },
+        {
+          "name": "Documentation",
+          "kind": "property",
+          "line": 80,
+          "endLine": 80,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"documentation,omitempty\""
+          }
+        },
+        {
+          "name": "ExportedFunctions",
+          "kind": "property",
+          "line": 84,
+          "endLine": 84,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"exportedFunctions\""
+          }
+        },
+        {
+          "name": "ExternalImports",
+          "kind": "property",
+          "line": 89,
+          "endLine": 89,
+          "result": "[]WorkspaceExternalImport",
+          "structTag": {
+            "value": "json:\"externalImports\""
+          }
+        },
+        {
+          "name": "FiberRoutes",
+          "kind": "property",
+          "line": 85,
+          "endLine": 85,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"fiberRoutes\""
+          }
+        },
+        {
+          "name": "ImportPath",
+          "kind": "property",
+          "line": 77,
+          "endLine": 77,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"importPath\""
+          }
+        },
+        {
+          "name": "LocalImports",
+          "kind": "property",
+          "line": 87,
+          "endLine": 87,
+          "result": "[]string",
+          "structTag": {
+            "value": "json:\"localImports\""
+          }
+        },
+        {
+          "name": "Main",
+          "kind": "property",
+          "line": 81,
+          "endLine": 81,
+          "result": "bool",
+          "structTag": {
+            "value": "json:\"main\""
+          }
+        },
+        {
+          "name": "Name",
+          "kind": "property",
+          "line": 79,
+          "endLine": 79,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"name\""
+          }
+        },
+        {
+          "name": "Routes",
+          "kind": "property",
+          "line": 86,
+          "endLine": 86,
+          "result": "[]PackageRoute",
+          "structTag": {
+            "value": "json:\"routes\""
+          }
+        },
+        {
+          "name": "SourceFiles",
+          "kind": "property",
+          "line": 82,
+          "endLine": 82,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"sourceFiles\""
+          }
+        },
+        {
+          "name": "StandardLibraryImports",
+          "kind": "property",
+          "line": 88,
+          "endLine": 88,
+          "result": "[]string",
+          "structTag": {
+            "value": "json:\"standardLibraryImports\""
+          }
+        },
+        {
+          "name": "UnmappedImports",
+          "kind": "property",
+          "line": 90,
+          "endLine": 90,
+          "result": "[]string",
+          "structTag": {
+            "value": "json:\"unmappedExternalImports\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "WorkspaceScope",
+      "kind": "struct",
+      "file": "extract/workspace_bundle.go",
+      "line": 42,
+      "endLine": 52,
+      "underlyingType": "struct{Packages string`json:\"packages\"`;Types string`json:\"types\"`;Functions string`json:\"functions\"`;Variables string`json:\"variables\"`;Constants string`json:\"constants\"`;Tests string`json:\"tests\"`;BuildTags string`json:\"buildTags\"`;Directories[]string`json:\"excludedDirectories\"`;Symlinks string`json:\"symlinks\"`;}",
+      "members": [
+        {
+          "name": "BuildTags",
+          "kind": "property",
+          "line": 49,
+          "endLine": 49,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"buildTags\""
+          }
+        },
+        {
+          "name": "Constants",
+          "kind": "property",
+          "line": 47,
+          "endLine": 47,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"constants\""
+          }
+        },
+        {
+          "name": "Directories",
+          "kind": "property",
+          "line": 50,
+          "endLine": 50,
+          "result": "[]string",
+          "structTag": {
+            "value": "json:\"excludedDirectories\""
+          }
+        },
+        {
+          "name": "Functions",
+          "kind": "property",
+          "line": 45,
+          "endLine": 45,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"functions\""
+          }
+        },
+        {
+          "name": "Packages",
+          "kind": "property",
+          "line": 43,
+          "endLine": 43,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"packages\""
+          }
+        },
+        {
+          "name": "Symlinks",
+          "kind": "property",
+          "line": 51,
+          "endLine": 51,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"symlinks\""
+          }
+        },
+        {
+          "name": "Tests",
+          "kind": "property",
+          "line": 48,
+          "endLine": 48,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"tests\""
+          }
+        },
+        {
+          "name": "Types",
+          "kind": "property",
+          "line": 44,
+          "endLine": 44,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"types\""
+          }
+        },
+        {
+          "name": "Variables",
+          "kind": "property",
+          "line": 46,
+          "endLine": 46,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"variables\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "WorkspaceSummary",
+      "kind": "struct",
+      "file": "extract/workspace_bundle.go",
+      "line": 55,
+      "endLine": 65,
+      "underlyingType": "struct{Modules int`json:\"modules\"`;Packages int`json:\"packages\"`;SourceFiles int`json:\"sourceFiles\"`;Declarations int`json:\"declarations\"`;ExportedFunctions int`json:\"exportedFunctions\"`;FiberRoutes int`json:\"fiberRoutes\"`;LocalImports int`json:\"localImports\"`;StandardImports int`json:\"standardLibraryImports\"`;ExternalModuleEdges int`json:\"externalModuleEdges\"`;}",
+      "members": [
+        {
+          "name": "Declarations",
+          "kind": "property",
+          "line": 59,
+          "endLine": 59,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"declarations\""
+          }
+        },
+        {
+          "name": "ExportedFunctions",
+          "kind": "property",
+          "line": 60,
+          "endLine": 60,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"exportedFunctions\""
+          }
+        },
+        {
+          "name": "ExternalModuleEdges",
+          "kind": "property",
+          "line": 64,
+          "endLine": 64,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"externalModuleEdges\""
+          }
+        },
+        {
+          "name": "FiberRoutes",
+          "kind": "property",
+          "line": 61,
+          "endLine": 61,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"fiberRoutes\""
+          }
+        },
+        {
+          "name": "LocalImports",
+          "kind": "property",
+          "line": 62,
+          "endLine": 62,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"localImports\""
+          }
+        },
+        {
+          "name": "Modules",
+          "kind": "property",
+          "line": 56,
+          "endLine": 56,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"modules\""
+          }
+        },
+        {
+          "name": "Packages",
+          "kind": "property",
+          "line": 57,
+          "endLine": 57,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"packages\""
+          }
+        },
+        {
+          "name": "SourceFiles",
+          "kind": "property",
+          "line": 58,
+          "endLine": 58,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"sourceFiles\""
+          }
+        },
+        {
+          "name": "StandardImports",
+          "kind": "property",
+          "line": 63,
+          "endLine": 63,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"standardLibraryImports\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "classParser",
+      "kind": "struct",
+      "file": "extract/class.go",
+      "line": 346,
+      "endLine": 352,
+      "underlyingType": "struct{diagram*ClassDiagram;current*DiagramClass;namespace string;namespaceLine int;sawHeader bool;}",
+      "members": [
+        {
+          "name": "addClass",
+          "kind": "method",
+          "line": 812,
+          "endLine": 823,
+          "parameters": [
+            "string",
+            "string",
+            "bool",
+            "int"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "addRelation",
+          "kind": "method",
+          "line": 769,
+          "endLine": 778,
+          "parameters": [
+            "[]string",
+            "int"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "applyClassScope",
+          "kind": "method",
+          "line": 659,
+          "endLine": 682,
+          "parameters": [
+            "string",
+            "string",
+            "string",
+            "int"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "applyCompletePackageMetadata",
+          "kind": "method",
+          "line": 559,
+          "endLine": 565,
+          "parameters": [
+            "string",
+            "int"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "applyDefaultExportMetadata",
+          "kind": "method",
+          "line": 512,
+          "endLine": 525,
+          "parameters": [
+            "string",
+            "int"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "applyExactDefault",
+          "kind": "method",
+          "line": 592,
+          "endLine": 601,
+          "parameters": [
+            "int"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "applyExternalStereotype",
+          "kind": "method",
+          "line": 825,
+          "endLine": 831,
+          "parameters": [
+            "string",
+            "string",
+            "int"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "applyFileLocalMetadata",
+          "kind": "method",
+          "line": 482,
+          "endLine": 495,
+          "parameters": [
+            "string",
+            "int"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "applyFileMetadata",
+          "kind": "method",
+          "line": 467,
+          "endLine": 480,
+          "parameters": [
+            "string",
+            "string",
+            "int"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "applyImportMetadata",
+          "kind": "method",
+          "line": 497,
+          "endLine": 510,
+          "parameters": [
+            "string",
+            "string",
+            "int"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "applyLanguageDefault",
+          "kind": "method",
+          "line": 578,
+          "endLine": 590,
+          "parameters": [
+            "string",
+            "int"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "applyPackageDefault",
+          "kind": "method",
+          "line": 567,
+          "endLine": 576,
+          "parameters": [
+            "string",
+            "int"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "applyRouteMetadata",
+          "kind": "method",
+          "line": 644,
+          "endLine": 657,
+          "parameters": [
+            "string",
+            "string",
+            "string",
+            "string",
+            "int"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "applyStructTagMetadata",
+          "kind": "method",
+          "line": 603,
+          "endLine": 623,
+          "parameters": [
+            "string",
+            "string",
+            "string",
+            "int"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "applyUnderlyingMetadata",
+          "kind": "method",
+          "line": 625,
+          "endLine": 642,
+          "parameters": [
+            "string",
+            "string",
+            "int"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "metadataTarget",
+          "kind": "method",
+          "line": 684,
+          "endLine": 690,
+          "parameters": [
+            "string",
+            "int"
+          ],
+          "result": "tuple\u003c*DiagramClass,error\u003e"
+        },
+        {
+          "name": "parseClassMetadata",
+          "kind": "method",
+          "line": 439,
+          "endLine": 465,
+          "parameters": [
+            "string",
+            "int"
+          ],
+          "result": "tuple\u003cbool,error\u003e"
+        },
+        {
+          "name": "parseDiagramMetadata",
+          "kind": "method",
+          "line": 395,
+          "endLine": 415,
+          "parameters": [
+            "string",
+            "int"
+          ],
+          "result": "tuple\u003cbool,error\u003e"
+        },
+        {
+          "name": "parseGoMetadata",
+          "kind": "method",
+          "line": 417,
+          "endLine": 437,
+          "parameters": [
+            "string",
+            "int"
+          ],
+          "result": "tuple\u003cbool,error\u003e"
+        },
+        {
+          "name": "parseHeader",
+          "kind": "method",
+          "line": 374,
+          "endLine": 380,
+          "parameters": [
+            "string",
+            "int"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "parseLine",
+          "kind": "method",
+          "line": 358,
+          "endLine": 372,
+          "parameters": [
+            "string",
+            "int"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "parseMemberLine",
+          "kind": "method",
+          "line": 692,
+          "endLine": 714,
+          "parameters": [
+            "string",
+            "int"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "parseMetadata",
+          "kind": "method",
+          "line": 382,
+          "endLine": 393,
+          "parameters": [
+            "string",
+            "int"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "parseNote",
+          "kind": "method",
+          "line": 780,
+          "endLine": 810,
+          "parameters": [
+            "string",
+            "int"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "parseTopLevel",
+          "kind": "method",
+          "line": 716,
+          "endLine": 733,
+          "parameters": [
+            "string",
+            "int"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "parseTopLevelLayout",
+          "kind": "method",
+          "line": 735,
+          "endLine": 767,
+          "parameters": [
+            "string",
+            "int"
+          ],
+          "result": "tuple\u003cbool,error\u003e"
+        },
+        {
+          "name": "current",
+          "kind": "property",
+          "line": 348,
+          "endLine": 348,
+          "result": "*DiagramClass"
+        },
+        {
+          "name": "diagram",
+          "kind": "property",
+          "line": 347,
+          "endLine": 347,
+          "result": "*ClassDiagram"
+        },
+        {
+          "name": "namespace",
+          "kind": "property",
+          "line": 349,
+          "endLine": 349,
+          "result": "string"
+        },
+        {
+          "name": "namespaceLine",
+          "kind": "property",
+          "line": 350,
+          "endLine": 350,
+          "result": "int"
+        },
+        {
+          "name": "sawHeader",
+          "kind": "property",
+          "line": 351,
+          "endLine": 351,
+          "result": "bool"
+        }
+      ]
+    },
+    {
+      "name": "classValidator",
+      "kind": "struct",
+      "file": "extract/class.go",
+      "line": 1043,
+      "endLine": 1048,
+      "underlyingType": "struct{diagram*ClassDiagram;analysis*Analysis;diagnostics[]Diagnostic;packageBundleCardinality bool;}",
+      "members": [
+        {
+          "name": "add",
+          "kind": "method",
+          "line": 1050,
+          "endLine": 1052,
+          "parameters": [
+            "int",
+            "string"
+          ]
+        },
+        {
+          "name": "addPackageCompletenessDiagnostic",
+          "kind": "method",
+          "line": 1113,
+          "endLine": 1120,
+          "parameters": [
+            "packageCompletenessItem"
+          ]
+        },
+        {
+          "name": "anyFunctionCandidateReferences",
+          "kind": "method",
+          "line": 1727,
+          "endLine": 1734,
+          "parameters": [
+            "*DiagramClass",
+            "string",
+            "string"
+          ],
+          "result": "bool"
+        },
+        {
+          "name": "associationExists",
+          "kind": "method",
+          "line": 1757,
+          "endLine": 1772,
+          "parameters": [
+            "string",
+            "string",
+            "string"
+          ],
+          "result": "bool"
+        },
+        {
+          "name": "checkAssociation",
+          "kind": "method",
+          "line": 1748,
+          "endLine": 1755,
+          "parameters": [
+            "Relation"
+          ]
+        },
+        {
+          "name": "checkClass",
+          "kind": "method",
+          "line": 1151,
+          "endLine": 1160,
+          "parameters": [
+            "*DiagramClass"
+          ]
+        },
+        {
+          "name": "checkCompletePackage",
+          "kind": "method",
+          "line": 1059,
+          "endLine": 1072
+        },
+        {
+          "name": "checkDeclaration",
+          "kind": "method",
+          "line": 1282,
+          "endLine": 1329,
+          "parameters": [
+            "*DiagramClass"
+          ]
+        },
+        {
+          "name": "checkExport",
+          "kind": "method",
+          "line": 1543,
+          "endLine": 1575,
+          "parameters": [
+            "*DiagramClass"
+          ]
+        },
+        {
+          "name": "checkFiberRoutes",
+          "kind": "method",
+          "line": 1341,
+          "endLine": 1358,
+          "parameters": [
+            "*DiagramClass",
+            "*Declaration"
+          ]
+        },
+        {
+          "name": "checkFunction",
+          "kind": "method",
+          "line": 1192,
+          "endLine": 1219,
+          "parameters": [
+            "*DiagramClass"
+          ]
+        },
+        {
+          "name": "checkGoFileLocal",
+          "kind": "method",
+          "line": 1382,
+          "endLine": 1394,
+          "parameters": [
+            "*DiagramClass",
+            "*Declaration"
+          ]
+        },
+        {
+          "name": "checkHeritage",
+          "kind": "method",
+          "line": 1589,
+          "endLine": 1609,
+          "parameters": [
+            "Relation"
+          ]
+        },
+        {
+          "name": "checkImport",
+          "kind": "method",
+          "line": 1162,
+          "endLine": 1181,
+          "parameters": [
+            "*DiagramClass"
+          ]
+        },
+        {
+          "name": "checkMember",
+          "kind": "method",
+          "line": 1521,
+          "endLine": 1541,
+          "parameters": [
+            "string",
+            "DiagramMember",
+            "[]Member"
+          ]
+        },
+        {
+          "name": "checkRelation",
+          "kind": "method",
+          "line": 1577,
+          "endLine": 1583,
+          "parameters": [
+            "Relation"
+          ]
+        },
+        {
+          "name": "checkStructTags",
+          "kind": "method",
+          "line": 1360,
+          "endLine": 1380,
+          "parameters": [
+            "*DiagramClass",
+            "*Declaration"
+          ]
+        },
+        {
+          "name": "checkUnderlying",
+          "kind": "method",
+          "line": 1331,
+          "endLine": 1339,
+          "parameters": [
+            "*DiagramClass",
+            "*Declaration"
+          ]
+        },
+        {
+          "name": "checkUnexpectedMembers",
+          "kind": "method",
+          "line": 1411,
+          "endLine": 1417,
+          "parameters": [
+            "*DiagramClass",
+            "[]Member"
+          ]
+        },
+        {
+          "name": "completePackageContains",
+          "kind": "method",
+          "line": 1122,
+          "endLine": 1134,
+          "parameters": [
+            "*Declaration"
+          ],
+          "result": "bool"
+        },
+        {
+          "name": "completePackageContainsFunction",
+          "kind": "method",
+          "line": 1136,
+          "endLine": 1149,
+          "parameters": [
+            "Member"
+          ],
+          "result": "bool"
+        },
+        {
+          "name": "declaration",
+          "kind": "method",
+          "line": 1246,
+          "endLine": 1262,
+          "parameters": [
+            "string"
+          ],
+          "result": "*Declaration"
+        },
+        {
+          "name": "declarationAmbiguous",
+          "kind": "method",
+          "line": 1464,
+          "endLine": 1486,
+          "parameters": [
+            "*DiagramClass"
+          ],
+          "result": "bool"
+        },
+        {
+          "name": "firstExternalGoTypeReference",
+          "kind": "method",
+          "line": 1396,
+          "endLine": 1409,
+          "parameters": [
+            "*Declaration"
+          ],
+          "result": "tuple\u003cLocation,bool\u003e"
+        },
+        {
+          "name": "functionAmbiguous",
+          "kind": "method",
+          "line": 1488,
+          "endLine": 1496,
+          "parameters": [
+            "*DiagramClass"
+          ],
+          "result": "bool"
+        },
+        {
+          "name": "functionReferences",
+          "kind": "method",
+          "line": 1713,
+          "endLine": 1725,
+          "parameters": [
+            "*DiagramClass",
+            "string",
+            "*Declaration",
+            "string"
+          ],
+          "result": "bool"
+        },
+        {
+          "name": "goDeclaration",
+          "kind": "method",
+          "line": 1264,
+          "endLine": 1276,
+          "parameters": [
+            "string",
+            "string"
+          ],
+          "result": "*Declaration"
+        },
+        {
+          "name": "hasFunctionInScope",
+          "kind": "method",
+          "line": 1221,
+          "endLine": 1228,
+          "parameters": [
+            "*DiagramClass"
+          ],
+          "result": "bool"
+        },
+        {
+          "name": "hasMatchingFunction",
+          "kind": "method",
+          "line": 1230,
+          "endLine": 1237,
+          "parameters": [
+            "*DiagramClass",
+            "DiagramMember"
+          ],
+          "result": "bool"
+        },
+        {
+          "name": "importScopeMatches",
+          "kind": "method",
+          "line": 1450,
+          "endLine": 1458,
+          "parameters": [
+            "*DiagramClass",
+            "Import"
+          ],
+          "result": "bool"
+        },
+        {
+          "name": "matchingFunctionReferences",
+          "kind": "method",
+          "line": 1736,
+          "endLine": 1746,
+          "parameters": [
+            "*DiagramClass",
+            "DiagramMember",
+            "Member",
+            "string",
+            "*Declaration",
+            "string"
+          ],
+          "result": "bool"
+        },
+        {
+          "name": "memberReferences",
+          "kind": "method",
+          "line": 1706,
+          "endLine": 1711,
+          "parameters": [
+            "Member",
+            "string",
+            "string"
+          ],
+          "result": "bool"
+        },
+        {
+          "name": "memberScopeMatches",
+          "kind": "method",
+          "line": 1440,
+          "endLine": 1448,
+          "parameters": [
+            "*DiagramClass",
+            "Member"
+          ],
+          "result": "bool"
+        },
+        {
+          "name": "structurallyImplements",
+          "kind": "method",
+          "line": 1611,
+          "endLine": 1629,
+          "parameters": [
+            "*Declaration",
+            "string",
+            "bool"
+          ],
+          "result": "bool"
+        },
+        {
+          "name": "uncoveredPackageDeclarations",
+          "kind": "method",
+          "line": 1074,
+          "endLine": 1083,
+          "parameters": [
+            "string"
+          ],
+          "result": "[]packageCompletenessItem"
+        },
+        {
+          "name": "uncoveredPackageFunctions",
+          "kind": "method",
+          "line": 1085,
+          "endLine": 1096,
+          "parameters": [
+            "string"
+          ],
+          "result": "[]packageCompletenessItem"
+        },
+        {
+          "name": "analysis",
+          "kind": "property",
+          "line": 1045,
+          "endLine": 1045,
+          "result": "*Analysis"
+        },
+        {
+          "name": "diagnostics",
+          "kind": "property",
+          "line": 1046,
+          "endLine": 1046,
+          "result": "[]Diagnostic"
+        },
+        {
+          "name": "diagram",
+          "kind": "property",
+          "line": 1044,
+          "endLine": 1044,
+          "result": "*ClassDiagram"
+        },
+        {
+          "name": "packageBundleCardinality",
+          "kind": "property",
+          "line": 1047,
+          "endLine": 1047,
+          "result": "bool"
+        }
+      ]
+    },
+    {
+      "name": "discoveredModule",
+      "kind": "struct",
+      "file": "extract/workspace_bundle.go",
+      "line": 112,
+      "endLine": 115,
+      "underlyingType": "struct{directory,relative,modulePath string;requires[]string;}",
+      "members": [
+        {
+          "name": "directory",
+          "kind": "property",
+          "line": 113,
+          "endLine": 113,
+          "result": "string"
+        },
+        {
+          "name": "modulePath",
+          "kind": "property",
+          "line": 113,
+          "endLine": 113,
+          "result": "string"
+        },
+        {
+          "name": "relative",
+          "kind": "property",
+          "line": 113,
+          "endLine": 113,
+          "result": "string"
+        },
+        {
+          "name": "requires",
+          "kind": "property",
+          "line": 114,
+          "endLine": 114,
+          "result": "[]string"
+        }
+      ]
+    },
+    {
+      "name": "fiberRouter",
+      "kind": "struct",
+      "file": "extract/go_analyze.go",
+      "line": 459,
+      "endLine": 461,
+      "underlyingType": "struct{prefix string}",
+      "members": [
+        {
+          "name": "prefix",
+          "kind": "property",
+          "line": 460,
+          "endLine": 460,
+          "result": "string"
+        }
+      ]
+    },
+    {
+      "name": "flowParser",
+      "kind": "struct",
+      "file": "extract/flow.go",
+      "line": 42,
+      "endLine": 45,
+      "underlyingType": "struct{flowchart*Flowchart;sawHeader bool;}",
+      "members": [
+        {
+          "name": "applyConcept",
+          "kind": "method",
+          "line": 187,
+          "endLine": 197,
+          "parameters": [
+            "string",
+            "int"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "applyLanguage",
+          "kind": "method",
+          "line": 169,
+          "endLine": 185,
+          "parameters": [
+            "string",
+            "string",
+            "int"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "applyModule",
+          "kind": "method",
+          "line": 151,
+          "endLine": 167,
+          "parameters": [
+            "string",
+            "string",
+            "int"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "applyPackage",
+          "kind": "method",
+          "line": 132,
+          "endLine": 149,
+          "parameters": [
+            "string",
+            "string",
+            "int"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "applySymbol",
+          "kind": "method",
+          "line": 120,
+          "endLine": 130,
+          "parameters": [
+            "string",
+            "string",
+            "int"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "node",
+          "kind": "method",
+          "line": 51,
+          "endLine": 59,
+          "parameters": [
+            "string",
+            "int"
+          ],
+          "result": "*FlowNode"
+        },
+        {
+          "name": "parseContent",
+          "kind": "method",
+          "line": 199,
+          "endLine": 214,
+          "parameters": [
+            "string",
+            "int"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "parseLine",
+          "kind": "method",
+          "line": 216,
+          "endLine": 231,
+          "parameters": [
+            "string",
+            "int"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "parseMetadata",
+          "kind": "method",
+          "line": 61,
+          "endLine": 84,
+          "parameters": [
+            "string",
+            "int"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "flowchart",
+          "kind": "property",
+          "line": 43,
+          "endLine": 43,
+          "result": "*Flowchart"
+        },
+        {
+          "name": "sawHeader",
+          "kind": "property",
+          "line": 44,
+          "endLine": 44,
+          "result": "bool"
+        }
+      ]
+    },
+    {
+      "name": "goAnalysis",
+      "kind": "struct",
+      "file": "extract/go_language.go",
+      "line": 8,
+      "endLine": 12,
+      "underlyingType": "struct{result*Analysis;sources[]Source;methods map[string][]Member;}",
+      "members": [
+        {
+          "name": "Analyze",
+          "kind": "method",
+          "line": 59,
+          "endLine": 61,
+          "parameters": [
+            "Source"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "Finalize",
+          "kind": "method",
+          "line": 63,
+          "endLine": 69,
+          "result": "error"
+        },
+        {
+          "name": "methods",
+          "kind": "property",
+          "line": 11,
+          "endLine": 11,
+          "result": "map[string][]Member"
+        },
+        {
+          "name": "result",
+          "kind": "property",
+          "line": 9,
+          "endLine": 9,
+          "result": "*Analysis"
+        },
+        {
+          "name": "sources",
+          "kind": "property",
+          "line": 10,
+          "endLine": 10,
+          "result": "[]Source"
+        }
+      ]
+    },
+    {
+      "name": "goBuildHeaderState",
+      "kind": "struct",
+      "file": "extract/package_bundle.go",
+      "line": 392,
+      "endLine": 397,
+      "underlyingType": "struct{content string;headerEnd,offset int;inBlock,ended bool;goBuild string;}",
+      "members": [
+        {
+          "name": "consume",
+          "kind": "method",
+          "line": 399,
+          "endLine": 418,
+          "parameters": [
+            "string"
+          ],
+          "result": "tuple\u003cbool,error\u003e"
+        },
+        {
+          "name": "consumeCommentText",
+          "kind": "method",
+          "line": 420,
+          "endLine": 442,
+          "parameters": [
+            "string"
+          ],
+          "result": "bool"
+        },
+        {
+          "name": "content",
+          "kind": "property",
+          "line": 393,
+          "endLine": 393,
+          "result": "string"
+        },
+        {
+          "name": "ended",
+          "kind": "property",
+          "line": 395,
+          "endLine": 395,
+          "result": "bool"
+        },
+        {
+          "name": "goBuild",
+          "kind": "property",
+          "line": 396,
+          "endLine": 396,
+          "result": "string"
+        },
+        {
+          "name": "headerEnd",
+          "kind": "property",
+          "line": 394,
+          "endLine": 394,
+          "result": "int"
+        },
+        {
+          "name": "inBlock",
+          "kind": "property",
+          "line": 395,
+          "endLine": 395,
+          "result": "bool"
+        },
+        {
+          "name": "offset",
+          "kind": "property",
+          "line": 394,
+          "endLine": 394,
+          "result": "int"
+        }
+      ]
+    },
+    {
+      "name": "goSourceAnalyzer",
+      "kind": "struct",
+      "file": "extract/go_analyze.go",
+      "line": 18,
+      "endLine": 25,
+      "underlyingType": "struct{result*Analysis;source Source;text[]byte;methods map[string][]Member;imports map[string]string;packageName,packageID string;}",
+      "members": [
+        {
+          "name": "addDuplicateGoError",
+          "kind": "method",
+          "line": 359,
+          "endLine": 364,
+          "parameters": [
+            "string",
+            "string",
+            "Location",
+            "Location"
+          ]
+        },
+        {
+          "name": "addEmbeddedNode",
+          "kind": "method",
+          "line": 330,
+          "endLine": 335,
+          "parameters": [
+            "*sitter.Node",
+            "*Declaration"
+          ]
+        },
+        {
+          "name": "addGoEmbeddedType",
+          "kind": "method",
+          "line": 322,
+          "endLine": 328,
+          "parameters": [
+            "*sitter.Node",
+            "*Declaration"
+          ]
+        },
+        {
+          "name": "addGoField",
+          "kind": "method",
+          "line": 284,
+          "endLine": 302,
+          "parameters": [
+            "*sitter.Node",
+            "*Declaration"
+          ]
+        },
+        {
+          "name": "addGoInterfaceMethod",
+          "kind": "method",
+          "line": 314,
+          "endLine": 320,
+          "parameters": [
+            "*sitter.Node",
+            "*Declaration"
+          ]
+        },
+        {
+          "name": "addGoSymbol",
+          "kind": "method",
+          "line": 712,
+          "endLine": 728,
+          "parameters": [
+            "string",
+            "string",
+            "*sitter.Node",
+            "*sitter.Node",
+            "string",
+            "string"
+          ]
+        },
+        {
+          "name": "addGoTypeReference",
+          "kind": "method",
+          "line": 236,
+          "endLine": 242,
+          "parameters": [
+            "string",
+            "*sitter.Node",
+            "string"
+          ]
+        },
+        {
+          "name": "analyzeFunction",
+          "kind": "method",
+          "line": 405,
+          "endLine": 424,
+          "parameters": [
+            "*sitter.Node"
+          ]
+        },
+        {
+          "name": "analyzeImportSpec",
+          "kind": "method",
+          "line": 774,
+          "endLine": 796,
+          "parameters": [
+            "*sitter.Node"
+          ]
+        },
+        {
+          "name": "analyzeImports",
+          "kind": "method",
+          "line": 768,
+          "endLine": 772,
+          "parameters": [
+            "*sitter.Node"
+          ]
+        },
+        {
+          "name": "analyzeMethod",
+          "kind": "method",
+          "line": 426,
+          "endLine": 443,
+          "parameters": [
+            "*sitter.Node"
+          ]
+        },
+        {
+          "name": "analyzeStatement",
+          "kind": "method",
+          "line": 134,
+          "endLine": 145,
+          "parameters": [
+            "*sitter.Node"
+          ]
+        },
+        {
+          "name": "analyzeTypeSpec",
+          "kind": "method",
+          "line": 169,
+          "endLine": 189,
+          "parameters": [
+            "*sitter.Node"
+          ]
+        },
+        {
+          "name": "analyzeTypes",
+          "kind": "method",
+          "line": 163,
+          "endLine": 167,
+          "parameters": [
+            "*sitter.Node"
+          ]
+        },
+        {
+          "name": "collectFiberRoutes",
+          "kind": "method",
+          "line": 463,
+          "endLine": 476,
+          "parameters": [
+            "*sitter.Node",
+            "*sitter.Node",
+            "string",
+            "string"
+          ]
+        },
+        {
+          "name": "collectGoMembers",
+          "kind": "method",
+          "line": 261,
+          "endLine": 273,
+          "parameters": [
+            "*sitter.Node",
+            "*Declaration"
+          ]
+        },
+        {
+          "name": "collectGoTypeReferences",
+          "kind": "method",
+          "line": 219,
+          "endLine": 234,
+          "parameters": [
+            "*sitter.Node"
+          ]
+        },
+        {
+          "name": "fiberRouterExpression",
+          "kind": "method",
+          "line": 551,
+          "endLine": 584,
+          "parameters": [
+            "*sitter.Node",
+            "map[string]fiberRouter"
+          ],
+          "result": "tuple\u003cfiberRouter,bool\u003e"
+        },
+        {
+          "name": "goCallableMember",
+          "kind": "method",
+          "line": 355,
+          "endLine": 357,
+          "parameters": [
+            "*sitter.Node",
+            "string"
+          ],
+          "result": "Member"
+        },
+        {
+          "name": "goParameters",
+          "kind": "method",
+          "line": 366,
+          "endLine": 385,
+          "parameters": [
+            "*sitter.Node"
+          ],
+          "result": "[]string"
+        },
+        {
+          "name": "goResult",
+          "kind": "method",
+          "line": 395,
+          "endLine": 403,
+          "parameters": [
+            "*sitter.Node"
+          ],
+          "result": "string"
+        },
+        {
+          "name": "processFiberAssignment",
+          "kind": "method",
+          "line": 511,
+          "endLine": 533,
+          "parameters": [
+            "*sitter.Node",
+            "*sitter.Node",
+            "map[string]fiberRouter"
+          ]
+        },
+        {
+          "name": "processFiberNode",
+          "kind": "method",
+          "line": 478,
+          "endLine": 509,
+          "parameters": [
+            "*sitter.Node",
+            "map[string]fiberRouter",
+            "map[string]string"
+          ]
+        },
+        {
+          "name": "receiver",
+          "kind": "method",
+          "line": 445,
+          "endLine": 457,
+          "parameters": [
+            "*sitter.Node"
+          ],
+          "result": "tuple\u003cstring,string\u003e"
+        },
+        {
+          "name": "recordFiberRoute",
+          "kind": "method",
+          "line": 586,
+          "endLine": 617,
+          "parameters": [
+            "*sitter.Node",
+            "map[string]fiberRouter",
+            "map[string]string"
+          ]
+        },
+        {
+          "name": "recordGoExport",
+          "kind": "method",
+          "line": 147,
+          "endLine": 150,
+          "parameters": [
+            "string"
+          ]
+        },
+        {
+          "name": "recordGoTypeDeclaration",
+          "kind": "method",
+          "line": 191,
+          "endLine": 203,
+          "parameters": [
+            "*sitter.Node",
+            "*Declaration"
+          ]
+        },
+        {
+          "name": "imports",
+          "kind": "property",
+          "line": 23,
+          "endLine": 23,
+          "result": "map[string]string"
+        },
+        {
+          "name": "methods",
+          "kind": "property",
+          "line": 22,
+          "endLine": 22,
+          "result": "map[string][]Member"
+        },
+        {
+          "name": "packageID",
+          "kind": "property",
+          "line": 24,
+          "endLine": 24,
+          "result": "string"
+        },
+        {
+          "name": "packageName",
+          "kind": "property",
+          "line": 24,
+          "endLine": 24,
+          "result": "string"
+        },
+        {
+          "name": "result",
+          "kind": "property",
+          "line": 19,
+          "endLine": 19,
+          "result": "*Analysis"
+        },
+        {
+          "name": "source",
+          "kind": "property",
+          "line": 20,
+          "endLine": 20,
+          "result": "Source"
+        },
+        {
+          "name": "text",
+          "kind": "property",
+          "line": 21,
+          "endLine": 21,
+          "result": "[]byte"
+        }
+      ]
+    },
+    {
+      "name": "goTypeOccurrences",
+      "kind": "struct",
+      "file": "extract/package_bundle_go_relations.go",
+      "line": 9,
+      "endLine": 12,
+      "underlyingType": "struct{one bool;many bool;}",
+      "members": [
+        {
+          "name": "many",
+          "kind": "property",
+          "line": 11,
+          "endLine": 11,
+          "result": "bool"
+        },
+        {
+          "name": "one",
+          "kind": "property",
+          "line": 10,
+          "endLine": 10,
+          "result": "bool"
+        }
+      ]
+    },
+    {
+      "name": "languageAnalysis",
+      "kind": "interface",
+      "file": "extract/language.go",
+      "line": 16,
+      "endLine": 19,
+      "underlyingType": "interface{Analyze(Source)error;Finalize()error;}",
+      "members": [
+        {
+          "name": "Analyze",
+          "kind": "method",
+          "line": 17,
+          "endLine": 17,
+          "parameters": [
+            "Source"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "Finalize",
+          "kind": "method",
+          "line": 18,
+          "endLine": 18,
+          "result": "error"
+        }
+      ]
+    },
+    {
+      "name": "languageDefinition",
+      "kind": "struct",
+      "file": "extract/language.go",
+      "line": 24,
+      "endLine": 35,
+      "underlyingType": "struct{info Language;acceptsSource func(string)bool;acceptsInput func(string,bool)(bool,error);newAnalysis func(*Analysis,[]Source)languageAnalysis;nearestProjectRoot func(string)string;sourceScope func(Source)(string,error);normalizeType func(string)string;generateStructure func(string,Source,[]Source,GenerateOptions)(string,error);generateFlow func(string,Source,[]Source,int,int)(string,error);validFlowEdge func(*Analysis,*Symbol,*Symbol)bool;}",
+      "members": [
+        {
+          "name": "acceptsInput",
+          "kind": "property",
+          "line": 27,
+          "endLine": 27,
+          "result": "func(string,bool)(bool,error)"
+        },
+        {
+          "name": "acceptsSource",
+          "kind": "property",
+          "line": 26,
+          "endLine": 26,
+          "result": "func(string)bool"
+        },
+        {
+          "name": "generateFlow",
+          "kind": "property",
+          "line": 33,
+          "endLine": 33,
+          "result": "func(string,Source,[]Source,int,int)(string,error)"
+        },
+        {
+          "name": "generateStructure",
+          "kind": "property",
+          "line": 32,
+          "endLine": 32,
+          "result": "func(string,Source,[]Source,GenerateOptions)(string,error)"
+        },
+        {
+          "name": "info",
+          "kind": "property",
+          "line": 25,
+          "endLine": 25,
+          "result": "Language"
+        },
+        {
+          "name": "nearestProjectRoot",
+          "kind": "property",
+          "line": 29,
+          "endLine": 29,
+          "result": "func(string)string"
+        },
+        {
+          "name": "newAnalysis",
+          "kind": "property",
+          "line": 28,
+          "endLine": 28,
+          "result": "func(*Analysis,[]Source)languageAnalysis"
+        },
+        {
+          "name": "normalizeType",
+          "kind": "property",
+          "line": 31,
+          "endLine": 31,
+          "result": "func(string)string"
+        },
+        {
+          "name": "sourceScope",
+          "kind": "property",
+          "line": 30,
+          "endLine": 30,
+          "result": "func(Source)(string,error)"
+        },
+        {
+          "name": "validFlowEdge",
+          "kind": "property",
+          "line": 34,
+          "endLine": 34,
+          "result": "func(*Analysis,*Symbol,*Symbol)bool"
+        }
+      ]
+    },
+    {
+      "name": "modulePackageCollector",
+      "kind": "struct",
+      "file": "extract/workspace_bundle.go",
+      "line": 311,
+      "endLine": 315,
+      "underlyingType": "struct{module discoveredModule;all map[string]discoveredModule;result[]string;}",
+      "members": [
+        {
+          "name": "visit",
+          "kind": "method",
+          "line": 324,
+          "endLine": 347,
+          "parameters": [
+            "string",
+            "os.DirEntry",
+            "error"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "all",
+          "kind": "property",
+          "line": 313,
+          "endLine": 313,
+          "result": "map[string]discoveredModule"
+        },
+        {
+          "name": "module",
+          "kind": "property",
+          "line": 312,
+          "endLine": 312,
+          "result": "discoveredModule"
+        },
+        {
+          "name": "result",
+          "kind": "property",
+          "line": 314,
+          "endLine": 314,
+          "result": "[]string"
+        }
+      ]
+    },
+    {
+      "name": "packageCompletenessItem",
+      "kind": "struct",
+      "file": "extract/class.go",
+      "line": 1054,
+      "endLine": 1057,
+      "underlyingType": "struct{name,kind string;location Location;}",
+      "members": [
+        {
+          "name": "kind",
+          "kind": "property",
+          "line": 1055,
+          "endLine": 1055,
+          "result": "string"
+        },
+        {
+          "name": "location",
+          "kind": "property",
+          "line": 1056,
+          "endLine": 1056,
+          "result": "Location"
+        },
+        {
+          "name": "name",
+          "kind": "property",
+          "line": 1055,
+          "endLine": 1055,
+          "result": "string"
+        }
+      ]
+    },
+    {
+      "name": "selectedGoSymbol",
+      "kind": "struct",
+      "file": "extract/go_generate_flow.go",
+      "line": 8,
+      "endLine": 11,
+      "underlyingType": "struct{symbol*Symbol;depth int;}",
+      "members": [
+        {
+          "name": "depth",
+          "kind": "property",
+          "line": 10,
+          "endLine": 10,
+          "result": "int"
+        },
+        {
+          "name": "symbol",
+          "kind": "property",
+          "line": 9,
+          "endLine": 9,
+          "result": "*Symbol"
+        }
+      ]
+    },
+    {
+      "name": "sourceAnalyzer",
+      "kind": "struct",
+      "file": "extract/analyze.go",
+      "line": 107,
+      "endLine": 112,
+      "underlyingType": "struct{result*Analysis;source Source;text[]byte;moduleID string;}",
+      "members": [
+        {
+          "name": "addDefaultImport",
+          "kind": "method",
+          "line": 396,
+          "endLine": 402,
+          "parameters": [
+            "*sitter.Node",
+            "string",
+            "bool"
+          ]
+        },
+        {
+          "name": "addImport",
+          "kind": "method",
+          "line": 371,
+          "endLine": 381,
+          "parameters": [
+            "string",
+            "string",
+            "string",
+            "bool",
+            "bool"
+          ]
+        },
+        {
+          "name": "addStructuredImport",
+          "kind": "method",
+          "line": 404,
+          "endLine": 419,
+          "parameters": [
+            "*sitter.Node",
+            "string",
+            "bool"
+          ]
+        },
+        {
+          "name": "addSymbol",
+          "kind": "method",
+          "line": 353,
+          "endLine": 369,
+          "parameters": [
+            "string",
+            "string",
+            "*sitter.Node",
+            "*sitter.Node",
+            "string"
+          ]
+        },
+        {
+          "name": "analyzeDeclaration",
+          "kind": "method",
+          "line": 495,
+          "endLine": 522,
+          "parameters": [
+            "*sitter.Node",
+            "bool",
+            "bool"
+          ]
+        },
+        {
+          "name": "analyzeExportSpecifiers",
+          "kind": "method",
+          "line": 421,
+          "endLine": 443,
+          "parameters": [
+            "*sitter.Node"
+          ]
+        },
+        {
+          "name": "analyzeFunction",
+          "kind": "method",
+          "line": 544,
+          "endLine": 556,
+          "parameters": [
+            "*sitter.Node",
+            "bool",
+            "bool"
+          ]
+        },
+        {
+          "name": "analyzeImport",
+          "kind": "method",
+          "line": 383,
+          "endLine": 394,
+          "parameters": [
+            "*sitter.Node"
+          ]
+        },
+        {
+          "name": "analyzeTopLevel",
+          "kind": "method",
+          "line": 583,
+          "endLine": 600,
+          "parameters": [
+            "*sitter.Node"
+          ]
+        },
+        {
+          "name": "collectMembers",
+          "kind": "method",
+          "line": 524,
+          "endLine": 542,
+          "parameters": [
+            "*sitter.Node",
+            "*Declaration"
+          ]
+        },
+        {
+          "name": "location",
+          "kind": "method",
+          "line": 114,
+          "endLine": 118,
+          "parameters": [
+            "*sitter.Node"
+          ],
+          "result": "Location"
+        },
+        {
+          "name": "recordExport",
+          "kind": "method",
+          "line": 558,
+          "endLine": 570,
+          "parameters": [
+            "string",
+            "bool",
+            "bool"
+          ]
+        },
+        {
+          "name": "recordTypeScriptExport",
+          "kind": "method",
+          "line": 572,
+          "endLine": 581,
+          "parameters": [
+            "string",
+            "string"
+          ]
+        },
+        {
+          "name": "moduleID",
+          "kind": "property",
+          "line": 111,
+          "endLine": 111,
+          "result": "string"
+        },
+        {
+          "name": "result",
+          "kind": "property",
+          "line": 108,
+          "endLine": 108,
+          "result": "*Analysis"
+        },
+        {
+          "name": "source",
+          "kind": "property",
+          "line": 109,
+          "endLine": 109,
+          "result": "Source"
+        },
+        {
+          "name": "text",
+          "kind": "property",
+          "line": 110,
+          "endLine": 110,
+          "result": "[]byte"
+        }
+      ]
+    },
+    {
+      "name": "sourceCollector",
+      "kind": "struct",
+      "file": "extract/files.go",
+      "line": 25,
+      "endLine": 25,
+      "underlyingType": "struct{paths map[string]bool}",
+      "members": [
+        {
+          "name": "collect",
+          "kind": "method",
+          "line": 27,
+          "endLine": 53,
+          "parameters": [
+            "string",
+            "bool"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "collectDirectory",
+          "kind": "method",
+          "line": 96,
+          "endLine": 113,
+          "parameters": [
+            "string"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "shouldSkip",
+          "kind": "method",
+          "line": 115,
+          "endLine": 117,
+          "parameters": [
+            "os.DirEntry"
+          ],
+          "result": "bool"
+        },
+        {
+          "name": "paths",
+          "kind": "property",
+          "line": 25,
+          "endLine": 25,
+          "result": "map[string]bool"
+        }
+      ]
+    },
+    {
+      "name": "traversalItem",
+      "kind": "struct",
+      "file": "extract/generate.go",
+      "line": 58,
+      "endLine": 61,
+      "underlyingType": "struct{name string;depth int;}",
+      "members": [
+        {
+          "name": "depth",
+          "kind": "property",
+          "line": 60,
+          "endLine": 60,
+          "result": "int"
+        },
+        {
+          "name": "name",
+          "kind": "property",
+          "line": 59,
+          "endLine": 59,
+          "result": "string"
+        }
+      ]
+    },
+    {
+      "name": "typeScriptAnalysis",
+      "kind": "struct",
+      "file": "extract/typescript_language.go",
+      "line": 8,
+      "endLine": 10,
+      "underlyingType": "struct{result*Analysis}",
+      "members": [
+        {
+          "name": "Analyze",
+          "kind": "method",
+          "line": 43,
+          "endLine": 45,
+          "parameters": [
+            "Source"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "Finalize",
+          "kind": "method",
+          "line": 47,
+          "endLine": 51,
+          "result": "error"
+        },
+        {
+          "name": "result",
+          "kind": "property",
+          "line": 9,
+          "endLine": 9,
+          "result": "*Analysis"
+        }
+      ]
+    },
+    {
+      "name": "typeScriptClassItem",
+      "kind": "struct",
+      "file": "extract/ts_generate.go",
+      "line": 8,
+      "endLine": 11,
+      "underlyingType": "struct{key string;depth int;}",
+      "members": [
+        {
+          "name": "depth",
+          "kind": "property",
+          "line": 10,
+          "endLine": 10,
+          "result": "int"
+        },
+        {
+          "name": "key",
+          "kind": "property",
+          "line": 9,
+          "endLine": 9,
+          "result": "string"
+        }
+      ]
+    },
+    {
+      "name": "typeScriptFlowItem",
+      "kind": "struct",
+      "file": "extract/ts_generate_flow.go",
+      "line": 8,
+      "endLine": 11,
+      "underlyingType": "struct{key string;depth int;}",
+      "members": [
+        {
+          "name": "depth",
+          "kind": "property",
+          "line": 10,
+          "endLine": 10,
+          "result": "int"
+        },
+        {
+          "name": "key",
+          "kind": "property",
+          "line": 9,
+          "endLine": 9,
+          "result": "string"
+        }
+      ]
+    },
+    {
+      "name": "workspaceModuleCollector",
+      "kind": "struct",
+      "file": "extract/workspace_bundle.go",
+      "line": 242,
+      "endLine": 245,
+      "underlyingType": "struct{root string;result[]discoveredModule;}",
+      "members": [
+        {
+          "name": "visit",
+          "kind": "method",
+          "line": 254,
+          "endLine": 282,
+          "parameters": [
+            "string",
+            "os.DirEntry",
+            "error"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "result",
+          "kind": "property",
+          "line": 244,
+          "endLine": 244,
+          "result": "[]discoveredModule"
+        },
+        {
+          "name": "root",
+          "kind": "property",
+          "line": 243,
+          "endLine": 243,
+          "result": "string"
+        }
+      ]
+    }
+  ],
+  "exportedFunctions": [
+    {
+      "name": "Analyze",
+      "kind": "function",
+      "file": "extract/analyze.go",
+      "line": 664,
+      "endLine": 692,
+      "parameters": [
+        "[]Source"
+      ],
+      "result": "tuple\u003c*Analysis,error\u003e"
+    },
+    {
+      "name": "BuildPackageIR",
+      "kind": "function",
+      "file": "extract/package_bundle.go",
+      "line": 133,
+      "endLine": 156,
+      "parameters": [
+        "string"
+      ],
+      "result": "tuple\u003c*PackageIR,[]Source,error\u003e"
+    },
+    {
+      "name": "BuildWorkspaceIR",
+      "kind": "function",
+      "file": "extract/workspace_bundle.go",
+      "line": 118,
+      "endLine": 149,
+      "parameters": [
+        "string"
+      ],
+      "result": "tuple\u003c*WorkspaceIR,error\u003e"
+    },
+    {
+      "name": "CheckClassDiagram",
+      "kind": "function",
+      "file": "extract/class.go",
+      "line": 1785,
+      "endLine": 1791,
+      "parameters": [
+        "string",
+        "[]Source"
+      ],
+      "result": "tuple\u003c[]Diagnostic,error\u003e"
+    },
+    {
+      "name": "CheckClassDiagramWithAnalysis",
+      "kind": "function",
+      "file": "extract/class.go",
+      "line": 1794,
+      "endLine": 1796,
+      "parameters": [
+        "string",
+        "*Analysis"
+      ],
+      "result": "tuple\u003c[]Diagnostic,error\u003e"
+    },
+    {
+      "name": "CheckClassPaths",
+      "kind": "function",
+      "file": "extract/files.go",
+      "line": 152,
+      "endLine": 154,
+      "parameters": [
+        "string",
+        "[]string"
+      ],
+      "result": "tuple\u003c[]Diagnostic,[]string,error\u003e"
+    },
+    {
+      "name": "CheckFlowPaths",
+      "kind": "function",
+      "file": "extract/files.go",
+      "line": 157,
+      "endLine": 159,
+      "parameters": [
+        "string",
+        "[]string"
+      ],
+      "result": "tuple\u003c[]Diagnostic,[]string,error\u003e"
+    },
+    {
+      "name": "CheckFlowchart",
+      "kind": "function",
+      "file": "extract/flow.go",
+      "line": 440,
+      "endLine": 446,
+      "parameters": [
+        "string",
+        "[]Source"
+      ],
+      "result": "tuple\u003c[]Diagnostic,error\u003e"
+    },
+    {
+      "name": "CheckFlowchartWithAnalysis",
+      "kind": "function",
+      "file": "extract/flow.go",
+      "line": 449,
+      "endLine": 462,
+      "parameters": [
+        "string",
+        "*Analysis"
+      ],
+      "result": "tuple\u003c[]Diagnostic,error\u003e"
+    },
+    {
+      "name": "CheckPackageBundle",
+      "kind": "function",
+      "file": "extract/package_bundle.go",
+      "line": 1266,
+      "endLine": 1293,
+      "parameters": [
+        "string",
+        "string"
+      ],
+      "result": "error"
+    },
+    {
+      "name": "CheckWorkspaceBundle",
+      "kind": "function",
+      "file": "extract/workspace_bundle.go",
+      "line": 776,
+      "endLine": 795,
+      "parameters": [
+        "string",
+        "string"
+      ],
+      "result": "error"
+    },
+    {
+      "name": "DiscoverSources",
+      "kind": "function",
+      "file": "extract/files.go",
+      "line": 120,
+      "endLine": 132,
+      "parameters": [
+        "[]string"
+      ],
+      "result": "tuple\u003c[]string,error\u003e"
+    },
+    {
+      "name": "GenerateClassDiagram",
+      "kind": "function",
+      "file": "extract/generate.go",
+      "line": 345,
+      "endLine": 351,
+      "parameters": [
+        "string",
+        "Source",
+        "[]Source",
+        "GenerateOptions"
+      ],
+      "result": "tuple\u003cstring,error\u003e"
+    },
+    {
+      "name": "GenerateFlowchart",
+      "kind": "function",
+      "file": "extract/generate.go",
+      "line": 542,
+      "endLine": 553,
+      "parameters": [
+        "string",
+        "string",
+        "[]Source",
+        "GenerateOptions"
+      ],
+      "result": "tuple\u003cstring,error\u003e"
+    },
+    {
+      "name": "GeneratePackageBundle",
+      "kind": "function",
+      "file": "extract/package_bundle.go",
+      "line": 633,
+      "endLine": 662,
+      "parameters": [
+        "string"
+      ],
+      "result": "tuple\u003c*PackageBundle,error\u003e"
+    },
+    {
+      "name": "GeneratePackageDiagram",
+      "kind": "function",
+      "file": "extract/package_generate.go",
+      "line": 13,
+      "endLine": 66,
+      "parameters": [
+        "string"
+      ],
+      "result": "tuple\u003cstring,error\u003e"
+    },
+    {
+      "name": "GenerateWorkspaceBundle",
+      "kind": "function",
+      "file": "extract/workspace_bundle.go",
+      "line": 481,
+      "endLine": 491,
+      "parameters": [
+        "string"
+      ],
+      "result": "tuple\u003c*WorkspaceBundle,error\u003e"
+    },
+    {
+      "name": "LanguageForPath",
+      "kind": "function",
+      "file": "extract/language.go",
+      "line": 54,
+      "endLine": 62,
+      "parameters": [
+        "string"
+      ],
+      "result": "tuple\u003cLanguage,bool\u003e"
+    },
+    {
+      "name": "LoadSources",
+      "kind": "function",
+      "file": "extract/files.go",
+      "line": 135,
+      "endLine": 149,
+      "parameters": [
+        "[]string"
+      ],
+      "result": "tuple\u003c[]Source,error\u003e"
+    },
+    {
+      "name": "ParseClassDiagram",
+      "kind": "function",
+      "file": "extract/class_parser.go",
+      "line": 20,
+      "endLine": 47,
+      "parameters": [
+        "string"
+      ],
+      "result": "tuple\u003c*ClassDiagram,error\u003e"
+    },
+    {
+      "name": "ParseFlowchart",
+      "kind": "function",
+      "file": "extract/flow.go",
+      "line": 234,
+      "endLine": 245,
+      "parameters": [
+        "string"
+      ],
+      "result": "tuple\u003c*Flowchart,error\u003e"
+    },
+    {
+      "name": "ResolvePackageBundleSource",
+      "kind": "function",
+      "file": "extract/package_bundle.go",
+      "line": 1216,
+      "endLine": 1262,
+      "parameters": [
+        "string"
+      ],
+      "result": "tuple\u003cstring,error\u003e"
+    },
+    {
+      "name": "ResolveWorkspaceBundleRoot",
+      "kind": "function",
+      "file": "extract/workspace_bundle.go",
+      "line": 710,
+      "endLine": 724,
+      "parameters": [
+        "string"
+      ],
+      "result": "tuple\u003cstring,error\u003e"
+    },
+    {
+      "name": "SupportedLanguages",
+      "kind": "function",
+      "file": "extract/language.go",
+      "line": 42,
+      "endLine": 51,
+      "result": "[]Language"
+    },
+    {
+      "name": "WritePackageBundle",
+      "kind": "function",
+      "file": "extract/package_bundle.go",
+      "line": 1085,
+      "endLine": 1096,
+      "parameters": [
+        "string",
+        "*PackageBundle"
+      ],
+      "result": "error"
+    },
+    {
+      "name": "WriteWorkspaceBundle",
+      "kind": "function",
+      "file": "extract/workspace_bundle.go",
+      "line": 595,
+      "endLine": 606,
+      "parameters": [
+        "string",
+        "*WorkspaceBundle"
+      ],
+      "result": "error"
+    }
+  ],
+  "fiberRoutes": [],
+  "relations": [
+    {
+      "from": "Analysis",
+      "to": "Declaration",
+      "kind": "association",
+      "via": "field DeclarationVariants",
+      "cardinality": "many"
+    },
+    {
+      "from": "Analysis",
+      "to": "Declaration",
+      "kind": "association",
+      "via": "field Declarations",
+      "cardinality": "many"
+    },
+    {
+      "from": "Analysis",
+      "to": "Declaration",
+      "kind": "association",
+      "via": "field GoDeclarations",
+      "cardinality": "many"
+    },
+    {
+      "from": "Analysis",
+      "to": "Declaration",
+      "kind": "association",
+      "via": "field TSDeclarations",
+      "cardinality": "many"
+    },
+    {
+      "from": "Analysis",
+      "to": "FiberRoute",
+      "kind": "association",
+      "via": "field GoFiberRoutes",
+      "cardinality": "many"
+    },
+    {
+      "from": "Analysis",
+      "to": "Import",
+      "kind": "association",
+      "via": "field Imports",
+      "cardinality": "many"
+    },
+    {
+      "from": "Analysis",
+      "to": "Import",
+      "kind": "association",
+      "via": "field TSImportBindings",
+      "cardinality": "many"
+    },
+    {
+      "from": "Analysis",
+      "to": "Location",
+      "kind": "association",
+      "via": "field GoTypeReferences",
+      "cardinality": "many"
+    },
+    {
+      "from": "Analysis",
+      "to": "Member",
+      "kind": "association",
+      "via": "field Functions",
+      "cardinality": "many"
+    },
+    {
+      "from": "Analysis",
+      "to": "Member",
+      "kind": "association",
+      "via": "field GoFunctions",
+      "cardinality": "many"
+    },
+    {
+      "from": "Analysis",
+      "to": "Symbol",
+      "kind": "association",
+      "via": "field GoSymbolIndex",
+      "cardinality": "many"
+    },
+    {
+      "from": "Analysis",
+      "to": "Symbol",
+      "kind": "association",
+      "via": "field SymbolVariants",
+      "cardinality": "many"
+    },
+    {
+      "from": "Analysis",
+      "to": "Symbol",
+      "kind": "association",
+      "via": "field Symbols",
+      "cardinality": "many"
+    },
+    {
+      "from": "Analysis",
+      "to": "Symbol",
+      "kind": "association",
+      "via": "field TSSymbolIndex",
+      "cardinality": "many"
+    },
+    {
+      "from": "Analyze",
+      "to": "Analysis",
+      "kind": "dependency",
+      "via": "result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "Analyze",
+      "to": "Source",
+      "kind": "dependency",
+      "via": "parameter 1",
+      "cardinality": "many"
+    },
+    {
+      "from": "BuildPackageIR",
+      "to": "PackageIR",
+      "kind": "dependency",
+      "via": "result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "BuildPackageIR",
+      "to": "Source",
+      "kind": "dependency",
+      "via": "result 2",
+      "cardinality": "many"
+    },
+    {
+      "from": "BuildWorkspaceIR",
+      "to": "WorkspaceIR",
+      "kind": "dependency",
+      "via": "result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "CheckClassDiagram",
+      "to": "Diagnostic",
+      "kind": "dependency",
+      "via": "result 1",
+      "cardinality": "many"
+    },
+    {
+      "from": "CheckClassDiagram",
+      "to": "Source",
+      "kind": "dependency",
+      "via": "parameter 2",
+      "cardinality": "many"
+    },
+    {
+      "from": "CheckClassDiagramWithAnalysis",
+      "to": "Analysis",
+      "kind": "dependency",
+      "via": "parameter 2",
+      "cardinality": "one"
+    },
+    {
+      "from": "CheckClassDiagramWithAnalysis",
+      "to": "Diagnostic",
+      "kind": "dependency",
+      "via": "result 1",
+      "cardinality": "many"
+    },
+    {
+      "from": "CheckClassPaths",
+      "to": "Diagnostic",
+      "kind": "dependency",
+      "via": "result 1",
+      "cardinality": "many"
+    },
+    {
+      "from": "CheckFlowPaths",
+      "to": "Diagnostic",
+      "kind": "dependency",
+      "via": "result 1",
+      "cardinality": "many"
+    },
+    {
+      "from": "CheckFlowchart",
+      "to": "Diagnostic",
+      "kind": "dependency",
+      "via": "result 1",
+      "cardinality": "many"
+    },
+    {
+      "from": "CheckFlowchart",
+      "to": "Source",
+      "kind": "dependency",
+      "via": "parameter 2",
+      "cardinality": "many"
+    },
+    {
+      "from": "CheckFlowchartWithAnalysis",
+      "to": "Analysis",
+      "kind": "dependency",
+      "via": "parameter 2",
+      "cardinality": "one"
+    },
+    {
+      "from": "CheckFlowchartWithAnalysis",
+      "to": "Diagnostic",
+      "kind": "dependency",
+      "via": "result 1",
+      "cardinality": "many"
+    },
+    {
+      "from": "ClassDiagram",
+      "to": "DiagramClass",
+      "kind": "association",
+      "via": "field Classes",
+      "cardinality": "many"
+    },
+    {
+      "from": "ClassDiagram",
+      "to": "DiagramNote",
+      "kind": "association",
+      "via": "field Notes",
+      "cardinality": "many"
+    },
+    {
+      "from": "ClassDiagram",
+      "to": "Relation",
+      "kind": "association",
+      "via": "field Relations",
+      "cardinality": "many"
+    },
+    {
+      "from": "Declaration",
+      "to": "GoStructTag",
+      "kind": "association",
+      "via": "field StructTags",
+      "cardinality": "many"
+    },
+    {
+      "from": "Declaration",
+      "to": "Location",
+      "kind": "association",
+      "via": "field Location",
+      "cardinality": "one"
+    },
+    {
+      "from": "Declaration",
+      "to": "Member",
+      "kind": "association",
+      "via": "field Members",
+      "cardinality": "many"
+    },
+    {
+      "from": "DiagramClass",
+      "to": "DiagramMember",
+      "kind": "association",
+      "via": "field Members",
+      "cardinality": "many"
+    },
+    {
+      "from": "DiagramClass",
+      "to": "RouteRequirement",
+      "kind": "association",
+      "via": "field Routes",
+      "cardinality": "many"
+    },
+    {
+      "from": "DiagramClass",
+      "to": "StructTagRequirement",
+      "kind": "association",
+      "via": "field StructTags",
+      "cardinality": "many"
+    },
+    {
+      "from": "DiagramMember",
+      "to": "Location",
+      "kind": "association",
+      "via": "field Location",
+      "cardinality": "one"
+    },
+    {
+      "from": "DiagramMember",
+      "to": "Member",
+      "kind": "inheritance",
+      "via": "embedded type",
+      "cardinality": "one"
+    },
+    {
+      "from": "FiberRoute",
+      "to": "Location",
+      "kind": "association",
+      "via": "field Location",
+      "cardinality": "one"
+    },
+    {
+      "from": "Flowchart",
+      "to": "FlowEdge",
+      "kind": "association",
+      "via": "field Edges",
+      "cardinality": "many"
+    },
+    {
+      "from": "Flowchart",
+      "to": "FlowNode",
+      "kind": "association",
+      "via": "field Nodes",
+      "cardinality": "many"
+    },
+    {
+      "from": "GenerateClassDiagram",
+      "to": "GenerateOptions",
+      "kind": "dependency",
+      "via": "parameter 4",
+      "cardinality": "one"
+    },
+    {
+      "from": "GenerateClassDiagram",
+      "to": "Source",
+      "kind": "dependency",
+      "via": "parameter 2",
+      "cardinality": "one"
+    },
+    {
+      "from": "GenerateClassDiagram",
+      "to": "Source",
+      "kind": "dependency",
+      "via": "parameter 3",
+      "cardinality": "many"
+    },
+    {
+      "from": "GenerateFlowchart",
+      "to": "GenerateOptions",
+      "kind": "dependency",
+      "via": "parameter 4",
+      "cardinality": "one"
+    },
+    {
+      "from": "GenerateFlowchart",
+      "to": "Source",
+      "kind": "dependency",
+      "via": "parameter 3",
+      "cardinality": "many"
+    },
+    {
+      "from": "GeneratePackageBundle",
+      "to": "PackageBundle",
+      "kind": "dependency",
+      "via": "result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "GenerateWorkspaceBundle",
+      "to": "WorkspaceBundle",
+      "kind": "dependency",
+      "via": "result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "LanguageForPath",
+      "to": "Language",
+      "kind": "dependency",
+      "via": "result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "LoadSources",
+      "to": "Source",
+      "kind": "dependency",
+      "via": "result 1",
+      "cardinality": "many"
+    },
+    {
+      "from": "Member",
+      "to": "Location",
+      "kind": "association",
+      "via": "field Location",
+      "cardinality": "one"
+    },
+    {
+      "from": "PackageDeclaration",
+      "to": "PackageMember",
+      "kind": "association",
+      "via": "field Members",
+      "cardinality": "many"
+    },
+    {
+      "from": "PackageIR",
+      "to": "PackageDeclaration",
+      "kind": "association",
+      "via": "field Declarations",
+      "cardinality": "many"
+    },
+    {
+      "from": "PackageIR",
+      "to": "PackageIdentity",
+      "kind": "association",
+      "via": "field Package",
+      "cardinality": "one"
+    },
+    {
+      "from": "PackageIR",
+      "to": "PackageMember",
+      "kind": "association",
+      "via": "field ExportedFunctions",
+      "cardinality": "many"
+    },
+    {
+      "from": "PackageIR",
+      "to": "PackageRelation",
+      "kind": "association",
+      "via": "field Relations",
+      "cardinality": "many"
+    },
+    {
+      "from": "PackageIR",
+      "to": "PackageRoute",
+      "kind": "association",
+      "via": "field Routes",
+      "cardinality": "many"
+    },
+    {
+      "from": "PackageIR",
+      "to": "PackageScope",
+      "kind": "association",
+      "via": "field Scope",
+      "cardinality": "one"
+    },
+    {
+      "from": "PackageIR",
+      "to": "PackageSourceFile",
+      "kind": "association",
+      "via": "field SourceFiles",
+      "cardinality": "many"
+    },
+    {
+      "from": "PackageIR",
+      "to": "PackageSummary",
+      "kind": "association",
+      "via": "field Summary",
+      "cardinality": "one"
+    },
+    {
+      "from": "PackageMember",
+      "to": "PackageStructTag",
+      "kind": "association",
+      "via": "field StructTag",
+      "cardinality": "one"
+    },
+    {
+      "from": "ParseClassDiagram",
+      "to": "ClassDiagram",
+      "kind": "dependency",
+      "via": "result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "ParseFlowchart",
+      "to": "Flowchart",
+      "kind": "dependency",
+      "via": "result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "SupportedLanguages",
+      "to": "Language",
+      "kind": "dependency",
+      "via": "result 1",
+      "cardinality": "many"
+    },
+    {
+      "from": "Symbol",
+      "to": "Location",
+      "kind": "association",
+      "via": "field Locations",
+      "cardinality": "many"
+    },
+    {
+      "from": "WorkspaceIR",
+      "to": "WorkspaceExternalModule",
+      "kind": "association",
+      "via": "field ExternalModules",
+      "cardinality": "many"
+    },
+    {
+      "from": "WorkspaceIR",
+      "to": "WorkspaceIdentity",
+      "kind": "association",
+      "via": "field Workspace",
+      "cardinality": "one"
+    },
+    {
+      "from": "WorkspaceIR",
+      "to": "WorkspaceModule",
+      "kind": "association",
+      "via": "field Modules",
+      "cardinality": "many"
+    },
+    {
+      "from": "WorkspaceIR",
+      "to": "WorkspaceScope",
+      "kind": "association",
+      "via": "field Scope",
+      "cardinality": "one"
+    },
+    {
+      "from": "WorkspaceIR",
+      "to": "WorkspaceSummary",
+      "kind": "association",
+      "via": "field Summary",
+      "cardinality": "one"
+    },
+    {
+      "from": "WorkspaceModule",
+      "to": "WorkspacePackage",
+      "kind": "association",
+      "via": "field Packages",
+      "cardinality": "many"
+    },
+    {
+      "from": "WorkspacePackage",
+      "to": "PackageRoute",
+      "kind": "association",
+      "via": "field Routes",
+      "cardinality": "many"
+    },
+    {
+      "from": "WorkspacePackage",
+      "to": "WorkspaceExternalImport",
+      "kind": "association",
+      "via": "field ExternalImports",
+      "cardinality": "many"
+    },
+    {
+      "from": "WritePackageBundle",
+      "to": "PackageBundle",
+      "kind": "dependency",
+      "via": "parameter 2",
+      "cardinality": "one"
+    },
+    {
+      "from": "WriteWorkspaceBundle",
+      "to": "WorkspaceBundle",
+      "kind": "dependency",
+      "via": "parameter 2",
+      "cardinality": "one"
+    },
+    {
+      "from": "classParser",
+      "to": "ClassDiagram",
+      "kind": "association",
+      "via": "field diagram",
+      "cardinality": "one"
+    },
+    {
+      "from": "classParser",
+      "to": "DiagramClass",
+      "kind": "association",
+      "via": "field current",
+      "cardinality": "one"
+    },
+    {
+      "from": "classParser",
+      "to": "DiagramClass",
+      "kind": "dependency",
+      "via": "method metadataTarget result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "classValidator",
+      "to": "Analysis",
+      "kind": "association",
+      "via": "field analysis",
+      "cardinality": "one"
+    },
+    {
+      "from": "classValidator",
+      "to": "ClassDiagram",
+      "kind": "association",
+      "via": "field diagram",
+      "cardinality": "one"
+    },
+    {
+      "from": "classValidator",
+      "to": "Declaration",
+      "kind": "dependency",
+      "via": "method checkFiberRoutes parameter 2",
+      "cardinality": "one"
+    },
+    {
+      "from": "classValidator",
+      "to": "Declaration",
+      "kind": "dependency",
+      "via": "method checkGoFileLocal parameter 2",
+      "cardinality": "one"
+    },
+    {
+      "from": "classValidator",
+      "to": "Declaration",
+      "kind": "dependency",
+      "via": "method checkStructTags parameter 2",
+      "cardinality": "one"
+    },
+    {
+      "from": "classValidator",
+      "to": "Declaration",
+      "kind": "dependency",
+      "via": "method checkUnderlying parameter 2",
+      "cardinality": "one"
+    },
+    {
+      "from": "classValidator",
+      "to": "Declaration",
+      "kind": "dependency",
+      "via": "method completePackageContains parameter 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "classValidator",
+      "to": "Declaration",
+      "kind": "dependency",
+      "via": "method declaration result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "classValidator",
+      "to": "Declaration",
+      "kind": "dependency",
+      "via": "method firstExternalGoTypeReference parameter 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "classValidator",
+      "to": "Declaration",
+      "kind": "dependency",
+      "via": "method functionReferences parameter 3",
+      "cardinality": "one"
+    },
+    {
+      "from": "classValidator",
+      "to": "Declaration",
+      "kind": "dependency",
+      "via": "method goDeclaration result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "classValidator",
+      "to": "Declaration",
+      "kind": "dependency",
+      "via": "method matchingFunctionReferences parameter 5",
+      "cardinality": "one"
+    },
+    {
+      "from": "classValidator",
+      "to": "Declaration",
+      "kind": "dependency",
+      "via": "method structurallyImplements parameter 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "classValidator",
+      "to": "Diagnostic",
+      "kind": "association",
+      "via": "field diagnostics",
+      "cardinality": "many"
+    },
+    {
+      "from": "classValidator",
+      "to": "DiagramClass",
+      "kind": "dependency",
+      "via": "method anyFunctionCandidateReferences parameter 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "classValidator",
+      "to": "DiagramClass",
+      "kind": "dependency",
+      "via": "method checkClass parameter 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "classValidator",
+      "to": "DiagramClass",
+      "kind": "dependency",
+      "via": "method checkDeclaration parameter 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "classValidator",
+      "to": "DiagramClass",
+      "kind": "dependency",
+      "via": "method checkExport parameter 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "classValidator",
+      "to": "DiagramClass",
+      "kind": "dependency",
+      "via": "method checkFiberRoutes parameter 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "classValidator",
+      "to": "DiagramClass",
+      "kind": "dependency",
+      "via": "method checkFunction parameter 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "classValidator",
+      "to": "DiagramClass",
+      "kind": "dependency",
+      "via": "method checkGoFileLocal parameter 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "classValidator",
+      "to": "DiagramClass",
+      "kind": "dependency",
+      "via": "method checkImport parameter 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "classValidator",
+      "to": "DiagramClass",
+      "kind": "dependency",
+      "via": "method checkStructTags parameter 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "classValidator",
+      "to": "DiagramClass",
+      "kind": "dependency",
+      "via": "method checkUnderlying parameter 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "classValidator",
+      "to": "DiagramClass",
+      "kind": "dependency",
+      "via": "method checkUnexpectedMembers parameter 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "classValidator",
+      "to": "DiagramClass",
+      "kind": "dependency",
+      "via": "method declarationAmbiguous parameter 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "classValidator",
+      "to": "DiagramClass",
+      "kind": "dependency",
+      "via": "method functionAmbiguous parameter 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "classValidator",
+      "to": "DiagramClass",
+      "kind": "dependency",
+      "via": "method functionReferences parameter 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "classValidator",
+      "to": "DiagramClass",
+      "kind": "dependency",
+      "via": "method hasFunctionInScope parameter 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "classValidator",
+      "to": "DiagramClass",
+      "kind": "dependency",
+      "via": "method hasMatchingFunction parameter 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "classValidator",
+      "to": "DiagramClass",
+      "kind": "dependency",
+      "via": "method importScopeMatches parameter 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "classValidator",
+      "to": "DiagramClass",
+      "kind": "dependency",
+      "via": "method matchingFunctionReferences parameter 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "classValidator",
+      "to": "DiagramClass",
+      "kind": "dependency",
+      "via": "method memberScopeMatches parameter 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "classValidator",
+      "to": "DiagramMember",
+      "kind": "dependency",
+      "via": "method checkMember parameter 2",
+      "cardinality": "one"
+    },
+    {
+      "from": "classValidator",
+      "to": "DiagramMember",
+      "kind": "dependency",
+      "via": "method hasMatchingFunction parameter 2",
+      "cardinality": "one"
+    },
+    {
+      "from": "classValidator",
+      "to": "DiagramMember",
+      "kind": "dependency",
+      "via": "method matchingFunctionReferences parameter 2",
+      "cardinality": "one"
+    },
+    {
+      "from": "classValidator",
+      "to": "Import",
+      "kind": "dependency",
+      "via": "method importScopeMatches parameter 2",
+      "cardinality": "one"
+    },
+    {
+      "from": "classValidator",
+      "to": "Location",
+      "kind": "dependency",
+      "via": "method firstExternalGoTypeReference result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "classValidator",
+      "to": "Member",
+      "kind": "dependency",
+      "via": "method checkMember parameter 3",
+      "cardinality": "many"
+    },
+    {
+      "from": "classValidator",
+      "to": "Member",
+      "kind": "dependency",
+      "via": "method checkUnexpectedMembers parameter 2",
+      "cardinality": "many"
+    },
+    {
+      "from": "classValidator",
+      "to": "Member",
+      "kind": "dependency",
+      "via": "method completePackageContainsFunction parameter 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "classValidator",
+      "to": "Member",
+      "kind": "dependency",
+      "via": "method matchingFunctionReferences parameter 3",
+      "cardinality": "one"
+    },
+    {
+      "from": "classValidator",
+      "to": "Member",
+      "kind": "dependency",
+      "via": "method memberReferences parameter 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "classValidator",
+      "to": "Member",
+      "kind": "dependency",
+      "via": "method memberScopeMatches parameter 2",
+      "cardinality": "one"
+    },
+    {
+      "from": "classValidator",
+      "to": "Relation",
+      "kind": "dependency",
+      "via": "method checkAssociation parameter 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "classValidator",
+      "to": "Relation",
+      "kind": "dependency",
+      "via": "method checkHeritage parameter 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "classValidator",
+      "to": "Relation",
+      "kind": "dependency",
+      "via": "method checkRelation parameter 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "classValidator",
+      "to": "packageCompletenessItem",
+      "kind": "dependency",
+      "via": "method addPackageCompletenessDiagnostic parameter 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "classValidator",
+      "to": "packageCompletenessItem",
+      "kind": "dependency",
+      "via": "method uncoveredPackageDeclarations result 1",
+      "cardinality": "many"
+    },
+    {
+      "from": "classValidator",
+      "to": "packageCompletenessItem",
+      "kind": "dependency",
+      "via": "method uncoveredPackageFunctions result 1",
+      "cardinality": "many"
+    },
+    {
+      "from": "flowParser",
+      "to": "FlowNode",
+      "kind": "dependency",
+      "via": "method node result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "flowParser",
+      "to": "Flowchart",
+      "kind": "association",
+      "via": "field flowchart",
+      "cardinality": "one"
+    },
+    {
+      "from": "goAnalysis",
+      "to": "Analysis",
+      "kind": "association",
+      "via": "field result",
+      "cardinality": "one"
+    },
+    {
+      "from": "goAnalysis",
+      "to": "Member",
+      "kind": "association",
+      "via": "field methods",
+      "cardinality": "many"
+    },
+    {
+      "from": "goAnalysis",
+      "to": "Source",
+      "kind": "association",
+      "via": "field sources",
+      "cardinality": "many"
+    },
+    {
+      "from": "goAnalysis",
+      "to": "Source",
+      "kind": "dependency",
+      "via": "method Analyze parameter 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "goAnalysis",
+      "to": "languageAnalysis",
+      "kind": "implementation",
+      "via": "implements",
+      "cardinality": "one"
+    },
+    {
+      "from": "goSourceAnalyzer",
+      "to": "Analysis",
+      "kind": "association",
+      "via": "field result",
+      "cardinality": "one"
+    },
+    {
+      "from": "goSourceAnalyzer",
+      "to": "Declaration",
+      "kind": "dependency",
+      "via": "method addEmbeddedNode parameter 2",
+      "cardinality": "one"
+    },
+    {
+      "from": "goSourceAnalyzer",
+      "to": "Declaration",
+      "kind": "dependency",
+      "via": "method addGoEmbeddedType parameter 2",
+      "cardinality": "one"
+    },
+    {
+      "from": "goSourceAnalyzer",
+      "to": "Declaration",
+      "kind": "dependency",
+      "via": "method addGoField parameter 2",
+      "cardinality": "one"
+    },
+    {
+      "from": "goSourceAnalyzer",
+      "to": "Declaration",
+      "kind": "dependency",
+      "via": "method addGoInterfaceMethod parameter 2",
+      "cardinality": "one"
+    },
+    {
+      "from": "goSourceAnalyzer",
+      "to": "Declaration",
+      "kind": "dependency",
+      "via": "method collectGoMembers parameter 2",
+      "cardinality": "one"
+    },
+    {
+      "from": "goSourceAnalyzer",
+      "to": "Declaration",
+      "kind": "dependency",
+      "via": "method recordGoTypeDeclaration parameter 2",
+      "cardinality": "one"
+    },
+    {
+      "from": "goSourceAnalyzer",
+      "to": "Location",
+      "kind": "dependency",
+      "via": "method addDuplicateGoError parameter 3",
+      "cardinality": "one"
+    },
+    {
+      "from": "goSourceAnalyzer",
+      "to": "Location",
+      "kind": "dependency",
+      "via": "method addDuplicateGoError parameter 4",
+      "cardinality": "one"
+    },
+    {
+      "from": "goSourceAnalyzer",
+      "to": "Member",
+      "kind": "association",
+      "via": "field methods",
+      "cardinality": "many"
+    },
+    {
+      "from": "goSourceAnalyzer",
+      "to": "Member",
+      "kind": "dependency",
+      "via": "method goCallableMember result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "goSourceAnalyzer",
+      "to": "Source",
+      "kind": "association",
+      "via": "field source",
+      "cardinality": "one"
+    },
+    {
+      "from": "goSourceAnalyzer",
+      "to": "fiberRouter",
+      "kind": "dependency",
+      "via": "method fiberRouterExpression parameter 2",
+      "cardinality": "many"
+    },
+    {
+      "from": "goSourceAnalyzer",
+      "to": "fiberRouter",
+      "kind": "dependency",
+      "via": "method fiberRouterExpression result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "goSourceAnalyzer",
+      "to": "fiberRouter",
+      "kind": "dependency",
+      "via": "method processFiberAssignment parameter 3",
+      "cardinality": "many"
+    },
+    {
+      "from": "goSourceAnalyzer",
+      "to": "fiberRouter",
+      "kind": "dependency",
+      "via": "method processFiberNode parameter 2",
+      "cardinality": "many"
+    },
+    {
+      "from": "goSourceAnalyzer",
+      "to": "fiberRouter",
+      "kind": "dependency",
+      "via": "method recordFiberRoute parameter 2",
+      "cardinality": "many"
+    },
+    {
+      "from": "languageAnalysis",
+      "to": "Source",
+      "kind": "dependency",
+      "via": "method Analyze parameter 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "languageDefinition",
+      "to": "Analysis",
+      "kind": "association",
+      "via": "field newAnalysis",
+      "cardinality": "one"
+    },
+    {
+      "from": "languageDefinition",
+      "to": "Analysis",
+      "kind": "association",
+      "via": "field validFlowEdge",
+      "cardinality": "one"
+    },
+    {
+      "from": "languageDefinition",
+      "to": "GenerateOptions",
+      "kind": "association",
+      "via": "field generateStructure",
+      "cardinality": "one"
+    },
+    {
+      "from": "languageDefinition",
+      "to": "Language",
+      "kind": "association",
+      "via": "field info",
+      "cardinality": "one"
+    },
+    {
+      "from": "languageDefinition",
+      "to": "Source",
+      "kind": "association",
+      "via": "field generateFlow",
+      "cardinality": "many"
+    },
+    {
+      "from": "languageDefinition",
+      "to": "Source",
+      "kind": "association",
+      "via": "field generateStructure",
+      "cardinality": "many"
+    },
+    {
+      "from": "languageDefinition",
+      "to": "Source",
+      "kind": "association",
+      "via": "field newAnalysis",
+      "cardinality": "many"
+    },
+    {
+      "from": "languageDefinition",
+      "to": "Source",
+      "kind": "association",
+      "via": "field sourceScope",
+      "cardinality": "one"
+    },
+    {
+      "from": "languageDefinition",
+      "to": "Symbol",
+      "kind": "association",
+      "via": "field validFlowEdge",
+      "cardinality": "one"
+    },
+    {
+      "from": "languageDefinition",
+      "to": "languageAnalysis",
+      "kind": "association",
+      "via": "field newAnalysis",
+      "cardinality": "one"
+    },
+    {
+      "from": "modulePackageCollector",
+      "to": "discoveredModule",
+      "kind": "association",
+      "via": "field all",
+      "cardinality": "many"
+    },
+    {
+      "from": "modulePackageCollector",
+      "to": "discoveredModule",
+      "kind": "association",
+      "via": "field module",
+      "cardinality": "one"
+    },
+    {
+      "from": "packageCompletenessItem",
+      "to": "Location",
+      "kind": "association",
+      "via": "field location",
+      "cardinality": "one"
+    },
+    {
+      "from": "selectedGoSymbol",
+      "to": "Symbol",
+      "kind": "association",
+      "via": "field symbol",
+      "cardinality": "one"
+    },
+    {
+      "from": "sourceAnalyzer",
+      "to": "Analysis",
+      "kind": "association",
+      "via": "field result",
+      "cardinality": "one"
+    },
+    {
+      "from": "sourceAnalyzer",
+      "to": "Declaration",
+      "kind": "dependency",
+      "via": "method collectMembers parameter 2",
+      "cardinality": "one"
+    },
+    {
+      "from": "sourceAnalyzer",
+      "to": "Location",
+      "kind": "dependency",
+      "via": "method location result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "sourceAnalyzer",
+      "to": "Source",
+      "kind": "association",
+      "via": "field source",
+      "cardinality": "one"
+    },
+    {
+      "from": "typeScriptAnalysis",
+      "to": "Analysis",
+      "kind": "association",
+      "via": "field result",
+      "cardinality": "one"
+    },
+    {
+      "from": "typeScriptAnalysis",
+      "to": "Source",
+      "kind": "dependency",
+      "via": "method Analyze parameter 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "typeScriptAnalysis",
+      "to": "languageAnalysis",
+      "kind": "implementation",
+      "via": "implements",
+      "cardinality": "one"
+    },
+    {
+      "from": "workspaceModuleCollector",
+      "to": "discoveredModule",
+      "kind": "association",
+      "via": "field result",
+      "cardinality": "many"
+    }
+  ]
+}

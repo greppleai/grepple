@@ -212,6 +212,9 @@ func Files(p Params, candidates []string) ([]FileMatch, error) {
 		out = scan.scanWindowed(files, p.Skip+limit)
 	}
 	out = applyResultWindow(out, p)
+	if p.Related {
+		attachRelated(out, scan.relatedFiles(files), p.FollowRelated)
+	}
 	// Skip the structural parse entirely when the caller will not render
 	// segments (--count, --files, --line-only, --context, --json-matches): those
 	// modes need only match lines, so parsing every returned file is wasted work.
@@ -231,6 +234,21 @@ type candidateScan struct {
 	m          func(string) bool
 	repoFilter *RepoFilter
 	fromIndex  bool
+}
+
+func (s candidateScan) relatedFiles(files []string) []string {
+	cwd, _ := os.Getwd()
+	filtered := make([]string, 0, len(files))
+	for _, file := range files {
+		display := displayPathFrom(file, cwd)
+		if s.fromIndex && (!withinRoot(file, s.p.Root) || !pathMatchesGlobs(display, s.p.Globs) || pathContainsGitDirectory(file)) {
+			continue
+		}
+		if s.repoFilter.Allow(RepoID(display)) {
+			filtered = append(filtered, file)
+		}
+	}
+	return filtered
 }
 
 // scanAll reads every candidate in parallel and sorts by display path —

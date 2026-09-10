@@ -2,15 +2,17 @@ classDiagram
     %% grepple:package-default github.com/greppleai/grepple/search
     %% grepple:language-default go
     direction LR
-    note "Package search provides file discovery, query and repository filtering, paging, match workers, context, and wire-result construction. | package github.com/greppleai/grepple/search | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=8, declarations=8, exportedTypes=3, internalTypes=5, members=52, exportedFunctions=18, fiberRoutes=0, relations=18"
+    note "Package search provides file discovery, query and repository filtering, paging, match workers, context, and wire-result construction. | package github.com/greppleai/grepple/search | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=10, declarations=14, exportedTypes=5, internalTypes=9, members=91, exportedFunctions=19, fiberRoutes=0, relations=32"
     namespace data_contracts {
-        class Params {
+        class Params["Params · search/model.go:11-33"] {
             +AfterContext: int
+            +At: string
             +BeforeContext: int
             +Context: int
             +CountByRepo: bool
             +ExcludeRepo: []string
             +Files: bool
+            +FollowRelated: int
             +Globs: []string
             +IgnoreCase: bool
             +InvertMatch: bool
@@ -19,6 +21,7 @@ classDiagram
             +MaxSegments: int
             +Query: string
             +Regex: bool
+            +Related: bool
             +Repo: []string
             +Root: string
             +Skip: int
@@ -27,106 +30,127 @@ classDiagram
         <<struct>> Params
     }
     namespace exported_types {
-        class FileMatch
+        class FileMatch["FileMatch · search/model.go:52-58"]
         <<struct>> FileMatch
-        class RepoFilter
+        class RelatedPoint["RelatedPoint · search/model.go:44-48"]
+        <<struct>> RelatedPoint
+        class RelatedPreview["RelatedPreview · search/model.go:37-41"]
+        <<struct>> RelatedPreview
+        class RepoFilter["RepoFilter · search/search_engine.go:128-131"]
         <<struct>> RepoFilter
     }
     namespace internal_types {
-        class candidateCollector
+        class candidateCollector["candidateCollector · search/search_glob.go:138-143"]
         <<struct>> candidateCollector
-        class candidateScan
+        class candidateScan["candidateScan · search/search_engine.go:232-237"]
         <<struct>> candidateScan
-        class candidateWalker
+        class candidateWalker["candidateWalker · search/search_glob.go:365-369"]
         <<struct>> candidateWalker
-        class gitignoreCache["gitignoreCache = map&#91;string&#93;&#91;&#93;string"]
+        class gitignoreCache["gitignoreCache = map&#91;string&#93;&#91;&#93;string · search/search_glob.go:428"]
         <<type>> gitignoreCache
-        class repoPattern
+        class navigationCall["navigationCall · search/related.go:34-37"]
+        <<struct>> navigationCall
+        class navigationCaller["navigationCaller · search/related.go:29-32"]
+        <<struct>> navigationCaller
+        class navigationDeclaration["navigationDeclaration · search/related.go:21-27"]
+        <<struct>> navigationDeclaration
+        class navigationIndex["navigationIndex · search/related.go:39-46"]
+        <<struct>> navigationIndex
+        class repoPattern["repoPattern · search/search_engine.go:94-97"]
         <<struct>> repoPattern
     }
     namespace operations {
-        class AggregateRepoCounts {
+        class AggregateRepoCounts["AggregateRepoCounts · search/search_engine.go:467-486"] {
             +AggregateRepoCounts([]FileMatch): []api.RepoCount
         }
         <<function>> AggregateRepoCounts
-        class BuildResults {
+        class At["At · search/at.go:16-63"] {
+            +At(Params): tuple~*FileMatch&#44;error~
+        }
+        <<function>> At
+        class BuildResults["BuildResults · search/result.go:62-75"] {
             +BuildResults([]FileMatch, int, int, int, bool): []api.FileResult
         }
         <<function>> BuildResults
-        class CollectFilesUnder {
+        class CollectFilesUnder["CollectFilesUnder · search/search_glob.go:87-104"] {
             +CollectFilesUnder([]string, string): tuple~[]string&#44;error~
         }
         <<function>> CollectFilesUnder
-        class Content {
+        class Content["Content · search/search_engine.go:308-318"] {
             +Content(Params, string, []byte): tuple~*FileMatch&#44;error~
         }
         <<function>> Content
-        class ContextLines {
+        class ContextLines["ContextLines · search/context.go:11-39"] {
             +ContextLines(string, map[int]bool, int, int, int): []api.ContextLine
         }
         <<function>> ContextLines
-        class EnforcePageLimit {
+        class EnforcePageLimit["EnforcePageLimit · search/search_params.go:101-108"] {
             +EnforcePageLimit(*Params, api.SearchRequest)
         }
         <<function>> EnforcePageLimit
-        class Files {
+        class Files["Files · search/search_engine.go:189-227"] {
             +Files(Params, []string): tuple~[]FileMatch&#44;error~
         }
         <<function>> Files
-        class ListFilePaths {
+        class ListFilePaths["ListFilePaths · search/search_engine.go:389-423"] {
             +ListFilePaths(Params, []string): tuple~[]string&#44;error~
         }
         <<function>> ListFilePaths
-        class NewRepoFilter {
+        class NewRepoFilter["NewRepoFilter · search/search_engine.go:135-137"] {
             +NewRepoFilter([]string, []string): *RepoFilter
         }
         <<function>> NewRepoFilter
-        class PathMatchesGlobs {
+        class PathMatchesGlobs["PathMatchesGlobs · search/search_glob.go:490-492"] {
             +PathMatchesGlobs(string, []string): bool
         }
         <<function>> PathMatchesGlobs
-        class RepoID {
+        class RepoID["RepoID · search/search_engine.go:80-89"] {
             +RepoID(string): string
         }
         <<function>> RepoID
-        class RepoMatches {
+        class RepoMatches["RepoMatches · search/search_params.go:113"] {
             +RepoMatches(string, []string): bool
         }
         <<function>> RepoMatches
-        class RepoMatchesAny {
+        class RepoMatchesAny["RepoMatchesAny · search/search_params.go:116"] {
             +RepoMatchesAny(string, []string): bool
         }
         <<function>> RepoMatchesAny
-        class ResolveRequest {
+        class ResolveRequest["ResolveRequest · search/search_params.go:11-35"] {
             +ResolveRequest(api.SearchRequest): tuple~Params&#44;error~
         }
         <<function>> ResolveRequest
-        class SortRepoCounts {
+        class SortRepoCounts["SortRepoCounts · search/search_engine.go:491-501"] {
             +SortRepoCounts([]api.RepoCount)
         }
         <<function>> SortRepoCounts
-        class SplitLines {
+        class SplitLines["SplitLines · search/search_engine.go:23-32"] {
             +SplitLines(string): []string
         }
         <<function>> SplitLines
-        class ToResult {
+        class ToResult["ToResult · search/result.go:13-31"] {
             +ToResult(FileMatch, []parser.Segment, int, int, int): api.FileResult
         }
         <<function>> ToResult
-        class WorkerCount {
+        class WorkerCount["WorkerCount · search/workers.go:19-34"] {
             +WorkerCount(): int
         }
         <<function>> WorkerCount
     }
     AggregateRepoCounts "1" ..> "*" FileMatch : parameter 1
+    At "1" ..> "1" FileMatch : result 1
+    At "1" ..> "1" Params : parameter 1
     BuildResults "1" ..> "*" FileMatch : parameter 1
     Content "1" ..> "1" FileMatch : result 1
     Content "1" ..> "1" Params : parameter 1
     EnforcePageLimit "1" ..> "1" Params : parameter 1
+    FileMatch "1" --> "*" RelatedPoint : field Related
     Files "1" ..> "*" FileMatch : result 1
     Files "1" ..> "1" Params : parameter 1
     ListFilePaths "1" ..> "1" Params : parameter 1
     NewRepoFilter "1" ..> "1" RepoFilter : result 1
+    RelatedPoint "1" --> "1" RelatedPreview : field Preview
+    RelatedPreview "1" --> "*" RelatedPoint : field Related
     RepoFilter "1" --> "*" repoPattern : field exclude; field include
     ResolveRequest "1" ..> "1" Params : result 1
     ToResult "1" ..> "1" FileMatch : parameter 1
@@ -134,3 +158,9 @@ classDiagram
     candidateScan "1" ..> "*" FileMatch : method scanAll result 1; method scanWindowed result 1
     candidateScan "1" --> "1" Params : field p
     candidateScan "1" --> "1" RepoFilter : field repoFilter
+    navigationCaller "1" --> "1" navigationDeclaration : field declaration
+    navigationDeclaration "1" --> "1" RelatedPoint : field point
+    navigationIndex "1" --> "*" navigationCall : field calls
+    navigationIndex "1" --> "*" navigationCaller : field callers
+    navigationIndex "1" --> "*" navigationDeclaration : field byFile; field byLocation; field declarations
+    navigationIndex "1" ..> "*" navigationDeclaration : method addCalls parameter 2; method addDeclarations result 1
