@@ -30,7 +30,6 @@ func BenchmarkNavigationParseVersusDiskCache(b *testing.B) {
 	protobufPackedPath, protobufPackedSize := writeNavigationBenchmarkProtobufPacked(b, graph)
 	cstMessagePath, cstMessageSize := writeNavigationBenchmarkCSTMessages(b, cst)
 	cstPackedPath, cstPackedSize := writeNavigationBenchmarkCSTPacked(b, cst)
-	nativeTreePath, nativeTreeSize := writeNativeTreeBenchmarkCache(b, sources)
 	totalSourceBytes := navigationBenchmarkSourceBytes(sources)
 
 	b.Run("tree-sitter-parse-memory", func(b *testing.B) {
@@ -38,15 +37,6 @@ func BenchmarkNavigationParseVersusDiskCache(b *testing.B) {
 	})
 	b.Run("tree-sitter-parse-disk", func(b *testing.B) {
 		benchmarkTreeSitterDisk(b, sources, totalSourceBytes)
-	})
-	b.Run("tree-sitter-native-serialize-memory", func(b *testing.B) {
-		benchmarkNativeTreeSerializeMemory(b, sources, totalSourceBytes)
-	})
-	b.Run("tree-sitter-native-deserialize-memory", func(b *testing.B) {
-		benchmarkNativeTreeMemory(b, nativeTreePath, nativeTreeSize, len(sources))
-	})
-	b.Run("tree-sitter-native-disk", func(b *testing.B) {
-		benchmarkNativeTreeDisk(b, nativeTreePath, nativeTreeSize, len(sources))
 	})
 	b.Run("navigation-parse-and-extract", func(b *testing.B) {
 		benchmarkNavigationExtraction(b, sources, totalSourceBytes)

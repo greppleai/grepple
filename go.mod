@@ -26,5 +26,3 @@ require (
 	github.com/mattn/go-pointer v0.0.1 // indirect
 	github.com/stretchr/testify v1.11.1 // indirect
 )
-
-replace github.com/tree-sitter/go-tree-sitter => ../go-tree-sitter

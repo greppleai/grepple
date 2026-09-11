@@ -1,3 +1,8 @@
+//go:build native_tree_cache
+
+// This benchmark requires a go-tree-sitter build with the experimental native
+// tree serialization API. Supply that fork with a go.work or temporary module replace.
+
 package parser
 
 import (
@@ -11,6 +16,21 @@ import (
 )
 
 var benchmarkNativeTreeBytes []byte
+
+func BenchmarkNativeTreeCache(b *testing.B) {
+	sources := navigationBenchmarkSources(b)
+	sourceBytes := navigationBenchmarkSourceBytes(sources)
+	path, cacheSize := writeNativeTreeBenchmarkCache(b, sources)
+	b.Run("serialize-memory", func(b *testing.B) {
+		benchmarkNativeTreeSerializeMemory(b, sources, sourceBytes)
+	})
+	b.Run("deserialize-memory", func(b *testing.B) {
+		benchmarkNativeTreeMemory(b, path, cacheSize, len(sources))
+	})
+	b.Run("disk", func(b *testing.B) {
+		benchmarkNativeTreeDisk(b, path, cacheSize, len(sources))
+	})
+}
 
 func benchmarkNativeTreeSerializeMemory(b *testing.B, sources []navigationBenchmarkSource, sourceBytes int) {
 	trees := make([]*sitter.Tree, 0, len(sources))
