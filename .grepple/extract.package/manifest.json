@@ -25,7 +25,7 @@
     "fiberRoutes": 0,
     "relations": 180
   },
-  "semanticModelDigest": "sha256:e0090facb7f229480d83c7c1591a95cd3077f7667f4c6084f130a7dfbfbb251e",
+  "semanticModelDigest": "sha256:c5b5bf8fd0e2f166c6325cd08becfc1fc203f5a811017c53bf230e55315971e3",
   "sourceFiles": [
     {
       "path": "extract/analyze.go"
@@ -3833,15 +3833,15 @@
       "name": "fiberRouter",
       "kind": "struct",
       "file": "extract/go_analyze.go",
-      "line": 445,
-      "endLine": 447,
+      "line": 456,
+      "endLine": 458,
       "underlyingType": "struct{prefix string}",
       "members": [
         {
           "name": "prefix",
           "kind": "property",
-          "line": 446,
-          "endLine": 446,
+          "line": 457,
+          "endLine": 457,
           "result": "string"
         }
       ]
@@ -3984,8 +3984,8 @@
         {
           "name": "Analyze",
           "kind": "method",
-          "line": 65,
-          "endLine": 67,
+          "line": 70,
+          "endLine": 72,
           "parameters": [
             "Source"
           ],
@@ -3994,8 +3994,8 @@
         {
           "name": "Finalize",
           "kind": "method",
-          "line": 69,
-          "endLine": 75,
+          "line": 74,
+          "endLine": 80,
           "result": "error"
         },
         {
@@ -4104,8 +4104,8 @@
         {
           "name": "addDuplicateGoError",
           "kind": "method",
-          "line": 345,
-          "endLine": 350,
+          "line": 356,
+          "endLine": 361,
           "parameters": [
             "string",
             "string",
@@ -4116,53 +4116,53 @@
         {
           "name": "addEmbeddedNode",
           "kind": "method",
-          "line": 316,
-          "endLine": 321,
+          "line": 327,
+          "endLine": 332,
           "parameters": [
-            "codeparser.Node",
+            "codeparser.ViewNode",
             "*Declaration"
           ]
         },
         {
           "name": "addGoEmbeddedType",
           "kind": "method",
-          "line": 308,
-          "endLine": 314,
+          "line": 319,
+          "endLine": 325,
           "parameters": [
-            "codeparser.Node",
+            "codeparser.ViewNode",
             "*Declaration"
           ]
         },
         {
           "name": "addGoField",
           "kind": "method",
-          "line": 270,
-          "endLine": 288,
+          "line": 281,
+          "endLine": 299,
           "parameters": [
-            "codeparser.Node",
+            "codeparser.ViewNode",
             "*Declaration"
           ]
         },
         {
           "name": "addGoInterfaceMethod",
           "kind": "method",
-          "line": 300,
-          "endLine": 306,
+          "line": 311,
+          "endLine": 317,
           "parameters": [
-            "codeparser.Node",
+            "codeparser.ViewNode",
             "*Declaration"
           ]
         },
         {
           "name": "addGoSymbol",
           "kind": "method",
-          "line": 698,
-          "endLine": 706,
+          "line": 709,
+          "endLine": 717,
           "parameters": [
             "string",
             "string",
-            "codeparser.Node",
-            "codeparser.Node",
+            "codeparser.ViewNode",
+            "codeparser.ViewNode",
             "string",
             "string"
           ]
@@ -4170,85 +4170,85 @@
         {
           "name": "addGoTypeReference",
           "kind": "method",
-          "line": 222,
-          "endLine": 228,
+          "line": 233,
+          "endLine": 239,
           "parameters": [
             "string",
-            "codeparser.Node",
+            "codeparser.ViewNode",
             "string"
           ]
         },
         {
           "name": "analyzeFunction",
           "kind": "method",
-          "line": 391,
-          "endLine": 410,
+          "line": 402,
+          "endLine": 421,
           "parameters": [
-            "codeparser.Node"
+            "codeparser.ViewNode"
           ]
         },
         {
           "name": "analyzeImportSpec",
           "kind": "method",
-          "line": 714,
-          "endLine": 736,
+          "line": 725,
+          "endLine": 747,
           "parameters": [
-            "codeparser.Node"
+            "codeparser.ViewNode"
           ]
         },
         {
           "name": "analyzeImports",
           "kind": "method",
-          "line": 708,
-          "endLine": 712,
+          "line": 719,
+          "endLine": 723,
           "parameters": [
-            "codeparser.Node"
+            "codeparser.ViewNode"
           ]
         },
         {
           "name": "analyzeMethod",
           "kind": "method",
-          "line": 412,
-          "endLine": 429,
+          "line": 423,
+          "endLine": 440,
           "parameters": [
-            "codeparser.Node"
+            "codeparser.ViewNode"
           ]
         },
         {
           "name": "analyzeStatement",
           "kind": "method",
-          "line": 120,
-          "endLine": 131,
+          "line": 131,
+          "endLine": 142,
           "parameters": [
-            "codeparser.Node"
+            "codeparser.ViewNode"
           ]
         },
         {
           "name": "analyzeTypeSpec",
           "kind": "method",
-          "line": 155,
-          "endLine": 175,
+          "line": 166,
+          "endLine": 186,
           "parameters": [
-            "codeparser.Node"
+            "codeparser.ViewNode"
           ]
         },
         {
           "name": "analyzeTypes",
           "kind": "method",
-          "line": 149,
-          "endLine": 153,
+          "line": 160,
+          "endLine": 164,
           "parameters": [
-            "codeparser.Node"
+            "codeparser.ViewNode"
           ]
         },
         {
           "name": "collectFiberRoutes",
           "kind": "method",
-          "line": 449,
-          "endLine": 462,
+          "line": 460,
+          "endLine": 473,
           "parameters": [
-            "codeparser.Node",
-            "codeparser.Node",
+            "codeparser.ViewNode",
+            "codeparser.ViewNode",
             "string",
             "string"
           ]
@@ -4256,29 +4256,29 @@
         {
           "name": "collectGoMembers",
           "kind": "method",
-          "line": 247,
-          "endLine": 259,
+          "line": 258,
+          "endLine": 270,
           "parameters": [
-            "codeparser.Node",
+            "codeparser.ViewNode",
             "*Declaration"
           ]
         },
         {
           "name": "collectGoTypeReferences",
           "kind": "method",
-          "line": 205,
-          "endLine": 220,
+          "line": 216,
+          "endLine": 231,
           "parameters": [
-            "codeparser.Node"
+            "codeparser.ViewNode"
           ]
         },
         {
           "name": "fiberRouterExpression",
           "kind": "method",
-          "line": 537,
-          "endLine": 570,
+          "line": 548,
+          "endLine": 581,
           "parameters": [
-            "codeparser.Node",
+            "codeparser.ViewNode",
             "map[string]fiberRouter"
           ],
           "result": "tuple\u003cfiberRouter,bool\u003e"
@@ -4286,10 +4286,10 @@
         {
           "name": "goCallableMember",
           "kind": "method",
-          "line": 341,
-          "endLine": 343,
+          "line": 352,
+          "endLine": 354,
           "parameters": [
-            "codeparser.Node",
+            "codeparser.ViewNode",
             "string"
           ],
           "result": "Member"
@@ -4297,41 +4297,41 @@
         {
           "name": "goParameters",
           "kind": "method",
-          "line": 352,
-          "endLine": 371,
+          "line": 363,
+          "endLine": 382,
           "parameters": [
-            "codeparser.Node"
+            "codeparser.ViewNode"
           ],
           "result": "[]string"
         },
         {
           "name": "goResult",
           "kind": "method",
-          "line": 381,
-          "endLine": 389,
+          "line": 392,
+          "endLine": 400,
           "parameters": [
-            "codeparser.Node"
+            "codeparser.ViewNode"
           ],
           "result": "string"
         },
         {
           "name": "processFiberAssignment",
           "kind": "method",
-          "line": 497,
-          "endLine": 519,
+          "line": 508,
+          "endLine": 530,
           "parameters": [
-            "codeparser.Node",
-            "codeparser.Node",
+            "codeparser.ViewNode",
+            "codeparser.ViewNode",
             "map[string]fiberRouter"
           ]
         },
         {
           "name": "processFiberNode",
           "kind": "method",
-          "line": 464,
-          "endLine": 495,
+          "line": 475,
+          "endLine": 506,
           "parameters": [
-            "codeparser.Node",
+            "codeparser.ViewNode",
             "map[string]fiberRouter",
             "map[string]string"
           ]
@@ -4339,20 +4339,20 @@
         {
           "name": "receiver",
           "kind": "method",
-          "line": 431,
-          "endLine": 443,
+          "line": 442,
+          "endLine": 454,
           "parameters": [
-            "codeparser.Node"
+            "codeparser.ViewNode"
           ],
           "result": "tuple\u003cstring,string\u003e"
         },
         {
           "name": "recordFiberRoute",
           "kind": "method",
-          "line": 572,
-          "endLine": 603,
+          "line": 583,
+          "endLine": 614,
           "parameters": [
-            "codeparser.Node",
+            "codeparser.ViewNode",
             "map[string]fiberRouter",
             "map[string]string"
           ]
@@ -4360,8 +4360,8 @@
         {
           "name": "recordGoExport",
           "kind": "method",
-          "line": 133,
-          "endLine": 136,
+          "line": 144,
+          "endLine": 147,
           "parameters": [
             "string"
           ]
@@ -4369,10 +4369,10 @@
         {
           "name": "recordGoTypeDeclaration",
           "kind": "method",
-          "line": 177,
-          "endLine": 189,
+          "line": 188,
+          "endLine": 200,
           "parameters": [
-            "codeparser.Node",
+            "codeparser.ViewNode",
             "*Declaration"
           ]
         },
@@ -4675,10 +4675,10 @@
         {
           "name": "addDefaultImport",
           "kind": "method",
-          "line": 329,
-          "endLine": 335,
+          "line": 315,
+          "endLine": 321,
           "parameters": [
-            "codeparser.Node",
+            "codeparser.ViewNode",
             "string",
             "bool"
           ]
@@ -4686,8 +4686,8 @@
         {
           "name": "addImport",
           "kind": "method",
-          "line": 304,
-          "endLine": 314,
+          "line": 290,
+          "endLine": 300,
           "parameters": [
             "string",
             "string",
@@ -4699,10 +4699,10 @@
         {
           "name": "addStructuredImport",
           "kind": "method",
-          "line": 337,
-          "endLine": 352,
+          "line": 323,
+          "endLine": 338,
           "parameters": [
-            "codeparser.Node",
+            "codeparser.ViewNode",
             "string",
             "bool"
           ]
@@ -4710,23 +4710,23 @@
         {
           "name": "addSymbol",
           "kind": "method",
-          "line": 294,
-          "endLine": 302,
+          "line": 280,
+          "endLine": 288,
           "parameters": [
             "string",
             "string",
-            "codeparser.Node",
-            "codeparser.Node",
+            "codeparser.ViewNode",
+            "codeparser.ViewNode",
             "string"
           ]
         },
         {
           "name": "analyzeDeclaration",
           "kind": "method",
-          "line": 428,
-          "endLine": 455,
+          "line": 414,
+          "endLine": 441,
           "parameters": [
-            "codeparser.Node",
+            "codeparser.ViewNode",
             "bool",
             "bool"
           ]
@@ -4734,19 +4734,19 @@
         {
           "name": "analyzeExportSpecifiers",
           "kind": "method",
-          "line": 354,
-          "endLine": 376,
+          "line": 340,
+          "endLine": 362,
           "parameters": [
-            "codeparser.Node"
+            "codeparser.ViewNode"
           ]
         },
         {
           "name": "analyzeFunction",
           "kind": "method",
-          "line": 477,
-          "endLine": 489,
+          "line": 463,
+          "endLine": 475,
           "parameters": [
-            "codeparser.Node",
+            "codeparser.ViewNode",
             "bool",
             "bool"
           ]
@@ -4754,28 +4754,28 @@
         {
           "name": "analyzeImport",
           "kind": "method",
-          "line": 316,
-          "endLine": 327,
+          "line": 302,
+          "endLine": 313,
           "parameters": [
-            "codeparser.Node"
+            "codeparser.ViewNode"
           ]
         },
         {
           "name": "analyzeTopLevel",
           "kind": "method",
-          "line": 516,
-          "endLine": 533,
+          "line": 502,
+          "endLine": 519,
           "parameters": [
-            "codeparser.Node"
+            "codeparser.ViewNode"
           ]
         },
         {
           "name": "collectMembers",
           "kind": "method",
-          "line": 457,
-          "endLine": 475,
+          "line": 443,
+          "endLine": 461,
           "parameters": [
-            "codeparser.Node",
+            "codeparser.ViewNode",
             "*Declaration"
           ]
         },
@@ -4785,15 +4785,15 @@
           "line": 118,
           "endLine": 122,
           "parameters": [
-            "codeparser.Node"
+            "codeparser.ViewNode"
           ],
           "result": "Location"
         },
         {
           "name": "recordExport",
           "kind": "method",
-          "line": 491,
-          "endLine": 503,
+          "line": 477,
+          "endLine": 489,
           "parameters": [
             "string",
             "bool",
@@ -4803,8 +4803,8 @@
         {
           "name": "recordTypeScriptExport",
           "kind": "method",
-          "line": 505,
-          "endLine": 514,
+          "line": 491,
+          "endLine": 500,
           "parameters": [
             "string",
             "string"
@@ -5012,8 +5012,8 @@
       "name": "Analyze",
       "kind": "function",
       "file": "extract/analyze.go",
-      "line": 589,
-      "endLine": 618,
+      "line": 575,
+      "endLine": 604,
       "parameters": [
         "[]Source"
       ],

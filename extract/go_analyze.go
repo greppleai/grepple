@@ -29,13 +29,18 @@ func analyzeGoSource(source Source, result *Analysis, methods map[string][]Membe
 		return err
 	}
 	defer document.Close()
-	root := document.Root()
-	if root.HasError() {
-		return malformedSourceError(source.Path, root)
+	if document.Root().HasError() {
+		return malformedSourceError(source.Path, document)
 	}
-	packageName := goPackageName(root, []byte(source.Text))
+	var packageName string
+	if err := document.Read(func(view codeparser.DocumentView) error {
+		packageName = goPackageName(view.Root(), []byte(source.Text))
+		return nil
+	}); err != nil {
+		return err
+	}
 	if packageName == "" {
-		return malformedSourceError(source.Path, root)
+		return malformedSourceError(source.Path, document)
 	}
 	packageID := filepath.Clean(absolutePath(filepath.Dir(source.Path))) + ":" + packageName
 	result.GoPackageNames[packageID] = packageName
@@ -44,19 +49,25 @@ func analyzeGoSource(source Source, result *Analysis, methods map[string][]Membe
 		result.GoPackageImports[packageID] = map[string]string{}
 	}
 	analyzer := goSourceAnalyzer{result: result, source: source, text: []byte(source.Text), methods: methods, imports: map[string]string{}, packageName: packageName, packageID: packageID}
-	statements := root.NamedChildren()
-	// Imports are file-scoped and must be known before route-bearing methods are analyzed.
-	for _, statement := range statements {
-		if statement.Kind() == "import_declaration" {
-			analyzer.analyzeImports(statement)
+	if err := document.Read(func(view codeparser.DocumentView) error {
+		root := view.Root()
+		statements := root.NamedChildren()
+		// Imports are file-scoped and must be known before route-bearing methods are analyzed.
+		for _, statement := range statements {
+			if statement.Kind() == "import_declaration" {
+				analyzer.analyzeImports(statement)
+			}
 		}
-	}
-	for _, statement := range statements {
-		if statement.Kind() != "import_declaration" {
-			analyzer.analyzeStatement(statement)
+		for _, statement := range statements {
+			if statement.Kind() != "import_declaration" {
+				analyzer.analyzeStatement(statement)
+			}
 		}
+		analyzer.collectGoTypeReferences(root)
+		return nil
+	}); err != nil {
+		return err
 	}
-	analyzer.collectGoTypeReferences(root)
 	result.Navigation.Merge(codeparser.NavigationGraphFromDocument(document, source.Path))
 	return nil
 }
@@ -108,7 +119,7 @@ func goModulePath(content string) string {
 	return ""
 }
 
-func goPackageName(root codeparser.Node, source []byte) string {
+func goPackageName(root codeparser.ViewNode, source []byte) string {
 	for _, child := range root.NamedChildren() {
 		if child.Kind() == "package_clause" && child.NamedChildCount() > 0 {
 			return nodeText(child.NamedChild(0), source)
@@ -117,7 +128,7 @@ func goPackageName(root codeparser.Node, source []byte) string {
 	return ""
 }
 
-func (analyzer *goSourceAnalyzer) analyzeStatement(node codeparser.Node) {
+func (analyzer *goSourceAnalyzer) analyzeStatement(node codeparser.ViewNode) {
 	switch node.Kind() {
 	case "type_declaration":
 		analyzer.analyzeTypes(node)
@@ -146,13 +157,13 @@ func goVisibility(name string) string {
 	return "private"
 }
 
-func (analyzer *goSourceAnalyzer) analyzeTypes(declaration codeparser.Node) {
+func (analyzer *goSourceAnalyzer) analyzeTypes(declaration codeparser.ViewNode) {
 	for _, spec := range declaration.NamedChildren() {
 		analyzer.analyzeTypeSpec(spec)
 	}
 }
 
-func (analyzer *goSourceAnalyzer) analyzeTypeSpec(spec codeparser.Node) {
+func (analyzer *goSourceAnalyzer) analyzeTypeSpec(spec codeparser.ViewNode) {
 	if spec.Kind() != "type_spec" && spec.Kind() != "type_alias" {
 		return
 	}
@@ -174,7 +185,7 @@ func (analyzer *goSourceAnalyzer) analyzeTypeSpec(spec codeparser.Node) {
 	analyzer.recordGoTypeDeclaration(spec, result)
 }
 
-func (analyzer *goSourceAnalyzer) recordGoTypeDeclaration(spec codeparser.Node, declaration *Declaration) {
+func (analyzer *goSourceAnalyzer) recordGoTypeDeclaration(spec codeparser.ViewNode, declaration *Declaration) {
 	key := analyzer.packageID + ":" + declaration.Name
 	if existing := analyzer.result.GoDeclarations[key]; existing != nil {
 		analyzer.addDuplicateGoError("package-level type", declaration.Name, existing.Location, declaration.Location)
@@ -182,7 +193,7 @@ func (analyzer *goSourceAnalyzer) recordGoTypeDeclaration(spec codeparser.Node, 
 		analyzer.addDuplicateGoError("package-level type/function", declaration.Name, functions[0].Location, declaration.Location)
 	}
 	analyzer.result.GoDeclarations[key] = declaration
-	analyzer.addGoSymbol(declaration.Name, "class", spec, codeparser.Node{}, "", declaration.Name)
+	analyzer.addGoSymbol(declaration.Name, "class", spec, codeparser.ViewNode{}, "", declaration.Name)
 	if exportedGoName(declaration.Name) {
 		analyzer.recordGoExport(declaration.Name)
 	}
@@ -202,9 +213,9 @@ func hasGoFileLocalMarker(source string, declarationRow int) bool {
 	return false
 }
 
-func (analyzer *goSourceAnalyzer) collectGoTypeReferences(root codeparser.Node) {
+func (analyzer *goSourceAnalyzer) collectGoTypeReferences(root codeparser.ViewNode) {
 	file := analyzer.result.SourcePaths[absolutePath(analyzer.source.Path)]
-	codeparser.WalkNamed(root, func(node codeparser.Node) {
+	codeparser.WalkNamedView(root, func(node codeparser.ViewNode) {
 		if node.Kind() == "type_identifier" {
 			analyzer.addGoTypeReference(nodeText(node, analyzer.text), node, file)
 			return
@@ -219,7 +230,7 @@ func (analyzer *goSourceAnalyzer) collectGoTypeReferences(root codeparser.Node) 
 	})
 }
 
-func (analyzer *goSourceAnalyzer) addGoTypeReference(name string, node codeparser.Node, file string) {
+func (analyzer *goSourceAnalyzer) addGoTypeReference(name string, node codeparser.ViewNode, file string) {
 	if name == "" {
 		return
 	}
@@ -227,7 +238,7 @@ func (analyzer *goSourceAnalyzer) addGoTypeReference(name string, node codeparse
 	analyzer.result.GoTypeReferences[key] = append(analyzer.result.GoTypeReferences[key], syntaxLocation(file, node))
 }
 
-func goDeclarationKind(spec, typeNode codeparser.Node) string {
+func goDeclarationKind(spec, typeNode codeparser.ViewNode) string {
 	if !spec.Valid() || !typeNode.Valid() {
 		return ""
 	}
@@ -244,7 +255,7 @@ func goDeclarationKind(spec, typeNode codeparser.Node) string {
 	}
 }
 
-func (analyzer *goSourceAnalyzer) collectGoMembers(typeNode codeparser.Node, declaration *Declaration) {
+func (analyzer *goSourceAnalyzer) collectGoMembers(typeNode codeparser.ViewNode, declaration *Declaration) {
 	container := directMemberContainer(typeNode)
 	for _, node := range container.NamedChildren() {
 		switch node.Kind() {
@@ -258,7 +269,7 @@ func (analyzer *goSourceAnalyzer) collectGoMembers(typeNode codeparser.Node, dec
 	}
 }
 
-func directMemberContainer(typeNode codeparser.Node) codeparser.Node {
+func directMemberContainer(typeNode codeparser.ViewNode) codeparser.ViewNode {
 	for _, child := range typeNode.NamedChildren() {
 		if child.Kind() == "field_declaration_list" {
 			return child
@@ -267,7 +278,7 @@ func directMemberContainer(typeNode codeparser.Node) codeparser.Node {
 	return typeNode
 }
 
-func (analyzer *goSourceAnalyzer) addGoField(node codeparser.Node, declaration *Declaration) {
+func (analyzer *goSourceAnalyzer) addGoField(node codeparser.ViewNode, declaration *Declaration) {
 	typeNode := node.ChildByFieldName("type")
 	names := childFieldTexts(node, "name", analyzer.text)
 	if len(names) == 0 {
@@ -287,7 +298,7 @@ func (analyzer *goSourceAnalyzer) addGoField(node codeparser.Node, declaration *
 	}
 }
 
-func childFieldTexts(node codeparser.Node, field string, source []byte) []string {
+func childFieldTexts(node codeparser.ViewNode, field string, source []byte) []string {
 	var result []string
 	for index := 0; index < node.ChildCount(); index++ {
 		if node.FieldNameForChild(index) == field {
@@ -297,7 +308,7 @@ func childFieldTexts(node codeparser.Node, field string, source []byte) []string
 	return result
 }
 
-func (analyzer *goSourceAnalyzer) addGoInterfaceMethod(node codeparser.Node, declaration *Declaration) {
+func (analyzer *goSourceAnalyzer) addGoInterfaceMethod(node codeparser.ViewNode, declaration *Declaration) {
 	name := nodeText(node.ChildByFieldName("name"), analyzer.text)
 	if name == "" {
 		return
@@ -305,7 +316,7 @@ func (analyzer *goSourceAnalyzer) addGoInterfaceMethod(node codeparser.Node, dec
 	declaration.Members = append(declaration.Members, analyzer.goCallableMember(node, name))
 }
 
-func (analyzer *goSourceAnalyzer) addGoEmbeddedType(node codeparser.Node, declaration *Declaration) {
+func (analyzer *goSourceAnalyzer) addGoEmbeddedType(node codeparser.ViewNode, declaration *Declaration) {
 	typeNode := node.ChildByFieldName("type")
 	if !typeNode.Valid() && node.NamedChildCount() > 0 {
 		typeNode = node.NamedChild(0)
@@ -313,14 +324,14 @@ func (analyzer *goSourceAnalyzer) addGoEmbeddedType(node codeparser.Node, declar
 	analyzer.addEmbeddedNode(typeNode, declaration)
 }
 
-func (analyzer *goSourceAnalyzer) addEmbeddedNode(node codeparser.Node, declaration *Declaration) {
+func (analyzer *goSourceAnalyzer) addEmbeddedNode(node codeparser.ViewNode, declaration *Declaration) {
 	name := goBaseType(node, analyzer.text)
 	if name != "" {
 		declaration.Extends[name] = true
 	}
 }
 
-func goBaseType(node codeparser.Node, source []byte) string {
+func goBaseType(node codeparser.ViewNode, source []byte) string {
 	if !node.Valid() {
 		return ""
 	}
@@ -338,7 +349,7 @@ func goBaseType(node codeparser.Node, source []byte) string {
 	}
 }
 
-func (analyzer *goSourceAnalyzer) goCallableMember(node codeparser.Node, name string) Member {
+func (analyzer *goSourceAnalyzer) goCallableMember(node codeparser.ViewNode, name string) Member {
 	return Member{Kind: "method", Name: name, Visibility: goVisibility(name), Parameters: analyzer.goParameters(node.ChildByFieldName("parameters")), Type: analyzer.goResult(node.ChildByFieldName("result")), Language: "go", Package: analyzer.packageName, PackageID: analyzer.packageID, File: analyzer.result.SourcePaths[absolutePath(analyzer.source.Path)], Location: syntaxLocation(analyzer.result.SourcePaths[absolutePath(analyzer.source.Path)], node)}
 }
 
@@ -349,7 +360,7 @@ func (analyzer *goSourceAnalyzer) addDuplicateGoError(kind, name string, first, 
 	))
 }
 
-func (analyzer *goSourceAnalyzer) goParameters(list codeparser.Node) []string {
+func (analyzer *goSourceAnalyzer) goParameters(list codeparser.ViewNode) []string {
 	if !list.Valid() {
 		return nil
 	}
@@ -370,7 +381,7 @@ func (analyzer *goSourceAnalyzer) goParameters(list codeparser.Node) []string {
 	return result
 }
 
-func goParameterCount(node codeparser.Node, source []byte) int {
+func goParameterCount(node codeparser.ViewNode, source []byte) int {
 	count := len(childFieldTexts(node, "name", source))
 	if count == 0 {
 		return 1
@@ -378,7 +389,7 @@ func goParameterCount(node codeparser.Node, source []byte) int {
 	return count
 }
 
-func (analyzer *goSourceAnalyzer) goResult(node codeparser.Node) string {
+func (analyzer *goSourceAnalyzer) goResult(node codeparser.ViewNode) string {
 	if !node.Valid() {
 		return ""
 	}
@@ -388,7 +399,7 @@ func (analyzer *goSourceAnalyzer) goResult(node codeparser.Node) string {
 	return "tuple<" + strings.Join(analyzer.goParameters(node), ",") + ">"
 }
 
-func (analyzer *goSourceAnalyzer) analyzeFunction(node codeparser.Node) {
+func (analyzer *goSourceAnalyzer) analyzeFunction(node codeparser.ViewNode) {
 	name := nodeText(node.ChildByFieldName("name"), analyzer.text)
 	if name == "" {
 		return
@@ -409,7 +420,7 @@ func (analyzer *goSourceAnalyzer) analyzeFunction(node codeparser.Node) {
 	}
 }
 
-func (analyzer *goSourceAnalyzer) analyzeMethod(node codeparser.Node) {
+func (analyzer *goSourceAnalyzer) analyzeMethod(node codeparser.ViewNode) {
 	name := nodeText(node.ChildByFieldName("name"), analyzer.text)
 	owner, receiver := analyzer.receiver(node.ChildByFieldName("receiver"))
 	if name == "" || owner == "" {
@@ -428,7 +439,7 @@ func (analyzer *goSourceAnalyzer) analyzeMethod(node codeparser.Node) {
 	analyzer.addGoSymbol(owner+"."+name, "method", node, node.ChildByFieldName("body"), receiver, owner)
 }
 
-func (analyzer *goSourceAnalyzer) receiver(node codeparser.Node) (string, string) {
+func (analyzer *goSourceAnalyzer) receiver(node codeparser.ViewNode) (string, string) {
 	if !node.Valid() {
 		return "", ""
 	}
@@ -446,7 +457,7 @@ type fiberRouter struct {
 	prefix string
 }
 
-func (analyzer *goSourceAnalyzer) collectFiberRoutes(body, parameters codeparser.Node, receiver, owner string) {
+func (analyzer *goSourceAnalyzer) collectFiberRoutes(body, parameters codeparser.ViewNode, receiver, owner string) {
 	if !body.Valid() {
 		return
 	}
@@ -461,7 +472,7 @@ func (analyzer *goSourceAnalyzer) collectFiberRoutes(body, parameters codeparser
 	analyzer.processFiberNode(body, routers, handlers)
 }
 
-func (analyzer *goSourceAnalyzer) processFiberNode(node codeparser.Node, routers map[string]fiberRouter, handlers map[string]string) {
+func (analyzer *goSourceAnalyzer) processFiberNode(node codeparser.ViewNode, routers map[string]fiberRouter, handlers map[string]string) {
 	if !node.Valid() || node.Kind() == "function_literal" {
 		return
 	}
@@ -494,13 +505,13 @@ func (analyzer *goSourceAnalyzer) processFiberNode(node codeparser.Node, routers
 	}
 }
 
-func (analyzer *goSourceAnalyzer) processFiberAssignment(left, right codeparser.Node, routers map[string]fiberRouter) {
+func (analyzer *goSourceAnalyzer) processFiberAssignment(left, right codeparser.ViewNode, routers map[string]fiberRouter) {
 	names := goAssignmentNames(left, analyzer.text)
-	var values []codeparser.Node
+	var values []codeparser.ViewNode
 	if right.Valid() {
 		values = right.NamedChildren()
 		if right.Kind() != "expression_list" {
-			values = []codeparser.Node{right}
+			values = []codeparser.ViewNode{right}
 		}
 	}
 	resolved := make([]fiberRouter, len(names))
@@ -518,7 +529,7 @@ func (analyzer *goSourceAnalyzer) processFiberAssignment(left, right codeparser.
 	}
 }
 
-func goAssignmentNames(left codeparser.Node, source []byte) []string {
+func goAssignmentNames(left codeparser.ViewNode, source []byte) []string {
 	if !left.Valid() {
 		return nil
 	}
@@ -534,7 +545,7 @@ func goAssignmentNames(left codeparser.Node, source []byte) []string {
 	return names
 }
 
-func (analyzer *goSourceAnalyzer) fiberRouterExpression(expression codeparser.Node, routers map[string]fiberRouter) (fiberRouter, bool) {
+func (analyzer *goSourceAnalyzer) fiberRouterExpression(expression codeparser.ViewNode, routers map[string]fiberRouter) (fiberRouter, bool) {
 	if !expression.Valid() {
 		return fiberRouter{}, false
 	}
@@ -569,7 +580,7 @@ func (analyzer *goSourceAnalyzer) fiberRouterExpression(expression codeparser.No
 	return fiberRouter{prefix: parent.prefix + prefix}, true
 }
 
-func (analyzer *goSourceAnalyzer) recordFiberRoute(node codeparser.Node, routers map[string]fiberRouter, handlers map[string]string) {
+func (analyzer *goSourceAnalyzer) recordFiberRoute(node codeparser.ViewNode, routers map[string]fiberRouter, handlers map[string]string) {
 	callee := node.ChildByFieldName("function")
 	if !callee.Valid() || callee.Kind() != "selector_expression" {
 		return
@@ -602,7 +613,7 @@ func (analyzer *goSourceAnalyzer) recordFiberRoute(node codeparser.Node, routers
 	}
 }
 
-func goStringLiteral(node codeparser.Node, source []byte) (string, bool) {
+func goStringLiteral(node codeparser.ViewNode, source []byte) (string, bool) {
 	if !node.Valid() || (node.Kind() != "interpreted_string_literal" && node.Kind() != "raw_string_literal") {
 		return "", false
 	}
@@ -610,7 +621,7 @@ func goStringLiteral(node codeparser.Node, source []byte) (string, bool) {
 	return value, err == nil
 }
 
-func goTypedParameters(parameters codeparser.Node, source []byte) map[string]string {
+func goTypedParameters(parameters codeparser.ViewNode, source []byte) map[string]string {
 	result := map[string]string{}
 	if !parameters.Valid() {
 		return result
@@ -638,9 +649,9 @@ func cloneFiberRouters(routers map[string]fiberRouter) map[string]fiberRouter {
 	return result
 }
 
-func fiberAssignedNames(node codeparser.Node, source []byte) map[string]bool {
+func fiberAssignedNames(node codeparser.ViewNode, source []byte) map[string]bool {
 	result := map[string]bool{}
-	codeparser.WalkNamed(node, func(child codeparser.Node) {
+	codeparser.WalkNamedView(node, func(child codeparser.ViewNode) {
 		if child != node && child.Kind() == "function_literal" {
 			return
 		}
@@ -658,7 +669,7 @@ func fiberAssignedNames(node codeparser.Node, source []byte) map[string]bool {
 	return result
 }
 
-func fiberAppParameters(parameters codeparser.Node, source []byte, imports map[string]string) map[string]bool {
+func fiberAppParameters(parameters codeparser.ViewNode, source []byte, imports map[string]string) map[string]bool {
 	result := map[string]bool{}
 	if !parameters.Valid() {
 		return result
@@ -695,7 +706,7 @@ func fiberRouteMethod(method string) bool {
 	}
 }
 
-func (analyzer *goSourceAnalyzer) addGoSymbol(name, kind string, node, _ codeparser.Node, receiver, owner string) {
+func (analyzer *goSourceAnalyzer) addGoSymbol(name, kind string, node, _ codeparser.ViewNode, receiver, owner string) {
 	key := analyzer.packageID + ":" + name
 	symbol := analyzer.result.GoSymbolIndex[key]
 	if symbol == nil {
@@ -705,13 +716,13 @@ func (analyzer *goSourceAnalyzer) addGoSymbol(name, kind string, node, _ codepar
 	symbol.Locations = append(symbol.Locations, syntaxLocation(analyzer.source.Path, node))
 }
 
-func (analyzer *goSourceAnalyzer) analyzeImports(node codeparser.Node) {
-	codeparser.WalkNamed(node, func(spec codeparser.Node) {
+func (analyzer *goSourceAnalyzer) analyzeImports(node codeparser.ViewNode) {
+	codeparser.WalkNamedView(node, func(spec codeparser.ViewNode) {
 		analyzer.analyzeImportSpec(spec)
 	})
 }
 
-func (analyzer *goSourceAnalyzer) analyzeImportSpec(spec codeparser.Node) {
+func (analyzer *goSourceAnalyzer) analyzeImportSpec(spec codeparser.ViewNode) {
 	if spec.Kind() != "import_spec" {
 		return
 	}

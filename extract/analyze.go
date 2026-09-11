@@ -59,7 +59,7 @@ type Location struct {
 	EndLine, EndColumn int
 }
 
-func syntaxLocation(path string, node codeparser.Node) Location {
+func syntaxLocation(path string, node codeparser.ViewNode) Location {
 	rng := node.Range()
 	return Location{Path: path, Line: rng.Start.Line, Column: rng.Start.Column, EndLine: rng.End.Line, EndColumn: rng.End.Column}
 }
@@ -115,7 +115,7 @@ type sourceAnalyzer struct {
 	moduleID string
 }
 
-func (analyzer *sourceAnalyzer) location(node codeparser.Node) Location {
+func (analyzer *sourceAnalyzer) location(node codeparser.ViewNode) Location {
 	location := syntaxLocation(analyzer.source.Path, node)
 	location.Path = analyzer.result.SourcePaths[absolutePath(analyzer.source.Path)]
 	return location
@@ -156,34 +156,20 @@ func newAnalysis() *Analysis {
 	}
 }
 
-func malformedSourceError(path string, root codeparser.Node) error {
-	errorNode := firstErrorNode(root)
-	if !errorNode.Valid() {
-		return fmt.Errorf("parse %s:1:1: malformed syntax", path)
-	}
-	position := errorNode.Range().Start
-	return fmt.Errorf("parse %s:%d:%d: malformed syntax near %s", path, position.Line, position.Column, errorNode.Kind())
+func malformedSourceError(path string, document *codeparser.Document) error {
+diagnostics := document.ParseDiagnostics()
+if len(diagnostics) == 0 {
+return fmt.Errorf("parse %s:1:1: malformed syntax", path)
 }
-
-func firstErrorNode(node codeparser.Node) codeparser.Node {
-	if !node.Valid() {
-		return codeparser.Node{}
-	}
-	if node.IsError() || node.IsMissing() {
-		return node
-	}
-	for _, child := range node.Children() {
-		if found := firstErrorNode(child); found.Valid() {
-			return found
-		}
-	}
-	return codeparser.Node{}
+diagnostic := diagnostics[0]
+position := diagnostic.Range.Start
+return fmt.Errorf("parse %s:%d:%d: malformed syntax near %s", path, position.Line, position.Column, diagnostic.Kind)
 }
-func nodeText(node codeparser.Node, _ []byte) string {
+func nodeText(node codeparser.ViewNode, _ []byte) string {
 	return node.Text()
 }
 
-func hasChildKind(node codeparser.Node, kind string) bool {
+func hasChildKind(node codeparser.ViewNode, kind string) bool {
 	for _, child := range node.Children() {
 		if child.Kind() == kind {
 			return true
@@ -197,7 +183,7 @@ func cleanType(value string) string {
 	return normalizeType(value)
 }
 
-func nodeType(node codeparser.Node, source []byte) string {
+func nodeType(node codeparser.ViewNode, source []byte) string {
 	typeNode := node.ChildByFieldName("type")
 	if !typeNode.Valid() {
 		typeNode = node.ChildByFieldName("return_type")
@@ -208,7 +194,7 @@ func nodeType(node codeparser.Node, source []byte) string {
 	return childTypeAnnotation(node, source)
 }
 
-func childTypeAnnotation(node codeparser.Node, source []byte) string {
+func childTypeAnnotation(node codeparser.ViewNode, source []byte) string {
 	for _, child := range node.NamedChildren() {
 		if child.Kind() == "type_annotation" {
 			return cleanType(nodeText(child, source))
@@ -217,7 +203,7 @@ func childTypeAnnotation(node codeparser.Node, source []byte) string {
 	return ""
 }
 
-func childHasText(node codeparser.Node, source []byte, value string) bool {
+func childHasText(node codeparser.ViewNode, source []byte, value string) bool {
 	for _, child := range node.Children() {
 		if nodeText(child, source) == value {
 			return true
@@ -226,7 +212,7 @@ func childHasText(node codeparser.Node, source []byte, value string) bool {
 	return false
 }
 
-func memberVisibility(node codeparser.Node, source []byte) string {
+func memberVisibility(node codeparser.ViewNode, source []byte) string {
 	for _, child := range node.Children() {
 		if child.Kind() != "accessibility_modifier" {
 			continue
@@ -238,7 +224,7 @@ func memberVisibility(node codeparser.Node, source []byte) string {
 	return "public"
 }
 
-func parameterTypes(node codeparser.Node, source []byte) []string {
+func parameterTypes(node codeparser.ViewNode, source []byte) []string {
 	parameters := node.ChildByFieldName("parameters")
 	if !parameters.Valid() {
 		return nil
@@ -252,7 +238,7 @@ func parameterTypes(node codeparser.Node, source []byte) []string {
 	return result
 }
 
-func memberFromNode(node codeparser.Node, source []byte) (Member, bool) {
+func memberFromNode(node codeparser.ViewNode, source []byte) (Member, bool) {
 	kind, ok := memberKind(node.Kind())
 	if !ok {
 		return Member{}, false
@@ -291,7 +277,7 @@ func memberKind(kind string) (string, bool) {
 	}
 }
 
-func (analyzer *sourceAnalyzer) addSymbol(name, kind string, node, _ codeparser.Node, owner string) {
+func (analyzer *sourceAnalyzer) addSymbol(name, kind string, node, _ codeparser.ViewNode, owner string) {
 	key := analyzer.moduleID + ":" + name
 	symbol := analyzer.result.TSSymbolIndex[key]
 	if symbol == nil {
@@ -313,7 +299,7 @@ func (analyzer *sourceAnalyzer) addImport(name, imported, module string, default
 	analyzer.result.TSImportBindings[analyzer.moduleID][name] = item
 }
 
-func (analyzer *sourceAnalyzer) analyzeImport(statement codeparser.Node) {
+func (analyzer *sourceAnalyzer) analyzeImport(statement codeparser.ViewNode) {
 	module := strings.Trim(nodeText(statement.ChildByFieldName("source"), analyzer.text), "'\"")
 	clause := statement.NamedChild(0)
 	if !clause.Valid() || clause.Kind() != "import_clause" {
@@ -321,12 +307,12 @@ func (analyzer *sourceAnalyzer) analyzeImport(statement codeparser.Node) {
 	}
 	typeOnly := hasChildKind(statement, "type") || childHasText(statement, analyzer.text, "type")
 	analyzer.addDefaultImport(clause, module, typeOnly)
-	codeparser.WalkNamed(clause, func(node codeparser.Node) {
+codeparser.WalkNamedView(clause, func(node codeparser.ViewNode) {
 		analyzer.addStructuredImport(node, module, typeOnly)
 	})
 }
 
-func (analyzer *sourceAnalyzer) addDefaultImport(clause codeparser.Node, module string, typeOnly bool) {
+func (analyzer *sourceAnalyzer) addDefaultImport(clause codeparser.ViewNode, module string, typeOnly bool) {
 	for _, child := range clause.NamedChildren() {
 		if child.Kind() == "identifier" {
 			analyzer.addImport(nodeText(child, analyzer.text), "", module, true, typeOnly)
@@ -334,7 +320,7 @@ func (analyzer *sourceAnalyzer) addDefaultImport(clause codeparser.Node, module 
 	}
 }
 
-func (analyzer *sourceAnalyzer) addStructuredImport(node codeparser.Node, module string, typeOnly bool) {
+func (analyzer *sourceAnalyzer) addStructuredImport(node codeparser.ViewNode, module string, typeOnly bool) {
 	if node.Kind() != "import_specifier" && node.Kind() != "namespace_import" {
 		return
 	}
@@ -351,8 +337,8 @@ func (analyzer *sourceAnalyzer) addStructuredImport(node codeparser.Node, module
 	analyzer.addImport(nodeText(nameNode, analyzer.text), nodeText(importedNode, analyzer.text), module, false, typeOnly || elementTypeOnly)
 }
 
-func (analyzer *sourceAnalyzer) analyzeExportSpecifiers(statement codeparser.Node) {
-	codeparser.WalkNamed(statement, func(node codeparser.Node) {
+func (analyzer *sourceAnalyzer) analyzeExportSpecifiers(statement codeparser.ViewNode) {
+codeparser.WalkNamedView(statement, func(node codeparser.ViewNode) {
 		if node.Kind() != "export_specifier" {
 			return
 		}
@@ -386,7 +372,7 @@ func declarationKind(kind string) (string, bool) {
 	}
 }
 
-func directHeritageName(node codeparser.Node, source []byte) string {
+func directHeritageName(node codeparser.ViewNode, source []byte) string {
 	candidate := node.ChildByFieldName("value")
 	if !candidate.Valid() {
 		candidate = node.ChildByFieldName("name")
@@ -400,11 +386,11 @@ func directHeritageName(node codeparser.Node, source []byte) string {
 	return strings.TrimSpace(nodeText(candidate, source))
 }
 
-func collectHeritage(node codeparser.Node, source []byte, declaration *Declaration) {
-	codeparser.WalkNamed(node, func(child codeparser.Node) { processHeritageNode(child, source, declaration) })
+func collectHeritage(node codeparser.ViewNode, source []byte, declaration *Declaration) {
+codeparser.WalkNamedView(node, func(child codeparser.ViewNode) { processHeritageNode(child, source, declaration) })
 }
 
-func processHeritageNode(node codeparser.Node, source []byte, declaration *Declaration) {
+func processHeritageNode(node codeparser.ViewNode, source []byte, declaration *Declaration) {
 	switch node.Kind() {
 	case "extends_clause", "extends_type_clause":
 		collectHeritageNames(node, source, declaration.Extends)
@@ -413,7 +399,7 @@ func processHeritageNode(node codeparser.Node, source []byte, declaration *Decla
 	}
 }
 
-func collectHeritageNames(clause codeparser.Node, source []byte, result map[string]bool) {
+func collectHeritageNames(clause codeparser.ViewNode, source []byte, result map[string]bool) {
 	for _, heritageType := range clause.NamedChildren() {
 		name := directHeritageName(heritageType, source)
 		if name == "" {
@@ -425,7 +411,7 @@ func collectHeritageNames(clause codeparser.Node, source []byte, result map[stri
 	}
 }
 
-func (analyzer *sourceAnalyzer) analyzeDeclaration(node codeparser.Node, exported, defaultExport bool) {
+func (analyzer *sourceAnalyzer) analyzeDeclaration(node codeparser.ViewNode, exported, defaultExport bool) {
 	kind, ok := declarationKind(node.Kind())
 	if !ok {
 		return
@@ -450,11 +436,11 @@ func (analyzer *sourceAnalyzer) analyzeDeclaration(node codeparser.Node, exporte
 	}
 	collectHeritage(node, analyzer.text, declaration)
 	analyzer.result.TSDeclarations[analyzer.moduleID+":"+name] = declaration
-	analyzer.addSymbol(name, "class", node, codeparser.Node{}, name)
+	analyzer.addSymbol(name, "class", node, codeparser.ViewNode{}, name)
 	analyzer.recordExport(name, exported, defaultExport)
 }
 
-func (analyzer *sourceAnalyzer) collectMembers(node codeparser.Node, declaration *Declaration) {
+func (analyzer *sourceAnalyzer) collectMembers(node codeparser.ViewNode, declaration *Declaration) {
 	body := node.ChildByFieldName("body")
 	if !body.Valid() {
 		return
@@ -474,7 +460,7 @@ func (analyzer *sourceAnalyzer) collectMembers(node codeparser.Node, declaration
 	}
 }
 
-func (analyzer *sourceAnalyzer) analyzeFunction(node codeparser.Node, exported, defaultExport bool) {
+func (analyzer *sourceAnalyzer) analyzeFunction(node codeparser.ViewNode, exported, defaultExport bool) {
 	if node.Kind() != "function_declaration" && node.Kind() != "function_signature" {
 		return
 	}
@@ -513,7 +499,7 @@ func (analyzer *sourceAnalyzer) recordTypeScriptExport(exported, local string) {
 	analyzer.result.TSExportNames[analyzer.moduleID][exported] = local
 }
 
-func (analyzer *sourceAnalyzer) analyzeTopLevel(statement codeparser.Node) {
+func (analyzer *sourceAnalyzer) analyzeTopLevel(statement codeparser.ViewNode) {
 	if statement.Kind() == "import_statement" {
 		analyzer.analyzeImport(statement)
 		return
@@ -577,11 +563,11 @@ func parseSource(source Source) (*codeparser.Document, error) {
 	if err != nil {
 		return nil, fmt.Errorf("parse %s: %w", source.Path, err)
 	}
-	if document.Root().HasError() {
-		err = malformedSourceError(source.Path, document.Root())
-		document.Close()
-		return nil, err
-	}
+if document.Root().HasError() {
+err = malformedSourceError(source.Path, document)
+document.Close()
+return nil, err
+}
 	return document, nil
 }
 
@@ -685,10 +671,15 @@ func analyzeTypeScriptSource(source Source, result *Analysis) error {
 		return err
 	}
 	defer document.Close()
-	analyzer := sourceAnalyzer{result: result, source: source, text: []byte(source.Text), moduleID: absolutePath(source.Path)}
-	for _, statement := range document.Root().NamedChildren() {
-		analyzer.analyzeTopLevel(statement)
-	}
+analyzer := sourceAnalyzer{result: result, source: source, text: []byte(source.Text), moduleID: absolutePath(source.Path)}
+if err := document.Read(func(view codeparser.DocumentView) error {
+for _, statement := range view.Root().NamedChildren() {
+analyzer.analyzeTopLevel(statement)
+}
+return nil
+}); err != nil {
+return err
+}
 	result.Navigation.Merge(codeparser.NavigationGraphFromDocument(document, source.Path))
 	return nil
 }

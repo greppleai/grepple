@@ -16,16 +16,16 @@
     "syntacticBuildTagUnion": []
   },
   "summary": {
-    "sourceFiles": 27,
-    "declarations": 39,
-    "exportedTypes": 14,
-    "internalTypes": 25,
-    "members": 260,
-    "exportedFunctions": 15,
+    "sourceFiles": 28,
+    "declarations": 46,
+    "exportedTypes": 18,
+    "internalTypes": 28,
+    "members": 305,
+    "exportedFunctions": 17,
     "fiberRoutes": 0,
-    "relations": 111
+    "relations": 128
   },
-  "semanticModelDigest": "sha256:4d023cc94cf52d3ecadb7f063ca738110da72045a93a504912ce31156c9b2930",
+  "semanticModelDigest": "sha256:65e3fc678b2f906712b1c8fec39561aeb7e396537ce3932b9a6b8ed9a3a9838f",
   "sourceFiles": [
     {
       "path": "parser/analyze.go"
@@ -107,6 +107,9 @@
     },
     {
       "path": "parser/tree_sitter.go"
+    },
+    {
+      "path": "parser/view.go"
     }
   ],
   "declarations": [
@@ -210,6 +213,69 @@
           "line": 45,
           "endLine": 45,
           "result": "*sitter.Tree"
+        },
+        {
+          "name": "Read",
+          "kind": "method",
+          "file": "parser/view.go",
+          "line": 44,
+          "endLine": 61,
+          "parameters": [
+            "func(DocumentView)error"
+          ],
+          "result": "error"
+        }
+      ]
+    },
+    {
+      "name": "DocumentView",
+      "kind": "struct",
+      "file": "parser/view.go",
+      "line": 17,
+      "endLine": 20,
+      "underlyingType": "struct{doc*Document;state*documentViewState;}",
+      "members": [
+        {
+          "name": "Language",
+          "kind": "method",
+          "line": 64,
+          "endLine": 69,
+          "result": "string"
+        },
+        {
+          "name": "Root",
+          "kind": "method",
+          "line": 80,
+          "endLine": 85,
+          "result": "ViewNode"
+        },
+        {
+          "name": "Source",
+          "kind": "method",
+          "line": 72,
+          "endLine": 77,
+          "result": "string"
+        },
+        {
+          "name": "valid",
+          "kind": "method",
+          "line": 87,
+          "endLine": 89,
+          "result": "bool"
+        },
+        {
+          "name": "doc",
+          "kind": "property",
+          "line": 18,
+          "endLine": 18,
+          "result": "*Document"
+        },
+        {
+          "name": "state",
+          "kind": "property",
+          "line": 19,
+          "endLine": 19,
+          "result": "*documentViewState"
         }
       ]
     },
@@ -1163,6 +1229,269 @@
       ]
     },
     {
+      "name": "ViewNode",
+      "kind": "struct",
+      "file": "parser/view.go",
+      "line": 35,
+      "endLine": 39,
+      "underlyingType": "struct{view DocumentView;raw*sitter.Node;fieldName string;}",
+      "members": [
+        {
+          "name": "Child",
+          "kind": "method",
+          "line": 176,
+          "endLine": 185,
+          "parameters": [
+            "int"
+          ],
+          "result": "ViewNode"
+        },
+        {
+          "name": "ChildByFieldName",
+          "kind": "method",
+          "line": 231,
+          "endLine": 240,
+          "parameters": [
+            "string"
+          ],
+          "result": "ViewNode"
+        },
+        {
+          "name": "ChildCount",
+          "kind": "method",
+          "line": 160,
+          "endLine": 165,
+          "result": "int"
+        },
+        {
+          "name": "Children",
+          "kind": "method",
+          "line": 200,
+          "endLine": 216,
+          "result": "[]ViewNode"
+        },
+        {
+          "name": "FieldName",
+          "kind": "method",
+          "line": 243,
+          "endLine": 248,
+          "result": "string"
+        },
+        {
+          "name": "FieldNameForChild",
+          "kind": "method",
+          "line": 251,
+          "endLine": 256,
+          "parameters": [
+            "int"
+          ],
+          "result": "string"
+        },
+        {
+          "name": "HasError",
+          "kind": "method",
+          "line": 118,
+          "endLine": 118,
+          "result": "bool"
+        },
+        {
+          "name": "IsError",
+          "kind": "method",
+          "line": 112,
+          "endLine": 112,
+          "result": "bool"
+        },
+        {
+          "name": "IsExtra",
+          "kind": "method",
+          "line": 109,
+          "endLine": 109,
+          "result": "bool"
+        },
+        {
+          "name": "IsMissing",
+          "kind": "method",
+          "line": 115,
+          "endLine": 115,
+          "result": "bool"
+        },
+        {
+          "name": "IsNamed",
+          "kind": "method",
+          "line": 106,
+          "endLine": 106,
+          "result": "bool"
+        },
+        {
+          "name": "IsValid",
+          "kind": "method",
+          "line": 95,
+          "endLine": 95,
+          "result": "bool"
+        },
+        {
+          "name": "Kind",
+          "kind": "method",
+          "line": 98,
+          "endLine": 103,
+          "result": "string"
+        },
+        {
+          "name": "NamedChild",
+          "kind": "method",
+          "line": 188,
+          "endLine": 197,
+          "parameters": [
+            "int"
+          ],
+          "result": "ViewNode"
+        },
+        {
+          "name": "NamedChildCount",
+          "kind": "method",
+          "line": 168,
+          "endLine": 173,
+          "result": "int"
+        },
+        {
+          "name": "NamedChildren",
+          "kind": "method",
+          "line": 219,
+          "endLine": 228,
+          "result": "[]ViewNode"
+        },
+        {
+          "name": "Parent",
+          "kind": "method",
+          "line": 148,
+          "endLine": 157,
+          "result": "ViewNode"
+        },
+        {
+          "name": "Range",
+          "kind": "method",
+          "line": 140,
+          "endLine": 145,
+          "result": "Range"
+        },
+        {
+          "name": "Snapshot",
+          "kind": "method",
+          "line": 259,
+          "endLine": 264,
+          "result": "tuple\u003cSyntaxNode,bool\u003e"
+        },
+        {
+          "name": "Source",
+          "kind": "method",
+          "line": 129,
+          "endLine": 129,
+          "result": "string"
+        },
+        {
+          "name": "Text",
+          "kind": "method",
+          "line": 121,
+          "endLine": 126,
+          "result": "string"
+        },
+        {
+          "name": "TextRange",
+          "kind": "method",
+          "line": 132,
+          "endLine": 137,
+          "parameters": [
+            "int",
+            "int"
+          ],
+          "result": "string"
+        },
+        {
+          "name": "Valid",
+          "kind": "method",
+          "line": 92,
+          "endLine": 92,
+          "result": "bool"
+        },
+        {
+          "name": "snapshot",
+          "kind": "method",
+          "line": 266,
+          "endLine": 297,
+          "result": "SyntaxNode"
+        },
+        {
+          "name": "fieldName",
+          "kind": "property",
+          "line": 38,
+          "endLine": 38,
+          "result": "string"
+        },
+        {
+          "name": "raw",
+          "kind": "property",
+          "line": 37,
+          "endLine": 37,
+          "result": "*sitter.Node"
+        },
+        {
+          "name": "view",
+          "kind": "property",
+          "line": 36,
+          "endLine": 36,
+          "result": "DocumentView"
+        }
+      ]
+    },
+    {
+      "name": "WalkOptions",
+      "kind": "struct",
+      "file": "parser/view.go",
+      "line": 300,
+      "endLine": 303,
+      "underlyingType": "struct{MaxDepth int;MaxNodes int;}",
+      "members": [
+        {
+          "name": "MaxDepth",
+          "kind": "property",
+          "line": 301,
+          "endLine": 301,
+          "result": "int"
+        },
+        {
+          "name": "MaxNodes",
+          "kind": "property",
+          "line": 302,
+          "endLine": 302,
+          "result": "int"
+        }
+      ]
+    },
+    {
+      "name": "WalkResult",
+      "kind": "struct",
+      "file": "parser/view.go",
+      "line": 306,
+      "endLine": 309,
+      "underlyingType": "struct{Visited int;Truncated bool;}",
+      "members": [
+        {
+          "name": "Truncated",
+          "kind": "property",
+          "line": 308,
+          "endLine": 308,
+          "result": "bool"
+        },
+        {
+          "name": "Visited",
+          "kind": "property",
+          "line": 307,
+          "endLine": 307,
+          "result": "int"
+        }
+      ]
+    },
+    {
       "name": "cLanguage",
       "kind": "struct",
       "file": "parser/language_c.go",
@@ -1327,6 +1656,37 @@
           "line": 10,
           "endLine": 10,
           "result": "structureRules"
+        }
+      ]
+    },
+    {
+      "name": "documentViewState",
+      "kind": "struct",
+      "file": "parser/view.go",
+      "line": 22,
+      "endLine": 26,
+      "underlyingType": "struct{active atomic.Bool;mu sync.Mutex;snapshots map[viewSnapshotKey]SyntaxNode;}",
+      "members": [
+        {
+          "name": "active",
+          "kind": "property",
+          "line": 23,
+          "endLine": 23,
+          "result": "atomic.Bool"
+        },
+        {
+          "name": "mu",
+          "kind": "property",
+          "line": 24,
+          "endLine": 24,
+          "result": "sync.Mutex"
+        },
+        {
+          "name": "snapshots",
+          "kind": "property",
+          "line": 25,
+          "endLine": 25,
+          "result": "map[viewSnapshotKey]SyntaxNode"
         }
       ]
     },
@@ -2477,6 +2837,54 @@
           "result": "structureRules"
         }
       ]
+    },
+    {
+      "name": "viewSnapshotKey",
+      "kind": "struct",
+      "file": "parser/view.go",
+      "line": 28,
+      "endLine": 31,
+      "underlyingType": "struct{id uintptr;field string;}",
+      "members": [
+        {
+          "name": "field",
+          "kind": "property",
+          "line": 30,
+          "endLine": 30,
+          "result": "string"
+        },
+        {
+          "name": "id",
+          "kind": "property",
+          "line": 29,
+          "endLine": 29,
+          "result": "uintptr"
+        }
+      ]
+    },
+    {
+      "name": "viewWalkItem",
+      "kind": "struct",
+      "file": "parser/view.go",
+      "line": 322,
+      "endLine": 325,
+      "underlyingType": "struct{node ViewNode;depth int;}",
+      "members": [
+        {
+          "name": "depth",
+          "kind": "property",
+          "line": 324,
+          "endLine": 324,
+          "result": "int"
+        },
+        {
+          "name": "node",
+          "kind": "property",
+          "line": 323,
+          "endLine": 323,
+          "result": "ViewNode"
+        }
+      ]
     }
   ],
   "exportedFunctions": [
@@ -2660,6 +3068,30 @@
         "Node",
         "func(Node)"
       ]
+    },
+    {
+      "name": "WalkNamedView",
+      "kind": "function",
+      "file": "parser/view.go",
+      "line": 312,
+      "endLine": 320,
+      "parameters": [
+        "ViewNode",
+        "func(ViewNode)"
+      ]
+    },
+    {
+      "name": "WalkNamedViewBounded",
+      "kind": "function",
+      "file": "parser/view.go",
+      "line": 329,
+      "endLine": 354,
+      "parameters": [
+        "ViewNode",
+        "WalkOptions",
+        "func(ViewNode,int)bool"
+      ],
+      "result": "WalkResult"
     }
   ],
   "fiberRoutes": [],
@@ -2683,6 +3115,13 @@
       "to": "LanguageCapabilities",
       "kind": "dependency",
       "via": "result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "Document",
+      "to": "DocumentView",
+      "kind": "dependency",
+      "via": "method Read parameter 1",
       "cardinality": "one"
     },
     {
@@ -2711,6 +3150,27 @@
       "to": "Range",
       "kind": "dependency",
       "via": "method nodeRangeLocked result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "DocumentView",
+      "to": "Document",
+      "kind": "association",
+      "via": "field doc",
+      "cardinality": "one"
+    },
+    {
+      "from": "DocumentView",
+      "to": "ViewNode",
+      "kind": "dependency",
+      "via": "method Root result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "DocumentView",
+      "to": "documentViewState",
+      "kind": "association",
+      "via": "field state",
       "cardinality": "one"
     },
     {
@@ -2875,6 +3335,34 @@
       "cardinality": "one"
     },
     {
+      "from": "ViewNode",
+      "to": "DocumentView",
+      "kind": "association",
+      "via": "field view",
+      "cardinality": "one"
+    },
+    {
+      "from": "ViewNode",
+      "to": "Range",
+      "kind": "dependency",
+      "via": "method Range result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "ViewNode",
+      "to": "SyntaxNode",
+      "kind": "dependency",
+      "via": "method Snapshot result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "ViewNode",
+      "to": "SyntaxNode",
+      "kind": "dependency",
+      "via": "method snapshot result 1",
+      "cardinality": "one"
+    },
+    {
       "from": "WalkNamed",
       "to": "Node",
       "kind": "dependency",
@@ -2889,6 +3377,48 @@
       "cardinality": "one"
     },
     {
+      "from": "WalkNamedView",
+      "to": "ViewNode",
+      "kind": "dependency",
+      "via": "parameter 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "WalkNamedView",
+      "to": "ViewNode",
+      "kind": "dependency",
+      "via": "parameter 2",
+      "cardinality": "one"
+    },
+    {
+      "from": "WalkNamedViewBounded",
+      "to": "ViewNode",
+      "kind": "dependency",
+      "via": "parameter 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "WalkNamedViewBounded",
+      "to": "ViewNode",
+      "kind": "dependency",
+      "via": "parameter 3",
+      "cardinality": "one"
+    },
+    {
+      "from": "WalkNamedViewBounded",
+      "to": "WalkOptions",
+      "kind": "dependency",
+      "via": "parameter 2",
+      "cardinality": "one"
+    },
+    {
+      "from": "WalkNamedViewBounded",
+      "to": "WalkResult",
+      "kind": "dependency",
+      "via": "result 1",
+      "cardinality": "one"
+    },
+    {
       "from": "cLanguage",
       "to": "Symbol",
       "kind": "dependency",
@@ -2971,6 +3501,20 @@
       "kind": "dependency",
       "via": "method Rules result 1",
       "cardinality": "one"
+    },
+    {
+      "from": "documentViewState",
+      "to": "SyntaxNode",
+      "kind": "association",
+      "via": "field snapshots",
+      "cardinality": "many"
+    },
+    {
+      "from": "documentViewState",
+      "to": "viewSnapshotKey",
+      "kind": "association",
+      "via": "field snapshots",
+      "cardinality": "many"
     },
     {
       "from": "goLanguage",
@@ -3439,6 +3983,13 @@
       "to": "structureRules",
       "kind": "dependency",
       "via": "method Rules result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "viewWalkItem",
+      "to": "ViewNode",
+      "kind": "association",
+      "via": "field node",
       "cardinality": "one"
     }
   ]

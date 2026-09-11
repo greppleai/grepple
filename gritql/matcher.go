@@ -13,6 +13,8 @@ import (
 type MatchTarget struct {
 	node       parser.Node
 	parent     parser.Node
+	viewNode   parser.ViewNode
+	viewParent parser.ViewNode
 	kind       string
 	field      string
 	childStart int
@@ -40,6 +42,18 @@ func RepeatedSequenceTarget(parent parser.Node, field string, childStart, childE
 
 func repeatedSequenceTarget(parent parser.Node, field string, childStart, childEnd int) MatchTarget {
 	return RepeatedSequenceTarget(parent, field, childStart, childEnd)
+}
+
+func viewNodeTarget(node parser.ViewNode) MatchTarget {
+	return MatchTarget{viewNode: node}
+}
+
+func viewSequenceTarget(kind string, parent parser.ViewNode, childStart, childEnd int) MatchTarget {
+	return MatchTarget{kind: kind, viewParent: parent, childStart: childStart, childEnd: childEnd, sequence: true}
+}
+
+func viewRepeatedSequenceTarget(parent parser.ViewNode, field string, childStart, childEnd int) MatchTarget {
+	return MatchTarget{kind: "list_sequence", field: field, viewParent: parent, childStart: childStart, childEnd: childEnd, sequence: true}
 }
 
 type frozenMatchTarget struct {
@@ -334,10 +348,20 @@ func takeMatchStep(budget *evaluationBudget) bool {
 
 func freezeMatchTarget(target MatchTarget) (frozenMatchTarget, bool) {
 	if !target.sequence {
-		n, ok := target.node.Snapshot()
-		return frozenMatchTarget{node: n}, ok
+		if target.viewNode.Valid() {
+			node, ok := target.viewNode.Snapshot()
+			return frozenMatchTarget{node: node}, ok
+		}
+		node, ok := target.node.Snapshot()
+		return frozenMatchTarget{node: node}, ok
 	}
-	parent, ok := target.parent.Snapshot()
+	var parent parser.SyntaxNode
+	var ok bool
+	if target.viewParent.Valid() {
+		parent, ok = target.viewParent.Snapshot()
+	} else {
+		parent, ok = target.parent.Snapshot()
+	}
 	if !ok || target.childStart < 0 || target.childEnd < target.childStart {
 		return frozenMatchTarget{}, false
 	}

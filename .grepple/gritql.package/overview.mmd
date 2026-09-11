@@ -2,7 +2,7 @@ classDiagram
     %% grepple:package-default github.com/greppleai/grepple/gritql
     %% grepple:language-default go
     direction LR
-    note "Package gritql implements Grepple's native, read-only gritql-go-v1 structural-search compiler, matcher, evaluator, and bounded scanner. | package github.com/greppleai/grepple/gritql | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=12, declarations=115, exportedTypes=48, internalTypes=67, members=592, exportedFunctions=17, fiberRoutes=0, relations=305"
+    note "Package gritql implements Grepple's native, read-only gritql-go-v1 structural-search compiler, matcher, evaluator, and bounded scanner. | package github.com/greppleai/grepple/gritql | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=12, declarations=115, exportedTypes=48, internalTypes=67, members=594, exportedFunctions=17, fiberRoutes=0, relations=305"
     namespace data_contracts {
         class EffectiveLimits["EffectiveLimits · gritql/finding.go:51-63"] {
             +ASTSteps: int
@@ -81,11 +81,11 @@ classDiagram
         <<struct>> BatchScanResult
         class BatchScanStats["BatchScanStats · gritql/scanner_batch.go:27-30"]
         <<struct>> BatchScanStats
-        class BindingKind["BindingKind = uint8 · gritql/matcher.go:55"]
+        class BindingKind["BindingKind = uint8 · gritql/matcher.go:69"]
         <<type>> BindingKind
-        class BindingSet["BindingSet · gritql/matcher.go:219"]
+        class BindingSet["BindingSet · gritql/matcher.go:233"]
         <<struct>> BindingSet
-        class BoundValue["BoundValue · gritql/matcher.go:161"]
+        class BoundValue["BoundValue · gritql/matcher.go:175"]
         <<struct>> BoundValue
         class CompileError["CompileError · gritql/compiler.go:51-57"]
         <<struct>> CompileError
@@ -97,13 +97,13 @@ classDiagram
         <<struct>> Diagnostic
         class DocumentInput["DocumentInput · gritql/finding.go:44-48"]
         <<struct>> DocumentInput
-        class EvaluateOptions["EvaluateOptions · gritql/evaluator.go:27-39"]
+        class EvaluateOptions["EvaluateOptions · gritql/evaluator.go:28-40"]
         <<struct>> EvaluateOptions
-        class EvaluationError["EvaluationError · gritql/evaluator.go:46-51"]
+        class EvaluationError["EvaluationError · gritql/evaluator.go:47-52"]
         <<struct>> EvaluationError
-        class EvaluationMatch["EvaluationMatch · gritql/evaluator.go:57-60"]
+        class EvaluationMatch["EvaluationMatch · gritql/evaluator.go:58-61"]
         <<struct>> EvaluationMatch
-        class EvaluationOptions["EvaluationOptions = EvaluateOptions · gritql/evaluator.go:42"]
+        class EvaluationOptions["EvaluationOptions = EvaluateOptions · gritql/evaluator.go:43"]
         <<alias>> EvaluationOptions
         class Expression["Expression · gritql/compiler.go:143"]
         <<struct>> Expression
@@ -121,9 +121,9 @@ classDiagram
         <<type>> Kind
         class LanguageDeclaration["LanguageDeclaration · gritql/compiler.go:243-246"]
         <<struct>> LanguageDeclaration
-        class MatchResult["MatchResult · gritql/matcher.go:245-248"]
+        class MatchResult["MatchResult · gritql/matcher.go:259-262"]
         <<struct>> MatchResult
-        class MatchTarget["MatchTarget · gritql/matcher.go:13-21"]
+        class MatchTarget["MatchTarget · gritql/matcher.go:13-23"]
         <<struct>> MatchTarget
         class ParsedEvaluationInput["ParsedEvaluationInput · gritql/batch.go:14-17"]
         <<struct>> ParsedEvaluationInput
@@ -147,7 +147,7 @@ classDiagram
         <<type>> SlotCardinality
         class SnippetContext["SnippetContext = uint8 · gritql/template.go:12"]
         <<type>> SnippetContext
-        class StructuralNode["StructuralNode · gritql/matcher.go:75"]
+        class StructuralNode["StructuralNode · gritql/matcher.go:89"]
         <<struct>> StructuralNode
         class Template["Template · gritql/template.go:59-63"]
         <<struct>> Template
@@ -165,21 +165,21 @@ classDiagram
         <<struct>> VariableRef
     }
     namespace internal_types {
-        class bindingValue["bindingValue · gritql/matcher.go:148-158"]
+        class bindingValue["bindingValue · gritql/matcher.go:162-172"]
         <<struct>> bindingValue
         class constraint["constraint · gritql/compiler.go:136-140"]
         <<struct>> constraint
         class decodedSnippet["decodedSnippet · gritql/template.go:166-169"]
         <<struct>> decodedSnippet
-        class evalCandidate["evalCandidate · gritql/evaluator.go:99-107"]
+        class evalCandidate["evalCandidate · gritql/evaluator.go:100-108"]
         <<struct>> evalCandidate
-        class evaluationBudget["evaluationBudget · gritql/evaluator.go:68-74"]
+        class evaluationBudget["evaluationBudget · gritql/evaluator.go:69-75"]
         <<struct>> evaluationBudget
-        class evaluationTraversalItem["evaluationTraversalItem · gritql/evaluator.go:371-375"]
+        class evaluationTraversalItem["evaluationTraversalItem · gritql/evaluator.go:384-388"]
         <<struct>> evaluationTraversalItem
         class expression["expression · gritql/compiler.go:125-134"]
         <<struct>> expression
-        class frozenMatchTarget["frozenMatchTarget · gritql/matcher.go:45-52"]
+        class frozenMatchTarget["frozenMatchTarget · gritql/matcher.go:59-66"]
         <<struct>> frozenMatchTarget
         class generatedPlaceholder["generatedPlaceholder · gritql/template.go:185-189"]
         <<struct>> generatedPlaceholder
@@ -193,9 +193,9 @@ classDiagram
         <<type>> normalizationCheckpointHook
         class normalizationCheckpointKey["normalizationCheckpointKey · gritql/batch.go:199"]
         <<struct>> normalizationCheckpointKey
-        class normalizedNode["normalizedNode · gritql/matcher.go:77-82"]
+        class normalizedNode["normalizedNode · gritql/matcher.go:91-96"]
         <<struct>> normalizedNode
-        class occurrenceRestoration["occurrenceRestoration · gritql/template.go:1336-1340"]
+        class occurrenceRestoration["occurrenceRestoration · gritql/template.go:1354-1358"]
         <<struct>> occurrenceRestoration
         class placeholderInference["placeholderInference · gritql/template.go:219-223"]
         <<struct>> placeholderInference
@@ -223,7 +223,7 @@ classDiagram
         <<struct>> queryPosition
         class queryRange["queryRange · gritql/query_syntax.go:30-35"]
         <<struct>> queryRange
-        class queryRecord["queryRecord · gritql/evaluator.go:109-112"]
+        class queryRecord["queryRecord · gritql/evaluator.go:110-113"]
         <<struct>> queryRecord
         class querySyntaxError["querySyntaxError · gritql/query_syntax.go:37-41"]
         <<struct>> querySyntaxError
@@ -257,9 +257,9 @@ classDiagram
         <<type>> separatorLexState
         class separatorScanner["separatorScanner · gritql/template.go:251-258"]
         <<struct>> separatorScanner
-        class sequencePosition["sequencePosition · gritql/evaluator.go:453-456"]
+        class sequencePosition["sequencePosition · gritql/evaluator.go:466-469"]
         <<struct>> sequencePosition
-        class significantRangeFrame["significantRangeFrame · gritql/evaluator.go:311-317"]
+        class significantRangeFrame["significantRangeFrame · gritql/evaluator.go:324-330"]
         <<struct>> significantRangeFrame
         class slotTarget["slotTarget · gritql/template.go:1043-1047"]
         <<struct>> slotTarget
@@ -269,7 +269,7 @@ classDiagram
         <<struct>> snippetAttempt
         class snippetPlaceholder["snippetPlaceholder · gritql/template.go:170-173"]
         <<struct>> snippetPlaceholder
-        class sourceInspectionItem["sourceInspectionItem · gritql/evaluator.go:251-254"]
+        class sourceInspectionItem["sourceInspectionItem · gritql/evaluator.go:264-267"]
         <<struct>> sourceInspectionItem
         class spanKey["spanKey · gritql/template.go:190"]
         <<struct>> spanKey
@@ -303,11 +303,11 @@ classDiagram
             +Compile([]byte, CompileOptions): tuple~*Program&#44;error~
         }
         <<function>> Compile
-        class Evaluate["Evaluate · gritql/evaluator.go:116-133"] {
+        class Evaluate["Evaluate · gritql/evaluator.go:117-146"] {
             +Evaluate(context.Context, *Program, *parser.Document, EvaluateOptions): tuple~[]EvaluationMatch&#44;error~
         }
         <<function>> Evaluate
-        class EvaluateDocument["EvaluateDocument · gritql/evaluator.go:219-221"] {
+        class EvaluateDocument["EvaluateDocument · gritql/evaluator.go:232-234"] {
             +EvaluateDocument(context.Context, *Program, *parser.Document, EvaluateOptions): tuple~[]EvaluationMatch&#44;error~
         }
         <<function>> EvaluateDocument
@@ -323,19 +323,19 @@ classDiagram
             +EvaluateFile(context.Context, *Program, FileInput, EvaluateOptions): tuple~FileEvaluation~
         }
         <<function>> EvaluateFile
-        class MatchNode["MatchNode · gritql/matcher.go:263-265"] {
+        class MatchNode["MatchNode · gritql/matcher.go:277-279"] {
             +MatchNode(Template, parser.Node): tuple~MatchResult&#44;bool~
         }
         <<function>> MatchNode
-        class MatchTemplate["MatchTemplate · gritql/matcher.go:258-260"] {
+        class MatchTemplate["MatchTemplate · gritql/matcher.go:272-274"] {
             +MatchTemplate(Template, MatchTarget): tuple~MatchResult&#44;bool~
         }
         <<function>> MatchTemplate
-        class MatchTemplateWithBindings["MatchTemplateWithBindings · gritql/matcher.go:269-271"] {
+        class MatchTemplateWithBindings["MatchTemplateWithBindings · gritql/matcher.go:283-285"] {
             +MatchTemplateWithBindings(Template, MatchTarget, BindingSet): tuple~MatchResult&#44;bool~
         }
         <<function>> MatchTemplateWithBindings
-        class NodeTarget["NodeTarget · gritql/matcher.go:25"] {
+        class NodeTarget["NodeTarget · gritql/matcher.go:27"] {
             +NodeTarget(parser.Node): MatchTarget
         }
         <<function>> NodeTarget
@@ -343,7 +343,7 @@ classDiagram
             +NormalizeEvaluations(context.Context, []FileEvaluation, EvaluateOptions): FileEvaluation
         }
         <<function>> NormalizeEvaluations
-        class RepeatedSequenceTarget["RepeatedSequenceTarget · gritql/matcher.go:37-39"] {
+        class RepeatedSequenceTarget["RepeatedSequenceTarget · gritql/matcher.go:39-41"] {
             +RepeatedSequenceTarget(parser.Node, string, int, int): MatchTarget
         }
         <<function>> RepeatedSequenceTarget
@@ -355,7 +355,7 @@ classDiagram
             +ScanFilesPrograms(context.Context, fs.FS, []ProgramScan, []ScanCandidate, ScanOptions): BatchScanResult
         }
         <<function>> ScanFilesPrograms
-        class SequenceTarget["SequenceTarget · gritql/matcher.go:30-32"] {
+        class SequenceTarget["SequenceTarget · gritql/matcher.go:32-34"] {
             +SequenceTarget(string, parser.Node, int, int): MatchTarget
         }
         <<function>> SequenceTarget

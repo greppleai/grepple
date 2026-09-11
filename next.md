@@ -185,16 +185,17 @@ Use case: code review and CI can explain architectural impact—such as a new pa
 Reduce repeated parsing and language knowledge across extraction, navigation, text search, and GritQL without moving query semantics into `parser`. The intended result is one source document, one language registry, and reusable projections—not one oversized package.
 
 1. [x] Migrate `extract` away from direct Tree-sitter parser construction.
-   - [x] Make Go, TypeScript, and TSX extraction consume `parser.Document` and `parser.Node`.
+   - [x] Make Go, TypeScript, and TSX extraction consume `parser.Document` and callback-scoped `parser.ViewNode` values.
    - [x] Remove extraction- and hook-local grammar selection and parser lifecycle; application-source parsing now flows through `parser.ParseDocument`.
    - [x] Preserve exact source ranges, malformed-source behavior, and generated artifact semantics. `parser.NavigationGraphFromDocument` now lets extraction derive navigation from the same parsed document without reparsing.
 2. [x] Expose a read-only parser language capability registry.
    - [x] Make parser-backed language IDs, extensions, ABI/fingerprint identity, and navigation support centrally discoverable; extraction delegates path classification and extension metadata to that registry.
    - [x] Generate exact grammar source fingerprints plus field and unfielded-child cardinality from every pinned grammar. GritQL now consumes parser-owned Go repeated-position metadata instead of handwritten tables, and `make schema-check` rejects stale generated metadata.
    - [x] Keep Grit-specific snippet wrappers and metavariable placeholder roles in `gritql`; they are query semantics rather than general parser facts.
-3. [ ] Add efficient shared syntax traversal primitives.
+3. [x] Add efficient shared syntax traversal primitives.
    - [x] Add parser-owned iterative named-node walking and use parser-owned child, field, diagnostic, text, and range access throughout extraction and hooks.
-   - [ ] Add bounded/depth-aware walking and evaluate a document-scoped read/view API so consumers avoid recursively snapshotting the same subtrees or taking a lock for every node operation.
+   - [x] Add bounded/depth-aware walking and a callback-scoped `DocumentView`. Extraction, hooks, and GritQL evaluation now hold one read lock per document instead of one per node operation.
+   - [x] Cache immutable subtree snapshots within a document view, so matching overlapping candidates reuses descendants rather than rebuilding every subtree. A repository-wide `exec.Command($args)` dogfood scan fell from roughly 8.8 seconds to 1.5 seconds elapsed on the same checkout.
    - [x] Keep feature-specific filtering such as GritQL trivia normalization and navigation declaration rules outside generic parser helpers.
 4. Unify source discovery and acquisition where text and structural search currently overlap.
    - Share repository-relative path normalization, ignore handling, glob filtering, language detection, bounded reads, binary detection, deterministic ordering, and cancellation.

@@ -232,7 +232,7 @@ classDiagram
         <<struct>> classValidator
         class discoveredModule["discoveredModule · extract/workspace_bundle.go:112-115"]
         <<struct>> discoveredModule
-        class fiberRouter["fiberRouter · extract/go_analyze.go:445-447"]
+        class fiberRouter["fiberRouter · extract/go_analyze.go:456-458"]
         <<struct>> fiberRouter
         class flowParser["flowParser · extract/flow.go:42-45"]
         <<struct>> flowParser
@@ -268,7 +268,7 @@ classDiagram
         <<struct>> workspaceModuleCollector
     }
     namespace operations {
-        class Analyze["Analyze · extract/analyze.go:589-618"] {
+        class Analyze["Analyze · extract/analyze.go:575-604"] {
             +Analyze([]Source): tuple~*Analysis&#44;error~
         }
         <<function>> Analyze

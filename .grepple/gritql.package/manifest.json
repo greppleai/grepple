@@ -20,12 +20,12 @@
     "declarations": 115,
     "exportedTypes": 48,
     "internalTypes": 67,
-    "members": 592,
+    "members": 594,
     "exportedFunctions": 17,
     "fiberRoutes": 0,
     "relations": 305
   },
-  "semanticModelDigest": "sha256:70ed074e391cbfd0a4e160f16c44f813e4566053c2c85b3183ba3ab3bd4df292",
+  "semanticModelDigest": "sha256:7547d365780e2c3868e396da63052a88ff50a164405da4b8d61ae88f385b17e9",
   "sourceFiles": [
     {
       "path": "gritql/anchor.go"
@@ -162,15 +162,15 @@
       "name": "BindingKind",
       "kind": "type",
       "file": "gritql/matcher.go",
-      "line": 55,
-      "endLine": 55,
+      "line": 69,
+      "endLine": 69,
       "underlyingType": "uint8",
       "members": [
         {
           "name": "String",
           "kind": "method",
-          "line": 63,
-          "endLine": 72,
+          "line": 77,
+          "endLine": 86,
           "result": "string"
         }
       ]
@@ -179,29 +179,29 @@
       "name": "BindingSet",
       "kind": "struct",
       "file": "gritql/matcher.go",
-      "line": 219,
-      "endLine": 219,
+      "line": 233,
+      "endLine": 233,
       "underlyingType": "struct{values map[VariableID]*bindingValue}",
       "members": [
         {
           "name": "All",
           "kind": "method",
-          "line": 231,
-          "endLine": 242,
+          "line": 245,
+          "endLine": 256,
           "result": "[]BoundValue"
         },
         {
           "name": "Len",
           "kind": "method",
-          "line": 228,
-          "endLine": 228,
+          "line": 242,
+          "endLine": 242,
           "result": "int"
         },
         {
           "name": "Lookup",
           "kind": "method",
-          "line": 222,
-          "endLine": 225,
+          "line": 236,
+          "endLine": 239,
           "parameters": [
             "VariableID"
           ],
@@ -210,8 +210,8 @@
         {
           "name": "values",
           "kind": "property",
-          "line": 219,
-          "endLine": 219,
+          "line": 233,
+          "endLine": 233,
           "result": "map[VariableID]*bindingValue"
         }
       ]
@@ -220,64 +220,64 @@
       "name": "BoundValue",
       "kind": "struct",
       "file": "gritql/matcher.go",
-      "line": 161,
-      "endLine": 161,
+      "line": 175,
+      "endLine": 175,
       "underlyingType": "struct{value*bindingValue}",
       "members": [
         {
           "name": "Kind",
           "kind": "method",
-          "line": 175,
-          "endLine": 180,
+          "line": 189,
+          "endLine": 194,
           "result": "BindingKind"
         },
         {
           "name": "Range",
           "kind": "method",
-          "line": 183,
-          "endLine": 188,
+          "line": 197,
+          "endLine": 202,
           "result": "parser.Range"
         },
         {
           "name": "Ranges",
           "kind": "method",
-          "line": 191,
-          "endLine": 196,
+          "line": 205,
+          "endLine": 210,
           "result": "[]parser.Range"
         },
         {
           "name": "Structural",
           "kind": "method",
-          "line": 199,
-          "endLine": 208,
+          "line": 213,
+          "endLine": 222,
           "result": "[]StructuralNode"
         },
         {
           "name": "Text",
           "kind": "method",
-          "line": 211,
-          "endLine": 216,
+          "line": 225,
+          "endLine": 230,
           "result": "string"
         },
         {
           "name": "Valid",
           "kind": "method",
-          "line": 164,
-          "endLine": 164,
+          "line": 178,
+          "endLine": 178,
           "result": "bool"
         },
         {
           "name": "Variable",
           "kind": "method",
-          "line": 167,
-          "endLine": 172,
+          "line": 181,
+          "endLine": 186,
           "result": "VariableRef"
         },
         {
           "name": "value",
           "kind": "property",
-          "line": 161,
-          "endLine": 161,
+          "line": 175,
+          "endLine": 175,
           "result": "*bindingValue"
         }
       ]
@@ -687,85 +687,85 @@
       "name": "EvaluateOptions",
       "kind": "struct",
       "file": "gritql/evaluator.go",
-      "line": 27,
-      "endLine": 39,
+      "line": 28,
+      "endLine": 40,
       "underlyingType": "struct{MaxDepth int;MaxCandidates int;MaxSteps int;MaxFindings int;MaxSourceBytes int;MaxMemoryBytes int;MaxElapsed time.Duration;MaxBatchElapsed time.Duration;DisableFileTimeout bool;DisableBatchTimeout bool;Deadline time.Time;}",
       "members": [
         {
           "name": "Deadline",
           "kind": "property",
-          "line": 38,
-          "endLine": 38,
+          "line": 39,
+          "endLine": 39,
           "result": "time.Time"
         },
         {
           "name": "DisableBatchTimeout",
+          "kind": "property",
+          "line": 38,
+          "endLine": 38,
+          "result": "bool"
+        },
+        {
+          "name": "DisableFileTimeout",
           "kind": "property",
           "line": 37,
           "endLine": 37,
           "result": "bool"
         },
         {
-          "name": "DisableFileTimeout",
+          "name": "MaxBatchElapsed",
           "kind": "property",
           "line": 36,
           "endLine": 36,
-          "result": "bool"
-        },
-        {
-          "name": "MaxBatchElapsed",
-          "kind": "property",
-          "line": 35,
-          "endLine": 35,
           "result": "time.Duration"
         },
         {
           "name": "MaxCandidates",
+          "kind": "property",
+          "line": 30,
+          "endLine": 30,
+          "result": "int"
+        },
+        {
+          "name": "MaxDepth",
           "kind": "property",
           "line": 29,
           "endLine": 29,
           "result": "int"
         },
         {
-          "name": "MaxDepth",
-          "kind": "property",
-          "line": 28,
-          "endLine": 28,
-          "result": "int"
-        },
-        {
           "name": "MaxElapsed",
           "kind": "property",
-          "line": 34,
-          "endLine": 34,
+          "line": 35,
+          "endLine": 35,
           "result": "time.Duration"
         },
         {
           "name": "MaxFindings",
-          "kind": "property",
-          "line": 31,
-          "endLine": 31,
-          "result": "int"
-        },
-        {
-          "name": "MaxMemoryBytes",
-          "kind": "property",
-          "line": 33,
-          "endLine": 33,
-          "result": "int"
-        },
-        {
-          "name": "MaxSourceBytes",
           "kind": "property",
           "line": 32,
           "endLine": 32,
           "result": "int"
         },
         {
+          "name": "MaxMemoryBytes",
+          "kind": "property",
+          "line": 34,
+          "endLine": 34,
+          "result": "int"
+        },
+        {
+          "name": "MaxSourceBytes",
+          "kind": "property",
+          "line": 33,
+          "endLine": 33,
+          "result": "int"
+        },
+        {
           "name": "MaxSteps",
           "kind": "property",
-          "line": 30,
-          "endLine": 30,
+          "line": 31,
+          "endLine": 31,
           "result": "int"
         }
       ]
@@ -774,50 +774,50 @@
       "name": "EvaluationError",
       "kind": "struct",
       "file": "gritql/evaluator.go",
-      "line": 46,
-      "endLine": 51,
+      "line": 47,
+      "endLine": 52,
       "underlyingType": "struct{Code string;Class string;Message string;cause error;}",
       "members": [
         {
           "name": "Error",
           "kind": "method",
-          "line": 53,
-          "endLine": 53,
+          "line": 54,
+          "endLine": 54,
           "result": "string"
         },
         {
           "name": "Unwrap",
           "kind": "method",
-          "line": 54,
-          "endLine": 54,
+          "line": 55,
+          "endLine": 55,
           "result": "error"
         },
         {
           "name": "Class",
-          "kind": "property",
-          "line": 48,
-          "endLine": 48,
-          "result": "string"
-        },
-        {
-          "name": "Code",
-          "kind": "property",
-          "line": 47,
-          "endLine": 47,
-          "result": "string"
-        },
-        {
-          "name": "Message",
           "kind": "property",
           "line": 49,
           "endLine": 49,
           "result": "string"
         },
         {
-          "name": "cause",
+          "name": "Code",
+          "kind": "property",
+          "line": 48,
+          "endLine": 48,
+          "result": "string"
+        },
+        {
+          "name": "Message",
           "kind": "property",
           "line": 50,
           "endLine": 50,
+          "result": "string"
+        },
+        {
+          "name": "cause",
+          "kind": "property",
+          "line": 51,
+          "endLine": 51,
           "result": "error"
         }
       ]
@@ -826,43 +826,43 @@
       "name": "EvaluationMatch",
       "kind": "struct",
       "file": "gritql/evaluator.go",
-      "line": 57,
-      "endLine": 60,
+      "line": 58,
+      "endLine": 61,
       "underlyingType": "struct{rng parser.Range;bindings BindingSet;}",
       "members": [
         {
           "name": "Bindings",
           "kind": "method",
-          "line": 66,
-          "endLine": 66,
+          "line": 67,
+          "endLine": 67,
           "result": "BindingSet"
         },
         {
           "name": "Range",
           "kind": "method",
-          "line": 63,
-          "endLine": 63,
+          "line": 64,
+          "endLine": 64,
           "result": "parser.Range"
         },
         {
           "name": "String",
           "kind": "method",
-          "line": 901,
-          "endLine": 907,
+          "line": 914,
+          "endLine": 920,
           "result": "string"
         },
         {
           "name": "bindings",
           "kind": "property",
-          "line": 59,
-          "endLine": 59,
+          "line": 60,
+          "endLine": 60,
           "result": "BindingSet"
         },
         {
           "name": "rng",
           "kind": "property",
-          "line": 58,
-          "endLine": 58,
+          "line": 59,
+          "endLine": 59,
           "result": "parser.Range"
         }
       ]
@@ -921,8 +921,8 @@
       "name": "EvaluationOptions",
       "kind": "alias",
       "file": "gritql/evaluator.go",
-      "line": 42,
-      "endLine": 42,
+      "line": 43,
+      "endLine": 43,
       "underlyingType": "EvaluateOptions"
     },
     {
@@ -1456,36 +1456,36 @@
       "name": "MatchResult",
       "kind": "struct",
       "file": "gritql/matcher.go",
-      "line": 245,
-      "endLine": 248,
+      "line": 259,
+      "endLine": 262,
       "underlyingType": "struct{rng parser.Range;bindings BindingSet;}",
       "members": [
         {
           "name": "Bindings",
           "kind": "method",
-          "line": 254,
-          "endLine": 254,
+          "line": 268,
+          "endLine": 268,
           "result": "BindingSet"
         },
         {
           "name": "Range",
           "kind": "method",
-          "line": 251,
-          "endLine": 251,
+          "line": 265,
+          "endLine": 265,
           "result": "parser.Range"
         },
         {
           "name": "bindings",
           "kind": "property",
-          "line": 247,
-          "endLine": 247,
+          "line": 261,
+          "endLine": 261,
           "result": "BindingSet"
         },
         {
           "name": "rng",
           "kind": "property",
-          "line": 246,
-          "endLine": 246,
+          "line": 260,
+          "endLine": 260,
           "result": "parser.Range"
         }
       ]
@@ -1495,35 +1495,35 @@
       "kind": "struct",
       "file": "gritql/matcher.go",
       "line": 13,
-      "endLine": 21,
-      "underlyingType": "struct{node parser.Node;parent parser.Node;kind string;field string;childStart int;childEnd int;sequence bool;}",
+      "endLine": 23,
+      "underlyingType": "struct{node parser.Node;parent parser.Node;viewNode parser.ViewNode;viewParent parser.ViewNode;kind string;field string;childStart int;childEnd int;sequence bool;}",
       "members": [
         {
           "name": "childEnd",
           "kind": "property",
-          "line": 19,
-          "endLine": 19,
+          "line": 21,
+          "endLine": 21,
           "result": "int"
         },
         {
           "name": "childStart",
           "kind": "property",
-          "line": 18,
-          "endLine": 18,
+          "line": 20,
+          "endLine": 20,
           "result": "int"
         },
         {
           "name": "field",
           "kind": "property",
-          "line": 17,
-          "endLine": 17,
+          "line": 19,
+          "endLine": 19,
           "result": "string"
         },
         {
           "name": "kind",
           "kind": "property",
-          "line": 16,
-          "endLine": 16,
+          "line": 18,
+          "endLine": 18,
           "result": "string"
         },
         {
@@ -1543,9 +1543,23 @@
         {
           "name": "sequence",
           "kind": "property",
-          "line": 20,
-          "endLine": 20,
+          "line": 22,
+          "endLine": 22,
           "result": "bool"
+        },
+        {
+          "name": "viewNode",
+          "kind": "property",
+          "line": 16,
+          "endLine": 16,
+          "result": "parser.ViewNode"
+        },
+        {
+          "name": "viewParent",
+          "kind": "property",
+          "line": 17,
+          "endLine": 17,
+          "result": "parser.ViewNode"
         }
       ]
     },
@@ -2110,71 +2124,71 @@
       "name": "StructuralNode",
       "kind": "struct",
       "file": "gritql/matcher.go",
-      "line": 75,
-      "endLine": 75,
+      "line": 89,
+      "endLine": 89,
       "underlyingType": "struct{node*normalizedNode}",
       "members": [
         {
           "name": "Children",
           "kind": "method",
-          "line": 125,
-          "endLine": 138,
+          "line": 139,
+          "endLine": 152,
           "result": "[]StructuralNode"
         },
         {
           "name": "IsToken",
           "kind": "method",
-          "line": 114,
-          "endLine": 114,
+          "line": 128,
+          "endLine": 128,
           "result": "bool"
         },
         {
           "name": "Kind",
           "kind": "method",
-          "line": 90,
-          "endLine": 95,
+          "line": 104,
+          "endLine": 109,
           "result": "string"
         },
         {
           "name": "Lexeme",
           "kind": "method",
-          "line": 117,
-          "endLine": 122,
+          "line": 131,
+          "endLine": 136,
           "result": "string"
         },
         {
           "name": "MarshalJSON",
           "kind": "method",
-          "line": 141,
-          "endLine": 146,
+          "line": 155,
+          "endLine": 160,
           "result": "tuple\u003c[]byte,error\u003e"
         },
         {
           "name": "NodeKind",
           "kind": "method",
-          "line": 98,
-          "endLine": 103,
+          "line": 112,
+          "endLine": 117,
           "result": "string"
         },
         {
           "name": "TokenKind",
           "kind": "method",
-          "line": 106,
-          "endLine": 111,
+          "line": 120,
+          "endLine": 125,
           "result": "string"
         },
         {
           "name": "Valid",
           "kind": "method",
-          "line": 87,
-          "endLine": 87,
+          "line": 101,
+          "endLine": 101,
           "result": "bool"
         },
         {
           "name": "node",
           "kind": "property",
-          "line": 75,
-          "endLine": 75,
+          "line": 89,
+          "endLine": 89,
           "result": "*normalizedNode"
         }
       ]
@@ -2454,71 +2468,71 @@
       "name": "bindingValue",
       "kind": "struct",
       "file": "gritql/matcher.go",
-      "line": 148,
-      "endLine": 158,
+      "line": 162,
+      "endLine": 172,
       "underlyingType": "struct{variable VariableRef;kind BindingKind;rng parser.Range;ranges[]parser.Range;structural[]normalizedNode;equality[]normalizedNode;sourceRanges[]parser.Range;sourceKinds[]string;text string;}",
       "members": [
         {
           "name": "equality",
           "kind": "property",
-          "line": 154,
-          "endLine": 154,
+          "line": 168,
+          "endLine": 168,
           "result": "[]normalizedNode"
         },
         {
           "name": "kind",
           "kind": "property",
-          "line": 150,
-          "endLine": 150,
+          "line": 164,
+          "endLine": 164,
           "result": "BindingKind"
         },
         {
           "name": "ranges",
           "kind": "property",
-          "line": 152,
-          "endLine": 152,
+          "line": 166,
+          "endLine": 166,
           "result": "[]parser.Range"
         },
         {
           "name": "rng",
           "kind": "property",
-          "line": 151,
-          "endLine": 151,
+          "line": 165,
+          "endLine": 165,
           "result": "parser.Range"
         },
         {
           "name": "sourceKinds",
           "kind": "property",
-          "line": 156,
-          "endLine": 156,
+          "line": 170,
+          "endLine": 170,
           "result": "[]string"
         },
         {
           "name": "sourceRanges",
           "kind": "property",
-          "line": 155,
-          "endLine": 155,
+          "line": 169,
+          "endLine": 169,
           "result": "[]parser.Range"
         },
         {
           "name": "structural",
           "kind": "property",
-          "line": 153,
-          "endLine": 153,
+          "line": 167,
+          "endLine": 167,
           "result": "[]normalizedNode"
         },
         {
           "name": "text",
           "kind": "property",
-          "line": 157,
-          "endLine": 157,
+          "line": 171,
+          "endLine": 171,
           "result": "string"
         },
         {
           "name": "variable",
           "kind": "property",
-          "line": 149,
-          "endLine": 149,
+          "line": 163,
+          "endLine": 163,
           "result": "VariableRef"
         }
       ]
@@ -2662,57 +2676,57 @@
       "name": "evalCandidate",
       "kind": "struct",
       "file": "gritql/evaluator.go",
-      "line": 99,
-      "endLine": 107,
-      "underlyingType": "struct{target MatchTarget;rng parser.Range;node parser.Node;ancestors[]parser.Node;sequence bool;parent parser.Node;elements[]parser.Node;}",
+      "line": 100,
+      "endLine": 108,
+      "underlyingType": "struct{target MatchTarget;rng parser.Range;node parser.ViewNode;ancestors[]parser.ViewNode;sequence bool;parent parser.ViewNode;elements[]parser.ViewNode;}",
       "members": [
         {
           "name": "ancestors",
           "kind": "property",
-          "line": 103,
-          "endLine": 103,
-          "result": "[]parser.Node"
+          "line": 104,
+          "endLine": 104,
+          "result": "[]parser.ViewNode"
         },
         {
           "name": "elements",
           "kind": "property",
-          "line": 106,
-          "endLine": 106,
-          "result": "[]parser.Node"
+          "line": 107,
+          "endLine": 107,
+          "result": "[]parser.ViewNode"
         },
         {
           "name": "node",
           "kind": "property",
-          "line": 102,
-          "endLine": 102,
-          "result": "parser.Node"
+          "line": 103,
+          "endLine": 103,
+          "result": "parser.ViewNode"
         },
         {
           "name": "parent",
           "kind": "property",
-          "line": 105,
-          "endLine": 105,
-          "result": "parser.Node"
+          "line": 106,
+          "endLine": 106,
+          "result": "parser.ViewNode"
         },
         {
           "name": "rng",
           "kind": "property",
-          "line": 101,
-          "endLine": 101,
+          "line": 102,
+          "endLine": 102,
           "result": "parser.Range"
         },
         {
           "name": "sequence",
           "kind": "property",
-          "line": 104,
-          "endLine": 104,
+          "line": 105,
+          "endLine": 105,
           "result": "bool"
         },
         {
           "name": "target",
           "kind": "property",
-          "line": 100,
-          "endLine": 100,
+          "line": 101,
+          "endLine": 101,
           "result": "MatchTarget"
         }
       ]
@@ -2721,50 +2735,50 @@
       "name": "evaluationBudget",
       "kind": "struct",
       "file": "gritql/evaluator.go",
-      "line": 68,
-      "endLine": 74,
+      "line": 69,
+      "endLine": 75,
       "underlyingType": "struct{ctx context.Context;deadline time.Time;steps int;maxSteps int;err*EvaluationError;}",
       "members": [
         {
           "name": "take",
           "kind": "method",
-          "line": 76,
-          "endLine": 97,
+          "line": 77,
+          "endLine": 98,
           "result": "bool"
         },
         {
           "name": "ctx",
           "kind": "property",
-          "line": 69,
-          "endLine": 69,
+          "line": 70,
+          "endLine": 70,
           "result": "context.Context"
         },
         {
           "name": "deadline",
           "kind": "property",
-          "line": 70,
-          "endLine": 70,
+          "line": 71,
+          "endLine": 71,
           "result": "time.Time"
         },
         {
           "name": "err",
           "kind": "property",
-          "line": 73,
-          "endLine": 73,
+          "line": 74,
+          "endLine": 74,
           "result": "*EvaluationError"
         },
         {
           "name": "maxSteps",
           "kind": "property",
-          "line": 72,
-          "endLine": 72,
+          "line": 73,
+          "endLine": 73,
           "result": "int"
         },
         {
           "name": "steps",
           "kind": "property",
-          "line": 71,
-          "endLine": 71,
+          "line": 72,
+          "endLine": 72,
           "result": "int"
         }
       ]
@@ -2773,30 +2787,30 @@
       "name": "evaluationTraversalItem",
       "kind": "struct",
       "file": "gritql/evaluator.go",
-      "line": 371,
-      "endLine": 375,
-      "underlyingType": "struct{node parser.Node;depth int;ancestors[]parser.Node;}",
+      "line": 384,
+      "endLine": 388,
+      "underlyingType": "struct{node parser.ViewNode;depth int;ancestors[]parser.ViewNode;}",
       "members": [
         {
           "name": "ancestors",
           "kind": "property",
-          "line": 374,
-          "endLine": 374,
-          "result": "[]parser.Node"
+          "line": 387,
+          "endLine": 387,
+          "result": "[]parser.ViewNode"
         },
         {
           "name": "depth",
           "kind": "property",
-          "line": 373,
-          "endLine": 373,
+          "line": 386,
+          "endLine": 386,
           "result": "int"
         },
         {
           "name": "node",
           "kind": "property",
-          "line": 372,
-          "endLine": 372,
-          "result": "parser.Node"
+          "line": 385,
+          "endLine": 385,
+          "result": "parser.ViewNode"
         }
       ]
     },
@@ -2962,50 +2976,50 @@
       "name": "frozenMatchTarget",
       "kind": "struct",
       "file": "gritql/matcher.go",
-      "line": 45,
-      "endLine": 52,
+      "line": 59,
+      "endLine": 66,
       "underlyingType": "struct{node parser.SyntaxNode;kind string;field string;children[]parser.SyntaxNode;anchor parser.Range;sequence bool;}",
       "members": [
         {
           "name": "anchor",
           "kind": "property",
-          "line": 50,
-          "endLine": 50,
+          "line": 64,
+          "endLine": 64,
           "result": "parser.Range"
         },
         {
           "name": "children",
           "kind": "property",
-          "line": 49,
-          "endLine": 49,
+          "line": 63,
+          "endLine": 63,
           "result": "[]parser.SyntaxNode"
         },
         {
           "name": "field",
           "kind": "property",
-          "line": 48,
-          "endLine": 48,
+          "line": 62,
+          "endLine": 62,
           "result": "string"
         },
         {
           "name": "kind",
           "kind": "property",
-          "line": 47,
-          "endLine": 47,
+          "line": 61,
+          "endLine": 61,
           "result": "string"
         },
         {
           "name": "node",
           "kind": "property",
-          "line": 46,
-          "endLine": 46,
+          "line": 60,
+          "endLine": 60,
           "result": "parser.SyntaxNode"
         },
         {
           "name": "sequence",
           "kind": "property",
-          "line": 51,
-          "endLine": 51,
+          "line": 65,
+          "endLine": 65,
           "result": "bool"
         }
       ]
@@ -3130,43 +3144,43 @@
       "name": "normalizedNode",
       "kind": "struct",
       "file": "gritql/matcher.go",
-      "line": 77,
-      "endLine": 82,
+      "line": 91,
+      "endLine": 96,
       "underlyingType": "struct{kind string;lexeme string;named bool;children[]normalizedNode;}",
       "members": [
         {
           "name": "MarshalJSON",
           "kind": "method",
-          "line": 84,
-          "endLine": 84,
+          "line": 98,
+          "endLine": 98,
           "result": "tuple\u003c[]byte,error\u003e"
         },
         {
           "name": "children",
           "kind": "property",
-          "line": 81,
-          "endLine": 81,
+          "line": 95,
+          "endLine": 95,
           "result": "[]normalizedNode"
         },
         {
           "name": "kind",
           "kind": "property",
-          "line": 78,
-          "endLine": 78,
+          "line": 92,
+          "endLine": 92,
           "result": "string"
         },
         {
           "name": "lexeme",
           "kind": "property",
-          "line": 79,
-          "endLine": 79,
+          "line": 93,
+          "endLine": 93,
           "result": "string"
         },
         {
           "name": "named",
           "kind": "property",
-          "line": 80,
-          "endLine": 80,
+          "line": 94,
+          "endLine": 94,
           "result": "bool"
         }
       ]
@@ -3175,22 +3189,22 @@
       "name": "occurrenceRestoration",
       "kind": "struct",
       "file": "gritql/template.go",
-      "line": 1336,
-      "endLine": 1340,
+      "line": 1354,
+      "endLine": 1358,
       "underlyingType": "struct{seen[]int;indices map[VariableRef]int;valid bool;}",
       "members": [
         {
           "name": "seenExactlyOnce",
           "kind": "method",
-          "line": 1374,
-          "endLine": 1381,
+          "line": 1392,
+          "endLine": 1399,
           "result": "bool"
         },
         {
           "name": "visitChildren",
           "kind": "method",
-          "line": 1362,
-          "endLine": 1372,
+          "line": 1380,
+          "endLine": 1390,
           "parameters": [
             "[]*templateNode",
             "[]templateChild"
@@ -3200,8 +3214,8 @@
         {
           "name": "visitSlot",
           "kind": "method",
-          "line": 1342,
-          "endLine": 1349,
+          "line": 1360,
+          "endLine": 1367,
           "parameters": [
             "*templateSlot"
           ]
@@ -3209,8 +3223,8 @@
         {
           "name": "visitTree",
           "kind": "method",
-          "line": 1351,
-          "endLine": 1360,
+          "line": 1369,
+          "endLine": 1378,
           "parameters": [
             "*templateNode"
           ]
@@ -3218,22 +3232,22 @@
         {
           "name": "indices",
           "kind": "property",
-          "line": 1338,
-          "endLine": 1338,
+          "line": 1356,
+          "endLine": 1356,
           "result": "map[VariableRef]int"
         },
         {
           "name": "seen",
           "kind": "property",
-          "line": 1337,
-          "endLine": 1337,
+          "line": 1355,
+          "endLine": 1355,
           "result": "[]int"
         },
         {
           "name": "valid",
           "kind": "property",
-          "line": 1339,
-          "endLine": 1339,
+          "line": 1357,
+          "endLine": 1357,
           "result": "bool"
         }
       ]
@@ -3889,22 +3903,22 @@
       "name": "queryRecord",
       "kind": "struct",
       "file": "gritql/evaluator.go",
-      "line": 109,
-      "endLine": 112,
+      "line": 110,
+      "endLine": 113,
       "underlyingType": "struct{rng parser.Range;bindings BindingSet;}",
       "members": [
         {
           "name": "bindings",
           "kind": "property",
-          "line": 111,
-          "endLine": 111,
+          "line": 112,
+          "endLine": 112,
           "result": "BindingSet"
         },
         {
           "name": "rng",
           "kind": "property",
-          "line": 110,
-          "endLine": 110,
+          "line": 111,
+          "endLine": 111,
           "result": "parser.Range"
         }
       ]
@@ -4761,22 +4775,22 @@
       "name": "sequencePosition",
       "kind": "struct",
       "file": "gritql/evaluator.go",
-      "line": 453,
-      "endLine": 456,
+      "line": 466,
+      "endLine": 469,
       "underlyingType": "struct{field string;indexes[]int;}",
       "members": [
         {
           "name": "field",
           "kind": "property",
-          "line": 454,
-          "endLine": 454,
+          "line": 467,
+          "endLine": 467,
           "result": "string"
         },
         {
           "name": "indexes",
           "kind": "property",
-          "line": 455,
-          "endLine": 455,
+          "line": 468,
+          "endLine": 468,
           "result": "[]int"
         }
       ]
@@ -4785,51 +4799,51 @@
       "name": "significantRangeFrame",
       "kind": "struct",
       "file": "gritql/evaluator.go",
-      "line": 311,
-      "endLine": 317,
-      "underlyingType": "struct{node parser.Node;children[]parser.Node;next int;first,last parser.Range;has bool;}",
+      "line": 324,
+      "endLine": 330,
+      "underlyingType": "struct{node parser.ViewNode;children[]parser.ViewNode;next int;first,last parser.Range;has bool;}",
       "members": [
         {
           "name": "children",
           "kind": "property",
-          "line": 313,
-          "endLine": 313,
-          "result": "[]parser.Node"
+          "line": 326,
+          "endLine": 326,
+          "result": "[]parser.ViewNode"
         },
         {
           "name": "first",
           "kind": "property",
-          "line": 315,
-          "endLine": 315,
+          "line": 328,
+          "endLine": 328,
           "result": "parser.Range"
         },
         {
           "name": "has",
           "kind": "property",
-          "line": 316,
-          "endLine": 316,
+          "line": 329,
+          "endLine": 329,
           "result": "bool"
         },
         {
           "name": "last",
           "kind": "property",
-          "line": 315,
-          "endLine": 315,
+          "line": 328,
+          "endLine": 328,
           "result": "parser.Range"
         },
         {
           "name": "next",
           "kind": "property",
-          "line": 314,
-          "endLine": 314,
+          "line": 327,
+          "endLine": 327,
           "result": "int"
         },
         {
           "name": "node",
           "kind": "property",
-          "line": 312,
-          "endLine": 312,
-          "result": "parser.Node"
+          "line": 325,
+          "endLine": 325,
+          "result": "parser.ViewNode"
         }
       ]
     },
@@ -4968,23 +4982,23 @@
       "name": "sourceInspectionItem",
       "kind": "struct",
       "file": "gritql/evaluator.go",
-      "line": 251,
-      "endLine": 254,
-      "underlyingType": "struct{node parser.Node;depth int;}",
+      "line": 264,
+      "endLine": 267,
+      "underlyingType": "struct{node parser.ViewNode;depth int;}",
       "members": [
         {
           "name": "depth",
           "kind": "property",
-          "line": 253,
-          "endLine": 253,
+          "line": 266,
+          "endLine": 266,
           "result": "int"
         },
         {
           "name": "node",
           "kind": "property",
-          "line": 252,
-          "endLine": 252,
-          "result": "parser.Node"
+          "line": 265,
+          "endLine": 265,
+          "result": "parser.ViewNode"
         }
       ]
     },
@@ -5683,8 +5697,8 @@
       "name": "Evaluate",
       "kind": "function",
       "file": "gritql/evaluator.go",
-      "line": 116,
-      "endLine": 133,
+      "line": 117,
+      "endLine": 146,
       "parameters": [
         "context.Context",
         "*Program",
@@ -5697,8 +5711,8 @@
       "name": "EvaluateDocument",
       "kind": "function",
       "file": "gritql/evaluator.go",
-      "line": 219,
-      "endLine": 221,
+      "line": 232,
+      "endLine": 234,
       "parameters": [
         "context.Context",
         "*Program",
@@ -5754,8 +5768,8 @@
       "name": "MatchNode",
       "kind": "function",
       "file": "gritql/matcher.go",
-      "line": 263,
-      "endLine": 265,
+      "line": 277,
+      "endLine": 279,
       "parameters": [
         "Template",
         "parser.Node"
@@ -5766,8 +5780,8 @@
       "name": "MatchTemplate",
       "kind": "function",
       "file": "gritql/matcher.go",
-      "line": 258,
-      "endLine": 260,
+      "line": 272,
+      "endLine": 274,
       "parameters": [
         "Template",
         "MatchTarget"
@@ -5778,8 +5792,8 @@
       "name": "MatchTemplateWithBindings",
       "kind": "function",
       "file": "gritql/matcher.go",
-      "line": 269,
-      "endLine": 271,
+      "line": 283,
+      "endLine": 285,
       "parameters": [
         "Template",
         "MatchTarget",
@@ -5791,8 +5805,8 @@
       "name": "NodeTarget",
       "kind": "function",
       "file": "gritql/matcher.go",
-      "line": 25,
-      "endLine": 25,
+      "line": 27,
+      "endLine": 27,
       "parameters": [
         "parser.Node"
       ],
@@ -5815,8 +5829,8 @@
       "name": "RepeatedSequenceTarget",
       "kind": "function",
       "file": "gritql/matcher.go",
-      "line": 37,
-      "endLine": 39,
+      "line": 39,
+      "endLine": 41,
       "parameters": [
         "parser.Node",
         "string",
@@ -5859,8 +5873,8 @@
       "name": "SequenceTarget",
       "kind": "function",
       "file": "gritql/matcher.go",
-      "line": 30,
-      "endLine": 32,
+      "line": 32,
+      "endLine": 34,
       "parameters": [
         "string",
         "parser.Node",

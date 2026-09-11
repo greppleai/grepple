@@ -17,10 +17,22 @@ classDiagram
         -mu: sync.RWMutex
         -source: string
         -tree: *sitter.Tree
+        +Read(func&#40;DocumentView&#41;error): error
     }
     <<struct>> Document
     %% grepple:file Document parser/document.go
-    note for Document "defined: parser/document.go:40-46; Close@parser/document.go:164-179; Diagnostics@parser/document.go:259; Language@parser/document.go:182-192; ParseDiagnostics@parser/document.go:225-256; Root@parser/document.go:211-221; Source@parser/document.go:195-205; Text@parser/document.go:208; nodeRangeLocked@parser/document.go:508-516; language@parser/document.go:42; lineStarts@parser/document.go:44; mu@parser/document.go:41; source@parser/document.go:43; tree@parser/document.go:45"
+    note for Document "defined: parser/document.go:40-46; Close@parser/document.go:164-179; Diagnostics@parser/document.go:259; Language@parser/document.go:182-192; ParseDiagnostics@parser/document.go:225-256; Root@parser/document.go:211-221; Source@parser/document.go:195-205; Text@parser/document.go:208; nodeRangeLocked@parser/document.go:508-516; language@parser/document.go:42; lineStarts@parser/document.go:44; mu@parser/document.go:41; source@parser/document.go:43; tree@parser/document.go:45; Read@parser/view.go:44-61"
+    class DocumentView {
+        +Language(): string
+        +Root(): ViewNode
+        +Source(): string
+        -valid(): bool
+        -doc: *Document
+        -state: *documentViewState
+    }
+    <<struct>> DocumentView
+    %% grepple:file DocumentView parser/view.go
+    note for DocumentView "defined: parser/view.go:17-20; Language@parser/view.go:64-69; Root@parser/view.go:80-85; Source@parser/view.go:72-77; valid@parser/view.go:87-89; doc@parser/view.go:18; state@parser/view.go:19"
     class FileOutline {
         +Language: string
         +Path: string
@@ -205,6 +217,52 @@ classDiagram
     <<struct>> SyntaxNode
     %% grepple:file SyntaxNode parser/document.go
     note for SyntaxNode "defined: parser/document.go:58-69; Children@parser/document.go:104-106; FieldName@parser/document.go:89; HasError@parser/document.go:98; IsExtra@parser/document.go:95; IsNamed@parser/document.go:92; Kind@parser/document.go:75; Range@parser/document.go:101; Text@parser/document.go:78; TextRange@parser/document.go:81-86; Valid@parser/document.go:72; children@parser/document.go:68; extra@parser/document.go:65; fieldName@parser/document.go:63; hasError@parser/document.go:66; kind@parser/document.go:60; named@parser/document.go:64; rng@parser/document.go:67; source@parser/document.go:62; text@parser/document.go:61; valid@parser/document.go:59"
+    class ViewNode {
+        +Child(int): ViewNode
+        +ChildByFieldName(string): ViewNode
+        +ChildCount(): int
+        +Children(): []ViewNode
+        +FieldName(): string
+        +FieldNameForChild(int): string
+        +HasError(): bool
+        +IsError(): bool
+        +IsExtra(): bool
+        +IsMissing(): bool
+        +IsNamed(): bool
+        +IsValid(): bool
+        +Kind(): string
+        +NamedChild(int): ViewNode
+        +NamedChildCount(): int
+        +NamedChildren(): []ViewNode
+        +Parent(): ViewNode
+        +Range(): Range
+        +Snapshot(): tuple~SyntaxNode&#44;bool~
+        +Source(): string
+        +Text(): string
+        +TextRange(int, int): string
+        +Valid(): bool
+        -snapshot(): SyntaxNode
+        -fieldName: string
+        -raw: *sitter.Node
+        -view: DocumentView
+    }
+    <<struct>> ViewNode
+    %% grepple:file ViewNode parser/view.go
+    note for ViewNode "defined: parser/view.go:35-39; Child@parser/view.go:176-185; ChildByFieldName@parser/view.go:231-240; ChildCount@parser/view.go:160-165; Children@parser/view.go:200-216; FieldName@parser/view.go:243-248; FieldNameForChild@parser/view.go:251-256; HasError@parser/view.go:118; IsError@parser/view.go:112; IsExtra@parser/view.go:109; IsMissing@parser/view.go:115; IsNamed@parser/view.go:106; IsValid@parser/view.go:95; Kind@parser/view.go:98-103; NamedChild@parser/view.go:188-197; NamedChildCount@parser/view.go:168-173; NamedChildren@parser/view.go:219-228; Parent@parser/view.go:148-157; Range@parser/view.go:140-145; Snapshot@parser/view.go:259-264; Source@parser/view.go:129; Text@parser/view.go:121-126; TextRange@parser/view.go:132-137; Valid@parser/view.go:92; snapshot@parser/view.go:266-297; fieldName@parser/view.go:38; raw@parser/view.go:37; view@parser/view.go:36"
+    class WalkOptions {
+        +MaxDepth: int
+        +MaxNodes: int
+    }
+    <<struct>> WalkOptions
+    %% grepple:file WalkOptions parser/view.go
+    note for WalkOptions "defined: parser/view.go:300-303; MaxDepth@parser/view.go:301; MaxNodes@parser/view.go:302"
+    class WalkResult {
+        +Truncated: bool
+        +Visited: int
+    }
+    <<struct>> WalkResult
+    %% grepple:file WalkResult parser/view.go
+    note for WalkResult "defined: parser/view.go:306-309; Truncated@parser/view.go:308; Visited@parser/view.go:307"
     class cLanguage {
         +Grammar(): *sitter.Language
         +ID(): string
@@ -238,6 +296,14 @@ classDiagram
     <<struct>> cppLanguage
     %% grepple:file cppLanguage parser/language_cpp.go
     note for cppLanguage "defined: parser/language_cpp.go:8-11; Grammar@parser/language_cpp.go:21; ID@parser/language_cpp.go:20; Outline@parser/language_cpp.go:23-25; Rules@parser/language_cpp.go:22; grammar@parser/language_cpp.go:9; rules@parser/language_cpp.go:10"
+    class documentViewState {
+        -active: atomic.Bool
+        -mu: sync.Mutex
+        -snapshots: map[viewSnapshotKey]SyntaxNode
+    }
+    <<struct>> documentViewState
+    %% grepple:file documentViewState parser/view.go
+    note for documentViewState "defined: parser/view.go:22-26; active@parser/view.go:23; mu@parser/view.go:24; snapshots@parser/view.go:25"
     class fenceTracker {
         -skip(string): bool
         -inside: bool
@@ -468,6 +534,20 @@ classDiagram
     <<struct>> typeScriptLanguage
     %% grepple:file typeScriptLanguage parser/language_typescript.go
     note for typeScriptLanguage "defined: parser/language_typescript.go:21-25; Grammar@parser/language_typescript.go:51; ID@parser/language_typescript.go:50; Outline@parser/language_typescript.go:53-55; Rules@parser/language_typescript.go:52; grammar@parser/language_typescript.go:23; id@parser/language_typescript.go:22; rules@parser/language_typescript.go:24"
+    class viewSnapshotKey {
+        -field: string
+        -id: uintptr
+    }
+    <<struct>> viewSnapshotKey
+    %% grepple:file viewSnapshotKey parser/view.go
+    note for viewSnapshotKey "defined: parser/view.go:28-31; field@parser/view.go:30; id@parser/view.go:29"
+    class viewWalkItem {
+        -depth: int
+        -node: ViewNode
+    }
+    <<struct>> viewWalkItem
+    %% grepple:file viewWalkItem parser/view.go
+    note for viewWalkItem "defined: parser/view.go:322-325; depth@parser/view.go:324; node@parser/view.go:323"
     class BuildNavigationGraph {
         +BuildNavigationGraph(string, string, string): NavigationGraph
     }
@@ -558,13 +638,29 @@ classDiagram
     <<function>> WalkNamed
     %% grepple:file WalkNamed parser/document.go
     note for WalkNamed "defined: parser/document.go:449-464"
+    class WalkNamedView {
+        +WalkNamedView(ViewNode, func&#40;ViewNode&#41;)
+    }
+    <<function>> WalkNamedView
+    %% grepple:file WalkNamedView parser/view.go
+    note for WalkNamedView "defined: parser/view.go:312-320"
+    class WalkNamedViewBounded {
+        +WalkNamedViewBounded(ViewNode, WalkOptions, func&#40;ViewNode&#44;int&#41;bool): WalkResult
+    }
+    <<function>> WalkNamedViewBounded
+    %% grepple:file WalkNamedViewBounded parser/view.go
+    note for WalkNamedViewBounded "defined: parser/view.go:329-354"
     BuildNavigationGraph "1" ..> "1" NavigationGraph : result 1
     BuildSegments "1" ..> "*" Segment : result 1
     CapabilitiesForLanguage "1" ..> "1" LanguageCapabilities : result 1
+    Document "1" ..> "1" DocumentView : method Read parameter 1
     Document "1" ..> "1" Node : method Root result 1
     Document "1" ..> "*" ParseDiagnostic : method Diagnostics result 1
     Document "1" ..> "*" ParseDiagnostic : method ParseDiagnostics result 1
     Document "1" ..> "1" Range : method nodeRangeLocked result 1
+    DocumentView "1" --> "1" Document : field doc
+    DocumentView "1" ..> "1" ViewNode : method Root result 1
+    DocumentView "1" --> "1" documentViewState : field state
     FileOutline "1" --> "*" Symbol : field Symbols
     GrammarChildrenCardinality "1" ..> "1" GrammarCardinality : result 1
     GrammarFieldCardinality "1" ..> "1" GrammarCardinality : result 1
@@ -588,8 +684,18 @@ classDiagram
     SupportedLanguages "1" ..> "*" LanguageCapabilities : result 1
     SyntaxNode "1" --> "1" Range : field rng
     SyntaxNode "1" ..> "1" Range : method Range result 1
+    ViewNode "1" --> "1" DocumentView : field view
+    ViewNode "1" ..> "1" Range : method Range result 1
+    ViewNode "1" ..> "1" SyntaxNode : method Snapshot result 1
+    ViewNode "1" ..> "1" SyntaxNode : method snapshot result 1
     WalkNamed "1" ..> "1" Node : parameter 1
     WalkNamed "1" ..> "1" Node : parameter 2
+    WalkNamedView "1" ..> "1" ViewNode : parameter 1
+    WalkNamedView "1" ..> "1" ViewNode : parameter 2
+    WalkNamedViewBounded "1" ..> "1" ViewNode : parameter 1
+    WalkNamedViewBounded "1" ..> "1" ViewNode : parameter 3
+    WalkNamedViewBounded "1" ..> "1" WalkOptions : parameter 2
+    WalkNamedViewBounded "1" ..> "1" WalkResult : result 1
     cLanguage "1" ..> "*" Symbol : method Outline result 1
     languageAdapter <|.. cLanguage : implements
     cLanguage "1" --> "1" structureRules : field rules
@@ -602,6 +708,8 @@ classDiagram
     languageAdapter <|.. cppLanguage : implements
     cppLanguage "1" --> "1" structureRules : field rules
     cppLanguage "1" ..> "1" structureRules : method Rules result 1
+    documentViewState "1" --> "*" SyntaxNode : field snapshots
+    documentViewState "1" --> "*" viewSnapshotKey : field snapshots
     goLanguage "1" ..> "*" Symbol : method Outline result 1
     languageAdapter <|.. goLanguage : implements
     goLanguage "1" --> "1" structureRules : field rules
@@ -669,3 +777,4 @@ classDiagram
     languageAdapter <|.. typeScriptLanguage : implements
     typeScriptLanguage "1" --> "1" structureRules : field rules
     typeScriptLanguage "1" ..> "1" structureRules : method Rules result 1
+    viewWalkItem "1" --> "1" ViewNode : field node

@@ -1279,20 +1279,38 @@ func declarationOrList(kind, declaration, list string) bool {
 // because node-types flattens their grouped alternative.
 
 func repeatedGrammarPosition(parent, child parser.Node) bool {
-	p := parent.Kind()
-	if child.FieldName() != "" {
-		return parser.GrammarFieldCardinality("go", p, child.FieldName()) == parser.GrammarCardinalityMany
-	}
-	if parser.GrammarChildrenCardinality("go", p) != parser.GrammarCardinalityMany {
-		return false
-	}
-	if p == "const_declaration" || p == "type_declaration" {
-		for _, c := range parent.Children() {
-			if c.Kind() == "(" {
-				return true
-			}
+	return repeatedGrammarPositionMetadata(parent.Kind(), child.FieldName(), nodeHasOpenParen(parent))
+}
+
+func repeatedViewGrammarPosition(parent, child parser.ViewNode) bool {
+	hasOpenParen := false
+	for _, candidate := range parent.Children() {
+		if candidate.Kind() == "(" {
+			hasOpenParen = true
+			break
 		}
+	}
+	return repeatedGrammarPositionMetadata(parent.Kind(), child.FieldName(), hasOpenParen)
+}
+
+func nodeHasOpenParen(parent parser.Node) bool {
+	for _, child := range parent.Children() {
+		if child.Kind() == "(" {
+			return true
+		}
+	}
+	return false
+}
+
+func repeatedGrammarPositionMetadata(parentKind, field string, hasOpenParen bool) bool {
+	if field != "" {
+		return parser.GrammarFieldCardinality("go", parentKind, field) == parser.GrammarCardinalityMany
+	}
+	if parser.GrammarChildrenCardinality("go", parentKind) != parser.GrammarCardinalityMany {
 		return false
+	}
+	if parentKind == "const_declaration" || parentKind == "type_declaration" {
+		return hasOpenParen
 	}
 	return true
 }

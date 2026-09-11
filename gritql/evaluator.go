@@ -2,6 +2,7 @@ package gritql
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -99,11 +100,11 @@ func (b *evaluationBudget) take() bool {
 type evalCandidate struct {
 	target    MatchTarget
 	rng       parser.Range
-	node      parser.Node
-	ancestors []parser.Node
+	node      parser.ViewNode
+	ancestors []parser.ViewNode
 	sequence  bool
-	parent    parser.Node
-	elements  []parser.Node
+	parent    parser.ViewNode
+	elements  []parser.ViewNode
 }
 
 type queryRecord struct {
@@ -122,14 +123,26 @@ func Evaluate(ctx context.Context, program *Program, document *parser.Document, 
 	}
 	options = normalizeEvaluateOptions(options)
 	budget := newEvaluationBudget(ctx, options)
-	if err := inspectEvaluationSource(document.Root(), options.MaxDepth, budget); err != nil {
-		return nil, err
-	}
-	candidates, nodesByRange, err := collectEvaluationCandidates(document.Root(), options, budget)
+	var matches []EvaluationMatch
+	err := document.Read(func(view parser.DocumentView) error {
+		root := view.Root()
+		if err := inspectEvaluationSource(root, options.MaxDepth, budget); err != nil {
+			return err
+		}
+		candidates, nodesByRange, err := collectEvaluationCandidates(root, options, budget)
+		if err != nil {
+			return err
+		}
+		matches, err = evaluateCandidates(program.root, candidates, nodesByRange, budget)
+		return err
+	})
 	if err != nil {
+		if errors.Is(err, parser.ErrDocumentClosed) {
+			return nil, evaluationFailure("INTERNAL_ERROR", "internal", "source document closed during evaluation", err)
+		}
 		return nil, err
 	}
-	return evaluateCandidates(program.root, candidates, nodesByRange, budget)
+	return matches, nil
 }
 
 func validateEvaluationInputs(program *Program, document *parser.Document) error {
@@ -165,7 +178,7 @@ func deadlineExceeded(deadline time.Time) bool {
 	return !deadline.IsZero() && !time.Now().Before(deadline)
 }
 
-func inspectEvaluationSource(root parser.Node, maxDepth int, budget *evaluationBudget) error {
+func inspectEvaluationSource(root parser.ViewNode, maxDepth int, budget *evaluationBudget) error {
 	message, found, err := inspectSource(root, maxDepth, budget)
 	if err != nil {
 		return err
@@ -249,11 +262,11 @@ func evaluationFailure(code, class, message string, cause error) *EvaluationErro
 }
 
 type sourceInspectionItem struct {
-	node  parser.Node
+	node  parser.ViewNode
 	depth int
 }
 
-func inspectSource(root parser.Node, maxDepth int, budget *evaluationBudget) (string, bool, error) {
+func inspectSource(root parser.ViewNode, maxDepth int, budget *evaluationBudget) (string, bool, error) {
 	stack := []sourceInspectionItem{{node: root, depth: 1}}
 	var earliest *parser.ParseDiagnostic
 	for len(stack) > 0 {
@@ -284,7 +297,7 @@ func validateInspectedNode(item sourceInspectionItem, maxDepth int) error {
 	return nil
 }
 
-func earlierParseDiagnostic(earliest *parser.ParseDiagnostic, node parser.Node) *parser.ParseDiagnostic {
+func earlierParseDiagnostic(earliest *parser.ParseDiagnostic, node parser.ViewNode) *parser.ParseDiagnostic {
 	if !node.IsError() && !node.IsMissing() {
 		return earliest
 	}
@@ -309,14 +322,14 @@ func appendInspectionChildren(stack []sourceInspectionItem, item sourceInspectio
 }
 
 type significantRangeFrame struct {
-	node        parser.Node
-	children    []parser.Node
+	node        parser.ViewNode
+	children    []parser.ViewNode
 	next        int
 	first, last parser.Range
 	has         bool
 }
 
-func collectSignificantRanges(root parser.Node, budget *evaluationBudget) (map[string]parser.Range, error) {
+func collectSignificantRanges(root parser.ViewNode, budget *evaluationBudget) (map[string]parser.Range, error) {
 	stack := []significantRangeFrame{{node: root}}
 	out := make(map[string]parser.Range)
 	for len(stack) > 0 {
@@ -369,12 +382,12 @@ func finishSignificantRange(stack *[]significantRangeFrame, out map[string]parse
 }
 
 type evaluationTraversalItem struct {
-	node      parser.Node
+	node      parser.ViewNode
 	depth     int
-	ancestors []parser.Node
+	ancestors []parser.ViewNode
 }
 
-func collectEvaluationCandidates(root parser.Node, options EvaluateOptions, budget *evaluationBudget) ([]evalCandidate, map[string]evalCandidate, error) {
+func collectEvaluationCandidates(root parser.ViewNode, options EvaluateOptions, budget *evaluationBudget) ([]evalCandidate, map[string]evalCandidate, error) {
 	significantRanges, err := collectSignificantRanges(root, budget)
 	if err != nil {
 		return nil, nil, err
@@ -412,15 +425,15 @@ func validateEvaluationTraversalItem(item evaluationTraversalItem, maxDepth int)
 	return nil
 }
 
-func evaluationCandidateNode(node parser.Node) bool {
+func evaluationCandidateNode(node parser.ViewNode) bool {
 	return node.IsNamed() && !node.IsExtra() && node.Kind() != "comment"
 }
 
 func appendNodeAndSequenceCandidates(candidates []evalCandidate, nodes map[string]evalCandidate, item evaluationTraversalItem, significantRanges map[string]parser.Range, maxCandidates int, budget *evaluationBudget) ([]evalCandidate, error) {
 	key := nodeRangeKey(item.node.Kind(), item.node.Range())
 	candidate := evalCandidate{
-		target: NodeTarget(item.node), rng: significantRanges[key], node: item.node,
-		ancestors: append([]parser.Node(nil), item.ancestors...),
+		target: viewNodeTarget(item.node), rng: significantRanges[key], node: item.node,
+		ancestors: append([]parser.ViewNode(nil), item.ancestors...),
 	}
 	candidates = append(candidates, candidate)
 	nodes[key] = candidate
@@ -442,7 +455,7 @@ func appendEvaluationChildren(stack []evaluationTraversalItem, item evaluationTr
 	children := item.node.Children()
 	ancestors := item.ancestors
 	if evaluationCandidateNode(item.node) {
-		ancestors = append([]parser.Node{item.node}, ancestors...)
+		ancestors = append([]parser.ViewNode{item.node}, ancestors...)
 	}
 	for i := len(children) - 1; i >= 0; i-- {
 		stack = append(stack, evaluationTraversalItem{node: children[i], depth: item.depth + 1, ancestors: ancestors})
@@ -455,7 +468,7 @@ type sequencePosition struct {
 	indexes []int
 }
 
-func sequenceCandidates(parent parser.Node, ancestors []parser.Node, significantRanges map[string]parser.Range, remaining int, budget *evaluationBudget) []evalCandidate {
+func sequenceCandidates(parent parser.ViewNode, ancestors []parser.ViewNode, significantRanges map[string]parser.Range, remaining int, budget *evaluationBudget) []evalCandidate {
 	children := parent.Children()
 	positions := repeatedSequencePositions(parent, children, budget)
 	if budget.err != nil {
@@ -470,7 +483,7 @@ func sequenceCandidates(parent parser.Node, ancestors []parser.Node, significant
 	return out
 }
 
-func repeatedSequencePositions(parent parser.Node, children []parser.Node, budget *evaluationBudget) []sequencePosition {
+func repeatedSequencePositions(parent parser.ViewNode, children []parser.ViewNode, budget *evaluationBudget) []sequencePosition {
 	var positions []sequencePosition
 	byField := make(map[string]int)
 	for i, child := range children {
@@ -492,7 +505,7 @@ func repeatedSequencePositions(parent parser.Node, children []parser.Node, budge
 	return positions
 }
 
-func appendPositionSequences(out *[]evalCandidate, parent parser.Node, ancestors []parser.Node, children []parser.Node, position sequencePosition, significantRanges map[string]parser.Range, remaining int, budget *evaluationBudget) bool {
+func appendPositionSequences(out *[]evalCandidate, parent parser.ViewNode, ancestors []parser.ViewNode, children []parser.ViewNode, position sequencePosition, significantRanges map[string]parser.Range, remaining int, budget *evaluationBudget) bool {
 	// A repeated field can have multiple runs if another named grammar member
 	// occurs between values. Each run is an independent consecutive list.
 	for runStart := 0; runStart < len(position.indexes); {
@@ -505,7 +518,7 @@ func appendPositionSequences(out *[]evalCandidate, parent parser.Node, ancestors
 	return true
 }
 
-func sequenceRunEnd(children []parser.Node, indexes []int, runStart int) int {
+func sequenceRunEnd(children []parser.ViewNode, indexes []int, runStart int) int {
 	runEnd := runStart + 1
 	for runEnd < len(indexes) && onlyListSeparators(children, indexes[runEnd-1]+1, indexes[runEnd]) {
 		runEnd++
@@ -513,7 +526,7 @@ func sequenceRunEnd(children []parser.Node, indexes []int, runStart int) int {
 	return runEnd
 }
 
-func appendRunSequences(out *[]evalCandidate, parent parser.Node, ancestors []parser.Node, children []parser.Node, field string, indexes []int, significantRanges map[string]parser.Range, remaining int, budget *evaluationBudget) bool {
+func appendRunSequences(out *[]evalCandidate, parent parser.ViewNode, ancestors []parser.ViewNode, children []parser.ViewNode, field string, indexes []int, significantRanges map[string]parser.Range, remaining int, budget *evaluationBudget) bool {
 	for length := len(indexes); length >= 1; length-- {
 		for first := 0; first+length <= len(indexes); first++ {
 			if !budget.take() {
@@ -529,7 +542,7 @@ func appendRunSequences(out *[]evalCandidate, parent parser.Node, ancestors []pa
 	return true
 }
 
-func makeSequenceCandidate(parent parser.Node, ancestors []parser.Node, children []parser.Node, field string, indexes []int, first, length int, significantRanges map[string]parser.Range) evalCandidate {
+func makeSequenceCandidate(parent parser.ViewNode, ancestors []parser.ViewNode, children []parser.ViewNode, field string, indexes []int, first, length int, significantRanges map[string]parser.Range) evalCandidate {
 	last := first + length - 1
 	start := indexes[first]
 	end := sequenceTargetEnd(children, indexes[last]+1)
@@ -537,17 +550,17 @@ func makeSequenceCandidate(parent parser.Node, ancestors []parser.Node, children
 	rng := significantRanges[nodeRangeKey(firstNode.Kind(), firstNode.Range())]
 	lastRange := significantRanges[nodeRangeKey(lastNode.Kind(), lastNode.Range())]
 	rng.EndByte, rng.End = lastRange.EndByte, lastRange.End
-	elements := make([]parser.Node, length)
+	elements := make([]parser.ViewNode, length)
 	for i := range elements {
 		elements[i] = children[indexes[first+i]]
 	}
 	return evalCandidate{
 		target: sequenceMatchTarget(parent, field, start, end), rng: rng, sequence: true,
-		parent: parent, elements: elements, ancestors: append([]parser.Node(nil), ancestors...),
+		parent: parent, elements: elements, ancestors: append([]parser.ViewNode(nil), ancestors...),
 	}
 }
 
-func sequenceTargetEnd(children []parser.Node, end int) int {
+func sequenceTargetEnd(children []parser.ViewNode, end int) int {
 	// Authored separators following the final element remain matchable, but do
 	// not enlarge the candidate range or equality value.
 	for end < len(children) && !children[end].IsNamed() && !children[end].IsExtra() && listSeparator(children[end].Kind()) {
@@ -556,19 +569,19 @@ func sequenceTargetEnd(children []parser.Node, end int) int {
 	return end
 }
 
-func sequenceMatchTarget(parent parser.Node, field string, start, end int) MatchTarget {
+func sequenceMatchTarget(parent parser.ViewNode, field string, start, end int) MatchTarget {
 	switch parent.Kind() {
 	case "statement_list":
-		return SequenceTarget("statement_sequence", parent, start, end)
+		return viewSequenceTarget("statement_sequence", parent, start, end)
 	case "source_file":
-		return SequenceTarget("declaration_sequence", parent, start, end)
+		return viewSequenceTarget("declaration_sequence", parent, start, end)
 	default:
-		return repeatedSequenceTarget(parent, field, start, end)
+		return viewRepeatedSequenceTarget(parent, field, start, end)
 	}
 }
 
-func repeatedTraversalElement(parent, child parser.Node) bool {
-	if !child.IsNamed() || child.IsExtra() || child.Kind() == "comment" || !repeatedGrammarPosition(parent, child) {
+func repeatedTraversalElement(parent, child parser.ViewNode) bool {
+	if !child.IsNamed() || child.IsExtra() || child.Kind() == "comment" || !repeatedViewGrammarPosition(parent, child) {
 		return false
 	}
 	switch parent.Kind() {
@@ -581,7 +594,7 @@ func repeatedTraversalElement(parent, child parser.Node) bool {
 	}
 }
 
-func onlyListSeparators(children []parser.Node, start, end int) bool {
+func onlyListSeparators(children []parser.ViewNode, start, end int) bool {
 	for i := start; i < end; i++ {
 		child := children[i]
 		if child.IsExtra() || child.Kind() == "comment" {
@@ -809,7 +822,7 @@ func containmentCandidates(candidate evalCandidate, nodes map[string]evalCandida
 	return out
 }
 
-func initializeContainmentTraversal(candidate evalCandidate) (map[string]struct{}, []parser.Node) {
+func initializeContainmentTraversal(candidate evalCandidate) (map[string]struct{}, []parser.ViewNode) {
 	seen := make(map[string]struct{})
 	if candidate.sequence {
 		// A synthetic list's elements are its direct named children.
@@ -822,7 +835,7 @@ func initializeContainmentTraversal(candidate evalCandidate) (map[string]struct{
 	return seen, appendReverseChildren(nil, candidate.node.Children())
 }
 
-func appendContainedCandidate(out []evalCandidate, node parser.Node, seen map[string]struct{}, nodes map[string]evalCandidate, budget *evaluationBudget) ([]evalCandidate, bool) {
+func appendContainedCandidate(out []evalCandidate, node parser.ViewNode, seen map[string]struct{}, nodes map[string]evalCandidate, budget *evaluationBudget) ([]evalCandidate, bool) {
 	if !evaluationCandidateNode(node) {
 		return out, true
 	}
@@ -839,7 +852,7 @@ func appendContainedCandidate(out []evalCandidate, node parser.Node, seen map[st
 	return append(out, nested), true
 }
 
-func appendReverseChildren(stack, children []parser.Node) []parser.Node {
+func appendReverseChildren(stack, children []parser.ViewNode) []parser.ViewNode {
 	for i := len(children) - 1; i >= 0; i-- {
 		stack = append(stack, children[i])
 	}

@@ -46,10 +46,17 @@ func findBlockedInvocation(command string, depth int) string {
 		return "" // The hook must fail open if its parser cannot be initialized.
 	}
 	defer document.Close()
-	return findInTree(document.Root(), []byte(command), depth)
+	var hit string
+	if err := document.Read(func(view codeparser.DocumentView) error {
+		hit = findInTree(view.Root(), []byte(command), depth)
+		return nil
+	}); err != nil {
+		return ""
+	}
+	return hit
 }
 
-func findInTree(node codeparser.Node, source []byte, depth int) string {
+func findInTree(node codeparser.ViewNode, source []byte, depth int) string {
 	if node.Kind() == "command" {
 		if hit := blockedInCommand(node, source, depth); hit != "" {
 			return hit
@@ -63,7 +70,7 @@ func findInTree(node codeparser.Node, source []byte, depth int) string {
 	return ""
 }
 
-func blockedInCommand(command codeparser.Node, source []byte, depth int) string {
+func blockedInCommand(command codeparser.ViewNode, source []byte, depth int) string {
 	nameNode := command.ChildByFieldName("name")
 	if !nameNode.Valid() {
 		return ""
@@ -284,7 +291,7 @@ func appendEscapedByte(result *strings.Builder, word string, index int) (int, bo
 	return index + 1, true
 }
 
-func nodeSource(node codeparser.Node, _ []byte) string {
+func nodeSource(node codeparser.ViewNode, _ []byte) string {
 	return node.Text()
 }
 

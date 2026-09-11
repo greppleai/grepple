@@ -128,21 +128,23 @@ func collectFileDeclarations(file string, packages map[string]*packageDeclaratio
 		return fmt.Errorf("parse %s: %w", file, err)
 	}
 	defer document.Close()
-	root := document.Root()
-	packageName := goPackageName(root, content)
-	if packageName == "" {
+	return document.Read(func(view codeparser.DocumentView) error {
+		root := view.Root()
+		packageName := goPackageName(root, content)
+		if packageName == "" {
+			return nil
+		}
+		declarations := packages[packageName]
+		if declarations == nil {
+			declarations = &packageDeclarations{structs: make(map[string]structDeclaration)}
+			packages[packageName] = declarations
+		}
+		collectGoDeclarations(root, content, file, declarations.structs, &declarations.methods)
 		return nil
-	}
-	declarations := packages[packageName]
-	if declarations == nil {
-		declarations = &packageDeclarations{structs: make(map[string]structDeclaration)}
-		packages[packageName] = declarations
-	}
-	collectGoDeclarations(root, content, file, declarations.structs, &declarations.methods)
-	return nil
+	})
 }
 
-func goPackageName(root codeparser.Node, content []byte) string {
+func goPackageName(root codeparser.ViewNode, content []byte) string {
 	for _, clause := range root.NamedChildren() {
 		if clause.Kind() != "package_clause" || clause.NamedChildCount() == 0 {
 			continue
@@ -184,7 +186,7 @@ func goFiles(directory string) []string {
 	return files
 }
 
-func collectGoDeclarations(root codeparser.Node, content []byte, file string, structs map[string]structDeclaration, methods *[]methodDeclaration) {
+func collectGoDeclarations(root codeparser.ViewNode, content []byte, file string, structs map[string]structDeclaration, methods *[]methodDeclaration) {
 	for _, child := range root.NamedChildren() {
 		switch child.Kind() {
 		case "type_declaration":
@@ -197,7 +199,7 @@ func collectGoDeclarations(root codeparser.Node, content []byte, file string, st
 	}
 }
 
-func collectStructs(declaration codeparser.Node, content []byte, file string, structs map[string]structDeclaration) {
+func collectStructs(declaration codeparser.ViewNode, content []byte, file string, structs map[string]structDeclaration) {
 	for _, spec := range declaration.NamedChildren() {
 		if spec.Kind() != "type_spec" {
 			continue
@@ -219,14 +221,14 @@ func collectStructs(declaration codeparser.Node, content []byte, file string, st
 	}
 }
 
-func methodFromNode(node codeparser.Node, content []byte, file string) (methodDeclaration, bool) {
+func methodFromNode(node codeparser.ViewNode, content []byte, file string) (methodDeclaration, bool) {
 	nameNode := node.ChildByFieldName("name")
 	receiver := node.ChildByFieldName("receiver")
 	if !nameNode.Valid() || !receiver.Valid() {
 		return methodDeclaration{}, false
 	}
 
-	var receiverType codeparser.Node
+	var receiverType codeparser.ViewNode
 	for _, parameter := range receiver.NamedChildren() {
 		if parameter.Kind() == "parameter_declaration" {
 			receiverType = parameter.ChildByFieldName("type")
@@ -251,9 +253,9 @@ func methodFromNode(node codeparser.Node, content []byte, file string) (methodDe
 	}, true
 }
 
-func receiverBaseType(node codeparser.Node) codeparser.Node {
+func receiverBaseType(node codeparser.ViewNode) codeparser.ViewNode {
 	if !node.Valid() {
-		return codeparser.Node{}
+		return codeparser.ViewNode{}
 	}
 	switch node.Kind() {
 	case "type_identifier":
@@ -265,10 +267,10 @@ func receiverBaseType(node codeparser.Node) codeparser.Node {
 	case "generic_type":
 		return receiverBaseType(node.ChildByFieldName("type"))
 	}
-	return codeparser.Node{}
+	return codeparser.ViewNode{}
 }
 
-func nodeContent(node codeparser.Node, _ []byte) string {
+func nodeContent(node codeparser.ViewNode, _ []byte) string {
 	return node.Text()
 }
 

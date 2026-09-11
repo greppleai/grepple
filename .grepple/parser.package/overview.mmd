@@ -2,7 +2,7 @@ classDiagram
     %% grepple:package-default github.com/greppleai/grepple/parser
     %% grepple:language-default go
     direction LR
-    note "Package parser provides application source classification and structural parsing. | package github.com/greppleai/grepple/parser | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=27, declarations=39, exportedTypes=14, internalTypes=25, members=260, exportedFunctions=15, fiberRoutes=0, relations=111"
+    note "Package parser provides application source classification and structural parsing. | package github.com/greppleai/grepple/parser | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=28, declarations=46, exportedTypes=18, internalTypes=28, members=305, exportedFunctions=17, fiberRoutes=0, relations=128"
     namespace interfaces {
         class languageAdapter["languageAdapter · parser/language.go:63-68"] {
             +Grammar(): *sitter.Language
@@ -32,6 +32,8 @@ classDiagram
     namespace exported_types {
         class Document["Document · parser/document.go:40-46"]
         <<struct>> Document
+        class DocumentView["DocumentView · parser/view.go:17-20"]
+        <<struct>> DocumentView
         class GrammarCardinality["GrammarCardinality = uint8 · parser/language.go:19"]
         <<type>> GrammarCardinality
         class LanguageCapabilities["LanguageCapabilities · parser/language.go:8-14"]
@@ -54,6 +56,12 @@ classDiagram
         <<struct>> Segment
         class SyntaxNode["SyntaxNode · parser/document.go:58-69"]
         <<struct>> SyntaxNode
+        class ViewNode["ViewNode · parser/view.go:35-39"]
+        <<struct>> ViewNode
+        class WalkOptions["WalkOptions · parser/view.go:300-303"]
+        <<struct>> WalkOptions
+        class WalkResult["WalkResult · parser/view.go:306-309"]
+        <<struct>> WalkResult
     }
     namespace internal_types {
         class cLanguage["cLanguage · parser/language_c.go:8-11"]
@@ -62,6 +70,8 @@ classDiagram
         <<struct>> cSharpLanguage
         class cppLanguage["cppLanguage · parser/language_cpp.go:8-11"]
         <<struct>> cppLanguage
+        class documentViewState["documentViewState · parser/view.go:22-26"]
+        <<struct>> documentViewState
         class fenceTracker["fenceTracker · parser/markdown.go:33-36"]
         <<struct>> fenceTracker
         class goLanguage["goLanguage · parser/language_go.go:8-11"]
@@ -104,6 +114,10 @@ classDiagram
         <<struct>> structureRules
         class typeScriptLanguage["typeScriptLanguage · parser/language_typescript.go:21-25"]
         <<struct>> typeScriptLanguage
+        class viewSnapshotKey["viewSnapshotKey · parser/view.go:28-31"]
+        <<struct>> viewSnapshotKey
+        class viewWalkItem["viewWalkItem · parser/view.go:322-325"]
+        <<struct>> viewWalkItem
     }
     namespace operations {
         class BuildNavigationGraph["BuildNavigationGraph · parser/navigation.go:83-94"] {
@@ -166,13 +180,25 @@ classDiagram
             +WalkNamed(Node, func&#40;Node&#41;)
         }
         <<function>> WalkNamed
+        class WalkNamedView["WalkNamedView · parser/view.go:312-320"] {
+            +WalkNamedView(ViewNode, func&#40;ViewNode&#41;)
+        }
+        <<function>> WalkNamedView
+        class WalkNamedViewBounded["WalkNamedViewBounded · parser/view.go:329-354"] {
+            +WalkNamedViewBounded(ViewNode, WalkOptions, func&#40;ViewNode&#44;int&#41;bool): WalkResult
+        }
+        <<function>> WalkNamedViewBounded
     }
     BuildNavigationGraph "1" ..> "1" NavigationGraph : result 1
     BuildSegments "1" ..> "*" Segment : result 1
     CapabilitiesForLanguage "1" ..> "1" LanguageCapabilities : result 1
+    Document "1" ..> "1" DocumentView : method Read parameter 1
     Document "1" ..> "1" Node : method Root result 1
     Document "1" ..> "*" ParseDiagnostic : method Diagnostics result 1; method ParseDiagnostics result 1
     Document "1" ..> "1" Range : method nodeRangeLocked result 1
+    DocumentView "1" --> "1" Document : field doc
+    DocumentView "1" ..> "1" ViewNode : method Root result 1
+    DocumentView "1" --> "1" documentViewState : field state
     FileOutline "1" --> "*" Symbol : field Symbols
     GrammarChildrenCardinality "1" ..> "1" GrammarCardinality : result 1
     GrammarFieldCardinality "1" ..> "1" GrammarCardinality : result 1
@@ -194,7 +220,14 @@ classDiagram
     SupportedLanguages "1" ..> "*" LanguageCapabilities : result 1
     SyntaxNode "1" --> "1" Range : field rng
     SyntaxNode "1" ..> "1" Range : method Range result 1
+    ViewNode "1" --> "1" DocumentView : field view
+    ViewNode "1" ..> "1" Range : method Range result 1
+    ViewNode "1" ..> "1" SyntaxNode : method Snapshot result 1; method snapshot result 1
     WalkNamed "1" ..> "1" Node : parameter 1; parameter 2
+    WalkNamedView "1" ..> "1" ViewNode : parameter 1; parameter 2
+    WalkNamedViewBounded "1" ..> "1" ViewNode : parameter 1; parameter 3
+    WalkNamedViewBounded "1" ..> "1" WalkOptions : parameter 2
+    WalkNamedViewBounded "1" ..> "1" WalkResult : result 1
     cLanguage "1" ..> "*" Symbol : method Outline result 1
     languageAdapter <|.. cLanguage : implements
     cLanguage "1" --> "1" structureRules : field rules
@@ -207,6 +240,8 @@ classDiagram
     languageAdapter <|.. cppLanguage : implements
     cppLanguage "1" --> "1" structureRules : field rules
     cppLanguage "1" ..> "1" structureRules : method Rules result 1
+    documentViewState "1" --> "*" SyntaxNode : field snapshots
+    documentViewState "1" --> "*" viewSnapshotKey : field snapshots
     goLanguage "1" ..> "*" Symbol : method Outline result 1
     languageAdapter <|.. goLanguage : implements
     goLanguage "1" --> "1" structureRules : field rules
@@ -256,3 +291,4 @@ classDiagram
     languageAdapter <|.. typeScriptLanguage : implements
     typeScriptLanguage "1" --> "1" structureRules : field rules
     typeScriptLanguage "1" ..> "1" structureRules : method Rules result 1
+    viewWalkItem "1" --> "1" ViewNode : field node
