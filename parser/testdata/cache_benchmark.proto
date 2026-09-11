@@ -1,0 +1,81 @@
+syntax = "proto3";
+
+package grepple.parser.cachebench;
+option go_package = "github.com/greppleai/grepple/parser;parser";
+
+message BenchmarkPBNavigationGraph {
+  repeated BenchmarkPBNavigationDeclaration declarations = 1;
+  repeated BenchmarkPBNavigationCall calls = 2;
+}
+
+message BenchmarkPBNavigationDeclaration {
+  string id = 1;
+  string name = 2;
+  string kind = 3;
+  string language = 4;
+  string path = 5;
+  string container = 6;
+  string receiver = 7;
+  string result_type = 8;
+  string result_import_path = 9;
+  string package = 10;
+  string package_id = 11;
+  string module_id = 12;
+  string scope = 13;
+  uint32 start = 14;
+  uint32 end = 15;
+}
+
+message BenchmarkPBNavigationCall {
+  string id = 1;
+  string caller_id = 2;
+  string target_id = 3;
+  string name = 4;
+  string display = 5;
+  string qualifier = 6;
+  string import_path = 7;
+  string receiver_type = 8;
+  string receiver_factory = 9;
+  string receiver_factory_import = 10;
+  string resolved_name = 11;
+  string confidence = 12;
+  string language = 13;
+  string path = 14;
+  uint32 line = 15;
+  uint32 enclosing_start = 16;
+  uint32 enclosing_end = 17;
+}
+
+message BenchmarkPBPackedNavigationGraph {
+  repeated string strings = 1;
+  repeated uint32 declaration_strings = 2 [packed = true];
+  repeated uint32 declaration_ranges = 3 [packed = true];
+  repeated uint32 call_strings = 4 [packed = true];
+  repeated uint32 call_ranges = 5 [packed = true];
+}
+
+message BenchmarkPBCST {
+  repeated BenchmarkPBCSTNode nodes = 1;
+}
+
+message BenchmarkPBCSTNode {
+  string kind = 1;
+  string field = 2;
+  uint32 file = 3;
+  uint32 parent = 4;
+  uint32 child_index = 5;
+  uint32 child_count = 6;
+  uint32 flags = 7;
+  uint32 start_byte = 8;
+  uint32 end_byte = 9;
+  uint32 start_row = 10;
+  uint32 start_column = 11;
+  uint32 end_row = 12;
+  uint32 end_column = 13;
+}
+
+message BenchmarkPBPackedCST {
+  repeated string strings = 1;
+  repeated uint32 node_strings = 2 [packed = true];
+  repeated uint32 node_values = 3 [packed = true];
+}

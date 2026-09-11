@@ -4,7 +4,16 @@ Grepple should stabilize for one or two iterations before adding more languages.
 
 ## Recommended next milestone
 
-> Improve resolution confidence, stabilize edit-anchor distribution, and make large graph results easier to consume.
+> Expand the usable graph feature set with programmatic output, compact views, queries, and diffs; improve resolution completeness when real workflows expose a blocking ambiguity.
+
+## Feature set versus feature completeness
+
+Treat these as separate planning dimensions:
+
+- **Feature set** determines which workflows Grepple makes possible. New graph projections and operations can unlock entirely new agent, developer, and CI use cases.
+- **Feature completeness** determines how precisely an existing workflow handles language and type-system edge cases. Import, receiver, lexical-scope, and return-type resolution belong here.
+- Completeness still needs a minimum reliability floor: deterministic candidates, bounded output, no unsafe binding leakage, and actionable ambiguity must remain release gates.
+- After that floor is met, prefer a new usable capability over indefinitely refining syntax-based resolution. Return to completeness work when dogfooding demonstrates that a specific ambiguity blocks a valuable workflow.
 
 ## Findings from dogfooding
 
@@ -23,7 +32,7 @@ Grepple should stabilize for one or two iterations before adding more languages.
 - The shared `parser.NavigationGraph` is now the sole source of generic call edges for Go and TypeScript flow selection, rendering, validation, `--at`, and `--related`; the next graph issue is richer resolution rather than duplicate discovery.
 - Larger diagrams are dominated by validation metadata when viewed as plain text.
 - Agent edit anchors are provider-specific, not generic line hashes. Grepple delegates through a user-owned, versioned batch provider and keeps editing-harness adapters out of the shipped repository.
-- Explicit Go and TypeScript imports, direct parameters/receivers, source-ordered top-level typed or constructor/composite-literal locals, and same-file typed field chains now resolve before terminal-name fallback. Nested lexical bindings, call-return inference, cross-file field chains, embedded/promoted methods, re-exports, and default imports still need richer binding propagation.
+- Explicit Go and TypeScript imports, direct parameters/receivers, source-ordered lexical bindings, local and imported return signatures, and same-file typed field chains now resolve before terminal-name fallback. Cross-file field chains, embedded/promoted methods, re-exports, and default imports still need richer propagation.
 - Architecture extraction remains richer for Go than TypeScript and other languages.
 - Cross-language fixtures prove the baseline but do not yet cover enough malformed, nested, generic, decorated, or multiline syntax.
 - Canonical mismatch errors identify the artifact but should eventually report the first semantic difference.
@@ -73,20 +82,76 @@ Acceptance criteria met for generic call discovery: one parser-owned graph suppl
 
 1. [x] Resolve explicit Go package imports and TypeScript named/namespace imports before terminal-name fallback.
 2. [x] Record direct parameter, Go method-receiver, and TypeScript `this` containing-type context for method calls.
-   - [x] Propagate source-ordered top-level typed locals, constructor/composite-literal inference, and same-file typed field/member chains without leaking future or nested bindings.
-   - Next: propagate nested lexical scopes, call-return inference, cross-file field chains, embedded/promoted methods, re-exports, and default imports.
+   - [x] Propagate source-ordered lexical bindings from typed declarations and constructor/composite literals without leaking future, sibling, branch-local, or nested bindings.
+   - [x] Infer lexical binding types from unambiguous local and imported Go and TypeScript return signatures.
+   - Completeness backlog after the graph feature-set work: propagate field types across files, embedded/promoted methods, re-exports, and default imports.
 3. [x] Distinguish exact, import-resolved, context-resolved, unique-terminal, and candidate confidence.
 4. [x] Rank unresolved candidates deterministically and suggest `--at PATH:LINE` locations.
 5. [x] Add duplicate same-name package/module function and method fixtures covering Go aliases and TypeScript named imports.
 6. Add ambiguity fixtures for interfaces, overloads, inheritance, re-exports, default imports, and TS/TSX path aliases.
 
-### C. Add compact agent-facing output
+### C. Expand the usable graph feature set
 
-1. Keep generated Mermaid lossless and self-validating.
-2. Add a compact view or summary command that omits validation metadata from presentation.
-3. Preserve source ranges, node identity, edge confidence, and truncation warnings.
-4. Add normalized JSON graph output so agents do not need to parse Mermaid.
-5. Test that compact and JSON projections come from the same graph as canonical Mermaid.
+These are the next capability milestones. The command names below are potential interfaces, not commitments; implementation should choose the smallest coherent CLI surface backed by the shared graph.
+
+#### C1. Normalized JSON graph output
+
+Expose declarations, source ranges, packages/modules, calls, resolved target IDs, direction, confidence, and truncation as stable JSON rather than requiring tools to parse Mermaid.
+
+Potential examples:
+
+```bash
+grepple graph . --json
+grepple graph ./internal/cli --entry 'Run' --depth 2 --json
+```
+
+Use case: an agent, editor extension, or CI job can consume exact nodes and edges, join them by stable ID, filter candidates by confidence, and retain complete machine-readable output independently of presentation.
+
+#### C2. Compact agent-facing architecture output
+
+Add a compact projection that omits validation metadata and repetitive schema details while preserving source locations, graph identity, edge confidence, and truncation warnings. Canonical Mermaid artifacts remain lossless and self-validating.
+
+Potential examples:
+
+```bash
+grepple graph ./internal/cli --entry 'Run' --compact
+grepple extract structure ./search --compact
+```
+
+Use case: an agent can orient itself in a package or focused call chain within a small token budget, then jump to exact declarations with `--at` without reading a large generated bundle.
+
+#### C3. Graph queries
+
+Support focused questions over the normalized graph: callers, callees, dependencies, dependents, and bounded impact radius. Filters should cover package/module, language, edge kind, exportedness, direction, confidence, and depth.
+
+Potential examples:
+
+```bash
+grepple graph callers 'Service.Save' . --depth 2
+grepple graph dependencies ./internal/cli --package search
+grepple graph impact --at internal/cli/local.go:120 --depth 3 --compact
+```
+
+Use case: before editing a declaration, an agent or developer can identify likely consumers, affected packages, and relevant tests without manually traversing repeated `--related` responses.
+
+#### C4. Architecture and graph diffing
+
+Compare two normalized graphs or canonical snapshots and report added, removed, moved, and changed declarations and edges. Prefer semantic identity over line-based Mermaid diffs, with bounded human output and complete JSON.
+
+Potential examples:
+
+```bash
+grepple graph diff --base main --head HEAD --compact
+grepple graph diff .grepple-before/ .grepple/ --json
+```
+
+Use case: code review and CI can explain architectural impact—such as a new package dependency, removed route, or changed caller edge—rather than only reporting that a generated artifact differs.
+
+#### C5. Shared-projection guarantees
+
+1. Derive compact text, JSON, graph queries, diffs, and canonical Mermaid from the same normalized graph.
+2. Preserve stable node identity, source ranges, edge confidence, and truncation semantics in every applicable projection.
+3. Add parity tests proving that compact and JSON edges agree with canonical Mermaid and `--related`.
 
 ### C2. Remove the redundant Read call for edits
 
@@ -105,6 +170,8 @@ Acceptance criteria met for generic call discovery: one parser-owned graph suppl
 2. Add CRLF, symlink, build-tag, ambiguous-extension, and Windows-path cases.
 3. Run fuzz targets for longer periods in scheduled CI and retain minimized regressions as seeds.
 4. Benchmark parse, navigation-index construction, focused extraction, package bundles, and workspace bundles.
+   - [x] Add a reproducible warm-page-cache comparison of Tree-sitter parsing, parse-plus-navigation extraction, normalized graph caches, full read-only CST projections, and experimental native `TSTree` serialization. Compare JSON, gob, manual protobuf wire code, standard `protoc-gen-go`, and `vtprotobuf` for message-oriented and string-interned packed layouts; report corpus/cache sizes, throughput, allocations, source-file count, and native serialize/deserialize cost.
+   - Next: add focused extraction and package/workspace bundle benchmarks.
 5. Add performance budgets that detect repeated parsing and significant allocation/runtime regressions.
 
 ### E. Improve architecture drift diagnostics
