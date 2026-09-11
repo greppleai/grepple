@@ -281,6 +281,38 @@ nested.load(); // NESTED_CALLER_NEEDLE
 	}
 }
 
+func TestRelatedTypeScriptCallsUseImportedReturnTypes(t *testing.T) {
+	directory := t.TempDir()
+	model := filepath.Join(directory, "model.ts")
+	worker := filepath.Join(directory, "worker.ts")
+	caller := filepath.Join(directory, "caller.ts")
+	if err := os.WriteFile(model, []byte(`export class Client { load(): void {} }
+`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(worker, []byte(`import { Client } from "./model";
+export function makeClient(): Client { return new Client(); }
+`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(caller, []byte(`import { makeClient as create } from "./worker";
+function run(): void {
+const returned = create();
+returned.load(); // RETURN_CALLER_NEEDLE
+}
+`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	matches, err := Files(Params{Query: "RETURN_CALLER_NEEDLE", MaxSegments: 20, Related: true}, []string{caller, model, worker})
+	if err != nil {
+		t.Fatal(err)
+	}
+	point := findRelatedPoint(t, matches[0].Related, "returned.load → Client.load", "callee")
+	if point.Confidence != "import-resolved" || !strings.HasSuffix(point.Path, "model.ts") {
+		t.Fatalf("unexpected TypeScript call-return receiver resolution: %#v", point)
+	}
+}
+
 func assertNestedTypeScriptReceiverResolution(t *testing.T, files []string) {
 	t.Helper()
 	matches, err := Files(Params{Query: "NESTED_CALLER_NEEDLE", MaxSegments: 20, Related: true}, files)

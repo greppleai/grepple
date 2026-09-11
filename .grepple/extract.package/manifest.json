@@ -4644,22 +4644,22 @@
       "name": "selectedNavigationSymbol",
       "kind": "struct",
       "file": "extract/navigation.go",
-      "line": 126,
-      "endLine": 129,
+      "line": 214,
+      "endLine": 217,
       "underlyingType": "struct{symbol*Symbol;depth int;}",
       "members": [
         {
           "name": "depth",
           "kind": "property",
-          "line": 128,
-          "endLine": 128,
+          "line": 216,
+          "endLine": 216,
           "result": "int"
         },
         {
           "name": "symbol",
           "kind": "property",
-          "line": 127,
-          "endLine": 127,
+          "line": 215,
+          "endLine": 215,
           "result": "*Symbol"
         }
       ]

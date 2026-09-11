@@ -2,7 +2,7 @@ classDiagram
     %% grepple:package-default github.com/greppleai/grepple/search
     %% grepple:language-default go
     direction LR
-    note "Package search provides file discovery, query and repository filtering, paging, match workers, context, and wire-result construction. | package github.com/greppleai/grepple/search | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=10, declarations=15, exportedTypes=5, internalTypes=10, members=103, exportedFunctions=19, fiberRoutes=0, relations=34"
+    note "Package search provides file discovery, query and repository filtering, paging, match workers, context, and wire-result construction. | package github.com/greppleai/grepple/search | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=10, declarations=15, exportedTypes=5, internalTypes=10, members=112, exportedFunctions=19, fiberRoutes=0, relations=37"
     namespace data_contracts {
         class Params["Params · search/model.go:11-33"] {
             +AfterContext: int
@@ -48,15 +48,15 @@ classDiagram
         <<struct>> candidateWalker
         class gitignoreCache["gitignoreCache = map&#91;string&#93;&#91;&#93;string · search/search_glob.go:428"]
         <<type>> gitignoreCache
-        class navigationCall["navigationCall · search/related.go:37-44"]
+        class navigationCall["navigationCall · search/related.go:39-48"]
         <<struct>> navigationCall
-        class navigationCaller["navigationCaller · search/related.go:32-35"]
+        class navigationCaller["navigationCaller · search/related.go:34-37"]
         <<struct>> navigationCaller
-        class navigationCandidateResolution["navigationCandidateResolution · search/related.go:227-230"]
+        class navigationCandidateResolution["navigationCandidateResolution · search/related.go:295-298"]
         <<struct>> navigationCandidateResolution
-        class navigationDeclaration["navigationDeclaration · search/related.go:21-30"]
+        class navigationDeclaration["navigationDeclaration · search/related.go:21-32"]
         <<struct>> navigationDeclaration
-        class navigationIndex["navigationIndex · search/related.go:46-53"]
+        class navigationIndex["navigationIndex · search/related.go:50-57"]
         <<struct>> navigationIndex
         class repoPattern["repoPattern · search/search_engine.go:94-97"]
         <<struct>> repoPattern
@@ -165,6 +165,8 @@ classDiagram
     navigationCandidateResolution "1" --> "*" navigationDeclaration : field candidates
     navigationDeclaration "1" --> "1" RelatedPoint : field point
     navigationIndex "1" --> "*" navigationCall : field calls
+    navigationIndex "1" ..> "1" navigationCall : method inferCallReturnReceiver parameter 1; method resolveReturnFactory parameter 1
     navigationIndex "1" --> "*" navigationCaller : field callers
     navigationIndex "1" --> "*" navigationDeclaration : field byFile; field byLocation; field declarations
     navigationIndex "1" ..> "*" navigationDeclaration : method addCalls parameter 2; method addDeclarations result 1
+    navigationIndex "1" ..> "1" navigationDeclaration : method resolveReturnFactory result 1

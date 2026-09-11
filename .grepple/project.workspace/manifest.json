@@ -34,7 +34,7 @@
     "standardLibraryImports": 93,
     "externalModuleEdges": 20
   },
-  "semanticModelDigest": "sha256:3556dc714ea2452bc154defe77265400432c4c23c71e2bf8827554e2ba0f6d19",
+  "semanticModelDigest": "sha256:ad37ca2c6712231b13800e5b6507f36df2c4be07996c6bc2abdd0d63434086e1",
   "modules": [
     {
       "path": "github.com/greppleai/grepple",
@@ -353,6 +353,7 @@
         "github.com/alexflint/go-arg",
         "github.com/alexflint/go-scalar",
         "github.com/mattn/go-pointer",
+        "github.com/planetscale/vtprotobuf",
         "github.com/stretchr/testify",
         "github.com/tree-sitter-grammars/tree-sitter-kotlin",
         "github.com/tree-sitter/go-tree-sitter",
@@ -366,7 +367,8 @@
         "github.com/tree-sitter/tree-sitter-python",
         "github.com/tree-sitter/tree-sitter-rust",
         "github.com/tree-sitter/tree-sitter-typescript",
-        "go.yaml.in/yaml/v3"
+        "go.yaml.in/yaml/v3",
+        "google.golang.org/protobuf"
       ]
     },
     {

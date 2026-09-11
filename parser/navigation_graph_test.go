@@ -183,6 +183,60 @@ local.Load()
 	}
 }
 
+func TestNavigationGraphInfersDirectCallReturnBindings(t *testing.T) {
+	tests := []struct {
+		name, language, path, content, display, receiverType, importPath string
+		line                                                             int
+	}{
+		{
+			name: "go", language: "go", path: "app/run.go", display: "local.Load", line: 5, receiverType: "Client", importPath: "example.com/project/worker",
+			content: `package app
+import workers "example.com/project/worker"
+func run() {
+local := makeClient()
+local.Load()
+}
+func makeClient() *workers.Client { return &workers.Client{} }
+`,
+		},
+		{
+			name: "typescript", language: "typescript", path: "src/run.ts", display: "local.load", line: 5, receiverType: "Client", importPath: "./worker",
+			content: `import { Client } from "./worker";
+function run(): void {
+const marker = true;
+const local = makeClient();
+local.load();
+}
+function makeClient(): Client { return new Client(); }
+`,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			call := navigationCallAtLine(BuildNavigationGraph(test.content, test.language, test.path).Calls, test.display, test.line)
+			if call.ReceiverType != test.receiverType || call.ImportPath != test.importPath {
+				t.Fatalf("call-return binding context = %+v", call)
+			}
+		})
+	}
+}
+
+func TestNavigationGraphDoesNotLeakNestedReturnBindings(t *testing.T) {
+	content := `class Client { load(): void {} }
+function owner(): void {
+function hidden(): Client { return new Client(); }
+}
+function run(): void {
+const local = hidden();
+local.load();
+}
+`
+	call := navigationCallAtLine(BuildNavigationGraph(content, "typescript", "src/run.ts").Calls, "local.load", 7)
+	if call.ReceiverType != "" || call.ImportPath != "" {
+		t.Fatalf("nested return binding leaked into sibling callable: %+v", call)
+	}
+}
+
 func navigationCallAtLine(calls []NavigationCall, display string, line int) NavigationCall {
 	for _, call := range calls {
 		if call.Display == display && call.Line == line {

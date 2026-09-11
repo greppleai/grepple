@@ -1,6 +1,7 @@
 package extract
 
 import (
+	"path"
 	"strings"
 
 	codeparser "github.com/greppleai/grepple/parser"
@@ -74,18 +75,105 @@ func enrichNavigationCall(analysis *Analysis, call *codeparser.NavigationCall) {
 	call.ResolvedName = navigationCallName(owner, call)
 	owner.CallOrder = append(owner.CallOrder, call.ResolvedName)
 	owner.Calls[call.ResolvedName] = true
-	var target *Symbol
-	if owner.Language == "go" {
-		target = resolveGoCall(analysis, owner.PackageID, call.ResolvedName)
-	} else if owner.Language == "typescript" {
-		target = resolveTypeScriptCall(analysis, owner, call.ResolvedName)
-	}
+	target := resolveNavigationCallTarget(analysis, owner, call)
 	if target == nil || target.NavigationID == "" {
 		return
 	}
 	call.TargetID = target.NavigationID
 	call.Confidence = navigationResolutionConfidence(owner, call, target)
 	analysis.navigationCalls[call.CallerID] = append(analysis.navigationCalls[call.CallerID], target)
+}
+
+func resolveNavigationCallTarget(analysis *Analysis, owner *Symbol, call *codeparser.NavigationCall) *Symbol {
+	if target := resolveNavigationFactoryReturnTarget(analysis, owner, call); target != nil {
+		return target
+	}
+	if call.ReceiverType != "" {
+		if target := resolveNavigationTypedReceiver(analysis, owner, call.ReceiverType, call.Name, call.ImportPath); target != nil {
+			return target
+		}
+	}
+	if owner.Language == "go" {
+		return resolveGoCall(analysis, owner.PackageID, call.ResolvedName)
+	}
+	if owner.Language == "typescript" || owner.Language == "tsx" {
+		return resolveTypeScriptCall(analysis, owner, call.ResolvedName)
+	}
+	return nil
+}
+
+func resolveNavigationFactoryReturnTarget(analysis *Analysis, owner *Symbol, call *codeparser.NavigationCall) *Symbol {
+	if call.ReceiverFactory == "" {
+		return nil
+	}
+	factory := resolveNavigationCallableInScope(analysis, owner, call.ReceiverFactory, call.ReceiverFactoryImport)
+	if factory == nil || factory.NavigationID == "" {
+		return nil
+	}
+	declaration := navigationDeclarationByID(analysis, factory.NavigationID)
+	if declaration == nil || declaration.ResultType == "" {
+		return nil
+	}
+	call.ReceiverType = declaration.ResultType
+	call.ImportPath = declaration.ResultImportPath
+	if call.ImportPath == "" {
+		call.ImportPath = call.ReceiverFactoryImport
+	}
+	return resolveNavigationTypedReceiver(analysis, factory, declaration.ResultType, call.Name, declaration.ResultImportPath)
+}
+
+func resolveNavigationCallableInScope(analysis *Analysis, owner *Symbol, name, importPath string) *Symbol {
+	if importPath == "" {
+		if owner.Language == "go" {
+			return analysis.GoSymbolIndex[owner.PackageID+":"+name]
+		}
+		return analysis.TSSymbolIndex[owner.ModuleID+":"+name]
+	}
+	if owner.Language == "go" {
+		return resolveImportedGoNavigationSymbol(analysis, importPath, name)
+	}
+	moduleID := resolveTypeScriptNavigationModule(analysis, owner.ModuleID, importPath)
+	return analysis.TSSymbolIndex[moduleID+":"+name]
+}
+
+func resolveNavigationTypedReceiver(analysis *Analysis, owner *Symbol, typeName, method, importPath string) *Symbol {
+	name := typeName + "." + method
+	if importPath == "" {
+		if owner.Language == "go" {
+			return analysis.GoSymbolIndex[owner.PackageID+":"+name]
+		}
+		return analysis.TSSymbolIndex[owner.ModuleID+":"+name]
+	}
+	if owner.Language == "go" {
+		return resolveImportedGoNavigationSymbol(analysis, importPath, name)
+	}
+	moduleID := resolveTypeScriptNavigationModule(analysis, owner.ModuleID, importPath)
+	return analysis.TSSymbolIndex[moduleID+":"+name]
+}
+
+func resolveImportedGoNavigationSymbol(analysis *Analysis, importPath, name string) *Symbol {
+	if packageID := analysis.GoImportPathIndex[importPath]; packageID != "" {
+		return analysis.GoSymbolIndex[packageID+":"+name]
+	}
+	return uniqueImportedGoSymbol(analysis, path.Base(importPath), name)
+}
+
+func resolveTypeScriptNavigationModule(analysis *Analysis, importerModuleID, importPath string) string {
+	for _, binding := range analysis.TSImportBindings[importerModuleID] {
+		if binding.Source == importPath {
+			return binding.ModuleID
+		}
+	}
+	return ""
+}
+
+func navigationDeclarationByID(analysis *Analysis, id string) *codeparser.NavigationDeclaration {
+	for index := range analysis.Navigation.Declarations {
+		if analysis.Navigation.Declarations[index].ID == id {
+			return &analysis.Navigation.Declarations[index]
+		}
+	}
+	return nil
 }
 
 func navigationCallName(owner *Symbol, call *codeparser.NavigationCall) string {

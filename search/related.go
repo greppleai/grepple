@@ -19,14 +19,16 @@ const (
 )
 
 type navigationDeclaration struct {
-	id          string
-	terminal    string
-	container   string
-	packageName string
-	language    string
-	file        string
-	matchStart  int
-	point       RelatedPoint
+	id               string
+	terminal         string
+	container        string
+	returnType       string
+	returnImportPath string
+	packageName      string
+	language         string
+	file             string
+	matchStart       int
+	point            RelatedPoint
 }
 
 type navigationCaller struct {
@@ -35,12 +37,14 @@ type navigationCaller struct {
 }
 
 type navigationCall struct {
-	name, display, resolvedName string
-	qualifier, importPath       string
-	receiverType, file          string
-	importDirectory             string
-	moduleKnown                 bool
-	line                        int
+	name, display, resolvedName   string
+	qualifier, importPath         string
+	receiverType, receiverFactory string
+	factoryImport, file           string
+	importSourceFile              string
+	importDirectory               string
+	moduleKnown                   bool
+	line                          int
 }
 
 type navigationIndex struct {
@@ -103,6 +107,8 @@ func buildNavigationIndex(files []string) *navigationIndex {
 	for _, path := range paths {
 		index.addFile(path, cwd)
 	}
+	index.inferCallReturnReceivers()
+	index.indexNavigationCallers()
 	return index
 }
 func (index *navigationIndex) addFile(path, cwd string) {
@@ -134,7 +140,7 @@ func (index *navigationIndex) addDeclarations(declarations []parser.NavigationDe
 			continue
 		}
 		item := navigationDeclaration{
-			id: declaration.ID, terminal: terminal, container: navigationDeclarationContainer(declaration), packageName: declaration.Package, language: language, file: path, matchStart: declaration.Start,
+			id: declaration.ID, terminal: terminal, container: navigationDeclarationContainer(declaration), returnType: declaration.ResultType, returnImportPath: declaration.ResultImportPath, packageName: declaration.Package, language: language, file: path, matchStart: declaration.Start,
 			point: RelatedPoint{Name: declaration.Name, Path: displayPath, File: path, Kind: declaration.Kind, Start: declaration.Start, End: declaration.End},
 		}
 		indexed = append(indexed, item)
@@ -158,12 +164,74 @@ func (index *navigationIndex) addCalls(calls []parser.NavigationCall, declaratio
 		}
 		location := relatedLocationKey(caller.point)
 		indexedCall := navigationCall{
-			name: call.Name, display: call.Display, resolvedName: call.ResolvedName, qualifier: call.Qualifier, importPath: call.ImportPath, receiverType: call.ReceiverType, file: call.Path, line: call.Line,
+			name: call.Name, display: call.Display, resolvedName: call.ResolvedName, qualifier: call.Qualifier, importPath: call.ImportPath, receiverType: call.ReceiverType,
+			receiverFactory: call.ReceiverFactory, factoryImport: call.ReceiverFactoryImport, file: call.Path, importSourceFile: call.Path, line: call.Line,
 		}
 		resolveNavigationCallImport(&indexedCall, language)
 		index.calls[location] = append(index.calls[location], indexedCall)
-		key := navigationSymbolKey(language, navigationCallTargetName(indexedCall))
-		index.callers[key] = append(index.callers[key], navigationCaller{declaration: caller, call: indexedCall})
+	}
+}
+
+func (index *navigationIndex) inferCallReturnReceivers() {
+	for location, calls := range index.calls {
+		caller, ok := index.byLocation[location]
+		if !ok {
+			continue
+		}
+		for callIndex := range calls {
+			index.inferCallReturnReceiver(&calls[callIndex], caller.language)
+		}
+		index.calls[location] = calls
+	}
+}
+
+func (index *navigationIndex) inferCallReturnReceiver(call *navigationCall, language string) {
+	if call.receiverType != "" || call.receiverFactory == "" {
+		return
+	}
+	declaration, ok := index.resolveReturnFactory(*call, language)
+	if !ok || declaration.returnType == "" {
+		return
+	}
+	call.receiverType = declaration.returnType
+	call.importPath = declaration.returnImportPath
+	call.importSourceFile = declaration.file
+	if call.importPath == "" {
+		call.importPath = call.factoryImport
+		call.importSourceFile = call.file
+	}
+	resolveNavigationCallImport(call, declaration.language)
+}
+
+func (index *navigationIndex) resolveReturnFactory(call navigationCall, language string) (navigationDeclaration, bool) {
+	factoryCall := navigationCall{
+		name: call.receiverFactory, display: call.receiverFactory, importPath: call.factoryImport,
+		file: call.file, importSourceFile: call.file,
+	}
+	resolveNavigationCallImport(&factoryCall, language)
+	key := navigationSymbolKey(language, call.receiverFactory)
+	resolution := resolveNavigationCandidates(factoryCall, index.declarations[key], nil)
+	if len(resolution.candidates) != 1 || resolution.confidence == "candidate" {
+		return navigationDeclaration{}, false
+	}
+	return resolution.candidates[0], true
+}
+
+func (index *navigationIndex) indexNavigationCallers() {
+	locations := make([]string, 0, len(index.calls))
+	for location := range index.calls {
+		locations = append(locations, location)
+	}
+	sort.Strings(locations)
+	for _, location := range locations {
+		caller, ok := index.byLocation[location]
+		if !ok {
+			continue
+		}
+		for _, call := range index.calls[location] {
+			key := navigationSymbolKey(caller.language, navigationCallTargetName(call))
+			index.callers[key] = append(index.callers[key], navigationCaller{declaration: caller, call: call})
+		}
 	}
 }
 
@@ -171,7 +239,7 @@ func resolveNavigationCallImport(call *navigationCall, language string) {
 	if navigationLanguageFamily(language) != "go" || call.importPath == "" {
 		return
 	}
-	call.importDirectory, call.moduleKnown = localGoImportDirectory(call.file, call.importPath)
+	call.importDirectory, call.moduleKnown = localGoImportDirectory(call.importSourceFile, call.importPath)
 }
 
 func relatedPoints(match FileMatch, navigation *navigationIndex) []RelatedPoint {
@@ -321,7 +389,7 @@ func navigationImportMatches(call navigationCall, candidate navigationDeclaratio
 	if !strings.HasPrefix(call.importPath, ".") {
 		return false
 	}
-	imported := filepath.Clean(filepath.Join(filepath.Dir(call.file), filepath.FromSlash(call.importPath)))
+	imported := filepath.Clean(filepath.Join(filepath.Dir(call.importSourceFile), filepath.FromSlash(call.importPath)))
 	candidatePath := strings.TrimSuffix(filepath.Clean(candidate.file), filepath.Ext(candidate.file))
 	imported = strings.TrimSuffix(imported, filepath.Ext(imported))
 	return candidatePath == imported || filepath.Base(candidatePath) == "index" && filepath.Dir(candidatePath) == imported

@@ -112,6 +112,50 @@ func TestNavigationGraphCarriesResolvedSemanticContext(t *testing.T) {
 	t.Fatalf("import call was absent from navigation graph: %+v", analysis.Navigation)
 }
 
+type navigationFactoryFixture struct {
+	name, entryPath, entryText, factoryPath, factoryText, entry, display, target string
+}
+
+func TestNavigationGraphResolvesImportedFactoryReturnTypes(t *testing.T) {
+	root := t.TempDir()
+	tests := []navigationFactoryFixture{
+		{
+			name: "go", entryPath: filepath.Join(root, "app", "app.go"), entry: "Start", display: "returned.Load", target: "Client.Load",
+			entryText:   "package app\nimport workers \"example.com/worker\"\nfunc Start() { returned := workers.NewClient(); returned.Load() }\n",
+			factoryPath: filepath.Join(root, "worker", "worker.go"), factoryText: "package worker\ntype Client struct{}\nfunc NewClient() *Client { return &Client{} }\nfunc (*Client) Load() {}\n",
+		},
+		{
+			name: "typescript", entryPath: filepath.Join(root, "app", "app.ts"), entry: "start", display: "returned.load", target: "Client.load",
+			entryText:   "import { makeClient as create } from '../worker';\nfunction start(): void { const returned = create(); returned.load(); }\n",
+			factoryPath: filepath.Join(root, "worker.ts"), factoryText: "export class Client { load(): void {} }\nexport function makeClient(): Client { return new Client(); }\n",
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			assertImportedFactoryReturnType(t, test)
+		})
+	}
+}
+
+func assertImportedFactoryReturnType(t *testing.T, test navigationFactoryFixture) {
+	t.Helper()
+	sources := []Source{{Path: test.entryPath, Text: test.entryText}, {Path: test.factoryPath, Text: test.factoryText}}
+	analysis, err := Analyze(sources)
+	if err != nil {
+		t.Fatal(err)
+	}
+	declarations := map[string]codeparser.NavigationDeclaration{}
+	for _, declaration := range analysis.Navigation.Declarations {
+		declarations[declaration.ID] = declaration
+	}
+	for _, call := range analysis.Navigation.Calls {
+		if call.Display == test.display && declarations[call.TargetID].Name == test.target {
+			return
+		}
+	}
+	t.Fatalf("factory return call was not resolved in shared graph: %+v", analysis.Navigation.Calls)
+}
+
 func TestTypeScriptStructureFollowsMethodTypes(t *testing.T) {
 	source := Source{Path: "main.ts", Text: "export interface Store { load(input: Item): Item }\nexport class Item { value: string }\n"}
 	diagram, err := GenerateClassDiagram("Store", source, []Source{source}, GenerateOptions{Depth: 2, MaxNodes: 20})

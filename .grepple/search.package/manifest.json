@@ -20,12 +20,12 @@
     "declarations": 15,
     "exportedTypes": 5,
     "internalTypes": 10,
-    "members": 103,
+    "members": 112,
     "exportedFunctions": 19,
     "fiberRoutes": 0,
-    "relations": 34
+    "relations": 37
   },
-  "semanticModelDigest": "sha256:60195170ba2e07868aab2f9f3d9cda6bcb23bceefc5b28645bdd139ddc0da315",
+  "semanticModelDigest": "sha256:a7b44e25469ded26448161a0729134e35279536ecab80ba6298f5c1f635ab836",
   "sourceFiles": [
     {
       "path": "search/at.go"
@@ -735,78 +735,99 @@
       "name": "navigationCall",
       "kind": "struct",
       "file": "search/related.go",
-      "line": 37,
-      "endLine": 44,
-      "underlyingType": "struct{name,display,resolvedName string;qualifier,importPath string;receiverType,file string;importDirectory string;moduleKnown bool;line int;}",
+      "line": 39,
+      "endLine": 48,
+      "underlyingType": "struct{name,display,resolvedName string;qualifier,importPath string;receiverType,receiverFactory string;factoryImport,file string;importSourceFile string;importDirectory string;moduleKnown bool;line int;}",
       "members": [
         {
           "name": "display",
-          "kind": "property",
-          "line": 38,
-          "endLine": 38,
-          "result": "string"
-        },
-        {
-          "name": "file",
           "kind": "property",
           "line": 40,
           "endLine": 40,
           "result": "string"
         },
         {
+          "name": "factoryImport",
+          "kind": "property",
+          "line": 43,
+          "endLine": 43,
+          "result": "string"
+        },
+        {
+          "name": "file",
+          "kind": "property",
+          "line": 43,
+          "endLine": 43,
+          "result": "string"
+        },
+        {
           "name": "importDirectory",
+          "kind": "property",
+          "line": 45,
+          "endLine": 45,
+          "result": "string"
+        },
+        {
+          "name": "importPath",
           "kind": "property",
           "line": 41,
           "endLine": 41,
           "result": "string"
         },
         {
-          "name": "importPath",
+          "name": "importSourceFile",
           "kind": "property",
-          "line": 39,
-          "endLine": 39,
+          "line": 44,
+          "endLine": 44,
           "result": "string"
         },
         {
           "name": "line",
           "kind": "property",
-          "line": 43,
-          "endLine": 43,
+          "line": 47,
+          "endLine": 47,
           "result": "int"
         },
         {
           "name": "moduleKnown",
           "kind": "property",
-          "line": 42,
-          "endLine": 42,
+          "line": 46,
+          "endLine": 46,
           "result": "bool"
         },
         {
           "name": "name",
-          "kind": "property",
-          "line": 38,
-          "endLine": 38,
-          "result": "string"
-        },
-        {
-          "name": "qualifier",
-          "kind": "property",
-          "line": 39,
-          "endLine": 39,
-          "result": "string"
-        },
-        {
-          "name": "receiverType",
           "kind": "property",
           "line": 40,
           "endLine": 40,
           "result": "string"
         },
         {
+          "name": "qualifier",
+          "kind": "property",
+          "line": 41,
+          "endLine": 41,
+          "result": "string"
+        },
+        {
+          "name": "receiverFactory",
+          "kind": "property",
+          "line": 42,
+          "endLine": 42,
+          "result": "string"
+        },
+        {
+          "name": "receiverType",
+          "kind": "property",
+          "line": 42,
+          "endLine": 42,
+          "result": "string"
+        },
+        {
           "name": "resolvedName",
           "kind": "property",
-          "line": 38,
-          "endLine": 38,
+          "line": 40,
+          "endLine": 40,
           "result": "string"
         }
       ]
@@ -815,22 +836,22 @@
       "name": "navigationCaller",
       "kind": "struct",
       "file": "search/related.go",
-      "line": 32,
-      "endLine": 35,
+      "line": 34,
+      "endLine": 37,
       "underlyingType": "struct{declaration navigationDeclaration;call navigationCall;}",
       "members": [
         {
           "name": "call",
           "kind": "property",
-          "line": 34,
-          "endLine": 34,
+          "line": 36,
+          "endLine": 36,
           "result": "navigationCall"
         },
         {
           "name": "declaration",
           "kind": "property",
-          "line": 33,
-          "endLine": 33,
+          "line": 35,
+          "endLine": 35,
           "result": "navigationDeclaration"
         }
       ]
@@ -839,22 +860,22 @@
       "name": "navigationCandidateResolution",
       "kind": "struct",
       "file": "search/related.go",
-      "line": 227,
-      "endLine": 230,
+      "line": 295,
+      "endLine": 298,
       "underlyingType": "struct{candidates[]navigationDeclaration;confidence string;}",
       "members": [
         {
           "name": "candidates",
           "kind": "property",
-          "line": 228,
-          "endLine": 228,
+          "line": 296,
+          "endLine": 296,
           "result": "[]navigationDeclaration"
         },
         {
           "name": "confidence",
           "kind": "property",
-          "line": 229,
-          "endLine": 229,
+          "line": 297,
+          "endLine": 297,
           "result": "string"
         }
       ]
@@ -864,8 +885,8 @@
       "kind": "struct",
       "file": "search/related.go",
       "line": 21,
-      "endLine": 30,
-      "underlyingType": "struct{id string;terminal string;container string;packageName string;language string;file string;matchStart int;point RelatedPoint;}",
+      "endLine": 32,
+      "underlyingType": "struct{id string;terminal string;container string;returnType string;returnImportPath string;packageName string;language string;file string;matchStart int;point RelatedPoint;}",
       "members": [
         {
           "name": "container",
@@ -877,8 +898,8 @@
         {
           "name": "file",
           "kind": "property",
-          "line": 27,
-          "endLine": 27,
+          "line": 29,
+          "endLine": 29,
           "result": "string"
         },
         {
@@ -891,30 +912,44 @@
         {
           "name": "language",
           "kind": "property",
-          "line": 26,
-          "endLine": 26,
+          "line": 28,
+          "endLine": 28,
           "result": "string"
         },
         {
           "name": "matchStart",
           "kind": "property",
-          "line": 28,
-          "endLine": 28,
+          "line": 30,
+          "endLine": 30,
           "result": "int"
         },
         {
           "name": "packageName",
           "kind": "property",
-          "line": 25,
-          "endLine": 25,
+          "line": 27,
+          "endLine": 27,
           "result": "string"
         },
         {
           "name": "point",
           "kind": "property",
-          "line": 29,
-          "endLine": 29,
+          "line": 31,
+          "endLine": 31,
           "result": "RelatedPoint"
+        },
+        {
+          "name": "returnImportPath",
+          "kind": "property",
+          "line": 26,
+          "endLine": 26,
+          "result": "string"
+        },
+        {
+          "name": "returnType",
+          "kind": "property",
+          "line": 25,
+          "endLine": 25,
+          "result": "string"
         },
         {
           "name": "terminal",
@@ -929,15 +964,15 @@
       "name": "navigationIndex",
       "kind": "struct",
       "file": "search/related.go",
-      "line": 46,
-      "endLine": 53,
+      "line": 50,
+      "endLine": 57,
       "underlyingType": "struct{declarations map[string][]navigationDeclaration;callers map[string][]navigationCaller;calls map[string][]navigationCall;byFile map[string][]navigationDeclaration;byLocation map[string]navigationDeclaration;contents map[string]string;}",
       "members": [
         {
           "name": "addCalls",
           "kind": "method",
-          "line": 149,
-          "endLine": 168,
+          "line": 155,
+          "endLine": 173,
           "parameters": [
             "[]parser.NavigationCall",
             "[]navigationDeclaration",
@@ -947,8 +982,8 @@
         {
           "name": "addDeclarations",
           "kind": "method",
-          "line": 129,
-          "endLine": 147,
+          "line": 135,
+          "endLine": 153,
           "parameters": [
             "[]parser.NavigationDeclaration",
             "string",
@@ -960,53 +995,86 @@
         {
           "name": "addFile",
           "kind": "method",
-          "line": 108,
-          "endLine": 127,
+          "line": 114,
+          "endLine": 133,
           "parameters": [
             "string",
             "string"
           ]
         },
         {
+          "name": "indexNavigationCallers",
+          "kind": "method",
+          "line": 220,
+          "endLine": 236
+        },
+        {
+          "name": "inferCallReturnReceiver",
+          "kind": "method",
+          "line": 188,
+          "endLine": 204,
+          "parameters": [
+            "*navigationCall",
+            "string"
+          ]
+        },
+        {
+          "name": "inferCallReturnReceivers",
+          "kind": "method",
+          "line": 175,
+          "endLine": 186
+        },
+        {
+          "name": "resolveReturnFactory",
+          "kind": "method",
+          "line": 206,
+          "endLine": 218,
+          "parameters": [
+            "navigationCall",
+            "string"
+          ],
+          "result": "tuple\u003cnavigationDeclaration,bool\u003e"
+        },
+        {
           "name": "byFile",
           "kind": "property",
-          "line": 50,
-          "endLine": 50,
+          "line": 54,
+          "endLine": 54,
           "result": "map[string][]navigationDeclaration"
         },
         {
           "name": "byLocation",
           "kind": "property",
-          "line": 51,
-          "endLine": 51,
+          "line": 55,
+          "endLine": 55,
           "result": "map[string]navigationDeclaration"
         },
         {
           "name": "callers",
           "kind": "property",
-          "line": 48,
-          "endLine": 48,
+          "line": 52,
+          "endLine": 52,
           "result": "map[string][]navigationCaller"
         },
         {
           "name": "calls",
           "kind": "property",
-          "line": 49,
-          "endLine": 49,
+          "line": 53,
+          "endLine": 53,
           "result": "map[string][]navigationCall"
         },
         {
           "name": "contents",
           "kind": "property",
-          "line": 52,
-          "endLine": 52,
+          "line": 56,
+          "endLine": 56,
           "result": "map[string]string"
         },
         {
           "name": "declarations",
           "kind": "property",
-          "line": 47,
-          "endLine": 47,
+          "line": 51,
+          "endLine": 51,
           "result": "map[string][]navigationDeclaration"
         }
       ]
@@ -1474,6 +1542,20 @@
     },
     {
       "from": "navigationIndex",
+      "to": "navigationCall",
+      "kind": "dependency",
+      "via": "method inferCallReturnReceiver parameter 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "navigationIndex",
+      "to": "navigationCall",
+      "kind": "dependency",
+      "via": "method resolveReturnFactory parameter 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "navigationIndex",
       "to": "navigationCaller",
       "kind": "association",
       "via": "field callers",
@@ -1513,6 +1595,13 @@
       "kind": "dependency",
       "via": "method addDeclarations result 1",
       "cardinality": "many"
+    },
+    {
+      "from": "navigationIndex",
+      "to": "navigationDeclaration",
+      "kind": "dependency",
+      "via": "method resolveReturnFactory result 1",
+      "cardinality": "one"
     }
   ]
 }

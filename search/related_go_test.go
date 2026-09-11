@@ -293,6 +293,43 @@ nested.Load() // NESTED_CALLER_NEEDLE
 	}
 }
 
+func TestRelatedGoCallsUseImportedReturnTypes(t *testing.T) {
+	directory := t.TempDir()
+	if err := os.WriteFile(filepath.Join(directory, "go.mod"), []byte("module example.com/project\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	workerDirectory := filepath.Join(directory, "worker")
+	modelDirectory := filepath.Join(directory, "model")
+	for _, path := range []string{workerDirectory, modelDirectory} {
+		if err := os.Mkdir(path, 0o755); err != nil {
+			t.Fatal(err)
+		}
+	}
+	model := writeGoFixture(t, modelDirectory, "model.go", `package model
+type Client struct{}
+func (*Client) Load() {}
+`)
+	worker := writeGoFixture(t, workerDirectory, "worker.go", `package worker
+import models "example.com/project/model"
+func NewClient() *models.Client { return &models.Client{} }
+`)
+	caller := writeGoFixture(t, directory, "caller.go", `package app
+import workers "example.com/project/worker"
+func run() {
+returned := workers.NewClient()
+returned.Load() // RETURN_CALLER_NEEDLE
+}
+`)
+	matches, err := Files(Params{Query: "RETURN_CALLER_NEEDLE", MaxSegments: 20, Related: true}, []string{caller, model, worker})
+	if err != nil {
+		t.Fatal(err)
+	}
+	point := findRelatedPoint(t, matches[0].Related, "returned.Load → Client.Load", "callee")
+	if point.Confidence != "import-resolved" || !strings.HasSuffix(point.Path, "model/model.go") {
+		t.Fatalf("unexpected call-return receiver resolution: %#v", point)
+	}
+}
+
 func assertNestedGoReceiverResolution(t *testing.T, files []string) {
 	t.Helper()
 	matches, err := Files(Params{Query: "NESTED_CALLER_NEEDLE", MaxSegments: 20, Related: true}, files)

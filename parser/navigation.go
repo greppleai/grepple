@@ -11,38 +11,42 @@ import (
 
 // NavigationDeclaration describes a callable declaration found by a language adapter.
 type NavigationDeclaration struct {
-	ID        string
-	Name      string
-	Kind      string
-	Language  string
-	Path      string
-	Container string
-	Receiver  string
-	Package   string
-	PackageID string
-	ModuleID  string
-	Scope     string
-	Start     int
-	End       int
+	ID               string
+	Name             string
+	Kind             string
+	Language         string
+	Path             string
+	Container        string
+	Receiver         string
+	ResultType       string
+	ResultImportPath string
+	Package          string
+	PackageID        string
+	ModuleID         string
+	Scope            string
+	Start            int
+	End              int
 }
 
 // NavigationCall describes a call and the callable declaration containing it.
 type NavigationCall struct {
-	ID             string
-	CallerID       string
-	TargetID       string
-	Name           string
-	Display        string
-	Qualifier      string
-	ImportPath     string
-	ReceiverType   string
-	ResolvedName   string
-	Confidence     string
-	Language       string
-	Path           string
-	Line           int
-	EnclosingStart int
-	EnclosingEnd   int
+	ID                    string
+	CallerID              string
+	TargetID              string
+	Name                  string
+	Display               string
+	Qualifier             string
+	ImportPath            string
+	ReceiverType          string
+	ReceiverFactory       string
+	ReceiverFactoryImport string
+	ResolvedName          string
+	Confidence            string
+	Language              string
+	Path                  string
+	Line                  int
+	EnclosingStart        int
+	EnclosingEnd          int
 }
 
 // NavigationGraph is the normalized, language-neutral callable and call model.
@@ -97,7 +101,8 @@ func NavigationGraphFromTree(root *sitter.Node, content, language, path string) 
 		return NavigationGraph{}
 	}
 	imports, packageName, fields := navigationSourceFacts(root, content, language)
-	collector := navigationCollector{content: content, language: language, path: path, rules: adapter.Rules(), imports: imports, fields: fields, packageName: packageName}
+	returnBindings := navigationReturnBindings(root, content, language, imports, adapter.Rules())
+	collector := navigationCollector{content: content, language: language, path: path, rules: adapter.Rules(), imports: imports, fields: fields, returnBindings: returnBindings, packageName: packageName}
 	collector.walk(root, navigationWalkContext{})
 	return NavigationGraph{Declarations: collector.declarations, Calls: collector.calls}
 }
@@ -120,15 +125,16 @@ func DeclarationRangeAt(content, language string, line int) (int, int, bool) {
 }
 
 type navigationCollector struct {
-	content      string
-	language     string
-	path         string
-	rules        *structureRules
-	imports      map[string]navigationImport
-	fields       map[string]map[string]navigationBinding
-	packageName  string
-	declarations []NavigationDeclaration
-	calls        []NavigationCall
+	content        string
+	language       string
+	path           string
+	rules          *structureRules
+	imports        map[string]navigationImport
+	fields         map[string]map[string]navigationBinding
+	returnBindings map[string]navigationBinding
+	packageName    string
+	declarations   []NavigationDeclaration
+	calls          []NavigationCall
 }
 
 type navigationEnvelope struct {
@@ -182,13 +188,15 @@ func (c *navigationCollector) enterNavigationNode(node *sitter.Node, context nav
 	if current.container != "" && !strings.Contains(name, ".") {
 		name = current.container + "." + name
 	}
+	result := navigationCallableReturnBinding(node, c.content, c.language, c.imports)
 	declaration := NavigationDeclaration{
-		Name: name, Kind: c.navigationDeclarationKind(node, current.container), Language: c.language, Path: c.path, Container: current.container, Package: c.packageName, Start: start, End: end,
+		Name: name, Kind: c.navigationDeclarationKind(node, current.container), Language: c.language, Path: c.path, Container: current.container, Package: c.packageName,
+		ResultType: result.typeName, ResultImportPath: result.importPath, Start: start, End: end,
 	}
 	declaration.ID = navigationStableID("declaration", declaration.Language, declaration.Path, declaration.Name, declaration.Kind, strconv.Itoa(start), strconv.Itoa(end))
 	c.declarations = append(c.declarations, declaration)
 	current.callable = &c.declarations[len(c.declarations)-1]
-	current.bindings = navigationCallableBindings(node, c.content, c.language, current.container, c.imports, c.rules)
+	current.bindings = navigationCallableBindings(node, c.content, c.language, current.container, c.imports, c.returnBindings, c.rules)
 	return current
 }
 
@@ -228,7 +236,7 @@ func (c *navigationCollector) walkNavigationChildren(node *sitter.Node, context 
 			childContext.envelope = &navigationEnvelope{start: leadingCommentStart(child), end: nodeEnd(child)}
 		}
 		c.walk(child, childContext)
-		mergeNavigationBindingsAfterNode(context.bindings, child, c.content, c.language, c.imports, c.rules)
+		mergeNavigationBindingsAfterNode(context.bindings, child, c.content, c.language, c.imports, c.returnBindings, c.rules)
 	}
 }
 func (c *navigationCollector) wrapperEnvelope(node *sitter.Node, inherited *navigationEnvelope) *navigationEnvelope {
