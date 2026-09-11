@@ -10,7 +10,7 @@ api/               Dependency-free HTTP request and response contracts
 cmd/grepple/       Minimal executable entry point
 docs/              User and file-type documentation
 extract/           Tree-sitter Mermaid extraction, validation, and canonical architecture bundles
-gritql/            Native, bounded gritql-go-v1 structural detection kernel
+gritql/            Native, bounded Go/TypeScript/TSX structural detection kernel
 gritqlapi/         Adapters from structural findings to dependency-free API DTOs
 hooks/             Project-local Pi hooks and architecture tooling
 internal/cli/      CLI workflows and output rendering
@@ -127,11 +127,15 @@ File patterns use Go's `filepath.Glob` syntax, extended with `**` to match acros
 **Pipes work like `grep`/`rg`:** when standard input is piped (or redirected) and no path/glob argument is given, grepple searches the stream instead of the filesystem — `cat build.log | grepple "ERROR"` or `go test ./... | grepple -F "FAIL"`. The stream is reported under the virtual path `<stdin>` in every output mode (`--json`, `-c`, `--files-with-matches`, `--line-only`, default segments). It uses the plain-text fallback (no filename, so no tree-sitter structure), NUL-containing input is treated as binary and skipped, and no match exits 1 as usual. `--files` and `--outline` always operate on the filesystem, and passing any path/glob selects the filesystem over stdin.
 ## Native structural search
 
-`grepple grit` runs the native, read-only `gritql-go-v1` engine over Go syntax trees. It is separate from text and regex search and has no external runtime, subprocess, rewrite engine, or fallback interpreter. The supported detection subset includes snippets, metavariables, repeated-binding equality, `where`, `contains`, `within`, `and`, `or`, `not`, `maybe`, and RE2 constraints.
+`grepple grit` runs a native, read-only structural-search engine over Go, TypeScript, and TSX syntax trees. Go retains the `gritql-go-v1` compatibility contract; TypeScript and TSX use the adapter-based `gritql-v1` contract. The engine is separate from text and regex search and has no external runtime, subprocess, rewrite engine, or fallback interpreter. The supported detection subset includes snippets, metavariables, repeated-binding equality, `where`, `contains`, `within`, `and`, `or`, `not`, `maybe`, and RE2 constraints.
 
 ```bash
 # Quote inline queries so the shell does not expand metavariables.
 grepple grit $'language go\n`exec.Command($args)`' '**/*.go'
+
+# TypeScript and TSX use the multilingual compatibility contract.
+grepple grit --compatibility gritql-v1 $'language typescript\n`fetch($url)`' '**/*.ts'
+grepple grit --compatibility gritql-v1 $'language tsx\n`<Button value={$value} />`' '**/*.tsx'
 
 # Multiline query file and complete JSON output.
 grepple grit --query-file /tmp/exec-command.grit --json '**/*.go'

@@ -31,3 +31,12 @@ func TestScanFilesFiltersAndReturnsDeterministicFindings(t *testing.T) {
 		t.Fatalf("diagnostics=%v", diagnostics)
 	}
 }
+
+func TestScanFilesRejectsInvalidProgramWithoutReading(t *testing.T) {
+	result := ScanFiles(context.Background(), fstest.MapFS{
+		"main.go": {Data: []byte("package p\nvar x = 1\n")},
+	}, nil, []ScanCandidate{{ReadPath: "main.go", Path: "main.go"}}, ScanOptions{})
+	if result.Stats().Evaluated != 0 || !batchHasDiagnostic(result.Diagnostics(), "INTERNAL_ERROR") {
+		t.Fatalf("stats=%+v diagnostics=%v", result.Stats(), result.Diagnostics())
+	}
+}

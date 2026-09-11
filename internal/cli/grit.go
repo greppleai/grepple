@@ -96,7 +96,7 @@ func validateGritQuerySelection(values gritArgs) error {
 	if values.Query == "" && values.QueryFile == "" {
 		return fmt.Errorf("grit requires query text or --query-file")
 	}
-	if values.Compatibility != api.GritCompatibilityV1 {
+	if values.Compatibility != api.GritCompatibilityV1 && values.Compatibility != api.GritMultilingualCompatibilityV1 {
 		return fmt.Errorf("unsupported structural compatibility %q", values.Compatibility)
 	}
 	if values.Local && (values.Remote || values.Server != "") {
@@ -254,6 +254,13 @@ func compileGritQuery(values gritArgs) (string, *gritql.Program, error) {
 	})
 	if err != nil {
 		return "", nil, formatGritCompileError(err)
+	}
+	compatibility := values.Compatibility
+	if compatibility == "" {
+		compatibility = api.GritCompatibilityV1
+	}
+	if compatibility != program.Compatibility() {
+		return "", nil, fmt.Errorf("query language requires structural compatibility %q", program.Compatibility())
 	}
 	return query, program, nil
 }

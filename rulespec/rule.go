@@ -97,11 +97,15 @@ func normalizeStructuralRequest(rule *api.Rule) error {
 	if request.Limits != nil {
 		limits = *request.Limits
 	}
-	if _, err := gritql.Compile([]byte(request.Query), gritql.CompileOptions{
+	program, err := gritql.Compile([]byte(request.Query), gritql.CompileOptions{
 		MaxPatternBytes: optionalInt(limits.PatternBytes), MaxRegexBytes: optionalInt(limits.RegexBytes),
 		MaxRegexInstructions: optionalInt(limits.RegexInstructions), MaxDepth: optionalInt(limits.ParseDepth),
-	}); err != nil {
+	})
+	if err != nil {
 		return err
+	}
+	if program.Compatibility() != request.Compatibility {
+		return fmt.Errorf("query language requires structural compatibility %q", program.Compatibility())
 	}
 	if rule.Mode == "" {
 		rule.Mode = api.RuleModeCount
@@ -109,9 +113,12 @@ func normalizeStructuralRequest(rule *api.Rule) error {
 	rule.Structural = &request
 	return nil
 }
+func supportedStructuralCompatibility(compatibility string) bool {
+	return compatibility == api.GritCompatibilityV1 || compatibility == api.GritMultilingualCompatibilityV1
+}
 
 func validateStructuralRequest(request api.GritRequest) error {
-	if request.Compatibility != api.GritCompatibilityV1 {
+	if !supportedStructuralCompatibility(request.Compatibility) {
 		return fmt.Errorf("unsupported structural compatibility %q", request.Compatibility)
 	}
 	if request.Query == "" || len(request.Query) > api.MaxGritQueryBytes {

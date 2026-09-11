@@ -293,6 +293,13 @@ func (n Node) Valid() bool {
 // IsValid is an alias for Valid.
 func (n Node) IsValid() bool { return n.Valid() }
 
+// Language returns the node document's canonical language identifier.
+func (n Node) Language() string {
+	var value string
+	n.read(func() { value = n.doc.language })
+	return value
+}
+
 // Kind returns the language grammar's node kind, or empty for an invalid node.
 func (n Node) Kind() string {
 	var value string

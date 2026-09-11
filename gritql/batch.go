@@ -79,6 +79,11 @@ func normalizeEvaluationsAt(ctx context.Context, results []FileEvaluation, optio
 func mergeEvaluationResults(result *FileEvaluation, files []FileEvaluation, compileMetadataSet bool) {
 	for _, file := range files {
 		if !compileMetadataSet && file.metadata.Contract != "" {
+			result.metadata.Contract = file.metadata.Contract
+			result.metadata.Language = file.metadata.Language
+			result.metadata.Grammar = file.metadata.Grammar
+			result.metadata.GoGrammar = file.metadata.GoGrammar
+			result.metadata.TreeSitterGrammar = file.metadata.TreeSitterGrammar
 			result.metadata.Limits.PatternBytes = file.metadata.Limits.PatternBytes
 			result.metadata.Limits.RegexBytes = file.metadata.Limits.RegexBytes
 			result.metadata.Limits.RegexInstructions = file.metadata.Limits.RegexInstructions

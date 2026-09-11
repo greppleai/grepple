@@ -20,12 +20,12 @@
     "declarations": 29,
     "exportedTypes": 29,
     "internalTypes": 0,
-    "members": 178,
+    "members": 180,
     "exportedFunctions": 0,
     "fiberRoutes": 0,
     "relations": 28
   },
-  "semanticModelDigest": "sha256:dcaa5fb9243f9025024ab1557848e73a697e0e13bfaaaed03b3ed95b71d73766",
+  "semanticModelDigest": "sha256:62010dedf00535be0356b852c0c2710f80644bd5d8ee30cb05685f608d746579",
   "sourceFiles": [
     {
       "path": "api/grit.go"
@@ -159,15 +159,15 @@
       "name": "GritBinding",
       "kind": "struct",
       "file": "api/grit.go",
-      "line": 95,
-      "endLine": 101,
+      "line": 97,
+      "endLine": 103,
       "underlyingType": "struct{Name string`json:\"name\"`;Kind string`json:\"kind\"`;Range GritRange`json:\"range\"`;Ranges[]GritRange`json:\"ranges,omitempty\"`;Structural[]GritStructuralNode`json:\"structural\"`;}",
       "members": [
         {
           "name": "Kind",
           "kind": "property",
-          "line": 97,
-          "endLine": 97,
+          "line": 99,
+          "endLine": 99,
           "result": "string",
           "structTag": {
             "value": "json:\"kind\""
@@ -176,8 +176,8 @@
         {
           "name": "Name",
           "kind": "property",
-          "line": 96,
-          "endLine": 96,
+          "line": 98,
+          "endLine": 98,
           "result": "string",
           "structTag": {
             "value": "json:\"name\""
@@ -186,8 +186,8 @@
         {
           "name": "Range",
           "kind": "property",
-          "line": 98,
-          "endLine": 98,
+          "line": 100,
+          "endLine": 100,
           "result": "GritRange",
           "structTag": {
             "value": "json:\"range\""
@@ -196,8 +196,8 @@
         {
           "name": "Ranges",
           "kind": "property",
-          "line": 99,
-          "endLine": 99,
+          "line": 101,
+          "endLine": 101,
           "result": "[]GritRange",
           "structTag": {
             "value": "json:\"ranges,omitempty\""
@@ -206,8 +206,8 @@
         {
           "name": "Structural",
           "kind": "property",
-          "line": 100,
-          "endLine": 100,
+          "line": 102,
+          "endLine": 102,
           "result": "[]GritStructuralNode",
           "structTag": {
             "value": "json:\"structural\""
@@ -219,15 +219,15 @@
       "name": "GritDiagnostic",
       "kind": "struct",
       "file": "api/grit.go",
-      "line": 118,
-      "endLine": 128,
+      "line": 120,
+      "endLine": 130,
       "underlyingType": "struct{Code string`json:\"code\"`;Class string`json:\"class\"`;Severity string`json:\"severity\"`;Message string`json:\"message\"`;Repo string`json:\"repo,omitempty\"`;Shard string`json:\"shard,omitempty\"`;PatternID*string`json:\"patternId\"`;Path*string`json:\"path\"`;Range*GritRange`json:\"range\"`;}",
       "members": [
         {
           "name": "Class",
           "kind": "property",
-          "line": 120,
-          "endLine": 120,
+          "line": 122,
+          "endLine": 122,
           "result": "string",
           "structTag": {
             "value": "json:\"class\""
@@ -236,8 +236,8 @@
         {
           "name": "Code",
           "kind": "property",
-          "line": 119,
-          "endLine": 119,
+          "line": 121,
+          "endLine": 121,
           "result": "string",
           "structTag": {
             "value": "json:\"code\""
@@ -246,8 +246,8 @@
         {
           "name": "Message",
           "kind": "property",
-          "line": 122,
-          "endLine": 122,
+          "line": 124,
+          "endLine": 124,
           "result": "string",
           "structTag": {
             "value": "json:\"message\""
@@ -256,8 +256,8 @@
         {
           "name": "Path",
           "kind": "property",
-          "line": 126,
-          "endLine": 126,
+          "line": 128,
+          "endLine": 128,
           "result": "*string",
           "structTag": {
             "value": "json:\"path\""
@@ -266,8 +266,8 @@
         {
           "name": "PatternID",
           "kind": "property",
-          "line": 125,
-          "endLine": 125,
+          "line": 127,
+          "endLine": 127,
           "result": "*string",
           "structTag": {
             "value": "json:\"patternId\""
@@ -276,8 +276,8 @@
         {
           "name": "Range",
           "kind": "property",
-          "line": 127,
-          "endLine": 127,
+          "line": 129,
+          "endLine": 129,
           "result": "*GritRange",
           "structTag": {
             "value": "json:\"range\""
@@ -286,8 +286,8 @@
         {
           "name": "Repo",
           "kind": "property",
-          "line": 123,
-          "endLine": 123,
+          "line": 125,
+          "endLine": 125,
           "result": "string",
           "structTag": {
             "value": "json:\"repo,omitempty\""
@@ -296,8 +296,8 @@
         {
           "name": "Severity",
           "kind": "property",
-          "line": 121,
-          "endLine": 121,
+          "line": 123,
+          "endLine": 123,
           "result": "string",
           "structTag": {
             "value": "json:\"severity\""
@@ -306,8 +306,8 @@
         {
           "name": "Shard",
           "kind": "property",
-          "line": 124,
-          "endLine": 124,
+          "line": 126,
+          "endLine": 126,
           "result": "string",
           "structTag": {
             "value": "json:\"shard,omitempty\""
@@ -319,15 +319,15 @@
       "name": "GritEffectiveLimits",
       "kind": "struct",
       "file": "api/grit.go",
-      "line": 141,
-      "endLine": 153,
+      "line": 143,
+      "endLine": 155,
       "underlyingType": "struct{PatternBytes int`json:\"patternBytes\"`;RegexBytes int`json:\"regexBytes\"`;RegexInstructions int`json:\"regexInstructions\"`;ParseDepth int`json:\"parseDepth\"`;SourceBytes int`json:\"sourceBytes\"`;Candidates int`json:\"candidates\"`;ASTSteps int`json:\"astSteps\"`;Findings int`json:\"findings\"`;FileTimeMillis int64`json:\"fileTimeMillis\"`;BatchTimeMillis int64`json:\"batchTimeMillis\"`;MemoryBytes int64`json:\"memoryBytes\"`;}",
       "members": [
         {
           "name": "ASTSteps",
           "kind": "property",
-          "line": 148,
-          "endLine": 148,
+          "line": 150,
+          "endLine": 150,
           "result": "int",
           "structTag": {
             "value": "json:\"astSteps\""
@@ -336,8 +336,8 @@
         {
           "name": "BatchTimeMillis",
           "kind": "property",
-          "line": 151,
-          "endLine": 151,
+          "line": 153,
+          "endLine": 153,
           "result": "int64",
           "structTag": {
             "value": "json:\"batchTimeMillis\""
@@ -346,8 +346,8 @@
         {
           "name": "Candidates",
           "kind": "property",
-          "line": 147,
-          "endLine": 147,
+          "line": 149,
+          "endLine": 149,
           "result": "int",
           "structTag": {
             "value": "json:\"candidates\""
@@ -356,8 +356,8 @@
         {
           "name": "FileTimeMillis",
           "kind": "property",
-          "line": 150,
-          "endLine": 150,
+          "line": 152,
+          "endLine": 152,
           "result": "int64",
           "structTag": {
             "value": "json:\"fileTimeMillis\""
@@ -366,8 +366,8 @@
         {
           "name": "Findings",
           "kind": "property",
-          "line": 149,
-          "endLine": 149,
+          "line": 151,
+          "endLine": 151,
           "result": "int",
           "structTag": {
             "value": "json:\"findings\""
@@ -376,8 +376,8 @@
         {
           "name": "MemoryBytes",
           "kind": "property",
-          "line": 152,
-          "endLine": 152,
+          "line": 154,
+          "endLine": 154,
           "result": "int64",
           "structTag": {
             "value": "json:\"memoryBytes\""
@@ -386,8 +386,8 @@
         {
           "name": "ParseDepth",
           "kind": "property",
-          "line": 145,
-          "endLine": 145,
+          "line": 147,
+          "endLine": 147,
           "result": "int",
           "structTag": {
             "value": "json:\"parseDepth\""
@@ -396,8 +396,8 @@
         {
           "name": "PatternBytes",
           "kind": "property",
-          "line": 142,
-          "endLine": 142,
+          "line": 144,
+          "endLine": 144,
           "result": "int",
           "structTag": {
             "value": "json:\"patternBytes\""
@@ -406,8 +406,8 @@
         {
           "name": "RegexBytes",
           "kind": "property",
-          "line": 143,
-          "endLine": 143,
+          "line": 145,
+          "endLine": 145,
           "result": "int",
           "structTag": {
             "value": "json:\"regexBytes\""
@@ -416,8 +416,8 @@
         {
           "name": "RegexInstructions",
           "kind": "property",
-          "line": 144,
-          "endLine": 144,
+          "line": 146,
+          "endLine": 146,
           "result": "int",
           "structTag": {
             "value": "json:\"regexInstructions\""
@@ -426,8 +426,8 @@
         {
           "name": "SourceBytes",
           "kind": "property",
-          "line": 146,
-          "endLine": 146,
+          "line": 148,
+          "endLine": 148,
           "result": "int",
           "structTag": {
             "value": "json:\"sourceBytes\""
@@ -439,15 +439,15 @@
       "name": "GritFinding",
       "kind": "struct",
       "file": "api/grit.go",
-      "line": 105,
-      "endLine": 114,
+      "line": 107,
+      "endLine": 116,
       "underlyingType": "struct{Repo string`json:\"repo,omitempty\"`;Path string`json:\"path\"`;Language string`json:\"language\"`;Range GritRange`json:\"range\"`;Text string`json:\"text\"`;PatternID string`json:\"patternId\"`;Message string`json:\"message\"`;Bindings[]GritBinding`json:\"bindings\"`;}",
       "members": [
         {
           "name": "Bindings",
           "kind": "property",
-          "line": 113,
-          "endLine": 113,
+          "line": 115,
+          "endLine": 115,
           "result": "[]GritBinding",
           "structTag": {
             "value": "json:\"bindings\""
@@ -456,8 +456,8 @@
         {
           "name": "Language",
           "kind": "property",
-          "line": 108,
-          "endLine": 108,
+          "line": 110,
+          "endLine": 110,
           "result": "string",
           "structTag": {
             "value": "json:\"language\""
@@ -466,8 +466,8 @@
         {
           "name": "Message",
           "kind": "property",
-          "line": 112,
-          "endLine": 112,
+          "line": 114,
+          "endLine": 114,
           "result": "string",
           "structTag": {
             "value": "json:\"message\""
@@ -476,8 +476,8 @@
         {
           "name": "Path",
           "kind": "property",
-          "line": 107,
-          "endLine": 107,
+          "line": 109,
+          "endLine": 109,
           "result": "string",
           "structTag": {
             "value": "json:\"path\""
@@ -486,8 +486,8 @@
         {
           "name": "PatternID",
           "kind": "property",
-          "line": 111,
-          "endLine": 111,
+          "line": 113,
+          "endLine": 113,
           "result": "string",
           "structTag": {
             "value": "json:\"patternId\""
@@ -496,8 +496,8 @@
         {
           "name": "Range",
           "kind": "property",
-          "line": 109,
-          "endLine": 109,
+          "line": 111,
+          "endLine": 111,
           "result": "GritRange",
           "structTag": {
             "value": "json:\"range\""
@@ -506,8 +506,8 @@
         {
           "name": "Repo",
           "kind": "property",
-          "line": 106,
-          "endLine": 106,
+          "line": 108,
+          "endLine": 108,
           "result": "string",
           "structTag": {
             "value": "json:\"repo,omitempty\""
@@ -516,8 +516,8 @@
         {
           "name": "Text",
           "kind": "property",
-          "line": 110,
-          "endLine": 110,
+          "line": 112,
+          "endLine": 112,
           "result": "string",
           "structTag": {
             "value": "json:\"text\""
@@ -529,15 +529,15 @@
       "name": "GritLimits",
       "kind": "struct",
       "file": "api/grit.go",
-      "line": 52,
-      "endLine": 67,
+      "line": 54,
+      "endLine": 69,
       "underlyingType": "struct{PatternBytes*int`json:\"patternBytes,omitempty\"`;RegexBytes*int`json:\"regexBytes,omitempty\"`;RegexInstructions*int`json:\"regexInstructions,omitempty\"`;ParseDepth*int`json:\"parseDepth,omitempty\"`;SourceBytes*int`json:\"sourceBytes,omitempty\"`;Candidates*int`json:\"candidates,omitempty\"`;ASTSteps*int`json:\"astSteps,omitempty\"`;Findings*int`json:\"findings,omitempty\"`;FileTimeMillis*int64`json:\"fileTimeMillis,omitempty\"`;BatchTimeMillis*int64`json:\"batchTimeMillis,omitempty\"`;MemoryBytes*int64`json:\"memoryBytes,omitempty\"`;Files*int`json:\"files,omitempty\"`;TotalBytes*int64`json:\"totalBytes,omitempty\"`;Workers*int`json:\"workers,omitempty\"`;}",
       "members": [
         {
           "name": "ASTSteps",
           "kind": "property",
-          "line": 59,
-          "endLine": 59,
+          "line": 61,
+          "endLine": 61,
           "result": "*int",
           "structTag": {
             "value": "json:\"astSteps,omitempty\""
@@ -546,8 +546,8 @@
         {
           "name": "BatchTimeMillis",
           "kind": "property",
-          "line": 62,
-          "endLine": 62,
+          "line": 64,
+          "endLine": 64,
           "result": "*int64",
           "structTag": {
             "value": "json:\"batchTimeMillis,omitempty\""
@@ -556,8 +556,8 @@
         {
           "name": "Candidates",
           "kind": "property",
-          "line": 58,
-          "endLine": 58,
+          "line": 60,
+          "endLine": 60,
           "result": "*int",
           "structTag": {
             "value": "json:\"candidates,omitempty\""
@@ -566,8 +566,8 @@
         {
           "name": "FileTimeMillis",
           "kind": "property",
-          "line": 61,
-          "endLine": 61,
+          "line": 63,
+          "endLine": 63,
           "result": "*int64",
           "structTag": {
             "value": "json:\"fileTimeMillis,omitempty\""
@@ -576,8 +576,8 @@
         {
           "name": "Files",
           "kind": "property",
-          "line": 64,
-          "endLine": 64,
+          "line": 66,
+          "endLine": 66,
           "result": "*int",
           "structTag": {
             "value": "json:\"files,omitempty\""
@@ -586,8 +586,8 @@
         {
           "name": "Findings",
           "kind": "property",
-          "line": 60,
-          "endLine": 60,
+          "line": 62,
+          "endLine": 62,
           "result": "*int",
           "structTag": {
             "value": "json:\"findings,omitempty\""
@@ -596,8 +596,8 @@
         {
           "name": "MemoryBytes",
           "kind": "property",
-          "line": 63,
-          "endLine": 63,
+          "line": 65,
+          "endLine": 65,
           "result": "*int64",
           "structTag": {
             "value": "json:\"memoryBytes,omitempty\""
@@ -606,8 +606,8 @@
         {
           "name": "ParseDepth",
           "kind": "property",
-          "line": 56,
-          "endLine": 56,
+          "line": 58,
+          "endLine": 58,
           "result": "*int",
           "structTag": {
             "value": "json:\"parseDepth,omitempty\""
@@ -616,8 +616,8 @@
         {
           "name": "PatternBytes",
           "kind": "property",
-          "line": 53,
-          "endLine": 53,
+          "line": 55,
+          "endLine": 55,
           "result": "*int",
           "structTag": {
             "value": "json:\"patternBytes,omitempty\""
@@ -626,8 +626,8 @@
         {
           "name": "RegexBytes",
           "kind": "property",
-          "line": 54,
-          "endLine": 54,
+          "line": 56,
+          "endLine": 56,
           "result": "*int",
           "structTag": {
             "value": "json:\"regexBytes,omitempty\""
@@ -636,8 +636,8 @@
         {
           "name": "RegexInstructions",
           "kind": "property",
-          "line": 55,
-          "endLine": 55,
+          "line": 57,
+          "endLine": 57,
           "result": "*int",
           "structTag": {
             "value": "json:\"regexInstructions,omitempty\""
@@ -646,8 +646,8 @@
         {
           "name": "SourceBytes",
           "kind": "property",
-          "line": 57,
-          "endLine": 57,
+          "line": 59,
+          "endLine": 59,
           "result": "*int",
           "structTag": {
             "value": "json:\"sourceBytes,omitempty\""
@@ -656,8 +656,8 @@
         {
           "name": "TotalBytes",
           "kind": "property",
-          "line": 65,
-          "endLine": 65,
+          "line": 67,
+          "endLine": 67,
           "result": "*int64",
           "structTag": {
             "value": "json:\"totalBytes,omitempty\""
@@ -666,8 +666,8 @@
         {
           "name": "Workers",
           "kind": "property",
-          "line": 66,
-          "endLine": 66,
+          "line": 68,
+          "endLine": 68,
           "result": "*int",
           "structTag": {
             "value": "json:\"workers,omitempty\""
@@ -679,15 +679,15 @@
       "name": "GritMetadata",
       "kind": "struct",
       "file": "api/grit.go",
-      "line": 156,
-      "endLine": 160,
-      "underlyingType": "struct{Compatibility string`json:\"compatibility\"`;GoGrammar string`json:\"goGrammar\"`;Limits GritEffectiveLimits`json:\"limits\"`;}",
+      "line": 158,
+      "endLine": 164,
+      "underlyingType": "struct{Compatibility string`json:\"compatibility\"`;Language string`json:\"language,omitempty\"`;Grammar string`json:\"grammar,omitempty\"`;GoGrammar string`json:\"goGrammar\"`;Limits GritEffectiveLimits`json:\"limits\"`;}",
       "members": [
         {
           "name": "Compatibility",
           "kind": "property",
-          "line": 157,
-          "endLine": 157,
+          "line": 159,
+          "endLine": 159,
           "result": "string",
           "structTag": {
             "value": "json:\"compatibility\""
@@ -696,18 +696,38 @@
         {
           "name": "GoGrammar",
           "kind": "property",
-          "line": 158,
-          "endLine": 158,
+          "line": 162,
+          "endLine": 162,
           "result": "string",
           "structTag": {
             "value": "json:\"goGrammar\""
           }
         },
         {
+          "name": "Grammar",
+          "kind": "property",
+          "line": 161,
+          "endLine": 161,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"grammar,omitempty\""
+          }
+        },
+        {
+          "name": "Language",
+          "kind": "property",
+          "line": 160,
+          "endLine": 160,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"language,omitempty\""
+          }
+        },
+        {
           "name": "Limits",
           "kind": "property",
-          "line": 159,
-          "endLine": 159,
+          "line": 163,
+          "endLine": 163,
           "result": "GritEffectiveLimits",
           "structTag": {
             "value": "json:\"limits\""
@@ -719,15 +739,15 @@
       "name": "GritPosition",
       "kind": "struct",
       "file": "api/grit.go",
-      "line": 70,
-      "endLine": 73,
+      "line": 72,
+      "endLine": 75,
       "underlyingType": "struct{Line int`json:\"line\"`;Column int`json:\"column\"`;}",
       "members": [
         {
           "name": "Column",
           "kind": "property",
-          "line": 72,
-          "endLine": 72,
+          "line": 74,
+          "endLine": 74,
           "result": "int",
           "structTag": {
             "value": "json:\"column\""
@@ -736,8 +756,8 @@
         {
           "name": "Line",
           "kind": "property",
-          "line": 71,
-          "endLine": 71,
+          "line": 73,
+          "endLine": 73,
           "result": "int",
           "structTag": {
             "value": "json:\"line\""
@@ -749,15 +769,15 @@
       "name": "GritRange",
       "kind": "struct",
       "file": "api/grit.go",
-      "line": 77,
-      "endLine": 82,
+      "line": 79,
+      "endLine": 84,
       "underlyingType": "struct{StartByte int`json:\"startByte\"`;EndByte int`json:\"endByte\"`;Start GritPosition`json:\"start\"`;End GritPosition`json:\"end\"`;}",
       "members": [
         {
           "name": "End",
           "kind": "property",
-          "line": 81,
-          "endLine": 81,
+          "line": 83,
+          "endLine": 83,
           "result": "GritPosition",
           "structTag": {
             "value": "json:\"end\""
@@ -766,8 +786,8 @@
         {
           "name": "EndByte",
           "kind": "property",
-          "line": 79,
-          "endLine": 79,
+          "line": 81,
+          "endLine": 81,
           "result": "int",
           "structTag": {
             "value": "json:\"endByte\""
@@ -776,8 +796,8 @@
         {
           "name": "Start",
           "kind": "property",
-          "line": 80,
-          "endLine": 80,
+          "line": 82,
+          "endLine": 82,
           "result": "GritPosition",
           "structTag": {
             "value": "json:\"start\""
@@ -786,8 +806,8 @@
         {
           "name": "StartByte",
           "kind": "property",
-          "line": 78,
-          "endLine": 78,
+          "line": 80,
+          "endLine": 80,
           "result": "int",
           "structTag": {
             "value": "json:\"startByte\""
@@ -799,15 +819,15 @@
       "name": "GritRequest",
       "kind": "struct",
       "file": "api/grit.go",
-      "line": 36,
-      "endLine": 48,
+      "line": 38,
+      "endLine": 50,
       "underlyingType": "struct{Query string`json:\"query\"`;Compatibility string`json:\"compatibility\"`;PatternID string`json:\"patternId,omitempty\"`;Message string`json:\"message,omitempty\"`;Globs[]string`json:\"globs,omitempty\"`;ExcludeGlobs[]string`json:\"excludeGlobs,omitempty\"`;Repositories[]string`json:\"repositories,omitempty\"`;ExcludeRepositories[]string`json:\"excludeRepositories,omitempty\"`;Skip*int`json:\"skip,omitempty\"`;Limit*int`json:\"limit,omitempty\"`;Limits*GritLimits`json:\"limits,omitempty\"`;}",
       "members": [
         {
           "name": "Compatibility",
           "kind": "property",
-          "line": 38,
-          "endLine": 38,
+          "line": 40,
+          "endLine": 40,
           "result": "string",
           "structTag": {
             "value": "json:\"compatibility\""
@@ -816,8 +836,8 @@
         {
           "name": "ExcludeGlobs",
           "kind": "property",
-          "line": 42,
-          "endLine": 42,
+          "line": 44,
+          "endLine": 44,
           "result": "[]string",
           "structTag": {
             "value": "json:\"excludeGlobs,omitempty\""
@@ -826,8 +846,8 @@
         {
           "name": "ExcludeRepositories",
           "kind": "property",
-          "line": 44,
-          "endLine": 44,
+          "line": 46,
+          "endLine": 46,
           "result": "[]string",
           "structTag": {
             "value": "json:\"excludeRepositories,omitempty\""
@@ -836,8 +856,8 @@
         {
           "name": "Globs",
           "kind": "property",
-          "line": 41,
-          "endLine": 41,
+          "line": 43,
+          "endLine": 43,
           "result": "[]string",
           "structTag": {
             "value": "json:\"globs,omitempty\""
@@ -846,8 +866,8 @@
         {
           "name": "Limit",
           "kind": "property",
-          "line": 46,
-          "endLine": 46,
+          "line": 48,
+          "endLine": 48,
           "result": "*int",
           "structTag": {
             "value": "json:\"limit,omitempty\""
@@ -856,8 +876,8 @@
         {
           "name": "Limits",
           "kind": "property",
-          "line": 47,
-          "endLine": 47,
+          "line": 49,
+          "endLine": 49,
           "result": "*GritLimits",
           "structTag": {
             "value": "json:\"limits,omitempty\""
@@ -866,8 +886,8 @@
         {
           "name": "Message",
           "kind": "property",
-          "line": 40,
-          "endLine": 40,
+          "line": 42,
+          "endLine": 42,
           "result": "string",
           "structTag": {
             "value": "json:\"message,omitempty\""
@@ -876,8 +896,8 @@
         {
           "name": "PatternID",
           "kind": "property",
-          "line": 39,
-          "endLine": 39,
+          "line": 41,
+          "endLine": 41,
           "result": "string",
           "structTag": {
             "value": "json:\"patternId,omitempty\""
@@ -886,8 +906,8 @@
         {
           "name": "Query",
           "kind": "property",
-          "line": 37,
-          "endLine": 37,
+          "line": 39,
+          "endLine": 39,
           "result": "string",
           "structTag": {
             "value": "json:\"query\""
@@ -896,8 +916,8 @@
         {
           "name": "Repositories",
           "kind": "property",
-          "line": 43,
-          "endLine": 43,
+          "line": 45,
+          "endLine": 45,
           "result": "[]string",
           "structTag": {
             "value": "json:\"repositories,omitempty\""
@@ -906,8 +926,8 @@
         {
           "name": "Skip",
           "kind": "property",
-          "line": 45,
-          "endLine": 45,
+          "line": 47,
+          "endLine": 47,
           "result": "*int",
           "structTag": {
             "value": "json:\"skip,omitempty\""
@@ -919,15 +939,15 @@
       "name": "GritResponse",
       "kind": "struct",
       "file": "api/grit.go",
-      "line": 175,
-      "endLine": 183,
+      "line": 179,
+      "endLine": 187,
       "underlyingType": "struct{Metadata GritMetadata`json:\"metadata\"`;Findings[]GritFinding`json:\"findings\"`;Diagnostics[]GritDiagnostic`json:\"diagnostics\"`;Truncations[]GritTruncation`json:\"truncations\"`;Statistics GritStatistics`json:\"statistics\"`;ShardErrors[]string`json:\"shardErrors\"`;Total int`json:\"total\"`;}",
       "members": [
         {
           "name": "Diagnostics",
           "kind": "property",
-          "line": 178,
-          "endLine": 178,
+          "line": 182,
+          "endLine": 182,
           "result": "[]GritDiagnostic",
           "structTag": {
             "value": "json:\"diagnostics\""
@@ -936,8 +956,8 @@
         {
           "name": "Findings",
           "kind": "property",
-          "line": 177,
-          "endLine": 177,
+          "line": 181,
+          "endLine": 181,
           "result": "[]GritFinding",
           "structTag": {
             "value": "json:\"findings\""
@@ -946,8 +966,8 @@
         {
           "name": "Metadata",
           "kind": "property",
-          "line": 176,
-          "endLine": 176,
+          "line": 180,
+          "endLine": 180,
           "result": "GritMetadata",
           "structTag": {
             "value": "json:\"metadata\""
@@ -956,8 +976,8 @@
         {
           "name": "ShardErrors",
           "kind": "property",
-          "line": 181,
-          "endLine": 181,
+          "line": 185,
+          "endLine": 185,
           "result": "[]string",
           "structTag": {
             "value": "json:\"shardErrors\""
@@ -966,8 +986,8 @@
         {
           "name": "Statistics",
           "kind": "property",
-          "line": 180,
-          "endLine": 180,
+          "line": 184,
+          "endLine": 184,
           "result": "GritStatistics",
           "structTag": {
             "value": "json:\"statistics\""
@@ -976,8 +996,8 @@
         {
           "name": "Total",
           "kind": "property",
-          "line": 182,
-          "endLine": 182,
+          "line": 186,
+          "endLine": 186,
           "result": "int",
           "structTag": {
             "value": "json:\"total\""
@@ -986,8 +1006,8 @@
         {
           "name": "Truncations",
           "kind": "property",
-          "line": 179,
-          "endLine": 179,
+          "line": 183,
+          "endLine": 183,
           "result": "[]GritTruncation",
           "structTag": {
             "value": "json:\"truncations\""
@@ -999,15 +1019,15 @@
       "name": "GritStatistics",
       "kind": "struct",
       "file": "api/grit.go",
-      "line": 163,
-      "endLine": 171,
+      "line": 167,
+      "endLine": 175,
       "underlyingType": "struct{Candidates int`json:\"candidates\"`;Eligible int`json:\"eligible\"`;Evaluated int`json:\"evaluated\"`;BytesRead int64`json:\"bytesRead\"`;SkippedLanguage int`json:\"skippedLanguage\"`;SkippedGlob int`json:\"skippedGlob\"`;SkippedBinary int`json:\"skippedBinary\"`;}",
       "members": [
         {
           "name": "BytesRead",
           "kind": "property",
-          "line": 167,
-          "endLine": 167,
+          "line": 171,
+          "endLine": 171,
           "result": "int64",
           "structTag": {
             "value": "json:\"bytesRead\""
@@ -1016,8 +1036,8 @@
         {
           "name": "Candidates",
           "kind": "property",
-          "line": 164,
-          "endLine": 164,
+          "line": 168,
+          "endLine": 168,
           "result": "int",
           "structTag": {
             "value": "json:\"candidates\""
@@ -1026,8 +1046,8 @@
         {
           "name": "Eligible",
           "kind": "property",
-          "line": 165,
-          "endLine": 165,
+          "line": 169,
+          "endLine": 169,
           "result": "int",
           "structTag": {
             "value": "json:\"eligible\""
@@ -1036,8 +1056,8 @@
         {
           "name": "Evaluated",
           "kind": "property",
-          "line": 166,
-          "endLine": 166,
+          "line": 170,
+          "endLine": 170,
           "result": "int",
           "structTag": {
             "value": "json:\"evaluated\""
@@ -1046,8 +1066,8 @@
         {
           "name": "SkippedBinary",
           "kind": "property",
-          "line": 170,
-          "endLine": 170,
+          "line": 174,
+          "endLine": 174,
           "result": "int",
           "structTag": {
             "value": "json:\"skippedBinary\""
@@ -1056,8 +1076,8 @@
         {
           "name": "SkippedGlob",
           "kind": "property",
-          "line": 169,
-          "endLine": 169,
+          "line": 173,
+          "endLine": 173,
           "result": "int",
           "structTag": {
             "value": "json:\"skippedGlob\""
@@ -1066,8 +1086,8 @@
         {
           "name": "SkippedLanguage",
           "kind": "property",
-          "line": 168,
-          "endLine": 168,
+          "line": 172,
+          "endLine": 172,
           "result": "int",
           "structTag": {
             "value": "json:\"skippedLanguage\""
@@ -1079,15 +1099,15 @@
       "name": "GritStructuralNode",
       "kind": "struct",
       "file": "api/grit.go",
-      "line": 86,
-      "endLine": 91,
+      "line": 88,
+      "endLine": 93,
       "underlyingType": "struct{NodeKind string`json:\"nodeKind,omitempty\"`;TokenKind string`json:\"tokenKind,omitempty\"`;Lexeme string`json:\"lexeme,omitempty\"`;Children[]GritStructuralNode`json:\"children,omitempty\"`;}",
       "members": [
         {
           "name": "Children",
           "kind": "property",
-          "line": 90,
-          "endLine": 90,
+          "line": 92,
+          "endLine": 92,
           "result": "[]GritStructuralNode",
           "structTag": {
             "value": "json:\"children,omitempty\""
@@ -1096,8 +1116,8 @@
         {
           "name": "Lexeme",
           "kind": "property",
-          "line": 89,
-          "endLine": 89,
+          "line": 91,
+          "endLine": 91,
           "result": "string",
           "structTag": {
             "value": "json:\"lexeme,omitempty\""
@@ -1106,8 +1126,8 @@
         {
           "name": "NodeKind",
           "kind": "property",
-          "line": 87,
-          "endLine": 87,
+          "line": 89,
+          "endLine": 89,
           "result": "string",
           "structTag": {
             "value": "json:\"nodeKind,omitempty\""
@@ -1116,8 +1136,8 @@
         {
           "name": "TokenKind",
           "kind": "property",
-          "line": 88,
-          "endLine": 88,
+          "line": 90,
+          "endLine": 90,
           "result": "string",
           "structTag": {
             "value": "json:\"tokenKind,omitempty\""
@@ -1129,15 +1149,15 @@
       "name": "GritTruncation",
       "kind": "struct",
       "file": "api/grit.go",
-      "line": 132,
-      "endLine": 138,
+      "line": 134,
+      "endLine": 140,
       "underlyingType": "struct{Repo string`json:\"repo,omitempty\"`;Shard string`json:\"shard,omitempty\"`;Reason string`json:\"reason\"`;Limit int64`json:\"limit\"`;Skipped int`json:\"skipped\"`;}",
       "members": [
         {
           "name": "Limit",
           "kind": "property",
-          "line": 136,
-          "endLine": 136,
+          "line": 138,
+          "endLine": 138,
           "result": "int64",
           "structTag": {
             "value": "json:\"limit\""
@@ -1146,8 +1166,8 @@
         {
           "name": "Reason",
           "kind": "property",
-          "line": 135,
-          "endLine": 135,
+          "line": 137,
+          "endLine": 137,
           "result": "string",
           "structTag": {
             "value": "json:\"reason\""
@@ -1156,8 +1176,8 @@
         {
           "name": "Repo",
           "kind": "property",
-          "line": 133,
-          "endLine": 133,
+          "line": 135,
+          "endLine": 135,
           "result": "string",
           "structTag": {
             "value": "json:\"repo,omitempty\""
@@ -1166,8 +1186,8 @@
         {
           "name": "Shard",
           "kind": "property",
-          "line": 134,
-          "endLine": 134,
+          "line": 136,
+          "endLine": 136,
           "result": "string",
           "structTag": {
             "value": "json:\"shard,omitempty\""
@@ -1176,8 +1196,8 @@
         {
           "name": "Skipped",
           "kind": "property",
-          "line": 137,
-          "endLine": 137,
+          "line": 139,
+          "endLine": 139,
           "result": "int",
           "structTag": {
             "value": "json:\"skipped\""

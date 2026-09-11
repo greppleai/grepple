@@ -15,6 +15,7 @@ type MatchTarget struct {
 	parent     parser.Node
 	viewNode   parser.ViewNode
 	viewParent parser.ViewNode
+	language   string
 	kind       string
 	field      string
 	childStart int
@@ -24,20 +25,22 @@ type MatchTarget struct {
 
 // NodeTarget constructs a target for an ordinary template (including a complete
 // source_file template).
-func NodeTarget(node parser.Node) MatchTarget { return MatchTarget{node: node} }
+func NodeTarget(node parser.Node) MatchTarget {
+	return MatchTarget{node: node, language: node.Language()}
+}
 
 // SequenceTarget constructs an authored statement/declaration sequence from the
 // half-open direct-child span [childStart, childEnd) of parent. Invalid indexes
 // and parent/kind combinations are rejected during matching.
 func SequenceTarget(kind string, parent parser.Node, childStart, childEnd int) MatchTarget {
-	return MatchTarget{kind: kind, parent: parent, childStart: childStart, childEnd: childEnd, sequence: true}
+	return MatchTarget{language: parent.Language(), kind: kind, parent: parent, childStart: childStart, childEnd: childEnd, sequence: true}
 }
 
 // RepeatedSequenceTarget constructs a grammar-generic list target. The parent
-// kind and field name must identify a repeated position in the pinned Go grammar;
+// kind and field name must identify a repeated position in the node's pinned grammar;
 // the span may contain only that position's named elements and intervening syntax.
 func RepeatedSequenceTarget(parent parser.Node, field string, childStart, childEnd int) MatchTarget {
-	return MatchTarget{kind: "list_sequence", field: field, parent: parent, childStart: childStart, childEnd: childEnd, sequence: true}
+	return MatchTarget{language: parent.Language(), kind: "list_sequence", field: field, parent: parent, childStart: childStart, childEnd: childEnd, sequence: true}
 }
 
 func repeatedSequenceTarget(parent parser.Node, field string, childStart, childEnd int) MatchTarget {
@@ -45,15 +48,15 @@ func repeatedSequenceTarget(parent parser.Node, field string, childStart, childE
 }
 
 func viewNodeTarget(node parser.ViewNode) MatchTarget {
-	return MatchTarget{viewNode: node}
+	return MatchTarget{viewNode: node, language: node.Language()}
 }
 
 func viewSequenceTarget(kind string, parent parser.ViewNode, childStart, childEnd int) MatchTarget {
-	return MatchTarget{kind: kind, viewParent: parent, childStart: childStart, childEnd: childEnd, sequence: true}
+	return MatchTarget{language: parent.Language(), kind: kind, viewParent: parent, childStart: childStart, childEnd: childEnd, sequence: true}
 }
 
 func viewRepeatedSequenceTarget(parent parser.ViewNode, field string, childStart, childEnd int) MatchTarget {
-	return MatchTarget{kind: "list_sequence", field: field, viewParent: parent, childStart: childStart, childEnd: childEnd, sequence: true}
+	return MatchTarget{language: parent.Language(), kind: "list_sequence", field: field, viewParent: parent, childStart: childStart, childEnd: childEnd, sequence: true}
 }
 
 type frozenMatchTarget struct {
@@ -321,12 +324,12 @@ func matchFrozenRootSlot(t Template, target frozenMatchTarget, state map[Variabl
 
 func rootSlotTargetAccepted(t Template, target frozenMatchTarget) bool {
 	if t.rootSlot.cardinality != SlotMany {
-		return !target.sequence && rootCategoryAccepts(t.context, target.node.Kind())
+		return !target.sequence && rootCategoryAccepts(t.language, t.context, target.node.Kind())
 	}
 	if !target.sequence || target.kind != "list_sequence" && target.kind != sequenceKindForContext(t.context) {
 		return false
 	}
-	return sequenceCategoryAccepts(t.context, listElements(target.children, target.field))
+	return sequenceCategoryAccepts(t.language, t.context, listElements(target.children, target.field))
 }
 
 func matchFrozenSequence(t Template, target frozenMatchTarget, state map[VariableID]*bindingValue, budget *evaluationBudget) (map[VariableID]*bindingValue, parser.Range, bool) {
@@ -382,7 +385,7 @@ func validSequenceTarget(target MatchTarget, parent parser.SyntaxNode, children 
 	}
 	found := false
 	for _, child := range children[target.childStart:target.childEnd] {
-		if child.IsNamed() && child.FieldName() == target.field && repeatedGrammarPositionKinds(parent.Kind(), target.field, children) {
+		if child.IsNamed() && child.FieldName() == target.field && repeatedGrammarPositionKinds(target.language, parent.Kind(), target.field, children) {
 			found = true
 			continue
 		}
@@ -407,8 +410,8 @@ func canonicalSequenceChildren(pattern []templateChild, children []parser.Syntax
 }
 
 func sequenceParent(kind, parent string) bool {
-	return kind == "statement_sequence" && parent == "statement_list" ||
-		kind == "declaration_sequence" && parent == "source_file"
+	return kind == "statement_sequence" && (parent == "statement_list" || parent == "statement_block") ||
+		kind == "declaration_sequence" && (parent == "source_file" || parent == "program")
 }
 
 func sequenceAnchor(parent parser.Range, children []parser.SyntaxNode, index int) parser.Range {
@@ -475,31 +478,8 @@ func sequenceKindForContext(context SnippetContext) string {
 	}
 }
 
-// These sets are the transitive named subtype sets from tree-sitter-go v0.25.0
-// node-types.json. Keeping them pinned beside repeatedGoFields makes root-slot
-// category checks deterministic and avoids reparsing on the matching hot path.
-var goExpressionKinds = kindSet(
-	"binary_expression", "call_expression", "composite_literal", "false", "float_literal",
-	"func_literal", "identifier", "imaginary_literal", "index_expression", "int_literal",
-	"interpreted_string_literal", "iota", "nil", "parenthesized_expression", "raw_string_literal",
-	"rune_literal", "selector_expression", "slice_expression", "true", "type_assertion_expression",
-	"type_conversion_expression", "type_instantiation_expression", "unary_expression",
-)
-
-var goTypeKinds = kindSet(
-	"array_type", "channel_type", "function_type", "generic_type", "interface_type", "map_type",
-	"negated_type", "pointer_type", "qualified_type", "slice_type", "struct_type", "type_identifier",
-	"parenthesized_type",
-)
-
-var goStatementKinds = kindSet(
-	"assignment_statement", "dec_statement", "expression_statement", "inc_statement", "send_statement",
-	"short_var_declaration", "block", "break_statement", "continue_statement", "defer_statement",
-	"empty_statement", "expression_switch_statement", "fallthrough_statement", "for_statement",
-	"go_statement", "goto_statement", "if_statement", "labeled_statement", "return_statement",
-	"select_statement", "type_switch_statement", "var_declaration", "const_declaration", "type_declaration",
-)
-
+// Go declarations do not have one shared grammar supertype, so this adapter-owned
+// set complements generated expression, type, and statement subtype metadata.
 var goDeclarationKinds = kindSet(
 	"import_declaration", "const_declaration", "type_declaration", "var_declaration",
 	"function_declaration", "method_declaration",
@@ -513,33 +493,39 @@ func kindSet(kinds ...string) map[string]struct{} {
 	return out
 }
 
-func rootCategoryAccepts(context SnippetContext, kind string) bool {
-	var set map[string]struct{}
+func rootCategoryAccepts(language string, context SnippetContext, kind string) bool {
+	if language == "" {
+		language = defaultTargetLanguage
+	}
+	adapter, ok := targetLanguageByID(language)
+	return ok && adapter.rootCategory(context, kind)
+}
+
+func goRootCategoryAccepts(context SnippetContext, kind string) bool {
 	switch context {
 	case SnippetContextExpression:
-		set = goExpressionKinds
+		return parser.GrammarSubtype(defaultTargetLanguage, "_expression", kind)
 	case SnippetContextType:
-		set = goTypeKinds
+		return parser.GrammarSubtype(defaultTargetLanguage, "_type", kind)
 	case SnippetContextStatement, SnippetContextStatementList:
-		set = goStatementKinds
+		return parser.GrammarSubtype(defaultTargetLanguage, "_statement", kind)
 	case SnippetContextDeclaration, SnippetContextDeclarationList:
-		set = goDeclarationKinds
+		_, ok := goDeclarationKinds[kind]
+		return ok
 	case SnippetContextFile:
 		return kind == "source_file"
 	default:
 		return false
 	}
-	_, ok := set[kind]
-	return ok
 }
 
-func sequenceCategoryAccepts(context SnippetContext, nodes []parser.SyntaxNode) bool {
+func sequenceCategoryAccepts(language string, context SnippetContext, nodes []parser.SyntaxNode) bool {
 	significant := significantNodes(nodes)
 	named := 0
 	for _, node := range significant {
 		if node.IsNamed() {
 			named++
-			if !rootCategoryAccepts(context, node.Kind()) {
+			if !rootCategoryAccepts(language, context, node.Kind()) {
 				return false
 			}
 		}

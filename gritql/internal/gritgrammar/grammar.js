@@ -593,6 +593,8 @@ module.exports = grammar({
         'csharp',
         'python',
         'go',
+        'typescript',
+        'tsx',
         'markdown',
         'rust',
         'ruby',

@@ -41,6 +41,9 @@ func TestRenderIsDeterministic(t *testing.T) {
 				"a": {"value": false},
 			},
 			Children: map[string]bool{"z": true, "a": false},
+			Subtypes: map[string]map[string]bool{
+				"expression": {"z": true, "a": true},
+			},
 		},
 	}
 	first, err := render(metadata)
@@ -53,6 +56,18 @@ func TestRenderIsDeterministic(t *testing.T) {
 	}
 	if string(first) != string(second) {
 		t.Fatal("metadata rendering is not deterministic")
+	}
+}
+func TestTransitiveSubtypeClosure(t *testing.T) {
+	closure := transitiveSubtypeClosure(map[string]map[string]bool{
+		"expression":         {"primary_expression": true},
+		"primary_expression": {"identifier": true},
+	})
+	if !closure["expression"]["primary_expression"] || !closure["expression"]["identifier"] {
+		t.Fatalf("closure=%v", closure)
+	}
+	if closure["primary_expression"]["expression"] {
+		t.Fatalf("closure introduced reverse edge: %v", closure)
 	}
 }
 

@@ -68,6 +68,26 @@ func TestGrammarCardinalityComesFromGeneratedMetadata(t *testing.T) {
 		t.Fatalf("unknown cardinality=%d", got)
 	}
 }
+func TestGrammarSubtypeComesFromGeneratedMetadata(t *testing.T) {
+	tests := []struct {
+		language, supertype, kind string
+		want                      bool
+	}{
+		{language: "go", supertype: "_expression", kind: "identifier", want: true},
+		{language: "go", supertype: "_statement", kind: "assignment_statement", want: true},
+		{language: "go", supertype: "_type", kind: "pointer_type", want: true},
+		{language: "typescript", supertype: "expression", kind: "call_expression", want: true},
+		{language: "typescript", supertype: "expression", kind: "identifier", want: true},
+		{language: "tsx", supertype: "expression", kind: "jsx_element", want: true},
+		{language: "typescript", supertype: "declaration", kind: "interface_declaration", want: true},
+		{language: "typescript", supertype: "expression", kind: "interface_declaration", want: false},
+	}
+	for _, test := range tests {
+		if got := GrammarSubtype(test.language, test.supertype, test.kind); got != test.want {
+			t.Fatalf("GrammarSubtype(%q, %q, %q)=%v, want %v", test.language, test.supertype, test.kind, got, test.want)
+		}
+	}
+}
 
 func TestNewLanguageOutlines(t *testing.T) {
 	tests := []struct {

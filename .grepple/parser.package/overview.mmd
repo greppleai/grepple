@@ -2,9 +2,9 @@ classDiagram
     %% grepple:package-default github.com/greppleai/grepple/parser
     %% grepple:language-default go
     direction LR
-    note "Package parser provides application source classification and structural parsing. | package github.com/greppleai/grepple/parser | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=28, declarations=46, exportedTypes=18, internalTypes=28, members=305, exportedFunctions=17, fiberRoutes=0, relations=128"
+    note "Package parser provides application source classification and structural parsing. | package github.com/greppleai/grepple/parser | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=28, declarations=46, exportedTypes=18, internalTypes=28, members=308, exportedFunctions=18, fiberRoutes=0, relations=128"
     namespace interfaces {
-        class languageAdapter["languageAdapter · parser/language.go:63-68"] {
+        class languageAdapter["languageAdapter · parser/language.go:64-69"] {
             +Grammar(): *sitter.Language
             +ID(): string
             +Outline(*sitter.Node, string): []Symbol
@@ -58,9 +58,9 @@ classDiagram
         <<struct>> SyntaxNode
         class ViewNode["ViewNode · parser/view.go:35-39"]
         <<struct>> ViewNode
-        class WalkOptions["WalkOptions · parser/view.go:278-281"]
+        class WalkOptions["WalkOptions · parser/view.go:286-289"]
         <<struct>> WalkOptions
-        class WalkResult["WalkResult · parser/view.go:284-287"]
+        class WalkResult["WalkResult · parser/view.go:292-295"]
         <<struct>> WalkResult
     }
     namespace internal_types {
@@ -82,7 +82,7 @@ classDiagram
         <<struct>> javaScriptLanguage
         class kotlinLanguage["kotlinLanguage · parser/language_kotlin.go:10-13"]
         <<struct>> kotlinLanguage
-        class languageGeneratedMetadata["languageGeneratedMetadata · parser/language.go:29-33"]
+        class languageGeneratedMetadata["languageGeneratedMetadata · parser/language.go:29-34"]
         <<struct>> languageGeneratedMetadata
         class matchLines["matchLines · parser/tree_sitter.go:98-101"]
         <<struct>> matchLines
@@ -108,15 +108,15 @@ classDiagram
         <<struct>> rustLanguage
         class shellLanguage["shellLanguage · parser/language_shell.go:8-11"]
         <<struct>> shellLanguage
-        class stringSet["stringSet = map&#91;string&#93;struct&#123;&#125; · parser/language.go:35"]
+        class stringSet["stringSet = map&#91;string&#93;struct&#123;&#125; · parser/language.go:36"]
         <<type>> stringSet
-        class structureRules["structureRules · parser/language.go:50-61"]
+        class structureRules["structureRules · parser/language.go:51-62"]
         <<struct>> structureRules
         class typeScriptLanguage["typeScriptLanguage · parser/language_typescript.go:21-25"]
         <<struct>> typeScriptLanguage
         class viewSnapshotKey["viewSnapshotKey · parser/view.go:28-31"]
         <<struct>> viewSnapshotKey
-        class viewWalkItem["viewWalkItem · parser/view.go:300-303"]
+        class viewWalkItem["viewWalkItem · parser/view.go:308-311"]
         <<struct>> viewWalkItem
     }
     namespace operations {
@@ -128,7 +128,7 @@ classDiagram
             +BuildSegments(string, string, map[int]bool, int): []Segment
         }
         <<function>> BuildSegments
-        class CapabilitiesForLanguage["CapabilitiesForLanguage · parser/language.go:110-117"] {
+        class CapabilitiesForLanguage["CapabilitiesForLanguage · parser/language.go:111-118"] {
             +CapabilitiesForLanguage(string): tuple~LanguageCapabilities&#44;bool~
         }
         <<function>> CapabilitiesForLanguage
@@ -136,14 +136,18 @@ classDiagram
             +DeclarationRangeAt(string, string, int): tuple~int&#44;int&#44;bool~
         }
         <<function>> DeclarationRangeAt
-        class GrammarChildrenCardinality["GrammarChildrenCardinality · parser/language.go:140-146"] {
+        class GrammarChildrenCardinality["GrammarChildrenCardinality · parser/language.go:141-147"] {
             +GrammarChildrenCardinality(string, string): GrammarCardinality
         }
         <<function>> GrammarChildrenCardinality
-        class GrammarFieldCardinality["GrammarFieldCardinality · parser/language.go:131-137"] {
+        class GrammarFieldCardinality["GrammarFieldCardinality · parser/language.go:132-138"] {
             +GrammarFieldCardinality(string, string, string): GrammarCardinality
         }
         <<function>> GrammarFieldCardinality
+        class GrammarSubtype["GrammarSubtype · parser/language.go:151-154"] {
+            +GrammarSubtype(string, string, string): bool
+        }
+        <<function>> GrammarSubtype
         class LanguageFor["LanguageFor · parser/content.go:10-25"] {
             +LanguageFor(string): string
         }
@@ -172,19 +176,19 @@ classDiagram
             +ParseDocument(string, string): tuple~*Document&#44;error~
         }
         <<function>> ParseDocument
-        class SupportedLanguages["SupportedLanguages · parser/language.go:101-107"] {
+        class SupportedLanguages["SupportedLanguages · parser/language.go:102-108"] {
             +SupportedLanguages(): []LanguageCapabilities
         }
         <<function>> SupportedLanguages
-        class WalkNamed["WalkNamed · parser/document.go:471-486"] {
+        class WalkNamed["WalkNamed · parser/document.go:478-493"] {
             +WalkNamed(Node, func&#40;Node&#41;)
         }
         <<function>> WalkNamed
-        class WalkNamedView["WalkNamedView · parser/view.go:290-298"] {
+        class WalkNamedView["WalkNamedView · parser/view.go:298-306"] {
             +WalkNamedView(ViewNode, func&#40;ViewNode&#41;)
         }
         <<function>> WalkNamedView
-        class WalkNamedViewBounded["WalkNamedViewBounded · parser/view.go:307-332"] {
+        class WalkNamedViewBounded["WalkNamedViewBounded · parser/view.go:315-340"] {
             +WalkNamedViewBounded(ViewNode, WalkOptions, func&#40;ViewNode&#44;int&#41;bool): WalkResult
         }
         <<function>> WalkNamedViewBounded

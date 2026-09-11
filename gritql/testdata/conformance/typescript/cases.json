@@ -1,0 +1,50 @@
+[
+  {
+    "name": "typescript-call-list-binding",
+    "language": "typescript",
+    "query": "language typescript\n`target($args)`",
+    "path": "src/app.ts",
+    "source": "const result = target(one, two);\n",
+    "findings": ["target(one, two)"]
+  },
+  {
+    "name": "typescript-expression-type-ambiguity",
+    "language": "typescript",
+    "query": "language typescript\n`Promise<$type>`",
+    "path": "src/types.mts",
+    "source": "type Result = Promise<string>;\nconst factory = Promise<Factory>;\n",
+    "findings": ["Promise<string>", "Promise<Factory>"]
+  },
+  {
+    "name": "typescript-import-source-role",
+    "language": "typescript",
+    "query": "language typescript\n`import {value} from $source;`",
+    "path": "src/imports.cts",
+    "source": "import {value} from \"pkg\";\n",
+    "findings": ["import {value} from \"pkg\";"]
+  },
+  {
+    "name": "typescript-statement-sequence",
+    "language": "typescript",
+    "query": "language typescript\n`first(); second();`",
+    "path": "src/app.ts",
+    "source": "function run() { first(); second(); third(); }\n",
+    "findings": ["first(); second();"]
+  },
+  {
+    "name": "typescript-shared-query-algebra",
+    "language": "typescript",
+    "query": "language typescript\nand { `pair($value, $value)`, contains `foo` }",
+    "path": "src/app.ts",
+    "source": "const yes = pair(foo, foo);\nconst no = pair(foo, bar);\n",
+    "findings": ["pair(foo, foo)"]
+  },
+  {
+    "name": "tsx-jsx-expression",
+    "language": "tsx",
+    "query": "language tsx\n`<Button value={$value} />`",
+    "path": "src/view.tsx",
+    "source": "const view = <Button value={item} />;\n",
+    "findings": ["<Button value={item} />"]
+  }
+]

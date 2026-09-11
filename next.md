@@ -197,20 +197,24 @@ Reduce repeated parsing and language knowledge across extraction, navigation, te
    - [x] Add bounded/depth-aware walking and a callback-scoped `DocumentView`. Extraction, hooks, and GritQL evaluation now hold one read lock per document instead of one per node operation.
    - [x] Cache immutable subtree snapshots within a document view, so matching overlapping candidates reuses descendants rather than rebuilding every subtree. A repository-wide `exec.Command($args)` dogfood scan fell from roughly 8.8 seconds to 1.5 seconds elapsed on the same checkout.
    - [x] Keep feature-specific filtering such as GritQL trivia normalization and navigation declaration rules outside generic parser helpers.
-4. Unify source discovery and acquisition where text and structural search currently overlap.
+4. [x] Introduce GritQL language adapters over parser capabilities.
+   - [x] Keep the compiler, query algebra, bindings, matching, constraints, transactional findings, and diagnostics in `gritql`, while isolating target parsing and root categories behind adapters.
+   - [x] Preserve `gritql-go-v1` and add the `gritql-v1` compatibility contract with focused TypeScript and TSX expression, type, statement, declaration, sequence, JSX, metavariable, and repeated-list matching.
+   - [x] Generate grammar subtype relationships alongside cardinality, so adapters do not grow handwritten expression/type/statement kind tables.
+   - Follow-up completeness: expand TypeScript/TSX grammar-local placeholder roles beyond the implemented identifier-like, import-source, and whole-declaration positions when a target grammar position cannot be represented safely by those forms.
+   - [x] Add dedicated TypeScript/TSX conformance fixtures covering ambiguous expression/type syntax, imports, sequences, JSX, query algebra, and binding equality.
+   - [x] Group mixed-language saved-rule batches by target language while reading and parsing each eligible source only once for the rules matching that source language.
+   - [x] Reject unsupported languages and compatibility mismatches explicitly; no target uses a fallback parser.
+5. Unify source discovery and acquisition where text and structural search currently overlap.
    - Share repository-relative path normalization, ignore handling, glob filtering, language detection, bounded reads, binary detection, deterministic ordering, and cancellation.
    - Avoid the current anchored structural-search path reading files once for text prefiltering and again for Grit evaluation.
    - Keep evaluation orchestration reusable by local CLI and backend callers; introduce a lower-level source/candidate package only if it produces a cleaner dependency graph than making `gritql` depend on `search`.
-5. Make parser documents the shared cache boundary.
+6. Make parser documents the shared cache boundary.
    - Allow a document to be backed by a live Tree-sitter tree or the production packed read-only CST through the same lightweight node accessor.
    - Parse or restore each file once, then derive outlines, navigation graphs, extraction models, and one or more GritQL rule evaluations from that document.
    - Keep repository-context resolution outside the path-neutral per-file cache.
-6. Introduce GritQL language adapters over parser capabilities.
-   - Keep the compiler, query algebra, bindings, matching, constraints, transactional findings, and diagnostics in `gritql`.
-   - Isolate Go snippet contexts and grammar-specific behavior behind an adapter so TypeScript/TSX can be added without duplicating the evaluator.
-   - Reject unsupported languages explicitly until their adapters and conformance fixtures are complete.
 
-Recommended implementation order: parser-backed extraction first, capability/schema exposure second, shared acquisition third, cached document backends fourth, and additional GritQL language adapters last.
+Recommended implementation order: complete targeted TypeScript/TSX placeholder-role gaps as conformance cases expose them, then shared acquisition, then cached document backends. Exercising a second grammar before those lower layers stabilized prevented Go-only assumptions from becoming cache or acquisition contracts.
 
 Acceptance criteria:
 

@@ -72,6 +72,14 @@ func (n ViewNode) Valid() bool { return n.raw != nil && n.view.valid() }
 // IsValid is an alias for Valid.
 func (n ViewNode) IsValid() bool { return n.Valid() }
 
+// Language returns the node document's canonical language identifier.
+func (n ViewNode) Language() string {
+	if !n.Valid() {
+		return ""
+	}
+	return n.view.doc.language
+}
+
 // Kind returns the grammar node kind.
 func (n ViewNode) Kind() string {
 	if !n.Valid() {

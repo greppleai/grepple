@@ -20,12 +20,12 @@
     "declarations": 46,
     "exportedTypes": 18,
     "internalTypes": 28,
-    "members": 305,
-    "exportedFunctions": 17,
+    "members": 308,
+    "exportedFunctions": 18,
     "fiberRoutes": 0,
     "relations": 128
   },
-  "semanticModelDigest": "sha256:8f85b90713d40dbe11de46dd50be70302a9e524034c5366e2a1b07ab74c23601",
+  "semanticModelDigest": "sha256:fb5028c295664b02bb6254e192cbfad22df74a55c301df15a92c06b4b793544b",
   "sourceFiles": [
     {
       "path": "parser/analyze.go"
@@ -182,8 +182,8 @@
         {
           "name": "nodeRangeLocked",
           "kind": "method",
-          "line": 530,
-          "endLine": 538,
+          "line": 537,
+          "endLine": 545,
           "parameters": [
             "*sitter.Node"
           ],
@@ -659,8 +659,8 @@
         {
           "name": "Child",
           "kind": "method",
-          "line": 398,
-          "endLine": 409,
+          "line": 405,
+          "endLine": 416,
           "parameters": [
             "int"
           ],
@@ -669,8 +669,8 @@
         {
           "name": "ChildByFieldName",
           "kind": "method",
-          "line": 489,
-          "endLine": 497,
+          "line": 496,
+          "endLine": 504,
           "parameters": [
             "string"
           ],
@@ -679,29 +679,29 @@
         {
           "name": "ChildCount",
           "kind": "method",
-          "line": 384,
-          "endLine": 388,
+          "line": 391,
+          "endLine": 395,
           "result": "int"
         },
         {
           "name": "Children",
           "kind": "method",
-          "line": 427,
-          "endLine": 444,
+          "line": 434,
+          "endLine": 451,
           "result": "[]Node"
         },
         {
           "name": "FieldName",
           "kind": "method",
-          "line": 501,
-          "endLine": 506,
+          "line": 508,
+          "endLine": 513,
           "result": "string"
         },
         {
           "name": "FieldNameForChild",
           "kind": "method",
-          "line": 509,
-          "endLine": 517,
+          "line": 516,
+          "endLine": 524,
           "parameters": [
             "int"
           ],
@@ -710,36 +710,36 @@
         {
           "name": "HasError",
           "kind": "method",
-          "line": 332,
-          "endLine": 336,
+          "line": 339,
+          "endLine": 343,
           "result": "bool"
         },
         {
           "name": "IsError",
-          "kind": "method",
-          "line": 318,
-          "endLine": 322,
-          "result": "bool"
-        },
-        {
-          "name": "IsExtra",
-          "kind": "method",
-          "line": 311,
-          "endLine": 315,
-          "result": "bool"
-        },
-        {
-          "name": "IsMissing",
           "kind": "method",
           "line": 325,
           "endLine": 329,
           "result": "bool"
         },
         {
+          "name": "IsExtra",
+          "kind": "method",
+          "line": 318,
+          "endLine": 322,
+          "result": "bool"
+        },
+        {
+          "name": "IsMissing",
+          "kind": "method",
+          "line": 332,
+          "endLine": 336,
+          "result": "bool"
+        },
+        {
           "name": "IsNamed",
           "kind": "method",
-          "line": 304,
-          "endLine": 308,
+          "line": 311,
+          "endLine": 315,
           "result": "bool"
         },
         {
@@ -752,6 +752,13 @@
         {
           "name": "Kind",
           "kind": "method",
+          "line": 304,
+          "endLine": 308,
+          "result": "string"
+        },
+        {
+          "name": "Language",
+          "kind": "method",
           "line": 297,
           "endLine": 301,
           "result": "string"
@@ -759,8 +766,8 @@
         {
           "name": "NamedChild",
           "kind": "method",
-          "line": 412,
-          "endLine": 423,
+          "line": 419,
+          "endLine": 430,
           "parameters": [
             "int"
           ],
@@ -769,29 +776,29 @@
         {
           "name": "NamedChildCount",
           "kind": "method",
-          "line": 391,
-          "endLine": 395,
+          "line": 398,
+          "endLine": 402,
           "result": "int"
         },
         {
           "name": "NamedChildren",
           "kind": "method",
-          "line": 447,
-          "endLine": 467,
+          "line": 454,
+          "endLine": 474,
           "result": "[]Node"
         },
         {
           "name": "Parent",
           "kind": "method",
-          "line": 373,
-          "endLine": 381,
+          "line": 380,
+          "endLine": 388,
           "result": "Node"
         },
         {
           "name": "Range",
           "kind": "method",
-          "line": 366,
-          "endLine": 370,
+          "line": 373,
+          "endLine": 377,
           "result": "Range"
         },
         {
@@ -804,22 +811,22 @@
         {
           "name": "Source",
           "kind": "method",
-          "line": 351,
-          "endLine": 351,
+          "line": 358,
+          "endLine": 358,
           "result": "string"
         },
         {
           "name": "Text",
           "kind": "method",
-          "line": 339,
-          "endLine": 348,
+          "line": 346,
+          "endLine": 355,
           "result": "string"
         },
         {
           "name": "TextRange",
           "kind": "method",
-          "line": 355,
-          "endLine": 363,
+          "line": 362,
+          "endLine": 370,
           "parameters": [
             "int",
             "int"
@@ -836,8 +843,8 @@
         {
           "name": "read",
           "kind": "method",
-          "line": 519,
-          "endLine": 528,
+          "line": 526,
+          "endLine": 535,
           "parameters": [
             "func()"
           ]
@@ -1238,8 +1245,8 @@
         {
           "name": "Child",
           "kind": "method",
-          "line": 154,
-          "endLine": 163,
+          "line": 162,
+          "endLine": 171,
           "parameters": [
             "int"
           ],
@@ -1248,8 +1255,8 @@
         {
           "name": "ChildByFieldName",
           "kind": "method",
-          "line": 209,
-          "endLine": 218,
+          "line": 217,
+          "endLine": 226,
           "parameters": [
             "string"
           ],
@@ -1258,29 +1265,29 @@
         {
           "name": "ChildCount",
           "kind": "method",
-          "line": 138,
-          "endLine": 143,
+          "line": 146,
+          "endLine": 151,
           "result": "int"
         },
         {
           "name": "Children",
           "kind": "method",
-          "line": 178,
-          "endLine": 194,
+          "line": 186,
+          "endLine": 202,
           "result": "[]ViewNode"
         },
         {
           "name": "FieldName",
           "kind": "method",
-          "line": 221,
-          "endLine": 226,
+          "line": 229,
+          "endLine": 234,
           "result": "string"
         },
         {
           "name": "FieldNameForChild",
           "kind": "method",
-          "line": 229,
-          "endLine": 234,
+          "line": 237,
+          "endLine": 242,
           "parameters": [
             "int"
           ],
@@ -1289,36 +1296,36 @@
         {
           "name": "HasError",
           "kind": "method",
-          "line": 96,
-          "endLine": 96,
+          "line": 104,
+          "endLine": 104,
           "result": "bool"
         },
         {
           "name": "IsError",
           "kind": "method",
-          "line": 90,
-          "endLine": 90,
+          "line": 98,
+          "endLine": 98,
           "result": "bool"
         },
         {
           "name": "IsExtra",
           "kind": "method",
-          "line": 87,
-          "endLine": 87,
+          "line": 95,
+          "endLine": 95,
           "result": "bool"
         },
         {
           "name": "IsMissing",
           "kind": "method",
-          "line": 93,
-          "endLine": 93,
+          "line": 101,
+          "endLine": 101,
           "result": "bool"
         },
         {
           "name": "IsNamed",
           "kind": "method",
-          "line": 84,
-          "endLine": 84,
+          "line": 92,
+          "endLine": 92,
           "result": "bool"
         },
         {
@@ -1331,6 +1338,13 @@
         {
           "name": "Kind",
           "kind": "method",
+          "line": 84,
+          "endLine": 89,
+          "result": "string"
+        },
+        {
+          "name": "Language",
+          "kind": "method",
           "line": 76,
           "endLine": 81,
           "result": "string"
@@ -1338,8 +1352,8 @@
         {
           "name": "NamedChild",
           "kind": "method",
-          "line": 166,
-          "endLine": 175,
+          "line": 174,
+          "endLine": 183,
           "parameters": [
             "int"
           ],
@@ -1348,57 +1362,57 @@
         {
           "name": "NamedChildCount",
           "kind": "method",
-          "line": 146,
-          "endLine": 151,
+          "line": 154,
+          "endLine": 159,
           "result": "int"
         },
         {
           "name": "NamedChildren",
           "kind": "method",
-          "line": 197,
-          "endLine": 206,
+          "line": 205,
+          "endLine": 214,
           "result": "[]ViewNode"
         },
         {
           "name": "Parent",
           "kind": "method",
-          "line": 126,
-          "endLine": 135,
+          "line": 134,
+          "endLine": 143,
           "result": "ViewNode"
         },
         {
           "name": "Range",
           "kind": "method",
-          "line": 118,
-          "endLine": 123,
+          "line": 126,
+          "endLine": 131,
           "result": "Range"
         },
         {
           "name": "Snapshot",
           "kind": "method",
-          "line": 237,
-          "endLine": 242,
+          "line": 245,
+          "endLine": 250,
           "result": "tuple\u003cSyntaxNode,bool\u003e"
         },
         {
           "name": "Source",
           "kind": "method",
-          "line": 107,
-          "endLine": 107,
+          "line": 115,
+          "endLine": 115,
           "result": "string"
         },
         {
           "name": "Text",
           "kind": "method",
-          "line": 99,
-          "endLine": 104,
+          "line": 107,
+          "endLine": 112,
           "result": "string"
         },
         {
           "name": "TextRange",
           "kind": "method",
-          "line": 110,
-          "endLine": 115,
+          "line": 118,
+          "endLine": 123,
           "parameters": [
             "int",
             "int"
@@ -1415,8 +1429,8 @@
         {
           "name": "snapshot",
           "kind": "method",
-          "line": 244,
-          "endLine": 275,
+          "line": 252,
+          "endLine": 283,
           "result": "SyntaxNode"
         },
         {
@@ -1446,22 +1460,22 @@
       "name": "WalkOptions",
       "kind": "struct",
       "file": "parser/view.go",
-      "line": 278,
-      "endLine": 281,
+      "line": 286,
+      "endLine": 289,
       "underlyingType": "struct{MaxDepth int;MaxNodes int;}",
       "members": [
         {
           "name": "MaxDepth",
           "kind": "property",
-          "line": 279,
-          "endLine": 279,
+          "line": 287,
+          "endLine": 287,
           "result": "int"
         },
         {
           "name": "MaxNodes",
           "kind": "property",
-          "line": 280,
-          "endLine": 280,
+          "line": 288,
+          "endLine": 288,
           "result": "int"
         }
       ]
@@ -1470,22 +1484,22 @@
       "name": "WalkResult",
       "kind": "struct",
       "file": "parser/view.go",
-      "line": 284,
-      "endLine": 287,
+      "line": 292,
+      "endLine": 295,
       "underlyingType": "struct{Visited int;Truncated bool;}",
       "members": [
         {
           "name": "Truncated",
           "kind": "property",
-          "line": 286,
-          "endLine": 286,
+          "line": 294,
+          "endLine": 294,
           "result": "bool"
         },
         {
           "name": "Visited",
           "kind": "property",
-          "line": 285,
-          "endLine": 285,
+          "line": 293,
+          "endLine": 293,
           "result": "int"
         }
       ]
@@ -1951,29 +1965,29 @@
       "name": "languageAdapter",
       "kind": "interface",
       "file": "parser/language.go",
-      "line": 63,
-      "endLine": 68,
+      "line": 64,
+      "endLine": 69,
       "underlyingType": "interface{ID()string;Grammar()*sitter.Language;Rules()*structureRules;Outline(root*sitter.Node,content string)[]Symbol;}",
       "members": [
         {
           "name": "Grammar",
           "kind": "method",
-          "line": 65,
-          "endLine": 65,
+          "line": 66,
+          "endLine": 66,
           "result": "*sitter.Language"
         },
         {
           "name": "ID",
           "kind": "method",
-          "line": 64,
-          "endLine": 64,
+          "line": 65,
+          "endLine": 65,
           "result": "string"
         },
         {
           "name": "Outline",
           "kind": "method",
-          "line": 67,
-          "endLine": 67,
+          "line": 68,
+          "endLine": 68,
           "parameters": [
             "*sitter.Node",
             "string"
@@ -1983,8 +1997,8 @@
         {
           "name": "Rules",
           "kind": "method",
-          "line": 66,
-          "endLine": 66,
+          "line": 67,
+          "endLine": 67,
           "result": "*structureRules"
         }
       ]
@@ -1994,8 +2008,8 @@
       "kind": "struct",
       "file": "parser/language.go",
       "line": 29,
-      "endLine": 33,
-      "underlyingType": "struct{fingerprint string;fields map[string]map[string]GrammarCardinality;children map[string]GrammarCardinality;}",
+      "endLine": 34,
+      "underlyingType": "struct{fingerprint string;fields map[string]map[string]GrammarCardinality;children map[string]GrammarCardinality;subtypes map[string]map[string]bool;}",
       "members": [
         {
           "name": "children",
@@ -2017,6 +2031,13 @@
           "line": 30,
           "endLine": 30,
           "result": "string"
+        },
+        {
+          "name": "subtypes",
+          "kind": "property",
+          "line": 33,
+          "endLine": 33,
+          "result": "map[string]map[string]bool"
         }
       ]
     },
@@ -2678,15 +2699,15 @@
       "name": "stringSet",
       "kind": "type",
       "file": "parser/language.go",
-      "line": 35,
-      "endLine": 35,
+      "line": 36,
+      "endLine": 36,
       "underlyingType": "map[string]struct{}",
       "members": [
         {
           "name": "contains",
           "kind": "method",
-          "line": 45,
-          "endLine": 48,
+          "line": 46,
+          "endLine": 49,
           "parameters": [
             "string"
           ],
@@ -2698,78 +2719,78 @@
       "name": "structureRules",
       "kind": "struct",
       "file": "parser/language.go",
-      "line": 50,
-      "endLine": 61,
+      "line": 51,
+      "endLine": 62,
       "underlyingType": "struct{structuralTypes stringSet;contextTypes stringSet;containerTypes stringSet;classDeclarationTypes stringSet;classBodyTypes stringSet;exportTypes stringSet;functionLikeTypes stringSet;blockTypes stringSet;jsxElementTypes stringSet;nameFieldCandidates stringSet;}",
       "members": [
         {
           "name": "blockTypes",
-          "kind": "property",
-          "line": 58,
-          "endLine": 58,
-          "result": "stringSet"
-        },
-        {
-          "name": "classBodyTypes",
-          "kind": "property",
-          "line": 55,
-          "endLine": 55,
-          "result": "stringSet"
-        },
-        {
-          "name": "classDeclarationTypes",
-          "kind": "property",
-          "line": 54,
-          "endLine": 54,
-          "result": "stringSet"
-        },
-        {
-          "name": "containerTypes",
-          "kind": "property",
-          "line": 53,
-          "endLine": 53,
-          "result": "stringSet"
-        },
-        {
-          "name": "contextTypes",
-          "kind": "property",
-          "line": 52,
-          "endLine": 52,
-          "result": "stringSet"
-        },
-        {
-          "name": "exportTypes",
-          "kind": "property",
-          "line": 56,
-          "endLine": 56,
-          "result": "stringSet"
-        },
-        {
-          "name": "functionLikeTypes",
-          "kind": "property",
-          "line": 57,
-          "endLine": 57,
-          "result": "stringSet"
-        },
-        {
-          "name": "jsxElementTypes",
           "kind": "property",
           "line": 59,
           "endLine": 59,
           "result": "stringSet"
         },
         {
-          "name": "nameFieldCandidates",
+          "name": "classBodyTypes",
+          "kind": "property",
+          "line": 56,
+          "endLine": 56,
+          "result": "stringSet"
+        },
+        {
+          "name": "classDeclarationTypes",
+          "kind": "property",
+          "line": 55,
+          "endLine": 55,
+          "result": "stringSet"
+        },
+        {
+          "name": "containerTypes",
+          "kind": "property",
+          "line": 54,
+          "endLine": 54,
+          "result": "stringSet"
+        },
+        {
+          "name": "contextTypes",
+          "kind": "property",
+          "line": 53,
+          "endLine": 53,
+          "result": "stringSet"
+        },
+        {
+          "name": "exportTypes",
+          "kind": "property",
+          "line": 57,
+          "endLine": 57,
+          "result": "stringSet"
+        },
+        {
+          "name": "functionLikeTypes",
+          "kind": "property",
+          "line": 58,
+          "endLine": 58,
+          "result": "stringSet"
+        },
+        {
+          "name": "jsxElementTypes",
           "kind": "property",
           "line": 60,
           "endLine": 60,
           "result": "stringSet"
         },
         {
+          "name": "nameFieldCandidates",
+          "kind": "property",
+          "line": 61,
+          "endLine": 61,
+          "result": "stringSet"
+        },
+        {
           "name": "structuralTypes",
           "kind": "property",
-          "line": 51,
-          "endLine": 51,
+          "line": 52,
+          "endLine": 52,
           "result": "stringSet"
         }
       ]
@@ -2865,22 +2886,22 @@
       "name": "viewWalkItem",
       "kind": "struct",
       "file": "parser/view.go",
-      "line": 300,
-      "endLine": 303,
+      "line": 308,
+      "endLine": 311,
       "underlyingType": "struct{node ViewNode;depth int;}",
       "members": [
         {
           "name": "depth",
           "kind": "property",
-          "line": 302,
-          "endLine": 302,
+          "line": 310,
+          "endLine": 310,
           "result": "int"
         },
         {
           "name": "node",
           "kind": "property",
-          "line": 301,
-          "endLine": 301,
+          "line": 309,
+          "endLine": 309,
           "result": "ViewNode"
         }
       ]
@@ -2918,8 +2939,8 @@
       "name": "CapabilitiesForLanguage",
       "kind": "function",
       "file": "parser/language.go",
-      "line": 110,
-      "endLine": 117,
+      "line": 111,
+      "endLine": 118,
       "parameters": [
         "string"
       ],
@@ -2942,8 +2963,8 @@
       "name": "GrammarChildrenCardinality",
       "kind": "function",
       "file": "parser/language.go",
-      "line": 140,
-      "endLine": 146,
+      "line": 141,
+      "endLine": 147,
       "parameters": [
         "string",
         "string"
@@ -2954,14 +2975,27 @@
       "name": "GrammarFieldCardinality",
       "kind": "function",
       "file": "parser/language.go",
-      "line": 131,
-      "endLine": 137,
+      "line": 132,
+      "endLine": 138,
       "parameters": [
         "string",
         "string",
         "string"
       ],
       "result": "GrammarCardinality"
+    },
+    {
+      "name": "GrammarSubtype",
+      "kind": "function",
+      "file": "parser/language.go",
+      "line": 151,
+      "endLine": 154,
+      "parameters": [
+        "string",
+        "string",
+        "string"
+      ],
+      "result": "bool"
     },
     {
       "name": "LanguageFor",
@@ -3053,16 +3087,16 @@
       "name": "SupportedLanguages",
       "kind": "function",
       "file": "parser/language.go",
-      "line": 101,
-      "endLine": 107,
+      "line": 102,
+      "endLine": 108,
       "result": "[]LanguageCapabilities"
     },
     {
       "name": "WalkNamed",
       "kind": "function",
       "file": "parser/document.go",
-      "line": 471,
-      "endLine": 486,
+      "line": 478,
+      "endLine": 493,
       "parameters": [
         "Node",
         "func(Node)"
@@ -3072,8 +3106,8 @@
       "name": "WalkNamedView",
       "kind": "function",
       "file": "parser/view.go",
-      "line": 290,
-      "endLine": 298,
+      "line": 298,
+      "endLine": 306,
       "parameters": [
         "ViewNode",
         "func(ViewNode)"
@@ -3083,8 +3117,8 @@
       "name": "WalkNamedViewBounded",
       "kind": "function",
       "file": "parser/view.go",
-      "line": 307,
-      "endLine": 332,
+      "line": 315,
+      "endLine": 340,
       "parameters": [
         "ViewNode",
         "WalkOptions",

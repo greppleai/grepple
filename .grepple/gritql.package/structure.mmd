@@ -19,21 +19,21 @@ classDiagram
     }
     <<struct>> BatchScanResult
     %% grepple:file BatchScanResult gritql/scanner_batch.go
-    note for BatchScanResult "defined: gritql/scanner_batch.go:33-36; Programs@gritql/scanner_batch.go:39-41; Stats@gritql/scanner_batch.go:44; programs@gritql/scanner_batch.go:34; stats@gritql/scanner_batch.go:35"
+    note for BatchScanResult "defined: gritql/scanner_batch.go:34-37; Programs@gritql/scanner_batch.go:40-42; Stats@gritql/scanner_batch.go:45; programs@gritql/scanner_batch.go:35; stats@gritql/scanner_batch.go:36"
     class BatchScanStats {
         +FilesParsed: int
         +FilesRead: int
     }
     <<struct>> BatchScanStats
     %% grepple:file BatchScanStats gritql/scanner_batch.go
-    note for BatchScanStats "defined: gritql/scanner_batch.go:27-30; FilesParsed@gritql/scanner_batch.go:29; FilesRead@gritql/scanner_batch.go:28"
+    note for BatchScanStats "defined: gritql/scanner_batch.go:28-31; FilesParsed@gritql/scanner_batch.go:30; FilesRead@gritql/scanner_batch.go:29"
     class BindingKind["BindingKind = uint8"] {
         +String(): string
     }
     <<type>> BindingKind
     %% grepple:underlying BindingKind uint8
     %% grepple:file BindingKind gritql/matcher.go
-    note for BindingKind "defined: gritql/matcher.go:69; String@gritql/matcher.go:77-86"
+    note for BindingKind "defined: gritql/matcher.go:72; String@gritql/matcher.go:80-89"
     class BindingSet {
         +All(): []BoundValue
         +Len(): int
@@ -42,7 +42,7 @@ classDiagram
     }
     <<struct>> BindingSet
     %% grepple:file BindingSet gritql/matcher.go
-    note for BindingSet "defined: gritql/matcher.go:233; All@gritql/matcher.go:245-256; Len@gritql/matcher.go:242; Lookup@gritql/matcher.go:236-239; values@gritql/matcher.go:233"
+    note for BindingSet "defined: gritql/matcher.go:236; All@gritql/matcher.go:248-259; Len@gritql/matcher.go:245; Lookup@gritql/matcher.go:239-242; values@gritql/matcher.go:236"
     class BoundValue {
         +Kind(): BindingKind
         +Range(): parser.Range
@@ -55,7 +55,7 @@ classDiagram
     }
     <<struct>> BoundValue
     %% grepple:file BoundValue gritql/matcher.go
-    note for BoundValue "defined: gritql/matcher.go:175; Kind@gritql/matcher.go:189-194; Range@gritql/matcher.go:197-202; Ranges@gritql/matcher.go:205-210; Structural@gritql/matcher.go:213-222; Text@gritql/matcher.go:225-230; Valid@gritql/matcher.go:178; Variable@gritql/matcher.go:181-186; value@gritql/matcher.go:175"
+    note for BoundValue "defined: gritql/matcher.go:178; Kind@gritql/matcher.go:192-197; Range@gritql/matcher.go:200-205; Ranges@gritql/matcher.go:208-213; Structural@gritql/matcher.go:216-225; Text@gritql/matcher.go:228-233; Valid@gritql/matcher.go:181; Variable@gritql/matcher.go:184-189; value@gritql/matcher.go:178"
     class CompileError {
         +Error(): string
         +Unwrap(): error
@@ -67,7 +67,7 @@ classDiagram
     }
     <<struct>> CompileError
     %% grepple:file CompileError gritql/compiler.go
-    note for CompileError "defined: gritql/compiler.go:51-57; Error@gritql/compiler.go:59; Unwrap@gritql/compiler.go:60; Class@gritql/compiler.go:53; Code@gritql/compiler.go:52; Message@gritql/compiler.go:54; Range@gritql/compiler.go:55; cause@gritql/compiler.go:56"
+    note for CompileError "defined: gritql/compiler.go:54-60; Error@gritql/compiler.go:62; Unwrap@gritql/compiler.go:63; Class@gritql/compiler.go:56; Code@gritql/compiler.go:55; Message@gritql/compiler.go:57; Range@gritql/compiler.go:58; cause@gritql/compiler.go:59"
     class CompileOptions {
         +MaxDepth: int
         +MaxPatternBytes: int
@@ -76,7 +76,7 @@ classDiagram
     }
     <<struct>> CompileOptions
     %% grepple:file CompileOptions gritql/compiler.go
-    note for CompileOptions "defined: gritql/compiler.go:32-37; MaxDepth@gritql/compiler.go:36; MaxPatternBytes@gritql/compiler.go:33; MaxRegexBytes@gritql/compiler.go:34; MaxRegexInstructions@gritql/compiler.go:35"
+    note for CompileOptions "defined: gritql/compiler.go:35-40; MaxDepth@gritql/compiler.go:39; MaxPatternBytes@gritql/compiler.go:36; MaxRegexBytes@gritql/compiler.go:37; MaxRegexInstructions@gritql/compiler.go:38"
     class Constraint {
         +LHS(): VariableRef
         +RHS(): Expression
@@ -85,7 +85,7 @@ classDiagram
     }
     <<struct>> Constraint
     %% grepple:file Constraint gritql/compiler.go
-    note for Constraint "defined: gritql/compiler.go:216; LHS@gritql/compiler.go:219-224; RHS@gritql/compiler.go:227-232; Range@gritql/compiler.go:235-240; c@gritql/compiler.go:216"
+    note for Constraint "defined: gritql/compiler.go:228; LHS@gritql/compiler.go:231-236; RHS@gritql/compiler.go:239-244; Range@gritql/compiler.go:247-252; c@gritql/compiler.go:228"
     class Diagnostic {
         +Class(): string
         +Code(): string
@@ -105,7 +105,7 @@ classDiagram
     }
     <<struct>> Diagnostic
     %% grepple:file Diagnostic gritql/finding.go
-    note for Diagnostic "defined: gritql/finding.go:194-198; Class@gritql/finding.go:204; Code@gritql/finding.go:201; MarshalJSON@gritql/finding.go:237-244; Message@gritql/finding.go:210; Path@gritql/finding.go:221-226; PatternID@gritql/finding.go:213-218; Range@gritql/finding.go:229-234; Severity@gritql/finding.go:207; class@gritql/finding.go:195; code@gritql/finding.go:195; message@gritql/finding.go:195; path@gritql/finding.go:196; patternID@gritql/finding.go:196; rng@gritql/finding.go:197; severity@gritql/finding.go:195"
+    note for Diagnostic "defined: gritql/finding.go:196-200; Class@gritql/finding.go:206; Code@gritql/finding.go:203; MarshalJSON@gritql/finding.go:239-246; Message@gritql/finding.go:212; Path@gritql/finding.go:223-228; PatternID@gritql/finding.go:215-220; Range@gritql/finding.go:231-236; Severity@gritql/finding.go:209; class@gritql/finding.go:197; code@gritql/finding.go:197; message@gritql/finding.go:197; path@gritql/finding.go:198; patternID@gritql/finding.go:198; rng@gritql/finding.go:199; severity@gritql/finding.go:197"
     class DocumentInput {
         +Message: string
         +Path: string
@@ -113,7 +113,7 @@ classDiagram
     }
     <<struct>> DocumentInput
     %% grepple:file DocumentInput gritql/finding.go
-    note for DocumentInput "defined: gritql/finding.go:44-48; Message@gritql/finding.go:47; Path@gritql/finding.go:45; PatternID@gritql/finding.go:46"
+    note for DocumentInput "defined: gritql/finding.go:45-49; Message@gritql/finding.go:48; Path@gritql/finding.go:46; PatternID@gritql/finding.go:47"
     class EffectiveLimits {
         +ASTSteps: int
         +BatchTimeMillis: int64
@@ -140,7 +140,7 @@ classDiagram
     %% grepple:struct-tag EffectiveLimits RegexBytes "json:\"regex_bytes\""
     %% grepple:struct-tag EffectiveLimits RegexInstructions "json:\"regex_instructions\""
     %% grepple:struct-tag EffectiveLimits SourceBytes "json:\"source_bytes\""
-    note for EffectiveLimits "defined: gritql/finding.go:51-63; ASTSteps@gritql/finding.go:56; BatchTimeMillis@gritql/finding.go:59; Candidates@gritql/finding.go:55; FileTimeMillis@gritql/finding.go:58; Findings@gritql/finding.go:57; MemoryBytes@gritql/finding.go:60; ParseDepth@gritql/finding.go:54; PatternBytes@gritql/finding.go:52; RegexBytes@gritql/finding.go:61; RegexInstructions@gritql/finding.go:62; SourceBytes@gritql/finding.go:53"
+    note for EffectiveLimits "defined: gritql/finding.go:52-64; ASTSteps@gritql/finding.go:57; BatchTimeMillis@gritql/finding.go:60; Candidates@gritql/finding.go:56; FileTimeMillis@gritql/finding.go:59; Findings@gritql/finding.go:58; MemoryBytes@gritql/finding.go:61; ParseDepth@gritql/finding.go:55; PatternBytes@gritql/finding.go:53; RegexBytes@gritql/finding.go:62; RegexInstructions@gritql/finding.go:63; SourceBytes@gritql/finding.go:54"
     class EvaluateOptions {
         +Deadline: time.Time
         +DisableBatchTimeout: bool
@@ -177,20 +177,24 @@ classDiagram
     }
     <<struct>> EvaluationMatch
     %% grepple:file EvaluationMatch gritql/evaluator.go
-    note for EvaluationMatch "defined: gritql/evaluator.go:58-61; Bindings@gritql/evaluator.go:67; Range@gritql/evaluator.go:64; String@gritql/evaluator.go:914-920; bindings@gritql/evaluator.go:60; rng@gritql/evaluator.go:59"
+    note for EvaluationMatch "defined: gritql/evaluator.go:58-61; Bindings@gritql/evaluator.go:67; Range@gritql/evaluator.go:64; String@gritql/evaluator.go:921-927; bindings@gritql/evaluator.go:60; rng@gritql/evaluator.go:59"
     class EvaluationMetadata {
         +Contract: string
         +GoGrammar: string
+        +Grammar: string
+        +Language: string
         +Limits: EffectiveLimits
         +TreeSitterGrammar: string
     }
     <<struct>> EvaluationMetadata
     %% grepple:file EvaluationMetadata gritql/finding.go
     %% grepple:struct-tag EvaluationMetadata Contract "json:\"contract\""
-    %% grepple:struct-tag EvaluationMetadata GoGrammar "json:\"go_grammar\""
+    %% grepple:struct-tag EvaluationMetadata GoGrammar "json:\"go_grammar,omitempty\""
+    %% grepple:struct-tag EvaluationMetadata Grammar "json:\"grammar,omitempty\""
+    %% grepple:struct-tag EvaluationMetadata Language "json:\"language,omitempty\""
     %% grepple:struct-tag EvaluationMetadata Limits "json:\"limits\""
     %% grepple:struct-tag EvaluationMetadata TreeSitterGrammar "json:\"-\""
-    note for EvaluationMetadata "defined: gritql/finding.go:68-73; Contract@gritql/finding.go:69; GoGrammar@gritql/finding.go:70; Limits@gritql/finding.go:71; TreeSitterGrammar@gritql/finding.go:72"
+    note for EvaluationMetadata "defined: gritql/finding.go:68-75; Contract@gritql/finding.go:69; GoGrammar@gritql/finding.go:72; Grammar@gritql/finding.go:71; Language@gritql/finding.go:70; Limits@gritql/finding.go:73; TreeSitterGrammar@gritql/finding.go:74"
     class EvaluationOptions["EvaluationOptions = EvaluateOptions"]
     <<alias>> EvaluationOptions
     %% grepple:underlying EvaluationOptions EvaluateOptions
@@ -203,20 +207,21 @@ classDiagram
         +MatchRegex(string): bool
         +Range(): Range
         +Template(): Template
+        +Templates(): []Template
         +Text(): string
         +Variables(): []VariableRef
         -e: *expression
     }
     <<struct>> Expression
     %% grepple:file Expression gritql/compiler.go
-    note for Expression "defined: gritql/compiler.go:143; Children@gritql/compiler.go:187-196; Constraints@gritql/compiler.go:199-208; Kind@gritql/compiler.go:146-151; MatchRegex@gritql/compiler.go:211-213; Range@gritql/compiler.go:154-159; Template@gritql/compiler.go:171-176; Text@gritql/compiler.go:162-167; Variables@gritql/compiler.go:179-184; e@gritql/compiler.go:143"
+    note for Expression "defined: gritql/compiler.go:147; Children@gritql/compiler.go:199-208; Constraints@gritql/compiler.go:211-220; Kind@gritql/compiler.go:150-155; MatchRegex@gritql/compiler.go:223-225; Range@gritql/compiler.go:158-163; Template@gritql/compiler.go:175-180; Templates@gritql/compiler.go:183-188; Text@gritql/compiler.go:166-171; Variables@gritql/compiler.go:191-196; e@gritql/compiler.go:147"
     class FeatureSet["FeatureSet = uint32"] {
         +Has(FeatureSet): bool
     }
     <<type>> FeatureSet
     %% grepple:underlying FeatureSet uint32
     %% grepple:file FeatureSet gritql/compiler.go
-    note for FeatureSet "defined: gritql/compiler.go:106; Has@gritql/compiler.go:123"
+    note for FeatureSet "defined: gritql/compiler.go:109; Has@gritql/compiler.go:126"
     class FileEvaluation {
         +Diagnostics(): []Diagnostic
         +Findings(): []Finding
@@ -228,7 +233,7 @@ classDiagram
     }
     <<struct>> FileEvaluation
     %% grepple:file FileEvaluation gritql/finding.go
-    note for FileEvaluation "defined: gritql/finding.go:247-251; Diagnostics@gritql/finding.go:261-265; Findings@gritql/finding.go:254-258; MarshalJSON@gritql/finding.go:271-285; Metadata@gritql/finding.go:268; diagnostics@gritql/finding.go:249; findings@gritql/finding.go:248; metadata@gritql/finding.go:250"
+    note for FileEvaluation "defined: gritql/finding.go:249-253; Diagnostics@gritql/finding.go:263-267; Findings@gritql/finding.go:256-260; MarshalJSON@gritql/finding.go:273-287; Metadata@gritql/finding.go:270; diagnostics@gritql/finding.go:251; findings@gritql/finding.go:250; metadata@gritql/finding.go:252"
     class FileInput {
         +Content: []byte
         +Language: string
@@ -238,7 +243,7 @@ classDiagram
     }
     <<struct>> FileInput
     %% grepple:file FileInput gritql/finding.go
-    note for FileInput "defined: gritql/finding.go:35-41; Content@gritql/finding.go:38; Language@gritql/finding.go:37; Message@gritql/finding.go:40; Path@gritql/finding.go:36; PatternID@gritql/finding.go:39"
+    note for FileInput "defined: gritql/finding.go:36-42; Content@gritql/finding.go:39; Language@gritql/finding.go:38; Message@gritql/finding.go:41; Path@gritql/finding.go:37; PatternID@gritql/finding.go:40"
     class Finding {
         +Bindings(): []FindingBinding
         +Compatibility(): string
@@ -268,7 +273,7 @@ classDiagram
     }
     <<struct>> Finding
     %% grepple:file Finding gritql/finding.go
-    note for Finding "defined: gritql/finding.go:77-89; Bindings@gritql/finding.go:128-132; Compatibility@gritql/finding.go:98; End@gritql/finding.go:116; EndByte@gritql/finding.go:110; Grammar@gritql/finding.go:101; Language@gritql/finding.go:95; MarshalJSON@gritql/finding.go:135-140; Message@gritql/finding.go:125; Path@gritql/finding.go:92; PatternID@gritql/finding.go:122; Range@gritql/finding.go:104; Start@gritql/finding.go:113; StartByte@gritql/finding.go:107; Text@gritql/finding.go:119; bindingJSON@gritql/finding.go:87; bindings@gritql/finding.go:86; canonicalJSON@gritql/finding.go:88; compatibility@gritql/finding.go:80; grammar@gritql/finding.go:81; language@gritql/finding.go:79; message@gritql/finding.go:85; path@gritql/finding.go:78; patternID@gritql/finding.go:84; rng@gritql/finding.go:82; text@gritql/finding.go:83"
+    note for Finding "defined: gritql/finding.go:79-91; Bindings@gritql/finding.go:130-134; Compatibility@gritql/finding.go:100; End@gritql/finding.go:118; EndByte@gritql/finding.go:112; Grammar@gritql/finding.go:103; Language@gritql/finding.go:97; MarshalJSON@gritql/finding.go:137-142; Message@gritql/finding.go:127; Path@gritql/finding.go:94; PatternID@gritql/finding.go:124; Range@gritql/finding.go:106; Start@gritql/finding.go:115; StartByte@gritql/finding.go:109; Text@gritql/finding.go:121; bindingJSON@gritql/finding.go:89; bindings@gritql/finding.go:88; canonicalJSON@gritql/finding.go:90; compatibility@gritql/finding.go:82; grammar@gritql/finding.go:83; language@gritql/finding.go:81; message@gritql/finding.go:87; path@gritql/finding.go:80; patternID@gritql/finding.go:86; rng@gritql/finding.go:84; text@gritql/finding.go:85"
     class FindingBinding {
         +Elements(): []StructuralNode
         +Kind(): BindingKind
@@ -286,21 +291,21 @@ classDiagram
     }
     <<struct>> FindingBinding
     %% grepple:file FindingBinding gritql/finding.go
-    note for FindingBinding "defined: gritql/finding.go:143-149; Elements@gritql/finding.go:186-191; Kind@gritql/finding.go:155; MarshalJSON@gritql/finding.go:175; Name@gritql/finding.go:152; Node@gritql/finding.go:178-183; Range@gritql/finding.go:158; Ranges@gritql/finding.go:161-165; Structural@gritql/finding.go:168-172; kind@gritql/finding.go:145; name@gritql/finding.go:144; ranges@gritql/finding.go:147; rng@gritql/finding.go:146; structural@gritql/finding.go:148"
+    note for FindingBinding "defined: gritql/finding.go:145-151; Elements@gritql/finding.go:188-193; Kind@gritql/finding.go:157; MarshalJSON@gritql/finding.go:177; Name@gritql/finding.go:154; Node@gritql/finding.go:180-185; Range@gritql/finding.go:160; Ranges@gritql/finding.go:163-167; Structural@gritql/finding.go:170-174; kind@gritql/finding.go:147; name@gritql/finding.go:146; ranges@gritql/finding.go:149; rng@gritql/finding.go:148; structural@gritql/finding.go:150"
     class Kind["Kind = uint8"] {
         +String(): string
     }
     <<type>> Kind
     %% grepple:underlying Kind uint8
     %% grepple:file Kind gritql/compiler.go
-    note for Kind "defined: gritql/compiler.go:82; String@gritql/compiler.go:97-103"
+    note for Kind "defined: gritql/compiler.go:85; String@gritql/compiler.go:100-106"
     class LanguageDeclaration {
         +Name: string
         +Range: Range
     }
     <<struct>> LanguageDeclaration
     %% grepple:file LanguageDeclaration gritql/compiler.go
-    note for LanguageDeclaration "defined: gritql/compiler.go:243-246; Name@gritql/compiler.go:244; Range@gritql/compiler.go:245"
+    note for LanguageDeclaration "defined: gritql/compiler.go:255-258; Name@gritql/compiler.go:256; Range@gritql/compiler.go:257"
     class MatchResult {
         +Bindings(): BindingSet
         +Range(): parser.Range
@@ -309,12 +314,13 @@ classDiagram
     }
     <<struct>> MatchResult
     %% grepple:file MatchResult gritql/matcher.go
-    note for MatchResult "defined: gritql/matcher.go:259-262; Bindings@gritql/matcher.go:268; Range@gritql/matcher.go:265; bindings@gritql/matcher.go:261; rng@gritql/matcher.go:260"
+    note for MatchResult "defined: gritql/matcher.go:262-265; Bindings@gritql/matcher.go:271; Range@gritql/matcher.go:268; bindings@gritql/matcher.go:264; rng@gritql/matcher.go:263"
     class MatchTarget {
         -childEnd: int
         -childStart: int
         -field: string
         -kind: string
+        -language: string
         -node: parser.Node
         -parent: parser.Node
         -sequence: bool
@@ -323,7 +329,7 @@ classDiagram
     }
     <<struct>> MatchTarget
     %% grepple:file MatchTarget gritql/matcher.go
-    note for MatchTarget "defined: gritql/matcher.go:13-23; childEnd@gritql/matcher.go:21; childStart@gritql/matcher.go:20; field@gritql/matcher.go:19; kind@gritql/matcher.go:18; node@gritql/matcher.go:14; parent@gritql/matcher.go:15; sequence@gritql/matcher.go:22; viewNode@gritql/matcher.go:16; viewParent@gritql/matcher.go:17"
+    note for MatchTarget "defined: gritql/matcher.go:13-24; childEnd@gritql/matcher.go:22; childStart@gritql/matcher.go:21; field@gritql/matcher.go:20; kind@gritql/matcher.go:19; language@gritql/matcher.go:18; node@gritql/matcher.go:14; parent@gritql/matcher.go:15; sequence@gritql/matcher.go:23; viewNode@gritql/matcher.go:16; viewParent@gritql/matcher.go:17"
     class ParsedEvaluationInput {
         +Document: *parser.Document
         +Input: DocumentInput
@@ -337,7 +343,7 @@ classDiagram
     }
     <<struct>> Position
     %% grepple:file Position gritql/compiler.go
-    note for Position "defined: gritql/compiler.go:18-21; Column@gritql/compiler.go:20; Line@gritql/compiler.go:19"
+    note for Position "defined: gritql/compiler.go:21-24; Column@gritql/compiler.go:23; Line@gritql/compiler.go:22"
     class Program {
         +Compatibility(): string
         +Declaration(): LanguageDeclaration
@@ -346,6 +352,7 @@ classDiagram
         +Range(): Range
         +Root(): Expression
         +Variables(): []Variable
+        -adapter: targetLanguageAdapter
         -compileLimits: CompileOptions
         -declaration: LanguageDeclaration
         -features: FeatureSet
@@ -355,7 +362,7 @@ classDiagram
     }
     <<struct>> Program
     %% grepple:file Program gritql/compiler.go
-    note for Program "defined: gritql/compiler.go:249-256; Compatibility@gritql/compiler.go:259; Declaration@gritql/compiler.go:270-275; Features@gritql/compiler.go:302-307; Language@gritql/compiler.go:262-267; Range@gritql/compiler.go:278-283; Root@gritql/compiler.go:286-291; Variables@gritql/compiler.go:294-299; compileLimits@gritql/compiler.go:255; declaration@gritql/compiler.go:250; features@gritql/compiler.go:254; rng@gritql/compiler.go:251; root@gritql/compiler.go:252; variables@gritql/compiler.go:253"
+    note for Program "defined: gritql/compiler.go:261-269; Compatibility@gritql/compiler.go:272-277; Declaration@gritql/compiler.go:288-293; Features@gritql/compiler.go:320-325; Language@gritql/compiler.go:280-285; Range@gritql/compiler.go:296-301; Root@gritql/compiler.go:304-309; Variables@gritql/compiler.go:312-317; adapter@gritql/compiler.go:263; compileLimits@gritql/compiler.go:268; declaration@gritql/compiler.go:262; features@gritql/compiler.go:267; rng@gritql/compiler.go:264; root@gritql/compiler.go:265; variables@gritql/compiler.go:266"
     class ProgramScan {
         +Message: string
         +PatternID: string
@@ -363,14 +370,14 @@ classDiagram
     }
     <<struct>> ProgramScan
     %% grepple:file ProgramScan gritql/scanner_batch.go
-    note for ProgramScan "defined: gritql/scanner_batch.go:14-18; Message@gritql/scanner_batch.go:17; PatternID@gritql/scanner_batch.go:16; Program@gritql/scanner_batch.go:15"
+    note for ProgramScan "defined: gritql/scanner_batch.go:15-19; Message@gritql/scanner_batch.go:18; PatternID@gritql/scanner_batch.go:17; Program@gritql/scanner_batch.go:16"
     class ProgramScanResult {
         +PatternID: string
         +Result: ScanResult
     }
     <<struct>> ProgramScanResult
     %% grepple:file ProgramScanResult gritql/scanner_batch.go
-    note for ProgramScanResult "defined: gritql/scanner_batch.go:21-24; PatternID@gritql/scanner_batch.go:22; Result@gritql/scanner_batch.go:23"
+    note for ProgramScanResult "defined: gritql/scanner_batch.go:22-25; PatternID@gritql/scanner_batch.go:23; Result@gritql/scanner_batch.go:24"
     class Range {
         +End: Position
         +EndByte: int
@@ -379,7 +386,7 @@ classDiagram
     }
     <<struct>> Range
     %% grepple:file Range gritql/compiler.go
-    note for Range "defined: gritql/compiler.go:24-29; End@gritql/compiler.go:28; EndByte@gritql/compiler.go:26; Start@gritql/compiler.go:27; StartByte@gritql/compiler.go:25"
+    note for Range "defined: gritql/compiler.go:27-32; End@gritql/compiler.go:31; EndByte@gritql/compiler.go:29; Start@gritql/compiler.go:30; StartByte@gritql/compiler.go:28"
     class ScanCandidate {
         +Language: string
         +Path: string
@@ -387,7 +394,7 @@ classDiagram
     }
     <<struct>> ScanCandidate
     %% grepple:file ScanCandidate gritql/scanner.go
-    note for ScanCandidate "defined: gritql/scanner.go:30-34; Language@gritql/scanner.go:33; Path@gritql/scanner.go:32; ReadPath@gritql/scanner.go:31"
+    note for ScanCandidate "defined: gritql/scanner.go:32-36; Language@gritql/scanner.go:35; Path@gritql/scanner.go:34; ReadPath@gritql/scanner.go:33"
     class ScanOptions {
         +EvaluateOptions: EvaluateOptions
         +ExcludeGlobs: []string
@@ -400,7 +407,7 @@ classDiagram
     }
     <<struct>> ScanOptions
     %% grepple:file ScanOptions gritql/scanner.go
-    note for ScanOptions "defined: gritql/scanner.go:38-47; EvaluateOptions@gritql/scanner.go:39; ExcludeGlobs@gritql/scanner.go:43; IncludeGlobs@gritql/scanner.go:42; MaxFiles@gritql/scanner.go:45; MaxTotalBytes@gritql/scanner.go:46; Message@gritql/scanner.go:41; PatternID@gritql/scanner.go:40; Workers@gritql/scanner.go:44"
+    note for ScanOptions "defined: gritql/scanner.go:40-49; EvaluateOptions@gritql/scanner.go:41; ExcludeGlobs@gritql/scanner.go:45; IncludeGlobs@gritql/scanner.go:44; MaxFiles@gritql/scanner.go:47; MaxTotalBytes@gritql/scanner.go:48; Message@gritql/scanner.go:43; PatternID@gritql/scanner.go:42; Workers@gritql/scanner.go:46"
     class ScanResult {
         +Diagnostics(): []Diagnostic
         +Findings(): []Finding
@@ -414,7 +421,7 @@ classDiagram
     }
     <<struct>> ScanResult
     %% grepple:file ScanResult gritql/scanner.go
-    note for ScanResult "defined: gritql/scanner.go:69-73; Diagnostics@gritql/scanner.go:79; Findings@gritql/scanner.go:76; MarshalJSON@gritql/scanner.go:93-101; Metadata@gritql/scanner.go:82; Stats@gritql/scanner.go:90; Truncations@gritql/scanner.go:85-87; evaluation@gritql/scanner.go:70; stats@gritql/scanner.go:72; truncations@gritql/scanner.go:71"
+    note for ScanResult "defined: gritql/scanner.go:71-75; Diagnostics@gritql/scanner.go:81; Findings@gritql/scanner.go:78; MarshalJSON@gritql/scanner.go:95-103; Metadata@gritql/scanner.go:84; Stats@gritql/scanner.go:92; Truncations@gritql/scanner.go:87-89; evaluation@gritql/scanner.go:72; stats@gritql/scanner.go:74; truncations@gritql/scanner.go:73"
     class ScanStats {
         +BytesRead: int64
         +Candidates: int
@@ -433,7 +440,7 @@ classDiagram
     %% grepple:struct-tag ScanStats SkippedBinary "json:\"skipped_binary\""
     %% grepple:struct-tag ScanStats SkippedGlob "json:\"skipped_glob\""
     %% grepple:struct-tag ScanStats SkippedLanguage "json:\"skipped_language\""
-    note for ScanStats "defined: gritql/scanner.go:58-66; BytesRead@gritql/scanner.go:62; Candidates@gritql/scanner.go:59; Eligible@gritql/scanner.go:60; Evaluated@gritql/scanner.go:61; SkippedBinary@gritql/scanner.go:65; SkippedGlob@gritql/scanner.go:64; SkippedLanguage@gritql/scanner.go:63"
+    note for ScanStats "defined: gritql/scanner.go:60-68; BytesRead@gritql/scanner.go:64; Candidates@gritql/scanner.go:61; Eligible@gritql/scanner.go:62; Evaluated@gritql/scanner.go:63; SkippedBinary@gritql/scanner.go:67; SkippedGlob@gritql/scanner.go:66; SkippedLanguage@gritql/scanner.go:65"
     class ScanTruncation {
         +Limit: int64
         +Reason: string
@@ -444,19 +451,19 @@ classDiagram
     %% grepple:struct-tag ScanTruncation Limit "json:\"limit\""
     %% grepple:struct-tag ScanTruncation Reason "json:\"reason\""
     %% grepple:struct-tag ScanTruncation Skipped "json:\"skipped\""
-    note for ScanTruncation "defined: gritql/scanner.go:51-55; Limit@gritql/scanner.go:53; Reason@gritql/scanner.go:52; Skipped@gritql/scanner.go:54"
+    note for ScanTruncation "defined: gritql/scanner.go:53-57; Limit@gritql/scanner.go:55; Reason@gritql/scanner.go:54; Skipped@gritql/scanner.go:56"
     class SlotCardinality["SlotCardinality = uint8"]
     <<type>> SlotCardinality
     %% grepple:underlying SlotCardinality uint8
     %% grepple:file SlotCardinality gritql/template.go
-    note for SlotCardinality "defined: gritql/template.go:34"
+    note for SlotCardinality "defined: gritql/template.go:35"
     class SnippetContext["SnippetContext = uint8"] {
         +String(): string
     }
     <<type>> SnippetContext
     %% grepple:underlying SnippetContext uint8
     %% grepple:file SnippetContext gritql/template.go
-    note for SnippetContext "defined: gritql/template.go:12; String@gritql/template.go:25-31"
+    note for SnippetContext "defined: gritql/template.go:13; String@gritql/template.go:26-32"
     class StructuralNode {
         +Children(): []StructuralNode
         +IsToken(): bool
@@ -470,19 +477,21 @@ classDiagram
     }
     <<struct>> StructuralNode
     %% grepple:file StructuralNode gritql/matcher.go
-    note for StructuralNode "defined: gritql/matcher.go:89; Children@gritql/matcher.go:139-152; IsToken@gritql/matcher.go:128; Kind@gritql/matcher.go:104-109; Lexeme@gritql/matcher.go:131-136; MarshalJSON@gritql/matcher.go:155-160; NodeKind@gritql/matcher.go:112-117; TokenKind@gritql/matcher.go:120-125; Valid@gritql/matcher.go:101; node@gritql/matcher.go:89"
+    note for StructuralNode "defined: gritql/matcher.go:92; Children@gritql/matcher.go:142-155; IsToken@gritql/matcher.go:131; Kind@gritql/matcher.go:107-112; Lexeme@gritql/matcher.go:134-139; MarshalJSON@gritql/matcher.go:158-163; NodeKind@gritql/matcher.go:115-120; TokenKind@gritql/matcher.go:123-128; Valid@gritql/matcher.go:104; node@gritql/matcher.go:92"
     class Template {
         +Context(): SnippetContext
+        +Language(): string
         +Root(): TemplateNode
         +RootSlot(): TemplateSlot
         +Valid(): bool
         -context: SnippetContext
+        -language: string
         -root: *templateNode
         -rootSlot: *templateSlot
     }
     <<struct>> Template
     %% grepple:file Template gritql/template.go
-    note for Template "defined: gritql/template.go:59-63; Context@gritql/template.go:66; Root@gritql/template.go:69; RootSlot@gritql/template.go:72; Valid@gritql/template.go:75; context@gritql/template.go:60; root@gritql/template.go:61; rootSlot@gritql/template.go:62"
+    note for Template "defined: gritql/template.go:60-65; Context@gritql/template.go:68; Language@gritql/template.go:71; Root@gritql/template.go:74; RootSlot@gritql/template.go:77; Valid@gritql/template.go:80; context@gritql/template.go:62; language@gritql/template.go:61; root@gritql/template.go:63; rootSlot@gritql/template.go:64"
     class TemplateChild {
         +Field(): string
         +IsSlot(): bool
@@ -492,7 +501,7 @@ classDiagram
     }
     <<struct>> TemplateChild
     %% grepple:file TemplateChild gritql/template.go
-    note for TemplateChild "defined: gritql/template.go:115; Field@gritql/template.go:118-123; IsSlot@gritql/template.go:126; Node@gritql/template.go:129-134; Slot@gritql/template.go:137-142; child@gritql/template.go:115"
+    note for TemplateChild "defined: gritql/template.go:120; Field@gritql/template.go:123-128; IsSlot@gritql/template.go:131; Node@gritql/template.go:134-139; Slot@gritql/template.go:142-147; child@gritql/template.go:120"
     class TemplateNode {
         +Children(): []TemplateChild
         +Kind(): string
@@ -503,7 +512,7 @@ classDiagram
     }
     <<struct>> TemplateNode
     %% grepple:file TemplateNode gritql/template.go
-    note for TemplateNode "defined: gritql/template.go:78; Children@gritql/template.go:103-112; Kind@gritql/template.go:84-89; Named@gritql/template.go:92; Token@gritql/template.go:95-100; Valid@gritql/template.go:81; node@gritql/template.go:78"
+    note for TemplateNode "defined: gritql/template.go:83; Children@gritql/template.go:108-117; Kind@gritql/template.go:89-94; Named@gritql/template.go:97; Token@gritql/template.go:100-105; Valid@gritql/template.go:86; node@gritql/template.go:83"
     class TemplateSlot {
         +Cardinality(): SlotCardinality
         +Valid(): bool
@@ -512,7 +521,7 @@ classDiagram
     }
     <<struct>> TemplateSlot
     %% grepple:file TemplateSlot gritql/template.go
-    note for TemplateSlot "defined: gritql/template.go:145; Cardinality@gritql/template.go:159-164; Valid@gritql/template.go:148; Variable@gritql/template.go:151-156; slot@gritql/template.go:145"
+    note for TemplateSlot "defined: gritql/template.go:150; Cardinality@gritql/template.go:164-169; Valid@gritql/template.go:153; Variable@gritql/template.go:156-161; slot@gritql/template.go:150"
     class Variable {
         +ID: VariableID
         +Name: string
@@ -520,12 +529,12 @@ classDiagram
     }
     <<struct>> Variable
     %% grepple:file Variable gritql/compiler.go
-    note for Variable "defined: gritql/compiler.go:67-71; ID@gritql/compiler.go:68; Name@gritql/compiler.go:69; Range@gritql/compiler.go:70"
+    note for Variable "defined: gritql/compiler.go:70-74; ID@gritql/compiler.go:71; Name@gritql/compiler.go:72; Range@gritql/compiler.go:73"
     class VariableID["VariableID = uint32"]
     <<type>> VariableID
     %% grepple:underlying VariableID uint32
     %% grepple:file VariableID gritql/compiler.go
-    note for VariableID "defined: gritql/compiler.go:64"
+    note for VariableID "defined: gritql/compiler.go:67"
     class VariableRef {
         +Anonymous: bool
         +ID: VariableID
@@ -534,7 +543,7 @@ classDiagram
     }
     <<struct>> VariableRef
     %% grepple:file VariableRef gritql/compiler.go
-    note for VariableRef "defined: gritql/compiler.go:74-79; Anonymous@gritql/compiler.go:77; ID@gritql/compiler.go:75; Name@gritql/compiler.go:76; Range@gritql/compiler.go:78"
+    note for VariableRef "defined: gritql/compiler.go:77-82; Anonymous@gritql/compiler.go:80; ID@gritql/compiler.go:78; Name@gritql/compiler.go:79; Range@gritql/compiler.go:81"
     class bindingValue {
         -equality: []normalizedNode
         -kind: BindingKind
@@ -548,7 +557,7 @@ classDiagram
     }
     <<struct>> bindingValue
     %% grepple:file bindingValue gritql/matcher.go
-    note for bindingValue "defined: gritql/matcher.go:162-172; equality@gritql/matcher.go:168; kind@gritql/matcher.go:164; ranges@gritql/matcher.go:166; rng@gritql/matcher.go:165; sourceKinds@gritql/matcher.go:170; sourceRanges@gritql/matcher.go:169; structural@gritql/matcher.go:167; text@gritql/matcher.go:171; variable@gritql/matcher.go:163"
+    note for bindingValue "defined: gritql/matcher.go:165-175; equality@gritql/matcher.go:171; kind@gritql/matcher.go:167; ranges@gritql/matcher.go:169; rng@gritql/matcher.go:168; sourceKinds@gritql/matcher.go:173; sourceRanges@gritql/matcher.go:172; structural@gritql/matcher.go:170; text@gritql/matcher.go:174; variable@gritql/matcher.go:166"
     class constraint {
         -lhs: VariableRef
         -rhs: *expression
@@ -556,14 +565,14 @@ classDiagram
     }
     <<struct>> constraint
     %% grepple:file constraint gritql/compiler.go
-    note for constraint "defined: gritql/compiler.go:136-140; lhs@gritql/compiler.go:137; rhs@gritql/compiler.go:138; rng@gritql/compiler.go:139"
+    note for constraint "defined: gritql/compiler.go:140-144; lhs@gritql/compiler.go:141; rhs@gritql/compiler.go:142; rng@gritql/compiler.go:143"
     class decodedSnippet {
         -placeholders: []snippetPlaceholder
         -text: string
     }
     <<struct>> decodedSnippet
     %% grepple:file decodedSnippet gritql/template.go
-    note for decodedSnippet "defined: gritql/template.go:166-169; placeholders@gritql/template.go:168; text@gritql/template.go:167"
+    note for decodedSnippet "defined: gritql/template.go:171-174; placeholders@gritql/template.go:173; text@gritql/template.go:172"
     class diagnosticJSON {
         +Class: string
         +Code: string
@@ -622,11 +631,12 @@ classDiagram
         -refs: []VariableRef
         -rng: Range
         -template: Template
+        -templates: []Template
         -text: string
     }
     <<struct>> expression
     %% grepple:file expression gritql/compiler.go
-    note for expression "defined: gritql/compiler.go:125-134; children@gritql/compiler.go:130; constraints@gritql/compiler.go:131; kind@gritql/compiler.go:126; re@gritql/compiler.go:132; refs@gritql/compiler.go:129; rng@gritql/compiler.go:127; template@gritql/compiler.go:133; text@gritql/compiler.go:128"
+    note for expression "defined: gritql/compiler.go:128-138; children@gritql/compiler.go:133; constraints@gritql/compiler.go:134; kind@gritql/compiler.go:129; re@gritql/compiler.go:135; refs@gritql/compiler.go:132; rng@gritql/compiler.go:130; template@gritql/compiler.go:136; templates@gritql/compiler.go:137; text@gritql/compiler.go:131"
     class findingJSON {
         +Bindings: map[string]json.RawMessage
         +EndByte: int
@@ -656,7 +666,7 @@ classDiagram
     }
     <<struct>> frozenMatchTarget
     %% grepple:file frozenMatchTarget gritql/matcher.go
-    note for frozenMatchTarget "defined: gritql/matcher.go:59-66; anchor@gritql/matcher.go:64; children@gritql/matcher.go:63; field@gritql/matcher.go:62; kind@gritql/matcher.go:61; node@gritql/matcher.go:60; sequence@gritql/matcher.go:65"
+    note for frozenMatchTarget "defined: gritql/matcher.go:62-69; anchor@gritql/matcher.go:67; children@gritql/matcher.go:66; field@gritql/matcher.go:65; kind@gritql/matcher.go:64; node@gritql/matcher.go:63; sequence@gritql/matcher.go:68"
     class generatedPlaceholder {
         -end: int
         -index: int
@@ -666,7 +676,7 @@ classDiagram
     }
     <<struct>> generatedPlaceholder
     %% grepple:file generatedPlaceholder gritql/template.go
-    note for generatedPlaceholder "defined: gritql/template.go:185-189; end@gritql/template.go:186; index@gritql/template.go:186; ref@gritql/template.go:187; role@gritql/template.go:188; start@gritql/template.go:186"
+    note for generatedPlaceholder "defined: gritql/template.go:191-195; end@gritql/template.go:192; index@gritql/template.go:192; ref@gritql/template.go:193; role@gritql/template.go:194; start@gritql/template.go:192"
     class inferredEvaluation {
         -tmpl: Template
         -tooDeep: bool
@@ -674,7 +684,7 @@ classDiagram
     }
     <<struct>> inferredEvaluation
     %% grepple:file inferredEvaluation gritql/template.go
-    note for inferredEvaluation "defined: gritql/template.go:771-774; tmpl@gritql/template.go:772; tooDeep@gritql/template.go:773; valid@gritql/template.go:773"
+    note for inferredEvaluation "defined: gritql/template.go:777-780; tmpl@gritql/template.go:778; tooDeep@gritql/template.go:779; valid@gritql/template.go:779"
     class noCopy {
         +Lock()
     }
@@ -685,16 +695,16 @@ classDiagram
     <<type>> normalizationCheckpoint
     %% grepple:underlying normalizationCheckpoint uint8
     %% grepple:file normalizationCheckpoint gritql/batch.go
-    note for normalizationCheckpoint "defined: gritql/batch.go:192"
+    note for normalizationCheckpoint "defined: gritql/batch.go:197"
     class normalizationCheckpointHook["normalizationCheckpointHook = func(normalizationCheckpoint)*EvaluationError"]
     <<type>> normalizationCheckpointHook
     %% grepple:underlying normalizationCheckpointHook func(normalizationCheckpoint)*EvaluationError
     %% grepple:file normalizationCheckpointHook gritql/batch.go
-    note for normalizationCheckpointHook "defined: gritql/batch.go:204"
+    note for normalizationCheckpointHook "defined: gritql/batch.go:209"
     class normalizationCheckpointKey
     <<struct>> normalizationCheckpointKey
     %% grepple:file normalizationCheckpointKey gritql/batch.go
-    note for normalizationCheckpointKey "defined: gritql/batch.go:199"
+    note for normalizationCheckpointKey "defined: gritql/batch.go:204"
     class normalizedNode {
         +MarshalJSON(): tuple~[]byte&#44;error~
         -children: []normalizedNode
@@ -704,7 +714,7 @@ classDiagram
     }
     <<struct>> normalizedNode
     %% grepple:file normalizedNode gritql/matcher.go
-    note for normalizedNode "defined: gritql/matcher.go:91-96; MarshalJSON@gritql/matcher.go:98; children@gritql/matcher.go:95; kind@gritql/matcher.go:92; lexeme@gritql/matcher.go:93; named@gritql/matcher.go:94"
+    note for normalizedNode "defined: gritql/matcher.go:94-99; MarshalJSON@gritql/matcher.go:101; children@gritql/matcher.go:98; kind@gritql/matcher.go:95; lexeme@gritql/matcher.go:96; named@gritql/matcher.go:97"
     class occurrenceRestoration {
         -seenExactlyOnce(): bool
         -visitChildren([]*templateNode, []templateChild): []*templateNode
@@ -716,7 +726,7 @@ classDiagram
     }
     <<struct>> occurrenceRestoration
     %% grepple:file occurrenceRestoration gritql/template.go
-    note for occurrenceRestoration "defined: gritql/template.go:1354-1358; seenExactlyOnce@gritql/template.go:1392-1399; visitChildren@gritql/template.go:1380-1390; visitSlot@gritql/template.go:1360-1367; visitTree@gritql/template.go:1369-1378; indices@gritql/template.go:1356; seen@gritql/template.go:1355; valid@gritql/template.go:1357"
+    note for occurrenceRestoration "defined: gritql/template.go:1363-1367; seenExactlyOnce@gritql/template.go:1401-1408; visitChildren@gritql/template.go:1389-1399; visitSlot@gritql/template.go:1369-1376; visitTree@gritql/template.go:1378-1387; indices@gritql/template.go:1365; seen@gritql/template.go:1364; valid@gritql/template.go:1366"
     class placeholderInference {
         -assignments: [][]placeholderRole
         -ok: bool
@@ -724,7 +734,7 @@ classDiagram
     }
     <<struct>> placeholderInference
     %% grepple:file placeholderInference gritql/template.go
-    note for placeholderInference "defined: gritql/template.go:219-223; assignments@gritql/template.go:220; ok@gritql/template.go:221; tooDeep@gritql/template.go:222"
+    note for placeholderInference "defined: gritql/template.go:225-229; assignments@gritql/template.go:226; ok@gritql/template.go:227; tooDeep@gritql/template.go:228"
     class placeholderInfo {
         -ancestors: roleAncestorSet
         -errorRange: parser.Range
@@ -733,7 +743,7 @@ classDiagram
     }
     <<struct>> placeholderInfo
     %% grepple:file placeholderInfo gritql/template.go
-    note for placeholderInfo "defined: gritql/template.go:397-402; ancestors@gritql/template.go:400; errorRange@gritql/template.go:401; foundNode@gritql/template.go:398; topLevelValue@gritql/template.go:399"
+    note for placeholderInfo "defined: gritql/template.go:403-408; ancestors@gritql/template.go:406; errorRange@gritql/template.go:407; foundNode@gritql/template.go:404; topLevelValue@gritql/template.go:405"
     class placeholderInfoCollector {
         -inspect(placeholderWalkItem): placeholderWalkItem
         -record(int, placeholderWalkItem)
@@ -742,12 +752,12 @@ classDiagram
     }
     <<struct>> placeholderInfoCollector
     %% grepple:file placeholderInfoCollector gritql/template.go
-    note for placeholderInfoCollector "defined: gritql/template.go:437-440; inspect@gritql/template.go:460-472; record@gritql/template.go:474-485; bySpan@gritql/template.go:438; infos@gritql/template.go:439"
+    note for placeholderInfoCollector "defined: gritql/template.go:443-446; inspect@gritql/template.go:466-478; record@gritql/template.go:480-491; bySpan@gritql/template.go:444; infos@gritql/template.go:445"
     class placeholderRole["placeholderRole = uint8"]
     <<type>> placeholderRole
     %% grepple:underlying placeholderRole uint8
     %% grepple:file placeholderRole gritql/template.go
-    note for placeholderRole "defined: gritql/template.go:175"
+    note for placeholderRole "defined: gritql/template.go:180"
     class placeholderRoleSolver {
         -allResolved(): bool
         -resolveErrorRegion(int)
@@ -767,7 +777,7 @@ classDiagram
     }
     <<struct>> placeholderRoleSolver
     %% grepple:file placeholderRoleSolver gritql/template.go
-    note for placeholderRoleSolver "defined: gritql/template.go:498-505; allResolved@gritql/template.go:596-603; resolveErrorRegion@gritql/template.go:578-594; resolveErrorRegions@gritql/template.go:570-576; resolveImport@gritql/template.go:530-538; resolveImports@gritql/template.go:515-528; resolveTopLevelValues@gritql/template.go:507-513; resolveTypedNodes@gritql/template.go:562-568; resolveWholeSpec@gritql/template.go:549-560; resolveWholeSpecs@gritql/template.go:540-547; infos@gritql/template.go:502; ps@gritql/template.go:500; resolved@gritql/template.go:504; roles@gritql/template.go:503; separators@gritql/template.go:501; source@gritql/template.go:499"
+    note for placeholderRoleSolver "defined: gritql/template.go:504-511; allResolved@gritql/template.go:602-609; resolveErrorRegion@gritql/template.go:584-600; resolveErrorRegions@gritql/template.go:576-582; resolveImport@gritql/template.go:536-544; resolveImports@gritql/template.go:521-534; resolveTopLevelValues@gritql/template.go:513-519; resolveTypedNodes@gritql/template.go:568-574; resolveWholeSpec@gritql/template.go:555-566; resolveWholeSpecs@gritql/template.go:546-553; infos@gritql/template.go:508; ps@gritql/template.go:506; resolved@gritql/template.go:510; roles@gritql/template.go:509; separators@gritql/template.go:507; source@gritql/template.go:505"
     class placeholderWalkItem {
         -ancestors: roleAncestorSet
         -depth: int
@@ -778,7 +788,16 @@ classDiagram
     }
     <<struct>> placeholderWalkItem
     %% grepple:file placeholderWalkItem gritql/template.go
-    note for placeholderWalkItem "defined: gritql/template.go:428-435; ancestors@gritql/template.go:432; depth@gritql/template.go:431; errorRange@gritql/template.go:434; inError@gritql/template.go:433; n@gritql/template.go:429; parent@gritql/template.go:430"
+    note for placeholderWalkItem "defined: gritql/template.go:434-441; ancestors@gritql/template.go:438; depth@gritql/template.go:437; errorRange@gritql/template.go:440; inError@gritql/template.go:439; n@gritql/template.go:435; parent@gritql/template.go:436"
+    class preparedLanguageScan {
+        -candidates: []preparedScanCandidate
+        -early: []FileEvaluation
+        -stats: ScanStats
+        -truncations: []ScanTruncation
+    }
+    <<struct>> preparedLanguageScan
+    %% grepple:file preparedLanguageScan gritql/scanner_batch.go
+    note for preparedLanguageScan "defined: gritql/scanner_batch.go:88-93; candidates@gritql/scanner_batch.go:89; early@gritql/scanner_batch.go:90; stats@gritql/scanner_batch.go:92; truncations@gritql/scanner_batch.go:91"
     class preparedScanCandidate {
         -language: string
         -path: string
@@ -786,7 +805,7 @@ classDiagram
     }
     <<struct>> preparedScanCandidate
     %% grepple:file preparedScanCandidate gritql/scanner.go
-    note for preparedScanCandidate "defined: gritql/scanner.go:103-107; language@gritql/scanner.go:106; path@gritql/scanner.go:105; readPath@gritql/scanner.go:104"
+    note for preparedScanCandidate "defined: gritql/scanner.go:105-109; language@gritql/scanner.go:108; path@gritql/scanner.go:107; readPath@gritql/scanner.go:106"
     class queryDocument {
         -bytes(): []byte
         -close()
@@ -802,7 +821,7 @@ classDiagram
     }
     <<struct>> queryDocument
     %% grepple:file queryDocument gritql/query_syntax.go
-    note for queryDocument "defined: gritql/query_syntax.go:58-64; bytes@gritql/query_syntax.go:171-181; close@gritql/query_syntax.go:155-169; diagnostics@gritql/query_syntax.go:207-235; hasUnsupportedConstruct@gritql/query_syntax.go:252-275; rangeForBytes@gritql/query_syntax.go:195-205; root@gritql/query_syntax.go:183-193; lineStarts@gritql/query_syntax.go:62; mu@gritql/query_syntax.go:60; noCopy@gritql/query_syntax.go:59; source@gritql/query_syntax.go:61; tree@gritql/query_syntax.go:63"
+    note for queryDocument "defined: gritql/query_syntax.go:58-64; bytes@gritql/query_syntax.go:179-189; close@gritql/query_syntax.go:163-177; diagnostics@gritql/query_syntax.go:215-243; hasUnsupportedConstruct@gritql/query_syntax.go:260-283; rangeForBytes@gritql/query_syntax.go:203-213; root@gritql/query_syntax.go:191-201; lineStarts@gritql/query_syntax.go:62; mu@gritql/query_syntax.go:60; noCopy@gritql/query_syntax.go:59; source@gritql/query_syntax.go:61; tree@gritql/query_syntax.go:63"
     class queryErrorKind["queryErrorKind = uint8"]
     <<type>> queryErrorKind
     %% grepple:underlying queryErrorKind uint8
@@ -829,7 +848,7 @@ classDiagram
     }
     <<struct>> queryNode
     %% grepple:file queryNode gritql/query_syntax.go
-    note for queryNode "defined: gritql/query_syntax.go:66-70; byteRange@gritql/query_syntax.go:376-382; childByFieldName@gritql/query_syntax.go:384-392; children@gritql/query_syntax.go:394-405; error@gritql/query_syntax.go:351-355; extra@gritql/query_syntax.go:345-349; fieldName@gritql/query_syntax.go:363; kind@gritql/query_syntax.go:333-337; missing@gritql/query_syntax.go:357-361; named@gritql/query_syntax.go:339-343; namedChildren@gritql/query_syntax.go:407-418; read@gritql/query_syntax.go:316-325; sexp@gritql/query_syntax.go:420-424; text@gritql/query_syntax.go:365-374; valid@gritql/query_syntax.go:327-331; doc@gritql/query_syntax.go:67; field@gritql/query_syntax.go:69; raw@gritql/query_syntax.go:68"
+    note for queryNode "defined: gritql/query_syntax.go:66-70; byteRange@gritql/query_syntax.go:384-390; childByFieldName@gritql/query_syntax.go:392-400; children@gritql/query_syntax.go:402-413; error@gritql/query_syntax.go:359-363; extra@gritql/query_syntax.go:353-357; fieldName@gritql/query_syntax.go:371; kind@gritql/query_syntax.go:341-345; missing@gritql/query_syntax.go:365-369; named@gritql/query_syntax.go:347-351; namedChildren@gritql/query_syntax.go:415-426; read@gritql/query_syntax.go:324-333; sexp@gritql/query_syntax.go:428-432; text@gritql/query_syntax.go:373-382; valid@gritql/query_syntax.go:335-339; doc@gritql/query_syntax.go:67; field@gritql/query_syntax.go:69; raw@gritql/query_syntax.go:68"
     class queryParseDiagnostic {
         +Kind: string
         +Message: string
@@ -894,7 +913,7 @@ classDiagram
     }
     <<struct>> roleAlternative
     %% grepple:file roleAlternative gritql/template.go
-    note for roleAlternative "defined: gritql/template.go:608-612; component@gritql/template.go:609; index@gritql/template.go:610; role@gritql/template.go:611"
+    note for roleAlternative "defined: gritql/template.go:614-618; component@gritql/template.go:615; index@gritql/template.go:616; role@gritql/template.go:617"
     class roleAncestorSet {
         -add(string, parser.Range)
         -get(string): tuple~parser.Range&#44;bool~
@@ -903,7 +922,7 @@ classDiagram
     }
     <<struct>> roleAncestorSet
     %% grepple:file roleAncestorSet gritql/template.go
-    note for roleAncestorSet "defined: gritql/template.go:372-375; add@gritql/template.go:379-386; get@gritql/template.go:388-395; ranges@gritql/template.go:373; set@gritql/template.go:374"
+    note for roleAncestorSet "defined: gritql/template.go:378-381; add@gritql/template.go:385-392; get@gritql/template.go:394-401; ranges@gritql/template.go:379; set@gritql/template.go:380"
     class scanByteAccount {
         -read(context.Context, fs.FS, string, int, ScanOptions): scanReadResult
         -readNext(context.Context, fs.FS, string, ScanOptions): scanReadResult
@@ -917,24 +936,24 @@ classDiagram
     }
     <<struct>> scanByteAccount
     %% grepple:file scanByteAccount gritql/scanner.go
-    note for scanByteAccount "defined: gritql/scanner.go:350-357; read@gritql/scanner.go:363-383; readNext@gritql/scanner.go:385-405; signalLocked@gritql/scanner.go:407-410; maximum@gritql/scanner.go:355; mu@gritql/scanner.go:351; next@gritql/scanner.go:353; notify@gritql/scanner.go:352; stopped@gritql/scanner.go:356; total@gritql/scanner.go:354"
+    note for scanByteAccount "defined: gritql/scanner.go:357-364; read@gritql/scanner.go:370-390; readNext@gritql/scanner.go:392-412; signalLocked@gritql/scanner.go:414-417; maximum@gritql/scanner.go:362; mu@gritql/scanner.go:358; next@gritql/scanner.go:360; notify@gritql/scanner.go:359; stopped@gritql/scanner.go:363; total@gritql/scanner.go:361"
     class scanCandidateDisposition["scanCandidateDisposition = uint8"]
     <<type>> scanCandidateDisposition
     %% grepple:underlying scanCandidateDisposition uint8
     %% grepple:file scanCandidateDisposition gritql/scanner.go
-    note for scanCandidateDisposition "defined: gritql/scanner.go:478"
+    note for scanCandidateDisposition "defined: gritql/scanner.go:485"
     class scanJob {
         -candidate: preparedScanCandidate
         -index: int
     }
     <<struct>> scanJob
     %% grepple:file scanJob gritql/scanner.go
-    note for scanJob "defined: gritql/scanner.go:118-121; candidate@gritql/scanner.go:120; index@gritql/scanner.go:119"
+    note for scanJob "defined: gritql/scanner.go:120-123; candidate@gritql/scanner.go:122; index@gritql/scanner.go:121"
     class scanLimitKind["scanLimitKind = uint8"]
     <<type>> scanLimitKind
     %% grepple:underlying scanLimitKind uint8
     %% grepple:file scanLimitKind gritql/scanner.go
-    note for scanLimitKind "defined: gritql/scanner.go:335"
+    note for scanLimitKind "defined: gritql/scanner.go:342"
     class scanMemoryAccount {
         -acquire(context.Context, int64): bool
         -discard(int, int64)
@@ -951,7 +970,7 @@ classDiagram
     }
     <<struct>> scanMemoryAccount
     %% grepple:file scanMemoryAccount gritql/scanner.go
-    note for scanMemoryAccount "defined: gritql/scanner.go:573-580; acquire@gritql/scanner.go:586-606; discard@gritql/scanner.go:644-652; release@gritql/scanner.go:654-662; replace@gritql/scanner.go:608-632; retain@gritql/scanner.go:634-642; signalLocked@gritql/scanner.go:664-667; capacity@gritql/scanner.go:576; current@gritql/scanner.go:577; mu@gritql/scanner.go:574; next@gritql/scanner.go:579; notify@gritql/scanner.go:575; retained@gritql/scanner.go:578"
+    note for scanMemoryAccount "defined: gritql/scanner.go:577-584; acquire@gritql/scanner.go:590-610; discard@gritql/scanner.go:648-656; release@gritql/scanner.go:658-666; replace@gritql/scanner.go:612-636; retain@gritql/scanner.go:638-646; signalLocked@gritql/scanner.go:668-671; capacity@gritql/scanner.go:580; current@gritql/scanner.go:581; mu@gritql/scanner.go:578; next@gritql/scanner.go:583; notify@gritql/scanner.go:579; retained@gritql/scanner.go:582"
     class scanOutcome {
         -binary: bool
         -bytesRead: int64
@@ -962,7 +981,7 @@ classDiagram
     }
     <<struct>> scanOutcome
     %% grepple:file scanOutcome gritql/scanner.go
-    note for scanOutcome "defined: gritql/scanner.go:109-116; binary@gritql/scanner.go:114; bytesRead@gritql/scanner.go:112; evaluation@gritql/scanner.go:111; index@gritql/scanner.go:110; reserved@gritql/scanner.go:113; totalTruncated@gritql/scanner.go:115"
+    note for scanOutcome "defined: gritql/scanner.go:111-118; binary@gritql/scanner.go:116; bytesRead@gritql/scanner.go:114; evaluation@gritql/scanner.go:113; index@gritql/scanner.go:112; reserved@gritql/scanner.go:115; totalTruncated@gritql/scanner.go:117"
     class scanReadResult {
         -content: []byte
         -err: error
@@ -970,7 +989,7 @@ classDiagram
     }
     <<struct>> scanReadResult
     %% grepple:file scanReadResult gritql/scanner.go
-    note for scanReadResult "defined: gritql/scanner.go:344-348; content@gritql/scanner.go:345; err@gritql/scanner.go:346; limit@gritql/scanner.go:347"
+    note for scanReadResult "defined: gritql/scanner.go:351-355; content@gritql/scanner.go:352; err@gritql/scanner.go:353; limit@gritql/scanner.go:354"
     class scanSegmentMatcher {
         -match(int, int): bool
         -matchDoubleStar(int, int): bool
@@ -982,14 +1001,14 @@ classDiagram
     }
     <<struct>> scanSegmentMatcher
     %% grepple:file scanSegmentMatcher gritql/scanner.go
-    note for scanSegmentMatcher "defined: gritql/scanner.go:777-782; match@gritql/scanner.go:789-798; matchDoubleStar@gritql/scanner.go:814-819; matchUncached@gritql/scanner.go:800-812; name@gritql/scanner.go:779; pattern@gritql/scanner.go:778; seen@gritql/scanner.go:780; values@gritql/scanner.go:781"
+    note for scanSegmentMatcher "defined: gritql/scanner.go:781-786; match@gritql/scanner.go:793-802; matchDoubleStar@gritql/scanner.go:818-823; matchUncached@gritql/scanner.go:804-816; name@gritql/scanner.go:783; pattern@gritql/scanner.go:782; seen@gritql/scanner.go:784; values@gritql/scanner.go:785"
     class scanSegmentState {
         -name: int
         -pattern: int
     }
     <<struct>> scanSegmentState
     %% grepple:file scanSegmentState gritql/scanner.go
-    note for scanSegmentState "defined: gritql/scanner.go:772-775; name@gritql/scanner.go:774; pattern@gritql/scanner.go:773"
+    note for scanSegmentState "defined: gritql/scanner.go:776-779; name@gritql/scanner.go:778; pattern@gritql/scanner.go:777"
     class scanState {
         -commit(*Program, scanOutcome)
         -scan(context.Context, fs.FS, *Program, []preparedScanCandidate)
@@ -1004,22 +1023,23 @@ classDiagram
         -stop: bool
         -totalSkipped: int
         -totalTruncated: bool
+        -truncations: []ScanTruncation
     }
     <<struct>> scanState
     %% grepple:file scanState gritql/scanner.go
-    note for scanState "defined: gritql/scanner.go:122-134; commit@gritql/scanner.go:231-263; scan@gritql/scanner.go:158-172; account@gritql/scanner.go:128; bytes@gritql/scanner.go:129; candidateCount@gritql/scanner.go:130; evaluations@gritql/scanner.go:125; options@gritql/scanner.go:123; retained@gritql/scanner.go:126; started@gritql/scanner.go:124; stats@gritql/scanner.go:127; stop@gritql/scanner.go:131; totalSkipped@gritql/scanner.go:133; totalTruncated@gritql/scanner.go:132"
+    note for scanState "defined: gritql/scanner.go:124-137; commit@gritql/scanner.go:238-270; scan@gritql/scanner.go:165-179; account@gritql/scanner.go:131; bytes@gritql/scanner.go:132; candidateCount@gritql/scanner.go:133; evaluations@gritql/scanner.go:127; options@gritql/scanner.go:125; retained@gritql/scanner.go:129; started@gritql/scanner.go:126; stats@gritql/scanner.go:130; stop@gritql/scanner.go:134; totalSkipped@gritql/scanner.go:136; totalTruncated@gritql/scanner.go:135; truncations@gritql/scanner.go:128"
     class selectedRoot {
         -node: parser.Node
         -sequenceKind: string
     }
     <<struct>> selectedRoot
     %% grepple:file selectedRoot gritql/template.go
-    note for selectedRoot "defined: gritql/template.go:197-200; node@gritql/template.go:198; sequenceKind@gritql/template.go:199"
+    note for selectedRoot "defined: gritql/template.go:203-206; node@gritql/template.go:204; sequenceKind@gritql/template.go:205"
     class separatorLexState["separatorLexState = uint8"]
     <<type>> separatorLexState
     %% grepple:underlying separatorLexState uint8
     %% grepple:file separatorLexState gritql/template.go
-    note for separatorLexState "defined: gritql/template.go:240"
+    note for separatorLexState "defined: gritql/template.go:246"
     class separatorScanner {
         -addBothSeparator(int)
         -beginComment(): bool
@@ -1039,7 +1059,7 @@ classDiagram
     }
     <<struct>> separatorScanner
     %% grepple:file separatorScanner gritql/template.go
-    note for separatorScanner "defined: gritql/template.go:251-258; addBothSeparator@gritql/template.go:367-370; beginComment@gritql/template.go:347-365; scan@gritql/template.go:260-264; scanBlockComment@gritql/template.go:289-307; scanCurrentByte@gritql/template.go:266-279; scanLineComment@gritql/template.go:281-287; scanNormalByte@gritql/template.go:326-345; scanQuotedLiteral@gritql/template.go:315-324; scanRawString@gritql/template.go:309-313; blockCommentHasNewline@gritql/template.go:257; blockCommentStart@gritql/template.go:256; index@gritql/template.go:255; result@gritql/template.go:253; source@gritql/template.go:252; state@gritql/template.go:254"
+    note for separatorScanner "defined: gritql/template.go:257-264; addBothSeparator@gritql/template.go:373-376; beginComment@gritql/template.go:353-371; scan@gritql/template.go:266-270; scanBlockComment@gritql/template.go:295-313; scanCurrentByte@gritql/template.go:272-285; scanLineComment@gritql/template.go:287-293; scanNormalByte@gritql/template.go:332-351; scanQuotedLiteral@gritql/template.go:321-330; scanRawString@gritql/template.go:315-319; blockCommentHasNewline@gritql/template.go:263; blockCommentStart@gritql/template.go:262; index@gritql/template.go:261; result@gritql/template.go:259; source@gritql/template.go:258; state@gritql/template.go:260"
     class sequencePosition {
         -field: string
         -indexes: []int
@@ -1065,7 +1085,7 @@ classDiagram
     }
     <<struct>> slotTarget
     %% grepple:file slotTarget gritql/template.go
-    note for slotTarget "defined: gritql/template.go:1043-1047; cardinality@gritql/template.go:1045; kind@gritql/template.go:1046; p@gritql/template.go:1044"
+    note for slotTarget "defined: gritql/template.go:1051-1055; cardinality@gritql/template.go:1053; kind@gritql/template.go:1054; p@gritql/template.go:1052"
     class slotTargetWalkItem {
         -depth: int
         -n: parser.Node
@@ -1073,7 +1093,7 @@ classDiagram
     }
     <<struct>> slotTargetWalkItem
     %% grepple:file slotTargetWalkItem gritql/template.go
-    note for slotTargetWalkItem "defined: gritql/template.go:1090-1093; depth@gritql/template.go:1092; n@gritql/template.go:1091; parent@gritql/template.go:1091"
+    note for slotTargetWalkItem "defined: gritql/template.go:1098-1101; depth@gritql/template.go:1100; n@gritql/template.go:1099; parent@gritql/template.go:1099"
     class snippetAttempt {
         -context: SnippetContext
         -prefix: string
@@ -1082,7 +1102,7 @@ classDiagram
     }
     <<struct>> snippetAttempt
     %% grepple:file snippetAttempt gritql/template.go
-    note for snippetAttempt "defined: gritql/template.go:192-196; context@gritql/template.go:193; prefix@gritql/template.go:194; selectRoot@gritql/template.go:195; suffix@gritql/template.go:194"
+    note for snippetAttempt "defined: gritql/template.go:198-202; context@gritql/template.go:199; prefix@gritql/template.go:200; selectRoot@gritql/template.go:201; suffix@gritql/template.go:200"
     class snippetPlaceholder {
         -end: int
         -ref: VariableRef
@@ -1090,7 +1110,7 @@ classDiagram
     }
     <<struct>> snippetPlaceholder
     %% grepple:file snippetPlaceholder gritql/template.go
-    note for snippetPlaceholder "defined: gritql/template.go:170-173; end@gritql/template.go:171; ref@gritql/template.go:172; start@gritql/template.go:171"
+    note for snippetPlaceholder "defined: gritql/template.go:175-178; end@gritql/template.go:176; ref@gritql/template.go:177; start@gritql/template.go:176"
     class sourceInspectionItem {
         -depth: int
         -node: parser.ViewNode
@@ -1104,14 +1124,28 @@ classDiagram
     }
     <<struct>> spanKey
     %% grepple:file spanKey gritql/template.go
-    note for spanKey "defined: gritql/template.go:190; end@gritql/template.go:190; start@gritql/template.go:190"
+    note for spanKey "defined: gritql/template.go:196; end@gritql/template.go:196; start@gritql/template.go:196"
     class structuralSeparators {
         -left: []int
         -right: []int
     }
     <<struct>> structuralSeparators
     %% grepple:file structuralSeparators gritql/template.go
-    note for structuralSeparators "defined: gritql/template.go:225-228; left@gritql/template.go:226; right@gritql/template.go:227"
+    note for structuralSeparators "defined: gritql/template.go:231-234; left@gritql/template.go:232; right@gritql/template.go:233"
+    class targetLanguageAdapter {
+        -compatibility: string
+        -compileTemplates: func&#40;decodedSnippet&#44;int&#41;&#40;[]Template&#44;string&#44;error&#41;
+        -goGrammar: string
+        -grammar: string
+        -id: string
+        -metadataGrammar: string
+        -metadataLanguage: string
+        -rootCategory: func&#40;SnippetContext&#44;string&#41;bool
+        -treeSitter: string
+    }
+    <<struct>> targetLanguageAdapter
+    %% grepple:file targetLanguageAdapter gritql/language.go
+    note for targetLanguageAdapter "defined: gritql/language.go:15-25; compatibility@gritql/language.go:17; compileTemplates@gritql/language.go:23; goGrammar@gritql/language.go:22; grammar@gritql/language.go:18; id@gritql/language.go:16; metadataGrammar@gritql/language.go:21; metadataLanguage@gritql/language.go:20; rootCategory@gritql/language.go:24; treeSitter@gritql/language.go:19"
     class templateChild {
         -field: string
         -node: *templateNode
@@ -1119,7 +1153,7 @@ classDiagram
     }
     <<struct>> templateChild
     %% grepple:file templateChild gritql/template.go
-    note for templateChild "defined: gritql/template.go:46-50; field@gritql/template.go:47; node@gritql/template.go:48; slot@gritql/template.go:49"
+    note for templateChild "defined: gritql/template.go:47-51; field@gritql/template.go:48; node@gritql/template.go:49; slot@gritql/template.go:50"
     class templateFreezeFrame {
         -children: []parser.Node
         -depth: int
@@ -1129,7 +1163,7 @@ classDiagram
     }
     <<struct>> templateFreezeFrame
     %% grepple:file templateFreezeFrame gritql/template.go
-    note for templateFreezeFrame "defined: gritql/template.go:1133-1139; children@gritql/template.go:1136; depth@gritql/template.go:1135; kept@gritql/template.go:1138; next@gritql/template.go:1137; src@gritql/template.go:1134"
+    note for templateFreezeFrame "defined: gritql/template.go:1141-1147; children@gritql/template.go:1144; depth@gritql/template.go:1143; kept@gritql/template.go:1146; next@gritql/template.go:1145; src@gritql/template.go:1142"
     class templateFreezer {
         -build(): tuple~templateChild&#44;error~
         -concreteChild(*templateFreezeFrame, bool): templateChild
@@ -1147,7 +1181,7 @@ classDiagram
     }
     <<struct>> templateFreezer
     %% grepple:file templateFreezer gritql/template.go
-    note for templateFreezer "defined: gritql/template.go:1141-1147; build@gritql/template.go:1149-1160; concreteChild@gritql/template.go:1207-1217; descend@gritql/template.go:1201-1205; finishFrame@gritql/template.go:1219-1227; keptChildren@gritql/template.go:1191-1199; slotChild@gritql/template.go:1181-1189; step@gritql/template.go:1162-1179; clipEnd@gritql/template.go:1144; clipStart@gritql/template.go:1143; maxDepth@gritql/template.go:1143; sequenceKind@gritql/template.go:1145; stack@gritql/template.go:1146; targets@gritql/template.go:1142"
+    note for templateFreezer "defined: gritql/template.go:1149-1155; build@gritql/template.go:1157-1168; concreteChild@gritql/template.go:1215-1225; descend@gritql/template.go:1209-1213; finishFrame@gritql/template.go:1227-1235; keptChildren@gritql/template.go:1199-1207; slotChild@gritql/template.go:1189-1197; step@gritql/template.go:1170-1187; clipEnd@gritql/template.go:1152; clipStart@gritql/template.go:1151; maxDepth@gritql/template.go:1151; sequenceKind@gritql/template.go:1153; stack@gritql/template.go:1154; targets@gritql/template.go:1150"
     class templateNode {
         -children: []templateChild
         -kind: string
@@ -1156,14 +1190,14 @@ classDiagram
     }
     <<struct>> templateNode
     %% grepple:file templateNode gritql/template.go
-    note for templateNode "defined: gritql/template.go:51-56; children@gritql/template.go:55; kind@gritql/template.go:52; named@gritql/template.go:53; token@gritql/template.go:54"
+    note for templateNode "defined: gritql/template.go:52-57; children@gritql/template.go:56; kind@gritql/template.go:53; named@gritql/template.go:54; token@gritql/template.go:55"
     class templateSlot {
         -cardinality: SlotCardinality
         -ref: VariableRef
     }
     <<struct>> templateSlot
     %% grepple:file templateSlot gritql/template.go
-    note for templateSlot "defined: gritql/template.go:42-45; cardinality@gritql/template.go:44; ref@gritql/template.go:43"
+    note for templateSlot "defined: gritql/template.go:43-46; cardinality@gritql/template.go:45; ref@gritql/template.go:44"
     class treeCompiler {
         -acceptDocumentField(queryNode, *queryNode, *queryNode): *CompileError
         -closedFailure(string): *CompileError
@@ -1190,6 +1224,7 @@ classDiagram
         -snippetMetavariableEnd([]byte, int): tuple~int&#44;*CompileError~
         -variable(string, int, int): VariableRef
         -whereChildren(queryNode): tuple~[]queryNode&#44;*CompileError~
+        -adapter: targetLanguageAdapter
         -doc: *queryDocument
         -features: FeatureSet
         -languageRange: Range
@@ -1199,24 +1234,24 @@ classDiagram
     }
     <<struct>> treeCompiler
     %% grepple:file treeCompiler gritql/compiler.go
-    note for treeCompiler "defined: gritql/compiler.go:452-459; acceptDocumentField@gritql/compiler.go:397-408; closedFailure@gritql/compiler.go:895-897; compileBlock@gritql/compiler.go:697-711; compileBlockChildren@gritql/compiler.go:713-735; compileConstraint@gritql/compiler.go:828-843; compileConstraintBlock@gritql/compiler.go:789-802; compileConstraintItems@gritql/compiler.go:804-826; compileDecodedRegex@gritql/compiler.go:675-695; compileDocumentFields@gritql/compiler.go:376-395; compileExpression@gritql/compiler.go:478-507; compileLanguage@gritql/compiler.go:461-476; compileRegex@gritql/compiler.go:592-607; compileSnippet@gritql/compiler.go:509-528; compileUnary@gritql/compiler.go:737-755; compileWhere@gritql/compiler.go:757-775; decodeRegex@gritql/compiler.go:622-639; decodeRegexEscape@gritql/compiler.go:641-656; decodeRegexHexEscape@gritql/compiler.go:658-673; decodeSnippet@gritql/compiler.go:543-575; failure@gritql/compiler.go:899-901; regexPayload@gritql/compiler.go:609-620; snippetLeaf@gritql/compiler.go:530-541; snippetMetavariableEnd@gritql/compiler.go:577-590; variable@gritql/compiler.go:845-858; whereChildren@gritql/compiler.go:777-787; doc@gritql/compiler.go:453; features@gritql/compiler.go:457; languageRange@gritql/compiler.go:458; names@gritql/compiler.go:455; options@gritql/compiler.go:454; variables@gritql/compiler.go:456"
+    note for treeCompiler "defined: gritql/compiler.go:470-478; acceptDocumentField@gritql/compiler.go:415-426; closedFailure@gritql/compiler.go:919-921; compileBlock@gritql/compiler.go:721-735; compileBlockChildren@gritql/compiler.go:737-759; compileConstraint@gritql/compiler.go:852-867; compileConstraintBlock@gritql/compiler.go:813-826; compileConstraintItems@gritql/compiler.go:828-850; compileDecodedRegex@gritql/compiler.go:699-719; compileDocumentFields@gritql/compiler.go:394-413; compileExpression@gritql/compiler.go:502-531; compileLanguage@gritql/compiler.go:480-500; compileRegex@gritql/compiler.go:616-631; compileSnippet@gritql/compiler.go:533-552; compileUnary@gritql/compiler.go:761-779; compileWhere@gritql/compiler.go:781-799; decodeRegex@gritql/compiler.go:646-663; decodeRegexEscape@gritql/compiler.go:665-680; decodeRegexHexEscape@gritql/compiler.go:682-697; decodeSnippet@gritql/compiler.go:567-599; failure@gritql/compiler.go:923-925; regexPayload@gritql/compiler.go:633-644; snippetLeaf@gritql/compiler.go:554-565; snippetMetavariableEnd@gritql/compiler.go:601-614; variable@gritql/compiler.go:869-882; whereChildren@gritql/compiler.go:801-811; adapter@gritql/compiler.go:476; doc@gritql/compiler.go:471; features@gritql/compiler.go:475; languageRange@gritql/compiler.go:477; names@gritql/compiler.go:473; options@gritql/compiler.go:472; variables@gritql/compiler.go:474"
     class v1NodeValidator["v1NodeValidator = func(queryNode,&#91;&#93;queryNode)bool"]
     <<type>> v1NodeValidator
     %% grepple:underlying v1NodeValidator func(queryNode,[]queryNode)bool
     %% grepple:file v1NodeValidator gritql/query_syntax.go
-    note for v1NodeValidator "defined: gritql/query_syntax.go:638"
+    note for v1NodeValidator "defined: gritql/query_syntax.go:646"
     class v1ValidationWork {
         -depth: int
         -node: queryNode
     }
     <<struct>> v1ValidationWork
     %% grepple:file v1ValidationWork gritql/query_syntax.go
-    note for v1ValidationWork "defined: gritql/query_syntax.go:529-532; depth@gritql/query_syntax.go:531; node@gritql/query_syntax.go:530"
+    note for v1ValidationWork "defined: gritql/query_syntax.go:537-540; depth@gritql/query_syntax.go:539; node@gritql/query_syntax.go:538"
     class variableScope["variableScope = map&#91;VariableID&#93;bool"]
     <<type>> variableScope
     %% grepple:underlying variableScope map[VariableID]bool
     %% grepple:file variableScope gritql/compiler.go
-    note for variableScope "defined: gritql/compiler.go:903"
+    note for variableScope "defined: gritql/compiler.go:927"
     class AnalyzeAnchors {
         +AnalyzeAnchors(*Program): AnchorPlan
     }
@@ -1228,7 +1263,7 @@ classDiagram
     }
     <<function>> Compile
     %% grepple:file Compile gritql/compiler.go
-    note for Compile "defined: gritql/compiler.go:310-341"
+    note for Compile "defined: gritql/compiler.go:328-359"
     class Evaluate {
         +Evaluate(context.Context, *Program, *parser.Document, EvaluateOptions): tuple~[]EvaluationMatch&#44;error~
     }
@@ -1246,7 +1281,7 @@ classDiagram
     }
     <<function>> EvaluateDocumentFindings
     %% grepple:file EvaluateDocumentFindings gritql/finding.go
-    note for EvaluateDocumentFindings "defined: gritql/finding.go:390-410"
+    note for EvaluateDocumentFindings "defined: gritql/finding.go:409-429"
     class EvaluateDocuments {
         +EvaluateDocuments(context.Context, *Program, []ParsedEvaluationInput, EvaluateOptions): FileEvaluation
     }
@@ -1258,31 +1293,31 @@ classDiagram
     }
     <<function>> EvaluateFile
     %% grepple:file EvaluateFile gritql/finding.go
-    note for EvaluateFile "defined: gritql/finding.go:321-368"
+    note for EvaluateFile "defined: gritql/finding.go:343-387"
     class MatchNode {
         +MatchNode(Template, parser.Node): tuple~MatchResult&#44;bool~
     }
     <<function>> MatchNode
     %% grepple:file MatchNode gritql/matcher.go
-    note for MatchNode "defined: gritql/matcher.go:277-279"
+    note for MatchNode "defined: gritql/matcher.go:280-282"
     class MatchTemplate {
         +MatchTemplate(Template, MatchTarget): tuple~MatchResult&#44;bool~
     }
     <<function>> MatchTemplate
     %% grepple:file MatchTemplate gritql/matcher.go
-    note for MatchTemplate "defined: gritql/matcher.go:272-274"
+    note for MatchTemplate "defined: gritql/matcher.go:275-277"
     class MatchTemplateWithBindings {
         +MatchTemplateWithBindings(Template, MatchTarget, BindingSet): tuple~MatchResult&#44;bool~
     }
     <<function>> MatchTemplateWithBindings
     %% grepple:file MatchTemplateWithBindings gritql/matcher.go
-    note for MatchTemplateWithBindings "defined: gritql/matcher.go:283-285"
+    note for MatchTemplateWithBindings "defined: gritql/matcher.go:286-288"
     class NodeTarget {
         +NodeTarget(parser.Node): MatchTarget
     }
     <<function>> NodeTarget
     %% grepple:file NodeTarget gritql/matcher.go
-    note for NodeTarget "defined: gritql/matcher.go:27"
+    note for NodeTarget "defined: gritql/matcher.go:28-30"
     class NormalizeEvaluations {
         +NormalizeEvaluations(context.Context, []FileEvaluation, EvaluateOptions): FileEvaluation
     }
@@ -1294,31 +1329,31 @@ classDiagram
     }
     <<function>> RepeatedSequenceTarget
     %% grepple:file RepeatedSequenceTarget gritql/matcher.go
-    note for RepeatedSequenceTarget "defined: gritql/matcher.go:39-41"
+    note for RepeatedSequenceTarget "defined: gritql/matcher.go:42-44"
     class ScanFiles {
         +ScanFiles(context.Context, fs.FS, *Program, []ScanCandidate, ScanOptions): ScanResult
     }
     <<function>> ScanFiles
     %% grepple:file ScanFiles gritql/scanner.go
-    note for ScanFiles "defined: gritql/scanner.go:138-156"
+    note for ScanFiles "defined: gritql/scanner.go:141-163"
     class ScanFilesPrograms {
         +ScanFilesPrograms(context.Context, fs.FS, []ProgramScan, []ScanCandidate, ScanOptions): BatchScanResult
     }
     <<function>> ScanFilesPrograms
     %% grepple:file ScanFilesPrograms gritql/scanner_batch.go
-    note for ScanFilesPrograms "defined: gritql/scanner_batch.go:49-79"
+    note for ScanFilesPrograms "defined: gritql/scanner_batch.go:50-86"
     class SequenceTarget {
         +SequenceTarget(string, parser.Node, int, int): MatchTarget
     }
     <<function>> SequenceTarget
     %% grepple:file SequenceTarget gritql/matcher.go
-    note for SequenceTarget "defined: gritql/matcher.go:32-34"
+    note for SequenceTarget "defined: gritql/matcher.go:35-37"
     class ValidateGlobs {
         +ValidateGlobs([]string, []string): error
     }
     <<function>> ValidateGlobs
     %% grepple:file ValidateGlobs gritql/scanner.go
-    note for ValidateGlobs "defined: gritql/scanner.go:728-733"
+    note for ValidateGlobs "defined: gritql/scanner.go:732-737"
     AnalyzeAnchors "1" ..> "1" AnchorPlan : result 1
     AnalyzeAnchors "1" ..> "1" Program : parameter 1
     BatchScanResult "1" --> "1" BatchScanStats : field stats
@@ -1367,6 +1402,7 @@ classDiagram
     Expression "1" ..> "1" Kind : method Kind result 1
     Expression "1" ..> "1" Range : method Range result 1
     Expression "1" ..> "1" Template : method Template result 1
+    Expression "1" ..> "*" Template : method Templates result 1
     Expression "1" ..> "*" VariableRef : method Variables result 1
     Expression "1" --> "1" expression : field e
     FileEvaluation "1" --> "*" Diagnostic : field diagnostics
@@ -1411,6 +1447,7 @@ classDiagram
     Program "1" --> "*" Variable : field variables
     Program "1" ..> "*" Variable : method Variables result 1
     Program "1" --> "1" expression : field root
+    Program "1" --> "1" targetLanguageAdapter : field adapter
     ProgramScan "1" --> "1" Program : field Program
     ProgramScanResult "1" --> "1" ScanResult : field Result
     Range "1" --> "1" Position : field End
@@ -1467,6 +1504,7 @@ classDiagram
     expression "1" --> "1" Kind : field kind
     expression "1" --> "1" Range : field rng
     expression "1" --> "1" Template : field template
+    expression "1" --> "*" Template : field templates
     expression "1" --> "*" VariableRef : field refs
     expression "1" --> "*" constraint : field constraints
     rangeJSON <|-- findingJSON : embedded type
@@ -1494,6 +1532,10 @@ classDiagram
     placeholderRoleSolver "1" ..> "*" spanKey : method resolveImport parameter 3
     placeholderRoleSolver "1" --> "1" structuralSeparators : field separators
     placeholderWalkItem "1" --> "1" roleAncestorSet : field ancestors
+    preparedLanguageScan "1" --> "*" FileEvaluation : field early
+    preparedLanguageScan "1" --> "1" ScanStats : field stats
+    preparedLanguageScan "1" --> "*" ScanTruncation : field truncations
+    preparedLanguageScan "1" --> "*" preparedScanCandidate : field candidates
     queryDocument "1" --> "1" noCopy : field noCopy
     queryDocument "1" ..> "1" queryNode : method root result 1
     queryDocument "1" ..> "*" queryParseDiagnostic : method diagnostics result 1
@@ -1522,6 +1564,7 @@ classDiagram
     scanState "1" ..> "1" Program : method scan parameter 3
     scanState "1" --> "1" ScanOptions : field options
     scanState "1" --> "1" ScanStats : field stats
+    scanState "1" --> "*" ScanTruncation : field truncations
     scanState "1" ..> "*" preparedScanCandidate : method scan parameter 4
     scanState "1" --> "1" scanByteAccount : field bytes
     scanState "1" --> "1" scanMemoryAccount : field account
@@ -1533,6 +1576,9 @@ classDiagram
     snippetAttempt "1" --> "1" SnippetContext : field context
     snippetAttempt "1" --> "1" selectedRoot : field selectRoot
     snippetPlaceholder "1" --> "1" VariableRef : field ref
+    targetLanguageAdapter "1" --> "1" SnippetContext : field rootCategory
+    targetLanguageAdapter "1" --> "*" Template : field compileTemplates
+    targetLanguageAdapter "1" --> "1" decodedSnippet : field compileTemplates
     templateChild "1" --> "1" templateNode : field node
     templateChild "1" --> "1" templateSlot : field slot
     templateFreezeFrame "1" --> "*" templateChild : field kept
@@ -1621,6 +1667,7 @@ classDiagram
     treeCompiler "1" ..> "1" queryNode : method whereChildren parameter 1
     treeCompiler "1" ..> "*" queryNode : method whereChildren result 1
     treeCompiler "1" ..> "*" snippetPlaceholder : method decodeSnippet result 3
+    treeCompiler "1" --> "1" targetLanguageAdapter : field adapter
     v1NodeValidator "1" ..> "*" queryNode : underlying type
     v1ValidationWork "1" --> "1" queryNode : field node
     variableScope "1" ..> "*" VariableID : underlying type

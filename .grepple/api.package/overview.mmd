@@ -2,7 +2,7 @@ classDiagram
     %% grepple:package-default github.com/greppleai/grepple/api
     %% grepple:language-default go
     direction LR
-    note "Package api defines Grepple-controlled HTTP request and response contracts. | package github.com/greppleai/grepple/api | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=2, declarations=29, exportedTypes=29, internalTypes=0, members=178, exportedFunctions=0, fiberRoutes=0, relations=28"
+    note "Package api defines Grepple-controlled HTTP request and response contracts. | package github.com/greppleai/grepple/api | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=2, declarations=29, exportedTypes=29, internalTypes=0, members=180, exportedFunctions=0, fiberRoutes=0, relations=28"
     namespace data_contracts {
         class ContextLine["ContextLine · api/model.go:47-51"] {
             +Line: int
@@ -20,7 +20,7 @@ classDiagram
             +Segments: []ResultSegment
         }
         <<struct>> FileResult
-        class GritBinding["GritBinding · api/grit.go:95-101"] {
+        class GritBinding["GritBinding · api/grit.go:97-103"] {
             +Kind: string
             +Name: string
             +Range: GritRange
@@ -28,7 +28,7 @@ classDiagram
             +Structural: []GritStructuralNode
         }
         <<struct>> GritBinding
-        class GritDiagnostic["GritDiagnostic · api/grit.go:118-128"] {
+        class GritDiagnostic["GritDiagnostic · api/grit.go:120-130"] {
             +Class: string
             +Code: string
             +Message: string
@@ -40,7 +40,7 @@ classDiagram
             +Shard: string
         }
         <<struct>> GritDiagnostic
-        class GritEffectiveLimits["GritEffectiveLimits · api/grit.go:141-153"] {
+        class GritEffectiveLimits["GritEffectiveLimits · api/grit.go:143-155"] {
             +ASTSteps: int
             +BatchTimeMillis: int64
             +Candidates: int
@@ -54,7 +54,7 @@ classDiagram
             +SourceBytes: int
         }
         <<struct>> GritEffectiveLimits
-        class GritFinding["GritFinding · api/grit.go:105-114"] {
+        class GritFinding["GritFinding · api/grit.go:107-116"] {
             +Bindings: []GritBinding
             +Language: string
             +Message: string
@@ -65,7 +65,7 @@ classDiagram
             +Text: string
         }
         <<struct>> GritFinding
-        class GritLimits["GritLimits · api/grit.go:52-67"] {
+        class GritLimits["GritLimits · api/grit.go:54-69"] {
             +ASTSteps: *int
             +BatchTimeMillis: *int64
             +Candidates: *int
@@ -82,25 +82,27 @@ classDiagram
             +Workers: *int
         }
         <<struct>> GritLimits
-        class GritMetadata["GritMetadata · api/grit.go:156-160"] {
+        class GritMetadata["GritMetadata · api/grit.go:158-164"] {
             +Compatibility: string
             +GoGrammar: string
+            +Grammar: string
+            +Language: string
             +Limits: GritEffectiveLimits
         }
         <<struct>> GritMetadata
-        class GritPosition["GritPosition · api/grit.go:70-73"] {
+        class GritPosition["GritPosition · api/grit.go:72-75"] {
             +Column: int
             +Line: int
         }
         <<struct>> GritPosition
-        class GritRange["GritRange · api/grit.go:77-82"] {
+        class GritRange["GritRange · api/grit.go:79-84"] {
             +End: GritPosition
             +EndByte: int
             +Start: GritPosition
             +StartByte: int
         }
         <<struct>> GritRange
-        class GritRequest["GritRequest · api/grit.go:36-48"] {
+        class GritRequest["GritRequest · api/grit.go:38-50"] {
             +Compatibility: string
             +ExcludeGlobs: []string
             +ExcludeRepositories: []string
@@ -114,7 +116,7 @@ classDiagram
             +Skip: *int
         }
         <<struct>> GritRequest
-        class GritResponse["GritResponse · api/grit.go:175-183"] {
+        class GritResponse["GritResponse · api/grit.go:179-187"] {
             +Diagnostics: []GritDiagnostic
             +Findings: []GritFinding
             +Metadata: GritMetadata
@@ -124,7 +126,7 @@ classDiagram
             +Truncations: []GritTruncation
         }
         <<struct>> GritResponse
-        class GritStatistics["GritStatistics · api/grit.go:163-171"] {
+        class GritStatistics["GritStatistics · api/grit.go:167-175"] {
             +BytesRead: int64
             +Candidates: int
             +Eligible: int
@@ -134,14 +136,14 @@ classDiagram
             +SkippedLanguage: int
         }
         <<struct>> GritStatistics
-        class GritStructuralNode["GritStructuralNode · api/grit.go:86-91"] {
+        class GritStructuralNode["GritStructuralNode · api/grit.go:88-93"] {
             +Children: []GritStructuralNode
             +Lexeme: string
             +NodeKind: string
             +TokenKind: string
         }
         <<struct>> GritStructuralNode
-        class GritTruncation["GritTruncation · api/grit.go:132-138"] {
+        class GritTruncation["GritTruncation · api/grit.go:134-140"] {
             +Limit: int64
             +Reason: string
             +Repo: string

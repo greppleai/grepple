@@ -52,6 +52,69 @@ func TestScanFilesProgramsCancellationInvalidatesEveryProgram(t *testing.T) {
 		}
 	}
 }
+func TestScanFilesProgramsGroupsMixedTargetLanguages(t *testing.T) {
+	goProgram := compileFindingPattern(t, "`target($value)`")
+	typeScriptProgram, err := Compile([]byte("language typescript\n`target($value)`"), CompileOptions{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	batch := ScanFilesPrograms(context.Background(), fstest.MapFS{
+		"main.go": {Data: []byte("package p\nvar _ = target(value)\n")},
+		"app.ts":  {Data: []byte("target(value);\n")},
+	}, []ProgramScan{{Program: goProgram, PatternID: "go"}, {Program: typeScriptProgram, PatternID: "typescript"}}, []ScanCandidate{
+		{ReadPath: "main.go", Path: "main.go"}, {ReadPath: "app.ts", Path: "app.ts"},
+	}, ScanOptions{})
+	if stats := batch.Stats(); stats.FilesRead != 2 || stats.FilesParsed != 2 {
+		t.Fatalf("stats=%+v", stats)
+	}
+	results := batch.Programs()
+	if len(results) != 2 {
+		t.Fatalf("results=%d", len(results))
+	}
+	assertBatchFinding(t, results[0], "go", "main.go")
+	assertBatchFinding(t, results[1], "typescript", "app.ts")
+}
+func TestScanFilesProgramsReportsSharedByteLimitPerLanguage(t *testing.T) {
+	goProgram := compileFindingPattern(t, "`target($value)`")
+	typeScriptProgram, err := Compile([]byte("language typescript\n`target($value)`"), CompileOptions{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	typeScriptSource := []byte("target(value);\n")
+	batch := ScanFilesPrograms(context.Background(), fstest.MapFS{
+		"app.ts":  {Data: typeScriptSource},
+		"main.go": {Data: []byte("package p\nvar _ = target(one)\n")},
+		"z.go":    {Data: []byte("package p\nvar _ = target(two)\n")},
+	}, []ProgramScan{{Program: goProgram, PatternID: "go"}, {Program: typeScriptProgram, PatternID: "typescript"}}, []ScanCandidate{
+		{ReadPath: "app.ts", Path: "app.ts"},
+		{ReadPath: "main.go", Path: "main.go"},
+		{ReadPath: "z.go", Path: "z.go"},
+	}, ScanOptions{MaxTotalBytes: int64(len(typeScriptSource) + 1)})
+	if stats := batch.Stats(); stats.FilesRead != 2 || stats.FilesParsed != 1 {
+		t.Fatalf("stats=%+v", stats)
+	}
+	results := batch.Programs()
+	goTruncations := results[0].Result.Truncations()
+	if len(goTruncations) != 1 || goTruncations[0].Reason != "max_total_bytes" || goTruncations[0].Skipped != 2 {
+		t.Fatalf("Go truncations=%v", goTruncations)
+	}
+	if truncations := results[1].Result.Truncations(); len(truncations) != 0 {
+		t.Fatalf("TypeScript truncations=%v", truncations)
+	}
+	assertBatchFinding(t, results[1], "typescript", "app.ts")
+}
+func TestScanFilesProgramsRejectsInvalidProgramWithoutReading(t *testing.T) {
+	batch := ScanFilesPrograms(context.Background(), fstest.MapFS{
+		"main.go": {Data: []byte("package p\nvar x = 1\n")},
+	}, []ProgramScan{{PatternID: "invalid"}}, []ScanCandidate{{ReadPath: "main.go", Path: "main.go"}}, ScanOptions{})
+	if stats := batch.Stats(); stats.FilesRead != 0 || stats.FilesParsed != 0 {
+		t.Fatalf("stats=%+v", stats)
+	}
+	results := batch.Programs()
+	if len(results) != 1 || !batchHasDiagnostic(results[0].Result.Diagnostics(), "INTERNAL_ERROR") {
+		t.Fatalf("results=%v", results)
+	}
+}
 
 func assertBatchFinding(t *testing.T, result ProgramScanResult, patternID, path string) {
 	t.Helper()

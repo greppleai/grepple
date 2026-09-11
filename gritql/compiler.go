@@ -8,8 +8,11 @@ import (
 	"unicode/utf8"
 )
 
-// Compatibility identifies the closed language accepted by Compile.
+// Compatibility identifies the original closed Go-only language contract.
 const Compatibility = "gritql-go-v1"
+
+// MultilingualCompatibility identifies the adapter-based language contract.
+const MultilingualCompatibility = "gritql-v1"
 
 // CompatibilityVersion is an explicit alias for metadata producers.
 const CompatibilityVersion = Compatibility
@@ -131,6 +134,7 @@ type expression struct {
 	constraints []constraint
 	re          *regexp.Regexp
 	template    Template
+	templates   []Template
 }
 
 type constraint struct {
@@ -166,13 +170,21 @@ func (e Expression) Text() string {
 	return e.e.text
 }
 
-// Template returns the compiled structural template for a snippet expression.
-// Its zero value is returned for other expression kinds.
+// Template returns the first compiled structural template for a snippet expression.
+// Use Templates when a language permits the same snippet in multiple contexts.
 func (e Expression) Template() Template {
 	if e.e == nil {
 		return Template{}
 	}
 	return e.e.template
+}
+
+// Templates returns every grammar-valid interpretation of a snippet.
+func (e Expression) Templates() []Template {
+	if e.e == nil {
+		return nil
+	}
+	return append([]Template(nil), e.e.templates...)
 }
 
 // Variables returns a copy of the metavariable references in source order.
@@ -248,6 +260,7 @@ type LanguageDeclaration struct {
 // Program is immutable and safe for concurrent use.
 type Program struct {
 	declaration   LanguageDeclaration
+	adapter       targetLanguageAdapter
 	rng           Range
 	root          *expression
 	variables     []Variable
@@ -256,7 +269,12 @@ type Program struct {
 }
 
 // Compatibility returns the closed compatibility identifier implemented by the program.
-func (p *Program) Compatibility() string { return Compatibility }
+func (p *Program) Compatibility() string {
+	if p == nil || p.adapter.id == "" {
+		return Compatibility
+	}
+	return p.adapter.compatibility
+}
 
 // Language returns the program's resolved target language, or empty for a nil program.
 func (p *Program) Language() string {
@@ -337,7 +355,7 @@ func Compile(source []byte, options CompileOptions) (*Program, error) {
 		return nil, scopeErr
 	}
 	variables := append([]Variable(nil), c.variables...)
-	return &Program{declaration: LanguageDeclaration{Name: "go", Range: c.languageRange}, rng: wholeValue, root: root, variables: variables, features: c.features, compileLimits: options}, nil
+	return &Program{declaration: LanguageDeclaration{Name: c.adapter.id, Range: c.languageRange}, adapter: c.adapter, rng: wholeValue, root: root, variables: variables, features: c.features, compileLimits: options}, nil
 }
 
 func parseCompileSource(source []byte, options CompileOptions) (*queryDocument, Range, *CompileError) {
@@ -455,22 +473,28 @@ type treeCompiler struct {
 	names         map[string]VariableID
 	variables     []Variable
 	features      FeatureSet
+	adapter       targetLanguageAdapter
 	languageRange Range
 }
 
 func (c *treeCompiler) compileLanguage(node queryNode) *CompileError {
 	children := nonCommentNamedChildren(node)
-	if !node.named() || node.extra() || !validCompilerComments(node) || len(children) != 1 || !isNode(children[0], "languageName", "name", true) || children[0].text() != "go" {
+	if !node.named() || node.extra() || !validCompilerComments(node) || len(children) != 1 || !isNode(children[0], "languageName", "name", true) {
 		return c.closedFailure("unexpected language declaration")
+	}
+	adapter, ok := targetLanguageByID(children[0].text())
+	if !ok {
+		return c.closedFailure("unsupported target language " + children[0].text())
 	}
 	concrete := nonCommentChildren(node)
 	if len(concrete) != 2 || !isCompilerLeaf(concrete[0], "language", "", false) || !isNode(concrete[1], "languageName", "name", true) {
 		return c.closedFailure("unexpected language declaration shape")
 	}
 	nameChildren := nonCommentChildren(concrete[1])
-	if !validCompilerComments(concrete[1]) || len(nameChildren) != 1 || !isCompilerLeaf(nameChildren[0], "go", "", false) {
+	if !validCompilerComments(concrete[1]) || len(nameChildren) != 1 || !isCompilerLeaf(nameChildren[0], adapter.id, "", false) {
 		return c.closedFailure("unexpected language name shape")
 	}
+	c.adapter = adapter
 	c.languageRange = publicRange(node.byteRange())
 	return nil
 }
@@ -515,7 +539,7 @@ func (c *treeCompiler) compileSnippet(node queryNode) (*expression, *CompileErro
 	if compileErr != nil {
 		return nil, compileErr
 	}
-	template, code, templateErr := compileGoTemplate(decodedSnippet{text: string(decoded), placeholders: placeholders}, c.options.MaxDepth)
+	templates, code, templateErr := c.adapter.compileTemplates(decodedSnippet{text: string(decoded), placeholders: placeholders}, c.options.MaxDepth)
 	if templateErr != nil {
 		class := "pattern"
 		if code == "LIMIT_PARSE_DEPTH" {
@@ -524,7 +548,7 @@ func (c *treeCompiler) compileSnippet(node queryNode) (*expression, *CompileErro
 		return nil, c.failure(code, class, templateErr.Error(), templateErr)
 	}
 	c.features |= FeatureSnippet
-	return &expression{kind: KindSnippet, rng: publicRange(node.byteRange()), text: string(decoded), refs: refs, template: template}, nil
+	return &expression{kind: KindSnippet, rng: publicRange(node.byteRange()), text: string(decoded), refs: refs, template: templates[0], templates: templates}, nil
 }
 
 func (c *treeCompiler) snippetLeaf(node queryNode) (queryNode, *CompileError) {

@@ -15,7 +15,7 @@ Language detection is extension-based; MIME types and shebangs are not inspected
 
 | Language ID | Extensions | Parser |
 | --- | --- | --- |
-| `typescript` | `.ts` | tree-sitter TypeScript |
+| `typescript` | `.ts`, `.mts`, `.cts` | tree-sitter TypeScript |
 | `tsx` | `.tsx` | tree-sitter TSX |
 | `javascript` | `.js`, `.jsx` | tree-sitter JavaScript |
 | `go` | `.go` | tree-sitter Go |
@@ -34,6 +34,8 @@ Everything else remains searchable through the plain-text fallback. JSON (`.json
 Structural source segments include comments attached immediately before a declaration, including JSDoc, Go documentation comments, Python comments, Rust doc comments, and equivalent forms in the other supported languages. One blank line is allowed between the comment and declaration. Attributes, annotations, and decorators between them are included; trailing comments attached to an earlier statement are not.
 
 Every tree-sitter-backed language in the table supports local syntax-based navigation. `--related` reports bounded outgoing callees and potential callers, `--at PATH:LINE` retrieves a callable declaration by location, and `--follow-related N` expands up to two resolved callees per level under a shared 400-line budget. Confidence distinguishes qualified `exact`, explicit-import `import-resolved`, safely narrowed `context-resolved`, globally `unique-terminal`, and unresolved `candidate` matches; candidate text includes an explicit `--at PATH:LINE` suggestion. Go and TypeScript use imports, direct parameter/method-receiver types, source-ordered lexical bindings from typed declarations, constructor/composite literals, or unambiguous local and imported return signatures, and same-file typed member chains before terminal fallback. Nested bindings remain confined to their branch or block. Resolution remains syntax-based rather than a type-checked call graph, so cross-file fields and promoted methods can remain ambiguous. Go additionally recognizes interface methods and function-valued struct fields.
+
+Native GritQL structural search currently supports `go`, `typescript`, and `tsx`. Go queries use `gritql-go-v1`; TypeScript and TSX queries require `--compatibility gritql-v1`. Other parser language IDs are rejected rather than falling back to text or a different syntax tree.
 
 ## Package boundaries
 

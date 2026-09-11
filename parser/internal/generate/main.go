@@ -29,9 +29,15 @@ type cardinality struct {
 	Multiple bool `json:"multiple"`
 }
 
+type nodeReference struct {
+	Type  string `json:"type"`
+	Named bool   `json:"named"`
+}
+
 type nodeType struct {
 	Type     string                 `json:"type"`
 	Named    bool                   `json:"named"`
+	Subtypes []nodeReference        `json:"subtypes"`
 	Fields   map[string]cardinality `json:"fields"`
 	Children *cardinality           `json:"children"`
 }
@@ -40,6 +46,7 @@ type grammarMetadata struct {
 	Fingerprint string
 	Fields      map[string]map[string]bool
 	Children    map[string]bool
+	Subtypes    map[string]map[string]bool
 }
 
 var grammars = []grammarSpec{
@@ -103,23 +110,54 @@ func inspectGrammar(spec grammarSpec) (grammarMetadata, error) {
 	if err := json.Unmarshal(content, &nodes); err != nil {
 		return grammarMetadata{}, fmt.Errorf("decode node-types.json: %w", err)
 	}
-	metadata := grammarMetadata{Fields: make(map[string]map[string]bool), Children: make(map[string]bool)}
+	metadata := grammarMetadata{Fields: make(map[string]map[string]bool), Children: make(map[string]bool), Subtypes: make(map[string]map[string]bool)}
 	for _, node := range nodes {
-		if !node.Named {
-			continue
-		}
-		if len(node.Fields) > 0 {
-			metadata.Fields[node.Type] = make(map[string]bool, len(node.Fields))
-			for field, shape := range node.Fields {
-				metadata.Fields[node.Type][field] = shape.Multiple
-			}
-		}
-		if node.Children != nil {
-			metadata.Children[node.Type] = node.Children.Multiple
-		}
+		addNodeMetadata(&metadata, node)
 	}
+	metadata.Subtypes = transitiveSubtypeClosure(metadata.Subtypes)
 	metadata.Fingerprint, err = grammarFingerprint(sourceDirectory)
 	return metadata, err
+}
+func addNodeMetadata(metadata *grammarMetadata, node nodeType) {
+	if !node.Named {
+		return
+	}
+	if len(node.Subtypes) > 0 {
+		metadata.Subtypes[node.Type] = make(map[string]bool, len(node.Subtypes))
+		for _, subtype := range node.Subtypes {
+			if subtype.Named {
+				metadata.Subtypes[node.Type][subtype.Type] = true
+			}
+		}
+	}
+	if len(node.Fields) > 0 {
+		metadata.Fields[node.Type] = make(map[string]bool, len(node.Fields))
+		for field, shape := range node.Fields {
+			metadata.Fields[node.Type][field] = shape.Multiple
+		}
+	}
+	if node.Children != nil {
+		metadata.Children[node.Type] = node.Children.Multiple
+	}
+}
+func transitiveSubtypeClosure(direct map[string]map[string]bool) map[string]map[string]bool {
+	closure := make(map[string]map[string]bool, len(direct))
+	for supertype, children := range direct {
+		reachable := make(map[string]bool)
+		pending := sortedMapKeys(children)
+		for len(pending) > 0 {
+			index := len(pending) - 1
+			subtype := pending[index]
+			pending = pending[:index]
+			if reachable[subtype] {
+				continue
+			}
+			reachable[subtype] = true
+			pending = append(pending, sortedMapKeys(direct[subtype])...)
+		}
+		closure[supertype] = reachable
+	}
+	return closure
 }
 
 func moduleDirectory(module string) (string, error) {
@@ -187,6 +225,14 @@ func writeGrammarMetadata(output *bytes.Buffer, language string, item grammarMet
 	output.WriteString("\t\t},\n\t\tchildren: map[string]GrammarCardinality{\n")
 	for _, parent := range sortedMapKeys(item.Children) {
 		fmt.Fprintf(output, "\t\t\t%q: %s,\n", parent, cardinalityName(item.Children[parent]))
+	}
+	output.WriteString("\t\t},\n\t\tsubtypes: map[string]map[string]bool{\n")
+	for _, supertype := range sortedMapKeys(item.Subtypes) {
+		fmt.Fprintf(output, "\t\t\t%q: {", supertype)
+		for _, subtype := range sortedMapKeys(item.Subtypes[supertype]) {
+			fmt.Fprintf(output, "%q: true,", subtype)
+		}
+		output.WriteString("},\n")
 	}
 	output.WriteString("\t\t},\n\t},\n")
 }

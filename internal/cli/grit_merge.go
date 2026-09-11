@@ -48,6 +48,12 @@ func validateGritResponseMetadata(local, remote api.GritMetadata) error {
 	if local.GoGrammar != remote.GoGrammar {
 		return fmt.Errorf("structural response Go grammar mismatch: local %q, remote %q", local.GoGrammar, remote.GoGrammar)
 	}
+	if local.Language != remote.Language {
+		return fmt.Errorf("structural response language mismatch: local %q, remote %q", local.Language, remote.Language)
+	}
+	if local.Grammar != remote.Grammar {
+		return fmt.Errorf("structural response grammar mismatch: local %q, remote %q", local.Grammar, remote.Grammar)
+	}
 	return nil
 }
 

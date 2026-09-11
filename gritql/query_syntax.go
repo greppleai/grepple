@@ -94,7 +94,7 @@ func parseQueryWithMaxDepth(source []byte, maxDepth int) (*queryDocument, error)
 	}
 	if classification != 0 {
 		return doc, &querySyntaxError{
-			Kind: classification, Message: queryClassificationMessage(classification),
+			Kind: classification, Message: queryClassificationMessage(classification, queryCompatibility(doc)),
 			Range: doc.rangeForBytes(0, len(owned)),
 		}
 	}
@@ -139,17 +139,25 @@ func parsePinnedQuery(source []byte) (*sitter.Tree, error) {
 	return tree, nil
 }
 
-func queryClassificationMessage(classification queryErrorKind) string {
+func queryClassificationMessage(classification queryErrorKind, compatibility string) string {
 	switch classification {
 	case queryDepthLimit:
 		return "pattern exceeds parse depth"
 	case queryUnsupported:
-		return "construct is outside gritql-go-v1"
+		return "construct is outside " + compatibility
 	case queryInvalidContext:
 		return "anonymous wildcard is invalid on a constraint left side"
 	default:
-		return "pattern does not satisfy gritql-go-v1"
+		return "pattern does not satisfy " + compatibility
 	}
+}
+
+func queryCompatibility(document *queryDocument) string {
+	language := document.root().childByFieldName("language").childByFieldName("name").text()
+	if adapter, ok := targetLanguageByID(language); ok {
+		return adapter.compatibility
+	}
+	return Compatibility
 }
 
 func (d *queryDocument) close() {
@@ -487,7 +495,7 @@ func validateV1Envelope(doc *queryDocument, root queryNode) queryErrorKind {
 	if !validEnvelopeSpacing(doc.source, language, pattern) {
 		return queryMalformed
 	}
-	if language.childByFieldName("name").text() != "go" {
+	if _, ok := targetLanguageByID(language.childByFieldName("name").text()); !ok {
 		return queryUnsupported
 	}
 	return 0
@@ -668,6 +676,8 @@ var v1NodeValidators = map[string]v1NodeValidator{
 	"variable":        validNamedTerminalNode,
 	"language":        validAnonymousTerminalNode,
 	"go":              validAnonymousTerminalNode,
+	"typescript":      validAnonymousTerminalNode,
+	"tsx":             validAnonymousTerminalNode,
 	"and":             validAnonymousTerminalNode,
 	"or":              validAnonymousTerminalNode,
 	"not":             validAnonymousTerminalNode,

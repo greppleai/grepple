@@ -1,6 +1,11 @@
-# `gritql-go-v1` compatibility contract
+# Native GritQL compatibility contracts
 
-`gritql-go-v1` is Grepple's closed, Go-native, read-only detection subset of GritQL. It is not an alias for any upstream GritQL release. A conforming implementation accepts exactly the syntax below and rejects every other construct; it does not invoke an external engine, Node, a shell, or a fallback interpreter.
+Grepple implements two closed, read-only detection contracts:
+
+- `gritql-go-v1` for `language go`; this preserves the original Go-specific behavior.
+- `gritql-v1` for `language typescript` and `language tsx`; target syntax is supplied by language adapters while the query algebra, transactions, limits, ordering, and diagnostics remain shared.
+
+Neither contract is an alias for an upstream GritQL release. A conforming implementation accepts exactly the documented syntax and rejects every other construct; it does not invoke an external engine, Node, a shell, or a fallback interpreter.
 
 ## 1. Closed syntax
 
@@ -8,7 +13,7 @@ The grammar is EBNF. Literal words and punctuation are quoted. `EOF` means the e
 
 ```ebnf
 pattern          = spacing, language, line_end, spacing, query, spacing, EOF ;
-language         = "language", hspace1, "go" ;
+language         = "language", hspace1, ( "go" | "typescript" | "tsx" ) ;
 
 query            = prefix, [ spacing, where_clause ] ;
 prefix           = snippet
@@ -50,7 +55,7 @@ comment          = line_comment, ( "\n" | "\r\n" | EOF ) ;
 line_comment     = "//", { ? any scalar except CR or LF ? } ;
 ```
 
-The `EOF` alternative in `comment` is lexical only; it does not let `line_end` omit its newline. A pattern must therefore start with exactly one `language go` directive on its own logical line. Keywords are lowercase and case-sensitive. A required separator prevents a keyword from being read as a prefix of another token. Comments have no meaning inside snippets or regex literals. Bare CR, invalid UTF-8, empty `and`/`or` blocks, one-element `and`/`or` blocks, and omitted commas are syntax errors.
+The `EOF` alternative in `comment` is lexical only; it does not let `line_end` omit its newline. A pattern must therefore start with exactly one supported `language` directive on its own logical line. Keywords and language identifiers are lowercase and case-sensitive. Comments have no meaning inside snippets or regex literals. Bare CR, invalid UTF-8, empty `and`/`or` blocks, one-element `and`/`or` blocks, and omitted commas are syntax errors.
 
 There are no infix query operators, parentheses, implicit sequences, or precedence rules. Unary prefix operators associate right-to-left, so `not maybe` followed by a snippet means `not (maybe snippet)`. The optional postfix `where` applies to the complete `prefix` immediately before it; to constrain a unary operand instead, place that operand in an `and` or `or` block. A second `where` is invalid. Blocks are comma-separated, evaluated left to right, and may have one trailing comma. These rules make every parse unique.
 
@@ -80,9 +85,9 @@ A regex is a predicate, not a top-level structural search: it is syntactically a
 
 ### 1.1 Identifiers and metavariables
 
-Metavariable names are ASCII and case-sensitive. `$x` and `$X` differ. `$_` is the anonymous wildcard: every occurrence is independent, it is never recorded, may not be used on the left of `<:`, and does not participate in equality. Names beginning with a digit, non-ASCII names, bare `$`, and names beginning with `_` are rejected. Go identifiers written literally in snippets follow the supported Go parser's rules, independently of metavariable names.
+Metavariable names are ASCII and case-sensitive. `$x` and `$X` differ. `$_` is the anonymous wildcard: every occurrence is independent, it is never recorded, may not be used on the left of `<:`, and does not participate in equality. Names beginning with a digit, non-ASCII names, bare `$`, and names beginning with `_` are rejected. Identifiers written literally in snippets follow the selected target parser's rules, independently of metavariable names.
 
-Inside a snippet, `$name` is recognized before Go parsing. A backtick snippet is decoded by replacing `\`` with a backtick and `\\` with a backslash; every other backslash escape is invalid. This allows Go raw-string tokens to be represented without terminating the snippet. Regex escapes are decoded as listed by the grammar and the result is compiled with Go's RE2 syntax. Regex matching is unanchored unless the author writes anchors. It is applied to the exact UTF-8 source bytes covered by a binding, converted to a string; a list binding uses the single span from its first element's start through its last element's end, including intervening source. An empty list supplies the empty string.
+Inside a snippet, `$name` is recognized before target-language parsing. A backtick snippet is decoded by replacing `\`` with a backtick and `\\` with a backslash; every other backslash escape is invalid. Regex escapes are decoded as listed by the grammar and the result is compiled with Go's RE2 syntax. Regex matching is unanchored unless the author writes anchors. It is applied to the exact UTF-8 source bytes covered by a binding, converted to a string; a list binding uses the single span from its first element's start through its last element's end, including intervening source. An empty list supplies the empty string.
 
 ## 2. Go snippet parsing
 
@@ -104,9 +109,17 @@ Synthetic parse scaffolding is not part of the resulting template. Authored stat
 
 The supported source grammar is the Go language version declared by the implementation for `gritql-go-v1`; that exact version must be reported in evaluation metadata and must not vary during one evaluation.
 
+### 2.1 TypeScript and TSX snippet parsing
+
+Under `gritql-v1`, `language typescript` selects `.ts`, `.mts`, and `.cts` source, while `language tsx` selects `.tsx`. Snippets are parsed as expression, type, statement, statement list, declaration, declaration list, and complete-file contexts using the matching pinned Tree-sitter grammar. Unlike the Go compatibility contract, every grammar-valid TypeScript interpretation is retained: for example, `Promise<$type>` can represent both an instantiation expression and a generic type, and either source shape may match.
+
+Synthetic wrappers are removed before matching. Statement and declaration lists use the same `statement_sequence` and `declaration_sequence` template roots as Go. Repeated fields and unfielded children come from parser-generated metadata for the selected grammar, including arguments, parameters, object members, statements, and declarations. Explicit semicolons remain structural; omitting one in a snippet does not match a source statement containing one.
+
+TypeScript-family metavariables currently occupy identifier-like, expression, type, property, JSX, parameter, and repeated-list grammar positions. Unsupported positions fail compilation with `PATTERN_INVALID_SNIPPET`; they are never interpreted by a fallback parser. TypeScript and TSX metadata reports canonical `language` and `grammar` fields instead of the Go-only `go_grammar` field.
+
 ## 3. Structural matching and bindings
 
-A source file is parsed into a lossless Go concrete syntax tree. A structural value is normalized recursively as:
+A source file is parsed into the selected language's lossless concrete syntax tree. A structural value is normalized recursively as:
 
 - the node kind;
 - every ordered named child and unnamed punctuation/operator/token child;
@@ -252,7 +265,7 @@ The following are recognized but unsupported and fail closed with `PATTERN_UNSUP
 - any equality or inequality operator (including `==` and `!=`); equality exists only through repeated metavariable binding;
 - any operator, literal, comment form, or delimiter absent from the EBNF.
 
-Non-Go targets, type checking, name resolution, data flow, network access, shell execution, repository writes, interactive input, and source rewrites are behaviorally unsupported. `gritql-go-v1` is native and detection-only.
+Targets other than Go, TypeScript, and TSX; type checking; name resolution; data flow; network access; shell execution; repository writes; interactive input; and source rewrites are behaviorally unsupported. Both compatibility contracts are native and detection-only.
 
 ## 9. Security and performance gates
 
@@ -280,6 +293,6 @@ done
 
 ## 10. Conformance and versioning
 
-A conforming implementation must fixture-test every grammar production, snippet context, binding transaction, range rule, diagnostic code, ordering key, limit outcome, and unsupported category. Evaluation metadata publishes contract `gritql-go-v1`, canonical Go grammar identifier `go1.25`, and every effective limit. The parser implementation pin (`tree-sitter-go@0.25.0`) is reported separately and is not substituted for the canonical grammar identifier.
+A conforming implementation must fixture-test every grammar production, supported snippet context, binding transaction, range rule, diagnostic code, ordering key, limit outcome, and unsupported category. `gritql-go-v1` metadata publishes canonical Go grammar identifier `go1.25`; `gritql-v1` metadata publishes the canonical TypeScript or TSX language and grammar identifiers. Both publish every effective limit and separately retain the pinned Tree-sitter implementation identity for Go callers.
 
-The accepted language is closed: adding syntax or changing matching, range, ordering, cancellation, or diagnostic classification requires a new compatibility contract. Clarifications that do not change observable behavior may retain the `gritql-go-v1` name. Existing stable codes may not be reassigned.
+Each accepted target set is closed: adding syntax or changing matching, range, ordering, cancellation, or diagnostic classification requires a new compatibility contract. Clarifications that do not change observable behavior may retain the existing contract name. Existing stable codes may not be reassigned.

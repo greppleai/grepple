@@ -12,6 +12,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/greppleai/grepple/parser"
 )
 
 const (
@@ -123,6 +125,7 @@ type scanState struct {
 	options        ScanOptions
 	started        time.Time
 	evaluations    []FileEvaluation
+	truncations    []ScanTruncation
 	retained       int64
 	stats          ScanStats
 	account        *scanMemoryAccount
@@ -145,7 +148,11 @@ func ScanFiles(ctx context.Context, filesystem fs.FS, program *Program, candidat
 		account: newScanMemoryAccount(int64(options.EvaluateOptions.MaxMemoryBytes)),
 		bytes:   newScanByteAccount(options.MaxTotalBytes),
 	}
-	prepared, early, truncations := prepareScanCandidates(candidates, options, &state.stats)
+	if program == nil || program.root == nil {
+		state.evaluations = append(state.evaluations, scannerDiagnosticEvaluation(program, options, evaluationFailure("INTERNAL_ERROR", "internal", "invalid compiled program", nil), nil))
+		return finishScan(ctx, program, state, nil)
+	}
+	prepared, early, truncations := prepareScanCandidates(program.Language(), candidates, options, &state.stats)
 	state.evaluations = append(state.evaluations, early...)
 	if filesystem == nil {
 		state.evaluations = append(state.evaluations, scannerFailure(options, "source filesystem is unavailable", nil))
@@ -439,7 +446,7 @@ func readBoundedFile(filesystem fs.FS, path string, maxBytes int) ([]byte, error
 	return content, nil
 }
 
-func prepareScanCandidates(candidates []ScanCandidate, options ScanOptions, stats *ScanStats) ([]preparedScanCandidate, []FileEvaluation, []ScanTruncation) {
+func prepareScanCandidates(programLanguage string, candidates []ScanCandidate, options ScanOptions, stats *ScanStats) ([]preparedScanCandidate, []FileEvaluation, []ScanTruncation) {
 	stats.Candidates = len(candidates)
 	if !validScanGlobs(options.IncludeGlobs) || !validScanGlobs(options.ExcludeGlobs) {
 		failure := scannerDiagnosticEvaluation(nil, options, evaluationFailure("INTERNAL_ERROR", "internal", "scan glob is invalid", nil), nil)
@@ -448,7 +455,7 @@ func prepareScanCandidates(candidates []ScanCandidate, options ScanOptions, stat
 	var prepared []preparedScanCandidate
 	var early []FileEvaluation
 	for _, candidate := range candidates {
-		entry, failure, disposition := prepareScanCandidate(candidate, options)
+		entry, failure, disposition := prepareScanCandidate(programLanguage, candidate, options)
 		switch disposition {
 		case scanCandidatePrepared:
 			prepared = append(prepared, entry)
@@ -484,7 +491,7 @@ const (
 	scanCandidateSkippedGlob
 )
 
-func prepareScanCandidate(candidate ScanCandidate, options ScanOptions) (preparedScanCandidate, FileEvaluation, scanCandidateDisposition) {
+func prepareScanCandidate(programLanguage string, candidate ScanCandidate, options ScanOptions) (preparedScanCandidate, FileEvaluation, scanCandidateDisposition) {
 	normalized, ok := normalizeEvaluationPath(candidate.Path)
 	if !ok {
 		failure := scannerDiagnosticEvaluation(nil, options, evaluationFailure("PATH_INVALID", "source", "source path is not a safe repository-relative path", nil), nil)
@@ -492,12 +499,9 @@ func prepareScanCandidate(candidate ScanCandidate, options ScanOptions) (prepare
 	}
 	language := candidate.Language
 	if language == "" {
-		if filepath.Ext(normalized) != ".go" {
-			return preparedScanCandidate{}, FileEvaluation{}, scanCandidateSkippedLanguage
-		}
-		language = "go"
+		language = parser.LanguageFor(normalized)
 	}
-	if language != "go" {
+	if language == "" || language != programLanguage {
 		return preparedScanCandidate{}, FileEvaluation{}, scanCandidateSkippedLanguage
 	}
 	if !scanPathMatchesAny(normalized, options.IncludeGlobs) || scanPathMatchesAnyNonEmpty(normalized, options.ExcludeGlobs) {
@@ -524,7 +528,7 @@ func finishScan(ctx context.Context, program *Program, state scanState, truncati
 	if state.totalTruncated {
 		truncations = append(truncations, ScanTruncation{Reason: "max_total_bytes", Limit: state.options.MaxTotalBytes, Skipped: state.totalSkipped})
 	}
-	evaluation := NormalizeEvaluations(ctx, state.evaluations, state.options.EvaluateOptions)
+	evaluation := normalizeEvaluationsAt(ctx, state.evaluations, state.options.EvaluateOptions, state.started, program)
 	if len(state.evaluations) == 0 {
 		evaluation.metadata = evaluationMetadataForProgram(state.options.EvaluateOptions, program)
 	}

@@ -34,6 +34,22 @@ func BenchmarkEvaluateFileStructuralQuery(b *testing.B) {
 		}
 	}
 }
+func BenchmarkEvaluateTypeScriptStructuralQuery(b *testing.B) {
+	program, err := Compile([]byte("language typescript\n`target($value)`"), CompileOptions{})
+	if err != nil {
+		b.Fatal(err)
+	}
+	source := []byte("const first = target(value(1)); const second = target(value(2));\n")
+	input := FileInput{Path: "repo/main.ts", Language: "typescript", Content: source, PatternID: "benchmark"}
+	b.ReportAllocs()
+	b.SetBytes(int64(len(source)))
+	for b.Loop() {
+		result := EvaluateFile(context.Background(), program, input, EvaluateOptions{})
+		if len(result.Findings()) != 2 {
+			b.Fatalf("findings=%d", len(result.Findings()))
+		}
+	}
+}
 
 func BenchmarkScanFilesProgramsSharedParse(b *testing.B) {
 	first, err := Compile([]byte("language go\n`target($x)`"), CompileOptions{})

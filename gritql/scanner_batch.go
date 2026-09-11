@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"io/fs"
+	"sort"
 	"time"
 	"unicode/utf8"
 
@@ -44,71 +45,102 @@ func (r BatchScanResult) Programs() []ProgramScanResult {
 func (r BatchScanResult) Stats() BatchScanStats { return r.stats }
 
 // ScanFilesPrograms reads and parses each eligible file once, then evaluates every
-// supplied program against the shared immutable document. All programs share the
-// scope and acquisition limits in options; finding identity remains program-local.
+// same-language program against the shared immutable document. Mixed-language rules
+// share acquisition while retaining per-language parsing and program-local identity.
 func ScanFilesPrograms(ctx context.Context, filesystem fs.FS, programs []ProgramScan, candidates []ScanCandidate, options ScanOptions) BatchScanResult {
 	if ctx == nil {
 		ctx = context.Background()
 	}
 	options = normalizeScanOptions(options)
-	states, prepared, truncations := prepareProgramScan(programs, candidates, options)
+	states, prepared := prepareProgramScan(programs, candidates, options)
 	batch := BatchScanResult{}
 	if filesystem == nil {
 		for index := range states {
 			states[index].evaluations = append(states[index].evaluations, scannerFailure(states[index].options, "source filesystem is unavailable", nil))
 		}
-		return finishProgramScan(ctx, programs, states, truncations, batch)
+		return finishProgramScan(ctx, programs, states, batch)
 	}
 	bytesAccount := newScanByteAccount(options.MaxTotalBytes)
+	readIndex := 0
 	for index, candidate := range prepared {
 		if stopProgramBatch(ctx, programs, states) {
 			break
 		}
-		read := bytesAccount.read(ctx, filesystem, candidate.readPath, index, options)
+		if !activeProgramMatchesCandidate(programs, states, candidate) {
+			continue
+		}
+		read := bytesAccount.read(ctx, filesystem, candidate.readPath, readIndex, options)
+		readIndex++
 		batch.stats.FilesRead++
 		if read.limit == scanLimitTotal {
 			for stateIndex := range states {
-				states[stateIndex].totalTruncated = true
-				states[stateIndex].totalSkipped = len(prepared) - index
+				skipped := matchingCandidateCount(programs[stateIndex].Program, prepared[index:])
+				states[stateIndex].totalTruncated = skipped > 0
+				states[stateIndex].totalSkipped = skipped
 			}
 			break
 		}
 		commitProgramRead(ctx, programs, states, candidate, read, &batch)
 	}
-	return finishProgramScan(ctx, programs, states, truncations, batch)
+	return finishProgramScan(ctx, programs, states, batch)
 }
 
-func prepareProgramScan(programs []ProgramScan, candidates []ScanCandidate, options ScanOptions) ([]scanState, []preparedScanCandidate, []ScanTruncation) {
+type preparedLanguageScan struct {
+	candidates  []preparedScanCandidate
+	early       []FileEvaluation
+	truncations []ScanTruncation
+	stats       ScanStats
+}
+
+func prepareProgramScan(programs []ProgramScan, candidates []ScanCandidate, options ScanOptions) ([]scanState, []preparedScanCandidate) {
 	states := make([]scanState, len(programs))
-	var prepared []preparedScanCandidate
-	var truncations []ScanTruncation
+	preparedByPath := make(map[string]preparedScanCandidate)
+	byLanguage := make(map[string]preparedLanguageScan)
 	for index, program := range programs {
 		programOptions := options
 		programOptions.PatternID = program.PatternID
 		programOptions.Message = program.Message
-		states[index] = scanState{options: programOptions, started: time.Now()}
-		if index == 0 {
-			prepared, states[index].evaluations, truncations = prepareScanCandidates(candidates, programOptions, &states[index].stats)
+		state := scanState{options: programOptions, started: time.Now()}
+		if program.Program == nil || program.Program.root == nil {
+			state.evaluations = append(state.evaluations, scannerDiagnosticEvaluation(program.Program, programOptions, evaluationFailure("INTERNAL_ERROR", "internal", "invalid compiled program", nil), nil))
+			state.stop = true
+			states[index] = state
 			continue
 		}
-		states[index].stats = states[0].stats
-		states[index].evaluations = cloneScannerEvaluations(states[0].evaluations, program.Program, programOptions)
+		language := program.Program.Language()
+		languageScan, prepared := byLanguage[language]
+		if !prepared {
+			languageScan.candidates, languageScan.early, languageScan.truncations = prepareScanCandidates(language, candidates, programOptions, &languageScan.stats)
+			byLanguage[language] = languageScan
+			for _, candidate := range languageScan.candidates {
+				preparedByPath[candidate.path] = candidate
+			}
+		}
+		state.stats = languageScan.stats
+		state.evaluations = cloneProgramScanFailures(languageScan.early, program.Program, programOptions)
+		state.truncations = append([]ScanTruncation(nil), languageScan.truncations...)
+		state.candidateCount = len(languageScan.candidates)
+		states[index] = state
 	}
-	for index := range states {
-		states[index].candidateCount = len(prepared)
+	prepared := make([]preparedScanCandidate, 0, len(preparedByPath))
+	for _, candidate := range preparedByPath {
+		prepared = append(prepared, candidate)
 	}
-	return states, prepared, truncations
+	sort.Slice(prepared, func(i, j int) bool {
+		if prepared[i].path != prepared[j].path {
+			return prepared[i].path < prepared[j].path
+		}
+		return prepared[i].readPath < prepared[j].readPath
+	})
+	return states, prepared
 }
-
-func cloneScannerEvaluations(source []FileEvaluation, program *Program, options ScanOptions) []FileEvaluation {
-	cloned := make([]FileEvaluation, 0, len(source))
+func cloneProgramScanFailures(source []FileEvaluation, program *Program, options ScanOptions) []FileEvaluation {
+	var cloned []FileEvaluation
 	for _, evaluation := range source {
-		if len(evaluation.diagnostics) == 0 {
-			continue
+		for _, diagnostic := range evaluation.diagnostics {
+			failure := evaluationFailure(diagnostic.code, diagnostic.class, diagnostic.message, nil)
+			cloned = append(cloned, scannerDiagnosticEvaluation(program, options, failure, diagnostic.path))
 		}
-		diagnostic := evaluation.diagnostics[0]
-		failure := evaluationFailure(diagnostic.code, diagnostic.class, diagnostic.message, nil)
-		cloned = append(cloned, scannerDiagnosticEvaluation(program, options, failure, diagnostic.path))
 	}
 	return cloned
 }
@@ -130,21 +162,13 @@ func stopProgramBatch(ctx context.Context, programs []ProgramScan, states []scan
 }
 
 func commitProgramRead(ctx context.Context, programs []ProgramScan, states []scanState, candidate preparedScanCandidate, read scanReadResult, batch *BatchScanResult) {
-	for index := range states {
-		if !states[index].stop {
-			states[index].stats.BytesRead += int64(len(read.content))
-		}
-	}
+	accountProgramRead(programs, states, candidate, len(read.content))
 	if read.err != nil {
 		appendProgramReadFailure(programs, states, candidate, read)
 		return
 	}
 	if bytes.IndexByte(read.content, 0) >= 0 {
-		for index := range states {
-			if !states[index].stop {
-				states[index].stats.SkippedBinary++
-			}
-		}
+		accountProgramBinary(programs, states, candidate)
 		return
 	}
 	if !utf8.Valid(read.content) {
@@ -159,12 +183,34 @@ func commitProgramRead(ctx context.Context, programs []ProgramScan, states []sca
 	batch.stats.FilesParsed++
 	defer document.Close()
 	for index, program := range programs {
-		if states[index].stop {
+		if states[index].stop || !programMatchesCandidate(program.Program, candidate) {
 			continue
 		}
 		evaluation := EvaluateDocumentFindings(ctx, program.Program, document, DocumentInput{Path: candidate.path, PatternID: program.PatternID, Message: program.Message}, states[index].options.EvaluateOptions)
 		commitProgramEvaluation(program.Program, &states[index], evaluation)
 	}
+}
+func programMatchesCandidate(program *Program, candidate preparedScanCandidate) bool {
+	return program != nil && program.Language() == candidate.language
+}
+
+func activeProgramMatchesCandidate(programs []ProgramScan, states []scanState, candidate preparedScanCandidate) bool {
+	for index := range states {
+		if !states[index].stop && programMatchesCandidate(programs[index].Program, candidate) {
+			return true
+		}
+	}
+	return false
+}
+
+func matchingCandidateCount(program *Program, candidates []preparedScanCandidate) int {
+	count := 0
+	for _, candidate := range candidates {
+		if programMatchesCandidate(program, candidate) {
+			count++
+		}
+	}
+	return count
 }
 
 func appendProgramReadFailure(programs []ProgramScan, states []scanState, candidate preparedScanCandidate, read scanReadResult) {
@@ -175,15 +221,30 @@ func appendProgramReadFailure(programs []ProgramScan, states []scanState, candid
 		code, class, message = "LIMIT_SOURCE_BYTES", "resource", "source exceeds effective byte limit"
 	}
 	for index := range states {
-		if !states[index].stop {
+		if !states[index].stop && programMatchesCandidate(programs[index].Program, candidate) {
 			states[index].evaluations = append(states[index].evaluations, scannerDiagnosticEvaluation(programs[index].Program, states[index].options, evaluationFailure(code, class, message, read.err), &candidate.path))
+		}
+	}
+}
+func accountProgramRead(programs []ProgramScan, states []scanState, candidate preparedScanCandidate, size int) {
+	for index := range states {
+		if !states[index].stop && programMatchesCandidate(programs[index].Program, candidate) {
+			states[index].stats.BytesRead += int64(size)
+		}
+	}
+}
+
+func accountProgramBinary(programs []ProgramScan, states []scanState, candidate preparedScanCandidate) {
+	for index := range states {
+		if !states[index].stop && programMatchesCandidate(programs[index].Program, candidate) {
+			states[index].stats.SkippedBinary++
 		}
 	}
 }
 
 func appendProgramSourceFailure(programs []ProgramScan, states []scanState, candidate preparedScanCandidate, code, message string) {
 	for index := range states {
-		if !states[index].stop {
+		if !states[index].stop && programMatchesCandidate(programs[index].Program, candidate) {
 			states[index].evaluations = append(states[index].evaluations, scannerDiagnosticEvaluation(programs[index].Program, states[index].options, evaluationFailure(code, "source", message, nil), &candidate.path))
 		}
 	}
@@ -202,10 +263,11 @@ func commitProgramEvaluation(program *Program, state *scanState, evaluation File
 	state.evaluations = append(state.evaluations, evaluation)
 }
 
-func finishProgramScan(ctx context.Context, programs []ProgramScan, states []scanState, truncations []ScanTruncation, batch BatchScanResult) BatchScanResult {
+func finishProgramScan(ctx context.Context, programs []ProgramScan, states []scanState, batch BatchScanResult) BatchScanResult {
 	batch.programs = make([]ProgramScanResult, len(programs))
 	for index, program := range programs {
-		batch.programs[index] = ProgramScanResult{PatternID: program.PatternID, Result: finishScan(ctx, program.Program, states[index], append([]ScanTruncation(nil), truncations...))}
+		programTruncations := append([]ScanTruncation(nil), states[index].truncations...)
+		batch.programs[index] = ProgramScanResult{PatternID: program.PatternID, Result: finishScan(ctx, program.Program, states[index], programTruncations)}
 	}
 	return batch
 }

@@ -25,6 +25,18 @@ func TestNormalizeStructuralRuleCompilesAndPreservesCanonicalSource(t *testing.T
 		t.Fatal("normalized rule retained caller-owned scope storage")
 	}
 }
+func TestNormalizeTypeScriptStructuralRule(t *testing.T) {
+	request := &api.GritRequest{
+		Query: "language typescript\n`target($value)`", Compatibility: api.GritMultilingualCompatibilityV1, Globs: []string{"**/*.ts"},
+	}
+	rule, err := Normalize(api.Rule{ID: "typescript-calls", Engine: api.RuleEngineGritQL, Structural: request})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rule.Structural.Compatibility != api.GritMultilingualCompatibilityV1 || rule.Structural.Query != request.Query {
+		t.Fatalf("rule=%#v", rule)
+	}
+}
 
 func TestNormalizeStructuralRuleRejectsInvalidDefinitions(t *testing.T) {
 	query := func(source string) *api.GritRequest {

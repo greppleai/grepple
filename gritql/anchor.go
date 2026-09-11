@@ -42,7 +42,7 @@ func requiredExpressionLiterals(expr *expression) map[string]struct{} {
 	}
 	switch expr.kind {
 	case KindSnippet:
-		return requiredTemplateLiterals(expr.template.root)
+		return requiredSnippetLiterals(expr)
 	case KindAnd:
 		return requiredAndLiterals(expr.children)
 	case KindOr:
@@ -56,6 +56,21 @@ func requiredExpressionLiterals(expr *expression) map[string]struct{} {
 	default:
 		return nil
 	}
+}
+
+func requiredSnippetLiterals(expr *expression) map[string]struct{} {
+	templates := expr.templates
+	if len(templates) == 0 {
+		templates = []Template{expr.template}
+	}
+	if len(templates) == 0 {
+		return nil
+	}
+	literals := cloneLiteralSet(requiredTemplateLiterals(templates[0].root))
+	for _, template := range templates[1:] {
+		literals = intersectLiteralSets(literals, requiredTemplateLiterals(template.root))
+	}
+	return literals
 }
 
 func requiredTemplateLiterals(root *templateNode) map[string]struct{} {

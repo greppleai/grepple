@@ -30,6 +30,7 @@ type languageGeneratedMetadata struct {
 	fingerprint string
 	fields      map[string]map[string]GrammarCardinality
 	children    map[string]GrammarCardinality
+	subtypes    map[string]map[string]bool
 }
 
 type stringSet map[string]struct{}
@@ -143,6 +144,13 @@ func GrammarChildrenCardinality(language, parentKind string) GrammarCardinality 
 		return GrammarCardinalityUnknown
 	}
 	return metadata.children[parentKind]
+}
+
+// GrammarSubtype reports whether kind belongs transitively to the named grammar
+// supertype in the pinned node-types metadata.
+func GrammarSubtype(language, supertype, kind string) bool {
+	metadata, ok := generatedLanguageMetadata[language]
+	return ok && metadata.subtypes[supertype][kind]
 }
 
 func buildLanguageAdapters(adapters ...languageAdapter) map[string]languageAdapter {

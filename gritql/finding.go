@@ -31,7 +31,8 @@ const (
 
 // FileInput is one in-memory source file. EvaluateFile does not access the
 // filesystem. Path is normalized as a repository-relative path and Content is
-// parsed without modification. An empty Language means go.
+// parsed without modification. An empty Language is inferred from Path, then
+// falls back to Go for backward compatibility.
 type FileInput struct {
 	Path      string
 	Language  string
@@ -47,7 +48,7 @@ type DocumentInput struct {
 	Message   string
 }
 
-// EffectiveLimits publishes every effective gritql-go-v1 resource bound.
+// EffectiveLimits publishes every effective native GritQL resource bound.
 type EffectiveLimits struct {
 	PatternBytes      int   `json:"pattern_bytes"`
 	SourceBytes       int   `json:"source_bytes"`
@@ -63,11 +64,12 @@ type EffectiveLimits struct {
 }
 
 // EvaluationMetadata identifies the closed contract and effective limits.
-// TreeSitterGrammar is exposed to Go callers separately because it is an
-// implementation pin, not the contract's go_grammar value.
+// GoGrammar remains populated for the original Go wire contract.
 type EvaluationMetadata struct {
 	Contract          string          `json:"contract"`
-	GoGrammar         string          `json:"go_grammar"`
+	Language          string          `json:"language,omitempty"`
+	Grammar           string          `json:"grammar,omitempty"`
+	GoGrammar         string          `json:"go_grammar,omitempty"`
 	Limits            EffectiveLimits `json:"limits"`
 	TreeSitterGrammar string          `json:"-"`
 }
@@ -300,15 +302,35 @@ func evaluationMetadata(options EvaluateOptions) EvaluationMetadata {
 func evaluationMetadataForProgram(options EvaluateOptions, program *Program) EvaluationMetadata {
 	metadata := evaluationMetadata(options)
 	if program != nil {
+		metadata.Contract = program.Compatibility()
 		metadata.Limits.PatternBytes = program.compileLimits.MaxPatternBytes
 		metadata.Limits.RegexBytes = program.compileLimits.MaxRegexBytes
 		metadata.Limits.RegexInstructions = program.compileLimits.MaxRegexInstructions
 		if program.compileLimits.MaxDepth < metadata.Limits.ParseDepth {
 			metadata.Limits.ParseDepth = program.compileLimits.MaxDepth
 		}
+		if adapter, ok := targetLanguageByID(program.Language()); ok {
+			metadata.Contract = adapter.compatibility
+			metadata.Language = adapter.metadataLanguage
+			metadata.Grammar = adapter.metadataGrammar
+			metadata.GoGrammar = adapter.goGrammar
+			metadata.TreeSitterGrammar = adapter.treeSitter
+		}
 	}
 	return metadata
 }
+func fileInputLanguage(input FileInput) string {
+	if input.Language != "" {
+		return input.Language
+	}
+	if language := parser.LanguageFor(input.Path); language != "" {
+		if _, supported := targetLanguageByID(language); supported {
+			return language
+		}
+	}
+	return defaultTargetLanguage
+}
+
 func withFileDeadline(started time.Time, options EvaluateOptions) EvaluateOptions {
 	normalized := normalizeEvaluateOptions(options)
 	options.Deadline = evaluationDeadline(started, normalized.MaxElapsed, options.Deadline)
@@ -320,10 +342,7 @@ func withFileDeadline(started time.Time, options EvaluateOptions) EvaluateOption
 // than Go errors. The result is deterministic and contains no partial findings.
 func EvaluateFile(ctx context.Context, program *Program, input FileInput, options EvaluateOptions) (result FileEvaluation) {
 	started := time.Now()
-	language := input.Language
-	if language == "" {
-		language = "go"
-	}
+	language := fileInputLanguage(input)
 	options = withFileDeadline(started, options)
 	result.metadata = evaluationMetadataForProgram(options, program)
 	defer func() {
@@ -345,8 +364,8 @@ func EvaluateFile(ctx context.Context, program *Program, input FileInput, option
 		result.diagnostics = []Diagnostic{newDiagnostic("INTERNAL_ERROR", "internal", "invalid compiled program", stringPtr(input.PatternID), &normalizedPath, nil)}
 		return result
 	}
-	if language != "go" || program.Language() != language {
-		result.diagnostics = []Diagnostic{newDiagnostic("SOURCE_PARSE", "source", "source language must be go", stringPtr(input.PatternID), &normalizedPath, nil)}
+	if _, supported := targetLanguageByID(language); !supported || program.Language() != language {
+		result.diagnostics = []Diagnostic{newDiagnostic("SOURCE_PARSE", "source", "source language must match the compiled program", stringPtr(input.PatternID), &normalizedPath, nil)}
 		return result
 	}
 	maxSourceBytes := normalizeEvaluateOptions(options).MaxSourceBytes
@@ -466,8 +485,8 @@ func validateNormalizedDocumentInput(ctx context.Context, program *Program, docu
 	if program == nil || program.root == nil {
 		return "", []Diagnostic{newDiagnostic("INTERNAL_ERROR", "internal", "invalid compiled program", stringPtr(input.PatternID), &normalizedPath, nil)}
 	}
-	if language != "go" || program.Language() != language {
-		return "", []Diagnostic{newDiagnostic("SOURCE_PARSE", "source", "source language must be go", stringPtr(input.PatternID), &normalizedPath, nil)}
+	if _, supported := targetLanguageByID(language); !supported || program.Language() != language {
+		return "", []Diagnostic{newDiagnostic("SOURCE_PARSE", "source", "source language must match the compiled program", stringPtr(input.PatternID), &normalizedPath, nil)}
 	}
 	maxSourceBytes := normalizeEvaluateOptions(options).MaxSourceBytes
 	if len(document.Source()) > maxSourceBytes {
@@ -500,7 +519,8 @@ func documentEvaluationErrorDiagnostics(err error, patternID, normalizedPath str
 }
 
 func normalizeFinding(pathValue, language, patternID, message, source string, match EvaluationMatch) Finding {
-	f := Finding{path: pathValue, language: language, compatibility: Compatibility, grammar: GoGrammar, rng: match.Range(), patternID: patternID, message: message}
+	adapter, _ := targetLanguageByID(language)
+	f := Finding{path: pathValue, language: language, compatibility: adapter.compatibility, grammar: adapter.grammar, rng: match.Range(), patternID: patternID, message: message}
 	if f.rng.StartByte >= 0 && f.rng.EndByte >= f.rng.StartByte && f.rng.EndByte <= len(source) {
 		f.text = strings.Clone(source[f.rng.StartByte:f.rng.EndByte])
 	}

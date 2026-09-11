@@ -21,7 +21,7 @@ const (
 	hardFileTime         = 10 * time.Second
 )
 
-// EvaluateOptions bounds evaluation. Zero values select the gritql-go-v1
+// EvaluateOptions bounds evaluation. Zero values select the native compatibility
 // defaults. MaxFindings and MaxBatchElapsed are batch normalization limits;
 // they are deliberately not applied by evaluation of one file. MaxSteps accounts
 // syntax visits, query operations, constraints, and matcher/backtracking work.
@@ -112,7 +112,7 @@ type queryRecord struct {
 	bindings BindingSet
 }
 
-// Evaluate evaluates a compiled Program against one already-parsed Go document.
+// Evaluate evaluates a compiled Program against one already-parsed target document.
 // Candidates and records are deterministic and no path or Finding model is used.
 func Evaluate(ctx context.Context, program *Program, document *parser.Document, options EvaluateOptions) ([]EvaluationMatch, error) {
 	if ctx == nil {
@@ -571,9 +571,9 @@ func sequenceTargetEnd(children []parser.ViewNode, end int) int {
 
 func sequenceMatchTarget(parent parser.ViewNode, field string, start, end int) MatchTarget {
 	switch parent.Kind() {
-	case "statement_list":
+	case "statement_list", "statement_block":
 		return viewSequenceTarget("statement_sequence", parent, start, end)
-	case "source_file":
+	case "source_file", "program":
 		return viewSequenceTarget("declaration_sequence", parent, start, end)
 	default:
 		return viewRepeatedSequenceTarget(parent, field, start, end)
@@ -581,14 +581,14 @@ func sequenceMatchTarget(parent parser.ViewNode, field string, start, end int) M
 }
 
 func repeatedTraversalElement(parent, child parser.ViewNode) bool {
-	if !child.IsNamed() || child.IsExtra() || child.Kind() == "comment" || !repeatedViewGrammarPosition(parent, child) {
+	if !child.IsNamed() || child.IsExtra() || child.Kind() == "comment" || !repeatedViewGrammarPosition(parent.Language(), parent, child) {
 		return false
 	}
 	switch parent.Kind() {
-	case "source_file":
-		return rootCategoryAccepts(SnippetContextDeclarationList, child.Kind())
-	case "statement_list":
-		return rootCategoryAccepts(SnippetContextStatementList, child.Kind())
+	case "source_file", "program":
+		return rootCategoryAccepts(parent.Language(), SnippetContextDeclarationList, child.Kind())
+	case "statement_list", "statement_block":
+		return rootCategoryAccepts(parent.Language(), SnippetContextStatementList, child.Kind())
 	default:
 		return true
 	}
@@ -637,11 +637,18 @@ func evaluateExpression(expr *expression, candidate evalCandidate, incoming Bind
 }
 
 func evaluateSnippetExpression(expr *expression, candidate evalCandidate, incoming BindingSet, budget *evaluationBudget) []queryRecord {
-	matched, ok := matchTemplateWithBudget(expr.template, candidate.target, incoming, budget)
-	if !ok {
-		return nil
+	templates := expr.templates
+	if len(templates) == 0 {
+		templates = []Template{expr.template}
 	}
-	return []queryRecord{{rng: matched.Range(), bindings: matched.Bindings()}}
+	records := make([]queryRecord, 0, len(templates))
+	for _, template := range templates {
+		matched, ok := matchTemplateWithBudget(template, candidate.target, incoming, budget)
+		if ok {
+			records = append(records, queryRecord{rng: matched.Range(), bindings: matched.Bindings()})
+		}
+	}
+	return records
 }
 
 func evaluateAndExpression(expr *expression, candidate evalCandidate, incoming BindingSet, nodes map[string]evalCandidate, budget *evaluationBudget) []queryRecord {

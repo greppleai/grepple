@@ -13,7 +13,8 @@ func FuzzCompileNoPanicDeterministic(f *testing.F) {
 	for _, query := range []string{
 		"language go\n`target($x)`",
 		"language go\n`$x` where { $x <: `return $_` }",
-		"", "language javascript\n`x`", "language go\n`unterminated",
+		"language typescript\n`target($x)`", "language tsx\n`<Button value={$x} />`",
+		"", "language javascript\n`x`", "language go\n`unterminated", "language typescript\n`unterminated",
 	} {
 		f.Add(query)
 	}

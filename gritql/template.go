@@ -2,16 +2,17 @@ package gritql
 
 import (
 	"fmt"
-	"github.com/greppleai/grepple/parser"
 	"sort"
 	"strconv"
 	"strings"
+
+	"github.com/greppleai/grepple/parser"
 )
 
-// SnippetContext is the first Go grammar context in which a snippet parsed.
+// SnippetContext identifies one target-language grammar context for a snippet.
 type SnippetContext uint8
 
-// SnippetContextExpression and the following constants define Go snippet-context priority.
+// SnippetContextExpression and the following constants identify supported contexts.
 const (
 	SnippetContextExpression SnippetContext = iota + 1
 	SnippetContextType
@@ -55,15 +56,19 @@ type templateNode struct {
 	children []templateChild
 }
 
-// Template is an immutable structural pattern compiled in one Go snippet context.
+// Template is an immutable structural pattern compiled in one target-language snippet context.
 type Template struct {
+	language string
 	context  SnippetContext
 	root     *templateNode
 	rootSlot *templateSlot
 }
 
-// Context returns the Go grammar context selected for the snippet.
+// Context returns the grammar context selected for the snippet.
 func (t Template) Context() SnippetContext { return t.context }
+
+// Language returns the canonical target language for the template.
+func (t Template) Language() string { return t.language }
 
 // Root returns a read-only handle to the concrete template root, if present.
 func (t Template) Root() TemplateNode { return TemplateNode{node: t.root} }
@@ -80,7 +85,7 @@ type TemplateNode struct{ node *templateNode }
 // Valid reports whether the handle refers to a template node.
 func (n TemplateNode) Valid() bool { return n.node != nil }
 
-// Kind returns the pinned Go grammar node kind, or empty for an invalid handle.
+// Kind returns the pinned target grammar node kind, or empty for an invalid handle.
 func (n TemplateNode) Kind() string {
 	if n.node == nil {
 		return ""
@@ -180,6 +185,7 @@ const (
 	roleDeclarationSpec
 	roleTypeSpec
 	roleDeclaration
+	roleTypeScriptDeclaration
 )
 
 type generatedPlaceholder struct {
@@ -739,7 +745,7 @@ func compileGoTemplate(decoded decodedSnippet, maxDepth int) (Template, string, 
 	for _, attempt := range goSnippetAttempts {
 		baseline, generated := replaceSnippetPlaceholders(decoded, attempt.prefix, nil)
 		source := attempt.prefix + baseline + attempt.suffix
-		doc, err := parser.ParseDocument("go", source)
+		doc, err := parser.ParseDocument(defaultTargetLanguage, source)
 		if err != nil {
 			continue
 		}
@@ -751,7 +757,7 @@ func compileGoTemplate(decoded decodedSnippet, maxDepth int) (Template, string, 
 		if !inference.ok {
 			continue
 		}
-		candidates, tooDeep := parseInferredTemplates(decoded, attempt, inference.assignments, maxDepth)
+		candidates, tooDeep := parseInferredTemplates(defaultTargetLanguage, decoded, attempt, inference.assignments, maxDepth)
 		if tooDeep {
 			return Template{}, "LIMIT_PARSE_DEPTH", fmt.Errorf("Go template exceeds effective depth limit")
 		}
@@ -790,11 +796,11 @@ func collectInferredTemplates(occurrences int, assignments [][]placeholderRole, 
 	return dedupeTemplates(candidates), false
 }
 
-func parseInferredTemplates(decoded decodedSnippet, attempt snippetAttempt, assignments [][]placeholderRole, maxDepth int) ([]Template, bool) {
+func parseInferredTemplates(language string, decoded decodedSnippet, attempt snippetAttempt, assignments [][]placeholderRole, maxDepth int) ([]Template, bool) {
 	evaluate := func(roles []placeholderRole) inferredEvaluation {
 		replaced, generated := replaceSnippetPlaceholders(decoded, attempt.prefix, roles)
 		source := attempt.prefix + replaced + attempt.suffix
-		doc, err := parser.ParseDocument("go", source)
+		doc, err := parser.ParseDocument(language, source)
 		if err != nil {
 			return inferredEvaluation{}
 		}
@@ -809,11 +815,11 @@ func parseInferredTemplates(decoded decodedSnippet, attempt snippetAttempt, assi
 		if !ok || !valid || !consumesSnippet(sel.node, root, source, start, end) {
 			return inferredEvaluation{}
 		}
-		frozen, buildErr := freezeTemplate(sel.node, generated, maxDepth, start, end, sel.sequenceKind)
+		frozen, buildErr := freezeTemplate(language, sel.node, generated, maxDepth, start, end, sel.sequenceKind)
 		if buildErr != nil {
 			return inferredEvaluation{tooDeep: strings.Contains(buildErr.Error(), "depth")}
 		}
-		t := Template{context: attempt.context, root: frozen.node, rootSlot: frozen.slot}
+		t := Template{language: language, context: attempt.context, root: frozen.node, rootSlot: frozen.slot}
 		return inferredEvaluation{tmpl: t, valid: restoredOccurrences(t, generated)}
 	}
 	return collectInferredTemplates(len(decoded.placeholders), assignments, evaluate)
@@ -844,6 +850,8 @@ func replaceSnippetPlaceholders(d decodedSnippet, prefix string, roles []placeho
 			expansion = marker + " int"
 		case roleDeclaration:
 			expansion = "var " + marker + " int"
+		case roleTypeScriptDeclaration:
+			expansion = "const " + marker + " = 0"
 		}
 		start := len(prefix) + b.Len()
 		b.WriteString(expansion)
@@ -1061,16 +1069,16 @@ func repeatedSlotsAreScalar(parent parser.Node, placeholders map[spanKey]generat
 	return placeholderCount > 1
 }
 
-func freezeTemplate(root parser.Node, ps []generatedPlaceholder, maxDepth, clipStart, clipEnd int, sequenceKind string) (templateChild, error) {
+func freezeTemplate(language string, root parser.Node, ps []generatedPlaceholder, maxDepth, clipStart, clipEnd int, sequenceKind string) (templateChild, error) {
 	// Index authored occurrences by synthetic span, then choose exactly one typed
 	// grammar value per span in a single pre-order traversal.
 	bySpan := indexGeneratedPlaceholders(ps)
-	targets, err := findSlotTargets(root, bySpan, maxDepth+8)
+	targets, err := findSlotTargets(language, root, bySpan, maxDepth+8)
 	if err != nil {
 		return templateChild{}, err
 	}
 	if len(targets) != len(ps) {
-		return templateChild{}, fmt.Errorf("not every metavariable occupies a supported Go grammar value")
+		return templateChild{}, fmt.Errorf("not every metavariable occupies a supported %s grammar value", language)
 	}
 	builder := templateFreezer{
 		targets: targets, maxDepth: maxDepth, clipStart: clipStart, clipEnd: clipEnd,
@@ -1092,22 +1100,22 @@ type slotTargetWalkItem struct {
 	depth     int
 }
 
-func findSlotTargets(root parser.Node, bySpan map[spanKey]generatedPlaceholder, depthLimit int) (map[spanKey]slotTarget, error) {
+func findSlotTargets(language string, root parser.Node, bySpan map[spanKey]generatedPlaceholder, depthLimit int) (map[spanKey]slotTarget, error) {
 	targets := make(map[spanKey]slotTarget, len(bySpan))
 	walk := []slotTargetWalkItem{{n: root, depth: 1}}
 	for len(walk) > 0 {
 		x := walk[len(walk)-1]
 		walk = walk[:len(walk)-1]
 		if x.depth > depthLimit {
-			return nil, fmt.Errorf("Go template exceeds effective depth limit")
+			return nil, fmt.Errorf("%s template exceeds effective depth limit", language)
 		}
-		chooseSlotTarget(x.n, x.parent, bySpan, targets)
+		chooseSlotTarget(language, x.n, x.parent, bySpan, targets)
 		walk = appendSlotTargetChildren(walk, x)
 	}
 	return targets, nil
 }
 
-func chooseSlotTarget(n, parent parser.Node, bySpan map[spanKey]generatedPlaceholder, targets map[spanKey]slotTarget) {
+func chooseSlotTarget(language string, n, parent parser.Node, bySpan map[spanKey]generatedPlaceholder, targets map[spanKey]slotTarget) {
 	r := n.Range()
 	key := spanKey{r.StartByte, r.EndByte}
 	p, authored := bySpan[key]
@@ -1116,7 +1124,7 @@ func chooseSlotTarget(n, parent parser.Node, bySpan map[spanKey]generatedPlaceho
 		return
 	}
 	cardinality := SlotOne
-	if parent.Valid() && repeatedGrammarPosition(parent, n) && !repeatedSlotsAreScalar(parent, bySpan) {
+	if parent.Valid() && repeatedGrammarPosition(language, parent, n) && !repeatedSlotsAreScalar(parent, bySpan) {
 		cardinality = SlotMany
 	}
 	targets[key] = slotTarget{p: p, cardinality: cardinality, kind: n.Kind()}
@@ -1237,6 +1245,8 @@ func typedPlaceholderNode(n, parent parser.Node, role placeholderRole) bool {
 		return typeSpecPlaceholderNode(n, parent)
 	case roleDeclaration:
 		return isGoDeclaration(n.Kind()) && parent.Valid() && parent.Kind() == "source_file"
+	case roleTypeScriptDeclaration:
+		return isTypeScriptDeclaration(n.Kind()) && parent.Valid() && parent.Kind() == "program"
 	default:
 		return false
 	}
@@ -1244,7 +1254,7 @@ func typedPlaceholderNode(n, parent parser.Node, role placeholderRole) bool {
 
 func ordinaryPlaceholderKind(kind string) bool {
 	switch kind {
-	case "identifier", "type_identifier", "field_identifier", "package_identifier", "label_name", "expression_statement", "parameter_declaration", "variadic_parameter_declaration", "field_declaration", "literal_element", "var_spec", "const_spec", "type_spec", "type_elem":
+	case "identifier", "type_identifier", "field_identifier", "package_identifier", "property_identifier", "private_property_identifier", "shorthand_property_identifier", "shorthand_property_identifier_pattern", "jsx_identifier", "namespace_name", "label_name", "expression_statement", "parameter_declaration", "variadic_parameter_declaration", "field_declaration", "literal_element", "var_spec", "const_spec", "type_spec", "type_elem":
 		return true
 	default:
 		return false
@@ -1255,7 +1265,10 @@ func importPathPlaceholderNode(n, parent parser.Node) bool {
 	if n.Kind() == "import_spec" {
 		return parent.Valid() && parent.Kind() == "import_spec_list"
 	}
-	return n.Kind() == "interpreted_string_literal" && parent.Valid() && parent.Kind() == "import_spec"
+	if n.Kind() == "interpreted_string_literal" {
+		return parent.Valid() && parent.Kind() == "import_spec"
+	}
+	return n.Kind() == "string" && parent.Valid() && (parent.Kind() == "import_statement" || parent.Kind() == "export_statement")
 }
 
 func declarationSpecPlaceholderNode(n, parent parser.Node) bool {
@@ -1278,11 +1291,11 @@ func declarationOrList(kind, declaration, list string) bool {
 // node-types.json. Grouped declarations retain syntax-sensitive checks here
 // because node-types flattens their grouped alternative.
 
-func repeatedGrammarPosition(parent, child parser.Node) bool {
-	return repeatedGrammarPositionMetadata(parent.Kind(), child.FieldName(), nodeHasOpenParen(parent))
+func repeatedGrammarPosition(language string, parent, child parser.Node) bool {
+	return repeatedGrammarPositionMetadata(language, parent.Kind(), child.FieldName(), nodeHasOpenParen(parent))
 }
 
-func repeatedViewGrammarPosition(parent, child parser.ViewNode) bool {
+func repeatedViewGrammarPosition(language string, parent, child parser.ViewNode) bool {
 	hasOpenParen := false
 	for _, candidate := range parent.Children() {
 		if candidate.Kind() == "(" {
@@ -1290,7 +1303,7 @@ func repeatedViewGrammarPosition(parent, child parser.ViewNode) bool {
 			break
 		}
 	}
-	return repeatedGrammarPositionMetadata(parent.Kind(), child.FieldName(), hasOpenParen)
+	return repeatedGrammarPositionMetadata(language, parent.Kind(), child.FieldName(), hasOpenParen)
 }
 
 func nodeHasOpenParen(parent parser.Node) bool {
@@ -1302,37 +1315,33 @@ func nodeHasOpenParen(parent parser.Node) bool {
 	return false
 }
 
-func repeatedGrammarPositionMetadata(parentKind, field string, hasOpenParen bool) bool {
+func repeatedGrammarPositionMetadata(language, parentKind, field string, hasOpenParen bool) bool {
 	if field != "" {
-		return parser.GrammarFieldCardinality("go", parentKind, field) == parser.GrammarCardinalityMany
+		return parser.GrammarFieldCardinality(language, parentKind, field) == parser.GrammarCardinalityMany
 	}
-	if parser.GrammarChildrenCardinality("go", parentKind) != parser.GrammarCardinalityMany {
+	if parser.GrammarChildrenCardinality(language, parentKind) != parser.GrammarCardinalityMany {
 		return false
 	}
-	if parentKind == "const_declaration" || parentKind == "type_declaration" {
-		return hasOpenParen
-	}
-	return true
+	return unfieldedCardinalityAllowed(language, parentKind, hasOpenParen)
 }
 
 // repeatedGrammarPositionKinds is the snapshot-friendly counterpart used to
 // validate generic traversal list targets against the same pinned metadata.
-func repeatedGrammarPositionKinds(parentKind, field string, children []parser.SyntaxNode) bool {
+func repeatedGrammarPositionKinds(language, parentKind, field string, children []parser.SyntaxNode) bool {
 	if field != "" {
-		return parser.GrammarFieldCardinality("go", parentKind, field) == parser.GrammarCardinalityMany
+		return parser.GrammarFieldCardinality(language, parentKind, field) == parser.GrammarCardinalityMany
 	}
-	if parser.GrammarChildrenCardinality("go", parentKind) != parser.GrammarCardinalityMany {
+	if parser.GrammarChildrenCardinality(language, parentKind) != parser.GrammarCardinalityMany {
 		return false
 	}
-	if parentKind == "const_declaration" || parentKind == "type_declaration" {
-		for _, child := range children {
-			if child.Kind() == "(" {
-				return true
-			}
+	hasOpenParen := false
+	for _, child := range children {
+		if child.Kind() == "(" {
+			hasOpenParen = true
+			break
 		}
-		return false
 	}
-	return true
+	return unfieldedCardinalityAllowed(language, parentKind, hasOpenParen)
 }
 func omitTemplateNode(n parser.Node, start, end int) bool {
 	r := n.Range()

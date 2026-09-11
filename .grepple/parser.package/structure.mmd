@@ -21,7 +21,7 @@ classDiagram
     }
     <<struct>> Document
     %% grepple:file Document parser/document.go
-    note for Document "defined: parser/document.go:40-46; Close@parser/document.go:164-179; Diagnostics@parser/document.go:281; Language@parser/document.go:204-214; ParseDiagnostics@parser/document.go:247-278; Read@parser/document.go:184-201; Root@parser/document.go:233-243; Source@parser/document.go:217-227; Text@parser/document.go:230; nodeRangeLocked@parser/document.go:530-538; language@parser/document.go:42; lineStarts@parser/document.go:44; mu@parser/document.go:41; source@parser/document.go:43; tree@parser/document.go:45"
+    note for Document "defined: parser/document.go:40-46; Close@parser/document.go:164-179; Diagnostics@parser/document.go:281; Language@parser/document.go:204-214; ParseDiagnostics@parser/document.go:247-278; Read@parser/document.go:184-201; Root@parser/document.go:233-243; Source@parser/document.go:217-227; Text@parser/document.go:230; nodeRangeLocked@parser/document.go:537-545; language@parser/document.go:42; lineStarts@parser/document.go:44; mu@parser/document.go:41; source@parser/document.go:43; tree@parser/document.go:45"
     class DocumentView {
         +Language(): string
         +Root(): ViewNode
@@ -123,6 +123,7 @@ classDiagram
         +IsNamed(): bool
         +IsValid(): bool
         +Kind(): string
+        +Language(): string
         +NamedChild(int): Node
         +NamedChildCount(): int
         +NamedChildren(): []Node
@@ -141,7 +142,7 @@ classDiagram
     }
     <<struct>> Node
     %% grepple:file Node parser/document.go
-    note for Node "defined: parser/document.go:50-54; Child@parser/document.go:398-409; ChildByFieldName@parser/document.go:489-497; ChildCount@parser/document.go:384-388; Children@parser/document.go:427-444; FieldName@parser/document.go:501-506; FieldNameForChild@parser/document.go:509-517; HasError@parser/document.go:332-336; IsError@parser/document.go:318-322; IsExtra@parser/document.go:311-315; IsMissing@parser/document.go:325-329; IsNamed@parser/document.go:304-308; IsValid@parser/document.go:294; Kind@parser/document.go:297-301; NamedChild@parser/document.go:412-423; NamedChildCount@parser/document.go:391-395; NamedChildren@parser/document.go:447-467; Parent@parser/document.go:373-381; Range@parser/document.go:366-370; Snapshot@parser/document.go:110-120; Source@parser/document.go:351; Text@parser/document.go:339-348; TextRange@parser/document.go:355-363; Valid@parser/document.go:284-291; read@parser/document.go:519-528; snapshotLocked@parser/document.go:122-140; doc@parser/document.go:51; fieldName@parser/document.go:53; raw@parser/document.go:52"
+    note for Node "defined: parser/document.go:50-54; Child@parser/document.go:405-416; ChildByFieldName@parser/document.go:496-504; ChildCount@parser/document.go:391-395; Children@parser/document.go:434-451; FieldName@parser/document.go:508-513; FieldNameForChild@parser/document.go:516-524; HasError@parser/document.go:339-343; IsError@parser/document.go:325-329; IsExtra@parser/document.go:318-322; IsMissing@parser/document.go:332-336; IsNamed@parser/document.go:311-315; IsValid@parser/document.go:294; Kind@parser/document.go:304-308; Language@parser/document.go:297-301; NamedChild@parser/document.go:419-430; NamedChildCount@parser/document.go:398-402; NamedChildren@parser/document.go:454-474; Parent@parser/document.go:380-388; Range@parser/document.go:373-377; Snapshot@parser/document.go:110-120; Source@parser/document.go:358; Text@parser/document.go:346-355; TextRange@parser/document.go:362-370; Valid@parser/document.go:284-291; read@parser/document.go:526-535; snapshotLocked@parser/document.go:122-140; doc@parser/document.go:51; fieldName@parser/document.go:53; raw@parser/document.go:52"
     class ParseDiagnostic {
         +Kind: string
         +Message: string
@@ -231,6 +232,7 @@ classDiagram
         +IsNamed(): bool
         +IsValid(): bool
         +Kind(): string
+        +Language(): string
         +NamedChild(int): ViewNode
         +NamedChildCount(): int
         +NamedChildren(): []ViewNode
@@ -248,21 +250,21 @@ classDiagram
     }
     <<struct>> ViewNode
     %% grepple:file ViewNode parser/view.go
-    note for ViewNode "defined: parser/view.go:35-39; Child@parser/view.go:154-163; ChildByFieldName@parser/view.go:209-218; ChildCount@parser/view.go:138-143; Children@parser/view.go:178-194; FieldName@parser/view.go:221-226; FieldNameForChild@parser/view.go:229-234; HasError@parser/view.go:96; IsError@parser/view.go:90; IsExtra@parser/view.go:87; IsMissing@parser/view.go:93; IsNamed@parser/view.go:84; IsValid@parser/view.go:73; Kind@parser/view.go:76-81; NamedChild@parser/view.go:166-175; NamedChildCount@parser/view.go:146-151; NamedChildren@parser/view.go:197-206; Parent@parser/view.go:126-135; Range@parser/view.go:118-123; Snapshot@parser/view.go:237-242; Source@parser/view.go:107; Text@parser/view.go:99-104; TextRange@parser/view.go:110-115; Valid@parser/view.go:70; snapshot@parser/view.go:244-275; fieldName@parser/view.go:38; raw@parser/view.go:37; view@parser/view.go:36"
+    note for ViewNode "defined: parser/view.go:35-39; Child@parser/view.go:162-171; ChildByFieldName@parser/view.go:217-226; ChildCount@parser/view.go:146-151; Children@parser/view.go:186-202; FieldName@parser/view.go:229-234; FieldNameForChild@parser/view.go:237-242; HasError@parser/view.go:104; IsError@parser/view.go:98; IsExtra@parser/view.go:95; IsMissing@parser/view.go:101; IsNamed@parser/view.go:92; IsValid@parser/view.go:73; Kind@parser/view.go:84-89; Language@parser/view.go:76-81; NamedChild@parser/view.go:174-183; NamedChildCount@parser/view.go:154-159; NamedChildren@parser/view.go:205-214; Parent@parser/view.go:134-143; Range@parser/view.go:126-131; Snapshot@parser/view.go:245-250; Source@parser/view.go:115; Text@parser/view.go:107-112; TextRange@parser/view.go:118-123; Valid@parser/view.go:70; snapshot@parser/view.go:252-283; fieldName@parser/view.go:38; raw@parser/view.go:37; view@parser/view.go:36"
     class WalkOptions {
         +MaxDepth: int
         +MaxNodes: int
     }
     <<struct>> WalkOptions
     %% grepple:file WalkOptions parser/view.go
-    note for WalkOptions "defined: parser/view.go:278-281; MaxDepth@parser/view.go:279; MaxNodes@parser/view.go:280"
+    note for WalkOptions "defined: parser/view.go:286-289; MaxDepth@parser/view.go:287; MaxNodes@parser/view.go:288"
     class WalkResult {
         +Truncated: bool
         +Visited: int
     }
     <<struct>> WalkResult
     %% grepple:file WalkResult parser/view.go
-    note for WalkResult "defined: parser/view.go:284-287; Truncated@parser/view.go:286; Visited@parser/view.go:285"
+    note for WalkResult "defined: parser/view.go:292-295; Truncated@parser/view.go:294; Visited@parser/view.go:293"
     class cLanguage {
         +Grammar(): *sitter.Language
         +ID(): string
@@ -364,15 +366,16 @@ classDiagram
     }
     <<interface>> languageAdapter
     %% grepple:file languageAdapter parser/language.go
-    note for languageAdapter "defined: parser/language.go:63-68; Grammar@parser/language.go:65; ID@parser/language.go:64; Outline@parser/language.go:67; Rules@parser/language.go:66"
+    note for languageAdapter "defined: parser/language.go:64-69; Grammar@parser/language.go:66; ID@parser/language.go:65; Outline@parser/language.go:68; Rules@parser/language.go:67"
     class languageGeneratedMetadata {
         -children: map[string]GrammarCardinality
         -fields: map[string]map[string]GrammarCardinality
         -fingerprint: string
+        -subtypes: map[string]map[string]bool
     }
     <<struct>> languageGeneratedMetadata
     %% grepple:file languageGeneratedMetadata parser/language.go
-    note for languageGeneratedMetadata "defined: parser/language.go:29-33; children@parser/language.go:32; fields@parser/language.go:31; fingerprint@parser/language.go:30"
+    note for languageGeneratedMetadata "defined: parser/language.go:29-34; children@parser/language.go:32; fields@parser/language.go:31; fingerprint@parser/language.go:30; subtypes@parser/language.go:33"
     class matchLines {
         -hitsRange(int, int): bool
         -set: map[int]bool
@@ -506,7 +509,7 @@ classDiagram
     <<type>> stringSet
     %% grepple:underlying stringSet map[string]struct{}
     %% grepple:file stringSet parser/language.go
-    note for stringSet "defined: parser/language.go:35; contains@parser/language.go:45-48"
+    note for stringSet "defined: parser/language.go:36; contains@parser/language.go:46-49"
     class structureRules {
         -blockTypes: stringSet
         -classBodyTypes: stringSet
@@ -521,7 +524,7 @@ classDiagram
     }
     <<struct>> structureRules
     %% grepple:file structureRules parser/language.go
-    note for structureRules "defined: parser/language.go:50-61; blockTypes@parser/language.go:58; classBodyTypes@parser/language.go:55; classDeclarationTypes@parser/language.go:54; containerTypes@parser/language.go:53; contextTypes@parser/language.go:52; exportTypes@parser/language.go:56; functionLikeTypes@parser/language.go:57; jsxElementTypes@parser/language.go:59; nameFieldCandidates@parser/language.go:60; structuralTypes@parser/language.go:51"
+    note for structureRules "defined: parser/language.go:51-62; blockTypes@parser/language.go:59; classBodyTypes@parser/language.go:56; classDeclarationTypes@parser/language.go:55; containerTypes@parser/language.go:54; contextTypes@parser/language.go:53; exportTypes@parser/language.go:57; functionLikeTypes@parser/language.go:58; jsxElementTypes@parser/language.go:60; nameFieldCandidates@parser/language.go:61; structuralTypes@parser/language.go:52"
     class typeScriptLanguage {
         +Grammar(): *sitter.Language
         +ID(): string
@@ -547,7 +550,7 @@ classDiagram
     }
     <<struct>> viewWalkItem
     %% grepple:file viewWalkItem parser/view.go
-    note for viewWalkItem "defined: parser/view.go:300-303; depth@parser/view.go:302; node@parser/view.go:301"
+    note for viewWalkItem "defined: parser/view.go:308-311; depth@parser/view.go:310; node@parser/view.go:309"
     class BuildNavigationGraph {
         +BuildNavigationGraph(string, string, string): NavigationGraph
     }
@@ -565,7 +568,7 @@ classDiagram
     }
     <<function>> CapabilitiesForLanguage
     %% grepple:file CapabilitiesForLanguage parser/language.go
-    note for CapabilitiesForLanguage "defined: parser/language.go:110-117"
+    note for CapabilitiesForLanguage "defined: parser/language.go:111-118"
     class DeclarationRangeAt {
         +DeclarationRangeAt(string, string, int): tuple~int&#44;int&#44;bool~
     }
@@ -577,13 +580,19 @@ classDiagram
     }
     <<function>> GrammarChildrenCardinality
     %% grepple:file GrammarChildrenCardinality parser/language.go
-    note for GrammarChildrenCardinality "defined: parser/language.go:140-146"
+    note for GrammarChildrenCardinality "defined: parser/language.go:141-147"
     class GrammarFieldCardinality {
         +GrammarFieldCardinality(string, string, string): GrammarCardinality
     }
     <<function>> GrammarFieldCardinality
     %% grepple:file GrammarFieldCardinality parser/language.go
-    note for GrammarFieldCardinality "defined: parser/language.go:131-137"
+    note for GrammarFieldCardinality "defined: parser/language.go:132-138"
+    class GrammarSubtype {
+        +GrammarSubtype(string, string, string): bool
+    }
+    <<function>> GrammarSubtype
+    %% grepple:file GrammarSubtype parser/language.go
+    note for GrammarSubtype "defined: parser/language.go:151-154"
     class LanguageFor {
         +LanguageFor(string): string
     }
@@ -631,25 +640,25 @@ classDiagram
     }
     <<function>> SupportedLanguages
     %% grepple:file SupportedLanguages parser/language.go
-    note for SupportedLanguages "defined: parser/language.go:101-107"
+    note for SupportedLanguages "defined: parser/language.go:102-108"
     class WalkNamed {
         +WalkNamed(Node, func&#40;Node&#41;)
     }
     <<function>> WalkNamed
     %% grepple:file WalkNamed parser/document.go
-    note for WalkNamed "defined: parser/document.go:471-486"
+    note for WalkNamed "defined: parser/document.go:478-493"
     class WalkNamedView {
         +WalkNamedView(ViewNode, func&#40;ViewNode&#41;)
     }
     <<function>> WalkNamedView
     %% grepple:file WalkNamedView parser/view.go
-    note for WalkNamedView "defined: parser/view.go:290-298"
+    note for WalkNamedView "defined: parser/view.go:298-306"
     class WalkNamedViewBounded {
         +WalkNamedViewBounded(ViewNode, WalkOptions, func&#40;ViewNode&#44;int&#41;bool): WalkResult
     }
     <<function>> WalkNamedViewBounded
     %% grepple:file WalkNamedViewBounded parser/view.go
-    note for WalkNamedViewBounded "defined: parser/view.go:307-332"
+    note for WalkNamedViewBounded "defined: parser/view.go:315-340"
     BuildNavigationGraph "1" ..> "1" NavigationGraph : result 1
     BuildSegments "1" ..> "*" Segment : result 1
     CapabilitiesForLanguage "1" ..> "1" LanguageCapabilities : result 1

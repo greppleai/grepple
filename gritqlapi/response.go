@@ -97,7 +97,7 @@ func convertRange(sourceRange parser.Range) api.GritRange {
 
 func metadata(source gritql.EvaluationMetadata) api.GritMetadata {
 	limits := source.Limits
-	return api.GritMetadata{Compatibility: source.Contract, GoGrammar: source.GoGrammar, Limits: api.GritEffectiveLimits{
+	return api.GritMetadata{Compatibility: source.Contract, Language: source.Language, Grammar: source.Grammar, GoGrammar: source.GoGrammar, Limits: api.GritEffectiveLimits{
 		PatternBytes: limits.PatternBytes, RegexBytes: limits.RegexBytes, RegexInstructions: limits.RegexInstructions,
 		ParseDepth: limits.ParseDepth, SourceBytes: limits.SourceBytes, Candidates: limits.Candidates,
 		ASTSteps: limits.ASTSteps, Findings: limits.Findings, FileTimeMillis: limits.FileTimeMillis,

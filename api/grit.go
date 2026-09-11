@@ -1,8 +1,10 @@
 package api
 
 const (
-	// GritCompatibilityV1 is the closed native Go structural-search contract.
+	// GritCompatibilityV1 is the original closed native Go structural-search contract.
 	GritCompatibilityV1 = "gritql-go-v1"
+	// GritMultilingualCompatibilityV1 is the adapter-based multilingual contract.
+	GritMultilingualCompatibilityV1 = "gritql-v1"
 	// MaxGritRequestBodyBytes bounds one encoded structural-search request.
 	MaxGritRequestBodyBytes = 2 << 20
 	// MaxGritQueryBytes bounds the UTF-8 query source carried by a request.
@@ -155,6 +157,8 @@ type GritEffectiveLimits struct {
 // GritMetadata identifies the compatibility and grammar contract used for a response.
 type GritMetadata struct {
 	Compatibility string              `json:"compatibility"`
+	Language      string              `json:"language,omitempty"`
+	Grammar       string              `json:"grammar,omitempty"`
 	GoGrammar     string              `json:"goGrammar"`
 	Limits        GritEffectiveLimits `json:"limits"`
 }
