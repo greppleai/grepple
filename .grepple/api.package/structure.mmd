@@ -33,6 +33,251 @@ classDiagram
     %% grepple:struct-tag FileResult Repo "json:\"repo,omitempty\""
     %% grepple:struct-tag FileResult Segments "json:\"segments\""
     note for FileResult "defined: api/model.go:73-81; Context@api/model.go:79; Language@api/model.go:76; Matches@api/model.go:77; Path@api/model.go:74; Related@api/model.go:80; Repo@api/model.go:75; Segments@api/model.go:78"
+    class GritBinding {
+        +Kind: string
+        +Name: string
+        +Range: GritRange
+        +Ranges: []GritRange
+        +Structural: []GritStructuralNode
+    }
+    <<struct>> GritBinding
+    %% grepple:file GritBinding api/grit.go
+    %% grepple:struct-tag GritBinding Kind "json:\"kind\""
+    %% grepple:struct-tag GritBinding Name "json:\"name\""
+    %% grepple:struct-tag GritBinding Range "json:\"range\""
+    %% grepple:struct-tag GritBinding Ranges "json:\"ranges,omitempty\""
+    %% grepple:struct-tag GritBinding Structural "json:\"structural\""
+    note for GritBinding "defined: api/grit.go:95-101; Kind@api/grit.go:97; Name@api/grit.go:96; Range@api/grit.go:98; Ranges@api/grit.go:99; Structural@api/grit.go:100"
+    class GritDiagnostic {
+        +Class: string
+        +Code: string
+        +Message: string
+        +Path: *string
+        +PatternID: *string
+        +Range: *GritRange
+        +Repo: string
+        +Severity: string
+        +Shard: string
+    }
+    <<struct>> GritDiagnostic
+    %% grepple:file GritDiagnostic api/grit.go
+    %% grepple:struct-tag GritDiagnostic Class "json:\"class\""
+    %% grepple:struct-tag GritDiagnostic Code "json:\"code\""
+    %% grepple:struct-tag GritDiagnostic Message "json:\"message\""
+    %% grepple:struct-tag GritDiagnostic Path "json:\"path\""
+    %% grepple:struct-tag GritDiagnostic PatternID "json:\"patternId\""
+    %% grepple:struct-tag GritDiagnostic Range "json:\"range\""
+    %% grepple:struct-tag GritDiagnostic Repo "json:\"repo,omitempty\""
+    %% grepple:struct-tag GritDiagnostic Severity "json:\"severity\""
+    %% grepple:struct-tag GritDiagnostic Shard "json:\"shard,omitempty\""
+    note for GritDiagnostic "defined: api/grit.go:118-128; Class@api/grit.go:120; Code@api/grit.go:119; Message@api/grit.go:122; Path@api/grit.go:126; PatternID@api/grit.go:125; Range@api/grit.go:127; Repo@api/grit.go:123; Severity@api/grit.go:121; Shard@api/grit.go:124"
+    class GritEffectiveLimits {
+        +ASTSteps: int
+        +BatchTimeMillis: int64
+        +Candidates: int
+        +FileTimeMillis: int64
+        +Findings: int
+        +MemoryBytes: int64
+        +ParseDepth: int
+        +PatternBytes: int
+        +RegexBytes: int
+        +RegexInstructions: int
+        +SourceBytes: int
+    }
+    <<struct>> GritEffectiveLimits
+    %% grepple:file GritEffectiveLimits api/grit.go
+    %% grepple:struct-tag GritEffectiveLimits ASTSteps "json:\"astSteps\""
+    %% grepple:struct-tag GritEffectiveLimits BatchTimeMillis "json:\"batchTimeMillis\""
+    %% grepple:struct-tag GritEffectiveLimits Candidates "json:\"candidates\""
+    %% grepple:struct-tag GritEffectiveLimits FileTimeMillis "json:\"fileTimeMillis\""
+    %% grepple:struct-tag GritEffectiveLimits Findings "json:\"findings\""
+    %% grepple:struct-tag GritEffectiveLimits MemoryBytes "json:\"memoryBytes\""
+    %% grepple:struct-tag GritEffectiveLimits ParseDepth "json:\"parseDepth\""
+    %% grepple:struct-tag GritEffectiveLimits PatternBytes "json:\"patternBytes\""
+    %% grepple:struct-tag GritEffectiveLimits RegexBytes "json:\"regexBytes\""
+    %% grepple:struct-tag GritEffectiveLimits RegexInstructions "json:\"regexInstructions\""
+    %% grepple:struct-tag GritEffectiveLimits SourceBytes "json:\"sourceBytes\""
+    note for GritEffectiveLimits "defined: api/grit.go:141-153; ASTSteps@api/grit.go:148; BatchTimeMillis@api/grit.go:151; Candidates@api/grit.go:147; FileTimeMillis@api/grit.go:150; Findings@api/grit.go:149; MemoryBytes@api/grit.go:152; ParseDepth@api/grit.go:145; PatternBytes@api/grit.go:142; RegexBytes@api/grit.go:143; RegexInstructions@api/grit.go:144; SourceBytes@api/grit.go:146"
+    class GritFinding {
+        +Bindings: []GritBinding
+        +Language: string
+        +Message: string
+        +Path: string
+        +PatternID: string
+        +Range: GritRange
+        +Repo: string
+        +Text: string
+    }
+    <<struct>> GritFinding
+    %% grepple:file GritFinding api/grit.go
+    %% grepple:struct-tag GritFinding Bindings "json:\"bindings\""
+    %% grepple:struct-tag GritFinding Language "json:\"language\""
+    %% grepple:struct-tag GritFinding Message "json:\"message\""
+    %% grepple:struct-tag GritFinding Path "json:\"path\""
+    %% grepple:struct-tag GritFinding PatternID "json:\"patternId\""
+    %% grepple:struct-tag GritFinding Range "json:\"range\""
+    %% grepple:struct-tag GritFinding Repo "json:\"repo,omitempty\""
+    %% grepple:struct-tag GritFinding Text "json:\"text\""
+    note for GritFinding "defined: api/grit.go:105-114; Bindings@api/grit.go:113; Language@api/grit.go:108; Message@api/grit.go:112; Path@api/grit.go:107; PatternID@api/grit.go:111; Range@api/grit.go:109; Repo@api/grit.go:106; Text@api/grit.go:110"
+    class GritLimits {
+        +ASTSteps: *int
+        +BatchTimeMillis: *int64
+        +Candidates: *int
+        +FileTimeMillis: *int64
+        +Files: *int
+        +Findings: *int
+        +MemoryBytes: *int64
+        +ParseDepth: *int
+        +PatternBytes: *int
+        +RegexBytes: *int
+        +RegexInstructions: *int
+        +SourceBytes: *int
+        +TotalBytes: *int64
+        +Workers: *int
+    }
+    <<struct>> GritLimits
+    %% grepple:file GritLimits api/grit.go
+    %% grepple:struct-tag GritLimits ASTSteps "json:\"astSteps,omitempty\""
+    %% grepple:struct-tag GritLimits BatchTimeMillis "json:\"batchTimeMillis,omitempty\""
+    %% grepple:struct-tag GritLimits Candidates "json:\"candidates,omitempty\""
+    %% grepple:struct-tag GritLimits FileTimeMillis "json:\"fileTimeMillis,omitempty\""
+    %% grepple:struct-tag GritLimits Files "json:\"files,omitempty\""
+    %% grepple:struct-tag GritLimits Findings "json:\"findings,omitempty\""
+    %% grepple:struct-tag GritLimits MemoryBytes "json:\"memoryBytes,omitempty\""
+    %% grepple:struct-tag GritLimits ParseDepth "json:\"parseDepth,omitempty\""
+    %% grepple:struct-tag GritLimits PatternBytes "json:\"patternBytes,omitempty\""
+    %% grepple:struct-tag GritLimits RegexBytes "json:\"regexBytes,omitempty\""
+    %% grepple:struct-tag GritLimits RegexInstructions "json:\"regexInstructions,omitempty\""
+    %% grepple:struct-tag GritLimits SourceBytes "json:\"sourceBytes,omitempty\""
+    %% grepple:struct-tag GritLimits TotalBytes "json:\"totalBytes,omitempty\""
+    %% grepple:struct-tag GritLimits Workers "json:\"workers,omitempty\""
+    note for GritLimits "defined: api/grit.go:52-67; ASTSteps@api/grit.go:59; BatchTimeMillis@api/grit.go:62; Candidates@api/grit.go:58; FileTimeMillis@api/grit.go:61; Files@api/grit.go:64; Findings@api/grit.go:60; MemoryBytes@api/grit.go:63; ParseDepth@api/grit.go:56; PatternBytes@api/grit.go:53; RegexBytes@api/grit.go:54; RegexInstructions@api/grit.go:55; SourceBytes@api/grit.go:57; TotalBytes@api/grit.go:65; Workers@api/grit.go:66"
+    class GritMetadata {
+        +Compatibility: string
+        +GoGrammar: string
+        +Limits: GritEffectiveLimits
+    }
+    <<struct>> GritMetadata
+    %% grepple:file GritMetadata api/grit.go
+    %% grepple:struct-tag GritMetadata Compatibility "json:\"compatibility\""
+    %% grepple:struct-tag GritMetadata GoGrammar "json:\"goGrammar\""
+    %% grepple:struct-tag GritMetadata Limits "json:\"limits\""
+    note for GritMetadata "defined: api/grit.go:156-160; Compatibility@api/grit.go:157; GoGrammar@api/grit.go:158; Limits@api/grit.go:159"
+    class GritPosition {
+        +Column: int
+        +Line: int
+    }
+    <<struct>> GritPosition
+    %% grepple:file GritPosition api/grit.go
+    %% grepple:struct-tag GritPosition Column "json:\"column\""
+    %% grepple:struct-tag GritPosition Line "json:\"line\""
+    note for GritPosition "defined: api/grit.go:70-73; Column@api/grit.go:72; Line@api/grit.go:71"
+    class GritRange {
+        +End: GritPosition
+        +EndByte: int
+        +Start: GritPosition
+        +StartByte: int
+    }
+    <<struct>> GritRange
+    %% grepple:file GritRange api/grit.go
+    %% grepple:struct-tag GritRange End "json:\"end\""
+    %% grepple:struct-tag GritRange EndByte "json:\"endByte\""
+    %% grepple:struct-tag GritRange Start "json:\"start\""
+    %% grepple:struct-tag GritRange StartByte "json:\"startByte\""
+    note for GritRange "defined: api/grit.go:77-82; End@api/grit.go:81; EndByte@api/grit.go:79; Start@api/grit.go:80; StartByte@api/grit.go:78"
+    class GritRequest {
+        +Compatibility: string
+        +ExcludeGlobs: []string
+        +ExcludeRepositories: []string
+        +Globs: []string
+        +Limit: *int
+        +Limits: *GritLimits
+        +Message: string
+        +PatternID: string
+        +Query: string
+        +Repositories: []string
+        +Skip: *int
+    }
+    <<struct>> GritRequest
+    %% grepple:file GritRequest api/grit.go
+    %% grepple:struct-tag GritRequest Compatibility "json:\"compatibility\""
+    %% grepple:struct-tag GritRequest ExcludeGlobs "json:\"excludeGlobs,omitempty\""
+    %% grepple:struct-tag GritRequest ExcludeRepositories "json:\"excludeRepositories,omitempty\""
+    %% grepple:struct-tag GritRequest Globs "json:\"globs,omitempty\""
+    %% grepple:struct-tag GritRequest Limit "json:\"limit,omitempty\""
+    %% grepple:struct-tag GritRequest Limits "json:\"limits,omitempty\""
+    %% grepple:struct-tag GritRequest Message "json:\"message,omitempty\""
+    %% grepple:struct-tag GritRequest PatternID "json:\"patternId,omitempty\""
+    %% grepple:struct-tag GritRequest Query "json:\"query\""
+    %% grepple:struct-tag GritRequest Repositories "json:\"repositories,omitempty\""
+    %% grepple:struct-tag GritRequest Skip "json:\"skip,omitempty\""
+    note for GritRequest "defined: api/grit.go:36-48; Compatibility@api/grit.go:38; ExcludeGlobs@api/grit.go:42; ExcludeRepositories@api/grit.go:44; Globs@api/grit.go:41; Limit@api/grit.go:46; Limits@api/grit.go:47; Message@api/grit.go:40; PatternID@api/grit.go:39; Query@api/grit.go:37; Repositories@api/grit.go:43; Skip@api/grit.go:45"
+    class GritResponse {
+        +Diagnostics: []GritDiagnostic
+        +Findings: []GritFinding
+        +Metadata: GritMetadata
+        +ShardErrors: []string
+        +Statistics: GritStatistics
+        +Total: int
+        +Truncations: []GritTruncation
+    }
+    <<struct>> GritResponse
+    %% grepple:file GritResponse api/grit.go
+    %% grepple:struct-tag GritResponse Diagnostics "json:\"diagnostics\""
+    %% grepple:struct-tag GritResponse Findings "json:\"findings\""
+    %% grepple:struct-tag GritResponse Metadata "json:\"metadata\""
+    %% grepple:struct-tag GritResponse ShardErrors "json:\"shardErrors\""
+    %% grepple:struct-tag GritResponse Statistics "json:\"statistics\""
+    %% grepple:struct-tag GritResponse Total "json:\"total\""
+    %% grepple:struct-tag GritResponse Truncations "json:\"truncations\""
+    note for GritResponse "defined: api/grit.go:175-183; Diagnostics@api/grit.go:178; Findings@api/grit.go:177; Metadata@api/grit.go:176; ShardErrors@api/grit.go:181; Statistics@api/grit.go:180; Total@api/grit.go:182; Truncations@api/grit.go:179"
+    class GritStatistics {
+        +BytesRead: int64
+        +Candidates: int
+        +Eligible: int
+        +Evaluated: int
+        +SkippedBinary: int
+        +SkippedGlob: int
+        +SkippedLanguage: int
+    }
+    <<struct>> GritStatistics
+    %% grepple:file GritStatistics api/grit.go
+    %% grepple:struct-tag GritStatistics BytesRead "json:\"bytesRead\""
+    %% grepple:struct-tag GritStatistics Candidates "json:\"candidates\""
+    %% grepple:struct-tag GritStatistics Eligible "json:\"eligible\""
+    %% grepple:struct-tag GritStatistics Evaluated "json:\"evaluated\""
+    %% grepple:struct-tag GritStatistics SkippedBinary "json:\"skippedBinary\""
+    %% grepple:struct-tag GritStatistics SkippedGlob "json:\"skippedGlob\""
+    %% grepple:struct-tag GritStatistics SkippedLanguage "json:\"skippedLanguage\""
+    note for GritStatistics "defined: api/grit.go:163-171; BytesRead@api/grit.go:167; Candidates@api/grit.go:164; Eligible@api/grit.go:165; Evaluated@api/grit.go:166; SkippedBinary@api/grit.go:170; SkippedGlob@api/grit.go:169; SkippedLanguage@api/grit.go:168"
+    class GritStructuralNode {
+        +Children: []GritStructuralNode
+        +Lexeme: string
+        +NodeKind: string
+        +TokenKind: string
+    }
+    <<struct>> GritStructuralNode
+    %% grepple:file GritStructuralNode api/grit.go
+    %% grepple:struct-tag GritStructuralNode Children "json:\"children,omitempty\""
+    %% grepple:struct-tag GritStructuralNode Lexeme "json:\"lexeme,omitempty\""
+    %% grepple:struct-tag GritStructuralNode NodeKind "json:\"nodeKind,omitempty\""
+    %% grepple:struct-tag GritStructuralNode TokenKind "json:\"tokenKind,omitempty\""
+    note for GritStructuralNode "defined: api/grit.go:86-91; Children@api/grit.go:90; Lexeme@api/grit.go:89; NodeKind@api/grit.go:87; TokenKind@api/grit.go:88"
+    class GritTruncation {
+        +Limit: int64
+        +Reason: string
+        +Repo: string
+        +Shard: string
+        +Skipped: int
+    }
+    <<struct>> GritTruncation
+    %% grepple:file GritTruncation api/grit.go
+    %% grepple:struct-tag GritTruncation Limit "json:\"limit\""
+    %% grepple:struct-tag GritTruncation Reason "json:\"reason\""
+    %% grepple:struct-tag GritTruncation Repo "json:\"repo,omitempty\""
+    %% grepple:struct-tag GritTruncation Shard "json:\"shard,omitempty\""
+    %% grepple:struct-tag GritTruncation Skipped "json:\"skipped\""
+    note for GritTruncation "defined: api/grit.go:132-138; Limit@api/grit.go:136; Reason@api/grit.go:135; Repo@api/grit.go:133; Shard@api/grit.go:134; Skipped@api/grit.go:137"
     class RelatedSymbol {
         +CallLine: int
         +Confidence: string
@@ -119,21 +364,25 @@ classDiagram
     note for ResultSegment "defined: api/model.go:39-44; End@api/model.go:42; Kind@api/model.go:40; Start@api/model.go:41; Text@api/model.go:43"
     class Rule {
         +CreatedAt: string
+        +Engine: string
         +ID: string
         +Mode: string
         +Name: string
         +Request: SearchRequest
+        +Structural: *GritRequest
         +UpdatedAt: string
     }
     <<struct>> Rule
     %% grepple:file Rule api/model.go
     %% grepple:struct-tag Rule CreatedAt "json:\"createdAt,omitempty\""
+    %% grepple:struct-tag Rule Engine "json:\"engine,omitempty\""
     %% grepple:struct-tag Rule ID "json:\"id\""
     %% grepple:struct-tag Rule Mode "json:\"mode\""
     %% grepple:struct-tag Rule Name "json:\"name,omitempty\""
     %% grepple:struct-tag Rule Request "json:\"request\""
+    %% grepple:struct-tag Rule Structural "json:\"structural,omitempty\""
     %% grepple:struct-tag Rule UpdatedAt "json:\"updatedAt,omitempty\""
-    note for Rule "defined: api/model.go:137-144; CreatedAt@api/model.go:142; ID@api/model.go:138; Mode@api/model.go:140; Name@api/model.go:139; Request@api/model.go:141; UpdatedAt@api/model.go:143"
+    note for Rule "defined: api/model.go:141-150; CreatedAt@api/model.go:148; Engine@api/model.go:145; ID@api/model.go:142; Mode@api/model.go:144; Name@api/model.go:143; Request@api/model.go:146; Structural@api/model.go:147; UpdatedAt@api/model.go:149"
     class RuleRepoResult {
         +EvaluatedAt: string
         +Files: int
@@ -150,7 +399,7 @@ classDiagram
     %% grepple:struct-tag RuleRepoResult Matches "json:\"matches\""
     %% grepple:struct-tag RuleRepoResult Paths "json:\"paths,omitempty\""
     %% grepple:struct-tag RuleRepoResult Repo "json:\"repo\""
-    note for RuleRepoResult "defined: api/model.go:147-154; EvaluatedAt@api/model.go:153; Files@api/model.go:149; Head@api/model.go:152; Matches@api/model.go:150; Paths@api/model.go:151; Repo@api/model.go:148"
+    note for RuleRepoResult "defined: api/model.go:153-160; EvaluatedAt@api/model.go:159; Files@api/model.go:155; Head@api/model.go:158; Matches@api/model.go:156; Paths@api/model.go:157; Repo@api/model.go:154"
     class RuleResults {
         +Generation: int64
         +Mode: string
@@ -165,7 +414,7 @@ classDiagram
     %% grepple:struct-tag RuleResults Repos "json:\"repos\""
     %% grepple:struct-tag RuleResults Rule "json:\"rule\""
     %% grepple:struct-tag RuleResults Truncated "json:\"truncated,omitempty\""
-    note for RuleResults "defined: api/model.go:157-163; Generation@api/model.go:160; Mode@api/model.go:159; Repos@api/model.go:161; Rule@api/model.go:158; Truncated@api/model.go:162"
+    note for RuleResults "defined: api/model.go:163-169; Generation@api/model.go:166; Mode@api/model.go:165; Repos@api/model.go:167; Rule@api/model.go:164; Truncated@api/model.go:168"
     class RuleSet {
         +Generation: int64
         +Rules: []Rule
@@ -174,7 +423,7 @@ classDiagram
     %% grepple:file RuleSet api/model.go
     %% grepple:struct-tag RuleSet Generation "json:\"generation\""
     %% grepple:struct-tag RuleSet Rules "json:\"rules\""
-    note for RuleSet "defined: api/model.go:166-169; Generation@api/model.go:167; Rules@api/model.go:168"
+    note for RuleSet "defined: api/model.go:172-175; Generation@api/model.go:173; Rules@api/model.go:174"
     class SearchRequest {
         +AfterContext: *int
         +BeforeContext: *int
@@ -259,8 +508,24 @@ classDiagram
     FileResult "1" --> "*" RelatedSymbol : field Related
     FileResult "1" --> "*" ResultMatch : field Matches
     FileResult "1" --> "*" ResultSegment : field Segments
+    GritBinding "1" --> "1" GritRange : field Range
+    GritBinding "1" --> "*" GritRange : field Ranges
+    GritBinding "1" --> "*" GritStructuralNode : field Structural
+    GritDiagnostic "1" --> "1" GritRange : field Range
+    GritFinding "1" --> "*" GritBinding : field Bindings
+    GritFinding "1" --> "1" GritRange : field Range
+    GritMetadata "1" --> "1" GritEffectiveLimits : field Limits
+    GritRange "1" --> "1" GritPosition : field End
+    GritRange "1" --> "1" GritPosition : field Start
+    GritRequest "1" --> "1" GritLimits : field Limits
+    GritResponse "1" --> "*" GritDiagnostic : field Diagnostics
+    GritResponse "1" --> "*" GritFinding : field Findings
+    GritResponse "1" --> "1" GritMetadata : field Metadata
+    GritResponse "1" --> "1" GritStatistics : field Statistics
+    GritResponse "1" --> "*" GritTruncation : field Truncations
     RelatedSymbol "1" --> "*" ResultSegment : field Segments
     ReposResponse "1" --> "*" RepoListEntry : field Repos
+    Rule "1" --> "1" GritRequest : field Structural
     Rule "1" --> "1" SearchRequest : field Request
     RuleResults "1" --> "*" RuleRepoResult : field Repos
     RuleSet "1" --> "*" Rule : field Rules

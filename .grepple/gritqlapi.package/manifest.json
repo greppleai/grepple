@@ -1,0 +1,53 @@
+{
+  "formatVersion": 1,
+  "package": {
+    "name": "gritqlapi",
+    "importPath": "github.com/greppleai/grepple/gritqlapi",
+    "sourceDirectory": "gritqlapi",
+    "documentation": "Package gritqlapi converts native structural-search results into the dependency-free wire contracts owned by package api."
+  },
+  "scope": {
+    "types": "all",
+    "functions": "exported",
+    "variables": "excluded",
+    "constants": "excluded",
+    "tests": "excluded",
+    "buildTags": "syntactic-union-conflicts-rejected",
+    "syntacticBuildTagUnion": []
+  },
+  "summary": {
+    "sourceFiles": 2,
+    "declarations": 0,
+    "exportedTypes": 0,
+    "internalTypes": 0,
+    "members": 0,
+    "exportedFunctions": 1,
+    "fiberRoutes": 0,
+    "relations": 0
+  },
+  "semanticModelDigest": "sha256:25e7aa7dce32430c835b5f470560010ec34b9dd441ded0bcbfed7da923f7619b",
+  "sourceFiles": [
+    {
+      "path": "gritqlapi/doc.go"
+    },
+    {
+      "path": "gritqlapi/response.go"
+    }
+  ],
+  "declarations": [],
+  "exportedFunctions": [
+    {
+      "name": "Response",
+      "kind": "function",
+      "file": "gritqlapi/response.go",
+      "line": 11,
+      "endLine": 33,
+      "parameters": [
+        "gritql.ScanResult"
+      ],
+      "result": "api.GritResponse"
+    }
+  ],
+  "fiberRoutes": [],
+  "relations": []
+}

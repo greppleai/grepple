@@ -2,7 +2,7 @@ classDiagram
     %% grepple:package-default github.com/greppleai/grepple/api
     %% grepple:language-default go
     direction LR
-    note "Package api defines Grepple-controlled HTTP request and response contracts. | package github.com/greppleai/grepple/api | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=1, declarations=16, exportedTypes=16, internalTypes=0, members=86, exportedFunctions=0, fiberRoutes=0, relations=12"
+    note "Package api defines Grepple-controlled HTTP request and response contracts. | package github.com/greppleai/grepple/api | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=2, declarations=29, exportedTypes=29, internalTypes=0, members=178, exportedFunctions=0, fiberRoutes=0, relations=28"
     namespace data_contracts {
         class ContextLine["ContextLine · api/model.go:47-51"] {
             +Line: int
@@ -20,6 +20,135 @@ classDiagram
             +Segments: []ResultSegment
         }
         <<struct>> FileResult
+        class GritBinding["GritBinding · api/grit.go:95-101"] {
+            +Kind: string
+            +Name: string
+            +Range: GritRange
+            +Ranges: []GritRange
+            +Structural: []GritStructuralNode
+        }
+        <<struct>> GritBinding
+        class GritDiagnostic["GritDiagnostic · api/grit.go:118-128"] {
+            +Class: string
+            +Code: string
+            +Message: string
+            +Path: *string
+            +PatternID: *string
+            +Range: *GritRange
+            +Repo: string
+            +Severity: string
+            +Shard: string
+        }
+        <<struct>> GritDiagnostic
+        class GritEffectiveLimits["GritEffectiveLimits · api/grit.go:141-153"] {
+            +ASTSteps: int
+            +BatchTimeMillis: int64
+            +Candidates: int
+            +FileTimeMillis: int64
+            +Findings: int
+            +MemoryBytes: int64
+            +ParseDepth: int
+            +PatternBytes: int
+            +RegexBytes: int
+            +RegexInstructions: int
+            +SourceBytes: int
+        }
+        <<struct>> GritEffectiveLimits
+        class GritFinding["GritFinding · api/grit.go:105-114"] {
+            +Bindings: []GritBinding
+            +Language: string
+            +Message: string
+            +Path: string
+            +PatternID: string
+            +Range: GritRange
+            +Repo: string
+            +Text: string
+        }
+        <<struct>> GritFinding
+        class GritLimits["GritLimits · api/grit.go:52-67"] {
+            +ASTSteps: *int
+            +BatchTimeMillis: *int64
+            +Candidates: *int
+            +FileTimeMillis: *int64
+            +Files: *int
+            +Findings: *int
+            +MemoryBytes: *int64
+            +ParseDepth: *int
+            +PatternBytes: *int
+            +RegexBytes: *int
+            +RegexInstructions: *int
+            +SourceBytes: *int
+            +TotalBytes: *int64
+            +Workers: *int
+        }
+        <<struct>> GritLimits
+        class GritMetadata["GritMetadata · api/grit.go:156-160"] {
+            +Compatibility: string
+            +GoGrammar: string
+            +Limits: GritEffectiveLimits
+        }
+        <<struct>> GritMetadata
+        class GritPosition["GritPosition · api/grit.go:70-73"] {
+            +Column: int
+            +Line: int
+        }
+        <<struct>> GritPosition
+        class GritRange["GritRange · api/grit.go:77-82"] {
+            +End: GritPosition
+            +EndByte: int
+            +Start: GritPosition
+            +StartByte: int
+        }
+        <<struct>> GritRange
+        class GritRequest["GritRequest · api/grit.go:36-48"] {
+            +Compatibility: string
+            +ExcludeGlobs: []string
+            +ExcludeRepositories: []string
+            +Globs: []string
+            +Limit: *int
+            +Limits: *GritLimits
+            +Message: string
+            +PatternID: string
+            +Query: string
+            +Repositories: []string
+            +Skip: *int
+        }
+        <<struct>> GritRequest
+        class GritResponse["GritResponse · api/grit.go:175-183"] {
+            +Diagnostics: []GritDiagnostic
+            +Findings: []GritFinding
+            +Metadata: GritMetadata
+            +ShardErrors: []string
+            +Statistics: GritStatistics
+            +Total: int
+            +Truncations: []GritTruncation
+        }
+        <<struct>> GritResponse
+        class GritStatistics["GritStatistics · api/grit.go:163-171"] {
+            +BytesRead: int64
+            +Candidates: int
+            +Eligible: int
+            +Evaluated: int
+            +SkippedBinary: int
+            +SkippedGlob: int
+            +SkippedLanguage: int
+        }
+        <<struct>> GritStatistics
+        class GritStructuralNode["GritStructuralNode · api/grit.go:86-91"] {
+            +Children: []GritStructuralNode
+            +Lexeme: string
+            +NodeKind: string
+            +TokenKind: string
+        }
+        <<struct>> GritStructuralNode
+        class GritTruncation["GritTruncation · api/grit.go:132-138"] {
+            +Limit: int64
+            +Reason: string
+            +Repo: string
+            +Shard: string
+            +Skipped: int
+        }
+        <<struct>> GritTruncation
         class RelatedSymbol["RelatedSymbol · api/model.go:59-70"] {
             +CallLine: int
             +Confidence: string
@@ -65,16 +194,18 @@ classDiagram
             +Text: string
         }
         <<struct>> ResultSegment
-        class Rule["Rule · api/model.go:137-144"] {
+        class Rule["Rule · api/model.go:141-150"] {
             +CreatedAt: string
+            +Engine: string
             +ID: string
             +Mode: string
             +Name: string
             +Request: SearchRequest
+            +Structural: *GritRequest
             +UpdatedAt: string
         }
         <<struct>> Rule
-        class RuleRepoResult["RuleRepoResult · api/model.go:147-154"] {
+        class RuleRepoResult["RuleRepoResult · api/model.go:153-160"] {
             +EvaluatedAt: string
             +Files: int
             +Head: string
@@ -83,7 +214,7 @@ classDiagram
             +Repo: string
         }
         <<struct>> RuleRepoResult
-        class RuleResults["RuleResults · api/model.go:157-163"] {
+        class RuleResults["RuleResults · api/model.go:163-169"] {
             +Generation: int64
             +Mode: string
             +Repos: []RuleRepoResult
@@ -91,7 +222,7 @@ classDiagram
             +Truncated: bool
         }
         <<struct>> RuleResults
-        class RuleSet["RuleSet · api/model.go:166-169"] {
+        class RuleSet["RuleSet · api/model.go:172-175"] {
             +Generation: int64
             +Rules: []Rule
         }
@@ -143,8 +274,23 @@ classDiagram
     FileResult "1" --> "*" RelatedSymbol : field Related
     FileResult "1" --> "*" ResultMatch : field Matches
     FileResult "1" --> "*" ResultSegment : field Segments
+    GritBinding "1" --> "*" GritRange : field Ranges
+    GritBinding "1" --> "1" GritRange : field Range
+    GritBinding "1" --> "*" GritStructuralNode : field Structural
+    GritDiagnostic "1" --> "1" GritRange : field Range
+    GritFinding "1" --> "*" GritBinding : field Bindings
+    GritFinding "1" --> "1" GritRange : field Range
+    GritMetadata "1" --> "1" GritEffectiveLimits : field Limits
+    GritRange "1" --> "1" GritPosition : field End; field Start
+    GritRequest "1" --> "1" GritLimits : field Limits
+    GritResponse "1" --> "*" GritDiagnostic : field Diagnostics
+    GritResponse "1" --> "*" GritFinding : field Findings
+    GritResponse "1" --> "1" GritMetadata : field Metadata
+    GritResponse "1" --> "1" GritStatistics : field Statistics
+    GritResponse "1" --> "*" GritTruncation : field Truncations
     RelatedSymbol "1" --> "*" ResultSegment : field Segments
     ReposResponse "1" --> "*" RepoListEntry : field Repos
+    Rule "1" --> "1" GritRequest : field Structural
     Rule "1" --> "1" SearchRequest : field Request
     RuleResults "1" --> "*" RuleRepoResult : field Repos
     RuleSet "1" --> "*" Rule : field Rules

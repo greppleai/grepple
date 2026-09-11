@@ -2,7 +2,7 @@ classDiagram
     %% grepple:package-default github.com/greppleai/grepple/internal/cli
     %% grepple:language-default go
     direction LR
-    note "Package cli implements Grepple's search, extraction, repository inspection, authentication, rules, and terminal/JSON presentation workflows. | package github.com/greppleai/grepple/internal/cli | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=27, declarations=35, exportedTypes=0, internalTypes=35, members=191, exportedFunctions=3, fiberRoutes=0, relations=23"
+    note "Package cli implements Grepple's search, extraction, repository inspection, authentication, rules, and terminal/JSON presentation workflows. | package github.com/greppleai/grepple/internal/cli | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=30, declarations=36, exportedTypes=0, internalTypes=36, members=226, exportedFunctions=3, fiberRoutes=0, relations=23"
     namespace interfaces {
         class resultRenderer["resultRenderer · internal/cli/renderer.go:9-11"] {
             +Render([]api.FileResult): error
@@ -102,6 +102,39 @@ classDiagram
             +Server: string
         }
         <<struct>> getArgs
+        class gritArgs["gritArgs · internal/cli/grit.go:26-57"] {
+            +Compatibility: string
+            +ExcludeGlobs: []string
+            +ExcludeRepositories: []string
+            +Globs: []string
+            +JSON: bool
+            +Limit: int
+            +Local: bool
+            +MaxASTSteps: int
+            +MaxCandidates: int
+            +MaxFileMilliseconds: int64
+            +MaxFiles: int
+            +MaxFindings: int
+            +MaxMemoryBytes: int
+            +MaxOutputBytes: int
+            +MaxParseDepth: int
+            +MaxPatternBytes: int
+            +MaxRegexBytes: int
+            +MaxRegexInstructions: int
+            +MaxSourceBytes: int
+            +MaxTotalBytes: int64
+            +Message: string
+            +PatternID: string
+            +Query: string
+            +QueryFile: string
+            +Remote: bool
+            +Repositories: []string
+            +Server: string
+            +Skip: int
+            +TimeoutMilliseconds: int64
+            +Workers: int
+        }
+        <<struct>> gritArgs
         class loginConfig["loginConfig · internal/cli/login.go:177-180"] {
             +ClientID: string
             +Scopes: string
@@ -113,16 +146,20 @@ classDiagram
             +Server: string
         }
         <<struct>> reposArgs
-        class rulesAddArgs["rulesAddArgs · internal/cli/rules.go:58-71"] {
+        class rulesAddArgs["rulesAddArgs · internal/cli/rules.go:60-77"] {
+            +Compatibility: string
+            +Engine: string
             +ExcludeRepo: []string
             +Files: bool
             +Globs: []string
+            +Grit: bool
             +ID: string
             +IgnoreCase: bool
             +JSON: bool
             +Mode: string
             +Name: string
             +Pattern: string
+            +QueryFile: string
             +Regex: bool
             +Repo: []string
             +Server: string
@@ -223,7 +260,7 @@ classDiagram
             +RenderOutlineOrContent(parser.FileOutline, string): string
         }
         <<function>> RenderOutlineOrContent
-        class Run["Run · internal/cli/args.go:341-365"] {
+        class Run["Run · internal/cli/args.go:341-367"] {
             +Run([]string): error
         }
         <<function>> Run

@@ -1,0 +1,11 @@
+classDiagram
+    %% grepple:complete-package github.com/greppleai/grepple/gritqlapi
+    %% grepple:package-default github.com/greppleai/grepple/gritqlapi
+    %% grepple:language-default go
+    %% grepple:exact-default
+    class Response {
+        +Response(gritql.ScanResult): api.GritResponse
+    }
+    <<function>> Response
+    %% grepple:file Response gritqlapi/response.go
+    note for Response "defined: gritqlapi/response.go:11-33"

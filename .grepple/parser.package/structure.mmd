@@ -3,6 +3,24 @@ classDiagram
     %% grepple:package-default github.com/greppleai/grepple/parser
     %% grepple:language-default go
     %% grepple:exact-default
+    class Document {
+        +Close()
+        +Diagnostics(): []ParseDiagnostic
+        +Language(): string
+        +ParseDiagnostics(): []ParseDiagnostic
+        +Root(): Node
+        +Source(): string
+        +Text(): string
+        -nodeRangeLocked(*sitter.Node): Range
+        -language: string
+        -lineStarts: []int
+        -mu: sync.RWMutex
+        -source: string
+        -tree: *sitter.Tree
+    }
+    <<struct>> Document
+    %% grepple:file Document parser/document.go
+    note for Document "defined: parser/document.go:40-46; Close@parser/document.go:164-179; Diagnostics@parser/document.go:259; Language@parser/document.go:182-192; ParseDiagnostics@parser/document.go:225-256; Root@parser/document.go:211-221; Source@parser/document.go:195-205; Text@parser/document.go:208; nodeRangeLocked@parser/document.go:489-497; language@parser/document.go:42; lineStarts@parser/document.go:44; mu@parser/document.go:41; source@parser/document.go:43; tree@parser/document.go:45"
     class FileOutline {
         +Language: string
         +Path: string
@@ -64,6 +82,63 @@ classDiagram
     <<struct>> NavigationGraph
     %% grepple:file NavigationGraph parser/navigation.go
     note for NavigationGraph "defined: parser/navigation.go:55-58; Merge@parser/navigation.go:61-64; Calls@parser/navigation.go:57; Declarations@parser/navigation.go:56"
+    class Node {
+        +Child(int): Node
+        +ChildByFieldName(string): Node
+        +ChildCount(): int
+        +Children(): []Node
+        +FieldName(): string
+        +FieldNameForChild(int): string
+        +HasError(): bool
+        +IsError(): bool
+        +IsExtra(): bool
+        +IsMissing(): bool
+        +IsNamed(): bool
+        +IsValid(): bool
+        +Kind(): string
+        +NamedChild(int): Node
+        +NamedChildCount(): int
+        +NamedChildren(): []Node
+        +Parent(): Node
+        +Range(): Range
+        +Snapshot(): tuple~SyntaxNode&#44;bool~
+        +Source(): string
+        +Text(): string
+        +TextRange(int, int): string
+        +Valid(): bool
+        -read(func&#40;&#41;)
+        -snapshotLocked(): SyntaxNode
+        -doc: *Document
+        -fieldName: string
+        -raw: *sitter.Node
+    }
+    <<struct>> Node
+    %% grepple:file Node parser/document.go
+    note for Node "defined: parser/document.go:50-54; Child@parser/document.go:376-387; ChildByFieldName@parser/document.go:448-456; ChildCount@parser/document.go:362-366; Children@parser/document.go:405-422; FieldName@parser/document.go:460-465; FieldNameForChild@parser/document.go:468-476; HasError@parser/document.go:310-314; IsError@parser/document.go:296-300; IsExtra@parser/document.go:289-293; IsMissing@parser/document.go:303-307; IsNamed@parser/document.go:282-286; IsValid@parser/document.go:272; Kind@parser/document.go:275-279; NamedChild@parser/document.go:390-401; NamedChildCount@parser/document.go:369-373; NamedChildren@parser/document.go:425-445; Parent@parser/document.go:351-359; Range@parser/document.go:344-348; Snapshot@parser/document.go:110-120; Source@parser/document.go:329; Text@parser/document.go:317-326; TextRange@parser/document.go:333-341; Valid@parser/document.go:262-269; read@parser/document.go:478-487; snapshotLocked@parser/document.go:122-140; doc@parser/document.go:51; fieldName@parser/document.go:53; raw@parser/document.go:52"
+    class ParseDiagnostic {
+        +Kind: string
+        +Message: string
+        +Range: Range
+    }
+    <<struct>> ParseDiagnostic
+    %% grepple:file ParseDiagnostic parser/document.go
+    note for ParseDiagnostic "defined: parser/document.go:31-35; Kind@parser/document.go:33; Message@parser/document.go:32; Range@parser/document.go:34"
+    class Position {
+        +Column: int
+        +Line: int
+    }
+    <<struct>> Position
+    %% grepple:file Position parser/document.go
+    note for Position "defined: parser/document.go:16-19; Column@parser/document.go:18; Line@parser/document.go:17"
+    class Range {
+        +End: Position
+        +EndByte: int
+        +Start: Position
+        +StartByte: int
+    }
+    <<struct>> Range
+    %% grepple:file Range parser/document.go
+    note for Range "defined: parser/document.go:23-28; End@parser/document.go:27; EndByte@parser/document.go:25; Start@parser/document.go:26; StartByte@parser/document.go:24"
     class Segment {
         +End: int
         +Kind: string
@@ -90,6 +165,31 @@ classDiagram
     %% grepple:struct-tag Symbol Signature "json:\"signature,omitempty\""
     %% grepple:struct-tag Symbol Start "json:\"start\""
     note for Symbol "defined: parser/model.go:12-19; Children@parser/model.go:18; End@parser/model.go:17; Kind@parser/model.go:13; Name@parser/model.go:14; Signature@parser/model.go:15; Start@parser/model.go:16"
+    class SyntaxNode {
+        +Children(): []SyntaxNode
+        +FieldName(): string
+        +HasError(): bool
+        +IsExtra(): bool
+        +IsNamed(): bool
+        +Kind(): string
+        +Range(): Range
+        +Text(): string
+        +TextRange(int, int): string
+        +Valid(): bool
+        -children: []SyntaxNode
+        -extra: bool
+        -fieldName: string
+        -hasError: bool
+        -kind: string
+        -named: bool
+        -rng: Range
+        -source: string
+        -text: string
+        -valid: bool
+    }
+    <<struct>> SyntaxNode
+    %% grepple:file SyntaxNode parser/document.go
+    note for SyntaxNode "defined: parser/document.go:58-69; Children@parser/document.go:104-106; FieldName@parser/document.go:89; HasError@parser/document.go:98; IsExtra@parser/document.go:95; IsNamed@parser/document.go:92; Kind@parser/document.go:75; Range@parser/document.go:101; Text@parser/document.go:78; TextRange@parser/document.go:81-86; Valid@parser/document.go:72; children@parser/document.go:68; extra@parser/document.go:65; fieldName@parser/document.go:63; hasError@parser/document.go:66; kind@parser/document.go:60; named@parser/document.go:64; rng@parser/document.go:67; source@parser/document.go:62; text@parser/document.go:61; valid@parser/document.go:59"
     class cLanguage {
         +Grammar(): *sitter.Language
         +ID(): string
@@ -393,16 +493,36 @@ classDiagram
     <<function>> OutlineFileDepth
     %% grepple:file OutlineFileDepth parser/outline.go
     note for OutlineFileDepth "defined: parser/outline.go:21-41"
+    class ParseDocument {
+        +ParseDocument(string, string): tuple~*Document&#44;error~
+    }
+    <<function>> ParseDocument
+    %% grepple:file ParseDocument parser/document.go
+    note for ParseDocument "defined: parser/document.go:144-160"
     BuildNavigationGraph "1" ..> "1" NavigationGraph : result 1
     BuildSegments "1" ..> "*" Segment : result 1
+    Document "1" ..> "1" Node : method Root result 1
+    Document "1" ..> "*" ParseDiagnostic : method Diagnostics result 1
+    Document "1" ..> "*" ParseDiagnostic : method ParseDiagnostics result 1
+    Document "1" ..> "1" Range : method nodeRangeLocked result 1
     FileOutline "1" --> "*" Symbol : field Symbols
     Navigation "1" ..> "*" NavigationCall : result 2
     Navigation "1" ..> "*" NavigationDeclaration : result 1
     NavigationGraph "1" --> "*" NavigationCall : field Calls
     NavigationGraph "1" --> "*" NavigationDeclaration : field Declarations
     NavigationGraphFromTree "1" ..> "1" NavigationGraph : result 1
+    Node "1" --> "1" Document : field doc
+    Node "1" ..> "1" Range : method Range result 1
+    Node "1" ..> "1" SyntaxNode : method Snapshot result 1
+    Node "1" ..> "1" SyntaxNode : method snapshotLocked result 1
     OutlineFile "1" ..> "1" FileOutline : result 1
     OutlineFileDepth "1" ..> "1" FileOutline : result 1
+    ParseDiagnostic "1" --> "1" Range : field Range
+    ParseDocument "1" ..> "1" Document : result 1
+    Range "1" --> "1" Position : field End
+    Range "1" --> "1" Position : field Start
+    SyntaxNode "1" --> "1" Range : field rng
+    SyntaxNode "1" ..> "1" Range : method Range result 1
     cLanguage "1" ..> "*" Symbol : method Outline result 1
     languageAdapter <|.. cLanguage : implements
     cLanguage "1" --> "1" structureRules : field rules

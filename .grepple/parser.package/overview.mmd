@@ -2,7 +2,7 @@ classDiagram
     %% grepple:package-default github.com/greppleai/grepple/parser
     %% grepple:language-default go
     direction LR
-    note "Package parser provides application source classification and structural parsing. | package github.com/greppleai/grepple/parser | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=25, declarations=30, exportedTypes=6, internalTypes=24, members=182, exportedFunctions=8, fiberRoutes=0, relations=87"
+    note "Package parser provides application source classification and structural parsing. | package github.com/greppleai/grepple/parser | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=26, declarations=36, exportedTypes=12, internalTypes=24, members=252, exportedFunctions=9, fiberRoutes=0, relations=101"
     namespace interfaces {
         class languageAdapter["languageAdapter · parser/language.go:33-38"] {
             +Grammar(): *sitter.Language
@@ -30,14 +30,26 @@ classDiagram
         <<struct>> Symbol
     }
     namespace exported_types {
+        class Document["Document · parser/document.go:40-46"]
+        <<struct>> Document
         class NavigationCall["NavigationCall · parser/navigation.go:32-50"]
         <<struct>> NavigationCall
         class NavigationDeclaration["NavigationDeclaration · parser/navigation.go:13-29"]
         <<struct>> NavigationDeclaration
         class NavigationGraph["NavigationGraph · parser/navigation.go:55-58"]
         <<struct>> NavigationGraph
+        class Node["Node · parser/document.go:50-54"]
+        <<struct>> Node
+        class ParseDiagnostic["ParseDiagnostic · parser/document.go:31-35"]
+        <<struct>> ParseDiagnostic
+        class Position["Position · parser/document.go:16-19"]
+        <<struct>> Position
+        class Range["Range · parser/document.go:23-28"]
+        <<struct>> Range
         class Segment["Segment · parser/model.go:5-9"]
         <<struct>> Segment
+        class SyntaxNode["SyntaxNode · parser/document.go:58-69"]
+        <<struct>> SyntaxNode
     }
     namespace internal_types {
         class cLanguage["cLanguage · parser/language_c.go:8-11"]
@@ -120,17 +132,32 @@ classDiagram
             +OutlineFileDepth(string, string, int): FileOutline
         }
         <<function>> OutlineFileDepth
+        class ParseDocument["ParseDocument · parser/document.go:144-160"] {
+            +ParseDocument(string, string): tuple~*Document&#44;error~
+        }
+        <<function>> ParseDocument
     }
     BuildNavigationGraph "1" ..> "1" NavigationGraph : result 1
     BuildSegments "1" ..> "*" Segment : result 1
+    Document "1" ..> "1" Node : method Root result 1
+    Document "1" ..> "*" ParseDiagnostic : method Diagnostics result 1; method ParseDiagnostics result 1
+    Document "1" ..> "1" Range : method nodeRangeLocked result 1
     FileOutline "1" --> "*" Symbol : field Symbols
     Navigation "1" ..> "*" NavigationCall : result 2
     Navigation "1" ..> "*" NavigationDeclaration : result 1
     NavigationGraph "1" --> "*" NavigationCall : field Calls
     NavigationGraph "1" --> "*" NavigationDeclaration : field Declarations
     NavigationGraphFromTree "1" ..> "1" NavigationGraph : result 1
+    Node "1" --> "1" Document : field doc
+    Node "1" ..> "1" Range : method Range result 1
+    Node "1" ..> "1" SyntaxNode : method Snapshot result 1; method snapshotLocked result 1
     OutlineFile "1" ..> "1" FileOutline : result 1
     OutlineFileDepth "1" ..> "1" FileOutline : result 1
+    ParseDiagnostic "1" --> "1" Range : field Range
+    ParseDocument "1" ..> "1" Document : result 1
+    Range "1" --> "1" Position : field End; field Start
+    SyntaxNode "1" --> "1" Range : field rng
+    SyntaxNode "1" ..> "1" Range : method Range result 1
     cLanguage "1" ..> "*" Symbol : method Outline result 1
     languageAdapter <|.. cLanguage : implements
     cLanguage "1" --> "1" structureRules : field rules

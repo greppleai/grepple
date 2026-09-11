@@ -25,16 +25,16 @@
   },
   "summary": {
     "modules": 2,
-    "packages": 11,
-    "sourceFiles": 96,
-    "declarations": 177,
-    "exportedFunctions": 71,
+    "packages": 15,
+    "sourceFiles": 118,
+    "declarations": 313,
+    "exportedFunctions": 93,
     "fiberRoutes": 0,
-    "localImports": 10,
-    "standardLibraryImports": 93,
-    "externalModuleEdges": 20
+    "localImports": 21,
+    "standardLibraryImports": 125,
+    "externalModuleEdges": 21
   },
-  "semanticModelDigest": "sha256:ad37ca2c6712231b13800e5b6507f36df2c4be07996c6bc2abdd0d63434086e1",
+  "semanticModelDigest": "sha256:42ecfe53290993a234ebf528c1e58be600342c3612492b17aab088f12826c197",
   "modules": [
     {
       "path": "github.com/greppleai/grepple",
@@ -46,8 +46,8 @@
           "name": "api",
           "documentation": "Package api defines Grepple-controlled HTTP request and response contracts.",
           "main": false,
-          "sourceFiles": 1,
-          "declarations": 16,
+          "sourceFiles": 2,
+          "declarations": 29,
           "exportedFunctions": 0,
           "fiberRoutes": 0,
           "routes": [],
@@ -170,20 +170,107 @@
           "unmappedExternalImports": []
         },
         {
+          "importPath": "github.com/greppleai/grepple/gritql",
+          "directory": "gritql",
+          "name": "gritql",
+          "documentation": "Package gritql implements Grepple's native, read-only gritql-go-v1 structural-search compiler, matcher, evaluator, and bounded scanner.",
+          "main": false,
+          "sourceFiles": 12,
+          "declarations": 115,
+          "exportedFunctions": 17,
+          "fiberRoutes": 0,
+          "routes": [],
+          "localImports": [
+            "github.com/greppleai/grepple/gritql/internal/gritgrammar",
+            "github.com/greppleai/grepple/parser"
+          ],
+          "standardLibraryImports": [
+            "bytes",
+            "context",
+            "encoding/json",
+            "errors",
+            "fmt",
+            "io",
+            "io/fs",
+            "path",
+            "path/filepath",
+            "reflect",
+            "regexp",
+            "regexp/syntax",
+            "runtime",
+            "sort",
+            "strconv",
+            "strings",
+            "sync",
+            "time",
+            "unicode",
+            "unicode/utf8"
+          ],
+          "externalImports": [
+            {
+              "importPath": "github.com/tree-sitter/go-tree-sitter",
+              "modulePath": "github.com/tree-sitter/go-tree-sitter"
+            }
+          ],
+          "unmappedExternalImports": []
+        },
+        {
+          "importPath": "github.com/greppleai/grepple/gritql/internal/gritgrammar",
+          "directory": "gritql/internal/gritgrammar",
+          "name": "gritgrammar",
+          "documentation": "Package gritgrammar binds the pinned, generated tree-sitter GritQL grammar.",
+          "main": false,
+          "sourceFiles": 1,
+          "declarations": 0,
+          "exportedFunctions": 1,
+          "fiberRoutes": 0,
+          "routes": [],
+          "localImports": [],
+          "standardLibraryImports": [
+            "C",
+            "unsafe"
+          ],
+          "externalImports": [],
+          "unmappedExternalImports": []
+        },
+        {
+          "importPath": "github.com/greppleai/grepple/gritqlapi",
+          "directory": "gritqlapi",
+          "name": "gritqlapi",
+          "documentation": "Package gritqlapi converts native structural-search results into the dependency-free wire contracts owned by package api.",
+          "main": false,
+          "sourceFiles": 2,
+          "declarations": 0,
+          "exportedFunctions": 1,
+          "fiberRoutes": 0,
+          "routes": [],
+          "localImports": [
+            "github.com/greppleai/grepple/api",
+            "github.com/greppleai/grepple/gritql",
+            "github.com/greppleai/grepple/parser"
+          ],
+          "standardLibraryImports": [],
+          "externalImports": [],
+          "unmappedExternalImports": []
+        },
+        {
           "importPath": "github.com/greppleai/grepple/internal/cli",
           "directory": "internal/cli",
           "name": "cli",
           "documentation": "Package cli implements Grepple's search, extraction, repository inspection, authentication, rules, and terminal/JSON presentation workflows.",
           "main": false,
-          "sourceFiles": 27,
-          "declarations": 35,
+          "sourceFiles": 30,
+          "declarations": 36,
           "exportedFunctions": 3,
           "fiberRoutes": 0,
           "routes": [],
           "localImports": [
             "github.com/greppleai/grepple/api",
             "github.com/greppleai/grepple/extract",
+            "github.com/greppleai/grepple/gritql",
+            "github.com/greppleai/grepple/gritqlapi",
             "github.com/greppleai/grepple/parser",
+            "github.com/greppleai/grepple/rulespec",
             "github.com/greppleai/grepple/search"
           ],
           "standardLibraryImports": [
@@ -196,10 +283,13 @@
             "flag",
             "fmt",
             "io",
+            "math",
             "net/http",
             "net/url",
             "os",
             "os/exec",
+            "os/signal",
+            "path",
             "path/filepath",
             "regexp",
             "runtime",
@@ -224,9 +314,9 @@
           "name": "parser",
           "documentation": "Package parser provides application source classification and structural parsing.",
           "main": false,
-          "sourceFiles": 25,
-          "declarations": 30,
-          "exportedFunctions": 8,
+          "sourceFiles": 26,
+          "declarations": 36,
+          "exportedFunctions": 9,
           "fiberRoutes": 0,
           "routes": [],
           "localImports": [],
@@ -241,7 +331,8 @@
             "strconv",
             "strings",
             "sync",
-            "sync/atomic"
+            "sync/atomic",
+            "unicode/utf8"
           ],
           "externalImports": [
             {
@@ -297,6 +388,33 @@
               "modulePath": "go.yaml.in/yaml/v3"
             }
           ],
+          "unmappedExternalImports": []
+        },
+        {
+          "importPath": "github.com/greppleai/grepple/rulespec",
+          "directory": "rulespec",
+          "name": "rulespec",
+          "documentation": "Package rulespec normalizes saved text and structural rule definitions while preserving the legacy text-rule wire shape.",
+          "main": false,
+          "sourceFiles": 2,
+          "declarations": 0,
+          "exportedFunctions": 2,
+          "fiberRoutes": 0,
+          "routes": [],
+          "localImports": [
+            "github.com/greppleai/grepple/api",
+            "github.com/greppleai/grepple/gritql",
+            "github.com/greppleai/grepple/search"
+          ],
+          "standardLibraryImports": [
+            "crypto/rand",
+            "encoding/hex",
+            "fmt",
+            "reflect",
+            "regexp",
+            "strings"
+          ],
+          "externalImports": [],
           "unmappedExternalImports": []
         },
         {
@@ -404,7 +522,7 @@
           "documentation": "Package pihooks implements hooks used by pi and compatible agent clients.",
           "main": false,
           "sourceFiles": 5,
-          "declarations": 12,
+          "declarations": 13,
           "exportedFunctions": 12,
           "fiberRoutes": 0,
           "routes": [],
@@ -486,6 +604,7 @@
       "path": "github.com/tree-sitter/go-tree-sitter",
       "importedBy": [
         "github.com/greppleai/grepple/extract",
+        "github.com/greppleai/grepple/gritql",
         "github.com/greppleai/grepple/parser",
         "grepple/hooks/internal/pihooks"
       ],
