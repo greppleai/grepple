@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+
+	codeparser "github.com/greppleai/grepple/parser"
 )
 
 // Language describes a source language supported by extraction.
@@ -62,15 +64,22 @@ func LanguageForPath(path string) (Language, bool) {
 }
 
 func languageDefinitionForPath(path string) (*languageDefinition, bool) {
-	lower := strings.ToLower(path)
-	for _, definition := range registeredLanguages() {
-		for _, extension := range definition.info.Extensions {
-			if strings.HasSuffix(lower, extension) {
-				return definition, true
-			}
+	language := codeparser.LanguageFor(path)
+	if language == "tsx" {
+		language = "typescript"
+	}
+	return languageDefinitionForID(language)
+}
+
+func parserLanguageExtensions(ids ...string) []string {
+	var extensions []string
+	for _, id := range ids {
+		capability, ok := codeparser.CapabilitiesForLanguage(id)
+		if ok {
+			extensions = append(extensions, capability.Extensions...)
 		}
 	}
-	return nil, false
+	return extensions
 }
 
 func languageDefinitionForID(language string) (*languageDefinition, bool) {

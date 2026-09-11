@@ -2,9 +2,9 @@ classDiagram
     %% grepple:package-default github.com/greppleai/grepple/parser
     %% grepple:language-default go
     direction LR
-    note "Package parser provides application source classification and structural parsing. | package github.com/greppleai/grepple/parser | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=26, declarations=36, exportedTypes=12, internalTypes=24, members=252, exportedFunctions=9, fiberRoutes=0, relations=101"
+    note "Package parser provides application source classification and structural parsing. | package github.com/greppleai/grepple/parser | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=26, declarations=37, exportedTypes=13, internalTypes=24, members=255, exportedFunctions=13, fiberRoutes=0, relations=107"
     namespace interfaces {
-        class languageAdapter["languageAdapter · parser/language.go:33-38"] {
+        class languageAdapter["languageAdapter · parser/language.go:41-46"] {
             +Grammar(): *sitter.Language
             +ID(): string
             +Outline(*sitter.Node, string): []Symbol
@@ -32,6 +32,8 @@ classDiagram
     namespace exported_types {
         class Document["Document · parser/document.go:40-46"]
         <<struct>> Document
+        class LanguageCapabilities["LanguageCapabilities · parser/language.go:7-11"]
+        <<struct>> LanguageCapabilities
         class NavigationCall["NavigationCall · parser/navigation.go:32-50"]
         <<struct>> NavigationCall
         class NavigationDeclaration["NavigationDeclaration · parser/navigation.go:13-29"]
@@ -76,13 +78,13 @@ classDiagram
         <<struct>> mdNode
         class navigationBinding["navigationBinding · parser/navigation_context.go:16-22"]
         <<struct>> navigationBinding
-        class navigationCollector["navigationCollector · parser/navigation.go:127-138"]
+        class navigationCollector["navigationCollector · parser/navigation.go:141-152"]
         <<struct>> navigationCollector
-        class navigationEnvelope["navigationEnvelope · parser/navigation.go:140-144"]
+        class navigationEnvelope["navigationEnvelope · parser/navigation.go:154-158"]
         <<struct>> navigationEnvelope
         class navigationImport["navigationImport · parser/navigation_context.go:11-14"]
         <<struct>> navigationImport
-        class navigationWalkContext["navigationWalkContext · parser/navigation.go:146-151"]
+        class navigationWalkContext["navigationWalkContext · parser/navigation.go:160-165"]
         <<struct>> navigationWalkContext
         class pooledParser["pooledParser · parser/tree_sitter.go:21-24"]
         <<struct>> pooledParser
@@ -92,9 +94,9 @@ classDiagram
         <<struct>> rustLanguage
         class shellLanguage["shellLanguage · parser/language_shell.go:8-11"]
         <<struct>> shellLanguage
-        class stringSet["stringSet = map&#91;string&#93;struct&#123;&#125; · parser/language.go:5"]
+        class stringSet["stringSet = map&#91;string&#93;struct&#123;&#125; · parser/language.go:13"]
         <<type>> stringSet
-        class structureRules["structureRules · parser/language.go:20-31"]
+        class structureRules["structureRules · parser/language.go:28-39"]
         <<struct>> structureRules
         class typeScriptLanguage["typeScriptLanguage · parser/language_typescript.go:21-25"]
         <<struct>> typeScriptLanguage
@@ -108,11 +110,15 @@ classDiagram
             +BuildSegments(string, string, map[int]bool, int): []Segment
         }
         <<function>> BuildSegments
-        class DeclarationRangeAt["DeclarationRangeAt · parser/navigation.go:111-125"] {
+        class CapabilitiesForLanguage["CapabilitiesForLanguage · parser/language.go:89-97"] {
+            +CapabilitiesForLanguage(string): tuple~LanguageCapabilities&#44;bool~
+        }
+        <<function>> CapabilitiesForLanguage
+        class DeclarationRangeAt["DeclarationRangeAt · parser/navigation.go:125-139"] {
             +DeclarationRangeAt(string, string, int): tuple~int&#44;int&#44;bool~
         }
         <<function>> DeclarationRangeAt
-        class LanguageFor["LanguageFor · parser/content.go:10-40"] {
+        class LanguageFor["LanguageFor · parser/content.go:10-25"] {
             +LanguageFor(string): string
         }
         <<function>> LanguageFor
@@ -120,7 +126,11 @@ classDiagram
             +Navigation(string, string): tuple~[]NavigationDeclaration&#44;[]NavigationCall~
         }
         <<function>> Navigation
-        class NavigationGraphFromTree["NavigationGraphFromTree · parser/navigation.go:98-108"] {
+        class NavigationGraphFromDocument["NavigationGraphFromDocument · parser/navigation.go:98-108"] {
+            +NavigationGraphFromDocument(*Document, string): NavigationGraph
+        }
+        <<function>> NavigationGraphFromDocument
+        class NavigationGraphFromTree["NavigationGraphFromTree · parser/navigation.go:112-122"] {
             +NavigationGraphFromTree(*sitter.Node, string, string, string): NavigationGraph
         }
         <<function>> NavigationGraphFromTree
@@ -136,9 +146,18 @@ classDiagram
             +ParseDocument(string, string): tuple~*Document&#44;error~
         }
         <<function>> ParseDocument
+        class SupportedLanguages["SupportedLanguages · parser/language.go:79-86"] {
+            +SupportedLanguages(): []LanguageCapabilities
+        }
+        <<function>> SupportedLanguages
+        class WalkNamed["WalkNamed · parser/document.go:449-464"] {
+            +WalkNamed(Node, func&#40;Node&#41;)
+        }
+        <<function>> WalkNamed
     }
     BuildNavigationGraph "1" ..> "1" NavigationGraph : result 1
     BuildSegments "1" ..> "*" Segment : result 1
+    CapabilitiesForLanguage "1" ..> "1" LanguageCapabilities : result 1
     Document "1" ..> "1" Node : method Root result 1
     Document "1" ..> "*" ParseDiagnostic : method Diagnostics result 1; method ParseDiagnostics result 1
     Document "1" ..> "1" Range : method nodeRangeLocked result 1
@@ -147,6 +166,8 @@ classDiagram
     Navigation "1" ..> "*" NavigationDeclaration : result 1
     NavigationGraph "1" --> "*" NavigationCall : field Calls
     NavigationGraph "1" --> "*" NavigationDeclaration : field Declarations
+    NavigationGraphFromDocument "1" ..> "1" Document : parameter 1
+    NavigationGraphFromDocument "1" ..> "1" NavigationGraph : result 1
     NavigationGraphFromTree "1" ..> "1" NavigationGraph : result 1
     Node "1" --> "1" Document : field doc
     Node "1" ..> "1" Range : method Range result 1
@@ -156,8 +177,10 @@ classDiagram
     ParseDiagnostic "1" --> "1" Range : field Range
     ParseDocument "1" ..> "1" Document : result 1
     Range "1" --> "1" Position : field End; field Start
+    SupportedLanguages "1" ..> "*" LanguageCapabilities : result 1
     SyntaxNode "1" --> "1" Range : field rng
     SyntaxNode "1" ..> "1" Range : method Range result 1
+    WalkNamed "1" ..> "1" Node : parameter 1; parameter 2
     cLanguage "1" ..> "*" Symbol : method Outline result 1
     languageAdapter <|.. cLanguage : implements
     cLanguage "1" --> "1" structureRules : field rules

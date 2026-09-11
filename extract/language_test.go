@@ -14,7 +14,7 @@ func TestSupportedLanguagesAreStableAndDefensive(t *testing.T) {
 	if languages[0].ID != "go" || !reflect.DeepEqual(languages[0].Extensions, []string{".go"}) {
 		t.Fatalf("Go adapter metadata = %#v", languages[0])
 	}
-	if languages[1].ID != "typescript" || !reflect.DeepEqual(languages[1].Extensions, []string{".ts", ".tsx", ".mts", ".cts"}) {
+	if languages[1].ID != "typescript" || !reflect.DeepEqual(languages[1].Extensions, []string{".ts", ".mts", ".cts", ".tsx"}) {
 		t.Fatalf("TypeScript adapter metadata = %#v", languages[1])
 	}
 	languages[0].Extensions[0] = ".changed"

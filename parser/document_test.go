@@ -271,6 +271,19 @@ func containsKind(nodes []Node, kind string) bool {
 	}
 	return false
 }
+func TestWalkNamedUsesStablePreorder(t *testing.T) {
+	document, err := ParseDocument("go", "package p\nfunc run() { call() }\n")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer document.Close()
+	var kinds []string
+	WalkNamed(document.Root(), func(node Node) { kinds = append(kinds, node.Kind()) })
+	if len(kinds) < 4 || kinds[0] != "source_file" || kinds[1] != "package_clause" || kinds[2] != "package_identifier" {
+		t.Fatalf("walk order=%v", kinds)
+	}
+}
+
 func findNode(root Node, kind string) Node {
 	if root.Kind() == kind {
 		return root

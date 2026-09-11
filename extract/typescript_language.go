@@ -11,7 +11,7 @@ type typeScriptAnalysis struct {
 
 func typeScriptLanguageDefinition() *languageDefinition {
 	return &languageDefinition{
-		info:          Language{ID: "typescript", Extensions: []string{".ts", ".tsx", ".mts", ".cts"}},
+		info:          Language{ID: "typescript", Extensions: parserLanguageExtensions("typescript", "tsx")},
 		acceptsSource: isTypeScriptSourceFile,
 		newAnalysis: func(result *Analysis, sources []Source) languageAnalysis {
 			prepareTypeScriptModules(result, sources)

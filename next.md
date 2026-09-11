@@ -180,6 +180,48 @@ Use case: code review and CI can explain architectural impact—such as a new pa
 2. Report the first changed declaration, member, route, relation, package, or module.
 3. Keep the final byte comparison as the canonical determinism check.
 
+### F. Consolidate parser and source infrastructure
+
+Reduce repeated parsing and language knowledge across extraction, navigation, text search, and GritQL without moving query semantics into `parser`. The intended result is one source document, one language registry, and reusable projections—not one oversized package.
+
+1. [x] Migrate `extract` away from direct Tree-sitter parser construction.
+   - [x] Make Go, TypeScript, and TSX extraction consume `parser.Document` and `parser.Node`.
+   - [x] Remove extraction- and hook-local grammar selection and parser lifecycle; application-source parsing now flows through `parser.ParseDocument`.
+   - [x] Preserve exact source ranges, malformed-source behavior, and generated artifact semantics. `parser.NavigationGraphFromDocument` now lets extraction derive navigation from the same parsed document without reparsing.
+2. [ ] Expose a read-only parser language capability registry.
+   - [x] Make parser-backed language IDs, extensions, and navigation support centrally discoverable; extraction now delegates path classification and extension metadata to that registry.
+   - [ ] Add exact grammar/build fingerprints and generated field-cardinality/repeated-position metadata so GritQL, extraction, navigation, and future projections do not maintain conflicting tables.
+   - [x] Keep Grit-specific snippet wrappers and metavariable placeholder roles in `gritql`; they are query semantics rather than general parser facts.
+3. [ ] Add efficient shared syntax traversal primitives.
+   - [x] Add parser-owned iterative named-node walking and use parser-owned child, field, diagnostic, text, and range access throughout extraction and hooks.
+   - [ ] Add bounded/depth-aware walking and evaluate a document-scoped read/view API so consumers avoid recursively snapshotting the same subtrees or taking a lock for every node operation.
+   - [x] Keep feature-specific filtering such as GritQL trivia normalization and navigation declaration rules outside generic parser helpers.
+4. Unify source discovery and acquisition where text and structural search currently overlap.
+   - Share repository-relative path normalization, ignore handling, glob filtering, language detection, bounded reads, binary detection, deterministic ordering, and cancellation.
+   - Avoid the current anchored structural-search path reading files once for text prefiltering and again for Grit evaluation.
+   - Keep evaluation orchestration reusable by local CLI and backend callers; introduce a lower-level source/candidate package only if it produces a cleaner dependency graph than making `gritql` depend on `search`.
+5. Make parser documents the shared cache boundary.
+   - Allow a document to be backed by a live Tree-sitter tree or the production packed read-only CST through the same lightweight node accessor.
+   - Parse or restore each file once, then derive outlines, navigation graphs, extraction models, and one or more GritQL rule evaluations from that document.
+   - Keep repository-context resolution outside the path-neutral per-file cache.
+6. Introduce GritQL language adapters over parser capabilities.
+   - Keep the compiler, query algebra, bindings, matching, constraints, transactional findings, and diagnostics in `gritql`.
+   - Isolate Go snippet contexts and grammar-specific behavior behind an adapter so TypeScript/TSX can be added without duplicating the evaluator.
+   - Reject unsupported languages explicitly until their adapters and conformance fixtures are complete.
+
+Recommended implementation order: parser-backed extraction first, capability/schema exposure second, shared acquisition third, cached document backends fourth, and additional GritQL language adapters last.
+
+Acceptance criteria:
+
+- No feature outside `parser` constructs a parser for supported application source directly; parsing the GritQL query language itself remains an intentional exception.
+- One parsed/restored document can feed extraction, navigation, outline, and multiple structural rules without reparsing.
+- Language IDs, extensions, grammar fingerprints, and grammar-derived cardinality have one canonical owner.
+- Anchored local Grit scans do not reread selected source files solely because text prefiltering and structural evaluation use separate pipelines.
+- Existing graph, extraction, GritQL conformance, deterministic-ordering, malformed-source, race, and schema parity tests remain green.
+- Benchmarks demonstrate fewer parse invocations and source reads; do not accept a package move that only relocates code without reducing duplicate work.
+
+Non-goals: the generated GritQL grammar, GritQL compiler, metavariable matcher, containment operators, binding equality, and query/source range domains should not be folded into `parser`. The generated Grit parser handles the query language, not application source, and its size is not duplicate target-language parsing.
+
 ## Release-quality gates
 
 Before expanding scope, require:

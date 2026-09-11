@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+
+	codeparser "github.com/greppleai/grepple/parser"
 )
 
 // GeneratePackageDiagram discovers the non-test Go files in directory and
@@ -123,12 +125,17 @@ func isPackageTypeScriptEntry(entry os.DirEntry) bool {
 func validateSelectedPackage(sources []Source) error {
 	packages := map[string]bool{}
 	for _, source := range sources {
-		tree, err := parseGoSource(source)
+		document, err := codeparser.ParseDocument("go", source.Text)
 		if err != nil {
 			return err
 		}
-		name := goPackageName(tree.RootNode(), []byte(source.Text))
-		tree.Close()
+		root := document.Root()
+		if root.HasError() {
+			document.Close()
+			return malformedSourceError(source.Path, root)
+		}
+		name := goPackageName(root, []byte(source.Text))
+		document.Close()
 		if name == "" {
 			return fmt.Errorf("no Go package declaration found in %s", source.Path)
 		}

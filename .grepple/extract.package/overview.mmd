@@ -4,7 +4,7 @@ classDiagram
     direction LR
     note "Package extract validates and generates source-linked Mermaid structure and flow diagrams. | package github.com/greppleai/grepple/extract | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=23, declarations=63, exportedTypes=42, internalTypes=21, members=500, exportedFunctions=26, fiberRoutes=0, relations=180"
     namespace interfaces {
-        class languageAnalysis["languageAnalysis · extract/language.go:16-19"] {
+        class languageAnalysis["languageAnalysis · extract/language.go:18-21"] {
             +Analyze(Source): error
             +Finalize(): error
         }
@@ -176,11 +176,11 @@ classDiagram
         <<struct>> WorkspaceSummary
     }
     namespace exported_types {
-        class Analysis["Analysis · extract/analyze.go:80-111"]
+        class Analysis["Analysis · extract/analyze.go:78-109"]
         <<struct>> Analysis
         class ClassDiagram["ClassDiagram · extract/class.go:70-84"]
         <<struct>> ClassDiagram
-        class Declaration["Declaration · extract/analyze.go:40-48"]
+        class Declaration["Declaration · extract/analyze.go:38-46"]
         <<struct>> Declaration
         class Diagnostic["Diagnostic · extract/class.go:14-20"]
         <<struct>> Diagnostic
@@ -190,7 +190,7 @@ classDiagram
         <<struct>> DiagramMember
         class DiagramNote["DiagramNote · extract/class.go:63-67"]
         <<struct>> DiagramNote
-        class FiberRoute["FiberRoute · extract/analyze.go:27-30"]
+        class FiberRoute["FiberRoute · extract/analyze.go:25-28"]
         <<struct>> FiberRoute
         class FlowEdge["FlowEdge · extract/flow.go:20-23"]
         <<struct>> FlowEdge
@@ -200,15 +200,15 @@ classDiagram
         <<struct>> Flowchart
         class GenerateOptions["GenerateOptions · extract/generate.go:11-15"]
         <<struct>> GenerateOptions
-        class GoStructTag["GoStructTag · extract/analyze.go:34-37"]
+        class GoStructTag["GoStructTag · extract/analyze.go:32-35"]
         <<struct>> GoStructTag
-        class Import["Import · extract/analyze.go:51-55"]
+        class Import["Import · extract/analyze.go:49-53"]
         <<struct>> Import
-        class Language["Language · extract/language.go:11-14"]
+        class Language["Language · extract/language.go:13-16"]
         <<struct>> Language
-        class Location["Location · extract/analyze.go:58-62"]
+        class Location["Location · extract/analyze.go:56-60"]
         <<struct>> Location
-        class Member["Member · extract/analyze.go:19-24"]
+        class Member["Member · extract/analyze.go:17-22"]
         <<struct>> Member
         class PackageBundle["PackageBundle · extract/package_bundle.go:126-130"]
         <<struct>> PackageBundle
@@ -216,11 +216,11 @@ classDiagram
         <<struct>> Relation
         class RouteRequirement["RouteRequirement · extract/class.go:35-38"]
         <<struct>> RouteRequirement
-        class Source["Source · extract/analyze.go:16"]
+        class Source["Source · extract/analyze.go:14"]
         <<struct>> Source
         class StructTagRequirement["StructTagRequirement · extract/class.go:29-32"]
         <<struct>> StructTagRequirement
-        class Symbol["Symbol · extract/analyze.go:70-77"]
+        class Symbol["Symbol · extract/analyze.go:68-75"]
         <<struct>> Symbol
         class WorkspaceBundle["WorkspaceBundle · extract/workspace_bundle.go:107-110"]
         <<struct>> WorkspaceBundle
@@ -232,19 +232,19 @@ classDiagram
         <<struct>> classValidator
         class discoveredModule["discoveredModule · extract/workspace_bundle.go:112-115"]
         <<struct>> discoveredModule
-        class fiberRouter["fiberRouter · extract/go_analyze.go:461-463"]
+        class fiberRouter["fiberRouter · extract/go_analyze.go:445-447"]
         <<struct>> fiberRouter
         class flowParser["flowParser · extract/flow.go:42-45"]
         <<struct>> flowParser
-        class goAnalysis["goAnalysis · extract/go_language.go:8-12"]
+        class goAnalysis["goAnalysis · extract/go_language.go:10-14"]
         <<struct>> goAnalysis
         class goBuildHeaderState["goBuildHeaderState · extract/package_bundle.go:392-397"]
         <<struct>> goBuildHeaderState
-        class goSourceAnalyzer["goSourceAnalyzer · extract/go_analyze.go:19-26"]
+        class goSourceAnalyzer["goSourceAnalyzer · extract/go_analyze.go:17-24"]
         <<struct>> goSourceAnalyzer
         class goTypeOccurrences["goTypeOccurrences · extract/package_bundle_go_relations.go:9-12"]
         <<struct>> goTypeOccurrences
-        class languageDefinition["languageDefinition · extract/language.go:24-35"]
+        class languageDefinition["languageDefinition · extract/language.go:26-37"]
         <<struct>> languageDefinition
         class modulePackageCollector["modulePackageCollector · extract/workspace_bundle.go:311-315"]
         <<struct>> modulePackageCollector
@@ -254,7 +254,7 @@ classDiagram
         <<alias>> selectedGoSymbol
         class selectedNavigationSymbol["selectedNavigationSymbol · extract/navigation.go:214-217"]
         <<struct>> selectedNavigationSymbol
-        class sourceAnalyzer["sourceAnalyzer · extract/analyze.go:113-118"]
+        class sourceAnalyzer["sourceAnalyzer · extract/analyze.go:111-116"]
         <<struct>> sourceAnalyzer
         class sourceCollector["sourceCollector · extract/files.go:25"]
         <<struct>> sourceCollector
@@ -268,7 +268,7 @@ classDiagram
         <<struct>> workspaceModuleCollector
     }
     namespace operations {
-        class Analyze["Analyze · extract/analyze.go:618-647"] {
+        class Analyze["Analyze · extract/analyze.go:589-618"] {
             +Analyze([]Source): tuple~*Analysis&#44;error~
         }
         <<function>> Analyze
@@ -328,7 +328,7 @@ classDiagram
             +GeneratePackageBundle(string): tuple~*PackageBundle&#44;error~
         }
         <<function>> GeneratePackageBundle
-        class GeneratePackageDiagram["GeneratePackageDiagram · extract/package_generate.go:13-66"] {
+        class GeneratePackageDiagram["GeneratePackageDiagram · extract/package_generate.go:15-68"] {
             +GeneratePackageDiagram(string): tuple~string&#44;error~
         }
         <<function>> GeneratePackageDiagram
@@ -336,7 +336,7 @@ classDiagram
             +GenerateWorkspaceBundle(string): tuple~*WorkspaceBundle&#44;error~
         }
         <<function>> GenerateWorkspaceBundle
-        class LanguageForPath["LanguageForPath · extract/language.go:54-62"] {
+        class LanguageForPath["LanguageForPath · extract/language.go:56-64"] {
             +LanguageForPath(string): tuple~Language&#44;bool~
         }
         <<function>> LanguageForPath
@@ -360,7 +360,7 @@ classDiagram
             +ResolveWorkspaceBundleRoot(string): tuple~string&#44;error~
         }
         <<function>> ResolveWorkspaceBundleRoot
-        class SupportedLanguages["SupportedLanguages · extract/language.go:42-51"] {
+        class SupportedLanguages["SupportedLanguages · extract/language.go:44-53"] {
             +SupportedLanguages(): []Language
         }
         <<function>> SupportedLanguages

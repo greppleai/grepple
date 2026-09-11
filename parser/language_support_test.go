@@ -4,8 +4,9 @@ import "testing"
 
 func TestLanguageForMinimumSupportedSet(t *testing.T) {
 	tests := map[string]string{
-		"main.go": "go", "app.js": "javascript", "app.ts": "typescript", "app.tsx": "tsx",
-		"app.py": "python", "types.pyi": "python", "Main.java": "java", "Main.kt": "kotlin",
+		"main.go": "go", "app.js": "javascript", "app.ts": "typescript", "app.mts": "typescript",
+		"app.cts": "typescript", "app.tsx": "tsx", "app.py": "python", "types.pyi": "python",
+		"Main.java": "java", "Main.kt": "kotlin",
 		"Program.cs": "csharp", "main.c": "c", "header.h": "c", "main.cpp": "cpp",
 		"header.hpp": "cpp", "main.rs": "rust", "build.sh": "shell", "build.zsh": "shell",
 	}
@@ -15,6 +16,28 @@ func TestLanguageForMinimumSupportedSet(t *testing.T) {
 				t.Fatalf("LanguageFor(%q) = %q, want %q", path, got, want)
 			}
 		})
+	}
+}
+
+func TestSupportedLanguagesOwnsClassificationMetadata(t *testing.T) {
+	languages := SupportedLanguages()
+	if len(languages) != len(languageAdapters) {
+		t.Fatalf("capabilities=%d adapters=%d", len(languages), len(languageAdapters))
+	}
+	for _, language := range languages {
+		if _, ok := languageAdapters[language.ID]; !ok {
+			t.Fatalf("capability %q has no parser adapter", language.ID)
+		}
+		for _, extension := range language.Extensions {
+			if got := LanguageFor("source" + extension); got != language.ID {
+				t.Fatalf("LanguageFor(%q)=%q, want %q", extension, got, language.ID)
+			}
+		}
+	}
+	languages[0].Extensions[0] = ".changed"
+	fresh, _ := CapabilitiesForLanguage("go")
+	if len(fresh.Extensions) != 1 || fresh.Extensions[0] != ".go" {
+		t.Fatalf("capability extensions were mutable: %#v", fresh)
 	}
 }
 

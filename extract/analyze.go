@@ -8,8 +8,6 @@ import (
 	"strings"
 
 	codeparser "github.com/greppleai/grepple/parser"
-	sitter "github.com/tree-sitter/go-tree-sitter"
-	typescript "github.com/tree-sitter/tree-sitter-typescript/bindings/go"
 )
 
 // Source is one source file handled by a registered language adapter.
@@ -61,9 +59,9 @@ type Location struct {
 	EndLine, EndColumn int
 }
 
-func syntaxLocation(path string, node *sitter.Node) Location {
-	start, end := node.StartPosition(), node.EndPosition()
-	return Location{Path: path, Line: int(start.Row) + 1, Column: int(start.Column) + 1, EndLine: int(end.Row) + 1, EndColumn: int(end.Column) + 1}
+func syntaxLocation(path string, node codeparser.Node) Location {
+	rng := node.Range()
+	return Location{Path: path, Line: rng.Start.Line, Column: rng.Start.Column, EndLine: rng.End.Line, EndColumn: rng.End.Column}
 }
 
 // Symbol describes a callable code symbol linked to its parser-owned navigation declaration.
@@ -117,7 +115,7 @@ type sourceAnalyzer struct {
 	moduleID string
 }
 
-func (analyzer *sourceAnalyzer) location(node *sitter.Node) Location {
+func (analyzer *sourceAnalyzer) location(node codeparser.Node) Location {
 	location := syntaxLocation(analyzer.source.Path, node)
 	location.Path = analyzer.result.SourcePaths[absolutePath(analyzer.source.Path)]
 	return location
@@ -158,47 +156,36 @@ func newAnalysis() *Analysis {
 	}
 }
 
-func malformedSourceError(path string, root *sitter.Node) error {
+func malformedSourceError(path string, root codeparser.Node) error {
 	errorNode := firstErrorNode(root)
-	if errorNode == nil {
+	if !errorNode.Valid() {
 		return fmt.Errorf("parse %s:1:1: malformed syntax", path)
 	}
-	position := errorNode.StartPosition()
-	return fmt.Errorf("parse %s:%d:%d: malformed syntax near %s", path, position.Row+1, position.Column+1, errorNode.Kind())
+	position := errorNode.Range().Start
+	return fmt.Errorf("parse %s:%d:%d: malformed syntax near %s", path, position.Line, position.Column, errorNode.Kind())
 }
 
-func firstErrorNode(node *sitter.Node) *sitter.Node {
-	if node == nil {
-		return nil
+func firstErrorNode(node codeparser.Node) codeparser.Node {
+	if !node.Valid() {
+		return codeparser.Node{}
 	}
 	if node.IsError() || node.IsMissing() {
 		return node
 	}
-	for index := uint(0); index < node.ChildCount(); index++ {
-		if found := firstErrorNode(node.Child(index)); found != nil {
+	for _, child := range node.Children() {
+		if found := firstErrorNode(child); found.Valid() {
 			return found
 		}
 	}
-	return nil
+	return codeparser.Node{}
 }
-func nodeText(node *sitter.Node, source []byte) string {
-	if node == nil || node.EndByte() > uint(len(source)) {
-		return ""
-	}
-	return string(source[node.StartByte():node.EndByte()])
+func nodeText(node codeparser.Node, _ []byte) string {
+	return node.Text()
 }
 
-func namedChildren(node *sitter.Node) []*sitter.Node {
-	children := make([]*sitter.Node, 0, node.NamedChildCount())
-	for index := uint(0); index < node.NamedChildCount(); index++ {
-		children = append(children, node.NamedChild(index))
-	}
-	return children
-}
-
-func hasChildKind(node *sitter.Node, kind string) bool {
-	for index := uint(0); index < node.ChildCount(); index++ {
-		if node.Child(index).Kind() == kind {
+func hasChildKind(node codeparser.Node, kind string) bool {
+	for _, child := range node.Children() {
+		if child.Kind() == kind {
 			return true
 		}
 	}
@@ -210,19 +197,19 @@ func cleanType(value string) string {
 	return normalizeType(value)
 }
 
-func nodeType(node *sitter.Node, source []byte) string {
+func nodeType(node codeparser.Node, source []byte) string {
 	typeNode := node.ChildByFieldName("type")
-	if typeNode == nil {
+	if !typeNode.Valid() {
 		typeNode = node.ChildByFieldName("return_type")
 	}
-	if typeNode != nil {
+	if typeNode.Valid() {
 		return cleanType(nodeText(typeNode, source))
 	}
 	return childTypeAnnotation(node, source)
 }
 
-func childTypeAnnotation(node *sitter.Node, source []byte) string {
-	for _, child := range namedChildren(node) {
+func childTypeAnnotation(node codeparser.Node, source []byte) string {
+	for _, child := range node.NamedChildren() {
 		if child.Kind() == "type_annotation" {
 			return cleanType(nodeText(child, source))
 		}
@@ -230,18 +217,17 @@ func childTypeAnnotation(node *sitter.Node, source []byte) string {
 	return ""
 }
 
-func childHasText(node *sitter.Node, source []byte, value string) bool {
-	for index := uint(0); index < node.ChildCount(); index++ {
-		if nodeText(node.Child(index), source) == value {
+func childHasText(node codeparser.Node, source []byte, value string) bool {
+	for _, child := range node.Children() {
+		if nodeText(child, source) == value {
 			return true
 		}
 	}
 	return false
 }
 
-func memberVisibility(node *sitter.Node, source []byte) string {
-	for index := uint(0); index < node.ChildCount(); index++ {
-		child := node.Child(index)
+func memberVisibility(node codeparser.Node, source []byte) string {
+	for _, child := range node.Children() {
 		if child.Kind() != "accessibility_modifier" {
 			continue
 		}
@@ -252,13 +238,13 @@ func memberVisibility(node *sitter.Node, source []byte) string {
 	return "public"
 }
 
-func parameterTypes(node *sitter.Node, source []byte) []string {
+func parameterTypes(node codeparser.Node, source []byte) []string {
 	parameters := node.ChildByFieldName("parameters")
-	if parameters == nil {
+	if !parameters.Valid() {
 		return nil
 	}
 	var result []string
-	for _, parameter := range namedChildren(parameters) {
+	for _, parameter := range parameters.NamedChildren() {
 		if parameter.Kind() == "required_parameter" || parameter.Kind() == "optional_parameter" {
 			result = append(result, nodeType(parameter, source))
 		}
@@ -266,7 +252,7 @@ func parameterTypes(node *sitter.Node, source []byte) []string {
 	return result
 }
 
-func memberFromNode(node *sitter.Node, source []byte) (Member, bool) {
+func memberFromNode(node codeparser.Node, source []byte) (Member, bool) {
 	kind, ok := memberKind(node.Kind())
 	if !ok {
 		return Member{}, false
@@ -305,14 +291,7 @@ func memberKind(kind string) (string, bool) {
 	}
 }
 
-func walkTree(node *sitter.Node, visit func(*sitter.Node)) {
-	visit(node)
-	for _, child := range namedChildren(node) {
-		walkTree(child, visit)
-	}
-}
-
-func (analyzer *sourceAnalyzer) addSymbol(name, kind string, node, _ *sitter.Node, owner string) {
+func (analyzer *sourceAnalyzer) addSymbol(name, kind string, node, _ codeparser.Node, owner string) {
 	key := analyzer.moduleID + ":" + name
 	symbol := analyzer.result.TSSymbolIndex[key]
 	if symbol == nil {
@@ -334,52 +313,52 @@ func (analyzer *sourceAnalyzer) addImport(name, imported, module string, default
 	analyzer.result.TSImportBindings[analyzer.moduleID][name] = item
 }
 
-func (analyzer *sourceAnalyzer) analyzeImport(statement *sitter.Node) {
+func (analyzer *sourceAnalyzer) analyzeImport(statement codeparser.Node) {
 	module := strings.Trim(nodeText(statement.ChildByFieldName("source"), analyzer.text), "'\"")
 	clause := statement.NamedChild(0)
-	if clause == nil || clause.Kind() != "import_clause" {
+	if !clause.Valid() || clause.Kind() != "import_clause" {
 		return
 	}
 	typeOnly := hasChildKind(statement, "type") || childHasText(statement, analyzer.text, "type")
 	analyzer.addDefaultImport(clause, module, typeOnly)
-	walkTree(clause, func(node *sitter.Node) {
+	codeparser.WalkNamed(clause, func(node codeparser.Node) {
 		analyzer.addStructuredImport(node, module, typeOnly)
 	})
 }
 
-func (analyzer *sourceAnalyzer) addDefaultImport(clause *sitter.Node, module string, typeOnly bool) {
-	for _, child := range namedChildren(clause) {
+func (analyzer *sourceAnalyzer) addDefaultImport(clause codeparser.Node, module string, typeOnly bool) {
+	for _, child := range clause.NamedChildren() {
 		if child.Kind() == "identifier" {
 			analyzer.addImport(nodeText(child, analyzer.text), "", module, true, typeOnly)
 		}
 	}
 }
 
-func (analyzer *sourceAnalyzer) addStructuredImport(node *sitter.Node, module string, typeOnly bool) {
+func (analyzer *sourceAnalyzer) addStructuredImport(node codeparser.Node, module string, typeOnly bool) {
 	if node.Kind() != "import_specifier" && node.Kind() != "namespace_import" {
 		return
 	}
 	alias := node.ChildByFieldName("alias")
 	importedNode := node.ChildByFieldName("name")
 	nameNode := alias
-	if nameNode == nil {
+	if !nameNode.Valid() {
 		nameNode = importedNode
 	}
-	if nameNode == nil && node.NamedChildCount() > 0 {
+	if !nameNode.Valid() && node.NamedChildCount() > 0 {
 		nameNode = node.NamedChild(node.NamedChildCount() - 1)
 	}
 	elementTypeOnly := hasChildKind(node, "type") || childHasText(node, analyzer.text, "type")
 	analyzer.addImport(nodeText(nameNode, analyzer.text), nodeText(importedNode, analyzer.text), module, false, typeOnly || elementTypeOnly)
 }
 
-func (analyzer *sourceAnalyzer) analyzeExportSpecifiers(statement *sitter.Node) {
-	walkTree(statement, func(node *sitter.Node) {
+func (analyzer *sourceAnalyzer) analyzeExportSpecifiers(statement codeparser.Node) {
+	codeparser.WalkNamed(statement, func(node codeparser.Node) {
 		if node.Kind() != "export_specifier" {
 			return
 		}
 		local := node.ChildByFieldName("name")
 		exported := node.ChildByFieldName("alias")
-		if exported == nil {
+		if !exported.Valid() {
 			exported = local
 		}
 		localName, exportedName := nodeText(local, analyzer.text), nodeText(exported, analyzer.text)
@@ -407,25 +386,25 @@ func declarationKind(kind string) (string, bool) {
 	}
 }
 
-func directHeritageName(node *sitter.Node, source []byte) string {
+func directHeritageName(node codeparser.Node, source []byte) string {
 	candidate := node.ChildByFieldName("value")
-	if candidate == nil {
+	if !candidate.Valid() {
 		candidate = node.ChildByFieldName("name")
 	}
-	if candidate == nil && node.NamedChildCount() > 0 {
+	if !candidate.Valid() && node.NamedChildCount() > 0 {
 		candidate = node.NamedChild(0)
 	}
-	if candidate != nil && candidate.Kind() == "generic_type" {
+	if candidate.Valid() && candidate.Kind() == "generic_type" {
 		candidate = candidate.ChildByFieldName("name")
 	}
 	return strings.TrimSpace(nodeText(candidate, source))
 }
 
-func collectHeritage(node *sitter.Node, source []byte, declaration *Declaration) {
-	walkTree(node, func(child *sitter.Node) { processHeritageNode(child, source, declaration) })
+func collectHeritage(node codeparser.Node, source []byte, declaration *Declaration) {
+	codeparser.WalkNamed(node, func(child codeparser.Node) { processHeritageNode(child, source, declaration) })
 }
 
-func processHeritageNode(node *sitter.Node, source []byte, declaration *Declaration) {
+func processHeritageNode(node codeparser.Node, source []byte, declaration *Declaration) {
 	switch node.Kind() {
 	case "extends_clause", "extends_type_clause":
 		collectHeritageNames(node, source, declaration.Extends)
@@ -434,8 +413,8 @@ func processHeritageNode(node *sitter.Node, source []byte, declaration *Declarat
 	}
 }
 
-func collectHeritageNames(clause *sitter.Node, source []byte, result map[string]bool) {
-	for _, heritageType := range namedChildren(clause) {
+func collectHeritageNames(clause codeparser.Node, source []byte, result map[string]bool) {
+	for _, heritageType := range clause.NamedChildren() {
 		name := directHeritageName(heritageType, source)
 		if name == "" {
 			name = strings.TrimSpace(nodeText(heritageType, source))
@@ -446,7 +425,7 @@ func collectHeritageNames(clause *sitter.Node, source []byte, result map[string]
 	}
 }
 
-func (analyzer *sourceAnalyzer) analyzeDeclaration(node *sitter.Node, exported, defaultExport bool) {
+func (analyzer *sourceAnalyzer) analyzeDeclaration(node codeparser.Node, exported, defaultExport bool) {
 	kind, ok := declarationKind(node.Kind())
 	if !ok {
 		return
@@ -471,16 +450,16 @@ func (analyzer *sourceAnalyzer) analyzeDeclaration(node *sitter.Node, exported, 
 	}
 	collectHeritage(node, analyzer.text, declaration)
 	analyzer.result.TSDeclarations[analyzer.moduleID+":"+name] = declaration
-	analyzer.addSymbol(name, "class", node, nil, name)
+	analyzer.addSymbol(name, "class", node, codeparser.Node{}, name)
 	analyzer.recordExport(name, exported, defaultExport)
 }
 
-func (analyzer *sourceAnalyzer) collectMembers(node *sitter.Node, declaration *Declaration) {
+func (analyzer *sourceAnalyzer) collectMembers(node codeparser.Node, declaration *Declaration) {
 	body := node.ChildByFieldName("body")
-	if body == nil {
+	if !body.Valid() {
 		return
 	}
-	for _, child := range namedChildren(body) {
+	for _, child := range body.NamedChildren() {
 		member, ok := memberFromNode(child, analyzer.text)
 		if !ok {
 			continue
@@ -495,7 +474,7 @@ func (analyzer *sourceAnalyzer) collectMembers(node *sitter.Node, declaration *D
 	}
 }
 
-func (analyzer *sourceAnalyzer) analyzeFunction(node *sitter.Node, exported, defaultExport bool) {
+func (analyzer *sourceAnalyzer) analyzeFunction(node codeparser.Node, exported, defaultExport bool) {
 	if node.Kind() != "function_declaration" && node.Kind() != "function_signature" {
 		return
 	}
@@ -534,7 +513,7 @@ func (analyzer *sourceAnalyzer) recordTypeScriptExport(exported, local string) {
 	analyzer.result.TSExportNames[analyzer.moduleID][exported] = local
 }
 
-func (analyzer *sourceAnalyzer) analyzeTopLevel(statement *sitter.Node) {
+func (analyzer *sourceAnalyzer) analyzeTopLevel(statement codeparser.Node) {
 	if statement.Kind() == "import_statement" {
 		analyzer.analyzeImport(statement)
 		return
@@ -545,7 +524,7 @@ func (analyzer *sourceAnalyzer) analyzeTopLevel(statement *sitter.Node) {
 		exported = true
 		defaultExport = hasChildKind(statement, "default")
 		statement = statement.ChildByFieldName("declaration")
-		if statement == nil {
+		if !statement.Valid() {
 			return
 		}
 	}
@@ -592,26 +571,18 @@ func finalizeTypeScriptSymbols(result *Analysis) {
 	}
 }
 
-func parseSource(source Source) (*sitter.Tree, error) {
-	parser := sitter.NewParser()
-	defer parser.Close()
-	language := typescript.LanguageTypescript()
-	if strings.HasSuffix(source.Path, ".tsx") {
-		language = typescript.LanguageTSX()
+func parseSource(source Source) (*codeparser.Document, error) {
+	language := codeparser.LanguageFor(source.Path)
+	document, err := codeparser.ParseDocument(language, source.Text)
+	if err != nil {
+		return nil, fmt.Errorf("parse %s: %w", source.Path, err)
 	}
-	if err := parser.SetLanguage(sitter.NewLanguage(language)); err != nil {
-		return nil, fmt.Errorf("set TypeScript language: %w", err)
-	}
-	tree := parser.Parse([]byte(source.Text), nil)
-	if tree == nil {
-		return nil, fmt.Errorf("parse %s: tree-sitter returned no tree", source.Path)
-	}
-	if tree.RootNode().HasError() {
-		err := malformedSourceError(source.Path, tree.RootNode())
-		tree.Close()
+	if document.Root().HasError() {
+		err = malformedSourceError(source.Path, document.Root())
+		document.Close()
 		return nil, err
 	}
-	return tree, nil
+	return document, nil
 }
 
 // Analyze parses supported sources with their Tree-sitter language adapters and builds a shared model.
@@ -709,17 +680,16 @@ func removeAmbiguousGenericEntries(result *Analysis) {
 }
 
 func analyzeTypeScriptSource(source Source, result *Analysis) error {
-	tree, err := parseSource(source)
+	document, err := parseSource(source)
 	if err != nil {
 		return err
 	}
-	defer tree.Close()
+	defer document.Close()
 	analyzer := sourceAnalyzer{result: result, source: source, text: []byte(source.Text), moduleID: absolutePath(source.Path)}
-	for _, statement := range namedChildren(tree.RootNode()) {
+	for _, statement := range document.Root().NamedChildren() {
 		analyzer.analyzeTopLevel(statement)
 	}
-	language := codeparser.LanguageFor(source.Path)
-	result.Navigation.Merge(codeparser.NavigationGraphFromTree(tree.RootNode(), source.Text, language, source.Path))
+	result.Navigation.Merge(codeparser.NavigationGraphFromDocument(document, source.Path))
 	return nil
 }
 

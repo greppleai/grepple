@@ -3,6 +3,8 @@ package extract
 import (
 	"path/filepath"
 	"strings"
+
+	codeparser "github.com/greppleai/grepple/parser"
 )
 
 type goAnalysis struct {
@@ -13,7 +15,7 @@ type goAnalysis struct {
 
 func goLanguageDefinition() *languageDefinition {
 	return &languageDefinition{
-		info:          Language{ID: "go", Extensions: []string{".go"}},
+		info:          Language{ID: "go", Extensions: parserLanguageExtensions("go")},
 		acceptsSource: isGoSourceFile,
 		acceptsInput: func(path string, explicit bool) (bool, error) {
 			if !isGeneratedGoFile(path) {
@@ -47,12 +49,16 @@ func isGoSourceFile(path string) bool {
 }
 
 func goSourceScope(source Source) (string, error) {
-	tree, err := parseGoSource(source)
+	document, err := codeparser.ParseDocument("go", source.Text)
 	if err != nil {
 		return "", err
 	}
-	defer tree.Close()
-	name := goPackageName(tree.RootNode(), []byte(source.Text))
+	defer document.Close()
+	root := document.Root()
+	if root.HasError() {
+		return "", malformedSourceError(source.Path, root)
+	}
+	name := goPackageName(root, []byte(source.Text))
 	return filepath.Clean(absolutePath(filepath.Dir(source.Path))) + ":" + name, nil
 }
 

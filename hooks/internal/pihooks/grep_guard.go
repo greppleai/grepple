@@ -8,8 +8,7 @@ import (
 	"regexp"
 	"strings"
 
-	sitter "github.com/tree-sitter/go-tree-sitter"
-	bash "github.com/tree-sitter/tree-sitter-bash/bindings/go"
+	codeparser "github.com/greppleai/grepple/parser"
 )
 
 // AllowMarker is the explicit escape hatch for commands which genuinely need a
@@ -20,7 +19,6 @@ var (
 	blockedCommands = stringSet("find", "grep", "egrep", "fgrep", "rg", "ag", "ack", "fd", "fdfind", "locate")
 	wrapperCommands = stringSet("sudo", "command", "builtin", "exec", "xargs", "time", "nice", "env", "noglob")
 	assignment      = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]*=`)
-	bashLanguage    = sitter.NewLanguage(bash.Language())
 )
 
 func stringSet(values ...string) map[string]struct{} {
@@ -43,26 +41,21 @@ func findBlockedInvocation(command string, depth int) string {
 	if strings.Contains(command, AllowMarker) || depth > 8 {
 		return ""
 	}
-	parser := sitter.NewParser()
-	defer parser.Close()
-	if err := parser.SetLanguage(bashLanguage); err != nil {
+	document, err := codeparser.ParseDocument("shell", command)
+	if err != nil {
 		return "" // The hook must fail open if its parser cannot be initialized.
 	}
-	tree := parser.Parse([]byte(command), nil)
-	if tree == nil {
-		return ""
-	}
-	defer tree.Close()
-	return findInTree(tree.RootNode(), []byte(command), depth)
+	defer document.Close()
+	return findInTree(document.Root(), []byte(command), depth)
 }
 
-func findInTree(node *sitter.Node, source []byte, depth int) string {
+func findInTree(node codeparser.Node, source []byte, depth int) string {
 	if node.Kind() == "command" {
 		if hit := blockedInCommand(node, source, depth); hit != "" {
 			return hit
 		}
 	}
-	for i := uint(0); i < node.NamedChildCount(); i++ {
+	for i := 0; i < node.NamedChildCount(); i++ {
 		if hit := findInTree(node.NamedChild(i), source, depth); hit != "" {
 			return hit
 		}
@@ -70,9 +63,9 @@ func findInTree(node *sitter.Node, source []byte, depth int) string {
 	return ""
 }
 
-func blockedInCommand(command *sitter.Node, source []byte, depth int) string {
+func blockedInCommand(command codeparser.Node, source []byte, depth int) string {
 	nameNode := command.ChildByFieldName("name")
-	if nameNode == nil {
+	if !nameNode.Valid() {
 		return ""
 	}
 	name, ok := literalWord(nodeSource(nameNode, source))
@@ -83,9 +76,9 @@ func blockedInCommand(command *sitter.Node, source []byte, depth int) string {
 	words := []string{name}
 	// Only direct children after the command name are argv words. Descendant
 	// commands (such as $(grep ...)) are visited separately by findInTree.
-	for i := uint(0); i < command.NamedChildCount(); i++ {
+	for i := 0; i < command.NamedChildCount(); i++ {
 		child := command.NamedChild(i)
-		if child.StartByte() < nameNode.EndByte() || !isArgumentNode(child.Kind()) {
+		if child.Range().StartByte < nameNode.Range().EndByte || !isArgumentNode(child.Kind()) {
 			continue
 		}
 		word, literal := literalWord(nodeSource(child, source))
@@ -291,12 +284,8 @@ func appendEscapedByte(result *strings.Builder, word string, index int) (int, bo
 	return index + 1, true
 }
 
-func nodeSource(node *sitter.Node, source []byte) string {
-	start, end := int(node.StartByte()), int(node.EndByte())
-	if start < 0 || end < start || end > len(source) {
-		return ""
-	}
-	return string(source[start:end])
+func nodeSource(node codeparser.Node, _ []byte) string {
+	return node.Text()
 }
 
 // DenialReason builds the tool-result feedback for a blocked command.

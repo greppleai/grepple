@@ -93,6 +93,20 @@ func BuildNavigationGraph(content, language, path string) NavigationGraph {
 	return NavigationGraphFromTree(tree.RootNode(), content, language, path)
 }
 
+// NavigationGraphFromDocument builds a graph from an already parsed document.
+// The document remains owned by the caller and is not reparsed.
+func NavigationGraphFromDocument(document *Document, path string) NavigationGraph {
+	if document == nil {
+		return NavigationGraph{}
+	}
+	document.mu.RLock()
+	defer document.mu.RUnlock()
+	if document.tree == nil {
+		return NavigationGraph{}
+	}
+	return NavigationGraphFromTree(document.tree.RootNode(), document.source, document.language, path)
+}
+
 // NavigationGraphFromTree builds a graph from an already parsed compatible tree.
 // It allows analyzers to share navigation extraction without parsing source twice.
 func NavigationGraphFromTree(root *sitter.Node, content, language, path string) NavigationGraph {

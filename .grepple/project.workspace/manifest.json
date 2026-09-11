@@ -27,14 +27,14 @@
     "modules": 2,
     "packages": 15,
     "sourceFiles": 118,
-    "declarations": 313,
-    "exportedFunctions": 93,
+    "declarations": 314,
+    "exportedFunctions": 97,
     "fiberRoutes": 0,
-    "localImports": 21,
+    "localImports": 22,
     "standardLibraryImports": 125,
-    "externalModuleEdges": 21
+    "externalModuleEdges": 15
   },
-  "semanticModelDigest": "sha256:42ecfe53290993a234ebf528c1e58be600342c3612492b17aab088f12826c197",
+  "semanticModelDigest": "sha256:569c1cf5ca4ef5802ec88cfdd5b9053e860f731c8c88fa5f9f614d70a458025b",
   "modules": [
     {
       "path": "github.com/greppleai/grepple",
@@ -153,20 +153,7 @@
             "unicode",
             "unicode/utf8"
           ],
-          "externalImports": [
-            {
-              "importPath": "github.com/tree-sitter/go-tree-sitter",
-              "modulePath": "github.com/tree-sitter/go-tree-sitter"
-            },
-            {
-              "importPath": "github.com/tree-sitter/tree-sitter-go/bindings/go",
-              "modulePath": "github.com/tree-sitter/tree-sitter-go"
-            },
-            {
-              "importPath": "github.com/tree-sitter/tree-sitter-typescript/bindings/go",
-              "modulePath": "github.com/tree-sitter/tree-sitter-typescript"
-            }
-          ],
+          "externalImports": [],
           "unmappedExternalImports": []
         },
         {
@@ -315,8 +302,8 @@
           "documentation": "Package parser provides application source classification and structural parsing.",
           "main": false,
           "sourceFiles": 26,
-          "declarations": 36,
-          "exportedFunctions": 9,
+          "declarations": 37,
+          "exportedFunctions": 13,
           "fiberRoutes": 0,
           "routes": [],
           "localImports": [],
@@ -527,7 +514,8 @@
           "fiberRoutes": 0,
           "routes": [],
           "localImports": [
-            "github.com/greppleai/grepple/extract"
+            "github.com/greppleai/grepple/extract",
+            "github.com/greppleai/grepple/parser"
           ],
           "standardLibraryImports": [
             "bytes",
@@ -545,20 +533,7 @@
             "sync",
             "unicode/utf8"
           ],
-          "externalImports": [
-            {
-              "importPath": "github.com/tree-sitter/go-tree-sitter",
-              "modulePath": "github.com/tree-sitter/go-tree-sitter"
-            },
-            {
-              "importPath": "github.com/tree-sitter/tree-sitter-bash/bindings/go",
-              "modulePath": "github.com/tree-sitter/tree-sitter-bash"
-            },
-            {
-              "importPath": "github.com/tree-sitter/tree-sitter-go/bindings/go",
-              "modulePath": "github.com/tree-sitter/tree-sitter-go"
-            }
-          ],
+          "externalImports": [],
           "unmappedExternalImports": []
         }
       ],
@@ -603,10 +578,8 @@
     {
       "path": "github.com/tree-sitter/go-tree-sitter",
       "importedBy": [
-        "github.com/greppleai/grepple/extract",
         "github.com/greppleai/grepple/gritql",
-        "github.com/greppleai/grepple/parser",
-        "grepple/hooks/internal/pihooks"
+        "github.com/greppleai/grepple/parser"
       ],
       "packages": [
         "github.com/tree-sitter/go-tree-sitter"
@@ -615,8 +588,7 @@
     {
       "path": "github.com/tree-sitter/tree-sitter-bash",
       "importedBy": [
-        "github.com/greppleai/grepple/parser",
-        "grepple/hooks/internal/pihooks"
+        "github.com/greppleai/grepple/parser"
       ],
       "packages": [
         "github.com/tree-sitter/tree-sitter-bash/bindings/go"
@@ -652,9 +624,7 @@
     {
       "path": "github.com/tree-sitter/tree-sitter-go",
       "importedBy": [
-        "github.com/greppleai/grepple/extract",
-        "github.com/greppleai/grepple/parser",
-        "grepple/hooks/internal/pihooks"
+        "github.com/greppleai/grepple/parser"
       ],
       "packages": [
         "github.com/tree-sitter/tree-sitter-go/bindings/go"
@@ -699,7 +669,6 @@
     {
       "path": "github.com/tree-sitter/tree-sitter-typescript",
       "importedBy": [
-        "github.com/greppleai/grepple/extract",
         "github.com/greppleai/grepple/parser"
       ],
       "packages": [

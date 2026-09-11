@@ -8,35 +8,20 @@ import (
 // LanguageFor classifies a path by extension. Unsupported source formats are
 // classified as text and use the plain-text segment fallback.
 func LanguageFor(path string) string {
-	switch strings.ToLower(filepath.Ext(path)) {
-	case ".ts":
-		return "typescript"
-	case ".tsx":
-		return "tsx"
-	case ".js", ".jsx":
-		return "javascript"
-	case ".go":
-		return "go"
-	case ".py", ".pyi", ".pyw":
-		return "python"
-	case ".cs":
-		return "csharp"
-	case ".c", ".h":
-		return "c"
-	case ".cc", ".cpp", ".cxx", ".hpp", ".hh", ".hxx":
-		return "cpp"
-	case ".rs":
-		return "rust"
-	case ".sh", ".bash", ".zsh":
-		return "shell"
-	case ".kt", ".kts":
-		return "kotlin"
-	case ".java":
-		return "java"
+	extension := strings.ToLower(filepath.Ext(path))
+	for _, capability := range languageCapabilities {
+		for _, candidate := range capability.Extensions {
+			if extension == candidate {
+				return capability.ID
+			}
+		}
+	}
+	switch extension {
 	case ".md", ".markdown", ".mdown", ".mkd":
 		return "markdown"
+	default:
+		return "text"
 	}
-	return "text"
 }
 
 func splitLines(content string) []string {

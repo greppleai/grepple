@@ -8,8 +8,7 @@ import (
 	"sort"
 	"strings"
 
-	sitter "github.com/tree-sitter/go-tree-sitter"
-	golang "github.com/tree-sitter/tree-sitter-go/bindings/go"
+	codeparser "github.com/greppleai/grepple/parser"
 )
 
 const sameFileStructMethodsRule = "same-file-struct-methods"
@@ -71,15 +70,9 @@ type packageDeclarations struct {
 // setup failures are returned to the caller.
 func AnalyzeRepository(root string) ([]Diagnostic, error) {
 	filesByDirectory, directories := groupGoFilesByDirectory(goFiles(root))
-	parser := sitter.NewParser()
-	defer parser.Close()
-	if err := parser.SetLanguage(sitter.NewLanguage(golang.Language())); err != nil {
-		return nil, fmt.Errorf("set Go tree-sitter language: %w", err)
-	}
-
 	diagnostics := make([]Diagnostic, 0)
 	for _, directory := range directories {
-		found, err := analyzeDirectory(parser, filesByDirectory[directory])
+		found, err := analyzeDirectory(filesByDirectory[directory])
 		if err != nil {
 			return nil, err
 		}
@@ -102,10 +95,10 @@ func groupGoFilesByDirectory(files []string) (map[string][]string, []string) {
 	return filesByDirectory, directories
 }
 
-func analyzeDirectory(parser *sitter.Parser, files []string) ([]Diagnostic, error) {
+func analyzeDirectory(files []string) ([]Diagnostic, error) {
 	packages := make(map[string]*packageDeclarations)
 	for _, file := range files {
-		if err := collectFileDeclarations(parser, file, packages); err != nil {
+		if err := collectFileDeclarations(file, packages); err != nil {
 			return nil, err
 		}
 	}
@@ -125,17 +118,18 @@ func analyzeDirectory(parser *sitter.Parser, files []string) ([]Diagnostic, erro
 	return diagnostics, nil
 }
 
-func collectFileDeclarations(parser *sitter.Parser, file string, packages map[string]*packageDeclarations) error {
+func collectFileDeclarations(file string, packages map[string]*packageDeclarations) error {
 	content, err := os.ReadFile(file)
 	if err != nil {
 		return fmt.Errorf("read %s: %w", file, err)
 	}
-	tree := parser.Parse(content, nil)
-	if tree == nil {
-		return fmt.Errorf("parse %s: tree-sitter returned no tree", file)
+	document, err := codeparser.ParseDocument("go", string(content))
+	if err != nil {
+		return fmt.Errorf("parse %s: %w", file, err)
 	}
-	defer tree.Close()
-	packageName := goPackageName(tree.RootNode(), content)
+	defer document.Close()
+	root := document.Root()
+	packageName := goPackageName(root, content)
 	if packageName == "" {
 		return nil
 	}
@@ -144,14 +138,13 @@ func collectFileDeclarations(parser *sitter.Parser, file string, packages map[st
 		declarations = &packageDeclarations{structs: make(map[string]structDeclaration)}
 		packages[packageName] = declarations
 	}
-	collectGoDeclarations(tree.RootNode(), content, file, declarations.structs, &declarations.methods)
+	collectGoDeclarations(root, content, file, declarations.structs, &declarations.methods)
 	return nil
 }
 
-func goPackageName(root *sitter.Node, content []byte) string {
-	for index := uint(0); index < root.NamedChildCount(); index++ {
-		clause := root.NamedChild(index)
-		if clause == nil || clause.Kind() != "package_clause" || clause.NamedChildCount() == 0 {
+func goPackageName(root codeparser.Node, content []byte) string {
+	for _, clause := range root.NamedChildren() {
+		if clause.Kind() != "package_clause" || clause.NamedChildCount() == 0 {
 			continue
 		}
 		return nodeContent(clause.NamedChild(0), content)
@@ -191,12 +184,8 @@ func goFiles(directory string) []string {
 	return files
 }
 
-func collectGoDeclarations(root *sitter.Node, content []byte, file string, structs map[string]structDeclaration, methods *[]methodDeclaration) {
-	for index := uint(0); index < root.NamedChildCount(); index++ {
-		child := root.NamedChild(index)
-		if child == nil {
-			continue
-		}
+func collectGoDeclarations(root codeparser.Node, content []byte, file string, structs map[string]structDeclaration, methods *[]methodDeclaration) {
+	for _, child := range root.NamedChildren() {
 		switch child.Kind() {
 		case "type_declaration":
 			collectStructs(child, content, file, structs)
@@ -208,15 +197,14 @@ func collectGoDeclarations(root *sitter.Node, content []byte, file string, struc
 	}
 }
 
-func collectStructs(declaration *sitter.Node, content []byte, file string, structs map[string]structDeclaration) {
-	for index := uint(0); index < declaration.NamedChildCount(); index++ {
-		spec := declaration.NamedChild(index)
-		if spec == nil || spec.Kind() != "type_spec" {
+func collectStructs(declaration codeparser.Node, content []byte, file string, structs map[string]structDeclaration) {
+	for _, spec := range declaration.NamedChildren() {
+		if spec.Kind() != "type_spec" {
 			continue
 		}
 		typeNode := spec.ChildByFieldName("type")
 		nameNode := spec.ChildByFieldName("name")
-		if typeNode == nil || typeNode.Kind() != "struct_type" || nameNode == nil {
+		if !typeNode.Valid() || typeNode.Kind() != "struct_type" || !nameNode.Valid() {
 			continue
 		}
 		name := nodeContent(nameNode, content)
@@ -231,23 +219,22 @@ func collectStructs(declaration *sitter.Node, content []byte, file string, struc
 	}
 }
 
-func methodFromNode(node *sitter.Node, content []byte, file string) (methodDeclaration, bool) {
+func methodFromNode(node codeparser.Node, content []byte, file string) (methodDeclaration, bool) {
 	nameNode := node.ChildByFieldName("name")
 	receiver := node.ChildByFieldName("receiver")
-	if nameNode == nil || receiver == nil {
+	if !nameNode.Valid() || !receiver.Valid() {
 		return methodDeclaration{}, false
 	}
 
-	var receiverType *sitter.Node
-	for index := uint(0); index < receiver.NamedChildCount(); index++ {
-		parameter := receiver.NamedChild(index)
-		if parameter != nil && parameter.Kind() == "parameter_declaration" {
+	var receiverType codeparser.Node
+	for _, parameter := range receiver.NamedChildren() {
+		if parameter.Kind() == "parameter_declaration" {
 			receiverType = parameter.ChildByFieldName("type")
 			break
 		}
 	}
 	base := receiverBaseType(receiverType)
-	if base == nil {
+	if !base.Valid() {
 		return methodDeclaration{}, false
 	}
 
@@ -260,13 +247,13 @@ func methodFromNode(node *sitter.Node, content []byte, file string) (methodDecla
 		typeName:   typeName,
 		methodName: methodName,
 		file:       file,
-		line:       int(node.StartPosition().Row) + 1,
+		line:       node.Range().Start.Line,
 	}, true
 }
 
-func receiverBaseType(node *sitter.Node) *sitter.Node {
-	if node == nil {
-		return nil
+func receiverBaseType(node codeparser.Node) codeparser.Node {
+	if !node.Valid() {
+		return codeparser.Node{}
 	}
 	switch node.Kind() {
 	case "type_identifier":
@@ -278,14 +265,11 @@ func receiverBaseType(node *sitter.Node) *sitter.Node {
 	case "generic_type":
 		return receiverBaseType(node.ChildByFieldName("type"))
 	}
-	return nil
+	return codeparser.Node{}
 }
 
-func nodeContent(node *sitter.Node, content []byte) string {
-	if node == nil || node.EndByte() > uint(len(content)) {
-		return ""
-	}
-	return string(content[node.StartByte():node.EndByte()])
+func nodeContent(node codeparser.Node, _ []byte) string {
+	return node.Text()
 }
 
 func sameFileDiagnostic(method methodDeclaration, declaration structDeclaration) Diagnostic {

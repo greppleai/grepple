@@ -2,6 +2,24 @@ package parser
 
 import "testing"
 
+func TestNavigationGraphFromDocumentDoesNotReparse(t *testing.T) {
+	content := "package sample\nfunc Start() { Finish() }\nfunc Finish() {}\n"
+	before := parseInvocations.Load()
+	document, err := ParseDocument("go", content)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer document.Close()
+	afterParse := parseInvocations.Load()
+	graph := NavigationGraphFromDocument(document, "sample/main.go")
+	if got := parseInvocations.Load(); afterParse != before+1 || got != afterParse {
+		t.Fatalf("parse invocations before=%d after-parse=%d after-graph=%d", before, afterParse, got)
+	}
+	if len(graph.Declarations) != 2 || len(graph.Calls) != 1 {
+		t.Fatalf("graph shape = %d declarations, %d calls: %+v", len(graph.Declarations), len(graph.Calls), graph)
+	}
+}
+
 func TestBuildNavigationGraphRetainsSourceIdentity(t *testing.T) {
 	content := "package sample\nfunc Start() { Finish() }\nfunc Finish() {}\n"
 	graph := BuildNavigationGraph(content, "go", "sample/main.go")

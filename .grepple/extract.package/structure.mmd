@@ -40,7 +40,7 @@ classDiagram
     }
     <<struct>> Analysis
     %% grepple:file Analysis extract/analyze.go
-    note for Analysis "defined: extract/analyze.go:80-111; DeclarationVariants@extract/analyze.go:82; Declarations@extract/analyze.go:81; DefaultExportVariants@extract/analyze.go:86; DefaultExports@extract/analyze.go:85; ExportVariants@extract/analyze.go:86; Exports@extract/analyze.go:85; Functions@extract/analyze.go:83; GoDeclarations@extract/analyze.go:90; GoFallbackScopes@extract/analyze.go:100; GoFiberRoutes@extract/analyze.go:96; GoFunctions@extract/analyze.go:92; GoImportPathIndex@extract/analyze.go:98; GoPackageImports@extract/analyze.go:97; GoPackageNames@extract/analyze.go:95; GoPackagePaths@extract/analyze.go:99; GoSymbolIndex@extract/analyze.go:94; GoTypeReferences@extract/analyze.go:91; Imports@extract/analyze.go:84; Navigation@extract/analyze.go:107; SourcePaths@extract/analyze.go:101; SymbolVariants@extract/analyze.go:88; Symbols@extract/analyze.go:87; TSDeclarations@extract/analyze.go:89; TSDefaultExports@extract/analyze.go:104; TSExportNames@extract/analyze.go:106; TSExports@extract/analyze.go:105; TSImportBindings@extract/analyze.go:103; TSModuleIndex@extract/analyze.go:102; TSModulePaths@extract/analyze.go:101; TSSymbolIndex@extract/analyze.go:93; duplicateErrors@extract/analyze.go:110; navigationCalls@extract/analyze.go:109; navigationSymbols@extract/analyze.go:108"
+    note for Analysis "defined: extract/analyze.go:78-109; DeclarationVariants@extract/analyze.go:80; Declarations@extract/analyze.go:79; DefaultExportVariants@extract/analyze.go:84; DefaultExports@extract/analyze.go:83; ExportVariants@extract/analyze.go:84; Exports@extract/analyze.go:83; Functions@extract/analyze.go:81; GoDeclarations@extract/analyze.go:88; GoFallbackScopes@extract/analyze.go:98; GoFiberRoutes@extract/analyze.go:94; GoFunctions@extract/analyze.go:90; GoImportPathIndex@extract/analyze.go:96; GoPackageImports@extract/analyze.go:95; GoPackageNames@extract/analyze.go:93; GoPackagePaths@extract/analyze.go:97; GoSymbolIndex@extract/analyze.go:92; GoTypeReferences@extract/analyze.go:89; Imports@extract/analyze.go:82; Navigation@extract/analyze.go:105; SourcePaths@extract/analyze.go:99; SymbolVariants@extract/analyze.go:86; Symbols@extract/analyze.go:85; TSDeclarations@extract/analyze.go:87; TSDefaultExports@extract/analyze.go:102; TSExportNames@extract/analyze.go:104; TSExports@extract/analyze.go:103; TSImportBindings@extract/analyze.go:101; TSModuleIndex@extract/analyze.go:100; TSModulePaths@extract/analyze.go:99; TSSymbolIndex@extract/analyze.go:91; duplicateErrors@extract/analyze.go:108; navigationCalls@extract/analyze.go:107; navigationSymbols@extract/analyze.go:106"
     class ClassDiagram {
         +Classes: map[string]*DiagramClass
         +CompletePackage: string
@@ -77,7 +77,7 @@ classDiagram
     }
     <<struct>> Declaration
     %% grepple:file Declaration extract/analyze.go
-    note for Declaration "defined: extract/analyze.go:40-48; Extends@extract/analyze.go:44; File@extract/analyze.go:41; FileLocal@extract/analyze.go:46; Implements@extract/analyze.go:44; Kind@extract/analyze.go:41; Language@extract/analyze.go:41; Location@extract/analyze.go:47; Members@extract/analyze.go:43; ModuleID@extract/analyze.go:41; Name@extract/analyze.go:41; Package@extract/analyze.go:41; PackageID@extract/analyze.go:41; StructTags@extract/analyze.go:45; Underlying@extract/analyze.go:42"
+    note for Declaration "defined: extract/analyze.go:38-46; Extends@extract/analyze.go:42; File@extract/analyze.go:39; FileLocal@extract/analyze.go:44; Implements@extract/analyze.go:42; Kind@extract/analyze.go:39; Language@extract/analyze.go:39; Location@extract/analyze.go:45; Members@extract/analyze.go:41; ModuleID@extract/analyze.go:39; Name@extract/analyze.go:39; Package@extract/analyze.go:39; PackageID@extract/analyze.go:39; StructTags@extract/analyze.go:43; Underlying@extract/analyze.go:40"
     class Diagnostic {
         +Line: int
         +Message: string
@@ -138,7 +138,7 @@ classDiagram
     }
     <<struct>> DiagramMember
     %% grepple:file DiagramMember extract/class.go
-    note for DiagramMember "defined: extract/class.go:23-26; Line@extract/class.go:25; Async@extract/analyze.go:21; File@extract/analyze.go:20; Kind@extract/analyze.go:20; Language@extract/analyze.go:20; Location@extract/analyze.go:23; ModuleID@extract/analyze.go:20; Name@extract/analyze.go:20; Package@extract/analyze.go:20; PackageID@extract/analyze.go:20; Parameters@extract/analyze.go:22; Static@extract/analyze.go:21; Type@extract/analyze.go:20; Visibility@extract/analyze.go:20"
+    note for DiagramMember "defined: extract/class.go:23-26; Line@extract/class.go:25; Async@extract/analyze.go:19; File@extract/analyze.go:18; Kind@extract/analyze.go:18; Language@extract/analyze.go:18; Location@extract/analyze.go:21; ModuleID@extract/analyze.go:18; Name@extract/analyze.go:18; Package@extract/analyze.go:18; PackageID@extract/analyze.go:18; Parameters@extract/analyze.go:20; Static@extract/analyze.go:19; Type@extract/analyze.go:18; Visibility@extract/analyze.go:18"
     class DiagramNote {
         +Line: int
         +Target: string
@@ -156,7 +156,7 @@ classDiagram
     }
     <<struct>> FiberRoute
     %% grepple:file FiberRoute extract/analyze.go
-    note for FiberRoute "defined: extract/analyze.go:27-30; Handler@extract/analyze.go:28; Location@extract/analyze.go:29; Method@extract/analyze.go:28; PackageID@extract/analyze.go:28; Path@extract/analyze.go:28"
+    note for FiberRoute "defined: extract/analyze.go:25-28; Handler@extract/analyze.go:26; Location@extract/analyze.go:27; Method@extract/analyze.go:26; PackageID@extract/analyze.go:26; Path@extract/analyze.go:26"
     class FlowEdge {
         +Label: string
         +Line: int
@@ -206,7 +206,7 @@ classDiagram
     }
     <<struct>> GoStructTag
     %% grepple:file GoStructTag extract/analyze.go
-    note for GoStructTag "defined: extract/analyze.go:34-37; Present@extract/analyze.go:36; Value@extract/analyze.go:35"
+    note for GoStructTag "defined: extract/analyze.go:32-35; Present@extract/analyze.go:34; Value@extract/analyze.go:33"
     class Import {
         +Default: bool
         +File: string
@@ -222,14 +222,14 @@ classDiagram
     }
     <<struct>> Import
     %% grepple:file Import extract/analyze.go
-    note for Import "defined: extract/analyze.go:51-55; Default@extract/analyze.go:53; File@extract/analyze.go:52; Imported@extract/analyze.go:52; ImporterModuleID@extract/analyze.go:52; Language@extract/analyze.go:54; ModuleID@extract/analyze.go:52; Package@extract/analyze.go:54; PackageID@extract/analyze.go:54; Resolved@extract/analyze.go:52; Source@extract/analyze.go:52; TypeOnly@extract/analyze.go:53"
+    note for Import "defined: extract/analyze.go:49-53; Default@extract/analyze.go:51; File@extract/analyze.go:50; Imported@extract/analyze.go:50; ImporterModuleID@extract/analyze.go:50; Language@extract/analyze.go:52; ModuleID@extract/analyze.go:50; Package@extract/analyze.go:52; PackageID@extract/analyze.go:52; Resolved@extract/analyze.go:50; Source@extract/analyze.go:50; TypeOnly@extract/analyze.go:51"
     class Language {
         +Extensions: []string
         +ID: string
     }
     <<struct>> Language
     %% grepple:file Language extract/language.go
-    note for Language "defined: extract/language.go:11-14; Extensions@extract/language.go:13; ID@extract/language.go:12"
+    note for Language "defined: extract/language.go:13-16; Extensions@extract/language.go:15; ID@extract/language.go:14"
     class Location {
         +Column: int
         +EndColumn: int
@@ -239,7 +239,7 @@ classDiagram
     }
     <<struct>> Location
     %% grepple:file Location extract/analyze.go
-    note for Location "defined: extract/analyze.go:58-62; Column@extract/analyze.go:60; EndColumn@extract/analyze.go:61; EndLine@extract/analyze.go:61; Line@extract/analyze.go:60; Path@extract/analyze.go:59"
+    note for Location "defined: extract/analyze.go:56-60; Column@extract/analyze.go:58; EndColumn@extract/analyze.go:59; EndLine@extract/analyze.go:59; Line@extract/analyze.go:58; Path@extract/analyze.go:57"
     class Member {
         +Async: bool
         +File: string
@@ -257,7 +257,7 @@ classDiagram
     }
     <<struct>> Member
     %% grepple:file Member extract/analyze.go
-    note for Member "defined: extract/analyze.go:19-24; Async@extract/analyze.go:21; File@extract/analyze.go:20; Kind@extract/analyze.go:20; Language@extract/analyze.go:20; Location@extract/analyze.go:23; ModuleID@extract/analyze.go:20; Name@extract/analyze.go:20; Package@extract/analyze.go:20; PackageID@extract/analyze.go:20; Parameters@extract/analyze.go:22; Static@extract/analyze.go:21; Type@extract/analyze.go:20; Visibility@extract/analyze.go:20"
+    note for Member "defined: extract/analyze.go:17-22; Async@extract/analyze.go:19; File@extract/analyze.go:18; Kind@extract/analyze.go:18; Language@extract/analyze.go:18; Location@extract/analyze.go:21; ModuleID@extract/analyze.go:18; Name@extract/analyze.go:18; Package@extract/analyze.go:18; PackageID@extract/analyze.go:18; Parameters@extract/analyze.go:20; Static@extract/analyze.go:19; Type@extract/analyze.go:18; Visibility@extract/analyze.go:18"
     class PackageBundle {
         +Manifest: []byte
         +Overview: []byte
@@ -461,7 +461,7 @@ classDiagram
     }
     <<struct>> Source
     %% grepple:file Source extract/analyze.go
-    note for Source "defined: extract/analyze.go:16; Path@extract/analyze.go:16; Text@extract/analyze.go:16"
+    note for Source "defined: extract/analyze.go:14; Path@extract/analyze.go:14; Text@extract/analyze.go:14"
     class StructTagRequirement {
         +Line: int
         +Value: string
@@ -486,7 +486,7 @@ classDiagram
     }
     <<struct>> Symbol
     %% grepple:file Symbol extract/analyze.go
-    note for Symbol "defined: extract/analyze.go:70-77; CallOrder@extract/analyze.go:75; Calls@extract/analyze.go:74; Key@extract/analyze.go:71; Kind@extract/analyze.go:71; Language@extract/analyze.go:71; Locations@extract/analyze.go:76; ModuleID@extract/analyze.go:71; Name@extract/analyze.go:71; NavigationID@extract/analyze.go:72; Owner@extract/analyze.go:72; Package@extract/analyze.go:71; PackageID@extract/analyze.go:71; Receiver@extract/analyze.go:72"
+    note for Symbol "defined: extract/analyze.go:68-75; CallOrder@extract/analyze.go:73; Calls@extract/analyze.go:72; Key@extract/analyze.go:69; Kind@extract/analyze.go:69; Language@extract/analyze.go:69; Locations@extract/analyze.go:74; ModuleID@extract/analyze.go:69; Name@extract/analyze.go:69; NavigationID@extract/analyze.go:70; Owner@extract/analyze.go:70; Package@extract/analyze.go:69; PackageID@extract/analyze.go:69; Receiver@extract/analyze.go:70"
     class WorkspaceBundle {
         +Manifest: []byte
         +Overview: []byte
@@ -729,7 +729,7 @@ classDiagram
     }
     <<struct>> fiberRouter
     %% grepple:file fiberRouter extract/go_analyze.go
-    note for fiberRouter "defined: extract/go_analyze.go:461-463; prefix@extract/go_analyze.go:462"
+    note for fiberRouter "defined: extract/go_analyze.go:445-447; prefix@extract/go_analyze.go:446"
     class flowParser {
         -applyConcept(string, int): error
         -applyLanguage(string, string, int): error
@@ -755,7 +755,7 @@ classDiagram
     }
     <<struct>> goAnalysis
     %% grepple:file goAnalysis extract/go_language.go
-    note for goAnalysis "defined: extract/go_language.go:8-12; Analyze@extract/go_language.go:59-61; Finalize@extract/go_language.go:63-69; methods@extract/go_language.go:11; result@extract/go_language.go:9; sources@extract/go_language.go:10"
+    note for goAnalysis "defined: extract/go_language.go:10-14; Analyze@extract/go_language.go:65-67; Finalize@extract/go_language.go:69-75; methods@extract/go_language.go:13; result@extract/go_language.go:11; sources@extract/go_language.go:12"
     class goBuildHeaderState {
         -consume(string): tuple~bool&#44;error~
         -consumeCommentText(string): bool
@@ -771,32 +771,32 @@ classDiagram
     note for goBuildHeaderState "defined: extract/package_bundle.go:392-397; consume@extract/package_bundle.go:399-418; consumeCommentText@extract/package_bundle.go:420-442; content@extract/package_bundle.go:393; ended@extract/package_bundle.go:395; goBuild@extract/package_bundle.go:396; headerEnd@extract/package_bundle.go:394; inBlock@extract/package_bundle.go:395; offset@extract/package_bundle.go:394"
     class goSourceAnalyzer {
         -addDuplicateGoError(string, string, Location, Location)
-        -addEmbeddedNode(*sitter.Node, *Declaration)
-        -addGoEmbeddedType(*sitter.Node, *Declaration)
-        -addGoField(*sitter.Node, *Declaration)
-        -addGoInterfaceMethod(*sitter.Node, *Declaration)
-        -addGoSymbol(string, string, *sitter.Node, *sitter.Node, string, string)
-        -addGoTypeReference(string, *sitter.Node, string)
-        -analyzeFunction(*sitter.Node)
-        -analyzeImportSpec(*sitter.Node)
-        -analyzeImports(*sitter.Node)
-        -analyzeMethod(*sitter.Node)
-        -analyzeStatement(*sitter.Node)
-        -analyzeTypeSpec(*sitter.Node)
-        -analyzeTypes(*sitter.Node)
-        -collectFiberRoutes(*sitter.Node, *sitter.Node, string, string)
-        -collectGoMembers(*sitter.Node, *Declaration)
-        -collectGoTypeReferences(*sitter.Node)
-        -fiberRouterExpression(*sitter.Node, map[string]fiberRouter): tuple~fiberRouter&#44;bool~
-        -goCallableMember(*sitter.Node, string): Member
-        -goParameters(*sitter.Node): []string
-        -goResult(*sitter.Node): string
-        -processFiberAssignment(*sitter.Node, *sitter.Node, map[string]fiberRouter)
-        -processFiberNode(*sitter.Node, map[string]fiberRouter, map[string]string)
-        -receiver(*sitter.Node): tuple~string&#44;string~
-        -recordFiberRoute(*sitter.Node, map[string]fiberRouter, map[string]string)
+        -addEmbeddedNode(codeparser.Node, *Declaration)
+        -addGoEmbeddedType(codeparser.Node, *Declaration)
+        -addGoField(codeparser.Node, *Declaration)
+        -addGoInterfaceMethod(codeparser.Node, *Declaration)
+        -addGoSymbol(string, string, codeparser.Node, codeparser.Node, string, string)
+        -addGoTypeReference(string, codeparser.Node, string)
+        -analyzeFunction(codeparser.Node)
+        -analyzeImportSpec(codeparser.Node)
+        -analyzeImports(codeparser.Node)
+        -analyzeMethod(codeparser.Node)
+        -analyzeStatement(codeparser.Node)
+        -analyzeTypeSpec(codeparser.Node)
+        -analyzeTypes(codeparser.Node)
+        -collectFiberRoutes(codeparser.Node, codeparser.Node, string, string)
+        -collectGoMembers(codeparser.Node, *Declaration)
+        -collectGoTypeReferences(codeparser.Node)
+        -fiberRouterExpression(codeparser.Node, map[string]fiberRouter): tuple~fiberRouter&#44;bool~
+        -goCallableMember(codeparser.Node, string): Member
+        -goParameters(codeparser.Node): []string
+        -goResult(codeparser.Node): string
+        -processFiberAssignment(codeparser.Node, codeparser.Node, map[string]fiberRouter)
+        -processFiberNode(codeparser.Node, map[string]fiberRouter, map[string]string)
+        -receiver(codeparser.Node): tuple~string&#44;string~
+        -recordFiberRoute(codeparser.Node, map[string]fiberRouter, map[string]string)
         -recordGoExport(string)
-        -recordGoTypeDeclaration(*sitter.Node, *Declaration)
+        -recordGoTypeDeclaration(codeparser.Node, *Declaration)
         -imports: map[string]string
         -methods: map[string][]Member
         -packageID: string
@@ -807,7 +807,7 @@ classDiagram
     }
     <<struct>> goSourceAnalyzer
     %% grepple:file goSourceAnalyzer extract/go_analyze.go
-    note for goSourceAnalyzer "defined: extract/go_analyze.go:19-26; addDuplicateGoError@extract/go_analyze.go:361-366; addEmbeddedNode@extract/go_analyze.go:332-337; addGoEmbeddedType@extract/go_analyze.go:324-330; addGoField@extract/go_analyze.go:286-304; addGoInterfaceMethod@extract/go_analyze.go:316-322; addGoSymbol@extract/go_analyze.go:714-722; addGoTypeReference@extract/go_analyze.go:238-244; analyzeFunction@extract/go_analyze.go:407-426; analyzeImportSpec@extract/go_analyze.go:730-752; analyzeImports@extract/go_analyze.go:724-728; analyzeMethod@extract/go_analyze.go:428-445; analyzeStatement@extract/go_analyze.go:136-147; analyzeTypeSpec@extract/go_analyze.go:171-191; analyzeTypes@extract/go_analyze.go:165-169; collectFiberRoutes@extract/go_analyze.go:465-478; collectGoMembers@extract/go_analyze.go:263-275; collectGoTypeReferences@extract/go_analyze.go:221-236; fiberRouterExpression@extract/go_analyze.go:553-586; goCallableMember@extract/go_analyze.go:357-359; goParameters@extract/go_analyze.go:368-387; goResult@extract/go_analyze.go:397-405; processFiberAssignment@extract/go_analyze.go:513-535; processFiberNode@extract/go_analyze.go:480-511; receiver@extract/go_analyze.go:447-459; recordFiberRoute@extract/go_analyze.go:588-619; recordGoExport@extract/go_analyze.go:149-152; recordGoTypeDeclaration@extract/go_analyze.go:193-205; imports@extract/go_analyze.go:24; methods@extract/go_analyze.go:23; packageID@extract/go_analyze.go:25; packageName@extract/go_analyze.go:25; result@extract/go_analyze.go:20; source@extract/go_analyze.go:21; text@extract/go_analyze.go:22"
+    note for goSourceAnalyzer "defined: extract/go_analyze.go:17-24; addDuplicateGoError@extract/go_analyze.go:345-350; addEmbeddedNode@extract/go_analyze.go:316-321; addGoEmbeddedType@extract/go_analyze.go:308-314; addGoField@extract/go_analyze.go:270-288; addGoInterfaceMethod@extract/go_analyze.go:300-306; addGoSymbol@extract/go_analyze.go:698-706; addGoTypeReference@extract/go_analyze.go:222-228; analyzeFunction@extract/go_analyze.go:391-410; analyzeImportSpec@extract/go_analyze.go:714-736; analyzeImports@extract/go_analyze.go:708-712; analyzeMethod@extract/go_analyze.go:412-429; analyzeStatement@extract/go_analyze.go:120-131; analyzeTypeSpec@extract/go_analyze.go:155-175; analyzeTypes@extract/go_analyze.go:149-153; collectFiberRoutes@extract/go_analyze.go:449-462; collectGoMembers@extract/go_analyze.go:247-259; collectGoTypeReferences@extract/go_analyze.go:205-220; fiberRouterExpression@extract/go_analyze.go:537-570; goCallableMember@extract/go_analyze.go:341-343; goParameters@extract/go_analyze.go:352-371; goResult@extract/go_analyze.go:381-389; processFiberAssignment@extract/go_analyze.go:497-519; processFiberNode@extract/go_analyze.go:464-495; receiver@extract/go_analyze.go:431-443; recordFiberRoute@extract/go_analyze.go:572-603; recordGoExport@extract/go_analyze.go:133-136; recordGoTypeDeclaration@extract/go_analyze.go:177-189; imports@extract/go_analyze.go:22; methods@extract/go_analyze.go:21; packageID@extract/go_analyze.go:23; packageName@extract/go_analyze.go:23; result@extract/go_analyze.go:18; source@extract/go_analyze.go:19; text@extract/go_analyze.go:20"
     class goTypeOccurrences {
         -many: bool
         -one: bool
@@ -821,7 +821,7 @@ classDiagram
     }
     <<interface>> languageAnalysis
     %% grepple:file languageAnalysis extract/language.go
-    note for languageAnalysis "defined: extract/language.go:16-19; Analyze@extract/language.go:17; Finalize@extract/language.go:18"
+    note for languageAnalysis "defined: extract/language.go:18-21; Analyze@extract/language.go:19; Finalize@extract/language.go:20"
     class languageDefinition {
         -acceptsInput: func&#40;string&#44;bool&#41;&#40;bool&#44;error&#41;
         -acceptsSource: func&#40;string&#41;bool
@@ -836,7 +836,7 @@ classDiagram
     }
     <<struct>> languageDefinition
     %% grepple:file languageDefinition extract/language.go
-    note for languageDefinition "defined: extract/language.go:24-35; acceptsInput@extract/language.go:27; acceptsSource@extract/language.go:26; generateFlow@extract/language.go:33; generateStructure@extract/language.go:32; info@extract/language.go:25; nearestProjectRoot@extract/language.go:29; newAnalysis@extract/language.go:28; normalizeType@extract/language.go:31; sourceScope@extract/language.go:30; validFlowEdge@extract/language.go:34"
+    note for languageDefinition "defined: extract/language.go:26-37; acceptsInput@extract/language.go:29; acceptsSource@extract/language.go:28; generateFlow@extract/language.go:35; generateStructure@extract/language.go:34; info@extract/language.go:27; nearestProjectRoot@extract/language.go:31; newAnalysis@extract/language.go:30; normalizeType@extract/language.go:33; sourceScope@extract/language.go:32; validFlowEdge@extract/language.go:36"
     class modulePackageCollector {
         -visit(string, os.DirEntry, error): error
         -all: map[string]discoveredModule
@@ -867,17 +867,17 @@ classDiagram
     %% grepple:file selectedNavigationSymbol extract/navigation.go
     note for selectedNavigationSymbol "defined: extract/navigation.go:214-217; depth@extract/navigation.go:216; symbol@extract/navigation.go:215"
     class sourceAnalyzer {
-        -addDefaultImport(*sitter.Node, string, bool)
+        -addDefaultImport(codeparser.Node, string, bool)
         -addImport(string, string, string, bool, bool)
-        -addStructuredImport(*sitter.Node, string, bool)
-        -addSymbol(string, string, *sitter.Node, *sitter.Node, string)
-        -analyzeDeclaration(*sitter.Node, bool, bool)
-        -analyzeExportSpecifiers(*sitter.Node)
-        -analyzeFunction(*sitter.Node, bool, bool)
-        -analyzeImport(*sitter.Node)
-        -analyzeTopLevel(*sitter.Node)
-        -collectMembers(*sitter.Node, *Declaration)
-        -location(*sitter.Node): Location
+        -addStructuredImport(codeparser.Node, string, bool)
+        -addSymbol(string, string, codeparser.Node, codeparser.Node, string)
+        -analyzeDeclaration(codeparser.Node, bool, bool)
+        -analyzeExportSpecifiers(codeparser.Node)
+        -analyzeFunction(codeparser.Node, bool, bool)
+        -analyzeImport(codeparser.Node)
+        -analyzeTopLevel(codeparser.Node)
+        -collectMembers(codeparser.Node, *Declaration)
+        -location(codeparser.Node): Location
         -recordExport(string, bool, bool)
         -recordTypeScriptExport(string, string)
         -moduleID: string
@@ -887,7 +887,7 @@ classDiagram
     }
     <<struct>> sourceAnalyzer
     %% grepple:file sourceAnalyzer extract/analyze.go
-    note for sourceAnalyzer "defined: extract/analyze.go:113-118; addDefaultImport@extract/analyze.go:350-356; addImport@extract/analyze.go:325-335; addStructuredImport@extract/analyze.go:358-373; addSymbol@extract/analyze.go:315-323; analyzeDeclaration@extract/analyze.go:449-476; analyzeExportSpecifiers@extract/analyze.go:375-397; analyzeFunction@extract/analyze.go:498-510; analyzeImport@extract/analyze.go:337-348; analyzeTopLevel@extract/analyze.go:537-554; collectMembers@extract/analyze.go:478-496; location@extract/analyze.go:120-124; recordExport@extract/analyze.go:512-524; recordTypeScriptExport@extract/analyze.go:526-535; moduleID@extract/analyze.go:117; result@extract/analyze.go:114; source@extract/analyze.go:115; text@extract/analyze.go:116"
+    note for sourceAnalyzer "defined: extract/analyze.go:111-116; addDefaultImport@extract/analyze.go:329-335; addImport@extract/analyze.go:304-314; addStructuredImport@extract/analyze.go:337-352; addSymbol@extract/analyze.go:294-302; analyzeDeclaration@extract/analyze.go:428-455; analyzeExportSpecifiers@extract/analyze.go:354-376; analyzeFunction@extract/analyze.go:477-489; analyzeImport@extract/analyze.go:316-327; analyzeTopLevel@extract/analyze.go:516-533; collectMembers@extract/analyze.go:457-475; location@extract/analyze.go:118-122; recordExport@extract/analyze.go:491-503; recordTypeScriptExport@extract/analyze.go:505-514; moduleID@extract/analyze.go:115; result@extract/analyze.go:112; source@extract/analyze.go:113; text@extract/analyze.go:114"
     class sourceCollector {
         -collect(string, bool): error
         -collectDirectory(string): error
@@ -932,7 +932,7 @@ classDiagram
     }
     <<function>> Analyze
     %% grepple:file Analyze extract/analyze.go
-    note for Analyze "defined: extract/analyze.go:618-647"
+    note for Analyze "defined: extract/analyze.go:589-618"
     class BuildPackageIR {
         +BuildPackageIR(string): tuple~*PackageIR&#44;[]Source&#44;error~
     }
@@ -1022,7 +1022,7 @@ classDiagram
     }
     <<function>> GeneratePackageDiagram
     %% grepple:file GeneratePackageDiagram extract/package_generate.go
-    note for GeneratePackageDiagram "defined: extract/package_generate.go:13-66"
+    note for GeneratePackageDiagram "defined: extract/package_generate.go:15-68"
     class GenerateWorkspaceBundle {
         +GenerateWorkspaceBundle(string): tuple~*WorkspaceBundle&#44;error~
     }
@@ -1034,7 +1034,7 @@ classDiagram
     }
     <<function>> LanguageForPath
     %% grepple:file LanguageForPath extract/language.go
-    note for LanguageForPath "defined: extract/language.go:54-62"
+    note for LanguageForPath "defined: extract/language.go:56-64"
     class LoadSources {
         +LoadSources([]string): tuple~[]Source&#44;error~
     }
@@ -1070,7 +1070,7 @@ classDiagram
     }
     <<function>> SupportedLanguages
     %% grepple:file SupportedLanguages extract/language.go
-    note for SupportedLanguages "defined: extract/language.go:42-51"
+    note for SupportedLanguages "defined: extract/language.go:44-53"
     class WritePackageBundle {
         +WritePackageBundle(string, *PackageBundle): error
     }

@@ -444,6 +444,25 @@ func (n Node) NamedChildren() []Node {
 	return result
 }
 
+// WalkNamed visits root and all named descendants in pre-order. It is iterative
+// so deeply nested source does not consume the Go call stack.
+func WalkNamed(root Node, visit func(Node)) {
+	if !root.Valid() || visit == nil {
+		return
+	}
+	stack := []Node{root}
+	for len(stack) > 0 {
+		index := len(stack) - 1
+		node := stack[index]
+		stack = stack[:index]
+		visit(node)
+		children := node.NamedChildren()
+		for i := len(children) - 1; i >= 0; i-- {
+			stack = append(stack, children[i])
+		}
+	}
+}
+
 // ChildByFieldName returns the child assigned to name, or an invalid node when absent.
 func (n Node) ChildByFieldName(name string) Node {
 	var value Node

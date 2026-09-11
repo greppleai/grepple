@@ -2,6 +2,14 @@ package parser
 
 import sitter "github.com/tree-sitter/go-tree-sitter"
 
+// LanguageCapabilities describes one Tree-sitter-backed application language.
+// Returned extension slices are copies and safe for callers to modify.
+type LanguageCapabilities struct {
+	ID         string
+	Extensions []string
+	Navigation bool
+}
+
 type stringSet map[string]struct{}
 
 func newStringSet(values ...string) stringSet {
@@ -51,6 +59,42 @@ var languageAdapters = buildLanguageAdapters(
 	newRustLanguage(),
 	newShellLanguage(),
 )
+
+var languageCapabilities = []LanguageCapabilities{
+	{ID: "go", Extensions: []string{".go"}, Navigation: true},
+	{ID: "java", Extensions: []string{".java"}, Navigation: true},
+	{ID: "kotlin", Extensions: []string{".kt", ".kts"}, Navigation: true},
+	{ID: "javascript", Extensions: []string{".js", ".jsx"}, Navigation: true},
+	{ID: "typescript", Extensions: []string{".ts", ".mts", ".cts"}, Navigation: true},
+	{ID: "tsx", Extensions: []string{".tsx"}, Navigation: true},
+	{ID: "python", Extensions: []string{".py", ".pyi", ".pyw"}, Navigation: true},
+	{ID: "csharp", Extensions: []string{".cs"}, Navigation: true},
+	{ID: "c", Extensions: []string{".c", ".h"}, Navigation: true},
+	{ID: "cpp", Extensions: []string{".cc", ".cpp", ".cxx", ".hpp", ".hh", ".hxx"}, Navigation: true},
+	{ID: "rust", Extensions: []string{".rs"}, Navigation: true},
+	{ID: "shell", Extensions: []string{".sh", ".bash", ".zsh"}, Navigation: true},
+}
+
+// SupportedLanguages returns deterministic metadata for parser-backed languages.
+func SupportedLanguages() []LanguageCapabilities {
+	result := make([]LanguageCapabilities, len(languageCapabilities))
+	for i, capability := range languageCapabilities {
+		result[i] = capability
+		result[i].Extensions = append([]string(nil), capability.Extensions...)
+	}
+	return result
+}
+
+// CapabilitiesForLanguage returns metadata for a canonical language ID.
+func CapabilitiesForLanguage(id string) (LanguageCapabilities, bool) {
+	for _, capability := range languageCapabilities {
+		if capability.ID == id {
+			capability.Extensions = append([]string(nil), capability.Extensions...)
+			return capability, true
+		}
+	}
+	return LanguageCapabilities{}, false
+}
 
 func buildLanguageAdapters(adapters ...languageAdapter) map[string]languageAdapter {
 	registry := make(map[string]languageAdapter, len(adapters))
