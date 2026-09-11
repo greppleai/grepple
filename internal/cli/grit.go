@@ -28,12 +28,11 @@ type gritArgs struct {
 	Remote               bool     `arg:"-R,--remote" help:"also query the remote shard/router and merge with local findings"`
 	Server               string   `arg:"-s,--server" placeholder:"URL" help:"remote shard/router URL (implies --remote)"`
 	QueryFile            string   `arg:"-f,--query-file" placeholder:"PATH" help:"read the GritQL query from PATH (- for stdin)"`
-	Compatibility        string   `arg:"--compatibility" placeholder:"VERSION" help:"structural compatibility version"`
 	PatternID            string   `arg:"--pattern-id" placeholder:"ID" help:"attach a pattern identifier to findings"`
 	Message              string   `arg:"--message" placeholder:"TEXT" help:"attach a message to findings"`
 	JSON                 bool     `arg:"--json" help:"print the complete structural response as JSON"`
 	MaxOutputBytes       int      `arg:"--max-output-bytes" placeholder:"N" help:"cap human-readable output (default 40960; 0 = unlimited; JSON is uncapped)"`
-	ExcludeGlobs         []string `arg:"--exclude-glob,separate" placeholder:"GLOB" help:"exclude a Go path; repeatable"`
+	ExcludeGlobs         []string `arg:"--exclude-glob,separate" placeholder:"GLOB" help:"exclude a source path; repeatable"`
 	Repositories         []string `arg:"--repo,separate" placeholder:"PATTERN" help:"restrict remote repositories; repeatable"`
 	ExcludeRepositories  []string `arg:"--exclude-repo,separate" placeholder:"PATTERN" help:"exclude remote repositories; repeatable"`
 	Skip                 int      `arg:"--skip" placeholder:"N" help:"skip the first N ordered findings"`
@@ -57,11 +56,11 @@ type gritArgs struct {
 }
 
 func (gritArgs) Description() string {
-	return "Run a native gritql-go-v1 structural search over local Go files; add --remote (or --server) to merge remote findings."
+	return "Run native GritQL structural search over local Go, TypeScript, and TSX files; add --remote (or --server) to merge remote findings."
 }
 
 func parseGritArgs(args []string) (gritArgs, error) {
-	values := gritArgs{Compatibility: api.GritCompatibilityV1, Limit: DefaultGritResultLimit, MaxOutputBytes: DefaultTextOutputBytes}
+	values := gritArgs{Limit: DefaultGritResultLimit, MaxOutputBytes: DefaultTextOutputBytes}
 	argumentParser, err := arg.NewParser(arg.Config{Program: "grepple grit"}, &values)
 	if err != nil {
 		return values, err
@@ -95,9 +94,6 @@ func validateGritQuerySelection(values gritArgs) error {
 	}
 	if values.Query == "" && values.QueryFile == "" {
 		return fmt.Errorf("grit requires query text or --query-file")
-	}
-	if values.Compatibility != api.GritCompatibilityV1 && values.Compatibility != api.GritMultilingualCompatibilityV1 {
-		return fmt.Errorf("unsupported structural compatibility %q", values.Compatibility)
 	}
 	if values.Local && (values.Remote || values.Server != "") {
 		return fmt.Errorf("--local cannot be combined with --remote or --server")
@@ -255,13 +251,6 @@ func compileGritQuery(values gritArgs) (string, *gritql.Program, error) {
 	if err != nil {
 		return "", nil, formatGritCompileError(err)
 	}
-	compatibility := values.Compatibility
-	if compatibility == "" {
-		compatibility = api.GritCompatibilityV1
-	}
-	if compatibility != program.Compatibility() {
-		return "", nil, fmt.Errorf("query language requires structural compatibility %q", program.Compatibility())
-	}
 	return query, program, nil
 }
 
@@ -335,7 +324,7 @@ func outputGritResponse(values gritArgs, response api.GritResponse) error {
 func gritRequest(values gritArgs, query string) api.GritRequest {
 	skip, limit := values.Skip, values.Limit
 	request := api.GritRequest{
-		Query: query, Compatibility: values.Compatibility, PatternID: values.PatternID, Message: values.Message,
+		Query: query, Compatibility: api.GritCompatibilityV1, PatternID: values.PatternID, Message: values.Message,
 		Globs: append([]string(nil), values.Globs...), ExcludeGlobs: append([]string(nil), values.ExcludeGlobs...),
 		Repositories: append([]string(nil), values.Repositories...), ExcludeRepositories: append([]string(nil), values.ExcludeRepositories...),
 		Skip: &skip, Limit: &limit,

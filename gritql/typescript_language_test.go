@@ -45,7 +45,7 @@ func assertLanguageEvaluation(t *testing.T, test languageEvaluationCase) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if program.Language() != test.language || program.Compatibility() != MultilingualCompatibility {
+	if program.Language() != test.language || program.Compatibility() != Compatibility {
 		t.Fatalf("program language=%q compatibility=%q", program.Language(), program.Compatibility())
 	}
 	result := EvaluateFile(context.Background(), program, FileInput{Path: test.path, Content: []byte(test.source)}, EvaluateOptions{})
@@ -111,10 +111,10 @@ func TestTypeScriptUsesSharedQueryAlgebraAndBindingEquality(t *testing.T) {
 	}
 }
 
-func TestTypeScriptMalformedQueryNamesMultilingualContract(t *testing.T) {
+func TestTypeScriptMalformedQueryNamesUnifiedContract(t *testing.T) {
 	t.Parallel()
 	_, err := Compile([]byte("language typescript\n`unterminated"), CompileOptions{})
-	if err == nil || !strings.Contains(err.Error(), MultilingualCompatibility) {
+	if err == nil || !strings.Contains(err.Error(), Compatibility) {
 		t.Fatalf("compile error=%v", err)
 	}
 }
@@ -155,7 +155,7 @@ func TestTypeScriptScannerDetectsCanonicalExtensions(t *testing.T) {
 		t.Fatalf("findings=%d stats=%#v diagnostics=%v", len(result.Findings()), result.Stats(), result.Diagnostics())
 	}
 	metadata := result.Metadata()
-	if metadata.Contract != MultilingualCompatibility || metadata.Language != "typescript" || metadata.Grammar != TypeScriptGrammar || metadata.GoGrammar != "" || metadata.TreeSitterGrammar != TreeSitterTypeScriptGrammar {
+	if metadata.Contract != Compatibility || metadata.Language != "typescript" || metadata.Grammar != TypeScriptGrammar || metadata.GoGrammar != "" || metadata.TreeSitterGrammar != TreeSitterTypeScriptGrammar {
 		t.Fatalf("metadata=%#v", metadata)
 	}
 }

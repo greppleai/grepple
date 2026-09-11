@@ -114,7 +114,7 @@ func normalizeStructuralRequest(rule *api.Rule) error {
 	return nil
 }
 func supportedStructuralCompatibility(compatibility string) bool {
-	return compatibility == api.GritCompatibilityV1 || compatibility == api.GritMultilingualCompatibilityV1
+	return compatibility == api.GritCompatibilityV1
 }
 
 func validateStructuralRequest(request api.GritRequest) error {

@@ -310,7 +310,6 @@ func evaluationMetadataForProgram(options EvaluateOptions, program *Program) Eva
 			metadata.Limits.ParseDepth = program.compileLimits.MaxDepth
 		}
 		if adapter, ok := targetLanguageByID(program.Language()); ok {
-			metadata.Contract = adapter.compatibility
 			metadata.Language = adapter.metadataLanguage
 			metadata.Grammar = adapter.metadataGrammar
 			metadata.GoGrammar = adapter.goGrammar
@@ -520,7 +519,7 @@ func documentEvaluationErrorDiagnostics(err error, patternID, normalizedPath str
 
 func normalizeFinding(pathValue, language, patternID, message, source string, match EvaluationMatch) Finding {
 	adapter, _ := targetLanguageByID(language)
-	f := Finding{path: pathValue, language: language, compatibility: adapter.compatibility, grammar: adapter.grammar, rng: match.Range(), patternID: patternID, message: message}
+	f := Finding{path: pathValue, language: language, compatibility: Compatibility, grammar: adapter.grammar, rng: match.Range(), patternID: patternID, message: message}
 	if f.rng.StartByte >= 0 && f.rng.EndByte >= f.rng.StartByte && f.rng.EndByte <= len(source) {
 		f.text = strings.Clone(source[f.rng.StartByte:f.rng.EndByte])
 	}

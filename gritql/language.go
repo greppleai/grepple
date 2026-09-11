@@ -14,7 +14,6 @@ const (
 // query algebra, matcher, evaluator, and diagnostics remain language-neutral.
 type targetLanguageAdapter struct {
 	id               string
-	compatibility    string
 	grammar          string
 	treeSitter       string
 	metadataLanguage string
@@ -35,7 +34,6 @@ func compileGoTemplates(decoded decodedSnippet, maxDepth int) ([]Template, strin
 var targetLanguageAdapters = map[string]targetLanguageAdapter{
 	defaultTargetLanguage: {
 		id:               defaultTargetLanguage,
-		compatibility:    Compatibility,
 		grammar:          GoGrammar,
 		treeSitter:       TreeSitterGoGrammar,
 		goGrammar:        GoGrammar,
@@ -44,7 +42,6 @@ var targetLanguageAdapters = map[string]targetLanguageAdapter{
 	},
 	"typescript": {
 		id:               "typescript",
-		compatibility:    MultilingualCompatibility,
 		grammar:          TypeScriptGrammar,
 		treeSitter:       TreeSitterTypeScriptGrammar,
 		metadataLanguage: "typescript",
@@ -54,7 +51,6 @@ var targetLanguageAdapters = map[string]targetLanguageAdapter{
 	},
 	"tsx": {
 		id:               "tsx",
-		compatibility:    MultilingualCompatibility,
 		grammar:          TSXGrammar,
 		treeSitter:       TreeSitterTypeScriptGrammar,
 		metadataLanguage: "tsx",

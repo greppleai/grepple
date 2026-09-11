@@ -27,13 +27,13 @@ func TestNormalizeStructuralRuleCompilesAndPreservesCanonicalSource(t *testing.T
 }
 func TestNormalizeTypeScriptStructuralRule(t *testing.T) {
 	request := &api.GritRequest{
-		Query: "language typescript\n`target($value)`", Compatibility: api.GritMultilingualCompatibilityV1, Globs: []string{"**/*.ts"},
+		Query: "language typescript\n`target($value)`", Compatibility: api.GritCompatibilityV1, Globs: []string{"**/*.ts"},
 	}
 	rule, err := Normalize(api.Rule{ID: "typescript-calls", Engine: api.RuleEngineGritQL, Structural: request})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if rule.Structural.Compatibility != api.GritMultilingualCompatibilityV1 || rule.Structural.Query != request.Query {
+	if rule.Structural.Compatibility != api.GritCompatibilityV1 || rule.Structural.Query != request.Query {
 		t.Fatalf("rule=%#v", rule)
 	}
 }

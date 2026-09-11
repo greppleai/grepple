@@ -60,7 +60,7 @@ func TestMetadataMatchesCanonicalContractAndEveryDefaultLimit(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := `{"contract":"gritql-go-v1","go_grammar":"go1.25","limits":{"pattern_bytes":262144,"source_bytes":10485760,"parse_depth":256,"candidates":250000,"ast_steps":10000000,"findings":10000,"file_time_ms":2000,"batch_time_ms":30000,"memory_bytes":134217728,"regex_bytes":16384,"regex_instructions":100000}}`
+	want := `{"contract":"gritql-v1","go_grammar":"go1.25","limits":{"pattern_bytes":262144,"source_bytes":10485760,"parse_depth":256,"candidates":250000,"ast_steps":10000000,"findings":10000,"file_time_ms":2000,"batch_time_ms":30000,"memory_bytes":134217728,"regex_bytes":16384,"regex_instructions":100000}}`
 	if string(encoded) != want {
 		t.Fatalf("metadata=%s\nwant=%s", encoded, want)
 	}

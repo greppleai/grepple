@@ -20,12 +20,12 @@
     "declarations": 117,
     "exportedTypes": 48,
     "internalTypes": 69,
-    "members": 619,
+    "members": 618,
     "exportedFunctions": 17,
     "fiberRoutes": 0,
     "relations": 317
   },
-  "semanticModelDigest": "sha256:fd583a343ca1c08d86060da12586359e53a5660925278429876a7a86e7a4c313",
+  "semanticModelDigest": "sha256:ca13813ecb45956569ea1cfc1939e0ff866dc1949bfd2a4ab40baa03e371f03f",
   "sourceFiles": [
     {
       "path": "gritql/anchor.go"
@@ -292,57 +292,57 @@
       "name": "CompileError",
       "kind": "struct",
       "file": "gritql/compiler.go",
-      "line": 54,
-      "endLine": 60,
+      "line": 55,
+      "endLine": 61,
       "underlyingType": "struct{Code string;Class string;Message string;Range*Range;cause error;}",
       "members": [
         {
           "name": "Error",
           "kind": "method",
-          "line": 62,
-          "endLine": 62,
+          "line": 63,
+          "endLine": 63,
           "result": "string"
         },
         {
           "name": "Unwrap",
           "kind": "method",
-          "line": 63,
-          "endLine": 63,
+          "line": 64,
+          "endLine": 64,
           "result": "error"
         },
         {
           "name": "Class",
-          "kind": "property",
-          "line": 56,
-          "endLine": 56,
-          "result": "string"
-        },
-        {
-          "name": "Code",
-          "kind": "property",
-          "line": 55,
-          "endLine": 55,
-          "result": "string"
-        },
-        {
-          "name": "Message",
           "kind": "property",
           "line": 57,
           "endLine": 57,
           "result": "string"
         },
         {
-          "name": "Range",
+          "name": "Code",
+          "kind": "property",
+          "line": 56,
+          "endLine": 56,
+          "result": "string"
+        },
+        {
+          "name": "Message",
           "kind": "property",
           "line": 58,
           "endLine": 58,
+          "result": "string"
+        },
+        {
+          "name": "Range",
+          "kind": "property",
+          "line": 59,
+          "endLine": 59,
           "result": "*Range"
         },
         {
           "name": "cause",
           "kind": "property",
-          "line": 59,
-          "endLine": 59,
+          "line": 60,
+          "endLine": 60,
           "result": "error"
         }
       ]
@@ -351,36 +351,36 @@
       "name": "CompileOptions",
       "kind": "struct",
       "file": "gritql/compiler.go",
-      "line": 35,
-      "endLine": 40,
+      "line": 36,
+      "endLine": 41,
       "underlyingType": "struct{MaxPatternBytes int;MaxRegexBytes int;MaxRegexInstructions int;MaxDepth int;}",
       "members": [
         {
           "name": "MaxDepth",
           "kind": "property",
-          "line": 39,
-          "endLine": 39,
+          "line": 40,
+          "endLine": 40,
           "result": "int"
         },
         {
           "name": "MaxPatternBytes",
-          "kind": "property",
-          "line": 36,
-          "endLine": 36,
-          "result": "int"
-        },
-        {
-          "name": "MaxRegexBytes",
           "kind": "property",
           "line": 37,
           "endLine": 37,
           "result": "int"
         },
         {
-          "name": "MaxRegexInstructions",
+          "name": "MaxRegexBytes",
           "kind": "property",
           "line": 38,
           "endLine": 38,
+          "result": "int"
+        },
+        {
+          "name": "MaxRegexInstructions",
+          "kind": "property",
+          "line": 39,
+          "endLine": 39,
           "result": "int"
         }
       ]
@@ -389,36 +389,36 @@
       "name": "Constraint",
       "kind": "struct",
       "file": "gritql/compiler.go",
-      "line": 228,
-      "endLine": 228,
+      "line": 229,
+      "endLine": 229,
       "underlyingType": "struct{c*constraint}",
       "members": [
         {
           "name": "LHS",
           "kind": "method",
-          "line": 231,
-          "endLine": 236,
+          "line": 232,
+          "endLine": 237,
           "result": "VariableRef"
         },
         {
           "name": "RHS",
           "kind": "method",
-          "line": 239,
-          "endLine": 244,
+          "line": 240,
+          "endLine": 245,
           "result": "Expression"
         },
         {
           "name": "Range",
           "kind": "method",
-          "line": 247,
-          "endLine": 252,
+          "line": 248,
+          "endLine": 253,
           "result": "Range"
         },
         {
           "name": "c",
           "kind": "property",
-          "line": 228,
-          "endLine": 228,
+          "line": 229,
+          "endLine": 229,
           "result": "*constraint"
         }
       ]
@@ -955,36 +955,36 @@
       "name": "Expression",
       "kind": "struct",
       "file": "gritql/compiler.go",
-      "line": 147,
-      "endLine": 147,
+      "line": 148,
+      "endLine": 148,
       "underlyingType": "struct{e*expression}",
       "members": [
         {
           "name": "Children",
           "kind": "method",
-          "line": 199,
-          "endLine": 208,
+          "line": 200,
+          "endLine": 209,
           "result": "[]Expression"
         },
         {
           "name": "Constraints",
           "kind": "method",
-          "line": 211,
-          "endLine": 220,
+          "line": 212,
+          "endLine": 221,
           "result": "[]Constraint"
         },
         {
           "name": "Kind",
           "kind": "method",
-          "line": 150,
-          "endLine": 155,
+          "line": 151,
+          "endLine": 156,
           "result": "Kind"
         },
         {
           "name": "MatchRegex",
           "kind": "method",
-          "line": 223,
-          "endLine": 225,
+          "line": 224,
+          "endLine": 226,
           "parameters": [
             "string"
           ],
@@ -993,43 +993,43 @@
         {
           "name": "Range",
           "kind": "method",
-          "line": 158,
-          "endLine": 163,
+          "line": 159,
+          "endLine": 164,
           "result": "Range"
         },
         {
           "name": "Template",
           "kind": "method",
-          "line": 175,
-          "endLine": 180,
+          "line": 176,
+          "endLine": 181,
           "result": "Template"
         },
         {
           "name": "Templates",
           "kind": "method",
-          "line": 183,
-          "endLine": 188,
+          "line": 184,
+          "endLine": 189,
           "result": "[]Template"
         },
         {
           "name": "Text",
           "kind": "method",
-          "line": 166,
-          "endLine": 171,
+          "line": 167,
+          "endLine": 172,
           "result": "string"
         },
         {
           "name": "Variables",
           "kind": "method",
-          "line": 191,
-          "endLine": 196,
+          "line": 192,
+          "endLine": 197,
           "result": "[]VariableRef"
         },
         {
           "name": "e",
           "kind": "property",
-          "line": 147,
-          "endLine": 147,
+          "line": 148,
+          "endLine": 148,
           "result": "*expression"
         }
       ]
@@ -1038,15 +1038,15 @@
       "name": "FeatureSet",
       "kind": "type",
       "file": "gritql/compiler.go",
-      "line": 109,
-      "endLine": 109,
+      "line": 110,
+      "endLine": 110,
       "underlyingType": "uint32",
       "members": [
         {
           "name": "Has",
           "kind": "method",
-          "line": 126,
-          "endLine": 126,
+          "line": 127,
+          "endLine": 127,
           "parameters": [
             "FeatureSet"
           ],
@@ -1448,15 +1448,15 @@
       "name": "Kind",
       "kind": "type",
       "file": "gritql/compiler.go",
-      "line": 85,
-      "endLine": 85,
+      "line": 86,
+      "endLine": 86,
       "underlyingType": "uint8",
       "members": [
         {
           "name": "String",
           "kind": "method",
-          "line": 100,
-          "endLine": 106,
+          "line": 101,
+          "endLine": 107,
           "result": "string"
         }
       ]
@@ -1465,22 +1465,22 @@
       "name": "LanguageDeclaration",
       "kind": "struct",
       "file": "gritql/compiler.go",
-      "line": 255,
-      "endLine": 258,
+      "line": 256,
+      "endLine": 259,
       "underlyingType": "struct{Name string;Range Range;}",
       "members": [
         {
           "name": "Name",
           "kind": "property",
-          "line": 256,
-          "endLine": 256,
+          "line": 257,
+          "endLine": 257,
           "result": "string"
         },
         {
           "name": "Range",
           "kind": "property",
-          "line": 257,
-          "endLine": 257,
+          "line": 258,
+          "endLine": 258,
           "result": "Range"
         }
       ]
@@ -1631,22 +1631,22 @@
       "name": "Position",
       "kind": "struct",
       "file": "gritql/compiler.go",
-      "line": 21,
-      "endLine": 24,
+      "line": 22,
+      "endLine": 25,
       "underlyingType": "struct{Line int;Column int;}",
       "members": [
         {
           "name": "Column",
           "kind": "property",
-          "line": 23,
-          "endLine": 23,
+          "line": 24,
+          "endLine": 24,
           "result": "int"
         },
         {
           "name": "Line",
           "kind": "property",
-          "line": 22,
-          "endLine": 22,
+          "line": 23,
+          "endLine": 23,
           "result": "int"
         }
       ]
@@ -1655,106 +1655,106 @@
       "name": "Program",
       "kind": "struct",
       "file": "gritql/compiler.go",
-      "line": 261,
-      "endLine": 269,
+      "line": 262,
+      "endLine": 270,
       "underlyingType": "struct{declaration LanguageDeclaration;adapter targetLanguageAdapter;rng Range;root*expression;variables[]Variable;features FeatureSet;compileLimits CompileOptions;}",
       "members": [
         {
           "name": "Compatibility",
           "kind": "method",
-          "line": 272,
-          "endLine": 277,
+          "line": 273,
+          "endLine": 273,
           "result": "string"
         },
         {
           "name": "Declaration",
           "kind": "method",
-          "line": 288,
-          "endLine": 293,
+          "line": 284,
+          "endLine": 289,
           "result": "LanguageDeclaration"
         },
         {
           "name": "Features",
           "kind": "method",
-          "line": 320,
-          "endLine": 325,
+          "line": 316,
+          "endLine": 321,
           "result": "FeatureSet"
         },
         {
           "name": "Language",
           "kind": "method",
-          "line": 280,
-          "endLine": 285,
+          "line": 276,
+          "endLine": 281,
           "result": "string"
         },
         {
           "name": "Range",
           "kind": "method",
-          "line": 296,
-          "endLine": 301,
+          "line": 292,
+          "endLine": 297,
           "result": "Range"
         },
         {
           "name": "Root",
           "kind": "method",
-          "line": 304,
-          "endLine": 309,
+          "line": 300,
+          "endLine": 305,
           "result": "Expression"
         },
         {
           "name": "Variables",
           "kind": "method",
-          "line": 312,
-          "endLine": 317,
+          "line": 308,
+          "endLine": 313,
           "result": "[]Variable"
         },
         {
           "name": "adapter",
           "kind": "property",
-          "line": 263,
-          "endLine": 263,
+          "line": 264,
+          "endLine": 264,
           "result": "targetLanguageAdapter"
         },
         {
           "name": "compileLimits",
           "kind": "property",
-          "line": 268,
-          "endLine": 268,
+          "line": 269,
+          "endLine": 269,
           "result": "CompileOptions"
         },
         {
           "name": "declaration",
           "kind": "property",
-          "line": 262,
-          "endLine": 262,
+          "line": 263,
+          "endLine": 263,
           "result": "LanguageDeclaration"
         },
         {
           "name": "features",
           "kind": "property",
-          "line": 267,
-          "endLine": 267,
+          "line": 268,
+          "endLine": 268,
           "result": "FeatureSet"
         },
         {
           "name": "rng",
           "kind": "property",
-          "line": 264,
-          "endLine": 264,
+          "line": 265,
+          "endLine": 265,
           "result": "Range"
         },
         {
           "name": "root",
           "kind": "property",
-          "line": 265,
-          "endLine": 265,
+          "line": 266,
+          "endLine": 266,
           "result": "*expression"
         },
         {
           "name": "variables",
           "kind": "property",
-          "line": 266,
-          "endLine": 266,
+          "line": 267,
+          "endLine": 267,
           "result": "[]Variable"
         }
       ]
@@ -1818,36 +1818,36 @@
       "name": "Range",
       "kind": "struct",
       "file": "gritql/compiler.go",
-      "line": 27,
-      "endLine": 32,
+      "line": 28,
+      "endLine": 33,
       "underlyingType": "struct{StartByte int;EndByte int;Start Position;End Position;}",
       "members": [
         {
           "name": "End",
+          "kind": "property",
+          "line": 32,
+          "endLine": 32,
+          "result": "Position"
+        },
+        {
+          "name": "EndByte",
+          "kind": "property",
+          "line": 30,
+          "endLine": 30,
+          "result": "int"
+        },
+        {
+          "name": "Start",
           "kind": "property",
           "line": 31,
           "endLine": 31,
           "result": "Position"
         },
         {
-          "name": "EndByte",
+          "name": "StartByte",
           "kind": "property",
           "line": 29,
           "endLine": 29,
-          "result": "int"
-        },
-        {
-          "name": "Start",
-          "kind": "property",
-          "line": 30,
-          "endLine": 30,
-          "result": "Position"
-        },
-        {
-          "name": "StartByte",
-          "kind": "property",
-          "line": 28,
-          "endLine": 28,
           "result": "int"
         }
       ]
@@ -2459,29 +2459,29 @@
       "name": "Variable",
       "kind": "struct",
       "file": "gritql/compiler.go",
-      "line": 70,
-      "endLine": 74,
+      "line": 71,
+      "endLine": 75,
       "underlyingType": "struct{ID VariableID;Name string;Range Range;}",
       "members": [
         {
           "name": "ID",
           "kind": "property",
-          "line": 71,
-          "endLine": 71,
+          "line": 72,
+          "endLine": 72,
           "result": "VariableID"
         },
         {
           "name": "Name",
           "kind": "property",
-          "line": 72,
-          "endLine": 72,
+          "line": 73,
+          "endLine": 73,
           "result": "string"
         },
         {
           "name": "Range",
           "kind": "property",
-          "line": 73,
-          "endLine": 73,
+          "line": 74,
+          "endLine": 74,
           "result": "Range"
         }
       ]
@@ -2490,44 +2490,44 @@
       "name": "VariableID",
       "kind": "type",
       "file": "gritql/compiler.go",
-      "line": 67,
-      "endLine": 67,
+      "line": 68,
+      "endLine": 68,
       "underlyingType": "uint32"
     },
     {
       "name": "VariableRef",
       "kind": "struct",
       "file": "gritql/compiler.go",
-      "line": 77,
-      "endLine": 82,
+      "line": 78,
+      "endLine": 83,
       "underlyingType": "struct{ID VariableID;Name string;Anonymous bool;Range Range;}",
       "members": [
         {
           "name": "Anonymous",
           "kind": "property",
-          "line": 80,
-          "endLine": 80,
+          "line": 81,
+          "endLine": 81,
           "result": "bool"
         },
         {
           "name": "ID",
           "kind": "property",
-          "line": 78,
-          "endLine": 78,
+          "line": 79,
+          "endLine": 79,
           "result": "VariableID"
         },
         {
           "name": "Name",
           "kind": "property",
-          "line": 79,
-          "endLine": 79,
+          "line": 80,
+          "endLine": 80,
           "result": "string"
         },
         {
           "name": "Range",
           "kind": "property",
-          "line": 81,
-          "endLine": 81,
+          "line": 82,
+          "endLine": 82,
           "result": "Range"
         }
       ]
@@ -2609,29 +2609,29 @@
       "name": "constraint",
       "kind": "struct",
       "file": "gritql/compiler.go",
-      "line": 140,
-      "endLine": 144,
+      "line": 141,
+      "endLine": 145,
       "underlyingType": "struct{lhs VariableRef;rhs*expression;rng Range;}",
       "members": [
         {
           "name": "lhs",
           "kind": "property",
-          "line": 141,
-          "endLine": 141,
+          "line": 142,
+          "endLine": 142,
           "result": "VariableRef"
         },
         {
           "name": "rhs",
           "kind": "property",
-          "line": 142,
-          "endLine": 142,
+          "line": 143,
+          "endLine": 143,
           "result": "*expression"
         },
         {
           "name": "rng",
           "kind": "property",
-          "line": 143,
-          "endLine": 143,
+          "line": 144,
+          "endLine": 144,
           "result": "Range"
         }
       ]
@@ -2886,71 +2886,71 @@
       "name": "expression",
       "kind": "struct",
       "file": "gritql/compiler.go",
-      "line": 128,
-      "endLine": 138,
+      "line": 129,
+      "endLine": 139,
       "underlyingType": "struct{kind Kind;rng Range;text string;refs[]VariableRef;children[]*expression;constraints[]constraint;re*regexp.Regexp;template Template;templates[]Template;}",
       "members": [
         {
           "name": "children",
           "kind": "property",
-          "line": 133,
-          "endLine": 133,
+          "line": 134,
+          "endLine": 134,
           "result": "[]*expression"
         },
         {
           "name": "constraints",
           "kind": "property",
-          "line": 134,
-          "endLine": 134,
+          "line": 135,
+          "endLine": 135,
           "result": "[]constraint"
         },
         {
           "name": "kind",
           "kind": "property",
-          "line": 129,
-          "endLine": 129,
+          "line": 130,
+          "endLine": 130,
           "result": "Kind"
         },
         {
           "name": "re",
           "kind": "property",
-          "line": 135,
-          "endLine": 135,
+          "line": 136,
+          "endLine": 136,
           "result": "*regexp.Regexp"
         },
         {
           "name": "refs",
           "kind": "property",
-          "line": 132,
-          "endLine": 132,
+          "line": 133,
+          "endLine": 133,
           "result": "[]VariableRef"
         },
         {
           "name": "rng",
           "kind": "property",
-          "line": 130,
-          "endLine": 130,
+          "line": 131,
+          "endLine": 131,
           "result": "Range"
         },
         {
           "name": "template",
           "kind": "property",
-          "line": 136,
-          "endLine": 136,
+          "line": 137,
+          "endLine": 137,
           "result": "Template"
         },
         {
           "name": "templates",
           "kind": "property",
-          "line": 137,
-          "endLine": 137,
+          "line": 138,
+          "endLine": 138,
           "result": "[]Template"
         },
         {
           "name": "text",
           "kind": "property",
-          "line": 131,
-          "endLine": 131,
+          "line": 132,
+          "endLine": 132,
           "result": "string"
         }
       ]
@@ -3705,35 +3705,35 @@
         {
           "name": "bytes",
           "kind": "method",
-          "line": 179,
-          "endLine": 189,
+          "line": 173,
+          "endLine": 183,
           "result": "[]byte"
         },
         {
           "name": "close",
           "kind": "method",
-          "line": 163,
-          "endLine": 177
+          "line": 157,
+          "endLine": 171
         },
         {
           "name": "diagnostics",
           "kind": "method",
-          "line": 215,
-          "endLine": 243,
+          "line": 209,
+          "endLine": 237,
           "result": "[]queryParseDiagnostic"
         },
         {
           "name": "hasUnsupportedConstruct",
           "kind": "method",
-          "line": 260,
-          "endLine": 283,
+          "line": 254,
+          "endLine": 277,
           "result": "bool"
         },
         {
           "name": "rangeForBytes",
           "kind": "method",
-          "line": 203,
-          "endLine": 213,
+          "line": 197,
+          "endLine": 207,
           "parameters": [
             "int",
             "int"
@@ -3743,8 +3743,8 @@
         {
           "name": "root",
           "kind": "method",
-          "line": 191,
-          "endLine": 201,
+          "line": 185,
+          "endLine": 195,
           "result": "queryNode"
         },
         {
@@ -3803,15 +3803,15 @@
         {
           "name": "byteRange",
           "kind": "method",
-          "line": 384,
-          "endLine": 390,
+          "line": 378,
+          "endLine": 384,
           "result": "queryRange"
         },
         {
           "name": "childByFieldName",
           "kind": "method",
-          "line": 392,
-          "endLine": 400,
+          "line": 386,
+          "endLine": 394,
           "parameters": [
             "string"
           ],
@@ -3820,64 +3820,64 @@
         {
           "name": "children",
           "kind": "method",
-          "line": 402,
-          "endLine": 413,
+          "line": 396,
+          "endLine": 407,
           "result": "[]queryNode"
         },
         {
           "name": "error",
-          "kind": "method",
-          "line": 359,
-          "endLine": 363,
-          "result": "bool"
-        },
-        {
-          "name": "extra",
           "kind": "method",
           "line": 353,
           "endLine": 357,
           "result": "bool"
         },
         {
-          "name": "fieldName",
-          "kind": "method",
-          "line": 371,
-          "endLine": 371,
-          "result": "string"
-        },
-        {
-          "name": "kind",
-          "kind": "method",
-          "line": 341,
-          "endLine": 345,
-          "result": "string"
-        },
-        {
-          "name": "missing",
-          "kind": "method",
-          "line": 365,
-          "endLine": 369,
-          "result": "bool"
-        },
-        {
-          "name": "named",
+          "name": "extra",
           "kind": "method",
           "line": 347,
           "endLine": 351,
           "result": "bool"
         },
         {
+          "name": "fieldName",
+          "kind": "method",
+          "line": 365,
+          "endLine": 365,
+          "result": "string"
+        },
+        {
+          "name": "kind",
+          "kind": "method",
+          "line": 335,
+          "endLine": 339,
+          "result": "string"
+        },
+        {
+          "name": "missing",
+          "kind": "method",
+          "line": 359,
+          "endLine": 363,
+          "result": "bool"
+        },
+        {
+          "name": "named",
+          "kind": "method",
+          "line": 341,
+          "endLine": 345,
+          "result": "bool"
+        },
+        {
           "name": "namedChildren",
           "kind": "method",
-          "line": 415,
-          "endLine": 426,
+          "line": 409,
+          "endLine": 420,
           "result": "[]queryNode"
         },
         {
           "name": "read",
           "kind": "method",
-          "line": 324,
-          "endLine": 333,
+          "line": 318,
+          "endLine": 327,
           "parameters": [
             "func()"
           ]
@@ -3885,22 +3885,22 @@
         {
           "name": "sexp",
           "kind": "method",
-          "line": 428,
-          "endLine": 432,
+          "line": 422,
+          "endLine": 426,
           "result": "string"
         },
         {
           "name": "text",
           "kind": "method",
-          "line": 373,
-          "endLine": 382,
+          "line": 367,
+          "endLine": 376,
           "result": "string"
         },
         {
           "name": "valid",
           "kind": "method",
-          "line": 335,
-          "endLine": 339,
+          "line": 329,
+          "endLine": 333,
           "result": "bool"
         },
         {
@@ -5184,35 +5184,28 @@
       "kind": "struct",
       "file": "gritql/language.go",
       "line": 15,
-      "endLine": 25,
-      "underlyingType": "struct{id string;compatibility string;grammar string;treeSitter string;metadataLanguage string;metadataGrammar string;goGrammar string;compileTemplates func(decodedSnippet,int)([]Template,string,error);rootCategory func(SnippetContext,string)bool;}",
+      "endLine": 24,
+      "underlyingType": "struct{id string;grammar string;treeSitter string;metadataLanguage string;metadataGrammar string;goGrammar string;compileTemplates func(decodedSnippet,int)([]Template,string,error);rootCategory func(SnippetContext,string)bool;}",
       "members": [
-        {
-          "name": "compatibility",
-          "kind": "property",
-          "line": 17,
-          "endLine": 17,
-          "result": "string"
-        },
         {
           "name": "compileTemplates",
           "kind": "property",
-          "line": 23,
-          "endLine": 23,
+          "line": 22,
+          "endLine": 22,
           "result": "func(decodedSnippet,int)([]Template,string,error)"
         },
         {
           "name": "goGrammar",
           "kind": "property",
-          "line": 22,
-          "endLine": 22,
+          "line": 21,
+          "endLine": 21,
           "result": "string"
         },
         {
           "name": "grammar",
           "kind": "property",
-          "line": 18,
-          "endLine": 18,
+          "line": 17,
+          "endLine": 17,
           "result": "string"
         },
         {
@@ -5225,29 +5218,29 @@
         {
           "name": "metadataGrammar",
           "kind": "property",
-          "line": 21,
-          "endLine": 21,
-          "result": "string"
-        },
-        {
-          "name": "metadataLanguage",
-          "kind": "property",
           "line": 20,
           "endLine": 20,
           "result": "string"
         },
         {
+          "name": "metadataLanguage",
+          "kind": "property",
+          "line": 19,
+          "endLine": 19,
+          "result": "string"
+        },
+        {
           "name": "rootCategory",
           "kind": "property",
-          "line": 24,
-          "endLine": 24,
+          "line": 23,
+          "endLine": 23,
           "result": "func(SnippetContext,string)bool"
         },
         {
           "name": "treeSitter",
           "kind": "property",
-          "line": 19,
-          "endLine": 19,
+          "line": 18,
+          "endLine": 18,
           "result": "string"
         }
       ]
@@ -5511,15 +5504,15 @@
       "name": "treeCompiler",
       "kind": "struct",
       "file": "gritql/compiler.go",
-      "line": 470,
-      "endLine": 478,
+      "line": 466,
+      "endLine": 474,
       "underlyingType": "struct{doc*queryDocument;options CompileOptions;names map[string]VariableID;variables[]Variable;features FeatureSet;adapter targetLanguageAdapter;languageRange Range;}",
       "members": [
         {
           "name": "acceptDocumentField",
           "kind": "method",
-          "line": 415,
-          "endLine": 426,
+          "line": 411,
+          "endLine": 422,
           "parameters": [
             "queryNode",
             "*queryNode",
@@ -5530,8 +5523,8 @@
         {
           "name": "closedFailure",
           "kind": "method",
-          "line": 919,
-          "endLine": 921,
+          "line": 915,
+          "endLine": 917,
           "parameters": [
             "string"
           ],
@@ -5540,8 +5533,8 @@
         {
           "name": "compileBlock",
           "kind": "method",
-          "line": 721,
-          "endLine": 735,
+          "line": 717,
+          "endLine": 731,
           "parameters": [
             "queryNode",
             "Kind",
@@ -5553,8 +5546,8 @@
         {
           "name": "compileBlockChildren",
           "kind": "method",
-          "line": 737,
-          "endLine": 759,
+          "line": 733,
+          "endLine": 755,
           "parameters": [
             "[]queryNode",
             "string"
@@ -5564,8 +5557,8 @@
         {
           "name": "compileConstraint",
           "kind": "method",
-          "line": 852,
-          "endLine": 867,
+          "line": 848,
+          "endLine": 863,
           "parameters": [
             "queryNode"
           ],
@@ -5574,8 +5567,8 @@
         {
           "name": "compileConstraintBlock",
           "kind": "method",
-          "line": 813,
-          "endLine": 826,
+          "line": 809,
+          "endLine": 822,
           "parameters": [
             "queryNode"
           ],
@@ -5584,8 +5577,8 @@
         {
           "name": "compileConstraintItems",
           "kind": "method",
-          "line": 828,
-          "endLine": 850,
+          "line": 824,
+          "endLine": 846,
           "parameters": [
             "[]queryNode"
           ],
@@ -5594,8 +5587,8 @@
         {
           "name": "compileDecodedRegex",
           "kind": "method",
-          "line": 699,
-          "endLine": 719,
+          "line": 695,
+          "endLine": 715,
           "parameters": [
             "[]byte"
           ],
@@ -5604,8 +5597,8 @@
         {
           "name": "compileDocumentFields",
           "kind": "method",
-          "line": 394,
-          "endLine": 413,
+          "line": 390,
+          "endLine": 409,
           "parameters": [
             "queryNode",
             "*Range"
@@ -5615,8 +5608,8 @@
         {
           "name": "compileExpression",
           "kind": "method",
-          "line": 502,
-          "endLine": 531,
+          "line": 498,
+          "endLine": 527,
           "parameters": [
             "queryNode",
             "bool"
@@ -5626,8 +5619,8 @@
         {
           "name": "compileLanguage",
           "kind": "method",
-          "line": 480,
-          "endLine": 500,
+          "line": 476,
+          "endLine": 496,
           "parameters": [
             "queryNode"
           ],
@@ -5636,8 +5629,8 @@
         {
           "name": "compileRegex",
           "kind": "method",
-          "line": 616,
-          "endLine": 631,
+          "line": 612,
+          "endLine": 627,
           "parameters": [
             "queryNode"
           ],
@@ -5646,8 +5639,8 @@
         {
           "name": "compileSnippet",
           "kind": "method",
-          "line": 533,
-          "endLine": 552,
+          "line": 529,
+          "endLine": 548,
           "parameters": [
             "queryNode"
           ],
@@ -5656,8 +5649,8 @@
         {
           "name": "compileUnary",
           "kind": "method",
-          "line": 761,
-          "endLine": 779,
+          "line": 757,
+          "endLine": 775,
           "parameters": [
             "queryNode",
             "Kind",
@@ -5669,8 +5662,8 @@
         {
           "name": "compileWhere",
           "kind": "method",
-          "line": 781,
-          "endLine": 799,
+          "line": 777,
+          "endLine": 795,
           "parameters": [
             "queryNode"
           ],
@@ -5679,8 +5672,8 @@
         {
           "name": "decodeRegex",
           "kind": "method",
-          "line": 646,
-          "endLine": 663,
+          "line": 642,
+          "endLine": 659,
           "parameters": [
             "[]byte"
           ],
@@ -5689,8 +5682,8 @@
         {
           "name": "decodeRegexEscape",
           "kind": "method",
-          "line": 665,
-          "endLine": 680,
+          "line": 661,
+          "endLine": 676,
           "parameters": [
             "[]byte",
             "int",
@@ -5701,8 +5694,8 @@
         {
           "name": "decodeRegexHexEscape",
           "kind": "method",
-          "line": 682,
-          "endLine": 697,
+          "line": 678,
+          "endLine": 693,
           "parameters": [
             "[]byte",
             "int",
@@ -5713,8 +5706,8 @@
         {
           "name": "decodeSnippet",
           "kind": "method",
-          "line": 567,
-          "endLine": 599,
+          "line": 563,
+          "endLine": 595,
           "parameters": [
             "queryNode"
           ],
@@ -5723,8 +5716,8 @@
         {
           "name": "failure",
           "kind": "method",
-          "line": 923,
-          "endLine": 925,
+          "line": 919,
+          "endLine": 921,
           "parameters": [
             "string",
             "string",
@@ -5736,8 +5729,8 @@
         {
           "name": "regexPayload",
           "kind": "method",
-          "line": 633,
-          "endLine": 644,
+          "line": 629,
+          "endLine": 640,
           "parameters": [
             "queryNode"
           ],
@@ -5746,8 +5739,8 @@
         {
           "name": "snippetLeaf",
           "kind": "method",
-          "line": 554,
-          "endLine": 565,
+          "line": 550,
+          "endLine": 561,
           "parameters": [
             "queryNode"
           ],
@@ -5756,8 +5749,8 @@
         {
           "name": "snippetMetavariableEnd",
           "kind": "method",
-          "line": 601,
-          "endLine": 614,
+          "line": 597,
+          "endLine": 610,
           "parameters": [
             "[]byte",
             "int"
@@ -5767,8 +5760,8 @@
         {
           "name": "variable",
           "kind": "method",
-          "line": 869,
-          "endLine": 882,
+          "line": 865,
+          "endLine": 878,
           "parameters": [
             "string",
             "int",
@@ -5779,8 +5772,8 @@
         {
           "name": "whereChildren",
           "kind": "method",
-          "line": 801,
-          "endLine": 811,
+          "line": 797,
+          "endLine": 807,
           "parameters": [
             "queryNode"
           ],
@@ -5789,50 +5782,50 @@
         {
           "name": "adapter",
           "kind": "property",
-          "line": 476,
-          "endLine": 476,
+          "line": 472,
+          "endLine": 472,
           "result": "targetLanguageAdapter"
         },
         {
           "name": "doc",
           "kind": "property",
-          "line": 471,
-          "endLine": 471,
+          "line": 467,
+          "endLine": 467,
           "result": "*queryDocument"
         },
         {
           "name": "features",
           "kind": "property",
-          "line": 475,
-          "endLine": 475,
+          "line": 471,
+          "endLine": 471,
           "result": "FeatureSet"
         },
         {
           "name": "languageRange",
           "kind": "property",
-          "line": 477,
-          "endLine": 477,
+          "line": 473,
+          "endLine": 473,
           "result": "Range"
         },
         {
           "name": "names",
           "kind": "property",
-          "line": 473,
-          "endLine": 473,
+          "line": 469,
+          "endLine": 469,
           "result": "map[string]VariableID"
         },
         {
           "name": "options",
           "kind": "property",
-          "line": 472,
-          "endLine": 472,
+          "line": 468,
+          "endLine": 468,
           "result": "CompileOptions"
         },
         {
           "name": "variables",
           "kind": "property",
-          "line": 474,
-          "endLine": 474,
+          "line": 470,
+          "endLine": 470,
           "result": "[]Variable"
         }
       ]
@@ -5841,30 +5834,30 @@
       "name": "v1NodeValidator",
       "kind": "type",
       "file": "gritql/query_syntax.go",
-      "line": 646,
-      "endLine": 646,
+      "line": 640,
+      "endLine": 640,
       "underlyingType": "func(queryNode,[]queryNode)bool"
     },
     {
       "name": "v1ValidationWork",
       "kind": "struct",
       "file": "gritql/query_syntax.go",
-      "line": 537,
-      "endLine": 540,
+      "line": 531,
+      "endLine": 534,
       "underlyingType": "struct{node queryNode;depth int;}",
       "members": [
         {
           "name": "depth",
           "kind": "property",
-          "line": 539,
-          "endLine": 539,
+          "line": 533,
+          "endLine": 533,
           "result": "int"
         },
         {
           "name": "node",
           "kind": "property",
-          "line": 538,
-          "endLine": 538,
+          "line": 532,
+          "endLine": 532,
           "result": "queryNode"
         }
       ]
@@ -5873,8 +5866,8 @@
       "name": "variableScope",
       "kind": "type",
       "file": "gritql/compiler.go",
-      "line": 927,
-      "endLine": 927,
+      "line": 923,
+      "endLine": 923,
       "underlyingType": "map[VariableID]bool"
     }
   ],
@@ -5894,8 +5887,8 @@
       "name": "Compile",
       "kind": "function",
       "file": "gritql/compiler.go",
-      "line": 328,
-      "endLine": 359,
+      "line": 324,
+      "endLine": 355,
       "parameters": [
         "[]byte",
         "CompileOptions"
@@ -5934,8 +5927,8 @@
       "name": "EvaluateDocumentFindings",
       "kind": "function",
       "file": "gritql/finding.go",
-      "line": 409,
-      "endLine": 429,
+      "line": 408,
+      "endLine": 428,
       "parameters": [
         "context.Context",
         "*Program",
@@ -5963,8 +5956,8 @@
       "name": "EvaluateFile",
       "kind": "function",
       "file": "gritql/finding.go",
-      "line": 343,
-      "endLine": 387,
+      "line": 342,
+      "endLine": 386,
       "parameters": [
         "context.Context",
         "*Program",

@@ -19,7 +19,7 @@ func TestGritRequestJSONPreservesRequiredAndOptionalFields(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := `{"query":"language go\n` + "`target($x)`" + `","compatibility":"gritql-go-v1","globs":["**/*.go"],"repositories":["acme/repo"],"limits":{"findings":7}}`
+	want := `{"query":"language go\n` + "`target($x)`" + `","compatibility":"gritql-v1","globs":["**/*.go"],"repositories":["acme/repo"],"limits":{"findings":7}}`
 	if string(encoded) != want {
 		t.Fatalf("request JSON=%s want %s", encoded, want)
 	}
@@ -67,7 +67,7 @@ func TestGritResponseJSONUsesStableShapesAndNullableDiagnosticContext(t *testing
 
 func TestGritRequestRejectsMalformedTypedJSON(t *testing.T) {
 	var request GritRequest
-	if err := json.Unmarshal([]byte(`{"query":"language go\n`+"`x`"+`","compatibility":"gritql-go-v1","skip":"one"}`), &request); err == nil {
+	if err := json.Unmarshal([]byte(`{"query":"language go\n`+"`x`"+`","compatibility":"gritql-v1","skip":"one"}`), &request); err == nil {
 		t.Fatal("malformed typed request decoded without error")
 	}
 }
@@ -116,7 +116,7 @@ func TestRuleJSONKeepsLegacyTextShapeAndAddsStructuralDefinition(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if string(structural) != `{"id":"calls","mode":"count","engine":"gritql","request":{},"structural":{"query":"language go\n`+"`x`"+`","compatibility":"gritql-go-v1"}}` {
+	if string(structural) != `{"id":"calls","mode":"count","engine":"gritql","request":{},"structural":{"query":"language go\n`+"`x`"+`","compatibility":"gritql-v1"}}` {
 		t.Fatalf("structural rule JSON=%s", structural)
 	}
 }

@@ -20,7 +20,7 @@ classDiagram
             +Segments: []ResultSegment
         }
         <<struct>> FileResult
-        class GritBinding["GritBinding · api/grit.go:97-103"] {
+        class GritBinding["GritBinding · api/grit.go:98-104"] {
             +Kind: string
             +Name: string
             +Range: GritRange
@@ -28,7 +28,7 @@ classDiagram
             +Structural: []GritStructuralNode
         }
         <<struct>> GritBinding
-        class GritDiagnostic["GritDiagnostic · api/grit.go:120-130"] {
+        class GritDiagnostic["GritDiagnostic · api/grit.go:121-131"] {
             +Class: string
             +Code: string
             +Message: string
@@ -40,7 +40,7 @@ classDiagram
             +Shard: string
         }
         <<struct>> GritDiagnostic
-        class GritEffectiveLimits["GritEffectiveLimits · api/grit.go:143-155"] {
+        class GritEffectiveLimits["GritEffectiveLimits · api/grit.go:144-156"] {
             +ASTSteps: int
             +BatchTimeMillis: int64
             +Candidates: int
@@ -54,7 +54,7 @@ classDiagram
             +SourceBytes: int
         }
         <<struct>> GritEffectiveLimits
-        class GritFinding["GritFinding · api/grit.go:107-116"] {
+        class GritFinding["GritFinding · api/grit.go:108-117"] {
             +Bindings: []GritBinding
             +Language: string
             +Message: string
@@ -65,7 +65,7 @@ classDiagram
             +Text: string
         }
         <<struct>> GritFinding
-        class GritLimits["GritLimits · api/grit.go:54-69"] {
+        class GritLimits["GritLimits · api/grit.go:55-70"] {
             +ASTSteps: *int
             +BatchTimeMillis: *int64
             +Candidates: *int
@@ -82,7 +82,7 @@ classDiagram
             +Workers: *int
         }
         <<struct>> GritLimits
-        class GritMetadata["GritMetadata · api/grit.go:158-164"] {
+        class GritMetadata["GritMetadata · api/grit.go:159-165"] {
             +Compatibility: string
             +GoGrammar: string
             +Grammar: string
@@ -90,19 +90,19 @@ classDiagram
             +Limits: GritEffectiveLimits
         }
         <<struct>> GritMetadata
-        class GritPosition["GritPosition · api/grit.go:72-75"] {
+        class GritPosition["GritPosition · api/grit.go:73-76"] {
             +Column: int
             +Line: int
         }
         <<struct>> GritPosition
-        class GritRange["GritRange · api/grit.go:79-84"] {
+        class GritRange["GritRange · api/grit.go:80-85"] {
             +End: GritPosition
             +EndByte: int
             +Start: GritPosition
             +StartByte: int
         }
         <<struct>> GritRange
-        class GritRequest["GritRequest · api/grit.go:38-50"] {
+        class GritRequest["GritRequest · api/grit.go:39-51"] {
             +Compatibility: string
             +ExcludeGlobs: []string
             +ExcludeRepositories: []string
@@ -116,7 +116,7 @@ classDiagram
             +Skip: *int
         }
         <<struct>> GritRequest
-        class GritResponse["GritResponse · api/grit.go:179-187"] {
+        class GritResponse["GritResponse · api/grit.go:180-188"] {
             +Diagnostics: []GritDiagnostic
             +Findings: []GritFinding
             +Metadata: GritMetadata
@@ -126,7 +126,7 @@ classDiagram
             +Truncations: []GritTruncation
         }
         <<struct>> GritResponse
-        class GritStatistics["GritStatistics · api/grit.go:167-175"] {
+        class GritStatistics["GritStatistics · api/grit.go:168-176"] {
             +BytesRead: int64
             +Candidates: int
             +Eligible: int
@@ -136,14 +136,14 @@ classDiagram
             +SkippedLanguage: int
         }
         <<struct>> GritStatistics
-        class GritStructuralNode["GritStructuralNode · api/grit.go:88-93"] {
+        class GritStructuralNode["GritStructuralNode · api/grit.go:89-94"] {
             +Children: []GritStructuralNode
             +Lexeme: string
             +NodeKind: string
             +TokenKind: string
         }
         <<struct>> GritStructuralNode
-        class GritTruncation["GritTruncation · api/grit.go:134-140"] {
+        class GritTruncation["GritTruncation · api/grit.go:135-141"] {
             +Limit: int64
             +Reason: string
             +Repo: string

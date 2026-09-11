@@ -1,11 +1,8 @@
-# Native GritQL compatibility contracts
+# `gritql-v1` compatibility contract
 
-Grepple implements two closed, read-only detection contracts:
+`gritql-v1` is Grepple's unified, closed, read-only detection contract for `language go`, `language typescript`, and `language tsx`. Target syntax is supplied by language adapters while query algebra, transactions, limits, ordering, and diagnostics remain shared.
 
-- `gritql-go-v1` for `language go`; this preserves the original Go-specific behavior.
-- `gritql-v1` for `language typescript` and `language tsx`; target syntax is supplied by language adapters while the query algebra, transactions, limits, ordering, and diagnostics remain shared.
-
-Neither contract is an alias for an upstream GritQL release. A conforming implementation accepts exactly the documented syntax and rejects every other construct; it does not invoke an external engine, Node, a shell, or a fallback interpreter.
+The contract is not an alias for an upstream GritQL release. A conforming implementation accepts exactly the documented syntax and rejects every other construct; it does not invoke an external engine, Node, a shell, or a fallback interpreter.
 
 ## 1. Closed syntax
 
@@ -107,11 +104,11 @@ The first successful context wins. The current deterministic Go grammar yields o
 
 Synthetic parse scaffolding is not part of the resulting template. Authored statement and declaration lists use explicit `statement_sequence` and `declaration_sequence` template roots (including a one-item sequence when an explicit semicolon must be retained); only an authored complete file uses `source_file`. Every decoded metavariable occurrence must restore to exactly one slot before a candidate is accepted. A metavariable occupying an entire repeated grammar field is `SlotMany`, even when only one value is written. This includes direct name fields under `var_spec`, `const_spec`, `parameter_declaration`, and `field_declaration`, direct type fields under `type_case`, and a whole `type_elem` under an interface (so it is ready to bind either method-like or type-union interface elements), in addition to explicit list-node children. Type/name fields in those same ancestors remain singular when the grammar field itself is not repeated.
 
-The supported source grammar is the Go language version declared by the implementation for `gritql-go-v1`; that exact version must be reported in evaluation metadata and must not vary during one evaluation.
+The supported Go grammar version is declared by the implementation for `gritql-v1`; that exact version must be reported in evaluation metadata and must not vary during one evaluation.
 
 ### 2.1 TypeScript and TSX snippet parsing
 
-Under `gritql-v1`, `language typescript` selects `.ts`, `.mts`, and `.cts` source, while `language tsx` selects `.tsx`. Snippets are parsed as expression, type, statement, statement list, declaration, declaration list, and complete-file contexts using the matching pinned Tree-sitter grammar. Unlike the Go compatibility contract, every grammar-valid TypeScript interpretation is retained: for example, `Promise<$type>` can represent both an instantiation expression and a generic type, and either source shape may match.
+For `language typescript`, the contract selects `.ts`, `.mts`, and `.cts` source; `language tsx` selects `.tsx`. Snippets are parsed as expression, type, statement, statement list, declaration, declaration list, and complete-file contexts using the matching pinned Tree-sitter grammar. Unlike Go's deterministic first-context interpretation, every grammar-valid TypeScript interpretation is retained: for example, `Promise<$type>` can represent both an instantiation expression and a generic type, and either source shape may match.
 
 Synthetic wrappers are removed before matching. Statement and declaration lists use the same `statement_sequence` and `declaration_sequence` template roots as Go. Repeated fields and unfielded children come from parser-generated metadata for the selected grammar, including arguments, parameters, object members, statements, and declarations. Explicit semicolons remain structural; omitting one in a snippet does not match a source statement containing one.
 
@@ -265,7 +262,7 @@ The following are recognized but unsupported and fail closed with `PATTERN_UNSUP
 - any equality or inequality operator (including `==` and `!=`); equality exists only through repeated metavariable binding;
 - any operator, literal, comment form, or delimiter absent from the EBNF.
 
-Targets other than Go, TypeScript, and TSX; type checking; name resolution; data flow; network access; shell execution; repository writes; interactive input; and source rewrites are behaviorally unsupported. Both compatibility contracts are native and detection-only.
+Targets other than Go, TypeScript, and TSX; type checking; name resolution; data flow; network access; shell execution; repository writes; interactive input; and source rewrites are behaviorally unsupported. The unified contract is native and detection-only.
 
 ## 9. Security and performance gates
 
@@ -293,6 +290,6 @@ done
 
 ## 10. Conformance and versioning
 
-A conforming implementation must fixture-test every grammar production, supported snippet context, binding transaction, range rule, diagnostic code, ordering key, limit outcome, and unsupported category. `gritql-go-v1` metadata publishes canonical Go grammar identifier `go1.25`; `gritql-v1` metadata publishes the canonical TypeScript or TSX language and grammar identifiers. Both publish every effective limit and separately retain the pinned Tree-sitter implementation identity for Go callers.
+A conforming implementation must fixture-test every grammar production, supported snippet context, binding transaction, range rule, diagnostic code, ordering key, limit outcome, and unsupported category. `gritql-v1` metadata publishes the canonical target language and grammar identifier, every effective limit, and the pinned Tree-sitter implementation identity for Go callers.
 
-Each accepted target set is closed: adding syntax or changing matching, range, ordering, cancellation, or diagnostic classification requires a new compatibility contract. Clarifications that do not change observable behavior may retain the existing contract name. Existing stable codes may not be reassigned.
+The accepted target set is closed: adding syntax or changing matching, range, ordering, cancellation, or diagnostic classification requires a new compatibility contract. Clarifications that do not change observable behavior may retain `gritql-v1`. Existing stable codes may not be reassigned.

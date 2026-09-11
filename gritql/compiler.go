@@ -8,11 +8,12 @@ import (
 	"unicode/utf8"
 )
 
-// Compatibility identifies the original closed Go-only language contract.
-const Compatibility = "gritql-go-v1"
+// Compatibility identifies the unified native GritQL language contract.
+const Compatibility = "gritql-v1"
 
-// MultilingualCompatibility identifies the adapter-based language contract.
-const MultilingualCompatibility = "gritql-v1"
+// MultilingualCompatibility is retained as a source-compatible alias.
+// Deprecated: use Compatibility.
+const MultilingualCompatibility = Compatibility
 
 // CompatibilityVersion is an explicit alias for metadata producers.
 const CompatibilityVersion = Compatibility
@@ -268,13 +269,8 @@ type Program struct {
 	compileLimits CompileOptions
 }
 
-// Compatibility returns the closed compatibility identifier implemented by the program.
-func (p *Program) Compatibility() string {
-	if p == nil || p.adapter.id == "" {
-		return Compatibility
-	}
-	return p.adapter.compatibility
-}
+// Compatibility returns the unified compatibility identifier.
+func (p *Program) Compatibility() string { return Compatibility }
 
 // Language returns the program's resolved target language, or empty for a nil program.
 func (p *Program) Language() string {

@@ -252,7 +252,7 @@
             "code": "PATTERN_UNSUPPORTED",
             "class": "unsupported",
             "severity": "error",
-            "message": "runtime behavior is outside gritql-go-v1",
+            "message": "runtime behavior is outside gritql-v1",
             "pattern_id": "rule",
             "path": null,
             "range": {

@@ -58,22 +58,21 @@ func rulesUsage() error {
 }
 
 type rulesAddArgs struct {
-	Server        string   `arg:"-s,--server" placeholder:"URL" help:"remote router URL"`
-	ID            string   `arg:"--id" placeholder:"ID" help:"stable rule id (default: slug of --name)"`
-	Name          string   `arg:"--name" placeholder:"NAME" help:"human-readable name"`
-	Mode          string   `arg:"--mode" placeholder:"MODE" help:"count | files"`
-	Engine        string   `arg:"--engine" placeholder:"ENGINE" help:"text | gritql"`
-	Grit          bool     `arg:"--grit" help:"create a gritql structural rule"`
-	QueryFile     string   `arg:"-f,--query-file" placeholder:"PATH" help:"read structural query from PATH (- for stdin)"`
-	Compatibility string   `arg:"--compatibility" placeholder:"VERSION" help:"structural compatibility version"`
-	Files         bool     `arg:"-l,--files" help:"files mode (store matching paths)"`
-	Regex         bool     `arg:"--regex" help:"treat PATTERN as a regular expression"`
-	IgnoreCase    bool     `arg:"-i,--ignore-case" help:"case-insensitive match"`
-	Repo          []string `arg:"--repo,separate" placeholder:"PATTERN" help:"limit to matching repos"`
-	ExcludeRepo   []string `arg:"--exclude-repo,separate" placeholder:"PATTERN" help:"exclude matching repos"`
-	JSON          bool     `arg:"--json" help:"print the created rule as JSON"`
-	Pattern       string   `arg:"positional" placeholder:"PATTERN"`
-	Globs         []string `arg:"positional" placeholder:"GLOB"`
+	Server      string   `arg:"-s,--server" placeholder:"URL" help:"remote router URL"`
+	ID          string   `arg:"--id" placeholder:"ID" help:"stable rule id (default: slug of --name)"`
+	Name        string   `arg:"--name" placeholder:"NAME" help:"human-readable name"`
+	Mode        string   `arg:"--mode" placeholder:"MODE" help:"count | files"`
+	Engine      string   `arg:"--engine" placeholder:"ENGINE" help:"text | gritql"`
+	Grit        bool     `arg:"--grit" help:"create a gritql structural rule"`
+	QueryFile   string   `arg:"-f,--query-file" placeholder:"PATH" help:"read structural query from PATH (- for stdin)"`
+	Files       bool     `arg:"-l,--files" help:"files mode (store matching paths)"`
+	Regex       bool     `arg:"--regex" help:"treat PATTERN as a regular expression"`
+	IgnoreCase  bool     `arg:"-i,--ignore-case" help:"case-insensitive match"`
+	Repo        []string `arg:"--repo,separate" placeholder:"PATTERN" help:"limit to matching repos"`
+	ExcludeRepo []string `arg:"--exclude-repo,separate" placeholder:"PATTERN" help:"exclude matching repos"`
+	JSON        bool     `arg:"--json" help:"print the created rule as JSON"`
+	Pattern     string   `arg:"positional" placeholder:"PATTERN"`
+	Globs       []string `arg:"positional" placeholder:"GLOB"`
 }
 
 func (rulesAddArgs) Description() string {
@@ -109,8 +108,8 @@ func buildRule(values rulesAddArgs) (api.Rule, error) {
 }
 
 func setTextRuleRequest(rule *api.Rule, values rulesAddArgs) error {
-	if values.QueryFile != "" || values.Compatibility != "" {
-		return fmt.Errorf("--query-file and --compatibility require a structural rule")
+	if values.QueryFile != "" {
+		return fmt.Errorf("--query-file requires a structural rule")
 	}
 	request := api.SearchRequest{}
 	if values.Pattern != "" {
@@ -145,12 +144,8 @@ func setStructuralRuleRequest(rule *api.Rule, values rulesAddArgs) error {
 	if err != nil {
 		return err
 	}
-	compatibility := values.Compatibility
-	if compatibility == "" {
-		compatibility = api.GritCompatibilityV1
-	}
 	rule.Structural = &api.GritRequest{
-		Query: query, Compatibility: compatibility, Globs: globs,
+		Query: query, Compatibility: api.GritCompatibilityV1, Globs: globs,
 		Repositories: append([]string(nil), values.Repo...), ExcludeRepositories: append([]string(nil), values.ExcludeRepo...),
 	}
 	return nil

@@ -243,7 +243,6 @@ classDiagram
     note for getArgs "defined: internal/cli/get.go:17-25; Description@internal/cli/get.go:27-29; Depth@internal/cli/get.go:22; JSON@internal/cli/get.go:20; Lines@internal/cli/get.go:19; Outline@internal/cli/get.go:21; Path@internal/cli/get.go:24; Repo@internal/cli/get.go:23; Server@internal/cli/get.go:18"
     class gritArgs {
         +Description(): string
-        +Compatibility: string
         +ExcludeGlobs: []string
         +ExcludeRepositories: []string
         +Globs: []string
@@ -276,8 +275,7 @@ classDiagram
     }
     <<struct>> gritArgs
     %% grepple:file gritArgs internal/cli/grit.go
-    %% grepple:struct-tag gritArgs Compatibility "arg:\"--compatibility\" placeholder:\"VERSION\" help:\"structural compatibility version\""
-    %% grepple:struct-tag gritArgs ExcludeGlobs "arg:\"--exclude-glob,separate\" placeholder:\"GLOB\" help:\"exclude a Go path; repeatable\""
+    %% grepple:struct-tag gritArgs ExcludeGlobs "arg:\"--exclude-glob,separate\" placeholder:\"GLOB\" help:\"exclude a source path; repeatable\""
     %% grepple:struct-tag gritArgs ExcludeRepositories "arg:\"--exclude-repo,separate\" placeholder:\"PATTERN\" help:\"exclude remote repositories; repeatable\""
     %% grepple:struct-tag gritArgs Globs "arg:\"positional\" placeholder:\"GLOB\""
     %% grepple:struct-tag gritArgs JSON "arg:\"--json\" help:\"print the complete structural response as JSON\""
@@ -306,7 +304,7 @@ classDiagram
     %% grepple:struct-tag gritArgs Skip "arg:\"--skip\" placeholder:\"N\" help:\"skip the first N ordered findings\""
     %% grepple:struct-tag gritArgs TimeoutMilliseconds "arg:\"--timeout-ms\" placeholder:\"N\" help:\"bound the complete structural scan in milliseconds\""
     %% grepple:struct-tag gritArgs Workers "arg:\"--workers\" placeholder:\"N\" help:\"bound concurrent file evaluations\""
-    note for gritArgs "defined: internal/cli/grit.go:26-57; Description@internal/cli/grit.go:59-61; Compatibility@internal/cli/grit.go:31; ExcludeGlobs@internal/cli/grit.go:36; ExcludeRepositories@internal/cli/grit.go:38; Globs@internal/cli/grit.go:56; JSON@internal/cli/grit.go:34; Limit@internal/cli/grit.go:40; Local@internal/cli/grit.go:27; MaxASTSteps@internal/cli/grit.go:49; MaxCandidates@internal/cli/grit.go:48; MaxFileMilliseconds@internal/cli/grit.go:52; MaxFiles@internal/cli/grit.go:41; MaxFindings@internal/cli/grit.go:50; MaxMemoryBytes@internal/cli/grit.go:51; MaxOutputBytes@internal/cli/grit.go:35; MaxParseDepth@internal/cli/grit.go:46; MaxPatternBytes@internal/cli/grit.go:43; MaxRegexBytes@internal/cli/grit.go:44; MaxRegexInstructions@internal/cli/grit.go:45; MaxSourceBytes@internal/cli/grit.go:47; MaxTotalBytes@internal/cli/grit.go:42; Message@internal/cli/grit.go:33; PatternID@internal/cli/grit.go:32; Query@internal/cli/grit.go:55; QueryFile@internal/cli/grit.go:30; Remote@internal/cli/grit.go:28; Repositories@internal/cli/grit.go:37; Server@internal/cli/grit.go:29; Skip@internal/cli/grit.go:39; TimeoutMilliseconds@internal/cli/grit.go:54; Workers@internal/cli/grit.go:53"
+    note for gritArgs "defined: internal/cli/grit.go:26-56; Description@internal/cli/grit.go:58-60; ExcludeGlobs@internal/cli/grit.go:35; ExcludeRepositories@internal/cli/grit.go:37; Globs@internal/cli/grit.go:55; JSON@internal/cli/grit.go:33; Limit@internal/cli/grit.go:39; Local@internal/cli/grit.go:27; MaxASTSteps@internal/cli/grit.go:48; MaxCandidates@internal/cli/grit.go:47; MaxFileMilliseconds@internal/cli/grit.go:51; MaxFiles@internal/cli/grit.go:40; MaxFindings@internal/cli/grit.go:49; MaxMemoryBytes@internal/cli/grit.go:50; MaxOutputBytes@internal/cli/grit.go:34; MaxParseDepth@internal/cli/grit.go:45; MaxPatternBytes@internal/cli/grit.go:42; MaxRegexBytes@internal/cli/grit.go:43; MaxRegexInstructions@internal/cli/grit.go:44; MaxSourceBytes@internal/cli/grit.go:46; MaxTotalBytes@internal/cli/grit.go:41; Message@internal/cli/grit.go:32; PatternID@internal/cli/grit.go:31; Query@internal/cli/grit.go:54; QueryFile@internal/cli/grit.go:30; Remote@internal/cli/grit.go:28; Repositories@internal/cli/grit.go:36; Server@internal/cli/grit.go:29; Skip@internal/cli/grit.go:38; TimeoutMilliseconds@internal/cli/grit.go:53; Workers@internal/cli/grit.go:52"
     class jsonResultRenderer {
         +Render([]api.FileResult): error
         -matchesOnly: bool
@@ -399,7 +397,6 @@ classDiagram
     note for resultRenderer "defined: internal/cli/renderer.go:9-11; Render@internal/cli/renderer.go:10"
     class rulesAddArgs {
         +Description(): string
-        +Compatibility: string
         +Engine: string
         +ExcludeRepo: []string
         +Files: bool
@@ -418,7 +415,6 @@ classDiagram
     }
     <<struct>> rulesAddArgs
     %% grepple:file rulesAddArgs internal/cli/rules.go
-    %% grepple:struct-tag rulesAddArgs Compatibility "arg:\"--compatibility\" placeholder:\"VERSION\" help:\"structural compatibility version\""
     %% grepple:struct-tag rulesAddArgs Engine "arg:\"--engine\" placeholder:\"ENGINE\" help:\"text | gritql\""
     %% grepple:struct-tag rulesAddArgs ExcludeRepo "arg:\"--exclude-repo,separate\" placeholder:\"PATTERN\" help:\"exclude matching repos\""
     %% grepple:struct-tag rulesAddArgs Files "arg:\"-l,--files\" help:\"files mode (store matching paths)\""
@@ -434,7 +430,7 @@ classDiagram
     %% grepple:struct-tag rulesAddArgs Regex "arg:\"--regex\" help:\"treat PATTERN as a regular expression\""
     %% grepple:struct-tag rulesAddArgs Repo "arg:\"--repo,separate\" placeholder:\"PATTERN\" help:\"limit to matching repos\""
     %% grepple:struct-tag rulesAddArgs Server "arg:\"-s,--server\" placeholder:\"URL\" help:\"remote router URL\""
-    note for rulesAddArgs "defined: internal/cli/rules.go:60-77; Description@internal/cli/rules.go:79-81; Compatibility@internal/cli/rules.go:68; Engine@internal/cli/rules.go:65; ExcludeRepo@internal/cli/rules.go:73; Files@internal/cli/rules.go:69; Globs@internal/cli/rules.go:76; Grit@internal/cli/rules.go:66; ID@internal/cli/rules.go:62; IgnoreCase@internal/cli/rules.go:71; JSON@internal/cli/rules.go:74; Mode@internal/cli/rules.go:64; Name@internal/cli/rules.go:63; Pattern@internal/cli/rules.go:75; QueryFile@internal/cli/rules.go:67; Regex@internal/cli/rules.go:70; Repo@internal/cli/rules.go:72; Server@internal/cli/rules.go:61"
+    note for rulesAddArgs "defined: internal/cli/rules.go:60-76; Description@internal/cli/rules.go:78-80; Engine@internal/cli/rules.go:65; ExcludeRepo@internal/cli/rules.go:72; Files@internal/cli/rules.go:68; Globs@internal/cli/rules.go:75; Grit@internal/cli/rules.go:66; ID@internal/cli/rules.go:62; IgnoreCase@internal/cli/rules.go:70; JSON@internal/cli/rules.go:73; Mode@internal/cli/rules.go:64; Name@internal/cli/rules.go:63; Pattern@internal/cli/rules.go:74; QueryFile@internal/cli/rules.go:67; Regex@internal/cli/rules.go:69; Repo@internal/cli/rules.go:71; Server@internal/cli/rules.go:61"
     class searchArgs {
         +Description(): string
         +AfterContext: int

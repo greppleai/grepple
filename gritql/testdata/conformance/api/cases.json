@@ -172,7 +172,7 @@
         "findings": [],
         "diagnostics": [],
         "metadata": {
-          "contract": "gritql-go-v1",
+          "contract": "gritql-v1",
           "go_grammar": "go1.25",
           "limits": {
             "pattern_bytes": 262144,

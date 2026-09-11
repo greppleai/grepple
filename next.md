@@ -199,7 +199,7 @@ Reduce repeated parsing and language knowledge across extraction, navigation, te
    - [x] Keep feature-specific filtering such as GritQL trivia normalization and navigation declaration rules outside generic parser helpers.
 4. [x] Introduce GritQL language adapters over parser capabilities.
    - [x] Keep the compiler, query algebra, bindings, matching, constraints, transactional findings, and diagnostics in `gritql`, while isolating target parsing and root categories behind adapters.
-   - [x] Preserve `gritql-go-v1` and add the `gritql-v1` compatibility contract with focused TypeScript and TSX expression, type, statement, declaration, sequence, JSX, metavariable, and repeated-list matching.
+   - [x] Use one `gritql-v1` compatibility contract for Go, TypeScript, and TSX, with focused expression, type, statement, declaration, sequence, JSX, metavariable, and repeated-list matching.
    - [x] Generate grammar subtype relationships alongside cardinality, so adapters do not grow handwritten expression/type/statement kind tables.
    - Follow-up completeness: expand TypeScript/TSX grammar-local placeholder roles beyond the implemented identifier-like, import-source, and whole-declaration positions when a target grammar position cannot be represented safely by those forms.
    - [x] Add dedicated TypeScript/TSX conformance fixtures covering ambiguous expression/type syntax, imports, sequences, JSX, query algebra, and binding equality.

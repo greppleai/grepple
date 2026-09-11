@@ -17,7 +17,7 @@ import (
 // ConformanceSuites is the fixed set of corpus groups.
 var ConformanceSuites = []string{"parser", "compiler", "matcher", "scanner", "api", "integration"}
 
-// Corpus is a strictly decoded gritql-go-v1 conformance corpus.
+// Corpus is a strictly decoded gritql-v1 conformance corpus.
 type Corpus struct {
 	Files []FixtureFile
 	Cases []Case
@@ -351,8 +351,8 @@ func validateExpectedContract(c Case) error {
 	if c.Expected.Metadata == nil {
 		return nil
 	}
-	if c.Expected.Metadata.Contract != "gritql-go-v1" || c.Expected.Metadata.GoGrammar == "" {
-		return fmt.Errorf("metadata must identify gritql-go-v1 and its Go grammar")
+	if c.Expected.Metadata.Contract != Compatibility || c.Expected.Metadata.GoGrammar == "" {
+		return fmt.Errorf("metadata must identify gritql-v1 and its Go grammar")
 	}
 	if err := validateLimits(c.Expected.Metadata.Limits, true); err != nil {
 		return fmt.Errorf("metadata limits: %w", err)

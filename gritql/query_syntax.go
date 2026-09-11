@@ -152,13 +152,7 @@ func queryClassificationMessage(classification queryErrorKind, compatibility str
 	}
 }
 
-func queryCompatibility(document *queryDocument) string {
-	language := document.root().childByFieldName("language").childByFieldName("name").text()
-	if adapter, ok := targetLanguageByID(language); ok {
-		return adapter.compatibility
-	}
-	return Compatibility
-}
+func queryCompatibility(*queryDocument) string { return Compatibility }
 
 func (d *queryDocument) close() {
 	if d == nil {
@@ -464,7 +458,7 @@ func rangeInBytes(source []byte, starts []int, start, end int) queryRange {
 	return queryRange{StartByte: start, EndByte: end, Start: position(start), End: position(end)}
 }
 
-// validateV1Tree is the closed gritql-go-v1 allow-list over the pinned parser's
+// validateV1Tree is the closed gritql-v1 allow-list over the pinned parser's
 // concrete tree. It validates each node locally and never constructs a second AST.
 func validateV1Tree(doc *queryDocument, maxDepth int) queryErrorKind {
 	if maxDepth <= 0 || maxDepth > hardMaxDepth {

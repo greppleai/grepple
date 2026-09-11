@@ -111,14 +111,14 @@ func TestRunGritLocalJSONIsDeterministic(t *testing.T) {
 		t.Fatalf("bindings=%#v", finding.Bindings)
 	}
 }
-func TestRunGritLocalTypeScriptUsesMultilingualContract(t *testing.T) {
+func TestRunGritLocalTypeScriptUsesUnifiedContract(t *testing.T) {
 	dir := chdirTemp(t)
 	if err := os.WriteFile(filepath.Join(dir, "app.ts"), []byte("const result = target(value);\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	values := gritArgs{
-		Query: "language typescript\n`target($value)`", Compatibility: api.GritMultilingualCompatibilityV1,
-		JSON: true, Limit: DefaultGritResultLimit,
+		Query: "language typescript\n`target($value)`",
+		JSON:  true, Limit: DefaultGritResultLimit,
 	}
 	output := captureStdout(t, func() {
 		if err := runGritLocal(context.Background(), values); err != nil {
@@ -129,7 +129,7 @@ func TestRunGritLocalTypeScriptUsesMultilingualContract(t *testing.T) {
 	if err := json.Unmarshal([]byte(output), &response); err != nil {
 		t.Fatal(err)
 	}
-	if response.Metadata.Compatibility != api.GritMultilingualCompatibilityV1 || response.Metadata.Language != "typescript" || len(response.Findings) != 1 || response.Findings[0].Text != "target(value)" {
+	if response.Metadata.Compatibility != api.GritCompatibilityV1 || response.Metadata.Language != "typescript" || len(response.Findings) != 1 || response.Findings[0].Text != "target(value)" {
 		t.Fatalf("response=%#v", response)
 	}
 }
@@ -139,7 +139,7 @@ func TestGritCandidatesCarryAnchoredSourceIntoStructuralScan(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(dir, "main.go"), source, 0o644); err != nil {
 		t.Fatal(err)
 	}
-	_, anchored, err := compileGritQuery(gritArgs{Query: "language go\n`target($value)`", Compatibility: api.GritCompatibilityV1})
+	_, anchored, err := compileGritQuery(gritArgs{Query: "language go\n`target($value)`"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -150,7 +150,7 @@ func TestGritCandidatesCarryAnchoredSourceIntoStructuralScan(t *testing.T) {
 	if len(candidates) != 1 || candidates[0].Content == nil || string(candidates[0].Content) != string(source) {
 		t.Fatalf("anchored candidates=%#v", candidates)
 	}
-	_, unanchored, err := compileGritQuery(gritArgs{Query: "language go\n`$value`", Compatibility: api.GritCompatibilityV1})
+	_, unanchored, err := compileGritQuery(gritArgs{Query: "language go\n`$value`"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -184,19 +184,15 @@ func TestRunDispatchesGritWithoutChangingSearchParsing(t *testing.T) {
 	}
 }
 
-func TestParseGritArgsRejectsUnknownCompatibilityAndTargetConflict(t *testing.T) {
-	if _, err := parseGritArgs([]string{"--compatibility", "gritql-go-v2", "language go\n`x`"}); err == nil || !strings.Contains(err.Error(), "compatibility") {
-		t.Fatalf("compatibility error=%v", err)
+func TestParseGritArgsRejectsRemovedCompatibilityFlagAndTargetConflict(t *testing.T) {
+	if _, err := parseGritArgs([]string{"--compatibility", "gritql-v1", "language go\n`x`"}); err == nil {
+		t.Fatal("removed compatibility flag was accepted")
 	}
 	if _, err := parseGritArgs([]string{"--local", "--remote", "language go\n`x`"}); err == nil || !strings.Contains(err.Error(), "--local") {
 		t.Fatalf("target conflict error=%v", err)
 	}
-	values, err := parseGritArgs([]string{"--compatibility", api.GritMultilingualCompatibilityV1, "language typescript\n`x`"})
-	if err != nil || values.Compatibility != api.GritMultilingualCompatibilityV1 {
-		t.Fatalf("multilingual args=%#v error=%v", values, err)
-	}
-	if _, _, err := compileGritQuery(gritArgs{Query: "language typescript\n`x`", Compatibility: api.GritCompatibilityV1}); err == nil || !strings.Contains(err.Error(), api.GritMultilingualCompatibilityV1) {
-		t.Fatalf("contract mismatch error=%v", err)
+	if _, _, err := compileGritQuery(gritArgs{Query: "language typescript\n`x`"}); err != nil {
+		t.Fatalf("unified TypeScript compilation: %v", err)
 	}
 }
 
@@ -353,9 +349,9 @@ func TestMergeGritResponsesRejectsIncompatibleMetadata(t *testing.T) {
 		t.Fatalf("metadata error=%v", err)
 	}
 }
-func TestMergeGritResponsesRejectsMultilingualGrammarMismatch(t *testing.T) {
-	local := api.GritResponse{Metadata: api.GritMetadata{Compatibility: api.GritMultilingualCompatibilityV1, Language: "typescript", Grammar: "typescript"}}
-	remote := api.GritResponse{Metadata: api.GritMetadata{Compatibility: api.GritMultilingualCompatibilityV1, Language: "tsx", Grammar: "tsx"}}
+func TestMergeGritResponsesRejectsTargetGrammarMismatch(t *testing.T) {
+	local := api.GritResponse{Metadata: api.GritMetadata{Compatibility: api.GritCompatibilityV1, Language: "typescript", Grammar: "typescript"}}
+	remote := api.GritResponse{Metadata: api.GritMetadata{Compatibility: api.GritCompatibilityV1, Language: "tsx", Grammar: "tsx"}}
 	if _, err := mergeGritResponses(local, remote, ""); err == nil || !strings.Contains(err.Error(), "language") {
 		t.Fatalf("metadata error=%v", err)
 	}

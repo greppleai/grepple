@@ -20,12 +20,12 @@
     "declarations": 36,
     "exportedTypes": 0,
     "internalTypes": 36,
-    "members": 226,
+    "members": 224,
     "exportedFunctions": 3,
     "fiberRoutes": 0,
     "relations": 23
   },
-  "semanticModelDigest": "sha256:ffaaddab5167edbd7931ff2c799a58ebe71c4b591b74922ebf747029c2a17b7e",
+  "semanticModelDigest": "sha256:468e384ea4f223bd1ab5a1fbda1f7f70569b8b4521d726ec6fb62f55e378fe2d",
   "sourceFiles": [
     {
       "path": "internal/cli/anchors.go"
@@ -1097,41 +1097,31 @@
       "kind": "struct",
       "file": "internal/cli/grit.go",
       "line": 26,
-      "endLine": 57,
-      "underlyingType": "struct{Local bool`arg:\"--local\" help:\"search only the local working directory (the default)\"`;Remote bool`arg:\"-R,--remote\" help:\"also query the remote shard/router and merge with local findings\"`;Server string`arg:\"-s,--server\" placeholder:\"URL\" help:\"remote shard/router URL (implies --remote)\"`;QueryFile string`arg:\"-f,--query-file\" placeholder:\"PATH\" help:\"read the GritQL query from PATH (- for stdin)\"`;Compatibility string`arg:\"--compatibility\" placeholder:\"VERSION\" help:\"structural compatibility version\"`;PatternID string`arg:\"--pattern-id\" placeholder:\"ID\" help:\"attach a pattern identifier to findings\"`;Message string`arg:\"--message\" placeholder:\"TEXT\" help:\"attach a message to findings\"`;JSON bool`arg:\"--json\" help:\"print the complete structural response as JSON\"`;MaxOutputBytes int`arg:\"--max-output-bytes\" placeholder:\"N\" help:\"cap human-readable output (default 40960; 0 = unlimited; JSON is uncapped)\"`;ExcludeGlobs[]string`arg:\"--exclude-glob,separate\" placeholder:\"GLOB\" help:\"exclude a Go path; repeatable\"`;Repositories[]string`arg:\"--repo,separate\" placeholder:\"PATTERN\" help:\"restrict remote repositories; repeatable\"`;ExcludeRepositories[]string`arg:\"--exclude-repo,separate\" placeholder:\"PATTERN\" help:\"exclude remote repositories; repeatable\"`;Skip int`arg:\"--skip\" placeholder:\"N\" help:\"skip the first N ordered findings\"`;Limit int`arg:\"--limit\" placeholder:\"N\" help:\"return at most N findings (default 20; 0 = all local)\"`;MaxFiles int`arg:\"--max-files\" placeholder:\"N\" help:\"bound eligible source files\"`;MaxTotalBytes int64`arg:\"--max-total-bytes\" placeholder:\"N\" help:\"bound aggregate source bytes\"`;MaxPatternBytes int`arg:\"--max-pattern-bytes\" placeholder:\"N\" help:\"bound query source bytes during compilation\"`;MaxRegexBytes int`arg:\"--max-regex-bytes\" placeholder:\"N\" help:\"bound one regex constraint\"`;MaxRegexInstructions int`arg:\"--max-regex-instructions\" placeholder:\"N\" help:\"bound compiled regex instructions\"`;MaxParseDepth int`arg:\"--max-parse-depth\" placeholder:\"N\" help:\"bound query and structural recursion depth\"`;MaxSourceBytes int`arg:\"--max-source-bytes\" placeholder:\"N\" help:\"bound one source file\"`;MaxCandidates int`arg:\"--max-candidates\" placeholder:\"N\" help:\"bound structural candidates per file\"`;MaxASTSteps int`arg:\"--max-ast-steps\" placeholder:\"N\" help:\"bound structural evaluation steps per file\"`;MaxFindings int`arg:\"--max-findings\" placeholder:\"N\" help:\"bound retained findings before paging\"`;MaxMemoryBytes int`arg:\"--max-memory-bytes\" placeholder:\"N\" help:\"bound live scanner memory\"`;MaxFileMilliseconds int64`arg:\"--max-file-time-ms\" placeholder:\"N\" help:\"bound evaluation time per file\"`;Workers int`arg:\"--workers\" placeholder:\"N\" help:\"bound concurrent file evaluations\"`;TimeoutMilliseconds int64`arg:\"--timeout-ms\" placeholder:\"N\" help:\"bound the complete structural scan in milliseconds\"`;Query string`arg:\"positional\" placeholder:\"QUERY\"`;Globs[]string`arg:\"positional\" placeholder:\"GLOB\"`;}",
+      "endLine": 56,
+      "underlyingType": "struct{Local bool`arg:\"--local\" help:\"search only the local working directory (the default)\"`;Remote bool`arg:\"-R,--remote\" help:\"also query the remote shard/router and merge with local findings\"`;Server string`arg:\"-s,--server\" placeholder:\"URL\" help:\"remote shard/router URL (implies --remote)\"`;QueryFile string`arg:\"-f,--query-file\" placeholder:\"PATH\" help:\"read the GritQL query from PATH (- for stdin)\"`;PatternID string`arg:\"--pattern-id\" placeholder:\"ID\" help:\"attach a pattern identifier to findings\"`;Message string`arg:\"--message\" placeholder:\"TEXT\" help:\"attach a message to findings\"`;JSON bool`arg:\"--json\" help:\"print the complete structural response as JSON\"`;MaxOutputBytes int`arg:\"--max-output-bytes\" placeholder:\"N\" help:\"cap human-readable output (default 40960; 0 = unlimited; JSON is uncapped)\"`;ExcludeGlobs[]string`arg:\"--exclude-glob,separate\" placeholder:\"GLOB\" help:\"exclude a source path; repeatable\"`;Repositories[]string`arg:\"--repo,separate\" placeholder:\"PATTERN\" help:\"restrict remote repositories; repeatable\"`;ExcludeRepositories[]string`arg:\"--exclude-repo,separate\" placeholder:\"PATTERN\" help:\"exclude remote repositories; repeatable\"`;Skip int`arg:\"--skip\" placeholder:\"N\" help:\"skip the first N ordered findings\"`;Limit int`arg:\"--limit\" placeholder:\"N\" help:\"return at most N findings (default 20; 0 = all local)\"`;MaxFiles int`arg:\"--max-files\" placeholder:\"N\" help:\"bound eligible source files\"`;MaxTotalBytes int64`arg:\"--max-total-bytes\" placeholder:\"N\" help:\"bound aggregate source bytes\"`;MaxPatternBytes int`arg:\"--max-pattern-bytes\" placeholder:\"N\" help:\"bound query source bytes during compilation\"`;MaxRegexBytes int`arg:\"--max-regex-bytes\" placeholder:\"N\" help:\"bound one regex constraint\"`;MaxRegexInstructions int`arg:\"--max-regex-instructions\" placeholder:\"N\" help:\"bound compiled regex instructions\"`;MaxParseDepth int`arg:\"--max-parse-depth\" placeholder:\"N\" help:\"bound query and structural recursion depth\"`;MaxSourceBytes int`arg:\"--max-source-bytes\" placeholder:\"N\" help:\"bound one source file\"`;MaxCandidates int`arg:\"--max-candidates\" placeholder:\"N\" help:\"bound structural candidates per file\"`;MaxASTSteps int`arg:\"--max-ast-steps\" placeholder:\"N\" help:\"bound structural evaluation steps per file\"`;MaxFindings int`arg:\"--max-findings\" placeholder:\"N\" help:\"bound retained findings before paging\"`;MaxMemoryBytes int`arg:\"--max-memory-bytes\" placeholder:\"N\" help:\"bound live scanner memory\"`;MaxFileMilliseconds int64`arg:\"--max-file-time-ms\" placeholder:\"N\" help:\"bound evaluation time per file\"`;Workers int`arg:\"--workers\" placeholder:\"N\" help:\"bound concurrent file evaluations\"`;TimeoutMilliseconds int64`arg:\"--timeout-ms\" placeholder:\"N\" help:\"bound the complete structural scan in milliseconds\"`;Query string`arg:\"positional\" placeholder:\"QUERY\"`;Globs[]string`arg:\"positional\" placeholder:\"GLOB\"`;}",
       "members": [
         {
           "name": "Description",
           "kind": "method",
-          "line": 59,
-          "endLine": 61,
+          "line": 58,
+          "endLine": 60,
           "result": "string"
-        },
-        {
-          "name": "Compatibility",
-          "kind": "property",
-          "line": 31,
-          "endLine": 31,
-          "result": "string",
-          "structTag": {
-            "value": "arg:\"--compatibility\" placeholder:\"VERSION\" help:\"structural compatibility version\""
-          }
         },
         {
           "name": "ExcludeGlobs",
           "kind": "property",
-          "line": 36,
-          "endLine": 36,
+          "line": 35,
+          "endLine": 35,
           "result": "[]string",
           "structTag": {
-            "value": "arg:\"--exclude-glob,separate\" placeholder:\"GLOB\" help:\"exclude a Go path; repeatable\""
+            "value": "arg:\"--exclude-glob,separate\" placeholder:\"GLOB\" help:\"exclude a source path; repeatable\""
           }
         },
         {
           "name": "ExcludeRepositories",
           "kind": "property",
-          "line": 38,
-          "endLine": 38,
+          "line": 37,
+          "endLine": 37,
           "result": "[]string",
           "structTag": {
             "value": "arg:\"--exclude-repo,separate\" placeholder:\"PATTERN\" help:\"exclude remote repositories; repeatable\""
@@ -1140,8 +1130,8 @@
         {
           "name": "Globs",
           "kind": "property",
-          "line": 56,
-          "endLine": 56,
+          "line": 55,
+          "endLine": 55,
           "result": "[]string",
           "structTag": {
             "value": "arg:\"positional\" placeholder:\"GLOB\""
@@ -1150,8 +1140,8 @@
         {
           "name": "JSON",
           "kind": "property",
-          "line": 34,
-          "endLine": 34,
+          "line": 33,
+          "endLine": 33,
           "result": "bool",
           "structTag": {
             "value": "arg:\"--json\" help:\"print the complete structural response as JSON\""
@@ -1160,8 +1150,8 @@
         {
           "name": "Limit",
           "kind": "property",
-          "line": 40,
-          "endLine": 40,
+          "line": 39,
+          "endLine": 39,
           "result": "int",
           "structTag": {
             "value": "arg:\"--limit\" placeholder:\"N\" help:\"return at most N findings (default 20; 0 = all local)\""
@@ -1180,8 +1170,8 @@
         {
           "name": "MaxASTSteps",
           "kind": "property",
-          "line": 49,
-          "endLine": 49,
+          "line": 48,
+          "endLine": 48,
           "result": "int",
           "structTag": {
             "value": "arg:\"--max-ast-steps\" placeholder:\"N\" help:\"bound structural evaluation steps per file\""
@@ -1190,8 +1180,8 @@
         {
           "name": "MaxCandidates",
           "kind": "property",
-          "line": 48,
-          "endLine": 48,
+          "line": 47,
+          "endLine": 47,
           "result": "int",
           "structTag": {
             "value": "arg:\"--max-candidates\" placeholder:\"N\" help:\"bound structural candidates per file\""
@@ -1200,8 +1190,8 @@
         {
           "name": "MaxFileMilliseconds",
           "kind": "property",
-          "line": 52,
-          "endLine": 52,
+          "line": 51,
+          "endLine": 51,
           "result": "int64",
           "structTag": {
             "value": "arg:\"--max-file-time-ms\" placeholder:\"N\" help:\"bound evaluation time per file\""
@@ -1210,8 +1200,8 @@
         {
           "name": "MaxFiles",
           "kind": "property",
-          "line": 41,
-          "endLine": 41,
+          "line": 40,
+          "endLine": 40,
           "result": "int",
           "structTag": {
             "value": "arg:\"--max-files\" placeholder:\"N\" help:\"bound eligible source files\""
@@ -1220,8 +1210,8 @@
         {
           "name": "MaxFindings",
           "kind": "property",
-          "line": 50,
-          "endLine": 50,
+          "line": 49,
+          "endLine": 49,
           "result": "int",
           "structTag": {
             "value": "arg:\"--max-findings\" placeholder:\"N\" help:\"bound retained findings before paging\""
@@ -1230,8 +1220,8 @@
         {
           "name": "MaxMemoryBytes",
           "kind": "property",
-          "line": 51,
-          "endLine": 51,
+          "line": 50,
+          "endLine": 50,
           "result": "int",
           "structTag": {
             "value": "arg:\"--max-memory-bytes\" placeholder:\"N\" help:\"bound live scanner memory\""
@@ -1240,8 +1230,8 @@
         {
           "name": "MaxOutputBytes",
           "kind": "property",
-          "line": 35,
-          "endLine": 35,
+          "line": 34,
+          "endLine": 34,
           "result": "int",
           "structTag": {
             "value": "arg:\"--max-output-bytes\" placeholder:\"N\" help:\"cap human-readable output (default 40960; 0 = unlimited; JSON is uncapped)\""
@@ -1250,8 +1240,8 @@
         {
           "name": "MaxParseDepth",
           "kind": "property",
-          "line": 46,
-          "endLine": 46,
+          "line": 45,
+          "endLine": 45,
           "result": "int",
           "structTag": {
             "value": "arg:\"--max-parse-depth\" placeholder:\"N\" help:\"bound query and structural recursion depth\""
@@ -1260,8 +1250,8 @@
         {
           "name": "MaxPatternBytes",
           "kind": "property",
-          "line": 43,
-          "endLine": 43,
+          "line": 42,
+          "endLine": 42,
           "result": "int",
           "structTag": {
             "value": "arg:\"--max-pattern-bytes\" placeholder:\"N\" help:\"bound query source bytes during compilation\""
@@ -1270,8 +1260,8 @@
         {
           "name": "MaxRegexBytes",
           "kind": "property",
-          "line": 44,
-          "endLine": 44,
+          "line": 43,
+          "endLine": 43,
           "result": "int",
           "structTag": {
             "value": "arg:\"--max-regex-bytes\" placeholder:\"N\" help:\"bound one regex constraint\""
@@ -1280,8 +1270,8 @@
         {
           "name": "MaxRegexInstructions",
           "kind": "property",
-          "line": 45,
-          "endLine": 45,
+          "line": 44,
+          "endLine": 44,
           "result": "int",
           "structTag": {
             "value": "arg:\"--max-regex-instructions\" placeholder:\"N\" help:\"bound compiled regex instructions\""
@@ -1290,8 +1280,8 @@
         {
           "name": "MaxSourceBytes",
           "kind": "property",
-          "line": 47,
-          "endLine": 47,
+          "line": 46,
+          "endLine": 46,
           "result": "int",
           "structTag": {
             "value": "arg:\"--max-source-bytes\" placeholder:\"N\" help:\"bound one source file\""
@@ -1300,8 +1290,8 @@
         {
           "name": "MaxTotalBytes",
           "kind": "property",
-          "line": 42,
-          "endLine": 42,
+          "line": 41,
+          "endLine": 41,
           "result": "int64",
           "structTag": {
             "value": "arg:\"--max-total-bytes\" placeholder:\"N\" help:\"bound aggregate source bytes\""
@@ -1310,8 +1300,8 @@
         {
           "name": "Message",
           "kind": "property",
-          "line": 33,
-          "endLine": 33,
+          "line": 32,
+          "endLine": 32,
           "result": "string",
           "structTag": {
             "value": "arg:\"--message\" placeholder:\"TEXT\" help:\"attach a message to findings\""
@@ -1320,8 +1310,8 @@
         {
           "name": "PatternID",
           "kind": "property",
-          "line": 32,
-          "endLine": 32,
+          "line": 31,
+          "endLine": 31,
           "result": "string",
           "structTag": {
             "value": "arg:\"--pattern-id\" placeholder:\"ID\" help:\"attach a pattern identifier to findings\""
@@ -1330,8 +1320,8 @@
         {
           "name": "Query",
           "kind": "property",
-          "line": 55,
-          "endLine": 55,
+          "line": 54,
+          "endLine": 54,
           "result": "string",
           "structTag": {
             "value": "arg:\"positional\" placeholder:\"QUERY\""
@@ -1360,8 +1350,8 @@
         {
           "name": "Repositories",
           "kind": "property",
-          "line": 37,
-          "endLine": 37,
+          "line": 36,
+          "endLine": 36,
           "result": "[]string",
           "structTag": {
             "value": "arg:\"--repo,separate\" placeholder:\"PATTERN\" help:\"restrict remote repositories; repeatable\""
@@ -1380,8 +1370,8 @@
         {
           "name": "Skip",
           "kind": "property",
-          "line": 39,
-          "endLine": 39,
+          "line": 38,
+          "endLine": 38,
           "result": "int",
           "structTag": {
             "value": "arg:\"--skip\" placeholder:\"N\" help:\"skip the first N ordered findings\""
@@ -1390,8 +1380,8 @@
         {
           "name": "TimeoutMilliseconds",
           "kind": "property",
-          "line": 54,
-          "endLine": 54,
+          "line": 53,
+          "endLine": 53,
           "result": "int64",
           "structTag": {
             "value": "arg:\"--timeout-ms\" placeholder:\"N\" help:\"bound the complete structural scan in milliseconds\""
@@ -1400,8 +1390,8 @@
         {
           "name": "Workers",
           "kind": "property",
-          "line": 53,
-          "endLine": 53,
+          "line": 52,
+          "endLine": 52,
           "result": "int",
           "structTag": {
             "value": "arg:\"--workers\" placeholder:\"N\" help:\"bound concurrent file evaluations\""
@@ -1817,25 +1807,15 @@
       "kind": "struct",
       "file": "internal/cli/rules.go",
       "line": 60,
-      "endLine": 77,
-      "underlyingType": "struct{Server string`arg:\"-s,--server\" placeholder:\"URL\" help:\"remote router URL\"`;ID string`arg:\"--id\" placeholder:\"ID\" help:\"stable rule id (default: slug of --name)\"`;Name string`arg:\"--name\" placeholder:\"NAME\" help:\"human-readable name\"`;Mode string`arg:\"--mode\" placeholder:\"MODE\" help:\"count | files\"`;Engine string`arg:\"--engine\" placeholder:\"ENGINE\" help:\"text | gritql\"`;Grit bool`arg:\"--grit\" help:\"create a gritql structural rule\"`;QueryFile string`arg:\"-f,--query-file\" placeholder:\"PATH\" help:\"read structural query from PATH (- for stdin)\"`;Compatibility string`arg:\"--compatibility\" placeholder:\"VERSION\" help:\"structural compatibility version\"`;Files bool`arg:\"-l,--files\" help:\"files mode (store matching paths)\"`;Regex bool`arg:\"--regex\" help:\"treat PATTERN as a regular expression\"`;IgnoreCase bool`arg:\"-i,--ignore-case\" help:\"case-insensitive match\"`;Repo[]string`arg:\"--repo,separate\" placeholder:\"PATTERN\" help:\"limit to matching repos\"`;ExcludeRepo[]string`arg:\"--exclude-repo,separate\" placeholder:\"PATTERN\" help:\"exclude matching repos\"`;JSON bool`arg:\"--json\" help:\"print the created rule as JSON\"`;Pattern string`arg:\"positional\" placeholder:\"PATTERN\"`;Globs[]string`arg:\"positional\" placeholder:\"GLOB\"`;}",
+      "endLine": 76,
+      "underlyingType": "struct{Server string`arg:\"-s,--server\" placeholder:\"URL\" help:\"remote router URL\"`;ID string`arg:\"--id\" placeholder:\"ID\" help:\"stable rule id (default: slug of --name)\"`;Name string`arg:\"--name\" placeholder:\"NAME\" help:\"human-readable name\"`;Mode string`arg:\"--mode\" placeholder:\"MODE\" help:\"count | files\"`;Engine string`arg:\"--engine\" placeholder:\"ENGINE\" help:\"text | gritql\"`;Grit bool`arg:\"--grit\" help:\"create a gritql structural rule\"`;QueryFile string`arg:\"-f,--query-file\" placeholder:\"PATH\" help:\"read structural query from PATH (- for stdin)\"`;Files bool`arg:\"-l,--files\" help:\"files mode (store matching paths)\"`;Regex bool`arg:\"--regex\" help:\"treat PATTERN as a regular expression\"`;IgnoreCase bool`arg:\"-i,--ignore-case\" help:\"case-insensitive match\"`;Repo[]string`arg:\"--repo,separate\" placeholder:\"PATTERN\" help:\"limit to matching repos\"`;ExcludeRepo[]string`arg:\"--exclude-repo,separate\" placeholder:\"PATTERN\" help:\"exclude matching repos\"`;JSON bool`arg:\"--json\" help:\"print the created rule as JSON\"`;Pattern string`arg:\"positional\" placeholder:\"PATTERN\"`;Globs[]string`arg:\"positional\" placeholder:\"GLOB\"`;}",
       "members": [
         {
           "name": "Description",
           "kind": "method",
-          "line": 79,
-          "endLine": 81,
+          "line": 78,
+          "endLine": 80,
           "result": "string"
-        },
-        {
-          "name": "Compatibility",
-          "kind": "property",
-          "line": 68,
-          "endLine": 68,
-          "result": "string",
-          "structTag": {
-            "value": "arg:\"--compatibility\" placeholder:\"VERSION\" help:\"structural compatibility version\""
-          }
         },
         {
           "name": "Engine",
@@ -1850,8 +1830,8 @@
         {
           "name": "ExcludeRepo",
           "kind": "property",
-          "line": 73,
-          "endLine": 73,
+          "line": 72,
+          "endLine": 72,
           "result": "[]string",
           "structTag": {
             "value": "arg:\"--exclude-repo,separate\" placeholder:\"PATTERN\" help:\"exclude matching repos\""
@@ -1860,8 +1840,8 @@
         {
           "name": "Files",
           "kind": "property",
-          "line": 69,
-          "endLine": 69,
+          "line": 68,
+          "endLine": 68,
           "result": "bool",
           "structTag": {
             "value": "arg:\"-l,--files\" help:\"files mode (store matching paths)\""
@@ -1870,8 +1850,8 @@
         {
           "name": "Globs",
           "kind": "property",
-          "line": 76,
-          "endLine": 76,
+          "line": 75,
+          "endLine": 75,
           "result": "[]string",
           "structTag": {
             "value": "arg:\"positional\" placeholder:\"GLOB\""
@@ -1900,8 +1880,8 @@
         {
           "name": "IgnoreCase",
           "kind": "property",
-          "line": 71,
-          "endLine": 71,
+          "line": 70,
+          "endLine": 70,
           "result": "bool",
           "structTag": {
             "value": "arg:\"-i,--ignore-case\" help:\"case-insensitive match\""
@@ -1910,8 +1890,8 @@
         {
           "name": "JSON",
           "kind": "property",
-          "line": 74,
-          "endLine": 74,
+          "line": 73,
+          "endLine": 73,
           "result": "bool",
           "structTag": {
             "value": "arg:\"--json\" help:\"print the created rule as JSON\""
@@ -1940,8 +1920,8 @@
         {
           "name": "Pattern",
           "kind": "property",
-          "line": 75,
-          "endLine": 75,
+          "line": 74,
+          "endLine": 74,
           "result": "string",
           "structTag": {
             "value": "arg:\"positional\" placeholder:\"PATTERN\""
@@ -1960,8 +1940,8 @@
         {
           "name": "Regex",
           "kind": "property",
-          "line": 70,
-          "endLine": 70,
+          "line": 69,
+          "endLine": 69,
           "result": "bool",
           "structTag": {
             "value": "arg:\"--regex\" help:\"treat PATTERN as a regular expression\""
@@ -1970,8 +1950,8 @@
         {
           "name": "Repo",
           "kind": "property",
-          "line": 72,
-          "endLine": 72,
+          "line": 71,
+          "endLine": 71,
           "result": "[]string",
           "structTag": {
             "value": "arg:\"--repo,separate\" placeholder:\"PATTERN\" help:\"limit to matching repos\""
