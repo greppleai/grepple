@@ -10,9 +10,12 @@ api/               Dependency-free HTTP request and response contracts
 cmd/grepple/       Minimal executable entry point
 docs/              User and file-type documentation
 extract/           Tree-sitter Mermaid extraction, validation, and canonical architecture bundles
+gritql/            Native, bounded gritql-go-v1 structural detection kernel
+gritqlapi/         Adapters from structural findings to dependency-free API DTOs
 hooks/             Project-local Pi hooks and architecture tooling
 internal/cli/      CLI workflows and output rendering
 parser/            Language detection, tree-sitter parsing, segments, and outlines
+rulespec/          Shared validation for text and structural saved rules
 search/            Discovery, matching, filtering, paging, and result construction
 ```
 
@@ -122,6 +125,24 @@ Each level expands at most two resolved outgoing callees; callers and ambiguous 
 File patterns use Go's `filepath.Glob` syntax, extended with `**` to match across directory boundaries (for example `**/*.yaml` or `charts/**/values.yaml`). Omit globs to search recursively from the working directory; a matched directory is also searched recursively. `.git` directories and repository `.gitignore` entries are excluded. Shard searches are confined to the served repository root, so client-supplied globs and paths cannot escape it. Globs compose with every output mode, including `-c`/`--count`. When a Zoekt index is available the globs are translated into a `file:` atom and pushed down to the index (a deliberate superset — the shard still applies the exact glob matcher to what the index returns), so the index pre-filters by path instead of shipping every content match for the shard to discard.
 
 **Pipes work like `grep`/`rg`:** when standard input is piped (or redirected) and no path/glob argument is given, grepple searches the stream instead of the filesystem — `cat build.log | grepple "ERROR"` or `go test ./... | grepple -F "FAIL"`. The stream is reported under the virtual path `<stdin>` in every output mode (`--json`, `-c`, `--files-with-matches`, `--line-only`, default segments). It uses the plain-text fallback (no filename, so no tree-sitter structure), NUL-containing input is treated as binary and skipped, and no match exits 1 as usual. `--files` and `--outline` always operate on the filesystem, and passing any path/glob selects the filesystem over stdin.
+## Native structural search
+
+`grepple grit` runs the native, read-only `gritql-go-v1` engine over Go syntax trees. It is separate from text and regex search and has no external runtime, subprocess, rewrite engine, or fallback interpreter. The supported detection subset includes snippets, metavariables, repeated-binding equality, `where`, `contains`, `within`, `and`, `or`, `not`, `maybe`, and RE2 constraints.
+
+```bash
+# Quote inline queries so the shell does not expand metavariables.
+grepple grit $'language go\n`exec.Command($args)`' '**/*.go'
+
+# Multiline query file and complete JSON output.
+grepple grit --query-file /tmp/exec-command.grit --json '**/*.go'
+
+# Merge local findings with bounded pages from a compatible router.
+grepple grit --remote --repo 'acme/*' --query-file /tmp/exec-command.grit '**/*.go'
+```
+
+Findings contain exact half-open byte ranges, one-based Unicode-scalar positions, matched text, and sorted metavariable bindings. Local and remote findings are normalized, sorted, exactly deduplicated, and paged once as a combined result. Resource flags lower bounded defaults; unknown compatibility versions and unsupported rewrites or external functions fail closed.
+
+Remote structural search requires a backend implementing `POST /public/grit`. See [`docs/gritql-compatibility.md`](docs/gritql-compatibility.md) for the exact closed syntax, evaluation rules, diagnostics, limits, security guarantees, conformance fixtures, and benchmark gates.
 
 ## Outline
 

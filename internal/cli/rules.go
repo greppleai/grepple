@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/greppleai/grepple/api"
+	"github.com/greppleai/grepple/rulespec"
 	"io"
 	"net/http"
 	"os"
@@ -49,64 +50,144 @@ func rulesUsage() error {
 		"  grepple rules rm ID                            delete a rule",
 		"  grepple rules results ID [--json]              fetch materialized results",
 		"",
-		"add flags: --id --name --mode(count|files) -l/--files --regex -i/--ignore-case",
+		"add flags: --id --name --mode(count|files) --engine(text|gritql) --grit",
+		"           -f/--query-file (structural) -l/--files --regex -i/--ignore-case",
 		"           --repo PATTERN --exclude-repo PATTERN",
 		"",
 	}, "\n"))
 }
 
 type rulesAddArgs struct {
-	Server      string   `arg:"-s,--server" placeholder:"URL" help:"remote router URL"`
-	ID          string   `arg:"--id" placeholder:"ID" help:"stable rule id (default: slug of --name)"`
-	Name        string   `arg:"--name" placeholder:"NAME" help:"human-readable name"`
-	Mode        string   `arg:"--mode" placeholder:"MODE" help:"count | files"`
-	Files       bool     `arg:"-l,--files" help:"files mode (store matching paths)"`
-	Regex       bool     `arg:"--regex" help:"treat PATTERN as a regular expression"`
-	IgnoreCase  bool     `arg:"-i,--ignore-case" help:"case-insensitive match"`
-	Repo        []string `arg:"--repo,separate" placeholder:"PATTERN" help:"limit to matching repos"`
-	ExcludeRepo []string `arg:"--exclude-repo,separate" placeholder:"PATTERN" help:"exclude matching repos"`
-	JSON        bool     `arg:"--json" help:"print the created rule as JSON"`
-	Pattern     string   `arg:"positional" placeholder:"PATTERN"`
-	Globs       []string `arg:"positional" placeholder:"GLOB"`
+	Server        string   `arg:"-s,--server" placeholder:"URL" help:"remote router URL"`
+	ID            string   `arg:"--id" placeholder:"ID" help:"stable rule id (default: slug of --name)"`
+	Name          string   `arg:"--name" placeholder:"NAME" help:"human-readable name"`
+	Mode          string   `arg:"--mode" placeholder:"MODE" help:"count | files"`
+	Engine        string   `arg:"--engine" placeholder:"ENGINE" help:"text | gritql"`
+	Grit          bool     `arg:"--grit" help:"create a gritql structural rule"`
+	QueryFile     string   `arg:"-f,--query-file" placeholder:"PATH" help:"read structural query from PATH (- for stdin)"`
+	Compatibility string   `arg:"--compatibility" placeholder:"VERSION" help:"structural compatibility version"`
+	Files         bool     `arg:"-l,--files" help:"files mode (store matching paths)"`
+	Regex         bool     `arg:"--regex" help:"treat PATTERN as a regular expression"`
+	IgnoreCase    bool     `arg:"-i,--ignore-case" help:"case-insensitive match"`
+	Repo          []string `arg:"--repo,separate" placeholder:"PATTERN" help:"limit to matching repos"`
+	ExcludeRepo   []string `arg:"--exclude-repo,separate" placeholder:"PATTERN" help:"exclude matching repos"`
+	JSON          bool     `arg:"--json" help:"print the created rule as JSON"`
+	Pattern       string   `arg:"positional" placeholder:"PATTERN"`
+	Globs         []string `arg:"positional" placeholder:"GLOB"`
 }
 
 func (rulesAddArgs) Description() string {
 	return "Create or replace a predefined grep (rule)."
 }
 
-func runRulesAdd(args []string) error {
-	var values rulesAddArgs
-	if err := parseRuleArgs("rules add", &values, args); err != nil {
-		return err
-	}
-	req := api.SearchRequest{}
-	if values.Pattern != "" {
-		q := values.Pattern
-		req.Query = &q
-	}
-	if len(values.Globs) > 0 {
-		req.Globs = values.Globs
-	}
-	if values.Regex {
-		b := true
-		req.Regex = &b
-	}
-	if values.IgnoreCase {
-		b := true
-		req.IgnoreCase = &b
-	}
-	if len(values.Repo) > 0 {
-		req.Repo = values.Repo
-	}
-	if len(values.ExcludeRepo) > 0 {
-		req.ExcludeRepo = values.ExcludeRepo
+func buildRule(values rulesAddArgs) (api.Rule, error) {
+	engine := strings.TrimSpace(values.Engine)
+	if values.Grit {
+		if engine != "" && engine != api.RuleEngineGritQL {
+			return api.Rule{}, fmt.Errorf("--grit conflicts with --engine %q", engine)
+		}
+		engine = api.RuleEngineGritQL
 	}
 	mode := values.Mode
 	if mode == "" && values.Files {
 		mode = api.RuleModeFiles
 	}
-	rule := api.Rule{ID: values.ID, Name: values.Name, Mode: mode, Request: req}
+	rule := api.Rule{ID: values.ID, Name: values.Name, Mode: mode, Engine: engine}
+	if engine == "" || engine == api.RuleEngineText {
+		if err := setTextRuleRequest(&rule, values); err != nil {
+			return api.Rule{}, err
+		}
+	} else if engine == api.RuleEngineGritQL {
+		if err := setStructuralRuleRequest(&rule, values); err != nil {
+			return api.Rule{}, err
+		}
+	}
+	if _, err := rulespec.Normalize(rule); err != nil {
+		return api.Rule{}, err
+	}
+	return rule, nil
+}
 
+func setTextRuleRequest(rule *api.Rule, values rulesAddArgs) error {
+	if values.QueryFile != "" || values.Compatibility != "" {
+		return fmt.Errorf("--query-file and --compatibility require a structural rule")
+	}
+	request := api.SearchRequest{}
+	if values.Pattern != "" {
+		request.Query = &values.Pattern
+	}
+	request.Globs = append([]string(nil), values.Globs...)
+	if values.Regex {
+		request.Regex = boolPointer(true)
+	}
+	if values.IgnoreCase {
+		request.IgnoreCase = boolPointer(true)
+	}
+	request.Repo = append([]string(nil), values.Repo...)
+	request.ExcludeRepo = append([]string(nil), values.ExcludeRepo...)
+	rule.Request = request
+	return nil
+}
+
+func setStructuralRuleRequest(rule *api.Rule, values rulesAddArgs) error {
+	if values.Regex || values.IgnoreCase {
+		return fmt.Errorf("--regex and --ignore-case are not valid for structural rules")
+	}
+	inline := values.Pattern
+	globs := append([]string(nil), values.Globs...)
+	if values.QueryFile != "" {
+		if inline != "" {
+			globs = append([]string{inline}, globs...)
+		}
+		inline = ""
+	}
+	query, err := loadRuleQuery(inline, values.QueryFile)
+	if err != nil {
+		return err
+	}
+	compatibility := values.Compatibility
+	if compatibility == "" {
+		compatibility = api.GritCompatibilityV1
+	}
+	rule.Structural = &api.GritRequest{
+		Query: query, Compatibility: compatibility, Globs: globs,
+		Repositories: append([]string(nil), values.Repo...), ExcludeRepositories: append([]string(nil), values.ExcludeRepo...),
+	}
+	return nil
+}
+
+func loadRuleQuery(inline, path string) (string, error) {
+	if inline != "" && path != "" {
+		return "", fmt.Errorf("structural rule accepts query text or --query-file, not both")
+	}
+	if path == "" {
+		if len(inline) > api.MaxGritQueryBytes {
+			return "", fmt.Errorf("structural query exceeds the %d-byte maximum", api.MaxGritQueryBytes)
+		}
+		return inline, nil
+	}
+	if path == "-" {
+		return readGritQuery(os.Stdin)
+	}
+	file, err := os.Open(path)
+	if err != nil {
+		return "", err
+	}
+	defer file.Close()
+	return readGritQuery(file)
+}
+
+func boolPointer(value bool) *bool { return &value }
+
+func runRulesAdd(args []string) error {
+	var values rulesAddArgs
+	if err := parseRuleArgs("rules add", &values, args); err != nil {
+		return err
+	}
+	rule, err := buildRule(values)
+	if err != nil {
+		return err
+	}
 	base := serverDefault(values.Server)
 	body, err := json.Marshal(rule)
 	if err != nil {
@@ -118,6 +199,9 @@ func runRulesAdd(args []string) error {
 	}
 	if values.JSON {
 		return stdoutWriter().writeJSON(created)
+	}
+	if created.Engine == api.RuleEngineGritQL {
+		return stdoutWriter().writeString(fmt.Sprintf("created structural rule %s (mode=%s, engine=%s)\n", created.ID, created.Mode, created.Engine))
 	}
 	return stdoutWriter().writeString(fmt.Sprintf("created rule %s (mode=%s)\n", created.ID, created.Mode))
 }
@@ -138,7 +222,11 @@ func runRulesList(args []string) error {
 		return stdoutWriter().writeString("no rules defined\n")
 	}
 	for _, r := range set.Rules {
-		if err := stdoutWriter().writeString(fmt.Sprintf("%s\t%s\t%s\n", r.ID, r.Mode, r.Name)); err != nil {
+		line := fmt.Sprintf("%s\t%s\t%s\n", r.ID, r.Mode, r.Name)
+		if r.Engine == api.RuleEngineGritQL {
+			line = fmt.Sprintf("%s\t%s\t%s\t%s\n", r.ID, r.Mode, r.Engine, r.Name)
+		}
+		if err := stdoutWriter().writeString(line); err != nil {
 			return err
 		}
 	}

@@ -9,14 +9,14 @@ BUILD_DATE ?= $(shell git show -s --format=%cI HEAD 2>/dev/null || echo unknown)
 VERSION_LDFLAGS := -X github.com/greppleai/grepple/internal/cli.Version=$(VERSION) -X github.com/greppleai/grepple/internal/cli.Commit=$(COMMIT) -X github.com/greppleai/grepple/internal/cli.BuildDate=$(BUILD_DATE)
 
 COMMANDS := grepple
-SOURCES := $(shell find cmd internal api extract parser search -type f -name '*.go') go.mod go.sum
+SOURCES := $(shell find cmd internal api extract gritql gritqlapi parser rulespec search -type f -name '*.go') go.mod go.sum
 SCHEMA_DIR := .grepple
-SCHEMA_CORE_PACKAGES := api extract parser search
+SCHEMA_CORE_PACKAGES := api extract gritql gritqlapi parser rulespec search
 SCHEMA_PACKAGES := $(SCHEMA_CORE_PACKAGES) cli
 PACKAGE_BUNDLES := $(addsuffix .package,$(addprefix $(SCHEMA_DIR)/,$(SCHEMA_PACKAGES)))
 WORKSPACE_BUNDLES := $(SCHEMA_DIR)/project.workspace
 
-.PHONY: build test lint revive-lint hook-build hook-lint hook-test schema-generate schema-check install clean
+.PHONY: build test lint revive-lint hook-build hook-lint hook-test schema-generate schema-check docker-smoke install clean
 
 build: $(addprefix $(BIN_DIR)/,$(COMMANDS)) hook-build
 
@@ -54,6 +54,11 @@ schema-generate: $(BIN_DIR)/grepple
 schema-check: $(BIN_DIR)/grepple
 	@for bundle in $(PACKAGE_BUNDLES); do $(BIN_DIR)/grepple extract check package $$bundle || exit $$?; done
 	@for bundle in $(WORKSPACE_BUNDLES); do $(BIN_DIR)/grepple extract check workspace $$bundle || exit $$?; done
+
+# Opt-in final-image smoke gate; requires a running Docker daemon and is not part of test.
+docker-smoke:
+	./scripts/docker-smoke.sh
+
 install: build
 	install -d $(DESTDIR)$(PREFIX)/bin
 	for command in $(COMMANDS); do \

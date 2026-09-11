@@ -2,12 +2,15 @@
 
 ## Project
 
-Grepple is the public Go code-search engine and CLI. Shared packages are importable by the private sibling backend:
+Grepple is the public Go code-search engine and CLI. Public packages are importable by the private sibling backend:
 
 - `api`: dependency-free HTTP DTOs
-- `parser`: language detection, tree-sitter parsing, segments, and outlines
+- `parser`: language detection, tree-sitter parsing, syntax documents, segments, and outlines
 - `search`: discovery, matching, filtering, paging, and result construction
-- `internal/cli`: CLI workflows and output rendering
+- `gritql`: native, bounded structural query compilation and evaluation
+- `gritqlapi`: conversion from structural results to API DTOs
+- `rulespec`: shared text and structural saved-rule validation
+- `internal/cli`: repository-local CLI workflows and output rendering
 
 Keep dependencies directed toward `api` and `parser`. Distributed router, shard, and repository-management code lives in `../grepple-backend`; this public module must not depend on it.
 
