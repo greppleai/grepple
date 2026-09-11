@@ -32,14 +32,21 @@ classDiagram
     %% grepple:struct-tag FileOutline Path "json:\"path\""
     %% grepple:struct-tag FileOutline Symbols "json:\"symbols\""
     note for FileOutline "defined: parser/model.go:22-26; Language@parser/model.go:24; Path@parser/model.go:23; Symbols@parser/model.go:25"
+    class GrammarCardinality["GrammarCardinality = uint8"]
+    <<type>> GrammarCardinality
+    %% grepple:underlying GrammarCardinality uint8
+    %% grepple:file GrammarCardinality parser/language.go
+    note for GrammarCardinality "defined: parser/language.go:19"
     class LanguageCapabilities {
         +Extensions: []string
+        +GrammarABI: uint32
+        +GrammarFingerprint: string
         +ID: string
         +Navigation: bool
     }
     <<struct>> LanguageCapabilities
     %% grepple:file LanguageCapabilities parser/language.go
-    note for LanguageCapabilities "defined: parser/language.go:7-11; Extensions@parser/language.go:9; ID@parser/language.go:8; Navigation@parser/language.go:10"
+    note for LanguageCapabilities "defined: parser/language.go:8-14; Extensions@parser/language.go:10; GrammarABI@parser/language.go:12; GrammarFingerprint@parser/language.go:13; ID@parser/language.go:9; Navigation@parser/language.go:11"
     class NavigationCall {
         +CallerID: string
         +Confidence: string
@@ -291,7 +298,15 @@ classDiagram
     }
     <<interface>> languageAdapter
     %% grepple:file languageAdapter parser/language.go
-    note for languageAdapter "defined: parser/language.go:41-46; Grammar@parser/language.go:43; ID@parser/language.go:42; Outline@parser/language.go:45; Rules@parser/language.go:44"
+    note for languageAdapter "defined: parser/language.go:63-68; Grammar@parser/language.go:65; ID@parser/language.go:64; Outline@parser/language.go:67; Rules@parser/language.go:66"
+    class languageGeneratedMetadata {
+        -children: map[string]GrammarCardinality
+        -fields: map[string]map[string]GrammarCardinality
+        -fingerprint: string
+    }
+    <<struct>> languageGeneratedMetadata
+    %% grepple:file languageGeneratedMetadata parser/language.go
+    note for languageGeneratedMetadata "defined: parser/language.go:29-33; children@parser/language.go:32; fields@parser/language.go:31; fingerprint@parser/language.go:30"
     class matchLines {
         -hitsRange(int, int): bool
         -set: map[int]bool
@@ -425,7 +440,7 @@ classDiagram
     <<type>> stringSet
     %% grepple:underlying stringSet map[string]struct{}
     %% grepple:file stringSet parser/language.go
-    note for stringSet "defined: parser/language.go:13; contains@parser/language.go:23-26"
+    note for stringSet "defined: parser/language.go:35; contains@parser/language.go:45-48"
     class structureRules {
         -blockTypes: stringSet
         -classBodyTypes: stringSet
@@ -440,7 +455,7 @@ classDiagram
     }
     <<struct>> structureRules
     %% grepple:file structureRules parser/language.go
-    note for structureRules "defined: parser/language.go:28-39; blockTypes@parser/language.go:36; classBodyTypes@parser/language.go:33; classDeclarationTypes@parser/language.go:32; containerTypes@parser/language.go:31; contextTypes@parser/language.go:30; exportTypes@parser/language.go:34; functionLikeTypes@parser/language.go:35; jsxElementTypes@parser/language.go:37; nameFieldCandidates@parser/language.go:38; structuralTypes@parser/language.go:29"
+    note for structureRules "defined: parser/language.go:50-61; blockTypes@parser/language.go:58; classBodyTypes@parser/language.go:55; classDeclarationTypes@parser/language.go:54; containerTypes@parser/language.go:53; contextTypes@parser/language.go:52; exportTypes@parser/language.go:56; functionLikeTypes@parser/language.go:57; jsxElementTypes@parser/language.go:59; nameFieldCandidates@parser/language.go:60; structuralTypes@parser/language.go:51"
     class typeScriptLanguage {
         +Grammar(): *sitter.Language
         +ID(): string
@@ -470,13 +485,25 @@ classDiagram
     }
     <<function>> CapabilitiesForLanguage
     %% grepple:file CapabilitiesForLanguage parser/language.go
-    note for CapabilitiesForLanguage "defined: parser/language.go:89-97"
+    note for CapabilitiesForLanguage "defined: parser/language.go:110-117"
     class DeclarationRangeAt {
         +DeclarationRangeAt(string, string, int): tuple~int&#44;int&#44;bool~
     }
     <<function>> DeclarationRangeAt
     %% grepple:file DeclarationRangeAt parser/navigation.go
     note for DeclarationRangeAt "defined: parser/navigation.go:125-139"
+    class GrammarChildrenCardinality {
+        +GrammarChildrenCardinality(string, string): GrammarCardinality
+    }
+    <<function>> GrammarChildrenCardinality
+    %% grepple:file GrammarChildrenCardinality parser/language.go
+    note for GrammarChildrenCardinality "defined: parser/language.go:140-146"
+    class GrammarFieldCardinality {
+        +GrammarFieldCardinality(string, string, string): GrammarCardinality
+    }
+    <<function>> GrammarFieldCardinality
+    %% grepple:file GrammarFieldCardinality parser/language.go
+    note for GrammarFieldCardinality "defined: parser/language.go:131-137"
     class LanguageFor {
         +LanguageFor(string): string
     }
@@ -524,7 +551,7 @@ classDiagram
     }
     <<function>> SupportedLanguages
     %% grepple:file SupportedLanguages parser/language.go
-    note for SupportedLanguages "defined: parser/language.go:79-86"
+    note for SupportedLanguages "defined: parser/language.go:101-107"
     class WalkNamed {
         +WalkNamed(Node, func&#40;Node&#41;)
     }
@@ -539,6 +566,8 @@ classDiagram
     Document "1" ..> "*" ParseDiagnostic : method ParseDiagnostics result 1
     Document "1" ..> "1" Range : method nodeRangeLocked result 1
     FileOutline "1" --> "*" Symbol : field Symbols
+    GrammarChildrenCardinality "1" ..> "1" GrammarCardinality : result 1
+    GrammarFieldCardinality "1" ..> "1" GrammarCardinality : result 1
     Navigation "1" ..> "*" NavigationCall : result 2
     Navigation "1" ..> "*" NavigationDeclaration : result 1
     NavigationGraph "1" --> "*" NavigationCall : field Calls
@@ -591,6 +620,8 @@ classDiagram
     kotlinLanguage "1" ..> "1" structureRules : method Rules result 1
     languageAdapter "1" ..> "*" Symbol : method Outline result 1
     languageAdapter "1" ..> "1" structureRules : method Rules result 1
+    languageGeneratedMetadata "1" --> "*" GrammarCardinality : field children
+    languageGeneratedMetadata "1" --> "*" GrammarCardinality : field fields
     mdNode "1" --> "1" Symbol : field sym
     navigationCollector "1" --> "*" NavigationCall : field calls
     navigationCollector "1" --> "*" NavigationDeclaration : field declarations

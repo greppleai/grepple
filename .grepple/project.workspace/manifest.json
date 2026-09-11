@@ -25,16 +25,16 @@
   },
   "summary": {
     "modules": 2,
-    "packages": 15,
-    "sourceFiles": 118,
-    "declarations": 314,
-    "exportedFunctions": 97,
+    "packages": 16,
+    "sourceFiles": 120,
+    "declarations": 321,
+    "exportedFunctions": 99,
     "fiberRoutes": 0,
     "localImports": 22,
-    "standardLibraryImports": 125,
+    "standardLibraryImports": 136,
     "externalModuleEdges": 15
   },
-  "semanticModelDigest": "sha256:569c1cf5ca4ef5802ec88cfdd5b9053e860f731c8c88fa5f9f614d70a458025b",
+  "semanticModelDigest": "sha256:3aea6c8707c1c3d9c4383ee79db8f56b1f541c2a21aa978415818f27e0a90a93",
   "modules": [
     {
       "path": "github.com/greppleai/grepple",
@@ -301,9 +301,9 @@
           "name": "parser",
           "documentation": "Package parser provides application source classification and structural parsing.",
           "main": false,
-          "sourceFiles": 26,
-          "declarations": 37,
-          "exportedFunctions": 13,
+          "sourceFiles": 27,
+          "declarations": 39,
+          "exportedFunctions": 15,
           "fiberRoutes": 0,
           "routes": [],
           "localImports": [],
@@ -375,6 +375,33 @@
               "modulePath": "go.yaml.in/yaml/v3"
             }
           ],
+          "unmappedExternalImports": []
+        },
+        {
+          "importPath": "github.com/greppleai/grepple/parser/internal/generate",
+          "directory": "parser/internal/generate",
+          "name": "main",
+          "main": true,
+          "sourceFiles": 1,
+          "declarations": 5,
+          "exportedFunctions": 0,
+          "fiberRoutes": 0,
+          "routes": [],
+          "localImports": [],
+          "standardLibraryImports": [
+            "bytes",
+            "crypto/sha256",
+            "encoding/hex",
+            "encoding/json",
+            "flag",
+            "fmt",
+            "go/format",
+            "os",
+            "os/exec",
+            "path/filepath",
+            "sort"
+          ],
+          "externalImports": [],
           "unmappedExternalImports": []
         },
         {

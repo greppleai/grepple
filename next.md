@@ -188,9 +188,9 @@ Reduce repeated parsing and language knowledge across extraction, navigation, te
    - [x] Make Go, TypeScript, and TSX extraction consume `parser.Document` and `parser.Node`.
    - [x] Remove extraction- and hook-local grammar selection and parser lifecycle; application-source parsing now flows through `parser.ParseDocument`.
    - [x] Preserve exact source ranges, malformed-source behavior, and generated artifact semantics. `parser.NavigationGraphFromDocument` now lets extraction derive navigation from the same parsed document without reparsing.
-2. [ ] Expose a read-only parser language capability registry.
-   - [x] Make parser-backed language IDs, extensions, and navigation support centrally discoverable; extraction now delegates path classification and extension metadata to that registry.
-   - [ ] Add exact grammar/build fingerprints and generated field-cardinality/repeated-position metadata so GritQL, extraction, navigation, and future projections do not maintain conflicting tables.
+2. [x] Expose a read-only parser language capability registry.
+   - [x] Make parser-backed language IDs, extensions, ABI/fingerprint identity, and navigation support centrally discoverable; extraction delegates path classification and extension metadata to that registry.
+   - [x] Generate exact grammar source fingerprints plus field and unfielded-child cardinality from every pinned grammar. GritQL now consumes parser-owned Go repeated-position metadata instead of handwritten tables, and `make schema-check` rejects stale generated metadata.
    - [x] Keep Grit-specific snippet wrappers and metavariable placeholder roles in `gritql`; they are query semantics rather than general parser facts.
 3. [ ] Add efficient shared syntax traversal primitives.
    - [x] Add parser-owned iterative named-node walking and use parser-owned child, field, diagnostic, text, and range access throughout extraction and hooks.

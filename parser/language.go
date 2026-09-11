@@ -1,13 +1,35 @@
 package parser
 
+//go:generate go run ./internal/generate
 import sitter "github.com/tree-sitter/go-tree-sitter"
 
 // LanguageCapabilities describes one Tree-sitter-backed application language.
 // Returned extension slices are copies and safe for callers to modify.
 type LanguageCapabilities struct {
-	ID         string
-	Extensions []string
-	Navigation bool
+	ID                 string
+	Extensions         []string
+	Navigation         bool
+	GrammarABI         uint32
+	GrammarFingerprint string
+}
+
+// GrammarCardinality describes whether one grammar position accepts one or
+// multiple syntax nodes. Unknown means the parent or position is not declared
+// in the pinned grammar's node-types metadata.
+type GrammarCardinality uint8
+
+// GrammarCardinalityUnknown, GrammarCardinalityOne, and GrammarCardinalityMany
+// identify absent, scalar, and repeated grammar positions.
+const (
+	GrammarCardinalityUnknown GrammarCardinality = iota
+	GrammarCardinalityOne
+	GrammarCardinalityMany
+)
+
+type languageGeneratedMetadata struct {
+	fingerprint string
+	fields      map[string]map[string]GrammarCardinality
+	children    map[string]GrammarCardinality
 }
 
 type stringSet map[string]struct{}
@@ -79,8 +101,7 @@ var languageCapabilities = []LanguageCapabilities{
 func SupportedLanguages() []LanguageCapabilities {
 	result := make([]LanguageCapabilities, len(languageCapabilities))
 	for i, capability := range languageCapabilities {
-		result[i] = capability
-		result[i].Extensions = append([]string(nil), capability.Extensions...)
+		result[i] = enrichLanguageCapabilities(capability)
 	}
 	return result
 }
@@ -89,11 +110,39 @@ func SupportedLanguages() []LanguageCapabilities {
 func CapabilitiesForLanguage(id string) (LanguageCapabilities, bool) {
 	for _, capability := range languageCapabilities {
 		if capability.ID == id {
-			capability.Extensions = append([]string(nil), capability.Extensions...)
-			return capability, true
+			return enrichLanguageCapabilities(capability), true
 		}
 	}
 	return LanguageCapabilities{}, false
+}
+
+func enrichLanguageCapabilities(capability LanguageCapabilities) LanguageCapabilities {
+	capability.Extensions = append([]string(nil), capability.Extensions...)
+	if generated, ok := generatedLanguageMetadata[capability.ID]; ok {
+		capability.GrammarFingerprint = generated.fingerprint
+	}
+	if adapter := adapterForLanguage(capability.ID); adapter != nil && adapter.Grammar() != nil {
+		capability.GrammarABI = adapter.Grammar().AbiVersion()
+	}
+	return capability
+}
+
+// GrammarFieldCardinality returns the cardinality of a named field on a node kind.
+func GrammarFieldCardinality(language, parentKind, field string) GrammarCardinality {
+	metadata, ok := generatedLanguageMetadata[language]
+	if !ok {
+		return GrammarCardinalityUnknown
+	}
+	return metadata.fields[parentKind][field]
+}
+
+// GrammarChildrenCardinality returns the cardinality of an unfielded children position.
+func GrammarChildrenCardinality(language, parentKind string) GrammarCardinality {
+	metadata, ok := generatedLanguageMetadata[language]
+	if !ok {
+		return GrammarCardinalityUnknown
+	}
+	return metadata.children[parentKind]
 }
 
 func buildLanguageAdapters(adapters ...languageAdapter) map[string]languageAdapter {

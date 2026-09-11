@@ -3175,22 +3175,22 @@
       "name": "occurrenceRestoration",
       "kind": "struct",
       "file": "gritql/template.go",
-      "line": 1372,
-      "endLine": 1376,
+      "line": 1336,
+      "endLine": 1340,
       "underlyingType": "struct{seen[]int;indices map[VariableRef]int;valid bool;}",
       "members": [
         {
           "name": "seenExactlyOnce",
           "kind": "method",
-          "line": 1410,
-          "endLine": 1417,
+          "line": 1374,
+          "endLine": 1381,
           "result": "bool"
         },
         {
           "name": "visitChildren",
           "kind": "method",
-          "line": 1398,
-          "endLine": 1408,
+          "line": 1362,
+          "endLine": 1372,
           "parameters": [
             "[]*templateNode",
             "[]templateChild"
@@ -3200,8 +3200,8 @@
         {
           "name": "visitSlot",
           "kind": "method",
-          "line": 1378,
-          "endLine": 1385,
+          "line": 1342,
+          "endLine": 1349,
           "parameters": [
             "*templateSlot"
           ]
@@ -3209,8 +3209,8 @@
         {
           "name": "visitTree",
           "kind": "method",
-          "line": 1387,
-          "endLine": 1396,
+          "line": 1351,
+          "endLine": 1360,
           "parameters": [
             "*templateNode"
           ]
@@ -3218,22 +3218,22 @@
         {
           "name": "indices",
           "kind": "property",
-          "line": 1374,
-          "endLine": 1374,
+          "line": 1338,
+          "endLine": 1338,
           "result": "map[VariableRef]int"
         },
         {
           "name": "seen",
           "kind": "property",
-          "line": 1373,
-          "endLine": 1373,
+          "line": 1337,
+          "endLine": 1337,
           "result": "[]int"
         },
         {
           "name": "valid",
           "kind": "property",
-          "line": 1375,
-          "endLine": 1375,
+          "line": 1339,
+          "endLine": 1339,
           "result": "bool"
         }
       ]

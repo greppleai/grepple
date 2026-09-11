@@ -1274,51 +1274,16 @@ func declarationOrList(kind, declaration, list string) bool {
 	return kind == declaration || kind == list
 }
 
-// repeatedGoFields and repeatedGoUnfielded are derived from the pinned
-// tree-sitter-go v0.25.0 src/node-types.json entries whose field/children has
-// multiple:true. Grouped declarations need the syntax-sensitive exceptions in
-// repeatedGrammarPosition because node-types flattens their grouped alternative.
-var repeatedGoFields = map[string]map[string]struct{}{
-	"const_spec":                 {"name": {}},
-	"field_declaration":          {"name": {}},
-	"parameter_declaration":      {"name": {}},
-	"type_case":                  {"type": {}},
-	"type_parameter_declaration": {"name": {}},
-	"var_spec":                   {"name": {}},
-}
-
-var repeatedGoUnfielded = map[string]struct{}{
-	"argument_list":                 {},
-	"const_declaration":             {},
-	"expression_list":               {},
-	"expression_switch_statement":   {},
-	"field_declaration_list":        {},
-	"import_spec_list":              {},
-	"interface_type":                {},
-	"interpreted_string_literal":    {},
-	"literal_value":                 {},
-	"parameter_list":                {},
-	"select_statement":              {},
-	"source_file":                   {},
-	"statement_list":                {},
-	"type_arguments":                {},
-	"type_constraint":               {},
-	"type_declaration":              {},
-	"type_elem":                     {},
-	"type_instantiation_expression": {},
-	"type_parameter_list":           {},
-	"type_switch_statement":         {},
-	"var_spec_list":                 {},
-}
+// Repeated-position metadata is generated in parser from the pinned grammar's
+// node-types.json. Grouped declarations retain syntax-sensitive checks here
+// because node-types flattens their grouped alternative.
 
 func repeatedGrammarPosition(parent, child parser.Node) bool {
 	p := parent.Kind()
-	if fields := repeatedGoFields[p]; fields != nil {
-		if _, ok := fields[child.FieldName()]; ok {
-			return true
-		}
+	if child.FieldName() != "" {
+		return parser.GrammarFieldCardinality("go", p, child.FieldName()) == parser.GrammarCardinalityMany
 	}
-	if _, ok := repeatedGoUnfielded[p]; !ok || child.FieldName() != "" {
+	if parser.GrammarChildrenCardinality("go", p) != parser.GrammarCardinalityMany {
 		return false
 	}
 	if p == "const_declaration" || p == "type_declaration" {
@@ -1335,11 +1300,10 @@ func repeatedGrammarPosition(parent, child parser.Node) bool {
 // repeatedGrammarPositionKinds is the snapshot-friendly counterpart used to
 // validate generic traversal list targets against the same pinned metadata.
 func repeatedGrammarPositionKinds(parentKind, field string, children []parser.SyntaxNode) bool {
-	if fields := repeatedGoFields[parentKind]; fields != nil {
-		_, ok := fields[field]
-		return ok
+	if field != "" {
+		return parser.GrammarFieldCardinality("go", parentKind, field) == parser.GrammarCardinalityMany
 	}
-	if _, ok := repeatedGoUnfielded[parentKind]; !ok || field != "" {
+	if parser.GrammarChildrenCardinality("go", parentKind) != parser.GrammarCardinalityMany {
 		return false
 	}
 	if parentKind == "const_declaration" || parentKind == "type_declaration" {

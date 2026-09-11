@@ -16,7 +16,7 @@ SCHEMA_PACKAGES := $(SCHEMA_CORE_PACKAGES) cli
 PACKAGE_BUNDLES := $(addsuffix .package,$(addprefix $(SCHEMA_DIR)/,$(SCHEMA_PACKAGES)))
 WORKSPACE_BUNDLES := $(SCHEMA_DIR)/project.workspace
 
-.PHONY: build test lint revive-lint hook-build hook-lint hook-test schema-generate schema-check docker-smoke install clean
+.PHONY: build test lint revive-lint hook-build hook-lint hook-test parser-metadata-generate parser-metadata-check schema-generate schema-check docker-smoke install clean
 
 build: $(addprefix $(BIN_DIR)/,$(COMMANDS)) hook-build
 
@@ -46,12 +46,18 @@ hook-lint:
 hook-test:
 	$(MAKE) -C hooks test
 
-schema-generate: $(BIN_DIR)/grepple
+parser-metadata-generate:
+	cd parser && go generate
+
+parser-metadata-check:
+	cd parser && go run ./internal/generate -check
+
+schema-generate: parser-metadata-generate $(BIN_DIR)/grepple
 	@for package in $(SCHEMA_CORE_PACKAGES); do $(BIN_DIR)/grepple extract structure $$package --bundle --output $(SCHEMA_DIR)/$$package.package || exit $$?; done
 	@$(BIN_DIR)/grepple extract structure internal/cli --bundle --output $(SCHEMA_DIR)/cli.package
 	@$(BIN_DIR)/grepple extract structure . --workspace --output $(WORKSPACE_BUNDLES)
 
-schema-check: $(BIN_DIR)/grepple
+schema-check: parser-metadata-check $(BIN_DIR)/grepple
 	@for bundle in $(PACKAGE_BUNDLES); do $(BIN_DIR)/grepple extract check package $$bundle || exit $$?; done
 	@for bundle in $(WORKSPACE_BUNDLES); do $(BIN_DIR)/grepple extract check workspace $$bundle || exit $$?; done
 

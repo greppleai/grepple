@@ -28,6 +28,9 @@ func TestSupportedLanguagesOwnsClassificationMetadata(t *testing.T) {
 		if _, ok := languageAdapters[language.ID]; !ok {
 			t.Fatalf("capability %q has no parser adapter", language.ID)
 		}
+		if language.GrammarABI == 0 || len(language.GrammarFingerprint) != len("sha256:")+64 {
+			t.Fatalf("capability %q has incomplete grammar identity: %#v", language.ID, language)
+		}
 		for _, extension := range language.Extensions {
 			if got := LanguageFor("source" + extension); got != language.ID {
 				t.Fatalf("LanguageFor(%q)=%q, want %q", extension, got, language.ID)
@@ -38,6 +41,31 @@ func TestSupportedLanguagesOwnsClassificationMetadata(t *testing.T) {
 	fresh, _ := CapabilitiesForLanguage("go")
 	if len(fresh.Extensions) != 1 || fresh.Extensions[0] != ".go" {
 		t.Fatalf("capability extensions were mutable: %#v", fresh)
+	}
+}
+
+func TestGrammarCardinalityComesFromGeneratedMetadata(t *testing.T) {
+	tests := []struct {
+		language, parent, field string
+		want                    GrammarCardinality
+	}{
+		{language: "go", parent: "parameter_declaration", field: "name", want: GrammarCardinalityMany},
+		{language: "go", parent: "function_declaration", field: "name", want: GrammarCardinalityOne},
+		{language: "go", parent: "argument_list", want: GrammarCardinalityMany},
+		{language: "typescript", parent: "arguments", want: GrammarCardinalityMany},
+		{language: "tsx", parent: "jsx_element", field: "open_tag", want: GrammarCardinalityOne},
+	}
+	for _, test := range tests {
+		got := GrammarChildrenCardinality(test.language, test.parent)
+		if test.field != "" {
+			got = GrammarFieldCardinality(test.language, test.parent, test.field)
+		}
+		if got != test.want {
+			t.Fatalf("cardinality %s/%s/%s=%d, want %d", test.language, test.parent, test.field, got, test.want)
+		}
+	}
+	if got := GrammarFieldCardinality("unknown", "node", "field"); got != GrammarCardinalityUnknown {
+		t.Fatalf("unknown cardinality=%d", got)
 	}
 }
 
