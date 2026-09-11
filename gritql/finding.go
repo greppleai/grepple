@@ -309,6 +309,11 @@ func evaluationMetadataForProgram(options EvaluateOptions, program *Program) Eva
 	}
 	return metadata
 }
+func withFileDeadline(started time.Time, options EvaluateOptions) EvaluateOptions {
+	normalized := normalizeEvaluateOptions(options)
+	options.Deadline = evaluationDeadline(started, normalized.MaxElapsed, options.Deadline)
+	return options
+}
 
 // EvaluateFile parses and evaluates one in-memory file. Expected source,
 // cancellation, and resource failures are returned as typed diagnostics rather
@@ -319,10 +324,7 @@ func EvaluateFile(ctx context.Context, program *Program, input FileInput, option
 	if language == "" {
 		language = "go"
 	}
-	fileDeadline := started.Add(normalizeEvaluateOptions(options).MaxElapsed)
-	if options.Deadline.IsZero() || fileDeadline.Before(options.Deadline) {
-		options.Deadline = fileDeadline
-	}
+	options = withFileDeadline(started, options)
 	result.metadata = evaluationMetadataForProgram(options, program)
 	defer func() {
 		finalizeFileEvaluation(ctx, &result, recover(), options, input)
@@ -387,10 +389,7 @@ func finalizeFileEvaluation(ctx context.Context, result *FileEvaluation, recover
 // Ownership of document remains with the caller.
 func EvaluateDocumentFindings(ctx context.Context, program *Program, document *parser.Document, input DocumentInput, options EvaluateOptions) (result FileEvaluation) {
 	started := time.Now()
-	fileDeadline := started.Add(normalizeEvaluateOptions(options).MaxElapsed)
-	if options.Deadline.IsZero() || fileDeadline.Before(options.Deadline) {
-		options.Deadline = fileDeadline
-	}
+	options = withFileDeadline(started, options)
 	result.metadata = evaluationMetadataForProgram(options, program)
 	defer func() {
 		if recover() != nil {

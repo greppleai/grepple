@@ -205,7 +205,7 @@ Unsupported constructs should use `PATTERN_UNSUPPORTED`, not `PATTERN_PARSE`, wh
 
 ## 7. Resource bounds and partial results
 
-Defaults are mandatory. A host may lower them, but may not exceed the hard maxima while claiming v1 conformance.
+Library and server evaluations use the defaults below. A host may lower them, but may not exceed the hard maxima while claiming bounded v1 execution. The interactive local CLI is intentionally exempt from wall-clock defaults: it has no implicit per-file or batch deadline, while retaining cancellation and all deterministic count, size, and memory limits. Local users can opt into deadlines with `--max-file-time-ms` and `--timeout-ms`; explicit deadlines still use the hard maxima.
 
 | Resource | Default | Hard maximum |
 | --- | ---: | ---: |

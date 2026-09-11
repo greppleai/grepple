@@ -12,6 +12,7 @@ import (
 	"slices"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/greppleai/grepple/api"
 )
@@ -34,6 +35,17 @@ func TestParseGritArgsKeepsStructuralFlagsSeparate(t *testing.T) {
 	}
 	if len(options.Globs) != 2 || len(options.ExcludeGlobs) != 1 || len(options.Repositories) != 1 || len(options.ExcludeRepositories) != 1 {
 		t.Fatalf("scopes=%#v", options)
+	}
+}
+
+func TestGritScanOptionsDisableImplicitLocalTimeouts(t *testing.T) {
+	defaults := gritScanOptions(gritArgs{}).EvaluateOptions
+	if !defaults.DisableFileTimeout || !defaults.DisableBatchTimeout {
+		t.Fatalf("default local timeouts remain enabled: %#v", defaults)
+	}
+	explicit := gritScanOptions(gritArgs{MaxFileMilliseconds: 25, TimeoutMilliseconds: 50}).EvaluateOptions
+	if explicit.DisableFileTimeout || explicit.DisableBatchTimeout || explicit.MaxElapsed != 25*time.Millisecond || explicit.MaxBatchElapsed != 50*time.Millisecond {
+		t.Fatalf("explicit local timeouts not preserved: %#v", explicit)
 	}
 }
 

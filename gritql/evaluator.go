@@ -25,15 +25,17 @@ const (
 // they are deliberately not applied by evaluation of one file. MaxSteps accounts
 // syntax visits, query operations, constraints, and matcher/backtracking work.
 type EvaluateOptions struct {
-	MaxDepth        int
-	MaxCandidates   int
-	MaxSteps        int
-	MaxFindings     int
-	MaxSourceBytes  int
-	MaxMemoryBytes  int
-	MaxElapsed      time.Duration
-	MaxBatchElapsed time.Duration
-	Deadline        time.Time
+	MaxDepth            int
+	MaxCandidates       int
+	MaxSteps            int
+	MaxFindings         int
+	MaxSourceBytes      int
+	MaxMemoryBytes      int
+	MaxElapsed          time.Duration
+	MaxBatchElapsed     time.Duration
+	DisableFileTimeout  bool
+	DisableBatchTimeout bool
+	Deadline            time.Time
 }
 
 // EvaluationOptions is an alias retained for callers that prefer the noun form.
@@ -144,11 +146,23 @@ func validateEvaluationInputs(program *Program, document *parser.Document) error
 }
 
 func newEvaluationBudget(ctx context.Context, options EvaluateOptions) *evaluationBudget {
-	deadline := time.Now().Add(options.MaxElapsed)
-	if !options.Deadline.IsZero() && options.Deadline.Before(deadline) {
-		deadline = options.Deadline
-	}
+	deadline := evaluationDeadline(time.Now(), options.MaxElapsed, options.Deadline)
 	return &evaluationBudget{ctx: ctx, deadline: deadline, maxSteps: options.MaxSteps}
+}
+
+func evaluationDeadline(started time.Time, maximum time.Duration, explicit time.Time) time.Time {
+	deadline := explicit
+	if maximum > 0 {
+		candidate := started.Add(maximum)
+		if deadline.IsZero() || candidate.Before(deadline) {
+			deadline = candidate
+		}
+	}
+	return deadline
+}
+
+func deadlineExceeded(deadline time.Time) bool {
+	return !deadline.IsZero() && !time.Now().Before(deadline)
 }
 
 func inspectEvaluationSource(root parser.Node, maxDepth int, budget *evaluationBudget) error {
@@ -213,12 +227,16 @@ func normalizeEvaluateOptions(o EvaluateOptions) EvaluateOptions {
 	o.MaxFindings = boundedOption(o.MaxFindings, defaultMaxFindings, hardMaxFindings)
 	o.MaxSourceBytes = boundedOption(o.MaxSourceBytes, defaultMaxSourceBytes, hardMaxSourceBytes)
 	o.MaxMemoryBytes = boundedOption(o.MaxMemoryBytes, defaultMaxMemoryBytes, hardMaxMemoryBytes)
-	if o.MaxElapsed <= 0 {
+	if o.DisableFileTimeout {
+		o.MaxElapsed = 0
+	} else if o.MaxElapsed <= 0 {
 		o.MaxElapsed = defaultFileTime
 	} else if o.MaxElapsed > hardFileTime {
 		o.MaxElapsed = hardFileTime
 	}
-	if o.MaxBatchElapsed <= 0 {
+	if o.DisableBatchTimeout {
+		o.MaxBatchElapsed = 0
+	} else if o.MaxBatchElapsed <= 0 {
 		o.MaxBatchElapsed = defaultBatchTime
 	} else if o.MaxBatchElapsed > hardBatchTime {
 		o.MaxBatchElapsed = hardBatchTime

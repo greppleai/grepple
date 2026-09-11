@@ -327,10 +327,7 @@ func evaluateScanCandidate(ctx context.Context, filesystem fs.FS, program *Progr
 		return outcome
 	}
 	evaluateOptions := options.EvaluateOptions
-	fileDeadline := started.Add(evaluateOptions.MaxElapsed)
-	if evaluateOptions.Deadline.IsZero() || fileDeadline.Before(evaluateOptions.Deadline) {
-		evaluateOptions.Deadline = fileDeadline
-	}
+	evaluateOptions.Deadline = evaluationDeadline(started, evaluateOptions.MaxElapsed, evaluateOptions.Deadline)
 	outcome.evaluation = EvaluateFile(ctx, program, FileInput{Path: candidate.path, Language: candidate.language, Content: read.content, PatternID: options.PatternID, Message: options.Message}, evaluateOptions)
 	return outcome
 }
@@ -708,20 +705,17 @@ func scanBatchFailure(ctx context.Context, options EvaluateOptions, started time
 	if err := ctx.Err(); err != nil {
 		return evaluationFailure("EVALUATION_CANCELLED", "cancelled", "evaluation cancelled", err)
 	}
-	deadline := started.Add(options.MaxBatchElapsed)
-	if !options.Deadline.IsZero() && options.Deadline.Before(deadline) {
-		deadline = options.Deadline
-	}
-	if !time.Now().Before(deadline) {
+	deadline := evaluationDeadline(started, options.MaxBatchElapsed, options.Deadline)
+	if deadlineExceeded(deadline) {
 		return evaluationFailure("LIMIT_TIME_BATCH", "resource", "batch evaluation deadline exceeded", nil)
 	}
 	return nil
 }
 
 func scanWaitDuration(options EvaluateOptions, started time.Time) time.Duration {
-	deadline := started.Add(options.MaxBatchElapsed)
-	if !options.Deadline.IsZero() && options.Deadline.Before(deadline) {
-		deadline = options.Deadline
+	deadline := evaluationDeadline(started, options.MaxBatchElapsed, options.Deadline)
+	if deadline.IsZero() {
+		return time.Duration(1<<63 - 1)
 	}
 	remaining := time.Until(deadline)
 	if remaining <= 0 {

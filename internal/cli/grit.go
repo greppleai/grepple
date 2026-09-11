@@ -370,12 +370,14 @@ func setPositiveInt64(destination **int64, value int64) {
 
 func gritScanOptions(values gritArgs) gritql.ScanOptions {
 	evaluation := gritql.EvaluateOptions{
-		MaxDepth:       values.MaxParseDepth,
-		MaxCandidates:  values.MaxCandidates,
-		MaxSteps:       values.MaxASTSteps,
-		MaxFindings:    values.MaxFindings,
-		MaxSourceBytes: values.MaxSourceBytes,
-		MaxMemoryBytes: values.MaxMemoryBytes,
+		MaxDepth:            values.MaxParseDepth,
+		MaxCandidates:       values.MaxCandidates,
+		MaxSteps:            values.MaxASTSteps,
+		MaxFindings:         values.MaxFindings,
+		MaxSourceBytes:      values.MaxSourceBytes,
+		MaxMemoryBytes:      values.MaxMemoryBytes,
+		DisableFileTimeout:  values.MaxFileMilliseconds == 0,
+		DisableBatchTimeout: values.TimeoutMilliseconds == 0,
 	}
 	if values.MaxFileMilliseconds > 0 {
 		evaluation.MaxElapsed = time.Duration(values.MaxFileMilliseconds) * time.Millisecond

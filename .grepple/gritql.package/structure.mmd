@@ -143,6 +143,8 @@ classDiagram
     note for EffectiveLimits "defined: gritql/finding.go:51-63; ASTSteps@gritql/finding.go:56; BatchTimeMillis@gritql/finding.go:59; Candidates@gritql/finding.go:55; FileTimeMillis@gritql/finding.go:58; Findings@gritql/finding.go:57; MemoryBytes@gritql/finding.go:60; ParseDepth@gritql/finding.go:54; PatternBytes@gritql/finding.go:52; RegexBytes@gritql/finding.go:61; RegexInstructions@gritql/finding.go:62; SourceBytes@gritql/finding.go:53"
     class EvaluateOptions {
         +Deadline: time.Time
+        +DisableBatchTimeout: bool
+        +DisableFileTimeout: bool
         +MaxBatchElapsed: time.Duration
         +MaxCandidates: int
         +MaxDepth: int
@@ -154,7 +156,7 @@ classDiagram
     }
     <<struct>> EvaluateOptions
     %% grepple:file EvaluateOptions gritql/evaluator.go
-    note for EvaluateOptions "defined: gritql/evaluator.go:27-37; Deadline@gritql/evaluator.go:36; MaxBatchElapsed@gritql/evaluator.go:35; MaxCandidates@gritql/evaluator.go:29; MaxDepth@gritql/evaluator.go:28; MaxElapsed@gritql/evaluator.go:34; MaxFindings@gritql/evaluator.go:31; MaxMemoryBytes@gritql/evaluator.go:33; MaxSourceBytes@gritql/evaluator.go:32; MaxSteps@gritql/evaluator.go:30"
+    note for EvaluateOptions "defined: gritql/evaluator.go:27-39; Deadline@gritql/evaluator.go:38; DisableBatchTimeout@gritql/evaluator.go:37; DisableFileTimeout@gritql/evaluator.go:36; MaxBatchElapsed@gritql/evaluator.go:35; MaxCandidates@gritql/evaluator.go:29; MaxDepth@gritql/evaluator.go:28; MaxElapsed@gritql/evaluator.go:34; MaxFindings@gritql/evaluator.go:31; MaxMemoryBytes@gritql/evaluator.go:33; MaxSourceBytes@gritql/evaluator.go:32; MaxSteps@gritql/evaluator.go:30"
     class EvaluationError {
         +Error(): string
         +Unwrap(): error
@@ -165,7 +167,7 @@ classDiagram
     }
     <<struct>> EvaluationError
     %% grepple:file EvaluationError gritql/evaluator.go
-    note for EvaluationError "defined: gritql/evaluator.go:44-49; Error@gritql/evaluator.go:51; Unwrap@gritql/evaluator.go:52; Class@gritql/evaluator.go:46; Code@gritql/evaluator.go:45; Message@gritql/evaluator.go:47; cause@gritql/evaluator.go:48"
+    note for EvaluationError "defined: gritql/evaluator.go:46-51; Error@gritql/evaluator.go:53; Unwrap@gritql/evaluator.go:54; Class@gritql/evaluator.go:48; Code@gritql/evaluator.go:47; Message@gritql/evaluator.go:49; cause@gritql/evaluator.go:50"
     class EvaluationMatch {
         +Bindings(): BindingSet
         +Range(): parser.Range
@@ -175,7 +177,7 @@ classDiagram
     }
     <<struct>> EvaluationMatch
     %% grepple:file EvaluationMatch gritql/evaluator.go
-    note for EvaluationMatch "defined: gritql/evaluator.go:55-58; Bindings@gritql/evaluator.go:64; Range@gritql/evaluator.go:61; String@gritql/evaluator.go:883-889; bindings@gritql/evaluator.go:57; rng@gritql/evaluator.go:56"
+    note for EvaluationMatch "defined: gritql/evaluator.go:57-60; Bindings@gritql/evaluator.go:66; Range@gritql/evaluator.go:63; String@gritql/evaluator.go:901-907; bindings@gritql/evaluator.go:59; rng@gritql/evaluator.go:58"
     class EvaluationMetadata {
         +Contract: string
         +GoGrammar: string
@@ -193,7 +195,7 @@ classDiagram
     <<alias>> EvaluationOptions
     %% grepple:underlying EvaluationOptions EvaluateOptions
     %% grepple:file EvaluationOptions gritql/evaluator.go
-    note for EvaluationOptions "defined: gritql/evaluator.go:40"
+    note for EvaluationOptions "defined: gritql/evaluator.go:42"
     class Expression {
         +Children(): []Expression
         +Constraints(): []Constraint
@@ -590,7 +592,7 @@ classDiagram
     }
     <<struct>> evalCandidate
     %% grepple:file evalCandidate gritql/evaluator.go
-    note for evalCandidate "defined: gritql/evaluator.go:97-105; ancestors@gritql/evaluator.go:101; elements@gritql/evaluator.go:104; node@gritql/evaluator.go:100; parent@gritql/evaluator.go:103; rng@gritql/evaluator.go:99; sequence@gritql/evaluator.go:102; target@gritql/evaluator.go:98"
+    note for evalCandidate "defined: gritql/evaluator.go:99-107; ancestors@gritql/evaluator.go:103; elements@gritql/evaluator.go:106; node@gritql/evaluator.go:102; parent@gritql/evaluator.go:105; rng@gritql/evaluator.go:101; sequence@gritql/evaluator.go:104; target@gritql/evaluator.go:100"
     class evaluationBudget {
         -take(): bool
         -ctx: context.Context
@@ -601,7 +603,7 @@ classDiagram
     }
     <<struct>> evaluationBudget
     %% grepple:file evaluationBudget gritql/evaluator.go
-    note for evaluationBudget "defined: gritql/evaluator.go:66-72; take@gritql/evaluator.go:74-95; ctx@gritql/evaluator.go:67; deadline@gritql/evaluator.go:68; err@gritql/evaluator.go:71; maxSteps@gritql/evaluator.go:70; steps@gritql/evaluator.go:69"
+    note for evaluationBudget "defined: gritql/evaluator.go:68-74; take@gritql/evaluator.go:76-97; ctx@gritql/evaluator.go:69; deadline@gritql/evaluator.go:70; err@gritql/evaluator.go:73; maxSteps@gritql/evaluator.go:72; steps@gritql/evaluator.go:71"
     class evaluationTraversalItem {
         -ancestors: []parser.Node
         -depth: int
@@ -609,7 +611,7 @@ classDiagram
     }
     <<struct>> evaluationTraversalItem
     %% grepple:file evaluationTraversalItem gritql/evaluator.go
-    note for evaluationTraversalItem "defined: gritql/evaluator.go:353-357; ancestors@gritql/evaluator.go:356; depth@gritql/evaluator.go:355; node@gritql/evaluator.go:354"
+    note for evaluationTraversalItem "defined: gritql/evaluator.go:371-375; ancestors@gritql/evaluator.go:374; depth@gritql/evaluator.go:373; node@gritql/evaluator.go:372"
     class expression {
         -children: []*expression
         -constraints: []constraint
@@ -681,16 +683,16 @@ classDiagram
     <<type>> normalizationCheckpoint
     %% grepple:underlying normalizationCheckpoint uint8
     %% grepple:file normalizationCheckpoint gritql/batch.go
-    note for normalizationCheckpoint "defined: gritql/batch.go:195"
+    note for normalizationCheckpoint "defined: gritql/batch.go:192"
     class normalizationCheckpointHook["normalizationCheckpointHook = func(normalizationCheckpoint)*EvaluationError"]
     <<type>> normalizationCheckpointHook
     %% grepple:underlying normalizationCheckpointHook func(normalizationCheckpoint)*EvaluationError
     %% grepple:file normalizationCheckpointHook gritql/batch.go
-    note for normalizationCheckpointHook "defined: gritql/batch.go:207"
+    note for normalizationCheckpointHook "defined: gritql/batch.go:204"
     class normalizationCheckpointKey
     <<struct>> normalizationCheckpointKey
     %% grepple:file normalizationCheckpointKey gritql/batch.go
-    note for normalizationCheckpointKey "defined: gritql/batch.go:202"
+    note for normalizationCheckpointKey "defined: gritql/batch.go:199"
     class normalizedNode {
         +MarshalJSON(): tuple~[]byte&#44;error~
         -children: []normalizedNode
@@ -856,7 +858,7 @@ classDiagram
     }
     <<struct>> queryRecord
     %% grepple:file queryRecord gritql/evaluator.go
-    note for queryRecord "defined: gritql/evaluator.go:107-110; bindings@gritql/evaluator.go:109; rng@gritql/evaluator.go:108"
+    note for queryRecord "defined: gritql/evaluator.go:109-112; bindings@gritql/evaluator.go:111; rng@gritql/evaluator.go:110"
     class querySyntaxError {
         +Error(): string
         +Kind: queryErrorKind
@@ -913,12 +915,12 @@ classDiagram
     }
     <<struct>> scanByteAccount
     %% grepple:file scanByteAccount gritql/scanner.go
-    note for scanByteAccount "defined: gritql/scanner.go:353-360; read@gritql/scanner.go:366-386; readNext@gritql/scanner.go:388-408; signalLocked@gritql/scanner.go:410-413; maximum@gritql/scanner.go:358; mu@gritql/scanner.go:354; next@gritql/scanner.go:356; notify@gritql/scanner.go:355; stopped@gritql/scanner.go:359; total@gritql/scanner.go:357"
+    note for scanByteAccount "defined: gritql/scanner.go:350-357; read@gritql/scanner.go:363-383; readNext@gritql/scanner.go:385-405; signalLocked@gritql/scanner.go:407-410; maximum@gritql/scanner.go:355; mu@gritql/scanner.go:351; next@gritql/scanner.go:353; notify@gritql/scanner.go:352; stopped@gritql/scanner.go:356; total@gritql/scanner.go:354"
     class scanCandidateDisposition["scanCandidateDisposition = uint8"]
     <<type>> scanCandidateDisposition
     %% grepple:underlying scanCandidateDisposition uint8
     %% grepple:file scanCandidateDisposition gritql/scanner.go
-    note for scanCandidateDisposition "defined: gritql/scanner.go:481"
+    note for scanCandidateDisposition "defined: gritql/scanner.go:478"
     class scanJob {
         -candidate: preparedScanCandidate
         -index: int
@@ -930,7 +932,7 @@ classDiagram
     <<type>> scanLimitKind
     %% grepple:underlying scanLimitKind uint8
     %% grepple:file scanLimitKind gritql/scanner.go
-    note for scanLimitKind "defined: gritql/scanner.go:338"
+    note for scanLimitKind "defined: gritql/scanner.go:335"
     class scanMemoryAccount {
         -acquire(context.Context, int64): bool
         -discard(int, int64)
@@ -947,7 +949,7 @@ classDiagram
     }
     <<struct>> scanMemoryAccount
     %% grepple:file scanMemoryAccount gritql/scanner.go
-    note for scanMemoryAccount "defined: gritql/scanner.go:576-583; acquire@gritql/scanner.go:589-609; discard@gritql/scanner.go:647-655; release@gritql/scanner.go:657-665; replace@gritql/scanner.go:611-635; retain@gritql/scanner.go:637-645; signalLocked@gritql/scanner.go:667-670; capacity@gritql/scanner.go:579; current@gritql/scanner.go:580; mu@gritql/scanner.go:577; next@gritql/scanner.go:582; notify@gritql/scanner.go:578; retained@gritql/scanner.go:581"
+    note for scanMemoryAccount "defined: gritql/scanner.go:573-580; acquire@gritql/scanner.go:586-606; discard@gritql/scanner.go:644-652; release@gritql/scanner.go:654-662; replace@gritql/scanner.go:608-632; retain@gritql/scanner.go:634-642; signalLocked@gritql/scanner.go:664-667; capacity@gritql/scanner.go:576; current@gritql/scanner.go:577; mu@gritql/scanner.go:574; next@gritql/scanner.go:579; notify@gritql/scanner.go:575; retained@gritql/scanner.go:578"
     class scanOutcome {
         -binary: bool
         -bytesRead: int64
@@ -966,7 +968,7 @@ classDiagram
     }
     <<struct>> scanReadResult
     %% grepple:file scanReadResult gritql/scanner.go
-    note for scanReadResult "defined: gritql/scanner.go:347-351; content@gritql/scanner.go:348; err@gritql/scanner.go:349; limit@gritql/scanner.go:350"
+    note for scanReadResult "defined: gritql/scanner.go:344-348; content@gritql/scanner.go:345; err@gritql/scanner.go:346; limit@gritql/scanner.go:347"
     class scanSegmentMatcher {
         -match(int, int): bool
         -matchDoubleStar(int, int): bool
@@ -978,14 +980,14 @@ classDiagram
     }
     <<struct>> scanSegmentMatcher
     %% grepple:file scanSegmentMatcher gritql/scanner.go
-    note for scanSegmentMatcher "defined: gritql/scanner.go:783-788; match@gritql/scanner.go:795-804; matchDoubleStar@gritql/scanner.go:820-825; matchUncached@gritql/scanner.go:806-818; name@gritql/scanner.go:785; pattern@gritql/scanner.go:784; seen@gritql/scanner.go:786; values@gritql/scanner.go:787"
+    note for scanSegmentMatcher "defined: gritql/scanner.go:777-782; match@gritql/scanner.go:789-798; matchDoubleStar@gritql/scanner.go:814-819; matchUncached@gritql/scanner.go:800-812; name@gritql/scanner.go:779; pattern@gritql/scanner.go:778; seen@gritql/scanner.go:780; values@gritql/scanner.go:781"
     class scanSegmentState {
         -name: int
         -pattern: int
     }
     <<struct>> scanSegmentState
     %% grepple:file scanSegmentState gritql/scanner.go
-    note for scanSegmentState "defined: gritql/scanner.go:778-781; name@gritql/scanner.go:780; pattern@gritql/scanner.go:779"
+    note for scanSegmentState "defined: gritql/scanner.go:772-775; name@gritql/scanner.go:774; pattern@gritql/scanner.go:773"
     class scanState {
         -commit(*Program, scanOutcome)
         -scan(context.Context, fs.FS, *Program, []preparedScanCandidate)
@@ -1042,7 +1044,7 @@ classDiagram
     }
     <<struct>> sequencePosition
     %% grepple:file sequencePosition gritql/evaluator.go
-    note for sequencePosition "defined: gritql/evaluator.go:435-438; field@gritql/evaluator.go:436; indexes@gritql/evaluator.go:437"
+    note for sequencePosition "defined: gritql/evaluator.go:453-456; field@gritql/evaluator.go:454; indexes@gritql/evaluator.go:455"
     class significantRangeFrame {
         -children: []parser.Node
         -first: parser.Range
@@ -1053,7 +1055,7 @@ classDiagram
     }
     <<struct>> significantRangeFrame
     %% grepple:file significantRangeFrame gritql/evaluator.go
-    note for significantRangeFrame "defined: gritql/evaluator.go:293-299; children@gritql/evaluator.go:295; first@gritql/evaluator.go:297; has@gritql/evaluator.go:298; last@gritql/evaluator.go:297; next@gritql/evaluator.go:296; node@gritql/evaluator.go:294"
+    note for significantRangeFrame "defined: gritql/evaluator.go:311-317; children@gritql/evaluator.go:313; first@gritql/evaluator.go:315; has@gritql/evaluator.go:316; last@gritql/evaluator.go:315; next@gritql/evaluator.go:314; node@gritql/evaluator.go:312"
     class slotTarget {
         -cardinality: SlotCardinality
         -kind: string
@@ -1093,7 +1095,7 @@ classDiagram
     }
     <<struct>> sourceInspectionItem
     %% grepple:file sourceInspectionItem gritql/evaluator.go
-    note for sourceInspectionItem "defined: gritql/evaluator.go:233-236; depth@gritql/evaluator.go:235; node@gritql/evaluator.go:234"
+    note for sourceInspectionItem "defined: gritql/evaluator.go:251-254; depth@gritql/evaluator.go:253; node@gritql/evaluator.go:252"
     class spanKey {
         -end: int
         -start: int
@@ -1230,19 +1232,19 @@ classDiagram
     }
     <<function>> Evaluate
     %% grepple:file Evaluate gritql/evaluator.go
-    note for Evaluate "defined: gritql/evaluator.go:114-131"
+    note for Evaluate "defined: gritql/evaluator.go:116-133"
     class EvaluateDocument {
         +EvaluateDocument(context.Context, *Program, *parser.Document, EvaluateOptions): tuple~[]EvaluationMatch&#44;error~
     }
     <<function>> EvaluateDocument
     %% grepple:file EvaluateDocument gritql/evaluator.go
-    note for EvaluateDocument "defined: gritql/evaluator.go:205-207"
+    note for EvaluateDocument "defined: gritql/evaluator.go:219-221"
     class EvaluateDocumentFindings {
         +EvaluateDocumentFindings(context.Context, *Program, *parser.Document, DocumentInput, EvaluateOptions): tuple~FileEvaluation~
     }
     <<function>> EvaluateDocumentFindings
     %% grepple:file EvaluateDocumentFindings gritql/finding.go
-    note for EvaluateDocumentFindings "defined: gritql/finding.go:388-411"
+    note for EvaluateDocumentFindings "defined: gritql/finding.go:390-410"
     class EvaluateDocuments {
         +EvaluateDocuments(context.Context, *Program, []ParsedEvaluationInput, EvaluateOptions): FileEvaluation
     }
@@ -1254,7 +1256,7 @@ classDiagram
     }
     <<function>> EvaluateFile
     %% grepple:file EvaluateFile gritql/finding.go
-    note for EvaluateFile "defined: gritql/finding.go:316-366"
+    note for EvaluateFile "defined: gritql/finding.go:321-368"
     class MatchNode {
         +MatchNode(Template, parser.Node): tuple~MatchResult&#44;bool~
     }
@@ -1314,7 +1316,7 @@ classDiagram
     }
     <<function>> ValidateGlobs
     %% grepple:file ValidateGlobs gritql/scanner.go
-    note for ValidateGlobs "defined: gritql/scanner.go:734-739"
+    note for ValidateGlobs "defined: gritql/scanner.go:728-733"
     AnalyzeAnchors "1" ..> "1" AnchorPlan : result 1
     AnalyzeAnchors "1" ..> "1" Program : parameter 1
     BatchScanResult "1" --> "1" BatchScanStats : field stats

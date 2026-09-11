@@ -219,3 +219,17 @@ func TestNormalizeEvaluationsPromotesFileCancellationToBatchCancellation(t *test
 		t.Fatal("promoted cancellation must be pathless")
 	}
 }
+
+func TestDisabledWallClockTimeoutsDoNotExpire(t *testing.T) {
+	options := normalizeEvaluateOptions(EvaluateOptions{DisableFileTimeout: true, DisableBatchTimeout: true})
+	if options.MaxElapsed != 0 || options.MaxBatchElapsed != 0 {
+		t.Fatalf("disabled durations=%v/%v", options.MaxElapsed, options.MaxBatchElapsed)
+	}
+	if failure := batchFailure(context.Background(), time.Now().Add(-time.Hour), options); failure != nil {
+		t.Fatalf("disabled batch timeout failed: %v", failure)
+	}
+	budget := newEvaluationBudget(context.Background(), options)
+	if !budget.deadline.IsZero() || !budget.take() {
+		t.Fatalf("disabled file timeout budget=%#v", budget)
+	}
+}

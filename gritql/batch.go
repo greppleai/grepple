@@ -144,11 +144,8 @@ func batchFailure(ctx context.Context, started time.Time, options EvaluateOption
 		return evaluationFailure("EVALUATION_CANCELLED", "cancelled", "evaluation cancelled", err)
 	}
 	o := normalizeEvaluateOptions(options)
-	deadline := started.Add(o.MaxBatchElapsed)
-	if !options.Deadline.IsZero() && options.Deadline.Before(deadline) {
-		deadline = options.Deadline
-	}
-	if !time.Now().Before(deadline) {
+	deadline := evaluationDeadline(started, o.MaxBatchElapsed, options.Deadline)
+	if deadlineExceeded(deadline) {
 		return evaluationFailure("LIMIT_TIME_BATCH", "resource", "batch evaluation deadline exceeded", nil)
 	}
 	return nil

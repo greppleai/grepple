@@ -140,7 +140,7 @@ grepple grit --query-file /tmp/exec-command.grit --json '**/*.go'
 grepple grit --remote --repo 'acme/*' --query-file /tmp/exec-command.grit '**/*.go'
 ```
 
-Findings contain exact half-open byte ranges, one-based Unicode-scalar positions, matched text, and sorted metavariable bindings. Local and remote findings are normalized, sorted, exactly deduplicated, and paged once as a combined result. Resource flags lower bounded defaults; unknown compatibility versions and unsupported rewrites or external functions fail closed.
+Findings contain exact half-open byte ranges, one-based Unicode-scalar positions, matched text, and sorted metavariable bindings. Local and remote findings are normalized, sorted, exactly deduplicated, and paged once as a combined result. Local scans have no implicit wall-clock timeout; `--max-file-time-ms` and `--timeout-ms` opt into deadlines. Count, size, memory, and cancellation bounds remain active. Unknown compatibility versions and unsupported rewrites or external functions fail closed.
 
 Remote structural search requires a backend implementing `POST /public/grit`. See [`docs/gritql-compatibility.md`](docs/gritql-compatibility.md) for the exact closed syntax, evaluation rules, diagnostics, limits, security guarantees, conformance fixtures, and benchmark gates.
 

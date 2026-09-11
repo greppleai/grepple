@@ -2,7 +2,7 @@ classDiagram
     %% grepple:package-default github.com/greppleai/grepple/gritql
     %% grepple:language-default go
     direction LR
-    note "Package gritql implements Grepple's native, read-only gritql-go-v1 structural-search compiler, matcher, evaluator, and bounded scanner. | package github.com/greppleai/grepple/gritql | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=12, declarations=115, exportedTypes=48, internalTypes=67, members=590, exportedFunctions=17, fiberRoutes=0, relations=305"
+    note "Package gritql implements Grepple's native, read-only gritql-go-v1 structural-search compiler, matcher, evaluator, and bounded scanner. | package github.com/greppleai/grepple/gritql | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=12, declarations=115, exportedTypes=48, internalTypes=67, members=592, exportedFunctions=17, fiberRoutes=0, relations=305"
     namespace data_contracts {
         class EffectiveLimits["EffectiveLimits · gritql/finding.go:51-63"] {
             +ASTSteps: int
@@ -97,13 +97,13 @@ classDiagram
         <<struct>> Diagnostic
         class DocumentInput["DocumentInput · gritql/finding.go:44-48"]
         <<struct>> DocumentInput
-        class EvaluateOptions["EvaluateOptions · gritql/evaluator.go:27-37"]
+        class EvaluateOptions["EvaluateOptions · gritql/evaluator.go:27-39"]
         <<struct>> EvaluateOptions
-        class EvaluationError["EvaluationError · gritql/evaluator.go:44-49"]
+        class EvaluationError["EvaluationError · gritql/evaluator.go:46-51"]
         <<struct>> EvaluationError
-        class EvaluationMatch["EvaluationMatch · gritql/evaluator.go:55-58"]
+        class EvaluationMatch["EvaluationMatch · gritql/evaluator.go:57-60"]
         <<struct>> EvaluationMatch
-        class EvaluationOptions["EvaluationOptions = EvaluateOptions · gritql/evaluator.go:40"]
+        class EvaluationOptions["EvaluationOptions = EvaluateOptions · gritql/evaluator.go:42"]
         <<alias>> EvaluationOptions
         class Expression["Expression · gritql/compiler.go:143"]
         <<struct>> Expression
@@ -171,11 +171,11 @@ classDiagram
         <<struct>> constraint
         class decodedSnippet["decodedSnippet · gritql/template.go:166-169"]
         <<struct>> decodedSnippet
-        class evalCandidate["evalCandidate · gritql/evaluator.go:97-105"]
+        class evalCandidate["evalCandidate · gritql/evaluator.go:99-107"]
         <<struct>> evalCandidate
-        class evaluationBudget["evaluationBudget · gritql/evaluator.go:66-72"]
+        class evaluationBudget["evaluationBudget · gritql/evaluator.go:68-74"]
         <<struct>> evaluationBudget
-        class evaluationTraversalItem["evaluationTraversalItem · gritql/evaluator.go:353-357"]
+        class evaluationTraversalItem["evaluationTraversalItem · gritql/evaluator.go:371-375"]
         <<struct>> evaluationTraversalItem
         class expression["expression · gritql/compiler.go:125-134"]
         <<struct>> expression
@@ -187,11 +187,11 @@ classDiagram
         <<struct>> inferredEvaluation
         class noCopy["noCopy · gritql/query_syntax.go:52"]
         <<struct>> noCopy
-        class normalizationCheckpoint["normalizationCheckpoint = uint8 · gritql/batch.go:195"]
+        class normalizationCheckpoint["normalizationCheckpoint = uint8 · gritql/batch.go:192"]
         <<type>> normalizationCheckpoint
-        class normalizationCheckpointHook["normalizationCheckpointHook = func(normalizationCheckpoint)*EvaluationError · gritql/batch.go:207"]
+        class normalizationCheckpointHook["normalizationCheckpointHook = func(normalizationCheckpoint)*EvaluationError · gritql/batch.go:204"]
         <<type>> normalizationCheckpointHook
-        class normalizationCheckpointKey["normalizationCheckpointKey · gritql/batch.go:202"]
+        class normalizationCheckpointKey["normalizationCheckpointKey · gritql/batch.go:199"]
         <<struct>> normalizationCheckpointKey
         class normalizedNode["normalizedNode · gritql/matcher.go:77-82"]
         <<struct>> normalizedNode
@@ -223,7 +223,7 @@ classDiagram
         <<struct>> queryPosition
         class queryRange["queryRange · gritql/query_syntax.go:30-35"]
         <<struct>> queryRange
-        class queryRecord["queryRecord · gritql/evaluator.go:107-110"]
+        class queryRecord["queryRecord · gritql/evaluator.go:109-112"]
         <<struct>> queryRecord
         class querySyntaxError["querySyntaxError · gritql/query_syntax.go:37-41"]
         <<struct>> querySyntaxError
@@ -231,23 +231,23 @@ classDiagram
         <<struct>> roleAlternative
         class roleAncestorSet["roleAncestorSet · gritql/template.go:372-375"]
         <<struct>> roleAncestorSet
-        class scanByteAccount["scanByteAccount · gritql/scanner.go:353-360"]
+        class scanByteAccount["scanByteAccount · gritql/scanner.go:350-357"]
         <<struct>> scanByteAccount
-        class scanCandidateDisposition["scanCandidateDisposition = uint8 · gritql/scanner.go:481"]
+        class scanCandidateDisposition["scanCandidateDisposition = uint8 · gritql/scanner.go:478"]
         <<type>> scanCandidateDisposition
         class scanJob["scanJob · gritql/scanner.go:118-121"]
         <<struct>> scanJob
-        class scanLimitKind["scanLimitKind = uint8 · gritql/scanner.go:338"]
+        class scanLimitKind["scanLimitKind = uint8 · gritql/scanner.go:335"]
         <<type>> scanLimitKind
-        class scanMemoryAccount["scanMemoryAccount · gritql/scanner.go:576-583"]
+        class scanMemoryAccount["scanMemoryAccount · gritql/scanner.go:573-580"]
         <<struct>> scanMemoryAccount
         class scanOutcome["scanOutcome · gritql/scanner.go:109-116"]
         <<struct>> scanOutcome
-        class scanReadResult["scanReadResult · gritql/scanner.go:347-351"]
+        class scanReadResult["scanReadResult · gritql/scanner.go:344-348"]
         <<struct>> scanReadResult
-        class scanSegmentMatcher["scanSegmentMatcher · gritql/scanner.go:783-788"]
+        class scanSegmentMatcher["scanSegmentMatcher · gritql/scanner.go:777-782"]
         <<struct>> scanSegmentMatcher
-        class scanSegmentState["scanSegmentState · gritql/scanner.go:778-781"]
+        class scanSegmentState["scanSegmentState · gritql/scanner.go:772-775"]
         <<struct>> scanSegmentState
         class scanState["scanState · gritql/scanner.go:122-134"]
         <<struct>> scanState
@@ -257,9 +257,9 @@ classDiagram
         <<type>> separatorLexState
         class separatorScanner["separatorScanner · gritql/template.go:251-258"]
         <<struct>> separatorScanner
-        class sequencePosition["sequencePosition · gritql/evaluator.go:435-438"]
+        class sequencePosition["sequencePosition · gritql/evaluator.go:453-456"]
         <<struct>> sequencePosition
-        class significantRangeFrame["significantRangeFrame · gritql/evaluator.go:293-299"]
+        class significantRangeFrame["significantRangeFrame · gritql/evaluator.go:311-317"]
         <<struct>> significantRangeFrame
         class slotTarget["slotTarget · gritql/template.go:1043-1047"]
         <<struct>> slotTarget
@@ -269,7 +269,7 @@ classDiagram
         <<struct>> snippetAttempt
         class snippetPlaceholder["snippetPlaceholder · gritql/template.go:170-173"]
         <<struct>> snippetPlaceholder
-        class sourceInspectionItem["sourceInspectionItem · gritql/evaluator.go:233-236"]
+        class sourceInspectionItem["sourceInspectionItem · gritql/evaluator.go:251-254"]
         <<struct>> sourceInspectionItem
         class spanKey["spanKey · gritql/template.go:190"]
         <<struct>> spanKey
@@ -303,15 +303,15 @@ classDiagram
             +Compile([]byte, CompileOptions): tuple~*Program&#44;error~
         }
         <<function>> Compile
-        class Evaluate["Evaluate · gritql/evaluator.go:114-131"] {
+        class Evaluate["Evaluate · gritql/evaluator.go:116-133"] {
             +Evaluate(context.Context, *Program, *parser.Document, EvaluateOptions): tuple~[]EvaluationMatch&#44;error~
         }
         <<function>> Evaluate
-        class EvaluateDocument["EvaluateDocument · gritql/evaluator.go:205-207"] {
+        class EvaluateDocument["EvaluateDocument · gritql/evaluator.go:219-221"] {
             +EvaluateDocument(context.Context, *Program, *parser.Document, EvaluateOptions): tuple~[]EvaluationMatch&#44;error~
         }
         <<function>> EvaluateDocument
-        class EvaluateDocumentFindings["EvaluateDocumentFindings · gritql/finding.go:388-411"] {
+        class EvaluateDocumentFindings["EvaluateDocumentFindings · gritql/finding.go:390-410"] {
             +EvaluateDocumentFindings(context.Context, *Program, *parser.Document, DocumentInput, EvaluateOptions): tuple~FileEvaluation~
         }
         <<function>> EvaluateDocumentFindings
@@ -319,7 +319,7 @@ classDiagram
             +EvaluateDocuments(context.Context, *Program, []ParsedEvaluationInput, EvaluateOptions): FileEvaluation
         }
         <<function>> EvaluateDocuments
-        class EvaluateFile["EvaluateFile · gritql/finding.go:316-366"] {
+        class EvaluateFile["EvaluateFile · gritql/finding.go:321-368"] {
             +EvaluateFile(context.Context, *Program, FileInput, EvaluateOptions): tuple~FileEvaluation~
         }
         <<function>> EvaluateFile
@@ -359,7 +359,7 @@ classDiagram
             +SequenceTarget(string, parser.Node, int, int): MatchTarget
         }
         <<function>> SequenceTarget
-        class ValidateGlobs["ValidateGlobs · gritql/scanner.go:734-739"] {
+        class ValidateGlobs["ValidateGlobs · gritql/scanner.go:728-733"] {
             +ValidateGlobs([]string, []string): error
         }
         <<function>> ValidateGlobs
