@@ -8,6 +8,7 @@ classDiagram
         +Diagnostics(): []ParseDiagnostic
         +Language(): string
         +ParseDiagnostics(): []ParseDiagnostic
+        +Read(func&#40;DocumentView&#41;error): error
         +Root(): Node
         +Source(): string
         +Text(): string
@@ -17,11 +18,10 @@ classDiagram
         -mu: sync.RWMutex
         -source: string
         -tree: *sitter.Tree
-        +Read(func&#40;DocumentView&#41;error): error
     }
     <<struct>> Document
     %% grepple:file Document parser/document.go
-    note for Document "defined: parser/document.go:40-46; Close@parser/document.go:164-179; Diagnostics@parser/document.go:259; Language@parser/document.go:182-192; ParseDiagnostics@parser/document.go:225-256; Root@parser/document.go:211-221; Source@parser/document.go:195-205; Text@parser/document.go:208; nodeRangeLocked@parser/document.go:508-516; language@parser/document.go:42; lineStarts@parser/document.go:44; mu@parser/document.go:41; source@parser/document.go:43; tree@parser/document.go:45; Read@parser/view.go:44-61"
+    note for Document "defined: parser/document.go:40-46; Close@parser/document.go:164-179; Diagnostics@parser/document.go:281; Language@parser/document.go:204-214; ParseDiagnostics@parser/document.go:247-278; Read@parser/document.go:184-201; Root@parser/document.go:233-243; Source@parser/document.go:217-227; Text@parser/document.go:230; nodeRangeLocked@parser/document.go:530-538; language@parser/document.go:42; lineStarts@parser/document.go:44; mu@parser/document.go:41; source@parser/document.go:43; tree@parser/document.go:45"
     class DocumentView {
         +Language(): string
         +Root(): ViewNode
@@ -32,7 +32,7 @@ classDiagram
     }
     <<struct>> DocumentView
     %% grepple:file DocumentView parser/view.go
-    note for DocumentView "defined: parser/view.go:17-20; Language@parser/view.go:64-69; Root@parser/view.go:80-85; Source@parser/view.go:72-77; valid@parser/view.go:87-89; doc@parser/view.go:18; state@parser/view.go:19"
+    note for DocumentView "defined: parser/view.go:17-20; Language@parser/view.go:42-47; Root@parser/view.go:58-63; Source@parser/view.go:50-55; valid@parser/view.go:65-67; doc@parser/view.go:18; state@parser/view.go:19"
     class FileOutline {
         +Language: string
         +Path: string
@@ -141,7 +141,7 @@ classDiagram
     }
     <<struct>> Node
     %% grepple:file Node parser/document.go
-    note for Node "defined: parser/document.go:50-54; Child@parser/document.go:376-387; ChildByFieldName@parser/document.go:467-475; ChildCount@parser/document.go:362-366; Children@parser/document.go:405-422; FieldName@parser/document.go:479-484; FieldNameForChild@parser/document.go:487-495; HasError@parser/document.go:310-314; IsError@parser/document.go:296-300; IsExtra@parser/document.go:289-293; IsMissing@parser/document.go:303-307; IsNamed@parser/document.go:282-286; IsValid@parser/document.go:272; Kind@parser/document.go:275-279; NamedChild@parser/document.go:390-401; NamedChildCount@parser/document.go:369-373; NamedChildren@parser/document.go:425-445; Parent@parser/document.go:351-359; Range@parser/document.go:344-348; Snapshot@parser/document.go:110-120; Source@parser/document.go:329; Text@parser/document.go:317-326; TextRange@parser/document.go:333-341; Valid@parser/document.go:262-269; read@parser/document.go:497-506; snapshotLocked@parser/document.go:122-140; doc@parser/document.go:51; fieldName@parser/document.go:53; raw@parser/document.go:52"
+    note for Node "defined: parser/document.go:50-54; Child@parser/document.go:398-409; ChildByFieldName@parser/document.go:489-497; ChildCount@parser/document.go:384-388; Children@parser/document.go:427-444; FieldName@parser/document.go:501-506; FieldNameForChild@parser/document.go:509-517; HasError@parser/document.go:332-336; IsError@parser/document.go:318-322; IsExtra@parser/document.go:311-315; IsMissing@parser/document.go:325-329; IsNamed@parser/document.go:304-308; IsValid@parser/document.go:294; Kind@parser/document.go:297-301; NamedChild@parser/document.go:412-423; NamedChildCount@parser/document.go:391-395; NamedChildren@parser/document.go:447-467; Parent@parser/document.go:373-381; Range@parser/document.go:366-370; Snapshot@parser/document.go:110-120; Source@parser/document.go:351; Text@parser/document.go:339-348; TextRange@parser/document.go:355-363; Valid@parser/document.go:284-291; read@parser/document.go:519-528; snapshotLocked@parser/document.go:122-140; doc@parser/document.go:51; fieldName@parser/document.go:53; raw@parser/document.go:52"
     class ParseDiagnostic {
         +Kind: string
         +Message: string
@@ -248,21 +248,21 @@ classDiagram
     }
     <<struct>> ViewNode
     %% grepple:file ViewNode parser/view.go
-    note for ViewNode "defined: parser/view.go:35-39; Child@parser/view.go:176-185; ChildByFieldName@parser/view.go:231-240; ChildCount@parser/view.go:160-165; Children@parser/view.go:200-216; FieldName@parser/view.go:243-248; FieldNameForChild@parser/view.go:251-256; HasError@parser/view.go:118; IsError@parser/view.go:112; IsExtra@parser/view.go:109; IsMissing@parser/view.go:115; IsNamed@parser/view.go:106; IsValid@parser/view.go:95; Kind@parser/view.go:98-103; NamedChild@parser/view.go:188-197; NamedChildCount@parser/view.go:168-173; NamedChildren@parser/view.go:219-228; Parent@parser/view.go:148-157; Range@parser/view.go:140-145; Snapshot@parser/view.go:259-264; Source@parser/view.go:129; Text@parser/view.go:121-126; TextRange@parser/view.go:132-137; Valid@parser/view.go:92; snapshot@parser/view.go:266-297; fieldName@parser/view.go:38; raw@parser/view.go:37; view@parser/view.go:36"
+    note for ViewNode "defined: parser/view.go:35-39; Child@parser/view.go:154-163; ChildByFieldName@parser/view.go:209-218; ChildCount@parser/view.go:138-143; Children@parser/view.go:178-194; FieldName@parser/view.go:221-226; FieldNameForChild@parser/view.go:229-234; HasError@parser/view.go:96; IsError@parser/view.go:90; IsExtra@parser/view.go:87; IsMissing@parser/view.go:93; IsNamed@parser/view.go:84; IsValid@parser/view.go:73; Kind@parser/view.go:76-81; NamedChild@parser/view.go:166-175; NamedChildCount@parser/view.go:146-151; NamedChildren@parser/view.go:197-206; Parent@parser/view.go:126-135; Range@parser/view.go:118-123; Snapshot@parser/view.go:237-242; Source@parser/view.go:107; Text@parser/view.go:99-104; TextRange@parser/view.go:110-115; Valid@parser/view.go:70; snapshot@parser/view.go:244-275; fieldName@parser/view.go:38; raw@parser/view.go:37; view@parser/view.go:36"
     class WalkOptions {
         +MaxDepth: int
         +MaxNodes: int
     }
     <<struct>> WalkOptions
     %% grepple:file WalkOptions parser/view.go
-    note for WalkOptions "defined: parser/view.go:300-303; MaxDepth@parser/view.go:301; MaxNodes@parser/view.go:302"
+    note for WalkOptions "defined: parser/view.go:278-281; MaxDepth@parser/view.go:279; MaxNodes@parser/view.go:280"
     class WalkResult {
         +Truncated: bool
         +Visited: int
     }
     <<struct>> WalkResult
     %% grepple:file WalkResult parser/view.go
-    note for WalkResult "defined: parser/view.go:306-309; Truncated@parser/view.go:308; Visited@parser/view.go:307"
+    note for WalkResult "defined: parser/view.go:284-287; Truncated@parser/view.go:286; Visited@parser/view.go:285"
     class cLanguage {
         +Grammar(): *sitter.Language
         +ID(): string
@@ -547,7 +547,7 @@ classDiagram
     }
     <<struct>> viewWalkItem
     %% grepple:file viewWalkItem parser/view.go
-    note for viewWalkItem "defined: parser/view.go:322-325; depth@parser/view.go:324; node@parser/view.go:323"
+    note for viewWalkItem "defined: parser/view.go:300-303; depth@parser/view.go:302; node@parser/view.go:301"
     class BuildNavigationGraph {
         +BuildNavigationGraph(string, string, string): NavigationGraph
     }
@@ -637,19 +637,19 @@ classDiagram
     }
     <<function>> WalkNamed
     %% grepple:file WalkNamed parser/document.go
-    note for WalkNamed "defined: parser/document.go:449-464"
+    note for WalkNamed "defined: parser/document.go:471-486"
     class WalkNamedView {
         +WalkNamedView(ViewNode, func&#40;ViewNode&#41;)
     }
     <<function>> WalkNamedView
     %% grepple:file WalkNamedView parser/view.go
-    note for WalkNamedView "defined: parser/view.go:312-320"
+    note for WalkNamedView "defined: parser/view.go:290-298"
     class WalkNamedViewBounded {
         +WalkNamedViewBounded(ViewNode, WalkOptions, func&#40;ViewNode&#44;int&#41;bool): WalkResult
     }
     <<function>> WalkNamedViewBounded
     %% grepple:file WalkNamedViewBounded parser/view.go
-    note for WalkNamedViewBounded "defined: parser/view.go:329-354"
+    note for WalkNamedViewBounded "defined: parser/view.go:307-332"
     BuildNavigationGraph "1" ..> "1" NavigationGraph : result 1
     BuildSegments "1" ..> "*" Segment : result 1
     CapabilitiesForLanguage "1" ..> "1" LanguageCapabilities : result 1

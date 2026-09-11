@@ -54,17 +54,17 @@ func goSourceScope(source Source) (string, error) {
 		return "", err
 	}
 	defer document.Close()
-if document.Root().HasError() {
-return "", malformedSourceError(source.Path, document)
-}
-var name string
-if err := document.Read(func(view codeparser.DocumentView) error {
-name = goPackageName(view.Root(), []byte(source.Text))
-return nil
-}); err != nil {
-return "", err
-}
-return filepath.Clean(absolutePath(filepath.Dir(source.Path))) + ":" + name, nil
+	if document.Root().HasError() {
+		return "", malformedSourceError(source.Path, document)
+	}
+	var name string
+	if err := document.Read(func(view codeparser.DocumentView) error {
+		name = goPackageName(view.Root(), []byte(source.Text))
+		return nil
+	}); err != nil {
+		return "", err
+	}
+	return filepath.Clean(absolutePath(filepath.Dir(source.Path))) + ":" + name, nil
 }
 
 func (analysis *goAnalysis) Analyze(source Source) error {

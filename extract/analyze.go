@@ -157,13 +157,13 @@ func newAnalysis() *Analysis {
 }
 
 func malformedSourceError(path string, document *codeparser.Document) error {
-diagnostics := document.ParseDiagnostics()
-if len(diagnostics) == 0 {
-return fmt.Errorf("parse %s:1:1: malformed syntax", path)
-}
-diagnostic := diagnostics[0]
-position := diagnostic.Range.Start
-return fmt.Errorf("parse %s:%d:%d: malformed syntax near %s", path, position.Line, position.Column, diagnostic.Kind)
+	diagnostics := document.ParseDiagnostics()
+	if len(diagnostics) == 0 {
+		return fmt.Errorf("parse %s:1:1: malformed syntax", path)
+	}
+	diagnostic := diagnostics[0]
+	position := diagnostic.Range.Start
+	return fmt.Errorf("parse %s:%d:%d: malformed syntax near %s", path, position.Line, position.Column, diagnostic.Kind)
 }
 func nodeText(node codeparser.ViewNode, _ []byte) string {
 	return node.Text()
@@ -307,7 +307,7 @@ func (analyzer *sourceAnalyzer) analyzeImport(statement codeparser.ViewNode) {
 	}
 	typeOnly := hasChildKind(statement, "type") || childHasText(statement, analyzer.text, "type")
 	analyzer.addDefaultImport(clause, module, typeOnly)
-codeparser.WalkNamedView(clause, func(node codeparser.ViewNode) {
+	codeparser.WalkNamedView(clause, func(node codeparser.ViewNode) {
 		analyzer.addStructuredImport(node, module, typeOnly)
 	})
 }
@@ -338,7 +338,7 @@ func (analyzer *sourceAnalyzer) addStructuredImport(node codeparser.ViewNode, mo
 }
 
 func (analyzer *sourceAnalyzer) analyzeExportSpecifiers(statement codeparser.ViewNode) {
-codeparser.WalkNamedView(statement, func(node codeparser.ViewNode) {
+	codeparser.WalkNamedView(statement, func(node codeparser.ViewNode) {
 		if node.Kind() != "export_specifier" {
 			return
 		}
@@ -387,7 +387,7 @@ func directHeritageName(node codeparser.ViewNode, source []byte) string {
 }
 
 func collectHeritage(node codeparser.ViewNode, source []byte, declaration *Declaration) {
-codeparser.WalkNamedView(node, func(child codeparser.ViewNode) { processHeritageNode(child, source, declaration) })
+	codeparser.WalkNamedView(node, func(child codeparser.ViewNode) { processHeritageNode(child, source, declaration) })
 }
 
 func processHeritageNode(node codeparser.ViewNode, source []byte, declaration *Declaration) {
@@ -563,11 +563,11 @@ func parseSource(source Source) (*codeparser.Document, error) {
 	if err != nil {
 		return nil, fmt.Errorf("parse %s: %w", source.Path, err)
 	}
-if document.Root().HasError() {
-err = malformedSourceError(source.Path, document)
-document.Close()
-return nil, err
-}
+	if document.Root().HasError() {
+		err = malformedSourceError(source.Path, document)
+		document.Close()
+		return nil, err
+	}
 	return document, nil
 }
 
@@ -671,15 +671,15 @@ func analyzeTypeScriptSource(source Source, result *Analysis) error {
 		return err
 	}
 	defer document.Close()
-analyzer := sourceAnalyzer{result: result, source: source, text: []byte(source.Text), moduleID: absolutePath(source.Path)}
-if err := document.Read(func(view codeparser.DocumentView) error {
-for _, statement := range view.Root().NamedChildren() {
-analyzer.analyzeTopLevel(statement)
-}
-return nil
-}); err != nil {
-return err
-}
+	analyzer := sourceAnalyzer{result: result, source: source, text: []byte(source.Text), moduleID: absolutePath(source.Path)}
+	if err := document.Read(func(view codeparser.DocumentView) error {
+		for _, statement := range view.Root().NamedChildren() {
+			analyzer.analyzeTopLevel(statement)
+		}
+		return nil
+	}); err != nil {
+		return err
+	}
 	result.Navigation.Merge(codeparser.NavigationGraphFromDocument(document, source.Path))
 	return nil
 }

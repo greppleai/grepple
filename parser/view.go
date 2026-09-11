@@ -38,28 +38,6 @@ type ViewNode struct {
 	fieldName string
 }
 
-// Read holds one document read lock while visit traverses a stable syntax tree.
-// The callback must access the document through its view: it must not call other
-// Document methods or retain the view or its nodes after returning.
-func (d *Document) Read(visit func(DocumentView) error) error {
-	if d == nil || visit == nil {
-		return ErrDocumentClosed
-	}
-	d.mu.RLock()
-	if d.tree == nil {
-		d.mu.RUnlock()
-		return ErrDocumentClosed
-	}
-	state := &documentViewState{snapshots: make(map[viewSnapshotKey]SyntaxNode)}
-	state.active.Store(true)
-	view := DocumentView{doc: d, state: state}
-	defer func() {
-		state.active.Store(false)
-		d.mu.RUnlock()
-	}()
-	return visit(view)
-}
-
 // Language returns the canonical language identifier while the view is active.
 func (v DocumentView) Language() string {
 	if !v.valid() {

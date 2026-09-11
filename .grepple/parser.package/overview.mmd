@@ -58,9 +58,9 @@ classDiagram
         <<struct>> SyntaxNode
         class ViewNode["ViewNode · parser/view.go:35-39"]
         <<struct>> ViewNode
-        class WalkOptions["WalkOptions · parser/view.go:300-303"]
+        class WalkOptions["WalkOptions · parser/view.go:278-281"]
         <<struct>> WalkOptions
-        class WalkResult["WalkResult · parser/view.go:306-309"]
+        class WalkResult["WalkResult · parser/view.go:284-287"]
         <<struct>> WalkResult
     }
     namespace internal_types {
@@ -116,7 +116,7 @@ classDiagram
         <<struct>> typeScriptLanguage
         class viewSnapshotKey["viewSnapshotKey · parser/view.go:28-31"]
         <<struct>> viewSnapshotKey
-        class viewWalkItem["viewWalkItem · parser/view.go:322-325"]
+        class viewWalkItem["viewWalkItem · parser/view.go:300-303"]
         <<struct>> viewWalkItem
     }
     namespace operations {
@@ -176,15 +176,15 @@ classDiagram
             +SupportedLanguages(): []LanguageCapabilities
         }
         <<function>> SupportedLanguages
-        class WalkNamed["WalkNamed · parser/document.go:449-464"] {
+        class WalkNamed["WalkNamed · parser/document.go:471-486"] {
             +WalkNamed(Node, func&#40;Node&#41;)
         }
         <<function>> WalkNamed
-        class WalkNamedView["WalkNamedView · parser/view.go:312-320"] {
+        class WalkNamedView["WalkNamedView · parser/view.go:290-298"] {
             +WalkNamedView(ViewNode, func&#40;ViewNode&#41;)
         }
         <<function>> WalkNamedView
-        class WalkNamedViewBounded["WalkNamedViewBounded · parser/view.go:329-354"] {
+        class WalkNamedViewBounded["WalkNamedViewBounded · parser/view.go:307-332"] {
             +WalkNamedViewBounded(ViewNode, WalkOptions, func&#40;ViewNode&#44;int&#41;bool): WalkResult
         }
         <<function>> WalkNamedViewBounded

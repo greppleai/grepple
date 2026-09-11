@@ -44,28 +44,28 @@ func TestDocumentReadViewIsStableAndCallbackScoped(t *testing.T) {
 }
 
 func TestWalkNamedViewBoundedReportsConfiguredLimits(t *testing.T) {
-document, err := ParseDocument("go", "package p\nfunc run() { call() }\n")
-if err != nil {
-t.Fatal(err)
-}
-defer document.Close()
-if err := document.Read(func(view DocumentView) error {
-byNodes := WalkNamedViewBounded(view.Root(), WalkOptions{MaxNodes: 2}, func(ViewNode, int) bool { return true })
-if byNodes.Visited != 2 || !byNodes.Truncated {
-t.Fatalf("node-bounded walk=%#v", byNodes)
-}
-byDepth := WalkNamedViewBounded(view.Root(), WalkOptions{MaxDepth: 1}, func(ViewNode, int) bool { return true })
-if byDepth.Visited != 1 || !byDepth.Truncated {
-t.Fatalf("depth-bounded walk=%#v", byDepth)
-}
-pruned := WalkNamedViewBounded(view.Root(), WalkOptions{}, func(ViewNode, int) bool { return false })
-if pruned.Visited != 1 || pruned.Truncated {
-t.Fatalf("pruned walk=%#v", pruned)
-}
-return nil
-}); err != nil {
-t.Fatal(err)
-}
+	document, err := ParseDocument("go", "package p\nfunc run() { call() }\n")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer document.Close()
+	if err := document.Read(func(view DocumentView) error {
+		byNodes := WalkNamedViewBounded(view.Root(), WalkOptions{MaxNodes: 2}, func(ViewNode, int) bool { return true })
+		if byNodes.Visited != 2 || !byNodes.Truncated {
+			t.Fatalf("node-bounded walk=%#v", byNodes)
+		}
+		byDepth := WalkNamedViewBounded(view.Root(), WalkOptions{MaxDepth: 1}, func(ViewNode, int) bool { return true })
+		if byDepth.Visited != 1 || !byDepth.Truncated {
+			t.Fatalf("depth-bounded walk=%#v", byDepth)
+		}
+		pruned := WalkNamedViewBounded(view.Root(), WalkOptions{}, func(ViewNode, int) bool { return false })
+		if pruned.Visited != 1 || pruned.Truncated {
+			t.Fatalf("pruned walk=%#v", pruned)
+		}
+		return nil
+	}); err != nil {
+		t.Fatal(err)
+	}
 }
 
 func TestDocumentReadPropagatesErrorAndRejectsClosedDocument(t *testing.T) {

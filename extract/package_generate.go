@@ -129,20 +129,20 @@ func validateSelectedPackage(sources []Source) error {
 		if err != nil {
 			return err
 		}
-if document.Root().HasError() {
-err = malformedSourceError(source.Path, document)
-document.Close()
-return err
-}
-var name string
-err = document.Read(func(view codeparser.DocumentView) error {
-name = goPackageName(view.Root(), []byte(source.Text))
-return nil
-})
-document.Close()
-if err != nil {
-return err
-}
+		if document.Root().HasError() {
+			err = malformedSourceError(source.Path, document)
+			document.Close()
+			return err
+		}
+		var name string
+		err = document.Read(func(view codeparser.DocumentView) error {
+			name = goPackageName(view.Root(), []byte(source.Text))
+			return nil
+		})
+		document.Close()
+		if err != nil {
+			return err
+		}
 		if name == "" {
 			return fmt.Errorf("no Go package declaration found in %s", source.Path)
 		}
