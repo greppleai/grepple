@@ -45,43 +45,56 @@ func AnalyzeMermaidSchemas(root string) ([]Diagnostic, error) {
 	return result, nil
 }
 
+type mermaidSchemaDiscovery struct {
+	diagrams         []string
+	packageBundles   []string
+	workspaceBundles []string
+}
+
 func discoverMermaidSchemas(root string) ([]string, []string, []string, error) {
-	var diagrams, packageBundles, workspaceBundles []string
+	discovery := mermaidSchemaDiscovery{}
 	err := filepath.WalkDir(root, func(path string, entry os.DirEntry, walkErr error) error {
-		if walkErr != nil {
-			return walkErr
-		}
-		if entry.IsDir() && path != root && mermaidExcludedDirectories[entry.Name()] {
+		return discovery.visit(root, path, entry, walkErr)
+	})
+	sort.Strings(discovery.diagrams)
+	sort.Strings(discovery.packageBundles)
+	sort.Strings(discovery.workspaceBundles)
+	return discovery.diagrams, discovery.packageBundles, discovery.workspaceBundles, err
+}
+
+func (d *mermaidSchemaDiscovery) visit(root, path string, entry os.DirEntry, walkErr error) error {
+	if walkErr != nil {
+		return walkErr
+	}
+	if entry.IsDir() && path != root && mermaidExcludedDirectories[entry.Name()] {
+		return filepath.SkipDir
+	}
+	if entry.Type()&os.ModeSymlink != 0 {
+		if entry.IsDir() {
 			return filepath.SkipDir
 		}
-		if entry.Type()&os.ModeSymlink != 0 {
-			if entry.IsDir() {
-				return filepath.SkipDir
-			}
-			return nil
-		}
-		if entry.IsDir() {
-			suffix := filepath.Ext(entry.Name())
-			switch suffix {
-			case ".package":
-				packageBundles = append(packageBundles, path)
-				return filepath.SkipDir
-			case ".workspace":
-				workspaceBundles = append(workspaceBundles, path)
-				return filepath.SkipDir
-			default:
-				return nil
-			}
-		}
-		if isMermaidSchema(entry.Name()) {
-			diagrams = append(diagrams, path)
-		}
 		return nil
-	})
-	sort.Strings(diagrams)
-	sort.Strings(packageBundles)
-	sort.Strings(workspaceBundles)
-	return diagrams, packageBundles, workspaceBundles, err
+	}
+	if entry.IsDir() {
+		return d.addBundle(path, entry.Name())
+	}
+	if isMermaidSchema(entry.Name()) {
+		d.diagrams = append(d.diagrams, path)
+	}
+	return nil
+}
+
+func (d *mermaidSchemaDiscovery) addBundle(path, name string) error {
+	switch filepath.Ext(name) {
+	case ".package":
+		d.packageBundles = append(d.packageBundles, path)
+		return filepath.SkipDir
+	case ".workspace":
+		d.workspaceBundles = append(d.workspaceBundles, path)
+		return filepath.SkipDir
+	default:
+		return nil
+	}
 }
 
 func isMermaidSchema(name string) bool {

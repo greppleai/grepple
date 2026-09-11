@@ -100,118 +100,11 @@ func TestAnalyzeMermaidSchemasSurfacesSourceErrors(t *testing.T) {
 }
 
 func TestAnalyzeMermaidSchemasPackageBundles(t *testing.T) {
-	makeBundle := func(t *testing.T) (string, string) {
-		t.Helper()
-		root := t.TempDir()
-		writeHookTestFile(t, filepath.Join(root, "go.mod"), "module example.com/hookbundle\n")
-		source := filepath.Join(root, "internal", "model")
-		writeHookTestFile(t, filepath.Join(source, "model.go"), "package model\ntype Item struct { Name string }\n")
-		bundle, err := mermaidcode.GeneratePackageBundle(source)
-		if err != nil {
-			t.Fatal(err)
-		}
-		bundleDirectory := filepath.Join(root, ".grepple", "model.package")
-		if err := mermaidcode.WritePackageBundle(bundleDirectory, bundle); err != nil {
-			t.Fatal(err)
-		}
-		return root, bundleDirectory
-	}
-
-	t.Run("valid", func(t *testing.T) {
-		root, _ := makeBundle(t)
-		diagnostics, err := AnalyzeMermaidSchemas(root)
-		if err != nil || len(diagnostics) != 0 {
-			t.Fatalf("valid bundle: %+v, %v", diagnostics, err)
-		}
-	})
-	for _, test := range []struct {
-		name, file string
-		mutate     func(string) error
-	}{
-		{"changed", "overview.mmd", func(path string) error { return os.WriteFile(path, []byte("changed"), 0o644) }},
-		{"missing manifest", "manifest.json", os.Remove},
-		{"missing", "structure.mmd", os.Remove},
-		{"extra", "notes.txt", func(path string) error { return os.WriteFile(path, []byte("extra"), 0o644) }},
-	} {
-		t.Run(test.name, func(t *testing.T) {
-			root, bundleDirectory := makeBundle(t)
-			if err := test.mutate(filepath.Join(bundleDirectory, test.file)); err != nil {
-				t.Fatal(err)
-			}
-			diagnostics, err := AnalyzeMermaidSchemas(root)
-			if err != nil || len(diagnostics) != 1 || !strings.Contains(diagnostics[0].Failure, test.file) {
-				t.Fatalf("bundle diagnostic: %+v, %v", diagnostics, err)
-			}
-			if diagnostics[0].Position.Start.Filename != filepath.Join(bundleDirectory, "manifest.json") {
-				t.Fatalf("diagnostic anchor: %+v", diagnostics[0])
-			}
-		})
-	}
-	t.Run("no double validation", func(t *testing.T) {
-		root, bundleDirectory := makeBundle(t)
-		writeHookTestFile(t, filepath.Join(bundleDirectory, "bad.structure.mmd"), "not a diagram")
-		diagnostics, err := AnalyzeMermaidSchemas(root)
-		if err != nil || len(diagnostics) != 1 || !strings.Contains(diagnostics[0].Failure, "unexpected file") {
-			t.Fatalf("double validation result: %+v, %v", diagnostics, err)
-		}
-	})
+	testAnalyzeBundleSchemas(t, makeHookPackageBundle, "bundle", "structure.mmd", "")
 }
 
 func TestAnalyzeMermaidSchemasWorkspaceBundles(t *testing.T) {
-	makeBundle := func(t *testing.T) (string, string) {
-		t.Helper()
-		root := t.TempDir()
-		writeHookTestFile(t, filepath.Join(root, "go.mod"), "module example.com/hookworkspace\n")
-		writeHookTestFile(t, filepath.Join(root, "main.go"), "package main\nfunc main() {}\n")
-		bundle, err := mermaidcode.GenerateWorkspaceBundle(root)
-		if err != nil {
-			t.Fatal(err)
-		}
-		bundleDirectory := filepath.Join(root, ".grepple", "project.workspace")
-		if err := mermaidcode.WriteWorkspaceBundle(bundleDirectory, bundle); err != nil {
-			t.Fatal(err)
-		}
-		return root, bundleDirectory
-	}
-
-	t.Run("valid", func(t *testing.T) {
-		root, _ := makeBundle(t)
-		diagnostics, err := AnalyzeMermaidSchemas(root)
-		if err != nil || len(diagnostics) != 0 {
-			t.Fatalf("valid workspace bundle: %+v, %v", diagnostics, err)
-		}
-	})
-	for _, test := range []struct {
-		name, file string
-		mutate     func(string) error
-	}{
-		{"drift", "overview.mmd", func(path string) error { return os.WriteFile(path, []byte("changed"), 0o644) }},
-		{"missing manifest", "manifest.json", os.Remove},
-		{"missing", "overview.mmd", os.Remove},
-		{"extra", "notes.txt", func(path string) error { return os.WriteFile(path, []byte("extra"), 0o644) }},
-	} {
-		t.Run(test.name, func(t *testing.T) {
-			root, bundleDirectory := makeBundle(t)
-			if err := test.mutate(filepath.Join(bundleDirectory, test.file)); err != nil {
-				t.Fatal(err)
-			}
-			diagnostics, err := AnalyzeMermaidSchemas(root)
-			if err != nil || len(diagnostics) != 1 || !strings.Contains(diagnostics[0].Failure, test.file) {
-				t.Fatalf("workspace bundle diagnostic: %+v, %v", diagnostics, err)
-			}
-			if !strings.Contains(diagnostics[0].Failure, "canonical workspace bundle mismatch") || diagnostics[0].Position.Start.Filename != filepath.Join(bundleDirectory, "manifest.json") {
-				t.Fatalf("workspace diagnostic anchor: %+v", diagnostics[0])
-			}
-		})
-	}
-	t.Run("no double validation", func(t *testing.T) {
-		root, bundleDirectory := makeBundle(t)
-		writeHookTestFile(t, filepath.Join(bundleDirectory, "bad.structure.mmd"), "not a diagram")
-		diagnostics, err := AnalyzeMermaidSchemas(root)
-		if err != nil || len(diagnostics) != 1 || !strings.Contains(diagnostics[0].Failure, "unexpected file") {
-			t.Fatalf("workspace double validation result: %+v, %v", diagnostics, err)
-		}
-	})
+	testAnalyzeBundleSchemas(t, makeHookWorkspaceBundle, "workspace bundle", "overview.mmd", "canonical workspace bundle mismatch")
 }
 
 func TestAnalyzeMermaidSchemasBundleAndLegacyCoexistence(t *testing.T) {
@@ -252,6 +145,92 @@ func TestAnalyzeMermaidSchemasBundleAndLegacyCoexistence(t *testing.T) {
 		if !strings.Contains(messages, expected) {
 			t.Fatalf("missing %q in diagnostics: %+v", expected, diagnostics)
 		}
+	}
+}
+
+type hookBundleMaker func(*testing.T) (string, string)
+
+func makeHookPackageBundle(t *testing.T) (string, string) {
+	t.Helper()
+	root := t.TempDir()
+	writeHookTestFile(t, filepath.Join(root, "go.mod"), "module example.com/hookbundle\n")
+	source := filepath.Join(root, "internal", "model")
+	writeHookTestFile(t, filepath.Join(source, "model.go"), "package model\ntype Item struct { Name string }\n")
+	bundle, err := mermaidcode.GeneratePackageBundle(source)
+	if err != nil {
+		t.Fatal(err)
+	}
+	bundleDirectory := filepath.Join(root, ".grepple", "model.package")
+	if err := mermaidcode.WritePackageBundle(bundleDirectory, bundle); err != nil {
+		t.Fatal(err)
+	}
+	return root, bundleDirectory
+}
+
+func makeHookWorkspaceBundle(t *testing.T) (string, string) {
+	t.Helper()
+	root := t.TempDir()
+	writeHookTestFile(t, filepath.Join(root, "go.mod"), "module example.com/hookworkspace\n")
+	writeHookTestFile(t, filepath.Join(root, "main.go"), "package main\nfunc main() {}\n")
+	bundle, err := mermaidcode.GenerateWorkspaceBundle(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	bundleDirectory := filepath.Join(root, ".grepple", "project.workspace")
+	if err := mermaidcode.WriteWorkspaceBundle(bundleDirectory, bundle); err != nil {
+		t.Fatal(err)
+	}
+	return root, bundleDirectory
+}
+
+func testAnalyzeBundleSchemas(t *testing.T, makeBundle hookBundleMaker, label, generatedFile, requiredFailure string) {
+	t.Helper()
+	t.Run("valid", func(t *testing.T) {
+		root, _ := makeBundle(t)
+		diagnostics, err := AnalyzeMermaidSchemas(root)
+		if err != nil || len(diagnostics) != 0 {
+			t.Fatalf("valid %s: %+v, %v", label, diagnostics, err)
+		}
+	})
+	mutations := []struct {
+		name, file string
+		mutate     func(string) error
+	}{
+		{"changed", "overview.mmd", func(path string) error { return os.WriteFile(path, []byte("changed"), 0o644) }},
+		{"missing manifest", "manifest.json", os.Remove},
+		{"missing", generatedFile, os.Remove},
+		{"extra", "notes.txt", func(path string) error { return os.WriteFile(path, []byte("extra"), 0o644) }},
+	}
+	for _, test := range mutations {
+		t.Run(test.name, func(t *testing.T) {
+			testAnalyzeBundleMutation(t, makeBundle, label, requiredFailure, test.file, test.mutate)
+		})
+	}
+	t.Run("no double validation", func(t *testing.T) {
+		root, bundleDirectory := makeBundle(t)
+		writeHookTestFile(t, filepath.Join(bundleDirectory, "bad.structure.mmd"), "not a diagram")
+		diagnostics, err := AnalyzeMermaidSchemas(root)
+		if err != nil || len(diagnostics) != 1 || !strings.Contains(diagnostics[0].Failure, "unexpected file") {
+			t.Fatalf("%s double validation result: %+v, %v", label, diagnostics, err)
+		}
+	})
+}
+
+func testAnalyzeBundleMutation(t *testing.T, makeBundle hookBundleMaker, label, requiredFailure, file string, mutate func(string) error) {
+	t.Helper()
+	root, bundleDirectory := makeBundle(t)
+	if err := mutate(filepath.Join(bundleDirectory, file)); err != nil {
+		t.Fatal(err)
+	}
+	diagnostics, err := AnalyzeMermaidSchemas(root)
+	if err != nil || len(diagnostics) != 1 || !strings.Contains(diagnostics[0].Failure, file) {
+		t.Fatalf("%s diagnostic: %+v, %v", label, diagnostics, err)
+	}
+	if requiredFailure != "" && !strings.Contains(diagnostics[0].Failure, requiredFailure) {
+		t.Fatalf("%s diagnostic: %+v", label, diagnostics[0])
+	}
+	if diagnostics[0].Position.Start.Filename != filepath.Join(bundleDirectory, "manifest.json") {
+		t.Fatalf("diagnostic anchor: %+v", diagnostics[0])
 	}
 }
 
