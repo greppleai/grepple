@@ -2,7 +2,7 @@ classDiagram
     %% grepple:package-default github.com/greppleai/grepple/gritql
     %% grepple:language-default go
     direction LR
-    note "Package gritql implements Grepple's native, read-only structural-search compiler, matcher, evaluator, and bounded scanner. | package github.com/greppleai/grepple/gritql | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=14, declarations=117, exportedTypes=48, internalTypes=69, members=617, exportedFunctions=17, fiberRoutes=0, relations=317"
+    note "Package gritql implements Grepple's native, read-only structural-search compiler, matcher, evaluator, and bounded scanner. | package github.com/greppleai/grepple/gritql | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=14, declarations=117, exportedTypes=48, internalTypes=69, members=619, exportedFunctions=17, fiberRoutes=0, relations=317"
     namespace data_contracts {
         class EffectiveLimits["EffectiveLimits · gritql/finding.go:52-64"] {
             +ASTSteps: int
@@ -27,7 +27,7 @@ classDiagram
             +TreeSitterGrammar: string
         }
         <<struct>> EvaluationMetadata
-        class ScanStats["ScanStats · gritql/scanner.go:60-68"] {
+        class ScanStats["ScanStats · gritql/scanner.go:63-71"] {
             +BytesRead: int64
             +Candidates: int
             +Eligible: int
@@ -37,7 +37,7 @@ classDiagram
             +SkippedLanguage: int
         }
         <<struct>> ScanStats
-        class ScanTruncation["ScanTruncation · gritql/scanner.go:53-57"] {
+        class ScanTruncation["ScanTruncation · gritql/scanner.go:56-60"] {
             +Limit: int64
             +Reason: string
             +Skipped: int
@@ -139,11 +139,11 @@ classDiagram
         <<struct>> ProgramScanResult
         class Range["Range · gritql/compiler.go:27-32"]
         <<struct>> Range
-        class ScanCandidate["ScanCandidate · gritql/scanner.go:32-36"]
+        class ScanCandidate["ScanCandidate · gritql/scanner.go:34-39"]
         <<struct>> ScanCandidate
-        class ScanOptions["ScanOptions · gritql/scanner.go:40-49"]
+        class ScanOptions["ScanOptions · gritql/scanner.go:43-52"]
         <<struct>> ScanOptions
-        class ScanResult["ScanResult · gritql/scanner.go:71-75"]
+        class ScanResult["ScanResult · gritql/scanner.go:74-78"]
         <<struct>> ScanResult
         class SlotCardinality["SlotCardinality = uint8 · gritql/template.go:35"]
         <<type>> SlotCardinality
@@ -213,7 +213,7 @@ classDiagram
         <<struct>> placeholderWalkItem
         class preparedLanguageScan["preparedLanguageScan · gritql/scanner_batch.go:88-93"]
         <<struct>> preparedLanguageScan
-        class preparedScanCandidate["preparedScanCandidate · gritql/scanner.go:105-109"]
+        class preparedScanCandidate["preparedScanCandidate · gritql/scanner.go:108-113"]
         <<struct>> preparedScanCandidate
         class queryDocument["queryDocument · gritql/query_syntax.go:58-64"]
         <<struct>> queryDocument
@@ -235,25 +235,25 @@ classDiagram
         <<struct>> roleAlternative
         class roleAncestorSet["roleAncestorSet · gritql/template.go:378-381"]
         <<struct>> roleAncestorSet
-        class scanByteAccount["scanByteAccount · gritql/scanner.go:357-364"]
+        class scanByteAccount["scanByteAccount · gritql/scanner.go:373-380"]
         <<struct>> scanByteAccount
-        class scanCandidateDisposition["scanCandidateDisposition = uint8 · gritql/scanner.go:485"]
+        class scanCandidateDisposition["scanCandidateDisposition = uint8 · gritql/scanner.go:514"]
         <<type>> scanCandidateDisposition
-        class scanJob["scanJob · gritql/scanner.go:120-123"]
+        class scanJob["scanJob · gritql/scanner.go:124-127"]
         <<struct>> scanJob
-        class scanLimitKind["scanLimitKind = uint8 · gritql/scanner.go:342"]
+        class scanLimitKind["scanLimitKind = uint8 · gritql/scanner.go:358"]
         <<type>> scanLimitKind
-        class scanMemoryAccount["scanMemoryAccount · gritql/scanner.go:577-584"]
+        class scanMemoryAccount["scanMemoryAccount · gritql/scanner.go:606-613"]
         <<struct>> scanMemoryAccount
-        class scanOutcome["scanOutcome · gritql/scanner.go:111-118"]
+        class scanOutcome["scanOutcome · gritql/scanner.go:115-122"]
         <<struct>> scanOutcome
-        class scanReadResult["scanReadResult · gritql/scanner.go:351-355"]
+        class scanReadResult["scanReadResult · gritql/scanner.go:367-371"]
         <<struct>> scanReadResult
-        class scanSegmentMatcher["scanSegmentMatcher · gritql/scanner.go:781-786"]
+        class scanSegmentMatcher["scanSegmentMatcher · gritql/scanner.go:810-815"]
         <<struct>> scanSegmentMatcher
-        class scanSegmentState["scanSegmentState · gritql/scanner.go:776-779"]
+        class scanSegmentState["scanSegmentState · gritql/scanner.go:805-808"]
         <<struct>> scanSegmentState
-        class scanState["scanState · gritql/scanner.go:124-137"]
+        class scanState["scanState · gritql/scanner.go:128-141"]
         <<struct>> scanState
         class selectedRoot["selectedRoot · gritql/template.go:203-206"]
         <<struct>> selectedRoot
@@ -353,7 +353,7 @@ classDiagram
             +RepeatedSequenceTarget(parser.Node, string, int, int): MatchTarget
         }
         <<function>> RepeatedSequenceTarget
-        class ScanFiles["ScanFiles · gritql/scanner.go:141-163"] {
+        class ScanFiles["ScanFiles · gritql/scanner.go:145-167"] {
             +ScanFiles(context.Context, fs.FS, *Program, []ScanCandidate, ScanOptions): ScanResult
         }
         <<function>> ScanFiles
@@ -365,7 +365,7 @@ classDiagram
             +SequenceTarget(string, parser.Node, int, int): MatchTarget
         }
         <<function>> SequenceTarget
-        class ValidateGlobs["ValidateGlobs · gritql/scanner.go:732-737"] {
+        class ValidateGlobs["ValidateGlobs · gritql/scanner.go:761-766"] {
             +ValidateGlobs([]string, []string): error
         }
         <<function>> ValidateGlobs
@@ -559,7 +559,7 @@ classDiagram
     querySyntaxError "1" --> "1" queryRange : field Range
     roleAlternative "1" --> "1" placeholderRole : field role
     roleAlternative "1" --> "1" spanKey : field component
-    scanByteAccount "1" ..> "1" ScanOptions : method read parameter 5; method readNext parameter 4
+    scanByteAccount "1" ..> "1" ScanOptions : method read parameter 6; method readNext parameter 5
     scanByteAccount "1" ..> "1" scanReadResult : method read result 1; method readNext result 1
     scanJob "1" --> "1" preparedScanCandidate : field candidate
     scanOutcome "1" --> "1" FileEvaluation : field evaluation

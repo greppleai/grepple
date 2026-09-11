@@ -31,6 +31,19 @@ func TestScanFilesFiltersAndReturnsDeterministicFindings(t *testing.T) {
 		t.Fatalf("diagnostics=%v", diagnostics)
 	}
 }
+func TestScanFilesUsesPreacquiredContentWithoutReading(t *testing.T) {
+	program := compileFindingPattern(t, "`x`")
+	source := []byte("package p\nvar x = 1\n")
+	result := ScanFiles(context.Background(), nil, program, []ScanCandidate{{
+		ReadPath: "missing.go", Path: "main.go", Content: source,
+	}}, ScanOptions{})
+	if findings := result.Findings(); len(findings) != 1 || findings[0].Path() != "main.go" {
+		t.Fatalf("findings=%v diagnostics=%v", findings, result.Diagnostics())
+	}
+	if result.Stats().BytesRead != int64(len(source)) {
+		t.Fatalf("stats=%+v", result.Stats())
+	}
+}
 
 func TestScanFilesRejectsInvalidProgramWithoutReading(t *testing.T) {
 	result := ScanFiles(context.Background(), fstest.MapFS{
@@ -38,5 +51,25 @@ func TestScanFilesRejectsInvalidProgramWithoutReading(t *testing.T) {
 	}, nil, []ScanCandidate{{ReadPath: "main.go", Path: "main.go"}}, ScanOptions{})
 	if result.Stats().Evaluated != 0 || !batchHasDiagnostic(result.Diagnostics(), "INTERNAL_ERROR") {
 		t.Fatalf("stats=%+v diagnostics=%v", result.Stats(), result.Diagnostics())
+	}
+}
+func TestScanFilesDeduplicationPrefersPreacquiredContent(t *testing.T) {
+	program := compileFindingPattern(t, "`x`")
+	source := []byte("package p\nvar x = 1\n")
+	result := ScanFiles(context.Background(), nil, program, []ScanCandidate{
+		{ReadPath: "main.go", Path: "main.go"},
+		{ReadPath: "main.go", Path: "main.go", Content: source},
+	}, ScanOptions{})
+	if findings := result.Findings(); len(findings) != 1 || result.Stats().Eligible != 1 {
+		t.Fatalf("findings=%v stats=%+v diagnostics=%v", findings, result.Stats(), result.Diagnostics())
+	}
+}
+func TestScanFilesAppliesSourceLimitToPreacquiredContent(t *testing.T) {
+	program := compileFindingPattern(t, "`x`")
+	result := ScanFiles(context.Background(), nil, program, []ScanCandidate{{
+		ReadPath: "main.go", Path: "main.go", Content: []byte("package p\nvar x = 123456789\n"),
+	}}, ScanOptions{EvaluateOptions: EvaluateOptions{MaxSourceBytes: 16}})
+	if findings := result.Findings(); len(findings) != 0 || !batchHasDiagnostic(result.Diagnostics(), "LIMIT_SOURCE_BYTES") {
+		t.Fatalf("findings=%v diagnostics=%v", findings, result.Diagnostics())
 	}
 }

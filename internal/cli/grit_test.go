@@ -133,6 +133,35 @@ func TestRunGritLocalTypeScriptUsesMultilingualContract(t *testing.T) {
 		t.Fatalf("response=%#v", response)
 	}
 }
+func TestGritCandidatesCarryAnchoredSourceIntoStructuralScan(t *testing.T) {
+	dir := chdirTemp(t)
+	source := []byte("package p\nvar x = target(value)\n")
+	if err := os.WriteFile(filepath.Join(dir, "main.go"), source, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	_, anchored, err := compileGritQuery(gritArgs{Query: "language go\n`target($value)`", Compatibility: api.GritCompatibilityV1})
+	if err != nil {
+		t.Fatal(err)
+	}
+	candidates, err := gritCandidates(dir, nil, anchored)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(candidates) != 1 || candidates[0].Content == nil || string(candidates[0].Content) != string(source) {
+		t.Fatalf("anchored candidates=%#v", candidates)
+	}
+	_, unanchored, err := compileGritQuery(gritArgs{Query: "language go\n`$value`", Compatibility: api.GritCompatibilityV1})
+	if err != nil {
+		t.Fatal(err)
+	}
+	candidates, err = gritCandidates(dir, nil, unanchored)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(candidates) != 1 || candidates[0].Content != nil {
+		t.Fatalf("unanchored candidates=%#v", candidates)
+	}
+}
 
 func TestRunGritLocalHumanOutputUsesStructuralRange(t *testing.T) {
 	dir := chdirTemp(t)

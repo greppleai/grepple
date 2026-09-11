@@ -207,7 +207,7 @@ Reduce repeated parsing and language knowledge across extraction, navigation, te
    - [x] Reject unsupported languages and compatibility mismatches explicitly; no target uses a fallback parser.
 5. Unify source discovery and acquisition where text and structural search currently overlap.
    - Share repository-relative path normalization, ignore handling, glob filtering, language detection, bounded reads, binary detection, deterministic ordering, and cancellation.
-   - Avoid the current anchored structural-search path reading files once for text prefiltering and again for Grit evaluation.
+   - [x] Avoid the anchored structural-search path reading files once for text prefiltering and again for Grit evaluation. `ScanCandidate.Content` now carries prefilter acquisitions into structural scanning without bypassing scanner byte, memory, binary, UTF-8, or parse checks.
    - Keep evaluation orchestration reusable by local CLI and backend callers; introduce a lower-level source/candidate package only if it produces a cleaner dependency graph than making `gritql` depend on `search`.
 6. Make parser documents the shared cache boundary.
    - Allow a document to be backed by a live Tree-sitter tree or the production packed read-only CST through the same lightweight node accessor.

@@ -29,10 +29,13 @@ const (
 
 // ScanCandidate identifies one already-scoped filesystem entry and its public
 // repository-relative display path. ReadPath is interpreted by the supplied FS.
+// A non-nil Content slice supplies bytes acquired by an upstream prefilter and
+// prevents a second filesystem read; callers must not mutate it during the scan.
 type ScanCandidate struct {
 	ReadPath string
 	Path     string
 	Language string
+	Content  []byte
 }
 
 // ScanOptions controls candidate filtering, bounded acquisition, and evaluation.
@@ -106,6 +109,7 @@ type preparedScanCandidate struct {
 	readPath string
 	path     string
 	language string
+	content  []byte
 }
 
 type scanOutcome struct {
@@ -154,12 +158,24 @@ func ScanFiles(ctx context.Context, filesystem fs.FS, program *Program, candidat
 	}
 	prepared, early, truncations := prepareScanCandidates(program.Language(), candidates, options, &state.stats)
 	state.evaluations = append(state.evaluations, early...)
-	if filesystem == nil {
+	if scanFilesystemUnavailable(filesystem, prepared) {
 		state.evaluations = append(state.evaluations, scannerFailure(options, "source filesystem is unavailable", nil))
 		return finishScan(ctx, program, state, truncations)
 	}
 	state.scan(ctx, filesystem, program, prepared)
 	return finishScan(ctx, program, state, truncations)
+}
+func scanFilesystemUnavailable(filesystem fs.FS, candidates []preparedScanCandidate) bool {
+	return filesystem == nil && (len(candidates) == 0 || scanCandidatesRequireFS(candidates))
+}
+
+func scanCandidatesRequireFS(candidates []preparedScanCandidate) bool {
+	for _, candidate := range candidates {
+		if candidate.content == nil {
+			return true
+		}
+	}
+	return false
 }
 
 func (s *scanState) scan(ctx context.Context, filesystem fs.FS, program *Program, candidates []preparedScanCandidate) {
@@ -312,7 +328,7 @@ func scanMemoryFailure(program *Program, options ScanOptions, index int, path st
 func evaluateScanCandidate(ctx context.Context, filesystem fs.FS, program *Program, options ScanOptions, byteAccount *scanByteAccount, index int, candidate preparedScanCandidate) scanOutcome {
 	outcome := scanOutcome{index: index}
 	started := time.Now()
-	read := byteAccount.read(ctx, filesystem, candidate.readPath, index, options)
+	read := byteAccount.read(ctx, filesystem, candidate.readPath, candidate.content, index, options)
 	outcome.bytesRead = int64(len(read.content))
 	if read.limit == scanLimitTotal {
 		outcome.totalTruncated = true
@@ -367,7 +383,7 @@ func newScanByteAccount(maximum int64) *scanByteAccount {
 	return &scanByteAccount{maximum: maximum, notify: make(chan struct{})}
 }
 
-func (a *scanByteAccount) read(ctx context.Context, filesystem fs.FS, path string, index int, options ScanOptions) scanReadResult {
+func (a *scanByteAccount) read(ctx context.Context, filesystem fs.FS, path string, content []byte, index int, options ScanOptions) scanReadResult {
 	for {
 		a.mu.Lock()
 		if a.stopped {
@@ -375,7 +391,7 @@ func (a *scanByteAccount) read(ctx context.Context, filesystem fs.FS, path strin
 			return scanReadResult{limit: scanLimitTotal, err: errSourceTooLarge}
 		}
 		if index == a.next {
-			result := a.readNext(ctx, filesystem, path, options)
+			result := a.readNext(ctx, filesystem, path, content, options)
 			a.mu.Unlock()
 			return result
 		}
@@ -389,13 +405,13 @@ func (a *scanByteAccount) read(ctx context.Context, filesystem fs.FS, path strin
 	}
 }
 
-func (a *scanByteAccount) readNext(ctx context.Context, filesystem fs.FS, path string, options ScanOptions) scanReadResult {
+func (a *scanByteAccount) readNext(ctx context.Context, filesystem fs.FS, path string, provided []byte, options ScanOptions) scanReadResult {
 	if err := ctx.Err(); err != nil {
 		return scanReadResult{err: err}
 	}
 	remaining := a.maximum - a.total
 	limit, kind := scanReadLimit(options, remaining)
-	content, err := readBoundedFile(filesystem, path, limit)
+	content, err := boundedCandidateContent(filesystem, path, provided, limit)
 	result := scanReadResult{content: content, err: err}
 	if err == errSourceTooLarge {
 		result.limit = kind
@@ -429,6 +445,16 @@ func scanReadLimit(options ScanOptions, remaining int64) (int, scanLimitKind) {
 }
 
 var errSourceTooLarge = &EvaluationError{Code: "LIMIT_SOURCE_BYTES", Class: "resource", Message: "source exceeds effective byte limit"}
+
+func boundedCandidateContent(filesystem fs.FS, path string, provided []byte, maxBytes int) ([]byte, error) {
+	if provided == nil {
+		return readBoundedFile(filesystem, path, maxBytes)
+	}
+	if len(provided) > maxBytes {
+		return provided[:maxBytes+1], errSourceTooLarge
+	}
+	return provided, nil
+}
 
 func readBoundedFile(filesystem fs.FS, path string, maxBytes int) ([]byte, error) {
 	file, err := filesystem.Open(path)
@@ -471,7 +497,10 @@ func prepareScanCandidates(programLanguage string, candidates []ScanCandidate, o
 		if prepared[i].path != prepared[j].path {
 			return prepared[i].path < prepared[j].path
 		}
-		return prepared[i].readPath < prepared[j].readPath
+		if prepared[i].readPath != prepared[j].readPath {
+			return prepared[i].readPath < prepared[j].readPath
+		}
+		return prepared[i].content != nil && prepared[j].content == nil
 	})
 	prepared = deduplicatePreparedCandidates(prepared)
 	stats.Eligible = len(prepared)
@@ -511,7 +540,7 @@ func prepareScanCandidate(programLanguage string, candidate ScanCandidate, optio
 		failure := scannerDiagnosticEvaluation(nil, options, evaluationFailure("INTERNAL_ERROR", "internal", "source file path is invalid", nil), &normalized)
 		return preparedScanCandidate{}, failure, scanCandidateInvalid
 	}
-	return preparedScanCandidate{candidate.ReadPath, normalized, language}, FileEvaluation{}, scanCandidatePrepared
+	return preparedScanCandidate{readPath: candidate.ReadPath, path: normalized, language: language, content: candidate.Content}, FileEvaluation{}, scanCandidatePrepared
 }
 
 func deduplicatePreparedCandidates(candidates []preparedScanCandidate) []preparedScanCandidate {

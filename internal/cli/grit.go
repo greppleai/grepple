@@ -273,14 +273,9 @@ func acquireGritLocal(ctx context.Context, values gritArgs, program *gritql.Prog
 	if err != nil {
 		return api.GritResponse{}, err
 	}
-	paths, err := gritCandidatePaths(cwd, values.Globs, program)
+	candidates, err := gritCandidates(cwd, values.Globs, program)
 	if err != nil {
 		return api.GritResponse{}, err
-	}
-	candidates := make([]gritql.ScanCandidate, 0, len(paths))
-	for _, candidatePath := range paths {
-		normalized := filepath.ToSlash(candidatePath)
-		candidates = append(candidates, gritql.ScanCandidate{ReadPath: normalized, Path: normalized})
 	}
 	result := gritql.ScanFiles(ctx, os.DirFS(cwd), program, candidates, gritScanOptions(values))
 	if err := ctx.Err(); err != nil {
@@ -291,10 +286,19 @@ func acquireGritLocal(ctx context.Context, values gritArgs, program *gritql.Prog
 	return response, nil
 }
 
-func gritCandidatePaths(root string, globs []string, program *gritql.Program) ([]string, error) {
+func gritCandidates(root string, globs []string, program *gritql.Program) ([]gritql.ScanCandidate, error) {
 	anchors := gritql.AnalyzeAnchors(program).RequiredLiterals()
 	if len(anchors) == 0 {
-		return search.ListFilePaths(search.Params{Files: true, Globs: globs, Root: root}, nil)
+		paths, err := search.ListFilePaths(search.Params{Files: true, Globs: globs, Root: root}, nil)
+		if err != nil {
+			return nil, err
+		}
+		candidates := make([]gritql.ScanCandidate, 0, len(paths))
+		for _, candidatePath := range paths {
+			normalized := filepath.ToSlash(candidatePath)
+			candidates = append(candidates, gritql.ScanCandidate{ReadPath: normalized, Path: normalized})
+		}
+		return candidates, nil
 	}
 	anchor := anchors[0]
 	for _, candidate := range anchors[1:] {
@@ -306,11 +310,12 @@ func gritCandidatePaths(root string, globs []string, program *gritql.Program) ([
 	if err != nil {
 		return nil, err
 	}
-	paths := make([]string, 0, len(matches))
+	candidates := make([]gritql.ScanCandidate, 0, len(matches))
 	for _, match := range matches {
-		paths = append(paths, match.DisplayPath)
+		normalized := filepath.ToSlash(match.DisplayPath)
+		candidates = append(candidates, gritql.ScanCandidate{ReadPath: normalized, Path: normalized, Content: []byte(match.Content)})
 	}
-	return paths, nil
+	return candidates, nil
 }
 
 func outputGritResponse(values gritArgs, response api.GritResponse) error {

@@ -54,7 +54,7 @@ func ScanFilesPrograms(ctx context.Context, filesystem fs.FS, programs []Program
 	options = normalizeScanOptions(options)
 	states, prepared := prepareProgramScan(programs, candidates, options)
 	batch := BatchScanResult{}
-	if filesystem == nil {
+	if scanFilesystemUnavailable(filesystem, prepared) {
 		for index := range states {
 			states[index].evaluations = append(states[index].evaluations, scannerFailure(states[index].options, "source filesystem is unavailable", nil))
 		}
@@ -69,7 +69,7 @@ func ScanFilesPrograms(ctx context.Context, filesystem fs.FS, programs []Program
 		if !activeProgramMatchesCandidate(programs, states, candidate) {
 			continue
 		}
-		read := bytesAccount.read(ctx, filesystem, candidate.readPath, readIndex, options)
+		read := bytesAccount.read(ctx, filesystem, candidate.readPath, candidate.content, readIndex, options)
 		readIndex++
 		batch.stats.FilesRead++
 		if read.limit == scanLimitTotal {
