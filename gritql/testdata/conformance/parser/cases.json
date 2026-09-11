@@ -1,0 +1,878 @@
+{
+  "schema_version": 1,
+  "suite": "parser",
+  "provenance": {
+    "kind": "grepple-original",
+    "note": "Grepple-original fixture derived solely from docs/gritql-compatibility.md; no upstream source text was copied."
+  },
+  "cases": [
+    {
+      "name": "parser/snippet",
+      "description": "Accepted closed-grammar production.",
+      "features": [
+        "positive"
+      ],
+      "pattern_id": "rule",
+      "message": "match",
+      "pattern": "language go\n`exec.Command($args)`",
+      "sources": [],
+      "execution": {
+        "mode": "local"
+      },
+      "expected": {
+        "findings": [],
+        "diagnostics": []
+      }
+    },
+    {
+      "name": "parser/regex-constraint",
+      "description": "Accepted closed-grammar production.",
+      "features": [
+        "positive"
+      ],
+      "pattern_id": "rule",
+      "message": "match",
+      "pattern": "language go\n`f($x)` where { $x <: r\"^x$\", }",
+      "sources": [],
+      "execution": {
+        "mode": "local"
+      },
+      "expected": {
+        "findings": [],
+        "diagnostics": []
+      }
+    },
+    {
+      "name": "parser/boolean-trailing-comma",
+      "description": "Accepted closed-grammar production.",
+      "features": [
+        "positive"
+      ],
+      "pattern_id": "rule",
+      "message": "match",
+      "pattern": "language go\nand { `x`, not `y`, }",
+      "sources": [],
+      "execution": {
+        "mode": "local"
+      },
+      "expected": {
+        "findings": [],
+        "diagnostics": []
+      }
+    },
+    {
+      "name": "parser/unary-right-association",
+      "description": "Accepted closed-grammar production.",
+      "features": [
+        "positive"
+      ],
+      "pattern_id": "rule",
+      "message": "match",
+      "pattern": "language go\nnot maybe `x`",
+      "sources": [],
+      "execution": {
+        "mode": "local"
+      },
+      "expected": {
+        "findings": [],
+        "diagnostics": []
+      }
+    },
+    {
+      "name": "parser/comments-and-crlf",
+      "description": "Accepted closed-grammar production.",
+      "features": [
+        "positive",
+        "comments"
+      ],
+      "pattern_id": "rule",
+      "message": "match",
+      "pattern": "language go // header\r\n// lead\r\ncontains // separator\r\n`x` // eof",
+      "sources": [],
+      "execution": {
+        "mode": "local"
+      },
+      "expected": {
+        "findings": [],
+        "diagnostics": []
+      }
+    },
+    {
+      "name": "parser/snippet-escapes",
+      "description": "Accepted closed-grammar production.",
+      "features": [
+        "positive"
+      ],
+      "pattern_id": "rule",
+      "message": "match",
+      "pattern": "language go\n`var s = \\`raw\\``",
+      "sources": [],
+      "execution": {
+        "mode": "local"
+      },
+      "expected": {
+        "findings": [],
+        "diagnostics": []
+      }
+    },
+    {
+      "name": "parser/malformed-missing-header",
+      "description": "Malformed input fails closed.",
+      "features": [
+        "negative",
+        "malformed"
+      ],
+      "pattern_id": "rule",
+      "message": "match",
+      "pattern": "`x`",
+      "sources": [],
+      "execution": {
+        "mode": "local"
+      },
+      "expected": {
+        "findings": [],
+        "diagnostics": [
+          {
+            "code": "PATTERN_PARSE",
+            "class": "pattern",
+            "severity": "error",
+            "message": "pattern does not satisfy gritql-go-v1",
+            "pattern_id": "rule",
+            "path": null,
+            "range": {
+              "start_byte": 0,
+              "end_byte": 3,
+              "start_line": 1,
+              "start_column": 1,
+              "end_line": 1,
+              "end_column": 4
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "parser/malformed-header-no-newline",
+      "description": "Malformed input fails closed.",
+      "features": [
+        "negative",
+        "malformed"
+      ],
+      "pattern_id": "rule",
+      "message": "match",
+      "pattern": "language go",
+      "sources": [],
+      "execution": {
+        "mode": "local"
+      },
+      "expected": {
+        "findings": [],
+        "diagnostics": [
+          {
+            "code": "PATTERN_PARSE",
+            "class": "pattern",
+            "severity": "error",
+            "message": "pattern does not satisfy gritql-go-v1",
+            "pattern_id": "rule",
+            "path": null,
+            "range": {
+              "start_byte": 0,
+              "end_byte": 11,
+              "start_line": 1,
+              "start_column": 1,
+              "end_line": 1,
+              "end_column": 12
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "parser/malformed-bare-cr",
+      "description": "Malformed input fails closed.",
+      "features": [
+        "negative",
+        "malformed"
+      ],
+      "pattern_id": "rule",
+      "message": "match",
+      "pattern": "language go\r`x`",
+      "sources": [],
+      "execution": {
+        "mode": "local"
+      },
+      "expected": {
+        "findings": [],
+        "diagnostics": [
+          {
+            "code": "PATTERN_PARSE",
+            "class": "pattern",
+            "severity": "error",
+            "message": "pattern does not satisfy gritql-go-v1",
+            "pattern_id": "rule",
+            "path": null,
+            "range": {
+              "start_byte": 0,
+              "end_byte": 15,
+              "start_line": 1,
+              "start_column": 1,
+              "end_line": 1,
+              "end_column": 16
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "parser/malformed-one-element-and",
+      "description": "Malformed input fails closed.",
+      "features": [
+        "negative",
+        "malformed"
+      ],
+      "pattern_id": "rule",
+      "message": "match",
+      "pattern": "language go\nand { `x` }",
+      "sources": [],
+      "execution": {
+        "mode": "local"
+      },
+      "expected": {
+        "findings": [],
+        "diagnostics": [
+          {
+            "code": "PATTERN_PARSE",
+            "class": "pattern",
+            "severity": "error",
+            "message": "pattern does not satisfy gritql-go-v1",
+            "pattern_id": "rule",
+            "path": null,
+            "range": {
+              "start_byte": 0,
+              "end_byte": 23,
+              "start_line": 1,
+              "start_column": 1,
+              "end_line": 2,
+              "end_column": 12
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "parser/malformed-missing-comma",
+      "description": "Malformed input fails closed.",
+      "features": [
+        "negative",
+        "malformed"
+      ],
+      "pattern_id": "rule",
+      "message": "match",
+      "pattern": "language go\nor { `x` `y` }",
+      "sources": [],
+      "execution": {
+        "mode": "local"
+      },
+      "expected": {
+        "findings": [],
+        "diagnostics": [
+          {
+            "code": "PATTERN_PARSE",
+            "class": "pattern",
+            "severity": "error",
+            "message": "pattern does not satisfy gritql-go-v1",
+            "pattern_id": "rule",
+            "path": null,
+            "range": {
+              "start_byte": 0,
+              "end_byte": 26,
+              "start_line": 1,
+              "start_column": 1,
+              "end_line": 2,
+              "end_column": 15
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "parser/malformed-bad-snippet-escape",
+      "description": "Malformed input fails closed.",
+      "features": [
+        "negative",
+        "malformed"
+      ],
+      "pattern_id": "rule",
+      "message": "match",
+      "pattern": "language go\n`\\n`",
+      "sources": [],
+      "execution": {
+        "mode": "local"
+      },
+      "expected": {
+        "findings": [],
+        "diagnostics": [
+          {
+            "code": "PATTERN_PARSE",
+            "class": "pattern",
+            "severity": "error",
+            "message": "pattern does not satisfy gritql-go-v1",
+            "pattern_id": "rule",
+            "path": null,
+            "range": {
+              "start_byte": 0,
+              "end_byte": 16,
+              "start_line": 1,
+              "start_column": 1,
+              "end_line": 2,
+              "end_column": 5
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "parser/malformed-bad-regex-escape",
+      "description": "Malformed input fails closed.",
+      "features": [
+        "negative",
+        "malformed"
+      ],
+      "pattern_id": "rule",
+      "message": "match",
+      "pattern": "language go\nr\"\\q\"",
+      "sources": [],
+      "execution": {
+        "mode": "local"
+      },
+      "expected": {
+        "findings": [],
+        "diagnostics": [
+          {
+            "code": "PATTERN_PARSE",
+            "class": "pattern",
+            "severity": "error",
+            "message": "pattern does not satisfy gritql-go-v1",
+            "pattern_id": "rule",
+            "path": null,
+            "range": {
+              "start_byte": 0,
+              "end_byte": 17,
+              "start_line": 1,
+              "start_column": 1,
+              "end_line": 2,
+              "end_column": 6
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "parser/malformed-second-where",
+      "description": "Malformed input fails closed.",
+      "features": [
+        "negative",
+        "malformed"
+      ],
+      "pattern_id": "rule",
+      "message": "match",
+      "pattern": "language go\n`x` where {$x <: `x`} where {$x <: `x`}",
+      "sources": [],
+      "execution": {
+        "mode": "local"
+      },
+      "expected": {
+        "findings": [],
+        "diagnostics": [
+          {
+            "code": "PATTERN_PARSE",
+            "class": "pattern",
+            "severity": "error",
+            "message": "pattern does not satisfy gritql-go-v1",
+            "pattern_id": "rule",
+            "path": null,
+            "range": {
+              "start_byte": 0,
+              "end_byte": 51,
+              "start_line": 1,
+              "start_column": 1,
+              "end_line": 2,
+              "end_column": 40
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "parser/malformed-bad-metavariable",
+      "description": "Malformed input fails closed.",
+      "features": [
+        "negative",
+        "malformed"
+      ],
+      "pattern_id": "rule",
+      "message": "match",
+      "pattern": "language go\n`f($1x)`",
+      "sources": [],
+      "execution": {
+        "mode": "local"
+      },
+      "expected": {
+        "findings": [],
+        "diagnostics": [
+          {
+            "code": "PATTERN_PARSE",
+            "class": "pattern",
+            "severity": "error",
+            "message": "pattern does not satisfy gritql-go-v1",
+            "pattern_id": "rule",
+            "path": null,
+            "range": {
+              "start_byte": 0,
+              "end_byte": 20,
+              "start_line": 1,
+              "start_column": 1,
+              "end_line": 2,
+              "end_column": 9
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "parser/anonymous-constraint-invalid-context",
+      "description": "The anonymous wildcard is valid syntax but forbidden on a constraint left side.",
+      "features": [
+        "negative",
+        "malformed"
+      ],
+      "pattern_id": "rule",
+      "message": "match",
+      "pattern": "language go\n`f($_)` where { $_ <: `x` }",
+      "sources": [],
+      "execution": {
+        "mode": "local"
+      },
+      "expected": {
+        "findings": [],
+        "diagnostics": [
+          {
+            "code": "PATTERN_INVALID_CONTEXT",
+            "class": "pattern",
+            "severity": "error",
+            "message": "anonymous wildcard is invalid on a constraint left side",
+            "pattern_id": "rule",
+            "path": null,
+            "range": {
+              "start_byte": 0,
+              "end_byte": 39,
+              "start_line": 1,
+              "start_column": 1,
+              "end_line": 2,
+              "end_column": 28
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "parser/unsupported-rewrite",
+      "description": "Recognized out-of-contract syntax has the unsupported diagnostic.",
+      "features": [
+        "negative",
+        "unsupported-rewrite"
+      ],
+      "pattern_id": "rule",
+      "message": "match",
+      "pattern": "language go\n`x` => `y`",
+      "sources": [],
+      "execution": {
+        "mode": "local"
+      },
+      "expected": {
+        "findings": [],
+        "diagnostics": [
+          {
+            "code": "PATTERN_UNSUPPORTED",
+            "class": "unsupported",
+            "severity": "error",
+            "message": "construct is outside gritql-go-v1",
+            "pattern_id": "rule",
+            "path": null,
+            "range": {
+              "start_byte": 0,
+              "end_byte": 22,
+              "start_line": 1,
+              "start_column": 1,
+              "end_line": 2,
+              "end_column": 11
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "parser/unsupported-definitions",
+      "description": "Recognized out-of-contract syntax has the unsupported diagnostic.",
+      "features": [
+        "negative",
+        "unsupported-definitions"
+      ],
+      "pattern_id": "rule",
+      "message": "match",
+      "pattern": "language go\npattern foo() { `x` }",
+      "sources": [],
+      "execution": {
+        "mode": "local"
+      },
+      "expected": {
+        "findings": [],
+        "diagnostics": [
+          {
+            "code": "PATTERN_UNSUPPORTED",
+            "class": "unsupported",
+            "severity": "error",
+            "message": "construct is outside gritql-go-v1",
+            "pattern_id": "rule",
+            "path": null,
+            "range": {
+              "start_byte": 0,
+              "end_byte": 33,
+              "start_line": 1,
+              "start_column": 1,
+              "end_line": 2,
+              "end_column": 22
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "parser/unsupported-imports",
+      "description": "Recognized out-of-contract syntax has the unsupported diagnostic.",
+      "features": [
+        "negative",
+        "unsupported-imports"
+      ],
+      "pattern_id": "rule",
+      "message": "match",
+      "pattern": "language go\nimport \"lib\"",
+      "sources": [],
+      "execution": {
+        "mode": "local"
+      },
+      "expected": {
+        "findings": [],
+        "diagnostics": [
+          {
+            "code": "PATTERN_UNSUPPORTED",
+            "class": "unsupported",
+            "severity": "error",
+            "message": "construct is outside gritql-go-v1",
+            "pattern_id": "rule",
+            "path": null,
+            "range": {
+              "start_byte": 0,
+              "end_byte": 24,
+              "start_line": 1,
+              "start_column": 1,
+              "end_line": 2,
+              "end_column": 13
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "parser/unsupported-multifile",
+      "description": "Recognized out-of-contract syntax has the unsupported diagnostic.",
+      "features": [
+        "negative",
+        "unsupported-multifile"
+      ],
+      "pattern_id": "rule",
+      "message": "match",
+      "pattern": "language go\nmultifile { `x`, `y` }",
+      "sources": [],
+      "execution": {
+        "mode": "local"
+      },
+      "expected": {
+        "findings": [],
+        "diagnostics": [
+          {
+            "code": "PATTERN_UNSUPPORTED",
+            "class": "unsupported",
+            "severity": "error",
+            "message": "construct is outside gritql-go-v1",
+            "pattern_id": "rule",
+            "path": null,
+            "range": {
+              "start_byte": 0,
+              "end_byte": 34,
+              "start_line": 1,
+              "start_column": 1,
+              "end_line": 2,
+              "end_column": 23
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "parser/unsupported-constructors",
+      "description": "Recognized out-of-contract syntax has the unsupported diagnostic.",
+      "features": [
+        "negative",
+        "unsupported-constructors"
+      ],
+      "pattern_id": "rule",
+      "message": "match",
+      "pattern": "language go\nCall(name=`x`)",
+      "sources": [],
+      "execution": {
+        "mode": "local"
+      },
+      "expected": {
+        "findings": [],
+        "diagnostics": [
+          {
+            "code": "PATTERN_UNSUPPORTED",
+            "class": "unsupported",
+            "severity": "error",
+            "message": "construct is outside gritql-go-v1",
+            "pattern_id": "rule",
+            "path": null,
+            "range": {
+              "start_byte": 0,
+              "end_byte": 26,
+              "start_line": 1,
+              "start_column": 1,
+              "end_line": 2,
+              "end_column": 15
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "parser/unsupported-language-qualifier",
+      "description": "Recognized out-of-contract syntax has the unsupported diagnostic.",
+      "features": [
+        "negative",
+        "unsupported-language-qualifier"
+      ],
+      "pattern_id": "rule",
+      "message": "match",
+      "pattern": "language go\ngo`x`",
+      "sources": [],
+      "execution": {
+        "mode": "local"
+      },
+      "expected": {
+        "findings": [],
+        "diagnostics": [
+          {
+            "code": "PATTERN_UNSUPPORTED",
+            "class": "unsupported",
+            "severity": "error",
+            "message": "construct is outside gritql-go-v1",
+            "pattern_id": "rule",
+            "path": null,
+            "range": {
+              "start_byte": 0,
+              "end_byte": 17,
+              "start_line": 1,
+              "start_column": 1,
+              "end_line": 2,
+              "end_column": 6
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "parser/unsupported-as-capture",
+      "description": "Recognized out-of-contract syntax has the unsupported diagnostic.",
+      "features": [
+        "negative",
+        "unsupported-as"
+      ],
+      "pattern_id": "rule",
+      "message": "match",
+      "pattern": "language go\n`x` as $x",
+      "sources": [],
+      "execution": {
+        "mode": "local"
+      },
+      "expected": {
+        "findings": [],
+        "diagnostics": [
+          {
+            "code": "PATTERN_UNSUPPORTED",
+            "class": "unsupported",
+            "severity": "error",
+            "message": "construct is outside gritql-go-v1",
+            "pattern_id": "rule",
+            "path": null,
+            "range": {
+              "start_byte": 0,
+              "end_byte": 21,
+              "start_line": 1,
+              "start_column": 1,
+              "end_line": 2,
+              "end_column": 10
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "parser/unsupported-functions",
+      "description": "Recognized out-of-contract syntax has the unsupported diagnostic.",
+      "features": [
+        "negative",
+        "unsupported-functions"
+      ],
+      "pattern_id": "rule",
+      "message": "match",
+      "pattern": "language go\n$x = foo()",
+      "sources": [],
+      "execution": {
+        "mode": "local"
+      },
+      "expected": {
+        "findings": [],
+        "diagnostics": [
+          {
+            "code": "PATTERN_UNSUPPORTED",
+            "class": "unsupported",
+            "severity": "error",
+            "message": "construct is outside gritql-go-v1",
+            "pattern_id": "rule",
+            "path": null,
+            "range": {
+              "start_byte": 0,
+              "end_byte": 22,
+              "start_line": 1,
+              "start_column": 1,
+              "end_line": 2,
+              "end_column": 11
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "parser/unsupported-equality",
+      "description": "Recognized out-of-contract syntax has the unsupported diagnostic.",
+      "features": [
+        "negative",
+        "unsupported-equality"
+      ],
+      "pattern_id": "rule",
+      "message": "match",
+      "pattern": "language go\n`x` where { $x == `x` }",
+      "sources": [],
+      "execution": {
+        "mode": "local"
+      },
+      "expected": {
+        "findings": [],
+        "diagnostics": [
+          {
+            "code": "PATTERN_UNSUPPORTED",
+            "class": "unsupported",
+            "severity": "error",
+            "message": "construct is outside gritql-go-v1",
+            "pattern_id": "rule",
+            "path": null,
+            "range": {
+              "start_byte": 0,
+              "end_byte": 35,
+              "start_line": 1,
+              "start_column": 1,
+              "end_line": 2,
+              "end_column": 24
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "parser/unsupported-unknown-token",
+      "description": "Recognized out-of-contract syntax has the unsupported diagnostic.",
+      "features": [
+        "negative",
+        "unsupported-token"
+      ],
+      "pattern_id": "rule",
+      "message": "match",
+      "pattern": "language go\n(`x`)",
+      "sources": [],
+      "execution": {
+        "mode": "local"
+      },
+      "expected": {
+        "findings": [],
+        "diagnostics": [
+          {
+            "code": "PATTERN_UNSUPPORTED",
+            "class": "unsupported",
+            "severity": "error",
+            "message": "construct is outside gritql-go-v1",
+            "pattern_id": "rule",
+            "path": null,
+            "range": {
+              "start_byte": 0,
+              "end_byte": 17,
+              "start_line": 1,
+              "start_column": 1,
+              "end_line": 2,
+              "end_column": 6
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "parser/comment-separator-valid",
+      "description": "A line comment and line ending satisfy a required separator.",
+      "features": [
+        "positive",
+        "comments",
+        "separators"
+      ],
+      "pattern_id": "rule",
+      "message": "match",
+      "pattern": "language go\ncontains // separator\r\n`x`",
+      "sources": [],
+      "execution": {
+        "mode": "local"
+      },
+      "expected": {
+        "findings": [],
+        "diagnostics": []
+      }
+    },
+    {
+      "name": "parser/regex-escapes",
+      "description": "Every recognized regex escape family is accepted.",
+      "features": [
+        "positive",
+        "escapes"
+      ],
+      "pattern_id": "rule",
+      "message": "match",
+      "pattern": "language go\n`f($x)` where { $x <: r\"\\n\\r\\t\\x41\\u0042\\\\\\\"\" }",
+      "sources": [],
+      "execution": {
+        "mode": "local"
+      },
+      "expected": {
+        "findings": [],
+        "diagnostics": []
+      }
+    }
+  ]
+}

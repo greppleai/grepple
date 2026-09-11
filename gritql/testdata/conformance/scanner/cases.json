@@ -1,0 +1,418 @@
+{
+  "schema_version": 1,
+  "suite": "scanner",
+  "provenance": {
+    "kind": "grepple-original",
+    "note": "Grepple-original fixture derived solely from docs/gritql-compatibility.md; no upstream source text was copied."
+  },
+  "cases": [
+    {
+      "name": "scanner/utf8-range",
+      "description": "Offsets are UTF-8 bytes while columns count Unicode scalars.",
+      "features": [
+        "positive",
+        "utf8-ranges"
+      ],
+      "pattern_id": "rule",
+      "message": "match",
+      "pattern": "language go\n`café`",
+      "sources": [
+        {
+          "path": "utf8.go",
+          "text": "package p\nvar café = \"茶\"\n"
+        }
+      ],
+      "execution": {
+        "mode": "local"
+      },
+      "expected": {
+        "findings": [
+          {
+            "path": "utf8.go",
+            "start_byte": 14,
+            "end_byte": 19,
+            "start_line": 2,
+            "start_column": 5,
+            "end_line": 2,
+            "end_column": 9,
+            "pattern_id": "rule",
+            "message": "match",
+            "bindings": {}
+          }
+        ],
+        "diagnostics": []
+      }
+    },
+    {
+      "name": "scanner/comments-are-trivia",
+      "description": "Comments are omitted as trivia and do not expand ranges.",
+      "features": [
+        "positive",
+        "comments"
+      ],
+      "pattern_id": "rule",
+      "message": "match",
+      "pattern": "language go\n`x`",
+      "sources": [
+        {
+          "path": "comments.go",
+          "text": "package p\n// 茶 comment\nvar x = 1 // tail\n"
+        }
+      ],
+      "execution": {
+        "mode": "local"
+      },
+      "expected": {
+        "findings": [
+          {
+            "path": "comments.go",
+            "start_byte": 29,
+            "end_byte": 30,
+            "start_line": 3,
+            "start_column": 5,
+            "end_line": 3,
+            "end_column": 6,
+            "pattern_id": "rule",
+            "message": "match",
+            "bindings": {}
+          }
+        ],
+        "diagnostics": []
+      }
+    },
+    {
+      "name": "scanner/invalid-utf8",
+      "description": "Invalid source bytes reject the complete file.",
+      "features": [
+        "negative"
+      ],
+      "pattern_id": "rule",
+      "message": "match",
+      "pattern": "language go\n`x`",
+      "sources": [
+        {
+          "path": "bad.go",
+          "bytes_base64": "cGFja2FnZSBwCv8="
+        }
+      ],
+      "execution": {
+        "mode": "local"
+      },
+      "expected": {
+        "findings": [],
+        "diagnostics": [
+          {
+            "code": "SOURCE_INVALID_UTF8",
+            "class": "source",
+            "severity": "error",
+            "message": "source is not valid UTF-8",
+            "pattern_id": "rule",
+            "path": "bad.go",
+            "range": null
+          }
+        ]
+      }
+    },
+    {
+      "name": "scanner/source-parse-error",
+      "description": "Only the earliest parser error is emitted and no partial findings survive.",
+      "features": [
+        "negative"
+      ],
+      "pattern_id": "rule",
+      "message": "match",
+      "pattern": "language go\n`x`",
+      "sources": [
+        {
+          "path": "bad.go",
+          "text": "package p\nfunc {"
+        }
+      ],
+      "execution": {
+        "mode": "local"
+      },
+      "expected": {
+        "findings": [],
+        "diagnostics": [
+          {
+            "code": "SOURCE_PARSE",
+            "class": "source",
+            "severity": "error",
+            "message": "expected function name",
+            "pattern_id": "rule",
+            "path": "bad.go",
+            "range": {
+              "start_byte": 15,
+              "end_byte": 16,
+              "start_line": 2,
+              "start_column": 6,
+              "end_line": 2,
+              "end_column": 7
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "scanner/limit-source-bytes",
+      "description": "A file-scoped resource failure discards that file.",
+      "features": [
+        "negative",
+        "limit-source-bytes"
+      ],
+      "pattern_id": "rule",
+      "message": "match",
+      "pattern": "language go\n`x`",
+      "sources": [
+        {
+          "path": "main.go",
+          "text": "package p\nvar x=1\n"
+        }
+      ],
+      "execution": {
+        "mode": "local",
+        "limits": {
+          "source_bytes": 4
+        }
+      },
+      "expected": {
+        "findings": [],
+        "diagnostics": [
+          {
+            "code": "LIMIT_SOURCE_BYTES",
+            "class": "resource",
+            "severity": "error",
+            "message": "source exceeds effective byte limit",
+            "pattern_id": "rule",
+            "path": "main.go",
+            "range": null
+          }
+        ]
+      }
+    },
+    {
+      "name": "scanner/limit-source-depth",
+      "description": "A file-scoped resource failure discards that file.",
+      "features": [
+        "negative",
+        "limit-parse-depth"
+      ],
+      "pattern_id": "rule",
+      "message": "match",
+      "pattern": "language go\n`x`",
+      "sources": [
+        {
+          "path": "main.go",
+          "text": "package p\nvar x=1\n"
+        }
+      ],
+      "execution": {
+        "mode": "local",
+        "limits": {
+          "parse_depth": 2
+        }
+      },
+      "expected": {
+        "findings": [],
+        "diagnostics": [
+          {
+            "code": "LIMIT_PARSE_DEPTH",
+            "class": "resource",
+            "severity": "error",
+            "message": "source tree exceeds effective depth limit",
+            "pattern_id": "rule",
+            "path": "main.go",
+            "range": null
+          }
+        ]
+      }
+    },
+    {
+      "name": "scanner/limit-candidates",
+      "description": "A file-scoped resource failure discards that file.",
+      "features": [
+        "negative",
+        "limit-candidates"
+      ],
+      "pattern_id": "rule",
+      "message": "match",
+      "pattern": "language go\n`x`",
+      "sources": [
+        {
+          "path": "main.go",
+          "text": "package p\nvar x=1\n"
+        }
+      ],
+      "execution": {
+        "mode": "local",
+        "limits": {
+          "candidates": 1
+        }
+      },
+      "expected": {
+        "findings": [],
+        "diagnostics": [
+          {
+            "code": "LIMIT_CANDIDATES",
+            "class": "resource",
+            "severity": "error",
+            "message": "traversal candidate limit exceeded",
+            "pattern_id": "rule",
+            "path": "main.go",
+            "range": null
+          }
+        ]
+      }
+    },
+    {
+      "name": "scanner/limit-file-time",
+      "description": "A file-scoped resource failure discards that file.",
+      "features": [
+        "negative",
+        "limit-file-time"
+      ],
+      "pattern_id": "rule",
+      "message": "match",
+      "pattern": "language go\n`x`",
+      "sources": [
+        {
+          "path": "main.go",
+          "text": "package p\nvar x=1\n"
+        }
+      ],
+      "execution": {
+        "mode": "local",
+        "limits": {
+          "file_time_ms": 0
+        }
+      },
+      "expected": {
+        "findings": [],
+        "diagnostics": [
+          {
+            "code": "LIMIT_TIME_FILE",
+            "class": "resource",
+            "severity": "error",
+            "message": "per-file deadline exceeded",
+            "pattern_id": "rule",
+            "path": "main.go",
+            "range": null
+          }
+        ]
+      }
+    },
+    {
+      "name": "scanner/limit-memory",
+      "description": "A file-scoped resource failure discards that file.",
+      "features": [
+        "negative",
+        "limit-memory"
+      ],
+      "pattern_id": "rule",
+      "message": "match",
+      "pattern": "language go\n`x`",
+      "sources": [
+        {
+          "path": "main.go",
+          "text": "package p\nvar x=1\n"
+        }
+      ],
+      "execution": {
+        "mode": "local",
+        "limits": {
+          "memory_bytes": 1
+        }
+      },
+      "expected": {
+        "findings": [],
+        "diagnostics": [
+          {
+            "code": "LIMIT_MEMORY",
+            "class": "resource",
+            "severity": "error",
+            "message": "accounted memory limit exceeded",
+            "pattern_id": "rule",
+            "path": "main.go",
+            "range": null
+          }
+        ]
+      }
+    },
+    {
+      "name": "scanner/crlf-interior-trivia",
+      "description": "CRLF and interior comments remain in source spans while edge trivia is excluded.",
+      "features": [
+        "positive",
+        "comments",
+        "crlf",
+        "interior-trivia"
+      ],
+      "pattern_id": "rule",
+      "message": "match",
+      "pattern": "language go\n`pair(a,b)`",
+      "sources": [
+        {
+          "path": "main.go",
+          "text": "package p\r\nfunc f(){ pair(a, /* 茶 */ b) }\r\n"
+        }
+      ],
+      "execution": {
+        "mode": "local"
+      },
+      "expected": {
+        "findings": [
+          {
+            "path": "main.go",
+            "start_byte": 21,
+            "end_byte": 41,
+            "start_line": 2,
+            "start_column": 11,
+            "end_line": 2,
+            "end_column": 29,
+            "pattern_id": "rule",
+            "message": "match",
+            "bindings": {}
+          }
+        ],
+        "diagnostics": []
+      }
+    },
+    {
+      "name": "scanner/limit-ast-steps",
+      "description": "The AST/match step budget is distinct from the traversal candidate cap.",
+      "features": [
+        "negative",
+        "limit-ast-steps"
+      ],
+      "pattern_id": "rule",
+      "message": "match",
+      "pattern": "language go\n`x`",
+      "sources": [
+        {
+          "path": "main.go",
+          "text": "package p\nvar x=1\n"
+        }
+      ],
+      "execution": {
+        "mode": "local",
+        "limits": {
+          "ast_steps": 1
+        }
+      },
+      "expected": {
+        "findings": [],
+        "diagnostics": [
+          {
+            "code": "LIMIT_AST_STEPS",
+            "class": "resource",
+            "severity": "error",
+            "message": "AST/match step budget exceeded",
+            "pattern_id": "rule",
+            "path": "main.go",
+            "range": null
+          }
+        ]
+      }
+    }
+  ]
+}

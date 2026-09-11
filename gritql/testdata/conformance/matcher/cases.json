@@ -1,0 +1,811 @@
+{
+  "schema_version": 1,
+  "suite": "matcher",
+  "provenance": {
+    "kind": "grepple-original",
+    "note": "Grepple-original fixture derived solely from docs/gritql-compatibility.md; no upstream source text was copied."
+  },
+  "cases": [
+    {
+      "name": "matcher/repeated-binding-equal",
+      "description": "Repeated names require structural equality and retain the first binding.",
+      "features": [
+        "positive",
+        "repeated-bindings"
+      ],
+      "pattern_id": "rule",
+      "message": "match",
+      "pattern": "language go\n`pair($x,$x)`",
+      "sources": [
+        {
+          "path": "main.go",
+          "text": "package p\nfunc f(){ pair(x,x) }\n"
+        }
+      ],
+      "execution": {
+        "mode": "local"
+      },
+      "expected": {
+        "findings": [
+          {
+            "path": "main.go",
+            "start_byte": 20,
+            "end_byte": 29,
+            "start_line": 2,
+            "start_column": 11,
+            "end_line": 2,
+            "end_column": 20,
+            "pattern_id": "rule",
+            "message": "match",
+            "bindings": {
+              "x": {
+                "kind": "node",
+                "range": {
+                  "start_byte": 25,
+                  "end_byte": 26,
+                  "start_line": 2,
+                  "start_column": 16,
+                  "end_line": 2,
+                  "end_column": 17
+                },
+                "structural": {
+                  "node_kind": "identifier",
+                  "children": [
+                    {
+                      "token_kind": "IDENT",
+                      "lexeme": "x"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        ],
+        "diagnostics": []
+      }
+    },
+    {
+      "name": "matcher/repeated-binding-conflict",
+      "description": "A conflicting repeated binding rejects the candidate.",
+      "features": [
+        "negative",
+        "repeated-bindings"
+      ],
+      "pattern_id": "rule",
+      "message": "match",
+      "pattern": "language go\n`pair($x,$x)`",
+      "sources": [
+        {
+          "path": "main.go",
+          "text": "package p\nfunc f(){ pair(x,y) }\n"
+        }
+      ],
+      "execution": {
+        "mode": "local"
+      },
+      "expected": {
+        "findings": [],
+        "diagnostics": []
+      }
+    },
+    {
+      "name": "matcher/branch-rollback",
+      "description": "A binding written by a failed and member does not leak into the succeeding or branch.",
+      "features": [
+        "positive",
+        "branch-rollback"
+      ],
+      "pattern_id": "rule",
+      "message": "match",
+      "pattern": "language go\nor { and { `pair($leak,$_)`, `missing` }, `pair($x,$_)` }",
+      "sources": [
+        {
+          "path": "main.go",
+          "text": "package p\nfunc f(){ pair(x,y) }\n"
+        }
+      ],
+      "execution": {
+        "mode": "local"
+      },
+      "expected": {
+        "findings": [
+          {
+            "path": "main.go",
+            "start_byte": 20,
+            "end_byte": 29,
+            "start_line": 2,
+            "start_column": 11,
+            "end_line": 2,
+            "end_column": 20,
+            "pattern_id": "rule",
+            "message": "match",
+            "bindings": {
+              "x": {
+                "kind": "node",
+                "range": {
+                  "start_byte": 25,
+                  "end_byte": 26,
+                  "start_line": 2,
+                  "start_column": 16,
+                  "end_line": 2,
+                  "end_column": 17
+                },
+                "structural": {
+                  "node_kind": "identifier",
+                  "children": [
+                    {
+                      "token_kind": "IDENT",
+                      "lexeme": "x"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        ],
+        "diagnostics": []
+      }
+    },
+    {
+      "name": "matcher/branch-isolation",
+      "description": "Each or branch starts from the same incoming binding map and may bind the same name differently.",
+      "features": [
+        "positive",
+        "branch-isolation"
+      ],
+      "pattern_id": "rule",
+      "message": "match",
+      "pattern": "language go\nor { `pair($x,$_)`, `pair($_,$x)` }",
+      "sources": [
+        {
+          "path": "main.go",
+          "text": "package p\nfunc f(){ pair(a,b) }\n"
+        }
+      ],
+      "execution": {
+        "mode": "local"
+      },
+      "expected": {
+        "findings": [
+          {
+            "path": "main.go",
+            "start_byte": 20,
+            "end_byte": 29,
+            "start_line": 2,
+            "start_column": 11,
+            "end_line": 2,
+            "end_column": 20,
+            "pattern_id": "rule",
+            "message": "match",
+            "bindings": {
+              "x": {
+                "kind": "node",
+                "range": {
+                  "start_byte": 25,
+                  "end_byte": 26,
+                  "start_line": 2,
+                  "start_column": 16,
+                  "end_line": 2,
+                  "end_column": 17
+                },
+                "structural": {
+                  "node_kind": "identifier",
+                  "children": [
+                    {
+                      "token_kind": "IDENT",
+                      "lexeme": "a"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "path": "main.go",
+            "start_byte": 20,
+            "end_byte": 29,
+            "start_line": 2,
+            "start_column": 11,
+            "end_line": 2,
+            "end_column": 20,
+            "pattern_id": "rule",
+            "message": "match",
+            "bindings": {
+              "x": {
+                "kind": "node",
+                "range": {
+                  "start_byte": 27,
+                  "end_byte": 28,
+                  "start_line": 2,
+                  "start_column": 18,
+                  "end_line": 2,
+                  "end_column": 19
+                },
+                "structural": {
+                  "node_kind": "identifier",
+                  "children": [
+                    {
+                      "token_kind": "IDENT",
+                      "lexeme": "b"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        ],
+        "diagnostics": []
+      }
+    },
+    {
+      "name": "matcher/nested-contains-within",
+      "description": "Nested contains and within locate one call; contractual deduplication removes reflexive duplicate records.",
+      "features": [
+        "positive",
+        "nested-contains-within"
+      ],
+      "pattern_id": "rule",
+      "message": "match",
+      "pattern": "language go\ncontains `$call()` where { $call <: within `target()` }",
+      "sources": [
+        {
+          "path": "main.go",
+          "text": "package p\nfunc outer(){ if ok { target() } }\n"
+        }
+      ],
+      "execution": {
+        "mode": "local"
+      },
+      "expected": {
+        "findings": [
+          {
+            "path": "main.go",
+            "start_byte": 32,
+            "end_byte": 40,
+            "start_line": 2,
+            "start_column": 23,
+            "end_line": 2,
+            "end_column": 31,
+            "pattern_id": "rule",
+            "message": "match",
+            "bindings": {
+              "call": {
+                "kind": "node",
+                "range": {
+                  "start_byte": 32,
+                  "end_byte": 38,
+                  "start_line": 2,
+                  "start_column": 23,
+                  "end_line": 2,
+                  "end_column": 29
+                },
+                "structural": {
+                  "node_kind": "identifier",
+                  "children": [
+                    {
+                      "token_kind": "IDENT",
+                      "lexeme": "target"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        ],
+        "diagnostics": []
+      }
+    },
+    {
+      "name": "matcher/list-binding-greedy",
+      "description": "Repeated-child list binding is greedy and ordered.",
+      "features": [
+        "positive"
+      ],
+      "pattern_id": "rule",
+      "message": "match",
+      "pattern": "language go\n`many($args)`",
+      "sources": [
+        {
+          "path": "main.go",
+          "text": "package p\nfunc f(){ many(a,b,c) }\n"
+        }
+      ],
+      "execution": {
+        "mode": "local"
+      },
+      "expected": {
+        "findings": [
+          {
+            "path": "main.go",
+            "start_byte": 20,
+            "end_byte": 31,
+            "start_line": 2,
+            "start_column": 11,
+            "end_line": 2,
+            "end_column": 22,
+            "pattern_id": "rule",
+            "message": "match",
+            "bindings": {
+              "args": {
+                "kind": "list",
+                "ranges": [
+                  {
+                    "start_byte": 25,
+                    "end_byte": 26,
+                    "start_line": 2,
+                    "start_column": 16,
+                    "end_line": 2,
+                    "end_column": 17
+                  },
+                  {
+                    "start_byte": 27,
+                    "end_byte": 28,
+                    "start_line": 2,
+                    "start_column": 18,
+                    "end_line": 2,
+                    "end_column": 19
+                  },
+                  {
+                    "start_byte": 29,
+                    "end_byte": 30,
+                    "start_line": 2,
+                    "start_column": 20,
+                    "end_line": 2,
+                    "end_column": 21
+                  }
+                ],
+                "structural": [
+                  {
+                    "node_kind": "identifier",
+                    "children": [
+                      {
+                        "token_kind": "IDENT",
+                        "lexeme": "a"
+                      }
+                    ]
+                  },
+                  {
+                    "node_kind": "identifier",
+                    "children": [
+                      {
+                        "token_kind": "IDENT",
+                        "lexeme": "b"
+                      }
+                    ]
+                  },
+                  {
+                    "node_kind": "identifier",
+                    "children": [
+                      {
+                        "token_kind": "IDENT",
+                        "lexeme": "c"
+                      }
+                    ]
+                  }
+                ],
+                "range": {
+                  "start_byte": 25,
+                  "end_byte": 30,
+                  "start_line": 2,
+                  "start_column": 16,
+                  "end_line": 2,
+                  "end_column": 21
+                }
+              }
+            }
+          }
+        ],
+        "diagnostics": []
+      }
+    },
+    {
+      "name": "matcher/list-binding-empty-slot",
+      "description": "An empty repeated-child binding retains its zero-width grammar-slot range.",
+      "features": [
+        "positive",
+        "empty-list-slot"
+      ],
+      "pattern_id": "rule",
+      "message": "match",
+      "pattern": "language go\n`many($args)`",
+      "sources": [
+        {
+          "path": "main.go",
+          "text": "package p\nfunc f(){ many() }\n"
+        }
+      ],
+      "execution": {
+        "mode": "local"
+      },
+      "expected": {
+        "findings": [
+          {
+            "path": "main.go",
+            "start_byte": 20,
+            "end_byte": 26,
+            "start_line": 2,
+            "start_column": 11,
+            "end_line": 2,
+            "end_column": 17,
+            "pattern_id": "rule",
+            "message": "match",
+            "bindings": {
+              "args": {
+                "kind": "list",
+                "range": {
+                  "start_byte": 25,
+                  "end_byte": 25,
+                  "start_line": 2,
+                  "start_column": 16,
+                  "end_line": 2,
+                  "end_column": 16
+                },
+                "ranges": [],
+                "structural": []
+              }
+            }
+          }
+        ],
+        "diagnostics": []
+      }
+    },
+    {
+      "name": "matcher/multiple-list-backtracking",
+      "description": "Multiple list slots greedily backtrack until later concrete elements complete the match.",
+      "features": [
+        "positive",
+        "multiple-list-backtracking"
+      ],
+      "pattern_id": "rule",
+      "message": "match",
+      "pattern": "language go\n`many($left, pivot, $right)`",
+      "sources": [
+        {
+          "path": "main.go",
+          "text": "package p\nfunc f(){ many(a,b,pivot,c,d) }\n"
+        }
+      ],
+      "execution": {
+        "mode": "local"
+      },
+      "expected": {
+        "findings": [
+          {
+            "path": "main.go",
+            "start_byte": 20,
+            "end_byte": 39,
+            "start_line": 2,
+            "start_column": 11,
+            "end_line": 2,
+            "end_column": 30,
+            "pattern_id": "rule",
+            "message": "match",
+            "bindings": {
+              "left": {
+                "kind": "list",
+                "range": {
+                  "start_byte": 25,
+                  "end_byte": 28,
+                  "start_line": 2,
+                  "start_column": 16,
+                  "end_line": 2,
+                  "end_column": 19
+                },
+                "ranges": [
+                  {
+                    "start_byte": 25,
+                    "end_byte": 26,
+                    "start_line": 2,
+                    "start_column": 16,
+                    "end_line": 2,
+                    "end_column": 17
+                  },
+                  {
+                    "start_byte": 27,
+                    "end_byte": 28,
+                    "start_line": 2,
+                    "start_column": 18,
+                    "end_line": 2,
+                    "end_column": 19
+                  }
+                ],
+                "structural": [
+                  {
+                    "node_kind": "identifier",
+                    "children": [
+                      {
+                        "token_kind": "IDENT",
+                        "lexeme": "a"
+                      }
+                    ]
+                  },
+                  {
+                    "node_kind": "identifier",
+                    "children": [
+                      {
+                        "token_kind": "IDENT",
+                        "lexeme": "b"
+                      }
+                    ]
+                  }
+                ]
+              },
+              "right": {
+                "kind": "list",
+                "range": {
+                  "start_byte": 35,
+                  "end_byte": 38,
+                  "start_line": 2,
+                  "start_column": 26,
+                  "end_line": 2,
+                  "end_column": 29
+                },
+                "ranges": [
+                  {
+                    "start_byte": 35,
+                    "end_byte": 36,
+                    "start_line": 2,
+                    "start_column": 26,
+                    "end_line": 2,
+                    "end_column": 27
+                  },
+                  {
+                    "start_byte": 37,
+                    "end_byte": 38,
+                    "start_line": 2,
+                    "start_column": 28,
+                    "end_line": 2,
+                    "end_column": 29
+                  }
+                ],
+                "structural": [
+                  {
+                    "node_kind": "identifier",
+                    "children": [
+                      {
+                        "token_kind": "IDENT",
+                        "lexeme": "c"
+                      }
+                    ]
+                  },
+                  {
+                    "node_kind": "identifier",
+                    "children": [
+                      {
+                        "token_kind": "IDENT",
+                        "lexeme": "d"
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ],
+        "diagnostics": []
+      }
+    },
+    {
+      "name": "matcher/and-cartesian-join",
+      "description": "And forms a left-to-right Cartesian join of compatible records.",
+      "features": [
+        "positive",
+        "cartesian"
+      ],
+      "pattern_id": "rule",
+      "message": "match",
+      "pattern": "language go\nand { contains `a`, contains `b` }",
+      "sources": [
+        {
+          "path": "main.go",
+          "text": "package p\nfunc f(){ pair(a,b) }\n"
+        }
+      ],
+      "execution": {
+        "mode": "local"
+      },
+      "expected": {
+        "findings": [
+          {
+            "path": "main.go",
+            "start_byte": 25,
+            "end_byte": 28,
+            "start_line": 2,
+            "start_column": 16,
+            "end_line": 2,
+            "end_column": 19,
+            "pattern_id": "rule",
+            "message": "match",
+            "bindings": {}
+          }
+        ],
+        "diagnostics": []
+      }
+    },
+    {
+      "name": "matcher/maybe-absent",
+      "description": "An absent maybe member contributes the current candidate range and no binding to an and join.",
+      "features": [
+        "positive",
+        "optional",
+        "top-level"
+      ],
+      "pattern_id": "rule",
+      "message": "match",
+      "pattern": "language go\nand { `x`, maybe `absent` }",
+      "sources": [
+        {
+          "path": "main.go",
+          "text": "package p\nvar x=1\n"
+        }
+      ],
+      "execution": {
+        "mode": "local"
+      },
+      "expected": {
+        "findings": [
+          {
+            "path": "main.go",
+            "start_byte": 14,
+            "end_byte": 15,
+            "start_line": 2,
+            "start_column": 5,
+            "end_line": 2,
+            "end_column": 6,
+            "pattern_id": "rule",
+            "message": "match",
+            "bindings": {}
+          }
+        ],
+        "diagnostics": []
+      }
+    },
+    {
+      "name": "matcher/not-top-level",
+      "description": "Top-level not succeeds once for each named traversal candidate; equal root/package spans deduplicate.",
+      "features": [
+        "positive",
+        "top-level-not"
+      ],
+      "pattern_id": "rule",
+      "message": "match",
+      "pattern": "language go\nnot `absent`",
+      "sources": [
+        {
+          "path": "main.go",
+          "text": "package p\n"
+        }
+      ],
+      "execution": {
+        "mode": "local"
+      },
+      "expected": {
+        "findings": [
+          {
+            "path": "main.go",
+            "start_byte": 0,
+            "end_byte": 9,
+            "start_line": 1,
+            "start_column": 1,
+            "end_line": 1,
+            "end_column": 10,
+            "pattern_id": "rule",
+            "message": "match",
+            "bindings": {}
+          },
+          {
+            "path": "main.go",
+            "start_byte": 8,
+            "end_byte": 9,
+            "start_line": 1,
+            "start_column": 9,
+            "end_line": 1,
+            "end_column": 10,
+            "pattern_id": "rule",
+            "message": "match",
+            "bindings": {}
+          }
+        ],
+        "diagnostics": []
+      }
+    },
+    {
+      "name": "matcher/constraint-rollback",
+      "description": "A binding written by a failed constraint alternative does not leak into the succeeding alternative.",
+      "features": [
+        "positive",
+        "constraint-rollback"
+      ],
+      "pattern_id": "rule",
+      "message": "match",
+      "pattern": "language go\n`pair($x,$y)` where { $x <: or { and { `$leak`, `missing` }, `$kept` } }",
+      "sources": [
+        {
+          "path": "main.go",
+          "text": "package p\nfunc f(){ pair(a,b) }\n"
+        }
+      ],
+      "execution": {
+        "mode": "local"
+      },
+      "expected": {
+        "findings": [
+          {
+            "path": "main.go",
+            "start_byte": 20,
+            "end_byte": 29,
+            "start_line": 2,
+            "start_column": 11,
+            "end_line": 2,
+            "end_column": 20,
+            "pattern_id": "rule",
+            "message": "match",
+            "bindings": {
+              "kept": {
+                "kind": "node",
+                "range": {
+                  "start_byte": 25,
+                  "end_byte": 26,
+                  "start_line": 2,
+                  "start_column": 16,
+                  "end_line": 2,
+                  "end_column": 17
+                },
+                "structural": {
+                  "node_kind": "identifier",
+                  "children": [
+                    {
+                      "token_kind": "IDENT",
+                      "lexeme": "a"
+                    }
+                  ]
+                }
+              },
+              "x": {
+                "kind": "node",
+                "range": {
+                  "start_byte": 25,
+                  "end_byte": 26,
+                  "start_line": 2,
+                  "start_column": 16,
+                  "end_line": 2,
+                  "end_column": 17
+                },
+                "structural": {
+                  "node_kind": "identifier",
+                  "children": [
+                    {
+                      "token_kind": "IDENT",
+                      "lexeme": "a"
+                    }
+                  ]
+                }
+              },
+              "y": {
+                "kind": "node",
+                "range": {
+                  "start_byte": 27,
+                  "end_byte": 28,
+                  "start_line": 2,
+                  "start_column": 18,
+                  "end_line": 2,
+                  "end_column": 19
+                },
+                "structural": {
+                  "node_kind": "identifier",
+                  "children": [
+                    {
+                      "token_kind": "IDENT",
+                      "lexeme": "b"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        ],
+        "diagnostics": []
+      }
+    }
+  ]
+}

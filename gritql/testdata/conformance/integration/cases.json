@@ -1,0 +1,409 @@
+{
+  "schema_version": 1,
+  "suite": "integration",
+  "provenance": {
+    "kind": "grepple-original",
+    "note": "Grepple-original fixture derived solely from docs/gritql-compatibility.md; no upstream source text was copied."
+  },
+  "cases": [
+    {
+      "name": "integration/local-distributed-parity",
+      "description": "Local and distributed evaluation serialize identical contractual results.",
+      "features": [
+        "positive",
+        "local-distributed-parity"
+      ],
+      "pattern_id": "rule",
+      "message": "match",
+      "pattern": "language go\n`x`",
+      "sources": [
+        {
+          "path": "a.go",
+          "text": "package p\nvar x=1\n"
+        }
+      ],
+      "execution": {
+        "mode": "both"
+      },
+      "expected": {
+        "findings": [
+          {
+            "path": "a.go",
+            "start_byte": 14,
+            "end_byte": 15,
+            "start_line": 2,
+            "start_column": 5,
+            "end_line": 2,
+            "end_column": 6,
+            "pattern_id": "rule",
+            "message": "match",
+            "bindings": {}
+          }
+        ],
+        "diagnostics": []
+      }
+    },
+    {
+      "name": "integration/text-compatibility",
+      "description": "Text rendering remains compatible while structured ranges stay authoritative.",
+      "features": [
+        "positive",
+        "text-compatibility"
+      ],
+      "pattern_id": "rule",
+      "message": "match",
+      "pattern": "language go\n`x`",
+      "sources": [
+        {
+          "path": "a.go",
+          "text": "package p\nvar x=1\n"
+        }
+      ],
+      "execution": {
+        "mode": "local",
+        "text_compatibility": true
+      },
+      "expected": {
+        "findings": [
+          {
+            "path": "a.go",
+            "start_byte": 14,
+            "end_byte": 15,
+            "start_line": 2,
+            "start_column": 5,
+            "end_line": 2,
+            "end_column": 6,
+            "pattern_id": "rule",
+            "message": "match",
+            "bindings": {}
+          }
+        ],
+        "diagnostics": [],
+        "text": "a.go:2:5: match\n"
+      }
+    },
+    {
+      "name": "integration/parse-once-rule-batching",
+      "description": "Several rules over one file share exactly one source parse.",
+      "features": [
+        "positive",
+        "parse-once-batching"
+      ],
+      "pattern_id": "rule",
+      "message": "match",
+      "pattern": "language go\n`x`",
+      "sources": [
+        {
+          "path": "a.go",
+          "text": "package p\nvar x=1\n"
+        }
+      ],
+      "execution": {
+        "mode": "local",
+        "require_parse_once": true
+      },
+      "expected": {
+        "findings": [
+          {
+            "path": "a.go",
+            "start_byte": 14,
+            "end_byte": 15,
+            "start_line": 2,
+            "start_column": 5,
+            "end_line": 2,
+            "end_column": 6,
+            "pattern_id": "rule",
+            "message": "match",
+            "bindings": {}
+          }
+        ],
+        "diagnostics": [],
+        "parse_counts": {
+          "a.go": 1
+        }
+      },
+      "additional_patterns": [
+        {
+          "pattern_id": "absent-rule",
+          "message": "absent",
+          "pattern": "language go\n`absent`"
+        }
+      ]
+    },
+    {
+      "name": "integration/caller-cancellation",
+      "description": "Caller cancellation discards findings from the whole batch.",
+      "features": [
+        "negative",
+        "cancellation"
+      ],
+      "pattern_id": "rule",
+      "message": "match",
+      "pattern": "language go\n`x`",
+      "sources": [
+        {
+          "path": "a.go",
+          "text": "package p\nvar x=1\n"
+        }
+      ],
+      "execution": {
+        "mode": "local",
+        "cancel": "before-file"
+      },
+      "expected": {
+        "findings": [],
+        "diagnostics": [
+          {
+            "code": "EVALUATION_CANCELLED",
+            "class": "cancelled",
+            "severity": "error",
+            "message": "evaluation cancelled",
+            "pattern_id": "rule",
+            "path": null,
+            "range": null
+          }
+        ]
+      }
+    },
+    {
+      "name": "integration/batch-time-limit",
+      "description": "Batch timeout returns no findings from any file.",
+      "features": [
+        "negative",
+        "limit-batch-time"
+      ],
+      "pattern_id": "rule",
+      "message": "match",
+      "pattern": "language go\n`x`",
+      "sources": [
+        {
+          "path": "a.go",
+          "text": "package p\nvar x=1\n"
+        }
+      ],
+      "execution": {
+        "mode": "local",
+        "limits": {
+          "batch_time_ms": 0
+        }
+      },
+      "expected": {
+        "findings": [],
+        "diagnostics": [
+          {
+            "code": "LIMIT_TIME_BATCH",
+            "class": "resource",
+            "severity": "error",
+            "message": "batch deadline exceeded",
+            "pattern_id": "rule",
+            "path": null,
+            "range": null
+          }
+        ]
+      }
+    },
+    {
+      "name": "integration/internal-error-redaction",
+      "description": "Injected invariant failure is stable and does not expose a stack trace or secrets.",
+      "features": [
+        "negative"
+      ],
+      "pattern_id": "rule",
+      "message": "match",
+      "pattern": "language go\n`x`",
+      "sources": [],
+      "execution": {
+        "mode": "local",
+        "fault": "internal-invariant"
+      },
+      "expected": {
+        "findings": [],
+        "diagnostics": [
+          {
+            "code": "INTERNAL_ERROR",
+            "class": "internal",
+            "severity": "error",
+            "message": "internal evaluation error",
+            "pattern_id": "rule",
+            "path": null,
+            "range": null
+          }
+        ]
+      }
+    },
+    {
+      "name": "integration/unsupported-non-go-target",
+      "description": "Behavioral capability non-go-target is unavailable in native detection-only mode.",
+      "features": [
+        "negative",
+        "unsupported-behavior"
+      ],
+      "pattern_id": "rule",
+      "message": "match",
+      "pattern": "language javascript\n`x`",
+      "sources": [],
+      "execution": {
+        "mode": "local"
+      },
+      "expected": {
+        "findings": [],
+        "diagnostics": [
+          {
+            "code": "PATTERN_UNSUPPORTED",
+            "class": "unsupported",
+            "severity": "error",
+            "message": "runtime behavior is outside gritql-go-v1",
+            "pattern_id": "rule",
+            "path": null,
+            "range": {
+              "start_byte": 0,
+              "end_byte": 23,
+              "start_line": 1,
+              "start_column": 1,
+              "end_line": 2,
+              "end_column": 4
+            }
+          }
+        ]
+      }
+    },
+    {
+      "features": [
+        "negative",
+        "cancellation",
+        "multi-file-transaction"
+      ],
+      "pattern_id": "rule",
+      "message": "match",
+      "pattern": "language go\n`x`",
+      "sources": [
+        {
+          "path": "a.go",
+          "text": "package p\nvar x=1\n"
+        },
+        {
+          "path": "b.go",
+          "text": "package p\nvar x=2\n"
+        }
+      ],
+      "name": "integration/cancellation-during-file",
+      "description": "Cancellation at during-file discards findings from the complete multi-file batch.",
+      "execution": {
+        "mode": "local",
+        "cancel": "during-file"
+      },
+      "expected": {
+        "findings": [],
+        "diagnostics": [
+          {
+            "code": "EVALUATION_CANCELLED",
+            "class": "cancelled",
+            "severity": "error",
+            "message": "evaluation cancelled",
+            "pattern_id": "rule",
+            "path": null,
+            "range": null
+          }
+        ]
+      }
+    },
+    {
+      "features": [
+        "negative",
+        "cancellation",
+        "multi-file-transaction"
+      ],
+      "pattern_id": "rule",
+      "message": "match",
+      "pattern": "language go\n`x`",
+      "sources": [
+        {
+          "path": "a.go",
+          "text": "package p\nvar x=1\n"
+        },
+        {
+          "path": "b.go",
+          "text": "package p\nvar x=2\n"
+        }
+      ],
+      "name": "integration/cancellation-before-commit",
+      "description": "Cancellation at before-commit discards findings from the complete multi-file batch.",
+      "execution": {
+        "mode": "local",
+        "cancel": "before-commit"
+      },
+      "expected": {
+        "findings": [],
+        "diagnostics": [
+          {
+            "code": "EVALUATION_CANCELLED",
+            "class": "cancelled",
+            "severity": "error",
+            "message": "evaluation cancelled",
+            "pattern_id": "rule",
+            "path": null,
+            "range": null
+          }
+        ]
+      }
+    },
+    {
+      "name": "integration/multi-file-source-transaction",
+      "description": "A source parse failure rolls back only its file while a previously normalized file remains committed.",
+      "features": [
+        "negative",
+        "multi-file-transaction"
+      ],
+      "pattern_id": "rule",
+      "message": "match",
+      "pattern": "language go\n`x`",
+      "sources": [
+        {
+          "path": "a.go",
+          "text": "package p\nvar x=1\n"
+        },
+        {
+          "path": "z.go",
+          "text": "package p\nfunc {"
+        }
+      ],
+      "execution": {
+        "mode": "local"
+      },
+      "expected": {
+        "findings": [
+          {
+            "path": "a.go",
+            "start_byte": 14,
+            "end_byte": 15,
+            "start_line": 2,
+            "start_column": 5,
+            "end_line": 2,
+            "end_column": 6,
+            "pattern_id": "rule",
+            "message": "match",
+            "bindings": {}
+          }
+        ],
+        "diagnostics": [
+          {
+            "code": "SOURCE_PARSE",
+            "class": "source",
+            "severity": "error",
+            "message": "expected function name",
+            "pattern_id": "rule",
+            "path": "z.go",
+            "range": {
+              "start_byte": 15,
+              "end_byte": 16,
+              "start_line": 2,
+              "start_column": 6,
+              "end_line": 2,
+              "end_column": 7
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,374 @@
+{
+  "schema_version": 1,
+  "suite": "compiler",
+  "provenance": {
+    "kind": "grepple-original",
+    "note": "Grepple-original fixture derived solely from docs/gritql-compatibility.md; no upstream source text was copied."
+  },
+  "cases": [
+    {
+      "name": "compiler/context-expression",
+      "description": "Snippet compiles in the documented fixed context priority.",
+      "features": [
+        "positive"
+      ],
+      "pattern_id": "rule",
+      "message": "match",
+      "pattern": "language go\n`f(x)`",
+      "sources": [],
+      "execution": {
+        "mode": "local"
+      },
+      "expected": {
+        "findings": [],
+        "diagnostics": []
+      }
+    },
+    {
+      "name": "compiler/context-type",
+      "description": "Snippet compiles in the documented fixed context priority.",
+      "features": [
+        "positive"
+      ],
+      "pattern_id": "rule",
+      "message": "match",
+      "pattern": "language go\n`map[string]int`",
+      "sources": [],
+      "execution": {
+        "mode": "local"
+      },
+      "expected": {
+        "findings": [],
+        "diagnostics": []
+      }
+    },
+    {
+      "name": "compiler/context-statement",
+      "description": "Snippet compiles in the documented fixed context priority.",
+      "features": [
+        "positive"
+      ],
+      "pattern_id": "rule",
+      "message": "match",
+      "pattern": "language go\n`return x`",
+      "sources": [],
+      "execution": {
+        "mode": "local"
+      },
+      "expected": {
+        "findings": [],
+        "diagnostics": []
+      }
+    },
+    {
+      "name": "compiler/context-statement-list",
+      "description": "Snippet compiles in the documented fixed context priority.",
+      "features": [
+        "positive"
+      ],
+      "pattern_id": "rule",
+      "message": "match",
+      "pattern": "language go\n`x++; y++`",
+      "sources": [],
+      "execution": {
+        "mode": "local"
+      },
+      "expected": {
+        "findings": [],
+        "diagnostics": []
+      }
+    },
+    {
+      "name": "compiler/context-declaration",
+      "description": "Snippet compiles in the documented fixed context priority.",
+      "features": [
+        "positive"
+      ],
+      "pattern_id": "rule",
+      "message": "match",
+      "pattern": "language go\n`var x int`",
+      "sources": [],
+      "execution": {
+        "mode": "local"
+      },
+      "expected": {
+        "findings": [],
+        "diagnostics": []
+      }
+    },
+    {
+      "name": "compiler/context-declaration-list",
+      "description": "Snippet compiles in the documented fixed context priority.",
+      "features": [
+        "positive"
+      ],
+      "pattern_id": "rule",
+      "message": "match",
+      "pattern": "language go\n`var x int; var y int`",
+      "sources": [],
+      "execution": {
+        "mode": "local"
+      },
+      "expected": {
+        "findings": [],
+        "diagnostics": []
+      }
+    },
+    {
+      "name": "compiler/context-file",
+      "description": "Snippet compiles in the documented fixed context priority.",
+      "features": [
+        "positive"
+      ],
+      "pattern_id": "rule",
+      "message": "match",
+      "pattern": "language go\n`package p\nvar x int`",
+      "sources": [],
+      "execution": {
+        "mode": "local"
+      },
+      "expected": {
+        "findings": [],
+        "diagnostics": []
+      }
+    },
+    {
+      "name": "compiler/top-level-regex",
+      "description": "A regex cannot perform top-level structural search.",
+      "features": [
+        "negative"
+      ],
+      "pattern_id": "rule",
+      "message": "match",
+      "pattern": "language go\nr\"x\"",
+      "sources": [],
+      "execution": {
+        "mode": "local"
+      },
+      "expected": {
+        "findings": [],
+        "diagnostics": [
+          {
+            "code": "PATTERN_INVALID_CONTEXT",
+            "class": "pattern",
+            "severity": "error",
+            "message": "regex is valid only as a binding predicate",
+            "pattern_id": "rule",
+            "path": null,
+            "range": {
+              "start_byte": 0,
+              "end_byte": 16,
+              "start_line": 1,
+              "start_column": 1,
+              "end_line": 2,
+              "end_column": 5
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "compiler/invalid-regex",
+      "description": "Invalid RE2 rejects the pattern.",
+      "features": [
+        "negative"
+      ],
+      "pattern_id": "rule",
+      "message": "match",
+      "pattern": "language go\n`f($x)` where {$x <: r\"[\"}",
+      "sources": [],
+      "execution": {
+        "mode": "local"
+      },
+      "expected": {
+        "findings": [],
+        "diagnostics": [
+          {
+            "code": "PATTERN_INVALID_REGEX",
+            "class": "pattern",
+            "severity": "error",
+            "message": "invalid RE2 expression",
+            "pattern_id": "rule",
+            "path": null,
+            "range": {
+              "start_byte": 0,
+              "end_byte": 38,
+              "start_line": 1,
+              "start_column": 1,
+              "end_line": 2,
+              "end_column": 27
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "compiler/pattern-byte-limit",
+      "description": "Decoded pattern byte limit is enforced.",
+      "features": [
+        "negative",
+        "limit-pattern-bytes"
+      ],
+      "pattern_id": "rule",
+      "message": "match",
+      "pattern": "language go\n`abcdef`",
+      "sources": [],
+      "execution": {
+        "mode": "local",
+        "limits": {
+          "pattern_bytes": 8
+        }
+      },
+      "expected": {
+        "findings": [],
+        "diagnostics": [
+          {
+            "code": "LIMIT_PATTERN_BYTES",
+            "class": "resource",
+            "severity": "error",
+            "message": "decoded pattern exceeds effective byte limit",
+            "pattern_id": "rule",
+            "path": null,
+            "range": {
+              "start_byte": 0,
+              "end_byte": 20,
+              "start_line": 1,
+              "start_column": 1,
+              "end_line": 2,
+              "end_column": 9
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "compiler/regex-byte-limit",
+      "description": "Decoded regex byte limit is enforced.",
+      "features": [
+        "negative",
+        "limit-regex-bytes"
+      ],
+      "pattern_id": "rule",
+      "message": "match",
+      "pattern": "language go\n`f($x)` where {$x <: r\"abcdef\"}",
+      "sources": [],
+      "execution": {
+        "mode": "local",
+        "limits": {
+          "regex_bytes": 4
+        }
+      },
+      "expected": {
+        "findings": [],
+        "diagnostics": [
+          {
+            "code": "PATTERN_INVALID_REGEX",
+            "class": "pattern",
+            "severity": "error",
+            "message": "decoded regex exceeds effective byte limit",
+            "pattern_id": "rule",
+            "path": null,
+            "range": {
+              "start_byte": 0,
+              "end_byte": 43,
+              "start_line": 1,
+              "start_column": 1,
+              "end_line": 2,
+              "end_column": 32
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "compiler/regex-program-limit",
+      "description": "Compiled RE2 instruction limit is enforced.",
+      "features": [
+        "negative",
+        "limit-regex-instructions"
+      ],
+      "pattern_id": "rule",
+      "message": "match",
+      "pattern": "language go\n`f($x)` where {$x <: r\"(a|b|c|d)\"}",
+      "sources": [],
+      "execution": {
+        "mode": "local",
+        "limits": {
+          "regex_instructions": 2
+        }
+      },
+      "expected": {
+        "findings": [],
+        "diagnostics": [
+          {
+            "code": "PATTERN_INVALID_REGEX",
+            "class": "pattern",
+            "severity": "error",
+            "message": "compiled regex exceeds effective instruction limit",
+            "pattern_id": "rule",
+            "path": null,
+            "range": {
+              "start_byte": 0,
+              "end_byte": 46,
+              "start_line": 1,
+              "start_column": 1,
+              "end_line": 2,
+              "end_column": 35
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "compiler/tree-depth-limit",
+      "description": "Pattern tree depth limit is enforced.",
+      "features": [
+        "negative",
+        "limit-parse-depth"
+      ],
+      "pattern_id": "rule",
+      "message": "match",
+      "pattern": "language go\ncontains contains contains `x`",
+      "sources": [],
+      "execution": {
+        "mode": "local",
+        "limits": {
+          "parse_depth": 2
+        }
+      },
+      "expected": {
+        "findings": [],
+        "diagnostics": [
+          {
+            "code": "LIMIT_PARSE_DEPTH",
+            "class": "resource",
+            "severity": "error",
+            "message": "pattern tree exceeds effective depth limit",
+            "pattern_id": "rule",
+            "path": null,
+            "range": null
+          }
+        ]
+      }
+    },
+    {
+      "name": "compiler/context-priority-expression-over-statement",
+      "description": "A bare identifier uses the first successful expression context rather than a lower-priority expression statement context.",
+      "features": [
+        "positive",
+        "context-priority"
+      ],
+      "pattern_id": "rule",
+      "message": "match",
+      "pattern": "language go\n`x`",
+      "sources": [],
+      "execution": {
+        "mode": "local"
+      },
+      "expected": {
+        "findings": [],
+        "diagnostics": []
+      }
+    }
+  ]
+}
