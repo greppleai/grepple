@@ -132,12 +132,13 @@ Use case: an agent can orient itself in a package or focused call chain within a
 #### C3. Graph queries
 
 - [x] Add deterministic `graph callers`, `callees`, `dependencies`, `dependents`, and bidirectional `impact` traversal with bounded depth, cycle protection, candidate-edge preservation, complete JSON, and bounded compact output. Exact symbol/location selectors choose one root; package/module/root-path selectors choose a scope.
-- [ ] Add filters for package/module, language, edge kind, exportedness, direction, and confidence. Queries and `--related` must expose omitted-edge counts whenever bounds make the result incomplete.
+- [x] Add repeatable canonical language and confidence filters before root selection and traversal; preserve normalized filter metadata in JSON and compact output.
+- [ ] Add exportedness filtering after declaration adapters expose a reliable cross-language exported/public fact. Add edge-kind filtering when the normalized graph contains more than call edges. Queries and `--related` must expose omitted-edge counts whenever bounds make the result incomplete.
 
 Potential examples:
 
 ```bash
-grepple graph callers --symbol 'Service.Save' --depth 2 --compact .
+grepple graph callers --symbol 'Service.Save' --language go --confidence exact --depth 2 --compact .
 grepple graph callees --at internal/cli/local.go:120 --depth 2 --json .
 grepple graph dependencies --root-path internal/cli --depth 1 --compact .
 grepple graph impact --at internal/cli/local.go:120 --depth 3 --compact
@@ -233,7 +234,7 @@ Reduce repeated parsing and language knowledge across extraction, navigation, te
    - [x] Add Java focused structure/flow with classes, interfaces, records, enums, inheritance, implementations, fields, constructors, methods, conservative cross-file targets, and shared navigation-graph flows.
    - [x] Add Kotlin focused structure/flow with classes, interfaces, objects, data-class constructor properties, delegation-based inheritance, properties, functions, conservative cross-file targets, and shared navigation-graph flows.
    - [ ] Add C# focused structure/flow next. Keep C/C++, Rust, and Shell unsupported until their non-class architecture projections have an explicit useful contract.
-Recommended implementation order from here: graph query filters, count summaries, agent workflow benchmarks, a smaller architecture summary, and evidence-based agent output limits; then C# focused structure/flow, semantic graph diffing, and useful non-class projections for Rust or C/C++. Address grammar-local placeholder-role gaps when conformance exposes a valuable blocked workflow.
+Recommended implementation order from here: count summaries, agent workflow benchmarks, a smaller architecture summary, and evidence-based agent output limits; then exported/public declaration facts and filters, C# focused structure/flow, semantic graph diffing, and useful non-class projections for Rust or C/C++. Address grammar-local placeholder-role gaps when conformance exposes a valuable blocked workflow.
 
 Acceptance criteria:
 
@@ -266,7 +267,8 @@ Before expanding scope, require:
 - [x] Expose normalized JSON and bounded compact graph output for agent and tool consumption.
 - [x] Report every bounded caller/callee omission with counts and complete-graph guidance in human and JSON output.
 - [x] Add focused callers/callees/dependencies/dependents/impact graph queries with exact symbol/location and package/module/root-path selectors, bounded depth, cycle protection, and candidate preservation.
-- [ ] Add language, edge-kind, exportedness, direction, and confidence filters.
+- [x] Add repeatable language and confidence filters with normalized query metadata.
+- [ ] Add exportedness filtering once declarations expose a reliable cross-language fact; defer edge-kind filtering until the graph contains more than call edges.
 - [ ] Add repository-wide count summaries independent of output paging.
 - [x] Stream validated focused extraction output to stdout when `--output` is omitted.
 - [ ] Add a concise package/workspace summary smaller than the generated overview.

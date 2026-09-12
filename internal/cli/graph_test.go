@@ -200,6 +200,30 @@ func TestGraphImpactQueryTraversesBothDirections(t *testing.T) {
 	}
 }
 
+func TestGraphQueryFiltersLanguageAndConfidenceBeforeRootSelection(t *testing.T) {
+	dir := chdirTemp(t)
+	writeGraphSource(t, dir, "flow.go", "package sample\nfunc Root(){ Middle() }\nfunc Middle() {}\n")
+	writeGraphSource(t, dir, "flow.py", "def Root():\n    pass\n")
+	outputText := captureStdout(t, func() {
+		if err := Run([]string{"graph", "callees", "--symbol", "Root", "--language", "go", "--confidence", "unique-terminal", "--json"}); err != nil {
+			t.Fatal(err)
+		}
+	})
+	var output navigationGraphOutput
+	if err := json.Unmarshal([]byte(outputText), &output); err != nil {
+		t.Fatal(err)
+	}
+	if output.Query == nil || !reflect.DeepEqual(output.Query.Languages, []string{"go"}) || !reflect.DeepEqual(output.Query.Confidences, []string{"unique-terminal"}) {
+		t.Fatalf("query filters=%#v", output.Query)
+	}
+	if names := graphOutputDeclarationNames(output); !reflect.DeepEqual(names, []string{"Root", "Middle"}) {
+		t.Fatalf("declarations=%v", names)
+	}
+	if len(output.Calls) != 1 {
+		t.Fatalf("calls=%#v", output.Calls)
+	}
+}
+
 func TestGraphQueryRejectsMissingAndAmbiguousSelectors(t *testing.T) {
 	dir := chdirTemp(t)
 	writeGraphSource(t, dir, "a.go", "package sample\nfunc helper() {}\n")
@@ -210,6 +234,8 @@ func TestGraphQueryRejectsMissingAndAmbiguousSelectors(t *testing.T) {
 		{"graph", "callers", "--symbol", "helper", "--at", "a.go:2", "--compact"},
 		{"graph", "dependencies", "--package", "sample", "--module", "sample", "--compact"},
 		{"graph", "dependents", "--root-path", "missing", "--compact"},
+		{"graph", "callers", "--symbol", "helper", "--language", "text", "--compact"},
+		{"graph", "callers", "--symbol", "helper", "--confidence", "likely", "--compact"},
 		{"graph", "callers", "--symbol", "missing", "--compact"},
 		{"graph", "callers", "--symbol", "helper", "--depth", "11", "--compact"},
 	} {

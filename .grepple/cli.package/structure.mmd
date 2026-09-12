@@ -261,8 +261,10 @@ classDiagram
         +Description(): string
         +At: string
         +Compact: bool
+        +Confidences: []string
         +Depth: int
         +JSON: bool
+        +Languages: []string
         +MaxFiles: int
         +MaxOutputBytes: int
         +Module: string
@@ -275,8 +277,10 @@ classDiagram
     %% grepple:file graphQueryArgs internal/cli/graph_query.go
     %% grepple:struct-tag graphQueryArgs At "arg:\"--at\" placeholder:\"PATH:LINE\" help:\"select the declaration containing a source location\""
     %% grepple:struct-tag graphQueryArgs Compact "arg:\"--compact\" help:\"emit a bounded agent-facing queried subgraph\""
+    %% grepple:struct-tag graphQueryArgs Confidences "arg:\"--confidence,separate\" placeholder:\"LEVEL\" help:\"retain one edge confidence; repeatable\""
     %% grepple:struct-tag graphQueryArgs Depth "arg:\"--depth\" default:\"1\" placeholder:\"N\" help:\"maximum traversal depth (1-10)\""
     %% grepple:struct-tag graphQueryArgs JSON "arg:\"--json\" help:\"emit the complete queried subgraph as JSON\""
+    %% grepple:struct-tag graphQueryArgs Languages "arg:\"--language,separate\" placeholder:\"ID\" help:\"retain one navigation language; repeatable\""
     %% grepple:struct-tag graphQueryArgs MaxFiles "arg:\"--max-files\" placeholder:\"N\" help:\"parse at most N discovered files (0 = unlimited)\""
     %% grepple:struct-tag graphQueryArgs MaxOutputBytes "arg:\"--max-output-bytes\" placeholder:\"N\" help:\"cap compact output (default 40960; 0 = unlimited; JSON is uncapped)\""
     %% grepple:struct-tag graphQueryArgs Module "arg:\"--module\" placeholder:\"ID\" help:\"select every declaration in an exact module ID\""
@@ -284,7 +288,7 @@ classDiagram
     %% grepple:struct-tag graphQueryArgs Paths "arg:\"positional\" placeholder:\"PATH\" help:\"file, directory, or glob to include; defaults to the working directory\""
     %% grepple:struct-tag graphQueryArgs RootPath "arg:\"--root-path\" placeholder:\"PATH\" help:\"select declarations at or below a repository-relative path\""
     %% grepple:struct-tag graphQueryArgs Symbol "arg:\"--symbol\" placeholder:\"NAME\" help:\"select one exact declaration name\""
-    note for graphQueryArgs "defined: internal/cli/graph_query.go:19-31; Description@internal/cli/graph_query.go:33-35; At@internal/cli/graph_query.go:23; Compact@internal/cli/graph_query.go:21; Depth@internal/cli/graph_query.go:27; JSON@internal/cli/graph_query.go:20; MaxFiles@internal/cli/graph_query.go:28; MaxOutputBytes@internal/cli/graph_query.go:29; Module@internal/cli/graph_query.go:25; Package@internal/cli/graph_query.go:24; Paths@internal/cli/graph_query.go:30; RootPath@internal/cli/graph_query.go:26; Symbol@internal/cli/graph_query.go:22"
+    note for graphQueryArgs "defined: internal/cli/graph_query.go:19-33; Description@internal/cli/graph_query.go:35-37; At@internal/cli/graph_query.go:23; Compact@internal/cli/graph_query.go:21; Confidences@internal/cli/graph_query.go:28; Depth@internal/cli/graph_query.go:29; JSON@internal/cli/graph_query.go:20; Languages@internal/cli/graph_query.go:27; MaxFiles@internal/cli/graph_query.go:30; MaxOutputBytes@internal/cli/graph_query.go:31; Module@internal/cli/graph_query.go:25; Package@internal/cli/graph_query.go:24; Paths@internal/cli/graph_query.go:32; RootPath@internal/cli/graph_query.go:26; Symbol@internal/cli/graph_query.go:22"
     class gritArgs {
         +Description(): string
         +ExcludeGlobs: []string
@@ -419,16 +423,20 @@ classDiagram
     %% grepple:struct-tag navigationGraphOutput Truncation "json:\"truncation,omitempty\""
     note for navigationGraphOutput "defined: internal/cli/graph.go:29-36; Calls@internal/cli/graph.go:33; Declarations@internal/cli/graph.go:32; Files@internal/cli/graph.go:31; Query@internal/cli/graph.go:34; Schema@internal/cli/graph.go:30; Truncation@internal/cli/graph.go:35"
     class navigationGraphQuery {
+        +Confidences: []string
         +Depth: int
         +Direction: string
+        +Languages: []string
         +RootIDs: []string
     }
     <<struct>> navigationGraphQuery
     %% grepple:file navigationGraphQuery internal/cli/graph.go
+    %% grepple:struct-tag navigationGraphQuery Confidences "json:\"confidences,omitempty\""
     %% grepple:struct-tag navigationGraphQuery Depth "json:\"depth\""
     %% grepple:struct-tag navigationGraphQuery Direction "json:\"direction\""
+    %% grepple:struct-tag navigationGraphQuery Languages "json:\"languages,omitempty\""
     %% grepple:struct-tag navigationGraphQuery RootIDs "json:\"rootIds\""
-    note for navigationGraphQuery "defined: internal/cli/graph.go:38-42; Depth@internal/cli/graph.go:40; Direction@internal/cli/graph.go:39; RootIDs@internal/cli/graph.go:41"
+    note for navigationGraphQuery "defined: internal/cli/graph.go:38-44; Confidences@internal/cli/graph.go:43; Depth@internal/cli/graph.go:40; Direction@internal/cli/graph.go:39; Languages@internal/cli/graph.go:42; RootIDs@internal/cli/graph.go:41"
     class navigationGraphTruncation {
         +Limit: int
         +Reason: string
@@ -439,7 +447,7 @@ classDiagram
     %% grepple:struct-tag navigationGraphTruncation Limit "json:\"limit\""
     %% grepple:struct-tag navigationGraphTruncation Reason "json:\"reason\""
     %% grepple:struct-tag navigationGraphTruncation Skipped "json:\"skipped\""
-    note for navigationGraphTruncation "defined: internal/cli/graph.go:44-48; Limit@internal/cli/graph.go:46; Reason@internal/cli/graph.go:45; Skipped@internal/cli/graph.go:47"
+    note for navigationGraphTruncation "defined: internal/cli/graph.go:46-50; Limit@internal/cli/graph.go:48; Reason@internal/cli/graph.go:47; Skipped@internal/cli/graph.go:49"
     class onlyMatchingRenderer {
         +Render([]api.FileResult): error
         -matcher: *regexp.Regexp

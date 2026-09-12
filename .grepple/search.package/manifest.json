@@ -16,16 +16,16 @@
     "syntacticBuildTagUnion": []
   },
   "summary": {
-    "sourceFiles": 11,
-    "declarations": 16,
-    "exportedTypes": 6,
+    "sourceFiles": 12,
+    "declarations": 17,
+    "exportedTypes": 7,
     "internalTypes": 10,
-    "members": 125,
-    "exportedFunctions": 22,
+    "members": 127,
+    "exportedFunctions": 24,
     "fiberRoutes": 0,
-    "relations": 43
+    "relations": 46
   },
-  "semanticModelDigest": "sha256:599c1b5437fc1e47f2667666facf51a88c1ee37cdf8efda88aeb51674f203c14",
+  "semanticModelDigest": "sha256:84908aef2be56adfc8cfb83adc70410ebf90b2f4bbf6bcd7bf2ce06505eab36b",
   "sourceFiles": [
     {
       "path": "search/at.go"
@@ -38,6 +38,9 @@
     },
     {
       "path": "search/model.go"
+    },
+    {
+      "path": "search/navigation_filter.go"
     },
     {
       "path": "search/navigation_query.go"
@@ -139,6 +142,30 @@
           "line": 59,
           "endLine": 59,
           "result": "bool"
+        }
+      ]
+    },
+    {
+      "name": "NavigationGraphFilter",
+      "kind": "struct",
+      "file": "search/navigation_filter.go",
+      "line": 12,
+      "endLine": 15,
+      "underlyingType": "struct{Languages[]string;Confidences[]string;}",
+      "members": [
+        {
+          "name": "Confidences",
+          "kind": "property",
+          "line": 14,
+          "endLine": 14,
+          "result": "[]string"
+        },
+        {
+          "name": "Languages",
+          "kind": "property",
+          "line": 13,
+          "endLine": 13,
+          "result": "[]string"
         }
       ]
     },
@@ -1333,6 +1360,18 @@
       "result": "tuple\u003c[]FileMatch,error\u003e"
     },
     {
+      "name": "FilterNavigationGraph",
+      "kind": "function",
+      "file": "search/navigation_filter.go",
+      "line": 19,
+      "endLine": 31,
+      "parameters": [
+        "parser.NavigationGraph",
+        "NavigationGraphFilter"
+      ],
+      "result": "tuple\u003cparser.NavigationGraph,error\u003e"
+    },
+    {
       "name": "ListFilePaths",
       "kind": "function",
       "file": "search/search_engine.go",
@@ -1368,6 +1407,17 @@
         "[]string"
       ],
       "result": "*RepoFilter"
+    },
+    {
+      "name": "NormalizeNavigationGraphFilter",
+      "kind": "function",
+      "file": "search/navigation_filter.go",
+      "line": 34,
+      "endLine": 44,
+      "parameters": [
+        "NavigationGraphFilter"
+      ],
+      "result": "tuple\u003cNavigationGraphFilter,error\u003e"
     },
     {
       "name": "PathMatchesGlobs",
@@ -1559,6 +1609,13 @@
       "cardinality": "one"
     },
     {
+      "from": "FilterNavigationGraph",
+      "to": "NavigationGraphFilter",
+      "kind": "dependency",
+      "via": "parameter 2",
+      "cardinality": "one"
+    },
+    {
       "from": "ListFilePaths",
       "to": "Params",
       "kind": "dependency",
@@ -1575,6 +1632,20 @@
     {
       "from": "NewRepoFilter",
       "to": "RepoFilter",
+      "kind": "dependency",
+      "via": "result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "NormalizeNavigationGraphFilter",
+      "to": "NavigationGraphFilter",
+      "kind": "dependency",
+      "via": "parameter 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "NormalizeNavigationGraphFilter",
+      "to": "NavigationGraphFilter",
       "kind": "dependency",
       "via": "result 1",
       "cardinality": "one"

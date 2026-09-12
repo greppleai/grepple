@@ -36,9 +36,11 @@ type navigationGraphOutput struct {
 }
 
 type navigationGraphQuery struct {
-	Direction string   `json:"direction"`
-	Depth     int      `json:"depth"`
-	RootIDs   []string `json:"rootIds"`
+	Direction   string   `json:"direction"`
+	Depth       int      `json:"depth"`
+	RootIDs     []string `json:"rootIds"`
+	Languages   []string `json:"languages,omitempty"`
+	Confidences []string `json:"confidences,omitempty"`
 }
 
 type navigationGraphTruncation struct {
@@ -98,7 +100,7 @@ func renderCompactNavigationGraph(graph navigationGraphOutput, maxBytes int) err
 	if !write(fmt.Sprintf("graph %s files=%d declarations=%d calls=%d", graph.Schema, graph.Files, len(graph.Declarations), len(visibleCalls))) {
 		return nil
 	}
-	if graph.Query != nil && !write(fmt.Sprintf("query %s depth=%d roots=%s", graph.Query.Direction, graph.Query.Depth, shortGraphIDs(graph.Query.RootIDs))) {
+	if graph.Query != nil && !write(compactGraphQueryLine(*graph.Query)) {
 		return nil
 	}
 	if graph.Truncation != nil && !write(fmt.Sprintf("! truncated %s limit=%d skipped=%d", graph.Truncation.Reason, graph.Truncation.Limit, graph.Truncation.Skipped)) {
@@ -108,6 +110,17 @@ func renderCompactNavigationGraph(graph navigationGraphOutput, maxBytes int) err
 	writeCompactNavigationDeclarations(write, graph.Declarations, declarations, callsByCaller)
 	return nil
 }
+func compactGraphQueryLine(query navigationGraphQuery) string {
+	parts := []string{fmt.Sprintf("query %s depth=%d roots=%s", query.Direction, query.Depth, shortGraphIDs(query.RootIDs))}
+	if len(query.Languages) > 0 {
+		parts = append(parts, "languages="+strings.Join(query.Languages, ","))
+	}
+	if len(query.Confidences) > 0 {
+		parts = append(parts, "confidences="+strings.Join(query.Confidences, ","))
+	}
+	return strings.Join(parts, " ")
+}
+
 func indexCompactNavigationGraph(declarationList []parser.NavigationDeclaration, calls []parser.NavigationCall) (map[string]parser.NavigationDeclaration, map[string][]parser.NavigationCall) {
 	declarations := make(map[string]parser.NavigationDeclaration, len(declarationList))
 	callsByCaller := make(map[string][]parser.NavigationCall)

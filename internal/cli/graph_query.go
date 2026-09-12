@@ -24,6 +24,8 @@ type graphQueryArgs struct {
 	Package        string   `arg:"--package" placeholder:"NAME" help:"select every declaration in an exact package name or ID"`
 	Module         string   `arg:"--module" placeholder:"ID" help:"select every declaration in an exact module ID"`
 	RootPath       string   `arg:"--root-path" placeholder:"PATH" help:"select declarations at or below a repository-relative path"`
+	Languages      []string `arg:"--language,separate" placeholder:"ID" help:"retain one navigation language; repeatable"`
+	Confidences    []string `arg:"--confidence,separate" placeholder:"LEVEL" help:"retain one edge confidence; repeatable"`
 	Depth          int      `arg:"--depth" default:"1" placeholder:"N" help:"maximum traversal depth (1-10)"`
 	MaxFiles       int      `arg:"--max-files" placeholder:"N" help:"parse at most N discovered files (0 = unlimited)"`
 	MaxOutputBytes int      `arg:"--max-output-bytes" placeholder:"N" help:"cap compact output (default 40960; 0 = unlimited; JSON is uncapped)"`
@@ -54,6 +56,16 @@ func runGraphQuery(direction search.NavigationQueryDirection, args []string) err
 	if err != nil {
 		return err
 	}
+	filter, err := search.NormalizeNavigationGraphFilter(search.NavigationGraphFilter{Languages: values.Languages, Confidences: values.Confidences})
+	if err != nil {
+		return err
+	}
+	filtered, err := search.FilterNavigationGraph(parser.NavigationGraph{Declarations: output.Declarations, Calls: output.Calls}, filter)
+	if err != nil {
+		return err
+	}
+	output.Declarations = filtered.Declarations
+	output.Calls = filtered.Calls
 	roots, err := selectNavigationQueryRoots(output.Declarations, values)
 	if err != nil {
 		return err
@@ -65,7 +77,10 @@ func runGraphQuery(direction search.NavigationQueryDirection, args []string) err
 	}
 	output.Declarations = queried.Declarations
 	output.Calls = queried.Calls
-	output.Query = &navigationGraphQuery{Direction: string(direction), Depth: values.Depth, RootIDs: rootIDs}
+	output.Query = &navigationGraphQuery{
+		Direction: string(direction), Depth: values.Depth, RootIDs: rootIDs,
+		Languages: filter.Languages, Confidences: filter.Confidences,
+	}
 	if values.Compact {
 		return renderCompactNavigationGraph(output, values.MaxOutputBytes)
 	}

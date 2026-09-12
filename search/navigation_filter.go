@@ -1,0 +1,119 @@
+package search
+
+import (
+	"fmt"
+	"sort"
+
+	"github.com/greppleai/grepple/parser"
+)
+
+// NavigationGraphFilter restricts declarations and calls before graph traversal.
+// Empty fields retain every value. Values are exact canonical IDs.
+type NavigationGraphFilter struct {
+	Languages   []string
+	Confidences []string
+}
+
+// FilterNavigationGraph applies deterministic language and confidence filters
+// while preserving declaration/call order and referential integrity.
+func FilterNavigationGraph(graph parser.NavigationGraph, filter NavigationGraphFilter) (parser.NavigationGraph, error) {
+	languages, err := navigationLanguageFilter(filter.Languages)
+	if err != nil {
+		return parser.NavigationGraph{}, err
+	}
+	confidences, err := navigationConfidenceFilter(filter.Confidences)
+	if err != nil {
+		return parser.NavigationGraph{}, err
+	}
+	declarations, included := filterNavigationDeclarations(graph.Declarations, languages)
+	calls := filterNavigationCalls(graph.Calls, included, languages, confidences)
+	return parser.NavigationGraph{Declarations: declarations, Calls: calls}, nil
+}
+
+// NormalizeNavigationGraphFilter returns sorted, duplicate-free values after validation.
+func NormalizeNavigationGraphFilter(filter NavigationGraphFilter) (NavigationGraphFilter, error) {
+	languages, err := navigationLanguageFilter(filter.Languages)
+	if err != nil {
+		return NavigationGraphFilter{}, err
+	}
+	confidences, err := navigationConfidenceFilter(filter.Confidences)
+	if err != nil {
+		return NavigationGraphFilter{}, err
+	}
+	return NavigationGraphFilter{Languages: sortedFilterKeys(languages), Confidences: sortedFilterKeys(confidences)}, nil
+}
+
+func navigationLanguageFilter(values []string) (map[string]bool, error) {
+	filter := make(map[string]bool, len(values))
+	for _, value := range values {
+		capabilities, ok := parser.CapabilitiesForLanguage(value)
+		if !ok || !capabilities.Navigation {
+			return nil, fmt.Errorf("unsupported navigation language %q", value)
+		}
+		filter[value] = true
+	}
+	return filter, nil
+}
+
+func navigationConfidenceFilter(values []string) (map[string]bool, error) {
+	filter := make(map[string]bool, len(values))
+	for _, value := range values {
+		switch value {
+		case "exact", "import-resolved", "context-resolved", "unique-terminal", "candidate":
+			filter[value] = true
+		default:
+			return nil, fmt.Errorf("unsupported navigation confidence %q", value)
+		}
+	}
+	return filter, nil
+}
+
+func filterNavigationDeclarations(declarations []parser.NavigationDeclaration, languages map[string]bool) ([]parser.NavigationDeclaration, map[string]bool) {
+	filtered := make([]parser.NavigationDeclaration, 0, len(declarations))
+	included := make(map[string]bool, len(declarations))
+	for _, declaration := range declarations {
+		if len(languages) > 0 && !languages[declaration.Language] {
+			continue
+		}
+		filtered = append(filtered, declaration)
+		included[declaration.ID] = true
+	}
+	return filtered, included
+}
+
+func filterNavigationCalls(calls []parser.NavigationCall, declarations, languages, confidences map[string]bool) []parser.NavigationCall {
+	filtered := make([]parser.NavigationCall, 0, len(calls))
+	for _, call := range calls {
+		if !declarations[call.CallerID] || len(languages) > 0 && !languages[call.Language] || len(confidences) > 0 && !confidences[call.Confidence] {
+			continue
+		}
+		if call.TargetID != "" && !declarations[call.TargetID] {
+			continue
+		}
+		call.CandidateTargetIDs = filterNavigationTargetIDs(call.CandidateTargetIDs, declarations)
+		filtered = append(filtered, call)
+	}
+	return filtered
+}
+
+func filterNavigationTargetIDs(ids []string, declarations map[string]bool) []string {
+	if len(ids) == 0 {
+		return nil
+	}
+	filtered := make([]string, 0, len(ids))
+	for _, id := range ids {
+		if declarations[id] {
+			filtered = append(filtered, id)
+		}
+	}
+	return filtered
+}
+
+func sortedFilterKeys(values map[string]bool) []string {
+	keys := make([]string, 0, len(values))
+	for value := range values {
+		keys = append(keys, value)
+	}
+	sort.Strings(keys)
+	return keys
+}

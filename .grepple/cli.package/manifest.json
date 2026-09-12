@@ -20,12 +20,12 @@
     "declarations": 42,
     "exportedTypes": 0,
     "internalTypes": 42,
-    "members": 258,
+    "members": 262,
     "exportedFunctions": 3,
     "fiberRoutes": 0,
     "relations": 25
   },
-  "semanticModelDigest": "sha256:fb83284ee402a05da7bad9c1f8e8f052c0f5a73176bd1bcd43d3470b47a92188",
+  "semanticModelDigest": "sha256:744a6d1eabfbd8d85b091332ad1219d1eb918f15e00346f89c7a26e0e4d1f3a0",
   "sourceFiles": [
     {
       "path": "internal/cli/anchors.go"
@@ -1173,14 +1173,14 @@
       "kind": "struct",
       "file": "internal/cli/graph_query.go",
       "line": 19,
-      "endLine": 31,
-      "underlyingType": "struct{JSON bool`arg:\"--json\" help:\"emit the complete queried subgraph as JSON\"`;Compact bool`arg:\"--compact\" help:\"emit a bounded agent-facing queried subgraph\"`;Symbol string`arg:\"--symbol\" placeholder:\"NAME\" help:\"select one exact declaration name\"`;At string`arg:\"--at\" placeholder:\"PATH:LINE\" help:\"select the declaration containing a source location\"`;Package string`arg:\"--package\" placeholder:\"NAME\" help:\"select every declaration in an exact package name or ID\"`;Module string`arg:\"--module\" placeholder:\"ID\" help:\"select every declaration in an exact module ID\"`;RootPath string`arg:\"--root-path\" placeholder:\"PATH\" help:\"select declarations at or below a repository-relative path\"`;Depth int`arg:\"--depth\" default:\"1\" placeholder:\"N\" help:\"maximum traversal depth (1-10)\"`;MaxFiles int`arg:\"--max-files\" placeholder:\"N\" help:\"parse at most N discovered files (0 = unlimited)\"`;MaxOutputBytes int`arg:\"--max-output-bytes\" placeholder:\"N\" help:\"cap compact output (default 40960; 0 = unlimited; JSON is uncapped)\"`;Paths[]string`arg:\"positional\" placeholder:\"PATH\" help:\"file, directory, or glob to include; defaults to the working directory\"`;}",
+      "endLine": 33,
+      "underlyingType": "struct{JSON bool`arg:\"--json\" help:\"emit the complete queried subgraph as JSON\"`;Compact bool`arg:\"--compact\" help:\"emit a bounded agent-facing queried subgraph\"`;Symbol string`arg:\"--symbol\" placeholder:\"NAME\" help:\"select one exact declaration name\"`;At string`arg:\"--at\" placeholder:\"PATH:LINE\" help:\"select the declaration containing a source location\"`;Package string`arg:\"--package\" placeholder:\"NAME\" help:\"select every declaration in an exact package name or ID\"`;Module string`arg:\"--module\" placeholder:\"ID\" help:\"select every declaration in an exact module ID\"`;RootPath string`arg:\"--root-path\" placeholder:\"PATH\" help:\"select declarations at or below a repository-relative path\"`;Languages[]string`arg:\"--language,separate\" placeholder:\"ID\" help:\"retain one navigation language; repeatable\"`;Confidences[]string`arg:\"--confidence,separate\" placeholder:\"LEVEL\" help:\"retain one edge confidence; repeatable\"`;Depth int`arg:\"--depth\" default:\"1\" placeholder:\"N\" help:\"maximum traversal depth (1-10)\"`;MaxFiles int`arg:\"--max-files\" placeholder:\"N\" help:\"parse at most N discovered files (0 = unlimited)\"`;MaxOutputBytes int`arg:\"--max-output-bytes\" placeholder:\"N\" help:\"cap compact output (default 40960; 0 = unlimited; JSON is uncapped)\"`;Paths[]string`arg:\"positional\" placeholder:\"PATH\" help:\"file, directory, or glob to include; defaults to the working directory\"`;}",
       "members": [
         {
           "name": "Description",
           "kind": "method",
-          "line": 33,
-          "endLine": 35,
+          "line": 35,
+          "endLine": 37,
           "result": "string"
         },
         {
@@ -1204,10 +1204,20 @@
           }
         },
         {
+          "name": "Confidences",
+          "kind": "property",
+          "line": 28,
+          "endLine": 28,
+          "result": "[]string",
+          "structTag": {
+            "value": "arg:\"--confidence,separate\" placeholder:\"LEVEL\" help:\"retain one edge confidence; repeatable\""
+          }
+        },
+        {
           "name": "Depth",
           "kind": "property",
-          "line": 27,
-          "endLine": 27,
+          "line": 29,
+          "endLine": 29,
           "result": "int",
           "structTag": {
             "value": "arg:\"--depth\" default:\"1\" placeholder:\"N\" help:\"maximum traversal depth (1-10)\""
@@ -1224,10 +1234,20 @@
           }
         },
         {
+          "name": "Languages",
+          "kind": "property",
+          "line": 27,
+          "endLine": 27,
+          "result": "[]string",
+          "structTag": {
+            "value": "arg:\"--language,separate\" placeholder:\"ID\" help:\"retain one navigation language; repeatable\""
+          }
+        },
+        {
           "name": "MaxFiles",
           "kind": "property",
-          "line": 28,
-          "endLine": 28,
+          "line": 30,
+          "endLine": 30,
           "result": "int",
           "structTag": {
             "value": "arg:\"--max-files\" placeholder:\"N\" help:\"parse at most N discovered files (0 = unlimited)\""
@@ -1236,8 +1256,8 @@
         {
           "name": "MaxOutputBytes",
           "kind": "property",
-          "line": 29,
-          "endLine": 29,
+          "line": 31,
+          "endLine": 31,
           "result": "int",
           "structTag": {
             "value": "arg:\"--max-output-bytes\" placeholder:\"N\" help:\"cap compact output (default 40960; 0 = unlimited; JSON is uncapped)\""
@@ -1266,8 +1286,8 @@
         {
           "name": "Paths",
           "kind": "property",
-          "line": 30,
-          "endLine": 30,
+          "line": 32,
+          "endLine": 32,
           "result": "[]string",
           "structTag": {
             "value": "arg:\"positional\" placeholder:\"PATH\" help:\"file, directory, or glob to include; defaults to the working directory\""
@@ -1890,9 +1910,19 @@
       "kind": "struct",
       "file": "internal/cli/graph.go",
       "line": 38,
-      "endLine": 42,
-      "underlyingType": "struct{Direction string`json:\"direction\"`;Depth int`json:\"depth\"`;RootIDs[]string`json:\"rootIds\"`;}",
+      "endLine": 44,
+      "underlyingType": "struct{Direction string`json:\"direction\"`;Depth int`json:\"depth\"`;RootIDs[]string`json:\"rootIds\"`;Languages[]string`json:\"languages,omitempty\"`;Confidences[]string`json:\"confidences,omitempty\"`;}",
       "members": [
+        {
+          "name": "Confidences",
+          "kind": "property",
+          "line": 43,
+          "endLine": 43,
+          "result": "[]string",
+          "structTag": {
+            "value": "json:\"confidences,omitempty\""
+          }
+        },
         {
           "name": "Depth",
           "kind": "property",
@@ -1914,6 +1944,16 @@
           }
         },
         {
+          "name": "Languages",
+          "kind": "property",
+          "line": 42,
+          "endLine": 42,
+          "result": "[]string",
+          "structTag": {
+            "value": "json:\"languages,omitempty\""
+          }
+        },
+        {
           "name": "RootIDs",
           "kind": "property",
           "line": 41,
@@ -1929,15 +1969,15 @@
       "name": "navigationGraphTruncation",
       "kind": "struct",
       "file": "internal/cli/graph.go",
-      "line": 44,
-      "endLine": 48,
+      "line": 46,
+      "endLine": 50,
       "underlyingType": "struct{Reason string`json:\"reason\"`;Limit int`json:\"limit\"`;Skipped int`json:\"skipped\"`;}",
       "members": [
         {
           "name": "Limit",
           "kind": "property",
-          "line": 46,
-          "endLine": 46,
+          "line": 48,
+          "endLine": 48,
           "result": "int",
           "structTag": {
             "value": "json:\"limit\""
@@ -1946,8 +1986,8 @@
         {
           "name": "Reason",
           "kind": "property",
-          "line": 45,
-          "endLine": 45,
+          "line": 47,
+          "endLine": 47,
           "result": "string",
           "structTag": {
             "value": "json:\"reason\""
@@ -1956,8 +1996,8 @@
         {
           "name": "Skipped",
           "kind": "property",
-          "line": 47,
-          "endLine": 47,
+          "line": 49,
+          "endLine": 49,
           "result": "int",
           "structTag": {
             "value": "json:\"skipped\""

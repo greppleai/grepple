@@ -18,6 +18,13 @@ classDiagram
     <<struct>> FileMatch
     %% grepple:file FileMatch search/model.go
     note for FileMatch "defined: search/model.go:53-60; Content@search/model.go:54; DisplayPath@search/model.go:54; File@search/model.go:54; Language@search/model.go:54; MatchLines@search/model.go:55; OmittedRelatedCallees@search/model.go:58; OmittedRelatedCallers@search/model.go:58; Related@search/model.go:57; Segments@search/model.go:56; SegmentsReady@search/model.go:59"
+    class NavigationGraphFilter {
+        +Confidences: []string
+        +Languages: []string
+    }
+    <<struct>> NavigationGraphFilter
+    %% grepple:file NavigationGraphFilter search/navigation_filter.go
+    note for NavigationGraphFilter "defined: search/navigation_filter.go:12-15; Confidences@search/navigation_filter.go:14; Languages@search/navigation_filter.go:13"
     class NavigationQueryDirection["NavigationQueryDirection = string"]
     <<type>> NavigationQueryDirection
     %% grepple:underlying NavigationQueryDirection string
@@ -284,6 +291,12 @@ classDiagram
     <<function>> Files
     %% grepple:file Files search/search_engine.go
     note for Files "defined: search/search_engine.go:190-228"
+    class FilterNavigationGraph {
+        +FilterNavigationGraph(parser.NavigationGraph, NavigationGraphFilter): tuple~parser.NavigationGraph&#44;error~
+    }
+    <<function>> FilterNavigationGraph
+    %% grepple:file FilterNavigationGraph search/navigation_filter.go
+    note for FilterNavigationGraph "defined: search/navigation_filter.go:19-31"
     class ListFilePaths {
         +ListFilePaths(Params, []string): tuple~[]string&#44;error~
     }
@@ -302,6 +315,12 @@ classDiagram
     <<function>> NewRepoFilter
     %% grepple:file NewRepoFilter search/search_engine.go
     note for NewRepoFilter "defined: search/search_engine.go:136-138"
+    class NormalizeNavigationGraphFilter {
+        +NormalizeNavigationGraphFilter(NavigationGraphFilter): tuple~NavigationGraphFilter&#44;error~
+    }
+    <<function>> NormalizeNavigationGraphFilter
+    %% grepple:file NormalizeNavigationGraphFilter search/navigation_filter.go
+    note for NormalizeNavigationGraphFilter "defined: search/navigation_filter.go:34-44"
     class PathMatchesGlobs {
         +PathMatchesGlobs(string, []string): bool
     }
@@ -372,9 +391,12 @@ classDiagram
     FileMatch "1" --> "*" RelatedPoint : field Related
     Files "1" ..> "*" FileMatch : result 1
     Files "1" ..> "1" Params : parameter 1
+    FilterNavigationGraph "1" ..> "1" NavigationGraphFilter : parameter 2
     ListFilePaths "1" ..> "1" Params : parameter 1
     ListFilePathsContext "1" ..> "1" Params : parameter 2
     NewRepoFilter "1" ..> "1" RepoFilter : result 1
+    NormalizeNavigationGraphFilter "1" ..> "1" NavigationGraphFilter : parameter 1
+    NormalizeNavigationGraphFilter "1" ..> "1" NavigationGraphFilter : result 1
     QueryNavigationGraph "1" ..> "1" NavigationQueryDirection : parameter 3
     RelatedPoint "1" --> "1" RelatedPreview : field Preview
     RelatedPreview "1" --> "*" RelatedPoint : field Related

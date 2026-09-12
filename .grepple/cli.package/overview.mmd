@@ -2,7 +2,7 @@ classDiagram
     %% grepple:package-default github.com/greppleai/grepple/internal/cli
     %% grepple:language-default go
     direction LR
-    note "Package cli implements Grepple's search, extraction, repository inspection, authentication, rules, and terminal/JSON presentation workflows. | package github.com/greppleai/grepple/internal/cli | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=33, declarations=42, exportedTypes=0, internalTypes=42, members=258, exportedFunctions=3, fiberRoutes=0, relations=25"
+    note "Package cli implements Grepple's search, extraction, repository inspection, authentication, rules, and terminal/JSON presentation workflows. | package github.com/greppleai/grepple/internal/cli | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=33, declarations=42, exportedTypes=0, internalTypes=42, members=262, exportedFunctions=3, fiberRoutes=0, relations=25"
     namespace interfaces {
         class resultRenderer["resultRenderer · internal/cli/renderer.go:9-11"] {
             +Render([]api.FileResult): error
@@ -110,11 +110,13 @@ classDiagram
             +Paths: []string
         }
         <<struct>> graphArgs
-        class graphQueryArgs["graphQueryArgs · internal/cli/graph_query.go:19-31"] {
+        class graphQueryArgs["graphQueryArgs · internal/cli/graph_query.go:19-33"] {
             +At: string
             +Compact: bool
+            +Confidences: []string
             +Depth: int
             +JSON: bool
+            +Languages: []string
             +MaxFiles: int
             +MaxOutputBytes: int
             +Module: string
@@ -175,13 +177,15 @@ classDiagram
             +Truncation: *navigationGraphTruncation
         }
         <<struct>> navigationGraphOutput
-        class navigationGraphQuery["navigationGraphQuery · internal/cli/graph.go:38-42"] {
+        class navigationGraphQuery["navigationGraphQuery · internal/cli/graph.go:38-44"] {
+            +Confidences: []string
             +Depth: int
             +Direction: string
+            +Languages: []string
             +RootIDs: []string
         }
         <<struct>> navigationGraphQuery
-        class navigationGraphTruncation["navigationGraphTruncation · internal/cli/graph.go:44-48"] {
+        class navigationGraphTruncation["navigationGraphTruncation · internal/cli/graph.go:46-50"] {
             +Limit: int
             +Reason: string
             +Skipped: int

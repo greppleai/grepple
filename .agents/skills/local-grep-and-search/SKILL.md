@@ -18,7 +18,7 @@ Use Grepple to minimize retrieval turns and tokens, not merely as a grep replace
 - **Know a navigation location:** use `--at PATH:LINE` (also accepts `PATH:START-END`) to retrieve the exact callable declaration instead of reading the file broadly.
 - **Need the next code hop:** add `--related` to expose bounded callees and potential callers. This often avoids a second symbol search.
 - **Need a short call chain:** use `--follow-related 1` first. Increase to 2–3 only when the extra inline context is worth the tokens.
-- **Assessing a refactor, package split, ownership boundary, or impact:** do not stop at outlines and occurrence searches. Run `--related` for an immediate preview, then use `grepple graph callers --at PATH:LINE --depth N --compact SCOPE` when a deterministic multi-hop incoming subgraph can replace repeated caller searches. Use `graph callees` for the outgoing direction.
+- **Assessing a refactor, package split, ownership boundary, or impact:** do not stop at outlines and occurrence searches. Run `--related` for an immediate preview, then use `grepple graph callers --at PATH:LINE --depth N --compact SCOPE` when a deterministic multi-hop incoming subgraph can replace repeated caller searches. Use `graph callees` for the outgoing direction. Add repeatable `--language` or `--confidence` filters only when a mixed or lower-confidence graph creates noise; filtering candidates trades completeness for precision.
 
 ## Why navigation saves tool-call cycles
 

@@ -2,7 +2,7 @@ classDiagram
     %% grepple:package-default github.com/greppleai/grepple/search
     %% grepple:language-default go
     direction LR
-    note "Package search provides file discovery, query and repository filtering, paging, match workers, context, and wire-result construction. | package github.com/greppleai/grepple/search | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=11, declarations=16, exportedTypes=6, internalTypes=10, members=125, exportedFunctions=22, fiberRoutes=0, relations=43"
+    note "Package search provides file discovery, query and repository filtering, paging, match workers, context, and wire-result construction. | package github.com/greppleai/grepple/search | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=12, declarations=17, exportedTypes=7, internalTypes=10, members=127, exportedFunctions=24, fiberRoutes=0, relations=46"
     namespace data_contracts {
         class Params["Params · search/model.go:11-33"] {
             +AfterContext: int
@@ -32,6 +32,8 @@ classDiagram
     namespace exported_types {
         class FileMatch["FileMatch · search/model.go:53-60"]
         <<struct>> FileMatch
+        class NavigationGraphFilter["NavigationGraphFilter · search/navigation_filter.go:12-15"]
+        <<struct>> NavigationGraphFilter
         class NavigationQueryDirection["NavigationQueryDirection = string · search/navigation_query.go:10"]
         <<type>> NavigationQueryDirection
         class RelatedPoint["RelatedPoint · search/model.go:45-49"]
@@ -100,6 +102,10 @@ classDiagram
             +Files(Params, []string): tuple~[]FileMatch&#44;error~
         }
         <<function>> Files
+        class FilterNavigationGraph["FilterNavigationGraph · search/navigation_filter.go:19-31"] {
+            +FilterNavigationGraph(parser.NavigationGraph, NavigationGraphFilter): tuple~parser.NavigationGraph&#44;error~
+        }
+        <<function>> FilterNavigationGraph
         class ListFilePaths["ListFilePaths · search/search_engine.go:390-392"] {
             +ListFilePaths(Params, []string): tuple~[]string&#44;error~
         }
@@ -112,6 +118,10 @@ classDiagram
             +NewRepoFilter([]string, []string): *RepoFilter
         }
         <<function>> NewRepoFilter
+        class NormalizeNavigationGraphFilter["NormalizeNavigationGraphFilter · search/navigation_filter.go:34-44"] {
+            +NormalizeNavigationGraphFilter(NavigationGraphFilter): tuple~NavigationGraphFilter&#44;error~
+        }
+        <<function>> NormalizeNavigationGraphFilter
         class PathMatchesGlobs["PathMatchesGlobs · search/search_glob.go:523-525"] {
             +PathMatchesGlobs(string, []string): bool
         }
@@ -163,9 +173,11 @@ classDiagram
     FileMatch "1" --> "*" RelatedPoint : field Related
     Files "1" ..> "*" FileMatch : result 1
     Files "1" ..> "1" Params : parameter 1
+    FilterNavigationGraph "1" ..> "1" NavigationGraphFilter : parameter 2
     ListFilePaths "1" ..> "1" Params : parameter 1
     ListFilePathsContext "1" ..> "1" Params : parameter 2
     NewRepoFilter "1" ..> "1" RepoFilter : result 1
+    NormalizeNavigationGraphFilter "1" ..> "1" NavigationGraphFilter : parameter 1; result 1
     QueryNavigationGraph "1" ..> "1" NavigationQueryDirection : parameter 3
     RelatedPoint "1" --> "1" RelatedPreview : field Preview
     RelatedPreview "1" --> "*" RelatedPoint : field Related
