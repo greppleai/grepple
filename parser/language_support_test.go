@@ -44,6 +44,31 @@ func TestSupportedLanguagesOwnsClassificationMetadata(t *testing.T) {
 	}
 }
 
+func TestSupportedContentLanguagesIncludesSpecializedFormats(t *testing.T) {
+	languages := SupportedContentLanguages()
+	byID := make(map[string]ContentLanguageCapabilities, len(languages))
+	for _, language := range languages {
+		if _, exists := byID[language.ID]; exists {
+			t.Fatalf("duplicate content language %q", language.ID)
+		}
+		byID[language.ID] = language
+	}
+	for _, id := range []string{"go", "javascript", "markdown", "json", "yaml", "text"} {
+		if _, ok := byID[id]; !ok {
+			t.Fatalf("missing content language %q", id)
+		}
+	}
+	if markdown := byID["markdown"]; !markdown.StructuralGrep || !markdown.Outline || !markdown.Specialized {
+		t.Fatalf("markdown capabilities=%#v", markdown)
+	}
+	if json := byID["json"]; json.StructuralGrep || !json.Outline || !json.Specialized {
+		t.Fatalf("json capabilities=%#v", json)
+	}
+	if goLanguage := byID["go"]; !goLanguage.StructuralGrep || !goLanguage.Outline || !goLanguage.Navigation || goLanguage.Specialized {
+		t.Fatalf("go capabilities=%#v", goLanguage)
+	}
+}
+
 func TestGrammarCardinalityComesFromGeneratedMetadata(t *testing.T) {
 	tests := []struct {
 		language, parent, field string

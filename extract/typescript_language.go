@@ -11,7 +11,10 @@ type typeScriptAnalysis struct {
 
 func typeScriptLanguageDefinition() *languageDefinition {
 	return &languageDefinition{
-		info:          Language{ID: "typescript", Extensions: parserLanguageExtensions("typescript", "tsx")},
+		info: Language{
+			ID: "typescript", Extensions: parserLanguageExtensions("typescript", "tsx"),
+			FocusedStructure: true, FocusedFlow: true,
+		},
 		acceptsSource: isTypeScriptSourceFile,
 		newAnalysis: func(result *Analysis, sources []Source) languageAnalysis {
 			prepareTypeScriptModules(result, sources)
@@ -41,7 +44,7 @@ func isTypeScriptSourceFile(path string) bool {
 }
 
 func (analysis *typeScriptAnalysis) Analyze(source Source) error {
-	return analyzeTypeScriptSource(source, analysis.result)
+	return analyzeECMAScriptSource(source, analysis.result)
 }
 
 func (analysis *typeScriptAnalysis) Finalize() error {

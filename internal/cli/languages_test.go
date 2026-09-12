@@ -1,0 +1,90 @@
+package cli
+
+import (
+	"encoding/json"
+	"os"
+	"strings"
+	"testing"
+
+	"github.com/greppleai/grepple/api"
+)
+
+func TestLanguagesJSONReportsRegisteredFeatureParity(t *testing.T) {
+	output := captureStdout(t, func() {
+		if err := Run([]string{"languages", "--json"}); err != nil {
+			t.Fatal(err)
+		}
+	})
+	var capabilities []api.LanguageCapabilities
+	if err := json.Unmarshal([]byte(output), &capabilities); err != nil {
+		t.Fatal(err)
+	}
+	byLanguage := make(map[string]api.LanguageCapabilities, len(capabilities))
+	for _, capability := range capabilities {
+		byLanguage[capability.Language] = capability
+	}
+	goLanguage := byLanguage["go"]
+	if goLanguage.GritQL != api.FeatureProduction || goLanguage.FocusedFlow != api.FeatureProduction || goLanguage.WorkspaceBundle != api.FeatureProduction {
+		t.Fatalf("go capabilities=%#v", goLanguage)
+	}
+	tsx := byLanguage["tsx"]
+	if tsx.GritQL != api.FeatureProduction || tsx.FocusedStructure != api.FeatureProduction || tsx.PackageBundle != api.FeatureUnsupported {
+		t.Fatalf("tsx capabilities=%#v", tsx)
+	}
+	javascript := byLanguage["javascript"]
+	if javascript.Navigation != api.FeatureProduction || javascript.GritQL != api.FeatureProduction || javascript.FocusedStructure != api.FeatureProduction || javascript.FocusedFlow != api.FeatureProduction {
+		t.Fatalf("javascript capabilities=%#v", javascript)
+	}
+	markdown := byLanguage["markdown"]
+	if markdown.StructuralGrep != api.FeatureSpecialized || markdown.Outline != api.FeatureSpecialized || markdown.Navigation != api.FeatureUnsupported {
+		t.Fatalf("markdown capabilities=%#v", markdown)
+	}
+	if !strings.Contains(output, `"language": "text"`) || !strings.Contains(output, `"extensions": []`) {
+		t.Fatalf("JSON collections or text fallback missing: %s", output)
+	}
+}
+
+func TestLanguagesHumanOutputUsesCapabilityIcons(t *testing.T) {
+	output := captureStdout(t, func() {
+		if err := Run([]string{"languages"}); err != nil {
+			t.Fatal(err)
+		}
+	})
+	for _, expected := range []string{"LANGUAGE", "STRUCTURAL", "GRITQL", "javascript", "markdown", "✓ production", "~ specialized production"} {
+		if !strings.Contains(output, expected) {
+			t.Fatalf("output %q does not contain %q", output, expected)
+		}
+	}
+}
+
+func TestLanguagesRejectsUnexpectedArguments(t *testing.T) {
+	if err := Run([]string{"languages", "extra"}); err == nil {
+		t.Fatal("expected unexpected argument to fail")
+	}
+}
+
+func TestLanguageCapabilityDocumentationIsGeneratedFromRegistrations(t *testing.T) {
+	content, err := os.ReadFile("../../docs/file-type-support.md")
+	if err != nil {
+		t.Fatal(err)
+	}
+	const startMarker = "<!-- grepple:language-matrix:start -->"
+	const endMarker = "<!-- grepple:language-matrix:end -->"
+	source := string(content)
+	start := strings.Index(source, startMarker)
+	end := strings.Index(source, endMarker)
+	if start < 0 || end < start {
+		t.Fatal("language matrix markers are missing")
+	}
+	actual := strings.TrimSpace(source[start+len(startMarker) : end])
+	expected := strings.TrimSpace(renderLanguageCapabilitiesMarkdown(languageCapabilityMatrix()))
+	if actual != expected {
+		t.Fatalf("documented language matrix is stale; regenerate with grepple languages --markdown\nactual:\n%s\nexpected:\n%s", actual, expected)
+	}
+}
+
+func TestLanguagesRejectsConflictingOutputFormats(t *testing.T) {
+	if err := Run([]string{"languages", "--json", "--markdown"}); err == nil {
+		t.Fatal("expected conflicting output formats to fail")
+	}
+}

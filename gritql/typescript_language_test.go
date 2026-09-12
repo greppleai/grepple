@@ -13,7 +13,7 @@ import (
 type languageEvaluationCase struct {
 	name, language, snippet, source, path, want string
 }
-type typeScriptConformanceCase struct {
+type targetConformanceCase struct {
 	Name, Language, Query, Path, Source string
 	Findings                            []string
 }
@@ -58,25 +58,34 @@ func assertLanguageEvaluation(t *testing.T, test languageEvaluationCase) {
 	}
 }
 func TestTypeScriptConformanceFixture(t *testing.T) {
-	content, err := os.ReadFile("testdata/conformance/typescript/cases.json")
+	runTargetConformanceFixture(t, "testdata/conformance/typescript/cases.json")
+}
+
+func TestJavaScriptConformanceFixture(t *testing.T) {
+	runTargetConformanceFixture(t, "testdata/conformance/javascript/cases.json")
+}
+
+func runTargetConformanceFixture(t *testing.T, path string) {
+	t.Helper()
+	content, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatal(err)
 	}
-	var cases []typeScriptConformanceCase
+	var cases []targetConformanceCase
 	if err := json.Unmarshal(content, &cases); err != nil {
 		t.Fatal(err)
 	}
 	if len(cases) == 0 {
-		t.Fatal("TypeScript conformance fixture is empty")
+		t.Fatalf("conformance fixture %s is empty", path)
 	}
 	for _, test := range cases {
 		test := test
 		t.Run(test.Name, func(t *testing.T) {
-			assertTypeScriptConformanceCase(t, test)
+			assertTargetConformanceCase(t, test)
 		})
 	}
 }
-func assertTypeScriptConformanceCase(t *testing.T, test typeScriptConformanceCase) {
+func assertTargetConformanceCase(t *testing.T, test targetConformanceCase) {
 	t.Helper()
 	program, err := Compile([]byte(test.Query), CompileOptions{})
 	if err != nil {
@@ -168,6 +177,32 @@ func TestTypeScriptMalformedSourceIsTransactional(t *testing.T) {
 	result := EvaluateFile(context.Background(), program, FileInput{Path: "src/app.ts", Language: "typescript", Content: []byte("function broken(\n")}, EvaluateOptions{})
 	if len(result.Findings()) != 0 || len(result.Diagnostics()) != 1 || result.Diagnostics()[0].Code() != "SOURCE_PARSE" {
 		t.Fatalf("findings=%v diagnostics=%v", result.Findings(), result.Diagnostics())
+	}
+}
+
+func TestJavaScriptScannerHandlesJSAndJSXTransactionally(t *testing.T) {
+	t.Parallel()
+	program, err := Compile([]byte("language javascript\n`target($value)`"), CompileOptions{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	filesystem := fstest.MapFS{
+		"src/app.js":   &fstest.MapFile{Data: []byte("target(one);\n")},
+		"src/view.jsx": &fstest.MapFile{Data: []byte("const view = <Button>{target(two)}</Button>;\n")},
+		"src/app.ts":   &fstest.MapFile{Data: []byte("target(three);\n")},
+	}
+	candidates := []ScanCandidate{{ReadPath: "src/app.js", Path: "src/app.js"}, {ReadPath: "src/view.jsx", Path: "src/view.jsx"}, {ReadPath: "src/app.ts", Path: "src/app.ts"}}
+	result := ScanFiles(context.Background(), filesystem, program, candidates, ScanOptions{Workers: 1})
+	if len(result.Findings()) != 2 || result.Stats().SkippedLanguage != 1 {
+		t.Fatalf("findings=%d stats=%#v diagnostics=%v", len(result.Findings()), result.Stats(), result.Diagnostics())
+	}
+	metadata := result.Metadata()
+	if metadata.Contract != Compatibility || metadata.Language != "javascript" || metadata.Grammar != JavaScriptGrammar || metadata.TreeSitterGrammar != TreeSitterJavaScriptGrammar {
+		t.Fatalf("metadata=%#v", metadata)
+	}
+	malformed := EvaluateFile(context.Background(), program, FileInput{Path: "src/broken.js", Language: "javascript", Content: []byte("function broken(\n")}, EvaluateOptions{})
+	if len(malformed.Findings()) != 0 || len(malformed.Diagnostics()) != 1 || malformed.Diagnostics()[0].Code() != "SOURCE_PARSE" {
+		t.Fatalf("findings=%v diagnostics=%v", malformed.Findings(), malformed.Diagnostics())
 	}
 }
 

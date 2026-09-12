@@ -113,6 +113,7 @@ type sourceAnalyzer struct {
 	source   Source
 	text     []byte
 	moduleID string
+	language string
 }
 
 func (analyzer *sourceAnalyzer) location(node codeparser.ViewNode) Location {
@@ -238,7 +239,7 @@ func parameterTypes(node codeparser.ViewNode, source []byte) []string {
 	return result
 }
 
-func memberFromNode(node codeparser.ViewNode, source []byte) (Member, bool) {
+func memberFromNode(node codeparser.ViewNode, source []byte, language string) (Member, bool) {
 	kind, ok := memberKind(node.Kind())
 	if !ok {
 		return Member{}, false
@@ -250,7 +251,7 @@ func memberFromNode(node codeparser.ViewNode, source []byte) (Member, bool) {
 	}
 	member := Member{
 		Kind:       kind,
-		Language:   "typescript",
+		Language:   language,
 		Name:       name,
 		Visibility: memberVisibility(node, source),
 		Type:       nodeType(node, source),
@@ -270,7 +271,7 @@ func memberKind(kind string) (string, bool) {
 	switch kind {
 	case "method_definition", "method_signature", "abstract_method_signature":
 		return "method", true
-	case "public_field_definition", "property_signature", "abstract_property_signature":
+	case "field_definition", "public_field_definition", "property_signature", "abstract_property_signature":
 		return "property", true
 	default:
 		return "", false
@@ -281,7 +282,7 @@ func (analyzer *sourceAnalyzer) addSymbol(name, kind string, node, _ codeparser.
 	key := analyzer.moduleID + ":" + name
 	symbol := analyzer.result.TSSymbolIndex[key]
 	if symbol == nil {
-		symbol = &Symbol{Name: name, Kind: kind, Language: "typescript", ModuleID: analyzer.moduleID, Key: key, Owner: owner, Calls: map[string]bool{}}
+		symbol = &Symbol{Name: name, Kind: kind, Language: analyzer.language, ModuleID: analyzer.moduleID, Key: key, Owner: owner, Calls: map[string]bool{}}
 		analyzer.result.TSSymbolIndex[key] = symbol
 	}
 	symbol.Locations = append(symbol.Locations, syntaxLocation(analyzer.source.Path, node))
@@ -291,7 +292,7 @@ func (analyzer *sourceAnalyzer) addImport(name, imported, module string, default
 	if name == "" {
 		return
 	}
-	item := Import{Source: module, Imported: imported, Default: defaultImport, TypeOnly: typeOnly, Language: "typescript", ImporterModuleID: analyzer.moduleID, File: analyzer.result.SourcePaths[absolutePath(analyzer.source.Path)]}
+	item := Import{Source: module, Imported: imported, Default: defaultImport, TypeOnly: typeOnly, Language: analyzer.language, ImporterModuleID: analyzer.moduleID, File: analyzer.result.SourcePaths[absolutePath(analyzer.source.Path)]}
 	analyzer.result.Imports[name] = append(analyzer.result.Imports[name], item)
 	if analyzer.result.TSImportBindings[analyzer.moduleID] == nil {
 		analyzer.result.TSImportBindings[analyzer.moduleID] = map[string]Import{}
@@ -350,12 +351,12 @@ func (analyzer *sourceAnalyzer) analyzeExportSpecifiers(statement codeparser.Vie
 		localName, exportedName := nodeText(local, analyzer.text), nodeText(exported, analyzer.text)
 		if exportedName == "default" {
 			analyzer.result.DefaultExports[localName] = true
-			analyzer.result.DefaultExportVariants["typescript:"+localName] = true
+			analyzer.result.DefaultExportVariants[analyzer.language+":"+localName] = true
 			analyzer.result.TSDefaultExports[analyzer.moduleID] = localName
 			analyzer.recordTypeScriptExport("default", localName)
 		} else if localName != "" {
 			analyzer.result.Exports[localName] = true
-			analyzer.result.ExportVariants["typescript:"+localName] = true
+			analyzer.result.ExportVariants[analyzer.language+":"+localName] = true
 			analyzer.recordTypeScriptExport(exportedName, localName)
 		}
 	})
@@ -384,6 +385,13 @@ func directHeritageName(node codeparser.ViewNode, source []byte) string {
 		candidate = candidate.ChildByFieldName("name")
 	}
 	return strings.TrimSpace(nodeText(candidate, source))
+}
+
+func ecmaScriptDisplayName(language string) string {
+	if language == "javascript" {
+		return "JavaScript"
+	}
+	return "TypeScript"
 }
 
 func collectHeritage(node codeparser.ViewNode, source []byte, declaration *Declaration) {
@@ -420,7 +428,7 @@ func (analyzer *sourceAnalyzer) analyzeDeclaration(node codeparser.ViewNode, exp
 	if name == "" {
 		return
 	}
-	declaration := &Declaration{Name: name, Kind: kind, Language: "typescript", ModuleID: analyzer.moduleID, File: analyzer.result.SourcePaths[absolutePath(analyzer.source.Path)], Location: analyzer.location(node), Extends: map[string]bool{}, Implements: map[string]bool{}}
+	declaration := &Declaration{Name: name, Kind: kind, Language: analyzer.language, ModuleID: analyzer.moduleID, File: analyzer.result.SourcePaths[absolutePath(analyzer.source.Path)], Location: analyzer.location(node), Extends: map[string]bool{}, Implements: map[string]bool{}}
 	analyzer.collectMembers(node, declaration)
 	collectHeritage(node, analyzer.text, declaration)
 	key := analyzer.moduleID + ":" + name
@@ -428,7 +436,7 @@ func (analyzer *sourceAnalyzer) analyzeDeclaration(node codeparser.ViewNode, exp
 		if existing.Kind == "interface" && declaration.Kind == "interface" {
 			mergeTypeScriptInterfaces(existing, declaration)
 		} else {
-			analyzer.result.duplicateErrors = append(analyzer.result.duplicateErrors, fmt.Sprintf("incompatible TypeScript declarations %s in %s", name, analyzer.source.Path))
+			analyzer.result.duplicateErrors = append(analyzer.result.duplicateErrors, fmt.Sprintf("incompatible %s declarations %s in %s", ecmaScriptDisplayName(analyzer.language), name, analyzer.source.Path))
 		}
 		declaration = existing
 	} else {
@@ -446,7 +454,7 @@ func (analyzer *sourceAnalyzer) collectMembers(node codeparser.ViewNode, declara
 		return
 	}
 	for _, child := range body.NamedChildren() {
-		member, ok := memberFromNode(child, analyzer.text)
+		member, ok := memberFromNode(child, analyzer.text, analyzer.language)
 		if !ok {
 			continue
 		}
@@ -468,7 +476,7 @@ func (analyzer *sourceAnalyzer) analyzeFunction(node codeparser.ViewNode, export
 	if name == "" {
 		return
 	}
-	function := Member{Kind: "method", Name: name, Visibility: "public", Language: "typescript", ModuleID: analyzer.moduleID, File: analyzer.result.SourcePaths[absolutePath(analyzer.source.Path)], Location: analyzer.location(node), Async: childHasText(node, analyzer.text, "async"), Parameters: parameterTypes(node, analyzer.text), Type: nodeType(node, analyzer.text)}
+	function := Member{Kind: "method", Name: name, Visibility: "public", Language: analyzer.language, ModuleID: analyzer.moduleID, File: analyzer.result.SourcePaths[absolutePath(analyzer.source.Path)], Location: analyzer.location(node), Async: childHasText(node, analyzer.text, "async"), Parameters: parameterTypes(node, analyzer.text), Type: nodeType(node, analyzer.text)}
 	analyzer.result.Functions[name] = append(analyzer.result.Functions[name], function)
 	analyzer.addSymbol(name, "function", node, node.ChildByFieldName("body"), "")
 	analyzer.recordExport(name, exported, defaultExport)
@@ -477,12 +485,12 @@ func (analyzer *sourceAnalyzer) analyzeFunction(node codeparser.ViewNode, export
 func (analyzer *sourceAnalyzer) recordExport(name string, exported, defaultExport bool) {
 	if exported {
 		analyzer.result.Exports[name] = true
-		analyzer.result.ExportVariants["typescript:"+name] = true
+		analyzer.result.ExportVariants[analyzer.language+":"+name] = true
 		analyzer.recordTypeScriptExport(name, name)
 	}
 	if defaultExport {
 		analyzer.result.DefaultExports[name] = true
-		analyzer.result.DefaultExportVariants["typescript:"+name] = true
+		analyzer.result.DefaultExportVariants[analyzer.language+":"+name] = true
 		analyzer.result.TSDefaultExports[analyzer.moduleID] = name
 		analyzer.recordTypeScriptExport("default", name)
 	}
@@ -527,15 +535,18 @@ func finalizeTypeScriptDeclarations(result *Analysis) {
 	groups := map[string][]*Declaration{}
 	for _, key := range sortedKeys(result.TSDeclarations) {
 		declaration := result.TSDeclarations[key]
-		groups[declaration.Name] = append(groups[declaration.Name], declaration)
+		group := declaration.Language + ":" + declaration.Name
+		groups[group] = append(groups[group], declaration)
 	}
-	for _, name := range sortedKeys(groups) {
-		if len(groups[name]) == 1 {
-			result.Declarations[name] = groups[name][0]
-			result.DeclarationVariants["typescript:"+name] = groups[name][0]
+	for _, group := range sortedKeys(groups) {
+		declarations := groups[group]
+		name := declarations[0].Name
+		if len(declarations) == 1 {
+			result.Declarations[name] = declarations[0]
+			result.DeclarationVariants[group] = declarations[0]
 		} else {
 			delete(result.Declarations, name)
-			delete(result.DeclarationVariants, "typescript:"+name)
+			delete(result.DeclarationVariants, group)
 		}
 	}
 }
@@ -544,15 +555,18 @@ func finalizeTypeScriptSymbols(result *Analysis) {
 	groups := map[string][]*Symbol{}
 	for _, key := range sortedKeys(result.TSSymbolIndex) {
 		symbol := result.TSSymbolIndex[key]
-		groups[symbol.Name] = append(groups[symbol.Name], symbol)
+		group := symbol.Language + ":" + symbol.Name
+		groups[group] = append(groups[group], symbol)
 	}
-	for _, name := range sortedKeys(groups) {
-		if len(groups[name]) == 1 {
-			result.Symbols[name] = groups[name][0]
-			result.SymbolVariants["typescript:"+name] = groups[name][0]
+	for _, group := range sortedKeys(groups) {
+		symbols := groups[group]
+		name := symbols[0].Name
+		if len(symbols) == 1 {
+			result.Symbols[name] = symbols[0]
+			result.SymbolVariants[group] = symbols[0]
 		} else {
 			delete(result.Symbols, name)
-			delete(result.SymbolVariants, "typescript:"+name)
+			delete(result.SymbolVariants, group)
 		}
 	}
 }
@@ -665,13 +679,17 @@ func removeAmbiguousGenericEntries(result *Analysis) {
 	}
 }
 
-func analyzeTypeScriptSource(source Source, result *Analysis) error {
+func analyzeECMAScriptSource(source Source, result *Analysis) error {
 	document, err := parseSource(source)
 	if err != nil {
 		return err
 	}
 	defer document.Close()
-	analyzer := sourceAnalyzer{result: result, source: source, text: []byte(source.Text), moduleID: absolutePath(source.Path)}
+	language := document.Language()
+	if language == "tsx" {
+		language = "typescript"
+	}
+	analyzer := sourceAnalyzer{result: result, source: source, text: []byte(source.Text), moduleID: absolutePath(source.Path), language: language}
 	if err := document.Read(func(view codeparser.DocumentView) error {
 		for _, statement := range view.Root().NamedChildren() {
 			analyzer.analyzeTopLevel(statement)

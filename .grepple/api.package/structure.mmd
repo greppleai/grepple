@@ -14,6 +14,11 @@ classDiagram
     %% grepple:struct-tag ContextLine Match "json:\"match\""
     %% grepple:struct-tag ContextLine Text "json:\"text\""
     note for ContextLine "defined: api/model.go:47-51; Line@api/model.go:48; Match@api/model.go:50; Text@api/model.go:49"
+    class FeatureSupport["FeatureSupport = string"]
+    <<type>> FeatureSupport
+    %% grepple:underlying FeatureSupport string
+    %% grepple:file FeatureSupport api/language.go
+    note for FeatureSupport "defined: api/language.go:5"
     class FileResult {
         +Context: []ContextLine
         +Language: string
@@ -284,6 +289,33 @@ classDiagram
     %% grepple:struct-tag GritTruncation Shard "json:\"shard,omitempty\""
     %% grepple:struct-tag GritTruncation Skipped "json:\"skipped\""
     note for GritTruncation "defined: api/grit.go:135-141; Limit@api/grit.go:139; Reason@api/grit.go:138; Repo@api/grit.go:136; Shard@api/grit.go:137; Skipped@api/grit.go:140"
+    class LanguageCapabilities {
+        +Extensions: []string
+        +FocusedFlow: FeatureSupport
+        +FocusedStructure: FeatureSupport
+        +GritQL: FeatureSupport
+        +Language: string
+        +Navigation: FeatureSupport
+        +Outline: FeatureSupport
+        +PackageBundle: FeatureSupport
+        +StructuralGrep: FeatureSupport
+        +TextGrep: FeatureSupport
+        +WorkspaceBundle: FeatureSupport
+    }
+    <<struct>> LanguageCapabilities
+    %% grepple:file LanguageCapabilities api/language.go
+    %% grepple:struct-tag LanguageCapabilities Extensions "json:\"extensions\""
+    %% grepple:struct-tag LanguageCapabilities FocusedFlow "json:\"focusedFlow\""
+    %% grepple:struct-tag LanguageCapabilities FocusedStructure "json:\"focusedStructure\""
+    %% grepple:struct-tag LanguageCapabilities GritQL "json:\"gritql\""
+    %% grepple:struct-tag LanguageCapabilities Language "json:\"language\""
+    %% grepple:struct-tag LanguageCapabilities Navigation "json:\"navigation\""
+    %% grepple:struct-tag LanguageCapabilities Outline "json:\"outline\""
+    %% grepple:struct-tag LanguageCapabilities PackageBundle "json:\"packageBundle\""
+    %% grepple:struct-tag LanguageCapabilities StructuralGrep "json:\"structuralGrep\""
+    %% grepple:struct-tag LanguageCapabilities TextGrep "json:\"textGrep\""
+    %% grepple:struct-tag LanguageCapabilities WorkspaceBundle "json:\"workspaceBundle\""
+    note for LanguageCapabilities "defined: api/language.go:19-31; Extensions@api/language.go:21; FocusedFlow@api/language.go:27; FocusedStructure@api/language.go:26; GritQL@api/language.go:28; Language@api/language.go:20; Navigation@api/language.go:25; Outline@api/language.go:24; PackageBundle@api/language.go:29; StructuralGrep@api/language.go:23; TextGrep@api/language.go:22; WorkspaceBundle@api/language.go:30"
     class RelatedSymbol {
         +CallLine: int
         +Confidence: string
@@ -529,6 +561,15 @@ classDiagram
     GritResponse "1" --> "1" GritMetadata : field Metadata
     GritResponse "1" --> "1" GritStatistics : field Statistics
     GritResponse "1" --> "*" GritTruncation : field Truncations
+    LanguageCapabilities "1" --> "1" FeatureSupport : field FocusedFlow
+    LanguageCapabilities "1" --> "1" FeatureSupport : field FocusedStructure
+    LanguageCapabilities "1" --> "1" FeatureSupport : field GritQL
+    LanguageCapabilities "1" --> "1" FeatureSupport : field Navigation
+    LanguageCapabilities "1" --> "1" FeatureSupport : field Outline
+    LanguageCapabilities "1" --> "1" FeatureSupport : field PackageBundle
+    LanguageCapabilities "1" --> "1" FeatureSupport : field StructuralGrep
+    LanguageCapabilities "1" --> "1" FeatureSupport : field TextGrep
+    LanguageCapabilities "1" --> "1" FeatureSupport : field WorkspaceBundle
     RelatedSymbol "1" --> "*" ResultSegment : field Segments
     ReposResponse "1" --> "*" RepoListEntry : field Repos
     Rule "1" --> "1" GritRequest : field Structural

@@ -3,6 +3,17 @@ classDiagram
     %% grepple:package-default github.com/greppleai/grepple/parser
     %% grepple:language-default go
     %% grepple:exact-default
+    class ContentLanguageCapabilities {
+        +Extensions: []string
+        +ID: string
+        +Navigation: bool
+        +Outline: bool
+        +Specialized: bool
+        +StructuralGrep: bool
+    }
+    <<struct>> ContentLanguageCapabilities
+    %% grepple:file ContentLanguageCapabilities parser/language.go
+    note for ContentLanguageCapabilities "defined: parser/language.go:18-25; Extensions@parser/language.go:20; ID@parser/language.go:19; Navigation@parser/language.go:23; Outline@parser/language.go:22; Specialized@parser/language.go:24; StructuralGrep@parser/language.go:21"
     class Document {
         +Close()
         +Diagnostics(): []ParseDiagnostic
@@ -48,7 +59,7 @@ classDiagram
     <<type>> GrammarCardinality
     %% grepple:underlying GrammarCardinality uint8
     %% grepple:file GrammarCardinality parser/language.go
-    note for GrammarCardinality "defined: parser/language.go:19"
+    note for GrammarCardinality "defined: parser/language.go:30"
     class LanguageCapabilities {
         +Extensions: []string
         +GrammarABI: uint32
@@ -366,7 +377,7 @@ classDiagram
     }
     <<interface>> languageAdapter
     %% grepple:file languageAdapter parser/language.go
-    note for languageAdapter "defined: parser/language.go:64-69; Grammar@parser/language.go:66; ID@parser/language.go:65; Outline@parser/language.go:68; Rules@parser/language.go:67"
+    note for languageAdapter "defined: parser/language.go:75-80; Grammar@parser/language.go:77; ID@parser/language.go:76; Outline@parser/language.go:79; Rules@parser/language.go:78"
     class languageGeneratedMetadata {
         -children: map[string]GrammarCardinality
         -fields: map[string]map[string]GrammarCardinality
@@ -375,7 +386,7 @@ classDiagram
     }
     <<struct>> languageGeneratedMetadata
     %% grepple:file languageGeneratedMetadata parser/language.go
-    note for languageGeneratedMetadata "defined: parser/language.go:29-34; children@parser/language.go:32; fields@parser/language.go:31; fingerprint@parser/language.go:30; subtypes@parser/language.go:33"
+    note for languageGeneratedMetadata "defined: parser/language.go:40-45; children@parser/language.go:43; fields@parser/language.go:42; fingerprint@parser/language.go:41; subtypes@parser/language.go:44"
     class matchLines {
         -hitsRange(int, int): bool
         -set: map[int]bool
@@ -509,7 +520,7 @@ classDiagram
     <<type>> stringSet
     %% grepple:underlying stringSet map[string]struct{}
     %% grepple:file stringSet parser/language.go
-    note for stringSet "defined: parser/language.go:36; contains@parser/language.go:46-49"
+    note for stringSet "defined: parser/language.go:47; contains@parser/language.go:57-60"
     class structureRules {
         -blockTypes: stringSet
         -classBodyTypes: stringSet
@@ -524,7 +535,7 @@ classDiagram
     }
     <<struct>> structureRules
     %% grepple:file structureRules parser/language.go
-    note for structureRules "defined: parser/language.go:51-62; blockTypes@parser/language.go:59; classBodyTypes@parser/language.go:56; classDeclarationTypes@parser/language.go:55; containerTypes@parser/language.go:54; contextTypes@parser/language.go:53; exportTypes@parser/language.go:57; functionLikeTypes@parser/language.go:58; jsxElementTypes@parser/language.go:60; nameFieldCandidates@parser/language.go:61; structuralTypes@parser/language.go:52"
+    note for structureRules "defined: parser/language.go:62-73; blockTypes@parser/language.go:70; classBodyTypes@parser/language.go:67; classDeclarationTypes@parser/language.go:66; containerTypes@parser/language.go:65; contextTypes@parser/language.go:64; exportTypes@parser/language.go:68; functionLikeTypes@parser/language.go:69; jsxElementTypes@parser/language.go:71; nameFieldCandidates@parser/language.go:72; structuralTypes@parser/language.go:63"
     class typeScriptLanguage {
         +Grammar(): *sitter.Language
         +ID(): string
@@ -568,7 +579,7 @@ classDiagram
     }
     <<function>> CapabilitiesForLanguage
     %% grepple:file CapabilitiesForLanguage parser/language.go
-    note for CapabilitiesForLanguage "defined: parser/language.go:111-118"
+    note for CapabilitiesForLanguage "defined: parser/language.go:139-146"
     class DeclarationRangeAt {
         +DeclarationRangeAt(string, string, int): tuple~int&#44;int&#44;bool~
     }
@@ -580,19 +591,19 @@ classDiagram
     }
     <<function>> GrammarChildrenCardinality
     %% grepple:file GrammarChildrenCardinality parser/language.go
-    note for GrammarChildrenCardinality "defined: parser/language.go:141-147"
+    note for GrammarChildrenCardinality "defined: parser/language.go:169-175"
     class GrammarFieldCardinality {
         +GrammarFieldCardinality(string, string, string): GrammarCardinality
     }
     <<function>> GrammarFieldCardinality
     %% grepple:file GrammarFieldCardinality parser/language.go
-    note for GrammarFieldCardinality "defined: parser/language.go:132-138"
+    note for GrammarFieldCardinality "defined: parser/language.go:160-166"
     class GrammarSubtype {
         +GrammarSubtype(string, string, string): bool
     }
     <<function>> GrammarSubtype
     %% grepple:file GrammarSubtype parser/language.go
-    note for GrammarSubtype "defined: parser/language.go:151-154"
+    note for GrammarSubtype "defined: parser/language.go:179-182"
     class LanguageFor {
         +LanguageFor(string): string
     }
@@ -635,12 +646,18 @@ classDiagram
     <<function>> ParseDocument
     %% grepple:file ParseDocument parser/document.go
     note for ParseDocument "defined: parser/document.go:144-160"
+    class SupportedContentLanguages {
+        +SupportedContentLanguages(): []ContentLanguageCapabilities
+    }
+    <<function>> SupportedContentLanguages
+    %% grepple:file SupportedContentLanguages parser/language.go
+    note for SupportedContentLanguages "defined: parser/language.go:122-136"
     class SupportedLanguages {
         +SupportedLanguages(): []LanguageCapabilities
     }
     <<function>> SupportedLanguages
     %% grepple:file SupportedLanguages parser/language.go
-    note for SupportedLanguages "defined: parser/language.go:102-108"
+    note for SupportedLanguages "defined: parser/language.go:113-119"
     class WalkNamed {
         +WalkNamed(Node, func&#40;Node&#41;)
     }
@@ -690,6 +707,7 @@ classDiagram
     ParseDocument "1" ..> "1" Document : result 1
     Range "1" --> "1" Position : field End
     Range "1" --> "1" Position : field Start
+    SupportedContentLanguages "1" ..> "*" ContentLanguageCapabilities : result 1
     SupportedLanguages "1" ..> "*" LanguageCapabilities : result 1
     SyntaxNode "1" --> "1" Range : field rng
     SyntaxNode "1" ..> "1" Range : method Range result 1

@@ -2,9 +2,9 @@ classDiagram
     %% grepple:package-default github.com/greppleai/grepple/extract
     %% grepple:language-default go
     direction LR
-    note "Package extract validates and generates source-linked Mermaid structure and flow diagrams. | package github.com/greppleai/grepple/extract | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=23, declarations=63, exportedTypes=42, internalTypes=21, members=500, exportedFunctions=26, fiberRoutes=0, relations=180"
+    note "Package extract validates and generates source-linked Mermaid structure and flow diagrams. | package github.com/greppleai/grepple/extract | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=24, declarations=64, exportedTypes=42, internalTypes=22, members=510, exportedFunctions=26, fiberRoutes=0, relations=185"
     namespace interfaces {
-        class languageAnalysis["languageAnalysis · extract/language.go:18-21"] {
+        class languageAnalysis["languageAnalysis · extract/language.go:22-25"] {
             +Analyze(Source): error
             +Finalize(): error
         }
@@ -204,7 +204,7 @@ classDiagram
         <<struct>> GoStructTag
         class Import["Import · extract/analyze.go:49-53"]
         <<struct>> Import
-        class Language["Language · extract/language.go:13-16"]
+        class Language["Language · extract/language.go:13-20"]
         <<struct>> Language
         class Location["Location · extract/analyze.go:56-60"]
         <<struct>> Location
@@ -228,7 +228,7 @@ classDiagram
     namespace internal_types {
         class classParser["classParser · extract/class.go:347-353"]
         <<struct>> classParser
-        class classValidator["classValidator · extract/class.go:1044-1049"]
+        class classValidator["classValidator · extract/class.go:1048-1053"]
         <<struct>> classValidator
         class discoveredModule["discoveredModule · extract/workspace_bundle.go:112-115"]
         <<struct>> discoveredModule
@@ -244,17 +244,19 @@ classDiagram
         <<struct>> goSourceAnalyzer
         class goTypeOccurrences["goTypeOccurrences · extract/package_bundle_go_relations.go:9-12"]
         <<struct>> goTypeOccurrences
-        class languageDefinition["languageDefinition · extract/language.go:26-37"]
+        class javaScriptAnalysis["javaScriptAnalysis · extract/javascript_language.go:8-10"]
+        <<struct>> javaScriptAnalysis
+        class languageDefinition["languageDefinition · extract/language.go:30-41"]
         <<struct>> languageDefinition
         class modulePackageCollector["modulePackageCollector · extract/workspace_bundle.go:311-315"]
         <<struct>> modulePackageCollector
-        class packageCompletenessItem["packageCompletenessItem · extract/class.go:1055-1058"]
+        class packageCompletenessItem["packageCompletenessItem · extract/class.go:1059-1062"]
         <<struct>> packageCompletenessItem
         class selectedGoSymbol["selectedGoSymbol = selectedNavigationSymbol · extract/go_generate_flow.go:8"]
         <<alias>> selectedGoSymbol
         class selectedNavigationSymbol["selectedNavigationSymbol · extract/navigation.go:214-217"]
         <<struct>> selectedNavigationSymbol
-        class sourceAnalyzer["sourceAnalyzer · extract/analyze.go:111-116"]
+        class sourceAnalyzer["sourceAnalyzer · extract/analyze.go:111-117"]
         <<struct>> sourceAnalyzer
         class sourceCollector["sourceCollector · extract/files.go:25"]
         <<struct>> sourceCollector
@@ -268,7 +270,7 @@ classDiagram
         <<struct>> workspaceModuleCollector
     }
     namespace operations {
-        class Analyze["Analyze · extract/analyze.go:575-604"] {
+        class Analyze["Analyze · extract/analyze.go:589-618"] {
             +Analyze([]Source): tuple~*Analysis&#44;error~
         }
         <<function>> Analyze
@@ -280,11 +282,11 @@ classDiagram
             +BuildWorkspaceIR(string): tuple~*WorkspaceIR&#44;error~
         }
         <<function>> BuildWorkspaceIR
-        class CheckClassDiagram["CheckClassDiagram · extract/class.go:1786-1792"] {
+        class CheckClassDiagram["CheckClassDiagram · extract/class.go:1801-1807"] {
             +CheckClassDiagram(string, []Source): tuple~[]Diagnostic&#44;error~
         }
         <<function>> CheckClassDiagram
-        class CheckClassDiagramWithAnalysis["CheckClassDiagramWithAnalysis · extract/class.go:1795-1797"] {
+        class CheckClassDiagramWithAnalysis["CheckClassDiagramWithAnalysis · extract/class.go:1810-1812"] {
             +CheckClassDiagramWithAnalysis(string, *Analysis): tuple~[]Diagnostic&#44;error~
         }
         <<function>> CheckClassDiagramWithAnalysis
@@ -296,11 +298,11 @@ classDiagram
             +CheckFlowPaths(string, []string): tuple~[]Diagnostic&#44;[]string&#44;error~
         }
         <<function>> CheckFlowPaths
-        class CheckFlowchart["CheckFlowchart · extract/flow.go:391-397"] {
+        class CheckFlowchart["CheckFlowchart · extract/flow.go:399-405"] {
             +CheckFlowchart(string, []Source): tuple~[]Diagnostic&#44;error~
         }
         <<function>> CheckFlowchart
-        class CheckFlowchartWithAnalysis["CheckFlowchartWithAnalysis · extract/flow.go:400-413"] {
+        class CheckFlowchartWithAnalysis["CheckFlowchartWithAnalysis · extract/flow.go:408-421"] {
             +CheckFlowchartWithAnalysis(string, *Analysis): tuple~[]Diagnostic&#44;error~
         }
         <<function>> CheckFlowchartWithAnalysis
@@ -336,7 +338,7 @@ classDiagram
             +GenerateWorkspaceBundle(string): tuple~*WorkspaceBundle&#44;error~
         }
         <<function>> GenerateWorkspaceBundle
-        class LanguageForPath["LanguageForPath · extract/language.go:56-64"] {
+        class LanguageForPath["LanguageForPath · extract/language.go:60-68"] {
             +LanguageForPath(string): tuple~Language&#44;bool~
         }
         <<function>> LanguageForPath
@@ -348,7 +350,7 @@ classDiagram
             +ParseClassDiagram(string): tuple~*ClassDiagram&#44;error~
         }
         <<function>> ParseClassDiagram
-        class ParseFlowchart["ParseFlowchart · extract/flow.go:235-246"] {
+        class ParseFlowchart["ParseFlowchart · extract/flow.go:239-250"] {
             +ParseFlowchart(string): tuple~*Flowchart&#44;error~
         }
         <<function>> ParseFlowchart
@@ -360,7 +362,7 @@ classDiagram
             +ResolveWorkspaceBundleRoot(string): tuple~string&#44;error~
         }
         <<function>> ResolveWorkspaceBundleRoot
-        class SupportedLanguages["SupportedLanguages · extract/language.go:44-53"] {
+        class SupportedLanguages["SupportedLanguages · extract/language.go:48-57"] {
             +SupportedLanguages(): []Language
         }
         <<function>> SupportedLanguages
@@ -449,7 +451,7 @@ classDiagram
     classValidator "1" --> "1" ClassDiagram : field diagram
     classValidator "1" ..> "1" Declaration : method-parameter=9; method-result=2
     classValidator "1" --> "*" Diagnostic : field diagnostics
-    classValidator "1" ..> "1" DiagramClass : method-parameter=19
+    classValidator "1" ..> "1" DiagramClass : method-parameter=21
     classValidator "1" ..> "1" DiagramMember : method checkMember parameter 2; method hasMatchingFunction parameter 2; method matchingFunctionReferences parameter 2
     classValidator "1" ..> "1" Import : method importScopeMatches parameter 2
     classValidator "1" ..> "1" Location : method firstExternalGoTypeReference result 1
@@ -473,6 +475,9 @@ classDiagram
     goSourceAnalyzer "1" --> "1" Source : field source
     goSourceAnalyzer "1" ..> "*" fiberRouter : method-parameter=4
     goSourceAnalyzer "1" ..> "1" fiberRouter : method fiberRouterExpression result 1
+    javaScriptAnalysis "1" --> "1" Analysis : field result
+    javaScriptAnalysis "1" ..> "1" Source : method Analyze parameter 1
+    languageAnalysis <|.. javaScriptAnalysis : implements
     languageAnalysis "1" ..> "1" Source : method Analyze parameter 1
     languageDefinition "1" --> "1" Analysis : field newAnalysis; field validFlowEdge
     languageDefinition "1" --> "1" GenerateOptions : field generateStructure

@@ -13,6 +13,17 @@ type LanguageCapabilities struct {
 	GrammarFingerprint string
 }
 
+// ContentLanguageCapabilities describes parser-owned search and outline support.
+// Specialized is true for lightweight non-Tree-sitter implementations.
+type ContentLanguageCapabilities struct {
+	ID             string
+	Extensions     []string
+	StructuralGrep bool
+	Outline        bool
+	Navigation     bool
+	Specialized    bool
+}
+
 // GrammarCardinality describes whether one grammar position accepts one or
 // multiple syntax nodes. Unknown means the parent or position is not declared
 // in the pinned grammar's node-types metadata.
@@ -105,6 +116,23 @@ func SupportedLanguages() []LanguageCapabilities {
 		result[i] = enrichLanguageCapabilities(capability)
 	}
 	return result
+}
+
+// SupportedContentLanguages returns deterministic parser and lightweight content capabilities.
+func SupportedContentLanguages() []ContentLanguageCapabilities {
+	languages := make([]ContentLanguageCapabilities, 0, len(languageCapabilities)+4)
+	for _, capability := range SupportedLanguages() {
+		languages = append(languages, ContentLanguageCapabilities{
+			ID: capability.ID, Extensions: capability.Extensions, StructuralGrep: true, Outline: true, Navigation: capability.Navigation,
+		})
+	}
+	languages = append(languages,
+		ContentLanguageCapabilities{ID: "markdown", Extensions: []string{".md", ".markdown", ".mdown", ".mkd"}, StructuralGrep: true, Outline: true, Specialized: true},
+		ContentLanguageCapabilities{ID: "json", Extensions: []string{".json"}, Outline: true, Specialized: true},
+		ContentLanguageCapabilities{ID: "yaml", Extensions: []string{".yaml", ".yml"}, Outline: true, Specialized: true},
+		ContentLanguageCapabilities{ID: "text"},
+	)
+	return languages
 }
 
 // CapabilitiesForLanguage returns metadata for a canonical language ID.

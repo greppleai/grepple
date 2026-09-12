@@ -2,9 +2,9 @@ classDiagram
     %% grepple:package-default github.com/greppleai/grepple/parser
     %% grepple:language-default go
     direction LR
-    note "Package parser provides application source classification and structural parsing. | package github.com/greppleai/grepple/parser | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=28, declarations=46, exportedTypes=18, internalTypes=28, members=308, exportedFunctions=18, fiberRoutes=0, relations=128"
+    note "Package parser provides application source classification and structural parsing. | package github.com/greppleai/grepple/parser | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=28, declarations=47, exportedTypes=19, internalTypes=28, members=314, exportedFunctions=19, fiberRoutes=0, relations=129"
     namespace interfaces {
-        class languageAdapter["languageAdapter · parser/language.go:64-69"] {
+        class languageAdapter["languageAdapter · parser/language.go:75-80"] {
             +Grammar(): *sitter.Language
             +ID(): string
             +Outline(*sitter.Node, string): []Symbol
@@ -30,11 +30,13 @@ classDiagram
         <<struct>> Symbol
     }
     namespace exported_types {
+        class ContentLanguageCapabilities["ContentLanguageCapabilities · parser/language.go:18-25"]
+        <<struct>> ContentLanguageCapabilities
         class Document["Document · parser/document.go:40-46"]
         <<struct>> Document
         class DocumentView["DocumentView · parser/view.go:17-20"]
         <<struct>> DocumentView
-        class GrammarCardinality["GrammarCardinality = uint8 · parser/language.go:19"]
+        class GrammarCardinality["GrammarCardinality = uint8 · parser/language.go:30"]
         <<type>> GrammarCardinality
         class LanguageCapabilities["LanguageCapabilities · parser/language.go:8-14"]
         <<struct>> LanguageCapabilities
@@ -82,7 +84,7 @@ classDiagram
         <<struct>> javaScriptLanguage
         class kotlinLanguage["kotlinLanguage · parser/language_kotlin.go:10-13"]
         <<struct>> kotlinLanguage
-        class languageGeneratedMetadata["languageGeneratedMetadata · parser/language.go:29-34"]
+        class languageGeneratedMetadata["languageGeneratedMetadata · parser/language.go:40-45"]
         <<struct>> languageGeneratedMetadata
         class matchLines["matchLines · parser/tree_sitter.go:98-101"]
         <<struct>> matchLines
@@ -108,9 +110,9 @@ classDiagram
         <<struct>> rustLanguage
         class shellLanguage["shellLanguage · parser/language_shell.go:8-11"]
         <<struct>> shellLanguage
-        class stringSet["stringSet = map&#91;string&#93;struct&#123;&#125; · parser/language.go:36"]
+        class stringSet["stringSet = map&#91;string&#93;struct&#123;&#125; · parser/language.go:47"]
         <<type>> stringSet
-        class structureRules["structureRules · parser/language.go:51-62"]
+        class structureRules["structureRules · parser/language.go:62-73"]
         <<struct>> structureRules
         class typeScriptLanguage["typeScriptLanguage · parser/language_typescript.go:21-25"]
         <<struct>> typeScriptLanguage
@@ -128,7 +130,7 @@ classDiagram
             +BuildSegments(string, string, map[int]bool, int): []Segment
         }
         <<function>> BuildSegments
-        class CapabilitiesForLanguage["CapabilitiesForLanguage · parser/language.go:111-118"] {
+        class CapabilitiesForLanguage["CapabilitiesForLanguage · parser/language.go:139-146"] {
             +CapabilitiesForLanguage(string): tuple~LanguageCapabilities&#44;bool~
         }
         <<function>> CapabilitiesForLanguage
@@ -136,15 +138,15 @@ classDiagram
             +DeclarationRangeAt(string, string, int): tuple~int&#44;int&#44;bool~
         }
         <<function>> DeclarationRangeAt
-        class GrammarChildrenCardinality["GrammarChildrenCardinality · parser/language.go:141-147"] {
+        class GrammarChildrenCardinality["GrammarChildrenCardinality · parser/language.go:169-175"] {
             +GrammarChildrenCardinality(string, string): GrammarCardinality
         }
         <<function>> GrammarChildrenCardinality
-        class GrammarFieldCardinality["GrammarFieldCardinality · parser/language.go:132-138"] {
+        class GrammarFieldCardinality["GrammarFieldCardinality · parser/language.go:160-166"] {
             +GrammarFieldCardinality(string, string, string): GrammarCardinality
         }
         <<function>> GrammarFieldCardinality
-        class GrammarSubtype["GrammarSubtype · parser/language.go:151-154"] {
+        class GrammarSubtype["GrammarSubtype · parser/language.go:179-182"] {
             +GrammarSubtype(string, string, string): bool
         }
         <<function>> GrammarSubtype
@@ -176,7 +178,11 @@ classDiagram
             +ParseDocument(string, string): tuple~*Document&#44;error~
         }
         <<function>> ParseDocument
-        class SupportedLanguages["SupportedLanguages · parser/language.go:102-108"] {
+        class SupportedContentLanguages["SupportedContentLanguages · parser/language.go:122-136"] {
+            +SupportedContentLanguages(): []ContentLanguageCapabilities
+        }
+        <<function>> SupportedContentLanguages
+        class SupportedLanguages["SupportedLanguages · parser/language.go:113-119"] {
             +SupportedLanguages(): []LanguageCapabilities
         }
         <<function>> SupportedLanguages
@@ -221,6 +227,7 @@ classDiagram
     ParseDiagnostic "1" --> "1" Range : field Range
     ParseDocument "1" ..> "1" Document : result 1
     Range "1" --> "1" Position : field End; field Start
+    SupportedContentLanguages "1" ..> "*" ContentLanguageCapabilities : result 1
     SupportedLanguages "1" ..> "*" LanguageCapabilities : result 1
     SyntaxNode "1" --> "1" Range : field rng
     SyntaxNode "1" ..> "1" Range : method Range result 1

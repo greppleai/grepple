@@ -2,7 +2,7 @@ classDiagram
     %% grepple:package-default github.com/greppleai/grepple/internal/cli
     %% grepple:language-default go
     direction LR
-    note "Package cli implements Grepple's search, extraction, repository inspection, authentication, rules, and terminal/JSON presentation workflows. | package github.com/greppleai/grepple/internal/cli | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=30, declarations=36, exportedTypes=0, internalTypes=36, members=224, exportedFunctions=3, fiberRoutes=0, relations=23"
+    note "Package cli implements Grepple's search, extraction, repository inspection, authentication, rules, and terminal/JSON presentation workflows. | package github.com/greppleai/grepple/internal/cli | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=31, declarations=37, exportedTypes=0, internalTypes=37, members=227, exportedFunctions=3, fiberRoutes=0, relations=23"
     namespace interfaces {
         class resultRenderer["resultRenderer · internal/cli/renderer.go:9-11"] {
             +Render([]api.FileResult): error
@@ -134,6 +134,11 @@ classDiagram
             +Workers: int
         }
         <<struct>> gritArgs
+        class languagesArgs["languagesArgs · internal/cli/languages.go:19-22"] {
+            +JSON: bool
+            +Markdown: bool
+        }
+        <<struct>> languagesArgs
         class loginConfig["loginConfig · internal/cli/login.go:177-180"] {
             +ClientID: string
             +Scopes: string
@@ -258,7 +263,7 @@ classDiagram
             +RenderOutlineOrContent(parser.FileOutline, string): string
         }
         <<function>> RenderOutlineOrContent
-        class Run["Run · internal/cli/args.go:341-367"] {
+        class Run["Run · internal/cli/args.go:341-369"] {
             +Run([]string): error
         }
         <<function>> Run

@@ -16,16 +16,16 @@
     "syntacticBuildTagUnion": []
   },
   "summary": {
-    "sourceFiles": 30,
-    "declarations": 36,
+    "sourceFiles": 31,
+    "declarations": 37,
     "exportedTypes": 0,
-    "internalTypes": 36,
-    "members": 224,
+    "internalTypes": 37,
+    "members": 227,
     "exportedFunctions": 3,
     "fiberRoutes": 0,
     "relations": 23
   },
-  "semanticModelDigest": "sha256:468e384ea4f223bd1ab5a1fbda1f7f70569b8b4521d726ec6fb62f55e378fe2d",
+  "semanticModelDigest": "sha256:e87a61c1058d8edc0194cd54e0c9f5e97fa00da3a75e846d2c3b2d77265b25f7",
   "sourceFiles": [
     {
       "path": "internal/cli/anchors.go"
@@ -59,6 +59,9 @@
     },
     {
       "path": "internal/cli/grit_remote.go"
+    },
+    {
+      "path": "internal/cli/languages.go"
     },
     {
       "path": "internal/cli/local.go"
@@ -1434,6 +1437,43 @@
       ]
     },
     {
+      "name": "languagesArgs",
+      "kind": "struct",
+      "file": "internal/cli/languages.go",
+      "line": 19,
+      "endLine": 22,
+      "underlyingType": "struct{JSON bool`arg:\"--json\" help:\"print the complete capability matrix as JSON\"`;Markdown bool`arg:\"--markdown\" help:\"print the generated documentation table\"`;}",
+      "members": [
+        {
+          "name": "Description",
+          "kind": "method",
+          "line": 24,
+          "endLine": 26,
+          "result": "string"
+        },
+        {
+          "name": "JSON",
+          "kind": "property",
+          "line": 20,
+          "endLine": 20,
+          "result": "bool",
+          "structTag": {
+            "value": "arg:\"--json\" help:\"print the complete capability matrix as JSON\""
+          }
+        },
+        {
+          "name": "Markdown",
+          "kind": "property",
+          "line": 21,
+          "endLine": 21,
+          "result": "bool",
+          "structTag": {
+            "value": "arg:\"--markdown\" help:\"print the generated documentation table\""
+          }
+        }
+      ]
+    },
+    {
       "name": "limitedAnchorBuffer",
       "kind": "struct",
       "file": "internal/cli/anchors.go",
@@ -2606,7 +2646,7 @@
       "kind": "function",
       "file": "internal/cli/args.go",
       "line": 341,
-      "endLine": 367,
+      "endLine": 369,
       "parameters": [
         "[]string"
       ],

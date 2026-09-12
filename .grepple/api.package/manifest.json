@@ -16,19 +16,22 @@
     "syntacticBuildTagUnion": []
   },
   "summary": {
-    "sourceFiles": 2,
-    "declarations": 29,
-    "exportedTypes": 29,
+    "sourceFiles": 3,
+    "declarations": 31,
+    "exportedTypes": 31,
     "internalTypes": 0,
-    "members": 181,
+    "members": 192,
     "exportedFunctions": 0,
     "fiberRoutes": 0,
-    "relations": 28
+    "relations": 37
   },
-  "semanticModelDigest": "sha256:d54b45f7d5739c9218047570e4be4de7938e1f64e44749e7401a8e068ee0e50e",
+  "semanticModelDigest": "sha256:6f47383c26d14a5fef8381e192becfd27671a389fc2afdbd7897515ebf002faa",
   "sourceFiles": [
     {
       "path": "api/grit.go"
+    },
+    {
+      "path": "api/language.go"
     },
     {
       "path": "api/model.go"
@@ -74,6 +77,14 @@
           }
         }
       ]
+    },
+    {
+      "name": "FeatureSupport",
+      "kind": "type",
+      "file": "api/language.go",
+      "line": 5,
+      "endLine": 5,
+      "underlyingType": "string"
     },
     {
       "name": "FileResult",
@@ -1216,6 +1227,126 @@
       ]
     },
     {
+      "name": "LanguageCapabilities",
+      "kind": "struct",
+      "file": "api/language.go",
+      "line": 19,
+      "endLine": 31,
+      "underlyingType": "struct{Language string`json:\"language\"`;Extensions[]string`json:\"extensions\"`;TextGrep FeatureSupport`json:\"textGrep\"`;StructuralGrep FeatureSupport`json:\"structuralGrep\"`;Outline FeatureSupport`json:\"outline\"`;Navigation FeatureSupport`json:\"navigation\"`;FocusedStructure FeatureSupport`json:\"focusedStructure\"`;FocusedFlow FeatureSupport`json:\"focusedFlow\"`;GritQL FeatureSupport`json:\"gritql\"`;PackageBundle FeatureSupport`json:\"packageBundle\"`;WorkspaceBundle FeatureSupport`json:\"workspaceBundle\"`;}",
+      "members": [
+        {
+          "name": "Extensions",
+          "kind": "property",
+          "line": 21,
+          "endLine": 21,
+          "result": "[]string",
+          "structTag": {
+            "value": "json:\"extensions\""
+          }
+        },
+        {
+          "name": "FocusedFlow",
+          "kind": "property",
+          "line": 27,
+          "endLine": 27,
+          "result": "FeatureSupport",
+          "structTag": {
+            "value": "json:\"focusedFlow\""
+          }
+        },
+        {
+          "name": "FocusedStructure",
+          "kind": "property",
+          "line": 26,
+          "endLine": 26,
+          "result": "FeatureSupport",
+          "structTag": {
+            "value": "json:\"focusedStructure\""
+          }
+        },
+        {
+          "name": "GritQL",
+          "kind": "property",
+          "line": 28,
+          "endLine": 28,
+          "result": "FeatureSupport",
+          "structTag": {
+            "value": "json:\"gritql\""
+          }
+        },
+        {
+          "name": "Language",
+          "kind": "property",
+          "line": 20,
+          "endLine": 20,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"language\""
+          }
+        },
+        {
+          "name": "Navigation",
+          "kind": "property",
+          "line": 25,
+          "endLine": 25,
+          "result": "FeatureSupport",
+          "structTag": {
+            "value": "json:\"navigation\""
+          }
+        },
+        {
+          "name": "Outline",
+          "kind": "property",
+          "line": 24,
+          "endLine": 24,
+          "result": "FeatureSupport",
+          "structTag": {
+            "value": "json:\"outline\""
+          }
+        },
+        {
+          "name": "PackageBundle",
+          "kind": "property",
+          "line": 29,
+          "endLine": 29,
+          "result": "FeatureSupport",
+          "structTag": {
+            "value": "json:\"packageBundle\""
+          }
+        },
+        {
+          "name": "StructuralGrep",
+          "kind": "property",
+          "line": 23,
+          "endLine": 23,
+          "result": "FeatureSupport",
+          "structTag": {
+            "value": "json:\"structuralGrep\""
+          }
+        },
+        {
+          "name": "TextGrep",
+          "kind": "property",
+          "line": 22,
+          "endLine": 22,
+          "result": "FeatureSupport",
+          "structTag": {
+            "value": "json:\"textGrep\""
+          }
+        },
+        {
+          "name": "WorkspaceBundle",
+          "kind": "property",
+          "line": 30,
+          "endLine": 30,
+          "result": "FeatureSupport",
+          "structTag": {
+            "value": "json:\"workspaceBundle\""
+          }
+        }
+      ]
+    },
+    {
       "name": "RelatedSymbol",
       "kind": "struct",
       "file": "api/model.go",
@@ -2271,6 +2402,69 @@
       "kind": "association",
       "via": "field Truncations",
       "cardinality": "many"
+    },
+    {
+      "from": "LanguageCapabilities",
+      "to": "FeatureSupport",
+      "kind": "association",
+      "via": "field FocusedFlow",
+      "cardinality": "one"
+    },
+    {
+      "from": "LanguageCapabilities",
+      "to": "FeatureSupport",
+      "kind": "association",
+      "via": "field FocusedStructure",
+      "cardinality": "one"
+    },
+    {
+      "from": "LanguageCapabilities",
+      "to": "FeatureSupport",
+      "kind": "association",
+      "via": "field GritQL",
+      "cardinality": "one"
+    },
+    {
+      "from": "LanguageCapabilities",
+      "to": "FeatureSupport",
+      "kind": "association",
+      "via": "field Navigation",
+      "cardinality": "one"
+    },
+    {
+      "from": "LanguageCapabilities",
+      "to": "FeatureSupport",
+      "kind": "association",
+      "via": "field Outline",
+      "cardinality": "one"
+    },
+    {
+      "from": "LanguageCapabilities",
+      "to": "FeatureSupport",
+      "kind": "association",
+      "via": "field PackageBundle",
+      "cardinality": "one"
+    },
+    {
+      "from": "LanguageCapabilities",
+      "to": "FeatureSupport",
+      "kind": "association",
+      "via": "field StructuralGrep",
+      "cardinality": "one"
+    },
+    {
+      "from": "LanguageCapabilities",
+      "to": "FeatureSupport",
+      "kind": "association",
+      "via": "field TextGrep",
+      "cardinality": "one"
+    },
+    {
+      "from": "LanguageCapabilities",
+      "to": "FeatureSupport",
+      "kind": "association",
+      "via": "field WorkspaceBundle",
+      "cardinality": "one"
     },
     {
       "from": "RelatedSymbol",

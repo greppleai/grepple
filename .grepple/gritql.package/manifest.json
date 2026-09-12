@@ -17,15 +17,15 @@
   },
   "summary": {
     "sourceFiles": 14,
-    "declarations": 117,
-    "exportedTypes": 48,
+    "declarations": 118,
+    "exportedTypes": 49,
     "internalTypes": 69,
-    "members": 621,
-    "exportedFunctions": 17,
+    "members": 624,
+    "exportedFunctions": 18,
     "fiberRoutes": 0,
-    "relations": 317
+    "relations": 318
   },
-  "semanticModelDigest": "sha256:941e6c675ae8be625fc3a46873a28a7d3e867da66443a7ed0445f5a47d835b54",
+  "semanticModelDigest": "sha256:8e2d5670018bdaf9db3dc1cf1b9b32377f0b85be116e0974e6dbbf2d4326c9c6",
   "sourceFiles": [
     {
       "path": "gritql/anchor.go"
@@ -1457,6 +1457,37 @@
           "kind": "method",
           "line": 101,
           "endLine": 107,
+          "result": "string"
+        }
+      ]
+    },
+    {
+      "name": "LanguageCapabilities",
+      "kind": "struct",
+      "file": "gritql/language.go",
+      "line": 20,
+      "endLine": 24,
+      "underlyingType": "struct{ID string;Grammar string;TreeSitter string;}",
+      "members": [
+        {
+          "name": "Grammar",
+          "kind": "property",
+          "line": 22,
+          "endLine": 22,
+          "result": "string"
+        },
+        {
+          "name": "ID",
+          "kind": "property",
+          "line": 21,
+          "endLine": 21,
+          "result": "string"
+        },
+        {
+          "name": "TreeSitter",
+          "kind": "property",
+          "line": 23,
+          "endLine": 23,
           "result": "string"
         }
       ]
@@ -5207,64 +5238,64 @@
       "name": "targetLanguageAdapter",
       "kind": "struct",
       "file": "gritql/language.go",
-      "line": 15,
-      "endLine": 24,
+      "line": 38,
+      "endLine": 47,
       "underlyingType": "struct{id string;grammar string;treeSitter string;metadataLanguage string;metadataGrammar string;goGrammar string;compileTemplates func(decodedSnippet,int)([]Template,string,error);rootCategory func(SnippetContext,string)bool;}",
       "members": [
         {
           "name": "compileTemplates",
           "kind": "property",
-          "line": 22,
-          "endLine": 22,
+          "line": 45,
+          "endLine": 45,
           "result": "func(decodedSnippet,int)([]Template,string,error)"
         },
         {
           "name": "goGrammar",
           "kind": "property",
-          "line": 21,
-          "endLine": 21,
+          "line": 44,
+          "endLine": 44,
           "result": "string"
         },
         {
           "name": "grammar",
           "kind": "property",
-          "line": 17,
-          "endLine": 17,
+          "line": 40,
+          "endLine": 40,
           "result": "string"
         },
         {
           "name": "id",
           "kind": "property",
-          "line": 16,
-          "endLine": 16,
+          "line": 39,
+          "endLine": 39,
           "result": "string"
         },
         {
           "name": "metadataGrammar",
           "kind": "property",
-          "line": 20,
-          "endLine": 20,
+          "line": 43,
+          "endLine": 43,
           "result": "string"
         },
         {
           "name": "metadataLanguage",
           "kind": "property",
-          "line": 19,
-          "endLine": 19,
+          "line": 42,
+          "endLine": 42,
           "result": "string"
         },
         {
           "name": "rootCategory",
           "kind": "property",
-          "line": 23,
-          "endLine": 23,
+          "line": 46,
+          "endLine": 46,
           "result": "func(SnippetContext,string)bool"
         },
         {
           "name": "treeSitter",
           "kind": "property",
-          "line": 18,
-          "endLine": 18,
+          "line": 41,
+          "endLine": 41,
           "result": "string"
         }
       ]
@@ -6110,6 +6141,14 @@
       "result": "MatchTarget"
     },
     {
+      "name": "SupportedLanguages",
+      "kind": "function",
+      "file": "gritql/language.go",
+      "line": 27,
+      "endLine": 34,
+      "result": "[]LanguageCapabilities"
+    },
+    {
       "name": "ValidateGlobs",
       "kind": "function",
       "file": "gritql/scanner.go",
@@ -6949,6 +6988,13 @@
       "kind": "association",
       "via": "field node",
       "cardinality": "one"
+    },
+    {
+      "from": "SupportedLanguages",
+      "to": "LanguageCapabilities",
+      "kind": "dependency",
+      "via": "result 1",
+      "cardinality": "many"
     },
     {
       "from": "Template",

@@ -17,15 +17,15 @@
   },
   "summary": {
     "sourceFiles": 28,
-    "declarations": 46,
-    "exportedTypes": 18,
+    "declarations": 47,
+    "exportedTypes": 19,
     "internalTypes": 28,
-    "members": 308,
-    "exportedFunctions": 18,
+    "members": 314,
+    "exportedFunctions": 19,
     "fiberRoutes": 0,
-    "relations": 128
+    "relations": 129
   },
-  "semanticModelDigest": "sha256:fb5028c295664b02bb6254e192cbfad22df74a55c301df15a92c06b4b793544b",
+  "semanticModelDigest": "sha256:663a19302770ce46b1dbd25127fa77f279f81ff60c1a021b1c2c490fa3681fa8",
   "sourceFiles": [
     {
       "path": "parser/analyze.go"
@@ -113,6 +113,58 @@
     }
   ],
   "declarations": [
+    {
+      "name": "ContentLanguageCapabilities",
+      "kind": "struct",
+      "file": "parser/language.go",
+      "line": 18,
+      "endLine": 25,
+      "underlyingType": "struct{ID string;Extensions[]string;StructuralGrep bool;Outline bool;Navigation bool;Specialized bool;}",
+      "members": [
+        {
+          "name": "Extensions",
+          "kind": "property",
+          "line": 20,
+          "endLine": 20,
+          "result": "[]string"
+        },
+        {
+          "name": "ID",
+          "kind": "property",
+          "line": 19,
+          "endLine": 19,
+          "result": "string"
+        },
+        {
+          "name": "Navigation",
+          "kind": "property",
+          "line": 23,
+          "endLine": 23,
+          "result": "bool"
+        },
+        {
+          "name": "Outline",
+          "kind": "property",
+          "line": 22,
+          "endLine": 22,
+          "result": "bool"
+        },
+        {
+          "name": "Specialized",
+          "kind": "property",
+          "line": 24,
+          "endLine": 24,
+          "result": "bool"
+        },
+        {
+          "name": "StructuralGrep",
+          "kind": "property",
+          "line": 21,
+          "endLine": 21,
+          "result": "bool"
+        }
+      ]
+    },
     {
       "name": "Document",
       "kind": "struct",
@@ -322,8 +374,8 @@
       "name": "GrammarCardinality",
       "kind": "type",
       "file": "parser/language.go",
-      "line": 19,
-      "endLine": 19,
+      "line": 30,
+      "endLine": 30,
       "underlyingType": "uint8"
     },
     {
@@ -1965,29 +2017,29 @@
       "name": "languageAdapter",
       "kind": "interface",
       "file": "parser/language.go",
-      "line": 64,
-      "endLine": 69,
+      "line": 75,
+      "endLine": 80,
       "underlyingType": "interface{ID()string;Grammar()*sitter.Language;Rules()*structureRules;Outline(root*sitter.Node,content string)[]Symbol;}",
       "members": [
         {
           "name": "Grammar",
           "kind": "method",
-          "line": 66,
-          "endLine": 66,
+          "line": 77,
+          "endLine": 77,
           "result": "*sitter.Language"
         },
         {
           "name": "ID",
           "kind": "method",
-          "line": 65,
-          "endLine": 65,
+          "line": 76,
+          "endLine": 76,
           "result": "string"
         },
         {
           "name": "Outline",
           "kind": "method",
-          "line": 68,
-          "endLine": 68,
+          "line": 79,
+          "endLine": 79,
           "parameters": [
             "*sitter.Node",
             "string"
@@ -1997,8 +2049,8 @@
         {
           "name": "Rules",
           "kind": "method",
-          "line": 67,
-          "endLine": 67,
+          "line": 78,
+          "endLine": 78,
           "result": "*structureRules"
         }
       ]
@@ -2007,36 +2059,36 @@
       "name": "languageGeneratedMetadata",
       "kind": "struct",
       "file": "parser/language.go",
-      "line": 29,
-      "endLine": 34,
+      "line": 40,
+      "endLine": 45,
       "underlyingType": "struct{fingerprint string;fields map[string]map[string]GrammarCardinality;children map[string]GrammarCardinality;subtypes map[string]map[string]bool;}",
       "members": [
         {
           "name": "children",
           "kind": "property",
-          "line": 32,
-          "endLine": 32,
+          "line": 43,
+          "endLine": 43,
           "result": "map[string]GrammarCardinality"
         },
         {
           "name": "fields",
           "kind": "property",
-          "line": 31,
-          "endLine": 31,
+          "line": 42,
+          "endLine": 42,
           "result": "map[string]map[string]GrammarCardinality"
         },
         {
           "name": "fingerprint",
           "kind": "property",
-          "line": 30,
-          "endLine": 30,
+          "line": 41,
+          "endLine": 41,
           "result": "string"
         },
         {
           "name": "subtypes",
           "kind": "property",
-          "line": 33,
-          "endLine": 33,
+          "line": 44,
+          "endLine": 44,
           "result": "map[string]map[string]bool"
         }
       ]
@@ -2699,15 +2751,15 @@
       "name": "stringSet",
       "kind": "type",
       "file": "parser/language.go",
-      "line": 36,
-      "endLine": 36,
+      "line": 47,
+      "endLine": 47,
       "underlyingType": "map[string]struct{}",
       "members": [
         {
           "name": "contains",
           "kind": "method",
-          "line": 46,
-          "endLine": 49,
+          "line": 57,
+          "endLine": 60,
           "parameters": [
             "string"
           ],
@@ -2719,78 +2771,78 @@
       "name": "structureRules",
       "kind": "struct",
       "file": "parser/language.go",
-      "line": 51,
-      "endLine": 62,
+      "line": 62,
+      "endLine": 73,
       "underlyingType": "struct{structuralTypes stringSet;contextTypes stringSet;containerTypes stringSet;classDeclarationTypes stringSet;classBodyTypes stringSet;exportTypes stringSet;functionLikeTypes stringSet;blockTypes stringSet;jsxElementTypes stringSet;nameFieldCandidates stringSet;}",
       "members": [
         {
           "name": "blockTypes",
           "kind": "property",
-          "line": 59,
-          "endLine": 59,
+          "line": 70,
+          "endLine": 70,
           "result": "stringSet"
         },
         {
           "name": "classBodyTypes",
           "kind": "property",
-          "line": 56,
-          "endLine": 56,
+          "line": 67,
+          "endLine": 67,
           "result": "stringSet"
         },
         {
           "name": "classDeclarationTypes",
           "kind": "property",
-          "line": 55,
-          "endLine": 55,
+          "line": 66,
+          "endLine": 66,
           "result": "stringSet"
         },
         {
           "name": "containerTypes",
           "kind": "property",
-          "line": 54,
-          "endLine": 54,
+          "line": 65,
+          "endLine": 65,
           "result": "stringSet"
         },
         {
           "name": "contextTypes",
           "kind": "property",
-          "line": 53,
-          "endLine": 53,
+          "line": 64,
+          "endLine": 64,
           "result": "stringSet"
         },
         {
           "name": "exportTypes",
           "kind": "property",
-          "line": 57,
-          "endLine": 57,
+          "line": 68,
+          "endLine": 68,
           "result": "stringSet"
         },
         {
           "name": "functionLikeTypes",
           "kind": "property",
-          "line": 58,
-          "endLine": 58,
+          "line": 69,
+          "endLine": 69,
           "result": "stringSet"
         },
         {
           "name": "jsxElementTypes",
           "kind": "property",
-          "line": 60,
-          "endLine": 60,
+          "line": 71,
+          "endLine": 71,
           "result": "stringSet"
         },
         {
           "name": "nameFieldCandidates",
           "kind": "property",
-          "line": 61,
-          "endLine": 61,
+          "line": 72,
+          "endLine": 72,
           "result": "stringSet"
         },
         {
           "name": "structuralTypes",
           "kind": "property",
-          "line": 52,
-          "endLine": 52,
+          "line": 63,
+          "endLine": 63,
           "result": "stringSet"
         }
       ]
@@ -2939,8 +2991,8 @@
       "name": "CapabilitiesForLanguage",
       "kind": "function",
       "file": "parser/language.go",
-      "line": 111,
-      "endLine": 118,
+      "line": 139,
+      "endLine": 146,
       "parameters": [
         "string"
       ],
@@ -2963,8 +3015,8 @@
       "name": "GrammarChildrenCardinality",
       "kind": "function",
       "file": "parser/language.go",
-      "line": 141,
-      "endLine": 147,
+      "line": 169,
+      "endLine": 175,
       "parameters": [
         "string",
         "string"
@@ -2975,8 +3027,8 @@
       "name": "GrammarFieldCardinality",
       "kind": "function",
       "file": "parser/language.go",
-      "line": 132,
-      "endLine": 138,
+      "line": 160,
+      "endLine": 166,
       "parameters": [
         "string",
         "string",
@@ -2988,8 +3040,8 @@
       "name": "GrammarSubtype",
       "kind": "function",
       "file": "parser/language.go",
-      "line": 151,
-      "endLine": 154,
+      "line": 179,
+      "endLine": 182,
       "parameters": [
         "string",
         "string",
@@ -3084,11 +3136,19 @@
       "result": "tuple\u003c*Document,error\u003e"
     },
     {
+      "name": "SupportedContentLanguages",
+      "kind": "function",
+      "file": "parser/language.go",
+      "line": 122,
+      "endLine": 136,
+      "result": "[]ContentLanguageCapabilities"
+    },
+    {
       "name": "SupportedLanguages",
       "kind": "function",
       "file": "parser/language.go",
-      "line": 102,
-      "endLine": 108,
+      "line": 113,
+      "endLine": 119,
       "result": "[]LanguageCapabilities"
     },
     {
@@ -3345,6 +3405,13 @@
       "kind": "association",
       "via": "field Start",
       "cardinality": "one"
+    },
+    {
+      "from": "SupportedContentLanguages",
+      "to": "ContentLanguageCapabilities",
+      "kind": "dependency",
+      "via": "result 1",
+      "cardinality": "many"
     },
     {
       "from": "SupportedLanguages",

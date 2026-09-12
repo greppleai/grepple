@@ -2,7 +2,7 @@ classDiagram
     %% grepple:package-default github.com/greppleai/grepple/api
     %% grepple:language-default go
     direction LR
-    note "Package api defines Grepple-controlled HTTP request and response contracts. | package github.com/greppleai/grepple/api | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=2, declarations=29, exportedTypes=29, internalTypes=0, members=181, exportedFunctions=0, fiberRoutes=0, relations=28"
+    note "Package api defines Grepple-controlled HTTP request and response contracts. | package github.com/greppleai/grepple/api | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=3, declarations=31, exportedTypes=31, internalTypes=0, members=192, exportedFunctions=0, fiberRoutes=0, relations=37"
     namespace data_contracts {
         class ContextLine["ContextLine · api/model.go:47-51"] {
             +Line: int
@@ -152,6 +152,20 @@ classDiagram
             +Skipped: int
         }
         <<struct>> GritTruncation
+        class LanguageCapabilities["LanguageCapabilities · api/language.go:19-31"] {
+            +Extensions: []string
+            +FocusedFlow: FeatureSupport
+            +FocusedStructure: FeatureSupport
+            +GritQL: FeatureSupport
+            +Language: string
+            +Navigation: FeatureSupport
+            +Outline: FeatureSupport
+            +PackageBundle: FeatureSupport
+            +StructuralGrep: FeatureSupport
+            +TextGrep: FeatureSupport
+            +WorkspaceBundle: FeatureSupport
+        }
+        <<struct>> LanguageCapabilities
         class RelatedSymbol["RelatedSymbol · api/model.go:59-70"] {
             +CallLine: int
             +Confidence: string
@@ -273,6 +287,10 @@ classDiagram
         }
         <<struct>> TreeResponse
     }
+    namespace exported_types {
+        class FeatureSupport["FeatureSupport = string · api/language.go:5"]
+        <<type>> FeatureSupport
+    }
     FileResult "1" --> "*" ContextLine : field Context
     FileResult "1" --> "*" RelatedSymbol : field Related
     FileResult "1" --> "*" ResultMatch : field Matches
@@ -291,6 +309,7 @@ classDiagram
     GritResponse "1" --> "1" GritMetadata : field Metadata
     GritResponse "1" --> "1" GritStatistics : field Statistics
     GritResponse "1" --> "*" GritTruncation : field Truncations
+    LanguageCapabilities "1" --> "1" FeatureSupport : field=9
     RelatedSymbol "1" --> "*" ResultSegment : field Segments
     ReposResponse "1" --> "*" RepoListEntry : field Repos
     Rule "1" --> "1" GritRequest : field Structural

@@ -15,7 +15,10 @@ type goAnalysis struct {
 
 func goLanguageDefinition() *languageDefinition {
 	return &languageDefinition{
-		info:          Language{ID: "go", Extensions: parserLanguageExtensions("go")},
+		info: Language{
+			ID: "go", Extensions: parserLanguageExtensions("go"),
+			FocusedStructure: true, FocusedFlow: true, PackageBundle: true, WorkspaceBundle: true,
+		},
 		acceptsSource: isGoSourceFile,
 		acceptsInput: func(path string, explicit bool) (bool, error) {
 			if !isGeneratedGoFile(path) {

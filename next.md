@@ -4,7 +4,7 @@ Grepple should stabilize for one or two iterations before adding more languages.
 
 ## Recommended next milestone
 
-> Expand the usable graph feature set with programmatic output, compact views, queries, and diffs; improve resolution completeness when real workflows expose a blocking ambiguity.
+> Make support across the existing language set explicit and close the highest-value parity gaps, starting with JavaScript/JSX reuse of the TypeScript extraction and GritQL infrastructure; continue graph output work after that baseline is coherent.
 
 ## Feature set versus feature completeness
 
@@ -33,7 +33,7 @@ Treat these as separate planning dimensions:
 - Larger diagrams are dominated by validation metadata when viewed as plain text.
 - Agent edit anchors are provider-specific, not generic line hashes. Grepple delegates through a user-owned, versioned batch provider and keeps editing-harness adapters out of the shipped repository.
 - Explicit Go and TypeScript imports, direct parameters/receivers, source-ordered lexical bindings, local and imported return signatures, and same-file typed field chains now resolve before terminal-name fallback. Cross-file field chains, embedded/promoted methods, re-exports, and default imports still need richer propagation.
-- Architecture extraction remains richer for Go than TypeScript and other languages.
+- Architecture extraction and native GritQL remain narrower than parser-backed segments, outlines, and navigation. JavaScript/JSX is the clearest next parity target because it can reuse the existing ECMAScript and TypeScript-family infrastructure without adding another grammar.
 - Cross-language fixtures prove the baseline but do not yet cover enough malformed, nested, generic, decorated, or multiline syntax.
 - Canonical mismatch errors identify the artifact but should eventually report the first semantic difference.
 
@@ -209,21 +209,23 @@ Reduce repeated parsing and language knowledge across extraction, navigation, te
    - [x] Reuse `search.ListFilePathsContext` for cancellable repository-relative discovery, ignore handling, globs, and deterministic ordering, then perform language filtering, bounded acquisition, binary detection, cancellation, and evaluation in the reusable Grit scanner.
    - [x] Evaluate mandatory anchors inside the bounded Grit acquisition pass, so local structural search reads every scoped source at most once and parses only anchor-selected files. Mixed-rule batches prefilter independently per program before their shared parse.
    - [x] Keep evaluation orchestration reusable by local CLI and backend callers without making `gritql` depend on `search`; preacquired callers may still provide `ScanCandidate.Content` without bypassing scanner checks.
-6. Make parser documents the shared cache boundary.
-   - Allow a document to be backed by a live Tree-sitter tree or the production packed read-only CST through the same lightweight node accessor.
-   - Parse or restore each file once, then derive outlines, navigation graphs, extraction models, and one or more GritQL rule evaluations from that document.
-   - Keep repository-context resolution outside the path-neutral per-file cache.
+6. Unify feature support across the existing language set.
+   - [x] Add one deterministic, machine-readable capability view (and a concise CLI presentation) for each parser-owned language ID: extensions, segments, outlines, navigation, focused structure/flow, native GritQL, and canonical bundle support. `grepple languages`, `--json`, and generated Markdown now derive from parser, extraction, and GritQL registrations. Feature implementations remain owned by their packages; language identity and grammar metadata remain owned by `parser`.
+   - [x] Add JavaScript/JSX to the unified `gritql-v1` contract by reusing the TypeScript-family adapter where grammar behavior agrees, with dedicated conformance fixtures for declarations, expressions, imports, JSX, sequences, containment, bindings, malformed source, and repeated positions.
+   - [x] Add JavaScript/JSX focused structure and flow extraction through the shared navigation graph and ECMAScript analysis helpers. Canonical package/workspace bundles remain Go-specific.
+   - [x] Add cross-feature parity tests proving advertised capabilities are implemented and that unsupported combinations fail explicitly rather than silently falling back. Registration parity, generated documentation drift, JavaScript/JSX CLI/conformance, malformed-source, extraction round-trip, and unsupported-language tests cover the matrix.
+   - [x] Select the next existing-language gap from the matrix: add Python GritQL first, because it extends the reusable structural matcher with a bounded language adapter while Python-focused architecture extraction needs a separate semantic projection. Reassess extraction after Python query conformance and dogfooding; consider Java and Rust afterward.
 
-Recommended implementation order: address targeted TypeScript/TSX placeholder-role gaps as conformance cases expose them, then proceed to cached document backends. Exercising a second grammar before shared acquisition and caching stabilized prevented Go-only assumptions from becoming lower-layer contracts.
+Recommended implementation order: capability matrix and CLI discovery, JavaScript/JSX GritQL, JavaScript/JSX focused extraction, then the next parity target selected from dogfooding. Address TypeScript/TSX placeholder-role gaps only when conformance cases expose them.
 
 Acceptance criteria:
 
 - No feature outside `parser` constructs a parser for supported application source directly; parsing the GritQL query language itself remains an intentional exception.
-- One parsed/restored document can feed extraction, navigation, outline, and multiple structural rules without reparsing.
+- Every advertised language/feature combination has parity coverage, and unsupported combinations fail explicitly without parser or text fallback.
 - Language IDs, extensions, grammar fingerprints, and grammar-derived cardinality have one canonical owner.
 - Anchored local Grit scans do not reread selected source files solely because text prefiltering and structural evaluation use separate pipelines.
 - Existing graph, extraction, GritQL conformance, deterministic-ordering, malformed-source, race, and schema parity tests remain green.
-- Benchmarks demonstrate fewer parse invocations and source reads; do not accept a package move that only relocates code without reducing duplicate work.
+- JavaScript/JSX reuse shared parser and ECMAScript infrastructure; parity work must not introduce duplicate grammar selection or direct application-source parser construction.
 
 Non-goals: the generated GritQL grammar, GritQL compiler, metavariable matcher, containment operators, binding equality, and query/source range domains should not be folded into `parser`. The generated Grit parser handles the query language, not application source, and its size is not duplicate target-language parsing.
 
@@ -251,6 +253,12 @@ Before expanding scope, require:
 - [ ] Offer normalized JSON graph output for agent and tool consumption.
 - [ ] Report the first semantic architecture difference instead of only naming the differing artifact.
 
+## Future optimizations
+
+- Make parser documents the shared cache boundary: allow a document to use either a live Tree-sitter tree or a versioned packed read-only CST through one lightweight node accessor.
+- Parse or restore each file once, then derive outlines, navigation graphs, extraction models, and multiple GritQL evaluations from that document.
+- Keep packed per-file facts path-neutral and resolve repository context after loading. Invalidate by source digest, language, grammar fingerprint/ABI, schema, and parser/extractor version.
+
 ## Language expansion afterward
 
-Resume the language roadmap only after baseline hardening and graph parity are complete. Swift, Ruby, PHP, and other new adapters should use the shared normalized graph and satisfy the existing definition of done.
+Add new grammars only after capability reporting and parity work make the current support levels explicit. Swift, Ruby, PHP, and other new adapters should use the shared normalized graph and satisfy the existing definition of done.

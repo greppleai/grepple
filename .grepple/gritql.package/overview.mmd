@@ -2,7 +2,7 @@ classDiagram
     %% grepple:package-default github.com/greppleai/grepple/gritql
     %% grepple:language-default go
     direction LR
-    note "Package gritql implements Grepple's native, read-only structural-search compiler, matcher, evaluator, and bounded scanner. | package github.com/greppleai/grepple/gritql | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=14, declarations=117, exportedTypes=48, internalTypes=69, members=621, exportedFunctions=17, fiberRoutes=0, relations=317"
+    note "Package gritql implements Grepple's native, read-only structural-search compiler, matcher, evaluator, and bounded scanner. | package github.com/greppleai/grepple/gritql | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=14, declarations=118, exportedTypes=49, internalTypes=69, members=624, exportedFunctions=18, fiberRoutes=0, relations=318"
     namespace data_contracts {
         class EffectiveLimits["EffectiveLimits · gritql/finding.go:52-64"] {
             +ASTSteps: int
@@ -122,6 +122,8 @@ classDiagram
         <<struct>> FindingBinding
         class Kind["Kind = uint8 · gritql/compiler.go:86"]
         <<type>> Kind
+        class LanguageCapabilities["LanguageCapabilities · gritql/language.go:20-24"]
+        <<struct>> LanguageCapabilities
         class LanguageDeclaration["LanguageDeclaration · gritql/compiler.go:256-259"]
         <<struct>> LanguageDeclaration
         class MatchResult["MatchResult · gritql/matcher.go:262-265"]
@@ -280,7 +282,7 @@ classDiagram
         <<struct>> spanKey
         class structuralSeparators["structuralSeparators · gritql/template.go:231-234"]
         <<struct>> structuralSeparators
-        class targetLanguageAdapter["targetLanguageAdapter · gritql/language.go:15-24"]
+        class targetLanguageAdapter["targetLanguageAdapter · gritql/language.go:38-47"]
         <<struct>> targetLanguageAdapter
         class templateChild["templateChild · gritql/template.go:47-51"]
         <<struct>> templateChild
@@ -366,6 +368,10 @@ classDiagram
             +SequenceTarget(string, parser.Node, int, int): MatchTarget
         }
         <<function>> SequenceTarget
+        class SupportedLanguages["SupportedLanguages · gritql/language.go:27-34"] {
+            +SupportedLanguages(): []LanguageCapabilities
+        }
+        <<function>> SupportedLanguages
         class ValidateGlobs["ValidateGlobs · gritql/scanner.go:773-778"] {
             +ValidateGlobs([]string, []string): error
         }
@@ -487,6 +493,7 @@ classDiagram
     ScanResult "1" ..> "*" ScanTruncation : method Truncations result 1
     SequenceTarget "1" ..> "1" MatchTarget : result 1
     StructuralNode "1" --> "1" normalizedNode : field node
+    SupportedLanguages "1" ..> "*" LanguageCapabilities : result 1
     Template "1" --> "1" SnippetContext : field context
     Template "1" ..> "1" SnippetContext : method Context result 1
     Template "1" ..> "1" TemplateNode : method Root result 1

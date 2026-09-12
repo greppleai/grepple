@@ -7,6 +7,7 @@ import (
 )
 
 var typeScriptExtensions = []string{".ts", ".tsx", ".mts", ".cts"}
+var ecmaScriptExtensions = []string{".ts", ".tsx", ".mts", ".cts", ".js", ".jsx"}
 
 func prepareTypeScriptModules(analysis *Analysis, sources []Source) {
 	paths := typeScriptSourcePaths(sources)
@@ -67,7 +68,7 @@ func nearestSourceRoot(language, directory string) string {
 func typeScriptSourcePaths(sources []Source) []string {
 	result := []string{}
 	for _, source := range sources {
-		if languageForPath(source.Path) == "typescript" {
+		if language := languageForPath(source.Path); language == "typescript" || language == "javascript" {
 			result = append(result, absolutePath(source.Path))
 		}
 	}
@@ -131,10 +132,10 @@ func resolveRelativeTypeScriptModule(owner, specifier string, analysis *Analysis
 	candidates := []string{base}
 	if filepath.Ext(base) == "" {
 		candidates = candidates[:0]
-		for _, extension := range typeScriptExtensions {
+		for _, extension := range ecmaScriptExtensions {
 			candidates = append(candidates, base+extension)
 		}
-		for _, extension := range typeScriptExtensions {
+		for _, extension := range ecmaScriptExtensions {
 			candidates = append(candidates, filepath.Join(base, "index"+extension))
 		}
 	}
@@ -145,7 +146,7 @@ func resolveRelativeTypeScriptModule(owner, specifier string, analysis *Analysis
 			continue
 		}
 		if found != "" && found != candidate {
-			analysis.duplicateErrors = append(analysis.duplicateErrors, "ambiguous TypeScript import "+specifier+" from "+analysis.TSModulePaths[owner])
+			analysis.duplicateErrors = append(analysis.duplicateErrors, "ambiguous ECMAScript import "+specifier+" from "+analysis.TSModulePaths[owner])
 			return ""
 		}
 		found = candidate
@@ -257,7 +258,7 @@ func structuralMembersMatch(required, actual Member) bool {
 }
 
 func typeScriptReferenceName(owner, target *Declaration, analysis *Analysis) string {
-	if owner == nil || target == nil || owner.Language != "typescript" || target.Language != "typescript" {
+	if owner == nil || target == nil || owner.Language != target.Language || owner.Language != "typescript" && owner.Language != "javascript" {
 		return ""
 	}
 	targetKey := target.ModuleID + ":" + target.Name

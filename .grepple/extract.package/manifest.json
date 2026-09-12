@@ -16,16 +16,16 @@
     "syntacticBuildTagUnion": []
   },
   "summary": {
-    "sourceFiles": 23,
-    "declarations": 63,
+    "sourceFiles": 24,
+    "declarations": 64,
     "exportedTypes": 42,
-    "internalTypes": 21,
-    "members": 500,
+    "internalTypes": 22,
+    "members": 510,
     "exportedFunctions": 26,
     "fiberRoutes": 0,
-    "relations": 180
+    "relations": 185
   },
-  "semanticModelDigest": "sha256:c5b5bf8fd0e2f166c6325cd08becfc1fc203f5a811017c53bf230e55315971e3",
+  "semanticModelDigest": "sha256:1d1303d1eae206986c4c2ef0ab91dbac06c0dd23f7b7e03d47697c81e7e93aa4",
   "sourceFiles": [
     {
       "path": "extract/analyze.go"
@@ -62,6 +62,9 @@
     },
     {
       "path": "extract/go_type.go"
+    },
+    {
+      "path": "extract/javascript_language.go"
     },
     {
       "path": "extract/language.go"
@@ -1306,8 +1309,8 @@
       "kind": "struct",
       "file": "extract/language.go",
       "line": 13,
-      "endLine": 16,
-      "underlyingType": "struct{ID string;Extensions[]string;}",
+      "endLine": 20,
+      "underlyingType": "struct{ID string;Extensions[]string;FocusedStructure bool;FocusedFlow bool;PackageBundle bool;WorkspaceBundle bool;}",
       "members": [
         {
           "name": "Extensions",
@@ -1317,11 +1320,39 @@
           "result": "[]string"
         },
         {
+          "name": "FocusedFlow",
+          "kind": "property",
+          "line": 17,
+          "endLine": 17,
+          "result": "bool"
+        },
+        {
+          "name": "FocusedStructure",
+          "kind": "property",
+          "line": 16,
+          "endLine": 16,
+          "result": "bool"
+        },
+        {
           "name": "ID",
           "kind": "property",
           "line": 14,
           "endLine": 14,
           "result": "string"
+        },
+        {
+          "name": "PackageBundle",
+          "kind": "property",
+          "line": 18,
+          "endLine": 18,
+          "result": "bool"
+        },
+        {
+          "name": "WorkspaceBundle",
+          "kind": "property",
+          "line": 19,
+          "endLine": 19,
+          "result": "bool"
         }
       ]
     },
@@ -3053,8 +3084,8 @@
         {
           "name": "addClass",
           "kind": "method",
-          "line": 813,
-          "endLine": 824,
+          "line": 817,
+          "endLine": 828,
           "parameters": [
             "string",
             "string",
@@ -3066,8 +3097,8 @@
         {
           "name": "addRelation",
           "kind": "method",
-          "line": 770,
-          "endLine": 779,
+          "line": 774,
+          "endLine": 783,
           "parameters": [
             "[]string",
             "int"
@@ -3077,8 +3108,8 @@
         {
           "name": "applyClassScope",
           "kind": "method",
-          "line": 660,
-          "endLine": 683,
+          "line": 664,
+          "endLine": 687,
           "parameters": [
             "string",
             "string",
@@ -3090,8 +3121,8 @@
         {
           "name": "applyCompletePackageMetadata",
           "kind": "method",
-          "line": 560,
-          "endLine": 566,
+          "line": 564,
+          "endLine": 570,
           "parameters": [
             "string",
             "int"
@@ -3101,8 +3132,8 @@
         {
           "name": "applyDefaultExportMetadata",
           "kind": "method",
-          "line": 513,
-          "endLine": 526,
+          "line": 517,
+          "endLine": 530,
           "parameters": [
             "string",
             "int"
@@ -3112,8 +3143,8 @@
         {
           "name": "applyExactDefault",
           "kind": "method",
-          "line": 593,
-          "endLine": 602,
+          "line": 597,
+          "endLine": 606,
           "parameters": [
             "int"
           ],
@@ -3122,8 +3153,8 @@
         {
           "name": "applyExternalStereotype",
           "kind": "method",
-          "line": 826,
-          "endLine": 832,
+          "line": 830,
+          "endLine": 836,
           "parameters": [
             "string",
             "string",
@@ -3134,8 +3165,8 @@
         {
           "name": "applyFileLocalMetadata",
           "kind": "method",
-          "line": 483,
-          "endLine": 496,
+          "line": 487,
+          "endLine": 500,
           "parameters": [
             "string",
             "int"
@@ -3145,8 +3176,8 @@
         {
           "name": "applyFileMetadata",
           "kind": "method",
-          "line": 468,
-          "endLine": 481,
+          "line": 472,
+          "endLine": 485,
           "parameters": [
             "string",
             "string",
@@ -3157,8 +3188,8 @@
         {
           "name": "applyImportMetadata",
           "kind": "method",
-          "line": 498,
-          "endLine": 511,
+          "line": 502,
+          "endLine": 515,
           "parameters": [
             "string",
             "string",
@@ -3169,8 +3200,8 @@
         {
           "name": "applyLanguageDefault",
           "kind": "method",
-          "line": 579,
-          "endLine": 591,
+          "line": 583,
+          "endLine": 595,
           "parameters": [
             "string",
             "int"
@@ -3180,8 +3211,8 @@
         {
           "name": "applyPackageDefault",
           "kind": "method",
-          "line": 568,
-          "endLine": 577,
+          "line": 572,
+          "endLine": 581,
           "parameters": [
             "string",
             "int"
@@ -3191,8 +3222,8 @@
         {
           "name": "applyRouteMetadata",
           "kind": "method",
-          "line": 645,
-          "endLine": 658,
+          "line": 649,
+          "endLine": 662,
           "parameters": [
             "string",
             "string",
@@ -3205,8 +3236,8 @@
         {
           "name": "applyStructTagMetadata",
           "kind": "method",
-          "line": 604,
-          "endLine": 624,
+          "line": 608,
+          "endLine": 628,
           "parameters": [
             "string",
             "string",
@@ -3218,8 +3249,8 @@
         {
           "name": "applyUnderlyingMetadata",
           "kind": "method",
-          "line": 626,
-          "endLine": 643,
+          "line": 630,
+          "endLine": 647,
           "parameters": [
             "string",
             "string",
@@ -3230,8 +3261,8 @@
         {
           "name": "metadataTarget",
           "kind": "method",
-          "line": 685,
-          "endLine": 691,
+          "line": 689,
+          "endLine": 695,
           "parameters": [
             "string",
             "int"
@@ -3242,7 +3273,7 @@
           "name": "parseClassMetadata",
           "kind": "method",
           "line": 440,
-          "endLine": 466,
+          "endLine": 470,
           "parameters": [
             "string",
             "int"
@@ -3296,8 +3327,8 @@
         {
           "name": "parseMemberLine",
           "kind": "method",
-          "line": 693,
-          "endLine": 715,
+          "line": 697,
+          "endLine": 719,
           "parameters": [
             "string",
             "int"
@@ -3318,8 +3349,8 @@
         {
           "name": "parseNote",
           "kind": "method",
-          "line": 781,
-          "endLine": 811,
+          "line": 785,
+          "endLine": 815,
           "parameters": [
             "string",
             "int"
@@ -3329,8 +3360,8 @@
         {
           "name": "parseTopLevel",
           "kind": "method",
-          "line": 717,
-          "endLine": 734,
+          "line": 721,
+          "endLine": 738,
           "parameters": [
             "string",
             "int"
@@ -3340,8 +3371,8 @@
         {
           "name": "parseTopLevelLayout",
           "kind": "method",
-          "line": 736,
-          "endLine": 768,
+          "line": 740,
+          "endLine": 772,
           "parameters": [
             "string",
             "int"
@@ -3389,15 +3420,15 @@
       "name": "classValidator",
       "kind": "struct",
       "file": "extract/class.go",
-      "line": 1044,
-      "endLine": 1049,
+      "line": 1048,
+      "endLine": 1053,
       "underlyingType": "struct{diagram*ClassDiagram;analysis*Analysis;diagnostics[]Diagnostic;packageBundleCardinality bool;}",
       "members": [
         {
           "name": "add",
           "kind": "method",
-          "line": 1051,
-          "endLine": 1053,
+          "line": 1055,
+          "endLine": 1057,
           "parameters": [
             "int",
             "string"
@@ -3406,8 +3437,8 @@
         {
           "name": "addPackageCompletenessDiagnostic",
           "kind": "method",
-          "line": 1114,
-          "endLine": 1121,
+          "line": 1118,
+          "endLine": 1125,
           "parameters": [
             "packageCompletenessItem"
           ]
@@ -3415,8 +3446,8 @@
         {
           "name": "anyFunctionCandidateReferences",
           "kind": "method",
-          "line": 1728,
-          "endLine": 1735,
+          "line": 1743,
+          "endLine": 1750,
           "parameters": [
             "*DiagramClass",
             "string",
@@ -3427,8 +3458,8 @@
         {
           "name": "associationExists",
           "kind": "method",
-          "line": 1758,
-          "endLine": 1773,
+          "line": 1773,
+          "endLine": 1788,
           "parameters": [
             "string",
             "string",
@@ -3439,8 +3470,8 @@
         {
           "name": "checkAssociation",
           "kind": "method",
-          "line": 1749,
-          "endLine": 1756,
+          "line": 1764,
+          "endLine": 1771,
           "parameters": [
             "Relation"
           ]
@@ -3448,8 +3479,8 @@
         {
           "name": "checkClass",
           "kind": "method",
-          "line": 1152,
-          "endLine": 1161,
+          "line": 1156,
+          "endLine": 1165,
           "parameters": [
             "*DiagramClass"
           ]
@@ -3457,14 +3488,14 @@
         {
           "name": "checkCompletePackage",
           "kind": "method",
-          "line": 1060,
-          "endLine": 1073
+          "line": 1064,
+          "endLine": 1077
         },
         {
           "name": "checkDeclaration",
           "kind": "method",
-          "line": 1283,
-          "endLine": 1330,
+          "line": 1287,
+          "endLine": 1334,
           "parameters": [
             "*DiagramClass"
           ]
@@ -3472,8 +3503,8 @@
         {
           "name": "checkExport",
           "kind": "method",
-          "line": 1544,
-          "endLine": 1576,
+          "line": 1559,
+          "endLine": 1591,
           "parameters": [
             "*DiagramClass"
           ]
@@ -3481,8 +3512,8 @@
         {
           "name": "checkFiberRoutes",
           "kind": "method",
-          "line": 1342,
-          "endLine": 1359,
+          "line": 1346,
+          "endLine": 1363,
           "parameters": [
             "*DiagramClass",
             "*Declaration"
@@ -3491,8 +3522,8 @@
         {
           "name": "checkFunction",
           "kind": "method",
-          "line": 1193,
-          "endLine": 1220,
+          "line": 1197,
+          "endLine": 1224,
           "parameters": [
             "*DiagramClass"
           ]
@@ -3500,8 +3531,8 @@
         {
           "name": "checkGoFileLocal",
           "kind": "method",
-          "line": 1383,
-          "endLine": 1395,
+          "line": 1387,
+          "endLine": 1399,
           "parameters": [
             "*DiagramClass",
             "*Declaration"
@@ -3510,8 +3541,8 @@
         {
           "name": "checkHeritage",
           "kind": "method",
-          "line": 1590,
-          "endLine": 1610,
+          "line": 1605,
+          "endLine": 1625,
           "parameters": [
             "Relation"
           ]
@@ -3519,8 +3550,8 @@
         {
           "name": "checkImport",
           "kind": "method",
-          "line": 1163,
-          "endLine": 1182,
+          "line": 1167,
+          "endLine": 1186,
           "parameters": [
             "*DiagramClass"
           ]
@@ -3528,8 +3559,8 @@
         {
           "name": "checkMember",
           "kind": "method",
-          "line": 1522,
-          "endLine": 1542,
+          "line": 1537,
+          "endLine": 1557,
           "parameters": [
             "string",
             "DiagramMember",
@@ -3539,8 +3570,8 @@
         {
           "name": "checkRelation",
           "kind": "method",
-          "line": 1578,
-          "endLine": 1584,
+          "line": 1593,
+          "endLine": 1599,
           "parameters": [
             "Relation"
           ]
@@ -3548,8 +3579,8 @@
         {
           "name": "checkStructTags",
           "kind": "method",
-          "line": 1361,
-          "endLine": 1381,
+          "line": 1365,
+          "endLine": 1385,
           "parameters": [
             "*DiagramClass",
             "*Declaration"
@@ -3558,8 +3589,8 @@
         {
           "name": "checkUnderlying",
           "kind": "method",
-          "line": 1332,
-          "endLine": 1340,
+          "line": 1336,
+          "endLine": 1344,
           "parameters": [
             "*DiagramClass",
             "*Declaration"
@@ -3568,8 +3599,8 @@
         {
           "name": "checkUnexpectedMembers",
           "kind": "method",
-          "line": 1412,
-          "endLine": 1418,
+          "line": 1416,
+          "endLine": 1422,
           "parameters": [
             "*DiagramClass",
             "[]Member"
@@ -3578,8 +3609,8 @@
         {
           "name": "completePackageContains",
           "kind": "method",
-          "line": 1123,
-          "endLine": 1135,
+          "line": 1127,
+          "endLine": 1139,
           "parameters": [
             "*Declaration"
           ],
@@ -3588,8 +3619,8 @@
         {
           "name": "completePackageContainsFunction",
           "kind": "method",
-          "line": 1137,
-          "endLine": 1150,
+          "line": 1141,
+          "endLine": 1154,
           "parameters": [
             "Member"
           ],
@@ -3598,8 +3629,8 @@
         {
           "name": "declaration",
           "kind": "method",
-          "line": 1247,
-          "endLine": 1263,
+          "line": 1251,
+          "endLine": 1267,
           "parameters": [
             "string"
           ],
@@ -3608,18 +3639,28 @@
         {
           "name": "declarationAmbiguous",
           "kind": "method",
-          "line": 1465,
-          "endLine": 1487,
+          "line": 1469,
+          "endLine": 1482,
           "parameters": [
             "*DiagramClass"
           ],
           "result": "bool"
         },
         {
+          "name": "ecmaScriptDeclarationCount",
+          "kind": "method",
+          "line": 1493,
+          "endLine": 1502,
+          "parameters": [
+            "*DiagramClass"
+          ],
+          "result": "int"
+        },
+        {
           "name": "firstExternalGoTypeReference",
           "kind": "method",
-          "line": 1397,
-          "endLine": 1410,
+          "line": 1401,
+          "endLine": 1414,
           "parameters": [
             "*Declaration"
           ],
@@ -3628,8 +3669,8 @@
         {
           "name": "functionAmbiguous",
           "kind": "method",
-          "line": 1489,
-          "endLine": 1497,
+          "line": 1504,
+          "endLine": 1512,
           "parameters": [
             "*DiagramClass"
           ],
@@ -3638,8 +3679,8 @@
         {
           "name": "functionReferences",
           "kind": "method",
-          "line": 1714,
-          "endLine": 1726,
+          "line": 1729,
+          "endLine": 1741,
           "parameters": [
             "*DiagramClass",
             "string",
@@ -3651,8 +3692,8 @@
         {
           "name": "goDeclaration",
           "kind": "method",
-          "line": 1265,
-          "endLine": 1277,
+          "line": 1269,
+          "endLine": 1281,
           "parameters": [
             "string",
             "string"
@@ -3660,10 +3701,20 @@
           "result": "*Declaration"
         },
         {
+          "name": "goDeclarationCount",
+          "kind": "method",
+          "line": 1483,
+          "endLine": 1491,
+          "parameters": [
+            "*DiagramClass"
+          ],
+          "result": "int"
+        },
+        {
           "name": "hasFunctionInScope",
           "kind": "method",
-          "line": 1222,
-          "endLine": 1229,
+          "line": 1226,
+          "endLine": 1233,
           "parameters": [
             "*DiagramClass"
           ],
@@ -3672,8 +3723,8 @@
         {
           "name": "hasMatchingFunction",
           "kind": "method",
-          "line": 1231,
-          "endLine": 1238,
+          "line": 1235,
+          "endLine": 1242,
           "parameters": [
             "*DiagramClass",
             "DiagramMember"
@@ -3683,8 +3734,8 @@
         {
           "name": "importScopeMatches",
           "kind": "method",
-          "line": 1451,
-          "endLine": 1459,
+          "line": 1455,
+          "endLine": 1463,
           "parameters": [
             "*DiagramClass",
             "Import"
@@ -3694,8 +3745,8 @@
         {
           "name": "matchingFunctionReferences",
           "kind": "method",
-          "line": 1737,
-          "endLine": 1747,
+          "line": 1752,
+          "endLine": 1762,
           "parameters": [
             "*DiagramClass",
             "DiagramMember",
@@ -3709,8 +3760,8 @@
         {
           "name": "memberReferences",
           "kind": "method",
-          "line": 1707,
-          "endLine": 1712,
+          "line": 1722,
+          "endLine": 1727,
           "parameters": [
             "Member",
             "string",
@@ -3721,8 +3772,8 @@
         {
           "name": "memberScopeMatches",
           "kind": "method",
-          "line": 1441,
-          "endLine": 1449,
+          "line": 1445,
+          "endLine": 1453,
           "parameters": [
             "*DiagramClass",
             "Member"
@@ -3732,8 +3783,8 @@
         {
           "name": "structurallyImplements",
           "kind": "method",
-          "line": 1612,
-          "endLine": 1630,
+          "line": 1627,
+          "endLine": 1645,
           "parameters": [
             "*Declaration",
             "string",
@@ -3744,8 +3795,8 @@
         {
           "name": "uncoveredPackageDeclarations",
           "kind": "method",
-          "line": 1075,
-          "endLine": 1084,
+          "line": 1079,
+          "endLine": 1088,
           "parameters": [
             "string"
           ],
@@ -3754,8 +3805,8 @@
         {
           "name": "uncoveredPackageFunctions",
           "kind": "method",
-          "line": 1086,
-          "endLine": 1097,
+          "line": 1090,
+          "endLine": 1101,
           "parameters": [
             "string"
           ],
@@ -3764,29 +3815,29 @@
         {
           "name": "analysis",
           "kind": "property",
-          "line": 1046,
-          "endLine": 1046,
+          "line": 1050,
+          "endLine": 1050,
           "result": "*Analysis"
         },
         {
           "name": "diagnostics",
           "kind": "property",
-          "line": 1047,
-          "endLine": 1047,
+          "line": 1051,
+          "endLine": 1051,
           "result": "[]Diagnostic"
         },
         {
           "name": "diagram",
           "kind": "property",
-          "line": 1045,
-          "endLine": 1045,
+          "line": 1049,
+          "endLine": 1049,
           "result": "*ClassDiagram"
         },
         {
           "name": "packageBundleCardinality",
           "kind": "property",
-          "line": 1048,
-          "endLine": 1048,
+          "line": 1052,
+          "endLine": 1052,
           "result": "bool"
         }
       ]
@@ -3857,8 +3908,8 @@
         {
           "name": "applyConcept",
           "kind": "method",
-          "line": 188,
-          "endLine": 198,
+          "line": 192,
+          "endLine": 202,
           "parameters": [
             "string",
             "int"
@@ -3868,8 +3919,8 @@
         {
           "name": "applyLanguage",
           "kind": "method",
-          "line": 170,
-          "endLine": 186,
+          "line": 174,
+          "endLine": 190,
           "parameters": [
             "string",
             "string",
@@ -3881,7 +3932,7 @@
           "name": "applyModule",
           "kind": "method",
           "line": 152,
-          "endLine": 168,
+          "endLine": 172,
           "parameters": [
             "string",
             "string",
@@ -3927,8 +3978,8 @@
         {
           "name": "parseContent",
           "kind": "method",
-          "line": 200,
-          "endLine": 215,
+          "line": 204,
+          "endLine": 219,
           "parameters": [
             "string",
             "int"
@@ -3938,8 +3989,8 @@
         {
           "name": "parseLine",
           "kind": "method",
-          "line": 217,
-          "endLine": 232,
+          "line": 221,
+          "endLine": 236,
           "parameters": [
             "string",
             "int"
@@ -3984,8 +4035,8 @@
         {
           "name": "Analyze",
           "kind": "method",
-          "line": 70,
-          "endLine": 72,
+          "line": 73,
+          "endLine": 75,
           "parameters": [
             "Source"
           ],
@@ -3994,8 +4045,8 @@
         {
           "name": "Finalize",
           "kind": "method",
-          "line": 74,
-          "endLine": 80,
+          "line": 77,
+          "endLine": 83,
           "result": "error"
         },
         {
@@ -4452,18 +4503,18 @@
       ]
     },
     {
-      "name": "languageAnalysis",
-      "kind": "interface",
-      "file": "extract/language.go",
-      "line": 18,
-      "endLine": 21,
-      "underlyingType": "interface{Analyze(Source)error;Finalize()error;}",
+      "name": "javaScriptAnalysis",
+      "kind": "struct",
+      "file": "extract/javascript_language.go",
+      "line": 8,
+      "endLine": 10,
+      "underlyingType": "struct{result*Analysis}",
       "members": [
         {
           "name": "Analyze",
           "kind": "method",
-          "line": 19,
-          "endLine": 19,
+          "line": 45,
+          "endLine": 47,
           "parameters": [
             "Source"
           ],
@@ -4472,8 +4523,42 @@
         {
           "name": "Finalize",
           "kind": "method",
-          "line": 20,
-          "endLine": 20,
+          "line": 49,
+          "endLine": 49,
+          "result": "error"
+        },
+        {
+          "name": "result",
+          "kind": "property",
+          "line": 9,
+          "endLine": 9,
+          "result": "*Analysis"
+        }
+      ]
+    },
+    {
+      "name": "languageAnalysis",
+      "kind": "interface",
+      "file": "extract/language.go",
+      "line": 22,
+      "endLine": 25,
+      "underlyingType": "interface{Analyze(Source)error;Finalize()error;}",
+      "members": [
+        {
+          "name": "Analyze",
+          "kind": "method",
+          "line": 23,
+          "endLine": 23,
+          "parameters": [
+            "Source"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "Finalize",
+          "kind": "method",
+          "line": 24,
+          "endLine": 24,
           "result": "error"
         }
       ]
@@ -4482,78 +4567,78 @@
       "name": "languageDefinition",
       "kind": "struct",
       "file": "extract/language.go",
-      "line": 26,
-      "endLine": 37,
+      "line": 30,
+      "endLine": 41,
       "underlyingType": "struct{info Language;acceptsSource func(string)bool;acceptsInput func(string,bool)(bool,error);newAnalysis func(*Analysis,[]Source)languageAnalysis;nearestProjectRoot func(string)string;sourceScope func(Source)(string,error);normalizeType func(string)string;generateStructure func(string,Source,[]Source,GenerateOptions)(string,error);generateFlow func(string,Source,[]Source,int,int)(string,error);validFlowEdge func(*Analysis,*Symbol,*Symbol)bool;}",
       "members": [
         {
           "name": "acceptsInput",
           "kind": "property",
-          "line": 29,
-          "endLine": 29,
+          "line": 33,
+          "endLine": 33,
           "result": "func(string,bool)(bool,error)"
         },
         {
           "name": "acceptsSource",
           "kind": "property",
-          "line": 28,
-          "endLine": 28,
+          "line": 32,
+          "endLine": 32,
           "result": "func(string)bool"
         },
         {
           "name": "generateFlow",
           "kind": "property",
-          "line": 35,
-          "endLine": 35,
+          "line": 39,
+          "endLine": 39,
           "result": "func(string,Source,[]Source,int,int)(string,error)"
         },
         {
           "name": "generateStructure",
           "kind": "property",
-          "line": 34,
-          "endLine": 34,
+          "line": 38,
+          "endLine": 38,
           "result": "func(string,Source,[]Source,GenerateOptions)(string,error)"
         },
         {
           "name": "info",
           "kind": "property",
-          "line": 27,
-          "endLine": 27,
+          "line": 31,
+          "endLine": 31,
           "result": "Language"
         },
         {
           "name": "nearestProjectRoot",
           "kind": "property",
-          "line": 31,
-          "endLine": 31,
+          "line": 35,
+          "endLine": 35,
           "result": "func(string)string"
         },
         {
           "name": "newAnalysis",
           "kind": "property",
-          "line": 30,
-          "endLine": 30,
+          "line": 34,
+          "endLine": 34,
           "result": "func(*Analysis,[]Source)languageAnalysis"
         },
         {
           "name": "normalizeType",
           "kind": "property",
-          "line": 33,
-          "endLine": 33,
+          "line": 37,
+          "endLine": 37,
           "result": "func(string)string"
         },
         {
           "name": "sourceScope",
           "kind": "property",
-          "line": 32,
-          "endLine": 32,
+          "line": 36,
+          "endLine": 36,
           "result": "func(Source)(string,error)"
         },
         {
           "name": "validFlowEdge",
           "kind": "property",
-          "line": 36,
-          "endLine": 36,
+          "line": 40,
+          "endLine": 40,
           "result": "func(*Analysis,*Symbol,*Symbol)bool"
         }
       ]
@@ -4605,29 +4690,29 @@
       "name": "packageCompletenessItem",
       "kind": "struct",
       "file": "extract/class.go",
-      "line": 1055,
-      "endLine": 1058,
+      "line": 1059,
+      "endLine": 1062,
       "underlyingType": "struct{name,kind string;location Location;}",
       "members": [
         {
           "name": "kind",
           "kind": "property",
-          "line": 1056,
-          "endLine": 1056,
+          "line": 1060,
+          "endLine": 1060,
           "result": "string"
         },
         {
           "name": "location",
           "kind": "property",
-          "line": 1057,
-          "endLine": 1057,
+          "line": 1061,
+          "endLine": 1061,
           "result": "Location"
         },
         {
           "name": "name",
           "kind": "property",
-          "line": 1056,
-          "endLine": 1056,
+          "line": 1060,
+          "endLine": 1060,
           "result": "string"
         }
       ]
@@ -4669,14 +4754,14 @@
       "kind": "struct",
       "file": "extract/analyze.go",
       "line": 111,
-      "endLine": 116,
-      "underlyingType": "struct{result*Analysis;source Source;text[]byte;moduleID string;}",
+      "endLine": 117,
+      "underlyingType": "struct{result*Analysis;source Source;text[]byte;moduleID string;language string;}",
       "members": [
         {
           "name": "addDefaultImport",
           "kind": "method",
-          "line": 315,
-          "endLine": 321,
+          "line": 316,
+          "endLine": 322,
           "parameters": [
             "codeparser.ViewNode",
             "string",
@@ -4686,8 +4771,8 @@
         {
           "name": "addImport",
           "kind": "method",
-          "line": 290,
-          "endLine": 300,
+          "line": 291,
+          "endLine": 301,
           "parameters": [
             "string",
             "string",
@@ -4699,8 +4784,8 @@
         {
           "name": "addStructuredImport",
           "kind": "method",
-          "line": 323,
-          "endLine": 338,
+          "line": 324,
+          "endLine": 339,
           "parameters": [
             "codeparser.ViewNode",
             "string",
@@ -4710,8 +4795,8 @@
         {
           "name": "addSymbol",
           "kind": "method",
-          "line": 280,
-          "endLine": 288,
+          "line": 281,
+          "endLine": 289,
           "parameters": [
             "string",
             "string",
@@ -4723,8 +4808,8 @@
         {
           "name": "analyzeDeclaration",
           "kind": "method",
-          "line": 414,
-          "endLine": 441,
+          "line": 422,
+          "endLine": 449,
           "parameters": [
             "codeparser.ViewNode",
             "bool",
@@ -4734,8 +4819,8 @@
         {
           "name": "analyzeExportSpecifiers",
           "kind": "method",
-          "line": 340,
-          "endLine": 362,
+          "line": 341,
+          "endLine": 363,
           "parameters": [
             "codeparser.ViewNode"
           ]
@@ -4743,8 +4828,8 @@
         {
           "name": "analyzeFunction",
           "kind": "method",
-          "line": 463,
-          "endLine": 475,
+          "line": 471,
+          "endLine": 483,
           "parameters": [
             "codeparser.ViewNode",
             "bool",
@@ -4754,8 +4839,8 @@
         {
           "name": "analyzeImport",
           "kind": "method",
-          "line": 302,
-          "endLine": 313,
+          "line": 303,
+          "endLine": 314,
           "parameters": [
             "codeparser.ViewNode"
           ]
@@ -4763,8 +4848,8 @@
         {
           "name": "analyzeTopLevel",
           "kind": "method",
-          "line": 502,
-          "endLine": 519,
+          "line": 510,
+          "endLine": 527,
           "parameters": [
             "codeparser.ViewNode"
           ]
@@ -4772,8 +4857,8 @@
         {
           "name": "collectMembers",
           "kind": "method",
-          "line": 443,
-          "endLine": 461,
+          "line": 451,
+          "endLine": 469,
           "parameters": [
             "codeparser.ViewNode",
             "*Declaration"
@@ -4782,8 +4867,8 @@
         {
           "name": "location",
           "kind": "method",
-          "line": 118,
-          "endLine": 122,
+          "line": 119,
+          "endLine": 123,
           "parameters": [
             "codeparser.ViewNode"
           ],
@@ -4792,8 +4877,8 @@
         {
           "name": "recordExport",
           "kind": "method",
-          "line": 477,
-          "endLine": 489,
+          "line": 485,
+          "endLine": 497,
           "parameters": [
             "string",
             "bool",
@@ -4803,12 +4888,19 @@
         {
           "name": "recordTypeScriptExport",
           "kind": "method",
-          "line": 491,
-          "endLine": 500,
+          "line": 499,
+          "endLine": 508,
           "parameters": [
             "string",
             "string"
           ]
+        },
+        {
+          "name": "language",
+          "kind": "property",
+          "line": 116,
+          "endLine": 116,
+          "result": "string"
         },
         {
           "name": "moduleID",
@@ -4923,8 +5015,8 @@
         {
           "name": "Analyze",
           "kind": "method",
-          "line": 43,
-          "endLine": 45,
+          "line": 46,
+          "endLine": 48,
           "parameters": [
             "Source"
           ],
@@ -4933,8 +5025,8 @@
         {
           "name": "Finalize",
           "kind": "method",
-          "line": 47,
-          "endLine": 51,
+          "line": 50,
+          "endLine": 54,
           "result": "error"
         },
         {
@@ -5012,8 +5104,8 @@
       "name": "Analyze",
       "kind": "function",
       "file": "extract/analyze.go",
-      "line": 575,
-      "endLine": 604,
+      "line": 589,
+      "endLine": 618,
       "parameters": [
         "[]Source"
       ],
@@ -5045,8 +5137,8 @@
       "name": "CheckClassDiagram",
       "kind": "function",
       "file": "extract/class.go",
-      "line": 1786,
-      "endLine": 1792,
+      "line": 1801,
+      "endLine": 1807,
       "parameters": [
         "string",
         "[]Source"
@@ -5057,8 +5149,8 @@
       "name": "CheckClassDiagramWithAnalysis",
       "kind": "function",
       "file": "extract/class.go",
-      "line": 1795,
-      "endLine": 1797,
+      "line": 1810,
+      "endLine": 1812,
       "parameters": [
         "string",
         "*Analysis"
@@ -5093,8 +5185,8 @@
       "name": "CheckFlowchart",
       "kind": "function",
       "file": "extract/flow.go",
-      "line": 391,
-      "endLine": 397,
+      "line": 399,
+      "endLine": 405,
       "parameters": [
         "string",
         "[]Source"
@@ -5105,8 +5197,8 @@
       "name": "CheckFlowchartWithAnalysis",
       "kind": "function",
       "file": "extract/flow.go",
-      "line": 400,
-      "endLine": 413,
+      "line": 408,
+      "endLine": 421,
       "parameters": [
         "string",
         "*Analysis"
@@ -5213,8 +5305,8 @@
       "name": "LanguageForPath",
       "kind": "function",
       "file": "extract/language.go",
-      "line": 56,
-      "endLine": 64,
+      "line": 60,
+      "endLine": 68,
       "parameters": [
         "string"
       ],
@@ -5246,8 +5338,8 @@
       "name": "ParseFlowchart",
       "kind": "function",
       "file": "extract/flow.go",
-      "line": 235,
-      "endLine": 246,
+      "line": 239,
+      "endLine": 250,
       "parameters": [
         "string"
       ],
@@ -5279,8 +5371,8 @@
       "name": "SupportedLanguages",
       "kind": "function",
       "file": "extract/language.go",
-      "line": 44,
-      "endLine": 53,
+      "line": 48,
+      "endLine": 57,
       "result": "[]Language"
     },
     {
@@ -6070,6 +6162,13 @@
       "from": "classValidator",
       "to": "DiagramClass",
       "kind": "dependency",
+      "via": "method ecmaScriptDeclarationCount parameter 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "classValidator",
+      "to": "DiagramClass",
+      "kind": "dependency",
       "via": "method functionAmbiguous parameter 1",
       "cardinality": "one"
     },
@@ -6078,6 +6177,13 @@
       "to": "DiagramClass",
       "kind": "dependency",
       "via": "method functionReferences parameter 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "classValidator",
+      "to": "DiagramClass",
+      "kind": "dependency",
+      "via": "method goDeclarationCount parameter 1",
       "cardinality": "one"
     },
     {
@@ -6401,6 +6507,27 @@
       "kind": "dependency",
       "via": "method recordFiberRoute parameter 2",
       "cardinality": "many"
+    },
+    {
+      "from": "javaScriptAnalysis",
+      "to": "Analysis",
+      "kind": "association",
+      "via": "field result",
+      "cardinality": "one"
+    },
+    {
+      "from": "javaScriptAnalysis",
+      "to": "Source",
+      "kind": "dependency",
+      "via": "method Analyze parameter 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "javaScriptAnalysis",
+      "to": "languageAnalysis",
+      "kind": "implementation",
+      "via": "implements",
+      "cardinality": "one"
     },
     {
       "from": "languageAnalysis",

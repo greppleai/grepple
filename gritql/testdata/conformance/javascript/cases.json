@@ -1,0 +1,50 @@
+[
+  {
+    "name": "javascript-call-list-binding",
+    "language": "javascript",
+    "query": "language javascript\n`target($args)`",
+    "path": "src/app.js",
+    "source": "const result = target(one, two);\n",
+    "findings": ["target(one, two)"]
+  },
+  {
+    "name": "javascript-import-source-role",
+    "language": "javascript",
+    "query": "language javascript\n`import {value} from $source;`",
+    "path": "src/imports.js",
+    "source": "import {value} from \"pkg\";\n",
+    "findings": ["import {value} from \"pkg\";"]
+  },
+  {
+    "name": "javascript-statement-sequence",
+    "language": "javascript",
+    "query": "language javascript\n`first(); second();`",
+    "path": "src/app.js",
+    "source": "function run() { first(); second(); third(); }\n",
+    "findings": ["first(); second();"]
+  },
+  {
+    "name": "javascript-declaration",
+    "language": "javascript",
+    "query": "language javascript\n`function $name($args) { $body }`",
+    "path": "src/app.js",
+    "source": "function run(first, second) { return first + second; }\n",
+    "findings": ["function run(first, second) { return first + second; }"]
+  },
+  {
+    "name": "javascript-shared-query-algebra",
+    "language": "javascript",
+    "query": "language javascript\nand { `pair($value, $value)`, contains `foo` }",
+    "path": "src/app.js",
+    "source": "const yes = pair(foo, foo);\nconst no = pair(foo, bar);\n",
+    "findings": ["pair(foo, foo)"]
+  },
+  {
+    "name": "javascript-jsx-expression",
+    "language": "javascript",
+    "query": "language javascript\n`<Button value={$value} />`",
+    "path": "src/view.jsx",
+    "source": "const view = <Button value={item} />;\n",
+    "findings": ["<Button value={item} />"]
+  }
+]

@@ -345,6 +345,8 @@ func Run(args []string) error {
 	}
 	if len(args) > 0 {
 		switch args[0] {
+		case "languages":
+			return runLanguages(args[1:])
 		case "get":
 			return runGet(args[1:])
 		case "tree":

@@ -1,7 +1,13 @@
 package gritql
 
+import "sort"
+
 const (
 	defaultTargetLanguage = "go"
+	// JavaScriptGrammar identifies the JavaScript syntax contract.
+	JavaScriptGrammar = "javascript"
+	// TreeSitterJavaScriptGrammar identifies the pinned JavaScript grammar implementation.
+	TreeSitterJavaScriptGrammar = "tree-sitter-javascript@0.25.0"
 	// TypeScriptGrammar identifies the TypeScript syntax contract.
 	TypeScriptGrammar = "typescript"
 	// TSXGrammar identifies the TSX syntax contract.
@@ -9,6 +15,23 @@ const (
 	// TreeSitterTypeScriptGrammar identifies the pinned TypeScript grammar implementation.
 	TreeSitterTypeScriptGrammar = "tree-sitter-typescript@0.23.2"
 )
+
+// LanguageCapabilities describes one production GritQL target adapter.
+type LanguageCapabilities struct {
+	ID         string
+	Grammar    string
+	TreeSitter string
+}
+
+// SupportedLanguages returns deterministic metadata for registered GritQL targets.
+func SupportedLanguages() []LanguageCapabilities {
+	languages := make([]LanguageCapabilities, 0, len(targetLanguageAdapters))
+	for _, adapter := range targetLanguageAdapters {
+		languages = append(languages, LanguageCapabilities{ID: adapter.id, Grammar: adapter.grammar, TreeSitter: adapter.treeSitter})
+	}
+	sort.Slice(languages, func(i, j int) bool { return languages[i].ID < languages[j].ID })
+	return languages
+}
 
 // targetLanguageAdapter owns target-language syntax behavior while the compiler,
 // query algebra, matcher, evaluator, and diagnostics remain language-neutral.
@@ -39,6 +62,15 @@ var targetLanguageAdapters = map[string]targetLanguageAdapter{
 		goGrammar:        GoGrammar,
 		compileTemplates: compileGoTemplates,
 		rootCategory:     goRootCategoryAccepts,
+	},
+	"javascript": {
+		id:               "javascript",
+		grammar:          JavaScriptGrammar,
+		treeSitter:       TreeSitterJavaScriptGrammar,
+		metadataLanguage: "javascript",
+		metadataGrammar:  JavaScriptGrammar,
+		compileTemplates: compileJavaScriptTemplates,
+		rootCategory:     javaScriptRootCategoryAccepts,
 	},
 	"typescript": {
 		id:               "typescript",

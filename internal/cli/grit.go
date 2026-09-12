@@ -56,7 +56,7 @@ type gritArgs struct {
 }
 
 func (gritArgs) Description() string {
-	return "Run native GritQL structural search over local Go, TypeScript, and TSX files; add --remote (or --server) to merge remote findings."
+	return "Run native GritQL structural search over local Go, JavaScript/JSX, TypeScript, and TSX files; add --remote (or --server) to merge remote findings."
 }
 
 func parseGritArgs(args []string) (gritArgs, error) {

@@ -232,15 +232,15 @@
       }
     },
     {
-      "name": "integration/unsupported-non-go-target",
-      "description": "Behavioral capability non-go-target is unavailable in native detection-only mode.",
+"name": "integration/unsupported-target",
+"description": "An unregistered target language is unavailable in native detection-only mode.",
       "features": [
         "negative",
         "unsupported-behavior"
       ],
       "pattern_id": "rule",
       "message": "match",
-      "pattern": "language javascript\n`x`",
+"pattern": "language python\n`x`",
       "sources": [],
       "execution": {
         "mode": "local"
@@ -257,7 +257,7 @@
             "path": null,
             "range": {
               "start_byte": 0,
-              "end_byte": 23,
+"end_byte": 19,
               "start_line": 1,
               "start_column": 1,
               "end_line": 2,

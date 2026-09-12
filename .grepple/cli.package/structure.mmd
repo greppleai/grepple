@@ -313,6 +313,16 @@ classDiagram
     <<struct>> jsonResultRenderer
     %% grepple:file jsonResultRenderer internal/cli/renderer_json.go
     note for jsonResultRenderer "defined: internal/cli/renderer_json.go:5-8; Render@internal/cli/renderer_json.go:10-15; matchesOnly@internal/cli/renderer_json.go:7; output@internal/cli/renderer_json.go:6"
+    class languagesArgs {
+        +Description(): string
+        +JSON: bool
+        +Markdown: bool
+    }
+    <<struct>> languagesArgs
+    %% grepple:file languagesArgs internal/cli/languages.go
+    %% grepple:struct-tag languagesArgs JSON "arg:\"--json\" help:\"print the complete capability matrix as JSON\""
+    %% grepple:struct-tag languagesArgs Markdown "arg:\"--markdown\" help:\"print the generated documentation table\""
+    note for languagesArgs "defined: internal/cli/languages.go:19-22; Description@internal/cli/languages.go:24-26; JSON@internal/cli/languages.go:20; Markdown@internal/cli/languages.go:21"
     class limitedAnchorBuffer {
         +Write([]byte): tuple~int&#44;error~
         -limit: int
@@ -572,7 +582,7 @@ classDiagram
     }
     <<function>> Run
     %% grepple:file Run internal/cli/args.go
-    note for Run "defined: internal/cli/args.go:341-367"
+    note for Run "defined: internal/cli/args.go:341-369"
     anchorProtocolRequest "1" --> "*" anchorProtocolRequestFile : field Files
     anchorProtocolResponse "1" --> "*" anchorProtocolResponseFile : field Files
     anchorProtocolResponseFile "1" --> "*" anchorProtocolLine : field Anchors

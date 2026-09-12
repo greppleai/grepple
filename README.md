@@ -10,7 +10,7 @@ api/               Dependency-free HTTP request and response contracts
 cmd/grepple/       Minimal executable entry point
 docs/              User and file-type documentation
 extract/           Tree-sitter Mermaid extraction, validation, and canonical architecture bundles
-gritql/            Native, bounded Go/TypeScript/TSX structural detection kernel
+gritql/            Native, bounded Go/JavaScript/TypeScript/TSX structural detection kernel
 gritqlapi/         Adapters from structural findings to dependency-free API DTOs
 hooks/             Project-local Pi hooks and architecture tooling
 internal/cli/      CLI workflows and output rendering
@@ -127,13 +127,14 @@ File patterns use Go's `filepath.Glob` syntax, extended with `**` to match acros
 **Pipes work like `grep`/`rg`:** when standard input is piped (or redirected) and no path/glob argument is given, grepple searches the stream instead of the filesystem — `cat build.log | grepple "ERROR"` or `go test ./... | grepple -F "FAIL"`. The stream is reported under the virtual path `<stdin>` in every output mode (`--json`, `-c`, `--files-with-matches`, `--line-only`, default segments). It uses the plain-text fallback (no filename, so no tree-sitter structure), NUL-containing input is treated as binary and skipped, and no match exits 1 as usual. `--files` and `--outline` always operate on the filesystem, and passing any path/glob selects the filesystem over stdin.
 ## Native structural search
 
-`grepple grit` runs the unified native, read-only `gritql-v1` structural-search engine over Go, TypeScript, and TSX syntax trees. The target language is declared in the query; no separate compatibility flag is required. The engine is separate from text and regex search and has no external runtime, subprocess, rewrite engine, or fallback interpreter. The supported detection subset includes snippets, metavariables, repeated-binding equality, `where`, `contains`, `within`, `and`, `or`, `not`, `maybe`, and RE2 constraints.
+`grepple grit` runs the unified native, read-only `gritql-v1` structural-search engine over Go, JavaScript/JSX, TypeScript, and TSX syntax trees. The target language is declared in the query; no separate compatibility flag is required. The engine is separate from text and regex search and has no external runtime, subprocess, rewrite engine, or fallback interpreter. The supported detection subset includes snippets, metavariables, repeated-binding equality, `where`, `contains`, `within`, `and`, `or`, `not`, `maybe`, and RE2 constraints.
 
 ```bash
 # Quote inline queries so the shell does not expand metavariables.
 grepple grit $'language go\n`exec.Command($args)`' '**/*.go'
 
-# TypeScript and TSX use the same command and compatibility contract.
+# JavaScript/JSX, TypeScript, and TSX use the same command and compatibility contract.
+grepple grit $'language javascript\n`fetch($url)`' '**/*.js' '**/*.jsx'
 grepple grit $'language typescript\n`fetch($url)`' '**/*.ts'
 grepple grit $'language tsx\n`<Button value={$value} />`' '**/*.tsx'
 
@@ -189,7 +190,7 @@ produce an empty outline. Go methods are shown at top level as `(*Type).Method`.
 
 ## Architecture and flow extraction
 
-`grepple extract` creates deterministic, self-validated Mermaid navigation maps from Tree-sitter source analysis. Focused structure and flow extraction support Go, TypeScript, and TSX; canonical package and workspace bundles remain Go-specific. Generic callable declarations and calls use the normalized `parser.NavigationGraph` shared with `--at` and `--related`. Extraction enriches graph declarations and edges with stable identities, package/module scope, receiver/container context, imports, resolved targets, and confidence; focused flow generation and validation consume those enriched edges directly.
+`grepple extract` creates deterministic, self-validated Mermaid navigation maps from Tree-sitter source analysis. Focused structure and flow extraction support Go, JavaScript/JSX, TypeScript, and TSX; canonical package and workspace bundles remain Go-specific. Generic callable declarations and calls use the normalized `parser.NavigationGraph` shared with `--at` and `--related`. Extraction enriches graph declarations and edges with stable identities, package/module scope, receiver/container context, imports, resolved targets, and confidence; focused flow generation and validation consume those enriched edges directly.
 
 ```bash
 grepple extract structure internal/cli
@@ -253,24 +254,9 @@ REST API (all under the org-authed `/public` gate):
 
 ## File type support
 
-Matching is line-based for every text file. File extensions determine whether tree-sitter can additionally provide structural result segments (this shapes output, not ordering — there is no relevance ranking).
+Matching is line-based for every readable non-NUL text file. Parser-backed features vary by language.
 
-| Language | Extensions | Structural behavior |
-| --- | --- | --- |
-| TypeScript | `.ts` | Functions, classes, interfaces, types, methods, variables, imports, and exports |
-| TSX | `.tsx` | TypeScript structure plus focused JSX element context |
-| JavaScript | `.js`, `.jsx` | Functions, classes, methods, variables, imports, exports, and JSX |
-| Go | `.go` | Functions, methods, types, variables, constants, and imports |
-| Java | `.java` | Classes, interfaces, enums, records, constructors, methods, fields, and imports |
-| Kotlin | `.kt`, `.kts` | Classes, objects, functions, properties, and imports |
-| Markdown | `.md`, `.markdown`, `.mdown`, `.mkd` | Heading sections — a match is shown under its enclosing heading chain (`#`…`######` breadcrumb); also powers `--outline` |
-| JSON | `.json` | `--outline` only: key/shape skeleton with values omitted (content search uses the plain-text fallback) |
-| YAML | `.yaml`, `.yml` | `--outline` only: key/shape skeleton, typed scalars, multi-document (`---`) aware (content search uses the plain-text fallback) |
-| Other text | Any other extension or no extension | Matching lines without AST-derived structure |
-
-Markdown uses a lightweight heading scanner (not a tree-sitter grammar) to give matches their enclosing section context and to build outlines. JSON and YAML are parsed for `--outline` via `go.yaml.in/yaml/v3` (JSON is valid YAML), which preserves line numbers and supports multi-document YAML streams; their *content* search still uses the plain-text fallback. Shell scripts, configuration files, and other textual formats are searchable through the plain-text fallback. During content searches, files containing a NUL byte are treated as binary and skipped, and invalid UTF-8 bytes are replaced during matching. `--files` reports discovered paths without opening them, so it can include binary or unreadable files. Extensions such as `.mjs`, `.cjs`, `.mts`, and `.cts` currently use the plain-text fallback.
-
-See [`docs/file-type-support.md`](docs/file-type-support.md) for implementation details and instructions for adding another tree-sitter-backed file type.
+Run `grepple languages` for the terminal matrix or `grepple languages --json` for machine-readable capabilities. See the canonical [language and feature support matrix](docs/file-type-support.md#current-support-matrix) for the same generated checkmark overview of text grep, structural grep, outlines, navigation, focused structure and flow extraction, GritQL, package bundles, and workspace bundles. Status distinguishes production, specialized/limited, unsupported, and experimental implementations.
 
 ## Remote service
 

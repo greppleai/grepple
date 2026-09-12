@@ -293,7 +293,7 @@ func applyStereotype(class *DiagramClass, stereotype string, line int) error {
 		}
 		class.Kind = "interface"
 	case "struct", "alias", "type":
-		if class.Language == "typescript" || class.Kind == "interface" || isExplicitGoDeclarationKind(class.Kind) && class.Kind != stereotype || class.Function {
+		if class.Language == "javascript" || class.Language == "typescript" || class.Kind == "interface" || isExplicitGoDeclarationKind(class.Kind) && class.Kind != stereotype || class.Function {
 			return stereotypeConflict(class, stereotype, line)
 		}
 		class.Kind, class.Language = stereotype, "go"
@@ -448,7 +448,11 @@ func (parser *classParser) parseClassMetadata(value string, line int) (bool, err
 		if !parser.sawHeader {
 			return true, nil
 		}
-		return true, parser.applyClassScope(match[1], match[2], "typescript", line)
+		language := "typescript"
+		if class := parser.diagram.Classes[match[1]]; class != nil && class.Language == "javascript" {
+			language = "javascript"
+		}
+		return true, parser.applyClassScope(match[1], match[2], language, line)
 	}
 	if match := fileMetadataRE.FindStringSubmatch(value); match != nil {
 		return true, parser.applyFileMetadata(match[1], match[2], line)
@@ -856,8 +860,8 @@ func validateRelationEndpoints(diagram *ClassDiagram) error {
 	return nil
 }
 func applyClassDefaults(diagram *ClassDiagram) error {
-	if diagram.PackageDefault != "" && diagram.LanguageDefault == "typescript" {
-		return fmt.Errorf("Line %d: package-default conflicts with language-default 'typescript'", diagram.LanguageDefaultLine)
+	if diagram.PackageDefault != "" && (diagram.LanguageDefault == "typescript" || diagram.LanguageDefault == "javascript") {
+		return fmt.Errorf("Line %d: package-default conflicts with language-default %q", diagram.LanguageDefaultLine, diagram.LanguageDefault)
 	}
 	for _, name := range diagram.Order {
 		if err := applyDefaultsToClass(diagram, name); err != nil {
@@ -1466,24 +1470,35 @@ func (validator *classValidator) declarationAmbiguous(class *DiagramClass) bool 
 	if class.Module != "" && typeScriptScopeAmbiguous(class.Module, validator.analysis) {
 		return true
 	}
-	goCount, tsCount := 0, 0
-	for _, declaration := range validator.analysis.GoDeclarations {
-		if declaration.Name == class.Name && goScopeMatches(class.Package, declaration.Package, declaration.PackageID, validator.analysis) {
-			goCount++
-		}
-	}
-	for _, declaration := range validator.analysis.TSDeclarations {
-		if declaration.Name == class.Name && (class.Module == "" || resolveTypeScriptScope(class.Module, validator.analysis) == declaration.ModuleID) {
-			tsCount++
-		}
-	}
+	goCount := validator.goDeclarationCount(class)
+	ecmaCount := validator.ecmaScriptDeclarationCount(class)
 	if class.Language == "go" {
 		return goCount > 1
 	}
-	if class.Language == "typescript" {
-		return tsCount > 1
+	if class.Language == "typescript" || class.Language == "javascript" {
+		return ecmaCount > 1
 	}
-	return goCount > 1 || tsCount > 1 || goCount == 1 && tsCount == 1
+	return goCount > 1 || ecmaCount > 1 || goCount == 1 && ecmaCount == 1
+}
+func (validator *classValidator) goDeclarationCount(class *DiagramClass) int {
+	count := 0
+	for _, declaration := range validator.analysis.GoDeclarations {
+		if declaration.Name == class.Name && goScopeMatches(class.Package, declaration.Package, declaration.PackageID, validator.analysis) {
+			count++
+		}
+	}
+	return count
+}
+
+func (validator *classValidator) ecmaScriptDeclarationCount(class *DiagramClass) int {
+	count := 0
+	moduleID := resolveTypeScriptScope(class.Module, validator.analysis)
+	for _, declaration := range validator.analysis.TSDeclarations {
+		if declaration.Name == class.Name && (class.Language == "" || declaration.Language == class.Language) && (class.Module == "" || moduleID == declaration.ModuleID) {
+			count++
+		}
+	}
+	return count
 }
 
 func (validator *classValidator) functionAmbiguous(class *DiagramClass) bool {
@@ -1500,7 +1515,7 @@ func memberIdentity(member Member) string {
 	if member.Language == "go" {
 		return "go:" + member.PackageID
 	}
-	return "typescript:" + member.ModuleID
+	return member.Language + ":" + member.ModuleID
 }
 
 func memberLanguageCount(members []Member) int {
@@ -1782,7 +1797,7 @@ func associationCardinalityDescription(multiplicity string) string {
 	return "a reference to"
 }
 
-// CheckClassDiagram validates a Mermaid class schema against Go and TypeScript sources.
+// CheckClassDiagram validates a Mermaid class schema against supported source languages.
 func CheckClassDiagram(diagram string, sources []Source) ([]Diagnostic, error) {
 	analysis, err := Analyze(sources)
 	if err != nil {

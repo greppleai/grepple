@@ -14674,6 +14674,10 @@
     "named": false
   },
   {
+    "type": "javascript",
+    "named": false
+  },
+  {
     "type": "js",
     "named": false
   },

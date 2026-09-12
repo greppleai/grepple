@@ -37,7 +37,7 @@ func generateTypeScriptFlowchart(entry string, entrySource Source, sources []Sou
 	for _, key := range selected {
 		symbol := analysis.TSSymbolIndex[key]
 		lines = append(lines, fmt.Sprintf("    %%%% grepple:symbol %s %s", identifiers[key], symbol.Name))
-		lines = append(lines, fmt.Sprintf("    %%%% grepple:language %s typescript", identifiers[key]))
+		lines = append(lines, fmt.Sprintf("    %%%% grepple:language %s %s", identifiers[key], symbol.Language))
 		lines = append(lines, fmt.Sprintf("    %%%% grepple:module %s %s", identifiers[key], analysis.TSModulePaths[symbol.ModuleID]))
 	}
 	lines = append(lines, "")

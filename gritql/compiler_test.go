@@ -129,7 +129,7 @@ func TestCompileStableErrorsAndUnsupportedSection8(t *testing.T) {
 		"language go\n$x = foo()",              // assignment/function
 		"language go\n`x` where { $x == `x` }", // equality
 		"language go /* block comment */\n`x`", // absent comment form
-		"language javascript\n`x`",             // non-Go target
+		"language python\n`x`",                 // unsupported target
 	}
 	for _, source := range unsupported {
 		_, err := Compile([]byte(source), CompileOptions{})

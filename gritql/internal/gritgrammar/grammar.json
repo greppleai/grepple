@@ -5859,6 +5859,10 @@
         },
         {
           "type": "STRING",
+          "value": "javascript"
+        },
+        {
+          "type": "STRING",
           "value": "typescript"
         },
         {

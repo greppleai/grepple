@@ -37,7 +37,7 @@ func navigationDeclarationSymbol(analysis *Analysis, declaration *codeparser.Nav
 	switch declaration.Language {
 	case "go":
 		symbols = analysis.GoSymbolIndex
-	case "typescript", "tsx":
+	case "javascript", "typescript", "tsx":
 		symbols = analysis.TSSymbolIndex
 	default:
 		return nil
@@ -96,7 +96,7 @@ func resolveNavigationCallTarget(analysis *Analysis, owner *Symbol, call *codepa
 	if owner.Language == "go" {
 		return resolveGoCall(analysis, owner.PackageID, call.ResolvedName)
 	}
-	if owner.Language == "typescript" || owner.Language == "tsx" {
+	if owner.Language == "javascript" || owner.Language == "typescript" || owner.Language == "tsx" {
 		return resolveTypeScriptCall(analysis, owner, call.ResolvedName)
 	}
 	return nil
@@ -188,7 +188,7 @@ func navigationCallName(owner *Symbol, call *codeparser.NavigationCall) string {
 	if owner.Language == "go" && parts[0] == owner.Receiver && owner.Owner != "" {
 		return owner.Owner + "." + parts[1]
 	}
-	if owner.Language == "typescript" && parts[0] == "this" && owner.Owner != "" {
+	if (owner.Language == "javascript" || owner.Language == "typescript" || owner.Language == "tsx") && parts[0] == "this" && owner.Owner != "" {
 		return owner.Owner + "." + parts[1]
 	}
 	return display

@@ -1,6 +1,6 @@
 # `gritql-v1` compatibility contract
 
-`gritql-v1` is Grepple's unified, closed, read-only detection contract for `language go`, `language typescript`, and `language tsx`. Target syntax is supplied by language adapters while query algebra, transactions, limits, ordering, and diagnostics remain shared.
+`gritql-v1` is Grepple's unified, closed, read-only detection contract for `language go`, `language javascript`, `language typescript`, and `language tsx`. Target syntax is supplied by language adapters while query algebra, transactions, limits, ordering, and diagnostics remain shared.
 
 The contract is not an alias for an upstream GritQL release. A conforming implementation accepts exactly the documented syntax and rejects every other construct; it does not invoke an external engine, Node, a shell, or a fallback interpreter.
 
@@ -10,7 +10,7 @@ The grammar is EBNF. Literal words and punctuation are quoted. `EOF` means the e
 
 ```ebnf
 pattern          = spacing, language, line_end, spacing, query, spacing, EOF ;
-language         = "language", hspace1, ( "go" | "typescript" | "tsx" ) ;
+language         = "language", hspace1, ( "go" | "javascript" | "typescript" | "tsx" ) ;
 
 query            = prefix, [ spacing, where_clause ] ;
 prefix           = snippet
@@ -106,13 +106,13 @@ Synthetic parse scaffolding is not part of the resulting template. Authored stat
 
 The supported Go grammar version is declared by the implementation for `gritql-v1`; that exact version must be reported in evaluation metadata and must not vary during one evaluation.
 
-### 2.1 TypeScript and TSX snippet parsing
+### 2.1 JavaScript, TypeScript, and TSX snippet parsing
 
-For `language typescript`, the contract selects `.ts`, `.mts`, and `.cts` source; `language tsx` selects `.tsx`. Snippets are parsed as expression, type, statement, statement list, declaration, declaration list, and complete-file contexts using the matching pinned Tree-sitter grammar. Unlike Go's deterministic first-context interpretation, every grammar-valid TypeScript interpretation is retained: for example, `Promise<$type>` can represent both an instantiation expression and a generic type, and either source shape may match.
+For `language javascript`, the contract selects `.js` and `.jsx` source; `language typescript` selects `.ts`, `.mts`, and `.cts`; `language tsx` selects `.tsx`. Snippets are parsed as expression, statement, statement list, declaration, declaration list, and complete-file contexts using the matching pinned Tree-sitter grammar. TypeScript and TSX additionally support type contexts. Unlike Go's deterministic first-context interpretation, every grammar-valid JavaScript/TypeScript-family interpretation is retained: for example, `Promise<$type>` can represent both a TypeScript instantiation expression and a generic type, and either source shape may match.
 
 Synthetic wrappers are removed before matching. Statement and declaration lists use the same `statement_sequence` and `declaration_sequence` template roots as Go. Repeated fields and unfielded children come from parser-generated metadata for the selected grammar, including arguments, parameters, object members, statements, and declarations. Explicit semicolons remain structural; omitting one in a snippet does not match a source statement containing one.
 
-TypeScript-family metavariables currently occupy identifier-like, expression, type, property, JSX, parameter, and repeated-list grammar positions. Unsupported positions fail compilation with `PATTERN_INVALID_SNIPPET`; they are never interpreted by a fallback parser. TypeScript and TSX metadata reports canonical `language` and `grammar` fields instead of the Go-only `go_grammar` field.
+JavaScript/TypeScript-family metavariables currently occupy identifier-like, expression, property, JSX, parameter, and repeated-list grammar positions; TypeScript and TSX additionally support type positions. Unsupported positions fail compilation with `PATTERN_INVALID_SNIPPET`; they are never interpreted by a fallback parser. JavaScript, TypeScript, and TSX metadata reports canonical `language` and `grammar` fields instead of the Go-only `go_grammar` field.
 
 ## 3. Structural matching and bindings
 
@@ -262,7 +262,7 @@ The following are recognized but unsupported and fail closed with `PATTERN_UNSUP
 - any equality or inequality operator (including `==` and `!=`); equality exists only through repeated metavariable binding;
 - any operator, literal, comment form, or delimiter absent from the EBNF.
 
-Targets other than Go, TypeScript, and TSX; type checking; name resolution; data flow; network access; shell execution; repository writes; interactive input; and source rewrites are behaviorally unsupported. The unified contract is native and detection-only.
+Targets other than Go, JavaScript/JSX, TypeScript, and TSX; type checking; name resolution; data flow; network access; shell execution; repository writes; interactive input; and source rewrites are behaviorally unsupported. The unified contract is native and detection-only.
 
 ## 9. Security and performance gates
 

@@ -17,6 +17,10 @@ var typeScriptSnippetAttempts = []snippetAttempt{
 	{SnippetContextFile, "", "", selectTypeScriptFile},
 }
 
+func compileJavaScriptTemplates(decoded decodedSnippet, maxDepth int) ([]Template, string, error) {
+	return compileTypeScriptFamilyTemplates("javascript", decoded, maxDepth)
+}
+
 func compileTypeScriptTemplates(decoded decodedSnippet, maxDepth int) ([]Template, string, error) {
 	return compileTypeScriptFamilyTemplates("typescript", decoded, maxDepth)
 }
@@ -166,6 +170,10 @@ func allTypeScriptDeclarations(nodes []parser.Node) bool {
 		}
 	}
 	return true
+}
+
+func javaScriptRootCategoryAccepts(context SnippetContext, kind string) bool {
+	return typeScriptFamilyRootCategoryAccepts("javascript", context, kind)
 }
 
 func typeScriptRootCategoryAccepts(context SnippetContext, kind string) bool {

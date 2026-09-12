@@ -190,7 +190,7 @@ func renderDeclarationMetadata(name string, declaration *Declaration, analysis *
 	if declaration.Language == "go" {
 		scope := goPackageScope(declaration.PackageID, declaration.Package, analysis)
 		lines = append(lines, "    %% grepple:package "+name+" "+scope)
-	} else if declaration.Language == "typescript" {
+	} else if declaration.Language == "javascript" || declaration.Language == "typescript" {
 		lines = append(lines, "    %% grepple:module "+name+" "+analysis.TSModulePaths[declaration.ModuleID])
 	}
 	if declaration.Language == "go" && (declaration.Kind == "alias" || declaration.Kind == "type") {
@@ -223,7 +223,7 @@ func renderDeclarationStructTags(name string, declaration *Declaration) []string
 func renderDeclarationExports(name string, declaration *Declaration, analysis *Analysis) []string {
 	exported := analysis.Exports[name]
 	defaultExported := analysis.DefaultExports[name]
-	if declaration.Language == "typescript" {
+	if declaration.Language == "javascript" || declaration.Language == "typescript" {
 		exported = analysis.TSExports[declaration.ModuleID][name]
 		defaultExported = analysis.TSDefaultExports[declaration.ModuleID] == name
 	}

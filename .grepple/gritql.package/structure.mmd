@@ -299,6 +299,14 @@ classDiagram
     %% grepple:underlying Kind uint8
     %% grepple:file Kind gritql/compiler.go
     note for Kind "defined: gritql/compiler.go:86; String@gritql/compiler.go:101-107"
+    class LanguageCapabilities {
+        +Grammar: string
+        +ID: string
+        +TreeSitter: string
+    }
+    <<struct>> LanguageCapabilities
+    %% grepple:file LanguageCapabilities gritql/language.go
+    note for LanguageCapabilities "defined: gritql/language.go:20-24; Grammar@gritql/language.go:22; ID@gritql/language.go:21; TreeSitter@gritql/language.go:23"
     class LanguageDeclaration {
         +Name: string
         +Range: Range
@@ -1150,7 +1158,7 @@ classDiagram
     }
     <<struct>> targetLanguageAdapter
     %% grepple:file targetLanguageAdapter gritql/language.go
-    note for targetLanguageAdapter "defined: gritql/language.go:15-24; compileTemplates@gritql/language.go:22; goGrammar@gritql/language.go:21; grammar@gritql/language.go:17; id@gritql/language.go:16; metadataGrammar@gritql/language.go:20; metadataLanguage@gritql/language.go:19; rootCategory@gritql/language.go:23; treeSitter@gritql/language.go:18"
+    note for targetLanguageAdapter "defined: gritql/language.go:38-47; compileTemplates@gritql/language.go:45; goGrammar@gritql/language.go:44; grammar@gritql/language.go:40; id@gritql/language.go:39; metadataGrammar@gritql/language.go:43; metadataLanguage@gritql/language.go:42; rootCategory@gritql/language.go:46; treeSitter@gritql/language.go:41"
     class templateChild {
         -field: string
         -node: *templateNode
@@ -1353,6 +1361,12 @@ classDiagram
     <<function>> SequenceTarget
     %% grepple:file SequenceTarget gritql/matcher.go
     note for SequenceTarget "defined: gritql/matcher.go:35-37"
+    class SupportedLanguages {
+        +SupportedLanguages(): []LanguageCapabilities
+    }
+    <<function>> SupportedLanguages
+    %% grepple:file SupportedLanguages gritql/language.go
+    note for SupportedLanguages "defined: gritql/language.go:27-34"
     class ValidateGlobs {
         +ValidateGlobs([]string, []string): error
     }
@@ -1477,6 +1491,7 @@ classDiagram
     ScanResult "1" ..> "*" ScanTruncation : method Truncations result 1
     SequenceTarget "1" ..> "1" MatchTarget : result 1
     StructuralNode "1" --> "1" normalizedNode : field node
+    SupportedLanguages "1" ..> "*" LanguageCapabilities : result 1
     Template "1" --> "1" SnippetContext : field context
     Template "1" ..> "1" SnippetContext : method Context result 1
     Template "1" ..> "1" TemplateNode : method Root result 1

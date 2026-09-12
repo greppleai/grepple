@@ -9,10 +9,14 @@ import (
 	codeparser "github.com/greppleai/grepple/parser"
 )
 
-// Language describes a source language supported by extraction.
+// Language describes source-language features supported by extraction.
 type Language struct {
-	ID         string
-	Extensions []string
+	ID               string
+	Extensions       []string
+	FocusedStructure bool
+	FocusedFlow      bool
+	PackageBundle    bool
+	WorkspaceBundle  bool
 }
 
 type languageAnalysis interface {
@@ -37,7 +41,7 @@ type languageDefinition struct {
 }
 
 func registeredLanguages() []*languageDefinition {
-	return []*languageDefinition{goLanguageDefinition(), typeScriptLanguageDefinition()}
+	return []*languageDefinition{goLanguageDefinition(), typeScriptLanguageDefinition(), javaScriptLanguageDefinition()}
 }
 
 // SupportedLanguages returns stable metadata for all built-in language adapters.
