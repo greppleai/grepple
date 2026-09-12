@@ -4,7 +4,7 @@ Grepple should stabilize for one or two iterations before adding more languages.
 
 ## Recommended next milestone
 
-> Continue the agentic-coding feedback work before further language expansion: add graph-query filters, improve repository-wide summaries, and establish repeatable tool-call/token benchmarks. C# remains the next class-model parity target after those reliability and ergonomics improvements.
+> Continue the agentic-coding feedback work before further language expansion: use the new workflow benchmark to design a smaller architecture summary and evidence-based agent output limits. C# remains the next class-model parity target after those ergonomics improvements.
 
 ## Feature set versus feature completeness
 
@@ -186,7 +186,7 @@ Use case: code review and CI can explain architectural impact—such as a new pa
    - [x] Add a reproducible warm-page-cache comparison of Tree-sitter parsing, parse-plus-navigation extraction, normalized graph caches, full read-only CST projections, and experimental native `TSTree` serialization. Compare JSON, gob, manual protobuf wire code, standard `protoc-gen-go`, and `vtprotobuf` for message-oriented and string-interned packed layouts; report corpus/cache sizes, throughput, allocations, source-file count, and native serialize/deserialize cost.
    - Next: add focused extraction and package/workspace bundle benchmarks.
 5. Add performance budgets that detect repeated parsing and significant allocation/runtime regressions.
-6. Add a repeatable agentic-coding benchmark suite with fixed discovery, navigation, impact, and edit-location tasks. Record answer correctness, tool-call count, bytes returned, approximate tokens, elapsed time, and whether every omission was disclosed. Compare structural search, line-only plus `--at`, `--related`, graph queries, outlines, and conventional multi-step retrieval.
+6. [x] Add a repeatable agentic-coding benchmark suite with fixed breadth-summary, outline, structural lookup, line-plus-`--at`, related-navigation, impact-graph, and edit-location tasks. It verifies answer fragments and reports tool-call count, returned bytes, approximate tokens, elapsed time, and allocations. The initial baseline confirms that structural lookup trades 16 additional bytes for one fewer retrieval call than line-only plus `--at`; methodology and measurements live in `docs/agent-workflow-benchmarks.md`.
 
 ### E. Improve architecture drift diagnostics
 
@@ -234,7 +234,7 @@ Reduce repeated parsing and language knowledge across extraction, navigation, te
    - [x] Add Java focused structure/flow with classes, interfaces, records, enums, inheritance, implementations, fields, constructors, methods, conservative cross-file targets, and shared navigation-graph flows.
    - [x] Add Kotlin focused structure/flow with classes, interfaces, objects, data-class constructor properties, delegation-based inheritance, properties, functions, conservative cross-file targets, and shared navigation-graph flows.
    - [ ] Add C# focused structure/flow next. Keep C/C++, Rust, and Shell unsupported until their non-class architecture projections have an explicit useful contract.
-Recommended implementation order from here: agent workflow benchmarks, a smaller architecture summary, and evidence-based agent output limits; then exported/public declaration facts and filters, C# focused structure/flow, semantic graph diffing, and useful non-class projections for Rust or C/C++. Address grammar-local placeholder-role gaps when conformance exposes a valuable blocked workflow.
+Recommended implementation order from here: a smaller architecture summary and evidence-based agent output limits; then exported/public declaration facts and filters, C# focused structure/flow, semantic graph diffing, and useful non-class projections for Rust or C/C++. Address grammar-local placeholder-role gaps when conformance exposes a valuable blocked workflow.
 
 Acceptance criteria:
 

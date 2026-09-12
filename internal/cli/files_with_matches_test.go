@@ -13,7 +13,7 @@ import (
 
 // captureStdout runs fn with os.Stdout redirected to a pipe and returns whatever
 // was written.
-func captureStdout(t *testing.T, fn func()) string {
+func captureStdout(t testing.TB, fn func()) string {
 	t.Helper()
 	previous := os.Stdout
 	reader, writer, err := os.Pipe()

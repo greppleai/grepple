@@ -282,6 +282,16 @@ Matching is line-based for every readable non-NUL text file. Parser-backed featu
 
 Run `grepple languages` for the terminal matrix or `grepple languages --json` for machine-readable capabilities. See the canonical [language and feature support matrix](docs/file-type-support.md#current-support-matrix) for the same generated checkmark overview of text grep, structural grep, outlines, navigation, focused structure and flow extraction, GritQL, package bundles, and workspace bundles. Status distinguishes production, specialized/limited, unsupported, and experimental implementations.
 
+## Agent workflow benchmarks
+
+Run the fixed end-to-end discovery, navigation, impact, and edit-location benchmark with:
+
+```bash
+make agent-benchmark
+```
+
+It reports modeled retrieval calls, returned bytes, approximate tokens, elapsed time, and allocations while verifying answer fragments. See [Agent workflow benchmarks](docs/agent-workflow-benchmarks.md) for methodology and the current baseline.
+
 ## Remote service
 
 The distributed router, shards, repository synchronization, Zoekt integration, and deployment assets live in the private sibling `grepple-backend` repository. This public repository contains only the CLI and shared search contracts.
