@@ -4,7 +4,7 @@ Grepple should stabilize for one or two iterations before adding more languages.
 
 ## Recommended next milestone
 
-> Continue matrix-driven language unification: Java and Kotlin focused structure/flow are now production. C# is the next class-model parity target; keep canonical package/workspace bundles intentionally Go-specific.
+> Prioritize the agentic-coding feedback gaps before further language expansion: make bounded navigation explicitly incomplete, add focused graph queries, make anchor setup diagnosable, and establish repeatable tool-call/token benchmarks. C# remains the next class-model parity target after those reliability and ergonomics improvements.
 
 ## Feature set versus feature completeness
 
@@ -20,16 +20,21 @@ Treat these as separate planning dimensions:
 ### What is already strong
 
 - The workspace → package overview → `--at` → `--related` workflow is a fast and effective way to enter an unfamiliar codebase.
-- Structural search is highly token-efficient because it preserves the enclosing declaration while collapsing unrelated code.
+- Structural search is highly token-efficient because it preserves the enclosing declaration while collapsing unrelated code. In the latest dogfood round, outlining a 581-line/19.5 KB JVM extractor returned 50 lines/1.9 KB, while a structural declaration lookup returned all relevant declarations in one 1.8 KB response.
 - Exact declaration and member ranges make generated diagrams useful navigation maps rather than passive documentation.
-- Focused TypeScript flow is concise and readable for small call chains.
+- Focused flow is concise and readable for small call chains across the production Go, ECMAScript, Python, Java, and Kotlin adapters.
 - Canonical package and workspace checks make architecture documentation trustworthy enough to use as an index.
 - Deterministic ordering, bounded traversal, explicit confidence, and round-trip validation are strong foundations for agent use.
 
 ### Remaining friction
 
-- External LLM dogfooding confirmed the Grepple locate/orient → anchored Edit loop, while also exposing grep-flag muscle memory, edit-target lines omitted by segment limits, broad output reaching the agent harness limit, and the need for anchor-provider diagnostics.
-- The shared `parser.NavigationGraph` is now the sole source of generic call edges for Go and TypeScript flow selection, rendering, validation, `--at`, and `--related`; the next graph issue is richer resolution rather than duplicate discovery.
+- External LLM dogfooding confirmed the Grepple locate/orient → anchored Edit loop, while also exposing grep-flag muscle memory, edit-target lines omitted by segment limits, broad output reaching the agent harness limit, and the need for anchor-provider diagnostics. In the current agent environment no default provider was configured, so Grepple could not eliminate the Read-before-Edit call.
+- The shared `parser.NavigationGraph` is now the sole source of generic call edges for flow selection, rendering, validation, `--at`, and `--related`; the next graph issues are focused querying and richer resolution rather than duplicate discovery.
+- `--related` can exhaust its edge budget without reporting how many callers or callees were omitted. Bounded output must never look complete during impact analysis.
+- Broad structural output is safely capped at 40960 bytes, but that still costs roughly 10000 tokens. Untrained agents need a cheaper default/profile and clearer early narrowing.
+- `--count` obeys file paging, so its default first 20 deterministic paths do not necessarily reveal repository-wide concentration.
+- Focused extraction usually writes an artifact that requires another tool call to read; exploratory agent workflows need an explicit stdout projection.
+- Generated package overviews can still be too large for focused questions: the extract package overview reached 526 lines/27 KB, while a file outline answered the immediate JVM question in 50 lines/1.9 KB.
 - Larger diagrams are dominated by validation metadata when viewed as plain text.
 - Agent edit anchors are provider-specific, not generic line hashes. Grepple delegates through a user-owned, versioned batch provider and keeps editing-harness adapters out of the shipped repository.
 - Explicit Go and TypeScript imports, direct parameters/receivers, source-ordered lexical bindings, local and imported return signatures, and same-file typed field chains now resolve before terminal-name fallback. Cross-file field chains, embedded/promoted methods, re-exports, and default imports still need richer propagation.
@@ -56,6 +61,11 @@ Treat these as separate planning dimensions:
 - [x] Accept safe grep compatibility aliases: `-E` explicitly selects the default JavaScript-regex mode and `-r` is a no-op because directory search is already recursive.
 - [x] Bound human-readable output below common agent limits with actionable narrowing guidance while keeping JSON valid and uncapped.
 - [x] Report matching lines omitted by `--max-segments` and direct edit-oriented searches to `--line-only`, which emits configured anchors or supplies exact lines for Read fallback.
+- [ ] Report related-edge truncation explicitly, including omitted caller/callee counts and an actionable flag or graph-query suggestion. Add tests proving bounded previews cannot be mistaken for complete impact results.
+- [ ] Add a repository-wide count summary that reports total matches and matched files independently of result paging; optionally expose deterministic top paths by count.
+- [ ] Add an explicit agent-oriented output profile, or evaluate a lower default human-output budget, so broad accidental queries stop well below common context limits without affecting complete JSON.
+- [ ] Add `extract structure|flow --stdout` for validated exploratory projections without a temporary artifact/read round trip.
+- [ ] Add a smaller package/workspace summary projection for orientation when generated overviews are still too large.
 - [ ] Consider a compact presentation mode that hides validation metadata while retaining it in generated artifacts.
 
 ### 3. Harden source handling
@@ -122,7 +132,7 @@ Use case: an agent can orient itself in a package or focused call chain within a
 
 #### C3. Graph queries
 
-Support focused questions over the normalized graph: callers, callees, dependencies, dependents, and bounded impact radius. Filters should cover package/module, language, edge kind, exportedness, direction, confidence, and depth.
+Support focused questions over the normalized graph: callers, callees, dependencies, dependents, and bounded impact radius. Filters should cover package/module, language, edge kind, exportedness, direction, confidence, and depth. Queries and `--related` must expose omitted-edge counts whenever bounds make the result incomplete.
 
 Potential examples:
 
@@ -153,15 +163,16 @@ Use case: code review and CI can explain architectural impact—such as a new pa
 2. Preserve stable node identity, source ranges, edge confidence, and truncation semantics in every applicable projection.
 3. Add parity tests proving that compact and JSON edges agree with canonical Mermaid and `--related`.
 
-### C2. Remove the redundant Read call for edits
+### C6. Remove the redundant Read call for edits
 
 1. [x] Add user-owned `~/.grepple/settings.json` anchor-provider configuration; never execute repository-controlled provider commands.
 2. [x] Add a versioned whole-file batch protocol with digest checks, timeout/output limits, strict response validation, and direct process execution without a shell.
 3. [x] Emit unambiguous `HASH│LINE│content` rows from local structural and `--line-only` output while retaining synthetic summary markers.
 4. [x] Verify locally that a user-owned provider can produce anchors accepted by the configured editing harness without shipping harness-specific adapter code.
 5. [x] Allow user settings to enable anchors by default for compatible output, with `--no-anchors` as a per-command escape hatch and automatic fallback for incompatible modes.
-6. [ ] Add `grepple anchors doctor` (or equivalent) to report provider identity/protocol, test a temporary file, and diagnose stale configuration.
-7. [ ] Evaluate anchors for related previews and context output only if dogfooding shows they save additional tool calls; keep JSON provider-neutral.
+6. [ ] Add `grepple anchors doctor` (or equivalent) to report provider identity/protocol, test a temporary file, and diagnose stale or missing configuration.
+7. [ ] Make the Pi/user integration offer an explicit provider-setup path so a fresh agent environment can enable edit-ready output without repository-owned commands or silent configuration changes.
+8. [ ] Evaluate anchors for related previews and context output only if dogfooding shows they save additional tool calls; keep JSON provider-neutral.
 
 
 ### D. Expand hardening and performance coverage
@@ -173,6 +184,7 @@ Use case: code review and CI can explain architectural impact—such as a new pa
    - [x] Add a reproducible warm-page-cache comparison of Tree-sitter parsing, parse-plus-navigation extraction, normalized graph caches, full read-only CST projections, and experimental native `TSTree` serialization. Compare JSON, gob, manual protobuf wire code, standard `protoc-gen-go`, and `vtprotobuf` for message-oriented and string-interned packed layouts; report corpus/cache sizes, throughput, allocations, source-file count, and native serialize/deserialize cost.
    - Next: add focused extraction and package/workspace bundle benchmarks.
 5. Add performance budgets that detect repeated parsing and significant allocation/runtime regressions.
+6. Add a repeatable agentic-coding benchmark suite with fixed discovery, navigation, impact, and edit-location tasks. Record answer correctness, tool-call count, bytes returned, approximate tokens, elapsed time, and whether every omission was disclosed. Compare structural search, line-only plus `--at`, `--related`, graph queries, outlines, and conventional multi-step retrieval.
 
 ### E. Improve architecture drift diagnostics
 
@@ -220,7 +232,7 @@ Reduce repeated parsing and language knowledge across extraction, navigation, te
    - [x] Add Java focused structure/flow with classes, interfaces, records, enums, inheritance, implementations, fields, constructors, methods, conservative cross-file targets, and shared navigation-graph flows.
    - [x] Add Kotlin focused structure/flow with classes, interfaces, objects, data-class constructor properties, delegation-based inheritance, properties, functions, conservative cross-file targets, and shared navigation-graph flows.
    - [ ] Add C# focused structure/flow next. Keep C/C++, Rust, and Shell unsupported until their non-class architecture projections have an explicit useful contract.
-Recommended implementation order from here: C# focused structure/flow, then define useful non-class projections for Rust or C/C++, followed by graph queries and semantic graph diffing. Address grammar-local placeholder-role gaps when conformance exposes a valuable blocked workflow.
+Recommended implementation order from here: explicit related-edge truncation, focused graph queries, anchor diagnostics/setup, count summaries, extraction stdout, and agent workflow benchmarks; then C# focused structure/flow, semantic graph diffing, and useful non-class projections for Rust or C/C++. Address grammar-local placeholder-role gaps when conformance exposes a valuable blocked workflow.
 
 Acceptance criteria:
 
@@ -240,9 +252,9 @@ Before expanding scope, require:
 - [x] Generated diagrams round-trip through their checker.
 - [x] Repeated generation is byte-deterministic in current tests.
 - [ ] Output is verified deterministic across supported operating systems.
-- [x] `--at`, `--related`, and focused Go/TypeScript flow use one graph and agree through parity tests on declarations, edges, and source ranges.
+- [x] `--at`, `--related`, and focused flows use one graph and agree through parity tests on declarations, edges, and source ranges across supported focused languages.
 - [x] `go test -race ./...` remains green.
-- [ ] Benchmarks cover parsing, navigation-index construction, package extraction, and workspace extraction.
+- [ ] Benchmarks cover parsing, navigation-index construction, package extraction, workspace extraction, and end-to-end agent retrieval workflows.
 - [ ] Performance budgets catch repeated parsing and significant regressions.
 - [ ] Public `api` DTO compatibility is tested for the private backend consumer.
 - [x] Package and workspace bundles pass canonical drift checks.
@@ -250,11 +262,15 @@ Before expanding scope, require:
 ## UX improvements after stabilization
 
 - [x] Improve ambiguity diagnostics with suggested `--at PATH:LINE` locations.
-- [ ] Add a concise architecture-summary command that does not expose Mermaid validation metadata.
+- [x] Expose normalized JSON and bounded compact graph output for agent and tool consumption.
+- [ ] Report every bounded caller/callee omission with counts and actionable continuation guidance.
+- [ ] Add focused graph queries with package/module, language, edge-kind, exportedness, direction, confidence, and depth filters.
+- [ ] Add repository-wide count summaries independent of output paging.
+- [ ] Add validated extraction output on stdout.
+- [ ] Add a concise package/workspace summary smaller than the generated overview.
+- [ ] Evaluate an agent-oriented output profile against the fixed workflow benchmark rather than lowering limits without evidence.
 - [x] Emit explicit truncation markers in bounded structures and flows.
 - [x] Expose reproducible release/source, revision, commit-time, toolchain, and platform metadata through `--version`.
-- [ ] Support graph filtering by package or module, edge kind, exportedness, and direction.
-- [ ] Offer normalized JSON graph output for agent and tool consumption.
 - [ ] Report the first semantic architecture difference instead of only naming the differing artifact.
 
 ## Future optimizations
