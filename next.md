@@ -4,7 +4,7 @@ Grepple should stabilize for one or two iterations before adding more languages.
 
 ## Recommended next milestone
 
-> Make support across the existing language set explicit and close the highest-value parity gaps, starting with JavaScript/JSX reuse of the TypeScript extraction and GritQL infrastructure; continue graph output work after that baseline is coherent.
+> Expose the shared navigation graph as stable JSON, then add a compact agent-facing projection. Python GritQL and JavaScript/JSX parity are complete; reassess Python focused extraction only after structural-query dogfooding demonstrates demand.
 
 ## Feature set versus feature completeness
 
@@ -33,7 +33,7 @@ Treat these as separate planning dimensions:
 - Larger diagrams are dominated by validation metadata when viewed as plain text.
 - Agent edit anchors are provider-specific, not generic line hashes. Grepple delegates through a user-owned, versioned batch provider and keeps editing-harness adapters out of the shipped repository.
 - Explicit Go and TypeScript imports, direct parameters/receivers, source-ordered lexical bindings, local and imported return signatures, and same-file typed field chains now resolve before terminal-name fallback. Cross-file field chains, embedded/promoted methods, re-exports, and default imports still need richer propagation.
-- Architecture extraction and native GritQL remain narrower than parser-backed segments, outlines, and navigation. JavaScript/JSX is the clearest next parity target because it can reuse the existing ECMAScript and TypeScript-family infrastructure without adding another grammar.
+- Architecture extraction remains narrower than parser-backed segments, outlines, navigation, and native GritQL. JavaScript/JSX now reuses the ECMAScript extraction path, and Python now has native GritQL; Python focused extraction remains intentionally deferred pending dogfooding.
 - Cross-language fixtures prove the baseline but do not yet cover enough malformed, nested, generic, decorated, or multiline syntax.
 - Canonical mismatch errors identify the artifact but should eventually report the first semantic difference.
 
@@ -214,9 +214,9 @@ Reduce repeated parsing and language knowledge across extraction, navigation, te
    - [x] Add JavaScript/JSX to the unified `gritql-v1` contract by reusing the TypeScript-family adapter where grammar behavior agrees, with dedicated conformance fixtures for declarations, expressions, imports, JSX, sequences, containment, bindings, malformed source, and repeated positions.
    - [x] Add JavaScript/JSX focused structure and flow extraction through the shared navigation graph and ECMAScript analysis helpers. Canonical package/workspace bundles remain Go-specific.
    - [x] Add cross-feature parity tests proving advertised capabilities are implemented and that unsupported combinations fail explicitly rather than silently falling back. Registration parity, generated documentation drift, JavaScript/JSX CLI/conformance, malformed-source, extraction round-trip, and unsupported-language tests cover the matrix.
-   - [x] Select the next existing-language gap from the matrix: add Python GritQL first, because it extends the reusable structural matcher with a bounded language adapter while Python-focused architecture extraction needs a separate semantic projection. Reassess extraction after Python query conformance and dogfooding; consider Java and Rust afterward.
+   - [x] Add Python to `gritql-v1` with expression, pattern, statement, declaration, module, dotted-import, repeated-list, malformed-source, mixed-batch, CLI, and conformance coverage. Reassess Python focused extraction after dogfooding; consider Java and Rust afterward.
 
-Recommended implementation order: capability matrix and CLI discovery, JavaScript/JSX GritQL, JavaScript/JSX focused extraction, then the next parity target selected from dogfooding. Address TypeScript/TSX placeholder-role gaps only when conformance cases expose them.
+Recommended implementation order from here: normalized JSON graph output, compact agent-facing graph output, graph queries, then semantic graph diffing. Address language-specific extraction and placeholder-role gaps only when conformance or dogfooding exposes a valuable blocked workflow.
 
 Acceptance criteria:
 

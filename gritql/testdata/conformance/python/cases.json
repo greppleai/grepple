@@ -1,0 +1,66 @@
+[
+  {
+    "name": "python-call-list-binding",
+    "language": "python",
+    "query": "language python\n`target($args)`",
+    "path": "src/app.py",
+    "source": "result = target(one, two)\n",
+    "findings": ["target(one, two)"]
+  },
+  {
+    "name": "python-import-bindings",
+    "language": "python",
+    "query": "language python\n`from $module import $name`",
+    "path": "src/imports.py",
+    "source": "from package.tools import helper\n",
+    "findings": ["from package.tools import helper"]
+  },
+  {
+    "name": "python-statement-sequence",
+    "language": "python",
+    "query": "language python\n`first()\nsecond()`",
+    "path": "src/app.py",
+    "source": "def run():\n    first()\n    second()\n    third()\n",
+    "findings": ["first()\n    second()"]
+  },
+  {
+    "name": "python-decorated-declaration",
+    "language": "python",
+    "query": "language python\n`@route($path)\ndef handler($args):\n    $body`",
+    "path": "src/routes.py",
+    "source": "@route('/items')\ndef handler(request):\n    return load(request)\n",
+    "findings": ["@route('/items')\ndef handler(request):\n    return load(request)"]
+  },
+  {
+    "name": "python-comprehension",
+    "language": "python",
+"query": "language python\n`[$value for $value in $items if keep($candidate)]`",
+    "path": "src/app.py",
+    "source": "selected = [item for item in values if keep(item)]\nrejected = [item for other in values if keep(item)]\n",
+    "findings": ["[item for item in values if keep(item)]"]
+  },
+  {
+    "name": "python-shared-query-algebra",
+    "language": "python",
+    "query": "language python\nand { `pair($value, $value)`, contains `foo` }",
+    "path": "src/app.py",
+    "source": "yes = pair(foo, foo)\nno = pair(foo, bar)\n",
+    "findings": ["pair(foo, foo)"]
+  },
+  {
+    "name": "python-multiline-call",
+    "language": "python",
+    "query": "language python\n`client.send($payload)`",
+    "path": "src/client.py",
+    "source": "result = client.send(\n    payload\n)\n",
+    "findings": ["client.send(\n    payload\n)"]
+  },
+  {
+    "name": "python-declaration-sequence",
+    "language": "python",
+    "query": "language python\n`def first():\n    pass\nclass Second:\n    pass`",
+    "path": "src/models.py",
+    "source": "def first():\n    pass\nclass Second:\n    pass\ndef third():\n    pass\n",
+    "findings": ["def first():\n    pass\nclass Second:\n    pass"]
+  }
+]

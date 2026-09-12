@@ -2,7 +2,7 @@
 
 _Analyzed on 2026-09-07._
 
-This is a historical design analysis, not the current API specification. The public-core refactor moved the parser and API to `parser/` and `api/`, renamed `internal/grepplecli` to `internal/cli`, and moved router/shard ownership to the separate `grepple-backend` repository. Backend proposals below do not imply that those implementations ship in this module. The original Go-only recommendation has since evolved into one adapter-based `gritql-v1` contract for Go, JavaScript/JSX, TypeScript, and TSX. See `gritql-compatibility.md` for the implemented contract.
+This is a historical design analysis, not the current API specification. The public-core refactor moved the parser and API to `parser/` and `api/`, renamed `internal/grepplecli` to `internal/cli`, and moved router/shard ownership to the separate `grepple-backend` repository. Backend proposals below do not imply that those implementations ship in this module. The original Go-only recommendation has since evolved into one adapter-based `gritql-v1` contract for Go, JavaScript/JSX, TypeScript, TSX, and Python. See `gritql-compatibility.md` for the implemented contract.
 
 ## Executive recommendation
 

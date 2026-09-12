@@ -15,7 +15,7 @@ func TestSupportedLanguagesReflectTargetAdapters(t *testing.T) {
 			t.Fatalf("language capability does not match adapter: %#v", language)
 		}
 	}
-	if want := []string{"go", "javascript", "tsx", "typescript"}; !reflect.DeepEqual(ids, want) {
+	if want := []string{"go", "javascript", "python", "tsx", "typescript"}; !reflect.DeepEqual(ids, want) {
 		t.Fatalf("language IDs=%#v, want %#v", ids, want)
 	}
 }

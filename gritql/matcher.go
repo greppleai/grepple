@@ -410,7 +410,7 @@ func canonicalSequenceChildren(pattern []templateChild, children []parser.Syntax
 }
 
 func sequenceParent(kind, parent string) bool {
-	return kind == "statement_sequence" && (parent == "statement_list" || parent == "statement_block") ||
+	return kind == "statement_sequence" && (parent == "statement_list" || parent == "statement_block" || parent == "block" || parent == "module") ||
 		kind == "declaration_sequence" && (parent == "source_file" || parent == "program")
 }
 

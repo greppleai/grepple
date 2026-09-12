@@ -186,6 +186,9 @@ const (
 	roleTypeSpec
 	roleDeclaration
 	roleTypeScriptDeclaration
+	rolePythonStatement
+	rolePythonDeclaration
+	rolePythonDottedName
 )
 
 type generatedPlaceholder struct {
@@ -852,6 +855,10 @@ func replaceSnippetPlaceholders(d decodedSnippet, prefix string, roles []placeho
 			expansion = "var " + marker + " int"
 		case roleTypeScriptDeclaration:
 			expansion = "const " + marker + " = 0"
+		case rolePythonStatement:
+			expansion = "pass"
+		case rolePythonDeclaration:
+			expansion = "def " + marker + "(): pass"
 		}
 		start := len(prefix) + b.Len()
 		b.WriteString(expansion)
@@ -1247,6 +1254,12 @@ func typedPlaceholderNode(n, parent parser.Node, role placeholderRole) bool {
 		return isGoDeclaration(n.Kind()) && parent.Valid() && parent.Kind() == "source_file"
 	case roleTypeScriptDeclaration:
 		return isTypeScriptDeclaration(n.Kind()) && parent.Valid() && parent.Kind() == "program"
+	case rolePythonStatement:
+		return n.Kind() == "pass_statement"
+	case rolePythonDeclaration:
+		return n.Kind() == "function_definition" && (!parent.Valid() || parent.Kind() == "module")
+	case rolePythonDottedName:
+		return n.Kind() == "dotted_name"
 	default:
 		return false
 	}

@@ -44,6 +44,19 @@ func TestLanguagesJSONReportsRegisteredFeatureParity(t *testing.T) {
 	}
 }
 
+func TestLanguageCapabilityMatrixReportsPythonGritQL(t *testing.T) {
+	for _, capability := range languageCapabilityMatrix() {
+		if capability.Language != "python" {
+			continue
+		}
+		if capability.Navigation != api.FeatureProduction || capability.GritQL != api.FeatureProduction || capability.FocusedStructure != api.FeatureUnsupported {
+			t.Fatalf("python capabilities=%#v", capability)
+		}
+		return
+	}
+	t.Fatal("python capabilities missing")
+}
+
 func TestLanguagesHumanOutputUsesCapabilityIcons(t *testing.T) {
 	output := captureStdout(t, func() {
 		if err := Run([]string{"languages"}); err != nil {

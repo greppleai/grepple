@@ -8,6 +8,10 @@ const (
 	JavaScriptGrammar = "javascript"
 	// TreeSitterJavaScriptGrammar identifies the pinned JavaScript grammar implementation.
 	TreeSitterJavaScriptGrammar = "tree-sitter-javascript@0.25.0"
+	// PythonGrammar identifies the Python syntax contract.
+	PythonGrammar = "python"
+	// TreeSitterPythonGrammar identifies the pinned Python grammar implementation.
+	TreeSitterPythonGrammar = "tree-sitter-python@0.25.0"
 	// TypeScriptGrammar identifies the TypeScript syntax contract.
 	TypeScriptGrammar = "typescript"
 	// TSXGrammar identifies the TSX syntax contract.
@@ -71,6 +75,15 @@ var targetLanguageAdapters = map[string]targetLanguageAdapter{
 		metadataGrammar:  JavaScriptGrammar,
 		compileTemplates: compileJavaScriptTemplates,
 		rootCategory:     javaScriptRootCategoryAccepts,
+	},
+	"python": {
+		id:               "python",
+		grammar:          PythonGrammar,
+		treeSitter:       TreeSitterPythonGrammar,
+		metadataLanguage: "python",
+		metadataGrammar:  PythonGrammar,
+		compileTemplates: compilePythonTemplates,
+		rootCategory:     pythonRootCategoryAccepts,
 	},
 	"typescript": {
 		id:               "typescript",

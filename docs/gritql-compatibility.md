@@ -1,6 +1,6 @@
 # `gritql-v1` compatibility contract
 
-`gritql-v1` is Grepple's unified, closed, read-only detection contract for `language go`, `language javascript`, `language typescript`, and `language tsx`. Target syntax is supplied by language adapters while query algebra, transactions, limits, ordering, and diagnostics remain shared.
+`gritql-v1` is Grepple's unified, closed, read-only detection contract for `language go`, `language javascript`, `language typescript`, `language tsx`, and `language python`. Target syntax is supplied by language adapters while query algebra, transactions, limits, ordering, and diagnostics remain shared.
 
 The contract is not an alias for an upstream GritQL release. A conforming implementation accepts exactly the documented syntax and rejects every other construct; it does not invoke an external engine, Node, a shell, or a fallback interpreter.
 
@@ -10,7 +10,7 @@ The grammar is EBNF. Literal words and punctuation are quoted. `EOF` means the e
 
 ```ebnf
 pattern          = spacing, language, line_end, spacing, query, spacing, EOF ;
-language         = "language", hspace1, ( "go" | "javascript" | "typescript" | "tsx" ) ;
+language         = "language", hspace1, ( "go" | "javascript" | "typescript" | "tsx" | "python" ) ;
 
 query            = prefix, [ spacing, where_clause ] ;
 prefix           = snippet
@@ -114,6 +114,12 @@ Synthetic wrappers are removed before matching. Statement and declaration lists 
 
 JavaScript/TypeScript-family metavariables currently occupy identifier-like, expression, property, JSX, parameter, and repeated-list grammar positions; TypeScript and TSX additionally support type positions. Unsupported positions fail compilation with `PATTERN_INVALID_SNIPPET`; they are never interpreted by a fallback parser. JavaScript, TypeScript, and TSX metadata reports canonical `language` and `grammar` fields instead of the Go-only `go_grammar` field.
 
+### 2.2 Python snippet parsing
+
+For `language python`, the contract selects `.py`, `.pyi`, and `.pyw` source and parses snippets against the pinned Python grammar. It retains every grammar-valid expression, statement, statement-list, declaration, declaration-list, and complete-module interpretation. Statement and declaration sequences share a `statement_sequence` projection because Python modules and blocks contain the same statement grammar; matching remains confined to one module or block and never crosses indentation scopes.
+
+Python metavariables occupy expression, pattern, identifier, dotted import-name, statement, declaration, and grammar-generated repeated-list positions. A placeholder immediately following `from` or `import` binds one complete `dotted_name`. Whole-snippet placeholders receive explicit statement and declaration interpretations so they can bind syntax that cannot be represented by an identifier expression. Indentation, delimiters, operators, and literal spelling remain structural, while formatting trivia follows the shared normalization rules. Unsupported or malformed positions fail with `PATTERN_INVALID_SNIPPET` rather than falling back to text or another grammar. Python metadata reports canonical `language`, `grammar`, and pinned `tree_sitter_grammar` fields.
+
 ## 3. Structural matching and bindings
 
 A source file is parsed into the selected language's lossless concrete syntax tree. A structural value is normalized recursively as:
@@ -130,7 +136,7 @@ A `where` block is evaluated after its prefix succeeds. Constraints are evaluate
 
 ## 4. Evaluation model
 
-The evaluator visits named source AST nodes in preorder: parent before children, children in grammar order, with equal-offset children in grammar order. Unnamed tokens are structural children but are not traversal candidates. At every repeated-child position in the pinned Go grammar (identified by parent kind plus field name, including an empty field name), it also visits each non-empty consecutive element list exactly once, longest first and then by increasing first-element index. This includes statements, declarations, arguments, parameters, fields, repeated names, and `type_elem` members. A list candidate's range runs from its first normalized element through its last and excludes leading or trailing separators. Empty lists are bindable while matching a surrounding snippet but are not traversal candidates.
+The evaluator visits named source AST nodes in preorder: parent before children, children in grammar order, with equal-offset children in grammar order. At every repeated-child position in the selected pinned grammar (identified by parent kind plus field name, including an empty field name), it also visits each non-empty consecutive element list exactly once, longest first and then by increasing first-element index. This includes statements, declarations, arguments, parameters, fields, repeated names, and equivalent adapter-supported list positions. A list candidate's range runs from its first normalized element through its last and excludes leading or trailing separators. Empty lists are bindable while matching a surrounding snippet but are not traversal candidates.
 
 Queries return zero or more match records. Each record contains a primary range and a binding map:
 
@@ -262,7 +268,7 @@ The following are recognized but unsupported and fail closed with `PATTERN_UNSUP
 - any equality or inequality operator (including `==` and `!=`); equality exists only through repeated metavariable binding;
 - any operator, literal, comment form, or delimiter absent from the EBNF.
 
-Targets other than Go, JavaScript/JSX, TypeScript, and TSX; type checking; name resolution; data flow; network access; shell execution; repository writes; interactive input; and source rewrites are behaviorally unsupported. The unified contract is native and detection-only.
+Targets other than Go, JavaScript/JSX, TypeScript, TSX, and Python; type checking; name resolution; data flow; network access; shell execution; repository writes; interactive input; and source rewrites are behaviorally unsupported. The unified contract is native and detection-only.
 
 ## 9. Security and performance gates
 

@@ -65,6 +65,10 @@ func TestJavaScriptConformanceFixture(t *testing.T) {
 	runTargetConformanceFixture(t, "testdata/conformance/javascript/cases.json")
 }
 
+func TestPythonConformanceFixture(t *testing.T) {
+	runTargetConformanceFixture(t, "testdata/conformance/python/cases.json")
+}
+
 func runTargetConformanceFixture(t *testing.T, path string) {
 	t.Helper()
 	content, err := os.ReadFile(path)

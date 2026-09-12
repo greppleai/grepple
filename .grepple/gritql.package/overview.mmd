@@ -2,7 +2,7 @@ classDiagram
     %% grepple:package-default github.com/greppleai/grepple/gritql
     %% grepple:language-default go
     direction LR
-    note "Package gritql implements Grepple's native, read-only structural-search compiler, matcher, evaluator, and bounded scanner. | package github.com/greppleai/grepple/gritql | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=14, declarations=118, exportedTypes=49, internalTypes=69, members=624, exportedFunctions=18, fiberRoutes=0, relations=318"
+    note "Package gritql implements Grepple's native, read-only structural-search compiler, matcher, evaluator, and bounded scanner. | package github.com/greppleai/grepple/gritql | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=15, declarations=118, exportedTypes=49, internalTypes=69, members=624, exportedFunctions=18, fiberRoutes=0, relations=318"
     namespace data_contracts {
         class EffectiveLimits["EffectiveLimits · gritql/finding.go:52-64"] {
             +ASTSteps: int
@@ -122,7 +122,7 @@ classDiagram
         <<struct>> FindingBinding
         class Kind["Kind = uint8 · gritql/compiler.go:86"]
         <<type>> Kind
-        class LanguageCapabilities["LanguageCapabilities · gritql/language.go:20-24"]
+        class LanguageCapabilities["LanguageCapabilities · gritql/language.go:24-28"]
         <<struct>> LanguageCapabilities
         class LanguageDeclaration["LanguageDeclaration · gritql/compiler.go:256-259"]
         <<struct>> LanguageDeclaration
@@ -186,9 +186,9 @@ classDiagram
         <<struct>> expression
         class frozenMatchTarget["frozenMatchTarget · gritql/matcher.go:62-69"]
         <<struct>> frozenMatchTarget
-        class generatedPlaceholder["generatedPlaceholder · gritql/template.go:191-195"]
+        class generatedPlaceholder["generatedPlaceholder · gritql/template.go:194-198"]
         <<struct>> generatedPlaceholder
-        class inferredEvaluation["inferredEvaluation · gritql/template.go:777-780"]
+        class inferredEvaluation["inferredEvaluation · gritql/template.go:780-783"]
         <<struct>> inferredEvaluation
         class noCopy["noCopy · gritql/query_syntax.go:52"]
         <<struct>> noCopy
@@ -200,19 +200,19 @@ classDiagram
         <<struct>> normalizationCheckpointKey
         class normalizedNode["normalizedNode · gritql/matcher.go:94-99"]
         <<struct>> normalizedNode
-        class occurrenceRestoration["occurrenceRestoration · gritql/template.go:1363-1367"]
+        class occurrenceRestoration["occurrenceRestoration · gritql/template.go:1376-1380"]
         <<struct>> occurrenceRestoration
-        class placeholderInference["placeholderInference · gritql/template.go:225-229"]
+        class placeholderInference["placeholderInference · gritql/template.go:228-232"]
         <<struct>> placeholderInference
-        class placeholderInfo["placeholderInfo · gritql/template.go:403-408"]
+        class placeholderInfo["placeholderInfo · gritql/template.go:406-411"]
         <<struct>> placeholderInfo
-        class placeholderInfoCollector["placeholderInfoCollector · gritql/template.go:443-446"]
+        class placeholderInfoCollector["placeholderInfoCollector · gritql/template.go:446-449"]
         <<struct>> placeholderInfoCollector
         class placeholderRole["placeholderRole = uint8 · gritql/template.go:180"]
         <<type>> placeholderRole
-        class placeholderRoleSolver["placeholderRoleSolver · gritql/template.go:504-511"]
+        class placeholderRoleSolver["placeholderRoleSolver · gritql/template.go:507-514"]
         <<struct>> placeholderRoleSolver
-        class placeholderWalkItem["placeholderWalkItem · gritql/template.go:434-441"]
+        class placeholderWalkItem["placeholderWalkItem · gritql/template.go:437-444"]
         <<struct>> placeholderWalkItem
         class preparedLanguageScan["preparedLanguageScan · gritql/scanner_batch.go:88-93"]
         <<struct>> preparedLanguageScan
@@ -234,9 +234,9 @@ classDiagram
         <<struct>> queryRecord
         class querySyntaxError["querySyntaxError · gritql/query_syntax.go:37-41"]
         <<struct>> querySyntaxError
-        class roleAlternative["roleAlternative · gritql/template.go:614-618"]
+        class roleAlternative["roleAlternative · gritql/template.go:617-621"]
         <<struct>> roleAlternative
-        class roleAncestorSet["roleAncestorSet · gritql/template.go:378-381"]
+        class roleAncestorSet["roleAncestorSet · gritql/template.go:381-384"]
         <<struct>> roleAncestorSet
         class scanByteAccount["scanByteAccount · gritql/scanner.go:385-392"]
         <<struct>> scanByteAccount
@@ -258,37 +258,37 @@ classDiagram
         <<struct>> scanSegmentState
         class scanState["scanState · gritql/scanner.go:130-144"]
         <<struct>> scanState
-        class selectedRoot["selectedRoot · gritql/template.go:203-206"]
+        class selectedRoot["selectedRoot · gritql/template.go:206-209"]
         <<struct>> selectedRoot
-        class separatorLexState["separatorLexState = uint8 · gritql/template.go:246"]
+        class separatorLexState["separatorLexState = uint8 · gritql/template.go:249"]
         <<type>> separatorLexState
-        class separatorScanner["separatorScanner · gritql/template.go:257-264"]
+        class separatorScanner["separatorScanner · gritql/template.go:260-267"]
         <<struct>> separatorScanner
         class sequencePosition["sequencePosition · gritql/evaluator.go:466-469"]
         <<struct>> sequencePosition
         class significantRangeFrame["significantRangeFrame · gritql/evaluator.go:324-330"]
         <<struct>> significantRangeFrame
-        class slotTarget["slotTarget · gritql/template.go:1051-1055"]
+        class slotTarget["slotTarget · gritql/template.go:1058-1062"]
         <<struct>> slotTarget
-        class slotTargetWalkItem["slotTargetWalkItem · gritql/template.go:1098-1101"]
+        class slotTargetWalkItem["slotTargetWalkItem · gritql/template.go:1105-1108"]
         <<struct>> slotTargetWalkItem
-        class snippetAttempt["snippetAttempt · gritql/template.go:198-202"]
+        class snippetAttempt["snippetAttempt · gritql/template.go:201-205"]
         <<struct>> snippetAttempt
         class snippetPlaceholder["snippetPlaceholder · gritql/template.go:175-178"]
         <<struct>> snippetPlaceholder
         class sourceInspectionItem["sourceInspectionItem · gritql/evaluator.go:264-267"]
         <<struct>> sourceInspectionItem
-        class spanKey["spanKey · gritql/template.go:196"]
+        class spanKey["spanKey · gritql/template.go:199"]
         <<struct>> spanKey
-        class structuralSeparators["structuralSeparators · gritql/template.go:231-234"]
+        class structuralSeparators["structuralSeparators · gritql/template.go:234-237"]
         <<struct>> structuralSeparators
-        class targetLanguageAdapter["targetLanguageAdapter · gritql/language.go:38-47"]
+        class targetLanguageAdapter["targetLanguageAdapter · gritql/language.go:42-51"]
         <<struct>> targetLanguageAdapter
         class templateChild["templateChild · gritql/template.go:47-51"]
         <<struct>> templateChild
-        class templateFreezeFrame["templateFreezeFrame · gritql/template.go:1141-1147"]
+        class templateFreezeFrame["templateFreezeFrame · gritql/template.go:1148-1154"]
         <<struct>> templateFreezeFrame
-        class templateFreezer["templateFreezer · gritql/template.go:1149-1155"]
+        class templateFreezer["templateFreezer · gritql/template.go:1156-1162"]
         <<struct>> templateFreezer
         class templateNode["templateNode · gritql/template.go:52-57"]
         <<struct>> templateNode
@@ -368,7 +368,7 @@ classDiagram
             +SequenceTarget(string, parser.Node, int, int): MatchTarget
         }
         <<function>> SequenceTarget
-        class SupportedLanguages["SupportedLanguages · gritql/language.go:27-34"] {
+        class SupportedLanguages["SupportedLanguages · gritql/language.go:31-38"] {
             +SupportedLanguages(): []LanguageCapabilities
         }
         <<function>> SupportedLanguages

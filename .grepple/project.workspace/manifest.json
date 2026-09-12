@@ -26,7 +26,7 @@
   "summary": {
     "modules": 2,
     "packages": 16,
-    "sourceFiles": 126,
+    "sourceFiles": 127,
     "declarations": 337,
     "exportedFunctions": 105,
     "fiberRoutes": 0,
@@ -34,7 +34,7 @@
     "standardLibraryImports": 139,
     "externalModuleEdges": 15
   },
-  "semanticModelDigest": "sha256:69f8c48dc55ac2277ba36b600c129db792a59b962762812fc5e9fb65d1e59f1a",
+  "semanticModelDigest": "sha256:d937062741a19f602621d9b1ec8a01774c5117e3558e3b62d8db2baf936a0007",
   "modules": [
     {
       "path": "github.com/greppleai/grepple",
@@ -162,7 +162,7 @@
           "name": "gritql",
           "documentation": "Package gritql implements Grepple's native, read-only structural-search compiler, matcher, evaluator, and bounded scanner.",
           "main": false,
-          "sourceFiles": 14,
+          "sourceFiles": 15,
           "declarations": 118,
           "exportedFunctions": 18,
           "fiberRoutes": 0,

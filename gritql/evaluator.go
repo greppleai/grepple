@@ -571,7 +571,7 @@ func sequenceTargetEnd(children []parser.ViewNode, end int) int {
 
 func sequenceMatchTarget(parent parser.ViewNode, field string, start, end int) MatchTarget {
 	switch parent.Kind() {
-	case "statement_list", "statement_block":
+	case "statement_list", "statement_block", "block", "module":
 		return viewSequenceTarget("statement_sequence", parent, start, end)
 	case "source_file", "program":
 		return viewSequenceTarget("declaration_sequence", parent, start, end)

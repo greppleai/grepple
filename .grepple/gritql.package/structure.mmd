@@ -306,7 +306,7 @@ classDiagram
     }
     <<struct>> LanguageCapabilities
     %% grepple:file LanguageCapabilities gritql/language.go
-    note for LanguageCapabilities "defined: gritql/language.go:20-24; Grammar@gritql/language.go:22; ID@gritql/language.go:21; TreeSitter@gritql/language.go:23"
+    note for LanguageCapabilities "defined: gritql/language.go:24-28; Grammar@gritql/language.go:26; ID@gritql/language.go:25; TreeSitter@gritql/language.go:27"
     class LanguageDeclaration {
         +Name: string
         +Range: Range
@@ -687,7 +687,7 @@ classDiagram
     }
     <<struct>> generatedPlaceholder
     %% grepple:file generatedPlaceholder gritql/template.go
-    note for generatedPlaceholder "defined: gritql/template.go:191-195; end@gritql/template.go:192; index@gritql/template.go:192; ref@gritql/template.go:193; role@gritql/template.go:194; start@gritql/template.go:192"
+    note for generatedPlaceholder "defined: gritql/template.go:194-198; end@gritql/template.go:195; index@gritql/template.go:195; ref@gritql/template.go:196; role@gritql/template.go:197; start@gritql/template.go:195"
     class inferredEvaluation {
         -tmpl: Template
         -tooDeep: bool
@@ -695,7 +695,7 @@ classDiagram
     }
     <<struct>> inferredEvaluation
     %% grepple:file inferredEvaluation gritql/template.go
-    note for inferredEvaluation "defined: gritql/template.go:777-780; tmpl@gritql/template.go:778; tooDeep@gritql/template.go:779; valid@gritql/template.go:779"
+    note for inferredEvaluation "defined: gritql/template.go:780-783; tmpl@gritql/template.go:781; tooDeep@gritql/template.go:782; valid@gritql/template.go:782"
     class noCopy {
         +Lock()
     }
@@ -737,7 +737,7 @@ classDiagram
     }
     <<struct>> occurrenceRestoration
     %% grepple:file occurrenceRestoration gritql/template.go
-    note for occurrenceRestoration "defined: gritql/template.go:1363-1367; seenExactlyOnce@gritql/template.go:1401-1408; visitChildren@gritql/template.go:1389-1399; visitSlot@gritql/template.go:1369-1376; visitTree@gritql/template.go:1378-1387; indices@gritql/template.go:1365; seen@gritql/template.go:1364; valid@gritql/template.go:1366"
+    note for occurrenceRestoration "defined: gritql/template.go:1376-1380; seenExactlyOnce@gritql/template.go:1414-1421; visitChildren@gritql/template.go:1402-1412; visitSlot@gritql/template.go:1382-1389; visitTree@gritql/template.go:1391-1400; indices@gritql/template.go:1378; seen@gritql/template.go:1377; valid@gritql/template.go:1379"
     class placeholderInference {
         -assignments: [][]placeholderRole
         -ok: bool
@@ -745,7 +745,7 @@ classDiagram
     }
     <<struct>> placeholderInference
     %% grepple:file placeholderInference gritql/template.go
-    note for placeholderInference "defined: gritql/template.go:225-229; assignments@gritql/template.go:226; ok@gritql/template.go:227; tooDeep@gritql/template.go:228"
+    note for placeholderInference "defined: gritql/template.go:228-232; assignments@gritql/template.go:229; ok@gritql/template.go:230; tooDeep@gritql/template.go:231"
     class placeholderInfo {
         -ancestors: roleAncestorSet
         -errorRange: parser.Range
@@ -754,7 +754,7 @@ classDiagram
     }
     <<struct>> placeholderInfo
     %% grepple:file placeholderInfo gritql/template.go
-    note for placeholderInfo "defined: gritql/template.go:403-408; ancestors@gritql/template.go:406; errorRange@gritql/template.go:407; foundNode@gritql/template.go:404; topLevelValue@gritql/template.go:405"
+    note for placeholderInfo "defined: gritql/template.go:406-411; ancestors@gritql/template.go:409; errorRange@gritql/template.go:410; foundNode@gritql/template.go:407; topLevelValue@gritql/template.go:408"
     class placeholderInfoCollector {
         -inspect(placeholderWalkItem): placeholderWalkItem
         -record(int, placeholderWalkItem)
@@ -763,7 +763,7 @@ classDiagram
     }
     <<struct>> placeholderInfoCollector
     %% grepple:file placeholderInfoCollector gritql/template.go
-    note for placeholderInfoCollector "defined: gritql/template.go:443-446; inspect@gritql/template.go:466-478; record@gritql/template.go:480-491; bySpan@gritql/template.go:444; infos@gritql/template.go:445"
+    note for placeholderInfoCollector "defined: gritql/template.go:446-449; inspect@gritql/template.go:469-481; record@gritql/template.go:483-494; bySpan@gritql/template.go:447; infos@gritql/template.go:448"
     class placeholderRole["placeholderRole = uint8"]
     <<type>> placeholderRole
     %% grepple:underlying placeholderRole uint8
@@ -788,7 +788,7 @@ classDiagram
     }
     <<struct>> placeholderRoleSolver
     %% grepple:file placeholderRoleSolver gritql/template.go
-    note for placeholderRoleSolver "defined: gritql/template.go:504-511; allResolved@gritql/template.go:602-609; resolveErrorRegion@gritql/template.go:584-600; resolveErrorRegions@gritql/template.go:576-582; resolveImport@gritql/template.go:536-544; resolveImports@gritql/template.go:521-534; resolveTopLevelValues@gritql/template.go:513-519; resolveTypedNodes@gritql/template.go:568-574; resolveWholeSpec@gritql/template.go:555-566; resolveWholeSpecs@gritql/template.go:546-553; infos@gritql/template.go:508; ps@gritql/template.go:506; resolved@gritql/template.go:510; roles@gritql/template.go:509; separators@gritql/template.go:507; source@gritql/template.go:505"
+    note for placeholderRoleSolver "defined: gritql/template.go:507-514; allResolved@gritql/template.go:605-612; resolveErrorRegion@gritql/template.go:587-603; resolveErrorRegions@gritql/template.go:579-585; resolveImport@gritql/template.go:539-547; resolveImports@gritql/template.go:524-537; resolveTopLevelValues@gritql/template.go:516-522; resolveTypedNodes@gritql/template.go:571-577; resolveWholeSpec@gritql/template.go:558-569; resolveWholeSpecs@gritql/template.go:549-556; infos@gritql/template.go:511; ps@gritql/template.go:509; resolved@gritql/template.go:513; roles@gritql/template.go:512; separators@gritql/template.go:510; source@gritql/template.go:508"
     class placeholderWalkItem {
         -ancestors: roleAncestorSet
         -depth: int
@@ -799,7 +799,7 @@ classDiagram
     }
     <<struct>> placeholderWalkItem
     %% grepple:file placeholderWalkItem gritql/template.go
-    note for placeholderWalkItem "defined: gritql/template.go:434-441; ancestors@gritql/template.go:438; depth@gritql/template.go:437; errorRange@gritql/template.go:440; inError@gritql/template.go:439; n@gritql/template.go:435; parent@gritql/template.go:436"
+    note for placeholderWalkItem "defined: gritql/template.go:437-444; ancestors@gritql/template.go:441; depth@gritql/template.go:440; errorRange@gritql/template.go:443; inError@gritql/template.go:442; n@gritql/template.go:438; parent@gritql/template.go:439"
     class preparedLanguageScan {
         -candidates: []preparedScanCandidate
         -early: []FileEvaluation
@@ -925,7 +925,7 @@ classDiagram
     }
     <<struct>> roleAlternative
     %% grepple:file roleAlternative gritql/template.go
-    note for roleAlternative "defined: gritql/template.go:614-618; component@gritql/template.go:615; index@gritql/template.go:616; role@gritql/template.go:617"
+    note for roleAlternative "defined: gritql/template.go:617-621; component@gritql/template.go:618; index@gritql/template.go:619; role@gritql/template.go:620"
     class roleAncestorSet {
         -add(string, parser.Range)
         -get(string): tuple~parser.Range&#44;bool~
@@ -934,7 +934,7 @@ classDiagram
     }
     <<struct>> roleAncestorSet
     %% grepple:file roleAncestorSet gritql/template.go
-    note for roleAncestorSet "defined: gritql/template.go:378-381; add@gritql/template.go:385-392; get@gritql/template.go:394-401; ranges@gritql/template.go:379; set@gritql/template.go:380"
+    note for roleAncestorSet "defined: gritql/template.go:381-384; add@gritql/template.go:388-395; get@gritql/template.go:397-404; ranges@gritql/template.go:382; set@gritql/template.go:383"
     class scanByteAccount {
         -read(context.Context, fs.FS, string, []byte, int, ScanOptions): scanReadResult
         -readNext(context.Context, fs.FS, string, []byte, ScanOptions): scanReadResult
@@ -1048,12 +1048,12 @@ classDiagram
     }
     <<struct>> selectedRoot
     %% grepple:file selectedRoot gritql/template.go
-    note for selectedRoot "defined: gritql/template.go:203-206; node@gritql/template.go:204; sequenceKind@gritql/template.go:205"
+    note for selectedRoot "defined: gritql/template.go:206-209; node@gritql/template.go:207; sequenceKind@gritql/template.go:208"
     class separatorLexState["separatorLexState = uint8"]
     <<type>> separatorLexState
     %% grepple:underlying separatorLexState uint8
     %% grepple:file separatorLexState gritql/template.go
-    note for separatorLexState "defined: gritql/template.go:246"
+    note for separatorLexState "defined: gritql/template.go:249"
     class separatorScanner {
         -addBothSeparator(int)
         -beginComment(): bool
@@ -1073,7 +1073,7 @@ classDiagram
     }
     <<struct>> separatorScanner
     %% grepple:file separatorScanner gritql/template.go
-    note for separatorScanner "defined: gritql/template.go:257-264; addBothSeparator@gritql/template.go:373-376; beginComment@gritql/template.go:353-371; scan@gritql/template.go:266-270; scanBlockComment@gritql/template.go:295-313; scanCurrentByte@gritql/template.go:272-285; scanLineComment@gritql/template.go:287-293; scanNormalByte@gritql/template.go:332-351; scanQuotedLiteral@gritql/template.go:321-330; scanRawString@gritql/template.go:315-319; blockCommentHasNewline@gritql/template.go:263; blockCommentStart@gritql/template.go:262; index@gritql/template.go:261; result@gritql/template.go:259; source@gritql/template.go:258; state@gritql/template.go:260"
+    note for separatorScanner "defined: gritql/template.go:260-267; addBothSeparator@gritql/template.go:376-379; beginComment@gritql/template.go:356-374; scan@gritql/template.go:269-273; scanBlockComment@gritql/template.go:298-316; scanCurrentByte@gritql/template.go:275-288; scanLineComment@gritql/template.go:290-296; scanNormalByte@gritql/template.go:335-354; scanQuotedLiteral@gritql/template.go:324-333; scanRawString@gritql/template.go:318-322; blockCommentHasNewline@gritql/template.go:266; blockCommentStart@gritql/template.go:265; index@gritql/template.go:264; result@gritql/template.go:262; source@gritql/template.go:261; state@gritql/template.go:263"
     class sequencePosition {
         -field: string
         -indexes: []int
@@ -1099,7 +1099,7 @@ classDiagram
     }
     <<struct>> slotTarget
     %% grepple:file slotTarget gritql/template.go
-    note for slotTarget "defined: gritql/template.go:1051-1055; cardinality@gritql/template.go:1053; kind@gritql/template.go:1054; p@gritql/template.go:1052"
+    note for slotTarget "defined: gritql/template.go:1058-1062; cardinality@gritql/template.go:1060; kind@gritql/template.go:1061; p@gritql/template.go:1059"
     class slotTargetWalkItem {
         -depth: int
         -n: parser.Node
@@ -1107,7 +1107,7 @@ classDiagram
     }
     <<struct>> slotTargetWalkItem
     %% grepple:file slotTargetWalkItem gritql/template.go
-    note for slotTargetWalkItem "defined: gritql/template.go:1098-1101; depth@gritql/template.go:1100; n@gritql/template.go:1099; parent@gritql/template.go:1099"
+    note for slotTargetWalkItem "defined: gritql/template.go:1105-1108; depth@gritql/template.go:1107; n@gritql/template.go:1106; parent@gritql/template.go:1106"
     class snippetAttempt {
         -context: SnippetContext
         -prefix: string
@@ -1116,7 +1116,7 @@ classDiagram
     }
     <<struct>> snippetAttempt
     %% grepple:file snippetAttempt gritql/template.go
-    note for snippetAttempt "defined: gritql/template.go:198-202; context@gritql/template.go:199; prefix@gritql/template.go:200; selectRoot@gritql/template.go:201; suffix@gritql/template.go:200"
+    note for snippetAttempt "defined: gritql/template.go:201-205; context@gritql/template.go:202; prefix@gritql/template.go:203; selectRoot@gritql/template.go:204; suffix@gritql/template.go:203"
     class snippetPlaceholder {
         -end: int
         -ref: VariableRef
@@ -1138,14 +1138,14 @@ classDiagram
     }
     <<struct>> spanKey
     %% grepple:file spanKey gritql/template.go
-    note for spanKey "defined: gritql/template.go:196; end@gritql/template.go:196; start@gritql/template.go:196"
+    note for spanKey "defined: gritql/template.go:199; end@gritql/template.go:199; start@gritql/template.go:199"
     class structuralSeparators {
         -left: []int
         -right: []int
     }
     <<struct>> structuralSeparators
     %% grepple:file structuralSeparators gritql/template.go
-    note for structuralSeparators "defined: gritql/template.go:231-234; left@gritql/template.go:232; right@gritql/template.go:233"
+    note for structuralSeparators "defined: gritql/template.go:234-237; left@gritql/template.go:235; right@gritql/template.go:236"
     class targetLanguageAdapter {
         -compileTemplates: func&#40;decodedSnippet&#44;int&#41;&#40;[]Template&#44;string&#44;error&#41;
         -goGrammar: string
@@ -1158,7 +1158,7 @@ classDiagram
     }
     <<struct>> targetLanguageAdapter
     %% grepple:file targetLanguageAdapter gritql/language.go
-    note for targetLanguageAdapter "defined: gritql/language.go:38-47; compileTemplates@gritql/language.go:45; goGrammar@gritql/language.go:44; grammar@gritql/language.go:40; id@gritql/language.go:39; metadataGrammar@gritql/language.go:43; metadataLanguage@gritql/language.go:42; rootCategory@gritql/language.go:46; treeSitter@gritql/language.go:41"
+    note for targetLanguageAdapter "defined: gritql/language.go:42-51; compileTemplates@gritql/language.go:49; goGrammar@gritql/language.go:48; grammar@gritql/language.go:44; id@gritql/language.go:43; metadataGrammar@gritql/language.go:47; metadataLanguage@gritql/language.go:46; rootCategory@gritql/language.go:50; treeSitter@gritql/language.go:45"
     class templateChild {
         -field: string
         -node: *templateNode
@@ -1176,7 +1176,7 @@ classDiagram
     }
     <<struct>> templateFreezeFrame
     %% grepple:file templateFreezeFrame gritql/template.go
-    note for templateFreezeFrame "defined: gritql/template.go:1141-1147; children@gritql/template.go:1144; depth@gritql/template.go:1143; kept@gritql/template.go:1146; next@gritql/template.go:1145; src@gritql/template.go:1142"
+    note for templateFreezeFrame "defined: gritql/template.go:1148-1154; children@gritql/template.go:1151; depth@gritql/template.go:1150; kept@gritql/template.go:1153; next@gritql/template.go:1152; src@gritql/template.go:1149"
     class templateFreezer {
         -build(): tuple~templateChild&#44;error~
         -concreteChild(*templateFreezeFrame, bool): templateChild
@@ -1194,7 +1194,7 @@ classDiagram
     }
     <<struct>> templateFreezer
     %% grepple:file templateFreezer gritql/template.go
-    note for templateFreezer "defined: gritql/template.go:1149-1155; build@gritql/template.go:1157-1168; concreteChild@gritql/template.go:1215-1225; descend@gritql/template.go:1209-1213; finishFrame@gritql/template.go:1227-1235; keptChildren@gritql/template.go:1199-1207; slotChild@gritql/template.go:1189-1197; step@gritql/template.go:1170-1187; clipEnd@gritql/template.go:1152; clipStart@gritql/template.go:1151; maxDepth@gritql/template.go:1151; sequenceKind@gritql/template.go:1153; stack@gritql/template.go:1154; targets@gritql/template.go:1150"
+    note for templateFreezer "defined: gritql/template.go:1156-1162; build@gritql/template.go:1164-1175; concreteChild@gritql/template.go:1222-1232; descend@gritql/template.go:1216-1220; finishFrame@gritql/template.go:1234-1242; keptChildren@gritql/template.go:1206-1214; slotChild@gritql/template.go:1196-1204; step@gritql/template.go:1177-1194; clipEnd@gritql/template.go:1159; clipStart@gritql/template.go:1158; maxDepth@gritql/template.go:1158; sequenceKind@gritql/template.go:1160; stack@gritql/template.go:1161; targets@gritql/template.go:1157"
     class templateNode {
         -children: []templateChild
         -kind: string
@@ -1366,7 +1366,7 @@ classDiagram
     }
     <<function>> SupportedLanguages
     %% grepple:file SupportedLanguages gritql/language.go
-    note for SupportedLanguages "defined: gritql/language.go:27-34"
+    note for SupportedLanguages "defined: gritql/language.go:31-38"
     class ValidateGlobs {
         +ValidateGlobs([]string, []string): error
     }

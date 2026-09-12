@@ -77,23 +77,29 @@ func TestScanFilesProgramsGroupsMixedTargetLanguages(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	pythonProgram, err := Compile([]byte("language python\n`target($value)`"), CompileOptions{})
+	if err != nil {
+		t.Fatal(err)
+	}
 	batch := ScanFilesPrograms(context.Background(), fstest.MapFS{
 		"main.go": {Data: []byte("package p\nvar _ = target(value)\n")},
 		"app.ts":  {Data: []byte("target(value);\n")},
 		"app.js":  {Data: []byte("target(value);\n")},
-	}, []ProgramScan{{Program: goProgram, PatternID: "go"}, {Program: typeScriptProgram, PatternID: "typescript"}, {Program: javaScriptProgram, PatternID: "javascript"}}, []ScanCandidate{
-		{ReadPath: "main.go", Path: "main.go"}, {ReadPath: "app.ts", Path: "app.ts"}, {ReadPath: "app.js", Path: "app.js"},
+		"app.py":  {Data: []byte("target(value)\n")},
+	}, []ProgramScan{{Program: goProgram, PatternID: "go"}, {Program: typeScriptProgram, PatternID: "typescript"}, {Program: javaScriptProgram, PatternID: "javascript"}, {Program: pythonProgram, PatternID: "python"}}, []ScanCandidate{
+		{ReadPath: "main.go", Path: "main.go"}, {ReadPath: "app.ts", Path: "app.ts"}, {ReadPath: "app.js", Path: "app.js"}, {ReadPath: "app.py", Path: "app.py"},
 	}, ScanOptions{})
-	if stats := batch.Stats(); stats.FilesRead != 3 || stats.FilesParsed != 3 {
+	if stats := batch.Stats(); stats.FilesRead != 4 || stats.FilesParsed != 4 {
 		t.Fatalf("stats=%+v", stats)
 	}
 	results := batch.Programs()
-	if len(results) != 3 {
+	if len(results) != 4 {
 		t.Fatalf("results=%d", len(results))
 	}
 	assertBatchFinding(t, results[0], "go", "main.go")
 	assertBatchFinding(t, results[1], "typescript", "app.ts")
 	assertBatchFinding(t, results[2], "javascript", "app.js")
+	assertBatchFinding(t, results[3], "python", "app.py")
 }
 func TestScanFilesProgramsReportsSharedByteLimitPerLanguage(t *testing.T) {
 	goProgram := compileFindingPattern(t, "`target($value)`")

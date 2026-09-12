@@ -153,6 +153,26 @@ func TestRunGritLocalJavaScriptUsesUnifiedContract(t *testing.T) {
 		t.Fatalf("response=%#v", response)
 	}
 }
+
+func TestRunGritLocalPythonUsesUnifiedContract(t *testing.T) {
+	dir := chdirTemp(t)
+	if err := os.WriteFile(filepath.Join(dir, "app.py"), []byte("result = target(value)\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	values := gritArgs{Query: "language python\n`target($value)`", JSON: true, Limit: DefaultGritResultLimit}
+	output := captureStdout(t, func() {
+		if err := runGritLocal(context.Background(), values); err != nil {
+			t.Fatal(err)
+		}
+	})
+	var response api.GritResponse
+	if err := json.Unmarshal([]byte(output), &response); err != nil {
+		t.Fatal(err)
+	}
+	if response.Metadata.Compatibility != api.GritCompatibilityV1 || response.Metadata.Language != "python" || len(response.Findings) != 1 || response.Findings[0].Text != "target(value)" {
+		t.Fatalf("response=%#v", response)
+	}
+}
 func TestGritCandidatesLeaveAcquisitionToBoundedScanner(t *testing.T) {
 	dir := chdirTemp(t)
 	if err := os.WriteFile(filepath.Join(dir, "main.go"), []byte("package p\nvar x = target(value)\n"), 0o644); err != nil {
