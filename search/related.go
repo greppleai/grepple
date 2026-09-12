@@ -37,14 +37,14 @@ type navigationCaller struct {
 }
 
 type navigationCall struct {
-	name, display, resolvedName   string
-	qualifier, importPath         string
-	receiverType, receiverFactory string
-	factoryImport, file           string
-	importSourceFile              string
-	importDirectory               string
-	moduleKnown                   bool
-	line                          int
+	id, callerID                      string
+	name, display, resolvedName       string
+	qualifier, importPath             string
+	receiverType, receiverFactory     string
+	factoryImport, file               string
+	importSourceFile, importDirectory string
+	moduleKnown                       bool
+	line                              int
 }
 
 type navigationIndex struct {
@@ -54,6 +54,7 @@ type navigationIndex struct {
 	byFile       map[string][]navigationDeclaration
 	byLocation   map[string]navigationDeclaration
 	contents     map[string]string
+	graph        parser.NavigationGraph
 }
 
 func hasNavigationMatch(matches []FileMatch) bool {
@@ -109,7 +110,72 @@ func buildNavigationIndex(files []string) *navigationIndex {
 	}
 	index.inferCallReturnReceivers()
 	index.indexNavigationCallers()
+	index.resolveGraphCalls()
 	return index
+}
+
+// BuildNavigationGraph builds the resolved, deterministic navigation graph for local files.
+func BuildNavigationGraph(files []string) parser.NavigationGraph {
+	return buildNavigationIndex(files).graph
+}
+
+func (index *navigationIndex) resolveGraphCalls() {
+	declarationsByID := index.navigationDeclarationsByID()
+	callsByID := index.navigationCallsByID()
+	for callIndex := range index.graph.Calls {
+		index.resolveGraphCall(&index.graph.Calls[callIndex], callsByID, declarationsByID)
+	}
+}
+
+func (index *navigationIndex) navigationDeclarationsByID() map[string]navigationDeclaration {
+	byID := make(map[string]navigationDeclaration)
+	for _, declarations := range index.declarations {
+		for _, declaration := range declarations {
+			byID[declaration.id] = declaration
+		}
+	}
+	return byID
+}
+
+func (index *navigationIndex) navigationCallsByID() map[string]navigationCall {
+	byID := make(map[string]navigationCall)
+	for _, calls := range index.calls {
+		for _, call := range calls {
+			byID[call.id] = call
+		}
+	}
+	return byID
+}
+
+func (index *navigationIndex) resolveGraphCall(call *parser.NavigationCall, callsByID map[string]navigationCall, declarationsByID map[string]navigationDeclaration) {
+	indexed, ok := callsByID[call.ID]
+	if !ok {
+		call.Confidence = "candidate"
+		return
+	}
+	call.ImportPath = indexed.importPath
+	call.ReceiverType = indexed.receiverType
+	call.ReceiverFactory = indexed.receiverFactory
+	call.ReceiverFactoryImport = indexed.factoryImport
+	call.ResolvedName = indexed.resolvedName
+	targetName := navigationCallTargetName(indexed)
+	matched := []navigationDeclaration(nil)
+	if caller, exists := declarationsByID[indexed.callerID]; exists {
+		matched = []navigationDeclaration{caller}
+	}
+	resolution := resolveNavigationCandidates(indexed, index.declarations[navigationSymbolKey(call.Language, targetName)], matched)
+	call.Confidence = resolution.confidence
+	if call.Confidence == "" {
+		call.Confidence = "candidate"
+	}
+	call.CandidateTargetIDs = make([]string, len(resolution.candidates))
+	for candidateIndex, candidate := range resolution.candidates {
+		call.CandidateTargetIDs[candidateIndex] = candidate.id
+	}
+	if len(resolution.candidates) == 1 && resolution.confidence != "candidate" {
+		call.TargetID = resolution.candidates[0].id
+		call.CandidateTargetIDs = nil
+	}
 }
 func (index *navigationIndex) addFile(path, cwd string) {
 	language := parser.LanguageFor(path)
@@ -122,14 +188,16 @@ func (index *navigationIndex) addFile(path, cwd string) {
 	}
 	content := strings.ToValidUTF8(string(contentBytes), "\uFFFD")
 	cleanPath := filepath.Clean(path)
-	graph := parser.BuildNavigationGraph(content, language, cleanPath)
+	displayPath := displayPathFrom(path, cwd)
+	graph := parser.BuildNavigationGraph(content, language, displayPath)
+	index.graph.Merge(graph)
 	if len(graph.Declarations) == 0 {
 		return
 	}
-	displayPath := displayPathFrom(path, cwd)
+	displayPath = filepath.Clean(displayPath)
 	index.contents[cleanPath] = content
 	indexed := index.addDeclarations(graph.Declarations, language, cleanPath, displayPath)
-	index.addCalls(graph.Calls, indexed, language)
+	index.addCalls(graph.Calls, indexed, language, cleanPath)
 }
 
 func (index *navigationIndex) addDeclarations(declarations []parser.NavigationDeclaration, language, path, displayPath string) []navigationDeclaration {
@@ -152,7 +220,7 @@ func (index *navigationIndex) addDeclarations(declarations []parser.NavigationDe
 	return indexed
 }
 
-func (index *navigationIndex) addCalls(calls []parser.NavigationCall, declarations []navigationDeclaration, language string) {
+func (index *navigationIndex) addCalls(calls []parser.NavigationCall, declarations []navigationDeclaration, language, sourcePath string) {
 	byID := map[string]navigationDeclaration{}
 	for _, declaration := range declarations {
 		byID[declaration.id] = declaration
@@ -164,8 +232,8 @@ func (index *navigationIndex) addCalls(calls []parser.NavigationCall, declaratio
 		}
 		location := relatedLocationKey(caller.point)
 		indexedCall := navigationCall{
-			name: call.Name, display: call.Display, resolvedName: call.ResolvedName, qualifier: call.Qualifier, importPath: call.ImportPath, receiverType: call.ReceiverType,
-			receiverFactory: call.ReceiverFactory, factoryImport: call.ReceiverFactoryImport, file: call.Path, importSourceFile: call.Path, line: call.Line,
+			id: call.ID, callerID: call.CallerID, name: call.Name, display: call.Display, resolvedName: call.ResolvedName, qualifier: call.Qualifier, importPath: call.ImportPath, receiverType: call.ReceiverType,
+			receiverFactory: call.ReceiverFactory, factoryImport: call.ReceiverFactoryImport, file: sourcePath, importSourceFile: sourcePath, line: call.Line,
 		}
 		resolveNavigationCallImport(&indexedCall, language)
 		index.calls[location] = append(index.calls[location], indexedCall)

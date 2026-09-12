@@ -189,6 +189,18 @@ produce an empty outline. Go methods are shown at top level as `(*Type).Method`.
 `--outline` composes with `--repo`/`--limit`/`--skip` (and `--depth N` for JSON/YAML,
 0 = unlimited) and cannot be combined with `--count` or `--files-with-matches`.
 
+## Normalized navigation graph
+
+`grepple graph --json [PATH...]` emits a deterministic `grepple-navigation-graph-v1` document from the same parser-owned declarations and calls used by `--at` and `--related`. Nodes include stable IDs, language, repository-relative paths, declaration line ranges, package/module/container context, and callable kinds. Calls include caller IDs, resolved target IDs, deterministic candidate target IDs, receiver/import context, line locations, and resolution confidence. JSON is never byte-truncated; `--max-files N` applies deterministic source-file truncation and records it explicitly.
+
+```bash
+grepple graph --json .
+grepple graph --json ./internal/cli --max-files 200
+grepple graph --compact ./internal/cli
+```
+
+`--compact` emits a bounded agent-facing declaration/edge list with 16-character stable ID prefixes, source locations, arrow direction, confidence, and source truncation warnings; `--max-output-bytes` defaults to 40960 and never applies to JSON. Unsupported file types are excluded before the file limit. Complete JSON retains unresolved/external calls with `candidate` confidence and ordered candidate IDs; compact output omits calls with no repository-local target and retains ambiguous calls without guessing one target. Exactly one of `--json` or `--compact` is required.
+
 ## Architecture and flow extraction
 
 `grepple extract` creates deterministic, self-validated Mermaid navigation maps from Tree-sitter source analysis. Focused structure and flow extraction support Go, JavaScript/JSX, TypeScript, and TSX; canonical package and workspace bundles remain Go-specific. Generic callable declarations and calls use the normalized `parser.NavigationGraph` shared with `--at` and `--related`. Extraction enriches graph declarations and edges with stable identities, package/module scope, receiver/container context, imports, resolved targets, and confidence; focused flow generation and validation consume those enriched edges directly.

@@ -142,9 +142,11 @@ classDiagram
     %% grepple:file gitignoreCache search/search_glob.go
     note for gitignoreCache "defined: search/search_glob.go:461; patterns@search/search_glob.go:463-471"
     class navigationCall {
+        -callerID: string
         -display: string
         -factoryImport: string
         -file: string
+        -id: string
         -importDirectory: string
         -importPath: string
         -importSourceFile: string
@@ -158,7 +160,7 @@ classDiagram
     }
     <<struct>> navigationCall
     %% grepple:file navigationCall search/related.go
-    note for navigationCall "defined: search/related.go:39-48; display@search/related.go:40; factoryImport@search/related.go:43; file@search/related.go:43; importDirectory@search/related.go:45; importPath@search/related.go:41; importSourceFile@search/related.go:44; line@search/related.go:47; moduleKnown@search/related.go:46; name@search/related.go:40; qualifier@search/related.go:41; receiverFactory@search/related.go:42; receiverType@search/related.go:42; resolvedName@search/related.go:40"
+    note for navigationCall "defined: search/related.go:39-48; callerID@search/related.go:40; display@search/related.go:41; factoryImport@search/related.go:44; file@search/related.go:44; id@search/related.go:40; importDirectory@search/related.go:45; importPath@search/related.go:42; importSourceFile@search/related.go:45; line@search/related.go:47; moduleKnown@search/related.go:46; name@search/related.go:41; qualifier@search/related.go:42; receiverFactory@search/related.go:43; receiverType@search/related.go:43; resolvedName@search/related.go:41"
     class navigationCaller {
         -call: navigationCall
         -declaration: navigationDeclaration
@@ -172,7 +174,7 @@ classDiagram
     }
     <<struct>> navigationCandidateResolution
     %% grepple:file navigationCandidateResolution search/related.go
-    note for navigationCandidateResolution "defined: search/related.go:295-298; candidates@search/related.go:296; confidence@search/related.go:297"
+    note for navigationCandidateResolution "defined: search/related.go:363-366; candidates@search/related.go:364; confidence@search/related.go:365"
     class navigationDeclaration {
         -container: string
         -file: string
@@ -189,12 +191,16 @@ classDiagram
     %% grepple:file navigationDeclaration search/related.go
     note for navigationDeclaration "defined: search/related.go:21-32; container@search/related.go:24; file@search/related.go:29; id@search/related.go:22; language@search/related.go:28; matchStart@search/related.go:30; packageName@search/related.go:27; point@search/related.go:31; returnImportPath@search/related.go:26; returnType@search/related.go:25; terminal@search/related.go:23"
     class navigationIndex {
-        -addCalls([]parser.NavigationCall, []navigationDeclaration, string)
+        -addCalls([]parser.NavigationCall, []navigationDeclaration, string, string)
         -addDeclarations([]parser.NavigationDeclaration, string, string, string): []navigationDeclaration
         -addFile(string, string)
         -indexNavigationCallers()
         -inferCallReturnReceiver(*navigationCall, string)
         -inferCallReturnReceivers()
+        -navigationCallsByID(): map[string]navigationCall
+        -navigationDeclarationsByID(): map[string]navigationDeclaration
+        -resolveGraphCall(*parser.NavigationCall, map[string]navigationCall, map[string]navigationDeclaration)
+        -resolveGraphCalls()
         -resolveReturnFactory(navigationCall, string): tuple~navigationDeclaration&#44;bool~
         -byFile: map[string][]navigationDeclaration
         -byLocation: map[string]navigationDeclaration
@@ -202,10 +208,11 @@ classDiagram
         -calls: map[string][]navigationCall
         -contents: map[string]string
         -declarations: map[string][]navigationDeclaration
+        -graph: parser.NavigationGraph
     }
     <<struct>> navigationIndex
     %% grepple:file navigationIndex search/related.go
-    note for navigationIndex "defined: search/related.go:50-57; addCalls@search/related.go:155-173; addDeclarations@search/related.go:135-153; addFile@search/related.go:114-133; indexNavigationCallers@search/related.go:220-236; inferCallReturnReceiver@search/related.go:188-204; inferCallReturnReceivers@search/related.go:175-186; resolveReturnFactory@search/related.go:206-218; byFile@search/related.go:54; byLocation@search/related.go:55; callers@search/related.go:52; calls@search/related.go:53; contents@search/related.go:56; declarations@search/related.go:51"
+    note for navigationIndex "defined: search/related.go:50-58; addCalls@search/related.go:223-241; addDeclarations@search/related.go:203-221; addFile@search/related.go:180-201; indexNavigationCallers@search/related.go:288-304; inferCallReturnReceiver@search/related.go:256-272; inferCallReturnReceivers@search/related.go:243-254; navigationCallsByID@search/related.go:140-148; navigationDeclarationsByID@search/related.go:130-138; resolveGraphCall@search/related.go:150-179; resolveGraphCalls@search/related.go:122-128; resolveReturnFactory@search/related.go:274-286; byFile@search/related.go:54; byLocation@search/related.go:55; callers@search/related.go:52; calls@search/related.go:53; contents@search/related.go:56; declarations@search/related.go:51; graph@search/related.go:57"
     class repoPattern {
         -match(string): bool
         -glob: string
@@ -226,6 +233,12 @@ classDiagram
     <<function>> At
     %% grepple:file At search/at.go
     note for At "defined: search/at.go:16-63"
+    class BuildNavigationGraph {
+        +BuildNavigationGraph([]string): parser.NavigationGraph
+    }
+    <<function>> BuildNavigationGraph
+    %% grepple:file BuildNavigationGraph search/related.go
+    note for BuildNavigationGraph "defined: search/related.go:118-120"
     class BuildResults {
         +BuildResults([]FileMatch, int, int, int, bool): []api.FileResult
     }
@@ -364,6 +377,8 @@ classDiagram
     navigationDeclaration "1" --> "1" RelatedPoint : field point
     navigationIndex "1" --> "*" navigationCall : field calls
     navigationIndex "1" ..> "1" navigationCall : method inferCallReturnReceiver parameter 1
+    navigationIndex "1" ..> "*" navigationCall : method navigationCallsByID result 1
+    navigationIndex "1" ..> "*" navigationCall : method resolveGraphCall parameter 2
     navigationIndex "1" ..> "1" navigationCall : method resolveReturnFactory parameter 1
     navigationIndex "1" --> "*" navigationCaller : field callers
     navigationIndex "1" --> "*" navigationDeclaration : field byFile
@@ -371,4 +386,6 @@ classDiagram
     navigationIndex "1" --> "*" navigationDeclaration : field declarations
     navigationIndex "1" ..> "*" navigationDeclaration : method addCalls parameter 2
     navigationIndex "1" ..> "*" navigationDeclaration : method addDeclarations result 1
+    navigationIndex "1" ..> "*" navigationDeclaration : method navigationDeclarationsByID result 1
+    navigationIndex "1" ..> "*" navigationDeclaration : method resolveGraphCall parameter 3
     navigationIndex "1" ..> "1" navigationDeclaration : method resolveReturnFactory result 1

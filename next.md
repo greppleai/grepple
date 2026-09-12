@@ -4,7 +4,7 @@ Grepple should stabilize for one or two iterations before adding more languages.
 
 ## Recommended next milestone
 
-> Expose the shared navigation graph as stable JSON, then add a compact agent-facing projection. Python GritQL and JavaScript/JSX parity are complete; reassess Python focused extraction only after structural-query dogfooding demonstrates demand.
+> Add focused graph queries over the normalized graph and compact projection, then semantic graph diffing. Python GritQL and JavaScript/JSX parity are complete; reassess Python focused extraction only after structural-query dogfooding demonstrates demand.
 
 ## Feature set versus feature completeness
 
@@ -94,28 +94,28 @@ Acceptance criteria met for generic call discovery: one parser-owned graph suppl
 
 These are the next capability milestones. The command names below are potential interfaces, not commitments; implementation should choose the smallest coherent CLI surface backed by the shared graph.
 
-#### C1. Normalized JSON graph output
+#### C1. Normalized JSON graph output — complete
 
-Expose declarations, source ranges, packages/modules, calls, resolved target IDs, direction, confidence, and truncation as stable JSON rather than requiring tools to parse Mermaid.
+[x] `grepple graph --json [PATH...]` emits the versioned `grepple-navigation-graph-v1` projection: declarations with stable IDs and source line ranges; calls with caller IDs, resolved target IDs or deterministic candidate target IDs, import/receiver context, confidence, and enclosing ranges; and explicit deterministic `--max-files` truncation. It builds through the same search navigation resolver used by `--related` and preserves parser graph identities.
 
 Potential examples:
 
 ```bash
-grepple graph . --json
-grepple graph ./internal/cli --entry 'Run' --depth 2 --json
+grepple graph --json .
+grepple graph --json ./internal/cli --max-files 200
 ```
 
 Use case: an agent, editor extension, or CI job can consume exact nodes and edges, join them by stable ID, filter candidates by confidence, and retain complete machine-readable output independently of presentation.
 
-#### C2. Compact agent-facing architecture output
+#### C2. Compact agent-facing architecture output — complete
 
-Add a compact projection that omits validation metadata and repetitive schema details while preserving source locations, graph identity, edge confidence, and truncation warnings. Canonical Mermaid artifacts remain lossless and self-validating.
+[x] `grepple graph --compact [PATH...]` emits declarations and directed calls from the same normalized graph, retaining stable ID prefixes, source locations, confidence, candidate identities, and file-truncation warnings while omitting JSON and Mermaid validation detail. Human output is bounded by the shared 40960-byte default; JSON remains complete and uncapped.
 
 Potential examples:
 
 ```bash
-grepple graph ./internal/cli --entry 'Run' --compact
-grepple extract structure ./search --compact
+grepple graph --compact ./internal/cli
+grepple graph --compact ./search --max-output-bytes 20000
 ```
 
 Use case: an agent can orient itself in a package or focused call chain within a small token budget, then jump to exact declarations with `--at` without reading a large generated bundle.
@@ -216,7 +216,7 @@ Reduce repeated parsing and language knowledge across extraction, navigation, te
    - [x] Add cross-feature parity tests proving advertised capabilities are implemented and that unsupported combinations fail explicitly rather than silently falling back. Registration parity, generated documentation drift, JavaScript/JSX CLI/conformance, malformed-source, extraction round-trip, and unsupported-language tests cover the matrix.
    - [x] Add Python to `gritql-v1` with expression, pattern, statement, declaration, module, dotted-import, repeated-list, malformed-source, mixed-batch, CLI, and conformance coverage. Reassess Python focused extraction after dogfooding; consider Java and Rust afterward.
 
-Recommended implementation order from here: normalized JSON graph output, compact agent-facing graph output, graph queries, then semantic graph diffing. Address language-specific extraction and placeholder-role gaps only when conformance or dogfooding exposes a valuable blocked workflow.
+Recommended implementation order from here: focused graph queries, semantic graph diffing, then shared-projection parity against canonical Mermaid and `--related`. Address language-specific extraction and placeholder-role gaps only when conformance or dogfooding exposes a valuable blocked workflow.
 
 Acceptance criteria:
 

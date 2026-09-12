@@ -2,7 +2,7 @@ classDiagram
     %% grepple:package-default github.com/greppleai/grepple/search
     %% grepple:language-default go
     direction LR
-    note "Package search provides file discovery, query and repository filtering, paging, match workers, context, and wire-result construction. | package github.com/greppleai/grepple/search | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=10, declarations=15, exportedTypes=5, internalTypes=10, members=114, exportedFunctions=20, fiberRoutes=0, relations=38"
+    note "Package search provides file discovery, query and repository filtering, paging, match workers, context, and wire-result construction. | package github.com/greppleai/grepple/search | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=10, declarations=15, exportedTypes=5, internalTypes=10, members=121, exportedFunctions=21, fiberRoutes=0, relations=42"
     namespace data_contracts {
         class Params["Params · search/model.go:11-33"] {
             +AfterContext: int
@@ -52,11 +52,11 @@ classDiagram
         <<struct>> navigationCall
         class navigationCaller["navigationCaller · search/related.go:34-37"]
         <<struct>> navigationCaller
-        class navigationCandidateResolution["navigationCandidateResolution · search/related.go:295-298"]
+        class navigationCandidateResolution["navigationCandidateResolution · search/related.go:363-366"]
         <<struct>> navigationCandidateResolution
         class navigationDeclaration["navigationDeclaration · search/related.go:21-32"]
         <<struct>> navigationDeclaration
-        class navigationIndex["navigationIndex · search/related.go:50-57"]
+        class navigationIndex["navigationIndex · search/related.go:50-58"]
         <<struct>> navigationIndex
         class repoPattern["repoPattern · search/search_engine.go:95-98"]
         <<struct>> repoPattern
@@ -70,6 +70,10 @@ classDiagram
             +At(Params): tuple~*FileMatch&#44;error~
         }
         <<function>> At
+        class BuildNavigationGraph["BuildNavigationGraph · search/related.go:118-120"] {
+            +BuildNavigationGraph([]string): parser.NavigationGraph
+        }
+        <<function>> BuildNavigationGraph
         class BuildResults["BuildResults · search/result.go:62-75"] {
             +BuildResults([]FileMatch, int, int, int, bool): []api.FileResult
         }
@@ -170,8 +174,9 @@ classDiagram
     navigationCandidateResolution "1" --> "*" navigationDeclaration : field candidates
     navigationDeclaration "1" --> "1" RelatedPoint : field point
     navigationIndex "1" --> "*" navigationCall : field calls
+    navigationIndex "1" ..> "*" navigationCall : method navigationCallsByID result 1; method resolveGraphCall parameter 2
     navigationIndex "1" ..> "1" navigationCall : method inferCallReturnReceiver parameter 1; method resolveReturnFactory parameter 1
     navigationIndex "1" --> "*" navigationCaller : field callers
     navigationIndex "1" --> "*" navigationDeclaration : field byFile; field byLocation; field declarations
-    navigationIndex "1" ..> "*" navigationDeclaration : method addCalls parameter 2; method addDeclarations result 1
+    navigationIndex "1" ..> "*" navigationDeclaration : method-parameter=2; method-result=2
     navigationIndex "1" ..> "1" navigationDeclaration : method resolveReturnFactory result 1

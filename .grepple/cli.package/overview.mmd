@@ -2,7 +2,7 @@ classDiagram
     %% grepple:package-default github.com/greppleai/grepple/internal/cli
     %% grepple:language-default go
     direction LR
-    note "Package cli implements Grepple's search, extraction, repository inspection, authentication, rules, and terminal/JSON presentation workflows. | package github.com/greppleai/grepple/internal/cli | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=31, declarations=37, exportedTypes=0, internalTypes=37, members=227, exportedFunctions=3, fiberRoutes=0, relations=23"
+    note "Package cli implements Grepple's search, extraction, repository inspection, authentication, rules, and terminal/JSON presentation workflows. | package github.com/greppleai/grepple/internal/cli | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=32, declarations=40, exportedTypes=0, internalTypes=40, members=241, exportedFunctions=3, fiberRoutes=0, relations=24"
     namespace interfaces {
         class resultRenderer["resultRenderer · internal/cli/renderer.go:9-11"] {
             +Render([]api.FileResult): error
@@ -102,6 +102,14 @@ classDiagram
             +Server: string
         }
         <<struct>> getArgs
+        class graphArgs["graphArgs · internal/cli/graph.go:18-24"] {
+            +Compact: bool
+            +JSON: bool
+            +MaxFiles: int
+            +MaxOutputBytes: int
+            +Paths: []string
+        }
+        <<struct>> graphArgs
         class gritArgs["gritArgs · internal/cli/grit.go:26-56"] {
             +ExcludeGlobs: []string
             +ExcludeRepositories: []string
@@ -144,6 +152,20 @@ classDiagram
             +Scopes: string
         }
         <<struct>> loginConfig
+        class navigationGraphOutput["navigationGraphOutput · internal/cli/graph.go:30-36"] {
+            +Calls: []parser.NavigationCall
+            +Declarations: []parser.NavigationDeclaration
+            +Files: int
+            +Schema: string
+            +Truncation: *navigationGraphTruncation
+        }
+        <<struct>> navigationGraphOutput
+        class navigationGraphTruncation["navigationGraphTruncation · internal/cli/graph.go:38-42"] {
+            +Limit: int
+            +Reason: string
+            +Skipped: int
+        }
+        <<struct>> navigationGraphTruncation
         class reposArgs["reposArgs · internal/cli/repos.go:16-20"] {
             +Filter: string
             +JSON: bool
@@ -263,7 +285,7 @@ classDiagram
             +RenderOutlineOrContent(parser.FileOutline, string): string
         }
         <<function>> RenderOutlineOrContent
-        class Run["Run · internal/cli/args.go:341-369"] {
+        class Run["Run · internal/cli/args.go:341-371"] {
             +Run([]string): error
         }
         <<function>> Run
@@ -284,6 +306,7 @@ classDiagram
     lineRenderer "1" --> "1" anchorLookup : field anchors
     lineRenderer "1" --> "1" outputWriter : field output
     resultRenderer <|.. lineRenderer : implements
+    navigationGraphOutput "1" --> "1" navigationGraphTruncation : field Truncation
     onlyMatchingRenderer "1" --> "1" outputWriter : field output
     resultRenderer <|.. onlyMatchingRenderer : implements
     repoCountRenderer "1" --> "1" outputWriter : field output

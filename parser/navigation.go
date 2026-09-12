@@ -11,50 +11,51 @@ import (
 
 // NavigationDeclaration describes a callable declaration found by a language adapter.
 type NavigationDeclaration struct {
-	ID               string
-	Name             string
-	Kind             string
-	Language         string
-	Path             string
-	Container        string
-	Receiver         string
-	ResultType       string
-	ResultImportPath string
-	Package          string
-	PackageID        string
-	ModuleID         string
-	Scope            string
-	Start            int
-	End              int
+	ID               string `json:"id"`
+	Name             string `json:"name"`
+	Kind             string `json:"kind"`
+	Language         string `json:"language"`
+	Path             string `json:"path"`
+	Container        string `json:"container,omitempty"`
+	Receiver         string `json:"receiver,omitempty"`
+	ResultType       string `json:"resultType,omitempty"`
+	ResultImportPath string `json:"resultImportPath,omitempty"`
+	Package          string `json:"package,omitempty"`
+	PackageID        string `json:"packageId,omitempty"`
+	ModuleID         string `json:"moduleId,omitempty"`
+	Scope            string `json:"scope,omitempty"`
+	Start            int    `json:"startLine"`
+	End              int    `json:"endLine"`
 }
 
 // NavigationCall describes a call and the callable declaration containing it.
 type NavigationCall struct {
-	ID                    string
-	CallerID              string
-	TargetID              string
-	Name                  string
-	Display               string
-	Qualifier             string
-	ImportPath            string
-	ReceiverType          string
-	ReceiverFactory       string
-	ReceiverFactoryImport string
-	ResolvedName          string
-	Confidence            string
-	Language              string
-	Path                  string
-	Line                  int
-	EnclosingStart        int
-	EnclosingEnd          int
+	ID                    string   `json:"id"`
+	CallerID              string   `json:"callerId"`
+	TargetID              string   `json:"targetId,omitempty"`
+	CandidateTargetIDs    []string `json:"candidateTargetIds,omitempty"`
+	Name                  string   `json:"name"`
+	Display               string   `json:"display,omitempty"`
+	Qualifier             string   `json:"qualifier,omitempty"`
+	ImportPath            string   `json:"importPath,omitempty"`
+	ReceiverType          string   `json:"receiverType,omitempty"`
+	ReceiverFactory       string   `json:"receiverFactory,omitempty"`
+	ReceiverFactoryImport string   `json:"receiverFactoryImport,omitempty"`
+	ResolvedName          string   `json:"resolvedName,omitempty"`
+	Confidence            string   `json:"confidence"`
+	Language              string   `json:"language"`
+	Path                  string   `json:"path"`
+	Line                  int      `json:"line"`
+	EnclosingStart        int      `json:"enclosingStartLine"`
+	EnclosingEnd          int      `json:"enclosingEndLine"`
 }
 
 // NavigationGraph is the normalized, language-neutral callable and call model.
 // Language-specific consumers may enrich its syntax facts with package, module,
 // import, receiver, or type information.
 type NavigationGraph struct {
-	Declarations []NavigationDeclaration
-	Calls        []NavigationCall
+	Declarations []NavigationDeclaration `json:"declarations"`
+	Calls        []NavigationCall        `json:"calls"`
 }
 
 // Merge appends another source graph while preserving source and syntax order.

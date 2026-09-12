@@ -241,6 +241,22 @@ classDiagram
     %% grepple:struct-tag getArgs Repo "arg:\"positional,required\" placeholder:\"OWNER/REPOSITORY\""
     %% grepple:struct-tag getArgs Server "arg:\"-s,--server\" placeholder:\"URL\" help:\"remote shard/router URL\""
     note for getArgs "defined: internal/cli/get.go:17-25; Description@internal/cli/get.go:27-29; Depth@internal/cli/get.go:22; JSON@internal/cli/get.go:20; Lines@internal/cli/get.go:19; Outline@internal/cli/get.go:21; Path@internal/cli/get.go:24; Repo@internal/cli/get.go:23; Server@internal/cli/get.go:18"
+    class graphArgs {
+        +Description(): string
+        +Compact: bool
+        +JSON: bool
+        +MaxFiles: int
+        +MaxOutputBytes: int
+        +Paths: []string
+    }
+    <<struct>> graphArgs
+    %% grepple:file graphArgs internal/cli/graph.go
+    %% grepple:struct-tag graphArgs Compact "arg:\"--compact\" help:\"emit a bounded agent-facing declaration and call summary\""
+    %% grepple:struct-tag graphArgs JSON "arg:\"--json\" help:\"emit the complete normalized navigation graph as JSON\""
+    %% grepple:struct-tag graphArgs MaxFiles "arg:\"--max-files\" placeholder:\"N\" help:\"parse at most N discovered files (0 = unlimited)\""
+    %% grepple:struct-tag graphArgs MaxOutputBytes "arg:\"--max-output-bytes\" placeholder:\"N\" help:\"cap compact output (default 40960; 0 = unlimited; JSON is uncapped)\""
+    %% grepple:struct-tag graphArgs Paths "arg:\"positional\" placeholder:\"PATH\" help:\"file, directory, or glob to include; defaults to the working directory\""
+    note for graphArgs "defined: internal/cli/graph.go:18-24; Description@internal/cli/graph.go:26-28; Compact@internal/cli/graph.go:20; JSON@internal/cli/graph.go:19; MaxFiles@internal/cli/graph.go:21; MaxOutputBytes@internal/cli/graph.go:22; Paths@internal/cli/graph.go:23"
     class gritArgs {
         +Description(): string
         +ExcludeGlobs: []string
@@ -357,6 +373,32 @@ classDiagram
     %% grepple:struct-tag loginConfig ClientID "json:\"clientId\""
     %% grepple:struct-tag loginConfig Scopes "json:\"scopes\""
     note for loginConfig "defined: internal/cli/login.go:177-180; ClientID@internal/cli/login.go:178; Scopes@internal/cli/login.go:179"
+    class navigationGraphOutput {
+        +Calls: []parser.NavigationCall
+        +Declarations: []parser.NavigationDeclaration
+        +Files: int
+        +Schema: string
+        +Truncation: *navigationGraphTruncation
+    }
+    <<struct>> navigationGraphOutput
+    %% grepple:file navigationGraphOutput internal/cli/graph.go
+    %% grepple:struct-tag navigationGraphOutput Calls "json:\"calls\""
+    %% grepple:struct-tag navigationGraphOutput Declarations "json:\"declarations\""
+    %% grepple:struct-tag navigationGraphOutput Files "json:\"files\""
+    %% grepple:struct-tag navigationGraphOutput Schema "json:\"schema\""
+    %% grepple:struct-tag navigationGraphOutput Truncation "json:\"truncation,omitempty\""
+    note for navigationGraphOutput "defined: internal/cli/graph.go:30-36; Calls@internal/cli/graph.go:34; Declarations@internal/cli/graph.go:33; Files@internal/cli/graph.go:32; Schema@internal/cli/graph.go:31; Truncation@internal/cli/graph.go:35"
+    class navigationGraphTruncation {
+        +Limit: int
+        +Reason: string
+        +Skipped: int
+    }
+    <<struct>> navigationGraphTruncation
+    %% grepple:file navigationGraphTruncation internal/cli/graph.go
+    %% grepple:struct-tag navigationGraphTruncation Limit "json:\"limit\""
+    %% grepple:struct-tag navigationGraphTruncation Reason "json:\"reason\""
+    %% grepple:struct-tag navigationGraphTruncation Skipped "json:\"skipped\""
+    note for navigationGraphTruncation "defined: internal/cli/graph.go:38-42; Limit@internal/cli/graph.go:40; Reason@internal/cli/graph.go:39; Skipped@internal/cli/graph.go:41"
     class onlyMatchingRenderer {
         +Render([]api.FileResult): error
         -matcher: *regexp.Regexp
@@ -582,7 +624,7 @@ classDiagram
     }
     <<function>> Run
     %% grepple:file Run internal/cli/args.go
-    note for Run "defined: internal/cli/args.go:341-369"
+    note for Run "defined: internal/cli/args.go:341-371"
     anchorProtocolRequest "1" --> "*" anchorProtocolRequestFile : field Files
     anchorProtocolResponse "1" --> "*" anchorProtocolResponseFile : field Files
     anchorProtocolResponseFile "1" --> "*" anchorProtocolLine : field Anchors
@@ -599,6 +641,7 @@ classDiagram
     lineRenderer "1" --> "1" anchorLookup : field anchors
     lineRenderer "1" --> "1" outputWriter : field output
     resultRenderer <|.. lineRenderer : implements
+    navigationGraphOutput "1" --> "1" navigationGraphTruncation : field Truncation
     onlyMatchingRenderer "1" --> "1" outputWriter : field output
     resultRenderer <|.. onlyMatchingRenderer : implements
     repoCountRenderer "1" --> "1" outputWriter : field output
