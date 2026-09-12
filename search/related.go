@@ -12,10 +12,9 @@ import (
 )
 
 const (
-	maxRelatedPoints            = 5
-	maxRelatedCandidatesPerCall = 3
-	maxFollowedPerLevel         = 2
-	maxFollowedTotalLines       = 400
+	maxRelatedPoints      = 5
+	maxFollowedPerLevel   = 2
+	maxFollowedTotalLines = 400
 )
 
 type navigationDeclaration struct {
@@ -86,13 +85,15 @@ func attachRelated(matches []FileMatch, candidates []string, followDepth int) {
 		if !supportsNavigation(matches[index].Language) {
 			continue
 		}
-		related := relatedPoints(matches[index], navigation)
+		related, omittedCallers, omittedCallees := relatedPoints(matches[index], navigation)
 		if followDepth > 0 {
 			seen := matchedLocations(matches[index], navigation)
 			lineBudget := maxFollowedTotalLines
 			related = expandRelated(related, navigation, followDepth, seen, &lineBudget)
 		}
 		matches[index].Related = related
+		matches[index].OmittedRelatedCallers = omittedCallers
+		matches[index].OmittedRelatedCallees = omittedCallees
 	}
 }
 
@@ -310,14 +311,14 @@ func resolveNavigationCallImport(call *navigationCall, language string) {
 	call.importDirectory, call.moduleKnown = localGoImportDirectory(call.importSourceFile, call.importPath)
 }
 
-func relatedPoints(match FileMatch, navigation *navigationIndex) []RelatedPoint {
+func relatedPoints(match FileMatch, navigation *navigationIndex) ([]RelatedPoint, int, int) {
 	declarations := matchedDeclarations(match, navigation)
-	callees := relatedCallees(match, declarations, navigation)
-	callers := navigationCallers(declarations, navigation)
-	return append(callees, callers...)
+	callees, omittedCallees := relatedCallees(match, declarations, navigation)
+	callers, omittedCallers := navigationCallers(declarations, navigation)
+	return append(callees, callers...), omittedCallers, omittedCallees
 }
 
-func relatedCallees(match FileMatch, declarations []navigationDeclaration, navigation *navigationIndex) []RelatedPoint {
+func relatedCallees(match FileMatch, declarations []navigationDeclaration, navigation *navigationIndex) ([]RelatedPoint, int) {
 	var calls []navigationCall
 	for _, declaration := range declarations {
 		calls = append(calls, navigation.calls[relatedLocationKey(declaration.point)]...)
@@ -353,9 +354,6 @@ func resolveCallee(call navigationCall, language string, matched []navigationDec
 			point.Name = call.display + " → " + point.Name
 		}
 		resolved = append(resolved, point)
-		if resolution.confidence == "candidate" && len(resolved) >= maxRelatedCandidatesPerCall {
-			break
-		}
 	}
 	return resolved
 }
@@ -547,7 +545,7 @@ func candidatesInMatchedFiles(candidates, matched []navigationDeclaration) []nav
 	})
 }
 
-func navigationCallers(targets []navigationDeclaration, navigation *navigationIndex) []RelatedPoint {
+func navigationCallers(targets []navigationDeclaration, navigation *navigationIndex) ([]RelatedPoint, int) {
 	var related []RelatedPoint
 	for _, target := range targets {
 		terminalCandidates := navigation.declarations[navigationSymbolKey(target.language, target.terminal)]
@@ -666,9 +664,12 @@ func expandRelated(points []RelatedPoint, navigation *navigationIndex, depth int
 			File: declaration.file, DisplayPath: point.Path, Content: content, Language: declaration.language,
 			MatchLines: map[int]bool{point.Start: true},
 		}
-		nested := relatedPoints(match, navigation)
+		nested, omittedCallers, omittedCallees := relatedPoints(match, navigation)
 		nested = expandRelated(nested, navigation, depth-1, copyLocations(seen), lineBudget)
-		point.Preview = &RelatedPreview{Content: content, Start: declaration.matchStart, End: declaration.point.End, Related: nested}
+		point.Preview = &RelatedPreview{
+			Content: content, Start: declaration.matchStart, End: declaration.point.End, Related: nested,
+			OmittedCallers: omittedCallers, OmittedCallees: omittedCallees,
+		}
 		followed++
 	}
 	return points
@@ -725,11 +726,11 @@ func uniqueRelatedPoints(points []RelatedPoint) []RelatedPoint {
 	return unique
 }
 
-func limitRelatedPoints(points []RelatedPoint) []RelatedPoint {
+func limitRelatedPoints(points []RelatedPoint) ([]RelatedPoint, int) {
 	if len(points) > maxRelatedPoints {
-		return points[:maxRelatedPoints]
+		return points[:maxRelatedPoints], len(points) - maxRelatedPoints
 	}
-	return points
+	return points, 0
 }
 
 func rangeHasHit(start, end int, hits map[int]bool) bool {

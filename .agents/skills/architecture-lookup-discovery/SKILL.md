@@ -89,7 +89,7 @@ Use:
 - `--related` for immediate callees and potential callers.
 - `--follow-related 1` when one bounded inline hop replaces several lookups.
 - deeper following only when the first hop leaves a specific unanswered question.
-
+- treat reported omitted caller/callee counts as an incomplete impact result; narrow the source universe or inspect `grepple graph --json PATH` before concluding that all consumers were found.
 Navigation is syntax-based. Treat `[candidate]` edges as leads to verify, not type-checked facts.
 
 ## Choose the query by intent
@@ -128,7 +128,13 @@ Inspect all three layers before concluding:
 
 ## Generate a focused diagram when canonical views are too broad
 
-Prefer `/tmp` output for exploratory diagrams; do not add ad hoc generated files to the repository.
+Focused extraction streams validated Mermaid to stdout by default, so use it directly when no reusable artifact is needed:
+
+```bash
+grepple extract structure --at path/to/model.ts:25 --source .
+```
+
+Prefer `/tmp` output when the diagram will be checked, revisited, or compared; do not add ad hoc generated files to the repository.
 
 Focused structure:
 

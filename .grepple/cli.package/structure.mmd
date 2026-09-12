@@ -564,7 +564,8 @@ classDiagram
     class segmentRenderer {
         +Render([]api.FileResult): error
         -renderFile(api.FileResult): error
-        -renderRelated([]api.RelatedSymbol): error
+        -renderRelated([]api.RelatedSymbol, int, int): error
+        -renderRelatedOmissions(int, int, int): error
         -renderRelatedPoint(api.RelatedSymbol, int): error
         -renderRelatedPoints([]api.RelatedSymbol, int): error
         -renderRelatedSegments([]api.ResultSegment, int): error
@@ -575,7 +576,7 @@ classDiagram
     }
     <<struct>> segmentRenderer
     %% grepple:file segmentRenderer internal/cli/renderer_segments.go
-    note for segmentRenderer "defined: internal/cli/renderer_segments.go:11-14; Render@internal/cli/renderer_segments.go:16-28; renderFile@internal/cli/renderer_segments.go:30-57; renderRelated@internal/cli/renderer_segments.go:58-66; renderRelatedPoint@internal/cli/renderer_segments.go:77-104; renderRelatedPoints@internal/cli/renderer_segments.go:68-75; renderRelatedSegments@internal/cli/renderer_segments.go:106-118; renderSegment@internal/cli/renderer_segments.go:120-131; renderSourceLine@internal/cli/renderer_segments.go:133-138; anchors@internal/cli/renderer_segments.go:13; output@internal/cli/renderer_segments.go:12"
+    note for segmentRenderer "defined: internal/cli/renderer_segments.go:11-14; Render@internal/cli/renderer_segments.go:16-28; renderFile@internal/cli/renderer_segments.go:30-57; renderRelated@internal/cli/renderer_segments.go:58-69; renderRelatedOmissions@internal/cli/renderer_segments.go:112-125; renderRelatedPoint@internal/cli/renderer_segments.go:80-110; renderRelatedPoints@internal/cli/renderer_segments.go:71-78; renderRelatedSegments@internal/cli/renderer_segments.go:134-146; renderSegment@internal/cli/renderer_segments.go:148-159; renderSourceLine@internal/cli/renderer_segments.go:161-166; anchors@internal/cli/renderer_segments.go:13; output@internal/cli/renderer_segments.go:12"
     class treeArgs {
         +Description(): string
         +Depth: int

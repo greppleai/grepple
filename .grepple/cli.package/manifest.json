@@ -20,12 +20,12 @@
     "declarations": 40,
     "exportedTypes": 0,
     "internalTypes": 40,
-    "members": 241,
+    "members": 242,
     "exportedFunctions": 3,
     "fiberRoutes": 0,
     "relations": 24
   },
-  "semanticModelDigest": "sha256:5f2ba6bdffad14f22d2b8def97caf4a3a49a98352714ed0aeb37ed9cc1ebaff1",
+  "semanticModelDigest": "sha256:87454ec93ca12662243de4aa4fd958763357c51f25e167558922ec55e0d6e207",
   "sourceFiles": [
     {
       "path": "internal/cli/anchors.go"
@@ -2588,17 +2588,31 @@
           "name": "renderRelated",
           "kind": "method",
           "line": 58,
-          "endLine": 66,
+          "endLine": 69,
           "parameters": [
-            "[]api.RelatedSymbol"
+            "[]api.RelatedSymbol",
+            "int",
+            "int"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "renderRelatedOmissions",
+          "kind": "method",
+          "line": 112,
+          "endLine": 125,
+          "parameters": [
+            "int",
+            "int",
+            "int"
           ],
           "result": "error"
         },
         {
           "name": "renderRelatedPoint",
           "kind": "method",
-          "line": 77,
-          "endLine": 104,
+          "line": 80,
+          "endLine": 110,
           "parameters": [
             "api.RelatedSymbol",
             "int"
@@ -2608,8 +2622,8 @@
         {
           "name": "renderRelatedPoints",
           "kind": "method",
-          "line": 68,
-          "endLine": 75,
+          "line": 71,
+          "endLine": 78,
           "parameters": [
             "[]api.RelatedSymbol",
             "int"
@@ -2619,8 +2633,8 @@
         {
           "name": "renderRelatedSegments",
           "kind": "method",
-          "line": 106,
-          "endLine": 118,
+          "line": 134,
+          "endLine": 146,
           "parameters": [
             "[]api.ResultSegment",
             "int"
@@ -2630,8 +2644,8 @@
         {
           "name": "renderSegment",
           "kind": "method",
-          "line": 120,
-          "endLine": 131,
+          "line": 148,
+          "endLine": 159,
           "parameters": [
             "string",
             "api.ResultSegment",
@@ -2642,8 +2656,8 @@
         {
           "name": "renderSourceLine",
           "kind": "method",
-          "line": 133,
-          "endLine": 138,
+          "line": 161,
+          "endLine": 166,
           "parameters": [
             "string",
             "int",

@@ -44,6 +44,7 @@ Navigation is syntax-based, not type-checked:
 - `[candidate; try --at PATH:LINE]` means ambiguity remains; use the suggested declaration location and verify rather than treating it as an exact call graph.
 - `→` is a callee and `←` is a potential caller.
 - Selected paths/globs define the navigation universe; include the relevant directory for cross-file edges.
+- Callees and callers are bounded previews. If Grepple reports omitted-edge counts, narrow the scope or inspect the complete `grepple graph --json PATH` projection before making an impact claim.
 - TypeScript and TSX share a namespace. Other languages are isolated. Go and TypeScript propagate direct types, source-ordered lexical construction, local and imported return signatures, and same-file typed member chains; cross-file field inference may remain a candidate.
 - Expansion is bounded (two resolved callees per level, depth ≤3, cycle protection, shared line budget).
 

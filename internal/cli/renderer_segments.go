@@ -53,16 +53,19 @@ func (renderer segmentRenderer) renderFile(result api.FileResult) error {
 			return err
 		}
 	}
-	return renderer.renderRelated(result.Related)
+	return renderer.renderRelated(result.Related, result.OmittedRelatedCallers, result.OmittedRelatedCallees)
 }
-func (renderer segmentRenderer) renderRelated(related []api.RelatedSymbol) error {
-	if len(related) == 0 {
+func (renderer segmentRenderer) renderRelated(related []api.RelatedSymbol, omittedCallers, omittedCallees int) error {
+	if len(related) == 0 && omittedCallers == 0 && omittedCallees == 0 {
 		return nil
 	}
 	if err := renderer.output.writeString("\nNext points (code navigation):\n"); err != nil {
 		return err
 	}
-	return renderer.renderRelatedPoints(related, 1)
+	if err := renderer.renderRelatedPoints(related, 1); err != nil {
+		return err
+	}
+	return renderer.renderRelatedOmissions(omittedCallers, omittedCallees, 1)
 }
 
 func (renderer segmentRenderer) renderRelatedPoints(related []api.RelatedSymbol, depth int) error {
@@ -94,13 +97,38 @@ func (renderer segmentRenderer) renderRelatedPoint(point api.RelatedSymbol, dept
 	if err := renderer.renderRelatedSegments(point.Segments, depth+1); err != nil {
 		return err
 	}
-	if len(point.Related) > 0 {
+	if len(point.Related) > 0 || point.OmittedCallers > 0 || point.OmittedCallees > 0 {
 		if err := renderer.output.writeString(strings.Repeat("  ", depth+1) + "next:\n"); err != nil {
 			return err
 		}
-		return renderer.renderRelatedPoints(point.Related, depth+2)
+		if err := renderer.renderRelatedPoints(point.Related, depth+2); err != nil {
+			return err
+		}
+		return renderer.renderRelatedOmissions(point.OmittedCallers, point.OmittedCallees, depth+2)
 	}
 	return nil
+}
+
+func (renderer segmentRenderer) renderRelatedOmissions(callers, callees, depth int) error {
+	if callers == 0 && callees == 0 {
+		return nil
+	}
+	parts := make([]string, 0, 2)
+	if callees > 0 {
+		parts = append(parts, fmt.Sprintf("%d additional %s", callees, pluralizeRelated("callee", callees)))
+	}
+	if callers > 0 {
+		parts = append(parts, fmt.Sprintf("%d additional %s", callers, pluralizeRelated("caller", callers)))
+	}
+	message := fmt.Sprintf("%s… %s omitted; narrow scope or use grepple graph --json PATH for complete repository-local edges …\n", strings.Repeat("  ", depth), strings.Join(parts, " and "))
+	return renderer.output.writeString(message)
+}
+
+func pluralizeRelated(noun string, count int) string {
+	if count == 1 {
+		return noun
+	}
+	return noun + "s"
 }
 
 func (renderer segmentRenderer) renderRelatedSegments(segments []api.ResultSegment, depth int) error {

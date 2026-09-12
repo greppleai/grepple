@@ -57,27 +57,31 @@ type ContextLine struct {
 // "unique-terminal" when only one declaration has the terminal name, and
 // "candidate" when ambiguity remains.
 type RelatedSymbol struct {
-	Name       string          `json:"name"`
-	Path       string          `json:"path"`
-	Kind       string          `json:"kind"`
-	Direction  string          `json:"direction"`
-	Start      int             `json:"start"`
-	End        int             `json:"end"`
-	CallLine   int             `json:"callLine"`
-	Confidence string          `json:"confidence"`
-	Segments   []ResultSegment `json:"segments,omitempty"`
-	Related    []RelatedSymbol `json:"related,omitempty"`
+	Name           string          `json:"name"`
+	Path           string          `json:"path"`
+	Kind           string          `json:"kind"`
+	Direction      string          `json:"direction"`
+	Start          int             `json:"start"`
+	End            int             `json:"end"`
+	CallLine       int             `json:"callLine"`
+	Confidence     string          `json:"confidence"`
+	Segments       []ResultSegment `json:"segments,omitempty"`
+	Related        []RelatedSymbol `json:"related,omitempty"`
+	OmittedCallers int             `json:"omittedCallers,omitempty"`
+	OmittedCallees int             `json:"omittedCallees,omitempty"`
 }
 
 // FileResult is one matching file.
 type FileResult struct {
-	Path     string          `json:"path"`
-	Repo     string          `json:"repo,omitempty"`
-	Language string          `json:"language"`
-	Matches  []ResultMatch   `json:"matches"`
-	Segments []ResultSegment `json:"segments"`
-	Context  []ContextLine   `json:"context,omitempty"`
-	Related  []RelatedSymbol `json:"related,omitempty"`
+	Path                  string          `json:"path"`
+	Repo                  string          `json:"repo,omitempty"`
+	Language              string          `json:"language"`
+	Matches               []ResultMatch   `json:"matches"`
+	Segments              []ResultSegment `json:"segments"`
+	Context               []ContextLine   `json:"context,omitempty"`
+	Related               []RelatedSymbol `json:"related,omitempty"`
+	OmittedRelatedCallers int             `json:"omittedRelatedCallers,omitempty"`
+	OmittedRelatedCallees int             `json:"omittedRelatedCallees,omitempty"`
 }
 
 // RepoCount is a per-repository tally of matching files and lines.

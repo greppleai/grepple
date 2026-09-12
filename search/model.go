@@ -35,9 +35,10 @@ type Params struct {
 // RelatedPreview is an optionally expanded declaration and its next navigation
 // points. Content stays internal and is converted to wire segments at the boundary.
 type RelatedPreview struct {
-	Content    string
-	Start, End int
-	Related    []RelatedPoint
+	Content                        string
+	Start, End                     int
+	Related                        []RelatedPoint
+	OmittedCallers, OmittedCallees int
 }
 
 // RelatedPoint is an internal navigation hint between matched source declarations.
@@ -50,9 +51,10 @@ type RelatedPoint struct {
 // FileMatch is the engine's internal per-file match: content, matching lines,
 // parser-produced structural segments, and optional related declarations.
 type FileMatch struct {
-	File, DisplayPath, Content, Language string
-	MatchLines                           map[int]bool
-	Segments                             []parser.Segment
-	Related                              []RelatedPoint
-	SegmentsReady                        bool
+	File, DisplayPath, Content, Language         string
+	MatchLines                                   map[int]bool
+	Segments                                     []parser.Segment
+	Related                                      []RelatedPoint
+	OmittedRelatedCallers, OmittedRelatedCallees int
+	SegmentsReady                                bool
 }

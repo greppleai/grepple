@@ -2,7 +2,7 @@ classDiagram
     %% grepple:package-default github.com/greppleai/grepple/search
     %% grepple:language-default go
     direction LR
-    note "Package search provides file discovery, query and repository filtering, paging, match workers, context, and wire-result construction. | package github.com/greppleai/grepple/search | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=10, declarations=15, exportedTypes=5, internalTypes=10, members=121, exportedFunctions=21, fiberRoutes=0, relations=42"
+    note "Package search provides file discovery, query and repository filtering, paging, match workers, context, and wire-result construction. | package github.com/greppleai/grepple/search | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=10, declarations=15, exportedTypes=5, internalTypes=10, members=125, exportedFunctions=21, fiberRoutes=0, relations=42"
     namespace data_contracts {
         class Params["Params · search/model.go:11-33"] {
             +AfterContext: int
@@ -30,11 +30,11 @@ classDiagram
         <<struct>> Params
     }
     namespace exported_types {
-        class FileMatch["FileMatch · search/model.go:52-58"]
+        class FileMatch["FileMatch · search/model.go:53-60"]
         <<struct>> FileMatch
-        class RelatedPoint["RelatedPoint · search/model.go:44-48"]
+        class RelatedPoint["RelatedPoint · search/model.go:45-49"]
         <<struct>> RelatedPoint
-        class RelatedPreview["RelatedPreview · search/model.go:37-41"]
+        class RelatedPreview["RelatedPreview · search/model.go:37-42"]
         <<struct>> RelatedPreview
         class RepoFilter["RepoFilter · search/search_engine.go:129-132"]
         <<struct>> RepoFilter
@@ -48,15 +48,15 @@ classDiagram
         <<struct>> candidateWalker
         class gitignoreCache["gitignoreCache = map&#91;string&#93;&#91;&#93;string · search/search_glob.go:461"]
         <<type>> gitignoreCache
-        class navigationCall["navigationCall · search/related.go:39-48"]
+        class navigationCall["navigationCall · search/related.go:38-47"]
         <<struct>> navigationCall
-        class navigationCaller["navigationCaller · search/related.go:34-37"]
+        class navigationCaller["navigationCaller · search/related.go:33-36"]
         <<struct>> navigationCaller
-        class navigationCandidateResolution["navigationCandidateResolution · search/related.go:363-366"]
+        class navigationCandidateResolution["navigationCandidateResolution · search/related.go:361-364"]
         <<struct>> navigationCandidateResolution
-        class navigationDeclaration["navigationDeclaration · search/related.go:21-32"]
+        class navigationDeclaration["navigationDeclaration · search/related.go:20-31"]
         <<struct>> navigationDeclaration
-        class navigationIndex["navigationIndex · search/related.go:50-58"]
+        class navigationIndex["navigationIndex · search/related.go:49-57"]
         <<struct>> navigationIndex
         class repoPattern["repoPattern · search/search_engine.go:95-98"]
         <<struct>> repoPattern
@@ -70,11 +70,11 @@ classDiagram
             +At(Params): tuple~*FileMatch&#44;error~
         }
         <<function>> At
-        class BuildNavigationGraph["BuildNavigationGraph · search/related.go:118-120"] {
+        class BuildNavigationGraph["BuildNavigationGraph · search/related.go:119-121"] {
             +BuildNavigationGraph([]string): parser.NavigationGraph
         }
         <<function>> BuildNavigationGraph
-        class BuildResults["BuildResults · search/result.go:62-75"] {
+        class BuildResults["BuildResults · search/result.go:67-80"] {
             +BuildResults([]FileMatch, int, int, int, bool): []api.FileResult
         }
         <<function>> BuildResults
@@ -138,7 +138,7 @@ classDiagram
             +SplitLines(string): []string
         }
         <<function>> SplitLines
-        class ToResult["ToResult · search/result.go:13-31"] {
+        class ToResult["ToResult · search/result.go:13-34"] {
             +ToResult(FileMatch, []parser.Segment, int, int, int): api.FileResult
         }
         <<function>> ToResult

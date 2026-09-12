@@ -9,13 +9,15 @@ classDiagram
         +File: string
         +Language: string
         +MatchLines: map[int]bool
+        +OmittedRelatedCallees: int
+        +OmittedRelatedCallers: int
         +Related: []RelatedPoint
         +Segments: []parser.Segment
         +SegmentsReady: bool
     }
     <<struct>> FileMatch
     %% grepple:file FileMatch search/model.go
-    note for FileMatch "defined: search/model.go:52-58; Content@search/model.go:53; DisplayPath@search/model.go:53; File@search/model.go:53; Language@search/model.go:53; MatchLines@search/model.go:54; Related@search/model.go:56; Segments@search/model.go:55; SegmentsReady@search/model.go:57"
+    note for FileMatch "defined: search/model.go:53-60; Content@search/model.go:54; DisplayPath@search/model.go:54; File@search/model.go:54; Language@search/model.go:54; MatchLines@search/model.go:55; OmittedRelatedCallees@search/model.go:58; OmittedRelatedCallers@search/model.go:58; Related@search/model.go:57; Segments@search/model.go:56; SegmentsReady@search/model.go:59"
     class Params {
         +AfterContext: int
         +At: string
@@ -78,16 +80,18 @@ classDiagram
     }
     <<struct>> RelatedPoint
     %% grepple:file RelatedPoint search/model.go
-    note for RelatedPoint "defined: search/model.go:44-48; CallLine@search/model.go:46; Confidence@search/model.go:45; Direction@search/model.go:45; Distance@search/model.go:46; End@search/model.go:46; File@search/model.go:45; Kind@search/model.go:45; Name@search/model.go:45; Path@search/model.go:45; Preview@search/model.go:47; Start@search/model.go:46"
+    note for RelatedPoint "defined: search/model.go:45-49; CallLine@search/model.go:47; Confidence@search/model.go:46; Direction@search/model.go:46; Distance@search/model.go:47; End@search/model.go:47; File@search/model.go:46; Kind@search/model.go:46; Name@search/model.go:46; Path@search/model.go:46; Preview@search/model.go:48; Start@search/model.go:47"
     class RelatedPreview {
         +Content: string
         +End: int
+        +OmittedCallees: int
+        +OmittedCallers: int
         +Related: []RelatedPoint
         +Start: int
     }
     <<struct>> RelatedPreview
     %% grepple:file RelatedPreview search/model.go
-    note for RelatedPreview "defined: search/model.go:37-41; Content@search/model.go:38; End@search/model.go:39; Related@search/model.go:40; Start@search/model.go:39"
+    note for RelatedPreview "defined: search/model.go:37-42; Content@search/model.go:38; End@search/model.go:39; OmittedCallees@search/model.go:41; OmittedCallers@search/model.go:41; Related@search/model.go:40; Start@search/model.go:39"
     class RepoFilter {
         +Allow(string): bool
         -exclude: []repoPattern
@@ -160,21 +164,21 @@ classDiagram
     }
     <<struct>> navigationCall
     %% grepple:file navigationCall search/related.go
-    note for navigationCall "defined: search/related.go:39-48; callerID@search/related.go:40; display@search/related.go:41; factoryImport@search/related.go:44; file@search/related.go:44; id@search/related.go:40; importDirectory@search/related.go:45; importPath@search/related.go:42; importSourceFile@search/related.go:45; line@search/related.go:47; moduleKnown@search/related.go:46; name@search/related.go:41; qualifier@search/related.go:42; receiverFactory@search/related.go:43; receiverType@search/related.go:43; resolvedName@search/related.go:41"
+    note for navigationCall "defined: search/related.go:38-47; callerID@search/related.go:39; display@search/related.go:40; factoryImport@search/related.go:43; file@search/related.go:43; id@search/related.go:39; importDirectory@search/related.go:44; importPath@search/related.go:41; importSourceFile@search/related.go:44; line@search/related.go:46; moduleKnown@search/related.go:45; name@search/related.go:40; qualifier@search/related.go:41; receiverFactory@search/related.go:42; receiverType@search/related.go:42; resolvedName@search/related.go:40"
     class navigationCaller {
         -call: navigationCall
         -declaration: navigationDeclaration
     }
     <<struct>> navigationCaller
     %% grepple:file navigationCaller search/related.go
-    note for navigationCaller "defined: search/related.go:34-37; call@search/related.go:36; declaration@search/related.go:35"
+    note for navigationCaller "defined: search/related.go:33-36; call@search/related.go:35; declaration@search/related.go:34"
     class navigationCandidateResolution {
         -candidates: []navigationDeclaration
         -confidence: string
     }
     <<struct>> navigationCandidateResolution
     %% grepple:file navigationCandidateResolution search/related.go
-    note for navigationCandidateResolution "defined: search/related.go:363-366; candidates@search/related.go:364; confidence@search/related.go:365"
+    note for navigationCandidateResolution "defined: search/related.go:361-364; candidates@search/related.go:362; confidence@search/related.go:363"
     class navigationDeclaration {
         -container: string
         -file: string
@@ -189,7 +193,7 @@ classDiagram
     }
     <<struct>> navigationDeclaration
     %% grepple:file navigationDeclaration search/related.go
-    note for navigationDeclaration "defined: search/related.go:21-32; container@search/related.go:24; file@search/related.go:29; id@search/related.go:22; language@search/related.go:28; matchStart@search/related.go:30; packageName@search/related.go:27; point@search/related.go:31; returnImportPath@search/related.go:26; returnType@search/related.go:25; terminal@search/related.go:23"
+    note for navigationDeclaration "defined: search/related.go:20-31; container@search/related.go:23; file@search/related.go:28; id@search/related.go:21; language@search/related.go:27; matchStart@search/related.go:29; packageName@search/related.go:26; point@search/related.go:30; returnImportPath@search/related.go:25; returnType@search/related.go:24; terminal@search/related.go:22"
     class navigationIndex {
         -addCalls([]parser.NavigationCall, []navigationDeclaration, string, string)
         -addDeclarations([]parser.NavigationDeclaration, string, string, string): []navigationDeclaration
@@ -212,7 +216,7 @@ classDiagram
     }
     <<struct>> navigationIndex
     %% grepple:file navigationIndex search/related.go
-    note for navigationIndex "defined: search/related.go:50-58; addCalls@search/related.go:223-241; addDeclarations@search/related.go:203-221; addFile@search/related.go:180-201; indexNavigationCallers@search/related.go:288-304; inferCallReturnReceiver@search/related.go:256-272; inferCallReturnReceivers@search/related.go:243-254; navigationCallsByID@search/related.go:140-148; navigationDeclarationsByID@search/related.go:130-138; resolveGraphCall@search/related.go:150-179; resolveGraphCalls@search/related.go:122-128; resolveReturnFactory@search/related.go:274-286; byFile@search/related.go:54; byLocation@search/related.go:55; callers@search/related.go:52; calls@search/related.go:53; contents@search/related.go:56; declarations@search/related.go:51; graph@search/related.go:57"
+    note for navigationIndex "defined: search/related.go:49-57; addCalls@search/related.go:224-242; addDeclarations@search/related.go:204-222; addFile@search/related.go:181-202; indexNavigationCallers@search/related.go:289-305; inferCallReturnReceiver@search/related.go:257-273; inferCallReturnReceivers@search/related.go:244-255; navigationCallsByID@search/related.go:141-149; navigationDeclarationsByID@search/related.go:131-139; resolveGraphCall@search/related.go:151-180; resolveGraphCalls@search/related.go:123-129; resolveReturnFactory@search/related.go:275-287; byFile@search/related.go:53; byLocation@search/related.go:54; callers@search/related.go:51; calls@search/related.go:52; contents@search/related.go:55; declarations@search/related.go:50; graph@search/related.go:56"
     class repoPattern {
         -match(string): bool
         -glob: string
@@ -238,13 +242,13 @@ classDiagram
     }
     <<function>> BuildNavigationGraph
     %% grepple:file BuildNavigationGraph search/related.go
-    note for BuildNavigationGraph "defined: search/related.go:118-120"
+    note for BuildNavigationGraph "defined: search/related.go:119-121"
     class BuildResults {
         +BuildResults([]FileMatch, int, int, int, bool): []api.FileResult
     }
     <<function>> BuildResults
     %% grepple:file BuildResults search/result.go
-    note for BuildResults "defined: search/result.go:62-75"
+    note for BuildResults "defined: search/result.go:67-80"
     class CollectFilesUnder {
         +CollectFilesUnder([]string, string): tuple~[]string&#44;error~
     }
@@ -340,7 +344,7 @@ classDiagram
     }
     <<function>> ToResult
     %% grepple:file ToResult search/result.go
-    note for ToResult "defined: search/result.go:13-31"
+    note for ToResult "defined: search/result.go:13-34"
     class WorkerCount {
         +WorkerCount(): int
     }

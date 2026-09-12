@@ -23,7 +23,10 @@ func ToResult(m FileMatch, segs []parser.Segment, beforeContext, afterContext, m
 	}
 	rs := resultSegments(m.Content, segs)
 	related := relatedSymbols(m.Related)
-	r := api.FileResult{Path: m.DisplayPath, Language: m.Language, Matches: matches, Segments: rs, Related: related}
+	r := api.FileResult{
+		Path: m.DisplayPath, Language: m.Language, Matches: matches, Segments: rs, Related: related,
+		OmittedRelatedCallers: m.OmittedRelatedCallers, OmittedRelatedCallees: m.OmittedRelatedCallees,
+	}
 	if beforeContext > 0 || afterContext > 0 {
 		r.Context = ContextLines(m.Content, m.MatchLines, beforeContext, afterContext, maxWindows)
 	}
@@ -52,6 +55,8 @@ func relatedSymbols(points []RelatedPoint) []api.RelatedSymbol {
 		if point.Preview != nil {
 			symbol.Segments = resultSegments(point.Preview.Content, []parser.Segment{{Kind: "lines", Start: point.Preview.Start, End: point.Preview.End}})
 			symbol.Related = relatedSymbols(point.Preview.Related)
+			symbol.OmittedCallers = point.Preview.OmittedCallers
+			symbol.OmittedCallees = point.Preview.OmittedCallees
 		}
 		related = append(related, symbol)
 	}

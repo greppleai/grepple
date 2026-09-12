@@ -342,6 +342,41 @@ func assertNestedGoReceiverResolution(t *testing.T, files []string) {
 	}
 }
 
+func TestRelatedReportsOmittedCallerAndCalleeCounts(t *testing.T) {
+	directory := t.TempDir()
+	path := writeGoFixture(t, directory, "many.go", `package related
+func focus() { // TARGET_NEEDLE
+callee0(); callee1(); callee2(); callee3(); callee4(); callee5()
+}
+func callee0() {}
+func callee1() {}
+func callee2() {}
+func callee3() {}
+func callee4() {}
+func callee5() {}
+func caller0() { focus() }
+func caller1() { focus() }
+func caller2() { focus() }
+func caller3() { focus() }
+func caller4() { focus() }
+func caller5() { focus() }
+`)
+	matches, err := Files(Params{Query: "TARGET_NEEDLE", MaxSegments: 20, Related: true}, []string{path})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(matches) != 1 || len(matches[0].Related) != 2*maxRelatedPoints {
+		t.Fatalf("related matches = %#v", matches)
+	}
+	if matches[0].OmittedRelatedCallers != 1 || matches[0].OmittedRelatedCallees != 1 {
+		t.Fatalf("omitted callers=%d callees=%d", matches[0].OmittedRelatedCallers, matches[0].OmittedRelatedCallees)
+	}
+	result := BuildResults(matches, 0, 0, 20, true)[0]
+	if result.OmittedRelatedCallers != 1 || result.OmittedRelatedCallees != 1 {
+		t.Fatalf("result omissions = %#v", result)
+	}
+}
+
 func writeGoFixture(t *testing.T, directory, name, content string) string {
 	t.Helper()
 	path := filepath.Join(directory, name)
