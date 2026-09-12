@@ -10,7 +10,7 @@ Remote Grepple exists to inspect indexed code without cloning. Treat repository 
 ## Decide by intent
 
 - **Repo identity unknown:** use `grepple repos <substring>` first.
-- **Need to locate a term:** query an explicit `OWNER/REPO` with `-R --repo`, preferably `--count` or `--files-with-matches` before bodies.
+- **Need to locate a term:** query an explicit `OWNER/REPO` with `-R --repo`, preferably `--count-summary` for complete breadth or `--files-with-matches` for paths before bodies.
 - **Need one known file/range:** use `grepple get OWNER/REPO PATH --lines A:B`; this is cheaper and more deterministic than another search.
 - **Need repository shape:** use `grepple tree OWNER/REPO [PATH] --depth N`.
 - **Need a structural map:** fetch with `grepple get OWNER/REPO PATH --outline`.
@@ -21,7 +21,7 @@ Remote Grepple exists to inspect indexed code without cloning. Treat repository 
 Always scope remote content search to an exact repository:
 
 ```bash
-grepple -R --repo OWNER/REPO -F 'Symbol' --count
+grepple -R --repo OWNER/REPO -F 'Symbol' --count-summary
 grepple -R --repo OWNER/REPO -F 'Symbol' --files-with-matches
 grepple -R --repo OWNER/REPO -F 'Symbol' --limit 5
 grepple get OWNER/REPO path/to/file.go --lines 40:80

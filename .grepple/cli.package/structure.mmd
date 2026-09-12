@@ -95,6 +95,7 @@ classDiagram
         +AnchorsDefaulted: bool
         +Count: bool
         +CountByRepo: bool
+        +CountSummary: bool
         +Depth: int
         +FilesWithMatches: bool
         +JSON: string
@@ -107,7 +108,7 @@ classDiagram
     }
     <<struct>> cliOptions
     %% grepple:file cliOptions internal/cli/model.go
-    note for cliOptions "defined: internal/cli/model.go:5-23; AnchorLines@internal/cli/model.go:19; AnchorProvider@internal/cli/model.go:18; Anchors@internal/cli/model.go:16; AnchorsDefaulted@internal/cli/model.go:17; Count@internal/cli/model.go:10; CountByRepo@internal/cli/model.go:11; Depth@internal/cli/model.go:14; FilesWithMatches@internal/cli/model.go:12; JSON@internal/cli/model.go:9; LineOnly@internal/cli/model.go:7; MaxOutputBytes@internal/cli/model.go:15; OnlyMatching@internal/cli/model.go:8; Outline@internal/cli/model.go:13; Params@internal/cli/model.go:6; Stdin@internal/cli/model.go:22"
+    note for cliOptions "defined: internal/cli/model.go:5-24; AnchorLines@internal/cli/model.go:20; AnchorProvider@internal/cli/model.go:19; Anchors@internal/cli/model.go:17; AnchorsDefaulted@internal/cli/model.go:18; Count@internal/cli/model.go:10; CountByRepo@internal/cli/model.go:11; CountSummary@internal/cli/model.go:12; Depth@internal/cli/model.go:15; FilesWithMatches@internal/cli/model.go:13; JSON@internal/cli/model.go:9; LineOnly@internal/cli/model.go:7; MaxOutputBytes@internal/cli/model.go:16; OnlyMatching@internal/cli/model.go:8; Outline@internal/cli/model.go:14; Params@internal/cli/model.go:6; Stdin@internal/cli/model.go:23"
     class config {
         +RefreshExpiry: int64
         +RefreshToken: string
@@ -471,13 +472,15 @@ classDiagram
     class repoCountRenderer {
         +Render([]api.RepoCount): error
         -renderJSON([]api.RepoCount, int, int): error
+        -renderSummary(int, int): error
         -renderText([]api.RepoCount, int, int): error
         -json: bool
         -output: *outputWriter
+        -summaryOnly: bool
     }
     <<struct>> repoCountRenderer
     %% grepple:file repoCountRenderer internal/cli/renderer_repo_count.go
-    note for repoCountRenderer "defined: internal/cli/renderer_repo_count.go:10-13; Render@internal/cli/renderer_repo_count.go:15-26; renderJSON@internal/cli/renderer_repo_count.go:28-38; renderText@internal/cli/renderer_repo_count.go:40-55; json@internal/cli/renderer_repo_count.go:12; output@internal/cli/renderer_repo_count.go:11"
+    note for repoCountRenderer "defined: internal/cli/renderer_repo_count.go:10-14; Render@internal/cli/renderer_repo_count.go:16-30; renderJSON@internal/cli/renderer_repo_count.go:39-49; renderSummary@internal/cli/renderer_repo_count.go:32-37; renderText@internal/cli/renderer_repo_count.go:51-66; json@internal/cli/renderer_repo_count.go:12; output@internal/cli/renderer_repo_count.go:11; summaryOnly@internal/cli/renderer_repo_count.go:13"
     class reposArgs {
         +Description(): string
         +Filter: string
@@ -542,6 +545,7 @@ classDiagram
         +Context: int
         +Count: bool
         +CountByRepo: bool
+        +CountSummary: bool
         +Depth: int
         +Files: bool
         +FilesWithMatches: bool
@@ -580,7 +584,8 @@ classDiagram
     %% grepple:struct-tag searchArgs BeforeContext "arg:\"-B,--before-context\" placeholder:\"N\" help:\"print N lines before matches\""
     %% grepple:struct-tag searchArgs Context "arg:\"-C,--context\" placeholder:\"N\" help:\"print N lines before and after matches\""
     %% grepple:struct-tag searchArgs Count "arg:\"-c,--count\" help:\"print matching-line counts per file\""
-    %% grepple:struct-tag searchArgs CountByRepo "arg:\"--count-by-repo\" help:\"print aggregate file and matching-line counts per repository\""
+    %% grepple:struct-tag searchArgs CountByRepo "arg:\"--count-by-repo\" help:\"print complete counts grouped by repository (compatibility name for --count-summary)\""
+    %% grepple:struct-tag searchArgs CountSummary "arg:\"--count-summary\" help:\"print complete aggregate file/match counts independent of paging\""
     %% grepple:struct-tag searchArgs Depth "arg:\"--depth\" placeholder:\"N\" help:\"outline: cap nesting depth for JSON/YAML (0 = unlimited)\""
     %% grepple:struct-tag searchArgs Files "arg:\"-l,--files\" help:\"recursively list files under optional PATHs; glob PATHs filter the listing\""
     %% grepple:struct-tag searchArgs FilesWithMatches "arg:\"--files-with-matches\" help:\"list paths whose contents match; accepts multiple file, directory, or glob PATHs\""
@@ -609,7 +614,7 @@ classDiagram
     %% grepple:struct-tag searchArgs Repos "arg:\"--repo,separate\" placeholder:\"PATTERN\" help:\"restrict remote repositories; repeatable\""
     %% grepple:struct-tag searchArgs Server "arg:\"-s,--server\" placeholder:\"URL\" help:\"remote shard/router URL (implies --remote)\""
     %% grepple:struct-tag searchArgs Skip "arg:\"--skip\" placeholder:\"N\" help:\"skip the first N ranked result files\""
-    note for searchArgs "defined: internal/cli/args.go:24-61; Description@internal/cli/args.go:63-65; AfterContext@internal/cli/args.go:45; AnchorProvider@internal/cli/args.go:52; Anchors@internal/cli/args.go:50; At@internal/cli/args.go:55; BeforeContext@internal/cli/args.go:46; Context@internal/cli/args.go:44; Count@internal/cli/args.go:36; CountByRepo@internal/cli/args.go:37; Depth@internal/cli/args.go:35; Files@internal/cli/args.go:32; FilesWithMatches@internal/cli/args.go:33; Fixed@internal/cli/args.go:41; FollowRelated@internal/cli/args.go:54; Globs@internal/cli/args.go:60; IgnoreCase@internal/cli/args.go:42; InvertMatch@internal/cli/args.go:43; JSON@internal/cli/args.go:38; JSONMatches@internal/cli/args.go:39; Limit@internal/cli/args.go:57; LineNumber@internal/cli/args.go:29; LineOnly@internal/cli/args.go:30; Local@internal/cli/args.go:25; MaxFiles@internal/cli/args.go:47; MaxOutputBytes@internal/cli/args.go:49; MaxSegments@internal/cli/args.go:48; NoAnchors@internal/cli/args.go:51; OnlyMatching@internal/cli/args.go:31; Outline@internal/cli/args.go:34; Query@internal/cli/args.go:59; Recursive@internal/cli/args.go:27; Regex@internal/cli/args.go:40; Related@internal/cli/args.go:53; Remote@internal/cli/args.go:26; Repos@internal/cli/args.go:58; Server@internal/cli/args.go:28; Skip@internal/cli/args.go:56"
+    note for searchArgs "defined: internal/cli/args.go:24-62; Description@internal/cli/args.go:64-66; AfterContext@internal/cli/args.go:46; AnchorProvider@internal/cli/args.go:53; Anchors@internal/cli/args.go:51; At@internal/cli/args.go:56; BeforeContext@internal/cli/args.go:47; Context@internal/cli/args.go:45; Count@internal/cli/args.go:36; CountByRepo@internal/cli/args.go:37; CountSummary@internal/cli/args.go:38; Depth@internal/cli/args.go:35; Files@internal/cli/args.go:32; FilesWithMatches@internal/cli/args.go:33; Fixed@internal/cli/args.go:42; FollowRelated@internal/cli/args.go:55; Globs@internal/cli/args.go:61; IgnoreCase@internal/cli/args.go:43; InvertMatch@internal/cli/args.go:44; JSON@internal/cli/args.go:39; JSONMatches@internal/cli/args.go:40; Limit@internal/cli/args.go:58; LineNumber@internal/cli/args.go:29; LineOnly@internal/cli/args.go:30; Local@internal/cli/args.go:25; MaxFiles@internal/cli/args.go:48; MaxOutputBytes@internal/cli/args.go:50; MaxSegments@internal/cli/args.go:49; NoAnchors@internal/cli/args.go:52; OnlyMatching@internal/cli/args.go:31; Outline@internal/cli/args.go:34; Query@internal/cli/args.go:60; Recursive@internal/cli/args.go:27; Regex@internal/cli/args.go:41; Related@internal/cli/args.go:54; Remote@internal/cli/args.go:26; Repos@internal/cli/args.go:59; Server@internal/cli/args.go:28; Skip@internal/cli/args.go:57"
     class segmentRenderer {
         +Render([]api.FileResult): error
         -renderFile(api.FileResult): error
@@ -674,7 +679,7 @@ classDiagram
     }
     <<function>> Run
     %% grepple:file Run internal/cli/args.go
-    note for Run "defined: internal/cli/args.go:341-371"
+    note for Run "defined: internal/cli/args.go:350-380"
     anchorProtocolRequest "1" --> "*" anchorProtocolRequestFile : field Files
     anchorProtocolResponse "1" --> "*" anchorProtocolResponseFile : field Files
     anchorProtocolResponseFile "1" --> "*" anchorProtocolLine : field Anchors

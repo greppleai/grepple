@@ -15,7 +15,7 @@ Language detection is extension-based; MIME types and shebangs are not inspected
 
 Status: ✅ production implementation; 🟡 production but specialized or intentionally limited (see notes); ❌ not implemented; 🧪 experimental. There are currently no 🧪 runtime entries—the packed/native-tree experiments do not back shipped features.
 
-`grepple` text matching covers every readable non-NUL file. `--line-only`, `--count`, and matching itself do not require a parser. Structural grep means the enclosing syntax or heading context used by default human search output. A source parse failure safely falls back to plain matching, but that fallback does not count as structural support.
+`grepple` text matching covers every readable non-NUL file. `--line-only`, per-file `--count`, complete paging-independent `--count-summary`, and matching itself do not require a parser. Structural grep means the enclosing syntax or heading context used by default human search output. A source parse failure safely falls back to plain matching, but that fallback does not count as structural support.
 
 <!-- grepple:language-matrix:start -->
 | Language | Extensions | Text grep | Structural grep | Outline | Navigation | Focused structure | Focused flow | GritQL | Package bundle | Workspace bundle |

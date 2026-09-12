@@ -9,7 +9,7 @@ Use Grepple to minimize retrieval turns and tokens, not merely as a grep replace
 
 ## Choose the cheapest useful shape
 
-- **Unknown scope:** start with `--count` to learn where a term concentrates without retrieving bodies.
+- **Unknown scope:** start with `--count-summary` to learn the complete matched-file and matching-line breadth without retrieving bodies. Then use `--files-with-matches` or a scoped per-file `--count` to choose paths.
 - **Need candidate paths:** use `--files-with-matches`; use `--files` only when matching filenames/globs.
 - **Need file structure:** use `--outline` before reading a large or unfamiliar file.
 - **Need implementation context:** default search returns enclosing structural segments and collapses unrelated code.
@@ -64,7 +64,8 @@ Navigation works locally in default structural output or full `--json` for Go, J
 ## Minimal patterns
 
 ```bash
-grepple -F 'Symbol' --count                 # locate concentration
+grepple -F 'Symbol' --count-summary         # complete breadth, independent of paging
+grepple -F 'Symbol' --count src             # per-file counts for a narrowed scope
 grepple -F 'Symbol' --files-with-matches    # identify candidate files
 grepple --outline path/to/file.go           # orient cheaply
 grepple -F 'Symbol' src --limit 5           # retrieve bounded structure

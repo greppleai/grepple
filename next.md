@@ -25,6 +25,7 @@ Treat these as separate planning dimensions:
 - Focused flow is concise and readable for small call chains across the production Go, ECMAScript, Python, Java, and Kotlin adapters.
 - Canonical package and workspace checks make architecture documentation trustworthy enough to use as an index.
 - Deterministic ordering, bounded traversal, explicit confidence, and round-trip validation are strong foundations for agent use.
+- `--count-summary` now reports complete matched-file and matching-line breadth independently of paging, while `--count` retains grep-compatible per-file page output.
 
 ### Remaining friction
 
@@ -32,7 +33,6 @@ Treat these as separate planning dimensions:
 - The shared `parser.NavigationGraph` is now the sole source of generic call edges for flow selection, rendering, validation, `--at`, and `--related`; the next graph issues are focused querying and richer resolution rather than duplicate discovery.
 - `--related` can exhaust its edge budget without reporting how many callers or callees were omitted. Bounded output must never look complete during impact analysis.
 - Broad structural output is safely capped at 40960 bytes, but that still costs roughly 10000 tokens. Untrained agents need a cheaper default/profile and clearer early narrowing.
-- `--count` obeys file paging, so its default first 20 deterministic paths do not necessarily reveal repository-wide concentration.
 - Generated package overviews can still be too large for focused questions: the extract package overview reached 526 lines/27 KB, while a file outline answered the immediate JVM question in 50 lines/1.9 KB.
 - Larger diagrams are dominated by validation metadata when viewed as plain text.
 - Agent edit anchors are provider-specific, not generic line hashes. Grepple delegates through a user-owned, versioned batch provider and keeps editing-harness adapters out of the shipped repository.
@@ -61,7 +61,7 @@ Treat these as separate planning dimensions:
 - [x] Bound human-readable output below common agent limits with actionable narrowing guidance while keeping JSON valid and uncapped.
 - [x] Report matching lines omitted by `--max-segments` and direct edit-oriented searches to `--line-only`, which emits configured anchors or supplies exact lines for Read fallback.
 - [x] Report related-edge truncation explicitly, including omitted caller/callee counts in human and JSON output plus complete-graph guidance. Tests prove bounded previews cannot be mistaken for complete impact results.
-- [ ] Add a repository-wide count summary that reports total matches and matched files independently of result paging; optionally expose deterministic top paths by count.
+- [x] Add `--count-summary` for complete aggregate matched-file and matching-line totals independent of `--skip`, `--limit`, and `--max-files`; retain `--count-by-repo` for grouped compatibility output.
 - [ ] Add an explicit agent-oriented output profile, or evaluate a lower default human-output budget, so broad accidental queries stop well below common context limits without affecting complete JSON.
 - [x] Stream validated `extract structure|flow` projections to stdout when `--output` is omitted.
 - [ ] Add a smaller package/workspace summary projection for orientation when generated overviews are still too large.
@@ -234,7 +234,7 @@ Reduce repeated parsing and language knowledge across extraction, navigation, te
    - [x] Add Java focused structure/flow with classes, interfaces, records, enums, inheritance, implementations, fields, constructors, methods, conservative cross-file targets, and shared navigation-graph flows.
    - [x] Add Kotlin focused structure/flow with classes, interfaces, objects, data-class constructor properties, delegation-based inheritance, properties, functions, conservative cross-file targets, and shared navigation-graph flows.
    - [ ] Add C# focused structure/flow next. Keep C/C++, Rust, and Shell unsupported until their non-class architecture projections have an explicit useful contract.
-Recommended implementation order from here: count summaries, agent workflow benchmarks, a smaller architecture summary, and evidence-based agent output limits; then exported/public declaration facts and filters, C# focused structure/flow, semantic graph diffing, and useful non-class projections for Rust or C/C++. Address grammar-local placeholder-role gaps when conformance exposes a valuable blocked workflow.
+Recommended implementation order from here: agent workflow benchmarks, a smaller architecture summary, and evidence-based agent output limits; then exported/public declaration facts and filters, C# focused structure/flow, semantic graph diffing, and useful non-class projections for Rust or C/C++. Address grammar-local placeholder-role gaps when conformance exposes a valuable blocked workflow.
 
 Acceptance criteria:
 
@@ -269,7 +269,7 @@ Before expanding scope, require:
 - [x] Add focused callers/callees/dependencies/dependents/impact graph queries with exact symbol/location and package/module/root-path selectors, bounded depth, cycle protection, and candidate preservation.
 - [x] Add repeatable language and confidence filters with normalized query metadata.
 - [ ] Add exportedness filtering once declarations expose a reliable cross-language fact; defer edge-kind filtering until the graph contains more than call edges.
-- [ ] Add repository-wide count summaries independent of output paging.
+- [x] Add repository-wide count summaries independent of output paging.
 - [x] Stream validated focused extraction output to stdout when `--output` is omitted.
 - [ ] Add a concise package/workspace summary smaller than the generated overview.
 - [ ] Evaluate an agent-oriented output profile against the fixed workflow benchmark rather than lowering limits without evidence.

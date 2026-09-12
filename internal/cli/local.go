@@ -300,7 +300,7 @@ func runCountByRepo(options *cliOptions, explicitServer string, remote bool) err
 	for repo, a := range repos {
 		out = append(out, api.RepoCount{Repo: repo, Files: a.files, Matches: a.matches})
 	}
-	renderer := repoCountRenderer{output: outputForOptions(options), json: options.JSON != "off"}
+	renderer := repoCountRenderer{output: outputForOptions(options), json: options.JSON != "off", summaryOnly: options.CountSummary}
 	if err := renderer.Render(out); err != nil && !errors.Is(err, errOutputTruncated) {
 		return err
 	}

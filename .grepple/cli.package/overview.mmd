@@ -2,7 +2,7 @@ classDiagram
     %% grepple:package-default github.com/greppleai/grepple/internal/cli
     %% grepple:language-default go
     direction LR
-    note "Package cli implements Grepple's search, extraction, repository inspection, authentication, rules, and terminal/JSON presentation workflows. | package github.com/greppleai/grepple/internal/cli | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=33, declarations=42, exportedTypes=0, internalTypes=42, members=262, exportedFunctions=3, fiberRoutes=0, relations=25"
+    note "Package cli implements Grepple's search, extraction, repository inspection, authentication, rules, and terminal/JSON presentation workflows. | package github.com/greppleai/grepple/internal/cli | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=33, declarations=42, exportedTypes=0, internalTypes=42, members=266, exportedFunctions=3, fiberRoutes=0, relations=25"
     namespace interfaces {
         class resultRenderer["resultRenderer · internal/cli/renderer.go:9-11"] {
             +Render([]api.FileResult): error
@@ -215,7 +215,7 @@ classDiagram
             +Server: string
         }
         <<struct>> rulesAddArgs
-        class searchArgs["searchArgs · internal/cli/args.go:24-61"] {
+        class searchArgs["searchArgs · internal/cli/args.go:24-62"] {
             +AfterContext: int
             +AnchorProvider: string
             +Anchors: bool
@@ -224,6 +224,7 @@ classDiagram
             +Context: int
             +Count: bool
             +CountByRepo: bool
+            +CountSummary: bool
             +Depth: int
             +Files: bool
             +FilesWithMatches: bool
@@ -272,7 +273,7 @@ classDiagram
         <<struct>> anchorFileSelection
         class anchorLookup["anchorLookup = map&#91;string&#93;map&#91;int&#93;string · internal/cli/anchors.go:30"]
         <<type>> anchorLookup
-        class cliOptions["cliOptions · internal/cli/model.go:5-23"]
+        class cliOptions["cliOptions · internal/cli/model.go:5-24"]
         <<struct>> cliOptions
         class contextRenderer["contextRenderer · internal/cli/renderer_context.go:9-11"]
         <<struct>> contextRenderer
@@ -294,7 +295,7 @@ classDiagram
         <<struct>> onlyMatchingRenderer
         class outputWriter["outputWriter · internal/cli/output.go:24-28"]
         <<struct>> outputWriter
-        class repoCountRenderer["repoCountRenderer · internal/cli/renderer_repo_count.go:10-13"]
+        class repoCountRenderer["repoCountRenderer · internal/cli/renderer_repo_count.go:10-14"]
         <<struct>> repoCountRenderer
         class segmentRenderer["segmentRenderer · internal/cli/renderer_segments.go:11-14"]
         <<struct>> segmentRenderer
@@ -310,7 +311,7 @@ classDiagram
             +RenderOutlineOrContent(parser.FileOutline, string): string
         }
         <<function>> RenderOutlineOrContent
-        class Run["Run · internal/cli/args.go:341-371"] {
+        class Run["Run · internal/cli/args.go:350-380"] {
             +Run([]string): error
         }
         <<function>> Run

@@ -34,7 +34,8 @@ type searchArgs struct {
 	Outline          bool     `arg:"-O,--outline" help:"print each file's structural outline (classes, funcs, interfaces) instead of searching"`
 	Depth            int      `arg:"--depth" placeholder:"N" help:"outline: cap nesting depth for JSON/YAML (0 = unlimited)"`
 	Count            bool     `arg:"-c,--count" help:"print matching-line counts per file"`
-	CountByRepo      bool     `arg:"--count-by-repo" help:"print aggregate file and matching-line counts per repository"`
+	CountByRepo      bool     `arg:"--count-by-repo" help:"print complete counts grouped by repository (compatibility name for --count-summary)"`
+	CountSummary     bool     `arg:"--count-summary" help:"print complete aggregate file/match counts independent of paging"`
 	JSON             bool     `arg:"--json" help:"print full JSON results"`
 	JSONMatches      bool     `arg:"--json-matches" help:"print compact JSON matches"`
 	Regex            bool     `arg:"-E,--regex" help:"use JavaScript regular expressions (default; -E is a compatibility alias)"`
@@ -83,6 +84,7 @@ func parseSearchArgs(args []string) (*cliOptions, string, bool, error) {
 		}
 		return nil, "", false, err
 	}
+	applyCountSummaryAlias(&values)
 	if values.NoAnchors && (values.Anchors || values.AnchorProvider != "") {
 		return nil, "", false, fmt.Errorf("--no-anchors cannot be combined with --anchors or --anchor-provider")
 	}
@@ -119,6 +121,7 @@ func parseSearchArgs(args []string) (*cliOptions, string, bool, error) {
 		JSON:             jsonModeFor(values),
 		Count:            values.Count,
 		CountByRepo:      values.CountByRepo,
+		CountSummary:     values.CountSummary,
 		FilesWithMatches: values.FilesWithMatches,
 		Outline:          values.Outline,
 		Depth:            values.Depth,
@@ -127,6 +130,12 @@ func parseSearchArgs(args []string) (*cliOptions, string, bool, error) {
 		AnchorsDefaulted: anchorsDefaulted,
 		AnchorProvider:   values.AnchorProvider,
 	}, values.Server, remoteEnabled, nil
+}
+
+func applyCountSummaryAlias(values *searchArgs) {
+	if values.CountSummary {
+		values.CountByRepo = true
+	}
 }
 
 func applyAnchorSettingsDefault(values *searchArgs) (bool, error) {
@@ -237,7 +246,7 @@ func validateSearchCombinations(values *searchArgs) error {
 		return fmt.Errorf("--files (filename glob) and --files-with-matches (content) cannot be used together")
 	}
 	if values.Count && values.CountByRepo {
-		return fmt.Errorf("--count and --count-by-repo cannot be used together")
+		return fmt.Errorf("--count and --count-summary cannot be used together")
 	}
 	if values.Local && values.Remote {
 		return fmt.Errorf("--local and --remote cannot be used together")

@@ -59,6 +59,7 @@ grepple -F "console.log" src
 grepple -E "console\\.(log|warn)" -r src
 grepple --files "config/*.yaml" "config/*.yml"
 grepple --count "httpRoute"
+grepple --count-summary "httpRoute" .
 ```
 
 Supported search options:
@@ -66,7 +67,7 @@ Supported search options:
 - `-E`/`--regex` (JavaScript regular expressions; this is already the default), `-F`/`--fixed-strings`, `-i`/`--ignore-case`
 - `-r`/`--recursive` is accepted as a compatibility no-op because directory searches are recursive by default
 - `-n`/`--line-number`, `--line-only`, `-C`/`--context N`
-- `-l`/`--files` (list files whose **path** matches the glob), `--files-with-matches` (list paths of files whose **contents** match, like `grep -l`), `-c`/`--count`
+- `-l`/`--files` (list files whose **path** matches the glob), `--files-with-matches` (list paths of files whose **contents** match, like `grep -l`), `-c`/`--count` (per-file counts in the selected page), `--count-summary` (complete matched-file/matching-line totals independent of `--skip`, `--limit`, and `--max-files`). `--count-by-repo` retains the grouped compatibility view.
 - `--json`, `--json-matches`
 - `--repo PATTERN` (repeatable)
 - `--max-files N`, `--max-segments N`

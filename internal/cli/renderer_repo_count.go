@@ -8,8 +8,9 @@ import (
 )
 
 type repoCountRenderer struct {
-	output *outputWriter
-	json   bool
+	output      *outputWriter
+	json        bool
+	summaryOnly bool
 }
 
 func (renderer repoCountRenderer) Render(counts []api.RepoCount) error {
@@ -19,10 +20,20 @@ func (renderer repoCountRenderer) Render(counts []api.RepoCount) error {
 		totalFiles += count.Files
 		totalMatches += count.Matches
 	}
+	if renderer.summaryOnly {
+		return renderer.renderSummary(totalFiles, totalMatches)
+	}
 	if renderer.json {
 		return renderer.renderJSON(counts, totalFiles, totalMatches)
 	}
 	return renderer.renderText(counts, totalFiles, totalMatches)
+}
+
+func (renderer repoCountRenderer) renderSummary(totalFiles, totalMatches int) error {
+	if renderer.json {
+		return renderer.output.writeJSON(map[string]any{"count": map[string]int{"files": totalFiles, "matches": totalMatches}})
+	}
+	return renderer.output.writeString(fmt.Sprintf("%d files\t%d matches\n", totalFiles, totalMatches))
 }
 
 func (renderer repoCountRenderer) renderJSON(counts []api.RepoCount, totalFiles, totalMatches int) error {
