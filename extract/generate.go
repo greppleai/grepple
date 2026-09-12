@@ -190,7 +190,7 @@ func renderDeclarationMetadata(name string, declaration *Declaration, analysis *
 	if declaration.Language == "go" {
 		scope := goPackageScope(declaration.PackageID, declaration.Package, analysis)
 		lines = append(lines, "    %% grepple:package "+name+" "+scope)
-	} else if declaration.Language == "javascript" || declaration.Language == "typescript" {
+	} else if declaration.ModuleID != "" {
 		lines = append(lines, "    %% grepple:module "+name+" "+analysis.TSModulePaths[declaration.ModuleID])
 	}
 	if declaration.Language == "go" && (declaration.Kind == "alias" || declaration.Kind == "type") {

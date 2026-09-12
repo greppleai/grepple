@@ -201,7 +201,7 @@ func TestGenerationEncodesComplexGoMemberTypes(t *testing.T) {
 }
 
 func TestMalformedSourcesReportTreeSitterLocation(t *testing.T) {
-	for _, source := range []Source{{"broken.go", "package broken\ntype Bad struct {"}, {"broken.ts", "class Bad { value: ; }"}} {
+	for _, source := range []Source{{"broken.go", "package broken\ntype Bad struct {"}, {"broken.ts", "class Bad { value: ; }"}, {"broken.py", "def broken(:\n    pass"}} {
 		_, err := Analyze([]Source{source})
 		if err == nil || !strings.Contains(err.Error(), source.Path+":") || !strings.Contains(err.Error(), "malformed syntax") {
 			t.Errorf("%s: %v", source.Path, err)

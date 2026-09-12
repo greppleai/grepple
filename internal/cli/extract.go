@@ -125,7 +125,7 @@ func runExtractStructure(values *extractArgs) error {
 }
 
 func runFocusedStructure(values *extractArgs) error {
-	entryFile, entry, roots, err := resolveExtractEntry(values)
+	entryFile, entry, roots, err := resolveExtractEntry(values, true)
 	if err != nil {
 		return err
 	}
@@ -151,7 +151,7 @@ func runExtractFlow(values *extractArgs) error {
 	if values.Entry == "" && values.At == "" {
 		return fmt.Errorf("extract flow requires --entry SYMBOL or --at PATH:LINE")
 	}
-	entryFile, entry, roots, err := resolveExtractEntry(values)
+	entryFile, entry, roots, err := resolveExtractEntry(values, false)
 	if err != nil {
 		return err
 	}
@@ -166,14 +166,14 @@ func runExtractFlow(values *extractArgs) error {
 	return writeExtractOutput(values.Output, diagram)
 }
 
-func resolveExtractEntry(values *extractArgs) (string, string, []string, error) {
+func resolveExtractEntry(values *extractArgs, allowStructure bool) (string, string, []string, error) {
 	roots := append([]string(nil), values.Source...)
 	if values.At != "" {
 		path, line, err := extractAt(values.At)
 		if err != nil {
 			return "", "", nil, err
 		}
-		entry, err := callableAt(path, line)
+		entry, err := declarationAt(path, line, allowStructure)
 		if err != nil {
 			return "", "", nil, err
 		}
@@ -215,7 +215,7 @@ func sourcePathForSymbol(sources []codeextract.Source, name string) (string, err
 	return absoluteExtractPath(paths[0]), nil
 }
 
-func callableAt(path string, line int) (string, error) {
+func declarationAt(path string, line int, allowStructure bool) (string, error) {
 	content, err := os.ReadFile(path)
 	if err != nil {
 		return "", err
@@ -230,7 +230,28 @@ func callableAt(path string, line int) (string, error) {
 			return declaration.Name, nil
 		}
 	}
+	if allowStructure {
+		if name := structureDeclarationAt(codeparser.OutlineFile(path, string(content)).Symbols, line); name != "" {
+			return name, nil
+		}
+	}
 	return "", fmt.Errorf("no callable declaration contains %s:%d", path, line)
+}
+
+func structureDeclarationAt(symbols []codeparser.Symbol, line int) string {
+	for _, symbol := range symbols {
+		if line < symbol.Start || line > symbol.End {
+			continue
+		}
+		if nested := structureDeclarationAt(symbol.Children, line); nested != "" {
+			return nested
+		}
+		switch symbol.Kind {
+		case "class", "interface", "struct", "type", "alias":
+			return symbol.Name
+		}
+	}
+	return ""
 }
 
 func loadExtractSources(roots []string) ([]codeextract.Source, error) {

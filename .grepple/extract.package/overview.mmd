@@ -2,7 +2,7 @@ classDiagram
     %% grepple:package-default github.com/greppleai/grepple/extract
     %% grepple:language-default go
     direction LR
-    note "Package extract validates and generates source-linked Mermaid structure and flow diagrams. | package github.com/greppleai/grepple/extract | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=24, declarations=64, exportedTypes=42, internalTypes=22, members=510, exportedFunctions=26, fiberRoutes=0, relations=185"
+    note "Package extract validates and generates source-linked Mermaid structure and flow diagrams. | package github.com/greppleai/grepple/extract | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=25, declarations=66, exportedTypes=42, internalTypes=24, members=526, exportedFunctions=26, fiberRoutes=0, relations=196"
     namespace interfaces {
         class languageAnalysis["languageAnalysis · extract/language.go:22-25"] {
             +Analyze(Source): error
@@ -252,9 +252,13 @@ classDiagram
         <<struct>> modulePackageCollector
         class packageCompletenessItem["packageCompletenessItem · extract/class.go:1059-1062"]
         <<struct>> packageCompletenessItem
+        class pythonAnalysis["pythonAnalysis · extract/python_language.go:10-12"]
+        <<struct>> pythonAnalysis
+        class pythonSourceAnalyzer["pythonSourceAnalyzer · extract/python_language.go:114-118"]
+        <<struct>> pythonSourceAnalyzer
         class selectedGoSymbol["selectedGoSymbol = selectedNavigationSymbol · extract/go_generate_flow.go:8"]
         <<alias>> selectedGoSymbol
-        class selectedNavigationSymbol["selectedNavigationSymbol · extract/navigation.go:214-217"]
+        class selectedNavigationSymbol["selectedNavigationSymbol · extract/navigation.go:249-252"]
         <<struct>> selectedNavigationSymbol
         class sourceAnalyzer["sourceAnalyzer · extract/analyze.go:111-117"]
         <<struct>> sourceAnalyzer
@@ -489,6 +493,14 @@ classDiagram
     modulePackageCollector "1" --> "*" discoveredModule : field all
     modulePackageCollector "1" --> "1" discoveredModule : field module
     packageCompletenessItem "1" --> "1" Location : field location
+    pythonAnalysis "1" --> "1" Analysis : field result
+    pythonAnalysis "1" ..> "1" Source : method Analyze parameter 1
+    languageAnalysis <|.. pythonAnalysis : implements
+    pythonSourceAnalyzer "1" --> "1" Analysis : field result
+    pythonSourceAnalyzer "1" ..> "1" Declaration : method addPythonMethod parameter 3; method collectPythonClassBody parameter 2; method collectPythonInstanceFields parameter 2
+    pythonSourceAnalyzer "1" ..> "1" Location : method location result 1
+    pythonSourceAnalyzer "1" ..> "1" Member : method pythonAssignmentMember result 1; method pythonFunctionMember result 1
+    pythonSourceAnalyzer "1" --> "1" Source : field source
     selectedGoSymbol "1" ..> "1" selectedNavigationSymbol : underlying type
     selectedNavigationSymbol "1" --> "1" Symbol : field symbol
     sourceAnalyzer "1" --> "1" Analysis : field result

@@ -44,12 +44,12 @@ func TestLanguagesJSONReportsRegisteredFeatureParity(t *testing.T) {
 	}
 }
 
-func TestLanguageCapabilityMatrixReportsPythonGritQL(t *testing.T) {
+func TestLanguageCapabilityMatrixReportsPythonStructuralParity(t *testing.T) {
 	for _, capability := range languageCapabilityMatrix() {
 		if capability.Language != "python" {
 			continue
 		}
-		if capability.Navigation != api.FeatureProduction || capability.GritQL != api.FeatureProduction || capability.FocusedStructure != api.FeatureUnsupported {
+		if capability.Navigation != api.FeatureProduction || capability.GritQL != api.FeatureProduction || capability.FocusedStructure != api.FeatureProduction || capability.FocusedFlow != api.FeatureProduction {
 			t.Fatalf("python capabilities=%#v", capability)
 		}
 		return

@@ -4,7 +4,7 @@ Grepple should stabilize for one or two iterations before adding more languages.
 
 ## Recommended next milestone
 
-> Continue matrix-driven language unification: native GritQL now covers every Tree-sitter-backed language, so the next parity decision is focused structure/flow coverage beyond Go and ECMAScript. Keep canonical package/workspace bundles intentionally Go-specific.
+> Continue matrix-driven language unification: Python focused structure/flow is now production, so prioritize Java next because its class, interface, inheritance, and method model provides the largest remaining architecture payoff. Keep canonical package/workspace bundles intentionally Go-specific.
 
 ## Feature set versus feature completeness
 
@@ -33,7 +33,7 @@ Treat these as separate planning dimensions:
 - Larger diagrams are dominated by validation metadata when viewed as plain text.
 - Agent edit anchors are provider-specific, not generic line hashes. Grepple delegates through a user-owned, versioned batch provider and keeps editing-harness adapters out of the shipped repository.
 - Explicit Go and TypeScript imports, direct parameters/receivers, source-ordered lexical bindings, local and imported return signatures, and same-file typed field chains now resolve before terminal-name fallback. Cross-file field chains, embedded/promoted methods, re-exports, and default imports still need richer propagation.
-- Architecture extraction remains narrower than parser-backed segments, outlines, navigation, and native GritQL. JavaScript/JSX now reuses the ECMAScript extraction path, and Python now has native GritQL; Python focused extraction remains intentionally deferred pending dogfooding.
+- Architecture extraction remains narrower than parser-backed segments, outlines, navigation, and native GritQL. Python now has focused class/inheritance/member extraction and graph-backed flows, including decorated methods and `.pyi` stubs. Java is the next high-value object-model gap.
 - Cross-language fixtures prove the baseline but do not yet cover enough malformed, nested, generic, decorated, or multiline syntax.
 - Canonical mismatch errors identify the artifact but should eventually report the first semantic difference.
 
@@ -216,8 +216,9 @@ Reduce repeated parsing and language knowledge across extraction, navigation, te
    - [x] Add cross-feature parity tests proving advertised capabilities are implemented and that unsupported combinations fail explicitly rather than silently falling back. Registration parity, generated documentation drift, JavaScript/JSX CLI/conformance, malformed-source, extraction round-trip, and unsupported-language tests cover the matrix.
    - [x] Add Python to `gritql-v1` with expression, pattern, statement, declaration, module, dotted-import, repeated-list, malformed-source, mixed-batch, CLI, and conformance coverage.
    - [x] Add C, C++, C#, Java, Kotlin, Rust, and Shell to `gritql-v1` through bounded grammar-local snippet adapters. Every parser-backed Tree-sitter language now has native GritQL, scanner, malformed-source, binding-equality, and conformance coverage.
-   - [ ] Select the next focused structure/flow adapters from Python, Java, Kotlin, C#, C/C++, Rust, and Shell based on graph dogfooding; keep unsupported cells explicit until their semantic projections are production-ready.
-Recommended implementation order from here: close the highest-value focused structure/flow matrix gaps, then return to graph queries and semantic graph diffing. Address grammar-local placeholder-role gaps when conformance or dogfooding exposes a valuable blocked workflow.
+   - [x] Add Python focused structure and flow extraction using `parser.Document` and the shared navigation graph, with classes, inheritance, annotated and unannotated attributes, decorators, `.pyi` stubs, bounded traversal, validation, and deterministic module metadata.
+   - [ ] Add Java focused structure/flow next, then assess C# and Kotlin. Keep C/C++, Rust, and Shell unsupported until their non-class architecture projections have an explicit useful contract.
+Recommended implementation order from here: Java focused structure/flow, then C# or Kotlin based on dogfooding, followed by graph queries and semantic graph diffing. Address grammar-local placeholder-role gaps when conformance exposes a valuable blocked workflow.
 
 Acceptance criteria:
 

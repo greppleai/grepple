@@ -78,6 +78,35 @@ func TestExtractFocusedCommandsUseLanguageAdapters(t *testing.T) {
 	}
 }
 
+func TestExtractFocusedCommandsSupportPython(t *testing.T) {
+	root := t.TempDir()
+	source := filepath.Join(root, "worker.py")
+	content := "class Worker:\n    def run(self):\n        finish()\n\ndef finish():\n    pass\n"
+	if err := os.WriteFile(source, []byte(content), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	structure := filepath.Join(root, "worker.structure.mmd")
+	if err := runExtract([]string{"structure", "--at", source + ":1", "--source", root, "--output", structure}); err != nil {
+		t.Fatal(err)
+	}
+	structureContent, err := os.ReadFile(structure)
+	if err != nil || !strings.Contains(string(structureContent), "<<python>> Worker") {
+		t.Fatalf("Python structure: %v\n%s", err, structureContent)
+	}
+	byName := filepath.Join(root, "worker-by-name.structure.mmd")
+	if err := runExtract([]string{"structure", "--entry", "Worker", "--source", root, "--output", byName}); err != nil {
+		t.Fatalf("Python structure by name: %v", err)
+	}
+	flow := filepath.Join(root, "run.flow.mmd")
+	if err := runExtract([]string{"flow", "--at", source + ":2", "--source", root, "--depth", "1", "--output", flow}); err != nil {
+		t.Fatal(err)
+	}
+	flowContent, err := os.ReadFile(flow)
+	if err != nil || !strings.Contains(string(flowContent), "Worker_run --> finish") {
+		t.Fatalf("Python flow: %v\n%s", err, flowContent)
+	}
+}
+
 func TestExtractStructureWritesCanonicalBundle(t *testing.T) {
 	root, source := writeExtractFixture(t)
 	output := filepath.Join(root, "service.package")

@@ -29,7 +29,7 @@ Status: ✅ production implementation; 🟡 production but specialized or intent
 | `json` | `.json` | ✅ | ❌ | 🟡 | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | `kotlin` | `.kt`, `.kts` | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | ❌ |
 | `markdown` | `.md`, `.markdown`, `.mdown`, `.mkd` | ✅ | 🟡 | 🟡 | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| `python` | `.py`, `.pyi`, `.pyw` | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | ❌ |
+| `python` | `.py`, `.pyi`, `.pyw` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
 | `rust` | `.rs` | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | ❌ |
 | `shell` | `.sh`, `.bash`, `.zsh` | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | ❌ |
 | `text` | any other extension | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
@@ -53,7 +53,7 @@ Notes:
 - **Text grep and discovery:** `search` is the default production path. It discovers files, applies ignore/path/repository filters, reads candidates, rejects NUL-containing files, normalizes invalid UTF-8 for matching, and matches text. Parser support is not required.
 - **Structural grep context and outlines:** `parser.LanguageFor`, `parser.BuildSegments`, and `parser.BuildOutline` select parser-owned adapters. Go, TypeScript/TSX, JavaScript/JSX, Python, Java, Kotlin, C#, C, C++, Rust, and Shell all use this default Tree-sitter path. Markdown, JSON, and YAML use the lightweight paths shown above.
 - **Navigation:** every Tree-sitter-backed language in the table uses `parser.NavigationGraph`; `search` resolves and renders that shared graph for `--at`, `--related`, and `--follow-related`. This is the default implementation, not a legacy or experimental collector.
-- **Focused architecture extraction:** Go, JavaScript/JSX, and the TypeScript family are registered in `extract`. They parse through `parser.Document` and reuse `parser.NavigationGraph`, but retain production language-specific semantic enrichment and Mermaid rendering. JSX is grouped with JavaScript, and TSX with TypeScript. Unsupported languages fail explicitly.
+- **Focused architecture extraction:** Go, JavaScript/JSX, TypeScript/TSX, and Python are registered in `extract`. They parse through `parser.Document` and reuse `parser.NavigationGraph`, while retaining production language-specific semantic enrichment and Mermaid rendering. Python structure extraction includes classes, inheritance, annotated and unannotated attributes, decorated methods and properties, and `.pyi` stubs. Unsupported languages fail explicitly.
 - **Native GritQL:** every Tree-sitter-backed language in the table is registered under the single production `gritql-v1` contract. All target source parses through `parser.Document`; the GritQL query grammar itself is a separate intentional parser. Language-local adapters define safe snippet wrappers and root categories, while query algebra, matching, limits, and diagnostics remain shared. Unsupported language declarations fail explicitly, with no text or alternate-language fallback.
 - **Canonical package/workspace bundles:** remain production Go-only because their package, module, build-tag, route, and schema contracts are Go-specific. This is intentional rather than a temporary limitation.
 - **Experimental code:** packed CST and native `TSTree` serialization exist only in benchmarks or opt-in build-tag experiments and do not back text search, structural context, outlines, navigation, extraction, or GritQL in the shipped CLI.

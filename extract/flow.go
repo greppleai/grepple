@@ -164,7 +164,7 @@ func (parser *flowParser) applyModule(identifier, module string, line int) error
 	if language == "" {
 		language = "typescript"
 	}
-	if node.languageLine != 0 && language != "typescript" && language != "javascript" {
+	if node.languageLine != 0 && language == "go" {
 		return fmt.Errorf("Line %d: module metadata conflicts with language metadata on flow node '%s'", line, identifier)
 	}
 	node.Module, node.moduleLine, node.Language = module, line, language

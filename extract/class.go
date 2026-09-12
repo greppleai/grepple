@@ -449,8 +449,8 @@ func (parser *classParser) parseClassMetadata(value string, line int) (bool, err
 			return true, nil
 		}
 		language := "typescript"
-		if class := parser.diagram.Classes[match[1]]; class != nil && class.Language == "javascript" {
-			language = "javascript"
+		if class := parser.diagram.Classes[match[1]]; class != nil && class.Language != "" && class.Language != "go" {
+			language = class.Language
 		}
 		return true, parser.applyClassScope(match[1], match[2], language, line)
 	}

@@ -868,6 +868,32 @@ classDiagram
     <<struct>> packageCompletenessItem
     %% grepple:file packageCompletenessItem extract/class.go
     note for packageCompletenessItem "defined: extract/class.go:1059-1062; kind@extract/class.go:1060; location@extract/class.go:1061; name@extract/class.go:1060"
+    class pythonAnalysis {
+        +Analyze(Source): error
+        +Finalize(): error
+        -result: *Analysis
+    }
+    <<struct>> pythonAnalysis
+    %% grepple:file pythonAnalysis extract/python_language.go
+    note for pythonAnalysis "defined: extract/python_language.go:10-12; Analyze@extract/python_language.go:86-107; Finalize@extract/python_language.go:109-112; result@extract/python_language.go:11"
+    class pythonSourceAnalyzer {
+        -addNavigationSymbols(codeparser.NavigationGraph)
+        -addPythonMethod(codeparser.ViewNode, codeparser.ViewNode, *Declaration)
+        -addSymbol(string, string, string, codeparser.ViewNode)
+        -analyzeClass(codeparser.ViewNode, codeparser.ViewNode)
+        -analyzeDefinition(codeparser.ViewNode, codeparser.ViewNode)
+        -collectPythonClassBody(codeparser.ViewNode, *Declaration)
+        -collectPythonInstanceFields(codeparser.ViewNode, *Declaration)
+        -location(codeparser.ViewNode): Location
+        -pythonAssignmentMember(codeparser.ViewNode, bool): tuple~Member&#44;bool~
+        -pythonFunctionMember(codeparser.ViewNode, codeparser.ViewNode): Member
+        -moduleID: string
+        -result: *Analysis
+        -source: Source
+    }
+    <<struct>> pythonSourceAnalyzer
+    %% grepple:file pythonSourceAnalyzer extract/python_language.go
+    note for pythonSourceAnalyzer "defined: extract/python_language.go:114-118; addNavigationSymbols@extract/python_language.go:310-322; addPythonMethod@extract/python_language.go:188-192; addSymbol@extract/python_language.go:324-332; analyzeClass@extract/python_language.go:143-162; analyzeDefinition@extract/python_language.go:120-129; collectPythonClassBody@extract/python_language.go:172-186; collectPythonInstanceFields@extract/python_language.go:249-255; location@extract/python_language.go:334-338; pythonAssignmentMember@extract/python_language.go:257-283; pythonFunctionMember@extract/python_language.go:194-206; moduleID@extract/python_language.go:117; result@extract/python_language.go:115; source@extract/python_language.go:116"
     class selectedGoSymbol["selectedGoSymbol = selectedNavigationSymbol"]
     <<alias>> selectedGoSymbol
     %% grepple:underlying selectedGoSymbol selectedNavigationSymbol
@@ -879,7 +905,7 @@ classDiagram
     }
     <<struct>> selectedNavigationSymbol
     %% grepple:file selectedNavigationSymbol extract/navigation.go
-    note for selectedNavigationSymbol "defined: extract/navigation.go:214-217; depth@extract/navigation.go:216; symbol@extract/navigation.go:215"
+    note for selectedNavigationSymbol "defined: extract/navigation.go:249-252; depth@extract/navigation.go:251; symbol@extract/navigation.go:250"
     class sourceAnalyzer {
         -addDefaultImport(codeparser.ViewNode, string, bool)
         -addImport(string, string, string, bool, bool)
@@ -1273,6 +1299,17 @@ classDiagram
     modulePackageCollector "1" --> "*" discoveredModule : field all
     modulePackageCollector "1" --> "1" discoveredModule : field module
     packageCompletenessItem "1" --> "1" Location : field location
+    pythonAnalysis "1" --> "1" Analysis : field result
+    pythonAnalysis "1" ..> "1" Source : method Analyze parameter 1
+    languageAnalysis <|.. pythonAnalysis : implements
+    pythonSourceAnalyzer "1" --> "1" Analysis : field result
+    pythonSourceAnalyzer "1" ..> "1" Declaration : method addPythonMethod parameter 3
+    pythonSourceAnalyzer "1" ..> "1" Declaration : method collectPythonClassBody parameter 2
+    pythonSourceAnalyzer "1" ..> "1" Declaration : method collectPythonInstanceFields parameter 2
+    pythonSourceAnalyzer "1" ..> "1" Location : method location result 1
+    pythonSourceAnalyzer "1" ..> "1" Member : method pythonAssignmentMember result 1
+    pythonSourceAnalyzer "1" ..> "1" Member : method pythonFunctionMember result 1
+    pythonSourceAnalyzer "1" --> "1" Source : field source
     selectedGoSymbol "1" ..> "1" selectedNavigationSymbol : underlying type
     selectedNavigationSymbol "1" --> "1" Symbol : field symbol
     sourceAnalyzer "1" --> "1" Analysis : field result

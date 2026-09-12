@@ -37,7 +37,7 @@ func navigationDeclarationSymbol(analysis *Analysis, declaration *codeparser.Nav
 	switch declaration.Language {
 	case "go":
 		symbols = analysis.GoSymbolIndex
-	case "javascript", "typescript", "tsx":
+	case "javascript", "typescript", "tsx", "python":
 		symbols = analysis.TSSymbolIndex
 	default:
 		return nil
@@ -99,7 +99,36 @@ func resolveNavigationCallTarget(analysis *Analysis, owner *Symbol, call *codepa
 	if owner.Language == "javascript" || owner.Language == "typescript" || owner.Language == "tsx" {
 		return resolveTypeScriptCall(analysis, owner, call.ResolvedName)
 	}
+	if owner.Language == "python" {
+		return resolvePythonNavigationCall(analysis, owner, call.ResolvedName)
+	}
 	return nil
+}
+
+func resolvePythonNavigationCall(analysis *Analysis, owner *Symbol, name string) *Symbol {
+	if local := analysis.TSSymbolIndex[owner.ModuleID+":"+name]; local != nil {
+		return local
+	}
+	terminal := name
+	if index := strings.LastIndex(terminal, "."); index >= 0 {
+		terminal = terminal[index+1:]
+	}
+	var found *Symbol
+	for _, key := range sortedKeys(analysis.TSSymbolIndex) {
+		candidate := analysis.TSSymbolIndex[key]
+		candidateTerminal := candidate.Name
+		if index := strings.LastIndex(candidateTerminal, "."); index >= 0 {
+			candidateTerminal = candidateTerminal[index+1:]
+		}
+		if candidate.Language != "python" || candidateTerminal != terminal {
+			continue
+		}
+		if found != nil && found.Key != candidate.Key {
+			return nil
+		}
+		found = candidate
+	}
+	return found
 }
 
 func resolveNavigationFactoryReturnTarget(analysis *Analysis, owner *Symbol, call *codeparser.NavigationCall) *Symbol {
@@ -191,10 +220,16 @@ func navigationCallName(owner *Symbol, call *codeparser.NavigationCall) string {
 	if (owner.Language == "javascript" || owner.Language == "typescript" || owner.Language == "tsx") && parts[0] == "this" && owner.Owner != "" {
 		return owner.Owner + "." + parts[1]
 	}
+	if owner.Language == "python" && (parts[0] == "self" || parts[0] == "cls") && owner.Owner != "" {
+		return owner.Owner + "." + parts[1]
+	}
 	return display
 }
 
 func navigationResolutionConfidence(owner *Symbol, call *codeparser.NavigationCall, target *Symbol) string {
+	if owner.Language == "python" && navigationSymbolScope(owner) != navigationSymbolScope(target) {
+		return "unique-terminal"
+	}
 	if call.Display == target.Name || call.Name == target.Name && !strings.Contains(call.Display, ".") {
 		return "exact"
 	}

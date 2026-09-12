@@ -16,16 +16,16 @@
     "syntacticBuildTagUnion": []
   },
   "summary": {
-    "sourceFiles": 24,
-    "declarations": 64,
+    "sourceFiles": 25,
+    "declarations": 66,
     "exportedTypes": 42,
-    "internalTypes": 22,
-    "members": 510,
+    "internalTypes": 24,
+    "members": 526,
     "exportedFunctions": 26,
     "fiberRoutes": 0,
-    "relations": 185
+    "relations": 196
   },
-  "semanticModelDigest": "sha256:1d1303d1eae206986c4c2ef0ab91dbac06c0dd23f7b7e03d47697c81e7e93aa4",
+  "semanticModelDigest": "sha256:5d4c1bfd228ba1629ecf076641425c4872ad38f03014312415ed8989c6415572",
   "sourceFiles": [
     {
       "path": "extract/analyze.go"
@@ -80,6 +80,9 @@
     },
     {
       "path": "extract/package_generate.go"
+    },
+    {
+      "path": "extract/python_language.go"
     },
     {
       "path": "extract/scope.go"
@@ -4718,6 +4721,175 @@
       ]
     },
     {
+      "name": "pythonAnalysis",
+      "kind": "struct",
+      "file": "extract/python_language.go",
+      "line": 10,
+      "endLine": 12,
+      "underlyingType": "struct{result*Analysis}",
+      "members": [
+        {
+          "name": "Analyze",
+          "kind": "method",
+          "line": 86,
+          "endLine": 107,
+          "parameters": [
+            "Source"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "Finalize",
+          "kind": "method",
+          "line": 109,
+          "endLine": 112,
+          "result": "error"
+        },
+        {
+          "name": "result",
+          "kind": "property",
+          "line": 11,
+          "endLine": 11,
+          "result": "*Analysis"
+        }
+      ]
+    },
+    {
+      "name": "pythonSourceAnalyzer",
+      "kind": "struct",
+      "file": "extract/python_language.go",
+      "line": 114,
+      "endLine": 118,
+      "underlyingType": "struct{result*Analysis;source Source;moduleID string;}",
+      "members": [
+        {
+          "name": "addNavigationSymbols",
+          "kind": "method",
+          "line": 310,
+          "endLine": 322,
+          "parameters": [
+            "codeparser.NavigationGraph"
+          ]
+        },
+        {
+          "name": "addPythonMethod",
+          "kind": "method",
+          "line": 188,
+          "endLine": 192,
+          "parameters": [
+            "codeparser.ViewNode",
+            "codeparser.ViewNode",
+            "*Declaration"
+          ]
+        },
+        {
+          "name": "addSymbol",
+          "kind": "method",
+          "line": 324,
+          "endLine": 332,
+          "parameters": [
+            "string",
+            "string",
+            "string",
+            "codeparser.ViewNode"
+          ]
+        },
+        {
+          "name": "analyzeClass",
+          "kind": "method",
+          "line": 143,
+          "endLine": 162,
+          "parameters": [
+            "codeparser.ViewNode",
+            "codeparser.ViewNode"
+          ]
+        },
+        {
+          "name": "analyzeDefinition",
+          "kind": "method",
+          "line": 120,
+          "endLine": 129,
+          "parameters": [
+            "codeparser.ViewNode",
+            "codeparser.ViewNode"
+          ]
+        },
+        {
+          "name": "collectPythonClassBody",
+          "kind": "method",
+          "line": 172,
+          "endLine": 186,
+          "parameters": [
+            "codeparser.ViewNode",
+            "*Declaration"
+          ]
+        },
+        {
+          "name": "collectPythonInstanceFields",
+          "kind": "method",
+          "line": 249,
+          "endLine": 255,
+          "parameters": [
+            "codeparser.ViewNode",
+            "*Declaration"
+          ]
+        },
+        {
+          "name": "location",
+          "kind": "method",
+          "line": 334,
+          "endLine": 338,
+          "parameters": [
+            "codeparser.ViewNode"
+          ],
+          "result": "Location"
+        },
+        {
+          "name": "pythonAssignmentMember",
+          "kind": "method",
+          "line": 257,
+          "endLine": 283,
+          "parameters": [
+            "codeparser.ViewNode",
+            "bool"
+          ],
+          "result": "tuple\u003cMember,bool\u003e"
+        },
+        {
+          "name": "pythonFunctionMember",
+          "kind": "method",
+          "line": 194,
+          "endLine": 206,
+          "parameters": [
+            "codeparser.ViewNode",
+            "codeparser.ViewNode"
+          ],
+          "result": "Member"
+        },
+        {
+          "name": "moduleID",
+          "kind": "property",
+          "line": 117,
+          "endLine": 117,
+          "result": "string"
+        },
+        {
+          "name": "result",
+          "kind": "property",
+          "line": 115,
+          "endLine": 115,
+          "result": "*Analysis"
+        },
+        {
+          "name": "source",
+          "kind": "property",
+          "line": 116,
+          "endLine": 116,
+          "result": "Source"
+        }
+      ]
+    },
+    {
       "name": "selectedGoSymbol",
       "kind": "alias",
       "file": "extract/go_generate_flow.go",
@@ -4729,22 +4901,22 @@
       "name": "selectedNavigationSymbol",
       "kind": "struct",
       "file": "extract/navigation.go",
-      "line": 214,
-      "endLine": 217,
+      "line": 249,
+      "endLine": 252,
       "underlyingType": "struct{symbol*Symbol;depth int;}",
       "members": [
         {
           "name": "depth",
           "kind": "property",
-          "line": 216,
-          "endLine": 216,
+          "line": 251,
+          "endLine": 251,
           "result": "int"
         },
         {
           "name": "symbol",
           "kind": "property",
-          "line": 215,
-          "endLine": 215,
+          "line": 250,
+          "endLine": 250,
           "result": "*Symbol"
         }
       ]
@@ -6625,6 +6797,83 @@
       "to": "Location",
       "kind": "association",
       "via": "field location",
+      "cardinality": "one"
+    },
+    {
+      "from": "pythonAnalysis",
+      "to": "Analysis",
+      "kind": "association",
+      "via": "field result",
+      "cardinality": "one"
+    },
+    {
+      "from": "pythonAnalysis",
+      "to": "Source",
+      "kind": "dependency",
+      "via": "method Analyze parameter 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "pythonAnalysis",
+      "to": "languageAnalysis",
+      "kind": "implementation",
+      "via": "implements",
+      "cardinality": "one"
+    },
+    {
+      "from": "pythonSourceAnalyzer",
+      "to": "Analysis",
+      "kind": "association",
+      "via": "field result",
+      "cardinality": "one"
+    },
+    {
+      "from": "pythonSourceAnalyzer",
+      "to": "Declaration",
+      "kind": "dependency",
+      "via": "method addPythonMethod parameter 3",
+      "cardinality": "one"
+    },
+    {
+      "from": "pythonSourceAnalyzer",
+      "to": "Declaration",
+      "kind": "dependency",
+      "via": "method collectPythonClassBody parameter 2",
+      "cardinality": "one"
+    },
+    {
+      "from": "pythonSourceAnalyzer",
+      "to": "Declaration",
+      "kind": "dependency",
+      "via": "method collectPythonInstanceFields parameter 2",
+      "cardinality": "one"
+    },
+    {
+      "from": "pythonSourceAnalyzer",
+      "to": "Location",
+      "kind": "dependency",
+      "via": "method location result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "pythonSourceAnalyzer",
+      "to": "Member",
+      "kind": "dependency",
+      "via": "method pythonAssignmentMember result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "pythonSourceAnalyzer",
+      "to": "Member",
+      "kind": "dependency",
+      "via": "method pythonFunctionMember result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "pythonSourceAnalyzer",
+      "to": "Source",
+      "kind": "association",
+      "via": "field source",
       "cardinality": "one"
     },
     {

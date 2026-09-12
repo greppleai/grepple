@@ -17,7 +17,7 @@ func generateTypeScriptClass(entry string, entrySource Source, sources []Source,
 	}
 	entryKey := absolutePath(entrySource.Path) + ":" + entry
 	if analysis.TSDeclarations[entryKey] == nil {
-		return "", fmt.Errorf("Class or interface '%s' was not found in entry file %s", entry, entrySource.Path)
+		return "", fmt.Errorf("class or interface '%s' was not found in entry file %s", entry, entrySource.Path)
 	}
 	depth, limit := classOptions(options)
 	selected, truncated := selectTypeScriptClasses(entryKey, analysis, depth, limit)
@@ -29,7 +29,7 @@ func generateTypeScriptClass(entry string, entrySource Source, sources []Source,
 	for _, key := range selected {
 		declaration := analysis.TSDeclarations[key]
 		if old := declarations[declaration.Name]; old != nil && old.ModuleID != declaration.ModuleID {
-			return "", fmt.Errorf("selected TypeScript declarations share Mermaid name %s", declaration.Name)
+			return "", fmt.Errorf("selected declarations share Mermaid name %s", declaration.Name)
 		}
 		declarations[declaration.Name] = declaration
 		rendered, renderErr := renderClass(declaration.Name, declaration, analysis)
@@ -88,23 +88,54 @@ func typeScriptDeclarationDependencies(declaration *Declaration, analysis *Analy
 }
 
 func typeScriptDependencyCandidates(declaration *Declaration, analysis *Analysis) map[string]string {
+	result := sameModuleDependencyCandidates(declaration, analysis)
+	if declaration.Language == "python" {
+		addUniquePythonDependencyCandidates(result, declaration.Language, analysis)
+	}
+	addImportedDependencyCandidates(result, declaration.ModuleID, analysis)
+	return result
+}
+
+func sameModuleDependencyCandidates(declaration *Declaration, analysis *Analysis) map[string]string {
 	result := map[string]string{}
 	for key, candidate := range analysis.TSDeclarations {
 		if candidate.ModuleID == declaration.ModuleID {
 			result[candidate.Name] = key
 		}
 	}
-	for local, binding := range analysis.TSImportBindings[declaration.ModuleID] {
+	return result
+}
+
+func addUniquePythonDependencyCandidates(result map[string]string, language string, analysis *Analysis) {
+	unique := map[string]string{}
+	ambiguous := map[string]bool{}
+	for key, candidate := range analysis.TSDeclarations {
+		if candidate.Language != language {
+			continue
+		}
+		if old := unique[candidate.Name]; old != "" && old != key {
+			ambiguous[candidate.Name] = true
+		} else {
+			unique[candidate.Name] = key
+		}
+	}
+	for name, key := range unique {
+		if !ambiguous[name] {
+			result[name] = key
+		}
+	}
+}
+
+func addImportedDependencyCandidates(result map[string]string, moduleID string, analysis *Analysis) {
+	for local, binding := range analysis.TSImportBindings[moduleID] {
 		if binding.ModuleID == "" || binding.Resolved == "" {
 			continue
 		}
-		name := binding.Resolved
-		key := binding.ModuleID + ":" + name
+		key := binding.ModuleID + ":" + binding.Resolved
 		if analysis.TSDeclarations[key] != nil {
 			result[local] = key
 		}
 	}
-	return result
 }
 
 func typeScriptDeclarationReferences(declaration *Declaration, name string) bool {
