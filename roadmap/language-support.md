@@ -46,7 +46,9 @@ Language identity, extensions, grammar fingerprints, and parser/navigation capab
 - [x] Add Python to native `gritql-v1` with dedicated query contexts, dotted-import placeholders, conformance fixtures, scanner/CLI coverage, and explicit malformed-source behavior.
 - [x] Add C, C++, C#, Java, Kotlin, Rust, and Shell to native `gritql-v1`; all parser-backed Tree-sitter languages now have registered adapters and parity coverage.
 - [x] Add Python focused structure/flow with class inheritance, annotated and unannotated attributes, decorators, `.pyi` stubs, and shared navigation-graph calls.
-- [ ] Add Java focused structure/flow next; assess C# and Kotlin afterward, while defining non-class architecture contracts before enabling C/C++, Rust, or Shell extraction.
+- [x] Add Java focused structure/flow for classes, interfaces, records, enums, inheritance, fields, constructors, methods, and graph-backed calls.
+- [x] Add Kotlin focused structure/flow for classes, interfaces, objects, data-class constructor properties, delegation inheritance, properties, functions, and graph-backed calls.
+- [ ] Add C# focused structure/flow next; define non-class architecture contracts before enabling C/C++, Rust, or Shell extraction.
 
 ## Next languages
 

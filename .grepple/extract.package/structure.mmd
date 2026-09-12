@@ -829,6 +829,41 @@ classDiagram
     <<struct>> javaScriptAnalysis
     %% grepple:file javaScriptAnalysis extract/javascript_language.go
     note for javaScriptAnalysis "defined: extract/javascript_language.go:8-10; Analyze@extract/javascript_language.go:45-47; Finalize@extract/javascript_language.go:49; result@extract/javascript_language.go:9"
+    class jvmAnalysis {
+        +Analyze(Source): error
+        +Finalize(): error
+        -language: string
+        -result: *Analysis
+    }
+    <<struct>> jvmAnalysis
+    %% grepple:file jvmAnalysis extract/jvm_language.go
+    note for jvmAnalysis "defined: extract/jvm_language.go:11-14; Analyze@extract/jvm_language.go:100-119; Finalize@extract/jvm_language.go:121-124; language@extract/jvm_language.go:13; result@extract/jvm_language.go:12"
+    class jvmSourceAnalyzer {
+        -addTypeSymbol(string, codeparser.ViewNode)
+        -analyzeJavaType(codeparser.ViewNode, codeparser.ViewNode)
+        -analyzeKotlinType(codeparser.ViewNode, codeparser.ViewNode)
+        -analyzeType(codeparser.ViewNode, codeparser.ViewNode)
+        -collectJavaMembers(codeparser.ViewNode, *Declaration)
+        -collectKotlinConstructorProperties(codeparser.ViewNode, *Declaration)
+        -collectKotlinMembers(codeparser.ViewNode, *Declaration)
+        -javaFieldMembers(codeparser.ViewNode, string, bool): []Member
+        -javaMethodMember(codeparser.ViewNode, string): Member
+        -javaRecordMember(codeparser.ViewNode): tuple~Member&#44;bool~
+        -jvmProperty(string, string, codeparser.ViewNode, bool): Member
+        -kotlinMethodMember(codeparser.ViewNode): Member
+        -kotlinPropertyMember(codeparser.ViewNode): tuple~Member&#44;bool~
+        -location(codeparser.ViewNode): Location
+        -newDeclaration(string, string, codeparser.ViewNode): *Declaration
+        -stablePath(): string
+        -storeDeclaration(*Declaration, codeparser.ViewNode)
+        -language: string
+        -moduleID: string
+        -result: *Analysis
+        -source: Source
+    }
+    <<struct>> jvmSourceAnalyzer
+    %% grepple:file jvmSourceAnalyzer extract/jvm_language.go
+    note for jvmSourceAnalyzer "defined: extract/jvm_language.go:126-131; addTypeSymbol@extract/jvm_language.go:565-571; analyzeJavaType@extract/jvm_language.go:173-186; analyzeKotlinType@extract/jvm_language.go:319-333; analyzeType@extract/jvm_language.go:133-144; collectJavaMembers@extract/jvm_language.go:233-262; collectKotlinConstructorProperties@extract/jvm_language.go:361-377; collectKotlinMembers@extract/jvm_language.go:379-397; javaFieldMembers@extract/jvm_language.go:296-308; javaMethodMember@extract/jvm_language.go:271-279; javaRecordMember@extract/jvm_language.go:310-317; jvmProperty@extract/jvm_language.go:472-480; kotlinMethodMember@extract/jvm_language.go:399-406; kotlinPropertyMember@extract/jvm_language.go:435-444; location@extract/jvm_language.go:577-581; newDeclaration@extract/jvm_language.go:155-161; stablePath@extract/jvm_language.go:573-575; storeDeclaration@extract/jvm_language.go:163-171; language@extract/jvm_language.go:130; moduleID@extract/jvm_language.go:129; result@extract/jvm_language.go:127; source@extract/jvm_language.go:128"
     class languageAnalysis {
         +Analyze(Source): error
         +Finalize(): error
@@ -877,7 +912,6 @@ classDiagram
     %% grepple:file pythonAnalysis extract/python_language.go
     note for pythonAnalysis "defined: extract/python_language.go:10-12; Analyze@extract/python_language.go:86-107; Finalize@extract/python_language.go:109-112; result@extract/python_language.go:11"
     class pythonSourceAnalyzer {
-        -addNavigationSymbols(codeparser.NavigationGraph)
         -addPythonMethod(codeparser.ViewNode, codeparser.ViewNode, *Declaration)
         -addSymbol(string, string, string, codeparser.ViewNode)
         -analyzeClass(codeparser.ViewNode, codeparser.ViewNode)
@@ -893,7 +927,7 @@ classDiagram
     }
     <<struct>> pythonSourceAnalyzer
     %% grepple:file pythonSourceAnalyzer extract/python_language.go
-    note for pythonSourceAnalyzer "defined: extract/python_language.go:114-118; addNavigationSymbols@extract/python_language.go:310-322; addPythonMethod@extract/python_language.go:188-192; addSymbol@extract/python_language.go:324-332; analyzeClass@extract/python_language.go:143-162; analyzeDefinition@extract/python_language.go:120-129; collectPythonClassBody@extract/python_language.go:172-186; collectPythonInstanceFields@extract/python_language.go:249-255; location@extract/python_language.go:334-338; pythonAssignmentMember@extract/python_language.go:257-283; pythonFunctionMember@extract/python_language.go:194-206; moduleID@extract/python_language.go:117; result@extract/python_language.go:115; source@extract/python_language.go:116"
+    note for pythonSourceAnalyzer "defined: extract/python_language.go:114-118; addPythonMethod@extract/python_language.go:188-192; addSymbol@extract/python_language.go:310-318; analyzeClass@extract/python_language.go:143-162; analyzeDefinition@extract/python_language.go:120-129; collectPythonClassBody@extract/python_language.go:172-186; collectPythonInstanceFields@extract/python_language.go:249-255; location@extract/python_language.go:320-324; pythonAssignmentMember@extract/python_language.go:257-283; pythonFunctionMember@extract/python_language.go:194-206; moduleID@extract/python_language.go:117; result@extract/python_language.go:115; source@extract/python_language.go:116"
     class selectedGoSymbol["selectedGoSymbol = selectedNavigationSymbol"]
     <<alias>> selectedGoSymbol
     %% grepple:underlying selectedGoSymbol selectedNavigationSymbol
@@ -905,7 +939,7 @@ classDiagram
     }
     <<struct>> selectedNavigationSymbol
     %% grepple:file selectedNavigationSymbol extract/navigation.go
-    note for selectedNavigationSymbol "defined: extract/navigation.go:249-252; depth@extract/navigation.go:251; symbol@extract/navigation.go:250"
+    note for selectedNavigationSymbol "defined: extract/navigation.go:308-311; depth@extract/navigation.go:310; symbol@extract/navigation.go:309"
     class sourceAnalyzer {
         -addDefaultImport(codeparser.ViewNode, string, bool)
         -addImport(string, string, string, bool, bool)
@@ -1285,6 +1319,23 @@ classDiagram
     javaScriptAnalysis "1" --> "1" Analysis : field result
     javaScriptAnalysis "1" ..> "1" Source : method Analyze parameter 1
     languageAnalysis <|.. javaScriptAnalysis : implements
+    jvmAnalysis "1" --> "1" Analysis : field result
+    jvmAnalysis "1" ..> "1" Source : method Analyze parameter 1
+    languageAnalysis <|.. jvmAnalysis : implements
+    jvmSourceAnalyzer "1" --> "1" Analysis : field result
+    jvmSourceAnalyzer "1" ..> "1" Declaration : method collectJavaMembers parameter 2
+    jvmSourceAnalyzer "1" ..> "1" Declaration : method collectKotlinConstructorProperties parameter 2
+    jvmSourceAnalyzer "1" ..> "1" Declaration : method collectKotlinMembers parameter 2
+    jvmSourceAnalyzer "1" ..> "1" Declaration : method newDeclaration result 1
+    jvmSourceAnalyzer "1" ..> "1" Declaration : method storeDeclaration parameter 1
+    jvmSourceAnalyzer "1" ..> "1" Location : method location result 1
+    jvmSourceAnalyzer "1" ..> "*" Member : method javaFieldMembers result 1
+    jvmSourceAnalyzer "1" ..> "1" Member : method javaMethodMember result 1
+    jvmSourceAnalyzer "1" ..> "1" Member : method javaRecordMember result 1
+    jvmSourceAnalyzer "1" ..> "1" Member : method jvmProperty result 1
+    jvmSourceAnalyzer "1" ..> "1" Member : method kotlinMethodMember result 1
+    jvmSourceAnalyzer "1" ..> "1" Member : method kotlinPropertyMember result 1
+    jvmSourceAnalyzer "1" --> "1" Source : field source
     languageAnalysis "1" ..> "1" Source : method Analyze parameter 1
     languageDefinition "1" --> "1" Analysis : field newAnalysis
     languageDefinition "1" --> "1" Analysis : field validFlowEdge

@@ -204,7 +204,7 @@ grepple graph --compact ./internal/cli
 
 ## Architecture and flow extraction
 
-`grepple extract` creates deterministic, self-validated Mermaid navigation maps from Tree-sitter source analysis. Focused structure and flow extraction support Go, JavaScript/JSX, TypeScript/TSX, and Python; canonical package and workspace bundles remain Go-specific. Python structure extraction covers classes, inheritance, annotated and unannotated attributes, decorated methods/properties, and `.pyi` stubs. Generic callable declarations and calls use the normalized `parser.NavigationGraph` shared with `--at` and `--related`. Extraction enriches graph declarations and edges with stable identities, package/module scope, receiver/container context, resolved targets, and confidence; focused flow generation and validation consume those enriched edges directly.
+`grepple extract` creates deterministic, self-validated Mermaid navigation maps from Tree-sitter source analysis. Focused structure and flow extraction support Go, JavaScript/JSX, TypeScript/TSX, Python, Java, and Kotlin; canonical package and workspace bundles remain Go-specific. Python covers classes, inheritance, annotated and unannotated attributes, decorators, and `.pyi` stubs. Java and Kotlin cover their class/interface models, inheritance, fields/properties, methods, records/data classes, enums, and objects. Generic callable declarations and calls use the normalized `parser.NavigationGraph` shared with `--at` and `--related`; focused flow generation and validation consume those enriched edges directly.
 
 ```bash
 grepple extract structure internal/cli
@@ -213,6 +213,8 @@ grepple extract flow internal/cli --entry runSearch --depth 2
 grepple extract flow --at internal/cli/local.go:13 --source .
 grepple extract structure --at web/store.ts:8 --source web
 grepple extract flow --at services/worker.py:20 --source services
+grepple extract structure --at src/main/java/acme/Service.java:12 --source .
+grepple extract flow --at src/main/kotlin/acme/Worker.kt:30 --source .
 grepple extract structure api --bundle --output .grepple/api.package
 grepple extract structure . --workspace --output .grepple/project.workspace
 ```

@@ -101,7 +101,7 @@ func (analysis *pythonAnalysis) Analyze(source Source) error {
 		return err
 	}
 	graph := codeparser.NavigationGraphFromDocument(document, source.Path)
-	analyzer.addNavigationSymbols(graph)
+	addModuleNavigationSymbols(analysis.result, graph, "python", analyzer.moduleID, source.Path)
 	analysis.result.Navigation.Merge(graph)
 	return nil
 }
@@ -305,20 +305,6 @@ func pythonVisibility(name string) string {
 		return "protected"
 	}
 	return "public"
-}
-
-func (analyzer *pythonSourceAnalyzer) addNavigationSymbols(graph codeparser.NavigationGraph) {
-	for _, declaration := range graph.Declarations {
-		key := analyzer.moduleID + ":" + declaration.Name
-		if analyzer.result.TSSymbolIndex[key] != nil {
-			continue
-		}
-		analyzer.result.TSSymbolIndex[key] = &Symbol{
-			Name: declaration.Name, Kind: declaration.Kind, Language: "python", ModuleID: analyzer.moduleID, Key: key,
-			Owner: declaration.Container, NavigationID: declaration.ID, Calls: map[string]bool{},
-			Locations: []Location{{Path: analyzer.source.Path, Line: declaration.Start, EndLine: declaration.End}},
-		}
-	}
 }
 
 func (analyzer *pythonSourceAnalyzer) addSymbol(name, kind, owner string, node codeparser.ViewNode) {

@@ -18,6 +18,8 @@ func TestFocusedFlowsAgreeWithSharedNavigationGraph(t *testing.T) {
 		{name: "typescript-method", path: "main.ts", source: "class Runner { start(): void { this.finish() } finish(): void {} }\n", entry: "Runner.start"},
 		{name: "python-function", path: "main.py", source: "def start():\n    finish()\n\ndef finish():\n    pass\n", entry: "start"},
 		{name: "python-method", path: "main.py", source: "class Runner:\n    def start(self):\n        self.finish()\n\n    def finish(self):\n        pass\n", entry: "Runner.start"},
+		{name: "java-method", path: "Runner.java", source: "class Runner { void start() { finish(); } void finish() {} }\n", entry: "Runner.start"},
+		{name: "kotlin-method", path: "Runner.kt", source: "class Runner {\n    fun start() { finish() }\n    fun finish() {}\n}\n", entry: "Runner.start"},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

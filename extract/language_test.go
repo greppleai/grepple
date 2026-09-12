@@ -8,7 +8,7 @@ import (
 
 func TestSupportedLanguagesAreStableAndDefensive(t *testing.T) {
 	languages := SupportedLanguages()
-	if len(languages) != 4 {
+	if len(languages) != 6 {
 		t.Fatalf("SupportedLanguages() = %#v", languages)
 	}
 	if languages[0].ID != "go" || !reflect.DeepEqual(languages[0].Extensions, []string{".go"}) || !languages[0].FocusedStructure || !languages[0].FocusedFlow || !languages[0].PackageBundle || !languages[0].WorkspaceBundle {
@@ -22,6 +22,15 @@ func TestSupportedLanguagesAreStableAndDefensive(t *testing.T) {
 	}
 	if languages[3].ID != "python" || !reflect.DeepEqual(languages[3].Extensions, []string{".py", ".pyi", ".pyw"}) || !languages[3].FocusedStructure || !languages[3].FocusedFlow || languages[3].PackageBundle || languages[3].WorkspaceBundle {
 		t.Fatalf("Python adapter metadata = %#v", languages[3])
+	}
+	for index, expected := range []struct {
+		id         string
+		extensions []string
+	}{{"java", []string{".java"}}, {"kotlin", []string{".kt", ".kts"}}} {
+		language := languages[index+4]
+		if language.ID != expected.id || !reflect.DeepEqual(language.Extensions, expected.extensions) || !language.FocusedStructure || !language.FocusedFlow || language.PackageBundle || language.WorkspaceBundle {
+			t.Fatalf("JVM adapter metadata = %#v", language)
+		}
 	}
 	languages[0].Extensions[0] = ".changed"
 	fresh := SupportedLanguages()
@@ -53,7 +62,7 @@ func TestLanguageForPathUsesAdapterExtensions(t *testing.T) {
 	for path, expected := range map[string]string{
 		"main.go": "go", "view.ts": "typescript", "view.tsx": "typescript",
 		"module.mts": "typescript", "module.cts": "typescript", "app.js": "javascript", "view.jsx": "javascript",
-		"main.py": "python", "types.pyi": "python", "gui.pyw": "python",
+		"main.py": "python", "types.pyi": "python", "gui.pyw": "python", "Main.java": "java", "build.kt": "kotlin", "script.kts": "kotlin",
 	} {
 		language, ok := LanguageForPath(path)
 		if !ok || language.ID != expected {
@@ -67,7 +76,7 @@ func TestLanguageForPathUsesAdapterExtensions(t *testing.T) {
 
 func TestAnalysisRejectsSourcesWithoutAnAdapter(t *testing.T) {
 	_, err := Analyze([]Source{{Path: "main.rs", Text: "fn main() {}"}})
-	if err == nil || !strings.Contains(err.Error(), "unsupported source language") || !strings.Contains(err.Error(), "go or javascript or python or typescript") {
+	if err == nil || !strings.Contains(err.Error(), "unsupported source language") || !strings.Contains(err.Error(), "go or java or javascript or kotlin or python or typescript") {
 		t.Fatalf("unsupported source error = %v", err)
 	}
 }

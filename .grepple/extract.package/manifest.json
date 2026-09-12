@@ -16,16 +16,16 @@
     "syntacticBuildTagUnion": []
   },
   "summary": {
-    "sourceFiles": 25,
-    "declarations": 66,
+    "sourceFiles": 26,
+    "declarations": 68,
     "exportedTypes": 42,
-    "internalTypes": 24,
-    "members": 526,
+    "internalTypes": 26,
+    "members": 550,
     "exportedFunctions": 26,
     "fiberRoutes": 0,
-    "relations": 196
+    "relations": 213
   },
-  "semanticModelDigest": "sha256:5d4c1bfd228ba1629ecf076641425c4872ad38f03014312415ed8989c6415572",
+  "semanticModelDigest": "sha256:d6c246d77ab2d63088542f790b955c8add6ca72cecbd20853bcb68c05b43a941",
   "sourceFiles": [
     {
       "path": "extract/analyze.go"
@@ -65,6 +65,9 @@
     },
     {
       "path": "extract/javascript_language.go"
+    },
+    {
+      "path": "extract/jvm_language.go"
     },
     {
       "path": "extract/language.go"
@@ -4540,6 +4543,260 @@
       ]
     },
     {
+      "name": "jvmAnalysis",
+      "kind": "struct",
+      "file": "extract/jvm_language.go",
+      "line": 11,
+      "endLine": 14,
+      "underlyingType": "struct{result*Analysis;language string;}",
+      "members": [
+        {
+          "name": "Analyze",
+          "kind": "method",
+          "line": 100,
+          "endLine": 119,
+          "parameters": [
+            "Source"
+          ],
+          "result": "error"
+        },
+        {
+          "name": "Finalize",
+          "kind": "method",
+          "line": 121,
+          "endLine": 124,
+          "result": "error"
+        },
+        {
+          "name": "language",
+          "kind": "property",
+          "line": 13,
+          "endLine": 13,
+          "result": "string"
+        },
+        {
+          "name": "result",
+          "kind": "property",
+          "line": 12,
+          "endLine": 12,
+          "result": "*Analysis"
+        }
+      ]
+    },
+    {
+      "name": "jvmSourceAnalyzer",
+      "kind": "struct",
+      "file": "extract/jvm_language.go",
+      "line": 126,
+      "endLine": 131,
+      "underlyingType": "struct{result*Analysis;source Source;moduleID string;language string;}",
+      "members": [
+        {
+          "name": "addTypeSymbol",
+          "kind": "method",
+          "line": 565,
+          "endLine": 571,
+          "parameters": [
+            "string",
+            "codeparser.ViewNode"
+          ]
+        },
+        {
+          "name": "analyzeJavaType",
+          "kind": "method",
+          "line": 173,
+          "endLine": 186,
+          "parameters": [
+            "codeparser.ViewNode",
+            "codeparser.ViewNode"
+          ]
+        },
+        {
+          "name": "analyzeKotlinType",
+          "kind": "method",
+          "line": 319,
+          "endLine": 333,
+          "parameters": [
+            "codeparser.ViewNode",
+            "codeparser.ViewNode"
+          ]
+        },
+        {
+          "name": "analyzeType",
+          "kind": "method",
+          "line": 133,
+          "endLine": 144,
+          "parameters": [
+            "codeparser.ViewNode",
+            "codeparser.ViewNode"
+          ]
+        },
+        {
+          "name": "collectJavaMembers",
+          "kind": "method",
+          "line": 233,
+          "endLine": 262,
+          "parameters": [
+            "codeparser.ViewNode",
+            "*Declaration"
+          ]
+        },
+        {
+          "name": "collectKotlinConstructorProperties",
+          "kind": "method",
+          "line": 361,
+          "endLine": 377,
+          "parameters": [
+            "codeparser.ViewNode",
+            "*Declaration"
+          ]
+        },
+        {
+          "name": "collectKotlinMembers",
+          "kind": "method",
+          "line": 379,
+          "endLine": 397,
+          "parameters": [
+            "codeparser.ViewNode",
+            "*Declaration"
+          ]
+        },
+        {
+          "name": "javaFieldMembers",
+          "kind": "method",
+          "line": 296,
+          "endLine": 308,
+          "parameters": [
+            "codeparser.ViewNode",
+            "string",
+            "bool"
+          ],
+          "result": "[]Member"
+        },
+        {
+          "name": "javaMethodMember",
+          "kind": "method",
+          "line": 271,
+          "endLine": 279,
+          "parameters": [
+            "codeparser.ViewNode",
+            "string"
+          ],
+          "result": "Member"
+        },
+        {
+          "name": "javaRecordMember",
+          "kind": "method",
+          "line": 310,
+          "endLine": 317,
+          "parameters": [
+            "codeparser.ViewNode"
+          ],
+          "result": "tuple\u003cMember,bool\u003e"
+        },
+        {
+          "name": "jvmProperty",
+          "kind": "method",
+          "line": 472,
+          "endLine": 480,
+          "parameters": [
+            "string",
+            "string",
+            "codeparser.ViewNode",
+            "bool"
+          ],
+          "result": "Member"
+        },
+        {
+          "name": "kotlinMethodMember",
+          "kind": "method",
+          "line": 399,
+          "endLine": 406,
+          "parameters": [
+            "codeparser.ViewNode"
+          ],
+          "result": "Member"
+        },
+        {
+          "name": "kotlinPropertyMember",
+          "kind": "method",
+          "line": 435,
+          "endLine": 444,
+          "parameters": [
+            "codeparser.ViewNode"
+          ],
+          "result": "tuple\u003cMember,bool\u003e"
+        },
+        {
+          "name": "location",
+          "kind": "method",
+          "line": 577,
+          "endLine": 581,
+          "parameters": [
+            "codeparser.ViewNode"
+          ],
+          "result": "Location"
+        },
+        {
+          "name": "newDeclaration",
+          "kind": "method",
+          "line": 155,
+          "endLine": 161,
+          "parameters": [
+            "string",
+            "string",
+            "codeparser.ViewNode"
+          ],
+          "result": "*Declaration"
+        },
+        {
+          "name": "stablePath",
+          "kind": "method",
+          "line": 573,
+          "endLine": 575,
+          "result": "string"
+        },
+        {
+          "name": "storeDeclaration",
+          "kind": "method",
+          "line": 163,
+          "endLine": 171,
+          "parameters": [
+            "*Declaration",
+            "codeparser.ViewNode"
+          ]
+        },
+        {
+          "name": "language",
+          "kind": "property",
+          "line": 130,
+          "endLine": 130,
+          "result": "string"
+        },
+        {
+          "name": "moduleID",
+          "kind": "property",
+          "line": 129,
+          "endLine": 129,
+          "result": "string"
+        },
+        {
+          "name": "result",
+          "kind": "property",
+          "line": 127,
+          "endLine": 127,
+          "result": "*Analysis"
+        },
+        {
+          "name": "source",
+          "kind": "property",
+          "line": 128,
+          "endLine": 128,
+          "result": "Source"
+        }
+      ]
+    },
+    {
       "name": "languageAnalysis",
       "kind": "interface",
       "file": "extract/language.go",
@@ -4763,15 +5020,6 @@
       "underlyingType": "struct{result*Analysis;source Source;moduleID string;}",
       "members": [
         {
-          "name": "addNavigationSymbols",
-          "kind": "method",
-          "line": 310,
-          "endLine": 322,
-          "parameters": [
-            "codeparser.NavigationGraph"
-          ]
-        },
-        {
           "name": "addPythonMethod",
           "kind": "method",
           "line": 188,
@@ -4785,8 +5033,8 @@
         {
           "name": "addSymbol",
           "kind": "method",
-          "line": 324,
-          "endLine": 332,
+          "line": 310,
+          "endLine": 318,
           "parameters": [
             "string",
             "string",
@@ -4837,8 +5085,8 @@
         {
           "name": "location",
           "kind": "method",
-          "line": 334,
-          "endLine": 338,
+          "line": 320,
+          "endLine": 324,
           "parameters": [
             "codeparser.ViewNode"
           ],
@@ -4901,22 +5149,22 @@
       "name": "selectedNavigationSymbol",
       "kind": "struct",
       "file": "extract/navigation.go",
-      "line": 249,
-      "endLine": 252,
+      "line": 308,
+      "endLine": 311,
       "underlyingType": "struct{symbol*Symbol;depth int;}",
       "members": [
         {
           "name": "depth",
           "kind": "property",
-          "line": 251,
-          "endLine": 251,
+          "line": 310,
+          "endLine": 310,
           "result": "int"
         },
         {
           "name": "symbol",
           "kind": "property",
-          "line": 250,
-          "endLine": 250,
+          "line": 309,
+          "endLine": 309,
           "result": "*Symbol"
         }
       ]
@@ -6699,6 +6947,125 @@
       "to": "languageAnalysis",
       "kind": "implementation",
       "via": "implements",
+      "cardinality": "one"
+    },
+    {
+      "from": "jvmAnalysis",
+      "to": "Analysis",
+      "kind": "association",
+      "via": "field result",
+      "cardinality": "one"
+    },
+    {
+      "from": "jvmAnalysis",
+      "to": "Source",
+      "kind": "dependency",
+      "via": "method Analyze parameter 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "jvmAnalysis",
+      "to": "languageAnalysis",
+      "kind": "implementation",
+      "via": "implements",
+      "cardinality": "one"
+    },
+    {
+      "from": "jvmSourceAnalyzer",
+      "to": "Analysis",
+      "kind": "association",
+      "via": "field result",
+      "cardinality": "one"
+    },
+    {
+      "from": "jvmSourceAnalyzer",
+      "to": "Declaration",
+      "kind": "dependency",
+      "via": "method collectJavaMembers parameter 2",
+      "cardinality": "one"
+    },
+    {
+      "from": "jvmSourceAnalyzer",
+      "to": "Declaration",
+      "kind": "dependency",
+      "via": "method collectKotlinConstructorProperties parameter 2",
+      "cardinality": "one"
+    },
+    {
+      "from": "jvmSourceAnalyzer",
+      "to": "Declaration",
+      "kind": "dependency",
+      "via": "method collectKotlinMembers parameter 2",
+      "cardinality": "one"
+    },
+    {
+      "from": "jvmSourceAnalyzer",
+      "to": "Declaration",
+      "kind": "dependency",
+      "via": "method newDeclaration result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "jvmSourceAnalyzer",
+      "to": "Declaration",
+      "kind": "dependency",
+      "via": "method storeDeclaration parameter 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "jvmSourceAnalyzer",
+      "to": "Location",
+      "kind": "dependency",
+      "via": "method location result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "jvmSourceAnalyzer",
+      "to": "Member",
+      "kind": "dependency",
+      "via": "method javaFieldMembers result 1",
+      "cardinality": "many"
+    },
+    {
+      "from": "jvmSourceAnalyzer",
+      "to": "Member",
+      "kind": "dependency",
+      "via": "method javaMethodMember result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "jvmSourceAnalyzer",
+      "to": "Member",
+      "kind": "dependency",
+      "via": "method javaRecordMember result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "jvmSourceAnalyzer",
+      "to": "Member",
+      "kind": "dependency",
+      "via": "method jvmProperty result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "jvmSourceAnalyzer",
+      "to": "Member",
+      "kind": "dependency",
+      "via": "method kotlinMethodMember result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "jvmSourceAnalyzer",
+      "to": "Member",
+      "kind": "dependency",
+      "via": "method kotlinPropertyMember result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "jvmSourceAnalyzer",
+      "to": "Source",
+      "kind": "association",
+      "via": "field source",
       "cardinality": "one"
     },
     {

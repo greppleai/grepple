@@ -26,15 +26,15 @@
   "summary": {
     "modules": 2,
     "packages": 16,
-    "sourceFiles": 130,
-    "declarations": 343,
+    "sourceFiles": 131,
+    "declarations": 345,
     "exportedFunctions": 106,
     "fiberRoutes": 0,
     "localImports": 22,
     "standardLibraryImports": 139,
     "externalModuleEdges": 15
   },
-  "semanticModelDigest": "sha256:39e3103c71dc1655b437892ea54b2ec6d871bcb67b6ba1f824ec8bab57c3f941",
+  "semanticModelDigest": "sha256:73ae26e767da0b3efd195281f7b473120e2fdc0704b3a6329ec80010dbf4ab05",
   "modules": [
     {
       "path": "github.com/greppleai/grepple",
@@ -122,8 +122,8 @@
           "name": "extract",
           "documentation": "Package extract validates and generates source-linked Mermaid structure and flow diagrams.",
           "main": false,
-          "sourceFiles": 25,
-          "declarations": 66,
+          "sourceFiles": 26,
+          "declarations": 68,
           "exportedFunctions": 26,
           "fiberRoutes": 0,
           "routes": [],

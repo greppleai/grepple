@@ -247,7 +247,7 @@ func structureDeclarationAt(symbols []codeparser.Symbol, line int) string {
 			return nested
 		}
 		switch symbol.Kind {
-		case "class", "interface", "struct", "type", "alias":
+		case "class", "interface", "struct", "type", "alias", "enum", "record", "object":
 			return symbol.Name
 		}
 	}

@@ -107,6 +107,43 @@ func TestExtractFocusedCommandsSupportPython(t *testing.T) {
 	}
 }
 
+func TestExtractFocusedCommandsSupportJavaAndKotlin(t *testing.T) {
+	tests := []struct {
+		name, extension, content, language, edge string
+	}{
+		{"java", ".java", "class Worker {\n    void run() { finish(); }\n    void finish() {}\n}\n", "java", "Worker_run --> Worker_finish"},
+		{"kotlin", ".kt", "class Worker {\n    fun run() { finish() }\n    fun finish() {}\n}\n", "kotlin", "Worker_run --> Worker_finish"},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) { assertFocusedJVMCLI(t, test.extension, test.content, test.language, test.edge) })
+	}
+}
+
+func assertFocusedJVMCLI(t *testing.T, extension, content, language, edge string) {
+	t.Helper()
+	root := t.TempDir()
+	source := filepath.Join(root, "Worker"+extension)
+	if err := os.WriteFile(source, []byte(content), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	structure := filepath.Join(root, "worker.structure.mmd")
+	if err := runExtract([]string{"structure", "--at", source + ":1", "--source", root, "--output", structure}); err != nil {
+		t.Fatal(err)
+	}
+	structureContent, err := os.ReadFile(structure)
+	if err != nil || !strings.Contains(string(structureContent), "<<"+language+">> Worker") {
+		t.Fatalf("%s structure: %v\n%s", language, err, structureContent)
+	}
+	flow := filepath.Join(root, "run.flow.mmd")
+	if err := runExtract([]string{"flow", "--at", source + ":2", "--source", root, "--depth", "1", "--output", flow}); err != nil {
+		t.Fatal(err)
+	}
+	flowContent, err := os.ReadFile(flow)
+	if err != nil || !strings.Contains(string(flowContent), edge) {
+		t.Fatalf("%s flow: %v\n%s", language, err, flowContent)
+	}
+}
+
 func TestExtractStructureWritesCanonicalBundle(t *testing.T) {
 	root, source := writeExtractFixture(t)
 	output := filepath.Join(root, "service.package")

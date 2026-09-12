@@ -89,8 +89,8 @@ func typeScriptDeclarationDependencies(declaration *Declaration, analysis *Analy
 
 func typeScriptDependencyCandidates(declaration *Declaration, analysis *Analysis) map[string]string {
 	result := sameModuleDependencyCandidates(declaration, analysis)
-	if declaration.Language == "python" {
-		addUniquePythonDependencyCandidates(result, declaration.Language, analysis)
+	if declaration.Language == "python" || declaration.Language == "java" || declaration.Language == "kotlin" {
+		addUniqueModuleDependencyCandidates(result, declaration.Language, analysis)
 	}
 	addImportedDependencyCandidates(result, declaration.ModuleID, analysis)
 	return result
@@ -106,7 +106,7 @@ func sameModuleDependencyCandidates(declaration *Declaration, analysis *Analysis
 	return result
 }
 
-func addUniquePythonDependencyCandidates(result map[string]string, language string, analysis *Analysis) {
+func addUniqueModuleDependencyCandidates(result map[string]string, language string, analysis *Analysis) {
 	unique := map[string]string{}
 	ambiguous := map[string]bool{}
 	for key, candidate := range analysis.TSDeclarations {

@@ -139,7 +139,7 @@ func TestGenerate(t *testing.T) {
 }
 func TestDiscovery(t *testing.T) {
 	root := t.TempDir()
-	for _, p := range []string{"a.ts", "x/b.tsx", "app.js", "x/view.jsx", "main.py", "x/types.pyi", "tool.pyw", "dist/no.ts", ".grepple/generated.go", "x/no.d.ts"} {
+	for _, p := range []string{"a.ts", "x/b.tsx", "app.js", "x/view.jsx", "main.py", "x/types.pyi", "tool.pyw", "Main.java", "x/build.kt", "script.kts", "dist/no.ts", ".grepple/generated.go", "x/no.d.ts"} {
 		path := filepath.Join(root, p)
 		if e := os.MkdirAll(filepath.Dir(path), 0755); e != nil {
 			t.Fatal(e)
@@ -152,7 +152,7 @@ func TestDiscovery(t *testing.T) {
 	if e != nil {
 		t.Fatal(e)
 	}
-	if len(paths) != 7 {
+	if len(paths) != 10 {
 		t.Fatalf("got %v", paths)
 	}
 }

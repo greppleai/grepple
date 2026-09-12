@@ -32,12 +32,26 @@ func enrichNavigationGraph(analysis *Analysis) {
 	}
 }
 
+func addModuleNavigationSymbols(analysis *Analysis, graph codeparser.NavigationGraph, language, moduleID, sourcePath string) {
+	for _, declaration := range graph.Declarations {
+		key := moduleID + ":" + declaration.Name
+		if analysis.TSSymbolIndex[key] != nil {
+			continue
+		}
+		analysis.TSSymbolIndex[key] = &Symbol{
+			Name: declaration.Name, Kind: declaration.Kind, Language: language, ModuleID: moduleID, Key: key,
+			Owner: declaration.Container, NavigationID: declaration.ID, Calls: map[string]bool{},
+			Locations: []Location{{Path: sourcePath, Line: declaration.Start, EndLine: declaration.End}},
+		}
+	}
+}
+
 func navigationDeclarationSymbol(analysis *Analysis, declaration *codeparser.NavigationDeclaration) *Symbol {
 	var symbols map[string]*Symbol
 	switch declaration.Language {
 	case "go":
 		symbols = analysis.GoSymbolIndex
-	case "javascript", "typescript", "tsx", "python":
+	case "javascript", "typescript", "tsx", "python", "java", "kotlin":
 		symbols = analysis.TSSymbolIndex
 	default:
 		return nil
@@ -102,6 +116,9 @@ func resolveNavigationCallTarget(analysis *Analysis, owner *Symbol, call *codepa
 	if owner.Language == "python" {
 		return resolvePythonNavigationCall(analysis, owner, call.ResolvedName)
 	}
+	if owner.Language == "java" || owner.Language == "kotlin" {
+		return resolveJVMNavigationCall(analysis, owner, call.ResolvedName)
+	}
 	return nil
 }
 
@@ -129,6 +146,45 @@ func resolvePythonNavigationCall(analysis *Analysis, owner *Symbol, name string)
 		found = candidate
 	}
 	return found
+}
+
+func resolveJVMNavigationCall(analysis *Analysis, owner *Symbol, name string) *Symbol {
+	candidates := []string{name}
+	if owner.Owner != "" && !strings.Contains(name, ".") {
+		candidates = append(candidates, owner.Owner+"."+name)
+	}
+	if !strings.Contains(name, ".") {
+		candidates = append(candidates, name+"."+name)
+	}
+	for _, candidateName := range candidates {
+		candidate := analysis.TSSymbolIndex[owner.ModuleID+":"+candidateName]
+		if candidate != nil && candidate.NavigationID != "" {
+			return candidate
+		}
+	}
+	terminal := name
+	if index := strings.LastIndex(terminal, "."); index >= 0 {
+		terminal = terminal[index+1:]
+	}
+	var found *Symbol
+	for _, key := range sortedKeys(analysis.TSSymbolIndex) {
+		candidate := analysis.TSSymbolIndex[key]
+		if candidate.Language != owner.Language || candidate.NavigationID == "" || navigationTerminal(candidate.Name) != terminal {
+			continue
+		}
+		if found != nil && found.Key != candidate.Key {
+			return nil
+		}
+		found = candidate
+	}
+	return found
+}
+
+func navigationTerminal(name string) string {
+	if index := strings.LastIndex(name, "."); index >= 0 {
+		return name[index+1:]
+	}
+	return name
 }
 
 func resolveNavigationFactoryReturnTarget(analysis *Analysis, owner *Symbol, call *codeparser.NavigationCall) *Symbol {
@@ -223,11 +279,14 @@ func navigationCallName(owner *Symbol, call *codeparser.NavigationCall) string {
 	if owner.Language == "python" && (parts[0] == "self" || parts[0] == "cls") && owner.Owner != "" {
 		return owner.Owner + "." + parts[1]
 	}
+	if (owner.Language == "java" || owner.Language == "kotlin") && parts[0] == "this" && owner.Owner != "" {
+		return owner.Owner + "." + parts[1]
+	}
 	return display
 }
 
 func navigationResolutionConfidence(owner *Symbol, call *codeparser.NavigationCall, target *Symbol) string {
-	if owner.Language == "python" && navigationSymbolScope(owner) != navigationSymbolScope(target) {
+	if (owner.Language == "python" || owner.Language == "java" || owner.Language == "kotlin") && navigationSymbolScope(owner) != navigationSymbolScope(target) {
 		return "unique-terminal"
 	}
 	if call.Display == target.Name || call.Name == target.Name && !strings.Contains(call.Display, ".") {
