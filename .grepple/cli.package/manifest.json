@@ -20,12 +20,12 @@
     "declarations": 42,
     "exportedTypes": 0,
     "internalTypes": 42,
-    "members": 255,
+    "members": 258,
     "exportedFunctions": 3,
     "fiberRoutes": 0,
     "relations": 25
   },
-  "semanticModelDigest": "sha256:7896729a6f0e2997ff641b2b22f90eccb818d39131f4da625d6534c8508bff76",
+  "semanticModelDigest": "sha256:fb83284ee402a05da7bad9c1f8e8f052c0f5a73176bd1bcd43d3470b47a92188",
   "sourceFiles": [
     {
       "path": "internal/cli/anchors.go"
@@ -1173,14 +1173,14 @@
       "kind": "struct",
       "file": "internal/cli/graph_query.go",
       "line": 19,
-      "endLine": 28,
-      "underlyingType": "struct{JSON bool`arg:\"--json\" help:\"emit the complete queried subgraph as JSON\"`;Compact bool`arg:\"--compact\" help:\"emit a bounded agent-facing queried subgraph\"`;Symbol string`arg:\"--symbol\" placeholder:\"NAME\" help:\"select one exact declaration name\"`;At string`arg:\"--at\" placeholder:\"PATH:LINE\" help:\"select the declaration containing a source location\"`;Depth int`arg:\"--depth\" default:\"1\" placeholder:\"N\" help:\"maximum traversal depth (1-10)\"`;MaxFiles int`arg:\"--max-files\" placeholder:\"N\" help:\"parse at most N discovered files (0 = unlimited)\"`;MaxOutputBytes int`arg:\"--max-output-bytes\" placeholder:\"N\" help:\"cap compact output (default 40960; 0 = unlimited; JSON is uncapped)\"`;Paths[]string`arg:\"positional\" placeholder:\"PATH\" help:\"file, directory, or glob to include; defaults to the working directory\"`;}",
+      "endLine": 31,
+      "underlyingType": "struct{JSON bool`arg:\"--json\" help:\"emit the complete queried subgraph as JSON\"`;Compact bool`arg:\"--compact\" help:\"emit a bounded agent-facing queried subgraph\"`;Symbol string`arg:\"--symbol\" placeholder:\"NAME\" help:\"select one exact declaration name\"`;At string`arg:\"--at\" placeholder:\"PATH:LINE\" help:\"select the declaration containing a source location\"`;Package string`arg:\"--package\" placeholder:\"NAME\" help:\"select every declaration in an exact package name or ID\"`;Module string`arg:\"--module\" placeholder:\"ID\" help:\"select every declaration in an exact module ID\"`;RootPath string`arg:\"--root-path\" placeholder:\"PATH\" help:\"select declarations at or below a repository-relative path\"`;Depth int`arg:\"--depth\" default:\"1\" placeholder:\"N\" help:\"maximum traversal depth (1-10)\"`;MaxFiles int`arg:\"--max-files\" placeholder:\"N\" help:\"parse at most N discovered files (0 = unlimited)\"`;MaxOutputBytes int`arg:\"--max-output-bytes\" placeholder:\"N\" help:\"cap compact output (default 40960; 0 = unlimited; JSON is uncapped)\"`;Paths[]string`arg:\"positional\" placeholder:\"PATH\" help:\"file, directory, or glob to include; defaults to the working directory\"`;}",
       "members": [
         {
           "name": "Description",
           "kind": "method",
-          "line": 30,
-          "endLine": 32,
+          "line": 33,
+          "endLine": 35,
           "result": "string"
         },
         {
@@ -1206,8 +1206,8 @@
         {
           "name": "Depth",
           "kind": "property",
-          "line": 24,
-          "endLine": 24,
+          "line": 27,
+          "endLine": 27,
           "result": "int",
           "structTag": {
             "value": "arg:\"--depth\" default:\"1\" placeholder:\"N\" help:\"maximum traversal depth (1-10)\""
@@ -1226,8 +1226,8 @@
         {
           "name": "MaxFiles",
           "kind": "property",
-          "line": 25,
-          "endLine": 25,
+          "line": 28,
+          "endLine": 28,
           "result": "int",
           "structTag": {
             "value": "arg:\"--max-files\" placeholder:\"N\" help:\"parse at most N discovered files (0 = unlimited)\""
@@ -1236,21 +1236,51 @@
         {
           "name": "MaxOutputBytes",
           "kind": "property",
-          "line": 26,
-          "endLine": 26,
+          "line": 29,
+          "endLine": 29,
           "result": "int",
           "structTag": {
             "value": "arg:\"--max-output-bytes\" placeholder:\"N\" help:\"cap compact output (default 40960; 0 = unlimited; JSON is uncapped)\""
           }
         },
         {
+          "name": "Module",
+          "kind": "property",
+          "line": 25,
+          "endLine": 25,
+          "result": "string",
+          "structTag": {
+            "value": "arg:\"--module\" placeholder:\"ID\" help:\"select every declaration in an exact module ID\""
+          }
+        },
+        {
+          "name": "Package",
+          "kind": "property",
+          "line": 24,
+          "endLine": 24,
+          "result": "string",
+          "structTag": {
+            "value": "arg:\"--package\" placeholder:\"NAME\" help:\"select every declaration in an exact package name or ID\""
+          }
+        },
+        {
           "name": "Paths",
           "kind": "property",
-          "line": 27,
-          "endLine": 27,
+          "line": 30,
+          "endLine": 30,
           "result": "[]string",
           "structTag": {
             "value": "arg:\"positional\" placeholder:\"PATH\" help:\"file, directory, or glob to include; defaults to the working directory\""
+          }
+        },
+        {
+          "name": "RootPath",
+          "kind": "property",
+          "line": 26,
+          "endLine": 26,
+          "result": "string",
+          "structTag": {
+            "value": "arg:\"--root-path\" placeholder:\"PATH\" help:\"select declarations at or below a repository-relative path\""
           }
         },
         {

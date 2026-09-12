@@ -21,6 +21,9 @@ type graphQueryArgs struct {
 	Compact        bool     `arg:"--compact" help:"emit a bounded agent-facing queried subgraph"`
 	Symbol         string   `arg:"--symbol" placeholder:"NAME" help:"select one exact declaration name"`
 	At             string   `arg:"--at" placeholder:"PATH:LINE" help:"select the declaration containing a source location"`
+	Package        string   `arg:"--package" placeholder:"NAME" help:"select every declaration in an exact package name or ID"`
+	Module         string   `arg:"--module" placeholder:"ID" help:"select every declaration in an exact module ID"`
+	RootPath       string   `arg:"--root-path" placeholder:"PATH" help:"select declarations at or below a repository-relative path"`
 	Depth          int      `arg:"--depth" default:"1" placeholder:"N" help:"maximum traversal depth (1-10)"`
 	MaxFiles       int      `arg:"--max-files" placeholder:"N" help:"parse at most N discovered files (0 = unlimited)"`
 	MaxOutputBytes int      `arg:"--max-output-bytes" placeholder:"N" help:"cap compact output (default 40960; 0 = unlimited; JSON is uncapped)"`
@@ -28,7 +31,7 @@ type graphQueryArgs struct {
 }
 
 func (graphQueryArgs) Description() string {
-	return "Query callers or callees over the deterministic local navigation graph."
+	return "Query callers, callees, dependencies, dependents, or bidirectional impact over the deterministic local navigation graph."
 }
 
 func runGraphQuery(direction search.NavigationQueryDirection, args []string) error {
@@ -51,17 +54,18 @@ func runGraphQuery(direction search.NavigationQueryDirection, args []string) err
 	if err != nil {
 		return err
 	}
-	root, err := selectNavigationQueryRoot(output.Declarations, values.Symbol, values.At)
+	roots, err := selectNavigationQueryRoots(output.Declarations, values)
 	if err != nil {
 		return err
 	}
-	queried, err := search.QueryNavigationGraph(parser.NavigationGraph{Declarations: output.Declarations, Calls: output.Calls}, []string{root.ID}, direction, values.Depth)
+	rootIDs := navigationDeclarationIDs(roots)
+	queried, err := search.QueryNavigationGraph(parser.NavigationGraph{Declarations: output.Declarations, Calls: output.Calls}, rootIDs, direction, values.Depth)
 	if err != nil {
 		return err
 	}
 	output.Declarations = queried.Declarations
 	output.Calls = queried.Calls
-	output.Query = &navigationGraphQuery{Direction: string(direction), Depth: values.Depth, RootIDs: []string{root.ID}}
+	output.Query = &navigationGraphQuery{Direction: string(direction), Depth: values.Depth, RootIDs: rootIDs}
 	if values.Compact {
 		return renderCompactNavigationGraph(output, values.MaxOutputBytes)
 	}
@@ -75,8 +79,8 @@ func validateGraphQueryArgs(values graphQueryArgs) error {
 	if values.JSON == values.Compact {
 		return fmt.Errorf("grepple graph query requires exactly one of --json or --compact")
 	}
-	if (values.Symbol == "") == (values.At == "") {
-		return fmt.Errorf("grepple graph query requires exactly one of --symbol or --at")
+	if graphQuerySelectorCount(values) != 1 {
+		return fmt.Errorf("grepple graph query requires exactly one of --symbol, --at, --package, --module, or --root-path")
 	}
 	if values.Depth < 1 || values.Depth > maxNavigationQueryDepth {
 		return fmt.Errorf("--depth must be between 1 and %d", maxNavigationQueryDepth)
@@ -88,6 +92,25 @@ func validateGraphQueryArgs(values graphQueryArgs) error {
 		return fmt.Errorf("--max-output-bytes must be non-negative")
 	}
 	return nil
+}
+
+func isGraphQueryDirection(value string) bool {
+	switch search.NavigationQueryDirection(value) {
+	case search.NavigationQueryCallers, search.NavigationQueryCallees, search.NavigationQueryDependencies, search.NavigationQueryDependents, search.NavigationQueryImpact:
+		return true
+	default:
+		return false
+	}
+}
+
+func graphQuerySelectorCount(values graphQueryArgs) int {
+	count := 0
+	for _, value := range []string{values.Symbol, values.At, values.Package, values.Module, values.RootPath} {
+		if value != "" {
+			count++
+		}
+	}
+	return count
 }
 
 func buildNavigationGraphOutput(globs []string, maxFiles int) (navigationGraphOutput, error) {
@@ -113,6 +136,56 @@ func buildNavigationGraphOutput(globs []string, maxFiles int) (navigationGraphOu
 	return navigationGraphOutput{
 		Schema: navigationGraphSchema, Files: len(paths), Declarations: declarations, Calls: calls, Truncation: truncation,
 	}, nil
+}
+
+func selectNavigationQueryRoots(declarations []parser.NavigationDeclaration, values graphQueryArgs) ([]parser.NavigationDeclaration, error) {
+	if values.Symbol != "" || values.At != "" {
+		root, err := selectNavigationQueryRoot(declarations, values.Symbol, values.At)
+		if err != nil {
+			return nil, err
+		}
+		return []parser.NavigationDeclaration{root}, nil
+	}
+	matches := make([]parser.NavigationDeclaration, 0)
+	for _, declaration := range declarations {
+		if navigationDeclarationMatchesScope(declaration, values) {
+			matches = append(matches, declaration)
+		}
+	}
+	if len(matches) == 0 {
+		return nil, fmt.Errorf("no navigation declarations match %s", graphQueryScopeDescription(values))
+	}
+	return matches, nil
+}
+
+func navigationDeclarationMatchesScope(declaration parser.NavigationDeclaration, values graphQueryArgs) bool {
+	if values.Package != "" {
+		return declaration.Package == values.Package || declaration.PackageID == values.Package
+	}
+	if values.Module != "" {
+		return declaration.ModuleID == values.Module
+	}
+	root := strings.TrimSuffix(navigationQueryDisplayPath(values.RootPath), "/")
+	path := filepath.ToSlash(declaration.Path)
+	return root == "." || path == root || strings.HasPrefix(path, root+"/")
+}
+
+func graphQueryScopeDescription(values graphQueryArgs) string {
+	if values.Package != "" {
+		return fmt.Sprintf("package %q", values.Package)
+	}
+	if values.Module != "" {
+		return fmt.Sprintf("module %q", values.Module)
+	}
+	return fmt.Sprintf("root path %q", values.RootPath)
+}
+
+func navigationDeclarationIDs(declarations []parser.NavigationDeclaration) []string {
+	ids := make([]string, 0, len(declarations))
+	for _, declaration := range declarations {
+		ids = append(ids, declaration.ID)
+	}
+	return ids
 }
 
 func selectNavigationQueryRoot(declarations []parser.NavigationDeclaration, symbol, at string) (parser.NavigationDeclaration, error) {

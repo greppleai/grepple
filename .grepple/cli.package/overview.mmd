@@ -2,7 +2,7 @@ classDiagram
     %% grepple:package-default github.com/greppleai/grepple/internal/cli
     %% grepple:language-default go
     direction LR
-    note "Package cli implements Grepple's search, extraction, repository inspection, authentication, rules, and terminal/JSON presentation workflows. | package github.com/greppleai/grepple/internal/cli | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=33, declarations=42, exportedTypes=0, internalTypes=42, members=255, exportedFunctions=3, fiberRoutes=0, relations=25"
+    note "Package cli implements Grepple's search, extraction, repository inspection, authentication, rules, and terminal/JSON presentation workflows. | package github.com/greppleai/grepple/internal/cli | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=33, declarations=42, exportedTypes=0, internalTypes=42, members=258, exportedFunctions=3, fiberRoutes=0, relations=25"
     namespace interfaces {
         class resultRenderer["resultRenderer · internal/cli/renderer.go:9-11"] {
             +Render([]api.FileResult): error
@@ -110,14 +110,17 @@ classDiagram
             +Paths: []string
         }
         <<struct>> graphArgs
-        class graphQueryArgs["graphQueryArgs · internal/cli/graph_query.go:19-28"] {
+        class graphQueryArgs["graphQueryArgs · internal/cli/graph_query.go:19-31"] {
             +At: string
             +Compact: bool
             +Depth: int
             +JSON: bool
             +MaxFiles: int
             +MaxOutputBytes: int
+            +Module: string
+            +Package: string
             +Paths: []string
+            +RootPath: string
             +Symbol: string
         }
         <<struct>> graphQueryArgs

@@ -265,7 +265,10 @@ classDiagram
         +JSON: bool
         +MaxFiles: int
         +MaxOutputBytes: int
+        +Module: string
+        +Package: string
         +Paths: []string
+        +RootPath: string
         +Symbol: string
     }
     <<struct>> graphQueryArgs
@@ -276,9 +279,12 @@ classDiagram
     %% grepple:struct-tag graphQueryArgs JSON "arg:\"--json\" help:\"emit the complete queried subgraph as JSON\""
     %% grepple:struct-tag graphQueryArgs MaxFiles "arg:\"--max-files\" placeholder:\"N\" help:\"parse at most N discovered files (0 = unlimited)\""
     %% grepple:struct-tag graphQueryArgs MaxOutputBytes "arg:\"--max-output-bytes\" placeholder:\"N\" help:\"cap compact output (default 40960; 0 = unlimited; JSON is uncapped)\""
+    %% grepple:struct-tag graphQueryArgs Module "arg:\"--module\" placeholder:\"ID\" help:\"select every declaration in an exact module ID\""
+    %% grepple:struct-tag graphQueryArgs Package "arg:\"--package\" placeholder:\"NAME\" help:\"select every declaration in an exact package name or ID\""
     %% grepple:struct-tag graphQueryArgs Paths "arg:\"positional\" placeholder:\"PATH\" help:\"file, directory, or glob to include; defaults to the working directory\""
+    %% grepple:struct-tag graphQueryArgs RootPath "arg:\"--root-path\" placeholder:\"PATH\" help:\"select declarations at or below a repository-relative path\""
     %% grepple:struct-tag graphQueryArgs Symbol "arg:\"--symbol\" placeholder:\"NAME\" help:\"select one exact declaration name\""
-    note for graphQueryArgs "defined: internal/cli/graph_query.go:19-28; Description@internal/cli/graph_query.go:30-32; At@internal/cli/graph_query.go:23; Compact@internal/cli/graph_query.go:21; Depth@internal/cli/graph_query.go:24; JSON@internal/cli/graph_query.go:20; MaxFiles@internal/cli/graph_query.go:25; MaxOutputBytes@internal/cli/graph_query.go:26; Paths@internal/cli/graph_query.go:27; Symbol@internal/cli/graph_query.go:22"
+    note for graphQueryArgs "defined: internal/cli/graph_query.go:19-31; Description@internal/cli/graph_query.go:33-35; At@internal/cli/graph_query.go:23; Compact@internal/cli/graph_query.go:21; Depth@internal/cli/graph_query.go:27; JSON@internal/cli/graph_query.go:20; MaxFiles@internal/cli/graph_query.go:28; MaxOutputBytes@internal/cli/graph_query.go:29; Module@internal/cli/graph_query.go:25; Package@internal/cli/graph_query.go:24; Paths@internal/cli/graph_query.go:30; RootPath@internal/cli/graph_query.go:26; Symbol@internal/cli/graph_query.go:22"
     class gritArgs {
         +Description(): string
         +ExcludeGlobs: []string

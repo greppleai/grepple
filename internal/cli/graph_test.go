@@ -161,6 +161,45 @@ func TestGraphCallersQuerySupportsAtAndCompactOutput(t *testing.T) {
 	}
 }
 
+func TestGraphDependencyQueriesSupportScopeRoots(t *testing.T) {
+	dir := chdirTemp(t)
+	writeGraphSource(t, dir, "go.mod", "module example.com/project\n")
+	writeGraphSource(t, dir, "app/app.go", "package app\nimport \"example.com/project/helper\"\nfunc Run(){ helper.Work() }\n")
+	writeGraphSource(t, dir, "helper/helper.go", "package helper\nfunc Work() {}\n")
+	for _, test := range []struct {
+		direction, rootPath string
+	}{
+		{"dependencies", "app"},
+		{"dependents", "helper"},
+	} {
+		output := captureStdout(t, func() {
+			if err := Run([]string{"graph", test.direction, "--root-path", test.rootPath, "--depth", "1", "--compact", "."}); err != nil {
+				t.Fatal(err)
+			}
+		})
+		for _, expected := range []string{"query " + test.direction + " depth=1 roots=", " go func Run ", " go func Work ", "Run -> Work#"} {
+			if !strings.Contains(output, expected) {
+				t.Fatalf("%s output missing %q:\n%s", test.direction, expected, output)
+			}
+		}
+	}
+}
+
+func TestGraphImpactQueryTraversesBothDirections(t *testing.T) {
+	dir := chdirTemp(t)
+	writeGraphSource(t, dir, "flow.go", "package sample\nfunc Root(){ Middle() }\nfunc Middle(){ Leaf() }\nfunc Leaf() {}\n")
+	output := captureStdout(t, func() {
+		if err := Run([]string{"graph", "impact", "--symbol", "Middle", "--depth", "1", "--compact"}); err != nil {
+			t.Fatal(err)
+		}
+	})
+	for _, expected := range []string{"query impact depth=1 roots=", " go func Root ", " go func Middle ", " go func Leaf ", "Root -> Middle#", "Middle -> Leaf#"} {
+		if !strings.Contains(output, expected) {
+			t.Fatalf("impact output missing %q:\n%s", expected, output)
+		}
+	}
+}
+
 func TestGraphQueryRejectsMissingAndAmbiguousSelectors(t *testing.T) {
 	dir := chdirTemp(t)
 	writeGraphSource(t, dir, "a.go", "package sample\nfunc helper() {}\n")
@@ -169,6 +208,8 @@ func TestGraphQueryRejectsMissingAndAmbiguousSelectors(t *testing.T) {
 		{"graph", "callers", "--compact"},
 		{"graph", "callees", "--symbol", "helper", "--compact"},
 		{"graph", "callers", "--symbol", "helper", "--at", "a.go:2", "--compact"},
+		{"graph", "dependencies", "--package", "sample", "--module", "sample", "--compact"},
+		{"graph", "dependents", "--root-path", "missing", "--compact"},
 		{"graph", "callers", "--symbol", "missing", "--compact"},
 		{"graph", "callers", "--symbol", "helper", "--depth", "11", "--compact"},
 	} {

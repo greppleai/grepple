@@ -14,13 +14,19 @@ const (
 	NavigationQueryCallers NavigationQueryDirection = "callers"
 	// NavigationQueryCallees follows calls toward declarations called by the roots.
 	NavigationQueryCallees NavigationQueryDirection = "callees"
+	// NavigationQueryDependencies follows outgoing calls from one or more scope roots.
+	NavigationQueryDependencies NavigationQueryDirection = "dependencies"
+	// NavigationQueryDependents follows incoming calls toward one or more scope roots.
+	NavigationQueryDependents NavigationQueryDirection = "dependents"
+	// NavigationQueryImpact traverses both incoming and outgoing calls.
+	NavigationQueryImpact NavigationQueryDirection = "impact"
 )
 
 // QueryNavigationGraph returns the bounded directional subgraph reachable from
 // root declaration IDs. Resolved and candidate targets are retained so callers
 // can distinguish certain edges from ambiguous repository-local possibilities.
 func QueryNavigationGraph(graph parser.NavigationGraph, rootIDs []string, direction NavigationQueryDirection, depth int) (parser.NavigationGraph, error) {
-	if direction != NavigationQueryCallers && direction != NavigationQueryCallees {
+	if !validNavigationQueryDirection(direction) {
 		return parser.NavigationGraph{}, fmt.Errorf("unsupported navigation query direction %q", direction)
 	}
 	if depth < 1 {
@@ -32,12 +38,10 @@ func QueryNavigationGraph(graph parser.NavigationGraph, rootIDs []string, direct
 		return parser.NavigationGraph{}, err
 	}
 	includedCalls := map[string]bool{}
-	visited := make(map[string]bool, len(frontier))
-	for id := range frontier {
-		visited[id] = true
-	}
+	roots := copyQuerySet(frontier)
+	visited := copyQuerySet(frontier)
 	for level := 0; level < depth && len(frontier) > 0; level++ {
-		frontier = queryNavigationLevel(graph.Calls, frontier, direction, declarations, visited, included, includedCalls)
+		frontier = queryNavigationLevel(graph.Calls, frontier, direction, level == 0, roots, visited, declarations, included, includedCalls)
 	}
 	return projectNavigationQuery(graph, included, includedCalls), nil
 }
@@ -48,6 +52,14 @@ func indexQueryDeclarations(declarations []parser.NavigationDeclaration) map[str
 		indexed[declaration.ID] = declaration
 	}
 	return indexed
+}
+
+func copyQuerySet(source map[string]bool) map[string]bool {
+	copied := make(map[string]bool, len(source))
+	for id := range source {
+		copied[id] = true
+	}
+	return copied
 }
 
 func queryRoots(rootIDs []string, declarations map[string]parser.NavigationDeclaration) (map[string]bool, map[string]bool, error) {
@@ -66,10 +78,10 @@ func queryRoots(rootIDs []string, declarations map[string]parser.NavigationDecla
 	return frontier, included, nil
 }
 
-func queryNavigationLevel(calls []parser.NavigationCall, frontier map[string]bool, direction NavigationQueryDirection, declarations map[string]parser.NavigationDeclaration, visited, included, includedCalls map[string]bool) map[string]bool {
+func queryNavigationLevel(calls []parser.NavigationCall, frontier map[string]bool, direction NavigationQueryDirection, firstLevel bool, roots, visited map[string]bool, declarations map[string]parser.NavigationDeclaration, included, includedCalls map[string]bool) map[string]bool {
 	next := map[string]bool{}
 	for _, call := range calls {
-		neighbors, matches := queryCallNeighbors(call, frontier, direction)
+		neighbors, matches := queryCallNeighbors(call, frontier, roots, direction, firstLevel)
 		if !matches {
 			continue
 		}
@@ -85,20 +97,40 @@ func queryNavigationLevel(calls []parser.NavigationCall, frontier map[string]boo
 	return next
 }
 
-func queryCallNeighbors(call parser.NavigationCall, frontier map[string]bool, direction NavigationQueryDirection) ([]string, bool) {
-	if direction == NavigationQueryCallees {
-		if !frontier[call.CallerID] {
-			return nil, false
+func queryCallNeighbors(call parser.NavigationCall, frontier, roots map[string]bool, direction NavigationQueryDirection, firstLevel bool) ([]string, bool) {
+	targets := queryCallTargets(call)
+	outgoing := direction == NavigationQueryCallees || direction == NavigationQueryDependencies || direction == NavigationQueryImpact
+	incoming := direction == NavigationQueryCallers || direction == NavigationQueryDependents || direction == NavigationQueryImpact
+	neighbors := make([]string, 0, len(targets)+1)
+	if outgoing && frontier[call.CallerID] {
+		for _, target := range targets {
+			if !firstLevel || direction == NavigationQueryCallees || !roots[target] {
+				neighbors = append(neighbors, target)
+			}
 		}
-		targets := queryCallTargets(call)
-		return targets, len(targets) > 0
 	}
-	for _, id := range queryCallTargets(call) {
+	if incoming && queryTargetsIntersect(targets, frontier) && (!firstLevel || direction == NavigationQueryCallers || !roots[call.CallerID]) {
+		neighbors = append(neighbors, call.CallerID)
+	}
+	return neighbors, len(neighbors) > 0
+}
+
+func validNavigationQueryDirection(direction NavigationQueryDirection) bool {
+	switch direction {
+	case NavigationQueryCallers, NavigationQueryCallees, NavigationQueryDependencies, NavigationQueryDependents, NavigationQueryImpact:
+		return true
+	default:
+		return false
+	}
+}
+
+func queryTargetsIntersect(targets []string, frontier map[string]bool) bool {
+	for _, id := range targets {
 		if frontier[id] {
-			return []string{call.CallerID}, true
+			return true
 		}
 	}
-	return nil, false
+	return false
 }
 
 func queryCallTargets(call parser.NavigationCall) []string {

@@ -1385,8 +1385,8 @@
       "name": "QueryNavigationGraph",
       "kind": "function",
       "file": "search/navigation_query.go",
-      "line": 22,
-      "endLine": 43,
+      "line": 28,
+      "endLine": 47,
       "parameters": [
         "parser.NavigationGraph",
         "[]string",

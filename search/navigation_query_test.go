@@ -46,6 +46,63 @@ func TestQueryNavigationGraphTraversesCallersAndRetainsCandidateContext(t *testi
 	}
 }
 
+func TestQueryNavigationGraphSupportsScopeAndBidirectionalModes(t *testing.T) {
+	graph := navigationQueryFixture()
+	dependencies, err := QueryNavigationGraph(graph, []string{"root"}, NavigationQueryDependencies, 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, want := queryCallIDs(dependencies), []string{"root-a", "root-candidates"}; !reflect.DeepEqual(got, want) {
+		t.Fatalf("dependencies=%v, want %v", got, want)
+	}
+	dependents, err := QueryNavigationGraph(graph, []string{"root"}, NavigationQueryDependents, 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, want := queryCallIDs(dependents), []string{"b-root", "incoming-root", "candidate-root"}; !reflect.DeepEqual(got, want) {
+		t.Fatalf("dependents=%v, want %v", got, want)
+	}
+	impact, err := QueryNavigationGraph(graph, []string{"root"}, NavigationQueryImpact, 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, want := queryCallIDs(impact), []string{"root-a", "b-root", "incoming-root", "root-candidates", "candidate-root"}; !reflect.DeepEqual(got, want) {
+		t.Fatalf("impact=%v, want %v", got, want)
+	}
+}
+
+func TestQueryNavigationGraphScopeModesOmitInternalFirstLevelEdges(t *testing.T) {
+	graph := parser.NavigationGraph{
+		Declarations: []parser.NavigationDeclaration{{ID: "one"}, {ID: "two"}, {ID: "external"}},
+		Calls: []parser.NavigationCall{
+			{ID: "internal", CallerID: "one", TargetID: "two"},
+			{ID: "outgoing", CallerID: "one", TargetID: "external"},
+			{ID: "incoming", CallerID: "external", TargetID: "two"},
+		},
+	}
+	dependencies, err := QueryNavigationGraph(graph, []string{"one", "two"}, NavigationQueryDependencies, 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, want := queryCallIDs(dependencies), []string{"outgoing"}; !reflect.DeepEqual(got, want) {
+		t.Fatalf("dependencies=%v, want %v", got, want)
+	}
+	dependents, err := QueryNavigationGraph(graph, []string{"one", "two"}, NavigationQueryDependents, 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, want := queryCallIDs(dependents), []string{"incoming"}; !reflect.DeepEqual(got, want) {
+		t.Fatalf("dependents=%v, want %v", got, want)
+	}
+	impact, err := QueryNavigationGraph(graph, []string{"one", "two"}, NavigationQueryImpact, 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, want := queryCallIDs(impact), []string{"outgoing", "incoming"}; !reflect.DeepEqual(got, want) {
+		t.Fatalf("impact=%v, want %v", got, want)
+	}
+}
+
 func TestQueryNavigationGraphCandidateContextDoesNotStopCallerTraversal(t *testing.T) {
 	graph := parser.NavigationGraph{
 		Declarations: []parser.NavigationDeclaration{

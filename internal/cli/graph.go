@@ -48,7 +48,7 @@ type navigationGraphTruncation struct {
 }
 
 func runGraph(args []string) error {
-	if len(args) > 0 && (args[0] == string(search.NavigationQueryCallers) || args[0] == string(search.NavigationQueryCallees)) {
+	if len(args) > 0 && isGraphQueryDirection(args[0]) {
 		return runGraphQuery(search.NavigationQueryDirection(args[0]), args[1:])
 	}
 	values := graphArgs{MaxOutputBytes: DefaultTextOutputBytes}
@@ -158,9 +158,17 @@ func shortGraphID(id string) string {
 }
 
 func shortGraphIDs(ids []string) string {
-	short := make([]string, 0, len(ids))
-	for _, id := range ids {
+	const maxIDs = 3
+	count := len(ids)
+	if count > maxIDs {
+		count = maxIDs
+	}
+	short := make([]string, 0, count+1)
+	for _, id := range ids[:count] {
 		short = append(short, shortGraphID(id))
+	}
+	if omitted := len(ids) - count; omitted > 0 {
+		short = append(short, fmt.Sprintf("+%d", omitted))
 	}
 	return strings.Join(short, ",")
 }
