@@ -57,8 +57,20 @@ func compileGoTemplates(decoded decodedSnippet, maxDepth int) ([]Template, strin
 	}
 	return []Template{template}, "", nil
 }
+func wrappedTargetLanguageAdapter(id, grammar, treeSitter string, compile func(decodedSnippet, int) ([]Template, string, error)) targetLanguageAdapter {
+	config := wrappedLanguageByID(id)
+	return targetLanguageAdapter{
+		id: id, grammar: grammar, treeSitter: treeSitter, metadataLanguage: id, metadataGrammar: grammar, compileTemplates: compile,
+		rootCategory: func(context SnippetContext, kind string) bool {
+			return wrappedRootCategoryAccepts(id, config.declarations, context, kind)
+		},
+	}
+}
 
 var targetLanguageAdapters = map[string]targetLanguageAdapter{
+	"c":      wrappedTargetLanguageAdapter("c", CGrammar, TreeSitterCGrammar, compileCTemplates),
+	"cpp":    wrappedTargetLanguageAdapter("cpp", CPPGrammar, TreeSitterCPPGrammar, compileCPPTemplates),
+	"csharp": wrappedTargetLanguageAdapter("csharp", CSharpGrammar, TreeSitterCSharpGrammar, compileCSharpTemplates),
 	defaultTargetLanguage: {
 		id:               defaultTargetLanguage,
 		grammar:          GoGrammar,
@@ -76,6 +88,8 @@ var targetLanguageAdapters = map[string]targetLanguageAdapter{
 		compileTemplates: compileJavaScriptTemplates,
 		rootCategory:     javaScriptRootCategoryAccepts,
 	},
+	"java":   wrappedTargetLanguageAdapter("java", JavaGrammar, TreeSitterJavaGrammar, compileJavaTemplates),
+	"kotlin": wrappedTargetLanguageAdapter("kotlin", KotlinGrammar, TreeSitterKotlinGrammar, compileKotlinTemplates),
 	"python": {
 		id:               "python",
 		grammar:          PythonGrammar,
@@ -85,6 +99,8 @@ var targetLanguageAdapters = map[string]targetLanguageAdapter{
 		compileTemplates: compilePythonTemplates,
 		rootCategory:     pythonRootCategoryAccepts,
 	},
+	"rust":  wrappedTargetLanguageAdapter("rust", RustGrammar, TreeSitterRustGrammar, compileRustTemplates),
+	"shell": wrappedTargetLanguageAdapter("shell", ShellGrammar, TreeSitterShellGrammar, compileShellTemplates),
 	"typescript": {
 		id:               "typescript",
 		grammar:          TypeScriptGrammar,

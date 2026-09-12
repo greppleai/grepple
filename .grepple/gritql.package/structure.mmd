@@ -177,7 +177,7 @@ classDiagram
     }
     <<struct>> EvaluationMatch
     %% grepple:file EvaluationMatch gritql/evaluator.go
-    note for EvaluationMatch "defined: gritql/evaluator.go:58-61; Bindings@gritql/evaluator.go:67; Range@gritql/evaluator.go:64; String@gritql/evaluator.go:921-927; bindings@gritql/evaluator.go:60; rng@gritql/evaluator.go:59"
+    note for EvaluationMatch "defined: gritql/evaluator.go:58-61; Bindings@gritql/evaluator.go:67; Range@gritql/evaluator.go:64; String@gritql/evaluator.go:932-938; bindings@gritql/evaluator.go:60; rng@gritql/evaluator.go:59"
     class EvaluationMetadata {
         +Contract: string
         +GoGrammar: string
@@ -1265,6 +1265,23 @@ classDiagram
     %% grepple:underlying variableScope map[VariableID]bool
     %% grepple:file variableScope gritql/compiler.go
     note for variableScope "defined: gritql/compiler.go:923"
+    class wrappedLanguageConfig {
+        -declarations: map[string]bool
+        -expressionPrefix: string
+        -expressionSuffix: string
+        -language: string
+        -memberBlocks: map[string]bool
+        -memberPrefix: string
+        -memberSuffix: string
+        -rootKind: string
+        -shellLike: bool
+        -statementBlocks: map[string]bool
+        -statementPrefix: string
+        -statementSuffix: string
+    }
+    <<struct>> wrappedLanguageConfig
+    %% grepple:file wrappedLanguageConfig gritql/wrapped_language.go
+    note for wrappedLanguageConfig "defined: gritql/wrapped_language.go:40-53; declarations@gritql/wrapped_language.go:48; expressionPrefix@gritql/wrapped_language.go:43; expressionSuffix@gritql/wrapped_language.go:44; language@gritql/wrapped_language.go:41; memberBlocks@gritql/wrapped_language.go:51; memberPrefix@gritql/wrapped_language.go:49; memberSuffix@gritql/wrapped_language.go:50; rootKind@gritql/wrapped_language.go:42; shellLike@gritql/wrapped_language.go:52; statementBlocks@gritql/wrapped_language.go:47; statementPrefix@gritql/wrapped_language.go:45; statementSuffix@gritql/wrapped_language.go:46"
     class AnalyzeAnchors {
         +AnalyzeAnchors(*Program): AnchorPlan
     }

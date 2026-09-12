@@ -1,6 +1,6 @@
 # `gritql-v1` compatibility contract
 
-`gritql-v1` is Grepple's unified, closed, read-only detection contract for `language go`, `language javascript`, `language typescript`, `language tsx`, and `language python`. Target syntax is supplied by language adapters while query algebra, transactions, limits, ordering, and diagnostics remain shared.
+`gritql-v1` is Grepple's unified, closed, read-only detection contract for every Tree-sitter-backed language in the capability matrix: `go`, `javascript`, `typescript`, `tsx`, `python`, `java`, `kotlin`, `csharp`, `c`, `cpp`, `rust`, and `shell`. Target syntax is supplied by language adapters while query algebra, transactions, limits, ordering, and diagnostics remain shared.
 
 The contract is not an alias for an upstream GritQL release. A conforming implementation accepts exactly the documented syntax and rejects every other construct; it does not invoke an external engine, Node, a shell, or a fallback interpreter.
 
@@ -10,7 +10,7 @@ The grammar is EBNF. Literal words and punctuation are quoted. `EOF` means the e
 
 ```ebnf
 pattern          = spacing, language, line_end, spacing, query, spacing, EOF ;
-language         = "language", hspace1, ( "go" | "javascript" | "typescript" | "tsx" | "python" ) ;
+language         = "language", hspace1, ( "c" | "cpp" | "csharp" | "go" | "java" | "javascript" | "kotlin" | "python" | "rust" | "shell" | "typescript" | "tsx" ) ;
 
 query            = prefix, [ spacing, where_clause ] ;
 prefix           = snippet
@@ -119,6 +119,13 @@ JavaScript/TypeScript-family metavariables currently occupy identifier-like, exp
 For `language python`, the contract selects `.py`, `.pyi`, and `.pyw` source and parses snippets against the pinned Python grammar. It retains every grammar-valid expression, statement, statement-list, declaration, declaration-list, and complete-module interpretation. Statement and declaration sequences share a `statement_sequence` projection because Python modules and blocks contain the same statement grammar; matching remains confined to one module or block and never crosses indentation scopes.
 
 Python metavariables occupy expression, pattern, identifier, dotted import-name, statement, declaration, and grammar-generated repeated-list positions. A placeholder immediately following `from` or `import` binds one complete `dotted_name`. Whole-snippet placeholders receive explicit statement and declaration interpretations so they can bind syntax that cannot be represented by an identifier expression. Indentation, delimiters, operators, and literal spelling remain structural, while formatting trivia follows the shared normalization rules. Unsupported or malformed positions fail with `PATTERN_INVALID_SNIPPET` rather than falling back to text or another grammar. Python metadata reports canonical `language`, `grammar`, and pinned `tree_sitter_grammar` fields.
+### 2.3 C, C++, C#, Java, Kotlin, Rust, and Shell snippet parsing
+
+C, C++, C#, Java, Kotlin, and Rust use grammar-local synthetic wrappers to parse expression and statement snippets without retaining wrapper syntax. Their adapters also retain statement-list, declaration, declaration-list, and complete-file interpretations. C# and Java additionally try class-member declaration contexts. C and C++ select `.c`/`.h` and the documented C++ extensions respectively; C#, Java, Kotlin, and Rust use the canonical extensions in the capability matrix. Shell selects `.sh`, `.bash`, and `.zsh` and supports command/statement, command-list, function/assignment declaration, and complete-script contexts; it does not invent a separate expression grammar.
+
+Metavariables occupy identifier-like and grammar-generated repeated positions. Wrapper selection requires one exact named syntax node, and sequence selection requires complete consecutive children within one grammar block or source root. Generated wrappers, helper declarations, and delimiters outside the authored snippet are clipped before freezing the template. Every interpretation must parse without recovery nodes and restore every metavariable exactly once. Unsupported grammar positions fail compilation rather than falling back to text, regex, or another target language.
+
+All adapters report their canonical language ID, grammar ID, and pinned Tree-sitter implementation in evaluation metadata. Query algebra, equality, transactional findings, resource limits, acquisition, ordering, and diagnostics are identical across target languages.
 
 ## 3. Structural matching and bindings
 
@@ -268,7 +275,7 @@ The following are recognized but unsupported and fail closed with `PATTERN_UNSUP
 - any equality or inequality operator (including `==` and `!=`); equality exists only through repeated metavariable binding;
 - any operator, literal, comment form, or delimiter absent from the EBNF.
 
-Targets other than Go, JavaScript/JSX, TypeScript, TSX, and Python; type checking; name resolution; data flow; network access; shell execution; repository writes; interactive input; and source rewrites are behaviorally unsupported. The unified contract is native and detection-only.
+Targets outside the generated capability matrix; type checking; name resolution; data flow; network access; shell execution; repository writes; interactive input; and source rewrites are behaviorally unsupported. The unified contract is native and detection-only.
 
 ## 9. Security and performance gates
 

@@ -4,7 +4,7 @@ Grepple should stabilize for one or two iterations before adding more languages.
 
 ## Recommended next milestone
 
-> Add focused graph queries over the normalized graph and compact projection, then semantic graph diffing. Python GritQL and JavaScript/JSX parity are complete; reassess Python focused extraction only after structural-query dogfooding demonstrates demand.
+> Continue matrix-driven language unification: native GritQL now covers every Tree-sitter-backed language, so the next parity decision is focused structure/flow coverage beyond Go and ECMAScript. Keep canonical package/workspace bundles intentionally Go-specific.
 
 ## Feature set versus feature completeness
 
@@ -214,9 +214,10 @@ Reduce repeated parsing and language knowledge across extraction, navigation, te
    - [x] Add JavaScript/JSX to the unified `gritql-v1` contract by reusing the TypeScript-family adapter where grammar behavior agrees, with dedicated conformance fixtures for declarations, expressions, imports, JSX, sequences, containment, bindings, malformed source, and repeated positions.
    - [x] Add JavaScript/JSX focused structure and flow extraction through the shared navigation graph and ECMAScript analysis helpers. Canonical package/workspace bundles remain Go-specific.
    - [x] Add cross-feature parity tests proving advertised capabilities are implemented and that unsupported combinations fail explicitly rather than silently falling back. Registration parity, generated documentation drift, JavaScript/JSX CLI/conformance, malformed-source, extraction round-trip, and unsupported-language tests cover the matrix.
-   - [x] Add Python to `gritql-v1` with expression, pattern, statement, declaration, module, dotted-import, repeated-list, malformed-source, mixed-batch, CLI, and conformance coverage. Reassess Python focused extraction after dogfooding; consider Java and Rust afterward.
-
-Recommended implementation order from here: focused graph queries, semantic graph diffing, then shared-projection parity against canonical Mermaid and `--related`. Address language-specific extraction and placeholder-role gaps only when conformance or dogfooding exposes a valuable blocked workflow.
+   - [x] Add Python to `gritql-v1` with expression, pattern, statement, declaration, module, dotted-import, repeated-list, malformed-source, mixed-batch, CLI, and conformance coverage.
+   - [x] Add C, C++, C#, Java, Kotlin, Rust, and Shell to `gritql-v1` through bounded grammar-local snippet adapters. Every parser-backed Tree-sitter language now has native GritQL, scanner, malformed-source, binding-equality, and conformance coverage.
+   - [ ] Select the next focused structure/flow adapters from Python, Java, Kotlin, C#, C/C++, Rust, and Shell based on graph dogfooding; keep unsupported cells explicit until their semantic projections are production-ready.
+Recommended implementation order from here: close the highest-value focused structure/flow matrix gaps, then return to graph queries and semantic graph diffing. Address grammar-local placeholder-role gaps when conformance or dogfooding exposes a valuable blocked workflow.
 
 Acceptance criteria:
 

@@ -76,6 +76,14 @@ func TestLanguagesRejectsUnexpectedArguments(t *testing.T) {
 	}
 }
 
+func TestLanguageCapabilityMatrixGritQLCoversTreeSitterLanguages(t *testing.T) {
+	for _, capability := range languageCapabilityMatrix() {
+		if capability.StructuralGrep == api.FeatureProduction && capability.Navigation == api.FeatureProduction && capability.GritQL != api.FeatureProduction {
+			t.Fatalf("Tree-sitter language %q lacks production GritQL: %#v", capability.Language, capability)
+		}
+	}
+}
+
 func TestLanguageCapabilityDocumentationIsGeneratedFromRegistrations(t *testing.T) {
 	content, err := os.ReadFile("../../docs/file-type-support.md")
 	if err != nil {

@@ -16,16 +16,16 @@
     "syntacticBuildTagUnion": []
   },
   "summary": {
-    "sourceFiles": 15,
-    "declarations": 118,
+    "sourceFiles": 16,
+    "declarations": 119,
     "exportedTypes": 49,
-    "internalTypes": 69,
-    "members": 624,
+    "internalTypes": 70,
+    "members": 636,
     "exportedFunctions": 18,
     "fiberRoutes": 0,
     "relations": 318
   },
-  "semanticModelDigest": "sha256:bd2e6e06ce4731393c0fae234479a72ef852a908a83ffb47718b740963fa35b9",
+  "semanticModelDigest": "sha256:64a56c470afe5acb5c81751c1c79348d8d3cead59c595a93b6225c61129a3106",
   "sourceFiles": [
     {
       "path": "gritql/anchor.go"
@@ -71,6 +71,9 @@
     },
     {
       "path": "gritql/typescript_language.go"
+    },
+    {
+      "path": "gritql/wrapped_language.go"
     }
   ],
   "declarations": [
@@ -856,8 +859,8 @@
         {
           "name": "String",
           "kind": "method",
-          "line": 921,
-          "endLine": 927,
+          "line": 932,
+          "endLine": 938,
           "result": "string"
         },
         {
@@ -5927,6 +5930,100 @@
       "line": 923,
       "endLine": 923,
       "underlyingType": "map[VariableID]bool"
+    },
+    {
+      "name": "wrappedLanguageConfig",
+      "kind": "struct",
+      "file": "gritql/wrapped_language.go",
+      "line": 40,
+      "endLine": 53,
+      "underlyingType": "struct{language string;rootKind string;expressionPrefix string;expressionSuffix string;statementPrefix string;statementSuffix string;statementBlocks map[string]bool;declarations map[string]bool;memberPrefix string;memberSuffix string;memberBlocks map[string]bool;shellLike bool;}",
+      "members": [
+        {
+          "name": "declarations",
+          "kind": "property",
+          "line": 48,
+          "endLine": 48,
+          "result": "map[string]bool"
+        },
+        {
+          "name": "expressionPrefix",
+          "kind": "property",
+          "line": 43,
+          "endLine": 43,
+          "result": "string"
+        },
+        {
+          "name": "expressionSuffix",
+          "kind": "property",
+          "line": 44,
+          "endLine": 44,
+          "result": "string"
+        },
+        {
+          "name": "language",
+          "kind": "property",
+          "line": 41,
+          "endLine": 41,
+          "result": "string"
+        },
+        {
+          "name": "memberBlocks",
+          "kind": "property",
+          "line": 51,
+          "endLine": 51,
+          "result": "map[string]bool"
+        },
+        {
+          "name": "memberPrefix",
+          "kind": "property",
+          "line": 49,
+          "endLine": 49,
+          "result": "string"
+        },
+        {
+          "name": "memberSuffix",
+          "kind": "property",
+          "line": 50,
+          "endLine": 50,
+          "result": "string"
+        },
+        {
+          "name": "rootKind",
+          "kind": "property",
+          "line": 42,
+          "endLine": 42,
+          "result": "string"
+        },
+        {
+          "name": "shellLike",
+          "kind": "property",
+          "line": 52,
+          "endLine": 52,
+          "result": "bool"
+        },
+        {
+          "name": "statementBlocks",
+          "kind": "property",
+          "line": 47,
+          "endLine": 47,
+          "result": "map[string]bool"
+        },
+        {
+          "name": "statementPrefix",
+          "kind": "property",
+          "line": 45,
+          "endLine": 45,
+          "result": "string"
+        },
+        {
+          "name": "statementSuffix",
+          "kind": "property",
+          "line": 46,
+          "endLine": 46,
+          "result": "string"
+        }
+      ]
     }
   ],
   "exportedFunctions": [

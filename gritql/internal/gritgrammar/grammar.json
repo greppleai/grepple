@@ -5935,6 +5935,10 @@
         },
         {
           "type": "STRING",
+          "value": "shell"
+        },
+        {
+          "type": "STRING",
           "value": "elixir"
         }
       ]

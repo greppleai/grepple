@@ -44,7 +44,8 @@ Language identity, extensions, grammar fingerprints, and parser/navigation capab
 - [x] Add JavaScript/JSX focused structure and flow extraction over the shared navigation graph and ECMAScript helpers; canonical bundles remain Go-specific.
 - [x] Add parity tests that fail when advertised support lacks implementation or unsupported combinations silently fall back.
 - [x] Add Python to native `gritql-v1` with dedicated query contexts, dotted-import placeholders, conformance fixtures, scanner/CLI coverage, and explicit malformed-source behavior.
-- [ ] Reassess Python focused structure/flow after GritQL dogfooding; consider Java and Rust parity afterward.
+- [x] Add C, C++, C#, Java, Kotlin, Rust, and Shell to native `gritql-v1`; all parser-backed Tree-sitter languages now have registered adapters and parity coverage.
+- [ ] Select focused structure/flow targets from the remaining matrix gaps through dogfooding, starting with the languages whose graph projections provide useful class or call semantics.
 
 ## Next languages
 

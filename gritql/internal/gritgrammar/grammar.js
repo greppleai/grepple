@@ -611,7 +611,8 @@ module.exports = grammar({
         'c',
         'ruby',
         'cpp',
-        'kotlin',
+'kotlin',
+'shell',
         'elixir',
       ),
 

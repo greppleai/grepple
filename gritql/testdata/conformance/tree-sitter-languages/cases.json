@@ -1,0 +1,58 @@
+[
+  {
+    "name": "c-statement-sequence",
+    "language": "c",
+    "query": "language c\n`first(); second();`",
+    "path": "src/app.c",
+    "source": "void run(void) { first(); second(); third(); }\n",
+    "findings": ["first(); second();"]
+  },
+  {
+    "name": "cpp-statement-sequence",
+    "language": "cpp",
+    "query": "language cpp\n`first(); second();`",
+    "path": "src/app.cpp",
+    "source": "void run() { first(); second(); third(); }\n",
+    "findings": ["first(); second();"]
+  },
+  {
+    "name": "csharp-member-declaration",
+    "language": "csharp",
+    "query": "language csharp\n`void Run() { Target(); }`",
+    "path": "src/App.cs",
+    "source": "class App { void Run() { Target(); } void Other() {} }\n",
+    "findings": ["void Run() { Target(); }"]
+  },
+  {
+    "name": "java-member-declaration",
+    "language": "java",
+    "query": "language java\n`void run() { target(); }`",
+    "path": "src/App.java",
+    "source": "class App { void run() { target(); } void other() {} }\n",
+    "findings": ["void run() { target(); }"]
+  },
+  {
+    "name": "kotlin-top-level-declaration",
+    "language": "kotlin",
+    "query": "language kotlin\n`fun run() { target() }`",
+    "path": "src/App.kt",
+    "source": "fun run() { target() }\nfun other() {}\n",
+    "findings": ["fun run() { target() }"]
+  },
+  {
+    "name": "rust-function-item",
+    "language": "rust",
+    "query": "language rust\n`fn run() { target(); }`",
+    "path": "src/app.rs",
+    "source": "fn run() { target(); }\nfn other() {}\n",
+    "findings": ["fn run() { target(); }"]
+  },
+  {
+    "name": "shell-command-sequence",
+    "language": "shell",
+    "query": "language shell\n`first\nsecond`",
+    "path": "scripts/app.sh",
+    "source": "first\nsecond\nthird\n",
+    "findings": ["first\nsecond"]
+  }
+]

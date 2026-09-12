@@ -571,9 +571,14 @@ func sequenceTargetEnd(children []parser.ViewNode, end int) int {
 
 func sequenceMatchTarget(parent parser.ViewNode, field string, start, end int) MatchTarget {
 	switch parent.Kind() {
-	case "statement_list", "statement_block", "block", "module":
+	case "statement_list", "statement_block", "block", "module", "compound_statement", "function_body", "statements":
 		return viewSequenceTarget("statement_sequence", parent, start, end)
-	case "source_file", "program":
+	case "program":
+		if parent.Language() == "shell" {
+			return viewSequenceTarget("statement_sequence", parent, start, end)
+		}
+		return viewSequenceTarget("declaration_sequence", parent, start, end)
+	case "source_file", "translation_unit", "compilation_unit":
 		return viewSequenceTarget("declaration_sequence", parent, start, end)
 	default:
 		return viewRepeatedSequenceTarget(parent, field, start, end)
@@ -585,9 +590,15 @@ func repeatedTraversalElement(parent, child parser.ViewNode) bool {
 		return false
 	}
 	switch parent.Kind() {
-	case "source_file", "program":
+	case "program":
+		context := SnippetContextDeclarationList
+		if parent.Language() == "shell" {
+			context = SnippetContextStatementList
+		}
+		return rootCategoryAccepts(parent.Language(), context, child.Kind())
+	case "source_file":
 		return rootCategoryAccepts(parent.Language(), SnippetContextDeclarationList, child.Kind())
-	case "statement_list", "statement_block":
+	case "statement_list", "statement_block", "block", "module", "compound_statement", "function_body", "statements":
 		return rootCategoryAccepts(parent.Language(), SnippetContextStatementList, child.Kind())
 	default:
 		return true
