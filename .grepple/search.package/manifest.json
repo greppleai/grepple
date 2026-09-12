@@ -20,12 +20,12 @@
     "declarations": 15,
     "exportedTypes": 5,
     "internalTypes": 10,
-    "members": 112,
-    "exportedFunctions": 19,
+    "members": 114,
+    "exportedFunctions": 20,
     "fiberRoutes": 0,
-    "relations": 37
+    "relations": 38
   },
-  "semanticModelDigest": "sha256:a7b44e25469ded26448161a0729134e35279536ecab80ba6298f5c1f635ab836",
+  "semanticModelDigest": "sha256:b5e58240750a063f970570dd483288a9bcb7255b31c59467004d7a1c369903ee",
   "sourceFiles": [
     {
       "path": "search/at.go"
@@ -474,15 +474,15 @@
       "name": "RepoFilter",
       "kind": "struct",
       "file": "search/search_engine.go",
-      "line": 128,
-      "endLine": 131,
+      "line": 129,
+      "endLine": 132,
       "underlyingType": "struct{include[]repoPattern;exclude[]repoPattern;}",
       "members": [
         {
           "name": "Allow",
           "kind": "method",
-          "line": 143,
-          "endLine": 165,
+          "line": 144,
+          "endLine": 166,
           "parameters": [
             "string"
           ],
@@ -491,15 +491,15 @@
         {
           "name": "exclude",
           "kind": "property",
-          "line": 130,
-          "endLine": 130,
+          "line": 131,
+          "endLine": 131,
           "result": "[]repoPattern"
         },
         {
           "name": "include",
           "kind": "property",
-          "line": 129,
-          "endLine": 129,
+          "line": 130,
+          "endLine": 130,
           "result": "[]repoPattern"
         }
       ]
@@ -508,15 +508,15 @@
       "name": "candidateCollector",
       "kind": "struct",
       "file": "search/search_glob.go",
-      "line": 138,
-      "endLine": 143,
-      "underlyingType": "struct{root,cwd string;ignoreCache gitignoreCache;seen map[string]bool;files[]string;}",
+      "line": 146,
+      "endLine": 152,
+      "underlyingType": "struct{ctx context.Context;root,cwd string;ignoreCache gitignoreCache;seen map[string]bool;files[]string;}",
       "members": [
         {
           "name": "add",
           "kind": "method",
-          "line": 151,
-          "endLine": 159,
+          "line": 160,
+          "endLine": 168,
           "parameters": [
             "string"
           ]
@@ -524,8 +524,8 @@
         {
           "name": "addPlainGlob",
           "kind": "method",
-          "line": 182,
-          "endLine": 205,
+          "line": 191,
+          "endLine": 220,
           "parameters": [
             "string"
           ],
@@ -534,8 +534,8 @@
         {
           "name": "addRecursiveGlob",
           "kind": "method",
-          "line": 208,
-          "endLine": 217,
+          "line": 223,
+          "endLine": 232,
           "parameters": [
             "string"
           ],
@@ -544,46 +544,53 @@
         {
           "name": "addSubtree",
           "kind": "method",
-          "line": 163,
-          "endLine": 178,
+          "line": 172,
+          "endLine": 187,
           "parameters": [
             "string"
           ],
           "result": "error"
         },
         {
+          "name": "ctx",
+          "kind": "property",
+          "line": 147,
+          "endLine": 147,
+          "result": "context.Context"
+        },
+        {
           "name": "cwd",
           "kind": "property",
-          "line": 139,
-          "endLine": 139,
+          "line": 148,
+          "endLine": 148,
           "result": "string"
         },
         {
           "name": "files",
           "kind": "property",
-          "line": 142,
-          "endLine": 142,
+          "line": 151,
+          "endLine": 151,
           "result": "[]string"
         },
         {
           "name": "ignoreCache",
           "kind": "property",
-          "line": 140,
-          "endLine": 140,
+          "line": 149,
+          "endLine": 149,
           "result": "gitignoreCache"
         },
         {
           "name": "root",
           "kind": "property",
-          "line": 139,
-          "endLine": 139,
+          "line": 148,
+          "endLine": 148,
           "result": "string"
         },
         {
           "name": "seen",
           "kind": "property",
-          "line": 141,
-          "endLine": 141,
+          "line": 150,
+          "endLine": 150,
           "result": "map[string]bool"
         }
       ]
@@ -592,15 +599,15 @@
       "name": "candidateScan",
       "kind": "struct",
       "file": "search/search_engine.go",
-      "line": 232,
-      "endLine": 237,
+      "line": 233,
+      "endLine": 238,
       "underlyingType": "struct{p Params;m func(string)bool;repoFilter*RepoFilter;fromIndex bool;}",
       "members": [
         {
           "name": "relatedFiles",
           "kind": "method",
-          "line": 239,
-          "endLine": 252,
+          "line": 240,
+          "endLine": 253,
           "parameters": [
             "[]string"
           ],
@@ -609,8 +616,8 @@
         {
           "name": "scanAll",
           "kind": "method",
-          "line": 258,
-          "endLine": 267,
+          "line": 259,
+          "endLine": 268,
           "parameters": [
             "[]string"
           ],
@@ -619,8 +626,8 @@
         {
           "name": "scanWindowed",
           "kind": "method",
-          "line": 272,
-          "endLine": 295,
+          "line": 273,
+          "endLine": 296,
           "parameters": [
             "[]string",
             "int"
@@ -630,29 +637,29 @@
         {
           "name": "fromIndex",
           "kind": "property",
-          "line": 236,
-          "endLine": 236,
+          "line": 237,
+          "endLine": 237,
           "result": "bool"
         },
         {
           "name": "m",
           "kind": "property",
-          "line": 234,
-          "endLine": 234,
+          "line": 235,
+          "endLine": 235,
           "result": "func(string)bool"
         },
         {
           "name": "p",
           "kind": "property",
-          "line": 233,
-          "endLine": 233,
+          "line": 234,
+          "endLine": 234,
           "result": "Params"
         },
         {
           "name": "repoFilter",
           "kind": "property",
-          "line": 235,
-          "endLine": 235,
+          "line": 236,
+          "endLine": 236,
           "result": "*RepoFilter"
         }
       ]
@@ -661,15 +668,15 @@
       "name": "candidateWalker",
       "kind": "struct",
       "file": "search/search_glob.go",
-      "line": 365,
-      "endLine": 369,
-      "underlyingType": "struct{root string;ignorePatterns map[string][]string;files[]string;}",
+      "line": 394,
+      "endLine": 399,
+      "underlyingType": "struct{ctx context.Context;root string;ignorePatterns map[string][]string;files[]string;}",
       "members": [
         {
           "name": "walk",
           "kind": "method",
-          "line": 374,
-          "endLine": 392,
+          "line": 404,
+          "endLine": 425,
           "parameters": [
             "string",
             "fs.DirEntry",
@@ -680,8 +687,8 @@
         {
           "name": "walkDir",
           "kind": "method",
-          "line": 396,
-          "endLine": 406,
+          "line": 429,
+          "endLine": 439,
           "parameters": [
             "string",
             "string"
@@ -689,24 +696,31 @@
           "result": "error"
         },
         {
+          "name": "ctx",
+          "kind": "property",
+          "line": 395,
+          "endLine": 395,
+          "result": "context.Context"
+        },
+        {
           "name": "files",
           "kind": "property",
-          "line": 368,
-          "endLine": 368,
+          "line": 398,
+          "endLine": 398,
           "result": "[]string"
         },
         {
           "name": "ignorePatterns",
           "kind": "property",
-          "line": 367,
-          "endLine": 367,
+          "line": 397,
+          "endLine": 397,
           "result": "map[string][]string"
         },
         {
           "name": "root",
           "kind": "property",
-          "line": 366,
-          "endLine": 366,
+          "line": 396,
+          "endLine": 396,
           "result": "string"
         }
       ]
@@ -715,15 +729,15 @@
       "name": "gitignoreCache",
       "kind": "type",
       "file": "search/search_glob.go",
-      "line": 428,
-      "endLine": 428,
+      "line": 461,
+      "endLine": 461,
       "underlyingType": "map[string][]string",
       "members": [
         {
           "name": "patterns",
           "kind": "method",
-          "line": 430,
-          "endLine": 438,
+          "line": 463,
+          "endLine": 471,
           "parameters": [
             "string"
           ],
@@ -1083,15 +1097,15 @@
       "name": "repoPattern",
       "kind": "struct",
       "file": "search/search_engine.go",
-      "line": 94,
-      "endLine": 97,
+      "line": 95,
+      "endLine": 98,
       "underlyingType": "struct{glob string;re*regexp.Regexp;}",
       "members": [
         {
           "name": "match",
           "kind": "method",
-          "line": 107,
-          "endLine": 112,
+          "line": 108,
+          "endLine": 113,
           "parameters": [
             "string"
           ],
@@ -1100,15 +1114,15 @@
         {
           "name": "glob",
           "kind": "property",
-          "line": 95,
-          "endLine": 95,
+          "line": 96,
+          "endLine": 96,
           "result": "string"
         },
         {
           "name": "re",
           "kind": "property",
-          "line": 96,
-          "endLine": 96,
+          "line": 97,
+          "endLine": 97,
           "result": "*regexp.Regexp"
         }
       ]
@@ -1119,8 +1133,8 @@
       "name": "AggregateRepoCounts",
       "kind": "function",
       "file": "search/search_engine.go",
-      "line": 467,
-      "endLine": 486,
+      "line": 488,
+      "endLine": 507,
       "parameters": [
         "[]FileMatch"
       ],
@@ -1156,8 +1170,8 @@
       "name": "CollectFilesUnder",
       "kind": "function",
       "file": "search/search_glob.go",
-      "line": 87,
-      "endLine": 104,
+      "line": 88,
+      "endLine": 105,
       "parameters": [
         "[]string",
         "string"
@@ -1168,8 +1182,8 @@
       "name": "Content",
       "kind": "function",
       "file": "search/search_engine.go",
-      "line": 308,
-      "endLine": 318,
+      "line": 309,
+      "endLine": 319,
       "parameters": [
         "Params",
         "string",
@@ -1207,8 +1221,8 @@
       "name": "Files",
       "kind": "function",
       "file": "search/search_engine.go",
-      "line": 189,
-      "endLine": 227,
+      "line": 190,
+      "endLine": 228,
       "parameters": [
         "Params",
         "[]string"
@@ -1219,9 +1233,22 @@
       "name": "ListFilePaths",
       "kind": "function",
       "file": "search/search_engine.go",
-      "line": 389,
-      "endLine": 423,
+      "line": 390,
+      "endLine": 392,
       "parameters": [
+        "Params",
+        "[]string"
+      ],
+      "result": "tuple\u003c[]string,error\u003e"
+    },
+    {
+      "name": "ListFilePathsContext",
+      "kind": "function",
+      "file": "search/search_engine.go",
+      "line": 395,
+      "endLine": 413,
+      "parameters": [
+        "context.Context",
         "Params",
         "[]string"
       ],
@@ -1231,8 +1258,8 @@
       "name": "NewRepoFilter",
       "kind": "function",
       "file": "search/search_engine.go",
-      "line": 135,
-      "endLine": 137,
+      "line": 136,
+      "endLine": 138,
       "parameters": [
         "[]string",
         "[]string"
@@ -1243,8 +1270,8 @@
       "name": "PathMatchesGlobs",
       "kind": "function",
       "file": "search/search_glob.go",
-      "line": 490,
-      "endLine": 492,
+      "line": 523,
+      "endLine": 525,
       "parameters": [
         "string",
         "[]string"
@@ -1255,8 +1282,8 @@
       "name": "RepoID",
       "kind": "function",
       "file": "search/search_engine.go",
-      "line": 80,
-      "endLine": 89,
+      "line": 81,
+      "endLine": 90,
       "parameters": [
         "string"
       ],
@@ -1301,8 +1328,8 @@
       "name": "SortRepoCounts",
       "kind": "function",
       "file": "search/search_engine.go",
-      "line": 491,
-      "endLine": 501,
+      "line": 512,
+      "endLine": 522,
       "parameters": [
         "[]api.RepoCount"
       ]
@@ -1311,8 +1338,8 @@
       "name": "SplitLines",
       "kind": "function",
       "file": "search/search_engine.go",
-      "line": 23,
-      "endLine": 32,
+      "line": 24,
+      "endLine": 33,
       "parameters": [
         "string"
       ],
@@ -1419,6 +1446,13 @@
       "to": "Params",
       "kind": "dependency",
       "via": "parameter 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "ListFilePathsContext",
+      "to": "Params",
+      "kind": "dependency",
+      "via": "parameter 2",
       "cardinality": "one"
     },
     {

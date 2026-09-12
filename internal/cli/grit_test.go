@@ -133,33 +133,17 @@ func TestRunGritLocalTypeScriptUsesUnifiedContract(t *testing.T) {
 		t.Fatalf("response=%#v", response)
 	}
 }
-func TestGritCandidatesCarryAnchoredSourceIntoStructuralScan(t *testing.T) {
+func TestGritCandidatesLeaveAcquisitionToBoundedScanner(t *testing.T) {
 	dir := chdirTemp(t)
-	source := []byte("package p\nvar x = target(value)\n")
-	if err := os.WriteFile(filepath.Join(dir, "main.go"), source, 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, "main.go"), []byte("package p\nvar x = target(value)\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	_, anchored, err := compileGritQuery(gritArgs{Query: "language go\n`target($value)`"})
-	if err != nil {
-		t.Fatal(err)
-	}
-	candidates, err := gritCandidates(dir, nil, anchored)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(candidates) != 1 || candidates[0].Content == nil || string(candidates[0].Content) != string(source) {
-		t.Fatalf("anchored candidates=%#v", candidates)
-	}
-	_, unanchored, err := compileGritQuery(gritArgs{Query: "language go\n`$value`"})
-	if err != nil {
-		t.Fatal(err)
-	}
-	candidates, err = gritCandidates(dir, nil, unanchored)
+	candidates, err := gritCandidates(context.Background(), dir, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if len(candidates) != 1 || candidates[0].Content != nil {
-		t.Fatalf("unanchored candidates=%#v", candidates)
+		t.Fatalf("candidates=%#v", candidates)
 	}
 }
 
@@ -311,14 +295,14 @@ func TestMergeGritResponsesNormalizesDeduplicatesAndAggregates(t *testing.T) {
 	local := api.GritResponse{
 		Metadata: metadata, Findings: []api.GritFinding{localFinding},
 		Diagnostics: []api.GritDiagnostic{}, Truncations: []api.GritTruncation{}, ShardErrors: []string{},
-		Statistics: api.GritStatistics{Candidates: 2, Evaluated: 1, BytesRead: 10}, Total: 1,
+		Statistics: api.GritStatistics{Candidates: 2, Evaluated: 1, BytesRead: 10, SkippedAnchor: 1}, Total: 1,
 	}
 	remote := api.GritResponse{
 		Metadata: metadata, Findings: []api.GritFinding{duplicate, duplicate, distinctBinding, currentCheckout},
 		Diagnostics: []api.GritDiagnostic{{Code: "REMOTE_WARNING"}},
 		Truncations: []api.GritTruncation{{Reason: "max_files", Limit: 3, Skipped: 1}},
 		ShardErrors: []string{"shard unavailable"},
-		Statistics:  api.GritStatistics{Candidates: 4, Evaluated: 3, BytesRead: 20}, Total: 4,
+		Statistics:  api.GritStatistics{Candidates: 4, Evaluated: 3, BytesRead: 20, SkippedAnchor: 2}, Total: 4,
 	}
 
 	merged, err := mergeGritResponses(local, remote, "owner/current")
@@ -331,7 +315,7 @@ func TestMergeGritResponsesNormalizesDeduplicatesAndAggregates(t *testing.T) {
 	if merged.Findings[0].Path != "z.go" || merged.Findings[1].Path != "a.go" || merged.Findings[2].Bindings[0].Name != "y" {
 		t.Fatalf("order=%#v", merged.Findings)
 	}
-	if merged.Statistics.Candidates != 6 || merged.Statistics.Evaluated != 4 || merged.Statistics.BytesRead != 30 {
+	if merged.Statistics.Candidates != 6 || merged.Statistics.Evaluated != 4 || merged.Statistics.BytesRead != 30 || merged.Statistics.SkippedAnchor != 3 {
 		t.Fatalf("statistics=%#v", merged.Statistics)
 	}
 	if len(merged.Diagnostics) != 1 || len(merged.Truncations) != 1 || len(merged.ShardErrors) != 1 {

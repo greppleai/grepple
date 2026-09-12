@@ -15,7 +15,7 @@ func TestScanFilesSkipsBinaryAndRejectsOversizedAndMalformedSources(t *testing.T
 	files := fstest.MapFS{
 		"binary.go": {Data: []byte("package p\x00var x = 1")},
 		"huge.go":   {Data: []byte("package p\nvar x = 123456789\n")},
-		"bad.go":    {Data: []byte("package p\nfunc {")},
+		"bad.go":    {Data: []byte("package p\nvar x =\n")},
 		"good.go":   {Data: []byte("package p\nvar x = 1\n")},
 	}
 	result := ScanFiles(context.Background(), files, program, scanCandidates("binary.go", "huge.go", "bad.go", "good.go"), ScanOptions{

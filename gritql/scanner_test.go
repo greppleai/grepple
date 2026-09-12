@@ -44,6 +44,20 @@ func TestScanFilesUsesPreacquiredContentWithoutReading(t *testing.T) {
 		t.Fatalf("stats=%+v", result.Stats())
 	}
 }
+func TestScanFilesAppliesMandatoryAnchorBeforeParsing(t *testing.T) {
+	program := compileFindingPattern(t, "`target($value)`")
+	files := fstest.MapFS{
+		"match.go": {Data: []byte("package p\nvar _ = target(value)\n")},
+		"skip.go":  {Data: []byte("package p\nfunc broken(\n")},
+	}
+	result := ScanFiles(context.Background(), files, program, scanCandidates("match.go", "skip.go"), ScanOptions{Workers: 1})
+	if findings := result.Findings(); len(findings) != 1 || findings[0].Path() != "match.go" {
+		t.Fatalf("findings=%v diagnostics=%v", findings, result.Diagnostics())
+	}
+	if stats := result.Stats(); stats.Evaluated != 1 || stats.SkippedAnchor != 1 {
+		t.Fatalf("stats=%+v", stats)
+	}
+}
 
 func TestScanFilesRejectsInvalidProgramWithoutReading(t *testing.T) {
 	result := ScanFiles(context.Background(), fstest.MapFS{

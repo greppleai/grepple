@@ -2,6 +2,7 @@ package search
 
 import (
 	"bytes"
+	"context"
 	"github.com/greppleai/grepple/api"
 	"os"
 	"path/filepath"
@@ -387,39 +388,59 @@ func collectMatches(results []*FileMatch) []FileMatch {
 // repo filters, in deterministic display-path order, windowed by p.Skip/p.Limit.
 // It backs --files listings and never reads file contents.
 func ListFilePaths(p Params, candidates []string) ([]string, error) {
+	return ListFilePathsContext(context.Background(), p, candidates)
+}
+
+// ListFilePathsContext is ListFilePaths with cancellation during discovery.
+func ListFilePathsContext(ctx context.Context, p Params, candidates []string) ([]string, error) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	files := candidates
 	var e error
 	if files == nil {
-		files, e = collectListingFiles(p.Globs, p.Root)
+		files, e = collectListingFilesContext(ctx, p.Globs, p.Root)
 		if e != nil {
 			return nil, e
 		}
 	}
+	out, err := listingDisplayPaths(ctx, p, files, candidates != nil)
+	if err != nil {
+		return nil, err
+	}
+	sort.Strings(out)
+	return applyPathWindow(out, p), nil
+}
+func listingDisplayPaths(ctx context.Context, p Params, files []string, supplied bool) ([]string, error) {
 	repoFilter := NewRepoFilter(p.Repo, p.ExcludeRepo)
 	cwd, _ := os.Getwd()
 	var out []string
-	for _, f := range files {
-		dp := displayPathFrom(f, cwd)
-		if candidates != nil && (!withinRoot(f, p.Root) || !pathMatchesGlobs(dp, p.Globs)) {
+	for _, file := range files {
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
+		display := displayPathFrom(file, cwd)
+		if supplied && (!withinRoot(file, p.Root) || !pathMatchesGlobs(display, p.Globs)) {
 			continue
 		}
-		repo := RepoID(dp)
-		if repoFilter.Allow(repo) {
-			out = append(out, dp)
+		if repoFilter.Allow(RepoID(display)) {
+			out = append(out, display)
 		}
-	}
-	sort.Strings(out)
-	if p.Skip > 0 {
-		if p.Skip >= len(out) {
-			out = out[:0]
-		} else {
-			out = out[p.Skip:]
-		}
-	}
-	if limit := resultLimit(p); limit > 0 && len(out) > limit {
-		out = out[:limit]
 	}
 	return out, nil
+}
+
+func applyPathWindow(paths []string, p Params) []string {
+	if p.Skip > 0 {
+		if p.Skip >= len(paths) {
+			return paths[:0]
+		}
+		paths = paths[p.Skip:]
+	}
+	if limit := resultLimit(p); limit > 0 && len(paths) > limit {
+		paths = paths[:limit]
+	}
+	return paths
 }
 
 // resultLimit returns the effective per-page cap from Limit and MaxFiles

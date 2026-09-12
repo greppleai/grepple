@@ -262,7 +262,7 @@ func acquireGritLocal(ctx context.Context, values gritArgs, program *gritql.Prog
 	if err != nil {
 		return api.GritResponse{}, err
 	}
-	candidates, err := gritCandidates(cwd, values.Globs, program)
+	candidates, err := gritCandidates(ctx, cwd, values.Globs)
 	if err != nil {
 		return api.GritResponse{}, err
 	}
@@ -275,34 +275,15 @@ func acquireGritLocal(ctx context.Context, values gritArgs, program *gritql.Prog
 	return response, nil
 }
 
-func gritCandidates(root string, globs []string, program *gritql.Program) ([]gritql.ScanCandidate, error) {
-	anchors := gritql.AnalyzeAnchors(program).RequiredLiterals()
-	if len(anchors) == 0 {
-		paths, err := search.ListFilePaths(search.Params{Files: true, Globs: globs, Root: root}, nil)
-		if err != nil {
-			return nil, err
-		}
-		candidates := make([]gritql.ScanCandidate, 0, len(paths))
-		for _, candidatePath := range paths {
-			normalized := filepath.ToSlash(candidatePath)
-			candidates = append(candidates, gritql.ScanCandidate{ReadPath: normalized, Path: normalized})
-		}
-		return candidates, nil
-	}
-	anchor := anchors[0]
-	for _, candidate := range anchors[1:] {
-		if len(candidate) > len(anchor) {
-			anchor = candidate
-		}
-	}
-	matches, err := search.Files(search.Params{Query: anchor, Globs: globs, Root: root, SkipSegments: true}, nil)
+func gritCandidates(ctx context.Context, root string, globs []string) ([]gritql.ScanCandidate, error) {
+	paths, err := search.ListFilePathsContext(ctx, search.Params{Files: true, Globs: globs, Root: root}, nil)
 	if err != nil {
 		return nil, err
 	}
-	candidates := make([]gritql.ScanCandidate, 0, len(matches))
-	for _, match := range matches {
-		normalized := filepath.ToSlash(match.DisplayPath)
-		candidates = append(candidates, gritql.ScanCandidate{ReadPath: normalized, Path: normalized, Content: []byte(match.Content)})
+	candidates := make([]gritql.ScanCandidate, 0, len(paths))
+	for _, candidatePath := range paths {
+		normalized := filepath.ToSlash(candidatePath)
+		candidates = append(candidates, gritql.ScanCandidate{ReadPath: normalized, Path: normalized})
 	}
 	return candidates, nil
 }

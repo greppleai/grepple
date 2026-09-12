@@ -158,6 +158,7 @@ func addGritStatistics(left, right api.GritStatistics) api.GritStatistics {
 		SkippedLanguage: saturatingAddInt(left.SkippedLanguage, right.SkippedLanguage),
 		SkippedGlob:     saturatingAddInt(left.SkippedGlob, right.SkippedGlob),
 		SkippedBinary:   saturatingAddInt(left.SkippedBinary, right.SkippedBinary),
+		SkippedAnchor:   saturatingAddInt(left.SkippedAnchor, right.SkippedAnchor),
 	}
 }
 

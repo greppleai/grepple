@@ -205,16 +205,16 @@ Reduce repeated parsing and language knowledge across extraction, navigation, te
    - [x] Add dedicated TypeScript/TSX conformance fixtures covering ambiguous expression/type syntax, imports, sequences, JSX, query algebra, and binding equality.
    - [x] Group mixed-language saved-rule batches by target language while reading and parsing each eligible source only once for the rules matching that source language.
    - [x] Reject unsupported languages and compatibility mismatches explicitly; no target uses a fallback parser.
-5. Unify source discovery and acquisition where text and structural search currently overlap.
-   - Share repository-relative path normalization, ignore handling, glob filtering, language detection, bounded reads, binary detection, deterministic ordering, and cancellation.
-   - [x] Avoid the anchored structural-search path reading files once for text prefiltering and again for Grit evaluation. `ScanCandidate.Content` now carries prefilter acquisitions into structural scanning without bypassing scanner byte, memory, binary, UTF-8, or parse checks.
-   - Keep evaluation orchestration reusable by local CLI and backend callers; introduce a lower-level source/candidate package only if it produces a cleaner dependency graph than making `gritql` depend on `search`.
+5. [x] Unify source discovery and acquisition where text and structural search overlap.
+   - [x] Reuse `search.ListFilePathsContext` for cancellable repository-relative discovery, ignore handling, globs, and deterministic ordering, then perform language filtering, bounded acquisition, binary detection, cancellation, and evaluation in the reusable Grit scanner.
+   - [x] Evaluate mandatory anchors inside the bounded Grit acquisition pass, so local structural search reads every scoped source at most once and parses only anchor-selected files. Mixed-rule batches prefilter independently per program before their shared parse.
+   - [x] Keep evaluation orchestration reusable by local CLI and backend callers without making `gritql` depend on `search`; preacquired callers may still provide `ScanCandidate.Content` without bypassing scanner checks.
 6. Make parser documents the shared cache boundary.
    - Allow a document to be backed by a live Tree-sitter tree or the production packed read-only CST through the same lightweight node accessor.
    - Parse or restore each file once, then derive outlines, navigation graphs, extraction models, and one or more GritQL rule evaluations from that document.
    - Keep repository-context resolution outside the path-neutral per-file cache.
 
-Recommended implementation order: complete targeted TypeScript/TSX placeholder-role gaps as conformance cases expose them, then shared acquisition, then cached document backends. Exercising a second grammar before those lower layers stabilized prevented Go-only assumptions from becoming cache or acquisition contracts.
+Recommended implementation order: address targeted TypeScript/TSX placeholder-role gaps as conformance cases expose them, then proceed to cached document backends. Exercising a second grammar before shared acquisition and caching stabilized prevented Go-only assumptions from becoming lower-layer contracts.
 
 Acceptance criteria:
 

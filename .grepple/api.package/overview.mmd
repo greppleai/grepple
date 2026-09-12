@@ -2,7 +2,7 @@ classDiagram
     %% grepple:package-default github.com/greppleai/grepple/api
     %% grepple:language-default go
     direction LR
-    note "Package api defines Grepple-controlled HTTP request and response contracts. | package github.com/greppleai/grepple/api | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=2, declarations=29, exportedTypes=29, internalTypes=0, members=180, exportedFunctions=0, fiberRoutes=0, relations=28"
+    note "Package api defines Grepple-controlled HTTP request and response contracts. | package github.com/greppleai/grepple/api | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=2, declarations=29, exportedTypes=29, internalTypes=0, members=181, exportedFunctions=0, fiberRoutes=0, relations=28"
     namespace data_contracts {
         class ContextLine["ContextLine · api/model.go:47-51"] {
             +Line: int
@@ -116,7 +116,7 @@ classDiagram
             +Skip: *int
         }
         <<struct>> GritRequest
-        class GritResponse["GritResponse · api/grit.go:180-188"] {
+        class GritResponse["GritResponse · api/grit.go:181-189"] {
             +Diagnostics: []GritDiagnostic
             +Findings: []GritFinding
             +Metadata: GritMetadata
@@ -126,11 +126,12 @@ classDiagram
             +Truncations: []GritTruncation
         }
         <<struct>> GritResponse
-        class GritStatistics["GritStatistics · api/grit.go:168-176"] {
+        class GritStatistics["GritStatistics · api/grit.go:168-177"] {
             +BytesRead: int64
             +Candidates: int
             +Eligible: int
             +Evaluated: int
+            +SkippedAnchor: int
             +SkippedBinary: int
             +SkippedGlob: int
             +SkippedLanguage: int

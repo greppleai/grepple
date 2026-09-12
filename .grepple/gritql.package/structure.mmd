@@ -422,12 +422,13 @@ classDiagram
     }
     <<struct>> ScanResult
     %% grepple:file ScanResult gritql/scanner.go
-    note for ScanResult "defined: gritql/scanner.go:74-78; Diagnostics@gritql/scanner.go:84; Findings@gritql/scanner.go:81; MarshalJSON@gritql/scanner.go:98-106; Metadata@gritql/scanner.go:87; Stats@gritql/scanner.go:95; Truncations@gritql/scanner.go:90-92; evaluation@gritql/scanner.go:75; stats@gritql/scanner.go:77; truncations@gritql/scanner.go:76"
+    note for ScanResult "defined: gritql/scanner.go:75-79; Diagnostics@gritql/scanner.go:85; Findings@gritql/scanner.go:82; MarshalJSON@gritql/scanner.go:99-107; Metadata@gritql/scanner.go:88; Stats@gritql/scanner.go:96; Truncations@gritql/scanner.go:91-93; evaluation@gritql/scanner.go:76; stats@gritql/scanner.go:78; truncations@gritql/scanner.go:77"
     class ScanStats {
         +BytesRead: int64
         +Candidates: int
         +Eligible: int
         +Evaluated: int
+        +SkippedAnchor: int
         +SkippedBinary: int
         +SkippedGlob: int
         +SkippedLanguage: int
@@ -438,10 +439,11 @@ classDiagram
     %% grepple:struct-tag ScanStats Candidates "json:\"candidates\""
     %% grepple:struct-tag ScanStats Eligible "json:\"eligible\""
     %% grepple:struct-tag ScanStats Evaluated "json:\"evaluated\""
+    %% grepple:struct-tag ScanStats SkippedAnchor "json:\"skipped_anchor\""
     %% grepple:struct-tag ScanStats SkippedBinary "json:\"skipped_binary\""
     %% grepple:struct-tag ScanStats SkippedGlob "json:\"skipped_glob\""
     %% grepple:struct-tag ScanStats SkippedLanguage "json:\"skipped_language\""
-    note for ScanStats "defined: gritql/scanner.go:63-71; BytesRead@gritql/scanner.go:67; Candidates@gritql/scanner.go:64; Eligible@gritql/scanner.go:65; Evaluated@gritql/scanner.go:66; SkippedBinary@gritql/scanner.go:70; SkippedGlob@gritql/scanner.go:69; SkippedLanguage@gritql/scanner.go:68"
+    note for ScanStats "defined: gritql/scanner.go:63-72; BytesRead@gritql/scanner.go:67; Candidates@gritql/scanner.go:64; Eligible@gritql/scanner.go:65; Evaluated@gritql/scanner.go:66; SkippedAnchor@gritql/scanner.go:71; SkippedBinary@gritql/scanner.go:70; SkippedGlob@gritql/scanner.go:69; SkippedLanguage@gritql/scanner.go:68"
     class ScanTruncation {
         +Limit: int64
         +Reason: string
@@ -807,7 +809,7 @@ classDiagram
     }
     <<struct>> preparedScanCandidate
     %% grepple:file preparedScanCandidate gritql/scanner.go
-    note for preparedScanCandidate "defined: gritql/scanner.go:108-113; content@gritql/scanner.go:112; language@gritql/scanner.go:111; path@gritql/scanner.go:110; readPath@gritql/scanner.go:109"
+    note for preparedScanCandidate "defined: gritql/scanner.go:109-114; content@gritql/scanner.go:113; language@gritql/scanner.go:112; path@gritql/scanner.go:111; readPath@gritql/scanner.go:110"
     class queryDocument {
         -bytes(): []byte
         -close()
@@ -938,24 +940,24 @@ classDiagram
     }
     <<struct>> scanByteAccount
     %% grepple:file scanByteAccount gritql/scanner.go
-    note for scanByteAccount "defined: gritql/scanner.go:373-380; read@gritql/scanner.go:386-406; readNext@gritql/scanner.go:408-428; signalLocked@gritql/scanner.go:430-433; maximum@gritql/scanner.go:378; mu@gritql/scanner.go:374; next@gritql/scanner.go:376; notify@gritql/scanner.go:375; stopped@gritql/scanner.go:379; total@gritql/scanner.go:377"
+    note for scanByteAccount "defined: gritql/scanner.go:385-392; read@gritql/scanner.go:398-418; readNext@gritql/scanner.go:420-440; signalLocked@gritql/scanner.go:442-445; maximum@gritql/scanner.go:390; mu@gritql/scanner.go:386; next@gritql/scanner.go:388; notify@gritql/scanner.go:387; stopped@gritql/scanner.go:391; total@gritql/scanner.go:389"
     class scanCandidateDisposition["scanCandidateDisposition = uint8"]
     <<type>> scanCandidateDisposition
     %% grepple:underlying scanCandidateDisposition uint8
     %% grepple:file scanCandidateDisposition gritql/scanner.go
-    note for scanCandidateDisposition "defined: gritql/scanner.go:514"
+    note for scanCandidateDisposition "defined: gritql/scanner.go:526"
     class scanJob {
         -candidate: preparedScanCandidate
         -index: int
     }
     <<struct>> scanJob
     %% grepple:file scanJob gritql/scanner.go
-    note for scanJob "defined: gritql/scanner.go:124-127; candidate@gritql/scanner.go:126; index@gritql/scanner.go:125"
+    note for scanJob "defined: gritql/scanner.go:126-129; candidate@gritql/scanner.go:128; index@gritql/scanner.go:127"
     class scanLimitKind["scanLimitKind = uint8"]
     <<type>> scanLimitKind
     %% grepple:underlying scanLimitKind uint8
     %% grepple:file scanLimitKind gritql/scanner.go
-    note for scanLimitKind "defined: gritql/scanner.go:358"
+    note for scanLimitKind "defined: gritql/scanner.go:370"
     class scanMemoryAccount {
         -acquire(context.Context, int64): bool
         -discard(int, int64)
@@ -972,8 +974,9 @@ classDiagram
     }
     <<struct>> scanMemoryAccount
     %% grepple:file scanMemoryAccount gritql/scanner.go
-    note for scanMemoryAccount "defined: gritql/scanner.go:606-613; acquire@gritql/scanner.go:619-639; discard@gritql/scanner.go:677-685; release@gritql/scanner.go:687-695; replace@gritql/scanner.go:641-665; retain@gritql/scanner.go:667-675; signalLocked@gritql/scanner.go:697-700; capacity@gritql/scanner.go:609; current@gritql/scanner.go:610; mu@gritql/scanner.go:607; next@gritql/scanner.go:612; notify@gritql/scanner.go:608; retained@gritql/scanner.go:611"
+    note for scanMemoryAccount "defined: gritql/scanner.go:618-625; acquire@gritql/scanner.go:631-651; discard@gritql/scanner.go:689-697; release@gritql/scanner.go:699-707; replace@gritql/scanner.go:653-677; retain@gritql/scanner.go:679-687; signalLocked@gritql/scanner.go:709-712; capacity@gritql/scanner.go:621; current@gritql/scanner.go:622; mu@gritql/scanner.go:619; next@gritql/scanner.go:624; notify@gritql/scanner.go:620; retained@gritql/scanner.go:623"
     class scanOutcome {
+        -anchorMiss: bool
         -binary: bool
         -bytesRead: int64
         -evaluation: FileEvaluation
@@ -983,7 +986,7 @@ classDiagram
     }
     <<struct>> scanOutcome
     %% grepple:file scanOutcome gritql/scanner.go
-    note for scanOutcome "defined: gritql/scanner.go:115-122; binary@gritql/scanner.go:120; bytesRead@gritql/scanner.go:118; evaluation@gritql/scanner.go:117; index@gritql/scanner.go:116; reserved@gritql/scanner.go:119; totalTruncated@gritql/scanner.go:121"
+    note for scanOutcome "defined: gritql/scanner.go:116-124; anchorMiss@gritql/scanner.go:122; binary@gritql/scanner.go:121; bytesRead@gritql/scanner.go:119; evaluation@gritql/scanner.go:118; index@gritql/scanner.go:117; reserved@gritql/scanner.go:120; totalTruncated@gritql/scanner.go:123"
     class scanReadResult {
         -content: []byte
         -err: error
@@ -991,7 +994,7 @@ classDiagram
     }
     <<struct>> scanReadResult
     %% grepple:file scanReadResult gritql/scanner.go
-    note for scanReadResult "defined: gritql/scanner.go:367-371; content@gritql/scanner.go:368; err@gritql/scanner.go:369; limit@gritql/scanner.go:370"
+    note for scanReadResult "defined: gritql/scanner.go:379-383; content@gritql/scanner.go:380; err@gritql/scanner.go:381; limit@gritql/scanner.go:382"
     class scanSegmentMatcher {
         -match(int, int): bool
         -matchDoubleStar(int, int): bool
@@ -1003,18 +1006,19 @@ classDiagram
     }
     <<struct>> scanSegmentMatcher
     %% grepple:file scanSegmentMatcher gritql/scanner.go
-    note for scanSegmentMatcher "defined: gritql/scanner.go:810-815; match@gritql/scanner.go:822-831; matchDoubleStar@gritql/scanner.go:847-852; matchUncached@gritql/scanner.go:833-845; name@gritql/scanner.go:812; pattern@gritql/scanner.go:811; seen@gritql/scanner.go:813; values@gritql/scanner.go:814"
+    note for scanSegmentMatcher "defined: gritql/scanner.go:822-827; match@gritql/scanner.go:834-843; matchDoubleStar@gritql/scanner.go:859-864; matchUncached@gritql/scanner.go:845-857; name@gritql/scanner.go:824; pattern@gritql/scanner.go:823; seen@gritql/scanner.go:825; values@gritql/scanner.go:826"
     class scanSegmentState {
         -name: int
         -pattern: int
     }
     <<struct>> scanSegmentState
     %% grepple:file scanSegmentState gritql/scanner.go
-    note for scanSegmentState "defined: gritql/scanner.go:805-808; name@gritql/scanner.go:807; pattern@gritql/scanner.go:806"
+    note for scanSegmentState "defined: gritql/scanner.go:817-820; name@gritql/scanner.go:819; pattern@gritql/scanner.go:818"
     class scanState {
         -commit(*Program, scanOutcome)
         -scan(context.Context, fs.FS, *Program, []preparedScanCandidate)
         -account: *scanMemoryAccount
+        -anchor: string
         -bytes: *scanByteAccount
         -candidateCount: int
         -evaluations: []FileEvaluation
@@ -1029,7 +1033,7 @@ classDiagram
     }
     <<struct>> scanState
     %% grepple:file scanState gritql/scanner.go
-    note for scanState "defined: gritql/scanner.go:128-141; commit@gritql/scanner.go:254-286; scan@gritql/scanner.go:181-195; account@gritql/scanner.go:135; bytes@gritql/scanner.go:136; candidateCount@gritql/scanner.go:137; evaluations@gritql/scanner.go:131; options@gritql/scanner.go:129; retained@gritql/scanner.go:133; started@gritql/scanner.go:130; stats@gritql/scanner.go:134; stop@gritql/scanner.go:138; totalSkipped@gritql/scanner.go:140; totalTruncated@gritql/scanner.go:139; truncations@gritql/scanner.go:132"
+    note for scanState "defined: gritql/scanner.go:130-144; commit@gritql/scanner.go:257-294; scan@gritql/scanner.go:184-198; account@gritql/scanner.go:138; anchor@gritql/scanner.go:133; bytes@gritql/scanner.go:139; candidateCount@gritql/scanner.go:140; evaluations@gritql/scanner.go:134; options@gritql/scanner.go:131; retained@gritql/scanner.go:136; started@gritql/scanner.go:132; stats@gritql/scanner.go:137; stop@gritql/scanner.go:141; totalSkipped@gritql/scanner.go:143; totalTruncated@gritql/scanner.go:142; truncations@gritql/scanner.go:135"
     class selectedRoot {
         -node: parser.Node
         -sequenceKind: string
@@ -1336,7 +1340,7 @@ classDiagram
     }
     <<function>> ScanFiles
     %% grepple:file ScanFiles gritql/scanner.go
-    note for ScanFiles "defined: gritql/scanner.go:145-167"
+    note for ScanFiles "defined: gritql/scanner.go:148-170"
     class ScanFilesPrograms {
         +ScanFilesPrograms(context.Context, fs.FS, []ProgramScan, []ScanCandidate, ScanOptions): BatchScanResult
     }
@@ -1354,7 +1358,7 @@ classDiagram
     }
     <<function>> ValidateGlobs
     %% grepple:file ValidateGlobs gritql/scanner.go
-    note for ValidateGlobs "defined: gritql/scanner.go:761-766"
+    note for ValidateGlobs "defined: gritql/scanner.go:773-778"
     AnalyzeAnchors "1" ..> "1" AnchorPlan : result 1
     AnalyzeAnchors "1" ..> "1" Program : parameter 1
     BatchScanResult "1" --> "1" BatchScanStats : field stats

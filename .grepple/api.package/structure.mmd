@@ -234,12 +234,13 @@ classDiagram
     %% grepple:struct-tag GritResponse Statistics "json:\"statistics\""
     %% grepple:struct-tag GritResponse Total "json:\"total\""
     %% grepple:struct-tag GritResponse Truncations "json:\"truncations\""
-    note for GritResponse "defined: api/grit.go:180-188; Diagnostics@api/grit.go:183; Findings@api/grit.go:182; Metadata@api/grit.go:181; ShardErrors@api/grit.go:186; Statistics@api/grit.go:185; Total@api/grit.go:187; Truncations@api/grit.go:184"
+    note for GritResponse "defined: api/grit.go:181-189; Diagnostics@api/grit.go:184; Findings@api/grit.go:183; Metadata@api/grit.go:182; ShardErrors@api/grit.go:187; Statistics@api/grit.go:186; Total@api/grit.go:188; Truncations@api/grit.go:185"
     class GritStatistics {
         +BytesRead: int64
         +Candidates: int
         +Eligible: int
         +Evaluated: int
+        +SkippedAnchor: int
         +SkippedBinary: int
         +SkippedGlob: int
         +SkippedLanguage: int
@@ -250,10 +251,11 @@ classDiagram
     %% grepple:struct-tag GritStatistics Candidates "json:\"candidates\""
     %% grepple:struct-tag GritStatistics Eligible "json:\"eligible\""
     %% grepple:struct-tag GritStatistics Evaluated "json:\"evaluated\""
+    %% grepple:struct-tag GritStatistics SkippedAnchor "json:\"skippedAnchor\""
     %% grepple:struct-tag GritStatistics SkippedBinary "json:\"skippedBinary\""
     %% grepple:struct-tag GritStatistics SkippedGlob "json:\"skippedGlob\""
     %% grepple:struct-tag GritStatistics SkippedLanguage "json:\"skippedLanguage\""
-    note for GritStatistics "defined: api/grit.go:168-176; BytesRead@api/grit.go:172; Candidates@api/grit.go:169; Eligible@api/grit.go:170; Evaluated@api/grit.go:171; SkippedBinary@api/grit.go:175; SkippedGlob@api/grit.go:174; SkippedLanguage@api/grit.go:173"
+    note for GritStatistics "defined: api/grit.go:168-177; BytesRead@api/grit.go:172; Candidates@api/grit.go:169; Eligible@api/grit.go:170; Evaluated@api/grit.go:171; SkippedAnchor@api/grit.go:176; SkippedBinary@api/grit.go:175; SkippedGlob@api/grit.go:174; SkippedLanguage@api/grit.go:173"
     class GritStructuralNode {
         +Children: []GritStructuralNode
         +Lexeme: string

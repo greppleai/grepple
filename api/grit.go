@@ -173,6 +173,7 @@ type GritStatistics struct {
 	SkippedLanguage int   `json:"skippedLanguage"`
 	SkippedGlob     int   `json:"skippedGlob"`
 	SkippedBinary   int   `json:"skippedBinary"`
+	SkippedAnchor   int   `json:"skippedAnchor"`
 }
 
 // GritResponse is the dedicated local, shard, and router structural-search

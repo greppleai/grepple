@@ -20,12 +20,12 @@
     "declarations": 117,
     "exportedTypes": 48,
     "internalTypes": 69,
-    "members": 618,
+    "members": 621,
     "exportedFunctions": 17,
     "fiberRoutes": 0,
     "relations": 317
   },
-  "semanticModelDigest": "sha256:ca13813ecb45956569ea1cfc1939e0ff866dc1949bfd2a4ab40baa03e371f03f",
+  "semanticModelDigest": "sha256:941e6c675ae8be625fc3a46873a28a7d3e867da66443a7ed0445f5a47d835b54",
   "sourceFiles": [
     {
       "path": "gritql/anchor.go"
@@ -1960,71 +1960,71 @@
       "name": "ScanResult",
       "kind": "struct",
       "file": "gritql/scanner.go",
-      "line": 74,
-      "endLine": 78,
+      "line": 75,
+      "endLine": 79,
       "underlyingType": "struct{evaluation FileEvaluation;truncations[]ScanTruncation;stats ScanStats;}",
       "members": [
         {
           "name": "Diagnostics",
           "kind": "method",
-          "line": 84,
-          "endLine": 84,
+          "line": 85,
+          "endLine": 85,
           "result": "[]Diagnostic"
         },
         {
           "name": "Findings",
           "kind": "method",
-          "line": 81,
-          "endLine": 81,
+          "line": 82,
+          "endLine": 82,
           "result": "[]Finding"
         },
         {
           "name": "MarshalJSON",
           "kind": "method",
-          "line": 98,
-          "endLine": 106,
+          "line": 99,
+          "endLine": 107,
           "result": "tuple\u003c[]byte,error\u003e"
         },
         {
           "name": "Metadata",
           "kind": "method",
-          "line": 87,
-          "endLine": 87,
+          "line": 88,
+          "endLine": 88,
           "result": "EvaluationMetadata"
         },
         {
           "name": "Stats",
           "kind": "method",
-          "line": 95,
-          "endLine": 95,
+          "line": 96,
+          "endLine": 96,
           "result": "ScanStats"
         },
         {
           "name": "Truncations",
           "kind": "method",
-          "line": 90,
-          "endLine": 92,
+          "line": 91,
+          "endLine": 93,
           "result": "[]ScanTruncation"
         },
         {
           "name": "evaluation",
           "kind": "property",
-          "line": 75,
-          "endLine": 75,
+          "line": 76,
+          "endLine": 76,
           "result": "FileEvaluation"
         },
         {
           "name": "stats",
           "kind": "property",
-          "line": 77,
-          "endLine": 77,
+          "line": 78,
+          "endLine": 78,
           "result": "ScanStats"
         },
         {
           "name": "truncations",
           "kind": "property",
-          "line": 76,
-          "endLine": 76,
+          "line": 77,
+          "endLine": 77,
           "result": "[]ScanTruncation"
         }
       ]
@@ -2034,8 +2034,8 @@
       "kind": "struct",
       "file": "gritql/scanner.go",
       "line": 63,
-      "endLine": 71,
-      "underlyingType": "struct{Candidates int`json:\"candidates\"`;Eligible int`json:\"eligible\"`;Evaluated int`json:\"evaluated\"`;BytesRead int64`json:\"bytes_read\"`;SkippedLanguage int`json:\"skipped_language\"`;SkippedGlob int`json:\"skipped_glob\"`;SkippedBinary int`json:\"skipped_binary\"`;}",
+      "endLine": 72,
+      "underlyingType": "struct{Candidates int`json:\"candidates\"`;Eligible int`json:\"eligible\"`;Evaluated int`json:\"evaluated\"`;BytesRead int64`json:\"bytes_read\"`;SkippedLanguage int`json:\"skipped_language\"`;SkippedGlob int`json:\"skipped_glob\"`;SkippedBinary int`json:\"skipped_binary\"`;SkippedAnchor int`json:\"skipped_anchor\"`;}",
       "members": [
         {
           "name": "BytesRead",
@@ -2075,6 +2075,16 @@
           "result": "int",
           "structTag": {
             "value": "json:\"evaluated\""
+          }
+        },
+        {
+          "name": "SkippedAnchor",
+          "kind": "property",
+          "line": 71,
+          "endLine": 71,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"skipped_anchor\""
           }
         },
         {
@@ -3660,36 +3670,36 @@
       "name": "preparedScanCandidate",
       "kind": "struct",
       "file": "gritql/scanner.go",
-      "line": 108,
-      "endLine": 113,
+      "line": 109,
+      "endLine": 114,
       "underlyingType": "struct{readPath string;path string;language string;content[]byte;}",
       "members": [
         {
           "name": "content",
           "kind": "property",
-          "line": 112,
-          "endLine": 112,
+          "line": 113,
+          "endLine": 113,
           "result": "[]byte"
         },
         {
           "name": "language",
+          "kind": "property",
+          "line": 112,
+          "endLine": 112,
+          "result": "string"
+        },
+        {
+          "name": "path",
           "kind": "property",
           "line": 111,
           "endLine": 111,
           "result": "string"
         },
         {
-          "name": "path",
+          "name": "readPath",
           "kind": "property",
           "line": 110,
           "endLine": 110,
-          "result": "string"
-        },
-        {
-          "name": "readPath",
-          "kind": "property",
-          "line": 109,
-          "endLine": 109,
           "result": "string"
         }
       ]
@@ -4230,15 +4240,15 @@
       "name": "scanByteAccount",
       "kind": "struct",
       "file": "gritql/scanner.go",
-      "line": 373,
-      "endLine": 380,
+      "line": 385,
+      "endLine": 392,
       "underlyingType": "struct{mu sync.Mutex;notify chan struct{};next int;total int64;maximum int64;stopped bool;}",
       "members": [
         {
           "name": "read",
           "kind": "method",
-          "line": 386,
-          "endLine": 406,
+          "line": 398,
+          "endLine": 418,
           "parameters": [
             "context.Context",
             "fs.FS",
@@ -4252,8 +4262,8 @@
         {
           "name": "readNext",
           "kind": "method",
-          "line": 408,
-          "endLine": 428,
+          "line": 420,
+          "endLine": 440,
           "parameters": [
             "context.Context",
             "fs.FS",
@@ -4266,49 +4276,49 @@
         {
           "name": "signalLocked",
           "kind": "method",
-          "line": 430,
-          "endLine": 433
+          "line": 442,
+          "endLine": 445
         },
         {
           "name": "maximum",
           "kind": "property",
-          "line": 378,
-          "endLine": 378,
+          "line": 390,
+          "endLine": 390,
           "result": "int64"
         },
         {
           "name": "mu",
           "kind": "property",
-          "line": 374,
-          "endLine": 374,
+          "line": 386,
+          "endLine": 386,
           "result": "sync.Mutex"
         },
         {
           "name": "next",
           "kind": "property",
-          "line": 376,
-          "endLine": 376,
+          "line": 388,
+          "endLine": 388,
           "result": "int"
         },
         {
           "name": "notify",
           "kind": "property",
-          "line": 375,
-          "endLine": 375,
+          "line": 387,
+          "endLine": 387,
           "result": "chan struct{}"
         },
         {
           "name": "stopped",
           "kind": "property",
-          "line": 379,
-          "endLine": 379,
+          "line": 391,
+          "endLine": 391,
           "result": "bool"
         },
         {
           "name": "total",
           "kind": "property",
-          "line": 377,
-          "endLine": 377,
+          "line": 389,
+          "endLine": 389,
           "result": "int64"
         }
       ]
@@ -4317,30 +4327,30 @@
       "name": "scanCandidateDisposition",
       "kind": "type",
       "file": "gritql/scanner.go",
-      "line": 514,
-      "endLine": 514,
+      "line": 526,
+      "endLine": 526,
       "underlyingType": "uint8"
     },
     {
       "name": "scanJob",
       "kind": "struct",
       "file": "gritql/scanner.go",
-      "line": 124,
-      "endLine": 127,
+      "line": 126,
+      "endLine": 129,
       "underlyingType": "struct{index int;candidate preparedScanCandidate;}",
       "members": [
         {
           "name": "candidate",
           "kind": "property",
-          "line": 126,
-          "endLine": 126,
+          "line": 128,
+          "endLine": 128,
           "result": "preparedScanCandidate"
         },
         {
           "name": "index",
           "kind": "property",
-          "line": 125,
-          "endLine": 125,
+          "line": 127,
+          "endLine": 127,
           "result": "int"
         }
       ]
@@ -4349,23 +4359,23 @@
       "name": "scanLimitKind",
       "kind": "type",
       "file": "gritql/scanner.go",
-      "line": 358,
-      "endLine": 358,
+      "line": 370,
+      "endLine": 370,
       "underlyingType": "uint8"
     },
     {
       "name": "scanMemoryAccount",
       "kind": "struct",
       "file": "gritql/scanner.go",
-      "line": 606,
-      "endLine": 613,
+      "line": 618,
+      "endLine": 625,
       "underlyingType": "struct{mu sync.Mutex;notify chan struct{};capacity int64;current int64;retained int64;next int;}",
       "members": [
         {
           "name": "acquire",
           "kind": "method",
-          "line": 619,
-          "endLine": 639,
+          "line": 631,
+          "endLine": 651,
           "parameters": [
             "context.Context",
             "int64"
@@ -4375,8 +4385,8 @@
         {
           "name": "discard",
           "kind": "method",
-          "line": 677,
-          "endLine": 685,
+          "line": 689,
+          "endLine": 697,
           "parameters": [
             "int",
             "int64"
@@ -4385,8 +4395,8 @@
         {
           "name": "release",
           "kind": "method",
-          "line": 687,
-          "endLine": 695,
+          "line": 699,
+          "endLine": 707,
           "parameters": [
             "int64"
           ]
@@ -4394,8 +4404,8 @@
         {
           "name": "replace",
           "kind": "method",
-          "line": 641,
-          "endLine": 665,
+          "line": 653,
+          "endLine": 677,
           "parameters": [
             "context.Context",
             "int",
@@ -4407,8 +4417,8 @@
         {
           "name": "retain",
           "kind": "method",
-          "line": 667,
-          "endLine": 675,
+          "line": 679,
+          "endLine": 687,
           "parameters": [
             "int",
             "int64"
@@ -4417,49 +4427,49 @@
         {
           "name": "signalLocked",
           "kind": "method",
-          "line": 697,
-          "endLine": 700
+          "line": 709,
+          "endLine": 712
         },
         {
           "name": "capacity",
           "kind": "property",
-          "line": 609,
-          "endLine": 609,
+          "line": 621,
+          "endLine": 621,
           "result": "int64"
         },
         {
           "name": "current",
           "kind": "property",
-          "line": 610,
-          "endLine": 610,
+          "line": 622,
+          "endLine": 622,
           "result": "int64"
         },
         {
           "name": "mu",
           "kind": "property",
-          "line": 607,
-          "endLine": 607,
+          "line": 619,
+          "endLine": 619,
           "result": "sync.Mutex"
         },
         {
           "name": "next",
           "kind": "property",
-          "line": 612,
-          "endLine": 612,
+          "line": 624,
+          "endLine": 624,
           "result": "int"
         },
         {
           "name": "notify",
           "kind": "property",
-          "line": 608,
-          "endLine": 608,
+          "line": 620,
+          "endLine": 620,
           "result": "chan struct{}"
         },
         {
           "name": "retained",
           "kind": "property",
-          "line": 611,
-          "endLine": 611,
+          "line": 623,
+          "endLine": 623,
           "result": "int64"
         }
       ]
@@ -4468,50 +4478,57 @@
       "name": "scanOutcome",
       "kind": "struct",
       "file": "gritql/scanner.go",
-      "line": 115,
-      "endLine": 122,
-      "underlyingType": "struct{index int;evaluation FileEvaluation;bytesRead int64;reserved int64;binary bool;totalTruncated bool;}",
+      "line": 116,
+      "endLine": 124,
+      "underlyingType": "struct{index int;evaluation FileEvaluation;bytesRead int64;reserved int64;binary bool;anchorMiss bool;totalTruncated bool;}",
       "members": [
+        {
+          "name": "anchorMiss",
+          "kind": "property",
+          "line": 122,
+          "endLine": 122,
+          "result": "bool"
+        },
         {
           "name": "binary",
           "kind": "property",
-          "line": 120,
-          "endLine": 120,
+          "line": 121,
+          "endLine": 121,
           "result": "bool"
         },
         {
           "name": "bytesRead",
-          "kind": "property",
-          "line": 118,
-          "endLine": 118,
-          "result": "int64"
-        },
-        {
-          "name": "evaluation",
-          "kind": "property",
-          "line": 117,
-          "endLine": 117,
-          "result": "FileEvaluation"
-        },
-        {
-          "name": "index",
-          "kind": "property",
-          "line": 116,
-          "endLine": 116,
-          "result": "int"
-        },
-        {
-          "name": "reserved",
           "kind": "property",
           "line": 119,
           "endLine": 119,
           "result": "int64"
         },
         {
+          "name": "evaluation",
+          "kind": "property",
+          "line": 118,
+          "endLine": 118,
+          "result": "FileEvaluation"
+        },
+        {
+          "name": "index",
+          "kind": "property",
+          "line": 117,
+          "endLine": 117,
+          "result": "int"
+        },
+        {
+          "name": "reserved",
+          "kind": "property",
+          "line": 120,
+          "endLine": 120,
+          "result": "int64"
+        },
+        {
           "name": "totalTruncated",
           "kind": "property",
-          "line": 121,
-          "endLine": 121,
+          "line": 123,
+          "endLine": 123,
           "result": "bool"
         }
       ]
@@ -4520,29 +4537,29 @@
       "name": "scanReadResult",
       "kind": "struct",
       "file": "gritql/scanner.go",
-      "line": 367,
-      "endLine": 371,
+      "line": 379,
+      "endLine": 383,
       "underlyingType": "struct{content[]byte;err error;limit scanLimitKind;}",
       "members": [
         {
           "name": "content",
           "kind": "property",
-          "line": 368,
-          "endLine": 368,
+          "line": 380,
+          "endLine": 380,
           "result": "[]byte"
         },
         {
           "name": "err",
           "kind": "property",
-          "line": 369,
-          "endLine": 369,
+          "line": 381,
+          "endLine": 381,
           "result": "error"
         },
         {
           "name": "limit",
           "kind": "property",
-          "line": 370,
-          "endLine": 370,
+          "line": 382,
+          "endLine": 382,
           "result": "scanLimitKind"
         }
       ]
@@ -4551,15 +4568,15 @@
       "name": "scanSegmentMatcher",
       "kind": "struct",
       "file": "gritql/scanner.go",
-      "line": 810,
-      "endLine": 815,
+      "line": 822,
+      "endLine": 827,
       "underlyingType": "struct{pattern[]string;name[]string;seen map[scanSegmentState]bool;values map[scanSegmentState]bool;}",
       "members": [
         {
           "name": "match",
           "kind": "method",
-          "line": 822,
-          "endLine": 831,
+          "line": 834,
+          "endLine": 843,
           "parameters": [
             "int",
             "int"
@@ -4569,8 +4586,8 @@
         {
           "name": "matchDoubleStar",
           "kind": "method",
-          "line": 847,
-          "endLine": 852,
+          "line": 859,
+          "endLine": 864,
           "parameters": [
             "int",
             "int"
@@ -4580,8 +4597,8 @@
         {
           "name": "matchUncached",
           "kind": "method",
-          "line": 833,
-          "endLine": 845,
+          "line": 845,
+          "endLine": 857,
           "parameters": [
             "int",
             "int"
@@ -4591,29 +4608,29 @@
         {
           "name": "name",
           "kind": "property",
-          "line": 812,
-          "endLine": 812,
+          "line": 824,
+          "endLine": 824,
           "result": "[]string"
         },
         {
           "name": "pattern",
           "kind": "property",
-          "line": 811,
-          "endLine": 811,
+          "line": 823,
+          "endLine": 823,
           "result": "[]string"
         },
         {
           "name": "seen",
           "kind": "property",
-          "line": 813,
-          "endLine": 813,
+          "line": 825,
+          "endLine": 825,
           "result": "map[scanSegmentState]bool"
         },
         {
           "name": "values",
           "kind": "property",
-          "line": 814,
-          "endLine": 814,
+          "line": 826,
+          "endLine": 826,
           "result": "map[scanSegmentState]bool"
         }
       ]
@@ -4622,22 +4639,22 @@
       "name": "scanSegmentState",
       "kind": "struct",
       "file": "gritql/scanner.go",
-      "line": 805,
-      "endLine": 808,
+      "line": 817,
+      "endLine": 820,
       "underlyingType": "struct{pattern int;name int;}",
       "members": [
         {
           "name": "name",
           "kind": "property",
-          "line": 807,
-          "endLine": 807,
+          "line": 819,
+          "endLine": 819,
           "result": "int"
         },
         {
           "name": "pattern",
           "kind": "property",
-          "line": 806,
-          "endLine": 806,
+          "line": 818,
+          "endLine": 818,
           "result": "int"
         }
       ]
@@ -4646,15 +4663,15 @@
       "name": "scanState",
       "kind": "struct",
       "file": "gritql/scanner.go",
-      "line": 128,
-      "endLine": 141,
-      "underlyingType": "struct{options ScanOptions;started time.Time;evaluations[]FileEvaluation;truncations[]ScanTruncation;retained int64;stats ScanStats;account*scanMemoryAccount;bytes*scanByteAccount;candidateCount int;stop bool;totalTruncated bool;totalSkipped int;}",
+      "line": 130,
+      "endLine": 144,
+      "underlyingType": "struct{options ScanOptions;started time.Time;anchor string;evaluations[]FileEvaluation;truncations[]ScanTruncation;retained int64;stats ScanStats;account*scanMemoryAccount;bytes*scanByteAccount;candidateCount int;stop bool;totalTruncated bool;totalSkipped int;}",
       "members": [
         {
           "name": "commit",
           "kind": "method",
-          "line": 254,
-          "endLine": 286,
+          "line": 257,
+          "endLine": 294,
           "parameters": [
             "*Program",
             "scanOutcome"
@@ -4663,8 +4680,8 @@
         {
           "name": "scan",
           "kind": "method",
-          "line": 181,
-          "endLine": 195,
+          "line": 184,
+          "endLine": 198,
           "parameters": [
             "context.Context",
             "fs.FS",
@@ -4675,85 +4692,92 @@
         {
           "name": "account",
           "kind": "property",
-          "line": 135,
-          "endLine": 135,
+          "line": 138,
+          "endLine": 138,
           "result": "*scanMemoryAccount"
+        },
+        {
+          "name": "anchor",
+          "kind": "property",
+          "line": 133,
+          "endLine": 133,
+          "result": "string"
         },
         {
           "name": "bytes",
           "kind": "property",
-          "line": 136,
-          "endLine": 136,
+          "line": 139,
+          "endLine": 139,
           "result": "*scanByteAccount"
         },
         {
           "name": "candidateCount",
-          "kind": "property",
-          "line": 137,
-          "endLine": 137,
-          "result": "int"
-        },
-        {
-          "name": "evaluations",
-          "kind": "property",
-          "line": 131,
-          "endLine": 131,
-          "result": "[]FileEvaluation"
-        },
-        {
-          "name": "options",
-          "kind": "property",
-          "line": 129,
-          "endLine": 129,
-          "result": "ScanOptions"
-        },
-        {
-          "name": "retained",
-          "kind": "property",
-          "line": 133,
-          "endLine": 133,
-          "result": "int64"
-        },
-        {
-          "name": "started",
-          "kind": "property",
-          "line": 130,
-          "endLine": 130,
-          "result": "time.Time"
-        },
-        {
-          "name": "stats",
-          "kind": "property",
-          "line": 134,
-          "endLine": 134,
-          "result": "ScanStats"
-        },
-        {
-          "name": "stop",
-          "kind": "property",
-          "line": 138,
-          "endLine": 138,
-          "result": "bool"
-        },
-        {
-          "name": "totalSkipped",
           "kind": "property",
           "line": 140,
           "endLine": 140,
           "result": "int"
         },
         {
+          "name": "evaluations",
+          "kind": "property",
+          "line": 134,
+          "endLine": 134,
+          "result": "[]FileEvaluation"
+        },
+        {
+          "name": "options",
+          "kind": "property",
+          "line": 131,
+          "endLine": 131,
+          "result": "ScanOptions"
+        },
+        {
+          "name": "retained",
+          "kind": "property",
+          "line": 136,
+          "endLine": 136,
+          "result": "int64"
+        },
+        {
+          "name": "started",
+          "kind": "property",
+          "line": 132,
+          "endLine": 132,
+          "result": "time.Time"
+        },
+        {
+          "name": "stats",
+          "kind": "property",
+          "line": 137,
+          "endLine": 137,
+          "result": "ScanStats"
+        },
+        {
+          "name": "stop",
+          "kind": "property",
+          "line": 141,
+          "endLine": 141,
+          "result": "bool"
+        },
+        {
+          "name": "totalSkipped",
+          "kind": "property",
+          "line": 143,
+          "endLine": 143,
+          "result": "int"
+        },
+        {
           "name": "totalTruncated",
           "kind": "property",
-          "line": 139,
-          "endLine": 139,
+          "line": 142,
+          "endLine": 142,
           "result": "bool"
         },
         {
           "name": "truncations",
           "kind": "property",
-          "line": 132,
-          "endLine": 132,
+          "line": 135,
+          "endLine": 135,
           "result": "[]ScanTruncation"
         }
       ]
@@ -6045,8 +6069,8 @@
       "name": "ScanFiles",
       "kind": "function",
       "file": "gritql/scanner.go",
-      "line": 145,
-      "endLine": 167,
+      "line": 148,
+      "endLine": 170,
       "parameters": [
         "context.Context",
         "fs.FS",
@@ -6089,8 +6113,8 @@
       "name": "ValidateGlobs",
       "kind": "function",
       "file": "gritql/scanner.go",
-      "line": 761,
-      "endLine": 766,
+      "line": 773,
+      "endLine": 778,
       "parameters": [
         "[]string",
         "[]string"

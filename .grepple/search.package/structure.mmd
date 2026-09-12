@@ -95,12 +95,13 @@ classDiagram
     }
     <<struct>> RepoFilter
     %% grepple:file RepoFilter search/search_engine.go
-    note for RepoFilter "defined: search/search_engine.go:128-131; Allow@search/search_engine.go:143-165; exclude@search/search_engine.go:130; include@search/search_engine.go:129"
+    note for RepoFilter "defined: search/search_engine.go:129-132; Allow@search/search_engine.go:144-166; exclude@search/search_engine.go:131; include@search/search_engine.go:130"
     class candidateCollector {
         -add(string)
         -addPlainGlob(string): error
         -addRecursiveGlob(string): error
         -addSubtree(string): error
+        -ctx: context.Context
         -cwd: string
         -files: []string
         -ignoreCache: gitignoreCache
@@ -109,7 +110,7 @@ classDiagram
     }
     <<struct>> candidateCollector
     %% grepple:file candidateCollector search/search_glob.go
-    note for candidateCollector "defined: search/search_glob.go:138-143; add@search/search_glob.go:151-159; addPlainGlob@search/search_glob.go:182-205; addRecursiveGlob@search/search_glob.go:208-217; addSubtree@search/search_glob.go:163-178; cwd@search/search_glob.go:139; files@search/search_glob.go:142; ignoreCache@search/search_glob.go:140; root@search/search_glob.go:139; seen@search/search_glob.go:141"
+    note for candidateCollector "defined: search/search_glob.go:146-152; add@search/search_glob.go:160-168; addPlainGlob@search/search_glob.go:191-220; addRecursiveGlob@search/search_glob.go:223-232; addSubtree@search/search_glob.go:172-187; ctx@search/search_glob.go:147; cwd@search/search_glob.go:148; files@search/search_glob.go:151; ignoreCache@search/search_glob.go:149; root@search/search_glob.go:148; seen@search/search_glob.go:150"
     class candidateScan {
         -relatedFiles([]string): []string
         -scanAll([]string): []FileMatch
@@ -121,24 +122,25 @@ classDiagram
     }
     <<struct>> candidateScan
     %% grepple:file candidateScan search/search_engine.go
-    note for candidateScan "defined: search/search_engine.go:232-237; relatedFiles@search/search_engine.go:239-252; scanAll@search/search_engine.go:258-267; scanWindowed@search/search_engine.go:272-295; fromIndex@search/search_engine.go:236; m@search/search_engine.go:234; p@search/search_engine.go:233; repoFilter@search/search_engine.go:235"
+    note for candidateScan "defined: search/search_engine.go:233-238; relatedFiles@search/search_engine.go:240-253; scanAll@search/search_engine.go:259-268; scanWindowed@search/search_engine.go:273-296; fromIndex@search/search_engine.go:237; m@search/search_engine.go:235; p@search/search_engine.go:234; repoFilter@search/search_engine.go:236"
     class candidateWalker {
         -walk(string, fs.DirEntry, error): error
         -walkDir(string, string): error
+        -ctx: context.Context
         -files: []string
         -ignorePatterns: map[string][]string
         -root: string
     }
     <<struct>> candidateWalker
     %% grepple:file candidateWalker search/search_glob.go
-    note for candidateWalker "defined: search/search_glob.go:365-369; walk@search/search_glob.go:374-392; walkDir@search/search_glob.go:396-406; files@search/search_glob.go:368; ignorePatterns@search/search_glob.go:367; root@search/search_glob.go:366"
+    note for candidateWalker "defined: search/search_glob.go:394-399; walk@search/search_glob.go:404-425; walkDir@search/search_glob.go:429-439; ctx@search/search_glob.go:395; files@search/search_glob.go:398; ignorePatterns@search/search_glob.go:397; root@search/search_glob.go:396"
     class gitignoreCache["gitignoreCache = map&#91;string&#93;&#91;&#93;string"] {
         -patterns(string): []string
     }
     <<type>> gitignoreCache
     %% grepple:underlying gitignoreCache map[string][]string
     %% grepple:file gitignoreCache search/search_glob.go
-    note for gitignoreCache "defined: search/search_glob.go:428; patterns@search/search_glob.go:430-438"
+    note for gitignoreCache "defined: search/search_glob.go:461; patterns@search/search_glob.go:463-471"
     class navigationCall {
         -display: string
         -factoryImport: string
@@ -211,13 +213,13 @@ classDiagram
     }
     <<struct>> repoPattern
     %% grepple:file repoPattern search/search_engine.go
-    note for repoPattern "defined: search/search_engine.go:94-97; match@search/search_engine.go:107-112; glob@search/search_engine.go:95; re@search/search_engine.go:96"
+    note for repoPattern "defined: search/search_engine.go:95-98; match@search/search_engine.go:108-113; glob@search/search_engine.go:96; re@search/search_engine.go:97"
     class AggregateRepoCounts {
         +AggregateRepoCounts([]FileMatch): []api.RepoCount
     }
     <<function>> AggregateRepoCounts
     %% grepple:file AggregateRepoCounts search/search_engine.go
-    note for AggregateRepoCounts "defined: search/search_engine.go:467-486"
+    note for AggregateRepoCounts "defined: search/search_engine.go:488-507"
     class At {
         +At(Params): tuple~*FileMatch&#44;error~
     }
@@ -235,13 +237,13 @@ classDiagram
     }
     <<function>> CollectFilesUnder
     %% grepple:file CollectFilesUnder search/search_glob.go
-    note for CollectFilesUnder "defined: search/search_glob.go:87-104"
+    note for CollectFilesUnder "defined: search/search_glob.go:88-105"
     class Content {
         +Content(Params, string, []byte): tuple~*FileMatch&#44;error~
     }
     <<function>> Content
     %% grepple:file Content search/search_engine.go
-    note for Content "defined: search/search_engine.go:308-318"
+    note for Content "defined: search/search_engine.go:309-319"
     class ContextLines {
         +ContextLines(string, map[int]bool, int, int, int): []api.ContextLine
     }
@@ -259,31 +261,37 @@ classDiagram
     }
     <<function>> Files
     %% grepple:file Files search/search_engine.go
-    note for Files "defined: search/search_engine.go:189-227"
+    note for Files "defined: search/search_engine.go:190-228"
     class ListFilePaths {
         +ListFilePaths(Params, []string): tuple~[]string&#44;error~
     }
     <<function>> ListFilePaths
     %% grepple:file ListFilePaths search/search_engine.go
-    note for ListFilePaths "defined: search/search_engine.go:389-423"
+    note for ListFilePaths "defined: search/search_engine.go:390-392"
+    class ListFilePathsContext {
+        +ListFilePathsContext(context.Context, Params, []string): tuple~[]string&#44;error~
+    }
+    <<function>> ListFilePathsContext
+    %% grepple:file ListFilePathsContext search/search_engine.go
+    note for ListFilePathsContext "defined: search/search_engine.go:395-413"
     class NewRepoFilter {
         +NewRepoFilter([]string, []string): *RepoFilter
     }
     <<function>> NewRepoFilter
     %% grepple:file NewRepoFilter search/search_engine.go
-    note for NewRepoFilter "defined: search/search_engine.go:135-137"
+    note for NewRepoFilter "defined: search/search_engine.go:136-138"
     class PathMatchesGlobs {
         +PathMatchesGlobs(string, []string): bool
     }
     <<function>> PathMatchesGlobs
     %% grepple:file PathMatchesGlobs search/search_glob.go
-    note for PathMatchesGlobs "defined: search/search_glob.go:490-492"
+    note for PathMatchesGlobs "defined: search/search_glob.go:523-525"
     class RepoID {
         +RepoID(string): string
     }
     <<function>> RepoID
     %% grepple:file RepoID search/search_engine.go
-    note for RepoID "defined: search/search_engine.go:80-89"
+    note for RepoID "defined: search/search_engine.go:81-90"
     class RepoMatches {
         +RepoMatches(string, []string): bool
     }
@@ -307,13 +315,13 @@ classDiagram
     }
     <<function>> SortRepoCounts
     %% grepple:file SortRepoCounts search/search_engine.go
-    note for SortRepoCounts "defined: search/search_engine.go:491-501"
+    note for SortRepoCounts "defined: search/search_engine.go:512-522"
     class SplitLines {
         +SplitLines(string): []string
     }
     <<function>> SplitLines
     %% grepple:file SplitLines search/search_engine.go
-    note for SplitLines "defined: search/search_engine.go:23-32"
+    note for SplitLines "defined: search/search_engine.go:24-33"
     class ToResult {
         +ToResult(FileMatch, []parser.Segment, int, int, int): api.FileResult
     }
@@ -337,6 +345,7 @@ classDiagram
     Files "1" ..> "*" FileMatch : result 1
     Files "1" ..> "1" Params : parameter 1
     ListFilePaths "1" ..> "1" Params : parameter 1
+    ListFilePathsContext "1" ..> "1" Params : parameter 2
     NewRepoFilter "1" ..> "1" RepoFilter : result 1
     RelatedPoint "1" --> "1" RelatedPreview : field Preview
     RelatedPreview "1" --> "*" RelatedPoint : field Related

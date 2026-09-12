@@ -33,6 +33,21 @@ func TestScanFilesProgramsParsesEachFileOnceAndPreservesProgramResults(t *testin
 	assertBatchFinding(t, results[0], "x-rule", "repo/a.go")
 	assertBatchFinding(t, results[1], "y-rule", "repo/b.go")
 }
+func TestScanFilesProgramsPrefiltersPerProgramBeforeSharedParse(t *testing.T) {
+	target := compileFindingPattern(t, "`target($value)`")
+	other := compileFindingPattern(t, "`other($value)`")
+	batch := ScanFilesPrograms(context.Background(), fstest.MapFS{
+		"main.go": {Data: []byte("package p\nvar _ = target(value)\n")},
+	}, []ProgramScan{{Program: target, PatternID: "target"}, {Program: other, PatternID: "other"}}, []ScanCandidate{{ReadPath: "main.go", Path: "main.go"}}, ScanOptions{})
+	if stats := batch.Stats(); stats.FilesRead != 1 || stats.FilesParsed != 1 {
+		t.Fatalf("batch stats=%+v", stats)
+	}
+	results := batch.Programs()
+	assertBatchFinding(t, results[0], "target", "main.go")
+	if stats := results[1].Result.Stats(); stats.Evaluated != 0 || stats.SkippedAnchor != 1 {
+		t.Fatalf("other stats=%+v", stats)
+	}
+}
 
 func TestScanFilesProgramsCancellationInvalidatesEveryProgram(t *testing.T) {
 	program := compileFindingPattern(t, "`x`")

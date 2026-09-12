@@ -35,6 +35,16 @@ func (p AnchorPlan) HasSafeAnchor() bool { return len(p.required) != 0 }
 func (p AnchorPlan) RequiredLiterals() []string {
 	return append([]string(nil), p.required...)
 }
+func longestRequiredLiteral(program *Program) string {
+	literals := AnalyzeAnchors(program).required
+	longest := ""
+	for _, literal := range literals {
+		if len(literal) > len(longest) {
+			longest = literal
+		}
+	}
+	return longest
+}
 
 func requiredExpressionLiterals(expr *expression) map[string]struct{} {
 	if expr == nil {

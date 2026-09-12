@@ -100,7 +100,7 @@ func prepareProgramScan(programs []ProgramScan, candidates []ScanCandidate, opti
 		programOptions := options
 		programOptions.PatternID = program.PatternID
 		programOptions.Message = program.Message
-		state := scanState{options: programOptions, started: time.Now()}
+		state := scanState{options: programOptions, started: time.Now(), anchor: longestRequiredLiteral(program.Program)}
 		if program.Program == nil || program.Program.root == nil {
 			state.evaluations = append(state.evaluations, scannerDiagnosticEvaluation(program.Program, programOptions, evaluationFailure("INTERNAL_ERROR", "internal", "invalid compiled program", nil), nil))
 			state.stop = true
@@ -171,19 +171,22 @@ func commitProgramRead(ctx context.Context, programs []ProgramScan, states []sca
 		accountProgramBinary(programs, states, candidate)
 		return
 	}
+	if !accountProgramAnchors(programs, states, candidate, read.content) {
+		return
+	}
 	if !utf8.Valid(read.content) {
-		appendProgramSourceFailure(programs, states, candidate, "SOURCE_INVALID_UTF8", "source is not valid UTF-8")
+		appendProgramSourceFailure(programs, states, candidate, read.content, "SOURCE_INVALID_UTF8", "source is not valid UTF-8")
 		return
 	}
 	document, err := parser.ParseDocument(candidate.language, string(read.content))
 	if err != nil {
-		appendProgramSourceFailure(programs, states, candidate, "INTERNAL_ERROR", "source parser failed")
+		appendProgramSourceFailure(programs, states, candidate, read.content, "INTERNAL_ERROR", "source parser failed")
 		return
 	}
 	batch.stats.FilesParsed++
 	defer document.Close()
 	for index, program := range programs {
-		if states[index].stop || !programMatchesCandidate(program.Program, candidate) {
+		if states[index].stop || !programMatchesCandidate(program.Program, candidate) || !programAnchorMatches(states[index], read.content) {
 			continue
 		}
 		evaluation := EvaluateDocumentFindings(ctx, program.Program, document, DocumentInput{Path: candidate.path, PatternID: program.PatternID, Message: program.Message}, states[index].options.EvaluateOptions)
@@ -233,6 +236,24 @@ func accountProgramRead(programs []ProgramScan, states []scanState, candidate pr
 		}
 	}
 }
+func accountProgramAnchors(programs []ProgramScan, states []scanState, candidate preparedScanCandidate, content []byte) bool {
+	selected := false
+	for index := range states {
+		if states[index].stop || !programMatchesCandidate(programs[index].Program, candidate) {
+			continue
+		}
+		if programAnchorMatches(states[index], content) {
+			selected = true
+		} else {
+			states[index].stats.SkippedAnchor++
+		}
+	}
+	return selected
+}
+
+func programAnchorMatches(state scanState, content []byte) bool {
+	return state.anchor == "" || bytes.Contains(content, []byte(state.anchor))
+}
 
 func accountProgramBinary(programs []ProgramScan, states []scanState, candidate preparedScanCandidate) {
 	for index := range states {
@@ -242,9 +263,9 @@ func accountProgramBinary(programs []ProgramScan, states []scanState, candidate 
 	}
 }
 
-func appendProgramSourceFailure(programs []ProgramScan, states []scanState, candidate preparedScanCandidate, code, message string) {
+func appendProgramSourceFailure(programs []ProgramScan, states []scanState, candidate preparedScanCandidate, content []byte, code, message string) {
 	for index := range states {
-		if !states[index].stop && programMatchesCandidate(programs[index].Program, candidate) {
+		if !states[index].stop && programMatchesCandidate(programs[index].Program, candidate) && programAnchorMatches(states[index], content) {
 			states[index].evaluations = append(states[index].evaluations, scannerDiagnosticEvaluation(programs[index].Program, states[index].options, evaluationFailure(code, "source", message, nil), &candidate.path))
 		}
 	}

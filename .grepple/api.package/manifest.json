@@ -20,12 +20,12 @@
     "declarations": 29,
     "exportedTypes": 29,
     "internalTypes": 0,
-    "members": 180,
+    "members": 181,
     "exportedFunctions": 0,
     "fiberRoutes": 0,
     "relations": 28
   },
-  "semanticModelDigest": "sha256:62010dedf00535be0356b852c0c2710f80644bd5d8ee30cb05685f608d746579",
+  "semanticModelDigest": "sha256:d54b45f7d5739c9218047570e4be4de7938e1f64e44749e7401a8e068ee0e50e",
   "sourceFiles": [
     {
       "path": "api/grit.go"
@@ -939,15 +939,15 @@
       "name": "GritResponse",
       "kind": "struct",
       "file": "api/grit.go",
-      "line": 180,
-      "endLine": 188,
+      "line": 181,
+      "endLine": 189,
       "underlyingType": "struct{Metadata GritMetadata`json:\"metadata\"`;Findings[]GritFinding`json:\"findings\"`;Diagnostics[]GritDiagnostic`json:\"diagnostics\"`;Truncations[]GritTruncation`json:\"truncations\"`;Statistics GritStatistics`json:\"statistics\"`;ShardErrors[]string`json:\"shardErrors\"`;Total int`json:\"total\"`;}",
       "members": [
         {
           "name": "Diagnostics",
           "kind": "property",
-          "line": 183,
-          "endLine": 183,
+          "line": 184,
+          "endLine": 184,
           "result": "[]GritDiagnostic",
           "structTag": {
             "value": "json:\"diagnostics\""
@@ -956,8 +956,8 @@
         {
           "name": "Findings",
           "kind": "property",
-          "line": 182,
-          "endLine": 182,
+          "line": 183,
+          "endLine": 183,
           "result": "[]GritFinding",
           "structTag": {
             "value": "json:\"findings\""
@@ -966,8 +966,8 @@
         {
           "name": "Metadata",
           "kind": "property",
-          "line": 181,
-          "endLine": 181,
+          "line": 182,
+          "endLine": 182,
           "result": "GritMetadata",
           "structTag": {
             "value": "json:\"metadata\""
@@ -976,8 +976,8 @@
         {
           "name": "ShardErrors",
           "kind": "property",
-          "line": 186,
-          "endLine": 186,
+          "line": 187,
+          "endLine": 187,
           "result": "[]string",
           "structTag": {
             "value": "json:\"shardErrors\""
@@ -986,8 +986,8 @@
         {
           "name": "Statistics",
           "kind": "property",
-          "line": 185,
-          "endLine": 185,
+          "line": 186,
+          "endLine": 186,
           "result": "GritStatistics",
           "structTag": {
             "value": "json:\"statistics\""
@@ -996,8 +996,8 @@
         {
           "name": "Total",
           "kind": "property",
-          "line": 187,
-          "endLine": 187,
+          "line": 188,
+          "endLine": 188,
           "result": "int",
           "structTag": {
             "value": "json:\"total\""
@@ -1006,8 +1006,8 @@
         {
           "name": "Truncations",
           "kind": "property",
-          "line": 184,
-          "endLine": 184,
+          "line": 185,
+          "endLine": 185,
           "result": "[]GritTruncation",
           "structTag": {
             "value": "json:\"truncations\""
@@ -1020,8 +1020,8 @@
       "kind": "struct",
       "file": "api/grit.go",
       "line": 168,
-      "endLine": 176,
-      "underlyingType": "struct{Candidates int`json:\"candidates\"`;Eligible int`json:\"eligible\"`;Evaluated int`json:\"evaluated\"`;BytesRead int64`json:\"bytesRead\"`;SkippedLanguage int`json:\"skippedLanguage\"`;SkippedGlob int`json:\"skippedGlob\"`;SkippedBinary int`json:\"skippedBinary\"`;}",
+      "endLine": 177,
+      "underlyingType": "struct{Candidates int`json:\"candidates\"`;Eligible int`json:\"eligible\"`;Evaluated int`json:\"evaluated\"`;BytesRead int64`json:\"bytesRead\"`;SkippedLanguage int`json:\"skippedLanguage\"`;SkippedGlob int`json:\"skippedGlob\"`;SkippedBinary int`json:\"skippedBinary\"`;SkippedAnchor int`json:\"skippedAnchor\"`;}",
       "members": [
         {
           "name": "BytesRead",
@@ -1061,6 +1061,16 @@
           "result": "int",
           "structTag": {
             "value": "json:\"evaluated\""
+          }
+        },
+        {
+          "name": "SkippedAnchor",
+          "kind": "property",
+          "line": 176,
+          "endLine": 176,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"skippedAnchor\""
           }
         },
         {

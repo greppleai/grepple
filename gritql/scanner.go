@@ -68,6 +68,7 @@ type ScanStats struct {
 	SkippedLanguage int   `json:"skipped_language"`
 	SkippedGlob     int   `json:"skipped_glob"`
 	SkippedBinary   int   `json:"skipped_binary"`
+	SkippedAnchor   int   `json:"skipped_anchor"`
 }
 
 // ScanResult is the immutable normalized result of one bounded candidate scan.
@@ -118,6 +119,7 @@ type scanOutcome struct {
 	bytesRead      int64
 	reserved       int64
 	binary         bool
+	anchorMiss     bool
 	totalTruncated bool
 }
 
@@ -128,6 +130,7 @@ type scanJob struct {
 type scanState struct {
 	options        ScanOptions
 	started        time.Time
+	anchor         string
 	evaluations    []FileEvaluation
 	truncations    []ScanTruncation
 	retained       int64
@@ -148,7 +151,7 @@ func ScanFiles(ctx context.Context, filesystem fs.FS, program *Program, candidat
 	}
 	options = normalizeScanOptions(options)
 	state := scanState{
-		options: options, started: time.Now(),
+		options: options, started: time.Now(), anchor: longestRequiredLiteral(program),
 		account: newScanMemoryAccount(int64(options.EvaluateOptions.MaxMemoryBytes)),
 		bytes:   newScanByteAccount(options.MaxTotalBytes),
 	}
@@ -188,7 +191,7 @@ func (s *scanState) scan(ctx context.Context, filesystem fs.FS, program *Program
 	workerCtx, cancel := context.WithCancel(ctx)
 	defer cancel()
 	for range s.options.Workers {
-		go scanWorker(workerCtx, filesystem, program, s.options, s.account, s.bytes, jobs, outcomes)
+		go scanWorker(workerCtx, filesystem, program, s.anchor, s.options, s.account, s.bytes, jobs, outcomes)
 	}
 	go feedScanJobs(workerCtx, candidates, jobs)
 	consumeScanOutcomes(ctx, s, program, outcomes)
@@ -260,6 +263,11 @@ func (s *scanState) commit(program *Program, outcome scanOutcome) {
 		return
 	}
 	s.stats.BytesRead += outcome.bytesRead
+	if outcome.anchorMiss {
+		s.account.discard(outcome.index, outcome.reserved)
+		s.stats.SkippedAnchor++
+		return
+	}
 	if outcome.binary {
 		s.account.discard(outcome.index, outcome.reserved)
 		s.stats.SkippedBinary++
@@ -285,7 +293,7 @@ func (s *scanState) commit(program *Program, outcome scanOutcome) {
 	s.evaluations = append(s.evaluations, outcome.evaluation)
 }
 
-func scanWorker(ctx context.Context, filesystem fs.FS, program *Program, options ScanOptions, account *scanMemoryAccount, byteAccount *scanByteAccount, jobs <-chan scanJob, outcomes chan<- scanOutcome) {
+func scanWorker(ctx context.Context, filesystem fs.FS, program *Program, anchor string, options ScanOptions, account *scanMemoryAccount, byteAccount *scanByteAccount, jobs <-chan scanJob, outcomes chan<- scanOutcome) {
 	for job := range jobs {
 		reservation := scanSourceReservation(options)
 		if !account.acquire(ctx, reservation) {
@@ -298,7 +306,7 @@ func scanWorker(ctx context.Context, filesystem fs.FS, program *Program, options
 			}
 			continue
 		}
-		outcome := evaluateScanCandidate(ctx, filesystem, program, options, byteAccount, job.index, job.candidate)
+		outcome := evaluateScanCandidate(ctx, filesystem, program, anchor, options, byteAccount, job.index, job.candidate)
 		resultReservation := estimateEvaluationMemory(outcome.evaluation)
 		if !account.replace(ctx, job.index, reservation, resultReservation) {
 			outcome = scanMemoryFailure(program, options, job.index, job.candidate.path)
@@ -325,7 +333,7 @@ func scanMemoryFailure(program *Program, options ScanOptions, index int, path st
 	return scanOutcome{index: index, evaluation: scannerDiagnosticEvaluation(program, options, evaluationFailure("LIMIT_MEMORY", "resource", "accounted memory limit exceeded", nil), &path)}
 }
 
-func evaluateScanCandidate(ctx context.Context, filesystem fs.FS, program *Program, options ScanOptions, byteAccount *scanByteAccount, index int, candidate preparedScanCandidate) scanOutcome {
+func evaluateScanCandidate(ctx context.Context, filesystem fs.FS, program *Program, anchor string, options ScanOptions, byteAccount *scanByteAccount, index int, candidate preparedScanCandidate) scanOutcome {
 	outcome := scanOutcome{index: index}
 	started := time.Now()
 	read := byteAccount.read(ctx, filesystem, candidate.readPath, candidate.content, index, options)
@@ -347,6 +355,10 @@ func evaluateScanCandidate(ctx context.Context, filesystem fs.FS, program *Progr
 	}
 	if bytes.IndexByte(read.content, 0) >= 0 {
 		outcome.binary = true
+		return outcome
+	}
+	if anchor != "" && !bytes.Contains(read.content, []byte(anchor)) {
+		outcome.anchorMiss = true
 		return outcome
 	}
 	evaluateOptions := options.EvaluateOptions

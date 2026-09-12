@@ -1,6 +1,8 @@
 package search
 
 import (
+	"context"
+	"errors"
 	"os"
 	"path/filepath"
 	"sort"
@@ -251,5 +253,21 @@ func TestGlobMatchDoubleStar(t *testing.T) {
 		if got := globMatch(test.pattern, test.name); got != test.want {
 			t.Errorf("globMatch(%q, %q) = %v, want %v", test.pattern, test.name, got, test.want)
 		}
+	}
+}
+
+func TestListFilePathsContextHonorsCancellation(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	_, err := ListFilePathsContext(ctx, Params{}, []string{"main.go"})
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("error=%v", err)
+	}
+	root := t.TempDir()
+	writeTree(t, root, "main.go")
+	chdir(t, root)
+	_, err = ListFilePathsContext(ctx, Params{}, nil)
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("discovery error=%v", err)
 	}
 }

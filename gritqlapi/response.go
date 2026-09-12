@@ -108,6 +108,6 @@ func metadata(source gritql.EvaluationMetadata) api.GritMetadata {
 func statistics(source gritql.ScanStats) api.GritStatistics {
 	return api.GritStatistics{
 		Candidates: source.Candidates, Eligible: source.Eligible, Evaluated: source.Evaluated, BytesRead: source.BytesRead,
-		SkippedLanguage: source.SkippedLanguage, SkippedGlob: source.SkippedGlob, SkippedBinary: source.SkippedBinary,
+		SkippedLanguage: source.SkippedLanguage, SkippedGlob: source.SkippedGlob, SkippedBinary: source.SkippedBinary, SkippedAnchor: source.SkippedAnchor,
 	}
 }

@@ -80,6 +80,23 @@ func BenchmarkScanFilesProgramsSharedParse(b *testing.B) {
 func BenchmarkScanFilesAnchored(b *testing.B) {
 	benchmarkScanFiles(b, "language go\n`target($x)`", true)
 }
+func BenchmarkScanFilesAnchoredSparse(b *testing.B) {
+	program, err := Compile([]byte("language go\n`target($x)`"), CompileOptions{})
+	if err != nil {
+		b.Fatal(err)
+	}
+	filesystem, candidates := benchmarkFileSet(100)
+	for index := 10; index < len(candidates); index++ {
+		filesystem[candidates[index].ReadPath] = &fstest.MapFile{Data: []byte("package p\nfunc f() { other(value(1)) }\n")}
+	}
+	b.ReportAllocs()
+	for b.Loop() {
+		result := ScanFiles(context.Background(), filesystem, program, candidates, ScanOptions{Workers: 1})
+		if result.Stats().Evaluated != 10 || result.Stats().SkippedAnchor != 90 {
+			b.Fatalf("stats=%+v", result.Stats())
+		}
+	}
+}
 
 func BenchmarkScanFilesUnanchored(b *testing.B) {
 	benchmarkScanFiles(b, "language go\n`$x`", false)
