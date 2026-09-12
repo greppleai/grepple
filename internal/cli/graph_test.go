@@ -123,7 +123,70 @@ func TestNavigationGraphJSONUsesStableFieldNames(t *testing.T) {
 	}
 }
 
-func writeGraphSource(t *testing.T, root, path, content string) {
+func TestGraphCalleesQueryTraversesByDepth(t *testing.T) {
+	dir := chdirTemp(t)
+	writeGraphSource(t, dir, "flow.go", "package sample\nfunc Root(){ Middle() }\nfunc Middle(){ Leaf() }\nfunc Leaf() {}\n")
+	outputText := captureStdout(t, func() {
+		if err := Run([]string{"graph", "callees", "--symbol", "Root", "--depth", "2", "--json"}); err != nil {
+			t.Fatal(err)
+		}
+	})
+	var output navigationGraphOutput
+	if err := json.Unmarshal([]byte(outputText), &output); err != nil {
+		t.Fatal(err)
+	}
+	if output.Query == nil || output.Query.Direction != "callees" || output.Query.Depth != 2 || len(output.Query.RootIDs) != 1 {
+		t.Fatalf("query=%#v", output.Query)
+	}
+	if names := graphOutputDeclarationNames(output); !reflect.DeepEqual(names, []string{"Root", "Middle", "Leaf"}) {
+		t.Fatalf("declarations=%v", names)
+	}
+	if len(output.Calls) != 2 {
+		t.Fatalf("calls=%#v", output.Calls)
+	}
+}
+
+func TestGraphCallersQuerySupportsAtAndCompactOutput(t *testing.T) {
+	dir := chdirTemp(t)
+	path := writeGraphSource(t, dir, "flow.go", "package sample\nfunc Root(){ Middle() }\nfunc Middle() {}\nfunc Consumer(){ Root() }\n")
+	output := captureStdout(t, func() {
+		if err := Run([]string{"graph", "callers", "--at", path + ":3", "--depth", "2", "--compact"}); err != nil {
+			t.Fatal(err)
+		}
+	})
+	for _, expected := range []string{"query callers depth=2 roots=", " go func Root ", " go func Middle ", " go func Consumer ", "Consumer -> Root#", "Root -> Middle#"} {
+		if !strings.Contains(output, expected) {
+			t.Fatalf("callers output missing %q:\n%s", expected, output)
+		}
+	}
+}
+
+func TestGraphQueryRejectsMissingAndAmbiguousSelectors(t *testing.T) {
+	dir := chdirTemp(t)
+	writeGraphSource(t, dir, "a.go", "package sample\nfunc helper() {}\n")
+	writeGraphSource(t, dir, "b.go", "package sample\nfunc helper() {}\n")
+	for _, arguments := range [][]string{
+		{"graph", "callers", "--compact"},
+		{"graph", "callees", "--symbol", "helper", "--compact"},
+		{"graph", "callers", "--symbol", "helper", "--at", "a.go:2", "--compact"},
+		{"graph", "callers", "--symbol", "missing", "--compact"},
+		{"graph", "callers", "--symbol", "helper", "--depth", "11", "--compact"},
+	} {
+		if err := Run(arguments); err == nil {
+			t.Fatalf("arguments %v unexpectedly succeeded", arguments)
+		}
+	}
+}
+
+func graphOutputDeclarationNames(output navigationGraphOutput) []string {
+	names := make([]string, 0, len(output.Declarations))
+	for _, declaration := range output.Declarations {
+		names = append(names, declaration.Name)
+	}
+	return names
+}
+
+func writeGraphSource(t *testing.T, root, path, content string) string {
 	t.Helper()
 	fullPath := filepath.Join(root, path)
 	if err := os.MkdirAll(filepath.Dir(fullPath), 0o755); err != nil {
@@ -132,4 +195,5 @@ func writeGraphSource(t *testing.T, root, path, content string) {
 	if err := os.WriteFile(fullPath, []byte(content), 0o644); err != nil {
 		t.Fatal(err)
 	}
+	return fullPath
 }

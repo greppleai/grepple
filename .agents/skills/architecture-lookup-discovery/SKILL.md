@@ -118,7 +118,8 @@ Inspect all three layers before concluding:
 
 1. Workspace import edges for package-level impact.
 2. Package type relations for model/API impact.
-3. `--related` on the changed entrypoint and shared helpers for behavioral impact.
+3. `--related` on the changed entrypoint and shared helpers for immediate behavioral impact.
+4. `grepple graph callers --at PATH:LINE --depth 2 --compact SCOPE` when multi-hop consumers matter; use `graph callees` for bounded outgoing dependencies.
 
 ### “Why does this route or entrypoint exist?”
 

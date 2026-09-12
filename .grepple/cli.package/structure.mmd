@@ -256,7 +256,29 @@ classDiagram
     %% grepple:struct-tag graphArgs MaxFiles "arg:\"--max-files\" placeholder:\"N\" help:\"parse at most N discovered files (0 = unlimited)\""
     %% grepple:struct-tag graphArgs MaxOutputBytes "arg:\"--max-output-bytes\" placeholder:\"N\" help:\"cap compact output (default 40960; 0 = unlimited; JSON is uncapped)\""
     %% grepple:struct-tag graphArgs Paths "arg:\"positional\" placeholder:\"PATH\" help:\"file, directory, or glob to include; defaults to the working directory\""
-    note for graphArgs "defined: internal/cli/graph.go:18-24; Description@internal/cli/graph.go:26-28; Compact@internal/cli/graph.go:20; JSON@internal/cli/graph.go:19; MaxFiles@internal/cli/graph.go:21; MaxOutputBytes@internal/cli/graph.go:22; Paths@internal/cli/graph.go:23"
+    note for graphArgs "defined: internal/cli/graph.go:17-23; Description@internal/cli/graph.go:25-27; Compact@internal/cli/graph.go:19; JSON@internal/cli/graph.go:18; MaxFiles@internal/cli/graph.go:20; MaxOutputBytes@internal/cli/graph.go:21; Paths@internal/cli/graph.go:22"
+    class graphQueryArgs {
+        +Description(): string
+        +At: string
+        +Compact: bool
+        +Depth: int
+        +JSON: bool
+        +MaxFiles: int
+        +MaxOutputBytes: int
+        +Paths: []string
+        +Symbol: string
+    }
+    <<struct>> graphQueryArgs
+    %% grepple:file graphQueryArgs internal/cli/graph_query.go
+    %% grepple:struct-tag graphQueryArgs At "arg:\"--at\" placeholder:\"PATH:LINE\" help:\"select the declaration containing a source location\""
+    %% grepple:struct-tag graphQueryArgs Compact "arg:\"--compact\" help:\"emit a bounded agent-facing queried subgraph\""
+    %% grepple:struct-tag graphQueryArgs Depth "arg:\"--depth\" default:\"1\" placeholder:\"N\" help:\"maximum traversal depth (1-10)\""
+    %% grepple:struct-tag graphQueryArgs JSON "arg:\"--json\" help:\"emit the complete queried subgraph as JSON\""
+    %% grepple:struct-tag graphQueryArgs MaxFiles "arg:\"--max-files\" placeholder:\"N\" help:\"parse at most N discovered files (0 = unlimited)\""
+    %% grepple:struct-tag graphQueryArgs MaxOutputBytes "arg:\"--max-output-bytes\" placeholder:\"N\" help:\"cap compact output (default 40960; 0 = unlimited; JSON is uncapped)\""
+    %% grepple:struct-tag graphQueryArgs Paths "arg:\"positional\" placeholder:\"PATH\" help:\"file, directory, or glob to include; defaults to the working directory\""
+    %% grepple:struct-tag graphQueryArgs Symbol "arg:\"--symbol\" placeholder:\"NAME\" help:\"select one exact declaration name\""
+    note for graphQueryArgs "defined: internal/cli/graph_query.go:19-28; Description@internal/cli/graph_query.go:30-32; At@internal/cli/graph_query.go:23; Compact@internal/cli/graph_query.go:21; Depth@internal/cli/graph_query.go:24; JSON@internal/cli/graph_query.go:20; MaxFiles@internal/cli/graph_query.go:25; MaxOutputBytes@internal/cli/graph_query.go:26; Paths@internal/cli/graph_query.go:27; Symbol@internal/cli/graph_query.go:22"
     class gritArgs {
         +Description(): string
         +ExcludeGlobs: []string
@@ -377,6 +399,7 @@ classDiagram
         +Calls: []parser.NavigationCall
         +Declarations: []parser.NavigationDeclaration
         +Files: int
+        +Query: *navigationGraphQuery
         +Schema: string
         +Truncation: *navigationGraphTruncation
     }
@@ -385,9 +408,21 @@ classDiagram
     %% grepple:struct-tag navigationGraphOutput Calls "json:\"calls\""
     %% grepple:struct-tag navigationGraphOutput Declarations "json:\"declarations\""
     %% grepple:struct-tag navigationGraphOutput Files "json:\"files\""
+    %% grepple:struct-tag navigationGraphOutput Query "json:\"query,omitempty\""
     %% grepple:struct-tag navigationGraphOutput Schema "json:\"schema\""
     %% grepple:struct-tag navigationGraphOutput Truncation "json:\"truncation,omitempty\""
-    note for navigationGraphOutput "defined: internal/cli/graph.go:30-36; Calls@internal/cli/graph.go:34; Declarations@internal/cli/graph.go:33; Files@internal/cli/graph.go:32; Schema@internal/cli/graph.go:31; Truncation@internal/cli/graph.go:35"
+    note for navigationGraphOutput "defined: internal/cli/graph.go:29-36; Calls@internal/cli/graph.go:33; Declarations@internal/cli/graph.go:32; Files@internal/cli/graph.go:31; Query@internal/cli/graph.go:34; Schema@internal/cli/graph.go:30; Truncation@internal/cli/graph.go:35"
+    class navigationGraphQuery {
+        +Depth: int
+        +Direction: string
+        +RootIDs: []string
+    }
+    <<struct>> navigationGraphQuery
+    %% grepple:file navigationGraphQuery internal/cli/graph.go
+    %% grepple:struct-tag navigationGraphQuery Depth "json:\"depth\""
+    %% grepple:struct-tag navigationGraphQuery Direction "json:\"direction\""
+    %% grepple:struct-tag navigationGraphQuery RootIDs "json:\"rootIds\""
+    note for navigationGraphQuery "defined: internal/cli/graph.go:38-42; Depth@internal/cli/graph.go:40; Direction@internal/cli/graph.go:39; RootIDs@internal/cli/graph.go:41"
     class navigationGraphTruncation {
         +Limit: int
         +Reason: string
@@ -398,7 +433,7 @@ classDiagram
     %% grepple:struct-tag navigationGraphTruncation Limit "json:\"limit\""
     %% grepple:struct-tag navigationGraphTruncation Reason "json:\"reason\""
     %% grepple:struct-tag navigationGraphTruncation Skipped "json:\"skipped\""
-    note for navigationGraphTruncation "defined: internal/cli/graph.go:38-42; Limit@internal/cli/graph.go:40; Reason@internal/cli/graph.go:39; Skipped@internal/cli/graph.go:41"
+    note for navigationGraphTruncation "defined: internal/cli/graph.go:44-48; Limit@internal/cli/graph.go:46; Reason@internal/cli/graph.go:45; Skipped@internal/cli/graph.go:47"
     class onlyMatchingRenderer {
         +Render([]api.FileResult): error
         -matcher: *regexp.Regexp
@@ -642,6 +677,7 @@ classDiagram
     lineRenderer "1" --> "1" anchorLookup : field anchors
     lineRenderer "1" --> "1" outputWriter : field output
     resultRenderer <|.. lineRenderer : implements
+    navigationGraphOutput "1" --> "1" navigationGraphQuery : field Query
     navigationGraphOutput "1" --> "1" navigationGraphTruncation : field Truncation
     onlyMatchingRenderer "1" --> "1" outputWriter : field output
     resultRenderer <|.. onlyMatchingRenderer : implements

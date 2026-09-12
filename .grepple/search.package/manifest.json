@@ -16,16 +16,16 @@
     "syntacticBuildTagUnion": []
   },
   "summary": {
-    "sourceFiles": 10,
-    "declarations": 15,
-    "exportedTypes": 5,
+    "sourceFiles": 11,
+    "declarations": 16,
+    "exportedTypes": 6,
     "internalTypes": 10,
     "members": 125,
-    "exportedFunctions": 21,
+    "exportedFunctions": 22,
     "fiberRoutes": 0,
-    "relations": 42
+    "relations": 43
   },
-  "semanticModelDigest": "sha256:695a75ba4b0c62bb635b967583fc938635d6e432bb5f0873afce7b1d20e49b8e",
+  "semanticModelDigest": "sha256:599c1b5437fc1e47f2667666facf51a88c1ee37cdf8efda88aeb51674f203c14",
   "sourceFiles": [
     {
       "path": "search/at.go"
@@ -38,6 +38,9 @@
     },
     {
       "path": "search/model.go"
+    },
+    {
+      "path": "search/navigation_query.go"
     },
     {
       "path": "search/related.go"
@@ -138,6 +141,14 @@
           "result": "bool"
         }
       ]
+    },
+    {
+      "name": "NavigationQueryDirection",
+      "kind": "type",
+      "file": "search/navigation_query.go",
+      "line": 10,
+      "endLine": 10,
+      "underlyingType": "string"
     },
     {
       "name": "Params",
@@ -1371,6 +1382,20 @@
       "result": "bool"
     },
     {
+      "name": "QueryNavigationGraph",
+      "kind": "function",
+      "file": "search/navigation_query.go",
+      "line": 22,
+      "endLine": 43,
+      "parameters": [
+        "parser.NavigationGraph",
+        "[]string",
+        "NavigationQueryDirection",
+        "int"
+      ],
+      "result": "tuple\u003cparser.NavigationGraph,error\u003e"
+    },
+    {
       "name": "RepoID",
       "kind": "function",
       "file": "search/search_engine.go",
@@ -1552,6 +1577,13 @@
       "to": "RepoFilter",
       "kind": "dependency",
       "via": "result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "QueryNavigationGraph",
+      "to": "NavigationQueryDirection",
+      "kind": "dependency",
+      "via": "parameter 3",
       "cardinality": "one"
     },
     {

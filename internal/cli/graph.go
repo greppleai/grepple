@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -24,7 +23,7 @@ type graphArgs struct {
 }
 
 func (graphArgs) Description() string {
-	return "Build a deterministic normalized navigation graph from local source files."
+	return "Build a deterministic local navigation graph; use the callers or callees subcommand for focused traversal."
 }
 
 type navigationGraphOutput struct {
@@ -32,7 +31,14 @@ type navigationGraphOutput struct {
 	Files        int                            `json:"files"`
 	Declarations []parser.NavigationDeclaration `json:"declarations"`
 	Calls        []parser.NavigationCall        `json:"calls"`
+	Query        *navigationGraphQuery          `json:"query,omitempty"`
 	Truncation   *navigationGraphTruncation     `json:"truncation,omitempty"`
+}
+
+type navigationGraphQuery struct {
+	Direction string   `json:"direction"`
+	Depth     int      `json:"depth"`
+	RootIDs   []string `json:"rootIds"`
 }
 
 type navigationGraphTruncation struct {
@@ -42,6 +48,9 @@ type navigationGraphTruncation struct {
 }
 
 func runGraph(args []string) error {
+	if len(args) > 0 && (args[0] == string(search.NavigationQueryCallers) || args[0] == string(search.NavigationQueryCallees)) {
+		return runGraphQuery(search.NavigationQueryDirection(args[0]), args[1:])
+	}
 	values := graphArgs{MaxOutputBytes: DefaultTextOutputBytes}
 	argumentParser, err := arg.NewParser(arg.Config{Program: "grepple graph"}, &values)
 	if err != nil {
@@ -63,27 +72,9 @@ func runGraph(args []string) error {
 	if values.MaxOutputBytes < 0 {
 		return fmt.Errorf("--max-output-bytes must be non-negative")
 	}
-	paths, err := search.ListFilePathsContext(context.Background(), search.Params{Files: true, Globs: values.Paths}, nil)
+	output, err := buildNavigationGraphOutput(values.Paths, values.MaxFiles)
 	if err != nil {
 		return err
-	}
-	paths = navigationSourcePaths(paths)
-	var truncation *navigationGraphTruncation
-	if values.MaxFiles > 0 && len(paths) > values.MaxFiles {
-		truncation = &navigationGraphTruncation{Reason: "max_files", Limit: values.MaxFiles, Skipped: len(paths) - values.MaxFiles}
-		paths = paths[:values.MaxFiles]
-	}
-	graph := search.BuildNavigationGraph(paths)
-	declarations := graph.Declarations
-	if declarations == nil {
-		declarations = []parser.NavigationDeclaration{}
-	}
-	calls := graph.Calls
-	if calls == nil {
-		calls = []parser.NavigationCall{}
-	}
-	output := navigationGraphOutput{
-		Schema: navigationGraphSchema, Files: len(paths), Declarations: declarations, Calls: calls, Truncation: truncation,
 	}
 	if values.Compact {
 		return renderCompactNavigationGraph(output, values.MaxOutputBytes)
@@ -105,6 +96,9 @@ func renderCompactNavigationGraph(graph navigationGraphOutput, maxBytes int) err
 	}
 	visibleCalls := compactNavigationCalls(graph.Calls)
 	if !write(fmt.Sprintf("graph %s files=%d declarations=%d calls=%d", graph.Schema, graph.Files, len(graph.Declarations), len(visibleCalls))) {
+		return nil
+	}
+	if graph.Query != nil && !write(fmt.Sprintf("query %s depth=%d roots=%s", graph.Query.Direction, graph.Query.Depth, shortGraphIDs(graph.Query.RootIDs))) {
 		return nil
 	}
 	if graph.Truncation != nil && !write(fmt.Sprintf("! truncated %s limit=%d skipped=%d", graph.Truncation.Reason, graph.Truncation.Limit, graph.Truncation.Skipped)) {
@@ -161,6 +155,14 @@ func shortGraphID(id string) string {
 		return id
 	}
 	return id[:length]
+}
+
+func shortGraphIDs(ids []string) string {
+	short := make([]string, 0, len(ids))
+	for _, id := range ids {
+		short = append(short, shortGraphID(id))
+	}
+	return strings.Join(short, ",")
 }
 
 func graphDeclarationLocation(declaration parser.NavigationDeclaration) string {

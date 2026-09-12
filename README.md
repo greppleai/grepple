@@ -198,9 +198,13 @@ produce an empty outline. Go methods are shown at top level as `(*Type).Method`.
 grepple graph --json .
 grepple graph --json ./internal/cli --max-files 200
 grepple graph --compact ./internal/cli
+grepple graph callers --at internal/cli/extract.go:32 --depth 2 --compact .
+grepple graph callees --symbol runExtract --depth 2 --json ./internal/cli
 ```
 
 `--compact` emits a bounded agent-facing declaration/edge list with 16-character stable ID prefixes, source locations, arrow direction, confidence, and source truncation warnings; `--max-output-bytes` defaults to 40960 and never applies to JSON. Unsupported file types are excluded before the file limit. Complete JSON retains unresolved/external calls with `candidate` confidence and ordered candidate IDs; compact output omits calls with no repository-local target and retains ambiguous calls without guessing one target. Exactly one of `--json` or `--compact` is required.
+
+`graph callers` and `graph callees` return a deterministic directional subgraph rooted at exactly one `--symbol NAME` or `--at PATH:LINE`. `--depth N` is bounded to 1–10, cycles are visited once, and ambiguous candidate targets remain explicit rather than being guessed. JSON retains the `grepple-navigation-graph-v1` declarations/calls and adds query direction, depth, and root IDs; compact mode adds the same query metadata to its header. Selected paths define the repository-local graph universe.
 
 ## Architecture and flow extraction
 

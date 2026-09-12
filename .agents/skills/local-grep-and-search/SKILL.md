@@ -18,7 +18,7 @@ Use Grepple to minimize retrieval turns and tokens, not merely as a grep replace
 - **Know a navigation location:** use `--at PATH:LINE` (also accepts `PATH:START-END`) to retrieve the exact callable declaration instead of reading the file broadly.
 - **Need the next code hop:** add `--related` to expose bounded callees and potential callers. This often avoids a second symbol search.
 - **Need a short call chain:** use `--follow-related 1` first. Increase to 2–3 only when the extra inline context is worth the tokens.
-- **Assessing a refactor, package split, ownership boundary, or impact:** do not stop at outlines and occurrence searches. Run `--related` on entry points and apparently shared helpers across the proposed scope; use `--follow-related 1` when one bounded inline hop can replace separate declaration searches and file reads.
+- **Assessing a refactor, package split, ownership boundary, or impact:** do not stop at outlines and occurrence searches. Run `--related` for an immediate preview, then use `grepple graph callers --at PATH:LINE --depth N --compact SCOPE` when a deterministic multi-hop incoming subgraph can replace repeated caller searches. Use `graph callees` for the outgoing direction.
 
 ## Why navigation saves tool-call cycles
 
@@ -74,6 +74,7 @@ grepple --anchors -F 'Symbol' src/file.go    # explicitly skip Read with an anch
 grepple --no-anchors -F 'Symbol' src/file.go # override settings when plain output is required
 grepple --at src/file.go:40-58               # retrieve a listed declaration
 grepple --follow-related 1 -F 'Symbol(' src # inline one deliberate hop
+grepple graph callers --at src/file.go:40 --depth 2 --compact src # bounded incoming graph
 ```
 
 For repositories or files not present in this checkout, use `remote-grep-and-search`; do not clone merely to inspect them.

@@ -18,6 +18,11 @@ classDiagram
     <<struct>> FileMatch
     %% grepple:file FileMatch search/model.go
     note for FileMatch "defined: search/model.go:53-60; Content@search/model.go:54; DisplayPath@search/model.go:54; File@search/model.go:54; Language@search/model.go:54; MatchLines@search/model.go:55; OmittedRelatedCallees@search/model.go:58; OmittedRelatedCallers@search/model.go:58; Related@search/model.go:57; Segments@search/model.go:56; SegmentsReady@search/model.go:59"
+    class NavigationQueryDirection["NavigationQueryDirection = string"]
+    <<type>> NavigationQueryDirection
+    %% grepple:underlying NavigationQueryDirection string
+    %% grepple:file NavigationQueryDirection search/navigation_query.go
+    note for NavigationQueryDirection "defined: search/navigation_query.go:10"
     class Params {
         +AfterContext: int
         +At: string
@@ -303,6 +308,12 @@ classDiagram
     <<function>> PathMatchesGlobs
     %% grepple:file PathMatchesGlobs search/search_glob.go
     note for PathMatchesGlobs "defined: search/search_glob.go:523-525"
+    class QueryNavigationGraph {
+        +QueryNavigationGraph(parser.NavigationGraph, []string, NavigationQueryDirection, int): tuple~parser.NavigationGraph&#44;error~
+    }
+    <<function>> QueryNavigationGraph
+    %% grepple:file QueryNavigationGraph search/navigation_query.go
+    note for QueryNavigationGraph "defined: search/navigation_query.go:22-43"
     class RepoID {
         +RepoID(string): string
     }
@@ -364,6 +375,7 @@ classDiagram
     ListFilePaths "1" ..> "1" Params : parameter 1
     ListFilePathsContext "1" ..> "1" Params : parameter 2
     NewRepoFilter "1" ..> "1" RepoFilter : result 1
+    QueryNavigationGraph "1" ..> "1" NavigationQueryDirection : parameter 3
     RelatedPoint "1" --> "1" RelatedPreview : field Preview
     RelatedPreview "1" --> "*" RelatedPoint : field Related
     RepoFilter "1" --> "*" repoPattern : field exclude

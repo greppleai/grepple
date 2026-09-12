@@ -16,16 +16,16 @@
     "syntacticBuildTagUnion": []
   },
   "summary": {
-    "sourceFiles": 32,
-    "declarations": 40,
+    "sourceFiles": 33,
+    "declarations": 42,
     "exportedTypes": 0,
-    "internalTypes": 40,
-    "members": 242,
+    "internalTypes": 42,
+    "members": 255,
     "exportedFunctions": 3,
     "fiberRoutes": 0,
-    "relations": 24
+    "relations": 25
   },
-  "semanticModelDigest": "sha256:87454ec93ca12662243de4aa4fd958763357c51f25e167558922ec55e0d6e207",
+  "semanticModelDigest": "sha256:7896729a6f0e2997ff641b2b22f90eccb818d39131f4da625d6534c8508bff76",
   "sourceFiles": [
     {
       "path": "internal/cli/anchors.go"
@@ -53,6 +53,9 @@
     },
     {
       "path": "internal/cli/graph.go"
+    },
+    {
+      "path": "internal/cli/graph_query.go"
     },
     {
       "path": "internal/cli/grit.go"
@@ -1102,22 +1105,22 @@
       "name": "graphArgs",
       "kind": "struct",
       "file": "internal/cli/graph.go",
-      "line": 18,
-      "endLine": 24,
+      "line": 17,
+      "endLine": 23,
       "underlyingType": "struct{JSON bool`arg:\"--json\" help:\"emit the complete normalized navigation graph as JSON\"`;Compact bool`arg:\"--compact\" help:\"emit a bounded agent-facing declaration and call summary\"`;MaxFiles int`arg:\"--max-files\" placeholder:\"N\" help:\"parse at most N discovered files (0 = unlimited)\"`;MaxOutputBytes int`arg:\"--max-output-bytes\" placeholder:\"N\" help:\"cap compact output (default 40960; 0 = unlimited; JSON is uncapped)\"`;Paths[]string`arg:\"positional\" placeholder:\"PATH\" help:\"file, directory, or glob to include; defaults to the working directory\"`;}",
       "members": [
         {
           "name": "Description",
           "kind": "method",
-          "line": 26,
-          "endLine": 28,
+          "line": 25,
+          "endLine": 27,
           "result": "string"
         },
         {
           "name": "Compact",
           "kind": "property",
-          "line": 20,
-          "endLine": 20,
+          "line": 19,
+          "endLine": 19,
           "result": "bool",
           "structTag": {
             "value": "arg:\"--compact\" help:\"emit a bounded agent-facing declaration and call summary\""
@@ -1126,8 +1129,8 @@
         {
           "name": "JSON",
           "kind": "property",
-          "line": 19,
-          "endLine": 19,
+          "line": 18,
+          "endLine": 18,
           "result": "bool",
           "structTag": {
             "value": "arg:\"--json\" help:\"emit the complete normalized navigation graph as JSON\""
@@ -1136,8 +1139,8 @@
         {
           "name": "MaxFiles",
           "kind": "property",
-          "line": 21,
-          "endLine": 21,
+          "line": 20,
+          "endLine": 20,
           "result": "int",
           "structTag": {
             "value": "arg:\"--max-files\" placeholder:\"N\" help:\"parse at most N discovered files (0 = unlimited)\""
@@ -1146,8 +1149,8 @@
         {
           "name": "MaxOutputBytes",
           "kind": "property",
-          "line": 22,
-          "endLine": 22,
+          "line": 21,
+          "endLine": 21,
           "result": "int",
           "structTag": {
             "value": "arg:\"--max-output-bytes\" placeholder:\"N\" help:\"cap compact output (default 40960; 0 = unlimited; JSON is uncapped)\""
@@ -1156,11 +1159,108 @@
         {
           "name": "Paths",
           "kind": "property",
-          "line": 23,
-          "endLine": 23,
+          "line": 22,
+          "endLine": 22,
           "result": "[]string",
           "structTag": {
             "value": "arg:\"positional\" placeholder:\"PATH\" help:\"file, directory, or glob to include; defaults to the working directory\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "graphQueryArgs",
+      "kind": "struct",
+      "file": "internal/cli/graph_query.go",
+      "line": 19,
+      "endLine": 28,
+      "underlyingType": "struct{JSON bool`arg:\"--json\" help:\"emit the complete queried subgraph as JSON\"`;Compact bool`arg:\"--compact\" help:\"emit a bounded agent-facing queried subgraph\"`;Symbol string`arg:\"--symbol\" placeholder:\"NAME\" help:\"select one exact declaration name\"`;At string`arg:\"--at\" placeholder:\"PATH:LINE\" help:\"select the declaration containing a source location\"`;Depth int`arg:\"--depth\" default:\"1\" placeholder:\"N\" help:\"maximum traversal depth (1-10)\"`;MaxFiles int`arg:\"--max-files\" placeholder:\"N\" help:\"parse at most N discovered files (0 = unlimited)\"`;MaxOutputBytes int`arg:\"--max-output-bytes\" placeholder:\"N\" help:\"cap compact output (default 40960; 0 = unlimited; JSON is uncapped)\"`;Paths[]string`arg:\"positional\" placeholder:\"PATH\" help:\"file, directory, or glob to include; defaults to the working directory\"`;}",
+      "members": [
+        {
+          "name": "Description",
+          "kind": "method",
+          "line": 30,
+          "endLine": 32,
+          "result": "string"
+        },
+        {
+          "name": "At",
+          "kind": "property",
+          "line": 23,
+          "endLine": 23,
+          "result": "string",
+          "structTag": {
+            "value": "arg:\"--at\" placeholder:\"PATH:LINE\" help:\"select the declaration containing a source location\""
+          }
+        },
+        {
+          "name": "Compact",
+          "kind": "property",
+          "line": 21,
+          "endLine": 21,
+          "result": "bool",
+          "structTag": {
+            "value": "arg:\"--compact\" help:\"emit a bounded agent-facing queried subgraph\""
+          }
+        },
+        {
+          "name": "Depth",
+          "kind": "property",
+          "line": 24,
+          "endLine": 24,
+          "result": "int",
+          "structTag": {
+            "value": "arg:\"--depth\" default:\"1\" placeholder:\"N\" help:\"maximum traversal depth (1-10)\""
+          }
+        },
+        {
+          "name": "JSON",
+          "kind": "property",
+          "line": 20,
+          "endLine": 20,
+          "result": "bool",
+          "structTag": {
+            "value": "arg:\"--json\" help:\"emit the complete queried subgraph as JSON\""
+          }
+        },
+        {
+          "name": "MaxFiles",
+          "kind": "property",
+          "line": 25,
+          "endLine": 25,
+          "result": "int",
+          "structTag": {
+            "value": "arg:\"--max-files\" placeholder:\"N\" help:\"parse at most N discovered files (0 = unlimited)\""
+          }
+        },
+        {
+          "name": "MaxOutputBytes",
+          "kind": "property",
+          "line": 26,
+          "endLine": 26,
+          "result": "int",
+          "structTag": {
+            "value": "arg:\"--max-output-bytes\" placeholder:\"N\" help:\"cap compact output (default 40960; 0 = unlimited; JSON is uncapped)\""
+          }
+        },
+        {
+          "name": "Paths",
+          "kind": "property",
+          "line": 27,
+          "endLine": 27,
+          "result": "[]string",
+          "structTag": {
+            "value": "arg:\"positional\" placeholder:\"PATH\" help:\"file, directory, or glob to include; defaults to the working directory\""
+          }
+        },
+        {
+          "name": "Symbol",
+          "kind": "property",
+          "line": 22,
+          "endLine": 22,
+          "result": "string",
+          "structTag": {
+            "value": "arg:\"--symbol\" placeholder:\"NAME\" help:\"select one exact declaration name\""
           }
         }
       ]
@@ -1689,15 +1789,15 @@
       "name": "navigationGraphOutput",
       "kind": "struct",
       "file": "internal/cli/graph.go",
-      "line": 30,
+      "line": 29,
       "endLine": 36,
-      "underlyingType": "struct{Schema string`json:\"schema\"`;Files int`json:\"files\"`;Declarations[]parser.NavigationDeclaration`json:\"declarations\"`;Calls[]parser.NavigationCall`json:\"calls\"`;Truncation*navigationGraphTruncation`json:\"truncation,omitempty\"`;}",
+      "underlyingType": "struct{Schema string`json:\"schema\"`;Files int`json:\"files\"`;Declarations[]parser.NavigationDeclaration`json:\"declarations\"`;Calls[]parser.NavigationCall`json:\"calls\"`;Query*navigationGraphQuery`json:\"query,omitempty\"`;Truncation*navigationGraphTruncation`json:\"truncation,omitempty\"`;}",
       "members": [
         {
           "name": "Calls",
           "kind": "property",
-          "line": 34,
-          "endLine": 34,
+          "line": 33,
+          "endLine": 33,
           "result": "[]parser.NavigationCall",
           "structTag": {
             "value": "json:\"calls\""
@@ -1706,8 +1806,8 @@
         {
           "name": "Declarations",
           "kind": "property",
-          "line": 33,
-          "endLine": 33,
+          "line": 32,
+          "endLine": 32,
           "result": "[]parser.NavigationDeclaration",
           "structTag": {
             "value": "json:\"declarations\""
@@ -1716,18 +1816,28 @@
         {
           "name": "Files",
           "kind": "property",
-          "line": 32,
-          "endLine": 32,
+          "line": 31,
+          "endLine": 31,
           "result": "int",
           "structTag": {
             "value": "json:\"files\""
           }
         },
         {
+          "name": "Query",
+          "kind": "property",
+          "line": 34,
+          "endLine": 34,
+          "result": "*navigationGraphQuery",
+          "structTag": {
+            "value": "json:\"query,omitempty\""
+          }
+        },
+        {
           "name": "Schema",
           "kind": "property",
-          "line": 31,
-          "endLine": 31,
+          "line": 30,
+          "endLine": 30,
           "result": "string",
           "structTag": {
             "value": "json:\"schema\""
@@ -1746,18 +1856,58 @@
       ]
     },
     {
-      "name": "navigationGraphTruncation",
+      "name": "navigationGraphQuery",
       "kind": "struct",
       "file": "internal/cli/graph.go",
       "line": 38,
       "endLine": 42,
+      "underlyingType": "struct{Direction string`json:\"direction\"`;Depth int`json:\"depth\"`;RootIDs[]string`json:\"rootIds\"`;}",
+      "members": [
+        {
+          "name": "Depth",
+          "kind": "property",
+          "line": 40,
+          "endLine": 40,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"depth\""
+          }
+        },
+        {
+          "name": "Direction",
+          "kind": "property",
+          "line": 39,
+          "endLine": 39,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"direction\""
+          }
+        },
+        {
+          "name": "RootIDs",
+          "kind": "property",
+          "line": 41,
+          "endLine": 41,
+          "result": "[]string",
+          "structTag": {
+            "value": "json:\"rootIds\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "navigationGraphTruncation",
+      "kind": "struct",
+      "file": "internal/cli/graph.go",
+      "line": 44,
+      "endLine": 48,
       "underlyingType": "struct{Reason string`json:\"reason\"`;Limit int`json:\"limit\"`;Skipped int`json:\"skipped\"`;}",
       "members": [
         {
           "name": "Limit",
           "kind": "property",
-          "line": 40,
-          "endLine": 40,
+          "line": 46,
+          "endLine": 46,
           "result": "int",
           "structTag": {
             "value": "json:\"limit\""
@@ -1766,8 +1916,8 @@
         {
           "name": "Reason",
           "kind": "property",
-          "line": 39,
-          "endLine": 39,
+          "line": 45,
+          "endLine": 45,
           "result": "string",
           "structTag": {
             "value": "json:\"reason\""
@@ -1776,8 +1926,8 @@
         {
           "name": "Skipped",
           "kind": "property",
-          "line": 41,
-          "endLine": 41,
+          "line": 47,
+          "endLine": 47,
           "result": "int",
           "structTag": {
             "value": "json:\"skipped\""
@@ -2949,6 +3099,13 @@
       "to": "resultRenderer",
       "kind": "implementation",
       "via": "implements",
+      "cardinality": "one"
+    },
+    {
+      "from": "navigationGraphOutput",
+      "to": "navigationGraphQuery",
+      "kind": "association",
+      "via": "field Query",
       "cardinality": "one"
     },
     {

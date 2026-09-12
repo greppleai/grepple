@@ -4,7 +4,7 @@ Grepple should stabilize for one or two iterations before adding more languages.
 
 ## Recommended next milestone
 
-> Prioritize the agentic-coding feedback gaps before further language expansion: make bounded navigation explicitly incomplete, add focused graph queries, improve repository-wide summaries, and establish repeatable tool-call/token benchmarks. C# remains the next class-model parity target after those reliability and ergonomics improvements.
+> Continue the agentic-coding feedback work before further language expansion: extend the new callers/callees queries into dependency and impact views, improve repository-wide summaries, and establish repeatable tool-call/token benchmarks. C# remains the next class-model parity target after those reliability and ergonomics improvements.
 
 ## Feature set versus feature completeness
 
@@ -131,12 +131,15 @@ Use case: an agent can orient itself in a package or focused call chain within a
 
 #### C3. Graph queries
 
-Support focused questions over the normalized graph: callers, callees, dependencies, dependents, and bounded impact radius. Filters should cover package/module, language, edge kind, exportedness, direction, confidence, and depth. Queries and `--related` must expose omitted-edge counts whenever bounds make the result incomplete.
+- [x] Add deterministic `graph callers` and `graph callees` traversal rooted by exact `--symbol` or `--at PATH:LINE`, with bounded depth, cycle protection, candidate-edge preservation, complete JSON, and bounded compact output.
+- [ ] Add package/module dependencies, dependents, and bounded impact-radius queries.
+- [ ] Add filters for package/module, language, edge kind, exportedness, direction, and confidence. Queries and `--related` must expose omitted-edge counts whenever bounds make the result incomplete.
 
 Potential examples:
 
 ```bash
-grepple graph callers 'Service.Save' . --depth 2
+grepple graph callers --symbol 'Service.Save' --depth 2 --compact .
+grepple graph callees --at internal/cli/local.go:120 --depth 2 --json .
 grepple graph dependencies ./internal/cli --package search
 grepple graph impact --at internal/cli/local.go:120 --depth 3 --compact
 ```
@@ -263,7 +266,8 @@ Before expanding scope, require:
 - [x] Improve ambiguity diagnostics with suggested `--at PATH:LINE` locations.
 - [x] Expose normalized JSON and bounded compact graph output for agent and tool consumption.
 - [x] Report every bounded caller/callee omission with counts and complete-graph guidance in human and JSON output.
-- [ ] Add focused graph queries with package/module, language, edge-kind, exportedness, direction, confidence, and depth filters.
+- [x] Add focused callers/callees graph queries with exact symbol/location roots, bounded depth, cycle protection, and candidate preservation.
+- [ ] Add dependency/dependent/impact queries and package/module, language, edge-kind, exportedness, direction, and confidence filters.
 - [ ] Add repository-wide count summaries independent of output paging.
 - [x] Stream validated focused extraction output to stdout when `--output` is omitted.
 - [ ] Add a concise package/workspace summary smaller than the generated overview.
