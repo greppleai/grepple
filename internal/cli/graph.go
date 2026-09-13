@@ -36,11 +36,12 @@ type navigationGraphOutput struct {
 }
 
 type navigationGraphQuery struct {
-	Direction   string   `json:"direction"`
-	Depth       int      `json:"depth"`
-	RootIDs     []string `json:"rootIds"`
-	Languages   []string `json:"languages,omitempty"`
-	Confidences []string `json:"confidences,omitempty"`
+	Direction    string   `json:"direction"`
+	Depth        int      `json:"depth"`
+	RootIDs      []string `json:"rootIds"`
+	Languages    []string `json:"languages,omitempty"`
+	Confidences  []string `json:"confidences,omitempty"`
+	Visibilities []string `json:"visibilities,omitempty"`
 }
 
 type navigationGraphTruncation struct {
@@ -118,6 +119,9 @@ func compactGraphQueryLine(query navigationGraphQuery) string {
 	if len(query.Confidences) > 0 {
 		parts = append(parts, "confidences="+strings.Join(query.Confidences, ","))
 	}
+	if len(query.Visibilities) > 0 {
+		parts = append(parts, "visibilities="+strings.Join(query.Visibilities, ","))
+	}
 	return strings.Join(parts, " ")
 }
 
@@ -135,7 +139,7 @@ func indexCompactNavigationGraph(declarationList []parser.NavigationDeclaration,
 
 func writeCompactNavigationDeclarations(write func(string) bool, declarationList []parser.NavigationDeclaration, declarations map[string]parser.NavigationDeclaration, callsByCaller map[string][]parser.NavigationCall) bool {
 	for _, declaration := range declarationList {
-		line := fmt.Sprintf("D %s %s %s %s %s", shortGraphID(declaration.ID), declaration.Language, declaration.Kind, declaration.Name, graphDeclarationLocation(declaration))
+		line := fmt.Sprintf("D %s %s %s %s %s visibility=%s", shortGraphID(declaration.ID), declaration.Language, declaration.Kind, declaration.Name, graphDeclarationLocation(declaration), declaration.Visibility)
 		if !write(line) {
 			return false
 		}

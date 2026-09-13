@@ -16,16 +16,16 @@
     "syntacticBuildTagUnion": []
   },
   "summary": {
-    "sourceFiles": 29,
-    "declarations": 50,
-    "exportedTypes": 20,
+    "sourceFiles": 30,
+    "declarations": 51,
+    "exportedTypes": 21,
     "internalTypes": 30,
-    "members": 328,
+    "members": 329,
     "exportedFunctions": 21,
     "fiberRoutes": 0,
-    "relations": 138
+    "relations": 139
   },
-  "semanticModelDigest": "sha256:392a57059fe22eb913acacc71da3883bfbe88b6273d94cf3494a01b3b37394ff",
+  "semanticModelDigest": "sha256:5a2f22b5d7a350854ac9c3d428a1be7f60b88515a0314ad91fc18de1117726ad",
   "sourceFiles": [
     {
       "path": "parser/analyze.go"
@@ -98,6 +98,9 @@
     },
     {
       "path": "parser/navigation_context.go"
+    },
+    {
+      "path": "parser/navigation_visibility.go"
     },
     {
       "path": "parser/outline.go"
@@ -430,15 +433,15 @@
       "name": "NavigationCall",
       "kind": "struct",
       "file": "parser/navigation.go",
-      "line": 32,
-      "endLine": 51,
+      "line": 33,
+      "endLine": 52,
       "underlyingType": "struct{ID string`json:\"id\"`;CallerID string`json:\"callerId\"`;TargetID string`json:\"targetId,omitempty\"`;CandidateTargetIDs[]string`json:\"candidateTargetIds,omitempty\"`;Name string`json:\"name\"`;Display string`json:\"display,omitempty\"`;Qualifier string`json:\"qualifier,omitempty\"`;ImportPath string`json:\"importPath,omitempty\"`;ReceiverType string`json:\"receiverType,omitempty\"`;ReceiverFactory string`json:\"receiverFactory,omitempty\"`;ReceiverFactoryImport string`json:\"receiverFactoryImport,omitempty\"`;ResolvedName string`json:\"resolvedName,omitempty\"`;Confidence string`json:\"confidence\"`;Language string`json:\"language\"`;Path string`json:\"path\"`;Line int`json:\"line\"`;EnclosingStart int`json:\"enclosingStartLine\"`;EnclosingEnd int`json:\"enclosingEndLine\"`;}",
       "members": [
         {
           "name": "CallerID",
           "kind": "property",
-          "line": 34,
-          "endLine": 34,
+          "line": 35,
+          "endLine": 35,
           "result": "string",
           "structTag": {
             "value": "json:\"callerId\""
@@ -447,8 +450,8 @@
         {
           "name": "CandidateTargetIDs",
           "kind": "property",
-          "line": 36,
-          "endLine": 36,
+          "line": 37,
+          "endLine": 37,
           "result": "[]string",
           "structTag": {
             "value": "json:\"candidateTargetIds,omitempty\""
@@ -457,8 +460,8 @@
         {
           "name": "Confidence",
           "kind": "property",
-          "line": 45,
-          "endLine": 45,
+          "line": 46,
+          "endLine": 46,
           "result": "string",
           "structTag": {
             "value": "json:\"confidence\""
@@ -467,8 +470,8 @@
         {
           "name": "Display",
           "kind": "property",
-          "line": 38,
-          "endLine": 38,
+          "line": 39,
+          "endLine": 39,
           "result": "string",
           "structTag": {
             "value": "json:\"display,omitempty\""
@@ -477,8 +480,8 @@
         {
           "name": "EnclosingEnd",
           "kind": "property",
-          "line": 50,
-          "endLine": 50,
+          "line": 51,
+          "endLine": 51,
           "result": "int",
           "structTag": {
             "value": "json:\"enclosingEndLine\""
@@ -487,8 +490,8 @@
         {
           "name": "EnclosingStart",
           "kind": "property",
-          "line": 49,
-          "endLine": 49,
+          "line": 50,
+          "endLine": 50,
           "result": "int",
           "structTag": {
             "value": "json:\"enclosingStartLine\""
@@ -497,8 +500,8 @@
         {
           "name": "ID",
           "kind": "property",
-          "line": 33,
-          "endLine": 33,
+          "line": 34,
+          "endLine": 34,
           "result": "string",
           "structTag": {
             "value": "json:\"id\""
@@ -507,8 +510,8 @@
         {
           "name": "ImportPath",
           "kind": "property",
-          "line": 40,
-          "endLine": 40,
+          "line": 41,
+          "endLine": 41,
           "result": "string",
           "structTag": {
             "value": "json:\"importPath,omitempty\""
@@ -517,8 +520,8 @@
         {
           "name": "Language",
           "kind": "property",
-          "line": 46,
-          "endLine": 46,
+          "line": 47,
+          "endLine": 47,
           "result": "string",
           "structTag": {
             "value": "json:\"language\""
@@ -527,8 +530,8 @@
         {
           "name": "Line",
           "kind": "property",
-          "line": 48,
-          "endLine": 48,
+          "line": 49,
+          "endLine": 49,
           "result": "int",
           "structTag": {
             "value": "json:\"line\""
@@ -537,8 +540,8 @@
         {
           "name": "Name",
           "kind": "property",
-          "line": 37,
-          "endLine": 37,
+          "line": 38,
+          "endLine": 38,
           "result": "string",
           "structTag": {
             "value": "json:\"name\""
@@ -547,8 +550,8 @@
         {
           "name": "Path",
           "kind": "property",
-          "line": 47,
-          "endLine": 47,
+          "line": 48,
+          "endLine": 48,
           "result": "string",
           "structTag": {
             "value": "json:\"path\""
@@ -557,8 +560,8 @@
         {
           "name": "Qualifier",
           "kind": "property",
-          "line": 39,
-          "endLine": 39,
+          "line": 40,
+          "endLine": 40,
           "result": "string",
           "structTag": {
             "value": "json:\"qualifier,omitempty\""
@@ -567,8 +570,8 @@
         {
           "name": "ReceiverFactory",
           "kind": "property",
-          "line": 42,
-          "endLine": 42,
+          "line": 43,
+          "endLine": 43,
           "result": "string",
           "structTag": {
             "value": "json:\"receiverFactory,omitempty\""
@@ -577,8 +580,8 @@
         {
           "name": "ReceiverFactoryImport",
           "kind": "property",
-          "line": 43,
-          "endLine": 43,
+          "line": 44,
+          "endLine": 44,
           "result": "string",
           "structTag": {
             "value": "json:\"receiverFactoryImport,omitempty\""
@@ -587,8 +590,8 @@
         {
           "name": "ReceiverType",
           "kind": "property",
-          "line": 41,
-          "endLine": 41,
+          "line": 42,
+          "endLine": 42,
           "result": "string",
           "structTag": {
             "value": "json:\"receiverType,omitempty\""
@@ -597,8 +600,8 @@
         {
           "name": "ResolvedName",
           "kind": "property",
-          "line": 44,
-          "endLine": 44,
+          "line": 45,
+          "endLine": 45,
           "result": "string",
           "structTag": {
             "value": "json:\"resolvedName,omitempty\""
@@ -607,8 +610,8 @@
         {
           "name": "TargetID",
           "kind": "property",
-          "line": 35,
-          "endLine": 35,
+          "line": 36,
+          "endLine": 36,
           "result": "string",
           "structTag": {
             "value": "json:\"targetId,omitempty\""
@@ -621,8 +624,8 @@
       "kind": "struct",
       "file": "parser/navigation.go",
       "line": 13,
-      "endLine": 29,
-      "underlyingType": "struct{ID string`json:\"id\"`;Name string`json:\"name\"`;Kind string`json:\"kind\"`;Language string`json:\"language\"`;Path string`json:\"path\"`;Container string`json:\"container,omitempty\"`;Receiver string`json:\"receiver,omitempty\"`;ResultType string`json:\"resultType,omitempty\"`;ResultImportPath string`json:\"resultImportPath,omitempty\"`;Package string`json:\"package,omitempty\"`;PackageID string`json:\"packageId,omitempty\"`;ModuleID string`json:\"moduleId,omitempty\"`;Scope string`json:\"scope,omitempty\"`;Start int`json:\"startLine\"`;End int`json:\"endLine\"`;}",
+      "endLine": 30,
+      "underlyingType": "struct{ID string`json:\"id\"`;Name string`json:\"name\"`;Kind string`json:\"kind\"`;Language string`json:\"language\"`;Path string`json:\"path\"`;Container string`json:\"container,omitempty\"`;Receiver string`json:\"receiver,omitempty\"`;ResultType string`json:\"resultType,omitempty\"`;ResultImportPath string`json:\"resultImportPath,omitempty\"`;Package string`json:\"package,omitempty\"`;PackageID string`json:\"packageId,omitempty\"`;ModuleID string`json:\"moduleId,omitempty\"`;Scope string`json:\"scope,omitempty\"`;Visibility NavigationVisibility`json:\"visibility\"`;Start int`json:\"startLine\"`;End int`json:\"endLine\"`;}",
       "members": [
         {
           "name": "Container",
@@ -637,8 +640,8 @@
         {
           "name": "End",
           "kind": "property",
-          "line": 28,
-          "endLine": 28,
+          "line": 29,
+          "endLine": 29,
           "result": "int",
           "structTag": {
             "value": "json:\"endLine\""
@@ -767,11 +770,21 @@
         {
           "name": "Start",
           "kind": "property",
-          "line": 27,
-          "endLine": 27,
+          "line": 28,
+          "endLine": 28,
           "result": "int",
           "structTag": {
             "value": "json:\"startLine\""
+          }
+        },
+        {
+          "name": "Visibility",
+          "kind": "property",
+          "line": 27,
+          "endLine": 27,
+          "result": "NavigationVisibility",
+          "structTag": {
+            "value": "json:\"visibility\""
           }
         }
       ]
@@ -780,15 +793,15 @@
       "name": "NavigationGraph",
       "kind": "struct",
       "file": "parser/navigation.go",
-      "line": 56,
-      "endLine": 59,
+      "line": 57,
+      "endLine": 60,
       "underlyingType": "struct{Declarations[]NavigationDeclaration`json:\"declarations\"`;Calls[]NavigationCall`json:\"calls\"`;}",
       "members": [
         {
           "name": "Merge",
           "kind": "method",
-          "line": 62,
-          "endLine": 65,
+          "line": 63,
+          "endLine": 66,
           "parameters": [
             "NavigationGraph"
           ]
@@ -796,8 +809,8 @@
         {
           "name": "Calls",
           "kind": "property",
-          "line": 58,
-          "endLine": 58,
+          "line": 59,
+          "endLine": 59,
           "result": "[]NavigationCall",
           "structTag": {
             "value": "json:\"calls\""
@@ -806,14 +819,22 @@
         {
           "name": "Declarations",
           "kind": "property",
-          "line": 57,
-          "endLine": 57,
+          "line": 58,
+          "endLine": 58,
           "result": "[]NavigationDeclaration",
           "structTag": {
             "value": "json:\"declarations\""
           }
         }
       ]
+    },
+    {
+      "name": "NavigationVisibility",
+      "kind": "type",
+      "file": "parser/navigation_visibility.go",
+      "line": 12,
+      "endLine": 12,
+      "underlyingType": "string"
     },
     {
       "name": "Node",
@@ -2378,15 +2399,15 @@
       "name": "navigationCollector",
       "kind": "struct",
       "file": "parser/navigation.go",
-      "line": 142,
-      "endLine": 153,
+      "line": 143,
+      "endLine": 154,
       "underlyingType": "struct{content string;language string;path string;rules*structureRules;imports map[string]navigationImport;fields map[string]map[string]navigationBinding;returnBindings map[string]navigationBinding;packageName string;declarations[]NavigationDeclaration;calls[]NavigationCall;}",
       "members": [
         {
           "name": "callName",
           "kind": "method",
-          "line": 393,
-          "endLine": 415,
+          "line": 394,
+          "endLine": 416,
           "parameters": [
             "*sitter.Node"
           ],
@@ -2395,8 +2416,8 @@
         {
           "name": "containerName",
           "kind": "method",
-          "line": 299,
-          "endLine": 306,
+          "line": 300,
+          "endLine": 307,
           "parameters": [
             "*sitter.Node",
             "*navigationEnvelope"
@@ -2406,8 +2427,8 @@
         {
           "name": "declarationName",
           "kind": "method",
-          "line": 308,
-          "endLine": 319,
+          "line": 309,
+          "endLine": 320,
           "parameters": [
             "*sitter.Node",
             "*navigationEnvelope"
@@ -2417,8 +2438,8 @@
         {
           "name": "enterNavigationNode",
           "kind": "method",
-          "line": 185,
-          "endLine": 216,
+          "line": 186,
+          "endLine": 217,
           "parameters": [
             "*sitter.Node",
             "navigationWalkContext"
@@ -2428,8 +2449,8 @@
         {
           "name": "isCall",
           "kind": "method",
-          "line": 371,
-          "endLine": 391,
+          "line": 372,
+          "endLine": 392,
           "parameters": [
             "string"
           ],
@@ -2438,8 +2459,8 @@
         {
           "name": "isCallableNode",
           "kind": "method",
-          "line": 269,
-          "endLine": 281,
+          "line": 270,
+          "endLine": 282,
           "parameters": [
             "*sitter.Node"
           ],
@@ -2448,8 +2469,8 @@
         {
           "name": "isGoTypeMemberNode",
           "kind": "method",
-          "line": 283,
-          "endLine": 288,
+          "line": 284,
+          "endLine": 289,
           "parameters": [
             "*sitter.Node"
           ],
@@ -2458,8 +2479,8 @@
         {
           "name": "isNavigationContainer",
           "kind": "method",
-          "line": 289,
-          "endLine": 297,
+          "line": 290,
+          "endLine": 298,
           "parameters": [
             "string"
           ],
@@ -2468,8 +2489,8 @@
         {
           "name": "navigationDeclarationKind",
           "kind": "method",
-          "line": 352,
-          "endLine": 369,
+          "line": 353,
+          "endLine": 370,
           "parameters": [
             "*sitter.Node",
             "string"
@@ -2479,8 +2500,8 @@
         {
           "name": "navigationDeclarationRange",
           "kind": "method",
-          "line": 218,
-          "endLine": 223,
+          "line": 219,
+          "endLine": 224,
           "parameters": [
             "*sitter.Node",
             "*navigationEnvelope"
@@ -2490,8 +2511,8 @@
         {
           "name": "recordNavigationCall",
           "kind": "method",
-          "line": 225,
-          "endLine": 240,
+          "line": 226,
+          "endLine": 241,
           "parameters": [
             "*sitter.Node",
             "*NavigationDeclaration",
@@ -2501,8 +2522,8 @@
         {
           "name": "walk",
           "kind": "method",
-          "line": 168,
-          "endLine": 175,
+          "line": 169,
+          "endLine": 176,
           "parameters": [
             "*sitter.Node",
             "navigationWalkContext"
@@ -2511,8 +2532,8 @@
         {
           "name": "walkNavigationChildren",
           "kind": "method",
-          "line": 242,
-          "endLine": 256,
+          "line": 243,
+          "endLine": 257,
           "parameters": [
             "*sitter.Node",
             "navigationWalkContext"
@@ -2521,8 +2542,8 @@
         {
           "name": "wrapperEnvelope",
           "kind": "method",
-          "line": 257,
-          "endLine": 267,
+          "line": 258,
+          "endLine": 268,
           "parameters": [
             "*sitter.Node",
             "*navigationEnvelope"
@@ -2532,71 +2553,71 @@
         {
           "name": "calls",
           "kind": "property",
-          "line": 152,
-          "endLine": 152,
+          "line": 153,
+          "endLine": 153,
           "result": "[]NavigationCall"
         },
         {
           "name": "content",
-          "kind": "property",
-          "line": 143,
-          "endLine": 143,
-          "result": "string"
-        },
-        {
-          "name": "declarations",
-          "kind": "property",
-          "line": 151,
-          "endLine": 151,
-          "result": "[]NavigationDeclaration"
-        },
-        {
-          "name": "fields",
-          "kind": "property",
-          "line": 148,
-          "endLine": 148,
-          "result": "map[string]map[string]navigationBinding"
-        },
-        {
-          "name": "imports",
-          "kind": "property",
-          "line": 147,
-          "endLine": 147,
-          "result": "map[string]navigationImport"
-        },
-        {
-          "name": "language",
           "kind": "property",
           "line": 144,
           "endLine": 144,
           "result": "string"
         },
         {
-          "name": "packageName",
+          "name": "declarations",
           "kind": "property",
-          "line": 150,
-          "endLine": 150,
-          "result": "string"
+          "line": 152,
+          "endLine": 152,
+          "result": "[]NavigationDeclaration"
         },
         {
-          "name": "path",
+          "name": "fields",
+          "kind": "property",
+          "line": 149,
+          "endLine": 149,
+          "result": "map[string]map[string]navigationBinding"
+        },
+        {
+          "name": "imports",
+          "kind": "property",
+          "line": 148,
+          "endLine": 148,
+          "result": "map[string]navigationImport"
+        },
+        {
+          "name": "language",
           "kind": "property",
           "line": 145,
           "endLine": 145,
           "result": "string"
         },
         {
+          "name": "packageName",
+          "kind": "property",
+          "line": 151,
+          "endLine": 151,
+          "result": "string"
+        },
+        {
+          "name": "path",
+          "kind": "property",
+          "line": 146,
+          "endLine": 146,
+          "result": "string"
+        },
+        {
           "name": "returnBindings",
           "kind": "property",
-          "line": 149,
-          "endLine": 149,
+          "line": 150,
+          "endLine": 150,
           "result": "map[string]navigationBinding"
         },
         {
           "name": "rules",
           "kind": "property",
-          "line": 146,
-          "endLine": 146,
+          "line": 147,
+          "endLine": 147,
           "result": "*structureRules"
         }
       ]
@@ -2605,29 +2626,29 @@
       "name": "navigationEnvelope",
       "kind": "struct",
       "file": "parser/navigation.go",
-      "line": 155,
-      "endLine": 159,
+      "line": 156,
+      "endLine": 160,
       "underlyingType": "struct{start int;end int;assignedName string;}",
       "members": [
         {
           "name": "assignedName",
           "kind": "property",
-          "line": 158,
-          "endLine": 158,
+          "line": 159,
+          "endLine": 159,
           "result": "string"
         },
         {
           "name": "end",
           "kind": "property",
-          "line": 157,
-          "endLine": 157,
+          "line": 158,
+          "endLine": 158,
           "result": "int"
         },
         {
           "name": "start",
           "kind": "property",
-          "line": 156,
-          "endLine": 156,
+          "line": 157,
+          "endLine": 157,
           "result": "int"
         }
       ]
@@ -2660,36 +2681,36 @@
       "name": "navigationWalkContext",
       "kind": "struct",
       "file": "parser/navigation.go",
-      "line": 161,
-      "endLine": 166,
+      "line": 162,
+      "endLine": 167,
       "underlyingType": "struct{envelope*navigationEnvelope;container string;bindings map[string]navigationBinding;callable*NavigationDeclaration;}",
       "members": [
         {
           "name": "bindings",
           "kind": "property",
-          "line": 164,
-          "endLine": 164,
+          "line": 165,
+          "endLine": 165,
           "result": "map[string]navigationBinding"
         },
         {
           "name": "callable",
           "kind": "property",
-          "line": 165,
-          "endLine": 165,
+          "line": 166,
+          "endLine": 166,
           "result": "*NavigationDeclaration"
         },
         {
           "name": "container",
           "kind": "property",
-          "line": 163,
-          "endLine": 163,
+          "line": 164,
+          "endLine": 164,
           "result": "string"
         },
         {
           "name": "envelope",
           "kind": "property",
-          "line": 162,
-          "endLine": 162,
+          "line": 163,
+          "endLine": 163,
           "result": "*navigationEnvelope"
         }
       ]
@@ -3212,8 +3233,8 @@
       "name": "BuildNavigationGraph",
       "kind": "function",
       "file": "parser/navigation.go",
-      "line": 84,
-      "endLine": 95,
+      "line": 85,
+      "endLine": 96,
       "parameters": [
         "string",
         "string",
@@ -3250,8 +3271,8 @@
       "name": "DeclarationRangeAt",
       "kind": "function",
       "file": "parser/navigation.go",
-      "line": 126,
-      "endLine": 140,
+      "line": 127,
+      "endLine": 141,
       "parameters": [
         "string",
         "string",
@@ -3325,8 +3346,8 @@
       "name": "Navigation",
       "kind": "function",
       "file": "parser/navigation.go",
-      "line": 78,
-      "endLine": 81,
+      "line": 79,
+      "endLine": 82,
       "parameters": [
         "string",
         "string"
@@ -3337,8 +3358,8 @@
       "name": "NavigationGraphFromDocument",
       "kind": "function",
       "file": "parser/navigation.go",
-      "line": 99,
-      "endLine": 109,
+      "line": 100,
+      "endLine": 110,
       "parameters": [
         "*Document",
         "string"
@@ -3349,8 +3370,8 @@
       "name": "NavigationGraphFromTree",
       "kind": "function",
       "file": "parser/navigation.go",
-      "line": 113,
-      "endLine": 123,
+      "line": 114,
+      "endLine": 124,
       "parameters": [
         "*sitter.Node",
         "string",
@@ -3581,6 +3602,13 @@
       "kind": "dependency",
       "via": "result 1",
       "cardinality": "many"
+    },
+    {
+      "from": "NavigationDeclaration",
+      "to": "NavigationVisibility",
+      "kind": "association",
+      "via": "field Visibility",
+      "cardinality": "one"
     },
     {
       "from": "NavigationGraph",

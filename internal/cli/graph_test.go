@@ -205,7 +205,7 @@ func TestGraphQueryFiltersLanguageAndConfidenceBeforeRootSelection(t *testing.T)
 	writeGraphSource(t, dir, "flow.go", "package sample\nfunc Root(){ Middle() }\nfunc Middle() {}\n")
 	writeGraphSource(t, dir, "flow.py", "def Root():\n    pass\n")
 	outputText := captureStdout(t, func() {
-		if err := Run([]string{"graph", "callees", "--symbol", "Root", "--language", "go", "--confidence", "unique-terminal", "--json"}); err != nil {
+		if err := Run([]string{"graph", "callees", "--symbol", "Root", "--language", "go", "--confidence", "unique-terminal", "--visibility", "public", "--json"}); err != nil {
 			t.Fatal(err)
 		}
 	})
@@ -213,7 +213,7 @@ func TestGraphQueryFiltersLanguageAndConfidenceBeforeRootSelection(t *testing.T)
 	if err := json.Unmarshal([]byte(outputText), &output); err != nil {
 		t.Fatal(err)
 	}
-	if output.Query == nil || !reflect.DeepEqual(output.Query.Languages, []string{"go"}) || !reflect.DeepEqual(output.Query.Confidences, []string{"unique-terminal"}) {
+	if output.Query == nil || !reflect.DeepEqual(output.Query.Languages, []string{"go"}) || !reflect.DeepEqual(output.Query.Confidences, []string{"unique-terminal"}) || !reflect.DeepEqual(output.Query.Visibilities, []string{"public"}) {
 		t.Fatalf("query filters=%#v", output.Query)
 	}
 	if names := graphOutputDeclarationNames(output); !reflect.DeepEqual(names, []string{"Root", "Middle"}) {
@@ -236,6 +236,7 @@ func TestGraphQueryRejectsMissingAndAmbiguousSelectors(t *testing.T) {
 		{"graph", "dependents", "--root-path", "missing", "--compact"},
 		{"graph", "callers", "--symbol", "helper", "--language", "text", "--compact"},
 		{"graph", "callers", "--symbol", "helper", "--confidence", "likely", "--compact"},
+		{"graph", "callers", "--symbol", "helper", "--visibility", "maybe", "--compact"},
 		{"graph", "callers", "--symbol", "missing", "--compact"},
 		{"graph", "callers", "--symbol", "helper", "--depth", "11", "--compact"},
 	} {

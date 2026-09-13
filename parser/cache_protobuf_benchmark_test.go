@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	protobufDeclarationStringWidth = 13
+	protobufDeclarationStringWidth = 14
 	protobufCallStringWidth        = 14
 )
 
@@ -132,8 +132,8 @@ func marshalNavigationDeclarationMessage(declaration NavigationDeclaration) []by
 	for index, value := range navigationDeclarationStrings(declaration) {
 		content = appendProtobufString(content, protowire.Number(index+1), value)
 	}
-	content = appendProtobufUint32(content, 14, uint32(declaration.Start))
-	return appendProtobufUint32(content, 15, uint32(declaration.End))
+	content = appendProtobufUint32(content, 15, uint32(declaration.Start))
+	return appendProtobufUint32(content, 16, uint32(declaration.End))
 }
 
 func marshalNavigationCallMessage(call NavigationCall) []byte {
@@ -220,9 +220,9 @@ func unmarshalNavigationDeclarationMessage(content []byte) (NavigationDeclaratio
 		if wireType != protowire.VarintType || valueLength < 0 {
 			return NavigationDeclaration{}, fmt.Errorf("invalid declaration integer field %d", field)
 		}
-		if field == 14 {
+		if field == 15 {
 			start = uint32(value)
-		} else if field == 15 {
+		} else if field == 16 {
 			end = uint32(value)
 		}
 		content = content[valueLength:]
@@ -269,7 +269,7 @@ func navigationDeclarationStrings(declaration NavigationDeclaration) [protobufDe
 	return [protobufDeclarationStringWidth]string{
 		declaration.ID, declaration.Name, declaration.Kind, declaration.Language, declaration.Path,
 		declaration.Container, declaration.Receiver, declaration.ResultType, declaration.ResultImportPath,
-		declaration.Package, declaration.PackageID, declaration.ModuleID, declaration.Scope,
+		declaration.Package, declaration.PackageID, declaration.ModuleID, declaration.Scope, string(declaration.Visibility),
 	}
 }
 
@@ -285,7 +285,7 @@ func navigationDeclarationFromProtobuf(values [protobufDeclarationStringWidth]st
 	return NavigationDeclaration{
 		ID: values[0], Name: values[1], Kind: values[2], Language: values[3], Path: values[4],
 		Container: values[5], Receiver: values[6], ResultType: values[7], ResultImportPath: values[8],
-		Package: values[9], PackageID: values[10], ModuleID: values[11], Scope: values[12],
+		Package: values[9], PackageID: values[10], ModuleID: values[11], Scope: values[12], Visibility: NavigationVisibility(values[13]),
 		Start: int(start), End: int(end),
 	}
 }

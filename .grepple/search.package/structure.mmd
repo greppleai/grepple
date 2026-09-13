@@ -22,10 +22,11 @@ classDiagram
     class NavigationGraphFilter {
         +Confidences: []string
         +Languages: []string
+        +Visibilities: []string
     }
     <<struct>> NavigationGraphFilter
     %% grepple:file NavigationGraphFilter search/navigation_filter.go
-    note for NavigationGraphFilter "defined: search/navigation_filter.go:12-15; Confidences@search/navigation_filter.go:14; Languages@search/navigation_filter.go:13"
+    note for NavigationGraphFilter "defined: search/navigation_filter.go:12-16; Confidences@search/navigation_filter.go:14; Languages@search/navigation_filter.go:13; Visibilities@search/navigation_filter.go:15"
     class NavigationQueryDirection["NavigationQueryDirection = string"]
     <<type>> NavigationQueryDirection
     %% grepple:underlying NavigationQueryDirection string
@@ -301,7 +302,7 @@ classDiagram
     }
     <<function>> FilterNavigationGraph
     %% grepple:file FilterNavigationGraph search/navigation_filter.go
-    note for FilterNavigationGraph "defined: search/navigation_filter.go:19-31"
+    note for FilterNavigationGraph "defined: search/navigation_filter.go:20-36"
     class ListFilePaths {
         +ListFilePaths(Params, []string): tuple~[]string&#44;error~
     }
@@ -325,7 +326,7 @@ classDiagram
     }
     <<function>> NormalizeNavigationGraphFilter
     %% grepple:file NormalizeNavigationGraphFilter search/navigation_filter.go
-    note for NormalizeNavigationGraphFilter "defined: search/navigation_filter.go:34-44"
+    note for NormalizeNavigationGraphFilter "defined: search/navigation_filter.go:39-53"
     class PathMatchesGlobs {
         +PathMatchesGlobs(string, []string): bool
     }

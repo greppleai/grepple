@@ -134,7 +134,7 @@ Use case: an agent can orient itself in a package or focused call chain within a
 
 - [x] Add deterministic `graph callers`, `callees`, `dependencies`, `dependents`, and bidirectional `impact` traversal with bounded depth, cycle protection, candidate-edge preservation, complete JSON, and bounded compact output. Exact symbol/location selectors choose one root; package/module/root-path selectors choose a scope.
 - [x] Add repeatable canonical language and confidence filters before root selection and traversal; preserve normalized filter metadata in JSON and compact output.
-- [ ] Add exportedness filtering after declaration adapters expose a reliable cross-language exported/public fact. Add edge-kind filtering when the normalized graph contains more than call edges. Queries and `--related` must expose omitted-edge counts whenever bounds make the result incomplete.
+- [x] Add explicit `public`, `non-public`, and `unknown` declaration visibility facts plus repeatable pre-traversal `--visibility` graph filtering. Unknown preserves honesty for languages without reliable visibility semantics. Defer edge-kind filtering until normalized graphs contain more than call edges.
 
 Potential examples:
 
@@ -269,7 +269,7 @@ Before expanding scope, require:
 - [x] Report every bounded caller/callee omission with counts and complete-graph guidance in human and JSON output.
 - [x] Add focused callers/callees/dependencies/dependents/impact graph queries with exact symbol/location and package/module/root-path selectors, bounded depth, cycle protection, and candidate preservation.
 - [x] Add repeatable language and confidence filters with normalized query metadata.
-- [ ] Add exportedness filtering once declarations expose a reliable cross-language fact; defer edge-kind filtering until the graph contains more than call edges.
+- [x] Add explicit declaration visibility facts and repeatable `--visibility public|non-public|unknown` filtering before root selection and traversal; defer edge-kind filtering until the graph contains more than call edges.
 - [x] Add repository-wide count summaries independent of output paging.
 - [x] Stream validated focused extraction output to stdout when `--output` is omitted.
 - [x] Add concise bounded package/workspace summaries from canonical IR, substantially smaller than generated overviews on the dogfood checkout.

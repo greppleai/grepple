@@ -10,8 +10,9 @@ import (
 // NavigationGraphFilter restricts declarations and calls before graph traversal.
 // Empty fields retain every value. Values are exact canonical IDs.
 type NavigationGraphFilter struct {
-	Languages   []string
-	Confidences []string
+	Languages    []string
+	Confidences  []string
+	Visibilities []string
 }
 
 // FilterNavigationGraph applies deterministic language and confidence filters
@@ -25,7 +26,11 @@ func FilterNavigationGraph(graph parser.NavigationGraph, filter NavigationGraphF
 	if err != nil {
 		return parser.NavigationGraph{}, err
 	}
-	declarations, included := filterNavigationDeclarations(graph.Declarations, languages)
+	visibilities, err := navigationVisibilityFilter(filter.Visibilities)
+	if err != nil {
+		return parser.NavigationGraph{}, err
+	}
+	declarations, included := filterNavigationDeclarations(graph.Declarations, languages, visibilities)
 	calls := filterNavigationCalls(graph.Calls, included, languages, confidences)
 	return parser.NavigationGraph{Declarations: declarations, Calls: calls}, nil
 }
@@ -40,7 +45,11 @@ func NormalizeNavigationGraphFilter(filter NavigationGraphFilter) (NavigationGra
 	if err != nil {
 		return NavigationGraphFilter{}, err
 	}
-	return NavigationGraphFilter{Languages: sortedFilterKeys(languages), Confidences: sortedFilterKeys(confidences)}, nil
+	visibilities, err := navigationVisibilityFilter(filter.Visibilities)
+	if err != nil {
+		return NavigationGraphFilter{}, err
+	}
+	return NavigationGraphFilter{Languages: sortedFilterKeys(languages), Confidences: sortedFilterKeys(confidences), Visibilities: sortedFilterKeys(visibilities)}, nil
 }
 
 func navigationLanguageFilter(values []string) (map[string]bool, error) {
@@ -68,11 +77,24 @@ func navigationConfidenceFilter(values []string) (map[string]bool, error) {
 	return filter, nil
 }
 
-func filterNavigationDeclarations(declarations []parser.NavigationDeclaration, languages map[string]bool) ([]parser.NavigationDeclaration, map[string]bool) {
+func navigationVisibilityFilter(values []string) (map[string]bool, error) {
+	filter := make(map[string]bool, len(values))
+	for _, value := range values {
+		switch parser.NavigationVisibility(value) {
+		case parser.NavigationVisibilityPublic, parser.NavigationVisibilityNonPublic, parser.NavigationVisibilityUnknown:
+			filter[value] = true
+		default:
+			return nil, fmt.Errorf("unsupported navigation visibility %q", value)
+		}
+	}
+	return filter, nil
+}
+
+func filterNavigationDeclarations(declarations []parser.NavigationDeclaration, languages, visibilities map[string]bool) ([]parser.NavigationDeclaration, map[string]bool) {
 	filtered := make([]parser.NavigationDeclaration, 0, len(declarations))
 	included := make(map[string]bool, len(declarations))
 	for _, declaration := range declarations {
-		if len(languages) > 0 && !languages[declaration.Language] {
+		if len(languages) > 0 && !languages[declaration.Language] || len(visibilities) > 0 && !visibilities[string(declaration.Visibility)] {
 			continue
 		}
 		filtered = append(filtered, declaration)

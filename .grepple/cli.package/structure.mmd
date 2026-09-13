@@ -273,6 +273,7 @@ classDiagram
         +Paths: []string
         +RootPath: string
         +Symbol: string
+        +Visibilities: []string
     }
     <<struct>> graphQueryArgs
     %% grepple:file graphQueryArgs internal/cli/graph_query.go
@@ -289,7 +290,8 @@ classDiagram
     %% grepple:struct-tag graphQueryArgs Paths "arg:\"positional\" placeholder:\"PATH\" help:\"file, directory, or glob to include; defaults to the working directory\""
     %% grepple:struct-tag graphQueryArgs RootPath "arg:\"--root-path\" placeholder:\"PATH\" help:\"select declarations at or below a repository-relative path\""
     %% grepple:struct-tag graphQueryArgs Symbol "arg:\"--symbol\" placeholder:\"NAME\" help:\"select one exact declaration name\""
-    note for graphQueryArgs "defined: internal/cli/graph_query.go:19-33; Description@internal/cli/graph_query.go:35-37; At@internal/cli/graph_query.go:23; Compact@internal/cli/graph_query.go:21; Confidences@internal/cli/graph_query.go:28; Depth@internal/cli/graph_query.go:29; JSON@internal/cli/graph_query.go:20; Languages@internal/cli/graph_query.go:27; MaxFiles@internal/cli/graph_query.go:30; MaxOutputBytes@internal/cli/graph_query.go:31; Module@internal/cli/graph_query.go:25; Package@internal/cli/graph_query.go:24; Paths@internal/cli/graph_query.go:32; RootPath@internal/cli/graph_query.go:26; Symbol@internal/cli/graph_query.go:22"
+    %% grepple:struct-tag graphQueryArgs Visibilities "arg:\"--visibility,separate\" placeholder:\"LEVEL\" help:\"retain public, non-public, or unknown declarations; repeatable\""
+    note for graphQueryArgs "defined: internal/cli/graph_query.go:19-34; Description@internal/cli/graph_query.go:36-38; At@internal/cli/graph_query.go:23; Compact@internal/cli/graph_query.go:21; Confidences@internal/cli/graph_query.go:28; Depth@internal/cli/graph_query.go:30; JSON@internal/cli/graph_query.go:20; Languages@internal/cli/graph_query.go:27; MaxFiles@internal/cli/graph_query.go:31; MaxOutputBytes@internal/cli/graph_query.go:32; Module@internal/cli/graph_query.go:25; Package@internal/cli/graph_query.go:24; Paths@internal/cli/graph_query.go:33; RootPath@internal/cli/graph_query.go:26; Symbol@internal/cli/graph_query.go:22; Visibilities@internal/cli/graph_query.go:29"
     class gritArgs {
         +Description(): string
         +ExcludeGlobs: []string
@@ -429,6 +431,7 @@ classDiagram
         +Direction: string
         +Languages: []string
         +RootIDs: []string
+        +Visibilities: []string
     }
     <<struct>> navigationGraphQuery
     %% grepple:file navigationGraphQuery internal/cli/graph.go
@@ -437,7 +440,8 @@ classDiagram
     %% grepple:struct-tag navigationGraphQuery Direction "json:\"direction\""
     %% grepple:struct-tag navigationGraphQuery Languages "json:\"languages,omitempty\""
     %% grepple:struct-tag navigationGraphQuery RootIDs "json:\"rootIds\""
-    note for navigationGraphQuery "defined: internal/cli/graph.go:38-44; Confidences@internal/cli/graph.go:43; Depth@internal/cli/graph.go:40; Direction@internal/cli/graph.go:39; Languages@internal/cli/graph.go:42; RootIDs@internal/cli/graph.go:41"
+    %% grepple:struct-tag navigationGraphQuery Visibilities "json:\"visibilities,omitempty\""
+    note for navigationGraphQuery "defined: internal/cli/graph.go:38-45; Confidences@internal/cli/graph.go:43; Depth@internal/cli/graph.go:40; Direction@internal/cli/graph.go:39; Languages@internal/cli/graph.go:42; RootIDs@internal/cli/graph.go:41; Visibilities@internal/cli/graph.go:44"
     class navigationGraphTruncation {
         +Limit: int
         +Reason: string
@@ -448,7 +452,7 @@ classDiagram
     %% grepple:struct-tag navigationGraphTruncation Limit "json:\"limit\""
     %% grepple:struct-tag navigationGraphTruncation Reason "json:\"reason\""
     %% grepple:struct-tag navigationGraphTruncation Skipped "json:\"skipped\""
-    note for navigationGraphTruncation "defined: internal/cli/graph.go:46-50; Limit@internal/cli/graph.go:48; Reason@internal/cli/graph.go:47; Skipped@internal/cli/graph.go:49"
+    note for navigationGraphTruncation "defined: internal/cli/graph.go:47-51; Limit@internal/cli/graph.go:49; Reason@internal/cli/graph.go:48; Skipped@internal/cli/graph.go:50"
     class onlyMatchingRenderer {
         +Render([]api.FileResult): error
         -matcher: *regexp.Regexp

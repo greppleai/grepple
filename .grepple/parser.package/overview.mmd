@@ -2,7 +2,7 @@ classDiagram
     %% grepple:package-default github.com/greppleai/grepple/parser
     %% grepple:language-default go
     direction LR
-    note "Package parser provides application source classification and structural parsing. | package github.com/greppleai/grepple/parser | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=29, declarations=50, exportedTypes=20, internalTypes=30, members=328, exportedFunctions=21, fiberRoutes=0, relations=138"
+    note "Package parser provides application source classification and structural parsing. | package github.com/greppleai/grepple/parser | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=30, declarations=51, exportedTypes=21, internalTypes=30, members=329, exportedFunctions=21, fiberRoutes=0, relations=139"
     namespace interfaces {
         class languageAdapter["languageAdapter · parser/language.go:75-80"] {
             +Grammar(): *sitter.Language
@@ -19,7 +19,7 @@ classDiagram
             +Symbols: []Symbol
         }
         <<struct>> FileOutline
-        class NavigationCall["NavigationCall · parser/navigation.go:32-51"] {
+        class NavigationCall["NavigationCall · parser/navigation.go:33-52"] {
             +CallerID: string
             +CandidateTargetIDs: []string
             +Confidence: string
@@ -40,7 +40,7 @@ classDiagram
             +TargetID: string
         }
         <<struct>> NavigationCall
-        class NavigationDeclaration["NavigationDeclaration · parser/navigation.go:13-29"] {
+        class NavigationDeclaration["NavigationDeclaration · parser/navigation.go:13-30"] {
             +Container: string
             +End: int
             +ID: string
@@ -56,9 +56,10 @@ classDiagram
             +ResultType: string
             +Scope: string
             +Start: int
+            +Visibility: NavigationVisibility
         }
         <<struct>> NavigationDeclaration
-        class NavigationGraph["NavigationGraph · parser/navigation.go:56-59"] {
+        class NavigationGraph["NavigationGraph · parser/navigation.go:57-60"] {
             +Calls: []NavigationCall
             +Declarations: []NavigationDeclaration
         }
@@ -84,6 +85,8 @@ classDiagram
         <<type>> GrammarCardinality
         class LanguageCapabilities["LanguageCapabilities · parser/language.go:8-14"]
         <<struct>> LanguageCapabilities
+        class NavigationVisibility["NavigationVisibility = string · parser/navigation_visibility.go:12"]
+        <<type>> NavigationVisibility
         class Node["Node · parser/document.go:50-54"]
         <<struct>> Node
         class ParseDiagnostic["ParseDiagnostic · parser/document.go:31-35"]
@@ -134,13 +137,13 @@ classDiagram
         <<struct>> mdNode
         class navigationBinding["navigationBinding · parser/navigation_context.go:16-22"]
         <<struct>> navigationBinding
-        class navigationCollector["navigationCollector · parser/navigation.go:142-153"]
+        class navigationCollector["navigationCollector · parser/navigation.go:143-154"]
         <<struct>> navigationCollector
-        class navigationEnvelope["navigationEnvelope · parser/navigation.go:155-159"]
+        class navigationEnvelope["navigationEnvelope · parser/navigation.go:156-160"]
         <<struct>> navigationEnvelope
         class navigationImport["navigationImport · parser/navigation_context.go:11-14"]
         <<struct>> navigationImport
-        class navigationWalkContext["navigationWalkContext · parser/navigation.go:161-166"]
+        class navigationWalkContext["navigationWalkContext · parser/navigation.go:162-167"]
         <<struct>> navigationWalkContext
         class pooledParser["pooledParser · parser/tree_sitter.go:21-24"]
         <<struct>> pooledParser
@@ -166,7 +169,7 @@ classDiagram
         <<struct>> viewWalkItem
     }
     namespace operations {
-        class BuildNavigationGraph["BuildNavigationGraph · parser/navigation.go:84-95"] {
+        class BuildNavigationGraph["BuildNavigationGraph · parser/navigation.go:85-96"] {
             +BuildNavigationGraph(string, string, string): NavigationGraph
         }
         <<function>> BuildNavigationGraph
@@ -178,7 +181,7 @@ classDiagram
             +CapabilitiesForLanguage(string): tuple~LanguageCapabilities&#44;bool~
         }
         <<function>> CapabilitiesForLanguage
-        class DeclarationRangeAt["DeclarationRangeAt · parser/navigation.go:126-140"] {
+        class DeclarationRangeAt["DeclarationRangeAt · parser/navigation.go:127-141"] {
             +DeclarationRangeAt(string, string, int): tuple~int&#44;int&#44;bool~
         }
         <<function>> DeclarationRangeAt
@@ -202,15 +205,15 @@ classDiagram
             +LanguageFor(string): string
         }
         <<function>> LanguageFor
-        class Navigation["Navigation · parser/navigation.go:78-81"] {
+        class Navigation["Navigation · parser/navigation.go:79-82"] {
             +Navigation(string, string): tuple~[]NavigationDeclaration&#44;[]NavigationCall~
         }
         <<function>> Navigation
-        class NavigationGraphFromDocument["NavigationGraphFromDocument · parser/navigation.go:99-109"] {
+        class NavigationGraphFromDocument["NavigationGraphFromDocument · parser/navigation.go:100-110"] {
             +NavigationGraphFromDocument(*Document, string): NavigationGraph
         }
         <<function>> NavigationGraphFromDocument
-        class NavigationGraphFromTree["NavigationGraphFromTree · parser/navigation.go:113-123"] {
+        class NavigationGraphFromTree["NavigationGraphFromTree · parser/navigation.go:114-124"] {
             +NavigationGraphFromTree(*sitter.Node, string, string, string): NavigationGraph
         }
         <<function>> NavigationGraphFromTree
@@ -267,6 +270,7 @@ classDiagram
     GrammarFieldCardinality "1" ..> "1" GrammarCardinality : result 1
     Navigation "1" ..> "*" NavigationCall : result 2
     Navigation "1" ..> "*" NavigationDeclaration : result 1
+    NavigationDeclaration "1" --> "1" NavigationVisibility : field Visibility
     NavigationGraph "1" --> "*" NavigationCall : field Calls
     NavigationGraph "1" --> "*" NavigationDeclaration : field Declarations
     NavigationGraphFromDocument "1" ..> "1" Document : parameter 1

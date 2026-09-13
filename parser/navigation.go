@@ -11,21 +11,22 @@ import (
 
 // NavigationDeclaration describes a callable declaration found by a language adapter.
 type NavigationDeclaration struct {
-	ID               string `json:"id"`
-	Name             string `json:"name"`
-	Kind             string `json:"kind"`
-	Language         string `json:"language"`
-	Path             string `json:"path"`
-	Container        string `json:"container,omitempty"`
-	Receiver         string `json:"receiver,omitempty"`
-	ResultType       string `json:"resultType,omitempty"`
-	ResultImportPath string `json:"resultImportPath,omitempty"`
-	Package          string `json:"package,omitempty"`
-	PackageID        string `json:"packageId,omitempty"`
-	ModuleID         string `json:"moduleId,omitempty"`
-	Scope            string `json:"scope,omitempty"`
-	Start            int    `json:"startLine"`
-	End              int    `json:"endLine"`
+	ID               string               `json:"id"`
+	Name             string               `json:"name"`
+	Kind             string               `json:"kind"`
+	Language         string               `json:"language"`
+	Path             string               `json:"path"`
+	Container        string               `json:"container,omitempty"`
+	Receiver         string               `json:"receiver,omitempty"`
+	ResultType       string               `json:"resultType,omitempty"`
+	ResultImportPath string               `json:"resultImportPath,omitempty"`
+	Package          string               `json:"package,omitempty"`
+	PackageID        string               `json:"packageId,omitempty"`
+	ModuleID         string               `json:"moduleId,omitempty"`
+	Scope            string               `json:"scope,omitempty"`
+	Visibility       NavigationVisibility `json:"visibility"`
+	Start            int                  `json:"startLine"`
+	End              int                  `json:"endLine"`
 }
 
 // NavigationCall describes a call and the callable declaration containing it.
@@ -206,7 +207,7 @@ func (c *navigationCollector) enterNavigationNode(node *sitter.Node, context nav
 	result := navigationCallableReturnBinding(node, c.content, c.language, c.imports)
 	declaration := NavigationDeclaration{
 		Name: name, Kind: c.navigationDeclarationKind(node, current.container), Language: c.language, Path: c.path, Container: current.container, Package: c.packageName,
-		ResultType: result.typeName, ResultImportPath: result.importPath, Start: start, End: end,
+		ResultType: result.typeName, ResultImportPath: result.importPath, Visibility: navigationDeclarationVisibility(node, c.language, name, c.content), Start: start, End: end,
 	}
 	declaration.ID = navigationStableID("declaration", declaration.Language, declaration.Path, declaration.Name, declaration.Kind, strconv.Itoa(start), strconv.Itoa(end))
 	c.declarations = append(c.declarations, declaration)

@@ -26,6 +26,7 @@ type graphQueryArgs struct {
 	RootPath       string   `arg:"--root-path" placeholder:"PATH" help:"select declarations at or below a repository-relative path"`
 	Languages      []string `arg:"--language,separate" placeholder:"ID" help:"retain one navigation language; repeatable"`
 	Confidences    []string `arg:"--confidence,separate" placeholder:"LEVEL" help:"retain one edge confidence; repeatable"`
+	Visibilities   []string `arg:"--visibility,separate" placeholder:"LEVEL" help:"retain public, non-public, or unknown declarations; repeatable"`
 	Depth          int      `arg:"--depth" default:"1" placeholder:"N" help:"maximum traversal depth (1-10)"`
 	MaxFiles       int      `arg:"--max-files" placeholder:"N" help:"parse at most N discovered files (0 = unlimited)"`
 	MaxOutputBytes int      `arg:"--max-output-bytes" placeholder:"N" help:"cap compact output (default 16384; 0 = unlimited; JSON is uncapped)"`
@@ -56,7 +57,7 @@ func runGraphQuery(direction search.NavigationQueryDirection, args []string) err
 	if err != nil {
 		return err
 	}
-	filter, err := search.NormalizeNavigationGraphFilter(search.NavigationGraphFilter{Languages: values.Languages, Confidences: values.Confidences})
+	filter, err := search.NormalizeNavigationGraphFilter(search.NavigationGraphFilter{Languages: values.Languages, Confidences: values.Confidences, Visibilities: values.Visibilities})
 	if err != nil {
 		return err
 	}
@@ -79,7 +80,7 @@ func runGraphQuery(direction search.NavigationQueryDirection, args []string) err
 	output.Calls = queried.Calls
 	output.Query = &navigationGraphQuery{
 		Direction: string(direction), Depth: values.Depth, RootIDs: rootIDs,
-		Languages: filter.Languages, Confidences: filter.Confidences,
+		Languages: filter.Languages, Confidences: filter.Confidences, Visibilities: filter.Visibilities,
 	}
 	if values.Compact {
 		return renderCompactNavigationGraph(output, values.MaxOutputBytes)

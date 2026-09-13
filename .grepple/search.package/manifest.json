@@ -20,12 +20,12 @@
     "declarations": 17,
     "exportedTypes": 7,
     "internalTypes": 10,
-    "members": 130,
+    "members": 131,
     "exportedFunctions": 24,
     "fiberRoutes": 0,
     "relations": 46
   },
-  "semanticModelDigest": "sha256:b43b0e767ced3033397fc556a04ef6e893e38a7a2edcb9298c435dcd7e71b586",
+  "semanticModelDigest": "sha256:c391ec9f73888942d0edcb7ae2c1b92ff4ea8be3dd24064a61bc7a55d729b0cf",
   "sourceFiles": [
     {
       "path": "search/at.go"
@@ -157,8 +157,8 @@
       "kind": "struct",
       "file": "search/navigation_filter.go",
       "line": 12,
-      "endLine": 15,
-      "underlyingType": "struct{Languages[]string;Confidences[]string;}",
+      "endLine": 16,
+      "underlyingType": "struct{Languages[]string;Confidences[]string;Visibilities[]string;}",
       "members": [
         {
           "name": "Confidences",
@@ -172,6 +172,13 @@
           "kind": "property",
           "line": 13,
           "endLine": 13,
+          "result": "[]string"
+        },
+        {
+          "name": "Visibilities",
+          "kind": "property",
+          "line": 15,
+          "endLine": 15,
           "result": "[]string"
         }
       ]
@@ -1390,8 +1397,8 @@
       "name": "FilterNavigationGraph",
       "kind": "function",
       "file": "search/navigation_filter.go",
-      "line": 19,
-      "endLine": 31,
+      "line": 20,
+      "endLine": 36,
       "parameters": [
         "parser.NavigationGraph",
         "NavigationGraphFilter"
@@ -1439,8 +1446,8 @@
       "name": "NormalizeNavigationGraphFilter",
       "kind": "function",
       "file": "search/navigation_filter.go",
-      "line": 34,
-      "endLine": 44,
+      "line": 39,
+      "endLine": 53,
       "parameters": [
         "NavigationGraphFilter"
       ],
