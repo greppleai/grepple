@@ -258,6 +258,33 @@ classDiagram
     %% grepple:struct-tag graphArgs MaxOutputBytes "arg:\"--max-output-bytes\" placeholder:\"N\" help:\"cap compact output (default 16384; 0 = unlimited; JSON is uncapped)\""
     %% grepple:struct-tag graphArgs Paths "arg:\"positional\" placeholder:\"PATH\" help:\"file, directory, or glob to include; defaults to the working directory\""
     note for graphArgs "defined: internal/cli/graph.go:17-23; Description@internal/cli/graph.go:25-27; Compact@internal/cli/graph.go:19; JSON@internal/cli/graph.go:18; MaxFiles@internal/cli/graph.go:20; MaxOutputBytes@internal/cli/graph.go:21; Paths@internal/cli/graph.go:22"
+    class graphDiffArgs {
+        +Description(): string
+        +After: string
+        +Before: string
+        +Compact: bool
+        +JSON: bool
+        +MaxFiles: int
+        +MaxOutputBytes: int
+    }
+    <<struct>> graphDiffArgs
+    %% grepple:file graphDiffArgs internal/cli/graph_diff.go
+    %% grepple:struct-tag graphDiffArgs After "arg:\"--after,required\" placeholder:\"PATH\" help:\"source tree after the change\""
+    %% grepple:struct-tag graphDiffArgs Before "arg:\"--before,required\" placeholder:\"PATH\" help:\"source tree before the change\""
+    %% grepple:struct-tag graphDiffArgs Compact "arg:\"--compact\" help:\"emit a bounded agent-facing semantic graph diff\""
+    %% grepple:struct-tag graphDiffArgs JSON "arg:\"--json\" help:\"emit the complete semantic graph diff as JSON\""
+    %% grepple:struct-tag graphDiffArgs MaxFiles "arg:\"--max-files\" placeholder:\"N\" help:\"parse at most N files in each tree (0 = unlimited)\""
+    %% grepple:struct-tag graphDiffArgs MaxOutputBytes "arg:\"--max-output-bytes\" placeholder:\"N\" help:\"cap compact output (default 16384; 0 = unlimited; JSON is uncapped)\""
+    note for graphDiffArgs "defined: internal/cli/graph_diff.go:16-23; Description@internal/cli/graph_diff.go:25-27; After@internal/cli/graph_diff.go:20; Before@internal/cli/graph_diff.go:19; Compact@internal/cli/graph_diff.go:18; JSON@internal/cli/graph_diff.go:17; MaxFiles@internal/cli/graph_diff.go:21; MaxOutputBytes@internal/cli/graph_diff.go:22"
+    class graphDiffOutput {
+        +AfterFiles: int
+        +BeforeFiles: int
+    }
+    <<struct>> graphDiffOutput
+    %% grepple:file graphDiffOutput internal/cli/graph_diff.go
+    %% grepple:struct-tag graphDiffOutput AfterFiles "json:\"afterFiles\""
+    %% grepple:struct-tag graphDiffOutput BeforeFiles "json:\"beforeFiles\""
+    note for graphDiffOutput "defined: internal/cli/graph_diff.go:29-33; AfterFiles@internal/cli/graph_diff.go:31; BeforeFiles@internal/cli/graph_diff.go:30"
     class graphQueryArgs {
         +Description(): string
         +At: string

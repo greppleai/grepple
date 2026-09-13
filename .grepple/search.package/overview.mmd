@@ -2,8 +2,29 @@ classDiagram
     %% grepple:package-default github.com/greppleai/grepple/search
     %% grepple:language-default go
     direction LR
-    note "Package search provides file discovery, query and repository filtering, paging, match workers, context, and wire-result construction. | package github.com/greppleai/grepple/search | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=12, declarations=17, exportedTypes=7, internalTypes=10, members=131, exportedFunctions=24, fiberRoutes=0, relations=46"
+    note "Package search provides file discovery, query and repository filtering, paging, match workers, context, and wire-result construction. | package github.com/greppleai/grepple/search | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=13, declarations=20, exportedTypes=10, internalTypes=10, members=143, exportedFunctions=25, fiberRoutes=0, relations=50"
     namespace data_contracts {
+        class NavigationCallDelta["NavigationCallDelta · search/navigation_diff.go:21-24"] {
+            +After: *parser.NavigationCall
+            +Before: *parser.NavigationCall
+        }
+        <<struct>> NavigationCallDelta
+        class NavigationDeclarationDelta["NavigationDeclarationDelta · search/navigation_diff.go:15-18"] {
+            +After: *parser.NavigationDeclaration
+            +Before: *parser.NavigationDeclaration
+        }
+        <<struct>> NavigationDeclarationDelta
+        class NavigationGraphDiff["NavigationGraphDiff · search/navigation_diff.go:27-36"] {
+            +AddedCalls: []parser.NavigationCall
+            +AddedDeclarations: []parser.NavigationDeclaration
+            +ChangedCalls: []NavigationCallDelta
+            +ChangedDeclarations: []NavigationDeclarationDelta
+            +MovedDeclarations: []NavigationDeclarationDelta
+            +RemovedCalls: []parser.NavigationCall
+            +RemovedDeclarations: []parser.NavigationDeclaration
+            +Schema: string
+        }
+        <<struct>> NavigationGraphDiff
         class Params["Params · search/model.go:11-35"] {
             +AfterContext: int
             +At: string
@@ -96,6 +117,10 @@ classDiagram
             +ContextLines(string, map[int]bool, int, int, int): []api.ContextLine
         }
         <<function>> ContextLines
+        class DiffNavigationGraphs["DiffNavigationGraphs · search/navigation_diff.go:39-50"] {
+            +DiffNavigationGraphs(parser.NavigationGraph, parser.NavigationGraph): NavigationGraphDiff
+        }
+        <<function>> DiffNavigationGraphs
         class EnforcePageLimit["EnforcePageLimit · search/search_params.go:106-113"] {
             +EnforcePageLimit(*Params, api.SearchRequest)
         }
@@ -171,6 +196,7 @@ classDiagram
     BuildResults "1" ..> "*" FileMatch : parameter 1
     Content "1" ..> "1" FileMatch : result 1
     Content "1" ..> "1" Params : parameter 1
+    DiffNavigationGraphs "1" ..> "1" NavigationGraphDiff : result 1
     EnforcePageLimit "1" ..> "1" Params : parameter 1
     FileMatch "1" --> "*" RelatedPoint : field Related
     Files "1" ..> "*" FileMatch : result 1
@@ -178,6 +204,8 @@ classDiagram
     FilterNavigationGraph "1" ..> "1" NavigationGraphFilter : parameter 2
     ListFilePaths "1" ..> "1" Params : parameter 1
     ListFilePathsContext "1" ..> "1" Params : parameter 2
+    NavigationGraphDiff "1" --> "*" NavigationCallDelta : field ChangedCalls
+    NavigationGraphDiff "1" --> "*" NavigationDeclarationDelta : field ChangedDeclarations; field MovedDeclarations
     NewRepoFilter "1" ..> "1" RepoFilter : result 1
     NormalizeNavigationGraphFilter "1" ..> "1" NavigationGraphFilter : parameter 1; result 1
     QueryNavigationGraph "1" ..> "1" NavigationQueryDirection : parameter 3

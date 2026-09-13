@@ -16,16 +16,16 @@
     "syntacticBuildTagUnion": []
   },
   "summary": {
-    "sourceFiles": 12,
-    "declarations": 17,
-    "exportedTypes": 7,
+    "sourceFiles": 13,
+    "declarations": 20,
+    "exportedTypes": 10,
     "internalTypes": 10,
-    "members": 131,
-    "exportedFunctions": 24,
+    "members": 143,
+    "exportedFunctions": 25,
     "fiberRoutes": 0,
-    "relations": 46
+    "relations": 50
   },
-  "semanticModelDigest": "sha256:c391ec9f73888942d0edcb7ae2c1b92ff4ea8be3dd24064a61bc7a55d729b0cf",
+  "semanticModelDigest": "sha256:8b02c6e9a581a65283033728b3e58da866dc43b923ebba81358a8b887aa88664",
   "sourceFiles": [
     {
       "path": "search/at.go"
@@ -38,6 +38,9 @@
     },
     {
       "path": "search/model.go"
+    },
+    {
+      "path": "search/navigation_diff.go"
     },
     {
       "path": "search/navigation_filter.go"
@@ -149,6 +152,156 @@
           "line": 62,
           "endLine": 62,
           "result": "bool"
+        }
+      ]
+    },
+    {
+      "name": "NavigationCallDelta",
+      "kind": "struct",
+      "file": "search/navigation_diff.go",
+      "line": 21,
+      "endLine": 24,
+      "underlyingType": "struct{Before*parser.NavigationCall`json:\"before,omitempty\"`;After*parser.NavigationCall`json:\"after,omitempty\"`;}",
+      "members": [
+        {
+          "name": "After",
+          "kind": "property",
+          "line": 23,
+          "endLine": 23,
+          "result": "*parser.NavigationCall",
+          "structTag": {
+            "value": "json:\"after,omitempty\""
+          }
+        },
+        {
+          "name": "Before",
+          "kind": "property",
+          "line": 22,
+          "endLine": 22,
+          "result": "*parser.NavigationCall",
+          "structTag": {
+            "value": "json:\"before,omitempty\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "NavigationDeclarationDelta",
+      "kind": "struct",
+      "file": "search/navigation_diff.go",
+      "line": 15,
+      "endLine": 18,
+      "underlyingType": "struct{Before*parser.NavigationDeclaration`json:\"before,omitempty\"`;After*parser.NavigationDeclaration`json:\"after,omitempty\"`;}",
+      "members": [
+        {
+          "name": "After",
+          "kind": "property",
+          "line": 17,
+          "endLine": 17,
+          "result": "*parser.NavigationDeclaration",
+          "structTag": {
+            "value": "json:\"after,omitempty\""
+          }
+        },
+        {
+          "name": "Before",
+          "kind": "property",
+          "line": 16,
+          "endLine": 16,
+          "result": "*parser.NavigationDeclaration",
+          "structTag": {
+            "value": "json:\"before,omitempty\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "NavigationGraphDiff",
+      "kind": "struct",
+      "file": "search/navigation_diff.go",
+      "line": 27,
+      "endLine": 36,
+      "underlyingType": "struct{Schema string`json:\"schema\"`;AddedDeclarations[]parser.NavigationDeclaration`json:\"addedDeclarations,omitempty\"`;RemovedDeclarations[]parser.NavigationDeclaration`json:\"removedDeclarations,omitempty\"`;MovedDeclarations[]NavigationDeclarationDelta`json:\"movedDeclarations,omitempty\"`;ChangedDeclarations[]NavigationDeclarationDelta`json:\"changedDeclarations,omitempty\"`;AddedCalls[]parser.NavigationCall`json:\"addedCalls,omitempty\"`;RemovedCalls[]parser.NavigationCall`json:\"removedCalls,omitempty\"`;ChangedCalls[]NavigationCallDelta`json:\"changedCalls,omitempty\"`;}",
+      "members": [
+        {
+          "name": "AddedCalls",
+          "kind": "property",
+          "line": 33,
+          "endLine": 33,
+          "result": "[]parser.NavigationCall",
+          "structTag": {
+            "value": "json:\"addedCalls,omitempty\""
+          }
+        },
+        {
+          "name": "AddedDeclarations",
+          "kind": "property",
+          "line": 29,
+          "endLine": 29,
+          "result": "[]parser.NavigationDeclaration",
+          "structTag": {
+            "value": "json:\"addedDeclarations,omitempty\""
+          }
+        },
+        {
+          "name": "ChangedCalls",
+          "kind": "property",
+          "line": 35,
+          "endLine": 35,
+          "result": "[]NavigationCallDelta",
+          "structTag": {
+            "value": "json:\"changedCalls,omitempty\""
+          }
+        },
+        {
+          "name": "ChangedDeclarations",
+          "kind": "property",
+          "line": 32,
+          "endLine": 32,
+          "result": "[]NavigationDeclarationDelta",
+          "structTag": {
+            "value": "json:\"changedDeclarations,omitempty\""
+          }
+        },
+        {
+          "name": "MovedDeclarations",
+          "kind": "property",
+          "line": 31,
+          "endLine": 31,
+          "result": "[]NavigationDeclarationDelta",
+          "structTag": {
+            "value": "json:\"movedDeclarations,omitempty\""
+          }
+        },
+        {
+          "name": "RemovedCalls",
+          "kind": "property",
+          "line": 34,
+          "endLine": 34,
+          "result": "[]parser.NavigationCall",
+          "structTag": {
+            "value": "json:\"removedCalls,omitempty\""
+          }
+        },
+        {
+          "name": "RemovedDeclarations",
+          "kind": "property",
+          "line": 30,
+          "endLine": 30,
+          "result": "[]parser.NavigationDeclaration",
+          "structTag": {
+            "value": "json:\"removedDeclarations,omitempty\""
+          }
+        },
+        {
+          "name": "Schema",
+          "kind": "property",
+          "line": 28,
+          "endLine": 28,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"schema\""
+          }
         }
       ]
     },
@@ -1371,6 +1524,18 @@
       "result": "[]api.ContextLine"
     },
     {
+      "name": "DiffNavigationGraphs",
+      "kind": "function",
+      "file": "search/navigation_diff.go",
+      "line": 39,
+      "endLine": 50,
+      "parameters": [
+        "parser.NavigationGraph",
+        "parser.NavigationGraph"
+      ],
+      "result": "NavigationGraphDiff"
+    },
+    {
       "name": "EnforcePageLimit",
       "kind": "function",
       "file": "search/search_params.go",
@@ -1615,6 +1780,13 @@
       "cardinality": "one"
     },
     {
+      "from": "DiffNavigationGraphs",
+      "to": "NavigationGraphDiff",
+      "kind": "dependency",
+      "via": "result 1",
+      "cardinality": "one"
+    },
+    {
       "from": "EnforcePageLimit",
       "to": "Params",
       "kind": "dependency",
@@ -1662,6 +1834,27 @@
       "kind": "dependency",
       "via": "parameter 2",
       "cardinality": "one"
+    },
+    {
+      "from": "NavigationGraphDiff",
+      "to": "NavigationCallDelta",
+      "kind": "association",
+      "via": "field ChangedCalls",
+      "cardinality": "many"
+    },
+    {
+      "from": "NavigationGraphDiff",
+      "to": "NavigationDeclarationDelta",
+      "kind": "association",
+      "via": "field ChangedDeclarations",
+      "cardinality": "many"
+    },
+    {
+      "from": "NavigationGraphDiff",
+      "to": "NavigationDeclarationDelta",
+      "kind": "association",
+      "via": "field MovedDeclarations",
+      "cardinality": "many"
     },
     {
       "from": "NewRepoFilter",

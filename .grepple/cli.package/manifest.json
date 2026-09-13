@@ -16,16 +16,16 @@
     "syntacticBuildTagUnion": []
   },
   "summary": {
-    "sourceFiles": 33,
-    "declarations": 42,
+    "sourceFiles": 34,
+    "declarations": 44,
     "exportedTypes": 0,
-    "internalTypes": 42,
-    "members": 269,
+    "internalTypes": 44,
+    "members": 278,
     "exportedFunctions": 3,
     "fiberRoutes": 0,
     "relations": 25
   },
-  "semanticModelDigest": "sha256:318f3fb4deeb97186ddff590f5fb1edb9eef27280bbc816719b0581191aaf7fd",
+  "semanticModelDigest": "sha256:804b4f5f6818a2acfe2e09eefd02dc71381196e5171d684806f2116f8234564d",
   "sourceFiles": [
     {
       "path": "internal/cli/anchors.go"
@@ -53,6 +53,9 @@
     },
     {
       "path": "internal/cli/graph.go"
+    },
+    {
+      "path": "internal/cli/graph_diff.go"
     },
     {
       "path": "internal/cli/graph_query.go"
@@ -1171,6 +1174,113 @@
           "result": "[]string",
           "structTag": {
             "value": "arg:\"positional\" placeholder:\"PATH\" help:\"file, directory, or glob to include; defaults to the working directory\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "graphDiffArgs",
+      "kind": "struct",
+      "file": "internal/cli/graph_diff.go",
+      "line": 16,
+      "endLine": 23,
+      "underlyingType": "struct{JSON bool`arg:\"--json\" help:\"emit the complete semantic graph diff as JSON\"`;Compact bool`arg:\"--compact\" help:\"emit a bounded agent-facing semantic graph diff\"`;Before string`arg:\"--before,required\" placeholder:\"PATH\" help:\"source tree before the change\"`;After string`arg:\"--after,required\" placeholder:\"PATH\" help:\"source tree after the change\"`;MaxFiles int`arg:\"--max-files\" placeholder:\"N\" help:\"parse at most N files in each tree (0 = unlimited)\"`;MaxOutputBytes int`arg:\"--max-output-bytes\" placeholder:\"N\" help:\"cap compact output (default 16384; 0 = unlimited; JSON is uncapped)\"`;}",
+      "members": [
+        {
+          "name": "Description",
+          "kind": "method",
+          "line": 25,
+          "endLine": 27,
+          "result": "string"
+        },
+        {
+          "name": "After",
+          "kind": "property",
+          "line": 20,
+          "endLine": 20,
+          "result": "string",
+          "structTag": {
+            "value": "arg:\"--after,required\" placeholder:\"PATH\" help:\"source tree after the change\""
+          }
+        },
+        {
+          "name": "Before",
+          "kind": "property",
+          "line": 19,
+          "endLine": 19,
+          "result": "string",
+          "structTag": {
+            "value": "arg:\"--before,required\" placeholder:\"PATH\" help:\"source tree before the change\""
+          }
+        },
+        {
+          "name": "Compact",
+          "kind": "property",
+          "line": 18,
+          "endLine": 18,
+          "result": "bool",
+          "structTag": {
+            "value": "arg:\"--compact\" help:\"emit a bounded agent-facing semantic graph diff\""
+          }
+        },
+        {
+          "name": "JSON",
+          "kind": "property",
+          "line": 17,
+          "endLine": 17,
+          "result": "bool",
+          "structTag": {
+            "value": "arg:\"--json\" help:\"emit the complete semantic graph diff as JSON\""
+          }
+        },
+        {
+          "name": "MaxFiles",
+          "kind": "property",
+          "line": 21,
+          "endLine": 21,
+          "result": "int",
+          "structTag": {
+            "value": "arg:\"--max-files\" placeholder:\"N\" help:\"parse at most N files in each tree (0 = unlimited)\""
+          }
+        },
+        {
+          "name": "MaxOutputBytes",
+          "kind": "property",
+          "line": 22,
+          "endLine": 22,
+          "result": "int",
+          "structTag": {
+            "value": "arg:\"--max-output-bytes\" placeholder:\"N\" help:\"cap compact output (default 16384; 0 = unlimited; JSON is uncapped)\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "graphDiffOutput",
+      "kind": "struct",
+      "file": "internal/cli/graph_diff.go",
+      "line": 29,
+      "endLine": 33,
+      "underlyingType": "struct{BeforeFiles int`json:\"beforeFiles\"`;AfterFiles int`json:\"afterFiles\"`;search.NavigationGraphDiff;}",
+      "members": [
+        {
+          "name": "AfterFiles",
+          "kind": "property",
+          "line": 31,
+          "endLine": 31,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"afterFiles\""
+          }
+        },
+        {
+          "name": "BeforeFiles",
+          "kind": "property",
+          "line": 30,
+          "endLine": 30,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"beforeFiles\""
           }
         }
       ]

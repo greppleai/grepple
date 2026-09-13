@@ -19,6 +19,45 @@ classDiagram
     <<struct>> FileMatch
     %% grepple:file FileMatch search/model.go
     note for FileMatch "defined: search/model.go:55-63; Content@search/model.go:56; DisplayPath@search/model.go:56; File@search/model.go:56; Language@search/model.go:56; MatchLines@search/model.go:57; MatchRanges@search/model.go:58; OmittedRelatedCallees@search/model.go:61; OmittedRelatedCallers@search/model.go:61; Related@search/model.go:60; Segments@search/model.go:59; SegmentsReady@search/model.go:62"
+    class NavigationCallDelta {
+        +After: *parser.NavigationCall
+        +Before: *parser.NavigationCall
+    }
+    <<struct>> NavigationCallDelta
+    %% grepple:file NavigationCallDelta search/navigation_diff.go
+    %% grepple:struct-tag NavigationCallDelta After "json:\"after,omitempty\""
+    %% grepple:struct-tag NavigationCallDelta Before "json:\"before,omitempty\""
+    note for NavigationCallDelta "defined: search/navigation_diff.go:21-24; After@search/navigation_diff.go:23; Before@search/navigation_diff.go:22"
+    class NavigationDeclarationDelta {
+        +After: *parser.NavigationDeclaration
+        +Before: *parser.NavigationDeclaration
+    }
+    <<struct>> NavigationDeclarationDelta
+    %% grepple:file NavigationDeclarationDelta search/navigation_diff.go
+    %% grepple:struct-tag NavigationDeclarationDelta After "json:\"after,omitempty\""
+    %% grepple:struct-tag NavigationDeclarationDelta Before "json:\"before,omitempty\""
+    note for NavigationDeclarationDelta "defined: search/navigation_diff.go:15-18; After@search/navigation_diff.go:17; Before@search/navigation_diff.go:16"
+    class NavigationGraphDiff {
+        +AddedCalls: []parser.NavigationCall
+        +AddedDeclarations: []parser.NavigationDeclaration
+        +ChangedCalls: []NavigationCallDelta
+        +ChangedDeclarations: []NavigationDeclarationDelta
+        +MovedDeclarations: []NavigationDeclarationDelta
+        +RemovedCalls: []parser.NavigationCall
+        +RemovedDeclarations: []parser.NavigationDeclaration
+        +Schema: string
+    }
+    <<struct>> NavigationGraphDiff
+    %% grepple:file NavigationGraphDiff search/navigation_diff.go
+    %% grepple:struct-tag NavigationGraphDiff AddedCalls "json:\"addedCalls,omitempty\""
+    %% grepple:struct-tag NavigationGraphDiff AddedDeclarations "json:\"addedDeclarations,omitempty\""
+    %% grepple:struct-tag NavigationGraphDiff ChangedCalls "json:\"changedCalls,omitempty\""
+    %% grepple:struct-tag NavigationGraphDiff ChangedDeclarations "json:\"changedDeclarations,omitempty\""
+    %% grepple:struct-tag NavigationGraphDiff MovedDeclarations "json:\"movedDeclarations,omitempty\""
+    %% grepple:struct-tag NavigationGraphDiff RemovedCalls "json:\"removedCalls,omitempty\""
+    %% grepple:struct-tag NavigationGraphDiff RemovedDeclarations "json:\"removedDeclarations,omitempty\""
+    %% grepple:struct-tag NavigationGraphDiff Schema "json:\"schema\""
+    note for NavigationGraphDiff "defined: search/navigation_diff.go:27-36; AddedCalls@search/navigation_diff.go:33; AddedDeclarations@search/navigation_diff.go:29; ChangedCalls@search/navigation_diff.go:35; ChangedDeclarations@search/navigation_diff.go:32; MovedDeclarations@search/navigation_diff.go:31; RemovedCalls@search/navigation_diff.go:34; RemovedDeclarations@search/navigation_diff.go:30; Schema@search/navigation_diff.go:28"
     class NavigationGraphFilter {
         +Confidences: []string
         +Languages: []string
@@ -285,6 +324,12 @@ classDiagram
     <<function>> ContextLines
     %% grepple:file ContextLines search/context.go
     note for ContextLines "defined: search/context.go:11-39"
+    class DiffNavigationGraphs {
+        +DiffNavigationGraphs(parser.NavigationGraph, parser.NavigationGraph): NavigationGraphDiff
+    }
+    <<function>> DiffNavigationGraphs
+    %% grepple:file DiffNavigationGraphs search/navigation_diff.go
+    note for DiffNavigationGraphs "defined: search/navigation_diff.go:39-50"
     class EnforcePageLimit {
         +EnforcePageLimit(*Params, api.SearchRequest)
     }
@@ -393,6 +438,7 @@ classDiagram
     BuildResults "1" ..> "*" FileMatch : parameter 1
     Content "1" ..> "1" FileMatch : result 1
     Content "1" ..> "1" Params : parameter 1
+    DiffNavigationGraphs "1" ..> "1" NavigationGraphDiff : result 1
     EnforcePageLimit "1" ..> "1" Params : parameter 1
     FileMatch "1" --> "*" RelatedPoint : field Related
     Files "1" ..> "*" FileMatch : result 1
@@ -400,6 +446,9 @@ classDiagram
     FilterNavigationGraph "1" ..> "1" NavigationGraphFilter : parameter 2
     ListFilePaths "1" ..> "1" Params : parameter 1
     ListFilePathsContext "1" ..> "1" Params : parameter 2
+    NavigationGraphDiff "1" --> "*" NavigationCallDelta : field ChangedCalls
+    NavigationGraphDiff "1" --> "*" NavigationDeclarationDelta : field ChangedDeclarations
+    NavigationGraphDiff "1" --> "*" NavigationDeclarationDelta : field MovedDeclarations
     NewRepoFilter "1" ..> "1" RepoFilter : result 1
     NormalizeNavigationGraphFilter "1" ..> "1" NavigationGraphFilter : parameter 1
     NormalizeNavigationGraphFilter "1" ..> "1" NavigationGraphFilter : result 1

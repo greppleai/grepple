@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/greppleai/grepple/parser"
+	"github.com/greppleai/grepple/search"
 )
 
 func TestGraphJSONEmitsResolvedDeterministicGraph(t *testing.T) {
@@ -243,6 +244,35 @@ func TestGraphQueryRejectsMissingAndAmbiguousSelectors(t *testing.T) {
 		if err := Run(arguments); err == nil {
 			t.Fatalf("arguments %v unexpectedly succeeded", arguments)
 		}
+	}
+}
+
+func TestGraphDiffReportsSemanticChangesAndIgnoresLineShifts(t *testing.T) {
+	root := t.TempDir()
+	before, after := filepath.Join(root, "before"), filepath.Join(root, "after")
+	writeGraphSource(t, before, "service.go", "package sample\nfunc Run() { helper() }\nfunc helper() {}\nfunc removed() {}\n")
+	writeGraphSource(t, after, "service.go", "package sample\n\nfunc Run() { added() }\nfunc helper() {}\nfunc added() {}\n")
+	output := captureStdout(t, func() {
+		if err := Run([]string{"graph", "diff", "--before", before, "--after", after, "--compact"}); err != nil {
+			t.Fatal(err)
+		}
+	})
+	for _, expected := range []string{"graph-diff grepple-navigation-diff-v1", "+ D go func added", "- D go func removed", "+ C", "- C"} {
+		if !strings.Contains(output, expected) {
+			t.Fatalf("diff missing %q:\n%s", expected, output)
+		}
+	}
+	jsonOutput := captureStdout(t, func() {
+		if err := Run([]string{"graph", "diff", "--before", before, "--after", after, "--json"}); err != nil {
+			t.Fatal(err)
+		}
+	})
+	var decoded graphDiffOutput
+	if err := json.Unmarshal([]byte(jsonOutput), &decoded); err != nil {
+		t.Fatal(err)
+	}
+	if len(decoded.MovedDeclarations) != 0 || decoded.Schema != search.NavigationDiffSchema {
+		t.Fatalf("unexpected diff=%#v", decoded)
 	}
 }
 

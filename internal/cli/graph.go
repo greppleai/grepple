@@ -51,6 +51,9 @@ type navigationGraphTruncation struct {
 }
 
 func runGraph(args []string) error {
+	if len(args) > 0 && args[0] == "diff" {
+		return runGraphDiff(args[1:])
+	}
 	if len(args) > 0 && isGraphQueryDirection(args[0]) {
 		return runGraphQuery(search.NavigationQueryDirection(args[0]), args[1:])
 	}

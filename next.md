@@ -4,7 +4,7 @@ Grepple should stabilize for one or two iterations before adding more languages.
 
 ## Recommended next milestone
 
-> The agent-output budget, declaration visibility filtering, and C# focused extraction milestones are complete. Prioritize benchmark budgets, shared-projection parity, and semantic graph/architecture diffing next.
+> The agent-output budget, declaration visibility filtering, C# focused extraction, architecture benchmarks, and semantic graph diff milestones are complete. Prioritize shared-projection parity and richer resolution next.
 
 ## Feature set versus feature completeness
 
@@ -149,13 +149,13 @@ Use case: before editing a declaration, an agent or developer can identify likel
 
 #### C4. Architecture and graph diffing
 
-Compare two normalized graphs or canonical snapshots and report added, removed, moved, and changed declarations and edges. Prefer semantic identity over line-based Mermaid diffs, with bounded human output and complete JSON.
+[x] Compare two normalized source graphs and report added, removed, moved, and semantically changed declarations and call edges through `grepple-navigation-diff-v1`. Position-only shifts are ignored; human output is bounded and JSON complete.
 
 Potential examples:
 
 ```bash
-grepple graph diff --base main --head HEAD --compact
-grepple graph diff .grepple-before/ .grepple/ --json
+grepple graph diff --before ../old-tree --after . --compact
+grepple graph diff --before ../old-tree --after . --json
 ```
 
 Use case: code review and CI can explain architectural impact—such as a new package dependency, removed route, or changed caller edge—rather than only reporting that a generated artifact differs.
