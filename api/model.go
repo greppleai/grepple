@@ -24,6 +24,7 @@ type SearchRequest struct {
 	BeforeContext *int     `json:"beforeContext,omitempty"`
 	AfterContext  *int     `json:"afterContext,omitempty"`
 	SkipSegments  bool     `json:"skipSegments,omitempty"`
+	LineRanges    bool     `json:"matchLineRanges,omitempty"`
 	Related       bool     `json:"related,omitempty"`
 	FollowRelated int      `json:"followRelated,omitempty"`
 	CountByRepo   bool     `json:"countByRepo,omitempty"`
@@ -31,8 +32,9 @@ type SearchRequest struct {
 
 // ResultMatch is one matching line inside a file.
 type ResultMatch struct {
-	Line int    `json:"line"`
-	Text string `json:"text"`
+	Line    int    `json:"line"`
+	EndLine int    `json:"endLine,omitempty"`
+	Text    string `json:"text"`
 }
 
 // ResultSegment is one structural segment around a file's matches.

@@ -25,3 +25,30 @@ func TestRelatedOmissionCountsUseStableJSONFields(t *testing.T) {
 		}
 	}
 }
+
+func TestSearchRequestLineRangesUsesStableJSONField(t *testing.T) {
+	encoded, err := json.Marshal(SearchRequest{LineRanges: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(encoded) != `{"matchLineRanges":true}` {
+		t.Fatalf("unexpected JSON: %s", encoded)
+	}
+}
+
+func TestResultMatchEndLineIsAdditive(t *testing.T) {
+	encoded, err := json.Marshal(ResultMatch{Line: 3, EndLine: 5, Text: "if ready {"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(encoded) != `{"line":3,"endLine":5,"text":"if ready {"}` {
+		t.Fatalf("unexpected JSON: %s", encoded)
+	}
+	encoded, err = json.Marshal(ResultMatch{Line: 7, Text: "plain"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(encoded), "endLine") {
+		t.Fatalf("zero endLine should remain wire-compatible: %s", encoded)
+	}
+}

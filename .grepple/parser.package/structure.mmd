@@ -223,6 +223,13 @@ classDiagram
     <<struct>> Segment
     %% grepple:file Segment parser/model.go
     note for Segment "defined: parser/model.go:5-9; End@parser/model.go:7; Kind@parser/model.go:6; Start@parser/model.go:7; Text@parser/model.go:8"
+    class StructuralLineRange {
+        +EndLine: int
+        +StartLine: int
+    }
+    <<struct>> StructuralLineRange
+    %% grepple:file StructuralLineRange parser/match_range.go
+    note for StructuralLineRange "defined: parser/match_range.go:7-10; EndLine@parser/match_range.go:9; StartLine@parser/match_range.go:8"
     class Symbol {
         +Children: []Symbol
         +End: int
@@ -557,6 +564,23 @@ classDiagram
     %% grepple:underlying stringSet map[string]struct{}
     %% grepple:file stringSet parser/language.go
     note for stringSet "defined: parser/language.go:47; contains@parser/language.go:57-60"
+    class structuralLineCandidate {
+        -column: int
+        -rangeValue: StructuralLineRange
+    }
+    <<struct>> structuralLineCandidate
+    %% grepple:file structuralLineCandidate parser/match_range.go
+    note for structuralLineCandidate "defined: parser/match_range.go:12-15; column@parser/match_range.go:14; rangeValue@parser/match_range.go:13"
+    class structuralLineRangeCollector {
+        -result(): map[int]StructuralLineRange
+        -visit(ViewNode, int): bool
+        -candidates: map[int]structuralLineCandidate
+        -lines: map[int]bool
+        -sortedLines: []int
+    }
+    <<struct>> structuralLineRangeCollector
+    %% grepple:file structuralLineRangeCollector parser/match_range.go
+    note for structuralLineRangeCollector "defined: parser/match_range.go:17-21; result@parser/match_range.go:84-90; visit@parser/match_range.go:57-78; candidates@parser/match_range.go:20; lines@parser/match_range.go:18; sortedLines@parser/match_range.go:19"
     class structureRules {
         -blockTypes: stringSet
         -classBodyTypes: stringSet
@@ -682,6 +706,12 @@ classDiagram
     <<function>> ParseDocument
     %% grepple:file ParseDocument parser/document.go
     note for ParseDocument "defined: parser/document.go:144-160"
+    class StructuralLineRanges {
+        +StructuralLineRanges(string, string, map[int]bool): map[int]StructuralLineRange
+    }
+    <<function>> StructuralLineRanges
+    %% grepple:file StructuralLineRanges parser/match_range.go
+    note for StructuralLineRanges "defined: parser/match_range.go:27-42"
     class SupportedContentLanguages {
         +SupportedContentLanguages(): []ContentLanguageCapabilities
     }
@@ -743,6 +773,7 @@ classDiagram
     ParseDocument "1" ..> "1" Document : result 1
     Range "1" --> "1" Position : field End
     Range "1" --> "1" Position : field Start
+    StructuralLineRanges "1" ..> "*" StructuralLineRange : result 1
     SupportedContentLanguages "1" ..> "*" ContentLanguageCapabilities : result 1
     SupportedLanguages "1" ..> "*" LanguageCapabilities : result 1
     SyntaxNode "1" --> "1" Range : field rng
@@ -826,6 +857,10 @@ classDiagram
     languageAdapter <|.. shellLanguage : implements
     shellLanguage "1" --> "1" structureRules : field rules
     shellLanguage "1" ..> "1" structureRules : method Rules result 1
+    structuralLineCandidate "1" --> "1" StructuralLineRange : field rangeValue
+    structuralLineRangeCollector "1" ..> "*" StructuralLineRange : method result result 1
+    structuralLineRangeCollector "1" ..> "1" ViewNode : method visit parameter 1
+    structuralLineRangeCollector "1" --> "*" structuralLineCandidate : field candidates
     structureRules "1" --> "1" stringSet : field blockTypes
     structureRules "1" --> "1" stringSet : field classBodyTypes
     structureRules "1" --> "1" stringSet : field classDeclarationTypes

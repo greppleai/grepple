@@ -28,7 +28,7 @@ func BenchmarkAgentWorkflows(b *testing.B) {
 		{name: "BreadthSummary", commands: [][]string{{"-F", "func ", "--count-summary", "."}}, want: []string{"2 files\t5 matches"}},
 		{name: "OutlineDiscovery", commands: [][]string{{"--outline", "service.go", "--no-anchors"}}, want: []string{"func\tRun", "func\tConsumer"}},
 		{name: "StructuralLookup", commands: [][]string{{"-F", "func Run(", "service.go", "--no-anchors"}}, want: []string{"func Run()", "validate()", "save()"}},
-		{name: "LineLocateThenAt", commands: [][]string{{"--line-only", "-F", "func Run(", "service.go", "--no-anchors"}, {"--at", "service.go:2", "--no-anchors"}}, want: []string{"service.go:2:func Run()", "validate()", "save()"}},
+		{name: "LineLocateThenAt", commands: [][]string{{"--line-only", "-F", "func Run(", "service.go", "--no-anchors"}, {"--at", "service.go:2-6", "--no-anchors"}}, want: []string{"service.go:2-6:func Run()", "validate()", "save()"}},
 		{name: "RelatedNavigation", commands: [][]string{{"--related", "--at", "service.go:2", "--no-anchors"}}, want: []string{"Next points", "→ validate", "← Handler"}},
 		{name: "ImpactGraph", commands: [][]string{{"graph", "impact", "--at", "service.go:2", "--depth", "1", "--compact", "."}}, want: []string{"query impact depth=1", "Run -> validate#", "Handler -> Run#"}},
 		{name: "ArchitectureSummary", commands: [][]string{{"extract", "summary", "package", "."}}, want: []string{"# Package `example.com/agentbench`", "## Public surface", "`Run()"}},

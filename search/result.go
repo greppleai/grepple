@@ -19,7 +19,11 @@ func ToResult(m FileMatch, segs []parser.Segment, beforeContext, afterContext, m
 	sort.Ints(ns)
 	matches := make([]api.ResultMatch, 0, len(ns))
 	for _, n := range ns {
-		matches = append(matches, api.ResultMatch{Line: n, Text: lines[n-1]})
+		match := api.ResultMatch{Line: n, Text: lines[n-1]}
+		if structuralRange, ok := m.MatchRanges[n]; ok {
+			match.EndLine = structuralRange.EndLine
+		}
+		matches = append(matches, match)
 	}
 	rs := resultSegments(m.Content, segs)
 	related := relatedSymbols(m.Related)

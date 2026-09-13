@@ -216,10 +216,9 @@ func Files(p Params, candidates []string) ([]FileMatch, error) {
 	if p.Related {
 		attachRelated(out, scan.relatedFiles(files), p.FollowRelated)
 	}
-	// Skip the structural parse entirely when the caller will not render
-	// segments (--count, --files, --line-only, --context, --json-matches): those
-	// modes need only match lines, so parsing every returned file is wasted work.
-	if !p.SkipSegments {
+	// Parse returned files only when the caller needs structural segments or
+	// multi-line construct ranges for matching lines.
+	if !p.SkipSegments || p.LineRanges {
 		runParallel(len(out), func(index int) {
 			analyzeMatchStructure(&out[index], p)
 		})
@@ -312,7 +311,7 @@ func Content(p Params, name string, content []byte) (*FileMatch, error) {
 		return nil, e
 	}
 	fm := scanContent(p, m, content, name, name)
-	if fm != nil && !p.SkipSegments {
+	if fm != nil && (!p.SkipSegments || p.LineRanges) {
 		analyzeMatchStructure(fm, p)
 	}
 	return fm, nil
@@ -474,11 +473,16 @@ func sortMatches(out []FileMatch) {
 	})
 }
 
-// analyzeMatchStructure asks parser to build structural output once for this
-// returned file. Result construction reuses the attached segments.
+// analyzeMatchStructure asks parser for only the structural projections requested
+// by the caller. Result construction reuses the attached facts.
 func analyzeMatchStructure(fm *FileMatch, p Params) {
-	fm.Segments = parser.BuildSegments(fm.Content, fm.Language, fm.MatchLines, p.MaxSegments)
-	fm.SegmentsReady = true
+	if !p.SkipSegments {
+		fm.Segments = parser.BuildSegments(fm.Content, fm.Language, fm.MatchLines, p.MaxSegments)
+		fm.SegmentsReady = true
+	}
+	if p.LineRanges {
+		fm.MatchRanges = parser.StructuralLineRanges(fm.Content, fm.Language, fm.MatchLines)
+	}
 }
 
 // AggregateRepoCounts tallies per-repository file and match-line counts from a

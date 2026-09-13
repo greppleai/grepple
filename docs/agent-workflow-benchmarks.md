@@ -26,7 +26,7 @@ benchstat before.txt after.txt
 | `BreadthSummary` | How broad is this term before loading bodies? | 1 |
 | `OutlineDiscovery` | What declarations does this file contain? | 1 |
 | `StructuralLookup` | Locate and retrieve one implementation. | 1 |
-| `LineLocateThenAt` | Locate a line, then retrieve its declaration. | 2 |
+| `LineLocateThenAt` | Locate a line with its construct extent, then retrieve that declaration. | 2 |
 | `RelatedNavigation` | What immediately calls this and what does it call? | 1 |
 | `ImpactGraph` | What is the bounded bidirectional impact neighborhood? | 1 |
 | `ArchitectureSummary` | What is the bounded package ownership and public surface? | 1 |
@@ -57,3 +57,7 @@ Linux/amd64, Intel Core Ultra 7 165H, Go 1.25.14, `-benchtime=10x`:
 | `EditLocation` | 1 | 40 | 10 | 1.09 ms |
 
 The structural lookup illustrates the intended tradeoff: it returns slightly more text than line-only plus `--at`, but removes one retrieval round trip. Timing is machine-dependent; call and fixture-output metrics are the primary regression signals until statistically reviewed budgets are established.
+
+## Construct-range extension
+
+After `--line-only` gained parser-backed `PATH:START-END` locations, the fixed function lookup returned 152 bytes/~38 tokens instead of 150 bytes/~37.5 tokens. The two added bytes disclose the exact `2-6` function extent for the next Read or `--at` call. A match inside a construct that does not begin one remains unchanged; `EditLocation` therefore still returns 40 bytes/~10 tokens. Across repeated 10-iteration samples, the ranged workflow took 2.4–2.7 ms/op and exact edit location took 1.3–1.5 ms/op. Timing remains secondary to the stable call/output metrics.

@@ -20,12 +20,12 @@
     "declarations": 17,
     "exportedTypes": 7,
     "internalTypes": 10,
-    "members": 127,
+    "members": 129,
     "exportedFunctions": 24,
     "fiberRoutes": 0,
     "relations": 46
   },
-  "semanticModelDigest": "sha256:84908aef2be56adfc8cfb83adc70410ebf90b2f4bbf6bcd7bf2ce06505eab36b",
+  "semanticModelDigest": "sha256:5022e6a88e5857c9c0743056f8ddb5d9d0b4d3d1bfe06d065cd4ab3034f9aebd",
   "sourceFiles": [
     {
       "path": "search/at.go"
@@ -69,78 +69,85 @@
       "name": "FileMatch",
       "kind": "struct",
       "file": "search/model.go",
-      "line": 53,
-      "endLine": 60,
-      "underlyingType": "struct{File,DisplayPath,Content,Language string;MatchLines map[int]bool;Segments[]parser.Segment;Related[]RelatedPoint;OmittedRelatedCallers,OmittedRelatedCallees int;SegmentsReady bool;}",
+      "line": 54,
+      "endLine": 62,
+      "underlyingType": "struct{File,DisplayPath,Content,Language string;MatchLines map[int]bool;MatchRanges map[int]parser.StructuralLineRange;Segments[]parser.Segment;Related[]RelatedPoint;OmittedRelatedCallers,OmittedRelatedCallees int;SegmentsReady bool;}",
       "members": [
         {
           "name": "Content",
           "kind": "property",
-          "line": 54,
-          "endLine": 54,
+          "line": 55,
+          "endLine": 55,
           "result": "string"
         },
         {
           "name": "DisplayPath",
           "kind": "property",
-          "line": 54,
-          "endLine": 54,
+          "line": 55,
+          "endLine": 55,
           "result": "string"
         },
         {
           "name": "File",
           "kind": "property",
-          "line": 54,
-          "endLine": 54,
+          "line": 55,
+          "endLine": 55,
           "result": "string"
         },
         {
           "name": "Language",
           "kind": "property",
-          "line": 54,
-          "endLine": 54,
+          "line": 55,
+          "endLine": 55,
           "result": "string"
         },
         {
           "name": "MatchLines",
           "kind": "property",
-          "line": 55,
-          "endLine": 55,
+          "line": 56,
+          "endLine": 56,
           "result": "map[int]bool"
+        },
+        {
+          "name": "MatchRanges",
+          "kind": "property",
+          "line": 57,
+          "endLine": 57,
+          "result": "map[int]parser.StructuralLineRange"
         },
         {
           "name": "OmittedRelatedCallees",
           "kind": "property",
-          "line": 58,
-          "endLine": 58,
+          "line": 60,
+          "endLine": 60,
           "result": "int"
         },
         {
           "name": "OmittedRelatedCallers",
           "kind": "property",
-          "line": 58,
-          "endLine": 58,
+          "line": 60,
+          "endLine": 60,
           "result": "int"
         },
         {
           "name": "Related",
           "kind": "property",
-          "line": 57,
-          "endLine": 57,
+          "line": 59,
+          "endLine": 59,
           "result": "[]RelatedPoint"
         },
         {
           "name": "Segments",
           "kind": "property",
-          "line": 56,
-          "endLine": 56,
+          "line": 58,
+          "endLine": 58,
           "result": "[]parser.Segment"
         },
         {
           "name": "SegmentsReady",
           "kind": "property",
-          "line": 59,
-          "endLine": 59,
+          "line": 61,
+          "endLine": 61,
           "result": "bool"
         }
       ]
@@ -182,8 +189,8 @@
       "kind": "struct",
       "file": "search/model.go",
       "line": 11,
-      "endLine": 33,
-      "underlyingType": "struct{Query string`json:\"query\"`;Globs[]string`json:\"globs\"`;Regex bool`json:\"regex\"`;IgnoreCase bool`json:\"ignoreCase\"`;InvertMatch bool`json:\"invertMatch,omitempty\"`;MaxFiles int`json:\"maxFiles,omitempty\"`;MaxSegments int`json:\"maxSegments\"`;Skip int`json:\"skip,omitempty\"`;Limit int`json:\"limit,omitempty\"`;Repo[]string`json:\"repo,omitempty\"`;ExcludeRepo[]string`json:\"excludeRepo,omitempty\"`;Files bool`json:\"files,omitempty\"`;Context int`json:\"context,omitempty\"`;BeforeContext int`json:\"beforeContext,omitempty\"`;AfterContext int`json:\"afterContext,omitempty\"`;SkipSegments bool`json:\"-\"`;Related bool`json:\"related,omitempty\"`;FollowRelated int`json:\"followRelated,omitempty\"`;At string`json:\"-\"`;Root string`json:\"-\"`;CountByRepo bool`json:\"-\"`;}",
+      "endLine": 34,
+      "underlyingType": "struct{Query string`json:\"query\"`;Globs[]string`json:\"globs\"`;Regex bool`json:\"regex\"`;IgnoreCase bool`json:\"ignoreCase\"`;InvertMatch bool`json:\"invertMatch,omitempty\"`;MaxFiles int`json:\"maxFiles,omitempty\"`;MaxSegments int`json:\"maxSegments\"`;Skip int`json:\"skip,omitempty\"`;Limit int`json:\"limit,omitempty\"`;Repo[]string`json:\"repo,omitempty\"`;ExcludeRepo[]string`json:\"excludeRepo,omitempty\"`;Files bool`json:\"files,omitempty\"`;Context int`json:\"context,omitempty\"`;BeforeContext int`json:\"beforeContext,omitempty\"`;AfterContext int`json:\"afterContext,omitempty\"`;SkipSegments bool`json:\"-\"`;LineRanges bool`json:\"matchLineRanges,omitempty\"`;Related bool`json:\"related,omitempty\"`;FollowRelated int`json:\"followRelated,omitempty\"`;At string`json:\"-\"`;Root string`json:\"-\"`;CountByRepo bool`json:\"-\"`;}",
       "members": [
         {
           "name": "AfterContext",
@@ -198,8 +205,8 @@
         {
           "name": "At",
           "kind": "property",
-          "line": 30,
-          "endLine": 30,
+          "line": 31,
+          "endLine": 31,
           "result": "string",
           "structTag": {
             "value": "json:\"-\""
@@ -228,8 +235,8 @@
         {
           "name": "CountByRepo",
           "kind": "property",
-          "line": 32,
-          "endLine": 32,
+          "line": 33,
+          "endLine": 33,
           "result": "bool",
           "structTag": {
             "value": "json:\"-\""
@@ -258,8 +265,8 @@
         {
           "name": "FollowRelated",
           "kind": "property",
-          "line": 29,
-          "endLine": 29,
+          "line": 30,
+          "endLine": 30,
           "result": "int",
           "structTag": {
             "value": "json:\"followRelated,omitempty\""
@@ -306,6 +313,16 @@
           }
         },
         {
+          "name": "LineRanges",
+          "kind": "property",
+          "line": 28,
+          "endLine": 28,
+          "result": "bool",
+          "structTag": {
+            "value": "json:\"matchLineRanges,omitempty\""
+          }
+        },
+        {
           "name": "MaxFiles",
           "kind": "property",
           "line": 17,
@@ -348,8 +365,8 @@
         {
           "name": "Related",
           "kind": "property",
-          "line": 28,
-          "endLine": 28,
+          "line": 29,
+          "endLine": 29,
           "result": "bool",
           "structTag": {
             "value": "json:\"related,omitempty\""
@@ -368,8 +385,8 @@
         {
           "name": "Root",
           "kind": "property",
-          "line": 31,
-          "endLine": 31,
+          "line": 32,
+          "endLine": 32,
           "result": "string",
           "structTag": {
             "value": "json:\"-\""
@@ -401,85 +418,85 @@
       "name": "RelatedPoint",
       "kind": "struct",
       "file": "search/model.go",
-      "line": 45,
-      "endLine": 49,
+      "line": 46,
+      "endLine": 50,
       "underlyingType": "struct{Name,Path,File,Kind,Direction,Confidence string;Start,End,CallLine,Distance int;Preview*RelatedPreview;}",
       "members": [
         {
           "name": "CallLine",
           "kind": "property",
-          "line": 47,
-          "endLine": 47,
+          "line": 48,
+          "endLine": 48,
           "result": "int"
         },
         {
           "name": "Confidence",
           "kind": "property",
-          "line": 46,
-          "endLine": 46,
+          "line": 47,
+          "endLine": 47,
           "result": "string"
         },
         {
           "name": "Direction",
           "kind": "property",
-          "line": 46,
-          "endLine": 46,
+          "line": 47,
+          "endLine": 47,
           "result": "string"
         },
         {
           "name": "Distance",
           "kind": "property",
-          "line": 47,
-          "endLine": 47,
+          "line": 48,
+          "endLine": 48,
           "result": "int"
         },
         {
           "name": "End",
           "kind": "property",
-          "line": 47,
-          "endLine": 47,
+          "line": 48,
+          "endLine": 48,
           "result": "int"
         },
         {
           "name": "File",
           "kind": "property",
-          "line": 46,
-          "endLine": 46,
+          "line": 47,
+          "endLine": 47,
           "result": "string"
         },
         {
           "name": "Kind",
           "kind": "property",
-          "line": 46,
-          "endLine": 46,
+          "line": 47,
+          "endLine": 47,
           "result": "string"
         },
         {
           "name": "Name",
           "kind": "property",
-          "line": 46,
-          "endLine": 46,
+          "line": 47,
+          "endLine": 47,
           "result": "string"
         },
         {
           "name": "Path",
           "kind": "property",
-          "line": 46,
-          "endLine": 46,
+          "line": 47,
+          "endLine": 47,
           "result": "string"
         },
         {
           "name": "Preview",
           "kind": "property",
-          "line": 48,
-          "endLine": 48,
+          "line": 49,
+          "endLine": 49,
           "result": "*RelatedPreview"
         },
         {
           "name": "Start",
           "kind": "property",
-          "line": 47,
-          "endLine": 47,
+          "line": 48,
+          "endLine": 48,
           "result": "int"
         }
       ]
@@ -488,50 +505,50 @@
       "name": "RelatedPreview",
       "kind": "struct",
       "file": "search/model.go",
-      "line": 37,
-      "endLine": 42,
+      "line": 38,
+      "endLine": 43,
       "underlyingType": "struct{Content string;Start,End int;Related[]RelatedPoint;OmittedCallers,OmittedCallees int;}",
       "members": [
         {
           "name": "Content",
           "kind": "property",
-          "line": 38,
-          "endLine": 38,
+          "line": 39,
+          "endLine": 39,
           "result": "string"
         },
         {
           "name": "End",
           "kind": "property",
-          "line": 39,
-          "endLine": 39,
+          "line": 40,
+          "endLine": 40,
           "result": "int"
         },
         {
           "name": "OmittedCallees",
           "kind": "property",
-          "line": 41,
-          "endLine": 41,
+          "line": 42,
+          "endLine": 42,
           "result": "int"
         },
         {
           "name": "OmittedCallers",
           "kind": "property",
-          "line": 41,
-          "endLine": 41,
+          "line": 42,
+          "endLine": 42,
           "result": "int"
         },
         {
           "name": "Related",
           "kind": "property",
-          "line": 40,
-          "endLine": 40,
+          "line": 41,
+          "endLine": 41,
           "result": "[]RelatedPoint"
         },
         {
           "name": "Start",
           "kind": "property",
-          "line": 39,
-          "endLine": 39,
+          "line": 40,
+          "endLine": 40,
           "result": "int"
         }
       ]
@@ -665,15 +682,15 @@
       "name": "candidateScan",
       "kind": "struct",
       "file": "search/search_engine.go",
-      "line": 233,
-      "endLine": 238,
+      "line": 232,
+      "endLine": 237,
       "underlyingType": "struct{p Params;m func(string)bool;repoFilter*RepoFilter;fromIndex bool;}",
       "members": [
         {
           "name": "relatedFiles",
           "kind": "method",
-          "line": 240,
-          "endLine": 253,
+          "line": 239,
+          "endLine": 252,
           "parameters": [
             "[]string"
           ],
@@ -682,8 +699,8 @@
         {
           "name": "scanAll",
           "kind": "method",
-          "line": 259,
-          "endLine": 268,
+          "line": 258,
+          "endLine": 267,
           "parameters": [
             "[]string"
           ],
@@ -692,8 +709,8 @@
         {
           "name": "scanWindowed",
           "kind": "method",
-          "line": 273,
-          "endLine": 296,
+          "line": 272,
+          "endLine": 295,
           "parameters": [
             "[]string",
             "int"
@@ -703,29 +720,29 @@
         {
           "name": "fromIndex",
           "kind": "property",
-          "line": 237,
-          "endLine": 237,
+          "line": 236,
+          "endLine": 236,
           "result": "bool"
         },
         {
           "name": "m",
           "kind": "property",
-          "line": 235,
-          "endLine": 235,
+          "line": 234,
+          "endLine": 234,
           "result": "func(string)bool"
         },
         {
           "name": "p",
           "kind": "property",
-          "line": 234,
-          "endLine": 234,
+          "line": 233,
+          "endLine": 233,
           "result": "Params"
         },
         {
           "name": "repoFilter",
           "kind": "property",
-          "line": 236,
-          "endLine": 236,
+          "line": 235,
+          "endLine": 235,
           "result": "*RepoFilter"
         }
       ]
@@ -1252,8 +1269,8 @@
       "name": "AggregateRepoCounts",
       "kind": "function",
       "file": "search/search_engine.go",
-      "line": 488,
-      "endLine": 507,
+      "line": 492,
+      "endLine": 511,
       "parameters": [
         "[]FileMatch"
       ],
@@ -1285,8 +1302,8 @@
       "name": "BuildResults",
       "kind": "function",
       "file": "search/result.go",
-      "line": 67,
-      "endLine": 80,
+      "line": 71,
+      "endLine": 84,
       "parameters": [
         "[]FileMatch",
         "int",
@@ -1312,8 +1329,8 @@
       "name": "Content",
       "kind": "function",
       "file": "search/search_engine.go",
-      "line": 309,
-      "endLine": 319,
+      "line": 308,
+      "endLine": 318,
       "parameters": [
         "Params",
         "string",
@@ -1340,8 +1357,8 @@
       "name": "EnforcePageLimit",
       "kind": "function",
       "file": "search/search_params.go",
-      "line": 101,
-      "endLine": 108,
+      "line": 102,
+      "endLine": 109,
       "parameters": [
         "*Params",
         "api.SearchRequest"
@@ -1352,7 +1369,7 @@
       "kind": "function",
       "file": "search/search_engine.go",
       "line": 190,
-      "endLine": 228,
+      "endLine": 227,
       "parameters": [
         "Params",
         "[]string"
@@ -1375,8 +1392,8 @@
       "name": "ListFilePaths",
       "kind": "function",
       "file": "search/search_engine.go",
-      "line": 390,
-      "endLine": 392,
+      "line": 389,
+      "endLine": 391,
       "parameters": [
         "Params",
         "[]string"
@@ -1387,8 +1404,8 @@
       "name": "ListFilePathsContext",
       "kind": "function",
       "file": "search/search_engine.go",
-      "line": 395,
-      "endLine": 413,
+      "line": 394,
+      "endLine": 412,
       "parameters": [
         "context.Context",
         "Params",
@@ -1460,8 +1477,8 @@
       "name": "RepoMatches",
       "kind": "function",
       "file": "search/search_params.go",
-      "line": 113,
-      "endLine": 113,
+      "line": 114,
+      "endLine": 114,
       "parameters": [
         "string",
         "[]string"
@@ -1472,8 +1489,8 @@
       "name": "RepoMatchesAny",
       "kind": "function",
       "file": "search/search_params.go",
-      "line": 116,
-      "endLine": 116,
+      "line": 117,
+      "endLine": 117,
       "parameters": [
         "string",
         "[]string"
@@ -1485,7 +1502,7 @@
       "kind": "function",
       "file": "search/search_params.go",
       "line": 11,
-      "endLine": 35,
+      "endLine": 36,
       "parameters": [
         "api.SearchRequest"
       ],
@@ -1495,8 +1512,8 @@
       "name": "SortRepoCounts",
       "kind": "function",
       "file": "search/search_engine.go",
-      "line": 512,
-      "endLine": 522,
+      "line": 516,
+      "endLine": 526,
       "parameters": [
         "[]api.RepoCount"
       ]
@@ -1517,7 +1534,7 @@
       "kind": "function",
       "file": "search/result.go",
       "line": 13,
-      "endLine": 34,
+      "endLine": 38,
       "parameters": [
         "FileMatch",
         "[]parser.Segment",

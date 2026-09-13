@@ -20,7 +20,11 @@ func (renderer lineRenderer) Render(results []api.FileResult) error {
 	for _, result := range results {
 		limit := min(len(result.Matches), renderer.maxLines)
 		for _, match := range result.Matches[:limit] {
-			if err := renderer.output.writeString(fmt.Sprintf("%s:%d:%s\n", result.Path, match.Line, match.Text)); err != nil {
+			location := fmt.Sprintf("%d", match.Line)
+			if match.EndLine > match.Line {
+				location = fmt.Sprintf("%d-%d", match.Line, match.EndLine)
+			}
+			if err := renderer.output.writeString(fmt.Sprintf("%s:%s:%s\n", result.Path, location, match.Text)); err != nil {
 				return err
 			}
 		}

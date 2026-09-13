@@ -25,6 +25,7 @@ type Params struct {
 	BeforeContext int      `json:"beforeContext,omitempty"`
 	AfterContext  int      `json:"afterContext,omitempty"`
 	SkipSegments  bool     `json:"-"`
+	LineRanges    bool     `json:"matchLineRanges,omitempty"`
 	Related       bool     `json:"related,omitempty"`
 	FollowRelated int      `json:"followRelated,omitempty"`
 	At            string   `json:"-"`
@@ -53,6 +54,7 @@ type RelatedPoint struct {
 type FileMatch struct {
 	File, DisplayPath, Content, Language         string
 	MatchLines                                   map[int]bool
+	MatchRanges                                  map[int]parser.StructuralLineRange
 	Segments                                     []parser.Segment
 	Related                                      []RelatedPoint
 	OmittedRelatedCallers, OmittedRelatedCallees int

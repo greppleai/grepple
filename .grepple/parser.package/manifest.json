@@ -16,16 +16,16 @@
     "syntacticBuildTagUnion": []
   },
   "summary": {
-    "sourceFiles": 28,
-    "declarations": 47,
-    "exportedTypes": 19,
-    "internalTypes": 28,
-    "members": 315,
-    "exportedFunctions": 19,
+    "sourceFiles": 29,
+    "declarations": 50,
+    "exportedTypes": 20,
+    "internalTypes": 30,
+    "members": 324,
+    "exportedFunctions": 20,
     "fiberRoutes": 0,
-    "relations": 129
+    "relations": 134
   },
-  "semanticModelDigest": "sha256:e5270b6e6d6c30a85644be70de264d598246300784559500bf3e4b6f9018c5b4",
+  "semanticModelDigest": "sha256:9e15067b0bf09894dfc24a46d5169d33a7edc05cbf276a5bc5f0f76b5fa78597",
   "sourceFiles": [
     {
       "path": "parser/analyze.go"
@@ -86,6 +86,9 @@
     },
     {
       "path": "parser/markdown.go"
+    },
+    {
+      "path": "parser/match_range.go"
     },
     {
       "path": "parser/model.go"
@@ -1171,6 +1174,30 @@
           "line": 8,
           "endLine": 8,
           "result": "string"
+        }
+      ]
+    },
+    {
+      "name": "StructuralLineRange",
+      "kind": "struct",
+      "file": "parser/match_range.go",
+      "line": 7,
+      "endLine": 10,
+      "underlyingType": "struct{StartLine int;EndLine int;}",
+      "members": [
+        {
+          "name": "EndLine",
+          "kind": "property",
+          "line": 9,
+          "endLine": 9,
+          "result": "int"
+        },
+        {
+          "name": "StartLine",
+          "kind": "property",
+          "line": 8,
+          "endLine": 8,
+          "result": "int"
         }
       ]
     },
@@ -2880,6 +2907,79 @@
       ]
     },
     {
+      "name": "structuralLineCandidate",
+      "kind": "struct",
+      "file": "parser/match_range.go",
+      "line": 12,
+      "endLine": 15,
+      "underlyingType": "struct{rangeValue StructuralLineRange;column int;}",
+      "members": [
+        {
+          "name": "column",
+          "kind": "property",
+          "line": 14,
+          "endLine": 14,
+          "result": "int"
+        },
+        {
+          "name": "rangeValue",
+          "kind": "property",
+          "line": 13,
+          "endLine": 13,
+          "result": "StructuralLineRange"
+        }
+      ]
+    },
+    {
+      "name": "structuralLineRangeCollector",
+      "kind": "struct",
+      "file": "parser/match_range.go",
+      "line": 17,
+      "endLine": 21,
+      "underlyingType": "struct{lines map[int]bool;sortedLines[]int;candidates map[int]structuralLineCandidate;}",
+      "members": [
+        {
+          "name": "result",
+          "kind": "method",
+          "line": 84,
+          "endLine": 90,
+          "result": "map[int]StructuralLineRange"
+        },
+        {
+          "name": "visit",
+          "kind": "method",
+          "line": 57,
+          "endLine": 78,
+          "parameters": [
+            "ViewNode",
+            "int"
+          ],
+          "result": "bool"
+        },
+        {
+          "name": "candidates",
+          "kind": "property",
+          "line": 20,
+          "endLine": 20,
+          "result": "map[int]structuralLineCandidate"
+        },
+        {
+          "name": "lines",
+          "kind": "property",
+          "line": 18,
+          "endLine": 18,
+          "result": "map[int]bool"
+        },
+        {
+          "name": "sortedLines",
+          "kind": "property",
+          "line": 19,
+          "endLine": 19,
+          "result": "[]int"
+        }
+      ]
+    },
+    {
       "name": "structureRules",
       "kind": "struct",
       "file": "parser/language.go",
@@ -3248,6 +3348,19 @@
       "result": "tuple\u003c*Document,error\u003e"
     },
     {
+      "name": "StructuralLineRanges",
+      "kind": "function",
+      "file": "parser/match_range.go",
+      "line": 27,
+      "endLine": 42,
+      "parameters": [
+        "string",
+        "string",
+        "map[int]bool"
+      ],
+      "result": "map[int]StructuralLineRange"
+    },
+    {
       "name": "SupportedContentLanguages",
       "kind": "function",
       "file": "parser/language.go",
@@ -3517,6 +3630,13 @@
       "kind": "association",
       "via": "field Start",
       "cardinality": "one"
+    },
+    {
+      "from": "StructuralLineRanges",
+      "to": "StructuralLineRange",
+      "kind": "dependency",
+      "via": "result 1",
+      "cardinality": "many"
     },
     {
       "from": "SupportedContentLanguages",
@@ -4098,6 +4218,34 @@
       "kind": "dependency",
       "via": "method Rules result 1",
       "cardinality": "one"
+    },
+    {
+      "from": "structuralLineCandidate",
+      "to": "StructuralLineRange",
+      "kind": "association",
+      "via": "field rangeValue",
+      "cardinality": "one"
+    },
+    {
+      "from": "structuralLineRangeCollector",
+      "to": "StructuralLineRange",
+      "kind": "dependency",
+      "via": "method result result 1",
+      "cardinality": "many"
+    },
+    {
+      "from": "structuralLineRangeCollector",
+      "to": "ViewNode",
+      "kind": "dependency",
+      "via": "method visit parameter 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "structuralLineRangeCollector",
+      "to": "structuralLineCandidate",
+      "kind": "association",
+      "via": "field candidates",
+      "cardinality": "many"
     },
     {
       "from": "structureRules",

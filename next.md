@@ -60,6 +60,7 @@ Treat these as separate planning dimensions:
 - [x] Accept safe grep compatibility aliases: `-E` explicitly selects the default JavaScript-regex mode and `-r` is a no-op because directory search is already recursive.
 - [x] Bound human-readable output below common agent limits with actionable narrowing guidance while keeping JSON valid and uncapped.
 - [x] Report matching lines omitted by `--max-segments` and direct edit-oriented searches to `--line-only`, which emits configured anchors or supplies exact lines for Read fallback.
+- [x] Enrich plain `--line-only` locations with parser-backed `PATH:START-END` ranges when the matching line begins a multi-line declaration or control-flow construct; preserve single-line and exact anchor-row contracts.
 - [x] Report related-edge truncation explicitly, including omitted caller/callee counts in human and JSON output plus complete-graph guidance. Tests prove bounded previews cannot be mistaken for complete impact results.
 - [x] Add `--count-summary` for complete aggregate matched-file and matching-line totals independent of `--skip`, `--limit`, and `--max-files`; retain `--count-by-repo` for grouped compatibility output.
 - [ ] Add an explicit agent-oriented output profile, or evaluate a lower default human-output budget, so broad accidental queries stop well below common context limits without affecting complete JSON.

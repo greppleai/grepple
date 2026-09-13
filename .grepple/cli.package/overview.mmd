@@ -291,7 +291,7 @@ classDiagram
         <<struct>> limitedStderrWriter
         class lineRenderer["lineRenderer · internal/cli/renderer_matches.go:10-14"]
         <<struct>> lineRenderer
-        class onlyMatchingRenderer["onlyMatchingRenderer · internal/cli/renderer_matches.go:53-57"]
+        class onlyMatchingRenderer["onlyMatchingRenderer · internal/cli/renderer_matches.go:57-61"]
         <<struct>> onlyMatchingRenderer
         class outputWriter["outputWriter · internal/cli/output.go:24-28"]
         <<struct>> outputWriter
@@ -311,7 +311,7 @@ classDiagram
             +RenderOutlineOrContent(parser.FileOutline, string): string
         }
         <<function>> RenderOutlineOrContent
-        class Run["Run · internal/cli/args.go:350-380"] {
+        class Run["Run · internal/cli/args.go:351-381"] {
             +Run([]string): error
         }
         <<function>> Run

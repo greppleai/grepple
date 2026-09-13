@@ -41,13 +41,13 @@ func TestLineRendererWritesToInjectedOutput(t *testing.T) {
 	renderer := lineRenderer{output: newOutputWriter(&output), maxLines: 10}
 	results := []api.FileResult{{
 		Path:    "example.go",
-		Matches: []api.ResultMatch{{Line: 7, Text: "needle"}},
+		Matches: []api.ResultMatch{{Line: 7, EndLine: 12, Text: "func needle() {"}, {Line: 15, Text: "needle"}},
 	}}
 
 	if err := renderer.Render(results); err != nil {
 		t.Fatal(err)
 	}
-	if got, want := output.String(), "example.go:7:needle\n"; got != want {
+	if got, want := output.String(), "example.go:7-12:func needle() {\nexample.go:15:needle\n"; got != want {
 		t.Fatalf("expected %q, got %q", want, got)
 	}
 }

@@ -27,7 +27,7 @@ type searchArgs struct {
 	Recursive        bool     `arg:"-r,--recursive" help:"search directories recursively (compatibility alias; already the default)"`
 	Server           string   `arg:"-s,--server" placeholder:"URL" help:"remote shard/router URL (implies --remote)"`
 	LineNumber       bool     `arg:"-n,--line-number" help:"include line numbers (enabled by default)"`
-	LineOnly         bool     `arg:"--line-only" help:"print only matching lines"`
+	LineOnly         bool     `arg:"--line-only" help:"print only matching lines; include construct end lines when available"`
 	OnlyMatching     bool     `arg:"-o,--only-matching" help:"print each matched substring"`
 	Files            bool     `arg:"-l,--files" help:"recursively list files under optional PATHs; glob PATHs filter the listing"`
 	FilesWithMatches bool     `arg:"--files-with-matches" help:"list paths whose contents match; accepts multiple file, directory, or glob PATHs"`
@@ -106,9 +106,10 @@ func parseSearchArgs(args []string) (*cliOptions, string, bool, error) {
 		return nil, "", false, err
 	}
 
-	// Structural parsing is only needed when we render segments (the default
-	// display and full --json). Skip it for match-line-only output modes.
+	// Skip full structural segments for compact output modes. Line-only still asks
+	// parser for focused construct-end metadata without rendering source bodies.
 	params.SkipSegments = values.Files || values.FilesWithMatches || values.Count || values.CountByRepo || values.LineOnly || values.OnlyMatching || values.JSONMatches || params.BeforeContext > 0 || params.AfterContext > 0
+	params.LineRanges = values.LineOnly
 
 	// Local-first: only reach out to the shard/router when the user explicitly opts
 	// in with --remote or by passing a --server URL. A configured GREPPLE_SERVER / config

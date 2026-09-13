@@ -106,6 +106,7 @@ func searchRequestFromParams(params search.Params) api.SearchRequest {
 		InvertMatch:   &params.InvertMatch,
 		MaxSegments:   &params.MaxSegments,
 		Files:         params.Files,
+		LineRanges:    params.LineRanges,
 		Related:       params.Related,
 		FollowRelated: params.FollowRelated,
 	}

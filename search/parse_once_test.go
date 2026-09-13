@@ -84,6 +84,27 @@ func TestSkipSegmentsAvoidsParserOutput(t *testing.T) {
 	}
 }
 
+func TestLineRangesBuildWithoutSegments(t *testing.T) {
+	dir := t.TempDir()
+	writeGoFile(t, dir, "a.go", "package a\nfunc Target() {\n\twork()\n}\n")
+	t.Chdir(dir)
+	p := Params{Query: "func Target", Regex: true, MaxSegments: DefaultMaxSegments, Root: dir, SkipSegments: true, LineRanges: true}
+	matches, err := Files(p, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(matches) != 1 || matches[0].SegmentsReady || len(matches[0].Segments) != 0 {
+		t.Fatalf("unexpected structural result: %#v", matches)
+	}
+	if got := matches[0].MatchRanges[2]; got.StartLine != 2 || got.EndLine != 4 {
+		t.Fatalf("match range = %#v", got)
+	}
+	result := ToResult(matches[0], nil, 0, 0, DefaultMaxSegments)
+	if len(result.Matches) != 1 || result.Matches[0].EndLine != 4 {
+		t.Fatalf("wire matches = %#v", result.Matches)
+	}
+}
+
 func TestSkipAndLimitWindow(t *testing.T) {
 	dir := t.TempDir()
 	writeGoFile(t, dir, "a.go", "package a\n// Target Target Target Target\n// Target\n")

@@ -396,7 +396,7 @@ classDiagram
     }
     <<struct>> lineRenderer
     %% grepple:file lineRenderer internal/cli/renderer_matches.go
-    note for lineRenderer "defined: internal/cli/renderer_matches.go:10-14; Render@internal/cli/renderer_matches.go:16-29; renderAnchored@internal/cli/renderer_matches.go:31-51; anchors@internal/cli/renderer_matches.go:13; maxLines@internal/cli/renderer_matches.go:12; output@internal/cli/renderer_matches.go:11"
+    note for lineRenderer "defined: internal/cli/renderer_matches.go:10-14; Render@internal/cli/renderer_matches.go:16-33; renderAnchored@internal/cli/renderer_matches.go:35-55; anchors@internal/cli/renderer_matches.go:13; maxLines@internal/cli/renderer_matches.go:12; output@internal/cli/renderer_matches.go:11"
     class loginConfig {
         +ClientID: string
         +Scopes: string
@@ -457,7 +457,7 @@ classDiagram
     }
     <<struct>> onlyMatchingRenderer
     %% grepple:file onlyMatchingRenderer internal/cli/renderer_matches.go
-    note for onlyMatchingRenderer "defined: internal/cli/renderer_matches.go:53-57; Render@internal/cli/renderer_matches.go:59-74; matcher@internal/cli/renderer_matches.go:56; maxLines@internal/cli/renderer_matches.go:55; output@internal/cli/renderer_matches.go:54"
+    note for onlyMatchingRenderer "defined: internal/cli/renderer_matches.go:57-61; Render@internal/cli/renderer_matches.go:63-78; matcher@internal/cli/renderer_matches.go:60; maxLines@internal/cli/renderer_matches.go:59; output@internal/cli/renderer_matches.go:58"
     class outputWriter {
         -writeDirect(string): error
         -writeJSON(any): error
@@ -598,7 +598,7 @@ classDiagram
     %% grepple:struct-tag searchArgs JSONMatches "arg:\"--json-matches\" help:\"print compact JSON matches\""
     %% grepple:struct-tag searchArgs Limit "arg:\"--limit\" placeholder:\"N\" help:\"return at most N ranked result files (default 20; 0 = all local; servers cap a page at 100 — page further with --skip)\""
     %% grepple:struct-tag searchArgs LineNumber "arg:\"-n,--line-number\" help:\"include line numbers (enabled by default)\""
-    %% grepple:struct-tag searchArgs LineOnly "arg:\"--line-only\" help:\"print only matching lines\""
+    %% grepple:struct-tag searchArgs LineOnly "arg:\"--line-only\" help:\"print only matching lines; include construct end lines when available\""
     %% grepple:struct-tag searchArgs Local "arg:\"--local\" help:\"search only the local working directory (this is the default)\""
     %% grepple:struct-tag searchArgs MaxFiles "arg:\"--max-files\" placeholder:\"N\" help:\"limit matching files\""
     %% grepple:struct-tag searchArgs MaxOutputBytes "arg:\"--max-output-bytes\" placeholder:\"N\" help:\"cap human-readable output (default 40960; 0 = unlimited; JSON is uncapped)\""
@@ -679,7 +679,7 @@ classDiagram
     }
     <<function>> Run
     %% grepple:file Run internal/cli/args.go
-    note for Run "defined: internal/cli/args.go:350-380"
+    note for Run "defined: internal/cli/args.go:351-381"
     anchorProtocolRequest "1" --> "*" anchorProtocolRequestFile : field Files
     anchorProtocolResponse "1" --> "*" anchorProtocolResponseFile : field Files
     anchorProtocolResponseFile "1" --> "*" anchorProtocolLine : field Anchors

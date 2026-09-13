@@ -2,15 +2,15 @@ classDiagram
     %% grepple:package-default github.com/greppleai/grepple/api
     %% grepple:language-default go
     direction LR
-    note "Package api defines Grepple-controlled HTTP request and response contracts. | package github.com/greppleai/grepple/api | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=3, declarations=31, exportedTypes=31, internalTypes=0, members=196, exportedFunctions=0, fiberRoutes=0, relations=37"
+    note "Package api defines Grepple-controlled HTTP request and response contracts. | package github.com/greppleai/grepple/api | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=3, declarations=31, exportedTypes=31, internalTypes=0, members=198, exportedFunctions=0, fiberRoutes=0, relations=37"
     namespace data_contracts {
-        class ContextLine["ContextLine · api/model.go:47-51"] {
+        class ContextLine["ContextLine · api/model.go:49-53"] {
             +Line: int
             +Match: bool
             +Text: string
         }
         <<struct>> ContextLine
-        class FileResult["FileResult · api/model.go:75-85"] {
+        class FileResult["FileResult · api/model.go:77-87"] {
             +Context: []ContextLine
             +Language: string
             +Matches: []ResultMatch
@@ -168,7 +168,7 @@ classDiagram
             +WorkspaceBundle: FeatureSupport
         }
         <<struct>> LanguageCapabilities
-        class RelatedSymbol["RelatedSymbol · api/model.go:59-72"] {
+        class RelatedSymbol["RelatedSymbol · api/model.go:61-74"] {
             +CallLine: int
             +Confidence: string
             +Direction: string
@@ -183,13 +183,13 @@ classDiagram
             +Start: int
         }
         <<struct>> RelatedSymbol
-        class RepoCount["RepoCount · api/model.go:88-92"] {
+        class RepoCount["RepoCount · api/model.go:90-94"] {
             +Files: int
             +Matches: int
             +Repo: string
         }
         <<struct>> RepoCount
-        class RepoListEntry["RepoListEntry · api/model.go:103-109"] {
+        class RepoListEntry["RepoListEntry · api/model.go:105-111"] {
             +Head: *string
             +IndexedAt: string
             +Ref: string
@@ -197,25 +197,26 @@ classDiagram
             +Shard: string
         }
         <<struct>> RepoListEntry
-        class ReposResponse["ReposResponse · api/model.go:112-116"] {
+        class ReposResponse["ReposResponse · api/model.go:114-118"] {
             +Count: int
             +OK: bool
             +Repos: []RepoListEntry
         }
         <<struct>> ReposResponse
-        class ResultMatch["ResultMatch · api/model.go:33-36"] {
+        class ResultMatch["ResultMatch · api/model.go:34-38"] {
+            +EndLine: int
             +Line: int
             +Text: string
         }
         <<struct>> ResultMatch
-        class ResultSegment["ResultSegment · api/model.go:39-44"] {
+        class ResultSegment["ResultSegment · api/model.go:41-46"] {
             +End: int
             +Kind: string
             +Start: int
             +Text: string
         }
         <<struct>> ResultSegment
-        class Rule["Rule · api/model.go:145-154"] {
+        class Rule["Rule · api/model.go:147-156"] {
             +CreatedAt: string
             +Engine: string
             +ID: string
@@ -226,7 +227,7 @@ classDiagram
             +UpdatedAt: string
         }
         <<struct>> Rule
-        class RuleRepoResult["RuleRepoResult · api/model.go:157-164"] {
+        class RuleRepoResult["RuleRepoResult · api/model.go:159-166"] {
             +EvaluatedAt: string
             +Files: int
             +Head: string
@@ -235,7 +236,7 @@ classDiagram
             +Repo: string
         }
         <<struct>> RuleRepoResult
-        class RuleResults["RuleResults · api/model.go:167-173"] {
+        class RuleResults["RuleResults · api/model.go:169-175"] {
             +Generation: int64
             +Mode: string
             +Repos: []RuleRepoResult
@@ -243,12 +244,12 @@ classDiagram
             +Truncated: bool
         }
         <<struct>> RuleResults
-        class RuleSet["RuleSet · api/model.go:176-179"] {
+        class RuleSet["RuleSet · api/model.go:178-181"] {
             +Generation: int64
             +Rules: []Rule
         }
         <<struct>> RuleSet
-        class SearchRequest["SearchRequest · api/model.go:10-30"] {
+        class SearchRequest["SearchRequest · api/model.go:10-31"] {
             +AfterContext: *int
             +BeforeContext: *int
             +Context: any
@@ -260,6 +261,7 @@ classDiagram
             +IgnoreCase: *bool
             +InvertMatch: *bool
             +Limit: *int
+            +LineRanges: bool
             +MaxFiles: *int
             +MaxSegments: *int
             +Query: *string
@@ -270,19 +272,19 @@ classDiagram
             +SkipSegments: bool
         }
         <<struct>> SearchRequest
-        class SearchResponse["SearchResponse · api/model.go:95-100"] {
+        class SearchResponse["SearchResponse · api/model.go:97-102"] {
             +RepoCounts: []RepoCount
             +Results: []FileResult
             +ShardErrors: []string
             +Truncated: bool
         }
         <<struct>> SearchResponse
-        class TreeEntry["TreeEntry · api/model.go:119-122"] {
+        class TreeEntry["TreeEntry · api/model.go:121-124"] {
             +Dir: bool
             +Path: string
         }
         <<struct>> TreeEntry
-        class TreeResponse["TreeResponse · api/model.go:125-131"] {
+        class TreeResponse["TreeResponse · api/model.go:127-133"] {
             +Commit: *string
             +Depth: int
             +Entries: []TreeEntry

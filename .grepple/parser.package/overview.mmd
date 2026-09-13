@@ -2,7 +2,7 @@ classDiagram
     %% grepple:package-default github.com/greppleai/grepple/parser
     %% grepple:language-default go
     direction LR
-    note "Package parser provides application source classification and structural parsing. | package github.com/greppleai/grepple/parser | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=28, declarations=47, exportedTypes=19, internalTypes=28, members=315, exportedFunctions=19, fiberRoutes=0, relations=129"
+    note "Package parser provides application source classification and structural parsing. | package github.com/greppleai/grepple/parser | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=29, declarations=50, exportedTypes=20, internalTypes=30, members=324, exportedFunctions=20, fiberRoutes=0, relations=134"
     namespace interfaces {
         class languageAdapter["languageAdapter · parser/language.go:75-80"] {
             +Grammar(): *sitter.Language
@@ -94,6 +94,8 @@ classDiagram
         <<struct>> Range
         class Segment["Segment · parser/model.go:5-9"]
         <<struct>> Segment
+        class StructuralLineRange["StructuralLineRange · parser/match_range.go:7-10"]
+        <<struct>> StructuralLineRange
         class SyntaxNode["SyntaxNode · parser/document.go:58-69"]
         <<struct>> SyntaxNode
         class ViewNode["ViewNode · parser/view.go:35-39"]
@@ -150,6 +152,10 @@ classDiagram
         <<struct>> shellLanguage
         class stringSet["stringSet = map&#91;string&#93;struct&#123;&#125; · parser/language.go:47"]
         <<type>> stringSet
+        class structuralLineCandidate["structuralLineCandidate · parser/match_range.go:12-15"]
+        <<struct>> structuralLineCandidate
+        class structuralLineRangeCollector["structuralLineRangeCollector · parser/match_range.go:17-21"]
+        <<struct>> structuralLineRangeCollector
         class structureRules["structureRules · parser/language.go:62-73"]
         <<struct>> structureRules
         class typeScriptLanguage["typeScriptLanguage · parser/language_typescript.go:21-25"]
@@ -216,6 +222,10 @@ classDiagram
             +ParseDocument(string, string): tuple~*Document&#44;error~
         }
         <<function>> ParseDocument
+        class StructuralLineRanges["StructuralLineRanges · parser/match_range.go:27-42"] {
+            +StructuralLineRanges(string, string, map[int]bool): map[int]StructuralLineRange
+        }
+        <<function>> StructuralLineRanges
         class SupportedContentLanguages["SupportedContentLanguages · parser/language.go:122-136"] {
             +SupportedContentLanguages(): []ContentLanguageCapabilities
         }
@@ -265,6 +275,7 @@ classDiagram
     ParseDiagnostic "1" --> "1" Range : field Range
     ParseDocument "1" ..> "1" Document : result 1
     Range "1" --> "1" Position : field End; field Start
+    StructuralLineRanges "1" ..> "*" StructuralLineRange : result 1
     SupportedContentLanguages "1" ..> "*" ContentLanguageCapabilities : result 1
     SupportedLanguages "1" ..> "*" LanguageCapabilities : result 1
     SyntaxNode "1" --> "1" Range : field rng
@@ -335,6 +346,10 @@ classDiagram
     languageAdapter <|.. shellLanguage : implements
     shellLanguage "1" --> "1" structureRules : field rules
     shellLanguage "1" ..> "1" structureRules : method Rules result 1
+    structuralLineCandidate "1" --> "1" StructuralLineRange : field rangeValue
+    structuralLineRangeCollector "1" ..> "*" StructuralLineRange : method result result 1
+    structuralLineRangeCollector "1" ..> "1" ViewNode : method visit parameter 1
+    structuralLineRangeCollector "1" --> "*" structuralLineCandidate : field candidates
     structureRules "1" --> "1" stringSet : field=10
     typeScriptLanguage "1" ..> "*" Symbol : method Outline result 1
     languageAdapter <|.. typeScriptLanguage : implements
