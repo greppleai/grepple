@@ -51,6 +51,26 @@ func TestStructuralLineRangesFindDeclarationsAndControlFlow(t *testing.T) {
 	}
 }
 
+func TestEnclosingLineRangesFindNearestNestedConstruct(t *testing.T) {
+	goContent := "package sample\nfunc Run() {\n\tif ready {\n\t\twork()\n\t}\n\tfinish()\n}\n"
+	got := EnclosingLineRanges(goContent, "go", map[int]bool{4: true, 6: true})
+	want := map[int]StructuralLineRange{
+		4: {StartLine: 3, EndLine: 5},
+		6: {StartLine: 2, EndLine: 7},
+	}
+	for line, expected := range want {
+		if got[line] != expected {
+			t.Fatalf("line %d range = %#v, want %#v", line, got[line], expected)
+		}
+	}
+
+	pythonContent := "def run():\n    if ready:\n        work()\n    finish()\n"
+	pythonRange := EnclosingLineRanges(pythonContent, "python", map[int]bool{3: true})[3]
+	if pythonRange != (StructuralLineRange{StartLine: 2, EndLine: 3}) {
+		t.Fatalf("python range = %#v", pythonRange)
+	}
+}
+
 func TestStructuralLineRangesCoverEveryTreeSitterLanguage(t *testing.T) {
 	tests := []struct {
 		language string
@@ -76,6 +96,11 @@ func TestStructuralLineRangesCoverEveryTreeSitterLanguage(t *testing.T) {
 			got := StructuralLineRanges(test.content, test.language, map[int]bool{test.line: true})[test.line]
 			if got.StartLine != test.line || got.EndLine != test.endLine {
 				t.Fatalf("range = %#v, want %d-%d", got, test.line, test.endLine)
+			}
+			bodyLine := test.line + 1
+			enclosing := EnclosingLineRanges(test.content, test.language, map[int]bool{bodyLine: true})[bodyLine]
+			if enclosing.StartLine != test.line || enclosing.EndLine != test.endLine {
+				t.Fatalf("enclosing range = %#v, want %d-%d", enclosing, test.line, test.endLine)
 			}
 		})
 	}

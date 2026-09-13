@@ -99,16 +99,17 @@ func requestGritRemote(ctx context.Context, request api.GritRequest, server stri
 func searchRequestFromParams(params search.Params) api.SearchRequest {
 	query := params.Query
 	request := api.SearchRequest{
-		Query:         &query,
-		Globs:         params.Globs,
-		Regex:         &params.Regex,
-		IgnoreCase:    &params.IgnoreCase,
-		InvertMatch:   &params.InvertMatch,
-		MaxSegments:   &params.MaxSegments,
-		Files:         params.Files,
-		LineRanges:    params.LineRanges,
-		Related:       params.Related,
-		FollowRelated: params.FollowRelated,
+		Query:           &query,
+		Globs:           params.Globs,
+		Regex:           &params.Regex,
+		IgnoreCase:      &params.IgnoreCase,
+		InvertMatch:     &params.InvertMatch,
+		MaxSegments:     &params.MaxSegments,
+		Files:           params.Files,
+		LineRanges:      params.LineRanges,
+		EnclosingRanges: params.EnclosingRanges,
+		Related:         params.Related,
+		FollowRelated:   params.FollowRelated,
 	}
 	if len(params.Repo) > 0 {
 		request.Repo = params.Repo

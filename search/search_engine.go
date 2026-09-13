@@ -218,7 +218,7 @@ func Files(p Params, candidates []string) ([]FileMatch, error) {
 	}
 	// Parse returned files only when the caller needs structural segments or
 	// multi-line construct ranges for matching lines.
-	if !p.SkipSegments || p.LineRanges {
+	if !p.SkipSegments || p.LineRanges || p.EnclosingRanges {
 		runParallel(len(out), func(index int) {
 			analyzeMatchStructure(&out[index], p)
 		})
@@ -311,7 +311,7 @@ func Content(p Params, name string, content []byte) (*FileMatch, error) {
 		return nil, e
 	}
 	fm := scanContent(p, m, content, name, name)
-	if fm != nil && (!p.SkipSegments || p.LineRanges) {
+	if fm != nil && (!p.SkipSegments || p.LineRanges || p.EnclosingRanges) {
 		analyzeMatchStructure(fm, p)
 	}
 	return fm, nil
@@ -480,7 +480,9 @@ func analyzeMatchStructure(fm *FileMatch, p Params) {
 		fm.Segments = parser.BuildSegments(fm.Content, fm.Language, fm.MatchLines, p.MaxSegments)
 		fm.SegmentsReady = true
 	}
-	if p.LineRanges {
+	if p.EnclosingRanges {
+		fm.MatchRanges = parser.EnclosingLineRanges(fm.Content, fm.Language, fm.MatchLines)
+	} else if p.LineRanges {
 		fm.MatchRanges = parser.StructuralLineRanges(fm.Content, fm.Language, fm.MatchLines)
 	}
 }

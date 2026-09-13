@@ -8,14 +8,9 @@ import (
 )
 
 func TestLineOnlyReportsConstructEndRange(t *testing.T) {
-	root := t.TempDir()
-	content := "package sample\nfunc Run() {\n\tif ready {\n\t\twork()\n\t}\n}\nconst plain = 1\n"
-	if err := os.WriteFile(filepath.Join(root, "sample.go"), []byte(content), 0o644); err != nil {
-		t.Fatal(err)
-	}
-
+	path := writeLineRangeFixture(t)
 	functionOutput := captureStdout(t, func() {
-		if err := runSearch([]string{"--line-only", "--no-anchors", "-F", "func Run", filepath.Join(root, "sample.go")}); err != nil {
+		if err := runSearch([]string{"--line-only", "--no-anchors", "-F", "func Run", path}); err != nil {
 			t.Fatal(err)
 		}
 	})
@@ -24,7 +19,7 @@ func TestLineOnlyReportsConstructEndRange(t *testing.T) {
 	}
 
 	branchOutput := captureStdout(t, func() {
-		if err := runSearch([]string{"--line-only", "--no-anchors", "-F", "if ready", filepath.Join(root, "sample.go")}); err != nil {
+		if err := runSearch([]string{"--line-only", "--no-anchors", "-F", "if ready", path}); err != nil {
 			t.Fatal(err)
 		}
 	})
@@ -33,20 +28,57 @@ func TestLineOnlyReportsConstructEndRange(t *testing.T) {
 	}
 
 	plainOutput := captureStdout(t, func() {
-		if err := runSearch([]string{"--line-only", "--no-anchors", "-F", "const plain", filepath.Join(root, "sample.go")}); err != nil {
+		if err := runSearch([]string{"--line-only", "--no-anchors", "-F", "const plain", path}); err != nil {
 			t.Fatal(err)
 		}
 	})
 	if !strings.Contains(plainOutput, "sample.go:7:const plain = 1") {
 		t.Fatalf("single-line location changed: %s", plainOutput)
 	}
+}
 
-	jsonOutput := captureStdout(t, func() {
-		if err := runSearch([]string{"--line-only", "--json", "-F", "func Run", filepath.Join(root, "sample.go")}); err != nil {
+func TestLineOnlyEnclosingReportsNearestBodyScope(t *testing.T) {
+	path := writeLineRangeFixture(t)
+	bodyOutput := captureStdout(t, func() {
+		if err := runSearch([]string{"--line-only", "--no-anchors", "-F", "work()", path}); err != nil {
 			t.Fatal(err)
 		}
 	})
-	if !strings.Contains(jsonOutput, `"line": 2`) || !strings.Contains(jsonOutput, `"endLine": 6`) {
-		t.Fatalf("JSON construct range missing: %s", jsonOutput)
+	if !strings.Contains(bodyOutput, "sample.go:4:\t\twork()") {
+		t.Fatalf("default body location changed: %s", bodyOutput)
 	}
+
+	enclosingOutput := captureStdout(t, func() {
+		if err := runSearch([]string{"--line-only", "--enclosing", "-F", "work()", path}); err != nil {
+			t.Fatal(err)
+		}
+	})
+	if !strings.Contains(enclosingOutput, "sample.go:4@3-5:\t\twork()") {
+		t.Fatalf("enclosing branch range missing: %s", enclosingOutput)
+	}
+}
+
+func TestLineOnlyEnclosingJSONReportsMatchAndScope(t *testing.T) {
+	path := writeLineRangeFixture(t)
+	output := captureStdout(t, func() {
+		if err := runSearch([]string{"--line-only", "--enclosing", "--json", "-F", "work()", path}); err != nil {
+			t.Fatal(err)
+		}
+	})
+	for _, expected := range []string{`"line": 4`, `"startLine": 3`, `"endLine": 5`} {
+		if !strings.Contains(output, expected) {
+			t.Fatalf("JSON enclosing range missing %s: %s", expected, output)
+		}
+	}
+}
+
+func writeLineRangeFixture(t *testing.T) string {
+	t.Helper()
+	root := t.TempDir()
+	path := filepath.Join(root, "sample.go")
+	content := "package sample\nfunc Run() {\n\tif ready {\n\t\twork()\n\t}\n}\nconst plain = 1\n"
+	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	return path
 }

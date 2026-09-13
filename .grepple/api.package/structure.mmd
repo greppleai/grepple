@@ -13,7 +13,7 @@ classDiagram
     %% grepple:struct-tag ContextLine Line "json:\"line\""
     %% grepple:struct-tag ContextLine Match "json:\"match\""
     %% grepple:struct-tag ContextLine Text "json:\"text\""
-    note for ContextLine "defined: api/model.go:49-53; Line@api/model.go:50; Match@api/model.go:52; Text@api/model.go:51"
+    note for ContextLine "defined: api/model.go:51-55; Line@api/model.go:52; Match@api/model.go:54; Text@api/model.go:53"
     class FeatureSupport["FeatureSupport = string"]
     <<type>> FeatureSupport
     %% grepple:underlying FeatureSupport string
@@ -41,7 +41,7 @@ classDiagram
     %% grepple:struct-tag FileResult Related "json:\"related,omitempty\""
     %% grepple:struct-tag FileResult Repo "json:\"repo,omitempty\""
     %% grepple:struct-tag FileResult Segments "json:\"segments\""
-    note for FileResult "defined: api/model.go:77-87; Context@api/model.go:83; Language@api/model.go:80; Matches@api/model.go:81; OmittedRelatedCallees@api/model.go:86; OmittedRelatedCallers@api/model.go:85; Path@api/model.go:78; Related@api/model.go:84; Repo@api/model.go:79; Segments@api/model.go:82"
+    note for FileResult "defined: api/model.go:79-89; Context@api/model.go:85; Language@api/model.go:82; Matches@api/model.go:83; OmittedRelatedCallees@api/model.go:88; OmittedRelatedCallers@api/model.go:87; Path@api/model.go:80; Related@api/model.go:86; Repo@api/model.go:81; Segments@api/model.go:84"
     class GritBinding {
         +Kind: string
         +Name: string
@@ -348,7 +348,7 @@ classDiagram
     %% grepple:struct-tag RelatedSymbol Related "json:\"related,omitempty\""
     %% grepple:struct-tag RelatedSymbol Segments "json:\"segments,omitempty\""
     %% grepple:struct-tag RelatedSymbol Start "json:\"start\""
-    note for RelatedSymbol "defined: api/model.go:61-74; CallLine@api/model.go:68; Confidence@api/model.go:69; Direction@api/model.go:65; End@api/model.go:67; Kind@api/model.go:64; Name@api/model.go:62; OmittedCallees@api/model.go:73; OmittedCallers@api/model.go:72; Path@api/model.go:63; Related@api/model.go:71; Segments@api/model.go:70; Start@api/model.go:66"
+    note for RelatedSymbol "defined: api/model.go:63-76; CallLine@api/model.go:70; Confidence@api/model.go:71; Direction@api/model.go:67; End@api/model.go:69; Kind@api/model.go:66; Name@api/model.go:64; OmittedCallees@api/model.go:75; OmittedCallers@api/model.go:74; Path@api/model.go:65; Related@api/model.go:73; Segments@api/model.go:72; Start@api/model.go:68"
     class RepoCount {
         +Files: int
         +Matches: int
@@ -359,7 +359,7 @@ classDiagram
     %% grepple:struct-tag RepoCount Files "json:\"files\""
     %% grepple:struct-tag RepoCount Matches "json:\"matches\""
     %% grepple:struct-tag RepoCount Repo "json:\"repo\""
-    note for RepoCount "defined: api/model.go:90-94; Files@api/model.go:92; Matches@api/model.go:93; Repo@api/model.go:91"
+    note for RepoCount "defined: api/model.go:92-96; Files@api/model.go:94; Matches@api/model.go:95; Repo@api/model.go:93"
     class RepoListEntry {
         +Head: *string
         +IndexedAt: string
@@ -374,7 +374,7 @@ classDiagram
     %% grepple:struct-tag RepoListEntry Ref "json:\"ref,omitempty\""
     %% grepple:struct-tag RepoListEntry Repo "json:\"repo\""
     %% grepple:struct-tag RepoListEntry Shard "json:\"shard,omitempty\""
-    note for RepoListEntry "defined: api/model.go:105-111; Head@api/model.go:109; IndexedAt@api/model.go:110; Ref@api/model.go:108; Repo@api/model.go:106; Shard@api/model.go:107"
+    note for RepoListEntry "defined: api/model.go:107-113; Head@api/model.go:111; IndexedAt@api/model.go:112; Ref@api/model.go:110; Repo@api/model.go:108; Shard@api/model.go:109"
     class ReposResponse {
         +Count: int
         +OK: bool
@@ -385,18 +385,20 @@ classDiagram
     %% grepple:struct-tag ReposResponse Count "json:\"count\""
     %% grepple:struct-tag ReposResponse OK "json:\"ok\""
     %% grepple:struct-tag ReposResponse Repos "json:\"repos\""
-    note for ReposResponse "defined: api/model.go:114-118; Count@api/model.go:116; OK@api/model.go:115; Repos@api/model.go:117"
+    note for ReposResponse "defined: api/model.go:116-120; Count@api/model.go:118; OK@api/model.go:117; Repos@api/model.go:119"
     class ResultMatch {
         +EndLine: int
         +Line: int
+        +StartLine: int
         +Text: string
     }
     <<struct>> ResultMatch
     %% grepple:file ResultMatch api/model.go
     %% grepple:struct-tag ResultMatch EndLine "json:\"endLine,omitempty\""
     %% grepple:struct-tag ResultMatch Line "json:\"line\""
+    %% grepple:struct-tag ResultMatch StartLine "json:\"startLine,omitempty\""
     %% grepple:struct-tag ResultMatch Text "json:\"text\""
-    note for ResultMatch "defined: api/model.go:34-38; EndLine@api/model.go:36; Line@api/model.go:35; Text@api/model.go:37"
+    note for ResultMatch "defined: api/model.go:35-40; EndLine@api/model.go:38; Line@api/model.go:36; StartLine@api/model.go:37; Text@api/model.go:39"
     class ResultSegment {
         +End: int
         +Kind: string
@@ -409,7 +411,7 @@ classDiagram
     %% grepple:struct-tag ResultSegment Kind "json:\"kind\""
     %% grepple:struct-tag ResultSegment Start "json:\"start\""
     %% grepple:struct-tag ResultSegment Text "json:\"text\""
-    note for ResultSegment "defined: api/model.go:41-46; End@api/model.go:44; Kind@api/model.go:42; Start@api/model.go:43; Text@api/model.go:45"
+    note for ResultSegment "defined: api/model.go:43-48; End@api/model.go:46; Kind@api/model.go:44; Start@api/model.go:45; Text@api/model.go:47"
     class Rule {
         +CreatedAt: string
         +Engine: string
@@ -430,7 +432,7 @@ classDiagram
     %% grepple:struct-tag Rule Request "json:\"request\""
     %% grepple:struct-tag Rule Structural "json:\"structural,omitempty\""
     %% grepple:struct-tag Rule UpdatedAt "json:\"updatedAt,omitempty\""
-    note for Rule "defined: api/model.go:147-156; CreatedAt@api/model.go:154; Engine@api/model.go:151; ID@api/model.go:148; Mode@api/model.go:150; Name@api/model.go:149; Request@api/model.go:152; Structural@api/model.go:153; UpdatedAt@api/model.go:155"
+    note for Rule "defined: api/model.go:149-158; CreatedAt@api/model.go:156; Engine@api/model.go:153; ID@api/model.go:150; Mode@api/model.go:152; Name@api/model.go:151; Request@api/model.go:154; Structural@api/model.go:155; UpdatedAt@api/model.go:157"
     class RuleRepoResult {
         +EvaluatedAt: string
         +Files: int
@@ -447,7 +449,7 @@ classDiagram
     %% grepple:struct-tag RuleRepoResult Matches "json:\"matches\""
     %% grepple:struct-tag RuleRepoResult Paths "json:\"paths,omitempty\""
     %% grepple:struct-tag RuleRepoResult Repo "json:\"repo\""
-    note for RuleRepoResult "defined: api/model.go:159-166; EvaluatedAt@api/model.go:165; Files@api/model.go:161; Head@api/model.go:164; Matches@api/model.go:162; Paths@api/model.go:163; Repo@api/model.go:160"
+    note for RuleRepoResult "defined: api/model.go:161-168; EvaluatedAt@api/model.go:167; Files@api/model.go:163; Head@api/model.go:166; Matches@api/model.go:164; Paths@api/model.go:165; Repo@api/model.go:162"
     class RuleResults {
         +Generation: int64
         +Mode: string
@@ -462,7 +464,7 @@ classDiagram
     %% grepple:struct-tag RuleResults Repos "json:\"repos\""
     %% grepple:struct-tag RuleResults Rule "json:\"rule\""
     %% grepple:struct-tag RuleResults Truncated "json:\"truncated,omitempty\""
-    note for RuleResults "defined: api/model.go:169-175; Generation@api/model.go:172; Mode@api/model.go:171; Repos@api/model.go:173; Rule@api/model.go:170; Truncated@api/model.go:174"
+    note for RuleResults "defined: api/model.go:171-177; Generation@api/model.go:174; Mode@api/model.go:173; Repos@api/model.go:175; Rule@api/model.go:172; Truncated@api/model.go:176"
     class RuleSet {
         +Generation: int64
         +Rules: []Rule
@@ -471,12 +473,13 @@ classDiagram
     %% grepple:file RuleSet api/model.go
     %% grepple:struct-tag RuleSet Generation "json:\"generation\""
     %% grepple:struct-tag RuleSet Rules "json:\"rules\""
-    note for RuleSet "defined: api/model.go:178-181; Generation@api/model.go:179; Rules@api/model.go:180"
+    note for RuleSet "defined: api/model.go:180-183; Generation@api/model.go:181; Rules@api/model.go:182"
     class SearchRequest {
         +AfterContext: *int
         +BeforeContext: *int
         +Context: any
         +CountByRepo: bool
+        +EnclosingRanges: bool
         +ExcludeRepo: any
         +Files: bool
         +FollowRelated: int
@@ -500,6 +503,7 @@ classDiagram
     %% grepple:struct-tag SearchRequest BeforeContext "json:\"beforeContext,omitempty\""
     %% grepple:struct-tag SearchRequest Context "json:\"context,omitempty\""
     %% grepple:struct-tag SearchRequest CountByRepo "json:\"countByRepo,omitempty\""
+    %% grepple:struct-tag SearchRequest EnclosingRanges "json:\"enclosingLineRanges,omitempty\""
     %% grepple:struct-tag SearchRequest ExcludeRepo "json:\"excludeRepo,omitempty\""
     %% grepple:struct-tag SearchRequest Files "json:\"files,omitempty\""
     %% grepple:struct-tag SearchRequest FollowRelated "json:\"followRelated,omitempty\""
@@ -516,7 +520,7 @@ classDiagram
     %% grepple:struct-tag SearchRequest Repo "json:\"repo,omitempty\""
     %% grepple:struct-tag SearchRequest Skip "json:\"skip,omitempty\""
     %% grepple:struct-tag SearchRequest SkipSegments "json:\"skipSegments,omitempty\""
-    note for SearchRequest "defined: api/model.go:10-31; AfterContext@api/model.go:25; BeforeContext@api/model.go:24; Context@api/model.go:23; CountByRepo@api/model.go:30; ExcludeRepo@api/model.go:21; Files@api/model.go:22; FollowRelated@api/model.go:29; Globs@api/model.go:12; IgnoreCase@api/model.go:14; InvertMatch@api/model.go:15; Limit@api/model.go:19; LineRanges@api/model.go:27; MaxFiles@api/model.go:16; MaxSegments@api/model.go:17; Query@api/model.go:11; Regex@api/model.go:13; Related@api/model.go:28; Repo@api/model.go:20; Skip@api/model.go:18; SkipSegments@api/model.go:26"
+    note for SearchRequest "defined: api/model.go:10-32; AfterContext@api/model.go:25; BeforeContext@api/model.go:24; Context@api/model.go:23; CountByRepo@api/model.go:31; EnclosingRanges@api/model.go:28; ExcludeRepo@api/model.go:21; Files@api/model.go:22; FollowRelated@api/model.go:30; Globs@api/model.go:12; IgnoreCase@api/model.go:14; InvertMatch@api/model.go:15; Limit@api/model.go:19; LineRanges@api/model.go:27; MaxFiles@api/model.go:16; MaxSegments@api/model.go:17; Query@api/model.go:11; Regex@api/model.go:13; Related@api/model.go:29; Repo@api/model.go:20; Skip@api/model.go:18; SkipSegments@api/model.go:26"
     class SearchResponse {
         +RepoCounts: []RepoCount
         +Results: []FileResult
@@ -529,7 +533,7 @@ classDiagram
     %% grepple:struct-tag SearchResponse Results "json:\"results\""
     %% grepple:struct-tag SearchResponse ShardErrors "json:\"shardErrors,omitempty\""
     %% grepple:struct-tag SearchResponse Truncated "json:\"truncated,omitempty\""
-    note for SearchResponse "defined: api/model.go:97-102; RepoCounts@api/model.go:99; Results@api/model.go:98; ShardErrors@api/model.go:100; Truncated@api/model.go:101"
+    note for SearchResponse "defined: api/model.go:99-104; RepoCounts@api/model.go:101; Results@api/model.go:100; ShardErrors@api/model.go:102; Truncated@api/model.go:103"
     class TreeEntry {
         +Dir: bool
         +Path: string
@@ -538,7 +542,7 @@ classDiagram
     %% grepple:file TreeEntry api/model.go
     %% grepple:struct-tag TreeEntry Dir "json:\"dir\""
     %% grepple:struct-tag TreeEntry Path "json:\"path\""
-    note for TreeEntry "defined: api/model.go:121-124; Dir@api/model.go:123; Path@api/model.go:122"
+    note for TreeEntry "defined: api/model.go:123-126; Dir@api/model.go:125; Path@api/model.go:124"
     class TreeResponse {
         +Commit: *string
         +Depth: int
@@ -553,7 +557,7 @@ classDiagram
     %% grepple:struct-tag TreeResponse Entries "json:\"entries\""
     %% grepple:struct-tag TreeResponse Path "json:\"path\""
     %% grepple:struct-tag TreeResponse Repo "json:\"repo\""
-    note for TreeResponse "defined: api/model.go:127-133; Commit@api/model.go:131; Depth@api/model.go:130; Entries@api/model.go:132; Path@api/model.go:129; Repo@api/model.go:128"
+    note for TreeResponse "defined: api/model.go:129-135; Commit@api/model.go:133; Depth@api/model.go:132; Entries@api/model.go:134; Path@api/model.go:131; Repo@api/model.go:130"
     FileResult "1" --> "*" ContextLine : field Context
     FileResult "1" --> "*" RelatedSymbol : field Related
     FileResult "1" --> "*" ResultMatch : field Matches

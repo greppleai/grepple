@@ -70,3 +70,14 @@ func TestResolveRequestAsymmetricContext(t *testing.T) {
 		t.Fatalf("unexpected resolved context: %#v", p)
 	}
 }
+
+func TestResolveRequestEnclosingImpliesLineRanges(t *testing.T) {
+	query := "work()"
+	params, err := ResolveRequest(api.SearchRequest{Query: &query, EnclosingRanges: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !params.EnclosingRanges || !params.LineRanges {
+		t.Fatalf("unexpected enclosing params: %#v", params)
+	}
+}

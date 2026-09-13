@@ -14,7 +14,7 @@ HASH│LINE│content
 
 `HASH` is the edit key; `LINE` is for orientation, cross-references, and recovery. Neither should be treated as durable after the file changes. Re-run Grepple or Read before a follow-up edit.
 
-Synthetic summary and collapsed-region rows are not anchorable and retain their normal presentation. Anchor output supports local default structural output and `--line-only`. Settings-based defaults leave remote, JSON, outline, count, context, filename-only, piped-stdin, and `--only-matching` modes unchanged; an explicit `--anchors` still rejects those incompatible modes.
+Synthetic summary and collapsed-region rows are not anchorable and retain their normal presentation. Anchor output supports local default structural output and `--line-only`. `--line-only --enclosing` uses range-bearing plain output instead: settings-default anchors are disabled for that invocation and explicit `--anchors` is rejected so `HASH│LINE│content` is never overloaded. Settings-based defaults leave remote, JSON, outline, count, context, filename-only, piped-stdin, and `--only-matching` modes unchanged; an explicit `--anchors` still rejects those incompatible modes.
 
 ## Settings
 

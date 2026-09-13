@@ -8,33 +8,35 @@ package api
 // SearchRequest is the on-the-wire search request. Nil pointer fields mean
 // "unset", allowing each HTTP surface to apply its defaults.
 type SearchRequest struct {
-	Query         *string  `json:"query,omitempty"`
-	Globs         []string `json:"globs,omitempty"`
-	Regex         *bool    `json:"regex,omitempty"`
-	IgnoreCase    *bool    `json:"ignoreCase,omitempty"`
-	InvertMatch   *bool    `json:"invertMatch,omitempty"`
-	MaxFiles      *int     `json:"maxFiles,omitempty"`
-	MaxSegments   *int     `json:"maxSegments,omitempty"`
-	Skip          *int     `json:"skip,omitempty"`
-	Limit         *int     `json:"limit,omitempty"`
-	Repo          any      `json:"repo,omitempty"`
-	ExcludeRepo   any      `json:"excludeRepo,omitempty"`
-	Files         bool     `json:"files,omitempty"`
-	Context       any      `json:"context,omitempty"`
-	BeforeContext *int     `json:"beforeContext,omitempty"`
-	AfterContext  *int     `json:"afterContext,omitempty"`
-	SkipSegments  bool     `json:"skipSegments,omitempty"`
-	LineRanges    bool     `json:"matchLineRanges,omitempty"`
-	Related       bool     `json:"related,omitempty"`
-	FollowRelated int      `json:"followRelated,omitempty"`
-	CountByRepo   bool     `json:"countByRepo,omitempty"`
+	Query           *string  `json:"query,omitempty"`
+	Globs           []string `json:"globs,omitempty"`
+	Regex           *bool    `json:"regex,omitempty"`
+	IgnoreCase      *bool    `json:"ignoreCase,omitempty"`
+	InvertMatch     *bool    `json:"invertMatch,omitempty"`
+	MaxFiles        *int     `json:"maxFiles,omitempty"`
+	MaxSegments     *int     `json:"maxSegments,omitempty"`
+	Skip            *int     `json:"skip,omitempty"`
+	Limit           *int     `json:"limit,omitempty"`
+	Repo            any      `json:"repo,omitempty"`
+	ExcludeRepo     any      `json:"excludeRepo,omitempty"`
+	Files           bool     `json:"files,omitempty"`
+	Context         any      `json:"context,omitempty"`
+	BeforeContext   *int     `json:"beforeContext,omitempty"`
+	AfterContext    *int     `json:"afterContext,omitempty"`
+	SkipSegments    bool     `json:"skipSegments,omitempty"`
+	LineRanges      bool     `json:"matchLineRanges,omitempty"`
+	EnclosingRanges bool     `json:"enclosingLineRanges,omitempty"`
+	Related         bool     `json:"related,omitempty"`
+	FollowRelated   int      `json:"followRelated,omitempty"`
+	CountByRepo     bool     `json:"countByRepo,omitempty"`
 }
 
 // ResultMatch is one matching line inside a file.
 type ResultMatch struct {
-	Line    int    `json:"line"`
-	EndLine int    `json:"endLine,omitempty"`
-	Text    string `json:"text"`
+	Line      int    `json:"line"`
+	StartLine int    `json:"startLine,omitempty"`
+	EndLine   int    `json:"endLine,omitempty"`
+	Text      string `json:"text"`
 }
 
 // ResultSegment is one structural segment around a file's matches.

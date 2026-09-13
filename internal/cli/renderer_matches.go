@@ -21,7 +21,9 @@ func (renderer lineRenderer) Render(results []api.FileResult) error {
 		limit := min(len(result.Matches), renderer.maxLines)
 		for _, match := range result.Matches[:limit] {
 			location := fmt.Sprintf("%d", match.Line)
-			if match.EndLine > match.Line {
+			if match.StartLine > 0 && match.EndLine >= match.StartLine {
+				location = fmt.Sprintf("%d@%d-%d", match.Line, match.StartLine, match.EndLine)
+			} else if match.EndLine > match.Line {
 				location = fmt.Sprintf("%d-%d", match.Line, match.EndLine)
 			}
 			if err := renderer.output.writeString(fmt.Sprintf("%s:%s:%s\n", result.Path, location, match.Text)); err != nil {

@@ -5,6 +5,7 @@ import "testing"
 func TestParseSearchArgs(t *testing.T) {
 	options, server, remote, err := parseSearchArgs([]string{
 		"--line-only",
+		"--enclosing",
 		"--ignore-case",
 		"--invert-match",
 		"--max-files", "5",
@@ -22,7 +23,7 @@ func TestParseSearchArgs(t *testing.T) {
 	if server != "http://search.example" || !remote {
 		t.Fatalf("unexpected target options: server=%q remote=%v", server, remote)
 	}
-	if !options.LineOnly || !options.Params.LineRanges || !options.Params.IgnoreCase || !options.Params.InvertMatch || options.Params.MaxFiles != 5 {
+	if !options.LineOnly || !options.Params.LineRanges || !options.Params.EnclosingRanges || !options.Params.IgnoreCase || !options.Params.InvertMatch || options.Params.MaxFiles != 5 {
 		t.Fatalf("unexpected options: %#v", options)
 	}
 	if options.Params.Query != "needle" || len(options.Params.Globs) != 1 {
@@ -32,8 +33,17 @@ func TestParseSearchArgs(t *testing.T) {
 	if request.InvertMatch == nil || !*request.InvertMatch {
 		t.Fatalf("invert-match was not preserved in the remote request: %#v", request)
 	}
-	if !request.LineRanges {
+	if !request.LineRanges || !request.EnclosingRanges {
 		t.Fatalf("line-only construct metadata was not preserved remotely: %#v", request)
+	}
+}
+
+func TestEnclosingRequiresLineOnlyAndRejectsExplicitAnchors(t *testing.T) {
+	if err := validateEnclosingArgs(&searchArgs{Enclosing: true}); err == nil {
+		t.Fatal("expected --enclosing without --line-only to fail")
+	}
+	if err := validateEnclosingArgs(&searchArgs{LineOnly: true, Enclosing: true, Anchors: true}); err == nil {
+		t.Fatal("expected --enclosing with anchors to fail")
 	}
 }
 

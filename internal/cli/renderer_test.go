@@ -40,14 +40,18 @@ func TestLineRendererWritesToInjectedOutput(t *testing.T) {
 	var output bytes.Buffer
 	renderer := lineRenderer{output: newOutputWriter(&output), maxLines: 10}
 	results := []api.FileResult{{
-		Path:    "example.go",
-		Matches: []api.ResultMatch{{Line: 7, EndLine: 12, Text: "func needle() {"}, {Line: 15, Text: "needle"}},
+		Path: "example.go",
+		Matches: []api.ResultMatch{
+			{Line: 7, EndLine: 12, Text: "func needle() {"},
+			{Line: 14, StartLine: 10, EndLine: 16, Text: "needle()"},
+			{Line: 20, Text: "needle"},
+		},
 	}}
 
 	if err := renderer.Render(results); err != nil {
 		t.Fatal(err)
 	}
-	if got, want := output.String(), "example.go:7-12:func needle() {\nexample.go:15:needle\n"; got != want {
+	if got, want := output.String(), "example.go:7-12:func needle() {\nexample.go:14@10-16:needle()\nexample.go:20:needle\n"; got != want {
 		t.Fatalf("expected %q, got %q", want, got)
 	}
 }

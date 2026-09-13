@@ -2,7 +2,7 @@ classDiagram
     %% grepple:package-default github.com/greppleai/grepple/parser
     %% grepple:language-default go
     direction LR
-    note "Package parser provides application source classification and structural parsing. | package github.com/greppleai/grepple/parser | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=29, declarations=50, exportedTypes=20, internalTypes=30, members=324, exportedFunctions=20, fiberRoutes=0, relations=134"
+    note "Package parser provides application source classification and structural parsing. | package github.com/greppleai/grepple/parser | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=29, declarations=50, exportedTypes=20, internalTypes=30, members=328, exportedFunctions=21, fiberRoutes=0, relations=138"
     namespace interfaces {
         class languageAdapter["languageAdapter · parser/language.go:75-80"] {
             +Grammar(): *sitter.Language
@@ -152,9 +152,9 @@ classDiagram
         <<struct>> shellLanguage
         class stringSet["stringSet = map&#91;string&#93;struct&#123;&#125; · parser/language.go:47"]
         <<type>> stringSet
-        class structuralLineCandidate["structuralLineCandidate · parser/match_range.go:12-15"]
+        class structuralLineCandidate["structuralLineCandidate · parser/match_range.go:12-16"]
         <<struct>> structuralLineCandidate
-        class structuralLineRangeCollector["structuralLineRangeCollector · parser/match_range.go:17-21"]
+        class structuralLineRangeCollector["structuralLineRangeCollector · parser/match_range.go:18-23"]
         <<struct>> structuralLineRangeCollector
         class structureRules["structureRules · parser/language.go:62-73"]
         <<struct>> structureRules
@@ -182,6 +182,10 @@ classDiagram
             +DeclarationRangeAt(string, string, int): tuple~int&#44;int&#44;bool~
         }
         <<function>> DeclarationRangeAt
+        class EnclosingLineRanges["EnclosingLineRanges · parser/match_range.go:37-39"] {
+            +EnclosingLineRanges(string, string, map[int]bool): map[int]StructuralLineRange
+        }
+        <<function>> EnclosingLineRanges
         class GrammarChildrenCardinality["GrammarChildrenCardinality · parser/language.go:169-175"] {
             +GrammarChildrenCardinality(string, string): GrammarCardinality
         }
@@ -222,7 +226,7 @@ classDiagram
             +ParseDocument(string, string): tuple~*Document&#44;error~
         }
         <<function>> ParseDocument
-        class StructuralLineRanges["StructuralLineRanges · parser/match_range.go:27-42"] {
+        class StructuralLineRanges["StructuralLineRanges · parser/match_range.go:29-31"] {
             +StructuralLineRanges(string, string, map[int]bool): map[int]StructuralLineRange
         }
         <<function>> StructuralLineRanges
@@ -257,6 +261,7 @@ classDiagram
     DocumentView "1" --> "1" Document : field doc
     DocumentView "1" ..> "1" ViewNode : method Root result 1
     DocumentView "1" --> "1" documentViewState : field state
+    EnclosingLineRanges "1" ..> "*" StructuralLineRange : result 1
     FileOutline "1" --> "*" Symbol : field Symbols
     GrammarChildrenCardinality "1" ..> "1" GrammarCardinality : result 1
     GrammarFieldCardinality "1" ..> "1" GrammarCardinality : result 1
@@ -347,8 +352,9 @@ classDiagram
     shellLanguage "1" --> "1" structureRules : field rules
     shellLanguage "1" ..> "1" structureRules : method Rules result 1
     structuralLineCandidate "1" --> "1" StructuralLineRange : field rangeValue
+    structuralLineRangeCollector "1" ..> "1" Range : method collectEnclosing parameter 2; method collectStarting parameter 1
     structuralLineRangeCollector "1" ..> "*" StructuralLineRange : method result result 1
-    structuralLineRangeCollector "1" ..> "1" ViewNode : method visit parameter 1
+    structuralLineRangeCollector "1" ..> "1" ViewNode : method collectEnclosing parameter 1; method visit parameter 1
     structuralLineRangeCollector "1" --> "*" structuralLineCandidate : field candidates
     structureRules "1" --> "1" stringSet : field=10
     typeScriptLanguage "1" ..> "*" Symbol : method Outline result 1

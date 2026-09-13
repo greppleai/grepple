@@ -14,7 +14,7 @@ Use Grepple to minimize retrieval turns and tokens, not merely as a grep replace
 - **Need file structure:** use `--outline` before reading a large or unfamiliar file.
 - **Need implementation context:** default search returns enclosing structural segments and collapses unrelated code.
 - **Need edit-ready context:** when a compatible provider has `enabled_by_default`, normal structural and `--line-only` searches already emit `HASH│LINE│content`; otherwise add `--anchors`. Edit directly without Read. Use `--no-anchors` when plain output is required. `HASH` mutates; 1-indexed `LINE` orients and composes with `--at`. Refresh both after edits.
-- **Need only evidence lines:** use `--line-only` or bounded context; this avoids retrieving structural bodies. For parser-backed files, a match that begins a multi-line construct is located as `PATH:START-END:text`, so pass that range directly to Read or `--at`; ordinary lines remain `PATH:LINE:text`.
+- **Need only evidence lines:** use `--line-only` or bounded context; this avoids retrieving structural bodies. For parser-backed files, a match that begins a multi-line construct is located as `PATH:START-END:text`, so pass that range directly to Read or `--at`; ordinary lines remain `PATH:LINE:text`. When the match is inside a construct, add `--enclosing` to get `PATH:MATCH@START-END:text` and read the exact nearest syntax scope without another discovery call.
 - **Know a navigation location:** use `--at PATH:LINE` (also accepts `PATH:START-END`) to retrieve the exact callable declaration instead of reading the file broadly.
 - **Need the next code hop:** add `--related` to expose bounded callees and potential callers. This often avoids a second symbol search.
 - **Need a short call chain:** use `--follow-related 1` first. Increase to 2–3 only when the extra inline context is worth the tokens.
@@ -71,6 +71,7 @@ grepple --outline path/to/file.go           # orient cheaply
 grepple -F 'Symbol' src --limit 5           # retrieve bounded structure
 grepple --related -F 'Symbol(' src          # choose caller/callee next hops
 grepple --line-only -F 'Symbol' src/file.go # locate lines; construct starts include PATH:START-END
+grepple --line-only --enclosing -F 'call()' src/file.go # body match plus nearest syntax range
 grepple --anchors -F 'Symbol' src/file.go    # explicitly skip Read with an anchor provider
 grepple --no-anchors -F 'Symbol' src/file.go # override settings when plain output is required
 grepple --at src/file.go:40-58               # retrieve a listed declaration

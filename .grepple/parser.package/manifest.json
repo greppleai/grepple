@@ -20,12 +20,12 @@
     "declarations": 50,
     "exportedTypes": 20,
     "internalTypes": 30,
-    "members": 324,
-    "exportedFunctions": 20,
+    "members": 328,
+    "exportedFunctions": 21,
     "fiberRoutes": 0,
-    "relations": 134
+    "relations": 138
   },
-  "semanticModelDigest": "sha256:9e15067b0bf09894dfc24a46d5169d33a7edc05cbf276a5bc5f0f76b5fa78597",
+  "semanticModelDigest": "sha256:392a57059fe22eb913acacc71da3883bfbe88b6273d94cf3494a01b3b37394ff",
   "sourceFiles": [
     {
       "path": "parser/analyze.go"
@@ -2911,14 +2911,21 @@
       "kind": "struct",
       "file": "parser/match_range.go",
       "line": 12,
-      "endLine": 15,
-      "underlyingType": "struct{rangeValue StructuralLineRange;column int;}",
+      "endLine": 16,
+      "underlyingType": "struct{rangeValue StructuralLineRange;column int;depth int;}",
       "members": [
         {
           "name": "column",
           "kind": "property",
           "line": 14,
           "endLine": 14,
+          "result": "int"
+        },
+        {
+          "name": "depth",
+          "kind": "property",
+          "line": 15,
+          "endLine": 15,
           "result": "int"
         },
         {
@@ -2934,22 +2941,44 @@
       "name": "structuralLineRangeCollector",
       "kind": "struct",
       "file": "parser/match_range.go",
-      "line": 17,
-      "endLine": 21,
-      "underlyingType": "struct{lines map[int]bool;sortedLines[]int;candidates map[int]structuralLineCandidate;}",
+      "line": 18,
+      "endLine": 23,
+      "underlyingType": "struct{lines map[int]bool;sortedLines[]int;candidates map[int]structuralLineCandidate;enclosing bool;}",
       "members": [
+        {
+          "name": "collectEnclosing",
+          "kind": "method",
+          "line": 103,
+          "endLine": 124,
+          "parameters": [
+            "ViewNode",
+            "Range",
+            "int",
+            "int"
+          ]
+        },
+        {
+          "name": "collectStarting",
+          "kind": "method",
+          "line": 89,
+          "endLine": 101,
+          "parameters": [
+            "Range",
+            "int"
+          ]
+        },
         {
           "name": "result",
           "kind": "method",
-          "line": 84,
-          "endLine": 90,
+          "line": 149,
+          "endLine": 155,
           "result": "map[int]StructuralLineRange"
         },
         {
           "name": "visit",
           "kind": "method",
-          "line": 57,
-          "endLine": 78,
+          "line": 72,
+          "endLine": 87,
           "parameters": [
             "ViewNode",
             "int"
@@ -2959,22 +2988,29 @@
         {
           "name": "candidates",
           "kind": "property",
-          "line": 20,
-          "endLine": 20,
+          "line": 21,
+          "endLine": 21,
           "result": "map[int]structuralLineCandidate"
+        },
+        {
+          "name": "enclosing",
+          "kind": "property",
+          "line": 22,
+          "endLine": 22,
+          "result": "bool"
         },
         {
           "name": "lines",
           "kind": "property",
-          "line": 18,
-          "endLine": 18,
+          "line": 19,
+          "endLine": 19,
           "result": "map[int]bool"
         },
         {
           "name": "sortedLines",
           "kind": "property",
-          "line": 19,
-          "endLine": 19,
+          "line": 20,
+          "endLine": 20,
           "result": "[]int"
         }
       ]
@@ -3224,6 +3260,19 @@
       "result": "tuple\u003cint,int,bool\u003e"
     },
     {
+      "name": "EnclosingLineRanges",
+      "kind": "function",
+      "file": "parser/match_range.go",
+      "line": 37,
+      "endLine": 39,
+      "parameters": [
+        "string",
+        "string",
+        "map[int]bool"
+      ],
+      "result": "map[int]StructuralLineRange"
+    },
+    {
       "name": "GrammarChildrenCardinality",
       "kind": "function",
       "file": "parser/language.go",
@@ -3351,8 +3400,8 @@
       "name": "StructuralLineRanges",
       "kind": "function",
       "file": "parser/match_range.go",
-      "line": 27,
-      "endLine": 42,
+      "line": 29,
+      "endLine": 31,
       "parameters": [
         "string",
         "string",
@@ -3490,6 +3539,13 @@
       "kind": "association",
       "via": "field state",
       "cardinality": "one"
+    },
+    {
+      "from": "EnclosingLineRanges",
+      "to": "StructuralLineRange",
+      "kind": "dependency",
+      "via": "result 1",
+      "cardinality": "many"
     },
     {
       "from": "FileOutline",
@@ -4228,10 +4284,31 @@
     },
     {
       "from": "structuralLineRangeCollector",
+      "to": "Range",
+      "kind": "dependency",
+      "via": "method collectEnclosing parameter 2",
+      "cardinality": "one"
+    },
+    {
+      "from": "structuralLineRangeCollector",
+      "to": "Range",
+      "kind": "dependency",
+      "via": "method collectStarting parameter 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "structuralLineRangeCollector",
       "to": "StructuralLineRange",
       "kind": "dependency",
       "via": "method result result 1",
       "cardinality": "many"
+    },
+    {
+      "from": "structuralLineRangeCollector",
+      "to": "ViewNode",
+      "kind": "dependency",
+      "via": "method collectEnclosing parameter 1",
+      "cardinality": "one"
     },
     {
       "from": "structuralLineRangeCollector",

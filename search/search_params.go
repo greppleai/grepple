@@ -27,6 +27,10 @@ func ResolveRequest(r api.SearchRequest) (Params, error) {
 	}
 	p.SkipSegments = r.SkipSegments
 	p.LineRanges = r.LineRanges
+	p.EnclosingRanges = r.EnclosingRanges
+	if p.EnclosingRanges {
+		p.LineRanges = true
+	}
 	if r.CountByRepo {
 		// A count probe never needs structural segments.
 		p.CountByRepo = true

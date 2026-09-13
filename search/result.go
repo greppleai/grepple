@@ -21,6 +21,9 @@ func ToResult(m FileMatch, segs []parser.Segment, beforeContext, afterContext, m
 	for _, n := range ns {
 		match := api.ResultMatch{Line: n, Text: lines[n-1]}
 		if structuralRange, ok := m.MatchRanges[n]; ok {
+			if structuralRange.StartLine != n {
+				match.StartLine = structuralRange.StartLine
+			}
 			match.EndLine = structuralRange.EndLine
 		}
 		matches = append(matches, match)

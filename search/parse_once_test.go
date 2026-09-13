@@ -103,6 +103,17 @@ func TestLineRangesBuildWithoutSegments(t *testing.T) {
 	if len(result.Matches) != 1 || result.Matches[0].EndLine != 4 {
 		t.Fatalf("wire matches = %#v", result.Matches)
 	}
+
+	p.Query = "work()"
+	p.EnclosingRanges = true
+	matches, err = Files(p, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	result = ToResult(matches[0], nil, 0, 0, DefaultMaxSegments)
+	if len(result.Matches) != 1 || result.Matches[0].Line != 3 || result.Matches[0].StartLine != 2 || result.Matches[0].EndLine != 4 {
+		t.Fatalf("enclosing wire matches = %#v", result.Matches)
+	}
 }
 
 func TestSkipAndLimitWindow(t *testing.T) {

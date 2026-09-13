@@ -28,13 +28,13 @@
     "packages": 16,
     "sourceFiles": 136,
     "declarations": 352,
-    "exportedFunctions": 112,
+    "exportedFunctions": 113,
     "fiberRoutes": 0,
     "localImports": 22,
     "standardLibraryImports": 139,
     "externalModuleEdges": 15
   },
-  "semanticModelDigest": "sha256:3a2b0692a2a860e221f8bba18bd19731084913308cfda11806da1de71095892c",
+  "semanticModelDigest": "sha256:7582785a3e8417f12d6895897426043d0ec30b58516ed16d83217b6c73e1c931",
   "modules": [
     {
       "path": "github.com/greppleai/grepple",
@@ -304,7 +304,7 @@
           "main": false,
           "sourceFiles": 29,
           "declarations": 50,
-          "exportedFunctions": 20,
+          "exportedFunctions": 21,
           "fiberRoutes": 0,
           "routes": [],
           "localImports": [],

@@ -28,6 +28,7 @@ type searchArgs struct {
 	Server           string   `arg:"-s,--server" placeholder:"URL" help:"remote shard/router URL (implies --remote)"`
 	LineNumber       bool     `arg:"-n,--line-number" help:"include line numbers (enabled by default)"`
 	LineOnly         bool     `arg:"--line-only" help:"print only matching lines; include construct end lines when available"`
+	Enclosing        bool     `arg:"--enclosing" help:"line-only: annotate body matches with the nearest enclosing multi-line syntax range"`
 	OnlyMatching     bool     `arg:"-o,--only-matching" help:"print each matched substring"`
 	Files            bool     `arg:"-l,--files" help:"recursively list files under optional PATHs; glob PATHs filter the listing"`
 	FilesWithMatches bool     `arg:"--files-with-matches" help:"list paths whose contents match; accepts multiple file, directory, or glob PATHs"`
@@ -110,6 +111,7 @@ func parseSearchArgs(args []string) (*cliOptions, string, bool, error) {
 	// parser for focused construct-end metadata without rendering source bodies.
 	params.SkipSegments = values.Files || values.FilesWithMatches || values.Count || values.CountByRepo || values.LineOnly || values.OnlyMatching || values.JSONMatches || params.BeforeContext > 0 || params.AfterContext > 0
 	params.LineRanges = values.LineOnly
+	params.EnclosingRanges = values.Enclosing
 
 	// Local-first: only reach out to the shard/router when the user explicitly opts
 	// in with --remote or by passing a --server URL. A configured GREPPLE_SERVER / config
@@ -158,7 +160,7 @@ func supportsDefaultAnchors(values *searchArgs) bool {
 	if values.Remote || values.Server != "" || values.JSON || values.JSONMatches {
 		return false
 	}
-	unsupportedCompact := values.Files || values.FilesWithMatches || values.Outline || values.Count || values.CountByRepo || values.OnlyMatching
+	unsupportedCompact := values.Files || values.FilesWithMatches || values.Outline || values.Count || values.CountByRepo || values.OnlyMatching || values.Enclosing
 	contextOutput := values.Context > 0 || values.BeforeContext > 0 || values.AfterContext > 0
 	return !unsupportedCompact && !contextOutput
 }
@@ -219,10 +221,31 @@ func validateAtArgs(values *searchArgs) error {
 	return nil
 }
 
+func validateEnclosingArgs(values *searchArgs) error {
+	if !values.Enclosing {
+		return nil
+	}
+	if !values.LineOnly {
+		return fmt.Errorf("--enclosing requires --line-only")
+	}
+	if values.Anchors {
+		return fmt.Errorf("--anchors cannot be combined with --enclosing")
+	}
+	incompatibleOutput := values.Files || values.FilesWithMatches || values.Outline || values.Count || values.CountByRepo || values.OnlyMatching
+	contextOutput := values.Context > 0 || values.BeforeContext > 0 || values.AfterContext > 0
+	if incompatibleOutput || contextOutput {
+		return fmt.Errorf("--enclosing requires line-only or line-only JSON output")
+	}
+	return nil
+}
+
 // validateSearchArgs rejects contradictory or out-of-range flag combinations
 // before any searching starts.
 func validateSearchArgs(values *searchArgs) error {
 	if err := validateSearchBounds(values); err != nil {
+		return err
+	}
+	if err := validateEnclosingArgs(values); err != nil {
 		return err
 	}
 	if err := validateRelatedArgs(values); err != nil {

@@ -2,7 +2,7 @@ classDiagram
     %% grepple:package-default github.com/greppleai/grepple/internal/cli
     %% grepple:language-default go
     direction LR
-    note "Package cli implements Grepple's search, extraction, repository inspection, authentication, rules, and terminal/JSON presentation workflows. | package github.com/greppleai/grepple/internal/cli | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=33, declarations=42, exportedTypes=0, internalTypes=42, members=266, exportedFunctions=3, fiberRoutes=0, relations=25"
+    note "Package cli implements Grepple's search, extraction, repository inspection, authentication, rules, and terminal/JSON presentation workflows. | package github.com/greppleai/grepple/internal/cli | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=33, declarations=42, exportedTypes=0, internalTypes=42, members=267, exportedFunctions=3, fiberRoutes=0, relations=25"
     namespace interfaces {
         class resultRenderer["resultRenderer · internal/cli/renderer.go:9-11"] {
             +Render([]api.FileResult): error
@@ -215,7 +215,7 @@ classDiagram
             +Server: string
         }
         <<struct>> rulesAddArgs
-        class searchArgs["searchArgs · internal/cli/args.go:24-62"] {
+        class searchArgs["searchArgs · internal/cli/args.go:24-63"] {
             +AfterContext: int
             +AnchorProvider: string
             +Anchors: bool
@@ -226,6 +226,7 @@ classDiagram
             +CountByRepo: bool
             +CountSummary: bool
             +Depth: int
+            +Enclosing: bool
             +Files: bool
             +FilesWithMatches: bool
             +Fixed: bool
@@ -291,7 +292,7 @@ classDiagram
         <<struct>> limitedStderrWriter
         class lineRenderer["lineRenderer · internal/cli/renderer_matches.go:10-14"]
         <<struct>> lineRenderer
-        class onlyMatchingRenderer["onlyMatchingRenderer · internal/cli/renderer_matches.go:57-61"]
+        class onlyMatchingRenderer["onlyMatchingRenderer · internal/cli/renderer_matches.go:59-63"]
         <<struct>> onlyMatchingRenderer
         class outputWriter["outputWriter · internal/cli/output.go:24-28"]
         <<struct>> outputWriter
@@ -311,7 +312,7 @@ classDiagram
             +RenderOutlineOrContent(parser.FileOutline, string): string
         }
         <<function>> RenderOutlineOrContent
-        class Run["Run · internal/cli/args.go:351-381"] {
+        class Run["Run · internal/cli/args.go:374-404"] {
             +Run([]string): error
         }
         <<function>> Run

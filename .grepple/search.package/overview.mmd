@@ -2,14 +2,15 @@ classDiagram
     %% grepple:package-default github.com/greppleai/grepple/search
     %% grepple:language-default go
     direction LR
-    note "Package search provides file discovery, query and repository filtering, paging, match workers, context, and wire-result construction. | package github.com/greppleai/grepple/search | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=12, declarations=17, exportedTypes=7, internalTypes=10, members=129, exportedFunctions=24, fiberRoutes=0, relations=46"
+    note "Package search provides file discovery, query and repository filtering, paging, match workers, context, and wire-result construction. | package github.com/greppleai/grepple/search | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=12, declarations=17, exportedTypes=7, internalTypes=10, members=130, exportedFunctions=24, fiberRoutes=0, relations=46"
     namespace data_contracts {
-        class Params["Params · search/model.go:11-34"] {
+        class Params["Params · search/model.go:11-35"] {
             +AfterContext: int
             +At: string
             +BeforeContext: int
             +Context: int
             +CountByRepo: bool
+            +EnclosingRanges: bool
             +ExcludeRepo: []string
             +Files: bool
             +FollowRelated: int
@@ -31,15 +32,15 @@ classDiagram
         <<struct>> Params
     }
     namespace exported_types {
-        class FileMatch["FileMatch · search/model.go:54-62"]
+        class FileMatch["FileMatch · search/model.go:55-63"]
         <<struct>> FileMatch
         class NavigationGraphFilter["NavigationGraphFilter · search/navigation_filter.go:12-15"]
         <<struct>> NavigationGraphFilter
         class NavigationQueryDirection["NavigationQueryDirection = string · search/navigation_query.go:10"]
         <<type>> NavigationQueryDirection
-        class RelatedPoint["RelatedPoint · search/model.go:46-50"]
+        class RelatedPoint["RelatedPoint · search/model.go:47-51"]
         <<struct>> RelatedPoint
-        class RelatedPreview["RelatedPreview · search/model.go:38-43"]
+        class RelatedPreview["RelatedPreview · search/model.go:39-44"]
         <<struct>> RelatedPreview
         class RepoFilter["RepoFilter · search/search_engine.go:129-132"]
         <<struct>> RepoFilter
@@ -67,7 +68,7 @@ classDiagram
         <<struct>> repoPattern
     }
     namespace operations {
-        class AggregateRepoCounts["AggregateRepoCounts · search/search_engine.go:492-511"] {
+        class AggregateRepoCounts["AggregateRepoCounts · search/search_engine.go:494-513"] {
             +AggregateRepoCounts([]FileMatch): []api.RepoCount
         }
         <<function>> AggregateRepoCounts
@@ -79,7 +80,7 @@ classDiagram
             +BuildNavigationGraph([]string): parser.NavigationGraph
         }
         <<function>> BuildNavigationGraph
-        class BuildResults["BuildResults · search/result.go:71-84"] {
+        class BuildResults["BuildResults · search/result.go:74-87"] {
             +BuildResults([]FileMatch, int, int, int, bool): []api.FileResult
         }
         <<function>> BuildResults
@@ -95,7 +96,7 @@ classDiagram
             +ContextLines(string, map[int]bool, int, int, int): []api.ContextLine
         }
         <<function>> ContextLines
-        class EnforcePageLimit["EnforcePageLimit · search/search_params.go:102-109"] {
+        class EnforcePageLimit["EnforcePageLimit · search/search_params.go:106-113"] {
             +EnforcePageLimit(*Params, api.SearchRequest)
         }
         <<function>> EnforcePageLimit
@@ -135,19 +136,19 @@ classDiagram
             +RepoID(string): string
         }
         <<function>> RepoID
-        class RepoMatches["RepoMatches · search/search_params.go:114"] {
+        class RepoMatches["RepoMatches · search/search_params.go:118"] {
             +RepoMatches(string, []string): bool
         }
         <<function>> RepoMatches
-        class RepoMatchesAny["RepoMatchesAny · search/search_params.go:117"] {
+        class RepoMatchesAny["RepoMatchesAny · search/search_params.go:121"] {
             +RepoMatchesAny(string, []string): bool
         }
         <<function>> RepoMatchesAny
-        class ResolveRequest["ResolveRequest · search/search_params.go:11-36"] {
+        class ResolveRequest["ResolveRequest · search/search_params.go:11-40"] {
             +ResolveRequest(api.SearchRequest): tuple~Params&#44;error~
         }
         <<function>> ResolveRequest
-        class SortRepoCounts["SortRepoCounts · search/search_engine.go:516-526"] {
+        class SortRepoCounts["SortRepoCounts · search/search_engine.go:518-528"] {
             +SortRepoCounts([]api.RepoCount)
         }
         <<function>> SortRepoCounts
@@ -155,7 +156,7 @@ classDiagram
             +SplitLines(string): []string
         }
         <<function>> SplitLines
-        class ToResult["ToResult · search/result.go:13-38"] {
+        class ToResult["ToResult · search/result.go:13-41"] {
             +ToResult(FileMatch, []parser.Segment, int, int, int): api.FileResult
         }
         <<function>> ToResult

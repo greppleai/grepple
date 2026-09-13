@@ -19,7 +19,10 @@ func flatMatches(results []api.FileResult) []map[string]any {
 	for _, result := range results {
 		for _, match := range result.Matches {
 			item := map[string]any{"path": result.Path, "line": match.Line, "text": match.Text}
-			if match.EndLine > match.Line {
+			if match.StartLine > 0 {
+				item["startLine"] = match.StartLine
+			}
+			if match.EndLine > 0 {
 				item["endLine"] = match.EndLine
 			}
 			if result.Repo != "" {

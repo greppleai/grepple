@@ -26,17 +26,17 @@ func TestRelatedOmissionCountsUseStableJSONFields(t *testing.T) {
 	}
 }
 
-func TestSearchRequestLineRangesUsesStableJSONField(t *testing.T) {
-	encoded, err := json.Marshal(SearchRequest{LineRanges: true})
+func TestSearchRequestLineRangesUseStableJSONFields(t *testing.T) {
+	encoded, err := json.Marshal(SearchRequest{LineRanges: true, EnclosingRanges: true})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if string(encoded) != `{"matchLineRanges":true}` {
+	if string(encoded) != `{"matchLineRanges":true,"enclosingLineRanges":true}` {
 		t.Fatalf("unexpected JSON: %s", encoded)
 	}
 }
 
-func TestResultMatchEndLineIsAdditive(t *testing.T) {
+func TestResultMatchRangesAreAdditive(t *testing.T) {
 	encoded, err := json.Marshal(ResultMatch{Line: 3, EndLine: 5, Text: "if ready {"})
 	if err != nil {
 		t.Fatal(err)
@@ -44,11 +44,18 @@ func TestResultMatchEndLineIsAdditive(t *testing.T) {
 	if string(encoded) != `{"line":3,"endLine":5,"text":"if ready {"}` {
 		t.Fatalf("unexpected JSON: %s", encoded)
 	}
+	encoded, err = json.Marshal(ResultMatch{Line: 4, StartLine: 3, EndLine: 5, Text: "work()"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(encoded) != `{"line":4,"startLine":3,"endLine":5,"text":"work()"}` {
+		t.Fatalf("unexpected enclosing JSON: %s", encoded)
+	}
 	encoded, err = json.Marshal(ResultMatch{Line: 7, Text: "plain"})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if strings.Contains(string(encoded), "endLine") {
+	if strings.Contains(string(encoded), "startLine") || strings.Contains(string(encoded), "endLine") {
 		t.Fatalf("zero endLine should remain wire-compatible: %s", encoded)
 	}
 }

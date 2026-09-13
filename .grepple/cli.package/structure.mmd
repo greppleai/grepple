@@ -396,7 +396,7 @@ classDiagram
     }
     <<struct>> lineRenderer
     %% grepple:file lineRenderer internal/cli/renderer_matches.go
-    note for lineRenderer "defined: internal/cli/renderer_matches.go:10-14; Render@internal/cli/renderer_matches.go:16-33; renderAnchored@internal/cli/renderer_matches.go:35-55; anchors@internal/cli/renderer_matches.go:13; maxLines@internal/cli/renderer_matches.go:12; output@internal/cli/renderer_matches.go:11"
+    note for lineRenderer "defined: internal/cli/renderer_matches.go:10-14; Render@internal/cli/renderer_matches.go:16-35; renderAnchored@internal/cli/renderer_matches.go:37-57; anchors@internal/cli/renderer_matches.go:13; maxLines@internal/cli/renderer_matches.go:12; output@internal/cli/renderer_matches.go:11"
     class loginConfig {
         +ClientID: string
         +Scopes: string
@@ -457,7 +457,7 @@ classDiagram
     }
     <<struct>> onlyMatchingRenderer
     %% grepple:file onlyMatchingRenderer internal/cli/renderer_matches.go
-    note for onlyMatchingRenderer "defined: internal/cli/renderer_matches.go:57-61; Render@internal/cli/renderer_matches.go:63-78; matcher@internal/cli/renderer_matches.go:60; maxLines@internal/cli/renderer_matches.go:59; output@internal/cli/renderer_matches.go:58"
+    note for onlyMatchingRenderer "defined: internal/cli/renderer_matches.go:59-63; Render@internal/cli/renderer_matches.go:65-80; matcher@internal/cli/renderer_matches.go:62; maxLines@internal/cli/renderer_matches.go:61; output@internal/cli/renderer_matches.go:60"
     class outputWriter {
         -writeDirect(string): error
         -writeJSON(any): error
@@ -547,6 +547,7 @@ classDiagram
         +CountByRepo: bool
         +CountSummary: bool
         +Depth: int
+        +Enclosing: bool
         +Files: bool
         +FilesWithMatches: bool
         +Fixed: bool
@@ -587,6 +588,7 @@ classDiagram
     %% grepple:struct-tag searchArgs CountByRepo "arg:\"--count-by-repo\" help:\"print complete counts grouped by repository (compatibility name for --count-summary)\""
     %% grepple:struct-tag searchArgs CountSummary "arg:\"--count-summary\" help:\"print complete aggregate file/match counts independent of paging\""
     %% grepple:struct-tag searchArgs Depth "arg:\"--depth\" placeholder:\"N\" help:\"outline: cap nesting depth for JSON/YAML (0 = unlimited)\""
+    %% grepple:struct-tag searchArgs Enclosing "arg:\"--enclosing\" help:\"line-only: annotate body matches with the nearest enclosing multi-line syntax range\""
     %% grepple:struct-tag searchArgs Files "arg:\"-l,--files\" help:\"recursively list files under optional PATHs; glob PATHs filter the listing\""
     %% grepple:struct-tag searchArgs FilesWithMatches "arg:\"--files-with-matches\" help:\"list paths whose contents match; accepts multiple file, directory, or glob PATHs\""
     %% grepple:struct-tag searchArgs Fixed "arg:\"-F,--fixed-strings\" help:\"treat the pattern as a literal string\""
@@ -614,7 +616,7 @@ classDiagram
     %% grepple:struct-tag searchArgs Repos "arg:\"--repo,separate\" placeholder:\"PATTERN\" help:\"restrict remote repositories; repeatable\""
     %% grepple:struct-tag searchArgs Server "arg:\"-s,--server\" placeholder:\"URL\" help:\"remote shard/router URL (implies --remote)\""
     %% grepple:struct-tag searchArgs Skip "arg:\"--skip\" placeholder:\"N\" help:\"skip the first N ranked result files\""
-    note for searchArgs "defined: internal/cli/args.go:24-62; Description@internal/cli/args.go:64-66; AfterContext@internal/cli/args.go:46; AnchorProvider@internal/cli/args.go:53; Anchors@internal/cli/args.go:51; At@internal/cli/args.go:56; BeforeContext@internal/cli/args.go:47; Context@internal/cli/args.go:45; Count@internal/cli/args.go:36; CountByRepo@internal/cli/args.go:37; CountSummary@internal/cli/args.go:38; Depth@internal/cli/args.go:35; Files@internal/cli/args.go:32; FilesWithMatches@internal/cli/args.go:33; Fixed@internal/cli/args.go:42; FollowRelated@internal/cli/args.go:55; Globs@internal/cli/args.go:61; IgnoreCase@internal/cli/args.go:43; InvertMatch@internal/cli/args.go:44; JSON@internal/cli/args.go:39; JSONMatches@internal/cli/args.go:40; Limit@internal/cli/args.go:58; LineNumber@internal/cli/args.go:29; LineOnly@internal/cli/args.go:30; Local@internal/cli/args.go:25; MaxFiles@internal/cli/args.go:48; MaxOutputBytes@internal/cli/args.go:50; MaxSegments@internal/cli/args.go:49; NoAnchors@internal/cli/args.go:52; OnlyMatching@internal/cli/args.go:31; Outline@internal/cli/args.go:34; Query@internal/cli/args.go:60; Recursive@internal/cli/args.go:27; Regex@internal/cli/args.go:41; Related@internal/cli/args.go:54; Remote@internal/cli/args.go:26; Repos@internal/cli/args.go:59; Server@internal/cli/args.go:28; Skip@internal/cli/args.go:57"
+    note for searchArgs "defined: internal/cli/args.go:24-63; Description@internal/cli/args.go:65-67; AfterContext@internal/cli/args.go:47; AnchorProvider@internal/cli/args.go:54; Anchors@internal/cli/args.go:52; At@internal/cli/args.go:57; BeforeContext@internal/cli/args.go:48; Context@internal/cli/args.go:46; Count@internal/cli/args.go:37; CountByRepo@internal/cli/args.go:38; CountSummary@internal/cli/args.go:39; Depth@internal/cli/args.go:36; Enclosing@internal/cli/args.go:31; Files@internal/cli/args.go:33; FilesWithMatches@internal/cli/args.go:34; Fixed@internal/cli/args.go:43; FollowRelated@internal/cli/args.go:56; Globs@internal/cli/args.go:62; IgnoreCase@internal/cli/args.go:44; InvertMatch@internal/cli/args.go:45; JSON@internal/cli/args.go:40; JSONMatches@internal/cli/args.go:41; Limit@internal/cli/args.go:59; LineNumber@internal/cli/args.go:29; LineOnly@internal/cli/args.go:30; Local@internal/cli/args.go:25; MaxFiles@internal/cli/args.go:49; MaxOutputBytes@internal/cli/args.go:51; MaxSegments@internal/cli/args.go:50; NoAnchors@internal/cli/args.go:53; OnlyMatching@internal/cli/args.go:32; Outline@internal/cli/args.go:35; Query@internal/cli/args.go:61; Recursive@internal/cli/args.go:27; Regex@internal/cli/args.go:42; Related@internal/cli/args.go:55; Remote@internal/cli/args.go:26; Repos@internal/cli/args.go:60; Server@internal/cli/args.go:28; Skip@internal/cli/args.go:58"
     class segmentRenderer {
         +Render([]api.FileResult): error
         -renderFile(api.FileResult): error
@@ -679,7 +681,7 @@ classDiagram
     }
     <<function>> Run
     %% grepple:file Run internal/cli/args.go
-    note for Run "defined: internal/cli/args.go:351-381"
+    note for Run "defined: internal/cli/args.go:374-404"
     anchorProtocolRequest "1" --> "*" anchorProtocolRequestFile : field Files
     anchorProtocolResponse "1" --> "*" anchorProtocolResponseFile : field Files
     anchorProtocolResponseFile "1" --> "*" anchorProtocolLine : field Anchors

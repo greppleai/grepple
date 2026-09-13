@@ -30,6 +30,7 @@ benchstat before.txt after.txt
 | `RelatedNavigation` | What immediately calls this and what does it call? | 1 |
 | `ImpactGraph` | What is the bounded bidirectional impact neighborhood? | 1 |
 | `ArchitectureSummary` | What is the bounded package ownership and public surface? | 1 |
+| `EnclosingScope` | What nearest syntax scope owns this body-line match? | 1 |
 | `EditLocation` | Where is the exact edit-ready evidence line? | 1 |
 
 The benchmark reports:
@@ -60,4 +61,6 @@ The structural lookup illustrates the intended tradeoff: it returns slightly mor
 
 ## Construct-range extension
 
-After `--line-only` gained parser-backed `PATH:START-END` locations, the fixed function lookup returned 152 bytes/~38 tokens instead of 150 bytes/~37.5 tokens. The two added bytes disclose the exact `2-6` function extent for the next Read or `--at` call. A match inside a construct that does not begin one remains unchanged; `EditLocation` therefore still returns 40 bytes/~10 tokens. Across repeated 10-iteration samples, the ranged workflow took 2.4–2.7 ms/op and exact edit location took 1.3–1.5 ms/op. Timing remains secondary to the stable call/output metrics.
+After `--line-only` gained parser-backed `PATH:START-END` locations, the fixed function lookup returned 152 bytes/~38 tokens instead of 150 bytes/~37.5 tokens. The two added bytes disclose the exact `2-6` function extent for the next Read or `--at` call. A match inside a construct that does not begin one remains unchanged by default; `EditLocation` therefore still returns 40 bytes/~10 tokens.
+
+Opt-in `--enclosing` adds the nearest syntax scope while retaining the actual match line. The fixed `EnclosingScope` workflow returns `service.go:5@2-6` in one 53-byte/~13.25-token call, allowing the next Read to target the owner without an intermediate outline or `--at` discovery call. Across repeated 10-iteration samples, enclosing-scope lookup took 1.2–1.4 ms/op, ordinary ranged lookup took 2.2–2.9 ms/op, and exact edit location took 1.2–1.5 ms/op. Timing remains secondary to the stable call/output metrics.
