@@ -1098,12 +1098,24 @@ classDiagram
     <<function>> GeneratePackageDiagram
     %% grepple:file GeneratePackageDiagram extract/package_generate.go
     note for GeneratePackageDiagram "defined: extract/package_generate.go:15-68"
+    class GeneratePackageSummary {
+        +GeneratePackageSummary(string): tuple~string&#44;error~
+    }
+    <<function>> GeneratePackageSummary
+    %% grepple:file GeneratePackageSummary extract/summary.go
+    note for GeneratePackageSummary "defined: extract/summary.go:18-24"
     class GenerateWorkspaceBundle {
         +GenerateWorkspaceBundle(string): tuple~*WorkspaceBundle&#44;error~
     }
     <<function>> GenerateWorkspaceBundle
     %% grepple:file GenerateWorkspaceBundle extract/workspace_bundle.go
     note for GenerateWorkspaceBundle "defined: extract/workspace_bundle.go:481-491"
+    class GenerateWorkspaceSummary {
+        +GenerateWorkspaceSummary(string): tuple~string&#44;error~
+    }
+    <<function>> GenerateWorkspaceSummary
+    %% grepple:file GenerateWorkspaceSummary extract/summary.go
+    note for GenerateWorkspaceSummary "defined: extract/summary.go:28-34"
     class LanguageForPath {
         +LanguageForPath(string): tuple~Language&#44;bool~
     }

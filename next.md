@@ -4,7 +4,7 @@ Grepple should stabilize for one or two iterations before adding more languages.
 
 ## Recommended next milestone
 
-> Continue the agentic-coding feedback work before further language expansion: use the new workflow benchmark to design a smaller architecture summary and evidence-based agent output limits. C# remains the next class-model parity target after those ergonomics improvements.
+> Continue the agentic-coding feedback work before further language expansion: evaluate an agent-oriented output budget/profile against the new workflow benchmark. C# remains the next class-model parity target after that ergonomics decision.
 
 ## Feature set versus feature completeness
 
@@ -64,8 +64,8 @@ Treat these as separate planning dimensions:
 - [x] Add `--count-summary` for complete aggregate matched-file and matching-line totals independent of `--skip`, `--limit`, and `--max-files`; retain `--count-by-repo` for grouped compatibility output.
 - [ ] Add an explicit agent-oriented output profile, or evaluate a lower default human-output budget, so broad accidental queries stop well below common context limits without affecting complete JSON.
 - [x] Stream validated `extract structure|flow` projections to stdout when `--output` is omitted.
-- [ ] Add a smaller package/workspace summary projection for orientation when generated overviews are still too large.
-- [ ] Consider a compact presentation mode that hides validation metadata while retaining it in generated artifacts.
+- [x] Add bounded `extract summary package|workspace` Markdown projections from canonical Go IR. On this checkout the package summary reduced extract orientation from 27.5 KB to 2.1 KB, while the workspace summary reduced 4.3 KB to 2.4 KB.
+- [x] Provide a compact presentation that omits Mermaid validation metadata while retaining complete canonical bundles for detailed or machine-readable use.
 
 ### 3. Harden source handling
 
@@ -234,7 +234,7 @@ Reduce repeated parsing and language knowledge across extraction, navigation, te
    - [x] Add Java focused structure/flow with classes, interfaces, records, enums, inheritance, implementations, fields, constructors, methods, conservative cross-file targets, and shared navigation-graph flows.
    - [x] Add Kotlin focused structure/flow with classes, interfaces, objects, data-class constructor properties, delegation-based inheritance, properties, functions, conservative cross-file targets, and shared navigation-graph flows.
    - [ ] Add C# focused structure/flow next. Keep C/C++, Rust, and Shell unsupported until their non-class architecture projections have an explicit useful contract.
-Recommended implementation order from here: a smaller architecture summary and evidence-based agent output limits; then exported/public declaration facts and filters, C# focused structure/flow, semantic graph diffing, and useful non-class projections for Rust or C/C++. Address grammar-local placeholder-role gaps when conformance exposes a valuable blocked workflow.
+Recommended implementation order from here: evaluate evidence-based agent output limits; then exported/public declaration facts and filters, C# focused structure/flow, semantic graph diffing, and useful non-class projections for Rust or C/C++. Address grammar-local placeholder-role gaps when conformance exposes a valuable blocked workflow.
 
 Acceptance criteria:
 
@@ -271,7 +271,7 @@ Before expanding scope, require:
 - [ ] Add exportedness filtering once declarations expose a reliable cross-language fact; defer edge-kind filtering until the graph contains more than call edges.
 - [x] Add repository-wide count summaries independent of output paging.
 - [x] Stream validated focused extraction output to stdout when `--output` is omitted.
-- [ ] Add a concise package/workspace summary smaller than the generated overview.
+- [x] Add concise bounded package/workspace summaries from canonical IR, substantially smaller than generated overviews on the dogfood checkout.
 - [ ] Evaluate an agent-oriented output profile against the fixed workflow benchmark rather than lowering limits without evidence.
 - [x] Emit explicit truncation markers in bounded structures and flows.
 - [x] Expose reproducible release/source, revision, commit-time, toolchain, and platform metadata through `--version`.

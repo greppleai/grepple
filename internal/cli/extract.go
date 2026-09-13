@@ -36,6 +36,9 @@ func runExtract(args []string) error {
 	if args[0] == "check" {
 		return runExtractCheck(args[1:])
 	}
+	if args[0] == "summary" {
+		return runExtractSummary(args[1:])
+	}
 	if args[0] != "structure" && args[0] != "flow" {
 		return extractUsageError()
 	}
@@ -53,7 +56,32 @@ func runExtract(args []string) error {
 }
 
 func extractUsageError() error {
-	return fmt.Errorf("usage: grepple extract <structure|flow|check> [flags] [PATH ...]")
+	return fmt.Errorf("usage: grepple extract <structure|flow|summary|check> [flags] [PATH ...]")
+}
+
+func runExtractSummary(args []string) error {
+	if len(args) < 1 || len(args) > 2 {
+		return fmt.Errorf("usage: grepple extract summary <package|workspace> [PATH]")
+	}
+	mode := args[0]
+	path := "."
+	if len(args) == 2 {
+		path = args[1]
+	}
+	var summary string
+	var err error
+	switch mode {
+	case "package":
+		summary, err = codeextract.GeneratePackageSummary(path)
+	case "workspace":
+		summary, err = codeextract.GenerateWorkspaceSummary(path)
+	default:
+		return fmt.Errorf("extract summary mode must be package or workspace")
+	}
+	if err != nil {
+		return err
+	}
+	return stdoutWriter().writeString(summary)
 }
 
 func parseExtractArgs(args []string) (string, *extractArgs, error) {

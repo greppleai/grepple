@@ -16,16 +16,16 @@
     "syntacticBuildTagUnion": []
   },
   "summary": {
-    "sourceFiles": 26,
+    "sourceFiles": 27,
     "declarations": 68,
     "exportedTypes": 42,
     "internalTypes": 26,
     "members": 550,
-    "exportedFunctions": 26,
+    "exportedFunctions": 28,
     "fiberRoutes": 0,
     "relations": 213
   },
-  "semanticModelDigest": "sha256:d6c246d77ab2d63088542f790b955c8add6ca72cecbd20853bcb68c05b43a941",
+  "semanticModelDigest": "sha256:db0e1c3c03199e0f91b1be51ef5eb9f29886a67be5b74177ebae02b61b5fb1cb",
   "sourceFiles": [
     {
       "path": "extract/analyze.go"
@@ -89,6 +89,9 @@
     },
     {
       "path": "extract/scope.go"
+    },
+    {
+      "path": "extract/summary.go"
     },
     {
       "path": "extract/ts_flow.go"
@@ -5711,6 +5714,17 @@
       "result": "tuple\u003cstring,error\u003e"
     },
     {
+      "name": "GeneratePackageSummary",
+      "kind": "function",
+      "file": "extract/summary.go",
+      "line": 18,
+      "endLine": 24,
+      "parameters": [
+        "string"
+      ],
+      "result": "tuple\u003cstring,error\u003e"
+    },
+    {
       "name": "GenerateWorkspaceBundle",
       "kind": "function",
       "file": "extract/workspace_bundle.go",
@@ -5720,6 +5734,17 @@
         "string"
       ],
       "result": "tuple\u003c*WorkspaceBundle,error\u003e"
+    },
+    {
+      "name": "GenerateWorkspaceSummary",
+      "kind": "function",
+      "file": "extract/summary.go",
+      "line": 28,
+      "endLine": 34,
+      "parameters": [
+        "string"
+      ],
+      "result": "tuple\u003cstring,error\u003e"
     },
     {
       "name": "LanguageForPath",

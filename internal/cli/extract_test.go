@@ -168,6 +168,33 @@ func TestExtractStructureWritesCanonicalBundle(t *testing.T) {
 	}
 }
 
+func TestExtractSummaryStreamsCompactPackageAndWorkspaceViews(t *testing.T) {
+	root, source := writeExtractFixture(t)
+	packageSummary := captureStdout(t, func() {
+		if err := runExtract([]string{"summary", "package", filepath.Dir(source)}); err != nil {
+			t.Fatal(err)
+		}
+	})
+	for _, expected := range []string{"# Package `example.com/extracttest/service`", "## Public surface", "`Service`"} {
+		if !strings.Contains(packageSummary, expected) {
+			t.Fatalf("package summary missing %q:\n%s", expected, packageSummary)
+		}
+	}
+	workspaceSummary := captureStdout(t, func() {
+		if err := runExtract([]string{"summary", "workspace", root}); err != nil {
+			t.Fatal(err)
+		}
+	})
+	for _, expected := range []string{"# Workspace `example.com/extracttest`", "## Modules", "`service` — package `service`"} {
+		if !strings.Contains(workspaceSummary, expected) {
+			t.Fatalf("workspace summary missing %q:\n%s", expected, workspaceSummary)
+		}
+	}
+	if strings.Contains(packageSummary, "classDiagram") || strings.Contains(workspaceSummary, "flowchart") {
+		t.Fatal("summary leaked Mermaid projection detail")
+	}
+}
+
 func TestExtractRejectsInvalidModeCombinations(t *testing.T) {
 	if err := runExtract([]string{"flow", "--bundle", "--entry", "Run"}); err == nil || !strings.Contains(err.Error(), "only to extract structure") {
 		t.Fatalf("unexpected error: %v", err)

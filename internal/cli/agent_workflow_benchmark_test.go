@@ -31,6 +31,7 @@ func BenchmarkAgentWorkflows(b *testing.B) {
 		{name: "LineLocateThenAt", commands: [][]string{{"--line-only", "-F", "func Run(", "service.go", "--no-anchors"}, {"--at", "service.go:2", "--no-anchors"}}, want: []string{"service.go:2:func Run()", "validate()", "save()"}},
 		{name: "RelatedNavigation", commands: [][]string{{"--related", "--at", "service.go:2", "--no-anchors"}}, want: []string{"Next points", "→ validate", "← Handler"}},
 		{name: "ImpactGraph", commands: [][]string{{"graph", "impact", "--at", "service.go:2", "--depth", "1", "--compact", "."}}, want: []string{"query impact depth=1", "Run -> validate#", "Handler -> Run#"}},
+		{name: "ArchitectureSummary", commands: [][]string{{"extract", "summary", "package", "."}}, want: []string{"# Package `example.com/agentbench`", "## Public surface", "`Run()"}},
 		{name: "EditLocation", commands: [][]string{{"--line-only", "-F", "EDIT_NEEDLE", "service.go", "--no-anchors"}}, want: []string{"service.go:4:\tvalidate() // EDIT_NEEDLE"}},
 	}
 	for _, workflow := range workflows {
@@ -73,6 +74,7 @@ func writeAgentWorkflowBenchmarkFixture(tb testing.TB) string {
 	tb.Helper()
 	root := tb.TempDir()
 	files := map[string]string{
+		"go.mod":     "module example.com/agentbench\n",
 		"service.go": "package sample\nfunc Run() {\n\tvalidate()\n\tvalidate() // EDIT_NEEDLE\n\tsave()\n}\nfunc validate() {}\nfunc save() {}\nfunc Consumer() { Run() }\n",
 		"handler.go": "package sample\nfunc Handler() { Run() }\n",
 	}

@@ -29,6 +29,7 @@ benchstat before.txt after.txt
 | `LineLocateThenAt` | Locate a line, then retrieve its declaration. | 2 |
 | `RelatedNavigation` | What immediately calls this and what does it call? | 1 |
 | `ImpactGraph` | What is the bounded bidirectional impact neighborhood? | 1 |
+| `ArchitectureSummary` | What is the bounded package ownership and public surface? | 1 |
 | `EditLocation` | Where is the exact edit-ready evidence line? | 1 |
 
 The benchmark reports:
@@ -52,6 +53,7 @@ Linux/amd64, Intel Core Ultra 7 165H, Go 1.25.14, `-benchtime=10x`:
 | `LineLocateThenAt` | 2 | 150 | 37.5 | 2.35 ms |
 | `RelatedNavigation` | 1 | 307 | 76.75 | 3.09 ms |
 | `ImpactGraph` | 1 | 756 | 189 | 3.10 ms |
+| `ArchitectureSummary` | 1 | 337 | 84.25 | 2.24 ms |
 | `EditLocation` | 1 | 40 | 10 | 1.09 ms |
 
 The structural lookup illustrates the intended tradeoff: it returns slightly more text than line-only plus `--at`, but removes one retrieval round trip. Timing is machine-dependent; call and fixture-output metrics are the primary regression signals until statistically reviewed budgets are established.

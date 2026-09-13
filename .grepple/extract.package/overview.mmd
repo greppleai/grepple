@@ -2,7 +2,7 @@ classDiagram
     %% grepple:package-default github.com/greppleai/grepple/extract
     %% grepple:language-default go
     direction LR
-    note "Package extract validates and generates source-linked Mermaid structure and flow diagrams. | package github.com/greppleai/grepple/extract | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=26, declarations=68, exportedTypes=42, internalTypes=26, members=550, exportedFunctions=26, fiberRoutes=0, relations=213"
+    note "Package extract validates and generates source-linked Mermaid structure and flow diagrams. | package github.com/greppleai/grepple/extract | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=27, declarations=68, exportedTypes=42, internalTypes=26, members=550, exportedFunctions=28, fiberRoutes=0, relations=213"
     namespace interfaces {
         class languageAnalysis["languageAnalysis · extract/language.go:22-25"] {
             +Analyze(Source): error
@@ -342,10 +342,18 @@ classDiagram
             +GeneratePackageDiagram(string): tuple~string&#44;error~
         }
         <<function>> GeneratePackageDiagram
+        class GeneratePackageSummary["GeneratePackageSummary · extract/summary.go:18-24"] {
+            +GeneratePackageSummary(string): tuple~string&#44;error~
+        }
+        <<function>> GeneratePackageSummary
         class GenerateWorkspaceBundle["GenerateWorkspaceBundle · extract/workspace_bundle.go:481-491"] {
             +GenerateWorkspaceBundle(string): tuple~*WorkspaceBundle&#44;error~
         }
         <<function>> GenerateWorkspaceBundle
+        class GenerateWorkspaceSummary["GenerateWorkspaceSummary · extract/summary.go:28-34"] {
+            +GenerateWorkspaceSummary(string): tuple~string&#44;error~
+        }
+        <<function>> GenerateWorkspaceSummary
         class LanguageForPath["LanguageForPath · extract/language.go:60-68"] {
             +LanguageForPath(string): tuple~Language&#44;bool~
         }

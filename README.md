@@ -222,11 +222,13 @@ grepple extract structure --at web/store.ts:8 --source web
 grepple extract flow --at services/worker.py:20 --source services
 grepple extract structure --at src/main/java/acme/Service.java:12 --source .
 grepple extract flow --at src/main/kotlin/acme/Worker.kt:30 --source .
+grepple extract summary package extract
+grepple extract summary workspace .
 grepple extract structure api --bundle --output .grepple/api.package
 grepple extract structure . --workspace --output .grepple/project.workspace
 ```
 
-`structure` without an entry generates the complete Go package class diagram for the selected file or directory. `--entry` or `--at PATH:LINE` produces a bounded, language-adapted type structure. `flow` requires one of those selectors and follows statically resolved outgoing calls. `--source` can be repeated to define the analysis roots; `--depth`, `--max-nodes`, and `--output` control projection and writing. A flow that reaches `--max-nodes` remains valid and deterministic, and includes `%% grepple:truncated max-nodes N` instead of failing after useful nodes have already been selected.
+`summary package|workspace` emits bounded Markdown from the same canonical Go IR as package/workspace bundles, without Mermaid validation metadata. Package summaries list counts and at most 30 public-surface entries plus 10 routes; workspace summaries list counts and bounded modules, packages, and local dependency edges. They are intended as the lowest-token orientation view. `structure` without an entry generates the complete Go package class diagram for the selected file or directory. `--entry` or `--at PATH:LINE` produces a bounded, language-adapted type structure. `flow` requires one of those selectors and follows statically resolved outgoing calls. `--source` can be repeated to define the analysis roots; `--depth`, `--max-nodes`, and `--output` control projection and writing. A flow that reaches `--max-nodes` remains valid and deterministic, and includes `%% grepple:truncated max-nodes N` instead of failing after useful nodes have already been selected.
 
 Every generated type/function node includes its exact `PATH:START-END` definition range; type notes also list exact member ranges. Flow nodes display their definition range directly. Generated diagrams are checked against the same source analysis before being returned.
 

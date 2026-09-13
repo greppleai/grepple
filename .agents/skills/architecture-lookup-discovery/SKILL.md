@@ -53,11 +53,23 @@ Answer only the immediate questions:
 - Which local packages point to it or are pointed to by it?
 - Are routes or external module dependencies involved?
 
+If only bounded ownership, package counts, and local dependency direction are needed, prefer the live compact projection before reading a larger Mermaid overview:
+
+```bash
+grepple extract summary workspace .
+```
+
 If no workspace bundle exists, use Grepple filename/outline discovery from the local search skill rather than recursively reading the tree.
 
 ### 2. Read the owning package overview
 
-Open only:
+Start with the bounded public-surface summary when the package path is known:
+
+```bash
+grepple extract summary package path/to/package
+```
+
+Read the canonical overview when type relations, grouped evidence, routes, or a stable generated artifact are required:
 
 ```text
 .grepple/<owner>.package/overview.mmd
