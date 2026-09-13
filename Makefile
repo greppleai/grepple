@@ -16,7 +16,7 @@ SCHEMA_PACKAGES := $(SCHEMA_CORE_PACKAGES) cli
 PACKAGE_BUNDLES := $(addsuffix .package,$(addprefix $(SCHEMA_DIR)/,$(SCHEMA_PACKAGES)))
 WORKSPACE_BUNDLES := $(SCHEMA_DIR)/project.workspace
 
-.PHONY: build test agent-benchmark lint revive-lint hook-build hook-lint hook-test parser-metadata-generate parser-metadata-check schema-generate schema-check docker-smoke install clean
+.PHONY: build test agent-benchmark architecture-benchmark lint revive-lint hook-build hook-lint hook-test parser-metadata-generate parser-metadata-check schema-generate schema-check docker-smoke install clean
 
 build: $(addprefix $(BIN_DIR)/,$(COMMANDS)) hook-build
 
@@ -32,6 +32,9 @@ test: schema-check
 
 agent-benchmark:
 	go test ./internal/cli -run '^$$' -bench '^BenchmarkAgentWorkflows$$' -benchtime=10x -benchmem
+
+architecture-benchmark:
+	go test ./extract -run '^$$' -bench '^BenchmarkArchitectureWorkflows$$' -benchtime=10x -benchmem
 
 # Example fixtures under examples/ are intentionally excluded from linting.
 lint: revive-lint hook-lint hook-test schema-check
