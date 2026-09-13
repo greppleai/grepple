@@ -31,7 +31,7 @@ type gritArgs struct {
 	PatternID            string   `arg:"--pattern-id" placeholder:"ID" help:"attach a pattern identifier to findings"`
 	Message              string   `arg:"--message" placeholder:"TEXT" help:"attach a message to findings"`
 	JSON                 bool     `arg:"--json" help:"print the complete structural response as JSON"`
-	MaxOutputBytes       int      `arg:"--max-output-bytes" placeholder:"N" help:"cap human-readable output (default 40960; 0 = unlimited; JSON is uncapped)"`
+	MaxOutputBytes       int      `arg:"--max-output-bytes" placeholder:"N" help:"cap human-readable output (default 16384; 0 = unlimited; JSON is uncapped)"`
 	ExcludeGlobs         []string `arg:"--exclude-glob,separate" placeholder:"GLOB" help:"exclude a source path; repeatable"`
 	Repositories         []string `arg:"--repo,separate" placeholder:"PATTERN" help:"restrict remote repositories; repeatable"`
 	ExcludeRepositories  []string `arg:"--exclude-repo,separate" placeholder:"PATTERN" help:"exclude remote repositories; repeatable"`

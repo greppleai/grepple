@@ -24,6 +24,7 @@ benchstat before.txt after.txt
 | Workflow | Question represented | CLI retrieval calls |
 | --- | --- | ---: |
 | `BreadthSummary` | How broad is this term before loading bodies? | 1 |
+| `BroadAccidental` | How much output does an accidentally broad body search retrieve? | 1 |
 | `OutlineDiscovery` | What declarations does this file contain? | 1 |
 | `StructuralLookup` | Locate and retrieve one implementation. | 1 |
 | `LineLocateThenAt` | Locate a line with its construct extent, then retrieve that declaration. | 2 |
@@ -41,6 +42,10 @@ The benchmark reports:
 - standard `ns/op`, allocation bytes, and allocations from Go's benchmark runner.
 
 A benchmark fails rather than reporting metrics when required answer fragments are missing. Workflows that can truncate must also retain an explicit truncation or omission marker in their correctness expectations when the fixture reaches the relevant bound.
+
+## Output-budget evaluation
+
+A synthetic 800-match body search measured the broad-query failure mode directly. At the previous 40960-byte default it could consume roughly 10K approximate tokens before guidance appeared. The 16384-byte default returns about 16.3 KB/~4.1K approximate tokens including explicit truncation guidance—a 60% reduction while leaving every bounded fixed workflow unchanged. The default was therefore lowered to 16384 bytes for search, GritQL, and compact graph output. `--max-output-bytes 0` remains the explicit uncapped escape hatch, and JSON remains complete and uncapped.
 
 ## Initial baseline
 

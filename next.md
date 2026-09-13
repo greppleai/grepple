@@ -63,7 +63,7 @@ Treat these as separate planning dimensions:
 - [x] Enrich plain `--line-only` locations with parser-backed `PATH:START-END` ranges when the matching line begins a multi-line declaration or control-flow construct, plus opt-in `--enclosing` `PATH:MATCH@START-END` ranges for body matches; preserve single-line and exact anchor-row contracts.
 - [x] Report related-edge truncation explicitly, including omitted caller/callee counts in human and JSON output plus complete-graph guidance. Tests prove bounded previews cannot be mistaken for complete impact results.
 - [x] Add `--count-summary` for complete aggregate matched-file and matching-line totals independent of `--skip`, `--limit`, and `--max-files`; retain `--count-by-repo` for grouped compatibility output.
-- [ ] Add an explicit agent-oriented output profile, or evaluate a lower default human-output budget, so broad accidental queries stop well below common context limits without affecting complete JSON.
+- [x] Lower the default human-output budget from 40960 to 16384 bytes after a synthetic 800-match benchmark showed a 60% output/token reduction with no effect on bounded workflows or complete JSON.
 - [x] Stream validated `extract structure|flow` projections to stdout when `--output` is omitted.
 - [x] Add bounded `extract summary package|workspace` Markdown projections from canonical Go IR. On this checkout the package summary reduced extract orientation from 27.5 KB to 2.1 KB, while the workspace summary reduced 4.3 KB to 2.4 KB.
 - [x] Provide a compact presentation that omits Mermaid validation metadata while retaining complete canonical bundles for detailed or machine-readable use.

@@ -71,7 +71,7 @@ Supported search options:
 - `--json`, `--json-matches`
 - `--repo PATTERN` (repeatable)
 - `--max-files N`, `--max-segments N`
-- `--max-output-bytes N` caps human-readable output before common agent tool limits (default `40960`; `0` disables the cap). JSON output is never partially truncated.
+- `--max-output-bytes N` caps human-readable output before common agent tool limits (default `16384`; `0` disables the cap). JSON output is never partially truncated.
 - `--anchors` emits configured edit anchors as `HASH│LINE│content`; `--anchor-provider NAME` selects a provider, while `--no-anchors` disables `anchors.enabled_by_default` from `~/.grepple/settings.json`
 - `--related` (experimental: show bounded project-local callees and callers for structurally supported source languages)
 - `--at PATH:LINE` (retrieve the declaration containing an exact local location; related `PATH:START-END` ranges are accepted too)
@@ -205,7 +205,7 @@ grepple graph dependencies --root-path internal/cli --depth 1 --compact .
 grepple graph impact --symbol runExtract --depth 2 --compact ./internal/cli
 ```
 
-`--compact` emits a bounded agent-facing declaration/edge list with 16-character stable ID prefixes, source locations, arrow direction, confidence, and source truncation warnings; `--max-output-bytes` defaults to 40960 and never applies to JSON. Unsupported file types are excluded before the file limit. Complete JSON retains unresolved/external calls with `candidate` confidence and ordered candidate IDs; compact output omits calls with no repository-local target and retains ambiguous calls without guessing one target. Exactly one of `--json` or `--compact` is required.
+`--compact` emits a bounded agent-facing declaration/edge list with 16-character stable ID prefixes, source locations, arrow direction, confidence, and source truncation warnings; `--max-output-bytes` defaults to 16384 and never applies to JSON. Unsupported file types are excluded before the file limit. Complete JSON retains unresolved/external calls with `candidate` confidence and ordered candidate IDs; compact output omits calls with no repository-local target and retains ambiguous calls without guessing one target. Exactly one of `--json` or `--compact` is required.
 
 `graph callers`, `callees`, `dependencies`, `dependents`, and `impact` return deterministic subgraphs over repository-local calls. Select one exact declaration with `--symbol NAME` or `--at PATH:LINE`, or select a scope with `--package`, `--module`, or `--root-path`; scope selectors may produce multiple roots. Callers/dependents traverse incoming calls, callees/dependencies traverse outgoing calls, and impact traverses both. Repeatable `--language ID` and `--confidence LEVEL` filters apply before root selection and traversal; confidence accepts `exact`, `import-resolved`, `context-resolved`, `unique-terminal`, and `candidate`. `--depth N` is bounded to 1–10, cycles are visited once, and ambiguous candidate targets remain explicit rather than being guessed. JSON retains the `grepple-navigation-graph-v1` declarations/calls and adds normalized query direction, depth, root IDs, and filters; compact mode adds concise query metadata to its header. Positional paths define the larger graph universe, while the root selector chooses where traversal starts.
 

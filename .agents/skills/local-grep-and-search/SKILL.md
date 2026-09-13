@@ -53,7 +53,7 @@ Navigation works locally in default structural output or full `--json` for Go, J
 ## Narrowing rules
 
 - Default `--limit` is 20. Keep it bounded; use `--limit 0` only when completeness is necessary.
-- Human-readable output is capped at 40960 bytes by default. If the truncation marker appears, narrow the path/glob or use `--limit`, `--line-only`, `-l`, or `--count`; use `--max-output-bytes 0` only when unbounded output is genuinely required.
+- Human-readable output is capped at 16384 bytes by default. If the truncation marker appears, narrow the path/glob or use `--limit`, `--line-only`, `-l`, or `--count`; use `--max-output-bytes 0` only when unbounded output is genuinely required.
 - Prefer `-F` for literal identifiers/snippets; JavaScript regex is the default.
 - Grepple is not a complete grep flag clone. `-E` explicitly selects the default JavaScript-regex mode, and `-r` is accepted as a no-op because directory search is already recursive. Translate other grep flags to Grepple's output modes.
 - Scope with a file, directory, or glob. `**` crosses directories.

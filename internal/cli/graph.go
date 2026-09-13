@@ -18,7 +18,7 @@ type graphArgs struct {
 	JSON           bool     `arg:"--json" help:"emit the complete normalized navigation graph as JSON"`
 	Compact        bool     `arg:"--compact" help:"emit a bounded agent-facing declaration and call summary"`
 	MaxFiles       int      `arg:"--max-files" placeholder:"N" help:"parse at most N discovered files (0 = unlimited)"`
-	MaxOutputBytes int      `arg:"--max-output-bytes" placeholder:"N" help:"cap compact output (default 40960; 0 = unlimited; JSON is uncapped)"`
+	MaxOutputBytes int      `arg:"--max-output-bytes" placeholder:"N" help:"cap compact output (default 16384; 0 = unlimited; JSON is uncapped)"`
 	Paths          []string `arg:"positional" placeholder:"PATH" help:"file, directory, or glob to include; defaults to the working directory"`
 }
 

@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -25,7 +26,8 @@ func BenchmarkAgentWorkflows(b *testing.B) {
 	b.Cleanup(func() { _ = os.Chdir(previous) })
 
 	workflows := []agentWorkflowBenchmark{
-		{name: "BreadthSummary", commands: [][]string{{"-F", "func ", "--count-summary", "."}}, want: []string{"2 files\t5 matches"}},
+		{name: "BreadthSummary", commands: [][]string{{"-F", "func ", "--count-summary", "service.go", "handler.go"}}, want: []string{"2 files\t5 matches"}},
+		{name: "BroadAccidental", commands: [][]string{{"--line-only", "--no-anchors", "-F", "NOISE_MATCH", "noise.txt", "--limit", "0", "--max-segments", "1000"}}, want: []string{"noise.txt:2:", "grepple output truncated"}},
 		{name: "OutlineDiscovery", commands: [][]string{{"--outline", "service.go", "--no-anchors"}}, want: []string{"func\tRun", "func\tConsumer"}},
 		{name: "StructuralLookup", commands: [][]string{{"-F", "func Run(", "service.go", "--no-anchors"}}, want: []string{"func Run()", "validate()", "save()"}},
 		{name: "LineLocateThenAt", commands: [][]string{{"--line-only", "-F", "func Run(", "service.go", "--no-anchors"}, {"--at", "service.go:2-6", "--no-anchors"}}, want: []string{"service.go:2-6:func Run()", "validate()", "save()"}},
@@ -79,6 +81,12 @@ func writeAgentWorkflowBenchmarkFixture(tb testing.TB) string {
 		"service.go": "package sample\nfunc Run() {\n\tvalidate()\n\tvalidate() // EDIT_NEEDLE\n\tsave()\n}\nfunc validate() {}\nfunc save() {}\nfunc Consumer() { Run() }\n",
 		"handler.go": "package sample\nfunc Handler() { Run() }\n",
 	}
+	var noise strings.Builder
+	noise.WriteString("synthetic broad-output fixture\n")
+	for index := range 800 {
+		fmt.Fprintf(&noise, "func noise%d() { println(\"NOISE_MATCH\") }\n", index)
+	}
+	files["noise.txt"] = noise.String()
 	for path, content := range files {
 		if err := os.WriteFile(filepath.Join(root, path), []byte(content), 0o644); err != nil {
 			tb.Fatal(err)

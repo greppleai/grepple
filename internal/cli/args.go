@@ -17,9 +17,9 @@ import (
 // in sync.
 const DefaultResultLimit = search.DefaultPageLimit
 
-// DefaultTextOutputBytes keeps human-readable search output below common agent
-// tool-result limits. JSON remains uncapped so it is never emitted partially.
-const DefaultTextOutputBytes = 40 * 1024
+// DefaultTextOutputBytes keeps human-readable search output comfortably below
+// common agent tool-result limits. JSON remains uncapped so it is never partial.
+const DefaultTextOutputBytes = 16 * 1024
 
 type searchArgs struct {
 	Local            bool     `arg:"--local" help:"search only the local working directory (this is the default)"`
@@ -48,7 +48,7 @@ type searchArgs struct {
 	BeforeContext    int      `arg:"-B,--before-context" placeholder:"N" help:"print N lines before matches"`
 	MaxFiles         int      `arg:"--max-files" placeholder:"N" help:"limit matching files"`
 	MaxSegments      int      `arg:"--max-segments" placeholder:"N" help:"limit result segments"`
-	MaxOutputBytes   int      `arg:"--max-output-bytes" placeholder:"N" help:"cap human-readable output (default 40960; 0 = unlimited; JSON is uncapped)"`
+	MaxOutputBytes   int      `arg:"--max-output-bytes" placeholder:"N" help:"cap human-readable output (default 16384; 0 = unlimited; JSON is uncapped)"`
 	Anchors          bool     `arg:"--anchors" help:"emit configured edit anchors as HASH│LINE│content rows (local structural or --line-only output)"`
 	NoAnchors        bool     `arg:"--no-anchors" help:"disable anchors enabled by user settings"`
 	AnchorProvider   string   `arg:"--anchor-provider" placeholder:"NAME" help:"use a named anchor provider from ~/.grepple/settings.json (implies --anchors)"`
