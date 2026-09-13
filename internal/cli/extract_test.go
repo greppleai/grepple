@@ -107,12 +107,13 @@ func TestExtractFocusedCommandsSupportPython(t *testing.T) {
 	}
 }
 
-func TestExtractFocusedCommandsSupportJavaAndKotlin(t *testing.T) {
+func TestExtractFocusedCommandsSupportJavaKotlinAndCSharp(t *testing.T) {
 	tests := []struct {
 		name, extension, content, language, edge string
 	}{
 		{"java", ".java", "class Worker {\n    void run() { finish(); }\n    void finish() {}\n}\n", "java", "Worker_run --> Worker_finish"},
 		{"kotlin", ".kt", "class Worker {\n    fun run() { finish() }\n    fun finish() {}\n}\n", "kotlin", "Worker_run --> Worker_finish"},
+		{"csharp", ".cs", "class Worker {\n    void Run() { Finish(); }\n    void Finish() {}\n}\n", "csharp", "Worker_Run --> Worker_Finish"},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) { assertFocusedJVMCLI(t, test.extension, test.content, test.language, test.edge) })

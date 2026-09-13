@@ -4,7 +4,7 @@ Grepple should stabilize for one or two iterations before adding more languages.
 
 ## Recommended next milestone
 
-> Continue the agentic-coding feedback work before further language expansion: evaluate an agent-oriented output budget/profile against the new workflow benchmark. C# remains the next class-model parity target after that ergonomics decision.
+> The agent-output budget, declaration visibility filtering, and C# focused extraction milestones are complete. Prioritize benchmark budgets, shared-projection parity, and semantic graph/architecture diffing next.
 
 ## Feature set versus feature completeness
 
@@ -32,12 +32,12 @@ Treat these as separate planning dimensions:
 - External LLM dogfooding confirmed the Grepple locate/orient → Edit loop, while also exposing grep-flag muscle memory, edit-target lines omitted by segment limits, and broad output reaching the agent harness limit.
 - The shared `parser.NavigationGraph` is now the sole source of generic call edges for flow selection, rendering, validation, `--at`, and `--related`; the next graph issues are focused querying and richer resolution rather than duplicate discovery.
 - `--related` can exhaust its edge budget without reporting how many callers or callees were omitted. Bounded output must never look complete during impact analysis.
-- Broad structural output is safely capped at 40960 bytes, but that still costs roughly 10000 tokens. Untrained agents need a cheaper default/profile and clearer early narrowing.
+- Broad structural output now defaults to 16384 bytes after the 800-match benchmark measured a 60% token reduction; complete JSON and the explicit uncapped override remain available.
 - Generated package overviews can still be too large for focused questions: the extract package overview reached 526 lines/27 KB, while a file outline answered the immediate JVM question in 50 lines/1.9 KB.
 - Larger diagrams are dominated by validation metadata when viewed as plain text.
 - Agent edit anchors are provider-specific, not generic line hashes. Grepple delegates through a user-owned, versioned batch provider and keeps editing-harness adapters out of the shipped repository.
 - Explicit Go and TypeScript imports, direct parameters/receivers, source-ordered lexical bindings, local and imported return signatures, and same-file typed field chains now resolve before terminal-name fallback. Cross-file field chains, embedded/promoted methods, re-exports, and default imports still need richer propagation.
-- Architecture extraction remains narrower than parser-backed segments, outlines, navigation, and native GritQL. Python, Java, and Kotlin now join Go and ECMAScript with production focused structure/flow. C# is the remaining high-value object-model gap.
+- Architecture extraction now covers the high-value object models through C#; C/C++, Rust, and Shell still need useful non-class projection contracts before focused extraction is enabled.
 - Cross-language fixtures prove the baseline but do not yet cover enough malformed, nested, generic, decorated, or multiline syntax.
 - Canonical mismatch errors identify the artifact but should eventually report the first semantic difference.
 
@@ -234,8 +234,8 @@ Reduce repeated parsing and language knowledge across extraction, navigation, te
    - [x] Add Python focused structure and flow extraction using `parser.Document` and the shared navigation graph, with classes, inheritance, annotated and unannotated attributes, decorators, `.pyi` stubs, bounded traversal, validation, and deterministic module metadata.
    - [x] Add Java focused structure/flow with classes, interfaces, records, enums, inheritance, implementations, fields, constructors, methods, conservative cross-file targets, and shared navigation-graph flows.
    - [x] Add Kotlin focused structure/flow with classes, interfaces, objects, data-class constructor properties, delegation-based inheritance, properties, functions, conservative cross-file targets, and shared navigation-graph flows.
-   - [ ] Add C# focused structure/flow next. Keep C/C++, Rust, and Shell unsupported until their non-class architecture projections have an explicit useful contract.
-Recommended implementation order from here: evaluate evidence-based agent output limits; then exported/public declaration facts and filters, C# focused structure/flow, semantic graph diffing, and useful non-class projections for Rust or C/C++. Address grammar-local placeholder-role gaps when conformance exposes a valuable blocked workflow.
+   - [x] Add C# focused structure/flow with classes, interfaces, structs, records, enums, inheritance, properties, fields, constructors, methods, visibility, static members, project-root discovery, and shared navigation resolution. Keep C/C++, Rust, and Shell unsupported until their non-class architecture projections have an explicit useful contract.
+Recommended implementation order from here: benchmark and budget focused/package/workspace extraction; then shared-projection parity and semantic graph/architecture diffing. Define useful non-class projections for Rust or C/C++ before expanding focused extraction.
 
 Acceptance criteria:
 

@@ -21,6 +21,10 @@ func kotlinLanguageDefinition() *languageDefinition {
 	return jvmLanguageDefinition("kotlin", nearestJVMRoot)
 }
 
+func cSharpLanguageDefinition() *languageDefinition {
+	return jvmLanguageDefinition("csharp", nearestCSharpRoot)
+}
+
 func jvmLanguageDefinition(language string, projectRoot func(string) string) *languageDefinition {
 	return &languageDefinition{
 		info:          Language{ID: language, Extensions: parserLanguageExtensions(language), FocusedStructure: true, FocusedFlow: true},
@@ -54,6 +58,25 @@ func normalizeJVMType(value, language string) string {
 		value = regexp.MustCompile(`\b`+source+`\b`).ReplaceAllString(value, target)
 	}
 	return value
+}
+
+func nearestCSharpRoot(directory string) string {
+	return nearestMarkedRoot(directory, []string{"*.sln", "*.csproj", "*.fsproj"})
+}
+
+func nearestMarkedRoot(directory string, patterns []string) string {
+	for current := directory; ; current = filepath.Dir(current) {
+		for _, pattern := range patterns {
+			matches, _ := filepath.Glob(filepath.Join(current, pattern))
+			if len(matches) > 0 {
+				return current
+			}
+		}
+		parent := filepath.Dir(current)
+		if parent == current {
+			return ""
+		}
+	}
 }
 
 func nearestJVMRoot(directory string) string {
@@ -140,12 +163,119 @@ func (analyzer *jvmSourceAnalyzer) analyzeType(node, envelope codeparser.ViewNod
 		if node.Kind() == "class_declaration" || node.Kind() == "object_declaration" {
 			analyzer.analyzeKotlinType(node, envelope)
 		}
+	case "csharp":
+		if isCSharpTypeNode(node.Kind()) {
+			analyzer.analyzeCSharpType(node, envelope)
+		}
 	}
 }
 
 func isJavaTypeNode(kind string) bool {
 	switch kind {
 	case "class_declaration", "interface_declaration", "enum_declaration", "record_declaration":
+		return true
+	default:
+		return false
+	}
+}
+
+func (analyzer *jvmSourceAnalyzer) analyzeCSharpType(node, envelope codeparser.ViewNode) {
+	name := node.ChildByFieldName("name").Text()
+	if name == "" {
+		return
+	}
+	kind := "class"
+	if node.Kind() == "interface_declaration" {
+		kind = "interface"
+	}
+	declaration := analyzer.newDeclaration(name, kind, envelope)
+	collectCSharpHeritage(node, declaration)
+	analyzer.collectCSharpMembers(node, declaration)
+	analyzer.storeDeclaration(declaration, envelope)
+}
+
+func collectCSharpHeritage(node codeparser.ViewNode, declaration *Declaration) {
+	bases := node.ChildByFieldName("bases")
+	if !bases.Valid() {
+		bases = directChildByKind(node, "base_list")
+	}
+	names := []string{}
+	for _, child := range bases.NamedChildren() {
+		name := strings.TrimSpace(strings.TrimPrefix(child.Text(), ":"))
+		if name != "" {
+			names = append(names, name)
+		}
+	}
+	for index, name := range names {
+		if declaration.Kind == "interface" || index == 0 {
+			declaration.Extends[name] = true
+		} else {
+			declaration.Implements[name] = true
+		}
+	}
+}
+
+func (analyzer *jvmSourceAnalyzer) collectCSharpMembers(node codeparser.ViewNode, declaration *Declaration) {
+	body := node.ChildByFieldName("body")
+	fallback := "private"
+	if declaration.Kind == "interface" {
+		fallback = "public"
+	}
+	for _, child := range body.NamedChildren() {
+		switch child.Kind() {
+		case "method_declaration", "constructor_declaration":
+			declaration.Members = appendJVMMember(declaration.Members, analyzer.cSharpMethodMember(child, fallback))
+		case "property_declaration":
+			member := analyzer.jvmProperty(child.ChildByFieldName("name").Text(), normalizeJVMType(child.ChildByFieldName("type").Text(), "csharp"), child, hasJVMModifier(child, "static"))
+			member.Visibility = jvmVisibility(child, fallback)
+			declaration.Members = appendJVMMember(declaration.Members, member)
+		case "field_declaration":
+			for _, member := range analyzer.cSharpFieldMembers(child, fallback) {
+				declaration.Members = appendJVMMember(declaration.Members, member)
+			}
+		case "enum_member_declaration":
+			member := analyzer.jvmProperty(child.ChildByFieldName("name").Text(), declaration.Name, child, true)
+			member.Visibility = "public"
+			declaration.Members = appendJVMMember(declaration.Members, member)
+		default:
+			analyzer.analyzeType(child, child)
+		}
+	}
+}
+
+func (analyzer *jvmSourceAnalyzer) cSharpMethodMember(node codeparser.ViewNode, fallback string) Member {
+	returnType := node.ChildByFieldName("type").Text()
+	if returnType == "" {
+		returnType = node.ChildByFieldName("returns").Text()
+	}
+	return Member{
+		Kind: "method", Name: node.ChildByFieldName("name").Text(), Visibility: jvmVisibility(node, fallback),
+		Type: normalizeJVMType(returnType, "csharp"), Language: analyzer.language,
+		ModuleID: analyzer.moduleID, File: analyzer.stablePath(), Static: hasJVMModifier(node, "static"),
+		Parameters: javaParameterTypes(node.ChildByFieldName("parameters")), Location: analyzer.location(node),
+	}
+}
+
+func (analyzer *jvmSourceAnalyzer) cSharpFieldMembers(node codeparser.ViewNode, fallback string) []Member {
+	typeName := normalizeJVMType(node.ChildByFieldName("type").Text(), "csharp")
+	if typeName == "" {
+		typeName = normalizeJVMType(firstDescendantText(node, "predefined_type", "identifier", "generic_name"), "csharp")
+	}
+	result := []Member{}
+	codeparser.WalkNamedView(node, func(child codeparser.ViewNode) {
+		if child.Kind() != "variable_declarator" {
+			return
+		}
+		member := analyzer.jvmProperty(child.ChildByFieldName("name").Text(), typeName, node, hasJVMModifier(node, "static"))
+		member.Visibility = jvmVisibility(node, fallback)
+		result = append(result, member)
+	})
+	return result
+}
+
+func isCSharpTypeNode(kind string) bool {
+	switch kind {
+	case "class_declaration", "interface_declaration", "struct_declaration", "record_declaration", "enum_declaration":
 		return true
 	default:
 		return false
@@ -515,7 +645,13 @@ func jvmModifiers(node codeparser.ViewNode) string {
 	if modifiers := directChildByKind(node, "modifiers"); modifiers.Valid() {
 		return modifiers.Text()
 	}
-	return ""
+	var modifiers []string
+	for _, child := range node.NamedChildren() {
+		if child.Kind() == "modifier" {
+			modifiers = append(modifiers, child.Text())
+		}
+	}
+	return strings.Join(modifiers, " ")
 }
 
 func containsWord(text, word string) bool {

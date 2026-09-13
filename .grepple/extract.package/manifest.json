@@ -20,12 +20,12 @@
     "declarations": 68,
     "exportedTypes": 42,
     "internalTypes": 26,
-    "members": 550,
+    "members": 554,
     "exportedFunctions": 28,
     "fiberRoutes": 0,
-    "relations": 213
+    "relations": 216
   },
-  "semanticModelDigest": "sha256:db0e1c3c03199e0f91b1be51ef5eb9f29886a67be5b74177ebae02b61b5fb1cb",
+  "semanticModelDigest": "sha256:0fc6188bff1e53e771681b4eed1f0c3515a9e1730e7cbc5710fe41757227dbc1",
   "sourceFiles": [
     {
       "path": "extract/analyze.go"
@@ -4556,8 +4556,8 @@
         {
           "name": "Analyze",
           "kind": "method",
-          "line": 100,
-          "endLine": 119,
+          "line": 123,
+          "endLine": 142,
           "parameters": [
             "Source"
           ],
@@ -4566,8 +4566,8 @@
         {
           "name": "Finalize",
           "kind": "method",
-          "line": 121,
-          "endLine": 124,
+          "line": 144,
+          "endLine": 147,
           "result": "error"
         },
         {
@@ -4590,25 +4590,35 @@
       "name": "jvmSourceAnalyzer",
       "kind": "struct",
       "file": "extract/jvm_language.go",
-      "line": 126,
-      "endLine": 131,
+      "line": 149,
+      "endLine": 154,
       "underlyingType": "struct{result*Analysis;source Source;moduleID string;language string;}",
       "members": [
         {
           "name": "addTypeSymbol",
           "kind": "method",
-          "line": 565,
-          "endLine": 571,
+          "line": 701,
+          "endLine": 707,
           "parameters": [
             "string",
             "codeparser.ViewNode"
           ]
         },
         {
+          "name": "analyzeCSharpType",
+          "kind": "method",
+          "line": 182,
+          "endLine": 195,
+          "parameters": [
+            "codeparser.ViewNode",
+            "codeparser.ViewNode"
+          ]
+        },
+        {
           "name": "analyzeJavaType",
           "kind": "method",
-          "line": 173,
-          "endLine": 186,
+          "line": 303,
+          "endLine": 316,
           "parameters": [
             "codeparser.ViewNode",
             "codeparser.ViewNode"
@@ -4617,8 +4627,8 @@
         {
           "name": "analyzeKotlinType",
           "kind": "method",
-          "line": 319,
-          "endLine": 333,
+          "line": 449,
+          "endLine": 463,
           "parameters": [
             "codeparser.ViewNode",
             "codeparser.ViewNode"
@@ -4627,18 +4637,50 @@
         {
           "name": "analyzeType",
           "kind": "method",
-          "line": 133,
-          "endLine": 144,
+          "line": 156,
+          "endLine": 171,
           "parameters": [
             "codeparser.ViewNode",
             "codeparser.ViewNode"
           ]
         },
         {
+          "name": "cSharpFieldMembers",
+          "kind": "method",
+          "line": 259,
+          "endLine": 274,
+          "parameters": [
+            "codeparser.ViewNode",
+            "string"
+          ],
+          "result": "[]Member"
+        },
+        {
+          "name": "cSharpMethodMember",
+          "kind": "method",
+          "line": 246,
+          "endLine": 257,
+          "parameters": [
+            "codeparser.ViewNode",
+            "string"
+          ],
+          "result": "Member"
+        },
+        {
+          "name": "collectCSharpMembers",
+          "kind": "method",
+          "line": 218,
+          "endLine": 244,
+          "parameters": [
+            "codeparser.ViewNode",
+            "*Declaration"
+          ]
+        },
+        {
           "name": "collectJavaMembers",
           "kind": "method",
-          "line": 233,
-          "endLine": 262,
+          "line": 363,
+          "endLine": 392,
           "parameters": [
             "codeparser.ViewNode",
             "*Declaration"
@@ -4647,8 +4689,8 @@
         {
           "name": "collectKotlinConstructorProperties",
           "kind": "method",
-          "line": 361,
-          "endLine": 377,
+          "line": 491,
+          "endLine": 507,
           "parameters": [
             "codeparser.ViewNode",
             "*Declaration"
@@ -4657,8 +4699,8 @@
         {
           "name": "collectKotlinMembers",
           "kind": "method",
-          "line": 379,
-          "endLine": 397,
+          "line": 509,
+          "endLine": 527,
           "parameters": [
             "codeparser.ViewNode",
             "*Declaration"
@@ -4667,8 +4709,8 @@
         {
           "name": "javaFieldMembers",
           "kind": "method",
-          "line": 296,
-          "endLine": 308,
+          "line": 426,
+          "endLine": 438,
           "parameters": [
             "codeparser.ViewNode",
             "string",
@@ -4679,8 +4721,8 @@
         {
           "name": "javaMethodMember",
           "kind": "method",
-          "line": 271,
-          "endLine": 279,
+          "line": 401,
+          "endLine": 409,
           "parameters": [
             "codeparser.ViewNode",
             "string"
@@ -4690,8 +4732,8 @@
         {
           "name": "javaRecordMember",
           "kind": "method",
-          "line": 310,
-          "endLine": 317,
+          "line": 440,
+          "endLine": 447,
           "parameters": [
             "codeparser.ViewNode"
           ],
@@ -4700,8 +4742,8 @@
         {
           "name": "jvmProperty",
           "kind": "method",
-          "line": 472,
-          "endLine": 480,
+          "line": 602,
+          "endLine": 610,
           "parameters": [
             "string",
             "string",
@@ -4713,8 +4755,8 @@
         {
           "name": "kotlinMethodMember",
           "kind": "method",
-          "line": 399,
-          "endLine": 406,
+          "line": 529,
+          "endLine": 536,
           "parameters": [
             "codeparser.ViewNode"
           ],
@@ -4723,8 +4765,8 @@
         {
           "name": "kotlinPropertyMember",
           "kind": "method",
-          "line": 435,
-          "endLine": 444,
+          "line": 565,
+          "endLine": 574,
           "parameters": [
             "codeparser.ViewNode"
           ],
@@ -4733,8 +4775,8 @@
         {
           "name": "location",
           "kind": "method",
-          "line": 577,
-          "endLine": 581,
+          "line": 713,
+          "endLine": 717,
           "parameters": [
             "codeparser.ViewNode"
           ],
@@ -4743,8 +4785,8 @@
         {
           "name": "newDeclaration",
           "kind": "method",
-          "line": 155,
-          "endLine": 161,
+          "line": 285,
+          "endLine": 291,
           "parameters": [
             "string",
             "string",
@@ -4755,15 +4797,15 @@
         {
           "name": "stablePath",
           "kind": "method",
-          "line": 573,
-          "endLine": 575,
+          "line": 709,
+          "endLine": 711,
           "result": "string"
         },
         {
           "name": "storeDeclaration",
           "kind": "method",
-          "line": 163,
-          "endLine": 171,
+          "line": 293,
+          "endLine": 301,
           "parameters": [
             "*Declaration",
             "codeparser.ViewNode"
@@ -4772,29 +4814,29 @@
         {
           "name": "language",
           "kind": "property",
-          "line": 130,
-          "endLine": 130,
+          "line": 153,
+          "endLine": 153,
           "result": "string"
         },
         {
           "name": "moduleID",
           "kind": "property",
-          "line": 129,
-          "endLine": 129,
+          "line": 152,
+          "endLine": 152,
           "result": "string"
         },
         {
           "name": "result",
           "kind": "property",
-          "line": 127,
-          "endLine": 127,
+          "line": 150,
+          "endLine": 150,
           "result": "*Analysis"
         },
         {
           "name": "source",
           "kind": "property",
-          "line": 128,
-          "endLine": 128,
+          "line": 151,
+          "endLine": 151,
           "result": "Source"
         }
       ]
@@ -7006,6 +7048,13 @@
       "from": "jvmSourceAnalyzer",
       "to": "Declaration",
       "kind": "dependency",
+      "via": "method collectCSharpMembers parameter 2",
+      "cardinality": "one"
+    },
+    {
+      "from": "jvmSourceAnalyzer",
+      "to": "Declaration",
+      "kind": "dependency",
       "via": "method collectJavaMembers parameter 2",
       "cardinality": "one"
     },
@@ -7042,6 +7091,20 @@
       "to": "Location",
       "kind": "dependency",
       "via": "method location result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "jvmSourceAnalyzer",
+      "to": "Member",
+      "kind": "dependency",
+      "via": "method cSharpFieldMembers result 1",
+      "cardinality": "many"
+    },
+    {
+      "from": "jvmSourceAnalyzer",
+      "to": "Member",
+      "kind": "dependency",
+      "via": "method cSharpMethodMember result 1",
       "cardinality": "one"
     },
     {

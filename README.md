@@ -211,7 +211,7 @@ grepple graph impact --symbol runExtract --depth 2 --compact ./internal/cli
 
 ## Architecture and flow extraction
 
-`grepple extract` creates deterministic, self-validated Mermaid navigation maps from Tree-sitter source analysis. Focused structure and flow extraction support Go, JavaScript/JSX, TypeScript/TSX, Python, Java, and Kotlin; canonical package and workspace bundles remain Go-specific. Python covers classes, inheritance, annotated and unannotated attributes, decorators, and `.pyi` stubs. Java and Kotlin cover their class/interface models, inheritance, fields/properties, methods, records/data classes, enums, and objects. Generic callable declarations and calls use the normalized `parser.NavigationGraph` shared with `--at` and `--related`; focused flow generation and validation consume those enriched edges directly.
+`grepple extract` creates deterministic, self-validated Mermaid navigation maps from Tree-sitter source analysis. Focused structure and flow extraction support Go, JavaScript/JSX, TypeScript/TSX, Python, Java, Kotlin, and C#; canonical package and workspace bundles remain Go-specific. Python covers classes, inheritance, annotated and unannotated attributes, decorators, and `.pyi` stubs. Java, Kotlin, and C# cover their class/interface models, inheritance, fields/properties, methods, records/data classes, enums, and objects where applicable. Generic callable declarations and calls use the normalized `parser.NavigationGraph` shared with `--at` and `--related`; focused flow generation and validation consume those enriched edges directly.
 
 ```bash
 grepple extract structure internal/cli

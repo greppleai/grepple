@@ -8,7 +8,7 @@ import (
 
 func TestSupportedLanguagesAreStableAndDefensive(t *testing.T) {
 	languages := SupportedLanguages()
-	if len(languages) != 6 {
+	if len(languages) != 7 {
 		t.Fatalf("SupportedLanguages() = %#v", languages)
 	}
 	if languages[0].ID != "go" || !reflect.DeepEqual(languages[0].Extensions, []string{".go"}) || !languages[0].FocusedStructure || !languages[0].FocusedFlow || !languages[0].PackageBundle || !languages[0].WorkspaceBundle {
@@ -26,10 +26,10 @@ func TestSupportedLanguagesAreStableAndDefensive(t *testing.T) {
 	for index, expected := range []struct {
 		id         string
 		extensions []string
-	}{{"java", []string{".java"}}, {"kotlin", []string{".kt", ".kts"}}} {
+	}{{"java", []string{".java"}}, {"kotlin", []string{".kt", ".kts"}}, {"csharp", []string{".cs"}}} {
 		language := languages[index+4]
 		if language.ID != expected.id || !reflect.DeepEqual(language.Extensions, expected.extensions) || !language.FocusedStructure || !language.FocusedFlow || language.PackageBundle || language.WorkspaceBundle {
-			t.Fatalf("JVM adapter metadata = %#v", language)
+			t.Fatalf("class-model adapter metadata = %#v", language)
 		}
 	}
 	languages[0].Extensions[0] = ".changed"

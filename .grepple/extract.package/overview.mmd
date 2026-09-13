@@ -2,7 +2,7 @@ classDiagram
     %% grepple:package-default github.com/greppleai/grepple/extract
     %% grepple:language-default go
     direction LR
-    note "Package extract validates and generates source-linked Mermaid structure and flow diagrams. | package github.com/greppleai/grepple/extract | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=27, declarations=68, exportedTypes=42, internalTypes=26, members=550, exportedFunctions=28, fiberRoutes=0, relations=213"
+    note "Package extract validates and generates source-linked Mermaid structure and flow diagrams. | package github.com/greppleai/grepple/extract | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=27, declarations=68, exportedTypes=42, internalTypes=26, members=554, exportedFunctions=28, fiberRoutes=0, relations=216"
     namespace interfaces {
         class languageAnalysis["languageAnalysis · extract/language.go:22-25"] {
             +Analyze(Source): error
@@ -248,7 +248,7 @@ classDiagram
         <<struct>> javaScriptAnalysis
         class jvmAnalysis["jvmAnalysis · extract/jvm_language.go:11-14"]
         <<struct>> jvmAnalysis
-        class jvmSourceAnalyzer["jvmSourceAnalyzer · extract/jvm_language.go:126-131"]
+        class jvmSourceAnalyzer["jvmSourceAnalyzer · extract/jvm_language.go:149-154"]
         <<struct>> jvmSourceAnalyzer
         class languageDefinition["languageDefinition · extract/language.go:30-41"]
         <<struct>> languageDefinition
@@ -498,10 +498,10 @@ classDiagram
     jvmAnalysis "1" ..> "1" Source : method Analyze parameter 1
     languageAnalysis <|.. jvmAnalysis : implements
     jvmSourceAnalyzer "1" --> "1" Analysis : field result
-    jvmSourceAnalyzer "1" ..> "1" Declaration : method-parameter=4; method-result=1
+    jvmSourceAnalyzer "1" ..> "1" Declaration : method-parameter=5; method-result=1
     jvmSourceAnalyzer "1" ..> "1" Location : method location result 1
-    jvmSourceAnalyzer "1" ..> "*" Member : method javaFieldMembers result 1
-    jvmSourceAnalyzer "1" ..> "1" Member : method-result=5
+    jvmSourceAnalyzer "1" ..> "*" Member : method cSharpFieldMembers result 1; method javaFieldMembers result 1
+    jvmSourceAnalyzer "1" ..> "1" Member : method-result=6
     jvmSourceAnalyzer "1" --> "1" Source : field source
     languageAnalysis "1" ..> "1" Source : method Analyze parameter 1
     languageDefinition "1" --> "1" Analysis : field newAnalysis; field validFlowEdge

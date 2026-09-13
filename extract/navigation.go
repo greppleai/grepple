@@ -51,7 +51,7 @@ func navigationDeclarationSymbol(analysis *Analysis, declaration *codeparser.Nav
 	switch declaration.Language {
 	case "go":
 		symbols = analysis.GoSymbolIndex
-	case "javascript", "typescript", "tsx", "python", "java", "kotlin":
+	case "javascript", "typescript", "tsx", "python", "java", "kotlin", "csharp":
 		symbols = analysis.TSSymbolIndex
 	default:
 		return nil
@@ -116,7 +116,7 @@ func resolveNavigationCallTarget(analysis *Analysis, owner *Symbol, call *codepa
 	if owner.Language == "python" {
 		return resolvePythonNavigationCall(analysis, owner, call.ResolvedName)
 	}
-	if owner.Language == "java" || owner.Language == "kotlin" {
+	if owner.Language == "java" || owner.Language == "kotlin" || owner.Language == "csharp" {
 		return resolveJVMNavigationCall(analysis, owner, call.ResolvedName)
 	}
 	return nil
@@ -279,14 +279,14 @@ func navigationCallName(owner *Symbol, call *codeparser.NavigationCall) string {
 	if owner.Language == "python" && (parts[0] == "self" || parts[0] == "cls") && owner.Owner != "" {
 		return owner.Owner + "." + parts[1]
 	}
-	if (owner.Language == "java" || owner.Language == "kotlin") && parts[0] == "this" && owner.Owner != "" {
+	if (owner.Language == "java" || owner.Language == "kotlin" || owner.Language == "csharp") && parts[0] == "this" && owner.Owner != "" {
 		return owner.Owner + "." + parts[1]
 	}
 	return display
 }
 
 func navigationResolutionConfidence(owner *Symbol, call *codeparser.NavigationCall, target *Symbol) string {
-	if (owner.Language == "python" || owner.Language == "java" || owner.Language == "kotlin") && navigationSymbolScope(owner) != navigationSymbolScope(target) {
+	if (owner.Language == "python" || owner.Language == "java" || owner.Language == "kotlin" || owner.Language == "csharp") && navigationSymbolScope(owner) != navigationSymbolScope(target) {
 		return "unique-terminal"
 	}
 	if call.Display == target.Name || call.Name == target.Name && !strings.Contains(call.Display, ".") {
