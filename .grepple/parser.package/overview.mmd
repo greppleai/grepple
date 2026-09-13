@@ -2,15 +2,35 @@ classDiagram
     %% grepple:package-default github.com/greppleai/grepple/parser
     %% grepple:language-default go
     direction LR
-    note "Package parser provides application source classification and structural parsing. | package github.com/greppleai/grepple/parser | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=30, declarations=51, exportedTypes=21, internalTypes=30, members=329, exportedFunctions=21, fiberRoutes=0, relations=139"
+    note "Package parser provides application source classification and structural parsing. | package github.com/greppleai/grepple/parser | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=32, declarations=53, exportedTypes=21, internalTypes=32, members=383, exportedFunctions=21, fiberRoutes=0, relations=182"
     namespace interfaces {
-        class languageAdapter["languageAdapter · parser/language.go:75-80"] {
+        class languageAdapter["languageAdapter · parser/language.go:75-81"] {
             +Grammar(): *sitter.Language
             +ID(): string
+            +Navigation(): navigationAdapter
             +Outline(*sitter.Node, string): []Symbol
             +Rules(): *structureRules
         }
         <<interface>> languageAdapter
+        class navigationAdapter["navigationAdapter · parser/navigation_adapter.go:23-40"] {
+            +CallableReturnBinding(*sitter.Node, string, map[string]navigationImport): navigationBinding
+            +ContainerName(*sitter.Node, string, *navigationEnvelope): string
+            +DeclarationKind(*sitter.Node, string): string
+            +DeclarationName(*sitter.Node, string, *navigationEnvelope): string
+            +IsCall(string): bool
+            +IsCallable(*sitter.Node): bool
+            +IsContainer(string): bool
+            +IsFieldContainer(string): bool
+            +IsNestedBindingScope(string): bool
+            +IsWrapper(string): bool
+            +RequiresContainer(*sitter.Node): bool
+            +ReturnCallableName(*sitter.Node, string, string): string
+            +Rules(): *structureRules
+            +SelfBinding(string): tuple~string&#44;navigationBinding&#44;bool~
+            +SourceFacts(*sitter.Node, string): tuple~map[string]navigationImport&#44;string&#44;map[string]map[string]navigationBinding~
+            +Visibility(*sitter.Node, string, string): NavigationVisibility
+        }
+        <<interface>> navigationAdapter
     }
     namespace data_contracts {
         class FileOutline["FileOutline · parser/model.go:22-26"] {
@@ -85,7 +105,7 @@ classDiagram
         <<type>> GrammarCardinality
         class LanguageCapabilities["LanguageCapabilities · parser/language.go:8-14"]
         <<struct>> LanguageCapabilities
-        class NavigationVisibility["NavigationVisibility = string · parser/navigation_visibility.go:12"]
+        class NavigationVisibility["NavigationVisibility = string · parser/language_navigation_visibility.go:12"]
         <<type>> NavigationVisibility
         class Node["Node · parser/document.go:50-54"]
         <<struct>> Node
@@ -135,15 +155,17 @@ classDiagram
         <<struct>> mdHeading
         class mdNode["mdNode · parser/markdown.go:135-139"]
         <<struct>> mdNode
+        class navigationAdapterConfig["navigationAdapterConfig · parser/navigation_adapter.go:42-60"]
+        <<struct>> navigationAdapterConfig
         class navigationBinding["navigationBinding · parser/navigation_context.go:16-22"]
         <<struct>> navigationBinding
-        class navigationCollector["navigationCollector · parser/navigation.go:143-154"]
+        class navigationCollector["navigationCollector · parser/navigation.go:144-155"]
         <<struct>> navigationCollector
-        class navigationEnvelope["navigationEnvelope · parser/navigation.go:156-160"]
+        class navigationEnvelope["navigationEnvelope · parser/navigation.go:157-161"]
         <<struct>> navigationEnvelope
         class navigationImport["navigationImport · parser/navigation_context.go:11-14"]
         <<struct>> navigationImport
-        class navigationWalkContext["navigationWalkContext · parser/navigation.go:162-167"]
+        class navigationWalkContext["navigationWalkContext · parser/navigation.go:163-168"]
         <<struct>> navigationWalkContext
         class pooledParser["pooledParser · parser/tree_sitter.go:21-24"]
         <<struct>> pooledParser
@@ -177,11 +199,11 @@ classDiagram
             +BuildSegments(string, string, map[int]bool, int): []Segment
         }
         <<function>> BuildSegments
-        class CapabilitiesForLanguage["CapabilitiesForLanguage · parser/language.go:139-146"] {
+        class CapabilitiesForLanguage["CapabilitiesForLanguage · parser/language.go:142-149"] {
             +CapabilitiesForLanguage(string): tuple~LanguageCapabilities&#44;bool~
         }
         <<function>> CapabilitiesForLanguage
-        class DeclarationRangeAt["DeclarationRangeAt · parser/navigation.go:127-141"] {
+        class DeclarationRangeAt["DeclarationRangeAt · parser/navigation.go:128-142"] {
             +DeclarationRangeAt(string, string, int): tuple~int&#44;int&#44;bool~
         }
         <<function>> DeclarationRangeAt
@@ -189,15 +211,15 @@ classDiagram
             +EnclosingLineRanges(string, string, map[int]bool): map[int]StructuralLineRange
         }
         <<function>> EnclosingLineRanges
-        class GrammarChildrenCardinality["GrammarChildrenCardinality · parser/language.go:169-175"] {
+        class GrammarChildrenCardinality["GrammarChildrenCardinality · parser/language.go:172-178"] {
             +GrammarChildrenCardinality(string, string): GrammarCardinality
         }
         <<function>> GrammarChildrenCardinality
-        class GrammarFieldCardinality["GrammarFieldCardinality · parser/language.go:160-166"] {
+        class GrammarFieldCardinality["GrammarFieldCardinality · parser/language.go:163-169"] {
             +GrammarFieldCardinality(string, string, string): GrammarCardinality
         }
         <<function>> GrammarFieldCardinality
-        class GrammarSubtype["GrammarSubtype · parser/language.go:179-182"] {
+        class GrammarSubtype["GrammarSubtype · parser/language.go:182-185"] {
             +GrammarSubtype(string, string, string): bool
         }
         <<function>> GrammarSubtype
@@ -213,7 +235,7 @@ classDiagram
             +NavigationGraphFromDocument(*Document, string): NavigationGraph
         }
         <<function>> NavigationGraphFromDocument
-        class NavigationGraphFromTree["NavigationGraphFromTree · parser/navigation.go:114-124"] {
+        class NavigationGraphFromTree["NavigationGraphFromTree · parser/navigation.go:114-125"] {
             +NavigationGraphFromTree(*sitter.Node, string, string, string): NavigationGraph
         }
         <<function>> NavigationGraphFromTree
@@ -233,11 +255,11 @@ classDiagram
             +StructuralLineRanges(string, string, map[int]bool): map[int]StructuralLineRange
         }
         <<function>> StructuralLineRanges
-        class SupportedContentLanguages["SupportedContentLanguages · parser/language.go:122-136"] {
+        class SupportedContentLanguages["SupportedContentLanguages · parser/language.go:125-139"] {
             +SupportedContentLanguages(): []ContentLanguageCapabilities
         }
         <<function>> SupportedContentLanguages
-        class SupportedLanguages["SupportedLanguages · parser/language.go:113-119"] {
+        class SupportedLanguages["SupportedLanguages · parser/language.go:116-122"] {
             +SupportedLanguages(): []LanguageCapabilities
         }
         <<function>> SupportedLanguages
@@ -299,60 +321,92 @@ classDiagram
     WalkNamedViewBounded "1" ..> "1" WalkResult : result 1
     cLanguage "1" ..> "*" Symbol : method Outline result 1
     languageAdapter <|.. cLanguage : implements
+    cLanguage "1" ..> "1" navigationAdapter : method Navigation result 1
     cLanguage "1" --> "1" structureRules : field rules
     cLanguage "1" ..> "1" structureRules : method Rules result 1
     cSharpLanguage "1" ..> "*" Symbol : method Outline result 1
     languageAdapter <|.. cSharpLanguage : implements
+    cSharpLanguage "1" ..> "1" navigationAdapter : method Navigation result 1
     cSharpLanguage "1" --> "1" structureRules : field rules
     cSharpLanguage "1" ..> "1" structureRules : method Rules result 1
     cppLanguage "1" ..> "*" Symbol : method Outline result 1
     languageAdapter <|.. cppLanguage : implements
+    cppLanguage "1" ..> "1" navigationAdapter : method Navigation result 1
     cppLanguage "1" --> "1" structureRules : field rules
     cppLanguage "1" ..> "1" structureRules : method Rules result 1
     documentViewState "1" --> "*" SyntaxNode : field snapshots
     documentViewState "1" --> "*" viewSnapshotKey : field snapshots
     goLanguage "1" ..> "*" Symbol : method Outline result 1
     languageAdapter <|.. goLanguage : implements
+    goLanguage "1" ..> "1" navigationAdapter : method Navigation result 1
     goLanguage "1" --> "1" structureRules : field rules
     goLanguage "1" ..> "1" structureRules : method Rules result 1
     javaLanguage "1" ..> "*" Symbol : method Outline result 1
     languageAdapter <|.. javaLanguage : implements
+    javaLanguage "1" ..> "1" navigationAdapter : method Navigation result 1
     javaLanguage "1" --> "1" structureRules : field rules
     javaLanguage "1" ..> "1" structureRules : method Rules result 1
     javaScriptLanguage "1" ..> "*" Symbol : method Outline result 1
     languageAdapter <|.. javaScriptLanguage : implements
+    javaScriptLanguage "1" ..> "1" navigationAdapter : method Navigation result 1
     javaScriptLanguage "1" --> "1" structureRules : field rules
     javaScriptLanguage "1" ..> "1" structureRules : method Rules result 1
     kotlinLanguage "1" ..> "*" Symbol : method Outline result 1
     languageAdapter <|.. kotlinLanguage : implements
+    kotlinLanguage "1" ..> "1" navigationAdapter : method Navigation result 1
     kotlinLanguage "1" --> "1" structureRules : field rules
     kotlinLanguage "1" ..> "1" structureRules : method Rules result 1
     languageAdapter "1" ..> "*" Symbol : method Outline result 1
+    languageAdapter "1" ..> "1" navigationAdapter : method Navigation result 1
     languageAdapter "1" ..> "1" structureRules : method Rules result 1
     languageGeneratedMetadata "1" --> "*" GrammarCardinality : field children; field fields
     mdNode "1" --> "1" Symbol : field sym
+    navigationAdapter "1" ..> "1" NavigationVisibility : method Visibility result 1
+    navigationAdapter "1" ..> "*" navigationBinding : method SourceFacts result 3
+    navigationAdapter "1" ..> "1" navigationBinding : method CallableReturnBinding result 1; method SelfBinding result 2
+    navigationAdapter "1" ..> "1" navigationEnvelope : method ContainerName parameter 3; method DeclarationName parameter 3
+    navigationAdapter "1" ..> "*" navigationImport : method CallableReturnBinding parameter 3; method SourceFacts result 1
+    navigationAdapter "1" ..> "1" structureRules : method Rules result 1
+    navigationAdapterConfig "1" --> "1" NavigationVisibility : field visibility
+    navigationAdapterConfig "1" ..> "1" NavigationVisibility : method Visibility result 1
+    navigationAdapter <|.. navigationAdapterConfig : implements
+    navigationAdapterConfig "1" --> "*" navigationBinding : field sourceFacts
+    navigationAdapterConfig "1" --> "1" navigationBinding : field callableReturnBinding
+    navigationAdapterConfig "1" ..> "*" navigationBinding : method SourceFacts result 3
+    navigationAdapterConfig "1" ..> "1" navigationBinding : method CallableReturnBinding result 1; method SelfBinding result 2
+    navigationAdapterConfig "1" --> "1" navigationEnvelope : field containerName; field declarationName
+    navigationAdapterConfig "1" ..> "1" navigationEnvelope : method ContainerName parameter 3; method DeclarationName parameter 3
+    navigationAdapterConfig "1" --> "*" navigationImport : field callableReturnBinding; field sourceFacts
+    navigationAdapterConfig "1" ..> "*" navigationImport : method CallableReturnBinding parameter 3; method SourceFacts result 1
+    navigationAdapterConfig "1" --> "1" stringSet : field=5
+    navigationAdapterConfig "1" --> "1" structureRules : field rules
+    navigationAdapterConfig "1" ..> "1" structureRules : method Rules result 1
     navigationCollector "1" --> "*" NavigationCall : field calls
     navigationCollector "1" --> "*" NavigationDeclaration : field declarations
     navigationCollector "1" ..> "1" NavigationDeclaration : method recordNavigationCall parameter 2
+    navigationCollector "1" --> "1" languageAdapter : field adapter
+    navigationCollector "1" --> "1" navigationAdapter : field navigation
     navigationCollector "1" --> "*" navigationBinding : field fields; field returnBindings
     navigationCollector "1" ..> "*" navigationBinding : method recordNavigationCall parameter 3
-    navigationCollector "1" ..> "1" navigationEnvelope : method-parameter=4; method-result=1
+    navigationCollector "1" ..> "1" navigationEnvelope : method navigationDeclarationRange parameter 2; method wrapperEnvelope parameter 2; method wrapperEnvelope result 1
     navigationCollector "1" --> "*" navigationImport : field imports
     navigationCollector "1" ..> "1" navigationWalkContext : method-parameter=3; method-result=1
-    navigationCollector "1" --> "1" structureRules : field rules
     navigationWalkContext "1" --> "1" NavigationDeclaration : field callable
     navigationWalkContext "1" --> "*" navigationBinding : field bindings
     navigationWalkContext "1" --> "1" navigationEnvelope : field envelope
     pythonLanguage "1" ..> "*" Symbol : method Outline result 1
     languageAdapter <|.. pythonLanguage : implements
+    pythonLanguage "1" ..> "1" navigationAdapter : method Navigation result 1
     pythonLanguage "1" --> "1" structureRules : field rules
     pythonLanguage "1" ..> "1" structureRules : method Rules result 1
     rustLanguage "1" ..> "*" Symbol : method Outline result 1
     languageAdapter <|.. rustLanguage : implements
+    rustLanguage "1" ..> "1" navigationAdapter : method Navigation result 1
     rustLanguage "1" --> "1" structureRules : field rules
     rustLanguage "1" ..> "1" structureRules : method Rules result 1
     shellLanguage "1" ..> "*" Symbol : method Outline result 1
     languageAdapter <|.. shellLanguage : implements
+    shellLanguage "1" ..> "1" navigationAdapter : method Navigation result 1
     shellLanguage "1" --> "1" structureRules : field rules
     shellLanguage "1" ..> "1" structureRules : method Rules result 1
     structuralLineCandidate "1" --> "1" StructuralLineRange : field rangeValue
@@ -363,6 +417,7 @@ classDiagram
     structureRules "1" --> "1" stringSet : field=10
     typeScriptLanguage "1" ..> "*" Symbol : method Outline result 1
     languageAdapter <|.. typeScriptLanguage : implements
+    typeScriptLanguage "1" ..> "1" navigationAdapter : method Navigation result 1
     typeScriptLanguage "1" --> "1" structureRules : field rules
     typeScriptLanguage "1" ..> "1" structureRules : method Rules result 1
     viewWalkItem "1" --> "1" ViewNode : field node

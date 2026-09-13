@@ -76,6 +76,7 @@ type languageAdapter interface {
 	ID() string
 	Grammar() *sitter.Language
 	Rules() *structureRules
+	Navigation() navigationAdapter
 	Outline(root *sitter.Node, content string) []Symbol
 }
 
@@ -93,6 +94,8 @@ var languageAdapters = buildLanguageAdapters(
 	newRustLanguage(),
 	newShellLanguage(),
 )
+
+var navigationAdapters = buildNavigationAdapters(languageAdapters)
 
 var languageCapabilities = []LanguageCapabilities{
 	{ID: "go", Extensions: []string{".go"}, Navigation: true},
@@ -187,6 +190,18 @@ func buildLanguageAdapters(adapters ...languageAdapter) map[string]languageAdapt
 		registry[adapter.ID()] = adapter
 	}
 	return registry
+}
+
+func buildNavigationAdapters(adapters map[string]languageAdapter) map[string]navigationAdapter {
+	registry := make(map[string]navigationAdapter, len(adapters))
+	for id, adapter := range adapters {
+		registry[id] = adapter.Navigation()
+	}
+	return registry
+}
+
+func navigationAdapterForLanguage(id string) navigationAdapter {
+	return navigationAdapters[id]
 }
 
 func adapterForLanguage(id string) languageAdapter {

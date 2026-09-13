@@ -212,6 +212,8 @@ Reduce repeated parsing and language knowledge across extraction, navigation, te
    - [x] Add bounded/depth-aware walking and a callback-scoped `DocumentView`. Extraction, hooks, and GritQL evaluation now hold one read lock per document instead of one per node operation.
    - [x] Cache immutable subtree snapshots within a document view, so matching overlapping candidates reuses descendants rather than rebuilding every subtree. A repository-wide `exec.Command($args)` dogfood scan fell from roughly 8.8 seconds to 1.5 seconds elapsed on the same checkout.
    - [x] Keep feature-specific filtering such as GritQL trivia normalization and navigation declaration rules outside generic parser helpers.
+   - [x] Move callable, container, declaration, call, import, binding, return-type, and visibility syntax policy behind `languageAdapter.Navigation()`; the generic navigation collector now depends on adapters rather than a language string.
+   - [x] Add an AST architecture guard that rejects canonical language-ID literals in generic `navigation*.go` engine files and verifies every registered adapter supplies navigation semantics.
 4. [x] Introduce GritQL language adapters over parser capabilities.
    - [x] Keep the compiler, query algebra, bindings, matching, constraints, transactional findings, and diagnostics in `gritql`, while isolating target parsing and root categories behind adapters.
    - [x] Use one `gritql-v1` compatibility contract for Go, TypeScript, and TSX, with focused expression, type, statement, declaration, sequence, JSX, metavariable, and repeated-list matching.

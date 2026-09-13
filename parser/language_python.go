@@ -31,6 +31,9 @@ func newPythonLanguage() languageAdapter {
 func (*pythonLanguage) ID() string                         { return "python" }
 func (language *pythonLanguage) Grammar() *sitter.Language { return language.grammar }
 func (language *pythonLanguage) Rules() *structureRules    { return &language.rules }
+func (language *pythonLanguage) Navigation() navigationAdapter {
+	return pythonNavigationAdapter(&language.rules)
+}
 func (language *pythonLanguage) Outline(root *sitter.Node, content string) []Symbol {
 	return pythonDeclarations(namedChildren(root), content, &language.rules)
 }

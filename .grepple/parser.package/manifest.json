@@ -16,16 +16,16 @@
     "syntacticBuildTagUnion": []
   },
   "summary": {
-    "sourceFiles": 30,
-    "declarations": 51,
+    "sourceFiles": 32,
+    "declarations": 53,
     "exportedTypes": 21,
-    "internalTypes": 30,
-    "members": 329,
+    "internalTypes": 32,
+    "members": 383,
     "exportedFunctions": 21,
     "fiberRoutes": 0,
-    "relations": 139
+    "relations": 182
   },
-  "semanticModelDigest": "sha256:5a2f22b5d7a350854ac9c3d428a1be7f60b88515a0314ad91fc18de1117726ad",
+  "semanticModelDigest": "sha256:85252500bcb29e8226f4778f59caf9cfc1a50d4b61af915cd5c0a2b752fc5685",
   "sourceFiles": [
     {
       "path": "parser/analyze.go"
@@ -73,6 +73,12 @@
       "path": "parser/language_metadata.go"
     },
     {
+      "path": "parser/language_navigation.go"
+    },
+    {
+      "path": "parser/language_navigation_visibility.go"
+    },
+    {
       "path": "parser/language_python.go"
     },
     {
@@ -97,10 +103,10 @@
       "path": "parser/navigation.go"
     },
     {
-      "path": "parser/navigation_context.go"
+      "path": "parser/navigation_adapter.go"
     },
     {
-      "path": "parser/navigation_visibility.go"
+      "path": "parser/navigation_context.go"
     },
     {
       "path": "parser/outline.go"
@@ -831,7 +837,7 @@
     {
       "name": "NavigationVisibility",
       "kind": "type",
-      "file": "parser/navigation_visibility.go",
+      "file": "parser/language_navigation_visibility.go",
       "line": 12,
       "endLine": 12,
       "underlyingType": "string"
@@ -1739,10 +1745,17 @@
           "result": "string"
         },
         {
-          "name": "Outline",
+          "name": "Navigation",
           "kind": "method",
           "line": 23,
           "endLine": 25,
+          "result": "navigationAdapter"
+        },
+        {
+          "name": "Outline",
+          "kind": "method",
+          "line": 26,
+          "endLine": 28,
           "parameters": [
             "*sitter.Node",
             "string"
@@ -1795,10 +1808,17 @@
           "result": "string"
         },
         {
-          "name": "Outline",
+          "name": "Navigation",
           "kind": "method",
           "line": 35,
           "endLine": 37,
+          "result": "navigationAdapter"
+        },
+        {
+          "name": "Outline",
+          "kind": "method",
+          "line": 38,
+          "endLine": 40,
           "parameters": [
             "*sitter.Node",
             "string"
@@ -1851,10 +1871,17 @@
           "result": "string"
         },
         {
-          "name": "Outline",
+          "name": "Navigation",
           "kind": "method",
           "line": 23,
           "endLine": 25,
+          "result": "navigationAdapter"
+        },
+        {
+          "name": "Outline",
+          "kind": "method",
+          "line": 26,
+          "endLine": 28,
           "parameters": [
             "*sitter.Node",
             "string"
@@ -1972,10 +1999,17 @@
           "result": "string"
         },
         {
-          "name": "Outline",
+          "name": "Navigation",
           "kind": "method",
           "line": 34,
           "endLine": 36,
+          "result": "navigationAdapter"
+        },
+        {
+          "name": "Outline",
+          "kind": "method",
+          "line": 37,
+          "endLine": 39,
           "parameters": [
             "*sitter.Node",
             "string"
@@ -2028,10 +2062,17 @@
           "result": "string"
         },
         {
-          "name": "Outline",
+          "name": "Navigation",
           "kind": "method",
           "line": 34,
           "endLine": 36,
+          "result": "navigationAdapter"
+        },
+        {
+          "name": "Outline",
+          "kind": "method",
+          "line": 37,
+          "endLine": 39,
           "parameters": [
             "*sitter.Node",
             "string"
@@ -2084,10 +2125,17 @@
           "result": "string"
         },
         {
-          "name": "Outline",
+          "name": "Navigation",
           "kind": "method",
           "line": 45,
           "endLine": 47,
+          "result": "navigationAdapter"
+        },
+        {
+          "name": "Outline",
+          "kind": "method",
+          "line": 48,
+          "endLine": 50,
           "parameters": [
             "*sitter.Node",
             "string"
@@ -2140,10 +2188,17 @@
           "result": "string"
         },
         {
-          "name": "Outline",
+          "name": "Navigation",
           "kind": "method",
           "line": 36,
           "endLine": 38,
+          "result": "navigationAdapter"
+        },
+        {
+          "name": "Outline",
+          "kind": "method",
+          "line": 39,
+          "endLine": 41,
           "parameters": [
             "*sitter.Node",
             "string"
@@ -2178,8 +2233,8 @@
       "kind": "interface",
       "file": "parser/language.go",
       "line": 75,
-      "endLine": 80,
-      "underlyingType": "interface{ID()string;Grammar()*sitter.Language;Rules()*structureRules;Outline(root*sitter.Node,content string)[]Symbol;}",
+      "endLine": 81,
+      "underlyingType": "interface{ID()string;Grammar()*sitter.Language;Rules()*structureRules;Navigation()navigationAdapter;Outline(root*sitter.Node,content string)[]Symbol;}",
       "members": [
         {
           "name": "Grammar",
@@ -2196,10 +2251,17 @@
           "result": "string"
         },
         {
-          "name": "Outline",
+          "name": "Navigation",
           "kind": "method",
           "line": 79,
           "endLine": 79,
+          "result": "navigationAdapter"
+        },
+        {
+          "name": "Outline",
+          "kind": "method",
+          "line": 80,
+          "endLine": 80,
           "parameters": [
             "*sitter.Node",
             "string"
@@ -2351,6 +2413,483 @@
       ]
     },
     {
+      "name": "navigationAdapter",
+      "kind": "interface",
+      "file": "parser/navigation_adapter.go",
+      "line": 23,
+      "endLine": 40,
+      "underlyingType": "interface{Rules()*structureRules;IsCallable(*sitter.Node)bool;RequiresContainer(*sitter.Node)bool;IsContainer(string)bool;ContainerName(*sitter.Node,string,*navigationEnvelope)string;DeclarationName(*sitter.Node,string,*navigationEnvelope)string;DeclarationKind(*sitter.Node,string)string;IsCall(string)bool;IsWrapper(string)bool;IsNestedBindingScope(string)bool;Visibility(*sitter.Node,string,string)NavigationVisibility;SourceFacts(*sitter.Node,string)(map[string]navigationImport,string,map[string]map[string]navigationBinding);ReturnCallableName(*sitter.Node,string,string)string;CallableReturnBinding(*sitter.Node,string,map[string]navigationImport)navigationBinding;IsFieldContainer(string)bool;SelfBinding(string)(string,navigationBinding,bool);}",
+      "members": [
+        {
+          "name": "CallableReturnBinding",
+          "kind": "method",
+          "line": 37,
+          "endLine": 37,
+          "parameters": [
+            "*sitter.Node",
+            "string",
+            "map[string]navigationImport"
+          ],
+          "result": "navigationBinding"
+        },
+        {
+          "name": "ContainerName",
+          "kind": "method",
+          "line": 28,
+          "endLine": 28,
+          "parameters": [
+            "*sitter.Node",
+            "string",
+            "*navigationEnvelope"
+          ],
+          "result": "string"
+        },
+        {
+          "name": "DeclarationKind",
+          "kind": "method",
+          "line": 30,
+          "endLine": 30,
+          "parameters": [
+            "*sitter.Node",
+            "string"
+          ],
+          "result": "string"
+        },
+        {
+          "name": "DeclarationName",
+          "kind": "method",
+          "line": 29,
+          "endLine": 29,
+          "parameters": [
+            "*sitter.Node",
+            "string",
+            "*navigationEnvelope"
+          ],
+          "result": "string"
+        },
+        {
+          "name": "IsCall",
+          "kind": "method",
+          "line": 31,
+          "endLine": 31,
+          "parameters": [
+            "string"
+          ],
+          "result": "bool"
+        },
+        {
+          "name": "IsCallable",
+          "kind": "method",
+          "line": 25,
+          "endLine": 25,
+          "parameters": [
+            "*sitter.Node"
+          ],
+          "result": "bool"
+        },
+        {
+          "name": "IsContainer",
+          "kind": "method",
+          "line": 27,
+          "endLine": 27,
+          "parameters": [
+            "string"
+          ],
+          "result": "bool"
+        },
+        {
+          "name": "IsFieldContainer",
+          "kind": "method",
+          "line": 38,
+          "endLine": 38,
+          "parameters": [
+            "string"
+          ],
+          "result": "bool"
+        },
+        {
+          "name": "IsNestedBindingScope",
+          "kind": "method",
+          "line": 33,
+          "endLine": 33,
+          "parameters": [
+            "string"
+          ],
+          "result": "bool"
+        },
+        {
+          "name": "IsWrapper",
+          "kind": "method",
+          "line": 32,
+          "endLine": 32,
+          "parameters": [
+            "string"
+          ],
+          "result": "bool"
+        },
+        {
+          "name": "RequiresContainer",
+          "kind": "method",
+          "line": 26,
+          "endLine": 26,
+          "parameters": [
+            "*sitter.Node"
+          ],
+          "result": "bool"
+        },
+        {
+          "name": "ReturnCallableName",
+          "kind": "method",
+          "line": 36,
+          "endLine": 36,
+          "parameters": [
+            "*sitter.Node",
+            "string",
+            "string"
+          ],
+          "result": "string"
+        },
+        {
+          "name": "Rules",
+          "kind": "method",
+          "line": 24,
+          "endLine": 24,
+          "result": "*structureRules"
+        },
+        {
+          "name": "SelfBinding",
+          "kind": "method",
+          "line": 39,
+          "endLine": 39,
+          "parameters": [
+            "string"
+          ],
+          "result": "tuple\u003cstring,navigationBinding,bool\u003e"
+        },
+        {
+          "name": "SourceFacts",
+          "kind": "method",
+          "line": 35,
+          "endLine": 35,
+          "parameters": [
+            "*sitter.Node",
+            "string"
+          ],
+          "result": "tuple\u003cmap[string]navigationImport,string,map[string]map[string]navigationBinding\u003e"
+        },
+        {
+          "name": "Visibility",
+          "kind": "method",
+          "line": 34,
+          "endLine": 34,
+          "parameters": [
+            "*sitter.Node",
+            "string",
+            "string"
+          ],
+          "result": "NavigationVisibility"
+        }
+      ]
+    },
+    {
+      "name": "navigationAdapterConfig",
+      "kind": "struct",
+      "file": "parser/navigation_adapter.go",
+      "line": 42,
+      "endLine": 60,
+      "underlyingType": "struct{rules*structureRules;callTypes stringSet;extraContainerTypes stringSet;fieldContainerTypes stringSet;wrapperTypes stringSet;nestedBindingScopeTypes stringSet;isCallable func(*sitter.Node)bool;requiresContainer func(*sitter.Node)bool;containerName func(*sitter.Node,string,*navigationEnvelope)string;declarationName func(*sitter.Node,string,*navigationEnvelope)string;declarationKind func(*sitter.Node,string)string;visibility func(*sitter.Node,string,string)NavigationVisibility;sourceFacts func(*sitter.Node,string,*navigationAdapterConfig)(map[string]navigationImport,string,map[string]map[string]navigationBinding);returnCallableName func(*sitter.Node,string,string,*navigationAdapterConfig)string;callableReturnBinding func(*sitter.Node,string,map[string]navigationImport)navigationBinding;selfBindingName string;selfBindingFromContainer bool;}",
+      "members": [
+        {
+          "name": "CallableReturnBinding",
+          "kind": "method",
+          "line": 154,
+          "endLine": 159,
+          "parameters": [
+            "*sitter.Node",
+            "string",
+            "map[string]navigationImport"
+          ],
+          "result": "navigationBinding"
+        },
+        {
+          "name": "ContainerName",
+          "kind": "method",
+          "line": 87,
+          "endLine": 92,
+          "parameters": [
+            "*sitter.Node",
+            "string",
+            "*navigationEnvelope"
+          ],
+          "result": "string"
+        },
+        {
+          "name": "DeclarationKind",
+          "kind": "method",
+          "line": 104,
+          "endLine": 115,
+          "parameters": [
+            "*sitter.Node",
+            "string"
+          ],
+          "result": "string"
+        },
+        {
+          "name": "DeclarationName",
+          "kind": "method",
+          "line": 94,
+          "endLine": 102,
+          "parameters": [
+            "*sitter.Node",
+            "string",
+            "*navigationEnvelope"
+          ],
+          "result": "string"
+        },
+        {
+          "name": "IsCall",
+          "kind": "method",
+          "line": 117,
+          "endLine": 119,
+          "parameters": [
+            "string"
+          ],
+          "result": "bool"
+        },
+        {
+          "name": "IsCallable",
+          "kind": "method",
+          "line": 72,
+          "endLine": 77,
+          "parameters": [
+            "*sitter.Node"
+          ],
+          "result": "bool"
+        },
+        {
+          "name": "IsContainer",
+          "kind": "method",
+          "line": 83,
+          "endLine": 85,
+          "parameters": [
+            "string"
+          ],
+          "result": "bool"
+        },
+        {
+          "name": "IsFieldContainer",
+          "kind": "method",
+          "line": 161,
+          "endLine": 163,
+          "parameters": [
+            "string"
+          ],
+          "result": "bool"
+        },
+        {
+          "name": "IsNestedBindingScope",
+          "kind": "method",
+          "line": 125,
+          "endLine": 127,
+          "parameters": [
+            "string"
+          ],
+          "result": "bool"
+        },
+        {
+          "name": "IsWrapper",
+          "kind": "method",
+          "line": 121,
+          "endLine": 123,
+          "parameters": [
+            "string"
+          ],
+          "result": "bool"
+        },
+        {
+          "name": "RequiresContainer",
+          "kind": "method",
+          "line": 79,
+          "endLine": 81,
+          "parameters": [
+            "*sitter.Node"
+          ],
+          "result": "bool"
+        },
+        {
+          "name": "ReturnCallableName",
+          "kind": "method",
+          "line": 143,
+          "endLine": 152,
+          "parameters": [
+            "*sitter.Node",
+            "string",
+            "string"
+          ],
+          "result": "string"
+        },
+        {
+          "name": "Rules",
+          "kind": "method",
+          "line": 70,
+          "endLine": 70,
+          "result": "*structureRules"
+        },
+        {
+          "name": "SelfBinding",
+          "kind": "method",
+          "line": 165,
+          "endLine": 170,
+          "parameters": [
+            "string"
+          ],
+          "result": "tuple\u003cstring,navigationBinding,bool\u003e"
+        },
+        {
+          "name": "SourceFacts",
+          "kind": "method",
+          "line": 136,
+          "endLine": 141,
+          "parameters": [
+            "*sitter.Node",
+            "string"
+          ],
+          "result": "tuple\u003cmap[string]navigationImport,string,map[string]map[string]navigationBinding\u003e"
+        },
+        {
+          "name": "Visibility",
+          "kind": "method",
+          "line": 129,
+          "endLine": 134,
+          "parameters": [
+            "*sitter.Node",
+            "string",
+            "string"
+          ],
+          "result": "NavigationVisibility"
+        },
+        {
+          "name": "callTypes",
+          "kind": "property",
+          "line": 44,
+          "endLine": 44,
+          "result": "stringSet"
+        },
+        {
+          "name": "callableReturnBinding",
+          "kind": "property",
+          "line": 57,
+          "endLine": 57,
+          "result": "func(*sitter.Node,string,map[string]navigationImport)navigationBinding"
+        },
+        {
+          "name": "containerName",
+          "kind": "property",
+          "line": 51,
+          "endLine": 51,
+          "result": "func(*sitter.Node,string,*navigationEnvelope)string"
+        },
+        {
+          "name": "declarationKind",
+          "kind": "property",
+          "line": 53,
+          "endLine": 53,
+          "result": "func(*sitter.Node,string)string"
+        },
+        {
+          "name": "declarationName",
+          "kind": "property",
+          "line": 52,
+          "endLine": 52,
+          "result": "func(*sitter.Node,string,*navigationEnvelope)string"
+        },
+        {
+          "name": "extraContainerTypes",
+          "kind": "property",
+          "line": 45,
+          "endLine": 45,
+          "result": "stringSet"
+        },
+        {
+          "name": "fieldContainerTypes",
+          "kind": "property",
+          "line": 46,
+          "endLine": 46,
+          "result": "stringSet"
+        },
+        {
+          "name": "isCallable",
+          "kind": "property",
+          "line": 49,
+          "endLine": 49,
+          "result": "func(*sitter.Node)bool"
+        },
+        {
+          "name": "nestedBindingScopeTypes",
+          "kind": "property",
+          "line": 48,
+          "endLine": 48,
+          "result": "stringSet"
+        },
+        {
+          "name": "requiresContainer",
+          "kind": "property",
+          "line": 50,
+          "endLine": 50,
+          "result": "func(*sitter.Node)bool"
+        },
+        {
+          "name": "returnCallableName",
+          "kind": "property",
+          "line": 56,
+          "endLine": 56,
+          "result": "func(*sitter.Node,string,string,*navigationAdapterConfig)string"
+        },
+        {
+          "name": "rules",
+          "kind": "property",
+          "line": 43,
+          "endLine": 43,
+          "result": "*structureRules"
+        },
+        {
+          "name": "selfBindingFromContainer",
+          "kind": "property",
+          "line": 59,
+          "endLine": 59,
+          "result": "bool"
+        },
+        {
+          "name": "selfBindingName",
+          "kind": "property",
+          "line": 58,
+          "endLine": 58,
+          "result": "string"
+        },
+        {
+          "name": "sourceFacts",
+          "kind": "property",
+          "line": 55,
+          "endLine": 55,
+          "result": "func(*sitter.Node,string,*navigationAdapterConfig)(map[string]navigationImport,string,map[string]map[string]navigationBinding)"
+        },
+        {
+          "name": "visibility",
+          "kind": "property",
+          "line": 54,
+          "endLine": 54,
+          "result": "func(*sitter.Node,string,string)NavigationVisibility"
+        },
+        {
+          "name": "wrapperTypes",
+          "kind": "property",
+          "line": 47,
+          "endLine": 47,
+          "result": "stringSet"
+        }
+      ]
+    },
+    {
       "name": "navigationBinding",
       "kind": "struct",
       "file": "parser/navigation_context.go",
@@ -2399,47 +2938,25 @@
       "name": "navigationCollector",
       "kind": "struct",
       "file": "parser/navigation.go",
-      "line": 143,
-      "endLine": 154,
-      "underlyingType": "struct{content string;language string;path string;rules*structureRules;imports map[string]navigationImport;fields map[string]map[string]navigationBinding;returnBindings map[string]navigationBinding;packageName string;declarations[]NavigationDeclaration;calls[]NavigationCall;}",
+      "line": 144,
+      "endLine": 155,
+      "underlyingType": "struct{content string;adapter languageAdapter;navigation navigationAdapter;path string;imports map[string]navigationImport;fields map[string]map[string]navigationBinding;returnBindings map[string]navigationBinding;packageName string;declarations[]NavigationDeclaration;calls[]NavigationCall;}",
       "members": [
         {
           "name": "callName",
           "kind": "method",
-          "line": 394,
-          "endLine": 416,
+          "line": 271,
+          "endLine": 293,
           "parameters": [
             "*sitter.Node"
           ],
           "result": "tuple\u003cstring,string\u003e"
         },
         {
-          "name": "containerName",
-          "kind": "method",
-          "line": 300,
-          "endLine": 307,
-          "parameters": [
-            "*sitter.Node",
-            "*navigationEnvelope"
-          ],
-          "result": "string"
-        },
-        {
-          "name": "declarationName",
-          "kind": "method",
-          "line": 309,
-          "endLine": 320,
-          "parameters": [
-            "*sitter.Node",
-            "*navigationEnvelope"
-          ],
-          "result": "string"
-        },
-        {
           "name": "enterNavigationNode",
           "kind": "method",
-          "line": 186,
-          "endLine": 217,
+          "line": 187,
+          "endLine": 218,
           "parameters": [
             "*sitter.Node",
             "navigationWalkContext"
@@ -2447,61 +2964,10 @@
           "result": "navigationWalkContext"
         },
         {
-          "name": "isCall",
-          "kind": "method",
-          "line": 372,
-          "endLine": 392,
-          "parameters": [
-            "string"
-          ],
-          "result": "bool"
-        },
-        {
-          "name": "isCallableNode",
-          "kind": "method",
-          "line": 270,
-          "endLine": 282,
-          "parameters": [
-            "*sitter.Node"
-          ],
-          "result": "bool"
-        },
-        {
-          "name": "isGoTypeMemberNode",
-          "kind": "method",
-          "line": 284,
-          "endLine": 289,
-          "parameters": [
-            "*sitter.Node"
-          ],
-          "result": "bool"
-        },
-        {
-          "name": "isNavigationContainer",
-          "kind": "method",
-          "line": 290,
-          "endLine": 298,
-          "parameters": [
-            "string"
-          ],
-          "result": "bool"
-        },
-        {
-          "name": "navigationDeclarationKind",
-          "kind": "method",
-          "line": 353,
-          "endLine": 370,
-          "parameters": [
-            "*sitter.Node",
-            "string"
-          ],
-          "result": "string"
-        },
-        {
           "name": "navigationDeclarationRange",
           "kind": "method",
-          "line": 219,
-          "endLine": 224,
+          "line": 220,
+          "endLine": 225,
           "parameters": [
             "*sitter.Node",
             "*navigationEnvelope"
@@ -2511,8 +2977,8 @@
         {
           "name": "recordNavigationCall",
           "kind": "method",
-          "line": 226,
-          "endLine": 241,
+          "line": 227,
+          "endLine": 242,
           "parameters": [
             "*sitter.Node",
             "*NavigationDeclaration",
@@ -2522,8 +2988,8 @@
         {
           "name": "walk",
           "kind": "method",
-          "line": 169,
-          "endLine": 176,
+          "line": 170,
+          "endLine": 177,
           "parameters": [
             "*sitter.Node",
             "navigationWalkContext"
@@ -2532,8 +2998,8 @@
         {
           "name": "walkNavigationChildren",
           "kind": "method",
-          "line": 243,
-          "endLine": 257,
+          "line": 244,
+          "endLine": 258,
           "parameters": [
             "*sitter.Node",
             "navigationWalkContext"
@@ -2542,8 +3008,8 @@
         {
           "name": "wrapperEnvelope",
           "kind": "method",
-          "line": 258,
-          "endLine": 268,
+          "line": 259,
+          "endLine": 269,
           "parameters": [
             "*sitter.Node",
             "*navigationEnvelope"
@@ -2551,74 +3017,74 @@
           "result": "*navigationEnvelope"
         },
         {
+          "name": "adapter",
+          "kind": "property",
+          "line": 146,
+          "endLine": 146,
+          "result": "languageAdapter"
+        },
+        {
           "name": "calls",
           "kind": "property",
-          "line": 153,
-          "endLine": 153,
+          "line": 154,
+          "endLine": 154,
           "result": "[]NavigationCall"
         },
         {
           "name": "content",
-          "kind": "property",
-          "line": 144,
-          "endLine": 144,
-          "result": "string"
-        },
-        {
-          "name": "declarations",
-          "kind": "property",
-          "line": 152,
-          "endLine": 152,
-          "result": "[]NavigationDeclaration"
-        },
-        {
-          "name": "fields",
-          "kind": "property",
-          "line": 149,
-          "endLine": 149,
-          "result": "map[string]map[string]navigationBinding"
-        },
-        {
-          "name": "imports",
-          "kind": "property",
-          "line": 148,
-          "endLine": 148,
-          "result": "map[string]navigationImport"
-        },
-        {
-          "name": "language",
           "kind": "property",
           "line": 145,
           "endLine": 145,
           "result": "string"
         },
         {
+          "name": "declarations",
+          "kind": "property",
+          "line": 153,
+          "endLine": 153,
+          "result": "[]NavigationDeclaration"
+        },
+        {
+          "name": "fields",
+          "kind": "property",
+          "line": 150,
+          "endLine": 150,
+          "result": "map[string]map[string]navigationBinding"
+        },
+        {
+          "name": "imports",
+          "kind": "property",
+          "line": 149,
+          "endLine": 149,
+          "result": "map[string]navigationImport"
+        },
+        {
+          "name": "navigation",
+          "kind": "property",
+          "line": 147,
+          "endLine": 147,
+          "result": "navigationAdapter"
+        },
+        {
           "name": "packageName",
           "kind": "property",
-          "line": 151,
-          "endLine": 151,
+          "line": 152,
+          "endLine": 152,
           "result": "string"
         },
         {
           "name": "path",
           "kind": "property",
-          "line": 146,
-          "endLine": 146,
+          "line": 148,
+          "endLine": 148,
           "result": "string"
         },
         {
           "name": "returnBindings",
           "kind": "property",
-          "line": 150,
-          "endLine": 150,
+          "line": 151,
+          "endLine": 151,
           "result": "map[string]navigationBinding"
-        },
-        {
-          "name": "rules",
-          "kind": "property",
-          "line": 147,
-          "endLine": 147,
-          "result": "*structureRules"
         }
       ]
     },
@@ -2626,29 +3092,29 @@
       "name": "navigationEnvelope",
       "kind": "struct",
       "file": "parser/navigation.go",
-      "line": 156,
-      "endLine": 160,
+      "line": 157,
+      "endLine": 161,
       "underlyingType": "struct{start int;end int;assignedName string;}",
       "members": [
         {
           "name": "assignedName",
           "kind": "property",
-          "line": 159,
-          "endLine": 159,
+          "line": 160,
+          "endLine": 160,
           "result": "string"
         },
         {
           "name": "end",
           "kind": "property",
-          "line": 158,
-          "endLine": 158,
+          "line": 159,
+          "endLine": 159,
           "result": "int"
         },
         {
           "name": "start",
           "kind": "property",
-          "line": 157,
-          "endLine": 157,
+          "line": 158,
+          "endLine": 158,
           "result": "int"
         }
       ]
@@ -2681,36 +3147,36 @@
       "name": "navigationWalkContext",
       "kind": "struct",
       "file": "parser/navigation.go",
-      "line": 162,
-      "endLine": 167,
+      "line": 163,
+      "endLine": 168,
       "underlyingType": "struct{envelope*navigationEnvelope;container string;bindings map[string]navigationBinding;callable*NavigationDeclaration;}",
       "members": [
         {
           "name": "bindings",
           "kind": "property",
-          "line": 165,
-          "endLine": 165,
+          "line": 166,
+          "endLine": 166,
           "result": "map[string]navigationBinding"
         },
         {
           "name": "callable",
           "kind": "property",
-          "line": 166,
-          "endLine": 166,
+          "line": 167,
+          "endLine": 167,
           "result": "*NavigationDeclaration"
         },
         {
           "name": "container",
           "kind": "property",
-          "line": 164,
-          "endLine": 164,
+          "line": 165,
+          "endLine": 165,
           "result": "string"
         },
         {
           "name": "envelope",
           "kind": "property",
-          "line": 163,
-          "endLine": 163,
+          "line": 164,
+          "endLine": 164,
           "result": "*navigationEnvelope"
         }
       ]
@@ -2762,10 +3228,17 @@
           "result": "string"
         },
         {
-          "name": "Outline",
+          "name": "Navigation",
           "kind": "method",
           "line": 34,
           "endLine": 36,
+          "result": "navigationAdapter"
+        },
+        {
+          "name": "Outline",
+          "kind": "method",
+          "line": 37,
+          "endLine": 39,
           "parameters": [
             "*sitter.Node",
             "string"
@@ -2818,10 +3291,17 @@
           "result": "string"
         },
         {
-          "name": "Outline",
+          "name": "Navigation",
           "kind": "method",
           "line": 34,
           "endLine": 36,
+          "result": "navigationAdapter"
+        },
+        {
+          "name": "Outline",
+          "kind": "method",
+          "line": 37,
+          "endLine": 39,
           "parameters": [
             "*sitter.Node",
             "string"
@@ -2874,10 +3354,17 @@
           "result": "string"
         },
         {
-          "name": "Outline",
+          "name": "Navigation",
           "kind": "method",
           "line": 34,
-          "endLine": 42,
+          "endLine": 36,
+          "result": "navigationAdapter"
+        },
+        {
+          "name": "Outline",
+          "kind": "method",
+          "line": 37,
+          "endLine": 45,
           "parameters": [
             "*sitter.Node",
             "string"
@@ -3139,10 +3626,17 @@
           "result": "string"
         },
         {
-          "name": "Outline",
+          "name": "Navigation",
           "kind": "method",
           "line": 53,
           "endLine": 55,
+          "result": "navigationAdapter"
+        },
+        {
+          "name": "Outline",
+          "kind": "method",
+          "line": 56,
+          "endLine": 58,
           "parameters": [
             "*sitter.Node",
             "string"
@@ -3260,8 +3754,8 @@
       "name": "CapabilitiesForLanguage",
       "kind": "function",
       "file": "parser/language.go",
-      "line": 139,
-      "endLine": 146,
+      "line": 142,
+      "endLine": 149,
       "parameters": [
         "string"
       ],
@@ -3271,8 +3765,8 @@
       "name": "DeclarationRangeAt",
       "kind": "function",
       "file": "parser/navigation.go",
-      "line": 127,
-      "endLine": 141,
+      "line": 128,
+      "endLine": 142,
       "parameters": [
         "string",
         "string",
@@ -3297,8 +3791,8 @@
       "name": "GrammarChildrenCardinality",
       "kind": "function",
       "file": "parser/language.go",
-      "line": 169,
-      "endLine": 175,
+      "line": 172,
+      "endLine": 178,
       "parameters": [
         "string",
         "string"
@@ -3309,8 +3803,8 @@
       "name": "GrammarFieldCardinality",
       "kind": "function",
       "file": "parser/language.go",
-      "line": 160,
-      "endLine": 166,
+      "line": 163,
+      "endLine": 169,
       "parameters": [
         "string",
         "string",
@@ -3322,8 +3816,8 @@
       "name": "GrammarSubtype",
       "kind": "function",
       "file": "parser/language.go",
-      "line": 179,
-      "endLine": 182,
+      "line": 182,
+      "endLine": 185,
       "parameters": [
         "string",
         "string",
@@ -3371,7 +3865,7 @@
       "kind": "function",
       "file": "parser/navigation.go",
       "line": 114,
-      "endLine": 124,
+      "endLine": 125,
       "parameters": [
         "*sitter.Node",
         "string",
@@ -3434,16 +3928,16 @@
       "name": "SupportedContentLanguages",
       "kind": "function",
       "file": "parser/language.go",
-      "line": 122,
-      "endLine": 136,
+      "line": 125,
+      "endLine": 139,
       "result": "[]ContentLanguageCapabilities"
     },
     {
       "name": "SupportedLanguages",
       "kind": "function",
       "file": "parser/language.go",
-      "line": 113,
-      "endLine": 119,
+      "line": 116,
+      "endLine": 122,
       "result": "[]LanguageCapabilities"
     },
     {
@@ -3850,6 +4344,13 @@
     },
     {
       "from": "cLanguage",
+      "to": "navigationAdapter",
+      "kind": "dependency",
+      "via": "method Navigation result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "cLanguage",
       "to": "structureRules",
       "kind": "association",
       "via": "field rules",
@@ -3878,6 +4379,13 @@
     },
     {
       "from": "cSharpLanguage",
+      "to": "navigationAdapter",
+      "kind": "dependency",
+      "via": "method Navigation result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "cSharpLanguage",
       "to": "structureRules",
       "kind": "association",
       "via": "field rules",
@@ -3902,6 +4410,13 @@
       "to": "languageAdapter",
       "kind": "implementation",
       "via": "implements",
+      "cardinality": "one"
+    },
+    {
+      "from": "cppLanguage",
+      "to": "navigationAdapter",
+      "kind": "dependency",
+      "via": "method Navigation result 1",
       "cardinality": "one"
     },
     {
@@ -3948,6 +4463,13 @@
     },
     {
       "from": "goLanguage",
+      "to": "navigationAdapter",
+      "kind": "dependency",
+      "via": "method Navigation result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "goLanguage",
       "to": "structureRules",
       "kind": "association",
       "via": "field rules",
@@ -3976,6 +4498,13 @@
     },
     {
       "from": "javaLanguage",
+      "to": "navigationAdapter",
+      "kind": "dependency",
+      "via": "method Navigation result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "javaLanguage",
       "to": "structureRules",
       "kind": "association",
       "via": "field rules",
@@ -4004,6 +4533,13 @@
     },
     {
       "from": "javaScriptLanguage",
+      "to": "navigationAdapter",
+      "kind": "dependency",
+      "via": "method Navigation result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "javaScriptLanguage",
       "to": "structureRules",
       "kind": "association",
       "via": "field rules",
@@ -4032,6 +4568,13 @@
     },
     {
       "from": "kotlinLanguage",
+      "to": "navigationAdapter",
+      "kind": "dependency",
+      "via": "method Navigation result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "kotlinLanguage",
       "to": "structureRules",
       "kind": "association",
       "via": "field rules",
@@ -4050,6 +4593,13 @@
       "kind": "dependency",
       "via": "method Outline result 1",
       "cardinality": "many"
+    },
+    {
+      "from": "languageAdapter",
+      "to": "navigationAdapter",
+      "kind": "dependency",
+      "via": "method Navigation result 1",
+      "cardinality": "one"
     },
     {
       "from": "languageAdapter",
@@ -4080,6 +4630,230 @@
       "cardinality": "one"
     },
     {
+      "from": "navigationAdapter",
+      "to": "NavigationVisibility",
+      "kind": "dependency",
+      "via": "method Visibility result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "navigationAdapter",
+      "to": "navigationBinding",
+      "kind": "dependency",
+      "via": "method CallableReturnBinding result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "navigationAdapter",
+      "to": "navigationBinding",
+      "kind": "dependency",
+      "via": "method SelfBinding result 2",
+      "cardinality": "one"
+    },
+    {
+      "from": "navigationAdapter",
+      "to": "navigationBinding",
+      "kind": "dependency",
+      "via": "method SourceFacts result 3",
+      "cardinality": "many"
+    },
+    {
+      "from": "navigationAdapter",
+      "to": "navigationEnvelope",
+      "kind": "dependency",
+      "via": "method ContainerName parameter 3",
+      "cardinality": "one"
+    },
+    {
+      "from": "navigationAdapter",
+      "to": "navigationEnvelope",
+      "kind": "dependency",
+      "via": "method DeclarationName parameter 3",
+      "cardinality": "one"
+    },
+    {
+      "from": "navigationAdapter",
+      "to": "navigationImport",
+      "kind": "dependency",
+      "via": "method CallableReturnBinding parameter 3",
+      "cardinality": "many"
+    },
+    {
+      "from": "navigationAdapter",
+      "to": "navigationImport",
+      "kind": "dependency",
+      "via": "method SourceFacts result 1",
+      "cardinality": "many"
+    },
+    {
+      "from": "navigationAdapter",
+      "to": "structureRules",
+      "kind": "dependency",
+      "via": "method Rules result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "navigationAdapterConfig",
+      "to": "NavigationVisibility",
+      "kind": "association",
+      "via": "field visibility",
+      "cardinality": "one"
+    },
+    {
+      "from": "navigationAdapterConfig",
+      "to": "NavigationVisibility",
+      "kind": "dependency",
+      "via": "method Visibility result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "navigationAdapterConfig",
+      "to": "navigationAdapter",
+      "kind": "implementation",
+      "via": "implements",
+      "cardinality": "one"
+    },
+    {
+      "from": "navigationAdapterConfig",
+      "to": "navigationBinding",
+      "kind": "association",
+      "via": "field callableReturnBinding",
+      "cardinality": "one"
+    },
+    {
+      "from": "navigationAdapterConfig",
+      "to": "navigationBinding",
+      "kind": "association",
+      "via": "field sourceFacts",
+      "cardinality": "many"
+    },
+    {
+      "from": "navigationAdapterConfig",
+      "to": "navigationBinding",
+      "kind": "dependency",
+      "via": "method CallableReturnBinding result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "navigationAdapterConfig",
+      "to": "navigationBinding",
+      "kind": "dependency",
+      "via": "method SelfBinding result 2",
+      "cardinality": "one"
+    },
+    {
+      "from": "navigationAdapterConfig",
+      "to": "navigationBinding",
+      "kind": "dependency",
+      "via": "method SourceFacts result 3",
+      "cardinality": "many"
+    },
+    {
+      "from": "navigationAdapterConfig",
+      "to": "navigationEnvelope",
+      "kind": "association",
+      "via": "field containerName",
+      "cardinality": "one"
+    },
+    {
+      "from": "navigationAdapterConfig",
+      "to": "navigationEnvelope",
+      "kind": "association",
+      "via": "field declarationName",
+      "cardinality": "one"
+    },
+    {
+      "from": "navigationAdapterConfig",
+      "to": "navigationEnvelope",
+      "kind": "dependency",
+      "via": "method ContainerName parameter 3",
+      "cardinality": "one"
+    },
+    {
+      "from": "navigationAdapterConfig",
+      "to": "navigationEnvelope",
+      "kind": "dependency",
+      "via": "method DeclarationName parameter 3",
+      "cardinality": "one"
+    },
+    {
+      "from": "navigationAdapterConfig",
+      "to": "navigationImport",
+      "kind": "association",
+      "via": "field callableReturnBinding",
+      "cardinality": "many"
+    },
+    {
+      "from": "navigationAdapterConfig",
+      "to": "navigationImport",
+      "kind": "association",
+      "via": "field sourceFacts",
+      "cardinality": "many"
+    },
+    {
+      "from": "navigationAdapterConfig",
+      "to": "navigationImport",
+      "kind": "dependency",
+      "via": "method CallableReturnBinding parameter 3",
+      "cardinality": "many"
+    },
+    {
+      "from": "navigationAdapterConfig",
+      "to": "navigationImport",
+      "kind": "dependency",
+      "via": "method SourceFacts result 1",
+      "cardinality": "many"
+    },
+    {
+      "from": "navigationAdapterConfig",
+      "to": "stringSet",
+      "kind": "association",
+      "via": "field callTypes",
+      "cardinality": "one"
+    },
+    {
+      "from": "navigationAdapterConfig",
+      "to": "stringSet",
+      "kind": "association",
+      "via": "field extraContainerTypes",
+      "cardinality": "one"
+    },
+    {
+      "from": "navigationAdapterConfig",
+      "to": "stringSet",
+      "kind": "association",
+      "via": "field fieldContainerTypes",
+      "cardinality": "one"
+    },
+    {
+      "from": "navigationAdapterConfig",
+      "to": "stringSet",
+      "kind": "association",
+      "via": "field nestedBindingScopeTypes",
+      "cardinality": "one"
+    },
+    {
+      "from": "navigationAdapterConfig",
+      "to": "stringSet",
+      "kind": "association",
+      "via": "field wrapperTypes",
+      "cardinality": "one"
+    },
+    {
+      "from": "navigationAdapterConfig",
+      "to": "structureRules",
+      "kind": "association",
+      "via": "field rules",
+      "cardinality": "one"
+    },
+    {
+      "from": "navigationAdapterConfig",
+      "to": "structureRules",
+      "kind": "dependency",
+      "via": "method Rules result 1",
+      "cardinality": "one"
+    },
+    {
       "from": "navigationCollector",
       "to": "NavigationCall",
       "kind": "association",
@@ -4102,6 +4876,20 @@
     },
     {
       "from": "navigationCollector",
+      "to": "languageAdapter",
+      "kind": "association",
+      "via": "field adapter",
+      "cardinality": "one"
+    },
+    {
+      "from": "navigationCollector",
+      "to": "navigationAdapter",
+      "kind": "association",
+      "via": "field navigation",
+      "cardinality": "one"
+    },
+    {
+      "from": "navigationCollector",
       "to": "navigationBinding",
       "kind": "association",
       "via": "field fields",
@@ -4120,20 +4908,6 @@
       "kind": "dependency",
       "via": "method recordNavigationCall parameter 3",
       "cardinality": "many"
-    },
-    {
-      "from": "navigationCollector",
-      "to": "navigationEnvelope",
-      "kind": "dependency",
-      "via": "method containerName parameter 2",
-      "cardinality": "one"
-    },
-    {
-      "from": "navigationCollector",
-      "to": "navigationEnvelope",
-      "kind": "dependency",
-      "via": "method declarationName parameter 2",
-      "cardinality": "one"
     },
     {
       "from": "navigationCollector",
@@ -4192,13 +4966,6 @@
       "cardinality": "one"
     },
     {
-      "from": "navigationCollector",
-      "to": "structureRules",
-      "kind": "association",
-      "via": "field rules",
-      "cardinality": "one"
-    },
-    {
       "from": "navigationWalkContext",
       "to": "NavigationDeclaration",
       "kind": "association",
@@ -4235,6 +5002,13 @@
     },
     {
       "from": "pythonLanguage",
+      "to": "navigationAdapter",
+      "kind": "dependency",
+      "via": "method Navigation result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "pythonLanguage",
       "to": "structureRules",
       "kind": "association",
       "via": "field rules",
@@ -4263,6 +5037,13 @@
     },
     {
       "from": "rustLanguage",
+      "to": "navigationAdapter",
+      "kind": "dependency",
+      "via": "method Navigation result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "rustLanguage",
       "to": "structureRules",
       "kind": "association",
       "via": "field rules",
@@ -4287,6 +5068,13 @@
       "to": "languageAdapter",
       "kind": "implementation",
       "via": "implements",
+      "cardinality": "one"
+    },
+    {
+      "from": "shellLanguage",
+      "to": "navigationAdapter",
+      "kind": "dependency",
+      "via": "method Navigation result 1",
       "cardinality": "one"
     },
     {
@@ -4434,6 +5222,13 @@
       "to": "languageAdapter",
       "kind": "implementation",
       "via": "implements",
+      "cardinality": "one"
+    },
+    {
+      "from": "typeScriptLanguage",
+      "to": "navigationAdapter",
+      "kind": "dependency",
+      "via": "method Navigation result 1",
       "cardinality": "one"
     },
     {

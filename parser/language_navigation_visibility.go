@@ -20,32 +20,6 @@ const (
 	NavigationVisibilityUnknown NavigationVisibility = "unknown"
 )
 
-func navigationDeclarationVisibility(node *sitter.Node, language, name, content string) NavigationVisibility {
-	terminal := name
-	if index := strings.LastIndex(terminal, "."); index >= 0 {
-		terminal = terminal[index+1:]
-	}
-	header := navigationDeclarationHeader(node, content)
-	switch language {
-	case "go":
-		return goNavigationVisibility(terminal)
-	case "python":
-		return pythonNavigationVisibility(terminal)
-	case "rust":
-		return visibilityFromRequiredModifier(header, "pub")
-	case "java":
-		return javaNavigationVisibility(node, header)
-	case "kotlin":
-		return visibilityFromModifiers(header, true)
-	case "csharp":
-		return cSharpNavigationVisibility(header)
-	case "javascript", "typescript", "tsx":
-		return typeScriptNavigationVisibility(node, terminal, header)
-	default:
-		return NavigationVisibilityUnknown
-	}
-}
-
 func goNavigationVisibility(name string) NavigationVisibility {
 	first, _ := utf8.DecodeRuneInString(name)
 	if first != utf8.RuneError && unicode.IsUpper(first) {

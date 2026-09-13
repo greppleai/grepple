@@ -113,12 +113,13 @@ func NavigationGraphFromDocument(document *Document, path string) NavigationGrap
 // It allows analyzers to share navigation extraction without parsing source twice.
 func NavigationGraphFromTree(root *sitter.Node, content, language, path string) NavigationGraph {
 	adapter := adapterForLanguage(language)
-	if adapter == nil || root == nil {
+	navigation := navigationAdapterForLanguage(language)
+	if adapter == nil || navigation == nil || root == nil {
 		return NavigationGraph{}
 	}
-	imports, packageName, fields := navigationSourceFacts(root, content, language)
-	returnBindings := navigationReturnBindings(root, content, language, imports, adapter.Rules())
-	collector := navigationCollector{content: content, language: language, path: path, rules: adapter.Rules(), imports: imports, fields: fields, returnBindings: returnBindings, packageName: packageName}
+	imports, packageName, fields := navigation.SourceFacts(root, content)
+	returnBindings := navigationReturnBindings(root, content, imports, navigation)
+	collector := navigationCollector{content: content, adapter: adapter, navigation: navigation, path: path, imports: imports, fields: fields, returnBindings: returnBindings, packageName: packageName}
 	collector.walk(root, navigationWalkContext{})
 	return NavigationGraph{Declarations: collector.declarations, Calls: collector.calls}
 }
@@ -142,9 +143,9 @@ func DeclarationRangeAt(content, language string, line int) (int, int, bool) {
 
 type navigationCollector struct {
 	content        string
-	language       string
+	adapter        languageAdapter
+	navigation     navigationAdapter
 	path           string
-	rules          *structureRules
 	imports        map[string]navigationImport
 	fields         map[string]map[string]navigationBinding
 	returnBindings map[string]navigationBinding
@@ -167,7 +168,7 @@ type navigationWalkContext struct {
 }
 
 func (c *navigationCollector) walk(node *sitter.Node, context navigationWalkContext) {
-	if navigationNestedBindingScope(node.Kind()) && context.callable != nil {
+	if c.navigation.IsNestedBindingScope(node.Kind()) && context.callable != nil {
 		context.bindings = cloneNavigationBindings(context.bindings)
 	}
 	current := c.enterNavigationNode(node, context)
@@ -185,18 +186,18 @@ func cloneNavigationBindings(bindings map[string]navigationBinding) map[string]n
 
 func (c *navigationCollector) enterNavigationNode(node *sitter.Node, context navigationWalkContext) navigationWalkContext {
 	current := context
-	if c.isNavigationContainer(node.Kind()) {
-		if name := c.containerName(node, context.envelope); name != "" {
+	if c.navigation.IsContainer(node.Kind()) {
+		if name := c.navigation.ContainerName(node, c.content, context.envelope); name != "" {
 			current.container = name
 		}
 	}
-	if !c.isCallableNode(node) {
+	if !c.navigation.IsCallable(node) {
 		return current
 	}
-	if c.isGoTypeMemberNode(node) && current.container == "" {
+	if c.navigation.RequiresContainer(node) && current.container == "" {
 		return current
 	}
-	name := c.declarationName(node, context.envelope)
+	name := c.navigation.DeclarationName(node, c.content, context.envelope)
 	if name == "" {
 		return current
 	}
@@ -204,15 +205,15 @@ func (c *navigationCollector) enterNavigationNode(node *sitter.Node, context nav
 	if current.container != "" && !strings.Contains(name, ".") {
 		name = current.container + "." + name
 	}
-	result := navigationCallableReturnBinding(node, c.content, c.language, c.imports)
+	result := c.navigation.CallableReturnBinding(node, c.content, c.imports)
 	declaration := NavigationDeclaration{
-		Name: name, Kind: c.navigationDeclarationKind(node, current.container), Language: c.language, Path: c.path, Container: current.container, Package: c.packageName,
-		ResultType: result.typeName, ResultImportPath: result.importPath, Visibility: navigationDeclarationVisibility(node, c.language, name, c.content), Start: start, End: end,
+		Name: name, Kind: c.navigation.DeclarationKind(node, current.container), Language: c.adapter.ID(), Path: c.path, Container: current.container, Package: c.packageName,
+		ResultType: result.typeName, ResultImportPath: result.importPath, Visibility: c.navigation.Visibility(node, name, c.content), Start: start, End: end,
 	}
 	declaration.ID = navigationStableID("declaration", declaration.Language, declaration.Path, declaration.Name, declaration.Kind, strconv.Itoa(start), strconv.Itoa(end))
 	c.declarations = append(c.declarations, declaration)
 	current.callable = &c.declarations[len(c.declarations)-1]
-	current.bindings = navigationCallableBindings(node, c.content, c.language, current.container, c.imports, c.returnBindings, c.rules)
+	current.bindings = navigationCallableBindings(node, c.content, current.container, c.imports, c.returnBindings, c.navigation)
 	return current
 }
 
@@ -224,7 +225,7 @@ func (c *navigationCollector) navigationDeclarationRange(node *sitter.Node, enve
 }
 
 func (c *navigationCollector) recordNavigationCall(node *sitter.Node, callable *NavigationDeclaration, bindings map[string]navigationBinding) {
-	if !c.isCall(node.Kind()) || callable == nil {
+	if !c.navigation.IsCall(node.Kind()) || callable == nil {
 		return
 	}
 	name, display := c.callName(node)
@@ -232,7 +233,7 @@ func (c *navigationCollector) recordNavigationCall(node *sitter.Node, callable *
 		return
 	}
 	call := NavigationCall{
-		Name: name, Display: display, Qualifier: navigationCallQualifier(display), Language: c.language, Path: c.path, Line: nodeStart(node),
+		Name: name, Display: display, Qualifier: navigationCallQualifier(display), Language: c.adapter.ID(), Path: c.path, Line: nodeStart(node),
 		CallerID: callable.ID, EnclosingStart: callable.Start, EnclosingEnd: callable.End,
 	}
 	applyNavigationCallContext(&call, c.imports, bindings, c.fields)
@@ -243,16 +244,16 @@ func (c *navigationCollector) recordNavigationCall(node *sitter.Node, callable *
 func (c *navigationCollector) walkNavigationChildren(node *sitter.Node, context navigationWalkContext) {
 	for _, child := range namedChildren(node) {
 		childContext := context
-		if navigationWrapperType(child.Kind()) {
+		if c.navigation.IsWrapper(child.Kind()) {
 			childContext.envelope = c.wrapperEnvelope(child, context.envelope)
-		} else if !c.isCallableNode(child) {
+		} else if !c.navigation.IsCallable(child) {
 			childContext.envelope = nil
 		}
-		if c.isCallableNode(child) && childContext.envelope == nil {
+		if c.navigation.IsCallable(child) && childContext.envelope == nil {
 			childContext.envelope = &navigationEnvelope{start: leadingCommentStart(child), end: nodeEnd(child)}
 		}
 		c.walk(child, childContext)
-		mergeNavigationBindingsAfterNode(context.bindings, child, c.content, c.language, c.imports, c.returnBindings, c.rules)
+		mergeNavigationBindingsAfterNode(context.bindings, child, c.content, c.imports, c.returnBindings, c.navigation)
 	}
 }
 func (c *navigationCollector) wrapperEnvelope(node *sitter.Node, inherited *navigationEnvelope) *navigationEnvelope {
@@ -265,130 +266,6 @@ func (c *navigationCollector) wrapperEnvelope(node *sitter.Node, inherited *navi
 		wrapped.assignedName = assignedName
 	}
 	return &wrapped
-}
-
-func (c *navigationCollector) isCallableNode(node *sitter.Node) bool {
-	if c.rules.functionLikeTypes.contains(node.Kind()) {
-		return true
-	}
-	if c.language != "go" {
-		return false
-	}
-	if node.Kind() == "method_elem" || node.Kind() == "method_spec" {
-		return true
-	}
-	callableType := node.ChildByFieldName("type")
-	return node.Kind() == "field_declaration" && callableType != nil && callableType.Kind() == "function_type"
-}
-
-func (c *navigationCollector) isGoTypeMemberNode(node *sitter.Node) bool {
-	if c.language != "go" {
-		return false
-	}
-	return node.Kind() == "method_elem" || node.Kind() == "method_spec" || node.Kind() == "field_declaration"
-}
-func (c *navigationCollector) isNavigationContainer(kind string) bool {
-	if c.rules.classDeclarationTypes.contains(kind) {
-		return true
-	}
-	if c.language == "go" && kind == "type_spec" {
-		return true
-	}
-	return (c.language == "typescript" || c.language == "tsx") && kind == "interface_declaration"
-}
-
-func (c *navigationCollector) containerName(node *sitter.Node, envelope *navigationEnvelope) string {
-	if c.language == "rust" && node.Kind() == "impl_item" {
-		if target := node.ChildByFieldName("type"); target != nil {
-			return nodeText(target, c.content)
-		}
-	}
-	return c.declarationName(node, envelope)
-}
-
-func (c *navigationCollector) declarationName(node *sitter.Node, envelope *navigationEnvelope) string {
-	if envelope != nil && envelope.assignedName != "" {
-		return envelope.assignedName
-	}
-	if c.language == "c" || c.language == "cpp" {
-		return cFamilyName(node, c.content, c.rules)
-	}
-	if c.language == "go" && node.Kind() == "method_declaration" {
-		return goNavigationMethodName(node, c.content, c.rules)
-	}
-	return extractNodeName(node, c.content, c.rules)
-}
-func goNavigationMethodName(node *sitter.Node, content string, rules *structureRules) string {
-	name := extractNodeName(node, content, rules)
-	receiver := strings.TrimSuffix(strings.TrimPrefix(goReceiver(node, content), "("), ").")
-	receiver = strings.TrimPrefix(receiver, "*")
-	if receiver == "" {
-		return name
-	}
-	return receiver + "." + name
-}
-
-func navigationAssignedName(node *sitter.Node, content string) string {
-	if named := node.ChildByFieldName("name"); named != nil {
-		return nodeText(named, content)
-	}
-	for _, child := range namedChildren(node) {
-		if child.Kind() == "variable_declarator" {
-			if named := child.ChildByFieldName("name"); named != nil {
-				return nodeText(named, content)
-			}
-		}
-	}
-	return ""
-}
-
-func navigationWrapperType(kind string) bool {
-	switch kind {
-	case "export_statement", "decorated_definition", "lexical_declaration", "variable_declaration", "variable_declarator", "template_declaration":
-		return true
-	}
-	return false
-}
-
-func (c *navigationCollector) navigationDeclarationKind(node *sitter.Node, container string) string {
-	kind := node.Kind()
-	if c.language == "go" {
-		if kind == "field_declaration" {
-			return "field"
-		}
-		if kind == "function_declaration" {
-			return "func"
-		}
-	}
-	if strings.Contains(kind, "constructor") {
-		return "constructor"
-	}
-	if strings.Contains(kind, "method") || container != "" {
-		return "method"
-	}
-	return "function"
-}
-
-func (c *navigationCollector) isCall(kind string) bool {
-	switch c.language {
-	case "go":
-		return kind == "call_expression"
-	case "javascript", "typescript", "tsx":
-		return kind == "call_expression" || kind == "new_expression"
-	case "python":
-		return kind == "call"
-	case "java":
-		return kind == "method_invocation" || kind == "object_creation_expression" || kind == "explicit_constructor_invocation"
-	case "kotlin":
-		return kind == "call_expression"
-	case "csharp":
-		return kind == "invocation_expression" || kind == "object_creation_expression"
-	case "c", "cpp", "rust":
-		return kind == "call_expression"
-	case "shell":
-		return kind == "command"
-	}
-	return false
 }
 
 func (c *navigationCollector) callName(node *sitter.Node) (string, string) {

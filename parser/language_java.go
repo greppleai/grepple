@@ -31,6 +31,9 @@ func newJavaLanguage() languageAdapter {
 func (*javaLanguage) ID() string                         { return "java" }
 func (language *javaLanguage) Grammar() *sitter.Language { return language.grammar }
 func (language *javaLanguage) Rules() *structureRules    { return &language.rules }
+func (language *javaLanguage) Navigation() navigationAdapter {
+	return javaNavigationAdapter(&language.rules)
+}
 func (language *javaLanguage) Outline(root *sitter.Node, content string) []Symbol {
 	return outlineJava(root, content, &language.rules)
 }

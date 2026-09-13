@@ -161,8 +161,8 @@ classDiagram
     class NavigationVisibility["NavigationVisibility = string"]
     <<type>> NavigationVisibility
     %% grepple:underlying NavigationVisibility string
-    %% grepple:file NavigationVisibility parser/navigation_visibility.go
-    note for NavigationVisibility "defined: parser/navigation_visibility.go:12"
+    %% grepple:file NavigationVisibility parser/language_navigation_visibility.go
+    note for NavigationVisibility "defined: parser/language_navigation_visibility.go:12"
     class Node {
         +Child(int): Node
         +ChildByFieldName(string): Node
@@ -329,6 +329,7 @@ classDiagram
     class cLanguage {
         +Grammar(): *sitter.Language
         +ID(): string
+        +Navigation(): navigationAdapter
         +Outline(*sitter.Node, string): []Symbol
         +Rules(): *structureRules
         -grammar: *sitter.Language
@@ -336,10 +337,11 @@ classDiagram
     }
     <<struct>> cLanguage
     %% grepple:file cLanguage parser/language_c.go
-    note for cLanguage "defined: parser/language_c.go:8-11; Grammar@parser/language_c.go:21; ID@parser/language_c.go:20; Outline@parser/language_c.go:23-25; Rules@parser/language_c.go:22; grammar@parser/language_c.go:9; rules@parser/language_c.go:10"
+    note for cLanguage "defined: parser/language_c.go:8-11; Grammar@parser/language_c.go:21; ID@parser/language_c.go:20; Navigation@parser/language_c.go:23-25; Outline@parser/language_c.go:26-28; Rules@parser/language_c.go:22; grammar@parser/language_c.go:9; rules@parser/language_c.go:10"
     class cSharpLanguage {
         +Grammar(): *sitter.Language
         +ID(): string
+        +Navigation(): navigationAdapter
         +Outline(*sitter.Node, string): []Symbol
         +Rules(): *structureRules
         -grammar: *sitter.Language
@@ -347,10 +349,11 @@ classDiagram
     }
     <<struct>> cSharpLanguage
     %% grepple:file cSharpLanguage parser/language_csharp.go
-    note for cSharpLanguage "defined: parser/language_csharp.go:8-11; Grammar@parser/language_csharp.go:33; ID@parser/language_csharp.go:32; Outline@parser/language_csharp.go:35-37; Rules@parser/language_csharp.go:34; grammar@parser/language_csharp.go:9; rules@parser/language_csharp.go:10"
+    note for cSharpLanguage "defined: parser/language_csharp.go:8-11; Grammar@parser/language_csharp.go:33; ID@parser/language_csharp.go:32; Navigation@parser/language_csharp.go:35-37; Outline@parser/language_csharp.go:38-40; Rules@parser/language_csharp.go:34; grammar@parser/language_csharp.go:9; rules@parser/language_csharp.go:10"
     class cppLanguage {
         +Grammar(): *sitter.Language
         +ID(): string
+        +Navigation(): navigationAdapter
         +Outline(*sitter.Node, string): []Symbol
         +Rules(): *structureRules
         -grammar: *sitter.Language
@@ -358,7 +361,7 @@ classDiagram
     }
     <<struct>> cppLanguage
     %% grepple:file cppLanguage parser/language_cpp.go
-    note for cppLanguage "defined: parser/language_cpp.go:8-11; Grammar@parser/language_cpp.go:21; ID@parser/language_cpp.go:20; Outline@parser/language_cpp.go:23-25; Rules@parser/language_cpp.go:22; grammar@parser/language_cpp.go:9; rules@parser/language_cpp.go:10"
+    note for cppLanguage "defined: parser/language_cpp.go:8-11; Grammar@parser/language_cpp.go:21; ID@parser/language_cpp.go:20; Navigation@parser/language_cpp.go:23-25; Outline@parser/language_cpp.go:26-28; Rules@parser/language_cpp.go:22; grammar@parser/language_cpp.go:9; rules@parser/language_cpp.go:10"
     class documentViewState {
         -active: atomic.Bool
         -mu: sync.Mutex
@@ -378,6 +381,7 @@ classDiagram
     class goLanguage {
         +Grammar(): *sitter.Language
         +ID(): string
+        +Navigation(): navigationAdapter
         +Outline(*sitter.Node, string): []Symbol
         +Rules(): *structureRules
         -grammar: *sitter.Language
@@ -385,10 +389,11 @@ classDiagram
     }
     <<struct>> goLanguage
     %% grepple:file goLanguage parser/language_go.go
-    note for goLanguage "defined: parser/language_go.go:8-11; Grammar@parser/language_go.go:32; ID@parser/language_go.go:31; Outline@parser/language_go.go:34-36; Rules@parser/language_go.go:33; grammar@parser/language_go.go:9; rules@parser/language_go.go:10"
+    note for goLanguage "defined: parser/language_go.go:8-11; Grammar@parser/language_go.go:32; ID@parser/language_go.go:31; Navigation@parser/language_go.go:34-36; Outline@parser/language_go.go:37-39; Rules@parser/language_go.go:33; grammar@parser/language_go.go:9; rules@parser/language_go.go:10"
     class javaLanguage {
         +Grammar(): *sitter.Language
         +ID(): string
+        +Navigation(): navigationAdapter
         +Outline(*sitter.Node, string): []Symbol
         +Rules(): *structureRules
         -grammar: *sitter.Language
@@ -396,10 +401,11 @@ classDiagram
     }
     <<struct>> javaLanguage
     %% grepple:file javaLanguage parser/language_java.go
-    note for javaLanguage "defined: parser/language_java.go:8-11; Grammar@parser/language_java.go:32; ID@parser/language_java.go:31; Outline@parser/language_java.go:34-36; Rules@parser/language_java.go:33; grammar@parser/language_java.go:9; rules@parser/language_java.go:10"
+    note for javaLanguage "defined: parser/language_java.go:8-11; Grammar@parser/language_java.go:32; ID@parser/language_java.go:31; Navigation@parser/language_java.go:34-36; Outline@parser/language_java.go:37-39; Rules@parser/language_java.go:33; grammar@parser/language_java.go:9; rules@parser/language_java.go:10"
     class javaScriptLanguage {
         +Grammar(): *sitter.Language
         +ID(): string
+        +Navigation(): navigationAdapter
         +Outline(*sitter.Node, string): []Symbol
         +Rules(): *structureRules
         -grammar: *sitter.Language
@@ -407,10 +413,11 @@ classDiagram
     }
     <<struct>> javaScriptLanguage
     %% grepple:file javaScriptLanguage parser/language_javascript.go
-    note for javaScriptLanguage "defined: parser/language_javascript.go:19-22; Grammar@parser/language_javascript.go:43; ID@parser/language_javascript.go:42; Outline@parser/language_javascript.go:45-47; Rules@parser/language_javascript.go:44; grammar@parser/language_javascript.go:20; rules@parser/language_javascript.go:21"
+    note for javaScriptLanguage "defined: parser/language_javascript.go:19-22; Grammar@parser/language_javascript.go:43; ID@parser/language_javascript.go:42; Navigation@parser/language_javascript.go:45-47; Outline@parser/language_javascript.go:48-50; Rules@parser/language_javascript.go:44; grammar@parser/language_javascript.go:20; rules@parser/language_javascript.go:21"
     class kotlinLanguage {
         +Grammar(): *sitter.Language
         +ID(): string
+        +Navigation(): navigationAdapter
         +Outline(*sitter.Node, string): []Symbol
         +Rules(): *structureRules
         -grammar: *sitter.Language
@@ -418,16 +425,17 @@ classDiagram
     }
     <<struct>> kotlinLanguage
     %% grepple:file kotlinLanguage parser/language_kotlin.go
-    note for kotlinLanguage "defined: parser/language_kotlin.go:10-13; Grammar@parser/language_kotlin.go:34; ID@parser/language_kotlin.go:33; Outline@parser/language_kotlin.go:36-38; Rules@parser/language_kotlin.go:35; grammar@parser/language_kotlin.go:11; rules@parser/language_kotlin.go:12"
+    note for kotlinLanguage "defined: parser/language_kotlin.go:10-13; Grammar@parser/language_kotlin.go:34; ID@parser/language_kotlin.go:33; Navigation@parser/language_kotlin.go:36-38; Outline@parser/language_kotlin.go:39-41; Rules@parser/language_kotlin.go:35; grammar@parser/language_kotlin.go:11; rules@parser/language_kotlin.go:12"
     class languageAdapter {
         +Grammar(): *sitter.Language
         +ID(): string
+        +Navigation(): navigationAdapter
         +Outline(*sitter.Node, string): []Symbol
         +Rules(): *structureRules
     }
     <<interface>> languageAdapter
     %% grepple:file languageAdapter parser/language.go
-    note for languageAdapter "defined: parser/language.go:75-80; Grammar@parser/language.go:77; ID@parser/language.go:76; Outline@parser/language.go:79; Rules@parser/language.go:78"
+    note for languageAdapter "defined: parser/language.go:75-81; Grammar@parser/language.go:77; ID@parser/language.go:76; Navigation@parser/language.go:79; Outline@parser/language.go:80; Rules@parser/language.go:78"
     class languageGeneratedMetadata {
         -children: map[string]GrammarCardinality
         -fields: map[string]map[string]GrammarCardinality
@@ -461,6 +469,65 @@ classDiagram
     <<struct>> mdNode
     %% grepple:file mdNode parser/markdown.go
     note for mdNode "defined: parser/markdown.go:135-139; kids@parser/markdown.go:138; level@parser/markdown.go:136; sym@parser/markdown.go:137"
+    class navigationAdapter {
+        +CallableReturnBinding(*sitter.Node, string, map[string]navigationImport): navigationBinding
+        +ContainerName(*sitter.Node, string, *navigationEnvelope): string
+        +DeclarationKind(*sitter.Node, string): string
+        +DeclarationName(*sitter.Node, string, *navigationEnvelope): string
+        +IsCall(string): bool
+        +IsCallable(*sitter.Node): bool
+        +IsContainer(string): bool
+        +IsFieldContainer(string): bool
+        +IsNestedBindingScope(string): bool
+        +IsWrapper(string): bool
+        +RequiresContainer(*sitter.Node): bool
+        +ReturnCallableName(*sitter.Node, string, string): string
+        +Rules(): *structureRules
+        +SelfBinding(string): tuple~string&#44;navigationBinding&#44;bool~
+        +SourceFacts(*sitter.Node, string): tuple~map[string]navigationImport&#44;string&#44;map[string]map[string]navigationBinding~
+        +Visibility(*sitter.Node, string, string): NavigationVisibility
+    }
+    <<interface>> navigationAdapter
+    %% grepple:file navigationAdapter parser/navigation_adapter.go
+    note for navigationAdapter "defined: parser/navigation_adapter.go:23-40; CallableReturnBinding@parser/navigation_adapter.go:37; ContainerName@parser/navigation_adapter.go:28; DeclarationKind@parser/navigation_adapter.go:30; DeclarationName@parser/navigation_adapter.go:29; IsCall@parser/navigation_adapter.go:31; IsCallable@parser/navigation_adapter.go:25; IsContainer@parser/navigation_adapter.go:27; IsFieldContainer@parser/navigation_adapter.go:38; IsNestedBindingScope@parser/navigation_adapter.go:33; IsWrapper@parser/navigation_adapter.go:32; RequiresContainer@parser/navigation_adapter.go:26; ReturnCallableName@parser/navigation_adapter.go:36; Rules@parser/navigation_adapter.go:24; SelfBinding@parser/navigation_adapter.go:39; SourceFacts@parser/navigation_adapter.go:35; Visibility@parser/navigation_adapter.go:34"
+    class navigationAdapterConfig {
+        +CallableReturnBinding(*sitter.Node, string, map[string]navigationImport): navigationBinding
+        +ContainerName(*sitter.Node, string, *navigationEnvelope): string
+        +DeclarationKind(*sitter.Node, string): string
+        +DeclarationName(*sitter.Node, string, *navigationEnvelope): string
+        +IsCall(string): bool
+        +IsCallable(*sitter.Node): bool
+        +IsContainer(string): bool
+        +IsFieldContainer(string): bool
+        +IsNestedBindingScope(string): bool
+        +IsWrapper(string): bool
+        +RequiresContainer(*sitter.Node): bool
+        +ReturnCallableName(*sitter.Node, string, string): string
+        +Rules(): *structureRules
+        +SelfBinding(string): tuple~string&#44;navigationBinding&#44;bool~
+        +SourceFacts(*sitter.Node, string): tuple~map[string]navigationImport&#44;string&#44;map[string]map[string]navigationBinding~
+        +Visibility(*sitter.Node, string, string): NavigationVisibility
+        -callTypes: stringSet
+        -callableReturnBinding: func&#40;*sitter.Node&#44;string&#44;map[string]navigationImport&#41;navigationBinding
+        -containerName: func&#40;*sitter.Node&#44;string&#44;*navigationEnvelope&#41;string
+        -declarationKind: func&#40;*sitter.Node&#44;string&#41;string
+        -declarationName: func&#40;*sitter.Node&#44;string&#44;*navigationEnvelope&#41;string
+        -extraContainerTypes: stringSet
+        -fieldContainerTypes: stringSet
+        -isCallable: func&#40;*sitter.Node&#41;bool
+        -nestedBindingScopeTypes: stringSet
+        -requiresContainer: func&#40;*sitter.Node&#41;bool
+        -returnCallableName: func&#40;*sitter.Node&#44;string&#44;string&#44;*navigationAdapterConfig&#41;string
+        -rules: *structureRules
+        -selfBindingFromContainer: bool
+        -selfBindingName: string
+        -sourceFacts: func&#40;*sitter.Node&#44;string&#44;*navigationAdapterConfig&#41;&#40;map[string]navigationImport&#44;string&#44;map[string]map[string]navigationBinding&#41;
+        -visibility: func&#40;*sitter.Node&#44;string&#44;string&#41;NavigationVisibility
+        -wrapperTypes: stringSet
+    }
+    <<struct>> navigationAdapterConfig
+    %% grepple:file navigationAdapterConfig parser/navigation_adapter.go
+    note for navigationAdapterConfig "defined: parser/navigation_adapter.go:42-60; CallableReturnBinding@parser/navigation_adapter.go:154-159; ContainerName@parser/navigation_adapter.go:87-92; DeclarationKind@parser/navigation_adapter.go:104-115; DeclarationName@parser/navigation_adapter.go:94-102; IsCall@parser/navigation_adapter.go:117-119; IsCallable@parser/navigation_adapter.go:72-77; IsContainer@parser/navigation_adapter.go:83-85; IsFieldContainer@parser/navigation_adapter.go:161-163; IsNestedBindingScope@parser/navigation_adapter.go:125-127; IsWrapper@parser/navigation_adapter.go:121-123; RequiresContainer@parser/navigation_adapter.go:79-81; ReturnCallableName@parser/navigation_adapter.go:143-152; Rules@parser/navigation_adapter.go:70; SelfBinding@parser/navigation_adapter.go:165-170; SourceFacts@parser/navigation_adapter.go:136-141; Visibility@parser/navigation_adapter.go:129-134; callTypes@parser/navigation_adapter.go:44; callableReturnBinding@parser/navigation_adapter.go:57; containerName@parser/navigation_adapter.go:51; declarationKind@parser/navigation_adapter.go:53; declarationName@parser/navigation_adapter.go:52; extraContainerTypes@parser/navigation_adapter.go:45; fieldContainerTypes@parser/navigation_adapter.go:46; isCallable@parser/navigation_adapter.go:49; nestedBindingScopeTypes@parser/navigation_adapter.go:48; requiresContainer@parser/navigation_adapter.go:50; returnCallableName@parser/navigation_adapter.go:56; rules@parser/navigation_adapter.go:43; selfBindingFromContainer@parser/navigation_adapter.go:59; selfBindingName@parser/navigation_adapter.go:58; sourceFacts@parser/navigation_adapter.go:55; visibility@parser/navigation_adapter.go:54; wrapperTypes@parser/navigation_adapter.go:47"
     class navigationBinding {
         -factoryImport: string
         -factoryName: string
@@ -473,33 +540,26 @@ classDiagram
     note for navigationBinding "defined: parser/navigation_context.go:16-22; factoryImport@parser/navigation_context.go:20; factoryName@parser/navigation_context.go:19; importPath@parser/navigation_context.go:18; line@parser/navigation_context.go:21; typeName@parser/navigation_context.go:17"
     class navigationCollector {
         -callName(*sitter.Node): tuple~string&#44;string~
-        -containerName(*sitter.Node, *navigationEnvelope): string
-        -declarationName(*sitter.Node, *navigationEnvelope): string
         -enterNavigationNode(*sitter.Node, navigationWalkContext): navigationWalkContext
-        -isCall(string): bool
-        -isCallableNode(*sitter.Node): bool
-        -isGoTypeMemberNode(*sitter.Node): bool
-        -isNavigationContainer(string): bool
-        -navigationDeclarationKind(*sitter.Node, string): string
         -navigationDeclarationRange(*sitter.Node, *navigationEnvelope): tuple~int&#44;int~
         -recordNavigationCall(*sitter.Node, *NavigationDeclaration, map[string]navigationBinding)
         -walk(*sitter.Node, navigationWalkContext)
         -walkNavigationChildren(*sitter.Node, navigationWalkContext)
         -wrapperEnvelope(*sitter.Node, *navigationEnvelope): *navigationEnvelope
+        -adapter: languageAdapter
         -calls: []NavigationCall
         -content: string
         -declarations: []NavigationDeclaration
         -fields: map[string]map[string]navigationBinding
         -imports: map[string]navigationImport
-        -language: string
+        -navigation: navigationAdapter
         -packageName: string
         -path: string
         -returnBindings: map[string]navigationBinding
-        -rules: *structureRules
     }
     <<struct>> navigationCollector
     %% grepple:file navigationCollector parser/navigation.go
-    note for navigationCollector "defined: parser/navigation.go:143-154; callName@parser/navigation.go:394-416; containerName@parser/navigation.go:300-307; declarationName@parser/navigation.go:309-320; enterNavigationNode@parser/navigation.go:186-217; isCall@parser/navigation.go:372-392; isCallableNode@parser/navigation.go:270-282; isGoTypeMemberNode@parser/navigation.go:284-289; isNavigationContainer@parser/navigation.go:290-298; navigationDeclarationKind@parser/navigation.go:353-370; navigationDeclarationRange@parser/navigation.go:219-224; recordNavigationCall@parser/navigation.go:226-241; walk@parser/navigation.go:169-176; walkNavigationChildren@parser/navigation.go:243-257; wrapperEnvelope@parser/navigation.go:258-268; calls@parser/navigation.go:153; content@parser/navigation.go:144; declarations@parser/navigation.go:152; fields@parser/navigation.go:149; imports@parser/navigation.go:148; language@parser/navigation.go:145; packageName@parser/navigation.go:151; path@parser/navigation.go:146; returnBindings@parser/navigation.go:150; rules@parser/navigation.go:147"
+    note for navigationCollector "defined: parser/navigation.go:144-155; callName@parser/navigation.go:271-293; enterNavigationNode@parser/navigation.go:187-218; navigationDeclarationRange@parser/navigation.go:220-225; recordNavigationCall@parser/navigation.go:227-242; walk@parser/navigation.go:170-177; walkNavigationChildren@parser/navigation.go:244-258; wrapperEnvelope@parser/navigation.go:259-269; adapter@parser/navigation.go:146; calls@parser/navigation.go:154; content@parser/navigation.go:145; declarations@parser/navigation.go:153; fields@parser/navigation.go:150; imports@parser/navigation.go:149; navigation@parser/navigation.go:147; packageName@parser/navigation.go:152; path@parser/navigation.go:148; returnBindings@parser/navigation.go:151"
     class navigationEnvelope {
         -assignedName: string
         -end: int
@@ -507,7 +567,7 @@ classDiagram
     }
     <<struct>> navigationEnvelope
     %% grepple:file navigationEnvelope parser/navigation.go
-    note for navigationEnvelope "defined: parser/navigation.go:156-160; assignedName@parser/navigation.go:159; end@parser/navigation.go:158; start@parser/navigation.go:157"
+    note for navigationEnvelope "defined: parser/navigation.go:157-161; assignedName@parser/navigation.go:160; end@parser/navigation.go:159; start@parser/navigation.go:158"
     class navigationImport {
         -imported: string
         -path: string
@@ -523,7 +583,7 @@ classDiagram
     }
     <<struct>> navigationWalkContext
     %% grepple:file navigationWalkContext parser/navigation.go
-    note for navigationWalkContext "defined: parser/navigation.go:162-167; bindings@parser/navigation.go:165; callable@parser/navigation.go:166; container@parser/navigation.go:164; envelope@parser/navigation.go:163"
+    note for navigationWalkContext "defined: parser/navigation.go:163-168; bindings@parser/navigation.go:166; callable@parser/navigation.go:167; container@parser/navigation.go:165; envelope@parser/navigation.go:164"
     class pooledParser {
         -lang: *sitter.Language
         -p: *sitter.Parser
@@ -534,6 +594,7 @@ classDiagram
     class pythonLanguage {
         +Grammar(): *sitter.Language
         +ID(): string
+        +Navigation(): navigationAdapter
         +Outline(*sitter.Node, string): []Symbol
         +Rules(): *structureRules
         -grammar: *sitter.Language
@@ -541,10 +602,11 @@ classDiagram
     }
     <<struct>> pythonLanguage
     %% grepple:file pythonLanguage parser/language_python.go
-    note for pythonLanguage "defined: parser/language_python.go:8-11; Grammar@parser/language_python.go:32; ID@parser/language_python.go:31; Outline@parser/language_python.go:34-36; Rules@parser/language_python.go:33; grammar@parser/language_python.go:9; rules@parser/language_python.go:10"
+    note for pythonLanguage "defined: parser/language_python.go:8-11; Grammar@parser/language_python.go:32; ID@parser/language_python.go:31; Navigation@parser/language_python.go:34-36; Outline@parser/language_python.go:37-39; Rules@parser/language_python.go:33; grammar@parser/language_python.go:9; rules@parser/language_python.go:10"
     class rustLanguage {
         +Grammar(): *sitter.Language
         +ID(): string
+        +Navigation(): navigationAdapter
         +Outline(*sitter.Node, string): []Symbol
         +Rules(): *structureRules
         -grammar: *sitter.Language
@@ -552,10 +614,11 @@ classDiagram
     }
     <<struct>> rustLanguage
     %% grepple:file rustLanguage parser/language_rust.go
-    note for rustLanguage "defined: parser/language_rust.go:8-11; Grammar@parser/language_rust.go:32; ID@parser/language_rust.go:31; Outline@parser/language_rust.go:34-36; Rules@parser/language_rust.go:33; grammar@parser/language_rust.go:9; rules@parser/language_rust.go:10"
+    note for rustLanguage "defined: parser/language_rust.go:8-11; Grammar@parser/language_rust.go:32; ID@parser/language_rust.go:31; Navigation@parser/language_rust.go:34-36; Outline@parser/language_rust.go:37-39; Rules@parser/language_rust.go:33; grammar@parser/language_rust.go:9; rules@parser/language_rust.go:10"
     class shellLanguage {
         +Grammar(): *sitter.Language
         +ID(): string
+        +Navigation(): navigationAdapter
         +Outline(*sitter.Node, string): []Symbol
         +Rules(): *structureRules
         -grammar: *sitter.Language
@@ -563,7 +626,7 @@ classDiagram
     }
     <<struct>> shellLanguage
     %% grepple:file shellLanguage parser/language_shell.go
-    note for shellLanguage "defined: parser/language_shell.go:8-11; Grammar@parser/language_shell.go:32; ID@parser/language_shell.go:31; Outline@parser/language_shell.go:34-42; Rules@parser/language_shell.go:33; grammar@parser/language_shell.go:9; rules@parser/language_shell.go:10"
+    note for shellLanguage "defined: parser/language_shell.go:8-11; Grammar@parser/language_shell.go:32; ID@parser/language_shell.go:31; Navigation@parser/language_shell.go:34-36; Outline@parser/language_shell.go:37-45; Rules@parser/language_shell.go:33; grammar@parser/language_shell.go:9; rules@parser/language_shell.go:10"
     class stringSet["stringSet = map&#91;string&#93;struct&#123;&#125;"] {
         -contains(string): bool
     }
@@ -610,6 +673,7 @@ classDiagram
     class typeScriptLanguage {
         +Grammar(): *sitter.Language
         +ID(): string
+        +Navigation(): navigationAdapter
         +Outline(*sitter.Node, string): []Symbol
         +Rules(): *structureRules
         -grammar: *sitter.Language
@@ -618,7 +682,7 @@ classDiagram
     }
     <<struct>> typeScriptLanguage
     %% grepple:file typeScriptLanguage parser/language_typescript.go
-    note for typeScriptLanguage "defined: parser/language_typescript.go:21-25; Grammar@parser/language_typescript.go:51; ID@parser/language_typescript.go:50; Outline@parser/language_typescript.go:53-55; Rules@parser/language_typescript.go:52; grammar@parser/language_typescript.go:23; id@parser/language_typescript.go:22; rules@parser/language_typescript.go:24"
+    note for typeScriptLanguage "defined: parser/language_typescript.go:21-25; Grammar@parser/language_typescript.go:51; ID@parser/language_typescript.go:50; Navigation@parser/language_typescript.go:53-55; Outline@parser/language_typescript.go:56-58; Rules@parser/language_typescript.go:52; grammar@parser/language_typescript.go:23; id@parser/language_typescript.go:22; rules@parser/language_typescript.go:24"
     class viewSnapshotKey {
         -field: string
         -id: uintptr
@@ -650,13 +714,13 @@ classDiagram
     }
     <<function>> CapabilitiesForLanguage
     %% grepple:file CapabilitiesForLanguage parser/language.go
-    note for CapabilitiesForLanguage "defined: parser/language.go:139-146"
+    note for CapabilitiesForLanguage "defined: parser/language.go:142-149"
     class DeclarationRangeAt {
         +DeclarationRangeAt(string, string, int): tuple~int&#44;int&#44;bool~
     }
     <<function>> DeclarationRangeAt
     %% grepple:file DeclarationRangeAt parser/navigation.go
-    note for DeclarationRangeAt "defined: parser/navigation.go:127-141"
+    note for DeclarationRangeAt "defined: parser/navigation.go:128-142"
     class EnclosingLineRanges {
         +EnclosingLineRanges(string, string, map[int]bool): map[int]StructuralLineRange
     }
@@ -668,19 +732,19 @@ classDiagram
     }
     <<function>> GrammarChildrenCardinality
     %% grepple:file GrammarChildrenCardinality parser/language.go
-    note for GrammarChildrenCardinality "defined: parser/language.go:169-175"
+    note for GrammarChildrenCardinality "defined: parser/language.go:172-178"
     class GrammarFieldCardinality {
         +GrammarFieldCardinality(string, string, string): GrammarCardinality
     }
     <<function>> GrammarFieldCardinality
     %% grepple:file GrammarFieldCardinality parser/language.go
-    note for GrammarFieldCardinality "defined: parser/language.go:160-166"
+    note for GrammarFieldCardinality "defined: parser/language.go:163-169"
     class GrammarSubtype {
         +GrammarSubtype(string, string, string): bool
     }
     <<function>> GrammarSubtype
     %% grepple:file GrammarSubtype parser/language.go
-    note for GrammarSubtype "defined: parser/language.go:179-182"
+    note for GrammarSubtype "defined: parser/language.go:182-185"
     class LanguageFor {
         +LanguageFor(string): string
     }
@@ -704,7 +768,7 @@ classDiagram
     }
     <<function>> NavigationGraphFromTree
     %% grepple:file NavigationGraphFromTree parser/navigation.go
-    note for NavigationGraphFromTree "defined: parser/navigation.go:114-124"
+    note for NavigationGraphFromTree "defined: parser/navigation.go:114-125"
     class OutlineFile {
         +OutlineFile(string, string): FileOutline
     }
@@ -734,13 +798,13 @@ classDiagram
     }
     <<function>> SupportedContentLanguages
     %% grepple:file SupportedContentLanguages parser/language.go
-    note for SupportedContentLanguages "defined: parser/language.go:122-136"
+    note for SupportedContentLanguages "defined: parser/language.go:125-139"
     class SupportedLanguages {
         +SupportedLanguages(): []LanguageCapabilities
     }
     <<function>> SupportedLanguages
     %% grepple:file SupportedLanguages parser/language.go
-    note for SupportedLanguages "defined: parser/language.go:113-119"
+    note for SupportedLanguages "defined: parser/language.go:116-122"
     class WalkNamed {
         +WalkNamed(Node, func&#40;Node&#41;)
     }
@@ -811,47 +875,87 @@ classDiagram
     WalkNamedViewBounded "1" ..> "1" WalkResult : result 1
     cLanguage "1" ..> "*" Symbol : method Outline result 1
     languageAdapter <|.. cLanguage : implements
+    cLanguage "1" ..> "1" navigationAdapter : method Navigation result 1
     cLanguage "1" --> "1" structureRules : field rules
     cLanguage "1" ..> "1" structureRules : method Rules result 1
     cSharpLanguage "1" ..> "*" Symbol : method Outline result 1
     languageAdapter <|.. cSharpLanguage : implements
+    cSharpLanguage "1" ..> "1" navigationAdapter : method Navigation result 1
     cSharpLanguage "1" --> "1" structureRules : field rules
     cSharpLanguage "1" ..> "1" structureRules : method Rules result 1
     cppLanguage "1" ..> "*" Symbol : method Outline result 1
     languageAdapter <|.. cppLanguage : implements
+    cppLanguage "1" ..> "1" navigationAdapter : method Navigation result 1
     cppLanguage "1" --> "1" structureRules : field rules
     cppLanguage "1" ..> "1" structureRules : method Rules result 1
     documentViewState "1" --> "*" SyntaxNode : field snapshots
     documentViewState "1" --> "*" viewSnapshotKey : field snapshots
     goLanguage "1" ..> "*" Symbol : method Outline result 1
     languageAdapter <|.. goLanguage : implements
+    goLanguage "1" ..> "1" navigationAdapter : method Navigation result 1
     goLanguage "1" --> "1" structureRules : field rules
     goLanguage "1" ..> "1" structureRules : method Rules result 1
     javaLanguage "1" ..> "*" Symbol : method Outline result 1
     languageAdapter <|.. javaLanguage : implements
+    javaLanguage "1" ..> "1" navigationAdapter : method Navigation result 1
     javaLanguage "1" --> "1" structureRules : field rules
     javaLanguage "1" ..> "1" structureRules : method Rules result 1
     javaScriptLanguage "1" ..> "*" Symbol : method Outline result 1
     languageAdapter <|.. javaScriptLanguage : implements
+    javaScriptLanguage "1" ..> "1" navigationAdapter : method Navigation result 1
     javaScriptLanguage "1" --> "1" structureRules : field rules
     javaScriptLanguage "1" ..> "1" structureRules : method Rules result 1
     kotlinLanguage "1" ..> "*" Symbol : method Outline result 1
     languageAdapter <|.. kotlinLanguage : implements
+    kotlinLanguage "1" ..> "1" navigationAdapter : method Navigation result 1
     kotlinLanguage "1" --> "1" structureRules : field rules
     kotlinLanguage "1" ..> "1" structureRules : method Rules result 1
     languageAdapter "1" ..> "*" Symbol : method Outline result 1
+    languageAdapter "1" ..> "1" navigationAdapter : method Navigation result 1
     languageAdapter "1" ..> "1" structureRules : method Rules result 1
     languageGeneratedMetadata "1" --> "*" GrammarCardinality : field children
     languageGeneratedMetadata "1" --> "*" GrammarCardinality : field fields
     mdNode "1" --> "1" Symbol : field sym
+    navigationAdapter "1" ..> "1" NavigationVisibility : method Visibility result 1
+    navigationAdapter "1" ..> "1" navigationBinding : method CallableReturnBinding result 1
+    navigationAdapter "1" ..> "1" navigationBinding : method SelfBinding result 2
+    navigationAdapter "1" ..> "*" navigationBinding : method SourceFacts result 3
+    navigationAdapter "1" ..> "1" navigationEnvelope : method ContainerName parameter 3
+    navigationAdapter "1" ..> "1" navigationEnvelope : method DeclarationName parameter 3
+    navigationAdapter "1" ..> "*" navigationImport : method CallableReturnBinding parameter 3
+    navigationAdapter "1" ..> "*" navigationImport : method SourceFacts result 1
+    navigationAdapter "1" ..> "1" structureRules : method Rules result 1
+    navigationAdapterConfig "1" --> "1" NavigationVisibility : field visibility
+    navigationAdapterConfig "1" ..> "1" NavigationVisibility : method Visibility result 1
+    navigationAdapter <|.. navigationAdapterConfig : implements
+    navigationAdapterConfig "1" --> "1" navigationBinding : field callableReturnBinding
+    navigationAdapterConfig "1" --> "*" navigationBinding : field sourceFacts
+    navigationAdapterConfig "1" ..> "1" navigationBinding : method CallableReturnBinding result 1
+    navigationAdapterConfig "1" ..> "1" navigationBinding : method SelfBinding result 2
+    navigationAdapterConfig "1" ..> "*" navigationBinding : method SourceFacts result 3
+    navigationAdapterConfig "1" --> "1" navigationEnvelope : field containerName
+    navigationAdapterConfig "1" --> "1" navigationEnvelope : field declarationName
+    navigationAdapterConfig "1" ..> "1" navigationEnvelope : method ContainerName parameter 3
+    navigationAdapterConfig "1" ..> "1" navigationEnvelope : method DeclarationName parameter 3
+    navigationAdapterConfig "1" --> "*" navigationImport : field callableReturnBinding
+    navigationAdapterConfig "1" --> "*" navigationImport : field sourceFacts
+    navigationAdapterConfig "1" ..> "*" navigationImport : method CallableReturnBinding parameter 3
+    navigationAdapterConfig "1" ..> "*" navigationImport : method SourceFacts result 1
+    navigationAdapterConfig "1" --> "1" stringSet : field callTypes
+    navigationAdapterConfig "1" --> "1" stringSet : field extraContainerTypes
+    navigationAdapterConfig "1" --> "1" stringSet : field fieldContainerTypes
+    navigationAdapterConfig "1" --> "1" stringSet : field nestedBindingScopeTypes
+    navigationAdapterConfig "1" --> "1" stringSet : field wrapperTypes
+    navigationAdapterConfig "1" --> "1" structureRules : field rules
+    navigationAdapterConfig "1" ..> "1" structureRules : method Rules result 1
     navigationCollector "1" --> "*" NavigationCall : field calls
     navigationCollector "1" --> "*" NavigationDeclaration : field declarations
     navigationCollector "1" ..> "1" NavigationDeclaration : method recordNavigationCall parameter 2
+    navigationCollector "1" --> "1" languageAdapter : field adapter
+    navigationCollector "1" --> "1" navigationAdapter : field navigation
     navigationCollector "1" --> "*" navigationBinding : field fields
     navigationCollector "1" --> "*" navigationBinding : field returnBindings
     navigationCollector "1" ..> "*" navigationBinding : method recordNavigationCall parameter 3
-    navigationCollector "1" ..> "1" navigationEnvelope : method containerName parameter 2
-    navigationCollector "1" ..> "1" navigationEnvelope : method declarationName parameter 2
     navigationCollector "1" ..> "1" navigationEnvelope : method navigationDeclarationRange parameter 2
     navigationCollector "1" ..> "1" navigationEnvelope : method wrapperEnvelope parameter 2
     navigationCollector "1" ..> "1" navigationEnvelope : method wrapperEnvelope result 1
@@ -860,20 +964,22 @@ classDiagram
     navigationCollector "1" ..> "1" navigationWalkContext : method enterNavigationNode result 1
     navigationCollector "1" ..> "1" navigationWalkContext : method walk parameter 2
     navigationCollector "1" ..> "1" navigationWalkContext : method walkNavigationChildren parameter 2
-    navigationCollector "1" --> "1" structureRules : field rules
     navigationWalkContext "1" --> "1" NavigationDeclaration : field callable
     navigationWalkContext "1" --> "*" navigationBinding : field bindings
     navigationWalkContext "1" --> "1" navigationEnvelope : field envelope
     pythonLanguage "1" ..> "*" Symbol : method Outline result 1
     languageAdapter <|.. pythonLanguage : implements
+    pythonLanguage "1" ..> "1" navigationAdapter : method Navigation result 1
     pythonLanguage "1" --> "1" structureRules : field rules
     pythonLanguage "1" ..> "1" structureRules : method Rules result 1
     rustLanguage "1" ..> "*" Symbol : method Outline result 1
     languageAdapter <|.. rustLanguage : implements
+    rustLanguage "1" ..> "1" navigationAdapter : method Navigation result 1
     rustLanguage "1" --> "1" structureRules : field rules
     rustLanguage "1" ..> "1" structureRules : method Rules result 1
     shellLanguage "1" ..> "*" Symbol : method Outline result 1
     languageAdapter <|.. shellLanguage : implements
+    shellLanguage "1" ..> "1" navigationAdapter : method Navigation result 1
     shellLanguage "1" --> "1" structureRules : field rules
     shellLanguage "1" ..> "1" structureRules : method Rules result 1
     structuralLineCandidate "1" --> "1" StructuralLineRange : field rangeValue
@@ -895,6 +1001,7 @@ classDiagram
     structureRules "1" --> "1" stringSet : field structuralTypes
     typeScriptLanguage "1" ..> "*" Symbol : method Outline result 1
     languageAdapter <|.. typeScriptLanguage : implements
+    typeScriptLanguage "1" ..> "1" navigationAdapter : method Navigation result 1
     typeScriptLanguage "1" --> "1" structureRules : field rules
     typeScriptLanguage "1" ..> "1" structureRules : method Rules result 1
     viewWalkItem "1" --> "1" ViewNode : field node

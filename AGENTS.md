@@ -14,6 +14,8 @@ Grepple is the public Go code-search engine and CLI. Public packages are importa
 
 Keep dependencies directed toward `api` and `parser`. Distributed router, shard, and repository-management code lives in `../grepple-backend`; this public module must not depend on it.
 
+Language-specific parser and navigation syntax belongs behind the owning `languageAdapter`, with navigation policy exposed through `languageAdapter.Navigation()`. Shared parser engine files must not branch on canonical Tree-sitter language IDs; `TestSharedParserEnginesContainNoLanguageSpecificBranches` enforces this boundary.
+
 ## Architecture artifacts
 
 Canonical generated architecture documentation is under `.grepple/`:

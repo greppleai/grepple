@@ -42,6 +42,9 @@ func newJavaScriptLanguage() languageAdapter {
 func (*javaScriptLanguage) ID() string                         { return "javascript" }
 func (language *javaScriptLanguage) Grammar() *sitter.Language { return language.grammar }
 func (language *javaScriptLanguage) Rules() *structureRules    { return &language.rules }
+func (language *javaScriptLanguage) Navigation() navigationAdapter {
+	return ecmaNavigationAdapter(&language.rules)
+}
 func (language *javaScriptLanguage) Outline(root *sitter.Node, content string) []Symbol {
 	return outlineTSJS(root, content, &language.rules)
 }

@@ -31,6 +31,9 @@ func newRustLanguage() languageAdapter {
 func (*rustLanguage) ID() string                         { return "rust" }
 func (language *rustLanguage) Grammar() *sitter.Language { return language.grammar }
 func (language *rustLanguage) Rules() *structureRules    { return &language.rules }
+func (language *rustLanguage) Navigation() navigationAdapter {
+	return rustNavigationAdapter(&language.rules)
+}
 func (language *rustLanguage) Outline(root *sitter.Node, content string) []Symbol {
 	return rustDeclarations(namedChildren(root), content, &language.rules)
 }

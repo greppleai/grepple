@@ -20,6 +20,9 @@ func newCLanguage() languageAdapter {
 func (*cLanguage) ID() string                         { return "c" }
 func (language *cLanguage) Grammar() *sitter.Language { return language.grammar }
 func (language *cLanguage) Rules() *structureRules    { return &language.rules }
+func (language *cLanguage) Navigation() navigationAdapter {
+	return cFamilyNavigationAdapter(&language.rules)
+}
 func (language *cLanguage) Outline(root *sitter.Node, content string) []Symbol {
 	return cFamilyDeclarations(namedChildren(root), content, &language.rules, false, false)
 }

@@ -50,6 +50,9 @@ func newTypeScriptLanguage(id string, tsx bool) languageAdapter {
 func (language *typeScriptLanguage) ID() string                { return language.id }
 func (language *typeScriptLanguage) Grammar() *sitter.Language { return language.grammar }
 func (language *typeScriptLanguage) Rules() *structureRules    { return &language.rules }
+func (language *typeScriptLanguage) Navigation() navigationAdapter {
+	return ecmaNavigationAdapter(&language.rules)
+}
 func (language *typeScriptLanguage) Outline(root *sitter.Node, content string) []Symbol {
 	return outlineTSJS(root, content, &language.rules)
 }

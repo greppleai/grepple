@@ -33,6 +33,9 @@ func newKotlinLanguage() languageAdapter {
 func (*kotlinLanguage) ID() string                         { return "kotlin" }
 func (language *kotlinLanguage) Grammar() *sitter.Language { return language.grammar }
 func (language *kotlinLanguage) Rules() *structureRules    { return &language.rules }
+func (language *kotlinLanguage) Navigation() navigationAdapter {
+	return kotlinNavigationAdapter(&language.rules)
+}
 func (language *kotlinLanguage) Outline(root *sitter.Node, content string) []Symbol {
 	return outlineKotlin(root, content, &language.rules)
 }

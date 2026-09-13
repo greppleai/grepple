@@ -32,6 +32,9 @@ func newCSharpLanguage() languageAdapter {
 func (*cSharpLanguage) ID() string                         { return "csharp" }
 func (language *cSharpLanguage) Grammar() *sitter.Language { return language.grammar }
 func (language *cSharpLanguage) Rules() *structureRules    { return &language.rules }
+func (language *cSharpLanguage) Navigation() navigationAdapter {
+	return cSharpNavigationAdapter(&language.rules)
+}
 func (language *cSharpLanguage) Outline(root *sitter.Node, content string) []Symbol {
 	return cSharpDeclarations(namedChildren(root), content, &language.rules)
 }

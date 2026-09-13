@@ -31,6 +31,9 @@ func newShellLanguage() languageAdapter {
 func (*shellLanguage) ID() string                         { return "shell" }
 func (language *shellLanguage) Grammar() *sitter.Language { return language.grammar }
 func (language *shellLanguage) Rules() *structureRules    { return &language.rules }
+func (language *shellLanguage) Navigation() navigationAdapter {
+	return shellNavigationAdapter(&language.rules)
+}
 func (language *shellLanguage) Outline(root *sitter.Node, content string) []Symbol {
 	var symbols []Symbol
 	for _, child := range namedChildren(root) {

@@ -31,6 +31,9 @@ func newGoLanguage() languageAdapter {
 func (*goLanguage) ID() string                         { return "go" }
 func (language *goLanguage) Grammar() *sitter.Language { return language.grammar }
 func (language *goLanguage) Rules() *structureRules    { return &language.rules }
+func (language *goLanguage) Navigation() navigationAdapter {
+	return goNavigationAdapter(&language.rules)
+}
 func (language *goLanguage) Outline(root *sitter.Node, content string) []Symbol {
 	return outlineGo(root, content, &language.rules)
 }
