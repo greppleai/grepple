@@ -212,6 +212,18 @@ grepple graph diff --before ./old-tree --after ./new-tree --compact
 
 `graph diff` compares two source trees using `grepple-navigation-diff-v1`. It classifies added, removed, moved, and semantically changed declarations plus added, removed, and changed calls. Position-only line shifts are ignored, moved declarations retain before/after locations, and call endpoints are compared through semantic declaration identities rather than unstable source IDs. Exactly one of complete `--json` or bounded `--compact` is required.
 
+## Responsibility analysis
+
+`grepple responsibilities TYPE [PATH...]` detects deterministic cross-function interaction topology for a receiver or container type. The same analyzer runs over normalized navigation facts for every Tree-sitter-backed language; no language IDs are interpreted by the analysis. It reports consumer breadth, externally used method surface, repeated method co-usage sets, ordered method sequences, and member-read/member-write plus method combinations. Candidate and receiver-only matches are retained and disclosed rather than silently upgraded to exact resolution.
+
+```bash
+grepple responsibilities Request .
+grepple responsibilities Repository ./internal --min-occurrences 3
+grepple responsibilities Client --json .
+```
+
+Human output is bounded to 16,384 bytes by default; JSON is complete. Parsed and cross-file-resolved navigation graphs are cached by source content plus grammar ABI/fingerprint under `.grepple/cache/responsibilities/`, so unchanged rechecks avoid reparsing. Cache entries are local and ignored by Git; use `--no-cache` to bypass them. `--max-files` remains explicit in the report when source discovery is incomplete.
+
 ## Architecture and flow extraction
 
 `grepple extract` creates deterministic, self-validated Mermaid navigation maps from Tree-sitter source analysis. Focused structure and flow extraction support Go, JavaScript/JSX, TypeScript/TSX, Python, Java, Kotlin, and C#; canonical package and workspace bundles remain Go-specific. Python covers classes, inheritance, annotated and unannotated attributes, decorators, and `.pyi` stubs. Java, Kotlin, and C# cover their class/interface models, inheritance, fields/properties, methods, records/data classes, enums, and objects where applicable. Generic callable declarations and calls use the normalized `parser.NavigationGraph` shared with `--at` and `--related`; focused flow generation and validation consume those enriched edges directly.

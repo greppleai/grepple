@@ -41,8 +41,11 @@ func Run() { client := NewClient(); client.Load() }
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !reflect.DeepEqual(decoded, graph) {
-		t.Fatalf("message-oriented protobuf round trip differs: got %+v want %+v", decoded, graph)
+	projection := graph
+	projection.TypeUsages = nil
+	projection.MemberAccesses = nil
+	if !reflect.DeepEqual(decoded, projection) {
+		t.Fatalf("message-oriented protobuf declaration/call projection differs: got %+v want %+v", decoded, projection)
 	}
 	packed, err := unmarshalNavigationProtobufPacked(marshalNavigationProtobufPacked(graph))
 	if err != nil {

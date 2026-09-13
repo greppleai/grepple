@@ -380,6 +380,8 @@ func Run(args []string) error {
 		switch args[0] {
 		case "graph":
 			return runGraph(args[1:])
+		case "responsibilities":
+			return runResponsibilities(args[1:])
 		case "languages":
 			return runLanguages(args[1:])
 		case "get":

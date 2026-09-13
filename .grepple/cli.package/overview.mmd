@@ -2,7 +2,7 @@ classDiagram
     %% grepple:package-default github.com/greppleai/grepple/internal/cli
     %% grepple:language-default go
     direction LR
-    note "Package cli implements Grepple's search, extraction, repository inspection, authentication, rules, and terminal/JSON presentation workflows. | package github.com/greppleai/grepple/internal/cli | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=34, declarations=44, exportedTypes=0, internalTypes=44, members=278, exportedFunctions=3, fiberRoutes=0, relations=25"
+    note "Package cli implements Grepple's search, extraction, repository inspection, authentication, rules, and terminal/JSON presentation workflows. | package github.com/greppleai/grepple/internal/cli | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=36, declarations=47, exportedTypes=0, internalTypes=47, members=293, exportedFunctions=3, fiberRoutes=0, relations=27"
     namespace interfaces {
         class resultRenderer["resultRenderer · internal/cli/renderer.go:9-11"] {
             +Render([]api.FileResult): error
@@ -183,16 +183,18 @@ classDiagram
             +Scopes: string
         }
         <<struct>> loginConfig
-        class navigationGraphOutput["navigationGraphOutput · internal/cli/graph.go:29-36"] {
+        class navigationGraphOutput["navigationGraphOutput · internal/cli/graph.go:29-38"] {
             +Calls: []parser.NavigationCall
             +Declarations: []parser.NavigationDeclaration
             +Files: int
+            +MemberAccesses: []parser.NavigationMemberAccess
             +Query: *navigationGraphQuery
             +Schema: string
             +Truncation: *navigationGraphTruncation
+            +TypeUsages: []parser.NavigationTypeUsage
         }
         <<struct>> navigationGraphOutput
-        class navigationGraphQuery["navigationGraphQuery · internal/cli/graph.go:38-45"] {
+        class navigationGraphQuery["navigationGraphQuery · internal/cli/graph.go:40-47"] {
             +Confidences: []string
             +Depth: int
             +Direction: string
@@ -201,7 +203,7 @@ classDiagram
             +Visibilities: []string
         }
         <<struct>> navigationGraphQuery
-        class navigationGraphTruncation["navigationGraphTruncation · internal/cli/graph.go:47-51"] {
+        class navigationGraphTruncation["navigationGraphTruncation · internal/cli/graph.go:49-53"] {
             +Limit: int
             +Reason: string
             +Skipped: int
@@ -213,6 +215,27 @@ classDiagram
             +Server: string
         }
         <<struct>> reposArgs
+        class responsibilitiesArgs["responsibilitiesArgs · internal/cli/responsibilities.go:15-23"] {
+            +JSON: bool
+            +MaxFiles: int
+            +MaxOutputBytes: int
+            +MinOccurrences: int
+            +NoCache: bool
+            +Paths: []string
+            +Type: string
+        }
+        <<struct>> responsibilitiesArgs
+        class responsibilitiesOutput["responsibilitiesOutput · internal/cli/responsibilities.go:29-33"] {
+            +Files: int
+            +Truncation: *navigationGraphTruncation
+        }
+        <<struct>> responsibilitiesOutput
+        class responsibilityGraphCache["responsibilityGraphCache · internal/cli/responsibilities_cache.go:17-21"] {
+            +Digest: string
+            +Graph: navigationGraphOutput
+            +Schema: string
+        }
+        <<struct>> responsibilityGraphCache
         class rulesAddArgs["rulesAddArgs · internal/cli/rules.go:60-76"] {
             +Engine: string
             +ExcludeRepo: []string
@@ -328,7 +351,7 @@ classDiagram
             +RenderOutlineOrContent(parser.FileOutline, string): string
         }
         <<function>> RenderOutlineOrContent
-        class Run["Run · internal/cli/args.go:374-404"] {
+        class Run["Run · internal/cli/args.go:374-406"] {
             +Run([]string): error
         }
         <<function>> Run
@@ -354,6 +377,8 @@ classDiagram
     onlyMatchingRenderer "1" --> "1" outputWriter : field output
     resultRenderer <|.. onlyMatchingRenderer : implements
     repoCountRenderer "1" --> "1" outputWriter : field output
+    responsibilitiesOutput "1" --> "1" navigationGraphTruncation : field Truncation
+    responsibilityGraphCache "1" --> "1" navigationGraphOutput : field Graph
     segmentRenderer "1" --> "1" anchorLookup : field anchors
     segmentRenderer "1" --> "1" outputWriter : field output
     resultRenderer <|.. segmentRenderer : implements

@@ -153,8 +153,10 @@ func includeQueryCallDeclarations(call parser.NavigationCall, declarations map[s
 
 func projectNavigationQuery(graph parser.NavigationGraph, included, includedCalls map[string]bool) parser.NavigationGraph {
 	result := parser.NavigationGraph{
-		Declarations: make([]parser.NavigationDeclaration, 0, len(included)),
-		Calls:        make([]parser.NavigationCall, 0, len(includedCalls)),
+		Declarations:   make([]parser.NavigationDeclaration, 0, len(included)),
+		Calls:          make([]parser.NavigationCall, 0, len(includedCalls)),
+		TypeUsages:     make([]parser.NavigationTypeUsage, 0),
+		MemberAccesses: make([]parser.NavigationMemberAccess, 0),
 	}
 	for _, declaration := range graph.Declarations {
 		if included[declaration.ID] {
@@ -164,6 +166,16 @@ func projectNavigationQuery(graph parser.NavigationGraph, included, includedCall
 	for _, call := range graph.Calls {
 		if includedCalls[call.ID] {
 			result.Calls = append(result.Calls, call)
+		}
+	}
+	for _, usage := range graph.TypeUsages {
+		if included[usage.CallerID] {
+			result.TypeUsages = append(result.TypeUsages, usage)
+		}
+	}
+	for _, access := range graph.MemberAccesses {
+		if included[access.CallerID] {
+			result.MemberAccesses = append(result.MemberAccesses, access)
 		}
 	}
 	return result

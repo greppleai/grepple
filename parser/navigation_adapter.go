@@ -20,6 +20,12 @@ func navigationAssignedName(node *sitter.Node, content string) string {
 	return ""
 }
 
+type navigationMemberSyntax struct {
+	receiver  string
+	member    string
+	operation string
+}
+
 type navigationAdapter interface {
 	Rules() *structureRules
 	IsCallable(*sitter.Node) bool
@@ -31,6 +37,7 @@ type navigationAdapter interface {
 	IsCall(string) bool
 	IsWrapper(string) bool
 	IsNestedBindingScope(string) bool
+	MemberAccess(*sitter.Node, string) (navigationMemberSyntax, bool)
 	Visibility(*sitter.Node, string, string) NavigationVisibility
 	SourceFacts(*sitter.Node, string) (map[string]navigationImport, string, map[string]map[string]navigationBinding)
 	ReturnCallableName(*sitter.Node, string, string) string
@@ -65,6 +72,10 @@ var defaultNavigationNestedBindingScopes = newStringSet(
 	"block", "statement_block", "if_statement", "for_statement", "for_in_statement", "while_statement", "do_statement",
 	"switch_statement", "expression_switch_statement", "type_switch_statement", "select_statement", "try_statement", "catch_clause",
 	"finally_clause", "expression_case", "type_case", "communication_case", "switch_case", "switch_default", "case_clause", "default_clause",
+)
+
+var defaultNavigationMemberTypes = newStringSet(
+	"selector_expression", "member_expression", "attribute", "field_access", "member_access_expression", "field_expression", "navigation_expression",
 )
 
 func (adapter *navigationAdapterConfig) Rules() *structureRules { return adapter.rules }
@@ -124,6 +135,62 @@ func (adapter *navigationAdapterConfig) IsWrapper(kind string) bool {
 
 func (adapter *navigationAdapterConfig) IsNestedBindingScope(kind string) bool {
 	return defaultNavigationNestedBindingScopes.contains(kind) || adapter.nestedBindingScopeTypes.contains(kind)
+}
+
+func (adapter *navigationAdapterConfig) MemberAccess(node *sitter.Node, content string) (navigationMemberSyntax, bool) {
+	if node == nil || !defaultNavigationMemberTypes.contains(node.Kind()) {
+		return navigationMemberSyntax{}, false
+	}
+	parent := node.Parent()
+	if parent != nil && adapter.IsCall(parent.Kind()) {
+		target := navigationFirstField(parent, "function", "name", "constructor", "type")
+		if target != nil && target.StartByte() == node.StartByte() && target.EndByte() == node.EndByte() {
+			return navigationMemberSyntax{}, false
+		}
+	}
+	receiver := navigationFirstField(node, "object", "operand", "value", "expression", "primary", "receiver")
+	member := navigationFirstField(node, "field", "property", "attribute", "name", "member")
+	children := namedChildren(node)
+	if receiver == nil && len(children) > 0 {
+		receiver = children[0]
+	}
+	if member == nil && len(children) > 1 {
+		member = children[len(children)-1]
+	}
+	if receiver == nil || member == nil {
+		return navigationMemberSyntax{}, false
+	}
+	receiverText := strings.TrimSpace(nodeText(receiver, content))
+	memberText := strings.TrimSpace(nodeText(member, content))
+	if receiverText == "" || memberText == "" || strings.ContainsAny(memberText, ".[]()") {
+		return navigationMemberSyntax{}, false
+	}
+	return navigationMemberSyntax{receiver: receiverText, member: memberText, operation: navigationMemberOperation(node)}, true
+}
+
+func navigationMemberOperation(node *sitter.Node) string {
+	for parent, depth := node.Parent(), 0; parent != nil && depth < 4; parent, depth = parent.Parent(), depth+1 {
+		switch parent.Kind() {
+		case "update_expression", "inc_statement", "dec_statement":
+			return "write"
+		case "assignment_expression", "assignment_statement", "assignment", "augmented_assignment", "short_var_declaration":
+			left := navigationFirstField(parent, "left", "name")
+			if left != nil && node.StartByte() >= left.StartByte() && node.EndByte() <= left.EndByte() {
+				return "write"
+			}
+			return "read"
+		}
+	}
+	return "read"
+}
+
+func navigationFirstField(node *sitter.Node, names ...string) *sitter.Node {
+	for _, name := range names {
+		if child := node.ChildByFieldName(name); child != nil {
+			return child
+		}
+	}
+	return nil
 }
 
 func (adapter *navigationAdapterConfig) Visibility(node *sitter.Node, name, content string) NavigationVisibility {

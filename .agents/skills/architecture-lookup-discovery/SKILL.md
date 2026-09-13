@@ -133,6 +133,15 @@ Inspect all three layers before concluding:
 3. `--related` on the changed entrypoint and shared helpers for immediate behavioral impact.
 4. `grepple graph callers --at PATH:LINE --depth 2 --compact SCOPE` when multi-hop consumers matter; use `graph callees` for bounded outgoing dependencies.
 
+### “Is behavior duplicated across consumers of a type?”
+
+```bash
+grepple responsibilities TypeName path/to/scope
+grepple responsibilities TypeName --min-occurrences 3 --json path/to/scope
+```
+
+Use the responsibility report for deterministic consumer breadth, externally used method surface, repeated method sets, ordered method sequences, and receiver-qualified member read/write plus method combinations. Treat disclosed ambiguous interactions as leads to verify.
+
 ### “Why does this route or entrypoint exist?”
 
 1. Find the route/entrypoint in workspace or package overview.

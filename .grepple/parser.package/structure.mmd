@@ -152,12 +152,56 @@ classDiagram
         +Merge(NavigationGraph)
         +Calls: []NavigationCall
         +Declarations: []NavigationDeclaration
+        +MemberAccesses: []NavigationMemberAccess
+        +TypeUsages: []NavigationTypeUsage
     }
     <<struct>> NavigationGraph
     %% grepple:file NavigationGraph parser/navigation.go
     %% grepple:struct-tag NavigationGraph Calls "json:\"calls\""
     %% grepple:struct-tag NavigationGraph Declarations "json:\"declarations\""
-    note for NavigationGraph "defined: parser/navigation.go:57-60; Merge@parser/navigation.go:63-66; Calls@parser/navigation.go:59; Declarations@parser/navigation.go:58"
+    %% grepple:struct-tag NavigationGraph MemberAccesses "json:\"memberAccesses,omitempty\""
+    %% grepple:struct-tag NavigationGraph TypeUsages "json:\"typeUsages,omitempty\""
+    note for NavigationGraph "defined: parser/navigation.go:80-85; Merge@parser/navigation.go:88-93; Calls@parser/navigation.go:82; Declarations@parser/navigation.go:81; MemberAccesses@parser/navigation.go:84; TypeUsages@parser/navigation.go:83"
+    class NavigationMemberAccess {
+        +CallerID: string
+        +ID: string
+        +Language: string
+        +Line: int
+        +Member: string
+        +Operation: string
+        +Path: string
+        +Receiver: string
+        +ReceiverType: string
+        +StartByte: int
+    }
+    <<struct>> NavigationMemberAccess
+    %% grepple:file NavigationMemberAccess parser/navigation.go
+    %% grepple:struct-tag NavigationMemberAccess CallerID "json:\"callerId\""
+    %% grepple:struct-tag NavigationMemberAccess ID "json:\"id\""
+    %% grepple:struct-tag NavigationMemberAccess Language "json:\"language\""
+    %% grepple:struct-tag NavigationMemberAccess Line "json:\"line\""
+    %% grepple:struct-tag NavigationMemberAccess Member "json:\"member\""
+    %% grepple:struct-tag NavigationMemberAccess Operation "json:\"operation\""
+    %% grepple:struct-tag NavigationMemberAccess Path "json:\"path\""
+    %% grepple:struct-tag NavigationMemberAccess Receiver "json:\"receiver,omitempty\""
+    %% grepple:struct-tag NavigationMemberAccess ReceiverType "json:\"receiverType,omitempty\""
+    %% grepple:struct-tag NavigationMemberAccess StartByte "json:\"startByte,omitempty\""
+    note for NavigationMemberAccess "defined: parser/navigation.go:64-75; CallerID@parser/navigation.go:66; ID@parser/navigation.go:65; Language@parser/navigation.go:71; Line@parser/navigation.go:73; Member@parser/navigation.go:69; Operation@parser/navigation.go:70; Path@parser/navigation.go:72; Receiver@parser/navigation.go:68; ReceiverType@parser/navigation.go:67; StartByte@parser/navigation.go:74"
+    class NavigationTypeUsage {
+        +CallerID: string
+        +Language: string
+        +Line: int
+        +Path: string
+        +Type: string
+    }
+    <<struct>> NavigationTypeUsage
+    %% grepple:file NavigationTypeUsage parser/navigation.go
+    %% grepple:struct-tag NavigationTypeUsage CallerID "json:\"callerId\""
+    %% grepple:struct-tag NavigationTypeUsage Language "json:\"language\""
+    %% grepple:struct-tag NavigationTypeUsage Line "json:\"line\""
+    %% grepple:struct-tag NavigationTypeUsage Path "json:\"path\""
+    %% grepple:struct-tag NavigationTypeUsage Type "json:\"type\""
+    note for NavigationTypeUsage "defined: parser/navigation.go:55-61; CallerID@parser/navigation.go:56; Language@parser/navigation.go:58; Line@parser/navigation.go:60; Path@parser/navigation.go:59; Type@parser/navigation.go:57"
     class NavigationVisibility["NavigationVisibility = string"]
     <<type>> NavigationVisibility
     %% grepple:underlying NavigationVisibility string
@@ -480,6 +524,7 @@ classDiagram
         +IsFieldContainer(string): bool
         +IsNestedBindingScope(string): bool
         +IsWrapper(string): bool
+        +MemberAccess(*sitter.Node, string): tuple~navigationMemberSyntax&#44;bool~
         +RequiresContainer(*sitter.Node): bool
         +ReturnCallableName(*sitter.Node, string, string): string
         +Rules(): *structureRules
@@ -489,7 +534,7 @@ classDiagram
     }
     <<interface>> navigationAdapter
     %% grepple:file navigationAdapter parser/navigation_adapter.go
-    note for navigationAdapter "defined: parser/navigation_adapter.go:23-40; CallableReturnBinding@parser/navigation_adapter.go:37; ContainerName@parser/navigation_adapter.go:28; DeclarationKind@parser/navigation_adapter.go:30; DeclarationName@parser/navigation_adapter.go:29; IsCall@parser/navigation_adapter.go:31; IsCallable@parser/navigation_adapter.go:25; IsContainer@parser/navigation_adapter.go:27; IsFieldContainer@parser/navigation_adapter.go:38; IsNestedBindingScope@parser/navigation_adapter.go:33; IsWrapper@parser/navigation_adapter.go:32; RequiresContainer@parser/navigation_adapter.go:26; ReturnCallableName@parser/navigation_adapter.go:36; Rules@parser/navigation_adapter.go:24; SelfBinding@parser/navigation_adapter.go:39; SourceFacts@parser/navigation_adapter.go:35; Visibility@parser/navigation_adapter.go:34"
+    note for navigationAdapter "defined: parser/navigation_adapter.go:29-47; CallableReturnBinding@parser/navigation_adapter.go:44; ContainerName@parser/navigation_adapter.go:34; DeclarationKind@parser/navigation_adapter.go:36; DeclarationName@parser/navigation_adapter.go:35; IsCall@parser/navigation_adapter.go:37; IsCallable@parser/navigation_adapter.go:31; IsContainer@parser/navigation_adapter.go:33; IsFieldContainer@parser/navigation_adapter.go:45; IsNestedBindingScope@parser/navigation_adapter.go:39; IsWrapper@parser/navigation_adapter.go:38; MemberAccess@parser/navigation_adapter.go:40; RequiresContainer@parser/navigation_adapter.go:32; ReturnCallableName@parser/navigation_adapter.go:43; Rules@parser/navigation_adapter.go:30; SelfBinding@parser/navigation_adapter.go:46; SourceFacts@parser/navigation_adapter.go:42; Visibility@parser/navigation_adapter.go:41"
     class navigationAdapterConfig {
         +CallableReturnBinding(*sitter.Node, string, map[string]navigationImport): navigationBinding
         +ContainerName(*sitter.Node, string, *navigationEnvelope): string
@@ -501,6 +546,7 @@ classDiagram
         +IsFieldContainer(string): bool
         +IsNestedBindingScope(string): bool
         +IsWrapper(string): bool
+        +MemberAccess(*sitter.Node, string): tuple~navigationMemberSyntax&#44;bool~
         +RequiresContainer(*sitter.Node): bool
         +ReturnCallableName(*sitter.Node, string, string): string
         +Rules(): *structureRules
@@ -527,7 +573,7 @@ classDiagram
     }
     <<struct>> navigationAdapterConfig
     %% grepple:file navigationAdapterConfig parser/navigation_adapter.go
-    note for navigationAdapterConfig "defined: parser/navigation_adapter.go:42-60; CallableReturnBinding@parser/navigation_adapter.go:154-159; ContainerName@parser/navigation_adapter.go:87-92; DeclarationKind@parser/navigation_adapter.go:104-115; DeclarationName@parser/navigation_adapter.go:94-102; IsCall@parser/navigation_adapter.go:117-119; IsCallable@parser/navigation_adapter.go:72-77; IsContainer@parser/navigation_adapter.go:83-85; IsFieldContainer@parser/navigation_adapter.go:161-163; IsNestedBindingScope@parser/navigation_adapter.go:125-127; IsWrapper@parser/navigation_adapter.go:121-123; RequiresContainer@parser/navigation_adapter.go:79-81; ReturnCallableName@parser/navigation_adapter.go:143-152; Rules@parser/navigation_adapter.go:70; SelfBinding@parser/navigation_adapter.go:165-170; SourceFacts@parser/navigation_adapter.go:136-141; Visibility@parser/navigation_adapter.go:129-134; callTypes@parser/navigation_adapter.go:44; callableReturnBinding@parser/navigation_adapter.go:57; containerName@parser/navigation_adapter.go:51; declarationKind@parser/navigation_adapter.go:53; declarationName@parser/navigation_adapter.go:52; extraContainerTypes@parser/navigation_adapter.go:45; fieldContainerTypes@parser/navigation_adapter.go:46; isCallable@parser/navigation_adapter.go:49; nestedBindingScopeTypes@parser/navigation_adapter.go:48; requiresContainer@parser/navigation_adapter.go:50; returnCallableName@parser/navigation_adapter.go:56; rules@parser/navigation_adapter.go:43; selfBindingFromContainer@parser/navigation_adapter.go:59; selfBindingName@parser/navigation_adapter.go:58; sourceFacts@parser/navigation_adapter.go:55; visibility@parser/navigation_adapter.go:54; wrapperTypes@parser/navigation_adapter.go:47"
+    note for navigationAdapterConfig "defined: parser/navigation_adapter.go:49-67; CallableReturnBinding@parser/navigation_adapter.go:221-226; ContainerName@parser/navigation_adapter.go:98-103; DeclarationKind@parser/navigation_adapter.go:115-126; DeclarationName@parser/navigation_adapter.go:105-113; IsCall@parser/navigation_adapter.go:128-130; IsCallable@parser/navigation_adapter.go:83-88; IsContainer@parser/navigation_adapter.go:94-96; IsFieldContainer@parser/navigation_adapter.go:228-230; IsNestedBindingScope@parser/navigation_adapter.go:136-138; IsWrapper@parser/navigation_adapter.go:132-134; MemberAccess@parser/navigation_adapter.go:140-169; RequiresContainer@parser/navigation_adapter.go:90-92; ReturnCallableName@parser/navigation_adapter.go:210-219; Rules@parser/navigation_adapter.go:81; SelfBinding@parser/navigation_adapter.go:232-237; SourceFacts@parser/navigation_adapter.go:203-208; Visibility@parser/navigation_adapter.go:196-201; callTypes@parser/navigation_adapter.go:51; callableReturnBinding@parser/navigation_adapter.go:64; containerName@parser/navigation_adapter.go:58; declarationKind@parser/navigation_adapter.go:60; declarationName@parser/navigation_adapter.go:59; extraContainerTypes@parser/navigation_adapter.go:52; fieldContainerTypes@parser/navigation_adapter.go:53; isCallable@parser/navigation_adapter.go:56; nestedBindingScopeTypes@parser/navigation_adapter.go:55; requiresContainer@parser/navigation_adapter.go:57; returnCallableName@parser/navigation_adapter.go:63; rules@parser/navigation_adapter.go:50; selfBindingFromContainer@parser/navigation_adapter.go:66; selfBindingName@parser/navigation_adapter.go:65; sourceFacts@parser/navigation_adapter.go:62; visibility@parser/navigation_adapter.go:61; wrapperTypes@parser/navigation_adapter.go:54"
     class navigationBinding {
         -factoryImport: string
         -factoryName: string
@@ -539,10 +585,13 @@ classDiagram
     %% grepple:file navigationBinding parser/navigation_context.go
     note for navigationBinding "defined: parser/navigation_context.go:16-22; factoryImport@parser/navigation_context.go:20; factoryName@parser/navigation_context.go:19; importPath@parser/navigation_context.go:18; line@parser/navigation_context.go:21; typeName@parser/navigation_context.go:17"
     class navigationCollector {
+        -addNavigationSignatureBindings(*sitter.Node, map[string]navigationBinding)
         -callName(*sitter.Node): tuple~string&#44;string~
         -enterNavigationNode(*sitter.Node, navigationWalkContext): navigationWalkContext
         -navigationDeclarationRange(*sitter.Node, *navigationEnvelope): tuple~int&#44;int~
         -recordNavigationCall(*sitter.Node, *NavigationDeclaration, map[string]navigationBinding)
+        -recordNavigationMemberAccess(*sitter.Node, navigationWalkContext)
+        -recordNavigationTypeUsages(*NavigationDeclaration, map[string]navigationBinding)
         -walk(*sitter.Node, navigationWalkContext)
         -walkNavigationChildren(*sitter.Node, navigationWalkContext)
         -wrapperEnvelope(*sitter.Node, *navigationEnvelope): *navigationEnvelope
@@ -552,14 +601,16 @@ classDiagram
         -declarations: []NavigationDeclaration
         -fields: map[string]map[string]navigationBinding
         -imports: map[string]navigationImport
+        -memberAccesses: []NavigationMemberAccess
         -navigation: navigationAdapter
         -packageName: string
         -path: string
         -returnBindings: map[string]navigationBinding
+        -typeUsages: []NavigationTypeUsage
     }
     <<struct>> navigationCollector
     %% grepple:file navigationCollector parser/navigation.go
-    note for navigationCollector "defined: parser/navigation.go:144-155; callName@parser/navigation.go:271-293; enterNavigationNode@parser/navigation.go:187-218; navigationDeclarationRange@parser/navigation.go:220-225; recordNavigationCall@parser/navigation.go:227-242; walk@parser/navigation.go:170-177; walkNavigationChildren@parser/navigation.go:244-258; wrapperEnvelope@parser/navigation.go:259-269; adapter@parser/navigation.go:146; calls@parser/navigation.go:154; content@parser/navigation.go:145; declarations@parser/navigation.go:153; fields@parser/navigation.go:150; imports@parser/navigation.go:149; navigation@parser/navigation.go:147; packageName@parser/navigation.go:152; path@parser/navigation.go:148; returnBindings@parser/navigation.go:151"
+    note for navigationCollector "defined: parser/navigation.go:171-184; addNavigationSignatureBindings@parser/navigation.go:252-259; callName@parser/navigation.go:348-370; enterNavigationNode@parser/navigation.go:217-250; navigationDeclarationRange@parser/navigation.go:273-278; recordNavigationCall@parser/navigation.go:280-295; recordNavigationMemberAccess@parser/navigation.go:297-319; recordNavigationTypeUsages@parser/navigation.go:261-271; walk@parser/navigation.go:199-207; walkNavigationChildren@parser/navigation.go:321-335; wrapperEnvelope@parser/navigation.go:336-346; adapter@parser/navigation.go:173; calls@parser/navigation.go:181; content@parser/navigation.go:172; declarations@parser/navigation.go:180; fields@parser/navigation.go:177; imports@parser/navigation.go:176; memberAccesses@parser/navigation.go:183; navigation@parser/navigation.go:174; packageName@parser/navigation.go:179; path@parser/navigation.go:175; returnBindings@parser/navigation.go:178; typeUsages@parser/navigation.go:182"
     class navigationEnvelope {
         -assignedName: string
         -end: int
@@ -567,7 +618,7 @@ classDiagram
     }
     <<struct>> navigationEnvelope
     %% grepple:file navigationEnvelope parser/navigation.go
-    note for navigationEnvelope "defined: parser/navigation.go:157-161; assignedName@parser/navigation.go:160; end@parser/navigation.go:159; start@parser/navigation.go:158"
+    note for navigationEnvelope "defined: parser/navigation.go:186-190; assignedName@parser/navigation.go:189; end@parser/navigation.go:188; start@parser/navigation.go:187"
     class navigationImport {
         -imported: string
         -path: string
@@ -575,6 +626,14 @@ classDiagram
     <<struct>> navigationImport
     %% grepple:file navigationImport parser/navigation_context.go
     note for navigationImport "defined: parser/navigation_context.go:11-14; imported@parser/navigation_context.go:13; path@parser/navigation_context.go:12"
+    class navigationMemberSyntax {
+        -member: string
+        -operation: string
+        -receiver: string
+    }
+    <<struct>> navigationMemberSyntax
+    %% grepple:file navigationMemberSyntax parser/navigation_adapter.go
+    note for navigationMemberSyntax "defined: parser/navigation_adapter.go:23-27; member@parser/navigation_adapter.go:25; operation@parser/navigation_adapter.go:26; receiver@parser/navigation_adapter.go:24"
     class navigationWalkContext {
         -bindings: map[string]navigationBinding
         -callable: *NavigationDeclaration
@@ -583,7 +642,7 @@ classDiagram
     }
     <<struct>> navigationWalkContext
     %% grepple:file navigationWalkContext parser/navigation.go
-    note for navigationWalkContext "defined: parser/navigation.go:163-168; bindings@parser/navigation.go:166; callable@parser/navigation.go:167; container@parser/navigation.go:165; envelope@parser/navigation.go:164"
+    note for navigationWalkContext "defined: parser/navigation.go:192-197; bindings@parser/navigation.go:195; callable@parser/navigation.go:196; container@parser/navigation.go:194; envelope@parser/navigation.go:193"
     class pooledParser {
         -lang: *sitter.Language
         -p: *sitter.Parser
@@ -702,7 +761,7 @@ classDiagram
     }
     <<function>> BuildNavigationGraph
     %% grepple:file BuildNavigationGraph parser/navigation.go
-    note for BuildNavigationGraph "defined: parser/navigation.go:85-96"
+    note for BuildNavigationGraph "defined: parser/navigation.go:112-123"
     class BuildSegments {
         +BuildSegments(string, string, map[int]bool, int): []Segment
     }
@@ -720,7 +779,7 @@ classDiagram
     }
     <<function>> DeclarationRangeAt
     %% grepple:file DeclarationRangeAt parser/navigation.go
-    note for DeclarationRangeAt "defined: parser/navigation.go:128-142"
+    note for DeclarationRangeAt "defined: parser/navigation.go:155-169"
     class EnclosingLineRanges {
         +EnclosingLineRanges(string, string, map[int]bool): map[int]StructuralLineRange
     }
@@ -756,19 +815,19 @@ classDiagram
     }
     <<function>> Navigation
     %% grepple:file Navigation parser/navigation.go
-    note for Navigation "defined: parser/navigation.go:79-82"
+    note for Navigation "defined: parser/navigation.go:106-109"
     class NavigationGraphFromDocument {
         +NavigationGraphFromDocument(*Document, string): NavigationGraph
     }
     <<function>> NavigationGraphFromDocument
     %% grepple:file NavigationGraphFromDocument parser/navigation.go
-    note for NavigationGraphFromDocument "defined: parser/navigation.go:100-110"
+    note for NavigationGraphFromDocument "defined: parser/navigation.go:127-137"
     class NavigationGraphFromTree {
         +NavigationGraphFromTree(*sitter.Node, string, string, string): NavigationGraph
     }
     <<function>> NavigationGraphFromTree
     %% grepple:file NavigationGraphFromTree parser/navigation.go
-    note for NavigationGraphFromTree "defined: parser/navigation.go:114-125"
+    note for NavigationGraphFromTree "defined: parser/navigation.go:141-152"
     class OutlineFile {
         +OutlineFile(string, string): FileOutline
     }
@@ -843,6 +902,8 @@ classDiagram
     NavigationDeclaration "1" --> "1" NavigationVisibility : field Visibility
     NavigationGraph "1" --> "*" NavigationCall : field Calls
     NavigationGraph "1" --> "*" NavigationDeclaration : field Declarations
+    NavigationGraph "1" --> "*" NavigationMemberAccess : field MemberAccesses
+    NavigationGraph "1" --> "*" NavigationTypeUsage : field TypeUsages
     NavigationGraphFromDocument "1" ..> "1" Document : parameter 1
     NavigationGraphFromDocument "1" ..> "1" NavigationGraph : result 1
     NavigationGraphFromTree "1" ..> "1" NavigationGraph : result 1
@@ -924,6 +985,7 @@ classDiagram
     navigationAdapter "1" ..> "1" navigationEnvelope : method DeclarationName parameter 3
     navigationAdapter "1" ..> "*" navigationImport : method CallableReturnBinding parameter 3
     navigationAdapter "1" ..> "*" navigationImport : method SourceFacts result 1
+    navigationAdapter "1" ..> "1" navigationMemberSyntax : method MemberAccess result 1
     navigationAdapter "1" ..> "1" structureRules : method Rules result 1
     navigationAdapterConfig "1" --> "1" NavigationVisibility : field visibility
     navigationAdapterConfig "1" ..> "1" NavigationVisibility : method Visibility result 1
@@ -941,6 +1003,7 @@ classDiagram
     navigationAdapterConfig "1" --> "*" navigationImport : field sourceFacts
     navigationAdapterConfig "1" ..> "*" navigationImport : method CallableReturnBinding parameter 3
     navigationAdapterConfig "1" ..> "*" navigationImport : method SourceFacts result 1
+    navigationAdapterConfig "1" ..> "1" navigationMemberSyntax : method MemberAccess result 1
     navigationAdapterConfig "1" --> "1" stringSet : field callTypes
     navigationAdapterConfig "1" --> "1" stringSet : field extraContainerTypes
     navigationAdapterConfig "1" --> "1" stringSet : field fieldContainerTypes
@@ -951,17 +1014,23 @@ classDiagram
     navigationCollector "1" --> "*" NavigationCall : field calls
     navigationCollector "1" --> "*" NavigationDeclaration : field declarations
     navigationCollector "1" ..> "1" NavigationDeclaration : method recordNavigationCall parameter 2
+    navigationCollector "1" ..> "1" NavigationDeclaration : method recordNavigationTypeUsages parameter 1
+    navigationCollector "1" --> "*" NavigationMemberAccess : field memberAccesses
+    navigationCollector "1" --> "*" NavigationTypeUsage : field typeUsages
     navigationCollector "1" --> "1" languageAdapter : field adapter
     navigationCollector "1" --> "1" navigationAdapter : field navigation
     navigationCollector "1" --> "*" navigationBinding : field fields
     navigationCollector "1" --> "*" navigationBinding : field returnBindings
+    navigationCollector "1" ..> "*" navigationBinding : method addNavigationSignatureBindings parameter 2
     navigationCollector "1" ..> "*" navigationBinding : method recordNavigationCall parameter 3
+    navigationCollector "1" ..> "*" navigationBinding : method recordNavigationTypeUsages parameter 2
     navigationCollector "1" ..> "1" navigationEnvelope : method navigationDeclarationRange parameter 2
     navigationCollector "1" ..> "1" navigationEnvelope : method wrapperEnvelope parameter 2
     navigationCollector "1" ..> "1" navigationEnvelope : method wrapperEnvelope result 1
     navigationCollector "1" --> "*" navigationImport : field imports
     navigationCollector "1" ..> "1" navigationWalkContext : method enterNavigationNode parameter 2
     navigationCollector "1" ..> "1" navigationWalkContext : method enterNavigationNode result 1
+    navigationCollector "1" ..> "1" navigationWalkContext : method recordNavigationMemberAccess parameter 2
     navigationCollector "1" ..> "1" navigationWalkContext : method walk parameter 2
     navigationCollector "1" ..> "1" navigationWalkContext : method walkNavigationChildren parameter 2
     navigationWalkContext "1" --> "1" NavigationDeclaration : field callable

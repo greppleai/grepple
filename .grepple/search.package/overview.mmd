@@ -2,7 +2,7 @@ classDiagram
     %% grepple:package-default github.com/greppleai/grepple/search
     %% grepple:language-default go
     direction LR
-    note "Package search provides file discovery, query and repository filtering, paging, match workers, context, and wire-result construction. | package github.com/greppleai/grepple/search | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=13, declarations=20, exportedTypes=10, internalTypes=10, members=143, exportedFunctions=25, fiberRoutes=0, relations=50"
+    note "Package search provides file discovery, query and repository filtering, paging, match workers, context, and wire-result construction. | package github.com/greppleai/grepple/search | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=14, declarations=29, exportedTypes=15, internalTypes=14, members=192, exportedFunctions=26, fiberRoutes=0, relations=67"
     namespace data_contracts {
         class NavigationCallDelta["NavigationCallDelta · search/navigation_diff.go:21-24"] {
             +After: *parser.NavigationCall
@@ -51,6 +51,47 @@ classDiagram
             +SkipSegments: bool
         }
         <<struct>> Params
+        class ResponsibilityBreadth["ResponsibilityBreadth · search/responsibilities.go:13-17"] {
+            +Files: int
+            +Functions: int
+            +Packages: int
+        }
+        <<struct>> ResponsibilityBreadth
+        class ResponsibilityConsumer["ResponsibilityConsumer · search/responsibilities.go:26-32"] {
+            +ID: string
+            +Line: int
+            +Name: string
+            +Package: string
+            +Path: string
+        }
+        <<struct>> ResponsibilityConsumer
+        class ResponsibilityPattern["ResponsibilityPattern · search/responsibilities.go:35-41"] {
+            +Consumers: []ResponsibilityConsumer
+            +Files: int
+            +Methods: []string
+            +Occurrences: int
+            +Packages: int
+        }
+        <<struct>> ResponsibilityPattern
+        class ResponsibilityReport["ResponsibilityReport · search/responsibilities.go:44-56"] {
+            +ConsumerDetails: []ResponsibilityConsumer
+            +Consumers: ResponsibilityBreadth
+            +ExternalMethodSurface: ResponsibilitySurface
+            +Languages: []string
+            +MemberMethodCombinations: []ResponsibilityPattern
+            +MethodCoUsage: []ResponsibilityPattern
+            +Methods: []string
+            +OrderedSequences: []ResponsibilityPattern
+            +Schema: string
+            +Type: string
+            +UnresolvedCalls: int
+        }
+        <<struct>> ResponsibilityReport
+        class ResponsibilitySurface["ResponsibilitySurface · search/responsibilities.go:20-23"] {
+            +Declared: int
+            +External: int
+        }
+        <<struct>> ResponsibilitySurface
     }
     namespace exported_types {
         class FileMatch["FileMatch · search/model.go:55-63"]
@@ -87,12 +128,24 @@ classDiagram
         <<struct>> navigationIndex
         class repoPattern["repoPattern · search/search_engine.go:95-98"]
         <<struct>> repoPattern
+        class responsibilityAnalyzer["responsibilityAnalyzer · search/responsibilities.go:80-90"]
+        <<struct>> responsibilityAnalyzer
+        class responsibilityInteraction["responsibilityInteraction · search/responsibilities.go:76-78"]
+        <<struct>> responsibilityInteraction
+        class responsibilityPatternGroup["responsibilityPatternGroup · search/responsibilities.go:294-297"]
+        <<struct>> responsibilityPatternGroup
+        class responsibilityPatternGroups["responsibilityPatternGroups · search/responsibilities.go:196-201"]
+        <<struct>> responsibilityPatternGroups
     }
     namespace operations {
         class AggregateRepoCounts["AggregateRepoCounts · search/search_engine.go:494-513"] {
             +AggregateRepoCounts([]FileMatch): []api.RepoCount
         }
         <<function>> AggregateRepoCounts
+        class AnalyzeResponsibilities["AnalyzeResponsibilities · search/responsibilities.go:61-74"] {
+            +AnalyzeResponsibilities(parser.NavigationGraph, string, int): tuple~ResponsibilityReport&#44;error~
+        }
+        <<function>> AnalyzeResponsibilities
         class At["At · search/at.go:16-63"] {
             +At(Params): tuple~*FileMatch&#44;error~
         }
@@ -129,7 +182,7 @@ classDiagram
             +Files(Params, []string): tuple~[]FileMatch&#44;error~
         }
         <<function>> Files
-        class FilterNavigationGraph["FilterNavigationGraph · search/navigation_filter.go:20-36"] {
+        class FilterNavigationGraph["FilterNavigationGraph · search/navigation_filter.go:20-38"] {
             +FilterNavigationGraph(parser.NavigationGraph, NavigationGraphFilter): tuple~parser.NavigationGraph&#44;error~
         }
         <<function>> FilterNavigationGraph
@@ -145,7 +198,7 @@ classDiagram
             +NewRepoFilter([]string, []string): *RepoFilter
         }
         <<function>> NewRepoFilter
-        class NormalizeNavigationGraphFilter["NormalizeNavigationGraphFilter · search/navigation_filter.go:39-53"] {
+        class NormalizeNavigationGraphFilter["NormalizeNavigationGraphFilter · search/navigation_filter.go:41-55"] {
             +NormalizeNavigationGraphFilter(NavigationGraphFilter): tuple~NavigationGraphFilter&#44;error~
         }
         <<function>> NormalizeNavigationGraphFilter
@@ -191,6 +244,7 @@ classDiagram
         <<function>> WorkerCount
     }
     AggregateRepoCounts "1" ..> "*" FileMatch : parameter 1
+    AnalyzeResponsibilities "1" ..> "1" ResponsibilityReport : result 1
     At "1" ..> "1" FileMatch : result 1
     At "1" ..> "1" Params : parameter 1
     BuildResults "1" ..> "*" FileMatch : parameter 1
@@ -213,6 +267,11 @@ classDiagram
     RelatedPreview "1" --> "*" RelatedPoint : field Related
     RepoFilter "1" --> "*" repoPattern : field exclude; field include
     ResolveRequest "1" ..> "1" Params : result 1
+    ResponsibilityPattern "1" --> "*" ResponsibilityConsumer : field Consumers
+    ResponsibilityReport "1" --> "1" ResponsibilityBreadth : field Consumers
+    ResponsibilityReport "1" --> "*" ResponsibilityConsumer : field ConsumerDetails
+    ResponsibilityReport "1" --> "*" ResponsibilityPattern : field MemberMethodCombinations; field MethodCoUsage; field OrderedSequences
+    ResponsibilityReport "1" --> "1" ResponsibilitySurface : field ExternalMethodSurface
     ToResult "1" ..> "1" FileMatch : parameter 1
     candidateCollector "1" --> "1" gitignoreCache : field ignoreCache
     candidateScan "1" ..> "*" FileMatch : method scanAll result 1; method scanWindowed result 1
@@ -229,3 +288,10 @@ classDiagram
     navigationIndex "1" --> "*" navigationDeclaration : field byFile; field byLocation; field declarations
     navigationIndex "1" ..> "*" navigationDeclaration : method-parameter=2; method-result=2
     navigationIndex "1" ..> "1" navigationDeclaration : method resolveReturnFactory result 1
+    responsibilityAnalyzer "1" ..> "1" ResponsibilityConsumer : method addResponsibilityCaller result 1
+    responsibilityAnalyzer "1" ..> "1" ResponsibilityReport : method report result 1
+    responsibilityAnalyzer "1" --> "*" responsibilityInteraction : field interactionsByCaller
+    responsibilityAnalyzer "1" ..> "*" responsibilityInteraction : method addResponsibilityCaller parameter 2
+    responsibilityAnalyzer "1" ..> "1" responsibilityPatternGroups : method addResponsibilityCaller parameter 3
+    responsibilityPatternGroup "1" --> "*" ResponsibilityConsumer : field consumers
+    responsibilityPatternGroups "1" --> "*" responsibilityPatternGroup : field combinations; field methodSets; field sequences

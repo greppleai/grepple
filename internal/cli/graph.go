@@ -27,12 +27,14 @@ func (graphArgs) Description() string {
 }
 
 type navigationGraphOutput struct {
-	Schema       string                         `json:"schema"`
-	Files        int                            `json:"files"`
-	Declarations []parser.NavigationDeclaration `json:"declarations"`
-	Calls        []parser.NavigationCall        `json:"calls"`
-	Query        *navigationGraphQuery          `json:"query,omitempty"`
-	Truncation   *navigationGraphTruncation     `json:"truncation,omitempty"`
+	Schema         string                          `json:"schema"`
+	Files          int                             `json:"files"`
+	Declarations   []parser.NavigationDeclaration  `json:"declarations"`
+	Calls          []parser.NavigationCall         `json:"calls"`
+	TypeUsages     []parser.NavigationTypeUsage    `json:"typeUsages,omitempty"`
+	MemberAccesses []parser.NavigationMemberAccess `json:"memberAccesses,omitempty"`
+	Query          *navigationGraphQuery           `json:"query,omitempty"`
+	Truncation     *navigationGraphTruncation      `json:"truncation,omitempty"`
 }
 
 type navigationGraphQuery struct {

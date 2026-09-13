@@ -51,18 +51,45 @@ type NavigationCall struct {
 	EnclosingEnd          int      `json:"enclosingEndLine"`
 }
 
+// NavigationTypeUsage records a callable's explicit use of a normalized type.
+type NavigationTypeUsage struct {
+	CallerID string `json:"callerId"`
+	Type     string `json:"type"`
+	Language string `json:"language"`
+	Path     string `json:"path"`
+	Line     int    `json:"line"`
+}
+
+// NavigationMemberAccess describes a receiver-qualified field or property read or write.
+type NavigationMemberAccess struct {
+	ID           string `json:"id"`
+	CallerID     string `json:"callerId"`
+	ReceiverType string `json:"receiverType,omitempty"`
+	Receiver     string `json:"receiver,omitempty"`
+	Member       string `json:"member"`
+	Operation    string `json:"operation"`
+	Language     string `json:"language"`
+	Path         string `json:"path"`
+	Line         int    `json:"line"`
+	StartByte    int    `json:"startByte,omitempty"`
+}
+
 // NavigationGraph is the normalized, language-neutral callable and call model.
 // Language-specific consumers may enrich its syntax facts with package, module,
 // import, receiver, or type information.
 type NavigationGraph struct {
-	Declarations []NavigationDeclaration `json:"declarations"`
-	Calls        []NavigationCall        `json:"calls"`
+	Declarations   []NavigationDeclaration  `json:"declarations"`
+	Calls          []NavigationCall         `json:"calls"`
+	TypeUsages     []NavigationTypeUsage    `json:"typeUsages,omitempty"`
+	MemberAccesses []NavigationMemberAccess `json:"memberAccesses,omitempty"`
 }
 
 // Merge appends another source graph while preserving source and syntax order.
 func (graph *NavigationGraph) Merge(other NavigationGraph) {
 	graph.Declarations = append(graph.Declarations, other.Declarations...)
 	graph.Calls = append(graph.Calls, other.Calls...)
+	graph.TypeUsages = append(graph.TypeUsages, other.TypeUsages...)
+	graph.MemberAccesses = append(graph.MemberAccesses, other.MemberAccesses...)
 }
 
 func navigationStableID(parts ...string) string {
@@ -121,7 +148,7 @@ func NavigationGraphFromTree(root *sitter.Node, content, language, path string) 
 	returnBindings := navigationReturnBindings(root, content, imports, navigation)
 	collector := navigationCollector{content: content, adapter: adapter, navigation: navigation, path: path, imports: imports, fields: fields, returnBindings: returnBindings, packageName: packageName}
 	collector.walk(root, navigationWalkContext{})
-	return NavigationGraph{Declarations: collector.declarations, Calls: collector.calls}
+	return NavigationGraph{Declarations: collector.declarations, Calls: collector.calls, TypeUsages: collector.typeUsages, MemberAccesses: collector.memberAccesses}
 }
 
 // DeclarationRangeAt returns the narrowest callable declaration containing line.
@@ -152,6 +179,8 @@ type navigationCollector struct {
 	packageName    string
 	declarations   []NavigationDeclaration
 	calls          []NavigationCall
+	typeUsages     []NavigationTypeUsage
+	memberAccesses []NavigationMemberAccess
 }
 
 type navigationEnvelope struct {
@@ -172,6 +201,7 @@ func (c *navigationCollector) walk(node *sitter.Node, context navigationWalkCont
 		context.bindings = cloneNavigationBindings(context.bindings)
 	}
 	current := c.enterNavigationNode(node, context)
+	c.recordNavigationMemberAccess(node, current)
 	c.recordNavigationCall(node, current.callable, current.bindings)
 	c.walkNavigationChildren(node, current)
 }
@@ -214,7 +244,30 @@ func (c *navigationCollector) enterNavigationNode(node *sitter.Node, context nav
 	c.declarations = append(c.declarations, declaration)
 	current.callable = &c.declarations[len(c.declarations)-1]
 	current.bindings = navigationCallableBindings(node, c.content, current.container, c.imports, c.returnBindings, c.navigation)
+	c.addNavigationSignatureBindings(node, current.bindings)
+	c.recordNavigationTypeUsages(current.callable, current.bindings)
 	return current
+}
+
+func (c *navigationCollector) addNavigationSignatureBindings(node *sitter.Node, bindings map[string]navigationBinding) {
+	body := node.ChildByFieldName("body")
+	walkNodes(node, func(current *sitter.Node) {
+		if body == nil || current.EndByte() <= body.StartByte() {
+			addNavigationParameterBinding(bindings, current, c.content, c.imports)
+		}
+	})
+}
+
+func (c *navigationCollector) recordNavigationTypeUsages(callable *NavigationDeclaration, bindings map[string]navigationBinding) {
+	seen := make(map[string]bool)
+	for _, binding := range bindings {
+		typeName := strings.TrimSpace(binding.typeName)
+		if typeName == "" || seen[typeName] {
+			continue
+		}
+		seen[typeName] = true
+		c.typeUsages = append(c.typeUsages, NavigationTypeUsage{CallerID: callable.ID, Type: typeName, Language: c.adapter.ID(), Path: c.path, Line: callable.Start})
+	}
 }
 
 func (c *navigationCollector) navigationDeclarationRange(node *sitter.Node, envelope *navigationEnvelope) (int, int) {
@@ -239,6 +292,30 @@ func (c *navigationCollector) recordNavigationCall(node *sitter.Node, callable *
 	applyNavigationCallContext(&call, c.imports, bindings, c.fields)
 	call.ID = navigationStableID("call", call.CallerID, strconv.Itoa(call.Line), call.Display, strconv.Itoa(len(c.calls)))
 	c.calls = append(c.calls, call)
+}
+
+func (c *navigationCollector) recordNavigationMemberAccess(node *sitter.Node, context navigationWalkContext) {
+	if context.callable == nil {
+		return
+	}
+	syntax, ok := c.navigation.MemberAccess(node, c.content)
+	if !ok {
+		return
+	}
+	receiverType := ""
+	if binding, exists := context.bindings[syntax.receiver]; exists {
+		receiverType = binding.typeName
+	} else if name, binding, exists := c.navigation.SelfBinding(context.container); exists && syntax.receiver == name {
+		receiverType = binding.typeName
+	} else if terminal := navigationTerminal(syntax.receiver); terminal != "" && strings.ToUpper(terminal[:1]) == terminal[:1] {
+		receiverType = terminal
+	}
+	access := NavigationMemberAccess{
+		CallerID: context.callable.ID, ReceiverType: receiverType, Receiver: syntax.receiver, Member: syntax.member, Operation: syntax.operation,
+		Language: c.adapter.ID(), Path: c.path, Line: nodeStart(node), StartByte: int(node.StartByte()),
+	}
+	access.ID = navigationStableID("member-access", access.CallerID, strconv.Itoa(access.StartByte), access.Receiver, access.Member, access.Operation)
+	c.memberAccesses = append(c.memberAccesses, access)
 }
 
 func (c *navigationCollector) walkNavigationChildren(node *sitter.Node, context navigationWalkContext) {

@@ -157,6 +157,83 @@ classDiagram
     <<struct>> RepoFilter
     %% grepple:file RepoFilter search/search_engine.go
     note for RepoFilter "defined: search/search_engine.go:129-132; Allow@search/search_engine.go:144-166; exclude@search/search_engine.go:131; include@search/search_engine.go:130"
+    class ResponsibilityBreadth {
+        +Files: int
+        +Functions: int
+        +Packages: int
+    }
+    <<struct>> ResponsibilityBreadth
+    %% grepple:file ResponsibilityBreadth search/responsibilities.go
+    %% grepple:struct-tag ResponsibilityBreadth Files "json:\"files\""
+    %% grepple:struct-tag ResponsibilityBreadth Functions "json:\"functions\""
+    %% grepple:struct-tag ResponsibilityBreadth Packages "json:\"packages\""
+    note for ResponsibilityBreadth "defined: search/responsibilities.go:13-17; Files@search/responsibilities.go:15; Functions@search/responsibilities.go:14; Packages@search/responsibilities.go:16"
+    class ResponsibilityConsumer {
+        +ID: string
+        +Line: int
+        +Name: string
+        +Package: string
+        +Path: string
+    }
+    <<struct>> ResponsibilityConsumer
+    %% grepple:file ResponsibilityConsumer search/responsibilities.go
+    %% grepple:struct-tag ResponsibilityConsumer ID "json:\"id\""
+    %% grepple:struct-tag ResponsibilityConsumer Line "json:\"line\""
+    %% grepple:struct-tag ResponsibilityConsumer Name "json:\"name\""
+    %% grepple:struct-tag ResponsibilityConsumer Package "json:\"package,omitempty\""
+    %% grepple:struct-tag ResponsibilityConsumer Path "json:\"path\""
+    note for ResponsibilityConsumer "defined: search/responsibilities.go:26-32; ID@search/responsibilities.go:27; Line@search/responsibilities.go:31; Name@search/responsibilities.go:28; Package@search/responsibilities.go:30; Path@search/responsibilities.go:29"
+    class ResponsibilityPattern {
+        +Consumers: []ResponsibilityConsumer
+        +Files: int
+        +Methods: []string
+        +Occurrences: int
+        +Packages: int
+    }
+    <<struct>> ResponsibilityPattern
+    %% grepple:file ResponsibilityPattern search/responsibilities.go
+    %% grepple:struct-tag ResponsibilityPattern Consumers "json:\"consumers\""
+    %% grepple:struct-tag ResponsibilityPattern Files "json:\"files\""
+    %% grepple:struct-tag ResponsibilityPattern Methods "json:\"methods\""
+    %% grepple:struct-tag ResponsibilityPattern Occurrences "json:\"occurrences\""
+    %% grepple:struct-tag ResponsibilityPattern Packages "json:\"packages\""
+    note for ResponsibilityPattern "defined: search/responsibilities.go:35-41; Consumers@search/responsibilities.go:40; Files@search/responsibilities.go:38; Methods@search/responsibilities.go:36; Occurrences@search/responsibilities.go:37; Packages@search/responsibilities.go:39"
+    class ResponsibilityReport {
+        +ConsumerDetails: []ResponsibilityConsumer
+        +Consumers: ResponsibilityBreadth
+        +ExternalMethodSurface: ResponsibilitySurface
+        +Languages: []string
+        +MemberMethodCombinations: []ResponsibilityPattern
+        +MethodCoUsage: []ResponsibilityPattern
+        +Methods: []string
+        +OrderedSequences: []ResponsibilityPattern
+        +Schema: string
+        +Type: string
+        +UnresolvedCalls: int
+    }
+    <<struct>> ResponsibilityReport
+    %% grepple:file ResponsibilityReport search/responsibilities.go
+    %% grepple:struct-tag ResponsibilityReport ConsumerDetails "json:\"consumerDetails\""
+    %% grepple:struct-tag ResponsibilityReport Consumers "json:\"consumers\""
+    %% grepple:struct-tag ResponsibilityReport ExternalMethodSurface "json:\"externalMethodSurface\""
+    %% grepple:struct-tag ResponsibilityReport Languages "json:\"languages\""
+    %% grepple:struct-tag ResponsibilityReport MemberMethodCombinations "json:\"memberMethodCombinations\""
+    %% grepple:struct-tag ResponsibilityReport MethodCoUsage "json:\"methodCoUsage\""
+    %% grepple:struct-tag ResponsibilityReport Methods "json:\"methods\""
+    %% grepple:struct-tag ResponsibilityReport OrderedSequences "json:\"orderedSequences\""
+    %% grepple:struct-tag ResponsibilityReport Schema "json:\"schema\""
+    %% grepple:struct-tag ResponsibilityReport Type "json:\"type\""
+    %% grepple:struct-tag ResponsibilityReport UnresolvedCalls "json:\"unresolvedCalls\""
+    note for ResponsibilityReport "defined: search/responsibilities.go:44-56; ConsumerDetails@search/responsibilities.go:49; Consumers@search/responsibilities.go:48; ExternalMethodSurface@search/responsibilities.go:50; Languages@search/responsibilities.go:47; MemberMethodCombinations@search/responsibilities.go:54; MethodCoUsage@search/responsibilities.go:52; Methods@search/responsibilities.go:51; OrderedSequences@search/responsibilities.go:53; Schema@search/responsibilities.go:45; Type@search/responsibilities.go:46; UnresolvedCalls@search/responsibilities.go:55"
+    class ResponsibilitySurface {
+        +Declared: int
+        +External: int
+    }
+    <<struct>> ResponsibilitySurface
+    %% grepple:file ResponsibilitySurface search/responsibilities.go
+    %% grepple:struct-tag ResponsibilitySurface Declared "json:\"declared\""
+    %% grepple:struct-tag ResponsibilitySurface External "json:\"external\""
+    note for ResponsibilitySurface "defined: search/responsibilities.go:20-23; Declared@search/responsibilities.go:22; External@search/responsibilities.go:21"
     class candidateCollector {
         -add(string)
         -addPlainGlob(string): error
@@ -282,12 +359,61 @@ classDiagram
     <<struct>> repoPattern
     %% grepple:file repoPattern search/search_engine.go
     note for repoPattern "defined: search/search_engine.go:95-98; match@search/search_engine.go:108-113; glob@search/search_engine.go:96; re@search/search_engine.go:97"
+    class responsibilityAnalyzer {
+        -addResponsibilityCaller(string, []responsibilityInteraction, *responsibilityPatternGroups): tuple~ResponsibilityConsumer&#44;bool~
+        -indexResponsibilityCalls([]parser.NavigationCall)
+        -indexResponsibilityDeclarations([]parser.NavigationDeclaration)
+        -indexResponsibilityMemberAccesses([]parser.NavigationMemberAccess)
+        -indexResponsibilityTypeUsages([]parser.NavigationTypeUsage)
+        -matchCall(parser.NavigationCall): tuple~string&#44;bool&#44;bool~
+        -report(int): ResponsibilityReport
+        -callsByCaller: map[string][]string
+        -declarations: map[string]parser.NavigationDeclaration
+        -interactionsByCaller: map[string][]responsibilityInteraction
+        -languages: map[string]bool
+        -methodIDs: map[string]bool
+        -methods: map[string]bool
+        -typeName: string
+        -unresolvedCall: int
+        -usageCallers: map[string]bool
+    }
+    <<struct>> responsibilityAnalyzer
+    %% grepple:file responsibilityAnalyzer search/responsibilities.go
+    note for responsibilityAnalyzer "defined: search/responsibilities.go:80-90; addResponsibilityCaller@search/responsibilities.go:203-224; indexResponsibilityCalls@search/responsibilities.go:115-130; indexResponsibilityDeclarations@search/responsibilities.go:104-113; indexResponsibilityMemberAccesses@search/responsibilities.go:132-142; indexResponsibilityTypeUsages@search/responsibilities.go:144-151; matchCall@search/responsibilities.go:153-173; report@search/responsibilities.go:175-194; callsByCaller@search/responsibilities.go:86; declarations@search/responsibilities.go:82; interactionsByCaller@search/responsibilities.go:87; languages@search/responsibilities.go:85; methodIDs@search/responsibilities.go:83; methods@search/responsibilities.go:84; typeName@search/responsibilities.go:81; unresolvedCall@search/responsibilities.go:89; usageCallers@search/responsibilities.go:88"
+    class responsibilityInteraction {
+        -label: string
+    }
+    <<struct>> responsibilityInteraction
+    %% grepple:file responsibilityInteraction search/responsibilities.go
+    note for responsibilityInteraction "defined: search/responsibilities.go:76-78; label@search/responsibilities.go:77"
+    class responsibilityPatternGroup {
+        -consumers: []ResponsibilityConsumer
+        -methods: []string
+    }
+    <<struct>> responsibilityPatternGroup
+    %% grepple:file responsibilityPatternGroup search/responsibilities.go
+    note for responsibilityPatternGroup "defined: search/responsibilities.go:294-297; consumers@search/responsibilities.go:296; methods@search/responsibilities.go:295"
+    class responsibilityPatternGroups {
+        -combinations: map[string]*responsibilityPatternGroup
+        -externalMethods: map[string]bool
+        -methodSets: map[string]*responsibilityPatternGroup
+        -sequences: map[string]*responsibilityPatternGroup
+    }
+    <<struct>> responsibilityPatternGroups
+    %% grepple:file responsibilityPatternGroups search/responsibilities.go
+    note for responsibilityPatternGroups "defined: search/responsibilities.go:196-201; combinations@search/responsibilities.go:200; externalMethods@search/responsibilities.go:197; methodSets@search/responsibilities.go:198; sequences@search/responsibilities.go:199"
     class AggregateRepoCounts {
         +AggregateRepoCounts([]FileMatch): []api.RepoCount
     }
     <<function>> AggregateRepoCounts
     %% grepple:file AggregateRepoCounts search/search_engine.go
     note for AggregateRepoCounts "defined: search/search_engine.go:494-513"
+    class AnalyzeResponsibilities {
+        +AnalyzeResponsibilities(parser.NavigationGraph, string, int): tuple~ResponsibilityReport&#44;error~
+    }
+    <<function>> AnalyzeResponsibilities
+    %% grepple:file AnalyzeResponsibilities search/responsibilities.go
+    note for AnalyzeResponsibilities "defined: search/responsibilities.go:61-74"
     class At {
         +At(Params): tuple~*FileMatch&#44;error~
     }
@@ -347,7 +473,7 @@ classDiagram
     }
     <<function>> FilterNavigationGraph
     %% grepple:file FilterNavigationGraph search/navigation_filter.go
-    note for FilterNavigationGraph "defined: search/navigation_filter.go:20-36"
+    note for FilterNavigationGraph "defined: search/navigation_filter.go:20-38"
     class ListFilePaths {
         +ListFilePaths(Params, []string): tuple~[]string&#44;error~
     }
@@ -371,7 +497,7 @@ classDiagram
     }
     <<function>> NormalizeNavigationGraphFilter
     %% grepple:file NormalizeNavigationGraphFilter search/navigation_filter.go
-    note for NormalizeNavigationGraphFilter "defined: search/navigation_filter.go:39-53"
+    note for NormalizeNavigationGraphFilter "defined: search/navigation_filter.go:41-55"
     class PathMatchesGlobs {
         +PathMatchesGlobs(string, []string): bool
     }
@@ -433,6 +559,7 @@ classDiagram
     %% grepple:file WorkerCount search/workers.go
     note for WorkerCount "defined: search/workers.go:19-34"
     AggregateRepoCounts "1" ..> "*" FileMatch : parameter 1
+    AnalyzeResponsibilities "1" ..> "1" ResponsibilityReport : result 1
     At "1" ..> "1" FileMatch : result 1
     At "1" ..> "1" Params : parameter 1
     BuildResults "1" ..> "*" FileMatch : parameter 1
@@ -458,6 +585,13 @@ classDiagram
     RepoFilter "1" --> "*" repoPattern : field exclude
     RepoFilter "1" --> "*" repoPattern : field include
     ResolveRequest "1" ..> "1" Params : result 1
+    ResponsibilityPattern "1" --> "*" ResponsibilityConsumer : field Consumers
+    ResponsibilityReport "1" --> "1" ResponsibilityBreadth : field Consumers
+    ResponsibilityReport "1" --> "*" ResponsibilityConsumer : field ConsumerDetails
+    ResponsibilityReport "1" --> "*" ResponsibilityPattern : field MemberMethodCombinations
+    ResponsibilityReport "1" --> "*" ResponsibilityPattern : field MethodCoUsage
+    ResponsibilityReport "1" --> "*" ResponsibilityPattern : field OrderedSequences
+    ResponsibilityReport "1" --> "1" ResponsibilitySurface : field ExternalMethodSurface
     ToResult "1" ..> "1" FileMatch : parameter 1
     candidateCollector "1" --> "1" gitignoreCache : field ignoreCache
     candidateScan "1" ..> "*" FileMatch : method scanAll result 1
@@ -482,3 +616,12 @@ classDiagram
     navigationIndex "1" ..> "*" navigationDeclaration : method navigationDeclarationsByID result 1
     navigationIndex "1" ..> "*" navigationDeclaration : method resolveGraphCall parameter 3
     navigationIndex "1" ..> "1" navigationDeclaration : method resolveReturnFactory result 1
+    responsibilityAnalyzer "1" ..> "1" ResponsibilityConsumer : method addResponsibilityCaller result 1
+    responsibilityAnalyzer "1" ..> "1" ResponsibilityReport : method report result 1
+    responsibilityAnalyzer "1" --> "*" responsibilityInteraction : field interactionsByCaller
+    responsibilityAnalyzer "1" ..> "*" responsibilityInteraction : method addResponsibilityCaller parameter 2
+    responsibilityAnalyzer "1" ..> "1" responsibilityPatternGroups : method addResponsibilityCaller parameter 3
+    responsibilityPatternGroup "1" --> "*" ResponsibilityConsumer : field consumers
+    responsibilityPatternGroups "1" --> "*" responsibilityPatternGroup : field combinations
+    responsibilityPatternGroups "1" --> "*" responsibilityPatternGroup : field methodSets
+    responsibilityPatternGroups "1" --> "*" responsibilityPatternGroup : field sequences

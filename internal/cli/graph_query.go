@@ -61,23 +61,27 @@ func runGraphQuery(direction search.NavigationQueryDirection, args []string) err
 	if err != nil {
 		return err
 	}
-	filtered, err := search.FilterNavigationGraph(parser.NavigationGraph{Declarations: output.Declarations, Calls: output.Calls}, filter)
+	filtered, err := search.FilterNavigationGraph(parser.NavigationGraph{Declarations: output.Declarations, Calls: output.Calls, TypeUsages: output.TypeUsages, MemberAccesses: output.MemberAccesses}, filter)
 	if err != nil {
 		return err
 	}
 	output.Declarations = filtered.Declarations
 	output.Calls = filtered.Calls
+	output.TypeUsages = filtered.TypeUsages
+	output.MemberAccesses = filtered.MemberAccesses
 	roots, err := selectNavigationQueryRoots(output.Declarations, values)
 	if err != nil {
 		return err
 	}
 	rootIDs := navigationDeclarationIDs(roots)
-	queried, err := search.QueryNavigationGraph(parser.NavigationGraph{Declarations: output.Declarations, Calls: output.Calls}, rootIDs, direction, values.Depth)
+	queried, err := search.QueryNavigationGraph(parser.NavigationGraph{Declarations: output.Declarations, Calls: output.Calls, TypeUsages: output.TypeUsages, MemberAccesses: output.MemberAccesses}, rootIDs, direction, values.Depth)
 	if err != nil {
 		return err
 	}
 	output.Declarations = queried.Declarations
 	output.Calls = queried.Calls
+	output.TypeUsages = queried.TypeUsages
+	output.MemberAccesses = queried.MemberAccesses
 	output.Query = &navigationGraphQuery{
 		Direction: string(direction), Depth: values.Depth, RootIDs: rootIDs,
 		Languages: filter.Languages, Confidences: filter.Confidences, Visibilities: filter.Visibilities,
@@ -130,11 +134,22 @@ func graphQuerySelectorCount(values graphQueryArgs) int {
 }
 
 func buildNavigationGraphOutput(globs []string, maxFiles int) (navigationGraphOutput, error) {
-	paths, err := search.ListFilePathsContext(context.Background(), search.Params{Files: true, Globs: globs}, nil)
+	paths, err := navigationInputPaths(globs)
 	if err != nil {
 		return navigationGraphOutput{}, err
 	}
-	paths = navigationSourcePaths(paths)
+	return buildNavigationGraphOutputFromPaths(paths, maxFiles), nil
+}
+
+func navigationInputPaths(globs []string) ([]string, error) {
+	paths, err := search.ListFilePathsContext(context.Background(), search.Params{Files: true, Globs: globs}, nil)
+	if err != nil {
+		return nil, err
+	}
+	return navigationSourcePaths(paths), nil
+}
+
+func buildNavigationGraphOutputFromPaths(paths []string, maxFiles int) navigationGraphOutput {
 	var truncation *navigationGraphTruncation
 	if maxFiles > 0 && len(paths) > maxFiles {
 		truncation = &navigationGraphTruncation{Reason: "max_files", Limit: maxFiles, Skipped: len(paths) - maxFiles}
@@ -150,8 +165,8 @@ func buildNavigationGraphOutput(globs []string, maxFiles int) (navigationGraphOu
 		calls = []parser.NavigationCall{}
 	}
 	return navigationGraphOutput{
-		Schema: navigationGraphSchema, Files: len(paths), Declarations: declarations, Calls: calls, Truncation: truncation,
-	}, nil
+		Schema: navigationGraphSchema, Files: len(paths), Declarations: declarations, Calls: calls, TypeUsages: graph.TypeUsages, MemberAccesses: graph.MemberAccesses, Truncation: truncation,
+	}
 }
 
 func selectNavigationQueryRoots(declarations []parser.NavigationDeclaration, values graphQueryArgs) ([]parser.NavigationDeclaration, error) {
