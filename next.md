@@ -4,7 +4,7 @@ Grepple should stabilize for one or two iterations before adding more languages.
 
 ## Recommended next milestone
 
-> The agent-output budget, declaration visibility filtering, C# focused extraction, architecture benchmarks, and semantic graph diff milestones are complete. Prioritize shared-projection parity and richer resolution next.
+> The agent-output budget, declaration visibility filtering, C# focused extraction, architecture benchmarks, semantic graph diffing, and shared-projection parity milestones are complete. Prioritize richer cross-file resolution next.
 
 ## Feature set versus feature completeness
 
@@ -164,7 +164,7 @@ Use case: code review and CI can explain architectural impact—such as a new pa
 
 1. Derive compact text, JSON, graph queries, diffs, and canonical Mermaid from the same normalized graph.
 2. Preserve stable node identity, source ranges, edge confidence, and truncation semantics in every applicable projection.
-3. Add parity tests proving that compact and JSON edges agree with canonical Mermaid and `--related`.
+3. [x] Add an end-to-end parity fixture proving complete JSON IDs/edges, compact IDs/edges, focused Mermaid flow, canonical package Mermaid declarations/ranges, and `--related` agree.
 
 ### C6. Remove the redundant Read call for edits
 
@@ -235,7 +235,7 @@ Reduce repeated parsing and language knowledge across extraction, navigation, te
    - [x] Add Java focused structure/flow with classes, interfaces, records, enums, inheritance, implementations, fields, constructors, methods, conservative cross-file targets, and shared navigation-graph flows.
    - [x] Add Kotlin focused structure/flow with classes, interfaces, objects, data-class constructor properties, delegation-based inheritance, properties, functions, conservative cross-file targets, and shared navigation-graph flows.
    - [x] Add C# focused structure/flow with classes, interfaces, structs, records, enums, inheritance, properties, fields, constructors, methods, visibility, static members, project-root discovery, and shared navigation resolution. Keep C/C++, Rust, and Shell unsupported until their non-class architecture projections have an explicit useful contract.
-Recommended implementation order from here: benchmark and budget focused/package/workspace extraction; then shared-projection parity and semantic graph/architecture diffing. Define useful non-class projections for Rust or C/C++ before expanding focused extraction.
+Recommended implementation order from here: improve cross-file member and TypeScript import/re-export resolution, expand ambiguity fixtures, and define useful non-class projections for Rust or C/C++ before expanding focused extraction.
 
 Acceptance criteria:
 
