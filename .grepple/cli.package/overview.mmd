@@ -81,9 +81,9 @@ classDiagram
         }
         <<struct>> deviceTokenResponse
         class directoryResponsibilitiesOutput["directoryResponsibilitiesOutput · internal/cli/responsibilities.go:40-46"] {
+            +Candidates: []search.ResponsibilityBoundaryCandidate
             +Files: int
             +Paths: []string
-            +Reports: []search.ResponsibilityReport
             +Schema: string
             +Truncation: *navigationGraphTruncation
         }

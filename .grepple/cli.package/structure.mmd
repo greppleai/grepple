@@ -184,20 +184,20 @@ classDiagram
     %% grepple:struct-tag deviceTokenResponse TokenType "json:\"token_type\""
     note for deviceTokenResponse "defined: internal/cli/login.go:31-41; AccessToken@internal/cli/login.go:32; Error@internal/cli/login.go:38; ErrorDescription@internal/cli/login.go:39; ExpiresIn@internal/cli/login.go:35; Interval@internal/cli/login.go:40; RefreshToken@internal/cli/login.go:36; RefreshTokenExpiresIn@internal/cli/login.go:37; Scope@internal/cli/login.go:34; TokenType@internal/cli/login.go:33"
     class directoryResponsibilitiesOutput {
+        +Candidates: []search.ResponsibilityBoundaryCandidate
         +Files: int
         +Paths: []string
-        +Reports: []search.ResponsibilityReport
         +Schema: string
         +Truncation: *navigationGraphTruncation
     }
     <<struct>> directoryResponsibilitiesOutput
     %% grepple:file directoryResponsibilitiesOutput internal/cli/responsibilities.go
+    %% grepple:struct-tag directoryResponsibilitiesOutput Candidates "json:\"candidates\""
     %% grepple:struct-tag directoryResponsibilitiesOutput Files "json:\"files\""
     %% grepple:struct-tag directoryResponsibilitiesOutput Paths "json:\"paths\""
-    %% grepple:struct-tag directoryResponsibilitiesOutput Reports "json:\"reports\""
     %% grepple:struct-tag directoryResponsibilitiesOutput Schema "json:\"schema\""
     %% grepple:struct-tag directoryResponsibilitiesOutput Truncation "json:\"truncation,omitempty\""
-    note for directoryResponsibilitiesOutput "defined: internal/cli/responsibilities.go:40-46; Files@internal/cli/responsibilities.go:43; Paths@internal/cli/responsibilities.go:42; Reports@internal/cli/responsibilities.go:44; Schema@internal/cli/responsibilities.go:41; Truncation@internal/cli/responsibilities.go:45"
+    note for directoryResponsibilitiesOutput "defined: internal/cli/responsibilities.go:40-46; Candidates@internal/cli/responsibilities.go:44; Files@internal/cli/responsibilities.go:43; Paths@internal/cli/responsibilities.go:42; Schema@internal/cli/responsibilities.go:41; Truncation@internal/cli/responsibilities.go:45"
     class errBrokenPipe {
         +Error(): string
         +Unwrap(): error

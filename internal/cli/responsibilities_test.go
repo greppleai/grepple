@@ -50,34 +50,39 @@ func Two(value Foo){ _ = value.State; value.Parse(); value.Validate() }
 
 func TestResponsibilitiesDirectoryDiscoversAndRanksTypes(t *testing.T) {
 	dir := chdirTemp(t)
-	writeGraphSource(t, dir, "main.go", `package sample
+	writeGraphSource(t, dir, "busy.go", `package sample
 type Busy struct{}
 func (Busy) Save(){}
-func One(value Busy){ value.Save() }
-func Two(value Busy){ value.Save() }
+func (Busy) Validate(){}
+`)
+	writeGraphSource(t, dir, "quiet.go", `package sample
 type Quiet struct{}
 func (Quiet) Read(){}
-func Once(value Quiet){ value.Read() }
+func (Quiet) Write(){}
 `)
+	writeGraphSource(t, dir, "busy_one.go", "package sample\nfunc BusyOne(value Busy){ value.Save(); value.Validate() }\n")
+	writeGraphSource(t, dir, "busy_two.go", "package sample\nfunc BusyTwo(value Busy){ value.Save(); value.Validate() }\n")
+	writeGraphSource(t, dir, "quiet_one.go", "package sample\nfunc QuietOne(value Quiet){ value.Read(); value.Write() }\n")
+	writeGraphSource(t, dir, "quiet_two.go", "package sample\nfunc QuietTwo(value Quiet){ value.Read(); value.Write() }\n")
 	output := captureStdout(t, func() {
 		if err := Run([]string{"responsibilities", "--no-cache", "."}); err != nil {
 			t.Fatal(err)
 		}
 	})
-	for _, expected := range []string{"responsibilities paths=. files=1 types=2 shown=2", "Busy\n", "consumers: 2 functions", "Quiet\n", "consumers: 1 functions"} {
+	for _, expected := range []string{"responsibility boundaries paths=. files=6 candidates=2 shown=2", "owner: busy.go [go]", "external consumers: 2 functions", "Save + Validate", "owner: quiet.go [go]", "Read + Write"} {
 		if !strings.Contains(output, expected) {
 			t.Fatalf("directory output missing %q:\n%s", expected, output)
 		}
 	}
-	if strings.Index(output, "Busy\n") > strings.Index(output, "Quiet\n") {
-		t.Fatalf("reports are not ranked by evidence:\n%s", output)
+	if strings.Index(output, "owner: busy.go") > strings.Index(output, "owner: quiet.go") {
+		t.Fatalf("reports are not deterministically ordered:\n%s", output)
 	}
 	limited := captureStdout(t, func() {
 		if err := Run([]string{"responsibilities", "--no-cache", "--limit", "1", "."}); err != nil {
 			t.Fatal(err)
 		}
 	})
-	if !strings.Contains(limited, "types=2 shown=1") || !strings.Contains(limited, "omitted 1 lower-ranked types") || strings.Contains(limited, "Quiet\n") {
+	if !strings.Contains(limited, "candidates=2 shown=1") || !strings.Contains(limited, "omitted 1 lower-ranked boundary candidates") || strings.Contains(limited, "owner: quiet.go") {
 		t.Fatalf("limited directory output is incomplete or misleading:\n%s", limited)
 	}
 	jsonText := captureStdout(t, func() {
@@ -89,7 +94,7 @@ func Once(value Quiet){ value.Read() }
 	if err := json.Unmarshal([]byte(jsonText), &directory); err != nil {
 		t.Fatal(err)
 	}
-	if directory.Schema != "grepple-directory-responsibilities-v1" || len(directory.Reports) != 2 {
+	if directory.Schema != "grepple-responsibility-boundaries-v1" || len(directory.Candidates) != 2 {
 		t.Fatalf("directory JSON was limited: %#v", directory)
 	}
 }

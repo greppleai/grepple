@@ -91,24 +91,63 @@ func TestAnalyzeResponsibilitiesUsesLanguageNeutralReceiverEvidence(t *testing.T
 func TestAnalyzeDirectoryResponsibilitiesRanksTypesAndKeepsLanguagesSeparate(t *testing.T) {
 	graph := parser.NavigationGraph{
 		Declarations: []parser.NavigationDeclaration{
-			{ID: "go-method", Name: "Client.Save", Container: "Client", Language: "go"},
+			{ID: "go-save", Name: "Client.Save", Container: "Client", Language: "go", Path: "go/client.go"},
+			{ID: "go-validate", Name: "Client.Validate", Container: "Client", Language: "go", Path: "go/client.go"},
+			{ID: "go-local", Name: "localWorkflow", Language: "go", Path: "go/client.go"},
 			{ID: "go-one", Name: "One", Language: "go", Path: "go/one.go"},
 			{ID: "go-two", Name: "Two", Language: "go", Path: "go/two.go"},
-			{ID: "java-method", Name: "Client.save", Container: "Client", Language: "java"},
+			{ID: "java-save", Name: "Client.save", Container: "Client", Language: "java", Path: "java/Client.java"},
+			{ID: "java-validate", Name: "Client.validate", Container: "Client", Language: "java", Path: "java/Client.java"},
 			{ID: "java-one", Name: "one", Language: "java", Path: "java/One.java"},
+			{ID: "java-two", Name: "two", Language: "java", Path: "java/Two.java"},
 		},
 		Calls: []parser.NavigationCall{
-			{CallerID: "go-one", TargetID: "go-method", Name: "Save", Language: "go"},
-			{CallerID: "go-two", TargetID: "go-method", Name: "Save", Language: "go"},
-			{CallerID: "java-one", TargetID: "java-method", Name: "save", Language: "java"},
+			{CallerID: "go-local", TargetID: "go-save", Name: "Save", Language: "go"},
+			{CallerID: "go-local", TargetID: "go-validate", Name: "Validate", Language: "go"},
+			{CallerID: "go-one", TargetID: "go-save", Name: "Save", Language: "go"},
+			{CallerID: "go-one", TargetID: "go-validate", Name: "Validate", Language: "go"},
+			{CallerID: "go-two", TargetID: "go-save", Name: "Save", Language: "go"},
+			{CallerID: "go-two", TargetID: "go-validate", Name: "Validate", Language: "go"},
+			{CallerID: "java-one", TargetID: "java-save", Name: "save", Language: "java"},
+			{CallerID: "java-one", TargetID: "java-validate", Name: "validate", Language: "java"},
+			{CallerID: "java-two", TargetID: "java-save", Name: "save", Language: "java"},
+			{CallerID: "java-two", TargetID: "java-validate", Name: "validate", Language: "java"},
 		},
 	}
 	reports, err := AnalyzeDirectoryResponsibilities(graph, 1)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(reports) != 2 || reports[0].Consumers.Functions != 2 || !reflect.DeepEqual(reports[0].Languages, []string{"go"}) || !reflect.DeepEqual(reports[1].Languages, []string{"java"}) {
+	if len(reports) != 2 || reports[0].OwnerFile != "go/client.go" || reports[0].Consumers.Functions != 2 || reports[0].CallableCoUsage[0].Occurrences != 2 || reports[0].Language != "go" || reports[1].OwnerFile != "java/Client.java" || reports[1].Language != "java" {
 		t.Fatalf("reports=%#v", reports)
+	}
+}
+
+func TestAnalyzeDirectoryResponsibilitiesUsesFileBoundariesForEveryLanguage(t *testing.T) {
+	for _, language := range []string{"go", "java", "kotlin", "javascript", "typescript", "tsx", "python", "csharp", "c", "cpp", "rust", "shell"} {
+		t.Run(language, func(t *testing.T) {
+			graph := parser.NavigationGraph{
+				Declarations: []parser.NavigationDeclaration{
+					{ID: "parse", Name: "Parse", Language: language, Path: "owner/source"},
+					{ID: "validate", Name: "Validate", Language: language, Path: "owner/source"},
+					{ID: "one", Name: "One", Language: language, Path: "consumer/one"},
+					{ID: "two", Name: "Two", Language: language, Path: "consumer/two"},
+				},
+				Calls: []parser.NavigationCall{
+					{CallerID: "one", TargetID: "parse", Language: language},
+					{CallerID: "one", TargetID: "validate", Language: language},
+					{CallerID: "two", TargetID: "parse", Language: language},
+					{CallerID: "two", TargetID: "validate", Language: language},
+				},
+			}
+			candidates, err := AnalyzeDirectoryResponsibilities(graph, 2)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if len(candidates) != 1 || candidates[0].OwnerFile != "owner/source" || candidates[0].Language != language {
+				t.Fatalf("candidates=%#v", candidates)
+			}
+		})
 	}
 }
 

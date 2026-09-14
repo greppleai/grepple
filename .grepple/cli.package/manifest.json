@@ -25,7 +25,7 @@
     "fiberRoutes": 0,
     "relations": 28
   },
-  "semanticModelDigest": "sha256:7f907043624ac326eaccd9fb527468911db7cd49c0306212a40331220019d1ae",
+  "semanticModelDigest": "sha256:fc5cd156f0259ddae106dc21060d91b429b640c0eef39663b77d32fe518a641b",
   "sourceFiles": [
     {
       "path": "internal/cli/anchors.go"
@@ -871,8 +871,18 @@
       "file": "internal/cli/responsibilities.go",
       "line": 40,
       "endLine": 46,
-      "underlyingType": "struct{Schema string`json:\"schema\"`;Paths[]string`json:\"paths\"`;Files int`json:\"files\"`;Reports[]search.ResponsibilityReport`json:\"reports\"`;Truncation*navigationGraphTruncation`json:\"truncation,omitempty\"`;}",
+      "underlyingType": "struct{Schema string`json:\"schema\"`;Paths[]string`json:\"paths\"`;Files int`json:\"files\"`;Candidates[]search.ResponsibilityBoundaryCandidate`json:\"candidates\"`;Truncation*navigationGraphTruncation`json:\"truncation,omitempty\"`;}",
       "members": [
+        {
+          "name": "Candidates",
+          "kind": "property",
+          "line": 44,
+          "endLine": 44,
+          "result": "[]search.ResponsibilityBoundaryCandidate",
+          "structTag": {
+            "value": "json:\"candidates\""
+          }
+        },
         {
           "name": "Files",
           "kind": "property",
@@ -891,16 +901,6 @@
           "result": "[]string",
           "structTag": {
             "value": "json:\"paths\""
-          }
-        },
-        {
-          "name": "Reports",
-          "kind": "property",
-          "line": 44,
-          "endLine": 44,
-          "result": "[]search.ResponsibilityReport",
-          "structTag": {
-            "value": "json:\"reports\""
           }
         },
         {

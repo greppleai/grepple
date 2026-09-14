@@ -133,7 +133,7 @@ Inspect all three layers before concluding:
 3. `--related` on the changed entrypoint and shared helpers for immediate behavioral impact.
 4. `grepple graph callers --at PATH:LINE --depth 2 --compact SCOPE` when multi-hop consumers matter; use `graph callees` for bounded outgoing dependencies.
 
-### “Which repeated responsibilities exist in this directory?”
+### “Which implementation workflows leaked outside their owning file?”
 
 ```bash
 grepple responsibilities path/to/scope
@@ -141,7 +141,7 @@ grepple responsibilities --type TypeName path/to/scope
 grepple responsibilities --min-occurrences 3 --json path/to/scope
 ```
 
-Use the ranked directory report for deterministic type-consumer breadth, externally used method surface, repeated method sets, ordered method sequences, and receiver-qualified member read/write plus method combinations. Narrow with `--type` only after directory ranking identifies a candidate. Treat disclosed ambiguous interactions as leads to verify.
+Directory mode groups resolved target declarations by their owner file and reports only workflows repeated in at least two external files. It therefore works for functions as well as methods across all navigation languages. Use the owner path and caller locations to verify whether a missing helper or higher-level operation belongs at that boundary. Use `--type` only for broader type-centric evidence. Treat disclosed ambiguous interactions as leads, not confirmed violations.
 
 ### “Why does this route or entrypoint exist?”
 

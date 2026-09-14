@@ -38,11 +38,11 @@ type responsibilitiesOutput struct {
 }
 
 type directoryResponsibilitiesOutput struct {
-	Schema     string                        `json:"schema"`
-	Paths      []string                      `json:"paths"`
-	Files      int                           `json:"files"`
-	Reports    []search.ResponsibilityReport `json:"reports"`
-	Truncation *navigationGraphTruncation    `json:"truncation,omitempty"`
+	Schema     string                                   `json:"schema"`
+	Paths      []string                                 `json:"paths"`
+	Files      int                                      `json:"files"`
+	Candidates []search.ResponsibilityBoundaryCandidate `json:"candidates"`
+	Truncation *navigationGraphTruncation               `json:"truncation,omitempty"`
 }
 
 func runResponsibilities(args []string) error {
@@ -84,7 +84,7 @@ func runResponsibilities(args []string) error {
 	if err != nil {
 		return err
 	}
-	output := directoryResponsibilitiesOutput{Schema: "grepple-directory-responsibilities-v1", Paths: responsibilityDisplayPaths(values.Paths), Files: graphOutput.Files, Reports: reports, Truncation: graphOutput.Truncation}
+	output := directoryResponsibilitiesOutput{Schema: "grepple-responsibility-boundaries-v1", Paths: responsibilityDisplayPaths(values.Paths), Files: graphOutput.Files, Candidates: reports, Truncation: graphOutput.Truncation}
 	if values.JSON {
 		return encodeResponsibilitiesJSON(output)
 	}
@@ -134,38 +134,63 @@ func renderDirectoryResponsibilities(directory directoryResponsibilitiesOutput, 
 	write := func(format string, values ...any) bool {
 		return output.writeString(fmt.Sprintf(format, values...)+"\n") == nil
 	}
-	visible := len(directory.Reports)
+	visible := len(directory.Candidates)
 	if limit > 0 && visible > limit {
 		visible = limit
 	}
-	if !write("responsibilities paths=%s files=%d types=%d shown=%d", strings.Join(directory.Paths, ","), directory.Files, len(directory.Reports), visible) {
+	if !write("responsibility boundaries paths=%s files=%d candidates=%d shown=%d", strings.Join(directory.Paths, ","), directory.Files, len(directory.Candidates), visible) {
 		return nil
 	}
 	if directory.Truncation != nil && !write("! incomplete: %d files omitted by %s=%d", directory.Truncation.Skipped, directory.Truncation.Reason, directory.Truncation.Limit) {
 		return nil
 	}
-	for index, report := range directory.Reports[:visible] {
+	for index, candidate := range directory.Candidates[:visible] {
 		if index > 0 && !write("") {
 			return nil
 		}
-		if !writeResponsibilityReport(write, report, minimum, 0, nil) {
+		if !writeResponsibilityBoundary(write, candidate, minimum) {
 			return nil
 		}
 	}
-	if omitted := len(directory.Reports) - visible; omitted > 0 {
-		write("\n! omitted %d lower-ranked types; use --limit 0 or --json for all reports", omitted)
+	if omitted := len(directory.Candidates) - visible; omitted > 0 {
+		write("\n! omitted %d lower-ranked boundary candidates; use --limit 0 or --json for all", omitted)
 	}
-	if len(directory.Reports) == 0 {
-		write("(no type responsibility evidence found)")
+	if len(directory.Candidates) == 0 {
+		write("(no repeated cross-file boundary leaks found)")
 	}
 	return nil
 }
 
+func writeResponsibilityBoundary(write func(string, ...any) bool, candidate search.ResponsibilityBoundaryCandidate, minimum int) bool {
+	if !write("owner: %s [%s]", candidate.OwnerFile, candidate.Language) ||
+		!write("  external consumers: %d functions / %d files / %d packages", candidate.Consumers.Functions, candidate.Consumers.Files, candidate.Consumers.Packages) ||
+		!write("  external callable surface: %d/%d callables", candidate.ExternalCallableSurface.External, candidate.ExternalCallableSurface.Declared) {
+		return false
+	}
+	if candidate.UnresolvedCalls > 0 && !write("  ! %d interactions use same-owner candidate resolution", candidate.UnresolvedCalls) {
+		return false
+	}
+	if !write("  repeated callable co-usage (minimum %d callers in 2+ files):", minimum) || !writeResponsibilityPatterns(write, candidate.CallableCoUsage, " + ") {
+		return false
+	}
+	if !write("  repeated ordered sequences (minimum %d callers in 2+ files):", minimum) || !writeResponsibilityPatterns(write, candidate.OrderedSequences, " -> ") {
+		return false
+	}
+	if !write("  repeated member + call combinations (minimum %d callers in 2+ files):", minimum) {
+		return false
+	}
+	return writeResponsibilityPatterns(write, candidate.MemberCallCombinations, " + ")
+}
+
 func writeResponsibilityReport(write func(string, ...any) bool, report search.ResponsibilityReport, minimum, files int, truncation *navigationGraphTruncation) bool {
+	surface := "external method surface"
+	if files == 0 {
+		surface = "repeated external method surface"
+	}
 	if !write("%s", report.Type) ||
 		!write("  languages: %s", strings.Join(report.Languages, ", ")) ||
 		!write("  consumers: %d functions / %d files / %d packages", report.Consumers.Functions, report.Consumers.Files, report.Consumers.Packages) ||
-		!write("  external method surface: %d/%d methods", report.ExternalMethodSurface.External, report.ExternalMethodSurface.Declared) {
+		!write("  %s: %d/%d methods", surface, report.ExternalMethodSurface.External, report.ExternalMethodSurface.Declared) {
 		return false
 	}
 	if files > 0 && !write("  analyzed files: %d", files) {
@@ -199,7 +224,8 @@ func writeResponsibilityPatterns(write func(string, ...any) bool, patterns []sea
 	}
 	for _, pattern := range patterns[:visible] {
 		if !write("    %s", strings.Join(pattern.Methods, separator)) ||
-			!write("      %d occurrences / %d files / %d packages", pattern.Occurrences, pattern.Files, pattern.Packages) {
+			!write("      %d occurrences / %d files / %d packages", pattern.Occurrences, pattern.Files, pattern.Packages) ||
+			!write("      callers: %s", responsibilityPatternLocations(pattern.Consumers)) {
 			return false
 		}
 	}
@@ -207,4 +233,20 @@ func writeResponsibilityPatterns(write func(string, ...any) bool, patterns []sea
 		return write("    +%d additional patterns; use --json for complete results", omitted)
 	}
 	return true
+}
+
+func responsibilityPatternLocations(consumers []search.ResponsibilityConsumer) string {
+	const maximum = 3
+	count := len(consumers)
+	if count > maximum {
+		count = maximum
+	}
+	locations := make([]string, 0, count+1)
+	for _, consumer := range consumers[:count] {
+		locations = append(locations, fmt.Sprintf("%s:%d %s", consumer.Path, consumer.Line, consumer.Name))
+	}
+	if omitted := len(consumers) - count; omitted > 0 {
+		locations = append(locations, fmt.Sprintf("+%d more", omitted))
+	}
+	return strings.Join(locations, "; ")
 }

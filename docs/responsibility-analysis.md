@@ -1,39 +1,37 @@
 # Responsibility analysis
 
-`grepple responsibilities [PATH...]` discovers and ranks repeated interaction topology for types used within one or more directories, without comparing source text. It deliberately uses directory scope instead of package/module semantics, so the workflow is consistent across languages. Use `--type TYPE` to inspect one exact receiver or container within the selected paths.
+`grepple responsibilities [PATH...]` detects likely file-boundary leaks. Every resolved target declaration establishes an owner file; calls from other files are grouped by that owner. Only callable sets, ordered sequences, or member-plus-call combinations repeated across at least two external files survive. This asks whether an implementation workflow that belongs behind file X has spread into multiple consumers. Directory scope avoids package/module assumptions and applies equally to class-oriented and function-oriented languages.
 
-The analyzer consumes `parser.NavigationGraph`, not grammar node names. Consequently the analysis and output contract are identical across Go, Java, Kotlin, JavaScript/JSX, TypeScript/TSX, Python, C#, C, C++, Rust, and Shell. Languages without receiver/container declarations naturally produce no type report; unsupported and malformed files retain the existing safe navigation fallback.
+The analyzer consumes `parser.NavigationGraph`, not grammar node names. Consequently the contract is identical across Go, Java, Kotlin, JavaScript/JSX, TypeScript/TSX, Python, C#, C, C++, Rust, and Shell. Unsupported and malformed files retain the existing safe navigation fallback. `--type TYPE` selects the separate, broader type-centric report when needed.
 
 ## Reported signals
 
-- **Type usage breadth**: distinct external functions, files, and packages with explicit type bindings or interactions.
-- **External method surface**: distinct externally called methods over distinct declared methods.
-- **Method co-usage**: the sorted set of methods used by the same caller.
-- **Ordered sequences**: the source-ordered type-method sequence within each caller.
-- **Member + method combinations**: normalized sets such as `State(read) + Retry(write) + Schedule()` used by the same caller.
+Directory boundary candidates report:
+- **External consumer breadth**: distinct functions, files, and path-derived groups outside the owner.
+- **External callable surface**: called owner-file declarations over all callable declarations in that file.
+- **Callable co-usage**: the normalized owner callables used by the same external caller.
+- **Ordered sequences**: source-ordered calls into the owner file.
+- **Member + call combinations**: normalized sets such as `State(read) + Retry(write) + Schedule()` where member ownership can be resolved.
 
-Methods invoked from another method on the analyzed type are excluded from external consumer counts. Resolved target IDs are preferred. Candidate target IDs and normalized receiver types provide deterministic fallback evidence and are counted in `unresolvedCalls` so uncertain matches remain visible.
+Resolved target IDs are preferred. Ambiguous calls are included only when every candidate agrees on language, owner file, and terminal callable name; these are counted in `unresolvedCalls` so uncertain evidence remains visible.
 
-Patterns are grouped by caller, ordered by occurrence count and then normalized signature, and filtered by `--min-occurrences` (default 2). Directory reports are ranked by interaction and repeated-pattern evidence. Human output shows 20 types by default and discloses omitted lower-ranked types; `--limit 0` shows all, while JSON always contains every report.
+Patterns are grouped by caller and filtered by `--min-occurrences` (default 2), then must span at least two distinct external files. Candidates are ranked by cross-file pattern breadth. General symbol usage and one-off API calls are omitted. Human output shows 20 candidates and up to five patterns per category by default, with explicit omissions and up to three caller locations per pattern; `--limit 0` shows every candidate, while JSON is complete.
 
 ```text
-Request
-  languages: go
-  consumers: 18 functions / 12 files / 5 packages
-  external method surface: 3/5 methods
-  analyzed files: 84
-
-Repeated method co-usage (minimum 2 callers):
-  Normalize + Parse + Validate
-    18 occurrences / 12 files / 5 packages
-
-Repeated ordered method sequences (minimum 2 callers):
-  Parse -> Validate -> Normalize
-    18 occurrences / 12 files / 5 packages
-
-Repeated member + method combinations (minimum 2 callers):
-  Retry(write) + Schedule() + State(read)
-    9 occurrences / 7 files / 4 packages
+responsibility boundaries paths=src files=84 candidates=1 shown=1
+owner: src/request.go [go]
+  external consumers: 18 functions / 12 files / 5 groups
+  external callable surface: 3/5 callables
+  repeated callable co-usage (minimum 2 callers in 2+ files):
+    Parse + Validate + Normalize
+      18 occurrences / 12 files / 5 groups
+      callers: src/create.go:20 Create; src/update.go:18 Update; +16 more
+  repeated ordered sequences (minimum 2 callers in 2+ files):
+    Parse -> Validate -> Normalize
+      18 occurrences / 12 files / 5 groups
+  repeated member + call combinations (minimum 2 callers in 2+ files):
+    Retry(write) + Schedule() + State(read)
+      9 occurrences / 7 files / 4 groups
 ```
 
 ## Cache

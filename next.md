@@ -90,7 +90,7 @@ Acceptance criteria met for generic call discovery: one parser-owned graph suppl
 
 Responsibility topology follow-up:
 - [x] Add language-neutral consumer breadth, external method surface, method co-usage, ordered method sequences, and member-read/member-write plus method combinations.
-- [x] Expose directory-ranked analysis as `grepple responsibilities [PATH...]`, with optional `--type TYPE`, bounded and omission-aware human output, complete JSON, ambiguity disclosure, and deterministic ordering.
+- [x] Expose directory-ranked boundary analysis as `grepple responsibilities [PATH...]`: group resolved target declarations by owner file, remove owner-local calls, require repeated workflows across at least two external files, and report actionable caller locations. Keep optional `--type TYPE` for broader inspection.
 - [x] Cache content- and grammar-addressed resolved navigation graphs under ignored `.grepple/cache/responsibilities/` for fast unchanged rechecks.
 - [ ] Extend declared external surface totals from callable methods to fields/properties once every adapter exposes declaration ownership with honest confidence.
 
