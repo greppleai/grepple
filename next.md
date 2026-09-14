@@ -16,7 +16,6 @@
 - Keep canonical language IDs and grammar-kind policy out of generic navigation engines.
 ## P1 — reduce repeated agent and developer work
 
-6. [ ] Add task-oriented CLI examples for orientation, exact retrieval, editing, caller impact, boundary review, one GritQL audit, focused diagrams, and canonical checks.
 7. [ ] Explain deterministic segment ranking and evaluate an opt-in deterministic relevance strategy for broad retrieval.
 8. [ ] Add GritQL compile/explain output showing target language, wrapper interpretation, metavariable roles, compatibility contract, and bounded diagnostics.
 

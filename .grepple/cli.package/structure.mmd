@@ -889,6 +889,14 @@ classDiagram
     <<struct>> segmentRenderer
     %% grepple:file segmentRenderer internal/cli/renderer_segments.go
     note for segmentRenderer "defined: internal/cli/renderer_segments.go:11-14; Render@internal/cli/renderer_segments.go:16-34; renderFile@internal/cli/renderer_segments.go:36-64; renderRelated@internal/cli/renderer_segments.go:81-92; renderRelatedOmissions@internal/cli/renderer_segments.go:135-151; renderRelatedPoint@internal/cli/renderer_segments.go:103-133; renderRelatedPoints@internal/cli/renderer_segments.go:94-101; renderRelatedSegments@internal/cli/renderer_segments.go:177-189; renderSegment@internal/cli/renderer_segments.go:191-202; renderSourceLine@internal/cli/renderer_segments.go:204-209; anchors@internal/cli/renderer_segments.go:13; output@internal/cli/renderer_segments.go:12"
+    class taskExample {
+        +Commands: []string
+        +Description: string
+        +Name: string
+    }
+    <<struct>> taskExample
+    %% grepple:file taskExample internal/cli/examples.go
+    note for taskExample "defined: internal/cli/examples.go:8-12; Commands@internal/cli/examples.go:11; Description@internal/cli/examples.go:10; Name@internal/cli/examples.go:9"
     class treeArgs {
         +Description(): string
         +Depth: int
@@ -937,7 +945,7 @@ classDiagram
     }
     <<function>> Run
     %% grepple:file Run internal/cli/args.go
-    note for Run "defined: internal/cli/args.go:440-482"
+    note for Run "defined: internal/cli/args.go:441-485"
     anchorDoctorReport "1" --> "*" anchorDoctorCheck : field Checks
     anchorProtocolRequest "1" --> "*" anchorProtocolRequestFile : field Files
     anchorProtocolResponse "1" --> "*" anchorProtocolResponseFile : field Files

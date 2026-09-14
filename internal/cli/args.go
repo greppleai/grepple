@@ -382,6 +382,7 @@ Commands:
   graph        Build, query, or diff local navigation graphs
   anchors      Diagnose and configure edit-anchor providers
   boundaries   Find repeated workflows and concrete-type spread
+  examples     Print task-oriented, copyable CLI workflows
   extract      Summarize, generate, or check architecture projections
   languages    Show the language capability matrix
   rules        Manage and inspect saved remote rules
@@ -429,7 +430,7 @@ func runHelp(args []string) error {
 		return stdoutWriter().writeString("Remove stored remote authentication.\nUsage: grepple logout\n")
 	case "version":
 		return stdoutWriter().writeString("Print build and source version information.\nUsage: grepple version\n")
-	case "grit", "graph", "anchors", "boundaries", "languages", "rules", "get", "tree", "repos":
+	case "grit", "graph", "anchors", "boundaries", "examples", "languages", "rules", "get", "tree", "repos":
 		return Run([]string{args[0], "--help"})
 	default:
 		return fmt.Errorf("unknown help topic %q", args[0])
@@ -458,6 +459,8 @@ func Run(args []string) error {
 			return runAnchors(args[1:])
 		case "boundaries":
 			return runBoundaries(args[1:])
+		case "examples":
+			return runExamples(args[1:])
 		case "languages":
 			return runLanguages(args[1:])
 		case "get":

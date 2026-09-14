@@ -62,6 +62,8 @@ grepple --count "httpRoute"
 grepple --count-summary "httpRoute" .
 ```
 
+Run `grepple examples` for copyable task workflows covering workspace orientation, exact retrieval, edit anchors, caller impact, boundary review, native structural audits, focused diagrams, and canonical architecture checks. Pass a task name such as `grepple examples impact` for one concise workflow.
+
 Supported search options:
 
 - `-E`/`--regex` (JavaScript regular expressions; this is already the default), `-F`/`--fixed-strings`, `-i`/`--ignore-case`

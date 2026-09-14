@@ -16,16 +16,16 @@
     "syntacticBuildTagUnion": []
   },
   "summary": {
-    "sourceFiles": 40,
-    "declarations": 55,
+    "sourceFiles": 41,
+    "declarations": 56,
     "exportedTypes": 0,
-    "internalTypes": 55,
-    "members": 366,
+    "internalTypes": 56,
+    "members": 369,
     "exportedFunctions": 3,
     "fiberRoutes": 0,
     "relations": 35
   },
-  "semanticModelDigest": "sha256:a8a240fb93d016c7538491273f45277c6fe10fbdef367e3bf6740cfedb02803f",
+  "semanticModelDigest": "sha256:81520c8fa2cbcbd4fe09a8efcf95a619fb5ca2c0c008f2e090ab455388a6e87d",
   "sourceFiles": [
     {
       "path": "internal/cli/anchors.go"
@@ -53,6 +53,9 @@
     },
     {
       "path": "internal/cli/doc.go"
+    },
+    {
+      "path": "internal/cli/examples.go"
     },
     {
       "path": "internal/cli/extract.go"
@@ -4072,6 +4075,37 @@
       ]
     },
     {
+      "name": "taskExample",
+      "kind": "struct",
+      "file": "internal/cli/examples.go",
+      "line": 8,
+      "endLine": 12,
+      "underlyingType": "struct{Name string;Description string;Commands[]string;}",
+      "members": [
+        {
+          "name": "Commands",
+          "kind": "property",
+          "line": 11,
+          "endLine": 11,
+          "result": "[]string"
+        },
+        {
+          "name": "Description",
+          "kind": "property",
+          "line": 10,
+          "endLine": 10,
+          "result": "string"
+        },
+        {
+          "name": "Name",
+          "kind": "property",
+          "line": 9,
+          "endLine": 9,
+          "result": "string"
+        }
+      ]
+    },
+    {
       "name": "treeArgs",
       "kind": "struct",
       "file": "internal/cli/tree.go",
@@ -4218,8 +4252,8 @@
       "name": "Run",
       "kind": "function",
       "file": "internal/cli/args.go",
-      "line": 440,
-      "endLine": 482,
+      "line": 441,
+      "endLine": 485,
       "parameters": [
         "[]string"
       ],
