@@ -3,6 +3,56 @@ classDiagram
     %% grepple:package-default github.com/greppleai/grepple/internal/cli
     %% grepple:language-default go
     %% grepple:exact-default
+    class anchorDoctorArgs {
+        +Description(): string
+        +JSON: bool
+        +Provider: string
+    }
+    <<struct>> anchorDoctorArgs
+    %% grepple:file anchorDoctorArgs internal/cli/anchors_doctor.go
+    %% grepple:struct-tag anchorDoctorArgs JSON "arg:\"--json\" help:\"emit machine-readable diagnostics\""
+    %% grepple:struct-tag anchorDoctorArgs Provider "arg:\"--provider\" placeholder:\"NAME\" help:\"diagnose a named provider instead of the configured default\""
+    note for anchorDoctorArgs "defined: internal/cli/anchors_doctor.go:16-19; Description@internal/cli/anchors_doctor.go:21-23; JSON@internal/cli/anchors_doctor.go:18; Provider@internal/cli/anchors_doctor.go:17"
+    class anchorDoctorCheck {
+        +Detail: string
+        +Name: string
+        +Status: string
+    }
+    <<struct>> anchorDoctorCheck
+    %% grepple:file anchorDoctorCheck internal/cli/anchors_doctor.go
+    %% grepple:struct-tag anchorDoctorCheck Detail "json:\"detail,omitempty\""
+    %% grepple:struct-tag anchorDoctorCheck Name "json:\"name\""
+    %% grepple:struct-tag anchorDoctorCheck Status "json:\"status\""
+    note for anchorDoctorCheck "defined: internal/cli/anchors_doctor.go:40-44; Detail@internal/cli/anchors_doctor.go:43; Name@internal/cli/anchors_doctor.go:41; Status@internal/cli/anchors_doctor.go:42"
+    class anchorDoctorReport {
+        +Checks: []anchorDoctorCheck
+        +Command: []string
+        +Guidance: []string
+        +MaxResponseBytes: int
+        +MaxStderrBytes: int
+        +OK: bool
+        +ProtocolVersion: int
+        +Provider: string
+        +ResponseBytes: int
+        +Schema: string
+        +SettingsPath: string
+        +TimeoutMS: int
+    }
+    <<struct>> anchorDoctorReport
+    %% grepple:file anchorDoctorReport internal/cli/anchors_doctor.go
+    %% grepple:struct-tag anchorDoctorReport Checks "json:\"checks\""
+    %% grepple:struct-tag anchorDoctorReport Command "json:\"command,omitempty\""
+    %% grepple:struct-tag anchorDoctorReport Guidance "json:\"guidance,omitempty\""
+    %% grepple:struct-tag anchorDoctorReport MaxResponseBytes "json:\"maxResponseBytes\""
+    %% grepple:struct-tag anchorDoctorReport MaxStderrBytes "json:\"maxStderrBytes\""
+    %% grepple:struct-tag anchorDoctorReport OK "json:\"ok\""
+    %% grepple:struct-tag anchorDoctorReport ProtocolVersion "json:\"protocolVersion\""
+    %% grepple:struct-tag anchorDoctorReport Provider "json:\"provider,omitempty\""
+    %% grepple:struct-tag anchorDoctorReport ResponseBytes "json:\"responseBytes,omitempty\""
+    %% grepple:struct-tag anchorDoctorReport Schema "json:\"schema\""
+    %% grepple:struct-tag anchorDoctorReport SettingsPath "json:\"settingsPath,omitempty\""
+    %% grepple:struct-tag anchorDoctorReport TimeoutMS "json:\"timeoutMs,omitempty\""
+    note for anchorDoctorReport "defined: internal/cli/anchors_doctor.go:25-38; Checks@internal/cli/anchors_doctor.go:36; Command@internal/cli/anchors_doctor.go:30; Guidance@internal/cli/anchors_doctor.go:37; MaxResponseBytes@internal/cli/anchors_doctor.go:33; MaxStderrBytes@internal/cli/anchors_doctor.go:34; OK@internal/cli/anchors_doctor.go:27; ProtocolVersion@internal/cli/anchors_doctor.go:31; Provider@internal/cli/anchors_doctor.go:29; ResponseBytes@internal/cli/anchors_doctor.go:35; Schema@internal/cli/anchors_doctor.go:26; SettingsPath@internal/cli/anchors_doctor.go:28; TimeoutMS@internal/cli/anchors_doctor.go:32"
     class anchorFileSelection {
         -displayPath: string
         -lines: map[int]string
@@ -855,7 +905,8 @@ classDiagram
     }
     <<function>> Run
     %% grepple:file Run internal/cli/args.go
-    note for Run "defined: internal/cli/args.go:439-479"
+    note for Run "defined: internal/cli/args.go:440-482"
+    anchorDoctorReport "1" --> "*" anchorDoctorCheck : field Checks
     anchorProtocolRequest "1" --> "*" anchorProtocolRequestFile : field Files
     anchorProtocolResponse "1" --> "*" anchorProtocolResponseFile : field Files
     anchorProtocolResponseFile "1" --> "*" anchorProtocolLine : field Anchors

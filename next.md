@@ -16,7 +16,6 @@
 - Keep canonical language IDs and grammar-kind policy out of generic navigation engines.
 ## P1 — reduce repeated agent and developer work
 
-3. [ ] Add `anchors doctor` with provider identity, protocol version, temporary-file round trip, timeout/output diagnostics, and setup guidance.
 4. [ ] Add an explicit fresh-environment anchor-provider setup path without repository-owned execution or silent user-configuration changes.
 5. [ ] Standardize result metadata across search, graph, boundaries, and GritQL: selected scope, paging, byte caps, source caps, omitted counts, diagnostics, and a copyable next command.
 6. [ ] Add task-oriented CLI examples for orientation, exact retrieval, editing, caller impact, boundary review, one GritQL audit, focused diagrams, and canonical checks.

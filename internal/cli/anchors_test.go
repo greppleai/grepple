@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/greppleai/grepple/api"
 )
@@ -39,9 +40,88 @@ func TestAnchorsEnabledBySettingsUseConfiguredProvider(t *testing.T) {
 	}
 }
 
+func TestAnchorsDoctorHelpIsRecursive(t *testing.T) {
+	output := captureStdout(t, func() {
+		if err := Run([]string{"help", "anchors", "doctor"}); err != nil {
+			t.Fatal(err)
+		}
+	})
+	if !strings.Contains(output, "temporary-file protocol round trip") || !strings.Contains(output, "--provider") || !strings.Contains(output, "--json") {
+		t.Fatalf("anchor doctor help is incomplete:\n%s", output)
+	}
+}
+
+func TestAnchorsDoctorReportsIdentityProtocolAndRoundTrip(t *testing.T) {
+	directory := t.TempDir()
+	settingsPath := filepath.Join(directory, "settings.json")
+	writeJSONFile(t, settingsPath, userSettings{Anchors: anchorSettings{
+		DefaultProvider: "test", Providers: map[string]anchorProviderSettings{
+			"test": {Command: []string{os.Args[0], "-test.run=TestAnchorProviderProcess"}},
+		},
+	}})
+	t.Setenv("GREPPLE_SETTINGS", settingsPath)
+	t.Setenv("GREPPLE_TEST_ANCHOR_PROVIDER", "1")
+	output := captureStdout(t, func() {
+		if err := Run([]string{"anchors", "doctor"}); err != nil {
+			t.Fatal(err)
+		}
+	})
+	for _, expected := range []string{"anchor doctor OK protocol=1", "provider: test", "[ok] executable", "[ok] round-trip", "response="} {
+		if !strings.Contains(output, expected) {
+			t.Fatalf("doctor output missing %q:\n%s", expected, output)
+		}
+	}
+
+	jsonText := captureStdout(t, func() {
+		if err := Run([]string{"anchors", "doctor", "--json"}); err != nil {
+			t.Fatal(err)
+		}
+	})
+	var report anchorDoctorReport
+	if err := json.Unmarshal([]byte(jsonText), &report); err != nil {
+		t.Fatal(err)
+	}
+	if report.Schema != anchorDoctorSchema || !report.OK || report.Provider != "test" || report.ProtocolVersion != 1 || report.ResponseBytes == 0 {
+		t.Fatalf("unexpected doctor JSON: %#v", report)
+	}
+}
+
+func TestAnchorsDoctorGivesSetupGuidanceWithoutConfiguration(t *testing.T) {
+	settingsPath := filepath.Join(t.TempDir(), "missing.json")
+	t.Setenv("GREPPLE_SETTINGS", settingsPath)
+	report := diagnoseAnchorProvider("")
+	if report.OK || len(report.Guidance) == 0 || report.Checks[len(report.Checks)-1].Status != "failed" {
+		t.Fatalf("missing configuration report: %#v", report)
+	}
+	if !strings.Contains(strings.Join(report.Guidance, "\n"), settingsPath) {
+		t.Fatalf("guidance does not identify settings path: %#v", report.Guidance)
+	}
+}
+
+func TestAnchorsDoctorReportsTimeout(t *testing.T) {
+	directory := t.TempDir()
+	settingsPath := filepath.Join(directory, "settings.json")
+	writeJSONFile(t, settingsPath, userSettings{Anchors: anchorSettings{
+		DefaultProvider: "slow", Providers: map[string]anchorProviderSettings{
+			"slow": {Command: []string{os.Args[0], "-test.run=TestAnchorProviderProcess"}, TimeoutMS: 10},
+		},
+	}})
+	t.Setenv("GREPPLE_SETTINGS", settingsPath)
+	t.Setenv("GREPPLE_TEST_ANCHOR_PROVIDER", "1")
+	t.Setenv("GREPPLE_TEST_ANCHOR_PROVIDER_SLOW", "1")
+	report := diagnoseAnchorProvider("")
+	last := report.Checks[len(report.Checks)-1]
+	if report.OK || last.Name != "round-trip" || !strings.Contains(last.Detail, "timed out after 10ms") {
+		t.Fatalf("timeout report: %#v", report)
+	}
+}
+
 func TestAnchorProviderProcess(_ *testing.T) {
 	if os.Getenv("GREPPLE_TEST_ANCHOR_PROVIDER") != "1" {
 		return
+	}
+	if os.Getenv("GREPPLE_TEST_ANCHOR_PROVIDER_SLOW") == "1" {
+		time.Sleep(200 * time.Millisecond)
 	}
 	var request anchorProtocolRequest
 	if err := json.NewDecoder(os.Stdin).Decode(&request); err != nil {

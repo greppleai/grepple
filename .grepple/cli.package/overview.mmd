@@ -2,7 +2,7 @@ classDiagram
     %% grepple:package-default github.com/greppleai/grepple/internal/cli
     %% grepple:language-default go
     direction LR
-    note "Package cli implements Grepple's search, extraction, repository inspection, authentication, rules, and terminal/JSON presentation workflows. | package github.com/greppleai/grepple/internal/cli | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=37, declarations=51, exportedTypes=0, internalTypes=51, members=333, exportedFunctions=3, fiberRoutes=0, relations=34"
+    note "Package cli implements Grepple's search, extraction, repository inspection, authentication, rules, and terminal/JSON presentation workflows. | package github.com/greppleai/grepple/internal/cli | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=38, declarations=54, exportedTypes=0, internalTypes=54, members=351, exportedFunctions=3, fiberRoutes=0, relations=35"
     namespace interfaces {
         class resultRenderer["resultRenderer · internal/cli/renderer.go:9-11"] {
             +Render([]api.FileResult): error
@@ -10,6 +10,32 @@ classDiagram
         <<interface>> resultRenderer
     }
     namespace data_contracts {
+        class anchorDoctorArgs["anchorDoctorArgs · internal/cli/anchors_doctor.go:16-19"] {
+            +JSON: bool
+            +Provider: string
+        }
+        <<struct>> anchorDoctorArgs
+        class anchorDoctorCheck["anchorDoctorCheck · internal/cli/anchors_doctor.go:40-44"] {
+            +Detail: string
+            +Name: string
+            +Status: string
+        }
+        <<struct>> anchorDoctorCheck
+        class anchorDoctorReport["anchorDoctorReport · internal/cli/anchors_doctor.go:25-38"] {
+            +Checks: []anchorDoctorCheck
+            +Command: []string
+            +Guidance: []string
+            +MaxResponseBytes: int
+            +MaxStderrBytes: int
+            +OK: bool
+            +ProtocolVersion: int
+            +Provider: string
+            +ResponseBytes: int
+            +Schema: string
+            +SettingsPath: string
+            +TimeoutMS: int
+        }
+        <<struct>> anchorDoctorReport
         class anchorProtocolLine["anchorProtocolLine · internal/cli/anchors.go:55-58"] {
             +Anchor: string
             +Line: int
@@ -402,11 +428,12 @@ classDiagram
             +RenderOutlineOrContent(parser.FileOutline, string): string
         }
         <<function>> RenderOutlineOrContent
-        class Run["Run · internal/cli/args.go:439-479"] {
+        class Run["Run · internal/cli/args.go:440-482"] {
             +Run([]string): error
         }
         <<function>> Run
     }
+    anchorDoctorReport "1" --> "*" anchorDoctorCheck : field Checks
     anchorProtocolRequest "1" --> "*" anchorProtocolRequestFile : field Files
     anchorProtocolResponse "1" --> "*" anchorProtocolResponseFile : field Files
     anchorProtocolResponseFile "1" --> "*" anchorProtocolLine : field Anchors

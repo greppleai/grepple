@@ -75,7 +75,15 @@ func userSettingsPath() (string, error) {
 	return filepath.Join(home, ".grepple", "settings.json"), nil
 }
 
+func displaySettingsPath(path string) string {
+	if path == "" {
+		return "$GREPPLE_SETTINGS or ~/.grepple/settings.json"
+	}
+	return path
+}
+
 func resolveAnchorProvider(name string) (string, anchorProviderSettings, error) {
+	settingsPath, _ := userSettingsPath()
 	settings, err := loadUserSettings()
 	if err != nil {
 		return "", anchorProviderSettings{}, err
@@ -84,11 +92,11 @@ func resolveAnchorProvider(name string) (string, anchorProviderSettings, error) 
 		name = settings.Anchors.DefaultProvider
 	}
 	if name == "" {
-		return "", anchorProviderSettings{}, fmt.Errorf("no default anchor provider configured in ~/.grepple/settings.json")
+		return "", anchorProviderSettings{}, fmt.Errorf("no default anchor provider configured in %s", displaySettingsPath(settingsPath))
 	}
 	provider, ok := settings.Anchors.Providers[name]
 	if !ok {
-		return "", anchorProviderSettings{}, fmt.Errorf("anchor provider %q is not configured in ~/.grepple/settings.json", name)
+		return "", anchorProviderSettings{}, fmt.Errorf("anchor provider %q is not configured in %s", name, displaySettingsPath(settingsPath))
 	}
 	if err := validateAnchorProviderSettings(provider); err != nil {
 		return "", anchorProviderSettings{}, fmt.Errorf("anchor provider %q: %w", name, err)

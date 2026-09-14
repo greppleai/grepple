@@ -380,6 +380,7 @@ Commands:
   search       Search local or explicitly selected remote code (default mode)
   grit         Run native, read-only structural queries
   graph        Build, query, or diff local navigation graphs
+  anchors      Diagnose and configure edit-anchor providers
   boundaries   Find repeated workflows and concrete-type spread
   extract      Summarize, generate, or check architecture projections
   languages    Show the language capability matrix
@@ -409,7 +410,7 @@ func runHelp(args []string) error {
 	}
 	if len(args) > 1 {
 		switch args[0] {
-		case "graph", "extract", "rules":
+		case "graph", "extract", "rules", "anchors":
 			command := append([]string(nil), args...)
 			command = append(command, "--help")
 			return Run(command)
@@ -428,7 +429,7 @@ func runHelp(args []string) error {
 		return stdoutWriter().writeString("Remove stored remote authentication.\nUsage: grepple logout\n")
 	case "version":
 		return stdoutWriter().writeString("Print build and source version information.\nUsage: grepple version\n")
-	case "grit", "graph", "boundaries", "languages", "rules", "get", "tree", "repos":
+	case "grit", "graph", "anchors", "boundaries", "languages", "rules", "get", "tree", "repos":
 		return Run([]string{args[0], "--help"})
 	default:
 		return fmt.Errorf("unknown help topic %q", args[0])
@@ -453,6 +454,8 @@ func Run(args []string) error {
 			return runSearch(args[1:])
 		case "graph":
 			return runGraph(args[1:])
+		case "anchors":
+			return runAnchors(args[1:])
 		case "boundaries":
 			return runBoundaries(args[1:])
 		case "languages":

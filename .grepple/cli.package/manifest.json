@@ -16,19 +16,22 @@
     "syntacticBuildTagUnion": []
   },
   "summary": {
-    "sourceFiles": 37,
-    "declarations": 51,
+    "sourceFiles": 38,
+    "declarations": 54,
     "exportedTypes": 0,
-    "internalTypes": 51,
-    "members": 333,
+    "internalTypes": 54,
+    "members": 351,
     "exportedFunctions": 3,
     "fiberRoutes": 0,
-    "relations": 34
+    "relations": 35
   },
-  "semanticModelDigest": "sha256:abe0673e68af9d157e18884c61adbb248d6c035fff50020608564b381bfe92eb",
+  "semanticModelDigest": "sha256:adcb1e1c6ec0bf1d2b3c727be7058f40a59c14f1fdf088f8a2c6193bd2f71a2b",
   "sourceFiles": [
     {
       "path": "internal/cli/anchors.go"
+    },
+    {
+      "path": "internal/cli/anchors_doctor.go"
     },
     {
       "path": "internal/cli/args.go"
@@ -140,6 +143,213 @@
     }
   ],
   "declarations": [
+    {
+      "name": "anchorDoctorArgs",
+      "kind": "struct",
+      "file": "internal/cli/anchors_doctor.go",
+      "line": 16,
+      "endLine": 19,
+      "underlyingType": "struct{Provider string`arg:\"--provider\" placeholder:\"NAME\" help:\"diagnose a named provider instead of the configured default\"`;JSON bool`arg:\"--json\" help:\"emit machine-readable diagnostics\"`;}",
+      "members": [
+        {
+          "name": "Description",
+          "kind": "method",
+          "line": 21,
+          "endLine": 23,
+          "result": "string"
+        },
+        {
+          "name": "JSON",
+          "kind": "property",
+          "line": 18,
+          "endLine": 18,
+          "result": "bool",
+          "structTag": {
+            "value": "arg:\"--json\" help:\"emit machine-readable diagnostics\""
+          }
+        },
+        {
+          "name": "Provider",
+          "kind": "property",
+          "line": 17,
+          "endLine": 17,
+          "result": "string",
+          "structTag": {
+            "value": "arg:\"--provider\" placeholder:\"NAME\" help:\"diagnose a named provider instead of the configured default\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "anchorDoctorCheck",
+      "kind": "struct",
+      "file": "internal/cli/anchors_doctor.go",
+      "line": 40,
+      "endLine": 44,
+      "underlyingType": "struct{Name string`json:\"name\"`;Status string`json:\"status\"`;Detail string`json:\"detail,omitempty\"`;}",
+      "members": [
+        {
+          "name": "Detail",
+          "kind": "property",
+          "line": 43,
+          "endLine": 43,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"detail,omitempty\""
+          }
+        },
+        {
+          "name": "Name",
+          "kind": "property",
+          "line": 41,
+          "endLine": 41,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"name\""
+          }
+        },
+        {
+          "name": "Status",
+          "kind": "property",
+          "line": 42,
+          "endLine": 42,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"status\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "anchorDoctorReport",
+      "kind": "struct",
+      "file": "internal/cli/anchors_doctor.go",
+      "line": 25,
+      "endLine": 38,
+      "underlyingType": "struct{Schema string`json:\"schema\"`;OK bool`json:\"ok\"`;SettingsPath string`json:\"settingsPath,omitempty\"`;Provider string`json:\"provider,omitempty\"`;Command[]string`json:\"command,omitempty\"`;ProtocolVersion int`json:\"protocolVersion\"`;TimeoutMS int`json:\"timeoutMs,omitempty\"`;MaxResponseBytes int`json:\"maxResponseBytes\"`;MaxStderrBytes int`json:\"maxStderrBytes\"`;ResponseBytes int`json:\"responseBytes,omitempty\"`;Checks[]anchorDoctorCheck`json:\"checks\"`;Guidance[]string`json:\"guidance,omitempty\"`;}",
+      "members": [
+        {
+          "name": "Checks",
+          "kind": "property",
+          "line": 36,
+          "endLine": 36,
+          "result": "[]anchorDoctorCheck",
+          "structTag": {
+            "value": "json:\"checks\""
+          }
+        },
+        {
+          "name": "Command",
+          "kind": "property",
+          "line": 30,
+          "endLine": 30,
+          "result": "[]string",
+          "structTag": {
+            "value": "json:\"command,omitempty\""
+          }
+        },
+        {
+          "name": "Guidance",
+          "kind": "property",
+          "line": 37,
+          "endLine": 37,
+          "result": "[]string",
+          "structTag": {
+            "value": "json:\"guidance,omitempty\""
+          }
+        },
+        {
+          "name": "MaxResponseBytes",
+          "kind": "property",
+          "line": 33,
+          "endLine": 33,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"maxResponseBytes\""
+          }
+        },
+        {
+          "name": "MaxStderrBytes",
+          "kind": "property",
+          "line": 34,
+          "endLine": 34,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"maxStderrBytes\""
+          }
+        },
+        {
+          "name": "OK",
+          "kind": "property",
+          "line": 27,
+          "endLine": 27,
+          "result": "bool",
+          "structTag": {
+            "value": "json:\"ok\""
+          }
+        },
+        {
+          "name": "ProtocolVersion",
+          "kind": "property",
+          "line": 31,
+          "endLine": 31,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"protocolVersion\""
+          }
+        },
+        {
+          "name": "Provider",
+          "kind": "property",
+          "line": 29,
+          "endLine": 29,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"provider,omitempty\""
+          }
+        },
+        {
+          "name": "ResponseBytes",
+          "kind": "property",
+          "line": 35,
+          "endLine": 35,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"responseBytes,omitempty\""
+          }
+        },
+        {
+          "name": "Schema",
+          "kind": "property",
+          "line": 26,
+          "endLine": 26,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"schema\""
+          }
+        },
+        {
+          "name": "SettingsPath",
+          "kind": "property",
+          "line": 28,
+          "endLine": 28,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"settingsPath,omitempty\""
+          }
+        },
+        {
+          "name": "TimeoutMS",
+          "kind": "property",
+          "line": 32,
+          "endLine": 32,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"timeoutMs,omitempty\""
+          }
+        }
+      ]
+    },
     {
       "name": "anchorFileSelection",
       "kind": "struct",
@@ -3851,8 +4061,8 @@
       "name": "Run",
       "kind": "function",
       "file": "internal/cli/args.go",
-      "line": 439,
-      "endLine": 479,
+      "line": 440,
+      "endLine": 482,
       "parameters": [
         "[]string"
       ],
@@ -3861,6 +4071,13 @@
   ],
   "fiberRoutes": [],
   "relations": [
+    {
+      "from": "anchorDoctorReport",
+      "to": "anchorDoctorCheck",
+      "kind": "association",
+      "via": "field Checks",
+      "cardinality": "many"
+    },
     {
       "from": "anchorProtocolRequest",
       "to": "anchorProtocolRequestFile",

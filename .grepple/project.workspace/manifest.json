@@ -26,15 +26,15 @@
   "summary": {
     "modules": 2,
     "packages": 16,
-    "sourceFiles": 148,
-    "declarations": 397,
+    "sourceFiles": 149,
+    "declarations": 400,
     "exportedFunctions": 120,
     "fiberRoutes": 0,
     "localImports": 23,
     "standardLibraryImports": 145,
     "externalModuleEdges": 15
   },
-  "semanticModelDigest": "sha256:04a9278755c190a9be7bcf6ff2f42534136ce7bebe8ae0afa6f8a0f0cdb481a9",
+  "semanticModelDigest": "sha256:e3018ee50fed64745e3cd4c89d2bb16348d4aa3dd5e7915f34eb5a1950bacfcb",
   "modules": [
     {
       "path": "github.com/greppleai/grepple",
@@ -248,8 +248,8 @@
           "name": "cli",
           "documentation": "Package cli implements Grepple's search, extraction, repository inspection, authentication, rules, and terminal/JSON presentation workflows.",
           "main": false,
-          "sourceFiles": 37,
-          "declarations": 51,
+          "sourceFiles": 38,
+          "declarations": 54,
           "exportedFunctions": 3,
           "fiberRoutes": 0,
           "routes": [],

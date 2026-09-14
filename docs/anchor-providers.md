@@ -54,6 +54,18 @@ The command is executed directly, never through a shell. Its executable must be 
 
 `GREPPLE_SETTINGS=/path/to/settings.json` overrides the settings path for isolated environments and tests.
 
+## Doctor
+
+Validate configuration before relying on anchor-bearing search output:
+
+```bash
+grepple anchors doctor
+grepple anchors doctor --provider editor
+grepple anchors doctor --json
+```
+
+The doctor reports the settings path, selected provider identity and absolute command, protocol version, configured timeout, provider response/stderr caps, executable availability, and validated response size. It creates one temporary Go source, requests an anchor for one line, validates the echoed path/digest and protocol response, then removes the file. Failures include copyable settings and protocol guidance. The provider still runs as trusted user code; the doctor never reads repository-owned executable configuration.
+
 ## Provider protocol v1
 
 Grepple launches one provider process for each non-empty output batch. It does not start the provider when search produces no anchorable source rows. This avoids per-line process cost and lets stateful providers update their stores serially.
