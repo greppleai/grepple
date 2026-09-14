@@ -89,6 +89,7 @@ This file records completed Grepple roadmap work that no longer belongs in `next
 - [x] Rejected unsupported languages, syntax, and compatibility mismatches without text or parser fallback.
 - [x] Unified cancellable source discovery, ignore/glob handling, bounded acquisition, binary checks, mandatory anchors, and deterministic ordering with local search infrastructure.
 - [x] Ensured anchored scans do not reread selected source before structural evaluation.
+- [x] Added bounded compile-only `grit explain` human/JSON output for target language, compatibility, grammar identity, used features, wrapper interpretations, node/list metavariable roles, occurrence ranges, and stable compile diagnostics.
 
 ## Boundary analysis
 

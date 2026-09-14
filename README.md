@@ -151,11 +151,14 @@ grepple grit $'language rust\n`Command::new($program)`' '**/*.rs'
 # Multiline query file and complete JSON output.
 grepple grit --query-file /tmp/exec-command.grit --json '**/*.go'
 
+# Compile only: explain target grammar wrappers, features, and metavariable roles.
+grepple grit explain --json --query-file /tmp/exec-command.grit
+
 # Merge local findings with bounded pages from a compatible router.
 grepple grit --remote --repo 'acme/*' --query-file /tmp/exec-command.grit '**/*.go'
 ```
 
-Findings contain exact half-open byte ranges, one-based Unicode-scalar positions, matched text, and sorted metavariable bindings. Local and remote findings are normalized, sorted, exactly deduplicated, and paged once as a combined result. Local scans have no implicit wall-clock timeout; `--max-file-time-ms` and `--timeout-ms` opt into deadlines. Count, size, memory, and cancellation bounds remain active. Unsupported target languages, rewrites, and external functions fail closed.
+Findings contain exact half-open byte ranges, one-based Unicode-scalar positions, matched text, and sorted metavariable bindings. Local and remote findings are normalized, sorted, exactly deduplicated, and paged once as a combined result. Local scans have no implicit wall-clock timeout; `--max-file-time-ms` and `--timeout-ms` opt into deadlines. Count, size, memory, and cancellation bounds remain active. Unsupported target languages, rewrites, and external functions fail closed. `grit explain` compiles without reading source files and emits `grepple-grit-explain-v1`: target language and compatibility, grammar identity, used features, every grammar-valid wrapper/context interpretation, named metavariable occurrence counts, node/list binding kinds, wrapper fields, constraint roles, and bounded compile diagnostics.
 
 Remote structural search requires a backend implementing `POST /public/grit`. See [`docs/gritql-compatibility.md`](docs/gritql-compatibility.md) for the exact closed syntax, evaluation rules, diagnostics, limits, security guarantees, conformance fixtures, and benchmark gates.
 

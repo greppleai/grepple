@@ -582,6 +582,108 @@ classDiagram
     %% grepple:struct-tag gritArgs TimeoutMilliseconds "arg:\"--timeout-ms\" placeholder:\"N\" help:\"bound the complete structural scan in milliseconds\""
     %% grepple:struct-tag gritArgs Workers "arg:\"--workers\" placeholder:\"N\" help:\"bound concurrent file evaluations\""
     note for gritArgs "defined: internal/cli/grit.go:26-56; Description@internal/cli/grit.go:58-60; ExcludeGlobs@internal/cli/grit.go:35; ExcludeRepositories@internal/cli/grit.go:37; Globs@internal/cli/grit.go:55; JSON@internal/cli/grit.go:33; Limit@internal/cli/grit.go:39; Local@internal/cli/grit.go:27; MaxASTSteps@internal/cli/grit.go:48; MaxCandidates@internal/cli/grit.go:47; MaxFileMilliseconds@internal/cli/grit.go:51; MaxFiles@internal/cli/grit.go:40; MaxFindings@internal/cli/grit.go:49; MaxMemoryBytes@internal/cli/grit.go:50; MaxOutputBytes@internal/cli/grit.go:34; MaxParseDepth@internal/cli/grit.go:45; MaxPatternBytes@internal/cli/grit.go:42; MaxRegexBytes@internal/cli/grit.go:43; MaxRegexInstructions@internal/cli/grit.go:44; MaxSourceBytes@internal/cli/grit.go:46; MaxTotalBytes@internal/cli/grit.go:41; Message@internal/cli/grit.go:32; PatternID@internal/cli/grit.go:31; Query@internal/cli/grit.go:54; QueryFile@internal/cli/grit.go:30; Remote@internal/cli/grit.go:28; Repositories@internal/cli/grit.go:36; Server@internal/cli/grit.go:29; Skip@internal/cli/grit.go:38; TimeoutMilliseconds@internal/cli/grit.go:53; Workers@internal/cli/grit.go:52"
+    class gritExplainArgs {
+        +Description(): string
+        +JSON: bool
+        +MaxOutputBytes: int
+        +MaxParseDepth: int
+        +MaxPatternBytes: int
+        +MaxRegexBytes: int
+        +MaxRegexInstructions: int
+        +Query: string
+        +QueryFile: string
+    }
+    <<struct>> gritExplainArgs
+    %% grepple:file gritExplainArgs internal/cli/grit_explain.go
+    %% grepple:struct-tag gritExplainArgs JSON "arg:\"--json\" help:\"emit complete machine-readable compile output\""
+    %% grepple:struct-tag gritExplainArgs MaxOutputBytes "arg:\"--max-output-bytes\" placeholder:\"N\" help:\"cap human output (default 16384; 0 = unlimited; JSON is uncapped)\""
+    %% grepple:struct-tag gritExplainArgs MaxParseDepth "arg:\"--max-parse-depth\" placeholder:\"N\" help:\"bound query and structural recursion depth\""
+    %% grepple:struct-tag gritExplainArgs MaxPatternBytes "arg:\"--max-pattern-bytes\" placeholder:\"N\" help:\"bound query source bytes\""
+    %% grepple:struct-tag gritExplainArgs MaxRegexBytes "arg:\"--max-regex-bytes\" placeholder:\"N\" help:\"bound one regex constraint\""
+    %% grepple:struct-tag gritExplainArgs MaxRegexInstructions "arg:\"--max-regex-instructions\" placeholder:\"N\" help:\"bound compiled regex instructions\""
+    %% grepple:struct-tag gritExplainArgs Query "arg:\"positional\" placeholder:\"QUERY\""
+    %% grepple:struct-tag gritExplainArgs QueryFile "arg:\"-f,--query-file\" placeholder:\"PATH\" help:\"read the GritQL query from PATH (- for stdin)\""
+    note for gritExplainArgs "defined: internal/cli/grit_explain.go:17-26; Description@internal/cli/grit_explain.go:28-30; JSON@internal/cli/grit_explain.go:19; MaxOutputBytes@internal/cli/grit_explain.go:20; MaxParseDepth@internal/cli/grit_explain.go:24; MaxPatternBytes@internal/cli/grit_explain.go:21; MaxRegexBytes@internal/cli/grit_explain.go:22; MaxRegexInstructions@internal/cli/grit_explain.go:23; Query@internal/cli/grit_explain.go:25; QueryFile@internal/cli/grit_explain.go:18"
+    class gritExplainDiagnostic {
+        +Class: string
+        +Code: string
+        +Message: string
+        +Range: string
+        +Severity: string
+    }
+    <<struct>> gritExplainDiagnostic
+    %% grepple:file gritExplainDiagnostic internal/cli/grit_explain.go
+    %% grepple:struct-tag gritExplainDiagnostic Class "json:\"class\""
+    %% grepple:struct-tag gritExplainDiagnostic Code "json:\"code\""
+    %% grepple:struct-tag gritExplainDiagnostic Message "json:\"message\""
+    %% grepple:struct-tag gritExplainDiagnostic Range "json:\"range,omitempty\""
+    %% grepple:struct-tag gritExplainDiagnostic Severity "json:\"severity\""
+    note for gritExplainDiagnostic "defined: internal/cli/grit_explain.go:62-68; Class@internal/cli/grit_explain.go:64; Code@internal/cli/grit_explain.go:63; Message@internal/cli/grit_explain.go:66; Range@internal/cli/grit_explain.go:67; Severity@internal/cli/grit_explain.go:65"
+    class gritExplainInterpretation {
+        +Context: string
+        +ExpressionKind: string
+        +Roles: []string
+        +RootKind: string
+        +RootSlot: string
+    }
+    <<struct>> gritExplainInterpretation
+    %% grepple:file gritExplainInterpretation internal/cli/grit_explain.go
+    %% grepple:struct-tag gritExplainInterpretation Context "json:\"context\""
+    %% grepple:struct-tag gritExplainInterpretation ExpressionKind "json:\"expressionKind\""
+    %% grepple:struct-tag gritExplainInterpretation Roles "json:\"roles\""
+    %% grepple:struct-tag gritExplainInterpretation RootKind "json:\"rootKind,omitempty\""
+    %% grepple:struct-tag gritExplainInterpretation RootSlot "json:\"rootSlot,omitempty\""
+    note for gritExplainInterpretation "defined: internal/cli/grit_explain.go:45-51; Context@internal/cli/grit_explain.go:47; ExpressionKind@internal/cli/grit_explain.go:46; Roles@internal/cli/grit_explain.go:50; RootKind@internal/cli/grit_explain.go:48; RootSlot@internal/cli/grit_explain.go:49"
+    class gritExplainOutput {
+        +Compatibility: string
+        +Diagnostics: []gritExplainDiagnostic
+        +Features: []string
+        +Grammar: string
+        +GrammarABI: uint32
+        +Interpretations: []gritExplainInterpretation
+        +Language: string
+        +OK: bool
+        +Schema: string
+        +Variables: []gritExplainVariable
+    }
+    <<struct>> gritExplainOutput
+    %% grepple:file gritExplainOutput internal/cli/grit_explain.go
+    %% grepple:struct-tag gritExplainOutput Compatibility "json:\"compatibility,omitempty\""
+    %% grepple:struct-tag gritExplainOutput Diagnostics "json:\"diagnostics\""
+    %% grepple:struct-tag gritExplainOutput Features "json:\"features\""
+    %% grepple:struct-tag gritExplainOutput Grammar "json:\"grammarFingerprint,omitempty\""
+    %% grepple:struct-tag gritExplainOutput GrammarABI "json:\"grammarAbi,omitempty\""
+    %% grepple:struct-tag gritExplainOutput Interpretations "json:\"interpretations\""
+    %% grepple:struct-tag gritExplainOutput Language "json:\"language,omitempty\""
+    %% grepple:struct-tag gritExplainOutput OK "json:\"ok\""
+    %% grepple:struct-tag gritExplainOutput Schema "json:\"schema\""
+    %% grepple:struct-tag gritExplainOutput Variables "json:\"variables\""
+    note for gritExplainOutput "defined: internal/cli/grit_explain.go:32-43; Compatibility@internal/cli/grit_explain.go:35; Diagnostics@internal/cli/grit_explain.go:42; Features@internal/cli/grit_explain.go:39; Grammar@internal/cli/grit_explain.go:38; GrammarABI@internal/cli/grit_explain.go:37; Interpretations@internal/cli/grit_explain.go:40; Language@internal/cli/grit_explain.go:36; OK@internal/cli/grit_explain.go:34; Schema@internal/cli/grit_explain.go:33; Variables@internal/cli/grit_explain.go:41"
+    class gritExplainVariable {
+        +BindingKinds: []string
+        +FirstRange: string
+        +ID: uint32
+        +Name: string
+        +Occurrences: int
+        +Roles: []string
+    }
+    <<struct>> gritExplainVariable
+    %% grepple:file gritExplainVariable internal/cli/grit_explain.go
+    %% grepple:struct-tag gritExplainVariable BindingKinds "json:\"bindingKinds\""
+    %% grepple:struct-tag gritExplainVariable FirstRange "json:\"firstRange\""
+    %% grepple:struct-tag gritExplainVariable ID "json:\"id\""
+    %% grepple:struct-tag gritExplainVariable Name "json:\"name\""
+    %% grepple:struct-tag gritExplainVariable Occurrences "json:\"occurrences\""
+    %% grepple:struct-tag gritExplainVariable Roles "json:\"roles\""
+    note for gritExplainVariable "defined: internal/cli/grit_explain.go:53-60; BindingKinds@internal/cli/grit_explain.go:58; FirstRange@internal/cli/grit_explain.go:56; ID@internal/cli/grit_explain.go:54; Name@internal/cli/grit_explain.go:55; Occurrences@internal/cli/grit_explain.go:57; Roles@internal/cli/grit_explain.go:59"
+    class gritVariableExplanation {
+        -bindingKinds: map[string]bool
+        -occurrences: map[string]bool
+        -roles: map[string]bool
+    }
+    <<struct>> gritVariableExplanation
+    %% grepple:file gritVariableExplanation internal/cli/grit_explain.go
+    note for gritVariableExplanation "defined: internal/cli/grit_explain.go:70-74; bindingKinds@internal/cli/grit_explain.go:72; occurrences@internal/cli/grit_explain.go:71; roles@internal/cli/grit_explain.go:73"
     class jsonResultRenderer {
         +Render([]api.FileResult): error
         -matchesOnly: bool
@@ -968,6 +1070,9 @@ classDiagram
     graphResolveOutput "1" --> "*" graphResolveMatch : field Matches
     graphResolveOutput "1" --> "1" navigationGraphTruncation : field Truncation
     graphResolveOutput "1" --> "1" navigationSourceSummary : field Sources
+    gritExplainOutput "1" --> "*" gritExplainDiagnostic : field Diagnostics
+    gritExplainOutput "1" --> "*" gritExplainInterpretation : field Interpretations
+    gritExplainOutput "1" --> "*" gritExplainVariable : field Variables
     jsonResultRenderer "1" --> "1" outputWriter : field output
     resultRenderer <|.. jsonResultRenderer : implements
     lineRenderer "1" --> "1" anchorLookup : field anchors

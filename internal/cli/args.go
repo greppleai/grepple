@@ -417,7 +417,7 @@ func runHelp(args []string) error {
 	}
 	if len(args) > 1 {
 		switch args[0] {
-		case "graph", "extract", "rules", "anchors":
+		case "graph", "extract", "rules", "anchors", "grit":
 			command := append([]string(nil), args...)
 			command = append(command, "--help")
 			return Run(command)

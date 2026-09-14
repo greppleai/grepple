@@ -4,7 +4,7 @@
 
 ## Recommended next milestone
 
-> Reuse navigation facts across commands, add cheap selector and anchor diagnostics, and standardize completeness metadata. Add language surface only when dogfooding identifies a blocked high-value workflow.
+> Improve navigation precision where measured ambiguity blocks real tasks, strengthen boundary classification with repository-owned policy, and clarify public syntax lifecycle contracts. Add language surface only for blocked high-value workflows.
 
 ## Planning principles
 
@@ -14,9 +14,6 @@
 - Syntax-based navigation, structural matching, architecture relations, and boundary findings are evidence—not compiler, runtime, type-flow, or policy verdicts.
 - Preserve dependency direction toward `api` and `parser`; keep GritQL query semantics out of `parser`.
 - Keep canonical language IDs and grammar-kind policy out of generic navigation engines.
-## P1 — reduce repeated agent and developer work
-
-8. [ ] Add GritQL compile/explain output showing target language, wrapper interpretation, metavariable roles, compatibility contract, and bounded diagnostics.
 
 ## P2 — improve precision and architectural signal
 

@@ -33,7 +33,8 @@ var taskExamples = []taskExample{
 		"grepple boundaries --json ./parser",
 	}},
 	{Name: "audit", Description: "Run a native read-only structural audit with complete JSON", Commands: []string{
-		"grepple grit --limit 0 --json $'language go\\n`exec.Command($args)`' '**/*.go'",
+		"grepple grit explain --json $'language go\n`exec.Command($args)`'",
+		"grepple grit --limit 0 --json $'language go\n`exec.Command($args)`' '**/*.go'",
 	}},
 	{Name: "diagram", Description: "Generate focused source-linked structure and flow diagrams", Commands: []string{
 		"grepple extract structure --entry NavigationGraph --source ./parser",

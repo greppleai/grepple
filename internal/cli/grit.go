@@ -56,7 +56,7 @@ type gritArgs struct {
 }
 
 func (gritArgs) Description() string {
-	return "Run native GritQL structural search over every local Tree-sitter-backed language; add --remote (or --server) to merge remote findings."
+	return "Run native GritQL structural search over every local Tree-sitter-backed language; use grit explain for compile-only inspection or add --remote to merge findings."
 }
 
 func parseGritArgs(args []string) (gritArgs, error) {
@@ -187,6 +187,9 @@ func readGritQuery(reader io.Reader) (string, error) {
 }
 
 func runGrit(args []string) error {
+	if len(args) > 0 && args[0] == "explain" {
+		return runGritExplain(args[1:])
+	}
 	values, err := parseGritArgs(args)
 	if err != nil {
 		return err

@@ -226,6 +226,14 @@ Stable v1 codes are:
 
 Unsupported constructs should use `PATTERN_UNSUPPORTED`, not `PATTERN_PARSE`, when the lexer can identify them. Internal errors must not expose secrets or stack traces in `message`.
 
+### 6.1 Compile explanation
+
+`grepple grit explain QUERY` compiles under the same bounded native contract without acquiring or evaluating source files. Human output is bounded by `--max-output-bytes`; `--json` emits complete `grepple-grit-explain-v1` compile output under the selected pattern, regex, instruction, and parse-depth limits.
+
+A successful explanation includes the resolved language and `gritql-v1` compatibility, grammar ABI/fingerprint, used feature names, every grammar-valid snippet wrapper interpretation (expression/type/statement/declaration/file context and concrete root kind or root slot), and named metavariables in first-occurrence order. Variable entries report source occurrence count, node/list binding cardinalities, wrapper root/field roles, expression roles, and constraint-left roles. These roles describe compiled syntax positions, not type resolution or runtime data flow.
+
+A failed explanation contains one bounded structured compile diagnostic with stable code/class, severity, message, and source range when available. It emits no partial program interpretation.
+
 ## 7. Resource bounds and partial results
 
 Library and server evaluations use the defaults below. A host may lower them, but may not exceed the hard maxima while claiming bounded v1 execution. The interactive local CLI is intentionally exempt from wall-clock defaults: it has no implicit per-file or batch deadline, while retaining cancellation and all deterministic count, size, and memory limits. Local users can opt into deadlines with `--max-file-time-ms` and `--timeout-ms`; explicit deadlines still use the hard maxima.

@@ -2,7 +2,7 @@ classDiagram
     %% grepple:package-default github.com/greppleai/grepple/internal/cli
     %% grepple:language-default go
     direction LR
-    note "Package cli implements Grepple's search, extraction, repository inspection, authentication, rules, and terminal/JSON presentation workflows. | package github.com/greppleai/grepple/internal/cli | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=41, declarations=56, exportedTypes=0, internalTypes=56, members=370, exportedFunctions=3, fiberRoutes=0, relations=35"
+    note "Package cli implements Grepple's search, extraction, repository inspection, authentication, rules, and terminal/JSON presentation workflows. | package github.com/greppleai/grepple/internal/cli | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=42, declarations=62, exportedTypes=0, internalTypes=62, members=408, exportedFunctions=3, fiberRoutes=0, relations=38"
     namespace interfaces {
         class resultRenderer["resultRenderer · internal/cli/renderer.go:9-11"] {
             +Render([]api.FileResult): error
@@ -275,6 +275,55 @@ classDiagram
             +Workers: int
         }
         <<struct>> gritArgs
+        class gritExplainArgs["gritExplainArgs · internal/cli/grit_explain.go:17-26"] {
+            +JSON: bool
+            +MaxOutputBytes: int
+            +MaxParseDepth: int
+            +MaxPatternBytes: int
+            +MaxRegexBytes: int
+            +MaxRegexInstructions: int
+            +Query: string
+            +QueryFile: string
+        }
+        <<struct>> gritExplainArgs
+        class gritExplainDiagnostic["gritExplainDiagnostic · internal/cli/grit_explain.go:62-68"] {
+            +Class: string
+            +Code: string
+            +Message: string
+            +Range: string
+            +Severity: string
+        }
+        <<struct>> gritExplainDiagnostic
+        class gritExplainInterpretation["gritExplainInterpretation · internal/cli/grit_explain.go:45-51"] {
+            +Context: string
+            +ExpressionKind: string
+            +Roles: []string
+            +RootKind: string
+            +RootSlot: string
+        }
+        <<struct>> gritExplainInterpretation
+        class gritExplainOutput["gritExplainOutput · internal/cli/grit_explain.go:32-43"] {
+            +Compatibility: string
+            +Diagnostics: []gritExplainDiagnostic
+            +Features: []string
+            +Grammar: string
+            +GrammarABI: uint32
+            +Interpretations: []gritExplainInterpretation
+            +Language: string
+            +OK: bool
+            +Schema: string
+            +Variables: []gritExplainVariable
+        }
+        <<struct>> gritExplainOutput
+        class gritExplainVariable["gritExplainVariable · internal/cli/grit_explain.go:53-60"] {
+            +BindingKinds: []string
+            +FirstRange: string
+            +ID: uint32
+            +Name: string
+            +Occurrences: int
+            +Roles: []string
+        }
+        <<struct>> gritExplainVariable
         class languagesArgs["languagesArgs · internal/cli/languages.go:19-22"] {
             +JSON: bool
             +Markdown: bool
@@ -416,6 +465,8 @@ classDiagram
         <<struct>> errBrokenPipe
         class filesRenderer["filesRenderer · internal/cli/renderer_files.go:5-8"]
         <<struct>> filesRenderer
+        class gritVariableExplanation["gritVariableExplanation · internal/cli/grit_explain.go:70-74"]
+        <<struct>> gritVariableExplanation
         class jsonResultRenderer["jsonResultRenderer · internal/cli/renderer_json.go:8-12"]
         <<struct>> jsonResultRenderer
         class limitedAnchorBuffer["limitedAnchorBuffer · internal/cli/anchors.go:221-224"]
@@ -470,6 +521,9 @@ classDiagram
     graphResolveOutput "1" --> "*" graphResolveMatch : field Matches
     graphResolveOutput "1" --> "1" navigationGraphTruncation : field Truncation
     graphResolveOutput "1" --> "1" navigationSourceSummary : field Sources
+    gritExplainOutput "1" --> "*" gritExplainDiagnostic : field Diagnostics
+    gritExplainOutput "1" --> "*" gritExplainInterpretation : field Interpretations
+    gritExplainOutput "1" --> "*" gritExplainVariable : field Variables
     jsonResultRenderer "1" --> "1" outputWriter : field output
     resultRenderer <|.. jsonResultRenderer : implements
     lineRenderer "1" --> "1" anchorLookup : field anchors

@@ -77,6 +77,65 @@ func TestLoadGritQueryFileIsBounded(t *testing.T) {
 	}
 }
 
+func TestGritExplainReportsWrappersVariablesAndCompatibility(t *testing.T) {
+	query := "language go\n`exec.Command($args)` where { $args <: r\"^ctx\" }"
+	run := func() string {
+		return captureStdout(t, func() {
+			if err := Run([]string{"grit", "explain", "--json", query}); err != nil {
+				t.Fatal(err)
+			}
+		})
+	}
+	first, second := run(), run()
+	if first != second {
+		t.Fatalf("explain JSON is not deterministic:\n%s\n%s", first, second)
+	}
+	var output gritExplainOutput
+	if err := json.Unmarshal([]byte(first), &output); err != nil {
+		t.Fatal(err)
+	}
+	if !output.OK || output.Schema != gritExplainSchema || output.Language != "go" || output.Compatibility != api.GritCompatibilityV1 || output.GrammarABI == 0 || output.Grammar == "" {
+		t.Fatalf("explain contract=%#v", output)
+	}
+	if len(output.Interpretations) != 1 || output.Interpretations[0].Context != "expression" || output.Interpretations[0].RootKind != "call_expression" {
+		t.Fatalf("wrapper interpretations=%#v", output.Interpretations)
+	}
+	if len(output.Variables) != 1 || output.Variables[0].Name != "args" || output.Variables[0].Occurrences != 2 || !slices.Contains(output.Variables[0].BindingKinds, "list") || !slices.Contains(output.Variables[0].Roles, "constraint:left") {
+		t.Fatalf("variable roles=%#v", output.Variables)
+	}
+	for _, feature := range []string{"snippet", "regex", "where", "variables"} {
+		if !slices.Contains(output.Features, feature) {
+			t.Fatalf("features missing %q: %#v", feature, output.Features)
+		}
+	}
+}
+
+func TestGritExplainReturnsBoundedCompileDiagnostics(t *testing.T) {
+	output := explainGritQuery("language go\n`unterminated", gritExplainArgs{})
+	if output.OK || len(output.Diagnostics) != 1 || output.Diagnostics[0].Code == "" || output.Diagnostics[0].Severity != "error" {
+		t.Fatalf("compile diagnostics=%#v", output)
+	}
+	human := captureStdout(t, func() {
+		if err := Run([]string{"grit", "explain", "--max-output-bytes", "120", "language go\n`target($value)`"}); err != nil {
+			t.Fatal(err)
+		}
+	})
+	if len(human) == 0 || len(human) > 120 {
+		t.Fatalf("bounded explain output=%q", human)
+	}
+}
+
+func TestGritExplainHelpIsRecursive(t *testing.T) {
+	output := captureStdout(t, func() {
+		if err := Run([]string{"help", "grit", "explain"}); err != nil {
+			t.Fatal(err)
+		}
+	})
+	if !strings.Contains(output, "No source files are read") || !strings.Contains(output, "--json") || !strings.Contains(output, "--max-parse-depth") {
+		t.Fatalf("grit explain help is incomplete:\n%s", output)
+	}
+}
+
 func TestRunGritLocalJSONIsDeterministic(t *testing.T) {
 	dir := chdirTemp(t)
 	source := "package sample\n\nfunc f() {\n\ttarget(value)\n}\n"

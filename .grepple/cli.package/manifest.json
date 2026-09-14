@@ -16,16 +16,16 @@
     "syntacticBuildTagUnion": []
   },
   "summary": {
-    "sourceFiles": 41,
-    "declarations": 56,
+    "sourceFiles": 42,
+    "declarations": 62,
     "exportedTypes": 0,
-    "internalTypes": 56,
-    "members": 370,
+    "internalTypes": 62,
+    "members": 408,
     "exportedFunctions": 3,
     "fiberRoutes": 0,
-    "relations": 35
+    "relations": 38
   },
-  "semanticModelDigest": "sha256:c9f83a83fe98031bccc2bd823262d776c6864045ce47b060dd417636ed53e3e8",
+  "semanticModelDigest": "sha256:7ca40308669f3123f7fd29dc0c8be60936f393e897f921331ad159e183ebeaf3",
   "sourceFiles": [
     {
       "path": "internal/cli/anchors.go"
@@ -80,6 +80,9 @@
     },
     {
       "path": "internal/cli/grit.go"
+    },
+    {
+      "path": "internal/cli/grit_explain.go"
     },
     {
       "path": "internal/cli/grit_merge.go"
@@ -2626,6 +2629,434 @@
       ]
     },
     {
+      "name": "gritExplainArgs",
+      "kind": "struct",
+      "file": "internal/cli/grit_explain.go",
+      "line": 17,
+      "endLine": 26,
+      "underlyingType": "struct{QueryFile string`arg:\"-f,--query-file\" placeholder:\"PATH\" help:\"read the GritQL query from PATH (- for stdin)\"`;JSON bool`arg:\"--json\" help:\"emit complete machine-readable compile output\"`;MaxOutputBytes int`arg:\"--max-output-bytes\" placeholder:\"N\" help:\"cap human output (default 16384; 0 = unlimited; JSON is uncapped)\"`;MaxPatternBytes int`arg:\"--max-pattern-bytes\" placeholder:\"N\" help:\"bound query source bytes\"`;MaxRegexBytes int`arg:\"--max-regex-bytes\" placeholder:\"N\" help:\"bound one regex constraint\"`;MaxRegexInstructions int`arg:\"--max-regex-instructions\" placeholder:\"N\" help:\"bound compiled regex instructions\"`;MaxParseDepth int`arg:\"--max-parse-depth\" placeholder:\"N\" help:\"bound query and structural recursion depth\"`;Query string`arg:\"positional\" placeholder:\"QUERY\"`;}",
+      "members": [
+        {
+          "name": "Description",
+          "kind": "method",
+          "line": 28,
+          "endLine": 30,
+          "result": "string"
+        },
+        {
+          "name": "JSON",
+          "kind": "property",
+          "line": 19,
+          "endLine": 19,
+          "result": "bool",
+          "structTag": {
+            "value": "arg:\"--json\" help:\"emit complete machine-readable compile output\""
+          }
+        },
+        {
+          "name": "MaxOutputBytes",
+          "kind": "property",
+          "line": 20,
+          "endLine": 20,
+          "result": "int",
+          "structTag": {
+            "value": "arg:\"--max-output-bytes\" placeholder:\"N\" help:\"cap human output (default 16384; 0 = unlimited; JSON is uncapped)\""
+          }
+        },
+        {
+          "name": "MaxParseDepth",
+          "kind": "property",
+          "line": 24,
+          "endLine": 24,
+          "result": "int",
+          "structTag": {
+            "value": "arg:\"--max-parse-depth\" placeholder:\"N\" help:\"bound query and structural recursion depth\""
+          }
+        },
+        {
+          "name": "MaxPatternBytes",
+          "kind": "property",
+          "line": 21,
+          "endLine": 21,
+          "result": "int",
+          "structTag": {
+            "value": "arg:\"--max-pattern-bytes\" placeholder:\"N\" help:\"bound query source bytes\""
+          }
+        },
+        {
+          "name": "MaxRegexBytes",
+          "kind": "property",
+          "line": 22,
+          "endLine": 22,
+          "result": "int",
+          "structTag": {
+            "value": "arg:\"--max-regex-bytes\" placeholder:\"N\" help:\"bound one regex constraint\""
+          }
+        },
+        {
+          "name": "MaxRegexInstructions",
+          "kind": "property",
+          "line": 23,
+          "endLine": 23,
+          "result": "int",
+          "structTag": {
+            "value": "arg:\"--max-regex-instructions\" placeholder:\"N\" help:\"bound compiled regex instructions\""
+          }
+        },
+        {
+          "name": "Query",
+          "kind": "property",
+          "line": 25,
+          "endLine": 25,
+          "result": "string",
+          "structTag": {
+            "value": "arg:\"positional\" placeholder:\"QUERY\""
+          }
+        },
+        {
+          "name": "QueryFile",
+          "kind": "property",
+          "line": 18,
+          "endLine": 18,
+          "result": "string",
+          "structTag": {
+            "value": "arg:\"-f,--query-file\" placeholder:\"PATH\" help:\"read the GritQL query from PATH (- for stdin)\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "gritExplainDiagnostic",
+      "kind": "struct",
+      "file": "internal/cli/grit_explain.go",
+      "line": 62,
+      "endLine": 68,
+      "underlyingType": "struct{Code string`json:\"code\"`;Class string`json:\"class\"`;Severity string`json:\"severity\"`;Message string`json:\"message\"`;Range string`json:\"range,omitempty\"`;}",
+      "members": [
+        {
+          "name": "Class",
+          "kind": "property",
+          "line": 64,
+          "endLine": 64,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"class\""
+          }
+        },
+        {
+          "name": "Code",
+          "kind": "property",
+          "line": 63,
+          "endLine": 63,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"code\""
+          }
+        },
+        {
+          "name": "Message",
+          "kind": "property",
+          "line": 66,
+          "endLine": 66,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"message\""
+          }
+        },
+        {
+          "name": "Range",
+          "kind": "property",
+          "line": 67,
+          "endLine": 67,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"range,omitempty\""
+          }
+        },
+        {
+          "name": "Severity",
+          "kind": "property",
+          "line": 65,
+          "endLine": 65,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"severity\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "gritExplainInterpretation",
+      "kind": "struct",
+      "file": "internal/cli/grit_explain.go",
+      "line": 45,
+      "endLine": 51,
+      "underlyingType": "struct{ExpressionKind string`json:\"expressionKind\"`;Context string`json:\"context\"`;RootKind string`json:\"rootKind,omitempty\"`;RootSlot string`json:\"rootSlot,omitempty\"`;Roles[]string`json:\"roles\"`;}",
+      "members": [
+        {
+          "name": "Context",
+          "kind": "property",
+          "line": 47,
+          "endLine": 47,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"context\""
+          }
+        },
+        {
+          "name": "ExpressionKind",
+          "kind": "property",
+          "line": 46,
+          "endLine": 46,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"expressionKind\""
+          }
+        },
+        {
+          "name": "Roles",
+          "kind": "property",
+          "line": 50,
+          "endLine": 50,
+          "result": "[]string",
+          "structTag": {
+            "value": "json:\"roles\""
+          }
+        },
+        {
+          "name": "RootKind",
+          "kind": "property",
+          "line": 48,
+          "endLine": 48,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"rootKind,omitempty\""
+          }
+        },
+        {
+          "name": "RootSlot",
+          "kind": "property",
+          "line": 49,
+          "endLine": 49,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"rootSlot,omitempty\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "gritExplainOutput",
+      "kind": "struct",
+      "file": "internal/cli/grit_explain.go",
+      "line": 32,
+      "endLine": 43,
+      "underlyingType": "struct{Schema string`json:\"schema\"`;OK bool`json:\"ok\"`;Compatibility string`json:\"compatibility,omitempty\"`;Language string`json:\"language,omitempty\"`;GrammarABI uint32`json:\"grammarAbi,omitempty\"`;Grammar string`json:\"grammarFingerprint,omitempty\"`;Features[]string`json:\"features\"`;Interpretations[]gritExplainInterpretation`json:\"interpretations\"`;Variables[]gritExplainVariable`json:\"variables\"`;Diagnostics[]gritExplainDiagnostic`json:\"diagnostics\"`;}",
+      "members": [
+        {
+          "name": "Compatibility",
+          "kind": "property",
+          "line": 35,
+          "endLine": 35,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"compatibility,omitempty\""
+          }
+        },
+        {
+          "name": "Diagnostics",
+          "kind": "property",
+          "line": 42,
+          "endLine": 42,
+          "result": "[]gritExplainDiagnostic",
+          "structTag": {
+            "value": "json:\"diagnostics\""
+          }
+        },
+        {
+          "name": "Features",
+          "kind": "property",
+          "line": 39,
+          "endLine": 39,
+          "result": "[]string",
+          "structTag": {
+            "value": "json:\"features\""
+          }
+        },
+        {
+          "name": "Grammar",
+          "kind": "property",
+          "line": 38,
+          "endLine": 38,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"grammarFingerprint,omitempty\""
+          }
+        },
+        {
+          "name": "GrammarABI",
+          "kind": "property",
+          "line": 37,
+          "endLine": 37,
+          "result": "uint32",
+          "structTag": {
+            "value": "json:\"grammarAbi,omitempty\""
+          }
+        },
+        {
+          "name": "Interpretations",
+          "kind": "property",
+          "line": 40,
+          "endLine": 40,
+          "result": "[]gritExplainInterpretation",
+          "structTag": {
+            "value": "json:\"interpretations\""
+          }
+        },
+        {
+          "name": "Language",
+          "kind": "property",
+          "line": 36,
+          "endLine": 36,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"language,omitempty\""
+          }
+        },
+        {
+          "name": "OK",
+          "kind": "property",
+          "line": 34,
+          "endLine": 34,
+          "result": "bool",
+          "structTag": {
+            "value": "json:\"ok\""
+          }
+        },
+        {
+          "name": "Schema",
+          "kind": "property",
+          "line": 33,
+          "endLine": 33,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"schema\""
+          }
+        },
+        {
+          "name": "Variables",
+          "kind": "property",
+          "line": 41,
+          "endLine": 41,
+          "result": "[]gritExplainVariable",
+          "structTag": {
+            "value": "json:\"variables\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "gritExplainVariable",
+      "kind": "struct",
+      "file": "internal/cli/grit_explain.go",
+      "line": 53,
+      "endLine": 60,
+      "underlyingType": "struct{ID uint32`json:\"id\"`;Name string`json:\"name\"`;FirstRange string`json:\"firstRange\"`;Occurrences int`json:\"occurrences\"`;BindingKinds[]string`json:\"bindingKinds\"`;Roles[]string`json:\"roles\"`;}",
+      "members": [
+        {
+          "name": "BindingKinds",
+          "kind": "property",
+          "line": 58,
+          "endLine": 58,
+          "result": "[]string",
+          "structTag": {
+            "value": "json:\"bindingKinds\""
+          }
+        },
+        {
+          "name": "FirstRange",
+          "kind": "property",
+          "line": 56,
+          "endLine": 56,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"firstRange\""
+          }
+        },
+        {
+          "name": "ID",
+          "kind": "property",
+          "line": 54,
+          "endLine": 54,
+          "result": "uint32",
+          "structTag": {
+            "value": "json:\"id\""
+          }
+        },
+        {
+          "name": "Name",
+          "kind": "property",
+          "line": 55,
+          "endLine": 55,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"name\""
+          }
+        },
+        {
+          "name": "Occurrences",
+          "kind": "property",
+          "line": 57,
+          "endLine": 57,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"occurrences\""
+          }
+        },
+        {
+          "name": "Roles",
+          "kind": "property",
+          "line": 59,
+          "endLine": 59,
+          "result": "[]string",
+          "structTag": {
+            "value": "json:\"roles\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "gritVariableExplanation",
+      "kind": "struct",
+      "file": "internal/cli/grit_explain.go",
+      "line": 70,
+      "endLine": 74,
+      "underlyingType": "struct{occurrences map[string]bool;bindingKinds map[string]bool;roles map[string]bool;}",
+      "members": [
+        {
+          "name": "bindingKinds",
+          "kind": "property",
+          "line": 72,
+          "endLine": 72,
+          "result": "map[string]bool"
+        },
+        {
+          "name": "occurrences",
+          "kind": "property",
+          "line": 71,
+          "endLine": 71,
+          "result": "map[string]bool"
+        },
+        {
+          "name": "roles",
+          "kind": "property",
+          "line": 73,
+          "endLine": 73,
+          "result": "map[string]bool"
+        }
+      ]
+    },
+    {
       "name": "jsonResultRenderer",
       "kind": "struct",
       "file": "internal/cli/renderer_json.go",
@@ -4411,6 +4842,27 @@
       "kind": "association",
       "via": "field Sources",
       "cardinality": "one"
+    },
+    {
+      "from": "gritExplainOutput",
+      "to": "gritExplainDiagnostic",
+      "kind": "association",
+      "via": "field Diagnostics",
+      "cardinality": "many"
+    },
+    {
+      "from": "gritExplainOutput",
+      "to": "gritExplainInterpretation",
+      "kind": "association",
+      "via": "field Interpretations",
+      "cardinality": "many"
+    },
+    {
+      "from": "gritExplainOutput",
+      "to": "gritExplainVariable",
+      "kind": "association",
+      "via": "field Variables",
+      "cardinality": "many"
     },
     {
       "from": "jsonResultRenderer",

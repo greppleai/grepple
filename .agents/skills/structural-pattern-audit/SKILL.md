@@ -12,8 +12,10 @@ Use text search for names; use GritQL when syntax position and shape determine c
 1. Identify the target language and narrow source glob.
 2. Start with one concrete positive shape:
    ```bash
-   grepple grit $'language go\n`exec.Command($args)`' 'internal/**/*.go'
+grepple grit explain --json $'language go\n`exec.Command($args)`'
+grepple grit $'language go\n`exec.Command($args)`' 'internal/**/*.go'
    ```
+   Explain output confirms grammar wrapper contexts and node/list metavariable roles without scanning source; it does not prove that the query expresses the intended policy.
 3. Use metavariables only where variation is intended. Repeating a named metavariable requires structural equality; `$_` is an independent anonymous wildcard.
 4. Add constraints only after the basic shape matches:
    ```bash
