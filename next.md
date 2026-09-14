@@ -17,7 +17,6 @@
 
 ## P0 — make current capabilities discoverable and trustworthy
 
-1. [ ] Add top-level command help listing search, GritQL, graph, boundaries, extraction, languages, rules, repository/authentication commands, and version.
 2. [ ] Make `grepple help [COMMAND ...]` real while preserving an explicit `grepple search` form for patterns that collide with command names.
 3. [ ] Make recursive help work for every extract and graph mode. Encode required output-mode exclusivity and return success for valid help requests.
 4. [ ] Classify boundary type origin as local, first-party, standard-library, third-party, or unresolved. Keep import identity separate from dependency origin.

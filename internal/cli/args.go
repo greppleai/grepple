@@ -370,8 +370,44 @@ func jsonModeFor(values searchArgs) string {
 	return "off"
 }
 
+const topLevelHelp = `Grepple searches code and provides source-backed navigation, structural queries, architecture views, and remote repository access.
+
+Usage:
+  grepple [SEARCH OPTIONS] PATTERN [PATH ...]
+  grepple COMMAND [OPTIONS]
+
+Commands:
+  search       Search local or explicitly selected remote code (default mode)
+  grit         Run native, read-only structural queries
+  graph        Build, query, or diff local navigation graphs
+  boundaries   Find repeated workflows and concrete-type spread
+  extract      Summarize, generate, or check architecture projections
+  languages    Show the language capability matrix
+  rules        Manage and inspect saved remote rules
+  get          Read one indexed repository file or outline
+  tree         List an indexed repository tree
+  repos        Find accessible indexed repositories
+  login        Authenticate with the remote service
+  logout       Remove stored remote authentication
+  version      Print build and source version information
+
+Search options follow below. Run grepple COMMAND --help for command-specific options.
+
+`
+
+func writeTopLevelHelp() error {
+	if _, err := fmt.Fprint(os.Stdout, topLevelHelp); err != nil {
+		return err
+	}
+	_, _, _, err := parseSearchArgs([]string{"--help"})
+	return err
+}
+
 // Run executes a Grepple command.
 func Run(args []string) error {
+	if len(args) == 1 && (args[0] == "--help" || args[0] == "-h") {
+		return writeTopLevelHelp()
+	}
 	if len(args) == 1 && (args[0] == "--version" || args[0] == "version") {
 		fmt.Fprintln(os.Stdout, versionString())
 		return nil

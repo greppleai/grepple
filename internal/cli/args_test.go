@@ -1,6 +1,9 @@
 package cli
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestParseSearchArgs(t *testing.T) {
 	options, server, remote, err := parseSearchArgs([]string{
@@ -162,6 +165,19 @@ func TestRelatedGoNavigationRejectsUnsupportedModes(t *testing.T) {
 	} {
 		if _, _, _, err := parseSearchArgs(args); err == nil {
 			t.Fatalf("parseSearchArgs(%q) succeeded, want an error", args)
+		}
+	}
+}
+
+func TestTopLevelHelpListsCommandFamilies(t *testing.T) {
+	output := captureStdout(t, func() {
+		if err := Run([]string{"--help"}); err != nil {
+			t.Fatal(err)
+		}
+	})
+	for _, expected := range []string{"search", "grit", "graph", "boundaries", "extract", "languages", "rules", "get", "tree", "repos", "login", "logout", "version"} {
+		if !strings.Contains(output, expected) {
+			t.Fatalf("top-level help missing %q:\n%s", expected, output)
 		}
 	}
 }

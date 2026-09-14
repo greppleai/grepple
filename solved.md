@@ -9,6 +9,10 @@ This file records completed Grepple roadmap work that no longer belongs in `next
 - [x] Made each skill state what Grepple evidence can and cannot prove, with explicit handling for candidates, bounded output, source universes, and syntax-only analysis.
 - [x] Added repeatable agent workflow benchmarks for breadth summaries, outlines, structural lookup, exact ranges, related navigation, impact graphs, enclosing scopes, and edit locations.
 
+## CLI discoverability
+
+- [x] Added top-level help that lists search, GritQL, graph, boundaries, extraction, language capabilities, rules, remote repository/authentication commands, and version before the default search options.
+
 ## Search and retrieval
 
 - [x] Added `--count-summary` for complete matched-file and matching-line breadth independent of output paging.
