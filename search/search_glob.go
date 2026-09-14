@@ -109,20 +109,24 @@ func collectCandidateFiles(globs []string, root string) ([]string, error) {
 }
 
 func collectCandidateFilesContext(ctx context.Context, globs []string, root string) ([]string, error) {
+	return collectCandidateFilesConfiguredContext(ctx, globs, root, sourceIgnoreConfig{})
+}
+
+func collectCandidateFilesConfiguredContext(ctx context.Context, globs []string, root string, ignore sourceIgnoreConfig) ([]string, error) {
 	cwd, err := os.Getwd()
 	if err != nil {
 		return nil, err
 	}
 
 	if len(globs) == 0 {
-		files, err := walkCandidateFilesContext(ctx, cwd)
+		files, err := walkCandidateFilesConfiguredContext(ctx, cwd, ignore)
 		if err != nil {
 			return nil, err
 		}
 		return confineFiles(files, root), nil
 	}
 
-	c := newCandidateCollector(ctx, root, cwd)
+	c := newCandidateCollector(ctx, root, cwd, ignore)
 	for _, pattern := range globs {
 		if err := ctx.Err(); err != nil {
 			return nil, err
@@ -149,10 +153,11 @@ type candidateCollector struct {
 	ignoreCache gitignoreCache
 	seen        map[string]bool
 	files       []string
+	ignore      sourceIgnoreConfig
 }
 
-func newCandidateCollector(ctx context.Context, root, cwd string) *candidateCollector {
-	return &candidateCollector{ctx: ctx, root: root, cwd: cwd, ignoreCache: gitignoreCache{}, seen: map[string]bool{}}
+func newCandidateCollector(ctx context.Context, root, cwd string, ignore sourceIgnoreConfig) *candidateCollector {
+	return &candidateCollector{ctx: ctx, root: root, cwd: cwd, ignoreCache: gitignoreCache{}, ignore: ignore, seen: map[string]bool{}}
 }
 
 // add records one matched file, applying root confinement, .git exclusion,
@@ -161,7 +166,16 @@ func (c *candidateCollector) add(absolute string) {
 	if !withinRoot(absolute, c.root) {
 		return
 	}
-	if !pathContainsGitDirectory(absolute) && !pathIgnoredFromRootCached(absolute, c.cwd, c.ignoreCache) && !c.seen[absolute] {
+	if !pathContainsGitDirectory(absolute) && !pathIgnoredFromRootCached(absolute, c.cwd, c.ignoreCache) && !c.ignore.ignored(absolute) && !c.seen[absolute] {
+		c.seen[absolute] = true
+		c.files = append(c.files, absolute)
+	}
+}
+
+// addExplicit records a directly named file without applying ignore lists.
+// Root confinement and de-duplication still apply.
+func (c *candidateCollector) addExplicit(absolute string) {
+	if withinRoot(absolute, c.root) && !c.seen[absolute] {
 		c.seen[absolute] = true
 		c.files = append(c.files, absolute)
 	}
@@ -173,7 +187,7 @@ func (c *candidateCollector) addSubtree(dir string) error {
 	if !withinRoot(dir, c.root) {
 		return nil
 	}
-	nested, err := walkCandidateFilesContext(c.ctx, dir)
+	nested, err := walkCandidateFilesConfiguredContext(c.ctx, dir, c.ignore)
 	if err != nil {
 		return err
 	}
@@ -214,9 +228,17 @@ func (c *candidateCollector) addPlainGlob(pattern string) error {
 			}
 			continue
 		}
-		c.add(absolute)
+		c.addMatchedFile(absolute, pattern)
 	}
 	return nil
+}
+
+func (c *candidateCollector) addMatchedFile(absolute, pattern string) {
+	if !hasGlobMeta(pattern) {
+		c.addExplicit(absolute)
+		return
+	}
+	c.add(absolute)
 }
 
 // addRecursiveGlob resolves one ** pattern and adds each match.
@@ -244,6 +266,10 @@ func collectListingFiles(globs []string, root string) ([]string, error) {
 }
 
 func collectListingFilesContext(ctx context.Context, globs []string, root string) ([]string, error) {
+	return collectListingFilesConfiguredContext(ctx, globs, root, sourceIgnoreConfig{})
+}
+
+func collectListingFilesConfiguredContext(ctx context.Context, globs []string, root string, ignore sourceIgnoreConfig) ([]string, error) {
 	roots, filters := splitGlobRoots(globs)
 
 	discoveryGlobs := roots
@@ -251,7 +277,7 @@ func collectListingFilesContext(ctx context.Context, globs []string, root string
 		// filters may be empty here, which makes collectCandidateFiles walk the CWD.
 		discoveryGlobs = filters
 	}
-	candidates, err := collectCandidateFilesContext(ctx, discoveryGlobs, root)
+	candidates, err := collectCandidateFilesConfiguredContext(ctx, discoveryGlobs, root, ignore)
 	if err != nil {
 		return nil, err
 	}
@@ -381,7 +407,11 @@ func walkCandidateFiles(root string) ([]string, error) {
 }
 
 func walkCandidateFilesContext(ctx context.Context, root string) ([]string, error) {
-	w := &candidateWalker{ctx: ctx, root: root, ignorePatterns: map[string][]string{}}
+	return walkCandidateFilesConfiguredContext(ctx, root, sourceIgnoreConfig{})
+}
+
+func walkCandidateFilesConfiguredContext(ctx context.Context, root string, ignore sourceIgnoreConfig) ([]string, error) {
+	w := &candidateWalker{ctx: ctx, root: root, ignorePatterns: map[string][]string{}, ignore: ignore}
 	if err := filepath.WalkDir(root, w.walk); err != nil {
 		return nil, err
 	}
@@ -395,6 +425,7 @@ type candidateWalker struct {
 	ctx            context.Context
 	root           string
 	ignorePatterns map[string][]string
+	ignore         sourceIgnoreConfig
 	files          []string
 }
 
@@ -418,7 +449,7 @@ func (w *candidateWalker) walk(path string, entry fs.DirEntry, walkErr error) er
 	if entry.IsDir() {
 		return w.walkDir(path, rel)
 	}
-	if !ignored(rel, w.ignorePatterns) {
+	if !ignored(rel, w.ignorePatterns) && !w.ignore.ignored(path) {
 		w.files = append(w.files, path)
 	}
 	return nil
@@ -432,7 +463,7 @@ func (w *candidateWalker) walkDir(path, rel string) error {
 		base = ""
 	}
 	w.ignorePatterns[base] = append(w.ignorePatterns[base], parseGitignore(path)...)
-	if path != w.root && ignored(rel, w.ignorePatterns) {
+	if path != w.root && (ignored(rel, w.ignorePatterns) || w.ignore.ignored(path) && !w.ignore.hasNegation()) {
 		return filepath.SkipDir
 	}
 	return nil

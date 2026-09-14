@@ -17,15 +17,15 @@
   },
   "summary": {
     "sourceFiles": 27,
-    "declarations": 68,
-    "exportedTypes": 42,
+    "declarations": 69,
+    "exportedTypes": 43,
     "internalTypes": 26,
-    "members": 554,
-    "exportedFunctions": 28,
+    "members": 557,
+    "exportedFunctions": 30,
     "fiberRoutes": 0,
-    "relations": 216
+    "relations": 219
   },
-  "semanticModelDigest": "sha256:0fc6188bff1e53e771681b4eed1f0c3515a9e1730e7cbc5710fe41757227dbc1",
+  "semanticModelDigest": "sha256:702ad3f346e90a740bfff72185e689b4036e7f38caf57fcd5750842ca1e032f7",
   "sourceFiles": [
     {
       "path": "extract/analyze.go"
@@ -952,6 +952,30 @@
           "kind": "property",
           "line": 64,
           "endLine": 64,
+          "result": "string"
+        }
+      ]
+    },
+    {
+      "name": "DiscoveryOptions",
+      "kind": "struct",
+      "file": "extract/files.go",
+      "line": 29,
+      "endLine": 32,
+      "underlyingType": "struct{IgnoreRoot string;IgnorePaths[]string;}",
+      "members": [
+        {
+          "name": "IgnorePaths",
+          "kind": "property",
+          "line": 31,
+          "endLine": 31,
+          "result": "[]string"
+        },
+        {
+          "name": "IgnoreRoot",
+          "kind": "property",
+          "line": 30,
+          "endLine": 30,
           "result": "string"
         }
       ]
@@ -5401,15 +5425,15 @@
       "name": "sourceCollector",
       "kind": "struct",
       "file": "extract/files.go",
-      "line": 25,
-      "endLine": 25,
-      "underlyingType": "struct{paths map[string]bool}",
+      "line": 34,
+      "endLine": 37,
+      "underlyingType": "struct{paths map[string]bool;ignore pathfilter.Config;}",
       "members": [
         {
           "name": "collect",
           "kind": "method",
-          "line": 27,
-          "endLine": 53,
+          "line": 39,
+          "endLine": 71,
           "parameters": [
             "string",
             "bool"
@@ -5419,8 +5443,8 @@
         {
           "name": "collectDirectory",
           "kind": "method",
-          "line": 96,
-          "endLine": 113,
+          "line": 114,
+          "endLine": 131,
           "parameters": [
             "string"
           ],
@@ -5429,18 +5453,25 @@
         {
           "name": "shouldSkip",
           "kind": "method",
-          "line": 115,
-          "endLine": 117,
+          "line": 133,
+          "endLine": 135,
           "parameters": [
             "os.DirEntry"
           ],
           "result": "bool"
         },
         {
+          "name": "ignore",
+          "kind": "property",
+          "line": 36,
+          "endLine": 36,
+          "result": "pathfilter.Config"
+        },
+        {
           "name": "paths",
           "kind": "property",
-          "line": 25,
-          "endLine": 25,
+          "line": 35,
+          "endLine": 35,
           "result": "map[string]bool"
         }
       ]
@@ -5626,8 +5657,8 @@
       "name": "CheckClassPaths",
       "kind": "function",
       "file": "extract/files.go",
-      "line": 152,
-      "endLine": 154,
+      "line": 180,
+      "endLine": 182,
       "parameters": [
         "string",
         "[]string"
@@ -5638,8 +5669,8 @@
       "name": "CheckFlowPaths",
       "kind": "function",
       "file": "extract/files.go",
-      "line": 157,
-      "endLine": 159,
+      "line": 185,
+      "endLine": 187,
       "parameters": [
         "string",
         "[]string"
@@ -5698,10 +5729,22 @@
       "name": "DiscoverSources",
       "kind": "function",
       "file": "extract/files.go",
-      "line": 120,
-      "endLine": 132,
+      "line": 138,
+      "endLine": 140,
       "parameters": [
         "[]string"
+      ],
+      "result": "tuple\u003c[]string,error\u003e"
+    },
+    {
+      "name": "DiscoverSourcesWithOptions",
+      "kind": "function",
+      "file": "extract/files.go",
+      "line": 143,
+      "endLine": 155,
+      "parameters": [
+        "[]string",
+        "DiscoveryOptions"
       ],
       "result": "tuple\u003c[]string,error\u003e"
     },
@@ -5803,10 +5846,22 @@
       "name": "LoadSources",
       "kind": "function",
       "file": "extract/files.go",
-      "line": 135,
-      "endLine": 149,
+      "line": 158,
+      "endLine": 160,
       "parameters": [
         "[]string"
+      ],
+      "result": "tuple\u003c[]Source,error\u003e"
+    },
+    {
+      "name": "LoadSourcesWithOptions",
+      "kind": "function",
+      "file": "extract/files.go",
+      "line": 163,
+      "endLine": 177,
+      "parameters": [
+        "[]string",
+        "DiscoveryOptions"
       ],
       "result": "tuple\u003c[]Source,error\u003e"
     },
@@ -6184,6 +6239,13 @@
       "cardinality": "one"
     },
     {
+      "from": "DiscoverSourcesWithOptions",
+      "to": "DiscoveryOptions",
+      "kind": "dependency",
+      "via": "parameter 2",
+      "cardinality": "one"
+    },
+    {
       "from": "FiberRoute",
       "to": "Location",
       "kind": "association",
@@ -6262,6 +6324,20 @@
     },
     {
       "from": "LoadSources",
+      "to": "Source",
+      "kind": "dependency",
+      "via": "result 1",
+      "cardinality": "many"
+    },
+    {
+      "from": "LoadSourcesWithOptions",
+      "to": "DiscoveryOptions",
+      "kind": "dependency",
+      "via": "parameter 2",
+      "cardinality": "one"
+    },
+    {
+      "from": "LoadSourcesWithOptions",
       "to": "Source",
       "kind": "dependency",
       "via": "result 1",

@@ -39,6 +39,8 @@ type Params struct {
 	FollowRelated   int      `json:"followRelated,omitempty"`
 	At              string   `json:"-"`
 	Root            string   `json:"-"`
+	IgnorePaths     []string `json:"-"`
+	IgnoreRoot      string   `json:"-"`
 	CountByRepo     bool     `json:"-"`
 }
 

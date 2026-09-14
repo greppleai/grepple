@@ -1,9 +1,13 @@
 package cli
 
 import (
+	"bytes"
 	"encoding/json"
+	"fmt"
+	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -16,46 +20,90 @@ type config struct {
 	User          string `json:"user,omitempty"`
 }
 
-// loadConfig merges ~/.grepple/config.json then ./grepple.json, overlaying only
-// non-empty fields so the local file can override the server without dropping a
-// token stored in the user config.
+type repositoryConfig struct {
+	Server        string                 `json:"server,omitempty"`
+	Ignore        repositoryIgnoreConfig `json:"ignore,omitempty"`
+	Output        repositoryOutputConfig `json:"output,omitempty"`
+	Token         string                 `json:"token,omitempty"`
+	RefreshToken  string                 `json:"refresh_token,omitempty"`
+	TokenExpiry   int64                  `json:"token_expiry,omitempty"`
+	RefreshExpiry int64                  `json:"refresh_expiry,omitempty"`
+	User          string                 `json:"user,omitempty"`
+}
+
+type repositoryIgnoreConfig struct {
+	Paths []string `json:"paths,omitempty"`
+}
+
+type repositoryOutputConfig struct {
+	SpillThresholdBytes int `json:"spillThresholdBytes,omitempty"`
+}
+
+// loadConfig merges the writable user config with repository-safe fields from the
+// nearest ancestor grepple.json. Repository files can select a server but can never
+// provide or override authentication state.
 func loadConfig() config {
 	var c config
-	home, _ := os.UserHomeDir()
-	for _, p := range []string{filepath.Join(home, ".grepple", "config.json"), filepath.Join(mustGetwd(), "grepple.json")} {
-		b, e := os.ReadFile(p)
-		if e != nil {
-			continue
+	if path, err := userConfigPath(); err == nil {
+		if content, readErr := os.ReadFile(path); readErr == nil {
+			_ = json.Unmarshal(content, &c)
 		}
-		var x config
-		if json.Unmarshal(b, &x) != nil {
-			continue
-		}
-		overlayConfig(&c, x)
+	}
+	if repository, _, err := loadRepositoryConfig(); err == nil && repository.Server != "" {
+		c.Server = repository.Server
 	}
 	return c
 }
 
-// overlayConfig copies x's non-empty fields over c, so a later config file
-// overrides only what it actually sets.
-func overlayConfig(c *config, x config) {
-	if x.Server != "" {
-		c.Server = x.Server
+func loadRepositoryConfig() (repositoryConfig, string, error) {
+	path, found := findRepositoryConfig(mustGetwd())
+	if !found {
+		return repositoryConfig{}, "", nil
 	}
-	if x.Token != "" {
-		c.Token = x.Token
+	content, err := os.ReadFile(path)
+	if err != nil {
+		return repositoryConfig{}, path, err
 	}
-	if x.RefreshToken != "" {
-		c.RefreshToken = x.RefreshToken
+	decoder := json.NewDecoder(bytes.NewReader(content))
+	decoder.DisallowUnknownFields()
+	var config repositoryConfig
+	if err := decoder.Decode(&config); err != nil {
+		return repositoryConfig{}, path, fmt.Errorf("invalid repository config %s: %w", path, err)
 	}
-	if x.TokenExpiry != 0 {
-		c.TokenExpiry = x.TokenExpiry
+	if err := decoder.Decode(&struct{}{}); err != io.EOF {
+		return repositoryConfig{}, path, fmt.Errorf("invalid repository config %s: trailing JSON content", path)
 	}
-	if x.RefreshExpiry != 0 {
-		c.RefreshExpiry = x.RefreshExpiry
+	if config.Token != "" || config.RefreshToken != "" || config.TokenExpiry != 0 || config.RefreshExpiry != 0 || config.User != "" {
+		return repositoryConfig{}, path, fmt.Errorf("repository config %s must not contain authentication fields", path)
 	}
-	if x.User != "" {
-		c.User = x.User
+	if config.Output.SpillThresholdBytes < 0 {
+		return repositoryConfig{}, path, fmt.Errorf("repository config %s output.spillThresholdBytes must be non-negative", path)
+	}
+	for index, pattern := range config.Ignore.Paths {
+		value := strings.TrimPrefix(strings.TrimSpace(pattern), "!")
+		clean := filepath.Clean(filepath.FromSlash(value))
+		if value == "" || filepath.IsAbs(clean) || clean == ".." || strings.HasPrefix(clean, ".."+string(filepath.Separator)) {
+			return repositoryConfig{}, path, fmt.Errorf("repository config %s ignore.paths[%d] must be repository-relative", path, index)
+		}
+	}
+	return config, path, nil
+}
+
+func findRepositoryConfig(start string) (string, bool) {
+	directory, err := filepath.Abs(start)
+	if err != nil {
+		return "", false
+	}
+	for {
+		path := filepath.Join(directory, "grepple.json")
+		if info, statErr := os.Stat(path); statErr == nil && info.Mode().IsRegular() {
+			return path, true
+		}
+		parent := filepath.Dir(directory)
+		if parent == directory {
+			return "", false
+		}
+		directory = parent
 	}
 }
 

@@ -23,6 +23,9 @@ func main() {
 	// Convert a downstream pipe closing into EPIPE so the CLI can return cleanly.
 	signal.Ignore(syscall.SIGPIPE)
 	if err := cli.Run(os.Args[1:]); err != nil {
+		if code, ok := cli.ExitCode(err); ok {
+			os.Exit(code)
+		}
 		if errors.Is(err, syscall.EPIPE) {
 			return
 		}

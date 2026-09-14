@@ -271,3 +271,46 @@ func TestListFilePathsContextHonorsCancellation(t *testing.T) {
 		t.Fatalf("discovery error=%v", err)
 	}
 }
+
+func TestConfiguredIgnoresApplyToDiscoveryButNotExplicitFiles(t *testing.T) {
+	root := t.TempDir()
+	writeTree(t, root, "keep/main.go")
+	writeTree(t, root, "sandbox/ignored.go")
+	ignored := filepath.Join(root, "sandbox", "ignored.go")
+	writeTree(t, root, "sandbox/keep.go")
+	chdir(t, root)
+	config := sourceIgnoreConfig{root: root, patterns: []string{"sandbox/**", "!sandbox/keep.go"}}
+
+	files, err := collectCandidateFilesConfiguredContext(context.Background(), []string{"."}, "", config)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := rels(t, root, files)
+	want := []string{"keep/main.go", "sandbox/keep.go"}
+	if len(got) != len(want) || got[0] != want[0] || got[1] != want[1] {
+		t.Fatalf("configured discovery = %#v, want %#v", got, want)
+	}
+
+	files, err = collectCandidateFilesConfiguredContext(context.Background(), []string{ignored}, "", config)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := rels(t, root, files); len(got) != 1 || got[0] != "sandbox/ignored.go" {
+		t.Fatalf("explicit ignored file = %#v", got)
+	}
+}
+
+func TestConfiguredIgnoresAlwaysExcludeGreppleOutputDiscovery(t *testing.T) {
+	root := t.TempDir()
+	writeTree(t, root, ".grepple/output/result.json")
+	writeTree(t, root, "main.go")
+	chdir(t, root)
+
+	files, err := collectCandidateFilesConfiguredContext(context.Background(), []string{"."}, "", sourceIgnoreConfig{root: root})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := rels(t, root, files); len(got) != 1 || got[0] != "main.go" {
+		t.Fatalf("discovered files = %#v", got)
+	}
+}

@@ -294,7 +294,7 @@ classDiagram
     }
     <<struct>> FileMatch
     %% grepple:file FileMatch search/model.go
-    note for FileMatch "defined: search/model.go:63-72; Content@search/model.go:64; DisplayPath@search/model.go:64; File@search/model.go:64; Language@search/model.go:64; MatchLines@search/model.go:65; MatchRanges@search/model.go:66; OmittedRelatedCallees@search/model.go:69; OmittedRelatedCallers@search/model.go:69; Related@search/model.go:68; Segments@search/model.go:67; SegmentsReady@search/model.go:70; StructureStatus@search/model.go:71"
+    note for FileMatch "defined: search/model.go:65-74; Content@search/model.go:66; DisplayPath@search/model.go:66; File@search/model.go:66; Language@search/model.go:66; MatchLines@search/model.go:67; MatchRanges@search/model.go:68; OmittedRelatedCallees@search/model.go:71; OmittedRelatedCallers@search/model.go:71; Related@search/model.go:70; Segments@search/model.go:69; SegmentsReady@search/model.go:72; StructureStatus@search/model.go:73"
     class NavigationBuildOptions {
         +DisableCache: bool
     }
@@ -431,6 +431,8 @@ classDiagram
         +FollowRelated: int
         +Globs: []string
         +IgnoreCase: bool
+        +IgnorePaths: []string
+        +IgnoreRoot: string
         +InvertMatch: bool
         +Limit: int
         +LineRanges: bool
@@ -458,6 +460,8 @@ classDiagram
     %% grepple:struct-tag Params FollowRelated "json:\"followRelated,omitempty\""
     %% grepple:struct-tag Params Globs "json:\"globs\""
     %% grepple:struct-tag Params IgnoreCase "json:\"ignoreCase\""
+    %% grepple:struct-tag Params IgnorePaths "json:\"-\""
+    %% grepple:struct-tag Params IgnoreRoot "json:\"-\""
     %% grepple:struct-tag Params InvertMatch "json:\"invertMatch,omitempty\""
     %% grepple:struct-tag Params Limit "json:\"limit,omitempty\""
     %% grepple:struct-tag Params LineRanges "json:\"matchLineRanges,omitempty\""
@@ -471,7 +475,7 @@ classDiagram
     %% grepple:struct-tag Params Skip "json:\"skip,omitempty\""
     %% grepple:struct-tag Params SkipSegments "json:\"-\""
     %% grepple:struct-tag Params Sort "json:\"sort,omitempty\""
-    note for Params "defined: search/model.go:18-43; AfterContext@search/model.go:34; At@search/model.go:40; BeforeContext@search/model.go:33; Context@search/model.go:32; CountByRepo@search/model.go:42; EnclosingRanges@search/model.go:37; ExcludeRepo@search/model.go:30; Files@search/model.go:31; FollowRelated@search/model.go:39; Globs@search/model.go:20; IgnoreCase@search/model.go:22; InvertMatch@search/model.go:23; Limit@search/model.go:27; LineRanges@search/model.go:36; MaxFiles@search/model.go:24; MaxSegments@search/model.go:25; Query@search/model.go:19; Regex@search/model.go:21; Related@search/model.go:38; Repo@search/model.go:29; Root@search/model.go:41; Skip@search/model.go:26; SkipSegments@search/model.go:35; Sort@search/model.go:28"
+    note for Params "defined: search/model.go:18-45; AfterContext@search/model.go:34; At@search/model.go:40; BeforeContext@search/model.go:33; Context@search/model.go:32; CountByRepo@search/model.go:44; EnclosingRanges@search/model.go:37; ExcludeRepo@search/model.go:30; Files@search/model.go:31; FollowRelated@search/model.go:39; Globs@search/model.go:20; IgnoreCase@search/model.go:22; IgnorePaths@search/model.go:42; IgnoreRoot@search/model.go:43; InvertMatch@search/model.go:23; Limit@search/model.go:27; LineRanges@search/model.go:36; MaxFiles@search/model.go:24; MaxSegments@search/model.go:25; Query@search/model.go:19; Regex@search/model.go:21; Related@search/model.go:38; Repo@search/model.go:29; Root@search/model.go:41; Skip@search/model.go:26; SkipSegments@search/model.go:35; Sort@search/model.go:28"
     class RelatedPoint {
         +CallLine: int
         +Confidence: string
@@ -487,7 +491,7 @@ classDiagram
     }
     <<struct>> RelatedPoint
     %% grepple:file RelatedPoint search/model.go
-    note for RelatedPoint "defined: search/model.go:55-59; CallLine@search/model.go:57; Confidence@search/model.go:56; Direction@search/model.go:56; Distance@search/model.go:57; End@search/model.go:57; File@search/model.go:56; Kind@search/model.go:56; Name@search/model.go:56; Path@search/model.go:56; Preview@search/model.go:58; Start@search/model.go:57"
+    note for RelatedPoint "defined: search/model.go:57-61; CallLine@search/model.go:59; Confidence@search/model.go:58; Direction@search/model.go:58; Distance@search/model.go:59; End@search/model.go:59; File@search/model.go:58; Kind@search/model.go:58; Name@search/model.go:58; Path@search/model.go:58; Preview@search/model.go:60; Start@search/model.go:59"
     class RelatedPreview {
         +Content: string
         +End: int
@@ -498,7 +502,7 @@ classDiagram
     }
     <<struct>> RelatedPreview
     %% grepple:file RelatedPreview search/model.go
-    note for RelatedPreview "defined: search/model.go:47-52; Content@search/model.go:48; End@search/model.go:49; OmittedCallees@search/model.go:51; OmittedCallers@search/model.go:51; Related@search/model.go:50; Start@search/model.go:49"
+    note for RelatedPreview "defined: search/model.go:49-54; Content@search/model.go:50; End@search/model.go:51; OmittedCallees@search/model.go:53; OmittedCallers@search/model.go:53; Related@search/model.go:52; Start@search/model.go:51"
     class RepoFilter {
         +Allow(string): bool
         -exclude: []repoPattern
@@ -565,19 +569,22 @@ classDiagram
     note for boundaryTypeSpreadKey "defined: search/type_boundaries.go:66-72; importPath@search/type_boundaries.go:69; language@search/type_boundaries.go:67; origin@search/type_boundaries.go:71; ownerFile@search/type_boundaries.go:70; typeName@search/type_boundaries.go:68"
     class candidateCollector {
         -add(string)
+        -addExplicit(string)
+        -addMatchedFile(string, string)
         -addPlainGlob(string): error
         -addRecursiveGlob(string): error
         -addSubtree(string): error
         -ctx: context.Context
         -cwd: string
         -files: []string
+        -ignore: sourceIgnoreConfig
         -ignoreCache: gitignoreCache
         -root: string
         -seen: map[string]bool
     }
     <<struct>> candidateCollector
     %% grepple:file candidateCollector search/search_glob.go
-    note for candidateCollector "defined: search/search_glob.go:146-152; add@search/search_glob.go:160-168; addPlainGlob@search/search_glob.go:191-220; addRecursiveGlob@search/search_glob.go:223-232; addSubtree@search/search_glob.go:172-187; ctx@search/search_glob.go:147; cwd@search/search_glob.go:148; files@search/search_glob.go:151; ignoreCache@search/search_glob.go:149; root@search/search_glob.go:148; seen@search/search_glob.go:150"
+    note for candidateCollector "defined: search/search_glob.go:150-157; add@search/search_glob.go:165-173; addExplicit@search/search_glob.go:177-182; addMatchedFile@search/search_glob.go:236-242; addPlainGlob@search/search_glob.go:205-234; addRecursiveGlob@search/search_glob.go:245-254; addSubtree@search/search_glob.go:186-201; ctx@search/search_glob.go:151; cwd@search/search_glob.go:152; files@search/search_glob.go:155; ignore@search/search_glob.go:156; ignoreCache@search/search_glob.go:153; root@search/search_glob.go:152; seen@search/search_glob.go:154"
     class candidateScan {
         -relatedFiles([]string): []string
         -scanAll([]string): []FileMatch
@@ -595,19 +602,20 @@ classDiagram
         -walkDir(string, string): error
         -ctx: context.Context
         -files: []string
+        -ignore: sourceIgnoreConfig
         -ignorePatterns: map[string][]string
         -root: string
     }
     <<struct>> candidateWalker
     %% grepple:file candidateWalker search/search_glob.go
-    note for candidateWalker "defined: search/search_glob.go:394-399; walk@search/search_glob.go:404-425; walkDir@search/search_glob.go:429-439; ctx@search/search_glob.go:395; files@search/search_glob.go:398; ignorePatterns@search/search_glob.go:397; root@search/search_glob.go:396"
+    note for candidateWalker "defined: search/search_glob.go:424-430; walk@search/search_glob.go:435-456; walkDir@search/search_glob.go:460-470; ctx@search/search_glob.go:425; files@search/search_glob.go:429; ignore@search/search_glob.go:428; ignorePatterns@search/search_glob.go:427; root@search/search_glob.go:426"
     class gitignoreCache["gitignoreCache = map&#91;string&#93;&#91;&#93;string"] {
         -patterns(string): []string
     }
     <<type>> gitignoreCache
     %% grepple:underlying gitignoreCache map[string][]string
     %% grepple:file gitignoreCache search/search_glob.go
-    note for gitignoreCache "defined: search/search_glob.go:461; patterns@search/search_glob.go:463-471"
+    note for gitignoreCache "defined: search/search_glob.go:492; patterns@search/search_glob.go:494-502"
     class jsonCommentStripper {
         -consumeBlockComment()
         -consumeComment()
@@ -773,6 +781,16 @@ classDiagram
     <<struct>> repoPattern
     %% grepple:file repoPattern search/search_engine.go
     note for repoPattern "defined: search/search_engine.go:95-98; match@search/search_engine.go:108-113; glob@search/search_engine.go:96; re@search/search_engine.go:97"
+    class sourceIgnoreConfig {
+        -filter(): pathfilter.Config
+        -hasNegation(): bool
+        -ignored(string): bool
+        -patterns: []string
+        -root: string
+    }
+    <<struct>> sourceIgnoreConfig
+    %% grepple:file sourceIgnoreConfig search/source_ignore.go
+    note for sourceIgnoreConfig "defined: search/source_ignore.go:9-12; filter@search/source_ignore.go:30-36; hasNegation@search/source_ignore.go:26-28; ignored@search/source_ignore.go:14-24; patterns@search/source_ignore.go:11; root@search/source_ignore.go:10"
     class typeScriptConfig {
         +CompilerOptions: struct&#123;BaseURL string`json:&quot;baseUrl&quot;`&#59;Paths map[string][]string`json:&quot;paths&quot;`&#59;&#125;
     }
@@ -923,7 +941,7 @@ classDiagram
     }
     <<function>> PathMatchesGlobs
     %% grepple:file PathMatchesGlobs search/search_glob.go
-    note for PathMatchesGlobs "defined: search/search_glob.go:523-525"
+    note for PathMatchesGlobs "defined: search/search_glob.go:554-556"
     class QueryNavigationGraph {
         +QueryNavigationGraph(parser.NavigationGraph, []string, NavigationQueryDirection, int): tuple~parser.NavigationGraph&#44;error~
     }
@@ -1061,10 +1079,12 @@ classDiagram
     boundaryPatternGroup "1" --> "*" BoundaryConsumer : field consumers
     boundaryTypeSpreadKey "1" --> "1" BoundaryTypeOrigin : field origin
     candidateCollector "1" --> "1" gitignoreCache : field ignoreCache
+    candidateCollector "1" --> "1" sourceIgnoreConfig : field ignore
     candidateScan "1" ..> "*" FileMatch : method scanAll result 1
     candidateScan "1" ..> "*" FileMatch : method scanWindowed result 1
     candidateScan "1" --> "1" Params : field p
     candidateScan "1" --> "1" RepoFilter : field repoFilter
+    candidateWalker "1" --> "1" sourceIgnoreConfig : field ignore
     navigationCaller "1" --> "1" navigationCall : field call
     navigationCaller "1" --> "1" navigationDeclaration : field declaration
     navigationCandidateResolution "1" --> "*" navigationDeclaration : field candidates

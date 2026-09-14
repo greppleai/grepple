@@ -176,7 +176,11 @@ func buildNavigationGraphOutput(globs []string, maxFiles int) (navigationGraphOu
 }
 
 func navigationInputPaths(globs []string) ([]string, error) {
-	paths, err := search.ListFilePathsContext(context.Background(), search.Params{Files: true, Globs: globs}, nil)
+	params := search.Params{Files: true, Globs: globs}
+	if err := applyRepositorySourceConfig(&params); err != nil {
+		return nil, err
+	}
+	paths, err := search.ListFilePathsContext(context.Background(), params, nil)
 	if err != nil {
 		return nil, err
 	}

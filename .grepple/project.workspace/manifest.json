@@ -25,16 +25,16 @@
   },
   "summary": {
     "modules": 2,
-    "packages": 16,
-    "sourceFiles": 162,
-    "declarations": 436,
-    "exportedFunctions": 125,
+    "packages": 17,
+    "sourceFiles": 168,
+    "declarations": 447,
+    "exportedFunctions": 129,
     "fiberRoutes": 0,
-    "localImports": 23,
-    "standardLibraryImports": 148,
+    "localImports": 25,
+    "standardLibraryImports": 153,
     "externalModuleEdges": 15
   },
-  "semanticModelDigest": "sha256:bda60f97a7912ac5030c98d1bdf16b49f07294359619c83985885efefed34d07",
+  "semanticModelDigest": "sha256:3fe755b3c4ef6d87f06f2291bc5b86b13666f6456ef0287ca17a8e18dfd06da4",
   "modules": [
     {
       "path": "github.com/greppleai/grepple",
@@ -125,11 +125,12 @@
           "documentation": "Package extract validates and generates source-linked Mermaid structure and flow diagrams.",
           "main": false,
           "sourceFiles": 27,
-          "declarations": 68,
-          "exportedFunctions": 28,
+          "declarations": 69,
+          "exportedFunctions": 30,
           "fiberRoutes": 0,
           "routes": [],
           "localImports": [
+            "github.com/greppleai/grepple/internal/pathfilter",
             "github.com/greppleai/grepple/parser"
           ],
           "standardLibraryImports": [
@@ -248,9 +249,9 @@
           "name": "cli",
           "documentation": "Package cli implements Grepple's search, extraction, repository inspection, authentication, rules, and terminal/JSON presentation workflows.",
           "main": false,
-          "sourceFiles": 44,
-          "declarations": 62,
-          "exportedFunctions": 3,
+          "sourceFiles": 48,
+          "declarations": 70,
+          "exportedFunctions": 4,
           "fiberRoutes": 0,
           "routes": [],
           "localImports": [
@@ -286,6 +287,8 @@
             "sort",
             "strconv",
             "strings",
+            "sync",
+            "sync/atomic",
             "syscall",
             "text/tabwriter",
             "time"
@@ -296,6 +299,26 @@
               "modulePath": "github.com/alexflint/go-arg"
             }
           ],
+          "unmappedExternalImports": []
+        },
+        {
+          "importPath": "github.com/greppleai/grepple/internal/pathfilter",
+          "directory": "internal/pathfilter",
+          "name": "pathfilter",
+          "documentation": "Package pathfilter applies deterministic repository-relative ignore patterns.",
+          "main": false,
+          "sourceFiles": 1,
+          "declarations": 1,
+          "exportedFunctions": 1,
+          "fiberRoutes": 0,
+          "routes": [],
+          "localImports": [],
+          "standardLibraryImports": [
+            "path",
+            "path/filepath",
+            "strings"
+          ],
+          "externalImports": [],
           "unmappedExternalImports": []
         },
         {
@@ -445,13 +468,14 @@
           "name": "search",
           "documentation": "Package search provides file discovery, query and repository filtering, paging, match workers, context, and wire-result construction.",
           "main": false,
-          "sourceFiles": 22,
-          "declarations": 58,
+          "sourceFiles": 23,
+          "declarations": 59,
           "exportedFunctions": 34,
           "fiberRoutes": 0,
           "routes": [],
           "localImports": [
             "github.com/greppleai/grepple/api",
+            "github.com/greppleai/grepple/internal/pathfilter",
             "github.com/greppleai/grepple/parser"
           ],
           "standardLibraryImports": [

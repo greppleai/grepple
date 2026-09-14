@@ -160,6 +160,26 @@ classDiagram
     %% grepple:struct-tag anchorSetupArgs TimeoutMS "arg:\"--timeout-ms\" placeholder:\"N\" help:\"provider timeout in milliseconds (default 5000)\""
     %% grepple:struct-tag anchorSetupArgs Write "arg:\"--write\" help:\"atomically write the previewed user settings\""
     note for anchorSetupArgs "defined: internal/cli/anchors_setup.go:15-24; Description@internal/cli/anchors_setup.go:26-28; Command@internal/cli/anchors_setup.go:17; CommandArgs@internal/cli/anchors_setup.go:18; EnableByDefault@internal/cli/anchors_setup.go:21; Force@internal/cli/anchors_setup.go:23; Provider@internal/cli/anchors_setup.go:16; SetDefault@internal/cli/anchors_setup.go:20; TimeoutMS@internal/cli/anchors_setup.go:19; Write@internal/cli/anchors_setup.go:22"
+    class artifactsCleanArgs {
+        +JSON: bool
+    }
+    <<struct>> artifactsCleanArgs
+    %% grepple:file artifactsCleanArgs internal/cli/artifacts.go
+    %% grepple:struct-tag artifactsCleanArgs JSON "arg:\"--json\" help:\"emit cleanup totals as JSON\""
+    note for artifactsCleanArgs "defined: internal/cli/artifacts.go:12-14; JSON@internal/cli/artifacts.go:13"
+    class artifactsCleanOutput {
+        +Bytes: int64
+        +Files: int
+        +Path: string
+        +Schema: string
+    }
+    <<struct>> artifactsCleanOutput
+    %% grepple:file artifactsCleanOutput internal/cli/artifacts.go
+    %% grepple:struct-tag artifactsCleanOutput Bytes "json:\"bytes\""
+    %% grepple:struct-tag artifactsCleanOutput Files "json:\"files\""
+    %% grepple:struct-tag artifactsCleanOutput Path "json:\"path\""
+    %% grepple:struct-tag artifactsCleanOutput Schema "json:\"schema\""
+    note for artifactsCleanOutput "defined: internal/cli/artifacts.go:16-21; Bytes@internal/cli/artifacts.go:20; Files@internal/cli/artifacts.go:19; Path@internal/cli/artifacts.go:18; Schema@internal/cli/artifacts.go:17"
     class boundariesArgs {
         +Description(): string
         +JSON: bool
@@ -240,6 +260,13 @@ classDiagram
     <<struct>> cliOptions
     %% grepple:file cliOptions internal/cli/model.go
     note for cliOptions "defined: internal/cli/model.go:8-28; AnchorLines@internal/cli/model.go:23; AnchorProvider@internal/cli/model.go:22; Anchors@internal/cli/model.go:20; AnchorsDefaulted@internal/cli/model.go:21; Count@internal/cli/model.go:13; CountByRepo@internal/cli/model.go:14; CountSummary@internal/cli/model.go:15; Depth@internal/cli/model.go:18; FilesWithMatches@internal/cli/model.go:16; JSON@internal/cli/model.go:12; LineOnly@internal/cli/model.go:10; MaxOutputBytes@internal/cli/model.go:19; OnlyMatching@internal/cli/model.go:11; Outline@internal/cli/model.go:17; Params@internal/cli/model.go:9; ResultMetadata@internal/cli/model.go:24; Stdin@internal/cli/model.go:27"
+    class commandExitError {
+        +Error(): string
+        -code: int
+    }
+    <<struct>> commandExitError
+    %% grepple:file commandExitError internal/cli/exit.go
+    note for commandExitError "defined: internal/cli/exit.go:7; Error@internal/cli/exit.go:9; code@internal/cli/exit.go:7"
     class config {
         +RefreshExpiry: int64
         +RefreshToken: string
@@ -256,7 +283,7 @@ classDiagram
     %% grepple:struct-tag config Token "json:\"token,omitempty\""
     %% grepple:struct-tag config TokenExpiry "json:\"token_expiry,omitempty\""
     %% grepple:struct-tag config User "json:\"user,omitempty\""
-    note for config "defined: internal/cli/config.go:10-17; RefreshExpiry@internal/cli/config.go:15; RefreshToken@internal/cli/config.go:13; Server@internal/cli/config.go:11; Token@internal/cli/config.go:12; TokenExpiry@internal/cli/config.go:14; User@internal/cli/config.go:16"
+    note for config "defined: internal/cli/config.go:14-21; RefreshExpiry@internal/cli/config.go:19; RefreshToken@internal/cli/config.go:17; Server@internal/cli/config.go:15; Token@internal/cli/config.go:16; TokenExpiry@internal/cli/config.go:18; User@internal/cli/config.go:20"
     class contextRenderer {
         +Render([]api.FileResult): error
         -output: *outputWriter
@@ -863,6 +890,41 @@ classDiagram
     %% grepple:struct-tag reposArgs JSON "arg:\"--json\" help:\"print raw JSON\""
     %% grepple:struct-tag reposArgs Server "arg:\"-s,--server\" placeholder:\"URL\" help:\"remote shard/router URL\""
     note for reposArgs "defined: internal/cli/repos.go:16-20; Description@internal/cli/repos.go:22-24; Filter@internal/cli/repos.go:19; JSON@internal/cli/repos.go:18; Server@internal/cli/repos.go:17"
+    class repositoryConfig {
+        +Ignore: repositoryIgnoreConfig
+        +Output: repositoryOutputConfig
+        +RefreshExpiry: int64
+        +RefreshToken: string
+        +Server: string
+        +Token: string
+        +TokenExpiry: int64
+        +User: string
+    }
+    <<struct>> repositoryConfig
+    %% grepple:file repositoryConfig internal/cli/config.go
+    %% grepple:struct-tag repositoryConfig Ignore "json:\"ignore,omitempty\""
+    %% grepple:struct-tag repositoryConfig Output "json:\"output,omitempty\""
+    %% grepple:struct-tag repositoryConfig RefreshExpiry "json:\"refresh_expiry,omitempty\""
+    %% grepple:struct-tag repositoryConfig RefreshToken "json:\"refresh_token,omitempty\""
+    %% grepple:struct-tag repositoryConfig Server "json:\"server,omitempty\""
+    %% grepple:struct-tag repositoryConfig Token "json:\"token,omitempty\""
+    %% grepple:struct-tag repositoryConfig TokenExpiry "json:\"token_expiry,omitempty\""
+    %% grepple:struct-tag repositoryConfig User "json:\"user,omitempty\""
+    note for repositoryConfig "defined: internal/cli/config.go:23-32; Ignore@internal/cli/config.go:25; Output@internal/cli/config.go:26; RefreshExpiry@internal/cli/config.go:30; RefreshToken@internal/cli/config.go:28; Server@internal/cli/config.go:24; Token@internal/cli/config.go:27; TokenExpiry@internal/cli/config.go:29; User@internal/cli/config.go:31"
+    class repositoryIgnoreConfig {
+        +Paths: []string
+    }
+    <<struct>> repositoryIgnoreConfig
+    %% grepple:file repositoryIgnoreConfig internal/cli/config.go
+    %% grepple:struct-tag repositoryIgnoreConfig Paths "json:\"paths,omitempty\""
+    note for repositoryIgnoreConfig "defined: internal/cli/config.go:34-36; Paths@internal/cli/config.go:35"
+    class repositoryOutputConfig {
+        +SpillThresholdBytes: int
+    }
+    <<struct>> repositoryOutputConfig
+    %% grepple:file repositoryOutputConfig internal/cli/config.go
+    %% grepple:struct-tag repositoryOutputConfig SpillThresholdBytes "json:\"spillThresholdBytes,omitempty\""
+    note for repositoryOutputConfig "defined: internal/cli/config.go:38-40; SpillThresholdBytes@internal/cli/config.go:39"
     class resultRenderer {
         +Render([]api.FileResult): error
     }
@@ -1005,6 +1067,36 @@ classDiagram
     <<struct>> segmentRenderer
     %% grepple:file segmentRenderer internal/cli/renderer_segments.go
     note for segmentRenderer "defined: internal/cli/renderer_segments.go:11-14; Render@internal/cli/renderer_segments.go:16-34; renderFile@internal/cli/renderer_segments.go:36-64; renderRelated@internal/cli/renderer_segments.go:81-92; renderRelatedOmissions@internal/cli/renderer_segments.go:135-151; renderRelatedPoint@internal/cli/renderer_segments.go:103-133; renderRelatedPoints@internal/cli/renderer_segments.go:94-101; renderRelatedSegments@internal/cli/renderer_segments.go:177-189; renderSegment@internal/cli/renderer_segments.go:191-205; renderSourceLine@internal/cli/renderer_segments.go:207-212; anchors@internal/cli/renderer_segments.go:13; output@internal/cli/renderer_segments.go:12"
+    class spillOptions {
+        -disabled: bool
+        -threshold: int
+    }
+    <<struct>> spillOptions
+    %% grepple:file spillOptions internal/cli/output_spill.go
+    note for spillOptions "defined: internal/cli/output_spill.go:20-23; disabled@internal/cli/output_spill.go:21; threshold@internal/cli/output_spill.go:22"
+    class spilledOutputDescriptor {
+        +Bytes: int64
+        +Digest: string
+        +Format: string
+        +Metadata: json.RawMessage
+        +OriginalSchema: string
+        +Path: string
+        +Rerun: string
+        +Schema: string
+        +Sources: json.RawMessage
+    }
+    <<struct>> spilledOutputDescriptor
+    %% grepple:file spilledOutputDescriptor internal/cli/output_spill.go
+    %% grepple:struct-tag spilledOutputDescriptor Bytes "json:\"bytes\""
+    %% grepple:struct-tag spilledOutputDescriptor Digest "json:\"digest\""
+    %% grepple:struct-tag spilledOutputDescriptor Format "json:\"format\""
+    %% grepple:struct-tag spilledOutputDescriptor Metadata "json:\"metadata,omitempty\""
+    %% grepple:struct-tag spilledOutputDescriptor OriginalSchema "json:\"originalSchema,omitempty\""
+    %% grepple:struct-tag spilledOutputDescriptor Path "json:\"path\""
+    %% grepple:struct-tag spilledOutputDescriptor Rerun "json:\"rerun\""
+    %% grepple:struct-tag spilledOutputDescriptor Schema "json:\"schema\""
+    %% grepple:struct-tag spilledOutputDescriptor Sources "json:\"sources,omitempty\""
+    note for spilledOutputDescriptor "defined: internal/cli/output_spill.go:25-35; Bytes@internal/cli/output_spill.go:28; Digest@internal/cli/output_spill.go:29; Format@internal/cli/output_spill.go:30; Metadata@internal/cli/output_spill.go:32; OriginalSchema@internal/cli/output_spill.go:31; Path@internal/cli/output_spill.go:27; Rerun@internal/cli/output_spill.go:34; Schema@internal/cli/output_spill.go:26; Sources@internal/cli/output_spill.go:33"
     class taskExample {
         +Commands: []string
         +Description: string
@@ -1044,6 +1136,12 @@ classDiagram
     %% grepple:file userSettings internal/cli/settings.go
     %% grepple:struct-tag userSettings Anchors "json:\"anchors\""
     note for userSettings "defined: internal/cli/settings.go:17-19; Anchors@internal/cli/settings.go:18"
+    class ExitCode {
+        +ExitCode(error): tuple~int&#44;bool~
+    }
+    <<function>> ExitCode
+    %% grepple:file ExitCode internal/cli/exit.go
+    note for ExitCode "defined: internal/cli/exit.go:22-25"
     class RenderOutline {
         +RenderOutline(parser.FileOutline): string
     }
@@ -1061,7 +1159,7 @@ classDiagram
     }
     <<function>> Run
     %% grepple:file Run internal/cli/args.go
-    note for Run "defined: internal/cli/args.go:447-491"
+    note for Run "defined: internal/cli/args.go:452-469"
     anchorDoctorReport "1" --> "*" anchorDoctorCheck : field Checks
     anchorProtocolRequest "1" --> "*" anchorProtocolRequestFile : field Files
     anchorProtocolResponse "1" --> "*" anchorProtocolResponseFile : field Files
@@ -1096,6 +1194,8 @@ classDiagram
     onlyMatchingRenderer "1" --> "1" outputWriter : field output
     resultRenderer <|.. onlyMatchingRenderer : implements
     repoCountRenderer "1" --> "1" outputWriter : field output
+    repositoryConfig "1" --> "1" repositoryIgnoreConfig : field Ignore
+    repositoryConfig "1" --> "1" repositoryOutputConfig : field Output
     segmentRenderer "1" --> "1" anchorLookup : field anchors
     segmentRenderer "1" --> "1" outputWriter : field output
     resultRenderer <|.. segmentRenderer : implements

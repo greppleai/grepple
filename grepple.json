@@ -1,3 +1,9 @@
 {
-  "server": "https://example.invalid"
+  "server": "https://example.invalid",
+  "ignore": {
+    "paths": ["sandbox/**"]
+  },
+  "output": {
+    "spillThresholdBytes": 65536
+  }
 }

@@ -16,16 +16,16 @@
     "syntacticBuildTagUnion": []
   },
   "summary": {
-    "sourceFiles": 44,
-    "declarations": 62,
+    "sourceFiles": 48,
+    "declarations": 70,
     "exportedTypes": 0,
-    "internalTypes": 62,
-    "members": 414,
-    "exportedFunctions": 3,
+    "internalTypes": 70,
+    "members": 442,
+    "exportedFunctions": 4,
     "fiberRoutes": 0,
-    "relations": 38
+    "relations": 40
   },
-  "semanticModelDigest": "sha256:71995b450ce41d420a09ec47b6805318590e7f8e376f119b9c8bdd7a5f66e330",
+  "semanticModelDigest": "sha256:196b1ada29a265225f1188260ab46f6bd4d7df00d34a116dde25598276ad9b83",
   "sourceFiles": [
     {
       "path": "internal/cli/anchors.go"
@@ -38,6 +38,9 @@
     },
     {
       "path": "internal/cli/args.go"
+    },
+    {
+      "path": "internal/cli/artifacts.go"
     },
     {
       "path": "internal/cli/boundaries.go"
@@ -62,6 +65,9 @@
     },
     {
       "path": "internal/cli/examples.go"
+    },
+    {
+      "path": "internal/cli/exit.go"
     },
     {
       "path": "internal/cli/extract.go"
@@ -118,6 +124,9 @@
       "path": "internal/cli/output.go"
     },
     {
+      "path": "internal/cli/output_spill.go"
+    },
+    {
       "path": "internal/cli/renderer.go"
     },
     {
@@ -143,6 +152,9 @@
     },
     {
       "path": "internal/cli/repos.go"
+    },
+    {
+      "path": "internal/cli/repository_source.go"
     },
     {
       "path": "internal/cli/result_metadata.go"
@@ -761,6 +773,76 @@
       ]
     },
     {
+      "name": "artifactsCleanArgs",
+      "kind": "struct",
+      "file": "internal/cli/artifacts.go",
+      "line": 12,
+      "endLine": 14,
+      "underlyingType": "struct{JSON bool`arg:\"--json\" help:\"emit cleanup totals as JSON\"`;}",
+      "members": [
+        {
+          "name": "JSON",
+          "kind": "property",
+          "line": 13,
+          "endLine": 13,
+          "result": "bool",
+          "structTag": {
+            "value": "arg:\"--json\" help:\"emit cleanup totals as JSON\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "artifactsCleanOutput",
+      "kind": "struct",
+      "file": "internal/cli/artifacts.go",
+      "line": 16,
+      "endLine": 21,
+      "underlyingType": "struct{Schema string`json:\"schema\"`;Path string`json:\"path\"`;Files int`json:\"files\"`;Bytes int64`json:\"bytes\"`;}",
+      "members": [
+        {
+          "name": "Bytes",
+          "kind": "property",
+          "line": 20,
+          "endLine": 20,
+          "result": "int64",
+          "structTag": {
+            "value": "json:\"bytes\""
+          }
+        },
+        {
+          "name": "Files",
+          "kind": "property",
+          "line": 19,
+          "endLine": 19,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"files\""
+          }
+        },
+        {
+          "name": "Path",
+          "kind": "property",
+          "line": 18,
+          "endLine": 18,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"path\""
+          }
+        },
+        {
+          "name": "Schema",
+          "kind": "property",
+          "line": 17,
+          "endLine": 17,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"schema\""
+          }
+        }
+      ]
+    },
+    {
       "name": "boundariesArgs",
       "kind": "struct",
       "file": "internal/cli/boundaries.go",
@@ -1137,18 +1219,42 @@
       ]
     },
     {
+      "name": "commandExitError",
+      "kind": "struct",
+      "file": "internal/cli/exit.go",
+      "line": 7,
+      "endLine": 7,
+      "underlyingType": "struct{code int}",
+      "members": [
+        {
+          "name": "Error",
+          "kind": "method",
+          "line": 9,
+          "endLine": 9,
+          "result": "string"
+        },
+        {
+          "name": "code",
+          "kind": "property",
+          "line": 7,
+          "endLine": 7,
+          "result": "int"
+        }
+      ]
+    },
+    {
       "name": "config",
       "kind": "struct",
       "file": "internal/cli/config.go",
-      "line": 10,
-      "endLine": 17,
+      "line": 14,
+      "endLine": 21,
       "underlyingType": "struct{Server string`json:\"server,omitempty\"`;Token string`json:\"token,omitempty\"`;RefreshToken string`json:\"refresh_token,omitempty\"`;TokenExpiry int64`json:\"token_expiry,omitempty\"`;RefreshExpiry int64`json:\"refresh_expiry,omitempty\"`;User string`json:\"user,omitempty\"`;}",
       "members": [
         {
           "name": "RefreshExpiry",
           "kind": "property",
-          "line": 15,
-          "endLine": 15,
+          "line": 19,
+          "endLine": 19,
           "result": "int64",
           "structTag": {
             "value": "json:\"refresh_expiry,omitempty\""
@@ -1157,8 +1263,8 @@
         {
           "name": "RefreshToken",
           "kind": "property",
-          "line": 13,
-          "endLine": 13,
+          "line": 17,
+          "endLine": 17,
           "result": "string",
           "structTag": {
             "value": "json:\"refresh_token,omitempty\""
@@ -1167,8 +1273,8 @@
         {
           "name": "Server",
           "kind": "property",
-          "line": 11,
-          "endLine": 11,
+          "line": 15,
+          "endLine": 15,
           "result": "string",
           "structTag": {
             "value": "json:\"server,omitempty\""
@@ -1177,8 +1283,8 @@
         {
           "name": "Token",
           "kind": "property",
-          "line": 12,
-          "endLine": 12,
+          "line": 16,
+          "endLine": 16,
           "result": "string",
           "structTag": {
             "value": "json:\"token,omitempty\""
@@ -1187,8 +1293,8 @@
         {
           "name": "TokenExpiry",
           "kind": "property",
-          "line": 14,
-          "endLine": 14,
+          "line": 18,
+          "endLine": 18,
           "result": "int64",
           "structTag": {
             "value": "json:\"token_expiry,omitempty\""
@@ -1197,8 +1303,8 @@
         {
           "name": "User",
           "kind": "property",
-          "line": 16,
-          "endLine": 16,
+          "line": 20,
+          "endLine": 20,
           "result": "string",
           "structTag": {
             "value": "json:\"user,omitempty\""
@@ -3858,6 +3964,136 @@
       ]
     },
     {
+      "name": "repositoryConfig",
+      "kind": "struct",
+      "file": "internal/cli/config.go",
+      "line": 23,
+      "endLine": 32,
+      "underlyingType": "struct{Server string`json:\"server,omitempty\"`;Ignore repositoryIgnoreConfig`json:\"ignore,omitempty\"`;Output repositoryOutputConfig`json:\"output,omitempty\"`;Token string`json:\"token,omitempty\"`;RefreshToken string`json:\"refresh_token,omitempty\"`;TokenExpiry int64`json:\"token_expiry,omitempty\"`;RefreshExpiry int64`json:\"refresh_expiry,omitempty\"`;User string`json:\"user,omitempty\"`;}",
+      "members": [
+        {
+          "name": "Ignore",
+          "kind": "property",
+          "line": 25,
+          "endLine": 25,
+          "result": "repositoryIgnoreConfig",
+          "structTag": {
+            "value": "json:\"ignore,omitempty\""
+          }
+        },
+        {
+          "name": "Output",
+          "kind": "property",
+          "line": 26,
+          "endLine": 26,
+          "result": "repositoryOutputConfig",
+          "structTag": {
+            "value": "json:\"output,omitempty\""
+          }
+        },
+        {
+          "name": "RefreshExpiry",
+          "kind": "property",
+          "line": 30,
+          "endLine": 30,
+          "result": "int64",
+          "structTag": {
+            "value": "json:\"refresh_expiry,omitempty\""
+          }
+        },
+        {
+          "name": "RefreshToken",
+          "kind": "property",
+          "line": 28,
+          "endLine": 28,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"refresh_token,omitempty\""
+          }
+        },
+        {
+          "name": "Server",
+          "kind": "property",
+          "line": 24,
+          "endLine": 24,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"server,omitempty\""
+          }
+        },
+        {
+          "name": "Token",
+          "kind": "property",
+          "line": 27,
+          "endLine": 27,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"token,omitempty\""
+          }
+        },
+        {
+          "name": "TokenExpiry",
+          "kind": "property",
+          "line": 29,
+          "endLine": 29,
+          "result": "int64",
+          "structTag": {
+            "value": "json:\"token_expiry,omitempty\""
+          }
+        },
+        {
+          "name": "User",
+          "kind": "property",
+          "line": 31,
+          "endLine": 31,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"user,omitempty\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "repositoryIgnoreConfig",
+      "kind": "struct",
+      "file": "internal/cli/config.go",
+      "line": 34,
+      "endLine": 36,
+      "underlyingType": "struct{Paths[]string`json:\"paths,omitempty\"`;}",
+      "members": [
+        {
+          "name": "Paths",
+          "kind": "property",
+          "line": 35,
+          "endLine": 35,
+          "result": "[]string",
+          "structTag": {
+            "value": "json:\"paths,omitempty\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "repositoryOutputConfig",
+      "kind": "struct",
+      "file": "internal/cli/config.go",
+      "line": 38,
+      "endLine": 40,
+      "underlyingType": "struct{SpillThresholdBytes int`json:\"spillThresholdBytes,omitempty\"`;}",
+      "members": [
+        {
+          "name": "SpillThresholdBytes",
+          "kind": "property",
+          "line": 39,
+          "endLine": 39,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"spillThresholdBytes,omitempty\""
+          }
+        }
+      ]
+    },
+    {
       "name": "resultRenderer",
       "kind": "interface",
       "file": "internal/cli/renderer.go",
@@ -4582,6 +4818,130 @@
       ]
     },
     {
+      "name": "spillOptions",
+      "kind": "struct",
+      "file": "internal/cli/output_spill.go",
+      "line": 20,
+      "endLine": 23,
+      "underlyingType": "struct{disabled bool;threshold int;}",
+      "members": [
+        {
+          "name": "disabled",
+          "kind": "property",
+          "line": 21,
+          "endLine": 21,
+          "result": "bool"
+        },
+        {
+          "name": "threshold",
+          "kind": "property",
+          "line": 22,
+          "endLine": 22,
+          "result": "int"
+        }
+      ]
+    },
+    {
+      "name": "spilledOutputDescriptor",
+      "kind": "struct",
+      "file": "internal/cli/output_spill.go",
+      "line": 25,
+      "endLine": 35,
+      "underlyingType": "struct{Schema string`json:\"schema\"`;Path string`json:\"path\"`;Bytes int64`json:\"bytes\"`;Digest string`json:\"digest\"`;Format string`json:\"format\"`;OriginalSchema string`json:\"originalSchema,omitempty\"`;Metadata json.RawMessage`json:\"metadata,omitempty\"`;Sources json.RawMessage`json:\"sources,omitempty\"`;Rerun string`json:\"rerun\"`;}",
+      "members": [
+        {
+          "name": "Bytes",
+          "kind": "property",
+          "line": 28,
+          "endLine": 28,
+          "result": "int64",
+          "structTag": {
+            "value": "json:\"bytes\""
+          }
+        },
+        {
+          "name": "Digest",
+          "kind": "property",
+          "line": 29,
+          "endLine": 29,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"digest\""
+          }
+        },
+        {
+          "name": "Format",
+          "kind": "property",
+          "line": 30,
+          "endLine": 30,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"format\""
+          }
+        },
+        {
+          "name": "Metadata",
+          "kind": "property",
+          "line": 32,
+          "endLine": 32,
+          "result": "json.RawMessage",
+          "structTag": {
+            "value": "json:\"metadata,omitempty\""
+          }
+        },
+        {
+          "name": "OriginalSchema",
+          "kind": "property",
+          "line": 31,
+          "endLine": 31,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"originalSchema,omitempty\""
+          }
+        },
+        {
+          "name": "Path",
+          "kind": "property",
+          "line": 27,
+          "endLine": 27,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"path\""
+          }
+        },
+        {
+          "name": "Rerun",
+          "kind": "property",
+          "line": 34,
+          "endLine": 34,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"rerun\""
+          }
+        },
+        {
+          "name": "Schema",
+          "kind": "property",
+          "line": 26,
+          "endLine": 26,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"schema\""
+          }
+        },
+        {
+          "name": "Sources",
+          "kind": "property",
+          "line": 33,
+          "endLine": 33,
+          "result": "json.RawMessage",
+          "structTag": {
+            "value": "json:\"sources,omitempty\""
+          }
+        }
+      ]
+    },
+    {
       "name": "taskExample",
       "kind": "struct",
       "file": "internal/cli/examples.go",
@@ -4733,6 +5093,17 @@
   ],
   "exportedFunctions": [
     {
+      "name": "ExitCode",
+      "kind": "function",
+      "file": "internal/cli/exit.go",
+      "line": 22,
+      "endLine": 25,
+      "parameters": [
+        "error"
+      ],
+      "result": "tuple\u003cint,bool\u003e"
+    },
+    {
       "name": "RenderOutline",
       "kind": "function",
       "file": "internal/cli/outline_renderer.go",
@@ -4759,8 +5130,8 @@
       "name": "Run",
       "kind": "function",
       "file": "internal/cli/args.go",
-      "line": 447,
-      "endLine": 491,
+      "line": 452,
+      "endLine": 469,
       "parameters": [
         "[]string"
       ],
@@ -5005,6 +5376,20 @@
       "to": "outputWriter",
       "kind": "association",
       "via": "field output",
+      "cardinality": "one"
+    },
+    {
+      "from": "repositoryConfig",
+      "to": "repositoryIgnoreConfig",
+      "kind": "association",
+      "via": "field Ignore",
+      "cardinality": "one"
+    },
+    {
+      "from": "repositoryConfig",
+      "to": "repositoryOutputConfig",
+      "kind": "association",
+      "via": "field Output",
       "cardinality": "one"
     },
     {

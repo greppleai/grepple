@@ -1,6 +1,7 @@
 bin/
 .grepple-index/
 .grepple/cache/
+.grepple/output/
 .env
 github-app.pem
 dist/

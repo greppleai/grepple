@@ -325,6 +325,20 @@ make agent-benchmark
 
 It reports modeled retrieval calls, returned bytes, approximate tokens, elapsed time, and allocations while verifying answer fragments. See [Agent workflow benchmarks](docs/agent-workflow-benchmarks.md) for methodology and the current baseline. Run `make architecture-benchmark` for focused structure/flow and package/workspace generation metrics; reviewed thresholds are documented in [Architecture performance benchmarks](docs/architecture-performance-benchmarks.md).
 
+## Repository configuration
+
+Grepple discovers the nearest ancestor `grepple.json`. Repository-owned ignore paths apply consistently to recursive local search, graph, boundary, GritQL, and focused extraction discovery. Explicitly named files bypass ignores.
+
+```json
+{
+  "server": "https://grepple.example.com",
+  "ignore": {"paths": ["sandbox/**", "vendor/**"]},
+  "output": {"spillThresholdBytes": 65536}
+}
+```
+
+Complete output larger than the threshold is stored content-addressed under `.grepple/output/`; stdout receives a small `grepple-artifact-v1` descriptor. Use `--no-spill` when a script requires the original stream, or `--spill-threshold-bytes N` for one invocation. Repository configuration cannot contain or override authentication credentials stored in `~/.grepple/config.json`.
+
 ## Remote service
 
 The distributed router, shards, repository synchronization, Zoekt integration, and deployment assets live in the private sibling `grepple-backend` repository. This public repository contains only the CLI and shared search contracts.

@@ -280,7 +280,11 @@ func acquireGritLocal(ctx context.Context, values gritArgs, program *gritql.Prog
 }
 
 func gritCandidates(ctx context.Context, root string, globs []string) ([]gritql.ScanCandidate, error) {
-	paths, err := search.ListFilePathsContext(ctx, search.Params{Files: true, Globs: globs, Root: root}, nil)
+	params := search.Params{Files: true, Globs: globs, Root: root}
+	if err := applyRepositorySourceConfig(&params); err != nil {
+		return nil, err
+	}
+	paths, err := search.ListFilePathsContext(ctx, params, nil)
 	if err != nil {
 		return nil, err
 	}

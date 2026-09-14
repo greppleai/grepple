@@ -15,6 +15,15 @@ This file records completed Grepple roadmap work that no longer belongs in `next
 - [x] Added real `grepple help` and command help routing plus an explicit `grepple search` mode so command-name patterns do not collide with dispatch.
 - [x] Added successful recursive help for every extract and graph mode, including explicit output-mode and root-selector exclusivity contracts.
 - [x] Added `grepple examples [TASK]` with concise copyable workflows for orientation, exact retrieval, editing, caller impact, boundary review, GritQL audits, focused diagrams, and canonical checks.
+## Repository scope and output delivery
+
+- [x] Extended the nearest ancestor root `grepple.json` with validated repository-relative `ignore.paths` and `output.spillThresholdBytes` while preserving existing `server` files.
+- [x] Kept authentication user-owned: repository configuration cannot provide or override access tokens, refresh tokens, expiries, or user identity.
+- [x] Applied one ordered `**`/negation-capable ignore matcher to search, graph, boundaries, GritQL, and focused extraction; recursive discovery honors ignores while explicitly named files bypass them.
+- [x] Excluded `.grepple/cache/` and `.grepple/output/` from recursive source discovery and Git.
+- [x] Added default 64 KiB output spilling to content-addressed mode-0600 artifacts with valid human/JSON descriptors, original schema/source metadata, exact `--no-spill` reruns, and threshold overrides.
+- [x] Added `grepple artifacts clean` for explicit deterministic artifact cleanup.
+- [x] Replaced process-exiting library paths with propagated command exit statuses so output delivery is finalized before grep-style exit code 1.
 
 ## Search and retrieval
 
@@ -51,6 +60,7 @@ This file records completed Grepple roadmap work that no longer belongs in `next
 - [x] Added deterministic discovered, selected, parsed, skipped, failed, recovered, and truncated source accounting to graphs, focused graph queries, graph diffs, and boundary reports.
 - [x] Added graph-wide and per-language/confidence resolution measurements, including resolved, ambiguous, unresolved, singleton-candidate counts, and ambiguity frequency in complete JSON plus compact aggregate headers.
 - [x] Added parser-owned content- and grammar-addressed per-file navigation facts shared by graph output/queries, `--related`, boundaries, and extraction, with atomic corruption-tolerant storage, path instantiation, explicit bypass, cold/warm parity tests, and a repeatable benchmark.
+- [x] Enriched path-neutral cached Go facts with owning module/package identity after loading so host-qualified same-module imports classify as first-party instead of critical third-party leakage.
 - [x] Added callers, callees, dependencies, dependents, and bidirectional impact queries with depth bounds, cycle safety, candidate preservation, and exact location/symbol/package/module/path roots.
 - [x] Added traversal-free `graph resolve --symbol NAME` previews with deterministic exact/terminal matches, full stable IDs, exact `--at` alternatives, filters, and copyable focused graph commands in bounded compact and complete JSON output.
 - [x] Added language, confidence, and visibility filtering before root selection and traversal.

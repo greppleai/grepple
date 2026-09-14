@@ -347,7 +347,15 @@ func structureDeclarationAt(symbols []codeparser.Symbol, line int) string {
 }
 
 func loadExtractSources(roots []string) ([]codeextract.Source, error) {
-	return codeextract.LoadSources(roots)
+	config, path, err := loadRepositoryConfig()
+	if err != nil {
+		return nil, err
+	}
+	options := codeextract.DiscoveryOptions{IgnorePaths: config.Ignore.Paths}
+	if path != "" {
+		options.IgnoreRoot = filepath.Dir(path)
+	}
+	return codeextract.LoadSourcesWithOptions(roots, options)
 }
 
 func extractGenerateOptions(values *extractArgs) codeextract.GenerateOptions {

@@ -156,3 +156,32 @@ func TestDiscovery(t *testing.T) {
 		t.Fatalf("got %v", paths)
 	}
 }
+
+func TestDiscoveryOptionsIgnoreRecursivePathsButNotExplicitFiles(t *testing.T) {
+	root := t.TempDir()
+	ignored := filepath.Join(root, "sandbox", "ignored.go")
+	kept := filepath.Join(root, "main.go")
+	for _, path := range []string{ignored, kept} {
+		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(path, []byte("package sample\n"), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	options := DiscoveryOptions{IgnoreRoot: root, IgnorePaths: []string{"sandbox/**"}}
+	paths, err := DiscoverSourcesWithOptions([]string{root}, options)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(paths) != 1 || paths[0] != kept {
+		t.Fatalf("recursive paths = %#v", paths)
+	}
+	paths, err = DiscoverSourcesWithOptions([]string{ignored}, options)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(paths) != 1 || paths[0] != ignored {
+		t.Fatalf("explicit paths = %#v", paths)
+	}
+}

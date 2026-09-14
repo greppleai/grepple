@@ -2,7 +2,7 @@ classDiagram
     %% grepple:package-default github.com/greppleai/grepple/search
     %% grepple:language-default go
     direction LR
-    note "Package search provides file discovery, query and repository filtering, paging, match workers, context, and wire-result construction. | package github.com/greppleai/grepple/search | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=22, declarations=58, exportedTypes=35, internalTypes=23, members=341, exportedFunctions=34, fiberRoutes=0, relations=106"
+    note "Package search provides file discovery, query and repository filtering, paging, match workers, context, and wire-result construction. | package github.com/greppleai/grepple/search | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=23, declarations=59, exportedTypes=35, internalTypes=24, members=352, exportedFunctions=34, fiberRoutes=0, relations=108"
     namespace data_contracts {
         class BoundaryBreadth["BoundaryBreadth · search/boundary_model.go:39-43"] {
             +Files: int
@@ -195,7 +195,7 @@ classDiagram
             +Skipped: int
         }
         <<struct>> NavigationSourceStats
-        class Params["Params · search/model.go:18-43"] {
+        class Params["Params · search/model.go:18-45"] {
             +AfterContext: int
             +At: string
             +BeforeContext: int
@@ -207,6 +207,8 @@ classDiagram
             +FollowRelated: int
             +Globs: []string
             +IgnoreCase: bool
+            +IgnorePaths: []string
+            +IgnoreRoot: string
             +InvertMatch: bool
             +Limit: int
             +LineRanges: bool
@@ -238,7 +240,7 @@ classDiagram
         <<type>> BoundaryTypeOrigin
         class BoundaryTypeSurface["BoundaryTypeSurface = string · search/boundary_surface.go:4"]
         <<type>> BoundaryTypeSurface
-        class FileMatch["FileMatch · search/model.go:63-72"]
+        class FileMatch["FileMatch · search/model.go:65-74"]
         <<struct>> FileMatch
         class NavigationBuildOptions["NavigationBuildOptions · search/related.go:166-168"]
         <<struct>> NavigationBuildOptions
@@ -246,9 +248,9 @@ classDiagram
         <<struct>> NavigationGraphFilter
         class NavigationQueryDirection["NavigationQueryDirection = string · search/navigation_query.go:10"]
         <<type>> NavigationQueryDirection
-        class RelatedPoint["RelatedPoint · search/model.go:55-59"]
+        class RelatedPoint["RelatedPoint · search/model.go:57-61"]
         <<struct>> RelatedPoint
-        class RelatedPreview["RelatedPreview · search/model.go:47-52"]
+        class RelatedPreview["RelatedPreview · search/model.go:49-54"]
         <<struct>> RelatedPreview
         class RepoFilter["RepoFilter · search/search_engine.go:129-132"]
         <<struct>> RepoFilter
@@ -268,13 +270,13 @@ classDiagram
         <<struct>> boundaryTypeCandidate
         class boundaryTypeSpreadKey["boundaryTypeSpreadKey · search/type_boundaries.go:66-72"]
         <<struct>> boundaryTypeSpreadKey
-        class candidateCollector["candidateCollector · search/search_glob.go:146-152"]
+        class candidateCollector["candidateCollector · search/search_glob.go:150-157"]
         <<struct>> candidateCollector
         class candidateScan["candidateScan · search/search_engine.go:230-235"]
         <<struct>> candidateScan
-        class candidateWalker["candidateWalker · search/search_glob.go:394-399"]
+        class candidateWalker["candidateWalker · search/search_glob.go:424-430"]
         <<struct>> candidateWalker
-        class gitignoreCache["gitignoreCache = map&#91;string&#93;&#91;&#93;string · search/search_glob.go:461"]
+        class gitignoreCache["gitignoreCache = map&#91;string&#93;&#91;&#93;string · search/search_glob.go:492"]
         <<type>> gitignoreCache
         class jsonCommentStripper["jsonCommentStripper · search/navigation_typescript.go:95-100"]
         <<struct>> jsonCommentStripper
@@ -298,6 +300,8 @@ classDiagram
         <<struct>> navigationResolutionAccumulator
         class repoPattern["repoPattern · search/search_engine.go:95-98"]
         <<struct>> repoPattern
+        class sourceIgnoreConfig["sourceIgnoreConfig · search/source_ignore.go:9-12"]
+        <<struct>> sourceIgnoreConfig
     }
     namespace operations {
         class AggregateRepoCounts["AggregateRepoCounts · search/search_engine.go:493-512"] {
@@ -392,7 +396,7 @@ classDiagram
             +NormalizeNavigationGraphFilter(NavigationGraphFilter): tuple~NavigationGraphFilter&#44;error~
         }
         <<function>> NormalizeNavigationGraphFilter
-        class PathMatchesGlobs["PathMatchesGlobs · search/search_glob.go:523-525"] {
+        class PathMatchesGlobs["PathMatchesGlobs · search/search_glob.go:554-556"] {
             +PathMatchesGlobs(string, []string): bool
         }
         <<function>> PathMatchesGlobs
@@ -504,9 +508,11 @@ classDiagram
     boundaryPatternGroup "1" --> "*" BoundaryConsumer : field consumers
     boundaryTypeSpreadKey "1" --> "1" BoundaryTypeOrigin : field origin
     candidateCollector "1" --> "1" gitignoreCache : field ignoreCache
+    candidateCollector "1" --> "1" sourceIgnoreConfig : field ignore
     candidateScan "1" ..> "*" FileMatch : method scanAll result 1; method scanWindowed result 1
     candidateScan "1" --> "1" Params : field p
     candidateScan "1" --> "1" RepoFilter : field repoFilter
+    candidateWalker "1" --> "1" sourceIgnoreConfig : field ignore
     navigationCaller "1" --> "1" navigationCall : field call
     navigationCaller "1" --> "1" navigationDeclaration : field declaration
     navigationCandidateResolution "1" --> "*" navigationDeclaration : field candidates

@@ -147,6 +147,13 @@ classDiagram
     <<struct>> DiagramNote
     %% grepple:file DiagramNote extract/class.go
     note for DiagramNote "defined: extract/class.go:63-67; Line@extract/class.go:66; Target@extract/class.go:65; Text@extract/class.go:64"
+    class DiscoveryOptions {
+        +IgnorePaths: []string
+        +IgnoreRoot: string
+    }
+    <<struct>> DiscoveryOptions
+    %% grepple:file DiscoveryOptions extract/files.go
+    note for DiscoveryOptions "defined: extract/files.go:29-32; IgnorePaths@extract/files.go:31; IgnoreRoot@extract/files.go:30"
     class FiberRoute {
         +Handler: string
         +Location: Location
@@ -971,11 +978,12 @@ classDiagram
         -collect(string, bool): error
         -collectDirectory(string): error
         -shouldSkip(os.DirEntry): bool
+        -ignore: pathfilter.Config
         -paths: map[string]bool
     }
     <<struct>> sourceCollector
     %% grepple:file sourceCollector extract/files.go
-    note for sourceCollector "defined: extract/files.go:25; collect@extract/files.go:27-53; collectDirectory@extract/files.go:96-113; shouldSkip@extract/files.go:115-117; paths@extract/files.go:25"
+    note for sourceCollector "defined: extract/files.go:34-37; collect@extract/files.go:39-71; collectDirectory@extract/files.go:114-131; shouldSkip@extract/files.go:133-135; ignore@extract/files.go:36; paths@extract/files.go:35"
     class traversalItem {
         -depth: int
         -name: string
@@ -1041,13 +1049,13 @@ classDiagram
     }
     <<function>> CheckClassPaths
     %% grepple:file CheckClassPaths extract/files.go
-    note for CheckClassPaths "defined: extract/files.go:152-154"
+    note for CheckClassPaths "defined: extract/files.go:180-182"
     class CheckFlowPaths {
         +CheckFlowPaths(string, []string): tuple~[]Diagnostic&#44;[]string&#44;error~
     }
     <<function>> CheckFlowPaths
     %% grepple:file CheckFlowPaths extract/files.go
-    note for CheckFlowPaths "defined: extract/files.go:157-159"
+    note for CheckFlowPaths "defined: extract/files.go:185-187"
     class CheckFlowchart {
         +CheckFlowchart(string, []Source): tuple~[]Diagnostic&#44;error~
     }
@@ -1077,7 +1085,13 @@ classDiagram
     }
     <<function>> DiscoverSources
     %% grepple:file DiscoverSources extract/files.go
-    note for DiscoverSources "defined: extract/files.go:120-132"
+    note for DiscoverSources "defined: extract/files.go:138-140"
+    class DiscoverSourcesWithOptions {
+        +DiscoverSourcesWithOptions([]string, DiscoveryOptions): tuple~[]string&#44;error~
+    }
+    <<function>> DiscoverSourcesWithOptions
+    %% grepple:file DiscoverSourcesWithOptions extract/files.go
+    note for DiscoverSourcesWithOptions "defined: extract/files.go:143-155"
     class GenerateClassDiagram {
         +GenerateClassDiagram(string, Source, []Source, GenerateOptions): tuple~string&#44;error~
     }
@@ -1131,7 +1145,13 @@ classDiagram
     }
     <<function>> LoadSources
     %% grepple:file LoadSources extract/files.go
-    note for LoadSources "defined: extract/files.go:135-149"
+    note for LoadSources "defined: extract/files.go:158-160"
+    class LoadSourcesWithOptions {
+        +LoadSourcesWithOptions([]string, DiscoveryOptions): tuple~[]Source&#44;error~
+    }
+    <<function>> LoadSourcesWithOptions
+    %% grepple:file LoadSourcesWithOptions extract/files.go
+    note for LoadSourcesWithOptions "defined: extract/files.go:163-177"
     class ParseClassDiagram {
         +ParseClassDiagram(string): tuple~*ClassDiagram&#44;error~
     }
@@ -1216,6 +1236,7 @@ classDiagram
     DiagramClass "1" --> "*" StructTagRequirement : field StructTags
     DiagramMember "1" --> "1" Location : field Location
     Member <|-- DiagramMember : embedded type
+    DiscoverSourcesWithOptions "1" ..> "1" DiscoveryOptions : parameter 2
     FiberRoute "1" --> "1" Location : field Location
     Flowchart "1" --> "*" FlowEdge : field Edges
     Flowchart "1" --> "*" FlowNode : field Nodes
@@ -1228,6 +1249,8 @@ classDiagram
     GenerateWorkspaceBundle "1" ..> "1" WorkspaceBundle : result 1
     LanguageForPath "1" ..> "1" Language : result 1
     LoadSources "1" ..> "*" Source : result 1
+    LoadSourcesWithOptions "1" ..> "1" DiscoveryOptions : parameter 2
+    LoadSourcesWithOptions "1" ..> "*" Source : result 1
     Member "1" --> "1" Location : field Location
     PackageDeclaration "1" --> "*" PackageMember : field Members
     PackageIR "1" --> "*" PackageDeclaration : field Declarations

@@ -2,7 +2,7 @@ classDiagram
     %% grepple:package-default github.com/greppleai/grepple/internal/cli
     %% grepple:language-default go
     direction LR
-    note "Package cli implements Grepple's search, extraction, repository inspection, authentication, rules, and terminal/JSON presentation workflows. | package github.com/greppleai/grepple/internal/cli | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=44, declarations=62, exportedTypes=0, internalTypes=62, members=414, exportedFunctions=3, fiberRoutes=0, relations=38"
+    note "Package cli implements Grepple's search, extraction, repository inspection, authentication, rules, and terminal/JSON presentation workflows. | package github.com/greppleai/grepple/internal/cli | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=48, declarations=70, exportedTypes=0, internalTypes=70, members=442, exportedFunctions=4, fiberRoutes=0, relations=40"
     namespace interfaces {
         class resultRenderer["resultRenderer · internal/cli/renderer.go:9-11"] {
             +Render([]api.FileResult): error
@@ -86,6 +86,17 @@ classDiagram
             +Write: bool
         }
         <<struct>> anchorSetupArgs
+        class artifactsCleanArgs["artifactsCleanArgs · internal/cli/artifacts.go:12-14"] {
+            +JSON: bool
+        }
+        <<struct>> artifactsCleanArgs
+        class artifactsCleanOutput["artifactsCleanOutput · internal/cli/artifacts.go:16-21"] {
+            +Bytes: int64
+            +Files: int
+            +Path: string
+            +Schema: string
+        }
+        <<struct>> artifactsCleanOutput
         class boundariesArgs["boundariesArgs · internal/cli/boundaries.go:20-29"] {
             +JSON: bool
             +Limit: int
@@ -116,7 +127,7 @@ classDiagram
             +Schema: string
         }
         <<struct>> boundaryGraphCache
-        class config["config · internal/cli/config.go:10-17"] {
+        class config["config · internal/cli/config.go:14-21"] {
             +RefreshExpiry: int64
             +RefreshToken: string
             +Server: string
@@ -383,6 +394,25 @@ classDiagram
             +Server: string
         }
         <<struct>> reposArgs
+        class repositoryConfig["repositoryConfig · internal/cli/config.go:23-32"] {
+            +Ignore: repositoryIgnoreConfig
+            +Output: repositoryOutputConfig
+            +RefreshExpiry: int64
+            +RefreshToken: string
+            +Server: string
+            +Token: string
+            +TokenExpiry: int64
+            +User: string
+        }
+        <<struct>> repositoryConfig
+        class repositoryIgnoreConfig["repositoryIgnoreConfig · internal/cli/config.go:34-36"] {
+            +Paths: []string
+        }
+        <<struct>> repositoryIgnoreConfig
+        class repositoryOutputConfig["repositoryOutputConfig · internal/cli/config.go:38-40"] {
+            +SpillThresholdBytes: int
+        }
+        <<struct>> repositoryOutputConfig
         class rulesAddArgs["rulesAddArgs · internal/cli/rules.go:60-76"] {
             +Engine: string
             +ExcludeRepo: []string
@@ -443,6 +473,18 @@ classDiagram
             +Sort: string
         }
         <<struct>> searchArgs
+        class spilledOutputDescriptor["spilledOutputDescriptor · internal/cli/output_spill.go:25-35"] {
+            +Bytes: int64
+            +Digest: string
+            +Format: string
+            +Metadata: json.RawMessage
+            +OriginalSchema: string
+            +Path: string
+            +Rerun: string
+            +Schema: string
+            +Sources: json.RawMessage
+        }
+        <<struct>> spilledOutputDescriptor
         class treeArgs["treeArgs · internal/cli/tree.go:18-24"] {
             +Depth: int
             +JSON: bool
@@ -463,6 +505,8 @@ classDiagram
         <<type>> anchorLookup
         class cliOptions["cliOptions · internal/cli/model.go:8-28"]
         <<struct>> cliOptions
+        class commandExitError["commandExitError · internal/cli/exit.go:7"]
+        <<struct>> commandExitError
         class contextRenderer["contextRenderer · internal/cli/renderer_context.go:9-11"]
         <<struct>> contextRenderer
         class countRenderer["countRenderer · internal/cli/renderer_count.go:9-12"]
@@ -489,12 +533,18 @@ classDiagram
         <<struct>> repoCountRenderer
         class segmentRenderer["segmentRenderer · internal/cli/renderer_segments.go:11-14"]
         <<struct>> segmentRenderer
+        class spillOptions["spillOptions · internal/cli/output_spill.go:20-23"]
+        <<struct>> spillOptions
         class taskExample["taskExample · internal/cli/examples.go:8-12"]
         <<struct>> taskExample
         class treeNode["treeNode · internal/cli/tree.go:30-34"]
         <<struct>> treeNode
     }
     namespace operations {
+        class ExitCode["ExitCode · internal/cli/exit.go:22-25"] {
+            +ExitCode(error): tuple~int&#44;bool~
+        }
+        <<function>> ExitCode
         class RenderOutline["RenderOutline · internal/cli/outline_renderer.go:11-19"] {
             +RenderOutline(parser.FileOutline): string
         }
@@ -503,7 +553,7 @@ classDiagram
             +RenderOutlineOrContent(parser.FileOutline, string): string
         }
         <<function>> RenderOutlineOrContent
-        class Run["Run · internal/cli/args.go:447-491"] {
+        class Run["Run · internal/cli/args.go:452-469"] {
             +Run([]string): error
         }
         <<function>> Run
@@ -541,6 +591,8 @@ classDiagram
     onlyMatchingRenderer "1" --> "1" outputWriter : field output
     resultRenderer <|.. onlyMatchingRenderer : implements
     repoCountRenderer "1" --> "1" outputWriter : field output
+    repositoryConfig "1" --> "1" repositoryIgnoreConfig : field Ignore
+    repositoryConfig "1" --> "1" repositoryOutputConfig : field Output
     segmentRenderer "1" --> "1" anchorLookup : field anchors
     segmentRenderer "1" --> "1" outputWriter : field output
     resultRenderer <|.. segmentRenderer : implements

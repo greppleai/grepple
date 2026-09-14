@@ -2,7 +2,7 @@ classDiagram
     %% grepple:package-default github.com/greppleai/grepple/extract
     %% grepple:language-default go
     direction LR
-    note "Package extract validates and generates source-linked Mermaid structure and flow diagrams. | package github.com/greppleai/grepple/extract | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=27, declarations=68, exportedTypes=42, internalTypes=26, members=554, exportedFunctions=28, fiberRoutes=0, relations=216"
+    note "Package extract validates and generates source-linked Mermaid structure and flow diagrams. | package github.com/greppleai/grepple/extract | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=27, declarations=69, exportedTypes=43, internalTypes=26, members=557, exportedFunctions=30, fiberRoutes=0, relations=219"
     namespace interfaces {
         class languageAnalysis["languageAnalysis · extract/language.go:22-25"] {
             +Analyze(Source): error
@@ -190,6 +190,8 @@ classDiagram
         <<struct>> DiagramMember
         class DiagramNote["DiagramNote · extract/class.go:63-67"]
         <<struct>> DiagramNote
+        class DiscoveryOptions["DiscoveryOptions · extract/files.go:29-32"]
+        <<struct>> DiscoveryOptions
         class FiberRoute["FiberRoute · extract/analyze.go:25-28"]
         <<struct>> FiberRoute
         class FlowEdge["FlowEdge · extract/flow.go:20-23"]
@@ -266,7 +268,7 @@ classDiagram
         <<struct>> selectedNavigationSymbol
         class sourceAnalyzer["sourceAnalyzer · extract/analyze.go:111-117"]
         <<struct>> sourceAnalyzer
-        class sourceCollector["sourceCollector · extract/files.go:25"]
+        class sourceCollector["sourceCollector · extract/files.go:34-37"]
         <<struct>> sourceCollector
         class traversalItem["traversalItem · extract/generate.go:58-61"]
         <<struct>> traversalItem
@@ -298,11 +300,11 @@ classDiagram
             +CheckClassDiagramWithAnalysis(string, *Analysis): tuple~[]Diagnostic&#44;error~
         }
         <<function>> CheckClassDiagramWithAnalysis
-        class CheckClassPaths["CheckClassPaths · extract/files.go:152-154"] {
+        class CheckClassPaths["CheckClassPaths · extract/files.go:180-182"] {
             +CheckClassPaths(string, []string): tuple~[]Diagnostic&#44;[]string&#44;error~
         }
         <<function>> CheckClassPaths
-        class CheckFlowPaths["CheckFlowPaths · extract/files.go:157-159"] {
+        class CheckFlowPaths["CheckFlowPaths · extract/files.go:185-187"] {
             +CheckFlowPaths(string, []string): tuple~[]Diagnostic&#44;[]string&#44;error~
         }
         <<function>> CheckFlowPaths
@@ -322,10 +324,14 @@ classDiagram
             +CheckWorkspaceBundle(string, string): error
         }
         <<function>> CheckWorkspaceBundle
-        class DiscoverSources["DiscoverSources · extract/files.go:120-132"] {
+        class DiscoverSources["DiscoverSources · extract/files.go:138-140"] {
             +DiscoverSources([]string): tuple~[]string&#44;error~
         }
         <<function>> DiscoverSources
+        class DiscoverSourcesWithOptions["DiscoverSourcesWithOptions · extract/files.go:143-155"] {
+            +DiscoverSourcesWithOptions([]string, DiscoveryOptions): tuple~[]string&#44;error~
+        }
+        <<function>> DiscoverSourcesWithOptions
         class GenerateClassDiagram["GenerateClassDiagram · extract/generate.go:348-354"] {
             +GenerateClassDiagram(string, Source, []Source, GenerateOptions): tuple~string&#44;error~
         }
@@ -358,10 +364,14 @@ classDiagram
             +LanguageForPath(string): tuple~Language&#44;bool~
         }
         <<function>> LanguageForPath
-        class LoadSources["LoadSources · extract/files.go:135-149"] {
+        class LoadSources["LoadSources · extract/files.go:158-160"] {
             +LoadSources([]string): tuple~[]Source&#44;error~
         }
         <<function>> LoadSources
+        class LoadSourcesWithOptions["LoadSourcesWithOptions · extract/files.go:163-177"] {
+            +LoadSourcesWithOptions([]string, DiscoveryOptions): tuple~[]Source&#44;error~
+        }
+        <<function>> LoadSourcesWithOptions
         class ParseClassDiagram["ParseClassDiagram · extract/class_parser.go:20-47"] {
             +ParseClassDiagram(string): tuple~*ClassDiagram&#44;error~
         }
@@ -423,6 +433,7 @@ classDiagram
     DiagramClass "1" --> "*" StructTagRequirement : field StructTags
     DiagramMember "1" --> "1" Location : field Location
     Member <|-- DiagramMember : embedded type
+    DiscoverSourcesWithOptions "1" ..> "1" DiscoveryOptions : parameter 2
     FiberRoute "1" --> "1" Location : field Location
     Flowchart "1" --> "*" FlowEdge : field Edges
     Flowchart "1" --> "*" FlowNode : field Nodes
@@ -435,6 +446,8 @@ classDiagram
     GenerateWorkspaceBundle "1" ..> "1" WorkspaceBundle : result 1
     LanguageForPath "1" ..> "1" Language : result 1
     LoadSources "1" ..> "*" Source : result 1
+    LoadSourcesWithOptions "1" ..> "1" DiscoveryOptions : parameter 2
+    LoadSourcesWithOptions "1" ..> "*" Source : result 1
     Member "1" --> "1" Location : field Location
     PackageDeclaration "1" --> "*" PackageMember : field Members
     PackageIR "1" --> "*" PackageDeclaration : field Declarations

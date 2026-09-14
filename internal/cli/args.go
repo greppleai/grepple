@@ -104,7 +104,7 @@ func parseSearchArgs(args []string) (*cliOptions, string, bool, error) {
 	if err := validateSearchArgs(&values); err != nil {
 		return nil, "", false, err
 	}
-	params, err := buildSearchParams(parser, &values)
+	params, err := configureResolvedSearchParams(buildSearchParams(parser, &values))
 	if err != nil {
 		return nil, "", false, err
 	}
@@ -389,6 +389,7 @@ Commands:
   anchors      Diagnose and configure edit-anchor providers
   boundaries   Find repeated workflows and concrete-type spread
   examples     Print task-oriented, copyable CLI workflows
+  artifacts    Manage spilled output artifacts
   extract      Summarize, generate, or check architecture projections
   languages    Show the language capability matrix
   rules        Manage and inspect saved remote rules
@@ -398,6 +399,10 @@ Commands:
   login        Authenticate with the remote service
   logout       Remove stored remote authentication
   version      Print build and source version information
+
+Global output delivery:
+	--no-spill                    keep complete output on stdout regardless of size
+	--spill-threshold-bytes N     spill output above N bytes (default 65536 or grepple.json)
 
 Search options follow below. Run grepple COMMAND --help for command-specific options.
 
@@ -417,10 +422,10 @@ func runHelp(args []string) error {
 	}
 	if len(args) > 1 {
 		switch args[0] {
-		case "graph", "extract", "rules", "anchors", "grit":
+		case "graph", "extract", "rules", "anchors", "grit", "artifacts":
 			command := append([]string(nil), args...)
 			command = append(command, "--help")
-			return Run(command)
+			return runCommand(command)
 		default:
 			return fmt.Errorf("command %q has no help subcommands", args[0])
 		}
@@ -436,15 +441,34 @@ func runHelp(args []string) error {
 		return stdoutWriter().writeString("Remove stored remote authentication.\nUsage: grepple logout\n")
 	case "version":
 		return stdoutWriter().writeString("Print build and source version information.\nUsage: grepple version\n")
-	case "grit", "graph", "anchors", "boundaries", "examples", "languages", "rules", "get", "tree", "repos":
-		return Run([]string{args[0], "--help"})
+	case "grit", "graph", "anchors", "boundaries", "examples", "languages", "rules", "get", "tree", "repos", "artifacts":
+		return runCommand([]string{args[0], "--help"})
 	default:
 		return fmt.Errorf("unknown help topic %q", args[0])
 	}
 }
 
-// Run executes a Grepple command.
+// Run executes a Grepple command with default large-output spilling.
 func Run(args []string) error {
+	resetRequestedExit()
+	commandArgs, spill, err := parseSpillOptions(args)
+	if err != nil {
+		return err
+	}
+	if len(commandArgs) >= 2 && commandArgs[0] == "artifacts" && commandArgs[1] == "clean" {
+		spill.disabled = true
+	}
+	err = runWithOutputSpill(commandArgs, spill, func() error { return runCommand(commandArgs) })
+	if err != nil {
+		return err
+	}
+	if code := requestedExit(); code != 0 {
+		return commandExitError{code: code}
+	}
+	return nil
+}
+
+func runCommand(args []string) error {
 	if len(args) == 1 && (args[0] == "--help" || args[0] == "-h") {
 		return writeTopLevelHelp()
 	}
@@ -467,6 +491,8 @@ func Run(args []string) error {
 			return runBoundaries(args[1:])
 		case "examples":
 			return runExamples(args[1:])
+		case "artifacts":
+			return runArtifacts(args[1:])
 		case "languages":
 			return runLanguages(args[1:])
 		case "get":

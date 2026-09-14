@@ -246,9 +246,7 @@ func setSearchExit(results []api.FileResult) error {
 }
 
 func setExit(code int) {
-	if code != 0 {
-		os.Exit(code)
-	}
+	requestExit(code)
 }
 
 func filePathObjects(results []api.FileResult) []map[string]string {

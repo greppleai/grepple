@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+
+	"github.com/greppleai/grepple/internal/pathfilter"
 )
 
 var excludedDirectories = map[string]bool{
@@ -22,7 +24,17 @@ func isTypeScriptDeclaration(path string) bool {
 	return strings.HasSuffix(path, ".d.ts") || strings.HasSuffix(path, ".d.mts") || strings.HasSuffix(path, ".d.cts")
 }
 
-type sourceCollector struct{ paths map[string]bool }
+// DiscoveryOptions applies repository-relative exclusions during recursive discovery.
+// Explicitly supplied files bypass IgnorePaths.
+type DiscoveryOptions struct {
+	IgnoreRoot  string
+	IgnorePaths []string
+}
+
+type sourceCollector struct {
+	paths  map[string]bool
+	ignore pathfilter.Config
+}
 
 func (collector *sourceCollector) collect(path string, explicit bool) error {
 	info, err := os.Lstat(path)
@@ -33,7 +45,13 @@ func (collector *sourceCollector) collect(path string, explicit bool) error {
 		return invalidSourceInput(path, explicit)
 	}
 	if info.IsDir() {
+		if !explicit && collector.ignore.Ignored(path) && !collector.ignore.HasNegation() {
+			return nil
+		}
 		return collector.collectDirectory(path)
+	}
+	if !explicit && collector.ignore.Ignored(path) {
+		return nil
 	}
 	definition, supported := languageDefinitionForPath(path)
 	if !info.Mode().IsRegular() || !supported || !definition.acceptsSource(path) {
@@ -118,7 +136,12 @@ func (collector *sourceCollector) shouldSkip(entry os.DirEntry) bool {
 
 // DiscoverSources recursively finds files supported by the registered language adapters.
 func DiscoverSources(inputs []string) ([]string, error) {
-	collector := sourceCollector{paths: map[string]bool{}}
+	return DiscoverSourcesWithOptions(inputs, DiscoveryOptions{})
+}
+
+// DiscoverSourcesWithOptions discovers sources with repository-owned exclusions.
+func DiscoverSourcesWithOptions(inputs []string, options DiscoveryOptions) ([]string, error) {
+	collector := sourceCollector{paths: map[string]bool{}, ignore: pathfilter.Config{Root: options.IgnoreRoot, Patterns: options.IgnorePaths}}
 	for _, input := range inputs {
 		if err := collector.collect(absolutePath(input), true); err != nil {
 			return nil, err
@@ -133,7 +156,12 @@ func DiscoverSources(inputs []string) ([]string, error) {
 
 // LoadSources discovers and reads sources supported by the registered language adapters.
 func LoadSources(inputs []string) ([]Source, error) {
-	paths, err := DiscoverSources(inputs)
+	return LoadSourcesWithOptions(inputs, DiscoveryOptions{})
+}
+
+// LoadSourcesWithOptions discovers and reads sources with repository-owned exclusions.
+func LoadSourcesWithOptions(inputs []string, options DiscoveryOptions) ([]Source, error) {
+	paths, err := DiscoverSourcesWithOptions(inputs, options)
 	if err != nil {
 		return nil, err
 	}

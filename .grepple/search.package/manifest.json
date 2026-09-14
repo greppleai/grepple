@@ -16,16 +16,16 @@
     "syntacticBuildTagUnion": []
   },
   "summary": {
-    "sourceFiles": 22,
-    "declarations": 58,
+    "sourceFiles": 23,
+    "declarations": 59,
     "exportedTypes": 35,
-    "internalTypes": 23,
-    "members": 341,
+    "internalTypes": 24,
+    "members": 352,
     "exportedFunctions": 34,
     "fiberRoutes": 0,
-    "relations": 106
+    "relations": 108
   },
-  "semanticModelDigest": "sha256:bc05e09720caaca4b531af859dd851fae5ed59faca27a0403da70c9232061d26",
+  "semanticModelDigest": "sha256:1cae470feafd3f5e0d1ccd5cac724505485162be452b575d00f66b7ee62a9245",
   "sourceFiles": [
     {
       "path": "search/at.go"
@@ -86,6 +86,9 @@
     },
     {
       "path": "search/search_params.go"
+    },
+    {
+      "path": "search/source_ignore.go"
     },
     {
       "path": "search/type_boundaries.go"
@@ -1179,92 +1182,92 @@
       "name": "FileMatch",
       "kind": "struct",
       "file": "search/model.go",
-      "line": 63,
-      "endLine": 72,
+      "line": 65,
+      "endLine": 74,
       "underlyingType": "struct{File,DisplayPath,Content,Language string;MatchLines map[int]bool;MatchRanges map[int]parser.StructuralLineRange;Segments[]parser.Segment;Related[]RelatedPoint;OmittedRelatedCallers,OmittedRelatedCallees int;SegmentsReady bool;StructureStatus parser.SegmentBuildStatus;}",
       "members": [
         {
           "name": "Content",
           "kind": "property",
-          "line": 64,
-          "endLine": 64,
+          "line": 66,
+          "endLine": 66,
           "result": "string"
         },
         {
           "name": "DisplayPath",
           "kind": "property",
-          "line": 64,
-          "endLine": 64,
+          "line": 66,
+          "endLine": 66,
           "result": "string"
         },
         {
           "name": "File",
           "kind": "property",
-          "line": 64,
-          "endLine": 64,
+          "line": 66,
+          "endLine": 66,
           "result": "string"
         },
         {
           "name": "Language",
           "kind": "property",
-          "line": 64,
-          "endLine": 64,
+          "line": 66,
+          "endLine": 66,
           "result": "string"
         },
         {
           "name": "MatchLines",
           "kind": "property",
-          "line": 65,
-          "endLine": 65,
+          "line": 67,
+          "endLine": 67,
           "result": "map[int]bool"
         },
         {
           "name": "MatchRanges",
           "kind": "property",
-          "line": 66,
-          "endLine": 66,
+          "line": 68,
+          "endLine": 68,
           "result": "map[int]parser.StructuralLineRange"
         },
         {
           "name": "OmittedRelatedCallees",
           "kind": "property",
-          "line": 69,
-          "endLine": 69,
+          "line": 71,
+          "endLine": 71,
           "result": "int"
         },
         {
           "name": "OmittedRelatedCallers",
           "kind": "property",
-          "line": 69,
-          "endLine": 69,
+          "line": 71,
+          "endLine": 71,
           "result": "int"
         },
         {
           "name": "Related",
           "kind": "property",
-          "line": 68,
-          "endLine": 68,
+          "line": 70,
+          "endLine": 70,
           "result": "[]RelatedPoint"
         },
         {
           "name": "Segments",
           "kind": "property",
-          "line": 67,
-          "endLine": 67,
+          "line": 69,
+          "endLine": 69,
           "result": "[]parser.Segment"
         },
         {
           "name": "SegmentsReady",
           "kind": "property",
-          "line": 70,
-          "endLine": 70,
+          "line": 72,
+          "endLine": 72,
           "result": "bool"
         },
         {
           "name": "StructureStatus",
           "kind": "property",
-          "line": 71,
-          "endLine": 71,
+          "line": 73,
+          "endLine": 73,
           "result": "parser.SegmentBuildStatus"
         }
       ]
@@ -1750,8 +1753,8 @@
       "kind": "struct",
       "file": "search/model.go",
       "line": 18,
-      "endLine": 43,
-      "underlyingType": "struct{Query string`json:\"query\"`;Globs[]string`json:\"globs\"`;Regex bool`json:\"regex\"`;IgnoreCase bool`json:\"ignoreCase\"`;InvertMatch bool`json:\"invertMatch,omitempty\"`;MaxFiles int`json:\"maxFiles,omitempty\"`;MaxSegments int`json:\"maxSegments\"`;Skip int`json:\"skip,omitempty\"`;Limit int`json:\"limit,omitempty\"`;Sort string`json:\"sort,omitempty\"`;Repo[]string`json:\"repo,omitempty\"`;ExcludeRepo[]string`json:\"excludeRepo,omitempty\"`;Files bool`json:\"files,omitempty\"`;Context int`json:\"context,omitempty\"`;BeforeContext int`json:\"beforeContext,omitempty\"`;AfterContext int`json:\"afterContext,omitempty\"`;SkipSegments bool`json:\"-\"`;LineRanges bool`json:\"matchLineRanges,omitempty\"`;EnclosingRanges bool`json:\"enclosingLineRanges,omitempty\"`;Related bool`json:\"related,omitempty\"`;FollowRelated int`json:\"followRelated,omitempty\"`;At string`json:\"-\"`;Root string`json:\"-\"`;CountByRepo bool`json:\"-\"`;}",
+      "endLine": 45,
+      "underlyingType": "struct{Query string`json:\"query\"`;Globs[]string`json:\"globs\"`;Regex bool`json:\"regex\"`;IgnoreCase bool`json:\"ignoreCase\"`;InvertMatch bool`json:\"invertMatch,omitempty\"`;MaxFiles int`json:\"maxFiles,omitempty\"`;MaxSegments int`json:\"maxSegments\"`;Skip int`json:\"skip,omitempty\"`;Limit int`json:\"limit,omitempty\"`;Sort string`json:\"sort,omitempty\"`;Repo[]string`json:\"repo,omitempty\"`;ExcludeRepo[]string`json:\"excludeRepo,omitempty\"`;Files bool`json:\"files,omitempty\"`;Context int`json:\"context,omitempty\"`;BeforeContext int`json:\"beforeContext,omitempty\"`;AfterContext int`json:\"afterContext,omitempty\"`;SkipSegments bool`json:\"-\"`;LineRanges bool`json:\"matchLineRanges,omitempty\"`;EnclosingRanges bool`json:\"enclosingLineRanges,omitempty\"`;Related bool`json:\"related,omitempty\"`;FollowRelated int`json:\"followRelated,omitempty\"`;At string`json:\"-\"`;Root string`json:\"-\"`;IgnorePaths[]string`json:\"-\"`;IgnoreRoot string`json:\"-\"`;CountByRepo bool`json:\"-\"`;}",
       "members": [
         {
           "name": "AfterContext",
@@ -1796,8 +1799,8 @@
         {
           "name": "CountByRepo",
           "kind": "property",
-          "line": 42,
-          "endLine": 42,
+          "line": 44,
+          "endLine": 44,
           "result": "bool",
           "structTag": {
             "value": "json:\"-\""
@@ -1861,6 +1864,26 @@
           "result": "bool",
           "structTag": {
             "value": "json:\"ignoreCase\""
+          }
+        },
+        {
+          "name": "IgnorePaths",
+          "kind": "property",
+          "line": 42,
+          "endLine": 42,
+          "result": "[]string",
+          "structTag": {
+            "value": "json:\"-\""
+          }
+        },
+        {
+          "name": "IgnoreRoot",
+          "kind": "property",
+          "line": 43,
+          "endLine": 43,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"-\""
           }
         },
         {
@@ -1999,85 +2022,85 @@
       "name": "RelatedPoint",
       "kind": "struct",
       "file": "search/model.go",
-      "line": 55,
-      "endLine": 59,
+      "line": 57,
+      "endLine": 61,
       "underlyingType": "struct{Name,Path,File,Kind,Direction,Confidence string;Start,End,CallLine,Distance int;Preview*RelatedPreview;}",
       "members": [
         {
           "name": "CallLine",
           "kind": "property",
-          "line": 57,
-          "endLine": 57,
+          "line": 59,
+          "endLine": 59,
           "result": "int"
         },
         {
           "name": "Confidence",
           "kind": "property",
-          "line": 56,
-          "endLine": 56,
+          "line": 58,
+          "endLine": 58,
           "result": "string"
         },
         {
           "name": "Direction",
           "kind": "property",
-          "line": 56,
-          "endLine": 56,
+          "line": 58,
+          "endLine": 58,
           "result": "string"
         },
         {
           "name": "Distance",
           "kind": "property",
-          "line": 57,
-          "endLine": 57,
+          "line": 59,
+          "endLine": 59,
           "result": "int"
         },
         {
           "name": "End",
           "kind": "property",
-          "line": 57,
-          "endLine": 57,
+          "line": 59,
+          "endLine": 59,
           "result": "int"
         },
         {
           "name": "File",
           "kind": "property",
-          "line": 56,
-          "endLine": 56,
+          "line": 58,
+          "endLine": 58,
           "result": "string"
         },
         {
           "name": "Kind",
           "kind": "property",
-          "line": 56,
-          "endLine": 56,
+          "line": 58,
+          "endLine": 58,
           "result": "string"
         },
         {
           "name": "Name",
           "kind": "property",
-          "line": 56,
-          "endLine": 56,
+          "line": 58,
+          "endLine": 58,
           "result": "string"
         },
         {
           "name": "Path",
           "kind": "property",
-          "line": 56,
-          "endLine": 56,
+          "line": 58,
+          "endLine": 58,
           "result": "string"
         },
         {
           "name": "Preview",
           "kind": "property",
-          "line": 58,
-          "endLine": 58,
+          "line": 60,
+          "endLine": 60,
           "result": "*RelatedPreview"
         },
         {
           "name": "Start",
           "kind": "property",
-          "line": 57,
-          "endLine": 57,
+          "line": 59,
+          "endLine": 59,
           "result": "int"
         }
       ]
@@ -2086,50 +2109,50 @@
       "name": "RelatedPreview",
       "kind": "struct",
       "file": "search/model.go",
-      "line": 47,
-      "endLine": 52,
+      "line": 49,
+      "endLine": 54,
       "underlyingType": "struct{Content string;Start,End int;Related[]RelatedPoint;OmittedCallers,OmittedCallees int;}",
       "members": [
         {
           "name": "Content",
           "kind": "property",
-          "line": 48,
-          "endLine": 48,
+          "line": 50,
+          "endLine": 50,
           "result": "string"
         },
         {
           "name": "End",
           "kind": "property",
-          "line": 49,
-          "endLine": 49,
+          "line": 51,
+          "endLine": 51,
           "result": "int"
         },
         {
           "name": "OmittedCallees",
           "kind": "property",
-          "line": 51,
-          "endLine": 51,
+          "line": 53,
+          "endLine": 53,
           "result": "int"
         },
         {
           "name": "OmittedCallers",
           "kind": "property",
-          "line": 51,
-          "endLine": 51,
+          "line": 53,
+          "endLine": 53,
           "result": "int"
         },
         {
           "name": "Related",
           "kind": "property",
-          "line": 50,
-          "endLine": 50,
+          "line": 52,
+          "endLine": 52,
           "result": "[]RelatedPoint"
         },
         {
           "name": "Start",
           "kind": "property",
-          "line": 49,
-          "endLine": 49,
+          "line": 51,
+          "endLine": 51,
           "result": "int"
         }
       ]
@@ -2389,24 +2412,43 @@
       "name": "candidateCollector",
       "kind": "struct",
       "file": "search/search_glob.go",
-      "line": 146,
-      "endLine": 152,
-      "underlyingType": "struct{ctx context.Context;root,cwd string;ignoreCache gitignoreCache;seen map[string]bool;files[]string;}",
+      "line": 150,
+      "endLine": 157,
+      "underlyingType": "struct{ctx context.Context;root,cwd string;ignoreCache gitignoreCache;seen map[string]bool;files[]string;ignore sourceIgnoreConfig;}",
       "members": [
         {
           "name": "add",
           "kind": "method",
-          "line": 160,
-          "endLine": 168,
+          "line": 165,
+          "endLine": 173,
           "parameters": [
+            "string"
+          ]
+        },
+        {
+          "name": "addExplicit",
+          "kind": "method",
+          "line": 177,
+          "endLine": 182,
+          "parameters": [
+            "string"
+          ]
+        },
+        {
+          "name": "addMatchedFile",
+          "kind": "method",
+          "line": 236,
+          "endLine": 242,
+          "parameters": [
+            "string",
             "string"
           ]
         },
         {
           "name": "addPlainGlob",
           "kind": "method",
-          "line": 191,
-          "endLine": 220,
+          "line": 205,
+          "endLine": 234,
           "parameters": [
             "string"
           ],
@@ -2415,8 +2457,8 @@
         {
           "name": "addRecursiveGlob",
           "kind": "method",
-          "line": 223,
-          "endLine": 232,
+          "line": 245,
+          "endLine": 254,
           "parameters": [
             "string"
           ],
@@ -2425,8 +2467,8 @@
         {
           "name": "addSubtree",
           "kind": "method",
-          "line": 172,
-          "endLine": 187,
+          "line": 186,
+          "endLine": 201,
           "parameters": [
             "string"
           ],
@@ -2435,43 +2477,50 @@
         {
           "name": "ctx",
           "kind": "property",
-          "line": 147,
-          "endLine": 147,
+          "line": 151,
+          "endLine": 151,
           "result": "context.Context"
         },
         {
           "name": "cwd",
           "kind": "property",
-          "line": 148,
-          "endLine": 148,
+          "line": 152,
+          "endLine": 152,
           "result": "string"
         },
         {
           "name": "files",
           "kind": "property",
-          "line": 151,
-          "endLine": 151,
+          "line": 155,
+          "endLine": 155,
           "result": "[]string"
+        },
+        {
+          "name": "ignore",
+          "kind": "property",
+          "line": 156,
+          "endLine": 156,
+          "result": "sourceIgnoreConfig"
         },
         {
           "name": "ignoreCache",
           "kind": "property",
-          "line": 149,
-          "endLine": 149,
+          "line": 153,
+          "endLine": 153,
           "result": "gitignoreCache"
         },
         {
           "name": "root",
           "kind": "property",
-          "line": 148,
-          "endLine": 148,
+          "line": 152,
+          "endLine": 152,
           "result": "string"
         },
         {
           "name": "seen",
           "kind": "property",
-          "line": 150,
-          "endLine": 150,
+          "line": 154,
+          "endLine": 154,
           "result": "map[string]bool"
         }
       ]
@@ -2549,15 +2598,15 @@
       "name": "candidateWalker",
       "kind": "struct",
       "file": "search/search_glob.go",
-      "line": 394,
-      "endLine": 399,
-      "underlyingType": "struct{ctx context.Context;root string;ignorePatterns map[string][]string;files[]string;}",
+      "line": 424,
+      "endLine": 430,
+      "underlyingType": "struct{ctx context.Context;root string;ignorePatterns map[string][]string;ignore sourceIgnoreConfig;files[]string;}",
       "members": [
         {
           "name": "walk",
           "kind": "method",
-          "line": 404,
-          "endLine": 425,
+          "line": 435,
+          "endLine": 456,
           "parameters": [
             "string",
             "fs.DirEntry",
@@ -2568,8 +2617,8 @@
         {
           "name": "walkDir",
           "kind": "method",
-          "line": 429,
-          "endLine": 439,
+          "line": 460,
+          "endLine": 470,
           "parameters": [
             "string",
             "string"
@@ -2579,29 +2628,36 @@
         {
           "name": "ctx",
           "kind": "property",
-          "line": 395,
-          "endLine": 395,
+          "line": 425,
+          "endLine": 425,
           "result": "context.Context"
         },
         {
           "name": "files",
           "kind": "property",
-          "line": 398,
-          "endLine": 398,
+          "line": 429,
+          "endLine": 429,
           "result": "[]string"
+        },
+        {
+          "name": "ignore",
+          "kind": "property",
+          "line": 428,
+          "endLine": 428,
+          "result": "sourceIgnoreConfig"
         },
         {
           "name": "ignorePatterns",
           "kind": "property",
-          "line": 397,
-          "endLine": 397,
+          "line": 427,
+          "endLine": 427,
           "result": "map[string][]string"
         },
         {
           "name": "root",
           "kind": "property",
-          "line": 396,
-          "endLine": 396,
+          "line": 426,
+          "endLine": 426,
           "result": "string"
         }
       ]
@@ -2610,15 +2666,15 @@
       "name": "gitignoreCache",
       "kind": "type",
       "file": "search/search_glob.go",
-      "line": 461,
-      "endLine": 461,
+      "line": 492,
+      "endLine": 492,
       "underlyingType": "map[string][]string",
       "members": [
         {
           "name": "patterns",
           "kind": "method",
-          "line": 463,
-          "endLine": 471,
+          "line": 494,
+          "endLine": 502,
           "parameters": [
             "string"
           ],
@@ -3560,6 +3616,54 @@
       ]
     },
     {
+      "name": "sourceIgnoreConfig",
+      "kind": "struct",
+      "file": "search/source_ignore.go",
+      "line": 9,
+      "endLine": 12,
+      "underlyingType": "struct{root string;patterns[]string;}",
+      "members": [
+        {
+          "name": "filter",
+          "kind": "method",
+          "line": 30,
+          "endLine": 36,
+          "result": "pathfilter.Config"
+        },
+        {
+          "name": "hasNegation",
+          "kind": "method",
+          "line": 26,
+          "endLine": 28,
+          "result": "bool"
+        },
+        {
+          "name": "ignored",
+          "kind": "method",
+          "line": 14,
+          "endLine": 24,
+          "parameters": [
+            "string"
+          ],
+          "result": "bool"
+        },
+        {
+          "name": "patterns",
+          "kind": "property",
+          "line": 11,
+          "endLine": 11,
+          "result": "[]string"
+        },
+        {
+          "name": "root",
+          "kind": "property",
+          "line": 10,
+          "endLine": 10,
+          "result": "string"
+        }
+      ]
+    },
+    {
       "name": "typeScriptConfig",
       "kind": "struct",
       "file": "search/navigation_typescript.go",
@@ -3864,8 +3968,8 @@
       "name": "PathMatchesGlobs",
       "kind": "function",
       "file": "search/search_glob.go",
-      "line": 523,
-      "endLine": 525,
+      "line": 554,
+      "endLine": 556,
       "parameters": [
         "string",
         "[]string"
@@ -4530,6 +4634,13 @@
       "cardinality": "one"
     },
     {
+      "from": "candidateCollector",
+      "to": "sourceIgnoreConfig",
+      "kind": "association",
+      "via": "field ignore",
+      "cardinality": "one"
+    },
+    {
       "from": "candidateScan",
       "to": "FileMatch",
       "kind": "dependency",
@@ -4555,6 +4666,13 @@
       "to": "RepoFilter",
       "kind": "association",
       "via": "field repoFilter",
+      "cardinality": "one"
+    },
+    {
+      "from": "candidateWalker",
+      "to": "sourceIgnoreConfig",
+      "kind": "association",
+      "via": "field ignore",
       "cardinality": "one"
     },
     {

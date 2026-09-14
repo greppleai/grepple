@@ -17,14 +17,12 @@
 
 ## P0 — restore source-scope and classification trust
 
-### Repository identity correctness
+### Repository identity hardening
 
-Dogfooding `grepple boundaries --json --no-cache --max-files 0 parser search` classified imports such as `github.com/greppleai/grepple/parser.NavigationGraph` as third-party/critical. Graph declarations currently expose `Package` but generally omit the `ModuleID`/`PackageID` roots consumed by boundary origin classification.
+Go navigation facts now receive path-dependent module/package identity after cache loading, and same-module imports classify as first-party before host-qualified third-party fallback.
 
-- [ ] Attach repository/module identity to the resolved graph independently of optional declaration fields.
-- [ ] Classify imports under the current module/workspace roots as first-party before host-qualified third-party fallback.
-- [ ] Add same-module, nested-module, workspace-module, replacement, and ambiguous-unqualified-import fixtures.
-- [ ] Keep first-party classification stable across cold/warm caches and focused/full source universes.
+- [ ] Add explicit nested-module, `go.work`, replacement, and ambiguous-unqualified-import fixtures.
+- [ ] Add cold/warm and focused/full-universe parity coverage for enriched repository identity.
 
 ### Repository configuration and one source universe
 
@@ -44,13 +42,9 @@ Proposed backward-compatible shape:
 }
 ```
 
-- [ ] Extend the existing JSON parser without breaking current `server`-only files; define validation, upward repository-root discovery from subdirectories, and precedence: explicit CLI settings override root `grepple.json`, which augments built-in and `.gitignore` exclusions.
-- [ ] Separate repository-safe fields from user credentials: root `grepple.json` must not provide or override `token`, `refresh_token`, or expiry/user authentication state loaded from `~/.grepple/config.json`.
-- [ ] Use one normalized ignore matcher, including `**`, negation policy, slash normalization, and deterministic behavior on Windows.
 - [ ] Report the loaded config path/digest and excluded source totals by reason without making machine output cache-state dependent.
 - [ ] Add `--no-repo-config`, `--no-config-ignore`, and an exclusion-explanation command or mode so hidden scope never becomes unexplained missing evidence; do not disable user authentication config when bypassing repository behavior.
-- [ ] Explicitly named files bypass configured ignore lists; recursive directory/glob discovery honors them. Report the bypass so explicit scope remains visible, and test this consistently across every command.
-- [ ] Ensure `.grepple/cache/` and spilled output artifacts remain unconditionally excluded from discovery.
+- [ ] Report when an explicitly named file bypasses configured ignores; behavior is already consistent and covered across search and extraction discovery.
 - [ ] Add production/test/generated/vendor classifications or a `--production-only` preset after the common ignore path is established; whole-repository recovery fixtures and unrelated sandboxes currently make completeness and resolution metrics unnecessarily pessimistic.
 
 ## P1 — simplify architecture discovery and output delivery
@@ -70,11 +64,7 @@ The current package/workspace model is Go-specific and expensive to complete: th
 
 Observed complete outputs reached about 1.55 MB for boundaries and 6.7 MB for a graph over only `parser search`. Valid uncapped JSON is useful for automation but is a severe agent-context trap. Spill mode should be the default above 64 KB; callers that require the original stdout stream can opt out explicitly.
 
-- [ ] Add a shared output-delivery layer that knows the final size before writing stdout; above a configurable threshold, atomically store the complete result under `.grepple/output/` and emit only a small descriptor.
-- [ ] Make artifact names content-addressed and descriptors report path, bytes, digest, original schema/format, source completeness, a copyable command/read range, and the exact `--no-spill` rerun command.
-- [ ] Preserve output-mode validity: JSON requests receive a valid versioned JSON artifact descriptor, while human requests receive bounded prose. Never emit partial original output followed by a fallback notice.
-- [ ] Enable spilling by default above the configured threshold for terminal, captured, and redirected output. Add `--no-spill` to force the original complete stdout stream, `--output PATH` to choose the artifact path, and `--spill-threshold-bytes N` for one invocation.
-- [ ] Keep content-addressed artifacts until an explicit cleanup command removes them; prevent artifacts from entering source discovery, cache digests, architecture diagrams, or Git by default.
+- [ ] Add an explicit artifact path override without colliding with extraction's existing `--output` meaning.
 - [ ] Teach agent skills to inspect the descriptor first and retrieve only relevant file ranges rather than loading the complete artifact.
 - [ ] Benchmark artifact fallback by context bytes and retrieval turns, not only file-write runtime.
 
