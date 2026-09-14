@@ -1,7 +1,5 @@
 package parser
 
-import sitter "github.com/tree-sitter/go-tree-sitter"
-
 func newCFamilyRules(cpp bool) structureRules {
 	structural := newStringSet("preproc_include", "function_definition", "type_definition", "struct_specifier", "union_specifier", "enum_specifier", "declaration")
 	context := newStringSet("function_definition", "type_definition", "struct_specifier", "union_specifier", "enum_specifier")
@@ -30,11 +28,11 @@ func newCFamilyRules(cpp bool) structureRules {
 	}
 }
 
-func cFamilyDeclarations(nodes []*sitter.Node, content string, rules *structureRules, cpp, member bool) []Symbol {
+func cFamilyDeclarations(nodes []*syntaxNode, content string, rules *structureRules, cpp, member bool) []Symbol {
 	var symbols []Symbol
 	for _, node := range nodes {
 		if node.Kind() == "template_declaration" {
-			symbols = append(symbols, cFamilyDeclarations(namedChildren(node), content, rules, cpp, member)...)
+			symbols = append(symbols, cFamilyDeclarations(node.NamedChildren(), content, rules, cpp, member)...)
 			continue
 		}
 		kind := cFamilySymbolKind(node.Kind(), cpp, member)
@@ -45,7 +43,7 @@ func cFamilyDeclarations(nodes []*sitter.Node, content string, rules *structureR
 		symbol := symbolFrom(kind, name, node, content)
 		if rules.containerTypes.contains(node.Kind()) {
 			if body := cFamilyBody(node); body != nil {
-				symbol.Children = cFamilyDeclarations(namedChildren(body), content, rules, cpp, true)
+				symbol.Children = cFamilyDeclarations(body.NamedChildren(), content, rules, cpp, true)
 			}
 		}
 		symbols = append(symbols, symbol)
@@ -84,7 +82,7 @@ func cFamilySymbolKind(kind string, cpp, member bool) string {
 	return ""
 }
 
-func cFamilyName(node *sitter.Node, content string, rules *structureRules) string {
+func cFamilyName(node *syntaxNode, content string, rules *structureRules) string {
 	for _, field := range []string{"name", "declarator"} {
 		if child := node.ChildByFieldName(field); child != nil {
 			if name := descendantName(child, content, rules.nameFieldCandidates); name != "" {
@@ -95,11 +93,11 @@ func cFamilyName(node *sitter.Node, content string, rules *structureRules) strin
 	return descendantName(node, content, rules.nameFieldCandidates)
 }
 
-func cFamilyBody(node *sitter.Node) *sitter.Node {
+func cFamilyBody(node *syntaxNode) *syntaxNode {
 	if body := node.ChildByFieldName("body"); body != nil {
 		return body
 	}
-	for _, child := range namedChildren(node) {
+	for _, child := range node.NamedChildren() {
 		if child.Kind() == "field_declaration_list" || child.Kind() == "declaration_list" {
 			return child
 		}

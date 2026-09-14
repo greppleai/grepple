@@ -1,18 +1,17 @@
 package parser
 
 import (
-	sitter "github.com/tree-sitter/go-tree-sitter"
 	golang "github.com/tree-sitter/tree-sitter-go/bindings/go"
 )
 
 type goLanguage struct {
-	grammar *sitter.Language
+	grammar syntaxLanguage
 	rules   structureRules
 }
 
 func newGoLanguage() languageAdapter {
 	return &goLanguage{
-		grammar: sitter.NewLanguage(golang.Language()),
+		grammar: newSyntaxLanguage(golang.Language()),
 		rules: structureRules{
 			structuralTypes:       newStringSet("import_declaration", "function_declaration", "method_declaration", "type_declaration", "var_declaration", "const_declaration"),
 			contextTypes:          newStringSet("function_declaration", "method_declaration", "type_declaration", "var_declaration", "const_declaration"),
@@ -28,19 +27,22 @@ func newGoLanguage() languageAdapter {
 	}
 }
 
-func (*goLanguage) ID() string                         { return "go" }
-func (language *goLanguage) Grammar() *sitter.Language { return language.grammar }
-func (language *goLanguage) Rules() *structureRules    { return &language.rules }
+func (*goLanguage) ID() string                       { return "go" }
+func (language *goLanguage) Grammar() syntaxLanguage { return language.grammar }
+func (language *goLanguage) Parse(content string) (*syntaxTree, error) {
+	return parseSyntaxTree(language.grammar, content)
+}
+func (language *goLanguage) Rules() *structureRules { return &language.rules }
 func (language *goLanguage) Navigation() navigationAdapter {
 	return goNavigationAdapter(&language.rules)
 }
-func (language *goLanguage) Outline(root *sitter.Node, content string) []Symbol {
+func (language *goLanguage) Outline(root *syntaxNode, content string) []Symbol {
 	return outlineGo(root, content, &language.rules)
 }
 
-func outlineGo(root *sitter.Node, content string, config *structureRules) []Symbol {
+func outlineGo(root *syntaxNode, content string, config *structureRules) []Symbol {
 	var out []Symbol
-	for _, child := range namedChildren(root) {
+	for _, child := range root.NamedChildren() {
 		switch child.Kind() {
 		case "function_declaration":
 			out = append(out, symbolFrom("func", extractNodeName(child, content, config), child, content))
@@ -60,22 +62,22 @@ func outlineGo(root *sitter.Node, content string, config *structureRules) []Symb
 
 // goReceiver renders a method's receiver type as a "(*Type)." prefix so methods
 // read as members of their type even though Go declares them at file scope.
-func goReceiver(method *sitter.Node, content string) string {
+func goReceiver(method *syntaxNode, _ string) string {
 	recv := method.ChildByFieldName("receiver")
 	if recv == nil {
 		return ""
 	}
-	for _, pd := range namedChildren(recv) {
+	for _, pd := range recv.NamedChildren() {
 		if t := pd.ChildByFieldName("type"); t != nil {
-			return "(" + nodeText(t, content) + ")."
+			return "(" + t.Text() + ")."
 		}
 	}
 	return ""
 }
 
-func goTypes(decl *sitter.Node, content string, config *structureRules) []Symbol {
+func goTypes(decl *syntaxNode, content string, config *structureRules) []Symbol {
 	var out []Symbol
-	for _, spec := range namedChildren(decl) {
+	for _, spec := range decl.NamedChildren() {
 		if spec.Kind() != "type_spec" && spec.Kind() != "type_alias" {
 			continue
 		}
@@ -98,9 +100,9 @@ func goTypes(decl *sitter.Node, content string, config *structureRules) []Symbol
 	return out
 }
 
-func goInterfaceMembers(iface *sitter.Node, content string, config *structureRules) []Symbol {
+func goInterfaceMembers(iface *syntaxNode, content string, config *structureRules) []Symbol {
 	var out []Symbol
-	for _, m := range namedChildren(iface) {
+	for _, m := range iface.NamedChildren() {
 		if m.Kind() == "method_elem" || m.Kind() == "method_spec" {
 			out = append(out, symbolFrom("method", extractNodeName(m, content, config), m, content))
 		}
@@ -108,15 +110,15 @@ func goInterfaceMembers(iface *sitter.Node, content string, config *structureRul
 	return out
 }
 
-func goValues(decl *sitter.Node, content string, label string) []Symbol {
+func goValues(decl *syntaxNode, content string, label string) []Symbol {
 	var out []Symbol
-	for _, spec := range namedChildren(decl) {
+	for _, spec := range decl.NamedChildren() {
 		if spec.Kind() != "const_spec" && spec.Kind() != "var_spec" {
 			continue
 		}
-		for _, id := range namedChildren(spec) {
+		for _, id := range spec.NamedChildren() {
 			if id.Kind() == "identifier" {
-				out = append(out, symbolFrom(label, nodeText(id, content), spec, content))
+				out = append(out, symbolFrom(label, id.Text(), spec, content))
 			}
 		}
 	}

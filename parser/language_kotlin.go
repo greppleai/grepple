@@ -4,17 +4,16 @@ import (
 	"strings"
 
 	kotlin "github.com/tree-sitter-grammars/tree-sitter-kotlin/bindings/go"
-	sitter "github.com/tree-sitter/go-tree-sitter"
 )
 
 type kotlinLanguage struct {
-	grammar *sitter.Language
+	grammar syntaxLanguage
 	rules   structureRules
 }
 
 func newKotlinLanguage() languageAdapter {
 	return &kotlinLanguage{
-		grammar: sitter.NewLanguage(kotlin.Language()),
+		grammar: newSyntaxLanguage(kotlin.Language()),
 		rules: structureRules{
 			structuralTypes:       newStringSet("import_header", "class_declaration", "object_declaration", "function_declaration", "property_declaration"),
 			contextTypes:          newStringSet("class_declaration", "object_declaration", "function_declaration", "property_declaration"),
@@ -30,19 +29,22 @@ func newKotlinLanguage() languageAdapter {
 	}
 }
 
-func (*kotlinLanguage) ID() string                         { return "kotlin" }
-func (language *kotlinLanguage) Grammar() *sitter.Language { return language.grammar }
-func (language *kotlinLanguage) Rules() *structureRules    { return &language.rules }
+func (*kotlinLanguage) ID() string                       { return "kotlin" }
+func (language *kotlinLanguage) Grammar() syntaxLanguage { return language.grammar }
+func (language *kotlinLanguage) Parse(content string) (*syntaxTree, error) {
+	return parseSyntaxTree(language.grammar, content)
+}
+func (language *kotlinLanguage) Rules() *structureRules { return &language.rules }
 func (language *kotlinLanguage) Navigation() navigationAdapter {
 	return kotlinNavigationAdapter(&language.rules)
 }
-func (language *kotlinLanguage) Outline(root *sitter.Node, content string) []Symbol {
+func (language *kotlinLanguage) Outline(root *syntaxNode, content string) []Symbol {
 	return outlineKotlin(root, content, &language.rules)
 }
 
-func outlineKotlin(root *sitter.Node, content string, config *structureRules) []Symbol {
+func outlineKotlin(root *syntaxNode, content string, config *structureRules) []Symbol {
 	var out []Symbol
-	for _, child := range namedChildren(root) {
+	for _, child := range root.NamedChildren() {
 		switch child.Kind() {
 		case "class_declaration":
 			kind := "class"
@@ -65,9 +67,9 @@ func outlineKotlin(root *sitter.Node, content string, config *structureRules) []
 	return out
 }
 
-func kotlinMembers(node *sitter.Node, content string, config *structureRules) []Symbol {
-	var body *sitter.Node
-	for _, child := range namedChildren(node) {
+func kotlinMembers(node *syntaxNode, content string, config *structureRules) []Symbol {
+	var body *syntaxNode
+	for _, child := range node.NamedChildren() {
 		if child.Kind() == "class_body" || child.Kind() == "enum_class_body" {
 			body = child
 			break
@@ -77,7 +79,7 @@ func kotlinMembers(node *sitter.Node, content string, config *structureRules) []
 		return nil
 	}
 	var out []Symbol
-	for _, m := range namedChildren(body) {
+	for _, m := range body.NamedChildren() {
 		switch m.Kind() {
 		case "function_declaration":
 			out = append(out, symbolFrom("fun", extractNodeName(m, content, config), m, content))
@@ -90,11 +92,11 @@ func kotlinMembers(node *sitter.Node, content string, config *structureRules) []
 
 // kotlinPropertyName digs the variable name out of a property_declaration, whose
 // name sits inside a variable_declaration child rather than a "name" field.
-func kotlinPropertyName(node *sitter.Node, content string, config *structureRules) string {
+func kotlinPropertyName(node *syntaxNode, content string, config *structureRules) string {
 	if name := extractNodeName(node, content, config); name != "" {
 		return name
 	}
-	for _, child := range namedChildren(node) {
+	for _, child := range node.NamedChildren() {
 		if child.Kind() == "variable_declaration" {
 			return extractNodeName(child, content, config)
 		}

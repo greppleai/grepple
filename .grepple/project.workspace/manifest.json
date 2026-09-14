@@ -27,14 +27,14 @@
     "modules": 2,
     "packages": 16,
     "sourceFiles": 146,
-    "declarations": 380,
-    "exportedFunctions": 116,
+    "declarations": 385,
+    "exportedFunctions": 115,
     "fiberRoutes": 0,
     "localImports": 22,
-    "standardLibraryImports": 141,
+    "standardLibraryImports": 142,
     "externalModuleEdges": 15
   },
-  "semanticModelDigest": "sha256:60231ebfbb1fcf6765287ee8b6c5f2a7a4ac8d917989f0680b7eb5ddd990643e",
+  "semanticModelDigest": "sha256:ec24453724935d44d80fea1ee115a636ea66f6b4a7b0307fd7445c6f103b25ec",
   "modules": [
     {
       "path": "github.com/greppleai/grepple",
@@ -303,8 +303,8 @@
           "documentation": "Package parser provides application source classification and structural parsing.",
           "main": false,
           "sourceFiles": 32,
-          "declarations": 56,
-          "exportedFunctions": 21,
+          "declarations": 61,
+          "exportedFunctions": 20,
           "fiberRoutes": 0,
           "routes": [],
           "localImports": [],
@@ -322,7 +322,8 @@
             "sync",
             "sync/atomic",
             "unicode",
-            "unicode/utf8"
+            "unicode/utf8",
+            "unsafe"
           ],
           "externalImports": [
             {

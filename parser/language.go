@@ -1,7 +1,6 @@
 package parser
 
 //go:generate go run ./internal/generate
-import sitter "github.com/tree-sitter/go-tree-sitter"
 
 // LanguageCapabilities describes one Tree-sitter-backed application language.
 // Returned extension slices are copies and safe for callers to modify.
@@ -74,10 +73,11 @@ type structureRules struct {
 
 type languageAdapter interface {
 	ID() string
-	Grammar() *sitter.Language
+	Grammar() syntaxLanguage
+	Parse(string) (*syntaxTree, error)
 	Rules() *structureRules
 	Navigation() navigationAdapter
-	Outline(root *sitter.Node, content string) []Symbol
+	Outline(root *syntaxNode, content string) []Symbol
 }
 
 var languageAdapters = buildLanguageAdapters(
@@ -153,8 +153,8 @@ func enrichLanguageCapabilities(capability LanguageCapabilities) LanguageCapabil
 	if generated, ok := generatedLanguageMetadata[capability.ID]; ok {
 		capability.GrammarFingerprint = generated.fingerprint
 	}
-	if adapter := adapterForLanguage(capability.ID); adapter != nil && adapter.Grammar() != nil {
-		capability.GrammarABI = adapter.Grammar().AbiVersion()
+	if adapter := adapterForLanguage(capability.ID); adapter != nil && adapter.Grammar().valid() {
+		capability.GrammarABI = adapter.Grammar().abiVersion()
 	}
 	return capability
 }
@@ -208,11 +208,11 @@ func adapterForLanguage(id string) languageAdapter {
 	return languageAdapters[id]
 }
 
-func descendantName(node *sitter.Node, content string, candidates stringSet) string {
+func descendantName(node *syntaxNode, content string, candidates stringSet) string {
 	if candidates.contains(node.Kind()) {
-		return nodeText(node, content)
+		return node.Text()
 	}
-	for _, child := range namedChildren(node) {
+	for _, child := range node.NamedChildren() {
 		if name := descendantName(child, content, candidates); name != "" {
 			return name
 		}

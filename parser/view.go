@@ -4,8 +4,6 @@ import (
 	"errors"
 	"sync"
 	"sync/atomic"
-
-	sitter "github.com/tree-sitter/go-tree-sitter"
 )
 
 // ErrDocumentClosed indicates that a read view was requested after its document closed.
@@ -34,7 +32,7 @@ type viewSnapshotKey struct {
 // acquire the document lock because Document.Read holds it for the whole view.
 type ViewNode struct {
 	view      DocumentView
-	raw       *sitter.Node
+	raw       *syntaxNode
 	fieldName string
 }
 
@@ -250,7 +248,7 @@ func (n ViewNode) Snapshot() (SyntaxNode, bool) {
 }
 
 func (n ViewNode) snapshot() SyntaxNode {
-	key := viewSnapshotKey{id: n.raw.Id(), field: n.fieldName}
+	key := viewSnapshotKey{id: n.raw.ID(), field: n.fieldName}
 	n.view.state.mu.Lock()
 	cached, ok := n.view.state.snapshots[key]
 	n.view.state.mu.Unlock()

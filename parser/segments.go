@@ -3,8 +3,6 @@ package parser
 import (
 	"sort"
 	"strings"
-
-	sitter "github.com/tree-sitter/go-tree-sitter"
 )
 
 // BuildSegments constructs structural segments for content using its detected
@@ -41,7 +39,7 @@ func buildPlainTextSegments(hits map[int]bool, maxSegments int) []Segment {
 	return segments
 }
 
-func buildASTSegments(root *sitter.Node, content string, hits matchLines, config *structureRules, maxSegments int) []Segment {
+func buildASTSegments(root *syntaxNode, content string, hits matchLines, config *structureRules, maxSegments int) []Segment {
 	// Split the file once and thread it through segment building. summarizeNode
 	// used to re-split the whole file on every call, which is O(summaries × lines).
 	lines := splitLines(content)
@@ -50,7 +48,7 @@ func buildASTSegments(root *sitter.Node, content string, hits matchLines, config
 
 	var segments []Segment
 	for index, node := range topLevel {
-		start, end := nodeStart(node), nodeEnd(node)
+		start, end := node.StartLine(), node.EndLine()
 		matchStart := leadingCommentStart(node)
 		if hits.hitsRange(matchStart, end) {
 			segments = append(segments, buildMatchingStructureSegments(node, content, lines, hits, config)...)
@@ -66,9 +64,9 @@ func buildASTSegments(root *sitter.Node, content string, hits matchLines, config
 
 // nonPunctuationChildren returns root's named children with punctuation nodes
 // (braces, parens, commas) dropped.
-func nonPunctuationChildren(root *sitter.Node) []*sitter.Node {
-	var topLevel []*sitter.Node
-	for _, node := range namedChildren(root) {
+func nonPunctuationChildren(root *syntaxNode) []*syntaxNode {
+	var topLevel []*syntaxNode
+	for _, node := range root.NamedChildren() {
 		if !isPunctuation(node) {
 			topLevel = append(topLevel, node)
 		}
@@ -78,10 +76,10 @@ func nonPunctuationChildren(root *sitter.Node) []*sitter.Node {
 
 // matchedTopLevelIndexes returns the indexes of the top-level nodes whose
 // line range contains a hit.
-func matchedTopLevelIndexes(topLevel []*sitter.Node, hits matchLines) []int {
+func matchedTopLevelIndexes(topLevel []*syntaxNode, hits matchLines) []int {
 	var matched []int
 	for index, node := range topLevel {
-		if hits.hitsRange(leadingCommentStart(node), nodeEnd(node)) {
+		if hits.hitsRange(leadingCommentStart(node), node.EndLine()) {
 			matched = append(matched, index)
 		}
 	}
@@ -90,18 +88,18 @@ func matchedTopLevelIndexes(topLevel []*sitter.Node, hits matchLines) []int {
 
 // leadingCommentStart extends a declaration to an attached leading comment block.
 // Comments and declaration metadata may be adjacent to the declaration or separated by one blank line.
-func leadingCommentStart(node *sitter.Node) int {
-	start := nodeStart(node)
+func leadingCommentStart(node *syntaxNode) int {
+	start := node.StartLine()
 	for previous := node.PrevNamedSibling(); previous != nil && isLeadingAttachmentNode(previous); previous = previous.PrevNamedSibling() {
-		if start-nodeEnd(previous) > 2 || isTrailingComment(previous) {
+		if start-previous.EndLine() > 2 || isTrailingComment(previous) {
 			break
 		}
-		start = nodeStart(previous)
+		start = previous.StartLine()
 	}
 	return start
 }
 
-func isCommentNode(node *sitter.Node) bool {
+func isCommentNode(node *syntaxNode) bool {
 	switch node.Kind() {
 	case "comment", "line_comment", "block_comment", "multiline_comment", "documentation_comment", "doc_comment":
 		return true
@@ -109,7 +107,7 @@ func isCommentNode(node *sitter.Node) bool {
 	return false
 }
 
-func isLeadingAttachmentNode(node *sitter.Node) bool {
+func isLeadingAttachmentNode(node *syntaxNode) bool {
 	if isCommentNode(node) {
 		return true
 	}
@@ -120,9 +118,9 @@ func isLeadingAttachmentNode(node *sitter.Node) bool {
 	return false
 }
 
-func isTrailingComment(comment *sitter.Node) bool {
+func isTrailingComment(comment *syntaxNode) bool {
 	previous := comment.PrevNamedSibling()
-	return previous != nil && !isCommentNode(previous) && nodeEnd(previous) == nodeStart(comment)
+	return previous != nil && !isCommentNode(previous) && previous.EndLine() == comment.StartLine()
 }
 
 // uncoveredLineSegments appends a lines segment for every hit not already
@@ -152,11 +150,11 @@ func nearMatchedTopLevel(index int, matchedIndexes []int) bool {
 	return false
 }
 
-func buildMatchingStructureSegments(node *sitter.Node, content string, lines []string, hits matchLines, config *structureRules) []Segment {
+func buildMatchingStructureSegments(node *syntaxNode, content string, lines []string, hits matchLines, config *structureRules) []Segment {
 	start := leadingCommentStart(node)
-	declarationStart := nodeStart(node)
+	declarationStart := node.StartLine()
 	node = unwrapExport(node, config)
-	end := nodeEnd(node)
+	end := node.EndLine()
 	if shouldCompactJSXFunction(node, hits, config) {
 		return buildCompactFunctionSegments(node, content, lines, hits, config, start, declarationStart)
 	}
@@ -179,10 +177,10 @@ func buildMatchingStructureSegments(node *sitter.Node, content string, lines []s
 // unwrapExport descends through export wrappers to the declaration they
 // export (the container or function inside), returning the node itself when
 // it is not an export wrapper.
-func unwrapExport(node *sitter.Node, config *structureRules) *sitter.Node {
+func unwrapExport(node *syntaxNode, config *structureRules) *syntaxNode {
 	for config.exportTypes.contains(node.Kind()) {
 		next := node
-		for _, child := range namedChildren(node) {
+		for _, child := range node.NamedChildren() {
 			if config.containerTypes.contains(child.Kind()) || config.functionLikeTypes.contains(child.Kind()) {
 				next = child
 				break
@@ -198,9 +196,9 @@ func unwrapExport(node *sitter.Node, config *structureRules) *sitter.Node {
 
 // anyChildHasMatch reports whether any structural child's line range contains
 // a hit.
-func anyChildHasMatch(children []*sitter.Node, hits matchLines) bool {
+func anyChildHasMatch(children []*syntaxNode, hits matchLines) bool {
 	for _, child := range children {
-		if hits.hitsRange(leadingCommentStart(child), nodeEnd(child)) {
+		if hits.hitsRange(leadingCommentStart(child), child.EndLine()) {
 			return true
 		}
 	}
@@ -209,10 +207,10 @@ func anyChildHasMatch(children []*sitter.Node, hits matchLines) bool {
 
 // containerChildSegments renders each structural child: full lines when it
 // contains a match, a one-line summary otherwise.
-func containerChildSegments(children []*sitter.Node, content string, lines []string, hits matchLines) []Segment {
+func containerChildSegments(children []*syntaxNode, content string, lines []string, hits matchLines) []Segment {
 	var segments []Segment
 	for _, child := range children {
-		childStart, childEnd := nodeStart(child), nodeEnd(child)
+		childStart, childEnd := child.StartLine(), child.EndLine()
 		matchStart := leadingCommentStart(child)
 		if hits.hitsRange(matchStart, childEnd) {
 			segments = append(segments, Segment{Kind: "lines", Start: matchStart, End: childEnd})
@@ -223,18 +221,18 @@ func containerChildSegments(children []*sitter.Node, content string, lines []str
 	return segments
 }
 
-func shouldCompactJSXFunction(node *sitter.Node, hits matchLines, config *structureRules) bool {
+func shouldCompactJSXFunction(node *syntaxNode, hits matchLines, config *structureRules) bool {
 	return config.functionLikeTypes.contains(node.Kind()) &&
 		containsNodeType(node, config.jsxElementTypes) &&
 		nodeHasMatchInTypes(node, hits, config.jsxElementTypes) &&
-		nodeEnd(node)-nodeStart(node) >= 6
+		node.EndLine()-node.StartLine() >= 6
 }
 
-func buildCompactFunctionSegments(node *sitter.Node, content string, lines []string, hits matchLines, config *structureRules, start, declarationStart int) []Segment {
-	end := nodeEnd(node)
+func buildCompactFunctionSegments(node *syntaxNode, content string, lines []string, hits matchLines, config *structureRules, start, declarationStart int) []Segment {
+	end := node.EndLine()
 	body := node.ChildByFieldName("body")
 	if body == nil {
-		for _, child := range namedChildren(node) {
+		for _, child := range node.NamedChildren() {
 			if config.blockTypes.contains(child.Kind()) {
 				body = child
 				break
@@ -245,8 +243,8 @@ func buildCompactFunctionSegments(node *sitter.Node, content string, lines []str
 		return []Segment{{Kind: "lines", Start: start, End: end}}
 	}
 	segments := []Segment{{Kind: "lines", Start: start, End: declarationStart}}
-	for _, child := range namedChildren(body) {
-		childStart, childEnd := nodeStart(child), nodeEnd(child)
+	for _, child := range body.NamedChildren() {
+		childStart, childEnd := child.StartLine(), child.EndLine()
 		matchStart := leadingCommentStart(child)
 		if hits.hitsRange(matchStart, childEnd) {
 			if containsNodeType(child, config.jsxElementTypes) {
@@ -279,12 +277,12 @@ func focusedLineSegments(start, end int, hits matchLines) []Segment {
 	return segments
 }
 
-func containsNodeType(node *sitter.Node, types stringSet) bool {
+func containsNodeType(node *syntaxNode, types stringSet) bool {
 	if len(types) == 0 {
 		return false
 	}
 	found := false
-	walkNodes(node, func(candidate *sitter.Node) {
+	node.WalkNamed(func(candidate *syntaxNode) {
 		if !found && types.contains(candidate.Kind()) {
 			found = true
 		}
@@ -292,21 +290,21 @@ func containsNodeType(node *sitter.Node, types stringSet) bool {
 	return found
 }
 
-func nodeHasMatchInTypes(node *sitter.Node, hits matchLines, types stringSet) bool {
+func nodeHasMatchInTypes(node *syntaxNode, hits matchLines, types stringSet) bool {
 	found := false
-	walkNodes(node, func(candidate *sitter.Node) {
-		if !found && types.contains(candidate.Kind()) && hits.hitsRange(nodeStart(candidate), nodeEnd(candidate)) {
+	node.WalkNamed(func(candidate *syntaxNode) {
+		if !found && types.contains(candidate.Kind()) && hits.hitsRange(candidate.StartLine(), candidate.EndLine()) {
 			found = true
 		}
 	})
 	return found
 }
 
-func structuralChildren(node *sitter.Node, config *structureRules) []*sitter.Node {
+func structuralChildren(node *syntaxNode, config *structureRules) []*syntaxNode {
 	if config.classDeclarationTypes.contains(node.Kind()) {
 		body := node.ChildByFieldName("body")
 		if body == nil {
-			for _, child := range namedChildren(node) {
+			for _, child := range node.NamedChildren() {
 				if config.classBodyTypes.contains(child.Kind()) {
 					body = child
 					break
@@ -321,9 +319,9 @@ func structuralChildren(node *sitter.Node, config *structureRules) []*sitter.Nod
 	return childrenInTypes(node, config.contextTypes)
 }
 
-func childrenInTypes(node *sitter.Node, types stringSet) []*sitter.Node {
-	var children []*sitter.Node
-	for _, child := range namedChildren(node) {
+func childrenInTypes(node *syntaxNode, types stringSet) []*syntaxNode {
+	var children []*syntaxNode
+	for _, child := range node.NamedChildren() {
 		if types.contains(child.Kind()) {
 			children = append(children, child)
 		}
@@ -331,14 +329,14 @@ func childrenInTypes(node *sitter.Node, types stringSet) []*sitter.Node {
 	return children
 }
 
-func summarizeNode(node *sitter.Node, content string, lines []string) string {
-	start, end := nodeStart(node), nodeEnd(node)
+func summarizeNode(node *syntaxNode, _ string, lines []string) string {
+	start, end := node.StartLine(), node.EndLine()
 	firstLine := ""
 	if start >= 1 && start <= len(lines) {
 		firstLine = lines[start-1]
 	}
 	if strings.TrimSpace(firstLine) == "" {
-		for _, line := range strings.Split(nodeText(node, content), "\n") {
+		for _, line := range strings.Split(node.Text(), "\n") {
 			if strings.TrimSpace(line) != "" {
 				firstLine = line
 				break

@@ -1,8 +1,6 @@
 package parser
 
-import sitter "github.com/tree-sitter/go-tree-sitter"
-
-func outlineTSJS(root *sitter.Node, content string, config *structureRules) []Symbol {
+func outlineTSJS(root *syntaxNode, content string, config *structureRules) []Symbol {
 	var out []Symbol
 	for _, child := range tsTopLevel(root) {
 		out = append(out, tsSymbolsFor(child, content, config)...)
@@ -12,11 +10,11 @@ func outlineTSJS(root *sitter.Node, content string, config *structureRules) []Sy
 
 // tsTopLevel unwraps `export`/`export default` statements so the inner
 // declaration is treated as a top-level definition.
-func tsTopLevel(root *sitter.Node) []*sitter.Node {
-	var out []*sitter.Node
-	for _, child := range namedChildren(root) {
+func tsTopLevel(root *syntaxNode) []*syntaxNode {
+	var out []*syntaxNode
+	for _, child := range root.NamedChildren() {
 		if child.Kind() == "export_statement" {
-			for _, inner := range namedChildren(child) {
+			for _, inner := range child.NamedChildren() {
 				if tsIsDecl(inner.Kind()) {
 					out = append(out, inner)
 				}
@@ -38,7 +36,7 @@ func tsIsDecl(kind string) bool {
 	return false
 }
 
-func tsSymbolsFor(node *sitter.Node, content string, config *structureRules) []Symbol {
+func tsSymbolsFor(node *syntaxNode, content string, config *structureRules) []Symbol {
 	name := extractNodeName(node, content, config)
 	switch node.Kind() {
 	case "class_declaration", "abstract_class_declaration":
@@ -61,15 +59,15 @@ func tsSymbolsFor(node *sitter.Node, content string, config *structureRules) []S
 	return nil
 }
 
-func tsVariables(decl *sitter.Node, content string, config *structureRules) []Symbol {
+func tsVariables(decl *syntaxNode, content string, config *structureRules) []Symbol {
 	var out []Symbol
-	for _, d := range namedChildren(decl) {
+	for _, d := range decl.NamedChildren() {
 		if d.Kind() != "variable_declarator" {
 			continue
 		}
 		name := ""
 		if n := d.ChildByFieldName("name"); n != nil {
-			name = nodeText(n, content)
+			name = n.Text()
 		}
 		kind := "const"
 		if v := d.ChildByFieldName("value"); v != nil && config.functionLikeTypes.contains(v.Kind()) {
@@ -81,13 +79,13 @@ func tsVariables(decl *sitter.Node, content string, config *structureRules) []Sy
 }
 
 // tsBodyMembers lists the members of a class or interface body.
-func tsBodyMembers(node *sitter.Node, content string, config *structureRules) []Symbol {
+func tsBodyMembers(node *syntaxNode, content string, config *structureRules) []Symbol {
 	body := node.ChildByFieldName("body")
 	if body == nil {
 		return nil
 	}
 	var out []Symbol
-	for _, m := range namedChildren(body) {
+	for _, m := range body.NamedChildren() {
 		switch m.Kind() {
 		case "method_definition", "method_signature":
 			out = append(out, symbolFrom("method", extractNodeName(m, content, config), m, content))

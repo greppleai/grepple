@@ -1,18 +1,17 @@
 package parser
 
 import (
-	sitter "github.com/tree-sitter/go-tree-sitter"
 	rust "github.com/tree-sitter/tree-sitter-rust/bindings/go"
 )
 
 type rustLanguage struct {
-	grammar *sitter.Language
+	grammar syntaxLanguage
 	rules   structureRules
 }
 
 func newRustLanguage() languageAdapter {
 	return &rustLanguage{
-		grammar: sitter.NewLanguage(rust.Language()),
+		grammar: newSyntaxLanguage(rust.Language()),
 		rules: structureRules{
 			structuralTypes:       newStringSet("use_declaration", "function_item", "function_signature_item", "struct_item", "enum_item", "trait_item", "impl_item", "mod_item", "type_item", "const_item", "static_item", "macro_definition"),
 			contextTypes:          newStringSet("function_item", "function_signature_item", "struct_item", "enum_item", "trait_item", "impl_item", "mod_item", "macro_definition"),
@@ -28,17 +27,20 @@ func newRustLanguage() languageAdapter {
 	}
 }
 
-func (*rustLanguage) ID() string                         { return "rust" }
-func (language *rustLanguage) Grammar() *sitter.Language { return language.grammar }
-func (language *rustLanguage) Rules() *structureRules    { return &language.rules }
+func (*rustLanguage) ID() string                       { return "rust" }
+func (language *rustLanguage) Grammar() syntaxLanguage { return language.grammar }
+func (language *rustLanguage) Parse(content string) (*syntaxTree, error) {
+	return parseSyntaxTree(language.grammar, content)
+}
+func (language *rustLanguage) Rules() *structureRules { return &language.rules }
 func (language *rustLanguage) Navigation() navigationAdapter {
 	return rustNavigationAdapter(&language.rules)
 }
-func (language *rustLanguage) Outline(root *sitter.Node, content string) []Symbol {
-	return rustDeclarations(namedChildren(root), content, &language.rules)
+func (language *rustLanguage) Outline(root *syntaxNode, content string) []Symbol {
+	return rustDeclarations(root.NamedChildren(), content, &language.rules)
 }
 
-func rustDeclarations(nodes []*sitter.Node, content string, rules *structureRules) []Symbol {
+func rustDeclarations(nodes []*syntaxNode, content string, rules *structureRules) []Symbol {
 	var symbols []Symbol
 	for _, node := range nodes {
 		kind := rustSymbolKind(node.Kind())
@@ -48,13 +50,13 @@ func rustDeclarations(nodes []*sitter.Node, content string, rules *structureRule
 		name := extractNodeName(node, content, rules)
 		if node.Kind() == "impl_item" {
 			if target := node.ChildByFieldName("type"); target != nil {
-				name = nodeText(target, content)
+				name = target.Text()
 			}
 		}
 		symbol := symbolFrom(kind, name, node, content)
 		if rules.containerTypes.contains(node.Kind()) {
 			if body := rustBody(node); body != nil {
-				symbol.Children = rustDeclarations(namedChildren(body), content, rules)
+				symbol.Children = rustDeclarations(body.NamedChildren(), content, rules)
 			}
 		}
 		symbols = append(symbols, symbol)
@@ -62,11 +64,11 @@ func rustDeclarations(nodes []*sitter.Node, content string, rules *structureRule
 	return symbols
 }
 
-func rustBody(node *sitter.Node) *sitter.Node {
+func rustBody(node *syntaxNode) *syntaxNode {
 	if body := node.ChildByFieldName("body"); body != nil {
 		return body
 	}
-	for _, child := range namedChildren(node) {
+	for _, child := range node.NamedChildren() {
 		if child.Kind() == "declaration_list" {
 			return child
 		}

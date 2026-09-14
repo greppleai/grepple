@@ -1,11 +1,7 @@
 package parser
 
 import (
-	"path"
-	"strconv"
 	"strings"
-
-	sitter "github.com/tree-sitter/go-tree-sitter"
 )
 
 type navigationImport struct {
@@ -26,14 +22,14 @@ func emptyNavigationSourceFacts() (map[string]navigationImport, string, map[stri
 	return make(map[string]navigationImport), "", make(map[string]map[string]navigationBinding)
 }
 
-func navigationReturnBindings(root *sitter.Node, content string, imports map[string]navigationImport, adapter navigationAdapter) map[string]navigationBinding {
+func navigationReturnBindings(root *syntaxNode, content string, imports map[string]navigationImport, adapter navigationAdapter) map[string]navigationBinding {
 	bindings := make(map[string]navigationBinding)
 	ambiguous := make(map[string]bool)
 	collectNavigationReturnBindings(root, "", content, imports, adapter, bindings, ambiguous)
 	return bindings
 }
 
-func collectNavigationReturnBindings(node *sitter.Node, container, content string, imports map[string]navigationImport, adapter navigationAdapter, bindings map[string]navigationBinding, ambiguous map[string]bool) {
+func collectNavigationReturnBindings(node *syntaxNode, container, content string, imports map[string]navigationImport, adapter navigationAdapter, bindings map[string]navigationBinding, ambiguous map[string]bool) {
 	if adapter.IsFieldContainer(node.Kind()) {
 		if name := extractNodeName(node, content, adapter.Rules()); name != "" {
 			container = name
@@ -50,33 +46,9 @@ func collectNavigationReturnBindings(node *sitter.Node, container, content strin
 		}
 		return
 	}
-	for _, child := range namedChildren(node) {
+	for _, child := range node.NamedChildren() {
 		collectNavigationReturnBindings(child, container, content, imports, adapter, bindings, ambiguous)
 	}
-}
-
-func navigationReturnBindingFromFields(node *sitter.Node, content string, imports map[string]navigationImport, fields ...string) navigationBinding {
-	var result *sitter.Node
-	for _, field := range fields {
-		result = node.ChildByFieldName(field)
-		if result != nil {
-			break
-		}
-	}
-	if result == nil {
-		return navigationBinding{}
-	}
-	if result.Kind() == "parameter_list" || result.Kind() == "formal_parameters" {
-		children := namedChildren(result)
-		if len(children) != 1 {
-			return navigationBinding{}
-		}
-		result = children[0]
-		if typed := result.ChildByFieldName("type"); typed != nil {
-			result = typed
-		}
-	}
-	return navigationBindingForType(nodeText(result, content), imports)
 }
 
 func addNavigationReturnBinding(bindings map[string]navigationBinding, ambiguous map[string]bool, name string, binding navigationBinding) {
@@ -98,7 +70,7 @@ func navigationReturnTerminal(name string) string {
 	return name
 }
 
-func addNavigationContainerFields(fields map[string]map[string]navigationBinding, node *sitter.Node, content string, imports map[string]navigationImport, adapter navigationAdapter) {
+func addNavigationContainerFields(fields map[string]map[string]navigationBinding, node *syntaxNode, content string, imports map[string]navigationImport, adapter navigationAdapter) {
 	if !adapter.IsFieldContainer(node.Kind()) {
 		return
 	}
@@ -107,108 +79,37 @@ func addNavigationContainerFields(fields map[string]map[string]navigationBinding
 		return
 	}
 	containerFields := make(map[string]navigationBinding)
-	walkNodes(node, func(current *sitter.Node) {
-		addNavigationFieldBinding(containerFields, current, content, imports)
+	node.WalkNamed(func(current *syntaxNode) {
+		addNavigationFieldBinding(containerFields, current, content, imports, adapter)
 	})
 	if len(containerFields) > 0 {
 		fields[name] = containerFields
 	}
 }
 
-func addNavigationFieldBinding(fields map[string]navigationBinding, node *sitter.Node, content string, imports map[string]navigationImport) {
-	switch node.Kind() {
-	case "field_declaration", "public_field_definition", "field_definition", "property_signature", "abstract_property_signature":
-	default:
+func addNavigationFieldBinding(fields map[string]navigationBinding, node *syntaxNode, content string, imports map[string]navigationImport, adapter navigationAdapter) {
+	if !adapter.IsFieldDeclaration(node.Kind()) {
 		return
 	}
 	typeNode := node.ChildByFieldName("type")
 	if typeNode == nil {
 		return
 	}
-	binding := navigationBindingForType(nodeText(typeNode, content), imports)
-	for _, name := range navigationParameterNames(node, typeNode, content) {
+	binding := navigationBindingForType(typeNode.Text(), imports)
+	for _, name := range adapter.ParameterNames(node, typeNode, content) {
 		fields[name] = binding
 	}
 }
 
-func navigationPackageName(node *sitter.Node, content string) string {
-	for _, child := range namedChildren(node) {
-		if child.Kind() == "package_identifier" || child.Kind() == "identifier" {
-			return nodeText(child, content)
-		}
-	}
-	return ""
-}
-
-func addGoNavigationImport(imports map[string]navigationImport, node *sitter.Node, content string) {
-	pathNode := node.ChildByFieldName("path")
-	if pathNode == nil {
-		return
-	}
-	importPath := unquoteNavigationPath(nodeText(pathNode, content))
-	if importPath == "" {
-		return
-	}
-	alias := path.Base(importPath)
-	if name := node.ChildByFieldName("name"); name != nil {
-		alias = nodeText(name, content)
-	}
-	if alias == "" || alias == "_" || alias == "." {
-		return
-	}
-	imports[alias] = navigationImport{path: importPath, imported: "*"}
-}
-
-func addTypeScriptNavigationImports(imports map[string]navigationImport, node *sitter.Node, content string) {
-	source := node.ChildByFieldName("source")
-	if source == nil {
-		return
-	}
-	importPath := unquoteNavigationPath(nodeText(source, content))
-	walkNodes(node, func(current *sitter.Node) {
-		switch current.Kind() {
-		case "import_specifier":
-			imported := navigationFieldText(current, "name", content)
-			local := navigationFieldText(current, "alias", content)
-			if local == "" {
-				local = imported
-			}
-			if local != "" {
-				imports[local] = navigationImport{path: importPath, imported: imported}
-			}
-		case "namespace_import":
-			if local := navigationFirstIdentifier(current, content); local != "" {
-				imports[local] = navigationImport{path: importPath, imported: "*"}
-			}
-		}
-	})
-}
-
-func navigationFieldText(node *sitter.Node, field, content string) string {
+func navigationFieldText(node *syntaxNode, field, _ string) string {
 	child := node.ChildByFieldName(field)
 	if child == nil {
 		return ""
 	}
-	return nodeText(child, content)
+	return child.Text()
 }
 
-func navigationFirstIdentifier(node *sitter.Node, content string) string {
-	for _, child := range namedChildren(node) {
-		if child.Kind() == "identifier" {
-			return nodeText(child, content)
-		}
-	}
-	return ""
-}
-
-func unquoteNavigationPath(value string) string {
-	if unquoted, err := strconv.Unquote(value); err == nil {
-		return unquoted
-	}
-	return strings.Trim(value, "'\"`")
-}
-
-func navigationCallableBindings(node *sitter.Node, content, container string, imports map[string]navigationImport, returnBindings map[string]navigationBinding, adapter navigationAdapter) map[string]navigationBinding {
+func navigationCallableBindings(node *syntaxNode, content, container string, imports map[string]navigationImport, returnBindings map[string]navigationBinding, adapter navigationAdapter) map[string]navigationBinding {
 	bindings := make(map[string]navigationBinding)
 	if name, binding, ok := adapter.SelfBinding(container); ok {
 		binding.role = "receiver"
@@ -220,52 +121,52 @@ func navigationCallableBindings(node *sitter.Node, content, container string, im
 		if root == nil {
 			continue
 		}
-		walkNodes(root, func(current *sitter.Node) {
-			addNavigationParameterBinding(bindings, current, content, imports)
+		root.WalkNamed(func(current *syntaxNode) {
+			addNavigationParameterBinding(bindings, current, content, imports, adapter)
 		})
 	}
 	addNavigationLocalBindings(bindings, node.ChildByFieldName("body"), content, imports, returnBindings, adapter)
 	return bindings
 }
 
-func addNavigationLocalBindings(bindings map[string]navigationBinding, root *sitter.Node, content string, imports map[string]navigationImport, returnBindings map[string]navigationBinding, adapter navigationAdapter) {
+func addNavigationLocalBindings(bindings map[string]navigationBinding, root *syntaxNode, content string, imports map[string]navigationImport, returnBindings map[string]navigationBinding, adapter navigationAdapter) {
 	if root == nil {
 		return
 	}
-	for _, child := range namedChildren(root) {
+	for _, child := range root.NamedChildren() {
 		if adapter.IsCallable(child) || adapter.IsNestedBindingScope(child.Kind()) {
 			continue
 		}
-		addNavigationVariableBinding(bindings, child, content, imports, returnBindings)
+		addNavigationVariableBinding(bindings, child, content, imports, returnBindings, adapter)
 		addNavigationLocalBindings(bindings, child, content, imports, returnBindings, adapter)
 	}
 }
 
-func mergeNavigationBindingsAfterNode(bindings map[string]navigationBinding, node *sitter.Node, content string, imports map[string]navigationImport, returnBindings map[string]navigationBinding, adapter navigationAdapter) {
+func mergeNavigationBindingsAfterNode(bindings map[string]navigationBinding, node *syntaxNode, content string, imports map[string]navigationImport, returnBindings map[string]navigationBinding, adapter navigationAdapter) {
 	if bindings == nil || adapter.IsCallable(node) || adapter.IsNestedBindingScope(node.Kind()) {
 		return
 	}
 	discovered := make(map[string]navigationBinding)
-	addNavigationVariableBinding(discovered, node, content, imports, returnBindings)
+	addNavigationVariableBinding(discovered, node, content, imports, returnBindings, adapter)
 	addNavigationLocalBindings(discovered, node, content, imports, returnBindings, adapter)
 	for name, binding := range discovered {
 		bindings[name] = binding
 	}
 }
 
-func addNavigationVariableBinding(bindings map[string]navigationBinding, node *sitter.Node, content string, imports map[string]navigationImport, returnBindings map[string]navigationBinding) {
-	switch node.Kind() {
-	case "variable_declarator", "var_spec":
+func addNavigationVariableBinding(bindings map[string]navigationBinding, node *syntaxNode, content string, imports map[string]navigationImport, returnBindings map[string]navigationBinding, adapter navigationAdapter) {
+	switch adapter.VariableBindingKind(node.Kind()) {
+	case "typed":
 		name := node.ChildByFieldName("name")
 		if name == nil {
 			return
 		}
-		binding := navigationNodeBinding(node.ChildByFieldName("type"), node.ChildByFieldName("value"), content, imports, returnBindings)
+		binding := navigationNodeBinding(node.ChildByFieldName("type"), node.ChildByFieldName("value"), content, imports, returnBindings, adapter)
 		if navigationBindingKnown(binding) {
-			addLocalNavigationBinding(bindings, nodeText(name, content), binding, nodeStart(node))
+			addLocalNavigationBinding(bindings, name.Text(), binding, node.StartLine())
 		}
-	case "short_var_declaration":
-		addNavigationShortVariableBindings(bindings, node, content, imports, returnBindings)
+	case "short":
+		addNavigationShortVariableBindings(bindings, node, content, imports, returnBindings, adapter)
 	}
 }
 
@@ -282,50 +183,50 @@ func addLocalNavigationBinding(bindings map[string]navigationBinding, name strin
 	bindings[name] = binding
 }
 
-func navigationNodeBinding(typeNode, valueNode *sitter.Node, content string, imports map[string]navigationImport, returnBindings map[string]navigationBinding) navigationBinding {
+func navigationNodeBinding(typeNode, valueNode *syntaxNode, content string, imports map[string]navigationImport, returnBindings map[string]navigationBinding, adapter navigationAdapter) navigationBinding {
 	if typeNode != nil {
-		return navigationBindingForType(nodeText(typeNode, content), imports)
+		return navigationBindingForType(typeNode.Text(), imports)
 	}
-	return navigationExpressionBinding(valueNode, content, imports, returnBindings)
+	return navigationExpressionBinding(valueNode, content, imports, returnBindings, adapter)
 }
 
-func addNavigationShortVariableBindings(bindings map[string]navigationBinding, node *sitter.Node, content string, imports map[string]navigationImport, returnBindings map[string]navigationBinding) {
+func addNavigationShortVariableBindings(bindings map[string]navigationBinding, node *syntaxNode, content string, imports map[string]navigationImport, returnBindings map[string]navigationBinding, adapter navigationAdapter) {
 	left := node.ChildByFieldName("left")
 	right := node.ChildByFieldName("right")
 	if left == nil || right == nil {
 		return
 	}
-	names := namedChildren(left)
-	values := namedChildren(right)
+	names := left.NamedChildren()
+	values := right.NamedChildren()
 	for index := 0; index < len(names) && index < len(values); index++ {
-		binding := navigationExpressionBinding(values[index], content, imports, returnBindings)
+		binding := navigationExpressionBinding(values[index], content, imports, returnBindings, adapter)
 		if navigationBindingKnown(binding) {
-			addLocalNavigationBinding(bindings, nodeText(names[index], content), binding, nodeStart(node))
+			addLocalNavigationBinding(bindings, names[index].Text(), binding, node.StartLine())
 		}
 	}
 }
 
-func navigationExpressionBinding(node *sitter.Node, content string, imports map[string]navigationImport, returnBindings map[string]navigationBinding) navigationBinding {
+func navigationExpressionBinding(node *syntaxNode, content string, imports map[string]navigationImport, returnBindings map[string]navigationBinding, adapter navigationAdapter) navigationBinding {
 	if node == nil {
 		return navigationBinding{}
 	}
 	for _, field := range []string{"type", "constructor"} {
 		if typeNode := node.ChildByFieldName(field); typeNode != nil {
-			return navigationBindingForType(nodeText(typeNode, content), imports)
+			return navigationBindingForType(typeNode.Text(), imports)
 		}
 	}
-	if binding, ok := navigationCallReturnBinding(node, content, imports, returnBindings); ok {
+	if binding, ok := navigationCallReturnBinding(node, content, imports, returnBindings, adapter); ok {
 		return binding
 	}
-	children := namedChildren(node)
+	children := node.NamedChildren()
 	if len(children) == 1 {
-		return navigationExpressionBinding(children[0], content, imports, returnBindings)
+		return navigationExpressionBinding(children[0], content, imports, returnBindings, adapter)
 	}
 	return navigationBinding{}
 }
 
-func navigationCallReturnBinding(node *sitter.Node, content string, imports map[string]navigationImport, returnBindings map[string]navigationBinding) (navigationBinding, bool) {
-	if node.Kind() != "call_expression" {
+func navigationCallReturnBinding(node *syntaxNode, content string, imports map[string]navigationImport, returnBindings map[string]navigationBinding, adapter navigationAdapter) (navigationBinding, bool) {
+	if !adapter.IsCall(node.Kind()) {
 		return navigationBinding{}, false
 	}
 	target := node.ChildByFieldName("function")
@@ -335,11 +236,11 @@ func navigationCallReturnBinding(node *sitter.Node, content string, imports map[
 	if target == nil {
 		return navigationBinding{}, false
 	}
-	display := strings.Join(strings.Fields(nodeText(target, content)), "")
+	display := strings.Join(strings.Fields(target.Text()), "")
 	if binding, ok := returnBindings[display]; ok {
 		return binding, true
 	}
-	terminal := navigationTerminalName(target, content)
+	terminal := adapter.TerminalName(target, content)
 	if binding, ok := returnBindings[terminal]; ok {
 		return binding, true
 	}
@@ -354,41 +255,23 @@ func navigationCallReturnBinding(node *sitter.Node, content string, imports map[
 	return binding, binding.factoryName != ""
 }
 
-func addNavigationParameterBinding(bindings map[string]navigationBinding, node *sitter.Node, content string, imports map[string]navigationImport) {
-	switch node.Kind() {
-	case "parameter_declaration", "variadic_parameter_declaration", "required_parameter", "optional_parameter":
-	default:
+func addNavigationParameterBinding(bindings map[string]navigationBinding, node *syntaxNode, content string, imports map[string]navigationImport, adapter navigationAdapter) {
+	if !adapter.IsParameter(node.Kind()) {
 		return
 	}
 	typeNode := node.ChildByFieldName("type")
 	if typeNode == nil {
 		return
 	}
-	binding := navigationBindingForType(nodeText(typeNode, content), imports)
+	binding := navigationBindingForType(typeNode.Text(), imports)
 	if binding.typeName == "" {
 		return
 	}
 	binding.role = "parameter"
-	for _, name := range navigationParameterNames(node, typeNode, content) {
-		binding.line = nodeStart(node)
+	for _, name := range adapter.ParameterNames(node, typeNode, content) {
+		binding.line = node.StartLine()
 		bindings[name] = binding
 	}
-}
-
-func navigationParameterNames(node, typeNode *sitter.Node, content string) []string {
-	if name := node.ChildByFieldName("name"); name != nil {
-		return []string{nodeText(name, content)}
-	}
-	if pattern := node.ChildByFieldName("pattern"); pattern != nil {
-		return []string{nodeText(pattern, content)}
-	}
-	var names []string
-	for _, child := range namedChildren(node) {
-		if child.Id() != typeNode.Id() && (child.Kind() == "identifier" || child.Kind() == "field_identifier") {
-			names = append(names, nodeText(child, content))
-		}
-	}
-	return names
 }
 
 func navigationTypeName(value string) string {

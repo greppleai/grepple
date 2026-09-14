@@ -6,8 +6,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-
-	sitter "github.com/tree-sitter/go-tree-sitter"
 )
 
 // NavigationDeclaration describes a callable declaration found by a language adapter.
@@ -117,12 +115,12 @@ func BuildNavigationGraph(content, language, path string) NavigationGraph {
 	if adapter == nil {
 		return NavigationGraph{}
 	}
-	tree, err := parseTree(adapter, content)
+	tree, err := adapter.Parse(content)
 	if err != nil {
 		return NavigationGraph{}
 	}
 	defer tree.Close()
-	return NavigationGraphFromTree(tree.RootNode(), content, language, path)
+	return navigationGraphFromTree(tree.RootNode(), content, language, path)
 }
 
 // NavigationGraphFromDocument builds a graph from an already parsed document.
@@ -136,12 +134,12 @@ func NavigationGraphFromDocument(document *Document, path string) NavigationGrap
 	if document.tree == nil {
 		return NavigationGraph{}
 	}
-	return NavigationGraphFromTree(document.tree.RootNode(), document.source, document.language, path)
+	return navigationGraphFromTree(document.tree.RootNode(), document.source, document.language, path)
 }
 
-// NavigationGraphFromTree builds a graph from an already parsed compatible tree.
+// navigationGraphFromTree builds a graph from an already parsed compatible tree.
 // It allows analyzers to share navigation extraction without parsing source twice.
-func NavigationGraphFromTree(root *sitter.Node, content, language, path string) NavigationGraph {
+func navigationGraphFromTree(root *syntaxNode, content, language, path string) NavigationGraph {
 	adapter := adapterForLanguage(language)
 	navigation := navigationAdapterForLanguage(language)
 	if adapter == nil || navigation == nil || root == nil {
@@ -199,7 +197,7 @@ type navigationWalkContext struct {
 	callable  *NavigationDeclaration
 }
 
-func (c *navigationCollector) walk(node *sitter.Node, context navigationWalkContext) {
+func (c *navigationCollector) walk(node *syntaxNode, context navigationWalkContext) {
 	if c.navigation.IsNestedBindingScope(node.Kind()) && context.callable != nil {
 		context.bindings = cloneNavigationBindings(context.bindings)
 	}
@@ -217,7 +215,7 @@ func cloneNavigationBindings(bindings map[string]navigationBinding) map[string]n
 	return cloned
 }
 
-func (c *navigationCollector) enterNavigationNode(node *sitter.Node, context navigationWalkContext) navigationWalkContext {
+func (c *navigationCollector) enterNavigationNode(node *syntaxNode, context navigationWalkContext) navigationWalkContext {
 	current := context
 	if c.navigation.IsContainer(node.Kind()) {
 		if name := c.navigation.ContainerName(node, c.content, context.envelope); name != "" {
@@ -252,11 +250,11 @@ func (c *navigationCollector) enterNavigationNode(node *sitter.Node, context nav
 	return current
 }
 
-func (c *navigationCollector) addNavigationSignatureBindings(node *sitter.Node, bindings map[string]navigationBinding) {
+func (c *navigationCollector) addNavigationSignatureBindings(node *syntaxNode, bindings map[string]navigationBinding) {
 	body := node.ChildByFieldName("body")
-	walkNodes(node, func(current *sitter.Node) {
+	node.WalkNamed(func(current *syntaxNode) {
 		if body == nil || current.EndByte() <= body.StartByte() {
-			addNavigationParameterBinding(bindings, current, c.content, c.imports)
+			addNavigationParameterBinding(bindings, current, c.content, c.imports, c.navigation)
 		}
 	})
 }
@@ -304,14 +302,14 @@ func (c *navigationCollector) recordNavigationTypeUsages(callable *NavigationDec
 	}
 }
 
-func (c *navigationCollector) navigationDeclarationRange(node *sitter.Node, envelope *navigationEnvelope) (int, int) {
+func (c *navigationCollector) navigationDeclarationRange(node *syntaxNode, envelope *navigationEnvelope) (int, int) {
 	if envelope != nil {
 		return envelope.start, envelope.end
 	}
-	return nodeStart(node), nodeEnd(node)
+	return node.StartLine(), node.EndLine()
 }
 
-func (c *navigationCollector) recordNavigationCall(node *sitter.Node, callable *NavigationDeclaration, bindings map[string]navigationBinding) {
+func (c *navigationCollector) recordNavigationCall(node *syntaxNode, callable *NavigationDeclaration, bindings map[string]navigationBinding) {
 	if !c.navigation.IsCall(node.Kind()) || callable == nil {
 		return
 	}
@@ -320,7 +318,7 @@ func (c *navigationCollector) recordNavigationCall(node *sitter.Node, callable *
 		return
 	}
 	call := NavigationCall{
-		Name: name, Display: display, Qualifier: navigationCallQualifier(display), Language: c.adapter.ID(), Path: c.path, Line: nodeStart(node),
+		Name: name, Display: display, Qualifier: navigationCallQualifier(display), Language: c.adapter.ID(), Path: c.path, Line: node.StartLine(),
 		CallerID: callable.ID, EnclosingStart: callable.Start, EnclosingEnd: callable.End,
 	}
 	applyNavigationCallContext(&call, c.imports, bindings, c.fields)
@@ -328,7 +326,7 @@ func (c *navigationCollector) recordNavigationCall(node *sitter.Node, callable *
 	c.calls = append(c.calls, call)
 }
 
-func (c *navigationCollector) recordNavigationMemberAccess(node *sitter.Node, context navigationWalkContext) {
+func (c *navigationCollector) recordNavigationMemberAccess(node *syntaxNode, context navigationWalkContext) {
 	if context.callable == nil {
 		return
 	}
@@ -346,14 +344,14 @@ func (c *navigationCollector) recordNavigationMemberAccess(node *sitter.Node, co
 	}
 	access := NavigationMemberAccess{
 		CallerID: context.callable.ID, ReceiverType: receiverType, Receiver: syntax.receiver, Member: syntax.member, Operation: syntax.operation,
-		Language: c.adapter.ID(), Path: c.path, Line: nodeStart(node), StartByte: int(node.StartByte()),
+		Language: c.adapter.ID(), Path: c.path, Line: node.StartLine(), StartByte: int(node.StartByte()),
 	}
 	access.ID = navigationStableID("member-access", access.CallerID, strconv.Itoa(access.StartByte), access.Receiver, access.Member, access.Operation)
 	c.memberAccesses = append(c.memberAccesses, access)
 }
 
-func (c *navigationCollector) walkNavigationChildren(node *sitter.Node, context navigationWalkContext) {
-	for _, child := range namedChildren(node) {
+func (c *navigationCollector) walkNavigationChildren(node *syntaxNode, context navigationWalkContext) {
+	for _, child := range node.NamedChildren() {
 		childContext := context
 		if c.navigation.IsWrapper(child.Kind()) {
 			childContext.envelope = c.wrapperEnvelope(child, context.envelope)
@@ -361,16 +359,16 @@ func (c *navigationCollector) walkNavigationChildren(node *sitter.Node, context 
 			childContext.envelope = nil
 		}
 		if c.navigation.IsCallable(child) && childContext.envelope == nil {
-			childContext.envelope = &navigationEnvelope{start: leadingCommentStart(child), end: nodeEnd(child)}
+			childContext.envelope = &navigationEnvelope{start: leadingCommentStart(child), end: child.EndLine()}
 		}
 		c.walk(child, childContext)
 		mergeNavigationBindingsAfterNode(context.bindings, child, c.content, c.imports, c.returnBindings, c.navigation)
 	}
 }
-func (c *navigationCollector) wrapperEnvelope(node *sitter.Node, inherited *navigationEnvelope) *navigationEnvelope {
+func (c *navigationCollector) wrapperEnvelope(node *syntaxNode, inherited *navigationEnvelope) *navigationEnvelope {
 	assignedName := navigationAssignedName(node, c.content)
 	if inherited == nil {
-		return &navigationEnvelope{start: leadingCommentStart(node), end: nodeEnd(node), assignedName: assignedName}
+		return &navigationEnvelope{start: leadingCommentStart(node), end: node.EndLine(), assignedName: assignedName}
 	}
 	wrapped := *inherited
 	if assignedName != "" {
@@ -379,15 +377,15 @@ func (c *navigationCollector) wrapperEnvelope(node *sitter.Node, inherited *navi
 	return &wrapped
 }
 
-func (c *navigationCollector) callName(node *sitter.Node) (string, string) {
-	var target *sitter.Node
+func (c *navigationCollector) callName(node *syntaxNode) (string, string) {
+	var target *syntaxNode
 	for _, field := range []string{"function", "name", "constructor", "type"} {
 		if target = node.ChildByFieldName(field); target != nil {
 			break
 		}
 	}
 	if target == nil {
-		children := namedChildren(node)
+		children := node.NamedChildren()
 		if len(children) > 0 {
 			target = children[0]
 		}
@@ -395,8 +393,8 @@ func (c *navigationCollector) callName(node *sitter.Node) (string, string) {
 	if target == nil {
 		return "", ""
 	}
-	name := navigationTerminalName(target, c.content)
-	display := strings.Join(strings.Fields(nodeText(target, c.content)), " ")
+	name := c.navigation.TerminalName(target, c.content)
+	display := strings.Join(strings.Fields(target.Text()), " ")
 	if len(display) > 80 {
 		display = display[:77] + "..."
 	}
@@ -409,15 +407,4 @@ func navigationCallQualifier(display string) string {
 		return strings.TrimSuffix(display[:index], "?")
 	}
 	return ""
-}
-
-func navigationTerminalName(node *sitter.Node, content string) string {
-	candidate := ""
-	walkNodes(node, func(current *sitter.Node) {
-		switch current.Kind() {
-		case "identifier", "field_identifier", "property_identifier", "type_identifier", "command_name", "word":
-			candidate = nodeText(current, content)
-		}
-	})
-	return candidate
 }

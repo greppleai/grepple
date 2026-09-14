@@ -1,18 +1,17 @@
 package parser
 
 import (
-	sitter "github.com/tree-sitter/go-tree-sitter"
 	bash "github.com/tree-sitter/tree-sitter-bash/bindings/go"
 )
 
 type shellLanguage struct {
-	grammar *sitter.Language
+	grammar syntaxLanguage
 	rules   structureRules
 }
 
 func newShellLanguage() languageAdapter {
 	return &shellLanguage{
-		grammar: sitter.NewLanguage(bash.Language()),
+		grammar: newSyntaxLanguage(bash.Language()),
 		rules: structureRules{
 			structuralTypes:       newStringSet("function_definition", "variable_assignment"),
 			contextTypes:          newStringSet("function_definition", "if_statement", "for_statement", "while_statement", "case_statement", "subshell"),
@@ -28,15 +27,18 @@ func newShellLanguage() languageAdapter {
 	}
 }
 
-func (*shellLanguage) ID() string                         { return "shell" }
-func (language *shellLanguage) Grammar() *sitter.Language { return language.grammar }
-func (language *shellLanguage) Rules() *structureRules    { return &language.rules }
+func (*shellLanguage) ID() string                       { return "shell" }
+func (language *shellLanguage) Grammar() syntaxLanguage { return language.grammar }
+func (language *shellLanguage) Parse(content string) (*syntaxTree, error) {
+	return parseSyntaxTree(language.grammar, content)
+}
+func (language *shellLanguage) Rules() *structureRules { return &language.rules }
 func (language *shellLanguage) Navigation() navigationAdapter {
 	return shellNavigationAdapter(&language.rules)
 }
-func (language *shellLanguage) Outline(root *sitter.Node, content string) []Symbol {
+func (language *shellLanguage) Outline(root *syntaxNode, content string) []Symbol {
 	var symbols []Symbol
-	for _, child := range namedChildren(root) {
+	for _, child := range root.NamedChildren() {
 		if child.Kind() == "function_definition" {
 			symbols = append(symbols, symbolFrom("function", extractNodeName(child, content, &language.rules), child, content))
 		}

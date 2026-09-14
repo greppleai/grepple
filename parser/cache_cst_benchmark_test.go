@@ -7,7 +7,6 @@ import (
 	"reflect"
 	"testing"
 
-	sitter "github.com/tree-sitter/go-tree-sitter"
 	"google.golang.org/protobuf/encoding/protowire"
 )
 
@@ -36,7 +35,7 @@ var (
 )
 
 func TestNavigationBenchmarkCSTProtobufRoundTrips(t *testing.T) {
-	tree, err := parseTree(adapterForLanguage("go"), "package sample\nfunc Run() { println(\"ok\") }\n")
+	tree, err := adapterForLanguage("go").Parse("package sample\nfunc Run() { println(\"ok\") }\n")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -63,7 +62,7 @@ func navigationBenchmarkCST(b *testing.B, sources []navigationBenchmarkSource) b
 	b.Helper()
 	result := benchmarkCST{}
 	for fileIndex, source := range sources {
-		tree, err := parseTree(adapterForLanguage("go"), source.content)
+		tree, err := adapterForLanguage("go").Parse(source.content)
 		if err != nil {
 			b.Fatal(err)
 		}
@@ -78,7 +77,7 @@ func benchmarkNavigationCSTProjection(b *testing.B, sources []navigationBenchmar
 	for range b.N {
 		loaded := benchmarkCST{}
 		for fileIndex, source := range sources {
-			tree, err := parseTree(adapterForLanguage("go"), source.content)
+			tree, err := adapterForLanguage("go").Parse(source.content)
 			if err != nil {
 				b.Fatal(err)
 			}
@@ -89,7 +88,7 @@ func benchmarkNavigationCSTProjection(b *testing.B, sources []navigationBenchmar
 	}
 }
 
-func appendNavigationBenchmarkCSTNode(result *benchmarkCST, node *sitter.Node, file, parent, childIndex uint32, field string) {
+func appendNavigationBenchmarkCSTNode(result *benchmarkCST, node *syntaxNode, file, parent, childIndex uint32, field string) {
 	start, end := node.StartPosition(), node.EndPosition()
 	index := uint32(len(result.nodes))
 	result.nodes = append(result.nodes, benchmarkCSTNode{
@@ -103,7 +102,7 @@ func appendNavigationBenchmarkCSTNode(result *benchmarkCST, node *sitter.Node, f
 	}
 }
 
-func benchmarkCSTNodeFlags(node *sitter.Node) uint32 {
+func benchmarkCSTNodeFlags(node *syntaxNode) uint32 {
 	var flags uint32
 	if node.IsNamed() {
 		flags |= 1

@@ -4,8 +4,6 @@ import (
 	"strings"
 	"unicode"
 	"unicode/utf8"
-
-	sitter "github.com/tree-sitter/go-tree-sitter"
 )
 
 // NavigationVisibility classifies whether a declaration is externally visible.
@@ -35,7 +33,7 @@ func pythonNavigationVisibility(name string) NavigationVisibility {
 	return NavigationVisibilityPublic
 }
 
-func javaNavigationVisibility(node *sitter.Node, header string) NavigationVisibility {
+func javaNavigationVisibility(node *syntaxNode, header string) NavigationVisibility {
 	if visibility := visibilityFromModifiers(header, false); visibility != NavigationVisibilityUnknown {
 		return visibility
 	}
@@ -52,7 +50,7 @@ func cSharpNavigationVisibility(header string) NavigationVisibility {
 	return NavigationVisibilityNonPublic
 }
 
-func typeScriptNavigationVisibility(node *sitter.Node, name, header string) NavigationVisibility {
+func typeScriptNavigationVisibility(node *syntaxNode, name, header string) NavigationVisibility {
 	if strings.HasPrefix(name, "#") || navigationHeaderHasWord(header, "private") || navigationHeaderHasWord(header, "protected") {
 		return NavigationVisibilityNonPublic
 	}
@@ -62,7 +60,7 @@ func typeScriptNavigationVisibility(node *sitter.Node, name, header string) Navi
 	return NavigationVisibilityNonPublic
 }
 
-func navigationDeclarationHeader(node *sitter.Node, content string) string {
+func navigationDeclarationHeader(node *syntaxNode, content string) string {
 	end := int(node.EndByte())
 	for _, field := range []string{"body", "consequence"} {
 		if body := node.ChildByFieldName(field); body != nil {
@@ -111,7 +109,7 @@ func navigationHeaderHasWord(header, word string) bool {
 	return false
 }
 
-func navigationHasAncestor(node *sitter.Node, kinds ...string) bool {
+func navigationHasAncestor(node *syntaxNode, kinds ...string) bool {
 	wanted := make(map[string]bool, len(kinds))
 	for _, kind := range kinds {
 		wanted[kind] = true

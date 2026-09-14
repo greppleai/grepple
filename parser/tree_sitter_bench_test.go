@@ -23,7 +23,7 @@ func BenchmarkParseTreePooled(b *testing.B) {
 	cfg := adapterForLanguage("go")
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
-		tree, err := parseTree(cfg, benchGoSource)
+		tree, err := cfg.Parse(benchGoSource)
 		if err != nil {
 			b.Fatal(err)
 		}
@@ -38,7 +38,7 @@ func BenchmarkParseTreeFresh(b *testing.B) {
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
 		parser := sitter.NewParser()
-		if err := parser.SetLanguage(cfg.Grammar()); err != nil {
+		if err := parser.SetLanguage(cfg.Grammar().raw); err != nil {
 			b.Fatal(err)
 		}
 		tree := parser.Parse([]byte(benchGoSource), nil)

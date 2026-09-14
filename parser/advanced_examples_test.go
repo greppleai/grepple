@@ -52,7 +52,7 @@ func TestAdvancedExamplesParseWithoutErrors(t *testing.T) {
 	for _, example := range advancedExamples {
 		t.Run(example.file, func(t *testing.T) {
 			_, content := readAdvancedExample(t, example.file)
-			tree, err := parseTree(adapterForLanguage(example.language), content)
+			tree, err := adapterForLanguage(example.language).Parse(content)
 			if err != nil {
 				t.Fatalf("parse fixture: %v", err)
 			}

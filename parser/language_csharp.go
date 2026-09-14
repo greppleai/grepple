@@ -1,19 +1,18 @@
 package parser
 
 import (
-	sitter "github.com/tree-sitter/go-tree-sitter"
 	csharp "github.com/tree-sitter/tree-sitter-c-sharp/bindings/go"
 )
 
 type cSharpLanguage struct {
-	grammar *sitter.Language
+	grammar syntaxLanguage
 	rules   structureRules
 }
 
 func newCSharpLanguage() languageAdapter {
 	types := newStringSet("class_declaration", "interface_declaration", "struct_declaration", "record_declaration", "enum_declaration")
 	return &cSharpLanguage{
-		grammar: sitter.NewLanguage(csharp.Language()),
+		grammar: newSyntaxLanguage(csharp.Language()),
 		rules: structureRules{
 			structuralTypes:       newStringSet("using_directive", "namespace_declaration", "file_scoped_namespace_declaration", "class_declaration", "interface_declaration", "struct_declaration", "record_declaration", "enum_declaration", "method_declaration", "constructor_declaration", "property_declaration", "field_declaration"),
 			contextTypes:          newStringSet("namespace_declaration", "file_scoped_namespace_declaration", "class_declaration", "interface_declaration", "struct_declaration", "record_declaration", "enum_declaration", "method_declaration", "constructor_declaration", "property_declaration"),
@@ -29,17 +28,20 @@ func newCSharpLanguage() languageAdapter {
 	}
 }
 
-func (*cSharpLanguage) ID() string                         { return "csharp" }
-func (language *cSharpLanguage) Grammar() *sitter.Language { return language.grammar }
-func (language *cSharpLanguage) Rules() *structureRules    { return &language.rules }
+func (*cSharpLanguage) ID() string                       { return "csharp" }
+func (language *cSharpLanguage) Grammar() syntaxLanguage { return language.grammar }
+func (language *cSharpLanguage) Parse(content string) (*syntaxTree, error) {
+	return parseSyntaxTree(language.grammar, content)
+}
+func (language *cSharpLanguage) Rules() *structureRules { return &language.rules }
 func (language *cSharpLanguage) Navigation() navigationAdapter {
 	return cSharpNavigationAdapter(&language.rules)
 }
-func (language *cSharpLanguage) Outline(root *sitter.Node, content string) []Symbol {
-	return cSharpDeclarations(namedChildren(root), content, &language.rules)
+func (language *cSharpLanguage) Outline(root *syntaxNode, content string) []Symbol {
+	return cSharpDeclarations(root.NamedChildren(), content, &language.rules)
 }
 
-func cSharpDeclarations(nodes []*sitter.Node, content string, rules *structureRules) []Symbol {
+func cSharpDeclarations(nodes []*syntaxNode, content string, rules *structureRules) []Symbol {
 	var symbols []Symbol
 	for _, node := range nodes {
 		kind := cSharpSymbolKind(node.Kind())
@@ -53,7 +55,7 @@ func cSharpDeclarations(nodes []*sitter.Node, content string, rules *structureRu
 		symbol := symbolFrom(kind, name, node, content)
 		if kind == "namespace" || rules.classDeclarationTypes.contains(node.Kind()) {
 			if body := cSharpBody(node); body != nil {
-				symbol.Children = cSharpDeclarations(namedChildren(body), content, rules)
+				symbol.Children = cSharpDeclarations(body.NamedChildren(), content, rules)
 			}
 		}
 		symbols = append(symbols, symbol)
@@ -61,11 +63,11 @@ func cSharpDeclarations(nodes []*sitter.Node, content string, rules *structureRu
 	return symbols
 }
 
-func cSharpBody(node *sitter.Node) *sitter.Node {
+func cSharpBody(node *syntaxNode) *syntaxNode {
 	if body := node.ChildByFieldName("body"); body != nil {
 		return body
 	}
-	for _, child := range namedChildren(node) {
+	for _, child := range node.NamedChildren() {
 		if child.Kind() == "declaration_list" || child.Kind() == "enum_member_declaration_list" {
 			return child
 		}

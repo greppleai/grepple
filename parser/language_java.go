@@ -1,18 +1,17 @@
 package parser
 
 import (
-	sitter "github.com/tree-sitter/go-tree-sitter"
 	java "github.com/tree-sitter/tree-sitter-java/bindings/go"
 )
 
 type javaLanguage struct {
-	grammar *sitter.Language
+	grammar syntaxLanguage
 	rules   structureRules
 }
 
 func newJavaLanguage() languageAdapter {
 	return &javaLanguage{
-		grammar: sitter.NewLanguage(java.Language()),
+		grammar: newSyntaxLanguage(java.Language()),
 		rules: structureRules{
 			structuralTypes:       newStringSet("import_declaration", "class_declaration", "interface_declaration", "enum_declaration", "record_declaration", "method_declaration", "constructor_declaration", "field_declaration"),
 			contextTypes:          newStringSet("class_declaration", "interface_declaration", "enum_declaration", "record_declaration", "method_declaration", "constructor_declaration", "field_declaration"),
@@ -28,19 +27,22 @@ func newJavaLanguage() languageAdapter {
 	}
 }
 
-func (*javaLanguage) ID() string                         { return "java" }
-func (language *javaLanguage) Grammar() *sitter.Language { return language.grammar }
-func (language *javaLanguage) Rules() *structureRules    { return &language.rules }
+func (*javaLanguage) ID() string                       { return "java" }
+func (language *javaLanguage) Grammar() syntaxLanguage { return language.grammar }
+func (language *javaLanguage) Parse(content string) (*syntaxTree, error) {
+	return parseSyntaxTree(language.grammar, content)
+}
+func (language *javaLanguage) Rules() *structureRules { return &language.rules }
 func (language *javaLanguage) Navigation() navigationAdapter {
 	return javaNavigationAdapter(&language.rules)
 }
-func (language *javaLanguage) Outline(root *sitter.Node, content string) []Symbol {
+func (language *javaLanguage) Outline(root *syntaxNode, content string) []Symbol {
 	return outlineJava(root, content, &language.rules)
 }
 
-func outlineJava(root *sitter.Node, content string, config *structureRules) []Symbol {
+func outlineJava(root *syntaxNode, content string, config *structureRules) []Symbol {
 	var out []Symbol
-	for _, child := range namedChildren(root) {
+	for _, child := range root.NamedChildren() {
 		if config.classDeclarationTypes.contains(child.Kind()) {
 			out = append(out, javaType(child, content, config))
 		}
@@ -48,7 +50,7 @@ func outlineJava(root *sitter.Node, content string, config *structureRules) []Sy
 	return out
 }
 
-func javaType(node *sitter.Node, content string, config *structureRules) Symbol {
+func javaType(node *syntaxNode, content string, config *structureRules) Symbol {
 	sym := symbolFrom(javaTypeKind(node.Kind()), extractNodeName(node, content, config), node, content)
 	sym.Children = javaMembers(node, content, config)
 	return sym
@@ -67,20 +69,20 @@ func javaTypeKind(kind string) string {
 	}
 }
 
-func javaMembers(node *sitter.Node, content string, config *structureRules) []Symbol {
+func javaMembers(node *syntaxNode, content string, config *structureRules) []Symbol {
 	body := node.ChildByFieldName("body")
 	if body == nil {
 		return nil
 	}
 	var out []Symbol
-	for _, m := range namedChildren(body) {
+	for _, m := range body.NamedChildren() {
 		switch m.Kind() {
 		case "method_declaration":
 			out = append(out, symbolFrom("method", extractNodeName(m, content, config), m, content))
 		case "constructor_declaration":
 			out = append(out, symbolFrom("constructor", extractNodeName(m, content, config), m, content))
 		case "field_declaration":
-			for _, d := range namedChildren(m) {
+			for _, d := range m.NamedChildren() {
 				if d.Kind() == "variable_declarator" {
 					out = append(out, symbolFrom("field", extractNodeName(d, content, config), m, content))
 				}

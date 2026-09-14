@@ -1,7 +1,6 @@
 package parser
 
 import (
-	sitter "github.com/tree-sitter/go-tree-sitter"
 	typescript "github.com/tree-sitter/tree-sitter-typescript/bindings/go"
 )
 
@@ -20,14 +19,14 @@ var (
 
 type typeScriptLanguage struct {
 	id      string
-	grammar *sitter.Language
+	grammar syntaxLanguage
 	rules   structureRules
 }
 
 func newTypeScriptLanguage(id string, tsx bool) languageAdapter {
-	grammar := sitter.NewLanguage(typescript.LanguageTypescript())
+	grammar := newSyntaxLanguage(typescript.LanguageTypescript())
 	if tsx {
-		grammar = sitter.NewLanguage(typescript.LanguageTSX())
+		grammar = newSyntaxLanguage(typescript.LanguageTSX())
 	}
 	return &typeScriptLanguage{
 		id:      id,
@@ -47,12 +46,15 @@ func newTypeScriptLanguage(id string, tsx bool) languageAdapter {
 	}
 }
 
-func (language *typeScriptLanguage) ID() string                { return language.id }
-func (language *typeScriptLanguage) Grammar() *sitter.Language { return language.grammar }
-func (language *typeScriptLanguage) Rules() *structureRules    { return &language.rules }
+func (language *typeScriptLanguage) ID() string              { return language.id }
+func (language *typeScriptLanguage) Grammar() syntaxLanguage { return language.grammar }
+func (language *typeScriptLanguage) Parse(content string) (*syntaxTree, error) {
+	return parseSyntaxTree(language.grammar, content)
+}
+func (language *typeScriptLanguage) Rules() *structureRules { return &language.rules }
 func (language *typeScriptLanguage) Navigation() navigationAdapter {
 	return ecmaNavigationAdapter(&language.rules)
 }
-func (language *typeScriptLanguage) Outline(root *sitter.Node, content string) []Symbol {
+func (language *typeScriptLanguage) Outline(root *syntaxNode, content string) []Symbol {
 	return outlineTSJS(root, content, &language.rules)
 }

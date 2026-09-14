@@ -3,8 +3,6 @@ package parser
 import (
 	"path/filepath"
 	"strings"
-
-	sitter "github.com/tree-sitter/go-tree-sitter"
 )
 
 // OutlineFile parses content according to the file's language and returns its
@@ -28,10 +26,10 @@ func OutlineFileDepth(path, content string, maxDepth int) FileOutline {
 	lang := LanguageFor(path)
 	out := FileOutline{Path: path, Language: lang, Symbols: []Symbol{}}
 	adapter := adapterForLanguage(lang)
-	if adapter == nil || adapter.Grammar() == nil {
+	if adapter == nil || !adapter.Grammar().valid() {
 		return out
 	}
-	tree, err := parseTree(adapter, content)
+	tree, err := adapter.Parse(content)
 	if err != nil {
 		return out
 	}
@@ -57,21 +55,21 @@ func isMarkdownPath(path string) bool {
 
 // symbolFrom builds a Symbol for a node, capturing its line bounds and a compact
 // one-line signature.
-func symbolFrom(kind, name string, node *sitter.Node, content string) Symbol {
+func symbolFrom(kind, name string, node *syntaxNode, content string) Symbol {
 	return Symbol{
 		Kind:      kind,
 		Name:      name,
 		Signature: declSignature(node, content),
-		Start:     nodeStart(node),
-		End:       nodeEnd(node),
+		Start:     node.StartLine(),
+		End:       node.EndLine(),
 	}
 }
 
 // declSignature returns the declaration line of a node with its body stripped:
 // everything up to the first "{" (or first newline for bodyless declarations),
 // whitespace-collapsed onto a single line.
-func declSignature(node *sitter.Node, content string) string {
-	text := nodeText(node, content)
+func declSignature(node *syntaxNode, _ string) string {
+	text := node.Text()
 	if i := strings.IndexByte(text, '{'); i >= 0 {
 		text = text[:i]
 	} else if i := strings.IndexByte(text, '\n'); i >= 0 {

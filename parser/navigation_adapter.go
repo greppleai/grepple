@@ -2,18 +2,16 @@ package parser
 
 import (
 	"strings"
-
-	sitter "github.com/tree-sitter/go-tree-sitter"
 )
 
-func navigationAssignedName(node *sitter.Node, content string) string {
+func navigationAssignedName(node *syntaxNode, _ string) string {
 	if named := node.ChildByFieldName("name"); named != nil {
-		return nodeText(named, content)
+		return named.Text()
 	}
-	for _, child := range namedChildren(node) {
+	for _, child := range node.NamedChildren() {
 		if child.Kind() == "variable_declarator" {
 			if named := child.ChildByFieldName("name"); named != nil {
-				return nodeText(named, content)
+				return named.Text()
 			}
 		}
 	}
@@ -28,22 +26,27 @@ type navigationMemberSyntax struct {
 
 type navigationAdapter interface {
 	Rules() *structureRules
-	IsCallable(*sitter.Node) bool
-	RequiresContainer(*sitter.Node) bool
+	IsCallable(*syntaxNode) bool
+	RequiresContainer(*syntaxNode) bool
 	IsContainer(string) bool
-	ContainerName(*sitter.Node, string, *navigationEnvelope) string
-	DeclarationName(*sitter.Node, string, *navigationEnvelope) string
-	DeclarationKind(*sitter.Node, string) string
+	ContainerName(*syntaxNode, string, *navigationEnvelope) string
+	DeclarationName(*syntaxNode, string, *navigationEnvelope) string
+	DeclarationKind(*syntaxNode, string) string
 	IsCall(string) bool
 	IsWrapper(string) bool
 	IsNestedBindingScope(string) bool
-	MemberAccess(*sitter.Node, string) (navigationMemberSyntax, bool)
-	Visibility(*sitter.Node, string, string) NavigationVisibility
-	SourceFacts(*sitter.Node, string) (map[string]navigationImport, string, map[string]map[string]navigationBinding)
-	ReturnCallableName(*sitter.Node, string, string) string
-	CallableReturnBinding(*sitter.Node, string, map[string]navigationImport) navigationBinding
+	MemberAccess(*syntaxNode, string) (navigationMemberSyntax, bool)
+	Visibility(*syntaxNode, string, string) NavigationVisibility
+	SourceFacts(*syntaxNode, string) (map[string]navigationImport, string, map[string]map[string]navigationBinding)
+	ReturnCallableName(*syntaxNode, string, string) string
+	CallableReturnBinding(*syntaxNode, string, map[string]navigationImport) navigationBinding
 	IsFieldContainer(string) bool
 	SelfBinding(string) (string, navigationBinding, bool)
+	TerminalName(*syntaxNode, string) string
+	IsFieldDeclaration(string) bool
+	IsParameter(string) bool
+	VariableBindingKind(string) string
+	ParameterNames(*syntaxNode, *syntaxNode, string) []string
 }
 
 type navigationAdapterConfig struct {
@@ -53,41 +56,30 @@ type navigationAdapterConfig struct {
 	fieldContainerTypes      stringSet
 	wrapperTypes             stringSet
 	nestedBindingScopeTypes  stringSet
-	isCallable               func(*sitter.Node) bool
-	requiresContainer        func(*sitter.Node) bool
-	containerName            func(*sitter.Node, string, *navigationEnvelope) string
-	declarationName          func(*sitter.Node, string, *navigationEnvelope) string
-	declarationKind          func(*sitter.Node, string) string
-	visibility               func(*sitter.Node, string, string) NavigationVisibility
-	sourceFacts              func(*sitter.Node, string, *navigationAdapterConfig) (map[string]navigationImport, string, map[string]map[string]navigationBinding)
-	returnCallableName       func(*sitter.Node, string, string, *navigationAdapterConfig) string
-	callableReturnBinding    func(*sitter.Node, string, map[string]navigationImport) navigationBinding
+	isCallable               func(*syntaxNode) bool
+	requiresContainer        func(*syntaxNode) bool
+	containerName            func(*syntaxNode, string, *navigationEnvelope) string
+	declarationName          func(*syntaxNode, string, *navigationEnvelope) string
+	declarationKind          func(*syntaxNode, string) string
+	visibility               func(*syntaxNode, string, string) NavigationVisibility
+	sourceFacts              func(*syntaxNode, string, *navigationAdapterConfig) (map[string]navigationImport, string, map[string]map[string]navigationBinding)
+	returnCallableName       func(*syntaxNode, string, string, *navigationAdapterConfig) string
+	callableReturnBinding    func(*syntaxNode, string, map[string]navigationImport) navigationBinding
+	terminalName             func(*syntaxNode, string) string
 	selfBindingName          string
 	selfBindingFromContainer bool
 }
 
-var defaultNavigationWrapperTypes = newStringSet("export_statement", "decorated_definition", "lexical_declaration", "variable_declaration", "variable_declarator", "template_declaration")
-
-var defaultNavigationNestedBindingScopes = newStringSet(
-	"block", "statement_block", "if_statement", "for_statement", "for_in_statement", "while_statement", "do_statement",
-	"switch_statement", "expression_switch_statement", "type_switch_statement", "select_statement", "try_statement", "catch_clause",
-	"finally_clause", "expression_case", "type_case", "communication_case", "switch_case", "switch_default", "case_clause", "default_clause",
-)
-
-var defaultNavigationMemberTypes = newStringSet(
-	"selector_expression", "member_expression", "attribute", "field_access", "member_access_expression", "field_expression", "navigation_expression",
-)
-
 func (adapter *navigationAdapterConfig) Rules() *structureRules { return adapter.rules }
 
-func (adapter *navigationAdapterConfig) IsCallable(node *sitter.Node) bool {
+func (adapter *navigationAdapterConfig) IsCallable(node *syntaxNode) bool {
 	if adapter.isCallable != nil {
 		return adapter.isCallable(node)
 	}
 	return adapter.rules.functionLikeTypes.contains(node.Kind())
 }
 
-func (adapter *navigationAdapterConfig) RequiresContainer(node *sitter.Node) bool {
+func (adapter *navigationAdapterConfig) RequiresContainer(node *syntaxNode) bool {
 	return adapter.requiresContainer != nil && adapter.requiresContainer(node)
 }
 
@@ -95,14 +87,14 @@ func (adapter *navigationAdapterConfig) IsContainer(kind string) bool {
 	return adapter.rules.classDeclarationTypes.contains(kind) || adapter.extraContainerTypes.contains(kind)
 }
 
-func (adapter *navigationAdapterConfig) ContainerName(node *sitter.Node, content string, envelope *navigationEnvelope) string {
+func (adapter *navigationAdapterConfig) ContainerName(node *syntaxNode, content string, envelope *navigationEnvelope) string {
 	if adapter.containerName != nil {
 		return adapter.containerName(node, content, envelope)
 	}
 	return adapter.DeclarationName(node, content, envelope)
 }
 
-func (adapter *navigationAdapterConfig) DeclarationName(node *sitter.Node, content string, envelope *navigationEnvelope) string {
+func (adapter *navigationAdapterConfig) DeclarationName(node *syntaxNode, content string, envelope *navigationEnvelope) string {
 	if envelope != nil && envelope.assignedName != "" {
 		return envelope.assignedName
 	}
@@ -112,7 +104,7 @@ func (adapter *navigationAdapterConfig) DeclarationName(node *sitter.Node, conte
 	return extractNodeName(node, content, adapter.rules)
 }
 
-func (adapter *navigationAdapterConfig) DeclarationKind(node *sitter.Node, container string) string {
+func (adapter *navigationAdapterConfig) DeclarationKind(node *syntaxNode, container string) string {
 	if adapter.declarationKind != nil {
 		return adapter.declarationKind(node, container)
 	}
@@ -137,7 +129,7 @@ func (adapter *navigationAdapterConfig) IsNestedBindingScope(kind string) bool {
 	return defaultNavigationNestedBindingScopes.contains(kind) || adapter.nestedBindingScopeTypes.contains(kind)
 }
 
-func (adapter *navigationAdapterConfig) MemberAccess(node *sitter.Node, content string) (navigationMemberSyntax, bool) {
+func (adapter *navigationAdapterConfig) MemberAccess(node *syntaxNode, _ string) (navigationMemberSyntax, bool) {
 	if node == nil || !defaultNavigationMemberTypes.contains(node.Kind()) {
 		return navigationMemberSyntax{}, false
 	}
@@ -150,7 +142,7 @@ func (adapter *navigationAdapterConfig) MemberAccess(node *sitter.Node, content 
 	}
 	receiver := navigationFirstField(node, "object", "operand", "value", "expression", "primary", "receiver")
 	member := navigationFirstField(node, "field", "property", "attribute", "name", "member")
-	children := namedChildren(node)
+	children := node.NamedChildren()
 	if receiver == nil && len(children) > 0 {
 		receiver = children[0]
 	}
@@ -160,15 +152,15 @@ func (adapter *navigationAdapterConfig) MemberAccess(node *sitter.Node, content 
 	if receiver == nil || member == nil {
 		return navigationMemberSyntax{}, false
 	}
-	receiverText := strings.TrimSpace(nodeText(receiver, content))
-	memberText := strings.TrimSpace(nodeText(member, content))
+	receiverText := strings.TrimSpace(receiver.Text())
+	memberText := strings.TrimSpace(member.Text())
 	if receiverText == "" || memberText == "" || strings.ContainsAny(memberText, ".[]()") {
 		return navigationMemberSyntax{}, false
 	}
 	return navigationMemberSyntax{receiver: receiverText, member: memberText, operation: navigationMemberOperation(node)}, true
 }
 
-func navigationMemberOperation(node *sitter.Node) string {
+func navigationMemberOperation(node *syntaxNode) string {
 	for parent, depth := node.Parent(), 0; parent != nil && depth < 4; parent, depth = parent.Parent(), depth+1 {
 		switch parent.Kind() {
 		case "update_expression", "inc_statement", "dec_statement":
@@ -184,7 +176,7 @@ func navigationMemberOperation(node *sitter.Node) string {
 	return "read"
 }
 
-func navigationFirstField(node *sitter.Node, names ...string) *sitter.Node {
+func navigationFirstField(node *syntaxNode, names ...string) *syntaxNode {
 	for _, name := range names {
 		if child := node.ChildByFieldName(name); child != nil {
 			return child
@@ -193,21 +185,21 @@ func navigationFirstField(node *sitter.Node, names ...string) *sitter.Node {
 	return nil
 }
 
-func (adapter *navigationAdapterConfig) Visibility(node *sitter.Node, name, content string) NavigationVisibility {
+func (adapter *navigationAdapterConfig) Visibility(node *syntaxNode, name, content string) NavigationVisibility {
 	if adapter.visibility == nil {
 		return NavigationVisibilityUnknown
 	}
 	return adapter.visibility(node, name, content)
 }
 
-func (adapter *navigationAdapterConfig) SourceFacts(root *sitter.Node, content string) (map[string]navigationImport, string, map[string]map[string]navigationBinding) {
+func (adapter *navigationAdapterConfig) SourceFacts(root *syntaxNode, content string) (map[string]navigationImport, string, map[string]map[string]navigationBinding) {
 	if adapter.sourceFacts != nil {
 		return adapter.sourceFacts(root, content, adapter)
 	}
 	return emptyNavigationSourceFacts()
 }
 
-func (adapter *navigationAdapterConfig) ReturnCallableName(node *sitter.Node, container, content string) string {
+func (adapter *navigationAdapterConfig) ReturnCallableName(node *syntaxNode, container, content string) string {
 	if adapter.returnCallableName != nil {
 		return adapter.returnCallableName(node, container, content, adapter)
 	}
@@ -218,7 +210,7 @@ func (adapter *navigationAdapterConfig) ReturnCallableName(node *sitter.Node, co
 	return name
 }
 
-func (adapter *navigationAdapterConfig) CallableReturnBinding(node *sitter.Node, content string, imports map[string]navigationImport) navigationBinding {
+func (adapter *navigationAdapterConfig) CallableReturnBinding(node *syntaxNode, content string, imports map[string]navigationImport) navigationBinding {
 	if adapter.callableReturnBinding == nil {
 		return navigationBinding{}
 	}
@@ -234,4 +226,27 @@ func (adapter *navigationAdapterConfig) SelfBinding(container string) (string, n
 		return "", navigationBinding{}, false
 	}
 	return adapter.selfBindingName, navigationBinding{typeName: container}, true
+}
+
+func (adapter *navigationAdapterConfig) TerminalName(node *syntaxNode, content string) string {
+	if adapter.terminalName != nil {
+		return adapter.terminalName(node, content)
+	}
+	return defaultNavigationTerminalName(node)
+}
+
+func (*navigationAdapterConfig) IsFieldDeclaration(kind string) bool {
+	return defaultNavigationFieldDeclarationTypes.contains(kind)
+}
+
+func (*navigationAdapterConfig) IsParameter(kind string) bool {
+	return defaultNavigationParameterTypes.contains(kind)
+}
+
+func (*navigationAdapterConfig) VariableBindingKind(kind string) string {
+	return defaultNavigationVariableBindingKinds[kind]
+}
+
+func (*navigationAdapterConfig) ParameterNames(node, typeNode *syntaxNode, content string) []string {
+	return defaultNavigationParameterNames(node, typeNode, content)
 }

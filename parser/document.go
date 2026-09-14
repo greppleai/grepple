@@ -7,8 +7,6 @@ import (
 	"strings"
 	"sync"
 	"unicode/utf8"
-
-	sitter "github.com/tree-sitter/go-tree-sitter"
 )
 
 // Position is a one-based source position. Column counts Unicode scalar values,
@@ -42,14 +40,14 @@ type Document struct {
 	language   string
 	source     string
 	lineStarts []int
-	tree       *sitter.Tree
+	tree       *syntaxTree
 }
 
 // Node is a language-neutral handle into a Document's syntax tree. It remains
 // usable only until that document is closed. The zero value is an invalid node.
 type Node struct {
 	doc       *Document
-	raw       *sitter.Node
+	raw       *syntaxNode
 	fieldName string
 }
 
@@ -146,11 +144,11 @@ func ParseDocument(language string, content string) (*Document, error) {
 		return nil, fmt.Errorf("source is not valid UTF-8")
 	}
 	adapter := adapterForLanguage(language)
-	if adapter == nil || adapter.Grammar() == nil {
+	if adapter == nil || !adapter.Grammar().valid() {
 		return nil, fmt.Errorf("unsupported language %q", language)
 	}
 	owned := strings.Clone(content)
-	tree, err := parseTree(adapter, owned)
+	tree, err := adapter.Parse(owned)
 	if err != nil {
 		return nil, err
 	}
@@ -254,8 +252,8 @@ func (d *Document) ParseDiagnostics() []ParseDiagnostic {
 		return nil
 	}
 	var diagnostics []ParseDiagnostic
-	var walk func(*sitter.Node)
-	walk = func(node *sitter.Node) {
+	var walk func(*syntaxNode)
+	walk = func(node *syntaxNode) {
 		if node.IsError() || node.IsMissing() {
 			message := "syntax error"
 			if node.IsMissing() {
@@ -534,7 +532,7 @@ func (n Node) read(read func()) {
 	}
 }
 
-func (d *Document) nodeRangeLocked(node *sitter.Node) Range {
+func (d *Document) nodeRangeLocked(node *syntaxNode) Range {
 	start, end := int(node.StartByte()), int(node.EndByte())
 	return Range{
 		StartByte: start,

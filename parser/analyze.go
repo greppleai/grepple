@@ -5,7 +5,7 @@ package parser
 // plain-text segments. grepple does not rank results, so this is used purely to
 // build structural output segments for supported languages.
 func analyzeStructure(adapter languageAdapter, content string, hits map[int]bool, maxSegments int) ([]Segment, bool) {
-	tree, err := parseTree(adapter, content)
+	tree, err := adapter.Parse(content)
 	if err != nil {
 		return nil, false
 	}

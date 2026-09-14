@@ -85,5 +85,71 @@ func TestEveryLanguageAdapterProvidesNavigationSemantics(t *testing.T) {
 		if navigation.Rules() != adapter.Rules() {
 			t.Errorf("language adapter %q navigation uses a different rule set", id)
 		}
+		tree, err := adapter.Parse("")
+		if err != nil {
+			t.Errorf("language adapter %q cannot parse through its syntax backend: %v", id, err)
+			continue
+		}
+		tree.Close()
 	}
+}
+
+func TestTreeSitterTypesRemainInsideSyntaxBackend(t *testing.T) {
+	entries, err := os.ReadDir(".")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, entry := range entries {
+		name := entry.Name()
+		if entry.IsDir() || name == "tree_sitter.go" || !strings.HasSuffix(name, ".go") || strings.HasSuffix(name, "_test.go") {
+			continue
+		}
+		content, err := os.ReadFile(name)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if strings.Contains(string(content), "github.com/tree-sitter/go-tree-sitter") || strings.Contains(string(content), "sitter.") {
+			t.Errorf("%s bypasses the project-owned syntax backend", name)
+		}
+	}
+}
+
+func TestGenericNavigationEnginesContainNoGrammarKinds(t *testing.T) {
+	grammarKinds := make(map[string]bool)
+	for _, metadata := range generatedLanguageMetadata {
+		for kind := range metadata.fields {
+			grammarKinds[kind] = true
+		}
+	}
+	for _, vocabulary := range []string{"call", "declaration", "local", "parameter", "receiver", "result"} {
+		delete(grammarKinds, vocabulary)
+	}
+	for _, path := range []string{"navigation.go", "navigation_context.go"} {
+		assertFileHasNoGrammarKindLiterals(t, path, grammarKinds)
+	}
+}
+
+func assertFileHasNoGrammarKindLiterals(t *testing.T, path string, grammarKinds map[string]bool) {
+	t.Helper()
+	content, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	document, err := ParseDocument("go", string(content))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer document.Close()
+	_ = document.Read(func(view DocumentView) error {
+		WalkNamedView(view.Root(), func(node ViewNode) {
+			if node.Kind() != "interpreted_string_literal" && node.Kind() != "raw_string_literal" {
+				return
+			}
+			value, err := strconv.Unquote(node.Text())
+			if err == nil && grammarKinds[value] {
+				t.Errorf("%s contains grammar kind %q; move syntax policy into the language adapter", path, value)
+			}
+		})
+		return nil
+	})
 }

@@ -71,7 +71,7 @@ func benchmarkTreeSitterMemory(b *testing.B, sources []navigationBenchmarkSource
 	for range b.N {
 		count := 0
 		for _, source := range sources {
-			tree, err := parseTree(adapterForLanguage("go"), source.content)
+			tree, err := adapterForLanguage("go").Parse(source.content)
 			if err != nil {
 				b.Fatal(err)
 			}
@@ -91,7 +91,7 @@ func benchmarkTreeSitterDisk(b *testing.B, sources []navigationBenchmarkSource, 
 			if err != nil {
 				b.Fatal(err)
 			}
-			tree, err := parseTree(adapterForLanguage("go"), string(content))
+			tree, err := adapterForLanguage("go").Parse(string(content))
 			if err != nil {
 				b.Fatal(err)
 			}

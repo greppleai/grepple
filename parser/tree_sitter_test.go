@@ -5,8 +5,6 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
-
-	sitter "github.com/tree-sitter/go-tree-sitter"
 )
 
 func withRepoRoot(t *testing.T) {
@@ -52,12 +50,12 @@ func verifyLanguageParity(t *testing.T, language, path, query, nodeKind string) 
 	}
 	content := string(contentBytes)
 	config := adapterForLanguage(language)
-	tree, err := parseTree(config, content)
+	tree, err := config.Parse(content)
 	if err != nil {
 		t.Fatalf("parse: %v", err)
 	}
 	found := false
-	walkNodes(tree.RootNode(), func(node *sitter.Node) {
+	tree.RootNode().WalkNamed(func(node *syntaxNode) {
 		if node.Kind() == nodeKind {
 			found = true
 		}

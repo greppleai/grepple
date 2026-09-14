@@ -33,9 +33,9 @@ func BenchmarkNativeTreeCache(b *testing.B) {
 }
 
 func benchmarkNativeTreeSerializeMemory(b *testing.B, sources []navigationBenchmarkSource, sourceBytes int) {
-	trees := make([]*sitter.Tree, 0, len(sources))
+	trees := make([]*syntaxTree, 0, len(sources))
 	for _, source := range sources {
-		tree, err := parseTree(adapterForLanguage("go"), source.content)
+		tree, err := adapterForLanguage("go").Parse(source.content)
 		if err != nil {
 			b.Fatal(err)
 		}
@@ -53,7 +53,7 @@ func benchmarkNativeTreeSerializeMemory(b *testing.B, sources []navigationBenchm
 	for range b.N {
 		var last []byte
 		for _, tree := range trees {
-			serialized, err := tree.MarshalBinary()
+			serialized, err := tree.raw.MarshalBinary()
 			if err != nil {
 				b.Fatal(err)
 			}
@@ -87,11 +87,11 @@ func writeNativeTreeBenchmarkCache(b *testing.B, sources []navigationBenchmarkSo
 	b.Helper()
 	content := make([]byte, 0)
 	for _, source := range sources {
-		tree, err := parseTree(adapterForLanguage("go"), source.content)
+		tree, err := adapterForLanguage("go").Parse(source.content)
 		if err != nil {
 			b.Fatal(err)
 		}
-		serialized, err := tree.MarshalBinary()
+		serialized, err := tree.raw.MarshalBinary()
 		tree.Close()
 		if err != nil {
 			b.Fatal(err)
@@ -126,7 +126,7 @@ func benchmarkNativeTreeDisk(b *testing.B, path string, cacheSize, sourceFiles i
 	}
 }
 
-func deserializeNativeTrees(content []byte, grammar *sitter.Language) (int, error) {
+func deserializeNativeTrees(content []byte, grammar syntaxLanguage) (int, error) {
 	count := 0
 	for len(content) > 0 {
 		if len(content) < 4 {
@@ -137,7 +137,7 @@ func deserializeNativeTrees(content []byte, grammar *sitter.Language) (int, erro
 		if length > len(content) {
 			return 0, fmt.Errorf("truncated native tree payload")
 		}
-		tree, err := sitter.DeserializeTree(content[:length], grammar)
+		tree, err := sitter.DeserializeTree(content[:length], grammar.raw)
 		if err != nil {
 			return 0, err
 		}
