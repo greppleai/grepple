@@ -394,6 +394,7 @@ func (index *navigationIndex) addFile(path, cwd string, useCache bool) {
 		index.sourceStats.Recovered++
 	}
 	index.sourceStats.Parsed++
+	enrichNavigationRepositoryIdentity(&graph, cleanPath)
 	index.graph.Merge(graph)
 	index.addExports(graph.Exports, language, cleanPath)
 	index.addFields(graph.Fields, language, cleanPath)
@@ -806,6 +807,40 @@ func localGoImportDirectory(sourceFile, importPath string) (string, bool) {
 		parent := filepath.Dir(directory)
 		if parent == directory {
 			return "", false
+		}
+		directory = parent
+	}
+}
+
+// enrichNavigationRepositoryIdentity applies path-dependent Go module and package
+// identity after path-neutral per-file facts have been loaded from cache.
+func enrichNavigationRepositoryIdentity(graph *parser.NavigationGraph, sourcePath string) {
+	if graph == nil || parser.LanguageFor(sourcePath) != "go" {
+		return
+	}
+	moduleRoot, moduleID, ok := goModuleForFile(sourcePath)
+	if !ok {
+		return
+	}
+	packageID := moduleID
+	if relative, err := filepath.Rel(moduleRoot, filepath.Dir(sourcePath)); err == nil && relative != "." {
+		packageID += "/" + filepath.ToSlash(relative)
+	}
+	for index := range graph.Declarations {
+		graph.Declarations[index].ModuleID = moduleID
+		graph.Declarations[index].PackageID = packageID
+	}
+}
+
+func goModuleForFile(sourcePath string) (root, moduleID string, ok bool) {
+	directory := filepath.Dir(sourcePath)
+	for {
+		if modulePath, found := goModulePath(filepath.Join(directory, "go.mod")); found {
+			return filepath.Clean(directory), modulePath, true
+		}
+		parent := filepath.Dir(directory)
+		if parent == directory {
+			return "", "", false
 		}
 		directory = parent
 	}

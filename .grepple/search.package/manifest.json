@@ -2956,22 +2956,22 @@
       "name": "navigationCandidateResolution",
       "kind": "struct",
       "file": "search/related.go",
-      "line": 680,
-      "endLine": 683,
+      "line": 681,
+      "endLine": 684,
       "underlyingType": "struct{candidates[]navigationDeclaration;confidence string;}",
       "members": [
         {
           "name": "candidates",
           "kind": "property",
-          "line": 681,
-          "endLine": 681,
+          "line": 682,
+          "endLine": 682,
           "result": "[]navigationDeclaration"
         },
         {
           "name": "confidence",
           "kind": "property",
-          "line": 682,
-          "endLine": 682,
+          "line": 683,
+          "endLine": 683,
           "result": "string"
         }
       ]
@@ -3192,8 +3192,8 @@
         {
           "name": "addCalls",
           "kind": "method",
-          "line": 542,
-          "endLine": 561,
+          "line": 543,
+          "endLine": 562,
           "parameters": [
             "[]parser.NavigationCall",
             "[]navigationDeclaration",
@@ -3204,8 +3204,8 @@
         {
           "name": "addDeclarations",
           "kind": "method",
-          "line": 522,
-          "endLine": 540,
+          "line": 523,
+          "endLine": 541,
           "parameters": [
             "[]parser.NavigationDeclaration",
             "string",
@@ -3228,8 +3228,8 @@
         {
           "name": "addFields",
           "kind": "method",
-          "line": 409,
-          "endLine": 419,
+          "line": 410,
+          "endLine": 420,
           "parameters": [
             "[]parser.NavigationField",
             "string",
@@ -3240,7 +3240,7 @@
           "name": "addFile",
           "kind": "method",
           "line": 357,
-          "endLine": 407,
+          "endLine": 408,
           "parameters": [
             "string",
             "string",
@@ -3274,14 +3274,14 @@
         {
           "name": "indexNavigationCallers",
           "kind": "method",
-          "line": 608,
-          "endLine": 624
+          "line": 609,
+          "endLine": 625
         },
         {
           "name": "inferCallReturnReceiver",
           "kind": "method",
-          "line": 576,
-          "endLine": 592,
+          "line": 577,
+          "endLine": 593,
           "parameters": [
             "*navigationCall",
             "string"
@@ -3290,14 +3290,14 @@
         {
           "name": "inferCallReturnReceivers",
           "kind": "method",
-          "line": 563,
-          "endLine": 574
+          "line": 564,
+          "endLine": 575
         },
         {
           "name": "inferCrossFileFieldReceiver",
           "kind": "method",
-          "line": 434,
-          "endLine": 453,
+          "line": 435,
+          "endLine": 454,
           "parameters": [
             "*navigationCall"
           ]
@@ -3305,14 +3305,14 @@
         {
           "name": "inferCrossFileFieldReceivers",
           "kind": "method",
-          "line": 425,
-          "endLine": 432
+          "line": 426,
+          "endLine": 433
         },
         {
           "name": "inferPromotedReceiverTypes",
           "kind": "method",
-          "line": 455,
-          "endLine": 467
+          "line": 456,
+          "endLine": 468
         },
         {
           "name": "inferReExportTargets",
@@ -3337,8 +3337,8 @@
         {
           "name": "promotedTypes",
           "kind": "method",
-          "line": 469,
-          "endLine": 485,
+          "line": 470,
+          "endLine": 486,
           "parameters": [
             "navigationField",
             "map[string]bool"
@@ -3379,8 +3379,8 @@
         {
           "name": "resolveReturnFactory",
           "kind": "method",
-          "line": 594,
-          "endLine": 606,
+          "line": 595,
+          "endLine": 607,
           "parameters": [
             "navigationCall",
             "string"

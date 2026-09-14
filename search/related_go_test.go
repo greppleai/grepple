@@ -450,6 +450,55 @@ func caller5() { focus() }
 		t.Fatalf("result omissions = %#v", result)
 	}
 }
+func TestBuildNavigationGraphEnrichesGoRepositoryIdentity(t *testing.T) {
+	root := t.TempDir()
+	writeGoFixture(t, root, "go.mod", "module example.com/project\n")
+	packageDir := filepath.Join(root, "parser")
+	if err := os.MkdirAll(packageDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	source := writeGoFixture(t, packageDir, "document.go", "package parser\nfunc Parse() {}\n")
+
+	graph := BuildNavigationGraph([]string{source})
+	if len(graph.Declarations) != 1 {
+		t.Fatalf("declarations = %#v", graph.Declarations)
+	}
+	declaration := graph.Declarations[0]
+	if declaration.ModuleID != "example.com/project" || declaration.PackageID != "example.com/project/parser" {
+		t.Fatalf("repository identity = module %q package %q", declaration.ModuleID, declaration.PackageID)
+	}
+}
+
+func TestAnalyzeTypeBoundariesTreatsCurrentModuleImportAsFirstParty(t *testing.T) {
+	root := t.TempDir()
+	writeGoFixture(t, root, "go.mod", "module example.com/project\n")
+	parserDir := filepath.Join(root, "parser")
+	consumerDir := filepath.Join(root, "consumer")
+	if err := os.MkdirAll(parserDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(consumerDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	parserFile := writeGoFixture(t, parserDir, "document.go", "package parser\ntype Document struct{}\nfunc New() Document { return Document{} }\n")
+	first := writeGoFixture(t, consumerDir, "first.go", "package consumer\nimport \"example.com/project/parser\"\nfunc First(v parser.Document) {}\n")
+	second := writeGoFixture(t, consumerDir, "second.go", "package consumer\nimport \"example.com/project/parser\"\nfunc Second(v parser.Document) {}\n")
+
+	graph := BuildNavigationGraph([]string{parserFile, first, second})
+	spreads, err := AnalyzeTypeBoundaries(graph, 2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, spread := range spreads {
+		if spread.ImportPath == "example.com/project/parser" {
+			if spread.Origin != BoundaryTypeOriginFirstParty {
+				t.Fatalf("origin = %q, want first-party: %#v", spread.Origin, spread)
+			}
+			return
+		}
+	}
+	t.Fatalf("first-party parser spread missing: %#v", spreads)
+}
 
 func writeGoFixture(t *testing.T, directory, name, content string) string {
 	t.Helper()
