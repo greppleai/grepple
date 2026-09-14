@@ -8,13 +8,14 @@ import (
 type jsonResultRenderer struct {
 	output      *outputWriter
 	matchesOnly bool
+	metadata    *api.ResultMetadata
 }
 
 func (renderer jsonResultRenderer) Render(results []api.FileResult) error {
 	if renderer.matchesOnly {
-		return renderer.output.writeJSON(map[string]any{"matches": flatMatches(results)})
+		return renderer.output.writeJSON(map[string]any{"matches": flatMatches(results), "metadata": renderer.metadata})
 	}
-	return renderer.output.writeJSON(api.SearchResponse{Results: results, SourceAnalysis: searchSourceAnalysis(results)})
+	return renderer.output.writeJSON(api.SearchResponse{Results: results, Metadata: renderer.metadata, SourceAnalysis: searchSourceAnalysis(results)})
 }
 
 func searchSourceAnalysis(results []api.FileResult) *api.SourceAnalysis {

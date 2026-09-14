@@ -35,7 +35,7 @@ grepple --at path/to/file.go:LINE
 - `unique-terminal` is syntax-based inference, not type checking.
 - `[candidate; try --at PATH:LINE]` is a lead. Inspect candidates before choosing one.
 - Paths passed to the command define the graph universe. Include consumers outside the declaration's package when claiming repository impact.
-- Check discovered/selected/parsed/skipped/failed/recovered source totals. Failed, recovered, or truncated source prevents a complete static-impact claim.
+- Check `metadata.page.complete` plus discovered/selected/parsed/skipped/failed/recovered source totals. Failed, recovered, or truncated source prevents a complete static-impact claim; use `nextCommand` when supplied.
 - Navigation does not prove interface dispatch, reflection, generated calls, runtime registration, data flow, or string-based lookup. Search those mechanisms explicitly when relevant.
 - Package import impact and callable impact differ. Use the workspace summary from `architecture-lookup-discovery` when a public package API or dependency direction changes.
 

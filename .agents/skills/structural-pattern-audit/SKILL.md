@@ -23,7 +23,7 @@ Use text search for names; use GritQL when syntax position and shape determine c
    ```bash
    grepple grit --limit 0 --json $'language go\n`exec.Command($args)`' 'internal/**/*.go'
    ```
-   JSON avoids byte truncation; `--limit 0` removes the default 20-finding page. Scanner/resource truncations can still make the evaluated source universe incomplete.
+   JSON avoids byte truncation; `--limit 0` removes the default 20-finding page. Check `resultMetadata.page.complete`, omissions, diagnostics, and any copyable `nextCommand`; scanner/resource truncations can still make the evaluated source universe incomplete.
 6. Inspect representative positive and negative source ranges. A zero-result query is trustworthy only when diagnostics and truncation records are empty and the intended files were eligible.
 
 ## Safety and precision rules

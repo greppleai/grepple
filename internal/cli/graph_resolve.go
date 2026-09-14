@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/alexflint/go-arg"
+	"github.com/greppleai/grepple/api"
 	"github.com/greppleai/grepple/parser"
 	"github.com/greppleai/grepple/search"
 )
@@ -32,6 +33,7 @@ func (graphResolveArgs) Description() string {
 
 type graphResolveOutput struct {
 	Schema     string                     `json:"schema"`
+	Metadata   *api.ResultMetadata        `json:"metadata,omitempty"`
 	Symbol     string                     `json:"symbol"`
 	Sources    navigationSourceSummary    `json:"sources"`
 	Matches    []graphResolveMatch        `json:"matches"`
@@ -85,16 +87,24 @@ func runGraphResolve(args []string) error {
 	}
 	matches := graphResolveMatches(filtered.Declarations, values.Symbol, values.Paths)
 	output := graphResolveOutput{Schema: navigationResolveSchema, Symbol: values.Symbol, Sources: graph.Sources, Matches: matches, Truncation: graph.Truncation}
+	output.Metadata = graphResultMetadata(values.Paths, len(matches), values.MaxFiles, values.MaxOutputBytes, values.JSON, graph.Sources, graph.Truncation, graphResolveContinuationCommand(values, graph.Truncation))
+	output.Metadata.Scope.Languages = normalizedResultScope(filter.Languages, "")
+	var outputErr error
+	if values.Compact {
+		outputErr = renderCompactGraphResolve(output, values.MaxOutputBytes)
+	} else {
+		encoder := json.NewEncoder(os.Stdout)
+		encoder.SetEscapeHTML(false)
+		encoder.SetIndent("", "  ")
+		outputErr = encoder.Encode(output)
+	}
+	if outputErr != nil {
+		return outputErr
+	}
 	if len(matches) == 0 {
 		setExit(1)
 	}
-	if values.Compact {
-		return renderCompactGraphResolve(output, values.MaxOutputBytes)
-	}
-	encoder := json.NewEncoder(os.Stdout)
-	encoder.SetEscapeHTML(false)
-	encoder.SetIndent("", "  ")
-	return encoder.Encode(output)
+	return nil
 }
 
 func validateGraphResolveArgs(values graphResolveArgs) error {
@@ -171,6 +181,23 @@ func graphResolveScope(paths []string) string {
 	return strings.Join(quoted, " ")
 }
 
+func graphResolveContinuationCommand(values graphResolveArgs, truncation *navigationGraphTruncation) string {
+	if truncation == nil {
+		return ""
+	}
+	parts := []string{"grepple", "graph", "resolve", "--symbol", quoteCommandArgument(values.Symbol), "--max-files", "0", "--json"}
+	for _, language := range values.Languages {
+		parts = append(parts, "--language", quoteCommandArgument(language))
+	}
+	for _, visibility := range values.Visibilities {
+		parts = append(parts, "--visibility", quoteCommandArgument(visibility))
+	}
+	for _, path := range normalizedResultScope(values.Paths, ".") {
+		parts = append(parts, quoteCommandArgument(path))
+	}
+	return strings.Join(parts, " ")
+}
+
 func renderCompactGraphResolve(output graphResolveOutput, maxBytes int) error {
 	writer := stdoutWriter()
 	if maxBytes > 0 {
@@ -181,6 +208,11 @@ func renderCompactGraphResolve(output graphResolveOutput, maxBytes int) error {
 	}
 	if output.Truncation != nil {
 		if err := writer.writeString(fmt.Sprintf("! truncated %s limit=%d skipped=%d\n", output.Truncation.Reason, output.Truncation.Limit, output.Truncation.Skipped)); err != nil {
+			return nil
+		}
+	}
+	if output.Metadata != nil && output.Metadata.NextCommand != "" {
+		if err := writer.writeString("continue: " + output.Metadata.NextCommand + "\n"); err != nil {
 			return nil
 		}
 	}

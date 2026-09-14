@@ -103,6 +103,9 @@ func TestRunGritLocalJSONIsDeterministic(t *testing.T) {
 	if len(response.Findings) != 1 || response.Findings[0].Path != "a.go" || response.Findings[0].Text != "target(value)" {
 		t.Fatalf("response=%#v", response)
 	}
+	if response.ResultMetadata == nil || !response.ResultMetadata.Page.Complete || response.ResultMetadata.Page.Returned != 1 || !response.ResultMetadata.Limits.JSONByteUncapped {
+		t.Fatalf("result metadata=%#v", response.ResultMetadata)
+	}
 	finding := response.Findings[0]
 	if finding.Range.Start.Line != 4 || finding.Range.Start.Column != 2 || finding.Range.StartByte >= finding.Range.EndByte {
 		t.Fatalf("range=%#v", finding.Range)

@@ -99,6 +99,7 @@ type RepoCount struct {
 // SearchResponse is the on-the-wire search response.
 type SearchResponse struct {
 	Results        []FileResult    `json:"results"`
+	Metadata       *ResultMetadata `json:"metadata,omitempty"`
 	SourceAnalysis *SourceAnalysis `json:"sourceAnalysis,omitempty"`
 	RepoCounts     []RepoCount     `json:"repoCounts,omitempty"`
 	ShardErrors    []string        `json:"shardErrors,omitempty"`

@@ -179,10 +179,11 @@ classDiagram
     %% grepple:struct-tag boundariesArgs MinOccurrences "arg:\"--min-occurrences\" placeholder:\"N\" help:\"minimum callers sharing a reported pattern (default 2)\""
     %% grepple:struct-tag boundariesArgs NoCache "arg:\"--no-cache\" help:\"bypass the content-addressed .grepple boundary cache\""
     %% grepple:struct-tag boundariesArgs Paths "arg:\"positional\" placeholder:\"PATH\" help:\"file, directory, or glob to include; defaults to the working directory\""
-    note for boundariesArgs "defined: internal/cli/boundaries.go:19-27; Description@internal/cli/boundaries.go:29-31; JSON@internal/cli/boundaries.go:20; Limit@internal/cli/boundaries.go:23; MaxFiles@internal/cli/boundaries.go:22; MaxOutputBytes@internal/cli/boundaries.go:24; MinOccurrences@internal/cli/boundaries.go:21; NoCache@internal/cli/boundaries.go:25; Paths@internal/cli/boundaries.go:26"
+    note for boundariesArgs "defined: internal/cli/boundaries.go:20-28; Description@internal/cli/boundaries.go:30-32; JSON@internal/cli/boundaries.go:21; Limit@internal/cli/boundaries.go:24; MaxFiles@internal/cli/boundaries.go:23; MaxOutputBytes@internal/cli/boundaries.go:25; MinOccurrences@internal/cli/boundaries.go:22; NoCache@internal/cli/boundaries.go:26; Paths@internal/cli/boundaries.go:27"
     class boundariesOutput {
         +Candidates: []search.BoundaryCandidate
         +Files: int
+        +Metadata: *api.ResultMetadata
         +Paths: []string
         +Schema: string
         +Sources: navigationSourceSummary
@@ -193,12 +194,13 @@ classDiagram
     %% grepple:file boundariesOutput internal/cli/boundaries.go
     %% grepple:struct-tag boundariesOutput Candidates "json:\"candidates\""
     %% grepple:struct-tag boundariesOutput Files "json:\"files\""
+    %% grepple:struct-tag boundariesOutput Metadata "json:\"metadata,omitempty\""
     %% grepple:struct-tag boundariesOutput Paths "json:\"paths\""
     %% grepple:struct-tag boundariesOutput Schema "json:\"schema\""
     %% grepple:struct-tag boundariesOutput Sources "json:\"sources\""
     %% grepple:struct-tag boundariesOutput Truncation "json:\"truncation,omitempty\""
     %% grepple:struct-tag boundariesOutput TypeBoundaries "json:\"typeBoundaries\""
-    note for boundariesOutput "defined: internal/cli/boundaries.go:33-41; Candidates@internal/cli/boundaries.go:38; Files@internal/cli/boundaries.go:36; Paths@internal/cli/boundaries.go:35; Schema@internal/cli/boundaries.go:34; Sources@internal/cli/boundaries.go:37; Truncation@internal/cli/boundaries.go:40; TypeBoundaries@internal/cli/boundaries.go:39"
+    note for boundariesOutput "defined: internal/cli/boundaries.go:34-43; Candidates@internal/cli/boundaries.go:40; Files@internal/cli/boundaries.go:38; Metadata@internal/cli/boundaries.go:36; Paths@internal/cli/boundaries.go:37; Schema@internal/cli/boundaries.go:35; Sources@internal/cli/boundaries.go:39; Truncation@internal/cli/boundaries.go:42; TypeBoundaries@internal/cli/boundaries.go:41"
     class boundaryGraphCache {
         +Digest: string
         +Graph: navigationGraphOutput
@@ -226,11 +228,12 @@ classDiagram
         +OnlyMatching: bool
         +Outline: bool
         +Params: search.Params
+        +ResultMetadata: *api.ResultMetadata
         +Stdin: bool
     }
     <<struct>> cliOptions
     %% grepple:file cliOptions internal/cli/model.go
-    note for cliOptions "defined: internal/cli/model.go:5-24; AnchorLines@internal/cli/model.go:20; AnchorProvider@internal/cli/model.go:19; Anchors@internal/cli/model.go:17; AnchorsDefaulted@internal/cli/model.go:18; Count@internal/cli/model.go:10; CountByRepo@internal/cli/model.go:11; CountSummary@internal/cli/model.go:12; Depth@internal/cli/model.go:15; FilesWithMatches@internal/cli/model.go:13; JSON@internal/cli/model.go:9; LineOnly@internal/cli/model.go:7; MaxOutputBytes@internal/cli/model.go:16; OnlyMatching@internal/cli/model.go:8; Outline@internal/cli/model.go:14; Params@internal/cli/model.go:6; Stdin@internal/cli/model.go:23"
+    note for cliOptions "defined: internal/cli/model.go:8-28; AnchorLines@internal/cli/model.go:23; AnchorProvider@internal/cli/model.go:22; Anchors@internal/cli/model.go:20; AnchorsDefaulted@internal/cli/model.go:21; Count@internal/cli/model.go:13; CountByRepo@internal/cli/model.go:14; CountSummary@internal/cli/model.go:15; Depth@internal/cli/model.go:18; FilesWithMatches@internal/cli/model.go:16; JSON@internal/cli/model.go:12; LineOnly@internal/cli/model.go:10; MaxOutputBytes@internal/cli/model.go:19; OnlyMatching@internal/cli/model.go:11; Outline@internal/cli/model.go:17; Params@internal/cli/model.go:9; ResultMetadata@internal/cli/model.go:24; Stdin@internal/cli/model.go:27"
     class config {
         +RefreshExpiry: int64
         +RefreshToken: string
@@ -379,7 +382,7 @@ classDiagram
     %% grepple:struct-tag graphArgs MaxFiles "arg:\"--max-files\" placeholder:\"N\" help:\"parse at most N discovered files (0 = unlimited)\""
     %% grepple:struct-tag graphArgs MaxOutputBytes "arg:\"--max-output-bytes\" placeholder:\"N\" help:\"cap compact output (default 16384; 0 = unlimited; JSON is uncapped)\""
     %% grepple:struct-tag graphArgs Paths "arg:\"positional\" placeholder:\"PATH\" help:\"file, directory, or glob to include; defaults to the working directory\""
-    note for graphArgs "defined: internal/cli/graph.go:17-23; Description@internal/cli/graph.go:25-27; Compact@internal/cli/graph.go:19; JSON@internal/cli/graph.go:18; MaxFiles@internal/cli/graph.go:20; MaxOutputBytes@internal/cli/graph.go:21; Paths@internal/cli/graph.go:22"
+    note for graphArgs "defined: internal/cli/graph.go:18-24; Description@internal/cli/graph.go:26-28; Compact@internal/cli/graph.go:20; JSON@internal/cli/graph.go:19; MaxFiles@internal/cli/graph.go:21; MaxOutputBytes@internal/cli/graph.go:22; Paths@internal/cli/graph.go:23"
     class graphDiffArgs {
         +Description(): string
         +After: string
@@ -397,12 +400,13 @@ classDiagram
     %% grepple:struct-tag graphDiffArgs JSON "arg:\"--json\" help:\"emit the complete semantic graph diff as JSON\""
     %% grepple:struct-tag graphDiffArgs MaxFiles "arg:\"--max-files\" placeholder:\"N\" help:\"parse at most N files in each tree (0 = unlimited)\""
     %% grepple:struct-tag graphDiffArgs MaxOutputBytes "arg:\"--max-output-bytes\" placeholder:\"N\" help:\"cap compact output (default 16384; 0 = unlimited; JSON is uncapped)\""
-    note for graphDiffArgs "defined: internal/cli/graph_diff.go:16-23; Description@internal/cli/graph_diff.go:25-27; After@internal/cli/graph_diff.go:20; Before@internal/cli/graph_diff.go:19; Compact@internal/cli/graph_diff.go:18; JSON@internal/cli/graph_diff.go:17; MaxFiles@internal/cli/graph_diff.go:21; MaxOutputBytes@internal/cli/graph_diff.go:22"
+    note for graphDiffArgs "defined: internal/cli/graph_diff.go:17-24; Description@internal/cli/graph_diff.go:26-28; After@internal/cli/graph_diff.go:21; Before@internal/cli/graph_diff.go:20; Compact@internal/cli/graph_diff.go:19; JSON@internal/cli/graph_diff.go:18; MaxFiles@internal/cli/graph_diff.go:22; MaxOutputBytes@internal/cli/graph_diff.go:23"
     class graphDiffOutput {
         +AfterFiles: int
         +AfterSources: navigationSourceSummary
         +BeforeFiles: int
         +BeforeSources: navigationSourceSummary
+        +Metadata: *api.ResultMetadata
     }
     <<struct>> graphDiffOutput
     %% grepple:file graphDiffOutput internal/cli/graph_diff.go
@@ -410,7 +414,8 @@ classDiagram
     %% grepple:struct-tag graphDiffOutput AfterSources "json:\"afterSources\""
     %% grepple:struct-tag graphDiffOutput BeforeFiles "json:\"beforeFiles\""
     %% grepple:struct-tag graphDiffOutput BeforeSources "json:\"beforeSources\""
-    note for graphDiffOutput "defined: internal/cli/graph_diff.go:29-35; AfterFiles@internal/cli/graph_diff.go:32; AfterSources@internal/cli/graph_diff.go:33; BeforeFiles@internal/cli/graph_diff.go:30; BeforeSources@internal/cli/graph_diff.go:31"
+    %% grepple:struct-tag graphDiffOutput Metadata "json:\"metadata,omitempty\""
+    note for graphDiffOutput "defined: internal/cli/graph_diff.go:30-37; AfterFiles@internal/cli/graph_diff.go:34; AfterSources@internal/cli/graph_diff.go:35; BeforeFiles@internal/cli/graph_diff.go:32; BeforeSources@internal/cli/graph_diff.go:33; Metadata@internal/cli/graph_diff.go:31"
     class graphQueryArgs {
         +Description(): string
         +At: string
@@ -466,7 +471,7 @@ classDiagram
     %% grepple:struct-tag graphResolveArgs Paths "arg:\"positional\" placeholder:\"PATH\" help:\"graph universe; defaults to the working directory\""
     %% grepple:struct-tag graphResolveArgs Symbol "arg:\"--symbol,required\" placeholder:\"NAME\" help:\"preview exact or terminal-name declaration matches\""
     %% grepple:struct-tag graphResolveArgs Visibilities "arg:\"--visibility,separate\" placeholder:\"LEVEL\" help:\"retain public, non-public, or unknown declarations; repeatable\""
-    note for graphResolveArgs "defined: internal/cli/graph_resolve.go:18-27; Description@internal/cli/graph_resolve.go:29-31; Compact@internal/cli/graph_resolve.go:20; JSON@internal/cli/graph_resolve.go:19; Languages@internal/cli/graph_resolve.go:22; MaxFiles@internal/cli/graph_resolve.go:24; MaxOutputBytes@internal/cli/graph_resolve.go:25; Paths@internal/cli/graph_resolve.go:26; Symbol@internal/cli/graph_resolve.go:21; Visibilities@internal/cli/graph_resolve.go:23"
+    note for graphResolveArgs "defined: internal/cli/graph_resolve.go:19-28; Description@internal/cli/graph_resolve.go:30-32; Compact@internal/cli/graph_resolve.go:21; JSON@internal/cli/graph_resolve.go:20; Languages@internal/cli/graph_resolve.go:23; MaxFiles@internal/cli/graph_resolve.go:25; MaxOutputBytes@internal/cli/graph_resolve.go:26; Paths@internal/cli/graph_resolve.go:27; Symbol@internal/cli/graph_resolve.go:22; Visibilities@internal/cli/graph_resolve.go:24"
     class graphResolveMatch {
         +At: string
         +CalleesCommand: string
@@ -495,9 +500,10 @@ classDiagram
     %% grepple:struct-tag graphResolveMatch Path "json:\"path\""
     %% grepple:struct-tag graphResolveMatch StartLine "json:\"startLine\""
     %% grepple:struct-tag graphResolveMatch Visibility "json:\"visibility\""
-    note for graphResolveMatch "defined: internal/cli/graph_resolve.go:41-54; At@internal/cli/graph_resolve.go:50; CalleesCommand@internal/cli/graph_resolve.go:52; CallersCommand@internal/cli/graph_resolve.go:51; EndLine@internal/cli/graph_resolve.go:48; ID@internal/cli/graph_resolve.go:42; ImpactCommand@internal/cli/graph_resolve.go:53; Kind@internal/cli/graph_resolve.go:44; Language@internal/cli/graph_resolve.go:45; Name@internal/cli/graph_resolve.go:43; Path@internal/cli/graph_resolve.go:46; StartLine@internal/cli/graph_resolve.go:47; Visibility@internal/cli/graph_resolve.go:49"
+    note for graphResolveMatch "defined: internal/cli/graph_resolve.go:43-56; At@internal/cli/graph_resolve.go:52; CalleesCommand@internal/cli/graph_resolve.go:54; CallersCommand@internal/cli/graph_resolve.go:53; EndLine@internal/cli/graph_resolve.go:50; ID@internal/cli/graph_resolve.go:44; ImpactCommand@internal/cli/graph_resolve.go:55; Kind@internal/cli/graph_resolve.go:46; Language@internal/cli/graph_resolve.go:47; Name@internal/cli/graph_resolve.go:45; Path@internal/cli/graph_resolve.go:48; StartLine@internal/cli/graph_resolve.go:49; Visibility@internal/cli/graph_resolve.go:51"
     class graphResolveOutput {
         +Matches: []graphResolveMatch
+        +Metadata: *api.ResultMetadata
         +Schema: string
         +Sources: navigationSourceSummary
         +Symbol: string
@@ -506,11 +512,12 @@ classDiagram
     <<struct>> graphResolveOutput
     %% grepple:file graphResolveOutput internal/cli/graph_resolve.go
     %% grepple:struct-tag graphResolveOutput Matches "json:\"matches\""
+    %% grepple:struct-tag graphResolveOutput Metadata "json:\"metadata,omitempty\""
     %% grepple:struct-tag graphResolveOutput Schema "json:\"schema\""
     %% grepple:struct-tag graphResolveOutput Sources "json:\"sources\""
     %% grepple:struct-tag graphResolveOutput Symbol "json:\"symbol\""
     %% grepple:struct-tag graphResolveOutput Truncation "json:\"truncation,omitempty\""
-    note for graphResolveOutput "defined: internal/cli/graph_resolve.go:33-39; Matches@internal/cli/graph_resolve.go:37; Schema@internal/cli/graph_resolve.go:34; Sources@internal/cli/graph_resolve.go:36; Symbol@internal/cli/graph_resolve.go:35; Truncation@internal/cli/graph_resolve.go:38"
+    note for graphResolveOutput "defined: internal/cli/graph_resolve.go:34-41; Matches@internal/cli/graph_resolve.go:39; Metadata@internal/cli/graph_resolve.go:36; Schema@internal/cli/graph_resolve.go:35; Sources@internal/cli/graph_resolve.go:38; Symbol@internal/cli/graph_resolve.go:37; Truncation@internal/cli/graph_resolve.go:40"
     class gritArgs {
         +Description(): string
         +ExcludeGlobs: []string
@@ -578,11 +585,12 @@ classDiagram
     class jsonResultRenderer {
         +Render([]api.FileResult): error
         -matchesOnly: bool
+        -metadata: *api.ResultMetadata
         -output: *outputWriter
     }
     <<struct>> jsonResultRenderer
     %% grepple:file jsonResultRenderer internal/cli/renderer_json.go
-    note for jsonResultRenderer "defined: internal/cli/renderer_json.go:8-11; Render@internal/cli/renderer_json.go:13-18; matchesOnly@internal/cli/renderer_json.go:10; output@internal/cli/renderer_json.go:9"
+    note for jsonResultRenderer "defined: internal/cli/renderer_json.go:8-12; Render@internal/cli/renderer_json.go:14-19; matchesOnly@internal/cli/renderer_json.go:10; metadata@internal/cli/renderer_json.go:11; output@internal/cli/renderer_json.go:9"
     class languagesArgs {
         +Description(): string
         +JSON: bool
@@ -632,6 +640,7 @@ classDiagram
         +Declarations: []parser.NavigationDeclaration
         +Files: int
         +MemberAccesses: []parser.NavigationMemberAccess
+        +Metadata: *api.ResultMetadata
         +Query: *navigationGraphQuery
         +Schema: string
         +Sources: navigationSourceSummary
@@ -644,12 +653,13 @@ classDiagram
     %% grepple:struct-tag navigationGraphOutput Declarations "json:\"declarations\""
     %% grepple:struct-tag navigationGraphOutput Files "json:\"files\""
     %% grepple:struct-tag navigationGraphOutput MemberAccesses "json:\"memberAccesses,omitempty\""
+    %% grepple:struct-tag navigationGraphOutput Metadata "json:\"metadata,omitempty\""
     %% grepple:struct-tag navigationGraphOutput Query "json:\"query,omitempty\""
     %% grepple:struct-tag navigationGraphOutput Schema "json:\"schema\""
     %% grepple:struct-tag navigationGraphOutput Sources "json:\"sources\""
     %% grepple:struct-tag navigationGraphOutput Truncation "json:\"truncation,omitempty\""
     %% grepple:struct-tag navigationGraphOutput TypeUsages "json:\"typeUsages,omitempty\""
-    note for navigationGraphOutput "defined: internal/cli/graph.go:29-39; Calls@internal/cli/graph.go:34; Declarations@internal/cli/graph.go:33; Files@internal/cli/graph.go:31; MemberAccesses@internal/cli/graph.go:36; Query@internal/cli/graph.go:37; Schema@internal/cli/graph.go:30; Sources@internal/cli/graph.go:32; Truncation@internal/cli/graph.go:38; TypeUsages@internal/cli/graph.go:35"
+    note for navigationGraphOutput "defined: internal/cli/graph.go:30-41; Calls@internal/cli/graph.go:36; Declarations@internal/cli/graph.go:35; Files@internal/cli/graph.go:32; MemberAccesses@internal/cli/graph.go:38; Metadata@internal/cli/graph.go:33; Query@internal/cli/graph.go:39; Schema@internal/cli/graph.go:31; Sources@internal/cli/graph.go:34; Truncation@internal/cli/graph.go:40; TypeUsages@internal/cli/graph.go:37"
     class navigationGraphQuery {
         +Confidences: []string
         +Depth: int
@@ -666,7 +676,7 @@ classDiagram
     %% grepple:struct-tag navigationGraphQuery Languages "json:\"languages,omitempty\""
     %% grepple:struct-tag navigationGraphQuery RootIDs "json:\"rootIds\""
     %% grepple:struct-tag navigationGraphQuery Visibilities "json:\"visibilities,omitempty\""
-    note for navigationGraphQuery "defined: internal/cli/graph.go:41-48; Confidences@internal/cli/graph.go:46; Depth@internal/cli/graph.go:43; Direction@internal/cli/graph.go:42; Languages@internal/cli/graph.go:45; RootIDs@internal/cli/graph.go:44; Visibilities@internal/cli/graph.go:47"
+    note for navigationGraphQuery "defined: internal/cli/graph.go:43-50; Confidences@internal/cli/graph.go:48; Depth@internal/cli/graph.go:45; Direction@internal/cli/graph.go:44; Languages@internal/cli/graph.go:47; RootIDs@internal/cli/graph.go:46; Visibilities@internal/cli/graph.go:49"
     class navigationGraphTruncation {
         +Limit: int
         +Reason: string
@@ -677,7 +687,7 @@ classDiagram
     %% grepple:struct-tag navigationGraphTruncation Limit "json:\"limit\""
     %% grepple:struct-tag navigationGraphTruncation Reason "json:\"reason\""
     %% grepple:struct-tag navigationGraphTruncation Skipped "json:\"skipped\""
-    note for navigationGraphTruncation "defined: internal/cli/graph.go:50-54; Limit@internal/cli/graph.go:52; Reason@internal/cli/graph.go:51; Skipped@internal/cli/graph.go:53"
+    note for navigationGraphTruncation "defined: internal/cli/graph.go:52-56; Limit@internal/cli/graph.go:54; Reason@internal/cli/graph.go:53; Skipped@internal/cli/graph.go:55"
     class navigationSourceSummary {
         +Discovered: int
         +Failed: int
@@ -694,7 +704,7 @@ classDiagram
     %% grepple:struct-tag navigationSourceSummary Recovered "json:\"recovered\""
     %% grepple:struct-tag navigationSourceSummary Selected "json:\"selected\""
     %% grepple:struct-tag navigationSourceSummary Skipped "json:\"skipped\""
-    note for navigationSourceSummary "defined: internal/cli/graph.go:56-63; Discovered@internal/cli/graph.go:57; Failed@internal/cli/graph.go:61; Parsed@internal/cli/graph.go:59; Recovered@internal/cli/graph.go:62; Selected@internal/cli/graph.go:58; Skipped@internal/cli/graph.go:60"
+    note for navigationSourceSummary "defined: internal/cli/graph.go:58-65; Discovered@internal/cli/graph.go:59; Failed@internal/cli/graph.go:63; Parsed@internal/cli/graph.go:61; Recovered@internal/cli/graph.go:64; Selected@internal/cli/graph.go:60; Skipped@internal/cli/graph.go:62"
     class onlyMatchingRenderer {
         +Render([]api.FileResult): error
         -matcher: *regexp.Regexp

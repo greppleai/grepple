@@ -2,7 +2,7 @@ classDiagram
     %% grepple:package-default github.com/greppleai/grepple/internal/cli
     %% grepple:language-default go
     direction LR
-    note "Package cli implements Grepple's search, extraction, repository inspection, authentication, rules, and terminal/JSON presentation workflows. | package github.com/greppleai/grepple/internal/cli | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=39, declarations=55, exportedTypes=0, internalTypes=55, members=360, exportedFunctions=3, fiberRoutes=0, relations=35"
+    note "Package cli implements Grepple's search, extraction, repository inspection, authentication, rules, and terminal/JSON presentation workflows. | package github.com/greppleai/grepple/internal/cli | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=40, declarations=55, exportedTypes=0, internalTypes=55, members=366, exportedFunctions=3, fiberRoutes=0, relations=35"
     namespace interfaces {
         class resultRenderer["resultRenderer · internal/cli/renderer.go:9-11"] {
             +Render([]api.FileResult): error
@@ -86,7 +86,7 @@ classDiagram
             +Write: bool
         }
         <<struct>> anchorSetupArgs
-        class boundariesArgs["boundariesArgs · internal/cli/boundaries.go:19-27"] {
+        class boundariesArgs["boundariesArgs · internal/cli/boundaries.go:20-28"] {
             +JSON: bool
             +Limit: int
             +MaxFiles: int
@@ -96,9 +96,10 @@ classDiagram
             +Paths: []string
         }
         <<struct>> boundariesArgs
-        class boundariesOutput["boundariesOutput · internal/cli/boundaries.go:33-41"] {
+        class boundariesOutput["boundariesOutput · internal/cli/boundaries.go:34-43"] {
             +Candidates: []search.BoundaryCandidate
             +Files: int
+            +Metadata: *api.ResultMetadata
             +Paths: []string
             +Schema: string
             +Sources: navigationSourceSummary
@@ -165,7 +166,7 @@ classDiagram
             +Server: string
         }
         <<struct>> getArgs
-        class graphArgs["graphArgs · internal/cli/graph.go:17-23"] {
+        class graphArgs["graphArgs · internal/cli/graph.go:18-24"] {
             +Compact: bool
             +JSON: bool
             +MaxFiles: int
@@ -173,7 +174,7 @@ classDiagram
             +Paths: []string
         }
         <<struct>> graphArgs
-        class graphDiffArgs["graphDiffArgs · internal/cli/graph_diff.go:16-23"] {
+        class graphDiffArgs["graphDiffArgs · internal/cli/graph_diff.go:17-24"] {
             +After: string
             +Before: string
             +Compact: bool
@@ -182,11 +183,12 @@ classDiagram
             +MaxOutputBytes: int
         }
         <<struct>> graphDiffArgs
-        class graphDiffOutput["graphDiffOutput · internal/cli/graph_diff.go:29-35"] {
+        class graphDiffOutput["graphDiffOutput · internal/cli/graph_diff.go:30-37"] {
             +AfterFiles: int
             +AfterSources: navigationSourceSummary
             +BeforeFiles: int
             +BeforeSources: navigationSourceSummary
+            +Metadata: *api.ResultMetadata
         }
         <<struct>> graphDiffOutput
         class graphQueryArgs["graphQueryArgs · internal/cli/graph_query.go:19-34"] {
@@ -206,7 +208,7 @@ classDiagram
             +Visibilities: []string
         }
         <<struct>> graphQueryArgs
-        class graphResolveArgs["graphResolveArgs · internal/cli/graph_resolve.go:18-27"] {
+        class graphResolveArgs["graphResolveArgs · internal/cli/graph_resolve.go:19-28"] {
             +Compact: bool
             +JSON: bool
             +Languages: []string
@@ -217,7 +219,7 @@ classDiagram
             +Visibilities: []string
         }
         <<struct>> graphResolveArgs
-        class graphResolveMatch["graphResolveMatch · internal/cli/graph_resolve.go:41-54"] {
+        class graphResolveMatch["graphResolveMatch · internal/cli/graph_resolve.go:43-56"] {
             +At: string
             +CalleesCommand: string
             +CallersCommand: string
@@ -232,8 +234,9 @@ classDiagram
             +Visibility: parser.NavigationVisibility
         }
         <<struct>> graphResolveMatch
-        class graphResolveOutput["graphResolveOutput · internal/cli/graph_resolve.go:33-39"] {
+        class graphResolveOutput["graphResolveOutput · internal/cli/graph_resolve.go:34-41"] {
             +Matches: []graphResolveMatch
+            +Metadata: *api.ResultMetadata
             +Schema: string
             +Sources: navigationSourceSummary
             +Symbol: string
@@ -282,11 +285,12 @@ classDiagram
             +Scopes: string
         }
         <<struct>> loginConfig
-        class navigationGraphOutput["navigationGraphOutput · internal/cli/graph.go:29-39"] {
+        class navigationGraphOutput["navigationGraphOutput · internal/cli/graph.go:30-41"] {
             +Calls: []parser.NavigationCall
             +Declarations: []parser.NavigationDeclaration
             +Files: int
             +MemberAccesses: []parser.NavigationMemberAccess
+            +Metadata: *api.ResultMetadata
             +Query: *navigationGraphQuery
             +Schema: string
             +Sources: navigationSourceSummary
@@ -294,7 +298,7 @@ classDiagram
             +TypeUsages: []parser.NavigationTypeUsage
         }
         <<struct>> navigationGraphOutput
-        class navigationGraphQuery["navigationGraphQuery · internal/cli/graph.go:41-48"] {
+        class navigationGraphQuery["navigationGraphQuery · internal/cli/graph.go:43-50"] {
             +Confidences: []string
             +Depth: int
             +Direction: string
@@ -303,13 +307,13 @@ classDiagram
             +Visibilities: []string
         }
         <<struct>> navigationGraphQuery
-        class navigationGraphTruncation["navigationGraphTruncation · internal/cli/graph.go:50-54"] {
+        class navigationGraphTruncation["navigationGraphTruncation · internal/cli/graph.go:52-56"] {
             +Limit: int
             +Reason: string
             +Skipped: int
         }
         <<struct>> navigationGraphTruncation
-        class navigationSourceSummary["navigationSourceSummary · internal/cli/graph.go:56-63"] {
+        class navigationSourceSummary["navigationSourceSummary · internal/cli/graph.go:58-65"] {
             +Discovered: int
             +Failed: int
             +Parsed: int
@@ -401,7 +405,7 @@ classDiagram
         <<struct>> anchorFileSelection
         class anchorLookup["anchorLookup = map&#91;string&#93;map&#91;int&#93;string · internal/cli/anchors.go:30"]
         <<type>> anchorLookup
-        class cliOptions["cliOptions · internal/cli/model.go:5-24"]
+        class cliOptions["cliOptions · internal/cli/model.go:8-28"]
         <<struct>> cliOptions
         class contextRenderer["contextRenderer · internal/cli/renderer_context.go:9-11"]
         <<struct>> contextRenderer
@@ -411,7 +415,7 @@ classDiagram
         <<struct>> errBrokenPipe
         class filesRenderer["filesRenderer · internal/cli/renderer_files.go:5-8"]
         <<struct>> filesRenderer
-        class jsonResultRenderer["jsonResultRenderer · internal/cli/renderer_json.go:8-11"]
+        class jsonResultRenderer["jsonResultRenderer · internal/cli/renderer_json.go:8-12"]
         <<struct>> jsonResultRenderer
         class limitedAnchorBuffer["limitedAnchorBuffer · internal/cli/anchors.go:221-224"]
         <<struct>> limitedAnchorBuffer

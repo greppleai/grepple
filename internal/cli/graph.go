@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/alexflint/go-arg"
+	"github.com/greppleai/grepple/api"
 	"github.com/greppleai/grepple/parser"
 	"github.com/greppleai/grepple/search"
 )
@@ -29,6 +30,7 @@ func (graphArgs) Description() string {
 type navigationGraphOutput struct {
 	Schema         string                          `json:"schema"`
 	Files          int                             `json:"files"`
+	Metadata       *api.ResultMetadata             `json:"metadata,omitempty"`
 	Sources        navigationSourceSummary         `json:"sources"`
 	Declarations   []parser.NavigationDeclaration  `json:"declarations"`
 	Calls          []parser.NavigationCall         `json:"calls"`
@@ -98,6 +100,7 @@ func runGraph(args []string) error {
 	if err != nil {
 		return err
 	}
+	output.Metadata = graphResultMetadata(values.Paths, len(output.Declarations), values.MaxFiles, values.MaxOutputBytes, values.JSON, output.Sources, output.Truncation, graphContinuationCommand("graph", values.Paths, output.Truncation))
 	if values.Compact {
 		return renderCompactNavigationGraph(output, values.MaxOutputBytes)
 	}
@@ -124,6 +127,9 @@ func renderCompactNavigationGraph(graph navigationGraphOutput, maxBytes int) err
 		return nil
 	}
 	if graph.Truncation != nil && !write(fmt.Sprintf("! truncated %s limit=%d skipped=%d", graph.Truncation.Reason, graph.Truncation.Limit, graph.Truncation.Skipped)) {
+		return nil
+	}
+	if graph.Metadata != nil && graph.Metadata.NextCommand != "" && !write("continue: "+graph.Metadata.NextCommand) {
 		return nil
 	}
 	declarations, callsByCaller := indexCompactNavigationGraph(graph.Declarations, visibleCalls)

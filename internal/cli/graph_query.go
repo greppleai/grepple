@@ -88,6 +88,8 @@ func runGraphQuery(direction search.NavigationQueryDirection, args []string) err
 		Direction: string(direction), Depth: values.Depth, RootIDs: rootIDs,
 		Languages: filter.Languages, Confidences: filter.Confidences, Visibilities: filter.Visibilities,
 	}
+	output.Metadata = graphResultMetadata(values.Paths, len(output.Declarations), values.MaxFiles, values.MaxOutputBytes, values.JSON, output.Sources, output.Truncation, graphQueryContinuationCommand(direction, values, output.Truncation))
+	output.Metadata.Scope.Languages = normalizedResultScope(filter.Languages, "")
 	if values.Compact {
 		return renderCompactNavigationGraph(output, values.MaxOutputBytes)
 	}
@@ -95,6 +97,31 @@ func runGraphQuery(direction search.NavigationQueryDirection, args []string) err
 	encoder.SetEscapeHTML(false)
 	encoder.SetIndent("", "  ")
 	return encoder.Encode(output)
+}
+
+func graphQueryContinuationCommand(direction search.NavigationQueryDirection, values graphQueryArgs, truncation *navigationGraphTruncation) string {
+	if truncation == nil {
+		return ""
+	}
+	parts := []string{"grepple", "graph", string(direction), "--max-files", "0", "--depth", fmt.Sprint(values.Depth), "--json"}
+	for _, selector := range []struct{ flag, value string }{{"--symbol", values.Symbol}, {"--at", values.At}, {"--package", values.Package}, {"--module", values.Module}, {"--root-path", values.RootPath}} {
+		if selector.value != "" {
+			parts = append(parts, selector.flag, quoteCommandArgument(selector.value))
+		}
+	}
+	for _, language := range values.Languages {
+		parts = append(parts, "--language", quoteCommandArgument(language))
+	}
+	for _, confidence := range values.Confidences {
+		parts = append(parts, "--confidence", quoteCommandArgument(confidence))
+	}
+	for _, visibility := range values.Visibilities {
+		parts = append(parts, "--visibility", quoteCommandArgument(visibility))
+	}
+	for _, path := range normalizedResultScope(values.Paths, ".") {
+		parts = append(parts, quoteCommandArgument(path))
+	}
+	return strings.Join(parts, " ")
 }
 
 func validateGraphQueryArgs(values graphQueryArgs) error {

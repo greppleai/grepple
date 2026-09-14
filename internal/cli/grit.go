@@ -236,6 +236,7 @@ func executeGrit(ctx context.Context, values gritArgs, includeRemote bool) error
 		}
 	}
 	response.Findings = windowGritFindings(response.Findings, values.Skip, values.Limit)
+	response.ResultMetadata = gritResultMetadata(values, response, includeRemote)
 	return outputGritResponse(values, response)
 }
 
@@ -440,6 +441,11 @@ func renderGritDiagnostics(output *outputWriter, response api.GritResponse) erro
 	}
 	for _, shardError := range response.ShardErrors {
 		if err := output.writeString(fmt.Sprintf("shard error: %s\n", shardError)); err != nil {
+			return err
+		}
+	}
+	if response.ResultMetadata != nil && response.ResultMetadata.NextCommand != "" {
+		if err := output.writeString("continue: " + response.ResultMetadata.NextCommand + "\n"); err != nil {
 			return err
 		}
 	}

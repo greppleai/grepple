@@ -1,6 +1,9 @@
 package cli
 
-import "github.com/greppleai/grepple/search"
+import (
+	"github.com/greppleai/grepple/api"
+	"github.com/greppleai/grepple/search"
+)
 
 type cliOptions struct {
 	Params           search.Params
@@ -18,6 +21,7 @@ type cliOptions struct {
 	AnchorsDefaulted bool
 	AnchorProvider   string
 	AnchorLines      anchorLookup
+	ResultMetadata   *api.ResultMetadata
 	// Stdin is true when the search reads piped standard input instead of
 	// walking the filesystem (see stdinSearch).
 	Stdin bool

@@ -70,6 +70,9 @@ func TestBoundariesHumanLimitDoesNotLimitJSON(t *testing.T) {
 	if output.Schema != "grepple-boundaries-v2" || len(output.Candidates) != 2 || output.Candidates[0].Risk == "" || len(output.Candidates[0].Reasons) == 0 {
 		t.Fatalf("JSON was limited: %#v", output)
 	}
+	if output.Metadata == nil || !output.Metadata.Page.Complete || output.Metadata.Page.Returned != 2 || output.Metadata.Scope.Paths[0] != "." {
+		t.Fatalf("boundary metadata=%#v", output.Metadata)
+	}
 	if _, err := os.Stat(filepath.Join(".grepple", "cache")); !os.IsNotExist(err) {
 		t.Fatalf("--no-cache created cache: %v", err)
 	}

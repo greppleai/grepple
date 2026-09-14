@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/alexflint/go-arg"
+	"github.com/greppleai/grepple/api"
 	"github.com/greppleai/grepple/parser"
 	"github.com/greppleai/grepple/search"
 )
@@ -32,6 +33,7 @@ func (boundariesArgs) Description() string {
 
 type boundariesOutput struct {
 	Schema         string                      `json:"schema"`
+	Metadata       *api.ResultMetadata         `json:"metadata,omitempty"`
 	Paths          []string                    `json:"paths"`
 	Files          int                         `json:"files"`
 	Sources        navigationSourceSummary     `json:"sources"`
@@ -73,6 +75,7 @@ func runBoundaries(args []string) error {
 		return err
 	}
 	output := boundariesOutput{Schema: "grepple-boundaries-v2", Paths: boundaryDisplayPaths(values.Paths), Files: graphOutput.Files, Sources: graphOutput.Sources, Candidates: candidates, TypeBoundaries: typeBoundaries, Truncation: graphOutput.Truncation}
+	output.Metadata = boundaryResultMetadata(values, output)
 	if values.JSON {
 		encoder := json.NewEncoder(os.Stdout)
 		encoder.SetEscapeHTML(false)
@@ -131,7 +134,14 @@ func renderBoundaries(report boundariesOutput, minimum, limit, maxBytes int) err
 	if len(report.Candidates) == 0 && len(report.TypeBoundaries) == 0 {
 		write("(no repeated cross-file workflow or type boundary patterns found)")
 	}
+	writeBoundaryContinuation(write, report.Metadata)
 	return nil
+}
+
+func writeBoundaryContinuation(write func(string, ...any) bool, metadata *api.ResultMetadata) {
+	if metadata != nil && metadata.NextCommand != "" {
+		write("\ncontinue: %s", metadata.NextCommand)
+	}
 }
 
 func writeBoundaryTypeSpreads(write func(string, ...any) bool, spreads []search.BoundaryTypeSpread, limit int) bool {

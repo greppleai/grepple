@@ -52,13 +52,18 @@ func runSearch(args []string) error {
 		return err
 	}
 
-	results = windowResults(sortByPath(results), options.Params)
+	results = sortByPath(results)
+	fetched := len(results)
+	totalKnown := !remote && (child.Params.Limit == 0 || fetched < child.Params.Limit)
+	results = windowResults(results, options.Params)
+	options.ResultMetadata = searchResultMetadata(options, fetched, totalKnown, remote, results)
 	noteDefaultLimitCap(options, results)
+	noteSearchContinuation(options)
 	if err := prepareResultAnchors(options, results); err != nil {
 		return err
 	}
 	// Group the selected page by repo/path for readable output.
-	return renderResults(options, sortByPath(results))
+	return renderResults(options, results)
 }
 
 func configureStdinSearch(options *cliOptions) error {
@@ -121,6 +126,12 @@ func sortByPath(results []api.FileResult) []api.FileResult {
 func noteDefaultLimitCap(options *cliOptions, results []api.FileResult) {
 	if options.Params.Limit == DefaultResultLimit && options.Params.MaxFiles == 0 && len(results) == DefaultResultLimit {
 		fmt.Fprintf(os.Stderr, "note: showing the first %d files (default --limit); raise with --limit N and page with --skip N (servers cap a page at %d; --limit 0 = all local)\n", DefaultResultLimit, search.MaxPageLimit)
+	}
+}
+
+func noteSearchContinuation(options *cliOptions) {
+	if options.JSON == "off" && options.ResultMetadata != nil && options.ResultMetadata.NextCommand != "" {
+		fmt.Fprintln(os.Stderr, "continue:", options.ResultMetadata.NextCommand)
 	}
 }
 

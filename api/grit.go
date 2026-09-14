@@ -179,11 +179,12 @@ type GritStatistics struct {
 // GritResponse is the dedicated local, shard, and router structural-search
 // response. Producers must initialize collection fields to non-nil slices.
 type GritResponse struct {
-	Metadata    GritMetadata     `json:"metadata"`
-	Findings    []GritFinding    `json:"findings"`
-	Diagnostics []GritDiagnostic `json:"diagnostics"`
-	Truncations []GritTruncation `json:"truncations"`
-	Statistics  GritStatistics   `json:"statistics"`
-	ShardErrors []string         `json:"shardErrors"`
-	Total       int              `json:"total"`
+	Metadata       GritMetadata     `json:"metadata"`
+	ResultMetadata *ResultMetadata  `json:"resultMetadata,omitempty"`
+	Findings       []GritFinding    `json:"findings"`
+	Diagnostics    []GritDiagnostic `json:"diagnostics"`
+	Truncations    []GritTruncation `json:"truncations"`
+	Statistics     GritStatistics   `json:"statistics"`
+	ShardErrors    []string         `json:"shardErrors"`
+	Total          int              `json:"total"`
 }

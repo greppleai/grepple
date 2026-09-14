@@ -16,16 +16,16 @@
     "syntacticBuildTagUnion": []
   },
   "summary": {
-    "sourceFiles": 3,
-    "declarations": 32,
-    "exportedTypes": 32,
+    "sourceFiles": 4,
+    "declarations": 38,
+    "exportedTypes": 38,
     "internalTypes": 0,
-    "members": 208,
+    "members": 240,
     "exportedFunctions": 0,
     "fiberRoutes": 0,
-    "relations": 38
+    "relations": 45
   },
-  "semanticModelDigest": "sha256:f135a694df7377210fdc6683e165f263b3657115c766a56722bc6517ede89c67",
+  "semanticModelDigest": "sha256:d3886949b3c1d03413d2c8db4fdfeecaac5b1990892fd71c5f89668dbe42b086",
   "sourceFiles": [
     {
       "path": "api/grit.go"
@@ -35,6 +35,9 @@
     },
     {
       "path": "api/model.go"
+    },
+    {
+      "path": "api/result_metadata.go"
     }
   ],
   "declarations": [
@@ -981,14 +984,14 @@
       "kind": "struct",
       "file": "api/grit.go",
       "line": 181,
-      "endLine": 189,
-      "underlyingType": "struct{Metadata GritMetadata`json:\"metadata\"`;Findings[]GritFinding`json:\"findings\"`;Diagnostics[]GritDiagnostic`json:\"diagnostics\"`;Truncations[]GritTruncation`json:\"truncations\"`;Statistics GritStatistics`json:\"statistics\"`;ShardErrors[]string`json:\"shardErrors\"`;Total int`json:\"total\"`;}",
+      "endLine": 190,
+      "underlyingType": "struct{Metadata GritMetadata`json:\"metadata\"`;ResultMetadata*ResultMetadata`json:\"resultMetadata,omitempty\"`;Findings[]GritFinding`json:\"findings\"`;Diagnostics[]GritDiagnostic`json:\"diagnostics\"`;Truncations[]GritTruncation`json:\"truncations\"`;Statistics GritStatistics`json:\"statistics\"`;ShardErrors[]string`json:\"shardErrors\"`;Total int`json:\"total\"`;}",
       "members": [
         {
           "name": "Diagnostics",
           "kind": "property",
-          "line": 184,
-          "endLine": 184,
+          "line": 185,
+          "endLine": 185,
           "result": "[]GritDiagnostic",
           "structTag": {
             "value": "json:\"diagnostics\""
@@ -997,8 +1000,8 @@
         {
           "name": "Findings",
           "kind": "property",
-          "line": 183,
-          "endLine": 183,
+          "line": 184,
+          "endLine": 184,
           "result": "[]GritFinding",
           "structTag": {
             "value": "json:\"findings\""
@@ -1015,10 +1018,20 @@
           }
         },
         {
+          "name": "ResultMetadata",
+          "kind": "property",
+          "line": 183,
+          "endLine": 183,
+          "result": "*ResultMetadata",
+          "structTag": {
+            "value": "json:\"resultMetadata,omitempty\""
+          }
+        },
+        {
           "name": "ShardErrors",
           "kind": "property",
-          "line": 187,
-          "endLine": 187,
+          "line": 188,
+          "endLine": 188,
           "result": "[]string",
           "structTag": {
             "value": "json:\"shardErrors\""
@@ -1027,8 +1040,8 @@
         {
           "name": "Statistics",
           "kind": "property",
-          "line": 186,
-          "endLine": 186,
+          "line": 187,
+          "endLine": 187,
           "result": "GritStatistics",
           "structTag": {
             "value": "json:\"statistics\""
@@ -1037,8 +1050,8 @@
         {
           "name": "Total",
           "kind": "property",
-          "line": 188,
-          "endLine": 188,
+          "line": 189,
+          "endLine": 189,
           "result": "int",
           "structTag": {
             "value": "json:\"total\""
@@ -1047,8 +1060,8 @@
         {
           "name": "Truncations",
           "kind": "property",
-          "line": 185,
-          "endLine": 185,
+          "line": 186,
+          "endLine": 186,
           "result": "[]GritTruncation",
           "structTag": {
             "value": "json:\"truncations\""
@@ -1550,15 +1563,15 @@
       "name": "RepoListEntry",
       "kind": "struct",
       "file": "api/model.go",
-      "line": 119,
-      "endLine": 125,
+      "line": 120,
+      "endLine": 126,
       "underlyingType": "struct{Repo string`json:\"repo\"`;Shard string`json:\"shard,omitempty\"`;Ref string`json:\"ref,omitempty\"`;Head*string`json:\"head,omitempty\"`;IndexedAt string`json:\"indexedAt,omitempty\"`;}",
       "members": [
         {
           "name": "Head",
           "kind": "property",
-          "line": 123,
-          "endLine": 123,
+          "line": 124,
+          "endLine": 124,
           "result": "*string",
           "structTag": {
             "value": "json:\"head,omitempty\""
@@ -1567,8 +1580,8 @@
         {
           "name": "IndexedAt",
           "kind": "property",
-          "line": 124,
-          "endLine": 124,
+          "line": 125,
+          "endLine": 125,
           "result": "string",
           "structTag": {
             "value": "json:\"indexedAt,omitempty\""
@@ -1577,8 +1590,8 @@
         {
           "name": "Ref",
           "kind": "property",
-          "line": 122,
-          "endLine": 122,
+          "line": 123,
+          "endLine": 123,
           "result": "string",
           "structTag": {
             "value": "json:\"ref,omitempty\""
@@ -1587,8 +1600,8 @@
         {
           "name": "Repo",
           "kind": "property",
-          "line": 120,
-          "endLine": 120,
+          "line": 121,
+          "endLine": 121,
           "result": "string",
           "structTag": {
             "value": "json:\"repo\""
@@ -1597,8 +1610,8 @@
         {
           "name": "Shard",
           "kind": "property",
-          "line": 121,
-          "endLine": 121,
+          "line": 122,
+          "endLine": 122,
           "result": "string",
           "structTag": {
             "value": "json:\"shard,omitempty\""
@@ -1610,15 +1623,15 @@
       "name": "ReposResponse",
       "kind": "struct",
       "file": "api/model.go",
-      "line": 128,
-      "endLine": 132,
+      "line": 129,
+      "endLine": 133,
       "underlyingType": "struct{OK bool`json:\"ok\"`;Count int`json:\"count\"`;Repos[]RepoListEntry`json:\"repos\"`;}",
       "members": [
         {
           "name": "Count",
           "kind": "property",
-          "line": 130,
-          "endLine": 130,
+          "line": 131,
+          "endLine": 131,
           "result": "int",
           "structTag": {
             "value": "json:\"count\""
@@ -1627,8 +1640,8 @@
         {
           "name": "OK",
           "kind": "property",
-          "line": 129,
-          "endLine": 129,
+          "line": 130,
+          "endLine": 130,
           "result": "bool",
           "structTag": {
             "value": "json:\"ok\""
@@ -1637,11 +1650,111 @@
         {
           "name": "Repos",
           "kind": "property",
-          "line": 131,
-          "endLine": 131,
+          "line": 132,
+          "endLine": 132,
           "result": "[]RepoListEntry",
           "structTag": {
             "value": "json:\"repos\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "ResultDiagnostic",
+      "kind": "struct",
+      "file": "api/result_metadata.go",
+      "line": 56,
+      "endLine": 59,
+      "underlyingType": "struct{Code string`json:\"code\"`;Message string`json:\"message\"`;}",
+      "members": [
+        {
+          "name": "Code",
+          "kind": "property",
+          "line": 57,
+          "endLine": 57,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"code\""
+          }
+        },
+        {
+          "name": "Message",
+          "kind": "property",
+          "line": 58,
+          "endLine": 58,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"message\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "ResultLimits",
+      "kind": "struct",
+      "file": "api/result_metadata.go",
+      "line": 36,
+      "endLine": 43,
+      "underlyingType": "struct{MaxFiles int`json:\"maxFiles\"`;MaxSegments int`json:\"maxSegments\"`;MaxOutputBytes int`json:\"maxOutputBytes\"`;MaxSourceBytes int`json:\"maxSourceBytes\"`;MaxTotalBytes int64`json:\"maxTotalBytes\"`;JSONByteUncapped bool`json:\"jsonByteUncapped\"`;}",
+      "members": [
+        {
+          "name": "JSONByteUncapped",
+          "kind": "property",
+          "line": 42,
+          "endLine": 42,
+          "result": "bool",
+          "structTag": {
+            "value": "json:\"jsonByteUncapped\""
+          }
+        },
+        {
+          "name": "MaxFiles",
+          "kind": "property",
+          "line": 37,
+          "endLine": 37,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"maxFiles\""
+          }
+        },
+        {
+          "name": "MaxOutputBytes",
+          "kind": "property",
+          "line": 39,
+          "endLine": 39,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"maxOutputBytes\""
+          }
+        },
+        {
+          "name": "MaxSegments",
+          "kind": "property",
+          "line": 38,
+          "endLine": 38,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"maxSegments\""
+          }
+        },
+        {
+          "name": "MaxSourceBytes",
+          "kind": "property",
+          "line": 40,
+          "endLine": 40,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"maxSourceBytes\""
+          }
+        },
+        {
+          "name": "MaxTotalBytes",
+          "kind": "property",
+          "line": 41,
+          "endLine": 41,
+          "result": "int64",
+          "structTag": {
+            "value": "json:\"maxTotalBytes\""
           }
         }
       ]
@@ -1692,6 +1805,266 @@
           "result": "string",
           "structTag": {
             "value": "json:\"text\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "ResultMetadata",
+      "kind": "struct",
+      "file": "api/result_metadata.go",
+      "line": 5,
+      "endLine": 12,
+      "underlyingType": "struct{Scope ResultScope`json:\"scope\"`;Page ResultPage`json:\"page\"`;Limits ResultLimits`json:\"limits\"`;Omitted ResultOmissions`json:\"omitted\"`;Diagnostics[]ResultDiagnostic`json:\"diagnostics\"`;NextCommand string`json:\"nextCommand,omitempty\"`;}",
+      "members": [
+        {
+          "name": "Diagnostics",
+          "kind": "property",
+          "line": 10,
+          "endLine": 10,
+          "result": "[]ResultDiagnostic",
+          "structTag": {
+            "value": "json:\"diagnostics\""
+          }
+        },
+        {
+          "name": "Limits",
+          "kind": "property",
+          "line": 8,
+          "endLine": 8,
+          "result": "ResultLimits",
+          "structTag": {
+            "value": "json:\"limits\""
+          }
+        },
+        {
+          "name": "NextCommand",
+          "kind": "property",
+          "line": 11,
+          "endLine": 11,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"nextCommand,omitempty\""
+          }
+        },
+        {
+          "name": "Omitted",
+          "kind": "property",
+          "line": 9,
+          "endLine": 9,
+          "result": "ResultOmissions",
+          "structTag": {
+            "value": "json:\"omitted\""
+          }
+        },
+        {
+          "name": "Page",
+          "kind": "property",
+          "line": 7,
+          "endLine": 7,
+          "result": "ResultPage",
+          "structTag": {
+            "value": "json:\"page\""
+          }
+        },
+        {
+          "name": "Scope",
+          "kind": "property",
+          "line": 6,
+          "endLine": 6,
+          "result": "ResultScope",
+          "structTag": {
+            "value": "json:\"scope\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "ResultOmissions",
+      "kind": "struct",
+      "file": "api/result_metadata.go",
+      "line": 47,
+      "endLine": 53,
+      "underlyingType": "struct{Files int`json:\"files\"`;Segments int`json:\"segments\"`;Sources int`json:\"sources\"`;Findings int`json:\"findings\"`;Bytes int64`json:\"bytes\"`;}",
+      "members": [
+        {
+          "name": "Bytes",
+          "kind": "property",
+          "line": 52,
+          "endLine": 52,
+          "result": "int64",
+          "structTag": {
+            "value": "json:\"bytes\""
+          }
+        },
+        {
+          "name": "Files",
+          "kind": "property",
+          "line": 48,
+          "endLine": 48,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"files\""
+          }
+        },
+        {
+          "name": "Findings",
+          "kind": "property",
+          "line": 51,
+          "endLine": 51,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"findings\""
+          }
+        },
+        {
+          "name": "Segments",
+          "kind": "property",
+          "line": 49,
+          "endLine": 49,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"segments\""
+          }
+        },
+        {
+          "name": "Sources",
+          "kind": "property",
+          "line": 50,
+          "endLine": 50,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"sources\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "ResultPage",
+      "kind": "struct",
+      "file": "api/result_metadata.go",
+      "line": 26,
+      "endLine": 32,
+      "underlyingType": "struct{Skip int`json:\"skip\"`;Limit int`json:\"limit\"`;Returned int`json:\"returned\"`;Total*int`json:\"total,omitempty\"`;Complete bool`json:\"complete\"`;}",
+      "members": [
+        {
+          "name": "Complete",
+          "kind": "property",
+          "line": 31,
+          "endLine": 31,
+          "result": "bool",
+          "structTag": {
+            "value": "json:\"complete\""
+          }
+        },
+        {
+          "name": "Limit",
+          "kind": "property",
+          "line": 28,
+          "endLine": 28,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"limit\""
+          }
+        },
+        {
+          "name": "Returned",
+          "kind": "property",
+          "line": 29,
+          "endLine": 29,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"returned\""
+          }
+        },
+        {
+          "name": "Skip",
+          "kind": "property",
+          "line": 27,
+          "endLine": 27,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"skip\""
+          }
+        },
+        {
+          "name": "Total",
+          "kind": "property",
+          "line": 30,
+          "endLine": 30,
+          "result": "*int",
+          "structTag": {
+            "value": "json:\"total,omitempty\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "ResultScope",
+      "kind": "struct",
+      "file": "api/result_metadata.go",
+      "line": 15,
+      "endLine": 22,
+      "underlyingType": "struct{Mode string`json:\"mode\"`;Paths[]string`json:\"paths\"`;ExcludedPaths[]string`json:\"excludedPaths\"`;Repositories[]string`json:\"repositories\"`;ExcludedRepositories[]string`json:\"excludedRepositories\"`;Languages[]string`json:\"languages\"`;}",
+      "members": [
+        {
+          "name": "ExcludedPaths",
+          "kind": "property",
+          "line": 18,
+          "endLine": 18,
+          "result": "[]string",
+          "structTag": {
+            "value": "json:\"excludedPaths\""
+          }
+        },
+        {
+          "name": "ExcludedRepositories",
+          "kind": "property",
+          "line": 20,
+          "endLine": 20,
+          "result": "[]string",
+          "structTag": {
+            "value": "json:\"excludedRepositories\""
+          }
+        },
+        {
+          "name": "Languages",
+          "kind": "property",
+          "line": 21,
+          "endLine": 21,
+          "result": "[]string",
+          "structTag": {
+            "value": "json:\"languages\""
+          }
+        },
+        {
+          "name": "Mode",
+          "kind": "property",
+          "line": 16,
+          "endLine": 16,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"mode\""
+          }
+        },
+        {
+          "name": "Paths",
+          "kind": "property",
+          "line": 17,
+          "endLine": 17,
+          "result": "[]string",
+          "structTag": {
+            "value": "json:\"paths\""
+          }
+        },
+        {
+          "name": "Repositories",
+          "kind": "property",
+          "line": 19,
+          "endLine": 19,
+          "result": "[]string",
+          "structTag": {
+            "value": "json:\"repositories\""
           }
         }
       ]
@@ -1750,15 +2123,15 @@
       "name": "Rule",
       "kind": "struct",
       "file": "api/model.go",
-      "line": 161,
-      "endLine": 170,
+      "line": 162,
+      "endLine": 171,
       "underlyingType": "struct{ID string`json:\"id\"`;Name string`json:\"name,omitempty\"`;Mode string`json:\"mode\"`;Engine string`json:\"engine,omitempty\"`;Request SearchRequest`json:\"request\"`;Structural*GritRequest`json:\"structural,omitempty\"`;CreatedAt string`json:\"createdAt,omitempty\"`;UpdatedAt string`json:\"updatedAt,omitempty\"`;}",
       "members": [
         {
           "name": "CreatedAt",
           "kind": "property",
-          "line": 168,
-          "endLine": 168,
+          "line": 169,
+          "endLine": 169,
           "result": "string",
           "structTag": {
             "value": "json:\"createdAt,omitempty\""
@@ -1767,8 +2140,8 @@
         {
           "name": "Engine",
           "kind": "property",
-          "line": 165,
-          "endLine": 165,
+          "line": 166,
+          "endLine": 166,
           "result": "string",
           "structTag": {
             "value": "json:\"engine,omitempty\""
@@ -1777,8 +2150,8 @@
         {
           "name": "ID",
           "kind": "property",
-          "line": 162,
-          "endLine": 162,
+          "line": 163,
+          "endLine": 163,
           "result": "string",
           "structTag": {
             "value": "json:\"id\""
@@ -1787,8 +2160,8 @@
         {
           "name": "Mode",
           "kind": "property",
-          "line": 164,
-          "endLine": 164,
+          "line": 165,
+          "endLine": 165,
           "result": "string",
           "structTag": {
             "value": "json:\"mode\""
@@ -1797,8 +2170,8 @@
         {
           "name": "Name",
           "kind": "property",
-          "line": 163,
-          "endLine": 163,
+          "line": 164,
+          "endLine": 164,
           "result": "string",
           "structTag": {
             "value": "json:\"name,omitempty\""
@@ -1807,8 +2180,8 @@
         {
           "name": "Request",
           "kind": "property",
-          "line": 166,
-          "endLine": 166,
+          "line": 167,
+          "endLine": 167,
           "result": "SearchRequest",
           "structTag": {
             "value": "json:\"request\""
@@ -1817,8 +2190,8 @@
         {
           "name": "Structural",
           "kind": "property",
-          "line": 167,
-          "endLine": 167,
+          "line": 168,
+          "endLine": 168,
           "result": "*GritRequest",
           "structTag": {
             "value": "json:\"structural,omitempty\""
@@ -1827,8 +2200,8 @@
         {
           "name": "UpdatedAt",
           "kind": "property",
-          "line": 169,
-          "endLine": 169,
+          "line": 170,
+          "endLine": 170,
           "result": "string",
           "structTag": {
             "value": "json:\"updatedAt,omitempty\""
@@ -1840,15 +2213,15 @@
       "name": "RuleRepoResult",
       "kind": "struct",
       "file": "api/model.go",
-      "line": 173,
-      "endLine": 180,
+      "line": 174,
+      "endLine": 181,
       "underlyingType": "struct{Repo string`json:\"repo\"`;Files int`json:\"files\"`;Matches int`json:\"matches\"`;Paths[]string`json:\"paths,omitempty\"`;Head string`json:\"head,omitempty\"`;EvaluatedAt string`json:\"evaluatedAt,omitempty\"`;}",
       "members": [
         {
           "name": "EvaluatedAt",
           "kind": "property",
-          "line": 179,
-          "endLine": 179,
+          "line": 180,
+          "endLine": 180,
           "result": "string",
           "structTag": {
             "value": "json:\"evaluatedAt,omitempty\""
@@ -1857,8 +2230,8 @@
         {
           "name": "Files",
           "kind": "property",
-          "line": 175,
-          "endLine": 175,
+          "line": 176,
+          "endLine": 176,
           "result": "int",
           "structTag": {
             "value": "json:\"files\""
@@ -1867,8 +2240,8 @@
         {
           "name": "Head",
           "kind": "property",
-          "line": 178,
-          "endLine": 178,
+          "line": 179,
+          "endLine": 179,
           "result": "string",
           "structTag": {
             "value": "json:\"head,omitempty\""
@@ -1877,8 +2250,8 @@
         {
           "name": "Matches",
           "kind": "property",
-          "line": 176,
-          "endLine": 176,
+          "line": 177,
+          "endLine": 177,
           "result": "int",
           "structTag": {
             "value": "json:\"matches\""
@@ -1887,8 +2260,8 @@
         {
           "name": "Paths",
           "kind": "property",
-          "line": 177,
-          "endLine": 177,
+          "line": 178,
+          "endLine": 178,
           "result": "[]string",
           "structTag": {
             "value": "json:\"paths,omitempty\""
@@ -1897,8 +2270,8 @@
         {
           "name": "Repo",
           "kind": "property",
-          "line": 174,
-          "endLine": 174,
+          "line": 175,
+          "endLine": 175,
           "result": "string",
           "structTag": {
             "value": "json:\"repo\""
@@ -1910,15 +2283,15 @@
       "name": "RuleResults",
       "kind": "struct",
       "file": "api/model.go",
-      "line": 183,
-      "endLine": 189,
+      "line": 184,
+      "endLine": 190,
       "underlyingType": "struct{Rule string`json:\"rule\"`;Mode string`json:\"mode,omitempty\"`;Generation int64`json:\"generation,omitempty\"`;Repos[]RuleRepoResult`json:\"repos\"`;Truncated bool`json:\"truncated,omitempty\"`;}",
       "members": [
         {
           "name": "Generation",
           "kind": "property",
-          "line": 186,
-          "endLine": 186,
+          "line": 187,
+          "endLine": 187,
           "result": "int64",
           "structTag": {
             "value": "json:\"generation,omitempty\""
@@ -1927,8 +2300,8 @@
         {
           "name": "Mode",
           "kind": "property",
-          "line": 185,
-          "endLine": 185,
+          "line": 186,
+          "endLine": 186,
           "result": "string",
           "structTag": {
             "value": "json:\"mode,omitempty\""
@@ -1937,8 +2310,8 @@
         {
           "name": "Repos",
           "kind": "property",
-          "line": 187,
-          "endLine": 187,
+          "line": 188,
+          "endLine": 188,
           "result": "[]RuleRepoResult",
           "structTag": {
             "value": "json:\"repos\""
@@ -1947,8 +2320,8 @@
         {
           "name": "Rule",
           "kind": "property",
-          "line": 184,
-          "endLine": 184,
+          "line": 185,
+          "endLine": 185,
           "result": "string",
           "structTag": {
             "value": "json:\"rule\""
@@ -1957,8 +2330,8 @@
         {
           "name": "Truncated",
           "kind": "property",
-          "line": 188,
-          "endLine": 188,
+          "line": 189,
+          "endLine": 189,
           "result": "bool",
           "structTag": {
             "value": "json:\"truncated,omitempty\""
@@ -1970,15 +2343,15 @@
       "name": "RuleSet",
       "kind": "struct",
       "file": "api/model.go",
-      "line": 192,
-      "endLine": 195,
+      "line": 193,
+      "endLine": 196,
       "underlyingType": "struct{Generation int64`json:\"generation\"`;Rules[]Rule`json:\"rules\"`;}",
       "members": [
         {
           "name": "Generation",
           "kind": "property",
-          "line": 193,
-          "endLine": 193,
+          "line": 194,
+          "endLine": 194,
           "result": "int64",
           "structTag": {
             "value": "json:\"generation\""
@@ -1987,8 +2360,8 @@
         {
           "name": "Rules",
           "kind": "property",
-          "line": 194,
-          "endLine": 194,
+          "line": 195,
+          "endLine": 195,
           "result": "[]Rule",
           "structTag": {
             "value": "json:\"rules\""
@@ -2221,14 +2594,24 @@
       "kind": "struct",
       "file": "api/model.go",
       "line": 100,
-      "endLine": 106,
-      "underlyingType": "struct{Results[]FileResult`json:\"results\"`;SourceAnalysis*SourceAnalysis`json:\"sourceAnalysis,omitempty\"`;RepoCounts[]RepoCount`json:\"repoCounts,omitempty\"`;ShardErrors[]string`json:\"shardErrors,omitempty\"`;Truncated bool`json:\"truncated,omitempty\"`;}",
+      "endLine": 107,
+      "underlyingType": "struct{Results[]FileResult`json:\"results\"`;Metadata*ResultMetadata`json:\"metadata,omitempty\"`;SourceAnalysis*SourceAnalysis`json:\"sourceAnalysis,omitempty\"`;RepoCounts[]RepoCount`json:\"repoCounts,omitempty\"`;ShardErrors[]string`json:\"shardErrors,omitempty\"`;Truncated bool`json:\"truncated,omitempty\"`;}",
       "members": [
+        {
+          "name": "Metadata",
+          "kind": "property",
+          "line": 102,
+          "endLine": 102,
+          "result": "*ResultMetadata",
+          "structTag": {
+            "value": "json:\"metadata,omitempty\""
+          }
+        },
         {
           "name": "RepoCounts",
           "kind": "property",
-          "line": 103,
-          "endLine": 103,
+          "line": 104,
+          "endLine": 104,
           "result": "[]RepoCount",
           "structTag": {
             "value": "json:\"repoCounts,omitempty\""
@@ -2247,8 +2630,8 @@
         {
           "name": "ShardErrors",
           "kind": "property",
-          "line": 104,
-          "endLine": 104,
+          "line": 105,
+          "endLine": 105,
           "result": "[]string",
           "structTag": {
             "value": "json:\"shardErrors,omitempty\""
@@ -2257,8 +2640,8 @@
         {
           "name": "SourceAnalysis",
           "kind": "property",
-          "line": 102,
-          "endLine": 102,
+          "line": 103,
+          "endLine": 103,
           "result": "*SourceAnalysis",
           "structTag": {
             "value": "json:\"sourceAnalysis,omitempty\""
@@ -2267,8 +2650,8 @@
         {
           "name": "Truncated",
           "kind": "property",
-          "line": 105,
-          "endLine": 105,
+          "line": 106,
+          "endLine": 106,
           "result": "bool",
           "structTag": {
             "value": "json:\"truncated,omitempty\""
@@ -2280,15 +2663,15 @@
       "name": "SourceAnalysis",
       "kind": "struct",
       "file": "api/model.go",
-      "line": 109,
-      "endLine": 116,
+      "line": 110,
+      "endLine": 117,
       "underlyingType": "struct{Returned int`json:\"returned\"`;Structured int`json:\"structured\"`;Plain int`json:\"plain\"`;Unsupported int`json:\"unsupported\"`;Failed int`json:\"failed\"`;Recovered int`json:\"recovered\"`;}",
       "members": [
         {
           "name": "Failed",
           "kind": "property",
-          "line": 114,
-          "endLine": 114,
+          "line": 115,
+          "endLine": 115,
           "result": "int",
           "structTag": {
             "value": "json:\"failed\""
@@ -2297,8 +2680,8 @@
         {
           "name": "Plain",
           "kind": "property",
-          "line": 112,
-          "endLine": 112,
+          "line": 113,
+          "endLine": 113,
           "result": "int",
           "structTag": {
             "value": "json:\"plain\""
@@ -2307,8 +2690,8 @@
         {
           "name": "Recovered",
           "kind": "property",
-          "line": 115,
-          "endLine": 115,
+          "line": 116,
+          "endLine": 116,
           "result": "int",
           "structTag": {
             "value": "json:\"recovered\""
@@ -2317,8 +2700,8 @@
         {
           "name": "Returned",
           "kind": "property",
-          "line": 110,
-          "endLine": 110,
+          "line": 111,
+          "endLine": 111,
           "result": "int",
           "structTag": {
             "value": "json:\"returned\""
@@ -2327,8 +2710,8 @@
         {
           "name": "Structured",
           "kind": "property",
-          "line": 111,
-          "endLine": 111,
+          "line": 112,
+          "endLine": 112,
           "result": "int",
           "structTag": {
             "value": "json:\"structured\""
@@ -2337,8 +2720,8 @@
         {
           "name": "Unsupported",
           "kind": "property",
-          "line": 113,
-          "endLine": 113,
+          "line": 114,
+          "endLine": 114,
           "result": "int",
           "structTag": {
             "value": "json:\"unsupported\""
@@ -2350,15 +2733,15 @@
       "name": "TreeEntry",
       "kind": "struct",
       "file": "api/model.go",
-      "line": 135,
-      "endLine": 138,
+      "line": 136,
+      "endLine": 139,
       "underlyingType": "struct{Path string`json:\"path\"`;Dir bool`json:\"dir\"`;}",
       "members": [
         {
           "name": "Dir",
           "kind": "property",
-          "line": 137,
-          "endLine": 137,
+          "line": 138,
+          "endLine": 138,
           "result": "bool",
           "structTag": {
             "value": "json:\"dir\""
@@ -2367,8 +2750,8 @@
         {
           "name": "Path",
           "kind": "property",
-          "line": 136,
-          "endLine": 136,
+          "line": 137,
+          "endLine": 137,
           "result": "string",
           "structTag": {
             "value": "json:\"path\""
@@ -2380,15 +2763,15 @@
       "name": "TreeResponse",
       "kind": "struct",
       "file": "api/model.go",
-      "line": 141,
-      "endLine": 147,
+      "line": 142,
+      "endLine": 148,
       "underlyingType": "struct{Repo string`json:\"repo\"`;Path string`json:\"path\"`;Depth int`json:\"depth\"`;Commit*string`json:\"commit\"`;Entries[]TreeEntry`json:\"entries\"`;}",
       "members": [
         {
           "name": "Commit",
           "kind": "property",
-          "line": 145,
-          "endLine": 145,
+          "line": 146,
+          "endLine": 146,
           "result": "*string",
           "structTag": {
             "value": "json:\"commit\""
@@ -2397,8 +2780,8 @@
         {
           "name": "Depth",
           "kind": "property",
-          "line": 144,
-          "endLine": 144,
+          "line": 145,
+          "endLine": 145,
           "result": "int",
           "structTag": {
             "value": "json:\"depth\""
@@ -2407,8 +2790,8 @@
         {
           "name": "Entries",
           "kind": "property",
-          "line": 146,
-          "endLine": 146,
+          "line": 147,
+          "endLine": 147,
           "result": "[]TreeEntry",
           "structTag": {
             "value": "json:\"entries\""
@@ -2417,8 +2800,8 @@
         {
           "name": "Path",
           "kind": "property",
-          "line": 143,
-          "endLine": 143,
+          "line": 144,
+          "endLine": 144,
           "result": "string",
           "structTag": {
             "value": "json:\"path\""
@@ -2427,8 +2810,8 @@
         {
           "name": "Repo",
           "kind": "property",
-          "line": 142,
-          "endLine": 142,
+          "line": 143,
+          "endLine": 143,
           "result": "string",
           "structTag": {
             "value": "json:\"repo\""
@@ -2574,6 +2957,13 @@
       "cardinality": "many"
     },
     {
+      "from": "GritResponse",
+      "to": "ResultMetadata",
+      "kind": "association",
+      "via": "field ResultMetadata",
+      "cardinality": "one"
+    },
+    {
       "from": "LanguageCapabilities",
       "to": "FeatureSupport",
       "kind": "association",
@@ -2651,6 +3041,41 @@
       "cardinality": "many"
     },
     {
+      "from": "ResultMetadata",
+      "to": "ResultDiagnostic",
+      "kind": "association",
+      "via": "field Diagnostics",
+      "cardinality": "many"
+    },
+    {
+      "from": "ResultMetadata",
+      "to": "ResultLimits",
+      "kind": "association",
+      "via": "field Limits",
+      "cardinality": "one"
+    },
+    {
+      "from": "ResultMetadata",
+      "to": "ResultOmissions",
+      "kind": "association",
+      "via": "field Omitted",
+      "cardinality": "one"
+    },
+    {
+      "from": "ResultMetadata",
+      "to": "ResultPage",
+      "kind": "association",
+      "via": "field Page",
+      "cardinality": "one"
+    },
+    {
+      "from": "ResultMetadata",
+      "to": "ResultScope",
+      "kind": "association",
+      "via": "field Scope",
+      "cardinality": "one"
+    },
+    {
       "from": "Rule",
       "to": "GritRequest",
       "kind": "association",
@@ -2691,6 +3116,13 @@
       "kind": "association",
       "via": "field RepoCounts",
       "cardinality": "many"
+    },
+    {
+      "from": "SearchResponse",
+      "to": "ResultMetadata",
+      "kind": "association",
+      "via": "field Metadata",
+      "cardinality": "one"
     },
     {
       "from": "SearchResponse",

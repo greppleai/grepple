@@ -231,6 +231,7 @@ classDiagram
         +Diagnostics: []GritDiagnostic
         +Findings: []GritFinding
         +Metadata: GritMetadata
+        +ResultMetadata: *ResultMetadata
         +ShardErrors: []string
         +Statistics: GritStatistics
         +Total: int
@@ -241,11 +242,12 @@ classDiagram
     %% grepple:struct-tag GritResponse Diagnostics "json:\"diagnostics\""
     %% grepple:struct-tag GritResponse Findings "json:\"findings\""
     %% grepple:struct-tag GritResponse Metadata "json:\"metadata\""
+    %% grepple:struct-tag GritResponse ResultMetadata "json:\"resultMetadata,omitempty\""
     %% grepple:struct-tag GritResponse ShardErrors "json:\"shardErrors\""
     %% grepple:struct-tag GritResponse Statistics "json:\"statistics\""
     %% grepple:struct-tag GritResponse Total "json:\"total\""
     %% grepple:struct-tag GritResponse Truncations "json:\"truncations\""
-    note for GritResponse "defined: api/grit.go:181-189; Diagnostics@api/grit.go:184; Findings@api/grit.go:183; Metadata@api/grit.go:182; ShardErrors@api/grit.go:187; Statistics@api/grit.go:186; Total@api/grit.go:188; Truncations@api/grit.go:185"
+    note for GritResponse "defined: api/grit.go:181-190; Diagnostics@api/grit.go:185; Findings@api/grit.go:184; Metadata@api/grit.go:182; ResultMetadata@api/grit.go:183; ShardErrors@api/grit.go:188; Statistics@api/grit.go:187; Total@api/grit.go:189; Truncations@api/grit.go:186"
     class GritStatistics {
         +BytesRead: int64
         +Candidates: int
@@ -376,7 +378,7 @@ classDiagram
     %% grepple:struct-tag RepoListEntry Ref "json:\"ref,omitempty\""
     %% grepple:struct-tag RepoListEntry Repo "json:\"repo\""
     %% grepple:struct-tag RepoListEntry Shard "json:\"shard,omitempty\""
-    note for RepoListEntry "defined: api/model.go:119-125; Head@api/model.go:123; IndexedAt@api/model.go:124; Ref@api/model.go:122; Repo@api/model.go:120; Shard@api/model.go:121"
+    note for RepoListEntry "defined: api/model.go:120-126; Head@api/model.go:124; IndexedAt@api/model.go:125; Ref@api/model.go:123; Repo@api/model.go:121; Shard@api/model.go:122"
     class ReposResponse {
         +Count: int
         +OK: bool
@@ -387,7 +389,33 @@ classDiagram
     %% grepple:struct-tag ReposResponse Count "json:\"count\""
     %% grepple:struct-tag ReposResponse OK "json:\"ok\""
     %% grepple:struct-tag ReposResponse Repos "json:\"repos\""
-    note for ReposResponse "defined: api/model.go:128-132; Count@api/model.go:130; OK@api/model.go:129; Repos@api/model.go:131"
+    note for ReposResponse "defined: api/model.go:129-133; Count@api/model.go:131; OK@api/model.go:130; Repos@api/model.go:132"
+    class ResultDiagnostic {
+        +Code: string
+        +Message: string
+    }
+    <<struct>> ResultDiagnostic
+    %% grepple:file ResultDiagnostic api/result_metadata.go
+    %% grepple:struct-tag ResultDiagnostic Code "json:\"code\""
+    %% grepple:struct-tag ResultDiagnostic Message "json:\"message\""
+    note for ResultDiagnostic "defined: api/result_metadata.go:56-59; Code@api/result_metadata.go:57; Message@api/result_metadata.go:58"
+    class ResultLimits {
+        +JSONByteUncapped: bool
+        +MaxFiles: int
+        +MaxOutputBytes: int
+        +MaxSegments: int
+        +MaxSourceBytes: int
+        +MaxTotalBytes: int64
+    }
+    <<struct>> ResultLimits
+    %% grepple:file ResultLimits api/result_metadata.go
+    %% grepple:struct-tag ResultLimits JSONByteUncapped "json:\"jsonByteUncapped\""
+    %% grepple:struct-tag ResultLimits MaxFiles "json:\"maxFiles\""
+    %% grepple:struct-tag ResultLimits MaxOutputBytes "json:\"maxOutputBytes\""
+    %% grepple:struct-tag ResultLimits MaxSegments "json:\"maxSegments\""
+    %% grepple:struct-tag ResultLimits MaxSourceBytes "json:\"maxSourceBytes\""
+    %% grepple:struct-tag ResultLimits MaxTotalBytes "json:\"maxTotalBytes\""
+    note for ResultLimits "defined: api/result_metadata.go:36-43; JSONByteUncapped@api/result_metadata.go:42; MaxFiles@api/result_metadata.go:37; MaxOutputBytes@api/result_metadata.go:39; MaxSegments@api/result_metadata.go:38; MaxSourceBytes@api/result_metadata.go:40; MaxTotalBytes@api/result_metadata.go:41"
     class ResultMatch {
         +EndLine: int
         +Line: int
@@ -401,6 +429,70 @@ classDiagram
     %% grepple:struct-tag ResultMatch StartLine "json:\"startLine,omitempty\""
     %% grepple:struct-tag ResultMatch Text "json:\"text\""
     note for ResultMatch "defined: api/model.go:35-40; EndLine@api/model.go:38; Line@api/model.go:36; StartLine@api/model.go:37; Text@api/model.go:39"
+    class ResultMetadata {
+        +Diagnostics: []ResultDiagnostic
+        +Limits: ResultLimits
+        +NextCommand: string
+        +Omitted: ResultOmissions
+        +Page: ResultPage
+        +Scope: ResultScope
+    }
+    <<struct>> ResultMetadata
+    %% grepple:file ResultMetadata api/result_metadata.go
+    %% grepple:struct-tag ResultMetadata Diagnostics "json:\"diagnostics\""
+    %% grepple:struct-tag ResultMetadata Limits "json:\"limits\""
+    %% grepple:struct-tag ResultMetadata NextCommand "json:\"nextCommand,omitempty\""
+    %% grepple:struct-tag ResultMetadata Omitted "json:\"omitted\""
+    %% grepple:struct-tag ResultMetadata Page "json:\"page\""
+    %% grepple:struct-tag ResultMetadata Scope "json:\"scope\""
+    note for ResultMetadata "defined: api/result_metadata.go:5-12; Diagnostics@api/result_metadata.go:10; Limits@api/result_metadata.go:8; NextCommand@api/result_metadata.go:11; Omitted@api/result_metadata.go:9; Page@api/result_metadata.go:7; Scope@api/result_metadata.go:6"
+    class ResultOmissions {
+        +Bytes: int64
+        +Files: int
+        +Findings: int
+        +Segments: int
+        +Sources: int
+    }
+    <<struct>> ResultOmissions
+    %% grepple:file ResultOmissions api/result_metadata.go
+    %% grepple:struct-tag ResultOmissions Bytes "json:\"bytes\""
+    %% grepple:struct-tag ResultOmissions Files "json:\"files\""
+    %% grepple:struct-tag ResultOmissions Findings "json:\"findings\""
+    %% grepple:struct-tag ResultOmissions Segments "json:\"segments\""
+    %% grepple:struct-tag ResultOmissions Sources "json:\"sources\""
+    note for ResultOmissions "defined: api/result_metadata.go:47-53; Bytes@api/result_metadata.go:52; Files@api/result_metadata.go:48; Findings@api/result_metadata.go:51; Segments@api/result_metadata.go:49; Sources@api/result_metadata.go:50"
+    class ResultPage {
+        +Complete: bool
+        +Limit: int
+        +Returned: int
+        +Skip: int
+        +Total: *int
+    }
+    <<struct>> ResultPage
+    %% grepple:file ResultPage api/result_metadata.go
+    %% grepple:struct-tag ResultPage Complete "json:\"complete\""
+    %% grepple:struct-tag ResultPage Limit "json:\"limit\""
+    %% grepple:struct-tag ResultPage Returned "json:\"returned\""
+    %% grepple:struct-tag ResultPage Skip "json:\"skip\""
+    %% grepple:struct-tag ResultPage Total "json:\"total,omitempty\""
+    note for ResultPage "defined: api/result_metadata.go:26-32; Complete@api/result_metadata.go:31; Limit@api/result_metadata.go:28; Returned@api/result_metadata.go:29; Skip@api/result_metadata.go:27; Total@api/result_metadata.go:30"
+    class ResultScope {
+        +ExcludedPaths: []string
+        +ExcludedRepositories: []string
+        +Languages: []string
+        +Mode: string
+        +Paths: []string
+        +Repositories: []string
+    }
+    <<struct>> ResultScope
+    %% grepple:file ResultScope api/result_metadata.go
+    %% grepple:struct-tag ResultScope ExcludedPaths "json:\"excludedPaths\""
+    %% grepple:struct-tag ResultScope ExcludedRepositories "json:\"excludedRepositories\""
+    %% grepple:struct-tag ResultScope Languages "json:\"languages\""
+    %% grepple:struct-tag ResultScope Mode "json:\"mode\""
+    %% grepple:struct-tag ResultScope Paths "json:\"paths\""
+    %% grepple:struct-tag ResultScope Repositories "json:\"repositories\""
+    note for ResultScope "defined: api/result_metadata.go:15-22; ExcludedPaths@api/result_metadata.go:18; ExcludedRepositories@api/result_metadata.go:20; Languages@api/result_metadata.go:21; Mode@api/result_metadata.go:16; Paths@api/result_metadata.go:17; Repositories@api/result_metadata.go:19"
     class ResultSegment {
         +End: int
         +Kind: string
@@ -434,7 +526,7 @@ classDiagram
     %% grepple:struct-tag Rule Request "json:\"request\""
     %% grepple:struct-tag Rule Structural "json:\"structural,omitempty\""
     %% grepple:struct-tag Rule UpdatedAt "json:\"updatedAt,omitempty\""
-    note for Rule "defined: api/model.go:161-170; CreatedAt@api/model.go:168; Engine@api/model.go:165; ID@api/model.go:162; Mode@api/model.go:164; Name@api/model.go:163; Request@api/model.go:166; Structural@api/model.go:167; UpdatedAt@api/model.go:169"
+    note for Rule "defined: api/model.go:162-171; CreatedAt@api/model.go:169; Engine@api/model.go:166; ID@api/model.go:163; Mode@api/model.go:165; Name@api/model.go:164; Request@api/model.go:167; Structural@api/model.go:168; UpdatedAt@api/model.go:170"
     class RuleRepoResult {
         +EvaluatedAt: string
         +Files: int
@@ -451,7 +543,7 @@ classDiagram
     %% grepple:struct-tag RuleRepoResult Matches "json:\"matches\""
     %% grepple:struct-tag RuleRepoResult Paths "json:\"paths,omitempty\""
     %% grepple:struct-tag RuleRepoResult Repo "json:\"repo\""
-    note for RuleRepoResult "defined: api/model.go:173-180; EvaluatedAt@api/model.go:179; Files@api/model.go:175; Head@api/model.go:178; Matches@api/model.go:176; Paths@api/model.go:177; Repo@api/model.go:174"
+    note for RuleRepoResult "defined: api/model.go:174-181; EvaluatedAt@api/model.go:180; Files@api/model.go:176; Head@api/model.go:179; Matches@api/model.go:177; Paths@api/model.go:178; Repo@api/model.go:175"
     class RuleResults {
         +Generation: int64
         +Mode: string
@@ -466,7 +558,7 @@ classDiagram
     %% grepple:struct-tag RuleResults Repos "json:\"repos\""
     %% grepple:struct-tag RuleResults Rule "json:\"rule\""
     %% grepple:struct-tag RuleResults Truncated "json:\"truncated,omitempty\""
-    note for RuleResults "defined: api/model.go:183-189; Generation@api/model.go:186; Mode@api/model.go:185; Repos@api/model.go:187; Rule@api/model.go:184; Truncated@api/model.go:188"
+    note for RuleResults "defined: api/model.go:184-190; Generation@api/model.go:187; Mode@api/model.go:186; Repos@api/model.go:188; Rule@api/model.go:185; Truncated@api/model.go:189"
     class RuleSet {
         +Generation: int64
         +Rules: []Rule
@@ -475,7 +567,7 @@ classDiagram
     %% grepple:file RuleSet api/model.go
     %% grepple:struct-tag RuleSet Generation "json:\"generation\""
     %% grepple:struct-tag RuleSet Rules "json:\"rules\""
-    note for RuleSet "defined: api/model.go:192-195; Generation@api/model.go:193; Rules@api/model.go:194"
+    note for RuleSet "defined: api/model.go:193-196; Generation@api/model.go:194; Rules@api/model.go:195"
     class SearchRequest {
         +AfterContext: *int
         +BeforeContext: *int
@@ -524,6 +616,7 @@ classDiagram
     %% grepple:struct-tag SearchRequest SkipSegments "json:\"skipSegments,omitempty\""
     note for SearchRequest "defined: api/model.go:10-32; AfterContext@api/model.go:25; BeforeContext@api/model.go:24; Context@api/model.go:23; CountByRepo@api/model.go:31; EnclosingRanges@api/model.go:28; ExcludeRepo@api/model.go:21; Files@api/model.go:22; FollowRelated@api/model.go:30; Globs@api/model.go:12; IgnoreCase@api/model.go:14; InvertMatch@api/model.go:15; Limit@api/model.go:19; LineRanges@api/model.go:27; MaxFiles@api/model.go:16; MaxSegments@api/model.go:17; Query@api/model.go:11; Regex@api/model.go:13; Related@api/model.go:29; Repo@api/model.go:20; Skip@api/model.go:18; SkipSegments@api/model.go:26"
     class SearchResponse {
+        +Metadata: *ResultMetadata
         +RepoCounts: []RepoCount
         +Results: []FileResult
         +ShardErrors: []string
@@ -532,12 +625,13 @@ classDiagram
     }
     <<struct>> SearchResponse
     %% grepple:file SearchResponse api/model.go
+    %% grepple:struct-tag SearchResponse Metadata "json:\"metadata,omitempty\""
     %% grepple:struct-tag SearchResponse RepoCounts "json:\"repoCounts,omitempty\""
     %% grepple:struct-tag SearchResponse Results "json:\"results\""
     %% grepple:struct-tag SearchResponse ShardErrors "json:\"shardErrors,omitempty\""
     %% grepple:struct-tag SearchResponse SourceAnalysis "json:\"sourceAnalysis,omitempty\""
     %% grepple:struct-tag SearchResponse Truncated "json:\"truncated,omitempty\""
-    note for SearchResponse "defined: api/model.go:100-106; RepoCounts@api/model.go:103; Results@api/model.go:101; ShardErrors@api/model.go:104; SourceAnalysis@api/model.go:102; Truncated@api/model.go:105"
+    note for SearchResponse "defined: api/model.go:100-107; Metadata@api/model.go:102; RepoCounts@api/model.go:104; Results@api/model.go:101; ShardErrors@api/model.go:105; SourceAnalysis@api/model.go:103; Truncated@api/model.go:106"
     class SourceAnalysis {
         +Failed: int
         +Plain: int
@@ -554,7 +648,7 @@ classDiagram
     %% grepple:struct-tag SourceAnalysis Returned "json:\"returned\""
     %% grepple:struct-tag SourceAnalysis Structured "json:\"structured\""
     %% grepple:struct-tag SourceAnalysis Unsupported "json:\"unsupported\""
-    note for SourceAnalysis "defined: api/model.go:109-116; Failed@api/model.go:114; Plain@api/model.go:112; Recovered@api/model.go:115; Returned@api/model.go:110; Structured@api/model.go:111; Unsupported@api/model.go:113"
+    note for SourceAnalysis "defined: api/model.go:110-117; Failed@api/model.go:115; Plain@api/model.go:113; Recovered@api/model.go:116; Returned@api/model.go:111; Structured@api/model.go:112; Unsupported@api/model.go:114"
     class TreeEntry {
         +Dir: bool
         +Path: string
@@ -563,7 +657,7 @@ classDiagram
     %% grepple:file TreeEntry api/model.go
     %% grepple:struct-tag TreeEntry Dir "json:\"dir\""
     %% grepple:struct-tag TreeEntry Path "json:\"path\""
-    note for TreeEntry "defined: api/model.go:135-138; Dir@api/model.go:137; Path@api/model.go:136"
+    note for TreeEntry "defined: api/model.go:136-139; Dir@api/model.go:138; Path@api/model.go:137"
     class TreeResponse {
         +Commit: *string
         +Depth: int
@@ -578,7 +672,7 @@ classDiagram
     %% grepple:struct-tag TreeResponse Entries "json:\"entries\""
     %% grepple:struct-tag TreeResponse Path "json:\"path\""
     %% grepple:struct-tag TreeResponse Repo "json:\"repo\""
-    note for TreeResponse "defined: api/model.go:141-147; Commit@api/model.go:145; Depth@api/model.go:144; Entries@api/model.go:146; Path@api/model.go:143; Repo@api/model.go:142"
+    note for TreeResponse "defined: api/model.go:142-148; Commit@api/model.go:146; Depth@api/model.go:145; Entries@api/model.go:147; Path@api/model.go:144; Repo@api/model.go:143"
     FileResult "1" --> "*" ContextLine : field Context
     FileResult "1" --> "*" RelatedSymbol : field Related
     FileResult "1" --> "*" ResultMatch : field Matches
@@ -598,6 +692,7 @@ classDiagram
     GritResponse "1" --> "1" GritMetadata : field Metadata
     GritResponse "1" --> "1" GritStatistics : field Statistics
     GritResponse "1" --> "*" GritTruncation : field Truncations
+    GritResponse "1" --> "1" ResultMetadata : field ResultMetadata
     LanguageCapabilities "1" --> "1" FeatureSupport : field FocusedFlow
     LanguageCapabilities "1" --> "1" FeatureSupport : field FocusedStructure
     LanguageCapabilities "1" --> "1" FeatureSupport : field GritQL
@@ -609,11 +704,17 @@ classDiagram
     LanguageCapabilities "1" --> "1" FeatureSupport : field WorkspaceBundle
     RelatedSymbol "1" --> "*" ResultSegment : field Segments
     ReposResponse "1" --> "*" RepoListEntry : field Repos
+    ResultMetadata "1" --> "*" ResultDiagnostic : field Diagnostics
+    ResultMetadata "1" --> "1" ResultLimits : field Limits
+    ResultMetadata "1" --> "1" ResultOmissions : field Omitted
+    ResultMetadata "1" --> "1" ResultPage : field Page
+    ResultMetadata "1" --> "1" ResultScope : field Scope
     Rule "1" --> "1" GritRequest : field Structural
     Rule "1" --> "1" SearchRequest : field Request
     RuleResults "1" --> "*" RuleRepoResult : field Repos
     RuleSet "1" --> "*" Rule : field Rules
     SearchResponse "1" --> "*" FileResult : field Results
     SearchResponse "1" --> "*" RepoCount : field RepoCounts
+    SearchResponse "1" --> "1" ResultMetadata : field Metadata
     SearchResponse "1" --> "1" SourceAnalysis : field SourceAnalysis
     TreeResponse "1" --> "*" TreeEntry : field Entries

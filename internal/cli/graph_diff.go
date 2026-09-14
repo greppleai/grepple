@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/alexflint/go-arg"
+	"github.com/greppleai/grepple/api"
 	"github.com/greppleai/grepple/parser"
 	"github.com/greppleai/grepple/search"
 )
@@ -27,6 +28,7 @@ func (graphDiffArgs) Description() string {
 }
 
 type graphDiffOutput struct {
+	Metadata      *api.ResultMetadata     `json:"metadata,omitempty"`
 	BeforeFiles   int                     `json:"beforeFiles"`
 	BeforeSources navigationSourceSummary `json:"beforeSources"`
 	AfterFiles    int                     `json:"afterFiles"`
@@ -68,6 +70,7 @@ func runGraphDiff(args []string) error {
 		beforeGraph,
 		afterGraph,
 	)}
+	output.Metadata = graphDiffResultMetadata(values, before, after)
 	if values.JSON {
 		encoder := json.NewEncoder(os.Stdout)
 		encoder.SetEscapeHTML(false)
@@ -111,6 +114,9 @@ func renderCompactGraphDiff(diff graphDiffOutput, maxBytes int) error {
 	}
 	write := func(value string) bool { return output.writeString(value+"\n") == nil }
 	if !write(fmt.Sprintf("graph-diff %s files=%d->%d sources=before(%s),after(%s) declarations=+%d/-%d/~%d/>%d calls=+%d/-%d/~%d", diff.Schema, diff.BeforeFiles, diff.AfterFiles, compactNavigationSourceSummary(diff.BeforeSources), compactNavigationSourceSummary(diff.AfterSources), len(diff.AddedDeclarations), len(diff.RemovedDeclarations), len(diff.ChangedDeclarations), len(diff.MovedDeclarations), len(diff.AddedCalls), len(diff.RemovedCalls), len(diff.ChangedCalls))) {
+		return nil
+	}
+	if diff.Metadata != nil && diff.Metadata.NextCommand != "" && !write("continue: "+diff.Metadata.NextCommand) {
 		return nil
 	}
 	if !renderCompactDeclarationDiff(write, diff) {

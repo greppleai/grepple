@@ -17,7 +17,7 @@ func newResultRenderer(options *cliOptions, output *outputWriter) resultRenderer
 	case options.Count:
 		return countRenderer{output: output, json: options.JSON != "off"}
 	case options.JSON != "off":
-		return jsonResultRenderer{output: output, matchesOnly: options.JSON == "matches" || options.LineOnly}
+		return jsonResultRenderer{output: output, matchesOnly: options.JSON == "matches" || options.LineOnly, metadata: options.ResultMetadata}
 	case options.Params.BeforeContext > 0 || options.Params.AfterContext > 0:
 		return contextRenderer{output: output}
 	case options.OnlyMatching:

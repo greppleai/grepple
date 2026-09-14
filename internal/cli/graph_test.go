@@ -38,6 +38,9 @@ func TestGraphJSONEmitsResolvedDeterministicGraph(t *testing.T) {
 	if output.Schema != navigationGraphSchema || output.Files != 2 || len(output.Declarations) != 2 || len(output.Calls) != 1 {
 		t.Fatalf("output=%#v", output)
 	}
+	if output.Metadata == nil || !output.Metadata.Page.Complete || output.Metadata.Limits.MaxOutputBytes != DefaultTextOutputBytes || len(output.Metadata.Scope.Paths) != 2 {
+		t.Fatalf("graph metadata=%#v", output.Metadata)
+	}
 	call := output.Calls[0]
 	if call.TargetID == "" || call.Confidence != "unique-terminal" || call.CallerID == "" {
 		t.Fatalf("call=%#v", call)
@@ -65,6 +68,9 @@ func TestGraphJSONReportsFileTruncation(t *testing.T) {
 	want := &navigationGraphTruncation{Reason: "max_files", Limit: 1, Skipped: 1}
 	if output.Files != 1 || !reflect.DeepEqual(output.Truncation, want) {
 		t.Fatalf("output=%#v", output)
+	}
+	if output.Metadata == nil || output.Metadata.Omitted.Sources != 1 || !strings.Contains(output.Metadata.NextCommand, "--max-files 0 --json") {
+		t.Fatalf("truncated graph metadata=%#v", output.Metadata)
 	}
 }
 
