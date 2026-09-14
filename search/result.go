@@ -39,17 +39,41 @@ func ToResult(m FileMatch, segs []parser.Segment, beforeContext, afterContext, m
 	}
 	return r
 }
+
+const maxInlineWhitespaceGap = 2
+
 func resultSegments(content string, segments []parser.Segment) []api.ResultSegment {
 	lines := SplitLines(content)
 	result := make([]api.ResultSegment, 0, len(segments))
+	previousEnd := 0
 	for _, segment := range segments {
+		if len(result) > 0 {
+			if gap, ok := inlineWhitespaceGap(lines, previousEnd+1, segment.Start-1); ok {
+				result = append(result, gap)
+			}
+		}
 		text := segment.Text
 		if segment.Kind == "lines" {
 			text = strings.Join(lines[segment.Start-1:segment.End], "\n")
 		}
 		result = append(result, api.ResultSegment{Kind: segment.Kind, Start: segment.Start, End: segment.End, Text: text})
+		previousEnd = max(previousEnd, segment.End)
 	}
 	return result
+}
+
+func inlineWhitespaceGap(lines []string, start, end int) (api.ResultSegment, bool) {
+	count := end - start + 1
+	if count <= 0 || count > maxInlineWhitespaceGap || start < 1 || end > len(lines) {
+		return api.ResultSegment{}, false
+	}
+	gapLines := lines[start-1 : end]
+	for _, line := range gapLines {
+		if strings.TrimSpace(line) != "" {
+			return api.ResultSegment{}, false
+		}
+	}
+	return api.ResultSegment{Kind: "spacing", Start: start, End: end, Text: strings.Join(gapLines, "\n")}, true
 }
 
 func relatedSymbols(points []RelatedPoint) []api.RelatedSymbol {

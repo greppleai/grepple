@@ -189,6 +189,9 @@ func (renderer segmentRenderer) renderRelatedSegments(segments []api.ResultSegme
 }
 
 func (renderer segmentRenderer) renderSegment(path string, segment api.ResultSegment, width int) error {
+	if segment.Kind == "spacing" {
+		return renderer.output.writeString(strings.Repeat("\n", segment.End-segment.Start+1))
+	}
 	if segment.Kind == "summary" {
 		return renderer.output.writeString(fmt.Sprintf("%*d   %s\n", width, segment.Start, segment.Text))
 	}

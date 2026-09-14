@@ -4478,7 +4478,7 @@
           "name": "renderSegment",
           "kind": "method",
           "line": 191,
-          "endLine": 202,
+          "endLine": 205,
           "parameters": [
             "string",
             "api.ResultSegment",
@@ -4489,8 +4489,8 @@
         {
           "name": "renderSourceLine",
           "kind": "method",
-          "line": 204,
-          "endLine": 209,
+          "line": 207,
+          "endLine": 212,
           "parameters": [
             "string",
             "int",

@@ -2479,8 +2479,8 @@
       "name": "BuildResults",
       "kind": "function",
       "file": "search/result.go",
-      "line": 74,
-      "endLine": 87,
+      "line": 98,
+      "endLine": 111,
       "parameters": [
         "[]FileMatch",
         "int",

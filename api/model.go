@@ -40,7 +40,8 @@ type ResultMatch struct {
 	Text      string `json:"text"`
 }
 
-// ResultSegment is one structural segment around a file's matches.
+// ResultSegment is one structural segment around a file's matches. Kind "spacing"
+// preserves a short whitespace-only gap without a verbose omission marker.
 type ResultSegment struct {
 	Kind  string `json:"kind"`
 	Start int    `json:"start"`

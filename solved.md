@@ -22,7 +22,7 @@ This file records completed Grepple roadmap work that no longer belongs in `next
 - [x] Kept grep-compatible per-file `--count` and grouped `--count-by-repo` output.
 - [x] Added safe compatibility aliases: `-E` selects JavaScript regex and `-r` is a recursive-search no-op.
 - [x] Bounded human-readable output at 16,384 bytes while keeping JSON valid and byte-uncapped.
-- [x] Reported omitted segments and broad-output truncation with narrowing guidance.
+- [x] Reported omitted segments and broad-output truncation with narrowing guidance; short whitespace-only gaps render as whitespace instead of verbose collapsed-line markers.
 - [x] Added parser-backed construct ranges to `--line-only` and opt-in enclosing ranges without changing anchor rows.
 - [x] Preserved exact `HASH│LINE│content` output through a user-owned, versioned anchor-provider protocol.
 - [x] Added provider digest checks, timeout/output bounds, strict response validation, default enablement, and `--no-anchors` fallback.

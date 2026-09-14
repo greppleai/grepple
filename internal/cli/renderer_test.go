@@ -58,6 +58,28 @@ func TestLineRendererWritesToInjectedOutput(t *testing.T) {
 	}
 }
 
+func TestSegmentRendererUsesWhitespaceForShortSpacingSegments(t *testing.T) {
+	var output bytes.Buffer
+	renderer := segmentRenderer{output: newOutputWriter(&output)}
+	results := []api.FileResult{{
+		Path: "example.go",
+		Segments: []api.ResultSegment{
+			{Kind: "summary", Start: 1, End: 1, Text: "first"},
+			{Kind: "spacing", Start: 2, End: 3, Text: "\n"},
+			{Kind: "lines", Start: 4, End: 4, Text: "fourth"},
+		},
+	}}
+	if err := renderer.Render(results); err != nil {
+		t.Fatal(err)
+	}
+	if got, want := output.String(), "example.go\n\n1   first\n\n\n4   fourth\n"; got != want {
+		t.Fatalf("expected %q, got %q", want, got)
+	}
+	if strings.Contains(output.String(), "collapsed") {
+		t.Fatalf("short whitespace gap used an omission marker: %q", output.String())
+	}
+}
+
 func TestSegmentRendererPrintsRelatedGoPoints(t *testing.T) {
 	var output bytes.Buffer
 	renderer := segmentRenderer{output: newOutputWriter(&output)}
