@@ -17,7 +17,7 @@ func TestBoundariesReportsExternalOwnerWorkflowsAndUsesCache(t *testing.T) {
 		}
 	})
 	for _, expected := range []string{
-		"boundary analysis paths=. files=3 workflow-candidates=1 workflow-shown=1 type-candidates=0 type-shown=0", "owner: owner.go [go]", "external consumers: 2 functions / 2 files",
+		"boundary analysis paths=. files=3 workflow-candidates=1 workflow-shown=1 type-candidates=0 type-shown=0", "owner: owner.go [go, risk=low]", "reasons: repeated-owner-file-workflow, broad-owner-callable-surface", "external consumers: 2 functions / 2 files",
 		"Parse + Validate", "Parse -> Validate", "callers: one.go:2 One; two.go:2 Two",
 	} {
 		if !strings.Contains(first, expected) {
@@ -64,7 +64,7 @@ func TestBoundariesHumanLimitDoesNotLimitJSON(t *testing.T) {
 	if err := json.Unmarshal([]byte(jsonText), &output); err != nil {
 		t.Fatal(err)
 	}
-	if output.Schema != "grepple-boundaries-v2" || len(output.Candidates) != 2 {
+	if output.Schema != "grepple-boundaries-v2" || len(output.Candidates) != 2 || output.Candidates[0].Risk == "" || len(output.Candidates[0].Reasons) == 0 {
 		t.Fatalf("JSON was limited: %#v", output)
 	}
 	if _, err := os.Stat(filepath.Join(".grepple", "cache")); !os.IsNotExist(err) {
@@ -87,7 +87,7 @@ func private(node *sitter.Node) {}
 			t.Fatal(err)
 		}
 	})
-	for _, expected := range []string{"type-candidates=1", "github.com/tree-sitter/go-tree-sitter.Node", "origin=third-party", "2 production files / 0 test files", "1 public external-type exposures", "one.go:3 Public (parameter)"} {
+	for _, expected := range []string{"type-candidates=1", "github.com/tree-sitter/go-tree-sitter.Node", "origin=third-party, risk=critical", "reasons: third-party-public-api", "2 production files / 0 test files", "1 public third-party exposures", "one.go:3 Public (parameter)"} {
 		if !strings.Contains(output, expected) {
 			t.Fatalf("type boundary output missing %q:\n%s", expected, output)
 		}

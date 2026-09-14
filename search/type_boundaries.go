@@ -46,6 +46,8 @@ type BoundaryTypeSpread struct {
 	Language        string              `json:"language"`
 	OwnerFile       string              `json:"ownerFile,omitempty"`
 	Origin          BoundaryTypeOrigin  `json:"origin"`
+	Risk            BoundaryRisk        `json:"risk"`
+	Reasons         []string            `json:"reasons"`
 	External        bool                `json:"external"` // Compatibility: true when ImportPath is non-empty.
 	Usages          int                 `json:"usages"`
 	Consumers       BoundaryBreadth     `json:"consumers"`
@@ -222,13 +224,54 @@ func buildBoundaryTypeSpreads(groups map[boundaryTypeSpreadKey][]BoundaryTypeUsa
 				spread.PublicExposures = append(spread.PublicExposures, detail)
 			}
 		}
+		spread.Risk, spread.Reasons = classifyTypeBoundary(spread)
 		spreads = append(spreads, spread)
 	}
 	return spreads
 }
 
+func classifyTypeBoundary(spread BoundaryTypeSpread) (BoundaryRisk, []string) {
+	if spread.Production.Files == 0 {
+		return BoundaryRiskInformational, []string{"test-only-spread"}
+	}
+	crossPackage := spread.Production.Packages > 1
+	switch spread.Origin {
+	case BoundaryTypeOriginThirdParty:
+		if len(spread.PublicExposures) > 0 {
+			return BoundaryRiskCritical, []string{"third-party-public-api"}
+		}
+		return BoundaryRiskHigh, []string{"third-party-production-spread"}
+	case BoundaryTypeOriginFirstParty:
+		if len(spread.PublicExposures) > 0 {
+			return BoundaryRiskMedium, []string{"first-party-public-api"}
+		}
+		if crossPackage {
+			return BoundaryRiskMedium, []string{"first-party-cross-package-spread"}
+		}
+		return BoundaryRiskLow, []string{"first-party-package-use"}
+	case BoundaryTypeOriginUnresolved:
+		if len(spread.PublicExposures) > 0 {
+			return BoundaryRiskMedium, []string{"unresolved-origin-public-api"}
+		}
+		return BoundaryRiskLow, []string{"unresolved-origin-production-spread"}
+	case BoundaryTypeOriginStandardLibrary:
+		return BoundaryRiskInformational, []string{"standard-library-spread"}
+	case BoundaryTypeOriginLocal:
+		if crossPackage {
+			return BoundaryRiskLow, []string{"local-cross-package-spread"}
+		}
+		return BoundaryRiskInformational, []string{"local-package-internal-spread"}
+	default:
+		return BoundaryRiskLow, []string{"unclassified-type-origin"}
+	}
+}
+
 func sortBoundaryTypeSpreads(spreads []BoundaryTypeSpread) {
 	sort.Slice(spreads, func(i, j int) bool {
+		leftRisk, rightRisk := boundaryRiskRank(spreads[i].Risk), boundaryRiskRank(spreads[j].Risk)
+		if leftRisk != rightRisk {
+			return leftRisk > rightRisk
+		}
 		leftPublic, rightPublic := boundaryExternalPublicExposures(spreads[i]), boundaryExternalPublicExposures(spreads[j])
 		if leftPublic != rightPublic {
 			return leftPublic > rightPublic

@@ -17,15 +17,15 @@
   },
   "summary": {
     "sourceFiles": 16,
-    "declarations": 36,
-    "exportedTypes": 19,
+    "declarations": 37,
+    "exportedTypes": 20,
     "internalTypes": 17,
-    "members": 214,
+    "members": 218,
     "exportedFunctions": 27,
     "fiberRoutes": 0,
-    "relations": 70
+    "relations": 72
   },
-  "semanticModelDigest": "sha256:7aaf3c3a824cf79c4ffa10ff99d4d28da9d91810b8d10f4d2a596d553b3131b0",
+  "semanticModelDigest": "sha256:43d91412e35fcb2927e4d90cb5ca764a2edf952a70e30c00993ddd2dbe9913e3",
   "sourceFiles": [
     {
       "path": "search/at.go"
@@ -81,15 +81,15 @@
       "name": "BoundaryBreadth",
       "kind": "struct",
       "file": "search/boundary_model.go",
-      "line": 12,
-      "endLine": 16,
+      "line": 39,
+      "endLine": 43,
       "underlyingType": "struct{Functions int`json:\"functions\"`;Files int`json:\"files\"`;Packages int`json:\"packages\"`;}",
       "members": [
         {
           "name": "Files",
           "kind": "property",
-          "line": 14,
-          "endLine": 14,
+          "line": 41,
+          "endLine": 41,
           "result": "int",
           "structTag": {
             "value": "json:\"files\""
@@ -98,8 +98,8 @@
         {
           "name": "Functions",
           "kind": "property",
-          "line": 13,
-          "endLine": 13,
+          "line": 40,
+          "endLine": 40,
           "result": "int",
           "structTag": {
             "value": "json:\"functions\""
@@ -108,8 +108,8 @@
         {
           "name": "Packages",
           "kind": "property",
-          "line": 15,
-          "endLine": 15,
+          "line": 42,
+          "endLine": 42,
           "result": "int",
           "structTag": {
             "value": "json:\"packages\""
@@ -122,14 +122,14 @@
       "kind": "struct",
       "file": "search/boundaries.go",
       "line": 12,
-      "endLine": 23,
-      "underlyingType": "struct{OwnerFile string`json:\"ownerFile\"`;Language string`json:\"language\"`;Consumers BoundaryBreadth`json:\"consumers\"`;ConsumerDetails[]BoundaryConsumer`json:\"consumerDetails\"`;ExternalCallableSurface BoundarySurface`json:\"externalCallableSurface\"`;Callables[]string`json:\"callables\"`;CallableCoUsage[]BoundaryPattern`json:\"callableCoUsage\"`;OrderedSequences[]BoundaryPattern`json:\"orderedSequences\"`;MemberCallCombinations[]BoundaryPattern`json:\"memberCallCombinations\"`;UnresolvedCalls int`json:\"unresolvedCalls\"`;}",
+      "endLine": 25,
+      "underlyingType": "struct{OwnerFile string`json:\"ownerFile\"`;Language string`json:\"language\"`;Risk BoundaryRisk`json:\"risk\"`;Reasons[]string`json:\"reasons\"`;Consumers BoundaryBreadth`json:\"consumers\"`;ConsumerDetails[]BoundaryConsumer`json:\"consumerDetails\"`;ExternalCallableSurface BoundarySurface`json:\"externalCallableSurface\"`;Callables[]string`json:\"callables\"`;CallableCoUsage[]BoundaryPattern`json:\"callableCoUsage\"`;OrderedSequences[]BoundaryPattern`json:\"orderedSequences\"`;MemberCallCombinations[]BoundaryPattern`json:\"memberCallCombinations\"`;UnresolvedCalls int`json:\"unresolvedCalls\"`;}",
       "members": [
         {
           "name": "CallableCoUsage",
           "kind": "property",
-          "line": 19,
-          "endLine": 19,
+          "line": 21,
+          "endLine": 21,
           "result": "[]BoundaryPattern",
           "structTag": {
             "value": "json:\"callableCoUsage\""
@@ -138,8 +138,8 @@
         {
           "name": "Callables",
           "kind": "property",
-          "line": 18,
-          "endLine": 18,
+          "line": 20,
+          "endLine": 20,
           "result": "[]string",
           "structTag": {
             "value": "json:\"callables\""
@@ -148,8 +148,8 @@
         {
           "name": "ConsumerDetails",
           "kind": "property",
-          "line": 16,
-          "endLine": 16,
+          "line": 18,
+          "endLine": 18,
           "result": "[]BoundaryConsumer",
           "structTag": {
             "value": "json:\"consumerDetails\""
@@ -158,8 +158,8 @@
         {
           "name": "Consumers",
           "kind": "property",
-          "line": 15,
-          "endLine": 15,
+          "line": 17,
+          "endLine": 17,
           "result": "BoundaryBreadth",
           "structTag": {
             "value": "json:\"consumers\""
@@ -168,8 +168,8 @@
         {
           "name": "ExternalCallableSurface",
           "kind": "property",
-          "line": 17,
-          "endLine": 17,
+          "line": 19,
+          "endLine": 19,
           "result": "BoundarySurface",
           "structTag": {
             "value": "json:\"externalCallableSurface\""
@@ -188,8 +188,8 @@
         {
           "name": "MemberCallCombinations",
           "kind": "property",
-          "line": 21,
-          "endLine": 21,
+          "line": 23,
+          "endLine": 23,
           "result": "[]BoundaryPattern",
           "structTag": {
             "value": "json:\"memberCallCombinations\""
@@ -198,8 +198,8 @@
         {
           "name": "OrderedSequences",
           "kind": "property",
-          "line": 20,
-          "endLine": 20,
+          "line": 22,
+          "endLine": 22,
           "result": "[]BoundaryPattern",
           "structTag": {
             "value": "json:\"orderedSequences\""
@@ -216,10 +216,30 @@
           }
         },
         {
+          "name": "Reasons",
+          "kind": "property",
+          "line": 16,
+          "endLine": 16,
+          "result": "[]string",
+          "structTag": {
+            "value": "json:\"reasons\""
+          }
+        },
+        {
+          "name": "Risk",
+          "kind": "property",
+          "line": 15,
+          "endLine": 15,
+          "result": "BoundaryRisk",
+          "structTag": {
+            "value": "json:\"risk\""
+          }
+        },
+        {
           "name": "UnresolvedCalls",
           "kind": "property",
-          "line": 22,
-          "endLine": 22,
+          "line": 24,
+          "endLine": 24,
           "result": "int",
           "structTag": {
             "value": "json:\"unresolvedCalls\""
@@ -231,15 +251,15 @@
       "name": "BoundaryConsumer",
       "kind": "struct",
       "file": "search/boundary_model.go",
-      "line": 25,
-      "endLine": 31,
+      "line": 52,
+      "endLine": 58,
       "underlyingType": "struct{ID string`json:\"id\"`;Name string`json:\"name\"`;Path string`json:\"path\"`;Package string`json:\"package,omitempty\"`;Line int`json:\"line\"`;}",
       "members": [
         {
           "name": "ID",
           "kind": "property",
-          "line": 26,
-          "endLine": 26,
+          "line": 53,
+          "endLine": 53,
           "result": "string",
           "structTag": {
             "value": "json:\"id\""
@@ -248,8 +268,8 @@
         {
           "name": "Line",
           "kind": "property",
-          "line": 30,
-          "endLine": 30,
+          "line": 57,
+          "endLine": 57,
           "result": "int",
           "structTag": {
             "value": "json:\"line\""
@@ -258,8 +278,8 @@
         {
           "name": "Name",
           "kind": "property",
-          "line": 27,
-          "endLine": 27,
+          "line": 54,
+          "endLine": 54,
           "result": "string",
           "structTag": {
             "value": "json:\"name\""
@@ -268,8 +288,8 @@
         {
           "name": "Package",
           "kind": "property",
-          "line": 29,
-          "endLine": 29,
+          "line": 56,
+          "endLine": 56,
           "result": "string",
           "structTag": {
             "value": "json:\"package,omitempty\""
@@ -278,8 +298,8 @@
         {
           "name": "Path",
           "kind": "property",
-          "line": 28,
-          "endLine": 28,
+          "line": 55,
+          "endLine": 55,
           "result": "string",
           "structTag": {
             "value": "json:\"path\""
@@ -291,15 +311,15 @@
       "name": "BoundaryPattern",
       "kind": "struct",
       "file": "search/boundary_model.go",
-      "line": 34,
-      "endLine": 40,
+      "line": 61,
+      "endLine": 67,
       "underlyingType": "struct{Interactions[]string`json:\"interactions\"`;Occurrences int`json:\"occurrences\"`;Files int`json:\"files\"`;Packages int`json:\"packages\"`;Consumers[]BoundaryConsumer`json:\"consumers\"`;}",
       "members": [
         {
           "name": "Consumers",
           "kind": "property",
-          "line": 39,
-          "endLine": 39,
+          "line": 66,
+          "endLine": 66,
           "result": "[]BoundaryConsumer",
           "structTag": {
             "value": "json:\"consumers\""
@@ -308,8 +328,8 @@
         {
           "name": "Files",
           "kind": "property",
-          "line": 37,
-          "endLine": 37,
+          "line": 64,
+          "endLine": 64,
           "result": "int",
           "structTag": {
             "value": "json:\"files\""
@@ -318,8 +338,8 @@
         {
           "name": "Interactions",
           "kind": "property",
-          "line": 35,
-          "endLine": 35,
+          "line": 62,
+          "endLine": 62,
           "result": "[]string",
           "structTag": {
             "value": "json:\"interactions\""
@@ -328,8 +348,8 @@
         {
           "name": "Occurrences",
           "kind": "property",
-          "line": 36,
-          "endLine": 36,
+          "line": 63,
+          "endLine": 63,
           "result": "int",
           "structTag": {
             "value": "json:\"occurrences\""
@@ -338,8 +358,8 @@
         {
           "name": "Packages",
           "kind": "property",
-          "line": 38,
-          "endLine": 38,
+          "line": 65,
+          "endLine": 65,
           "result": "int",
           "structTag": {
             "value": "json:\"packages\""
@@ -348,18 +368,26 @@
       ]
     },
     {
+      "name": "BoundaryRisk",
+      "kind": "type",
+      "file": "search/boundary_model.go",
+      "line": 12,
+      "endLine": 12,
+      "underlyingType": "string"
+    },
+    {
       "name": "BoundarySurface",
       "kind": "struct",
       "file": "search/boundary_model.go",
-      "line": 19,
-      "endLine": 22,
+      "line": 46,
+      "endLine": 49,
       "underlyingType": "struct{External int`json:\"external\"`;Declared int`json:\"declared\"`;}",
       "members": [
         {
           "name": "Declared",
           "kind": "property",
-          "line": 21,
-          "endLine": 21,
+          "line": 48,
+          "endLine": 48,
           "result": "int",
           "structTag": {
             "value": "json:\"declared\""
@@ -368,8 +396,8 @@
         {
           "name": "External",
           "kind": "property",
-          "line": 20,
-          "endLine": 20,
+          "line": 47,
+          "endLine": 47,
           "result": "int",
           "structTag": {
             "value": "json:\"external\""
@@ -450,8 +478,8 @@
       "kind": "struct",
       "file": "search/type_boundaries.go",
       "line": 42,
-      "endLine": 57,
-      "underlyingType": "struct{Type string`json:\"type\"`;ImportPath string`json:\"importPath,omitempty\"`;CanonicalType string`json:\"canonicalType\"`;Language string`json:\"language\"`;OwnerFile string`json:\"ownerFile,omitempty\"`;Origin BoundaryTypeOrigin`json:\"origin\"`;External bool`json:\"external\"`;Usages int`json:\"usages\"`;Consumers BoundaryBreadth`json:\"consumers\"`;Production BoundaryBreadth`json:\"production\"`;Tests BoundaryBreadth`json:\"tests\"`;Roles BoundaryTypeRoles`json:\"roles\"`;PublicExposures[]BoundaryTypeUsage`json:\"publicExposures,omitempty\"`;UsageDetails[]BoundaryTypeUsage`json:\"usageDetails\"`;}",
+      "endLine": 59,
+      "underlyingType": "struct{Type string`json:\"type\"`;ImportPath string`json:\"importPath,omitempty\"`;CanonicalType string`json:\"canonicalType\"`;Language string`json:\"language\"`;OwnerFile string`json:\"ownerFile,omitempty\"`;Origin BoundaryTypeOrigin`json:\"origin\"`;Risk BoundaryRisk`json:\"risk\"`;Reasons[]string`json:\"reasons\"`;External bool`json:\"external\"`;Usages int`json:\"usages\"`;Consumers BoundaryBreadth`json:\"consumers\"`;Production BoundaryBreadth`json:\"production\"`;Tests BoundaryBreadth`json:\"tests\"`;Roles BoundaryTypeRoles`json:\"roles\"`;PublicExposures[]BoundaryTypeUsage`json:\"publicExposures,omitempty\"`;UsageDetails[]BoundaryTypeUsage`json:\"usageDetails\"`;}",
       "members": [
         {
           "name": "CanonicalType",
@@ -466,8 +494,8 @@
         {
           "name": "Consumers",
           "kind": "property",
-          "line": 51,
-          "endLine": 51,
+          "line": 53,
+          "endLine": 53,
           "result": "BoundaryBreadth",
           "structTag": {
             "value": "json:\"consumers\""
@@ -476,8 +504,8 @@
         {
           "name": "External",
           "kind": "property",
-          "line": 49,
-          "endLine": 49,
+          "line": 51,
+          "endLine": 51,
           "result": "bool",
           "structTag": {
             "value": "json:\"external\""
@@ -526,8 +554,8 @@
         {
           "name": "Production",
           "kind": "property",
-          "line": 52,
-          "endLine": 52,
+          "line": 54,
+          "endLine": 54,
           "result": "BoundaryBreadth",
           "structTag": {
             "value": "json:\"production\""
@@ -536,18 +564,38 @@
         {
           "name": "PublicExposures",
           "kind": "property",
-          "line": 55,
-          "endLine": 55,
+          "line": 57,
+          "endLine": 57,
           "result": "[]BoundaryTypeUsage",
           "structTag": {
             "value": "json:\"publicExposures,omitempty\""
           }
         },
         {
+          "name": "Reasons",
+          "kind": "property",
+          "line": 50,
+          "endLine": 50,
+          "result": "[]string",
+          "structTag": {
+            "value": "json:\"reasons\""
+          }
+        },
+        {
+          "name": "Risk",
+          "kind": "property",
+          "line": 49,
+          "endLine": 49,
+          "result": "BoundaryRisk",
+          "structTag": {
+            "value": "json:\"risk\""
+          }
+        },
+        {
           "name": "Roles",
           "kind": "property",
-          "line": 54,
-          "endLine": 54,
+          "line": 56,
+          "endLine": 56,
           "result": "BoundaryTypeRoles",
           "structTag": {
             "value": "json:\"roles\""
@@ -556,8 +604,8 @@
         {
           "name": "Tests",
           "kind": "property",
-          "line": 53,
-          "endLine": 53,
+          "line": 55,
+          "endLine": 55,
           "result": "BoundaryBreadth",
           "structTag": {
             "value": "json:\"tests\""
@@ -576,8 +624,8 @@
         {
           "name": "UsageDetails",
           "kind": "property",
-          "line": 56,
-          "endLine": 56,
+          "line": 58,
+          "endLine": 58,
           "result": "[]BoundaryTypeUsage",
           "structTag": {
             "value": "json:\"usageDetails\""
@@ -586,8 +634,8 @@
         {
           "name": "Usages",
           "kind": "property",
-          "line": 50,
-          "endLine": 50,
+          "line": 52,
+          "endLine": 52,
           "result": "int",
           "structTag": {
             "value": "json:\"usages\""
@@ -637,40 +685,40 @@
           "name": "ID",
           "kind": "property",
           "file": "search/boundary_model.go",
-          "line": 26,
-          "endLine": 26,
+          "line": 53,
+          "endLine": 53,
           "result": "string"
         },
         {
           "name": "Line",
           "kind": "property",
           "file": "search/boundary_model.go",
-          "line": 30,
-          "endLine": 30,
+          "line": 57,
+          "endLine": 57,
           "result": "int"
         },
         {
           "name": "Name",
           "kind": "property",
           "file": "search/boundary_model.go",
-          "line": 27,
-          "endLine": 27,
+          "line": 54,
+          "endLine": 54,
           "result": "string"
         },
         {
           "name": "Package",
           "kind": "property",
           "file": "search/boundary_model.go",
-          "line": 29,
-          "endLine": 29,
+          "line": 56,
+          "endLine": 56,
           "result": "string"
         },
         {
           "name": "Path",
           "kind": "property",
           "file": "search/boundary_model.go",
-          "line": 28,
-          "endLine": 28,
+          "line": 55,
+          "endLine": 55,
           "result": "string"
         }
       ]
@@ -1368,15 +1416,15 @@
       "name": "boundaryDependencyContext",
       "kind": "struct",
       "file": "search/type_boundaries.go",
-      "line": 67,
-      "endLine": 69,
+      "line": 69,
+      "endLine": 71,
       "underlyingType": "struct{roots[]string}",
       "members": [
         {
           "name": "roots",
           "kind": "property",
-          "line": 68,
-          "endLine": 68,
+          "line": 70,
+          "endLine": 70,
           "result": "[]string"
         }
       ]
@@ -1385,15 +1433,15 @@
       "name": "boundaryInteraction",
       "kind": "struct",
       "file": "search/boundary_model.go",
-      "line": 42,
-      "endLine": 44,
+      "line": 69,
+      "endLine": 71,
       "underlyingType": "struct{label string}",
       "members": [
         {
           "name": "label",
           "kind": "property",
-          "line": 43,
-          "endLine": 43,
+          "line": 70,
+          "endLine": 70,
           "result": "string"
         }
       ]
@@ -1402,50 +1450,50 @@
       "name": "boundaryOwnerAnalysis",
       "kind": "struct",
       "file": "search/boundaries.go",
-      "line": 30,
-      "endLine": 37,
+      "line": 32,
+      "endLine": 39,
       "underlyingType": "struct{callers map[string]parser.NavigationDeclaration;callsByCaller map[string][]string;interactions map[string][]boundaryInteraction;called map[string]bool;declared int;unresolvedCalls int;}",
       "members": [
         {
           "name": "called",
           "kind": "property",
-          "line": 34,
-          "endLine": 34,
+          "line": 36,
+          "endLine": 36,
           "result": "map[string]bool"
         },
         {
           "name": "callers",
           "kind": "property",
-          "line": 31,
-          "endLine": 31,
+          "line": 33,
+          "endLine": 33,
           "result": "map[string]parser.NavigationDeclaration"
         },
         {
           "name": "callsByCaller",
           "kind": "property",
-          "line": 32,
-          "endLine": 32,
+          "line": 34,
+          "endLine": 34,
           "result": "map[string][]string"
         },
         {
           "name": "declared",
           "kind": "property",
-          "line": 35,
-          "endLine": 35,
+          "line": 37,
+          "endLine": 37,
           "result": "int"
         },
         {
           "name": "interactions",
           "kind": "property",
-          "line": 33,
-          "endLine": 33,
+          "line": 35,
+          "endLine": 35,
           "result": "map[string][]boundaryInteraction"
         },
         {
           "name": "unresolvedCalls",
           "kind": "property",
-          "line": 36,
-          "endLine": 36,
+          "line": 38,
+          "endLine": 38,
           "result": "int"
         }
       ]
@@ -1454,22 +1502,22 @@
       "name": "boundaryOwnerKey",
       "kind": "struct",
       "file": "search/boundaries.go",
-      "line": 25,
-      "endLine": 28,
+      "line": 27,
+      "endLine": 30,
       "underlyingType": "struct{language string;path string;}",
       "members": [
         {
           "name": "language",
           "kind": "property",
-          "line": 26,
-          "endLine": 26,
+          "line": 28,
+          "endLine": 28,
           "result": "string"
         },
         {
           "name": "path",
           "kind": "property",
-          "line": 27,
-          "endLine": 27,
+          "line": 29,
+          "endLine": 29,
           "result": "string"
         }
       ]
@@ -1478,22 +1526,22 @@
       "name": "boundaryPatternGroup",
       "kind": "struct",
       "file": "search/boundary_model.go",
-      "line": 46,
-      "endLine": 49,
+      "line": 73,
+      "endLine": 76,
       "underlyingType": "struct{interactions[]string;consumers[]BoundaryConsumer;}",
       "members": [
         {
           "name": "consumers",
           "kind": "property",
-          "line": 48,
-          "endLine": 48,
+          "line": 75,
+          "endLine": 75,
           "result": "[]BoundaryConsumer"
         },
         {
           "name": "interactions",
           "kind": "property",
-          "line": 47,
-          "endLine": 47,
+          "line": 74,
+          "endLine": 74,
           "result": "[]string"
         }
       ]
@@ -1502,22 +1550,22 @@
       "name": "boundaryTypeCandidate",
       "kind": "struct",
       "file": "search/boundaries.go",
-      "line": 167,
-      "endLine": 170,
+      "line": 173,
+      "endLine": 176,
       "underlyingType": "struct{typeName string;language string;}",
       "members": [
         {
           "name": "language",
           "kind": "property",
-          "line": 169,
-          "endLine": 169,
+          "line": 175,
+          "endLine": 175,
           "result": "string"
         },
         {
           "name": "typeName",
           "kind": "property",
-          "line": 168,
-          "endLine": 168,
+          "line": 174,
+          "endLine": 174,
           "result": "string"
         }
       ]
@@ -1526,43 +1574,43 @@
       "name": "boundaryTypeSpreadKey",
       "kind": "struct",
       "file": "search/type_boundaries.go",
-      "line": 59,
-      "endLine": 65,
+      "line": 61,
+      "endLine": 67,
       "underlyingType": "struct{language string;typeName string;importPath string;ownerFile string;origin BoundaryTypeOrigin;}",
       "members": [
         {
           "name": "importPath",
+          "kind": "property",
+          "line": 64,
+          "endLine": 64,
+          "result": "string"
+        },
+        {
+          "name": "language",
           "kind": "property",
           "line": 62,
           "endLine": 62,
           "result": "string"
         },
         {
-          "name": "language",
-          "kind": "property",
-          "line": 60,
-          "endLine": 60,
-          "result": "string"
-        },
-        {
           "name": "origin",
           "kind": "property",
-          "line": 64,
-          "endLine": 64,
+          "line": 66,
+          "endLine": 66,
           "result": "BoundaryTypeOrigin"
         },
         {
           "name": "ownerFile",
           "kind": "property",
-          "line": 63,
-          "endLine": 63,
+          "line": 65,
+          "endLine": 65,
           "result": "string"
         },
         {
           "name": "typeName",
           "kind": "property",
-          "line": 61,
-          "endLine": 61,
+          "line": 63,
+          "endLine": 63,
           "result": "string"
         }
       ]
@@ -2260,8 +2308,8 @@
       "name": "AnalyzeBoundaries",
       "kind": "function",
       "file": "search/boundaries.go",
-      "line": 42,
-      "endLine": 66,
+      "line": 44,
+      "endLine": 72,
       "parameters": [
         "parser.NavigationGraph",
         "int"
@@ -2272,8 +2320,8 @@
       "name": "AnalyzeTypeBoundaries",
       "kind": "function",
       "file": "search/type_boundaries.go",
-      "line": 146,
-      "endLine": 156,
+      "line": 148,
+      "endLine": 158,
       "parameters": [
         "parser.NavigationGraph",
         "int"
@@ -2643,6 +2691,13 @@
     },
     {
       "from": "BoundaryCandidate",
+      "to": "BoundaryRisk",
+      "kind": "association",
+      "via": "field Risk",
+      "cardinality": "one"
+    },
+    {
+      "from": "BoundaryCandidate",
       "to": "BoundarySurface",
       "kind": "association",
       "via": "field ExternalCallableSurface",
@@ -2674,6 +2729,13 @@
       "to": "BoundaryBreadth",
       "kind": "association",
       "via": "field Tests",
+      "cardinality": "one"
+    },
+    {
+      "from": "BoundaryTypeSpread",
+      "to": "BoundaryRisk",
+      "kind": "association",
+      "via": "field Risk",
       "cardinality": "one"
     },
     {

@@ -8,6 +8,33 @@ import (
 	"github.com/greppleai/grepple/parser"
 )
 
+// BoundaryRisk is the heuristic review priority of a boundary signal.
+type BoundaryRisk string
+
+// Boundary risk values are ordered by boundaryRiskRank, not lexically.
+const (
+	BoundaryRiskInformational BoundaryRisk = "informational"
+	BoundaryRiskLow           BoundaryRisk = "low"
+	BoundaryRiskMedium        BoundaryRisk = "medium"
+	BoundaryRiskHigh          BoundaryRisk = "high"
+	BoundaryRiskCritical      BoundaryRisk = "critical"
+)
+
+func boundaryRiskRank(risk BoundaryRisk) int {
+	switch risk {
+	case BoundaryRiskCritical:
+		return 4
+	case BoundaryRiskHigh:
+		return 3
+	case BoundaryRiskMedium:
+		return 2
+	case BoundaryRiskLow:
+		return 1
+	default:
+		return 0
+	}
+}
+
 // BoundaryBreadth summarizes distinct external consumers of an owner file.
 type BoundaryBreadth struct {
 	Functions int `json:"functions"`

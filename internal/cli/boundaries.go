@@ -164,7 +164,8 @@ func writeBoundaryTypeSpread(write func(string, ...any) bool, spread search.Boun
 	if origin == "" {
 		origin = "unresolved"
 	}
-	if !write("  type: %s [%s, origin=%s]", spread.CanonicalType, spread.Language, origin) ||
+	if !write("  type: %s [%s, origin=%s, risk=%s]", spread.CanonicalType, spread.Language, origin, spread.Risk) ||
+		!write("    reasons: %s", strings.Join(spread.Reasons, ", ")) ||
 		!write("    reach: %d usages / %d functions / %d files / %d packages", spread.Usages, spread.Consumers.Functions, spread.Consumers.Files, spread.Consumers.Packages) ||
 		!write("    source split: %d production files / %d test files", spread.Production.Files, spread.Tests.Files) ||
 		!write("    roles: %d parameters / %d results / %d receivers / %d locals / %d unknown", spread.Roles.Parameters, spread.Roles.Results, spread.Roles.Receivers, spread.Roles.Locals, spread.Roles.Unknown) {
@@ -182,8 +183,8 @@ func writeBoundaryTypeSpread(write func(string, ...any) bool, spread search.Boun
 func writeBoundaryTypePublicExposures(write func(string, ...any) bool, spread search.BoundaryTypeSpread) bool {
 	label := "public signature uses"
 	prefix := ""
-	if spread.External {
-		label = "public external-type exposures"
+	if spread.Origin == search.BoundaryTypeOriginThirdParty {
+		label = "public third-party exposures"
 		prefix = "! "
 	}
 	return write("    %s%d %s: %s", prefix, len(spread.PublicExposures), label, boundaryTypeLocations(spread.PublicExposures))
@@ -210,7 +211,8 @@ func boundaryTypeLocations(usages []search.BoundaryTypeUsage) string {
 }
 
 func writeBoundaryCandidate(write func(string, ...any) bool, candidate search.BoundaryCandidate, minimum int) bool {
-	if !write("owner: %s [%s]", candidate.OwnerFile, candidate.Language) ||
+	if !write("owner: %s [%s, risk=%s]", candidate.OwnerFile, candidate.Language, candidate.Risk) ||
+		!write("  reasons: %s", strings.Join(candidate.Reasons, ", ")) ||
 		!write("  external consumers: %d functions / %d files / %d packages", candidate.Consumers.Functions, candidate.Consumers.Files, candidate.Consumers.Packages) ||
 		!write("  external callable surface: %d/%d callables", candidate.ExternalCallableSurface.External, candidate.ExternalCallableSurface.Declared) {
 		return false

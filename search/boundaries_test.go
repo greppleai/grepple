@@ -33,7 +33,7 @@ func TestAnalyzeBoundariesFindsRepeatedExternalOwnerWorkflow(t *testing.T) {
 		t.Fatalf("candidates=%#v", candidates)
 	}
 	candidate := candidates[0]
-	if candidate.OwnerFile != "parser.go" || candidate.Language != "go" || candidate.Consumers != (BoundaryBreadth{Functions: 2, Files: 2, Packages: 1}) {
+	if candidate.OwnerFile != "parser.go" || candidate.Language != "go" || candidate.Risk != BoundaryRiskLow || !reflect.DeepEqual(candidate.Reasons, []string{"repeated-owner-file-workflow", "broad-owner-callable-surface"}) || candidate.Consumers != (BoundaryBreadth{Functions: 2, Files: 2, Packages: 1}) {
 		t.Fatalf("candidate=%#v", candidate)
 	}
 	if len(candidate.CallableCoUsage) != 1 || !reflect.DeepEqual(candidate.CallableCoUsage[0].Interactions, []string{"Parse", "Validate"}) || candidate.CallableCoUsage[0].Occurrences != 2 {
@@ -138,14 +138,14 @@ func TestAnalyzeTypeBoundariesFindsImportedAndOwnedTypeSpread(t *testing.T) {
 		t.Fatalf("spreads=%#v", spreads)
 	}
 	external := spreads[0]
-	if external.CanonicalType != "github.com/tree-sitter/go-tree-sitter.Node" || !external.External || external.Origin != BoundaryTypeOriginThirdParty || external.Consumers.Files != 3 || external.Production.Files != 2 || external.Tests.Files != 1 || len(external.PublicExposures) != 1 {
+	if external.CanonicalType != "github.com/tree-sitter/go-tree-sitter.Node" || !external.External || external.Origin != BoundaryTypeOriginThirdParty || external.Risk != BoundaryRiskCritical || !reflect.DeepEqual(external.Reasons, []string{"third-party-public-api"}) || external.Consumers.Files != 3 || external.Production.Files != 2 || external.Tests.Files != 1 || len(external.PublicExposures) != 1 {
 		t.Fatalf("external spread=%#v", external)
 	}
 	if external.Roles.Parameters != 2 || external.Roles.Locals != 1 {
 		t.Fatalf("external roles=%#v", external.Roles)
 	}
 	owned := spreads[1]
-	if owned.CanonicalType != "Widget" || owned.OwnerFile != "widget.go" || owned.External || owned.Origin != BoundaryTypeOriginLocal {
+	if owned.CanonicalType != "Widget" || owned.OwnerFile != "widget.go" || owned.External || owned.Origin != BoundaryTypeOriginLocal || owned.Risk != BoundaryRiskInformational || !reflect.DeepEqual(owned.Reasons, []string{"local-package-internal-spread"}) {
 		t.Fatalf("owned spread=%#v", owned)
 	}
 }
@@ -173,6 +173,30 @@ func TestBoundaryTypeOriginClassification(t *testing.T) {
 	for _, test := range tests {
 		if got := boundaryTypeOriginForImport(test.language, test.path, context); got != test.want {
 			t.Errorf("origin(%q, %q) = %q, want %q", test.language, test.path, got, test.want)
+		}
+	}
+}
+
+func TestClassifyTypeBoundaryRisk(t *testing.T) {
+	public := []BoundaryTypeUsage{{Public: true}}
+	tests := []struct {
+		name   string
+		spread BoundaryTypeSpread
+		risk   BoundaryRisk
+		reason string
+	}{
+		{"third-party public API", BoundaryTypeSpread{Origin: BoundaryTypeOriginThirdParty, Production: BoundaryBreadth{Files: 2}, PublicExposures: public}, BoundaryRiskCritical, "third-party-public-api"},
+		{"third-party production", BoundaryTypeSpread{Origin: BoundaryTypeOriginThirdParty, Production: BoundaryBreadth{Files: 2}}, BoundaryRiskHigh, "third-party-production-spread"},
+		{"first-party public API", BoundaryTypeSpread{Origin: BoundaryTypeOriginFirstParty, Production: BoundaryBreadth{Files: 2}, PublicExposures: public}, BoundaryRiskMedium, "first-party-public-api"},
+		{"unresolved public API", BoundaryTypeSpread{Origin: BoundaryTypeOriginUnresolved, Production: BoundaryBreadth{Files: 2}, PublicExposures: public}, BoundaryRiskMedium, "unresolved-origin-public-api"},
+		{"local package internal", BoundaryTypeSpread{Origin: BoundaryTypeOriginLocal, Production: BoundaryBreadth{Files: 2, Packages: 1}}, BoundaryRiskInformational, "local-package-internal-spread"},
+		{"standard library", BoundaryTypeSpread{Origin: BoundaryTypeOriginStandardLibrary, Production: BoundaryBreadth{Files: 2}}, BoundaryRiskInformational, "standard-library-spread"},
+		{"test only third-party", BoundaryTypeSpread{Origin: BoundaryTypeOriginThirdParty, Tests: BoundaryBreadth{Files: 2}}, BoundaryRiskInformational, "test-only-spread"},
+	}
+	for _, test := range tests {
+		risk, reasons := classifyTypeBoundary(test.spread)
+		if risk != test.risk || !reflect.DeepEqual(reasons, []string{test.reason}) {
+			t.Errorf("%s: risk=%q reasons=%v, want %q [%s]", test.name, risk, reasons, test.risk, test.reason)
 		}
 	}
 }

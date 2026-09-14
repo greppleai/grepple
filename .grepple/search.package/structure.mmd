@@ -13,7 +13,7 @@ classDiagram
     %% grepple:struct-tag BoundaryBreadth Files "json:\"files\""
     %% grepple:struct-tag BoundaryBreadth Functions "json:\"functions\""
     %% grepple:struct-tag BoundaryBreadth Packages "json:\"packages\""
-    note for BoundaryBreadth "defined: search/boundary_model.go:12-16; Files@search/boundary_model.go:14; Functions@search/boundary_model.go:13; Packages@search/boundary_model.go:15"
+    note for BoundaryBreadth "defined: search/boundary_model.go:39-43; Files@search/boundary_model.go:41; Functions@search/boundary_model.go:40; Packages@search/boundary_model.go:42"
     class BoundaryCandidate {
         +CallableCoUsage: []BoundaryPattern
         +Callables: []string
@@ -24,6 +24,8 @@ classDiagram
         +MemberCallCombinations: []BoundaryPattern
         +OrderedSequences: []BoundaryPattern
         +OwnerFile: string
+        +Reasons: []string
+        +Risk: BoundaryRisk
         +UnresolvedCalls: int
     }
     <<struct>> BoundaryCandidate
@@ -37,8 +39,10 @@ classDiagram
     %% grepple:struct-tag BoundaryCandidate MemberCallCombinations "json:\"memberCallCombinations\""
     %% grepple:struct-tag BoundaryCandidate OrderedSequences "json:\"orderedSequences\""
     %% grepple:struct-tag BoundaryCandidate OwnerFile "json:\"ownerFile\""
+    %% grepple:struct-tag BoundaryCandidate Reasons "json:\"reasons\""
+    %% grepple:struct-tag BoundaryCandidate Risk "json:\"risk\""
     %% grepple:struct-tag BoundaryCandidate UnresolvedCalls "json:\"unresolvedCalls\""
-    note for BoundaryCandidate "defined: search/boundaries.go:12-23; CallableCoUsage@search/boundaries.go:19; Callables@search/boundaries.go:18; ConsumerDetails@search/boundaries.go:16; Consumers@search/boundaries.go:15; ExternalCallableSurface@search/boundaries.go:17; Language@search/boundaries.go:14; MemberCallCombinations@search/boundaries.go:21; OrderedSequences@search/boundaries.go:20; OwnerFile@search/boundaries.go:13; UnresolvedCalls@search/boundaries.go:22"
+    note for BoundaryCandidate "defined: search/boundaries.go:12-25; CallableCoUsage@search/boundaries.go:21; Callables@search/boundaries.go:20; ConsumerDetails@search/boundaries.go:18; Consumers@search/boundaries.go:17; ExternalCallableSurface@search/boundaries.go:19; Language@search/boundaries.go:14; MemberCallCombinations@search/boundaries.go:23; OrderedSequences@search/boundaries.go:22; OwnerFile@search/boundaries.go:13; Reasons@search/boundaries.go:16; Risk@search/boundaries.go:15; UnresolvedCalls@search/boundaries.go:24"
     class BoundaryConsumer {
         +ID: string
         +Line: int
@@ -53,7 +57,7 @@ classDiagram
     %% grepple:struct-tag BoundaryConsumer Name "json:\"name\""
     %% grepple:struct-tag BoundaryConsumer Package "json:\"package,omitempty\""
     %% grepple:struct-tag BoundaryConsumer Path "json:\"path\""
-    note for BoundaryConsumer "defined: search/boundary_model.go:25-31; ID@search/boundary_model.go:26; Line@search/boundary_model.go:30; Name@search/boundary_model.go:27; Package@search/boundary_model.go:29; Path@search/boundary_model.go:28"
+    note for BoundaryConsumer "defined: search/boundary_model.go:52-58; ID@search/boundary_model.go:53; Line@search/boundary_model.go:57; Name@search/boundary_model.go:54; Package@search/boundary_model.go:56; Path@search/boundary_model.go:55"
     class BoundaryPattern {
         +Consumers: []BoundaryConsumer
         +Files: int
@@ -68,7 +72,12 @@ classDiagram
     %% grepple:struct-tag BoundaryPattern Interactions "json:\"interactions\""
     %% grepple:struct-tag BoundaryPattern Occurrences "json:\"occurrences\""
     %% grepple:struct-tag BoundaryPattern Packages "json:\"packages\""
-    note for BoundaryPattern "defined: search/boundary_model.go:34-40; Consumers@search/boundary_model.go:39; Files@search/boundary_model.go:37; Interactions@search/boundary_model.go:35; Occurrences@search/boundary_model.go:36; Packages@search/boundary_model.go:38"
+    note for BoundaryPattern "defined: search/boundary_model.go:61-67; Consumers@search/boundary_model.go:66; Files@search/boundary_model.go:64; Interactions@search/boundary_model.go:62; Occurrences@search/boundary_model.go:63; Packages@search/boundary_model.go:65"
+    class BoundaryRisk["BoundaryRisk = string"]
+    <<type>> BoundaryRisk
+    %% grepple:underlying BoundaryRisk string
+    %% grepple:file BoundaryRisk search/boundary_model.go
+    note for BoundaryRisk "defined: search/boundary_model.go:12"
     class BoundarySurface {
         +Declared: int
         +External: int
@@ -77,7 +86,7 @@ classDiagram
     %% grepple:file BoundarySurface search/boundary_model.go
     %% grepple:struct-tag BoundarySurface Declared "json:\"declared\""
     %% grepple:struct-tag BoundarySurface External "json:\"external\""
-    note for BoundarySurface "defined: search/boundary_model.go:19-22; Declared@search/boundary_model.go:21; External@search/boundary_model.go:20"
+    note for BoundarySurface "defined: search/boundary_model.go:46-49; Declared@search/boundary_model.go:48; External@search/boundary_model.go:47"
     class BoundaryTypeOrigin["BoundaryTypeOrigin = string"]
     <<type>> BoundaryTypeOrigin
     %% grepple:underlying BoundaryTypeOrigin string
@@ -108,6 +117,8 @@ classDiagram
         +OwnerFile: string
         +Production: BoundaryBreadth
         +PublicExposures: []BoundaryTypeUsage
+        +Reasons: []string
+        +Risk: BoundaryRisk
         +Roles: BoundaryTypeRoles
         +Tests: BoundaryBreadth
         +Type: string
@@ -125,12 +136,14 @@ classDiagram
     %% grepple:struct-tag BoundaryTypeSpread OwnerFile "json:\"ownerFile,omitempty\""
     %% grepple:struct-tag BoundaryTypeSpread Production "json:\"production\""
     %% grepple:struct-tag BoundaryTypeSpread PublicExposures "json:\"publicExposures,omitempty\""
+    %% grepple:struct-tag BoundaryTypeSpread Reasons "json:\"reasons\""
+    %% grepple:struct-tag BoundaryTypeSpread Risk "json:\"risk\""
     %% grepple:struct-tag BoundaryTypeSpread Roles "json:\"roles\""
     %% grepple:struct-tag BoundaryTypeSpread Tests "json:\"tests\""
     %% grepple:struct-tag BoundaryTypeSpread Type "json:\"type\""
     %% grepple:struct-tag BoundaryTypeSpread UsageDetails "json:\"usageDetails\""
     %% grepple:struct-tag BoundaryTypeSpread Usages "json:\"usages\""
-    note for BoundaryTypeSpread "defined: search/type_boundaries.go:42-57; CanonicalType@search/type_boundaries.go:45; Consumers@search/type_boundaries.go:51; External@search/type_boundaries.go:49; ImportPath@search/type_boundaries.go:44; Language@search/type_boundaries.go:46; Origin@search/type_boundaries.go:48; OwnerFile@search/type_boundaries.go:47; Production@search/type_boundaries.go:52; PublicExposures@search/type_boundaries.go:55; Roles@search/type_boundaries.go:54; Tests@search/type_boundaries.go:53; Type@search/type_boundaries.go:43; UsageDetails@search/type_boundaries.go:56; Usages@search/type_boundaries.go:50"
+    note for BoundaryTypeSpread "defined: search/type_boundaries.go:42-59; CanonicalType@search/type_boundaries.go:45; Consumers@search/type_boundaries.go:53; External@search/type_boundaries.go:51; ImportPath@search/type_boundaries.go:44; Language@search/type_boundaries.go:46; Origin@search/type_boundaries.go:48; OwnerFile@search/type_boundaries.go:47; Production@search/type_boundaries.go:54; PublicExposures@search/type_boundaries.go:57; Reasons@search/type_boundaries.go:50; Risk@search/type_boundaries.go:49; Roles@search/type_boundaries.go:56; Tests@search/type_boundaries.go:55; Type@search/type_boundaries.go:43; UsageDetails@search/type_boundaries.go:58; Usages@search/type_boundaries.go:52"
     class BoundaryTypeUsage {
         +Public: bool
         +Role: string
@@ -146,7 +159,7 @@ classDiagram
     %% grepple:struct-tag BoundaryTypeUsage Public "json:\"public,omitempty\""
     %% grepple:struct-tag BoundaryTypeUsage Role "json:\"role\""
     %% grepple:struct-tag BoundaryTypeUsage Test "json:\"test,omitempty\""
-    note for BoundaryTypeUsage "defined: search/type_boundaries.go:34-39; Public@search/type_boundaries.go:37; Role@search/type_boundaries.go:36; Test@search/type_boundaries.go:38; ID@search/boundary_model.go:26; Line@search/boundary_model.go:30; Name@search/boundary_model.go:27; Package@search/boundary_model.go:29; Path@search/boundary_model.go:28"
+    note for BoundaryTypeUsage "defined: search/type_boundaries.go:34-39; Public@search/type_boundaries.go:37; Role@search/type_boundaries.go:36; Test@search/type_boundaries.go:38; ID@search/boundary_model.go:53; Line@search/boundary_model.go:57; Name@search/boundary_model.go:54; Package@search/boundary_model.go:56; Path@search/boundary_model.go:55"
     class FileMatch {
         +Content: string
         +DisplayPath: string
@@ -306,13 +319,13 @@ classDiagram
     }
     <<struct>> boundaryDependencyContext
     %% grepple:file boundaryDependencyContext search/type_boundaries.go
-    note for boundaryDependencyContext "defined: search/type_boundaries.go:67-69; roots@search/type_boundaries.go:68"
+    note for boundaryDependencyContext "defined: search/type_boundaries.go:69-71; roots@search/type_boundaries.go:70"
     class boundaryInteraction {
         -label: string
     }
     <<struct>> boundaryInteraction
     %% grepple:file boundaryInteraction search/boundary_model.go
-    note for boundaryInteraction "defined: search/boundary_model.go:42-44; label@search/boundary_model.go:43"
+    note for boundaryInteraction "defined: search/boundary_model.go:69-71; label@search/boundary_model.go:70"
     class boundaryOwnerAnalysis {
         -called: map[string]bool
         -callers: map[string]parser.NavigationDeclaration
@@ -323,28 +336,28 @@ classDiagram
     }
     <<struct>> boundaryOwnerAnalysis
     %% grepple:file boundaryOwnerAnalysis search/boundaries.go
-    note for boundaryOwnerAnalysis "defined: search/boundaries.go:30-37; called@search/boundaries.go:34; callers@search/boundaries.go:31; callsByCaller@search/boundaries.go:32; declared@search/boundaries.go:35; interactions@search/boundaries.go:33; unresolvedCalls@search/boundaries.go:36"
+    note for boundaryOwnerAnalysis "defined: search/boundaries.go:32-39; called@search/boundaries.go:36; callers@search/boundaries.go:33; callsByCaller@search/boundaries.go:34; declared@search/boundaries.go:37; interactions@search/boundaries.go:35; unresolvedCalls@search/boundaries.go:38"
     class boundaryOwnerKey {
         -language: string
         -path: string
     }
     <<struct>> boundaryOwnerKey
     %% grepple:file boundaryOwnerKey search/boundaries.go
-    note for boundaryOwnerKey "defined: search/boundaries.go:25-28; language@search/boundaries.go:26; path@search/boundaries.go:27"
+    note for boundaryOwnerKey "defined: search/boundaries.go:27-30; language@search/boundaries.go:28; path@search/boundaries.go:29"
     class boundaryPatternGroup {
         -consumers: []BoundaryConsumer
         -interactions: []string
     }
     <<struct>> boundaryPatternGroup
     %% grepple:file boundaryPatternGroup search/boundary_model.go
-    note for boundaryPatternGroup "defined: search/boundary_model.go:46-49; consumers@search/boundary_model.go:48; interactions@search/boundary_model.go:47"
+    note for boundaryPatternGroup "defined: search/boundary_model.go:73-76; consumers@search/boundary_model.go:75; interactions@search/boundary_model.go:74"
     class boundaryTypeCandidate {
         -language: string
         -typeName: string
     }
     <<struct>> boundaryTypeCandidate
     %% grepple:file boundaryTypeCandidate search/boundaries.go
-    note for boundaryTypeCandidate "defined: search/boundaries.go:167-170; language@search/boundaries.go:169; typeName@search/boundaries.go:168"
+    note for boundaryTypeCandidate "defined: search/boundaries.go:173-176; language@search/boundaries.go:175; typeName@search/boundaries.go:174"
     class boundaryTypeSpreadKey {
         -importPath: string
         -language: string
@@ -354,7 +367,7 @@ classDiagram
     }
     <<struct>> boundaryTypeSpreadKey
     %% grepple:file boundaryTypeSpreadKey search/type_boundaries.go
-    note for boundaryTypeSpreadKey "defined: search/type_boundaries.go:59-65; importPath@search/type_boundaries.go:62; language@search/type_boundaries.go:60; origin@search/type_boundaries.go:64; ownerFile@search/type_boundaries.go:63; typeName@search/type_boundaries.go:61"
+    note for boundaryTypeSpreadKey "defined: search/type_boundaries.go:61-67; importPath@search/type_boundaries.go:64; language@search/type_boundaries.go:62; origin@search/type_boundaries.go:66; ownerFile@search/type_boundaries.go:65; typeName@search/type_boundaries.go:63"
     class candidateCollector {
         -add(string)
         -addPlainGlob(string): error
@@ -491,13 +504,13 @@ classDiagram
     }
     <<function>> AnalyzeBoundaries
     %% grepple:file AnalyzeBoundaries search/boundaries.go
-    note for AnalyzeBoundaries "defined: search/boundaries.go:42-66"
+    note for AnalyzeBoundaries "defined: search/boundaries.go:44-72"
     class AnalyzeTypeBoundaries {
         +AnalyzeTypeBoundaries(parser.NavigationGraph, int): tuple~[]BoundaryTypeSpread&#44;error~
     }
     <<function>> AnalyzeTypeBoundaries
     %% grepple:file AnalyzeTypeBoundaries search/type_boundaries.go
-    note for AnalyzeTypeBoundaries "defined: search/type_boundaries.go:146-156"
+    note for AnalyzeTypeBoundaries "defined: search/type_boundaries.go:148-158"
     class At {
         +At(Params): tuple~*FileMatch&#44;error~
     }
@@ -652,11 +665,13 @@ classDiagram
     BoundaryCandidate "1" --> "*" BoundaryPattern : field CallableCoUsage
     BoundaryCandidate "1" --> "*" BoundaryPattern : field MemberCallCombinations
     BoundaryCandidate "1" --> "*" BoundaryPattern : field OrderedSequences
+    BoundaryCandidate "1" --> "1" BoundaryRisk : field Risk
     BoundaryCandidate "1" --> "1" BoundarySurface : field ExternalCallableSurface
     BoundaryPattern "1" --> "*" BoundaryConsumer : field Consumers
     BoundaryTypeSpread "1" --> "1" BoundaryBreadth : field Consumers
     BoundaryTypeSpread "1" --> "1" BoundaryBreadth : field Production
     BoundaryTypeSpread "1" --> "1" BoundaryBreadth : field Tests
+    BoundaryTypeSpread "1" --> "1" BoundaryRisk : field Risk
     BoundaryTypeSpread "1" --> "1" BoundaryTypeOrigin : field Origin
     BoundaryTypeSpread "1" --> "1" BoundaryTypeRoles : field Roles
     BoundaryTypeSpread "1" --> "*" BoundaryTypeUsage : field PublicExposures

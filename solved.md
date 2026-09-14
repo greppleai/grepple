@@ -87,6 +87,7 @@ This file records completed Grepple roadmap work that no longer belongs in `next
 - [x] Excluded owner-local calls and required repeated evidence across at least two external files.
 - [x] Added import-qualified and unambiguously owned project type spread with parameter/result/receiver/local roles, public signature exposure, and production/test reach.
 - [x] Classified type origin independently as local, first-party, standard-library, third-party, or unresolved while retaining imported identity and the compatibility `external` signal.
+- [x] Added deterministic boundary `risk` and `reasons`, ranking third-party public/production spread above first-party or unresolved API exposure while making standard-library, test-only, and package-internal local spread informational.
 - [x] Added content- and grammar-addressed resolved-navigation caching under `.grepple/cache/boundaries/` with atomic writes and corrupt-entry fallback.
 - [x] Kept cache state out of report output so cold and warm reports remain byte-identical.
 

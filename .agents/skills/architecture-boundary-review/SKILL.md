@@ -30,9 +30,10 @@ A clean directory diagram can hide behavioral coupling; a broad type can be a he
 
 ## Interpretation rules
 
-- Current `External` means an import path was recorded; it does **not** distinguish standard library, first-party, and third-party dependencies.
-- Wide use is not automatically bad. Test whether use is package-internal, cross-package, public API, test-only, or outside an intended containment zone.
-- Public third-party representation and facade bypass deserve more attention than broad private use of a project-owned abstraction.
+- Use `origin`, `risk`, and `reasons` for triage. The compatibility `External` field only means an import path was recorded.
+- Risk is heuristic: it prioritizes third-party public/production spread and down-ranks standard-library, test-only, and package-internal local use.
+- Wide use is not automatically bad. Containment escape and facade bypass are not inferred until repository-owned policy exists; verify them in source.
+- Public third-party representation and confirmed facade bypass deserve more attention than broad private use of a project-owned abstraction.
 - Workflow candidates show repeated co-usage/order across owner-file boundaries. Configuration setup, lifecycle cleanup, tests, and utility hubs often produce benign repetition.
 - Boundary analysis is syntax-based and heuristic. Candidate edges and unresolved ownership must lower confidence.
 - Compare production and test reach; never inflate production risk with test-framework spread.

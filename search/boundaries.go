@@ -12,6 +12,8 @@ import (
 type BoundaryCandidate struct {
 	OwnerFile               string             `json:"ownerFile"`
 	Language                string             `json:"language"`
+	Risk                    BoundaryRisk       `json:"risk"`
+	Reasons                 []string           `json:"reasons"`
 	Consumers               BoundaryBreadth    `json:"consumers"`
 	ConsumerDetails         []BoundaryConsumer `json:"consumerDetails"`
 	ExternalCallableSurface BoundarySurface    `json:"externalCallableSurface"`
@@ -53,6 +55,10 @@ func AnalyzeBoundaries(graph parser.NavigationGraph, minOccurrences int) ([]Boun
 		}
 	}
 	sort.Slice(candidates, func(i, j int) bool {
+		leftRisk, rightRisk := boundaryRiskRank(candidates[i].Risk), boundaryRiskRank(candidates[j].Risk)
+		if leftRisk != rightRisk {
+			return leftRisk > rightRisk
+		}
 		left, right := boundaryScore(candidates[i]), boundaryScore(candidates[j])
 		if left != right {
 			return left > right
@@ -194,6 +200,7 @@ func buildBoundaryCandidate(key boundaryOwnerKey, owner *boundaryOwnerAnalysis, 
 	}
 	candidate.ConsumerDetails = boundaryConsumers(candidate)
 	candidate.Consumers = boundaryBreadth(candidate.ConsumerDetails)
+	candidate.Risk, candidate.Reasons = classifyWorkflowBoundary(candidate)
 	return candidate
 }
 
@@ -227,6 +234,22 @@ func boundaryConsumers(candidate BoundaryCandidate) []BoundaryConsumer {
 
 func boundaryHasPatterns(candidate BoundaryCandidate) bool {
 	return len(candidate.CallableCoUsage) > 0 || len(candidate.OrderedSequences) > 0 || len(candidate.MemberCallCombinations) > 0
+}
+
+func classifyWorkflowBoundary(candidate BoundaryCandidate) (BoundaryRisk, []string) {
+	risk := BoundaryRiskLow
+	reasons := []string{"repeated-owner-file-workflow"}
+	if candidate.Consumers.Packages > 1 {
+		risk = BoundaryRiskMedium
+		reasons = append(reasons, "cross-package-workflow")
+	}
+	if candidate.ExternalCallableSurface.Declared > 0 && candidate.ExternalCallableSurface.External*2 >= candidate.ExternalCallableSurface.Declared {
+		reasons = append(reasons, "broad-owner-callable-surface")
+	}
+	if candidate.UnresolvedCalls > 0 {
+		reasons = append(reasons, "candidate-resolved-interactions")
+	}
+	return risk, reasons
 }
 
 func boundaryScore(candidate BoundaryCandidate) int {
