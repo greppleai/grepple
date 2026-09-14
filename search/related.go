@@ -54,6 +54,7 @@ type navigationIndex struct {
 	byLocation   map[string]navigationDeclaration
 	contents     map[string]string
 	graph        parser.NavigationGraph
+	sourceStats  NavigationSourceStats
 }
 
 func hasNavigationMatch(matches []FileMatch) bool {
@@ -115,9 +116,25 @@ func buildNavigationIndex(files []string) *navigationIndex {
 	return index
 }
 
+// NavigationSourceStats reports the completeness of one navigation graph build.
+type NavigationSourceStats struct {
+	Attempted int `json:"attempted"`
+	Parsed    int `json:"parsed"`
+	Skipped   int `json:"skipped"`
+	Failed    int `json:"failed"`
+	Recovered int `json:"recovered"`
+}
+
 // BuildNavigationGraph builds the resolved, deterministic navigation graph for local files.
 func BuildNavigationGraph(files []string) parser.NavigationGraph {
-	return buildNavigationIndex(files).graph
+	graph, _ := BuildNavigationGraphWithStats(files)
+	return graph
+}
+
+// BuildNavigationGraphWithStats builds the graph and reports source completeness.
+func BuildNavigationGraphWithStats(files []string) (parser.NavigationGraph, NavigationSourceStats) {
+	index := buildNavigationIndex(files)
+	return index.graph, index.sourceStats
 }
 
 func (index *navigationIndex) resolveGraphCalls() {
@@ -179,18 +196,35 @@ func (index *navigationIndex) resolveGraphCall(call *parser.NavigationCall, call
 	}
 }
 func (index *navigationIndex) addFile(path, cwd string) {
+	index.sourceStats.Attempted++
 	language := parser.LanguageFor(path)
 	if !supportsNavigation(language) {
+		index.sourceStats.Skipped++
 		return
 	}
 	contentBytes, err := os.ReadFile(path)
-	if err != nil || bytes.IndexByte(contentBytes, 0) >= 0 {
+	if err != nil {
+		index.sourceStats.Failed++
 		return
 	}
-	content := strings.ToValidUTF8(string(contentBytes), "\uFFFD")
+	if bytes.IndexByte(contentBytes, 0) >= 0 {
+		index.sourceStats.Skipped++
+		return
+	}
+	content := string(contentBytes)
 	cleanPath := filepath.Clean(path)
 	displayPath := displayPathFrom(path, cwd)
-	graph := parser.BuildNavigationGraph(content, language, displayPath)
+	document, err := parser.ParseDocument(language, content)
+	if err != nil {
+		index.sourceStats.Failed++
+		return
+	}
+	if document.Root().HasError() {
+		index.sourceStats.Recovered++
+	}
+	graph := parser.NavigationGraphFromDocument(document, displayPath)
+	document.Close()
+	index.sourceStats.Parsed++
 	index.graph.Merge(graph)
 	if len(graph.Declarations) == 0 {
 		return

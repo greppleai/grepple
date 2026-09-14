@@ -17,15 +17,15 @@
   },
   "summary": {
     "sourceFiles": 32,
-    "declarations": 61,
-    "exportedTypes": 23,
+    "declarations": 62,
+    "exportedTypes": 24,
     "internalTypes": 38,
     "members": 481,
-    "exportedFunctions": 20,
+    "exportedFunctions": 21,
     "fiberRoutes": 0,
-    "relations": 292
+    "relations": 294
   },
-  "semanticModelDigest": "sha256:847a27aa86e61752661567e3998272430cae6781f5343b3f8579b7794700737f",
+  "semanticModelDigest": "sha256:53d3a2507dcce4b8d40ab55465ea05d830af029a8d0bcab6c5f7bd53dbb52c97",
   "sourceFiles": [
     {
       "path": "parser/analyze.go"
@@ -1413,6 +1413,14 @@
           "result": "string"
         }
       ]
+    },
+    {
+      "name": "SegmentBuildStatus",
+      "kind": "type",
+      "file": "parser/segments.go",
+      "line": 10,
+      "endLine": 10,
+      "underlyingType": "string"
     },
     {
       "name": "StructuralLineRange",
@@ -4667,8 +4675,8 @@
       "name": "BuildSegments",
       "kind": "function",
       "file": "parser/segments.go",
-      "line": 11,
-      "endLine": 24,
+      "line": 24,
+      "endLine": 27,
       "parameters": [
         "string",
         "string",
@@ -4676,6 +4684,20 @@
         "int"
       ],
       "result": "[]Segment"
+    },
+    {
+      "name": "BuildSegmentsWithStatus",
+      "kind": "function",
+      "file": "parser/segments.go",
+      "line": 30,
+      "endLine": 52,
+      "parameters": [
+        "string",
+        "string",
+        "map[int]bool",
+        "int"
+      ],
+      "result": "tuple\u003c[]Segment,SegmentBuildStatus\u003e"
     },
     {
       "name": "CapabilitiesForLanguage",
@@ -4904,6 +4926,20 @@
       "kind": "dependency",
       "via": "result 1",
       "cardinality": "many"
+    },
+    {
+      "from": "BuildSegmentsWithStatus",
+      "to": "Segment",
+      "kind": "dependency",
+      "via": "result 1",
+      "cardinality": "many"
+    },
+    {
+      "from": "BuildSegmentsWithStatus",
+      "to": "SegmentBuildStatus",
+      "kind": "dependency",
+      "via": "result 2",
+      "cardinality": "one"
     },
     {
       "from": "CapabilitiesForLanguage",

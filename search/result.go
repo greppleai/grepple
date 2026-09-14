@@ -31,7 +31,7 @@ func ToResult(m FileMatch, segs []parser.Segment, beforeContext, afterContext, m
 	rs := resultSegments(m.Content, segs)
 	related := relatedSymbols(m.Related)
 	r := api.FileResult{
-		Path: m.DisplayPath, Language: m.Language, Matches: matches, Segments: rs, Related: related,
+		Path: m.DisplayPath, Language: m.Language, StructureStatus: string(m.StructureStatus), Matches: matches, Segments: rs, Related: related,
 		OmittedRelatedCallers: m.OmittedRelatedCallers, OmittedRelatedCallees: m.OmittedRelatedCallees,
 	}
 	if beforeContext > 0 || afterContext > 0 {
@@ -78,7 +78,7 @@ func BuildResults(matches []FileMatch, beforeContext, afterContext, maxSegments 
 		if includeSegments {
 			segments = matches[index].Segments
 			if !matches[index].SegmentsReady {
-				segments = parser.BuildSegments(matches[index].Content, matches[index].Language, matches[index].MatchLines, maxSegments)
+				segments, matches[index].StructureStatus = parser.BuildSegmentsWithStatus(matches[index].Content, matches[index].Language, matches[index].MatchLines, maxSegments)
 			}
 		}
 		results[index] = ToResult(matches[index], segments, beforeContext, afterContext, maxSegments)

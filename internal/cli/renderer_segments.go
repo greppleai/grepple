@@ -14,6 +14,12 @@ type segmentRenderer struct {
 }
 
 func (renderer segmentRenderer) Render(results []api.FileResult) error {
+	if analysis := searchSourceAnalysis(results); analysis != nil && analysis.Unsupported+analysis.Failed+analysis.Recovered > 0 {
+		message := fmt.Sprintf("! incomplete source analysis returned=%d structured=%d plain=%d unsupported=%d failed=%d recovered=%d\n\n", analysis.Returned, analysis.Structured, analysis.Plain, analysis.Unsupported, analysis.Failed, analysis.Recovered)
+		if err := renderer.output.writeString(message); err != nil {
+			return err
+		}
+	}
 	for index, result := range results {
 		if index > 0 {
 			if err := renderer.output.writeString("\n"); err != nil {

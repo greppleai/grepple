@@ -148,16 +148,27 @@ func navigationInputPaths(globs []string) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	return navigationSourcePaths(paths), nil
+	filtered := paths[:0]
+	for _, path := range paths {
+		slashPath := "/" + strings.TrimPrefix(filepath.ToSlash(filepath.Clean(path)), "./")
+		if strings.Contains(slashPath, "/.grepple/cache/") {
+			continue
+		}
+		filtered = append(filtered, path)
+	}
+	return filtered, nil
 }
 
 func buildNavigationGraphOutputFromPaths(paths []string, maxFiles int) navigationGraphOutput {
+	discovered := len(paths)
+	eligible := navigationSourcePaths(paths)
+	unsupported := discovered - len(eligible)
 	var truncation *navigationGraphTruncation
-	if maxFiles > 0 && len(paths) > maxFiles {
-		truncation = &navigationGraphTruncation{Reason: "max_files", Limit: maxFiles, Skipped: len(paths) - maxFiles}
-		paths = paths[:maxFiles]
+	if maxFiles > 0 && len(eligible) > maxFiles {
+		truncation = &navigationGraphTruncation{Reason: "max_files", Limit: maxFiles, Skipped: len(eligible) - maxFiles}
+		eligible = eligible[:maxFiles]
 	}
-	graph := search.BuildNavigationGraph(paths)
+	graph, stats := search.BuildNavigationGraphWithStats(eligible)
 	declarations := graph.Declarations
 	if declarations == nil {
 		declarations = []parser.NavigationDeclaration{}
@@ -166,8 +177,11 @@ func buildNavigationGraphOutputFromPaths(paths []string, maxFiles int) navigatio
 	if calls == nil {
 		calls = []parser.NavigationCall{}
 	}
+	sourceSummary := navigationSourceSummary{
+		Discovered: discovered, Selected: stats.Attempted, Parsed: stats.Parsed, Skipped: unsupported + stats.Skipped, Failed: stats.Failed, Recovered: stats.Recovered,
+	}
 	return navigationGraphOutput{
-		Schema: navigationGraphSchema, Files: len(paths), Declarations: declarations, Calls: calls, TypeUsages: graph.TypeUsages, MemberAccesses: graph.MemberAccesses, Truncation: truncation,
+		Schema: navigationGraphSchema, Files: len(eligible), Sources: sourceSummary, Declarations: declarations, Calls: calls, TypeUsages: graph.TypeUsages, MemberAccesses: graph.MemberAccesses, Truncation: truncation,
 	}
 }
 

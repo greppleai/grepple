@@ -59,3 +59,19 @@ func TestResultMatchRangesAreAdditive(t *testing.T) {
 		t.Fatalf("zero endLine should remain wire-compatible: %s", encoded)
 	}
 }
+
+func TestSourceAnalysisUsesAdditiveStableJSONFields(t *testing.T) {
+	response := SearchResponse{
+		Results:        []FileResult{{Path: "broken.go", Language: "go", StructureStatus: "recovered", Matches: []ResultMatch{}, Segments: []ResultSegment{}}},
+		SourceAnalysis: &SourceAnalysis{Returned: 1, Recovered: 1},
+	}
+	encoded, err := json.Marshal(response)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, field := range []string{`"structureStatus":"recovered"`, `"sourceAnalysis":{"returned":1`, `"recovered":1`} {
+		if !strings.Contains(string(encoded), field) {
+			t.Fatalf("JSON missing %s: %s", field, encoded)
+		}
+	}
+}

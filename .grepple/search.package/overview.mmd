@@ -2,7 +2,7 @@ classDiagram
     %% grepple:package-default github.com/greppleai/grepple/search
     %% grepple:language-default go
     direction LR
-    note "Package search provides file discovery, query and repository filtering, paging, match workers, context, and wire-result construction. | package github.com/greppleai/grepple/search | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=16, declarations=37, exportedTypes=20, internalTypes=17, members=218, exportedFunctions=27, fiberRoutes=0, relations=72"
+    note "Package search provides file discovery, query and repository filtering, paging, match workers, context, and wire-result construction. | package github.com/greppleai/grepple/search | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=16, declarations=38, exportedTypes=21, internalTypes=17, members=225, exportedFunctions=28, fiberRoutes=0, relations=74"
     namespace data_contracts {
         class BoundaryBreadth["BoundaryBreadth · search/boundary_model.go:39-43"] {
             +Files: int
@@ -105,6 +105,14 @@ classDiagram
             +Schema: string
         }
         <<struct>> NavigationGraphDiff
+        class NavigationSourceStats["NavigationSourceStats · search/related.go:120-126"] {
+            +Attempted: int
+            +Failed: int
+            +Parsed: int
+            +Recovered: int
+            +Skipped: int
+        }
+        <<struct>> NavigationSourceStats
         class Params["Params · search/model.go:11-35"] {
             +AfterContext: int
             +At: string
@@ -137,7 +145,7 @@ classDiagram
         <<type>> BoundaryRisk
         class BoundaryTypeOrigin["BoundaryTypeOrigin = string · search/type_boundaries.go:13"]
         <<type>> BoundaryTypeOrigin
-        class FileMatch["FileMatch · search/model.go:55-63"]
+        class FileMatch["FileMatch · search/model.go:55-64"]
         <<struct>> FileMatch
         class NavigationGraphFilter["NavigationGraphFilter · search/navigation_filter.go:12-16"]
         <<struct>> NavigationGraphFilter
@@ -177,11 +185,11 @@ classDiagram
         <<struct>> navigationCall
         class navigationCaller["navigationCaller · search/related.go:33-36"]
         <<struct>> navigationCaller
-        class navigationCandidateResolution["navigationCandidateResolution · search/related.go:361-364"]
+        class navigationCandidateResolution["navigationCandidateResolution · search/related.go:395-398"]
         <<struct>> navigationCandidateResolution
         class navigationDeclaration["navigationDeclaration · search/related.go:20-31"]
         <<struct>> navigationDeclaration
-        class navigationIndex["navigationIndex · search/related.go:49-57"]
+        class navigationIndex["navigationIndex · search/related.go:49-58"]
         <<struct>> navigationIndex
         class repoPattern["repoPattern · search/search_engine.go:95-98"]
         <<struct>> repoPattern
@@ -203,10 +211,14 @@ classDiagram
             +At(Params): tuple~*FileMatch&#44;error~
         }
         <<function>> At
-        class BuildNavigationGraph["BuildNavigationGraph · search/related.go:119-121"] {
+        class BuildNavigationGraph["BuildNavigationGraph · search/related.go:129-132"] {
             +BuildNavigationGraph([]string): parser.NavigationGraph
         }
         <<function>> BuildNavigationGraph
+        class BuildNavigationGraphWithStats["BuildNavigationGraphWithStats · search/related.go:135-138"] {
+            +BuildNavigationGraphWithStats([]string): tuple~parser.NavigationGraph&#44;NavigationSourceStats~
+        }
+        <<function>> BuildNavigationGraphWithStats
         class BuildResults["BuildResults · search/result.go:74-87"] {
             +BuildResults([]FileMatch, int, int, int, bool): []api.FileResult
         }
@@ -313,6 +325,7 @@ classDiagram
     BoundaryTypeSpread "1" --> "1" BoundaryTypeRoles : field Roles
     BoundaryTypeSpread "1" --> "*" BoundaryTypeUsage : field PublicExposures; field UsageDetails
     BoundaryConsumer <|-- BoundaryTypeUsage : embedded type
+    BuildNavigationGraphWithStats "1" ..> "1" NavigationSourceStats : result 2
     BuildResults "1" ..> "*" FileMatch : parameter 1
     Content "1" ..> "1" FileMatch : result 1
     Content "1" ..> "1" Params : parameter 1
@@ -345,6 +358,7 @@ classDiagram
     navigationCaller "1" --> "1" navigationDeclaration : field declaration
     navigationCandidateResolution "1" --> "*" navigationDeclaration : field candidates
     navigationDeclaration "1" --> "1" RelatedPoint : field point
+    navigationIndex "1" --> "1" NavigationSourceStats : field sourceStats
     navigationIndex "1" --> "*" navigationCall : field calls
     navigationIndex "1" ..> "*" navigationCall : method navigationCallsByID result 1; method resolveGraphCall parameter 2
     navigationIndex "1" ..> "1" navigationCall : method inferCallReturnReceiver parameter 1; method resolveReturnFactory parameter 1

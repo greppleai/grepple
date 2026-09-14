@@ -3,24 +3,52 @@ package parser
 import (
 	"sort"
 	"strings"
+	"unicode/utf8"
+)
+
+// SegmentBuildStatus reports whether structural context was parsed or safely degraded.
+type SegmentBuildStatus string
+
+// Segment build status values distinguish intentional plain text from incomplete syntax.
+const (
+	SegmentBuildStructured  SegmentBuildStatus = "structured"
+	SegmentBuildRecovered   SegmentBuildStatus = "recovered"
+	SegmentBuildPlain       SegmentBuildStatus = "plain"
+	SegmentBuildUnsupported SegmentBuildStatus = "unsupported"
+	SegmentBuildFailed      SegmentBuildStatus = "failed"
 )
 
 // BuildSegments constructs structural segments for content using its detected
 // language and 1-based hit lines. Unsupported languages and parse failures fall
 // back to one-line plain-text segments.
 func BuildSegments(content, language string, hitLines map[int]bool, maxSegments int) []Segment {
+	segments, _ := BuildSegmentsWithStatus(content, language, hitLines, maxSegments)
+	return segments
+}
+
+// BuildSegmentsWithStatus constructs segments and reports parser completeness.
+func BuildSegmentsWithStatus(content, language string, hitLines map[int]bool, maxSegments int) ([]Segment, SegmentBuildStatus) {
+	if !utf8.ValidString(content) {
+		return buildPlainTextSegments(hitLines, maxSegments), SegmentBuildFailed
+	}
 	if language == "markdown" {
-		return buildMarkdownSegments(content, hitLines, maxSegments)
+		return buildMarkdownSegments(content, hitLines, maxSegments), SegmentBuildStructured
 	}
 	if language == "text" {
-		return buildPlainTextSegments(hitLines, maxSegments)
+		return buildPlainTextSegments(hitLines, maxSegments), SegmentBuildPlain
 	}
 	adapter := adapterForLanguage(language)
-	segments, ok := analyzeStructure(adapter, content, hitLines, maxSegments)
-	if !ok {
-		return buildPlainTextSegments(hitLines, maxSegments)
+	if adapter == nil {
+		return buildPlainTextSegments(hitLines, maxSegments), SegmentBuildUnsupported
 	}
-	return segments
+	segments, ok, recovered := analyzeStructure(adapter, content, hitLines, maxSegments)
+	if !ok {
+		return buildPlainTextSegments(hitLines, maxSegments), SegmentBuildFailed
+	}
+	if recovered {
+		return segments, SegmentBuildRecovered
+	}
+	return segments, SegmentBuildStructured
 }
 
 func buildPlainTextSegments(hits map[int]bool, maxSegments int) []Segment {

@@ -2,7 +2,7 @@
 
 `grepple boundaries [PATH...]` reports two complementary boundary signals. Workflow analysis treats each resolved target declaration's source file as its owner and retains callable sets, ordered sequences, or member-plus-call combinations repeated across at least two external files. Type-spread analysis reports imported concrete types and unambiguously owned project types used from at least two files. Together they ask whether implementation behavior or a concrete representation has spread beyond its intended boundary.
 
-The analyzer consumes `parser.NavigationGraph`, not grammar node names. Consequently the workflow contract is identical across Go, Java, Kotlin, JavaScript/JSX, TypeScript/TSX, Python, C#, C, C++, Rust, and Shell. Type identity is import-qualified where an adapter can resolve an import; otherwise project-owned types require an unambiguous declaration owner. Unsupported and malformed files retain the existing safe navigation fallback.
+The analyzer consumes `parser.NavigationGraph`, not grammar node names. Consequently the workflow contract is identical across Go, Java, Kotlin, JavaScript/JSX, TypeScript/TSX, Python, C#, C, C++, Rust, and Shell. Type identity is import-qualified where an adapter can resolve an import; otherwise project-owned types require an unambiguous declaration owner. Human and JSON reports include discovered, selected, parsed, skipped, failed, and recovered source counts; `--max-files` omissions remain a separate truncation record.
 
 ## Reported signals
 
@@ -64,7 +64,7 @@ The command automatically stores its complete, resolved navigation graph under:
 .grepple/cache/boundaries/<input-digest>.json
 ```
 
-The digest covers source paths and bytes, the file limit, language identity, grammar ABI, and generated grammar fingerprint. Any source or grammar change therefore causes a cache miss. Cache writes use an atomic rename, corrupt entries are ignored, and inability to write the optional cache does not fail analysis. `.grepple/cache/` is ignored by Git.
+The digest covers source paths and bytes, the file limit, language identity, grammar ABI, and generated grammar fingerprint. Any source or grammar change therefore causes a cache miss. Cache schema `grepple-boundary-cache-v4` includes source-completeness metadata. Cache writes use an atomic rename, corrupt entries are ignored, and inability to write the optional cache does not fail analysis. `.grepple/cache/` is always excluded from graph discovery and ignored by Git.
 
 Use `--no-cache` for a forced clean analysis. Cache hits and misses are intentionally absent from human and JSON output, keeping reports byte-for-byte deterministic across cold and warm runs. Source truncation metadata remains explicit when applicable.
 

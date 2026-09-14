@@ -257,7 +257,7 @@ func TestGraphDiffReportsSemanticChangesAndIgnoresLineShifts(t *testing.T) {
 			t.Fatal(err)
 		}
 	})
-	for _, expected := range []string{"graph-diff grepple-navigation-diff-v1", "+ D go func added", "- D go func removed", "+ C", "- C"} {
+	for _, expected := range []string{"graph-diff grepple-navigation-diff-v1", "sources=before(discovered:1,selected:1,parsed:1,skipped:0,failed:0,recovered:0)", "+ D go func added", "- D go func removed", "+ C", "- C"} {
 		if !strings.Contains(output, expected) {
 			t.Fatalf("diff missing %q:\n%s", expected, output)
 		}
@@ -271,7 +271,7 @@ func TestGraphDiffReportsSemanticChangesAndIgnoresLineShifts(t *testing.T) {
 	if err := json.Unmarshal([]byte(jsonOutput), &decoded); err != nil {
 		t.Fatal(err)
 	}
-	if len(decoded.MovedDeclarations) != 0 || decoded.Schema != search.NavigationDiffSchema {
+	if len(decoded.MovedDeclarations) != 0 || decoded.Schema != search.NavigationDiffSchema || decoded.BeforeSources.Parsed != 1 || decoded.AfterSources.Parsed != 1 {
 		t.Fatalf("unexpected diff=%#v", decoded)
 	}
 }
@@ -295,6 +295,40 @@ func TestGraphRecursiveHelpStatesOutputContract(t *testing.T) {
 		if !strings.Contains(output, "Required output mode: (--json | --compact)") {
 			t.Fatalf("Run(%q) omitted output exclusivity:\n%s", args, output)
 		}
+	}
+}
+
+func TestGraphReportsDiscoveredParsedSkippedFailedAndRecoveredSources(t *testing.T) {
+	root := t.TempDir()
+	writeGraphSource(t, root, "valid.go", "package sample\nfunc Valid() {}\n")
+	writeGraphSource(t, root, "recovered.go", "package sample\nfunc Recovered( {\n")
+	writeGraphSource(t, root, "binary.go", "package sample\x00")
+	if err := os.WriteFile(filepath.Join(root, "invalid.go"), []byte{0xff, 0xfe}, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	writeGraphSource(t, root, "notes.md", "# not navigation source\n")
+
+	outputText := captureStdout(t, func() {
+		if err := Run([]string{"graph", "--json", root}); err != nil {
+			t.Fatal(err)
+		}
+	})
+	var output navigationGraphOutput
+	if err := json.Unmarshal([]byte(outputText), &output); err != nil {
+		t.Fatal(err)
+	}
+	want := navigationSourceSummary{Discovered: 5, Selected: 4, Parsed: 2, Skipped: 2, Failed: 1, Recovered: 1}
+	if output.Sources != want {
+		t.Fatalf("sources=%#v, want %#v", output.Sources, want)
+	}
+
+	compact := captureStdout(t, func() {
+		if err := Run([]string{"graph", "--compact", root}); err != nil {
+			t.Fatal(err)
+		}
+	})
+	if !strings.Contains(compact, "sources=discovered:5,selected:4,parsed:2,skipped:2,failed:1,recovered:1") {
+		t.Fatalf("compact source completeness missing:\n%s", compact)
 	}
 }
 

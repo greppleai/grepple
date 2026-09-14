@@ -26,6 +26,7 @@ This file records completed Grepple roadmap work that no longer belongs in `next
 - [x] Preserved exact `HASH│LINE│content` output through a user-owned, versioned anchor-provider protocol.
 - [x] Added provider digest checks, timeout/output bounds, strict response validation, default enablement, and `--no-anchors` fallback.
 - [x] Streamed validated focused extraction to stdout when no output path is supplied.
+- [x] Classified default structural-search results as structured, recovered, plain, unsupported, or failed; incomplete human output is flagged and complete JSON carries per-file plus aggregate status.
 
 ## Shared navigation graph
 
@@ -39,6 +40,7 @@ This file records completed Grepple roadmap work that no longer belongs in `next
 - [x] Reported omitted callers and callees in human and JSON related output.
 - [x] Made every human omitted-edge notice provide a copyable focused `graph callers|callees|impact --at PATH:LINE --depth 2 --json .` continuation.
 - [x] Added complete `grepple-navigation-graph-v1` JSON and bounded compact graph projections.
+- [x] Added deterministic discovered, selected, parsed, skipped, failed, recovered, and truncated source accounting to graphs, focused graph queries, graph diffs, and boundary reports.
 - [x] Added callers, callees, dependencies, dependents, and bidirectional impact queries with depth bounds, cycle safety, candidate preservation, and exact location/symbol/package/module/path roots.
 - [x] Added language, confidence, and visibility filtering before root selection and traversal.
 - [x] Added `grepple-navigation-diff-v1`, ignoring line-only movement while reporting semantic declaration and call-edge changes.

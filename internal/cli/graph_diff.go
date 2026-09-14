@@ -27,8 +27,10 @@ func (graphDiffArgs) Description() string {
 }
 
 type graphDiffOutput struct {
-	BeforeFiles int `json:"beforeFiles"`
-	AfterFiles  int `json:"afterFiles"`
+	BeforeFiles   int                     `json:"beforeFiles"`
+	BeforeSources navigationSourceSummary `json:"beforeSources"`
+	AfterFiles    int                     `json:"afterFiles"`
+	AfterSources  navigationSourceSummary `json:"afterSources"`
 	search.NavigationGraphDiff
 }
 
@@ -62,7 +64,7 @@ func runGraphDiff(args []string) error {
 	}
 	beforeGraph := relativeNavigationGraph(before, values.Before)
 	afterGraph := relativeNavigationGraph(after, values.After)
-	output := graphDiffOutput{BeforeFiles: before.Files, AfterFiles: after.Files, NavigationGraphDiff: search.DiffNavigationGraphs(
+	output := graphDiffOutput{BeforeFiles: before.Files, BeforeSources: before.Sources, AfterFiles: after.Files, AfterSources: after.Sources, NavigationGraphDiff: search.DiffNavigationGraphs(
 		beforeGraph,
 		afterGraph,
 	)}
@@ -108,7 +110,7 @@ func renderCompactGraphDiff(diff graphDiffOutput, maxBytes int) error {
 		output = newBoundedOutputWriter(os.Stdout, maxBytes)
 	}
 	write := func(value string) bool { return output.writeString(value+"\n") == nil }
-	if !write(fmt.Sprintf("graph-diff %s files=%d->%d declarations=+%d/-%d/~%d/>%d calls=+%d/-%d/~%d", diff.Schema, diff.BeforeFiles, diff.AfterFiles, len(diff.AddedDeclarations), len(diff.RemovedDeclarations), len(diff.ChangedDeclarations), len(diff.MovedDeclarations), len(diff.AddedCalls), len(diff.RemovedCalls), len(diff.ChangedCalls))) {
+	if !write(fmt.Sprintf("graph-diff %s files=%d->%d sources=before(%s),after(%s) declarations=+%d/-%d/~%d/>%d calls=+%d/-%d/~%d", diff.Schema, diff.BeforeFiles, diff.AfterFiles, compactNavigationSourceSummary(diff.BeforeSources), compactNavigationSourceSummary(diff.AfterSources), len(diff.AddedDeclarations), len(diff.RemovedDeclarations), len(diff.ChangedDeclarations), len(diff.MovedDeclarations), len(diff.AddedCalls), len(diff.RemovedCalls), len(diff.ChangedCalls))) {
 		return nil
 	}
 	if !renderCompactDeclarationDiff(write, diff) {

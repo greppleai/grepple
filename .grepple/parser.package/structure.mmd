@@ -278,6 +278,11 @@ classDiagram
     <<struct>> Segment
     %% grepple:file Segment parser/model.go
     note for Segment "defined: parser/model.go:5-9; End@parser/model.go:7; Kind@parser/model.go:6; Start@parser/model.go:7; Text@parser/model.go:8"
+    class SegmentBuildStatus["SegmentBuildStatus = string"]
+    <<type>> SegmentBuildStatus
+    %% grepple:underlying SegmentBuildStatus string
+    %% grepple:file SegmentBuildStatus parser/segments.go
+    note for SegmentBuildStatus "defined: parser/segments.go:10"
     class StructuralLineRange {
         +EndLine: int
         +StartLine: int
@@ -865,7 +870,13 @@ classDiagram
     }
     <<function>> BuildSegments
     %% grepple:file BuildSegments parser/segments.go
-    note for BuildSegments "defined: parser/segments.go:11-24"
+    note for BuildSegments "defined: parser/segments.go:24-27"
+    class BuildSegmentsWithStatus {
+        +BuildSegmentsWithStatus(string, string, map[int]bool, int): tuple~[]Segment&#44;SegmentBuildStatus~
+    }
+    <<function>> BuildSegmentsWithStatus
+    %% grepple:file BuildSegmentsWithStatus parser/segments.go
+    note for BuildSegmentsWithStatus "defined: parser/segments.go:30-52"
     class CapabilitiesForLanguage {
         +CapabilitiesForLanguage(string): tuple~LanguageCapabilities&#44;bool~
     }
@@ -976,6 +987,8 @@ classDiagram
     note for WalkNamedViewBounded "defined: parser/view.go:313-338"
     BuildNavigationGraph "1" ..> "1" NavigationGraph : result 1
     BuildSegments "1" ..> "*" Segment : result 1
+    BuildSegmentsWithStatus "1" ..> "*" Segment : result 1
+    BuildSegmentsWithStatus "1" ..> "1" SegmentBuildStatus : result 2
     CapabilitiesForLanguage "1" ..> "1" LanguageCapabilities : result 1
     Document "1" ..> "1" DocumentView : method Read parameter 1
     Document "1" ..> "1" Node : method Root result 1

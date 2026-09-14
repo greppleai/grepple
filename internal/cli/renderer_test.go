@@ -2,12 +2,14 @@ package cli
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"reflect"
 	"strings"
 	"testing"
 
 	"github.com/greppleai/grepple/api"
+	"github.com/greppleai/grepple/parser"
 	"github.com/greppleai/grepple/search"
 )
 
@@ -117,6 +119,42 @@ func TestSegmentRendererReportsMatchesOmittedBySegmentLimit(t *testing.T) {
 	}
 	if !strings.Contains(output.String(), "1 matching lines omitted") || !strings.Contains(output.String(), "use --line-only") {
 		t.Fatalf("missing omitted-match guidance:\n%s", output.String())
+	}
+}
+
+func TestSegmentRendererReportsIncompleteSourceAnalysis(t *testing.T) {
+	var output bytes.Buffer
+	renderer := segmentRenderer{output: newOutputWriter(&output)}
+	results := []api.FileResult{
+		{Path: "valid.go", StructureStatus: string(parser.SegmentBuildStructured)},
+		{Path: "recovered.go", StructureStatus: string(parser.SegmentBuildRecovered)},
+		{Path: "plain.txt", StructureStatus: string(parser.SegmentBuildPlain)},
+		{Path: "unknown.ext", StructureStatus: string(parser.SegmentBuildUnsupported)},
+		{Path: "invalid.go", StructureStatus: string(parser.SegmentBuildFailed)},
+	}
+	if err := renderer.Render(results); err != nil {
+		t.Fatal(err)
+	}
+	want := "! incomplete source analysis returned=5 structured=1 plain=1 unsupported=1 failed=1 recovered=1"
+	if !strings.Contains(output.String(), want) {
+		t.Fatalf("missing source analysis %q:\n%s", want, output.String())
+	}
+	analysis := searchSourceAnalysis(results)
+	if analysis == nil || analysis.Returned != 5 || analysis.Recovered != 1 || analysis.Failed != 1 {
+		t.Fatalf("analysis=%#v", analysis)
+	}
+
+	output.Reset()
+	jsonRenderer := jsonResultRenderer{output: newOutputWriter(&output)}
+	if err := jsonRenderer.Render(results); err != nil {
+		t.Fatal(err)
+	}
+	var response api.SearchResponse
+	if err := json.Unmarshal(output.Bytes(), &response); err != nil {
+		t.Fatal(err)
+	}
+	if response.SourceAnalysis == nil || *response.SourceAnalysis != *analysis {
+		t.Fatalf("JSON source analysis=%#v, want %#v", response.SourceAnalysis, analysis)
 	}
 }
 

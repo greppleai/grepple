@@ -51,6 +51,24 @@ func TestBuildNavigationGraphReportsDeterministicCandidateTargetIDs(t *testing.T
 	}
 }
 
+func TestBuildNavigationGraphReportsSourceCompleteness(t *testing.T) {
+	root := t.TempDir()
+	writeNavigationGraphFile(t, root, "valid.go", "package sample\nfunc Valid() {}\n")
+	writeNavigationGraphFile(t, root, "recovered.go", "package sample\nfunc Recovered( {\n")
+	writeNavigationGraphFile(t, root, "binary.go", "package sample\x00")
+	writeNavigationGraphFile(t, root, "invalid.go", string([]byte{0xff, 0xfe}))
+	writeNavigationGraphFile(t, root, "notes.md", "# not navigation source\n")
+	chdir(t, root)
+
+	graph, stats := BuildNavigationGraphWithStats([]string{"valid.go", "recovered.go", "binary.go", "invalid.go", "notes.md"})
+	if stats != (NavigationSourceStats{Attempted: 5, Parsed: 2, Skipped: 2, Failed: 1, Recovered: 1}) {
+		t.Fatalf("stats=%#v", stats)
+	}
+	if len(graph.Declarations) == 0 {
+		t.Fatalf("valid source was omitted: %#v", graph)
+	}
+}
+
 func writeNavigationGraphFile(t *testing.T, root, path, content string) {
 	t.Helper()
 	fullPath := filepath.Join(root, path)

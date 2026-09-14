@@ -2,7 +2,7 @@ classDiagram
     %% grepple:package-default github.com/greppleai/grepple/parser
     %% grepple:language-default go
     direction LR
-    note "Package parser provides application source classification and structural parsing. | package github.com/greppleai/grepple/parser | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=32, declarations=61, exportedTypes=23, internalTypes=38, members=481, exportedFunctions=20, fiberRoutes=0, relations=292"
+    note "Package parser provides application source classification and structural parsing. | package github.com/greppleai/grepple/parser | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=32, declarations=62, exportedTypes=24, internalTypes=38, members=481, exportedFunctions=21, fiberRoutes=0, relations=294"
     namespace interfaces {
         class languageAdapter["languageAdapter · parser/language.go:74-81"] {
             +Grammar(): syntaxLanguage
@@ -149,6 +149,8 @@ classDiagram
         <<struct>> Range
         class Segment["Segment · parser/model.go:5-9"]
         <<struct>> Segment
+        class SegmentBuildStatus["SegmentBuildStatus = string · parser/segments.go:10"]
+        <<type>> SegmentBuildStatus
         class StructuralLineRange["StructuralLineRange · parser/match_range.go:7-10"]
         <<struct>> StructuralLineRange
         class SyntaxNode["SyntaxNode · parser/document.go:56-67"]
@@ -239,10 +241,14 @@ classDiagram
             +BuildNavigationGraph(string, string, string): NavigationGraph
         }
         <<function>> BuildNavigationGraph
-        class BuildSegments["BuildSegments · parser/segments.go:11-24"] {
+        class BuildSegments["BuildSegments · parser/segments.go:24-27"] {
             +BuildSegments(string, string, map[int]bool, int): []Segment
         }
         <<function>> BuildSegments
+        class BuildSegmentsWithStatus["BuildSegmentsWithStatus · parser/segments.go:30-52"] {
+            +BuildSegmentsWithStatus(string, string, map[int]bool, int): tuple~[]Segment&#44;SegmentBuildStatus~
+        }
+        <<function>> BuildSegmentsWithStatus
         class CapabilitiesForLanguage["CapabilitiesForLanguage · parser/language.go:142-149"] {
             +CapabilitiesForLanguage(string): tuple~LanguageCapabilities&#44;bool~
         }
@@ -318,6 +324,8 @@ classDiagram
     }
     BuildNavigationGraph "1" ..> "1" NavigationGraph : result 1
     BuildSegments "1" ..> "*" Segment : result 1
+    BuildSegmentsWithStatus "1" ..> "*" Segment : result 1
+    BuildSegmentsWithStatus "1" ..> "1" SegmentBuildStatus : result 2
     CapabilitiesForLanguage "1" ..> "1" LanguageCapabilities : result 1
     Document "1" ..> "1" DocumentView : method Read parameter 1
     Document "1" ..> "1" Node : method Root result 1

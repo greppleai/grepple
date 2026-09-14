@@ -33,9 +33,10 @@ Prevent the two common mistakes: treating every name occurrence as a caller, and
 - `unique-terminal` is syntax-based inference, not type checking.
 - `[candidate; try --at PATH:LINE]` is a lead. Inspect candidates before choosing one.
 - Paths passed to the command define the graph universe. Include consumers outside the declaration's package when claiming repository impact.
+- Check discovered/selected/parsed/skipped/failed/recovered source totals. Failed, recovered, or truncated source prevents a complete static-impact claim.
 - Navigation does not prove interface dispatch, reflection, generated calls, runtime registration, data flow, or string-based lookup. Search those mechanisms explicitly when relevant.
 - Package import impact and callable impact differ. Use the workspace summary from `architecture-lookup-discovery` when a public package API or dependency direction changes.
 
 ## Decision record
 
-Before changing code, state: exact declaration, graph universe, direct callers, direct callees, ambiguous candidates, omitted counts, and non-static mechanisms checked. This makes “no callers” a scoped evidence claim instead of a guess.
+Before changing code, state: exact declaration, graph universe and source totals, direct callers, direct callees, ambiguous candidates, omitted counts, and non-static mechanisms checked. This makes “no callers” a scoped evidence claim instead of a guess.

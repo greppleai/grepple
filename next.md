@@ -4,7 +4,7 @@
 
 ## Recommended next milestone
 
-> Make Grepple's existing capabilities discoverable, make incomplete evidence unmistakable, classify boundary risk honestly, and reuse navigation facts across commands. Add language surface only when dogfooding identifies a blocked high-value workflow.
+> Reuse navigation facts across commands, add cheap selector and anchor diagnostics, and standardize completeness metadata. Add language surface only when dogfooding identifies a blocked high-value workflow.
 
 ## Planning principles
 
@@ -14,11 +14,6 @@
 - Syntax-based navigation, structural matching, architecture relations, and boundary findings are evidence—not compiler, runtime, type-flow, or policy verdicts.
 - Preserve dependency direction toward `api` and `parser`; keep GritQL query semantics out of `parser`.
 - Keep canonical language IDs and grammar-kind policy out of generic navigation engines.
-
-## P0 — make current capabilities discoverable and trustworthy
-
-7. [ ] Audit structural and graph operations for unsupported/failed source. Report deterministic discovered, parsed, skipped, failed, and truncated totals in human and JSON output.
-
 ## P1 — reduce repeated agent and developer work
 
 1. [ ] Reuse content- and grammar-addressed per-file navigation facts across graph output, graph queries, `--related`, boundary analysis, and extraction. Cold and warm output must remain byte-identical.

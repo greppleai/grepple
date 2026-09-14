@@ -1,6 +1,9 @@
 package cli
 
-import "github.com/greppleai/grepple/api"
+import (
+	"github.com/greppleai/grepple/api"
+	"github.com/greppleai/grepple/parser"
+)
 
 type jsonResultRenderer struct {
 	output      *outputWriter
@@ -11,7 +14,35 @@ func (renderer jsonResultRenderer) Render(results []api.FileResult) error {
 	if renderer.matchesOnly {
 		return renderer.output.writeJSON(map[string]any{"matches": flatMatches(results)})
 	}
-	return renderer.output.writeJSON(api.SearchResponse{Results: results})
+	return renderer.output.writeJSON(api.SearchResponse{Results: results, SourceAnalysis: searchSourceAnalysis(results)})
+}
+
+func searchSourceAnalysis(results []api.FileResult) *api.SourceAnalysis {
+	analysis := &api.SourceAnalysis{Returned: len(results)}
+	classified := 0
+	for _, result := range results {
+		switch parser.SegmentBuildStatus(result.StructureStatus) {
+		case parser.SegmentBuildStructured:
+			analysis.Structured++
+			classified++
+		case parser.SegmentBuildRecovered:
+			analysis.Recovered++
+			classified++
+		case parser.SegmentBuildPlain:
+			analysis.Plain++
+			classified++
+		case parser.SegmentBuildUnsupported:
+			analysis.Unsupported++
+			classified++
+		case parser.SegmentBuildFailed:
+			analysis.Failed++
+			classified++
+		}
+	}
+	if classified == 0 {
+		return nil
+	}
+	return analysis
 }
 
 func flatMatches(results []api.FileResult) []map[string]any {

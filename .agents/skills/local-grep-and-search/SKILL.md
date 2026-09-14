@@ -29,9 +29,10 @@ Default search returns enclosing structural segments and collapses unrelated bod
 2. Use `-F` for identifiers and snippets. The default pattern mode is JavaScript regex, not POSIX or RE2.
 3. Distinguish `--files` (path discovery) from `--files-with-matches` (content evidence). `-l` means file listing here, not grep's matching-file behavior.
 4. Treat a text occurrence as an occurrence only. For callers, dependencies, or refactor impact, switch to `change-impact-analysis`.
-5. Treat truncation and omitted-segment messages as incompleteness. Narrow scope; use uncapped output only when truly necessary.
-6. Selected paths/globs are the evidence universe. State that universe when making a completeness claim.
-7. Do not read an entire large file after Grepple supplied an exact construct range.
+5. Treat `recovered`, `unsupported`, or `failed` source analysis as incomplete parser evidence; plain text is intentional but has no syntax guarantees.
+6. Treat truncation and omitted-segment messages as incompleteness. Narrow scope; use uncapped output only when truly necessary.
+7. Selected paths/globs are the evidence universe. State that universe when making a completeness claim.
+8. Do not read an entire large file after Grepple supplied an exact construct range.
 
 ## Edit-safe workflow
 

@@ -17,15 +17,15 @@
   },
   "summary": {
     "sourceFiles": 16,
-    "declarations": 37,
-    "exportedTypes": 20,
+    "declarations": 38,
+    "exportedTypes": 21,
     "internalTypes": 17,
-    "members": 218,
-    "exportedFunctions": 27,
+    "members": 225,
+    "exportedFunctions": 28,
     "fiberRoutes": 0,
-    "relations": 72
+    "relations": 74
   },
-  "semanticModelDigest": "sha256:43d91412e35fcb2927e4d90cb5ca764a2edf952a70e30c00993ddd2dbe9913e3",
+  "semanticModelDigest": "sha256:6317913a251a35690de90dc9fd481db22c38387b7fb1cd0f81697abcaab784ff",
   "sourceFiles": [
     {
       "path": "search/at.go"
@@ -728,8 +728,8 @@
       "kind": "struct",
       "file": "search/model.go",
       "line": 55,
-      "endLine": 63,
-      "underlyingType": "struct{File,DisplayPath,Content,Language string;MatchLines map[int]bool;MatchRanges map[int]parser.StructuralLineRange;Segments[]parser.Segment;Related[]RelatedPoint;OmittedRelatedCallers,OmittedRelatedCallees int;SegmentsReady bool;}",
+      "endLine": 64,
+      "underlyingType": "struct{File,DisplayPath,Content,Language string;MatchLines map[int]bool;MatchRanges map[int]parser.StructuralLineRange;Segments[]parser.Segment;Related[]RelatedPoint;OmittedRelatedCallers,OmittedRelatedCallees int;SegmentsReady bool;StructureStatus parser.SegmentBuildStatus;}",
       "members": [
         {
           "name": "Content",
@@ -807,6 +807,13 @@
           "line": 62,
           "endLine": 62,
           "result": "bool"
+        },
+        {
+          "name": "StructureStatus",
+          "kind": "property",
+          "line": 63,
+          "endLine": 63,
+          "result": "parser.SegmentBuildStatus"
         }
       ]
     },
@@ -998,6 +1005,66 @@
       "line": 10,
       "endLine": 10,
       "underlyingType": "string"
+    },
+    {
+      "name": "NavigationSourceStats",
+      "kind": "struct",
+      "file": "search/related.go",
+      "line": 120,
+      "endLine": 126,
+      "underlyingType": "struct{Attempted int`json:\"attempted\"`;Parsed int`json:\"parsed\"`;Skipped int`json:\"skipped\"`;Failed int`json:\"failed\"`;Recovered int`json:\"recovered\"`;}",
+      "members": [
+        {
+          "name": "Attempted",
+          "kind": "property",
+          "line": 121,
+          "endLine": 121,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"attempted\""
+          }
+        },
+        {
+          "name": "Failed",
+          "kind": "property",
+          "line": 124,
+          "endLine": 124,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"failed\""
+          }
+        },
+        {
+          "name": "Parsed",
+          "kind": "property",
+          "line": 122,
+          "endLine": 122,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"parsed\""
+          }
+        },
+        {
+          "name": "Recovered",
+          "kind": "property",
+          "line": 125,
+          "endLine": 125,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"recovered\""
+          }
+        },
+        {
+          "name": "Skipped",
+          "kind": "property",
+          "line": 123,
+          "endLine": 123,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"skipped\""
+          }
+        }
+      ]
     },
     {
       "name": "Params",
@@ -1999,22 +2066,22 @@
       "name": "navigationCandidateResolution",
       "kind": "struct",
       "file": "search/related.go",
-      "line": 361,
-      "endLine": 364,
+      "line": 395,
+      "endLine": 398,
       "underlyingType": "struct{candidates[]navigationDeclaration;confidence string;}",
       "members": [
         {
           "name": "candidates",
           "kind": "property",
-          "line": 362,
-          "endLine": 362,
+          "line": 396,
+          "endLine": 396,
           "result": "[]navigationDeclaration"
         },
         {
           "name": "confidence",
           "kind": "property",
-          "line": 363,
-          "endLine": 363,
+          "line": 397,
+          "endLine": 397,
           "result": "string"
         }
       ]
@@ -2104,14 +2171,14 @@
       "kind": "struct",
       "file": "search/related.go",
       "line": 49,
-      "endLine": 57,
-      "underlyingType": "struct{declarations map[string][]navigationDeclaration;callers map[string][]navigationCaller;calls map[string][]navigationCall;byFile map[string][]navigationDeclaration;byLocation map[string]navigationDeclaration;contents map[string]string;graph parser.NavigationGraph;}",
+      "endLine": 58,
+      "underlyingType": "struct{declarations map[string][]navigationDeclaration;callers map[string][]navigationCaller;calls map[string][]navigationCall;byFile map[string][]navigationDeclaration;byLocation map[string]navigationDeclaration;contents map[string]string;graph parser.NavigationGraph;sourceStats NavigationSourceStats;}",
       "members": [
         {
           "name": "addCalls",
           "kind": "method",
-          "line": 224,
-          "endLine": 242,
+          "line": 258,
+          "endLine": 276,
           "parameters": [
             "[]parser.NavigationCall",
             "[]navigationDeclaration",
@@ -2122,8 +2189,8 @@
         {
           "name": "addDeclarations",
           "kind": "method",
-          "line": 204,
-          "endLine": 222,
+          "line": 238,
+          "endLine": 256,
           "parameters": [
             "[]parser.NavigationDeclaration",
             "string",
@@ -2135,8 +2202,8 @@
         {
           "name": "addFile",
           "kind": "method",
-          "line": 181,
-          "endLine": 202,
+          "line": 198,
+          "endLine": 236,
           "parameters": [
             "string",
             "string"
@@ -2145,14 +2212,14 @@
         {
           "name": "indexNavigationCallers",
           "kind": "method",
-          "line": 289,
-          "endLine": 305
+          "line": 323,
+          "endLine": 339
         },
         {
           "name": "inferCallReturnReceiver",
           "kind": "method",
-          "line": 257,
-          "endLine": 273,
+          "line": 291,
+          "endLine": 307,
           "parameters": [
             "*navigationCall",
             "string"
@@ -2161,28 +2228,28 @@
         {
           "name": "inferCallReturnReceivers",
           "kind": "method",
-          "line": 244,
-          "endLine": 255
+          "line": 278,
+          "endLine": 289
         },
         {
           "name": "navigationCallsByID",
           "kind": "method",
-          "line": 141,
-          "endLine": 149,
+          "line": 158,
+          "endLine": 166,
           "result": "map[string]navigationCall"
         },
         {
           "name": "navigationDeclarationsByID",
           "kind": "method",
-          "line": 131,
-          "endLine": 139,
+          "line": 148,
+          "endLine": 156,
           "result": "map[string]navigationDeclaration"
         },
         {
           "name": "resolveGraphCall",
           "kind": "method",
-          "line": 151,
-          "endLine": 180,
+          "line": 168,
+          "endLine": 197,
           "parameters": [
             "*parser.NavigationCall",
             "map[string]navigationCall",
@@ -2192,14 +2259,14 @@
         {
           "name": "resolveGraphCalls",
           "kind": "method",
-          "line": 123,
-          "endLine": 129
+          "line": 140,
+          "endLine": 146
         },
         {
           "name": "resolveReturnFactory",
           "kind": "method",
-          "line": 275,
-          "endLine": 287,
+          "line": 309,
+          "endLine": 321,
           "parameters": [
             "navigationCall",
             "string"
@@ -2254,6 +2321,13 @@
           "line": 56,
           "endLine": 56,
           "result": "parser.NavigationGraph"
+        },
+        {
+          "name": "sourceStats",
+          "kind": "property",
+          "line": 57,
+          "endLine": 57,
+          "result": "NavigationSourceStats"
         }
       ]
     },
@@ -2343,12 +2417,23 @@
       "name": "BuildNavigationGraph",
       "kind": "function",
       "file": "search/related.go",
-      "line": 119,
-      "endLine": 121,
+      "line": 129,
+      "endLine": 132,
       "parameters": [
         "[]string"
       ],
       "result": "parser.NavigationGraph"
+    },
+    {
+      "name": "BuildNavigationGraphWithStats",
+      "kind": "function",
+      "file": "search/related.go",
+      "line": 135,
+      "endLine": 138,
+      "parameters": [
+        "[]string"
+      ],
+      "result": "tuple\u003cparser.NavigationGraph,NavigationSourceStats\u003e"
     },
     {
       "name": "BuildResults",
@@ -2774,6 +2859,13 @@
       "cardinality": "one"
     },
     {
+      "from": "BuildNavigationGraphWithStats",
+      "to": "NavigationSourceStats",
+      "kind": "dependency",
+      "via": "result 2",
+      "cardinality": "one"
+    },
+    {
       "from": "BuildResults",
       "to": "FileMatch",
       "kind": "dependency",
@@ -3023,6 +3115,13 @@
       "to": "RelatedPoint",
       "kind": "association",
       "via": "field point",
+      "cardinality": "one"
+    },
+    {
+      "from": "navigationIndex",
+      "to": "NavigationSourceStats",
+      "kind": "association",
+      "via": "field sourceStats",
       "cardinality": "one"
     },
     {

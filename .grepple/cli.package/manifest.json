@@ -17,15 +17,15 @@
   },
   "summary": {
     "sourceFiles": 36,
-    "declarations": 47,
+    "declarations": 48,
     "exportedTypes": 0,
-    "internalTypes": 47,
-    "members": 297,
+    "internalTypes": 48,
+    "members": 307,
     "exportedFunctions": 3,
     "fiberRoutes": 0,
-    "relations": 27
+    "relations": 31
   },
-  "semanticModelDigest": "sha256:216c7f14533afc1cace89b1679a3614976bc303cd8cd3b95b8528ee15d7d231d",
+  "semanticModelDigest": "sha256:19a668fb3b5063a5d82a6768341c2e20eac78e8c9bd43b92ea5d5ec00b0b3139",
   "sourceFiles": [
     {
       "path": "internal/cli/anchors.go"
@@ -524,14 +524,14 @@
       "kind": "struct",
       "file": "internal/cli/boundaries.go",
       "line": 33,
-      "endLine": 40,
-      "underlyingType": "struct{Schema string`json:\"schema\"`;Paths[]string`json:\"paths\"`;Files int`json:\"files\"`;Candidates[]search.BoundaryCandidate`json:\"candidates\"`;TypeBoundaries[]search.BoundaryTypeSpread`json:\"typeBoundaries\"`;Truncation*navigationGraphTruncation`json:\"truncation,omitempty\"`;}",
+      "endLine": 41,
+      "underlyingType": "struct{Schema string`json:\"schema\"`;Paths[]string`json:\"paths\"`;Files int`json:\"files\"`;Sources navigationSourceSummary`json:\"sources\"`;Candidates[]search.BoundaryCandidate`json:\"candidates\"`;TypeBoundaries[]search.BoundaryTypeSpread`json:\"typeBoundaries\"`;Truncation*navigationGraphTruncation`json:\"truncation,omitempty\"`;}",
       "members": [
         {
           "name": "Candidates",
           "kind": "property",
-          "line": 37,
-          "endLine": 37,
+          "line": 38,
+          "endLine": 38,
           "result": "[]search.BoundaryCandidate",
           "structTag": {
             "value": "json:\"candidates\""
@@ -568,10 +568,20 @@
           }
         },
         {
+          "name": "Sources",
+          "kind": "property",
+          "line": 37,
+          "endLine": 37,
+          "result": "navigationSourceSummary",
+          "structTag": {
+            "value": "json:\"sources\""
+          }
+        },
+        {
           "name": "Truncation",
           "kind": "property",
-          "line": 39,
-          "endLine": 39,
+          "line": 40,
+          "endLine": 40,
           "result": "*navigationGraphTruncation",
           "structTag": {
             "value": "json:\"truncation,omitempty\""
@@ -580,8 +590,8 @@
         {
           "name": "TypeBoundaries",
           "kind": "property",
-          "line": 38,
-          "endLine": 38,
+          "line": 39,
+          "endLine": 39,
           "result": "[]search.BoundaryTypeSpread",
           "structTag": {
             "value": "json:\"typeBoundaries\""
@@ -1463,17 +1473,27 @@
       "kind": "struct",
       "file": "internal/cli/graph_diff.go",
       "line": 29,
-      "endLine": 33,
-      "underlyingType": "struct{BeforeFiles int`json:\"beforeFiles\"`;AfterFiles int`json:\"afterFiles\"`;search.NavigationGraphDiff;}",
+      "endLine": 35,
+      "underlyingType": "struct{BeforeFiles int`json:\"beforeFiles\"`;BeforeSources navigationSourceSummary`json:\"beforeSources\"`;AfterFiles int`json:\"afterFiles\"`;AfterSources navigationSourceSummary`json:\"afterSources\"`;search.NavigationGraphDiff;}",
       "members": [
         {
           "name": "AfterFiles",
           "kind": "property",
-          "line": 31,
-          "endLine": 31,
+          "line": 32,
+          "endLine": 32,
           "result": "int",
           "structTag": {
             "value": "json:\"afterFiles\""
+          }
+        },
+        {
+          "name": "AfterSources",
+          "kind": "property",
+          "line": 33,
+          "endLine": 33,
+          "result": "navigationSourceSummary",
+          "structTag": {
+            "value": "json:\"afterSources\""
           }
         },
         {
@@ -1484,6 +1504,16 @@
           "result": "int",
           "structTag": {
             "value": "json:\"beforeFiles\""
+          }
+        },
+        {
+          "name": "BeforeSources",
+          "kind": "property",
+          "line": 31,
+          "endLine": 31,
+          "result": "navigationSourceSummary",
+          "structTag": {
+            "value": "json:\"beforeSources\""
           }
         }
       ]
@@ -1956,15 +1986,15 @@
       "name": "jsonResultRenderer",
       "kind": "struct",
       "file": "internal/cli/renderer_json.go",
-      "line": 5,
-      "endLine": 8,
+      "line": 8,
+      "endLine": 11,
       "underlyingType": "struct{output*outputWriter;matchesOnly bool;}",
       "members": [
         {
           "name": "Render",
           "kind": "method",
-          "line": 10,
-          "endLine": 15,
+          "line": 13,
+          "endLine": 18,
           "parameters": [
             "[]api.FileResult"
           ],
@@ -1973,15 +2003,15 @@
         {
           "name": "matchesOnly",
           "kind": "property",
-          "line": 7,
-          "endLine": 7,
+          "line": 10,
+          "endLine": 10,
           "result": "bool"
         },
         {
           "name": "output",
           "kind": "property",
-          "line": 6,
-          "endLine": 6,
+          "line": 9,
+          "endLine": 9,
           "result": "*outputWriter"
         }
       ]
@@ -2170,14 +2200,14 @@
       "kind": "struct",
       "file": "internal/cli/graph.go",
       "line": 29,
-      "endLine": 38,
-      "underlyingType": "struct{Schema string`json:\"schema\"`;Files int`json:\"files\"`;Declarations[]parser.NavigationDeclaration`json:\"declarations\"`;Calls[]parser.NavigationCall`json:\"calls\"`;TypeUsages[]parser.NavigationTypeUsage`json:\"typeUsages,omitempty\"`;MemberAccesses[]parser.NavigationMemberAccess`json:\"memberAccesses,omitempty\"`;Query*navigationGraphQuery`json:\"query,omitempty\"`;Truncation*navigationGraphTruncation`json:\"truncation,omitempty\"`;}",
+      "endLine": 39,
+      "underlyingType": "struct{Schema string`json:\"schema\"`;Files int`json:\"files\"`;Sources navigationSourceSummary`json:\"sources\"`;Declarations[]parser.NavigationDeclaration`json:\"declarations\"`;Calls[]parser.NavigationCall`json:\"calls\"`;TypeUsages[]parser.NavigationTypeUsage`json:\"typeUsages,omitempty\"`;MemberAccesses[]parser.NavigationMemberAccess`json:\"memberAccesses,omitempty\"`;Query*navigationGraphQuery`json:\"query,omitempty\"`;Truncation*navigationGraphTruncation`json:\"truncation,omitempty\"`;}",
       "members": [
         {
           "name": "Calls",
           "kind": "property",
-          "line": 33,
-          "endLine": 33,
+          "line": 34,
+          "endLine": 34,
           "result": "[]parser.NavigationCall",
           "structTag": {
             "value": "json:\"calls\""
@@ -2186,8 +2216,8 @@
         {
           "name": "Declarations",
           "kind": "property",
-          "line": 32,
-          "endLine": 32,
+          "line": 33,
+          "endLine": 33,
           "result": "[]parser.NavigationDeclaration",
           "structTag": {
             "value": "json:\"declarations\""
@@ -2206,8 +2236,8 @@
         {
           "name": "MemberAccesses",
           "kind": "property",
-          "line": 35,
-          "endLine": 35,
+          "line": 36,
+          "endLine": 36,
           "result": "[]parser.NavigationMemberAccess",
           "structTag": {
             "value": "json:\"memberAccesses,omitempty\""
@@ -2216,8 +2246,8 @@
         {
           "name": "Query",
           "kind": "property",
-          "line": 36,
-          "endLine": 36,
+          "line": 37,
+          "endLine": 37,
           "result": "*navigationGraphQuery",
           "structTag": {
             "value": "json:\"query,omitempty\""
@@ -2234,10 +2264,20 @@
           }
         },
         {
+          "name": "Sources",
+          "kind": "property",
+          "line": 32,
+          "endLine": 32,
+          "result": "navigationSourceSummary",
+          "structTag": {
+            "value": "json:\"sources\""
+          }
+        },
+        {
           "name": "Truncation",
           "kind": "property",
-          "line": 37,
-          "endLine": 37,
+          "line": 38,
+          "endLine": 38,
           "result": "*navigationGraphTruncation",
           "structTag": {
             "value": "json:\"truncation,omitempty\""
@@ -2246,8 +2286,8 @@
         {
           "name": "TypeUsages",
           "kind": "property",
-          "line": 34,
-          "endLine": 34,
+          "line": 35,
+          "endLine": 35,
           "result": "[]parser.NavigationTypeUsage",
           "structTag": {
             "value": "json:\"typeUsages,omitempty\""
@@ -2259,15 +2299,15 @@
       "name": "navigationGraphQuery",
       "kind": "struct",
       "file": "internal/cli/graph.go",
-      "line": 40,
-      "endLine": 47,
+      "line": 41,
+      "endLine": 48,
       "underlyingType": "struct{Direction string`json:\"direction\"`;Depth int`json:\"depth\"`;RootIDs[]string`json:\"rootIds\"`;Languages[]string`json:\"languages,omitempty\"`;Confidences[]string`json:\"confidences,omitempty\"`;Visibilities[]string`json:\"visibilities,omitempty\"`;}",
       "members": [
         {
           "name": "Confidences",
           "kind": "property",
-          "line": 45,
-          "endLine": 45,
+          "line": 46,
+          "endLine": 46,
           "result": "[]string",
           "structTag": {
             "value": "json:\"confidences,omitempty\""
@@ -2276,8 +2316,8 @@
         {
           "name": "Depth",
           "kind": "property",
-          "line": 42,
-          "endLine": 42,
+          "line": 43,
+          "endLine": 43,
           "result": "int",
           "structTag": {
             "value": "json:\"depth\""
@@ -2286,8 +2326,8 @@
         {
           "name": "Direction",
           "kind": "property",
-          "line": 41,
-          "endLine": 41,
+          "line": 42,
+          "endLine": 42,
           "result": "string",
           "structTag": {
             "value": "json:\"direction\""
@@ -2296,8 +2336,8 @@
         {
           "name": "Languages",
           "kind": "property",
-          "line": 44,
-          "endLine": 44,
+          "line": 45,
+          "endLine": 45,
           "result": "[]string",
           "structTag": {
             "value": "json:\"languages,omitempty\""
@@ -2306,8 +2346,8 @@
         {
           "name": "RootIDs",
           "kind": "property",
-          "line": 43,
-          "endLine": 43,
+          "line": 44,
+          "endLine": 44,
           "result": "[]string",
           "structTag": {
             "value": "json:\"rootIds\""
@@ -2316,8 +2356,8 @@
         {
           "name": "Visibilities",
           "kind": "property",
-          "line": 46,
-          "endLine": 46,
+          "line": 47,
+          "endLine": 47,
           "result": "[]string",
           "structTag": {
             "value": "json:\"visibilities,omitempty\""
@@ -2329,15 +2369,15 @@
       "name": "navigationGraphTruncation",
       "kind": "struct",
       "file": "internal/cli/graph.go",
-      "line": 49,
-      "endLine": 53,
+      "line": 50,
+      "endLine": 54,
       "underlyingType": "struct{Reason string`json:\"reason\"`;Limit int`json:\"limit\"`;Skipped int`json:\"skipped\"`;}",
       "members": [
         {
           "name": "Limit",
           "kind": "property",
-          "line": 51,
-          "endLine": 51,
+          "line": 52,
+          "endLine": 52,
           "result": "int",
           "structTag": {
             "value": "json:\"limit\""
@@ -2346,8 +2386,8 @@
         {
           "name": "Reason",
           "kind": "property",
-          "line": 50,
-          "endLine": 50,
+          "line": 51,
+          "endLine": 51,
           "result": "string",
           "structTag": {
             "value": "json:\"reason\""
@@ -2356,8 +2396,78 @@
         {
           "name": "Skipped",
           "kind": "property",
-          "line": 52,
-          "endLine": 52,
+          "line": 53,
+          "endLine": 53,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"skipped\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "navigationSourceSummary",
+      "kind": "struct",
+      "file": "internal/cli/graph.go",
+      "line": 56,
+      "endLine": 63,
+      "underlyingType": "struct{Discovered int`json:\"discovered\"`;Selected int`json:\"selected\"`;Parsed int`json:\"parsed\"`;Skipped int`json:\"skipped\"`;Failed int`json:\"failed\"`;Recovered int`json:\"recovered\"`;}",
+      "members": [
+        {
+          "name": "Discovered",
+          "kind": "property",
+          "line": 57,
+          "endLine": 57,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"discovered\""
+          }
+        },
+        {
+          "name": "Failed",
+          "kind": "property",
+          "line": 61,
+          "endLine": 61,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"failed\""
+          }
+        },
+        {
+          "name": "Parsed",
+          "kind": "property",
+          "line": 59,
+          "endLine": 59,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"parsed\""
+          }
+        },
+        {
+          "name": "Recovered",
+          "kind": "property",
+          "line": 62,
+          "endLine": 62,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"recovered\""
+          }
+        },
+        {
+          "name": "Selected",
+          "kind": "property",
+          "line": 58,
+          "endLine": 58,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"selected\""
+          }
+        },
+        {
+          "name": "Skipped",
+          "kind": "property",
+          "line": 60,
+          "endLine": 60,
           "result": "int",
           "structTag": {
             "value": "json:\"skipped\""
@@ -3186,7 +3296,7 @@
           "name": "Render",
           "kind": "method",
           "line": 16,
-          "endLine": 28,
+          "endLine": 34,
           "parameters": [
             "[]api.FileResult"
           ],
@@ -3195,8 +3305,8 @@
         {
           "name": "renderFile",
           "kind": "method",
-          "line": 30,
-          "endLine": 58,
+          "line": 36,
+          "endLine": 64,
           "parameters": [
             "api.FileResult"
           ],
@@ -3205,8 +3315,8 @@
         {
           "name": "renderRelated",
           "kind": "method",
-          "line": 75,
-          "endLine": 86,
+          "line": 81,
+          "endLine": 92,
           "parameters": [
             "[]api.RelatedSymbol",
             "int",
@@ -3219,8 +3329,8 @@
         {
           "name": "renderRelatedOmissions",
           "kind": "method",
-          "line": 129,
-          "endLine": 145,
+          "line": 135,
+          "endLine": 151,
           "parameters": [
             "int",
             "int",
@@ -3233,8 +3343,8 @@
         {
           "name": "renderRelatedPoint",
           "kind": "method",
-          "line": 97,
-          "endLine": 127,
+          "line": 103,
+          "endLine": 133,
           "parameters": [
             "api.RelatedSymbol",
             "int"
@@ -3244,8 +3354,8 @@
         {
           "name": "renderRelatedPoints",
           "kind": "method",
-          "line": 88,
-          "endLine": 95,
+          "line": 94,
+          "endLine": 101,
           "parameters": [
             "[]api.RelatedSymbol",
             "int"
@@ -3255,8 +3365,8 @@
         {
           "name": "renderRelatedSegments",
           "kind": "method",
-          "line": 171,
-          "endLine": 183,
+          "line": 177,
+          "endLine": 189,
           "parameters": [
             "[]api.ResultSegment",
             "int"
@@ -3266,8 +3376,8 @@
         {
           "name": "renderSegment",
           "kind": "method",
-          "line": 185,
-          "endLine": 196,
+          "line": 191,
+          "endLine": 202,
           "parameters": [
             "string",
             "api.ResultSegment",
@@ -3278,8 +3388,8 @@
         {
           "name": "renderSourceLine",
           "kind": "method",
-          "line": 198,
-          "endLine": 203,
+          "line": 204,
+          "endLine": 209,
           "parameters": [
             "string",
             "int",
@@ -3497,6 +3607,13 @@
       "cardinality": "one"
     },
     {
+      "from": "boundariesOutput",
+      "to": "navigationSourceSummary",
+      "kind": "association",
+      "via": "field Sources",
+      "cardinality": "one"
+    },
+    {
       "from": "boundaryGraphCache",
       "to": "navigationGraphOutput",
       "kind": "association",
@@ -3553,6 +3670,20 @@
       "cardinality": "one"
     },
     {
+      "from": "graphDiffOutput",
+      "to": "navigationSourceSummary",
+      "kind": "association",
+      "via": "field AfterSources",
+      "cardinality": "one"
+    },
+    {
+      "from": "graphDiffOutput",
+      "to": "navigationSourceSummary",
+      "kind": "association",
+      "via": "field BeforeSources",
+      "cardinality": "one"
+    },
+    {
       "from": "jsonResultRenderer",
       "to": "outputWriter",
       "kind": "association",
@@ -3599,6 +3730,13 @@
       "to": "navigationGraphTruncation",
       "kind": "association",
       "via": "field Truncation",
+      "cardinality": "one"
+    },
+    {
+      "from": "navigationGraphOutput",
+      "to": "navigationSourceSummary",
+      "kind": "association",
+      "via": "field Sources",
       "cardinality": "one"
     },
     {

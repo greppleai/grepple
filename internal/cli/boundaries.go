@@ -34,6 +34,7 @@ type boundariesOutput struct {
 	Schema         string                      `json:"schema"`
 	Paths          []string                    `json:"paths"`
 	Files          int                         `json:"files"`
+	Sources        navigationSourceSummary     `json:"sources"`
 	Candidates     []search.BoundaryCandidate  `json:"candidates"`
 	TypeBoundaries []search.BoundaryTypeSpread `json:"typeBoundaries"`
 	Truncation     *navigationGraphTruncation  `json:"truncation,omitempty"`
@@ -71,7 +72,7 @@ func runBoundaries(args []string) error {
 	if err != nil {
 		return err
 	}
-	output := boundariesOutput{Schema: "grepple-boundaries-v2", Paths: boundaryDisplayPaths(values.Paths), Files: graphOutput.Files, Candidates: candidates, TypeBoundaries: typeBoundaries, Truncation: graphOutput.Truncation}
+	output := boundariesOutput{Schema: "grepple-boundaries-v2", Paths: boundaryDisplayPaths(values.Paths), Files: graphOutput.Files, Sources: graphOutput.Sources, Candidates: candidates, TypeBoundaries: typeBoundaries, Truncation: graphOutput.Truncation}
 	if values.JSON {
 		encoder := json.NewEncoder(os.Stdout)
 		encoder.SetEscapeHTML(false)
@@ -107,7 +108,7 @@ func renderBoundaries(report boundariesOutput, minimum, limit, maxBytes int) err
 	}
 	visible := boundaryVisibleCount(len(report.Candidates), limit)
 	typeVisible := boundaryVisibleCount(len(report.TypeBoundaries), limit)
-	if !write("boundary analysis paths=%s files=%d workflow-candidates=%d workflow-shown=%d type-candidates=%d type-shown=%d", strings.Join(report.Paths, ","), report.Files, len(report.Candidates), visible, len(report.TypeBoundaries), typeVisible) {
+	if !write("boundary analysis paths=%s files=%d workflow-candidates=%d workflow-shown=%d type-candidates=%d type-shown=%d sources=discovered:%d,selected:%d,parsed:%d,skipped:%d,failed:%d,recovered:%d", strings.Join(report.Paths, ","), report.Files, len(report.Candidates), visible, len(report.TypeBoundaries), typeVisible, report.Sources.Discovered, report.Sources.Selected, report.Sources.Parsed, report.Sources.Skipped, report.Sources.Failed, report.Sources.Recovered) {
 		return nil
 	}
 	if report.Truncation != nil && !write("! incomplete: %d files omitted by %s=%d", report.Truncation.Skipped, report.Truncation.Reason, report.Truncation.Limit) {

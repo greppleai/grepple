@@ -113,6 +113,7 @@ classDiagram
         +Files: int
         +Paths: []string
         +Schema: string
+        +Sources: navigationSourceSummary
         +Truncation: *navigationGraphTruncation
         +TypeBoundaries: []search.BoundaryTypeSpread
     }
@@ -122,9 +123,10 @@ classDiagram
     %% grepple:struct-tag boundariesOutput Files "json:\"files\""
     %% grepple:struct-tag boundariesOutput Paths "json:\"paths\""
     %% grepple:struct-tag boundariesOutput Schema "json:\"schema\""
+    %% grepple:struct-tag boundariesOutput Sources "json:\"sources\""
     %% grepple:struct-tag boundariesOutput Truncation "json:\"truncation,omitempty\""
     %% grepple:struct-tag boundariesOutput TypeBoundaries "json:\"typeBoundaries\""
-    note for boundariesOutput "defined: internal/cli/boundaries.go:33-40; Candidates@internal/cli/boundaries.go:37; Files@internal/cli/boundaries.go:36; Paths@internal/cli/boundaries.go:35; Schema@internal/cli/boundaries.go:34; Truncation@internal/cli/boundaries.go:39; TypeBoundaries@internal/cli/boundaries.go:38"
+    note for boundariesOutput "defined: internal/cli/boundaries.go:33-41; Candidates@internal/cli/boundaries.go:38; Files@internal/cli/boundaries.go:36; Paths@internal/cli/boundaries.go:35; Schema@internal/cli/boundaries.go:34; Sources@internal/cli/boundaries.go:37; Truncation@internal/cli/boundaries.go:40; TypeBoundaries@internal/cli/boundaries.go:39"
     class boundaryGraphCache {
         +Digest: string
         +Graph: navigationGraphOutput
@@ -326,13 +328,17 @@ classDiagram
     note for graphDiffArgs "defined: internal/cli/graph_diff.go:16-23; Description@internal/cli/graph_diff.go:25-27; After@internal/cli/graph_diff.go:20; Before@internal/cli/graph_diff.go:19; Compact@internal/cli/graph_diff.go:18; JSON@internal/cli/graph_diff.go:17; MaxFiles@internal/cli/graph_diff.go:21; MaxOutputBytes@internal/cli/graph_diff.go:22"
     class graphDiffOutput {
         +AfterFiles: int
+        +AfterSources: navigationSourceSummary
         +BeforeFiles: int
+        +BeforeSources: navigationSourceSummary
     }
     <<struct>> graphDiffOutput
     %% grepple:file graphDiffOutput internal/cli/graph_diff.go
     %% grepple:struct-tag graphDiffOutput AfterFiles "json:\"afterFiles\""
+    %% grepple:struct-tag graphDiffOutput AfterSources "json:\"afterSources\""
     %% grepple:struct-tag graphDiffOutput BeforeFiles "json:\"beforeFiles\""
-    note for graphDiffOutput "defined: internal/cli/graph_diff.go:29-33; AfterFiles@internal/cli/graph_diff.go:31; BeforeFiles@internal/cli/graph_diff.go:30"
+    %% grepple:struct-tag graphDiffOutput BeforeSources "json:\"beforeSources\""
+    note for graphDiffOutput "defined: internal/cli/graph_diff.go:29-35; AfterFiles@internal/cli/graph_diff.go:32; AfterSources@internal/cli/graph_diff.go:33; BeforeFiles@internal/cli/graph_diff.go:30; BeforeSources@internal/cli/graph_diff.go:31"
     class graphQueryArgs {
         +Description(): string
         +At: string
@@ -438,7 +444,7 @@ classDiagram
     }
     <<struct>> jsonResultRenderer
     %% grepple:file jsonResultRenderer internal/cli/renderer_json.go
-    note for jsonResultRenderer "defined: internal/cli/renderer_json.go:5-8; Render@internal/cli/renderer_json.go:10-15; matchesOnly@internal/cli/renderer_json.go:7; output@internal/cli/renderer_json.go:6"
+    note for jsonResultRenderer "defined: internal/cli/renderer_json.go:8-11; Render@internal/cli/renderer_json.go:13-18; matchesOnly@internal/cli/renderer_json.go:10; output@internal/cli/renderer_json.go:9"
     class languagesArgs {
         +Description(): string
         +JSON: bool
@@ -490,6 +496,7 @@ classDiagram
         +MemberAccesses: []parser.NavigationMemberAccess
         +Query: *navigationGraphQuery
         +Schema: string
+        +Sources: navigationSourceSummary
         +Truncation: *navigationGraphTruncation
         +TypeUsages: []parser.NavigationTypeUsage
     }
@@ -501,9 +508,10 @@ classDiagram
     %% grepple:struct-tag navigationGraphOutput MemberAccesses "json:\"memberAccesses,omitempty\""
     %% grepple:struct-tag navigationGraphOutput Query "json:\"query,omitempty\""
     %% grepple:struct-tag navigationGraphOutput Schema "json:\"schema\""
+    %% grepple:struct-tag navigationGraphOutput Sources "json:\"sources\""
     %% grepple:struct-tag navigationGraphOutput Truncation "json:\"truncation,omitempty\""
     %% grepple:struct-tag navigationGraphOutput TypeUsages "json:\"typeUsages,omitempty\""
-    note for navigationGraphOutput "defined: internal/cli/graph.go:29-38; Calls@internal/cli/graph.go:33; Declarations@internal/cli/graph.go:32; Files@internal/cli/graph.go:31; MemberAccesses@internal/cli/graph.go:35; Query@internal/cli/graph.go:36; Schema@internal/cli/graph.go:30; Truncation@internal/cli/graph.go:37; TypeUsages@internal/cli/graph.go:34"
+    note for navigationGraphOutput "defined: internal/cli/graph.go:29-39; Calls@internal/cli/graph.go:34; Declarations@internal/cli/graph.go:33; Files@internal/cli/graph.go:31; MemberAccesses@internal/cli/graph.go:36; Query@internal/cli/graph.go:37; Schema@internal/cli/graph.go:30; Sources@internal/cli/graph.go:32; Truncation@internal/cli/graph.go:38; TypeUsages@internal/cli/graph.go:35"
     class navigationGraphQuery {
         +Confidences: []string
         +Depth: int
@@ -520,7 +528,7 @@ classDiagram
     %% grepple:struct-tag navigationGraphQuery Languages "json:\"languages,omitempty\""
     %% grepple:struct-tag navigationGraphQuery RootIDs "json:\"rootIds\""
     %% grepple:struct-tag navigationGraphQuery Visibilities "json:\"visibilities,omitempty\""
-    note for navigationGraphQuery "defined: internal/cli/graph.go:40-47; Confidences@internal/cli/graph.go:45; Depth@internal/cli/graph.go:42; Direction@internal/cli/graph.go:41; Languages@internal/cli/graph.go:44; RootIDs@internal/cli/graph.go:43; Visibilities@internal/cli/graph.go:46"
+    note for navigationGraphQuery "defined: internal/cli/graph.go:41-48; Confidences@internal/cli/graph.go:46; Depth@internal/cli/graph.go:43; Direction@internal/cli/graph.go:42; Languages@internal/cli/graph.go:45; RootIDs@internal/cli/graph.go:44; Visibilities@internal/cli/graph.go:47"
     class navigationGraphTruncation {
         +Limit: int
         +Reason: string
@@ -531,7 +539,24 @@ classDiagram
     %% grepple:struct-tag navigationGraphTruncation Limit "json:\"limit\""
     %% grepple:struct-tag navigationGraphTruncation Reason "json:\"reason\""
     %% grepple:struct-tag navigationGraphTruncation Skipped "json:\"skipped\""
-    note for navigationGraphTruncation "defined: internal/cli/graph.go:49-53; Limit@internal/cli/graph.go:51; Reason@internal/cli/graph.go:50; Skipped@internal/cli/graph.go:52"
+    note for navigationGraphTruncation "defined: internal/cli/graph.go:50-54; Limit@internal/cli/graph.go:52; Reason@internal/cli/graph.go:51; Skipped@internal/cli/graph.go:53"
+    class navigationSourceSummary {
+        +Discovered: int
+        +Failed: int
+        +Parsed: int
+        +Recovered: int
+        +Selected: int
+        +Skipped: int
+    }
+    <<struct>> navigationSourceSummary
+    %% grepple:file navigationSourceSummary internal/cli/graph.go
+    %% grepple:struct-tag navigationSourceSummary Discovered "json:\"discovered\""
+    %% grepple:struct-tag navigationSourceSummary Failed "json:\"failed\""
+    %% grepple:struct-tag navigationSourceSummary Parsed "json:\"parsed\""
+    %% grepple:struct-tag navigationSourceSummary Recovered "json:\"recovered\""
+    %% grepple:struct-tag navigationSourceSummary Selected "json:\"selected\""
+    %% grepple:struct-tag navigationSourceSummary Skipped "json:\"skipped\""
+    note for navigationSourceSummary "defined: internal/cli/graph.go:56-63; Discovered@internal/cli/graph.go:57; Failed@internal/cli/graph.go:61; Parsed@internal/cli/graph.go:59; Recovered@internal/cli/graph.go:62; Selected@internal/cli/graph.go:58; Skipped@internal/cli/graph.go:60"
     class onlyMatchingRenderer {
         +Render([]api.FileResult): error
         -matcher: *regexp.Regexp
@@ -715,7 +740,7 @@ classDiagram
     }
     <<struct>> segmentRenderer
     %% grepple:file segmentRenderer internal/cli/renderer_segments.go
-    note for segmentRenderer "defined: internal/cli/renderer_segments.go:11-14; Render@internal/cli/renderer_segments.go:16-28; renderFile@internal/cli/renderer_segments.go:30-58; renderRelated@internal/cli/renderer_segments.go:75-86; renderRelatedOmissions@internal/cli/renderer_segments.go:129-145; renderRelatedPoint@internal/cli/renderer_segments.go:97-127; renderRelatedPoints@internal/cli/renderer_segments.go:88-95; renderRelatedSegments@internal/cli/renderer_segments.go:171-183; renderSegment@internal/cli/renderer_segments.go:185-196; renderSourceLine@internal/cli/renderer_segments.go:198-203; anchors@internal/cli/renderer_segments.go:13; output@internal/cli/renderer_segments.go:12"
+    note for segmentRenderer "defined: internal/cli/renderer_segments.go:11-14; Render@internal/cli/renderer_segments.go:16-34; renderFile@internal/cli/renderer_segments.go:36-64; renderRelated@internal/cli/renderer_segments.go:81-92; renderRelatedOmissions@internal/cli/renderer_segments.go:135-151; renderRelatedPoint@internal/cli/renderer_segments.go:103-133; renderRelatedPoints@internal/cli/renderer_segments.go:94-101; renderRelatedSegments@internal/cli/renderer_segments.go:177-189; renderSegment@internal/cli/renderer_segments.go:191-202; renderSourceLine@internal/cli/renderer_segments.go:204-209; anchors@internal/cli/renderer_segments.go:13; output@internal/cli/renderer_segments.go:12"
     class treeArgs {
         +Description(): string
         +Depth: int
@@ -770,6 +795,7 @@ classDiagram
     anchorProtocolResponseFile "1" --> "*" anchorProtocolLine : field Anchors
     anchorSettings "1" --> "*" anchorProviderSettings : field Providers
     boundariesOutput "1" --> "1" navigationGraphTruncation : field Truncation
+    boundariesOutput "1" --> "1" navigationSourceSummary : field Sources
     boundaryGraphCache "1" --> "1" navigationGraphOutput : field Graph
     cliOptions "1" --> "1" anchorLookup : field AnchorLines
     contextRenderer "1" --> "1" outputWriter : field output
@@ -778,6 +804,8 @@ classDiagram
     resultRenderer <|.. countRenderer : implements
     filesRenderer "1" --> "1" outputWriter : field output
     resultRenderer <|.. filesRenderer : implements
+    graphDiffOutput "1" --> "1" navigationSourceSummary : field AfterSources
+    graphDiffOutput "1" --> "1" navigationSourceSummary : field BeforeSources
     jsonResultRenderer "1" --> "1" outputWriter : field output
     resultRenderer <|.. jsonResultRenderer : implements
     lineRenderer "1" --> "1" anchorLookup : field anchors
@@ -785,6 +813,7 @@ classDiagram
     resultRenderer <|.. lineRenderer : implements
     navigationGraphOutput "1" --> "1" navigationGraphQuery : field Query
     navigationGraphOutput "1" --> "1" navigationGraphTruncation : field Truncation
+    navigationGraphOutput "1" --> "1" navigationSourceSummary : field Sources
     onlyMatchingRenderer "1" --> "1" outputWriter : field output
     resultRenderer <|.. onlyMatchingRenderer : implements
     repoCountRenderer "1" --> "1" outputWriter : field output

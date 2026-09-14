@@ -29,6 +29,7 @@ func (graphArgs) Description() string {
 type navigationGraphOutput struct {
 	Schema         string                          `json:"schema"`
 	Files          int                             `json:"files"`
+	Sources        navigationSourceSummary         `json:"sources"`
 	Declarations   []parser.NavigationDeclaration  `json:"declarations"`
 	Calls          []parser.NavigationCall         `json:"calls"`
 	TypeUsages     []parser.NavigationTypeUsage    `json:"typeUsages,omitempty"`
@@ -50,6 +51,15 @@ type navigationGraphTruncation struct {
 	Reason  string `json:"reason"`
 	Limit   int    `json:"limit"`
 	Skipped int    `json:"skipped"`
+}
+
+type navigationSourceSummary struct {
+	Discovered int `json:"discovered"`
+	Selected   int `json:"selected"`
+	Parsed     int `json:"parsed"`
+	Skipped    int `json:"skipped"`
+	Failed     int `json:"failed"`
+	Recovered  int `json:"recovered"`
 }
 
 func runGraph(args []string) error {
@@ -104,7 +114,7 @@ func renderCompactNavigationGraph(graph navigationGraphOutput, maxBytes int) err
 		return err == nil
 	}
 	visibleCalls := compactNavigationCalls(graph.Calls)
-	if !write(fmt.Sprintf("graph %s files=%d declarations=%d calls=%d", graph.Schema, graph.Files, len(graph.Declarations), len(visibleCalls))) {
+	if !write(fmt.Sprintf("graph %s files=%d declarations=%d calls=%d sources=%s", graph.Schema, graph.Files, len(graph.Declarations), len(visibleCalls), compactNavigationSourceSummary(graph.Sources))) {
 		return nil
 	}
 	if graph.Query != nil && !write(compactGraphQueryLine(*graph.Query)) {
@@ -116,6 +126,10 @@ func renderCompactNavigationGraph(graph navigationGraphOutput, maxBytes int) err
 	declarations, callsByCaller := indexCompactNavigationGraph(graph.Declarations, visibleCalls)
 	writeCompactNavigationDeclarations(write, graph.Declarations, declarations, callsByCaller)
 	return nil
+}
+
+func compactNavigationSourceSummary(summary navigationSourceSummary) string {
+	return fmt.Sprintf("discovered:%d,selected:%d,parsed:%d,skipped:%d,failed:%d,recovered:%d", summary.Discovered, summary.Selected, summary.Parsed, summary.Skipped, summary.Failed, summary.Recovered)
 }
 func compactGraphQueryLine(query navigationGraphQuery) string {
 	parts := []string{fmt.Sprintf("query %s depth=%d roots=%s", query.Direction, query.Depth, shortGraphIDs(query.RootIDs))}

@@ -80,6 +80,7 @@ type FileResult struct {
 	Path                  string          `json:"path"`
 	Repo                  string          `json:"repo,omitempty"`
 	Language              string          `json:"language"`
+	StructureStatus       string          `json:"structureStatus,omitempty"`
 	Matches               []ResultMatch   `json:"matches"`
 	Segments              []ResultSegment `json:"segments"`
 	Context               []ContextLine   `json:"context,omitempty"`
@@ -97,10 +98,21 @@ type RepoCount struct {
 
 // SearchResponse is the on-the-wire search response.
 type SearchResponse struct {
-	Results     []FileResult `json:"results"`
-	RepoCounts  []RepoCount  `json:"repoCounts,omitempty"`
-	ShardErrors []string     `json:"shardErrors,omitempty"`
-	Truncated   bool         `json:"truncated,omitempty"`
+	Results        []FileResult    `json:"results"`
+	SourceAnalysis *SourceAnalysis `json:"sourceAnalysis,omitempty"`
+	RepoCounts     []RepoCount     `json:"repoCounts,omitempty"`
+	ShardErrors    []string        `json:"shardErrors,omitempty"`
+	Truncated      bool            `json:"truncated,omitempty"`
+}
+
+// SourceAnalysis summarizes structural parsing for returned search results.
+type SourceAnalysis struct {
+	Returned    int `json:"returned"`
+	Structured  int `json:"structured"`
+	Plain       int `json:"plain"`
+	Unsupported int `json:"unsupported"`
+	Failed      int `json:"failed"`
+	Recovered   int `json:"recovered"`
 }
 
 // RepoListEntry is one repository returned by the public repository endpoint.

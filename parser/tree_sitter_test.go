@@ -91,3 +91,24 @@ func TestBuildSegmentsParsesSupportedSourceOnce(t *testing.T) {
 		t.Fatalf("BuildSegments parsed %d times, want 1", got)
 	}
 }
+
+func TestBuildSegmentsReportsStructuralStatus(t *testing.T) {
+	tests := []struct {
+		name     string
+		content  string
+		language string
+		want     SegmentBuildStatus
+	}{
+		{"structured", "package p\nfunc Target() {}\n", "go", SegmentBuildStructured},
+		{"recovered", "package p\nfunc Target( {\n", "go", SegmentBuildRecovered},
+		{"plain", "target\n", "text", SegmentBuildPlain},
+		{"unsupported", "target\n", "unknown", SegmentBuildUnsupported},
+		{"invalid UTF-8", string([]byte{0xff}), "go", SegmentBuildFailed},
+	}
+	for _, test := range tests {
+		_, status := BuildSegmentsWithStatus(test.content, test.language, map[int]bool{1: true}, 20)
+		if status != test.want {
+			t.Errorf("%s: status=%q, want %q", test.name, status, test.want)
+		}
+	}
+}
