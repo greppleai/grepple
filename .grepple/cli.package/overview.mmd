@@ -2,7 +2,7 @@ classDiagram
     %% grepple:package-default github.com/greppleai/grepple/internal/cli
     %% grepple:language-default go
     direction LR
-    note "Package cli implements Grepple's search, extraction, repository inspection, authentication, rules, and terminal/JSON presentation workflows. | package github.com/greppleai/grepple/internal/cli | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=38, declarations=54, exportedTypes=0, internalTypes=54, members=351, exportedFunctions=3, fiberRoutes=0, relations=35"
+    note "Package cli implements Grepple's search, extraction, repository inspection, authentication, rules, and terminal/JSON presentation workflows. | package github.com/greppleai/grepple/internal/cli | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=39, declarations=55, exportedTypes=0, internalTypes=55, members=360, exportedFunctions=3, fiberRoutes=0, relations=35"
     namespace interfaces {
         class resultRenderer["resultRenderer · internal/cli/renderer.go:9-11"] {
             +Render([]api.FileResult): error
@@ -75,6 +75,17 @@ classDiagram
             +Providers: map[string]anchorProviderSettings
         }
         <<struct>> anchorSettings
+        class anchorSetupArgs["anchorSetupArgs · internal/cli/anchors_setup.go:15-24"] {
+            +Command: string
+            +CommandArgs: []string
+            +EnableByDefault: bool
+            +Force: bool
+            +Provider: string
+            +SetDefault: bool
+            +TimeoutMS: int
+            +Write: bool
+        }
+        <<struct>> anchorSetupArgs
         class boundariesArgs["boundariesArgs · internal/cli/boundaries.go:19-27"] {
             +JSON: bool
             +Limit: int

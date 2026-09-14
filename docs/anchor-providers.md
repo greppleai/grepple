@@ -54,6 +54,17 @@ The command is executed directly, never through a shell. Its executable must be 
 
 `GREPPLE_SETTINGS=/path/to/settings.json` overrides the settings path for isolated environments and tests.
 
+## Setup
+
+Create or update user-owned settings through an explicit preview/write workflow:
+
+```bash
+grepple anchors setup --provider editor --command /absolute/path/to/provider --set-default
+grepple anchors setup --provider editor --command /absolute/path/to/provider --set-default --enable-by-default --write
+```
+
+Preview is the default and never creates or changes a file. `--write` atomically writes mode-0600 settings, preserving other configured providers; replacing different settings additionally requires `--force`. Literal executable arguments are added with repeatable `--command-arg`. The executable must already exist at an absolute path. No repository configuration is read or executed, and setup never invokes the provider; use the printed `anchors doctor` command for that explicit round trip.
+
 ## Doctor
 
 Validate configuration before relying on anchor-bearing search output:

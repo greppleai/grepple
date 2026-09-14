@@ -26,6 +26,7 @@ This file records completed Grepple roadmap work that no longer belongs in `next
 - [x] Preserved exact `HASH│LINE│content` output through a user-owned, versioned anchor-provider protocol.
 - [x] Added provider digest checks, timeout/output bounds, strict response validation, default enablement, and `--no-anchors` fallback.
 - [x] Added `anchors doctor` human/JSON diagnostics for settings and provider identity, executable availability, protocol version, timeout/output limits, and a validated temporary-file round trip with actionable setup guidance.
+- [x] Added explicit fresh-environment `anchors setup`: preview-only by default, atomic mode-0600 user-settings writes behind `--write`, replacement behind `--force`, and no repository configuration or provider execution during setup.
 - [x] Streamed validated focused extraction to stdout when no output path is supplied.
 - [x] Classified default structural-search results as structured, recovered, plain, unsupported, or failed; incomplete human output is flagged and complete JSON carries per-file plus aggregate status.
 

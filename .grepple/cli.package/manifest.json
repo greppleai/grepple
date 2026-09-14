@@ -16,22 +16,25 @@
     "syntacticBuildTagUnion": []
   },
   "summary": {
-    "sourceFiles": 38,
-    "declarations": 54,
+    "sourceFiles": 39,
+    "declarations": 55,
     "exportedTypes": 0,
-    "internalTypes": 54,
-    "members": 351,
+    "internalTypes": 55,
+    "members": 360,
     "exportedFunctions": 3,
     "fiberRoutes": 0,
     "relations": 35
   },
-  "semanticModelDigest": "sha256:adcb1e1c6ec0bf1d2b3c727be7058f40a59c14f1fdf088f8a2c6193bd2f71a2b",
+  "semanticModelDigest": "sha256:be587b079b3681fd5c083a4b7a5a8e5a09782315e6d0ed177a6c99fdc29f8d2c",
   "sourceFiles": [
     {
       "path": "internal/cli/anchors.go"
     },
     {
       "path": "internal/cli/anchors_doctor.go"
+    },
+    {
+      "path": "internal/cli/anchors_setup.go"
     },
     {
       "path": "internal/cli/args.go"
@@ -641,6 +644,103 @@
           "result": "map[string]anchorProviderSettings",
           "structTag": {
             "value": "json:\"providers\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "anchorSetupArgs",
+      "kind": "struct",
+      "file": "internal/cli/anchors_setup.go",
+      "line": 15,
+      "endLine": 24,
+      "underlyingType": "struct{Provider string`arg:\"--provider,required\" placeholder:\"NAME\" help:\"provider name to add or update\"`;Command string`arg:\"--command,required\" placeholder:\"ABSOLUTE_PATH\" help:\"absolute provider executable path\"`;CommandArgs[]string`arg:\"--command-arg,separate\" placeholder:\"ARG\" help:\"append one literal executable argument; repeatable\"`;TimeoutMS int`arg:\"--timeout-ms\" placeholder:\"N\" help:\"provider timeout in milliseconds (default 5000)\"`;SetDefault bool`arg:\"--set-default\" help:\"select this provider as the user default\"`;EnableByDefault bool`arg:\"--enable-by-default\" help:\"anchor eligible searches by default; requires this provider to be default\"`;Write bool`arg:\"--write\" help:\"atomically write the previewed user settings\"`;Force bool`arg:\"--force\" help:\"replace an existing provider with different settings; requires --write\"`;}",
+      "members": [
+        {
+          "name": "Description",
+          "kind": "method",
+          "line": 26,
+          "endLine": 28,
+          "result": "string"
+        },
+        {
+          "name": "Command",
+          "kind": "property",
+          "line": 17,
+          "endLine": 17,
+          "result": "string",
+          "structTag": {
+            "value": "arg:\"--command,required\" placeholder:\"ABSOLUTE_PATH\" help:\"absolute provider executable path\""
+          }
+        },
+        {
+          "name": "CommandArgs",
+          "kind": "property",
+          "line": 18,
+          "endLine": 18,
+          "result": "[]string",
+          "structTag": {
+            "value": "arg:\"--command-arg,separate\" placeholder:\"ARG\" help:\"append one literal executable argument; repeatable\""
+          }
+        },
+        {
+          "name": "EnableByDefault",
+          "kind": "property",
+          "line": 21,
+          "endLine": 21,
+          "result": "bool",
+          "structTag": {
+            "value": "arg:\"--enable-by-default\" help:\"anchor eligible searches by default; requires this provider to be default\""
+          }
+        },
+        {
+          "name": "Force",
+          "kind": "property",
+          "line": 23,
+          "endLine": 23,
+          "result": "bool",
+          "structTag": {
+            "value": "arg:\"--force\" help:\"replace an existing provider with different settings; requires --write\""
+          }
+        },
+        {
+          "name": "Provider",
+          "kind": "property",
+          "line": 16,
+          "endLine": 16,
+          "result": "string",
+          "structTag": {
+            "value": "arg:\"--provider,required\" placeholder:\"NAME\" help:\"provider name to add or update\""
+          }
+        },
+        {
+          "name": "SetDefault",
+          "kind": "property",
+          "line": 20,
+          "endLine": 20,
+          "result": "bool",
+          "structTag": {
+            "value": "arg:\"--set-default\" help:\"select this provider as the user default\""
+          }
+        },
+        {
+          "name": "TimeoutMS",
+          "kind": "property",
+          "line": 19,
+          "endLine": 19,
+          "result": "int",
+          "structTag": {
+            "value": "arg:\"--timeout-ms\" placeholder:\"N\" help:\"provider timeout in milliseconds (default 5000)\""
+          }
+        },
+        {
+          "name": "Write",
+          "kind": "property",
+          "line": 22,
+          "endLine": 22,
+          "result": "bool",
+          "structTag": {
+            "value": "arg:\"--write\" help:\"atomically write the previewed user settings\""
           }
         }
       ]

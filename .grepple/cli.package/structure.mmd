@@ -138,6 +138,28 @@ classDiagram
     %% grepple:struct-tag anchorSettings EnabledByDefault "json:\"enabled_by_default\""
     %% grepple:struct-tag anchorSettings Providers "json:\"providers\""
     note for anchorSettings "defined: internal/cli/settings.go:21-25; DefaultProvider@internal/cli/settings.go:23; EnabledByDefault@internal/cli/settings.go:22; Providers@internal/cli/settings.go:24"
+    class anchorSetupArgs {
+        +Description(): string
+        +Command: string
+        +CommandArgs: []string
+        +EnableByDefault: bool
+        +Force: bool
+        +Provider: string
+        +SetDefault: bool
+        +TimeoutMS: int
+        +Write: bool
+    }
+    <<struct>> anchorSetupArgs
+    %% grepple:file anchorSetupArgs internal/cli/anchors_setup.go
+    %% grepple:struct-tag anchorSetupArgs Command "arg:\"--command,required\" placeholder:\"ABSOLUTE_PATH\" help:\"absolute provider executable path\""
+    %% grepple:struct-tag anchorSetupArgs CommandArgs "arg:\"--command-arg,separate\" placeholder:\"ARG\" help:\"append one literal executable argument; repeatable\""
+    %% grepple:struct-tag anchorSetupArgs EnableByDefault "arg:\"--enable-by-default\" help:\"anchor eligible searches by default; requires this provider to be default\""
+    %% grepple:struct-tag anchorSetupArgs Force "arg:\"--force\" help:\"replace an existing provider with different settings; requires --write\""
+    %% grepple:struct-tag anchorSetupArgs Provider "arg:\"--provider,required\" placeholder:\"NAME\" help:\"provider name to add or update\""
+    %% grepple:struct-tag anchorSetupArgs SetDefault "arg:\"--set-default\" help:\"select this provider as the user default\""
+    %% grepple:struct-tag anchorSetupArgs TimeoutMS "arg:\"--timeout-ms\" placeholder:\"N\" help:\"provider timeout in milliseconds (default 5000)\""
+    %% grepple:struct-tag anchorSetupArgs Write "arg:\"--write\" help:\"atomically write the previewed user settings\""
+    note for anchorSetupArgs "defined: internal/cli/anchors_setup.go:15-24; Description@internal/cli/anchors_setup.go:26-28; Command@internal/cli/anchors_setup.go:17; CommandArgs@internal/cli/anchors_setup.go:18; EnableByDefault@internal/cli/anchors_setup.go:21; Force@internal/cli/anchors_setup.go:23; Provider@internal/cli/anchors_setup.go:16; SetDefault@internal/cli/anchors_setup.go:20; TimeoutMS@internal/cli/anchors_setup.go:19; Write@internal/cli/anchors_setup.go:22"
     class boundariesArgs {
         +Description(): string
         +JSON: bool
