@@ -23,7 +23,7 @@ type graphArgs struct {
 }
 
 func (graphArgs) Description() string {
-	return "Build a deterministic local navigation graph; use the callers or callees subcommand for focused traversal."
+	return "Build a deterministic local navigation graph. Exactly one of --json or --compact is required; use callers or callees for focused traversal."
 }
 
 type navigationGraphOutput struct {
@@ -67,6 +67,7 @@ func runGraph(args []string) error {
 	if err := argumentParser.Parse(args); err != nil {
 		if errors.Is(err, arg.ErrHelp) {
 			argumentParser.WriteHelp(os.Stdout)
+			fmt.Fprintln(os.Stdout, "Required output mode: (--json | --compact); choose exactly one.")
 			return nil
 		}
 		return err

@@ -276,6 +276,28 @@ func TestGraphDiffReportsSemanticChangesAndIgnoresLineShifts(t *testing.T) {
 	}
 }
 
+func TestGraphRecursiveHelpStatesOutputContract(t *testing.T) {
+	tests := [][]string{
+		{"help", "graph"},
+		{"help", "graph", "callers"},
+		{"help", "graph", "callees"},
+		{"help", "graph", "dependencies"},
+		{"help", "graph", "dependents"},
+		{"help", "graph", "impact"},
+		{"help", "graph", "diff"},
+	}
+	for _, args := range tests {
+		output := captureStdout(t, func() {
+			if err := Run(args); err != nil {
+				t.Fatalf("Run(%q): %v", args, err)
+			}
+		})
+		if !strings.Contains(output, "Required output mode: (--json | --compact)") {
+			t.Fatalf("Run(%q) omitted output exclusivity:\n%s", args, output)
+		}
+	}
+}
+
 func graphOutputDeclarationNames(output navigationGraphOutput) []string {
 	names := make([]string, 0, len(output.Declarations))
 	for _, declaration := range output.Declarations {

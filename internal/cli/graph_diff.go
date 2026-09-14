@@ -23,7 +23,7 @@ type graphDiffArgs struct {
 }
 
 func (graphDiffArgs) Description() string {
-	return "Compare two source trees by semantic declarations and call edges while ignoring position-only line changes."
+	return "Compare semantic declarations and calls while ignoring position-only movement. Exactly one of --json or --compact is required."
 }
 
 type graphDiffOutput struct {
@@ -41,6 +41,7 @@ func runGraphDiff(args []string) error {
 	if err := argumentParser.Parse(args); err != nil {
 		if errors.Is(err, arg.ErrHelp) {
 			argumentParser.WriteHelp(os.Stdout)
+			fmt.Fprintln(os.Stdout, "Required output mode: (--json | --compact); choose exactly one.")
 			return nil
 		}
 		return err

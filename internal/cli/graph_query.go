@@ -34,7 +34,7 @@ type graphQueryArgs struct {
 }
 
 func (graphQueryArgs) Description() string {
-	return "Query callers, callees, dependencies, dependents, or bidirectional impact over the deterministic local navigation graph."
+	return "Query the deterministic local navigation graph. Exactly one of --json or --compact and exactly one root selector are required."
 }
 
 func runGraphQuery(direction search.NavigationQueryDirection, args []string) error {
@@ -46,6 +46,8 @@ func runGraphQuery(direction search.NavigationQueryDirection, args []string) err
 	if err := argumentParser.Parse(args); err != nil {
 		if errors.Is(err, arg.ErrHelp) {
 			argumentParser.WriteHelp(os.Stdout)
+			fmt.Fprintln(os.Stdout, "Required output mode: (--json | --compact); choose exactly one.")
+			fmt.Fprintln(os.Stdout, "Required root selector: choose exactly one of --symbol, --at, --package, --module, or --root-path.")
 			return nil
 		}
 		return err

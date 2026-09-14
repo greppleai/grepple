@@ -205,6 +205,31 @@ func TestExtractRejectsInvalidModeCombinations(t *testing.T) {
 	}
 }
 
+func TestExtractRecursiveHelp(t *testing.T) {
+	tests := []struct {
+		args []string
+		want string
+	}{
+		{[]string{"extract", "--help"}, "grepple extract structure [OPTIONS]"},
+		{[]string{"help", "extract", "structure"}, "Usage: grepple extract structure"},
+		{[]string{"help", "extract", "flow"}, "Usage: grepple extract flow"},
+		{[]string{"help", "extract", "summary"}, "grepple extract summary <package|workspace>"},
+		{[]string{"help", "extract", "summary", "package"}, "grepple extract summary package [PATH]"},
+		{[]string{"help", "extract", "check"}, "grepple extract check <structure|flow|package|workspace>"},
+		{[]string{"help", "extract", "check", "flow"}, "grepple extract check flow TARGET"},
+	}
+	for _, test := range tests {
+		output := captureStdout(t, func() {
+			if err := Run(test.args); err != nil {
+				t.Fatalf("Run(%q): %v", test.args, err)
+			}
+		})
+		if !strings.Contains(output, test.want) {
+			t.Fatalf("Run(%q) missing %q:\n%s", test.args, test.want, output)
+		}
+	}
+}
+
 func writeExtractFixture(t *testing.T) (string, string) {
 	t.Helper()
 	root := t.TempDir()

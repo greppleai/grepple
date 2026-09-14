@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/greppleai/grepple/search"
 
@@ -409,13 +408,20 @@ func runHelp(args []string) error {
 		return writeTopLevelHelp()
 	}
 	if len(args) > 1 {
-		return fmt.Errorf("nested help is not available for %q; run grepple %s --help", strings.Join(args, " "), strings.Join(args, " "))
+		switch args[0] {
+		case "graph", "extract", "rules":
+			command := append([]string(nil), args...)
+			command = append(command, "--help")
+			return Run(command)
+		default:
+			return fmt.Errorf("command %q has no help subcommands", args[0])
+		}
 	}
 	switch args[0] {
 	case "search":
 		return runSearch([]string{"--help"})
 	case "extract":
-		return stdoutWriter().writeString("Extract source-backed architecture projections.\nUsage: grepple extract <structure|flow|summary|check> [OPTIONS]\n")
+		return runExtract([]string{"--help"})
 	case "login":
 		return stdoutWriter().writeString("Authenticate with the remote service.\nUsage: grepple login [--url URL] [--scope SCOPES] [--no-browser]\n")
 	case "logout":

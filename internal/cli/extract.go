@@ -29,9 +29,61 @@ func (extractArgs) Description() string {
 	return "Extract a validated, source-linked Mermaid structure or call-flow diagram from supported code."
 }
 
+const extractHelp = `Extract source-backed architecture projections.
+
+Usage:
+  grepple extract structure [OPTIONS] [PATH ...]
+  grepple extract flow [OPTIONS] [PATH ...]
+  grepple extract summary <package|workspace> [PATH]
+  grepple extract check <structure|flow|package|workspace> TARGET [SOURCE ...]
+
+Modes:
+  structure   Generate a focused diagram or canonical Go bundle
+  flow        Generate a focused callable flow diagram
+  summary     Print a bounded package or workspace orientation summary
+  check       Validate a diagram or canonical bundle against source
+
+Run grepple help extract MODE for mode-specific help.
+`
+
+func isExtractHelp(value string) bool {
+	return value == "--help" || value == "-h" || value == "help"
+}
+
+func writeExtractHelp() error {
+	return stdoutWriter().writeString(extractHelp)
+}
+
+func writeExtractSummaryHelp(mode string) error {
+	switch mode {
+	case "":
+		return stdoutWriter().writeString("Summarize canonical Go architecture IR without Mermaid metadata.\nUsage: grepple extract summary <package|workspace> [PATH]\n")
+	case "package", "workspace":
+		return stdoutWriter().writeString(fmt.Sprintf("Summarize one Go %s.\nUsage: grepple extract summary %s [PATH]\n", mode, mode))
+	default:
+		return fmt.Errorf("extract summary mode must be package or workspace")
+	}
+}
+
+func writeExtractCheckHelp(mode string) error {
+	switch mode {
+	case "":
+		return stdoutWriter().writeString("Validate generated architecture against source.\nUsage: grepple extract check <structure|flow|package|workspace> TARGET [SOURCE ...]\n")
+	case "structure", "flow":
+		return stdoutWriter().writeString(fmt.Sprintf("Validate a generated %s diagram.\nUsage: grepple extract check %s TARGET [SOURCE ...]\n", mode, mode))
+	case "package", "workspace":
+		return stdoutWriter().writeString(fmt.Sprintf("Validate a canonical Go %s bundle.\nUsage: grepple extract check %s TARGET [SOURCE]\n", mode, mode))
+	default:
+		return fmt.Errorf("unknown extract check mode %q", mode)
+	}
+}
+
 func runExtract(args []string) error {
 	if len(args) == 0 {
 		return extractUsageError()
+	}
+	if isExtractHelp(args[0]) {
+		return writeExtractHelp()
 	}
 	if args[0] == "check" {
 		return runExtractCheck(args[1:])
@@ -60,7 +112,16 @@ func extractUsageError() error {
 }
 
 func runExtractSummary(args []string) error {
-	if len(args) < 1 || len(args) > 2 {
+	if len(args) == 0 {
+		return fmt.Errorf("usage: grepple extract summary <package|workspace> [PATH]")
+	}
+	if isExtractHelp(args[0]) {
+		return writeExtractSummaryHelp("")
+	}
+	if len(args) == 2 && isExtractHelp(args[1]) {
+		return writeExtractSummaryHelp(args[0])
+	}
+	if len(args) > 2 {
 		return fmt.Errorf("usage: grepple extract summary <package|workspace> [PATH]")
 	}
 	mode := args[0]
@@ -348,6 +409,15 @@ func writeExtractOutput(path, content string) error {
 }
 
 func runExtractCheck(args []string) error {
+	if len(args) == 0 {
+		return fmt.Errorf("usage: grepple extract check <structure|flow|package|workspace> TARGET [SOURCE ...]")
+	}
+	if isExtractHelp(args[0]) {
+		return writeExtractCheckHelp("")
+	}
+	if len(args) == 2 && isExtractHelp(args[1]) {
+		return writeExtractCheckHelp(args[0])
+	}
 	if len(args) < 2 {
 		return fmt.Errorf("usage: grepple extract check <structure|flow|package|workspace> TARGET [SOURCE ...]")
 	}
