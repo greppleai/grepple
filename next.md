@@ -49,7 +49,7 @@ Proposed backward-compatible shape:
 - [ ] Use one normalized ignore matcher, including `**`, negation policy, slash normalization, and deterministic behavior on Windows.
 - [ ] Report the loaded config path/digest and excluded source totals by reason without making machine output cache-state dependent.
 - [ ] Add `--no-repo-config`, `--no-config-ignore`, and an exclusion-explanation command or mode so hidden scope never becomes unexplained missing evidence; do not disable user authentication config when bypassing repository behavior.
-- [ ] Decide whether explicitly named files bypass configured ignores; document and test the decision consistently across every command.
+- [ ] Explicitly named files bypass configured ignore lists; recursive directory/glob discovery honors them. Report the bypass so explicit scope remains visible, and test this consistently across every command.
 - [ ] Ensure `.grepple/cache/` and spilled output artifacts remain unconditionally excluded from discovery.
 - [ ] Add production/test/generated/vendor classifications or a `--production-only` preset after the common ignore path is established; whole-repository recovery fixtures and unrelated sandboxes currently make completeness and resolution metrics unnecessarily pessimistic.
 
@@ -60,7 +60,7 @@ Proposed backward-compatible shape:
 The current package/workspace model is Go-specific and expensive to complete: the `search` overview is about 27 KB, structure 65 KB, and manifest 120 KB. A simple directory model can orient across all supported languages without inventing package semantics.
 
 - [ ] Define one bounded, language-neutral directory projection: directory/file counts, detected languages, declaration-kind counts, public/exported surface where adapters know it, entrypoints, and source-linked import/reference edges.
-- [ ] Add `grepple architecture directory [PATH]` (or a consistent `extract summary directory` spelling) with depth/node limits, deterministic collapse, explicit unknowns, and exact continuation commands.
+- [ ] Add `grepple architecture directory [PATH]` with depth/node limits, deterministic collapse, explicit unknowns, and exact continuation commands.
 - [ ] Add targeted architecture resolution for types, callables, routes, files, and directories so `Document` resolves directly instead of `graph resolve` parsing the repository and returning zero because it indexes callables only.
 - [ ] Add a source-linked `architecture why FROM TO` query that explains the exact import/type/reference evidence behind a directory edge.
 - [ ] Generate a compact normalized directory manifest usable for drift checks and targeted queries; do not require agents to read exhaustive Mermaid or a large raw manifest.
@@ -71,10 +71,10 @@ The current package/workspace model is Go-specific and expensive to complete: th
 Observed complete outputs reached about 1.55 MB for boundaries and 6.7 MB for a graph over only `parser search`. Valid uncapped JSON is useful for automation but is a severe agent-context trap. Spill mode should be the default above 64 KB; callers that require the original stdout stream can opt out explicitly.
 
 - [ ] Add a shared output-delivery layer that knows the final size before writing stdout; above a configurable threshold, atomically store the complete result under `.grepple/output/` and emit only a small descriptor.
-- [ ] Make artifact names content-addressed and descriptors report path, bytes, digest, original schema/format, source completeness, and a copyable command/read range.
+- [ ] Make artifact names content-addressed and descriptors report path, bytes, digest, original schema/format, source completeness, a copyable command/read range, and the exact `--no-spill` rerun command.
 - [ ] Preserve output-mode validity: JSON requests receive a valid versioned JSON artifact descriptor, while human requests receive bounded prose. Never emit partial original output followed by a fallback notice.
 - [ ] Enable spilling by default above the configured threshold for terminal, captured, and redirected output. Add `--no-spill` to force the original complete stdout stream, `--output PATH` to choose the artifact path, and `--spill-threshold-bytes N` for one invocation.
-- [ ] Add retention/cleanup policy and prevent artifacts from entering source discovery, cache digests, architecture diagrams, or Git by default.
+- [ ] Keep content-addressed artifacts until an explicit cleanup command removes them; prevent artifacts from entering source discovery, cache digests, architecture diagrams, or Git by default.
 - [ ] Teach agent skills to inspect the descriptor first and retrieve only relevant file ranges rather than loading the complete artifact.
 - [ ] Benchmark artifact fallback by context bytes and retrieval turns, not only file-write runtime.
 
