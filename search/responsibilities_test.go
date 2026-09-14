@@ -88,6 +88,30 @@ func TestAnalyzeResponsibilitiesUsesLanguageNeutralReceiverEvidence(t *testing.T
 	}
 }
 
+func TestAnalyzeDirectoryResponsibilitiesRanksTypesAndKeepsLanguagesSeparate(t *testing.T) {
+	graph := parser.NavigationGraph{
+		Declarations: []parser.NavigationDeclaration{
+			{ID: "go-method", Name: "Client.Save", Container: "Client", Language: "go"},
+			{ID: "go-one", Name: "One", Language: "go", Path: "go/one.go"},
+			{ID: "go-two", Name: "Two", Language: "go", Path: "go/two.go"},
+			{ID: "java-method", Name: "Client.save", Container: "Client", Language: "java"},
+			{ID: "java-one", Name: "one", Language: "java", Path: "java/One.java"},
+		},
+		Calls: []parser.NavigationCall{
+			{CallerID: "go-one", TargetID: "go-method", Name: "Save", Language: "go"},
+			{CallerID: "go-two", TargetID: "go-method", Name: "Save", Language: "go"},
+			{CallerID: "java-one", TargetID: "java-method", Name: "save", Language: "java"},
+		},
+	}
+	reports, err := AnalyzeDirectoryResponsibilities(graph, 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(reports) != 2 || reports[0].Consumers.Functions != 2 || !reflect.DeepEqual(reports[0].Languages, []string{"go"}) || !reflect.DeepEqual(reports[1].Languages, []string{"java"}) {
+		t.Fatalf("reports=%#v", reports)
+	}
+}
+
 func TestAnalyzeResponsibilitiesValidatesInputs(t *testing.T) {
 	if _, err := AnalyzeResponsibilities(parser.NavigationGraph{}, "", 1); err == nil {
 		t.Fatal("expected empty type to fail")

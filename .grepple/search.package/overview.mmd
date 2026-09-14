@@ -2,7 +2,7 @@ classDiagram
     %% grepple:package-default github.com/greppleai/grepple/search
     %% grepple:language-default go
     direction LR
-    note "Package search provides file discovery, query and repository filtering, paging, match workers, context, and wire-result construction. | package github.com/greppleai/grepple/search | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=14, declarations=29, exportedTypes=15, internalTypes=14, members=192, exportedFunctions=26, fiberRoutes=0, relations=67"
+    note "Package search provides file discovery, query and repository filtering, paging, match workers, context, and wire-result construction. | package github.com/greppleai/grepple/search | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=14, declarations=30, exportedTypes=15, internalTypes=15, members=194, exportedFunctions=27, fiberRoutes=0, relations=68"
     namespace data_contracts {
         class NavigationCallDelta["NavigationCallDelta · search/navigation_diff.go:21-24"] {
             +After: *parser.NavigationCall
@@ -128,20 +128,26 @@ classDiagram
         <<struct>> navigationIndex
         class repoPattern["repoPattern · search/search_engine.go:95-98"]
         <<struct>> repoPattern
-        class responsibilityAnalyzer["responsibilityAnalyzer · search/responsibilities.go:80-90"]
+        class responsibilityAnalyzer["responsibilityAnalyzer · search/responsibilities.go:173-183"]
         <<struct>> responsibilityAnalyzer
-        class responsibilityInteraction["responsibilityInteraction · search/responsibilities.go:76-78"]
+        class responsibilityInteraction["responsibilityInteraction · search/responsibilities.go:169-171"]
         <<struct>> responsibilityInteraction
-        class responsibilityPatternGroup["responsibilityPatternGroup · search/responsibilities.go:294-297"]
+        class responsibilityPatternGroup["responsibilityPatternGroup · search/responsibilities.go:397-400"]
         <<struct>> responsibilityPatternGroup
-        class responsibilityPatternGroups["responsibilityPatternGroups · search/responsibilities.go:196-201"]
+        class responsibilityPatternGroups["responsibilityPatternGroups · search/responsibilities.go:289-294"]
         <<struct>> responsibilityPatternGroups
+        class responsibilityTypeCandidate["responsibilityTypeCandidate · search/responsibilities.go:104-107"]
+        <<struct>> responsibilityTypeCandidate
     }
     namespace operations {
         class AggregateRepoCounts["AggregateRepoCounts · search/search_engine.go:494-513"] {
             +AggregateRepoCounts([]FileMatch): []api.RepoCount
         }
         <<function>> AggregateRepoCounts
+        class AnalyzeDirectoryResponsibilities["AnalyzeDirectoryResponsibilities · search/responsibilities.go:79-102"] {
+            +AnalyzeDirectoryResponsibilities(parser.NavigationGraph, int): tuple~[]ResponsibilityReport&#44;error~
+        }
+        <<function>> AnalyzeDirectoryResponsibilities
         class AnalyzeResponsibilities["AnalyzeResponsibilities · search/responsibilities.go:61-74"] {
             +AnalyzeResponsibilities(parser.NavigationGraph, string, int): tuple~ResponsibilityReport&#44;error~
         }
@@ -244,6 +250,7 @@ classDiagram
         <<function>> WorkerCount
     }
     AggregateRepoCounts "1" ..> "*" FileMatch : parameter 1
+    AnalyzeDirectoryResponsibilities "1" ..> "*" ResponsibilityReport : result 1
     AnalyzeResponsibilities "1" ..> "1" ResponsibilityReport : result 1
     At "1" ..> "1" FileMatch : result 1
     At "1" ..> "1" Params : parameter 1

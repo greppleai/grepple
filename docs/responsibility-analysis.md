@@ -1,6 +1,6 @@
 # Responsibility analysis
 
-`grepple responsibilities TYPE [PATH...]` finds repeated interaction topology around a type without comparing source text.
+`grepple responsibilities [PATH...]` discovers and ranks repeated interaction topology for types used within one or more directories, without comparing source text. It deliberately uses directory scope instead of package/module semantics, so the workflow is consistent across languages. Use `--type TYPE` to inspect one exact receiver or container within the selected paths.
 
 The analyzer consumes `parser.NavigationGraph`, not grammar node names. Consequently the analysis and output contract are identical across Go, Java, Kotlin, JavaScript/JSX, TypeScript/TSX, Python, C#, C, C++, Rust, and Shell. Languages without receiver/container declarations naturally produce no type report; unsupported and malformed files retain the existing safe navigation fallback.
 
@@ -14,7 +14,7 @@ The analyzer consumes `parser.NavigationGraph`, not grammar node names. Conseque
 
 Methods invoked from another method on the analyzed type are excluded from external consumer counts. Resolved target IDs are preferred. Candidate target IDs and normalized receiver types provide deterministic fallback evidence and are counted in `unresolvedCalls` so uncertain matches remain visible.
 
-Patterns are grouped by caller, ordered by occurrence count and then normalized signature, and filtered by `--min-occurrences` (default 2).
+Patterns are grouped by caller, ordered by occurrence count and then normalized signature, and filtered by `--min-occurrences` (default 2). Directory reports are ranked by interaction and repeated-pattern evidence. Human output shows 20 types by default and discloses omitted lower-ranked types; `--limit 0` shows all, while JSON always contains every report.
 
 ```text
 Request

@@ -133,14 +133,15 @@ Inspect all three layers before concluding:
 3. `--related` on the changed entrypoint and shared helpers for immediate behavioral impact.
 4. `grepple graph callers --at PATH:LINE --depth 2 --compact SCOPE` when multi-hop consumers matter; use `graph callees` for bounded outgoing dependencies.
 
-### “Is behavior duplicated across consumers of a type?”
+### “Which repeated responsibilities exist in this directory?”
 
 ```bash
-grepple responsibilities TypeName path/to/scope
-grepple responsibilities TypeName --min-occurrences 3 --json path/to/scope
+grepple responsibilities path/to/scope
+grepple responsibilities --type TypeName path/to/scope
+grepple responsibilities --min-occurrences 3 --json path/to/scope
 ```
 
-Use the responsibility report for deterministic consumer breadth, externally used method surface, repeated method sets, ordered method sequences, and receiver-qualified member read/write plus method combinations. Treat disclosed ambiguous interactions as leads to verify.
+Use the ranked directory report for deterministic type-consumer breadth, externally used method surface, repeated method sets, ordered method sequences, and receiver-qualified member read/write plus method combinations. Narrow with `--type` only after directory ranking identifies a candidate. Treat disclosed ambiguous interactions as leads to verify.
 
 ### “Why does this route or entrypoint exist?”
 

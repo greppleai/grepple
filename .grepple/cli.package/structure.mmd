@@ -183,6 +183,21 @@ classDiagram
     %% grepple:struct-tag deviceTokenResponse Scope "json:\"scope\""
     %% grepple:struct-tag deviceTokenResponse TokenType "json:\"token_type\""
     note for deviceTokenResponse "defined: internal/cli/login.go:31-41; AccessToken@internal/cli/login.go:32; Error@internal/cli/login.go:38; ErrorDescription@internal/cli/login.go:39; ExpiresIn@internal/cli/login.go:35; Interval@internal/cli/login.go:40; RefreshToken@internal/cli/login.go:36; RefreshTokenExpiresIn@internal/cli/login.go:37; Scope@internal/cli/login.go:34; TokenType@internal/cli/login.go:33"
+    class directoryResponsibilitiesOutput {
+        +Files: int
+        +Paths: []string
+        +Reports: []search.ResponsibilityReport
+        +Schema: string
+        +Truncation: *navigationGraphTruncation
+    }
+    <<struct>> directoryResponsibilitiesOutput
+    %% grepple:file directoryResponsibilitiesOutput internal/cli/responsibilities.go
+    %% grepple:struct-tag directoryResponsibilitiesOutput Files "json:\"files\""
+    %% grepple:struct-tag directoryResponsibilitiesOutput Paths "json:\"paths\""
+    %% grepple:struct-tag directoryResponsibilitiesOutput Reports "json:\"reports\""
+    %% grepple:struct-tag directoryResponsibilitiesOutput Schema "json:\"schema\""
+    %% grepple:struct-tag directoryResponsibilitiesOutput Truncation "json:\"truncation,omitempty\""
+    note for directoryResponsibilitiesOutput "defined: internal/cli/responsibilities.go:40-46; Files@internal/cli/responsibilities.go:43; Paths@internal/cli/responsibilities.go:42; Reports@internal/cli/responsibilities.go:44; Schema@internal/cli/responsibilities.go:41; Truncation@internal/cli/responsibilities.go:45"
     class errBrokenPipe {
         +Error(): string
         +Unwrap(): error
@@ -531,6 +546,7 @@ classDiagram
     class responsibilitiesArgs {
         +Description(): string
         +JSON: bool
+        +Limit: int
         +MaxFiles: int
         +MaxOutputBytes: int
         +MinOccurrences: int
@@ -541,13 +557,14 @@ classDiagram
     <<struct>> responsibilitiesArgs
     %% grepple:file responsibilitiesArgs internal/cli/responsibilities.go
     %% grepple:struct-tag responsibilitiesArgs JSON "arg:\"--json\" help:\"emit the complete responsibility report as JSON\""
+    %% grepple:struct-tag responsibilitiesArgs Limit "arg:\"--limit\" placeholder:\"N\" help:\"maximum type reports in human directory output (default 20; 0 = unlimited; JSON is complete)\""
     %% grepple:struct-tag responsibilitiesArgs MaxFiles "arg:\"--max-files\" placeholder:\"N\" help:\"parse at most N discovered files (0 = unlimited)\""
     %% grepple:struct-tag responsibilitiesArgs MaxOutputBytes "arg:\"--max-output-bytes\" placeholder:\"N\" help:\"cap human output (default 16384; 0 = unlimited; JSON is uncapped)\""
     %% grepple:struct-tag responsibilitiesArgs MinOccurrences "arg:\"--min-occurrences\" placeholder:\"N\" help:\"minimum callers sharing a reported pattern (default 2)\""
     %% grepple:struct-tag responsibilitiesArgs NoCache "arg:\"--no-cache\" help:\"bypass the content-addressed .grepple responsibility cache\""
     %% grepple:struct-tag responsibilitiesArgs Paths "arg:\"positional\" placeholder:\"PATH\" help:\"file, directory, or glob to include; defaults to the working directory\""
-    %% grepple:struct-tag responsibilitiesArgs Type "arg:\"positional\" placeholder:\"TYPE\" help:\"exact receiver or container type name\""
-    note for responsibilitiesArgs "defined: internal/cli/responsibilities.go:15-23; Description@internal/cli/responsibilities.go:25-27; JSON@internal/cli/responsibilities.go:16; MaxFiles@internal/cli/responsibilities.go:18; MaxOutputBytes@internal/cli/responsibilities.go:19; MinOccurrences@internal/cli/responsibilities.go:17; NoCache@internal/cli/responsibilities.go:20; Paths@internal/cli/responsibilities.go:22; Type@internal/cli/responsibilities.go:21"
+    %% grepple:struct-tag responsibilitiesArgs Type "arg:\"--type\" placeholder:\"TYPE\" help:\"analyze one exact receiver or container type instead of discovering the directory\""
+    note for responsibilitiesArgs "defined: internal/cli/responsibilities.go:19-28; Description@internal/cli/responsibilities.go:30-32; JSON@internal/cli/responsibilities.go:20; Limit@internal/cli/responsibilities.go:23; MaxFiles@internal/cli/responsibilities.go:22; MaxOutputBytes@internal/cli/responsibilities.go:24; MinOccurrences@internal/cli/responsibilities.go:21; NoCache@internal/cli/responsibilities.go:25; Paths@internal/cli/responsibilities.go:27; Type@internal/cli/responsibilities.go:26"
     class responsibilitiesOutput {
         +Files: int
         +Truncation: *navigationGraphTruncation
@@ -556,7 +573,7 @@ classDiagram
     %% grepple:file responsibilitiesOutput internal/cli/responsibilities.go
     %% grepple:struct-tag responsibilitiesOutput Files "json:\"files\""
     %% grepple:struct-tag responsibilitiesOutput Truncation "json:\"truncation,omitempty\""
-    note for responsibilitiesOutput "defined: internal/cli/responsibilities.go:29-33; Files@internal/cli/responsibilities.go:31; Truncation@internal/cli/responsibilities.go:32"
+    note for responsibilitiesOutput "defined: internal/cli/responsibilities.go:34-38; Files@internal/cli/responsibilities.go:36; Truncation@internal/cli/responsibilities.go:37"
     class responsibilityGraphCache {
         +Digest: string
         +Graph: navigationGraphOutput
@@ -766,6 +783,7 @@ classDiagram
     resultRenderer <|.. contextRenderer : implements
     countRenderer "1" --> "1" outputWriter : field output
     resultRenderer <|.. countRenderer : implements
+    directoryResponsibilitiesOutput "1" --> "1" navigationGraphTruncation : field Truncation
     filesRenderer "1" --> "1" outputWriter : field output
     resultRenderer <|.. filesRenderer : implements
     jsonResultRenderer "1" --> "1" outputWriter : field output

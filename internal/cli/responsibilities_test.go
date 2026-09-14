@@ -19,7 +19,7 @@ func One(value Foo){ _ = value.State; value.Parse(); value.Validate() }
 func Two(value Foo){ _ = value.State; value.Parse(); value.Validate() }
 `)
 	first := captureStdout(t, func() {
-		if err := Run([]string{"responsibilities", "Foo", "."}); err != nil {
+		if err := Run([]string{"responsibilities", "--type", "Foo", "."}); err != nil {
 			t.Fatal(err)
 		}
 	})
@@ -32,7 +32,7 @@ func Two(value Foo){ _ = value.State; value.Parse(); value.Validate() }
 		}
 	}
 	second := captureStdout(t, func() {
-		if err := Run([]string{"responsibilities", "Foo", "."}); err != nil {
+		if err := Run([]string{"responsibilities", "--type", "Foo", "."}); err != nil {
 			t.Fatal(err)
 		}
 	})
@@ -48,11 +48,57 @@ func Two(value Foo){ _ = value.State; value.Parse(); value.Validate() }
 	}
 }
 
+func TestResponsibilitiesDirectoryDiscoversAndRanksTypes(t *testing.T) {
+	dir := chdirTemp(t)
+	writeGraphSource(t, dir, "main.go", `package sample
+type Busy struct{}
+func (Busy) Save(){}
+func One(value Busy){ value.Save() }
+func Two(value Busy){ value.Save() }
+type Quiet struct{}
+func (Quiet) Read(){}
+func Once(value Quiet){ value.Read() }
+`)
+	output := captureStdout(t, func() {
+		if err := Run([]string{"responsibilities", "--no-cache", "."}); err != nil {
+			t.Fatal(err)
+		}
+	})
+	for _, expected := range []string{"responsibilities paths=. files=1 types=2 shown=2", "Busy\n", "consumers: 2 functions", "Quiet\n", "consumers: 1 functions"} {
+		if !strings.Contains(output, expected) {
+			t.Fatalf("directory output missing %q:\n%s", expected, output)
+		}
+	}
+	if strings.Index(output, "Busy\n") > strings.Index(output, "Quiet\n") {
+		t.Fatalf("reports are not ranked by evidence:\n%s", output)
+	}
+	limited := captureStdout(t, func() {
+		if err := Run([]string{"responsibilities", "--no-cache", "--limit", "1", "."}); err != nil {
+			t.Fatal(err)
+		}
+	})
+	if !strings.Contains(limited, "types=2 shown=1") || !strings.Contains(limited, "omitted 1 lower-ranked types") || strings.Contains(limited, "Quiet\n") {
+		t.Fatalf("limited directory output is incomplete or misleading:\n%s", limited)
+	}
+	jsonText := captureStdout(t, func() {
+		if err := Run([]string{"responsibilities", "--json", "--no-cache", "--limit", "1", "."}); err != nil {
+			t.Fatal(err)
+		}
+	})
+	var directory directoryResponsibilitiesOutput
+	if err := json.Unmarshal([]byte(jsonText), &directory); err != nil {
+		t.Fatal(err)
+	}
+	if directory.Schema != "grepple-directory-responsibilities-v1" || len(directory.Reports) != 2 {
+		t.Fatalf("directory JSON was limited: %#v", directory)
+	}
+}
+
 func TestResponsibilitiesJSONIsCompleteAndNoCacheWritesFiles(t *testing.T) {
 	dir := chdirTemp(t)
 	writeGraphSource(t, dir, "main.go", "package sample\ntype Foo struct{}\nfunc (Foo) Save(){}\nfunc Run(value Foo){ value.Save() }\n")
 	text := captureStdout(t, func() {
-		if err := Run([]string{"responsibilities", "--json", "--no-cache", "--min-occurrences", "1", "Foo", "."}); err != nil {
+		if err := Run([]string{"responsibilities", "--json", "--no-cache", "--min-occurrences", "1", "--type", "Foo", "."}); err != nil {
 			t.Fatal(err)
 		}
 	})
@@ -72,7 +118,7 @@ func TestResponsibilitiesCacheInvalidatesWhenSourceChanges(t *testing.T) {
 	dir := chdirTemp(t)
 	path := writeGraphSource(t, dir, "main.go", "package sample\ntype Foo struct{}\nfunc (Foo) Save(){}\nfunc Run(value Foo){ value.Save() }\n")
 	captureStdout(t, func() {
-		if err := Run([]string{"responsibilities", "--min-occurrences", "1", "Foo", "."}); err != nil {
+		if err := Run([]string{"responsibilities", "--min-occurrences", "1", "--type", "Foo", "."}); err != nil {
 			t.Fatal(err)
 		}
 	})
@@ -84,7 +130,7 @@ func TestResponsibilitiesCacheInvalidatesWhenSourceChanges(t *testing.T) {
 		t.Fatalf("cache state=%q err=%v", cache, err)
 	}
 	output := captureStdout(t, func() {
-		if err := Run([]string{"responsibilities", "--min-occurrences", "1", "Foo", "."}); err != nil {
+		if err := Run([]string{"responsibilities", "--min-occurrences", "1", "--type", "Foo", "."}); err != nil {
 			t.Fatal(err)
 		}
 	})

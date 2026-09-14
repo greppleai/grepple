@@ -2,7 +2,7 @@ classDiagram
     %% grepple:package-default github.com/greppleai/grepple/internal/cli
     %% grepple:language-default go
     direction LR
-    note "Package cli implements Grepple's search, extraction, repository inspection, authentication, rules, and terminal/JSON presentation workflows. | package github.com/greppleai/grepple/internal/cli | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=36, declarations=47, exportedTypes=0, internalTypes=47, members=293, exportedFunctions=3, fiberRoutes=0, relations=27"
+    note "Package cli implements Grepple's search, extraction, repository inspection, authentication, rules, and terminal/JSON presentation workflows. | package github.com/greppleai/grepple/internal/cli | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=36, declarations=48, exportedTypes=0, internalTypes=48, members=299, exportedFunctions=3, fiberRoutes=0, relations=28"
     namespace interfaces {
         class resultRenderer["resultRenderer · internal/cli/renderer.go:9-11"] {
             +Render([]api.FileResult): error
@@ -80,6 +80,14 @@ classDiagram
             +TokenType: string
         }
         <<struct>> deviceTokenResponse
+        class directoryResponsibilitiesOutput["directoryResponsibilitiesOutput · internal/cli/responsibilities.go:40-46"] {
+            +Files: int
+            +Paths: []string
+            +Reports: []search.ResponsibilityReport
+            +Schema: string
+            +Truncation: *navigationGraphTruncation
+        }
+        <<struct>> directoryResponsibilitiesOutput
         class extractArgs["extractArgs · internal/cli/extract.go:16-26"] {
             +At: string
             +Bundle: bool
@@ -215,8 +223,9 @@ classDiagram
             +Server: string
         }
         <<struct>> reposArgs
-        class responsibilitiesArgs["responsibilitiesArgs · internal/cli/responsibilities.go:15-23"] {
+        class responsibilitiesArgs["responsibilitiesArgs · internal/cli/responsibilities.go:19-28"] {
             +JSON: bool
+            +Limit: int
             +MaxFiles: int
             +MaxOutputBytes: int
             +MinOccurrences: int
@@ -225,7 +234,7 @@ classDiagram
             +Type: string
         }
         <<struct>> responsibilitiesArgs
-        class responsibilitiesOutput["responsibilitiesOutput · internal/cli/responsibilities.go:29-33"] {
+        class responsibilitiesOutput["responsibilitiesOutput · internal/cli/responsibilities.go:34-38"] {
             +Files: int
             +Truncation: *navigationGraphTruncation
         }
@@ -365,6 +374,7 @@ classDiagram
     resultRenderer <|.. contextRenderer : implements
     countRenderer "1" --> "1" outputWriter : field output
     resultRenderer <|.. countRenderer : implements
+    directoryResponsibilitiesOutput "1" --> "1" navigationGraphTruncation : field Truncation
     filesRenderer "1" --> "1" outputWriter : field output
     resultRenderer <|.. filesRenderer : implements
     jsonResultRenderer "1" --> "1" outputWriter : field output

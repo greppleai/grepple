@@ -214,15 +214,16 @@ grepple graph diff --before ./old-tree --after ./new-tree --compact
 
 ## Responsibility analysis
 
-`grepple responsibilities TYPE [PATH...]` detects deterministic cross-function interaction topology for a receiver or container type. The same analyzer runs over normalized navigation facts for every Tree-sitter-backed language; no language IDs are interpreted by the analysis. It reports consumer breadth, externally used method surface, repeated method co-usage sets, ordered method sequences, and member-read/member-write plus method combinations. Candidate and receiver-only matches are retained and disclosed rather than silently upgraded to exact resolution.
+`grepple responsibilities [PATH...]` discovers and ranks responsibility topology by directory rather than relying on language-specific package or module models. `--type TYPE` narrows the same directory graph to one exact receiver or container type. The analyzer runs over normalized facts for every Tree-sitter-backed language and reports consumer breadth, externally used method surface, repeated method co-usage sets, ordered method sequences, and member-read/member-write plus method combinations. Candidate and receiver-only matches remain disclosed rather than being silently upgraded to exact resolution.
 
 ```bash
-grepple responsibilities Request .
-grepple responsibilities Repository ./internal --min-occurrences 3
-grepple responsibilities Client --json .
+grepple responsibilities parser
+grepple responsibilities ./src ./lib --min-occurrences 3
+grepple responsibilities --type Request .
+grepple responsibilities --json ./internal
 ```
 
-Human output is bounded to 16,384 bytes by default; JSON is complete. Parsed and cross-file-resolved navigation graphs are cached by source content plus grammar ABI/fingerprint under `.grepple/cache/responsibilities/`, so unchanged rechecks avoid reparsing. Cache entries are local and ignored by Git; use `--no-cache` to bypass them. `--max-files` remains explicit in the report when source discovery is incomplete.
+Human output is bounded to 16,384 bytes and shows at most 20 ranked types by default; it reports lower-ranked omissions and `--limit 0` shows all. JSON is complete regardless of the human limit. Parsed and cross-file-resolved navigation graphs are cached by source content plus grammar ABI/fingerprint under `.grepple/cache/responsibilities/`, so unchanged rechecks avoid reparsing. Cache entries are local and ignored by Git; use `--no-cache` to bypass them. `--max-files` remains explicit when source discovery is incomplete.
 
 ## Architecture and flow extraction
 
