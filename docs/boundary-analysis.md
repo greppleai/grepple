@@ -1,8 +1,8 @@
-# Responsibility analysis
+# Boundary pattern analysis
 
-`grepple responsibilities [PATH...]` detects likely file-boundary leaks. Every resolved target declaration establishes an owner file; calls from other files are grouped by that owner. Only callable sets, ordered sequences, or member-plus-call combinations repeated across at least two external files survive. This asks whether an implementation workflow that belongs behind file X has spread into multiple consumers. Directory scope avoids package/module assumptions and applies equally to class-oriented and function-oriented languages.
+`grepple boundaries [PATH...]` detects likely file-boundary leaks. Every resolved target declaration establishes an owner file; calls from other files are grouped by that owner. Only callable sets, ordered sequences, or member-plus-call combinations repeated across at least two external files survive. This asks whether an implementation workflow that belongs behind file X has spread into multiple consumers. Directory scope avoids package/module assumptions and applies equally to class-oriented and function-oriented languages.
 
-The analyzer consumes `parser.NavigationGraph`, not grammar node names. Consequently the contract is identical across Go, Java, Kotlin, JavaScript/JSX, TypeScript/TSX, Python, C#, C, C++, Rust, and Shell. Unsupported and malformed files retain the existing safe navigation fallback. `--type TYPE` selects the separate, broader type-centric report when needed.
+The analyzer consumes `parser.NavigationGraph`, not grammar node names. Consequently the contract is identical across Go, Java, Kotlin, JavaScript/JSX, TypeScript/TSX, Python, C#, C, C++, Rust, and Shell. Unsupported and malformed files retain the existing safe navigation fallback.
 
 ## Reported signals
 
@@ -18,7 +18,7 @@ Resolved target IDs are preferred. Ambiguous calls are included only when every 
 Patterns are grouped by caller and filtered by `--min-occurrences` (default 2), then must span at least two distinct external files. Candidates are ranked by cross-file pattern breadth. General symbol usage and one-off API calls are omitted. Human output shows 20 candidates and up to five patterns per category by default, with explicit omissions and up to three caller locations per pattern; `--limit 0` shows every candidate, while JSON is complete.
 
 ```text
-responsibility boundaries paths=src files=84 candidates=1 shown=1
+boundary patterns paths=src files=84 candidates=1 shown=1
 owner: src/request.go [go]
   external consumers: 18 functions / 12 files / 5 groups
   external callable surface: 3/5 callables
@@ -39,7 +39,7 @@ owner: src/request.go [go]
 The command automatically stores its complete, resolved navigation graph under:
 
 ```text
-.grepple/cache/responsibilities/<input-digest>.json
+.grepple/cache/boundaries/<input-digest>.json
 ```
 
 The digest covers source paths and bytes, the file limit, language identity, grammar ABI, and generated grammar fingerprint. Any source or grammar change therefore causes a cache miss. Cache writes use an atomic rename, corrupt entries are ignored, and inability to write the optional cache does not fail analysis. `.grepple/cache/` is ignored by Git.

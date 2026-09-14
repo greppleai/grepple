@@ -2,8 +2,48 @@ classDiagram
     %% grepple:package-default github.com/greppleai/grepple/search
     %% grepple:language-default go
     direction LR
-    note "Package search provides file discovery, query and repository filtering, paging, match workers, context, and wire-result construction. | package github.com/greppleai/grepple/search | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=15, declarations=33, exportedTypes=16, internalTypes=17, members=212, exportedFunctions=27, fiberRoutes=0, relations=75"
+    note "Package search provides file discovery, query and repository filtering, paging, match workers, context, and wire-result construction. | package github.com/greppleai/grepple/search | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=15, declarations=30, exportedTypes=15, internalTypes=15, members=181, exportedFunctions=26, fiberRoutes=0, relations=60"
     namespace data_contracts {
+        class BoundaryBreadth["BoundaryBreadth · search/boundary_model.go:12-16"] {
+            +Files: int
+            +Functions: int
+            +Packages: int
+        }
+        <<struct>> BoundaryBreadth
+        class BoundaryCandidate["BoundaryCandidate · search/boundaries.go:12-23"] {
+            +CallableCoUsage: []BoundaryPattern
+            +Callables: []string
+            +ConsumerDetails: []BoundaryConsumer
+            +Consumers: BoundaryBreadth
+            +ExternalCallableSurface: BoundarySurface
+            +Language: string
+            +MemberCallCombinations: []BoundaryPattern
+            +OrderedSequences: []BoundaryPattern
+            +OwnerFile: string
+            +UnresolvedCalls: int
+        }
+        <<struct>> BoundaryCandidate
+        class BoundaryConsumer["BoundaryConsumer · search/boundary_model.go:25-31"] {
+            +ID: string
+            +Line: int
+            +Name: string
+            +Package: string
+            +Path: string
+        }
+        <<struct>> BoundaryConsumer
+        class BoundaryPattern["BoundaryPattern · search/boundary_model.go:34-40"] {
+            +Consumers: []BoundaryConsumer
+            +Files: int
+            +Interactions: []string
+            +Occurrences: int
+            +Packages: int
+        }
+        <<struct>> BoundaryPattern
+        class BoundarySurface["BoundarySurface · search/boundary_model.go:19-22"] {
+            +Declared: int
+            +External: int
+        }
+        <<struct>> BoundarySurface
         class NavigationCallDelta["NavigationCallDelta · search/navigation_diff.go:21-24"] {
             +After: *parser.NavigationCall
             +Before: *parser.NavigationCall
@@ -51,60 +91,6 @@ classDiagram
             +SkipSegments: bool
         }
         <<struct>> Params
-        class ResponsibilityBoundaryCandidate["ResponsibilityBoundaryCandidate · search/responsibility_boundaries.go:12-23"] {
-            +CallableCoUsage: []ResponsibilityPattern
-            +Callables: []string
-            +ConsumerDetails: []ResponsibilityConsumer
-            +Consumers: ResponsibilityBreadth
-            +ExternalCallableSurface: ResponsibilitySurface
-            +Language: string
-            +MemberCallCombinations: []ResponsibilityPattern
-            +OrderedSequences: []ResponsibilityPattern
-            +OwnerFile: string
-            +UnresolvedCalls: int
-        }
-        <<struct>> ResponsibilityBoundaryCandidate
-        class ResponsibilityBreadth["ResponsibilityBreadth · search/responsibilities.go:13-17"] {
-            +Files: int
-            +Functions: int
-            +Packages: int
-        }
-        <<struct>> ResponsibilityBreadth
-        class ResponsibilityConsumer["ResponsibilityConsumer · search/responsibilities.go:26-32"] {
-            +ID: string
-            +Line: int
-            +Name: string
-            +Package: string
-            +Path: string
-        }
-        <<struct>> ResponsibilityConsumer
-        class ResponsibilityPattern["ResponsibilityPattern · search/responsibilities.go:35-41"] {
-            +Consumers: []ResponsibilityConsumer
-            +Files: int
-            +Methods: []string
-            +Occurrences: int
-            +Packages: int
-        }
-        <<struct>> ResponsibilityPattern
-        class ResponsibilityReport["ResponsibilityReport · search/responsibilities.go:44-56"] {
-            +ConsumerDetails: []ResponsibilityConsumer
-            +Consumers: ResponsibilityBreadth
-            +ExternalMethodSurface: ResponsibilitySurface
-            +Languages: []string
-            +MemberMethodCombinations: []ResponsibilityPattern
-            +MethodCoUsage: []ResponsibilityPattern
-            +Methods: []string
-            +OrderedSequences: []ResponsibilityPattern
-            +Schema: string
-            +Type: string
-            +UnresolvedCalls: int
-        }
-        <<struct>> ResponsibilityReport
-        class ResponsibilitySurface["ResponsibilitySurface · search/responsibilities.go:20-23"] {
-            +Declared: int
-            +External: int
-        }
-        <<struct>> ResponsibilitySurface
     }
     namespace exported_types {
         class FileMatch["FileMatch · search/model.go:55-63"]
@@ -121,6 +107,16 @@ classDiagram
         <<struct>> RepoFilter
     }
     namespace internal_types {
+        class boundaryInteraction["boundaryInteraction · search/boundary_model.go:42-44"]
+        <<struct>> boundaryInteraction
+        class boundaryOwnerAnalysis["boundaryOwnerAnalysis · search/boundaries.go:30-37"]
+        <<struct>> boundaryOwnerAnalysis
+        class boundaryOwnerKey["boundaryOwnerKey · search/boundaries.go:25-28"]
+        <<struct>> boundaryOwnerKey
+        class boundaryPatternGroup["boundaryPatternGroup · search/boundary_model.go:46-49"]
+        <<struct>> boundaryPatternGroup
+        class boundaryTypeCandidate["boundaryTypeCandidate · search/boundaries.go:167-170"]
+        <<struct>> boundaryTypeCandidate
         class candidateCollector["candidateCollector · search/search_glob.go:146-152"]
         <<struct>> candidateCollector
         class candidateScan["candidateScan · search/search_engine.go:232-237"]
@@ -141,34 +137,16 @@ classDiagram
         <<struct>> navigationIndex
         class repoPattern["repoPattern · search/search_engine.go:95-98"]
         <<struct>> repoPattern
-        class responsibilityAnalyzer["responsibilityAnalyzer · search/responsibilities.go:80-90"]
-        <<struct>> responsibilityAnalyzer
-        class responsibilityInteraction["responsibilityInteraction · search/responsibilities.go:76-78"]
-        <<struct>> responsibilityInteraction
-        class responsibilityOwnerAnalysis["responsibilityOwnerAnalysis · search/responsibility_boundaries.go:30-37"]
-        <<struct>> responsibilityOwnerAnalysis
-        class responsibilityOwnerKey["responsibilityOwnerKey · search/responsibility_boundaries.go:25-28"]
-        <<struct>> responsibilityOwnerKey
-        class responsibilityPatternGroup["responsibilityPatternGroup · search/responsibilities.go:304-307"]
-        <<struct>> responsibilityPatternGroup
-        class responsibilityPatternGroups["responsibilityPatternGroups · search/responsibilities.go:196-201"]
-        <<struct>> responsibilityPatternGroups
-        class responsibilityTypeCandidate["responsibilityTypeCandidate · search/responsibility_boundaries.go:169-172"]
-        <<struct>> responsibilityTypeCandidate
     }
     namespace operations {
         class AggregateRepoCounts["AggregateRepoCounts · search/search_engine.go:494-513"] {
             +AggregateRepoCounts([]FileMatch): []api.RepoCount
         }
         <<function>> AggregateRepoCounts
-        class AnalyzeDirectoryResponsibilities["AnalyzeDirectoryResponsibilities · search/responsibility_boundaries.go:42-66"] {
-            +AnalyzeDirectoryResponsibilities(parser.NavigationGraph, int): tuple~[]ResponsibilityBoundaryCandidate&#44;error~
+        class AnalyzeBoundaries["AnalyzeBoundaries · search/boundaries.go:42-66"] {
+            +AnalyzeBoundaries(parser.NavigationGraph, int): tuple~[]BoundaryCandidate&#44;error~
         }
-        <<function>> AnalyzeDirectoryResponsibilities
-        class AnalyzeResponsibilities["AnalyzeResponsibilities · search/responsibilities.go:61-74"] {
-            +AnalyzeResponsibilities(parser.NavigationGraph, string, int): tuple~ResponsibilityReport&#44;error~
-        }
-        <<function>> AnalyzeResponsibilities
+        <<function>> AnalyzeBoundaries
         class At["At · search/at.go:16-63"] {
             +At(Params): tuple~*FileMatch&#44;error~
         }
@@ -267,10 +245,14 @@ classDiagram
         <<function>> WorkerCount
     }
     AggregateRepoCounts "1" ..> "*" FileMatch : parameter 1
-    AnalyzeDirectoryResponsibilities "1" ..> "*" ResponsibilityBoundaryCandidate : result 1
-    AnalyzeResponsibilities "1" ..> "1" ResponsibilityReport : result 1
+    AnalyzeBoundaries "1" ..> "*" BoundaryCandidate : result 1
     At "1" ..> "1" FileMatch : result 1
     At "1" ..> "1" Params : parameter 1
+    BoundaryCandidate "1" --> "1" BoundaryBreadth : field Consumers
+    BoundaryCandidate "1" --> "*" BoundaryConsumer : field ConsumerDetails
+    BoundaryCandidate "1" --> "*" BoundaryPattern : field CallableCoUsage; field MemberCallCombinations; field OrderedSequences
+    BoundaryCandidate "1" --> "1" BoundarySurface : field ExternalCallableSurface
+    BoundaryPattern "1" --> "*" BoundaryConsumer : field Consumers
     BuildResults "1" ..> "*" FileMatch : parameter 1
     Content "1" ..> "1" FileMatch : result 1
     Content "1" ..> "1" Params : parameter 1
@@ -291,16 +273,9 @@ classDiagram
     RelatedPreview "1" --> "*" RelatedPoint : field Related
     RepoFilter "1" --> "*" repoPattern : field exclude; field include
     ResolveRequest "1" ..> "1" Params : result 1
-    ResponsibilityBoundaryCandidate "1" --> "1" ResponsibilityBreadth : field Consumers
-    ResponsibilityBoundaryCandidate "1" --> "*" ResponsibilityConsumer : field ConsumerDetails
-    ResponsibilityBoundaryCandidate "1" --> "*" ResponsibilityPattern : field CallableCoUsage; field MemberCallCombinations; field OrderedSequences
-    ResponsibilityBoundaryCandidate "1" --> "1" ResponsibilitySurface : field ExternalCallableSurface
-    ResponsibilityPattern "1" --> "*" ResponsibilityConsumer : field Consumers
-    ResponsibilityReport "1" --> "1" ResponsibilityBreadth : field Consumers
-    ResponsibilityReport "1" --> "*" ResponsibilityConsumer : field ConsumerDetails
-    ResponsibilityReport "1" --> "*" ResponsibilityPattern : field MemberMethodCombinations; field MethodCoUsage; field OrderedSequences
-    ResponsibilityReport "1" --> "1" ResponsibilitySurface : field ExternalMethodSurface
     ToResult "1" ..> "1" FileMatch : parameter 1
+    boundaryOwnerAnalysis "1" --> "*" boundaryInteraction : field interactions
+    boundaryPatternGroup "1" --> "*" BoundaryConsumer : field consumers
     candidateCollector "1" --> "1" gitignoreCache : field ignoreCache
     candidateScan "1" ..> "*" FileMatch : method scanAll result 1; method scanWindowed result 1
     candidateScan "1" --> "1" Params : field p
@@ -316,11 +291,3 @@ classDiagram
     navigationIndex "1" --> "*" navigationDeclaration : field byFile; field byLocation; field declarations
     navigationIndex "1" ..> "*" navigationDeclaration : method-parameter=2; method-result=2
     navigationIndex "1" ..> "1" navigationDeclaration : method resolveReturnFactory result 1
-    responsibilityAnalyzer "1" ..> "1" ResponsibilityConsumer : method addResponsibilityCaller result 1
-    responsibilityAnalyzer "1" ..> "1" ResponsibilityReport : method report result 1
-    responsibilityAnalyzer "1" --> "*" responsibilityInteraction : field interactionsByCaller
-    responsibilityAnalyzer "1" ..> "*" responsibilityInteraction : method addResponsibilityCaller parameter 2
-    responsibilityAnalyzer "1" ..> "1" responsibilityPatternGroups : method addResponsibilityCaller parameter 3
-    responsibilityOwnerAnalysis "1" --> "*" responsibilityInteraction : field interactions
-    responsibilityPatternGroup "1" --> "*" ResponsibilityConsumer : field consumers
-    responsibilityPatternGroups "1" --> "*" responsibilityPatternGroup : field combinations; field methodSets; field sequences

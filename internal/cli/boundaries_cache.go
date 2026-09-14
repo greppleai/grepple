@@ -12,15 +12,15 @@ import (
 	"github.com/greppleai/grepple/parser"
 )
 
-const responsibilityCacheSchema = "grepple-responsibility-cache-v3"
+const boundaryCacheSchema = "grepple-boundary-cache-v1"
 
-type responsibilityGraphCache struct {
+type boundaryGraphCache struct {
 	Schema string                `json:"schema"`
 	Digest string                `json:"digest"`
 	Graph  navigationGraphOutput `json:"graph"`
 }
 
-func buildCachedResponsibilityGraph(globs []string, maxFiles int, useCache bool) (navigationGraphOutput, string, error) {
+func buildCachedBoundaryGraph(globs []string, maxFiles int, useCache bool) (navigationGraphOutput, string, error) {
 	paths, err := navigationInputPaths(globs)
 	if err != nil {
 		return navigationGraphOutput{}, "", err
@@ -28,22 +28,22 @@ func buildCachedResponsibilityGraph(globs []string, maxFiles int, useCache bool)
 	if !useCache {
 		return buildNavigationGraphOutputFromPaths(paths, maxFiles), "disabled", nil
 	}
-	digest, err := responsibilityInputDigest(paths, maxFiles)
+	digest, err := boundaryInputDigest(paths, maxFiles)
 	if err != nil {
 		return navigationGraphOutput{}, "", err
 	}
-	cachePath := filepath.Join(".grepple", "cache", "responsibilities", digest+".json")
-	if cached, ok := readResponsibilityGraphCache(cachePath, digest); ok {
+	cachePath := filepath.Join(".grepple", "cache", "boundaries", digest+".json")
+	if cached, ok := readBoundaryGraphCache(cachePath, digest); ok {
 		return cached, "hit", nil
 	}
 	output := buildNavigationGraphOutputFromPaths(paths, maxFiles)
-	_ = writeResponsibilityGraphCache(cachePath, responsibilityGraphCache{Schema: responsibilityCacheSchema, Digest: digest, Graph: output})
+	_ = writeBoundaryGraphCache(cachePath, boundaryGraphCache{Schema: boundaryCacheSchema, Digest: digest, Graph: output})
 	return output, "miss", nil
 }
 
-func responsibilityInputDigest(paths []string, maxFiles int) (string, error) {
+func boundaryInputDigest(paths []string, maxFiles int) (string, error) {
 	hash := sha256.New()
-	_, _ = fmt.Fprintf(hash, "%s\x00%d\x00", responsibilityCacheSchema, maxFiles)
+	_, _ = fmt.Fprintf(hash, "%s\x00%d\x00", boundaryCacheSchema, maxFiles)
 	sortedPaths := append([]string(nil), paths...)
 	sort.Strings(sortedPaths)
 	for _, path := range sortedPaths {
@@ -60,19 +60,19 @@ func responsibilityInputDigest(paths []string, maxFiles int) (string, error) {
 	return hex.EncodeToString(hash.Sum(nil)), nil
 }
 
-func readResponsibilityGraphCache(path, digest string) (navigationGraphOutput, bool) {
+func readBoundaryGraphCache(path, digest string) (navigationGraphOutput, bool) {
 	content, err := os.ReadFile(path)
 	if err != nil {
 		return navigationGraphOutput{}, false
 	}
-	var cached responsibilityGraphCache
-	if json.Unmarshal(content, &cached) != nil || cached.Schema != responsibilityCacheSchema || cached.Digest != digest {
+	var cached boundaryGraphCache
+	if json.Unmarshal(content, &cached) != nil || cached.Schema != boundaryCacheSchema || cached.Digest != digest {
 		return navigationGraphOutput{}, false
 	}
 	return cached.Graph, true
 }
 
-func writeResponsibilityGraphCache(path string, cached responsibilityGraphCache) error {
+func writeBoundaryGraphCache(path string, cached boundaryGraphCache) error {
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		return err
 	}
@@ -80,7 +80,7 @@ func writeResponsibilityGraphCache(path string, cached responsibilityGraphCache)
 	if err != nil {
 		return err
 	}
-	temporary, err := os.CreateTemp(filepath.Dir(path), ".responsibilities-*.tmp")
+	temporary, err := os.CreateTemp(filepath.Dir(path), ".boundaries-*.tmp")
 	if err != nil {
 		return err
 	}

@@ -88,11 +88,11 @@ Treat these as separate planning dimensions:
 
 Acceptance criteria met for generic call discovery: one parser-owned graph supplies `--related`, focused flow generation, and flow validation; language adapters only enrich and resolve graph facts.
 
-Responsibility topology follow-up:
-- [x] Add language-neutral consumer breadth, external method surface, method co-usage, ordered method sequences, and member-read/member-write plus method combinations.
-- [x] Expose directory-ranked boundary analysis as `grepple responsibilities [PATH...]`: group resolved target declarations by owner file, remove owner-local calls, require repeated workflows across at least two external files, and report actionable caller locations. Keep optional `--type TYPE` for broader inspection.
-- [x] Cache content- and grammar-addressed resolved navigation graphs under ignored `.grepple/cache/responsibilities/` for fast unchanged rechecks.
-- [ ] Extend declared external surface totals from callable methods to fields/properties once every adapter exposes declaration ownership with honest confidence.
+Boundary pattern analysis follow-up:
+- [x] Add language-neutral external consumer breadth, callable surface, callable co-usage, ordered sequences, and member-read/member-write plus call combinations.
+- [x] Expose directory-ranked analysis as `grepple boundaries [PATH...]`: group resolved target declarations by owner file, remove owner-local calls, require repeated workflows across at least two external files, and report actionable caller locations.
+- [x] Cache content- and grammar-addressed resolved navigation graphs under ignored `.grepple/cache/boundaries/` for fast unchanged rechecks.
+- [ ] Extend external surface totals from callables to fields/properties once every adapter exposes declaration ownership with honest confidence.
 
 ### B. Improve resolution confidence
 

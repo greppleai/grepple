@@ -17,18 +17,24 @@
   },
   "summary": {
     "sourceFiles": 15,
-    "declarations": 33,
-    "exportedTypes": 16,
-    "internalTypes": 17,
-    "members": 212,
-    "exportedFunctions": 27,
+    "declarations": 30,
+    "exportedTypes": 15,
+    "internalTypes": 15,
+    "members": 181,
+    "exportedFunctions": 26,
     "fiberRoutes": 0,
-    "relations": 75
+    "relations": 60
   },
-  "semanticModelDigest": "sha256:c40ca7330a73ad551b062b6bfb36ff8db7fada085dd36067a2b7671cf0c7a969",
+  "semanticModelDigest": "sha256:157de44f8903786a0a85d07f22cbcc81469768807f8718331e07fa930b7d8e38",
   "sourceFiles": [
     {
       "path": "search/at.go"
+    },
+    {
+      "path": "search/boundaries.go"
+    },
+    {
+      "path": "search/boundary_model.go"
     },
     {
       "path": "search/context.go"
@@ -52,12 +58,6 @@
       "path": "search/related.go"
     },
     {
-      "path": "search/responsibilities.go"
-    },
-    {
-      "path": "search/responsibility_boundaries.go"
-    },
-    {
       "path": "search/result.go"
     },
     {
@@ -74,6 +74,306 @@
     }
   ],
   "declarations": [
+    {
+      "name": "BoundaryBreadth",
+      "kind": "struct",
+      "file": "search/boundary_model.go",
+      "line": 12,
+      "endLine": 16,
+      "underlyingType": "struct{Functions int`json:\"functions\"`;Files int`json:\"files\"`;Packages int`json:\"packages\"`;}",
+      "members": [
+        {
+          "name": "Files",
+          "kind": "property",
+          "line": 14,
+          "endLine": 14,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"files\""
+          }
+        },
+        {
+          "name": "Functions",
+          "kind": "property",
+          "line": 13,
+          "endLine": 13,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"functions\""
+          }
+        },
+        {
+          "name": "Packages",
+          "kind": "property",
+          "line": 15,
+          "endLine": 15,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"packages\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "BoundaryCandidate",
+      "kind": "struct",
+      "file": "search/boundaries.go",
+      "line": 12,
+      "endLine": 23,
+      "underlyingType": "struct{OwnerFile string`json:\"ownerFile\"`;Language string`json:\"language\"`;Consumers BoundaryBreadth`json:\"consumers\"`;ConsumerDetails[]BoundaryConsumer`json:\"consumerDetails\"`;ExternalCallableSurface BoundarySurface`json:\"externalCallableSurface\"`;Callables[]string`json:\"callables\"`;CallableCoUsage[]BoundaryPattern`json:\"callableCoUsage\"`;OrderedSequences[]BoundaryPattern`json:\"orderedSequences\"`;MemberCallCombinations[]BoundaryPattern`json:\"memberCallCombinations\"`;UnresolvedCalls int`json:\"unresolvedCalls\"`;}",
+      "members": [
+        {
+          "name": "CallableCoUsage",
+          "kind": "property",
+          "line": 19,
+          "endLine": 19,
+          "result": "[]BoundaryPattern",
+          "structTag": {
+            "value": "json:\"callableCoUsage\""
+          }
+        },
+        {
+          "name": "Callables",
+          "kind": "property",
+          "line": 18,
+          "endLine": 18,
+          "result": "[]string",
+          "structTag": {
+            "value": "json:\"callables\""
+          }
+        },
+        {
+          "name": "ConsumerDetails",
+          "kind": "property",
+          "line": 16,
+          "endLine": 16,
+          "result": "[]BoundaryConsumer",
+          "structTag": {
+            "value": "json:\"consumerDetails\""
+          }
+        },
+        {
+          "name": "Consumers",
+          "kind": "property",
+          "line": 15,
+          "endLine": 15,
+          "result": "BoundaryBreadth",
+          "structTag": {
+            "value": "json:\"consumers\""
+          }
+        },
+        {
+          "name": "ExternalCallableSurface",
+          "kind": "property",
+          "line": 17,
+          "endLine": 17,
+          "result": "BoundarySurface",
+          "structTag": {
+            "value": "json:\"externalCallableSurface\""
+          }
+        },
+        {
+          "name": "Language",
+          "kind": "property",
+          "line": 14,
+          "endLine": 14,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"language\""
+          }
+        },
+        {
+          "name": "MemberCallCombinations",
+          "kind": "property",
+          "line": 21,
+          "endLine": 21,
+          "result": "[]BoundaryPattern",
+          "structTag": {
+            "value": "json:\"memberCallCombinations\""
+          }
+        },
+        {
+          "name": "OrderedSequences",
+          "kind": "property",
+          "line": 20,
+          "endLine": 20,
+          "result": "[]BoundaryPattern",
+          "structTag": {
+            "value": "json:\"orderedSequences\""
+          }
+        },
+        {
+          "name": "OwnerFile",
+          "kind": "property",
+          "line": 13,
+          "endLine": 13,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"ownerFile\""
+          }
+        },
+        {
+          "name": "UnresolvedCalls",
+          "kind": "property",
+          "line": 22,
+          "endLine": 22,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"unresolvedCalls\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "BoundaryConsumer",
+      "kind": "struct",
+      "file": "search/boundary_model.go",
+      "line": 25,
+      "endLine": 31,
+      "underlyingType": "struct{ID string`json:\"id\"`;Name string`json:\"name\"`;Path string`json:\"path\"`;Package string`json:\"package,omitempty\"`;Line int`json:\"line\"`;}",
+      "members": [
+        {
+          "name": "ID",
+          "kind": "property",
+          "line": 26,
+          "endLine": 26,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"id\""
+          }
+        },
+        {
+          "name": "Line",
+          "kind": "property",
+          "line": 30,
+          "endLine": 30,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"line\""
+          }
+        },
+        {
+          "name": "Name",
+          "kind": "property",
+          "line": 27,
+          "endLine": 27,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"name\""
+          }
+        },
+        {
+          "name": "Package",
+          "kind": "property",
+          "line": 29,
+          "endLine": 29,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"package,omitempty\""
+          }
+        },
+        {
+          "name": "Path",
+          "kind": "property",
+          "line": 28,
+          "endLine": 28,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"path\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "BoundaryPattern",
+      "kind": "struct",
+      "file": "search/boundary_model.go",
+      "line": 34,
+      "endLine": 40,
+      "underlyingType": "struct{Interactions[]string`json:\"interactions\"`;Occurrences int`json:\"occurrences\"`;Files int`json:\"files\"`;Packages int`json:\"packages\"`;Consumers[]BoundaryConsumer`json:\"consumers\"`;}",
+      "members": [
+        {
+          "name": "Consumers",
+          "kind": "property",
+          "line": 39,
+          "endLine": 39,
+          "result": "[]BoundaryConsumer",
+          "structTag": {
+            "value": "json:\"consumers\""
+          }
+        },
+        {
+          "name": "Files",
+          "kind": "property",
+          "line": 37,
+          "endLine": 37,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"files\""
+          }
+        },
+        {
+          "name": "Interactions",
+          "kind": "property",
+          "line": 35,
+          "endLine": 35,
+          "result": "[]string",
+          "structTag": {
+            "value": "json:\"interactions\""
+          }
+        },
+        {
+          "name": "Occurrences",
+          "kind": "property",
+          "line": 36,
+          "endLine": 36,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"occurrences\""
+          }
+        },
+        {
+          "name": "Packages",
+          "kind": "property",
+          "line": 38,
+          "endLine": 38,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"packages\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "BoundarySurface",
+      "kind": "struct",
+      "file": "search/boundary_model.go",
+      "line": 19,
+      "endLine": 22,
+      "underlyingType": "struct{External int`json:\"external\"`;Declared int`json:\"declared\"`;}",
+      "members": [
+        {
+          "name": "Declared",
+          "kind": "property",
+          "line": 21,
+          "endLine": 21,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"declared\""
+          }
+        },
+        {
+          "name": "External",
+          "kind": "property",
+          "line": 20,
+          "endLine": 20,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"external\""
+          }
+        }
+      ]
+    },
     {
       "name": "FileMatch",
       "kind": "struct",
@@ -764,422 +1064,143 @@
       ]
     },
     {
-      "name": "ResponsibilityBoundaryCandidate",
+      "name": "boundaryInteraction",
       "kind": "struct",
-      "file": "search/responsibility_boundaries.go",
-      "line": 12,
-      "endLine": 23,
-      "underlyingType": "struct{OwnerFile string`json:\"ownerFile\"`;Language string`json:\"language\"`;Consumers ResponsibilityBreadth`json:\"consumers\"`;ConsumerDetails[]ResponsibilityConsumer`json:\"consumerDetails\"`;ExternalCallableSurface ResponsibilitySurface`json:\"externalCallableSurface\"`;Callables[]string`json:\"callables\"`;CallableCoUsage[]ResponsibilityPattern`json:\"callableCoUsage\"`;OrderedSequences[]ResponsibilityPattern`json:\"orderedSequences\"`;MemberCallCombinations[]ResponsibilityPattern`json:\"memberCallCombinations\"`;UnresolvedCalls int`json:\"unresolvedCalls\"`;}",
+      "file": "search/boundary_model.go",
+      "line": 42,
+      "endLine": 44,
+      "underlyingType": "struct{label string}",
       "members": [
         {
-          "name": "CallableCoUsage",
+          "name": "label",
           "kind": "property",
-          "line": 19,
-          "endLine": 19,
-          "result": "[]ResponsibilityPattern",
-          "structTag": {
-            "value": "json:\"callableCoUsage\""
-          }
-        },
-        {
-          "name": "Callables",
-          "kind": "property",
-          "line": 18,
-          "endLine": 18,
-          "result": "[]string",
-          "structTag": {
-            "value": "json:\"callables\""
-          }
-        },
-        {
-          "name": "ConsumerDetails",
-          "kind": "property",
-          "line": 16,
-          "endLine": 16,
-          "result": "[]ResponsibilityConsumer",
-          "structTag": {
-            "value": "json:\"consumerDetails\""
-          }
-        },
-        {
-          "name": "Consumers",
-          "kind": "property",
-          "line": 15,
-          "endLine": 15,
-          "result": "ResponsibilityBreadth",
-          "structTag": {
-            "value": "json:\"consumers\""
-          }
-        },
-        {
-          "name": "ExternalCallableSurface",
-          "kind": "property",
-          "line": 17,
-          "endLine": 17,
-          "result": "ResponsibilitySurface",
-          "structTag": {
-            "value": "json:\"externalCallableSurface\""
-          }
-        },
-        {
-          "name": "Language",
-          "kind": "property",
-          "line": 14,
-          "endLine": 14,
-          "result": "string",
-          "structTag": {
-            "value": "json:\"language\""
-          }
-        },
-        {
-          "name": "MemberCallCombinations",
-          "kind": "property",
-          "line": 21,
-          "endLine": 21,
-          "result": "[]ResponsibilityPattern",
-          "structTag": {
-            "value": "json:\"memberCallCombinations\""
-          }
-        },
-        {
-          "name": "OrderedSequences",
-          "kind": "property",
-          "line": 20,
-          "endLine": 20,
-          "result": "[]ResponsibilityPattern",
-          "structTag": {
-            "value": "json:\"orderedSequences\""
-          }
-        },
-        {
-          "name": "OwnerFile",
-          "kind": "property",
-          "line": 13,
-          "endLine": 13,
-          "result": "string",
-          "structTag": {
-            "value": "json:\"ownerFile\""
-          }
-        },
-        {
-          "name": "UnresolvedCalls",
-          "kind": "property",
-          "line": 22,
-          "endLine": 22,
-          "result": "int",
-          "structTag": {
-            "value": "json:\"unresolvedCalls\""
-          }
+          "line": 43,
+          "endLine": 43,
+          "result": "string"
         }
       ]
     },
     {
-      "name": "ResponsibilityBreadth",
+      "name": "boundaryOwnerAnalysis",
       "kind": "struct",
-      "file": "search/responsibilities.go",
-      "line": 13,
-      "endLine": 17,
-      "underlyingType": "struct{Functions int`json:\"functions\"`;Files int`json:\"files\"`;Packages int`json:\"packages\"`;}",
+      "file": "search/boundaries.go",
+      "line": 30,
+      "endLine": 37,
+      "underlyingType": "struct{callers map[string]parser.NavigationDeclaration;callsByCaller map[string][]string;interactions map[string][]boundaryInteraction;called map[string]bool;declared int;unresolvedCalls int;}",
       "members": [
         {
-          "name": "Files",
+          "name": "called",
           "kind": "property",
-          "line": 15,
-          "endLine": 15,
-          "result": "int",
-          "structTag": {
-            "value": "json:\"files\""
-          }
+          "line": 34,
+          "endLine": 34,
+          "result": "map[string]bool"
         },
         {
-          "name": "Functions",
-          "kind": "property",
-          "line": 14,
-          "endLine": 14,
-          "result": "int",
-          "structTag": {
-            "value": "json:\"functions\""
-          }
-        },
-        {
-          "name": "Packages",
-          "kind": "property",
-          "line": 16,
-          "endLine": 16,
-          "result": "int",
-          "structTag": {
-            "value": "json:\"packages\""
-          }
-        }
-      ]
-    },
-    {
-      "name": "ResponsibilityConsumer",
-      "kind": "struct",
-      "file": "search/responsibilities.go",
-      "line": 26,
-      "endLine": 32,
-      "underlyingType": "struct{ID string`json:\"id\"`;Name string`json:\"name\"`;Path string`json:\"path\"`;Package string`json:\"package,omitempty\"`;Line int`json:\"line\"`;}",
-      "members": [
-        {
-          "name": "ID",
-          "kind": "property",
-          "line": 27,
-          "endLine": 27,
-          "result": "string",
-          "structTag": {
-            "value": "json:\"id\""
-          }
-        },
-        {
-          "name": "Line",
+          "name": "callers",
           "kind": "property",
           "line": 31,
           "endLine": 31,
-          "result": "int",
-          "structTag": {
-            "value": "json:\"line\""
-          }
+          "result": "map[string]parser.NavigationDeclaration"
         },
         {
-          "name": "Name",
+          "name": "callsByCaller",
           "kind": "property",
-          "line": 28,
-          "endLine": 28,
-          "result": "string",
-          "structTag": {
-            "value": "json:\"name\""
-          }
+          "line": 32,
+          "endLine": 32,
+          "result": "map[string][]string"
         },
         {
-          "name": "Package",
+          "name": "declared",
           "kind": "property",
-          "line": 30,
-          "endLine": 30,
-          "result": "string",
-          "structTag": {
-            "value": "json:\"package,omitempty\""
-          }
+          "line": 35,
+          "endLine": 35,
+          "result": "int"
         },
         {
-          "name": "Path",
+          "name": "interactions",
           "kind": "property",
-          "line": 29,
-          "endLine": 29,
-          "result": "string",
-          "structTag": {
-            "value": "json:\"path\""
-          }
-        }
-      ]
-    },
-    {
-      "name": "ResponsibilityPattern",
-      "kind": "struct",
-      "file": "search/responsibilities.go",
-      "line": 35,
-      "endLine": 41,
-      "underlyingType": "struct{Methods[]string`json:\"methods\"`;Occurrences int`json:\"occurrences\"`;Files int`json:\"files\"`;Packages int`json:\"packages\"`;Consumers[]ResponsibilityConsumer`json:\"consumers\"`;}",
-      "members": [
-        {
-          "name": "Consumers",
-          "kind": "property",
-          "line": 40,
-          "endLine": 40,
-          "result": "[]ResponsibilityConsumer",
-          "structTag": {
-            "value": "json:\"consumers\""
-          }
+          "line": 33,
+          "endLine": 33,
+          "result": "map[string][]boundaryInteraction"
         },
         {
-          "name": "Files",
-          "kind": "property",
-          "line": 38,
-          "endLine": 38,
-          "result": "int",
-          "structTag": {
-            "value": "json:\"files\""
-          }
-        },
-        {
-          "name": "Methods",
+          "name": "unresolvedCalls",
           "kind": "property",
           "line": 36,
           "endLine": 36,
-          "result": "[]string",
-          "structTag": {
-            "value": "json:\"methods\""
-          }
-        },
-        {
-          "name": "Occurrences",
-          "kind": "property",
-          "line": 37,
-          "endLine": 37,
-          "result": "int",
-          "structTag": {
-            "value": "json:\"occurrences\""
-          }
-        },
-        {
-          "name": "Packages",
-          "kind": "property",
-          "line": 39,
-          "endLine": 39,
-          "result": "int",
-          "structTag": {
-            "value": "json:\"packages\""
-          }
+          "result": "int"
         }
       ]
     },
     {
-      "name": "ResponsibilityReport",
+      "name": "boundaryOwnerKey",
       "kind": "struct",
-      "file": "search/responsibilities.go",
-      "line": 44,
-      "endLine": 56,
-      "underlyingType": "struct{Schema string`json:\"schema\"`;Type string`json:\"type\"`;Languages[]string`json:\"languages\"`;Consumers ResponsibilityBreadth`json:\"consumers\"`;ConsumerDetails[]ResponsibilityConsumer`json:\"consumerDetails\"`;ExternalMethodSurface ResponsibilitySurface`json:\"externalMethodSurface\"`;Methods[]string`json:\"methods\"`;MethodCoUsage[]ResponsibilityPattern`json:\"methodCoUsage\"`;OrderedSequences[]ResponsibilityPattern`json:\"orderedSequences\"`;MemberMethodCombinations[]ResponsibilityPattern`json:\"memberMethodCombinations\"`;UnresolvedCalls int`json:\"unresolvedCalls\"`;}",
+      "file": "search/boundaries.go",
+      "line": 25,
+      "endLine": 28,
+      "underlyingType": "struct{language string;path string;}",
       "members": [
         {
-          "name": "ConsumerDetails",
+          "name": "language",
           "kind": "property",
-          "line": 49,
-          "endLine": 49,
-          "result": "[]ResponsibilityConsumer",
-          "structTag": {
-            "value": "json:\"consumerDetails\""
-          }
+          "line": 26,
+          "endLine": 26,
+          "result": "string"
         },
         {
-          "name": "Consumers",
+          "name": "path",
+          "kind": "property",
+          "line": 27,
+          "endLine": 27,
+          "result": "string"
+        }
+      ]
+    },
+    {
+      "name": "boundaryPatternGroup",
+      "kind": "struct",
+      "file": "search/boundary_model.go",
+      "line": 46,
+      "endLine": 49,
+      "underlyingType": "struct{interactions[]string;consumers[]BoundaryConsumer;}",
+      "members": [
+        {
+          "name": "consumers",
           "kind": "property",
           "line": 48,
           "endLine": 48,
-          "result": "ResponsibilityBreadth",
-          "structTag": {
-            "value": "json:\"consumers\""
-          }
+          "result": "[]BoundaryConsumer"
         },
         {
-          "name": "ExternalMethodSurface",
-          "kind": "property",
-          "line": 50,
-          "endLine": 50,
-          "result": "ResponsibilitySurface",
-          "structTag": {
-            "value": "json:\"externalMethodSurface\""
-          }
-        },
-        {
-          "name": "Languages",
+          "name": "interactions",
           "kind": "property",
           "line": 47,
           "endLine": 47,
-          "result": "[]string",
-          "structTag": {
-            "value": "json:\"languages\""
-          }
-        },
-        {
-          "name": "MemberMethodCombinations",
-          "kind": "property",
-          "line": 54,
-          "endLine": 54,
-          "result": "[]ResponsibilityPattern",
-          "structTag": {
-            "value": "json:\"memberMethodCombinations\""
-          }
-        },
-        {
-          "name": "MethodCoUsage",
-          "kind": "property",
-          "line": 52,
-          "endLine": 52,
-          "result": "[]ResponsibilityPattern",
-          "structTag": {
-            "value": "json:\"methodCoUsage\""
-          }
-        },
-        {
-          "name": "Methods",
-          "kind": "property",
-          "line": 51,
-          "endLine": 51,
-          "result": "[]string",
-          "structTag": {
-            "value": "json:\"methods\""
-          }
-        },
-        {
-          "name": "OrderedSequences",
-          "kind": "property",
-          "line": 53,
-          "endLine": 53,
-          "result": "[]ResponsibilityPattern",
-          "structTag": {
-            "value": "json:\"orderedSequences\""
-          }
-        },
-        {
-          "name": "Schema",
-          "kind": "property",
-          "line": 45,
-          "endLine": 45,
-          "result": "string",
-          "structTag": {
-            "value": "json:\"schema\""
-          }
-        },
-        {
-          "name": "Type",
-          "kind": "property",
-          "line": 46,
-          "endLine": 46,
-          "result": "string",
-          "structTag": {
-            "value": "json:\"type\""
-          }
-        },
-        {
-          "name": "UnresolvedCalls",
-          "kind": "property",
-          "line": 55,
-          "endLine": 55,
-          "result": "int",
-          "structTag": {
-            "value": "json:\"unresolvedCalls\""
-          }
+          "result": "[]string"
         }
       ]
     },
     {
-      "name": "ResponsibilitySurface",
+      "name": "boundaryTypeCandidate",
       "kind": "struct",
-      "file": "search/responsibilities.go",
-      "line": 20,
-      "endLine": 23,
-      "underlyingType": "struct{External int`json:\"external\"`;Declared int`json:\"declared\"`;}",
+      "file": "search/boundaries.go",
+      "line": 167,
+      "endLine": 170,
+      "underlyingType": "struct{typeName string;language string;}",
       "members": [
         {
-          "name": "Declared",
+          "name": "language",
           "kind": "property",
-          "line": 22,
-          "endLine": 22,
-          "result": "int",
-          "structTag": {
-            "value": "json:\"declared\""
-          }
+          "line": 169,
+          "endLine": 169,
+          "result": "string"
         },
         {
-          "name": "External",
+          "name": "typeName",
           "kind": "property",
-          "line": 21,
-          "endLine": 21,
-          "result": "int",
-          "structTag": {
-            "value": "json:\"external\""
-          }
+          "line": 168,
+          "endLine": 168,
+          "result": "string"
         }
       ]
     },
@@ -1858,326 +1879,6 @@
           "result": "*regexp.Regexp"
         }
       ]
-    },
-    {
-      "name": "responsibilityAnalyzer",
-      "kind": "struct",
-      "file": "search/responsibilities.go",
-      "line": 80,
-      "endLine": 90,
-      "underlyingType": "struct{typeName string;declarations map[string]parser.NavigationDeclaration;methodIDs map[string]bool;methods map[string]bool;languages map[string]bool;callsByCaller map[string][]string;interactionsByCaller map[string][]responsibilityInteraction;usageCallers map[string]bool;unresolvedCall int;}",
-      "members": [
-        {
-          "name": "addResponsibilityCaller",
-          "kind": "method",
-          "line": 203,
-          "endLine": 224,
-          "parameters": [
-            "string",
-            "[]responsibilityInteraction",
-            "*responsibilityPatternGroups"
-          ],
-          "result": "tuple\u003cResponsibilityConsumer,bool\u003e"
-        },
-        {
-          "name": "indexResponsibilityCalls",
-          "kind": "method",
-          "line": 115,
-          "endLine": 130,
-          "parameters": [
-            "[]parser.NavigationCall"
-          ]
-        },
-        {
-          "name": "indexResponsibilityDeclarations",
-          "kind": "method",
-          "line": 104,
-          "endLine": 113,
-          "parameters": [
-            "[]parser.NavigationDeclaration"
-          ]
-        },
-        {
-          "name": "indexResponsibilityMemberAccesses",
-          "kind": "method",
-          "line": 132,
-          "endLine": 142,
-          "parameters": [
-            "[]parser.NavigationMemberAccess"
-          ]
-        },
-        {
-          "name": "indexResponsibilityTypeUsages",
-          "kind": "method",
-          "line": 144,
-          "endLine": 151,
-          "parameters": [
-            "[]parser.NavigationTypeUsage"
-          ]
-        },
-        {
-          "name": "matchCall",
-          "kind": "method",
-          "line": 153,
-          "endLine": 173,
-          "parameters": [
-            "parser.NavigationCall"
-          ],
-          "result": "tuple\u003cstring,bool,bool\u003e"
-        },
-        {
-          "name": "report",
-          "kind": "method",
-          "line": 175,
-          "endLine": 194,
-          "parameters": [
-            "int"
-          ],
-          "result": "ResponsibilityReport"
-        },
-        {
-          "name": "callsByCaller",
-          "kind": "property",
-          "line": 86,
-          "endLine": 86,
-          "result": "map[string][]string"
-        },
-        {
-          "name": "declarations",
-          "kind": "property",
-          "line": 82,
-          "endLine": 82,
-          "result": "map[string]parser.NavigationDeclaration"
-        },
-        {
-          "name": "interactionsByCaller",
-          "kind": "property",
-          "line": 87,
-          "endLine": 87,
-          "result": "map[string][]responsibilityInteraction"
-        },
-        {
-          "name": "languages",
-          "kind": "property",
-          "line": 85,
-          "endLine": 85,
-          "result": "map[string]bool"
-        },
-        {
-          "name": "methodIDs",
-          "kind": "property",
-          "line": 83,
-          "endLine": 83,
-          "result": "map[string]bool"
-        },
-        {
-          "name": "methods",
-          "kind": "property",
-          "line": 84,
-          "endLine": 84,
-          "result": "map[string]bool"
-        },
-        {
-          "name": "typeName",
-          "kind": "property",
-          "line": 81,
-          "endLine": 81,
-          "result": "string"
-        },
-        {
-          "name": "unresolvedCall",
-          "kind": "property",
-          "line": 89,
-          "endLine": 89,
-          "result": "int"
-        },
-        {
-          "name": "usageCallers",
-          "kind": "property",
-          "line": 88,
-          "endLine": 88,
-          "result": "map[string]bool"
-        }
-      ]
-    },
-    {
-      "name": "responsibilityInteraction",
-      "kind": "struct",
-      "file": "search/responsibilities.go",
-      "line": 76,
-      "endLine": 78,
-      "underlyingType": "struct{label string}",
-      "members": [
-        {
-          "name": "label",
-          "kind": "property",
-          "line": 77,
-          "endLine": 77,
-          "result": "string"
-        }
-      ]
-    },
-    {
-      "name": "responsibilityOwnerAnalysis",
-      "kind": "struct",
-      "file": "search/responsibility_boundaries.go",
-      "line": 30,
-      "endLine": 37,
-      "underlyingType": "struct{callers map[string]parser.NavigationDeclaration;callsByCaller map[string][]string;interactions map[string][]responsibilityInteraction;called map[string]bool;declared int;unresolvedCalls int;}",
-      "members": [
-        {
-          "name": "called",
-          "kind": "property",
-          "line": 34,
-          "endLine": 34,
-          "result": "map[string]bool"
-        },
-        {
-          "name": "callers",
-          "kind": "property",
-          "line": 31,
-          "endLine": 31,
-          "result": "map[string]parser.NavigationDeclaration"
-        },
-        {
-          "name": "callsByCaller",
-          "kind": "property",
-          "line": 32,
-          "endLine": 32,
-          "result": "map[string][]string"
-        },
-        {
-          "name": "declared",
-          "kind": "property",
-          "line": 35,
-          "endLine": 35,
-          "result": "int"
-        },
-        {
-          "name": "interactions",
-          "kind": "property",
-          "line": 33,
-          "endLine": 33,
-          "result": "map[string][]responsibilityInteraction"
-        },
-        {
-          "name": "unresolvedCalls",
-          "kind": "property",
-          "line": 36,
-          "endLine": 36,
-          "result": "int"
-        }
-      ]
-    },
-    {
-      "name": "responsibilityOwnerKey",
-      "kind": "struct",
-      "file": "search/responsibility_boundaries.go",
-      "line": 25,
-      "endLine": 28,
-      "underlyingType": "struct{language string;path string;}",
-      "members": [
-        {
-          "name": "language",
-          "kind": "property",
-          "line": 26,
-          "endLine": 26,
-          "result": "string"
-        },
-        {
-          "name": "path",
-          "kind": "property",
-          "line": 27,
-          "endLine": 27,
-          "result": "string"
-        }
-      ]
-    },
-    {
-      "name": "responsibilityPatternGroup",
-      "kind": "struct",
-      "file": "search/responsibilities.go",
-      "line": 304,
-      "endLine": 307,
-      "underlyingType": "struct{methods[]string;consumers[]ResponsibilityConsumer;}",
-      "members": [
-        {
-          "name": "consumers",
-          "kind": "property",
-          "line": 306,
-          "endLine": 306,
-          "result": "[]ResponsibilityConsumer"
-        },
-        {
-          "name": "methods",
-          "kind": "property",
-          "line": 305,
-          "endLine": 305,
-          "result": "[]string"
-        }
-      ]
-    },
-    {
-      "name": "responsibilityPatternGroups",
-      "kind": "struct",
-      "file": "search/responsibilities.go",
-      "line": 196,
-      "endLine": 201,
-      "underlyingType": "struct{externalMethods map[string]bool;methodSets map[string]*responsibilityPatternGroup;sequences map[string]*responsibilityPatternGroup;combinations map[string]*responsibilityPatternGroup;}",
-      "members": [
-        {
-          "name": "combinations",
-          "kind": "property",
-          "line": 200,
-          "endLine": 200,
-          "result": "map[string]*responsibilityPatternGroup"
-        },
-        {
-          "name": "externalMethods",
-          "kind": "property",
-          "line": 197,
-          "endLine": 197,
-          "result": "map[string]bool"
-        },
-        {
-          "name": "methodSets",
-          "kind": "property",
-          "line": 198,
-          "endLine": 198,
-          "result": "map[string]*responsibilityPatternGroup"
-        },
-        {
-          "name": "sequences",
-          "kind": "property",
-          "line": 199,
-          "endLine": 199,
-          "result": "map[string]*responsibilityPatternGroup"
-        }
-      ]
-    },
-    {
-      "name": "responsibilityTypeCandidate",
-      "kind": "struct",
-      "file": "search/responsibility_boundaries.go",
-      "line": 169,
-      "endLine": 172,
-      "underlyingType": "struct{typeName string;language string;}",
-      "members": [
-        {
-          "name": "language",
-          "kind": "property",
-          "line": 171,
-          "endLine": 171,
-          "result": "string"
-        },
-        {
-          "name": "typeName",
-          "kind": "property",
-          "line": 170,
-          "endLine": 170,
-          "result": "string"
-        }
-      ]
     }
   ],
   "exportedFunctions": [
@@ -2193,29 +1894,16 @@
       "result": "[]api.RepoCount"
     },
     {
-      "name": "AnalyzeDirectoryResponsibilities",
+      "name": "AnalyzeBoundaries",
       "kind": "function",
-      "file": "search/responsibility_boundaries.go",
+      "file": "search/boundaries.go",
       "line": 42,
       "endLine": 66,
       "parameters": [
         "parser.NavigationGraph",
         "int"
       ],
-      "result": "tuple\u003c[]ResponsibilityBoundaryCandidate,error\u003e"
-    },
-    {
-      "name": "AnalyzeResponsibilities",
-      "kind": "function",
-      "file": "search/responsibilities.go",
-      "line": 61,
-      "endLine": 74,
-      "parameters": [
-        "parser.NavigationGraph",
-        "string",
-        "int"
-      ],
-      "result": "tuple\u003cResponsibilityReport,error\u003e"
+      "result": "tuple\u003c[]BoundaryCandidate,error\u003e"
     },
     {
       "name": "At",
@@ -2516,18 +2204,11 @@
       "cardinality": "many"
     },
     {
-      "from": "AnalyzeDirectoryResponsibilities",
-      "to": "ResponsibilityBoundaryCandidate",
+      "from": "AnalyzeBoundaries",
+      "to": "BoundaryCandidate",
       "kind": "dependency",
       "via": "result 1",
       "cardinality": "many"
-    },
-    {
-      "from": "AnalyzeResponsibilities",
-      "to": "ResponsibilityReport",
-      "kind": "dependency",
-      "via": "result 1",
-      "cardinality": "one"
     },
     {
       "from": "At",
@@ -2542,6 +2223,55 @@
       "kind": "dependency",
       "via": "parameter 1",
       "cardinality": "one"
+    },
+    {
+      "from": "BoundaryCandidate",
+      "to": "BoundaryBreadth",
+      "kind": "association",
+      "via": "field Consumers",
+      "cardinality": "one"
+    },
+    {
+      "from": "BoundaryCandidate",
+      "to": "BoundaryConsumer",
+      "kind": "association",
+      "via": "field ConsumerDetails",
+      "cardinality": "many"
+    },
+    {
+      "from": "BoundaryCandidate",
+      "to": "BoundaryPattern",
+      "kind": "association",
+      "via": "field CallableCoUsage",
+      "cardinality": "many"
+    },
+    {
+      "from": "BoundaryCandidate",
+      "to": "BoundaryPattern",
+      "kind": "association",
+      "via": "field MemberCallCombinations",
+      "cardinality": "many"
+    },
+    {
+      "from": "BoundaryCandidate",
+      "to": "BoundaryPattern",
+      "kind": "association",
+      "via": "field OrderedSequences",
+      "cardinality": "many"
+    },
+    {
+      "from": "BoundaryCandidate",
+      "to": "BoundarySurface",
+      "kind": "association",
+      "via": "field ExternalCallableSurface",
+      "cardinality": "one"
+    },
+    {
+      "from": "BoundaryPattern",
+      "to": "BoundaryConsumer",
+      "kind": "association",
+      "via": "field Consumers",
+      "cardinality": "many"
     },
     {
       "from": "BuildResults",
@@ -2705,102 +2435,25 @@
       "cardinality": "one"
     },
     {
-      "from": "ResponsibilityBoundaryCandidate",
-      "to": "ResponsibilityBreadth",
-      "kind": "association",
-      "via": "field Consumers",
-      "cardinality": "one"
-    },
-    {
-      "from": "ResponsibilityBoundaryCandidate",
-      "to": "ResponsibilityConsumer",
-      "kind": "association",
-      "via": "field ConsumerDetails",
-      "cardinality": "many"
-    },
-    {
-      "from": "ResponsibilityBoundaryCandidate",
-      "to": "ResponsibilityPattern",
-      "kind": "association",
-      "via": "field CallableCoUsage",
-      "cardinality": "many"
-    },
-    {
-      "from": "ResponsibilityBoundaryCandidate",
-      "to": "ResponsibilityPattern",
-      "kind": "association",
-      "via": "field MemberCallCombinations",
-      "cardinality": "many"
-    },
-    {
-      "from": "ResponsibilityBoundaryCandidate",
-      "to": "ResponsibilityPattern",
-      "kind": "association",
-      "via": "field OrderedSequences",
-      "cardinality": "many"
-    },
-    {
-      "from": "ResponsibilityBoundaryCandidate",
-      "to": "ResponsibilitySurface",
-      "kind": "association",
-      "via": "field ExternalCallableSurface",
-      "cardinality": "one"
-    },
-    {
-      "from": "ResponsibilityPattern",
-      "to": "ResponsibilityConsumer",
-      "kind": "association",
-      "via": "field Consumers",
-      "cardinality": "many"
-    },
-    {
-      "from": "ResponsibilityReport",
-      "to": "ResponsibilityBreadth",
-      "kind": "association",
-      "via": "field Consumers",
-      "cardinality": "one"
-    },
-    {
-      "from": "ResponsibilityReport",
-      "to": "ResponsibilityConsumer",
-      "kind": "association",
-      "via": "field ConsumerDetails",
-      "cardinality": "many"
-    },
-    {
-      "from": "ResponsibilityReport",
-      "to": "ResponsibilityPattern",
-      "kind": "association",
-      "via": "field MemberMethodCombinations",
-      "cardinality": "many"
-    },
-    {
-      "from": "ResponsibilityReport",
-      "to": "ResponsibilityPattern",
-      "kind": "association",
-      "via": "field MethodCoUsage",
-      "cardinality": "many"
-    },
-    {
-      "from": "ResponsibilityReport",
-      "to": "ResponsibilityPattern",
-      "kind": "association",
-      "via": "field OrderedSequences",
-      "cardinality": "many"
-    },
-    {
-      "from": "ResponsibilityReport",
-      "to": "ResponsibilitySurface",
-      "kind": "association",
-      "via": "field ExternalMethodSurface",
-      "cardinality": "one"
-    },
-    {
       "from": "ToResult",
       "to": "FileMatch",
       "kind": "dependency",
       "via": "parameter 1",
       "cardinality": "one"
+    },
+    {
+      "from": "boundaryOwnerAnalysis",
+      "to": "boundaryInteraction",
+      "kind": "association",
+      "via": "field interactions",
+      "cardinality": "many"
+    },
+    {
+      "from": "boundaryPatternGroup",
+      "to": "BoundaryConsumer",
+      "kind": "association",
+      "via": "field consumers",
+      "cardinality": "many"
     },
     {
       "from": "candidateCollector",
@@ -2962,76 +2615,6 @@
       "kind": "dependency",
       "via": "method resolveReturnFactory result 1",
       "cardinality": "one"
-    },
-    {
-      "from": "responsibilityAnalyzer",
-      "to": "ResponsibilityConsumer",
-      "kind": "dependency",
-      "via": "method addResponsibilityCaller result 1",
-      "cardinality": "one"
-    },
-    {
-      "from": "responsibilityAnalyzer",
-      "to": "ResponsibilityReport",
-      "kind": "dependency",
-      "via": "method report result 1",
-      "cardinality": "one"
-    },
-    {
-      "from": "responsibilityAnalyzer",
-      "to": "responsibilityInteraction",
-      "kind": "association",
-      "via": "field interactionsByCaller",
-      "cardinality": "many"
-    },
-    {
-      "from": "responsibilityAnalyzer",
-      "to": "responsibilityInteraction",
-      "kind": "dependency",
-      "via": "method addResponsibilityCaller parameter 2",
-      "cardinality": "many"
-    },
-    {
-      "from": "responsibilityAnalyzer",
-      "to": "responsibilityPatternGroups",
-      "kind": "dependency",
-      "via": "method addResponsibilityCaller parameter 3",
-      "cardinality": "one"
-    },
-    {
-      "from": "responsibilityOwnerAnalysis",
-      "to": "responsibilityInteraction",
-      "kind": "association",
-      "via": "field interactions",
-      "cardinality": "many"
-    },
-    {
-      "from": "responsibilityPatternGroup",
-      "to": "ResponsibilityConsumer",
-      "kind": "association",
-      "via": "field consumers",
-      "cardinality": "many"
-    },
-    {
-      "from": "responsibilityPatternGroups",
-      "to": "responsibilityPatternGroup",
-      "kind": "association",
-      "via": "field combinations",
-      "cardinality": "many"
-    },
-    {
-      "from": "responsibilityPatternGroups",
-      "to": "responsibilityPatternGroup",
-      "kind": "association",
-      "via": "field methodSets",
-      "cardinality": "many"
-    },
-    {
-      "from": "responsibilityPatternGroups",
-      "to": "responsibilityPatternGroup",
-      "kind": "association",
-      "via": "field sequences",
-      "cardinality": "many"
     }
   ]
 }

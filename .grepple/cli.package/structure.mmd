@@ -88,6 +88,52 @@ classDiagram
     %% grepple:struct-tag anchorSettings EnabledByDefault "json:\"enabled_by_default\""
     %% grepple:struct-tag anchorSettings Providers "json:\"providers\""
     note for anchorSettings "defined: internal/cli/settings.go:21-25; DefaultProvider@internal/cli/settings.go:23; EnabledByDefault@internal/cli/settings.go:22; Providers@internal/cli/settings.go:24"
+    class boundariesArgs {
+        +Description(): string
+        +JSON: bool
+        +Limit: int
+        +MaxFiles: int
+        +MaxOutputBytes: int
+        +MinOccurrences: int
+        +NoCache: bool
+        +Paths: []string
+    }
+    <<struct>> boundariesArgs
+    %% grepple:file boundariesArgs internal/cli/boundaries.go
+    %% grepple:struct-tag boundariesArgs JSON "arg:\"--json\" help:\"emit the complete boundary report as JSON\""
+    %% grepple:struct-tag boundariesArgs Limit "arg:\"--limit\" placeholder:\"N\" help:\"maximum candidates in human output (default 20; 0 = unlimited; JSON is complete)\""
+    %% grepple:struct-tag boundariesArgs MaxFiles "arg:\"--max-files\" placeholder:\"N\" help:\"parse at most N discovered files (0 = unlimited)\""
+    %% grepple:struct-tag boundariesArgs MaxOutputBytes "arg:\"--max-output-bytes\" placeholder:\"N\" help:\"cap human output (default 16384; 0 = unlimited; JSON is uncapped)\""
+    %% grepple:struct-tag boundariesArgs MinOccurrences "arg:\"--min-occurrences\" placeholder:\"N\" help:\"minimum callers sharing a reported pattern (default 2)\""
+    %% grepple:struct-tag boundariesArgs NoCache "arg:\"--no-cache\" help:\"bypass the content-addressed .grepple boundary cache\""
+    %% grepple:struct-tag boundariesArgs Paths "arg:\"positional\" placeholder:\"PATH\" help:\"file, directory, or glob to include; defaults to the working directory\""
+    note for boundariesArgs "defined: internal/cli/boundaries.go:19-27; Description@internal/cli/boundaries.go:29-31; JSON@internal/cli/boundaries.go:20; Limit@internal/cli/boundaries.go:23; MaxFiles@internal/cli/boundaries.go:22; MaxOutputBytes@internal/cli/boundaries.go:24; MinOccurrences@internal/cli/boundaries.go:21; NoCache@internal/cli/boundaries.go:25; Paths@internal/cli/boundaries.go:26"
+    class boundariesOutput {
+        +Candidates: []search.BoundaryCandidate
+        +Files: int
+        +Paths: []string
+        +Schema: string
+        +Truncation: *navigationGraphTruncation
+    }
+    <<struct>> boundariesOutput
+    %% grepple:file boundariesOutput internal/cli/boundaries.go
+    %% grepple:struct-tag boundariesOutput Candidates "json:\"candidates\""
+    %% grepple:struct-tag boundariesOutput Files "json:\"files\""
+    %% grepple:struct-tag boundariesOutput Paths "json:\"paths\""
+    %% grepple:struct-tag boundariesOutput Schema "json:\"schema\""
+    %% grepple:struct-tag boundariesOutput Truncation "json:\"truncation,omitempty\""
+    note for boundariesOutput "defined: internal/cli/boundaries.go:33-39; Candidates@internal/cli/boundaries.go:37; Files@internal/cli/boundaries.go:36; Paths@internal/cli/boundaries.go:35; Schema@internal/cli/boundaries.go:34; Truncation@internal/cli/boundaries.go:38"
+    class boundaryGraphCache {
+        +Digest: string
+        +Graph: navigationGraphOutput
+        +Schema: string
+    }
+    <<struct>> boundaryGraphCache
+    %% grepple:file boundaryGraphCache internal/cli/boundaries_cache.go
+    %% grepple:struct-tag boundaryGraphCache Digest "json:\"digest\""
+    %% grepple:struct-tag boundaryGraphCache Graph "json:\"graph\""
+    %% grepple:struct-tag boundaryGraphCache Schema "json:\"schema\""
+    note for boundaryGraphCache "defined: internal/cli/boundaries_cache.go:17-21; Digest@internal/cli/boundaries_cache.go:19; Graph@internal/cli/boundaries_cache.go:20; Schema@internal/cli/boundaries_cache.go:18"
     class cliOptions {
         +AnchorLines: anchorLookup
         +AnchorProvider: string
@@ -183,21 +229,6 @@ classDiagram
     %% grepple:struct-tag deviceTokenResponse Scope "json:\"scope\""
     %% grepple:struct-tag deviceTokenResponse TokenType "json:\"token_type\""
     note for deviceTokenResponse "defined: internal/cli/login.go:31-41; AccessToken@internal/cli/login.go:32; Error@internal/cli/login.go:38; ErrorDescription@internal/cli/login.go:39; ExpiresIn@internal/cli/login.go:35; Interval@internal/cli/login.go:40; RefreshToken@internal/cli/login.go:36; RefreshTokenExpiresIn@internal/cli/login.go:37; Scope@internal/cli/login.go:34; TokenType@internal/cli/login.go:33"
-    class directoryResponsibilitiesOutput {
-        +Candidates: []search.ResponsibilityBoundaryCandidate
-        +Files: int
-        +Paths: []string
-        +Schema: string
-        +Truncation: *navigationGraphTruncation
-    }
-    <<struct>> directoryResponsibilitiesOutput
-    %% grepple:file directoryResponsibilitiesOutput internal/cli/responsibilities.go
-    %% grepple:struct-tag directoryResponsibilitiesOutput Candidates "json:\"candidates\""
-    %% grepple:struct-tag directoryResponsibilitiesOutput Files "json:\"files\""
-    %% grepple:struct-tag directoryResponsibilitiesOutput Paths "json:\"paths\""
-    %% grepple:struct-tag directoryResponsibilitiesOutput Schema "json:\"schema\""
-    %% grepple:struct-tag directoryResponsibilitiesOutput Truncation "json:\"truncation,omitempty\""
-    note for directoryResponsibilitiesOutput "defined: internal/cli/responsibilities.go:40-46; Candidates@internal/cli/responsibilities.go:44; Files@internal/cli/responsibilities.go:43; Paths@internal/cli/responsibilities.go:42; Schema@internal/cli/responsibilities.go:41; Truncation@internal/cli/responsibilities.go:45"
     class errBrokenPipe {
         +Error(): string
         +Unwrap(): error
@@ -543,48 +574,6 @@ classDiagram
     %% grepple:struct-tag reposArgs JSON "arg:\"--json\" help:\"print raw JSON\""
     %% grepple:struct-tag reposArgs Server "arg:\"-s,--server\" placeholder:\"URL\" help:\"remote shard/router URL\""
     note for reposArgs "defined: internal/cli/repos.go:16-20; Description@internal/cli/repos.go:22-24; Filter@internal/cli/repos.go:19; JSON@internal/cli/repos.go:18; Server@internal/cli/repos.go:17"
-    class responsibilitiesArgs {
-        +Description(): string
-        +JSON: bool
-        +Limit: int
-        +MaxFiles: int
-        +MaxOutputBytes: int
-        +MinOccurrences: int
-        +NoCache: bool
-        +Paths: []string
-        +Type: string
-    }
-    <<struct>> responsibilitiesArgs
-    %% grepple:file responsibilitiesArgs internal/cli/responsibilities.go
-    %% grepple:struct-tag responsibilitiesArgs JSON "arg:\"--json\" help:\"emit the complete responsibility report as JSON\""
-    %% grepple:struct-tag responsibilitiesArgs Limit "arg:\"--limit\" placeholder:\"N\" help:\"maximum type reports in human directory output (default 20; 0 = unlimited; JSON is complete)\""
-    %% grepple:struct-tag responsibilitiesArgs MaxFiles "arg:\"--max-files\" placeholder:\"N\" help:\"parse at most N discovered files (0 = unlimited)\""
-    %% grepple:struct-tag responsibilitiesArgs MaxOutputBytes "arg:\"--max-output-bytes\" placeholder:\"N\" help:\"cap human output (default 16384; 0 = unlimited; JSON is uncapped)\""
-    %% grepple:struct-tag responsibilitiesArgs MinOccurrences "arg:\"--min-occurrences\" placeholder:\"N\" help:\"minimum callers sharing a reported pattern (default 2)\""
-    %% grepple:struct-tag responsibilitiesArgs NoCache "arg:\"--no-cache\" help:\"bypass the content-addressed .grepple responsibility cache\""
-    %% grepple:struct-tag responsibilitiesArgs Paths "arg:\"positional\" placeholder:\"PATH\" help:\"file, directory, or glob to include; defaults to the working directory\""
-    %% grepple:struct-tag responsibilitiesArgs Type "arg:\"--type\" placeholder:\"TYPE\" help:\"analyze one exact receiver or container type instead of discovering the directory\""
-    note for responsibilitiesArgs "defined: internal/cli/responsibilities.go:19-28; Description@internal/cli/responsibilities.go:30-32; JSON@internal/cli/responsibilities.go:20; Limit@internal/cli/responsibilities.go:23; MaxFiles@internal/cli/responsibilities.go:22; MaxOutputBytes@internal/cli/responsibilities.go:24; MinOccurrences@internal/cli/responsibilities.go:21; NoCache@internal/cli/responsibilities.go:25; Paths@internal/cli/responsibilities.go:27; Type@internal/cli/responsibilities.go:26"
-    class responsibilitiesOutput {
-        +Files: int
-        +Truncation: *navigationGraphTruncation
-    }
-    <<struct>> responsibilitiesOutput
-    %% grepple:file responsibilitiesOutput internal/cli/responsibilities.go
-    %% grepple:struct-tag responsibilitiesOutput Files "json:\"files\""
-    %% grepple:struct-tag responsibilitiesOutput Truncation "json:\"truncation,omitempty\""
-    note for responsibilitiesOutput "defined: internal/cli/responsibilities.go:34-38; Files@internal/cli/responsibilities.go:36; Truncation@internal/cli/responsibilities.go:37"
-    class responsibilityGraphCache {
-        +Digest: string
-        +Graph: navigationGraphOutput
-        +Schema: string
-    }
-    <<struct>> responsibilityGraphCache
-    %% grepple:file responsibilityGraphCache internal/cli/responsibilities_cache.go
-    %% grepple:struct-tag responsibilityGraphCache Digest "json:\"digest\""
-    %% grepple:struct-tag responsibilityGraphCache Graph "json:\"graph\""
-    %% grepple:struct-tag responsibilityGraphCache Schema "json:\"schema\""
-    note for responsibilityGraphCache "defined: internal/cli/responsibilities_cache.go:17-21; Digest@internal/cli/responsibilities_cache.go:19; Graph@internal/cli/responsibilities_cache.go:20; Schema@internal/cli/responsibilities_cache.go:18"
     class resultRenderer {
         +Render([]api.FileResult): error
     }
@@ -778,12 +767,13 @@ classDiagram
     anchorProtocolResponse "1" --> "*" anchorProtocolResponseFile : field Files
     anchorProtocolResponseFile "1" --> "*" anchorProtocolLine : field Anchors
     anchorSettings "1" --> "*" anchorProviderSettings : field Providers
+    boundariesOutput "1" --> "1" navigationGraphTruncation : field Truncation
+    boundaryGraphCache "1" --> "1" navigationGraphOutput : field Graph
     cliOptions "1" --> "1" anchorLookup : field AnchorLines
     contextRenderer "1" --> "1" outputWriter : field output
     resultRenderer <|.. contextRenderer : implements
     countRenderer "1" --> "1" outputWriter : field output
     resultRenderer <|.. countRenderer : implements
-    directoryResponsibilitiesOutput "1" --> "1" navigationGraphTruncation : field Truncation
     filesRenderer "1" --> "1" outputWriter : field output
     resultRenderer <|.. filesRenderer : implements
     jsonResultRenderer "1" --> "1" outputWriter : field output
@@ -796,8 +786,6 @@ classDiagram
     onlyMatchingRenderer "1" --> "1" outputWriter : field output
     resultRenderer <|.. onlyMatchingRenderer : implements
     repoCountRenderer "1" --> "1" outputWriter : field output
-    responsibilitiesOutput "1" --> "1" navigationGraphTruncation : field Truncation
-    responsibilityGraphCache "1" --> "1" navigationGraphOutput : field Graph
     segmentRenderer "1" --> "1" anchorLookup : field anchors
     segmentRenderer "1" --> "1" outputWriter : field output
     resultRenderer <|.. segmentRenderer : implements

@@ -3,6 +3,81 @@ classDiagram
     %% grepple:package-default github.com/greppleai/grepple/search
     %% grepple:language-default go
     %% grepple:exact-default
+    class BoundaryBreadth {
+        +Files: int
+        +Functions: int
+        +Packages: int
+    }
+    <<struct>> BoundaryBreadth
+    %% grepple:file BoundaryBreadth search/boundary_model.go
+    %% grepple:struct-tag BoundaryBreadth Files "json:\"files\""
+    %% grepple:struct-tag BoundaryBreadth Functions "json:\"functions\""
+    %% grepple:struct-tag BoundaryBreadth Packages "json:\"packages\""
+    note for BoundaryBreadth "defined: search/boundary_model.go:12-16; Files@search/boundary_model.go:14; Functions@search/boundary_model.go:13; Packages@search/boundary_model.go:15"
+    class BoundaryCandidate {
+        +CallableCoUsage: []BoundaryPattern
+        +Callables: []string
+        +ConsumerDetails: []BoundaryConsumer
+        +Consumers: BoundaryBreadth
+        +ExternalCallableSurface: BoundarySurface
+        +Language: string
+        +MemberCallCombinations: []BoundaryPattern
+        +OrderedSequences: []BoundaryPattern
+        +OwnerFile: string
+        +UnresolvedCalls: int
+    }
+    <<struct>> BoundaryCandidate
+    %% grepple:file BoundaryCandidate search/boundaries.go
+    %% grepple:struct-tag BoundaryCandidate CallableCoUsage "json:\"callableCoUsage\""
+    %% grepple:struct-tag BoundaryCandidate Callables "json:\"callables\""
+    %% grepple:struct-tag BoundaryCandidate ConsumerDetails "json:\"consumerDetails\""
+    %% grepple:struct-tag BoundaryCandidate Consumers "json:\"consumers\""
+    %% grepple:struct-tag BoundaryCandidate ExternalCallableSurface "json:\"externalCallableSurface\""
+    %% grepple:struct-tag BoundaryCandidate Language "json:\"language\""
+    %% grepple:struct-tag BoundaryCandidate MemberCallCombinations "json:\"memberCallCombinations\""
+    %% grepple:struct-tag BoundaryCandidate OrderedSequences "json:\"orderedSequences\""
+    %% grepple:struct-tag BoundaryCandidate OwnerFile "json:\"ownerFile\""
+    %% grepple:struct-tag BoundaryCandidate UnresolvedCalls "json:\"unresolvedCalls\""
+    note for BoundaryCandidate "defined: search/boundaries.go:12-23; CallableCoUsage@search/boundaries.go:19; Callables@search/boundaries.go:18; ConsumerDetails@search/boundaries.go:16; Consumers@search/boundaries.go:15; ExternalCallableSurface@search/boundaries.go:17; Language@search/boundaries.go:14; MemberCallCombinations@search/boundaries.go:21; OrderedSequences@search/boundaries.go:20; OwnerFile@search/boundaries.go:13; UnresolvedCalls@search/boundaries.go:22"
+    class BoundaryConsumer {
+        +ID: string
+        +Line: int
+        +Name: string
+        +Package: string
+        +Path: string
+    }
+    <<struct>> BoundaryConsumer
+    %% grepple:file BoundaryConsumer search/boundary_model.go
+    %% grepple:struct-tag BoundaryConsumer ID "json:\"id\""
+    %% grepple:struct-tag BoundaryConsumer Line "json:\"line\""
+    %% grepple:struct-tag BoundaryConsumer Name "json:\"name\""
+    %% grepple:struct-tag BoundaryConsumer Package "json:\"package,omitempty\""
+    %% grepple:struct-tag BoundaryConsumer Path "json:\"path\""
+    note for BoundaryConsumer "defined: search/boundary_model.go:25-31; ID@search/boundary_model.go:26; Line@search/boundary_model.go:30; Name@search/boundary_model.go:27; Package@search/boundary_model.go:29; Path@search/boundary_model.go:28"
+    class BoundaryPattern {
+        +Consumers: []BoundaryConsumer
+        +Files: int
+        +Interactions: []string
+        +Occurrences: int
+        +Packages: int
+    }
+    <<struct>> BoundaryPattern
+    %% grepple:file BoundaryPattern search/boundary_model.go
+    %% grepple:struct-tag BoundaryPattern Consumers "json:\"consumers\""
+    %% grepple:struct-tag BoundaryPattern Files "json:\"files\""
+    %% grepple:struct-tag BoundaryPattern Interactions "json:\"interactions\""
+    %% grepple:struct-tag BoundaryPattern Occurrences "json:\"occurrences\""
+    %% grepple:struct-tag BoundaryPattern Packages "json:\"packages\""
+    note for BoundaryPattern "defined: search/boundary_model.go:34-40; Consumers@search/boundary_model.go:39; Files@search/boundary_model.go:37; Interactions@search/boundary_model.go:35; Occurrences@search/boundary_model.go:36; Packages@search/boundary_model.go:38"
+    class BoundarySurface {
+        +Declared: int
+        +External: int
+    }
+    <<struct>> BoundarySurface
+    %% grepple:file BoundarySurface search/boundary_model.go
+    %% grepple:struct-tag BoundarySurface Declared "json:\"declared\""
+    %% grepple:struct-tag BoundarySurface External "json:\"external\""
+    note for BoundarySurface "defined: search/boundary_model.go:19-22; Declared@search/boundary_model.go:21; External@search/boundary_model.go:20"
     class FileMatch {
         +Content: string
         +DisplayPath: string
@@ -157,108 +232,44 @@ classDiagram
     <<struct>> RepoFilter
     %% grepple:file RepoFilter search/search_engine.go
     note for RepoFilter "defined: search/search_engine.go:129-132; Allow@search/search_engine.go:144-166; exclude@search/search_engine.go:131; include@search/search_engine.go:130"
-    class ResponsibilityBoundaryCandidate {
-        +CallableCoUsage: []ResponsibilityPattern
-        +Callables: []string
-        +ConsumerDetails: []ResponsibilityConsumer
-        +Consumers: ResponsibilityBreadth
-        +ExternalCallableSurface: ResponsibilitySurface
-        +Language: string
-        +MemberCallCombinations: []ResponsibilityPattern
-        +OrderedSequences: []ResponsibilityPattern
-        +OwnerFile: string
-        +UnresolvedCalls: int
+    class boundaryInteraction {
+        -label: string
     }
-    <<struct>> ResponsibilityBoundaryCandidate
-    %% grepple:file ResponsibilityBoundaryCandidate search/responsibility_boundaries.go
-    %% grepple:struct-tag ResponsibilityBoundaryCandidate CallableCoUsage "json:\"callableCoUsage\""
-    %% grepple:struct-tag ResponsibilityBoundaryCandidate Callables "json:\"callables\""
-    %% grepple:struct-tag ResponsibilityBoundaryCandidate ConsumerDetails "json:\"consumerDetails\""
-    %% grepple:struct-tag ResponsibilityBoundaryCandidate Consumers "json:\"consumers\""
-    %% grepple:struct-tag ResponsibilityBoundaryCandidate ExternalCallableSurface "json:\"externalCallableSurface\""
-    %% grepple:struct-tag ResponsibilityBoundaryCandidate Language "json:\"language\""
-    %% grepple:struct-tag ResponsibilityBoundaryCandidate MemberCallCombinations "json:\"memberCallCombinations\""
-    %% grepple:struct-tag ResponsibilityBoundaryCandidate OrderedSequences "json:\"orderedSequences\""
-    %% grepple:struct-tag ResponsibilityBoundaryCandidate OwnerFile "json:\"ownerFile\""
-    %% grepple:struct-tag ResponsibilityBoundaryCandidate UnresolvedCalls "json:\"unresolvedCalls\""
-    note for ResponsibilityBoundaryCandidate "defined: search/responsibility_boundaries.go:12-23; CallableCoUsage@search/responsibility_boundaries.go:19; Callables@search/responsibility_boundaries.go:18; ConsumerDetails@search/responsibility_boundaries.go:16; Consumers@search/responsibility_boundaries.go:15; ExternalCallableSurface@search/responsibility_boundaries.go:17; Language@search/responsibility_boundaries.go:14; MemberCallCombinations@search/responsibility_boundaries.go:21; OrderedSequences@search/responsibility_boundaries.go:20; OwnerFile@search/responsibility_boundaries.go:13; UnresolvedCalls@search/responsibility_boundaries.go:22"
-    class ResponsibilityBreadth {
-        +Files: int
-        +Functions: int
-        +Packages: int
+    <<struct>> boundaryInteraction
+    %% grepple:file boundaryInteraction search/boundary_model.go
+    note for boundaryInteraction "defined: search/boundary_model.go:42-44; label@search/boundary_model.go:43"
+    class boundaryOwnerAnalysis {
+        -called: map[string]bool
+        -callers: map[string]parser.NavigationDeclaration
+        -callsByCaller: map[string][]string
+        -declared: int
+        -interactions: map[string][]boundaryInteraction
+        -unresolvedCalls: int
     }
-    <<struct>> ResponsibilityBreadth
-    %% grepple:file ResponsibilityBreadth search/responsibilities.go
-    %% grepple:struct-tag ResponsibilityBreadth Files "json:\"files\""
-    %% grepple:struct-tag ResponsibilityBreadth Functions "json:\"functions\""
-    %% grepple:struct-tag ResponsibilityBreadth Packages "json:\"packages\""
-    note for ResponsibilityBreadth "defined: search/responsibilities.go:13-17; Files@search/responsibilities.go:15; Functions@search/responsibilities.go:14; Packages@search/responsibilities.go:16"
-    class ResponsibilityConsumer {
-        +ID: string
-        +Line: int
-        +Name: string
-        +Package: string
-        +Path: string
+    <<struct>> boundaryOwnerAnalysis
+    %% grepple:file boundaryOwnerAnalysis search/boundaries.go
+    note for boundaryOwnerAnalysis "defined: search/boundaries.go:30-37; called@search/boundaries.go:34; callers@search/boundaries.go:31; callsByCaller@search/boundaries.go:32; declared@search/boundaries.go:35; interactions@search/boundaries.go:33; unresolvedCalls@search/boundaries.go:36"
+    class boundaryOwnerKey {
+        -language: string
+        -path: string
     }
-    <<struct>> ResponsibilityConsumer
-    %% grepple:file ResponsibilityConsumer search/responsibilities.go
-    %% grepple:struct-tag ResponsibilityConsumer ID "json:\"id\""
-    %% grepple:struct-tag ResponsibilityConsumer Line "json:\"line\""
-    %% grepple:struct-tag ResponsibilityConsumer Name "json:\"name\""
-    %% grepple:struct-tag ResponsibilityConsumer Package "json:\"package,omitempty\""
-    %% grepple:struct-tag ResponsibilityConsumer Path "json:\"path\""
-    note for ResponsibilityConsumer "defined: search/responsibilities.go:26-32; ID@search/responsibilities.go:27; Line@search/responsibilities.go:31; Name@search/responsibilities.go:28; Package@search/responsibilities.go:30; Path@search/responsibilities.go:29"
-    class ResponsibilityPattern {
-        +Consumers: []ResponsibilityConsumer
-        +Files: int
-        +Methods: []string
-        +Occurrences: int
-        +Packages: int
+    <<struct>> boundaryOwnerKey
+    %% grepple:file boundaryOwnerKey search/boundaries.go
+    note for boundaryOwnerKey "defined: search/boundaries.go:25-28; language@search/boundaries.go:26; path@search/boundaries.go:27"
+    class boundaryPatternGroup {
+        -consumers: []BoundaryConsumer
+        -interactions: []string
     }
-    <<struct>> ResponsibilityPattern
-    %% grepple:file ResponsibilityPattern search/responsibilities.go
-    %% grepple:struct-tag ResponsibilityPattern Consumers "json:\"consumers\""
-    %% grepple:struct-tag ResponsibilityPattern Files "json:\"files\""
-    %% grepple:struct-tag ResponsibilityPattern Methods "json:\"methods\""
-    %% grepple:struct-tag ResponsibilityPattern Occurrences "json:\"occurrences\""
-    %% grepple:struct-tag ResponsibilityPattern Packages "json:\"packages\""
-    note for ResponsibilityPattern "defined: search/responsibilities.go:35-41; Consumers@search/responsibilities.go:40; Files@search/responsibilities.go:38; Methods@search/responsibilities.go:36; Occurrences@search/responsibilities.go:37; Packages@search/responsibilities.go:39"
-    class ResponsibilityReport {
-        +ConsumerDetails: []ResponsibilityConsumer
-        +Consumers: ResponsibilityBreadth
-        +ExternalMethodSurface: ResponsibilitySurface
-        +Languages: []string
-        +MemberMethodCombinations: []ResponsibilityPattern
-        +MethodCoUsage: []ResponsibilityPattern
-        +Methods: []string
-        +OrderedSequences: []ResponsibilityPattern
-        +Schema: string
-        +Type: string
-        +UnresolvedCalls: int
+    <<struct>> boundaryPatternGroup
+    %% grepple:file boundaryPatternGroup search/boundary_model.go
+    note for boundaryPatternGroup "defined: search/boundary_model.go:46-49; consumers@search/boundary_model.go:48; interactions@search/boundary_model.go:47"
+    class boundaryTypeCandidate {
+        -language: string
+        -typeName: string
     }
-    <<struct>> ResponsibilityReport
-    %% grepple:file ResponsibilityReport search/responsibilities.go
-    %% grepple:struct-tag ResponsibilityReport ConsumerDetails "json:\"consumerDetails\""
-    %% grepple:struct-tag ResponsibilityReport Consumers "json:\"consumers\""
-    %% grepple:struct-tag ResponsibilityReport ExternalMethodSurface "json:\"externalMethodSurface\""
-    %% grepple:struct-tag ResponsibilityReport Languages "json:\"languages\""
-    %% grepple:struct-tag ResponsibilityReport MemberMethodCombinations "json:\"memberMethodCombinations\""
-    %% grepple:struct-tag ResponsibilityReport MethodCoUsage "json:\"methodCoUsage\""
-    %% grepple:struct-tag ResponsibilityReport Methods "json:\"methods\""
-    %% grepple:struct-tag ResponsibilityReport OrderedSequences "json:\"orderedSequences\""
-    %% grepple:struct-tag ResponsibilityReport Schema "json:\"schema\""
-    %% grepple:struct-tag ResponsibilityReport Type "json:\"type\""
-    %% grepple:struct-tag ResponsibilityReport UnresolvedCalls "json:\"unresolvedCalls\""
-    note for ResponsibilityReport "defined: search/responsibilities.go:44-56; ConsumerDetails@search/responsibilities.go:49; Consumers@search/responsibilities.go:48; ExternalMethodSurface@search/responsibilities.go:50; Languages@search/responsibilities.go:47; MemberMethodCombinations@search/responsibilities.go:54; MethodCoUsage@search/responsibilities.go:52; Methods@search/responsibilities.go:51; OrderedSequences@search/responsibilities.go:53; Schema@search/responsibilities.go:45; Type@search/responsibilities.go:46; UnresolvedCalls@search/responsibilities.go:55"
-    class ResponsibilitySurface {
-        +Declared: int
-        +External: int
-    }
-    <<struct>> ResponsibilitySurface
-    %% grepple:file ResponsibilitySurface search/responsibilities.go
-    %% grepple:struct-tag ResponsibilitySurface Declared "json:\"declared\""
-    %% grepple:struct-tag ResponsibilitySurface External "json:\"external\""
-    note for ResponsibilitySurface "defined: search/responsibilities.go:20-23; Declared@search/responsibilities.go:22; External@search/responsibilities.go:21"
+    <<struct>> boundaryTypeCandidate
+    %% grepple:file boundaryTypeCandidate search/boundaries.go
+    note for boundaryTypeCandidate "defined: search/boundaries.go:167-170; language@search/boundaries.go:169; typeName@search/boundaries.go:168"
     class candidateCollector {
         -add(string)
         -addPlainGlob(string): error
@@ -384,92 +395,18 @@ classDiagram
     <<struct>> repoPattern
     %% grepple:file repoPattern search/search_engine.go
     note for repoPattern "defined: search/search_engine.go:95-98; match@search/search_engine.go:108-113; glob@search/search_engine.go:96; re@search/search_engine.go:97"
-    class responsibilityAnalyzer {
-        -addResponsibilityCaller(string, []responsibilityInteraction, *responsibilityPatternGroups): tuple~ResponsibilityConsumer&#44;bool~
-        -indexResponsibilityCalls([]parser.NavigationCall)
-        -indexResponsibilityDeclarations([]parser.NavigationDeclaration)
-        -indexResponsibilityMemberAccesses([]parser.NavigationMemberAccess)
-        -indexResponsibilityTypeUsages([]parser.NavigationTypeUsage)
-        -matchCall(parser.NavigationCall): tuple~string&#44;bool&#44;bool~
-        -report(int): ResponsibilityReport
-        -callsByCaller: map[string][]string
-        -declarations: map[string]parser.NavigationDeclaration
-        -interactionsByCaller: map[string][]responsibilityInteraction
-        -languages: map[string]bool
-        -methodIDs: map[string]bool
-        -methods: map[string]bool
-        -typeName: string
-        -unresolvedCall: int
-        -usageCallers: map[string]bool
-    }
-    <<struct>> responsibilityAnalyzer
-    %% grepple:file responsibilityAnalyzer search/responsibilities.go
-    note for responsibilityAnalyzer "defined: search/responsibilities.go:80-90; addResponsibilityCaller@search/responsibilities.go:203-224; indexResponsibilityCalls@search/responsibilities.go:115-130; indexResponsibilityDeclarations@search/responsibilities.go:104-113; indexResponsibilityMemberAccesses@search/responsibilities.go:132-142; indexResponsibilityTypeUsages@search/responsibilities.go:144-151; matchCall@search/responsibilities.go:153-173; report@search/responsibilities.go:175-194; callsByCaller@search/responsibilities.go:86; declarations@search/responsibilities.go:82; interactionsByCaller@search/responsibilities.go:87; languages@search/responsibilities.go:85; methodIDs@search/responsibilities.go:83; methods@search/responsibilities.go:84; typeName@search/responsibilities.go:81; unresolvedCall@search/responsibilities.go:89; usageCallers@search/responsibilities.go:88"
-    class responsibilityInteraction {
-        -label: string
-    }
-    <<struct>> responsibilityInteraction
-    %% grepple:file responsibilityInteraction search/responsibilities.go
-    note for responsibilityInteraction "defined: search/responsibilities.go:76-78; label@search/responsibilities.go:77"
-    class responsibilityOwnerAnalysis {
-        -called: map[string]bool
-        -callers: map[string]parser.NavigationDeclaration
-        -callsByCaller: map[string][]string
-        -declared: int
-        -interactions: map[string][]responsibilityInteraction
-        -unresolvedCalls: int
-    }
-    <<struct>> responsibilityOwnerAnalysis
-    %% grepple:file responsibilityOwnerAnalysis search/responsibility_boundaries.go
-    note for responsibilityOwnerAnalysis "defined: search/responsibility_boundaries.go:30-37; called@search/responsibility_boundaries.go:34; callers@search/responsibility_boundaries.go:31; callsByCaller@search/responsibility_boundaries.go:32; declared@search/responsibility_boundaries.go:35; interactions@search/responsibility_boundaries.go:33; unresolvedCalls@search/responsibility_boundaries.go:36"
-    class responsibilityOwnerKey {
-        -language: string
-        -path: string
-    }
-    <<struct>> responsibilityOwnerKey
-    %% grepple:file responsibilityOwnerKey search/responsibility_boundaries.go
-    note for responsibilityOwnerKey "defined: search/responsibility_boundaries.go:25-28; language@search/responsibility_boundaries.go:26; path@search/responsibility_boundaries.go:27"
-    class responsibilityPatternGroup {
-        -consumers: []ResponsibilityConsumer
-        -methods: []string
-    }
-    <<struct>> responsibilityPatternGroup
-    %% grepple:file responsibilityPatternGroup search/responsibilities.go
-    note for responsibilityPatternGroup "defined: search/responsibilities.go:304-307; consumers@search/responsibilities.go:306; methods@search/responsibilities.go:305"
-    class responsibilityPatternGroups {
-        -combinations: map[string]*responsibilityPatternGroup
-        -externalMethods: map[string]bool
-        -methodSets: map[string]*responsibilityPatternGroup
-        -sequences: map[string]*responsibilityPatternGroup
-    }
-    <<struct>> responsibilityPatternGroups
-    %% grepple:file responsibilityPatternGroups search/responsibilities.go
-    note for responsibilityPatternGroups "defined: search/responsibilities.go:196-201; combinations@search/responsibilities.go:200; externalMethods@search/responsibilities.go:197; methodSets@search/responsibilities.go:198; sequences@search/responsibilities.go:199"
-    class responsibilityTypeCandidate {
-        -language: string
-        -typeName: string
-    }
-    <<struct>> responsibilityTypeCandidate
-    %% grepple:file responsibilityTypeCandidate search/responsibility_boundaries.go
-    note for responsibilityTypeCandidate "defined: search/responsibility_boundaries.go:169-172; language@search/responsibility_boundaries.go:171; typeName@search/responsibility_boundaries.go:170"
     class AggregateRepoCounts {
         +AggregateRepoCounts([]FileMatch): []api.RepoCount
     }
     <<function>> AggregateRepoCounts
     %% grepple:file AggregateRepoCounts search/search_engine.go
     note for AggregateRepoCounts "defined: search/search_engine.go:494-513"
-    class AnalyzeDirectoryResponsibilities {
-        +AnalyzeDirectoryResponsibilities(parser.NavigationGraph, int): tuple~[]ResponsibilityBoundaryCandidate&#44;error~
+    class AnalyzeBoundaries {
+        +AnalyzeBoundaries(parser.NavigationGraph, int): tuple~[]BoundaryCandidate&#44;error~
     }
-    <<function>> AnalyzeDirectoryResponsibilities
-    %% grepple:file AnalyzeDirectoryResponsibilities search/responsibility_boundaries.go
-    note for AnalyzeDirectoryResponsibilities "defined: search/responsibility_boundaries.go:42-66"
-    class AnalyzeResponsibilities {
-        +AnalyzeResponsibilities(parser.NavigationGraph, string, int): tuple~ResponsibilityReport&#44;error~
-    }
-    <<function>> AnalyzeResponsibilities
-    %% grepple:file AnalyzeResponsibilities search/responsibilities.go
-    note for AnalyzeResponsibilities "defined: search/responsibilities.go:61-74"
+    <<function>> AnalyzeBoundaries
+    %% grepple:file AnalyzeBoundaries search/boundaries.go
+    note for AnalyzeBoundaries "defined: search/boundaries.go:42-66"
     class At {
         +At(Params): tuple~*FileMatch&#44;error~
     }
@@ -615,10 +552,16 @@ classDiagram
     %% grepple:file WorkerCount search/workers.go
     note for WorkerCount "defined: search/workers.go:19-34"
     AggregateRepoCounts "1" ..> "*" FileMatch : parameter 1
-    AnalyzeDirectoryResponsibilities "1" ..> "*" ResponsibilityBoundaryCandidate : result 1
-    AnalyzeResponsibilities "1" ..> "1" ResponsibilityReport : result 1
+    AnalyzeBoundaries "1" ..> "*" BoundaryCandidate : result 1
     At "1" ..> "1" FileMatch : result 1
     At "1" ..> "1" Params : parameter 1
+    BoundaryCandidate "1" --> "1" BoundaryBreadth : field Consumers
+    BoundaryCandidate "1" --> "*" BoundaryConsumer : field ConsumerDetails
+    BoundaryCandidate "1" --> "*" BoundaryPattern : field CallableCoUsage
+    BoundaryCandidate "1" --> "*" BoundaryPattern : field MemberCallCombinations
+    BoundaryCandidate "1" --> "*" BoundaryPattern : field OrderedSequences
+    BoundaryCandidate "1" --> "1" BoundarySurface : field ExternalCallableSurface
+    BoundaryPattern "1" --> "*" BoundaryConsumer : field Consumers
     BuildResults "1" ..> "*" FileMatch : parameter 1
     Content "1" ..> "1" FileMatch : result 1
     Content "1" ..> "1" Params : parameter 1
@@ -642,20 +585,9 @@ classDiagram
     RepoFilter "1" --> "*" repoPattern : field exclude
     RepoFilter "1" --> "*" repoPattern : field include
     ResolveRequest "1" ..> "1" Params : result 1
-    ResponsibilityBoundaryCandidate "1" --> "1" ResponsibilityBreadth : field Consumers
-    ResponsibilityBoundaryCandidate "1" --> "*" ResponsibilityConsumer : field ConsumerDetails
-    ResponsibilityBoundaryCandidate "1" --> "*" ResponsibilityPattern : field CallableCoUsage
-    ResponsibilityBoundaryCandidate "1" --> "*" ResponsibilityPattern : field MemberCallCombinations
-    ResponsibilityBoundaryCandidate "1" --> "*" ResponsibilityPattern : field OrderedSequences
-    ResponsibilityBoundaryCandidate "1" --> "1" ResponsibilitySurface : field ExternalCallableSurface
-    ResponsibilityPattern "1" --> "*" ResponsibilityConsumer : field Consumers
-    ResponsibilityReport "1" --> "1" ResponsibilityBreadth : field Consumers
-    ResponsibilityReport "1" --> "*" ResponsibilityConsumer : field ConsumerDetails
-    ResponsibilityReport "1" --> "*" ResponsibilityPattern : field MemberMethodCombinations
-    ResponsibilityReport "1" --> "*" ResponsibilityPattern : field MethodCoUsage
-    ResponsibilityReport "1" --> "*" ResponsibilityPattern : field OrderedSequences
-    ResponsibilityReport "1" --> "1" ResponsibilitySurface : field ExternalMethodSurface
     ToResult "1" ..> "1" FileMatch : parameter 1
+    boundaryOwnerAnalysis "1" --> "*" boundaryInteraction : field interactions
+    boundaryPatternGroup "1" --> "*" BoundaryConsumer : field consumers
     candidateCollector "1" --> "1" gitignoreCache : field ignoreCache
     candidateScan "1" ..> "*" FileMatch : method scanAll result 1
     candidateScan "1" ..> "*" FileMatch : method scanWindowed result 1
@@ -679,13 +611,3 @@ classDiagram
     navigationIndex "1" ..> "*" navigationDeclaration : method navigationDeclarationsByID result 1
     navigationIndex "1" ..> "*" navigationDeclaration : method resolveGraphCall parameter 3
     navigationIndex "1" ..> "1" navigationDeclaration : method resolveReturnFactory result 1
-    responsibilityAnalyzer "1" ..> "1" ResponsibilityConsumer : method addResponsibilityCaller result 1
-    responsibilityAnalyzer "1" ..> "1" ResponsibilityReport : method report result 1
-    responsibilityAnalyzer "1" --> "*" responsibilityInteraction : field interactionsByCaller
-    responsibilityAnalyzer "1" ..> "*" responsibilityInteraction : method addResponsibilityCaller parameter 2
-    responsibilityAnalyzer "1" ..> "1" responsibilityPatternGroups : method addResponsibilityCaller parameter 3
-    responsibilityOwnerAnalysis "1" --> "*" responsibilityInteraction : field interactions
-    responsibilityPatternGroup "1" --> "*" ResponsibilityConsumer : field consumers
-    responsibilityPatternGroups "1" --> "*" responsibilityPatternGroup : field combinations
-    responsibilityPatternGroups "1" --> "*" responsibilityPatternGroup : field methodSets
-    responsibilityPatternGroups "1" --> "*" responsibilityPatternGroup : field sequences

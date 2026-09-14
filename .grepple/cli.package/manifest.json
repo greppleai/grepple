@@ -17,21 +17,27 @@
   },
   "summary": {
     "sourceFiles": 36,
-    "declarations": 48,
+    "declarations": 47,
     "exportedTypes": 0,
-    "internalTypes": 48,
-    "members": 299,
+    "internalTypes": 47,
+    "members": 296,
     "exportedFunctions": 3,
     "fiberRoutes": 0,
-    "relations": 28
+    "relations": 27
   },
-  "semanticModelDigest": "sha256:fc5cd156f0259ddae106dc21060d91b429b640c0eef39663b77d32fe518a641b",
+  "semanticModelDigest": "sha256:dfa03844a8cd816aa4ca9b0c656f344f971653cd85ef41cdbb5b6d2e8bfc051b",
   "sourceFiles": [
     {
       "path": "internal/cli/anchors.go"
     },
     {
       "path": "internal/cli/args.go"
+    },
+    {
+      "path": "internal/cli/boundaries.go"
+    },
+    {
+      "path": "internal/cli/boundaries_cache.go"
     },
     {
       "path": "internal/cli/client.go"
@@ -116,12 +122,6 @@
     },
     {
       "path": "internal/cli/repos.go"
-    },
-    {
-      "path": "internal/cli/responsibilities.go"
-    },
-    {
-      "path": "internal/cli/responsibilities_cache.go"
     },
     {
       "path": "internal/cli/rules.go"
@@ -428,6 +428,193 @@
           "result": "map[string]anchorProviderSettings",
           "structTag": {
             "value": "json:\"providers\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "boundariesArgs",
+      "kind": "struct",
+      "file": "internal/cli/boundaries.go",
+      "line": 19,
+      "endLine": 27,
+      "underlyingType": "struct{JSON bool`arg:\"--json\" help:\"emit the complete boundary report as JSON\"`;MinOccurrences int`arg:\"--min-occurrences\" placeholder:\"N\" help:\"minimum callers sharing a reported pattern (default 2)\"`;MaxFiles int`arg:\"--max-files\" placeholder:\"N\" help:\"parse at most N discovered files (0 = unlimited)\"`;Limit int`arg:\"--limit\" placeholder:\"N\" help:\"maximum candidates in human output (default 20; 0 = unlimited; JSON is complete)\"`;MaxOutputBytes int`arg:\"--max-output-bytes\" placeholder:\"N\" help:\"cap human output (default 16384; 0 = unlimited; JSON is uncapped)\"`;NoCache bool`arg:\"--no-cache\" help:\"bypass the content-addressed .grepple boundary cache\"`;Paths[]string`arg:\"positional\" placeholder:\"PATH\" help:\"file, directory, or glob to include; defaults to the working directory\"`;}",
+      "members": [
+        {
+          "name": "Description",
+          "kind": "method",
+          "line": 29,
+          "endLine": 31,
+          "result": "string"
+        },
+        {
+          "name": "JSON",
+          "kind": "property",
+          "line": 20,
+          "endLine": 20,
+          "result": "bool",
+          "structTag": {
+            "value": "arg:\"--json\" help:\"emit the complete boundary report as JSON\""
+          }
+        },
+        {
+          "name": "Limit",
+          "kind": "property",
+          "line": 23,
+          "endLine": 23,
+          "result": "int",
+          "structTag": {
+            "value": "arg:\"--limit\" placeholder:\"N\" help:\"maximum candidates in human output (default 20; 0 = unlimited; JSON is complete)\""
+          }
+        },
+        {
+          "name": "MaxFiles",
+          "kind": "property",
+          "line": 22,
+          "endLine": 22,
+          "result": "int",
+          "structTag": {
+            "value": "arg:\"--max-files\" placeholder:\"N\" help:\"parse at most N discovered files (0 = unlimited)\""
+          }
+        },
+        {
+          "name": "MaxOutputBytes",
+          "kind": "property",
+          "line": 24,
+          "endLine": 24,
+          "result": "int",
+          "structTag": {
+            "value": "arg:\"--max-output-bytes\" placeholder:\"N\" help:\"cap human output (default 16384; 0 = unlimited; JSON is uncapped)\""
+          }
+        },
+        {
+          "name": "MinOccurrences",
+          "kind": "property",
+          "line": 21,
+          "endLine": 21,
+          "result": "int",
+          "structTag": {
+            "value": "arg:\"--min-occurrences\" placeholder:\"N\" help:\"minimum callers sharing a reported pattern (default 2)\""
+          }
+        },
+        {
+          "name": "NoCache",
+          "kind": "property",
+          "line": 25,
+          "endLine": 25,
+          "result": "bool",
+          "structTag": {
+            "value": "arg:\"--no-cache\" help:\"bypass the content-addressed .grepple boundary cache\""
+          }
+        },
+        {
+          "name": "Paths",
+          "kind": "property",
+          "line": 26,
+          "endLine": 26,
+          "result": "[]string",
+          "structTag": {
+            "value": "arg:\"positional\" placeholder:\"PATH\" help:\"file, directory, or glob to include; defaults to the working directory\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "boundariesOutput",
+      "kind": "struct",
+      "file": "internal/cli/boundaries.go",
+      "line": 33,
+      "endLine": 39,
+      "underlyingType": "struct{Schema string`json:\"schema\"`;Paths[]string`json:\"paths\"`;Files int`json:\"files\"`;Candidates[]search.BoundaryCandidate`json:\"candidates\"`;Truncation*navigationGraphTruncation`json:\"truncation,omitempty\"`;}",
+      "members": [
+        {
+          "name": "Candidates",
+          "kind": "property",
+          "line": 37,
+          "endLine": 37,
+          "result": "[]search.BoundaryCandidate",
+          "structTag": {
+            "value": "json:\"candidates\""
+          }
+        },
+        {
+          "name": "Files",
+          "kind": "property",
+          "line": 36,
+          "endLine": 36,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"files\""
+          }
+        },
+        {
+          "name": "Paths",
+          "kind": "property",
+          "line": 35,
+          "endLine": 35,
+          "result": "[]string",
+          "structTag": {
+            "value": "json:\"paths\""
+          }
+        },
+        {
+          "name": "Schema",
+          "kind": "property",
+          "line": 34,
+          "endLine": 34,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"schema\""
+          }
+        },
+        {
+          "name": "Truncation",
+          "kind": "property",
+          "line": 38,
+          "endLine": 38,
+          "result": "*navigationGraphTruncation",
+          "structTag": {
+            "value": "json:\"truncation,omitempty\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "boundaryGraphCache",
+      "kind": "struct",
+      "file": "internal/cli/boundaries_cache.go",
+      "line": 17,
+      "endLine": 21,
+      "underlyingType": "struct{Schema string`json:\"schema\"`;Digest string`json:\"digest\"`;Graph navigationGraphOutput`json:\"graph\"`;}",
+      "members": [
+        {
+          "name": "Digest",
+          "kind": "property",
+          "line": 19,
+          "endLine": 19,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"digest\""
+          }
+        },
+        {
+          "name": "Graph",
+          "kind": "property",
+          "line": 20,
+          "endLine": 20,
+          "result": "navigationGraphOutput",
+          "structTag": {
+            "value": "json:\"graph\""
+          }
+        },
+        {
+          "name": "Schema",
+          "kind": "property",
+          "line": 18,
+          "endLine": 18,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"schema\""
           }
         }
       ]
@@ -861,66 +1048,6 @@
           "result": "string",
           "structTag": {
             "value": "json:\"token_type\""
-          }
-        }
-      ]
-    },
-    {
-      "name": "directoryResponsibilitiesOutput",
-      "kind": "struct",
-      "file": "internal/cli/responsibilities.go",
-      "line": 40,
-      "endLine": 46,
-      "underlyingType": "struct{Schema string`json:\"schema\"`;Paths[]string`json:\"paths\"`;Files int`json:\"files\"`;Candidates[]search.ResponsibilityBoundaryCandidate`json:\"candidates\"`;Truncation*navigationGraphTruncation`json:\"truncation,omitempty\"`;}",
-      "members": [
-        {
-          "name": "Candidates",
-          "kind": "property",
-          "line": 44,
-          "endLine": 44,
-          "result": "[]search.ResponsibilityBoundaryCandidate",
-          "structTag": {
-            "value": "json:\"candidates\""
-          }
-        },
-        {
-          "name": "Files",
-          "kind": "property",
-          "line": 43,
-          "endLine": 43,
-          "result": "int",
-          "structTag": {
-            "value": "json:\"files\""
-          }
-        },
-        {
-          "name": "Paths",
-          "kind": "property",
-          "line": 42,
-          "endLine": 42,
-          "result": "[]string",
-          "structTag": {
-            "value": "json:\"paths\""
-          }
-        },
-        {
-          "name": "Schema",
-          "kind": "property",
-          "line": 41,
-          "endLine": 41,
-          "result": "string",
-          "structTag": {
-            "value": "json:\"schema\""
-          }
-        },
-        {
-          "name": "Truncation",
-          "kind": "property",
-          "line": 45,
-          "endLine": 45,
-          "result": "*navigationGraphTruncation",
-          "structTag": {
-            "value": "json:\"truncation,omitempty\""
           }
         }
       ]
@@ -2454,173 +2581,6 @@
       ]
     },
     {
-      "name": "responsibilitiesArgs",
-      "kind": "struct",
-      "file": "internal/cli/responsibilities.go",
-      "line": 19,
-      "endLine": 28,
-      "underlyingType": "struct{JSON bool`arg:\"--json\" help:\"emit the complete responsibility report as JSON\"`;MinOccurrences int`arg:\"--min-occurrences\" placeholder:\"N\" help:\"minimum callers sharing a reported pattern (default 2)\"`;MaxFiles int`arg:\"--max-files\" placeholder:\"N\" help:\"parse at most N discovered files (0 = unlimited)\"`;Limit int`arg:\"--limit\" placeholder:\"N\" help:\"maximum type reports in human directory output (default 20; 0 = unlimited; JSON is complete)\"`;MaxOutputBytes int`arg:\"--max-output-bytes\" placeholder:\"N\" help:\"cap human output (default 16384; 0 = unlimited; JSON is uncapped)\"`;NoCache bool`arg:\"--no-cache\" help:\"bypass the content-addressed .grepple responsibility cache\"`;Type string`arg:\"--type\" placeholder:\"TYPE\" help:\"analyze one exact receiver or container type instead of discovering the directory\"`;Paths[]string`arg:\"positional\" placeholder:\"PATH\" help:\"file, directory, or glob to include; defaults to the working directory\"`;}",
-      "members": [
-        {
-          "name": "Description",
-          "kind": "method",
-          "line": 30,
-          "endLine": 32,
-          "result": "string"
-        },
-        {
-          "name": "JSON",
-          "kind": "property",
-          "line": 20,
-          "endLine": 20,
-          "result": "bool",
-          "structTag": {
-            "value": "arg:\"--json\" help:\"emit the complete responsibility report as JSON\""
-          }
-        },
-        {
-          "name": "Limit",
-          "kind": "property",
-          "line": 23,
-          "endLine": 23,
-          "result": "int",
-          "structTag": {
-            "value": "arg:\"--limit\" placeholder:\"N\" help:\"maximum type reports in human directory output (default 20; 0 = unlimited; JSON is complete)\""
-          }
-        },
-        {
-          "name": "MaxFiles",
-          "kind": "property",
-          "line": 22,
-          "endLine": 22,
-          "result": "int",
-          "structTag": {
-            "value": "arg:\"--max-files\" placeholder:\"N\" help:\"parse at most N discovered files (0 = unlimited)\""
-          }
-        },
-        {
-          "name": "MaxOutputBytes",
-          "kind": "property",
-          "line": 24,
-          "endLine": 24,
-          "result": "int",
-          "structTag": {
-            "value": "arg:\"--max-output-bytes\" placeholder:\"N\" help:\"cap human output (default 16384; 0 = unlimited; JSON is uncapped)\""
-          }
-        },
-        {
-          "name": "MinOccurrences",
-          "kind": "property",
-          "line": 21,
-          "endLine": 21,
-          "result": "int",
-          "structTag": {
-            "value": "arg:\"--min-occurrences\" placeholder:\"N\" help:\"minimum callers sharing a reported pattern (default 2)\""
-          }
-        },
-        {
-          "name": "NoCache",
-          "kind": "property",
-          "line": 25,
-          "endLine": 25,
-          "result": "bool",
-          "structTag": {
-            "value": "arg:\"--no-cache\" help:\"bypass the content-addressed .grepple responsibility cache\""
-          }
-        },
-        {
-          "name": "Paths",
-          "kind": "property",
-          "line": 27,
-          "endLine": 27,
-          "result": "[]string",
-          "structTag": {
-            "value": "arg:\"positional\" placeholder:\"PATH\" help:\"file, directory, or glob to include; defaults to the working directory\""
-          }
-        },
-        {
-          "name": "Type",
-          "kind": "property",
-          "line": 26,
-          "endLine": 26,
-          "result": "string",
-          "structTag": {
-            "value": "arg:\"--type\" placeholder:\"TYPE\" help:\"analyze one exact receiver or container type instead of discovering the directory\""
-          }
-        }
-      ]
-    },
-    {
-      "name": "responsibilitiesOutput",
-      "kind": "struct",
-      "file": "internal/cli/responsibilities.go",
-      "line": 34,
-      "endLine": 38,
-      "underlyingType": "struct{search.ResponsibilityReport;Files int`json:\"files\"`;Truncation*navigationGraphTruncation`json:\"truncation,omitempty\"`;}",
-      "members": [
-        {
-          "name": "Files",
-          "kind": "property",
-          "line": 36,
-          "endLine": 36,
-          "result": "int",
-          "structTag": {
-            "value": "json:\"files\""
-          }
-        },
-        {
-          "name": "Truncation",
-          "kind": "property",
-          "line": 37,
-          "endLine": 37,
-          "result": "*navigationGraphTruncation",
-          "structTag": {
-            "value": "json:\"truncation,omitempty\""
-          }
-        }
-      ]
-    },
-    {
-      "name": "responsibilityGraphCache",
-      "kind": "struct",
-      "file": "internal/cli/responsibilities_cache.go",
-      "line": 17,
-      "endLine": 21,
-      "underlyingType": "struct{Schema string`json:\"schema\"`;Digest string`json:\"digest\"`;Graph navigationGraphOutput`json:\"graph\"`;}",
-      "members": [
-        {
-          "name": "Digest",
-          "kind": "property",
-          "line": 19,
-          "endLine": 19,
-          "result": "string",
-          "structTag": {
-            "value": "json:\"digest\""
-          }
-        },
-        {
-          "name": "Graph",
-          "kind": "property",
-          "line": 20,
-          "endLine": 20,
-          "result": "navigationGraphOutput",
-          "structTag": {
-            "value": "json:\"graph\""
-          }
-        },
-        {
-          "name": "Schema",
-          "kind": "property",
-          "line": 18,
-          "endLine": 18,
-          "result": "string",
-          "structTag": {
-            "value": "json:\"schema\""
-          }
-        }
-      ]
-    },
-    {
       "name": "resultRenderer",
       "kind": "interface",
       "file": "internal/cli/renderer.go",
@@ -3516,6 +3476,20 @@
       "cardinality": "many"
     },
     {
+      "from": "boundariesOutput",
+      "to": "navigationGraphTruncation",
+      "kind": "association",
+      "via": "field Truncation",
+      "cardinality": "one"
+    },
+    {
+      "from": "boundaryGraphCache",
+      "to": "navigationGraphOutput",
+      "kind": "association",
+      "via": "field Graph",
+      "cardinality": "one"
+    },
+    {
       "from": "cliOptions",
       "to": "anchorLookup",
       "kind": "association",
@@ -3548,13 +3522,6 @@
       "to": "resultRenderer",
       "kind": "implementation",
       "via": "implements",
-      "cardinality": "one"
-    },
-    {
-      "from": "directoryResponsibilitiesOutput",
-      "to": "navigationGraphTruncation",
-      "kind": "association",
-      "via": "field Truncation",
       "cardinality": "one"
     },
     {
@@ -3639,20 +3606,6 @@
       "to": "outputWriter",
       "kind": "association",
       "via": "field output",
-      "cardinality": "one"
-    },
-    {
-      "from": "responsibilitiesOutput",
-      "to": "navigationGraphTruncation",
-      "kind": "association",
-      "via": "field Truncation",
-      "cardinality": "one"
-    },
-    {
-      "from": "responsibilityGraphCache",
-      "to": "navigationGraphOutput",
-      "kind": "association",
-      "via": "field Graph",
       "cardinality": "one"
     },
     {

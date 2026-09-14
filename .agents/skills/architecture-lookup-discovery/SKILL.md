@@ -136,12 +136,11 @@ Inspect all three layers before concluding:
 ### “Which implementation workflows leaked outside their owning file?”
 
 ```bash
-grepple responsibilities path/to/scope
-grepple responsibilities --type TypeName path/to/scope
-grepple responsibilities --min-occurrences 3 --json path/to/scope
+grepple boundaries path/to/scope
+grepple boundaries --min-occurrences 3 --json path/to/scope
 ```
 
-Directory mode groups resolved target declarations by their owner file and reports only workflows repeated in at least two external files. It therefore works for functions as well as methods across all navigation languages. Use the owner path and caller locations to verify whether a missing helper or higher-level operation belongs at that boundary. Use `--type` only for broader type-centric evidence. Treat disclosed ambiguous interactions as leads, not confirmed violations.
+The command groups resolved target declarations by owner file and reports only workflows repeated in at least two external files. It works for functions and methods across all navigation languages. Use the owner path and caller locations to verify whether a missing helper or higher-level operation belongs at that boundary. Treat disclosed ambiguous interactions as leads, not confirmed violations.
 
 ### “Why does this route or entrypoint exist?”
 

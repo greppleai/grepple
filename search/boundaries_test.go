@@ -1,0 +1,110 @@
+package search
+
+import (
+	"reflect"
+	"testing"
+
+	"github.com/greppleai/grepple/parser"
+)
+
+func TestAnalyzeBoundariesFindsRepeatedExternalOwnerWorkflow(t *testing.T) {
+	graph := parser.NavigationGraph{
+		Declarations: []parser.NavigationDeclaration{
+			{ID: "parse", Name: "Parser.Parse", Language: "go", Path: "parser.go"},
+			{ID: "validate", Name: "Parser.Validate", Language: "go", Path: "parser.go"},
+			{ID: "local", Name: "localWorkflow", Language: "go", Path: "parser.go"},
+			{ID: "one", Name: "One", Language: "go", Path: "one.go", Start: 10},
+			{ID: "two", Name: "Two", Language: "go", Path: "two.go", Start: 20},
+		},
+		Calls: []parser.NavigationCall{
+			{CallerID: "local", TargetID: "parse", Language: "go"},
+			{CallerID: "local", TargetID: "validate", Language: "go"},
+			{CallerID: "one", TargetID: "parse", Language: "go"},
+			{CallerID: "one", TargetID: "validate", Language: "go"},
+			{CallerID: "two", TargetID: "parse", Language: "go"},
+			{CallerID: "two", TargetID: "validate", Language: "go"},
+		},
+	}
+	candidates, err := AnalyzeBoundaries(graph, 2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(candidates) != 1 {
+		t.Fatalf("candidates=%#v", candidates)
+	}
+	candidate := candidates[0]
+	if candidate.OwnerFile != "parser.go" || candidate.Language != "go" || candidate.Consumers != (BoundaryBreadth{Functions: 2, Files: 2, Packages: 1}) {
+		t.Fatalf("candidate=%#v", candidate)
+	}
+	if len(candidate.CallableCoUsage) != 1 || !reflect.DeepEqual(candidate.CallableCoUsage[0].Interactions, []string{"Parse", "Validate"}) || candidate.CallableCoUsage[0].Occurrences != 2 {
+		t.Fatalf("co-usage=%#v", candidate.CallableCoUsage)
+	}
+	if len(candidate.OrderedSequences) != 1 || !reflect.DeepEqual(candidate.OrderedSequences[0].Interactions, []string{"Parse", "Validate"}) {
+		t.Fatalf("sequences=%#v", candidate.OrderedSequences)
+	}
+	for _, consumer := range candidate.ConsumerDetails {
+		if consumer.Path == "parser.go" {
+			t.Fatalf("owner-local caller leaked into candidate: %#v", candidate)
+		}
+	}
+}
+
+func TestAnalyzeBoundariesKeepsOwnerFilesAndLanguagesSeparate(t *testing.T) {
+	graph := parser.NavigationGraph{
+		Declarations: []parser.NavigationDeclaration{
+			{ID: "go-a", Name: "A", Language: "go", Path: "go/owner.go"},
+			{ID: "go-b", Name: "B", Language: "go", Path: "go/owner.go"},
+			{ID: "go-one", Name: "One", Language: "go", Path: "go/one.go"},
+			{ID: "go-two", Name: "Two", Language: "go", Path: "go/two.go"},
+			{ID: "java-a", Name: "A", Language: "java", Path: "java/Owner.java"},
+			{ID: "java-b", Name: "B", Language: "java", Path: "java/Owner.java"},
+			{ID: "java-one", Name: "one", Language: "java", Path: "java/One.java"},
+			{ID: "java-two", Name: "two", Language: "java", Path: "java/Two.java"},
+		},
+		Calls: []parser.NavigationCall{
+			{CallerID: "go-one", TargetID: "go-a", Language: "go"}, {CallerID: "go-one", TargetID: "go-b", Language: "go"},
+			{CallerID: "go-two", TargetID: "go-a", Language: "go"}, {CallerID: "go-two", TargetID: "go-b", Language: "go"},
+			{CallerID: "java-one", TargetID: "java-a", Language: "java"}, {CallerID: "java-one", TargetID: "java-b", Language: "java"},
+			{CallerID: "java-two", TargetID: "java-a", Language: "java"}, {CallerID: "java-two", TargetID: "java-b", Language: "java"},
+		},
+	}
+	candidates, err := AnalyzeBoundaries(graph, 2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(candidates) != 2 || candidates[0].OwnerFile != "go/owner.go" || candidates[0].Language != "go" || candidates[1].OwnerFile != "java/Owner.java" || candidates[1].Language != "java" {
+		t.Fatalf("candidates=%#v", candidates)
+	}
+}
+
+func TestAnalyzeBoundariesUsesFileOwnershipForEveryLanguage(t *testing.T) {
+	for _, language := range []string{"go", "java", "kotlin", "javascript", "typescript", "tsx", "python", "csharp", "c", "cpp", "rust", "shell"} {
+		t.Run(language, func(t *testing.T) {
+			graph := parser.NavigationGraph{
+				Declarations: []parser.NavigationDeclaration{
+					{ID: "parse", Name: "Parse", Language: language, Path: "owner/source"},
+					{ID: "validate", Name: "Validate", Language: language, Path: "owner/source"},
+					{ID: "one", Name: "One", Language: language, Path: "consumer/one"},
+					{ID: "two", Name: "Two", Language: language, Path: "consumer/two"},
+				},
+				Calls: []parser.NavigationCall{
+					{CallerID: "one", TargetID: "parse", Language: language}, {CallerID: "one", TargetID: "validate", Language: language},
+					{CallerID: "two", TargetID: "parse", Language: language}, {CallerID: "two", TargetID: "validate", Language: language},
+				},
+			}
+			candidates, err := AnalyzeBoundaries(graph, 2)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if len(candidates) != 1 || candidates[0].OwnerFile != "owner/source" || candidates[0].Language != language {
+				t.Fatalf("candidates=%#v", candidates)
+			}
+		})
+	}
+}
+
+func TestAnalyzeBoundariesValidatesMinimum(t *testing.T) {
+	if _, err := AnalyzeBoundaries(parser.NavigationGraph{}, 0); err == nil {
+		t.Fatal("expected invalid minimum to fail")
+	}
+}
