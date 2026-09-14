@@ -4,7 +4,7 @@
 
 ## Recommended next milestone
 
-> Adopt one repository scope through `.grepple/grepple.yaml`, replace Go-specific package/workspace orientation with bounded directory architecture, and prevent large complete output from entering agent context by spilling it to a disclosed artifact. Fix repository-origin classification before trusting boundary risk.
+> Adopt one repository scope through the existing root `grepple.json`, replace and immediately remove Go-specific package/workspace orientation in favor of bounded directory architecture, and default large complete output to a disclosed file artifact with `--no-spill` as the compatibility escape hatch. Fix repository-origin classification before trusting boundary risk.
 
 ## Planning principles
 
@@ -28,25 +28,27 @@ Dogfooding `grepple boundaries --json --no-cache --max-files 0 parser search` cl
 
 ### Repository configuration and one source universe
 
-Adopt `.grepple/grepple.yaml` as the repository-owned configuration entrypoint. The first capability should be ignore lists shared by search, graph, boundaries, extraction, GritQL scans, architecture discovery, and cache input discovery.
+Extend the existing repository-root `grepple.json` configuration, which already stores fields such as `server`. The first new capability should be ignore lists shared by search, graph, boundaries, extraction, GritQL scans, architecture discovery, and cache input discovery.
 
-Proposed initial shape:
+Proposed backward-compatible shape:
 
-```yaml
-schema: grepple-config-v1
-ignore:
-  paths:
-    - sandbox/**
-    - vendor/**
-    - generated/**
-output:
-  spillThresholdBytes: 262144
+```json
+{
+  "server": "https://example.invalid",
+  "ignore": {
+    "paths": ["sandbox/**", "vendor/**", "generated/**"]
+  },
+  "output": {
+    "spillThresholdBytes": 65536
+  }
+}
 ```
 
-- [ ] Define versioned parsing, validation, repository-root discovery, and precedence: explicit CLI settings override repository configuration, which augments built-in and `.gitignore` exclusions.
+- [ ] Extend the existing JSON parser without breaking current `server`-only files; define validation, upward repository-root discovery from subdirectories, and precedence: explicit CLI settings override root `grepple.json`, which augments built-in and `.gitignore` exclusions.
+- [ ] Separate repository-safe fields from user credentials: root `grepple.json` must not provide or override `token`, `refresh_token`, or expiry/user authentication state loaded from `~/.grepple/config.json`.
 - [ ] Use one normalized ignore matcher, including `**`, negation policy, slash normalization, and deterministic behavior on Windows.
 - [ ] Report the loaded config path/digest and excluded source totals by reason without making machine output cache-state dependent.
-- [ ] Add `--no-config`, `--no-config-ignore`, and an exclusion-explanation command or mode so hidden scope never becomes unexplained missing evidence.
+- [ ] Add `--no-repo-config`, `--no-config-ignore`, and an exclusion-explanation command or mode so hidden scope never becomes unexplained missing evidence; do not disable user authentication config when bypassing repository behavior.
 - [ ] Decide whether explicitly named files bypass configured ignores; document and test the decision consistently across every command.
 - [ ] Ensure `.grepple/cache/` and spilled output artifacts remain unconditionally excluded from discovery.
 - [ ] Add production/test/generated/vendor classifications or a `--production-only` preset after the common ignore path is established; whole-repository recovery fixtures and unrelated sandboxes currently make completeness and resolution metrics unnecessarily pessimistic.
@@ -62,17 +64,16 @@ The current package/workspace model is Go-specific and expensive to complete: th
 - [ ] Add targeted architecture resolution for types, callables, routes, files, and directories so `Document` resolves directly instead of `graph resolve` parsing the repository and returning zero because it indexes callables only.
 - [ ] Add a source-linked `architecture why FROM TO` query that explains the exact import/type/reference evidence behind a directory edge.
 - [ ] Generate a compact normalized directory manifest usable for drift checks and targeted queries; do not require agents to read exhaustive Mermaid or a large raw manifest.
-- [ ] Compare directory-manifest coverage and answer quality with current Go package/workspace bundles, then deprecate or remove package/workspace generation rather than maintaining two orientation systems without measured value.
-- [ ] Preserve old package/workspace commands only for an explicit compatibility window if external consumers require them.
+- [ ] Compare directory-manifest coverage and answer quality with current Go package/workspace bundles, then remove package/workspace commands, generation paths, tests, documentation, and canonical artifacts immediately rather than maintaining two orientation systems.
 
 ### Spill large output to a file artifact
 
-Observed complete outputs reached about 1.55 MB for boundaries and 6.7 MB for a graph over only `parser search`. Valid uncapped JSON is useful for automation but is a severe agent-context trap.
+Observed complete outputs reached about 1.55 MB for boundaries and 6.7 MB for a graph over only `parser search`. Valid uncapped JSON is useful for automation but is a severe agent-context trap. Spill mode should be the default above 64 KB; callers that require the original stdout stream can opt out explicitly.
 
 - [ ] Add a shared output-delivery layer that knows the final size before writing stdout; above a configurable threshold, atomically store the complete result under `.grepple/output/` and emit only a small descriptor.
 - [ ] Make artifact names content-addressed and descriptors report path, bytes, digest, original schema/format, source completeness, and a copyable command/read range.
 - [ ] Preserve output-mode validity: JSON requests receive a valid versioned JSON artifact descriptor, while human requests receive bounded prose. Never emit partial original output followed by a fallback notice.
-- [ ] Add `--delivery auto|stdout|file`, `--output PATH`, and a threshold override. Decide the compatibility default for redirected stdout and API consumers before making `auto` universal; `stdout` must remain an explicit escape hatch.
+- [ ] Enable spilling by default above the configured threshold for terminal, captured, and redirected output. Add `--no-spill` to force the original complete stdout stream, `--output PATH` to choose the artifact path, and `--spill-threshold-bytes N` for one invocation.
 - [ ] Add retention/cleanup policy and prevent artifacts from entering source discovery, cache digests, architecture diagrams, or Git by default.
 - [ ] Teach agent skills to inspect the descriptor first and retrieve only relevant file ranges rather than loading the complete artifact.
 - [ ] Benchmark artifact fallback by context bytes and retrieval turns, not only file-write runtime.
@@ -89,7 +90,7 @@ Observed complete outputs reached about 1.55 MB for boundaries and 6.7 MB for a 
 
 - [ ] Compare normalized directory manifests before canonical byte comparison.
 - [ ] Report the first changed declaration, member, route, relation, file, or directory with source-linked context before the final byte-level determinism comparison.
-- [ ] Make command-specific errors explain focused-language versus language-neutral directory support and any legacy Go-only bundle support.
+- [ ] Make command-specific errors explain focused-language versus language-neutral directory support; remove legacy Go-only bundle wording with the commands.
 
 ## Reliability and compatibility gates
 
