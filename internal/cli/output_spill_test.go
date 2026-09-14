@@ -78,3 +78,20 @@ func TestParseSpillOptionsRemovesGlobalFlags(t *testing.T) {
 		t.Fatalf("args=%q options=%+v", args, options)
 	}
 }
+
+func TestOutputSpillRerunPreservesRepositoryScopeFlags(t *testing.T) {
+	root := t.TempDir()
+	chdirForConfigTest(t, root)
+	output := captureStdout(t, func() {
+		if err := Run([]string{"languages", "--json", "--production-only", "--no-config-ignore", "--spill-threshold-bytes", "64"}); err != nil {
+			t.Fatal(err)
+		}
+	})
+	var descriptor spilledOutputDescriptor
+	if err := json.Unmarshal([]byte(output), &descriptor); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(descriptor.Rerun, "--production-only") || !strings.Contains(descriptor.Rerun, "--no-config-ignore") {
+		t.Fatalf("rerun=%q", descriptor.Rerun)
+	}
+}

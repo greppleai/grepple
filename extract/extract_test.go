@@ -161,7 +161,8 @@ func TestDiscoveryOptionsIgnoreRecursivePathsButNotExplicitFiles(t *testing.T) {
 	root := t.TempDir()
 	ignored := filepath.Join(root, "sandbox", "ignored.go")
 	kept := filepath.Join(root, "main.go")
-	for _, path := range []string{ignored, kept} {
+	builtIn := filepath.Join(root, ".grepple", "hidden.go")
+	for _, path := range []string{ignored, kept, builtIn} {
 		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 			t.Fatal(err)
 		}
@@ -183,5 +184,8 @@ func TestDiscoveryOptionsIgnoreRecursivePathsButNotExplicitFiles(t *testing.T) {
 	}
 	if len(paths) != 1 || paths[0] != ignored {
 		t.Fatalf("explicit paths = %#v", paths)
+	}
+	if _, err := DiscoverSourcesWithOptions([]string{builtIn}, options); err == nil || !strings.Contains(err.Error(), "unconditionally excluded") {
+		t.Fatalf("explicit built-in error=%v", err)
 	}
 }

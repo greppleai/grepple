@@ -18,13 +18,17 @@ Language-specific parser and navigation syntax belongs behind the owning `langua
 
 ## Architecture discovery
 
+Inspect source scope before architecture when exclusions or production/test composition can matter:
+
+- `grepple sources explain --compact [PATH]`: config digest, classifications, exclusions, and explicit bypasses
+
 Architecture orientation is generated dynamically across supported languages:
 
 - `grepple architecture directory --compact [PATH]`: bounded directory ownership and relation map
 - `grepple architecture resolve --symbol NAME --compact [PATH]`: exact source-linked declaration lookup
 - `grepple architecture why FROM TO --compact [PATH]`: resolved cross-directory call evidence
 
-Do not infer package semantics from directory ownership. `make schema-generate` and `make schema-check` validate generated parser metadata; architecture views do not require committed package/workspace bundles.
+Do not infer package semantics from directory ownership. Use `--production-only` only for explicitly production-scoped questions; retain full-universe evidence otherwise. `make schema-generate` and `make schema-check` validate generated parser metadata; architecture views do not require committed package/workspace bundles.
 
 ## Validation
 

@@ -180,7 +180,7 @@ func TestTopLevelHelpListsCommandFamilies(t *testing.T) {
 			t.Fatal(err)
 		}
 	})
-	for _, expected := range []string{"search", "grit", "graph", "anchors", "boundaries", "examples", "extract", "languages", "rules", "get", "tree", "repos", "login", "logout", "version"} {
+	for _, expected := range []string{"search", "grit", "graph", "anchors", "boundaries", "examples", "extract", "architecture", "sources", "artifacts", "languages", "rules", "get", "tree", "repos", "login", "logout", "version", "--production-only", "--no-repo-config"} {
 		if !strings.Contains(output, expected) {
 			t.Fatalf("top-level help missing %q:\n%s", expected, output)
 		}

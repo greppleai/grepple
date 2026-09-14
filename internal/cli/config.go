@@ -56,6 +56,9 @@ func loadConfig() config {
 }
 
 func loadRepositoryConfig() (repositoryConfig, string, error) {
+	if activeRepositoryOptions.disabled {
+		return repositoryConfig{}, "", nil
+	}
 	path, found := findRepositoryConfig(mustGetwd())
 	if !found {
 		return repositoryConfig{}, "", nil

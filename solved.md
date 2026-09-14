@@ -24,6 +24,9 @@ This file records completed Grepple roadmap work that no longer belongs in `next
 - [x] Added default 64 KiB output spilling to content-addressed mode-0600 artifacts with valid human/JSON descriptors, original schema/source metadata, exact `--no-spill` reruns, and threshold overrides.
 - [x] Added `grepple artifacts clean` for explicit deterministic artifact cleanup.
 - [x] Replaced process-exiting library paths with propagated command exit statuses so output delivery is finalized before grep-style exit code 1.
+- [x] Added `grepple sources explain` with deterministic config path/digest, selection decisions, classification totals, exclusion reasons, explicit bypasses, and omitted infrastructure subtrees.
+- [x] Added global `--no-repo-config`, `--no-config-ignore`, and `--production-only` source controls without disabling user authentication state.
+- [x] Classified recursive sources as production, test, fixture, generated, or vendor; exposed directory totals and retained explicit-file precedence with a bypass notice.
 
 ## Search and retrieval
 

@@ -313,4 +313,11 @@ func TestConfiguredIgnoresAlwaysExcludeGreppleOutputDiscovery(t *testing.T) {
 	if got := rels(t, root, files); len(got) != 1 || got[0] != "main.go" {
 		t.Fatalf("discovered files = %#v", got)
 	}
+	files, err = collectCandidateFilesConfiguredContext(context.Background(), []string{filepath.Join(root, ".grepple", "output", "result.json")}, "", sourceIgnoreConfig{root: root})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(files) != 0 {
+		t.Fatalf("explicit built-in files = %#v", files)
+	}
 }

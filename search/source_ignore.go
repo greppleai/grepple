@@ -4,23 +4,33 @@ import (
 	"os"
 
 	"github.com/greppleai/grepple/internal/pathfilter"
+	"github.com/greppleai/grepple/internal/sourcekind"
 )
 
 type sourceIgnoreConfig struct {
-	root     string
-	patterns []string
+	root           string
+	patterns       []string
+	productionOnly bool
 }
 
 func (config sourceIgnoreConfig) ignored(candidate string) bool {
+	if config.builtIn(candidate) {
+		return true
+	}
+	if config.productionOnly && !sourcekind.IsProduction(candidate, config.root) {
+		return true
+	}
+	filter := config.filter()
+	return filter.Ignored(candidate)
+}
+
+func (config sourceIgnoreConfig) builtIn(candidate string) bool {
 	filter := config.filter()
 	relative, inRepository := filter.Relative(candidate)
 	if !inRepository {
 		return false
 	}
-	if pathfilter.Match(".grepple/**", relative) {
-		return true
-	}
-	return filter.Ignored(candidate)
+	return pathfilter.Match(".grepple/**", relative) || pathfilter.Match(".worktrees/**", relative)
 }
 
 func (config sourceIgnoreConfig) hasNegation() bool {

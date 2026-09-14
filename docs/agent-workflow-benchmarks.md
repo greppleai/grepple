@@ -59,11 +59,11 @@ Linux/amd64, Intel Core Ultra 7 165H, Go 1.25.14, `-benchtime=10x`:
 | `LineLocateThenAt` | 2 | 152 | 38 | 5.07 ms |
 | `RelatedNavigation` | 1 | 307 | 76.75 | 8.10 ms |
 | `ImpactGraph` | 1 | 978 | 244.5 | 6.33 ms |
-| `ArchitectureResolve` | 1 | 173 | 43.25 | 5.75 ms |
+| `ArchitectureResolve` | 1 | 190 | 47.5 | 3.77 ms |
 | `EnclosingScope` | 1 | 53 | 13.25 | 2.87 ms |
 | `EditLocation` | 1 | 40 | 10 | 2.69 ms |
 
-Direct `ArchitectureResolve` replaces the former package-summary fixture for known declarations. It returns the owner and exact range in 173 bytes instead of the former 337-byte package summary, a 49% reduction, while remaining one retrieval call. The structural lookup similarly returns slightly more text than line-only plus `--at`, but removes one retrieval round trip. Timing is machine-dependent; call and fixture-output metrics are the primary regression signals until statistically reviewed budgets are established.
+Direct `ArchitectureResolve` replaces the former package-summary fixture for known declarations. It returns owner, exact range, and source classification in 190 bytes instead of the former 337-byte package summary, a 44% reduction, while remaining one retrieval call. The structural lookup similarly returns slightly more text than line-only plus `--at`, but removes one retrieval round trip. Timing is machine-dependent; call and fixture-output metrics are the primary regression signals until statistically reviewed budgets are established.
 
 ## Navigation-resolution measurement extension
 

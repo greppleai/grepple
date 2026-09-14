@@ -108,7 +108,7 @@ func graphQueryContinuationCommand(direction search.NavigationQueryDirection, va
 	if truncation == nil {
 		return ""
 	}
-	parts := []string{"grepple", "graph", string(direction), "--max-files", "0", "--depth", fmt.Sprint(values.Depth), "--json"}
+	parts := appendActiveRepositoryScopeFlags([]string{"grepple", "graph", string(direction), "--max-files", "0", "--depth", fmt.Sprint(values.Depth), "--json"})
 	for _, selector := range []struct{ flag, value string }{{"--symbol", values.Symbol}, {"--at", values.At}, {"--package", values.Package}, {"--module", values.Module}, {"--root-path", values.RootPath}} {
 		if selector.value != "" {
 			parts = append(parts, selector.flag, quoteCommandArgument(selector.value))

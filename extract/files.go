@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/greppleai/grepple/internal/pathfilter"
+	"github.com/greppleai/grepple/internal/sourcekind"
 )
 
 var excludedDirectories = map[string]bool{
@@ -27,13 +28,15 @@ func isTypeScriptDeclaration(path string) bool {
 // DiscoveryOptions applies repository-relative exclusions during recursive discovery.
 // Explicitly supplied files bypass IgnorePaths.
 type DiscoveryOptions struct {
-	IgnoreRoot  string
-	IgnorePaths []string
+	IgnoreRoot     string
+	IgnorePaths    []string
+	ProductionOnly bool
 }
 
 type sourceCollector struct {
-	paths  map[string]bool
-	ignore pathfilter.Config
+	paths          map[string]bool
+	ignore         pathfilter.Config
+	productionOnly bool
 }
 
 func (collector *sourceCollector) collect(path string, explicit bool) error {
@@ -44,15 +47,44 @@ func (collector *sourceCollector) collect(path string, explicit bool) error {
 	if info.Mode()&os.ModeSymlink != 0 {
 		return invalidSourceInput(path, explicit)
 	}
-	if info.IsDir() {
-		if !explicit && collector.ignore.Ignored(path) && !collector.ignore.HasNegation() {
-			return nil
+	if collector.unconditionallyExcluded(path) {
+		if explicit {
+			return fmt.Errorf("source input is unconditionally excluded: %s", path)
 		}
-		return collector.collectDirectory(path)
-	}
-	if !explicit && collector.ignore.Ignored(path) {
 		return nil
 	}
+	if info.IsDir() {
+		return collector.collectInputDirectory(path, explicit)
+	}
+	if collector.ignoredFile(path, explicit) {
+		return nil
+	}
+	return collector.collectFile(path, info, explicit)
+}
+
+func (collector *sourceCollector) unconditionallyExcluded(candidate string) bool {
+	relative, ok := collector.ignore.Relative(candidate)
+	if !ok {
+		return false
+	}
+	return pathfilter.Match(".git/**", relative) || pathfilter.Match(".grepple/**", relative) || pathfilter.Match(".worktrees/**", relative)
+}
+
+func (collector *sourceCollector) collectInputDirectory(path string, explicit bool) error {
+	if !explicit && collector.productionOnly && !sourcekind.IsProduction(path, collector.ignore.Root) {
+		return nil
+	}
+	if !explicit && collector.ignore.Ignored(path) && !collector.ignore.HasNegation() {
+		return nil
+	}
+	return collector.collectDirectory(path)
+}
+
+func (collector *sourceCollector) ignoredFile(path string, explicit bool) bool {
+	return !explicit && (collector.ignore.Ignored(path) || collector.productionOnly && !sourcekind.IsProduction(path, collector.ignore.Root))
+}
+
+func (collector *sourceCollector) collectFile(path string, info os.FileInfo, explicit bool) error {
 	definition, supported := languageDefinitionForPath(path)
 	if !info.Mode().IsRegular() || !supported || !definition.acceptsSource(path) {
 		return invalidCodeInput(path, explicit)
@@ -141,7 +173,7 @@ func DiscoverSources(inputs []string) ([]string, error) {
 
 // DiscoverSourcesWithOptions discovers sources with repository-owned exclusions.
 func DiscoverSourcesWithOptions(inputs []string, options DiscoveryOptions) ([]string, error) {
-	collector := sourceCollector{paths: map[string]bool{}, ignore: pathfilter.Config{Root: options.IgnoreRoot, Patterns: options.IgnorePaths}}
+	collector := sourceCollector{paths: map[string]bool{}, ignore: pathfilter.Config{Root: options.IgnoreRoot, Patterns: options.IgnorePaths}, productionOnly: options.ProductionOnly}
 	for _, input := range inputs {
 		if err := collector.collect(absolutePath(input), true); err != nil {
 			return nil, err

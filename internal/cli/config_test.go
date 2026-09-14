@@ -82,6 +82,13 @@ func TestLoadConfigDoesNotOverlayUserTokenFromRepository(t *testing.T) {
 	if config.Token != "user-token" || config.Server != "https://repo.example" {
 		t.Fatalf("merged config = %+v", config)
 	}
+	previous := activeRepositoryOptions
+	activeRepositoryOptions.disabled = true
+	bypassed := loadConfig()
+	activeRepositoryOptions = previous
+	if bypassed.Token != "user-token" || bypassed.Server != "https://user.example" {
+		t.Fatalf("bypassed repository config = %+v", bypassed)
+	}
 }
 func TestRepositoryIgnoreAppliesToRecursiveDiscoveryAndExplicitFileBypasses(t *testing.T) {
 	root := t.TempDir()

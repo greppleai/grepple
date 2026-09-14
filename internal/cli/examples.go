@@ -12,7 +12,8 @@ type taskExample struct {
 }
 
 var taskExamples = []taskExample{
-	{Name: "orient", Description: "Orient by directory and resolve one declaration", Commands: []string{
+	{Name: "orient", Description: "Inspect source scope, orient by directory, and resolve one declaration", Commands: []string{
+		"grepple sources explain --compact .",
 		"grepple architecture directory --depth 2 --compact .",
 		"grepple architecture resolve --symbol Document --compact .",
 	}},

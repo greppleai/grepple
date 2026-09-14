@@ -328,7 +328,7 @@ It reports modeled retrieval calls, returned bytes, approximate tokens, elapsed 
 
 ## Repository configuration
 
-Grepple discovers the nearest ancestor `grepple.json`. Repository-owned ignore paths apply consistently to recursive local search, graph, boundary, GritQL, and focused extraction discovery. Explicitly named files bypass ignores.
+Grepple discovers the nearest ancestor `grepple.json`. Repository-owned ignore paths apply consistently to recursive local search, graph, boundary, GritQL, focused extraction, and architecture discovery. Explicitly named files bypass ignores and emit a notice.
 
 ```json
 {
@@ -337,6 +337,15 @@ Grepple discovers the nearest ancestor `grepple.json`. Repository-owned ignore p
   "output": {"spillThresholdBytes": 65536}
 }
 ```
+
+Inspect the effective source universe before drawing completeness conclusions:
+
+```bash
+grepple sources explain --compact .
+grepple sources explain --json --production-only .
+```
+
+`--no-config-ignore` keeps repository configuration but disables `ignore.paths`; `--no-repo-config` bypasses repository behavior without disabling user authentication. `--production-only` excludes conventionally classified tests, fixtures, generated sources, and vendored sources during recursive discovery. Explicit files still win and disclose the bypass. See [Repository source scope](docs/source-scope.md) for classification and omission semantics.
 
 Complete output larger than the threshold is stored content-addressed under `.grepple/output/`; stdout receives a small `grepple-artifact-v1` descriptor. Use `--no-spill` when a script requires the original stream, or `--spill-threshold-bytes N` for one invocation. `grepple artifacts clean` explicitly removes retained artifacts. Repository configuration cannot contain or override authentication credentials stored in `~/.grepple/config.json`.
 

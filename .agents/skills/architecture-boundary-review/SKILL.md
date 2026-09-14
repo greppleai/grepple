@@ -9,8 +9,9 @@ A clean directory diagram can hide behavioral coupling; a broad type can be a he
 
 ## Workflow
 
-1. Establish physical ownership and strongly resolved cross-directory evidence:
+1. Establish the source universe, then inspect physical ownership and strongly resolved cross-directory evidence:
    ```bash
+   grepple sources explain --compact SCOPE
    grepple architecture directory --depth 2 --compact .
    grepple architecture why FROM TO --compact SCOPE
    ```
@@ -37,7 +38,7 @@ grepple boundaries --policy .grepple/boundary-policy.json --json path/to/scope
 - Public third-party representation and confirmed facade bypass deserve more attention than broad private use of a project-owned abstraction.
 - Workflow candidates show repeated co-usage/order across owner-file boundaries. Check `signals`: utility, declarative configuration, lifecycle, test-framework, and adapter roles lower priority without hiding evidence.
 - Boundary analysis is syntax-based and heuristic. Candidate edges and unresolved ownership must lower confidence.
-- Compare production and test reach; never inflate production risk with test-framework spread.
+- Compare production and test reach; never inflate production risk with test-framework spread. Use `--production-only` only when the review question intentionally excludes tests and fixtures.
 
 ## Required conclusion shape
 

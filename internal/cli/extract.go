@@ -267,10 +267,12 @@ func loadExtractSources(roots []string) ([]codeextract.Source, error) {
 	if err != nil {
 		return nil, err
 	}
-	options := codeextract.DiscoveryOptions{IgnorePaths: config.Ignore.Paths}
-	if path != "" {
+	options := codeextract.DiscoveryOptions{IgnoreRoot: mustGetwd(), ProductionOnly: activeRepositoryOptions.productionOnly}
+	if path != "" && !activeRepositoryOptions.ignoreDisabled {
 		options.IgnoreRoot = filepath.Dir(path)
+		options.IgnorePaths = append([]string(nil), config.Ignore.Paths...)
 	}
+	reportExplicitSourceBypasses(roots, options.IgnoreRoot, options.IgnorePaths, options.ProductionOnly)
 	return codeextract.LoadSourcesWithOptions(roots, options)
 }
 

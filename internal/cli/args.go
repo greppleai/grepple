@@ -392,6 +392,7 @@ Commands:
   artifacts    Manage spilled output artifacts
   extract      Generate or check focused architecture projections
   architecture Inspect language-neutral directory architecture
+  sources      Explain repository configuration and source selection
   languages    Show the language capability matrix
   rules        Manage and inspect saved remote rules
   get          Read one indexed repository file or outline
@@ -404,6 +405,11 @@ Commands:
 Global output delivery:
 	--no-spill                    keep complete output on stdout regardless of size
 	--spill-threshold-bytes N     spill output above N bytes (default 65536 or grepple.json)
+
+Global repository scope:
+	--no-repo-config              ignore repository-owned grepple.json behavior
+	--no-config-ignore            load grepple.json but ignore ignore.paths
+	--production-only             recursively select production-classified sources
 
 Search options follow below. Run grepple COMMAND --help for command-specific options.
 
@@ -423,7 +429,7 @@ func runHelp(args []string) error {
 	}
 	if len(args) > 1 {
 		switch args[0] {
-		case "graph", "extract", "architecture", "rules", "anchors", "grit", "artifacts":
+		case "graph", "extract", "architecture", "sources", "rules", "anchors", "grit", "artifacts":
 			command := append([]string(nil), args...)
 			command = append(command, "--help")
 			return runCommand(command)
@@ -442,24 +448,35 @@ func runHelp(args []string) error {
 		return stdoutWriter().writeString("Remove stored remote authentication.\nUsage: grepple logout\n")
 	case "version":
 		return stdoutWriter().writeString("Print build and source version information.\nUsage: grepple version\n")
-	case "grit", "graph", "anchors", "boundaries", "examples", "languages", "rules", "get", "tree", "repos", "artifacts", "architecture":
+	case "grit", "graph", "anchors", "boundaries", "examples", "languages", "rules", "get", "tree", "repos", "artifacts", "architecture", "sources":
 		return runCommand([]string{args[0], "--help"})
 	default:
 		return fmt.Errorf("unknown help topic %q", args[0])
 	}
 }
 
-// Run executes a Grepple command with default large-output spilling.
+// Run executes a Grepple command with repository scope controls and default large-output spilling.
 func Run(args []string) error {
+	repositoryInvocationMutex.Lock()
+	defer repositoryInvocationMutex.Unlock()
+
+	repositoryArgs, repositoryOptions, err := parseRepositoryInvocationOptions(args)
+	if err != nil {
+		return err
+	}
+	previousRepositoryOptions := activeRepositoryOptions
+	activeRepositoryOptions = repositoryOptions
+	defer func() { activeRepositoryOptions = previousRepositoryOptions }()
 	resetRequestedExit()
-	commandArgs, spill, err := parseSpillOptions(args)
+	commandArgs, spill, err := parseSpillOptions(repositoryArgs)
 	if err != nil {
 		return err
 	}
 	if len(commandArgs) >= 2 && commandArgs[0] == "artifacts" && commandArgs[1] == "clean" {
 		spill.disabled = true
 	}
-	err = runWithOutputSpill(commandArgs, spill, func() error { return runCommand(commandArgs) })
+	descriptorArgs := append(activeRepositoryScopeFlags(), commandArgs...)
+	err = runWithOutputSpill(descriptorArgs, spill, func() error { return runCommand(commandArgs) })
 	if err != nil {
 		return err
 	}
@@ -514,6 +531,8 @@ func runCommand(args []string) error {
 			return runExtract(args[1:])
 		case "architecture":
 			return runArchitecture(args[1:])
+		case "sources":
+			return runSources(args[1:])
 		}
 	}
 	return runSearch(args)

@@ -9,8 +9,9 @@ Directory architecture is a language-neutral orientation index, not proof of pac
 
 ## Fast path
 
-1. **Unknown owner:** inspect a bounded directory map.
+1. **Unknown owner:** inspect the source universe, then request a bounded directory map.
    ```bash
+   grepple sources explain --compact .
    grepple architecture directory --depth 2 --max-nodes 80 --compact .
    ```
 2. **Known symbol:** resolve it directly across types and callables.
@@ -33,7 +34,7 @@ Directory architecture is a language-neutral orientation index, not proof of pac
 - Directory names establish physical ownership, not language package/module/layer intent.
 - Directory `why` relations currently contain only strongly resolved static calls (`exact`, `import-resolved`, or `context-resolved`). Absence is not proof that no import, reflection, registration, or runtime dependency exists.
 - Declaration visibility is reported only when an owning language adapter provides it; `unknown` must stay unknown.
-- Inspect `sources` and truncation before making a completeness claim.
+- Inspect `sources` and truncation before making a completeness claim. Use `grepple sources explain --compact PATH` when skipped input or repository configuration could matter; use `--production-only` only when the question is explicitly about production code.
 - Large JSON may be returned as a `grepple-artifact-v1` descriptor. Read only relevant artifact ranges or rerun a narrower command; use the descriptor's exact `--no-spill` command only when the complete stdout stream is required.
 - Do not invent a package boundary from directory names alone.
 

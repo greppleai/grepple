@@ -185,7 +185,7 @@ func graphResolveContinuationCommand(values graphResolveArgs, truncation *naviga
 	if truncation == nil {
 		return ""
 	}
-	parts := []string{"grepple", "graph", "resolve", "--symbol", quoteCommandArgument(values.Symbol), "--max-files", "0", "--json"}
+	parts := appendActiveRepositoryScopeFlags([]string{"grepple", "graph", "resolve", "--symbol", quoteCommandArgument(values.Symbol), "--max-files", "0", "--json"})
 	for _, language := range values.Languages {
 		parts = append(parts, "--language", quoteCommandArgument(language))
 	}

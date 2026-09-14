@@ -4,7 +4,7 @@
 
 ## Recommended next milestone
 
-> Make repository scope observable (`config`, exclusions, production/test), improve directory relations beyond resolved calls without inventing package semantics, and measure artifact-backed task success. Revisit syntax lifecycle APIs after these daily workflows are calibrated.
+> Separate directory relations by source class, add source-linked import/type-reference edges, and harden repository identity fixtures. Measure artifact-backed task success before revisiting syntax lifecycle APIs.
 
 ## Planning principles
 
@@ -24,36 +24,13 @@ Go navigation facts now receive path-dependent module/package identity after cac
 - [ ] Add explicit nested-module, `go.work`, replacement, and ambiguous-unqualified-import fixtures.
 - [ ] Add cold/warm and focused/full-universe parity coverage for enriched repository identity.
 
-### Repository configuration and one source universe
-
-Extend the existing repository-root `grepple.json` configuration, which already stores fields such as `server`. The first new capability should be ignore lists shared by search, graph, boundaries, extraction, GritQL scans, architecture discovery, and cache input discovery.
-
-Proposed backward-compatible shape:
-
-```json
-{
-  "server": "https://example.invalid",
-  "ignore": {
-    "paths": ["sandbox/**", "vendor/**", "generated/**"]
-  },
-  "output": {
-    "spillThresholdBytes": 65536
-  }
-}
-```
-
-- [ ] Report the loaded config path/digest and excluded source totals by reason without making machine output cache-state dependent.
-- [ ] Add `--no-repo-config`, `--no-config-ignore`, and an exclusion-explanation command or mode so hidden scope never becomes unexplained missing evidence; do not disable user authentication config when bypassing repository behavior.
-- [ ] Report when an explicitly named file bypasses configured ignores; behavior is already consistent and covered across search and extraction discovery.
-- [ ] Add production/test/generated/vendor classifications or a `--production-only` preset after the common ignore path is established; whole-repository recovery fixtures and unrelated sandboxes currently make completeness and resolution metrics unnecessarily pessimistic.
-
 ## P1 — simplify architecture discovery and output delivery
 
 ### Directory architecture precision
 
 `grepple architecture directory|resolve|why` now provides bounded, language-neutral directory ownership, exact type/callable ranges, and strongly resolved cross-directory call evidence. Legacy Go package/workspace commands and generated artifacts have been removed.
 
-- [ ] Separate production, test, fixture, generated, and vendor totals/relations so test calls do not dominate directory orientation.
+- [ ] Separate relation counts/evidence by production, test, fixture, generated, and vendor class; directory and source-scope totals already expose these classes and `--production-only` filters recursive discovery.
 - [ ] Add source-linked import and type-reference directory edges independently of callable resolution; label each relation kind and preserve unsupported/unknown semantics.
 - [ ] Add adapter-evidenced entrypoints and routes only where languages provide useful contracts.
 - [ ] Parse or restore each selected file once when deriving both outlines and the resolved navigation graph.

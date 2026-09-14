@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/alexflint/go-arg"
+	"github.com/greppleai/grepple/internal/sourcekind"
 	"github.com/greppleai/grepple/parser"
 	"github.com/greppleai/grepple/search"
 )
@@ -58,6 +59,7 @@ type directoryArchitecture struct {
 type architectureDirectory struct {
 	Path            string              `json:"path"`
 	Files           int                 `json:"files"`
+	Classifications []architectureCount `json:"classifications"`
 	Languages       []architectureCount `json:"languages"`
 	Declarations    []architectureCount `json:"declarations"`
 	PublicCallables int                 `json:"publicCallables"`
@@ -69,15 +71,16 @@ type architectureCount struct {
 }
 
 type architectureSymbol struct {
-	Name       string                      `json:"name"`
-	Kind       string                      `json:"kind"`
-	Language   string                      `json:"language"`
-	Path       string                      `json:"path"`
-	Directory  string                      `json:"directory"`
-	Container  string                      `json:"container,omitempty"`
-	Visibility parser.NavigationVisibility `json:"visibility,omitempty"`
-	Start      int                         `json:"startLine"`
-	End        int                         `json:"endLine"`
+	Name           string                      `json:"name"`
+	Kind           string                      `json:"kind"`
+	Language       string                      `json:"language"`
+	Classification string                      `json:"classification"`
+	Path           string                      `json:"path"`
+	Directory      string                      `json:"directory"`
+	Container      string                      `json:"container,omitempty"`
+	Visibility     parser.NavigationVisibility `json:"visibility,omitempty"`
+	Start          int                         `json:"startLine"`
+	End            int                         `json:"endLine"`
 }
 
 type architectureRelation struct {
@@ -113,10 +116,11 @@ type architectureWhyOutput struct {
 }
 
 type directoryAccumulator struct {
-	files        int
-	languages    map[string]int
-	declarations map[string]int
-	public       int
+	files           int
+	classifications map[string]int
+	languages       map[string]int
+	declarations    map[string]int
+	public          int
 }
 
 func runArchitecture(args []string) error {
@@ -277,10 +281,12 @@ func buildDirectoryArchitecture(globs []string, maxFiles int) (directoryArchitec
 		}
 		outline := parser.OutlineFile(sourcePath, string(content))
 		directory := cleanArchitectureDirectory(filepath.Dir(sourcePath))
+		classification := string(sourcekind.Classify(sourcePath, "."))
 		for _, ancestor := range architectureDirectoryAncestors(directory) {
 			entry := getDirectoryAccumulator(directories, ancestor)
 			entry.files++
 			entry.languages[outline.Language]++
+			entry.classifications[classification]++
 		}
 		appendArchitectureSymbols(&symbols, directories, outline.Symbols, outline.Language, sourcePath, directory, "", visibility)
 	}
@@ -290,19 +296,19 @@ func buildDirectoryArchitecture(globs []string, maxFiles int) (directoryArchitec
 	return directoryArchitecture{Schema: directoryArchitectureSchema, Root: ".", Files: len(paths), Sources: sources, Directories: buildArchitectureDirectories(directories), Symbols: symbols, Relations: relations, Truncation: truncation}, nil
 }
 
-func architectureVisibilityIndex(declarations []parser.NavigationDeclaration) map[string]parser.NavigationVisibility {
-	result := make(map[string]parser.NavigationVisibility, len(declarations))
+func architectureVisibilityIndex(declarations []parser.NavigationDeclaration) map[string][]parser.NavigationDeclaration {
+	result := make(map[string][]parser.NavigationDeclaration, len(declarations))
 	for _, declaration := range declarations {
-		key := architectureSymbolKey(declaration.Path, declaration.Start, declaration.Name)
-		result[key] = declaration.Visibility
+		key := architectureSymbolKey(declaration.Path, declaration.Name)
+		result[key] = append(result[key], declaration)
 	}
 	return result
 }
 
-func appendArchitectureSymbols(target *[]architectureSymbol, directories map[string]*directoryAccumulator, symbols []parser.Symbol, language, sourcePath, directoryPath, container string, visibility map[string]parser.NavigationVisibility) {
+func appendArchitectureSymbols(target *[]architectureSymbol, directories map[string]*directoryAccumulator, symbols []parser.Symbol, language, sourcePath, directoryPath, container string, visibility map[string][]parser.NavigationDeclaration) {
 	for _, symbol := range symbols {
-		item := architectureSymbol{Name: symbol.Name, Kind: symbol.Kind, Language: language, Path: filepath.ToSlash(sourcePath), Directory: directoryPath, Container: container, Start: symbol.Start, End: symbol.End}
-		item.Visibility = visibility[architectureSymbolKey(item.Path, item.Start, item.Name)]
+		item := architectureSymbol{Name: symbol.Name, Kind: symbol.Kind, Language: language, Classification: string(sourcekind.Classify(sourcePath, ".")), Path: filepath.ToSlash(sourcePath), Directory: directoryPath, Container: container, Start: symbol.Start, End: symbol.End}
+		item.Visibility = architectureSymbolVisibility(visibility, item)
 		*target = append(*target, item)
 		for _, ancestor := range architectureDirectoryAncestors(directoryPath) {
 			directory := getDirectoryAccumulator(directories, ancestor)
@@ -319,8 +325,27 @@ func appendArchitectureSymbols(target *[]architectureSymbol, directories map[str
 	}
 }
 
-func architectureSymbolKey(path string, line int, name string) string {
-	return filepath.ToSlash(filepath.Clean(path)) + "\x00" + fmt.Sprint(line) + "\x00" + name
+func architectureSymbolKey(path, name string) string {
+	return filepath.ToSlash(filepath.Clean(path)) + "\x00" + name
+}
+
+func architectureSymbolVisibility(index map[string][]parser.NavigationDeclaration, symbol architectureSymbol) parser.NavigationVisibility {
+	candidates := index[architectureSymbolKey(symbol.Path, symbol.Name)]
+	bestSpan := 0
+	found := false
+	var visibility parser.NavigationVisibility
+	for _, candidate := range candidates {
+		if symbol.Start > candidate.End || candidate.Start > symbol.End {
+			continue
+		}
+		span := candidate.End - candidate.Start
+		if !found || span < bestSpan {
+			visibility = candidate.Visibility
+			bestSpan = span
+			found = true
+		}
+	}
+	return visibility
 }
 
 func architectureDirectoryAncestors(directory string) []string {
@@ -339,7 +364,7 @@ func architectureDirectoryAncestors(directory string) []string {
 func getDirectoryAccumulator(directories map[string]*directoryAccumulator, path string) *directoryAccumulator {
 	entry := directories[path]
 	if entry == nil {
-		entry = &directoryAccumulator{languages: make(map[string]int), declarations: make(map[string]int)}
+		entry = &directoryAccumulator{languages: make(map[string]int), declarations: make(map[string]int), classifications: make(map[string]int)}
 		directories[path] = entry
 	}
 	return entry
@@ -354,7 +379,7 @@ func buildArchitectureDirectories(index map[string]*directoryAccumulator) []arch
 	result := make([]architectureDirectory, 0, len(paths))
 	for _, path := range paths {
 		entry := index[path]
-		result = append(result, architectureDirectory{Path: path, Files: entry.files, Languages: architectureCounts(entry.languages), Declarations: architectureCounts(entry.declarations), PublicCallables: entry.public})
+		result = append(result, architectureDirectory{Path: path, Files: entry.files, Classifications: architectureCounts(entry.classifications), Languages: architectureCounts(entry.languages), Declarations: architectureCounts(entry.declarations), PublicCallables: entry.public})
 	}
 	return result
 }
@@ -494,7 +519,7 @@ func renderDirectoryArchitecture(architecture directoryArchitecture, values arch
 		return nil
 	}
 	for _, directory := range directories[:shown] {
-		if !write("D %s files=%d languages=%s declarations=%s public-callables=%d", directory.Path, directory.Files, formatArchitectureCounts(directory.Languages), formatArchitectureCounts(directory.Declarations), directory.PublicCallables) {
+		if !write("D %s files=%d classes=%s languages=%s declarations=%s public-callables=%d", directory.Path, directory.Files, formatArchitectureCounts(directory.Classifications), formatArchitectureCounts(directory.Languages), formatArchitectureCounts(directory.Declarations), directory.PublicCallables) {
 			return nil
 		}
 	}
@@ -519,7 +544,7 @@ func renderArchitectureResolve(output architectureResolveOutput, maxBytes int) e
 		if visibility == "" {
 			visibility = "unknown"
 		}
-		if err := writer.writeString(fmt.Sprintf("S %s %s %s %s visibility=%s directory=%s\n", match.Language, match.Kind, match.Name, architectureSymbolLocation(match), visibility, match.Directory)); err != nil {
+		if err := writer.writeString(fmt.Sprintf("S %s %s %s %s visibility=%s class=%s directory=%s\n", match.Language, match.Kind, match.Name, architectureSymbolLocation(match), visibility, match.Classification, match.Directory)); err != nil {
 			return nil
 		}
 	}

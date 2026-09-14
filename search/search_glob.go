@@ -175,7 +175,7 @@ func (c *candidateCollector) add(absolute string) {
 // addExplicit records a directly named file without applying ignore lists.
 // Root confinement and de-duplication still apply.
 func (c *candidateCollector) addExplicit(absolute string) {
-	if withinRoot(absolute, c.root) && !c.seen[absolute] {
+	if withinRoot(absolute, c.root) && !pathContainsGitDirectory(absolute) && !c.ignore.builtIn(absolute) && !c.seen[absolute] {
 		c.seen[absolute] = true
 		c.files = append(c.files, absolute)
 	}

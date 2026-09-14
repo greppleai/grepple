@@ -9,9 +9,9 @@ grepple architecture directory --depth 2 --max-nodes 80 --compact .
 grepple architecture directory --json src services
 ```
 
-`grepple-directory-architecture-v1` reports hierarchical directories, recursive file/language/declaration counts, callable visibility when adapters provide it, exact declaration ranges, and strongly resolved cross-directory calls. `--max-files` limits source analysis; compact `--depth`, `--max-nodes`, and `--max-output-bytes` affect presentation. Sources and truncation are always explicit.
+`grepple-directory-architecture-v1` reports hierarchical directories, recursive file/language/declaration counts, production/test/fixture/generated/vendor classifications, callable visibility when adapters provide it, exact declaration ranges, and strongly resolved cross-directory calls. `--max-files` limits source analysis; compact `--depth`, `--max-nodes`, and `--max-output-bytes` affect presentation. Sources and truncation are always explicit.
 
-Repository `grepple.json` ignores apply before analysis. Explicitly named files bypass ignores. Large JSON follows the shared spill policy and may produce a `grepple-artifact-v1` descriptor instead of injecting the complete document into stdout.
+Repository `grepple.json` ignores apply before analysis. Explicitly named files bypass ignores and emit a notice. Use `--production-only` to remove conventionally classified tests, fixtures, generated files, and vendor files from recursive analysis. Before relying on absence or completeness, run `grepple sources explain --compact PATH` to inspect the loaded config digest and exclusion counts. Large JSON follows the shared spill policy and may produce a `grepple-artifact-v1` descriptor instead of injecting the complete document into stdout.
 
 ## Declaration resolution
 

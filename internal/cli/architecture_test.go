@@ -12,7 +12,8 @@ func TestArchitectureDirectoryAndResolveAcrossLanguages(t *testing.T) {
 	root := t.TempDir()
 	writeArchitectureFixture(t, root, "grepple.json", `{"ignore":{"paths":["sandbox/**"]}}`)
 	writeArchitectureFixture(t, root, "go.mod", "module example.com/project\n")
-	writeArchitectureFixture(t, root, "parser/document.go", "package parser\ntype Document struct{}\n")
+	writeArchitectureFixture(t, root, "parser/document.go", "package parser\n// Document is public.\ntype Document struct{}\n// Build constructs a document.\nfunc Build() Document { return Document{} }\n")
+	writeArchitectureFixture(t, root, "parser/document_test.go", "package parser\ntype TestDocument struct{}\n")
 	writeArchitectureFixture(t, root, "web/component.ts", "export class Component { render() {} }\n")
 	writeArchitectureFixture(t, root, "sandbox/ignored.py", "class Ignored:\n    pass\n")
 	chdirForConfigTest(t, root)
@@ -26,8 +27,11 @@ func TestArchitectureDirectoryAndResolveAcrossLanguages(t *testing.T) {
 	if err := json.Unmarshal([]byte(output), &architecture); err != nil {
 		t.Fatal(err)
 	}
-	if architecture.Schema != directoryArchitectureSchema || architecture.Files != 2 || len(architecture.Directories) != 3 {
+	if architecture.Schema != directoryArchitectureSchema || architecture.Files != 3 || len(architecture.Directories) != 3 {
 		t.Fatalf("architecture = %+v", architecture)
+	}
+	if formatArchitectureCounts(architecture.Directories[0].Classifications) != "production:2,test:1" || architecture.Directories[0].PublicCallables != 1 {
+		t.Fatalf("root classifications=%+v", architecture.Directories[0].Classifications)
 	}
 	for _, directory := range architecture.Directories {
 		if strings.HasPrefix(directory.Path, "sandbox") {
@@ -40,8 +44,23 @@ func TestArchitectureDirectoryAndResolveAcrossLanguages(t *testing.T) {
 			t.Fatal(err)
 		}
 	})
-	if !strings.Contains(resolved, "matches=1") || !strings.Contains(resolved, "parser/document.go:2") {
+	if !strings.Contains(resolved, "matches=1") || !strings.Contains(resolved, "parser/document.go:3") || !strings.Contains(resolved, "class=production") {
 		t.Fatalf("resolve output:\n%s", resolved)
+	}
+
+	assertProductionOnlyArchitectureResolve(t)
+}
+
+func assertProductionOnlyArchitectureResolve(t *testing.T) {
+	t.Helper()
+	production := captureStdout(t, func() {
+		err := Run([]string{"architecture", "resolve", "--symbol", "TestDocument", "--compact", "--production-only", ".", "--no-spill"})
+		if code, ok := ExitCode(err); !ok || code != 1 {
+			t.Fatalf("production-only resolve error=%v", err)
+		}
+	})
+	if !strings.Contains(production, "matches=0") {
+		t.Fatalf("production-only resolve output:\n%s", production)
 	}
 }
 

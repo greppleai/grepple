@@ -41,6 +41,7 @@ type Params struct {
 	Root            string   `json:"-"`
 	IgnorePaths     []string `json:"-"`
 	IgnoreRoot      string   `json:"-"`
+	ProductionOnly  bool     `json:"-"`
 	CountByRepo     bool     `json:"-"`
 }
 

@@ -126,7 +126,7 @@ func searchAnalysisIncomplete(results []api.FileResult) bool {
 }
 
 func searchNextCommand(options *cliOptions, skip int, remote bool) string {
-	parts := []string{"grepple", "search"}
+	parts := appendActiveRepositoryScopeFlags([]string{"grepple", "search"})
 	if remote {
 		parts = append(parts, "--remote")
 	}
@@ -165,7 +165,7 @@ func graphContinuationCommand(mode string, paths []string, truncation *navigatio
 	if truncation == nil {
 		return ""
 	}
-	parts := []string{"grepple", "graph"}
+	parts := appendActiveRepositoryScopeFlags([]string{"grepple", "graph"})
 	if mode != "graph" {
 		parts = append(parts, mode)
 	}
@@ -202,7 +202,7 @@ func boundaryResultMetadata(values boundariesArgs, report boundariesOutput) *api
 }
 
 func boundaryContinuationCommand(values boundariesArgs, removeSourceCap bool) string {
-	parts := []string{"grepple", "boundaries", "--json", "--min-occurrences", fmt.Sprint(values.MinOccurrences)}
+	parts := appendActiveRepositoryScopeFlags([]string{"grepple", "boundaries", "--json", "--min-occurrences", fmt.Sprint(values.MinOccurrences)})
 	if values.Policy != "" {
 		parts = append(parts, "--policy", quoteCommandArgument(values.Policy))
 	}
@@ -260,7 +260,7 @@ func gritResultLanguages(response api.GritResponse) []string {
 }
 
 func gritContinuationCommand(values gritArgs, nextSkip int, removeSourceCaps bool) string {
-	parts := []string{"grepple", "grit", "--json"}
+	parts := appendActiveRepositoryScopeFlags([]string{"grepple", "grit", "--json"})
 	if values.Remote {
 		parts = append(parts, "--remote")
 	}
@@ -308,7 +308,8 @@ func graphDiffResultMetadata(values graphDiffArgs, before, after navigationGraph
 		Omitted: api.ResultOmissions{Sources: omitted}, Diagnostics: sourceResultDiagnostics(sources),
 	}
 	if !metadata.Page.Complete {
-		metadata.NextCommand = fmt.Sprintf("grepple graph diff --before %s --after %s --max-files 0 --json", quoteCommandArgument(values.Before), quoteCommandArgument(values.After))
+		parts := appendActiveRepositoryScopeFlags([]string{"grepple", "graph", "diff", "--before", quoteCommandArgument(values.Before), "--after", quoteCommandArgument(values.After), "--max-files", "0", "--json"})
+		metadata.NextCommand = strings.Join(parts, " ")
 	}
 	return metadata
 }

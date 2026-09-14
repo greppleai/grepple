@@ -194,7 +194,7 @@ func Files(p Params, candidates []string) ([]FileMatch, error) {
 	}
 	files := candidates
 	if files == nil {
-		files, e = collectCandidateFilesConfiguredContext(context.Background(), p.Globs, p.Root, sourceIgnoreConfig{root: p.IgnoreRoot, patterns: p.IgnorePaths})
+		files, e = collectCandidateFilesConfiguredContext(context.Background(), p.Globs, p.Root, sourceIgnoreConfig{root: p.IgnoreRoot, patterns: p.IgnorePaths, productionOnly: p.ProductionOnly})
 		if e != nil {
 			return nil, e
 		}
@@ -394,7 +394,7 @@ func ListFilePathsContext(ctx context.Context, p Params, candidates []string) ([
 	files := candidates
 	var e error
 	if files == nil {
-		files, e = collectListingFilesConfiguredContext(ctx, p.Globs, p.Root, sourceIgnoreConfig{root: p.IgnoreRoot, patterns: p.IgnorePaths})
+		files, e = collectListingFilesConfiguredContext(ctx, p.Globs, p.Root, sourceIgnoreConfig{root: p.IgnoreRoot, patterns: p.IgnorePaths, productionOnly: p.ProductionOnly})
 		if e != nil {
 			return nil, e
 		}

@@ -14,6 +14,7 @@ Use the smallest result shape that can answer the question. Grepple is determini
 | Measure breadth without bodies | `grepple -F 'Name' --count-summary SCOPE` |
 | List matching files | `grepple -F 'Name' --files-with-matches SCOPE` |
 | List files by path/glob | `grepple --files 'src/**/*.go'` |
+| Explain selected/excluded paths | `grepple sources explain --compact SCOPE` |
 | Inventory one file | `grepple --outline path/to/file.go` |
 | Retrieve enclosing implementation | `grepple -F 'Name' SCOPE --limit 5` |
 | Locate exact evidence lines | `grepple --line-only -F 'Name' SCOPE` |
@@ -31,7 +32,7 @@ Default search returns enclosing structural segments and collapses unrelated bod
 4. Treat a text occurrence as an occurrence only. For callers, dependencies, or refactor impact, switch to `change-impact-analysis`.
 5. Treat `recovered`, `unsupported`, or `failed` source analysis as incomplete parser evidence; plain text is intentional but has no syntax guarantees.
 6. In complete JSON, inspect `metadata.page.complete`, limits, omissions, and diagnostics; use its copyable `nextCommand` rather than inventing a paging command. If stdout is `grepple-artifact-v1`, inspect the descriptor first and read only relevant artifact ranges; use its `--no-spill` rerun only when the complete stream is required. Human truncation and omitted-segment messages are likewise incomplete.
-7. Selected paths/globs are the evidence universe. State that universe when making a completeness claim.
+7. Selected paths/globs and repository source controls define the evidence universe. If exclusions could matter, run `grepple sources explain --compact SCOPE`; use `--production-only` only for explicitly production-scoped questions. State that universe when making a completeness claim.
 8. Do not read an entire large file after Grepple supplied an exact construct range.
 
 ## Edit-safe workflow
