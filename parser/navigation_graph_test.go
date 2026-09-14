@@ -188,13 +188,15 @@ explicit.Load()
 service.client.Load()
 }
 `
-	goCalls := navigationCallsByDisplay(BuildNavigationGraph(goContent, "go", "app/service.go").Calls)
+	goGraph := BuildNavigationGraph(goContent, "go", "app/service.go")
+	goCalls := navigationCallsByDisplay(goGraph.Calls)
 	for _, display := range []string{"local.Load", "explicit.Load", "service.client.Load"} {
 		call := goCalls[display]
 		if call.ReceiverType != "Client" || call.ImportPath != "example.com/project/worker" {
 			t.Fatalf("Go %s binding context = %+v", display, call)
 		}
 	}
+	assertGoNavigationFieldFacts(t, goGraph.Fields)
 
 	typeScriptContent := `import { Client } from "./worker";
 class Runner {
@@ -336,4 +338,11 @@ func navigationCallsByDisplay(calls []NavigationCall) map[string]NavigationCall 
 		result[call.Display] = call
 	}
 	return result
+}
+
+func assertGoNavigationFieldFacts(t *testing.T, fields []NavigationField) {
+	t.Helper()
+	if len(fields) != 1 || fields[0].OwnerType != "Service" || fields[0].Name != "client" || fields[0].Type != "Client" || fields[0].ImportPath != "example.com/project/worker" || fields[0].Line != 3 {
+		t.Fatalf("Go field facts = %+v", fields)
+	}
 }

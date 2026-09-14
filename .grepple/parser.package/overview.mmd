@@ -2,7 +2,7 @@ classDiagram
     %% grepple:package-default github.com/greppleai/grepple/parser
     %% grepple:language-default go
     direction LR
-    note "Package parser provides application source classification and structural parsing. | package github.com/greppleai/grepple/parser | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=33, declarations=63, exportedTypes=24, internalTypes=39, members=485, exportedFunctions=23, fiberRoutes=0, relations=298"
+    note "Package parser provides application source classification and structural parsing. | package github.com/greppleai/grepple/parser | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=33, declarations=66, exportedTypes=26, internalTypes=40, members=515, exportedFunctions=23, fiberRoutes=0, relations=314"
     namespace interfaces {
         class languageAdapter["languageAdapter · parser/language.go:74-81"] {
             +Grammar(): syntaxLanguage
@@ -13,11 +13,13 @@ classDiagram
             +Rules(): *structureRules
         }
         <<interface>> languageAdapter
-        class navigationAdapter["navigationAdapter · parser/navigation_adapter.go:27-50"] {
+        class navigationAdapter["navigationAdapter · parser/navigation_adapter.go:32-57"] {
             +CallableReturnBinding(*syntaxNode, string, map[string]navigationImport): navigationBinding
             +ContainerName(*syntaxNode, string, *navigationEnvelope): string
             +DeclarationKind(*syntaxNode, string): string
             +DeclarationName(*syntaxNode, string, *navigationEnvelope): string
+            +Exports(*syntaxNode, string, string, string): []NavigationExport
+            +FieldNames(*syntaxNode, *syntaxNode, string): []navigationFieldName
             +IsCall(string): bool
             +IsCallable(*syntaxNode): bool
             +IsContainer(string): bool
@@ -46,7 +48,7 @@ classDiagram
             +Symbols: []Symbol
         }
         <<struct>> FileOutline
-        class NavigationCall["NavigationCall · parser/navigation.go:32-51"] {
+        class NavigationCall["NavigationCall · parser/navigation.go:32-54"] {
             +CallerID: string
             +CandidateTargetIDs: []string
             +Confidence: string
@@ -62,6 +64,9 @@ classDiagram
             +Qualifier: string
             +ReceiverFactory: string
             +ReceiverFactoryImport: string
+            +ReceiverMembers: []string
+            +ReceiverRootImport: string
+            +ReceiverRootType: string
             +ReceiverType: string
             +ResolvedName: string
             +TargetID: string
@@ -86,14 +91,38 @@ classDiagram
             +Visibility: NavigationVisibility
         }
         <<struct>> NavigationDeclaration
-        class NavigationGraph["NavigationGraph · parser/navigation.go:81-86"] {
+        class NavigationExport["NavigationExport · parser/navigation.go:68-76"] {
+            +ImportPath: string
+            +ImportedName: string
+            +Language: string
+            +Line: int
+            +LocalName: string
+            +Name: string
+            +Path: string
+        }
+        <<struct>> NavigationExport
+        class NavigationField["NavigationField · parser/navigation.go:79-89"] {
+            +Embedded: bool
+            +ImportPath: string
+            +Language: string
+            +Line: int
+            +Name: string
+            +OwnerType: string
+            +Package: string
+            +Path: string
+            +Type: string
+        }
+        <<struct>> NavigationField
+        class NavigationGraph["NavigationGraph · parser/navigation.go:108-115"] {
             +Calls: []NavigationCall
             +Declarations: []NavigationDeclaration
+            +Exports: []NavigationExport
+            +Fields: []NavigationField
             +MemberAccesses: []NavigationMemberAccess
             +TypeUsages: []NavigationTypeUsage
         }
         <<struct>> NavigationGraph
-        class NavigationMemberAccess["NavigationMemberAccess · parser/navigation.go:65-76"] {
+        class NavigationMemberAccess["NavigationMemberAccess · parser/navigation.go:92-103"] {
             +CallerID: string
             +ID: string
             +Language: string
@@ -106,7 +135,7 @@ classDiagram
             +StartByte: int
         }
         <<struct>> NavigationMemberAccess
-        class NavigationTypeUsage["NavigationTypeUsage · parser/navigation.go:54-62"] {
+        class NavigationTypeUsage["NavigationTypeUsage · parser/navigation.go:57-65"] {
             +CallerID: string
             +ImportPath: string
             +Language: string
@@ -196,19 +225,21 @@ classDiagram
         <<struct>> mdHeading
         class mdNode["mdNode · parser/markdown.go:135-139"]
         <<struct>> mdNode
-        class navigationAdapterConfig["navigationAdapterConfig · parser/navigation_adapter.go:52-71"]
+        class navigationAdapterConfig["navigationAdapterConfig · parser/navigation_adapter.go:59-80"]
         <<struct>> navigationAdapterConfig
-        class navigationBinding["navigationBinding · parser/navigation_context.go:12-19"]
+        class navigationBinding["navigationBinding · parser/navigation_context.go:13-21"]
         <<struct>> navigationBinding
-        class navigationCollector["navigationCollector · parser/navigation.go:172-185"]
+        class navigationCollector["navigationCollector · parser/navigation.go:203-216"]
         <<struct>> navigationCollector
-        class navigationEnvelope["navigationEnvelope · parser/navigation.go:187-191"]
+        class navigationEnvelope["navigationEnvelope · parser/navigation.go:218-222"]
         <<struct>> navigationEnvelope
-        class navigationImport["navigationImport · parser/navigation_context.go:7-10"]
+        class navigationFieldName["navigationFieldName · parser/navigation_adapter.go:21-24"]
+        <<struct>> navigationFieldName
+        class navigationImport["navigationImport · parser/navigation_context.go:8-11"]
         <<struct>> navigationImport
-        class navigationMemberSyntax["navigationMemberSyntax · parser/navigation_adapter.go:21-25"]
+        class navigationMemberSyntax["navigationMemberSyntax · parser/navigation_adapter.go:26-30"]
         <<struct>> navigationMemberSyntax
-        class navigationWalkContext["navigationWalkContext · parser/navigation.go:193-198"]
+        class navigationWalkContext["navigationWalkContext · parser/navigation.go:224-229"]
         <<struct>> navigationWalkContext
         class pooledParser["pooledParser · parser/tree_sitter.go:171-174"]
         <<struct>> pooledParser
@@ -244,7 +275,7 @@ classDiagram
         <<struct>> viewWalkItem
     }
     namespace operations {
-        class BuildNavigationGraph["BuildNavigationGraph · parser/navigation.go:113-124"] {
+        class BuildNavigationGraph["BuildNavigationGraph · parser/navigation.go:144-155"] {
             +BuildNavigationGraph(string, string, string): NavigationGraph
         }
         <<function>> BuildNavigationGraph
@@ -268,7 +299,7 @@ classDiagram
             +CapabilitiesForLanguage(string): tuple~LanguageCapabilities&#44;bool~
         }
         <<function>> CapabilitiesForLanguage
-        class DeclarationRangeAt["DeclarationRangeAt · parser/navigation.go:156-170"] {
+        class DeclarationRangeAt["DeclarationRangeAt · parser/navigation.go:187-201"] {
             +DeclarationRangeAt(string, string, int): tuple~int&#44;int&#44;bool~
         }
         <<function>> DeclarationRangeAt
@@ -292,11 +323,11 @@ classDiagram
             +LanguageFor(string): string
         }
         <<function>> LanguageFor
-        class Navigation["Navigation · parser/navigation.go:107-110"] {
+        class Navigation["Navigation · parser/navigation.go:138-141"] {
             +Navigation(string, string): tuple~[]NavigationDeclaration&#44;[]NavigationCall~
         }
         <<function>> Navigation
-        class NavigationGraphFromDocument["NavigationGraphFromDocument · parser/navigation.go:128-138"] {
+        class NavigationGraphFromDocument["NavigationGraphFromDocument · parser/navigation.go:159-169"] {
             +NavigationGraphFromDocument(*Document, string): NavigationGraph
         }
         <<function>> NavigationGraphFromDocument
@@ -363,6 +394,8 @@ classDiagram
     NavigationDeclaration "1" --> "1" NavigationVisibility : field Visibility
     NavigationGraph "1" --> "*" NavigationCall : field Calls
     NavigationGraph "1" --> "*" NavigationDeclaration : field Declarations
+    NavigationGraph "1" --> "*" NavigationExport : field Exports
+    NavigationGraph "1" --> "*" NavigationField : field Fields
     NavigationGraph "1" --> "*" NavigationMemberAccess : field MemberAccesses
     NavigationGraph "1" --> "*" NavigationTypeUsage : field TypeUsages
     NavigationGraphFromDocument "1" ..> "1" Document : parameter 1
@@ -463,14 +496,18 @@ classDiagram
     languageAdapter "1" ..> "1" syntaxTree : method Parse result 1
     languageGeneratedMetadata "1" --> "*" GrammarCardinality : field children; field fields
     mdNode "1" --> "1" Symbol : field sym
+    navigationAdapter "1" ..> "*" NavigationExport : method Exports result 1
     navigationAdapter "1" ..> "1" NavigationVisibility : method Visibility result 1
     navigationAdapter "1" ..> "*" navigationBinding : method SourceFacts result 3
     navigationAdapter "1" ..> "1" navigationBinding : method CallableReturnBinding result 1; method SelfBinding result 2
     navigationAdapter "1" ..> "1" navigationEnvelope : method ContainerName parameter 3; method DeclarationName parameter 3
+    navigationAdapter "1" ..> "*" navigationFieldName : method FieldNames result 1
     navigationAdapter "1" ..> "*" navigationImport : method CallableReturnBinding parameter 3; method SourceFacts result 1
     navigationAdapter "1" ..> "1" navigationMemberSyntax : method MemberAccess result 1
     navigationAdapter "1" ..> "1" structureRules : method Rules result 1
-    navigationAdapter "1" ..> "1" syntaxNode : method-parameter=13
+    navigationAdapter "1" ..> "1" syntaxNode : method-parameter=16
+    navigationAdapterConfig "1" --> "*" NavigationExport : field exports
+    navigationAdapterConfig "1" ..> "*" NavigationExport : method Exports result 1
     navigationAdapterConfig "1" --> "1" NavigationVisibility : field visibility
     navigationAdapterConfig "1" ..> "1" NavigationVisibility : method Visibility result 1
     navigationAdapter <|.. navigationAdapterConfig : implements
@@ -480,14 +517,16 @@ classDiagram
     navigationAdapterConfig "1" ..> "1" navigationBinding : method CallableReturnBinding result 1; method SelfBinding result 2
     navigationAdapterConfig "1" --> "1" navigationEnvelope : field containerName; field declarationName
     navigationAdapterConfig "1" ..> "1" navigationEnvelope : method ContainerName parameter 3; method DeclarationName parameter 3
+    navigationAdapterConfig "1" --> "*" navigationFieldName : field fieldNames
+    navigationAdapterConfig "1" ..> "*" navigationFieldName : method FieldNames result 1
     navigationAdapterConfig "1" --> "*" navigationImport : field callableReturnBinding; field sourceFacts
     navigationAdapterConfig "1" ..> "*" navigationImport : method CallableReturnBinding parameter 3; method SourceFacts result 1
     navigationAdapterConfig "1" ..> "1" navigationMemberSyntax : method MemberAccess result 1
     navigationAdapterConfig "1" --> "1" stringSet : field=5
     navigationAdapterConfig "1" --> "1" structureRules : field rules
     navigationAdapterConfig "1" ..> "1" structureRules : method Rules result 1
-    navigationAdapterConfig "1" --> "1" syntaxNode : field=10
-    navigationAdapterConfig "1" ..> "1" syntaxNode : method-parameter=13
+    navigationAdapterConfig "1" --> "1" syntaxNode : field=12
+    navigationAdapterConfig "1" ..> "1" syntaxNode : method-parameter=16
     navigationCacheEntry "1" --> "1" NavigationGraph : field Graph
     navigationCollector "1" --> "*" NavigationCall : field calls
     navigationCollector "1" --> "*" NavigationDeclaration : field declarations

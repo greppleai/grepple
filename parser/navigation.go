@@ -39,6 +39,9 @@ type NavigationCall struct {
 	Qualifier             string   `json:"qualifier,omitempty"`
 	ImportPath            string   `json:"importPath,omitempty"`
 	ReceiverType          string   `json:"receiverType,omitempty"`
+	ReceiverRootType      string   `json:"receiverRootType,omitempty"`
+	ReceiverRootImport    string   `json:"receiverRootImport,omitempty"`
+	ReceiverMembers       []string `json:"receiverMembers,omitempty"`
 	ReceiverFactory       string   `json:"receiverFactory,omitempty"`
 	ReceiverFactoryImport string   `json:"receiverFactoryImport,omitempty"`
 	ResolvedName          string   `json:"resolvedName,omitempty"`
@@ -61,6 +64,30 @@ type NavigationTypeUsage struct {
 	Line       int    `json:"line"`
 }
 
+// NavigationExport describes a module export or re-export used for import resolution.
+type NavigationExport struct {
+	Name         string `json:"name"`
+	LocalName    string `json:"localName,omitempty"`
+	ImportPath   string `json:"importPath,omitempty"`
+	ImportedName string `json:"importedName,omitempty"`
+	Language     string `json:"language"`
+	Path         string `json:"path"`
+	Line         int    `json:"line"`
+}
+
+// NavigationField describes one typed field or property owned by a declared type.
+type NavigationField struct {
+	OwnerType  string `json:"ownerType"`
+	Name       string `json:"name"`
+	Type       string `json:"type"`
+	ImportPath string `json:"importPath,omitempty"`
+	Language   string `json:"language"`
+	Path       string `json:"path"`
+	Package    string `json:"package,omitempty"`
+	Line       int    `json:"line"`
+	Embedded   bool   `json:"embedded,omitempty"`
+}
+
 // NavigationMemberAccess describes a receiver-qualified field or property read or write.
 type NavigationMemberAccess struct {
 	ID           string `json:"id"`
@@ -77,10 +104,12 @@ type NavigationMemberAccess struct {
 
 // NavigationGraph is the normalized, language-neutral callable and call model.
 // Language-specific consumers may enrich its syntax facts with package, module,
-// import, receiver, or type information.
+// import, receiver, field, or type information.
 type NavigationGraph struct {
 	Declarations   []NavigationDeclaration  `json:"declarations"`
 	Calls          []NavigationCall         `json:"calls"`
+	Exports        []NavigationExport       `json:"exports,omitempty"`
+	Fields         []NavigationField        `json:"fields,omitempty"`
 	TypeUsages     []NavigationTypeUsage    `json:"typeUsages,omitempty"`
 	MemberAccesses []NavigationMemberAccess `json:"memberAccesses,omitempty"`
 }
@@ -89,6 +118,8 @@ type NavigationGraph struct {
 func (graph *NavigationGraph) Merge(other NavigationGraph) {
 	graph.Declarations = append(graph.Declarations, other.Declarations...)
 	graph.Calls = append(graph.Calls, other.Calls...)
+	graph.Exports = append(graph.Exports, other.Exports...)
+	graph.Fields = append(graph.Fields, other.Fields...)
 	graph.TypeUsages = append(graph.TypeUsages, other.TypeUsages...)
 	graph.MemberAccesses = append(graph.MemberAccesses, other.MemberAccesses...)
 }
@@ -149,7 +180,7 @@ func navigationGraphFromTree(root *syntaxNode, content, language, path string) N
 	returnBindings := navigationReturnBindings(root, content, imports, navigation)
 	collector := navigationCollector{content: content, adapter: adapter, navigation: navigation, path: path, imports: imports, fields: fields, returnBindings: returnBindings, packageName: packageName}
 	collector.walk(root, navigationWalkContext{})
-	return NavigationGraph{Declarations: collector.declarations, Calls: collector.calls, TypeUsages: collector.typeUsages, MemberAccesses: collector.memberAccesses}
+	return NavigationGraph{Declarations: collector.declarations, Calls: collector.calls, Exports: navigation.Exports(root, content, language, path), Fields: navigationFieldFacts(fields, language, path, packageName), TypeUsages: collector.typeUsages, MemberAccesses: collector.memberAccesses}
 }
 
 // DeclarationRangeAt returns the narrowest callable declaration containing line.

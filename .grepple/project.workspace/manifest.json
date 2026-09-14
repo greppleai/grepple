@@ -26,15 +26,15 @@
   "summary": {
     "modules": 2,
     "packages": 16,
-    "sourceFiles": 154,
-    "declarations": 414,
-    "exportedFunctions": 120,
+    "sourceFiles": 156,
+    "declarations": 426,
+    "exportedFunctions": 121,
     "fiberRoutes": 0,
     "localImports": 23,
-    "standardLibraryImports": 145,
+    "standardLibraryImports": 147,
     "externalModuleEdges": 15
   },
-  "semanticModelDigest": "sha256:510b7ae76bc52218555d873964337ff48a4589dd295b1113ffe00a5911bfb488",
+  "semanticModelDigest": "sha256:8970ede9a8dfa641df6e92dbac39033109639663ad2dcaa6e522af8d4df9b35f",
   "modules": [
     {
       "path": "github.com/greppleai/grepple",
@@ -305,7 +305,7 @@
           "documentation": "Package parser provides application source classification and structural parsing.",
           "main": false,
           "sourceFiles": 33,
-          "declarations": 63,
+          "declarations": 66,
           "exportedFunctions": 23,
           "fiberRoutes": 0,
           "routes": [],
@@ -445,9 +445,9 @@
           "name": "search",
           "documentation": "Package search provides file discovery, query and repository filtering, paging, match workers, context, and wire-result construction.",
           "main": false,
-          "sourceFiles": 16,
-          "declarations": 39,
-          "exportedFunctions": 29,
+          "sourceFiles": 18,
+          "declarations": 48,
+          "exportedFunctions": 30,
           "fiberRoutes": 0,
           "routes": [],
           "localImports": [
@@ -457,7 +457,9 @@
           "standardLibraryImports": [
             "bytes",
             "context",
+            "encoding/json",
             "fmt",
+            "io",
             "io/fs",
             "os",
             "path/filepath",

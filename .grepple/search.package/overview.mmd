@@ -2,7 +2,7 @@ classDiagram
     %% grepple:package-default github.com/greppleai/grepple/search
     %% grepple:language-default go
     direction LR
-    note "Package search provides file discovery, query and repository filtering, paging, match workers, context, and wire-result construction. | package github.com/greppleai/grepple/search | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=16, declarations=39, exportedTypes=22, internalTypes=17, members=227, exportedFunctions=29, fiberRoutes=0, relations=76"
+    note "Package search provides file discovery, query and repository filtering, paging, match workers, context, and wire-result construction. | package github.com/greppleai/grepple/search | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=18, declarations=48, exportedTypes=25, internalTypes=23, members=305, exportedFunctions=30, fiberRoutes=0, relations=86"
     namespace data_contracts {
         class BoundaryBreadth["BoundaryBreadth · search/boundary_model.go:39-43"] {
             +Files: int
@@ -105,7 +105,34 @@ classDiagram
             +Schema: string
         }
         <<struct>> NavigationGraphDiff
-        class NavigationSourceStats["NavigationSourceStats · search/related.go:120-126"] {
+        class NavigationLanguageResolutionStats["NavigationLanguageResolutionStats · search/navigation_stats.go:16-25"] {
+            +AmbiguityRate: float64
+            +Ambiguous: int
+            +Calls: int
+            +Candidate: int
+            +Confidences: []NavigationResolutionCount
+            +Language: string
+            +Resolved: int
+            +Unresolved: int
+        }
+        <<struct>> NavigationLanguageResolutionStats
+        class NavigationResolutionCount["NavigationResolutionCount · search/navigation_stats.go:10-13"] {
+            +Count: int
+            +Name: string
+        }
+        <<struct>> NavigationResolutionCount
+        class NavigationResolutionStats["NavigationResolutionStats · search/navigation_stats.go:28-37"] {
+            +AmbiguityRate: float64
+            +Ambiguous: int
+            +Calls: int
+            +Candidate: int
+            +Confidences: []NavigationResolutionCount
+            +Languages: []NavigationLanguageResolutionStats
+            +Resolved: int
+            +Unresolved: int
+        }
+        <<struct>> NavigationResolutionStats
+        class NavigationSourceStats["NavigationSourceStats · search/related.go:146-152"] {
             +Attempted: int
             +Failed: int
             +Parsed: int
@@ -140,6 +167,10 @@ classDiagram
             +Sort: string
         }
         <<struct>> Params
+        class typeScriptConfig["typeScriptConfig · search/navigation_typescript.go:14-19"] {
+            +CompilerOptions: struct&#123;BaseURL string`json:&quot;baseUrl&quot;`&#59;Paths map[string][]string`json:&quot;paths&quot;`&#59;&#125;
+        }
+        <<struct>> typeScriptConfig
     }
     namespace exported_types {
         class BoundaryRisk["BoundaryRisk = string · search/boundary_model.go:12"]
@@ -148,7 +179,7 @@ classDiagram
         <<type>> BoundaryTypeOrigin
         class FileMatch["FileMatch · search/model.go:63-72"]
         <<struct>> FileMatch
-        class NavigationBuildOptions["NavigationBuildOptions · search/related.go:140-142"]
+        class NavigationBuildOptions["NavigationBuildOptions · search/related.go:166-168"]
         <<struct>> NavigationBuildOptions
         class NavigationGraphFilter["NavigationGraphFilter · search/navigation_filter.go:12-16"]
         <<struct>> NavigationGraphFilter
@@ -184,16 +215,26 @@ classDiagram
         <<struct>> candidateWalker
         class gitignoreCache["gitignoreCache = map&#91;string&#93;&#91;&#93;string · search/search_glob.go:461"]
         <<type>> gitignoreCache
-        class navigationCall["navigationCall · search/related.go:38-47"]
+        class jsonCommentStripper["jsonCommentStripper · search/navigation_typescript.go:95-100"]
+        <<struct>> jsonCommentStripper
+        class jsonTrailingCommaStripper["jsonTrailingCommaStripper · search/navigation_typescript.go:168-172"]
+        <<struct>> jsonTrailingCommaStripper
+        class navigationCall["navigationCall · search/related.go:38-54"]
         <<struct>> navigationCall
         class navigationCaller["navigationCaller · search/related.go:33-36"]
         <<struct>> navigationCaller
-        class navigationCandidateResolution["navigationCandidateResolution · search/related.go:415-418"]
+        class navigationCandidateResolution["navigationCandidateResolution · search/related.go:680-683"]
         <<struct>> navigationCandidateResolution
         class navigationDeclaration["navigationDeclaration · search/related.go:20-31"]
         <<struct>> navigationDeclaration
-        class navigationIndex["navigationIndex · search/related.go:49-58"]
+        class navigationExport["navigationExport · search/related.go:56-58"]
+        <<struct>> navigationExport
+        class navigationField["navigationField · search/related.go:60-66"]
+        <<struct>> navigationField
+        class navigationIndex["navigationIndex · search/related.go:68-80"]
         <<struct>> navigationIndex
+        class navigationResolutionAccumulator["navigationResolutionAccumulator · search/navigation_stats.go:64-67"]
+        <<struct>> navigationResolutionAccumulator
         class repoPattern["repoPattern · search/search_engine.go:95-98"]
         <<struct>> repoPattern
     }
@@ -214,15 +255,15 @@ classDiagram
             +At(Params): tuple~*FileMatch&#44;error~
         }
         <<function>> At
-        class BuildNavigationGraph["BuildNavigationGraph · search/related.go:129-132"] {
+        class BuildNavigationGraph["BuildNavigationGraph · search/related.go:155-158"] {
             +BuildNavigationGraph([]string): parser.NavigationGraph
         }
         <<function>> BuildNavigationGraph
-        class BuildNavigationGraphWithOptions["BuildNavigationGraphWithOptions · search/related.go:145-148"] {
+        class BuildNavigationGraphWithOptions["BuildNavigationGraphWithOptions · search/related.go:171-174"] {
             +BuildNavigationGraphWithOptions([]string, NavigationBuildOptions): tuple~parser.NavigationGraph&#44;NavigationSourceStats~
         }
         <<function>> BuildNavigationGraphWithOptions
-        class BuildNavigationGraphWithStats["BuildNavigationGraphWithStats · search/related.go:135-137"] {
+        class BuildNavigationGraphWithStats["BuildNavigationGraphWithStats · search/related.go:161-163"] {
             +BuildNavigationGraphWithStats([]string): tuple~parser.NavigationGraph&#44;NavigationSourceStats~
         }
         <<function>> BuildNavigationGraphWithStats
@@ -254,7 +295,7 @@ classDiagram
             +Files(Params, []string): tuple~[]FileMatch&#44;error~
         }
         <<function>> Files
-        class FilterNavigationGraph["FilterNavigationGraph · search/navigation_filter.go:20-38"] {
+        class FilterNavigationGraph["FilterNavigationGraph · search/navigation_filter.go:20-40"] {
             +FilterNavigationGraph(parser.NavigationGraph, NavigationGraphFilter): tuple~parser.NavigationGraph&#44;error~
         }
         <<function>> FilterNavigationGraph
@@ -266,11 +307,15 @@ classDiagram
             +ListFilePathsContext(context.Context, Params, []string): tuple~[]string&#44;error~
         }
         <<function>> ListFilePathsContext
+        class MeasureNavigationResolution["MeasureNavigationResolution · search/navigation_stats.go:40-62"] {
+            +MeasureNavigationResolution(parser.NavigationGraph): NavigationResolutionStats
+        }
+        <<function>> MeasureNavigationResolution
         class NewRepoFilter["NewRepoFilter · search/search_engine.go:136-138"] {
             +NewRepoFilter([]string, []string): *RepoFilter
         }
         <<function>> NewRepoFilter
-        class NormalizeNavigationGraphFilter["NormalizeNavigationGraphFilter · search/navigation_filter.go:41-55"] {
+        class NormalizeNavigationGraphFilter["NormalizeNavigationGraphFilter · search/navigation_filter.go:43-57"] {
             +NormalizeNavigationGraphFilter(NavigationGraphFilter): tuple~NavigationGraphFilter&#44;error~
         }
         <<function>> NormalizeNavigationGraphFilter
@@ -346,8 +391,12 @@ classDiagram
     FilterNavigationGraph "1" ..> "1" NavigationGraphFilter : parameter 2
     ListFilePaths "1" ..> "1" Params : parameter 1
     ListFilePathsContext "1" ..> "1" Params : parameter 2
+    MeasureNavigationResolution "1" ..> "1" NavigationResolutionStats : result 1
     NavigationGraphDiff "1" --> "*" NavigationCallDelta : field ChangedCalls
     NavigationGraphDiff "1" --> "*" NavigationDeclarationDelta : field ChangedDeclarations; field MovedDeclarations
+    NavigationLanguageResolutionStats "1" --> "*" NavigationResolutionCount : field Confidences
+    NavigationResolutionStats "1" --> "*" NavigationLanguageResolutionStats : field Languages
+    NavigationResolutionStats "1" --> "*" NavigationResolutionCount : field Confidences
     NewRepoFilter "1" ..> "1" RepoFilter : result 1
     NormalizeNavigationGraphFilter "1" ..> "1" NavigationGraphFilter : parameter 1; result 1
     QueryNavigationGraph "1" ..> "1" NavigationQueryDirection : parameter 3
@@ -370,8 +419,12 @@ classDiagram
     navigationIndex "1" --> "1" NavigationSourceStats : field sourceStats
     navigationIndex "1" --> "*" navigationCall : field calls
     navigationIndex "1" ..> "*" navigationCall : method navigationCallsByID result 1; method resolveGraphCall parameter 2
-    navigationIndex "1" ..> "1" navigationCall : method inferCallReturnReceiver parameter 1; method resolveReturnFactory parameter 1
+    navigationIndex "1" ..> "1" navigationCall : method inferCallReturnReceiver parameter 1; method inferCrossFileFieldReceiver parameter 1; method resolveReturnFactory parameter 1
     navigationIndex "1" --> "*" navigationCaller : field callers
     navigationIndex "1" --> "*" navigationDeclaration : field byFile; field byLocation; field declarations
     navigationIndex "1" ..> "*" navigationDeclaration : method-parameter=2; method-result=2
     navigationIndex "1" ..> "1" navigationDeclaration : method resolveReturnFactory result 1
+    navigationIndex "1" --> "*" navigationExport : field exports
+    navigationIndex "1" --> "*" navigationField : field embeddedFields; field fields
+    navigationIndex "1" ..> "1" navigationField : method promotedTypes parameter 1
+    navigationResolutionAccumulator "1" ..> "1" NavigationResolutionStats : method stats result 1

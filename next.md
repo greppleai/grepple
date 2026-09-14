@@ -4,7 +4,7 @@
 
 ## Recommended next milestone
 
-> Improve navigation precision where measured ambiguity blocks real tasks, strengthen boundary classification with repository-owned policy, and clarify public syntax lifecycle contracts. Add language surface only for blocked high-value workflows.
+> Strengthen boundary classification with repository-owned policy, clarify public syntax lifecycle contracts, and improve architecture drift diagnostics. Revisit navigation only when measured ambiguity identifies a blocked workflow.
 
 ## Planning principles
 
@@ -17,14 +17,6 @@
 
 ## P2 — improve precision and architectural signal
 
-### Navigation resolution
-
-- [ ] Propagate typed fields across files.
-- [ ] Resolve embedded/promoted Go methods.
-- [ ] Improve TypeScript/TSX re-export, default-import, alias, and member-chain resolution.
-- [ ] Add ambiguity fixtures for interfaces, overloads, inheritance, re-exports, default imports, and TS/TSX path aliases.
-- [ ] Expand grammar-local TypeScript/TSX metavariable roles when identifier-like, import-source, and whole-declaration positions cannot safely represent the syntax.
-- [ ] Measure ambiguity frequency by language and confidence class so improvements follow observed impact.
 
 ### Boundary analysis
 

@@ -740,10 +740,13 @@ classDiagram
     class navigationGraphOutput {
         +Calls: []parser.NavigationCall
         +Declarations: []parser.NavigationDeclaration
+        +Exports: []parser.NavigationExport
+        +Fields: []parser.NavigationField
         +Files: int
         +MemberAccesses: []parser.NavigationMemberAccess
         +Metadata: *api.ResultMetadata
         +Query: *navigationGraphQuery
+        +Resolution: search.NavigationResolutionStats
         +Schema: string
         +Sources: navigationSourceSummary
         +Truncation: *navigationGraphTruncation
@@ -753,15 +756,18 @@ classDiagram
     %% grepple:file navigationGraphOutput internal/cli/graph.go
     %% grepple:struct-tag navigationGraphOutput Calls "json:\"calls\""
     %% grepple:struct-tag navigationGraphOutput Declarations "json:\"declarations\""
+    %% grepple:struct-tag navigationGraphOutput Exports "json:\"exports,omitempty\""
+    %% grepple:struct-tag navigationGraphOutput Fields "json:\"fields,omitempty\""
     %% grepple:struct-tag navigationGraphOutput Files "json:\"files\""
     %% grepple:struct-tag navigationGraphOutput MemberAccesses "json:\"memberAccesses,omitempty\""
     %% grepple:struct-tag navigationGraphOutput Metadata "json:\"metadata,omitempty\""
     %% grepple:struct-tag navigationGraphOutput Query "json:\"query,omitempty\""
+    %% grepple:struct-tag navigationGraphOutput Resolution "json:\"resolution\""
     %% grepple:struct-tag navigationGraphOutput Schema "json:\"schema\""
     %% grepple:struct-tag navigationGraphOutput Sources "json:\"sources\""
     %% grepple:struct-tag navigationGraphOutput Truncation "json:\"truncation,omitempty\""
     %% grepple:struct-tag navigationGraphOutput TypeUsages "json:\"typeUsages,omitempty\""
-    note for navigationGraphOutput "defined: internal/cli/graph.go:30-41; Calls@internal/cli/graph.go:36; Declarations@internal/cli/graph.go:35; Files@internal/cli/graph.go:32; MemberAccesses@internal/cli/graph.go:38; Metadata@internal/cli/graph.go:33; Query@internal/cli/graph.go:39; Schema@internal/cli/graph.go:31; Sources@internal/cli/graph.go:34; Truncation@internal/cli/graph.go:40; TypeUsages@internal/cli/graph.go:37"
+    note for navigationGraphOutput "defined: internal/cli/graph.go:30-44; Calls@internal/cli/graph.go:36; Declarations@internal/cli/graph.go:35; Exports@internal/cli/graph.go:37; Fields@internal/cli/graph.go:38; Files@internal/cli/graph.go:32; MemberAccesses@internal/cli/graph.go:41; Metadata@internal/cli/graph.go:33; Query@internal/cli/graph.go:42; Resolution@internal/cli/graph.go:39; Schema@internal/cli/graph.go:31; Sources@internal/cli/graph.go:34; Truncation@internal/cli/graph.go:43; TypeUsages@internal/cli/graph.go:40"
     class navigationGraphQuery {
         +Confidences: []string
         +Depth: int
@@ -778,7 +784,7 @@ classDiagram
     %% grepple:struct-tag navigationGraphQuery Languages "json:\"languages,omitempty\""
     %% grepple:struct-tag navigationGraphQuery RootIDs "json:\"rootIds\""
     %% grepple:struct-tag navigationGraphQuery Visibilities "json:\"visibilities,omitempty\""
-    note for navigationGraphQuery "defined: internal/cli/graph.go:43-50; Confidences@internal/cli/graph.go:48; Depth@internal/cli/graph.go:45; Direction@internal/cli/graph.go:44; Languages@internal/cli/graph.go:47; RootIDs@internal/cli/graph.go:46; Visibilities@internal/cli/graph.go:49"
+    note for navigationGraphQuery "defined: internal/cli/graph.go:46-53; Confidences@internal/cli/graph.go:51; Depth@internal/cli/graph.go:48; Direction@internal/cli/graph.go:47; Languages@internal/cli/graph.go:50; RootIDs@internal/cli/graph.go:49; Visibilities@internal/cli/graph.go:52"
     class navigationGraphTruncation {
         +Limit: int
         +Reason: string
@@ -789,7 +795,7 @@ classDiagram
     %% grepple:struct-tag navigationGraphTruncation Limit "json:\"limit\""
     %% grepple:struct-tag navigationGraphTruncation Reason "json:\"reason\""
     %% grepple:struct-tag navigationGraphTruncation Skipped "json:\"skipped\""
-    note for navigationGraphTruncation "defined: internal/cli/graph.go:52-56; Limit@internal/cli/graph.go:54; Reason@internal/cli/graph.go:53; Skipped@internal/cli/graph.go:55"
+    note for navigationGraphTruncation "defined: internal/cli/graph.go:55-59; Limit@internal/cli/graph.go:57; Reason@internal/cli/graph.go:56; Skipped@internal/cli/graph.go:58"
     class navigationSourceSummary {
         +Discovered: int
         +Failed: int
@@ -806,7 +812,7 @@ classDiagram
     %% grepple:struct-tag navigationSourceSummary Recovered "json:\"recovered\""
     %% grepple:struct-tag navigationSourceSummary Selected "json:\"selected\""
     %% grepple:struct-tag navigationSourceSummary Skipped "json:\"skipped\""
-    note for navigationSourceSummary "defined: internal/cli/graph.go:58-65; Discovered@internal/cli/graph.go:59; Failed@internal/cli/graph.go:63; Parsed@internal/cli/graph.go:61; Recovered@internal/cli/graph.go:64; Selected@internal/cli/graph.go:60; Skipped@internal/cli/graph.go:62"
+    note for navigationSourceSummary "defined: internal/cli/graph.go:61-68; Discovered@internal/cli/graph.go:62; Failed@internal/cli/graph.go:66; Parsed@internal/cli/graph.go:64; Recovered@internal/cli/graph.go:67; Selected@internal/cli/graph.go:63; Skipped@internal/cli/graph.go:65"
     class onlyMatchingRenderer {
         +Render([]api.FileResult): error
         -matcher: *regexp.Regexp

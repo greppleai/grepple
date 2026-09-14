@@ -42,8 +42,16 @@ func Run() { client := NewClient(); client.Load() }
 		t.Fatal(err)
 	}
 	projection := graph
+	projection.Calls = append([]NavigationCall(nil), graph.Calls...)
+	projection.Exports = nil
+	projection.Fields = nil
 	projection.TypeUsages = nil
 	projection.MemberAccesses = nil
+	for index := range projection.Calls {
+		projection.Calls[index].ReceiverRootType = ""
+		projection.Calls[index].ReceiverRootImport = ""
+		projection.Calls[index].ReceiverMembers = nil
+	}
 	if !reflect.DeepEqual(decoded, projection) {
 		t.Fatalf("message-oriented protobuf declaration/call projection differs: got %+v want %+v", decoded, projection)
 	}

@@ -38,6 +38,7 @@ func TestGraphJSONEmitsResolvedDeterministicGraph(t *testing.T) {
 	if output.Schema != navigationGraphSchema || output.Files != 2 || len(output.Declarations) != 2 || len(output.Calls) != 1 {
 		t.Fatalf("output=%#v", output)
 	}
+	assertGraphResolutionStats(t, output.Resolution)
 	if output.Metadata == nil || !output.Metadata.Page.Complete || output.Metadata.Limits.MaxOutputBytes != DefaultTextOutputBytes || len(output.Metadata.Scope.Paths) != 2 {
 		t.Fatalf("graph metadata=%#v", output.Metadata)
 	}
@@ -398,4 +399,11 @@ func writeGraphSource(t *testing.T, root, path, content string) string {
 		t.Fatal(err)
 	}
 	return fullPath
+}
+
+func assertGraphResolutionStats(t *testing.T, stats search.NavigationResolutionStats) {
+	t.Helper()
+	if stats.Calls != 1 || stats.Resolved != 1 || stats.Ambiguous != 0 || len(stats.Languages) != 1 || stats.Languages[0].Language != "go" {
+		t.Fatalf("graph resolution stats=%#v", stats)
+	}
 }

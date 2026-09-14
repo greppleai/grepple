@@ -40,21 +40,43 @@ type navigationCall struct {
 	name, display, resolvedName       string
 	qualifier, importPath             string
 	receiverType, receiverFactory     string
-	factoryImport, file               string
+	factoryImport, file, language     string
 	importSourceFile, importDirectory string
+	rootType, rootImport              string
+	receiverMembers                   []string
+	importTargetFiles                 []string
+	promotedReceiverTypes             []string
+	importedReceiverTypes             []string
+	importedIdentity                  string
+	packageName                       string
 	moduleKnown                       bool
 	line                              int
 }
 
+type navigationExport struct {
+	name, importedName, importPath, language, file string
+}
+
+type navigationField struct {
+	ownerType, name, typeName, importPath string
+	language, packageName, file           string
+	line                                  int
+	embedded                              bool
+	targetFiles                           []string
+}
+
 type navigationIndex struct {
-	declarations map[string][]navigationDeclaration
-	callers      map[string][]navigationCaller
-	calls        map[string][]navigationCall
-	byFile       map[string][]navigationDeclaration
-	byLocation   map[string]navigationDeclaration
-	contents     map[string]string
-	graph        parser.NavigationGraph
-	sourceStats  NavigationSourceStats
+	declarations   map[string][]navigationDeclaration
+	callers        map[string][]navigationCaller
+	calls          map[string][]navigationCall
+	byFile         map[string][]navigationDeclaration
+	byLocation     map[string]navigationDeclaration
+	exports        map[string][]navigationExport
+	fields         map[string][]navigationField
+	embeddedFields map[string][]navigationField
+	contents       map[string]string
+	graph          parser.NavigationGraph
+	sourceStats    NavigationSourceStats
 }
 
 func hasNavigationMatch(matches []FileMatch) bool {
@@ -102,7 +124,7 @@ func buildNavigationIndex(files []string, useCache bool) *navigationIndex {
 	index := &navigationIndex{
 		declarations: make(map[string][]navigationDeclaration), callers: make(map[string][]navigationCaller),
 		calls: make(map[string][]navigationCall), byFile: make(map[string][]navigationDeclaration),
-		byLocation: make(map[string]navigationDeclaration), contents: make(map[string]string),
+		byLocation: make(map[string]navigationDeclaration), exports: make(map[string][]navigationExport), fields: make(map[string][]navigationField), embeddedFields: make(map[string][]navigationField), contents: make(map[string]string),
 	}
 	cwd, _ := os.Getwd()
 	paths := append([]string(nil), files...)
@@ -110,6 +132,10 @@ func buildNavigationIndex(files []string, useCache bool) *navigationIndex {
 	for _, path := range paths {
 		index.addFile(path, cwd, useCache)
 	}
+	index.inferReExportTargets()
+	index.inferCrossFileFieldReceivers()
+	index.inferReExportTargets()
+	index.inferPromotedReceiverTypes()
 	index.inferCallReturnReceivers()
 	index.indexNavigationCallers()
 	index.resolveGraphCalls()
@@ -175,6 +201,129 @@ func (index *navigationIndex) navigationCallsByID() map[string]navigationCall {
 	return byID
 }
 
+func (index *navigationIndex) addExports(exports []parser.NavigationExport, language, sourcePath string) {
+	key := navigationSymbolKey(language, sourcePath)
+	for _, export := range exports {
+		index.exports[key] = append(index.exports[key], navigationExport{name: export.Name, importedName: export.ImportedName, importPath: export.ImportPath, language: language, file: sourcePath})
+	}
+}
+
+func (index *navigationIndex) inferReExportTargets() {
+	for location, calls := range index.calls {
+		for callIndex := range calls {
+			call := &calls[callIndex]
+			if call.importedIdentity == "" {
+				call.importedIdentity = navigationImportedIdentity(*call)
+			}
+			identity := call.importedIdentity
+			call.importTargetFiles = index.reExportTargetFiles(call.file, call.importPath, identity, call.language, map[string]bool{})
+			call.importedReceiverTypes = index.importedTypeNames(call.importTargetFiles, identity, call.language)
+			if len(call.importedReceiverTypes) == 1 {
+				if call.receiverType != "" {
+					call.receiverType = call.importedReceiverTypes[0]
+				} else {
+					call.resolvedName = call.importedReceiverTypes[0]
+				}
+			}
+		}
+		index.calls[location] = calls
+	}
+}
+
+func (index *navigationIndex) importedTypeNames(files []string, name, language string) []string {
+	result := []string{}
+	for _, file := range files {
+		for _, export := range index.exports[navigationSymbolKey(language, file)] {
+			if export.name == name && export.importedName != "" && export.importedName != "*" {
+				result = append(result, terminalSymbolName(export.importedName))
+			}
+		}
+	}
+	sort.Strings(result)
+	return compactSortedStrings(result)
+}
+
+func navigationImportedIdentity(call navigationCall) string {
+	if call.receiverType != "" {
+		return terminalSymbolName(call.receiverType)
+	}
+	if call.rootType != "" {
+		return terminalSymbolName(call.rootType)
+	}
+	if call.resolvedName != "" {
+		return terminalSymbolName(call.resolvedName)
+	}
+	return terminalSymbolName(call.name)
+}
+
+func (index *navigationIndex) reExportTargetFiles(sourceFile, importPath, name, language string, seen map[string]bool) []string {
+	if importPath == "" {
+		return nil
+	}
+	result := []string{}
+	candidateFiles := index.importTargetFiles(sourceFile, importPath, language)
+	for _, candidateFile := range candidateFiles {
+		key := navigationSymbolKey(language, candidateFile) + "\x00" + name
+		if seen[key] {
+			continue
+		}
+		seen[key] = true
+		result = append(result, candidateFile)
+		for _, export := range index.exports[navigationSymbolKey(language, candidateFile)] {
+			if export.name != name && export.name != "*" {
+				continue
+			}
+			nextName := export.importedName
+			if nextName == "" || nextName == "*" {
+				nextName = name
+			}
+			result = append(result, index.reExportTargetFiles(export.file, export.importPath, nextName, language, seen)...)
+		}
+	}
+	sort.Strings(result)
+	return compactSortedStrings(result)
+}
+
+func (index *navigationIndex) importTargetFiles(sourceFile, importPath, language string) []string {
+	files := make([]string, 0, len(index.contents))
+	for candidateFile := range index.contents {
+		files = append(files, candidateFile)
+	}
+	sort.Strings(files)
+	if strings.HasPrefix(importPath, ".") {
+		result := []string{}
+		for _, candidateFile := range files {
+			if navigationRelativeImportMatches(sourceFile, importPath, candidateFile) {
+				result = append(result, candidateFile)
+			}
+		}
+		return result
+	}
+	if navigationLanguageFamily(language) == "typescript" || navigationLanguageFamily(language) == "javascript" {
+		return typeScriptAliasImportTargets(files, sourceFile, importPath)
+	}
+	return nil
+}
+
+func navigationRelativeImportMatches(sourceFile, importPath, candidateFile string) bool {
+	imported := filepath.Clean(filepath.Join(filepath.Dir(sourceFile), filepath.FromSlash(importPath)))
+	candidate := strings.TrimSuffix(filepath.Clean(candidateFile), filepath.Ext(candidateFile))
+	imported = strings.TrimSuffix(imported, filepath.Ext(imported))
+	return candidate == imported || filepath.Base(candidate) == "index" && filepath.Dir(candidate) == imported
+}
+
+func compactSortedStrings(values []string) []string {
+	if len(values) < 2 {
+		return values
+	}
+	result := values[:1]
+	for _, value := range values[1:] {
+		if value != result[len(result)-1] {
+			result = append(result, value)
+		}
+	}
+	return result
+}
 func (index *navigationIndex) resolveGraphCall(call *parser.NavigationCall, callsByID map[string]navigationCall, declarationsByID map[string]navigationDeclaration) {
 	indexed, ok := callsByID[call.ID]
 	if !ok {
@@ -246,13 +395,128 @@ func (index *navigationIndex) addFile(path, cwd string, useCache bool) {
 	}
 	index.sourceStats.Parsed++
 	index.graph.Merge(graph)
+	index.addExports(graph.Exports, language, cleanPath)
+	index.addFields(graph.Fields, language, cleanPath)
+	index.contents[cleanPath] = content
 	if len(graph.Declarations) == 0 {
 		return
 	}
 	displayPath = filepath.Clean(displayPath)
-	index.contents[cleanPath] = content
 	indexed := index.addDeclarations(graph.Declarations, language, cleanPath, displayPath)
 	index.addCalls(graph.Calls, indexed, language, cleanPath)
+}
+
+func (index *navigationIndex) addFields(fields []parser.NavigationField, language, sourcePath string) {
+	for _, field := range fields {
+		item := navigationField{ownerType: terminalSymbolName(field.OwnerType), name: field.Name, typeName: field.Type, importPath: field.ImportPath, language: language, packageName: field.Package, file: sourcePath, line: field.Line, embedded: field.Embedded}
+		key := navigationFieldKey(language, item.ownerType, item.name)
+		index.fields[key] = append(index.fields[key], item)
+		if item.embedded {
+			ownerKey := navigationSymbolKey(language, item.ownerType)
+			index.embeddedFields[ownerKey] = append(index.embeddedFields[ownerKey], item)
+		}
+	}
+}
+
+func navigationFieldKey(language, owner, name string) string {
+	return navigationSymbolKey(language, terminalSymbolName(owner)+"."+name)
+}
+
+func (index *navigationIndex) inferCrossFileFieldReceivers() {
+	for location, calls := range index.calls {
+		for callIndex := range calls {
+			index.inferCrossFileFieldReceiver(&calls[callIndex])
+		}
+		index.calls[location] = calls
+	}
+}
+
+func (index *navigationIndex) inferCrossFileFieldReceiver(call *navigationCall) {
+	if call.receiverType != "" || call.rootType == "" || len(call.receiverMembers) == 0 {
+		return
+	}
+	binding := navigationField{typeName: call.rootType, importPath: call.rootImport, language: call.language, packageName: call.packageName, file: call.file}
+	binding.targetFiles = index.reExportTargetFiles(call.file, call.rootImport, terminalSymbolName(call.rootType), call.language, map[string]bool{})
+	for _, member := range call.receiverMembers {
+		candidates := index.fields[navigationFieldKey(call.language, binding.typeName, member)]
+		matched := filterNavigationFieldsByOrigin(candidates, binding)
+		if len(matched) != 1 || matched[0].typeName == "" {
+			return
+		}
+		binding = matched[0]
+	}
+	call.receiverType = binding.typeName
+	call.importPath = binding.importPath
+	call.importedIdentity = ""
+	call.importSourceFile = binding.file
+	resolveNavigationCallImport(call, binding.language)
+}
+
+func (index *navigationIndex) inferPromotedReceiverTypes() {
+	for location, calls := range index.calls {
+		for callIndex := range calls {
+			call := &calls[callIndex]
+			if call.receiverType == "" {
+				continue
+			}
+			owner := navigationField{typeName: call.receiverType, importPath: call.importPath, language: call.language, packageName: call.packageName, file: call.importSourceFile}
+			call.promotedReceiverTypes = index.promotedTypes(owner, map[string]bool{})
+		}
+		index.calls[location] = calls
+	}
+}
+
+func (index *navigationIndex) promotedTypes(owner navigationField, seen map[string]bool) []string {
+	key := navigationSymbolKey(owner.language, terminalSymbolName(owner.typeName))
+	if seen[key] {
+		return nil
+	}
+	seen[key] = true
+	result := []string{}
+	for _, field := range filterNavigationFieldsByOrigin(index.embeddedFields[key], owner) {
+		typeName := terminalSymbolName(field.typeName)
+		if typeName == "" || stringSliceContains(result, typeName) {
+			continue
+		}
+		result = append(result, typeName)
+		result = append(result, index.promotedTypes(field, seen)...)
+	}
+	return result
+}
+
+func stringSliceContains(values []string, target string) bool {
+	for _, value := range values {
+		if value == target {
+			return true
+		}
+	}
+	return false
+}
+
+func filterNavigationFieldsByOrigin(candidates []navigationField, owner navigationField) []navigationField {
+	result := make([]navigationField, 0, len(candidates))
+	for _, candidate := range candidates {
+		if navigationFieldOriginMatches(candidate, owner) {
+			result = append(result, candidate)
+		}
+	}
+	return result
+}
+
+func navigationFieldOriginMatches(candidate, owner navigationField) bool {
+	if len(owner.targetFiles) > 0 {
+		return stringSliceContains(owner.targetFiles, candidate.file)
+	}
+	if owner.importPath != "" {
+		call := navigationCall{importPath: owner.importPath, importSourceFile: owner.file, file: owner.file}
+		resolveNavigationCallImport(&call, candidate.language)
+		declaration := navigationDeclaration{language: candidate.language, file: candidate.file, packageName: candidate.packageName}
+		return navigationImportMatches(call, declaration)
+	}
+	if navigationLanguageFamily(candidate.language) == "go" {
+		return candidate.packageName == owner.packageName && filepath.Clean(filepath.Dir(candidate.file)) == filepath.Clean(filepath.Dir(owner.file))
+	}
+	return candidate.file == owner.file
 }
 
 func (index *navigationIndex) addDeclarations(declarations []parser.NavigationDeclaration, language, path, displayPath string) []navigationDeclaration {
@@ -288,7 +552,8 @@ func (index *navigationIndex) addCalls(calls []parser.NavigationCall, declaratio
 		location := relatedLocationKey(caller.point)
 		indexedCall := navigationCall{
 			id: call.ID, callerID: call.CallerID, name: call.Name, display: call.Display, resolvedName: call.ResolvedName, qualifier: call.Qualifier, importPath: call.ImportPath, receiverType: call.ReceiverType,
-			receiverFactory: call.ReceiverFactory, factoryImport: call.ReceiverFactoryImport, file: sourcePath, importSourceFile: sourcePath, line: call.Line,
+			rootType: call.ReceiverRootType, rootImport: call.ReceiverRootImport, receiverMembers: append([]string(nil), call.ReceiverMembers...), packageName: caller.packageName,
+			receiverFactory: call.ReceiverFactory, factoryImport: call.ReceiverFactoryImport, file: sourcePath, language: language, importSourceFile: sourcePath, line: call.Line,
 		}
 		resolveNavigationCallImport(&indexedCall, language)
 		index.calls[location] = append(index.calls[location], indexedCall)
@@ -486,11 +751,16 @@ func navigationContextCandidates(call navigationCall, candidates []navigationDec
 		confidence = "import-resolved"
 	}
 	if call.receiverType != "" {
-		result = filterNavigationCandidates(result, func(candidate navigationDeclaration) bool {
-			return candidate.container == terminalSymbolName(call.receiverType)
+		receiverCandidates := filterNavigationCandidates(result, func(candidate navigationDeclaration) bool {
+			return candidate.container == terminalSymbolName(call.receiverType) || stringSliceContains(call.importedReceiverTypes, candidate.container) || stringSliceContains(call.promotedReceiverTypes, candidate.container)
 		})
-		if confidence == "" {
-			confidence = "context-resolved"
+		if len(receiverCandidates) > 0 {
+			result = receiverCandidates
+			if confidence == "" {
+				confidence = "context-resolved"
+			}
+		} else if confidence == "" {
+			return nil, ""
 		}
 	}
 	if confidence == "" || len(result) == 0 {
@@ -500,6 +770,9 @@ func navigationContextCandidates(call navigationCall, candidates []navigationDec
 }
 
 func navigationImportMatches(call navigationCall, candidate navigationDeclaration) bool {
+	if stringSliceContains(call.importTargetFiles, candidate.file) {
+		return true
+	}
 	if navigationLanguageFamily(candidate.language) == "go" {
 		if call.moduleKnown {
 			return call.importDirectory != "" && filepath.Clean(filepath.Dir(candidate.file)) == call.importDirectory

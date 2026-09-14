@@ -2,7 +2,7 @@ classDiagram
     %% grepple:package-default github.com/greppleai/grepple/internal/cli
     %% grepple:language-default go
     direction LR
-    note "Package cli implements Grepple's search, extraction, repository inspection, authentication, rules, and terminal/JSON presentation workflows. | package github.com/greppleai/grepple/internal/cli | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=42, declarations=62, exportedTypes=0, internalTypes=62, members=408, exportedFunctions=3, fiberRoutes=0, relations=38"
+    note "Package cli implements Grepple's search, extraction, repository inspection, authentication, rules, and terminal/JSON presentation workflows. | package github.com/greppleai/grepple/internal/cli | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=42, declarations=62, exportedTypes=0, internalTypes=62, members=411, exportedFunctions=3, fiberRoutes=0, relations=38"
     namespace interfaces {
         class resultRenderer["resultRenderer · internal/cli/renderer.go:9-11"] {
             +Render([]api.FileResult): error
@@ -334,20 +334,23 @@ classDiagram
             +Scopes: string
         }
         <<struct>> loginConfig
-        class navigationGraphOutput["navigationGraphOutput · internal/cli/graph.go:30-41"] {
+        class navigationGraphOutput["navigationGraphOutput · internal/cli/graph.go:30-44"] {
             +Calls: []parser.NavigationCall
             +Declarations: []parser.NavigationDeclaration
+            +Exports: []parser.NavigationExport
+            +Fields: []parser.NavigationField
             +Files: int
             +MemberAccesses: []parser.NavigationMemberAccess
             +Metadata: *api.ResultMetadata
             +Query: *navigationGraphQuery
+            +Resolution: search.NavigationResolutionStats
             +Schema: string
             +Sources: navigationSourceSummary
             +Truncation: *navigationGraphTruncation
             +TypeUsages: []parser.NavigationTypeUsage
         }
         <<struct>> navigationGraphOutput
-        class navigationGraphQuery["navigationGraphQuery · internal/cli/graph.go:43-50"] {
+        class navigationGraphQuery["navigationGraphQuery · internal/cli/graph.go:46-53"] {
             +Confidences: []string
             +Depth: int
             +Direction: string
@@ -356,13 +359,13 @@ classDiagram
             +Visibilities: []string
         }
         <<struct>> navigationGraphQuery
-        class navigationGraphTruncation["navigationGraphTruncation · internal/cli/graph.go:52-56"] {
+        class navigationGraphTruncation["navigationGraphTruncation · internal/cli/graph.go:55-59"] {
             +Limit: int
             +Reason: string
             +Skipped: int
         }
         <<struct>> navigationGraphTruncation
-        class navigationSourceSummary["navigationSourceSummary · internal/cli/graph.go:58-65"] {
+        class navigationSourceSummary["navigationSourceSummary · internal/cli/graph.go:61-68"] {
             +Discovered: int
             +Failed: int
             +Parsed: int

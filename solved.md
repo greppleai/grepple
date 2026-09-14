@@ -41,11 +41,15 @@ This file records completed Grepple roadmap work that no longer belongs in `next
 - [x] Added deterministic ambiguity ranking and actionable `--at PATH:LINE` candidate suggestions.
 - [x] Added exact, import-resolved, context-resolved, unique-terminal, and candidate confidence classes.
 - [x] Resolved explicit Go package imports and TypeScript named/namespace imports before terminal fallback.
-- [x] Added direct receiver/parameter context, source-ordered lexical bindings, local/imported return inference, and same-file typed member chains.
+- [x] Added direct receiver/parameter context, source-ordered lexical bindings, local/imported return inference, and typed member chains.
+- [x] Added package/module-aware cross-file field facts, embedded/promoted Go method resolution, and TypeScript/TSX inheritance resolution while preserving conflicting candidates.
+- [x] Added TypeScript/TSX named/default aliases, relative barrel re-exports, member chains, and nearest-`tsconfig.json` `baseUrl`/`paths` resolution with JSONC comment/trailing-comma support.
+- [x] Added deterministic ambiguity fixtures for interfaces, overloads, inheritance, re-exports, default imports, aliases, and TSX path aliases.
 - [x] Reported omitted callers and callees in human and JSON related output.
 - [x] Made every human omitted-edge notice provide a copyable focused `graph callers|callees|impact --at PATH:LINE --depth 2 --json .` continuation.
 - [x] Added complete `grepple-navigation-graph-v1` JSON and bounded compact graph projections.
 - [x] Added deterministic discovered, selected, parsed, skipped, failed, recovered, and truncated source accounting to graphs, focused graph queries, graph diffs, and boundary reports.
+- [x] Added graph-wide and per-language/confidence resolution measurements, including resolved, ambiguous, unresolved, singleton-candidate counts, and ambiguity frequency in complete JSON plus compact aggregate headers.
 - [x] Added parser-owned content- and grammar-addressed per-file navigation facts shared by graph output/queries, `--related`, boundaries, and extraction, with atomic corruption-tolerant storage, path instantiation, explicit bypass, cold/warm parity tests, and a repeatable benchmark.
 - [x] Added callers, callees, dependencies, dependents, and bidirectional impact queries with depth bounds, cycle safety, candidate preservation, and exact location/symbol/package/module/path roots.
 - [x] Added traversal-free `graph resolve --symbol NAME` previews with deterministic exact/terminal matches, full stable IDs, exact `--at` alternatives, filters, and copyable focused graph commands in bounded compact and complete JSON output.
@@ -90,6 +94,7 @@ This file records completed Grepple roadmap work that no longer belongs in `next
 - [x] Unified cancellable source discovery, ignore/glob handling, bounded acquisition, binary checks, mandatory anchors, and deterministic ordering with local search infrastructure.
 - [x] Ensured anchored scans do not reread selected source before structural evaluation.
 - [x] Added bounded compile-only `grit explain` human/JSON output for target language, compatibility, grammar identity, used features, wrapper interpretations, node/list metavariable roles, occurrence ranges, and stable compile diagnostics.
+- [x] Expanded grammar-local TypeScript/TSX roles and wrappers for default-import identifiers, module sources, JSX identifier positions, class members, and declaration alternatives without fallback parsing.
 
 ## Boundary analysis
 

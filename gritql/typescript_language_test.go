@@ -25,10 +25,13 @@ func TestTypeScriptAndTSXStructuralEvaluation(t *testing.T) {
 		{name: "type interpretation", language: "typescript", snippet: "Promise<$type>", source: "type Result = Promise<string>;\n", path: "src/types.mts", want: "Promise<string>"},
 		{name: "object property", language: "typescript", snippet: "{$key: $value}", source: "const value = {answer: 42};\n", path: "src/app.cts", want: "{answer: 42}"},
 		{name: "import source", language: "typescript", snippet: "import {value} from $source;", source: "import {value} from \"pkg\";\n", path: "src/app.ts", want: "import {value} from \"pkg\";"},
+		{name: "default import identifier", language: "typescript", snippet: "import $name from $source;", source: "import Client from \"./client\";\n", path: "src/app.ts", want: "import Client from \"./client\";"},
+		{name: "class member", language: "typescript", snippet: "$name: $type;", source: "class Client { value: string; }\n", path: "src/app.ts", want: "value: string;"},
 		{name: "typed declaration", language: "typescript", snippet: "function f($name: $type) {}", source: "function f(name: string) {}\n", path: "src/app.ts", want: "function f(name: string) {}"},
 		{name: "statement sequence", language: "typescript", snippet: "first(); second();", source: "function f(){ first(); second(); third(); }\n", path: "src/app.ts", want: "first(); second();"},
 		{name: "declaration sequence", language: "typescript", snippet: "interface A {}\ntype B = string;", source: "interface A {}\ntype B = string;\nconst c = 1;\n", path: "src/app.ts", want: "interface A {}\ntype B = string;"},
 		{name: "tsx", language: "tsx", snippet: "<Button value={$value} />", source: "const view = <Button value={item} />;\n", path: "src/view.tsx", want: "<Button value={item} />"},
+		{name: "tsx identifier positions", language: "tsx", snippet: "<$component $property={$value} />", source: "const view = <Button value={item} />;\n", path: "src/view.tsx", want: "<Button value={item} />"},
 	}
 	for _, test := range tests {
 		test := test
@@ -149,6 +152,39 @@ func TestTypeScriptAmbiguousSnippetRetainsExpressionAndTypeTemplates(t *testing.
 	if !contexts[SnippetContextExpression] || !contexts[SnippetContextType] {
 		t.Fatalf("template contexts=%v", contexts)
 	}
+}
+
+func TestTypeScriptWholePlaceholderRetainsDeclarationRole(t *testing.T) {
+	t.Parallel()
+	program, err := Compile([]byte("language typescript\n`$declaration`"), CompileOptions{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	found := false
+	for _, template := range program.Root().Templates() {
+		if template.Context() == SnippetContextDeclaration && templateNodeContainsVariable(template.Root(), "$declaration") {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Fatalf("whole declaration interpretations=%#v", program.Root().Templates())
+	}
+}
+
+func templateNodeContainsVariable(node TemplateNode, name string) bool {
+	if !node.Valid() {
+		return false
+	}
+	for _, child := range node.Children() {
+		if child.IsSlot() && child.Slot().Variable().Name == name {
+			return true
+		}
+		if templateNodeContainsVariable(child.Node(), name) {
+			return true
+		}
+	}
+	return false
 }
 
 func TestTypeScriptScannerDetectsCanonicalExtensions(t *testing.T) {

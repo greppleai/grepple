@@ -12,6 +12,8 @@ var typeScriptSnippetAttempts = []snippetAttempt{
 	{SnippetContextType, "type __grit_type = ", ";\n", selectTypeScriptType},
 	{SnippetContextStatement, "function __grit_func(){\n", "\n}\n", selectOneTypeScriptStatement},
 	{SnippetContextStatementList, "function __grit_func(){\n", "\n}\n", selectTypeScriptStatementList},
+	{SnippetContextDeclaration, "class __grit_class {\n", "\n}\n", selectOneTypeScriptMember},
+	{SnippetContextDeclarationList, "class __grit_class {\n", "\n}\n", selectTypeScriptMemberList},
 	{SnippetContextDeclaration, "", "\n", selectOneTypeScriptDeclaration},
 	{SnippetContextDeclarationList, "", "\n", selectTypeScriptDeclarationList},
 	{SnippetContextFile, "", "", selectTypeScriptFile},
@@ -55,7 +57,8 @@ func typeScriptPlaceholderRoles(decoded decodedSnippet) []placeholderRole {
 	roles := make([]placeholderRole, len(decoded.placeholders))
 	for index, placeholder := range decoded.placeholders {
 		before := strings.TrimSpace(decoded.text[:placeholder.start])
-		if hasTrailingWord(before, "from") || hasTrailingWord(before, "import") {
+		after := strings.TrimSpace(decoded.text[placeholder.end:])
+		if hasTrailingWord(before, "from") || before == "import" && (after == "" || after == ";") {
 			roles[index] = roleImportPath
 		}
 	}
@@ -66,12 +69,12 @@ func hasTrailingWord(source, word string) bool {
 	if !strings.HasSuffix(source, word) {
 		return false
 	}
-	prefix := strings.TrimSpace(strings.TrimSuffix(source, word))
-	if prefix == "" {
+	start := len(source) - len(word)
+	if start == 0 {
 		return true
 	}
-	last := prefix[len(prefix)-1]
-	return !(last == '_' || last >= '0' && last <= '9' || last >= 'A' && last <= 'Z' || last >= 'a' && last <= 'z')
+	previous := source[start-1]
+	return !(previous == '_' || previous >= '0' && previous <= '9' || previous >= 'A' && previous <= 'Z' || previous >= 'a' && previous <= 'z')
 }
 
 func typeScriptWholePlaceholder(decoded decodedSnippet) bool {
@@ -142,6 +145,40 @@ func selectOneTypeScriptDeclaration(root parser.Node, start, end int) (selectedR
 	return selectedRoot{node: children[0]}, true
 }
 
+func typeScriptClassBody(root parser.Node) (parser.Node, bool) {
+	children := directNamed(root)
+	if len(children) != 1 || children[0].Kind() != "class_declaration" {
+		return parser.Node{}, false
+	}
+	body := children[0].ChildByFieldName("body")
+	return body, body.Valid() && body.Kind() == "class_body"
+}
+
+func selectOneTypeScriptMember(root parser.Node, start, end int) (selectedRoot, bool) {
+	body, ok := typeScriptClassBody(root)
+	if !ok {
+		return selectedRoot{}, false
+	}
+
+	children := directNamed(body)
+	if len(children) != 1 || !rangeWithin(children[0], start, end) {
+		return selectedRoot{}, false
+	}
+	if hasExplicitSemicolon(body, start, end) {
+		return selectedRoot{node: body, sequenceKind: "list_sequence"}, true
+	}
+	return selectedRoot{node: children[0]}, true
+}
+
+func selectTypeScriptMemberList(root parser.Node, start, end int) (selectedRoot, bool) {
+	body, ok := typeScriptClassBody(root)
+	children := directNamed(body)
+	if !ok || len(children) < 2 || !rangeWithin(children[0], start, end) || !rangeWithin(children[len(children)-1], start, end) {
+		return selectedRoot{}, false
+	}
+	return selectedRoot{node: body, sequenceKind: "list_sequence"}, true
+}
+
 func selectTypeScriptDeclarationList(root parser.Node, start, end int) (selectedRoot, bool) {
 	children := directNamed(root)
 	if len(children) < 2 || !allTypeScriptDeclarations(children) || !rangeWithin(children[0], start, end) || !rangeWithin(children[len(children)-1], start, end) {
@@ -157,6 +194,15 @@ func selectTypeScriptFile(root parser.Node, start, end int) (selectedRoot, bool)
 func isTypeScriptDeclaration(kind string) bool {
 	switch kind {
 	case "ambient_declaration", "class_declaration", "enum_declaration", "export_statement", "function_declaration", "generator_function_declaration", "import_alias", "import_statement", "interface_declaration", "internal_module", "lexical_declaration", "module", "type_alias_declaration", "variable_declaration":
+		return true
+	default:
+		return false
+	}
+}
+
+func isTypeScriptMember(kind string) bool {
+	switch kind {
+	case "abstract_method_signature", "abstract_property_signature", "field_definition", "method_definition", "method_signature", "public_field_definition", "property_signature":
 		return true
 	default:
 		return false
@@ -193,7 +239,7 @@ func typeScriptFamilyRootCategoryAccepts(language string, context SnippetContext
 	case SnippetContextStatement, SnippetContextStatementList:
 		return parser.GrammarSubtype(language, "statement", kind)
 	case SnippetContextDeclaration, SnippetContextDeclarationList:
-		return isTypeScriptDeclaration(kind) || parser.GrammarSubtype(language, "declaration", kind)
+		return isTypeScriptDeclaration(kind) || isTypeScriptMember(kind) || parser.GrammarSubtype(language, "declaration", kind)
 	case SnippetContextFile:
 		return kind == "program"
 	default:

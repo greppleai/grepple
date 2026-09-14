@@ -155,6 +155,8 @@ func projectNavigationQuery(graph parser.NavigationGraph, included, includedCall
 	result := parser.NavigationGraph{
 		Declarations:   make([]parser.NavigationDeclaration, 0, len(included)),
 		Calls:          make([]parser.NavigationCall, 0, len(includedCalls)),
+		Exports:        make([]parser.NavigationExport, 0),
+		Fields:         make([]parser.NavigationField, 0),
 		TypeUsages:     make([]parser.NavigationTypeUsage, 0),
 		MemberAccesses: make([]parser.NavigationMemberAccess, 0),
 	}
@@ -168,6 +170,27 @@ func projectNavigationQuery(graph parser.NavigationGraph, included, includedCall
 			result.Calls = append(result.Calls, call)
 		}
 	}
+	projectNavigationContextFacts(graph, &result)
+	projectNavigationOwnedFacts(graph, included, &result)
+	return result
+}
+
+func projectNavigationContextFacts(graph parser.NavigationGraph, result *parser.NavigationGraph) {
+	fieldOwners := navigationQueryFieldOwners(result.Declarations, result.Calls)
+	for _, field := range graph.Fields {
+		if fieldOwners[terminalSymbolName(field.OwnerType)] {
+			result.Fields = append(result.Fields, field)
+		}
+	}
+	files := navigationQueryFiles(result.Declarations, result.Calls, result.Fields)
+	for _, export := range graph.Exports {
+		if files[export.Path] {
+			result.Exports = append(result.Exports, export)
+		}
+	}
+}
+
+func projectNavigationOwnedFacts(graph parser.NavigationGraph, included map[string]bool, result *parser.NavigationGraph) {
 	for _, usage := range graph.TypeUsages {
 		if included[usage.CallerID] {
 			result.TypeUsages = append(result.TypeUsages, usage)
@@ -178,5 +201,39 @@ func projectNavigationQuery(graph parser.NavigationGraph, included, includedCall
 			result.MemberAccesses = append(result.MemberAccesses, access)
 		}
 	}
-	return result
+}
+
+func navigationQueryFieldOwners(declarations []parser.NavigationDeclaration, calls []parser.NavigationCall) map[string]bool {
+	owners := make(map[string]bool)
+	for _, declaration := range declarations {
+		if declaration.Container != "" {
+			owners[terminalSymbolName(declaration.Container)] = true
+		}
+		if declaration.Receiver != "" {
+			owners[terminalSymbolName(declaration.Receiver)] = true
+		}
+	}
+	for _, call := range calls {
+		if call.ReceiverRootType != "" {
+			owners[terminalSymbolName(call.ReceiverRootType)] = true
+		}
+		if call.ReceiverType != "" {
+			owners[terminalSymbolName(call.ReceiverType)] = true
+		}
+	}
+	return owners
+}
+
+func navigationQueryFiles(declarations []parser.NavigationDeclaration, calls []parser.NavigationCall, fields []parser.NavigationField) map[string]bool {
+	files := make(map[string]bool)
+	for _, declaration := range declarations {
+		files[declaration.Path] = true
+	}
+	for _, call := range calls {
+		files[call.Path] = true
+	}
+	for _, field := range fields {
+		files[field.Path] = true
+	}
+	return files
 }

@@ -13,7 +13,7 @@ import (
 // fact cache. Library callers remain side-effect free unless they set it.
 const NavigationCacheDirectoryEnv = "GREPPLE_NAVIGATION_CACHE_DIR"
 
-const navigationCacheSchema = "grepple-navigation-facts-v1"
+const navigationCacheSchema = "grepple-navigation-facts-v2"
 
 type navigationCacheEntry struct {
 	Schema    string          `json:"schema"`
@@ -126,6 +126,9 @@ func navigationGraphAtPath(graph NavigationGraph, path string) NavigationGraph {
 		declaration.ID = navigationStableID("declaration", declaration.Language, path, declaration.Name, declaration.Kind, strconv.Itoa(declaration.Start), strconv.Itoa(declaration.End))
 		ids[oldID] = declaration.ID
 	}
+	for index := range graph.Exports {
+		graph.Exports[index].Path = path
+	}
 	for index := range graph.Calls {
 		call := &graph.Calls[index]
 		call.Path = path
@@ -135,6 +138,9 @@ func navigationGraphAtPath(graph NavigationGraph, path string) NavigationGraph {
 			call.CandidateTargetIDs[candidateIndex] = ids[candidateID]
 		}
 		call.ID = navigationStableID("call", call.CallerID, strconv.Itoa(call.Line), call.Display, strconv.Itoa(index))
+	}
+	for index := range graph.Fields {
+		graph.Fields[index].Path = path
 	}
 	for index := range graph.TypeUsages {
 		usage := &graph.TypeUsages[index]

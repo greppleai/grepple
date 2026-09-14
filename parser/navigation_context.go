@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"sort"
 	"strings"
 )
 
@@ -15,6 +16,7 @@ type navigationBinding struct {
 	factoryName   string
 	factoryImport string
 	role          string
+	embedded      bool
 	line          int
 }
 
@@ -96,9 +98,33 @@ func addNavigationFieldBinding(fields map[string]navigationBinding, node *syntax
 		return
 	}
 	binding := navigationBindingForType(typeNode.Text(), imports)
-	for _, name := range adapter.ParameterNames(node, typeNode, content) {
-		fields[name] = binding
+	binding.line = node.StartLine()
+	for _, field := range adapter.FieldNames(node, typeNode, content) {
+		fieldBinding := binding
+		fieldBinding.embedded = field.embedded
+		fields[field.name] = fieldBinding
 	}
+}
+
+func navigationFieldFacts(fields map[string]map[string]navigationBinding, language, path, packageName string) []NavigationField {
+	owners := make([]string, 0, len(fields))
+	for owner := range fields {
+		owners = append(owners, owner)
+	}
+	sort.Strings(owners)
+	facts := []NavigationField{}
+	for _, owner := range owners {
+		names := make([]string, 0, len(fields[owner]))
+		for name := range fields[owner] {
+			names = append(names, name)
+		}
+		sort.Strings(names)
+		for _, name := range names {
+			binding := fields[owner][name]
+			facts = append(facts, NavigationField{OwnerType: owner, Name: name, Type: binding.typeName, ImportPath: binding.importPath, Language: language, Path: path, Package: packageName, Line: binding.line, Embedded: binding.embedded})
+		}
+	}
+	return facts
 }
 
 func navigationFieldText(node *syntaxNode, field, _ string) string {
@@ -294,6 +320,9 @@ func navigationBindingForType(value string, imports map[string]navigationImport)
 	}
 	if imported, ok := imports[qualifier]; ok {
 		binding.importPath = imported.path
+		if imported.imported != "" && imported.imported != "*" {
+			binding.typeName = imported.imported
+		}
 	}
 	return binding
 }
@@ -335,7 +364,10 @@ func applyQualifiedNavigationCallContext(call *NavigationCall, imports map[strin
 	if !ok || binding.line > call.Line {
 		return
 	}
-	for _, member := range segments[1 : len(segments)-1] {
+	call.ReceiverRootType = binding.typeName
+	call.ReceiverRootImport = binding.importPath
+	call.ReceiverMembers = append([]string(nil), segments[1:len(segments)-1]...)
+	for _, member := range call.ReceiverMembers {
 		binding = fields[binding.typeName][member]
 		if binding.typeName == "" {
 			return

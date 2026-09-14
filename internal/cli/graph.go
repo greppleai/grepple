@@ -28,16 +28,19 @@ func (graphArgs) Description() string {
 }
 
 type navigationGraphOutput struct {
-	Schema         string                          `json:"schema"`
-	Files          int                             `json:"files"`
-	Metadata       *api.ResultMetadata             `json:"metadata,omitempty"`
-	Sources        navigationSourceSummary         `json:"sources"`
-	Declarations   []parser.NavigationDeclaration  `json:"declarations"`
-	Calls          []parser.NavigationCall         `json:"calls"`
-	TypeUsages     []parser.NavigationTypeUsage    `json:"typeUsages,omitempty"`
-	MemberAccesses []parser.NavigationMemberAccess `json:"memberAccesses,omitempty"`
-	Query          *navigationGraphQuery           `json:"query,omitempty"`
-	Truncation     *navigationGraphTruncation      `json:"truncation,omitempty"`
+	Schema         string                           `json:"schema"`
+	Files          int                              `json:"files"`
+	Metadata       *api.ResultMetadata              `json:"metadata,omitempty"`
+	Sources        navigationSourceSummary          `json:"sources"`
+	Declarations   []parser.NavigationDeclaration   `json:"declarations"`
+	Calls          []parser.NavigationCall          `json:"calls"`
+	Exports        []parser.NavigationExport        `json:"exports,omitempty"`
+	Fields         []parser.NavigationField         `json:"fields,omitempty"`
+	Resolution     search.NavigationResolutionStats `json:"resolution"`
+	TypeUsages     []parser.NavigationTypeUsage     `json:"typeUsages,omitempty"`
+	MemberAccesses []parser.NavigationMemberAccess  `json:"memberAccesses,omitempty"`
+	Query          *navigationGraphQuery            `json:"query,omitempty"`
+	Truncation     *navigationGraphTruncation       `json:"truncation,omitempty"`
 }
 
 type navigationGraphQuery struct {
@@ -120,7 +123,8 @@ func renderCompactNavigationGraph(graph navigationGraphOutput, maxBytes int) err
 		return err == nil
 	}
 	visibleCalls := compactNavigationCalls(graph.Calls)
-	if !write(fmt.Sprintf("graph %s files=%d declarations=%d calls=%d sources=%s", graph.Schema, graph.Files, len(graph.Declarations), len(visibleCalls), compactNavigationSourceSummary(graph.Sources))) {
+	resolution := graph.Resolution
+	if !write(fmt.Sprintf("graph %s files=%d declarations=%d calls=%d visible-calls=%d resolved=%d ambiguous=%d unresolved=%d sources=%s", graph.Schema, graph.Files, len(graph.Declarations), resolution.Calls, len(visibleCalls), resolution.Resolved, resolution.Ambiguous, resolution.Unresolved, compactNavigationSourceSummary(graph.Sources))) {
 		return nil
 	}
 	if graph.Query != nil && !write(compactGraphQueryLine(*graph.Query)) {

@@ -18,6 +18,11 @@ func navigationAssignedName(node *syntaxNode, _ string) string {
 	return ""
 }
 
+type navigationFieldName struct {
+	name     string
+	embedded bool
+}
+
 type navigationMemberSyntax struct {
 	receiver  string
 	member    string
@@ -47,6 +52,8 @@ type navigationAdapter interface {
 	IsParameter(string) bool
 	VariableBindingKind(string) string
 	ParameterNames(*syntaxNode, *syntaxNode, string) []string
+	FieldNames(*syntaxNode, *syntaxNode, string) []navigationFieldName
+	Exports(*syntaxNode, string, string, string) []NavigationExport
 }
 
 type navigationAdapterConfig struct {
@@ -68,6 +75,8 @@ type navigationAdapterConfig struct {
 	terminalName             func(*syntaxNode, string) string
 	selfBindingName          string
 	selfBindingFromContainer bool
+	fieldNames               func(*syntaxNode, *syntaxNode, string) []navigationFieldName
+	exports                  func(*syntaxNode, string, string, string) []NavigationExport
 }
 
 func (adapter *navigationAdapterConfig) Rules() *structureRules { return adapter.rules }
@@ -249,4 +258,23 @@ func (*navigationAdapterConfig) VariableBindingKind(kind string) string {
 
 func (*navigationAdapterConfig) ParameterNames(node, typeNode *syntaxNode, content string) []string {
 	return defaultNavigationParameterNames(node, typeNode, content)
+}
+
+func (adapter *navigationAdapterConfig) FieldNames(node, typeNode *syntaxNode, content string) []navigationFieldName {
+	if adapter.fieldNames != nil {
+		return adapter.fieldNames(node, typeNode, content)
+	}
+	names := adapter.ParameterNames(node, typeNode, content)
+	result := make([]navigationFieldName, 0, len(names))
+	for _, name := range names {
+		result = append(result, navigationFieldName{name: name})
+	}
+	return result
+}
+
+func (adapter *navigationAdapterConfig) Exports(root *syntaxNode, content, language, path string) []NavigationExport {
+	if adapter.exports == nil {
+		return nil
+	}
+	return adapter.exports(root, content, language, path)
 }

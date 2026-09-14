@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/greppleai/grepple/parser"
 )
 
 func TestRelatedGoCallsResolveProjectDeclaration(t *testing.T) {
@@ -290,6 +292,78 @@ nested.Load() // NESTED_CALLER_NEEDLE
 	}
 	if len(otherMethodMatches) != 1 || len(otherMethodMatches[0].Related) != 0 {
 		t.Fatalf("receiver-resolved call was attributed to the other package: %#v", otherMethodMatches)
+	}
+}
+
+func TestRelatedGoCallsPropagateTypedFieldsAcrossFiles(t *testing.T) {
+	directory := t.TempDir()
+	if err := os.WriteFile(filepath.Join(directory, "go.mod"), []byte("module example.com/project\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	workerDirectory := filepath.Join(directory, "worker")
+	appDirectory := filepath.Join(directory, "app")
+	for _, path := range []string{workerDirectory, appDirectory} {
+		if err := os.MkdirAll(path, 0o755); err != nil {
+			t.Fatal(err)
+		}
+	}
+	worker := writeGoFixture(t, workerDirectory, "worker.go", `package worker
+type Client struct{}
+func (*Client) Load() {}
+`)
+	fields := writeGoFixture(t, appDirectory, "fields.go", `package app
+import workers "example.com/project/worker"
+type Runner struct { client *workers.Client }
+`)
+	caller := writeGoFixture(t, appDirectory, "caller.go", `package app
+func (runner *Runner) run() {
+runner.client.Load() // CROSS_FILE_FIELD
+}
+`)
+	graph := BuildNavigationGraph([]string{caller, fields, worker})
+	var resolved parser.NavigationCall
+	for _, call := range graph.Calls {
+		if call.Display == "runner.client.Load" {
+			resolved = call
+			break
+		}
+	}
+	if resolved.ReceiverType != "Client" || resolved.ImportPath != "example.com/project/worker" || resolved.Confidence != "import-resolved" || resolved.TargetID == "" {
+		t.Fatalf("cross-file typed field call=%+v", resolved)
+	}
+}
+
+func TestRelatedGoCallsResolvePromotedMethods(t *testing.T) {
+	directory := t.TempDir()
+	base := writeGoFixture(t, directory, "base.go", `package promoted
+type Base struct{}
+func (*Base) Load() {}
+type Other struct{}
+func (*Other) Load() {}
+`)
+	outer := writeGoFixture(t, directory, "outer.go", `package promoted
+type Outer struct { *Base }
+`)
+	caller := writeGoFixture(t, directory, "caller.go", `package promoted
+func run(value *Outer) { value.Load() }
+`)
+	graph := BuildNavigationGraph([]string{base, outer, caller})
+	var resolved parser.NavigationCall
+	for _, call := range graph.Calls {
+		if call.Display == "value.Load" {
+			resolved = call
+			break
+		}
+	}
+	if resolved.Confidence != "context-resolved" || resolved.TargetID == "" || len(resolved.CandidateTargetIDs) != 0 {
+		t.Fatalf("promoted method call=%+v", resolved)
+	}
+	target := map[string]parser.NavigationDeclaration{}
+	for _, declaration := range graph.Declarations {
+		target[declaration.ID] = declaration
+	}
+	if target[resolved.TargetID].Name != "Base.Load" {
+		t.Fatalf("promoted target=%+v", target[resolved.TargetID])
 	}
 }
 

@@ -12,6 +12,14 @@ func TestNavigationGraphProjectionsPreserveMemberAccessesForIncludedCallers(t *t
 			{ID: "root", Name: "Root", Language: "go", Visibility: parser.NavigationVisibilityPublic},
 			{ID: "hidden", Name: "Hidden", Language: "python", Visibility: parser.NavigationVisibilityNonPublic},
 		},
+		Fields: []parser.NavigationField{
+			{OwnerType: "Root", Name: "state", Type: "State", Language: "go"},
+			{OwnerType: "Hidden", Name: "state", Type: "State", Language: "python"},
+		},
+		Exports: []parser.NavigationExport{
+			{Name: "Root", Language: "go"},
+			{Name: "Hidden", Language: "python"},
+		},
 		TypeUsages: []parser.NavigationTypeUsage{
 			{CallerID: "root", Type: "State", Language: "go"},
 			{CallerID: "hidden", Type: "State", Language: "python"},
@@ -28,7 +36,13 @@ func TestNavigationGraphProjectionsPreserveMemberAccessesForIncludedCallers(t *t
 	if len(filtered.MemberAccesses) != 1 || filtered.MemberAccesses[0].ID != "root-access" {
 		t.Fatalf("filtered accesses=%#v", filtered.MemberAccesses)
 	}
-	if len(filtered.TypeUsages) != 1 || filtered.TypeUsages[0].CallerID != "root" {
+	if len(filtered.Fields) != 1 || filtered.Fields[0].OwnerType != "Root" {
+		t.Fatalf("filtered fields=%#v", filtered.Fields)
+	}
+	if len(filtered.Exports) != 1 || filtered.Exports[0].Name != "Root" {
+		t.Fatalf("filtered exports=%#v", filtered.Exports)
+	}
+	if len(filtered.Fields) != 1 || filtered.Fields[0].OwnerType != "Root" {
 		t.Fatalf("filtered type usages=%#v", filtered.TypeUsages)
 	}
 	queried, err := QueryNavigationGraph(filtered, []string{"root"}, NavigationQueryCallees, 1)

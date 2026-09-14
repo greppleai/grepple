@@ -64,6 +64,10 @@ Linux/amd64, Intel Core Ultra 7 165H, Go 1.25.14, `-benchtime=10x`:
 
 The structural lookup illustrates the intended tradeoff: it returns slightly more text than line-only plus `--at`, but removes one retrieval round trip. Timing is machine-dependent; call and fixture-output metrics are the primary regression signals until statistically reviewed budgets are established.
 
+## Navigation-resolution measurement extension
+
+Compact graph headers now report total calls, visible local edges, and resolved, ambiguous, and unresolved counts. The fixed `ImpactGraph` workflow grew from 926 bytes/~231.5 tokens to 978 bytes/~244.5 tokens—52 bytes/~13 tokens—to expose whether a focused impact result depends materially on ambiguous syntax resolution. Complete JSON additionally reports singleton candidates, confidence counts, and ambiguity frequency overall and by language family. Other fixed workflow output sizes are unchanged.
+
 ## Construct-range extension
 
 After `--line-only` gained parser-backed `PATH:START-END` locations, the fixed function lookup returned 152 bytes/~38 tokens instead of 150 bytes/~37.5 tokens. The two added bytes disclose the exact `2-6` function extent for the next Read or `--at` call. A match inside a construct that does not begin one remains unchanged by default; `EditLocation` therefore still returns 40 bytes/~10 tokens.

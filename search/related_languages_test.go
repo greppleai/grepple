@@ -4,8 +4,11 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
+
+	"github.com/greppleai/grepple/parser"
 )
 
 type navigationFixture struct {
@@ -278,6 +281,216 @@ nested.load(); // NESTED_CALLER_NEEDLE
 	}
 	if len(secondMethodMatches) != 1 || len(secondMethodMatches[0].Related) != 0 {
 		t.Fatalf("receiver-resolved call was attributed to the other module: %#v", secondMethodMatches)
+	}
+}
+
+func TestRelatedTypeScriptCallsResolveDefaultAliasesAndCrossFileFields(t *testing.T) {
+	directory := t.TempDir()
+	client := filepath.Join(directory, "client.ts")
+	model := filepath.Join(directory, "model.ts")
+	caller := filepath.Join(directory, "caller.ts")
+	if err := os.WriteFile(client, []byte(`export default class Client { load(): void {} }
+export class Alternate { load(): void {} }
+`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(model, []byte(`import ClientAlias from "./client";
+export class Runner { client: ClientAlias; }
+`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(caller, []byte(`import { Runner as LocalRunner } from "./model";
+function run(value: LocalRunner): void { value.client.load(); }
+`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	graph := BuildNavigationGraph([]string{caller, client, model})
+	var resolved parser.NavigationCall
+	for _, call := range graph.Calls {
+		if call.Display == "value.client.load" {
+			resolved = call
+			break
+		}
+	}
+	if resolved.ReceiverType != "Client" || resolved.Confidence != "import-resolved" || resolved.TargetID == "" {
+		t.Fatalf("default alias cross-file chain=%+v", resolved)
+	}
+	target := map[string]parser.NavigationDeclaration{}
+	for _, declaration := range graph.Declarations {
+		target[declaration.ID] = declaration
+	}
+	if target[resolved.TargetID].Name != "Client.load" {
+		t.Fatalf("default alias target=%+v", target[resolved.TargetID])
+	}
+}
+
+func TestRelatedTypeScriptCallsResolveReExports(t *testing.T) {
+	directory := t.TempDir()
+	client := filepath.Join(directory, "client.ts")
+	barrel := filepath.Join(directory, "index.ts")
+	caller := filepath.Join(directory, "caller.ts")
+	if err := os.WriteFile(client, []byte(`export class Client { load(): void {} }
+`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(barrel, []byte(`export { Client as APIClient } from "./client";
+`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(caller, []byte(`import { APIClient as LocalClient } from "./";
+function run(value: LocalClient): void { value.load(); }
+`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	graph := BuildNavigationGraph([]string{barrel, caller, client})
+	var resolved parser.NavigationCall
+	for _, call := range graph.Calls {
+		if call.Display == "value.load" {
+			resolved = call
+			break
+		}
+	}
+	if resolved.Confidence != "import-resolved" || resolved.TargetID == "" {
+		t.Fatalf("re-exported method call=%+v exports=%+v", resolved, graph.Exports)
+	}
+	target := map[string]parser.NavigationDeclaration{}
+	for _, declaration := range graph.Declarations {
+		target[declaration.ID] = declaration
+	}
+	if target[resolved.TargetID].Name != "Client.load" {
+		t.Fatalf("re-exported target=%+v", target[resolved.TargetID])
+	}
+}
+
+func TestRelatedTypeScriptCallsResolvePathAliases(t *testing.T) {
+	directory := t.TempDir()
+	modelDirectory := filepath.Join(directory, "src", "models")
+	appDirectory := filepath.Join(directory, "src", "app")
+	for _, path := range []string{modelDirectory, appDirectory} {
+		if err := os.MkdirAll(path, 0o755); err != nil {
+			t.Fatal(err)
+		}
+	}
+	config := `{// project aliases
+  "compilerOptions": {"baseUrl": ".", "paths": {"@models/*": ["src/models/*"],},},
+}`
+	if err := os.WriteFile(filepath.Join(directory, "tsconfig.json"), []byte(config), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	client := filepath.Join(modelDirectory, "Client.ts")
+	caller := filepath.Join(appDirectory, "caller.tsx")
+	if err := os.WriteFile(client, []byte(`export class Client { load(): void {} }
+`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(caller, []byte(`import { Client } from "@models/Client";
+function run(value: Client): void { value.load(); }
+`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	graph := BuildNavigationGraph([]string{caller, client})
+	var resolved parser.NavigationCall
+	for _, call := range graph.Calls {
+		if call.Display == "value.load" {
+			resolved = call
+			break
+		}
+	}
+	if resolved.Confidence != "import-resolved" || resolved.TargetID == "" {
+		t.Fatalf("path-alias method call=%+v", resolved)
+	}
+}
+
+func TestRelatedTypeScriptCallsResolveInheritedMethods(t *testing.T) {
+	directory := t.TempDir()
+	types := filepath.Join(directory, "types.ts")
+	caller := filepath.Join(directory, "caller.ts")
+	if err := os.WriteFile(types, []byte(`export class Base { load(): void {} }
+export class Other { load(): void {} }
+export class Child extends Base {}
+`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(caller, []byte(`import { Child } from "./types";
+function run(value: Child): void { value.load(); }
+`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	graph := BuildNavigationGraph([]string{caller, types})
+	var resolved parser.NavigationCall
+	for _, call := range graph.Calls {
+		if call.Display == "value.load" {
+			resolved = call
+			break
+		}
+	}
+	if resolved.Confidence != "import-resolved" || resolved.TargetID == "" {
+		t.Fatalf("inherited method call=%+v", resolved)
+	}
+	targets := map[string]parser.NavigationDeclaration{}
+	for _, declaration := range graph.Declarations {
+		targets[declaration.ID] = declaration
+	}
+	if targets[resolved.TargetID].Name != "Base.load" {
+		t.Fatalf("inherited target=%+v", targets[resolved.TargetID])
+	}
+}
+
+func TestRelatedTypeScriptOverloadsRemainDeterministicCandidates(t *testing.T) {
+	directory := t.TempDir()
+	path := filepath.Join(directory, "overloads.ts")
+	content := `class Client {
+load(value: string): void;
+load(value: number): void;
+load(value: unknown): void {}
+}
+function run(value: Client): void { value.load("x"); }
+`
+	if err := os.WriteFile(path, []byte(content), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	first := BuildNavigationGraph([]string{path})
+	second := BuildNavigationGraph([]string{path})
+	var firstCall, secondCall parser.NavigationCall
+	for _, call := range first.Calls {
+		if call.Display == "value.load" {
+			firstCall = call
+		}
+	}
+	for _, call := range second.Calls {
+		if call.Display == "value.load" {
+			secondCall = call
+		}
+	}
+	if firstCall.Confidence != "candidate" || firstCall.TargetID != "" || len(firstCall.CandidateTargetIDs) != 3 || !slices.Equal(firstCall.CandidateTargetIDs, secondCall.CandidateTargetIDs) {
+		t.Fatalf("overload candidates first=%+v second=%+v", firstCall, secondCall)
+	}
+}
+
+func TestRelatedTypeScriptCallsResolveDefaultFunctions(t *testing.T) {
+	directory := t.TempDir()
+	target := filepath.Join(directory, "target.ts")
+	other := filepath.Join(directory, "other.ts")
+	caller := filepath.Join(directory, "caller.ts")
+	if err := os.WriteFile(target, []byte(`export default function execute(): void {}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(other, []byte(`export function execute(): void {}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(caller, []byte(`import run from "./target"; function invoke(): void { run(); }`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	graph := BuildNavigationGraph([]string{caller, other, target})
+	var resolved parser.NavigationCall
+	for _, call := range graph.Calls {
+		if call.Display == "run" {
+			resolved = call
+			break
+		}
+	}
+	if resolved.ResolvedName != "execute" || resolved.Confidence != "import-resolved" || resolved.TargetID == "" {
+		t.Fatalf("default function call=%+v exports=%+v", resolved, graph.Exports)
 	}
 }
 
