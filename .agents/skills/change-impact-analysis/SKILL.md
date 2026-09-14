@@ -1,0 +1,41 @@
+---
+name: change-impact-analysis
+description: Use before renaming, deleting, moving, or changing behavior/signatures of local code, or when asked what calls a symbol, what it calls, or what may break. Uses Grepple navigation and graph queries; text occurrences alone are not impact evidence.
+---
+
+# Change-impact analysis with Grepple
+
+Prevent the two common mistakes: treating every name occurrence as a caller, and treating a bounded navigation preview as a complete call graph.
+
+## Workflow
+
+1. Resolve the exact declaration location. Prefer an existing range; otherwise locate it:
+   ```bash
+   grepple --line-only --enclosing -F 'Symbol' SCOPE
+   grepple --at path/to/file.go:LINE
+   ```
+2. Preview immediate behavior and consumers:
+   ```bash
+   grepple --related --at path/to/file.go:LINE
+   ```
+3. For a refactor decision, query the needed direction over the relevant source universe:
+   ```bash
+   grepple graph callers --at path/to/file.go:LINE --depth 2 --compact SCOPE
+   grepple graph callees --at path/to/file.go:LINE --depth 2 --compact SCOPE
+   grepple graph impact  --at path/to/file.go:LINE --depth 2 --compact SCOPE
+   ```
+4. If compact output reports omissions or completeness is required, narrow the universe or rerun the focused query with `--json`; do not replace it with a whole-repository graph dump.
+5. Open the changed declaration and the highest-risk exact callers with `grepple --at` before editing.
+
+## Confidence rules
+
+- `exact`, `import-resolved`, and safely `context-resolved` edges are evidence.
+- `unique-terminal` is syntax-based inference, not type checking.
+- `[candidate; try --at PATH:LINE]` is a lead. Inspect candidates before choosing one.
+- Paths passed to the command define the graph universe. Include consumers outside the declaration's package when claiming repository impact.
+- Navigation does not prove interface dispatch, reflection, generated calls, runtime registration, data flow, or string-based lookup. Search those mechanisms explicitly when relevant.
+- Package import impact and callable impact differ. Use the workspace summary from `architecture-lookup-discovery` when a public package API or dependency direction changes.
+
+## Decision record
+
+Before changing code, state: exact declaration, graph universe, direct callers, direct callees, ambiguous candidates, omitted counts, and non-static mechanisms checked. This makes “no callers” a scoped evidence claim instead of a guess.

@@ -119,6 +119,8 @@ This review treats Grepple as both a developer CLI and an agent tool. The strong
 
 #### P0 — make existing capabilities discoverable and trustworthy
 
+- [x] Split broad Grepple guidance into short intent-triggered skills for local retrieval, architecture lookup, change impact, boundary review, structural audits, diagram generation/validation, and remote inspection. Each skill states what its evidence can and cannot prove.
+
 1. [ ] Add top-level command help that lists search, GritQL, graph, boundaries, extraction, languages, rules, repository/authentication commands, and version. Make `grepple help [COMMAND ...]` real while preserving an explicit `grepple search` command for command-word patterns.
 2. [ ] Make recursive help work for every extract and graph mode. Usage should encode required output-mode exclusivity and return success for valid help requests.
 3. [ ] Classify boundary types as local, first-party, standard-library, third-party, or unresolved. Keep imported identity separate from dependency origin.
