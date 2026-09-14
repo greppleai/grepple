@@ -4,7 +4,7 @@ Grepple should stabilize for one or two iterations before adding more languages.
 
 ## Recommended next milestone
 
-> The agent-output budget, declaration visibility filtering, C# focused extraction, architecture benchmarks, semantic graph diffing, and shared-projection parity milestones are complete. Prioritize richer cross-file resolution next.
+> Stabilize command discoverability, diagnostic fidelity, boundary-signal classification, and reusable analysis caches before adding languages. Then prioritize richer cross-file resolution where dogfooding shows that ambiguity blocks a valuable workflow.
 
 ## Feature set versus feature completeness
 
@@ -22,7 +22,7 @@ Treat these as separate planning dimensions:
 - The workspace → package overview → `--at` → `--related` workflow is a fast and effective way to enter an unfamiliar codebase.
 - Structural search is highly token-efficient because it preserves the enclosing declaration while collapsing unrelated code. In the latest dogfood round, outlining a 581-line/19.5 KB JVM extractor returned 50 lines/1.9 KB, while a structural declaration lookup returned all relevant declarations in one 1.8 KB response.
 - Exact declaration and member ranges make generated diagrams useful navigation maps rather than passive documentation. Focused extraction already streams validated Mermaid to stdout when `--output` is omitted.
-- Focused flow is concise and readable for small call chains across the production Go, ECMAScript, Python, Java, and Kotlin adapters.
+- Focused flow is concise and readable for small call chains across Go, ECMAScript, Python, Java, Kotlin, and C# adapters.
 - Canonical package and workspace checks make architecture documentation trustworthy enough to use as an index.
 - Deterministic ordering, bounded traversal, explicit confidence, and round-trip validation are strong foundations for agent use.
 - `--count-summary` now reports complete matched-file and matching-line breadth independently of paging, while `--count` retains grep-compatible per-file page output.
@@ -31,7 +31,7 @@ Treat these as separate planning dimensions:
 
 - External LLM dogfooding confirmed the Grepple locate/orient → Edit loop, while also exposing grep-flag muscle memory, edit-target lines omitted by segment limits, and broad output reaching the agent harness limit.
 - The shared `parser.NavigationGraph` is now the sole source of generic call edges for flow selection, rendering, validation, `--at`, and `--related`; the next graph issues are focused querying and richer resolution rather than duplicate discovery.
-- `--related` can exhaust its edge budget without reporting how many callers or callees were omitted. Bounded output must never look complete during impact analysis.
+- `--related` now reports omitted callers and callees, but its continuation guidance still points at a broad complete graph instead of a copyable focused callers/callees query.
 - Broad structural output now defaults to 16384 bytes after the 800-match benchmark measured a 60% token reduction; complete JSON and the explicit uncapped override remain available.
 - Generated package overviews can still be too large for focused questions: the extract package overview reached 526 lines/27 KB, while a file outline answered the immediate JVM question in 50 lines/1.9 KB.
 - Larger diagrams are dominated by validation metadata when viewed as plain text.
@@ -40,6 +40,119 @@ Treat these as separate planning dimensions:
 - Architecture extraction now covers the high-value object models through C#; C/C++, Rust, and Shell still need useful non-class projection contracts before focused extraction is enabled.
 - Cross-language fixtures prove the baseline but do not yet cover enough malformed, nested, generic, decorated, or multiline syntax.
 - Canonical mismatch errors identify the artifact but should eventually report the first semantic difference.
+
+## Current Grepple tool review
+
+This review treats Grepple as both a developer CLI and an agent tool. The strongest parts are the workflows that compress source while preserving exact locations; the weakest parts are command discovery, consistency between modes, and distinguishing architectural evidence from architectural risk.
+
+### Where Grepple is most useful
+
+- **Repository orientation:** `extract summary workspace|package`, outlines, and canonical architecture artifacts reveal ownership and dependency direction much faster than reading directory trees or manifests.
+- **Bounded code retrieval:** structural search normally returns the enclosing declaration and collapses unrelated bodies. It is substantially more useful than raw matching lines for understanding code while remaining small enough for an agent context.
+- **Edit targeting:** `--line-only`, `--enclosing`, `--at`, exact source ranges, and optional anchors form a good locate → understand → edit path. The location notation composes well across commands.
+- **Impact exploration:** `--related`, graph queries, confidence labels, candidate preservation, and omitted-edge counts make syntax-based navigation honest enough for investigation when treated as evidence rather than a compiler call graph.
+- **Machine integration:** deterministic ordering, stable graph IDs, complete JSON, explicit schemas, semantic graph diffs, and canonical checks make the tool suitable for CI and other programs instead of only terminal use.
+- **Structural querying:** native bounded GritQL across every parser-backed language is a substantial capability, especially because unsupported constructs fail instead of silently degrading to text matching.
+- **Operational safety:** local-first behavior, explicit remote use, bounded human output, cancellation and resource limits, ignored-file handling, and user-owned anchor providers are appropriate defaults for agent execution.
+- **Capability honesty:** `grepple languages` clearly exposes the uneven feature matrix instead of implying that every language supports every projection.
+
+### Main downsides and friction points
+
+#### Command discovery and help
+
+- The root help presents only the default text-search interface and does not list `grit`, `graph`, `boundaries`, `extract`, `languages`, remote repository commands, authentication, rules, or version discovery. A new user cannot discover most of Grepple from `grepple --help`.
+- `grepple help` is interpreted as a search for the word `help`, not as help. Top-level command words such as `graph`, `grit`, and `extract` also collide with legitimate search patterns unless users know to force search mode with an option such as `-F`.
+- Nested help is inconsistent. `extract --help` prints only a terse usage line and exits with an error; `extract summary --help` reports a missing mode; `extract summary package --help` treats `--help` as a path. `extract check --help` has the same shallow behavior.
+- `grepple anchors --help` falls back to root search help because there is no anchors command, even though anchor configuration is a meaningful subsystem.
+- `graph` usage renders `--json` and `--compact` as optional even though exactly one is required. The error is correct, but the discoverable usage contract is not.
+- Help pages are mostly option inventories. They need one or two task-oriented examples and explicit statements about output completeness, source-universe scope, and selector semantics.
+
+#### CLI consistency and grep compatibility
+
+- Output mode conventions vary by command: search has human, `--json`, and `--json-matches`; graph requires exactly one of JSON or compact; boundaries defaults to human; extract defaults to Mermaid; GritQL has human or JSON. These choices are individually defensible but collectively expensive to memorize.
+- Limit names have different units: search `--limit` pages files, GritQL pages findings, boundaries limits each human section, while `--max-files`, `--max-segments`, `--max-nodes`, and `--max-output-bytes` bound other stages. Every result should disclose all active bounds in one consistent footer or metadata object.
+- `-l` means recursive file listing, whereas grep users expect matching filenames. `--files-with-matches` is available, but this is a recurring muscle-memory trap.
+- JavaScript regular expressions are the default even in Go-centric repositories. This is useful for compatibility with the existing query engine but surprising to users expecting POSIX or RE2 syntax.
+- The optional positional `PATTERN [PATH...]` shape makes path-only intent and command-name searches less obvious than an explicit `grepple search` form would.
+- Local and remote modes do not support the same structural/navigation features. The help should show capability differences at the attempted operation, not require prior knowledge of the architecture.
+
+#### Search and retrieval
+
+- Structural output is excellent when its selected segment is the desired unit, but the ranking and segment-selection rationale is opaque. When a useful match is omitted, users know that truncation happened but not why one segment ranked above another.
+- Broad searches can still spend the entire 16 KiB budget on low-value early paths because deterministic path order is not relevance order. Count-summary → files → focused retrieval is effective but currently learned through skills/documentation rather than the CLI.
+- `--related` currently advises users to inspect a complete `graph --json PATH` when edges are omitted. The more actionable continuation is a focused `graph callers|callees --at PATH:LINE --depth N --json|--compact SCOPE` command.
+- Anchor setup remains external and hard to diagnose. Without a doctor command, users must distinguish unsupported output modes, missing providers, provider protocol failures, digest failures, and harness incompatibility manually.
+
+#### Navigation and graph analysis
+
+- Navigation is syntax-based and deliberately conservative. Interfaces, overloads, inheritance, re-exports, default imports, TS/TSX path aliases, cross-file field chains, and promoted Go methods remain important ambiguity sources.
+- The selected paths define the graph universe, but this completeness boundary is easy to overlook. Compact and JSON query headers should report discovered, parsed, unsupported, failed, and truncated files consistently.
+- Exact `--symbol` selection assumes the user already knows Grepple's normalized declaration name. There is no lightweight selector-resolution command that previews exact and ambiguous candidates before building a traversal.
+- Graph and related operations rebuild the repository-local graph for each invocation. Boundary analysis has a content-addressed cache, but ordinary graph queries and repeated `--related` exploration do not yet share it.
+- `dependencies` and `dependents` can sound like build/import dependency queries even though the graph is primarily callable navigation. Naming or help must make the edge domain explicit.
+- Compact graph output is useful only when rooted or tightly scoped. A whole-package compact dump can still be a large inventory with less signal than an outline plus one focused query.
+
+#### Boundary analysis
+
+- The current `External` flag means “has an import path,” not “third-party dependency.” It conflates standard-library, first-party cross-package, and actual external-module types.
+- Type spread is evidence, not leakage. A package-wide private syntax abstraction such as `syntaxNode` can be healthy, while one raw third-party node outside an approved backend can be a serious violation. Current breadth thresholds cannot express that distinction.
+- The report needs explicit origin classes such as local, first-party, standard-library, third-party, and unresolved, followed by package-internal, cross-package, cross-layer, and public-API spread.
+- Approved containment zones and facade-bypass checks are absent from the generic analyzer. The parser currently relies on a bespoke architecture test to keep Tree-sitter types in approved backend files.
+- Test-only framework types, standard-library utility types, adapter protocols, declarative configuration, and benchmark helper workflows create substantial noise.
+- Internal types should not be ranked as risks merely because they are popular. Rank them when they cross a declared boundary, expose representation publicly, have an ambiguous owner, or form a competing abstraction.
+- Workflow candidates identify repeated topology but do not yet classify utility hubs, declarative setup, lifecycle protocols, or likely misplaced functions. Findings still require considerable manual interpretation.
+
+#### Architecture extraction and checking
+
+- Canonical Go package/workspace bundles are trustworthy and useful, but they are intentionally Go-only while focused projections cover a different language subset. The distinction should be visible in command-specific errors and examples.
+- Full Mermaid and manifest artifacts are too large for many questions and contain validation metadata that overwhelms plain-text inspection. Summaries help, but users need clearer guidance on when to use summary, overview, structure, compact graph, or focused extraction.
+- Canonical checks report which artifact differs but not the first semantic declaration, relation, route, package, or module difference.
+- Direct generation and checking commands exist, but repository-wide canonical workflows still depend on non-discoverable mode combinations and repository-specific Make targets. Commands should explain canonical output locations and next actions without encouraging manual edits.
+
+#### GritQL
+
+- GritQL exposes powerful resource controls but its help is dominated by limits and offers no minimal query examples. First-use success depends heavily on separate compatibility documentation.
+- There is no obvious compile-only or explain mode that shows the selected language adapter, wrapper interpretation, metavariable roles, or why a snippet cannot be represented.
+- Query diagnostics should consistently include source ranges, attempted wrapper categories, compatibility contract, and a concise remediation path without requiring debug tests.
+
+### Prioritized improvement backlog from this review
+
+#### P0 — make existing capabilities discoverable and trustworthy
+
+1. [ ] Add top-level command help that lists search, GritQL, graph, boundaries, extraction, languages, rules, repository/authentication commands, and version. Make `grepple help [COMMAND ...]` real while preserving an explicit `grepple search` command for command-word patterns.
+2. [ ] Make recursive help work for every extract and graph mode. Usage should encode required output-mode exclusivity and return success for valid help requests.
+3. [ ] Classify boundary types as local, first-party, standard-library, third-party, or unresolved. Keep imported identity separate from dependency origin.
+4. [ ] Add boundary risk/reason fields rather than presenting breadth as implied leakage. Prioritize public third-party exposure, containment escape, facade bypass, and cross-layer representation spread; mark broad approved internal abstractions as informational.
+5. [ ] Replace omitted-edge guidance with a copyable focused graph-query continuation using the current location, direction, scope, and an appropriate complete or compact mode.
+6. [ ] Audit every local structural/graph operation for parse failures and unsupported files; expose deterministic parsed/skipped/failed/truncated totals in human and JSON output.
+
+#### P1 — reduce repeated user and agent work
+
+1. [ ] Reuse content- and grammar-addressed per-file navigation facts across graph, graph query, `--related`, boundary analysis, and extraction while keeping output independent of cache state.
+2. [ ] Add selector preview/disambiguation, for example `graph resolve --symbol NAME --compact SCOPE`, returning exact declaration IDs and actionable `--at` alternatives without traversing the graph.
+3. [ ] Add `anchors doctor` with provider identity, protocol version, temporary-file round trip, timeout/output diagnostics, and clear setup instructions.
+4. [ ] Standardize output metadata and terminology across search, graph, boundaries, and GritQL: selected scope, completeness, paging, byte caps, source caps, omitted counts, and a copyable next command.
+5. [ ] Add task-oriented examples to command help: orient, locate, edit, inspect callers, check impact, run one GritQL query, generate a focused diagram, and validate a canonical bundle.
+6. [ ] Explain search ranking and add an opt-in relevance strategy that remains deterministic. Keep path order available for reproducible scripts.
+7. [ ] Add a compile-only/explain path for GritQL queries with wrapper selection, metavariable interpretation, language compatibility, and bounded diagnostics.
+
+#### P2 — improve precision and reduce conceptual surface
+
+1. [ ] Complete the documented cross-file member, import/re-export, alias, interface, overload, inheritance, and promoted-method resolution cases based on measured ambiguity frequency.
+2. [ ] Decide and document the distinct lifecycle contracts for `Document`, `Node`, `DocumentView`, `ViewNode`, and `SyntaxNode`; deprecate a surface if two provide the same job without a measurable safety or performance difference.
+3. [ ] Add generic containment policies and facade-bypass analysis using repository-owned configuration or generated architecture ownership facts. Keep language/framework defaults optional to avoid brittle hard-coding.
+4. [ ] Extend boundary surfaces to fields/properties and distinguish public API, private signature, field representation, and body-local usage.
+5. [ ] Report the first semantic architecture difference and provide a focused source-linked diff before the final byte-level mismatch.
+6. [ ] Define useful focused architecture contracts for Rust and then C/C++ only after real dogfood questions demonstrate what should be projected.
+
+### Review success measures
+
+- A new user can discover and run search, graph impact, boundaries, focused extraction, and one GritQL query using only recursive CLI help.
+- An agent can move from an omitted `--related` edge to a complete focused query by copying one suggested command.
+- Boundary output separates true third-party permeability from first-party API reuse and standard-library noise, with reviewed precision fixtures.
+- Warm repeated graph queries parse or restore each unchanged file once and remain byte-identical to cold output.
+- Every bounded response states what was bounded, what was omitted, and whether JSON or a narrower command provides completeness.
+- Dogfood benchmarks track task success and retrieval turns in addition to bytes, tokens, runtime, and allocations.
 
 ## Highest priority
 
@@ -126,7 +239,7 @@ Use case: an agent, editor extension, or CI job can consume exact nodes and edge
 
 #### C2. Compact agent-facing architecture output — complete
 
-[x] `grepple graph --compact [PATH...]` emits declarations and directed calls from the same normalized graph, retaining stable ID prefixes, source locations, confidence, candidate identities, and file-truncation warnings while omitting JSON and Mermaid validation detail. Human output is bounded by the shared 40960-byte default; JSON remains complete and uncapped.
+[x] `grepple graph --compact [PATH...]` emits declarations and directed calls from the same normalized graph, retaining stable ID prefixes, source locations, confidence, candidate identities, and file-truncation warnings while omitting JSON and Mermaid validation detail. Human output is bounded by the shared 16384-byte default; JSON remains complete and uncapped.
 
 Potential examples:
 
