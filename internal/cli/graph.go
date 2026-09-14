@@ -23,7 +23,7 @@ type graphArgs struct {
 }
 
 func (graphArgs) Description() string {
-	return "Build a deterministic local navigation graph. Exactly one of --json or --compact is required; use callers or callees for focused traversal."
+	return "Build a deterministic local navigation graph. Use resolve to preview symbol alternatives, callers/callees/impact for traversal, or diff for comparison. Exactly one of --json or --compact is required."
 }
 
 type navigationGraphOutput struct {
@@ -63,6 +63,9 @@ type navigationSourceSummary struct {
 }
 
 func runGraph(args []string) error {
+	if len(args) > 0 && args[0] == "resolve" {
+		return runGraphResolve(args[1:])
+	}
 	if len(args) > 0 && args[0] == "diff" {
 		return runGraphDiff(args[1:])
 	}

@@ -11,9 +11,11 @@ Prevent the two common mistakes: treating every name occurrence as a caller, and
 
 1. Resolve the exact declaration location. Prefer an existing range; otherwise locate it:
    ```bash
-   grepple --line-only --enclosing -F 'Symbol' SCOPE
-   grepple --at path/to/file.go:LINE
+grepple --line-only --enclosing -F 'Symbol' SCOPE
+grepple graph resolve --symbol Symbol --compact SCOPE
+grepple --at path/to/file.go:LINE
    ```
+   Use `graph resolve` when a name is overloaded or appears in multiple containers; continue with one emitted `--at` selector rather than guessing.
 2. Preview immediate behavior and consumers:
    ```bash
    grepple --related --at path/to/file.go:LINE

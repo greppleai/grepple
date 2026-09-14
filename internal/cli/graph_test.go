@@ -277,6 +277,46 @@ func TestGraphDiffReportsSemanticChangesAndIgnoresLineShifts(t *testing.T) {
 	}
 }
 
+func TestGraphResolvePreviewsDeterministicAtAlternatives(t *testing.T) {
+	dir := chdirTemp(t)
+	writeGraphSource(t, dir, "workers.go", "package sample\ntype Alpha struct{}\ntype Beta struct{}\nfunc (Alpha) Run() {}\nfunc (Beta) Run() {}\n")
+	jsonText := captureStdout(t, func() {
+		if err := Run([]string{"graph", "resolve", "--symbol", "Run", "--json", "."}); err != nil {
+			t.Fatal(err)
+		}
+	})
+	var output graphResolveOutput
+	if err := json.Unmarshal([]byte(jsonText), &output); err != nil {
+		t.Fatal(err)
+	}
+	if output.Schema != navigationResolveSchema || len(output.Matches) != 2 || output.Matches[0].Name != "Alpha.Run" || output.Matches[1].Name != "Beta.Run" {
+		t.Fatalf("unexpected resolve output: %#v", output)
+	}
+	for _, match := range output.Matches {
+		if match.ID == "" || match.At == "" || !strings.Contains(match.CallersCommand, "graph callers --at") || !strings.Contains(match.ImpactCommand, "graph impact --at") {
+			t.Fatalf("resolve match is not actionable: %#v", match)
+		}
+	}
+
+	compact := captureStdout(t, func() {
+		if err := Run([]string{"graph", "resolve", "--symbol", "Alpha.Run", "--compact", "."}); err != nil {
+			t.Fatal(err)
+		}
+	})
+	if !strings.Contains(compact, "matches=1") || !strings.Contains(compact, "at: workers.go:4") || !strings.Contains(compact, "grepple graph callees --at workers.go:4") {
+		t.Fatalf("compact resolve output missing exact alternative:\n%s", compact)
+	}
+}
+
+func TestGraphResolveValidatesSelectorAndOutputMode(t *testing.T) {
+	if err := Run([]string{"graph", "resolve", "--symbol", "Run"}); err == nil || !strings.Contains(err.Error(), "exactly one") {
+		t.Fatalf("missing output mode error = %v", err)
+	}
+	if err := Run([]string{"graph", "resolve", "--compact"}); err == nil {
+		t.Fatal("expected missing --symbol error")
+	}
+}
+
 func TestGraphRecursiveHelpStatesOutputContract(t *testing.T) {
 	tests := [][]string{
 		{"help", "graph"},
@@ -285,6 +325,7 @@ func TestGraphRecursiveHelpStatesOutputContract(t *testing.T) {
 		{"help", "graph", "dependencies"},
 		{"help", "graph", "dependents"},
 		{"help", "graph", "impact"},
+		{"help", "graph", "resolve"},
 		{"help", "graph", "diff"},
 	}
 	for _, args := range tests {

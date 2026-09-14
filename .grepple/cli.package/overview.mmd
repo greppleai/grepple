@@ -2,7 +2,7 @@ classDiagram
     %% grepple:package-default github.com/greppleai/grepple/internal/cli
     %% grepple:language-default go
     direction LR
-    note "Package cli implements Grepple's search, extraction, repository inspection, authentication, rules, and terminal/JSON presentation workflows. | package github.com/greppleai/grepple/internal/cli | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=36, declarations=48, exportedTypes=0, internalTypes=48, members=307, exportedFunctions=3, fiberRoutes=0, relations=31"
+    note "Package cli implements Grepple's search, extraction, repository inspection, authentication, rules, and terminal/JSON presentation workflows. | package github.com/greppleai/grepple/internal/cli | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=37, declarations=51, exportedTypes=0, internalTypes=51, members=333, exportedFunctions=3, fiberRoutes=0, relations=34"
     namespace interfaces {
         class resultRenderer["resultRenderer · internal/cli/renderer.go:9-11"] {
             +Render([]api.FileResult): error
@@ -169,6 +169,40 @@ classDiagram
             +Visibilities: []string
         }
         <<struct>> graphQueryArgs
+        class graphResolveArgs["graphResolveArgs · internal/cli/graph_resolve.go:18-27"] {
+            +Compact: bool
+            +JSON: bool
+            +Languages: []string
+            +MaxFiles: int
+            +MaxOutputBytes: int
+            +Paths: []string
+            +Symbol: string
+            +Visibilities: []string
+        }
+        <<struct>> graphResolveArgs
+        class graphResolveMatch["graphResolveMatch · internal/cli/graph_resolve.go:41-54"] {
+            +At: string
+            +CalleesCommand: string
+            +CallersCommand: string
+            +EndLine: int
+            +ID: string
+            +ImpactCommand: string
+            +Kind: string
+            +Language: string
+            +Name: string
+            +Path: string
+            +StartLine: int
+            +Visibility: parser.NavigationVisibility
+        }
+        <<struct>> graphResolveMatch
+        class graphResolveOutput["graphResolveOutput · internal/cli/graph_resolve.go:33-39"] {
+            +Matches: []graphResolveMatch
+            +Schema: string
+            +Sources: navigationSourceSummary
+            +Symbol: string
+            +Truncation: *navigationGraphTruncation
+        }
+        <<struct>> graphResolveOutput
         class gritArgs["gritArgs · internal/cli/grit.go:26-56"] {
             +ExcludeGlobs: []string
             +ExcludeRepositories: []string
@@ -388,6 +422,9 @@ classDiagram
     filesRenderer "1" --> "1" outputWriter : field output
     resultRenderer <|.. filesRenderer : implements
     graphDiffOutput "1" --> "1" navigationSourceSummary : field AfterSources; field BeforeSources
+    graphResolveOutput "1" --> "*" graphResolveMatch : field Matches
+    graphResolveOutput "1" --> "1" navigationGraphTruncation : field Truncation
+    graphResolveOutput "1" --> "1" navigationSourceSummary : field Sources
     jsonResultRenderer "1" --> "1" outputWriter : field output
     resultRenderer <|.. jsonResultRenderer : implements
     lineRenderer "1" --> "1" anchorLookup : field anchors

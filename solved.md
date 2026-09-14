@@ -43,6 +43,7 @@ This file records completed Grepple roadmap work that no longer belongs in `next
 - [x] Added deterministic discovered, selected, parsed, skipped, failed, recovered, and truncated source accounting to graphs, focused graph queries, graph diffs, and boundary reports.
 - [x] Added parser-owned content- and grammar-addressed per-file navigation facts shared by graph output/queries, `--related`, boundaries, and extraction, with atomic corruption-tolerant storage, path instantiation, explicit bypass, cold/warm parity tests, and a repeatable benchmark.
 - [x] Added callers, callees, dependencies, dependents, and bidirectional impact queries with depth bounds, cycle safety, candidate preservation, and exact location/symbol/package/module/path roots.
+- [x] Added traversal-free `graph resolve --symbol NAME` previews with deterministic exact/terminal matches, full stable IDs, exact `--at` alternatives, filters, and copyable focused graph commands in bounded compact and complete JSON output.
 - [x] Added language, confidence, and visibility filtering before root selection and traversal.
 - [x] Added `grepple-navigation-diff-v1`, ignoring line-only movement while reporting semantic declaration and call-edge changes.
 - [x] Added end-to-end parity coverage across JSON, compact output, focused Mermaid, canonical Mermaid, and `--related`.

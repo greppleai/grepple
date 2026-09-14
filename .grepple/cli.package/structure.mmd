@@ -373,6 +373,72 @@ classDiagram
     %% grepple:struct-tag graphQueryArgs Symbol "arg:\"--symbol\" placeholder:\"NAME\" help:\"select one exact declaration name\""
     %% grepple:struct-tag graphQueryArgs Visibilities "arg:\"--visibility,separate\" placeholder:\"LEVEL\" help:\"retain public, non-public, or unknown declarations; repeatable\""
     note for graphQueryArgs "defined: internal/cli/graph_query.go:19-34; Description@internal/cli/graph_query.go:36-38; At@internal/cli/graph_query.go:23; Compact@internal/cli/graph_query.go:21; Confidences@internal/cli/graph_query.go:28; Depth@internal/cli/graph_query.go:30; JSON@internal/cli/graph_query.go:20; Languages@internal/cli/graph_query.go:27; MaxFiles@internal/cli/graph_query.go:31; MaxOutputBytes@internal/cli/graph_query.go:32; Module@internal/cli/graph_query.go:25; Package@internal/cli/graph_query.go:24; Paths@internal/cli/graph_query.go:33; RootPath@internal/cli/graph_query.go:26; Symbol@internal/cli/graph_query.go:22; Visibilities@internal/cli/graph_query.go:29"
+    class graphResolveArgs {
+        +Description(): string
+        +Compact: bool
+        +JSON: bool
+        +Languages: []string
+        +MaxFiles: int
+        +MaxOutputBytes: int
+        +Paths: []string
+        +Symbol: string
+        +Visibilities: []string
+    }
+    <<struct>> graphResolveArgs
+    %% grepple:file graphResolveArgs internal/cli/graph_resolve.go
+    %% grepple:struct-tag graphResolveArgs Compact "arg:\"--compact\" help:\"emit bounded declaration alternatives with copyable commands\""
+    %% grepple:struct-tag graphResolveArgs JSON "arg:\"--json\" help:\"emit every matching declaration and continuation command as JSON\""
+    %% grepple:struct-tag graphResolveArgs Languages "arg:\"--language,separate\" placeholder:\"ID\" help:\"retain one navigation language; repeatable\""
+    %% grepple:struct-tag graphResolveArgs MaxFiles "arg:\"--max-files\" placeholder:\"N\" help:\"parse at most N discovered files (0 = unlimited)\""
+    %% grepple:struct-tag graphResolveArgs MaxOutputBytes "arg:\"--max-output-bytes\" placeholder:\"N\" help:\"cap compact output (default 16384; 0 = unlimited; JSON is uncapped)\""
+    %% grepple:struct-tag graphResolveArgs Paths "arg:\"positional\" placeholder:\"PATH\" help:\"graph universe; defaults to the working directory\""
+    %% grepple:struct-tag graphResolveArgs Symbol "arg:\"--symbol,required\" placeholder:\"NAME\" help:\"preview exact or terminal-name declaration matches\""
+    %% grepple:struct-tag graphResolveArgs Visibilities "arg:\"--visibility,separate\" placeholder:\"LEVEL\" help:\"retain public, non-public, or unknown declarations; repeatable\""
+    note for graphResolveArgs "defined: internal/cli/graph_resolve.go:18-27; Description@internal/cli/graph_resolve.go:29-31; Compact@internal/cli/graph_resolve.go:20; JSON@internal/cli/graph_resolve.go:19; Languages@internal/cli/graph_resolve.go:22; MaxFiles@internal/cli/graph_resolve.go:24; MaxOutputBytes@internal/cli/graph_resolve.go:25; Paths@internal/cli/graph_resolve.go:26; Symbol@internal/cli/graph_resolve.go:21; Visibilities@internal/cli/graph_resolve.go:23"
+    class graphResolveMatch {
+        +At: string
+        +CalleesCommand: string
+        +CallersCommand: string
+        +EndLine: int
+        +ID: string
+        +ImpactCommand: string
+        +Kind: string
+        +Language: string
+        +Name: string
+        +Path: string
+        +StartLine: int
+        +Visibility: parser.NavigationVisibility
+    }
+    <<struct>> graphResolveMatch
+    %% grepple:file graphResolveMatch internal/cli/graph_resolve.go
+    %% grepple:struct-tag graphResolveMatch At "json:\"at\""
+    %% grepple:struct-tag graphResolveMatch CalleesCommand "json:\"calleesCommand\""
+    %% grepple:struct-tag graphResolveMatch CallersCommand "json:\"callersCommand\""
+    %% grepple:struct-tag graphResolveMatch EndLine "json:\"endLine\""
+    %% grepple:struct-tag graphResolveMatch ID "json:\"id\""
+    %% grepple:struct-tag graphResolveMatch ImpactCommand "json:\"impactCommand\""
+    %% grepple:struct-tag graphResolveMatch Kind "json:\"kind\""
+    %% grepple:struct-tag graphResolveMatch Language "json:\"language\""
+    %% grepple:struct-tag graphResolveMatch Name "json:\"name\""
+    %% grepple:struct-tag graphResolveMatch Path "json:\"path\""
+    %% grepple:struct-tag graphResolveMatch StartLine "json:\"startLine\""
+    %% grepple:struct-tag graphResolveMatch Visibility "json:\"visibility\""
+    note for graphResolveMatch "defined: internal/cli/graph_resolve.go:41-54; At@internal/cli/graph_resolve.go:50; CalleesCommand@internal/cli/graph_resolve.go:52; CallersCommand@internal/cli/graph_resolve.go:51; EndLine@internal/cli/graph_resolve.go:48; ID@internal/cli/graph_resolve.go:42; ImpactCommand@internal/cli/graph_resolve.go:53; Kind@internal/cli/graph_resolve.go:44; Language@internal/cli/graph_resolve.go:45; Name@internal/cli/graph_resolve.go:43; Path@internal/cli/graph_resolve.go:46; StartLine@internal/cli/graph_resolve.go:47; Visibility@internal/cli/graph_resolve.go:49"
+    class graphResolveOutput {
+        +Matches: []graphResolveMatch
+        +Schema: string
+        +Sources: navigationSourceSummary
+        +Symbol: string
+        +Truncation: *navigationGraphTruncation
+    }
+    <<struct>> graphResolveOutput
+    %% grepple:file graphResolveOutput internal/cli/graph_resolve.go
+    %% grepple:struct-tag graphResolveOutput Matches "json:\"matches\""
+    %% grepple:struct-tag graphResolveOutput Schema "json:\"schema\""
+    %% grepple:struct-tag graphResolveOutput Sources "json:\"sources\""
+    %% grepple:struct-tag graphResolveOutput Symbol "json:\"symbol\""
+    %% grepple:struct-tag graphResolveOutput Truncation "json:\"truncation,omitempty\""
+    note for graphResolveOutput "defined: internal/cli/graph_resolve.go:33-39; Matches@internal/cli/graph_resolve.go:37; Schema@internal/cli/graph_resolve.go:34; Sources@internal/cli/graph_resolve.go:36; Symbol@internal/cli/graph_resolve.go:35; Truncation@internal/cli/graph_resolve.go:38"
     class gritArgs {
         +Description(): string
         +ExcludeGlobs: []string
@@ -806,6 +872,9 @@ classDiagram
     resultRenderer <|.. filesRenderer : implements
     graphDiffOutput "1" --> "1" navigationSourceSummary : field AfterSources
     graphDiffOutput "1" --> "1" navigationSourceSummary : field BeforeSources
+    graphResolveOutput "1" --> "*" graphResolveMatch : field Matches
+    graphResolveOutput "1" --> "1" navigationGraphTruncation : field Truncation
+    graphResolveOutput "1" --> "1" navigationSourceSummary : field Sources
     jsonResultRenderer "1" --> "1" outputWriter : field output
     resultRenderer <|.. jsonResultRenderer : implements
     lineRenderer "1" --> "1" anchorLookup : field anchors
