@@ -101,7 +101,7 @@ classDiagram
     <<struct>> boundariesArgs
     %% grepple:file boundariesArgs internal/cli/boundaries.go
     %% grepple:struct-tag boundariesArgs JSON "arg:\"--json\" help:\"emit the complete boundary report as JSON\""
-    %% grepple:struct-tag boundariesArgs Limit "arg:\"--limit\" placeholder:\"N\" help:\"maximum candidates in human output (default 20; 0 = unlimited; JSON is complete)\""
+    %% grepple:struct-tag boundariesArgs Limit "arg:\"--limit\" placeholder:\"N\" help:\"maximum candidates per human-output section (default 20; 0 = unlimited; JSON is complete)\""
     %% grepple:struct-tag boundariesArgs MaxFiles "arg:\"--max-files\" placeholder:\"N\" help:\"parse at most N discovered files (0 = unlimited)\""
     %% grepple:struct-tag boundariesArgs MaxOutputBytes "arg:\"--max-output-bytes\" placeholder:\"N\" help:\"cap human output (default 16384; 0 = unlimited; JSON is uncapped)\""
     %% grepple:struct-tag boundariesArgs MinOccurrences "arg:\"--min-occurrences\" placeholder:\"N\" help:\"minimum callers sharing a reported pattern (default 2)\""
@@ -114,6 +114,7 @@ classDiagram
         +Paths: []string
         +Schema: string
         +Truncation: *navigationGraphTruncation
+        +TypeBoundaries: []search.BoundaryTypeSpread
     }
     <<struct>> boundariesOutput
     %% grepple:file boundariesOutput internal/cli/boundaries.go
@@ -122,7 +123,8 @@ classDiagram
     %% grepple:struct-tag boundariesOutput Paths "json:\"paths\""
     %% grepple:struct-tag boundariesOutput Schema "json:\"schema\""
     %% grepple:struct-tag boundariesOutput Truncation "json:\"truncation,omitempty\""
-    note for boundariesOutput "defined: internal/cli/boundaries.go:33-39; Candidates@internal/cli/boundaries.go:37; Files@internal/cli/boundaries.go:36; Paths@internal/cli/boundaries.go:35; Schema@internal/cli/boundaries.go:34; Truncation@internal/cli/boundaries.go:38"
+    %% grepple:struct-tag boundariesOutput TypeBoundaries "json:\"typeBoundaries\""
+    note for boundariesOutput "defined: internal/cli/boundaries.go:33-40; Candidates@internal/cli/boundaries.go:37; Files@internal/cli/boundaries.go:36; Paths@internal/cli/boundaries.go:35; Schema@internal/cli/boundaries.go:34; Truncation@internal/cli/boundaries.go:39; TypeBoundaries@internal/cli/boundaries.go:38"
     class boundaryGraphCache {
         +Digest: string
         +Graph: navigationGraphOutput

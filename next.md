@@ -92,6 +92,7 @@ Boundary pattern analysis follow-up:
 - [x] Add language-neutral external consumer breadth, callable surface, callable co-usage, ordered sequences, and member-read/member-write plus call combinations.
 - [x] Expose directory-ranked analysis as `grepple boundaries [PATH...]`: group resolved target declarations by owner file, remove owner-local calls, require repeated workflows across at least two external files, and report actionable caller locations.
 - [x] Cache content- and grammar-addressed resolved navigation graphs under ignored `.grepple/cache/boundaries/` for fast unchanged rechecks.
+- [x] Report import-qualified external and unambiguously owned project type spread with usage roles, public-signature exposure, production/test reach, and deterministic evidence locations.
 - [ ] Extend external surface totals from callables to fields/properties once every adapter exposes declaration ownership with honest confidence.
 
 ### B. Improve resolution confidence

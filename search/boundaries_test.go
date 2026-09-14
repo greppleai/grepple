@@ -107,4 +107,45 @@ func TestAnalyzeBoundariesValidatesMinimum(t *testing.T) {
 	if _, err := AnalyzeBoundaries(parser.NavigationGraph{}, 0); err == nil {
 		t.Fatal("expected invalid minimum to fail")
 	}
+	if _, err := AnalyzeTypeBoundaries(parser.NavigationGraph{}, 0); err == nil {
+		t.Fatal("expected invalid type minimum to fail")
+	}
+}
+
+func TestAnalyzeTypeBoundariesFindsImportedAndOwnedTypeSpread(t *testing.T) {
+	graph := parser.NavigationGraph{
+		Declarations: []parser.NavigationDeclaration{
+			{ID: "owner", Name: "Widget.Run", Kind: "method", Language: "go", Path: "widget.go"},
+			{ID: "public", Name: "Public", Language: "go", Path: "one.go", Package: "sample", Visibility: parser.NavigationVisibilityPublic, Start: 10},
+			{ID: "private", Name: "private", Language: "go", Path: "two.go", Package: "sample", Visibility: parser.NavigationVisibilityNonPublic, Start: 20},
+			{ID: "test", Name: "TestNode", Language: "go", Path: "node_test.go", Package: "sample", Visibility: parser.NavigationVisibilityPublic, Start: 30},
+		},
+		TypeUsages: []parser.NavigationTypeUsage{
+			{CallerID: "public", Type: "Node", ImportPath: "github.com/tree-sitter/go-tree-sitter", Role: "parameter", Language: "go", Path: "one.go", Line: 10},
+			{CallerID: "private", Type: "Node", ImportPath: "github.com/tree-sitter/go-tree-sitter", Role: "local", Language: "go", Path: "two.go", Line: 21},
+			{CallerID: "test", Type: "Node", ImportPath: "github.com/tree-sitter/go-tree-sitter", Role: "parameter", Language: "go", Path: "node_test.go", Line: 30},
+			{CallerID: "public", Type: "Widget", Role: "parameter", Language: "go", Path: "one.go", Line: 10},
+			{CallerID: "private", Type: "Widget", Role: "local", Language: "go", Path: "two.go", Line: 21},
+			{CallerID: "public", Type: "string", Role: "parameter", Language: "go", Path: "one.go", Line: 10},
+			{CallerID: "private", Type: "string", Role: "local", Language: "go", Path: "two.go", Line: 21},
+		},
+	}
+	spreads, err := AnalyzeTypeBoundaries(graph, 2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(spreads) != 2 {
+		t.Fatalf("spreads=%#v", spreads)
+	}
+	external := spreads[0]
+	if external.CanonicalType != "github.com/tree-sitter/go-tree-sitter.Node" || !external.External || external.Consumers.Files != 3 || external.Production.Files != 2 || external.Tests.Files != 1 || len(external.PublicExposures) != 1 {
+		t.Fatalf("external spread=%#v", external)
+	}
+	if external.Roles.Parameters != 2 || external.Roles.Locals != 1 {
+		t.Fatalf("external roles=%#v", external.Roles)
+	}
+	owned := spreads[1]
+	if owned.CanonicalType != "Widget" || owned.OwnerFile != "widget.go" || owned.External {
+		t.Fatalf("owned spread=%#v", owned)
+	}
 }

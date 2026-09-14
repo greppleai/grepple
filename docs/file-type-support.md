@@ -64,7 +64,7 @@ Every Tree-sitter-backed language in the table supports local syntax-based navig
 
 `grepple graph callers`, `callees`, `dependencies`, `dependents`, and `impact` traverse the same resolved and candidate call edges. Exact symbol/location selectors choose one root; package, module, and root-path selectors choose a scope. Repeatable language and confidence filters apply before root selection and traversal. Traversal is deterministic, cycle-safe, bounded to depth 1–10 in the CLI, complete in JSON, and byte-bounded in compact output. Positional paths remain the larger graph universe.
 
-`grepple boundaries [PATH...]` detects file-boundary patterns by grouping resolved target declarations by owner file and retaining only workflows repeated across two or more external files. Callable co-usage and ordered sequences therefore work for class-oriented and function-oriented languages alike; receiver-qualified member facts enrich combinations when ownership is known. The directory algorithm is package/module-independent and shared by all navigation languages.
+`grepple boundaries [PATH...]` combines file-owned workflow patterns with concrete type spread. Workflow candidates retain callable co-usage and ordered sequences repeated across two or more external files; receiver-qualified member facts enrich combinations when ownership is known. Type candidates retain import-qualified concrete types and unambiguously owned project types spanning two or more files, with role, public-exposure, and production/test evidence. Both analyses use the shared navigation facts available for each language without fabricating unsupported type ownership.
 
 ## Package boundaries
 

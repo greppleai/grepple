@@ -3,6 +3,7 @@ package parser
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -53,11 +54,13 @@ type NavigationCall struct {
 
 // NavigationTypeUsage records a callable's explicit use of a normalized type.
 type NavigationTypeUsage struct {
-	CallerID string `json:"callerId"`
-	Type     string `json:"type"`
-	Language string `json:"language"`
-	Path     string `json:"path"`
-	Line     int    `json:"line"`
+	CallerID   string `json:"callerId"`
+	Type       string `json:"type"`
+	ImportPath string `json:"importPath,omitempty"`
+	Role       string `json:"role,omitempty"`
+	Language   string `json:"language"`
+	Path       string `json:"path"`
+	Line       int    `json:"line"`
 }
 
 // NavigationMemberAccess describes a receiver-qualified field or property read or write.
@@ -259,14 +262,45 @@ func (c *navigationCollector) addNavigationSignatureBindings(node *sitter.Node, 
 }
 
 func (c *navigationCollector) recordNavigationTypeUsages(callable *NavigationDeclaration, bindings map[string]navigationBinding) {
-	seen := make(map[string]bool)
+	type usageKey struct {
+		typeName   string
+		importPath string
+		role       string
+		line       int
+	}
+	usages := make(map[usageKey]bool)
 	for _, binding := range bindings {
 		typeName := strings.TrimSpace(binding.typeName)
-		if typeName == "" || seen[typeName] {
+		if typeName == "" {
 			continue
 		}
-		seen[typeName] = true
-		c.typeUsages = append(c.typeUsages, NavigationTypeUsage{CallerID: callable.ID, Type: typeName, Language: c.adapter.ID(), Path: c.path, Line: callable.Start})
+		line := binding.line
+		if line == 0 {
+			line = callable.Start
+		}
+		usages[usageKey{typeName: typeName, importPath: binding.importPath, role: binding.role, line: line}] = true
+	}
+	if callable.ResultType != "" {
+		usages[usageKey{typeName: callable.ResultType, importPath: callable.ResultImportPath, role: "result", line: callable.Start}] = true
+	}
+	ordered := make([]usageKey, 0, len(usages))
+	for usage := range usages {
+		ordered = append(ordered, usage)
+	}
+	sort.Slice(ordered, func(i, j int) bool {
+		if ordered[i].typeName != ordered[j].typeName {
+			return ordered[i].typeName < ordered[j].typeName
+		}
+		if ordered[i].importPath != ordered[j].importPath {
+			return ordered[i].importPath < ordered[j].importPath
+		}
+		if ordered[i].role != ordered[j].role {
+			return ordered[i].role < ordered[j].role
+		}
+		return ordered[i].line < ordered[j].line
+	})
+	for _, usage := range ordered {
+		c.typeUsages = append(c.typeUsages, NavigationTypeUsage{CallerID: callable.ID, Type: usage.typeName, ImportPath: usage.importPath, Role: usage.role, Language: c.adapter.ID(), Path: c.path, Line: usage.line})
 	}
 }
 

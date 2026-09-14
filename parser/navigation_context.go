@@ -18,6 +18,7 @@ type navigationBinding struct {
 	importPath    string
 	factoryName   string
 	factoryImport string
+	role          string
 	line          int
 }
 
@@ -210,8 +211,9 @@ func unquoteNavigationPath(value string) string {
 func navigationCallableBindings(node *sitter.Node, content, container string, imports map[string]navigationImport, returnBindings map[string]navigationBinding, adapter navigationAdapter) map[string]navigationBinding {
 	bindings := make(map[string]navigationBinding)
 	if name, binding, ok := adapter.SelfBinding(container); ok {
+		binding.role = "receiver"
 		bindings[name] = binding
-		bindings["this"] = navigationBinding{typeName: container}
+		bindings["this"] = navigationBinding{typeName: container, role: "receiver"}
 	}
 	for _, field := range []string{"receiver", "parameters"} {
 		root := node.ChildByFieldName(field)
@@ -275,6 +277,7 @@ func addLocalNavigationBinding(bindings map[string]navigationBinding, name strin
 	if _, exists := bindings[name]; exists {
 		return
 	}
+	binding.role = "local"
 	binding.line = line
 	bindings[name] = binding
 }
@@ -365,6 +368,7 @@ func addNavigationParameterBinding(bindings map[string]navigationBinding, node *
 	if binding.typeName == "" {
 		return
 	}
+	binding.role = "parameter"
 	for _, name := range navigationParameterNames(node, typeNode, content) {
 		binding.line = nodeStart(node)
 		bindings[name] = binding

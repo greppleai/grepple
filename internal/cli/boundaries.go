@@ -20,22 +20,23 @@ type boundariesArgs struct {
 	JSON           bool     `arg:"--json" help:"emit the complete boundary report as JSON"`
 	MinOccurrences int      `arg:"--min-occurrences" placeholder:"N" help:"minimum callers sharing a reported pattern (default 2)"`
 	MaxFiles       int      `arg:"--max-files" placeholder:"N" help:"parse at most N discovered files (0 = unlimited)"`
-	Limit          int      `arg:"--limit" placeholder:"N" help:"maximum candidates in human output (default 20; 0 = unlimited; JSON is complete)"`
+	Limit          int      `arg:"--limit" placeholder:"N" help:"maximum candidates per human-output section (default 20; 0 = unlimited; JSON is complete)"`
 	MaxOutputBytes int      `arg:"--max-output-bytes" placeholder:"N" help:"cap human output (default 16384; 0 = unlimited; JSON is uncapped)"`
 	NoCache        bool     `arg:"--no-cache" help:"bypass the content-addressed .grepple boundary cache"`
 	Paths          []string `arg:"positional" placeholder:"PATH" help:"file, directory, or glob to include; defaults to the working directory"`
 }
 
 func (boundariesArgs) Description() string {
-	return "Find owner-file workflows repeated across multiple external files in every navigation-supported language."
+	return "Find repeated owner-file workflows and concrete type spread across source boundaries."
 }
 
 type boundariesOutput struct {
-	Schema     string                     `json:"schema"`
-	Paths      []string                   `json:"paths"`
-	Files      int                        `json:"files"`
-	Candidates []search.BoundaryCandidate `json:"candidates"`
-	Truncation *navigationGraphTruncation `json:"truncation,omitempty"`
+	Schema         string                      `json:"schema"`
+	Paths          []string                    `json:"paths"`
+	Files          int                         `json:"files"`
+	Candidates     []search.BoundaryCandidate  `json:"candidates"`
+	TypeBoundaries []search.BoundaryTypeSpread `json:"typeBoundaries"`
+	Truncation     *navigationGraphTruncation  `json:"truncation,omitempty"`
 }
 
 func runBoundaries(args []string) error {
@@ -66,7 +67,11 @@ func runBoundaries(args []string) error {
 	if err != nil {
 		return err
 	}
-	output := boundariesOutput{Schema: "grepple-boundary-patterns-v1", Paths: boundaryDisplayPaths(values.Paths), Files: graphOutput.Files, Candidates: candidates, Truncation: graphOutput.Truncation}
+	typeBoundaries, err := search.AnalyzeTypeBoundaries(graph, values.MinOccurrences)
+	if err != nil {
+		return err
+	}
+	output := boundariesOutput{Schema: "grepple-boundaries-v1", Paths: boundaryDisplayPaths(values.Paths), Files: graphOutput.Files, Candidates: candidates, TypeBoundaries: typeBoundaries, Truncation: graphOutput.Truncation}
 	if values.JSON {
 		encoder := json.NewEncoder(os.Stdout)
 		encoder.SetEscapeHTML(false)
@@ -100,11 +105,9 @@ func renderBoundaries(report boundariesOutput, minimum, limit, maxBytes int) err
 	write := func(format string, values ...any) bool {
 		return output.writeString(fmt.Sprintf(format, values...)+"\n") == nil
 	}
-	visible := len(report.Candidates)
-	if limit > 0 && visible > limit {
-		visible = limit
-	}
-	if !write("boundary patterns paths=%s files=%d candidates=%d shown=%d", strings.Join(report.Paths, ","), report.Files, len(report.Candidates), visible) {
+	visible := boundaryVisibleCount(len(report.Candidates), limit)
+	typeVisible := boundaryVisibleCount(len(report.TypeBoundaries), limit)
+	if !write("boundary analysis paths=%s files=%d workflow-candidates=%d workflow-shown=%d type-candidates=%d type-shown=%d", strings.Join(report.Paths, ","), report.Files, len(report.Candidates), visible, len(report.TypeBoundaries), typeVisible) {
 		return nil
 	}
 	if report.Truncation != nil && !write("! incomplete: %d files omitted by %s=%d", report.Truncation.Skipped, report.Truncation.Reason, report.Truncation.Limit) {
@@ -119,12 +122,91 @@ func renderBoundaries(report boundariesOutput, minimum, limit, maxBytes int) err
 		}
 	}
 	if omitted := len(report.Candidates) - visible; omitted > 0 {
-		write("\n! omitted %d lower-ranked boundary candidates; use --limit 0 or --json for all", omitted)
+		write("\n! omitted %d lower-ranked workflow candidates; use --limit 0 or --json for all", omitted)
 	}
-	if len(report.Candidates) == 0 {
-		write("(no repeated cross-file boundary patterns found)")
+	if !writeBoundaryTypeSpreads(write, report.TypeBoundaries, limit) {
+		return nil
+	}
+	if len(report.Candidates) == 0 && len(report.TypeBoundaries) == 0 {
+		write("(no repeated cross-file workflow or type boundary patterns found)")
 	}
 	return nil
+}
+
+func writeBoundaryTypeSpreads(write func(string, ...any) bool, spreads []search.BoundaryTypeSpread, limit int) bool {
+	if !write("\ntype boundary spread:") {
+		return false
+	}
+	if len(spreads) == 0 {
+		return write("  (none)")
+	}
+	visible := boundaryVisibleCount(len(spreads), limit)
+	for _, spread := range spreads[:visible] {
+		if !writeBoundaryTypeSpread(write, spread) {
+			return false
+		}
+	}
+	if omitted := len(spreads) - visible; omitted > 0 {
+		return write("  +%d additional type boundary candidates; use --limit 0 or --json for all", omitted)
+	}
+	return true
+}
+
+func boundaryVisibleCount(count, limit int) int {
+	if limit > 0 && count > limit {
+		return limit
+	}
+	return count
+}
+
+func writeBoundaryTypeSpread(write func(string, ...any) bool, spread search.BoundaryTypeSpread) bool {
+	ownership := "project-owned"
+	if spread.External {
+		ownership = "external concrete"
+	}
+	if !write("  type: %s [%s, %s]", spread.CanonicalType, spread.Language, ownership) ||
+		!write("    reach: %d usages / %d functions / %d files / %d packages", spread.Usages, spread.Consumers.Functions, spread.Consumers.Files, spread.Consumers.Packages) ||
+		!write("    source split: %d production files / %d test files", spread.Production.Files, spread.Tests.Files) ||
+		!write("    roles: %d parameters / %d results / %d receivers / %d locals / %d unknown", spread.Roles.Parameters, spread.Roles.Results, spread.Roles.Receivers, spread.Roles.Locals, spread.Roles.Unknown) {
+		return false
+	}
+	if spread.OwnerFile != "" && !write("    owner: %s", spread.OwnerFile) {
+		return false
+	}
+	if len(spread.PublicExposures) > 0 && !writeBoundaryTypePublicExposures(write, spread) {
+		return false
+	}
+	return write("    usages: %s", boundaryTypeLocations(spread.UsageDetails))
+}
+
+func writeBoundaryTypePublicExposures(write func(string, ...any) bool, spread search.BoundaryTypeSpread) bool {
+	label := "public signature uses"
+	prefix := ""
+	if spread.External {
+		label = "public external-type exposures"
+		prefix = "! "
+	}
+	return write("    %s%d %s: %s", prefix, len(spread.PublicExposures), label, boundaryTypeLocations(spread.PublicExposures))
+}
+
+func boundaryTypeLocations(usages []search.BoundaryTypeUsage) string {
+	const maximum = 3
+	count := len(usages)
+	if count > maximum {
+		count = maximum
+	}
+	locations := make([]string, 0, count+1)
+	for _, usage := range usages[:count] {
+		suffix := usage.Role
+		if usage.Test {
+			suffix += ", test"
+		}
+		locations = append(locations, fmt.Sprintf("%s:%d %s (%s)", usage.Path, usage.Line, usage.Name, suffix))
+	}
+	if omitted := len(usages) - count; omitted > 0 {
+		locations = append(locations, fmt.Sprintf("+%d more", omitted))
+	}
+	return strings.Join(locations, "; ")
 }
 
 func writeBoundaryCandidate(write func(string, ...any) bool, candidate search.BoundaryCandidate, minimum int) bool {

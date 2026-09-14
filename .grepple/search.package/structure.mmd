@@ -78,6 +78,68 @@ classDiagram
     %% grepple:struct-tag BoundarySurface Declared "json:\"declared\""
     %% grepple:struct-tag BoundarySurface External "json:\"external\""
     note for BoundarySurface "defined: search/boundary_model.go:19-22; Declared@search/boundary_model.go:21; External@search/boundary_model.go:20"
+    class BoundaryTypeRoles {
+        +Locals: int
+        +Parameters: int
+        +Receivers: int
+        +Results: int
+        +Unknown: int
+    }
+    <<struct>> BoundaryTypeRoles
+    %% grepple:file BoundaryTypeRoles search/type_boundaries.go
+    %% grepple:struct-tag BoundaryTypeRoles Locals "json:\"locals\""
+    %% grepple:struct-tag BoundaryTypeRoles Parameters "json:\"parameters\""
+    %% grepple:struct-tag BoundaryTypeRoles Receivers "json:\"receivers\""
+    %% grepple:struct-tag BoundaryTypeRoles Results "json:\"results\""
+    %% grepple:struct-tag BoundaryTypeRoles Unknown "json:\"unknown\""
+    note for BoundaryTypeRoles "defined: search/type_boundaries.go:13-19; Locals@search/type_boundaries.go:17; Parameters@search/type_boundaries.go:14; Receivers@search/type_boundaries.go:16; Results@search/type_boundaries.go:15; Unknown@search/type_boundaries.go:18"
+    class BoundaryTypeSpread {
+        +CanonicalType: string
+        +Consumers: BoundaryBreadth
+        +External: bool
+        +ImportPath: string
+        +Language: string
+        +OwnerFile: string
+        +Production: BoundaryBreadth
+        +PublicExposures: []BoundaryTypeUsage
+        +Roles: BoundaryTypeRoles
+        +Tests: BoundaryBreadth
+        +Type: string
+        +UsageDetails: []BoundaryTypeUsage
+        +Usages: int
+    }
+    <<struct>> BoundaryTypeSpread
+    %% grepple:file BoundaryTypeSpread search/type_boundaries.go
+    %% grepple:struct-tag BoundaryTypeSpread CanonicalType "json:\"canonicalType\""
+    %% grepple:struct-tag BoundaryTypeSpread Consumers "json:\"consumers\""
+    %% grepple:struct-tag BoundaryTypeSpread External "json:\"external\""
+    %% grepple:struct-tag BoundaryTypeSpread ImportPath "json:\"importPath,omitempty\""
+    %% grepple:struct-tag BoundaryTypeSpread Language "json:\"language\""
+    %% grepple:struct-tag BoundaryTypeSpread OwnerFile "json:\"ownerFile,omitempty\""
+    %% grepple:struct-tag BoundaryTypeSpread Production "json:\"production\""
+    %% grepple:struct-tag BoundaryTypeSpread PublicExposures "json:\"publicExposures,omitempty\""
+    %% grepple:struct-tag BoundaryTypeSpread Roles "json:\"roles\""
+    %% grepple:struct-tag BoundaryTypeSpread Tests "json:\"tests\""
+    %% grepple:struct-tag BoundaryTypeSpread Type "json:\"type\""
+    %% grepple:struct-tag BoundaryTypeSpread UsageDetails "json:\"usageDetails\""
+    %% grepple:struct-tag BoundaryTypeSpread Usages "json:\"usages\""
+    note for BoundaryTypeSpread "defined: search/type_boundaries.go:30-44; CanonicalType@search/type_boundaries.go:33; Consumers@search/type_boundaries.go:38; External@search/type_boundaries.go:36; ImportPath@search/type_boundaries.go:32; Language@search/type_boundaries.go:34; OwnerFile@search/type_boundaries.go:35; Production@search/type_boundaries.go:39; PublicExposures@search/type_boundaries.go:42; Roles@search/type_boundaries.go:41; Tests@search/type_boundaries.go:40; Type@search/type_boundaries.go:31; UsageDetails@search/type_boundaries.go:43; Usages@search/type_boundaries.go:37"
+    class BoundaryTypeUsage {
+        +Public: bool
+        +Role: string
+        +Test: bool
+        +ID: string
+        +Line: int
+        +Name: string
+        +Package: string
+        +Path: string
+    }
+    <<struct>> BoundaryTypeUsage
+    %% grepple:file BoundaryTypeUsage search/type_boundaries.go
+    %% grepple:struct-tag BoundaryTypeUsage Public "json:\"public,omitempty\""
+    %% grepple:struct-tag BoundaryTypeUsage Role "json:\"role\""
+    %% grepple:struct-tag BoundaryTypeUsage Test "json:\"test,omitempty\""
+    note for BoundaryTypeUsage "defined: search/type_boundaries.go:22-27; Public@search/type_boundaries.go:25; Role@search/type_boundaries.go:24; Test@search/type_boundaries.go:26; ID@search/boundary_model.go:26; Line@search/boundary_model.go:30; Name@search/boundary_model.go:27; Package@search/boundary_model.go:29; Path@search/boundary_model.go:28"
     class FileMatch {
         +Content: string
         +DisplayPath: string
@@ -270,6 +332,15 @@ classDiagram
     <<struct>> boundaryTypeCandidate
     %% grepple:file boundaryTypeCandidate search/boundaries.go
     note for boundaryTypeCandidate "defined: search/boundaries.go:167-170; language@search/boundaries.go:169; typeName@search/boundaries.go:168"
+    class boundaryTypeSpreadKey {
+        -importPath: string
+        -language: string
+        -ownerFile: string
+        -typeName: string
+    }
+    <<struct>> boundaryTypeSpreadKey
+    %% grepple:file boundaryTypeSpreadKey search/type_boundaries.go
+    note for boundaryTypeSpreadKey "defined: search/type_boundaries.go:46-51; importPath@search/type_boundaries.go:49; language@search/type_boundaries.go:47; ownerFile@search/type_boundaries.go:50; typeName@search/type_boundaries.go:48"
     class candidateCollector {
         -add(string)
         -addPlainGlob(string): error
@@ -407,6 +478,12 @@ classDiagram
     <<function>> AnalyzeBoundaries
     %% grepple:file AnalyzeBoundaries search/boundaries.go
     note for AnalyzeBoundaries "defined: search/boundaries.go:42-66"
+    class AnalyzeTypeBoundaries {
+        +AnalyzeTypeBoundaries(parser.NavigationGraph, int): tuple~[]BoundaryTypeSpread&#44;error~
+    }
+    <<function>> AnalyzeTypeBoundaries
+    %% grepple:file AnalyzeTypeBoundaries search/type_boundaries.go
+    note for AnalyzeTypeBoundaries "defined: search/type_boundaries.go:56-65"
     class At {
         +At(Params): tuple~*FileMatch&#44;error~
     }
@@ -553,6 +630,7 @@ classDiagram
     note for WorkerCount "defined: search/workers.go:19-34"
     AggregateRepoCounts "1" ..> "*" FileMatch : parameter 1
     AnalyzeBoundaries "1" ..> "*" BoundaryCandidate : result 1
+    AnalyzeTypeBoundaries "1" ..> "*" BoundaryTypeSpread : result 1
     At "1" ..> "1" FileMatch : result 1
     At "1" ..> "1" Params : parameter 1
     BoundaryCandidate "1" --> "1" BoundaryBreadth : field Consumers
@@ -562,6 +640,13 @@ classDiagram
     BoundaryCandidate "1" --> "*" BoundaryPattern : field OrderedSequences
     BoundaryCandidate "1" --> "1" BoundarySurface : field ExternalCallableSurface
     BoundaryPattern "1" --> "*" BoundaryConsumer : field Consumers
+    BoundaryTypeSpread "1" --> "1" BoundaryBreadth : field Consumers
+    BoundaryTypeSpread "1" --> "1" BoundaryBreadth : field Production
+    BoundaryTypeSpread "1" --> "1" BoundaryBreadth : field Tests
+    BoundaryTypeSpread "1" --> "1" BoundaryTypeRoles : field Roles
+    BoundaryTypeSpread "1" --> "*" BoundaryTypeUsage : field PublicExposures
+    BoundaryTypeSpread "1" --> "*" BoundaryTypeUsage : field UsageDetails
+    BoundaryConsumer <|-- BoundaryTypeUsage : embedded type
     BuildResults "1" ..> "*" FileMatch : parameter 1
     Content "1" ..> "1" FileMatch : result 1
     Content "1" ..> "1" Params : parameter 1

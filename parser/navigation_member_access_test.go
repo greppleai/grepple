@@ -44,3 +44,26 @@ func TestNavigationMemberAccessClassifiesWrites(t *testing.T) {
 		t.Fatalf("type usages=%#v", graph.TypeUsages)
 	}
 }
+
+func TestNavigationTypeUsagesPreserveImportAndRole(t *testing.T) {
+	content := `package p
+import sitter "github.com/tree-sitter/go-tree-sitter"
+func Public(node *sitter.Node) *sitter.Node {
+var local *sitter.Node = node
+return local
+}`
+	graph := BuildNavigationGraph(content, "go", "sample.go")
+	if len(graph.TypeUsages) != 3 {
+		t.Fatalf("type usages=%#v", graph.TypeUsages)
+	}
+	roles := make(map[string]NavigationTypeUsage)
+	for _, usage := range graph.TypeUsages {
+		roles[usage.Role] = usage
+	}
+	for _, role := range []string{"local", "parameter", "result"} {
+		usage, ok := roles[role]
+		if !ok || usage.Type != "Node" || usage.ImportPath != "github.com/tree-sitter/go-tree-sitter" {
+			t.Fatalf("role %q usage=%#v all=%#v", role, usage, graph.TypeUsages)
+		}
+	}
+}

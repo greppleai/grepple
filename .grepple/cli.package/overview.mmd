@@ -2,7 +2,7 @@ classDiagram
     %% grepple:package-default github.com/greppleai/grepple/internal/cli
     %% grepple:language-default go
     direction LR
-    note "Package cli implements Grepple's search, extraction, repository inspection, authentication, rules, and terminal/JSON presentation workflows. | package github.com/greppleai/grepple/internal/cli | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=36, declarations=47, exportedTypes=0, internalTypes=47, members=296, exportedFunctions=3, fiberRoutes=0, relations=27"
+    note "Package cli implements Grepple's search, extraction, repository inspection, authentication, rules, and terminal/JSON presentation workflows. | package github.com/greppleai/grepple/internal/cli | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=36, declarations=47, exportedTypes=0, internalTypes=47, members=297, exportedFunctions=3, fiberRoutes=0, relations=27"
     namespace interfaces {
         class resultRenderer["resultRenderer · internal/cli/renderer.go:9-11"] {
             +Render([]api.FileResult): error
@@ -59,12 +59,13 @@ classDiagram
             +Paths: []string
         }
         <<struct>> boundariesArgs
-        class boundariesOutput["boundariesOutput · internal/cli/boundaries.go:33-39"] {
+        class boundariesOutput["boundariesOutput · internal/cli/boundaries.go:33-40"] {
             +Candidates: []search.BoundaryCandidate
             +Files: int
             +Paths: []string
             +Schema: string
             +Truncation: *navigationGraphTruncation
+            +TypeBoundaries: []search.BoundaryTypeSpread
         }
         <<struct>> boundariesOutput
         class boundaryGraphCache["boundaryGraphCache · internal/cli/boundaries_cache.go:17-21"] {

@@ -20,12 +20,12 @@
     "declarations": 47,
     "exportedTypes": 0,
     "internalTypes": 47,
-    "members": 296,
+    "members": 297,
     "exportedFunctions": 3,
     "fiberRoutes": 0,
     "relations": 27
   },
-  "semanticModelDigest": "sha256:dfa03844a8cd816aa4ca9b0c656f344f971653cd85ef41cdbb5b6d2e8bfc051b",
+  "semanticModelDigest": "sha256:9558994dc73f23fab5cf6e9abaee16d7c850c18f6534c07e7108c03c4768e1c8",
   "sourceFiles": [
     {
       "path": "internal/cli/anchors.go"
@@ -438,7 +438,7 @@
       "file": "internal/cli/boundaries.go",
       "line": 19,
       "endLine": 27,
-      "underlyingType": "struct{JSON bool`arg:\"--json\" help:\"emit the complete boundary report as JSON\"`;MinOccurrences int`arg:\"--min-occurrences\" placeholder:\"N\" help:\"minimum callers sharing a reported pattern (default 2)\"`;MaxFiles int`arg:\"--max-files\" placeholder:\"N\" help:\"parse at most N discovered files (0 = unlimited)\"`;Limit int`arg:\"--limit\" placeholder:\"N\" help:\"maximum candidates in human output (default 20; 0 = unlimited; JSON is complete)\"`;MaxOutputBytes int`arg:\"--max-output-bytes\" placeholder:\"N\" help:\"cap human output (default 16384; 0 = unlimited; JSON is uncapped)\"`;NoCache bool`arg:\"--no-cache\" help:\"bypass the content-addressed .grepple boundary cache\"`;Paths[]string`arg:\"positional\" placeholder:\"PATH\" help:\"file, directory, or glob to include; defaults to the working directory\"`;}",
+      "underlyingType": "struct{JSON bool`arg:\"--json\" help:\"emit the complete boundary report as JSON\"`;MinOccurrences int`arg:\"--min-occurrences\" placeholder:\"N\" help:\"minimum callers sharing a reported pattern (default 2)\"`;MaxFiles int`arg:\"--max-files\" placeholder:\"N\" help:\"parse at most N discovered files (0 = unlimited)\"`;Limit int`arg:\"--limit\" placeholder:\"N\" help:\"maximum candidates per human-output section (default 20; 0 = unlimited; JSON is complete)\"`;MaxOutputBytes int`arg:\"--max-output-bytes\" placeholder:\"N\" help:\"cap human output (default 16384; 0 = unlimited; JSON is uncapped)\"`;NoCache bool`arg:\"--no-cache\" help:\"bypass the content-addressed .grepple boundary cache\"`;Paths[]string`arg:\"positional\" placeholder:\"PATH\" help:\"file, directory, or glob to include; defaults to the working directory\"`;}",
       "members": [
         {
           "name": "Description",
@@ -464,7 +464,7 @@
           "endLine": 23,
           "result": "int",
           "structTag": {
-            "value": "arg:\"--limit\" placeholder:\"N\" help:\"maximum candidates in human output (default 20; 0 = unlimited; JSON is complete)\""
+            "value": "arg:\"--limit\" placeholder:\"N\" help:\"maximum candidates per human-output section (default 20; 0 = unlimited; JSON is complete)\""
           }
         },
         {
@@ -524,8 +524,8 @@
       "kind": "struct",
       "file": "internal/cli/boundaries.go",
       "line": 33,
-      "endLine": 39,
-      "underlyingType": "struct{Schema string`json:\"schema\"`;Paths[]string`json:\"paths\"`;Files int`json:\"files\"`;Candidates[]search.BoundaryCandidate`json:\"candidates\"`;Truncation*navigationGraphTruncation`json:\"truncation,omitempty\"`;}",
+      "endLine": 40,
+      "underlyingType": "struct{Schema string`json:\"schema\"`;Paths[]string`json:\"paths\"`;Files int`json:\"files\"`;Candidates[]search.BoundaryCandidate`json:\"candidates\"`;TypeBoundaries[]search.BoundaryTypeSpread`json:\"typeBoundaries\"`;Truncation*navigationGraphTruncation`json:\"truncation,omitempty\"`;}",
       "members": [
         {
           "name": "Candidates",
@@ -570,11 +570,21 @@
         {
           "name": "Truncation",
           "kind": "property",
-          "line": 38,
-          "endLine": 38,
+          "line": 39,
+          "endLine": 39,
           "result": "*navigationGraphTruncation",
           "structTag": {
             "value": "json:\"truncation,omitempty\""
+          }
+        },
+        {
+          "name": "TypeBoundaries",
+          "kind": "property",
+          "line": 38,
+          "endLine": 38,
+          "result": "[]search.BoundaryTypeSpread",
+          "structTag": {
+            "value": "json:\"typeBoundaries\""
           }
         }
       ]

@@ -212,9 +212,9 @@ grepple graph diff --before ./old-tree --after ./new-tree --compact
 
 `graph diff` compares two source trees using `grepple-navigation-diff-v1`. It classifies added, removed, moved, and semantically changed declarations plus added, removed, and changed calls. Position-only line shifts are ignored, moved declarations retain before/after locations, and call endpoints are compared through semantic declaration identities rather than unstable source IDs. Exactly one of complete `--json` or bounded `--compact` is required.
 
-## Boundary pattern analysis
+## Boundary analysis
 
-`grepple boundaries [PATH...]` treats each source file as an implementation ownership boundary. It groups resolved calls by target owner file and reports only callable co-usage, ordered call sequences, or member-plus-call combinations repeated across at least two external files. This suppresses ordinary symbol popularity and highlights low-level workflows that may need a helper or higher-level operation in the owner. Directory scope avoids package/module assumptions and works for every Tree-sitter-backed language, including function-oriented C, Rust, and Shell code. Each candidate includes its owner file and external caller locations.
+`grepple boundaries [PATH...]` reports both repeated owner-file workflows and concrete type spread. Workflow candidates group resolved calls by target owner file and retain only callable co-usage, ordered sequences, or member-plus-call combinations repeated across at least two external files. Type candidates report import-qualified concrete types or unambiguously owned project types used across at least two files, including production/test reach, parameter/result/receiver/local roles, public-signature exposure, and evidence locations. This highlights both repeated low-level behavior and representations or dependencies that have crossed architectural boundaries without asserting that every widely shared utility is a violation.
 
 ```bash
 grepple boundaries parser
@@ -222,7 +222,7 @@ grepple boundaries ./src ./lib --min-occurrences 3
 grepple boundaries --json ./internal
 ```
 
-Human output is bounded to 16,384 bytes and shows at most 20 ranked boundary candidates by default; patterns include up to three caller locations and disclose omissions. `--limit 0` shows all candidates, while JSON is complete. Parsed and cross-file-resolved navigation graphs are cached by source content plus grammar ABI/fingerprint under `.grepple/cache/boundaries/`; use `--no-cache` to bypass them. `--max-files` remains explicit when source discovery is incomplete.
+Human output is bounded to 16,384 bytes and shows at most 20 ranked candidates per workflow/type section by default; evidence locations and omissions remain explicit. `--limit 0` shows all candidates, while `grepple-boundaries-v1` JSON is complete. Parsed and cross-file-resolved navigation graphs are cached by source content plus grammar ABI/fingerprint under `.grepple/cache/boundaries/`; use `--no-cache` to bypass them. `--max-files` remains explicit when source discovery is incomplete.
 
 ## Architecture and flow extraction
 

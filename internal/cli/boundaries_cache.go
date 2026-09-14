@@ -12,7 +12,7 @@ import (
 	"github.com/greppleai/grepple/parser"
 )
 
-const boundaryCacheSchema = "grepple-boundary-cache-v1"
+const boundaryCacheSchema = "grepple-boundary-cache-v2"
 
 type boundaryGraphCache struct {
 	Schema string                `json:"schema"`

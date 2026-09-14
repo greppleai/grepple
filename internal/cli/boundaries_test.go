@@ -17,7 +17,7 @@ func TestBoundariesReportsExternalOwnerWorkflowsAndUsesCache(t *testing.T) {
 		}
 	})
 	for _, expected := range []string{
-		"boundary patterns paths=. files=3 candidates=1 shown=1", "owner: owner.go [go]", "external consumers: 2 functions / 2 files",
+		"boundary analysis paths=. files=3 workflow-candidates=1 workflow-shown=1 type-candidates=0 type-shown=0", "owner: owner.go [go]", "external consumers: 2 functions / 2 files",
 		"Parse + Validate", "Parse -> Validate", "callers: one.go:2 One; two.go:2 Two",
 	} {
 		if !strings.Contains(first, expected) {
@@ -52,7 +52,7 @@ func TestBoundariesHumanLimitDoesNotLimitJSON(t *testing.T) {
 			t.Fatal(err)
 		}
 	})
-	if !strings.Contains(limited, "candidates=2 shown=1") || !strings.Contains(limited, "omitted 1 lower-ranked boundary candidates") {
+	if !strings.Contains(limited, "workflow-candidates=2 workflow-shown=1 type-candidates=0 type-shown=0") || !strings.Contains(limited, "omitted 1 lower-ranked workflow candidates") {
 		t.Fatalf("limited output is misleading:\n%s", limited)
 	}
 	jsonText := captureStdout(t, func() {
@@ -64,11 +64,33 @@ func TestBoundariesHumanLimitDoesNotLimitJSON(t *testing.T) {
 	if err := json.Unmarshal([]byte(jsonText), &output); err != nil {
 		t.Fatal(err)
 	}
-	if output.Schema != "grepple-boundary-patterns-v1" || len(output.Candidates) != 2 {
+	if output.Schema != "grepple-boundaries-v1" || len(output.Candidates) != 2 {
 		t.Fatalf("JSON was limited: %#v", output)
 	}
 	if _, err := os.Stat(filepath.Join(".grepple", "cache")); !os.IsNotExist(err) {
 		t.Fatalf("--no-cache created cache: %v", err)
+	}
+}
+
+func TestBoundariesReportsImportedTypeSpreadAndPublicExposure(t *testing.T) {
+	dir := chdirTemp(t)
+	writeGraphSource(t, dir, "one.go", `package sample
+import sitter "github.com/tree-sitter/go-tree-sitter"
+func Public(node *sitter.Node) {}
+`)
+	writeGraphSource(t, dir, "two.go", `package sample
+import sitter "github.com/tree-sitter/go-tree-sitter"
+func private(node *sitter.Node) {}
+`)
+	output := captureStdout(t, func() {
+		if err := Run([]string{"boundaries", "--no-cache", "."}); err != nil {
+			t.Fatal(err)
+		}
+	})
+	for _, expected := range []string{"type-candidates=1", "github.com/tree-sitter/go-tree-sitter.Node", "2 production files / 0 test files", "1 public external-type exposures", "one.go:3 Public (parameter)"} {
+		if !strings.Contains(output, expected) {
+			t.Fatalf("type boundary output missing %q:\n%s", expected, output)
+		}
 	}
 }
 

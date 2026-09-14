@@ -133,14 +133,14 @@ Inspect all three layers before concluding:
 3. `--related` on the changed entrypoint and shared helpers for immediate behavioral impact.
 4. `grepple graph callers --at PATH:LINE --depth 2 --compact SCOPE` when multi-hop consumers matter; use `graph callees` for bounded outgoing dependencies.
 
-### “Which implementation workflows leaked outside their owning file?”
+### “Which workflows or concrete types spread across their boundaries?”
 
 ```bash
 grepple boundaries path/to/scope
 grepple boundaries --min-occurrences 3 --json path/to/scope
 ```
 
-The command groups resolved target declarations by owner file and reports only workflows repeated in at least two external files. It works for functions and methods across all navigation languages. Use the owner path and caller locations to verify whether a missing helper or higher-level operation belongs at that boundary. Treat disclosed ambiguous interactions as leads, not confirmed violations.
+The command reports repeated file-owned workflows separately from concrete type spread. For workflows, use owner paths and caller locations to verify whether a helper or higher-level operation belongs at that boundary. For types, prioritize import-qualified external types in public signatures, then production-file reach and parameter/result/receiver roles; broad local or test-only use may be intentional. Treat every finding as an architectural lead, not a confirmed violation.
 
 ### “Why does this route or entrypoint exist?”
 

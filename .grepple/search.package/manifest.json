@@ -16,16 +16,16 @@
     "syntacticBuildTagUnion": []
   },
   "summary": {
-    "sourceFiles": 15,
-    "declarations": 30,
-    "exportedTypes": 15,
-    "internalTypes": 15,
-    "members": 181,
-    "exportedFunctions": 26,
+    "sourceFiles": 16,
+    "declarations": 34,
+    "exportedTypes": 18,
+    "internalTypes": 16,
+    "members": 211,
+    "exportedFunctions": 27,
     "fiberRoutes": 0,
-    "relations": 60
+    "relations": 68
   },
-  "semanticModelDigest": "sha256:157de44f8903786a0a85d07f22cbcc81469768807f8718331e07fa930b7d8e38",
+  "semanticModelDigest": "sha256:9da802357fc689860c9fae87279171d62dcd601f99fc569116db31fcb4c98f98",
   "sourceFiles": [
     {
       "path": "search/at.go"
@@ -68,6 +68,9 @@
     },
     {
       "path": "search/search_params.go"
+    },
+    {
+      "path": "search/type_boundaries.go"
     },
     {
       "path": "search/workers.go"
@@ -371,6 +374,286 @@
           "structTag": {
             "value": "json:\"external\""
           }
+        }
+      ]
+    },
+    {
+      "name": "BoundaryTypeRoles",
+      "kind": "struct",
+      "file": "search/type_boundaries.go",
+      "line": 13,
+      "endLine": 19,
+      "underlyingType": "struct{Parameters int`json:\"parameters\"`;Results int`json:\"results\"`;Receivers int`json:\"receivers\"`;Locals int`json:\"locals\"`;Unknown int`json:\"unknown\"`;}",
+      "members": [
+        {
+          "name": "Locals",
+          "kind": "property",
+          "line": 17,
+          "endLine": 17,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"locals\""
+          }
+        },
+        {
+          "name": "Parameters",
+          "kind": "property",
+          "line": 14,
+          "endLine": 14,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"parameters\""
+          }
+        },
+        {
+          "name": "Receivers",
+          "kind": "property",
+          "line": 16,
+          "endLine": 16,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"receivers\""
+          }
+        },
+        {
+          "name": "Results",
+          "kind": "property",
+          "line": 15,
+          "endLine": 15,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"results\""
+          }
+        },
+        {
+          "name": "Unknown",
+          "kind": "property",
+          "line": 18,
+          "endLine": 18,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"unknown\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "BoundaryTypeSpread",
+      "kind": "struct",
+      "file": "search/type_boundaries.go",
+      "line": 30,
+      "endLine": 44,
+      "underlyingType": "struct{Type string`json:\"type\"`;ImportPath string`json:\"importPath,omitempty\"`;CanonicalType string`json:\"canonicalType\"`;Language string`json:\"language\"`;OwnerFile string`json:\"ownerFile,omitempty\"`;External bool`json:\"external\"`;Usages int`json:\"usages\"`;Consumers BoundaryBreadth`json:\"consumers\"`;Production BoundaryBreadth`json:\"production\"`;Tests BoundaryBreadth`json:\"tests\"`;Roles BoundaryTypeRoles`json:\"roles\"`;PublicExposures[]BoundaryTypeUsage`json:\"publicExposures,omitempty\"`;UsageDetails[]BoundaryTypeUsage`json:\"usageDetails\"`;}",
+      "members": [
+        {
+          "name": "CanonicalType",
+          "kind": "property",
+          "line": 33,
+          "endLine": 33,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"canonicalType\""
+          }
+        },
+        {
+          "name": "Consumers",
+          "kind": "property",
+          "line": 38,
+          "endLine": 38,
+          "result": "BoundaryBreadth",
+          "structTag": {
+            "value": "json:\"consumers\""
+          }
+        },
+        {
+          "name": "External",
+          "kind": "property",
+          "line": 36,
+          "endLine": 36,
+          "result": "bool",
+          "structTag": {
+            "value": "json:\"external\""
+          }
+        },
+        {
+          "name": "ImportPath",
+          "kind": "property",
+          "line": 32,
+          "endLine": 32,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"importPath,omitempty\""
+          }
+        },
+        {
+          "name": "Language",
+          "kind": "property",
+          "line": 34,
+          "endLine": 34,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"language\""
+          }
+        },
+        {
+          "name": "OwnerFile",
+          "kind": "property",
+          "line": 35,
+          "endLine": 35,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"ownerFile,omitempty\""
+          }
+        },
+        {
+          "name": "Production",
+          "kind": "property",
+          "line": 39,
+          "endLine": 39,
+          "result": "BoundaryBreadth",
+          "structTag": {
+            "value": "json:\"production\""
+          }
+        },
+        {
+          "name": "PublicExposures",
+          "kind": "property",
+          "line": 42,
+          "endLine": 42,
+          "result": "[]BoundaryTypeUsage",
+          "structTag": {
+            "value": "json:\"publicExposures,omitempty\""
+          }
+        },
+        {
+          "name": "Roles",
+          "kind": "property",
+          "line": 41,
+          "endLine": 41,
+          "result": "BoundaryTypeRoles",
+          "structTag": {
+            "value": "json:\"roles\""
+          }
+        },
+        {
+          "name": "Tests",
+          "kind": "property",
+          "line": 40,
+          "endLine": 40,
+          "result": "BoundaryBreadth",
+          "structTag": {
+            "value": "json:\"tests\""
+          }
+        },
+        {
+          "name": "Type",
+          "kind": "property",
+          "line": 31,
+          "endLine": 31,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"type\""
+          }
+        },
+        {
+          "name": "UsageDetails",
+          "kind": "property",
+          "line": 43,
+          "endLine": 43,
+          "result": "[]BoundaryTypeUsage",
+          "structTag": {
+            "value": "json:\"usageDetails\""
+          }
+        },
+        {
+          "name": "Usages",
+          "kind": "property",
+          "line": 37,
+          "endLine": 37,
+          "result": "int",
+          "structTag": {
+            "value": "json:\"usages\""
+          }
+        }
+      ]
+    },
+    {
+      "name": "BoundaryTypeUsage",
+      "kind": "struct",
+      "file": "search/type_boundaries.go",
+      "line": 22,
+      "endLine": 27,
+      "underlyingType": "struct{BoundaryConsumer;Role string`json:\"role\"`;Public bool`json:\"public,omitempty\"`;Test bool`json:\"test,omitempty\"`;}",
+      "members": [
+        {
+          "name": "Public",
+          "kind": "property",
+          "line": 25,
+          "endLine": 25,
+          "result": "bool",
+          "structTag": {
+            "value": "json:\"public,omitempty\""
+          }
+        },
+        {
+          "name": "Role",
+          "kind": "property",
+          "line": 24,
+          "endLine": 24,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"role\""
+          }
+        },
+        {
+          "name": "Test",
+          "kind": "property",
+          "line": 26,
+          "endLine": 26,
+          "result": "bool",
+          "structTag": {
+            "value": "json:\"test,omitempty\""
+          }
+        },
+        {
+          "name": "ID",
+          "kind": "property",
+          "file": "search/boundary_model.go",
+          "line": 26,
+          "endLine": 26,
+          "result": "string"
+        },
+        {
+          "name": "Line",
+          "kind": "property",
+          "file": "search/boundary_model.go",
+          "line": 30,
+          "endLine": 30,
+          "result": "int"
+        },
+        {
+          "name": "Name",
+          "kind": "property",
+          "file": "search/boundary_model.go",
+          "line": 27,
+          "endLine": 27,
+          "result": "string"
+        },
+        {
+          "name": "Package",
+          "kind": "property",
+          "file": "search/boundary_model.go",
+          "line": 29,
+          "endLine": 29,
+          "result": "string"
+        },
+        {
+          "name": "Path",
+          "kind": "property",
+          "file": "search/boundary_model.go",
+          "line": 28,
+          "endLine": 28,
+          "result": "string"
         }
       ]
     },
@@ -1205,6 +1488,44 @@
       ]
     },
     {
+      "name": "boundaryTypeSpreadKey",
+      "kind": "struct",
+      "file": "search/type_boundaries.go",
+      "line": 46,
+      "endLine": 51,
+      "underlyingType": "struct{language string;typeName string;importPath string;ownerFile string;}",
+      "members": [
+        {
+          "name": "importPath",
+          "kind": "property",
+          "line": 49,
+          "endLine": 49,
+          "result": "string"
+        },
+        {
+          "name": "language",
+          "kind": "property",
+          "line": 47,
+          "endLine": 47,
+          "result": "string"
+        },
+        {
+          "name": "ownerFile",
+          "kind": "property",
+          "line": 50,
+          "endLine": 50,
+          "result": "string"
+        },
+        {
+          "name": "typeName",
+          "kind": "property",
+          "line": 48,
+          "endLine": 48,
+          "result": "string"
+        }
+      ]
+    },
+    {
       "name": "candidateCollector",
       "kind": "struct",
       "file": "search/search_glob.go",
@@ -1906,6 +2227,18 @@
       "result": "tuple\u003c[]BoundaryCandidate,error\u003e"
     },
     {
+      "name": "AnalyzeTypeBoundaries",
+      "kind": "function",
+      "file": "search/type_boundaries.go",
+      "line": 56,
+      "endLine": 65,
+      "parameters": [
+        "parser.NavigationGraph",
+        "int"
+      ],
+      "result": "tuple\u003c[]BoundaryTypeSpread,error\u003e"
+    },
+    {
       "name": "At",
       "kind": "function",
       "file": "search/at.go",
@@ -2211,6 +2544,13 @@
       "cardinality": "many"
     },
     {
+      "from": "AnalyzeTypeBoundaries",
+      "to": "BoundaryTypeSpread",
+      "kind": "dependency",
+      "via": "result 1",
+      "cardinality": "many"
+    },
+    {
       "from": "At",
       "to": "FileMatch",
       "kind": "dependency",
@@ -2272,6 +2612,55 @@
       "kind": "association",
       "via": "field Consumers",
       "cardinality": "many"
+    },
+    {
+      "from": "BoundaryTypeSpread",
+      "to": "BoundaryBreadth",
+      "kind": "association",
+      "via": "field Consumers",
+      "cardinality": "one"
+    },
+    {
+      "from": "BoundaryTypeSpread",
+      "to": "BoundaryBreadth",
+      "kind": "association",
+      "via": "field Production",
+      "cardinality": "one"
+    },
+    {
+      "from": "BoundaryTypeSpread",
+      "to": "BoundaryBreadth",
+      "kind": "association",
+      "via": "field Tests",
+      "cardinality": "one"
+    },
+    {
+      "from": "BoundaryTypeSpread",
+      "to": "BoundaryTypeRoles",
+      "kind": "association",
+      "via": "field Roles",
+      "cardinality": "one"
+    },
+    {
+      "from": "BoundaryTypeSpread",
+      "to": "BoundaryTypeUsage",
+      "kind": "association",
+      "via": "field PublicExposures",
+      "cardinality": "many"
+    },
+    {
+      "from": "BoundaryTypeSpread",
+      "to": "BoundaryTypeUsage",
+      "kind": "association",
+      "via": "field UsageDetails",
+      "cardinality": "many"
+    },
+    {
+      "from": "BoundaryTypeUsage",
+      "to": "BoundaryConsumer",
+      "kind": "inheritance",
+      "via": "embedded type",
+      "cardinality": "one"
     },
     {
       "from": "BuildResults",
