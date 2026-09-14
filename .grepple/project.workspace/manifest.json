@@ -26,15 +26,15 @@
   "summary": {
     "modules": 2,
     "packages": 16,
-    "sourceFiles": 146,
-    "declarations": 392,
-    "exportedFunctions": 117,
+    "sourceFiles": 147,
+    "declarations": 394,
+    "exportedFunctions": 120,
     "fiberRoutes": 0,
-    "localImports": 22,
-    "standardLibraryImports": 142,
+    "localImports": 23,
+    "standardLibraryImports": 145,
     "externalModuleEdges": 15
   },
-  "semanticModelDigest": "sha256:62ad3bee9a4669006d069fc07d0e1030a653d3cfd6e91f353be6cb15769a385a",
+  "semanticModelDigest": "sha256:c3668605b755db733d434f2787629ad2bf2bf0e804b96225a5c61c8576a6bb41",
   "modules": [
     {
       "path": "github.com/greppleai/grepple",
@@ -68,13 +68,15 @@
           "fiberRoutes": 0,
           "routes": [],
           "localImports": [
-            "github.com/greppleai/grepple/internal/cli"
+            "github.com/greppleai/grepple/internal/cli",
+            "github.com/greppleai/grepple/parser"
           ],
           "standardLibraryImports": [
             "errors",
             "fmt",
             "os",
             "os/signal",
+            "path/filepath",
             "syscall"
           ],
           "externalImports": [],
@@ -302,17 +304,19 @@
           "name": "parser",
           "documentation": "Package parser provides application source classification and structural parsing.",
           "main": false,
-          "sourceFiles": 32,
-          "declarations": 62,
-          "exportedFunctions": 21,
+          "sourceFiles": 33,
+          "declarations": 63,
+          "exportedFunctions": 23,
           "fiberRoutes": 0,
           "routes": [],
           "localImports": [],
           "standardLibraryImports": [
             "crypto/sha256",
             "encoding/hex",
+            "encoding/json",
             "errors",
             "fmt",
+            "os",
             "path",
             "path/filepath",
             "runtime",
@@ -442,8 +446,8 @@
           "documentation": "Package search provides file discovery, query and repository filtering, paging, match workers, context, and wire-result construction.",
           "main": false,
           "sourceFiles": 16,
-          "declarations": 38,
-          "exportedFunctions": 28,
+          "declarations": 39,
+          "exportedFunctions": 29,
           "fiberRoutes": 0,
           "routes": [],
           "localImports": [

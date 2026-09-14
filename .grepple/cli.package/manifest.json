@@ -603,15 +603,15 @@
       "name": "boundaryGraphCache",
       "kind": "struct",
       "file": "internal/cli/boundaries_cache.go",
-      "line": 17,
-      "endLine": 21,
+      "line": 18,
+      "endLine": 22,
       "underlyingType": "struct{Schema string`json:\"schema\"`;Digest string`json:\"digest\"`;Graph navigationGraphOutput`json:\"graph\"`;}",
       "members": [
         {
           "name": "Digest",
           "kind": "property",
-          "line": 19,
-          "endLine": 19,
+          "line": 20,
+          "endLine": 20,
           "result": "string",
           "structTag": {
             "value": "json:\"digest\""
@@ -620,8 +620,8 @@
         {
           "name": "Graph",
           "kind": "property",
-          "line": 20,
-          "endLine": 20,
+          "line": 21,
+          "endLine": 21,
           "result": "navigationGraphOutput",
           "structTag": {
             "value": "json:\"graph\""
@@ -630,8 +630,8 @@
         {
           "name": "Schema",
           "kind": "property",
-          "line": 18,
-          "endLine": 18,
+          "line": 19,
+          "endLine": 19,
           "result": "string",
           "structTag": {
             "value": "json:\"schema\""

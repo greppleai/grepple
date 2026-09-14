@@ -3893,15 +3893,15 @@
       "name": "fiberRouter",
       "kind": "struct",
       "file": "extract/go_analyze.go",
-      "line": 456,
-      "endLine": 458,
+      "line": 457,
+      "endLine": 459,
       "underlyingType": "struct{prefix string}",
       "members": [
         {
           "name": "prefix",
           "kind": "property",
-          "line": 457,
-          "endLine": 457,
+          "line": 458,
+          "endLine": 458,
           "result": "string"
         }
       ]
@@ -4164,8 +4164,8 @@
         {
           "name": "addDuplicateGoError",
           "kind": "method",
-          "line": 356,
-          "endLine": 361,
+          "line": 357,
+          "endLine": 362,
           "parameters": [
             "string",
             "string",
@@ -4176,8 +4176,8 @@
         {
           "name": "addEmbeddedNode",
           "kind": "method",
-          "line": 327,
-          "endLine": 332,
+          "line": 328,
+          "endLine": 333,
           "parameters": [
             "codeparser.ViewNode",
             "*Declaration"
@@ -4186,8 +4186,8 @@
         {
           "name": "addGoEmbeddedType",
           "kind": "method",
-          "line": 319,
-          "endLine": 325,
+          "line": 320,
+          "endLine": 326,
           "parameters": [
             "codeparser.ViewNode",
             "*Declaration"
@@ -4196,8 +4196,8 @@
         {
           "name": "addGoField",
           "kind": "method",
-          "line": 281,
-          "endLine": 299,
+          "line": 282,
+          "endLine": 300,
           "parameters": [
             "codeparser.ViewNode",
             "*Declaration"
@@ -4206,8 +4206,8 @@
         {
           "name": "addGoInterfaceMethod",
           "kind": "method",
-          "line": 311,
-          "endLine": 317,
+          "line": 312,
+          "endLine": 318,
           "parameters": [
             "codeparser.ViewNode",
             "*Declaration"
@@ -4216,8 +4216,8 @@
         {
           "name": "addGoSymbol",
           "kind": "method",
-          "line": 709,
-          "endLine": 717,
+          "line": 710,
+          "endLine": 718,
           "parameters": [
             "string",
             "string",
@@ -4230,8 +4230,8 @@
         {
           "name": "addGoTypeReference",
           "kind": "method",
-          "line": 233,
-          "endLine": 239,
+          "line": 234,
+          "endLine": 240,
           "parameters": [
             "string",
             "codeparser.ViewNode",
@@ -4241,8 +4241,8 @@
         {
           "name": "analyzeFunction",
           "kind": "method",
-          "line": 402,
-          "endLine": 421,
+          "line": 403,
+          "endLine": 422,
           "parameters": [
             "codeparser.ViewNode"
           ]
@@ -4250,8 +4250,8 @@
         {
           "name": "analyzeImportSpec",
           "kind": "method",
-          "line": 725,
-          "endLine": 747,
+          "line": 726,
+          "endLine": 748,
           "parameters": [
             "codeparser.ViewNode"
           ]
@@ -4259,8 +4259,8 @@
         {
           "name": "analyzeImports",
           "kind": "method",
-          "line": 719,
-          "endLine": 723,
+          "line": 720,
+          "endLine": 724,
           "parameters": [
             "codeparser.ViewNode"
           ]
@@ -4268,8 +4268,8 @@
         {
           "name": "analyzeMethod",
           "kind": "method",
-          "line": 423,
-          "endLine": 440,
+          "line": 424,
+          "endLine": 441,
           "parameters": [
             "codeparser.ViewNode"
           ]
@@ -4277,8 +4277,8 @@
         {
           "name": "analyzeStatement",
           "kind": "method",
-          "line": 131,
-          "endLine": 142,
+          "line": 132,
+          "endLine": 143,
           "parameters": [
             "codeparser.ViewNode"
           ]
@@ -4286,8 +4286,8 @@
         {
           "name": "analyzeTypeSpec",
           "kind": "method",
-          "line": 166,
-          "endLine": 186,
+          "line": 167,
+          "endLine": 187,
           "parameters": [
             "codeparser.ViewNode"
           ]
@@ -4295,8 +4295,8 @@
         {
           "name": "analyzeTypes",
           "kind": "method",
-          "line": 160,
-          "endLine": 164,
+          "line": 161,
+          "endLine": 165,
           "parameters": [
             "codeparser.ViewNode"
           ]
@@ -4304,8 +4304,8 @@
         {
           "name": "collectFiberRoutes",
           "kind": "method",
-          "line": 460,
-          "endLine": 473,
+          "line": 461,
+          "endLine": 474,
           "parameters": [
             "codeparser.ViewNode",
             "codeparser.ViewNode",
@@ -4316,8 +4316,8 @@
         {
           "name": "collectGoMembers",
           "kind": "method",
-          "line": 258,
-          "endLine": 270,
+          "line": 259,
+          "endLine": 271,
           "parameters": [
             "codeparser.ViewNode",
             "*Declaration"
@@ -4326,8 +4326,8 @@
         {
           "name": "collectGoTypeReferences",
           "kind": "method",
-          "line": 216,
-          "endLine": 231,
+          "line": 217,
+          "endLine": 232,
           "parameters": [
             "codeparser.ViewNode"
           ]
@@ -4335,8 +4335,8 @@
         {
           "name": "fiberRouterExpression",
           "kind": "method",
-          "line": 548,
-          "endLine": 581,
+          "line": 549,
+          "endLine": 582,
           "parameters": [
             "codeparser.ViewNode",
             "map[string]fiberRouter"
@@ -4346,8 +4346,8 @@
         {
           "name": "goCallableMember",
           "kind": "method",
-          "line": 352,
-          "endLine": 354,
+          "line": 353,
+          "endLine": 355,
           "parameters": [
             "codeparser.ViewNode",
             "string"
@@ -4357,8 +4357,8 @@
         {
           "name": "goParameters",
           "kind": "method",
-          "line": 363,
-          "endLine": 382,
+          "line": 364,
+          "endLine": 383,
           "parameters": [
             "codeparser.ViewNode"
           ],
@@ -4367,8 +4367,8 @@
         {
           "name": "goResult",
           "kind": "method",
-          "line": 392,
-          "endLine": 400,
+          "line": 393,
+          "endLine": 401,
           "parameters": [
             "codeparser.ViewNode"
           ],
@@ -4377,8 +4377,8 @@
         {
           "name": "processFiberAssignment",
           "kind": "method",
-          "line": 508,
-          "endLine": 530,
+          "line": 509,
+          "endLine": 531,
           "parameters": [
             "codeparser.ViewNode",
             "codeparser.ViewNode",
@@ -4388,8 +4388,8 @@
         {
           "name": "processFiberNode",
           "kind": "method",
-          "line": 475,
-          "endLine": 506,
+          "line": 476,
+          "endLine": 507,
           "parameters": [
             "codeparser.ViewNode",
             "map[string]fiberRouter",
@@ -4399,8 +4399,8 @@
         {
           "name": "receiver",
           "kind": "method",
-          "line": 442,
-          "endLine": 454,
+          "line": 443,
+          "endLine": 455,
           "parameters": [
             "codeparser.ViewNode"
           ],
@@ -4409,8 +4409,8 @@
         {
           "name": "recordFiberRoute",
           "kind": "method",
-          "line": 583,
-          "endLine": 614,
+          "line": 584,
+          "endLine": 615,
           "parameters": [
             "codeparser.ViewNode",
             "map[string]fiberRouter",
@@ -4420,8 +4420,8 @@
         {
           "name": "recordGoExport",
           "kind": "method",
-          "line": 144,
-          "endLine": 147,
+          "line": 145,
+          "endLine": 148,
           "parameters": [
             "string"
           ]
@@ -4429,8 +4429,8 @@
         {
           "name": "recordGoTypeDeclaration",
           "kind": "method",
-          "line": 188,
-          "endLine": 200,
+          "line": 189,
+          "endLine": 201,
           "parameters": [
             "codeparser.ViewNode",
             "*Declaration"

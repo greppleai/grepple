@@ -313,7 +313,10 @@ func declarationAt(path string, line int, allowStructure bool) (string, error) {
 	if language == "" {
 		return "", fmt.Errorf("extract does not support the source language for %s", path)
 	}
-	graph := codeparser.BuildNavigationGraph(string(content), language, path)
+	graph, _, _, err := codeparser.CachedNavigationGraph(string(content), language, path)
+	if err != nil {
+		return "", fmt.Errorf("parse %s: %w", path, err)
+	}
 	for _, declaration := range graph.Declarations {
 		if line >= declaration.Start && line <= declaration.End {
 			return declaration.Name, nil

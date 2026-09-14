@@ -177,6 +177,12 @@ classDiagram
     <<struct>> FileMatch
     %% grepple:file FileMatch search/model.go
     note for FileMatch "defined: search/model.go:55-64; Content@search/model.go:56; DisplayPath@search/model.go:56; File@search/model.go:56; Language@search/model.go:56; MatchLines@search/model.go:57; MatchRanges@search/model.go:58; OmittedRelatedCallees@search/model.go:61; OmittedRelatedCallers@search/model.go:61; Related@search/model.go:60; Segments@search/model.go:59; SegmentsReady@search/model.go:62; StructureStatus@search/model.go:63"
+    class NavigationBuildOptions {
+        +DisableCache: bool
+    }
+    <<struct>> NavigationBuildOptions
+    %% grepple:file NavigationBuildOptions search/related.go
+    note for NavigationBuildOptions "defined: search/related.go:140-142; DisableCache@search/related.go:141"
     class NavigationCallDelta {
         +After: *parser.NavigationCall
         +Before: *parser.NavigationCall
@@ -462,7 +468,7 @@ classDiagram
     }
     <<struct>> navigationCandidateResolution
     %% grepple:file navigationCandidateResolution search/related.go
-    note for navigationCandidateResolution "defined: search/related.go:395-398; candidates@search/related.go:396; confidence@search/related.go:397"
+    note for navigationCandidateResolution "defined: search/related.go:415-418; candidates@search/related.go:416; confidence@search/related.go:417"
     class navigationDeclaration {
         -container: string
         -file: string
@@ -481,7 +487,7 @@ classDiagram
     class navigationIndex {
         -addCalls([]parser.NavigationCall, []navigationDeclaration, string, string)
         -addDeclarations([]parser.NavigationDeclaration, string, string, string): []navigationDeclaration
-        -addFile(string, string)
+        -addFile(string, string, bool)
         -indexNavigationCallers()
         -inferCallReturnReceiver(*navigationCall, string)
         -inferCallReturnReceivers()
@@ -501,7 +507,7 @@ classDiagram
     }
     <<struct>> navigationIndex
     %% grepple:file navigationIndex search/related.go
-    note for navigationIndex "defined: search/related.go:49-58; addCalls@search/related.go:258-276; addDeclarations@search/related.go:238-256; addFile@search/related.go:198-236; indexNavigationCallers@search/related.go:323-339; inferCallReturnReceiver@search/related.go:291-307; inferCallReturnReceivers@search/related.go:278-289; navigationCallsByID@search/related.go:158-166; navigationDeclarationsByID@search/related.go:148-156; resolveGraphCall@search/related.go:168-197; resolveGraphCalls@search/related.go:140-146; resolveReturnFactory@search/related.go:309-321; byFile@search/related.go:53; byLocation@search/related.go:54; callers@search/related.go:51; calls@search/related.go:52; contents@search/related.go:55; declarations@search/related.go:50; graph@search/related.go:56; sourceStats@search/related.go:57"
+    note for navigationIndex "defined: search/related.go:49-58; addCalls@search/related.go:278-296; addDeclarations@search/related.go:258-276; addFile@search/related.go:208-256; indexNavigationCallers@search/related.go:343-359; inferCallReturnReceiver@search/related.go:311-327; inferCallReturnReceivers@search/related.go:298-309; navigationCallsByID@search/related.go:168-176; navigationDeclarationsByID@search/related.go:158-166; resolveGraphCall@search/related.go:178-207; resolveGraphCalls@search/related.go:150-156; resolveReturnFactory@search/related.go:329-341; byFile@search/related.go:53; byLocation@search/related.go:54; callers@search/related.go:51; calls@search/related.go:52; contents@search/related.go:55; declarations@search/related.go:50; graph@search/related.go:56; sourceStats@search/related.go:57"
     class repoPattern {
         -match(string): bool
         -glob: string
@@ -540,12 +546,18 @@ classDiagram
     <<function>> BuildNavigationGraph
     %% grepple:file BuildNavigationGraph search/related.go
     note for BuildNavigationGraph "defined: search/related.go:129-132"
+    class BuildNavigationGraphWithOptions {
+        +BuildNavigationGraphWithOptions([]string, NavigationBuildOptions): tuple~parser.NavigationGraph&#44;NavigationSourceStats~
+    }
+    <<function>> BuildNavigationGraphWithOptions
+    %% grepple:file BuildNavigationGraphWithOptions search/related.go
+    note for BuildNavigationGraphWithOptions "defined: search/related.go:145-148"
     class BuildNavigationGraphWithStats {
         +BuildNavigationGraphWithStats([]string): tuple~parser.NavigationGraph&#44;NavigationSourceStats~
     }
     <<function>> BuildNavigationGraphWithStats
     %% grepple:file BuildNavigationGraphWithStats search/related.go
-    note for BuildNavigationGraphWithStats "defined: search/related.go:135-138"
+    note for BuildNavigationGraphWithStats "defined: search/related.go:135-137"
     class BuildResults {
         +BuildResults([]FileMatch, int, int, int, bool): []api.FileResult
     }
@@ -700,6 +712,8 @@ classDiagram
     BoundaryTypeSpread "1" --> "*" BoundaryTypeUsage : field PublicExposures
     BoundaryTypeSpread "1" --> "*" BoundaryTypeUsage : field UsageDetails
     BoundaryConsumer <|-- BoundaryTypeUsage : embedded type
+    BuildNavigationGraphWithOptions "1" ..> "1" NavigationBuildOptions : parameter 2
+    BuildNavigationGraphWithOptions "1" ..> "1" NavigationSourceStats : result 2
     BuildNavigationGraphWithStats "1" ..> "1" NavigationSourceStats : result 2
     BuildResults "1" ..> "*" FileMatch : parameter 1
     Content "1" ..> "1" FileMatch : result 1

@@ -160,6 +160,10 @@ func navigationInputPaths(globs []string) ([]string, error) {
 }
 
 func buildNavigationGraphOutputFromPaths(paths []string, maxFiles int) navigationGraphOutput {
+	return buildNavigationGraphOutputFromPathsWithOptions(paths, maxFiles, search.NavigationBuildOptions{})
+}
+
+func buildNavigationGraphOutputFromPathsWithOptions(paths []string, maxFiles int, options search.NavigationBuildOptions) navigationGraphOutput {
 	discovered := len(paths)
 	eligible := navigationSourcePaths(paths)
 	unsupported := discovered - len(eligible)
@@ -168,7 +172,7 @@ func buildNavigationGraphOutputFromPaths(paths []string, maxFiles int) navigatio
 		truncation = &navigationGraphTruncation{Reason: "max_files", Limit: maxFiles, Skipped: len(eligible) - maxFiles}
 		eligible = eligible[:maxFiles]
 	}
-	graph, stats := search.BuildNavigationGraphWithStats(eligible)
+	graph, stats := search.BuildNavigationGraphWithOptions(eligible, options)
 	declarations := graph.Declarations
 	if declarations == nil {
 		declarations = []parser.NavigationDeclaration{}

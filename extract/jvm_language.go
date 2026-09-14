@@ -135,7 +135,7 @@ func (analysis *jvmAnalysis) Analyze(source Source) error {
 	}); err != nil {
 		return err
 	}
-	graph := codeparser.NavigationGraphFromDocument(document, source.Path)
+	graph, _ := codeparser.CachedNavigationGraphFromDocument(document, source.Path)
 	addModuleNavigationSymbols(analysis.result, graph, analysis.language, analyzer.moduleID, source.Path)
 	analysis.result.Navigation.Merge(graph)
 	return nil

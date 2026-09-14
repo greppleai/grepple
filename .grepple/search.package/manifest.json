@@ -17,15 +17,15 @@
   },
   "summary": {
     "sourceFiles": 16,
-    "declarations": 38,
-    "exportedTypes": 21,
+    "declarations": 39,
+    "exportedTypes": 22,
     "internalTypes": 17,
-    "members": 225,
-    "exportedFunctions": 28,
+    "members": 226,
+    "exportedFunctions": 29,
     "fiberRoutes": 0,
-    "relations": 74
+    "relations": 76
   },
-  "semanticModelDigest": "sha256:6317913a251a35690de90dc9fd481db22c38387b7fb1cd0f81697abcaab784ff",
+  "semanticModelDigest": "sha256:2ccf2cb0fbeb664b4647517303823f559dc866cba557f8538ef27fc8575c598d",
   "sourceFiles": [
     {
       "path": "search/at.go"
@@ -814,6 +814,23 @@
           "line": 63,
           "endLine": 63,
           "result": "parser.SegmentBuildStatus"
+        }
+      ]
+    },
+    {
+      "name": "NavigationBuildOptions",
+      "kind": "struct",
+      "file": "search/related.go",
+      "line": 140,
+      "endLine": 142,
+      "underlyingType": "struct{DisableCache bool}",
+      "members": [
+        {
+          "name": "DisableCache",
+          "kind": "property",
+          "line": 141,
+          "endLine": 141,
+          "result": "bool"
         }
       ]
     },
@@ -2066,22 +2083,22 @@
       "name": "navigationCandidateResolution",
       "kind": "struct",
       "file": "search/related.go",
-      "line": 395,
-      "endLine": 398,
+      "line": 415,
+      "endLine": 418,
       "underlyingType": "struct{candidates[]navigationDeclaration;confidence string;}",
       "members": [
         {
           "name": "candidates",
           "kind": "property",
-          "line": 396,
-          "endLine": 396,
+          "line": 416,
+          "endLine": 416,
           "result": "[]navigationDeclaration"
         },
         {
           "name": "confidence",
           "kind": "property",
-          "line": 397,
-          "endLine": 397,
+          "line": 417,
+          "endLine": 417,
           "result": "string"
         }
       ]
@@ -2177,8 +2194,8 @@
         {
           "name": "addCalls",
           "kind": "method",
-          "line": 258,
-          "endLine": 276,
+          "line": 278,
+          "endLine": 296,
           "parameters": [
             "[]parser.NavigationCall",
             "[]navigationDeclaration",
@@ -2189,8 +2206,8 @@
         {
           "name": "addDeclarations",
           "kind": "method",
-          "line": 238,
-          "endLine": 256,
+          "line": 258,
+          "endLine": 276,
           "parameters": [
             "[]parser.NavigationDeclaration",
             "string",
@@ -2202,24 +2219,25 @@
         {
           "name": "addFile",
           "kind": "method",
-          "line": 198,
-          "endLine": 236,
+          "line": 208,
+          "endLine": 256,
           "parameters": [
             "string",
-            "string"
+            "string",
+            "bool"
           ]
         },
         {
           "name": "indexNavigationCallers",
           "kind": "method",
-          "line": 323,
-          "endLine": 339
+          "line": 343,
+          "endLine": 359
         },
         {
           "name": "inferCallReturnReceiver",
           "kind": "method",
-          "line": 291,
-          "endLine": 307,
+          "line": 311,
+          "endLine": 327,
           "parameters": [
             "*navigationCall",
             "string"
@@ -2228,28 +2246,28 @@
         {
           "name": "inferCallReturnReceivers",
           "kind": "method",
-          "line": 278,
-          "endLine": 289
+          "line": 298,
+          "endLine": 309
         },
         {
           "name": "navigationCallsByID",
           "kind": "method",
-          "line": 158,
-          "endLine": 166,
+          "line": 168,
+          "endLine": 176,
           "result": "map[string]navigationCall"
         },
         {
           "name": "navigationDeclarationsByID",
           "kind": "method",
-          "line": 148,
-          "endLine": 156,
+          "line": 158,
+          "endLine": 166,
           "result": "map[string]navigationDeclaration"
         },
         {
           "name": "resolveGraphCall",
           "kind": "method",
-          "line": 168,
-          "endLine": 197,
+          "line": 178,
+          "endLine": 207,
           "parameters": [
             "*parser.NavigationCall",
             "map[string]navigationCall",
@@ -2259,14 +2277,14 @@
         {
           "name": "resolveGraphCalls",
           "kind": "method",
-          "line": 140,
-          "endLine": 146
+          "line": 150,
+          "endLine": 156
         },
         {
           "name": "resolveReturnFactory",
           "kind": "method",
-          "line": 309,
-          "endLine": 321,
+          "line": 329,
+          "endLine": 341,
           "parameters": [
             "navigationCall",
             "string"
@@ -2425,11 +2443,23 @@
       "result": "parser.NavigationGraph"
     },
     {
+      "name": "BuildNavigationGraphWithOptions",
+      "kind": "function",
+      "file": "search/related.go",
+      "line": 145,
+      "endLine": 148,
+      "parameters": [
+        "[]string",
+        "NavigationBuildOptions"
+      ],
+      "result": "tuple\u003cparser.NavigationGraph,NavigationSourceStats\u003e"
+    },
+    {
       "name": "BuildNavigationGraphWithStats",
       "kind": "function",
       "file": "search/related.go",
       "line": 135,
-      "endLine": 138,
+      "endLine": 137,
       "parameters": [
         "[]string"
       ],
@@ -2856,6 +2886,20 @@
       "to": "BoundaryConsumer",
       "kind": "inheritance",
       "via": "embedded type",
+      "cardinality": "one"
+    },
+    {
+      "from": "BuildNavigationGraphWithOptions",
+      "to": "NavigationBuildOptions",
+      "kind": "dependency",
+      "via": "parameter 2",
+      "cardinality": "one"
+    },
+    {
+      "from": "BuildNavigationGraphWithOptions",
+      "to": "NavigationSourceStats",
+      "kind": "dependency",
+      "via": "result 2",
       "cardinality": "one"
     },
     {

@@ -78,7 +78,7 @@ func attachRelated(matches []FileMatch, candidates []string, followDepth int) {
 	if !hasNavigationMatch(matches) {
 		return
 	}
-	navigation := buildNavigationIndex(candidates)
+	navigation := buildNavigationIndex(candidates, true)
 	if len(navigation.declarations) == 0 {
 		return
 	}
@@ -98,7 +98,7 @@ func attachRelated(matches []FileMatch, candidates []string, followDepth int) {
 	}
 }
 
-func buildNavigationIndex(files []string) *navigationIndex {
+func buildNavigationIndex(files []string, useCache bool) *navigationIndex {
 	index := &navigationIndex{
 		declarations: make(map[string][]navigationDeclaration), callers: make(map[string][]navigationCaller),
 		calls: make(map[string][]navigationCall), byFile: make(map[string][]navigationDeclaration),
@@ -108,7 +108,7 @@ func buildNavigationIndex(files []string) *navigationIndex {
 	paths := append([]string(nil), files...)
 	sort.Strings(paths)
 	for _, path := range paths {
-		index.addFile(path, cwd)
+		index.addFile(path, cwd, useCache)
 	}
 	index.inferCallReturnReceivers()
 	index.indexNavigationCallers()
@@ -133,7 +133,17 @@ func BuildNavigationGraph(files []string) parser.NavigationGraph {
 
 // BuildNavigationGraphWithStats builds the graph and reports source completeness.
 func BuildNavigationGraphWithStats(files []string) (parser.NavigationGraph, NavigationSourceStats) {
-	index := buildNavigationIndex(files)
+	return BuildNavigationGraphWithOptions(files, NavigationBuildOptions{})
+}
+
+// NavigationBuildOptions controls optional performance behavior without changing graph facts.
+type NavigationBuildOptions struct {
+	DisableCache bool
+}
+
+// BuildNavigationGraphWithOptions builds the graph with explicit cache behavior.
+func BuildNavigationGraphWithOptions(files []string, options NavigationBuildOptions) (parser.NavigationGraph, NavigationSourceStats) {
+	index := buildNavigationIndex(files, !options.DisableCache)
 	return index.graph, index.sourceStats
 }
 
@@ -195,7 +205,7 @@ func (index *navigationIndex) resolveGraphCall(call *parser.NavigationCall, call
 		call.CandidateTargetIDs = nil
 	}
 }
-func (index *navigationIndex) addFile(path, cwd string) {
+func (index *navigationIndex) addFile(path, cwd string, useCache bool) {
 	index.sourceStats.Attempted++
 	language := parser.LanguageFor(path)
 	if !supportsNavigation(language) {
@@ -214,16 +224,26 @@ func (index *navigationIndex) addFile(path, cwd string) {
 	content := string(contentBytes)
 	cleanPath := filepath.Clean(path)
 	displayPath := displayPathFrom(path, cwd)
-	document, err := parser.ParseDocument(language, content)
+	var graph parser.NavigationGraph
+	var recovered bool
+	if useCache {
+		graph, recovered, _, err = parser.CachedNavigationGraph(content, language, displayPath)
+	} else {
+		var document *parser.Document
+		document, err = parser.ParseDocument(language, content)
+		if err == nil {
+			recovered = document.Root().HasError()
+			graph = parser.NavigationGraphFromDocument(document, displayPath)
+			document.Close()
+		}
+	}
 	if err != nil {
 		index.sourceStats.Failed++
 		return
 	}
-	if document.Root().HasError() {
+	if recovered {
 		index.sourceStats.Recovered++
 	}
-	graph := parser.NavigationGraphFromDocument(document, displayPath)
-	document.Close()
 	index.sourceStats.Parsed++
 	index.graph.Merge(graph)
 	if len(graph.Declarations) == 0 {

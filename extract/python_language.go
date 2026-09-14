@@ -100,7 +100,7 @@ func (analysis *pythonAnalysis) Analyze(source Source) error {
 	}); err != nil {
 		return err
 	}
-	graph := codeparser.NavigationGraphFromDocument(document, source.Path)
+	graph, _ := codeparser.CachedNavigationGraphFromDocument(document, source.Path)
 	addModuleNavigationSymbols(analysis.result, graph, "python", analyzer.moduleID, source.Path)
 	analysis.result.Navigation.Merge(graph)
 	return nil

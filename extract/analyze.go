@@ -698,7 +698,8 @@ func analyzeECMAScriptSource(source Source, result *Analysis) error {
 	}); err != nil {
 		return err
 	}
-	result.Navigation.Merge(codeparser.NavigationGraphFromDocument(document, source.Path))
+	graph, _ := codeparser.CachedNavigationGraphFromDocument(document, source.Path)
+	result.Navigation.Merge(graph)
 	return nil
 }
 

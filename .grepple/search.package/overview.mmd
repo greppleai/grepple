@@ -2,7 +2,7 @@ classDiagram
     %% grepple:package-default github.com/greppleai/grepple/search
     %% grepple:language-default go
     direction LR
-    note "Package search provides file discovery, query and repository filtering, paging, match workers, context, and wire-result construction. | package github.com/greppleai/grepple/search | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=16, declarations=38, exportedTypes=21, internalTypes=17, members=225, exportedFunctions=28, fiberRoutes=0, relations=74"
+    note "Package search provides file discovery, query and repository filtering, paging, match workers, context, and wire-result construction. | package github.com/greppleai/grepple/search | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=16, declarations=39, exportedTypes=22, internalTypes=17, members=226, exportedFunctions=29, fiberRoutes=0, relations=76"
     namespace data_contracts {
         class BoundaryBreadth["BoundaryBreadth · search/boundary_model.go:39-43"] {
             +Files: int
@@ -147,6 +147,8 @@ classDiagram
         <<type>> BoundaryTypeOrigin
         class FileMatch["FileMatch · search/model.go:55-64"]
         <<struct>> FileMatch
+        class NavigationBuildOptions["NavigationBuildOptions · search/related.go:140-142"]
+        <<struct>> NavigationBuildOptions
         class NavigationGraphFilter["NavigationGraphFilter · search/navigation_filter.go:12-16"]
         <<struct>> NavigationGraphFilter
         class NavigationQueryDirection["NavigationQueryDirection = string · search/navigation_query.go:10"]
@@ -185,7 +187,7 @@ classDiagram
         <<struct>> navigationCall
         class navigationCaller["navigationCaller · search/related.go:33-36"]
         <<struct>> navigationCaller
-        class navigationCandidateResolution["navigationCandidateResolution · search/related.go:395-398"]
+        class navigationCandidateResolution["navigationCandidateResolution · search/related.go:415-418"]
         <<struct>> navigationCandidateResolution
         class navigationDeclaration["navigationDeclaration · search/related.go:20-31"]
         <<struct>> navigationDeclaration
@@ -215,7 +217,11 @@ classDiagram
             +BuildNavigationGraph([]string): parser.NavigationGraph
         }
         <<function>> BuildNavigationGraph
-        class BuildNavigationGraphWithStats["BuildNavigationGraphWithStats · search/related.go:135-138"] {
+        class BuildNavigationGraphWithOptions["BuildNavigationGraphWithOptions · search/related.go:145-148"] {
+            +BuildNavigationGraphWithOptions([]string, NavigationBuildOptions): tuple~parser.NavigationGraph&#44;NavigationSourceStats~
+        }
+        <<function>> BuildNavigationGraphWithOptions
+        class BuildNavigationGraphWithStats["BuildNavigationGraphWithStats · search/related.go:135-137"] {
             +BuildNavigationGraphWithStats([]string): tuple~parser.NavigationGraph&#44;NavigationSourceStats~
         }
         <<function>> BuildNavigationGraphWithStats
@@ -325,6 +331,8 @@ classDiagram
     BoundaryTypeSpread "1" --> "1" BoundaryTypeRoles : field Roles
     BoundaryTypeSpread "1" --> "*" BoundaryTypeUsage : field PublicExposures; field UsageDetails
     BoundaryConsumer <|-- BoundaryTypeUsage : embedded type
+    BuildNavigationGraphWithOptions "1" ..> "1" NavigationBuildOptions : parameter 2
+    BuildNavigationGraphWithOptions "1" ..> "1" NavigationSourceStats : result 2
     BuildNavigationGraphWithStats "1" ..> "1" NavigationSourceStats : result 2
     BuildResults "1" ..> "*" FileMatch : parameter 1
     Content "1" ..> "1" FileMatch : result 1

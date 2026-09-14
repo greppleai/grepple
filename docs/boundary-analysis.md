@@ -58,15 +58,16 @@ type boundary spread:
 
 ## Cache
 
-The command automatically stores its complete, resolved navigation graph under:
+The command uses two cache layers: parser-owned path-neutral per-file facts shared with graph, related-navigation, and extraction workflows, plus its complete resolved report:
 
 ```text
+.grepple/cache/navigation/<content-and-grammar-digest>.json
 .grepple/cache/boundaries/<input-digest>.json
 ```
 
 The digest covers source paths and bytes, the file limit, language identity, grammar ABI, and generated grammar fingerprint. Any source or grammar change therefore causes a cache miss. Cache schema `grepple-boundary-cache-v4` includes source-completeness metadata. Cache writes use an atomic rename, corrupt entries are ignored, and inability to write the optional cache does not fail analysis. `.grepple/cache/` is always excluded from graph discovery and ignored by Git.
 
-Use `--no-cache` for a forced clean analysis. Cache hits and misses are intentionally absent from human and JSON output, keeping reports byte-for-byte deterministic across cold and warm runs. Source truncation metadata remains explicit when applicable.
+Use `--no-cache` for a forced clean analysis that bypasses both layers. Cache hits and misses are intentionally absent from human and JSON output, keeping reports byte-for-byte deterministic across cold and warm runs. Source truncation metadata remains explicit when applicable.
 
 ## Member and type boundaries
 

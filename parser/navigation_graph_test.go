@@ -1,6 +1,9 @@
 package parser
 
-import "testing"
+import (
+	"encoding/json"
+	"testing"
+)
 
 func TestNavigationGraphFromDocumentDoesNotReparse(t *testing.T) {
 	content := "package sample\nfunc Start() { Finish() }\nfunc Finish() {}\n"
@@ -42,6 +45,69 @@ func TestBuildNavigationGraphRetainsSourceIdentity(t *testing.T) {
 	if repeated.Declarations[0].ID != graph.Declarations[0].ID || repeated.Calls[0].ID != call.ID {
 		t.Fatalf("graph identities are not deterministic: first=%+v repeated=%+v", graph, repeated)
 	}
+}
+
+const navigationCacheTestContent = "package sample\nfunc Start() { Finish() }\nfunc Finish() {}\n"
+
+func TestCachedNavigationGraphReusesContentFactsWithoutChangingOutput(t *testing.T) {
+	t.Setenv(NavigationCacheDirectoryEnv, t.TempDir())
+	before := parseInvocations.Load()
+	cold, coldRecovered, coldHit := cachedTestNavigationGraph(t, navigationCacheTestContent, "sample/main.go")
+	afterCold := parseInvocations.Load()
+	warm, warmRecovered, warmHit := cachedTestNavigationGraph(t, navigationCacheTestContent, "sample/main.go")
+	if coldRecovered || coldHit || warmRecovered || !warmHit {
+		t.Fatalf("cache states cold=(%v,%v) warm=(%v,%v)", coldRecovered, coldHit, warmRecovered, warmHit)
+	}
+	if afterCold != before+1 || parseInvocations.Load() != afterCold {
+		t.Fatalf("parse invocations before=%d cold=%d warm=%d", before, afterCold, parseInvocations.Load())
+	}
+	if navigationGraphJSON(cold) != navigationGraphJSON(warm) {
+		t.Fatalf("cold and warm graphs differ:\ncold %s\nwarm %s", navigationGraphJSON(cold), navigationGraphJSON(warm))
+	}
+}
+
+func TestCachedNavigationGraphInstantiatesPathsAndInvalidatesContent(t *testing.T) {
+	t.Setenv(NavigationCacheDirectoryEnv, t.TempDir())
+	cold, _, _ := cachedTestNavigationGraph(t, navigationCacheTestContent, "sample/main.go")
+	moved, _, movedHit := cachedTestNavigationGraph(t, navigationCacheTestContent, "moved/main.go")
+	if !movedHit || moved.Declarations[0].Path != "moved/main.go" || moved.Declarations[0].ID == cold.Declarations[0].ID {
+		t.Fatalf("path-instantiated cache hit=%v declaration=%+v", movedHit, moved.Declarations[0])
+	}
+	if moved.Calls[0].CallerID != moved.Declarations[0].ID {
+		t.Fatalf("repathed call is not linked to declaration: %+v", moved.Calls[0])
+	}
+	_, _, changedHit := cachedTestNavigationGraph(t, navigationCacheTestContent+"\n", "sample/main.go")
+	if changedHit {
+		t.Fatal("changed content reused stale navigation facts")
+	}
+}
+
+func TestCachedNavigationGraphFromDocumentReusesFacts(t *testing.T) {
+	t.Setenv(NavigationCacheDirectoryEnv, t.TempDir())
+	cold, _, _ := cachedTestNavigationGraph(t, navigationCacheTestContent, "sample/main.go")
+	document, err := ParseDocument("go", navigationCacheTestContent)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fromDocument, hit := CachedNavigationGraphFromDocument(document, "sample/main.go")
+	document.Close()
+	if !hit || navigationGraphJSON(fromDocument) != navigationGraphJSON(cold) {
+		t.Fatalf("document cache reuse hit=%v graph=%s", hit, navigationGraphJSON(fromDocument))
+	}
+}
+
+func cachedTestNavigationGraph(t *testing.T, content, path string) (NavigationGraph, bool, bool) {
+	t.Helper()
+	graph, recovered, hit, err := CachedNavigationGraph(content, "go", path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return graph, recovered, hit
+}
+
+func navigationGraphJSON(graph NavigationGraph) string {
+	encoded, _ := json.Marshal(graph)
+	return string(encoded)
 }
 
 func TestNavigationCompatibilityUsesNormalizedGraph(t *testing.T) {

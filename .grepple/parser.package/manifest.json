@@ -16,16 +16,16 @@
     "syntacticBuildTagUnion": []
   },
   "summary": {
-    "sourceFiles": 32,
-    "declarations": 62,
+    "sourceFiles": 33,
+    "declarations": 63,
     "exportedTypes": 24,
-    "internalTypes": 38,
-    "members": 481,
-    "exportedFunctions": 21,
+    "internalTypes": 39,
+    "members": 485,
+    "exportedFunctions": 23,
     "fiberRoutes": 0,
-    "relations": 294
+    "relations": 298
   },
-  "semanticModelDigest": "sha256:53d3a2507dcce4b8d40ab55465ea05d830af029a8d0bcab6c5f7bd53dbb52c97",
+  "semanticModelDigest": "sha256:0fa481e4c0d572e8caeb4510c8ed4d02ff209363258b9c9375e772552a4e4fad",
   "sourceFiles": [
     {
       "path": "parser/analyze.go"
@@ -104,6 +104,9 @@
     },
     {
       "path": "parser/navigation_adapter.go"
+    },
+    {
+      "path": "parser/navigation_cache.go"
     },
     {
       "path": "parser/navigation_context.go"
@@ -3375,6 +3378,56 @@
       ]
     },
     {
+      "name": "navigationCacheEntry",
+      "kind": "struct",
+      "file": "parser/navigation_cache.go",
+      "line": 18,
+      "endLine": 23,
+      "underlyingType": "struct{Schema string`json:\"schema\"`;Digest string`json:\"digest\"`;Recovered bool`json:\"recovered\"`;Graph NavigationGraph`json:\"graph\"`;}",
+      "members": [
+        {
+          "name": "Digest",
+          "kind": "property",
+          "line": 20,
+          "endLine": 20,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"digest\""
+          }
+        },
+        {
+          "name": "Graph",
+          "kind": "property",
+          "line": 22,
+          "endLine": 22,
+          "result": "NavigationGraph",
+          "structTag": {
+            "value": "json:\"graph\""
+          }
+        },
+        {
+          "name": "Recovered",
+          "kind": "property",
+          "line": 21,
+          "endLine": 21,
+          "result": "bool",
+          "structTag": {
+            "value": "json:\"recovered\""
+          }
+        },
+        {
+          "name": "Schema",
+          "kind": "property",
+          "line": 19,
+          "endLine": 19,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"schema\""
+          }
+        }
+      ]
+    },
+    {
       "name": "navigationCollector",
       "kind": "struct",
       "file": "parser/navigation.go",
@@ -4700,6 +4753,31 @@
       "result": "tuple\u003c[]Segment,SegmentBuildStatus\u003e"
     },
     {
+      "name": "CachedNavigationGraph",
+      "kind": "function",
+      "file": "parser/navigation_cache.go",
+      "line": 28,
+      "endLine": 42,
+      "parameters": [
+        "string",
+        "string",
+        "string"
+      ],
+      "result": "tuple\u003cNavigationGraph,bool,bool,error\u003e"
+    },
+    {
+      "name": "CachedNavigationGraphFromDocument",
+      "kind": "function",
+      "file": "parser/navigation_cache.go",
+      "line": 46,
+      "endLine": 61,
+      "parameters": [
+        "*Document",
+        "string"
+      ],
+      "result": "tuple\u003cNavigationGraph,bool\u003e"
+    },
+    {
       "name": "CapabilitiesForLanguage",
       "kind": "function",
       "file": "parser/language.go",
@@ -4939,6 +5017,27 @@
       "to": "SegmentBuildStatus",
       "kind": "dependency",
       "via": "result 2",
+      "cardinality": "one"
+    },
+    {
+      "from": "CachedNavigationGraph",
+      "to": "NavigationGraph",
+      "kind": "dependency",
+      "via": "result 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "CachedNavigationGraphFromDocument",
+      "to": "Document",
+      "kind": "dependency",
+      "via": "parameter 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "CachedNavigationGraphFromDocument",
+      "to": "NavigationGraph",
+      "kind": "dependency",
+      "via": "result 1",
       "cardinality": "one"
     },
     {
@@ -6318,6 +6417,13 @@
       "to": "syntaxNode",
       "kind": "dependency",
       "via": "method Visibility parameter 1",
+      "cardinality": "one"
+    },
+    {
+      "from": "navigationCacheEntry",
+      "to": "NavigationGraph",
+      "kind": "association",
+      "via": "field Graph",
       "cardinality": "one"
     },
     {

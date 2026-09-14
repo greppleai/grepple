@@ -14,6 +14,7 @@ import (
 
 func TestGraphJSONEmitsResolvedDeterministicGraph(t *testing.T) {
 	dir := chdirTemp(t)
+	t.Setenv(parser.NavigationCacheDirectoryEnv, filepath.Join(dir, ".grepple", "cache", "navigation"))
 	writeGraphSource(t, dir, "main.go", "package sample\nfunc Run(){ helper() }\n")
 	writeGraphSource(t, dir, "helper.go", "package sample\nfunc helper() {}\n")
 	writeGraphSource(t, dir, "notes.txt", "ignored\n")

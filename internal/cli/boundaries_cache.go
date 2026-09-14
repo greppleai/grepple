@@ -10,6 +10,7 @@ import (
 	"sort"
 
 	"github.com/greppleai/grepple/parser"
+	"github.com/greppleai/grepple/search"
 )
 
 const boundaryCacheSchema = "grepple-boundary-cache-v4"
@@ -26,7 +27,7 @@ func buildCachedBoundaryGraph(globs []string, maxFiles int, useCache bool) (navi
 		return navigationGraphOutput{}, "", err
 	}
 	if !useCache {
-		return buildNavigationGraphOutputFromPaths(paths, maxFiles), "disabled", nil
+		return buildNavigationGraphOutputFromPathsWithOptions(paths, maxFiles, search.NavigationBuildOptions{DisableCache: true}), "disabled", nil
 	}
 	digest, err := boundaryInputDigest(paths, maxFiles)
 	if err != nil {

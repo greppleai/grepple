@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/greppleai/grepple/parser"
 )
 
 func TestBoundariesReportsExternalOwnerWorkflowsAndUsesCache(t *testing.T) {
@@ -43,6 +45,7 @@ func TestBoundariesReportsExternalOwnerWorkflowsAndUsesCache(t *testing.T) {
 
 func TestBoundariesHumanLimitDoesNotLimitJSON(t *testing.T) {
 	dir := chdirTemp(t)
+	t.Setenv(parser.NavigationCacheDirectoryEnv, filepath.Join(dir, ".grepple", "cache", "navigation"))
 	writeBoundaryFixture(t, dir)
 	writeGraphSource(t, dir, "other.go", "package sample\nfunc Read(){}\nfunc Write(){}\n")
 	writeGraphSource(t, dir, "other_one.go", "package sample\nfunc OtherOne(){ Read(); Write() }\n")

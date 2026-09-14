@@ -41,6 +41,7 @@ This file records completed Grepple roadmap work that no longer belongs in `next
 - [x] Made every human omitted-edge notice provide a copyable focused `graph callers|callees|impact --at PATH:LINE --depth 2 --json .` continuation.
 - [x] Added complete `grepple-navigation-graph-v1` JSON and bounded compact graph projections.
 - [x] Added deterministic discovered, selected, parsed, skipped, failed, recovered, and truncated source accounting to graphs, focused graph queries, graph diffs, and boundary reports.
+- [x] Added parser-owned content- and grammar-addressed per-file navigation facts shared by graph output/queries, `--related`, boundaries, and extraction, with atomic corruption-tolerant storage, path instantiation, explicit bypass, cold/warm parity tests, and a repeatable benchmark.
 - [x] Added callers, callees, dependencies, dependents, and bidirectional impact queries with depth bounds, cycle safety, candidate preservation, and exact location/symbol/package/module/path roots.
 - [x] Added language, confidence, and visibility filtering before root selection and traversal.
 - [x] Added `grepple-navigation-diff-v1`, ignoring line-only movement while reporting semantic declaration and call-edge changes.

@@ -16,7 +16,6 @@
 - Keep canonical language IDs and grammar-kind policy out of generic navigation engines.
 ## P1 — reduce repeated agent and developer work
 
-1. [ ] Reuse content- and grammar-addressed per-file navigation facts across graph output, graph queries, `--related`, boundary analysis, and extraction. Cold and warm output must remain byte-identical.
 2. [ ] Add selector preview/disambiguation, such as `graph resolve --symbol NAME --compact SCOPE`, returning exact declaration IDs and actionable `--at` alternatives without traversal.
 3. [ ] Add `anchors doctor` with provider identity, protocol version, temporary-file round trip, timeout/output diagnostics, and setup guidance.
 4. [ ] Add an explicit fresh-environment anchor-provider setup path without repository-owned execution or silent user-configuration changes.

@@ -2,7 +2,7 @@ classDiagram
     %% grepple:package-default github.com/greppleai/grepple/parser
     %% grepple:language-default go
     direction LR
-    note "Package parser provides application source classification and structural parsing. | package github.com/greppleai/grepple/parser | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=32, declarations=62, exportedTypes=24, internalTypes=38, members=481, exportedFunctions=21, fiberRoutes=0, relations=294"
+    note "Package parser provides application source classification and structural parsing. | package github.com/greppleai/grepple/parser | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=33, declarations=63, exportedTypes=24, internalTypes=39, members=485, exportedFunctions=23, fiberRoutes=0, relations=298"
     namespace interfaces {
         class languageAdapter["languageAdapter · parser/language.go:74-81"] {
             +Grammar(): syntaxLanguage
@@ -125,6 +125,13 @@ classDiagram
             +Start: int
         }
         <<struct>> Symbol
+        class navigationCacheEntry["navigationCacheEntry · parser/navigation_cache.go:18-23"] {
+            +Digest: string
+            +Graph: NavigationGraph
+            +Recovered: bool
+            +Schema: string
+        }
+        <<struct>> navigationCacheEntry
     }
     namespace exported_types {
         class ContentLanguageCapabilities["ContentLanguageCapabilities · parser/language.go:17-24"]
@@ -249,6 +256,14 @@ classDiagram
             +BuildSegmentsWithStatus(string, string, map[int]bool, int): tuple~[]Segment&#44;SegmentBuildStatus~
         }
         <<function>> BuildSegmentsWithStatus
+        class CachedNavigationGraph["CachedNavigationGraph · parser/navigation_cache.go:28-42"] {
+            +CachedNavigationGraph(string, string, string): tuple~NavigationGraph&#44;bool&#44;bool&#44;error~
+        }
+        <<function>> CachedNavigationGraph
+        class CachedNavigationGraphFromDocument["CachedNavigationGraphFromDocument · parser/navigation_cache.go:46-61"] {
+            +CachedNavigationGraphFromDocument(*Document, string): tuple~NavigationGraph&#44;bool~
+        }
+        <<function>> CachedNavigationGraphFromDocument
         class CapabilitiesForLanguage["CapabilitiesForLanguage · parser/language.go:142-149"] {
             +CapabilitiesForLanguage(string): tuple~LanguageCapabilities&#44;bool~
         }
@@ -326,6 +341,9 @@ classDiagram
     BuildSegments "1" ..> "*" Segment : result 1
     BuildSegmentsWithStatus "1" ..> "*" Segment : result 1
     BuildSegmentsWithStatus "1" ..> "1" SegmentBuildStatus : result 2
+    CachedNavigationGraph "1" ..> "1" NavigationGraph : result 1
+    CachedNavigationGraphFromDocument "1" ..> "1" Document : parameter 1
+    CachedNavigationGraphFromDocument "1" ..> "1" NavigationGraph : result 1
     CapabilitiesForLanguage "1" ..> "1" LanguageCapabilities : result 1
     Document "1" ..> "1" DocumentView : method Read parameter 1
     Document "1" ..> "1" Node : method Root result 1
@@ -470,6 +488,7 @@ classDiagram
     navigationAdapterConfig "1" ..> "1" structureRules : method Rules result 1
     navigationAdapterConfig "1" --> "1" syntaxNode : field=10
     navigationAdapterConfig "1" ..> "1" syntaxNode : method-parameter=13
+    navigationCacheEntry "1" --> "1" NavigationGraph : field Graph
     navigationCollector "1" --> "*" NavigationCall : field calls
     navigationCollector "1" --> "*" NavigationDeclaration : field declarations
     navigationCollector "1" ..> "1" NavigationDeclaration : method recordNavigationCall parameter 2; method recordNavigationTypeUsages parameter 1
