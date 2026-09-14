@@ -71,7 +71,7 @@ func runBoundaries(args []string) error {
 	if err != nil {
 		return err
 	}
-	output := boundariesOutput{Schema: "grepple-boundaries-v1", Paths: boundaryDisplayPaths(values.Paths), Files: graphOutput.Files, Candidates: candidates, TypeBoundaries: typeBoundaries, Truncation: graphOutput.Truncation}
+	output := boundariesOutput{Schema: "grepple-boundaries-v2", Paths: boundaryDisplayPaths(values.Paths), Files: graphOutput.Files, Candidates: candidates, TypeBoundaries: typeBoundaries, Truncation: graphOutput.Truncation}
 	if values.JSON {
 		encoder := json.NewEncoder(os.Stdout)
 		encoder.SetEscapeHTML(false)
@@ -160,11 +160,11 @@ func boundaryVisibleCount(count, limit int) int {
 }
 
 func writeBoundaryTypeSpread(write func(string, ...any) bool, spread search.BoundaryTypeSpread) bool {
-	ownership := "project-owned"
-	if spread.External {
-		ownership = "external concrete"
+	origin := string(spread.Origin)
+	if origin == "" {
+		origin = "unresolved"
 	}
-	if !write("  type: %s [%s, %s]", spread.CanonicalType, spread.Language, ownership) ||
+	if !write("  type: %s [%s, origin=%s]", spread.CanonicalType, spread.Language, origin) ||
 		!write("    reach: %d usages / %d functions / %d files / %d packages", spread.Usages, spread.Consumers.Functions, spread.Consumers.Files, spread.Consumers.Packages) ||
 		!write("    source split: %d production files / %d test files", spread.Production.Files, spread.Tests.Files) ||
 		!write("    roles: %d parameters / %d results / %d receivers / %d locals / %d unknown", spread.Roles.Parameters, spread.Roles.Results, spread.Roles.Receivers, spread.Roles.Locals, spread.Roles.Unknown) {

@@ -17,7 +17,6 @@
 
 ## P0 — make current capabilities discoverable and trustworthy
 
-4. [ ] Classify boundary type origin as local, first-party, standard-library, third-party, or unresolved. Keep import identity separate from dependency origin.
 5. [ ] Add boundary risk and reason fields. Prioritize public third-party exposure, containment escape, facade bypass, and cross-layer representation spread; mark approved broad internal abstractions as informational.
 6. [ ] Replace omitted `--related` guidance with a copyable focused callers/callees graph query using the current location and scope.
 7. [ ] Audit structural and graph operations for unsupported/failed source. Report deterministic discovered, parsed, skipped, failed, and truncated totals in human and JSON output.

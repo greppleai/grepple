@@ -138,14 +138,41 @@ func TestAnalyzeTypeBoundariesFindsImportedAndOwnedTypeSpread(t *testing.T) {
 		t.Fatalf("spreads=%#v", spreads)
 	}
 	external := spreads[0]
-	if external.CanonicalType != "github.com/tree-sitter/go-tree-sitter.Node" || !external.External || external.Consumers.Files != 3 || external.Production.Files != 2 || external.Tests.Files != 1 || len(external.PublicExposures) != 1 {
+	if external.CanonicalType != "github.com/tree-sitter/go-tree-sitter.Node" || !external.External || external.Origin != BoundaryTypeOriginThirdParty || external.Consumers.Files != 3 || external.Production.Files != 2 || external.Tests.Files != 1 || len(external.PublicExposures) != 1 {
 		t.Fatalf("external spread=%#v", external)
 	}
 	if external.Roles.Parameters != 2 || external.Roles.Locals != 1 {
 		t.Fatalf("external roles=%#v", external.Roles)
 	}
 	owned := spreads[1]
-	if owned.CanonicalType != "Widget" || owned.OwnerFile != "widget.go" || owned.External {
+	if owned.CanonicalType != "Widget" || owned.OwnerFile != "widget.go" || owned.External || owned.Origin != BoundaryTypeOriginLocal {
 		t.Fatalf("owned spread=%#v", owned)
+	}
+}
+
+func TestBoundaryTypeOriginClassification(t *testing.T) {
+	context := boundaryDependencyContext{roots: []string{"example.com/app", "com.example.app"}}
+	tests := []struct {
+		language string
+		path     string
+		want     BoundaryTypeOrigin
+	}{
+		{"go", "context", BoundaryTypeOriginStandardLibrary},
+		{"go", "io/fs", BoundaryTypeOriginStandardLibrary},
+		{"go", "example.com/app/parser", BoundaryTypeOriginFirstParty},
+		{"go", "github.com/tree-sitter/go-tree-sitter", BoundaryTypeOriginThirdParty},
+		{"typescript", "../model", BoundaryTypeOriginFirstParty},
+		{"typescript", "node:fs", BoundaryTypeOriginStandardLibrary},
+		{"typescript", "@app/model", BoundaryTypeOriginUnresolved},
+		{"java", "com.example.app.model", BoundaryTypeOriginFirstParty},
+		{"java", "java.util", BoundaryTypeOriginStandardLibrary},
+		{"kotlin", "kotlin.collections", BoundaryTypeOriginStandardLibrary},
+		{"csharp", "System.IO", BoundaryTypeOriginStandardLibrary},
+		{"python", "requests", BoundaryTypeOriginUnresolved},
+	}
+	for _, test := range tests {
+		if got := boundaryTypeOriginForImport(test.language, test.path, context); got != test.want {
+			t.Errorf("origin(%q, %q) = %q, want %q", test.language, test.path, got, test.want)
+		}
 	}
 }

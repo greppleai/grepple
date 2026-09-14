@@ -214,7 +214,7 @@ grepple graph diff --before ./old-tree --after ./new-tree --compact
 
 ## Boundary analysis
 
-`grepple boundaries [PATH...]` reports both repeated owner-file workflows and concrete type spread. Workflow candidates group resolved calls by target owner file and retain only callable co-usage, ordered sequences, or member-plus-call combinations repeated across at least two external files. Type candidates report import-qualified concrete types or unambiguously owned project types used across at least two files, including production/test reach, parameter/result/receiver/local roles, public-signature exposure, and evidence locations. This highlights both repeated low-level behavior and representations or dependencies that have crossed architectural boundaries without asserting that every widely shared utility is a violation.
+`grepple boundaries [PATH...]` reports both repeated owner-file workflows and concrete type spread. Workflow candidates group resolved calls by target owner file and retain only callable co-usage, ordered sequences, or member-plus-call combinations repeated across at least two external files. Type candidates report import-qualified concrete types or unambiguously owned project types used across at least two files, including dependency origin (`local`, `first-party`, `standard-library`, `third-party`, or `unresolved`), production/test reach, parameter/result/receiver/local roles, public-signature exposure, and evidence locations. This highlights both repeated low-level behavior and representations or dependencies that have crossed architectural boundaries without asserting that every widely shared utility is a violation.
 
 ```bash
 grepple boundaries parser
@@ -222,7 +222,7 @@ grepple boundaries ./src ./lib --min-occurrences 3
 grepple boundaries --json ./internal
 ```
 
-Human output is bounded to 16,384 bytes and shows at most 20 ranked candidates per workflow/type section by default; evidence locations and omissions remain explicit. `--limit 0` shows all candidates, while `grepple-boundaries-v1` JSON is complete. Parsed and cross-file-resolved navigation graphs are cached by source content plus grammar ABI/fingerprint under `.grepple/cache/boundaries/`; use `--no-cache` to bypass them. `--max-files` remains explicit when source discovery is incomplete.
+Human output is bounded to 16,384 bytes and shows at most 20 ranked candidates per workflow/type section by default; evidence locations and omissions remain explicit. `--limit 0` shows all candidates, while `grepple-boundaries-v2` JSON is complete. Parsed and cross-file-resolved navigation graphs are cached by source content plus grammar ABI/fingerprint under `.grepple/cache/boundaries/`; use `--no-cache` to bypass them. `--max-files` remains explicit when source discovery is incomplete.
 
 ## Architecture and flow extraction
 

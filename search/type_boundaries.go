@@ -9,6 +9,18 @@ import (
 	"github.com/greppleai/grepple/parser"
 )
 
+// BoundaryTypeOrigin classifies where a reported concrete type is owned.
+type BoundaryTypeOrigin string
+
+// Boundary type origin values separate dependency provenance from imported identity.
+const (
+	BoundaryTypeOriginLocal           BoundaryTypeOrigin = "local"
+	BoundaryTypeOriginFirstParty      BoundaryTypeOrigin = "first-party"
+	BoundaryTypeOriginStandardLibrary BoundaryTypeOrigin = "standard-library"
+	BoundaryTypeOriginThirdParty      BoundaryTypeOrigin = "third-party"
+	BoundaryTypeOriginUnresolved      BoundaryTypeOrigin = "unresolved"
+)
+
 // BoundaryTypeRoles counts the ways a type participates in callable declarations and bodies.
 type BoundaryTypeRoles struct {
 	Parameters int `json:"parameters"`
@@ -33,7 +45,8 @@ type BoundaryTypeSpread struct {
 	CanonicalType   string              `json:"canonicalType"`
 	Language        string              `json:"language"`
 	OwnerFile       string              `json:"ownerFile,omitempty"`
-	External        bool                `json:"external"`
+	Origin          BoundaryTypeOrigin  `json:"origin"`
+	External        bool                `json:"external"` // Compatibility: true when ImportPath is non-empty.
 	Usages          int                 `json:"usages"`
 	Consumers       BoundaryBreadth     `json:"consumers"`
 	Production      BoundaryBreadth     `json:"production"`
@@ -48,6 +61,83 @@ type boundaryTypeSpreadKey struct {
 	typeName   string
 	importPath string
 	ownerFile  string
+	origin     BoundaryTypeOrigin
+}
+
+type boundaryDependencyContext struct {
+	roots []string
+}
+
+func newBoundaryDependencyContext(declarations map[string]parser.NavigationDeclaration) boundaryDependencyContext {
+	rootSet := make(map[string]bool)
+	for _, declaration := range declarations {
+		for _, root := range []string{declaration.ModuleID, declaration.PackageID} {
+			root = normalizeBoundaryImportPath(root)
+			if root != "" && root != "." {
+				rootSet[root] = true
+			}
+		}
+	}
+	roots := make([]string, 0, len(rootSet))
+	for root := range rootSet {
+		roots = append(roots, root)
+	}
+	sort.Strings(roots)
+	return boundaryDependencyContext{roots: roots}
+}
+
+func boundaryTypeOriginForImport(language, importPath string, context boundaryDependencyContext) BoundaryTypeOrigin {
+	path := normalizeBoundaryImportPath(importPath)
+	if path == "" {
+		return BoundaryTypeOriginUnresolved
+	}
+	if boundaryFirstPartyImport(path, context.roots) {
+		return BoundaryTypeOriginFirstParty
+	}
+	if boundaryStandardLibraryImport(language, path) {
+		return BoundaryTypeOriginStandardLibrary
+	}
+	if language == "go" {
+		return BoundaryTypeOriginThirdParty
+	}
+	return BoundaryTypeOriginUnresolved
+}
+
+func boundaryStandardLibraryImport(language, path string) bool {
+	switch language {
+	case "go":
+		first := path
+		if separator := strings.IndexByte(first, '/'); separator >= 0 {
+			first = first[:separator]
+		}
+		return !strings.Contains(first, ".")
+	case "javascript", "typescript", "tsx":
+		return strings.HasPrefix(path, "node:")
+	case "java":
+		return path == "java" || strings.HasPrefix(path, "java.") || path == "javax" || strings.HasPrefix(path, "javax.")
+	case "kotlin":
+		return path == "kotlin" || strings.HasPrefix(path, "kotlin.")
+	case "csharp":
+		return path == "System" || strings.HasPrefix(path, "System.")
+	default:
+		return false
+	}
+}
+
+func boundaryFirstPartyImport(path string, roots []string) bool {
+	if strings.HasPrefix(path, "./") || strings.HasPrefix(path, "../") {
+		return true
+	}
+	for _, root := range roots {
+		if path == root || strings.HasPrefix(path, root+"/") || strings.HasPrefix(path, root+".") {
+			return true
+		}
+	}
+	return false
+}
+
+func normalizeBoundaryImportPath(path string) string {
+	return strings.Trim(strings.TrimSpace(path), "\"'<> ")
 }
 
 // AnalyzeTypeBoundaries finds imported concrete types and project-owned types whose
@@ -58,13 +148,14 @@ func AnalyzeTypeBoundaries(graph parser.NavigationGraph, minOccurrences int) ([]
 		return nil, fmt.Errorf("minimum occurrences must be positive")
 	}
 	declarations := indexBoundaryDeclarations(graph.Declarations)
-	groups := indexBoundaryTypeSpreads(graph.TypeUsages, declarations, boundaryTypeOwners(declarations))
+	context := newBoundaryDependencyContext(declarations)
+	groups := indexBoundaryTypeSpreads(graph.TypeUsages, declarations, boundaryTypeOwners(declarations), context)
 	spreads := buildBoundaryTypeSpreads(groups, minOccurrences)
 	sortBoundaryTypeSpreads(spreads)
 	return spreads, nil
 }
 
-func indexBoundaryTypeSpreads(usages []parser.NavigationTypeUsage, declarations map[string]parser.NavigationDeclaration, localOwners map[boundaryTypeCandidate]boundaryOwnerKey) map[boundaryTypeSpreadKey][]BoundaryTypeUsage {
+func indexBoundaryTypeSpreads(usages []parser.NavigationTypeUsage, declarations map[string]parser.NavigationDeclaration, localOwners map[boundaryTypeCandidate]boundaryOwnerKey, context boundaryDependencyContext) map[boundaryTypeSpreadKey][]BoundaryTypeUsage {
 	groups := make(map[boundaryTypeSpreadKey][]BoundaryTypeUsage)
 	seen := make(map[string]bool)
 	for _, usage := range usages {
@@ -72,7 +163,7 @@ func indexBoundaryTypeSpreads(usages []parser.NavigationTypeUsage, declarations 
 		if !ok || usage.Type == "" || usage.Path == "" {
 			continue
 		}
-		key, ok := boundaryTypeSpreadKeyForUsage(usage, localOwners)
+		key, ok := boundaryTypeSpreadKeyForUsage(usage, localOwners, context)
 		if !ok {
 			continue
 		}
@@ -86,12 +177,13 @@ func indexBoundaryTypeSpreads(usages []parser.NavigationTypeUsage, declarations 
 	return groups
 }
 
-func boundaryTypeSpreadKeyForUsage(usage parser.NavigationTypeUsage, localOwners map[boundaryTypeCandidate]boundaryOwnerKey) (boundaryTypeSpreadKey, bool) {
+func boundaryTypeSpreadKeyForUsage(usage parser.NavigationTypeUsage, localOwners map[boundaryTypeCandidate]boundaryOwnerKey, context boundaryDependencyContext) (boundaryTypeSpreadKey, bool) {
 	key := boundaryTypeSpreadKey{language: usage.Language, typeName: boundaryTerminalTypeName(usage.Type), importPath: usage.ImportPath}
 	if key.typeName == "" {
 		return boundaryTypeSpreadKey{}, false
 	}
 	if key.importPath != "" {
+		key.origin = boundaryTypeOriginForImport(key.language, key.importPath, context)
 		return key, true
 	}
 	owner, owned := localOwners[boundaryTypeCandidate{typeName: key.typeName, language: key.language}]
@@ -99,6 +191,7 @@ func boundaryTypeSpreadKeyForUsage(usage parser.NavigationTypeUsage, localOwners
 		return boundaryTypeSpreadKey{}, false
 	}
 	key.ownerFile = owner.path
+	key.origin = BoundaryTypeOriginLocal
 	return key, true
 }
 
@@ -120,7 +213,7 @@ func buildBoundaryTypeSpreads(groups map[boundaryTypeSpreadKey][]BoundaryTypeUsa
 			continue
 		}
 		spread := BoundaryTypeSpread{
-			Type: key.typeName, ImportPath: key.importPath, CanonicalType: boundaryCanonicalType(key.importPath, key.typeName), Language: key.language, OwnerFile: key.ownerFile, External: key.importPath != "",
+			Type: key.typeName, ImportPath: key.importPath, CanonicalType: boundaryCanonicalType(key.importPath, key.typeName), Language: key.language, OwnerFile: key.ownerFile, Origin: key.origin, External: key.importPath != "",
 			Usages: len(details), Consumers: breadth, Production: boundaryTypeUsageBreadth(details, func(detail BoundaryTypeUsage) bool { return !detail.Test }),
 			Tests: boundaryTypeUsageBreadth(details, func(detail BoundaryTypeUsage) bool { return detail.Test }), Roles: boundaryTypeRoles(details), UsageDetails: details,
 		}

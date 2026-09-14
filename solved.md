@@ -86,6 +86,7 @@ This file records completed Grepple roadmap work that no longer belongs in `next
 - [x] Added file-owned workflow signals for external consumer breadth, callable surface, callable co-usage, ordered sequences, and member-read/write plus call combinations.
 - [x] Excluded owner-local calls and required repeated evidence across at least two external files.
 - [x] Added import-qualified and unambiguously owned project type spread with parameter/result/receiver/local roles, public signature exposure, and production/test reach.
+- [x] Classified type origin independently as local, first-party, standard-library, third-party, or unresolved while retaining imported identity and the compatibility `external` signal.
 - [x] Added content- and grammar-addressed resolved-navigation caching under `.grepple/cache/boundaries/` with atomic writes and corrupt-entry fallback.
 - [x] Kept cache state out of report output so cold and warm reports remain byte-identical.
 

@@ -15,6 +15,7 @@ Workflow boundary candidates report:
 
 Type boundary candidates report:
 - **Canonical identity**: an import-qualified concrete type, or an unambiguously owned project type.
+- **Dependency origin**: `local`, `first-party`, `standard-library`, `third-party`, or `unresolved`.
 - **Reach**: distinct usages, functions, files, and path-derived groups.
 - **Source split**: production files versus recognizable test/benchmark files.
 - **Roles**: parameter, result, receiver, local, or unknown usage.
@@ -23,7 +24,7 @@ Type boundary candidates report:
 
 Resolved target IDs are preferred. Ambiguous calls are included only when every candidate agrees on language, owner file, and terminal callable name; these are counted in `unresolvedCalls` so uncertain evidence remains visible.
 
-Workflow patterns are grouped by caller and filtered by `--min-occurrences` (default 2), then must span at least two distinct external files. Type candidates use the same callable and two-file thresholds. Primitive and unresolved ownerless types are omitted. Imported types remain visible even when they are intentionally shared, because concrete dependency reach and public exposure are architectural facts rather than asserted violations. Candidates are ranked deterministically, prioritizing external types in public signatures and then production spread. Human output shows 20 candidates per section by default and discloses omissions; `--limit 0` shows every candidate, while JSON is complete under `grepple-boundaries-v1`.
+Workflow patterns are grouped by caller and filtered by `--min-occurrences` (default 2), then must span at least two distinct external files. Type candidates use the same callable and two-file thresholds. Primitive and unresolved ownerless local types are omitted. Imported types remain visible even when origin is unresolved because concrete dependency reach and public exposure are facts rather than asserted violations. Origin is resolved from local module/package identities and relative imports first; Go standard-library versus third-party imports are deterministic, while `node:`, `java`/`javax`, `kotlin`, and `System` namespaces supply conservative standard-library evidence for their languages. Ambiguous aliases and ecosystems without safe provenance remain `unresolved`. The compatibility `external` JSON field continues to mean only that `importPath` is non-empty. Human output shows 20 candidates per section by default and discloses omissions; `--limit 0` shows every candidate, while JSON is complete under `grepple-boundaries-v2`.
 
 ```text
 boundary analysis paths=src files=84 workflow-candidates=1 workflow-shown=1 type-candidates=1 type-shown=1
@@ -42,7 +43,7 @@ owner: src/request.go [go]
       9 occurrences / 7 files / 4 groups
 
 type boundary spread:
-  type: github.com/vendor/parser.Node [go, external concrete]
+  type: github.com/vendor/parser.Node [go, origin=third-party]
     reach: 42 usages / 31 functions / 9 files / 2 packages
     source split: 8 production files / 1 test files
     roles: 28 parameters / 3 results / 0 receivers / 11 locals / 0 unknown

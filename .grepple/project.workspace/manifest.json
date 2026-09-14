@@ -27,14 +27,14 @@
     "modules": 2,
     "packages": 16,
     "sourceFiles": 146,
-    "declarations": 385,
+    "declarations": 387,
     "exportedFunctions": 115,
     "fiberRoutes": 0,
     "localImports": 22,
     "standardLibraryImports": 142,
     "externalModuleEdges": 15
   },
-  "semanticModelDigest": "sha256:ec24453724935d44d80fea1ee115a636ea66f6b4a7b0307fd7445c6f103b25ec",
+  "semanticModelDigest": "sha256:d06104528d09dc8744f5f440668557f9b89248b55faa01254b7fb60ddf13d888",
   "modules": [
     {
       "path": "github.com/greppleai/grepple",
@@ -442,7 +442,7 @@
           "documentation": "Package search provides file discovery, query and repository filtering, paging, match workers, context, and wire-result construction.",
           "main": false,
           "sourceFiles": 16,
-          "declarations": 34,
+          "declarations": 36,
           "exportedFunctions": 27,
           "fiberRoutes": 0,
           "routes": [],

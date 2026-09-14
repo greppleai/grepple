@@ -2,7 +2,7 @@ classDiagram
     %% grepple:package-default github.com/greppleai/grepple/search
     %% grepple:language-default go
     direction LR
-    note "Package search provides file discovery, query and repository filtering, paging, match workers, context, and wire-result construction. | package github.com/greppleai/grepple/search | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=16, declarations=34, exportedTypes=18, internalTypes=16, members=211, exportedFunctions=27, fiberRoutes=0, relations=68"
+    note "Package search provides file discovery, query and repository filtering, paging, match workers, context, and wire-result construction. | package github.com/greppleai/grepple/search | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=16, declarations=36, exportedTypes=19, internalTypes=17, members=214, exportedFunctions=27, fiberRoutes=0, relations=70"
     namespace data_contracts {
         class BoundaryBreadth["BoundaryBreadth · search/boundary_model.go:12-16"] {
             +Files: int
@@ -44,7 +44,7 @@ classDiagram
             +External: int
         }
         <<struct>> BoundarySurface
-        class BoundaryTypeRoles["BoundaryTypeRoles · search/type_boundaries.go:13-19"] {
+        class BoundaryTypeRoles["BoundaryTypeRoles · search/type_boundaries.go:25-31"] {
             +Locals: int
             +Parameters: int
             +Receivers: int
@@ -52,12 +52,13 @@ classDiagram
             +Unknown: int
         }
         <<struct>> BoundaryTypeRoles
-        class BoundaryTypeSpread["BoundaryTypeSpread · search/type_boundaries.go:30-44"] {
+        class BoundaryTypeSpread["BoundaryTypeSpread · search/type_boundaries.go:42-57"] {
             +CanonicalType: string
             +Consumers: BoundaryBreadth
             +External: bool
             +ImportPath: string
             +Language: string
+            +Origin: BoundaryTypeOrigin
             +OwnerFile: string
             +Production: BoundaryBreadth
             +PublicExposures: []BoundaryTypeUsage
@@ -68,7 +69,7 @@ classDiagram
             +Usages: int
         }
         <<struct>> BoundaryTypeSpread
-        class BoundaryTypeUsage["BoundaryTypeUsage · search/type_boundaries.go:22-27"] {
+        class BoundaryTypeUsage["BoundaryTypeUsage · search/type_boundaries.go:34-39"] {
             +Public: bool
             +Role: string
             +Test: bool
@@ -128,6 +129,8 @@ classDiagram
         <<struct>> Params
     }
     namespace exported_types {
+        class BoundaryTypeOrigin["BoundaryTypeOrigin = string · search/type_boundaries.go:13"]
+        <<type>> BoundaryTypeOrigin
         class FileMatch["FileMatch · search/model.go:55-63"]
         <<struct>> FileMatch
         class NavigationGraphFilter["NavigationGraphFilter · search/navigation_filter.go:12-16"]
@@ -142,6 +145,8 @@ classDiagram
         <<struct>> RepoFilter
     }
     namespace internal_types {
+        class boundaryDependencyContext["boundaryDependencyContext · search/type_boundaries.go:67-69"]
+        <<struct>> boundaryDependencyContext
         class boundaryInteraction["boundaryInteraction · search/boundary_model.go:42-44"]
         <<struct>> boundaryInteraction
         class boundaryOwnerAnalysis["boundaryOwnerAnalysis · search/boundaries.go:30-37"]
@@ -152,7 +157,7 @@ classDiagram
         <<struct>> boundaryPatternGroup
         class boundaryTypeCandidate["boundaryTypeCandidate · search/boundaries.go:167-170"]
         <<struct>> boundaryTypeCandidate
-        class boundaryTypeSpreadKey["boundaryTypeSpreadKey · search/type_boundaries.go:46-51"]
+        class boundaryTypeSpreadKey["boundaryTypeSpreadKey · search/type_boundaries.go:59-65"]
         <<struct>> boundaryTypeSpreadKey
         class candidateCollector["candidateCollector · search/search_glob.go:146-152"]
         <<struct>> candidateCollector
@@ -184,7 +189,7 @@ classDiagram
             +AnalyzeBoundaries(parser.NavigationGraph, int): tuple~[]BoundaryCandidate&#44;error~
         }
         <<function>> AnalyzeBoundaries
-        class AnalyzeTypeBoundaries["AnalyzeTypeBoundaries · search/type_boundaries.go:56-65"] {
+        class AnalyzeTypeBoundaries["AnalyzeTypeBoundaries · search/type_boundaries.go:146-156"] {
             +AnalyzeTypeBoundaries(parser.NavigationGraph, int): tuple~[]BoundaryTypeSpread&#44;error~
         }
         <<function>> AnalyzeTypeBoundaries
@@ -296,6 +301,7 @@ classDiagram
     BoundaryCandidate "1" --> "1" BoundarySurface : field ExternalCallableSurface
     BoundaryPattern "1" --> "*" BoundaryConsumer : field Consumers
     BoundaryTypeSpread "1" --> "1" BoundaryBreadth : field Consumers; field Production; field Tests
+    BoundaryTypeSpread "1" --> "1" BoundaryTypeOrigin : field Origin
     BoundaryTypeSpread "1" --> "1" BoundaryTypeRoles : field Roles
     BoundaryTypeSpread "1" --> "*" BoundaryTypeUsage : field PublicExposures; field UsageDetails
     BoundaryConsumer <|-- BoundaryTypeUsage : embedded type
@@ -322,6 +328,7 @@ classDiagram
     ToResult "1" ..> "1" FileMatch : parameter 1
     boundaryOwnerAnalysis "1" --> "*" boundaryInteraction : field interactions
     boundaryPatternGroup "1" --> "*" BoundaryConsumer : field consumers
+    boundaryTypeSpreadKey "1" --> "1" BoundaryTypeOrigin : field origin
     candidateCollector "1" --> "1" gitignoreCache : field ignoreCache
     candidateScan "1" ..> "*" FileMatch : method scanAll result 1; method scanWindowed result 1
     candidateScan "1" --> "1" Params : field p

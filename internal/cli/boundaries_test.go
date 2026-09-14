@@ -64,7 +64,7 @@ func TestBoundariesHumanLimitDoesNotLimitJSON(t *testing.T) {
 	if err := json.Unmarshal([]byte(jsonText), &output); err != nil {
 		t.Fatal(err)
 	}
-	if output.Schema != "grepple-boundaries-v1" || len(output.Candidates) != 2 {
+	if output.Schema != "grepple-boundaries-v2" || len(output.Candidates) != 2 {
 		t.Fatalf("JSON was limited: %#v", output)
 	}
 	if _, err := os.Stat(filepath.Join(".grepple", "cache")); !os.IsNotExist(err) {
@@ -87,7 +87,7 @@ func private(node *sitter.Node) {}
 			t.Fatal(err)
 		}
 	})
-	for _, expected := range []string{"type-candidates=1", "github.com/tree-sitter/go-tree-sitter.Node", "2 production files / 0 test files", "1 public external-type exposures", "one.go:3 Public (parameter)"} {
+	for _, expected := range []string{"type-candidates=1", "github.com/tree-sitter/go-tree-sitter.Node", "origin=third-party", "2 production files / 0 test files", "1 public external-type exposures", "one.go:3 Public (parameter)"} {
 		if !strings.Contains(output, expected) {
 			t.Fatalf("type boundary output missing %q:\n%s", expected, output)
 		}
