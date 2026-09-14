@@ -53,9 +53,26 @@ func (renderer segmentRenderer) renderFile(result api.FileResult) error {
 			return err
 		}
 	}
-	return renderer.renderRelated(result.Related, result.OmittedRelatedCallers, result.OmittedRelatedCallees)
+	line := relatedRootLine(result)
+	return renderer.renderRelated(result.Related, result.OmittedRelatedCallers, result.OmittedRelatedCallees, result.Path, line)
 }
-func (renderer segmentRenderer) renderRelated(related []api.RelatedSymbol, omittedCallers, omittedCallees int) error {
+
+func relatedRootLine(result api.FileResult) int {
+	if len(result.Segments) > 0 && result.Segments[0].Start > 0 {
+		return result.Segments[0].Start
+	}
+	if len(result.Matches) > 0 {
+		if result.Matches[0].StartLine > 0 {
+			return result.Matches[0].StartLine
+		}
+		if result.Matches[0].Line > 0 {
+			return result.Matches[0].Line
+		}
+	}
+	return 1
+}
+
+func (renderer segmentRenderer) renderRelated(related []api.RelatedSymbol, omittedCallers, omittedCallees int, path string, line int) error {
 	if len(related) == 0 && omittedCallers == 0 && omittedCallees == 0 {
 		return nil
 	}
@@ -65,7 +82,7 @@ func (renderer segmentRenderer) renderRelated(related []api.RelatedSymbol, omitt
 	if err := renderer.renderRelatedPoints(related, 1); err != nil {
 		return err
 	}
-	return renderer.renderRelatedOmissions(omittedCallers, omittedCallees, 1)
+	return renderer.renderRelatedOmissions(omittedCallers, omittedCallees, path, line, 1)
 }
 
 func (renderer segmentRenderer) renderRelatedPoints(related []api.RelatedSymbol, depth int) error {
@@ -104,12 +121,12 @@ func (renderer segmentRenderer) renderRelatedPoint(point api.RelatedSymbol, dept
 		if err := renderer.renderRelatedPoints(point.Related, depth+2); err != nil {
 			return err
 		}
-		return renderer.renderRelatedOmissions(point.OmittedCallers, point.OmittedCallees, depth+2)
+		return renderer.renderRelatedOmissions(point.OmittedCallers, point.OmittedCallees, point.Path, point.Start, depth+2)
 	}
 	return nil
 }
 
-func (renderer segmentRenderer) renderRelatedOmissions(callers, callees, depth int) error {
+func (renderer segmentRenderer) renderRelatedOmissions(callers, callees int, path string, line, depth int) error {
 	if callers == 0 && callees == 0 {
 		return nil
 	}
@@ -120,8 +137,28 @@ func (renderer segmentRenderer) renderRelatedOmissions(callers, callees, depth i
 	if callers > 0 {
 		parts = append(parts, fmt.Sprintf("%d additional %s", callers, pluralizeRelated("caller", callers)))
 	}
-	message := fmt.Sprintf("%s… %s omitted; narrow scope or use grepple graph --json PATH for complete repository-local edges …\n", strings.Repeat("  ", depth), strings.Join(parts, " and "))
+	direction := relatedGraphDirection(callers, callees)
+	location := fmt.Sprintf("%s:%d", path, line)
+	command := fmt.Sprintf("grepple graph %s --at %s --depth 2 --json .", direction, quoteCommandArgument(location))
+	message := fmt.Sprintf("%s… %s omitted; continue: %s …\n", strings.Repeat("  ", depth), strings.Join(parts, " and "), command)
 	return renderer.output.writeString(message)
+}
+
+func relatedGraphDirection(callers, callees int) string {
+	if callers > 0 && callees == 0 {
+		return "callers"
+	}
+	if callees > 0 && callers == 0 {
+		return "callees"
+	}
+	return "impact"
+}
+
+func quoteCommandArgument(value string) string {
+	if value != "" && !strings.ContainsAny(value, " \t\r\n'\"") {
+		return value
+	}
+	return "'" + strings.ReplaceAll(value, "'", "'\"'\"'") + "'"
 }
 
 func pluralizeRelated(noun string, count int) string {

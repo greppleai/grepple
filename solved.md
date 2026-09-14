@@ -37,6 +37,7 @@ This file records completed Grepple roadmap work that no longer belongs in `next
 - [x] Resolved explicit Go package imports and TypeScript named/namespace imports before terminal fallback.
 - [x] Added direct receiver/parameter context, source-ordered lexical bindings, local/imported return inference, and same-file typed member chains.
 - [x] Reported omitted callers and callees in human and JSON related output.
+- [x] Made every human omitted-edge notice provide a copyable focused `graph callers|callees|impact --at PATH:LINE --depth 2 --json .` continuation.
 - [x] Added complete `grepple-navigation-graph-v1` JSON and bounded compact graph projections.
 - [x] Added callers, callees, dependencies, dependents, and bidirectional impact queries with depth bounds, cycle safety, candidate preservation, and exact location/symbol/package/module/path roots.
 - [x] Added language, confidence, and visibility filtering before root selection and traversal.

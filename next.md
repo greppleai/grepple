@@ -17,7 +17,6 @@
 
 ## P0 — make current capabilities discoverable and trustworthy
 
-6. [ ] Replace omitted `--related` guidance with a copyable focused callers/callees graph query using the current location and scope.
 7. [ ] Audit structural and graph operations for unsupported/failed source. Report deterministic discovered, parsed, skipped, failed, and truncated totals in human and JSON output.
 
 ## P1 — reduce repeated agent and developer work
