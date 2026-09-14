@@ -12,6 +12,7 @@ This file records completed Grepple roadmap work that no longer belongs in `next
 ## CLI discoverability
 
 - [x] Added top-level help that lists search, GritQL, graph, boundaries, extraction, language capabilities, rules, remote repository/authentication commands, and version before the default search options.
+- [x] Added real `grepple help` and command help routing plus an explicit `grepple search` mode so command-name patterns do not collide with dispatch.
 
 ## Search and retrieval
 

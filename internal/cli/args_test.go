@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"os"
 	"strings"
 	"testing"
 )
@@ -179,5 +180,43 @@ func TestTopLevelHelpListsCommandFamilies(t *testing.T) {
 		if !strings.Contains(output, expected) {
 			t.Fatalf("top-level help missing %q:\n%s", expected, output)
 		}
+	}
+}
+
+func TestHelpCommandAndExplicitSearch(t *testing.T) {
+	help := captureStdout(t, func() {
+		if err := Run([]string{"help"}); err != nil {
+			t.Fatal(err)
+		}
+	})
+	if !strings.Contains(help, "Commands:") {
+		t.Fatalf("help command did not render top-level help:\n%s", help)
+	}
+
+	searchHelp := captureStdout(t, func() {
+		if err := Run([]string{"help", "search"}); err != nil {
+			t.Fatal(err)
+		}
+	})
+	if !strings.Contains(searchHelp, "Search the local working directory") {
+		t.Fatalf("search help missing description:\n%s", searchHelp)
+	}
+
+	directory := t.TempDir()
+	path := directory + "/sample.txt"
+	if err := os.WriteFile(path, []byte("graph\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	output := captureStdout(t, func() {
+		if err := Run([]string{"search", "--line-only", "--no-anchors", "-F", "graph", path}); err != nil {
+			t.Fatal(err)
+		}
+	})
+	if !strings.Contains(output, "graph") || !strings.Contains(output, "sample.txt") {
+		t.Fatalf("explicit search did not search a command-name pattern:\n%s", output)
+	}
+
+	if err := Run([]string{"help", "not-a-command"}); err == nil {
+		t.Fatal("unknown help topic succeeded")
 	}
 }

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/greppleai/grepple/search"
 
@@ -403,10 +404,38 @@ func writeTopLevelHelp() error {
 	return err
 }
 
+func runHelp(args []string) error {
+	if len(args) == 0 {
+		return writeTopLevelHelp()
+	}
+	if len(args) > 1 {
+		return fmt.Errorf("nested help is not available for %q; run grepple %s --help", strings.Join(args, " "), strings.Join(args, " "))
+	}
+	switch args[0] {
+	case "search":
+		return runSearch([]string{"--help"})
+	case "extract":
+		return stdoutWriter().writeString("Extract source-backed architecture projections.\nUsage: grepple extract <structure|flow|summary|check> [OPTIONS]\n")
+	case "login":
+		return stdoutWriter().writeString("Authenticate with the remote service.\nUsage: grepple login [--url URL] [--scope SCOPES] [--no-browser]\n")
+	case "logout":
+		return stdoutWriter().writeString("Remove stored remote authentication.\nUsage: grepple logout\n")
+	case "version":
+		return stdoutWriter().writeString("Print build and source version information.\nUsage: grepple version\n")
+	case "grit", "graph", "boundaries", "languages", "rules", "get", "tree", "repos":
+		return Run([]string{args[0], "--help"})
+	default:
+		return fmt.Errorf("unknown help topic %q", args[0])
+	}
+}
+
 // Run executes a Grepple command.
 func Run(args []string) error {
 	if len(args) == 1 && (args[0] == "--help" || args[0] == "-h") {
 		return writeTopLevelHelp()
+	}
+	if len(args) > 0 && args[0] == "help" {
+		return runHelp(args[1:])
 	}
 	if len(args) == 1 && (args[0] == "--version" || args[0] == "version") {
 		fmt.Fprintln(os.Stdout, versionString())
@@ -414,6 +443,8 @@ func Run(args []string) error {
 	}
 	if len(args) > 0 {
 		switch args[0] {
+		case "search":
+			return runSearch(args[1:])
 		case "graph":
 			return runGraph(args[1:])
 		case "boundaries":

@@ -2781,22 +2781,22 @@
       "name": "searchArgs",
       "kind": "struct",
       "file": "internal/cli/args.go",
-      "line": 24,
-      "endLine": 63,
+      "line": 25,
+      "endLine": 64,
       "underlyingType": "struct{Local bool`arg:\"--local\" help:\"search only the local working directory (this is the default)\"`;Remote bool`arg:\"-R,--remote\" help:\"also query the remote shard/router (default: local only)\"`;Recursive bool`arg:\"-r,--recursive\" help:\"search directories recursively (compatibility alias; already the default)\"`;Server string`arg:\"-s,--server\" placeholder:\"URL\" help:\"remote shard/router URL (implies --remote)\"`;LineNumber bool`arg:\"-n,--line-number\" help:\"include line numbers (enabled by default)\"`;LineOnly bool`arg:\"--line-only\" help:\"print only matching lines; include construct end lines when available\"`;Enclosing bool`arg:\"--enclosing\" help:\"line-only: annotate body matches with the nearest enclosing multi-line syntax range\"`;OnlyMatching bool`arg:\"-o,--only-matching\" help:\"print each matched substring\"`;Files bool`arg:\"-l,--files\" help:\"recursively list files under optional PATHs; glob PATHs filter the listing\"`;FilesWithMatches bool`arg:\"--files-with-matches\" help:\"list paths whose contents match; accepts multiple file, directory, or glob PATHs\"`;Outline bool`arg:\"-O,--outline\" help:\"print each file's structural outline (classes, funcs, interfaces) instead of searching\"`;Depth int`arg:\"--depth\" placeholder:\"N\" help:\"outline: cap nesting depth for JSON/YAML (0 = unlimited)\"`;Count bool`arg:\"-c,--count\" help:\"print matching-line counts per file\"`;CountByRepo bool`arg:\"--count-by-repo\" help:\"print complete counts grouped by repository (compatibility name for --count-summary)\"`;CountSummary bool`arg:\"--count-summary\" help:\"print complete aggregate file/match counts independent of paging\"`;JSON bool`arg:\"--json\" help:\"print full JSON results\"`;JSONMatches bool`arg:\"--json-matches\" help:\"print compact JSON matches\"`;Regex bool`arg:\"-E,--regex\" help:\"use JavaScript regular expressions (default; -E is a compatibility alias)\"`;Fixed bool`arg:\"-F,--fixed-strings\" help:\"treat the pattern as a literal string\"`;IgnoreCase bool`arg:\"-i,--ignore-case\" help:\"ignore case distinctions\"`;InvertMatch bool`arg:\"-v,--invert-match\" help:\"select lines that do not match\"`;Context int`arg:\"-C,--context\" placeholder:\"N\" help:\"print N lines before and after matches\"`;AfterContext int`arg:\"-A,--after-context\" placeholder:\"N\" help:\"print N lines after matches\"`;BeforeContext int`arg:\"-B,--before-context\" placeholder:\"N\" help:\"print N lines before matches\"`;MaxFiles int`arg:\"--max-files\" placeholder:\"N\" help:\"limit matching files\"`;MaxSegments int`arg:\"--max-segments\" placeholder:\"N\" help:\"limit result segments\"`;MaxOutputBytes int`arg:\"--max-output-bytes\" placeholder:\"N\" help:\"cap human-readable output (default 16384; 0 = unlimited; JSON is uncapped)\"`;Anchors bool`arg:\"--anchors\" help:\"emit configured edit anchors as HASH│LINE│content rows (local structural or --line-only output)\"`;NoAnchors bool`arg:\"--no-anchors\" help:\"disable anchors enabled by user settings\"`;AnchorProvider string`arg:\"--anchor-provider\" placeholder:\"NAME\" help:\"use a named anchor provider from ~/.grepple/settings.json (implies --anchors)\"`;Related bool`arg:\"--related\" help:\"show project-local callees and callers for supported source languages (local search only)\"`;FollowRelated int`arg:\"--follow-related\" placeholder:\"N\" help:\"expand up to two unique callees per level (1-3; implies --related)\"`;At string`arg:\"--at\" placeholder:\"PATH:LINE\" help:\"retrieve the declaration containing a local source location\"`;Skip int`arg:\"--skip\" placeholder:\"N\" help:\"skip the first N ranked result files\"`;Limit int`arg:\"--limit\" placeholder:\"N\" help:\"return at most N ranked result files (default 20; 0 = all local; servers cap a page at 100 — page further with --skip)\"`;Repos[]string`arg:\"--repo,separate\" placeholder:\"PATTERN\" help:\"restrict remote repositories; repeatable\"`;Query string`arg:\"positional\" placeholder:\"PATTERN\"`;Globs[]string`arg:\"positional\" placeholder:\"PATH\" help:\"file, directory, or glob to search; repeat for multiple roots\"`;}",
       "members": [
         {
           "name": "Description",
           "kind": "method",
-          "line": 65,
-          "endLine": 67,
+          "line": 66,
+          "endLine": 68,
           "result": "string"
         },
         {
           "name": "AfterContext",
           "kind": "property",
-          "line": 47,
-          "endLine": 47,
+          "line": 48,
+          "endLine": 48,
           "result": "int",
           "structTag": {
             "value": "arg:\"-A,--after-context\" placeholder:\"N\" help:\"print N lines after matches\""
@@ -2805,8 +2805,8 @@
         {
           "name": "AnchorProvider",
           "kind": "property",
-          "line": 54,
-          "endLine": 54,
+          "line": 55,
+          "endLine": 55,
           "result": "string",
           "structTag": {
             "value": "arg:\"--anchor-provider\" placeholder:\"NAME\" help:\"use a named anchor provider from ~/.grepple/settings.json (implies --anchors)\""
@@ -2815,8 +2815,8 @@
         {
           "name": "Anchors",
           "kind": "property",
-          "line": 52,
-          "endLine": 52,
+          "line": 53,
+          "endLine": 53,
           "result": "bool",
           "structTag": {
             "value": "arg:\"--anchors\" help:\"emit configured edit anchors as HASH│LINE│content rows (local structural or --line-only output)\""
@@ -2825,8 +2825,8 @@
         {
           "name": "At",
           "kind": "property",
-          "line": 57,
-          "endLine": 57,
+          "line": 58,
+          "endLine": 58,
           "result": "string",
           "structTag": {
             "value": "arg:\"--at\" placeholder:\"PATH:LINE\" help:\"retrieve the declaration containing a local source location\""
@@ -2835,8 +2835,8 @@
         {
           "name": "BeforeContext",
           "kind": "property",
-          "line": 48,
-          "endLine": 48,
+          "line": 49,
+          "endLine": 49,
           "result": "int",
           "structTag": {
             "value": "arg:\"-B,--before-context\" placeholder:\"N\" help:\"print N lines before matches\""
@@ -2845,8 +2845,8 @@
         {
           "name": "Context",
           "kind": "property",
-          "line": 46,
-          "endLine": 46,
+          "line": 47,
+          "endLine": 47,
           "result": "int",
           "structTag": {
             "value": "arg:\"-C,--context\" placeholder:\"N\" help:\"print N lines before and after matches\""
@@ -2855,8 +2855,8 @@
         {
           "name": "Count",
           "kind": "property",
-          "line": 37,
-          "endLine": 37,
+          "line": 38,
+          "endLine": 38,
           "result": "bool",
           "structTag": {
             "value": "arg:\"-c,--count\" help:\"print matching-line counts per file\""
@@ -2865,8 +2865,8 @@
         {
           "name": "CountByRepo",
           "kind": "property",
-          "line": 38,
-          "endLine": 38,
+          "line": 39,
+          "endLine": 39,
           "result": "bool",
           "structTag": {
             "value": "arg:\"--count-by-repo\" help:\"print complete counts grouped by repository (compatibility name for --count-summary)\""
@@ -2875,8 +2875,8 @@
         {
           "name": "CountSummary",
           "kind": "property",
-          "line": 39,
-          "endLine": 39,
+          "line": 40,
+          "endLine": 40,
           "result": "bool",
           "structTag": {
             "value": "arg:\"--count-summary\" help:\"print complete aggregate file/match counts independent of paging\""
@@ -2885,8 +2885,8 @@
         {
           "name": "Depth",
           "kind": "property",
-          "line": 36,
-          "endLine": 36,
+          "line": 37,
+          "endLine": 37,
           "result": "int",
           "structTag": {
             "value": "arg:\"--depth\" placeholder:\"N\" help:\"outline: cap nesting depth for JSON/YAML (0 = unlimited)\""
@@ -2895,8 +2895,8 @@
         {
           "name": "Enclosing",
           "kind": "property",
-          "line": 31,
-          "endLine": 31,
+          "line": 32,
+          "endLine": 32,
           "result": "bool",
           "structTag": {
             "value": "arg:\"--enclosing\" help:\"line-only: annotate body matches with the nearest enclosing multi-line syntax range\""
@@ -2905,8 +2905,8 @@
         {
           "name": "Files",
           "kind": "property",
-          "line": 33,
-          "endLine": 33,
+          "line": 34,
+          "endLine": 34,
           "result": "bool",
           "structTag": {
             "value": "arg:\"-l,--files\" help:\"recursively list files under optional PATHs; glob PATHs filter the listing\""
@@ -2915,8 +2915,8 @@
         {
           "name": "FilesWithMatches",
           "kind": "property",
-          "line": 34,
-          "endLine": 34,
+          "line": 35,
+          "endLine": 35,
           "result": "bool",
           "structTag": {
             "value": "arg:\"--files-with-matches\" help:\"list paths whose contents match; accepts multiple file, directory, or glob PATHs\""
@@ -2925,8 +2925,8 @@
         {
           "name": "Fixed",
           "kind": "property",
-          "line": 43,
-          "endLine": 43,
+          "line": 44,
+          "endLine": 44,
           "result": "bool",
           "structTag": {
             "value": "arg:\"-F,--fixed-strings\" help:\"treat the pattern as a literal string\""
@@ -2935,8 +2935,8 @@
         {
           "name": "FollowRelated",
           "kind": "property",
-          "line": 56,
-          "endLine": 56,
+          "line": 57,
+          "endLine": 57,
           "result": "int",
           "structTag": {
             "value": "arg:\"--follow-related\" placeholder:\"N\" help:\"expand up to two unique callees per level (1-3; implies --related)\""
@@ -2945,8 +2945,8 @@
         {
           "name": "Globs",
           "kind": "property",
-          "line": 62,
-          "endLine": 62,
+          "line": 63,
+          "endLine": 63,
           "result": "[]string",
           "structTag": {
             "value": "arg:\"positional\" placeholder:\"PATH\" help:\"file, directory, or glob to search; repeat for multiple roots\""
@@ -2955,8 +2955,8 @@
         {
           "name": "IgnoreCase",
           "kind": "property",
-          "line": 44,
-          "endLine": 44,
+          "line": 45,
+          "endLine": 45,
           "result": "bool",
           "structTag": {
             "value": "arg:\"-i,--ignore-case\" help:\"ignore case distinctions\""
@@ -2965,8 +2965,8 @@
         {
           "name": "InvertMatch",
           "kind": "property",
-          "line": 45,
-          "endLine": 45,
+          "line": 46,
+          "endLine": 46,
           "result": "bool",
           "structTag": {
             "value": "arg:\"-v,--invert-match\" help:\"select lines that do not match\""
@@ -2975,8 +2975,8 @@
         {
           "name": "JSON",
           "kind": "property",
-          "line": 40,
-          "endLine": 40,
+          "line": 41,
+          "endLine": 41,
           "result": "bool",
           "structTag": {
             "value": "arg:\"--json\" help:\"print full JSON results\""
@@ -2985,8 +2985,8 @@
         {
           "name": "JSONMatches",
           "kind": "property",
-          "line": 41,
-          "endLine": 41,
+          "line": 42,
+          "endLine": 42,
           "result": "bool",
           "structTag": {
             "value": "arg:\"--json-matches\" help:\"print compact JSON matches\""
@@ -2995,8 +2995,8 @@
         {
           "name": "Limit",
           "kind": "property",
-          "line": 59,
-          "endLine": 59,
+          "line": 60,
+          "endLine": 60,
           "result": "int",
           "structTag": {
             "value": "arg:\"--limit\" placeholder:\"N\" help:\"return at most N ranked result files (default 20; 0 = all local; servers cap a page at 100 — page further with --skip)\""
@@ -3005,8 +3005,8 @@
         {
           "name": "LineNumber",
           "kind": "property",
-          "line": 29,
-          "endLine": 29,
+          "line": 30,
+          "endLine": 30,
           "result": "bool",
           "structTag": {
             "value": "arg:\"-n,--line-number\" help:\"include line numbers (enabled by default)\""
@@ -3015,8 +3015,8 @@
         {
           "name": "LineOnly",
           "kind": "property",
-          "line": 30,
-          "endLine": 30,
+          "line": 31,
+          "endLine": 31,
           "result": "bool",
           "structTag": {
             "value": "arg:\"--line-only\" help:\"print only matching lines; include construct end lines when available\""
@@ -3025,8 +3025,8 @@
         {
           "name": "Local",
           "kind": "property",
-          "line": 25,
-          "endLine": 25,
+          "line": 26,
+          "endLine": 26,
           "result": "bool",
           "structTag": {
             "value": "arg:\"--local\" help:\"search only the local working directory (this is the default)\""
@@ -3035,8 +3035,8 @@
         {
           "name": "MaxFiles",
           "kind": "property",
-          "line": 49,
-          "endLine": 49,
+          "line": 50,
+          "endLine": 50,
           "result": "int",
           "structTag": {
             "value": "arg:\"--max-files\" placeholder:\"N\" help:\"limit matching files\""
@@ -3045,8 +3045,8 @@
         {
           "name": "MaxOutputBytes",
           "kind": "property",
-          "line": 51,
-          "endLine": 51,
+          "line": 52,
+          "endLine": 52,
           "result": "int",
           "structTag": {
             "value": "arg:\"--max-output-bytes\" placeholder:\"N\" help:\"cap human-readable output (default 16384; 0 = unlimited; JSON is uncapped)\""
@@ -3055,8 +3055,8 @@
         {
           "name": "MaxSegments",
           "kind": "property",
-          "line": 50,
-          "endLine": 50,
+          "line": 51,
+          "endLine": 51,
           "result": "int",
           "structTag": {
             "value": "arg:\"--max-segments\" placeholder:\"N\" help:\"limit result segments\""
@@ -3065,8 +3065,8 @@
         {
           "name": "NoAnchors",
           "kind": "property",
-          "line": 53,
-          "endLine": 53,
+          "line": 54,
+          "endLine": 54,
           "result": "bool",
           "structTag": {
             "value": "arg:\"--no-anchors\" help:\"disable anchors enabled by user settings\""
@@ -3075,8 +3075,8 @@
         {
           "name": "OnlyMatching",
           "kind": "property",
-          "line": 32,
-          "endLine": 32,
+          "line": 33,
+          "endLine": 33,
           "result": "bool",
           "structTag": {
             "value": "arg:\"-o,--only-matching\" help:\"print each matched substring\""
@@ -3085,8 +3085,8 @@
         {
           "name": "Outline",
           "kind": "property",
-          "line": 35,
-          "endLine": 35,
+          "line": 36,
+          "endLine": 36,
           "result": "bool",
           "structTag": {
             "value": "arg:\"-O,--outline\" help:\"print each file's structural outline (classes, funcs, interfaces) instead of searching\""
@@ -3095,8 +3095,8 @@
         {
           "name": "Query",
           "kind": "property",
-          "line": 61,
-          "endLine": 61,
+          "line": 62,
+          "endLine": 62,
           "result": "string",
           "structTag": {
             "value": "arg:\"positional\" placeholder:\"PATTERN\""
@@ -3105,8 +3105,8 @@
         {
           "name": "Recursive",
           "kind": "property",
-          "line": 27,
-          "endLine": 27,
+          "line": 28,
+          "endLine": 28,
           "result": "bool",
           "structTag": {
             "value": "arg:\"-r,--recursive\" help:\"search directories recursively (compatibility alias; already the default)\""
@@ -3115,8 +3115,8 @@
         {
           "name": "Regex",
           "kind": "property",
-          "line": 42,
-          "endLine": 42,
+          "line": 43,
+          "endLine": 43,
           "result": "bool",
           "structTag": {
             "value": "arg:\"-E,--regex\" help:\"use JavaScript regular expressions (default; -E is a compatibility alias)\""
@@ -3125,8 +3125,8 @@
         {
           "name": "Related",
           "kind": "property",
-          "line": 55,
-          "endLine": 55,
+          "line": 56,
+          "endLine": 56,
           "result": "bool",
           "structTag": {
             "value": "arg:\"--related\" help:\"show project-local callees and callers for supported source languages (local search only)\""
@@ -3135,8 +3135,8 @@
         {
           "name": "Remote",
           "kind": "property",
-          "line": 26,
-          "endLine": 26,
+          "line": 27,
+          "endLine": 27,
           "result": "bool",
           "structTag": {
             "value": "arg:\"-R,--remote\" help:\"also query the remote shard/router (default: local only)\""
@@ -3145,8 +3145,8 @@
         {
           "name": "Repos",
           "kind": "property",
-          "line": 60,
-          "endLine": 60,
+          "line": 61,
+          "endLine": 61,
           "result": "[]string",
           "structTag": {
             "value": "arg:\"--repo,separate\" placeholder:\"PATTERN\" help:\"restrict remote repositories; repeatable\""
@@ -3155,8 +3155,8 @@
         {
           "name": "Server",
           "kind": "property",
-          "line": 28,
-          "endLine": 28,
+          "line": 29,
+          "endLine": 29,
           "result": "string",
           "structTag": {
             "value": "arg:\"-s,--server\" placeholder:\"URL\" help:\"remote shard/router URL (implies --remote)\""
@@ -3165,8 +3165,8 @@
         {
           "name": "Skip",
           "kind": "property",
-          "line": 58,
-          "endLine": 58,
+          "line": 59,
+          "endLine": 59,
           "result": "int",
           "structTag": {
             "value": "arg:\"--skip\" placeholder:\"N\" help:\"skip the first N ranked result files\""
@@ -3447,8 +3447,8 @@
       "name": "Run",
       "kind": "function",
       "file": "internal/cli/args.go",
-      "line": 407,
-      "endLine": 442,
+      "line": 433,
+      "endLine": 473,
       "parameters": [
         "[]string"
       ],
