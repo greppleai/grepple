@@ -177,11 +177,11 @@ func graphContinuationCommand(mode string, paths []string, truncation *navigatio
 }
 
 func boundaryResultMetadata(values boundariesArgs, report boundariesOutput) *api.ResultMetadata {
-	total := len(report.Candidates) + len(report.TypeBoundaries)
+	total := len(report.Candidates) + len(report.TypeBoundaries) + len(report.FacadeBypasses)
 	returned := total
 	omittedCandidates := 0
 	if !values.JSON {
-		returned = boundaryVisibleCount(len(report.Candidates), values.Limit) + boundaryVisibleCount(len(report.TypeBoundaries), values.Limit)
+		returned = boundaryVisibleCount(len(report.Candidates), values.Limit) + boundaryVisibleCount(len(report.TypeBoundaries), values.Limit) + boundaryVisibleCount(len(report.FacadeBypasses), values.Limit)
 		omittedCandidates = total - returned
 	}
 	omittedSources := 0
@@ -203,6 +203,9 @@ func boundaryResultMetadata(values boundariesArgs, report boundariesOutput) *api
 
 func boundaryContinuationCommand(values boundariesArgs, removeSourceCap bool) string {
 	parts := []string{"grepple", "boundaries", "--json", "--min-occurrences", fmt.Sprint(values.MinOccurrences)}
+	if values.Policy != "" {
+		parts = append(parts, "--policy", quoteCommandArgument(values.Policy))
+	}
 	if removeSourceCap {
 		parts = append(parts, "--max-files", "0")
 	} else if values.MaxFiles > 0 {

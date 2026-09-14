@@ -342,7 +342,21 @@ func navigationCallsByDisplay(calls []NavigationCall) map[string]NavigationCall 
 
 func assertGoNavigationFieldFacts(t *testing.T, fields []NavigationField) {
 	t.Helper()
-	if len(fields) != 1 || fields[0].OwnerType != "Service" || fields[0].Name != "client" || fields[0].Type != "Client" || fields[0].ImportPath != "example.com/project/worker" || fields[0].Line != 3 {
+	if len(fields) != 1 || fields[0].OwnerType != "Service" || fields[0].Name != "client" || fields[0].Type != "Client" || fields[0].ImportPath != "example.com/project/worker" || fields[0].Line != 3 || fields[0].Visibility != NavigationVisibilityNonPublic {
 		t.Fatalf("Go field facts = %+v", fields)
+	}
+}
+
+func TestNavigationFieldVisibilityRequiresPublicOwnerAndField(t *testing.T) {
+	graph := BuildNavigationGraph(`package sample
+type Public struct { Exported string; hidden string }
+type private struct { Exported string }
+`, "go", "model.go")
+	visibility := map[string]NavigationVisibility{}
+	for _, field := range graph.Fields {
+		visibility[field.OwnerType+"."+field.Name] = field.Visibility
+	}
+	if visibility["Public.Exported"] != NavigationVisibilityPublic || visibility["Public.hidden"] != NavigationVisibilityNonPublic || visibility["private.Exported"] != NavigationVisibilityNonPublic {
+		t.Fatalf("field visibility=%v", visibility)
 	}
 }

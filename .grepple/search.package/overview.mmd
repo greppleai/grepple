@@ -2,7 +2,7 @@ classDiagram
     %% grepple:package-default github.com/greppleai/grepple/search
     %% grepple:language-default go
     direction LR
-    note "Package search provides file discovery, query and repository filtering, paging, match workers, context, and wire-result construction. | package github.com/greppleai/grepple/search | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=18, declarations=48, exportedTypes=25, internalTypes=23, members=305, exportedFunctions=30, fiberRoutes=0, relations=86"
+    note "Package search provides file discovery, query and repository filtering, paging, match workers, context, and wire-result construction. | package github.com/greppleai/grepple/search | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=22, declarations=58, exportedTypes=35, internalTypes=23, members=341, exportedFunctions=34, fiberRoutes=0, relations=106"
     namespace data_contracts {
         class BoundaryBreadth["BoundaryBreadth · search/boundary_model.go:39-43"] {
             +Files: int
@@ -10,18 +10,22 @@ classDiagram
             +Packages: int
         }
         <<struct>> BoundaryBreadth
-        class BoundaryCandidate["BoundaryCandidate · search/boundaries.go:12-25"] {
+        class BoundaryCandidate["BoundaryCandidate · search/boundaries.go:12-29"] {
             +CallableCoUsage: []BoundaryPattern
             +Callables: []string
             +ConsumerDetails: []BoundaryConsumer
             +Consumers: BoundaryBreadth
+            +Containment: BoundaryContainment
             +ExternalCallableSurface: BoundarySurface
+            +ExternalFieldSurface: BoundarySurface
             +Language: string
             +MemberCallCombinations: []BoundaryPattern
             +OrderedSequences: []BoundaryPattern
             +OwnerFile: string
             +Reasons: []string
             +Risk: BoundaryRisk
+            +Signals: []string
+            +Spread: BoundarySpread
             +UnresolvedCalls: int
         }
         <<struct>> BoundaryCandidate
@@ -33,6 +37,36 @@ classDiagram
             +Path: string
         }
         <<struct>> BoundaryConsumer
+        class BoundaryContainmentRule["BoundaryContainmentRule · search/boundary_policy.go:32-36"] {
+            +ConsumerPaths: []string
+            +Name: string
+            +OwnerPaths: []string
+        }
+        <<struct>> BoundaryContainmentRule
+        class BoundaryFacadeBypass["BoundaryFacadeBypass · search/boundary_policy.go:73-79"] {
+            +Caller: BoundaryConsumer
+            +Confidence: string
+            +Facade: string
+            +Implementation: string
+            +Target: BoundaryConsumer
+        }
+        <<struct>> BoundaryFacadeBypass
+        class BoundaryFacadeRule["BoundaryFacadeRule · search/boundary_policy.go:39-43"] {
+            +FacadePaths: []string
+            +ImplementationPaths: []string
+            +Name: string
+        }
+        <<struct>> BoundaryFacadeRule
+        class BoundaryLayer["BoundaryLayer · search/boundary_policy.go:26-29"] {
+            +Name: string
+            +Paths: []string
+        }
+        <<struct>> BoundaryLayer
+        class BoundaryPathClassification["BoundaryPathClassification · search/boundary_policy.go:46-49"] {
+            +Category: string
+            +Paths: []string
+        }
+        <<struct>> BoundaryPathClassification
         class BoundaryPattern["BoundaryPattern · search/boundary_model.go:61-67"] {
             +Consumers: []BoundaryConsumer
             +Files: int
@@ -41,12 +75,21 @@ classDiagram
             +Packages: int
         }
         <<struct>> BoundaryPattern
+        class BoundaryPolicy["BoundaryPolicy · search/boundary_policy.go:17-23"] {
+            +Classifications: []BoundaryPathClassification
+            +Containments: []BoundaryContainmentRule
+            +Facades: []BoundaryFacadeRule
+            +Layers: []BoundaryLayer
+            +Schema: string
+        }
+        <<struct>> BoundaryPolicy
         class BoundarySurface["BoundarySurface · search/boundary_model.go:46-49"] {
             +Declared: int
             +External: int
         }
         <<struct>> BoundarySurface
-        class BoundaryTypeRoles["BoundaryTypeRoles · search/type_boundaries.go:25-31"] {
+        class BoundaryTypeRoles["BoundaryTypeRoles · search/type_boundaries.go:25-32"] {
+            +Fields: int
             +Locals: int
             +Parameters: int
             +Receivers: int
@@ -54,9 +97,10 @@ classDiagram
             +Unknown: int
         }
         <<struct>> BoundaryTypeRoles
-        class BoundaryTypeSpread["BoundaryTypeSpread · search/type_boundaries.go:42-59"] {
+        class BoundaryTypeSpread["BoundaryTypeSpread · search/type_boundaries.go:44-64"] {
             +CanonicalType: string
             +Consumers: BoundaryBreadth
+            +Containment: BoundaryContainment
             +External: bool
             +ImportPath: string
             +Language: string
@@ -67,15 +111,26 @@ classDiagram
             +Reasons: []string
             +Risk: BoundaryRisk
             +Roles: BoundaryTypeRoles
+            +Spread: BoundarySpread
+            +Surfaces: BoundaryTypeSurfaces
             +Tests: BoundaryBreadth
             +Type: string
             +UsageDetails: []BoundaryTypeUsage
             +Usages: int
         }
         <<struct>> BoundaryTypeSpread
-        class BoundaryTypeUsage["BoundaryTypeUsage · search/type_boundaries.go:34-39"] {
+        class BoundaryTypeSurfaces["BoundaryTypeSurfaces · search/boundary_surface.go:16-22"] {
+            +BodyLocal: int
+            +FieldRepresentation: int
+            +PrivateSignature: int
+            +PublicAPI: int
+            +Unknown: int
+        }
+        <<struct>> BoundaryTypeSurfaces
+        class BoundaryTypeUsage["BoundaryTypeUsage · search/type_boundaries.go:35-41"] {
             +Public: bool
             +Role: string
+            +Surface: BoundaryTypeSurface
             +Test: bool
             +ID: string
             +Line: int
@@ -173,10 +228,16 @@ classDiagram
         <<struct>> typeScriptConfig
     }
     namespace exported_types {
+        class BoundaryContainment["BoundaryContainment = string · search/boundary_policy.go:63"]
+        <<type>> BoundaryContainment
         class BoundaryRisk["BoundaryRisk = string · search/boundary_model.go:12"]
         <<type>> BoundaryRisk
+        class BoundarySpread["BoundarySpread = string · search/boundary_policy.go:52"]
+        <<type>> BoundarySpread
         class BoundaryTypeOrigin["BoundaryTypeOrigin = string · search/type_boundaries.go:13"]
         <<type>> BoundaryTypeOrigin
+        class BoundaryTypeSurface["BoundaryTypeSurface = string · search/boundary_surface.go:4"]
+        <<type>> BoundaryTypeSurface
         class FileMatch["FileMatch · search/model.go:63-72"]
         <<struct>> FileMatch
         class NavigationBuildOptions["NavigationBuildOptions · search/related.go:166-168"]
@@ -193,19 +254,19 @@ classDiagram
         <<struct>> RepoFilter
     }
     namespace internal_types {
-        class boundaryDependencyContext["boundaryDependencyContext · search/type_boundaries.go:69-71"]
+        class boundaryDependencyContext["boundaryDependencyContext · search/type_boundaries.go:74-76"]
         <<struct>> boundaryDependencyContext
         class boundaryInteraction["boundaryInteraction · search/boundary_model.go:69-71"]
         <<struct>> boundaryInteraction
-        class boundaryOwnerAnalysis["boundaryOwnerAnalysis · search/boundaries.go:32-39"]
+        class boundaryOwnerAnalysis["boundaryOwnerAnalysis · search/boundaries.go:36-45"]
         <<struct>> boundaryOwnerAnalysis
-        class boundaryOwnerKey["boundaryOwnerKey · search/boundaries.go:27-30"]
+        class boundaryOwnerKey["boundaryOwnerKey · search/boundaries.go:31-34"]
         <<struct>> boundaryOwnerKey
         class boundaryPatternGroup["boundaryPatternGroup · search/boundary_model.go:73-76"]
         <<struct>> boundaryPatternGroup
-        class boundaryTypeCandidate["boundaryTypeCandidate · search/boundaries.go:173-176"]
+        class boundaryTypeCandidate["boundaryTypeCandidate · search/boundaries.go:190-193"]
         <<struct>> boundaryTypeCandidate
-        class boundaryTypeSpreadKey["boundaryTypeSpreadKey · search/type_boundaries.go:61-67"]
+        class boundaryTypeSpreadKey["boundaryTypeSpreadKey · search/type_boundaries.go:66-72"]
         <<struct>> boundaryTypeSpreadKey
         class candidateCollector["candidateCollector · search/search_glob.go:146-152"]
         <<struct>> candidateCollector
@@ -243,14 +304,26 @@ classDiagram
             +AggregateRepoCounts([]FileMatch): []api.RepoCount
         }
         <<function>> AggregateRepoCounts
-        class AnalyzeBoundaries["AnalyzeBoundaries · search/boundaries.go:44-72"] {
+        class AnalyzeBoundaries["AnalyzeBoundaries · search/boundaries.go:50-52"] {
             +AnalyzeBoundaries(parser.NavigationGraph, int): tuple~[]BoundaryCandidate&#44;error~
         }
         <<function>> AnalyzeBoundaries
-        class AnalyzeTypeBoundaries["AnalyzeTypeBoundaries · search/type_boundaries.go:165-175"] {
+        class AnalyzeBoundariesWithPolicy["AnalyzeBoundariesWithPolicy · search/boundaries.go:55-87"] {
+            +AnalyzeBoundariesWithPolicy(parser.NavigationGraph, int, BoundaryPolicy): tuple~[]BoundaryCandidate&#44;error~
+        }
+        <<function>> AnalyzeBoundariesWithPolicy
+        class AnalyzeFacadeBypasses["AnalyzeFacadeBypasses · search/boundary_policy.go:211-237"] {
+            +AnalyzeFacadeBypasses(parser.NavigationGraph, BoundaryPolicy): []BoundaryFacadeBypass
+        }
+        <<function>> AnalyzeFacadeBypasses
+        class AnalyzeTypeBoundaries["AnalyzeTypeBoundaries · search/type_boundaries.go:170-172"] {
             +AnalyzeTypeBoundaries(parser.NavigationGraph, int): tuple~[]BoundaryTypeSpread&#44;error~
         }
         <<function>> AnalyzeTypeBoundaries
+        class AnalyzeTypeBoundariesWithPolicy["AnalyzeTypeBoundariesWithPolicy · search/type_boundaries.go:175-193"] {
+            +AnalyzeTypeBoundariesWithPolicy(parser.NavigationGraph, int, BoundaryPolicy): tuple~[]BoundaryTypeSpread&#44;error~
+        }
+        <<function>> AnalyzeTypeBoundariesWithPolicy
         class At["At · search/at.go:16-63"] {
             +At(Params): tuple~*FileMatch&#44;error~
         }
@@ -355,6 +428,10 @@ classDiagram
             +ToResult(FileMatch, []parser.Segment, int, int, int): api.FileResult
         }
         <<function>> ToResult
+        class ValidateBoundaryPolicy["ValidateBoundaryPolicy · search/boundary_policy.go:82-96"] {
+            +ValidateBoundaryPolicy(BoundaryPolicy): error
+        }
+        <<function>> ValidateBoundaryPolicy
         class WorkerCount["WorkerCount · search/workers.go:19-34"] {
             +WorkerCount(): int
         }
@@ -362,21 +439,38 @@ classDiagram
     }
     AggregateRepoCounts "1" ..> "*" FileMatch : parameter 1
     AnalyzeBoundaries "1" ..> "*" BoundaryCandidate : result 1
+    AnalyzeBoundariesWithPolicy "1" ..> "*" BoundaryCandidate : result 1
+    AnalyzeBoundariesWithPolicy "1" ..> "1" BoundaryPolicy : parameter 3
+    AnalyzeFacadeBypasses "1" ..> "*" BoundaryFacadeBypass : result 1
+    AnalyzeFacadeBypasses "1" ..> "1" BoundaryPolicy : parameter 2
     AnalyzeTypeBoundaries "1" ..> "*" BoundaryTypeSpread : result 1
+    AnalyzeTypeBoundariesWithPolicy "1" ..> "1" BoundaryPolicy : parameter 3
+    AnalyzeTypeBoundariesWithPolicy "1" ..> "*" BoundaryTypeSpread : result 1
     At "1" ..> "1" FileMatch : result 1
     At "1" ..> "1" Params : parameter 1
     BoundaryCandidate "1" --> "1" BoundaryBreadth : field Consumers
     BoundaryCandidate "1" --> "*" BoundaryConsumer : field ConsumerDetails
+    BoundaryCandidate "1" --> "1" BoundaryContainment : field Containment
     BoundaryCandidate "1" --> "*" BoundaryPattern : field CallableCoUsage; field MemberCallCombinations; field OrderedSequences
     BoundaryCandidate "1" --> "1" BoundaryRisk : field Risk
-    BoundaryCandidate "1" --> "1" BoundarySurface : field ExternalCallableSurface
+    BoundaryCandidate "1" --> "1" BoundarySpread : field Spread
+    BoundaryCandidate "1" --> "1" BoundarySurface : field ExternalCallableSurface; field ExternalFieldSurface
+    BoundaryFacadeBypass "1" --> "1" BoundaryConsumer : field Caller; field Target
     BoundaryPattern "1" --> "*" BoundaryConsumer : field Consumers
+    BoundaryPolicy "1" --> "*" BoundaryContainmentRule : field Containments
+    BoundaryPolicy "1" --> "*" BoundaryFacadeRule : field Facades
+    BoundaryPolicy "1" --> "*" BoundaryLayer : field Layers
+    BoundaryPolicy "1" --> "*" BoundaryPathClassification : field Classifications
     BoundaryTypeSpread "1" --> "1" BoundaryBreadth : field Consumers; field Production; field Tests
+    BoundaryTypeSpread "1" --> "1" BoundaryContainment : field Containment
     BoundaryTypeSpread "1" --> "1" BoundaryRisk : field Risk
+    BoundaryTypeSpread "1" --> "1" BoundarySpread : field Spread
     BoundaryTypeSpread "1" --> "1" BoundaryTypeOrigin : field Origin
     BoundaryTypeSpread "1" --> "1" BoundaryTypeRoles : field Roles
+    BoundaryTypeSpread "1" --> "1" BoundaryTypeSurfaces : field Surfaces
     BoundaryTypeSpread "1" --> "*" BoundaryTypeUsage : field PublicExposures; field UsageDetails
     BoundaryConsumer <|-- BoundaryTypeUsage : embedded type
+    BoundaryTypeUsage "1" --> "1" BoundaryTypeSurface : field Surface
     BuildNavigationGraphWithOptions "1" ..> "1" NavigationBuildOptions : parameter 2
     BuildNavigationGraphWithOptions "1" ..> "1" NavigationSourceStats : result 2
     BuildNavigationGraphWithStats "1" ..> "1" NavigationSourceStats : result 2
@@ -405,6 +499,7 @@ classDiagram
     RepoFilter "1" --> "*" repoPattern : field exclude; field include
     ResolveRequest "1" ..> "1" Params : result 1
     ToResult "1" ..> "1" FileMatch : parameter 1
+    ValidateBoundaryPolicy "1" ..> "1" BoundaryPolicy : parameter 1
     boundaryOwnerAnalysis "1" --> "*" boundaryInteraction : field interactions
     boundaryPatternGroup "1" --> "*" BoundaryConsumer : field consumers
     boundaryTypeSpreadKey "1" --> "1" BoundaryTypeOrigin : field origin

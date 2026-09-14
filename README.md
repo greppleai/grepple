@@ -229,15 +229,16 @@ CLI graph, focused graph query, `--related`, boundary, and extraction workflows 
 
 ## Boundary analysis
 
-`grepple boundaries [PATH...]` reports both repeated owner-file workflows and concrete type spread. Workflow candidates group resolved calls by target owner file and retain only callable co-usage, ordered sequences, or member-plus-call combinations repeated across at least two external files. Type candidates report import-qualified concrete types or unambiguously owned project types used across at least two files, including dependency origin (`local`, `first-party`, `standard-library`, `third-party`, or `unresolved`), heuristic risk and stable reasons, production/test reach, parameter/result/receiver/local roles, public-signature exposure, and evidence locations. Critical/high type signals prioritize third-party public exposure and production spread; standard-library, test-only, and package-internal local spread remain informational. Findings remain review leads rather than asserted violations.
+`grepple boundaries [PATH...]` reports repeated owner-file workflows, concrete type spread, owned field/property surface, and policy-backed facade bypasses. Spread is classified as `package-internal`, `cross-package`, `cross-layer`, or `public-api`; containment is `approved`, `escaped`, or `unknown`. Type usage distinguishes public API, private signatures, field representation, and body-local use. Repository policy can identify layers, containment rules, facade/implementation path sets, and intentional utility, test-framework, declarative-configuration, lifecycle-cleanup, or adapter-protocol paths. Without policy, same-directory ownership facts can establish approved package-internal use, but cross-boundary intent remains unknown. Signals are conservative review leads, never policy-independent violations.
 
 ```bash
 grepple boundaries parser
 grepple boundaries ./src ./lib --min-occurrences 3
 grepple boundaries --json ./internal
+grepple boundaries --policy .grepple/boundary-policy.json --json .
 ```
 
-Human output is bounded to 16,384 bytes and shows at most 20 ranked candidates per workflow/type section by default; evidence locations and omissions remain explicit. `--limit 0` shows all candidates, while `grepple-boundaries-v2` JSON is complete. Per-file parser facts are reused from `.grepple/cache/navigation/`; fully resolved boundary reports are additionally cached by source universe under `.grepple/cache/boundaries/`. Use `--no-cache` to bypass both boundary cache layers. `--max-files` remains explicit when source discovery is incomplete.
+Human output is bounded to 16,384 bytes and shows at most 20 ranked candidates per workflow/type/facade section by default; evidence and omissions remain explicit. `--limit 0` shows all candidates, while `grepple-boundaries-v3` JSON is complete. Per-file parser facts are reused from `.grepple/cache/navigation/`; resolved graph inputs are cached under `.grepple/cache/boundaries/`. Use `--no-cache` to bypass both cache layers. `--max-files` remains explicit when source discovery is incomplete.
 
 ## Architecture and flow extraction
 

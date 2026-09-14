@@ -26,6 +26,7 @@ type BoundaryTypeRoles struct {
 	Parameters int `json:"parameters"`
 	Results    int `json:"results"`
 	Receivers  int `json:"receivers"`
+	Fields     int `json:"fields"`
 	Locals     int `json:"locals"`
 	Unknown    int `json:"unknown"`
 }
@@ -33,29 +34,33 @@ type BoundaryTypeRoles struct {
 // BoundaryTypeUsage identifies one callable and role contributing to a type's spread.
 type BoundaryTypeUsage struct {
 	BoundaryConsumer
-	Role   string `json:"role"`
-	Public bool   `json:"public,omitempty"`
-	Test   bool   `json:"test,omitempty"`
+	Role    string              `json:"role"`
+	Surface BoundaryTypeSurface `json:"surface"`
+	Public  bool                `json:"public,omitempty"`
+	Test    bool                `json:"test,omitempty"`
 }
 
 // BoundaryTypeSpread describes a concrete imported or project-owned type used across files.
 type BoundaryTypeSpread struct {
-	Type            string              `json:"type"`
-	ImportPath      string              `json:"importPath,omitempty"`
-	CanonicalType   string              `json:"canonicalType"`
-	Language        string              `json:"language"`
-	OwnerFile       string              `json:"ownerFile,omitempty"`
-	Origin          BoundaryTypeOrigin  `json:"origin"`
-	Risk            BoundaryRisk        `json:"risk"`
-	Reasons         []string            `json:"reasons"`
-	External        bool                `json:"external"` // Compatibility: true when ImportPath is non-empty.
-	Usages          int                 `json:"usages"`
-	Consumers       BoundaryBreadth     `json:"consumers"`
-	Production      BoundaryBreadth     `json:"production"`
-	Tests           BoundaryBreadth     `json:"tests"`
-	Roles           BoundaryTypeRoles   `json:"roles"`
-	PublicExposures []BoundaryTypeUsage `json:"publicExposures,omitempty"`
-	UsageDetails    []BoundaryTypeUsage `json:"usageDetails"`
+	Type            string               `json:"type"`
+	ImportPath      string               `json:"importPath,omitempty"`
+	CanonicalType   string               `json:"canonicalType"`
+	Language        string               `json:"language"`
+	OwnerFile       string               `json:"ownerFile,omitempty"`
+	Origin          BoundaryTypeOrigin   `json:"origin"`
+	Risk            BoundaryRisk         `json:"risk"`
+	Spread          BoundarySpread       `json:"spread"`
+	Containment     BoundaryContainment  `json:"containment"`
+	Reasons         []string             `json:"reasons"`
+	External        bool                 `json:"external"` // Compatibility: true when ImportPath is non-empty.
+	Usages          int                  `json:"usages"`
+	Consumers       BoundaryBreadth      `json:"consumers"`
+	Production      BoundaryBreadth      `json:"production"`
+	Tests           BoundaryBreadth      `json:"tests"`
+	Roles           BoundaryTypeRoles    `json:"roles"`
+	Surfaces        BoundaryTypeSurfaces `json:"surfaces"`
+	PublicExposures []BoundaryTypeUsage  `json:"publicExposures,omitempty"`
+	UsageDetails    []BoundaryTypeUsage  `json:"usageDetails"`
 }
 
 type boundaryTypeSpreadKey struct {
@@ -163,13 +168,26 @@ func normalizeBoundaryImportPath(path string) string {
 // explicit uses span at least two files. Imported types are identified by resolved
 // import path; local types require an unambiguous declaration owner.
 func AnalyzeTypeBoundaries(graph parser.NavigationGraph, minOccurrences int) ([]BoundaryTypeSpread, error) {
+	return AnalyzeTypeBoundariesWithPolicy(graph, minOccurrences, BoundaryPolicy{})
+}
+
+// AnalyzeTypeBoundariesWithPolicy applies repository-owned layer and containment evidence.
+func AnalyzeTypeBoundariesWithPolicy(graph parser.NavigationGraph, minOccurrences int, policy BoundaryPolicy) ([]BoundaryTypeSpread, error) {
 	if minOccurrences < 1 {
 		return nil, fmt.Errorf("minimum occurrences must be positive")
 	}
+	if err := ValidateBoundaryPolicy(policy); err != nil {
+		return nil, err
+	}
 	declarations := indexBoundaryDeclarations(graph.Declarations)
+	usages := append([]parser.NavigationTypeUsage(nil), graph.TypeUsages...)
+	usages = appendBoundaryFieldTypeUsages(usages, graph.Fields, declarations)
 	context := newBoundaryDependencyContext(declarations)
-	groups := indexBoundaryTypeSpreads(graph.TypeUsages, declarations, boundaryTypeOwners(declarations), context)
+	groups := indexBoundaryTypeSpreads(usages, declarations, boundaryTypeOwners(declarations), context)
 	spreads := buildBoundaryTypeSpreads(groups, minOccurrences)
+	for index := range spreads {
+		classifyBoundaryTypePolicy(&spreads[index], policy)
+	}
 	sortBoundaryTypeSpreads(spreads)
 	return spreads, nil
 }
@@ -216,7 +234,8 @@ func boundaryTypeSpreadKeyForUsage(usage parser.NavigationTypeUsage, localOwners
 
 func boundaryTypeUsageDetail(usage parser.NavigationTypeUsage, declaration parser.NavigationDeclaration) BoundaryTypeUsage {
 	role := normalizedBoundaryTypeRole(usage.Role)
-	detail := BoundaryTypeUsage{BoundaryConsumer: boundaryConsumer(declaration), Role: role, Public: boundaryTypeUsageIsPublic(declaration, role), Test: boundaryTestPath(usage.Path)}
+	public := boundaryTypeUsageIsPublic(declaration, role)
+	detail := BoundaryTypeUsage{BoundaryConsumer: boundaryConsumer(declaration), Role: role, Surface: boundaryTypeSurface(role, public), Public: public, Test: boundaryTestPath(usage.Path)}
 	if usage.Line > 0 {
 		detail.Line = usage.Line
 	}
@@ -234,7 +253,7 @@ func buildBoundaryTypeSpreads(groups map[boundaryTypeSpreadKey][]BoundaryTypeUsa
 		spread := BoundaryTypeSpread{
 			Type: key.typeName, ImportPath: key.importPath, CanonicalType: boundaryCanonicalType(key.importPath, key.typeName), Language: key.language, OwnerFile: key.ownerFile, Origin: key.origin, External: key.importPath != "",
 			Usages: len(details), Consumers: breadth, Production: boundaryTypeUsageBreadth(details, func(detail BoundaryTypeUsage) bool { return !detail.Test }),
-			Tests: boundaryTypeUsageBreadth(details, func(detail BoundaryTypeUsage) bool { return detail.Test }), Roles: boundaryTypeRoles(details), UsageDetails: details,
+			Tests: boundaryTypeUsageBreadth(details, func(detail BoundaryTypeUsage) bool { return detail.Test }), Roles: boundaryTypeRoles(details), Surfaces: boundaryTypeSurfaces(details), UsageDetails: details,
 		}
 		for _, detail := range details {
 			if detail.Public {
@@ -247,11 +266,24 @@ func buildBoundaryTypeSpreads(groups map[boundaryTypeSpreadKey][]BoundaryTypeUsa
 	return spreads
 }
 
+func boundaryTypeCrossPackage(spread BoundaryTypeSpread) bool {
+	packages := map[string]bool{}
+	if spread.OwnerFile != "" {
+		packages[filepath.ToSlash(filepath.Dir(spread.OwnerFile))] = true
+	}
+	for _, detail := range spread.UsageDetails {
+		if !detail.Test {
+			packages[filepath.ToSlash(filepath.Dir(detail.Path))] = true
+		}
+	}
+	return len(packages) > 1
+}
+
 func classifyTypeBoundary(spread BoundaryTypeSpread) (BoundaryRisk, []string) {
 	if spread.Production.Files == 0 {
 		return BoundaryRiskInformational, []string{"test-only-spread"}
 	}
-	crossPackage := spread.Production.Packages > 1
+	crossPackage := boundaryTypeCrossPackage(spread)
 	switch spread.Origin {
 	case BoundaryTypeOriginThirdParty:
 		if len(spread.PublicExposures) > 0 {
@@ -274,6 +306,9 @@ func classifyTypeBoundary(spread BoundaryTypeSpread) (BoundaryRisk, []string) {
 	case BoundaryTypeOriginStandardLibrary:
 		return BoundaryRiskInformational, []string{"standard-library-spread"}
 	case BoundaryTypeOriginLocal:
+		if len(spread.PublicExposures) > 0 {
+			return BoundaryRiskLow, []string{"local-public-api"}
+		}
 		if crossPackage {
 			return BoundaryRiskLow, []string{"local-cross-package-spread"}
 		}
@@ -328,7 +363,7 @@ func boundaryCanonicalType(importPath, typeName string) string {
 
 func normalizedBoundaryTypeRole(role string) string {
 	switch role {
-	case "parameter", "result", "receiver", "local":
+	case "parameter", "result", "receiver", "local", "field":
 		return role
 	default:
 		return "unknown"
@@ -336,6 +371,9 @@ func normalizedBoundaryTypeRole(role string) string {
 }
 
 func boundaryTypeUsageIsPublic(declaration parser.NavigationDeclaration, role string) bool {
+	if role == "field" {
+		return declaration.Visibility == parser.NavigationVisibilityPublic && !boundaryTestPath(declaration.Path)
+	}
 	if role != "parameter" && role != "result" && role != "receiver" {
 		return false
 	}
@@ -388,6 +426,8 @@ func boundaryTypeRoles(details []BoundaryTypeUsage) BoundaryTypeRoles {
 			roles.Results++
 		case "receiver":
 			roles.Receivers++
+		case "field":
+			roles.Fields++
 		case "local":
 			roles.Locals++
 		default:

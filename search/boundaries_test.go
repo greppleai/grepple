@@ -36,6 +36,9 @@ func TestAnalyzeBoundariesFindsRepeatedExternalOwnerWorkflow(t *testing.T) {
 	if candidate.OwnerFile != "parser.go" || candidate.Language != "go" || candidate.Risk != BoundaryRiskLow || !reflect.DeepEqual(candidate.Reasons, []string{"repeated-owner-file-workflow", "broad-owner-callable-surface"}) || candidate.Consumers != (BoundaryBreadth{Functions: 2, Files: 2, Packages: 1}) {
 		t.Fatalf("candidate=%#v", candidate)
 	}
+	if !reflect.DeepEqual(candidate.Signals, []string{"owner-cohesion", "repeated-protocol"}) {
+		t.Fatalf("signals=%v", candidate.Signals)
+	}
 	if len(candidate.CallableCoUsage) != 1 || !reflect.DeepEqual(candidate.CallableCoUsage[0].Interactions, []string{"Parse", "Validate"}) || candidate.CallableCoUsage[0].Occurrences != 2 {
 		t.Fatalf("co-usage=%#v", candidate.CallableCoUsage)
 	}
@@ -144,8 +147,11 @@ func TestAnalyzeTypeBoundariesFindsImportedAndOwnedTypeSpread(t *testing.T) {
 	if external.Roles.Parameters != 2 || external.Roles.Locals != 1 {
 		t.Fatalf("external roles=%#v", external.Roles)
 	}
+	if external.Surfaces.PublicAPI != 1 || external.Surfaces.PrivateSignature != 1 || external.Surfaces.BodyLocal != 1 || external.Spread != BoundarySpreadPublicAPI || external.Containment != BoundaryContainmentUnknown {
+		t.Fatalf("external surfaces=%#v spread=%s containment=%s", external.Surfaces, external.Spread, external.Containment)
+	}
 	owned := spreads[1]
-	if owned.CanonicalType != "Widget" || owned.OwnerFile != "widget.go" || owned.External || owned.Origin != BoundaryTypeOriginLocal || owned.Risk != BoundaryRiskInformational || !reflect.DeepEqual(owned.Reasons, []string{"local-package-internal-spread"}) {
+	if owned.CanonicalType != "Widget" || owned.OwnerFile != "widget.go" || owned.External || owned.Origin != BoundaryTypeOriginLocal || owned.Risk != BoundaryRiskLow || !reflect.DeepEqual(owned.Reasons, []string{"local-public-api"}) {
 		t.Fatalf("owned spread=%#v", owned)
 	}
 }
@@ -191,6 +197,7 @@ func TestClassifyTypeBoundaryRisk(t *testing.T) {
 		{"first-party public API", BoundaryTypeSpread{Origin: BoundaryTypeOriginFirstParty, Production: BoundaryBreadth{Files: 2}, PublicExposures: public}, BoundaryRiskMedium, "first-party-public-api"},
 		{"unresolved public API", BoundaryTypeSpread{Origin: BoundaryTypeOriginUnresolved, Production: BoundaryBreadth{Files: 2}, PublicExposures: public}, BoundaryRiskMedium, "unresolved-origin-public-api"},
 		{"local package internal", BoundaryTypeSpread{Origin: BoundaryTypeOriginLocal, Production: BoundaryBreadth{Files: 2, Packages: 1}}, BoundaryRiskInformational, "local-package-internal-spread"},
+		{"local public API", BoundaryTypeSpread{Origin: BoundaryTypeOriginLocal, Production: BoundaryBreadth{Files: 2, Packages: 1}, PublicExposures: public}, BoundaryRiskLow, "local-public-api"},
 		{"standard library", BoundaryTypeSpread{Origin: BoundaryTypeOriginStandardLibrary, Production: BoundaryBreadth{Files: 2}}, BoundaryRiskInformational, "standard-library-spread"},
 		{"test only third-party", BoundaryTypeSpread{Origin: BoundaryTypeOriginThirdParty, Tests: BoundaryBreadth{Files: 2}}, BoundaryRiskInformational, "test-only-spread"},
 	}

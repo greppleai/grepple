@@ -18,16 +18,6 @@
 ## P2 — improve precision and architectural signal
 
 
-### Boundary analysis
-
-- [ ] Classify spread as package-internal, cross-package, cross-layer, or public API.
-- [ ] Classify containment as approved, escaped, or unknown using repository-owned policy or generated ownership facts.
-- [ ] Add generic facade-bypass analysis without hard-coding language/framework policy into shared engines.
-- [ ] Extend declared external surface totals from callables to fields/properties once adapters expose ownership with honest confidence.
-- [ ] Distinguish public API, private signature, field representation, and body-local type usage.
-- [ ] Down-rank standard-library utilities, test frameworks, declarative configuration, lifecycle cleanup, and intentional adapter protocols without hiding their evidence.
-- [ ] Add utility-hub, cohesion, repeated-protocol, parallel-abstraction, transitive-public-exposure, and misplaced-function signals only with reviewed precision fixtures.
-
 ### Public syntax API
 
 - [ ] Document distinct lifecycle and safety contracts for `Document`, `Node`, `DocumentView`, `ViewNode`, and `SyntaxNode`.

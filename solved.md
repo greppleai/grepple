@@ -106,6 +106,13 @@ This file records completed Grepple roadmap work that no longer belongs in `next
 - [x] Added deterministic boundary `risk` and `reasons`, ranking third-party public/production spread above first-party or unresolved API exposure while making standard-library, test-only, and package-internal local spread informational.
 - [x] Added content- and grammar-addressed resolved-navigation caching under `.grepple/cache/boundaries/` with atomic writes and corrupt-entry fallback.
 - [x] Kept cache state out of report output so cold and warm reports remain byte-identical.
+- [x] Classified spread as package-internal, cross-package, cross-layer, or public API and containment as approved, escaped, or unknown from generated ownership facts plus optional repository policy.
+- [x] Added validated `grepple-boundary-policy-v1` layers, containment, facades, and intentional path classifications through `.grepple/boundary-policy.json` or `--policy`.
+- [x] Added generic resolved-call facade-bypass findings without language or framework policy in the shared analyzer.
+- [x] Extended owner surfaces and type spread to typed fields/properties with adapter-owned visibility and honest unambiguous ownership requirements.
+- [x] Distinguished public API, private signature, field representation, body-local, and unknown type surfaces.
+- [x] Down-ranked standard-library, test-only, utility-hub, test-framework, declarative-configuration, lifecycle-cleanup, and adapter-protocol leads without removing evidence.
+- [x] Added reviewed precision fixtures for utility hubs, owner cohesion, repeated protocols, parallel abstractions, transitive public exposure, and policy-backed misplaced-function signals.
 
 ## Capability reporting and language support
 

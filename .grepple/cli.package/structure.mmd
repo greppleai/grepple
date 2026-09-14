@@ -169,6 +169,7 @@ classDiagram
         +MinOccurrences: int
         +NoCache: bool
         +Paths: []string
+        +Policy: string
     }
     <<struct>> boundariesArgs
     %% grepple:file boundariesArgs internal/cli/boundaries.go
@@ -179,12 +180,15 @@ classDiagram
     %% grepple:struct-tag boundariesArgs MinOccurrences "arg:\"--min-occurrences\" placeholder:\"N\" help:\"minimum callers sharing a reported pattern (default 2)\""
     %% grepple:struct-tag boundariesArgs NoCache "arg:\"--no-cache\" help:\"bypass the content-addressed .grepple boundary cache\""
     %% grepple:struct-tag boundariesArgs Paths "arg:\"positional\" placeholder:\"PATH\" help:\"file, directory, or glob to include; defaults to the working directory\""
-    note for boundariesArgs "defined: internal/cli/boundaries.go:20-28; Description@internal/cli/boundaries.go:30-32; JSON@internal/cli/boundaries.go:21; Limit@internal/cli/boundaries.go:24; MaxFiles@internal/cli/boundaries.go:23; MaxOutputBytes@internal/cli/boundaries.go:25; MinOccurrences@internal/cli/boundaries.go:22; NoCache@internal/cli/boundaries.go:26; Paths@internal/cli/boundaries.go:27"
+    %% grepple:struct-tag boundariesArgs Policy "arg:\"--policy\" placeholder:\"PATH\" help:\"repository-owned boundary policy (default .grepple/boundary-policy.json when present)\""
+    note for boundariesArgs "defined: internal/cli/boundaries.go:20-29; Description@internal/cli/boundaries.go:31-33; JSON@internal/cli/boundaries.go:21; Limit@internal/cli/boundaries.go:24; MaxFiles@internal/cli/boundaries.go:23; MaxOutputBytes@internal/cli/boundaries.go:25; MinOccurrences@internal/cli/boundaries.go:22; NoCache@internal/cli/boundaries.go:26; Paths@internal/cli/boundaries.go:28; Policy@internal/cli/boundaries.go:27"
     class boundariesOutput {
         +Candidates: []search.BoundaryCandidate
+        +FacadeBypasses: []search.BoundaryFacadeBypass
         +Files: int
         +Metadata: *api.ResultMetadata
         +Paths: []string
+        +Policy: string
         +Schema: string
         +Sources: navigationSourceSummary
         +Truncation: *navigationGraphTruncation
@@ -193,14 +197,16 @@ classDiagram
     <<struct>> boundariesOutput
     %% grepple:file boundariesOutput internal/cli/boundaries.go
     %% grepple:struct-tag boundariesOutput Candidates "json:\"candidates\""
+    %% grepple:struct-tag boundariesOutput FacadeBypasses "json:\"facadeBypasses,omitempty\""
     %% grepple:struct-tag boundariesOutput Files "json:\"files\""
     %% grepple:struct-tag boundariesOutput Metadata "json:\"metadata,omitempty\""
     %% grepple:struct-tag boundariesOutput Paths "json:\"paths\""
+    %% grepple:struct-tag boundariesOutput Policy "json:\"policy,omitempty\""
     %% grepple:struct-tag boundariesOutput Schema "json:\"schema\""
     %% grepple:struct-tag boundariesOutput Sources "json:\"sources\""
     %% grepple:struct-tag boundariesOutput Truncation "json:\"truncation,omitempty\""
     %% grepple:struct-tag boundariesOutput TypeBoundaries "json:\"typeBoundaries\""
-    note for boundariesOutput "defined: internal/cli/boundaries.go:34-43; Candidates@internal/cli/boundaries.go:40; Files@internal/cli/boundaries.go:38; Metadata@internal/cli/boundaries.go:36; Paths@internal/cli/boundaries.go:37; Schema@internal/cli/boundaries.go:35; Sources@internal/cli/boundaries.go:39; Truncation@internal/cli/boundaries.go:42; TypeBoundaries@internal/cli/boundaries.go:41"
+    note for boundariesOutput "defined: internal/cli/boundaries.go:35-46; Candidates@internal/cli/boundaries.go:42; FacadeBypasses@internal/cli/boundaries.go:44; Files@internal/cli/boundaries.go:39; Metadata@internal/cli/boundaries.go:37; Paths@internal/cli/boundaries.go:38; Policy@internal/cli/boundaries.go:41; Schema@internal/cli/boundaries.go:36; Sources@internal/cli/boundaries.go:40; Truncation@internal/cli/boundaries.go:45; TypeBoundaries@internal/cli/boundaries.go:43"
     class boundaryGraphCache {
         +Digest: string
         +Graph: navigationGraphOutput

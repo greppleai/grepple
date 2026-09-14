@@ -77,15 +77,16 @@ type NavigationExport struct {
 
 // NavigationField describes one typed field or property owned by a declared type.
 type NavigationField struct {
-	OwnerType  string `json:"ownerType"`
-	Name       string `json:"name"`
-	Type       string `json:"type"`
-	ImportPath string `json:"importPath,omitempty"`
-	Language   string `json:"language"`
-	Path       string `json:"path"`
-	Package    string `json:"package,omitempty"`
-	Line       int    `json:"line"`
-	Embedded   bool   `json:"embedded,omitempty"`
+	OwnerType  string               `json:"ownerType"`
+	Name       string               `json:"name"`
+	Type       string               `json:"type"`
+	ImportPath string               `json:"importPath,omitempty"`
+	Language   string               `json:"language"`
+	Path       string               `json:"path"`
+	Package    string               `json:"package,omitempty"`
+	Line       int                  `json:"line"`
+	Visibility NavigationVisibility `json:"visibility"`
+	Embedded   bool                 `json:"embedded,omitempty"`
 }
 
 // NavigationMemberAccess describes a receiver-qualified field or property read or write.

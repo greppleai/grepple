@@ -17,6 +17,7 @@ type navigationBinding struct {
 	factoryImport string
 	role          string
 	embedded      bool
+	visibility    NavigationVisibility
 	line          int
 }
 
@@ -81,15 +82,16 @@ func addNavigationContainerFields(fields map[string]map[string]navigationBinding
 		return
 	}
 	containerFields := make(map[string]navigationBinding)
+	ownerVisibility := adapter.Visibility(node, name, "")
 	node.WalkNamed(func(current *syntaxNode) {
-		addNavigationFieldBinding(containerFields, current, content, imports, adapter)
+		addNavigationFieldBinding(containerFields, current, name, ownerVisibility, content, imports, adapter)
 	})
 	if len(containerFields) > 0 {
 		fields[name] = containerFields
 	}
 }
 
-func addNavigationFieldBinding(fields map[string]navigationBinding, node *syntaxNode, content string, imports map[string]navigationImport, adapter navigationAdapter) {
+func addNavigationFieldBinding(fields map[string]navigationBinding, node *syntaxNode, owner string, ownerVisibility NavigationVisibility, content string, imports map[string]navigationImport, adapter navigationAdapter) {
 	if !adapter.IsFieldDeclaration(node.Kind()) {
 		return
 	}
@@ -102,6 +104,10 @@ func addNavigationFieldBinding(fields map[string]navigationBinding, node *syntax
 	for _, field := range adapter.FieldNames(node, typeNode, content) {
 		fieldBinding := binding
 		fieldBinding.embedded = field.embedded
+		fieldBinding.visibility = adapter.Visibility(node, field.name, owner)
+		if ownerVisibility != NavigationVisibilityPublic {
+			fieldBinding.visibility = NavigationVisibilityNonPublic
+		}
 		fields[field.name] = fieldBinding
 	}
 }
@@ -121,7 +127,7 @@ func navigationFieldFacts(fields map[string]map[string]navigationBinding, langua
 		sort.Strings(names)
 		for _, name := range names {
 			binding := fields[owner][name]
-			facts = append(facts, NavigationField{OwnerType: owner, Name: name, Type: binding.typeName, ImportPath: binding.importPath, Language: language, Path: path, Package: packageName, Line: binding.line, Embedded: binding.embedded})
+			facts = append(facts, NavigationField{OwnerType: owner, Name: name, Type: binding.typeName, ImportPath: binding.importPath, Language: language, Path: path, Package: packageName, Line: binding.line, Visibility: binding.visibility, Embedded: binding.embedded})
 		}
 	}
 	return facts

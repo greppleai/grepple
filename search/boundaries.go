@@ -10,18 +10,22 @@ import (
 // BoundaryCandidate describes a workflow implemented by symbols from one owner
 // file and repeated across multiple external files.
 type BoundaryCandidate struct {
-	OwnerFile               string             `json:"ownerFile"`
-	Language                string             `json:"language"`
-	Risk                    BoundaryRisk       `json:"risk"`
-	Reasons                 []string           `json:"reasons"`
-	Consumers               BoundaryBreadth    `json:"consumers"`
-	ConsumerDetails         []BoundaryConsumer `json:"consumerDetails"`
-	ExternalCallableSurface BoundarySurface    `json:"externalCallableSurface"`
-	Callables               []string           `json:"callables"`
-	CallableCoUsage         []BoundaryPattern  `json:"callableCoUsage"`
-	OrderedSequences        []BoundaryPattern  `json:"orderedSequences"`
-	MemberCallCombinations  []BoundaryPattern  `json:"memberCallCombinations"`
-	UnresolvedCalls         int                `json:"unresolvedCalls"`
+	OwnerFile               string              `json:"ownerFile"`
+	Language                string              `json:"language"`
+	Risk                    BoundaryRisk        `json:"risk"`
+	Spread                  BoundarySpread      `json:"spread"`
+	Containment             BoundaryContainment `json:"containment"`
+	Signals                 []string            `json:"signals,omitempty"`
+	Reasons                 []string            `json:"reasons"`
+	Consumers               BoundaryBreadth     `json:"consumers"`
+	ConsumerDetails         []BoundaryConsumer  `json:"consumerDetails"`
+	ExternalCallableSurface BoundarySurface     `json:"externalCallableSurface"`
+	ExternalFieldSurface    BoundarySurface     `json:"externalFieldSurface"`
+	Callables               []string            `json:"callables"`
+	CallableCoUsage         []BoundaryPattern   `json:"callableCoUsage"`
+	OrderedSequences        []BoundaryPattern   `json:"orderedSequences"`
+	MemberCallCombinations  []BoundaryPattern   `json:"memberCallCombinations"`
+	UnresolvedCalls         int                 `json:"unresolvedCalls"`
 }
 
 type boundaryOwnerKey struct {
@@ -34,6 +38,8 @@ type boundaryOwnerAnalysis struct {
 	callsByCaller   map[string][]string
 	interactions    map[string][]boundaryInteraction
 	called          map[string]bool
+	accessedFields  map[string]bool
+	declaredFields  int
 	declared        int
 	unresolvedCalls int
 }
@@ -42,18 +48,27 @@ type boundaryOwnerAnalysis struct {
 // callables owned by one file whose co-usage or ordering is repeated across at
 // least two other files. It does not depend on package/module semantics.
 func AnalyzeBoundaries(graph parser.NavigationGraph, minOccurrences int) ([]BoundaryCandidate, error) {
+	return AnalyzeBoundariesWithPolicy(graph, minOccurrences, BoundaryPolicy{})
+}
+
+// AnalyzeBoundariesWithPolicy applies repository-owned layer, containment, and path-role evidence.
+func AnalyzeBoundariesWithPolicy(graph parser.NavigationGraph, minOccurrences int, policy BoundaryPolicy) ([]BoundaryCandidate, error) {
 	if minOccurrences < 1 {
 		return nil, fmt.Errorf("minimum occurrences must be positive")
+	}
+	if err := ValidateBoundaryPolicy(policy); err != nil {
+		return nil, err
 	}
 	declarations := indexBoundaryDeclarations(graph.Declarations)
 	owners := indexBoundaryOwners(graph, declarations)
 	candidates := make([]BoundaryCandidate, 0, len(owners))
 	for key, analysis := range owners {
-		candidate := buildBoundaryCandidate(key, analysis, minOccurrences)
+		candidate := buildBoundaryCandidate(key, analysis, minOccurrences, policy)
 		if boundaryHasPatterns(candidate) {
 			candidates = append(candidates, candidate)
 		}
 	}
+	classifyParallelBoundaryAbstractions(candidates)
 	sort.Slice(candidates, func(i, j int) bool {
 		leftRisk, rightRisk := boundaryRiskRank(candidates[i].Risk), boundaryRiskRank(candidates[j].Risk)
 		if leftRisk != rightRisk {
@@ -102,13 +117,14 @@ func indexBoundaryOwners(graph parser.NavigationGraph, declarations map[string]p
 		}
 	}
 	indexBoundaryMembers(graph.MemberAccesses, declarations, owners)
+	indexBoundaryFields(graph.Fields, declarations, owners)
 	return owners
 }
 
 func getBoundaryOwner(owners map[boundaryOwnerKey]*boundaryOwnerAnalysis, key boundaryOwnerKey) *boundaryOwnerAnalysis {
 	owner := owners[key]
 	if owner == nil {
-		owner = &boundaryOwnerAnalysis{callers: make(map[string]parser.NavigationDeclaration), callsByCaller: make(map[string][]string), interactions: make(map[string][]boundaryInteraction), called: make(map[string]bool)}
+		owner = &boundaryOwnerAnalysis{callers: make(map[string]parser.NavigationDeclaration), callsByCaller: make(map[string][]string), interactions: make(map[string][]boundaryInteraction), called: make(map[string]bool), accessedFields: make(map[string]bool)}
 		owners[key] = owner
 	}
 	return owner
@@ -144,6 +160,7 @@ func indexBoundaryMembers(accesses []parser.NavigationMemberAccess, declarations
 			continue
 		}
 		owner := getBoundaryOwner(owners, key)
+		owner.accessedFields[access.Member] = true
 		owner.callers[caller.ID] = caller
 		owner.interactions[caller.ID] = append(owner.interactions[caller.ID], boundaryInteraction{label: access.Member + "(" + access.Operation + ")"})
 	}
@@ -175,7 +192,7 @@ type boundaryTypeCandidate struct {
 	language string
 }
 
-func buildBoundaryCandidate(key boundaryOwnerKey, owner *boundaryOwnerAnalysis, minimum int) BoundaryCandidate {
+func buildBoundaryCandidate(key boundaryOwnerKey, owner *boundaryOwnerAnalysis, minimum int, policy BoundaryPolicy) BoundaryCandidate {
 	setGroups := make(map[string]*boundaryPatternGroup)
 	sequenceGroups := make(map[string]*boundaryPatternGroup)
 	combinationGroups := make(map[string]*boundaryPatternGroup)
@@ -194,13 +211,14 @@ func buildBoundaryCandidate(key boundaryOwnerKey, owner *boundaryOwnerAnalysis, 
 		}
 	}
 	candidate := BoundaryCandidate{
-		OwnerFile: key.path, Language: key.language, ExternalCallableSurface: BoundarySurface{External: len(owner.called), Declared: owner.declared},
+		OwnerFile: key.path, Language: key.language, ExternalCallableSurface: BoundarySurface{External: len(owner.called), Declared: owner.declared}, ExternalFieldSurface: BoundarySurface{External: len(owner.accessedFields), Declared: owner.declaredFields},
 		Callables: sortedBoundaryKeys(owner.called), CallableCoUsage: crossFileBoundaryPatterns(setGroups, minimum),
 		OrderedSequences: crossFileBoundaryPatterns(sequenceGroups, minimum), MemberCallCombinations: crossFileBoundaryPatterns(combinationGroups, minimum), UnresolvedCalls: owner.unresolvedCalls,
 	}
 	candidate.ConsumerDetails = boundaryConsumers(candidate)
 	candidate.Consumers = boundaryBreadth(candidate.ConsumerDetails)
 	candidate.Risk, candidate.Reasons = classifyWorkflowBoundary(candidate)
+	classifyWorkflowCandidatePolicy(&candidate, policy)
 	return candidate
 }
 

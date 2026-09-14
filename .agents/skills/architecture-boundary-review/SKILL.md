@@ -17,7 +17,8 @@ A clean directory diagram can hide behavioral coupling; a broad type can be a he
 2. Find repeated behavior and concrete-type spread:
    ```bash
    grepple boundaries path/to/scope
-   grepple boundaries --json path/to/scope
+grepple boundaries --json path/to/scope
+grepple boundaries --policy .grepple/boundary-policy.json --json path/to/scope
    ```
    Human output is triage; JSON is complete.
 3. Inspect each high-value evidence location with `grepple --at`. Do not recommend a move from counts alone.
@@ -30,11 +31,11 @@ A clean directory diagram can hide behavioral coupling; a broad type can be a he
 
 ## Interpretation rules
 
-- Use `origin`, `risk`, and `reasons` for triage. The compatibility `External` field only means an import path was recorded.
+- Use `origin`, `spread`, `containment`, usage `surface`, `risk`, and `reasons` for triage. The compatibility `External` field only means an import path was recorded.
 - Risk is heuristic: it prioritizes third-party public/production spread and down-ranks standard-library, test-only, and package-internal local use.
-- Wide use is not automatically bad. Containment escape and facade bypass are not inferred until repository-owned policy exists; verify them in source.
+- Wide use is not automatically bad. Treat `escaped` containment and facade bypass as repository-policy evidence; without a loaded policy, cross-boundary containment remains `unknown`.
 - Public third-party representation and confirmed facade bypass deserve more attention than broad private use of a project-owned abstraction.
-- Workflow candidates show repeated co-usage/order across owner-file boundaries. Configuration setup, lifecycle cleanup, tests, and utility hubs often produce benign repetition.
+- Workflow candidates show repeated co-usage/order across owner-file boundaries. Check `signals`: utility, declarative configuration, lifecycle, test-framework, and adapter roles lower priority without hiding evidence.
 - Boundary analysis is syntax-based and heuristic. Candidate edges and unresolved ownership must lower confidence.
 - Compare production and test reach; never inflate production risk with test-framework spread.
 

@@ -16,16 +16,16 @@
     "syntacticBuildTagUnion": []
   },
   "summary": {
-    "sourceFiles": 42,
+    "sourceFiles": 44,
     "declarations": 62,
     "exportedTypes": 0,
     "internalTypes": 62,
-    "members": 411,
+    "members": 414,
     "exportedFunctions": 3,
     "fiberRoutes": 0,
     "relations": 38
   },
-  "semanticModelDigest": "sha256:5149cd4b349071dfd82dcffe98f98e3929ca7fb174a10dcd7fb9ee271b779a78",
+  "semanticModelDigest": "sha256:71995b450ce41d420a09ec47b6805318590e7f8e376f119b9c8bdd7a5f66e330",
   "sourceFiles": [
     {
       "path": "internal/cli/anchors.go"
@@ -44,6 +44,12 @@
     },
     {
       "path": "internal/cli/boundaries_cache.go"
+    },
+    {
+      "path": "internal/cli/boundary_policy.go"
+    },
+    {
+      "path": "internal/cli/boundary_render.go"
     },
     {
       "path": "internal/cli/client.go"
@@ -759,14 +765,14 @@
       "kind": "struct",
       "file": "internal/cli/boundaries.go",
       "line": 20,
-      "endLine": 28,
-      "underlyingType": "struct{JSON bool`arg:\"--json\" help:\"emit the complete boundary report as JSON\"`;MinOccurrences int`arg:\"--min-occurrences\" placeholder:\"N\" help:\"minimum callers sharing a reported pattern (default 2)\"`;MaxFiles int`arg:\"--max-files\" placeholder:\"N\" help:\"parse at most N discovered files (0 = unlimited)\"`;Limit int`arg:\"--limit\" placeholder:\"N\" help:\"maximum candidates per human-output section (default 20; 0 = unlimited; JSON is complete)\"`;MaxOutputBytes int`arg:\"--max-output-bytes\" placeholder:\"N\" help:\"cap human output (default 16384; 0 = unlimited; JSON is uncapped)\"`;NoCache bool`arg:\"--no-cache\" help:\"bypass the content-addressed .grepple boundary cache\"`;Paths[]string`arg:\"positional\" placeholder:\"PATH\" help:\"file, directory, or glob to include; defaults to the working directory\"`;}",
+      "endLine": 29,
+      "underlyingType": "struct{JSON bool`arg:\"--json\" help:\"emit the complete boundary report as JSON\"`;MinOccurrences int`arg:\"--min-occurrences\" placeholder:\"N\" help:\"minimum callers sharing a reported pattern (default 2)\"`;MaxFiles int`arg:\"--max-files\" placeholder:\"N\" help:\"parse at most N discovered files (0 = unlimited)\"`;Limit int`arg:\"--limit\" placeholder:\"N\" help:\"maximum candidates per human-output section (default 20; 0 = unlimited; JSON is complete)\"`;MaxOutputBytes int`arg:\"--max-output-bytes\" placeholder:\"N\" help:\"cap human output (default 16384; 0 = unlimited; JSON is uncapped)\"`;NoCache bool`arg:\"--no-cache\" help:\"bypass the content-addressed .grepple boundary cache\"`;Policy string`arg:\"--policy\" placeholder:\"PATH\" help:\"repository-owned boundary policy (default .grepple/boundary-policy.json when present)\"`;Paths[]string`arg:\"positional\" placeholder:\"PATH\" help:\"file, directory, or glob to include; defaults to the working directory\"`;}",
       "members": [
         {
           "name": "Description",
           "kind": "method",
-          "line": 30,
-          "endLine": 32,
+          "line": 31,
+          "endLine": 33,
           "result": "string"
         },
         {
@@ -832,11 +838,21 @@
         {
           "name": "Paths",
           "kind": "property",
-          "line": 27,
-          "endLine": 27,
+          "line": 28,
+          "endLine": 28,
           "result": "[]string",
           "structTag": {
             "value": "arg:\"positional\" placeholder:\"PATH\" help:\"file, directory, or glob to include; defaults to the working directory\""
+          }
+        },
+        {
+          "name": "Policy",
+          "kind": "property",
+          "line": 27,
+          "endLine": 27,
+          "result": "string",
+          "structTag": {
+            "value": "arg:\"--policy\" placeholder:\"PATH\" help:\"repository-owned boundary policy (default .grepple/boundary-policy.json when present)\""
           }
         }
       ]
@@ -845,25 +861,35 @@
       "name": "boundariesOutput",
       "kind": "struct",
       "file": "internal/cli/boundaries.go",
-      "line": 34,
-      "endLine": 43,
-      "underlyingType": "struct{Schema string`json:\"schema\"`;Metadata*api.ResultMetadata`json:\"metadata,omitempty\"`;Paths[]string`json:\"paths\"`;Files int`json:\"files\"`;Sources navigationSourceSummary`json:\"sources\"`;Candidates[]search.BoundaryCandidate`json:\"candidates\"`;TypeBoundaries[]search.BoundaryTypeSpread`json:\"typeBoundaries\"`;Truncation*navigationGraphTruncation`json:\"truncation,omitempty\"`;}",
+      "line": 35,
+      "endLine": 46,
+      "underlyingType": "struct{Schema string`json:\"schema\"`;Metadata*api.ResultMetadata`json:\"metadata,omitempty\"`;Paths[]string`json:\"paths\"`;Files int`json:\"files\"`;Sources navigationSourceSummary`json:\"sources\"`;Policy string`json:\"policy,omitempty\"`;Candidates[]search.BoundaryCandidate`json:\"candidates\"`;TypeBoundaries[]search.BoundaryTypeSpread`json:\"typeBoundaries\"`;FacadeBypasses[]search.BoundaryFacadeBypass`json:\"facadeBypasses,omitempty\"`;Truncation*navigationGraphTruncation`json:\"truncation,omitempty\"`;}",
       "members": [
         {
           "name": "Candidates",
           "kind": "property",
-          "line": 40,
-          "endLine": 40,
+          "line": 42,
+          "endLine": 42,
           "result": "[]search.BoundaryCandidate",
           "structTag": {
             "value": "json:\"candidates\""
           }
         },
         {
+          "name": "FacadeBypasses",
+          "kind": "property",
+          "line": 44,
+          "endLine": 44,
+          "result": "[]search.BoundaryFacadeBypass",
+          "structTag": {
+            "value": "json:\"facadeBypasses,omitempty\""
+          }
+        },
+        {
           "name": "Files",
           "kind": "property",
-          "line": 38,
-          "endLine": 38,
+          "line": 39,
+          "endLine": 39,
           "result": "int",
           "structTag": {
             "value": "json:\"files\""
@@ -872,8 +898,8 @@
         {
           "name": "Metadata",
           "kind": "property",
-          "line": 36,
-          "endLine": 36,
+          "line": 37,
+          "endLine": 37,
           "result": "*api.ResultMetadata",
           "structTag": {
             "value": "json:\"metadata,omitempty\""
@@ -882,18 +908,28 @@
         {
           "name": "Paths",
           "kind": "property",
-          "line": 37,
-          "endLine": 37,
+          "line": 38,
+          "endLine": 38,
           "result": "[]string",
           "structTag": {
             "value": "json:\"paths\""
           }
         },
         {
+          "name": "Policy",
+          "kind": "property",
+          "line": 41,
+          "endLine": 41,
+          "result": "string",
+          "structTag": {
+            "value": "json:\"policy,omitempty\""
+          }
+        },
+        {
           "name": "Schema",
           "kind": "property",
-          "line": 35,
-          "endLine": 35,
+          "line": 36,
+          "endLine": 36,
           "result": "string",
           "structTag": {
             "value": "json:\"schema\""
@@ -902,8 +938,8 @@
         {
           "name": "Sources",
           "kind": "property",
-          "line": 39,
-          "endLine": 39,
+          "line": 40,
+          "endLine": 40,
           "result": "navigationSourceSummary",
           "structTag": {
             "value": "json:\"sources\""
@@ -912,8 +948,8 @@
         {
           "name": "Truncation",
           "kind": "property",
-          "line": 42,
-          "endLine": 42,
+          "line": 45,
+          "endLine": 45,
           "result": "*navigationGraphTruncation",
           "structTag": {
             "value": "json:\"truncation,omitempty\""
@@ -922,8 +958,8 @@
         {
           "name": "TypeBoundaries",
           "kind": "property",
-          "line": 41,
-          "endLine": 41,
+          "line": 43,
+          "endLine": 43,
           "result": "[]search.BoundaryTypeSpread",
           "structTag": {
             "value": "json:\"typeBoundaries\""
