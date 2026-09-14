@@ -161,6 +161,7 @@ func TestBoundaryTypeOriginClassification(t *testing.T) {
 		{"go", "io/fs", BoundaryTypeOriginStandardLibrary},
 		{"go", "example.com/app/parser", BoundaryTypeOriginFirstParty},
 		{"go", "github.com/tree-sitter/go-tree-sitter", BoundaryTypeOriginThirdParty},
+		{"go", "corp/shared", BoundaryTypeOriginUnresolved},
 		{"typescript", "../model", BoundaryTypeOriginFirstParty},
 		{"typescript", "node:fs", BoundaryTypeOriginStandardLibrary},
 		{"typescript", "@app/model", BoundaryTypeOriginUnresolved},

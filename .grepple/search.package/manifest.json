@@ -2394,8 +2394,8 @@
       "name": "AnalyzeTypeBoundaries",
       "kind": "function",
       "file": "search/type_boundaries.go",
-      "line": 148,
-      "endLine": 158,
+      "line": 165,
+      "endLine": 175,
       "parameters": [
         "parser.NavigationGraph",
         "int"

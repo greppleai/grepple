@@ -99,7 +99,7 @@ func boundaryTypeOriginForImport(language, importPath string, context boundaryDe
 	if boundaryStandardLibraryImport(language, path) {
 		return BoundaryTypeOriginStandardLibrary
 	}
-	if language == "go" {
+	if language == "go" && boundaryGoThirdPartyImport(path) {
 		return BoundaryTypeOriginThirdParty
 	}
 	return BoundaryTypeOriginUnresolved
@@ -108,11 +108,7 @@ func boundaryTypeOriginForImport(language, importPath string, context boundaryDe
 func boundaryStandardLibraryImport(language, path string) bool {
 	switch language {
 	case "go":
-		first := path
-		if separator := strings.IndexByte(first, '/'); separator >= 0 {
-			first = first[:separator]
-		}
-		return !strings.Contains(first, ".")
+		return boundaryGoStandardLibraryImport(path)
 	case "javascript", "typescript", "tsx":
 		return strings.HasPrefix(path, "node:")
 	case "java":
@@ -124,6 +120,27 @@ func boundaryStandardLibraryImport(language, path string) bool {
 	default:
 		return false
 	}
+}
+
+func boundaryGoStandardLibraryImport(path string) bool {
+	first := boundaryFirstImportComponent(path)
+	switch first {
+	case "archive", "arena", "bufio", "builtin", "bytes", "cmp", "compress", "container", "context", "crypto", "database", "debug", "embed", "encoding", "errors", "expvar", "flag", "fmt", "go", "hash", "html", "image", "index", "io", "iter", "log", "maps", "math", "mime", "net", "os", "path", "plugin", "reflect", "regexp", "runtime", "slices", "sort", "strconv", "strings", "structs", "sync", "syscall", "testing", "text", "time", "unicode", "unique", "unsafe", "weak":
+		return true
+	default:
+		return false
+	}
+}
+
+func boundaryGoThirdPartyImport(path string) bool {
+	return strings.Contains(boundaryFirstImportComponent(path), ".")
+}
+
+func boundaryFirstImportComponent(path string) string {
+	if separator := strings.IndexByte(path, '/'); separator >= 0 {
+		return path[:separator]
+	}
+	return path
 }
 
 func boundaryFirstPartyImport(path string, roots []string) bool {
