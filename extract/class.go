@@ -1046,10 +1046,9 @@ func genericCollectionReferences(memberType, target string) (bool, bool) {
 }
 
 type classValidator struct {
-	diagram                  *ClassDiagram
-	analysis                 *Analysis
-	diagnostics              []Diagnostic
-	packageBundleCardinality bool
+	diagram     *ClassDiagram
+	analysis    *Analysis
+	diagnostics []Diagnostic
 }
 
 func (validator *classValidator) add(line int, message string) {
@@ -1808,23 +1807,15 @@ func CheckClassDiagram(diagram string, sources []Source) ([]Diagnostic, error) {
 
 // CheckClassDiagramWithAnalysis validates a class schema using a shared source analysis.
 func CheckClassDiagramWithAnalysis(diagram string, analysis *Analysis) ([]Diagnostic, error) {
-	return checkClassDiagramWithAnalysis(diagram, analysis, false)
+	return checkClassDiagramWithAnalysis(diagram, analysis)
 }
 
-func checkPackageBundleDiagram(diagram string, sources []Source) ([]Diagnostic, error) {
-	analysis, err := Analyze(sources)
-	if err != nil {
-		return nil, err
-	}
-	return checkClassDiagramWithAnalysis(diagram, analysis, true)
-}
-
-func checkClassDiagramWithAnalysis(diagram string, analysis *Analysis, packageBundleCardinality bool) ([]Diagnostic, error) {
+func checkClassDiagramWithAnalysis(diagram string, analysis *Analysis) ([]Diagnostic, error) {
 	parsed, err := ParseClassDiagram(diagram)
 	if err != nil {
 		return nil, err
 	}
-	validator := classValidator{diagram: parsed, analysis: analysis, packageBundleCardinality: packageBundleCardinality}
+	validator := classValidator{diagram: parsed, analysis: analysis}
 	for _, name := range parsed.Order {
 		validator.checkClass(parsed.Classes[name])
 	}

@@ -30,7 +30,7 @@ benchstat before.txt after.txt
 | `LineLocateThenAt` | Locate a line with its construct extent, then retrieve that declaration. | 2 |
 | `RelatedNavigation` | What immediately calls this and what does it call? | 1 |
 | `ImpactGraph` | What is the bounded bidirectional impact neighborhood? | 1 |
-| `ArchitectureSummary` | What is the bounded package ownership and public surface? | 1 |
+| `ArchitectureResolve` | Which directory owns this declaration and what is its exact range? | 1 |
 | `EnclosingScope` | What nearest syntax scope owns this body-line match? | 1 |
 | `EditLocation` | Where is the exact edit-ready evidence line? | 1 |
 
@@ -45,7 +45,7 @@ A benchmark fails rather than reporting metrics when required answer fragments a
 
 ## Output-budget evaluation
 
-A synthetic 800-match body search measured the broad-query failure mode directly. At the previous 40960-byte default it could consume roughly 10K approximate tokens before guidance appeared. The 16384-byte default returns about 16.3 KB/~4.1K approximate tokens including explicit truncation guidance—a 60% reduction while leaving every bounded fixed workflow unchanged. The default was therefore lowered to 16384 bytes for search, GritQL, and compact graph output. `--max-output-bytes 0` remains the explicit uncapped escape hatch, and JSON remains complete and uncapped.
+A synthetic 800-match body search measured the broad-query failure mode directly. At the previous 40960-byte default it could consume roughly 10K approximate tokens before guidance appeared. The 16384-byte human default returns about 16.3 KB/~4.1K approximate tokens including explicit truncation guidance. Complete output above the repository spill threshold now returns a small artifact descriptor instead of injecting the full document into agent context; `--no-spill` is the explicit original-stream escape hatch.
 
 ## Initial baseline
 
@@ -53,16 +53,17 @@ Linux/amd64, Intel Core Ultra 7 165H, Go 1.25.14, `-benchtime=10x`:
 
 | Workflow | Calls | Retrieved bytes | Approx. tokens | Time/op |
 | --- | ---: | ---: | ---: | ---: |
-| `BreadthSummary` | 1 | 18 | 4.5 | 1.76 ms |
-| `OutlineDiscovery` | 1 | 77 | 19.25 | 1.34 ms |
-| `StructuralLookup` | 1 | 166 | 41.5 | 1.36 ms |
-| `LineLocateThenAt` | 2 | 150 | 37.5 | 2.35 ms |
-| `RelatedNavigation` | 1 | 307 | 76.75 | 3.09 ms |
-| `ImpactGraph` | 1 | 756 | 189 | 3.10 ms |
-| `ArchitectureSummary` | 1 | 337 | 84.25 | 2.24 ms |
-| `EditLocation` | 1 | 40 | 10 | 1.09 ms |
+| `BreadthSummary` | 1 | 18 | 4.5 | 4.87 ms |
+| `OutlineDiscovery` | 1 | 77 | 19.25 | 2.72 ms |
+| `StructuralLookup` | 1 | 166 | 41.5 | 2.64 ms |
+| `LineLocateThenAt` | 2 | 152 | 38 | 5.07 ms |
+| `RelatedNavigation` | 1 | 307 | 76.75 | 8.10 ms |
+| `ImpactGraph` | 1 | 978 | 244.5 | 6.33 ms |
+| `ArchitectureResolve` | 1 | 173 | 43.25 | 5.75 ms |
+| `EnclosingScope` | 1 | 53 | 13.25 | 2.87 ms |
+| `EditLocation` | 1 | 40 | 10 | 2.69 ms |
 
-The structural lookup illustrates the intended tradeoff: it returns slightly more text than line-only plus `--at`, but removes one retrieval round trip. Timing is machine-dependent; call and fixture-output metrics are the primary regression signals until statistically reviewed budgets are established.
+Direct `ArchitectureResolve` replaces the former package-summary fixture for known declarations. It returns the owner and exact range in 173 bytes instead of the former 337-byte package summary, a 49% reduction, while remaining one retrieval call. The structural lookup similarly returns slightly more text than line-only plus `--at`, but removes one retrieval round trip. Timing is machine-dependent; call and fixture-output metrics are the primary regression signals until statistically reviewed budgets are established.
 
 ## Navigation-resolution measurement extension
 

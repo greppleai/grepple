@@ -45,7 +45,7 @@ Project analyzers in `hooks/internal/pihooks/` add repo-specific checks that rev
 `same-file-struct-methods` analyzer uses tree-sitter Go syntax trees and requires every method of a struct to live in the file that declares the type.
 The PreToolUse grep guard is also implemented in the standalone module and uses the tree-sitter Bash grammar to inspect actual command invocations.
 
-Mermaid extraction and validation live in the main `extract` package and are exposed through `grepple extract`; the hooks module imports that package for automatic Stop validation rather than maintaining a second analyzer. This repository exports canonical architecture artifacts to root [`.grepple/`](.grepple/): `make schema-generate` rewrites them and `make schema-check` validates them through the Grepple binary. Package bundles contain `manifest.json`, `overview.mmd`, and `structure.mmd`; workspace bundles contain `manifest.json` and `overview.mmd`. The Stop hook validates legacy `*.class.mmd`, `*.structure.mmd`, and `*.flow.mmd` schemas plus canonical package/workspace bundles. See [`hooks/README.md`](hooks/README.md) for automatic validation details.
+Mermaid extraction and validation live in the main `extract` package and are exposed through focused `grepple extract structure|flow` commands; the hooks module imports that package for automatic Stop validation rather than maintaining a second analyzer. Language-neutral repository orientation is generated dynamically through `grepple architecture directory|resolve|why`, so no package/workspace artifacts need to be committed under `.grepple/`. `make schema-generate` and `make schema-check` validate parser-generated language metadata. The Stop hook validates `*.class.mmd`, `*.structure.mmd`, and `*.flow.mmd` schemas.
 
 The `grepple` application binary is built into `bin/grepple`.
 
@@ -240,12 +240,15 @@ grepple boundaries --policy .grepple/boundary-policy.json --json .
 
 Human output is bounded to 16,384 bytes and shows at most 20 ranked candidates per workflow/type/facade section by default; evidence and omissions remain explicit. `--limit 0` shows all candidates, while `grepple-boundaries-v3` JSON is complete. Per-file parser facts are reused from `.grepple/cache/navigation/`; resolved graph inputs are cached under `.grepple/cache/boundaries/`. Use `--no-cache` to bypass both cache layers. `--max-files` remains explicit when source discovery is incomplete.
 
-## Architecture and flow extraction
+## Directory architecture and focused diagrams
+`grepple architecture` provides deterministic, language-neutral directory orientation over every Tree-sitter-backed language. `directory` summarizes physical ownership and strongly resolved cross-directory calls, `resolve` locates types and callables with exact ranges, and `why` returns source-linked evidence for one directory relation. Directory ownership is intentionally not presented as package, module, or layer intent. See [Directory architecture](docs/directory-architecture.md) for schemas and evidence limits.
 
-`grepple extract` creates deterministic, self-validated Mermaid navigation maps from Tree-sitter source analysis. Focused structure and flow extraction support Go, JavaScript/JSX, TypeScript/TSX, Python, Java, Kotlin, and C#; canonical package and workspace bundles remain Go-specific. Python covers classes, inheritance, annotated and unannotated attributes, decorators, and `.pyi` stubs. Java, Kotlin, and C# cover their class/interface models, inheritance, fields/properties, methods, records/data classes, enums, and objects where applicable. Generic callable declarations and calls use the normalized `parser.NavigationGraph` shared with `--at` and `--related`; focused flow generation and validation consume those enriched edges directly.
+`grepple extract` creates deterministic, self-validated focused Mermaid navigation maps from Tree-sitter source analysis. Focused structure and flow extraction support Go, JavaScript/JSX, TypeScript/TSX, Python, Java, Kotlin, and C#. Python covers classes, inheritance, annotated and unannotated attributes, decorators, and `.pyi` stubs. Java, Kotlin, and C# cover their class/interface models, inheritance, fields/properties, methods, records/data classes, enums, and objects where applicable. Generic callable declarations and calls use the normalized `parser.NavigationGraph` shared with `--at` and `--related`.
 
 ```bash
-grepple extract structure internal/cli
+grepple architecture directory --depth 2 --compact .
+grepple architecture resolve --symbol Document --compact .
+grepple architecture why rulespec search --compact rulespec search
 grepple extract structure internal/cli --entry cliOptions --source .
 grepple extract flow internal/cli --entry runSearch --depth 2
 grepple extract flow --at internal/cli/local.go:13 --source .
@@ -253,17 +256,15 @@ grepple extract structure --at web/store.ts:8 --source web
 grepple extract flow --at services/worker.py:20 --source services
 grepple extract structure --at src/main/java/acme/Service.java:12 --source .
 grepple extract flow --at src/main/kotlin/acme/Worker.kt:30 --source .
-grepple extract summary package extract
-grepple extract summary workspace .
-grepple extract structure api --bundle --output .grepple/api.package
-grepple extract structure . --workspace --output .grepple/project.workspace
 ```
 
-`summary package|workspace` emits bounded Markdown from the same canonical Go IR as package/workspace bundles, without Mermaid validation metadata. Package summaries list counts and at most 30 public-surface entries plus 10 routes; workspace summaries list counts and bounded modules, packages, and local dependency edges. They are intended as the lowest-token orientation view. `structure` without an entry generates the complete Go package class diagram for the selected file or directory. `--entry` or `--at PATH:LINE` produces a bounded, language-adapted type structure. `flow` requires one of those selectors and follows statically resolved outgoing calls. `--source` can be repeated to define the analysis roots; `--depth`, `--max-nodes`, and `--output` control projection and writing. A flow that reaches `--max-nodes` remains valid and deterministic, and includes `%% grepple:truncated max-nodes N` instead of failing after useful nodes have already been selected.
+`architecture directory` uses explicit depth, node, file, and output bounds in compact mode; complete JSON may spill to a disclosed artifact according to repository output policy. `architecture resolve` indexes declaration outlines rather than only callable graph nodes. `architecture why` currently reports only `exact`, `import-resolved`, and `context-resolved` static calls, so absence does not prove that no build-system, reflective, registration, or runtime dependency exists.
+
+Focused extraction requires `--entry` or `--at PATH:LINE`. `flow` follows statically resolved outgoing calls. `--source` can be repeated to define analysis roots; `--depth`, `--max-nodes`, and `--output` control projection and writing. A flow that reaches `--max-nodes` remains valid and deterministic, and includes `%% grepple:truncated max-nodes N` instead of failing after useful nodes have already been selected.
 
 Every generated type/function node includes its exact `PATH:START-END` definition range; type notes also list exact member ranges. Flow nodes display their definition range directly. Generated diagrams are checked against the same source analysis before being returned.
 
-Validation is available through `grepple extract check structure|flow|package|workspace`. `extract.SupportedLanguages` and `extract.LanguageForPath` expose adapter metadata. To add a language, implement one adapter with its Tree-sitter analyzer and structure/flow projections, then add it to `registeredLanguages`; discovery and orchestration require no language-specific branches.
+Validation is available through `grepple extract check structure|flow`. `extract.SupportedLanguages` and `extract.LanguageForPath` expose focused adapter metadata. To add a focused language, implement one adapter with its Tree-sitter analyzer and structure/flow projections, then add it to `registeredLanguages`; directory architecture uses parser capabilities directly.
 
 ## Predefined searches (rules)
 
@@ -313,7 +314,7 @@ REST API (all under the org-authed `/public` gate):
 
 Matching is line-based for every readable non-NUL text file. Parser-backed features vary by language.
 
-Run `grepple languages` for the terminal matrix or `grepple languages --json` for machine-readable capabilities. See the canonical [language and feature support matrix](docs/file-type-support.md#current-support-matrix) for the same generated checkmark overview of text grep, structural grep, outlines, navigation, focused structure and flow extraction, GritQL, package bundles, and workspace bundles. Status distinguishes production, specialized/limited, unsupported, and experimental implementations.
+Run `grepple languages` for the terminal matrix or `grepple languages --json` for machine-readable capabilities. See the generated [language and feature support matrix](docs/file-type-support.md#current-support-matrix) for text grep, structural grep, outlines, navigation, focused structure/flow extraction, and GritQL. Directory architecture applies to every language with parser navigation support.
 
 ## Agent workflow benchmarks
 
@@ -323,7 +324,7 @@ Run the fixed end-to-end discovery, navigation, impact, and edit-location benchm
 make agent-benchmark
 ```
 
-It reports modeled retrieval calls, returned bytes, approximate tokens, elapsed time, and allocations while verifying answer fragments. See [Agent workflow benchmarks](docs/agent-workflow-benchmarks.md) for methodology and the current baseline. Run `make architecture-benchmark` for focused structure/flow and package/workspace generation metrics; reviewed thresholds are documented in [Architecture performance benchmarks](docs/architecture-performance-benchmarks.md).
+It reports modeled retrieval calls, returned bytes, approximate tokens, elapsed time, and allocations while verifying answer fragments. See [Agent workflow benchmarks](docs/agent-workflow-benchmarks.md) for methodology and the current baseline. Run `make architecture-benchmark` for focused structure/flow metrics; reviewed thresholds are documented in [Architecture performance benchmarks](docs/architecture-performance-benchmarks.md).
 
 ## Repository configuration
 
@@ -337,7 +338,7 @@ Grepple discovers the nearest ancestor `grepple.json`. Repository-owned ignore p
 }
 ```
 
-Complete output larger than the threshold is stored content-addressed under `.grepple/output/`; stdout receives a small `grepple-artifact-v1` descriptor. Use `--no-spill` when a script requires the original stream, or `--spill-threshold-bytes N` for one invocation. Repository configuration cannot contain or override authentication credentials stored in `~/.grepple/config.json`.
+Complete output larger than the threshold is stored content-addressed under `.grepple/output/`; stdout receives a small `grepple-artifact-v1` descriptor. Use `--no-spill` when a script requires the original stream, or `--spill-threshold-bytes N` for one invocation. `grepple artifacts clean` explicitly removes retained artifacts. Repository configuration cannot contain or override authentication credentials stored in `~/.grepple/config.json`.
 
 ## Remote service
 

@@ -65,20 +65,22 @@ This file records completed Grepple roadmap work that no longer belongs in `next
 - [x] Added traversal-free `graph resolve --symbol NAME` previews with deterministic exact/terminal matches, full stable IDs, exact `--at` alternatives, filters, and copyable focused graph commands in bounded compact and complete JSON output.
 - [x] Added language, confidence, and visibility filtering before root selection and traversal.
 - [x] Added `grepple-navigation-diff-v1`, ignoring line-only movement while reporting semantic declaration and call-edge changes.
-- [x] Added end-to-end parity coverage across JSON, compact output, focused Mermaid, canonical Mermaid, and `--related`.
+- [x] Added end-to-end shared-edge parity coverage across JSON, compact graph output, focused Mermaid, directory resolution, and `--related`.
 
 ## Architecture extraction and validation
 
 - [x] Replaced hook-local Mermaid extraction/checking with the shared root `extract` implementation.
 - [x] Added source-linked, deterministic structure and flow generation with bounded depth/node counts.
 - [x] Added explicit, checker-valid truncation markers to bounded diagrams.
-- [x] Added structure, flow, package, and workspace checking.
-- [x] Added canonical Go package/workspace overview, structure, and manifest bundles.
-- [x] Added bounded package/workspace Markdown summaries; dogfooding reduced package orientation from about 27.5 KB to 2.1 KB and workspace orientation from about 4.3 KB to 2.4 KB.
-- [x] Added compact architecture presentation that omits Mermaid validation metadata while retaining canonical bundles.
-- [x] Added exact declaration/member ranges and deterministic relation evidence to generated artifacts.
+- [x] Added structure and flow checking.
+- [x] Previously implemented and measured canonical Go package/workspace bundles and bounded summaries; later removed them after dogfooding showed that a simpler directory projection generalized across languages with lower workflow complexity.
+- [x] Added exact declaration/member ranges and deterministic relation evidence to generated focused diagrams.
 - [x] Added focused structure/flow support for Go, JavaScript/JSX, TypeScript/TSX, Python, Java, Kotlin, and C#.
-- [x] Added semantic graph diffing for code review and CI architecture impact.
+- [x] Added semantic navigation graph diffing for code review and CI impact.
+- [x] Added `grepple architecture directory` with bounded hierarchical directory/file/language/declaration counts across every navigation-backed language.
+- [x] Added `architecture resolve` for direct type/callable ownership and exact ranges, including declarations omitted by callable-only `graph resolve`.
+- [x] Added `architecture why` with source-linked cross-directory call evidence restricted to exact/import/context-resolved edges.
+- [x] Removed Go-specific package/workspace commands, public capability fields, generators, checkers, hook paths, tests, and committed `.grepple` artifacts without a compatibility period.
 
 ## Parser and language architecture
 
@@ -126,7 +128,7 @@ This file records completed Grepple roadmap work that no longer belongs in `next
 
 ## Capability reporting and language support
 
-- [x] Added deterministic human, JSON, and generated Markdown capability views covering extensions, segments, outlines, navigation, focused structure/flow, GritQL, and canonical bundles.
+- [x] Added deterministic human, JSON, and generated Markdown capability views covering extensions, segments, outlines, navigation, focused structure/flow, and GritQL.
 - [x] Added parity tests proving advertised combinations work and unsupported combinations fail explicitly.
 - [x] Added JavaScript/JSX, Python, Java, Kotlin, and C# focused architecture adapters on the shared parser/navigation infrastructure.
 - [x] Added native GritQL support for every Tree-sitter-backed language in the capability registry.
@@ -136,8 +138,8 @@ This file records completed Grepple roadmap work that no longer belongs in `next
 - [x] Added malformed and partially written source fuzz seeds.
 - [x] Added bounded fuzz targets for navigation extraction and both Mermaid parsers.
 - [x] Made generated diagrams round-trip through their checkers and byte-deterministic in current tests.
-- [x] Added parse, navigation-index, cache-format, focused extraction, package bundle, and workspace bundle benchmarks.
+- [x] Added parse, navigation-index, cache-format, focused extraction, and directory architecture benchmarks; retired package/workspace bundle benchmarks with those features.
 - [x] Compared JSON, gob, protobuf variants, packed layouts, and experimental native tree serialization for cache design.
 - [x] Added reviewed runtime/allocation budgets as benchmark gates rather than host-sensitive unit assertions.
-- [x] Kept `go test -race ./...`, canonical schema checks, and package/workspace drift checks green through the completed refactors.
+- [x] Kept `go test -race ./...`, generated parser metadata checks, and deterministic architecture tests green through the completed refactors.
 - [x] Added reproducible version, revision, source time, toolchain, and platform output through `--version`.

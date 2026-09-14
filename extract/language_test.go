@@ -11,16 +11,16 @@ func TestSupportedLanguagesAreStableAndDefensive(t *testing.T) {
 	if len(languages) != 7 {
 		t.Fatalf("SupportedLanguages() = %#v", languages)
 	}
-	if languages[0].ID != "go" || !reflect.DeepEqual(languages[0].Extensions, []string{".go"}) || !languages[0].FocusedStructure || !languages[0].FocusedFlow || !languages[0].PackageBundle || !languages[0].WorkspaceBundle {
+	if languages[0].ID != "go" || !reflect.DeepEqual(languages[0].Extensions, []string{".go"}) || !languages[0].FocusedStructure || !languages[0].FocusedFlow {
 		t.Fatalf("Go adapter metadata = %#v", languages[0])
 	}
-	if languages[1].ID != "typescript" || !reflect.DeepEqual(languages[1].Extensions, []string{".ts", ".mts", ".cts", ".tsx"}) || !languages[1].FocusedStructure || !languages[1].FocusedFlow || languages[1].PackageBundle || languages[1].WorkspaceBundle {
+	if languages[1].ID != "typescript" || !reflect.DeepEqual(languages[1].Extensions, []string{".ts", ".mts", ".cts", ".tsx"}) || !languages[1].FocusedStructure || !languages[1].FocusedFlow {
 		t.Fatalf("TypeScript adapter metadata = %#v", languages[1])
 	}
-	if languages[2].ID != "javascript" || !reflect.DeepEqual(languages[2].Extensions, []string{".js", ".jsx"}) || !languages[2].FocusedStructure || !languages[2].FocusedFlow || languages[2].PackageBundle || languages[2].WorkspaceBundle {
+	if languages[2].ID != "javascript" || !reflect.DeepEqual(languages[2].Extensions, []string{".js", ".jsx"}) || !languages[2].FocusedStructure || !languages[2].FocusedFlow {
 		t.Fatalf("JavaScript adapter metadata = %#v", languages[2])
 	}
-	if languages[3].ID != "python" || !reflect.DeepEqual(languages[3].Extensions, []string{".py", ".pyi", ".pyw"}) || !languages[3].FocusedStructure || !languages[3].FocusedFlow || languages[3].PackageBundle || languages[3].WorkspaceBundle {
+	if languages[3].ID != "python" || !reflect.DeepEqual(languages[3].Extensions, []string{".py", ".pyi", ".pyw"}) || !languages[3].FocusedStructure || !languages[3].FocusedFlow {
 		t.Fatalf("Python adapter metadata = %#v", languages[3])
 	}
 	for index, expected := range []struct {
@@ -28,7 +28,7 @@ func TestSupportedLanguagesAreStableAndDefensive(t *testing.T) {
 		extensions []string
 	}{{"java", []string{".java"}}, {"kotlin", []string{".kt", ".kts"}}, {"csharp", []string{".cs"}}} {
 		language := languages[index+4]
-		if language.ID != expected.id || !reflect.DeepEqual(language.Extensions, expected.extensions) || !language.FocusedStructure || !language.FocusedFlow || language.PackageBundle || language.WorkspaceBundle {
+		if language.ID != expected.id || !reflect.DeepEqual(language.Extensions, expected.extensions) || !language.FocusedStructure || !language.FocusedFlow {
 			t.Fatalf("class-model adapter metadata = %#v", language)
 		}
 	}

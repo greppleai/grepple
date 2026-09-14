@@ -10,7 +10,7 @@ import (
 func TestExtractStructureGeneratesValidatedGoDiagram(t *testing.T) {
 	root, source := writeExtractFixture(t)
 	output := filepath.Join(root, "structure.mmd")
-	if err := runExtract([]string{"structure", filepath.Dir(source), "--output", output}); err != nil {
+	if err := runExtract([]string{"structure", "--entry", "Service", "--source", filepath.Dir(source), "--output", output}); err != nil {
 		t.Fatal(err)
 	}
 	content, err := os.ReadFile(output)
@@ -145,59 +145,8 @@ func assertFocusedJVMCLI(t *testing.T, extension, content, language, edge string
 	}
 }
 
-func TestExtractStructureWritesCanonicalBundle(t *testing.T) {
-	root, source := writeExtractFixture(t)
-	output := filepath.Join(root, "service.package")
-	if err := runExtract([]string{"structure", filepath.Dir(source), "--bundle", "--output", output}); err != nil {
-		t.Fatal(err)
-	}
-	for _, name := range []string{"manifest.json", "overview.mmd", "structure.mmd"} {
-		if _, err := os.Stat(filepath.Join(output, name)); err != nil {
-			t.Fatalf("missing %s: %v", name, err)
-		}
-	}
-	manifest, err := os.ReadFile(filepath.Join(output, "manifest.json"))
-	if err != nil || !strings.Contains(string(manifest), `"line": 3`) {
-		t.Fatalf("manifest location: %v\n%s", err, manifest)
-	}
-	structure, err := os.ReadFile(filepath.Join(output, "structure.mmd"))
-	if err != nil || !strings.Contains(string(structure), "defined: service/service.go:3") {
-		t.Fatalf("structure location: %v\n%s", err, structure)
-	}
-	if err := runExtract([]string{"check", "package", output, filepath.Dir(source)}); err != nil {
-		t.Fatal(err)
-	}
-}
-
-func TestExtractSummaryStreamsCompactPackageAndWorkspaceViews(t *testing.T) {
-	root, source := writeExtractFixture(t)
-	packageSummary := captureStdout(t, func() {
-		if err := runExtract([]string{"summary", "package", filepath.Dir(source)}); err != nil {
-			t.Fatal(err)
-		}
-	})
-	for _, expected := range []string{"# Package `example.com/extracttest/service`", "## Public surface", "`Service`"} {
-		if !strings.Contains(packageSummary, expected) {
-			t.Fatalf("package summary missing %q:\n%s", expected, packageSummary)
-		}
-	}
-	workspaceSummary := captureStdout(t, func() {
-		if err := runExtract([]string{"summary", "workspace", root}); err != nil {
-			t.Fatal(err)
-		}
-	})
-	for _, expected := range []string{"# Workspace `example.com/extracttest`", "## Modules", "`service` — package `service`"} {
-		if !strings.Contains(workspaceSummary, expected) {
-			t.Fatalf("workspace summary missing %q:\n%s", expected, workspaceSummary)
-		}
-	}
-	if strings.Contains(packageSummary, "classDiagram") || strings.Contains(workspaceSummary, "flowchart") {
-		t.Fatal("summary leaked Mermaid projection detail")
-	}
-}
-
 func TestExtractRejectsInvalidModeCombinations(t *testing.T) {
-	if err := runExtract([]string{"flow", "--bundle", "--entry", "Run"}); err == nil || !strings.Contains(err.Error(), "only to extract structure") {
+	if err := runExtract([]string{"structure", filepath.Dir("x.go")}); err == nil || !strings.Contains(err.Error(), "requires --entry") {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	if err := runExtract([]string{"flow", "--entry", "Run", "--at", "x.go:1"}); err == nil || !strings.Contains(err.Error(), "cannot be used together") {
@@ -210,12 +159,10 @@ func TestExtractRecursiveHelp(t *testing.T) {
 		args []string
 		want string
 	}{
-		{[]string{"extract", "--help"}, "grepple extract structure [OPTIONS]"},
+		{[]string{"extract", "--help"}, "grepple extract structure (--entry SYMBOL | --at PATH:LINE)"},
 		{[]string{"help", "extract", "structure"}, "Usage: grepple extract structure"},
 		{[]string{"help", "extract", "flow"}, "Usage: grepple extract flow"},
-		{[]string{"help", "extract", "summary"}, "grepple extract summary <package|workspace>"},
-		{[]string{"help", "extract", "summary", "package"}, "grepple extract summary package [PATH]"},
-		{[]string{"help", "extract", "check"}, "grepple extract check <structure|flow|package|workspace>"},
+		{[]string{"help", "extract", "check"}, "grepple extract check <structure|flow>"},
 		{[]string{"help", "extract", "check", "flow"}, "grepple extract check flow TARGET"},
 	}
 	for _, test := range tests {

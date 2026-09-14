@@ -33,7 +33,7 @@ func BenchmarkAgentWorkflows(b *testing.B) {
 		{name: "LineLocateThenAt", commands: [][]string{{"--line-only", "-F", "func Run(", "service.go", "--no-anchors"}, {"--at", "service.go:2-6", "--no-anchors"}}, want: []string{"service.go:2-6:func Run()", "validate()", "save()"}},
 		{name: "RelatedNavigation", commands: [][]string{{"--related", "--at", "service.go:2", "--no-anchors"}}, want: []string{"Next points", "→ validate", "← Handler"}},
 		{name: "ImpactGraph", commands: [][]string{{"graph", "impact", "--at", "service.go:2", "--depth", "1", "--compact", "."}}, want: []string{"query impact depth=1", "Run -> validate#", "Handler -> Run#"}},
-		{name: "ArchitectureSummary", commands: [][]string{{"extract", "summary", "package", "."}}, want: []string{"# Package `example.com/agentbench`", "## Public surface", "`Run()"}},
+		{name: "ArchitectureResolve", commands: [][]string{{"architecture", "resolve", "--symbol", "Run", "--compact", "."}}, want: []string{"architecture resolve symbol=Run matches=1", "service.go:2-6"}},
 		{name: "EnclosingScope", commands: [][]string{{"--line-only", "--enclosing", "-F", "save()", "service.go", "--no-anchors"}}, want: []string{"service.go:5@2-6:\tsave()"}},
 		{name: "EditLocation", commands: [][]string{{"--line-only", "-F", "EDIT_NEEDLE", "service.go", "--no-anchors"}}, want: []string{"service.go:4:\tvalidate() // EDIT_NEEDLE"}},
 	}

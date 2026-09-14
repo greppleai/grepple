@@ -12,9 +12,9 @@ type taskExample struct {
 }
 
 var taskExamples = []taskExample{
-	{Name: "orient", Description: "Orient in a workspace and then one package", Commands: []string{
-		"grepple extract summary workspace .",
-		"grepple extract summary package ./parser",
+	{Name: "orient", Description: "Orient by directory and resolve one declaration", Commands: []string{
+		"grepple architecture directory --depth 2 --compact .",
+		"grepple architecture resolve --symbol Document --compact .",
 	}},
 	{Name: "retrieve", Description: "Locate a declaration and retrieve its exact range", Commands: []string{
 		"grepple --line-only --enclosing -F 'BuildNavigationGraph' ./parser",
@@ -40,9 +40,8 @@ var taskExamples = []taskExample{
 		"grepple extract structure --entry NavigationGraph --source ./parser",
 		"grepple extract flow --entry BuildNavigationGraph --source ./parser",
 	}},
-	{Name: "canonical", Description: "Regenerate and validate canonical architecture bundles", Commands: []string{
-		"make schema-generate",
-		"make schema-check",
+	{Name: "architecture", Description: "Explain one strongly resolved cross-directory relation", Commands: []string{
+		"grepple architecture why rulespec search --compact rulespec search",
 	}},
 }
 

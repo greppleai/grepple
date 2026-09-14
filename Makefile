@@ -10,11 +10,6 @@ VERSION_LDFLAGS := -X github.com/greppleai/grepple/internal/cli.Version=$(VERSIO
 
 COMMANDS := grepple
 SOURCES := $(shell find cmd internal api extract gritql gritqlapi parser rulespec search -type f -name '*.go') go.mod go.sum
-SCHEMA_DIR := .grepple
-SCHEMA_CORE_PACKAGES := api extract gritql gritqlapi parser rulespec search
-SCHEMA_PACKAGES := $(SCHEMA_CORE_PACKAGES) cli
-PACKAGE_BUNDLES := $(addsuffix .package,$(addprefix $(SCHEMA_DIR)/,$(SCHEMA_PACKAGES)))
-WORKSPACE_BUNDLES := $(SCHEMA_DIR)/project.workspace
 
 .PHONY: build test agent-benchmark architecture-benchmark lint revive-lint hook-build hook-lint hook-test parser-metadata-generate parser-metadata-check schema-generate schema-check docker-smoke install clean
 
@@ -35,6 +30,7 @@ agent-benchmark:
 
 architecture-benchmark:
 	go test ./extract -run '^$$' -bench '^BenchmarkArchitectureWorkflows$$' -benchtime=10x -benchmem
+	go test ./internal/cli -run '^$$' -bench '^BenchmarkDirectoryArchitecture$$' -benchtime=10x -benchmem
 
 # Example fixtures under examples/ are intentionally excluded from linting.
 lint: revive-lint hook-lint hook-test schema-check
@@ -58,14 +54,9 @@ parser-metadata-generate:
 parser-metadata-check:
 	cd parser && go run ./internal/generate -check
 
-schema-generate: parser-metadata-generate $(BIN_DIR)/grepple
-	@for package in $(SCHEMA_CORE_PACKAGES); do $(BIN_DIR)/grepple extract structure $$package --bundle --output $(SCHEMA_DIR)/$$package.package || exit $$?; done
-	@$(BIN_DIR)/grepple extract structure internal/cli --bundle --output $(SCHEMA_DIR)/cli.package
-	@$(BIN_DIR)/grepple extract structure . --workspace --output $(WORKSPACE_BUNDLES)
+schema-generate: parser-metadata-generate
 
-schema-check: parser-metadata-check $(BIN_DIR)/grepple
-	@for bundle in $(PACKAGE_BUNDLES); do $(BIN_DIR)/grepple extract check package $$bundle || exit $$?; done
-	@for bundle in $(WORKSPACE_BUNDLES); do $(BIN_DIR)/grepple extract check workspace $$bundle || exit $$?; done
+schema-check: parser-metadata-check
 
 # Opt-in final-image smoke gate; requires a running Docker daemon and is not part of test.
 docker-smoke:

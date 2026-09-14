@@ -1,12 +1,12 @@
 # Architecture performance benchmarks
 
-`BenchmarkArchitectureWorkflows` measures the four architecture retrieval paths that agents and schema tooling use most often:
+`BenchmarkArchitectureWorkflows` measures focused Mermaid structure/flow generation, while `BenchmarkDirectoryArchitecture` measures language-neutral directory indexing and JSON projection:
 
 ```bash
 make architecture-benchmark
 ```
 
-The deterministic fixture contains a three-file TypeScript focused graph and a Go module with eight model files plus one dependent package. Every operation validates successful generation and reports standard time/allocation metrics plus `output_bytes/op`.
+The deterministic fixtures contain a three-file TypeScript focused graph and a 20-directory Go repository. Every operation validates successful generation and reports standard time/allocation metrics plus `output_bytes/op`.
 
 ## Reviewed baseline and budgets
 
@@ -14,12 +14,11 @@ Linux/amd64, Intel Core Ultra 7 165H, Go 1.25.14, `-benchtime=10x`:
 
 | Workflow | Baseline time | Baseline allocated bytes | Output bytes | Review budget time | Review budget allocated bytes |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| Focused structure | 1.59 ms | 0.68 MB | 722 | 3 ms | 1 MB |
-| Focused flow | 1.49 ms | 0.46 MB | 520 | 3 ms | 0.75 MB |
-| Package bundle | 20.28 ms | 5.37 MB | 14,110 | 35 ms | 8 MB |
-| Workspace bundle | 4.54 ms | 1.01 MB | 2,475 | 10 ms | 2 MB |
+| Focused structure | 2.22 ms | 0.73 MB | 722 | 3 ms | 1 MB |
+| Focused flow | 1.97 ms | 0.52 MB | 520 | 3 ms | 0.75 MB |
+| Directory architecture | 7.86 ms | 0.51 MB | 14,851 | 15 ms | 1 MB |
 
-Budgets are review thresholds rather than flaky test assertions: benchmark time depends on host scheduling and filesystem behavior. A repeatable result above either budget requires profiling or an explicit baseline review before merge. Correctness remains test-gated, while output size is deterministic and should not grow without explaining the added agent value.
+Budgets are review thresholds rather than flaky test assertions: benchmark time depends on host scheduling and filesystem behavior. A repeatable result above a budget requires profiling or an explicit baseline review before merge. Correctness remains test-gated, while output size is deterministic and should not grow without explaining the added agent value.
 
 Run the benchmark on the same machine and Go version when comparing changes. Use at least three samples for a budget decision; treat one timing outlier as diagnostic rather than conclusive.
 

@@ -1,73 +1,23 @@
 # Mermaid code schemas
 
-The main Grepple `extract` package checks and generates class/structure diagrams and call flowcharts
-from source parsed with Tree-sitter. Focused extraction supports Go and TypeScript-family sources; canonical package and workspace bundles remain Go-specific. Generic callable declarations and calls use the normalized `parser.NavigationGraph` shared with local code navigation. Malformed source reports its path and first syntax error location.
+The main Grepple `extract` package checks and generates focused class/structure diagrams and call flowcharts from Tree-sitter source. Generic callable declarations and calls use the normalized `parser.NavigationGraph` shared with local code navigation. Malformed source reports its path and first syntax-error location.
 
 ## Automatic Stop validation
 
-The Stop hook automatically checks files ending in `.class.mmd`,
-`.structure.mmd`, or `.flow.mmd`, and discovers canonical bundles at
-`*.package` and `*.workspace` directories. This repository exports all generated
-artifacts beneath root `.grepple/`; generated content there is excluded from source
-analysis but remains visible to schema discovery. Bundle directories are checked as
-a unit with the matching canonical, self-locating checker; their generated children are not
-independently treated as legacy diagrams. Bundle failures become bounded `mermaid-code`
-diagnostics anchored to the manifest, without preventing checks of unrelated bundle or legacy
-schemas. It first performs a cheap schema/bundle scan; when none exist, no Go/TypeScript
-source discovery or parsing occurs. This also runs in TypeScript-only projects without
-`go.mod`, where revive and other Go tooling are not required. Class and structure suffixes
-select the class schema, while the flow suffix selects the call-flow schema. Mismatches appear
-as `mermaid-code` lint diagnostics at the corresponding diagram line. Syntax and
-source-analysis failures are returned as bounded Stop feedback.
+The Stop hook automatically checks files ending in `.class.mmd`, `.structure.mmd`, or `.flow.mmd`. It performs a cheap schema scan first; when no diagrams exist, no source discovery or parsing occurs. Class and structure suffixes select the class schema, while flow selects the call-flow schema. Mismatches appear as bounded `mermaid-code` diagnostics at the corresponding diagram line.
 
 ## CLI
 
 ```bash
-bin/grepple extract check structure .grepple/model.class.mmd .
-bin/grepple extract check structure .grepple/model.structure.mmd .
-bin/grepple extract check flow .grepple/calls.flow.mmd .
-
-bin/grepple extract structure internal/service --bundle --output .grepple/service.package
-bin/grepple extract check package .grepple/service.package
+bin/grepple architecture directory --depth 2 --compact .
+bin/grepple architecture resolve --symbol Service --compact .
 bin/grepple extract structure service.go --entry Service --source . --output .grepple/service.structure.mmd
 bin/grepple extract flow service.go --entry Service.Run --source . --output .grepple/service.flow.mmd
+bin/grepple extract check structure .grepple/service.structure.mmd .
+bin/grepple extract check flow .grepple/service.flow.mmd .
 ```
 
-Focused flow generation is deterministically bounded. When resolvable calls exceed `--max-nodes`, generation keeps the selected prefix and emits `%% grepple:truncated max-nodes N`; the checker accepts this explicit warning while continuing to validate every emitted node and edge.
-
-`extract structure <source-directory>` generates the complete package diagram. Add `--entry`
-for a focused type diagram. The `--bundle` form
-always contains exactly `manifest.json`, `overview.mmd`, and `structure.mmd`. The manifest
-records the normalized package source directory relative to its `go.mod` root. Thus
-`extract check package <bundle-directory> [source-directory]` can safely self-locate its source when the
-second argument is omitted; an explicit source must reproduce the canonical manifest. Checking
-regenerates and byte-compares all three canonical artifacts. Bundle writes stage all
-artifacts in a sibling temporary directory, then rename the complete directory into place; an
-existing generated bundle is renamed aside and restored if commit fails. Unexpected entries
-are rejected before staging and are never deleted.
-
-The overview summary note is emitted immediately after `direction LR`. It begins with the
-exact mechanically extracted first sentence of a conventional `Package name ...` Go package
-comment when one exists; no replacement prose is synthesized. The overview includes every
-exported package function, all interface methods, and every named field of a tagged
-data-contract struct. Other declarations stay compact. Relations are grouped by
-from/to/kind/cardinality: groups of up to three retain their sorted exact `via` evidence;
-larger groups use deterministic evidence-category counts. `manifest.json` and
-`structure.mmd` retain every exact relation.
-
-Manifest JSON uses these lossless defaults to reduce repetition: a member without `file`
-inherits its declaration's file; absent `parameters` means no parameters; absent `result`
-means no result; absent `structTag` means the source field had no tag (an object with an empty
-`value` represents an explicitly empty tag). Declaration/member visibility and exportedness
-are derived from Go identifier capitalization and are not duplicated. Package-level exported
-entries in `exportedFunctions` use kind `function`, never `method`. Empty build-constraint arrays
-are omitted per source file; top-level semantic arrays remain present for a stable shape. The
-`scope.buildTags` value `syntactic-union-conflicts-rejected` means generation considers every
-non-test Go file without evaluating the host or environment GOOS/GOARCH. Only valid constraints
-in Go's leading build header are recorded; standard filename GOOS/GOARCH suffix constraints are
-added mechanically. `syntacticBuildTagUnion` is their sorted union. Because mutually exclusive
-files are represented together, duplicate package-level types/functions and duplicate methods
-are rejected rather than overwritten or merged, and diagnostics report both source locations.
+Focused structure and flow require `--entry` or `--at PATH:LINE`. Flow generation is deterministically bounded. When resolvable calls exceed `--max-nodes`, generation keeps the selected prefix and emits `%% grepple:truncated max-nodes N`; the checker accepts this explicit warning while validating every emitted node and edge.
 
 ## Class and structure conventions
 

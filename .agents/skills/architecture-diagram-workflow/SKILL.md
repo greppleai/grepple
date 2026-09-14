@@ -1,18 +1,18 @@
 ---
 name: architecture-diagram-workflow
-description: Use when asked to create, update, inspect, or validate Mermaid architecture diagrams or canonical .grepple package/workspace artifacts. Uses source-linked Grepple extraction instead of hand-authored architectural guesses.
+description: Use when asked to create, update, inspect, or validate focused Mermaid architecture diagrams. Uses source-linked Grepple extraction instead of hand-authored architectural guesses; use directory architecture for repository orientation.
 ---
 
 # Source-backed architecture diagrams with Grepple
 
-Choose the projection by question; do not generate the largest diagram by default.
+Choose the projection by question; do not generate a repository-wide diagram by default.
 
 ## Projection choice
 
-- **Package/workspace orientation:** use `extract summary`; do not generate a diagram merely to read it.
+- **Repository/directory orientation:** use `grepple architecture directory --compact`.
+- **Declaration ownership:** use `grepple architecture resolve --symbol NAME --compact`.
 - **Type, field, method, or dependency shape:** use focused `extract structure`.
 - **Callable sequence or path:** use focused `extract flow`.
-- **Stable repository documentation/CI:** generate or check the canonical package/workspace bundle. Canonical bundles are Go-specific.
 
 ## Focused workflow
 
@@ -30,8 +30,6 @@ Validate any diagram used for a decision or committed documentation:
 ```bash
 grepple extract check structure /tmp/model.structure.mmd .
 grepple extract check flow /tmp/service.flow.mmd .
-grepple extract check package .grepple/<package>.package
-grepple extract check workspace .grepple/project.workspace
 ```
 
 ## Trust rules
@@ -39,7 +37,7 @@ grepple extract check workspace .grepple/project.workspace
 - Prefer generated source locations and semantic metadata over labels guessed from names.
 - A structure edge is declared shape; a flow edge is syntax-resolved navigation. Neither proves runtime data flow or dynamic dispatch.
 - Treat candidate or truncated relations as incomplete and verify their `PATH:LINE` declarations.
-- Never manually edit canonical `.grepple/` output. Regenerate through the repository's documented target and run its schema check.
+- Directory ownership is not package/module/layer intent.
 - Keep one-off diagrams in `/tmp` unless the repository explicitly owns them.
 
 Use `architecture-lookup-discovery` to find the owner first and `change-impact-analysis` when the decision is about callers rather than visualization.

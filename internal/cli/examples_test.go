@@ -12,10 +12,10 @@ func TestExamplesCoverTaskOrientedWorkflows(t *testing.T) {
 		}
 	})
 	for _, expected := range []string{
-		"orient —", "extract summary workspace", "retrieve —", "--at", "edit —", "anchors doctor",
+		"orient —", "architecture directory", "architecture resolve", "retrieve —", "--at", "edit —", "anchors doctor",
 		"impact —", "graph resolve", "graph callers", "boundaries —", "boundaries --json",
 		"audit —", "grit --limit 0 --json", "diagram —", "extract structure", "extract flow",
-		"canonical —", "make schema-generate", "make schema-check",
+		"architecture —", "architecture why",
 	} {
 		if !strings.Contains(output, expected) {
 			t.Fatalf("examples output missing %q:\n%s", expected, output)
@@ -43,7 +43,7 @@ func TestExamplesHelpListsTasks(t *testing.T) {
 			t.Fatal(err)
 		}
 	})
-	if !strings.Contains(output, "Usage: grepple examples [TASK]") || !strings.Contains(output, "canonical") {
+	if !strings.Contains(output, "Usage: grepple examples [TASK]") || !strings.Contains(output, "architecture") {
 		t.Fatalf("examples help:\n%s", output)
 	}
 }

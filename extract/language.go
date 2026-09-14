@@ -15,8 +15,6 @@ type Language struct {
 	Extensions       []string
 	FocusedStructure bool
 	FocusedFlow      bool
-	PackageBundle    bool
-	WorkspaceBundle  bool
 }
 
 type languageAnalysis interface {

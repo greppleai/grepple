@@ -14,35 +14,32 @@ import (
 )
 
 type extractArgs struct {
-	Entry     string   `arg:"--entry" placeholder:"SYMBOL" help:"entry type, function, or method"`
-	At        string   `arg:"--at" placeholder:"PATH:LINE" help:"infer the entry declaration from a source location"`
-	Source    []string `arg:"--source,separate" placeholder:"PATH" help:"source root; repeatable"`
-	Depth     int      `arg:"--depth" default:"3" placeholder:"N" help:"dependency or call depth"`
-	MaxNodes  int      `arg:"--max-nodes" default:"200" placeholder:"N" help:"maximum diagram nodes"`
-	Output    string   `arg:"--output" placeholder:"PATH" help:"write output instead of stdout"`
-	Bundle    bool     `arg:"--bundle" help:"structure: generate a canonical package bundle"`
-	Workspace bool     `arg:"--workspace" help:"structure: generate a canonical workspace bundle"`
-	Paths     []string `arg:"positional" placeholder:"PATH" help:"source file or directory"`
+	Entry    string   `arg:"--entry" placeholder:"SYMBOL" help:"entry type, function, or method"`
+	At       string   `arg:"--at" placeholder:"PATH:LINE" help:"infer the entry declaration from a source location"`
+	Source   []string `arg:"--source,separate" placeholder:"PATH" help:"source root; repeatable"`
+	Depth    int      `arg:"--depth" default:"3" placeholder:"N" help:"dependency or call depth"`
+	MaxNodes int      `arg:"--max-nodes" default:"200" placeholder:"N" help:"maximum diagram nodes"`
+	Output   string   `arg:"--output" placeholder:"PATH" help:"write output instead of stdout"`
+	Paths    []string `arg:"positional" placeholder:"PATH" help:"source file or directory"`
 }
 
 func (extractArgs) Description() string {
 	return "Extract a validated, source-linked Mermaid structure or call-flow diagram from supported code."
 }
 
-const extractHelp = `Extract source-backed architecture projections.
+const extractHelp = `Extract source-backed focused architecture projections.
 
 Usage:
-  grepple extract structure [OPTIONS] [PATH ...]
-  grepple extract flow [OPTIONS] [PATH ...]
-  grepple extract summary <package|workspace> [PATH]
-  grepple extract check <structure|flow|package|workspace> TARGET [SOURCE ...]
+  grepple extract structure (--entry SYMBOL | --at PATH:LINE) [OPTIONS] [PATH ...]
+  grepple extract flow (--entry SYMBOL | --at PATH:LINE) [OPTIONS] [PATH ...]
+  grepple extract check <structure|flow> TARGET [SOURCE ...]
 
 Modes:
-  structure   Generate a focused diagram or canonical Go bundle
+  structure   Generate a focused type structure diagram
   flow        Generate a focused callable flow diagram
-  summary     Print a bounded package or workspace orientation summary
-  check       Validate a diagram or canonical bundle against source
+  check       Validate a focused diagram against source
 
+Use grepple architecture directory|resolve|why for language-neutral repository orientation.
 Run grepple help extract MODE for mode-specific help.
 `
 
@@ -54,25 +51,12 @@ func writeExtractHelp() error {
 	return stdoutWriter().writeString(extractHelp)
 }
 
-func writeExtractSummaryHelp(mode string) error {
-	switch mode {
-	case "":
-		return stdoutWriter().writeString("Summarize canonical Go architecture IR without Mermaid metadata.\nUsage: grepple extract summary <package|workspace> [PATH]\n")
-	case "package", "workspace":
-		return stdoutWriter().writeString(fmt.Sprintf("Summarize one Go %s.\nUsage: grepple extract summary %s [PATH]\n", mode, mode))
-	default:
-		return fmt.Errorf("extract summary mode must be package or workspace")
-	}
-}
-
 func writeExtractCheckHelp(mode string) error {
 	switch mode {
 	case "":
-		return stdoutWriter().writeString("Validate generated architecture against source.\nUsage: grepple extract check <structure|flow|package|workspace> TARGET [SOURCE ...]\n")
+		return stdoutWriter().writeString("Validate generated architecture against source.\nUsage: grepple extract check <structure|flow> TARGET [SOURCE ...]\n")
 	case "structure", "flow":
 		return stdoutWriter().writeString(fmt.Sprintf("Validate a generated %s diagram.\nUsage: grepple extract check %s TARGET [SOURCE ...]\n", mode, mode))
-	case "package", "workspace":
-		return stdoutWriter().writeString(fmt.Sprintf("Validate a canonical Go %s bundle.\nUsage: grepple extract check %s TARGET [SOURCE]\n", mode, mode))
 	default:
 		return fmt.Errorf("unknown extract check mode %q", mode)
 	}
@@ -88,9 +72,6 @@ func runExtract(args []string) error {
 	if args[0] == "check" {
 		return runExtractCheck(args[1:])
 	}
-	if args[0] == "summary" {
-		return runExtractSummary(args[1:])
-	}
 	if args[0] != "structure" && args[0] != "flow" {
 		return extractUsageError()
 	}
@@ -98,7 +79,7 @@ func runExtract(args []string) error {
 	if err != nil || values == nil {
 		return err
 	}
-	if err := validateExtractArgs(mode, values); err != nil {
+	if err := validateExtractArgs(values); err != nil {
 		return err
 	}
 	if mode == "structure" {
@@ -108,41 +89,7 @@ func runExtract(args []string) error {
 }
 
 func extractUsageError() error {
-	return fmt.Errorf("usage: grepple extract <structure|flow|summary|check> [flags] [PATH ...]")
-}
-
-func runExtractSummary(args []string) error {
-	if len(args) == 0 {
-		return fmt.Errorf("usage: grepple extract summary <package|workspace> [PATH]")
-	}
-	if isExtractHelp(args[0]) {
-		return writeExtractSummaryHelp("")
-	}
-	if len(args) == 2 && isExtractHelp(args[1]) {
-		return writeExtractSummaryHelp(args[0])
-	}
-	if len(args) > 2 {
-		return fmt.Errorf("usage: grepple extract summary <package|workspace> [PATH]")
-	}
-	mode := args[0]
-	path := "."
-	if len(args) == 2 {
-		path = args[1]
-	}
-	var summary string
-	var err error
-	switch mode {
-	case "package":
-		summary, err = codeextract.GeneratePackageSummary(path)
-	case "workspace":
-		summary, err = codeextract.GenerateWorkspaceSummary(path)
-	default:
-		return fmt.Errorf("extract summary mode must be package or workspace")
-	}
-	if err != nil {
-		return err
-	}
-	return stdoutWriter().writeString(summary)
+	return fmt.Errorf("usage: grepple extract <structure|flow|check> [flags] [PATH ...]")
 }
 
 func parseExtractArgs(args []string) (string, *extractArgs, error) {
@@ -162,7 +109,7 @@ func parseExtractArgs(args []string) (string, *extractArgs, error) {
 	return mode, values, nil
 }
 
-func validateExtractArgs(mode string, values *extractArgs) error {
+func validateExtractArgs(values *extractArgs) error {
 	if values.Depth < 0 {
 		return fmt.Errorf("--depth must not be negative")
 	}
@@ -172,45 +119,14 @@ func validateExtractArgs(mode string, values *extractArgs) error {
 	if values.Entry != "" && values.At != "" {
 		return fmt.Errorf("--entry and --at cannot be used together")
 	}
-	if mode == "flow" && (values.Bundle || values.Workspace) {
-		return fmt.Errorf("--bundle and --workspace apply only to extract structure")
-	}
-	if values.Bundle && values.Workspace {
-		return fmt.Errorf("--bundle and --workspace cannot be used together")
-	}
 	return nil
 }
 
 func runExtractStructure(values *extractArgs) error {
-	path := firstExtractPath(values.Paths)
-	if values.Workspace {
-		bundle, err := codeextract.GenerateWorkspaceBundle(path)
-		if err != nil {
-			return err
-		}
-		if values.Output == "" {
-			return fmt.Errorf("--output is required with --workspace")
-		}
-		return codeextract.WriteWorkspaceBundle(values.Output, bundle)
+	if values.Entry == "" && values.At == "" {
+		return fmt.Errorf("extract structure requires --entry SYMBOL or --at PATH:LINE; use grepple architecture directory for repository orientation")
 	}
-	if values.Bundle {
-		bundle, err := codeextract.GeneratePackageBundle(packageDirectory(path))
-		if err != nil {
-			return err
-		}
-		if values.Output == "" {
-			return fmt.Errorf("--output is required with --bundle")
-		}
-		return codeextract.WritePackageBundle(values.Output, bundle)
-	}
-	if values.Entry != "" || values.At != "" {
-		return runFocusedStructure(values)
-	}
-	diagram, err := codeextract.GeneratePackageDiagram(packageDirectory(path))
-	if err != nil {
-		return err
-	}
-	return writeExtractOutput(values.Output, diagram)
+	return runFocusedStructure(values)
 }
 
 func runFocusedStructure(values *extractArgs) error {
@@ -372,21 +288,6 @@ func defaultExtractRoots(paths []string, entryFile string) []string {
 	return []string{"."}
 }
 
-func firstExtractPath(paths []string) string {
-	if len(paths) == 0 {
-		return "."
-	}
-	return paths[0]
-}
-
-func packageDirectory(path string) string {
-	info, err := os.Stat(path)
-	if err == nil && !info.IsDir() {
-		return filepath.Dir(path)
-	}
-	return path
-}
-
 func extractSourceByPath(sources []codeextract.Source, path string) *codeextract.Source {
 	path = absoluteExtractPath(path)
 	for index := range sources {
@@ -421,7 +322,7 @@ func writeExtractOutput(path, content string) error {
 
 func runExtractCheck(args []string) error {
 	if len(args) == 0 {
-		return fmt.Errorf("usage: grepple extract check <structure|flow|package|workspace> TARGET [SOURCE ...]")
+		return fmt.Errorf("usage: grepple extract check <structure|flow> TARGET [SOURCE ...]")
 	}
 	if isExtractHelp(args[0]) {
 		return writeExtractCheckHelp("")
@@ -430,15 +331,11 @@ func runExtractCheck(args []string) error {
 		return writeExtractCheckHelp(args[0])
 	}
 	if len(args) < 2 {
-		return fmt.Errorf("usage: grepple extract check <structure|flow|package|workspace> TARGET [SOURCE ...]")
+		return fmt.Errorf("usage: grepple extract check <structure|flow> TARGET [SOURCE ...]")
 	}
 	mode, target := args[0], args[1]
 	sources := args[2:]
 	switch mode {
-	case "package":
-		return codeextract.CheckPackageBundle(target, optionalExtractSource(sources))
-	case "workspace":
-		return codeextract.CheckWorkspaceBundle(target, optionalExtractSource(sources))
 	case "structure":
 		return checkExtractDiagram(target, sources, true)
 	case "flow":
@@ -463,13 +360,6 @@ func checkExtractDiagram(path string, sources []string, structure bool) error {
 		return nil
 	}
 	return fmt.Errorf("%s:%d: %s (%d mismatch(es))", path, diagnostics[0].Line, diagnostics[0].Message, len(diagnostics))
-}
-
-func optionalExtractSource(sources []string) string {
-	if len(sources) == 0 {
-		return ""
-	}
-	return sources[0]
 }
 
 func absoluteExtractPath(path string) string {

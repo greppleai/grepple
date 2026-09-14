@@ -18,27 +18,27 @@ Status: ✅ production implementation; 🟡 production but specialized or intent
 `grepple` text matching covers every readable non-NUL file. Per-file `--count`, complete paging-independent `--count-summary`, and matching itself do not require a parser. `--line-only` also works without parsing; for parser-backed source it additionally reports `PATH:START-END` when a matching line begins a multi-line syntax construct, and falls back to `PATH:LINE` otherwise. Opt-in `--enclosing` reports body matches as `PATH:MATCH@START-END` using the nearest multi-line named syntax scope. Structural grep means the enclosing syntax or heading context used by default human search output. A source parse failure safely falls back to plain matching, but that fallback does not count as structural support.
 
 <!-- grepple:language-matrix:start -->
-| Language | Extensions | Text grep | Structural grep | Outline | Navigation | Focused structure | Focused flow | GritQL | Package bundle | Workspace bundle |
-| --- | --- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| `c` | `.c`, `.h` | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | ❌ |
-| `cpp` | `.cc`, `.cpp`, `.cxx`, `.hpp`, `.hh`, `.hxx` | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | ❌ |
-| `csharp` | `.cs` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
-| `go` | `.go` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| `java` | `.java` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
-| `javascript` | `.js`, `.jsx` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
-| `json` | `.json` | ✅ | ❌ | 🟡 | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| `kotlin` | `.kt`, `.kts` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
-| `markdown` | `.md`, `.markdown`, `.mdown`, `.mkd` | ✅ | 🟡 | 🟡 | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| `python` | `.py`, `.pyi`, `.pyw` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
-| `rust` | `.rs` | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | ❌ |
-| `shell` | `.sh`, `.bash`, `.zsh` | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | ❌ |
-| `text` | any other extension | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| `tsx` | `.tsx` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
-| `typescript` | `.ts`, `.mts`, `.cts` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
-| `yaml` | `.yaml`, `.yml` | ✅ | ❌ | 🟡 | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Language | Extensions | Text grep | Structural grep | Outline | Navigation | Focused structure | Focused flow | GritQL | Directory architecture |
+| --- | --- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| `c` | `.c`, `.h` | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ |
+| `cpp` | `.cc`, `.cpp`, `.cxx`, `.hpp`, `.hh`, `.hxx` | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ |
+| `csharp` | `.cs` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `go` | `.go` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `java` | `.java` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `javascript` | `.js`, `.jsx` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `json` | `.json` | ✅ | ❌ | 🟡 | ❌ | ❌ | ❌ | ❌ | ❌ |
+| `kotlin` | `.kt`, `.kts` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `markdown` | `.md`, `.markdown`, `.mdown`, `.mkd` | ✅ | 🟡 | 🟡 | ❌ | ❌ | ❌ | ❌ | ❌ |
+| `python` | `.py`, `.pyi`, `.pyw` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `rust` | `.rs` | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ |
+| `shell` | `.sh`, `.bash`, `.zsh` | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ |
+| `text` | any other extension | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| `tsx` | `.tsx` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `typescript` | `.ts`, `.mts`, `.cts` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `yaml` | `.yaml`, `.yml` | ✅ | ❌ | 🟡 | ❌ | ❌ | ❌ | ❌ | ❌ |
 <!-- grepple:language-matrix:end -->
 
-The table is generated from parser, extraction, and GritQL registrations. `grepple languages` renders the terminal view, `grepple languages --json` emits the machine-readable matrix, and `grepple languages --markdown` regenerates the table above. Tests reject stale documentation.
+The table is generated from parser, focused-extraction, GritQL, and directory-architecture registrations. `grepple languages` renders the terminal view, `grepple languages --json` emits the machine-readable matrix, and `grepple languages --markdown` regenerates the table above. Tests reject stale documentation.
 
 Notes:
 
@@ -53,9 +53,9 @@ Notes:
 - **Text grep and discovery:** `search` is the default production path. It discovers files, applies ignore/path/repository filters, reads candidates, rejects NUL-containing files, normalizes invalid UTF-8 for matching, and matches text. Parser support is not required.
 - **Structural grep context and outlines:** `parser.LanguageFor`, `parser.BuildSegments`, and `parser.BuildOutline` select parser-owned adapters. Go, TypeScript/TSX, JavaScript/JSX, Python, Java, Kotlin, C#, C, C++, Rust, and Shell all use this default Tree-sitter path. Markdown, JSON, and YAML use the lightweight paths shown above.
 - **Navigation:** every Tree-sitter-backed language in the table uses `parser.NavigationGraph`; `search` resolves and renders that shared graph for `--at`, `--related`, and `--follow-related`. Typed field and export facts propagate safe cross-file receiver context. Go embedded fields support promoted-method candidates; TypeScript/TSX support inheritance, named/default import aliases, relative barrel re-exports, and nearest-`tsconfig.json` `baseUrl`/`paths` aliases. Resolution remains syntax-based, and ambiguous interface/overload/inheritance candidates remain explicit. This is the default implementation, not a legacy or experimental collector.
-- **Focused architecture extraction:** Go, JavaScript/JSX, TypeScript/TSX, Python, Java, and Kotlin are registered in `extract`. They parse through `parser.Document` and reuse `parser.NavigationGraph`, while retaining production language-specific semantic enrichment and Mermaid rendering. Python covers classes, inheritance, annotated and unannotated attributes, decorators, and `.pyi` stubs. Java covers classes, interfaces, records, enums, inheritance, implementations, fields, constructors, and methods. Kotlin covers classes, interfaces, objects, data-class constructor properties, delegation-based inheritance, properties, and functions. Unsupported languages fail explicitly.
+- **Focused architecture extraction:** Go, JavaScript/JSX, TypeScript/TSX, Python, Java, Kotlin, and C# are registered in `extract`. They parse through `parser.Document` and reuse `parser.NavigationGraph`, while retaining production language-specific semantic enrichment and Mermaid rendering. Unsupported focused languages fail explicitly.
 - **Native GritQL:** every Tree-sitter-backed language in the table is registered under the single production `gritql-v1` contract. All target source parses through `parser.Document`; the GritQL query grammar itself is a separate intentional parser. Language-local adapters define safe snippet wrappers and root categories, while query algebra, matching, limits, and diagnostics remain shared. Unsupported language declarations fail explicitly, with no text or alternate-language fallback.
-- **Canonical package/workspace bundles:** remain production Go-only because their package, module, build-tag, route, and schema contracts are Go-specific. `grepple extract summary package|workspace` provides a bounded Markdown orientation projection from that same canonical IR. This is intentional rather than a temporary limitation.
+- **Directory architecture:** every Tree-sitter-backed language contributes files, outlines, declarations, and strongly resolved cross-directory calls through `grepple architecture directory|resolve|why`. Physical directories are not presented as package/module/layer semantics, and unknown visibility remains explicit.
 - **Experimental code:** packed CST and native `TSTree` serialization exist only in benchmarks or opt-in build-tag experiments and do not back text search, structural context, outlines, navigation, extraction, or GritQL in the shipped CLI.
 
 Structural source segments include comments attached immediately before a declaration, including JSDoc, Go documentation comments, Python comments, Rust doc comments, and equivalent forms in the other supported languages. One blank line is allowed between the comment and declaration. Attributes, annotations, and decorators between them are included; trailing comments attached to an earlier statement are not.

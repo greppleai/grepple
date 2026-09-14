@@ -2,11 +2,9 @@ package cli
 
 import (
 	"encoding/json"
-	"path/filepath"
 	"strings"
 	"testing"
 
-	architecture "github.com/greppleai/grepple/extract"
 	"github.com/greppleai/grepple/parser"
 )
 
@@ -19,7 +17,7 @@ func TestSharedNavigationEdgeParityAcrossAgentProjections(t *testing.T) {
 	assertParityCompactGraph(t, caller, target)
 	assertParityFocusedFlow(t)
 	assertParityRelatedOutput(t, call)
-	assertParityCanonicalPackage(t, root)
+	assertParityArchitectureResolve(t)
 }
 
 func loadParityJSONGraph(t *testing.T) navigationGraphOutput {
@@ -68,14 +66,14 @@ func assertParityRelatedOutput(t *testing.T, call parser.NavigationCall) {
 	}
 }
 
-func assertParityCanonicalPackage(t *testing.T, root string) {
+func assertParityArchitectureResolve(t *testing.T) {
 	t.Helper()
-	bundle, err := architecture.GeneratePackageBundle(filepath.Clean(root))
-	if err != nil {
-		t.Fatal(err)
-	}
-	canonical := string(bundle.Overview) + string(bundle.Structure)
-	assertContainsAll(t, canonical, []string{"Worker", "Run()", "Helper()", "service.go:3"}, "canonical Mermaid")
+	resolved := captureStdout(t, func() {
+		if err := Run([]string{"architecture", "resolve", "--symbol", "Worker", "--compact", "."}); err != nil {
+			t.Fatal(err)
+		}
+	})
+	assertContainsAll(t, resolved, []string{"matches=1", "go struct Worker service.go:2"}, "architecture resolve")
 }
 
 func assertContainsAll(t *testing.T, content string, expected []string, projection string) {

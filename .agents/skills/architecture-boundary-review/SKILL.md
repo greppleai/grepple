@@ -9,10 +9,10 @@ A clean directory diagram can hide behavioral coupling; a broad type can be a he
 
 ## Workflow
 
-1. Establish current ownership and dependency direction:
+1. Establish physical ownership and strongly resolved cross-directory evidence:
    ```bash
-   grepple extract summary workspace .
-   grepple extract summary package path/to/package
+   grepple architecture directory --depth 2 --compact .
+   grepple architecture why FROM TO --compact SCOPE
    ```
 2. Find repeated behavior and concrete-type spread:
    ```bash
@@ -20,14 +20,14 @@ A clean directory diagram can hide behavioral coupling; a broad type can be a he
 grepple boundaries --json path/to/scope
 grepple boundaries --policy .grepple/boundary-policy.json --json path/to/scope
    ```
-   Human output is triage; JSON is complete.
+   Human output is triage; JSON is complete but may be delivered through a `grepple-artifact-v1` descriptor. Inspect the descriptor and retrieve only relevant artifact ranges.
 3. Inspect each high-value evidence location with `grepple --at`. Do not recommend a move from counts alone.
 4. Test the proposed boundary from both sides with focused callers/callees:
    ```bash
    grepple graph callers --at owner/file.go:LINE --depth 2 --compact SCOPE
    grepple graph callees --at consumer/file.go:LINE --depth 2 --compact SCOPE
    ```
-5. Verify public signatures and package relations in source or canonical package structure before claiming API leakage.
+5. Verify public signatures and relevant directory relations in exact source before claiming API leakage.
 
 ## Interpretation rules
 

@@ -17,15 +17,14 @@ const (
 
 // LanguageCapabilities is one row in the cross-feature language support matrix.
 type LanguageCapabilities struct {
-	Language         string         `json:"language"`
-	Extensions       []string       `json:"extensions"`
-	TextGrep         FeatureSupport `json:"textGrep"`
-	StructuralGrep   FeatureSupport `json:"structuralGrep"`
-	Outline          FeatureSupport `json:"outline"`
-	Navigation       FeatureSupport `json:"navigation"`
-	FocusedStructure FeatureSupport `json:"focusedStructure"`
-	FocusedFlow      FeatureSupport `json:"focusedFlow"`
-	GritQL           FeatureSupport `json:"gritql"`
-	PackageBundle    FeatureSupport `json:"packageBundle"`
-	WorkspaceBundle  FeatureSupport `json:"workspaceBundle"`
+	Language              string         `json:"language"`
+	Extensions            []string       `json:"extensions"`
+	TextGrep              FeatureSupport `json:"textGrep"`
+	StructuralGrep        FeatureSupport `json:"structuralGrep"`
+	Outline               FeatureSupport `json:"outline"`
+	Navigation            FeatureSupport `json:"navigation"`
+	FocusedStructure      FeatureSupport `json:"focusedStructure"`
+	FocusedFlow           FeatureSupport `json:"focusedFlow"`
+	GritQL                FeatureSupport `json:"gritql"`
+	DirectoryArchitecture FeatureSupport `json:"directoryArchitecture"`
 }

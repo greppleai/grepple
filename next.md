@@ -4,7 +4,7 @@
 
 ## Recommended next milestone
 
-> Adopt one repository scope through the existing root `grepple.json`, replace and immediately remove Go-specific package/workspace orientation in favor of bounded directory architecture, and default large complete output to a disclosed file artifact with `--no-spill` as the compatibility escape hatch. Fix repository-origin classification before trusting boundary risk.
+> Make repository scope observable (`config`, exclusions, production/test), improve directory relations beyond resolved calls without inventing package semantics, and measure artifact-backed task success. Revisit syntax lifecycle APIs after these daily workflows are calibrated.
 
 ## Planning principles
 
@@ -49,23 +49,21 @@ Proposed backward-compatible shape:
 
 ## P1 — simplify architecture discovery and output delivery
 
-### Directory architecture instead of package/workspace bundles
+### Directory architecture precision
 
-The current package/workspace model is Go-specific and expensive to complete: the `search` overview is about 27 KB, structure 65 KB, and manifest 120 KB. A simple directory model can orient across all supported languages without inventing package semantics.
+`grepple architecture directory|resolve|why` now provides bounded, language-neutral directory ownership, exact type/callable ranges, and strongly resolved cross-directory call evidence. Legacy Go package/workspace commands and generated artifacts have been removed.
 
-- [ ] Define one bounded, language-neutral directory projection: directory/file counts, detected languages, declaration-kind counts, public/exported surface where adapters know it, entrypoints, and source-linked import/reference edges.
-- [ ] Add `grepple architecture directory [PATH]` with depth/node limits, deterministic collapse, explicit unknowns, and exact continuation commands.
-- [ ] Add targeted architecture resolution for types, callables, routes, files, and directories so `Document` resolves directly instead of `graph resolve` parsing the repository and returning zero because it indexes callables only.
-- [ ] Add a source-linked `architecture why FROM TO` query that explains the exact import/type/reference evidence behind a directory edge.
-- [ ] Generate a compact normalized directory manifest usable for drift checks and targeted queries; do not require agents to read exhaustive Mermaid or a large raw manifest.
-- [ ] Compare directory-manifest coverage and answer quality with current Go package/workspace bundles, then remove package/workspace commands, generation paths, tests, documentation, and canonical artifacts immediately rather than maintaining two orientation systems.
+- [ ] Separate production, test, fixture, generated, and vendor totals/relations so test calls do not dominate directory orientation.
+- [ ] Add source-linked import and type-reference directory edges independently of callable resolution; label each relation kind and preserve unsupported/unknown semantics.
+- [ ] Add adapter-evidenced entrypoints and routes only where languages provide useful contracts.
+- [ ] Parse or restore each selected file once when deriving both outlines and the resolved navigation graph.
+- [ ] Add task-level answer/turn/output benchmarks comparing directory orientation, direct symbol resolution, and relation explanation.
 
 ### Spill large output to a file artifact
 
 Observed complete outputs reached about 1.55 MB for boundaries and 6.7 MB for a graph over only `parser search`. Valid uncapped JSON is useful for automation but is a severe agent-context trap. Spill mode should be the default above 64 KB; callers that require the original stdout stream can opt out explicitly.
 
 - [ ] Add an explicit artifact path override without colliding with extraction's existing `--output` meaning.
-- [ ] Teach agent skills to inspect the descriptor first and retrieve only relevant file ranges rather than loading the complete artifact.
 - [ ] Benchmark artifact fallback by context bytes and retrieval turns, not only file-write runtime.
 
 ## P2 — improve precision and architectural signal
@@ -78,9 +76,8 @@ Observed complete outputs reached about 1.55 MB for boundaries and 6.7 MB for a 
 
 ### Architecture diagnostics
 
-- [ ] Compare normalized directory manifests before canonical byte comparison.
-- [ ] Report the first changed declaration, member, route, relation, file, or directory with source-linked context before the final byte-level determinism comparison.
-- [ ] Make command-specific errors explain focused-language versus language-neutral directory support; remove legacy Go-only bundle wording with the commands.
+- [ ] Compare normalized directory JSON before byte-level determinism checks.
+- [ ] Report the first changed declaration, relation, file, or directory with source-linked context.
 
 ## Reliability and compatibility gates
 

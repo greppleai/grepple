@@ -1,8 +1,7 @@
 # Grepple project hooks
 
 This directory is a small Go module containing project-local Pi hook orchestration.
-Mermaid analysis is imported from the main module's `extract` package so CLI generation,
-canonical checks, and automatic Stop validation share one implementation.
+Mermaid analysis is imported from the main module's `extract` package so CLI focused generation, checks, and automatic Stop validation share one implementation.
 
 ## Layout
 
@@ -23,70 +22,22 @@ sources when one of these suffixes exists:
 - `*.flow.mmd`
 
 Class and structure files use the class schema checker; flow files use the call
-flow checker. This repository keeps all generated artifacts under root `.grepple/`.
-The hook discovers `*.package` and `*.workspace` bundle directories there, validates
-each entire bundle with its canonical self-locating checker, and skips independent
-validation of generated files inside those directories. Generated `.grepple/` content
-is excluded from source analysis but not from schema discovery. Mismatches are returned
-as bounded `mermaid-code` diagnostics at diagram lines or bundle manifests.
+flow checker. Generated repository orientation is provided dynamically by `grepple architecture`; the Stop hook does not discover or validate generated package/workspace directories.
 
 ## Mermaid CLI
 
 ```bash
 make build
 
-bin/grepple extract check structure .grepple/service.structure.mmd .
-bin/grepple extract check flow .grepple/service.flow.mmd .
-bin/grepple extract structure internal/service --bundle --output .grepple/service.package
-bin/grepple extract check package .grepple/service.package
-bin/grepple extract structure . --workspace --output .grepple/project.workspace
-bin/grepple extract check workspace .grepple/project.workspace
+bin/grepple architecture directory --depth 2 --compact .
+bin/grepple architecture resolve --symbol Service --compact .
 bin/grepple extract structure internal/service --entry Service --source . --output .grepple/service.class.mmd
 bin/grepple extract flow internal/service --entry Service.Run --source . --output .grepple/service.flow.mmd
+bin/grepple extract check structure .grepple/service.class.mmd .
+bin/grepple extract check flow .grepple/service.flow.mmd .
 ```
 
-`extract structure <source-directory>` writes the package diagram to stdout or `--output`.
-Adding `--bundle --output <bundle-directory>` writes a canonical machine-generated
-package bundle containing exactly `manifest.json`, `overview.mmd`, and `structure.mmd`.
-The manifest is stable JSON for one syntax-derived semantic IR. Its package identity includes
-a normalized `sourceDirectory`, mechanically relative to the selected package's `go.mod` root.
-Its `syntactic-union-conflicts-rejected` build scope includes every non-test Go source file
-without consulting runtime GOOS/GOARCH: valid leading Go build constraints and standard
-filename-derived GOOS/GOARCH constraints are recorded per file and summarized as a sorted
-union. Package-level type/function conflicts and duplicate methods anywhere in that union are
-rejected with both source locations. The manifest also records files, types, exact members and tags, exported functions, routes, evidenced
-local relations, summary counts, and its SHA-256 digest. `structure.mmd` is exhaustive; `overview.mmd` is
-an LR projection grouped into syntax-derived namespaces. It lists every exported package
-function, every interface method, and all named fields on tagged data-contract structs;
-other declarations remain compact. Overview relations sharing from/to/kind/cardinality
-are collapsed (up to three exact evidence labels, then deterministic per-category counts),
-while the manifest and structure retain every exact relation. A mechanically extracted
-first sentence from a conventional Go `Package name ...` comment is included when present.
-`extract check package <bundle-directory> [source-directory]` regenerates and validates the bundle,
-using the manifest's strict project-relative source metadata when source is omitted. An explicit
-source remains supported and only succeeds when it produces the same canonical artifacts. It
-rejects missing or extra files and byte-compares every artifact. Bundle generation requires
-and rename/rollback. It refuses unexpected existing entries instead of deleting user content.
-Package selection rejects empty, mixed-package, non-directory, module-less, and
-TypeScript-only selectors.
-
-`extract structure <root> --workspace --output <bundle-directory>` writes exactly `manifest.json` and
-`overview.mmd`. It recursively discovers root and nested `go.mod` files, but scans each module
-without crossing into a nested module, and inventories directories containing direct non-test
-Go files. The stable manifest records module/import paths and root-relative directories, exact
-package-doc first sentences when present, package counts and Fiber route facts, local and
-standard-library imports, and external imports mapped to the longest boundary-matching
-`require` module path. Unmatched external imports are explicitly retained. Scope metadata
-records the same syntactic build-tag union policy as package bundles and the excluded
-directories/symlinks. Its digest covers the semantic model with only the digest field blanked.
-
-The deterministic `flowchart LR` overview groups packages by module, marks `package main`
-entrypoints mechanically, renders local edges, collapses each package-to-external-module edge,
-and attaches at most five exact route facts plus a machine count for any remainder. It contains
-no inferred descriptions. `extract check workspace <bundle-directory> [root]` strictly regenerates and
-byte-compares both files, rejecting missing/extra entries. When root is omitted it uses strict
-root metadata anchored to the containing Go module. Workspace writes use directory-level
-temporary generation and rename/rollback and refuse symlink outputs or unknown existing files.
+Focused structure and flow generation require `--entry` or `--at PATH:LINE`. `--source` defines the source universe; `--depth` and `--max-nodes` keep generated Mermaid bounded.
 
 `structure` is an alias for `class`. Class diagrams may include one `direction LR|RL|TB|BT`
 statement and non-nested `namespace <identifier> { ... }` grouping blocks; namespaces do not
@@ -113,8 +64,7 @@ exact module import paths for package metadata. One-package schemas can replace 
 scope and language metadata with `%% grepple:package-default <exact-go-import-path>` and
 `%% grepple:language-default go|typescript`; `%% grepple:exact-default` makes only
 non-function struct/interface nodes exact. Defaults are finalized independent of order and
-strictly reject malformed, duplicate, or conflicting metadata. Canonical bundles use these
-defaults while retaining kind, file, tag, underlying-type, route, and file-local facts.
+strictly reject malformed, duplicate, or conflicting metadata.
 Alias and named-type nodes can opt into exact underlying Go type validation with
 `%% grepple:underlying <Type> <normalized-Go-type-expression>`; generated `<<alias>>` and
 `<<type>>` nodes emit this metadata. The legacy `pi` prefix is accepted.

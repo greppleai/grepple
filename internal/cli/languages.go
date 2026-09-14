@@ -22,7 +22,7 @@ type languagesArgs struct {
 }
 
 func (languagesArgs) Description() string {
-	return "Show language extensions and support across search, navigation, extraction, GritQL, and architecture bundles."
+	return "Show language extensions and support across search, navigation, focused extraction, GritQL, and directory architecture."
 }
 
 func runLanguages(args []string) error {
@@ -65,17 +65,16 @@ func languageCapabilityMatrix() []api.LanguageCapabilities {
 	for _, language := range contentLanguages {
 		extractLanguage, hasExtraction := extractionCapabilities(language, extraction)
 		result = append(result, api.LanguageCapabilities{
-			Language:         language.ID,
-			Extensions:       append([]string{}, language.Extensions...),
-			TextGrep:         api.FeatureProduction,
-			StructuralGrep:   featureSupport(language.StructuralGrep, language.Specialized),
-			Outline:          featureSupport(language.Outline, language.Specialized),
-			Navigation:       featureSupport(language.Navigation, false),
-			FocusedStructure: featureSupport(hasExtraction && extractLanguage.FocusedStructure, false),
-			FocusedFlow:      featureSupport(hasExtraction && extractLanguage.FocusedFlow, false),
-			GritQL:           featureSupport(gritLanguages[language.ID], false),
-			PackageBundle:    featureSupport(hasExtraction && extractLanguage.PackageBundle, false),
-			WorkspaceBundle:  featureSupport(hasExtraction && extractLanguage.WorkspaceBundle, false),
+			Language:              language.ID,
+			Extensions:            append([]string{}, language.Extensions...),
+			TextGrep:              api.FeatureProduction,
+			StructuralGrep:        featureSupport(language.StructuralGrep, language.Specialized),
+			Outline:               featureSupport(language.Outline, language.Specialized),
+			Navigation:            featureSupport(language.Navigation, false),
+			FocusedStructure:      featureSupport(hasExtraction && extractLanguage.FocusedStructure, false),
+			FocusedFlow:           featureSupport(hasExtraction && extractLanguage.FocusedFlow, false),
+			GritQL:                featureSupport(gritLanguages[language.ID], false),
+			DirectoryArchitecture: featureSupport(language.Navigation, false),
 		})
 	}
 	sort.Slice(result, func(i, j int) bool { return result[i].Language < result[j].Language })
@@ -119,7 +118,7 @@ func featureSupport(supported, specialized bool) api.FeatureSupport {
 
 func renderLanguageCapabilities(capabilities []api.LanguageCapabilities) error {
 	writer := tabwriter.NewWriter(os.Stdout, 0, 4, 2, ' ', 0)
-	if _, err := fmt.Fprintln(writer, "LANGUAGE\tEXTENSIONS\tTEXT\tSTRUCTURAL\tOUTLINE\tNAV\tSTRUCTURE\tFLOW\tGRITQL\tPACKAGE\tWORKSPACE"); err != nil {
+	if _, err := fmt.Fprintln(writer, "LANGUAGE\tEXTENSIONS\tTEXT\tSTRUCTURAL\tOUTLINE\tNAV\tSTRUCTURE\tFLOW\tGRITQL\tDIRECTORY"); err != nil {
 		return err
 	}
 	for _, capability := range capabilities {
@@ -127,11 +126,10 @@ func renderLanguageCapabilities(capabilities []api.LanguageCapabilities) error {
 		if extensions == "" {
 			extensions = "other"
 		}
-		if _, err := fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
+		if _, err := fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
 			capability.Language, extensions, supportIcon(capability.TextGrep), supportIcon(capability.StructuralGrep),
 			supportIcon(capability.Outline), supportIcon(capability.Navigation), supportIcon(capability.FocusedStructure),
-			supportIcon(capability.FocusedFlow), supportIcon(capability.GritQL), supportIcon(capability.PackageBundle),
-			supportIcon(capability.WorkspaceBundle)); err != nil {
+			supportIcon(capability.FocusedFlow), supportIcon(capability.GritQL), supportIcon(capability.DirectoryArchitecture)); err != nil {
 			return err
 		}
 	}
@@ -156,18 +154,17 @@ func supportIcon(support api.FeatureSupport) string {
 
 func renderLanguageCapabilitiesMarkdown(capabilities []api.LanguageCapabilities) string {
 	var output strings.Builder
-	output.WriteString("| Language | Extensions | Text grep | Structural grep | Outline | Navigation | Focused structure | Focused flow | GritQL | Package bundle | Workspace bundle |\n")
-	output.WriteString("| --- | --- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |\n")
+	output.WriteString("| Language | Extensions | Text grep | Structural grep | Outline | Navigation | Focused structure | Focused flow | GritQL | Directory architecture |\n")
+	output.WriteString("| --- | --- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |\n")
 	for _, capability := range capabilities {
 		extensions := "any other extension"
 		if len(capability.Extensions) > 0 {
 			extensions = "`" + strings.Join(capability.Extensions, "`, `") + "`"
 		}
-		fmt.Fprintf(&output, "| `%s` | %s | %s | %s | %s | %s | %s | %s | %s | %s | %s |\n",
+		fmt.Fprintf(&output, "| `%s` | %s | %s | %s | %s | %s | %s | %s | %s | %s |\n",
 			capability.Language, extensions, markdownSupportIcon(capability.TextGrep), markdownSupportIcon(capability.StructuralGrep),
 			markdownSupportIcon(capability.Outline), markdownSupportIcon(capability.Navigation), markdownSupportIcon(capability.FocusedStructure),
-			markdownSupportIcon(capability.FocusedFlow), markdownSupportIcon(capability.GritQL), markdownSupportIcon(capability.PackageBundle),
-			markdownSupportIcon(capability.WorkspaceBundle))
+			markdownSupportIcon(capability.FocusedFlow), markdownSupportIcon(capability.GritQL), markdownSupportIcon(capability.DirectoryArchitecture))
 	}
 	return output.String()
 }

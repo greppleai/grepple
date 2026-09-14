@@ -30,7 +30,7 @@ Default search returns enclosing structural segments and collapses unrelated bod
 3. Distinguish `--files` (path discovery) from `--files-with-matches` (content evidence). `-l` means file listing here, not grep's matching-file behavior.
 4. Treat a text occurrence as an occurrence only. For callers, dependencies, or refactor impact, switch to `change-impact-analysis`.
 5. Treat `recovered`, `unsupported`, or `failed` source analysis as incomplete parser evidence; plain text is intentional but has no syntax guarantees.
-6. In complete JSON, inspect `metadata.page.complete`, limits, omissions, and diagnostics; use its copyable `nextCommand` rather than inventing a paging command. Human truncation and omitted-segment messages are likewise incomplete.
+6. In complete JSON, inspect `metadata.page.complete`, limits, omissions, and diagnostics; use its copyable `nextCommand` rather than inventing a paging command. If stdout is `grepple-artifact-v1`, inspect the descriptor first and read only relevant artifact ranges; use its `--no-spill` rerun only when the complete stream is required. Human truncation and omitted-segment messages are likewise incomplete.
 7. Selected paths/globs are the evidence universe. State that universe when making a completeness claim.
 8. Do not read an entire large file after Grepple supplied an exact construct range.
 

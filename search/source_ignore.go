@@ -17,7 +17,7 @@ func (config sourceIgnoreConfig) ignored(candidate string) bool {
 	if !inRepository {
 		return false
 	}
-	if pathfilter.Match(".grepple/cache/**", relative) || pathfilter.Match(".grepple/output/**", relative) {
+	if pathfilter.Match(".grepple/**", relative) {
 		return true
 	}
 	return filter.Ignored(candidate)

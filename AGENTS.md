@@ -16,16 +16,15 @@ Keep dependencies directed toward `api` and `parser`. Distributed router, shard,
 
 Language-specific parser and navigation syntax belongs behind the owning `languageAdapter`, with parsing entered through `languageAdapter.Parse()` and navigation policy exposed through `languageAdapter.Navigation()`. `syntaxTree` and `syntaxNode` are the private structural boundary; production parser files outside `tree_sitter.go` must not import or name go-tree-sitter types. Shared parser engines must not contain canonical language IDs or grammar node-kind policy. Architecture tests enforce these boundaries.
 
-## Architecture artifacts
+## Architecture discovery
 
-Canonical generated architecture documentation is under `.grepple/`:
+Architecture orientation is generated dynamically across supported languages:
 
-- `.grepple/project.workspace/overview.mmd`: project overview
-- `.grepple/<package>.package/overview.mmd`: compact package view
-- `.grepple/<package>.package/structure.mmd`: exhaustive package structure
-- `.grepple/<package>.package/manifest.json`: machine-readable model
+- `grepple architecture directory --compact [PATH]`: bounded directory ownership and relation map
+- `grepple architecture resolve --symbol NAME --compact [PATH]`: exact source-linked declaration lookup
+- `grepple architecture why FROM TO --compact [PATH]`: resolved cross-directory call evidence
 
-Do not edit generated artifacts manually. Run `make schema-generate` after structural changes and `make schema-check` to verify them.
+Do not infer package semantics from directory ownership. `make schema-generate` and `make schema-check` validate generated parser metadata; architecture views do not require committed package/workspace bundles.
 
 ## Validation
 

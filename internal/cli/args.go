@@ -390,7 +390,8 @@ Commands:
   boundaries   Find repeated workflows and concrete-type spread
   examples     Print task-oriented, copyable CLI workflows
   artifacts    Manage spilled output artifacts
-  extract      Summarize, generate, or check architecture projections
+  extract      Generate or check focused architecture projections
+  architecture Inspect language-neutral directory architecture
   languages    Show the language capability matrix
   rules        Manage and inspect saved remote rules
   get          Read one indexed repository file or outline
@@ -422,7 +423,7 @@ func runHelp(args []string) error {
 	}
 	if len(args) > 1 {
 		switch args[0] {
-		case "graph", "extract", "rules", "anchors", "grit", "artifacts":
+		case "graph", "extract", "architecture", "rules", "anchors", "grit", "artifacts":
 			command := append([]string(nil), args...)
 			command = append(command, "--help")
 			return runCommand(command)
@@ -441,7 +442,7 @@ func runHelp(args []string) error {
 		return stdoutWriter().writeString("Remove stored remote authentication.\nUsage: grepple logout\n")
 	case "version":
 		return stdoutWriter().writeString("Print build and source version information.\nUsage: grepple version\n")
-	case "grit", "graph", "anchors", "boundaries", "examples", "languages", "rules", "get", "tree", "repos", "artifacts":
+	case "grit", "graph", "anchors", "boundaries", "examples", "languages", "rules", "get", "tree", "repos", "artifacts", "architecture":
 		return runCommand([]string{args[0], "--help"})
 	default:
 		return fmt.Errorf("unknown help topic %q", args[0])
@@ -511,6 +512,8 @@ func runCommand(args []string) error {
 			return runGrit(args[1:])
 		case "extract":
 			return runExtract(args[1:])
+		case "architecture":
+			return runArchitecture(args[1:])
 		}
 	}
 	return runSearch(args)

@@ -24,11 +24,11 @@ func TestLanguagesJSONReportsRegisteredFeatureParity(t *testing.T) {
 		byLanguage[capability.Language] = capability
 	}
 	goLanguage := byLanguage["go"]
-	if goLanguage.GritQL != api.FeatureProduction || goLanguage.FocusedFlow != api.FeatureProduction || goLanguage.WorkspaceBundle != api.FeatureProduction {
+	if goLanguage.GritQL != api.FeatureProduction || goLanguage.FocusedFlow != api.FeatureProduction || goLanguage.DirectoryArchitecture != api.FeatureProduction {
 		t.Fatalf("go capabilities=%#v", goLanguage)
 	}
 	tsx := byLanguage["tsx"]
-	if tsx.GritQL != api.FeatureProduction || tsx.FocusedStructure != api.FeatureProduction || tsx.PackageBundle != api.FeatureUnsupported {
+	if tsx.GritQL != api.FeatureProduction || tsx.FocusedStructure != api.FeatureProduction || tsx.DirectoryArchitecture != api.FeatureProduction {
 		t.Fatalf("tsx capabilities=%#v", tsx)
 	}
 	javascript := byLanguage["javascript"]
@@ -36,7 +36,7 @@ func TestLanguagesJSONReportsRegisteredFeatureParity(t *testing.T) {
 		t.Fatalf("javascript capabilities=%#v", javascript)
 	}
 	markdown := byLanguage["markdown"]
-	if markdown.StructuralGrep != api.FeatureSpecialized || markdown.Outline != api.FeatureSpecialized || markdown.Navigation != api.FeatureUnsupported {
+	if markdown.StructuralGrep != api.FeatureSpecialized || markdown.Outline != api.FeatureSpecialized || markdown.Navigation != api.FeatureUnsupported || markdown.DirectoryArchitecture != api.FeatureUnsupported {
 		t.Fatalf("markdown capabilities=%#v", markdown)
 	}
 	if !strings.Contains(output, `"language": "text"`) || !strings.Contains(output, `"extensions": []`) {

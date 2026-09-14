@@ -159,6 +159,36 @@ func renderReturnType(value string) string {
 	return ": " + renderType(value)
 }
 
+// mermaidNoteText keeps generated notes single-line and inert.
+func mermaidNoteText(value string) string {
+	var result strings.Builder
+	for _, character := range value {
+		switch character {
+		case '&':
+			result.WriteString("&amp;")
+		case '"':
+			result.WriteString("&quot;")
+		case '<':
+			result.WriteString("&lt;")
+		case '>':
+			result.WriteString("&gt;")
+		case '\\':
+			result.WriteString("&#92;")
+		case '\n':
+			result.WriteString("&#10;")
+		case '\r':
+			result.WriteString("&#13;")
+		default:
+			if character < 0x20 || character == 0x7f || character == '\u2028' || character == '\u2029' {
+				fmt.Fprintf(&result, "&#%d;", character)
+			} else {
+				result.WriteRune(character)
+			}
+		}
+	}
+	return result.String()
+}
+
 func renderClass(name string, declaration *Declaration, analysis *Analysis) ([]string, error) {
 	members, err := renderedMembers(name, declaration.Members)
 	if err != nil {

@@ -8,19 +8,13 @@ import (
 )
 
 func BenchmarkArchitectureWorkflows(b *testing.B) {
-	root, sources := writeArchitectureBenchmarkFixture(b)
+	_, sources := writeArchitectureBenchmarkFixture(b)
 	entry := sources[0]
 	b.Run("FocusedStructure", func(b *testing.B) {
 		benchmarkFocusedStructure(b, entry, sources)
 	})
 	b.Run("FocusedFlow", func(b *testing.B) {
 		benchmarkFocusedFlow(b, entry, sources)
-	})
-	b.Run("PackageBundle", func(b *testing.B) {
-		benchmarkPackageBundle(b, filepath.Join(root, "model"))
-	})
-	b.Run("WorkspaceBundle", func(b *testing.B) {
-		benchmarkWorkspaceBundle(b, root)
 	})
 }
 
@@ -46,32 +40,6 @@ func benchmarkFocusedFlow(b *testing.B, entry Source, sources []Source) {
 			b.Fatal(err)
 		}
 		bytes += len(output)
-	}
-	reportArchitectureBytes(b, bytes)
-}
-
-func benchmarkPackageBundle(b *testing.B, directory string) {
-	b.ReportAllocs()
-	var bytes int
-	for range b.N {
-		bundle, err := GeneratePackageBundle(directory)
-		if err != nil {
-			b.Fatal(err)
-		}
-		bytes += len(bundle.Manifest) + len(bundle.Overview) + len(bundle.Structure)
-	}
-	reportArchitectureBytes(b, bytes)
-}
-
-func benchmarkWorkspaceBundle(b *testing.B, root string) {
-	b.ReportAllocs()
-	var bytes int
-	for range b.N {
-		bundle, err := GenerateWorkspaceBundle(root)
-		if err != nil {
-			b.Fatal(err)
-		}
-		bytes += len(bundle.Manifest) + len(bundle.Overview)
 	}
 	reportArchitectureBytes(b, bytes)
 }

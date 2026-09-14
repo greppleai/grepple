@@ -26,8 +26,7 @@ grepple --at path/to/file.go:LINE
    grepple graph callees --at path/to/file.go:LINE --depth 2 --compact SCOPE
    grepple graph impact  --at path/to/file.go:LINE --depth 2 --compact SCOPE
    ```
-4. If compact output reports omissions or completeness is required, narrow the universe or rerun the focused query with `--json`; do not replace it with a whole-repository graph dump.
-4. If compact output reports omissions or completeness is required, narrow the universe or rerun the focused query with `--json`; do not replace it with a whole-repository graph dump. Use `resolution` totals and per-language/confidence ambiguity rates to decide whether candidate inspection is material for this scope.
+4. If compact output reports omissions or completeness is required, narrow the universe or rerun the focused query with `--json`; do not replace it with a whole-repository graph dump. If JSON spills, inspect the `grepple-artifact-v1` descriptor and read only relevant artifact ranges. Use resolution totals and per-language/confidence ambiguity rates to decide whether candidate inspection is material for this scope.
 
 ## Confidence rules
 
@@ -37,7 +36,7 @@ grepple --at path/to/file.go:LINE
 - Paths passed to the command define the graph universe. Include consumers outside the declaration's package when claiming repository impact.
 - Check `metadata.page.complete` plus discovered/selected/parsed/skipped/failed/recovered source totals. Failed, recovered, or truncated source prevents a complete static-impact claim; use `nextCommand` when supplied.
 - Navigation does not prove interface dispatch, reflection, generated calls, runtime registration, data flow, or string-based lookup. Search those mechanisms explicitly when relevant.
-- Package import impact and callable impact differ. Use the workspace summary from `architecture-lookup-discovery` when a public package API or dependency direction changes.
+- Directory relation evidence and callable impact differ. Use `architecture directory|resolve|why` for physical ownership and strongly resolved cross-directory calls, but do not infer build-system package imports from directory edges.
 
 ## Decision record
 

@@ -25,7 +25,7 @@ grepple grit $'language go\n`exec.Command($args)`' 'internal/**/*.go'
    ```bash
    grepple grit --limit 0 --json $'language go\n`exec.Command($args)`' 'internal/**/*.go'
    ```
-   JSON avoids byte truncation; `--limit 0` removes the default 20-finding page. Check `resultMetadata.page.complete`, omissions, diagnostics, and any copyable `nextCommand`; scanner/resource truncations can still make the evaluated source universe incomplete.
+   `--limit 0` removes the default 20-finding page. Complete JSON above the repository spill threshold is stored as a `grepple-artifact-v1`; inspect its descriptor and retrieve only relevant ranges instead of loading the entire artifact. In the underlying response, check `resultMetadata.page.complete`, omissions, diagnostics, and any copyable `nextCommand`; scanner/resource truncations can still make the evaluated source universe incomplete.
 6. Inspect representative positive and negative source ranges. A zero-result query is trustworthy only when diagnostics and truncation records are empty and the intended files were eligible.
 
 ## Safety and precision rules
