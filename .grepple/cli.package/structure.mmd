@@ -831,6 +831,7 @@ classDiagram
         +Repos: []string
         +Server: string
         +Skip: int
+        +Sort: string
     }
     <<struct>> searchArgs
     %% grepple:file searchArgs internal/cli/args.go
@@ -872,7 +873,8 @@ classDiagram
     %% grepple:struct-tag searchArgs Repos "arg:\"--repo,separate\" placeholder:\"PATTERN\" help:\"restrict remote repositories; repeatable\""
     %% grepple:struct-tag searchArgs Server "arg:\"-s,--server\" placeholder:\"URL\" help:\"remote shard/router URL (implies --remote)\""
     %% grepple:struct-tag searchArgs Skip "arg:\"--skip\" placeholder:\"N\" help:\"skip the first N ranked result files\""
-    note for searchArgs "defined: internal/cli/args.go:24-63; Description@internal/cli/args.go:65-67; AfterContext@internal/cli/args.go:47; AnchorProvider@internal/cli/args.go:54; Anchors@internal/cli/args.go:52; At@internal/cli/args.go:57; BeforeContext@internal/cli/args.go:48; Context@internal/cli/args.go:46; Count@internal/cli/args.go:37; CountByRepo@internal/cli/args.go:38; CountSummary@internal/cli/args.go:39; Depth@internal/cli/args.go:36; Enclosing@internal/cli/args.go:31; Files@internal/cli/args.go:33; FilesWithMatches@internal/cli/args.go:34; Fixed@internal/cli/args.go:43; FollowRelated@internal/cli/args.go:56; Globs@internal/cli/args.go:62; IgnoreCase@internal/cli/args.go:44; InvertMatch@internal/cli/args.go:45; JSON@internal/cli/args.go:40; JSONMatches@internal/cli/args.go:41; Limit@internal/cli/args.go:59; LineNumber@internal/cli/args.go:29; LineOnly@internal/cli/args.go:30; Local@internal/cli/args.go:25; MaxFiles@internal/cli/args.go:49; MaxOutputBytes@internal/cli/args.go:51; MaxSegments@internal/cli/args.go:50; NoAnchors@internal/cli/args.go:53; OnlyMatching@internal/cli/args.go:32; Outline@internal/cli/args.go:35; Query@internal/cli/args.go:61; Recursive@internal/cli/args.go:27; Regex@internal/cli/args.go:42; Related@internal/cli/args.go:55; Remote@internal/cli/args.go:26; Repos@internal/cli/args.go:60; Server@internal/cli/args.go:28; Skip@internal/cli/args.go:58"
+    %% grepple:struct-tag searchArgs Sort "arg:\"--sort\" placeholder:\"ORDER\" help:\"order result files by path (default) or matching-line count (matches)\""
+    note for searchArgs "defined: internal/cli/args.go:24-64; Description@internal/cli/args.go:66-68; AfterContext@internal/cli/args.go:47; AnchorProvider@internal/cli/args.go:54; Anchors@internal/cli/args.go:52; At@internal/cli/args.go:57; BeforeContext@internal/cli/args.go:48; Context@internal/cli/args.go:46; Count@internal/cli/args.go:37; CountByRepo@internal/cli/args.go:38; CountSummary@internal/cli/args.go:39; Depth@internal/cli/args.go:36; Enclosing@internal/cli/args.go:31; Files@internal/cli/args.go:33; FilesWithMatches@internal/cli/args.go:34; Fixed@internal/cli/args.go:43; FollowRelated@internal/cli/args.go:56; Globs@internal/cli/args.go:63; IgnoreCase@internal/cli/args.go:44; InvertMatch@internal/cli/args.go:45; JSON@internal/cli/args.go:40; JSONMatches@internal/cli/args.go:41; Limit@internal/cli/args.go:59; LineNumber@internal/cli/args.go:29; LineOnly@internal/cli/args.go:30; Local@internal/cli/args.go:25; MaxFiles@internal/cli/args.go:49; MaxOutputBytes@internal/cli/args.go:51; MaxSegments@internal/cli/args.go:50; NoAnchors@internal/cli/args.go:53; OnlyMatching@internal/cli/args.go:32; Outline@internal/cli/args.go:35; Query@internal/cli/args.go:62; Recursive@internal/cli/args.go:27; Regex@internal/cli/args.go:42; Related@internal/cli/args.go:55; Remote@internal/cli/args.go:26; Repos@internal/cli/args.go:61; Server@internal/cli/args.go:28; Skip@internal/cli/args.go:58; Sort@internal/cli/args.go:60"
     class segmentRenderer {
         +Render([]api.FileResult): error
         -renderFile(api.FileResult): error
@@ -945,7 +947,7 @@ classDiagram
     }
     <<function>> Run
     %% grepple:file Run internal/cli/args.go
-    note for Run "defined: internal/cli/args.go:441-485"
+    note for Run "defined: internal/cli/args.go:447-491"
     anchorDoctorReport "1" --> "*" anchorDoctorCheck : field Checks
     anchorProtocolRequest "1" --> "*" anchorProtocolRequestFile : field Files
     anchorProtocolResponse "1" --> "*" anchorProtocolResponseFile : field Files

@@ -52,7 +52,7 @@ func runSearch(args []string) error {
 		return err
 	}
 
-	results = sortByPath(results)
+	results = sortResults(results, options.Params.Sort)
 	fetched := len(results)
 	totalKnown := !remote && (child.Params.Limit == 0 || fetched < child.Params.Limit)
 	results = windowResults(results, options.Params)
@@ -108,11 +108,13 @@ func childWindowParams(params search.Params) search.Params {
 	return params
 }
 
-// sortByPath orders results deterministically (repo, then path), matching the
-// shard/router so local + remote compose into one stable, reproducible list
-// and skip/limit paging is consistent across pages. No relevance ranking.
-func sortByPath(results []api.FileResult) []api.FileResult {
+// sortResults applies the same deterministic file ranking to merged local and
+// remote results. Match count uses path as a stable tie-breaker.
+func sortResults(results []api.FileResult, strategy string) []api.FileResult {
 	sort.SliceStable(results, func(i, j int) bool {
+		if strategy == search.ResultSortMatches && len(results[i].Matches) != len(results[j].Matches) {
+			return len(results[i].Matches) > len(results[j].Matches)
+		}
 		if results[i].Repo != results[j].Repo {
 			return results[i].Repo < results[j].Repo
 		}

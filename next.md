@@ -16,7 +16,6 @@
 - Keep canonical language IDs and grammar-kind policy out of generic navigation engines.
 ## P1 — reduce repeated agent and developer work
 
-7. [ ] Explain deterministic segment ranking and evaluate an opt-in deterministic relevance strategy for broad retrieval.
 8. [ ] Add GritQL compile/explain output showing target language, wrapper interpretation, metavariable roles, compatibility contract, and bounded diagnostics.
 
 ## P2 — improve precision and architectural signal

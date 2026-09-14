@@ -2,7 +2,7 @@ classDiagram
     %% grepple:package-default github.com/greppleai/grepple/internal/cli
     %% grepple:language-default go
     direction LR
-    note "Package cli implements Grepple's search, extraction, repository inspection, authentication, rules, and terminal/JSON presentation workflows. | package github.com/greppleai/grepple/internal/cli | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=41, declarations=56, exportedTypes=0, internalTypes=56, members=369, exportedFunctions=3, fiberRoutes=0, relations=35"
+    note "Package cli implements Grepple's search, extraction, repository inspection, authentication, rules, and terminal/JSON presentation workflows. | package github.com/greppleai/grepple/internal/cli | scope: types=all, functions=exported, variables=excluded, constants=excluded, tests=excluded, buildTags=syntactic-union-conflicts-rejected | counts: files=41, declarations=56, exportedTypes=0, internalTypes=56, members=370, exportedFunctions=3, fiberRoutes=0, relations=35"
     namespace interfaces {
         class resultRenderer["resultRenderer · internal/cli/renderer.go:9-11"] {
             +Render([]api.FileResult): error
@@ -346,7 +346,7 @@ classDiagram
             +Server: string
         }
         <<struct>> rulesAddArgs
-        class searchArgs["searchArgs · internal/cli/args.go:24-63"] {
+        class searchArgs["searchArgs · internal/cli/args.go:24-64"] {
             +AfterContext: int
             +AnchorProvider: string
             +Anchors: bool
@@ -385,6 +385,7 @@ classDiagram
             +Repos: []string
             +Server: string
             +Skip: int
+            +Sort: string
         }
         <<struct>> searchArgs
         class treeArgs["treeArgs · internal/cli/tree.go:18-24"] {
@@ -445,7 +446,7 @@ classDiagram
             +RenderOutlineOrContent(parser.FileOutline, string): string
         }
         <<function>> RenderOutlineOrContent
-        class Run["Run · internal/cli/args.go:441-485"] {
+        class Run["Run · internal/cli/args.go:447-491"] {
             +Run([]string): error
         }
         <<function>> Run

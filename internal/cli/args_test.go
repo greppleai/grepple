@@ -13,6 +13,7 @@ func TestParseSearchArgs(t *testing.T) {
 		"--ignore-case",
 		"--invert-match",
 		"--max-files", "5",
+		"--sort", "matches",
 		"--server", "http://search.example",
 		"needle",
 		"src/*/*.go",
@@ -27,7 +28,7 @@ func TestParseSearchArgs(t *testing.T) {
 	if server != "http://search.example" || !remote {
 		t.Fatalf("unexpected target options: server=%q remote=%v", server, remote)
 	}
-	if !options.LineOnly || !options.Params.LineRanges || !options.Params.EnclosingRanges || !options.Params.IgnoreCase || !options.Params.InvertMatch || options.Params.MaxFiles != 5 {
+	if !options.LineOnly || !options.Params.LineRanges || !options.Params.EnclosingRanges || !options.Params.IgnoreCase || !options.Params.InvertMatch || options.Params.MaxFiles != 5 || options.Params.Sort != "matches" {
 		t.Fatalf("unexpected options: %#v", options)
 	}
 	if options.Params.Query != "needle" || len(options.Params.Globs) != 1 {
@@ -37,8 +38,8 @@ func TestParseSearchArgs(t *testing.T) {
 	if request.InvertMatch == nil || !*request.InvertMatch {
 		t.Fatalf("invert-match was not preserved in the remote request: %#v", request)
 	}
-	if !request.LineRanges || !request.EnclosingRanges {
-		t.Fatalf("line-only construct metadata was not preserved remotely: %#v", request)
+	if !request.LineRanges || !request.EnclosingRanges || request.Sort != "matches" {
+		t.Fatalf("line-only metadata or result sort was not preserved remotely: %#v", request)
 	}
 }
 
@@ -69,6 +70,9 @@ func TestParseSearchArgsAcceptsSafeGrepCompatibilityAliases(t *testing.T) {
 	}
 	if unbounded.MaxOutputBytes != 0 {
 		t.Fatalf("--max-output-bytes 0 = %d, want unbounded", unbounded.MaxOutputBytes)
+	}
+	if _, _, _, err := parseSearchArgs([]string{"--sort", "score", "needle"}); err == nil || !strings.Contains(err.Error(), "path") {
+		t.Fatalf("invalid sort error = %v", err)
 	}
 }
 

@@ -31,6 +31,7 @@ This file records completed Grepple roadmap work that no longer belongs in `next
 - [x] Streamed validated focused extraction to stdout when no output path is supplied.
 - [x] Classified default structural-search results as structured, recovered, plain, unsupported, or failed; incomplete human output is flagged and complete JSON carries per-file plus aggregate status.
 - [x] Standardized search, graph, graph diff/resolve/query, boundary, and CLI GritQL result metadata for normalized scope, paging completeness, effective user caps, known omissions, stable diagnostics, and shell-quoted continuation commands.
+- [x] Documented exact structural segment selection and added opt-in `--sort matches`: matching-line count descending with repository/path tie-breakers, full-universe scan semantics, wire support, and deterministic local/merged paging.
 
 ## Shared navigation graph
 

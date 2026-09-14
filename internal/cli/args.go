@@ -57,6 +57,7 @@ type searchArgs struct {
 	At               string   `arg:"--at" placeholder:"PATH:LINE" help:"retrieve the declaration containing a local source location"`
 	Skip             int      `arg:"--skip" placeholder:"N" help:"skip the first N ranked result files"`
 	Limit            int      `arg:"--limit" placeholder:"N" help:"return at most N ranked result files (default 20; 0 = all local; servers cap a page at 100 — page further with --skip)"`
+	Sort             string   `arg:"--sort" placeholder:"ORDER" help:"order result files by path (default) or matching-line count (matches)"`
 	Repos            []string `arg:"--repo,separate" placeholder:"PATTERN" help:"restrict remote repositories; repeatable"`
 	Query            string   `arg:"positional" placeholder:"PATTERN"`
 	Globs            []string `arg:"positional" placeholder:"PATH" help:"file, directory, or glob to search; repeat for multiple roots"`
@@ -73,6 +74,7 @@ func parseSearchArgs(args []string) (*cliOptions, string, bool, error) {
 		MaxSegments:    search.DefaultMaxSegments,
 		MaxOutputBytes: DefaultTextOutputBytes,
 		Limit:          DefaultResultLimit,
+		Sort:           search.ResultSortPath,
 	}
 	parser, err := arg.NewParser(arg.Config{Program: "grepple"}, &values)
 	if err != nil {
@@ -309,6 +311,9 @@ func validateSearchBounds(values *searchArgs) error {
 	if values.MaxOutputBytes < 0 {
 		return fmt.Errorf("--max-output-bytes must not be negative")
 	}
+	if values.Sort != search.ResultSortPath && values.Sort != search.ResultSortMatches {
+		return fmt.Errorf("--sort must be %q or %q", search.ResultSortPath, search.ResultSortMatches)
+	}
 	return nil
 }
 
@@ -332,6 +337,7 @@ func buildSearchParams(parser *arg.Parser, values *searchArgs) (search.Params, e
 		At:            values.At,
 		Skip:          values.Skip,
 		Limit:         values.Limit,
+		Sort:          values.Sort,
 		Repo:          values.Repos,
 	}
 	if values.BeforeContext > 0 {

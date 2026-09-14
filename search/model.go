@@ -6,6 +6,13 @@ import "github.com/greppleai/grepple/parser"
 // when the caller does not set MaxSegments.
 const DefaultMaxSegments = 20
 
+const (
+	// ResultSortPath preserves deterministic repository/path order.
+	ResultSortPath = "path"
+	// ResultSortMatches ranks matching-line count descending, then path ascending.
+	ResultSortMatches = "matches"
+)
+
 // Params is the fully resolved parameter set the engine executes: every
 // default applied, no pointer fields.
 type Params struct {
@@ -18,6 +25,7 @@ type Params struct {
 	MaxSegments     int      `json:"maxSegments"`
 	Skip            int      `json:"skip,omitempty"`
 	Limit           int      `json:"limit,omitempty"`
+	Sort            string   `json:"sort,omitempty"`
 	Repo            []string `json:"repo,omitempty"`
 	ExcludeRepo     []string `json:"excludeRepo,omitempty"`
 	Files           bool     `json:"files,omitempty"`

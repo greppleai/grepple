@@ -17,6 +17,7 @@ type SearchRequest struct {
 	MaxSegments     *int     `json:"maxSegments,omitempty"`
 	Skip            *int     `json:"skip,omitempty"`
 	Limit           *int     `json:"limit,omitempty"`
+	Sort            string   `json:"sort,omitempty"`
 	Repo            any      `json:"repo,omitempty"`
 	ExcludeRepo     any      `json:"excludeRepo,omitempty"`
 	Files           bool     `json:"files,omitempty"`

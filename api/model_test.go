@@ -80,6 +80,7 @@ func TestResultMetadataUsesStableCrossCommandFields(t *testing.T) {
 	total := 4
 	metadata := ResultMetadata{
 		Scope:   ResultScope{Mode: "local", Paths: []string{"."}, Repositories: []string{}, Languages: []string{"go"}},
+		Order:   "path",
 		Page:    ResultPage{Skip: 1, Limit: 2, Returned: 2, Total: &total},
 		Limits:  ResultLimits{MaxFiles: 10, MaxOutputBytes: 16384, JSONByteUncapped: true},
 		Omitted: ResultOmissions{Files: 2}, Diagnostics: []ResultDiagnostic{{Code: "source-cap", Message: "capped"}},
@@ -89,7 +90,7 @@ func TestResultMetadataUsesStableCrossCommandFields(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, field := range []string{`"scope":{"mode":"local"`, `"page":{"skip":1`, `"limits":{"maxFiles":10`, `"omitted":{"files":2`, `"diagnostics":[{"code":"source-cap"`, `"nextCommand":"grepple search --skip 3"`} {
+	for _, field := range []string{`"scope":{"mode":"local"`, `"order":"path"`, `"page":{"skip":1`, `"limits":{"maxFiles":10`, `"omitted":{"files":2`, `"diagnostics":[{"code":"source-cap"`, `"nextCommand":"grepple search --skip 3"`} {
 		if !strings.Contains(string(encoded), field) {
 			t.Fatalf("JSON missing %s: %s", field, encoded)
 		}

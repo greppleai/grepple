@@ -78,7 +78,8 @@ Supported search options:
 - `--related` (experimental: show bounded project-local callees and callers for structurally supported source languages)
 - `--at PATH:LINE` (retrieve the declaration containing an exact local location; related `PATH:START-END` ranges are accepted too)
 - `--follow-related N` (expand up to two unique callees per level, depth 1-3; implies `--related`)
-- `--skip N`, `--limit N` (page through results in deterministic path order: skip the first `N` files / return at most `N`; **`--limit` defaults to `20`**, use `--limit 0` for all). A server never returns more than **100 files per page** — `--limit 0` or a larger value gets the maximum page, and you page further with `--skip N`; local-only searches stay uncapped
+- `--skip N`, `--limit N` (page through results in deterministic order: skip the first `N` files / return at most `N`; **`--limit` defaults to `20`**, use `--limit 0` for all). A server never returns more than **100 files per page** — `--limit 0` or a larger value gets the maximum page, and you page further with `--skip N`; local-only searches stay uncapped
+- `--sort path|matches` keeps repository/path order by default or opts into matching-line count descending with repository/path tie-breakers. Match-count sorting scans the full selected candidate universe before paging.
 
 ### Grep migration and editing workflow
 
@@ -129,7 +130,7 @@ File patterns use Go's `filepath.Glob` syntax, extended with `**` to match acros
 
 **Pipes work like `grep`/`rg`:** when standard input is piped (or redirected) and no path/glob argument is given, grepple searches the stream instead of the filesystem — `cat build.log | grepple "ERROR"` or `go test ./... | grepple -F "FAIL"`. The stream is reported under the virtual path `<stdin>` in every output mode (`--json`, `-c`, `--files-with-matches`, `--line-only`, default segments). It uses the plain-text fallback (no filename, so no tree-sitter structure), NUL-containing input is treated as binary and skipped, and no match exits 1 as usual. `--files` and `--outline` always operate on the filesystem, and passing any path/glob selects the filesystem over stdin.
 
-Default structural search classifies every returned file as `structured`, `recovered`, `plain`, `unsupported`, or `failed`. Human output emits an incomplete source-analysis summary when any result is recovered, unsupported, or failed; intentional plain-text output remains quiet. Complete JSON includes each file's `structureStatus` and aggregate `sourceAnalysis`. Incomplete parsing is never silently presented as fully parser-backed context.
+Default structural search classifies every returned file as `structured`, `recovered`, `plain`, `unsupported`, or `failed`. Human output emits an incomplete source-analysis summary when any result is recovered, unsupported, or failed; intentional plain-text output remains quiet. Complete JSON includes each file's `structureStatus` and aggregate `sourceAnalysis`. Incomplete parsing is never silently presented as fully parser-backed context. [Search and segment ranking](docs/search-ranking.md) documents path and opt-in match-count file order plus the exact matching-source-before-summary segment cap policy.
 
 Complete search, graph, boundary, and CLI GritQL JSON also share a [result metadata](docs/result-metadata.md) envelope covering normalized scope, paging/completeness, source and byte caps, known omission totals, stable diagnostics, and a copyable continuation command when one is available. Unknown totals are omitted rather than estimated.
 ## Native structural search

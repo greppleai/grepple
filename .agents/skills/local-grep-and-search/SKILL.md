@@ -25,7 +25,7 @@ Default search returns enclosing structural segments and collapses unrelated bod
 
 ## Evidence rules that prevent bad decisions
 
-1. Start with `--count-summary` when scope is unknown. A first page is a sample, not repository-wide evidence.
+1. Start with `--count-summary` when scope is unknown. A first page is a sample, not repository-wide evidence. Default path order is cheapest; use `--sort matches` only for broad exploration because it scans the full selected universe.
 2. Use `-F` for identifiers and snippets. The default pattern mode is JavaScript regex, not POSIX or RE2.
 3. Distinguish `--files` (path discovery) from `--files-with-matches` (content evidence). `-l` means file listing here, not grep's matching-file behavior.
 4. Treat a text occurrence as an occurrence only. For callers, dependencies, or refactor impact, switch to `change-impact-analysis`.

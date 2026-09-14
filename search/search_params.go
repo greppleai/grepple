@@ -9,7 +9,7 @@ import (
 // ResolveRequest merges a wire api.SearchRequest into validated Params: unset optional
 // fields keep their defaults, and a content search must carry a query.
 func ResolveRequest(r api.SearchRequest) (Params, error) {
-	p := Params{Regex: true, MaxSegments: DefaultMaxSegments, Files: r.Files}
+	p := Params{Regex: true, MaxSegments: DefaultMaxSegments, Files: r.Files, Sort: ResultSortPath}
 	if r.Query != nil {
 		p.Query = *r.Query
 	}
@@ -35,6 +35,12 @@ func ResolveRequest(r api.SearchRequest) (Params, error) {
 		// A count probe never needs structural segments.
 		p.CountByRepo = true
 		p.SkipSegments = true
+	}
+	if r.Sort != "" {
+		p.Sort = r.Sort
+	}
+	if p.Sort != ResultSortPath && p.Sort != ResultSortMatches {
+		return p, fmt.Errorf("search sort must be %q or %q", ResultSortPath, ResultSortMatches)
 	}
 	return p, nil
 }

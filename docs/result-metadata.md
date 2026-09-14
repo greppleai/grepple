@@ -6,10 +6,13 @@ Complete JSON responses from local text search, navigation graph operations, bou
 {
   "scope": {
     "mode": "local",
-    "paths": ["."],
-    "repositories": [],
-    "languages": ["go"]
-  },
+"paths": ["."],
+"excludedPaths": [],
+"repositories": [],
+"excludedRepositories": [],
+"languages": ["go"]
+},
+"order": "path",
   "page": {
     "skip": 0,
     "limit": 20,
@@ -38,7 +41,8 @@ Complete JSON responses from local text search, navigation graph operations, bou
 
 ## Interpretation
 
-- `scope` is the normalized selected universe, not a claim about files outside it.
+- `scope` is the normalized selected universe, including explicit exclusions, not a claim about files outside it.
+- `order` names the deterministic result strategy. Search uses `path` by default or `matches` when explicitly requested.
 - `page.total` is present only when the operation can prove the total without estimating. `page.complete=false` plus an absent total means the remainder is unknown.
 - Zero limits mean unlimited for that local dimension. `maxOutputBytes` describes human output; JSON remains byte-uncapped when `jsonByteUncapped=true`.
 - Omission fields contain known counts only. Unknown omissions remain zero and are disclosed through `page.complete`, truncation records, or diagnostics rather than guessed.

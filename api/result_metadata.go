@@ -4,6 +4,7 @@ package api
 // Domain-specific statistics and truncation records remain authoritative details.
 type ResultMetadata struct {
 	Scope       ResultScope        `json:"scope"`
+	Order       string             `json:"order"`
 	Page        ResultPage         `json:"page"`
 	Limits      ResultLimits       `json:"limits"`
 	Omitted     ResultOmissions    `json:"omitted"`

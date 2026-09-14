@@ -199,15 +199,13 @@ func Files(p Params, candidates []string) ([]FileMatch, error) {
 			return nil, e
 		}
 	}
-	// Read candidates in the deterministic output order and, for a bounded query,
-	// stop once the window is full instead of reading every candidate. Zoekt can
-	// return thousands of candidates while --limit keeps only a handful, so this
-	// avoids reading the long tail. --count and unbounded queries (Limit 0) still
-	// scan everything, since they need the complete match set.
+	// Path ordering can stop after the requested deterministic window. Match-count
+	// ordering must scan every candidate before ranking; it is explicitly opt-in
+	// because a broad indexed universe can otherwise contain a long unread tail.
 	limit := resultLimit(p)
 	scan := candidateScan{p: p, m: m, repoFilter: NewRepoFilter(p.Repo, p.ExcludeRepo), fromIndex: candidates != nil}
 	var out []FileMatch
-	if limit <= 0 {
+	if limit <= 0 || p.Sort == ResultSortMatches {
 		out = scan.scanAll(files)
 	} else {
 		out = scan.scanWindowed(files, p.Skip+limit)
@@ -251,10 +249,8 @@ func (s candidateScan) relatedFiles(files []string) []string {
 	return filtered
 }
 
-// scanAll reads every candidate in parallel and sorts by display path —
-// deterministic order (owner/repo/dir/file), stable and reproducible across
-// shards and reindexes. There is no relevance ranking: an agent narrows with
-// --repo / a tighter pattern rather than relying on an opaque score.
+// scanAll reads every candidate in parallel, then applies the requested stable
+// ordering. Match-count ranking uses path as its deterministic tie-breaker.
 func (s candidateScan) scanAll(files []string) []FileMatch {
 	cwd, _ := os.Getwd()
 	results := make([]*FileMatch, len(files))
@@ -262,7 +258,7 @@ func (s candidateScan) scanAll(files []string) []FileMatch {
 		results[index] = scanCandidate(s.p, s.m, files[index], displayPathFrom(files[index], cwd), s.repoFilter, s.fromIndex)
 	})
 	out := collectMatches(results)
-	sortMatches(out)
+	sortMatches(out, s.p.Sort)
 	return out
 }
 
@@ -467,8 +463,11 @@ func applyResultWindow(out []FileMatch, p Params) []FileMatch {
 	return out
 }
 
-func sortMatches(out []FileMatch) {
+func sortMatches(out []FileMatch, strategy string) {
 	sort.Slice(out, func(i, j int) bool {
+		if strategy == ResultSortMatches && len(out[i].MatchLines) != len(out[j].MatchLines) {
+			return len(out[i].MatchLines) > len(out[j].MatchLines)
+		}
 		return out[i].DisplayPath < out[j].DisplayPath
 	})
 }

@@ -176,7 +176,7 @@ classDiagram
     }
     <<struct>> FileMatch
     %% grepple:file FileMatch search/model.go
-    note for FileMatch "defined: search/model.go:55-64; Content@search/model.go:56; DisplayPath@search/model.go:56; File@search/model.go:56; Language@search/model.go:56; MatchLines@search/model.go:57; MatchRanges@search/model.go:58; OmittedRelatedCallees@search/model.go:61; OmittedRelatedCallers@search/model.go:61; Related@search/model.go:60; Segments@search/model.go:59; SegmentsReady@search/model.go:62; StructureStatus@search/model.go:63"
+    note for FileMatch "defined: search/model.go:63-72; Content@search/model.go:64; DisplayPath@search/model.go:64; File@search/model.go:64; Language@search/model.go:64; MatchLines@search/model.go:65; MatchRanges@search/model.go:66; OmittedRelatedCallees@search/model.go:69; OmittedRelatedCallers@search/model.go:69; Related@search/model.go:68; Segments@search/model.go:67; SegmentsReady@search/model.go:70; StructureStatus@search/model.go:71"
     class NavigationBuildOptions {
         +DisableCache: bool
     }
@@ -274,6 +274,7 @@ classDiagram
         +Root: string
         +Skip: int
         +SkipSegments: bool
+        +Sort: string
     }
     <<struct>> Params
     %% grepple:file Params search/model.go
@@ -300,7 +301,8 @@ classDiagram
     %% grepple:struct-tag Params Root "json:\"-\""
     %% grepple:struct-tag Params Skip "json:\"skip,omitempty\""
     %% grepple:struct-tag Params SkipSegments "json:\"-\""
-    note for Params "defined: search/model.go:11-35; AfterContext@search/model.go:26; At@search/model.go:32; BeforeContext@search/model.go:25; Context@search/model.go:24; CountByRepo@search/model.go:34; EnclosingRanges@search/model.go:29; ExcludeRepo@search/model.go:22; Files@search/model.go:23; FollowRelated@search/model.go:31; Globs@search/model.go:13; IgnoreCase@search/model.go:15; InvertMatch@search/model.go:16; Limit@search/model.go:20; LineRanges@search/model.go:28; MaxFiles@search/model.go:17; MaxSegments@search/model.go:18; Query@search/model.go:12; Regex@search/model.go:14; Related@search/model.go:30; Repo@search/model.go:21; Root@search/model.go:33; Skip@search/model.go:19; SkipSegments@search/model.go:27"
+    %% grepple:struct-tag Params Sort "json:\"sort,omitempty\""
+    note for Params "defined: search/model.go:18-43; AfterContext@search/model.go:34; At@search/model.go:40; BeforeContext@search/model.go:33; Context@search/model.go:32; CountByRepo@search/model.go:42; EnclosingRanges@search/model.go:37; ExcludeRepo@search/model.go:30; Files@search/model.go:31; FollowRelated@search/model.go:39; Globs@search/model.go:20; IgnoreCase@search/model.go:22; InvertMatch@search/model.go:23; Limit@search/model.go:27; LineRanges@search/model.go:36; MaxFiles@search/model.go:24; MaxSegments@search/model.go:25; Query@search/model.go:19; Regex@search/model.go:21; Related@search/model.go:38; Repo@search/model.go:29; Root@search/model.go:41; Skip@search/model.go:26; SkipSegments@search/model.go:35; Sort@search/model.go:28"
     class RelatedPoint {
         +CallLine: int
         +Confidence: string
@@ -316,7 +318,7 @@ classDiagram
     }
     <<struct>> RelatedPoint
     %% grepple:file RelatedPoint search/model.go
-    note for RelatedPoint "defined: search/model.go:47-51; CallLine@search/model.go:49; Confidence@search/model.go:48; Direction@search/model.go:48; Distance@search/model.go:49; End@search/model.go:49; File@search/model.go:48; Kind@search/model.go:48; Name@search/model.go:48; Path@search/model.go:48; Preview@search/model.go:50; Start@search/model.go:49"
+    note for RelatedPoint "defined: search/model.go:55-59; CallLine@search/model.go:57; Confidence@search/model.go:56; Direction@search/model.go:56; Distance@search/model.go:57; End@search/model.go:57; File@search/model.go:56; Kind@search/model.go:56; Name@search/model.go:56; Path@search/model.go:56; Preview@search/model.go:58; Start@search/model.go:57"
     class RelatedPreview {
         +Content: string
         +End: int
@@ -327,7 +329,7 @@ classDiagram
     }
     <<struct>> RelatedPreview
     %% grepple:file RelatedPreview search/model.go
-    note for RelatedPreview "defined: search/model.go:39-44; Content@search/model.go:40; End@search/model.go:41; OmittedCallees@search/model.go:43; OmittedCallers@search/model.go:43; Related@search/model.go:42; Start@search/model.go:41"
+    note for RelatedPreview "defined: search/model.go:47-52; Content@search/model.go:48; End@search/model.go:49; OmittedCallees@search/model.go:51; OmittedCallers@search/model.go:51; Related@search/model.go:50; Start@search/model.go:49"
     class RepoFilter {
         +Allow(string): bool
         -exclude: []repoPattern
@@ -416,7 +418,7 @@ classDiagram
     }
     <<struct>> candidateScan
     %% grepple:file candidateScan search/search_engine.go
-    note for candidateScan "defined: search/search_engine.go:232-237; relatedFiles@search/search_engine.go:239-252; scanAll@search/search_engine.go:258-267; scanWindowed@search/search_engine.go:272-295; fromIndex@search/search_engine.go:236; m@search/search_engine.go:234; p@search/search_engine.go:233; repoFilter@search/search_engine.go:235"
+    note for candidateScan "defined: search/search_engine.go:230-235; relatedFiles@search/search_engine.go:237-250; scanAll@search/search_engine.go:254-263; scanWindowed@search/search_engine.go:268-291; fromIndex@search/search_engine.go:234; m@search/search_engine.go:232; p@search/search_engine.go:231; repoFilter@search/search_engine.go:233"
     class candidateWalker {
         -walk(string, fs.DirEntry, error): error
         -walkDir(string, string): error
@@ -521,7 +523,7 @@ classDiagram
     }
     <<function>> AggregateRepoCounts
     %% grepple:file AggregateRepoCounts search/search_engine.go
-    note for AggregateRepoCounts "defined: search/search_engine.go:494-513"
+    note for AggregateRepoCounts "defined: search/search_engine.go:493-512"
     class AnalyzeBoundaries {
         +AnalyzeBoundaries(parser.NavigationGraph, int): tuple~[]BoundaryCandidate&#44;error~
     }
@@ -575,7 +577,7 @@ classDiagram
     }
     <<function>> Content
     %% grepple:file Content search/search_engine.go
-    note for Content "defined: search/search_engine.go:308-318"
+    note for Content "defined: search/search_engine.go:304-314"
     class ContextLines {
         +ContextLines(string, map[int]bool, int, int, int): []api.ContextLine
     }
@@ -593,13 +595,13 @@ classDiagram
     }
     <<function>> EnforcePageLimit
     %% grepple:file EnforcePageLimit search/search_params.go
-    note for EnforcePageLimit "defined: search/search_params.go:106-113"
+    note for EnforcePageLimit "defined: search/search_params.go:112-119"
     class Files {
         +Files(Params, []string): tuple~[]FileMatch&#44;error~
     }
     <<function>> Files
     %% grepple:file Files search/search_engine.go
-    note for Files "defined: search/search_engine.go:190-227"
+    note for Files "defined: search/search_engine.go:190-225"
     class FilterNavigationGraph {
         +FilterNavigationGraph(parser.NavigationGraph, NavigationGraphFilter): tuple~parser.NavigationGraph&#44;error~
     }
@@ -611,13 +613,13 @@ classDiagram
     }
     <<function>> ListFilePaths
     %% grepple:file ListFilePaths search/search_engine.go
-    note for ListFilePaths "defined: search/search_engine.go:389-391"
+    note for ListFilePaths "defined: search/search_engine.go:385-387"
     class ListFilePathsContext {
         +ListFilePathsContext(context.Context, Params, []string): tuple~[]string&#44;error~
     }
     <<function>> ListFilePathsContext
     %% grepple:file ListFilePathsContext search/search_engine.go
-    note for ListFilePathsContext "defined: search/search_engine.go:394-412"
+    note for ListFilePathsContext "defined: search/search_engine.go:390-408"
     class NewRepoFilter {
         +NewRepoFilter([]string, []string): *RepoFilter
     }
@@ -653,25 +655,25 @@ classDiagram
     }
     <<function>> RepoMatches
     %% grepple:file RepoMatches search/search_params.go
-    note for RepoMatches "defined: search/search_params.go:118"
+    note for RepoMatches "defined: search/search_params.go:124"
     class RepoMatchesAny {
         +RepoMatchesAny(string, []string): bool
     }
     <<function>> RepoMatchesAny
     %% grepple:file RepoMatchesAny search/search_params.go
-    note for RepoMatchesAny "defined: search/search_params.go:121"
+    note for RepoMatchesAny "defined: search/search_params.go:127"
     class ResolveRequest {
         +ResolveRequest(api.SearchRequest): tuple~Params&#44;error~
     }
     <<function>> ResolveRequest
     %% grepple:file ResolveRequest search/search_params.go
-    note for ResolveRequest "defined: search/search_params.go:11-40"
+    note for ResolveRequest "defined: search/search_params.go:11-46"
     class SortRepoCounts {
         +SortRepoCounts([]api.RepoCount)
     }
     <<function>> SortRepoCounts
     %% grepple:file SortRepoCounts search/search_engine.go
-    note for SortRepoCounts "defined: search/search_engine.go:518-528"
+    note for SortRepoCounts "defined: search/search_engine.go:517-527"
     class SplitLines {
         +SplitLines(string): []string
     }

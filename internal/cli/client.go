@@ -105,6 +105,7 @@ func searchRequestFromParams(params search.Params) api.SearchRequest {
 		IgnoreCase:      &params.IgnoreCase,
 		InvertMatch:     &params.InvertMatch,
 		MaxSegments:     &params.MaxSegments,
+		Sort:            params.Sort,
 		Files:           params.Files,
 		LineRanges:      params.LineRanges,
 		EnclosingRanges: params.EnclosingRanges,

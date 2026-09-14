@@ -81,3 +81,18 @@ func TestResolveRequestEnclosingImpliesLineRanges(t *testing.T) {
 		t.Fatalf("unexpected enclosing params: %#v", params)
 	}
 }
+
+func TestResolveRequestValidatesDeterministicSort(t *testing.T) {
+	query := "work"
+	defaults, err := ResolveRequest(api.SearchRequest{Query: &query})
+	if err != nil || defaults.Sort != ResultSortPath {
+		t.Fatalf("default sort=%q err=%v", defaults.Sort, err)
+	}
+	ranked, err := ResolveRequest(api.SearchRequest{Query: &query, Sort: ResultSortMatches})
+	if err != nil || ranked.Sort != ResultSortMatches {
+		t.Fatalf("match sort=%q err=%v", ranked.Sort, err)
+	}
+	if _, err := ResolveRequest(api.SearchRequest{Query: &query, Sort: "score"}); err == nil {
+		t.Fatal("expected invalid sort to fail")
+	}
+}

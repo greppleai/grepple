@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/greppleai/grepple/api"
+	"github.com/greppleai/grepple/search"
 )
 
 func resultScope(mode string, paths, repositories, languages []string) api.ResultScope {
@@ -58,6 +59,7 @@ func graphResultMetadata(paths []string, returned, maxFiles, maxOutputBytes int,
 	}
 	return &api.ResultMetadata{
 		Scope:   resultScope("local", paths, nil, nil),
+		Order:   "source",
 		Page:    api.ResultPage{Skip: 0, Limit: 0, Returned: returned, Complete: omitted == 0 && sources.Failed == 0 && sources.Recovered == 0},
 		Limits:  api.ResultLimits{MaxFiles: maxFiles, MaxOutputBytes: maxOutputBytes, JSONByteUncapped: jsonMode},
 		Omitted: api.ResultOmissions{Sources: omitted}, Diagnostics: sourceResultDiagnostics(sources), NextCommand: nextCommand,
@@ -87,6 +89,7 @@ func searchResultMetadata(options *cliOptions, total int, totalKnown, remote boo
 	}
 	metadata := &api.ResultMetadata{
 		Scope:   resultScope(mode, scopePaths, options.Params.Repo, nil),
+		Order:   options.Params.Sort,
 		Page:    api.ResultPage{Skip: options.Params.Skip, Limit: options.Params.Limit, Returned: returned, Total: totalPointer, Complete: complete},
 		Limits:  api.ResultLimits{MaxFiles: options.Params.MaxFiles, MaxSegments: options.Params.MaxSegments, MaxOutputBytes: options.MaxOutputBytes, JSONByteUncapped: options.JSON != "off"},
 		Omitted: api.ResultOmissions{Files: omitted}, Diagnostics: searchResultDiagnostics(options, results),
@@ -145,6 +148,9 @@ func searchNextCommand(options *cliOptions, skip int, remote bool) string {
 	for _, repository := range options.Params.Repo {
 		parts = append(parts, "--repo", quoteCommandArgument(repository))
 	}
+	if options.Params.Sort == search.ResultSortMatches {
+		parts = append(parts, "--sort", search.ResultSortMatches)
+	}
 	for _, repository := range options.Params.ExcludeRepo {
 		parts = append(parts, "--exclude-repo", quoteCommandArgument(repository))
 	}
@@ -184,6 +190,7 @@ func boundaryResultMetadata(values boundariesArgs, report boundariesOutput) *api
 	}
 	metadata := &api.ResultMetadata{
 		Scope:   resultScope("local", report.Paths, nil, nil),
+		Order:   "risk-breadth",
 		Page:    api.ResultPage{Skip: 0, Limit: values.Limit, Returned: returned, Total: &total, Complete: omittedCandidates == 0 && omittedSources == 0 && report.Sources.Failed == 0 && report.Sources.Recovered == 0},
 		Limits:  api.ResultLimits{MaxFiles: values.MaxFiles, MaxOutputBytes: values.MaxOutputBytes, JSONByteUncapped: values.JSON},
 		Omitted: api.ResultOmissions{Sources: omittedSources, Findings: omittedCandidates}, Diagnostics: sourceResultDiagnostics(report.Sources),
@@ -228,6 +235,7 @@ func gritResultMetadata(values gritArgs, response api.GritResponse, remote bool)
 	}
 	metadata := &api.ResultMetadata{
 		Scope:   resultScope(mode, values.Globs, values.Repositories, gritResultLanguages(response)),
+		Order:   "repository-path-range",
 		Page:    api.ResultPage{Skip: values.Skip, Limit: values.Limit, Returned: len(response.Findings), Total: &total, Complete: pageComplete && len(response.Truncations) == 0 && len(response.ShardErrors) == 0},
 		Limits:  api.ResultLimits{MaxFiles: values.MaxFiles, MaxOutputBytes: values.MaxOutputBytes, MaxSourceBytes: values.MaxSourceBytes, MaxTotalBytes: values.MaxTotalBytes, JSONByteUncapped: values.JSON},
 		Omitted: api.ResultOmissions{Findings: max(0, total-len(response.Findings)), Sources: omittedSources}, Diagnostics: diagnostics,
@@ -291,6 +299,7 @@ func graphDiffResultMetadata(values graphDiffArgs, before, after navigationGraph
 	}
 	metadata := &api.ResultMetadata{
 		Scope:   resultScope("local-diff", []string{values.Before, values.After}, nil, nil),
+		Order:   "semantic-identity",
 		Page:    api.ResultPage{Returned: sources.Parsed, Complete: omitted == 0 && sources.Failed == 0},
 		Limits:  api.ResultLimits{MaxFiles: values.MaxFiles, MaxOutputBytes: values.MaxOutputBytes, JSONByteUncapped: values.JSON},
 		Omitted: api.ResultOmissions{Sources: omitted}, Diagnostics: sourceResultDiagnostics(sources),
