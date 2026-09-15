@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.2](https://github.com/greppleai/grepple/compare/v0.0.1...v0.0.2) (2026-09-15)
+
+
+### Bug Fixes
+
+* skip unavailable private release attestations ([33e59b1](https://github.com/greppleai/grepple/commit/33e59b1c07d45b22dc6cda6fafd74e470be37dcf))
+
 ## 0.0.1 (2026-09-15)
 
 
