@@ -23,6 +23,9 @@ type researchSession struct {
 	mu       sync.Mutex
 	values   map[string]fantasy.ToolResponse
 	inflight map[string]*researchPendingCall
+
+	universeMu sync.Mutex
+	universes  map[string]*localResearchUniverse
 }
 
 type researchPendingCall struct {
@@ -44,11 +47,47 @@ func newResearchSession(ctx context.Context, log *askLog, root, server string) *
 		ctx = context.Background()
 	}
 	return &researchSession{
-		ctx:      ctx,
-		identity: researchSourceIdentity(root, server),
-		log:      log,
-		values:   make(map[string]fantasy.ToolResponse),
-		inflight: make(map[string]*researchPendingCall),
+		ctx:       ctx,
+		identity:  researchSourceIdentity(root, server),
+		log:       log,
+		values:    make(map[string]fantasy.ToolResponse),
+		inflight:  make(map[string]*researchPendingCall),
+		universes: make(map[string]*localResearchUniverse),
+	}
+}
+
+func (s *researchSession) localUniverse(globs []string, maxFiles int) (*localResearchUniverse, error) {
+	plan, err := planLocalResearchUniverse(globs, maxFiles)
+	if err != nil {
+		return nil, err
+	}
+	s.universeMu.Lock()
+	universe := s.universes[plan.key]
+	created := universe == nil
+	if created {
+		universe = &localResearchUniverse{plan: plan}
+		s.universes[plan.key] = universe
+	}
+	s.universeMu.Unlock()
+	universe.once.Do(universe.load)
+	if s.log != nil {
+		if err := s.log.Record("research.universe", map[string]any{"key": plan.key[:12], "files": len(plan.paths), "reused": !created}); err != nil {
+			return nil, err
+		}
+	}
+	return universe, universe.err
+}
+
+// Close releases parser documents owned by this invocation after every tool has finished.
+func (s *researchSession) Close() {
+	s.universeMu.Lock()
+	universes := make([]*localResearchUniverse, 0, len(s.universes))
+	for _, universe := range s.universes {
+		universes = append(universes, universe)
+	}
+	s.universeMu.Unlock()
+	for _, universe := range universes {
+		universe.close()
 	}
 }
 

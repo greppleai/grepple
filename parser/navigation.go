@@ -218,6 +218,16 @@ func navigationGraphFromTree(root *syntaxNode, content, language, path string) N
 // DeclarationRangeAt returns the narrowest callable declaration containing line.
 func DeclarationRangeAt(content, language string, line int) (int, int, bool) {
 	declarations, _ := Navigation(content, language)
+	return narrowestDeclarationRangeAt(declarations, line)
+}
+
+// DeclarationRangeAtFromDocument returns the narrowest callable declaration containing line
+// without reparsing the caller-owned document.
+func DeclarationRangeAtFromDocument(document *Document, path string, line int) (int, int, bool) {
+	return narrowestDeclarationRangeAt(NavigationGraphFromDocument(document, path).Declarations, line)
+}
+
+func narrowestDeclarationRangeAt(declarations []NavigationDeclaration, line int) (int, int, bool) {
 	var best NavigationDeclaration
 	found := false
 	for _, declaration := range declarations {

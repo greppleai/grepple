@@ -49,7 +49,7 @@ Human answers participate in Grepple's normal bounded-output and artifact-spill 
 
 ## Debug logs
 
-Every invocation immediately prints an `Ask log:` path to stderr and writes `grepple-ask-log-v1` JSONL under `~/.grepple/ask-logs/`. The log records the question, selected provider/model, system and tool prompts, assembled model and reasoning content for each completed step, tool calls and complete results, per-call `tool.cache` hit/shared status, usage, final answer, and errors. It intentionally omits noisy per-token stream chunks. Partial logs remain useful if a run is interrupted. Files use mode `0600` and the directory uses `0700`.
+Every invocation immediately prints an `Ask log:` path to stderr and writes `grepple-ask-log-v1` JSONL under `~/.grepple/ask-logs/`. The log records the question, selected provider/model, system and tool prompts, assembled model and reasoning content for each completed step, tool calls and complete results, per-call `tool.cache` hit/shared status, shared `research.universe` creation/reuse, usage, final answer, and errors. It intentionally omits noisy per-token stream chunks. Partial logs remain useful if a run is interrupted. Files use mode `0600` and the directory uses `0700`.
 
 Logs deliberately omit OAuth credentials and raw authorization headers, but they can contain sensitive questions, model reasoning, and retrieved source. Remove them according to your retention policy. `GREPPLE_ASK_LOG_DIR` selects another directory for isolated automation.
 
@@ -71,4 +71,6 @@ Each tool has a purpose-specific JSON schema with only the relevant options. Too
 
 One invocation owns a source/config/server-identified research session. Successful identical typed calls reuse byte-identical evidence, and concurrent duplicates share one execution. Cache status is exposed through tool-response metadata and `tool.cache` log events; errors are not cached, and a canceled waiter does not cancel shared work governed by the overall ask timeout. The cache is in-memory and never survives the invocation.
 
-The system prompt requires source-backed answers with repository/path:line evidence and instructs the model to narrow broad searches before retrieving bodies. There is no step-count cutoff; the overall timeout remains the execution bound. Tool errors are returned to the model so it can recover.
+One invocation owns a source/config/server-identified research session. Successful identical typed calls reuse byte-identical evidence, and concurrent duplicates share one execution. Cache status is exposed through tool-response metadata and `tool.cache` log events; errors are not cached, and a canceled waiter does not cancel shared work governed by the overall ask timeout. The cache is in-memory and never survives the invocation.
+
+Local `navigate_code`, `query_graph`, and `inspect_architecture` also share a lazily initialized source universe when their normalized selected paths and `max_files` scope agree. Each selected file is parsed into one caller-owned `parser.Document`; outlines, exact declaration context, related navigation, graph traversal, and directory architecture borrow those documents and one resolved navigation analysis until the ask session closes them. Different effective scopes receive separate universes, and cold versus reused tool evidence remains byte-identical.

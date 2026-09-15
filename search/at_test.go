@@ -4,7 +4,10 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"reflect"
 	"testing"
+
+	"github.com/greppleai/grepple/parser"
 )
 
 func TestAtReturnsExactDocumentedGoCallable(t *testing.T) {
@@ -91,6 +94,36 @@ func run() { fmt.Println("ok") }
 		if len(match.Segments) > 4 {
 			t.Fatalf("line %d segments=%d, want at most 4", line, len(match.Segments))
 		}
+	}
+}
+
+func TestAtFromDocumentMatchesColdRelatedOutput(t *testing.T) {
+	directory := t.TempDir()
+	caller := writeGoFixture(t, directory, "caller.go", "package related\nfunc run() string { return helper() }\n")
+	helper := writeGoFixture(t, directory, "helper.go", "package related\nfunc helper() string { return \"value\" }\n")
+	t.Chdir(directory)
+	callerDocument, err := parser.ParseDocument("go", "package related\nfunc run() string { return helper() }\n")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer callerDocument.Close()
+	helperDocument, err := parser.ParseDocument("go", "package related\nfunc helper() string { return \"value\" }\n")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer helperDocument.Close()
+	analysis, _ := BuildNavigationAnalysisFromDocuments([]NavigationDocumentSource{{Path: caller, Document: callerDocument}, {Path: helper, Document: helperDocument}}, NavigationBuildOptions{})
+	params := Params{At: "caller.go:2", Root: directory, MaxSegments: 20, Related: true, FollowRelated: 1}
+	cold, err := At(params)
+	if err != nil {
+		t.Fatal(err)
+	}
+	prepared, err := AtFromDocument(params, callerDocument, analysis)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(cold, prepared) {
+		t.Fatalf("cold/prepared navigation differs:\n%#v\n%#v", cold, prepared)
 	}
 }
 

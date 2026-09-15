@@ -215,6 +215,10 @@ func buildNavigationGraphOutputFromPathsWithOptions(paths []string, maxFiles int
 		eligible = eligible[:maxFiles]
 	}
 	graph, stats := search.BuildNavigationGraphWithOptions(eligible, options)
+	return navigationGraphOutputFromParts(eligible, discovered, unsupported, truncation, graph, stats)
+}
+
+func navigationGraphOutputFromParts(paths []string, discovered, unsupported int, truncation *navigationGraphTruncation, graph parser.NavigationGraph, stats search.NavigationSourceStats) navigationGraphOutput {
 	declarations := graph.Declarations
 	if declarations == nil {
 		declarations = []parser.NavigationDeclaration{}
@@ -227,7 +231,7 @@ func buildNavigationGraphOutputFromPathsWithOptions(paths []string, maxFiles int
 		Discovered: discovered, Selected: stats.Attempted, Parsed: stats.Parsed, Skipped: unsupported + stats.Skipped, Failed: stats.Failed, Recovered: stats.Recovered,
 	}
 	return navigationGraphOutput{
-		Schema: navigationGraphSchema, Files: len(eligible), Sources: sourceSummary, Declarations: declarations, Calls: calls, Imports: graph.Imports, Exports: graph.Exports, Fields: graph.Fields, TypeUsages: graph.TypeUsages, MemberAccesses: graph.MemberAccesses, Routes: graph.Routes, RepositoryRoots: graph.RepositoryRoots, Resolution: search.MeasureNavigationResolution(graph), Truncation: truncation,
+		Schema: navigationGraphSchema, Files: len(paths), Sources: sourceSummary, Declarations: declarations, Calls: calls, Imports: graph.Imports, Exports: graph.Exports, Fields: graph.Fields, TypeUsages: graph.TypeUsages, MemberAccesses: graph.MemberAccesses, Routes: graph.Routes, RepositoryRoots: graph.RepositoryRoots, Resolution: search.MeasureNavigationResolution(graph), Truncation: truncation,
 	}
 }
 

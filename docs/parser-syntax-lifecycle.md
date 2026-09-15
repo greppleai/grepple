@@ -14,7 +14,7 @@ Grepple exposes three syntax access modes over one parser-owned `Document`. They
 
 `ParseDocument` validates UTF-8, clones the source, parses through the owning `languageAdapter`, and returns a `Document`. The caller should call `Close`; the finalizer is only a safety net. `Close` is idempotent and may run concurrently with ordinary `Document` or `Node` reads. A `Document` contains synchronization state and must not be copied after first use.
 
-High-level consumers should prefer document-backed APIs such as `OutlineFromDocument`, `NavigationGraphFromDocument`, and `CachedNavigationGraphFromDocument`. These derive facts from the same tree without reparsing and leave ownership with the caller.
+High-level consumers should prefer document-backed APIs such as `OutlineFromDocument`, `NavigationGraphFromDocument`, `CachedNavigationGraphFromDocument`, `DeclarationRangeAtFromDocument`, and `BuildSegmentsFromDocument`. These derive facts from the same tree without reparsing and leave ownership with the caller. `search.BuildNavigationAnalysisFromDocuments` can retain one resolved, read-only multi-file analysis for graph and related-navigation projections while the caller keeps those documents open.
 
 ## Stable callback traversal
 

@@ -66,6 +66,48 @@ func At(params Params) (*FileMatch, error) {
 	return match, nil
 }
 
+// AtFromDocument retrieves local structural context from a caller-owned document
+// and attaches related evidence from an already resolved navigation analysis.
+func AtFromDocument(params Params, document *structure.Document, analysis *NavigationAnalysis) (*FileMatch, error) {
+	path, line, err := parseAtReference(params.At)
+	if err != nil {
+		return nil, err
+	}
+	if !filepath.IsAbs(path) && strings.TrimSpace(params.Root) != "" {
+		path = filepath.Join(params.Root, path)
+	}
+	absolute, err := filepath.Abs(path)
+	if err != nil {
+		return nil, err
+	}
+	if !withinRoot(absolute, params.Root) {
+		return nil, fmt.Errorf("--at path %q is outside the search root", path)
+	}
+	if document == nil {
+		return nil, fmt.Errorf("--at path %q has no parsed document", path)
+	}
+	content := document.Source()
+	lines := SplitLines(content)
+	if line < 1 || line > len(lines) {
+		return nil, fmt.Errorf("--at line %d is outside %s (1-%d)", line, path, len(lines))
+	}
+	language := document.Language()
+	match := &FileMatch{
+		File: absolute, DisplayPath: displayPathFrom(absolute, displayBase(params.Root)), Content: content, Language: language,
+		MatchLines: map[int]bool{line: true}, SegmentsReady: true,
+	}
+	if start, end, ok := structure.DeclarationRangeAtFromDocument(document, match.DisplayPath, line); ok {
+		match.CallableDeclaration = true
+		match.Segments = []structure.Segment{{Kind: "lines", Start: start, End: end}}
+	} else {
+		match.Segments, match.StructureStatus = structure.BuildSegmentsFromDocument(document, match.MatchLines, params.MaxSegments)
+	}
+	if params.Related && match.CallableDeclaration {
+		AttachRelatedFromAnalysis(match, analysis, params.FollowRelated)
+	}
+	return match, nil
+}
+
 func parseAtReference(reference string) (string, int, error) {
 	separator := strings.LastIndex(reference, ":")
 	if separator <= 0 || separator == len(reference)-1 {

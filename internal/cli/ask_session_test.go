@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"charm.land/fantasy"
+	"github.com/greppleai/grepple/parser"
 )
 
 func TestResearchSessionCachesNormalizedSuccessfulResults(t *testing.T) {
@@ -154,6 +155,87 @@ func TestResearchSessionIdentityIncludesRootConfigScopeAndServer(t *testing.T) {
 	}
 }
 
+func TestResearchUniverseColdAndReusedOutputsMatch(t *testing.T) {
+	root := t.TempDir()
+	source := "package sample\n\nfunc Parse() { helper() }\nfunc helper() {}\n"
+	if err := os.WriteFile(filepath.Join(root, "source.go"), []byte(source), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	t.Chdir(root)
+	navigateInput := askNavigateInput{Location: "source.go:3", FollowDepth: 1}
+	graphInput := askGraphInput{Direction: "callees", Symbol: "Parse"}
+	architectureInput := askArchitectureInput{Operation: "resolve", Symbol: "Parse"}
+
+	coldNavigation, err := runAskNavigate(context.Background(), root, "", navigateInput)
+	if err != nil {
+		t.Fatal(err)
+	}
+	coldGraph, err := runAskGraph(root, graphInput)
+	if err != nil {
+		t.Fatal(err)
+	}
+	coldArchitecture, err := runAskArchitecture(root, architectureInput)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	session := newResearchSession(context.Background(), nil, root, "")
+	defer session.Close()
+	reusedNavigation, err := runAskNavigateWithSession(context.Background(), session, root, "", navigateInput)
+	if err != nil {
+		t.Fatal(err)
+	}
+	reusedGraph, err := runAskGraphWithSession(session, root, graphInput)
+	if err != nil {
+		t.Fatal(err)
+	}
+	reusedArchitecture, err := runAskArchitectureWithSession(session, root, architectureInput)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertResearchJSONEqual(t, "navigation", coldNavigation, reusedNavigation)
+	assertResearchJSONEqual(t, "graph", coldGraph, reusedGraph)
+	assertResearchJSONEqual(t, "architecture", coldArchitecture, reusedArchitecture)
+}
+
+func TestResearchUniversePreservesIncompleteSourceMetadata(t *testing.T) {
+	root := t.TempDir()
+	mustWriteResearchFile(t, filepath.Join(root, "source.go"), "package sample\nfunc Parse() {}\n")
+	mustWriteResearchFile(t, filepath.Join(root, "binary.go"), "package sample\x00\n")
+	t.Chdir(root)
+	expectedGraph, err := buildNavigationGraphOutput(nil, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	expectedArchitecture, err := buildDirectoryArchitecture(nil, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	session := newResearchSession(context.Background(), nil, root, "")
+	defer session.Close()
+	universe, err := session.localUniverse(nil, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertResearchJSONEqual(t, "incomplete graph", expectedGraph, universe.navigationOutput())
+	assertResearchJSONEqual(t, "incomplete architecture", expectedArchitecture, universe.architecture())
+}
+
+func assertResearchJSONEqual(t *testing.T, name string, left, right any) {
+	t.Helper()
+	leftJSON, err := json.Marshal(left)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rightJSON, err := json.Marshal(right)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(leftJSON) != string(rightJSON) {
+		t.Fatalf("%s cold/reused output differs:\n%s\n%s", name, leftJSON, rightJSON)
+	}
+}
+
 func TestResearchSessionLogsCacheStatusAndPreservesToolEvidence(t *testing.T) {
 	directory := t.TempDir()
 	t.Setenv(askLogDirectoryEnv, directory)
@@ -198,6 +280,104 @@ func TestResearchSessionLogsCacheStatusAndPreservesToolEvidence(t *testing.T) {
 	}
 	if statuses[0].Type != "tool.cache" || statuses[1].Type != "tool.cache" || !strings.Contains(lines[1], `"hit":true`) {
 		t.Fatalf("unexpected cache log: %s", content)
+	}
+}
+
+func TestResearchSessionReusesOneUniverseAcrossAnalysisTools(t *testing.T) {
+	root := t.TempDir()
+	source := "package sample\n\nfunc Parse() { helper() }\nfunc helper() {}\n"
+	mustWriteResearchFile(t, filepath.Join(root, "source.go"), source)
+	t.Chdir(root)
+	t.Setenv(askLogDirectoryEnv, t.TempDir())
+	log := mustResearchLog(t)
+	session := newResearchSession(context.Background(), log, root, "")
+	researchUniverseBuilds.Store(0)
+
+	navigation, err := runAskNavigateWithSession(context.Background(), session, root, "", askNavigateInput{Location: "source.go:3", FollowDepth: 1})
+	assertResearchResult(t, "navigation", navigation, err, "helper")
+	graph, err := runAskGraphWithSession(session, root, askGraphInput{Direction: "callees", Symbol: "Parse"})
+	assertResearchResult(t, "graph", graph, err, "helper")
+	architecture, err := runAskArchitectureWithSession(session, root, askArchitectureInput{Operation: "resolve", Symbol: "Parse"})
+	assertResearchResult(t, "architecture", architecture, err, "Parse")
+	if builds := researchUniverseBuilds.Load(); builds != 1 {
+		t.Fatalf("research universe builds=%d, want 1", builds)
+	}
+	universe, err := session.localUniverse(nil, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	document := universe.document(filepath.Join(root, "source.go"))
+	if document == nil || document.Source() == "" {
+		t.Fatal("expected live caller-owned document")
+	}
+	session.Close()
+	assertResearchUniverseClosedAndLogged(t, log, document)
+}
+
+func TestResearchSessionNormalizesEquivalentUniverseScopes(t *testing.T) {
+	root := t.TempDir()
+	for _, name := range []string{"a.go", "b.go"} {
+		if err := os.WriteFile(filepath.Join(root, name), []byte("package sample\nfunc "+strings.TrimSuffix(name, ".go")+"() {}\n"), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	t.Chdir(root)
+	session := newResearchSession(context.Background(), nil, root, "")
+	defer session.Close()
+	researchUniverseBuilds.Store(0)
+	first, err := session.localUniverse([]string{"b.go", "a.go"}, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	second, err := session.localUniverse([]string{"a.go", "b.go"}, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if first != second || researchUniverseBuilds.Load() != 1 {
+		t.Fatalf("equivalent scopes did not share one universe: same=%v builds=%d", first == second, researchUniverseBuilds.Load())
+	}
+}
+
+func mustWriteResearchFile(t *testing.T, path, content string) {
+	t.Helper()
+	if err := os.WriteFile(path, []byte(content), 0o600); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func mustResearchLog(t *testing.T) *askLog {
+	t.Helper()
+	log, err := newAskLog()
+	if err != nil {
+		t.Fatal(err)
+	}
+	return log
+}
+
+func assertResearchResult(t *testing.T, name string, value any, err error, expected string) {
+	t.Helper()
+	if err != nil || !jsonContains(value, expected) {
+		t.Fatalf("%s=%+v err=%v", name, value, err)
+	}
+}
+
+func assertResearchUniverseClosedAndLogged(t *testing.T, log *askLog, document *parser.Document) {
+	t.Helper()
+	if err := log.Close(); err != nil {
+		t.Fatal(err)
+	}
+	logContent, err := os.ReadFile(log.Path())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if events := strings.Count(string(logContent), `"type":"research.universe"`); events != 4 {
+		t.Fatalf("research universe log events=%d, want 4: %s", events, logContent)
+	}
+	if reused := strings.Count(string(logContent), `"reused":true`); reused != 3 {
+		t.Fatalf("reused universe events=%d, want 3: %s", reused, logContent)
+	}
+	if document.Source() != "" {
+		t.Fatal("session close did not release its document")
 	}
 }
 

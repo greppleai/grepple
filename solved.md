@@ -11,6 +11,7 @@ This file records completed Grepple roadmap work that no longer belongs in `next
 - [x] Added answer-gated task benchmarks for bounded directory orientation, direct architecture resolution, and exact relation explanation; each task completes in one modeled retrieval call.
 - [x] Added `grepple ask` for bounded, cost-efficient research through Fantasy, with provider-neutral authentication, Codex device login and refresh, direct typed read-only tools, confined local reads, and a user-owned default research model in `~/.grepple/grepple.json`.
 - [x] Added a per-invocation ask research cache identified by canonical source root, repository configuration digest, active source flags, server, tool, and normalized typed input. Successful identical calls preserve evidence bytes, concurrent duplicates share one execution, failures retry, canceled waiters do not cancel shared work, and response metadata plus semantic JSONL events disclose cache status.
+- [x] Added scope-keyed lazy local research universes for ask. `navigate_code`, `query_graph`, and `inspect_architecture` reuse caller-owned parser documents, outlines, and one resolved navigation analysis; equivalent path orderings share state, sessions close documents once, and cold/reused outputs are byte-identical. A 30-file three-tool benchmark reduced runtime from 12.93 ms to 4.59 ms and allocations from 2.47 MB/63,628 to 1.01 MB/23,497.
 
 ## CLI discoverability
 

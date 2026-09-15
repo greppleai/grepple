@@ -77,6 +77,28 @@ func BuildSegmentsWithStatus(content, language string, hitLines map[int]bool, ma
 	return segments, SegmentBuildStructured
 }
 
+// BuildSegmentsFromDocument constructs structural segments without reparsing the caller-owned document.
+func BuildSegmentsFromDocument(document *Document, hitLines map[int]bool, maxSegments int) ([]Segment, SegmentBuildStatus) {
+	if document == nil {
+		return buildPlainTextSegments(hitLines, maxSegments), SegmentBuildFailed
+	}
+	document.mu.RLock()
+	defer document.mu.RUnlock()
+	if document.tree == nil || !utf8.ValidString(document.source) {
+		return buildPlainTextSegments(hitLines, maxSegments), SegmentBuildFailed
+	}
+	adapter := adapterForLanguage(document.language)
+	if adapter == nil {
+		return buildPlainTextSegments(hitLines, maxSegments), SegmentBuildUnsupported
+	}
+	root := document.tree.RootNode()
+	segments := buildASTSegments(root, document.source, newMatchLines(hitLines), adapter.Rules(), maxSegments)
+	if root.HasError() {
+		return segments, SegmentBuildRecovered
+	}
+	return segments, SegmentBuildStructured
+}
+
 func buildPlainTextSegments(hits map[int]bool, maxSegments int) []Segment {
 	lines := make([]int, 0, len(hits))
 	for line := range hits {

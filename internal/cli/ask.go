@@ -99,6 +99,7 @@ func runLoggedAsk(ctx context.Context, log *askLog, provider aiprovider.Provider
 	systemPrompt := askSystemPrompt(root)
 	server := serverDefault(values.Server)
 	session := newResearchSession(ctx, log, root, server)
+	defer session.Close()
 	tools := newAskResearchToolsForSession(session, root, server)
 	if err := log.Record("session.start", map[string]any{
 		"provider": provider.Name(), "model": values.Model, "question": question, "root": root, "server": server,

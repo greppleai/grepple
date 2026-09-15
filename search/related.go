@@ -195,8 +195,14 @@ type NavigationDocumentSource struct {
 	Document *parser.Document
 }
 
-// BuildNavigationGraphFromDocuments resolves a graph from already parsed documents.
-func BuildNavigationGraphFromDocuments(sources []NavigationDocumentSource, options NavigationBuildOptions) (parser.NavigationGraph, NavigationSourceStats) {
+// NavigationAnalysis retains one resolved navigation index for repeated read-only projections.
+// Documents used to build it remain owned by the caller.
+type NavigationAnalysis struct {
+	index *navigationIndex
+}
+
+// BuildNavigationAnalysisFromDocuments builds one reusable analysis from caller-owned documents.
+func BuildNavigationAnalysisFromDocuments(sources []NavigationDocumentSource, options NavigationBuildOptions) (*NavigationAnalysis, NavigationSourceStats) {
 	ordered := append([]NavigationDocumentSource(nil), sources...)
 	sort.Slice(ordered, func(i, j int) bool { return ordered[i].Path < ordered[j].Path })
 	index := newNavigationIndex()
@@ -207,7 +213,37 @@ func BuildNavigationGraphFromDocuments(sources []NavigationDocumentSource, optio
 		index.addDocument(source, cwd, !options.DisableCache)
 	}
 	index.finalize(paths)
-	return index.graph, index.sourceStats
+	return &NavigationAnalysis{index: index}, index.sourceStats
+}
+
+// Graph returns the analysis's immutable resolved navigation graph projection.
+func (analysis *NavigationAnalysis) Graph() parser.NavigationGraph {
+	if analysis == nil || analysis.index == nil {
+		return parser.NavigationGraph{}
+	}
+	return analysis.index.graph
+}
+
+// AttachRelatedFromAnalysis adds bounded navigation evidence without parsing or rebuilding the graph.
+func AttachRelatedFromAnalysis(match *FileMatch, analysis *NavigationAnalysis, followDepth int) {
+	if match == nil || analysis == nil || analysis.index == nil || !match.CallableDeclaration || !supportsNavigation(match.Language) {
+		return
+	}
+	related, omittedCallers, omittedCallees := relatedPoints(*match, analysis.index)
+	if followDepth > 0 {
+		seen := matchedLocations(*match, analysis.index)
+		lineBudget := maxFollowedTotalLines
+		related = expandRelated(related, analysis.index, followDepth, seen, &lineBudget)
+	}
+	match.Related = related
+	match.OmittedRelatedCallers = omittedCallers
+	match.OmittedRelatedCallees = omittedCallees
+}
+
+// BuildNavigationGraphFromDocuments resolves a graph from already parsed documents.
+func BuildNavigationGraphFromDocuments(sources []NavigationDocumentSource, options NavigationBuildOptions) (parser.NavigationGraph, NavigationSourceStats) {
+	analysis, stats := BuildNavigationAnalysisFromDocuments(sources, options)
+	return analysis.Graph(), stats
 }
 
 func (index *navigationIndex) resolveGraphCalls() {

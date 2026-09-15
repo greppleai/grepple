@@ -358,9 +358,14 @@ func buildDirectoryArchitecture(globs []string, maxFiles int) (directoryArchitec
 	}
 	parsedSources, parseStats := loadArchitectureDocuments(paths)
 	graph, graphStats := search.BuildNavigationGraphFromDocuments(architectureNavigationDocuments(parsedSources), search.NavigationBuildOptions{})
+	architecture := buildDirectoryArchitectureFromParts(paths, discovered, supported, truncation, parsedSources, parseStats, graph, graphStats)
 	for _, source := range parsedSources {
 		source.document.Close()
 	}
+	return architecture, nil
+}
+
+func buildDirectoryArchitectureFromParts(paths []string, discovered, supported int, truncation *navigationGraphTruncation, parsedSources []architectureParsedSource, parseStats search.NavigationSourceStats, graph parser.NavigationGraph, graphStats search.NavigationSourceStats) directoryArchitecture {
 	visibility := architectureVisibilityIndex(graph.Declarations)
 	directories := make(map[string]*directoryAccumulator)
 	symbols := make([]architectureSymbol, 0)
@@ -381,7 +386,7 @@ func buildDirectoryArchitecture(globs []string, maxFiles int) (directoryArchitec
 	routes := buildArchitectureRoutes(graph, directories)
 	relations, relationCoverage := buildArchitectureRelations(graph, paths)
 	sources := navigationSourceSummary{Discovered: discovered, Selected: len(paths), Parsed: graphStats.Parsed, Skipped: discovered - supported + parseStats.Skipped + graphStats.Skipped, Failed: parseStats.Failed + graphStats.Failed, Recovered: graphStats.Recovered}
-	return directoryArchitecture{Schema: directoryArchitectureSchema, Root: ".", Files: len(paths), Sources: sources, SourceFiles: buildArchitectureSourceFiles(paths), Directories: buildArchitectureDirectories(directories), Symbols: symbols, Routes: routes, Relations: relations, RepositoryRoots: graph.RepositoryRoots, RelationCoverage: relationCoverage, Truncation: truncation}, nil
+	return directoryArchitecture{Schema: directoryArchitectureSchema, Root: ".", Files: len(paths), Sources: sources, SourceFiles: buildArchitectureSourceFiles(paths), Directories: buildArchitectureDirectories(directories), Symbols: symbols, Routes: routes, Relations: relations, RepositoryRoots: graph.RepositoryRoots, RelationCoverage: relationCoverage, Truncation: truncation}
 }
 
 func buildArchitectureSourceFiles(paths []string) []architectureSourceFile {

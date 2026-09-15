@@ -142,6 +142,7 @@ Use the log when the answer is missing, expensive, repetitive, or surprising. Im
 - `session.start`: question, provider/model, system prompt, server, and complete typed tool metadata;
 - `tool.call` / `tool.result`: exact structured research requests and evidence returned;
 - `tool.cache`: whether a typed call was served from the invocation cache or shared an in-flight duplicate;
+- `research.universe`: whether local navigation, graph, and architecture tools created or reused one parsed source universe;
 - `step.finish`: assembled response and reasoning content for a completed model step;
 - `stream.finish`: finish reason and usage;
 - `agent.finish` / `session.finish`: complete result and final answer;

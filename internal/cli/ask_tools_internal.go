@@ -95,16 +95,16 @@ func newAskResearchToolsForSession(session *researchSession, root, server string
 			return askToolResult(runAskSearch(ctx, root, server, input))
 		}),
 		cachedAskTool(session, "navigate_code", "Retrieve the exact declaration containing a known PATH:LINE and its immediate callers/callees. Use after search_code; candidate edges are leads, while exact/import-resolved/context-resolved edges are stronger evidence.", func(ctx context.Context, input askNavigateInput) (fantasy.ToolResponse, error) {
-			return askToolResult(runAskNavigate(ctx, root, server, input))
+			return askToolResult(runAskNavigateWithSession(ctx, session, root, server, input))
 		}),
 		cachedAskTool(session, "structural_search", "Run a native read-only gritql-v1 syntax query across Tree-sitter-backed source. Use for code shapes, not type resolution, call impact, or data-flow proof.", func(ctx context.Context, input askStructuralInput) (fantasy.ToolResponse, error) {
 			return askToolResult(runAskStructural(ctx, root, server, input))
 		}),
 		cachedAskTool(session, "inspect_architecture", "Inspect local language-neutral directory architecture. directory orients ownership; resolve locates a symbol; why returns exact evidence for a directory relation.", func(_ context.Context, input askArchitectureInput) (fantasy.ToolResponse, error) {
-			return askToolResult(runAskArchitecture(root, input))
+			return askToolResult(runAskArchitectureWithSession(session, root, input))
 		}),
 		cachedAskTool(session, "query_graph", "Query the local parser-owned navigation graph for callers, callees, dependencies, dependents, or impact. Select exactly one symbol or source location and keep depth small.", func(_ context.Context, input askGraphInput) (fantasy.ToolResponse, error) {
-			return askToolResult(runAskGraph(root, input))
+			return askToolResult(runAskGraphWithSession(session, root, input))
 		}),
 		cachedAskTool(session, "explain_sources", "Report which local files are selected, excluded, ignored, generated, vendored, tests, fixtures, or production. Use before completeness-sensitive conclusions.", func(_ context.Context, input askSourceScopeInput) (fantasy.ToolResponse, error) {
 			return askToolResult(runAskSourceScope(root, input))
@@ -197,6 +197,12 @@ func askSearchResults(ctx context.Context, server string, params search.Params, 
 }
 
 func runAskNavigate(ctx context.Context, root, server string, input askNavigateInput) (any, error) {
+	session := newResearchSession(ctx, nil, root, server)
+	defer session.Close()
+	return runAskNavigateWithSession(ctx, session, root, server, input)
+}
+
+func runAskNavigateWithSession(ctx context.Context, session *researchSession, root, server string, input askNavigateInput) (any, error) {
 	if strings.TrimSpace(input.Location) == "" {
 		return nil, fmt.Errorf("location is required")
 	}
@@ -218,7 +224,18 @@ func runAskNavigate(ctx context.Context, root, server string, input askNavigateI
 	if err := applyRepositorySourceConfig(&params); err != nil {
 		return nil, err
 	}
-	match, err := search.At(params)
+	universe, err := session.localUniverse(nil, 0)
+	if err != nil {
+		return nil, err
+	}
+	separator := strings.LastIndex(input.Location, ":")
+	document := universe.document(filepath.Join(root, input.Location[:separator]))
+	var match *search.FileMatch
+	if document == nil {
+		match, err = search.At(params)
+	} else {
+		match, err = search.AtFromDocument(params, document, universe.analysis)
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -267,6 +284,12 @@ func runAskStructural(ctx context.Context, root, server string, input askStructu
 }
 
 func runAskArchitecture(root string, input askArchitectureInput) (any, error) {
+	session := newResearchSession(context.Background(), nil, root, "")
+	defer session.Close()
+	return runAskArchitectureWithSession(session, root, input)
+}
+
+func runAskArchitectureWithSession(session *researchSession, root string, input askArchitectureInput) (any, error) {
 	if err := validateAskLocalPaths(root, input.Paths); err != nil {
 		return nil, err
 	}
@@ -286,10 +309,11 @@ func runAskArchitecture(root string, input askArchitectureInput) (any, error) {
 	default:
 		return nil, fmt.Errorf("operation must be directory, resolve, or why")
 	}
-	architecture, err := buildDirectoryArchitecture(input.Paths, input.MaxFiles)
+	universe, err := session.localUniverse(input.Paths, input.MaxFiles)
 	if err != nil {
 		return nil, err
 	}
+	architecture := universe.architecture()
 	switch input.Operation {
 	case "directory":
 		return architecture, nil
@@ -303,6 +327,12 @@ func runAskArchitecture(root string, input askArchitectureInput) (any, error) {
 }
 
 func runAskGraph(root string, input askGraphInput) (any, error) {
+	session := newResearchSession(context.Background(), nil, root, "")
+	defer session.Close()
+	return runAskGraphWithSession(session, root, input)
+}
+
+func runAskGraphWithSession(session *researchSession, root string, input askGraphInput) (any, error) {
 	if err := validateAskLocalPaths(root, input.Paths); err != nil {
 		return nil, err
 	}
@@ -322,10 +352,11 @@ func runAskGraph(root string, input askGraphInput) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	output, err := buildNavigationGraphOutput(input.Paths, 0)
+	universe, err := session.localUniverse(input.Paths, 0)
 	if err != nil {
 		return nil, err
 	}
+	output := universe.navigationOutput()
 	filter := search.NavigationGraphFilter{}
 	if input.Language != "" {
 		filter.Languages = []string{input.Language}
