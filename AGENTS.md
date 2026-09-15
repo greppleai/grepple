@@ -26,7 +26,7 @@ Architecture orientation is generated dynamically across supported languages:
 
 - `grepple architecture directory --compact [PATH]`: bounded directory ownership and relation map
 - `grepple architecture resolve --symbol NAME --compact [PATH]`: exact source-linked declaration lookup
-- `grepple architecture why FROM TO --compact [PATH]`: resolved cross-directory call evidence
+- `grepple architecture why FROM TO --compact [PATH]`: source-linked call, import, and type-reference evidence
 
 Do not infer package semantics from directory ownership. Use `--production-only` only for explicitly production-scoped questions; retain full-universe evidence otherwise. `make schema-generate` and `make schema-check` validate generated parser metadata; architecture views do not require committed package/workspace bundles.
 

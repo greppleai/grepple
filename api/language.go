@@ -27,4 +27,5 @@ type LanguageCapabilities struct {
 	FocusedFlow           FeatureSupport `json:"focusedFlow"`
 	GritQL                FeatureSupport `json:"gritql"`
 	DirectoryArchitecture FeatureSupport `json:"directoryArchitecture"`
+	ImportRelations       FeatureSupport `json:"importRelations"`
 }

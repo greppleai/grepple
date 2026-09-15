@@ -154,6 +154,7 @@ func includeQueryCallDeclarations(call parser.NavigationCall, declarations map[s
 func projectNavigationQuery(graph parser.NavigationGraph, included, includedCalls map[string]bool) parser.NavigationGraph {
 	result := parser.NavigationGraph{
 		Declarations:   make([]parser.NavigationDeclaration, 0, len(included)),
+		Imports:        make([]parser.NavigationImport, 0),
 		Calls:          make([]parser.NavigationCall, 0, len(includedCalls)),
 		Exports:        make([]parser.NavigationExport, 0),
 		Fields:         make([]parser.NavigationField, 0),
@@ -183,6 +184,11 @@ func projectNavigationContextFacts(graph parser.NavigationGraph, result *parser.
 		}
 	}
 	files := navigationQueryFiles(result.Declarations, result.Calls, result.Fields)
+	for _, item := range graph.Imports {
+		if files[item.Path] {
+			result.Imports = append(result.Imports, item)
+		}
+	}
 	for _, export := range graph.Exports {
 		if files[export.Path] {
 			result.Exports = append(result.Exports, export)

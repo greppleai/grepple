@@ -4,7 +4,7 @@
 
 ## Recommended next milestone
 
-> Separate directory relations by source class, add source-linked import/type-reference edges, and harden repository identity fixtures. Measure artifact-backed task success before revisiting syntax lifecycle APIs.
+> Harden repository identity fixtures, add adapter-evidenced entrypoints/routes, and parse each architecture source once. Measure artifact-backed task success before revisiting syntax lifecycle APIs.
 
 ## Planning principles
 
@@ -28,10 +28,8 @@ Go navigation facts now receive path-dependent module/package identity after cac
 
 ### Directory architecture precision
 
-`grepple architecture directory|resolve|why` now provides bounded, language-neutral directory ownership, exact type/callable ranges, and strongly resolved cross-directory call evidence. Legacy Go package/workspace commands and generated artifacts have been removed.
+`grepple architecture directory|resolve|why` now provides bounded, language-neutral directory ownership, exact type/callable ranges, source-classified call/import/type relations, and explicit relation coverage. Legacy Go package/workspace commands and generated artifacts have been removed.
 
-- [ ] Separate relation counts/evidence by production, test, fixture, generated, and vendor class; directory and source-scope totals already expose these classes and `--production-only` filters recursive discovery.
-- [ ] Add source-linked import and type-reference directory edges independently of callable resolution; label each relation kind and preserve unsupported/unknown semantics.
 - [ ] Add adapter-evidenced entrypoints and routes only where languages provide useful contracts.
 - [ ] Parse or restore each selected file once when deriving both outlines and the resolved navigation graph.
 - [ ] Add task-level answer/turn/output benchmarks comparing directory orientation, direct symbol resolution, and relation explanation.

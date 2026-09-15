@@ -14,7 +14,7 @@ import (
 	"github.com/greppleai/grepple/search"
 )
 
-const directoryArchitectureSchema = "grepple-directory-architecture-v1"
+const directoryArchitectureSchema = "grepple-directory-architecture-v2"
 
 type architectureArgs struct {
 	JSON           bool     `arg:"--json" help:"emit complete directory architecture JSON"`
@@ -46,14 +46,15 @@ type architectureWhyArgs struct {
 }
 
 type directoryArchitecture struct {
-	Schema      string                     `json:"schema"`
-	Root        string                     `json:"root"`
-	Files       int                        `json:"files"`
-	Sources     navigationSourceSummary    `json:"sources"`
-	Directories []architectureDirectory    `json:"directories"`
-	Symbols     []architectureSymbol       `json:"symbols"`
-	Relations   []architectureRelation     `json:"relations"`
-	Truncation  *navigationGraphTruncation `json:"truncation,omitempty"`
+	Schema           string                       `json:"schema"`
+	Root             string                       `json:"root"`
+	Files            int                          `json:"files"`
+	Sources          navigationSourceSummary      `json:"sources"`
+	Directories      []architectureDirectory      `json:"directories"`
+	Symbols          []architectureSymbol         `json:"symbols"`
+	Relations        []architectureRelation       `json:"relations"`
+	RelationCoverage architectureRelationCoverage `json:"relationCoverage"`
+	Truncation       *navigationGraphTruncation   `json:"truncation,omitempty"`
 }
 
 type architectureDirectory struct {
@@ -84,19 +85,37 @@ type architectureSymbol struct {
 }
 
 type architectureRelation struct {
-	From     string                         `json:"from"`
-	To       string                         `json:"to"`
-	Kind     string                         `json:"kind"`
-	Count    int                            `json:"count"`
-	Evidence []architectureRelationEvidence `json:"evidence"`
+	From            string                         `json:"from"`
+	To              string                         `json:"to"`
+	Kind            string                         `json:"kind"`
+	Count           int                            `json:"count"`
+	Classifications []architectureCount            `json:"classifications"`
+	Evidence        []architectureRelationEvidence `json:"evidence"`
 }
 
 type architectureRelationEvidence struct {
-	Path       string `json:"path"`
-	Line       int    `json:"line"`
-	Caller     string `json:"caller"`
-	Target     string `json:"target"`
-	Confidence string `json:"confidence"`
+	Path           string `json:"path"`
+	Line           int    `json:"line"`
+	Caller         string `json:"caller"`
+	Target         string `json:"target"`
+	Kind           string `json:"kind"`
+	Classification string `json:"classification"`
+	Confidence     string `json:"confidence"`
+	ImportPath     string `json:"importPath,omitempty"`
+	Role           string `json:"role,omitempty"`
+}
+
+type architectureRelationCoverage struct {
+	ImportFacts                int      `json:"importFacts"`
+	ResolvedImports            int      `json:"resolvedImports"`
+	AmbiguousImports           int      `json:"ambiguousImports"`
+	UnresolvedImports          int      `json:"unresolvedImports"`
+	TypeReferences             int      `json:"typeReferences"`
+	ResolvedTypeReferences     int      `json:"resolvedTypeReferences"`
+	AmbiguousTypeReferences    int      `json:"ambiguousTypeReferences"`
+	UnresolvedTypeReferences   int      `json:"unresolvedTypeReferences"`
+	UnqualifiedTypeReferences  int      `json:"unqualifiedTypeReferences"`
+	UnsupportedImportLanguages []string `json:"unsupportedImportLanguages"`
 }
 
 type architectureResolveOutput struct {
@@ -217,7 +236,7 @@ func runArchitectureWhy(args []string) error {
 		return err
 	}
 	evidence := architectureRelationEvidenceFor(architecture.Relations, values.From, values.To)
-	output := architectureWhyOutput{Schema: "grepple-architecture-why-v1", From: cleanArchitectureDirectory(values.From), To: cleanArchitectureDirectory(values.To), Relation: "resolved-call", Sources: architecture.Sources, Evidence: evidence}
+	output := architectureWhyOutput{Schema: "grepple-architecture-why-v2", From: cleanArchitectureDirectory(values.From), To: cleanArchitectureDirectory(values.To), Relation: architectureEvidenceRelation(evidence), Sources: architecture.Sources, Evidence: evidence}
 	if values.JSON {
 		if err := stdoutWriter().writeJSON(output); err != nil {
 			return err
@@ -291,9 +310,9 @@ func buildDirectoryArchitecture(globs []string, maxFiles int) (directoryArchitec
 		appendArchitectureSymbols(&symbols, directories, outline.Symbols, outline.Language, sourcePath, directory, "", visibility)
 	}
 	sortArchitectureSymbols(symbols)
-	relations := buildArchitectureRelations(graph)
+	relations, relationCoverage := buildArchitectureRelations(graph, paths)
 	sources := navigationSourceSummary{Discovered: discovered, Selected: graphStats.Attempted, Parsed: graphStats.Parsed, Skipped: discovered - supported + graphStats.Skipped, Failed: graphStats.Failed, Recovered: graphStats.Recovered}
-	return directoryArchitecture{Schema: directoryArchitectureSchema, Root: ".", Files: len(paths), Sources: sources, Directories: buildArchitectureDirectories(directories), Symbols: symbols, Relations: relations, Truncation: truncation}, nil
+	return directoryArchitecture{Schema: directoryArchitectureSchema, Root: ".", Files: len(paths), Sources: sources, Directories: buildArchitectureDirectories(directories), Symbols: symbols, Relations: relations, RelationCoverage: relationCoverage, Truncation: truncation}, nil
 }
 
 func architectureVisibilityIndex(declarations []parser.NavigationDeclaration) map[string][]parser.NavigationDeclaration {
@@ -417,37 +436,199 @@ func architectureRelationForCall(call parser.NavigationCall, declarations map[st
 	if from == to {
 		return "", "", architectureRelationEvidence{}, false
 	}
-	evidence := architectureRelationEvidence{Path: call.Path, Line: call.Line, Caller: caller.Name, Target: target.Name, Confidence: call.Confidence}
+	evidence := architectureRelationEvidence{Path: call.Path, Line: call.Line, Caller: caller.Name, Target: target.Name, Kind: "resolved-call", Classification: string(sourcekind.Classify(call.Path, ".")), Confidence: call.Confidence}
 	return from, to, evidence, true
 }
 
-func buildArchitectureRelations(graph parser.NavigationGraph) []architectureRelation {
+func buildArchitectureRelations(graph parser.NavigationGraph, paths []string) ([]architectureRelation, architectureRelationCoverage) {
 	declarations := make(map[string]parser.NavigationDeclaration, len(graph.Declarations))
+	packageFiles := make(map[string][]string)
 	for _, declaration := range graph.Declarations {
 		declarations[declaration.ID] = declaration
+		if declaration.PackageID != "" {
+			packageFiles[declaration.PackageID] = append(packageFiles[declaration.PackageID], declaration.Path)
+		}
 	}
 	grouped := make(map[string]*architectureRelation)
+	seen := make(map[string]bool)
 	for _, call := range graph.Calls {
 		from, to, evidence, ok := architectureRelationForCall(call, declarations)
-		if !ok {
+		if ok {
+			addArchitectureRelation(grouped, seen, from, to, evidence)
+		}
+	}
+	coverage := architectureRelationCoverage{UnsupportedImportLanguages: unsupportedArchitectureImportLanguages(paths)}
+	importTargets := addArchitectureImportRelations(grouped, seen, graph.Imports, &coverage)
+	typeUsages := append([]parser.NavigationTypeUsage(nil), graph.TypeUsages...)
+	for _, field := range graph.Fields {
+		typeUsages = append(typeUsages, parser.NavigationTypeUsage{CallerID: field.OwnerType + "." + field.Name, Type: field.Type, ImportPath: field.ImportPath, Role: "field", Language: field.Language, Path: field.Path, Line: field.Line})
+	}
+	addArchitectureTypeRelations(grouped, seen, typeUsages, declarations, packageFiles, importTargets, &coverage)
+	return finalizeArchitectureRelations(grouped), coverage
+}
+
+func unsupportedArchitectureImportLanguages(paths []string) []string {
+	languages := map[string]bool{}
+	for _, sourcePath := range paths {
+		language := parser.LanguageFor(sourcePath)
+		capability, ok := parser.CapabilitiesForLanguage(language)
+		if ok && capability.Navigation && !capability.ImportNavigation {
+			languages[language] = true
+		}
+	}
+	result := make([]string, 0, len(languages))
+	for language := range languages {
+		result = append(result, language)
+	}
+	sort.Strings(result)
+	return result
+}
+
+func addArchitectureImportRelations(grouped map[string]*architectureRelation, seen map[string]bool, imports []parser.NavigationImport, coverage *architectureRelationCoverage) map[string][]string {
+	targetIndex := make(map[string][]string)
+	counted := make(map[string]bool)
+	for _, item := range imports {
+		indexKey := item.Path + "\x00" + item.ImportPath
+		targetIndex[indexKey] = append(targetIndex[indexKey], item.TargetPaths...)
+		statementKey := fmt.Sprintf("%s\x00%d\x00%s", item.Path, item.Line, item.ImportPath)
+		if counted[statementKey] {
 			continue
 		}
-		key := from + "\x00" + to
-		relation := grouped[key]
-		if relation == nil {
-			relation = &architectureRelation{From: from, To: to, Kind: "resolved-call", Evidence: []architectureRelationEvidence{}}
-			grouped[key] = relation
+		counted[statementKey] = true
+		coverage.ImportFacts++
+		targetDirectories := architectureTargetDirectories(item.TargetPaths)
+		switch len(targetDirectories) {
+		case 0:
+			coverage.UnresolvedImports++
+		case 1:
+			coverage.ResolvedImports++
+			from := cleanArchitectureDirectory(filepath.Dir(item.Path))
+			evidence := architectureRelationEvidence{Path: item.Path, Line: item.Line, Caller: item.Alias, Target: item.ImportPath, Kind: "import", Classification: string(sourcekind.Classify(item.Path, ".")), Confidence: "local-import-resolved", ImportPath: item.ImportPath}
+			addArchitectureRelation(grouped, seen, from, targetDirectories[0], evidence)
+		default:
+			coverage.AmbiguousImports++
 		}
-		relation.Count++
-		relation.Evidence = append(relation.Evidence, evidence)
 	}
+	for key, targets := range targetIndex {
+		sort.Strings(targets)
+		targetIndex[key] = compactArchitectureStrings(targets)
+	}
+	return targetIndex
+}
+
+func addArchitectureTypeRelations(grouped map[string]*architectureRelation, seen map[string]bool, usages []parser.NavigationTypeUsage, declarations map[string]parser.NavigationDeclaration, packageFiles, importTargets map[string][]string, coverage *architectureRelationCoverage) {
+	for _, usage := range usages {
+		coverage.TypeReferences++
+		if usage.ImportPath == "" {
+			coverage.UnqualifiedTypeReferences++
+			continue
+		}
+		targets := append([]string(nil), packageFiles[usage.ImportPath]...)
+		targets = append(targets, importTargets[usage.Path+"\x00"+usage.ImportPath]...)
+		targetDirectories := architectureTargetDirectories(targets)
+		switch len(targetDirectories) {
+		case 0:
+			coverage.UnresolvedTypeReferences++
+		case 1:
+			coverage.ResolvedTypeReferences++
+			caller := declarations[usage.CallerID].Name
+			if caller == "" {
+				caller = usage.CallerID
+			}
+			evidence := architectureRelationEvidence{Path: usage.Path, Line: usage.Line, Caller: caller, Target: usage.Type, Kind: "type-reference", Classification: string(sourcekind.Classify(usage.Path, ".")), Confidence: "local-import-resolved", ImportPath: usage.ImportPath, Role: usage.Role}
+			addArchitectureRelation(grouped, seen, cleanArchitectureDirectory(filepath.Dir(usage.Path)), targetDirectories[0], evidence)
+		default:
+			coverage.AmbiguousTypeReferences++
+		}
+	}
+}
+
+func projectArchitectureRelations(relations []architectureRelation, directories []architectureDirectory) []architectureRelation {
+	visible := make([]string, 0, len(directories))
+	for _, directory := range directories {
+		visible = append(visible, directory.Path)
+	}
+	grouped := make(map[string]*architectureRelation)
+	seen := make(map[string]bool)
+	for _, relation := range relations {
+		from := nearestVisibleArchitectureDirectory(relation.From, visible)
+		to := nearestVisibleArchitectureDirectory(relation.To, visible)
+		for _, evidence := range relation.Evidence {
+			addArchitectureRelation(grouped, seen, from, to, evidence)
+		}
+	}
+	return finalizeArchitectureRelations(grouped)
+}
+
+func nearestVisibleArchitectureDirectory(path string, visible []string) string {
+	best := ""
+	for _, candidate := range visible {
+		if candidate == "." || path == candidate || strings.HasPrefix(path, candidate+"/") {
+			if len(candidate) > len(best) {
+				best = candidate
+			}
+		}
+	}
+	return best
+}
+
+func architectureTargetDirectories(paths []string) []string {
+	directories := make([]string, 0, len(paths))
+	for _, path := range paths {
+		directories = append(directories, cleanArchitectureDirectory(filepath.Dir(path)))
+	}
+	sort.Strings(directories)
+	return compactArchitectureStrings(directories)
+}
+
+func compactArchitectureStrings(values []string) []string {
+	if len(values) < 2 {
+		return values
+	}
+	result := values[:1]
+	for _, value := range values[1:] {
+		if value != result[len(result)-1] {
+			result = append(result, value)
+		}
+	}
+	return result
+}
+
+func addArchitectureRelation(grouped map[string]*architectureRelation, seen map[string]bool, from, to string, evidence architectureRelationEvidence) {
+	if from == "" || to == "" || from == to {
+		return
+	}
+	key := from + "\x00" + to + "\x00" + evidence.Kind
+	evidenceKey := fmt.Sprintf("%s\x00%s\x00%d\x00%s\x00%s\x00%s", key, evidence.Path, evidence.Line, evidence.Caller, evidence.Target, evidence.Role)
+	if seen[evidenceKey] {
+		return
+	}
+	seen[evidenceKey] = true
+	relation := grouped[key]
+	if relation == nil {
+		relation = &architectureRelation{From: from, To: to, Kind: evidence.Kind, Evidence: []architectureRelationEvidence{}}
+		grouped[key] = relation
+	}
+	relation.Count++
+	relation.Evidence = append(relation.Evidence, evidence)
+}
+
+func finalizeArchitectureRelations(grouped map[string]*architectureRelation) []architectureRelation {
 	result := make([]architectureRelation, 0, len(grouped))
 	for _, relation := range grouped {
+		classifications := make(map[string]int)
+		for _, evidence := range relation.Evidence {
+			classifications[evidence.Classification]++
+		}
+		relation.Classifications = architectureCounts(classifications)
 		sort.Slice(relation.Evidence, func(i, j int) bool {
 			if relation.Evidence[i].Path != relation.Evidence[j].Path {
 				return relation.Evidence[i].Path < relation.Evidence[j].Path
 			}
-			return relation.Evidence[i].Line < relation.Evidence[j].Line
+			if relation.Evidence[i].Line != relation.Evidence[j].Line {
+				return relation.Evidence[i].Line < relation.Evidence[j].Line
+			}
+			return relation.Evidence[i].Target < relation.Evidence[j].Target
 		})
 		result = append(result, *relation)
 	}
@@ -455,7 +636,10 @@ func buildArchitectureRelations(graph parser.NavigationGraph) []architectureRela
 		if result[i].From != result[j].From {
 			return result[i].From < result[j].From
 		}
-		return result[i].To < result[j].To
+		if result[i].To != result[j].To {
+			return result[i].To < result[j].To
+		}
+		return result[i].Kind < result[j].Kind
 	})
 	return result
 }
@@ -477,12 +661,29 @@ func resolveArchitectureSymbols(symbols []architectureSymbol, query string) []ar
 func architectureRelationEvidenceFor(relations []architectureRelation, from, to string) []architectureRelationEvidence {
 	from = cleanArchitectureDirectory(from)
 	to = cleanArchitectureDirectory(to)
+	evidence := []architectureRelationEvidence{}
 	for _, relation := range relations {
 		if relation.From == from && relation.To == to {
-			return relation.Evidence
+			evidence = append(evidence, relation.Evidence...)
 		}
 	}
-	return []architectureRelationEvidence{}
+	return evidence
+}
+
+func architectureEvidenceRelation(evidence []architectureRelationEvidence) string {
+	kinds := make([]string, 0)
+	seen := make(map[string]bool)
+	for _, item := range evidence {
+		if !seen[item.Kind] {
+			seen[item.Kind] = true
+			kinds = append(kinds, item.Kind)
+		}
+	}
+	sort.Strings(kinds)
+	if len(kinds) == 0 {
+		return "none"
+	}
+	return strings.Join(kinds, ",")
 }
 
 func sortArchitectureSymbols(symbols []architectureSymbol) {
@@ -515,7 +716,12 @@ func renderDirectoryArchitecture(architecture directoryArchitecture, values arch
 	if values.MaxNodes > 0 && shown > values.MaxNodes {
 		shown = values.MaxNodes
 	}
-	if !write("architecture %s root=%s files=%d directories=%d shown=%d relations=%d sources=%s", architecture.Schema, architecture.Root, architecture.Files, len(directories), shown, len(architecture.Relations), compactNavigationSourceSummary(architecture.Sources)) {
+	visibleRelations := projectArchitectureRelations(architecture.Relations, directories[:shown])
+	if !write("architecture %s root=%s files=%d directories=%d shown=%d relations=%d shown-relations=%d sources=%s", architecture.Schema, architecture.Root, architecture.Files, len(directories), shown, len(architecture.Relations), len(visibleRelations), compactNavigationSourceSummary(architecture.Sources)) {
+		return nil
+	}
+	coverage := architecture.RelationCoverage
+	if !write("coverage imports=%d resolved=%d ambiguous=%d unresolved=%d types=%d type-resolved=%d type-ambiguous=%d type-unresolved=%d type-unqualified=%d import-unsupported=%s", coverage.ImportFacts, coverage.ResolvedImports, coverage.AmbiguousImports, coverage.UnresolvedImports, coverage.TypeReferences, coverage.ResolvedTypeReferences, coverage.AmbiguousTypeReferences, coverage.UnresolvedTypeReferences, coverage.UnqualifiedTypeReferences, formatArchitectureStrings(coverage.UnsupportedImportLanguages)) {
 		return nil
 	}
 	for _, directory := range directories[:shown] {
@@ -523,8 +729,13 @@ func renderDirectoryArchitecture(architecture directoryArchitecture, values arch
 			return nil
 		}
 	}
-	for _, relation := range architecture.Relations {
-		if !write("R %s -> %s kind=%s count=%d at=%s", relation.From, relation.To, relation.Kind, relation.Count, architectureEvidenceLocation(relation.Evidence)) {
+	for _, relation := range visibleRelations {
+		if !write("R %s -> %s kind=%s count=%d classes=%s at=%s", relation.From, relation.To, relation.Kind, relation.Count, formatArchitectureCounts(relation.Classifications), architectureEvidenceLocation(relation.Evidence)) {
+			return nil
+		}
+	}
+	if len(visibleRelations) < len(architecture.Relations) {
+		if !write("! omitted relation-groups=%d; raise --depth/--max-nodes or narrow PATH", len(architecture.Relations)-len(visibleRelations)) {
 			return nil
 		}
 	}
@@ -557,7 +768,7 @@ func renderArchitectureWhy(output architectureWhyOutput, maxBytes int) error {
 		return nil
 	}
 	for _, evidence := range output.Evidence {
-		if err := writer.writeString(fmt.Sprintf("E %s:%d %s -> %s [%s]\n", evidence.Path, evidence.Line, evidence.Caller, evidence.Target, evidence.Confidence)); err != nil {
+		if err := writer.writeString(fmt.Sprintf("E %s:%d %s -> %s kind=%s class=%s confidence=%s\n", evidence.Path, evidence.Line, evidence.Caller, evidence.Target, evidence.Kind, evidence.Classification, evidence.Confidence)); err != nil {
 			return nil
 		}
 	}
@@ -589,6 +800,13 @@ func architectureDirectoryDepth(path string) int {
 		return 0
 	}
 	return len(strings.Split(filepath.ToSlash(path), "/"))
+}
+
+func formatArchitectureStrings(values []string) string {
+	if len(values) == 0 {
+		return "none"
+	}
+	return strings.Join(values, ",")
 }
 
 func formatArchitectureCounts(counts []architectureCount) string {

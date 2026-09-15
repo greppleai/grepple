@@ -53,6 +53,9 @@ var local *sitter.Node = node
 return local
 }`
 	graph := BuildNavigationGraph(content, "go", "sample.go")
+	if len(graph.Imports) != 1 || graph.Imports[0].Alias != "sitter" || graph.Imports[0].ImportPath != "github.com/tree-sitter/go-tree-sitter" || graph.Imports[0].Line != 2 {
+		t.Fatalf("imports=%#v", graph.Imports)
+	}
 	if len(graph.TypeUsages) != 3 {
 		t.Fatalf("type usages=%#v", graph.TypeUsages)
 	}
@@ -65,5 +68,13 @@ return local
 		if !ok || usage.Type != "Node" || usage.ImportPath != "github.com/tree-sitter/go-tree-sitter" {
 			t.Fatalf("role %q usage=%#v all=%#v", role, usage, graph.TypeUsages)
 		}
+	}
+}
+
+func TestNavigationImportsRetainBlankAndDotEvidence(t *testing.T) {
+	content := "package p\nimport _ \"example.com/sideeffect\"\nimport . \"example.com/dot\"\n"
+	graph := BuildNavigationGraph(content, "go", "sample.go")
+	if len(graph.Imports) != 2 || graph.Imports[0].Alias != "." || graph.Imports[1].Alias != "_" {
+		t.Fatalf("imports=%#v", graph.Imports)
 	}
 }

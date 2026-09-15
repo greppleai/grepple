@@ -6,8 +6,10 @@ import (
 )
 
 type navigationImport struct {
+	alias    string
 	path     string
 	imported string
+	line     int
 }
 
 type navigationBinding struct {
@@ -23,6 +25,20 @@ type navigationBinding struct {
 
 func emptyNavigationSourceFacts() (map[string]navigationImport, string, map[string]map[string]navigationBinding) {
 	return make(map[string]navigationImport), "", make(map[string]map[string]navigationBinding)
+}
+
+func navigationImportFacts(imports map[string]navigationImport, language, sourcePath string) []NavigationImport {
+	keys := make([]string, 0, len(imports))
+	for key := range imports {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	facts := make([]NavigationImport, 0, len(keys))
+	for _, key := range keys {
+		value := imports[key]
+		facts = append(facts, NavigationImport{Alias: value.alias, ImportPath: value.path, Imported: value.imported, Language: language, Path: sourcePath, Line: value.line})
+	}
+	return facts
 }
 
 func navigationReturnBindings(root *syntaxNode, content string, imports map[string]navigationImport, adapter navigationAdapter) map[string]navigationBinding {

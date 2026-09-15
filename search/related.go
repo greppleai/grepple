@@ -139,6 +139,7 @@ func buildNavigationIndex(files []string, useCache bool) *navigationIndex {
 	index.inferCallReturnReceivers()
 	index.indexNavigationCallers()
 	index.resolveGraphCalls()
+	index.resolveGraphImports()
 	return index
 }
 
@@ -179,6 +180,43 @@ func (index *navigationIndex) resolveGraphCalls() {
 	for callIndex := range index.graph.Calls {
 		index.resolveGraphCall(&index.graph.Calls[callIndex], callsByID, declarationsByID)
 	}
+}
+
+func (index *navigationIndex) resolveGraphImports() {
+	packageFiles := make(map[string][]string)
+	for _, declaration := range index.graph.Declarations {
+		if declaration.PackageID != "" {
+			packageFiles[declaration.PackageID] = append(packageFiles[declaration.PackageID], declaration.Path)
+		}
+	}
+	for importIndex := range index.graph.Imports {
+		fact := &index.graph.Imports[importIndex]
+		fact.TargetPaths = index.resolveImportTargetPaths(*fact, packageFiles)
+	}
+}
+
+func (index *navigationIndex) resolveImportTargetPaths(fact parser.NavigationImport, packageFiles map[string][]string) []string {
+	targets := append([]string(nil), packageFiles[fact.ImportPath]...)
+	targets = append(targets, index.importTargetFiles(fact.Path, fact.ImportPath, fact.Language)...)
+	if len(targets) == 0 && navigationLanguageFamily(fact.Language) == "go" {
+		targets = append(targets, index.localGoImportTargets(fact.Path, fact.ImportPath)...)
+	}
+	sort.Strings(targets)
+	return compactSortedStrings(targets)
+}
+
+func (index *navigationIndex) localGoImportTargets(sourcePath, importPath string) []string {
+	directory, known := localGoImportDirectory(sourcePath, importPath)
+	if !known || directory == "" {
+		return nil
+	}
+	targets := []string{}
+	for candidatePath := range index.contents {
+		if filepath.Clean(filepath.Dir(candidatePath)) == directory {
+			targets = append(targets, candidatePath)
+		}
+	}
+	return targets
 }
 
 func (index *navigationIndex) navigationDeclarationsByID() map[string]navigationDeclaration {

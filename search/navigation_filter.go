@@ -31,12 +31,13 @@ func FilterNavigationGraph(graph parser.NavigationGraph, filter NavigationGraphF
 		return parser.NavigationGraph{}, err
 	}
 	declarations, included := filterNavigationDeclarations(graph.Declarations, languages, visibilities)
+	imports := filterNavigationImports(graph.Imports, languages)
 	calls := filterNavigationCalls(graph.Calls, included, languages, confidences)
 	exports := filterNavigationExports(graph.Exports, languages)
 	fields := filterNavigationFields(graph.Fields, languages)
 	usages := filterNavigationTypeUsages(graph.TypeUsages, included, languages)
 	accesses := filterNavigationMemberAccesses(graph.MemberAccesses, included, languages)
-	return parser.NavigationGraph{Declarations: declarations, Calls: calls, Exports: exports, Fields: fields, TypeUsages: usages, MemberAccesses: accesses}, nil
+	return parser.NavigationGraph{Declarations: declarations, Calls: calls, Imports: imports, Exports: exports, Fields: fields, TypeUsages: usages, MemberAccesses: accesses}, nil
 }
 
 // NormalizeNavigationGraphFilter returns sorted, duplicate-free values after validation.
@@ -118,6 +119,16 @@ func filterNavigationCalls(calls []parser.NavigationCall, declarations, language
 		}
 		call.CandidateTargetIDs = filterNavigationTargetIDs(call.CandidateTargetIDs, declarations)
 		filtered = append(filtered, call)
+	}
+	return filtered
+}
+
+func filterNavigationImports(imports []parser.NavigationImport, languages map[string]bool) []parser.NavigationImport {
+	filtered := make([]parser.NavigationImport, 0, len(imports))
+	for _, item := range imports {
+		if len(languages) == 0 || languages[item.Language] {
+			filtered = append(filtered, item)
+		}
 	}
 	return filtered
 }

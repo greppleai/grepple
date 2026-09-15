@@ -49,6 +49,27 @@ func ignored() {}
 		t.Fatalf("related result was not preserved: %#v", results[0].Related)
 	}
 }
+
+func TestNavigationImportsResolveLocalTargetPaths(t *testing.T) {
+	root := t.TempDir()
+	for _, directory := range []string{"search", "rules"} {
+		if err := os.MkdirAll(filepath.Join(root, directory), 0o755); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := os.WriteFile(filepath.Join(root, "go.mod"), []byte("module example.com/project\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	target := writeGoFixture(t, root, "search/request.go", "package search\ntype Request struct{}\n")
+	caller := writeGoFixture(t, root, "rules/rule.go", "package rules\nimport \"example.com/project/search\"\nfunc Validate(search.Request) {}\n")
+	graph, stats := BuildNavigationGraphWithOptions([]string{caller, target}, NavigationBuildOptions{DisableCache: true})
+	if stats.Parsed != 2 || len(graph.Imports) != 1 {
+		t.Fatalf("stats=%+v imports=%#v", stats, graph.Imports)
+	}
+	if len(graph.Imports[0].TargetPaths) != 1 || graph.Imports[0].TargetPaths[0] != target {
+		t.Fatalf("resolved import=%#v", graph.Imports[0])
+	}
+}
 func TestRelatedGoCallsPreferFunctionForUnqualifiedCall(t *testing.T) {
 	directory := t.TempDir()
 	path := writeGoFixture(t, directory, "analysis.go", `package related

@@ -67,17 +67,43 @@ func assertProductionOnlyArchitectureResolve(t *testing.T) {
 func TestArchitectureWhyUsesResolvedCrossDirectoryCalls(t *testing.T) {
 	root := t.TempDir()
 	writeArchitectureFixture(t, root, "go.mod", "module example.com/project\n")
-	writeArchitectureFixture(t, root, "search/request.go", "package search\nfunc ResolveRequest() {}\n")
-	writeArchitectureFixture(t, root, "rulespec/rule.go", "package rulespec\nimport \"example.com/project/search\"\nfunc Validate() { search.ResolveRequest() }\n")
+	writeArchitectureFixture(t, root, "search/request.go", "package search\ntype Request struct{}\nfunc ResolveRequest() {}\n")
+	writeArchitectureFixture(t, root, "rulespec/rule.go", "package rulespec\nimport \"example.com/project/search\"\nfunc Validate(value search.Request) { search.ResolveRequest() }\n")
+	writeArchitectureFixture(t, root, "rulespec/rule_test.go", "package rulespec\nimport \"example.com/project/search\"\nfunc TestValidate(value search.Request) { search.ResolveRequest() }\n")
 	chdirForConfigTest(t, root)
+	assertArchitectureRelationCoverage(t)
 
 	output := captureStdout(t, func() {
 		if err := runArchitecture([]string{"why", "rulespec", "search", "--compact", "."}); err != nil {
 			t.Fatal(err)
 		}
 	})
-	if !strings.Contains(output, "evidence=1") || !strings.Contains(output, "rulespec/rule.go:3 Validate -> ResolveRequest [import-resolved]") {
-		t.Fatalf("why output:\n%s", output)
+	for _, expected := range []string{
+		"relation=import,resolved-call,type-reference evidence=6",
+		"rulespec/rule.go:2 search -> example.com/project/search kind=import class=production confidence=local-import-resolved",
+		"rulespec/rule.go:3 Validate -> ResolveRequest kind=resolved-call class=production confidence=import-resolved",
+		"rulespec/rule.go:3 Validate -> Request kind=type-reference class=production confidence=local-import-resolved",
+		"rulespec/rule_test.go:3 TestValidate -> ResolveRequest kind=resolved-call class=test confidence=import-resolved",
+	} {
+		if !strings.Contains(output, expected) {
+			t.Fatalf("why output missing %q:\n%s", expected, output)
+		}
+	}
+}
+
+func TestArchitectureWhyReportsImportOnlyRelation(t *testing.T) {
+	root := t.TempDir()
+	writeArchitectureFixture(t, root, "go.mod", "module example.com/project\n")
+	writeArchitectureFixture(t, root, "target/data.go", "package target\nconst Value = 1\n")
+	writeArchitectureFixture(t, root, "side/effect.go", "package side\nimport _ \"example.com/project/target\"\n")
+	chdirForConfigTest(t, root)
+	output := captureStdout(t, func() {
+		if err := runArchitecture([]string{"why", "side", "target", "--compact", "."}); err != nil {
+			t.Fatal(err)
+		}
+	})
+	if !strings.Contains(output, "relation=import evidence=1") || !strings.Contains(output, "side/effect.go:2 _ -> example.com/project/target kind=import") {
+		t.Fatalf("import-only why output:\n%s", output)
 	}
 }
 
@@ -89,6 +115,31 @@ func TestArchitectureHelpStopsBeforeAnalysis(t *testing.T) {
 	})
 	if !strings.Contains(output, "--compact") || strings.Contains(output, "requires exactly one") {
 		t.Fatalf("help output:\n%s", output)
+	}
+}
+
+func assertArchitectureRelationCoverage(t *testing.T) {
+	t.Helper()
+	architecture, err := buildDirectoryArchitecture([]string{"."}, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	coverage := architecture.RelationCoverage
+	if coverage.ImportFacts != 2 || coverage.ResolvedImports != 2 || coverage.TypeReferences != 2 || coverage.ResolvedTypeReferences != 2 {
+		t.Fatalf("coverage=%+v", coverage)
+	}
+	matched := 0
+	for _, relation := range architecture.Relations {
+		if relation.From != "rulespec" || relation.To != "search" {
+			continue
+		}
+		matched++
+		if formatArchitectureCounts(relation.Classifications) != "production:1,test:1" {
+			t.Fatalf("relation classifications=%+v relation=%+v", relation.Classifications, relation)
+		}
+	}
+	if matched != 3 {
+		t.Fatalf("rulespec -> search relation kinds=%d, want 3", matched)
 	}
 }
 

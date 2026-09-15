@@ -39,8 +39,12 @@ func TestSupportedLanguagesOwnsClassificationMetadata(t *testing.T) {
 	}
 	languages[0].Extensions[0] = ".changed"
 	fresh, _ := CapabilitiesForLanguage("go")
-	if len(fresh.Extensions) != 1 || fresh.Extensions[0] != ".go" {
-		t.Fatalf("capability extensions were mutable: %#v", fresh)
+	if len(fresh.Extensions) != 1 || fresh.Extensions[0] != ".go" || !fresh.ImportNavigation {
+		t.Fatalf("Go capability metadata=%#v", fresh)
+	}
+	python, _ := CapabilitiesForLanguage("python")
+	if python.ImportNavigation {
+		t.Fatalf("Python unexpectedly reports import navigation: %#v", python)
 	}
 }
 

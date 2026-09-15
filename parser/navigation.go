@@ -53,6 +53,17 @@ type NavigationCall struct {
 	EnclosingEnd          int      `json:"enclosingEndLine"`
 }
 
+// NavigationImport records one source import recognized by a language adapter.
+type NavigationImport struct {
+	Alias       string   `json:"alias,omitempty"`
+	ImportPath  string   `json:"importPath"`
+	Imported    string   `json:"imported,omitempty"`
+	Language    string   `json:"language"`
+	Path        string   `json:"path"`
+	Line        int      `json:"line"`
+	TargetPaths []string `json:"targetPaths,omitempty"`
+}
+
 // NavigationTypeUsage records a callable's explicit use of a normalized type.
 type NavigationTypeUsage struct {
 	CallerID   string `json:"callerId"`
@@ -103,11 +114,12 @@ type NavigationMemberAccess struct {
 	StartByte    int    `json:"startByte,omitempty"`
 }
 
-// NavigationGraph is the normalized, language-neutral callable and call model.
-// Language-specific consumers may enrich its syntax facts with package, module,
-// import, receiver, field, or type information.
+// NavigationGraph is the normalized, language-neutral declaration, call, import,
+// type, field, export, and member-access model. Language-specific consumers may
+// enrich its syntax facts with package, module, receiver, or repository context.
 type NavigationGraph struct {
 	Declarations   []NavigationDeclaration  `json:"declarations"`
+	Imports        []NavigationImport       `json:"imports,omitempty"`
 	Calls          []NavigationCall         `json:"calls"`
 	Exports        []NavigationExport       `json:"exports,omitempty"`
 	Fields         []NavigationField        `json:"fields,omitempty"`
@@ -118,6 +130,7 @@ type NavigationGraph struct {
 // Merge appends another source graph while preserving source and syntax order.
 func (graph *NavigationGraph) Merge(other NavigationGraph) {
 	graph.Declarations = append(graph.Declarations, other.Declarations...)
+	graph.Imports = append(graph.Imports, other.Imports...)
 	graph.Calls = append(graph.Calls, other.Calls...)
 	graph.Exports = append(graph.Exports, other.Exports...)
 	graph.Fields = append(graph.Fields, other.Fields...)
@@ -181,7 +194,7 @@ func navigationGraphFromTree(root *syntaxNode, content, language, path string) N
 	returnBindings := navigationReturnBindings(root, content, imports, navigation)
 	collector := navigationCollector{content: content, adapter: adapter, navigation: navigation, path: path, imports: imports, fields: fields, returnBindings: returnBindings, packageName: packageName}
 	collector.walk(root, navigationWalkContext{})
-	return NavigationGraph{Declarations: collector.declarations, Calls: collector.calls, Exports: navigation.Exports(root, content, language, path), Fields: navigationFieldFacts(fields, language, path, packageName), TypeUsages: collector.typeUsages, MemberAccesses: collector.memberAccesses}
+	return NavigationGraph{Declarations: collector.declarations, Calls: collector.calls, Imports: navigationImportFacts(imports, language, path), Exports: navigation.Exports(root, content, language, path), Fields: navigationFieldFacts(fields, language, path, packageName), TypeUsages: collector.typeUsages, MemberAccesses: collector.memberAccesses}
 }
 
 // DeclarationRangeAt returns the narrowest callable declaration containing line.

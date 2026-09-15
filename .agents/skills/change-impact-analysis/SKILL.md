@@ -36,7 +36,7 @@ grepple --at path/to/file.go:LINE
 - Paths passed to the command define the graph universe. Include consumers outside the declaration's package when claiming repository impact.
 - Check `metadata.page.complete` plus discovered/selected/parsed/skipped/failed/recovered source totals. Failed, recovered, or truncated source prevents a complete static-impact claim; use `nextCommand` when supplied.
 - Navigation does not prove interface dispatch, reflection, generated calls, runtime registration, data flow, or string-based lookup. Search those mechanisms explicitly when relevant.
-- Directory relation evidence and callable impact differ. Use `architecture directory|resolve|why` for physical ownership and strongly resolved cross-directory calls, but do not infer build-system package imports from directory edges.
+- Directory relation evidence and callable impact differ. Use `architecture directory|resolve|why` for physical ownership and source-linked call/import/type relations, but use graph traversal for callable impact and inspect architecture coverage before treating an absent relation as evidence.
 
 ## Decision record
 

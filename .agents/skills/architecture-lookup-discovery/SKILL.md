@@ -19,7 +19,7 @@ Directory architecture is a language-neutral orientation index, not proof of pac
    grepple architecture resolve --symbol Document --compact .
    ```
    Retain every emitted match when the name is ambiguous; narrow PATH instead of guessing.
-3. **Why two directories are related:** request exact resolved-call evidence.
+3. **Why two directories are related:** request exact call/import/type evidence.
    ```bash
    grepple architecture why rulespec search --compact rulespec search
    ```
@@ -32,7 +32,7 @@ Directory architecture is a language-neutral orientation index, not proof of pac
 ## Trust rules
 
 - Directory names establish physical ownership, not language package/module/layer intent.
-- Directory `why` relations currently contain only strongly resolved static calls (`exact`, `import-resolved`, or `context-resolved`). Absence is not proof that no import, reflection, registration, or runtime dependency exists.
+- Directory `why` relations distinguish strongly resolved static calls, adapter-owned imports, and imported type references. Inspect relation coverage: ambiguous, unresolved, unqualified, and adapter-unsupported facts are not asserted as edges, so absence is not proof that no reflection, registration, build-system, or runtime dependency exists.
 - Declaration visibility is reported only when an owning language adapter provides it; `unknown` must stay unknown.
 - Inspect `sources` and truncation before making a completeness claim. Use `grepple sources explain --compact PATH` when skipped input or repository configuration could matter; use `--production-only` only when the question is explicitly about production code.
 - Large JSON may be returned as a `grepple-artifact-v1` descriptor. Read only relevant artifact ranges or rerun a narrower command; use the descriptor's exact `--no-spill` command only when the complete stdout stream is required.

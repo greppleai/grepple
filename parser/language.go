@@ -8,6 +8,7 @@ type LanguageCapabilities struct {
 	ID                 string
 	Extensions         []string
 	Navigation         bool
+	ImportNavigation   bool
 	GrammarABI         uint32
 	GrammarFingerprint string
 }
@@ -153,8 +154,13 @@ func enrichLanguageCapabilities(capability LanguageCapabilities) LanguageCapabil
 	if generated, ok := generatedLanguageMetadata[capability.ID]; ok {
 		capability.GrammarFingerprint = generated.fingerprint
 	}
-	if adapter := adapterForLanguage(capability.ID); adapter != nil && adapter.Grammar().valid() {
-		capability.GrammarABI = adapter.Grammar().abiVersion()
+	if adapter := adapterForLanguage(capability.ID); adapter != nil {
+		if adapter.Grammar().valid() {
+			capability.GrammarABI = adapter.Grammar().abiVersion()
+		}
+		if navigation := adapter.Navigation(); navigation != nil {
+			capability.ImportNavigation = navigation.ImportFactsSupported()
+		}
 	}
 	return capability
 }

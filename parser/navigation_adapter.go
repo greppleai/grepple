@@ -43,6 +43,7 @@ type navigationAdapter interface {
 	MemberAccess(*syntaxNode, string) (navigationMemberSyntax, bool)
 	Visibility(*syntaxNode, string, string) NavigationVisibility
 	SourceFacts(*syntaxNode, string) (map[string]navigationImport, string, map[string]map[string]navigationBinding)
+	ImportFactsSupported() bool
 	ReturnCallableName(*syntaxNode, string, string) string
 	CallableReturnBinding(*syntaxNode, string, map[string]navigationImport) navigationBinding
 	IsFieldContainer(string) bool
@@ -199,6 +200,10 @@ func (adapter *navigationAdapterConfig) Visibility(node *syntaxNode, name, conte
 		return NavigationVisibilityUnknown
 	}
 	return adapter.visibility(node, name, content)
+}
+
+func (adapter *navigationAdapterConfig) ImportFactsSupported() bool {
+	return adapter.sourceFacts != nil
 }
 
 func (adapter *navigationAdapterConfig) SourceFacts(root *syntaxNode, content string) (map[string]navigationImport, string, map[string]map[string]navigationBinding) {

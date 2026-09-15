@@ -33,6 +33,7 @@ type navigationGraphOutput struct {
 	Metadata       *api.ResultMetadata              `json:"metadata,omitempty"`
 	Sources        navigationSourceSummary          `json:"sources"`
 	Declarations   []parser.NavigationDeclaration   `json:"declarations"`
+	Imports        []parser.NavigationImport        `json:"imports,omitempty"`
 	Calls          []parser.NavigationCall          `json:"calls"`
 	Exports        []parser.NavigationExport        `json:"exports,omitempty"`
 	Fields         []parser.NavigationField         `json:"fields,omitempty"`

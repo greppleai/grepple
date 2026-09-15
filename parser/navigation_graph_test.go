@@ -47,7 +47,7 @@ func TestBuildNavigationGraphRetainsSourceIdentity(t *testing.T) {
 	}
 }
 
-const navigationCacheTestContent = "package sample\nfunc Start() { Finish() }\nfunc Finish() {}\n"
+const navigationCacheTestContent = "package sample\nimport fmt \"fmt\"\nfunc Start() { Finish() }\nfunc Finish() {}\n"
 
 func TestCachedNavigationGraphReusesContentFactsWithoutChangingOutput(t *testing.T) {
 	t.Setenv(NavigationCacheDirectoryEnv, t.TempDir())
@@ -70,7 +70,7 @@ func TestCachedNavigationGraphInstantiatesPathsAndInvalidatesContent(t *testing.
 	t.Setenv(NavigationCacheDirectoryEnv, t.TempDir())
 	cold, _, _ := cachedTestNavigationGraph(t, navigationCacheTestContent, "sample/main.go")
 	moved, _, movedHit := cachedTestNavigationGraph(t, navigationCacheTestContent, "moved/main.go")
-	if !movedHit || moved.Declarations[0].Path != "moved/main.go" || moved.Declarations[0].ID == cold.Declarations[0].ID {
+	if !movedHit || moved.Declarations[0].Path != "moved/main.go" || moved.Declarations[0].ID == cold.Declarations[0].ID || len(moved.Imports) != 1 || moved.Imports[0].Path != "moved/main.go" {
 		t.Fatalf("path-instantiated cache hit=%v declaration=%+v", movedHit, moved.Declarations[0])
 	}
 	if moved.Calls[0].CallerID != moved.Declarations[0].ID {

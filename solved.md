@@ -83,6 +83,9 @@ This file records completed Grepple roadmap work that no longer belongs in `next
 - [x] Added `grepple architecture directory` with bounded hierarchical directory/file/language/declaration counts across every navigation-backed language.
 - [x] Added `architecture resolve` for direct type/callable ownership and exact ranges, including declarations omitted by callable-only `graph resolve`.
 - [x] Added `architecture why` with source-linked cross-directory call evidence restricted to exact/import/context-resolved edges.
+- [x] Added adapter-owned import facts and local target paths to the shared navigation graph for Go and JavaScript/TypeScript, with explicit language capability reporting and cache-safe path instantiation.
+- [x] Added independently labeled import-only and imported-type directory relations with production/test/fixture/generated/vendor evidence totals and resolved/ambiguous/unresolved/unsupported coverage.
+- [x] Kept compact directory relation output bounded to displayed directory depth while `architecture why` preserves exact uncollapsed evidence.
 - [x] Removed Go-specific package/workspace commands, public capability fields, generators, checkers, hook paths, tests, and committed `.grepple` artifacts without a compatibility period.
 
 ## Parser and language architecture

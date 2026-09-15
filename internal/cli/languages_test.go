@@ -24,19 +24,19 @@ func TestLanguagesJSONReportsRegisteredFeatureParity(t *testing.T) {
 		byLanguage[capability.Language] = capability
 	}
 	goLanguage := byLanguage["go"]
-	if goLanguage.GritQL != api.FeatureProduction || goLanguage.FocusedFlow != api.FeatureProduction || goLanguage.DirectoryArchitecture != api.FeatureProduction {
+	if goLanguage.GritQL != api.FeatureProduction || goLanguage.FocusedFlow != api.FeatureProduction || goLanguage.DirectoryArchitecture != api.FeatureProduction || goLanguage.ImportRelations != api.FeatureProduction {
 		t.Fatalf("go capabilities=%#v", goLanguage)
 	}
 	tsx := byLanguage["tsx"]
-	if tsx.GritQL != api.FeatureProduction || tsx.FocusedStructure != api.FeatureProduction || tsx.DirectoryArchitecture != api.FeatureProduction {
+	if tsx.GritQL != api.FeatureProduction || tsx.FocusedStructure != api.FeatureProduction || tsx.DirectoryArchitecture != api.FeatureProduction || tsx.ImportRelations != api.FeatureProduction {
 		t.Fatalf("tsx capabilities=%#v", tsx)
 	}
 	javascript := byLanguage["javascript"]
-	if javascript.Navigation != api.FeatureProduction || javascript.GritQL != api.FeatureProduction || javascript.FocusedStructure != api.FeatureProduction || javascript.FocusedFlow != api.FeatureProduction {
+	if javascript.Navigation != api.FeatureProduction || javascript.GritQL != api.FeatureProduction || javascript.FocusedStructure != api.FeatureProduction || javascript.FocusedFlow != api.FeatureProduction || javascript.ImportRelations != api.FeatureProduction {
 		t.Fatalf("javascript capabilities=%#v", javascript)
 	}
 	markdown := byLanguage["markdown"]
-	if markdown.StructuralGrep != api.FeatureSpecialized || markdown.Outline != api.FeatureSpecialized || markdown.Navigation != api.FeatureUnsupported || markdown.DirectoryArchitecture != api.FeatureUnsupported {
+	if markdown.StructuralGrep != api.FeatureSpecialized || markdown.Outline != api.FeatureSpecialized || markdown.Navigation != api.FeatureUnsupported || markdown.DirectoryArchitecture != api.FeatureUnsupported || markdown.ImportRelations != api.FeatureUnsupported {
 		t.Fatalf("markdown capabilities=%#v", markdown)
 	}
 	if !strings.Contains(output, `"language": "text"`) || !strings.Contains(output, `"extensions": []`) {

@@ -340,10 +340,14 @@ func addGoNavigationImport(imports map[string]navigationImport, node *syntaxNode
 	if name := node.ChildByFieldName("name"); name != nil {
 		alias = name.Text()
 	}
-	if alias == "" || alias == "_" || alias == "." {
+	if alias == "" {
 		return
 	}
-	imports[alias] = navigationImport{path: importPath, imported: "*"}
+	key := alias
+	if alias == "_" || alias == "." {
+		key += "\x00" + strconv.Itoa(node.StartLine())
+	}
+	imports[key] = navigationImport{alias: alias, path: importPath, imported: "*", line: node.StartLine()}
 }
 
 func addTypeScriptNavigationImports(imports map[string]navigationImport, node *syntaxNode, content string) {
@@ -362,11 +366,11 @@ func addTypeScriptNavigationImports(imports map[string]navigationImport, node *s
 				local = imported
 			}
 			if local != "" {
-				imports[local] = navigationImport{path: importPath, imported: imported}
+				imports[local] = navigationImport{alias: local, path: importPath, imported: imported, line: node.StartLine()}
 			}
 		case "namespace_import":
 			if local := navigationFirstIdentifier(current, content); local != "" {
-				imports[local] = navigationImport{path: importPath, imported: "*"}
+				imports[local] = navigationImport{alias: local, path: importPath, imported: "*", line: node.StartLine()}
 			}
 		}
 	})
@@ -439,7 +443,7 @@ func addTypeScriptDefaultNavigationImport(imports map[string]navigationImport, n
 		for _, imported := range child.NamedChildren() {
 			if imported.Kind() == "identifier" {
 				local := imported.Text()
-				imports[local] = navigationImport{path: importPath, imported: "default"}
+				imports[local] = navigationImport{alias: local, path: importPath, imported: "default", line: node.StartLine()}
 			}
 		}
 		return

@@ -9,7 +9,7 @@ A clean directory diagram can hide behavioral coupling; a broad type can be a he
 
 ## Workflow
 
-1. Establish the source universe, then inspect physical ownership and strongly resolved cross-directory evidence:
+1. Establish the source universe, then inspect physical ownership and source-linked call/import/type relations:
    ```bash
    grepple sources explain --compact SCOPE
    grepple architecture directory --depth 2 --compact .
