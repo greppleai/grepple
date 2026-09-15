@@ -6,8 +6,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "make",
-            "args": ["--no-print-directory", "-C", "hooks", "run-grep-guard"],
+            "command": "sh",
+            "args": ["-c", "if [ -d hooks ]; then hook_dir=hooks; else hook_dir=grepple/hooks; fi; make --no-print-directory -C \"$hook_dir\" run-grep-guard"],
             "timeout": 30
           }
         ]
@@ -18,8 +18,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "make",
-            "args": ["--no-print-directory", "-C", "hooks", "run-lint-check"],
+            "command": "sh",
+            "args": ["-c", "if [ -d hooks ]; then hook_dir=hooks; else hook_dir=grepple/hooks; fi; make --no-print-directory -C \"$hook_dir\" run-lint-check"],
             "timeout": 120,
             "statusMessage": "Running revive lint checks"
           }
