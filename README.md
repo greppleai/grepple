@@ -342,6 +342,17 @@ Matching is line-based for every readable non-NUL text file. Parser-backed featu
 
 Run `grepple languages` for terminal feature and navigation-fact matrices or `grepple languages --json` for machine-readable capabilities. See the generated [language and feature support matrix](docs/file-type-support.md#current-support-matrix) for text grep, structural grep, outlines, navigation, focused structure/flow extraction, GritQL, and adapter-owned declarations, calls, imports, type references, fields, member access, and process entrypoints. Supported fact extraction is distinct from an individual fact remaining ambiguous or unresolved. Directory architecture applies to every language with parser navigation support.
 
+## Agent utility metrics
+
+Grepple can analyze local Pi session JSONL to compare assigned Grepple and control cohorts without adding prompt, code, command, edit, or tool-result content to telemetry annotations:
+
+```bash
+grepple metrics report --group-by cohort --complete
+grepple metrics export --format json --complete > metrics.json
+```
+
+The optional packaged Pi recorder provides `/metrics-start`, `/metrics-status`, and `/metrics-end`; automatic one-prompt recording is opt-in with `pi --grepple-metrics`. Reports separate assigned cohort from observed Grepple use and pair speed with outcome and rework. See [Agent utility metrics](docs/agent-utility-metrics.md) for schemas, privacy/retention, installation, filters, limitations, and the paired A/B protocol.
+
 ## Agent workflow benchmarks
 
 Run the fixed end-to-end discovery, navigation, impact, and edit-location benchmark with:
