@@ -5,12 +5,14 @@ package parser
 // LanguageCapabilities describes one Tree-sitter-backed application language.
 // Returned extension slices are copies and safe for callers to modify.
 type LanguageCapabilities struct {
-	ID                 string
-	Extensions         []string
-	Navigation         bool
-	ImportNavigation   bool
-	GrammarABI         uint32
-	GrammarFingerprint string
+	ID                   string
+	Extensions           []string
+	Navigation           bool
+	ImportNavigation     bool
+	EntrypointNavigation bool
+	RouteNavigation      bool
+	GrammarABI           uint32
+	GrammarFingerprint   string
 }
 
 // ContentLanguageCapabilities describes parser-owned search and outline support.
@@ -70,6 +72,18 @@ type structureRules struct {
 	blockTypes            stringSet
 	jsxElementTypes       stringSet
 	nameFieldCandidates   stringSet
+}
+
+func extractNodeName(node *syntaxNode, _ string, config *structureRules) string {
+	if named := node.ChildByFieldName("name"); named != nil {
+		return named.Text()
+	}
+	for _, child := range node.Children() {
+		if config.nameFieldCandidates.contains(child.Kind()) {
+			return child.Text()
+		}
+	}
+	return ""
 }
 
 type languageAdapter interface {
@@ -160,6 +174,8 @@ func enrichLanguageCapabilities(capability LanguageCapabilities) LanguageCapabil
 		}
 		if navigation := adapter.Navigation(); navigation != nil {
 			capability.ImportNavigation = navigation.ImportFactsSupported()
+			capability.EntrypointNavigation = navigation.EntrypointFactsSupported()
+			capability.RouteNavigation = navigation.RouteFactsSupported()
 		}
 	}
 	return capability

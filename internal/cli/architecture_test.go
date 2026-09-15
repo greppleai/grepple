@@ -51,6 +51,34 @@ func TestArchitectureDirectoryAndResolveAcrossLanguages(t *testing.T) {
 	assertProductionOnlyArchitectureResolve(t)
 }
 
+func TestArchitectureDirectoryReportsAdapterEvidencedEntrypointsAndRoutes(t *testing.T) {
+	root := t.TempDir()
+	writeArchitectureFixture(t, root, "go.mod", "module example.com/project\n")
+	writeArchitectureFixture(t, root, "cmd/server/main.go", "package main\nimport web \"net/http\"\nfunc main() { web.HandleFunc(\"POST /items\", createItem) }\nfunc createItem(web.ResponseWriter, *web.Request) {}\n")
+	chdirForConfigTest(t, root)
+	compact := captureStdout(t, func() {
+		if err := runArchitecture([]string{"directory", "--compact", "."}); err != nil {
+			t.Fatal(err)
+		}
+	})
+	for _, expected := range []string{"entrypoints=1 routes=1", "E process main cmd/server/main.go:3", "P POST /items -> createItem framework=net/http at=cmd/server/main.go:3"} {
+		if !strings.Contains(compact, expected) {
+			t.Fatalf("compact architecture missing %q:\n%s", expected, compact)
+		}
+	}
+	architecture, err := buildDirectoryArchitecture([]string{"."}, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(architecture.Routes) != 1 || architecture.Routes[0].Classification != "production" || architecture.Routes[0].Directory != "cmd/server" {
+		t.Fatalf("routes=%+v", architecture.Routes)
+	}
+	matches := resolveArchitectureSymbols(architecture.Symbols, "main")
+	if len(matches) != 1 || matches[0].Entrypoint != "process" {
+		t.Fatalf("matches=%+v", matches)
+	}
+}
+
 func assertProductionOnlyArchitectureResolve(t *testing.T) {
 	t.Helper()
 	production := captureStdout(t, func() {

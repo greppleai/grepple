@@ -160,6 +160,7 @@ func projectNavigationQuery(graph parser.NavigationGraph, included, includedCall
 		Fields:          make([]parser.NavigationField, 0),
 		TypeUsages:      make([]parser.NavigationTypeUsage, 0),
 		MemberAccesses:  make([]parser.NavigationMemberAccess, 0),
+		Routes:          make([]parser.NavigationRoute, 0),
 		RepositoryRoots: append([]string(nil), graph.RepositoryRoots...),
 	}
 	for _, declaration := range graph.Declarations {
@@ -206,6 +207,11 @@ func projectNavigationOwnedFacts(graph parser.NavigationGraph, included map[stri
 	for _, access := range graph.MemberAccesses {
 		if included[access.CallerID] {
 			result.MemberAccesses = append(result.MemberAccesses, access)
+		}
+	}
+	for _, route := range graph.Routes {
+		if included[route.CallerID] {
+			result.Routes = append(result.Routes, route)
 		}
 	}
 }

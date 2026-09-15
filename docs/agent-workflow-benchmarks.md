@@ -35,19 +35,22 @@ benchstat before.txt after.txt
 | `RelationExplanation` | What exact call/import/type evidence connects two directories? | 1 |
 | `EnclosingScope` | What nearest syntax scope owns this body-line match? | 1 |
 | `EditLocation` | Where is the exact edit-ready evidence line? | 1 |
+| `ArtifactDirectComplete` | How much context does a complete 1 MiB result consume with spill disabled? | 1 |
+| `ArtifactFallback` | Can one bounded artifact read recover the required answer after spill? | 2 |
 
 The benchmark reports:
 
-- `tool_calls/op`: modeled CLI retrieval calls required by the workflow;
-- `retrieved_bytes/op`: bytes returned to the agent;
-- `approx_tokens/op`: returned bytes divided by four, used only as a stable rough comparison;
+- `tool_calls/op` or `retrieval_turns/op`: modeled retrievals required by the workflow;
+- `retrieved_bytes/op` or `context_bytes/op`: bytes returned to the agent;
+- `artifact_reads/op`: bounded artifact reads after descriptor delivery;
+- `approx_tokens/op`: returned context bytes divided by four, used only as a stable rough comparison;
 - standard `ns/op`, allocation bytes, and allocations from Go's benchmark runner.
 
 A benchmark fails rather than reporting metrics when required answer fragments are missing. Workflows that can truncate must also retain an explicit truncation or omission marker in their correctness expectations when the fixture reaches the relevant bound.
 
 ## Output-budget evaluation
 
-A synthetic 800-match body search measured the broad-query failure mode directly. At the previous 40960-byte default it could consume roughly 10K approximate tokens before guidance appeared. The 16384-byte human default returns about 16.3 KB/~4.1K approximate tokens including explicit truncation guidance. Complete output above the repository spill threshold now returns a small artifact descriptor instead of injecting the full document into agent context; `--no-spill` is the explicit original-stream escape hatch.
+A synthetic 800-match body search measured the broad-query failure mode directly. At the previous 40960-byte default it could consume roughly 10K approximate tokens before guidance appeared. The 16384-byte human default returns about 16.3 KB/~4.1K approximate tokens including explicit truncation guidance. The answer-gated artifact fixture compares a complete 1 MiB JSON stream with descriptor delivery plus one 512-byte tail read. `--no-spill` used 1,048,676 context bytes/~262K tokens in one turn. Artifact fallback recovered the same required answer using 902 context bytes/~225.5 tokens, one artifact read, and two retrieval turns—a 99.91% context reduction.
 
 ## Initial baseline
 
@@ -60,18 +63,20 @@ Linux/amd64, Intel Core Ultra 7 165H, Go 1.25.14, `-benchtime=10x`:
 | `StructuralLookup` | 1 | 166 | 41.5 | 2.64 ms |
 | `LineLocateThenAt` | 2 | 152 | 38 | 5.07 ms |
 | `RelatedNavigation` | 1 | 307 | 76.75 | 8.10 ms |
-| `ImpactGraph` | 1 | 978 | 244.5 | 6.33 ms |
-| `DirectoryOrientation` | 1 | 811 | 202.75 | 4.64 ms |
-| `ArchitectureResolve` | 1 | 190 | 47.5 | 5.04 ms |
-| `RelationExplanation` | 1 | 366 | 91.5 | 4.37 ms |
+| `ImpactGraph` | 1 | 1,081 | 270.25 | 8.02 ms |
+| `DirectoryOrientation` | 1 | 903 | 225.75 | 6.63 ms |
+| `ArchitectureResolve` | 1 | 206 | 51.5 | 5.82 ms |
+| `RelationExplanation` | 1 | 366 | 91.5 | 5.89 ms |
 | `EnclosingScope` | 1 | 53 | 13.25 | 2.87 ms |
 | `EditLocation` | 1 | 40 | 10 | 2.69 ms |
+| `ArtifactDirectComplete` | 1 | 1,048,676 | 262,169 | 5.58 ms |
+| `ArtifactFallback` | 2 | 902 | 225.5 | 10.50 ms |
 
-The three architecture tasks are independently answerable in one retrieval call: bounded orientation uses 811 bytes, direct ownership resolution 190 bytes, and exact relation explanation 366 bytes. Running all three would retrieve 1,367 bytes/~342 tokens, while an agent with a known symbol or directory pair can skip orientation entirely. Direct `ArchitectureResolve` remains 44% smaller than the former 337-byte package summary while adding source classification. The structural lookup similarly returns slightly more text than line-only plus `--at`, but removes one retrieval round trip. Timing is machine-dependent; call and fixture-output metrics are the primary regression signals until statistically reviewed budgets are established.
+The three architecture tasks are independently answerable in one retrieval call: bounded orientation uses 903 bytes, direct ownership resolution 206 bytes, and exact relation explanation 366 bytes. Running all three would retrieve 1,475 bytes/~369 tokens, while an agent with a known symbol or directory pair can skip orientation entirely. Direct `ArchitectureResolve` remains 39% smaller than the former 337-byte package summary while adding source classification and entrypoint status. The structural lookup similarly returns slightly more text than line-only plus `--at`, but removes one retrieval round trip. Timing is machine-dependent; call and fixture-output metrics are the primary regression signals until statistically reviewed budgets are established.
 
 ## Navigation-resolution measurement extension
 
-Compact graph headers now report total calls, visible local edges, and resolved, ambiguous, and unresolved counts. The fixed `ImpactGraph` workflow grew from 926 bytes/~231.5 tokens to 978 bytes/~244.5 tokens—52 bytes/~13 tokens—to expose whether a focused impact result depends materially on ambiguous syntax resolution. Complete JSON additionally reports singleton candidates, confidence counts, and ambiguity frequency overall and by language family. Other fixed workflow output sizes are unchanged.
+Compact graph headers now report total calls, visible local edges, resolution outcomes, entrypoints, and routes; declarations expose entrypoint status. The fixed `ImpactGraph` workflow is 1,081 bytes/~270 tokens, retaining bounded resolution and architecture-role context. Complete JSON additionally reports singleton candidates, confidence counts, ambiguity frequency, and adapter-evidenced route facts.
 
 ## Construct-range extension
 

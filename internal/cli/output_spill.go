@@ -20,6 +20,7 @@ var outputSpillMutex sync.Mutex
 type spillOptions struct {
 	disabled  bool
 	threshold int
+	directory string
 }
 
 type spilledOutputDescriptor struct {
@@ -53,6 +54,15 @@ func parseSpillOptions(args []string) ([]string, spillOptions, error) {
 			options.disabled = true
 			continue
 		}
+		directory, directoryConsumed, directoryMatched, directoryErr := parseArtifactDirectory(args, index)
+		if directoryErr != nil {
+			return nil, options, directoryErr
+		}
+		if directoryMatched {
+			options.directory = directory
+			index += directoryConsumed
+			continue
+		}
 		threshold, consumed, matched, err := parseSpillThreshold(args, index)
 		if err != nil {
 			return nil, options, err
@@ -67,6 +77,24 @@ func parseSpillOptions(args []string) ([]string, spillOptions, error) {
 	return filtered, options, nil
 }
 
+func parseArtifactDirectory(args []string, index int) (directory string, consumed int, matched bool, err error) {
+	argument := args[index]
+	switch {
+	case argument == "--artifact-dir":
+		if index+1 >= len(args) {
+			return "", 0, true, fmt.Errorf("--artifact-dir requires a path")
+		}
+		directory, consumed = args[index+1], 1
+	case strings.HasPrefix(argument, "--artifact-dir="):
+		directory = strings.TrimPrefix(argument, "--artifact-dir=")
+	default:
+		return "", 0, false, nil
+	}
+	if strings.TrimSpace(directory) == "" {
+		return "", 0, true, fmt.Errorf("--artifact-dir requires a path")
+	}
+	return filepath.Clean(directory), consumed, true, nil
+}
 func parseSpillThreshold(args []string, index int) (threshold, consumed int, matched bool, err error) {
 	argument := args[index]
 	value := ""
@@ -110,6 +138,12 @@ func runWithOutputSpill(args []string, options spillOptions, run func() error) e
 		root = filepath.Dir(configPath)
 	}
 	outputDirectory := filepath.Join(root, ".grepple", "output")
+	if options.directory != "" {
+		outputDirectory = options.directory
+		if !filepath.IsAbs(outputDirectory) {
+			outputDirectory = filepath.Join(mustGetwd(), outputDirectory)
+		}
+	}
 	if err := os.MkdirAll(outputDirectory, 0o700); err != nil {
 		return err
 	}

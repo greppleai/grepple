@@ -6,6 +6,32 @@ import (
 	"unicode/utf8"
 )
 
+// matchLines carries matched lines as both a membership set and an ascending
+// slice so repeated range queries avoid scanning every match.
+type matchLines struct {
+	set    map[int]bool
+	sorted []int
+}
+
+func newMatchLines(hits map[int]bool) matchLines {
+	sorted := make([]int, 0, len(hits))
+	for line := range hits {
+		sorted = append(sorted, line)
+	}
+	sort.Ints(sorted)
+	return matchLines{set: hits, sorted: sorted}
+}
+
+func (m matchLines) hitsRange(start, end int) bool {
+	index := sort.Search(len(m.sorted), func(index int) bool { return m.sorted[index] >= start })
+	return index < len(m.sorted) && m.sorted[index] <= end
+}
+
+func isPunctuation(node *syntaxNode) bool {
+	kind := node.Kind()
+	return len(kind) == 1 && !strings.ContainsAny(kind, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+}
+
 // SegmentBuildStatus reports whether structural context was parsed or safely degraded.
 type SegmentBuildStatus string
 

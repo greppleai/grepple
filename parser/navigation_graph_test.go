@@ -47,6 +47,39 @@ func TestBuildNavigationGraphRetainsSourceIdentity(t *testing.T) {
 	}
 }
 
+func TestNavigationGraphCapturesAdapterEvidencedGoEntrypointAndRoutes(t *testing.T) {
+	content := "package main\nimport web \"net/http\"\nfunc main() { web.HandleFunc(\"GET /users\", users) }\nfunc users(web.ResponseWriter, *web.Request) {}\n"
+	graph := BuildNavigationGraph(content, "go", "cmd/server/main.go")
+	if len(graph.Declarations) != 2 || graph.Declarations[0].Entrypoint != "process" || graph.Declarations[1].Entrypoint != "" {
+		t.Fatalf("declarations=%+v", graph.Declarations)
+	}
+	if len(graph.Routes) != 1 {
+		t.Fatalf("routes=%+v", graph.Routes)
+	}
+	route := graph.Routes[0]
+	if route.Method != "GET" || route.Pattern != "/users" || route.Handler != "users" || route.Framework != "net/http" || route.Path != "cmd/server/main.go" || route.CallerID != graph.Declarations[0].ID {
+		t.Fatalf("route=%+v", route)
+	}
+}
+
+func TestCachedNavigationGraphInstantiatesRoutePathsAndOwners(t *testing.T) {
+	t.Setenv(NavigationCacheDirectoryEnv, t.TempDir())
+	content := "package main\nimport web \"net/http\"\nfunc main() { web.HandleFunc(\"/ready\", ready) }\nfunc ready(web.ResponseWriter, *web.Request) {}\n"
+	cold, _, _ := cachedTestNavigationGraph(t, content, "cmd/a/main.go")
+	moved, _, hit := cachedTestNavigationGraph(t, content, "cmd/b/main.go")
+	if !hit || len(cold.Routes) != 1 || len(moved.Routes) != 1 || moved.Routes[0].Path != "cmd/b/main.go" || moved.Routes[0].CallerID != moved.Declarations[0].ID || moved.Routes[0].CallerID == cold.Routes[0].CallerID {
+		t.Fatalf("cold=%+v moved=%+v hit=%v", cold, moved, hit)
+	}
+}
+
+func TestNavigationGraphDoesNotInferGoEntrypointsOrRoutesWithoutOwningSemantics(t *testing.T) {
+	content := "package library\nimport web \"example.com/web\"\nfunc main() { web.HandleFunc(\"/users\", users) }\nfunc users() {}\n"
+	graph := BuildNavigationGraph(content, "go", "library.go")
+	if graph.Declarations[0].Entrypoint != "" || len(graph.Routes) != 0 {
+		t.Fatalf("graph=%+v", graph)
+	}
+}
+
 const navigationCacheTestContent = "package sample\nimport fmt \"fmt\"\nfunc Start() { Finish() }\nfunc Finish() {}\n"
 
 func TestCachedNavigationGraphReusesContentFactsWithoutChangingOutput(t *testing.T) {

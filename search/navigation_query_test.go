@@ -19,6 +19,9 @@ func TestQueryNavigationGraphTraversesCalleesByDepthAndStopsCycles(t *testing.T)
 	if got, want := queryCallIDs(one), []string{"root-a", "root-candidates"}; !reflect.DeepEqual(got, want) {
 		t.Fatalf("depth-one calls=%v, want %v", got, want)
 	}
+	if len(one.Routes) != 1 || one.Routes[0].CallerID != "root" {
+		t.Fatalf("depth-one routes=%+v", one.Routes)
+	}
 
 	two, err := QueryNavigationGraph(graph, []string{"root"}, NavigationQueryCallees, 2)
 	if err != nil {
@@ -29,6 +32,9 @@ func TestQueryNavigationGraphTraversesCalleesByDepthAndStopsCycles(t *testing.T)
 	}
 	if got, want := queryCallIDs(two), []string{"root-a", "a-b", "root-candidates"}; !reflect.DeepEqual(got, want) {
 		t.Fatalf("depth-two calls=%v, want %v", got, want)
+	}
+	if len(two.Routes) != 2 || two.Routes[1].CallerID != "b" {
+		t.Fatalf("depth-two routes=%+v", two.Routes)
 	}
 }
 
@@ -164,7 +170,7 @@ func navigationQueryFixture() parser.NavigationGraph {
 		{ID: "root-candidates", CallerID: "root", CandidateTargetIDs: []string{"candidate-one", "candidate-two"}, Confidence: "candidate"},
 		{ID: "candidate-root", CallerID: "candidate-caller", CandidateTargetIDs: []string{"root", "candidate-two"}, Confidence: "candidate"},
 	}
-	return parser.NavigationGraph{Declarations: declarations, Calls: calls}
+	return parser.NavigationGraph{Declarations: declarations, Calls: calls, Routes: []parser.NavigationRoute{{CallerID: "root", Pattern: "/root"}, {CallerID: "b", Pattern: "/b"}}}
 }
 
 func queryDeclarationIDs(graph parser.NavigationGraph) []string {

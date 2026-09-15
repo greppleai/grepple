@@ -15,7 +15,7 @@ import (
 	"github.com/greppleai/grepple/search"
 )
 
-const directoryArchitectureSchema = "grepple-directory-architecture-v2"
+const directoryArchitectureSchema = "grepple-directory-architecture-v3"
 
 type architectureArgs struct {
 	JSON           bool     `arg:"--json" help:"emit complete directory architecture JSON"`
@@ -53,6 +53,7 @@ type directoryArchitecture struct {
 	Sources          navigationSourceSummary      `json:"sources"`
 	Directories      []architectureDirectory      `json:"directories"`
 	Symbols          []architectureSymbol         `json:"symbols"`
+	Routes           []architectureRoute          `json:"routes,omitempty"`
 	Relations        []architectureRelation       `json:"relations"`
 	RepositoryRoots  []string                     `json:"repositoryRoots,omitempty"`
 	RelationCoverage architectureRelationCoverage `json:"relationCoverage"`
@@ -66,6 +67,8 @@ type architectureDirectory struct {
 	Languages       []architectureCount `json:"languages"`
 	Declarations    []architectureCount `json:"declarations"`
 	PublicCallables int                 `json:"publicCallables"`
+	Entrypoints     int                 `json:"entrypoints"`
+	Routes          int                 `json:"routes"`
 }
 
 type architectureCount struct {
@@ -82,8 +85,22 @@ type architectureSymbol struct {
 	Directory      string                      `json:"directory"`
 	Container      string                      `json:"container,omitempty"`
 	Visibility     parser.NavigationVisibility `json:"visibility,omitempty"`
+	Entrypoint     string                      `json:"entrypoint,omitempty"`
 	Start          int                         `json:"startLine"`
 	End            int                         `json:"endLine"`
+}
+
+type architectureRoute struct {
+	Method         string `json:"method,omitempty"`
+	Pattern        string `json:"pattern"`
+	Handler        string `json:"handler,omitempty"`
+	Framework      string `json:"framework"`
+	Language       string `json:"language"`
+	Classification string `json:"classification"`
+	Path           string `json:"path"`
+	Directory      string `json:"directory"`
+	Caller         string `json:"caller,omitempty"`
+	Line           int    `json:"line"`
 }
 
 type architectureRelation struct {
@@ -179,6 +196,8 @@ type directoryAccumulator struct {
 	languages       map[string]int
 	declarations    map[string]int
 	public          int
+	entrypoints     int
+	routes          int
 }
 
 func runArchitecture(args []string) error {
@@ -350,9 +369,10 @@ func buildDirectoryArchitecture(globs []string, maxFiles int) (directoryArchitec
 		appendArchitectureSymbols(&symbols, directories, outline.Symbols, outline.Language, sourcePath, directory, "", visibility)
 	}
 	sortArchitectureSymbols(symbols)
+	routes := buildArchitectureRoutes(graph, directories)
 	relations, relationCoverage := buildArchitectureRelations(graph, paths)
 	sources := navigationSourceSummary{Discovered: discovered, Selected: len(paths), Parsed: graphStats.Parsed, Skipped: discovered - supported + parseStats.Skipped + graphStats.Skipped, Failed: parseStats.Failed + graphStats.Failed, Recovered: graphStats.Recovered}
-	return directoryArchitecture{Schema: directoryArchitectureSchema, Root: ".", Files: len(paths), Sources: sources, Directories: buildArchitectureDirectories(directories), Symbols: symbols, Relations: relations, RepositoryRoots: graph.RepositoryRoots, RelationCoverage: relationCoverage, Truncation: truncation}, nil
+	return directoryArchitecture{Schema: directoryArchitectureSchema, Root: ".", Files: len(paths), Sources: sources, Directories: buildArchitectureDirectories(directories), Symbols: symbols, Routes: routes, Relations: relations, RepositoryRoots: graph.RepositoryRoots, RelationCoverage: relationCoverage, Truncation: truncation}, nil
 }
 
 func architectureVisibilityIndex(declarations []parser.NavigationDeclaration) map[string][]parser.NavigationDeclaration {
@@ -367,13 +387,16 @@ func architectureVisibilityIndex(declarations []parser.NavigationDeclaration) ma
 func appendArchitectureSymbols(target *[]architectureSymbol, directories map[string]*directoryAccumulator, symbols []parser.Symbol, language, sourcePath, directoryPath, container string, visibility map[string][]parser.NavigationDeclaration) {
 	for _, symbol := range symbols {
 		item := architectureSymbol{Name: symbol.Name, Kind: symbol.Kind, Language: language, Classification: string(sourcekind.Classify(sourcePath, ".")), Path: filepath.ToSlash(sourcePath), Directory: directoryPath, Container: container, Start: symbol.Start, End: symbol.End}
-		item.Visibility = architectureSymbolVisibility(visibility, item)
+		item.Visibility, item.Entrypoint = architectureSymbolNavigation(visibility, item)
 		*target = append(*target, item)
 		for _, ancestor := range architectureDirectoryAncestors(directoryPath) {
 			directory := getDirectoryAccumulator(directories, ancestor)
 			directory.declarations[item.Kind]++
 			if item.Visibility == parser.NavigationVisibilityPublic {
 				directory.public++
+			}
+			if item.Entrypoint != "" {
+				directory.entrypoints++
 			}
 		}
 		nextContainer := item.Name
@@ -388,11 +411,12 @@ func architectureSymbolKey(path, name string) string {
 	return filepath.ToSlash(filepath.Clean(path)) + "\x00" + name
 }
 
-func architectureSymbolVisibility(index map[string][]parser.NavigationDeclaration, symbol architectureSymbol) parser.NavigationVisibility {
+func architectureSymbolNavigation(index map[string][]parser.NavigationDeclaration, symbol architectureSymbol) (parser.NavigationVisibility, string) {
 	candidates := index[architectureSymbolKey(symbol.Path, symbol.Name)]
 	bestSpan := 0
 	found := false
 	var visibility parser.NavigationVisibility
+	entrypoint := ""
 	for _, candidate := range candidates {
 		if symbol.Start > candidate.End || candidate.Start > symbol.End {
 			continue
@@ -400,11 +424,12 @@ func architectureSymbolVisibility(index map[string][]parser.NavigationDeclaratio
 		span := candidate.End - candidate.Start
 		if !found || span < bestSpan {
 			visibility = candidate.Visibility
+			entrypoint = candidate.Entrypoint
 			bestSpan = span
 			found = true
 		}
 	}
-	return visibility
+	return visibility, entrypoint
 }
 
 func architectureDirectoryAncestors(directory string) []string {
@@ -429,6 +454,30 @@ func getDirectoryAccumulator(directories map[string]*directoryAccumulator, path 
 	return entry
 }
 
+func buildArchitectureRoutes(graph parser.NavigationGraph, directories map[string]*directoryAccumulator) []architectureRoute {
+	declarations := make(map[string]string, len(graph.Declarations))
+	for _, declaration := range graph.Declarations {
+		declarations[declaration.ID] = declaration.Name
+	}
+	result := make([]architectureRoute, 0, len(graph.Routes))
+	for _, route := range graph.Routes {
+		directory := cleanArchitectureDirectory(filepath.Dir(route.Path))
+		for _, ancestor := range architectureDirectoryAncestors(directory) {
+			getDirectoryAccumulator(directories, ancestor).routes++
+		}
+		result = append(result, architectureRoute{Method: route.Method, Pattern: route.Pattern, Handler: route.Handler, Framework: route.Framework, Language: route.Language, Classification: string(sourcekind.Classify(route.Path, ".")), Path: filepath.ToSlash(route.Path), Directory: directory, Caller: declarations[route.CallerID], Line: route.Line})
+	}
+	sort.Slice(result, func(i, j int) bool {
+		if result[i].Path != result[j].Path {
+			return result[i].Path < result[j].Path
+		}
+		if result[i].Line != result[j].Line {
+			return result[i].Line < result[j].Line
+		}
+		return result[i].Pattern < result[j].Pattern
+	})
+	return result
+}
 func buildArchitectureDirectories(index map[string]*directoryAccumulator) []architectureDirectory {
 	paths := make([]string, 0, len(index))
 	for path := range index {
@@ -438,7 +487,7 @@ func buildArchitectureDirectories(index map[string]*directoryAccumulator) []arch
 	result := make([]architectureDirectory, 0, len(paths))
 	for _, path := range paths {
 		entry := index[path]
-		result = append(result, architectureDirectory{Path: path, Files: entry.files, Classifications: architectureCounts(entry.classifications), Languages: architectureCounts(entry.languages), Declarations: architectureCounts(entry.declarations), PublicCallables: entry.public})
+		result = append(result, architectureDirectory{Path: path, Files: entry.files, Classifications: architectureCounts(entry.classifications), Languages: architectureCounts(entry.languages), Declarations: architectureCounts(entry.declarations), PublicCallables: entry.public, Entrypoints: entry.entrypoints, Routes: entry.routes})
 	}
 	return result
 }
@@ -757,7 +806,8 @@ func renderDirectoryArchitecture(architecture directoryArchitecture, values arch
 		shown = values.MaxNodes
 	}
 	visibleRelations := projectArchitectureRelations(architecture.Relations, directories[:shown])
-	if !write("architecture %s root=%s files=%d directories=%d shown=%d relations=%d shown-relations=%d sources=%s", architecture.Schema, architecture.Root, architecture.Files, len(directories), shown, len(architecture.Relations), len(visibleRelations), compactNavigationSourceSummary(architecture.Sources)) {
+	entrypoints := countArchitectureEntrypoints(architecture.Symbols)
+	if !write("architecture %s root=%s files=%d directories=%d shown=%d relations=%d shown-relations=%d entrypoints=%d routes=%d sources=%s", architecture.Schema, architecture.Root, architecture.Files, len(directories), shown, len(architecture.Relations), len(visibleRelations), entrypoints, len(architecture.Routes), compactNavigationSourceSummary(architecture.Sources)) {
 		return nil
 	}
 	if !write("repository-roots %s", formatArchitectureStrings(architecture.RepositoryRoots)) {
@@ -767,15 +817,14 @@ func renderDirectoryArchitecture(architecture directoryArchitecture, values arch
 	if !write("coverage imports=%d resolved=%d ambiguous=%d unresolved=%d types=%d type-resolved=%d type-ambiguous=%d type-unresolved=%d type-unqualified=%d import-unsupported=%s", coverage.ImportFacts, coverage.ResolvedImports, coverage.AmbiguousImports, coverage.UnresolvedImports, coverage.TypeReferences, coverage.ResolvedTypeReferences, coverage.AmbiguousTypeReferences, coverage.UnresolvedTypeReferences, coverage.UnqualifiedTypeReferences, formatArchitectureStrings(coverage.UnsupportedImportLanguages)) {
 		return nil
 	}
-	for _, directory := range directories[:shown] {
-		if !write("D %s files=%d classes=%s languages=%s declarations=%s public-callables=%d", directory.Path, directory.Files, formatArchitectureCounts(directory.Classifications), formatArchitectureCounts(directory.Languages), formatArchitectureCounts(directory.Declarations), directory.PublicCallables) {
-			return nil
-		}
+	if !renderArchitectureDirectories(write, directories[:shown]) {
+		return nil
 	}
-	for _, relation := range visibleRelations {
-		if !write("R %s -> %s kind=%s count=%d classes=%s at=%s", relation.From, relation.To, relation.Kind, relation.Count, formatArchitectureCounts(relation.Classifications), architectureEvidenceLocation(relation.Evidence)) {
-			return nil
-		}
+	if !renderArchitectureFacts(write, architecture.Symbols, architecture.Routes) {
+		return nil
+	}
+	if !renderArchitectureRelations(write, visibleRelations) {
+		return nil
 	}
 	if len(visibleRelations) < len(architecture.Relations) {
 		if !write("! omitted relation-groups=%d; raise --depth/--max-nodes or narrow PATH", len(architecture.Relations)-len(visibleRelations)) {
@@ -788,6 +837,51 @@ func renderDirectoryArchitecture(architecture directoryArchitecture, values arch
 	return nil
 }
 
+func countArchitectureEntrypoints(symbols []architectureSymbol) int {
+	count := 0
+	for _, symbol := range symbols {
+		if symbol.Entrypoint != "" {
+			count++
+		}
+	}
+	return count
+}
+
+func renderArchitectureDirectories(write func(string, ...any) bool, directories []architectureDirectory) bool {
+	for _, directory := range directories {
+		if !write("D %s files=%d classes=%s languages=%s declarations=%s public-callables=%d entrypoints=%d routes=%d", directory.Path, directory.Files, formatArchitectureCounts(directory.Classifications), formatArchitectureCounts(directory.Languages), formatArchitectureCounts(directory.Declarations), directory.PublicCallables, directory.Entrypoints, directory.Routes) {
+			return false
+		}
+	}
+	return true
+}
+
+func renderArchitectureFacts(write func(string, ...any) bool, symbols []architectureSymbol, routes []architectureRoute) bool {
+	for _, symbol := range symbols {
+		if symbol.Entrypoint != "" && !write("E %s %s %s class=%s directory=%s", symbol.Entrypoint, symbol.Name, architectureSymbolLocation(symbol), symbol.Classification, symbol.Directory) {
+			return false
+		}
+	}
+	for _, route := range routes {
+		method := route.Method
+		if method == "" {
+			method = "*"
+		}
+		if !write("P %s %s -> %s framework=%s at=%s:%d caller=%s class=%s directory=%s", method, compactRoutePattern(route.Pattern), route.Handler, route.Framework, route.Path, route.Line, route.Caller, route.Classification, route.Directory) {
+			return false
+		}
+	}
+	return true
+}
+
+func renderArchitectureRelations(write func(string, ...any) bool, relations []architectureRelation) bool {
+	for _, relation := range relations {
+		if !write("R %s -> %s kind=%s count=%d classes=%s at=%s", relation.From, relation.To, relation.Kind, relation.Count, formatArchitectureCounts(relation.Classifications), architectureEvidenceLocation(relation.Evidence)) {
+			return false
+		}
+	}
+	return true
+}
 func renderArchitectureResolve(output architectureResolveOutput, maxBytes int) error {
 	writer := architectureOutputWriter(maxBytes)
 	if err := writer.writeString(fmt.Sprintf("architecture resolve symbol=%s matches=%d sources=%s\n", output.Symbol, len(output.Matches), compactNavigationSourceSummary(output.Sources))); err != nil {
@@ -798,7 +892,7 @@ func renderArchitectureResolve(output architectureResolveOutput, maxBytes int) e
 		if visibility == "" {
 			visibility = "unknown"
 		}
-		if err := writer.writeString(fmt.Sprintf("S %s %s %s %s visibility=%s class=%s directory=%s\n", match.Language, match.Kind, match.Name, architectureSymbolLocation(match), visibility, match.Classification, match.Directory)); err != nil {
+		if err := writer.writeString(fmt.Sprintf("S %s %s %s %s visibility=%s entrypoint=%s class=%s directory=%s\n", match.Language, match.Kind, match.Name, architectureSymbolLocation(match), visibility, emptyArchitectureValue(match.Entrypoint), match.Classification, match.Directory)); err != nil {
 			return nil
 		}
 	}
@@ -816,6 +910,13 @@ func renderArchitectureWhy(output architectureWhyOutput, maxBytes int) error {
 		}
 	}
 	return nil
+}
+
+func emptyArchitectureValue(value string) string {
+	if value == "" {
+		return "none"
+	}
+	return value
 }
 
 func architectureOutputWriter(maxBytes int) *outputWriter {

@@ -24,11 +24,11 @@ func TestLanguagesJSONReportsRegisteredFeatureParity(t *testing.T) {
 		byLanguage[capability.Language] = capability
 	}
 	goLanguage := byLanguage["go"]
-	if goLanguage.GritQL != api.FeatureProduction || goLanguage.FocusedFlow != api.FeatureProduction || goLanguage.DirectoryArchitecture != api.FeatureProduction || goLanguage.ImportRelations != api.FeatureProduction {
+	if goLanguage.GritQL != api.FeatureProduction || goLanguage.FocusedFlow != api.FeatureProduction || goLanguage.DirectoryArchitecture != api.FeatureProduction || goLanguage.ImportRelations != api.FeatureProduction || goLanguage.Entrypoints != api.FeatureProduction || goLanguage.Routes != api.FeatureProduction {
 		t.Fatalf("go capabilities=%#v", goLanguage)
 	}
 	tsx := byLanguage["tsx"]
-	if tsx.GritQL != api.FeatureProduction || tsx.FocusedStructure != api.FeatureProduction || tsx.DirectoryArchitecture != api.FeatureProduction || tsx.ImportRelations != api.FeatureProduction {
+	if tsx.GritQL != api.FeatureProduction || tsx.FocusedStructure != api.FeatureProduction || tsx.DirectoryArchitecture != api.FeatureProduction || tsx.ImportRelations != api.FeatureProduction || tsx.Entrypoints != api.FeatureUnsupported || tsx.Routes != api.FeatureUnsupported {
 		t.Fatalf("tsx capabilities=%#v", tsx)
 	}
 	javascript := byLanguage["javascript"]

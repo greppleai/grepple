@@ -1,7 +1,9 @@
 package cli
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -43,8 +45,94 @@ func BenchmarkAgentWorkflows(b *testing.B) {
 		workflow := workflow
 		b.Run(workflow.name, func(b *testing.B) { benchmarkAgentWorkflow(b, workflow) })
 	}
+	payload := []byte(`{"schema":"benchmark-large-v1","sources":{"parsed":1},"padding":"` + strings.Repeat("x", 1024*1024) + `","target":"ARTIFACT_TASK_ANSWER"}` + "\n")
+	b.Run("ArtifactDirectComplete", func(b *testing.B) { benchmarkArtifactDelivery(b, payload, false) })
+	b.Run("ArtifactFallback", func(b *testing.B) { benchmarkArtifactDelivery(b, payload, true) })
 }
 
+func benchmarkArtifactDelivery(b *testing.B, payload []byte, spill bool) {
+	b.Helper()
+	if spill {
+		benchmarkArtifactFallback(b, payload)
+		return
+	}
+	benchmarkArtifactDirect(b, payload)
+}
+
+func benchmarkArtifactDirect(b *testing.B, payload []byte) {
+	b.ReportAllocs()
+	totalContextBytes := 0
+	for range b.N {
+		output := captureArtifactBenchmarkOutput(b, payload, spillOptions{disabled: true})
+		if !strings.Contains(output, "ARTIFACT_TASK_ANSWER") {
+			b.Fatal("complete output did not contain the required answer")
+		}
+		totalContextBytes += len(output)
+	}
+	reportArtifactBenchmarkMetrics(b, totalContextBytes, 0)
+}
+
+func benchmarkArtifactFallback(b *testing.B, payload []byte) {
+	b.ReportAllocs()
+	totalContextBytes := 0
+	for range b.N {
+		output := captureArtifactBenchmarkOutput(b, payload, spillOptions{threshold: 64})
+		var descriptor spilledOutputDescriptor
+		if err := json.Unmarshal([]byte(output), &descriptor); err != nil {
+			b.Fatal(err)
+		}
+		selected, err := readArtifactTail(descriptor.Path, 512)
+		if err != nil {
+			b.Fatal(err)
+		}
+		context := append([]byte(output), selected...)
+		if !strings.Contains(string(context), "ARTIFACT_TASK_ANSWER") {
+			b.Fatal("artifact workflow did not recover the required answer")
+		}
+		totalContextBytes += len(context)
+	}
+	reportArtifactBenchmarkMetrics(b, totalContextBytes, b.N)
+}
+
+func captureArtifactBenchmarkOutput(b *testing.B, payload []byte, options spillOptions) string {
+	return captureStdout(b, func() {
+		if err := runWithOutputSpill([]string{"graph", "--json", "."}, options, func() error {
+			_, err := os.Stdout.Write(payload)
+			return err
+		}); err != nil {
+			b.Fatal(err)
+		}
+	})
+}
+
+func reportArtifactBenchmarkMetrics(b *testing.B, totalContextBytes, artifactReads int) {
+	if b.N == 0 {
+		return
+	}
+	contextBytes := float64(totalContextBytes) / float64(b.N)
+	reads := float64(artifactReads) / float64(b.N)
+	b.ReportMetric(contextBytes, "context_bytes/op")
+	b.ReportMetric(reads, "artifact_reads/op")
+	b.ReportMetric(1+reads, "retrieval_turns/op")
+	b.ReportMetric(contextBytes/4, "approx_tokens/op")
+}
+
+func readArtifactTail(path string, limit int64) ([]byte, error) {
+	file, err := os.Open(filepath.FromSlash(path))
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+	info, err := file.Stat()
+	if err != nil {
+		return nil, err
+	}
+	offset := max(int64(0), info.Size()-limit)
+	if _, err := file.Seek(offset, io.SeekStart); err != nil {
+		return nil, err
+	}
+	return io.ReadAll(io.LimitReader(file, limit))
+}
 func benchmarkAgentWorkflow(b *testing.B, workflow agentWorkflowBenchmark) {
 	b.Helper()
 	b.ReportAllocs()

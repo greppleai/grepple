@@ -70,12 +70,36 @@ func TestOutputSpillKeepsSmallAndDisabledOutputOnStdout(t *testing.T) {
 }
 
 func TestParseSpillOptionsRemovesGlobalFlags(t *testing.T) {
-	args, options, err := parseSpillOptions([]string{"graph", "--spill-threshold-bytes", "1024", "--json", "--no-spill", "."})
+	args, options, err := parseSpillOptions([]string{"graph", "--spill-threshold-bytes", "1024", "--artifact-dir", "artifacts", "--json", "--no-spill", "."})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !options.disabled || options.threshold != 1024 || strings.Join(args, " ") != "graph --json ." {
+	if !options.disabled || options.threshold != 1024 || options.directory != "artifacts" || strings.Join(args, " ") != "graph --json ." {
 		t.Fatalf("args=%q options=%+v", args, options)
+	}
+}
+
+func TestOutputSpillUsesExplicitArtifactDirectoryWithContentAddressedName(t *testing.T) {
+	root := t.TempDir()
+	chdirForConfigTest(t, root)
+	output := captureStdout(t, func() {
+		if err := Run([]string{"languages", "--json", "--spill-threshold-bytes", "64", "--artifact-dir", "agent-output"}); err != nil {
+			t.Fatal(err)
+		}
+	})
+	var descriptor spilledOutputDescriptor
+	if err := json.Unmarshal([]byte(output), &descriptor); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.HasPrefix(descriptor.Path, "agent-output/") {
+		t.Fatalf("descriptor path=%q", descriptor.Path)
+	}
+	name := strings.TrimSuffix(filepath.Base(descriptor.Path), filepath.Ext(descriptor.Path))
+	if len(name) != 64 || descriptor.Digest != "sha256:"+name {
+		t.Fatalf("descriptor=%+v", descriptor)
+	}
+	if _, err := os.Stat(filepath.Join(root, filepath.FromSlash(descriptor.Path))); err != nil {
+		t.Fatal(err)
 	}
 }
 

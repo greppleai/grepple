@@ -28,4 +28,6 @@ type LanguageCapabilities struct {
 	GritQL                FeatureSupport `json:"gritql"`
 	DirectoryArchitecture FeatureSupport `json:"directoryArchitecture"`
 	ImportRelations       FeatureSupport `json:"importRelations"`
+	Entrypoints           FeatureSupport `json:"entrypoints"`
+	Routes                FeatureSupport `json:"routes"`
 }

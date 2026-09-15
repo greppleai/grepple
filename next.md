@@ -4,7 +4,7 @@
 
 ## Recommended next milestone
 
-> Add adapter-evidenced entrypoints/routes and measure artifact-backed task success before revisiting syntax lifecycle APIs.
+> Improve normalized, source-linked architecture determinism diagnostics before broadening language projections.
 
 ## Planning principles
 
@@ -21,22 +21,16 @@
 
 `grepple architecture directory|resolve|why` now provides bounded, language-neutral directory ownership, exact type/callable ranges, source-classified call/import/type relations, and explicit relation coverage. Legacy Go package/workspace commands and generated artifacts have been removed.
 
-- [ ] Add adapter-evidenced entrypoints and routes only where languages provide useful contracts.
 
 ### Spill large output to a file artifact
 
 Observed complete outputs reached about 1.55 MB for boundaries and 6.7 MB for a graph over only `parser search`. Valid uncapped JSON is useful for automation but is a severe agent-context trap. Spill mode should be the default above 64 KB; callers that require the original stdout stream can opt out explicitly.
 
-- [ ] Add an explicit artifact path override without colliding with extraction's existing `--output` meaning.
-- [ ] Benchmark artifact fallback by context bytes and retrieval turns, not only file-write runtime.
 
 ## P1 — improve precision and architectural signal
 
 ### Public syntax API
 
-- [ ] Document distinct lifecycle and safety contracts for `Document`, `Node`, `DocumentView`, `ViewNode`, and `SyntaxNode`.
-- [ ] Consolidate or deprecate overlapping surfaces when they do not provide measurable safety, ownership, or performance value.
-- [ ] Review whether non-backend helpers still located in `parser/tree_sitter.go` belong with their semantic owner.
 
 ### Architecture diagnostics
 

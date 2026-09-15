@@ -22,7 +22,8 @@ This file records completed Grepple roadmap work that no longer belongs in `next
 - [x] Kept authentication user-owned: repository configuration cannot provide or override access tokens, refresh tokens, expiries, or user identity.
 - [x] Applied one ordered `**`/negation-capable ignore matcher to search, graph, boundaries, GritQL, and focused extraction; recursive discovery honors ignores while explicitly named files bypass them.
 - [x] Excluded `.grepple/cache/` and `.grepple/output/` from recursive source discovery and Git.
-- [x] Added default 64 KiB output spilling to content-addressed mode-0600 artifacts with valid human/JSON descriptors, original schema/source metadata, exact `--no-spill` reruns, and threshold overrides.
+- [x] Added default 64 KiB output spilling to content-addressed mode-0600 artifacts with valid human/JSON descriptors, original schema/source metadata, exact `--no-spill` reruns, threshold overrides, and an explicit global `--artifact-dir PATH` destination.
+- [x] Added answer-gated artifact workflow benchmarks covering context bytes, retrieval turns, artifact reads, and correctness; one bounded artifact read reduced a synthetic 1 MiB task from 1,048,676 to 902 context bytes while recovering the same answer.
 - [x] Added `grepple artifacts clean` for explicit deterministic artifact cleanup.
 - [x] Replaced process-exiting library paths with propagated command exit statuses so output delivery is finalized before grep-style exit code 1.
 - [x] Added `grepple sources explain` with deterministic config path/digest, selection decisions, classification totals, exclusion reasons, explicit bypasses, and omitted infrastructure subtrees.
@@ -63,7 +64,7 @@ This file records completed Grepple roadmap work that no longer belongs in `next
 - [x] Added deterministic ambiguity fixtures for interfaces, overloads, inheritance, re-exports, default imports, aliases, and TSX path aliases.
 - [x] Reported omitted callers and callees in human and JSON related output.
 - [x] Made every human omitted-edge notice provide a copyable focused `graph callers|callees|impact --at PATH:LINE --depth 2 --json .` continuation.
-- [x] Added complete `grepple-navigation-graph-v1` JSON and bounded compact graph projections.
+- [x] Added complete `grepple-navigation-graph-v2` JSON and bounded compact graph projections, including adapter-evidenced entrypoints and routes.
 - [x] Added deterministic discovered, selected, parsed, skipped, failed, recovered, and truncated source accounting to graphs, focused graph queries, graph diffs, and boundary reports.
 - [x] Added graph-wide and per-language/confidence resolution measurements, including resolved, ambiguous, unresolved, singleton-candidate counts, and ambiguity frequency in complete JSON plus compact aggregate headers.
 - [x] Added parser-owned content- and grammar-addressed per-file navigation facts shared by graph output/queries, `--related`, boundaries, and extraction, with atomic corruption-tolerant storage, path instantiation, explicit bypass, cold/warm parity tests, and a repeatable benchmark.
@@ -71,7 +72,7 @@ This file records completed Grepple roadmap work that no longer belongs in `next
 - [x] Added callers, callees, dependencies, dependents, and bidirectional impact queries with depth bounds, cycle safety, candidate preservation, and exact location/symbol/package/module/path roots.
 - [x] Added traversal-free `graph resolve --symbol NAME` previews with deterministic exact/terminal matches, full stable IDs, exact `--at` alternatives, filters, and copyable focused graph commands in bounded compact and complete JSON output.
 - [x] Added language, confidence, and visibility filtering before root selection and traversal.
-- [x] Added `grepple-navigation-diff-v1`, ignoring line-only movement while reporting semantic declaration and call-edge changes.
+- [x] Added `grepple-navigation-diff-v2`, ignoring line-only movement while reporting semantic declaration, call-edge, entrypoint, and route changes.
 - [x] Added end-to-end shared-edge parity coverage across JSON, compact graph output, focused Mermaid, directory resolution, and `--related`.
 
 ## Architecture extraction and validation
@@ -91,15 +92,19 @@ This file records completed Grepple roadmap work that no longer belongs in `next
 - [x] Added independently labeled import-only and imported-type directory relations with production/test/fixture/generated/vendor evidence totals and resolved/ambiguous/unresolved/unsupported coverage.
 - [x] Kept compact directory relation output bounded to displayed directory depth while `architecture why` preserves exact uncollapsed evidence.
 - [x] Added `parser.OutlineFromDocument` and document-backed graph construction so directory architecture parses each selected source once for both outlines and navigation.
+- [x] Added adapter-evidenced Go process entrypoints and source-linked `net/http.Handle`/`HandleFunc` routes to shared graph, directory architecture, focused queries, graph filtering, and semantic diffs without inferring unsupported framework semantics.
 - [x] Removed Go-specific package/workspace commands, public capability fields, generators, checkers, hook paths, tests, and committed `.grepple` artifacts without a compatibility period.
 
 ## Parser and language architecture
 
 - [x] Moved application-source parsing behind `parser.Document`, callback-scoped `DocumentView`, and shared traversal/range APIs.
+- [x] Documented the ownership, locking, invalidation, retention, recovery, and performance contracts for `Document`, `Node`, `DocumentView`, `ViewNode`, and immutable `SyntaxNode` snapshots.
+- [x] Benchmarked document-tied, callback-scoped, and immutable-snapshot syntax traversal; retained all three because coherent lock scope, retainable borrowed handles, and post-close ownership are distinct contracts rather than aliases.
 - [x] Removed extraction and hook parser construction, grammar selection, and duplicate application-source parser lifecycles.
 - [x] Added a parser-owned language capability registry with canonical IDs, extensions, grammar ABI/fingerprints, navigation support, and generated grammar cardinality/subtype metadata.
 - [x] Added iterative bounded syntax traversal and immutable subtree snapshot reuse within document views.
 - [x] Moved callable, declaration, call, container, import, binding, return, visibility, receiver, member, and field syntax policy behind `languageAdapter.Navigation()`.
+- [x] Reduced `parser/tree_sitter.go` to syntax-backend ownership by moving segment match/punctuation helpers to `segments.go` and adapter naming policy to `language.go`.
 - [x] Added architecture guards preventing language-ID and mixed grammar-kind policy from returning to generic navigation engines.
 - [x] Routed parsing through `languageAdapter.Parse()` and hid raw Tree-sitter grammars, trees, nodes, and cursors behind private syntax handles.
 - [x] Removed the public raw-tree graph API and prevented production go-tree-sitter imports outside approved syntax backends.

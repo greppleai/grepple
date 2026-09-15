@@ -405,6 +405,7 @@ Commands:
 Global output delivery:
 	--no-spill                    keep complete output on stdout regardless of size
 	--spill-threshold-bytes N     spill output above N bytes (default 65536 or grepple.json)
+	--artifact-dir PATH           store spilled content-addressed artifacts under PATH
 
 Global repository scope:
 	--no-repo-config              ignore repository-owned grepple.json behavior

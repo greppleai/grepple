@@ -23,6 +23,7 @@ type NavigationDeclaration struct {
 	PackageID        string               `json:"packageId,omitempty"`
 	ModuleID         string               `json:"moduleId,omitempty"`
 	Scope            string               `json:"scope,omitempty"`
+	Entrypoint       string               `json:"entrypoint,omitempty"`
 	Visibility       NavigationVisibility `json:"visibility"`
 	Start            int                  `json:"startLine"`
 	End              int                  `json:"endLine"`
@@ -114,6 +115,18 @@ type NavigationMemberAccess struct {
 	StartByte    int    `json:"startByte,omitempty"`
 }
 
+// NavigationRoute records a statically declared route recognized by a language adapter.
+type NavigationRoute struct {
+	CallerID  string `json:"callerId,omitempty"`
+	Method    string `json:"method,omitempty"`
+	Pattern   string `json:"pattern"`
+	Handler   string `json:"handler,omitempty"`
+	Framework string `json:"framework"`
+	Language  string `json:"language"`
+	Path      string `json:"path"`
+	Line      int    `json:"line"`
+}
+
 // NavigationGraph is the normalized, language-neutral declaration, call, import,
 // type, field, export, and member-access model. Language-specific consumers may
 // enrich its syntax facts with package, module, receiver, or repository context.
@@ -125,6 +138,7 @@ type NavigationGraph struct {
 	Fields          []NavigationField        `json:"fields,omitempty"`
 	TypeUsages      []NavigationTypeUsage    `json:"typeUsages,omitempty"`
 	MemberAccesses  []NavigationMemberAccess `json:"memberAccesses,omitempty"`
+	Routes          []NavigationRoute        `json:"routes,omitempty"`
 	RepositoryRoots []string                 `json:"repositoryRoots,omitempty"`
 }
 
@@ -137,6 +151,7 @@ func (graph *NavigationGraph) Merge(other NavigationGraph) {
 	graph.Fields = append(graph.Fields, other.Fields...)
 	graph.TypeUsages = append(graph.TypeUsages, other.TypeUsages...)
 	graph.MemberAccesses = append(graph.MemberAccesses, other.MemberAccesses...)
+	graph.Routes = append(graph.Routes, other.Routes...)
 	graph.RepositoryRoots = append(graph.RepositoryRoots, other.RepositoryRoots...)
 }
 
@@ -196,7 +211,8 @@ func navigationGraphFromTree(root *syntaxNode, content, language, path string) N
 	returnBindings := navigationReturnBindings(root, content, imports, navigation)
 	collector := navigationCollector{content: content, adapter: adapter, navigation: navigation, path: path, imports: imports, fields: fields, returnBindings: returnBindings, packageName: packageName}
 	collector.walk(root, navigationWalkContext{})
-	return NavigationGraph{Declarations: collector.declarations, Calls: collector.calls, Imports: navigationImportFacts(imports, language, path), Exports: navigation.Exports(root, content, language, path), Fields: navigationFieldFacts(fields, language, path, packageName), TypeUsages: collector.typeUsages, MemberAccesses: collector.memberAccesses}
+	routes := navigation.Routes(root, content, language, path, imports, collector.declarations)
+	return NavigationGraph{Declarations: collector.declarations, Calls: collector.calls, Imports: navigationImportFacts(imports, language, path), Exports: navigation.Exports(root, content, language, path), Fields: navigationFieldFacts(fields, language, path, packageName), TypeUsages: collector.typeUsages, MemberAccesses: collector.memberAccesses, Routes: routes}
 }
 
 // DeclarationRangeAt returns the narrowest callable declaration containing line.
@@ -286,7 +302,7 @@ func (c *navigationCollector) enterNavigationNode(node *syntaxNode, context navi
 	result := c.navigation.CallableReturnBinding(node, c.content, c.imports)
 	declaration := NavigationDeclaration{
 		Name: name, Kind: c.navigation.DeclarationKind(node, current.container), Language: c.adapter.ID(), Path: c.path, Container: current.container, Package: c.packageName,
-		ResultType: result.typeName, ResultImportPath: result.importPath, Visibility: c.navigation.Visibility(node, name, c.content), Start: start, End: end,
+		ResultType: result.typeName, ResultImportPath: result.importPath, Visibility: c.navigation.Visibility(node, name, c.content), Entrypoint: c.navigation.Entrypoint(node, name, current.container, c.packageName, c.content), Start: start, End: end,
 	}
 	declaration.ID = navigationStableID("declaration", declaration.Language, declaration.Path, declaration.Name, declaration.Kind, strconv.Itoa(start), strconv.Itoa(end))
 	c.declarations = append(c.declarations, declaration)

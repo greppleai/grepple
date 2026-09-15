@@ -3,8 +3,6 @@ package parser
 import (
 	"fmt"
 	"runtime"
-	"sort"
-	"strings"
 	"sync"
 	"sync/atomic"
 	"unsafe"
@@ -201,45 +199,4 @@ func parseSyntaxTree(grammar syntaxLanguage, content string) (*syntaxTree, error
 		return nil, fmt.Errorf("tree-sitter returned no tree")
 	}
 	return &syntaxTree{raw: tree, source: content}, nil
-}
-
-// matchLines carries the matched line numbers both as a set (membership) and as
-// an ascending slice (range queries). Building the sorted slice once lets
-// hitsRange use binary search instead of scanning the whole map for every node
-// visited during segment building (rangeHit used to be O(matches) per node).
-type matchLines struct {
-	set    map[int]bool
-	sorted []int
-}
-
-func newMatchLines(hits map[int]bool) matchLines {
-	sorted := make([]int, 0, len(hits))
-	for line := range hits {
-		sorted = append(sorted, line)
-	}
-	sort.Ints(sorted)
-	return matchLines{set: hits, sorted: sorted}
-}
-
-// hitsRange reports whether any matched line falls within [start, end].
-func (m matchLines) hitsRange(start, end int) bool {
-	i := sort.Search(len(m.sorted), func(i int) bool { return m.sorted[i] >= start })
-	return i < len(m.sorted) && m.sorted[i] <= end
-}
-
-func extractNodeName(node *syntaxNode, _ string, config *structureRules) string {
-	if named := node.ChildByFieldName("name"); named != nil {
-		return named.Text()
-	}
-	for _, child := range node.Children() {
-		if config.nameFieldCandidates.contains(child.Kind()) {
-			return child.Text()
-		}
-	}
-	return ""
-}
-
-func isPunctuation(node *syntaxNode) bool {
-	kind := node.Kind()
-	return len(kind) == 1 && !strings.ContainsAny(kind, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 }

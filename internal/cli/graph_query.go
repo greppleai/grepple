@@ -63,7 +63,7 @@ func runGraphQuery(direction search.NavigationQueryDirection, args []string) err
 	if err != nil {
 		return err
 	}
-	filtered, err := search.FilterNavigationGraph(parser.NavigationGraph{Declarations: output.Declarations, Calls: output.Calls, Imports: output.Imports, Exports: output.Exports, Fields: output.Fields, TypeUsages: output.TypeUsages, MemberAccesses: output.MemberAccesses, RepositoryRoots: output.RepositoryRoots}, filter)
+	filtered, err := search.FilterNavigationGraph(parser.NavigationGraph{Declarations: output.Declarations, Calls: output.Calls, Imports: output.Imports, Exports: output.Exports, Fields: output.Fields, TypeUsages: output.TypeUsages, MemberAccesses: output.MemberAccesses, Routes: output.Routes, RepositoryRoots: output.RepositoryRoots}, filter)
 	if err != nil {
 		return err
 	}
@@ -75,12 +75,13 @@ func runGraphQuery(direction search.NavigationQueryDirection, args []string) err
 	output.Fields = filtered.Fields
 	output.TypeUsages = filtered.TypeUsages
 	output.MemberAccesses = filtered.MemberAccesses
+	output.Routes = filtered.Routes
 	roots, err := selectNavigationQueryRoots(output.Declarations, values)
 	if err != nil {
 		return err
 	}
 	rootIDs := navigationDeclarationIDs(roots)
-	queried, err := search.QueryNavigationGraph(parser.NavigationGraph{Declarations: output.Declarations, Calls: output.Calls, Imports: output.Imports, Exports: output.Exports, Fields: output.Fields, TypeUsages: output.TypeUsages, MemberAccesses: output.MemberAccesses, RepositoryRoots: output.RepositoryRoots}, rootIDs, direction, values.Depth)
+	queried, err := search.QueryNavigationGraph(parser.NavigationGraph{Declarations: output.Declarations, Calls: output.Calls, Imports: output.Imports, Exports: output.Exports, Fields: output.Fields, TypeUsages: output.TypeUsages, MemberAccesses: output.MemberAccesses, Routes: output.Routes, RepositoryRoots: output.RepositoryRoots}, rootIDs, direction, values.Depth)
 	if err != nil {
 		return err
 	}
@@ -92,6 +93,7 @@ func runGraphQuery(direction search.NavigationQueryDirection, args []string) err
 	output.Fields = queried.Fields
 	output.TypeUsages = queried.TypeUsages
 	output.MemberAccesses = queried.MemberAccesses
+	output.Routes = queried.Routes
 	output.Resolution = search.MeasureNavigationResolution(queried)
 	output.Query = &navigationGraphQuery{
 		Direction: string(direction), Depth: values.Depth, RootIDs: rootIDs,
@@ -225,7 +227,7 @@ func buildNavigationGraphOutputFromPathsWithOptions(paths []string, maxFiles int
 		Discovered: discovered, Selected: stats.Attempted, Parsed: stats.Parsed, Skipped: unsupported + stats.Skipped, Failed: stats.Failed, Recovered: stats.Recovered,
 	}
 	return navigationGraphOutput{
-		Schema: navigationGraphSchema, Files: len(eligible), Sources: sourceSummary, Declarations: declarations, Calls: calls, Imports: graph.Imports, Exports: graph.Exports, Fields: graph.Fields, TypeUsages: graph.TypeUsages, MemberAccesses: graph.MemberAccesses, RepositoryRoots: graph.RepositoryRoots, Resolution: search.MeasureNavigationResolution(graph), Truncation: truncation,
+		Schema: navigationGraphSchema, Files: len(eligible), Sources: sourceSummary, Declarations: declarations, Calls: calls, Imports: graph.Imports, Exports: graph.Exports, Fields: graph.Fields, TypeUsages: graph.TypeUsages, MemberAccesses: graph.MemberAccesses, Routes: graph.Routes, RepositoryRoots: graph.RepositoryRoots, Resolution: search.MeasureNavigationResolution(graph), Truncation: truncation,
 	}
 }
 

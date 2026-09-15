@@ -14,11 +14,11 @@ Linux/amd64, Intel Core Ultra 7 165H, Go 1.25.14, `-benchtime=10x`:
 
 | Workflow | Baseline time | Baseline allocated bytes | Output bytes | Review budget time | Review budget allocated bytes |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| Focused structure | 2.30 ms | 0.95 MB | 722 | 3 ms | 1 MB |
-| Focused flow | 2.27 ms | 0.70 MB | 520 | 3 ms | 0.75 MB |
-| Directory architecture | 5.61 ms | 0.67 MB | 17,673 | 15 ms | 1 MB |
+| Focused structure | 3.03 ms | 0.97 MB | 722 | 3.5 ms | 1 MB |
+| Focused flow | 2.37 ms | 0.71 MB | 520 | 3 ms | 0.75 MB |
+| Directory architecture | 7.00 ms | 0.68 MB | 18,348 | 15 ms | 1 MB |
 
-Budgets are review thresholds rather than flaky test assertions: benchmark time depends on host scheduling and filesystem behavior. A repeatable result above a budget requires profiling or an explicit baseline review before merge. Directory JSON grew by 2,822 bytes from the pre-classification baseline to expose source classifications, repository roots, and explicit import/type relation coverage rather than hiding uncertainty. Directory analysis now derives outlines and graph facts from one parsed document per selected source; the reviewed allocation sample fell from 0.70 MB to 0.67 MB. Correctness remains test-gated, while output size is deterministic and should not grow without explaining the added agent value.
+Budgets are review thresholds rather than flaky test assertions: benchmark time depends on host scheduling and filesystem behavior. A repeatable result above a budget requires profiling or an explicit baseline review before merge. These baselines use the median of three 20-iteration samples. Directory JSON intentionally grew by about 675 bytes in the benchmark fixture to expose adapter-evidenced entrypoint and route fields alongside source classifications, repository roots, and import/type relation coverage. Directory analysis derives outlines and graph facts from one parsed document per selected source. Correctness remains test-gated, while output size is deterministic for the same source paths and should not grow without explaining the added agent value.
 
 Run the benchmark on the same machine and Go version when comparing changes. Use at least three samples for a budget decision; treat one timing outlier as diagnostic rather than conclusive.
 

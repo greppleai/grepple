@@ -9,7 +9,7 @@ import (
 )
 
 // NavigationDiffSchema identifies the semantic graph-diff wire contract.
-const NavigationDiffSchema = "grepple-navigation-diff-v1"
+const NavigationDiffSchema = "grepple-navigation-diff-v2"
 
 // NavigationDeclarationDelta pairs a declaration before and after a semantic change.
 type NavigationDeclarationDelta struct {
@@ -33,6 +33,8 @@ type NavigationGraphDiff struct {
 	AddedCalls          []parser.NavigationCall        `json:"addedCalls,omitempty"`
 	RemovedCalls        []parser.NavigationCall        `json:"removedCalls,omitempty"`
 	ChangedCalls        []NavigationCallDelta          `json:"changedCalls,omitempty"`
+	AddedRoutes         []parser.NavigationRoute       `json:"addedRoutes,omitempty"`
+	RemovedRoutes       []parser.NavigationRoute       `json:"removedRoutes,omitempty"`
 }
 
 // DiffNavigationGraphs compares normalized graphs while ignoring position-only shifts.
@@ -46,6 +48,7 @@ func DiffNavigationGraphs(before, after parser.NavigationGraph) NavigationGraphD
 		diffNavigationDeclarationGroup(&diff, beforeByKey[key], afterByKey[key])
 	}
 	diffNavigationCalls(&diff, before, after, beforeKeys, afterKeys)
+	diffNavigationRoutes(&diff, before.Routes, after.Routes, beforeKeys, afterKeys)
 	return diff
 }
 
@@ -96,6 +99,35 @@ func navigationDeclarationChanged(before, after parser.NavigationDeclaration) bo
 	before.Path, after.Path = "", ""
 	before.Start, before.End, after.Start, after.End = 0, 0, 0, 0
 	return !reflect.DeepEqual(before, after)
+}
+
+func diffNavigationRoutes(diff *NavigationGraphDiff, before, after []parser.NavigationRoute, beforeKeys, afterKeys map[string]string) {
+	beforeGroups := groupNavigationRoutes(before, beforeKeys)
+	afterGroups := groupNavigationRoutes(after, afterKeys)
+	for _, key := range sortedStringUnion(beforeGroups, afterGroups) {
+		oldRoutes, newRoutes := beforeGroups[key], afterGroups[key]
+		paired := min(len(oldRoutes), len(newRoutes))
+		diff.RemovedRoutes = append(diff.RemovedRoutes, oldRoutes[paired:]...)
+		diff.AddedRoutes = append(diff.AddedRoutes, newRoutes[paired:]...)
+	}
+}
+
+func groupNavigationRoutes(routes []parser.NavigationRoute, declarations map[string]string) map[string][]parser.NavigationRoute {
+	grouped := make(map[string][]parser.NavigationRoute)
+	for _, route := range routes {
+		caller := declarations[route.CallerID]
+		key := strings.Join([]string{route.Language, route.Framework, route.Method, route.Pattern, route.Handler, caller}, "\x00")
+		grouped[key] = append(grouped[key], route)
+	}
+	for key := range grouped {
+		sort.Slice(grouped[key], func(i, j int) bool {
+			if grouped[key][i].Path != grouped[key][j].Path {
+				return grouped[key][i].Path < grouped[key][j].Path
+			}
+			return grouped[key][i].Line < grouped[key][j].Line
+		})
+	}
+	return grouped
 }
 
 func diffNavigationCalls(diff *NavigationGraphDiff, before, after parser.NavigationGraph, beforeKeys, afterKeys map[string]string) {

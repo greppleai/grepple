@@ -80,6 +80,8 @@ func languageCapabilityMatrix() []api.LanguageCapabilities {
 			GritQL:                featureSupport(gritLanguages[language.ID], false),
 			DirectoryArchitecture: featureSupport(language.Navigation, false),
 			ImportRelations:       featureSupport(parserLanguages[language.ID].ImportNavigation, false),
+			Entrypoints:           featureSupport(parserLanguages[language.ID].EntrypointNavigation, false),
+			Routes:                featureSupport(parserLanguages[language.ID].RouteNavigation, false),
 		})
 	}
 	sort.Slice(result, func(i, j int) bool { return result[i].Language < result[j].Language })
@@ -123,7 +125,7 @@ func featureSupport(supported, specialized bool) api.FeatureSupport {
 
 func renderLanguageCapabilities(capabilities []api.LanguageCapabilities) error {
 	writer := tabwriter.NewWriter(os.Stdout, 0, 4, 2, ' ', 0)
-	if _, err := fmt.Fprintln(writer, "LANGUAGE\tEXTENSIONS\tTEXT\tSTRUCTURAL\tOUTLINE\tNAV\tSTRUCTURE\tFLOW\tGRITQL\tDIRECTORY\tIMPORT-RELATIONS"); err != nil {
+	if _, err := fmt.Fprintln(writer, "LANGUAGE\tEXTENSIONS\tTEXT\tSTRUCTURAL\tOUTLINE\tNAV\tSTRUCTURE\tFLOW\tGRITQL\tDIRECTORY\tIMPORT-RELATIONS\tENTRYPOINTS\tROUTES"); err != nil {
 		return err
 	}
 	for _, capability := range capabilities {
@@ -131,10 +133,10 @@ func renderLanguageCapabilities(capabilities []api.LanguageCapabilities) error {
 		if extensions == "" {
 			extensions = "other"
 		}
-		if _, err := fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
+		if _, err := fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
 			capability.Language, extensions, supportIcon(capability.TextGrep), supportIcon(capability.StructuralGrep),
 			supportIcon(capability.Outline), supportIcon(capability.Navigation), supportIcon(capability.FocusedStructure),
-			supportIcon(capability.FocusedFlow), supportIcon(capability.GritQL), supportIcon(capability.DirectoryArchitecture), supportIcon(capability.ImportRelations)); err != nil {
+			supportIcon(capability.FocusedFlow), supportIcon(capability.GritQL), supportIcon(capability.DirectoryArchitecture), supportIcon(capability.ImportRelations), supportIcon(capability.Entrypoints), supportIcon(capability.Routes)); err != nil {
 			return err
 		}
 	}
@@ -159,17 +161,17 @@ func supportIcon(support api.FeatureSupport) string {
 
 func renderLanguageCapabilitiesMarkdown(capabilities []api.LanguageCapabilities) string {
 	var output strings.Builder
-	output.WriteString("| Language | Extensions | Text grep | Structural grep | Outline | Navigation | Focused structure | Focused flow | GritQL | Directory architecture | Import relations |\n")
-	output.WriteString("| --- | --- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |\n")
+	output.WriteString("| Language | Extensions | Text grep | Structural grep | Outline | Navigation | Focused structure | Focused flow | GritQL | Directory architecture | Import relations | Entrypoints | Routes |\n")
+	output.WriteString("| --- | --- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |\n")
 	for _, capability := range capabilities {
 		extensions := "any other extension"
 		if len(capability.Extensions) > 0 {
 			extensions = "`" + strings.Join(capability.Extensions, "`, `") + "`"
 		}
-		fmt.Fprintf(&output, "| `%s` | %s | %s | %s | %s | %s | %s | %s | %s | %s | %s |\n",
+		fmt.Fprintf(&output, "| `%s` | %s | %s | %s | %s | %s | %s | %s | %s | %s | %s | %s | %s |\n",
 			capability.Language, extensions, markdownSupportIcon(capability.TextGrep), markdownSupportIcon(capability.StructuralGrep),
 			markdownSupportIcon(capability.Outline), markdownSupportIcon(capability.Navigation), markdownSupportIcon(capability.FocusedStructure),
-			markdownSupportIcon(capability.FocusedFlow), markdownSupportIcon(capability.GritQL), markdownSupportIcon(capability.DirectoryArchitecture), markdownSupportIcon(capability.ImportRelations))
+			markdownSupportIcon(capability.FocusedFlow), markdownSupportIcon(capability.GritQL), markdownSupportIcon(capability.DirectoryArchitecture), markdownSupportIcon(capability.ImportRelations), markdownSupportIcon(capability.Entrypoints), markdownSupportIcon(capability.Routes))
 	}
 	return output.String()
 }

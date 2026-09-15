@@ -13,7 +13,7 @@ import (
 	"github.com/greppleai/grepple/search"
 )
 
-const navigationGraphSchema = "grepple-navigation-graph-v1"
+const navigationGraphSchema = "grepple-navigation-graph-v2"
 
 type graphArgs struct {
 	JSON           bool     `arg:"--json" help:"emit the complete normalized navigation graph as JSON"`
@@ -40,6 +40,7 @@ type navigationGraphOutput struct {
 	Resolution      search.NavigationResolutionStats `json:"resolution"`
 	TypeUsages      []parser.NavigationTypeUsage     `json:"typeUsages,omitempty"`
 	MemberAccesses  []parser.NavigationMemberAccess  `json:"memberAccesses,omitempty"`
+	Routes          []parser.NavigationRoute         `json:"routes,omitempty"`
 	RepositoryRoots []string                         `json:"repositoryRoots,omitempty"`
 	Query           *navigationGraphQuery            `json:"query,omitempty"`
 	Truncation      *navigationGraphTruncation       `json:"truncation,omitempty"`
@@ -125,8 +126,9 @@ func renderCompactNavigationGraph(graph navigationGraphOutput, maxBytes int) err
 		return err == nil
 	}
 	visibleCalls := compactNavigationCalls(graph.Calls)
+	entrypoints := countNavigationEntrypoints(graph.Declarations)
 	resolution := graph.Resolution
-	if !write(fmt.Sprintf("graph %s files=%d declarations=%d calls=%d visible-calls=%d resolved=%d ambiguous=%d unresolved=%d sources=%s", graph.Schema, graph.Files, len(graph.Declarations), resolution.Calls, len(visibleCalls), resolution.Resolved, resolution.Ambiguous, resolution.Unresolved, compactNavigationSourceSummary(graph.Sources))) {
+	if !write(fmt.Sprintf("graph %s files=%d declarations=%d calls=%d visible-calls=%d resolved=%d ambiguous=%d unresolved=%d entrypoints=%d routes=%d sources=%s", graph.Schema, graph.Files, len(graph.Declarations), resolution.Calls, len(visibleCalls), resolution.Resolved, resolution.Ambiguous, resolution.Unresolved, entrypoints, len(graph.Routes), compactNavigationSourceSummary(graph.Sources))) {
 		return nil
 	}
 	if graph.Query != nil && !write(compactGraphQueryLine(*graph.Query)) {
@@ -139,10 +141,37 @@ func renderCompactNavigationGraph(graph navigationGraphOutput, maxBytes int) err
 		return nil
 	}
 	declarations, callsByCaller := indexCompactNavigationGraph(graph.Declarations, visibleCalls)
-	writeCompactNavigationDeclarations(write, graph.Declarations, declarations, callsByCaller)
+	if !writeCompactNavigationDeclarations(write, graph.Declarations, declarations, callsByCaller) {
+		return nil
+	}
+	if !writeCompactNavigationRoutes(write, graph.Routes) {
+		return nil
+	}
 	return nil
 }
 
+func countNavigationEntrypoints(declarations []parser.NavigationDeclaration) int {
+	count := 0
+	for _, declaration := range declarations {
+		if declaration.Entrypoint != "" {
+			count++
+		}
+	}
+	return count
+}
+
+func writeCompactNavigationRoutes(write func(string) bool, routes []parser.NavigationRoute) bool {
+	for _, route := range routes {
+		method := route.Method
+		if method == "" {
+			method = "*"
+		}
+		if !write(fmt.Sprintf("P %s %s -> %s framework=%s %s:%d", method, compactRoutePattern(route.Pattern), route.Handler, route.Framework, route.Path, route.Line)) {
+			return false
+		}
+	}
+	return true
+}
 func compactNavigationSourceSummary(summary navigationSourceSummary) string {
 	return fmt.Sprintf("discovered:%d,selected:%d,parsed:%d,skipped:%d,failed:%d,recovered:%d", summary.Discovered, summary.Selected, summary.Parsed, summary.Skipped, summary.Failed, summary.Recovered)
 }
@@ -174,7 +203,7 @@ func indexCompactNavigationGraph(declarationList []parser.NavigationDeclaration,
 
 func writeCompactNavigationDeclarations(write func(string) bool, declarationList []parser.NavigationDeclaration, declarations map[string]parser.NavigationDeclaration, callsByCaller map[string][]parser.NavigationCall) bool {
 	for _, declaration := range declarationList {
-		line := fmt.Sprintf("D %s %s %s %s %s visibility=%s", shortGraphID(declaration.ID), declaration.Language, declaration.Kind, declaration.Name, graphDeclarationLocation(declaration), declaration.Visibility)
+		line := fmt.Sprintf("D %s %s %s %s %s %s visibility=%s", shortGraphID(declaration.ID), declaration.Language, declaration.Kind, declaration.Name, graphDeclarationLocation(declaration), compactEntrypoint(declaration.Entrypoint), declaration.Visibility)
 		if !write(line) {
 			return false
 		}
@@ -185,6 +214,17 @@ func writeCompactNavigationDeclarations(write func(string) bool, declarationList
 		}
 	}
 	return true
+}
+
+func compactEntrypoint(entrypoint string) string {
+	if entrypoint == "" {
+		return "entrypoint=none"
+	}
+	return "entrypoint=" + entrypoint
+}
+
+func compactRoutePattern(pattern string) string {
+	return strings.NewReplacer("\n", "\\n", "\r", "\\r", "\t", "\\t").Replace(pattern)
 }
 
 func compactNavigationCalls(calls []parser.NavigationCall) []parser.NavigationCall {
