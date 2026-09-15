@@ -32,7 +32,6 @@ Live `grepple ask` dogfooding showed two distinct bottlenecks: ordinary local/re
 
 - [ ] Add a per-invocation `researchSession` cache keyed by normalized typed-tool input and source/config identity; reuse identical local and remote results, coalesce concurrent duplicate calls with `singleflight`, and expose cache-hit status without changing evidence.
 - [ ] Lazily parse each normalized local source universe once per ask, then reuse caller-owned documents and one navigation graph across `navigate_code`, `query_graph`, and `inspect_architecture`; preserve byte-identical answers between cold and reused state.
-- [ ] Preflight local `navigate_code` locations with cheap declaration-range detection. If a location is package/import/file scope rather than a callable declaration, return a bounded correction without constructing the repository navigation graph.
 - [ ] Add a focused `inspect_symbol` tool that can combine bounded symbol discovery, deterministic declaration selection, immediate related navigation, and exact source retrieval in one call, reducing common count → files → snippets → navigate → read sequences.
 - [ ] Add an `auto` `search_code` projection that returns aggregate concentration, top matching paths, bounded snippets, and exact next locations together while retaining explicit `count`, `files`, and `snippets` modes.
 - [ ] Detect repeated or increasingly broad equivalent research calls and return cached evidence plus a synthesis/narrowing hint. Do not reintroduce a model-step cutoff; the overall timeout remains the execution bound.

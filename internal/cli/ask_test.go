@@ -219,6 +219,10 @@ func TestAskAnalysisToolsCallInternalEngines(t *testing.T) {
 	if err != nil || !jsonContains(graph, "helper") {
 		t.Fatalf("graph=%+v err=%v", graph, err)
 	}
+	navigation, err := runAskNavigate(context.Background(), root, "", askNavigateInput{Location: "source.go:1", FollowDepth: 2})
+	if err != nil || !jsonContains(navigation, "related graph construction was skipped") {
+		t.Fatalf("navigation=%+v err=%v", navigation, err)
+	}
 	structural, err := runAskStructural(context.Background(), root, "", askStructuralInput{Query: "language go\n`helper()`", Paths: []string{"source.go"}})
 	if err != nil || len(structural.Findings) != 1 {
 		t.Fatalf("structural findings=%d err=%v", len(structural.Findings), err)

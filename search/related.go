@@ -7,9 +7,12 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"sync/atomic"
 
 	"github.com/greppleai/grepple/parser"
 )
+
+var relatedBuildInvocations atomic.Int64
 
 const (
 	maxRelatedPoints      = 5
@@ -102,6 +105,7 @@ func attachRelated(matches []FileMatch, candidates []string, followDepth int) {
 	if !hasNavigationMatch(matches) {
 		return
 	}
+	relatedBuildInvocations.Add(1)
 	navigation := buildNavigationIndex(candidates, true)
 	if len(navigation.declarations) == 0 {
 		return

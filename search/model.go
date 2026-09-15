@@ -71,5 +71,6 @@ type FileMatch struct {
 	Related                                      []RelatedPoint
 	OmittedRelatedCallers, OmittedRelatedCallees int
 	SegmentsReady                                bool
+	CallableDeclaration                          bool
 	StructureStatus                              parser.SegmentBuildStatus
 }

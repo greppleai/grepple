@@ -219,7 +219,14 @@ func runAskNavigate(ctx context.Context, root, server string, input askNavigateI
 		return nil, err
 	}
 	results := search.BuildResults([]search.FileMatch{*match}, 0, 0, params.MaxSegments, true)
-	return map[string]any{"location": input.Location, "results": results}, nil
+	response := map[string]any{"location": input.Location, "results": results}
+	if !match.CallableDeclaration {
+		response["correction"] = map[string]string{
+			"reason": "location is not inside a callable declaration; related graph construction was skipped",
+			"next":   "use search_code snippets or read_file with outline=true to choose a function or method location",
+		}
+	}
+	return response, nil
 }
 
 func runAskStructural(ctx context.Context, root, server string, input askStructuralInput) (api.GritResponse, error) {

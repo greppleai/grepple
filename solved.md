@@ -163,3 +163,4 @@ This file records completed Grepple roadmap work that no longer belongs in `next
 - [x] Added reproducible version, revision, source time, toolchain, and platform output through `--version`.
 - [x] Added Google Release Please automation starting at `v0.0.1`, native-CGO GoReleaser builds and smoke tests for Linux amd64/arm64, macOS amd64/arm64, and Windows amd64, SHA-256 release assets, and plan-aware build-provenance attestations for public repositories.
 - [x] Added weekly grouped Dependabot updates for the root Go module, hooks module, and GitHub Actions.
+- [x] Added callable-declaration preflight to exact local navigation: package, import, blank, and other file-scope locations now return bounded source without constructing the repository-wide related graph; the typed ask tool adds an explicit correction while callable locations retain related traversal. A previously observed 14–27 second invalid navigation path completed in 0.06 seconds after the change.

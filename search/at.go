@@ -46,11 +46,12 @@ func At(params Params) (*FileMatch, error) {
 		MatchLines: map[int]bool{line: true}, SegmentsReady: true,
 	}
 	if start, end, ok := structure.DeclarationRangeAt(content, language, line); ok {
+		match.CallableDeclaration = true
 		match.Segments = []structure.Segment{{Kind: "lines", Start: start, End: end}}
 	} else {
 		match.Segments = structure.BuildSegments(content, language, match.MatchLines, params.MaxSegments)
 	}
-	if params.Related {
+	if params.Related && match.CallableDeclaration {
 		files, collectErr := collectCandidateFiles(nil, params.Root)
 		if collectErr != nil {
 			return nil, collectErr
