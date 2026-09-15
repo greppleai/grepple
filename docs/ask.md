@@ -1,6 +1,6 @@
 # Delegated research with `grepple ask`
 
-`grepple ask` runs a bounded, read-only internal research agent backed by a larger model. The agent receives focused JSON tools that directly invoke Grepple's search, parser navigation, GritQL, graph, architecture, source-scope, indexed-tree, and file-reading APIs. It receives neither a shell nor a generic Grepple command surface. This trades model/API cost for fewer interactive investigation turns in the calling agent.
+`grepple ask` runs a bounded, read-only internal research agent, usually with a cheaper model than the main coding agent. The delegated model receives focused JSON tools that directly invoke Grepple's search, parser navigation, GritQL, graph, architecture, source-scope, indexed-tree, and file-reading APIs. It receives neither a shell nor a generic Grepple command surface. Its job is to sift through noisy, multi-file evidence and return a compact source-backed handoff, trading modest model/API cost for fewer interactive turns and a cleaner, more focused main-agent context.
 
 ## Provider authentication
 
@@ -43,7 +43,7 @@ Set a non-secret per-user model default independently of credentials:
 }
 ```
 
-Command-line `--model` always takes precedence. Repository-owned `grepple.json` files cannot select the AI model.
+Command-line `--model` always takes precedence. Repository-owned `grepple.json` files cannot select the AI model. Prefer a capable cheaper model as the user default for broad research; override it only when an investigation needs a different cost/capability tradeoff.
 
 Human answers participate in Grepple's normal bounded-output and artifact-spill behavior.
 

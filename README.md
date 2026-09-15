@@ -56,14 +56,14 @@ The default Linux build links the CGO tree-sitter runtime and all grammars into 
 
 ## Delegated research
 
-Authenticate a larger model once, then delegate bounded source research without consuming repeated turns in the calling agent:
+Authenticate a capable, usually cheaper research model once, then delegate broad source exploration without consuming repeated turns or filling the calling agent's context:
 
 ```bash
 grepple ai-provider login codex
 grepple ask Which package owns navigation resolution and what calls it?
 ```
 
-The internal agent has focused typed tools for text search, exact navigation, structural search, graph queries, architecture, source scope, indexed refs and trees, and bounded file reads. They call Grepple internals directly: no generic argv tool, command parser, executable subprocess, or shell is exposed to the model. Every run writes a complete permission-restricted JSONL debug log under `~/.grepple/ask-logs/` and prints its path to stderr. Codex device authentication is implemented behind a provider registry so additional AI providers can be added without changing `ask`. Set `ai.model` in the non-secret user configuration `~/.grepple/grepple.json` to choose the default model; `--model` overrides it. See [Delegated research](docs/ask.md) for provider, model, logging, timeout, credential, and tool-safety details.
+The internal agent is intended to sift through messy, multi-file evidence with a cost-efficient model and return a compact research handoff for the main coding agent to verify and implement. It has focused typed tools for text search, exact navigation, structural search, graph queries, architecture, source scope, indexed refs and trees, and bounded file reads. They call Grepple internals directly: no generic argv tool, command parser, executable subprocess, or shell is exposed to the model. Every run writes a complete permission-restricted JSONL debug log under `~/.grepple/ask-logs/` and prints its path to stderr. Codex device authentication is implemented behind a provider registry so additional AI providers can be added without changing `ask`. Set `ai.model` in the non-secret user configuration `~/.grepple/grepple.json` to choose the default research model; `--model` overrides it. See [Delegated research](docs/ask.md) for provider, model, logging, timeout, credential, and tool-safety details.
 
 ## Search
 

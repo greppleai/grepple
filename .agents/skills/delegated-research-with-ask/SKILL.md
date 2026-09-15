@@ -1,20 +1,20 @@
 ---
 name: delegated-research-with-ask
-description: "Use when a repository question needs substantial multi-step, source-backed research that is worth delegating to a larger model—especially architecture, call-path, structural-audit, cross-repository, or exact dependency-version investigations. Prefer direct Grepple lookup for simple questions and keep implementation, mutation, builds, and final verification in the calling agent."
+description: "Use when a repository question needs substantial multi-step, source-backed research that is worth delegating to a cheaper model—especially broad architecture, call-path, structural-audit, cross-repository, or exact dependency-version investigations. Prefer direct Grepple lookup for simple questions and keep implementation, mutation, builds, and final verification in the calling agent."
 ---
 
 # Delegated research with `grepple ask`
 
-Use `grepple ask` as a research subagent, not as a replacement for the coding agent. It gives a larger model focused, read-only Grepple capabilities and returns a source-backed synthesis while preserving the calling agent's context for implementation and verification.
+Use `grepple ask` as a research subagent, not as a replacement for the coding agent. It gives a usually cheaper model focused, read-only Grepple capabilities so it can perform messy, broad exploration and return a compact source-backed synthesis while preserving the calling agent's context for implementation and verification.
 
 ## Why use it
 
-A normal unfamiliar-code investigation can consume many interactive turns: locate ownership, search symbols, inspect declarations, follow calls, examine architecture, check an exact dependency version, and synthesize the evidence. `grepple ask` delegates that loop to one model invocation.
+A normal unfamiliar-code investigation can consume many interactive turns and large amounts of context: locate ownership, search symbols, inspect declarations, follow calls, sift through many files, examine architecture, check an exact dependency version, and synthesize the evidence. `grepple ask` delegates that noisy loop to one isolated model invocation.
 
 Benefits:
 
 - **Context isolation:** tool calls, source excerpts, and intermediate reasoning stay in the delegated run and its JSONL log instead of filling the calling agent's context.
-- **Stronger research model:** use a larger user-configured model for difficult synthesis while retaining a smaller or faster model for routine coding work.
+- **Cost-efficient delegation:** use a cheaper user-configured model for broad retrieval and evidence sifting while retaining the main model's context and capability for implementation, judgment, and verification.
 - **Source-backed answers:** the research agent is instructed to cite repository paths and exact line ranges.
 - **Purpose-built tools:** it receives typed tools for text search, exact navigation, structural search, graph queries, directory architecture, source scope, indexed refs and trees, and bounded file reads.
 - **No shell exposure:** tools invoke Grepple internals directly; the delegated model gets no shell, generic argv command, mutation surface, or recursive `ask` capability.
@@ -67,7 +67,7 @@ If needed, ask the user to complete interactive authentication:
 grepple ai-provider login codex
 ```
 
-The model defaults to `ai.model` in `~/.grepple/grepple.json`, then the provider default. Use `--model` only when the task needs an explicit override.
+The model defaults to `ai.model` in `~/.grepple/grepple.json`, then the provider default. Prefer a capable cheaper research model there; use `--model` when a particular investigation needs a different cost/capability tradeoff.
 
 ## Recommended workflow
 
