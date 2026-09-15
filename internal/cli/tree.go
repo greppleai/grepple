@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -63,6 +64,10 @@ func runTree(args []string) error {
 // fetchTree retrieves the directory listing from the server's /public/tree,
 // surfacing the server's error text for non-2xx responses.
 func fetchTree(base string, values treeArgs) (api.TreeResponse, error) {
+	return fetchTreeContext(context.Background(), base, values)
+}
+
+func fetchTreeContext(ctx context.Context, base string, values treeArgs) (api.TreeResponse, error) {
 	target, err := url.Parse(strings.TrimRight(base, "/") + "/public/tree")
 	if err != nil {
 		return api.TreeResponse{}, err
@@ -78,6 +83,7 @@ func fetchTree(base string, values treeArgs) (api.TreeResponse, error) {
 	if err != nil {
 		return api.TreeResponse{}, err
 	}
+	req = req.WithContext(ctx)
 	response, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return api.TreeResponse{}, err

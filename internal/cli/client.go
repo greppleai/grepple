@@ -16,6 +16,10 @@ import (
 )
 
 func searchRemote(options *cliOptions, server string) ([]api.FileResult, error) {
+	return searchRemoteContext(context.Background(), options, server)
+}
+
+func searchRemoteContext(ctx context.Context, options *cliOptions, server string) ([]api.FileResult, error) {
 	body, err := json.Marshal(searchRequestFromParams(options.Params))
 	if err != nil {
 		return nil, err
@@ -24,6 +28,7 @@ func searchRemote(options *cliOptions, server string) ([]api.FileResult, error) 
 	if err != nil {
 		return nil, err
 	}
+	req = req.WithContext(ctx)
 	response, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, err

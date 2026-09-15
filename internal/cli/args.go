@@ -392,12 +392,12 @@ Commands:
   sources      Explain repository configuration and source selection
   languages    Show the language capability matrix
   rules        Manage and inspect saved remote rules
+  repos        List indexed repositories
   get          Read one indexed repository file or outline
   tree         List an indexed repository tree
   refs         List indexed repository branches, tags, and commits
   ask          Delegate bounded code research to a larger tool-using model
   ai-provider  Authenticate and inspect AI model providers
-  refs         List indexed repository branches, tags, and commits
   login        Authenticate with the remote service
   logout       Remove stored remote authentication
   version      Print build and source version information

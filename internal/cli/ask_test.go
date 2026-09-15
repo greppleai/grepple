@@ -90,6 +90,22 @@ func assertAskLog(t *testing.T, directory string) {
 	}
 }
 
+func assertAskRequest(t *testing.T, requestCount int, requestBody map[string]any, encoded []byte) {
+	t.Helper()
+	body := string(encoded)
+	if requestCount == 1 {
+		if !strings.Contains(body, "where is parsing") || requestBody["model"] != "gpt-5.6-luna" || requestBody["stream"] != true {
+			t.Fatalf("request body did not contain question: %s", encoded)
+		}
+		if !strings.Contains(body, `"name":"search_code"`) || !strings.Contains(body, `"name":"navigate_code"`) || !strings.Contains(body, `"name":"read_file"`) || strings.Contains(body, `"name":"grepple"`) {
+			t.Fatalf("request did not contain direct typed tools: %s", encoded)
+		}
+	}
+	if requestCount == 2 && !strings.Contains(body, "source evidence") {
+		t.Fatalf("second request did not contain tool evidence: %s", encoded)
+	}
+}
+
 func newAskTestServer(t *testing.T) (*httptest.Server, *int) {
 	t.Helper()
 	requestCount := 0
@@ -104,17 +120,12 @@ func newAskTestServer(t *testing.T) (*httptest.Server, *int) {
 		}
 		encoded, _ := json.Marshal(requestBody)
 		requestCount++
-		if requestCount == 1 && (!strings.Contains(string(encoded), "where is parsing") || requestBody["model"] != "gpt-5.6-luna" || requestBody["stream"] != true) {
-			t.Fatalf("request body did not contain question: %s", encoded)
-		}
-		if requestCount == 2 && !strings.Contains(string(encoded), "source evidence") {
-			t.Fatalf("second request did not contain tool evidence: %s", encoded)
-		}
+		assertAskRequest(t, requestCount, requestBody, encoded)
 		writer.Header().Set("content-type", "text/event-stream")
 		if requestCount == 1 {
 			writeAskSSE(writer,
-				`{"type":"response.output_item.added","output_index":0,"item":{"id":"tool","type":"function_call","status":"in_progress","call_id":"call-1","name":"read","arguments":""}}`,
-				`{"type":"response.output_item.done","output_index":0,"item":{"id":"tool","type":"function_call","status":"completed","call_id":"call-1","name":"read","arguments":"{\"path\":\"evidence.txt\",\"start_line\":1,\"end_line\":1}"}}`,
+				`{"type":"response.output_item.added","output_index":0,"item":{"id":"tool","type":"function_call","status":"in_progress","call_id":"call-1","name":"read_file","arguments":""}}`,
+				`{"type":"response.output_item.done","output_index":0,"item":{"id":"tool","type":"function_call","status":"completed","call_id":"call-1","name":"read_file","arguments":"{\"path\":\"evidence.txt\",\"start_line\":1,\"end_line\":1}"}}`,
 				askCompletedEvent("response-1"),
 			)
 			return
@@ -154,22 +165,79 @@ func TestSimpleReadToolIsBoundedAndConfined(t *testing.T) {
 	}
 }
 
-func TestResearchToolRejectsRecursiveAndMutatingCommands(t *testing.T) {
-	for _, args := range [][]string{{"ask", "question"}, {"ai-provider", "login"}, {"artifacts", "clean"}, {"anchors", "setup", "--write"}, {"rules", "add"}} {
-		response, err := runGreppleResearchTool(context.Background(), greppleToolInput{Args: args})
-		if err != nil || !response.IsError {
-			t.Fatalf("args=%v response=%+v err=%v", args, response, err)
+func TestAskResearchToolsAreTypedAndDirect(t *testing.T) {
+	names := askResearchToolNames()
+	if strings.Contains(strings.Join(names, ","), "grepple") {
+		t.Fatalf("generic CLI tool is still exposed: %v", names)
+	}
+	info, _ := json.Marshal(askResearchToolInfo(newAskResearchTools(t.TempDir(), "https://example.invalid")))
+	for _, field := range []string{`"query"`, `"location"`, `"operation"`, `"direction"`, `"repository"`} {
+		if !bytes.Contains(info, []byte(field)) {
+			t.Fatalf("typed tool schemas missing %s: %s", field, info)
 		}
+	}
+	root := t.TempDir()
+	if err := os.WriteFile(filepath.Join(root, "source.go"), []byte("package sample\n\nfunc Parse() {}\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	t.Chdir(root)
+	value, err := runAskSearch(context.Background(), root, "", askSearchInput{Query: "Parse", Mode: "snippets"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	encoded, _ := json.Marshal(value)
+	if !bytes.Contains(encoded, []byte("source.go")) || !bytes.Contains(encoded, []byte("func Parse")) {
+		t.Fatalf("direct search result=%s", encoded)
+	}
+	if _, err := runAskSearch(context.Background(), root, "", askSearchInput{Query: "Parse", Paths: []string{root}}); err != nil {
+		t.Fatalf("direct search rejected the workspace root: %v", err)
+	}
+	if _, err := runAskSearch(context.Background(), root, "", askSearchInput{Query: "root", Paths: []string{"../outside"}}); err == nil {
+		t.Fatal("direct search accepted a path outside the workspace")
+	}
+	outside := t.TempDir()
+	if err := os.Symlink(outside, filepath.Join(root, "escape")); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := runAskSearch(context.Background(), root, "", askSearchInput{Query: "root", Paths: []string{"escape"}}); err == nil {
+		t.Fatal("direct search accepted a symlink escape")
 	}
 }
 
-func TestBoundedBufferDisclosesTruncation(t *testing.T) {
-	buffer := &boundedBuffer{limit: 4}
-	if count, err := buffer.Write([]byte("abcdef")); err != nil || count != 6 {
-		t.Fatalf("count=%d err=%v", count, err)
+func TestAskAnalysisToolsCallInternalEngines(t *testing.T) {
+	root := t.TempDir()
+	source := "package sample\n\nfunc Parse() { helper() }\nfunc helper() {}\n"
+	if err := os.WriteFile(filepath.Join(root, "source.go"), []byte(source), 0o600); err != nil {
+		t.Fatal(err)
 	}
-	if buffer.String() != "abcd" || !buffer.truncated {
-		t.Fatalf("buffer=%q truncated=%v", buffer.String(), buffer.truncated)
+	t.Chdir(root)
+	architecture, err := runAskArchitecture(root, askArchitectureInput{Operation: "resolve", Symbol: "Parse", Paths: []string{"source.go"}})
+	if err != nil || !jsonContains(architecture, "Parse") {
+		t.Fatalf("architecture=%+v err=%v", architecture, err)
+	}
+	graph, err := runAskGraph(root, askGraphInput{Direction: "callees", Symbol: "Parse", Paths: []string{"source.go"}, Depth: 1})
+	if err != nil || !jsonContains(graph, "helper") {
+		t.Fatalf("graph=%+v err=%v", graph, err)
+	}
+	structural, err := runAskStructural(context.Background(), root, "", askStructuralInput{Query: "language go\n`helper()`", Paths: []string{"source.go"}})
+	if err != nil || len(structural.Findings) != 1 {
+		t.Fatalf("structural findings=%d err=%v", len(structural.Findings), err)
+	}
+	sources, err := buildSourceScopeReport([]string{"source.go"})
+	if err != nil || sources.SelectedFiles != 1 {
+		t.Fatalf("sources=%+v err=%v", sources, err)
+	}
+}
+
+func jsonContains(value any, text string) bool {
+	encoded, _ := json.Marshal(value)
+	return bytes.Contains(encoded, []byte(text))
+}
+
+func TestAskToolResultDisclosesTruncation(t *testing.T) {
+	response, err := askToolResult(strings.Repeat("x", defaultToolOutputSize+1), nil)
+	if err != nil || response.IsError || !strings.Contains(response.Content, `"truncated":true`) {
+		t.Fatalf("response=%+v err=%v", response, err)
 	}
 }
 

@@ -5,10 +5,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -29,19 +27,18 @@ const (
 type askArgs struct {
 	Provider string   `arg:"--provider" placeholder:"NAME" help:"AI provider (default codex)"`
 	Model    string   `arg:"--model" placeholder:"MODEL" help:"larger research model (user/provider default when omitted)"`
+	Server   string   `arg:"--server" placeholder:"URL" help:"remote Grepple service available to research tools"`
 	Steps    int      `arg:"--max-steps" placeholder:"N" help:"maximum model/tool steps"`
 	Timeout  int      `arg:"--timeout-seconds" placeholder:"N" help:"overall deadline in seconds"`
 	Question []string `arg:"positional" placeholder:"QUESTION"`
 }
 
-type greppleToolInput struct {
-	Args []string `json:"args" description:"Grepple CLI arguments, excluding the grepple executable"`
-}
-
 type readToolInput struct {
-	Path      string `json:"path" description:"Repository-relative file path"`
-	StartLine int    `json:"start_line,omitempty" description:"First 1-indexed line; defaults to 1"`
-	EndLine   int    `json:"end_line,omitempty" description:"Last 1-indexed line; defaults to start+199"`
+	Path       string `json:"path" description:"Repository-relative file path"`
+	Repository string `json:"repository,omitempty" description:"Exact indexed OWNER/REPO[@REF] selector; omit for local workspace"`
+	StartLine  int    `json:"start_line,omitempty" description:"First 1-indexed line; defaults to 1"`
+	EndLine    int    `json:"end_line,omitempty" description:"Last 1-indexed line; defaults to start+199"`
+	Outline    bool   `json:"outline,omitempty" description:"Return the file's structural outline instead of source lines"`
 }
 
 func validateAskArgs(values askArgs) (string, error) {
@@ -105,24 +102,18 @@ func runAsk(args []string) error {
 
 func runLoggedAsk(ctx context.Context, log *askLog, provider aiprovider.Provider, values askArgs, question, root string) error {
 	systemPrompt := askSystemPrompt(root)
+	server := serverDefault(values.Server)
+	tools := newAskResearchTools(root, server)
 	if err := log.Record("session.start", map[string]any{
-		"provider": provider.Name(), "model": values.Model, "question": question, "root": root,
+		"provider": provider.Name(), "model": values.Model, "question": question, "root": root, "server": server,
 		"maxSteps": values.Steps, "timeoutSeconds": values.Timeout, "systemPrompt": systemPrompt,
-		"tools": []map[string]string{{"name": "grepple", "description": greppleResearchToolDescription}, {"name": "read", "description": "Read a bounded line range from one local file under the current working directory."}},
+		"tools": askResearchToolInfo(tools),
 	}); err != nil {
 		return err
 	}
 	model, err := provider.LanguageModel(ctx, values.Model)
 	if err != nil {
 		return recordAskError(log, err)
-	}
-	tools := []fantasy.AgentTool{
-		fantasy.NewAgentTool("grepple", greppleResearchToolDescription, func(ctx context.Context, input greppleToolInput, _ fantasy.ToolCall) (fantasy.ToolResponse, error) {
-			return runGreppleResearchTool(ctx, input)
-		}),
-		fantasy.NewAgentTool("read", "Read a bounded line range from one local file under the current working directory. Provide path and optional 1-indexed start_line/end_line; paths must remain under the workspace root.", func(_ context.Context, input readToolInput, _ fantasy.ToolCall) (fantasy.ToolResponse, error) {
-			return runSimpleReadTool(root, input)
-		}),
 	}
 	agent := fantasy.NewAgent(model, fantasy.WithSystemPrompt(systemPrompt), fantasy.WithTools(tools...))
 	result, err := agent.Stream(ctx, loggedAgentStreamCall(log, question, values.Steps))
@@ -176,68 +167,10 @@ func resolveAskModel(explicit, providerDefault string) (string, error) {
 
 func askSystemPrompt(root string) string {
 	return "You are Grepple's internal read-only research agent. Answer the user's question with precise, source-backed evidence. " +
-		"Use the grepple tool aggressively to search, navigate, inspect indexed repositories, and retrieve exact ranges. Use the read tool only for bounded local files. " +
-		"Start with counts, files, outlines, architecture, or repository trees; narrow before retrieving bodies. Cite repository/path:line ranges in the final answer. " +
-		"Do not modify files, credentials, rules, artifacts, or configuration. Never invoke grepple ask or ai-provider. " +
+		"Use the focused research tools directly; there is no shell or CLI. Start with search_code count/files or inspect_architecture when scope is unknown, then use snippets, navigate_code, query_graph, structural_search, or read_file only as needed. " +
+		"Use repository_tree and a repository selector for remote indexed source. Use explain_sources before completeness-sensitive conclusions. Cite repository/path:line ranges in the final answer. " +
+		"Navigation is syntax-based, structural queries prove syntax rather than types or data flow, and bounded results can have more pages. Do not modify files, credentials, artifacts, or configuration. " +
 		"The local workspace root is " + root + "."
-}
-
-func runGreppleResearchTool(ctx context.Context, input greppleToolInput) (fantasy.ToolResponse, error) {
-	if len(input.Args) == 0 {
-		return fantasy.NewTextErrorResponse("args must not be empty"), nil
-	}
-	if reason := deniedResearchCommand(input.Args); reason != "" {
-		return fantasy.NewTextErrorResponse(reason), nil
-	}
-	executable, err := os.Executable()
-	if err != nil {
-		return fantasy.NewTextErrorResponse(err.Error()), nil
-	}
-	args := append([]string(nil), input.Args...)
-	args = append(args, "--no-spill")
-	command := exec.CommandContext(ctx, executable, args...)
-	output := &boundedBuffer{limit: defaultToolOutputSize}
-	command.Stdout, command.Stderr = output, output
-	err = command.Run()
-	text := output.String()
-	if output.truncated {
-		text += "\n[tool output truncated; narrow the command]\n"
-	}
-	if err != nil {
-		text += "\nexit: " + err.Error()
-		return fantasy.NewTextErrorResponse(text), nil
-	}
-	return fantasy.NewTextResponse(text), nil
-}
-
-func deniedResearchCommand(args []string) string {
-	command := strings.ToLower(args[0])
-	switch command {
-	case "ask", "ai-provider", "login", "logout":
-		return "recursive or credential-mutating Grepple commands are unavailable to the research agent"
-	case "artifacts":
-		if len(args) > 1 && args[1] == "clean" {
-			return "artifact deletion is unavailable to the research agent"
-		}
-	case "anchors":
-		if containsArg(args, "--write") {
-			return "anchor configuration writes are unavailable to the research agent"
-		}
-	case "rules":
-		if len(args) > 1 && args[1] != "list" && args[1] != "results" {
-			return "saved-rule mutations are unavailable to the research agent"
-		}
-	}
-	return ""
-}
-
-func containsArg(args []string, value string) bool {
-	for _, item := range args {
-		if item == value {
-			return true
-		}
-	}
-	return false
 }
 
 func runSimpleReadTool(root string, input readToolInput) (fantasy.ToolResponse, error) {
@@ -293,25 +226,3 @@ func confinedReadPath(root, requested string) (string, error) {
 	}
 	return path, nil
 }
-
-type boundedBuffer struct {
-	buffer    bytes.Buffer
-	limit     int
-	truncated bool
-}
-
-func (b *boundedBuffer) Write(content []byte) (int, error) {
-	original := len(content)
-	remaining := b.limit - b.buffer.Len()
-	if remaining > 0 {
-		_, _ = b.buffer.Write(content[:min(remaining, len(content))])
-	}
-	if original > remaining {
-		b.truncated = true
-	}
-	return original, nil
-}
-
-func (b *boundedBuffer) String() string { return b.buffer.String() }
-
-var _ io.Writer = (*boundedBuffer)(nil)

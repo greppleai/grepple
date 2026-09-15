@@ -209,6 +209,9 @@ func TestTopLevelHelpListsCommandFamilies(t *testing.T) {
 			t.Fatalf("top-level help missing %q:\n%s", expected, output)
 		}
 	}
+	if count := strings.Count(output, "  refs         "); count != 1 {
+		t.Fatalf("top-level help lists refs %d times:\n%s", count, output)
+	}
 }
 
 func TestHelpCommandAndExplicitSearch(t *testing.T) {

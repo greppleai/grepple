@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -83,10 +84,15 @@ func getRawURL(values getArgs) (*url.URL, error) {
 // fetchRaw performs the authorized GET and returns the body, surfacing the
 // server's error text for non-2xx responses.
 func fetchRaw(target, base string) ([]byte, error) {
+	return fetchRawContext(context.Background(), target, base)
+}
+
+func fetchRawContext(ctx context.Context, target, base string) ([]byte, error) {
 	req, err := authorizedRequest(http.MethodGet, target, "", nil)
 	if err != nil {
 		return nil, err
 	}
+	req = req.WithContext(ctx)
 	response, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, err
