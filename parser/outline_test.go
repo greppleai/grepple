@@ -15,6 +15,24 @@ func find(symbols []Symbol, kind, name string) (Symbol, bool) {
 	return Symbol{}, false
 }
 
+func TestOutlineFromDocumentDoesNotReparse(t *testing.T) {
+	content := "package sample\ntype Item struct{}\nfunc Build() Item { return Item{} }\n"
+	before := parseInvocations.Load()
+	document, err := ParseDocument("go", content)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer document.Close()
+	afterParse := parseInvocations.Load()
+	outline := OutlineFromDocument("sample.go", document)
+	if afterParse != before+1 || parseInvocations.Load() != afterParse {
+		t.Fatalf("parse counts before=%d after=%d final=%d", before, afterParse, parseInvocations.Load())
+	}
+	if len(outline.Symbols) != 2 || outline.Symbols[0].Name != "Item" || outline.Symbols[1].Name != "Build" {
+		t.Fatalf("outline=%#v", outline)
+	}
+}
+
 func mustFind(t *testing.T, symbols []Symbol, kind, name string) Symbol {
 	t.Helper()
 	s, ok := find(symbols, kind, name)

@@ -123,17 +123,26 @@ func attachRelated(matches []FileMatch, candidates []string, followDepth int) {
 }
 
 func buildNavigationIndex(files []string, useCache bool) *navigationIndex {
-	index := &navigationIndex{
-		declarations: make(map[string][]navigationDeclaration), callers: make(map[string][]navigationCaller),
-		calls: make(map[string][]navigationCall), byFile: make(map[string][]navigationDeclaration),
-		byLocation: make(map[string]navigationDeclaration), exports: make(map[string][]navigationExport), fields: make(map[string][]navigationField), embeddedFields: make(map[string][]navigationField), contents: make(map[string]string), goReplacements: make(map[string]string), goPackages: make(map[string][]string),
-	}
+	index := newNavigationIndex()
 	cwd, _ := os.Getwd()
 	paths := append([]string(nil), files...)
 	sort.Strings(paths)
 	for _, path := range paths {
 		index.addFile(path, cwd, useCache)
 	}
+	index.finalize(paths)
+	return index
+}
+
+func newNavigationIndex() *navigationIndex {
+	return &navigationIndex{
+		declarations: make(map[string][]navigationDeclaration), callers: make(map[string][]navigationCaller),
+		calls: make(map[string][]navigationCall), byFile: make(map[string][]navigationDeclaration),
+		byLocation: make(map[string]navigationDeclaration), exports: make(map[string][]navigationExport), fields: make(map[string][]navigationField), embeddedFields: make(map[string][]navigationField), contents: make(map[string]string), goReplacements: make(map[string]string), goPackages: make(map[string][]string),
+	}
+}
+
+func (index *navigationIndex) finalize(paths []string) {
 	index.graph.RepositoryRoots, index.goReplacements, index.goPackages = goRepositoryContext(paths)
 	index.inferReExportTargets()
 	index.inferCrossFileFieldReceivers()
@@ -143,7 +152,6 @@ func buildNavigationIndex(files []string, useCache bool) *navigationIndex {
 	index.indexNavigationCallers()
 	index.resolveGraphCalls()
 	index.resolveGraphImports()
-	return index
 }
 
 // NavigationSourceStats reports the completeness of one navigation graph build.
@@ -174,6 +182,27 @@ type NavigationBuildOptions struct {
 // BuildNavigationGraphWithOptions builds the graph with explicit cache behavior.
 func BuildNavigationGraphWithOptions(files []string, options NavigationBuildOptions) (parser.NavigationGraph, NavigationSourceStats) {
 	index := buildNavigationIndex(files, !options.DisableCache)
+	return index.graph, index.sourceStats
+}
+
+// NavigationDocumentSource pairs one caller-owned parsed document with its path.
+type NavigationDocumentSource struct {
+	Path     string
+	Document *parser.Document
+}
+
+// BuildNavigationGraphFromDocuments resolves a graph from already parsed documents.
+func BuildNavigationGraphFromDocuments(sources []NavigationDocumentSource, options NavigationBuildOptions) (parser.NavigationGraph, NavigationSourceStats) {
+	ordered := append([]NavigationDocumentSource(nil), sources...)
+	sort.Slice(ordered, func(i, j int) bool { return ordered[i].Path < ordered[j].Path })
+	index := newNavigationIndex()
+	cwd, _ := os.Getwd()
+	paths := make([]string, 0, len(ordered))
+	for _, source := range ordered {
+		paths = append(paths, source.Path)
+		index.addDocument(source, cwd, !options.DisableCache)
+	}
+	index.finalize(paths)
 	return index.graph, index.sourceStats
 }
 
@@ -457,6 +486,28 @@ func (index *navigationIndex) addFile(path, cwd string, useCache bool) {
 		index.sourceStats.Failed++
 		return
 	}
+	index.addParsedGraph(cleanPath, displayPath, language, content, graph, recovered)
+}
+
+func (index *navigationIndex) addDocument(source NavigationDocumentSource, cwd string, useCache bool) {
+	index.sourceStats.Attempted++
+	if source.Document == nil || !supportsNavigation(source.Document.Language()) {
+		index.sourceStats.Skipped++
+		return
+	}
+	cleanPath := filepath.Clean(source.Path)
+	displayPath := displayPathFrom(source.Path, cwd)
+	recovered := source.Document.Root().HasError()
+	var graph parser.NavigationGraph
+	if useCache {
+		graph, _ = parser.CachedNavigationGraphFromDocument(source.Document, displayPath)
+	} else {
+		graph = parser.NavigationGraphFromDocument(source.Document, displayPath)
+	}
+	index.addParsedGraph(cleanPath, displayPath, source.Document.Language(), source.Document.Source(), graph, recovered)
+}
+
+func (index *navigationIndex) addParsedGraph(cleanPath, displayPath, language, content string, graph parser.NavigationGraph, recovered bool) {
 	if recovered {
 		index.sourceStats.Recovered++
 	}

@@ -19,7 +19,7 @@ benchstat before.txt after.txt
 
 ## Fixed workflows
 
-`BenchmarkAgentWorkflows` creates a deterministic two-file Go fixture and verifies required answer fragments on every iteration.
+`BenchmarkAgentWorkflows` creates a deterministic multi-directory Go fixture and verifies required answer fragments on every iteration.
 
 | Workflow | Question represented | CLI retrieval calls |
 | --- | --- | ---: |
@@ -30,7 +30,9 @@ benchstat before.txt after.txt
 | `LineLocateThenAt` | Locate a line with its construct extent, then retrieve that declaration. | 2 |
 | `RelatedNavigation` | What immediately calls this and what does it call? | 1 |
 | `ImpactGraph` | What is the bounded bidirectional impact neighborhood? | 1 |
+| `DirectoryOrientation` | What are the bounded physical owners and typed relation kinds? | 1 |
 | `ArchitectureResolve` | Which directory owns this declaration and what is its exact range? | 1 |
+| `RelationExplanation` | What exact call/import/type evidence connects two directories? | 1 |
 | `EnclosingScope` | What nearest syntax scope owns this body-line match? | 1 |
 | `EditLocation` | Where is the exact edit-ready evidence line? | 1 |
 
@@ -59,11 +61,13 @@ Linux/amd64, Intel Core Ultra 7 165H, Go 1.25.14, `-benchtime=10x`:
 | `LineLocateThenAt` | 2 | 152 | 38 | 5.07 ms |
 | `RelatedNavigation` | 1 | 307 | 76.75 | 8.10 ms |
 | `ImpactGraph` | 1 | 978 | 244.5 | 6.33 ms |
-| `ArchitectureResolve` | 1 | 190 | 47.5 | 4.36 ms |
+| `DirectoryOrientation` | 1 | 811 | 202.75 | 4.64 ms |
+| `ArchitectureResolve` | 1 | 190 | 47.5 | 5.04 ms |
+| `RelationExplanation` | 1 | 366 | 91.5 | 4.37 ms |
 | `EnclosingScope` | 1 | 53 | 13.25 | 2.87 ms |
 | `EditLocation` | 1 | 40 | 10 | 2.69 ms |
 
-Direct `ArchitectureResolve` replaces the former package-summary fixture for known declarations. It returns owner, exact range, and source classification in 190 bytes instead of the former 337-byte package summary, a 44% reduction, while remaining one retrieval call. The structural lookup similarly returns slightly more text than line-only plus `--at`, but removes one retrieval round trip. Timing is machine-dependent; call and fixture-output metrics are the primary regression signals until statistically reviewed budgets are established.
+The three architecture tasks are independently answerable in one retrieval call: bounded orientation uses 811 bytes, direct ownership resolution 190 bytes, and exact relation explanation 366 bytes. Running all three would retrieve 1,367 bytes/~342 tokens, while an agent with a known symbol or directory pair can skip orientation entirely. Direct `ArchitectureResolve` remains 44% smaller than the former 337-byte package summary while adding source classification. The structural lookup similarly returns slightly more text than line-only plus `--at`, but removes one retrieval round trip. Timing is machine-dependent; call and fixture-output metrics are the primary regression signals until statistically reviewed budgets are established.
 
 ## Navigation-resolution measurement extension
 

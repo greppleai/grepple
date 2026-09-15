@@ -8,6 +8,7 @@ This file records completed Grepple roadmap work that no longer belongs in `next
 - [x] Added short intent-triggered skills for local retrieval, architecture lookup, change impact, boundary review, structural audits, architecture diagrams, and remote inspection.
 - [x] Made each skill state what Grepple evidence can and cannot prove, with explicit handling for candidates, bounded output, source universes, and syntax-only analysis.
 - [x] Added repeatable agent workflow benchmarks for breadth summaries, outlines, structural lookup, exact ranges, related navigation, impact graphs, enclosing scopes, and edit locations.
+- [x] Added answer-gated task benchmarks for bounded directory orientation, direct architecture resolution, and exact relation explanation; each task completes in one modeled retrieval call.
 
 ## CLI discoverability
 
@@ -89,6 +90,7 @@ This file records completed Grepple roadmap work that no longer belongs in `next
 - [x] Added adapter-owned import facts and local target paths to the shared navigation graph for Go and JavaScript/TypeScript, with explicit language capability reporting and cache-safe path instantiation.
 - [x] Added independently labeled import-only and imported-type directory relations with production/test/fixture/generated/vendor evidence totals and resolved/ambiguous/unresolved/unsupported coverage.
 - [x] Kept compact directory relation output bounded to displayed directory depth while `architecture why` preserves exact uncollapsed evidence.
+- [x] Added `parser.OutlineFromDocument` and document-backed graph construction so directory architecture parses each selected source once for both outlines and navigation.
 - [x] Removed Go-specific package/workspace commands, public capability fields, generators, checkers, hook paths, tests, and committed `.grepple` artifacts without a compatibility period.
 
 ## Parser and language architecture

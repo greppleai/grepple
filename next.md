@@ -4,7 +4,7 @@
 
 ## Recommended next milestone
 
-> Add adapter-evidenced entrypoints/routes and parse each architecture source once. Measure artifact-backed task success before revisiting syntax lifecycle APIs.
+> Add adapter-evidenced entrypoints/routes and measure artifact-backed task success before revisiting syntax lifecycle APIs.
 
 ## Planning principles
 
@@ -22,8 +22,6 @@
 `grepple architecture directory|resolve|why` now provides bounded, language-neutral directory ownership, exact type/callable ranges, source-classified call/import/type relations, and explicit relation coverage. Legacy Go package/workspace commands and generated artifacts have been removed.
 
 - [ ] Add adapter-evidenced entrypoints and routes only where languages provide useful contracts.
-- [ ] Parse or restore each selected file once when deriving both outlines and the resolved navigation graph.
-- [ ] Add task-level answer/turn/output benchmarks comparing directory orientation, direct symbol resolution, and relation explanation.
 
 ### Spill large output to a file artifact
 

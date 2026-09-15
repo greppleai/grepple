@@ -33,7 +33,9 @@ func BenchmarkAgentWorkflows(b *testing.B) {
 		{name: "LineLocateThenAt", commands: [][]string{{"--line-only", "-F", "func Run(", "service.go", "--no-anchors"}, {"--at", "service.go:2-6", "--no-anchors"}}, want: []string{"service.go:2-6:func Run()", "validate()", "save()"}},
 		{name: "RelatedNavigation", commands: [][]string{{"--related", "--at", "service.go:2", "--no-anchors"}}, want: []string{"Next points", "→ validate", "← Handler"}},
 		{name: "ImpactGraph", commands: [][]string{{"graph", "impact", "--at", "service.go:2", "--depth", "1", "--compact", "."}}, want: []string{"query impact depth=1", "Run -> validate#", "Handler -> Run#"}},
+		{name: "DirectoryOrientation", commands: [][]string{{"architecture", "directory", "--depth", "1", "--max-nodes", "20", "--compact", "."}}, want: []string{"D app files=1", "D service files=1", "R app -> service kind=import", "R app -> service kind=resolved-call"}},
 		{name: "ArchitectureResolve", commands: [][]string{{"architecture", "resolve", "--symbol", "Run", "--compact", "."}}, want: []string{"architecture resolve symbol=Run matches=1", "service.go:2-6"}},
+		{name: "RelationExplanation", commands: [][]string{{"architecture", "why", "app", "service", "--compact", "."}}, want: []string{"relation=import,resolved-call evidence=2", "app/entry.go:2 service -> example.com/agentbench/service kind=import", "app/entry.go:3 Entry -> RunService kind=resolved-call"}},
 		{name: "EnclosingScope", commands: [][]string{{"--line-only", "--enclosing", "-F", "save()", "service.go", "--no-anchors"}}, want: []string{"service.go:5@2-6:\tsave()"}},
 		{name: "EditLocation", commands: [][]string{{"--line-only", "-F", "EDIT_NEEDLE", "service.go", "--no-anchors"}}, want: []string{"service.go:4:\tvalidate() // EDIT_NEEDLE"}},
 	}
@@ -77,9 +79,11 @@ func writeAgentWorkflowBenchmarkFixture(tb testing.TB) string {
 	tb.Helper()
 	root := tb.TempDir()
 	files := map[string]string{
-		"go.mod":     "module example.com/agentbench\n",
-		"service.go": "package sample\nfunc Run() {\n\tvalidate()\n\tvalidate() // EDIT_NEEDLE\n\tsave()\n}\nfunc validate() {}\nfunc save() {}\nfunc Consumer() { Run() }\n",
-		"handler.go": "package sample\nfunc Handler() { Run() }\n",
+		"go.mod":             "module example.com/agentbench\n",
+		"service.go":         "package sample\nfunc Run() {\n\tvalidate()\n\tvalidate() // EDIT_NEEDLE\n\tsave()\n}\nfunc validate() {}\nfunc save() {}\nfunc Consumer() { Run() }\n",
+		"handler.go":         "package sample\nfunc Handler() { Run() }\n",
+		"app/entry.go":       "package app\nimport \"example.com/agentbench/service\"\nfunc Entry() { service.RunService() }\n",
+		"service/package.go": "package service\nfunc RunService() {}\n",
 	}
 	var noise strings.Builder
 	noise.WriteString("synthetic broad-output fixture\n")
@@ -88,6 +92,9 @@ func writeAgentWorkflowBenchmarkFixture(tb testing.TB) string {
 	}
 	files["noise.txt"] = noise.String()
 	for path, content := range files {
+		if err := os.MkdirAll(filepath.Dir(filepath.Join(root, path)), 0o755); err != nil {
+			tb.Fatal(err)
+		}
 		if err := os.WriteFile(filepath.Join(root, path), []byte(content), 0o644); err != nil {
 			tb.Fatal(err)
 		}

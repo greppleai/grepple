@@ -38,6 +38,25 @@ func OutlineFileDepth(path, content string, maxDepth int) FileOutline {
 	return out
 }
 
+// OutlineFromDocument derives a code outline without reparsing the caller-owned document.
+func OutlineFromDocument(path string, document *Document) FileOutline {
+	if document == nil {
+		return FileOutline{Path: path, Symbols: []Symbol{}}
+	}
+	document.mu.RLock()
+	defer document.mu.RUnlock()
+	out := FileOutline{Path: path, Language: document.language, Symbols: []Symbol{}}
+	if document.tree == nil {
+		return out
+	}
+	adapter := adapterForLanguage(document.language)
+	if adapter == nil {
+		return out
+	}
+	out.Symbols = nonNil(adapter.Outline(document.tree.RootNode(), document.source))
+	return out
+}
+
 func nonNil(s []Symbol) []Symbol {
 	if s == nil {
 		return []Symbol{}

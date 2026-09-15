@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"reflect"
 	"testing"
+
+	"github.com/greppleai/grepple/parser"
 )
 
 func TestBuildNavigationGraphResolvesCallsAndUsesRelativePaths(t *testing.T) {
@@ -25,6 +27,33 @@ func TestBuildNavigationGraphResolvesCallsAndUsesRelativePaths(t *testing.T) {
 		if filepath.IsAbs(declaration.Path) {
 			t.Fatalf("declaration path is absolute: %#v", declaration)
 		}
+	}
+}
+
+func TestBuildNavigationGraphFromDocumentsMatchesFileBuild(t *testing.T) {
+	root := t.TempDir()
+	writeNavigationGraphFile(t, root, "go.mod", "module example.com/project\n")
+	contents := map[string]string{
+		"main.go":     "package sample\nimport \"example.com/project/helper\"\nfunc Run(value helper.Value) { helper.Work() }\n",
+		"helper/x.go": "package helper\ntype Value struct{}\nfunc Work() {}\n",
+	}
+	for path, content := range contents {
+		writeNavigationGraphFile(t, root, path, content)
+	}
+	chdir(t, root)
+	expected, expectedStats := BuildNavigationGraphWithOptions([]string{"main.go", "helper/x.go"}, NavigationBuildOptions{DisableCache: true})
+	sources := make([]NavigationDocumentSource, 0, len(contents))
+	for _, path := range []string{"main.go", "helper/x.go"} {
+		document, err := parser.ParseDocument("go", contents[path])
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer document.Close()
+		sources = append(sources, NavigationDocumentSource{Path: path, Document: document})
+	}
+	actual, actualStats := BuildNavigationGraphFromDocuments(sources, NavigationBuildOptions{DisableCache: true})
+	if !reflect.DeepEqual(actual, expected) || actualStats != expectedStats {
+		t.Fatalf("document graph mismatch\nactual=%#v stats=%+v\nexpected=%#v stats=%+v", actual, actualStats, expected, expectedStats)
 	}
 }
 

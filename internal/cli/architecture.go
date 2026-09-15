@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"os"
@@ -133,6 +134,43 @@ type architectureWhyOutput struct {
 	Relation string                         `json:"relation"`
 	Sources  navigationSourceSummary        `json:"sources"`
 	Evidence []architectureRelationEvidence `json:"evidence"`
+}
+
+type architectureParsedSource struct {
+	path     string
+	document *parser.Document
+	outline  parser.FileOutline
+}
+
+func loadArchitectureDocuments(paths []string) ([]architectureParsedSource, search.NavigationSourceStats) {
+	stats := search.NavigationSourceStats{Attempted: len(paths)}
+	result := make([]architectureParsedSource, 0, len(paths))
+	for _, sourcePath := range paths {
+		content, err := os.ReadFile(sourcePath)
+		if err != nil {
+			stats.Failed++
+			continue
+		}
+		if bytes.IndexByte(content, 0) >= 0 {
+			stats.Skipped++
+			continue
+		}
+		document, err := parser.ParseDocument(parser.LanguageFor(sourcePath), string(content))
+		if err != nil {
+			stats.Failed++
+			continue
+		}
+		result = append(result, architectureParsedSource{path: sourcePath, document: document, outline: parser.OutlineFromDocument(sourcePath, document)})
+	}
+	return result, stats
+}
+
+func architectureNavigationDocuments(sources []architectureParsedSource) []search.NavigationDocumentSource {
+	result := make([]search.NavigationDocumentSource, 0, len(sources))
+	for _, source := range sources {
+		result = append(result, search.NavigationDocumentSource{Path: source.path, Document: source.document})
+	}
+	return result
 }
 
 type directoryAccumulator struct {
@@ -290,16 +328,17 @@ func buildDirectoryArchitecture(globs []string, maxFiles int) (directoryArchitec
 		truncation = &navigationGraphTruncation{Reason: "max_files", Limit: maxFiles, Skipped: len(paths) - maxFiles}
 		paths = paths[:maxFiles]
 	}
-	graph, graphStats := search.BuildNavigationGraphWithStats(paths)
+	parsedSources, parseStats := loadArchitectureDocuments(paths)
+	graph, graphStats := search.BuildNavigationGraphFromDocuments(architectureNavigationDocuments(parsedSources), search.NavigationBuildOptions{})
+	for _, source := range parsedSources {
+		source.document.Close()
+	}
 	visibility := architectureVisibilityIndex(graph.Declarations)
 	directories := make(map[string]*directoryAccumulator)
 	symbols := make([]architectureSymbol, 0)
-	for _, sourcePath := range paths {
-		content, readErr := os.ReadFile(sourcePath)
-		if readErr != nil {
-			continue
-		}
-		outline := parser.OutlineFile(sourcePath, string(content))
+	for _, source := range parsedSources {
+		sourcePath := source.path
+		outline := source.outline
 		directory := cleanArchitectureDirectory(filepath.Dir(sourcePath))
 		classification := string(sourcekind.Classify(sourcePath, "."))
 		for _, ancestor := range architectureDirectoryAncestors(directory) {
@@ -312,7 +351,7 @@ func buildDirectoryArchitecture(globs []string, maxFiles int) (directoryArchitec
 	}
 	sortArchitectureSymbols(symbols)
 	relations, relationCoverage := buildArchitectureRelations(graph, paths)
-	sources := navigationSourceSummary{Discovered: discovered, Selected: graphStats.Attempted, Parsed: graphStats.Parsed, Skipped: discovered - supported + graphStats.Skipped, Failed: graphStats.Failed, Recovered: graphStats.Recovered}
+	sources := navigationSourceSummary{Discovered: discovered, Selected: len(paths), Parsed: graphStats.Parsed, Skipped: discovered - supported + parseStats.Skipped + graphStats.Skipped, Failed: parseStats.Failed + graphStats.Failed, Recovered: graphStats.Recovered}
 	return directoryArchitecture{Schema: directoryArchitectureSchema, Root: ".", Files: len(paths), Sources: sources, Directories: buildArchitectureDirectories(directories), Symbols: symbols, Relations: relations, RepositoryRoots: graph.RepositoryRoots, RelationCoverage: relationCoverage, Truncation: truncation}, nil
 }
 
