@@ -14,7 +14,7 @@ Grepple releases are coordinated by Google's Release Please and start at `v0.0.1
 
 Tree-sitter and the bundled grammars require CGO. Every target is therefore compiled and smoke-tested on a native GitHub-hosted runner rather than pretending that `CGO_ENABLED=0` or an unverified cross-compiler produces a supported binary. Linux release binaries use static external linking; macOS and Windows use their native system toolchains.
 
-Every release includes `checksums.txt` with SHA-256 checksums and a GitHub build-provenance attestation. Artifact names follow `grepple_VERSION_GOOS_GOARCH.EXT`.
+Every release includes `checksums.txt` with SHA-256 checksums. GitHub build-provenance attestations are emitted for public repositories and skipped for private repositories where the organization plan does not provide attestations. Artifact names follow `grepple_VERSION_GOOS_GOARCH.EXT`.
 
 ## Publishing
 

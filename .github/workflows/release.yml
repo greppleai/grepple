@@ -165,7 +165,8 @@ jobs:
           cd dist
           sha256sum grepple_* > checksums.txt
 
-      - name: Attest release artifacts
+      - name: Attest release artifacts when supported
+        if: github.event.repository.visibility == 'public'
         uses: actions/attest-build-provenance@v4
         with:
           subject-path: dist/*

@@ -25,7 +25,7 @@ All Go source is formatted with `gofmt`. The project requires Go 1.25. Tree-sitt
 
 ## Build and install
 
-Prebuilt `grepple` CLI binaries are attached to every GitHub release for Linux amd64/arm64, macOS amd64/arm64, and Windows amd64, with SHA-256 checksums and build-provenance attestations. Google's [Release Please](https://github.com/googleapis/release-please) manages conventional-commit release pull requests and semantic tags starting at `v0.0.1`; native CGO runners build and smoke-test every target. See [Releases](docs/releases.md) for the publishing and validation workflow.
+Prebuilt `grepple` CLI binaries are attached to every GitHub release for Linux amd64/arm64, macOS amd64/arm64, and Windows amd64, with SHA-256 checksums and build-provenance attestations when GitHub enables them for the repository. Google's [Release Please](https://github.com/googleapis/release-please) manages conventional-commit release pull requests and semantic tags starting at `v0.0.1`; native CGO runners build and smoke-test every target. See [Releases](docs/releases.md) for the publishing and validation workflow.
 
 To build from source:
 

@@ -53,7 +53,7 @@
 
 ## Operational and release readiness
 
-- [ ] Run the `v0.0.1` Release Please flow on GitHub and verify all five native hosted-runner archives, checksums, attestations, and downloaded-binary smoke tests; extend smoke coverage beyond `version` to recursive help, local search, architecture comparison, and one GritQL query.
+- [ ] Run the `v0.0.1` Release Please flow on GitHub and verify all five native hosted-runner archives, checksums, conditional attestation behavior, and downloaded-binary smoke tests; extend smoke coverage beyond `version` to recursive help, local search, architecture comparison, and one GritQL query.
 - [ ] Test concurrent processes writing the same content-addressed artifact or cache entry, interrupted writes, corrupt entries, cleanup during reads, and permission preservation.
 - [ ] Measure cold/warm runtime, peak RSS, cache size, artifact disk growth, and cleanup behavior on representative medium and large repositories.
 - [ ] Define supported Go versions, operating systems, repository-size expectations, schema support windows, and release rollback/migration behavior.
