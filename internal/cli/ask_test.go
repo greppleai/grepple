@@ -229,6 +229,32 @@ func TestAskAnalysisToolsCallInternalEngines(t *testing.T) {
 	}
 }
 
+func TestAskRemoteToolsUseSelectedServer(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		switch request.URL.Path {
+		case "/public/raw":
+			if request.URL.Query().Get("repo") != "owner/repo@tag~v1.0.0" {
+				t.Fatalf("raw repo=%q", request.URL.Query().Get("repo"))
+			}
+			_, _ = writer.Write([]byte("answer\n"))
+		case "/public/repos":
+			_, _ = writer.Write([]byte(`{"ok":true,"count":1,"repos":[{"repo":"owner/repo","selector":"owner/repo@tag~v1.0.0","ref":"v1.0.0","refKind":"tag"}]}`))
+		default:
+			http.NotFound(writer, request)
+		}
+	}))
+	defer server.Close()
+	read, err := runAskRemoteReadTool(context.Background(), server.URL, readToolInput{Repository: "owner/repo@tag~v1.0.0", Path: "source.go", StartLine: 7, EndLine: 7})
+	if err != nil || read.IsError || !strings.Contains(read.Content, "7│answer") {
+		t.Fatalf("remote read=%+v err=%v", read, err)
+	}
+	refs, err := runAskRepositoryRefs(context.Background(), server.URL, askRepositoryRefsInput{Repository: "owner/repo", Kind: "tag"})
+	if err != nil || refs.Count != 1 || refs.Repos[0].Selector != "owner/repo@tag~v1.0.0" {
+		t.Fatalf("remote refs=%+v err=%v", refs, err)
+	}
+}
+
 func jsonContains(value any, text string) bool {
 	encoded, _ := json.Marshal(value)
 	return bytes.Contains(encoded, []byte(text))

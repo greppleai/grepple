@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -62,11 +63,16 @@ func runRepos(args []string) error {
 // fetchRepoList retrieves the server's indexed repository list, surfacing the
 // server's error text for non-2xx responses.
 func fetchRepoList(base string) ([]api.RepoListEntry, error) {
+	return fetchRepoListContext(context.Background(), base)
+}
+
+func fetchRepoListContext(ctx context.Context, base string) ([]api.RepoListEntry, error) {
 	target := strings.TrimRight(base, "/") + "/public/repos"
 	req, err := authorizedRequest(http.MethodGet, target, "", nil)
 	if err != nil {
 		return nil, err
 	}
+	req = req.WithContext(ctx)
 	response, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, err

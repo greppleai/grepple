@@ -22,8 +22,8 @@ Questions do not need shell quoting when they contain only ordinary words:
 
 ```bash
 grepple ask Which package owns navigation resolution and what calls it?
-grepple ask --model gpt-5.3-codex --max-steps 16 \
-  Compare the parser lifecycle with the architecture single-parse path
+grepple ask --model gpt-5.3-codex \
+	Compare the parser lifecycle with the architecture single-parse path
 ```
 
 Options:
@@ -31,7 +31,6 @@ Options:
 - `--provider NAME` selects a registered provider (`codex` by default).
 - `--model MODEL` selects the provider model. When omitted, `ai.model` from `~/.grepple/grepple.json` is used, then the provider default (`gpt-5.3-codex`).
 - `--server URL` selects the remote Grepple service available to tools with an indexed-repository selector. When omitted, normal Grepple server configuration applies.
-- `--max-steps N` bounds model/tool iterations from 1 to 30 (default 12).
 - `--timeout-seconds N` bounds the whole run from 1 to 3600 seconds (default 600).
 
 Set a non-secret per-user model default independently of credentials:
@@ -64,9 +63,10 @@ The internal agent receives a small set of typed, read-only tools:
 - `inspect_architecture`: local directory architecture, symbol resolution, and relation evidence.
 - `query_graph`: bounded callers, callees, dependencies, dependents, and impact queries.
 - `explain_sources`: source classifications, exclusions, and completeness.
+- `repository_refs`: exact indexed default-branch, branch, and tag selectors for one source repository.
 - `repository_tree`: bounded indexed-repository path discovery.
 - `read_file`: bounded local or indexed-repository source ranges and structural outlines.
 
 Each tool has a purpose-specific JSON schema with only the relevant options. Tools call Grepple's search, parser, graph, architecture, GritQL, source-scope, and remote HTTP APIs directly. The agent receives no generic argv tool, command parser, executable subprocess, or shell.
 
-The system prompt requires source-backed answers with repository/path:line evidence and instructs the model to narrow broad searches before retrieving bodies. Tool errors are returned to the model so it can recover within the remaining step budget.
+The system prompt requires source-backed answers with repository/path:line evidence and instructs the model to narrow broad searches before retrieving bodies. There is no step-count cutoff; the overall timeout remains the execution bound. Tool errors are returned to the model so it can recover.

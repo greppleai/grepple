@@ -62,6 +62,11 @@ type askSourceScopeInput struct {
 	Paths []string `json:"paths,omitempty" description:"Local files or directories to classify; defaults to the repository root"`
 }
 
+type askRepositoryRefsInput struct {
+	Repository string `json:"repository" description:"Source OWNER/REPO whose indexed selectors should be listed"`
+	Kind       string `json:"kind,omitempty" description:"Optional ref kind: default, branch, or tag"`
+}
+
 type askRepositoryTreeInput struct {
 	Repository string `json:"repository" description:"Exact indexed OWNER/REPO[@REF] selector"`
 	Path       string `json:"path,omitempty" description:"Optional repository-relative subtree"`
@@ -69,7 +74,7 @@ type askRepositoryTreeInput struct {
 }
 
 func askResearchToolNames() []string {
-	return []string{"search_code", "navigate_code", "structural_search", "inspect_architecture", "query_graph", "explain_sources", "repository_tree", "read_file"}
+	return []string{"search_code", "navigate_code", "structural_search", "inspect_architecture", "query_graph", "explain_sources", "repository_refs", "repository_tree", "read_file"}
 }
 
 func askResearchToolInfo(tools []fantasy.AgentTool) []fantasy.ToolInfo {
@@ -100,7 +105,10 @@ func newAskResearchTools(root, server string) []fantasy.AgentTool {
 		fantasy.NewAgentTool("explain_sources", "Report which local files are selected, excluded, ignored, generated, vendored, tests, fixtures, or production. Use before completeness-sensitive conclusions.", func(_ context.Context, input askSourceScopeInput, _ fantasy.ToolCall) (fantasy.ToolResponse, error) {
 			return askToolResult(runAskSourceScope(root, input))
 		}),
-		fantasy.NewAgentTool("repository_tree", "List a bounded tree from one indexed remote repository or exact branch/tag selector. Use it to discover remote paths before search or read.", func(ctx context.Context, input askRepositoryTreeInput, _ fantasy.ToolCall) (fantasy.ToolResponse, error) {
+		fantasy.NewAgentTool("repository_refs", "Resolve a source OWNER/REPO and requested version to exact indexed repository selectors. Use before remote search, navigation, tree, or read when a branch or tag matters.", func(ctx context.Context, input askRepositoryRefsInput, _ fantasy.ToolCall) (fantasy.ToolResponse, error) {
+			return askToolResult(runAskRepositoryRefs(ctx, server, input))
+		}),
+		fantasy.NewAgentTool("repository_tree", "List a bounded tree from one exact indexed repository selector returned by repository_refs. Use it to discover remote paths before search or read.", func(ctx context.Context, input askRepositoryTreeInput, _ fantasy.ToolCall) (fantasy.ToolResponse, error) {
 			return askToolResult(runAskRepositoryTree(ctx, server, input))
 		}),
 		fantasy.NewAgentTool("read_file", "Read one bounded local or indexed-repository file range. Prefer navigate_code for declarations and search_code for discovery; use outline=true to return structural symbols instead of content.", func(ctx context.Context, input readToolInput, _ fantasy.ToolCall) (fantasy.ToolResponse, error) {
@@ -144,10 +152,11 @@ func runAskSearch(ctx context.Context, root, server string, input askSearchInput
 	if err != nil {
 		return nil, err
 	}
-	if input.Context < 0 || input.Context > 3 {
-		return nil, fmt.Errorf("context must be between 0 and 3")
+	if input.Context < 0 {
+		return nil, fmt.Errorf("context must not be negative")
 	}
-	params := search.Params{Query: input.Query, Globs: input.Paths, Regex: input.Regex, IgnoreCase: input.IgnoreCase, Root: root, MaxSegments: 8, Limit: limit + 1, Sort: search.ResultSortPath, BeforeContext: input.Context, AfterContext: input.Context, SkipSegments: mode != "snippets"}
+	contextLines := min(input.Context, 3)
+	params := search.Params{Query: input.Query, Globs: input.Paths, Regex: input.Regex, IgnoreCase: input.IgnoreCase, Root: root, MaxSegments: 8, Limit: limit + 1, Sort: search.ResultSortPath, BeforeContext: contextLines, AfterContext: contextLines, SkipSegments: mode != "snippets"}
 	results, err := askSearchResults(ctx, server, params, input.Repository)
 	if err != nil {
 		return nil, err
@@ -351,6 +360,23 @@ func runAskSourceScope(root string, input askSourceScopeInput) (sourceScopeRepor
 	return buildSourceScopeReport(input.Paths)
 }
 
+func runAskRepositoryRefs(ctx context.Context, server string, input askRepositoryRefsInput) (api.ReposResponse, error) {
+	repository := strings.TrimSpace(input.Repository)
+	if repository == "" {
+		return api.ReposResponse{}, fmt.Errorf("repository is required")
+	}
+	kind := strings.ToLower(strings.TrimSpace(input.Kind))
+	if kind != "" && kind != "default" && kind != "branch" && kind != "tag" {
+		return api.ReposResponse{}, fmt.Errorf("kind must be default, branch, or tag")
+	}
+	entries, err := fetchRepoListContext(ctx, server)
+	if err != nil {
+		return api.ReposResponse{}, err
+	}
+	entries = refsForRepository(entries, repository, kind)
+	return api.ReposResponse{OK: true, Count: len(entries), Repos: entries}, nil
+}
+
 func runAskRepositoryTree(ctx context.Context, server string, input askRepositoryTreeInput) (api.TreeResponse, error) {
 	if strings.TrimSpace(input.Repository) == "" {
 		return api.TreeResponse{}, fmt.Errorf("repository is required")
@@ -388,7 +414,7 @@ func runAskRemoteReadTool(ctx context.Context, server string, input readToolInpu
 	if strings.TrimSpace(input.Path) == "" {
 		return fantasy.NewTextErrorResponse("path is required"), nil
 	}
-	values := getArgs{Repo: input.Repository, Path: input.Path, Outline: input.Outline}
+	values := getArgs{Server: server, Repo: input.Repository, Path: input.Path, Outline: input.Outline}
 	if !input.Outline {
 		start, end, err := askReadRange(input.StartLine, input.EndLine)
 		if err != nil {
@@ -498,8 +524,11 @@ func askBoundedValue(value, fallback, minimum, maximum int, name string) (int, e
 	if value == 0 {
 		return fallback, nil
 	}
-	if value < minimum || value > maximum {
-		return 0, fmt.Errorf("%s must be between %d and %d", name, minimum, maximum)
+	if value < minimum {
+		return 0, fmt.Errorf("%s must be at least %d", name, minimum)
+	}
+	if value > maximum {
+		return maximum, nil
 	}
 	return value, nil
 }

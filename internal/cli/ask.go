@@ -17,7 +17,6 @@ import (
 )
 
 const (
-	defaultAskSteps       = 12
 	defaultAskTimeout     = 10 * time.Minute
 	defaultToolOutputSize = 64 << 10
 	maxReadBytes          = 256 << 10
@@ -28,7 +27,6 @@ type askArgs struct {
 	Provider string   `arg:"--provider" placeholder:"NAME" help:"AI provider (default codex)"`
 	Model    string   `arg:"--model" placeholder:"MODEL" help:"larger research model (user/provider default when omitted)"`
 	Server   string   `arg:"--server" placeholder:"URL" help:"remote Grepple service available to research tools"`
-	Steps    int      `arg:"--max-steps" placeholder:"N" help:"maximum model/tool steps"`
 	Timeout  int      `arg:"--timeout-seconds" placeholder:"N" help:"overall deadline in seconds"`
 	Question []string `arg:"positional" placeholder:"QUESTION"`
 }
@@ -46,9 +44,6 @@ func validateAskArgs(values askArgs) (string, error) {
 	if question == "" {
 		return "", fmt.Errorf("ask requires a question")
 	}
-	if values.Steps < 1 || values.Steps > 30 {
-		return "", fmt.Errorf("--max-steps must be between 1 and 30")
-	}
 	if values.Timeout < 1 || values.Timeout > 3600 {
 		return "", fmt.Errorf("--timeout-seconds must be between 1 and 3600")
 	}
@@ -56,7 +51,7 @@ func validateAskArgs(values askArgs) (string, error) {
 }
 
 func runAsk(args []string) error {
-	values := askArgs{Provider: "codex", Steps: defaultAskSteps, Timeout: int(defaultAskTimeout.Seconds())}
+	values := askArgs{Provider: "codex", Timeout: int(defaultAskTimeout.Seconds())}
 	parser, err := arg.NewParser(arg.Config{Program: "grepple ask"}, &values)
 	if err != nil {
 		return err
@@ -106,7 +101,7 @@ func runLoggedAsk(ctx context.Context, log *askLog, provider aiprovider.Provider
 	tools := newAskResearchTools(root, server)
 	if err := log.Record("session.start", map[string]any{
 		"provider": provider.Name(), "model": values.Model, "question": question, "root": root, "server": server,
-		"maxSteps": values.Steps, "timeoutSeconds": values.Timeout, "systemPrompt": systemPrompt,
+		"timeoutSeconds": values.Timeout, "systemPrompt": systemPrompt,
 		"tools": askResearchToolInfo(tools),
 	}); err != nil {
 		return err
@@ -116,7 +111,7 @@ func runLoggedAsk(ctx context.Context, log *askLog, provider aiprovider.Provider
 		return recordAskError(log, err)
 	}
 	agent := fantasy.NewAgent(model, fantasy.WithSystemPrompt(systemPrompt), fantasy.WithTools(tools...))
-	result, err := agent.Stream(ctx, loggedAgentStreamCall(log, question, values.Steps))
+	result, err := agent.Stream(ctx, loggedAgentStreamCall(log, question))
 	if err != nil {
 		return recordAskError(log, fmt.Errorf("ask %s/%s: %w", provider.Name(), values.Model, err))
 	}
@@ -130,10 +125,9 @@ func runLoggedAsk(ctx context.Context, log *askLog, provider aiprovider.Provider
 	return stdoutWriter().writeString(answer + "\n")
 }
 
-func loggedAgentStreamCall(log *askLog, question string, steps int) fantasy.AgentStreamCall {
+func loggedAgentStreamCall(log *askLog, question string) fantasy.AgentStreamCall {
 	return fantasy.AgentStreamCall{
 		Prompt:        question,
-		StopWhen:      []fantasy.StopCondition{fantasy.StepCountIs(steps)},
 		OnStepStart:   func(step int) error { return log.Record("step.start", map[string]int{"step": step}) },
 		OnToolCall:    func(call fantasy.ToolCallContent) error { return log.Record("tool.call", call) },
 		OnToolResult:  func(result fantasy.ToolResultContent) error { return log.Record("tool.result", result) },
@@ -169,6 +163,7 @@ func askSystemPrompt(root string) string {
 	return "You are Grepple's internal read-only research agent. Answer the user's question with precise, source-backed evidence. " +
 		"Use the focused research tools directly; there is no shell or CLI. Start with search_code count/files or inspect_architecture when scope is unknown, then use snippets, navigate_code, query_graph, structural_search, or read_file only as needed. " +
 		"Use repository_tree and a repository selector for remote indexed source. Use explain_sources before completeness-sensitive conclusions. Cite repository/path:line ranges in the final answer. " +
+		"Make at most two tool calls at a time and stop researching as soon as the evidence answers the question. Do not repeat equivalent searches or read whole files when snippets or navigation suffice. Return the text answer immediately once sufficient evidence is available. " +
 		"Navigation is syntax-based, structural queries prove syntax rather than types or data flow, and bounded results can have more pages. Do not modify files, credentials, artifacts, or configuration. " +
 		"The local workspace root is " + root + "."
 }
