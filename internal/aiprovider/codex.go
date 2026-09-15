@@ -17,6 +17,7 @@ import (
 
 	"charm.land/fantasy"
 	fantasyopenai "charm.land/fantasy/providers/openai"
+	"github.com/openai/openai-go/v2/option"
 )
 
 const (
@@ -85,7 +86,7 @@ func (p *codexProvider) Login(ctx context.Context, options LoginOptions) error {
 		return err
 	}
 	verificationURL := strings.TrimRight(p.issuer, "/") + "/codex/device"
-	fmt.Fprintf(output, "Open %s and enter code %s\n", verificationURL, device.UserCode)
+	fmt.Fprintf(output, "\nTo authorize Grepple, open:\n  %s\nand enter the code:\n  %s\n\n", verificationURL, device.UserCode)
 	if !options.NoBrowser {
 		_ = openBrowser(verificationURL)
 	}
@@ -115,18 +116,27 @@ func (p *codexProvider) LanguageModel(ctx context.Context, modelID string) (fant
 	if err != nil {
 		return nil, err
 	}
+	fantasyModelID := modelID
+	sdkOptions := []option.RequestOption(nil)
+	if !fantasyopenai.IsResponsesModel(modelID) {
+		// The Codex endpoint always implements Responses, including private model aliases
+		// that Fantasy cannot recognize from its static public-model list.
+		fantasyModelID = p.DefaultModel()
+		sdkOptions = append(sdkOptions, option.WithJSONSet("model", modelID))
+	}
 	provider, err := fantasyopenai.New(
 		fantasyopenai.WithName(p.Name()),
 		fantasyopenai.WithAPIKey(credentials.AccessToken),
 		fantasyopenai.WithBaseURL(p.apiURL),
 		fantasyopenai.WithHeaders(map[string]string{"ChatGPT-Account-ID": credentials.AccountID, "originator": "grepple"}),
 		fantasyopenai.WithHTTPClient(p.client),
+		fantasyopenai.WithSDKOptions(sdkOptions...),
 		fantasyopenai.WithUseResponsesAPI(),
 	)
 	if err != nil {
 		return nil, err
 	}
-	return provider.LanguageModel(ctx, modelID)
+	return provider.LanguageModel(ctx, fantasyModelID)
 }
 
 func (p *codexProvider) credentials(ctx context.Context) (codexCredentials, error) {

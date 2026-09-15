@@ -3,6 +3,7 @@ package cli
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -20,6 +21,14 @@ type config struct {
 	TokenExpiry   int64  `json:"token_expiry,omitempty"`   // unix seconds; 0 = unknown/never
 	RefreshExpiry int64  `json:"refresh_expiry,omitempty"` // unix seconds; 0 = unknown/never
 	User          string `json:"user,omitempty"`
+}
+
+type userPreferences struct {
+	AI userAIPreferences `json:"ai,omitempty"`
+}
+
+type userAIPreferences struct {
+	Model string `json:"model,omitempty"`
 }
 
 type repositoryConfig struct {
@@ -124,6 +133,38 @@ func userConfigPath() (string, error) {
 		return "", err
 	}
 	return filepath.Join(home, ".grepple", "config.json"), nil
+}
+
+// userPreferencesPath is the non-secret per-user configuration file.
+func userPreferencesPath() (string, error) {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(home, ".grepple", "grepple.json"), nil
+}
+
+func configuredAIModel() (string, error) {
+	path, err := userPreferencesPath()
+	if err != nil {
+		return "", err
+	}
+	content, err := os.ReadFile(path)
+	if errors.Is(err, os.ErrNotExist) {
+		return "", nil
+	}
+	if err != nil {
+		return "", fmt.Errorf("read user configuration %s: %w", path, err)
+	}
+	decoder := json.NewDecoder(bytes.NewReader(content))
+	var preferences userPreferences
+	if err := decoder.Decode(&preferences); err != nil {
+		return "", fmt.Errorf("invalid user configuration %s: %w", path, err)
+	}
+	if err := decoder.Decode(&struct{}{}); err != io.EOF {
+		return "", fmt.Errorf("invalid user configuration %s: trailing JSON content", path)
+	}
+	return strings.TrimSpace(preferences.AI.Model), nil
 }
 
 // storeLogin persists a token set (access token, optional refresh token, and

@@ -57,7 +57,9 @@ func runAIProviderLogin(registry *aiprovider.Registry, store *aiprovider.Store, 
 	if err != nil {
 		return err
 	}
-	if err := provider.Login(context.Background(), aiprovider.LoginOptions{NoBrowser: values.NoBrowser, Output: os.Stdout}); err != nil {
+	// Device instructions must bypass the bounded stdout collector so they are
+	// visible while Login waits for browser authorization.
+	if err := provider.Login(context.Background(), aiprovider.LoginOptions{NoBrowser: values.NoBrowser, Output: os.Stderr}); err != nil {
 		return err
 	}
 	return stdoutWriter().writeString(fmt.Sprintf("Logged in to %s; credentials stored in %s\n", provider.Name(), store.Path()))

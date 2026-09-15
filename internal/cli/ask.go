@@ -28,7 +28,7 @@ const (
 
 type askArgs struct {
 	Provider string   `arg:"--provider" placeholder:"NAME" help:"AI provider (default codex)"`
-	Model    string   `arg:"--model" placeholder:"MODEL" help:"larger research model (provider default when omitted)"`
+	Model    string   `arg:"--model" placeholder:"MODEL" help:"larger research model (user/provider default when omitted)"`
 	Steps    int      `arg:"--max-steps" placeholder:"N" help:"maximum model/tool steps"`
 	Timeout  int      `arg:"--timeout-seconds" placeholder:"N" help:"overall deadline in seconds"`
 	Question []string `arg:"positional" placeholder:"QUESTION"`
@@ -83,8 +83,9 @@ func runAsk(args []string) error {
 	if err != nil {
 		return err
 	}
-	if strings.TrimSpace(values.Model) == "" {
-		values.Model = provider.DefaultModel()
+	values.Model, err = resolveAskModel(values.Model, provider.DefaultModel())
+	if err != nil {
+		return err
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(values.Timeout)*time.Second)
 	defer cancel()
@@ -117,6 +118,20 @@ func runAsk(args []string) error {
 		return fmt.Errorf("ask returned no text answer")
 	}
 	return stdoutWriter().writeString(answer + "\n")
+}
+
+func resolveAskModel(explicit, providerDefault string) (string, error) {
+	if model := strings.TrimSpace(explicit); model != "" {
+		return model, nil
+	}
+	model, err := configuredAIModel()
+	if err != nil {
+		return "", err
+	}
+	if model != "" {
+		return model, nil
+	}
+	return providerDefault, nil
 }
 
 func askSystemPrompt(root string) string {

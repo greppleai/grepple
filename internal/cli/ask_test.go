@@ -18,6 +18,14 @@ import (
 
 func TestRunAskUsesFantasyProviderAndReadTool(t *testing.T) {
 	root := t.TempDir()
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	if err := os.MkdirAll(filepath.Join(home, ".grepple"), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(home, ".grepple", "grepple.json"), []byte(`{"ai":{"model":"gpt-5.6-luna"}}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
 	if err := os.WriteFile(filepath.Join(root, "evidence.txt"), []byte("source evidence\n"), 0o600); err != nil {
 		t.Fatal(err)
 	}
@@ -59,7 +67,7 @@ func newAskTestServer(t *testing.T) (*httptest.Server, *int) {
 		}
 		encoded, _ := json.Marshal(requestBody)
 		requestCount++
-		if requestCount == 1 && !strings.Contains(string(encoded), "where is parsing") {
+		if requestCount == 1 && (!strings.Contains(string(encoded), "where is parsing") || requestBody["model"] != "gpt-5.6-luna") {
 			t.Fatalf("request body did not contain question: %s", encoded)
 		}
 		if requestCount == 2 && !strings.Contains(string(encoded), "source evidence") {

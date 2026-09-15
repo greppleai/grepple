@@ -34,6 +34,41 @@ func TestLoadRepositoryConfigFindsAncestorAndKeepsAuthenticationUserOwned(t *tes
 	}
 }
 
+func TestConfiguredAIModelUsesUserGreppleJSON(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	directory := filepath.Join(home, ".grepple")
+	if err := os.MkdirAll(directory, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(directory, "grepple.json")
+	if err := os.WriteFile(path, []byte(`{"ai":{"model":" luna "},"future":true}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	model, err := configuredAIModel()
+	if err != nil || model != "luna" {
+		t.Fatalf("model=%q err=%v", model, err)
+	}
+	override, err := resolveAskModel(" explicit ", "provider-default")
+	if err != nil || override != "explicit" {
+		t.Fatalf("override=%q err=%v", override, err)
+	}
+	if err := os.WriteFile(path, []byte(`{"ai":{"model":"luna"}} trailing`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := configuredAIModel(); err == nil {
+		t.Fatal("expected malformed user configuration error")
+	}
+}
+
+func TestResolveAskModelFallsBackToProvider(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+	model, err := resolveAskModel("", "provider-default")
+	if err != nil || model != "provider-default" {
+		t.Fatalf("model=%q err=%v", model, err)
+	}
+}
+
 func TestRepositoryConfigLoadsIndexPatterns(t *testing.T) {
 	root := t.TempDir()
 	content := `{"index":{"repositories":[{"repo":"sourcegraph/zoekt","branches":["main","release/*"],"tags":["v0.25.*"]}]}}`

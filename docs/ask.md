@@ -4,7 +4,7 @@
 
 ## Provider authentication
 
-AI provider credentials are user-owned and never loaded from `grepple.json`:
+AI provider credentials are user-owned and never loaded from repository configuration or `~/.grepple/grepple.json`:
 
 ```bash
 grepple ai-provider list
@@ -29,9 +29,21 @@ grepple ask --model gpt-5.3-codex --max-steps 16 \
 Options:
 
 - `--provider NAME` selects a registered provider (`codex` by default).
-- `--model MODEL` selects the provider model (`gpt-5.3-codex` by default).
+- `--model MODEL` selects the provider model. When omitted, `ai.model` from `~/.grepple/grepple.json` is used, then the provider default (`gpt-5.3-codex`).
 - `--max-steps N` bounds model/tool iterations from 1 to 30 (default 12).
 - `--timeout-seconds N` bounds the whole run from 1 to 3600 seconds (default 600).
+
+Set a non-secret per-user model default independently of credentials:
+
+```json
+{
+  "ai": {
+    "model": "gpt-5.6-luna"
+  }
+}
+```
+
+Command-line `--model` always takes precedence. Repository-owned `grepple.json` files cannot select the AI model.
 
 Human answers participate in Grepple's normal bounded-output and artifact-spill behavior.
 
