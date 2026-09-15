@@ -11,7 +11,7 @@ VERSION_LDFLAGS := -X github.com/greppleai/grepple/internal/cli.Version=$(VERSIO
 COMMANDS := grepple
 SOURCES := $(shell find cmd internal api extract gritql gritqlapi parser rulespec search -type f -name '*.go') go.mod go.sum
 
-.PHONY: build test agent-benchmark architecture-benchmark lint revive-lint hook-build hook-lint hook-test parser-metadata-generate parser-metadata-check schema-generate schema-check docker-smoke install clean
+.PHONY: build test agent-benchmark architecture-benchmark release-check lint revive-lint hook-build hook-lint hook-test parser-metadata-generate parser-metadata-check schema-generate schema-check docker-smoke install clean
 
 build: $(addprefix $(BIN_DIR)/,$(COMMANDS)) hook-build
 
@@ -31,6 +31,10 @@ agent-benchmark:
 architecture-benchmark:
 	go test ./extract -run '^$$' -bench '^BenchmarkArchitectureWorkflows$$' -benchtime=10x -benchmem
 	go test ./internal/cli -run '^$$' -bench '^BenchmarkDirectoryArchitecture$$' -benchtime=10x -benchmem
+
+release-check:
+	@command -v goreleaser >/dev/null 2>&1 || { echo "goreleaser not found: install GoReleaser v2" >&2; exit 1; }
+	GREPPLE_BUILD_DATE="$$(git show -s --format=%cI HEAD)" goreleaser check .goreleaser.yaml
 
 # Example fixtures under examples/ are intentionally excluded from linting.
 lint: revive-lint hook-lint hook-test schema-check

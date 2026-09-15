@@ -1,0 +1,178 @@
+name: Release binaries
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"
+  workflow_call:
+    inputs:
+      release_tag:
+        description: Existing GitHub release tag to build and populate
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ inputs.release_tag || github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  test:
+    name: Test release source
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ inputs.release_tag || github.ref }}
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache-dependency-path: |
+            go.sum
+            hooks/go.sum
+      - name: Run test suite
+        run: make test
+
+  build:
+    name: Build ${{ matrix.goos }}/${{ matrix.goarch }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-24.04
+            goos: linux
+            goarch: amd64
+            build_id: grepple-linux
+            archive: tar.gz
+          - runner: ubuntu-24.04-arm
+            goos: linux
+            goarch: arm64
+            build_id: grepple-linux
+            archive: tar.gz
+          - runner: macos-15-intel
+            goos: darwin
+            goarch: amd64
+            build_id: grepple-darwin
+            archive: tar.gz
+          - runner: macos-15
+            goos: darwin
+            goarch: arm64
+            build_id: grepple-darwin
+            archive: tar.gz
+          - runner: windows-2025
+            goos: windows
+            goarch: amd64
+            build_id: grepple-windows
+            archive: zip
+    runs-on: ${{ matrix.runner }}
+    env:
+      GOOS: ${{ matrix.goos }}
+      GOARCH: ${{ matrix.goarch }}
+      RELEASE_TAG: ${{ inputs.release_tag || (github.ref_type == 'tag' && github.ref_name) || 'v0.0.0-check' }}
+    steps:
+      - name: Check out tagged source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ inputs.release_tag || github.ref }}
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache-dependency-path: |
+            go.sum
+            hooks/go.sum
+
+      - name: Record reproducible source date
+        shell: bash
+        run: echo "GREPPLE_BUILD_DATE=$(git show -s --format=%cI HEAD)" >> "$GITHUB_ENV"
+
+      - name: Build with GoReleaser
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          distribution: goreleaser
+          version: v2.12.7
+          args: build --single-target --clean --id ${{ matrix.build_id }} --output release/grepple${{ matrix.goos == 'windows' && '.exe' || '' }} ${{ github.event_name == 'pull_request' && '--snapshot' || '' }}
+
+      - name: Smoke test Unix binary
+        if: matrix.goos != 'windows'
+        shell: bash
+        run: ./release/grepple version
+
+      - name: Smoke test Windows binary
+        if: matrix.goos == 'windows'
+        shell: pwsh
+        run: .\release\grepple.exe version
+
+      - name: Package Unix binary
+        if: matrix.archive == 'tar.gz'
+        shell: bash
+        run: |
+          version="${RELEASE_TAG#v}"
+          mkdir -p artifacts
+          tar -C release -czf "artifacts/grepple_${version}_${GOOS}_${GOARCH}.tar.gz" grepple
+
+      - name: Package Windows binary
+        if: matrix.archive == 'zip'
+        shell: pwsh
+        run: |
+          $version = "${{ inputs.release_tag || github.ref_name }}" -replace '^v', ''
+          New-Item -ItemType Directory -Force artifacts | Out-Null
+          Compress-Archive -Path release\grepple.exe -DestinationPath "artifacts\grepple_${version}_${env:GOOS}_${env:GOARCH}.zip"
+
+      - name: Upload packaged binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: grepple-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: artifacts/*
+          if-no-files-found: error
+          retention-days: 7
+
+  release:
+    name: Publish GitHub release
+    needs:
+      - test
+      - build
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    steps:
+      - name: Download packaged binaries
+        uses: actions/download-artifact@v4
+        with:
+          pattern: grepple-*
+          path: dist
+          merge-multiple: true
+
+      - name: Generate checksums
+        shell: bash
+        run: |
+          cd dist
+          sha256sum grepple_* > checksums.txt
+
+      - name: Attest release artifacts
+        uses: actions/attest-build-provenance@v3
+        with:
+          subject-path: dist/*
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.release_tag || github.ref_name }}
+          generate_release_notes: true
+          fail_on_unmatched_files: true
+          files: |
+            dist/grepple_*
+            dist/checksums.txt

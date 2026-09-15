@@ -160,3 +160,5 @@ This file records completed Grepple roadmap work that no longer belongs in `next
 - [x] Added reviewed runtime/allocation budgets as benchmark gates rather than host-sensitive unit assertions.
 - [x] Kept `go test -race ./...`, generated parser metadata checks, and deterministic architecture tests green through the completed refactors.
 - [x] Added reproducible version, revision, source time, toolchain, and platform output through `--version`.
+- [x] Added Google Release Please automation starting at `v0.0.1`, native-CGO GoReleaser builds and smoke tests for Linux amd64/arm64, macOS amd64/arm64, and Windows amd64, SHA-256 release assets, and build-provenance attestations.
+- [x] Added weekly grouped Dependabot updates for the root Go module, hooks module, and GitHub Actions.

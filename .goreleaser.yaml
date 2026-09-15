@@ -1,0 +1,67 @@
+version: 2
+
+project_name: grepple
+
+builds:
+  - id: grepple-linux
+    main: ./cmd/grepple
+    binary: grepple
+    goos:
+      - linux
+    goarch:
+      - amd64
+      - arm64
+    env:
+      - CGO_ENABLED=1
+    flags:
+      - -trimpath
+    tags:
+      - netgo
+      - osusergo
+    ldflags:
+      - -s -w
+      - -linkmode external -extldflags -static
+      - -X github.com/greppleai/grepple/internal/cli.Version={{ .Version }}
+      - -X github.com/greppleai/grepple/internal/cli.Commit={{ .Commit }}
+      - -X github.com/greppleai/grepple/internal/cli.BuildDate={{ .Env.GREPPLE_BUILD_DATE }}
+
+  - id: grepple-darwin
+    main: ./cmd/grepple
+    binary: grepple
+    goos:
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    env:
+      - CGO_ENABLED=1
+    flags:
+      - -trimpath
+    tags:
+      - netgo
+      - osusergo
+    ldflags:
+      - -s -w
+      - -X github.com/greppleai/grepple/internal/cli.Version={{ .Version }}
+      - -X github.com/greppleai/grepple/internal/cli.Commit={{ .Commit }}
+      - -X github.com/greppleai/grepple/internal/cli.BuildDate={{ .Env.GREPPLE_BUILD_DATE }}
+
+  - id: grepple-windows
+    main: ./cmd/grepple
+    binary: grepple
+    goos:
+      - windows
+    goarch:
+      - amd64
+    env:
+      - CGO_ENABLED=1
+    flags:
+      - -trimpath
+    tags:
+      - netgo
+      - osusergo
+    ldflags:
+      - -s -w
+      - -X github.com/greppleai/grepple/internal/cli.Version={{ .Version }}
+      - -X github.com/greppleai/grepple/internal/cli.Commit={{ .Commit }}
+      - -X github.com/greppleai/grepple/internal/cli.BuildDate={{ .Env.GREPPLE_BUILD_DATE }}
