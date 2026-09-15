@@ -15,7 +15,7 @@ import (
 	"github.com/greppleai/grepple/search"
 )
 
-const directoryArchitectureSchema = "grepple-directory-architecture-v3"
+const directoryArchitectureSchema = "grepple-directory-architecture-v4"
 
 type architectureArgs struct {
 	JSON           bool     `arg:"--json" help:"emit complete directory architecture JSON"`
@@ -51,6 +51,7 @@ type directoryArchitecture struct {
 	Root             string                       `json:"root"`
 	Files            int                          `json:"files"`
 	Sources          navigationSourceSummary      `json:"sources"`
+	SourceFiles      []architectureSourceFile     `json:"sourceFiles"`
 	Directories      []architectureDirectory      `json:"directories"`
 	Symbols          []architectureSymbol         `json:"symbols"`
 	Routes           []architectureRoute          `json:"routes,omitempty"`
@@ -58,6 +59,12 @@ type directoryArchitecture struct {
 	RepositoryRoots  []string                     `json:"repositoryRoots,omitempty"`
 	RelationCoverage architectureRelationCoverage `json:"relationCoverage"`
 	Truncation       *navigationGraphTruncation   `json:"truncation,omitempty"`
+}
+
+type architectureSourceFile struct {
+	Path           string `json:"path"`
+	Language       string `json:"language"`
+	Classification string `json:"classification"`
 }
 
 type architectureDirectory struct {
@@ -202,7 +209,7 @@ type directoryAccumulator struct {
 
 func runArchitecture(args []string) error {
 	if len(args) == 0 || isExtractHelp(args[0]) {
-		return stdoutWriter().writeString("Inspect language-neutral directory architecture.\nUsage:\n  grepple architecture directory (--compact | --json) [PATH ...]\n  grepple architecture resolve --symbol NAME (--compact | --json) [PATH ...]\n  grepple architecture why FROM TO (--compact | --json) [PATH ...]\n")
+		return stdoutWriter().writeString("Inspect language-neutral directory architecture.\nUsage:\n  grepple architecture directory (--compact | --json) [PATH ...]\n  grepple architecture resolve --symbol NAME (--compact | --json) [PATH ...]\n  grepple architecture why FROM TO (--compact | --json) [PATH ...]\n  grepple architecture compare (--compact | --json) BEFORE.json AFTER.json\n")
 	}
 	switch args[0] {
 	case "directory":
@@ -211,6 +218,8 @@ func runArchitecture(args []string) error {
 		return runArchitectureResolve(args[1:])
 	case "why":
 		return runArchitectureWhy(args[1:])
+	case "compare":
+		return runArchitectureCompare(args[1:])
 	default:
 		return fmt.Errorf("unknown architecture command %q", args[0])
 	}
@@ -372,9 +381,21 @@ func buildDirectoryArchitecture(globs []string, maxFiles int) (directoryArchitec
 	routes := buildArchitectureRoutes(graph, directories)
 	relations, relationCoverage := buildArchitectureRelations(graph, paths)
 	sources := navigationSourceSummary{Discovered: discovered, Selected: len(paths), Parsed: graphStats.Parsed, Skipped: discovered - supported + parseStats.Skipped + graphStats.Skipped, Failed: parseStats.Failed + graphStats.Failed, Recovered: graphStats.Recovered}
-	return directoryArchitecture{Schema: directoryArchitectureSchema, Root: ".", Files: len(paths), Sources: sources, Directories: buildArchitectureDirectories(directories), Symbols: symbols, Routes: routes, Relations: relations, RepositoryRoots: graph.RepositoryRoots, RelationCoverage: relationCoverage, Truncation: truncation}, nil
+	return directoryArchitecture{Schema: directoryArchitectureSchema, Root: ".", Files: len(paths), Sources: sources, SourceFiles: buildArchitectureSourceFiles(paths), Directories: buildArchitectureDirectories(directories), Symbols: symbols, Routes: routes, Relations: relations, RepositoryRoots: graph.RepositoryRoots, RelationCoverage: relationCoverage, Truncation: truncation}, nil
 }
 
+func buildArchitectureSourceFiles(paths []string) []architectureSourceFile {
+	files := make([]architectureSourceFile, 0, len(paths))
+	for _, path := range paths {
+		files = append(files, architectureSourceFile{
+			Path:           filepath.ToSlash(path),
+			Language:       parser.LanguageFor(path),
+			Classification: string(sourcekind.Classify(path, ".")),
+		})
+	}
+	sort.Slice(files, func(i, j int) bool { return files[i].Path < files[j].Path })
+	return files
+}
 func architectureVisibilityIndex(declarations []parser.NavigationDeclaration) map[string][]parser.NavigationDeclaration {
 	result := make(map[string][]parser.NavigationDeclaration, len(declarations))
 	for _, declaration := range declarations {

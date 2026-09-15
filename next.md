@@ -4,7 +4,7 @@
 
 ## Recommended next milestone
 
-> Improve normalized, source-linked architecture determinism diagnostics before broadening language projections.
+> Verify generated and queried output determinism across supported operating systems, using normalized architecture comparison to localize drift.
 
 ## Planning principles
 
@@ -14,28 +14,6 @@
 - Syntax-based navigation, structural matching, architecture relations, and boundary findings are evidence—not compiler, runtime, type-flow, or policy verdicts.
 - Preserve dependency direction toward `api` and `parser`; keep GritQL query semantics out of `parser`.
 - Keep canonical language IDs and grammar-kind policy out of generic navigation engines.
-
-## P0 — simplify architecture discovery and output delivery
-
-### Directory architecture precision
-
-`grepple architecture directory|resolve|why` now provides bounded, language-neutral directory ownership, exact type/callable ranges, source-classified call/import/type relations, and explicit relation coverage. Legacy Go package/workspace commands and generated artifacts have been removed.
-
-
-### Spill large output to a file artifact
-
-Observed complete outputs reached about 1.55 MB for boundaries and 6.7 MB for a graph over only `parser search`. Valid uncapped JSON is useful for automation but is a severe agent-context trap. Spill mode should be the default above 64 KB; callers that require the original stdout stream can opt out explicitly.
-
-
-## P1 — improve precision and architectural signal
-
-### Public syntax API
-
-
-### Architecture diagnostics
-
-- [ ] Compare normalized directory JSON before byte-level determinism checks.
-- [ ] Report the first changed declaration, relation, file, or directory with source-linked context.
 
 ## Reliability and compatibility gates
 

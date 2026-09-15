@@ -41,8 +41,9 @@ var taskExamples = []taskExample{
 		"grepple extract structure --entry NavigationGraph --source ./parser",
 		"grepple extract flow --entry BuildNavigationGraph --source ./parser",
 	}},
-	{Name: "architecture", Description: "Explain one strongly resolved cross-directory relation", Commands: []string{
+	{Name: "architecture", Description: "Explain one relation or diagnose drift between complete directory reports", Commands: []string{
 		"grepple architecture why rulespec search --compact rulespec search",
+		"grepple architecture compare --compact before.json after.json",
 	}},
 }
 

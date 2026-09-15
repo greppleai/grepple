@@ -45,7 +45,7 @@ Project analyzers in `hooks/internal/pihooks/` add repo-specific checks that rev
 `same-file-struct-methods` analyzer uses tree-sitter Go syntax trees and requires every method of a struct to live in the file that declares the type.
 The PreToolUse grep guard is also implemented in the standalone module and uses the tree-sitter Bash grammar to inspect actual command invocations.
 
-Mermaid extraction and validation live in the main `extract` package and are exposed through focused `grepple extract structure|flow` commands; the hooks module imports that package for automatic Stop validation rather than maintaining a second analyzer. Language-neutral repository orientation is generated dynamically through `grepple architecture directory|resolve|why`, so no package/workspace artifacts need to be committed under `.grepple/`. `make schema-generate` and `make schema-check` validate parser-generated language metadata. The Stop hook validates `*.class.mmd`, `*.structure.mmd`, and `*.flow.mmd` schemas.
+Mermaid extraction and validation live in the main `extract` package and are exposed through focused `grepple extract structure|flow` commands; the hooks module imports that package for automatic Stop validation rather than maintaining a second analyzer. Language-neutral repository orientation is generated dynamically through `grepple architecture directory|resolve|why`, while `architecture compare` diagnoses drift between complete reports, so no package/workspace artifacts need to be committed under `.grepple/`. `make schema-generate` and `make schema-check` validate parser-generated language metadata. The Stop hook validates `*.class.mmd`, `*.structure.mmd`, and `*.flow.mmd` schemas.
 
 Public parser consumers should treat `Document` as the owning parse boundary, `Node` as a document-tied handle, `DocumentView`/`ViewNode` as callback-scoped lock-free traversal, and `SyntaxNode` as the persistent immutable snapshot. See [Parser syntax lifecycle](docs/parser-syntax-lifecycle.md) for ownership, locking, invalidation, and snapshot guidance.
 
@@ -243,7 +243,7 @@ grepple boundaries --policy .grepple/boundary-policy.json --json .
 Human output is bounded to 16,384 bytes and shows at most 20 ranked candidates per workflow/type/facade section by default; evidence and omissions remain explicit. `--limit 0` shows all candidates, while `grepple-boundaries-v3` JSON is complete. Per-file parser facts are reused from `.grepple/cache/navigation/`; resolved graph inputs are cached under `.grepple/cache/boundaries/`. Use `--no-cache` to bypass both cache layers. `--max-files` remains explicit when source discovery is incomplete.
 
 ## Directory architecture and focused diagrams
-`grepple architecture` provides deterministic, language-neutral directory orientation over every Tree-sitter-backed language. `directory` summarizes physical ownership and separately labeled call/import/type relations, `resolve` locates types and callables with exact ranges, and `why` returns source-linked evidence for one directory relation. Relation coverage preserves unresolved and adapter-unsupported semantics. Directory ownership is intentionally not presented as package, module, or layer intent. See [Directory architecture](docs/directory-architecture.md) for schemas and evidence limits.
+`grepple architecture` provides deterministic, language-neutral directory orientation over every Tree-sitter-backed language. `directory` summarizes physical ownership and separately labeled call/import/type relations, `resolve` locates types and callables with exact ranges, `why` returns source-linked evidence for one directory relation, and `compare` diagnoses semantic or byte-level drift between complete directory JSON reports. Relation coverage preserves unresolved and adapter-unsupported semantics. Directory ownership is intentionally not presented as package, module, or layer intent. See [Directory architecture](docs/directory-architecture.md) for schemas and evidence limits.
 
 `grepple extract` creates deterministic, self-validated focused Mermaid navigation maps from Tree-sitter source analysis. Focused structure and flow extraction support Go, JavaScript/JSX, TypeScript/TSX, Python, Java, Kotlin, and C#. Python covers classes, inheritance, annotated and unannotated attributes, decorators, and `.pyi` stubs. Java, Kotlin, and C# cover their class/interface models, inheritance, fields/properties, methods, records/data classes, enums, and objects where applicable. Generic callable declarations and calls use the normalized `parser.NavigationGraph` shared with `--at` and `--related`.
 
@@ -251,6 +251,7 @@ Human output is bounded to 16,384 bytes and shows at most 20 ranked candidates p
 grepple architecture directory --depth 2 --compact .
 grepple architecture resolve --symbol Document --compact .
 grepple architecture why rulespec search --compact rulespec search
+grepple architecture compare --compact before.json after.json
 grepple extract structure internal/cli --entry cliOptions --source .
 grepple extract flow internal/cli --entry runSearch --depth 2
 grepple extract flow --at internal/cli/local.go:13 --source .
@@ -260,7 +261,7 @@ grepple extract structure --at src/main/java/acme/Service.java:12 --source .
 grepple extract flow --at src/main/kotlin/acme/Worker.kt:30 --source .
 ```
 
-`architecture directory` uses explicit depth, node, file, and output bounds in compact mode; complete JSON may spill to a disclosed artifact according to repository output policy. `architecture resolve` indexes declaration outlines rather than only callable graph nodes. `architecture why` currently reports only `exact`, `import-resolved`, and `context-resolved` static calls, so absence does not prove that no build-system, reflective, registration, or runtime dependency exists.
+`architecture directory` uses explicit depth, node, file, and output bounds in compact mode; complete JSON may spill to a disclosed artifact according to repository output policy. `architecture resolve` indexes declaration outlines rather than only callable graph nodes. `architecture why` currently reports only `exact`, `import-resolved`, and `context-resolved` static calls, so absence does not prove that no build-system, reflective, registration, or runtime dependency exists. `architecture compare` first normalizes paths and collection order, reports the first source-linked semantic difference, and only then diagnoses raw-byte drift.
 
 Focused extraction requires `--entry` or `--at PATH:LINE`. `flow` follows statically resolved outgoing calls. `--source` can be repeated to define analysis roots; `--depth`, `--max-nodes`, and `--output` control projection and writing. A flow that reaches `--max-nodes` remains valid and deterministic, and includes `%% grepple:truncated max-nodes N` instead of failing after useful nodes have already been selected.
 

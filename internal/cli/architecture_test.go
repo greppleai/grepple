@@ -30,6 +30,7 @@ func TestArchitectureDirectoryAndResolveAcrossLanguages(t *testing.T) {
 	if architecture.Schema != directoryArchitectureSchema || architecture.Files != 3 || len(architecture.Directories) != 3 {
 		t.Fatalf("architecture = %+v", architecture)
 	}
+	assertArchitectureSourceFiles(t, architecture.SourceFiles)
 	if formatArchitectureCounts(architecture.Directories[0].Classifications) != "production:2,test:1" || architecture.Directories[0].PublicCallables != 1 {
 		t.Fatalf("root classifications=%+v", architecture.Directories[0].Classifications)
 	}
@@ -49,6 +50,16 @@ func TestArchitectureDirectoryAndResolveAcrossLanguages(t *testing.T) {
 	}
 
 	assertProductionOnlyArchitectureResolve(t)
+}
+
+func assertArchitectureSourceFiles(t *testing.T, files []architectureSourceFile) {
+	t.Helper()
+	if len(files) != 3 {
+		t.Fatalf("source files = %+v", files)
+	}
+	if files[0].Path != "parser/document.go" || files[0].Classification != "production" || files[1].Classification != "test" || files[2].Language != "typescript" {
+		t.Fatalf("source files = %+v", files)
+	}
 }
 
 func TestArchitectureDirectoryReportsAdapterEvidencedEntrypointsAndRoutes(t *testing.T) {
@@ -136,13 +147,15 @@ func TestArchitectureWhyReportsImportOnlyRelation(t *testing.T) {
 }
 
 func TestArchitectureHelpStopsBeforeAnalysis(t *testing.T) {
-	output := captureStdout(t, func() {
-		if err := runArchitecture([]string{"directory", "--help"}); err != nil {
-			t.Fatal(err)
+	for _, command := range []string{"directory", "compare"} {
+		output := captureStdout(t, func() {
+			if err := runArchitecture([]string{command, "--help"}); err != nil {
+				t.Fatal(err)
+			}
+		})
+		if !strings.Contains(output, "--compact") || strings.Contains(output, "requires exactly one") {
+			t.Fatalf("%s help output:\n%s", command, output)
 		}
-	})
-	if !strings.Contains(output, "--compact") || strings.Contains(output, "requires exactly one") {
-		t.Fatalf("help output:\n%s", output)
 	}
 }
 

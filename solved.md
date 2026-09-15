@@ -93,6 +93,7 @@ This file records completed Grepple roadmap work that no longer belongs in `next
 - [x] Kept compact directory relation output bounded to displayed directory depth while `architecture why` preserves exact uncollapsed evidence.
 - [x] Added `parser.OutlineFromDocument` and document-backed graph construction so directory architecture parses each selected source once for both outlines and navigation.
 - [x] Added adapter-evidenced Go process entrypoints and source-linked `net/http.Handle`/`HandleFunc` routes to shared graph, directory architecture, focused queries, graph filtering, and semantic diffs without inferring unsupported framework semantics.
+- [x] Added a selected source-file inventory and `architecture compare` diagnostics that normalize paths and collection ordering before raw-byte checks, then report the first changed file, declaration, route, relation, or directory with exact before/after evidence.
 - [x] Removed Go-specific package/workspace commands, public capability fields, generators, checkers, hook paths, tests, and committed `.grepple` artifacts without a compatibility period.
 
 ## Parser and language architecture

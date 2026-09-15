@@ -28,6 +28,11 @@ Directory architecture is a language-neutral orientation index, not proof of pac
    grepple --at path/to/file.go:40-80
    ```
 5. **Only if behavioral impact matters:** switch to `change-impact-analysis` instead of inferring complete behavior from a directory relation.
+6. **Diagnose unexpected architecture drift:** compare complete reports from the same intended source universe before inspecting checksums.
+   ```bash
+   grepple architecture compare --compact before.json after.json
+   ```
+   A semantic difference identifies the first source-linked fact. Semantic equality with byte inequality identifies encoding or ordering drift.
 
 ## Trust rules
 
