@@ -394,7 +394,9 @@ Commands:
   rules        Manage and inspect saved remote rules
   get          Read one indexed repository file or outline
   tree         List an indexed repository tree
-  repos        Find accessible indexed repositories
+  refs         List indexed repository branches, tags, and commits
+  ask          Delegate bounded code research to a larger tool-using model
+  ai-provider  Authenticate and inspect AI model providers
   refs         List indexed repository branches, tags, and commits
   login        Authenticate with the remote service
   logout       Remove stored remote authentication
@@ -428,7 +430,7 @@ func runHelp(args []string) error {
 	}
 	if len(args) > 1 {
 		switch args[0] {
-		case "graph", "extract", "architecture", "sources", "rules", "anchors", "grit", "artifacts":
+		case "graph", "extract", "architecture", "sources", "rules", "anchors", "grit", "artifacts", "ai-provider":
 			command := append([]string(nil), args...)
 			command = append(command, "--help")
 			return runCommand(command)
@@ -447,7 +449,7 @@ func runHelp(args []string) error {
 		return stdoutWriter().writeString("Remove stored remote authentication.\nUsage: grepple logout\n")
 	case "version":
 		return stdoutWriter().writeString("Print build and source version information.\nUsage: grepple version\n")
-	case "grit", "graph", "anchors", "boundaries", "examples", "languages", "rules", "get", "tree", "repos", "refs", "artifacts", "architecture", "sources":
+	case "grit", "graph", "anchors", "boundaries", "examples", "languages", "rules", "get", "tree", "repos", "refs", "artifacts", "architecture", "sources", "ask", "ai-provider":
 		return runCommand([]string{args[0], "--help"})
 	default:
 		return fmt.Errorf("unknown help topic %q", args[0])
@@ -520,6 +522,10 @@ func runCommand(args []string) error {
 			return runRepos(args[1:])
 		case "refs":
 			return runRefs(args[1:])
+		case "ask":
+			return runAsk(args[1:])
+		case "ai-provider":
+			return runAIProvider(args[1:])
 		case "login":
 			return runLogin(args[1:])
 		case "logout":

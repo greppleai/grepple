@@ -5,5 +5,11 @@
   },
   "output": {
     "spillThresholdBytes": 65536
+  },
+  "index": {
+    "repositories": [
+      {"repo": "charmbracelet/fantasy", "tags": ["v0.8.0"]},
+      {"repo": "openai/codex"}
+    ]
   }
 }

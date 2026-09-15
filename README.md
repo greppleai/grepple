@@ -13,6 +13,7 @@ extract/           Tree-sitter Mermaid extraction, validation, and canonical arc
 gritql/            Native, bounded multi-language Tree-sitter structural detection kernel
 gritqlapi/         Adapters from structural findings to dependency-free API DTOs
 hooks/             Project-local Pi hooks and architecture tooling
+internal/aiprovider/ Provider-neutral AI authentication, credential storage, and model adapters
 internal/cli/      CLI workflows and output rendering
 parser/            Language detection, tree-sitter parsing, segments, and outlines
 rulespec/          Shared validation for text and structural saved rules
@@ -51,7 +52,18 @@ Public parser consumers should treat `Document` as the owning parse boundary, `N
 
 The `grepple` application binary is built into `bin/grepple`.
 
-The default Linux build links the CGO tree-sitter runtime and all grammars into self-contained static binaries. Command-line parsing uses [`go-arg`](https://github.com/alexflint/go-arg).
+The default Linux build links the CGO tree-sitter runtime and all grammars into self-contained static binaries. Command-line parsing uses [`go-arg`](https://github.com/alexflint/go-arg). Delegated research uses [`charm.land/fantasy`](https://github.com/charmbracelet/fantasy), currently pinned to the newest release compatible with Go 1.25.
+
+## Delegated research
+
+Authenticate a larger model once, then delegate bounded source research without consuming repeated turns in the calling agent:
+
+```bash
+grepple ai-provider login codex
+grepple ask Which package owns navigation resolution and what calls it?
+```
+
+The internal agent has a shell-free Grepple argv tool covering local and remote research workflows plus a confined, bounded local read tool. Codex device authentication is implemented behind a provider registry so additional AI providers can be added without changing `ask`. See [Delegated research](docs/ask.md) for provider, model, step, timeout, credential, and tool-safety details.
 
 ## Search
 

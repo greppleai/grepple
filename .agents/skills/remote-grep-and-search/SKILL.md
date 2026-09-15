@@ -29,9 +29,16 @@ grepple get OWNER/REPO path/to/file.go --lines 40:80
 
 Do not issue unrestricted corpus-wide searches. If the repository is unavailable or ambiguous, stop and resolve it with `repos` rather than widening the query.
 
-## Why local navigation flags do not apply
+## Remote navigation
 
-`--related`, `--follow-related`, and `--at` are local declaration-index features and are intentionally unavailable for remote search. For remote code, use bounded search to obtain a location, then `get --lines` or `get --outline`. This preserves explicit revision/repository boundaries and avoids pretending a partial remote result set is a complete call graph.
+`--related` and `--follow-related` build navigation from the complete selected indexed checkout rather than only text-match candidates. Always provide an exact `--repo` selector. Remote `--at` also requires exactly one repository and accepts a repository-relative location:
+
+```bash
+grepple --server URL --repo OWNER/REPO --related -F 'Symbol'
+grepple --server URL --repo OWNER/REPO --at path/file.go:40
+```
+
+Navigation remains syntax-based and bounded. Treat candidates as leads, preserve the exact repository/ref selector, and use `get --lines` when only one known range is needed.
 
 ## Operational facts
 
@@ -41,4 +48,4 @@ Do not issue unrestricted corpus-wide searches. If the repository is unavailable
 - A configured server does not itself enable remote search.
 - Truncation means the sample is incomplete; narrow the repository, path, or pattern before drawing conclusions.
 
-Use the local skill for detailed search semantics, structural output, globs, and local navigation.
+Use the local skill for detailed search semantics, structural output, globs, and navigation confidence interpretation.

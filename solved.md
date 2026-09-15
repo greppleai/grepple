@@ -9,6 +9,7 @@ This file records completed Grepple roadmap work that no longer belongs in `next
 - [x] Made each skill state what Grepple evidence can and cannot prove, with explicit handling for candidates, bounded output, source universes, and syntax-only analysis.
 - [x] Added repeatable agent workflow benchmarks for breadth summaries, outlines, structural lookup, exact ranges, related navigation, impact graphs, enclosing scopes, and edit locations.
 - [x] Added answer-gated task benchmarks for bounded directory orientation, direct architecture resolution, and exact relation explanation; each task completes in one modeled retrieval call.
+- [x] Added `grepple ask` for bounded larger-model research through Fantasy, with provider-neutral authentication, Codex device login and refresh, a shell-free Grepple tool, and a confined local read tool.
 
 ## CLI discoverability
 
