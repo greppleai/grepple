@@ -86,32 +86,36 @@ func askResearchToolInfo(tools []fantasy.AgentTool) []fantasy.ToolInfo {
 }
 
 func newAskResearchTools(root, server string) []fantasy.AgentTool {
+	return newAskResearchToolsForSession(newResearchSession(context.Background(), nil, root, server), root, server)
+}
+
+func newAskResearchToolsForSession(session *researchSession, root, server string) []fantasy.AgentTool {
 	return []fantasy.AgentTool{
-		fantasy.NewAgentTool("search_code", "Search source text directly. Use mode=count to locate concentration, mode=files to choose files, then mode=snippets for bounded source-backed context. Set repository for remote indexed code.", func(ctx context.Context, input askSearchInput, _ fantasy.ToolCall) (fantasy.ToolResponse, error) {
+		cachedAskTool(session, "search_code", "Search source text directly. Use mode=count to locate concentration, mode=files to choose files, then mode=snippets for bounded source-backed context. Set repository for remote indexed code.", func(ctx context.Context, input askSearchInput) (fantasy.ToolResponse, error) {
 			return askToolResult(runAskSearch(ctx, root, server, input))
 		}),
-		fantasy.NewAgentTool("navigate_code", "Retrieve the exact declaration containing a known PATH:LINE and its immediate callers/callees. Use after search_code; candidate edges are leads, while exact/import-resolved/context-resolved edges are stronger evidence.", func(ctx context.Context, input askNavigateInput, _ fantasy.ToolCall) (fantasy.ToolResponse, error) {
+		cachedAskTool(session, "navigate_code", "Retrieve the exact declaration containing a known PATH:LINE and its immediate callers/callees. Use after search_code; candidate edges are leads, while exact/import-resolved/context-resolved edges are stronger evidence.", func(ctx context.Context, input askNavigateInput) (fantasy.ToolResponse, error) {
 			return askToolResult(runAskNavigate(ctx, root, server, input))
 		}),
-		fantasy.NewAgentTool("structural_search", "Run a native read-only gritql-v1 syntax query across Tree-sitter-backed source. Use for code shapes, not type resolution, call impact, or data-flow proof.", func(ctx context.Context, input askStructuralInput, _ fantasy.ToolCall) (fantasy.ToolResponse, error) {
+		cachedAskTool(session, "structural_search", "Run a native read-only gritql-v1 syntax query across Tree-sitter-backed source. Use for code shapes, not type resolution, call impact, or data-flow proof.", func(ctx context.Context, input askStructuralInput) (fantasy.ToolResponse, error) {
 			return askToolResult(runAskStructural(ctx, root, server, input))
 		}),
-		fantasy.NewAgentTool("inspect_architecture", "Inspect local language-neutral directory architecture. directory orients ownership; resolve locates a symbol; why returns exact evidence for a directory relation.", func(_ context.Context, input askArchitectureInput, _ fantasy.ToolCall) (fantasy.ToolResponse, error) {
+		cachedAskTool(session, "inspect_architecture", "Inspect local language-neutral directory architecture. directory orients ownership; resolve locates a symbol; why returns exact evidence for a directory relation.", func(_ context.Context, input askArchitectureInput) (fantasy.ToolResponse, error) {
 			return askToolResult(runAskArchitecture(root, input))
 		}),
-		fantasy.NewAgentTool("query_graph", "Query the local parser-owned navigation graph for callers, callees, dependencies, dependents, or impact. Select exactly one symbol or source location and keep depth small.", func(_ context.Context, input askGraphInput, _ fantasy.ToolCall) (fantasy.ToolResponse, error) {
+		cachedAskTool(session, "query_graph", "Query the local parser-owned navigation graph for callers, callees, dependencies, dependents, or impact. Select exactly one symbol or source location and keep depth small.", func(_ context.Context, input askGraphInput) (fantasy.ToolResponse, error) {
 			return askToolResult(runAskGraph(root, input))
 		}),
-		fantasy.NewAgentTool("explain_sources", "Report which local files are selected, excluded, ignored, generated, vendored, tests, fixtures, or production. Use before completeness-sensitive conclusions.", func(_ context.Context, input askSourceScopeInput, _ fantasy.ToolCall) (fantasy.ToolResponse, error) {
+		cachedAskTool(session, "explain_sources", "Report which local files are selected, excluded, ignored, generated, vendored, tests, fixtures, or production. Use before completeness-sensitive conclusions.", func(_ context.Context, input askSourceScopeInput) (fantasy.ToolResponse, error) {
 			return askToolResult(runAskSourceScope(root, input))
 		}),
-		fantasy.NewAgentTool("repository_refs", "Resolve a source OWNER/REPO and requested version to exact indexed repository selectors. Use before remote search, navigation, tree, or read when a branch or tag matters.", func(ctx context.Context, input askRepositoryRefsInput, _ fantasy.ToolCall) (fantasy.ToolResponse, error) {
+		cachedAskTool(session, "repository_refs", "Resolve a source OWNER/REPO and requested version to exact indexed repository selectors. Use before remote search, navigation, tree, or read when a branch or tag matters.", func(ctx context.Context, input askRepositoryRefsInput) (fantasy.ToolResponse, error) {
 			return askToolResult(runAskRepositoryRefs(ctx, server, input))
 		}),
-		fantasy.NewAgentTool("repository_tree", "List a bounded tree from one exact indexed repository selector returned by repository_refs. Use it to discover remote paths before search or read.", func(ctx context.Context, input askRepositoryTreeInput, _ fantasy.ToolCall) (fantasy.ToolResponse, error) {
+		cachedAskTool(session, "repository_tree", "List a bounded tree from one exact indexed repository selector returned by repository_refs. Use it to discover remote paths before search or read.", func(ctx context.Context, input askRepositoryTreeInput) (fantasy.ToolResponse, error) {
 			return askToolResult(runAskRepositoryTree(ctx, server, input))
 		}),
-		fantasy.NewAgentTool("read_file", "Read one bounded local or indexed-repository file range. Prefer navigate_code for declarations and search_code for discovery; use outline=true to return structural symbols instead of content.", func(ctx context.Context, input readToolInput, _ fantasy.ToolCall) (fantasy.ToolResponse, error) {
+		cachedAskTool(session, "read_file", "Read one bounded local or indexed-repository file range. Prefer navigate_code for declarations and search_code for discovery; use outline=true to return structural symbols instead of content.", func(ctx context.Context, input readToolInput) (fantasy.ToolResponse, error) {
 			return runAskReadTool(ctx, root, server, input)
 		}),
 	}

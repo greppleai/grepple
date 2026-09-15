@@ -30,7 +30,6 @@
 
 Live `grepple ask` dogfooding showed two distinct bottlenecks: ordinary local/remote investigations took about 55 seconds while tool execution consumed only 0.85–3.09 seconds, so model round trips dominated; a subprocess audit spent 41.58 of 60.11 seconds in tools because two unnecessary whole-repository navigation builds took 14.13 and 27.15 seconds.
 
-- [ ] Add a per-invocation `researchSession` cache keyed by normalized typed-tool input and source/config identity; reuse identical local and remote results, coalesce concurrent duplicate calls with `singleflight`, and expose cache-hit status without changing evidence.
 - [ ] Lazily parse each normalized local source universe once per ask, then reuse caller-owned documents and one navigation graph across `navigate_code`, `query_graph`, and `inspect_architecture`; preserve byte-identical answers between cold and reused state.
 - [ ] Add a focused `inspect_symbol` tool that can combine bounded symbol discovery, deterministic declaration selection, immediate related navigation, and exact source retrieval in one call, reducing common count → files → snippets → navigate → read sequences.
 - [ ] Add an `auto` `search_code` projection that returns aggregate concentration, top matching paths, bounded snippets, and exact next locations together while retaining explicit `count`, `files`, and `snippets` modes.

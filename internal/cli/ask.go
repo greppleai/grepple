@@ -98,7 +98,8 @@ func runAsk(args []string) error {
 func runLoggedAsk(ctx context.Context, log *askLog, provider aiprovider.Provider, values askArgs, question, root string) error {
 	systemPrompt := askSystemPrompt(root)
 	server := serverDefault(values.Server)
-	tools := newAskResearchTools(root, server)
+	session := newResearchSession(ctx, log, root, server)
+	tools := newAskResearchToolsForSession(session, root, server)
 	if err := log.Record("session.start", map[string]any{
 		"provider": provider.Name(), "model": values.Model, "question": question, "root": root, "server": server,
 		"timeoutSeconds": values.Timeout, "systemPrompt": systemPrompt,

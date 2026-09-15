@@ -9,7 +9,8 @@ This file records completed Grepple roadmap work that no longer belongs in `next
 - [x] Made each skill state what Grepple evidence can and cannot prove, with explicit handling for candidates, bounded output, source universes, and syntax-only analysis.
 - [x] Added repeatable agent workflow benchmarks for breadth summaries, outlines, structural lookup, exact ranges, related navigation, impact graphs, enclosing scopes, and edit locations.
 - [x] Added answer-gated task benchmarks for bounded directory orientation, direct architecture resolution, and exact relation explanation; each task completes in one modeled retrieval call.
-- [x] Added `grepple ask` for bounded larger-model research through Fantasy, with provider-neutral authentication, Codex device login and refresh, a shell-free Grepple tool, a confined local read tool, and a user-owned default model in `~/.grepple/grepple.json`.
+- [x] Added `grepple ask` for bounded, cost-efficient research through Fantasy, with provider-neutral authentication, Codex device login and refresh, direct typed read-only tools, confined local reads, and a user-owned default research model in `~/.grepple/grepple.json`.
+- [x] Added a per-invocation ask research cache identified by canonical source root, repository configuration digest, active source flags, server, tool, and normalized typed input. Successful identical calls preserve evidence bytes, concurrent duplicates share one execution, failures retry, canceled waiters do not cancel shared work, and response metadata plus semantic JSONL events disclose cache status.
 
 ## CLI discoverability
 
