@@ -27,7 +27,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Check out source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
           ref: ${{ inputs.release_tag || github.ref }}
@@ -79,7 +79,7 @@ jobs:
       RELEASE_TAG: ${{ inputs.release_tag || (github.ref_type == 'tag' && github.ref_name) || 'v0.0.0-check' }}
     steps:
       - name: Check out tagged source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
           ref: ${{ inputs.release_tag || github.ref }}
@@ -92,6 +92,9 @@ jobs:
             go.sum
             hooks/go.sum
 
+      - name: Prepare binary output directory
+        shell: bash
+        run: mkdir -p release
       - name: Record reproducible source date
         shell: bash
         run: echo "GREPPLE_BUILD_DATE=$(git show -s --format=%cI HEAD)" >> "$GITHUB_ENV"
@@ -130,7 +133,7 @@ jobs:
           Compress-Archive -Path release\grepple.exe -DestinationPath "artifacts\grepple_${version}_${env:GOOS}_${env:GOARCH}.zip"
 
       - name: Upload packaged binary
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: grepple-${{ matrix.goos }}-${{ matrix.goarch }}
           path: artifacts/*
@@ -150,7 +153,7 @@ jobs:
       attestations: write
     steps:
       - name: Download packaged binaries
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           pattern: grepple-*
           path: dist

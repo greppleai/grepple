@@ -367,7 +367,7 @@ var generatedLanguageMetadata = map[string]languageGeneratedMetadata{
 		},
 	},
 	"csharp": {
-		fingerprint: "sha256:b233bf3c07328eb041084ade0afa1815c1781327927585990b3862c93033ba63",
+		fingerprint: "sha256:eec6557b97a3bce39ec42abe6809ffa37bc788ab6dd213f1157a95b2d57ac93c",
 		fields: map[string]map[string]GrammarCardinality{
 			"accessor_declaration":               {"body": GrammarCardinalityOne, "name": GrammarCardinalityOne},
 			"alias_qualified_name":               {"alias": GrammarCardinalityOne, "name": GrammarCardinalityOne},

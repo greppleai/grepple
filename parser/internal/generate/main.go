@@ -161,7 +161,7 @@ func transitiveSubtypeClosure(direct map[string]map[string]bool) map[string]map[
 }
 
 func moduleDirectory(module string) (string, error) {
-	command := exec.Command("go", "list", "-m", "-json", module)
+	command := exec.Command("go", "mod", "download", "-json", module)
 	output, err := command.Output()
 	if err != nil {
 		return "", err
