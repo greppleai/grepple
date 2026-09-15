@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -120,8 +121,9 @@ func TestRegistryRejectsUnknownProvider(t *testing.T) {
 	if _, err := registry.Provider("unknown"); err == nil {
 		t.Fatal("unknown provider succeeded")
 	}
-	if got := registry.Names(); len(got) != 1 || got[0] != "codex" {
-		t.Fatalf("providers = %v", got)
+	want := []string{"anthropic", "anthropic-subscription", "bedrock", "codex", "copilot", "openai"}
+	if got := registry.Names(); !slices.Equal(got, want) {
+		t.Fatalf("providers = %v, want %v", got, want)
 	}
 }
 

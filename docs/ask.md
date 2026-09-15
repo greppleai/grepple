@@ -12,9 +12,33 @@ grepple ai-provider login codex
 grepple ai-provider logout codex
 ```
 
-Codex login uses OpenAI's device authorization flow. The CLI prints the verification URL and one-time code and opens the browser when possible; use `--no-browser` to suppress browser launch. Credentials are atomically stored with mode `0600` in `~/.grepple/ai-providers.json`. Override the location with `GREPPLE_AI_CREDENTIALS` for isolated automation or testing.
+The built-in providers are:
 
-The provider registry is intentionally provider-agnostic. Each provider owns login, logout, status, token refresh, and Fantasy language-model construction. Codex is the first registered provider. Its OAuth access token is sent only to the configured Codex API endpoint, with the account identifier required by that endpoint. Expiring tokens refresh automatically.
+| Provider | Authentication | Default model |
+| --- | --- | --- |
+| `codex` | OpenAI Codex device OAuth with automatic refresh | `gpt-5.3-codex` |
+| `copilot` | GitHub device authorization plus Copilot subscription verification | `gpt-4.1` |
+| `anthropic` | `ANTHROPIC_API_KEY`, `GREPPLE_ANTHROPIC_API_KEY`, or a hidden login prompt | `claude-sonnet-4-5-20250929` |
+| `anthropic-subscription` | `CLAUDE_CODE_OAUTH_TOKEN`, `GREPPLE_ANTHROPIC_OAUTH_TOKEN`, or a hidden prompt for a token created by `claude setup-token` | `claude-sonnet-4-5-20250929` |
+| `openai` | `OPENAI_API_KEY`, `GREPPLE_OPENAI_API_KEY`, or a hidden login prompt | `gpt-5.1` |
+| `bedrock` | AWS SDK default credential chain and region configuration | `anthropic.claude-sonnet-4-5-20250929-v1:0` |
+
+```bash
+grepple ai-provider login copilot
+grepple ai-provider login anthropic
+grepple ai-provider login anthropic-subscription
+grepple ai-provider login openai
+AWS_PROFILE=research AWS_REGION=us-east-1 grepple ai-provider login bedrock
+
+grepple ask --provider copilot --model gpt-4.1 'Question'
+grepple ask --provider anthropic --model claude-sonnet-4-5-20250929 'Question'
+```
+
+Codex and Copilot login print the verification URL and one-time code immediately while authorization polling continues. `--no-browser` suppresses browser launch. Static credentials entered interactively are read without terminal echo. Credentials are atomically stored with mode `0600` in `~/.grepple/ai-providers.json`; override the location with `GREPPLE_AI_CREDENTIALS` for isolated automation or testing. Merely using an API-key environment variable does not copy it into the store. Logout removes only the stored provider entry; an active environment variable continues to authenticate that provider. Concurrent provider updates are serialized so one login cannot overwrite another.
+
+Anthropic subscription access uses Anthropic's user-created setup token rather than collecting account passwords. Availability and permitted use remain controlled by Anthropic's subscription terms. Bedrock does not copy AWS secrets into Grepple: `login bedrock` validates the current AWS SDK credential chain and records only a validation marker, while `list` revalidates the active chain before reporting `logged-in`. Run the appropriate AWS SSO login or configure environment/shared-profile credentials first; Grepple logout does not remove external AWS credentials.
+
+Each provider owns login, logout, status, refresh, and Fantasy language-model construction. API credentials are sent only to that provider's configured endpoint. Copilot exchanges the stored GitHub token for a short-lived Copilot token before model construction; Codex refreshes expiring OAuth credentials automatically.
 
 ## Ask
 
@@ -28,8 +52,8 @@ grepple ask --model gpt-5.3-codex \
 
 Options:
 
-- `--provider NAME` selects a registered provider (`codex` by default).
-- `--model MODEL` selects the provider model. When omitted, `ai.model` from `~/.grepple/grepple.json` is used, then the provider default (`gpt-5.3-codex`).
+- `--provider NAME` selects `anthropic`, `anthropic-subscription`, `bedrock`, `codex`, `copilot`, or `openai` (`codex` by default).
+- `--model MODEL` selects the provider model. When omitted, `ai.models[PROVIDER]` from `~/.grepple/grepple.json` is used, then the provider default. Legacy `ai.model` remains the Codex default only.
 - `--server URL` selects the remote Grepple service available to tools with an indexed-repository selector. When omitted, normal Grepple server configuration applies.
 - `--timeout-seconds N` bounds the whole run from 1 to 3600 seconds (default 600).
 
@@ -38,12 +62,16 @@ Set a non-secret per-user model default independently of credentials:
 ```json
 {
   "ai": {
-    "model": "gpt-5.6-luna"
+    "model": "gpt-5.6-luna",
+    "models": {
+      "copilot": "gpt-4.1",
+      "anthropic": "claude-sonnet-4-5-20250929"
+    }
   }
 }
 ```
 
-Command-line `--model` always takes precedence. Repository-owned `grepple.json` files cannot select the AI model. Prefer a capable cheaper model as the user default for broad research; override it only when an investigation needs a different cost/capability tradeoff.
+Command-line `--model` always takes precedence. Provider-keyed `ai.models` entries prevent a Codex model alias from leaking into Anthropic, Bedrock, Copilot, or OpenAI requests; legacy `ai.model` remains backward-compatible for Codex. Repository-owned `grepple.json` files cannot select the AI model. Prefer capable cheaper models for broad research and override them only when an investigation needs a different cost/capability tradeoff.
 
 Human answers participate in Grepple's normal bounded-output and artifact-spill behavior.
 

@@ -61,13 +61,18 @@ Check provider state when authentication is uncertain:
 grepple ai-provider list
 ```
 
-If needed, ask the user to complete interactive authentication:
+If needed, ask the user to complete provider authentication:
 
 ```bash
-grepple ai-provider login codex
+grepple ai-provider login codex                 # device OAuth
+grepple ai-provider login copilot               # GitHub device flow
+grepple ai-provider login anthropic             # API key
+grepple ai-provider login anthropic-subscription # claude setup-token
+grepple ai-provider login openai                # API key
+grepple ai-provider login bedrock               # validate AWS credential chain
 ```
 
-The model defaults to `ai.model` in `~/.grepple/grepple.json`, then the provider default. Prefer a capable cheaper research model there; use `--model` when a particular investigation needs a different cost/capability tradeoff.
+Select another service with `grepple ask --provider NAME --model MODEL`. The model defaults to `ai.models[PROVIDER]` in `~/.grepple/grepple.json`, then the selected provider default; legacy `ai.model` applies only to Codex. Prefer a capable cheaper research model and use explicit `--model` only when an investigation needs a different cost/capability tradeoff.
 
 ## Recommended workflow
 

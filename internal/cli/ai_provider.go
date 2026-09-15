@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"bufio"
 	"context"
 	"errors"
 	"fmt"
@@ -11,17 +12,18 @@ import (
 
 	"github.com/alexflint/go-arg"
 	"github.com/greppleai/grepple/internal/aiprovider"
+	"golang.org/x/term"
 )
 
 var errAIProviderHelp = errors.New("AI provider help displayed")
 
 type aiProviderLoginArgs struct {
-	Provider  string `arg:"positional" placeholder:"PROVIDER" help:"provider name (default codex)"`
-	NoBrowser bool   `arg:"--no-browser" help:"print the device URL without opening a browser"`
+	Provider  string `arg:"positional" placeholder:"PROVIDER" help:"anthropic, anthropic-subscription, bedrock, codex, copilot, or openai (default codex)"`
+	NoBrowser bool   `arg:"--no-browser" help:"do not open a browser during device login"`
 }
 
 type aiProviderNameArgs struct {
-	Provider string `arg:"positional" placeholder:"PROVIDER" help:"provider name (default codex)"`
+	Provider string `arg:"positional" placeholder:"PROVIDER" help:"registered provider name (default codex)"`
 }
 
 func runAIProvider(args []string) error {
@@ -59,10 +61,11 @@ func runAIProviderLogin(registry *aiprovider.Registry, store *aiprovider.Store, 
 	}
 	// Device instructions must bypass the bounded stdout collector so they are
 	// visible while Login waits for browser authorization.
-	if err := provider.Login(context.Background(), aiprovider.LoginOptions{NoBrowser: values.NoBrowser, Output: os.Stderr}); err != nil {
+	loginOptions := aiprovider.LoginOptions{NoBrowser: values.NoBrowser, Output: os.Stderr, ReadSecret: readAIProviderSecret}
+	if err := provider.Login(context.Background(), loginOptions); err != nil {
 		return err
 	}
-	return stdoutWriter().writeString(fmt.Sprintf("Logged in to %s; credentials stored in %s\n", provider.Name(), store.Path()))
+	return stdoutWriter().writeString(fmt.Sprintf("Authentication configured for %s; provider state: %s\n", provider.Name(), store.Path()))
 }
 
 func runAIProviderLogout(registry *aiprovider.Registry, args []string) error {
@@ -120,6 +123,28 @@ func parseAIProviderArgs(program string, args []string, target any) error {
 		return err
 	}
 	return nil
+}
+
+func readAIProviderSecret(ctx context.Context, prompt string) (string, error) {
+	select {
+	case <-ctx.Done():
+		return "", ctx.Err()
+	default:
+	}
+	fmt.Fprint(os.Stderr, prompt+": ")
+	if term.IsTerminal(int(os.Stdin.Fd())) {
+		secret, err := term.ReadPassword(int(os.Stdin.Fd()))
+		fmt.Fprintln(os.Stderr)
+		if err != nil {
+			return "", err
+		}
+		return strings.TrimSpace(string(secret)), nil
+	}
+	line, err := bufio.NewReader(os.Stdin).ReadString('\n')
+	if err != nil && line == "" {
+		return "", err
+	}
+	return strings.TrimSpace(line), nil
 }
 
 func defaultAIProvider(value string) string {

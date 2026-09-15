@@ -15,6 +15,8 @@ import (
 type LoginOptions struct {
 	NoBrowser bool
 	Output    io.Writer
+	// ReadSecret securely obtains a static credential when environment-based login is unavailable.
+	ReadSecret func(context.Context, string) (string, error)
 }
 
 // Provider owns one model service's authentication and Fantasy model adapter.
@@ -37,8 +39,19 @@ func NewRegistry(store *Store, client *http.Client) *Registry {
 	if client == nil {
 		client = http.DefaultClient
 	}
-	codex := newCodexProvider(store, client)
-	return &Registry{providers: map[string]Provider{codex.Name(): codex}}
+	providers := []Provider{
+		newAnthropicProvider(store, client),
+		newAnthropicSubscriptionProvider(store, client),
+		newBedrockProvider(store, client),
+		newCodexProvider(store, client),
+		newCopilotProvider(store, client),
+		newOpenAIProvider(store, client),
+	}
+	registry := &Registry{providers: make(map[string]Provider, len(providers))}
+	for _, provider := range providers {
+		registry.providers[provider.Name()] = provider
+	}
+	return registry
 }
 
 // Provider resolves a configured provider by stable name.

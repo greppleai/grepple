@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 )
 
 const credentialsSchema = "grepple-ai-credentials-v1"
@@ -57,26 +58,54 @@ func (s *Store) Load(provider string, target any) (found bool, err error) {
 
 // Save atomically stores one provider's credentials with mode 0600.
 func (s *Store) Save(provider string, value any) error {
-	file, err := s.loadFile()
-	if err != nil {
-		return err
-	}
 	raw, err := json.Marshal(value)
 	if err != nil {
 		return err
 	}
-	file.Providers[provider] = raw
-	return s.saveFile(file)
+	return s.mutate(func(file *credentialFile) { file.Providers[provider] = raw })
 }
 
 // Delete removes one provider without affecting other provider sessions.
 func (s *Store) Delete(provider string) error {
+	return s.mutate(func(file *credentialFile) { delete(file.Providers, provider) })
+}
+
+func (s *Store) mutate(update func(*credentialFile)) error {
+	release, err := acquireCredentialStoreLock(s.path)
+	if err != nil {
+		return err
+	}
+	defer release()
 	file, err := s.loadFile()
 	if err != nil {
 		return err
 	}
-	delete(file.Providers, provider)
+	update(&file)
 	return s.saveFile(file)
+}
+
+func acquireCredentialStoreLock(path string) (func(), error) {
+	directory := filepath.Dir(path)
+	if err := os.MkdirAll(directory, 0o700); err != nil {
+		return nil, err
+	}
+	lockPath := path + ".lock"
+	deadline := time.Now().Add(10 * time.Second)
+	for {
+		if err := os.Mkdir(lockPath, 0o700); err == nil {
+			return func() { _ = os.Remove(lockPath) }, nil
+		} else if !errors.Is(err, os.ErrExist) {
+			return nil, err
+		}
+		if information, err := os.Stat(lockPath); err == nil && time.Since(information.ModTime()) > 30*time.Second {
+			_ = os.Remove(lockPath)
+			continue
+		}
+		if time.Now().After(deadline) {
+			return nil, fmt.Errorf("timed out locking AI credential store %s", path)
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
 }
 
 func (s *Store) loadFile() (credentialFile, error) {

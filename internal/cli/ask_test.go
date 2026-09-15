@@ -271,14 +271,18 @@ func TestAskToolResultDisclosesTruncation(t *testing.T) {
 	}
 }
 
-func TestAIProviderListShowsCodexLoggedOut(t *testing.T) {
+func TestAIProviderListShowsBuiltInsLoggedOut(t *testing.T) {
 	t.Setenv(aiprovider.CredentialsPathEnv, filepath.Join(t.TempDir(), "credentials.json"))
+	for _, name := range []string{"GREPPLE_ANTHROPIC_API_KEY", "ANTHROPIC_API_KEY", "GREPPLE_ANTHROPIC_OAUTH_TOKEN", "CLAUDE_CODE_OAUTH_TOKEN", "GREPPLE_OPENAI_API_KEY", "OPENAI_API_KEY"} {
+		t.Setenv(name, "")
+	}
 	output := captureStdout(t, func() {
 		if err := runAIProvider([]string{"list"}); err != nil {
 			t.Fatal(err)
 		}
 	})
-	if output != "codex\tlogged-out\n" {
+	want := "anthropic\tlogged-out\nanthropic-subscription\tlogged-out\nbedrock\tlogged-out\ncodex\tlogged-out\ncopilot\tlogged-out\nopenai\tlogged-out\n"
+	if output != want {
 		t.Fatalf("output=%q", output)
 	}
 }

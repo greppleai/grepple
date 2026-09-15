@@ -1,8 +1,10 @@
 package aiprovider
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
+	"sync"
 	"testing"
 )
 
@@ -45,5 +47,43 @@ func TestStoreSeparatesProvidersAndUsesPrivateMode(t *testing.T) {
 	found, err = store.Load("two", &loaded)
 	if err != nil || !found || loaded.Token != "secret-two" {
 		t.Fatalf("other provider was changed: found=%v loaded=%+v err=%v", found, loaded, err)
+	}
+}
+
+func TestStoreSerializesConcurrentProviderUpdates(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "credentials.json")
+	t.Setenv(CredentialsPathEnv, path)
+	const providers = 25
+	var group sync.WaitGroup
+	errors := make(chan error, providers)
+	for index := range providers {
+		group.Add(1)
+		go func() {
+			defer group.Done()
+			store, err := NewStore()
+			if err == nil {
+				err = store.Save(fmt.Sprintf("provider-%02d", index), testCredentials{Token: fmt.Sprintf("secret-%02d", index)})
+			}
+			errors <- err
+		}()
+	}
+	group.Wait()
+	close(errors)
+	for err := range errors {
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	store, err := NewStore()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for index := range providers {
+		var loaded testCredentials
+		name := fmt.Sprintf("provider-%02d", index)
+		found, err := store.Load(name, &loaded)
+		if err != nil || !found || loaded.Token != fmt.Sprintf("secret-%02d", index) {
+			t.Fatalf("%s lost during concurrent update: found=%v loaded=%+v err=%v", name, found, loaded, err)
+		}
 	}
 }

@@ -24,8 +24,8 @@ const (
 )
 
 type askArgs struct {
-	Provider string   `arg:"--provider" placeholder:"NAME" help:"AI provider (default codex)"`
-	Model    string   `arg:"--model" placeholder:"MODEL" help:"larger research model (user/provider default when omitted)"`
+	Provider string   `arg:"--provider" placeholder:"NAME" help:"AI provider: anthropic, anthropic-subscription, bedrock, codex, copilot, or openai"`
+	Model    string   `arg:"--model" placeholder:"MODEL" help:"research model (user/provider default when omitted)"`
 	Server   string   `arg:"--server" placeholder:"URL" help:"remote Grepple service available to research tools"`
 	Timeout  int      `arg:"--timeout-seconds" placeholder:"N" help:"overall deadline in seconds"`
 	Question []string `arg:"positional" placeholder:"QUESTION"`
@@ -75,7 +75,7 @@ func runAsk(args []string) error {
 	if err != nil {
 		return err
 	}
-	values.Model, err = resolveAskModel(values.Model, provider.DefaultModel())
+	values.Model, err = resolveAskModel(values.Model, provider.Name(), provider.DefaultModel())
 	if err != nil {
 		return err
 	}
@@ -147,11 +147,11 @@ func recordAskError(log *askLog, err error) error {
 	return errors.Join(err, logErr)
 }
 
-func resolveAskModel(explicit, providerDefault string) (string, error) {
+func resolveAskModel(explicit, providerName, providerDefault string) (string, error) {
 	if model := strings.TrimSpace(explicit); model != "" {
 		return model, nil
 	}
-	model, err := configuredAIModel()
+	model, err := configuredAIModel(providerName)
 	if err != nil {
 		return "", err
 	}

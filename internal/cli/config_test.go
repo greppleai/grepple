@@ -42,28 +42,40 @@ func TestConfiguredAIModelUsesUserGreppleJSON(t *testing.T) {
 		t.Fatal(err)
 	}
 	path := filepath.Join(directory, "grepple.json")
-	if err := os.WriteFile(path, []byte(`{"ai":{"model":" luna "},"future":true}`), 0o600); err != nil {
+	if err := os.WriteFile(path, []byte(`{"ai":{"model":" luna ","models":{"anthropic":" sonnet "}},"future":true}`), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	model, err := configuredAIModel()
+	model, err := configuredAIModel("codex")
 	if err != nil || model != "luna" {
 		t.Fatalf("model=%q err=%v", model, err)
 	}
-	override, err := resolveAskModel(" explicit ", "provider-default")
+	providerModel, err := configuredAIModel("anthropic")
+	if err != nil || providerModel != "sonnet" {
+		t.Fatalf("provider model=%q err=%v", providerModel, err)
+	}
+	otherModel, err := configuredAIModel("openai")
+	if err != nil || otherModel != "" {
+		t.Fatalf("other provider model=%q err=%v", otherModel, err)
+	}
+	resolvedOther, err := resolveAskModel("", "openai", "openai-default")
+	if err != nil || resolvedOther != "openai-default" {
+		t.Fatalf("resolved other provider model=%q err=%v", resolvedOther, err)
+	}
+	override, err := resolveAskModel(" explicit ", "anthropic", "provider-default")
 	if err != nil || override != "explicit" {
 		t.Fatalf("override=%q err=%v", override, err)
 	}
 	if err := os.WriteFile(path, []byte(`{"ai":{"model":"luna"}} trailing`), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := configuredAIModel(); err == nil {
+	if _, err := configuredAIModel("codex"); err == nil {
 		t.Fatal("expected malformed user configuration error")
 	}
 }
 
 func TestResolveAskModelFallsBackToProvider(t *testing.T) {
 	t.Setenv("HOME", t.TempDir())
-	model, err := resolveAskModel("", "provider-default")
+	model, err := resolveAskModel("", "openai", "provider-default")
 	if err != nil || model != "provider-default" {
 		t.Fatalf("model=%q err=%v", model, err)
 	}
