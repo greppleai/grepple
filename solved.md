@@ -17,6 +17,8 @@ This file records completed Grepple roadmap work that no longer belongs in `next
 - [x] Added real `grepple help` and command help routing plus an explicit `grepple search` mode so command-name patterns do not collide with dispatch.
 - [x] Added successful recursive help for every extract and graph mode, including explicit output-mode and root-selector exclusivity contracts.
 - [x] Added `grepple examples [TASK]` with concise copyable workflows for orientation, exact retrieval, editing, caller impact, boundary review, GritQL audits, focused diagrams, and canonical checks.
+- [x] Clarified directly in search help that `-l`/`--files` lists paths rather than matching content, identified `--files-with-matches` as the `grep -l` equivalent, and put the content-matching mode first in the copyable retrieval workflow.
+
 ## Repository scope and output delivery
 
 - [x] Extended the nearest ancestor root `grepple.json` with validated repository-relative `ignore.paths` and `output.spillThresholdBytes` while preserving existing `server` files.

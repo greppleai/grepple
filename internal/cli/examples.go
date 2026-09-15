@@ -17,7 +17,8 @@ var taskExamples = []taskExample{
 		"grepple architecture directory --depth 2 --compact .",
 		"grepple architecture resolve --symbol Document --compact .",
 	}},
-	{Name: "retrieve", Description: "Locate a declaration and retrieve its exact range", Commands: []string{
+	{Name: "retrieve", Description: "Find content-matching files, then retrieve an exact declaration range", Commands: []string{
+		"grepple -F 'BuildNavigationGraph' --files-with-matches ./parser",
 		"grepple --line-only --enclosing -F 'BuildNavigationGraph' ./parser",
 		"grepple --at parser/navigation.go:113",
 	}},

@@ -56,7 +56,6 @@ Live `grepple ask` dogfooding showed two distinct bottlenecks: ordinary local/re
 ## Output and CLI consistency
 
 - [ ] Reconcile or clearly document the different output-mode contracts: search human/JSON/JSON-matches, graph JSON-or-compact, boundaries human/JSON, extract Mermaid, and GritQL human/JSON.
-- [ ] Clarify that `-l` lists paths rather than grep-style matching files; make `--files-with-matches` easy to discover.
 - [ ] Explain JavaScript-regex defaults at first use and in examples.
 - [ ] Make limit units explicit: files, findings, candidates per section, segments, nodes, bytes, and source files.
 - [ ] Distinguish local and remote feature availability at the attempted command.

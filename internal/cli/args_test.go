@@ -229,8 +229,15 @@ func TestHelpCommandAndExplicitSearch(t *testing.T) {
 			t.Fatal(err)
 		}
 	})
-	if !strings.Contains(searchHelp, "Search the local working directory") {
-		t.Fatalf("search help missing description:\n%s", searchHelp)
+	for _, expected := range []string{
+		"Search the local working directory",
+		"unlike grep -l, does not search contents",
+		"--files-with-matches",
+		"grep -l equivalent",
+	} {
+		if !strings.Contains(searchHelp, expected) {
+			t.Fatalf("search help missing %q:\n%s", expected, searchHelp)
+		}
 	}
 
 	directory := t.TempDir()
