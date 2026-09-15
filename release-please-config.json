@@ -6,6 +6,7 @@
       "package-name": "grepple",
       "include-v-in-tag": true,
       "include-component-in-tag": false,
+      "initial-version": "0.0.1",
       "bump-patch-for-minor-pre-major": true,
       "changelog-path": "CHANGELOG.md"
     }
