@@ -128,7 +128,7 @@ jobs:
         if: matrix.archive == 'zip'
         shell: pwsh
         run: |
-          $version = "${{ inputs.release_tag || github.ref_name }}" -replace '^v', ''
+          $version = $env:RELEASE_TAG -replace '^v', ''
           New-Item -ItemType Directory -Force artifacts | Out-Null
           Compress-Archive -Path release\grepple.exe -DestinationPath "artifacts\grepple_${version}_${env:GOOS}_${env:GOARCH}.zip"
 
