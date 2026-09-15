@@ -337,9 +337,16 @@ Grepple discovers the nearest ancestor `grepple.json`. Repository-owned ignore p
 {
   "server": "https://grepple.example.com",
   "ignore": {"paths": ["sandbox/**", "vendor/**"]},
-  "output": {"spillThresholdBytes": 65536}
+  "output": {"spillThresholdBytes": 65536},
+  "index": {
+    "repositories": [
+      {"repo": "sourcegraph/zoekt", "branches": ["main", "release/*"], "tags": ["v0.25.*"]}
+    ]
+  }
 }
 ```
+
+When this repository is indexed by the Grepple backend, its `index.repositories` declarations are trusted and reconciled automatically. A target's default branch is always indexed. Branch and tag patterns use path-style globs; matching tags are ordered by semantic version when possible and capped at the newest 20 per target. Use `grepple refs OWNER/REPO` to obtain an exact indexed selector for remote search, `get`, or `tree`. See [Versioned remote indexing](docs/versioned-indexing.md).
 
 Inspect the effective source universe before drawing completeness conclusions:
 

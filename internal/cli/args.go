@@ -398,6 +398,7 @@ Commands:
   get          Read one indexed repository file or outline
   tree         List an indexed repository tree
   repos        Find accessible indexed repositories
+  refs         List indexed repository branches, tags, and commits
   login        Authenticate with the remote service
   logout       Remove stored remote authentication
   version      Print build and source version information
@@ -449,7 +450,7 @@ func runHelp(args []string) error {
 		return stdoutWriter().writeString("Remove stored remote authentication.\nUsage: grepple logout\n")
 	case "version":
 		return stdoutWriter().writeString("Print build and source version information.\nUsage: grepple version\n")
-	case "grit", "graph", "anchors", "boundaries", "examples", "languages", "rules", "get", "tree", "repos", "artifacts", "architecture", "sources":
+	case "grit", "graph", "anchors", "boundaries", "examples", "languages", "rules", "get", "tree", "repos", "refs", "artifacts", "architecture", "sources":
 		return runCommand([]string{args[0], "--help"})
 	default:
 		return fmt.Errorf("unknown help topic %q", args[0])
@@ -520,6 +521,8 @@ func runCommand(args []string) error {
 			return runTree(args[1:])
 		case "repos":
 			return runRepos(args[1:])
+		case "refs":
+			return runRefs(args[1:])
 		case "login":
 			return runLogin(args[1:])
 		case "logout":

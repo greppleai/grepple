@@ -16,9 +16,10 @@ func reposTestServer(t *testing.T) (*httptest.Server, *string) {
 		gotPath = r.URL.Path
 		_ = json.NewEncoder(w).Encode(api.ReposResponse{
 			OK:    true,
-			Count: 3,
+			Count: 4,
 			Repos: []api.RepoListEntry{
 				{Repo: "acme/api"},
+				{Repo: "acme/api", Selector: "acme/api@tag~v1.0.0", RefKind: "tag", Ref: "v1.0.0"},
 				{Repo: "acme/web"},
 				{Repo: "other/tools"},
 			},

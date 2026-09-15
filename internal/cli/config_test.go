@@ -34,6 +34,22 @@ func TestLoadRepositoryConfigFindsAncestorAndKeepsAuthenticationUserOwned(t *tes
 	}
 }
 
+func TestRepositoryConfigLoadsIndexPatterns(t *testing.T) {
+	root := t.TempDir()
+	content := `{"index":{"repositories":[{"repo":"sourcegraph/zoekt","branches":["main","release/*"],"tags":["v0.25.*"]}]}}`
+	if err := os.WriteFile(filepath.Join(root, "grepple.json"), []byte(content), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	chdirForConfigTest(t, root)
+	config, _, err := loadRepositoryConfig()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(config.Index.Repositories) != 1 || config.Index.Repositories[0].Repo != "sourcegraph/zoekt" {
+		t.Fatalf("unexpected index config: %+v", config.Index)
+	}
+}
+
 func TestRepositoryConfigRejectsAuthenticationFields(t *testing.T) {
 	root := t.TempDir()
 	if err := os.WriteFile(filepath.Join(root, "grepple.json"), []byte(`{"token":"repository-secret"}`), 0o600); err != nil {
@@ -48,6 +64,8 @@ func TestRepositoryConfigRejectsInvalidSourceAndOutputSettings(t *testing.T) {
 	for _, content := range []string{
 		`{"ignore":{"paths":["../outside/**"]}}`,
 		`{"output":{"spillThresholdBytes":-1}}`,
+		`{"index":{"repositories":[{"repo":"invalid","tags":["v*"]}]}}`,
+		`{"index":{"repositories":[{"repo":"owner/repo","branches":["["]}]}}`,
 		`{"unknown":true}`,
 		`{} {}`,
 	} {

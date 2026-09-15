@@ -118,13 +118,29 @@ type SourceAnalysis struct {
 	Recovered   int `json:"recovered"`
 }
 
-// RepoListEntry is one repository returned by the public repository endpoint.
+// RepoListEntry is one repository checkout returned by the public repository endpoint.
 type RepoListEntry struct {
 	Repo      string  `json:"repo"`
+	Selector  string  `json:"selector,omitempty"`
 	Shard     string  `json:"shard,omitempty"`
 	Ref       string  `json:"ref,omitempty"`
+	RefKind   string  `json:"refKind,omitempty"`
 	Head      *string `json:"head,omitempty"`
 	IndexedAt string  `json:"indexedAt,omitempty"`
+}
+
+// RepositoryIndexConfig declares additional repository refs that an indexed
+// repository asks the backend to retain.
+type RepositoryIndexConfig struct {
+	Repositories []RepositoryIndexTarget `json:"repositories,omitempty"`
+}
+
+// RepositoryIndexTarget selects branches and tags from one GitHub repository.
+// The backend always indexes the repository's default branch independently.
+type RepositoryIndexTarget struct {
+	Repo     string   `json:"repo"`
+	Branches []string `json:"branches,omitempty"`
+	Tags     []string `json:"tags,omitempty"`
 }
 
 // ReposResponse is the payload of GET /public/repos.

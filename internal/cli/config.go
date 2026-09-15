@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/greppleai/grepple/api"
 )
 
 type config struct {
@@ -21,14 +23,15 @@ type config struct {
 }
 
 type repositoryConfig struct {
-	Server        string                 `json:"server,omitempty"`
-	Ignore        repositoryIgnoreConfig `json:"ignore,omitempty"`
-	Output        repositoryOutputConfig `json:"output,omitempty"`
-	Token         string                 `json:"token,omitempty"`
-	RefreshToken  string                 `json:"refresh_token,omitempty"`
-	TokenExpiry   int64                  `json:"token_expiry,omitempty"`
-	RefreshExpiry int64                  `json:"refresh_expiry,omitempty"`
-	User          string                 `json:"user,omitempty"`
+	Server        string                    `json:"server,omitempty"`
+	Ignore        repositoryIgnoreConfig    `json:"ignore,omitempty"`
+	Output        repositoryOutputConfig    `json:"output,omitempty"`
+	Index         api.RepositoryIndexConfig `json:"index,omitempty"`
+	Token         string                    `json:"token,omitempty"`
+	RefreshToken  string                    `json:"refresh_token,omitempty"`
+	TokenExpiry   int64                     `json:"token_expiry,omitempty"`
+	RefreshExpiry int64                     `json:"refresh_expiry,omitempty"`
+	User          string                    `json:"user,omitempty"`
 }
 
 type repositoryIgnoreConfig struct {
@@ -88,6 +91,9 @@ func loadRepositoryConfig() (repositoryConfig, string, error) {
 		if value == "" || filepath.IsAbs(clean) || clean == ".." || strings.HasPrefix(clean, ".."+string(filepath.Separator)) {
 			return repositoryConfig{}, path, fmt.Errorf("repository config %s ignore.paths[%d] must be repository-relative", path, index)
 		}
+	}
+	if err := api.ValidateRepositoryIndexConfig(config.Index); err != nil {
+		return repositoryConfig{}, path, fmt.Errorf("invalid repository config %s: %w", path, err)
 	}
 	return config, path, nil
 }

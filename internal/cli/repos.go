@@ -44,7 +44,7 @@ func runRepos(args []string) error {
 	if err != nil {
 		return err
 	}
-	repos = filterRepos(repos, values.Filter)
+	repos = filterRepos(uniqueSourceRepos(repos), values.Filter)
 	if values.JSON {
 		return stdoutWriter().writeJSON(api.ReposResponse{OK: true, Count: len(repos), Repos: repos})
 	}
@@ -81,6 +81,19 @@ func fetchRepoList(base string) ([]api.RepoListEntry, error) {
 		return nil, err
 	}
 	return data.Repos, nil
+}
+
+func uniqueSourceRepos(repos []api.RepoListEntry) []api.RepoListEntry {
+	seen := map[string]bool{}
+	unique := make([]api.RepoListEntry, 0, len(repos))
+	for _, entry := range repos {
+		if seen[entry.Repo] {
+			continue
+		}
+		seen[entry.Repo] = true
+		unique = append(unique, entry)
+	}
+	return unique
 }
 
 // filterRepos keeps only the repos whose name contains the substring filter
