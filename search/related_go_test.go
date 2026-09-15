@@ -521,6 +521,23 @@ func TestAnalyzeTypeBoundariesTreatsCurrentModuleImportAsFirstParty(t *testing.T
 	t.Fatalf("first-party parser spread missing: %#v", spreads)
 }
 
+func TestRelatedUsesAbsoluteRepositoryRootForDisplayPaths(t *testing.T) {
+	root := t.TempDir()
+	repo := filepath.Join(root, "owner", "repo")
+	if err := os.MkdirAll(repo, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	writeGoFixture(t, repo, "caller.go", "package sample\nfunc caller() { helper() } // REMOTE_NEEDLE\n")
+	writeGoFixture(t, repo, "helper.go", "package sample\nfunc helper() {}\n")
+	matches, err := Files(Params{Root: root, Repo: []string{"owner/repo"}, Query: "REMOTE_NEEDLE", Related: true, MaxSegments: 20}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(matches) != 1 || matches[0].DisplayPath != "owner/repo/caller.go" || len(matches[0].Related) == 0 {
+		t.Fatalf("remote-root navigation = %#v", matches)
+	}
+}
+
 func writeGoFixture(t *testing.T, directory, name, content string) string {
 	t.Helper()
 	path := filepath.Join(directory, name)

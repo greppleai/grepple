@@ -43,7 +43,7 @@ func runSearch(args []string) error {
 	child := *options
 	child.Params = childWindowParams(options.Params)
 
-	results, err := searchLocal(&child)
+	results, err := initialSearchResults(&child, remote)
 	if err != nil {
 		return err
 	}
@@ -64,6 +64,13 @@ func runSearch(args []string) error {
 	}
 	// Group the selected page by repo/path for readable output.
 	return renderResults(options, results)
+}
+
+func initialSearchResults(options *cliOptions, remote bool) ([]api.FileResult, error) {
+	if remote && options.Params.At != "" {
+		return nil, nil
+	}
+	return searchLocal(options)
 }
 
 func configureStdinSearch(options *cliOptions) error {

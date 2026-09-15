@@ -119,11 +119,7 @@ func collectCandidateFilesConfiguredContext(ctx context.Context, globs []string,
 	}
 
 	if len(globs) == 0 {
-		files, err := walkCandidateFilesConfiguredContext(ctx, cwd, ignore)
-		if err != nil {
-			return nil, err
-		}
-		return confineFiles(files, root), nil
+		return collectDefaultRootFiles(ctx, root, cwd, ignore)
 	}
 
 	c := newCandidateCollector(ctx, root, cwd, ignore)
@@ -143,6 +139,22 @@ func collectCandidateFilesConfiguredContext(ctx context.Context, globs []string,
 	}
 	sort.Strings(c.files)
 	return c.files, nil
+}
+
+func collectDefaultRootFiles(ctx context.Context, root, cwd string, ignore sourceIgnoreConfig) ([]string, error) {
+	walkRoot := cwd
+	var err error
+	if strings.TrimSpace(root) != "" {
+		walkRoot, err = filepath.Abs(root)
+		if err != nil {
+			return nil, err
+		}
+	}
+	files, err := walkCandidateFilesConfiguredContext(ctx, walkRoot, ignore)
+	if err != nil {
+		return nil, err
+	}
+	return confineFiles(files, root), nil
 }
 
 // candidateCollector accumulates de-duplicated, root-confined file paths for

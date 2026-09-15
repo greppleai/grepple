@@ -9,12 +9,15 @@ import (
 // ResolveRequest merges a wire api.SearchRequest into validated Params: unset optional
 // fields keep their defaults, and a content search must carry a query.
 func ResolveRequest(r api.SearchRequest) (Params, error) {
-	p := Params{Regex: true, MaxSegments: DefaultMaxSegments, Files: r.Files, Sort: ResultSortPath}
+	p := Params{Regex: true, MaxSegments: DefaultMaxSegments, Files: r.Files, At: r.At, Sort: ResultSortPath}
 	if r.Query != nil {
 		p.Query = *r.Query
 	}
-	if !p.Files && p.Query == "" {
+	if !p.Files && p.Query == "" && p.At == "" {
 		return p, fmt.Errorf("search request requires a non-empty 'query'")
+	}
+	if err := applyNavigationFields(&p, r); err != nil {
+		return p, err
 	}
 	applyOptionalFields(&p, r)
 	p.Context = resolveContext(r.Context)
@@ -43,6 +46,21 @@ func ResolveRequest(r api.SearchRequest) (Params, error) {
 		return p, fmt.Errorf("search sort must be %q or %q", ResultSortPath, ResultSortMatches)
 	}
 	return p, nil
+}
+
+func applyNavigationFields(params *Params, request api.SearchRequest) error {
+	if params.At != "" && (params.Query != "" || len(request.Globs) > 0) {
+		return fmt.Errorf("search request 'at' cannot be combined with query or globs")
+	}
+	params.Related = request.Related
+	params.FollowRelated = request.FollowRelated
+	if params.FollowRelated < 0 || params.FollowRelated > 3 {
+		return fmt.Errorf("followRelated must be between 0 and 3")
+	}
+	if params.FollowRelated > 0 {
+		params.Related = true
+	}
+	return nil
 }
 
 // applyOptionalFields copies the request's explicitly set fields into p;

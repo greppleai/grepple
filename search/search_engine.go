@@ -235,10 +235,10 @@ type candidateScan struct {
 }
 
 func (s candidateScan) relatedFiles(files []string) []string {
-	cwd, _ := os.Getwd()
+	base := displayBase(s.p.Root)
 	filtered := make([]string, 0, len(files))
 	for _, file := range files {
-		display := displayPathFrom(file, cwd)
+		display := displayPathFrom(file, base)
 		if s.fromIndex && (!withinRoot(file, s.p.Root) || !pathMatchesGlobs(display, s.p.Globs) || pathContainsGitDirectory(file)) {
 			continue
 		}
@@ -249,13 +249,21 @@ func (s candidateScan) relatedFiles(files []string) []string {
 	return filtered
 }
 
+func displayBase(root string) string {
+	if filepath.IsAbs(root) {
+		return root
+	}
+	cwd, _ := os.Getwd()
+	return cwd
+}
+
 // scanAll reads every candidate in parallel, then applies the requested stable
 // ordering. Match-count ranking uses path as its deterministic tie-breaker.
 func (s candidateScan) scanAll(files []string) []FileMatch {
-	cwd, _ := os.Getwd()
+	base := displayBase(s.p.Root)
 	results := make([]*FileMatch, len(files))
 	runParallel(len(files), func(index int) {
-		results[index] = scanCandidate(s.p, s.m, files[index], displayPathFrom(files[index], cwd), s.repoFilter, s.fromIndex)
+		results[index] = scanCandidate(s.p, s.m, files[index], displayPathFrom(files[index], base), s.repoFilter, s.fromIndex)
 	})
 	out := collectMatches(results)
 	sortMatches(out, s.p.Sort)
@@ -267,10 +275,10 @@ func (s candidateScan) scanAll(files []string) []FileMatch {
 // have accumulated for the skip+limit window.
 func (s candidateScan) scanWindowed(files []string, target int) []FileMatch {
 	type candidate struct{ file, display string }
-	cwd, _ := os.Getwd()
+	base := displayBase(s.p.Root)
 	cands := make([]candidate, len(files))
 	for i, f := range files {
-		cands[i] = candidate{file: f, display: displayPathFrom(f, cwd)}
+		cands[i] = candidate{file: f, display: displayPathFrom(f, base)}
 	}
 	sort.Slice(cands, func(i, j int) bool { return cands[i].display < cands[j].display })
 	var out []FileMatch

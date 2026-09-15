@@ -52,9 +52,9 @@ type searchArgs struct {
 	Anchors          bool     `arg:"--anchors" help:"emit configured edit anchors as HASH│LINE│content rows (local structural or --line-only output)"`
 	NoAnchors        bool     `arg:"--no-anchors" help:"disable anchors enabled by user settings"`
 	AnchorProvider   string   `arg:"--anchor-provider" placeholder:"NAME" help:"use a named anchor provider from ~/.grepple/settings.json (implies --anchors)"`
-	Related          bool     `arg:"--related" help:"show project-local callees and callers for supported source languages (local search only)"`
+	Related          bool     `arg:"--related" help:"show repository-local callees and callers for supported source languages"`
 	FollowRelated    int      `arg:"--follow-related" placeholder:"N" help:"expand up to two unique callees per level (1-3; implies --related)"`
-	At               string   `arg:"--at" placeholder:"PATH:LINE" help:"retrieve the declaration containing a local source location"`
+	At               string   `arg:"--at" placeholder:"PATH:LINE" help:"retrieve the declaration containing a source location"`
 	Skip             int      `arg:"--skip" placeholder:"N" help:"skip the first N ranked result files"`
 	Limit            int      `arg:"--limit" placeholder:"N" help:"return at most N ranked result files (default 20; 0 = all local; servers cap a page at 100 — page further with --skip)"`
 	Sort             string   `arg:"--sort" placeholder:"ORDER" help:"order result files by path (default) or matching-line count (matches)"`
@@ -172,13 +172,10 @@ func usesCompactSearchOutput(values *searchArgs) bool {
 }
 
 // validateRelatedArgs keeps experimental source navigation scoped to modes
-// that render structural or full JSON results.
+// validateRelatedArgs limits navigation to output modes that can preserve its
 func validateRelatedArgs(values *searchArgs) error {
 	if !values.Related {
 		return nil
-	}
-	if values.Remote || values.Server != "" {
-		return fmt.Errorf("--related currently supports local searches only")
 	}
 	compactOutput := usesCompactSearchOutput(values)
 	contextOutput := values.Context > 0 || values.BeforeContext > 0 || values.AfterContext > 0
@@ -210,8 +207,8 @@ func validateAtArgs(values *searchArgs) error {
 	if values.At == "" {
 		return nil
 	}
-	if values.Remote || values.Server != "" {
-		return fmt.Errorf("--at currently supports local files only")
+	if (values.Remote || values.Server != "") && len(values.Repos) != 1 {
+		return fmt.Errorf("remote --at requires exactly one --repo OWNER/REPO[@REF]")
 	}
 	if values.Query != "" || len(values.Globs) > 0 {
 		return fmt.Errorf("--at cannot be combined with a search pattern or path")

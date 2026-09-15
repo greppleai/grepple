@@ -90,6 +90,17 @@ func TestParseSearchArgsEnablesRelatedGoNavigation(t *testing.T) {
 	}
 }
 
+func TestParseSearchArgsEnablesRemoteNavigation(t *testing.T) {
+	options, _, remote, err := parseSearchArgs([]string{"--server", "http://search.example", "--follow-related", "1", "needle"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	request := searchRequestFromParams(options.Params)
+	if !remote || !request.Related || request.FollowRelated != 1 {
+		t.Fatalf("remote navigation was not preserved: remote=%v request=%#v", remote, request)
+	}
+}
+
 func TestAnchorProviderFlagEnablesAnchoredOutput(t *testing.T) {
 	options, _, remote, err := parseSearchArgs([]string{"--anchor-provider", "pi", "--line-only", "needle"})
 	if err != nil {
@@ -130,6 +141,20 @@ func TestSettingsEnableAnchorsByDefault(t *testing.T) {
 	}
 }
 
+func TestParseRemoteAtRequiresOneRepository(t *testing.T) {
+	options, _, remote, err := parseSearchArgs([]string{"--server", "http://search.example", "--repo", "owner/repo@tag~v1", "--at", "app.go:20"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	request := searchRequestFromParams(options.Params)
+	if !remote || request.At != "app.go:20" {
+		t.Fatalf("remote at was not preserved: remote=%v request=%#v", remote, request)
+	}
+	if _, _, _, err := parseSearchArgs([]string{"--remote", "--at", "app.go:20"}); err == nil {
+		t.Fatal("remote at without exactly one repository succeeded")
+	}
+}
+
 func TestFollowRelatedImpliesNavigation(t *testing.T) {
 	options, _, _, err := parseSearchArgs([]string{"--follow-related", "2", "needle"})
 	if err != nil {
@@ -156,7 +181,6 @@ func TestParseAtLocationWithoutQuery(t *testing.T) {
 
 func TestRelatedGoNavigationRejectsUnsupportedModes(t *testing.T) {
 	for _, args := range [][]string{
-		{"--related", "--remote", "needle"},
 		{"--related", "--line-only", "needle"},
 		{"--related", "-C", "2", "needle"},
 		{"--follow-related", "4", "needle"},

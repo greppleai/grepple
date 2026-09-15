@@ -110,6 +110,7 @@ func searchRequestFromParams(params search.Params) api.SearchRequest {
 		LineRanges:      params.LineRanges,
 		EnclosingRanges: params.EnclosingRanges,
 		Related:         params.Related,
+		At:              params.At,
 		FollowRelated:   params.FollowRelated,
 	}
 	if len(params.Repo) > 0 {

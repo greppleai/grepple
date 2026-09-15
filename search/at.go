@@ -18,6 +18,9 @@ func At(params Params) (*FileMatch, error) {
 	if err != nil {
 		return nil, err
 	}
+	if !filepath.IsAbs(path) && strings.TrimSpace(params.Root) != "" {
+		path = filepath.Join(params.Root, path)
+	}
 	absolute, err := filepath.Abs(path)
 	if err != nil {
 		return nil, err
@@ -39,7 +42,7 @@ func At(params Params) (*FileMatch, error) {
 	}
 	language := structure.LanguageFor(path)
 	match := &FileMatch{
-		File: absolute, DisplayPath: displayPath(absolute), Content: content, Language: language,
+		File: absolute, DisplayPath: displayPathFrom(absolute, displayBase(params.Root)), Content: content, Language: language,
 		MatchLines: map[int]bool{line: true}, SegmentsReady: true,
 	}
 	if start, end, ok := structure.DeclarationRangeAt(content, language, line); ok {

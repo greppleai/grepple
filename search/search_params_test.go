@@ -96,3 +96,28 @@ func TestResolveRequestValidatesDeterministicSort(t *testing.T) {
 		t.Fatal("expected invalid sort to fail")
 	}
 }
+
+func TestResolveRequestAcceptsAtWithoutQuery(t *testing.T) {
+	params, err := ResolveRequest(api.SearchRequest{At: "app.go:20"})
+	if err != nil || params.At != "app.go:20" {
+		t.Fatalf("at params=%#v err=%v", params, err)
+	}
+	query := "work"
+	if _, err := ResolveRequest(api.SearchRequest{At: "app.go:20", Query: &query}); err == nil {
+		t.Fatal("at with query succeeded")
+	}
+}
+
+func TestResolveRequestPreservesNavigation(t *testing.T) {
+	query := "work"
+	params, err := ResolveRequest(api.SearchRequest{Query: &query, FollowRelated: 2})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !params.Related || params.FollowRelated != 2 {
+		t.Fatalf("navigation was not preserved: %#v", params)
+	}
+	if _, err := ResolveRequest(api.SearchRequest{Query: &query, FollowRelated: 4}); err == nil {
+		t.Fatal("expected invalid followRelated to fail")
+	}
+}

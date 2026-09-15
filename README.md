@@ -100,11 +100,11 @@ Default structural output shows enclosing declarations and may collapse unrelate
 
 ### Source call navigation
 
-For local searches, `--related` adds bounded navigation hints after each structural result. It supports Go, JavaScript/JSX, TypeScript/TSX, Python, Java, Kotlin, C#, C, C++, Rust, and Shell:
+`--related` adds bounded navigation hints after each structural result for local or remotely indexed repositories. It supports Go, JavaScript/JSX, TypeScript/TSX, Python, Java, Kotlin, C#, C, C++, Rust, and Shell:
 
 ```bash
 grepple --related -F "g.auditor.Record" examples/advanced-files
-```
+grepple --server http://localhost:8080 --repo gofiber/fiber --related -F 'func New(config'
 
 ```text
 Next points (code navigation):
@@ -118,6 +118,7 @@ Retrieve one declaration directly from a navigation location:
 
 ```bash
 grepple --at search/result.go:32
+grepple --server http://localhost:8080 --repo gofiber/fiber --at app.go:721
 ```
 
 Or explicitly spend more tokens to inline a bounded call chain:
@@ -126,7 +127,7 @@ Or explicitly spend more tokens to inline a bounded call chain:
 grepple --follow-related 1 -F "attachRelated(out" search
 ```
 
-Each level expands at most two resolved outgoing callees; callers and ambiguous candidates remain compact hints. Expansion depth is capped at three, cycles are not expanded again, and expanded declarations share a 400-line budget per root result. Every expansion remains available structurally in full `--json`. These experimental navigation modes currently support local default structural output and full JSON only.
+Each level expands at most two resolved outgoing callees; callers and ambiguous candidates remain compact hints. Expansion depth is capped at three, cycles are not expanded again, and expanded declarations share a 400-line budget per root result. Every expansion remains available structurally in full `--json`. Navigation modes support local and remote default structural output and full JSON. Remote `--at` requires exactly one `--repo`, and remote navigation deliberately scans the complete selected repository source universe rather than a text-index candidate subset so declarations in non-matching files remain available.
 
 File patterns use Go's `filepath.Glob` syntax, extended with `**` to match across directory boundaries (for example `**/*.yaml` or `charts/**/values.yaml`). Omit globs to search recursively from the working directory; a matched directory is also searched recursively. `.git` directories and repository `.gitignore` entries are excluded. Shard searches are confined to the served repository root, so client-supplied globs and paths cannot escape it. Globs compose with every output mode, including `-c`/`--count`. When a Zoekt index is available the globs are translated into a `file:` atom and pushed down to the index (a deliberate superset — the shard still applies the exact glob matcher to what the index returns), so the index pre-filters by path instead of shipping every content match for the shard to discard.
 
