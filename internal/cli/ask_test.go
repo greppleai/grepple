@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"bytes"
 	"context"
 	"encoding/base64"
 	"encoding/json"
@@ -18,6 +19,8 @@ import (
 
 func TestRunAskUsesFantasyProviderAndReadTool(t *testing.T) {
 	root := t.TempDir()
+	logDirectory := filepath.Join(t.TempDir(), "ask-logs")
+	t.Setenv(askLogDirectoryEnv, logDirectory)
 	home := t.TempDir()
 	t.Setenv("HOME", home)
 	if err := os.MkdirAll(filepath.Join(home, ".grepple"), 0o700); err != nil {
@@ -50,6 +53,40 @@ func TestRunAskUsesFantasyProviderAndReadTool(t *testing.T) {
 	})
 	if output != "source-backed answer\n" || *requestCount != 2 {
 		t.Fatalf("answer=%q requests=%d", output, *requestCount)
+	}
+	assertAskLog(t, logDirectory)
+}
+
+func assertAskLog(t *testing.T, directory string) {
+	t.Helper()
+	entries, err := os.ReadDir(directory)
+	if err != nil || len(entries) != 1 {
+		t.Fatalf("ask log entries=%v err=%v", entries, err)
+	}
+	path := filepath.Join(directory, entries[0].Name())
+	content, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, line := range bytes.Split(bytes.TrimSpace(content), []byte("\n")) {
+		if !json.Valid(line) {
+			t.Fatalf("invalid JSONL line: %s", line)
+		}
+	}
+	for _, eventType := range []string{"session.start", "tool.call", "tool.result", "step.finish", "session.finish"} {
+		if !bytes.Contains(content, []byte(`"type":"`+eventType+`"`)) {
+			t.Fatalf("ask log missing %s: %s", eventType, content)
+		}
+	}
+	if bytes.Contains(content, []byte(`"type":"model.chunk"`)) {
+		t.Fatalf("ask log contains noisy model chunks: %s", content)
+	}
+	info, err := os.Stat(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if info.Mode().Perm() != 0o600 {
+		t.Fatalf("ask log mode=%v", info.Mode().Perm())
 	}
 }
 

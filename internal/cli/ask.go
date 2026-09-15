@@ -87,37 +87,77 @@ func runAsk(args []string) error {
 	if err != nil {
 		return err
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(values.Timeout)*time.Second)
-	defer cancel()
-	model, err := provider.LanguageModel(ctx, values.Model)
-	if err != nil {
-		return err
-	}
 	root, err := os.Getwd()
 	if err != nil {
 		return err
 	}
+	log, err := newAskLog()
+	if err != nil {
+		return err
+	}
+	fmt.Fprintln(os.Stderr, "Ask log:", log.Path())
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(values.Timeout)*time.Second)
+	defer cancel()
+	runErr := runLoggedAsk(ctx, log, provider, values, question, root)
+	closeErr := log.Close()
+	return errors.Join(runErr, closeErr)
+}
+
+func runLoggedAsk(ctx context.Context, log *askLog, provider aiprovider.Provider, values askArgs, question, root string) error {
+	systemPrompt := askSystemPrompt(root)
+	if err := log.Record("session.start", map[string]any{
+		"provider": provider.Name(), "model": values.Model, "question": question, "root": root,
+		"maxSteps": values.Steps, "timeoutSeconds": values.Timeout, "systemPrompt": systemPrompt,
+		"tools": []map[string]string{{"name": "grepple", "description": greppleResearchToolDescription}, {"name": "read", "description": "Read a bounded line range from one local file under the current working directory."}},
+	}); err != nil {
+		return err
+	}
+	model, err := provider.LanguageModel(ctx, values.Model)
+	if err != nil {
+		return recordAskError(log, err)
+	}
 	tools := []fantasy.AgentTool{
-		fantasy.NewAgentTool("grepple", "Run any read-only Grepple CLI research command. Pass argv tokens without a shell. Use help, search, grit, graph, architecture, boundaries, sources, languages, get, tree, repos, refs, and related/at navigation as needed.", func(ctx context.Context, input greppleToolInput, _ fantasy.ToolCall) (fantasy.ToolResponse, error) {
+		fantasy.NewAgentTool("grepple", greppleResearchToolDescription, func(ctx context.Context, input greppleToolInput, _ fantasy.ToolCall) (fantasy.ToolResponse, error) {
 			return runGreppleResearchTool(ctx, input)
 		}),
-		fantasy.NewAgentTool("read", "Read a bounded line range from one local file under the current working directory.", func(_ context.Context, input readToolInput, _ fantasy.ToolCall) (fantasy.ToolResponse, error) {
+		fantasy.NewAgentTool("read", "Read a bounded line range from one local file under the current working directory. Provide path and optional 1-indexed start_line/end_line; paths must remain under the workspace root.", func(_ context.Context, input readToolInput, _ fantasy.ToolCall) (fantasy.ToolResponse, error) {
 			return runSimpleReadTool(root, input)
 		}),
 	}
-	agent := fantasy.NewAgent(model,
-		fantasy.WithSystemPrompt(askSystemPrompt(root)),
-		fantasy.WithTools(tools...),
-	)
-	result, err := agent.Stream(ctx, fantasy.AgentStreamCall{Prompt: question, StopWhen: []fantasy.StopCondition{fantasy.StepCountIs(values.Steps)}})
+	agent := fantasy.NewAgent(model, fantasy.WithSystemPrompt(systemPrompt), fantasy.WithTools(tools...))
+	result, err := agent.Stream(ctx, loggedAgentStreamCall(log, question, values.Steps))
 	if err != nil {
-		return fmt.Errorf("ask %s/%s: %w", provider.Name(), values.Model, err)
+		return recordAskError(log, fmt.Errorf("ask %s/%s: %w", provider.Name(), values.Model, err))
 	}
 	answer := strings.TrimSpace(result.Response.Content.Text())
 	if answer == "" {
-		return fmt.Errorf("ask returned no text answer")
+		return recordAskError(log, fmt.Errorf("ask returned no text answer"))
+	}
+	if err := log.Record("session.finish", map[string]any{"answer": answer, "usage": result.TotalUsage, "steps": len(result.Steps)}); err != nil {
+		return err
 	}
 	return stdoutWriter().writeString(answer + "\n")
+}
+
+func loggedAgentStreamCall(log *askLog, question string, steps int) fantasy.AgentStreamCall {
+	return fantasy.AgentStreamCall{
+		Prompt:        question,
+		StopWhen:      []fantasy.StopCondition{fantasy.StepCountIs(steps)},
+		OnStepStart:   func(step int) error { return log.Record("step.start", map[string]int{"step": step}) },
+		OnToolCall:    func(call fantasy.ToolCallContent) error { return log.Record("tool.call", call) },
+		OnToolResult:  func(result fantasy.ToolResultContent) error { return log.Record("tool.result", result) },
+		OnStepFinish:  func(result fantasy.StepResult) error { return log.Record("step.finish", result) },
+		OnAgentFinish: func(result *fantasy.AgentResult) error { return log.Record("agent.finish", result) },
+		OnError:       func(err error) { _ = log.Record("agent.error", map[string]string{"error": err.Error()}) },
+		OnStreamFinish: func(usage fantasy.Usage, reason fantasy.FinishReason, metadata fantasy.ProviderMetadata) error {
+			return log.Record("stream.finish", map[string]any{"usage": usage, "finishReason": reason, "providerMetadata": metadata})
+		},
+	}
+}
+
+func recordAskError(log *askLog, err error) error {
+	logErr := log.Record("session.error", map[string]string{"error": err.Error()})
+	return errors.Join(err, logErr)
 }
 
 func resolveAskModel(explicit, providerDefault string) (string, error) {

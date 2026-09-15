@@ -63,7 +63,7 @@ grepple ai-provider login codex
 grepple ask Which package owns navigation resolution and what calls it?
 ```
 
-The internal agent has a shell-free Grepple argv tool covering local and remote research workflows plus a confined, bounded local read tool. Codex device authentication is implemented behind a provider registry so additional AI providers can be added without changing `ask`. Set `ai.model` in the non-secret user configuration `~/.grepple/grepple.json` to choose the default model; `--model` overrides it. See [Delegated research](docs/ask.md) for provider, model, step, timeout, credential, and tool-safety details.
+The internal agent has a shell-free Grepple argv tool with detailed workflow guidance and examples for local and remote research, plus a confined, bounded local read tool. Every run writes a complete permission-restricted JSONL debug log under `~/.grepple/ask-logs/` and prints its path to stderr. Codex device authentication is implemented behind a provider registry so additional AI providers can be added without changing `ask`. Set `ai.model` in the non-secret user configuration `~/.grepple/grepple.json` to choose the default model; `--model` overrides it. See [Delegated research](docs/ask.md) for provider, model, logging, step, timeout, credential, and tool-safety details.
 
 ## Search
 

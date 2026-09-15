@@ -47,11 +47,17 @@ Command-line `--model` always takes precedence. Repository-owned `grepple.json` 
 
 Human answers participate in Grepple's normal bounded-output and artifact-spill behavior.
 
+## Debug logs
+
+Every invocation immediately prints an `Ask log:` path to stderr and writes `grepple-ask-log-v1` JSONL under `~/.grepple/ask-logs/`. The log records the question, selected provider/model, system and tool prompts, assembled model and reasoning content for each completed step, tool calls and complete results, usage, final answer, and errors. It intentionally omits noisy per-token stream chunks. Partial logs remain useful if a run is interrupted. Files use mode `0600` and the directory uses `0700`.
+
+Logs deliberately omit OAuth credentials and raw authorization headers, but they can contain sensitive questions, model reasoning, and retrieved source. Remove them according to your retention policy. `GREPPLE_ASK_LOG_DIR` selects another directory for isolated automation.
+
 ## Tool safety and limits
 
 The internal agent receives two tools:
 
-1. `grepple` executes argv directly without a shell and caps captured output at 64 KiB. It can use read-only Grepple research commands, including local and remote navigation. Recursive `ask`, provider/login/logout commands, artifact deletion, anchor writes, and saved-rule mutations are rejected.
+1. `grepple` executes argv directly without a shell and caps captured output at 64 KiB. Its tool description includes selection guidance, confidence/completeness caveats, argument rules, and examples for counts, matching files, outlines, exact `--at`, related traversal, GritQL, graph queries, architecture, source explanation, and remote `search`/`get`/`tree`. Recursive `ask`, provider/login/logout commands, artifact deletion, anchor writes, and saved-rule mutations are rejected.
 2. `read` accepts a repository-relative path and an optional line range. It rejects path escapes and symlink escapes, binary files, files larger than 256 KiB, and ranges larger than 1,000 lines.
 
 The system prompt requires source-backed answers with repository/path:line evidence and instructs the model to narrow broad searches before retrieving bodies. Tool errors are returned to the model so it can recover within the remaining step budget.
