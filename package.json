@@ -1,0 +1,19 @@
+{
+  "name": "@greppleai/pi-package",
+  "version": "0.0.2",
+  "private": true,
+  "description": "Grepple skills and content-free agent utility metrics for Pi",
+  "keywords": ["pi-package", "grepple", "code-search"],
+  "type": "module",
+  "scripts": {
+    "test:extension": "node --experimental-strip-types --test .pi/tests/*.test.ts",
+    "check:extension": "node --experimental-strip-types --check .pi/extensions/agent-metrics.ts"
+  },
+  "peerDependencies": {
+    "@fleetagent/pi-coding-agent": "*"
+  },
+  "pi": {
+    "extensions": ["./.pi/extensions/agent-metrics.ts"],
+    "skills": ["./.agents/skills"]
+  }
+}
