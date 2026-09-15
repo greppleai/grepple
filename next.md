@@ -26,6 +26,21 @@
 - [ ] Define schema compatibility and deprecation rules for public `api` DTOs and versioned CLI JSON before the next public release.
 - Keep test, race, vet, lint, schema, architecture benchmark, and agent benchmark gates green after each change.
 
+### Delegated research performance
+
+Live `grepple ask` dogfooding showed two distinct bottlenecks: ordinary local/remote investigations took about 55 seconds while tool execution consumed only 0.85–3.09 seconds, so model round trips dominated; a subprocess audit spent 41.58 of 60.11 seconds in tools because two unnecessary whole-repository navigation builds took 14.13 and 27.15 seconds.
+
+- [ ] Add a per-invocation `researchSession` cache keyed by normalized typed-tool input and source/config identity; reuse identical local and remote results, coalesce concurrent duplicate calls with `singleflight`, and expose cache-hit status without changing evidence.
+- [ ] Lazily parse each normalized local source universe once per ask, then reuse caller-owned documents and one navigation graph across `navigate_code`, `query_graph`, and `inspect_architecture`; preserve byte-identical answers between cold and reused state.
+- [ ] Preflight local `navigate_code` locations with cheap declaration-range detection. If a location is package/import/file scope rather than a callable declaration, return a bounded correction without constructing the repository navigation graph.
+- [ ] Add a focused `inspect_symbol` tool that can combine bounded symbol discovery, deterministic declaration selection, immediate related navigation, and exact source retrieval in one call, reducing common count → files → snippets → navigate → read sequences.
+- [ ] Add an `auto` `search_code` projection that returns aggregate concentration, top matching paths, bounded snippets, and exact next locations together while retaining explicit `count`, `files`, and `snippets` modes.
+- [ ] Detect repeated or increasingly broad equivalent research calls and return cached evidence plus a synthesis/narrowing hint. Do not reintroduce a model-step cutoff; the overall timeout remains the execution bound.
+- [ ] Reduce repeated model-input tokens by activating only the relevant typed-tool subset after initial intent becomes observable, while ensuring local, remote, architecture, and exact-location questions can still reach every required tool.
+- [ ] Extend semantic JSONL logs with per-tool duration, response bytes, cache state, parsed/restored file counts, model-versus-tool time, calls by tool, duplicate-call counts, and token usage; keep token chunks omitted.
+- [ ] Add answer-gated ask benchmarks for local ownership, subprocess/security audit, graph impact, structural matching, and exact remote-version research. Gate on answer correctness, citation validity, ref fidelity, completeness disclosure, elapsed time, model steps, tool calls, tool time, and tokens rather than latency alone.
+- [ ] Set regression targets from the live baseline: eliminate full-graph work for invalid navigation locations, avoid repeated identical scans within one ask, and reduce routine source-backed investigations from multi-call discovery chains to one or two evidence calls before synthesis.
+
 ### Navigation and evidence calibration
 
 - [ ] Publish per-language coverage for declarations, calls, imports, type references, fields, member access, entrypoints, and routes; distinguish unsupported facts from unresolved facts.
