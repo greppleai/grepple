@@ -21,9 +21,23 @@
 - [ ] Cover malformed, nested, generic, decorated/annotated, and multiline declarations per language.
 - [ ] Expand CRLF, symlink, build-constraint, ambiguous-extension, and Windows/cross-platform path cases.
 - [ ] Run fuzz targets longer in scheduled CI and retain minimized failures as seeds.
-- [ ] Verify generated and queried output determinism across every supported operating system.
+- [ ] Verify generated and queried output determinism on Linux, macOS, and Windows; compare normalized semantics first and raw bytes second, retaining the first source-linked failure as CI evidence.
 - [ ] Add public `api` DTO compatibility tests against the private backend consumer when that checkout is available.
+- [ ] Define schema compatibility and deprecation rules for public `api` DTOs and versioned CLI JSON before the next public release.
 - Keep test, race, vet, lint, schema, architecture benchmark, and agent benchmark gates green after each change.
+
+### Navigation and evidence calibration
+
+- [ ] Publish per-language coverage for declarations, calls, imports, type references, fields, member access, entrypoints, and routes; distinguish unsupported facts from unresolved facts.
+- [ ] Add cross-file navigation goldens for aliases, receivers, overload-like declarations, generics, nested scopes, and ambiguous imports in every language that claims the relevant adapter capability.
+- [ ] Measure resolved-local, ambiguous-local, unresolved-local, and expected-external outcomes on representative repositories instead of treating candidate counts as precision.
+- [ ] Add answer-gated tasks that intentionally exercise reflection, dynamic dispatch, generated code, registration, and build-system edges; verify Grepple reports uncertainty rather than unsupported architectural claims.
+- [ ] Document when users must hand evidence to a compiler, language server, build-system query, or runtime tool for refactor safety; do not imply Grepple alone proves exact semantic impact.
+
+### Structural-query reliability
+
+- [ ] Expand `gritql-v1` conformance fixtures across every supported language for named/list metavariables, ambiguous snippet contexts, malformed syntax, cancellation, and resource limits.
+- [ ] Benchmark structural scans on representative medium and large repositories, including peak memory, cancellation latency, and cold/warm behavior.
 
 ## Output and CLI consistency
 
@@ -36,6 +50,14 @@
 - [ ] Separate resolution outcomes from confidence labels: report resolution, ambiguous-local, unresolved-local, and expected-external rates. The current `candidate` outcome and `candidate` confidence use different meanings, while ambiguity rate alone hides a large unresolved population.
 - [ ] Keep complete JSON available for scripts, but direct agents toward filtered projections and artifact descriptors rather than multi-megabyte graph/boundary documents.
 - [ ] Remove guidance drift such as duplicate workflow steps and completed milestones still named in the recommendation; add lightweight documentation consistency checks.
+
+## Operational and release readiness
+
+- [ ] Add install and smoke coverage for release binaries on Linux, macOS, and Windows, including recursive help, local search, architecture comparison, and one GritQL query.
+- [ ] Test concurrent processes writing the same content-addressed artifact or cache entry, interrupted writes, corrupt entries, cleanup during reads, and permission preservation.
+- [ ] Measure cold/warm runtime, peak RSS, cache size, artifact disk growth, and cleanup behavior on representative medium and large repositories.
+- [ ] Define supported Go versions, operating systems, repository-size expectations, schema support windows, and release rollback/migration behavior.
+- [ ] Add explicit local-only, authentication-required, backend-unavailable, and unsupported-remote command tests so deployment availability is observable rather than inferred.
 
 ## Parser and cache direction
 
@@ -58,5 +80,8 @@
 - Every bounded response or spilled artifact descriptor identifies the bound/delivery decision, omitted work, evaluated source universe, and completeness path.
 - Boundary output separates third-party permeability from first-party reuse, standard-library spread, test-only use, and approved internal infrastructure.
 - Warm repeated graph queries parse or restore every unchanged file at most once and exactly match cold output.
-- Dogfood benchmarks measure answer correctness, false architectural claims, retrieval turns, stdout/context bytes, and artifact reads as well as runtime and allocations.
+- Dogfood benchmarks measure answer correctness, false architectural claims, retrieval turns, stdout/context bytes, artifact reads, peak memory, and cold/warm cache behavior as well as runtime and allocations.
+- Per-language capability reports distinguish unsupported analysis from attempted-but-unresolved evidence.
+- The same complete report generated on Linux, macOS, and Windows is normalized-semantically equal; byte differences either fail the gate or have an explicit documented platform reason.
+- Public DTO and CLI JSON changes have consumer compatibility evidence and a declared migration path.
 - Architectural recommendations preserve exact source evidence, confidence, scope, and unresolved alternatives instead of converting heuristics into facts.
