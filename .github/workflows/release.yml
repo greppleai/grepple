@@ -97,7 +97,7 @@ jobs:
         run: echo "GREPPLE_BUILD_DATE=$(git show -s --format=%cI HEAD)" >> "$GITHUB_ENV"
 
       - name: Build with GoReleaser
-        uses: goreleaser/goreleaser-action@v6
+        uses: goreleaser/goreleaser-action@v7
         with:
           distribution: goreleaser
           version: v2.12.7
