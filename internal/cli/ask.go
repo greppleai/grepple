@@ -109,7 +109,7 @@ func runAsk(args []string) error {
 		fantasy.WithSystemPrompt(askSystemPrompt(root)),
 		fantasy.WithTools(tools...),
 	)
-	result, err := agent.Generate(ctx, fantasy.AgentCall{Prompt: question, StopWhen: []fantasy.StopCondition{fantasy.StepCountIs(values.Steps)}})
+	result, err := agent.Stream(ctx, fantasy.AgentStreamCall{Prompt: question, StopWhen: []fantasy.StopCondition{fantasy.StepCountIs(values.Steps)}})
 	if err != nil {
 		return fmt.Errorf("ask %s/%s: %w", provider.Name(), values.Model, err)
 	}

@@ -67,20 +67,39 @@ func newAskTestServer(t *testing.T) (*httptest.Server, *int) {
 		}
 		encoded, _ := json.Marshal(requestBody)
 		requestCount++
-		if requestCount == 1 && (!strings.Contains(string(encoded), "where is parsing") || requestBody["model"] != "gpt-5.6-luna") {
+		if requestCount == 1 && (!strings.Contains(string(encoded), "where is parsing") || requestBody["model"] != "gpt-5.6-luna" || requestBody["stream"] != true) {
 			t.Fatalf("request body did not contain question: %s", encoded)
 		}
 		if requestCount == 2 && !strings.Contains(string(encoded), "source evidence") {
 			t.Fatalf("second request did not contain tool evidence: %s", encoded)
 		}
-		writer.Header().Set("content-type", "application/json")
+		writer.Header().Set("content-type", "text/event-stream")
 		if requestCount == 1 {
-			fmt.Fprint(writer, `{"id":"response-1","object":"response","created_at":1,"status":"completed","model":"gpt-5.3-codex","output":[{"id":"tool","type":"function_call","status":"completed","call_id":"call-1","name":"read","arguments":"{\"path\":\"evidence.txt\",\"start_line\":1,\"end_line\":1}"}],"usage":{"input_tokens":1,"output_tokens":1,"total_tokens":2}}`)
+			writeAskSSE(writer,
+				`{"type":"response.output_item.added","output_index":0,"item":{"id":"tool","type":"function_call","status":"in_progress","call_id":"call-1","name":"read","arguments":""}}`,
+				`{"type":"response.output_item.done","output_index":0,"item":{"id":"tool","type":"function_call","status":"completed","call_id":"call-1","name":"read","arguments":"{\"path\":\"evidence.txt\",\"start_line\":1,\"end_line\":1}"}}`,
+				askCompletedEvent("response-1"),
+			)
 			return
 		}
-		fmt.Fprint(writer, `{"id":"response-2","object":"response","created_at":1,"status":"completed","model":"gpt-5.3-codex","output":[{"id":"message","type":"message","status":"completed","role":"assistant","content":[{"type":"output_text","text":"source-backed answer","annotations":[]}]}],"usage":{"input_tokens":1,"output_tokens":1,"total_tokens":2}}`)
+		writeAskSSE(writer,
+			`{"type":"response.output_item.added","output_index":0,"item":{"id":"message","type":"message","status":"in_progress","role":"assistant","content":[]}}`,
+			`{"type":"response.output_text.delta","item_id":"message","output_index":0,"content_index":0,"delta":"source-backed answer"}`,
+			`{"type":"response.output_item.done","output_index":0,"item":{"id":"message","type":"message","status":"completed","role":"assistant","content":[{"type":"output_text","text":"source-backed answer","annotations":[]}]}}`,
+			askCompletedEvent("response-2"),
+		)
 	}))
 	return server, &requestCount
+}
+
+func writeAskSSE(writer http.ResponseWriter, events ...string) {
+	for _, event := range events {
+		fmt.Fprintf(writer, "data: %s\n\n", event)
+	}
+}
+
+func askCompletedEvent(id string) string {
+	return fmt.Sprintf(`{"type":"response.completed","response":{"id":%q,"object":"response","created_at":1,"status":"completed","model":"gpt-5.6-luna","output":[],"usage":{"input_tokens":1,"output_tokens":1,"total_tokens":2,"input_tokens_details":{"cached_tokens":0},"output_tokens_details":{"reasoning_tokens":0}}}}`, id)
 }
 
 func TestSimpleReadToolIsBoundedAndConfined(t *testing.T) {
