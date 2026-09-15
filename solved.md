@@ -27,6 +27,9 @@ This file records completed Grepple roadmap work that no longer belongs in `next
 - [x] Added `grepple sources explain` with deterministic config path/digest, selection decisions, classification totals, exclusion reasons, explicit bypasses, and omitted infrastructure subtrees.
 - [x] Added global `--no-repo-config`, `--no-config-ignore`, and `--production-only` source controls without disabling user authentication state.
 - [x] Classified recursive sources as production, test, fixture, generated, or vendor; exposed directory totals and retained explicit-file precedence with a bypass notice.
+- [x] Derived graph-level Go repository roots from selected modules and unambiguous local `go.mod`/`go.work` replacements, independently of optional declaration metadata.
+- [x] Covered nested modules, workspace replacements, conflicting replacements, ambiguous unqualified imports, local replacement call resolution, and cold/warm plus focused/full identity parity.
+- [x] Included module/workspace files in boundary cache digests and upgraded the cache schema so repository identity changes cannot reuse stale origin results.
 
 ## Search and retrieval
 

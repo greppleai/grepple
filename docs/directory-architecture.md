@@ -9,9 +9,11 @@ grepple architecture directory --depth 2 --max-nodes 80 --compact .
 grepple architecture directory --json src services
 ```
 
-`grepple-directory-architecture-v2` reports hierarchical directories, recursive file/language/declaration counts, production/test/fixture/generated/vendor classifications, callable visibility when adapters provide it, exact declaration ranges, and cross-directory relations. Relations are independently labeled `resolved-call`, `import`, or `type-reference`; each relation carries source-class totals and exact evidence. Coverage reports resolved, ambiguous, unresolved, unqualified, and adapter-unsupported import/type analysis. `--max-files` limits source analysis; compact `--depth`, `--max-nodes`, and `--max-output-bytes` affect presentation. Sources and truncation are always explicit.
+`grepple-directory-architecture-v2` reports hierarchical directories, recursive file/language/declaration counts, repository import roots, production/test/fixture/generated/vendor classifications, callable visibility when adapters provide it, exact declaration ranges, and cross-directory relations. Relations are independently labeled `resolved-call`, `import`, or `type-reference`; each relation carries source-class totals and exact evidence. Coverage reports resolved, ambiguous, unresolved, unqualified, and adapter-unsupported import/type analysis. `--max-files` limits source analysis; compact `--depth`, `--max-nodes`, and `--max-output-bytes` affect presentation. Sources and truncation are always explicit.
 
 Repository `grepple.json` ignores apply before analysis. Explicitly named files bypass ignores and emit a notice. Use `--production-only` to remove conventionally classified tests, fixtures, generated files, and vendor files from recursive analysis. Before relying on absence or completeness, run `grepple sources explain --compact PATH` to inspect the loaded config digest and exclusion counts. Large JSON follows the shared spill policy and may produce a `grepple-artifact-v1` descriptor instead of injecting the complete document into stdout.
+
+For Go, repository import roots come from the nearest module identity for every selected file plus unambiguous local `go.mod`/`go.work` replacements. Nested modules retain their nearest identity; conflicting replacements remain unresolved. This context is rebuilt after path-neutral cache loading, so focused/full and cold/warm runs do not inherit stale repository identity.
 
 ## Declaration resolution
 

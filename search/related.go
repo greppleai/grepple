@@ -75,6 +75,8 @@ type navigationIndex struct {
 	fields         map[string][]navigationField
 	embeddedFields map[string][]navigationField
 	contents       map[string]string
+	goReplacements map[string]string
+	goPackages     map[string][]string
 	graph          parser.NavigationGraph
 	sourceStats    NavigationSourceStats
 }
@@ -124,7 +126,7 @@ func buildNavigationIndex(files []string, useCache bool) *navigationIndex {
 	index := &navigationIndex{
 		declarations: make(map[string][]navigationDeclaration), callers: make(map[string][]navigationCaller),
 		calls: make(map[string][]navigationCall), byFile: make(map[string][]navigationDeclaration),
-		byLocation: make(map[string]navigationDeclaration), exports: make(map[string][]navigationExport), fields: make(map[string][]navigationField), embeddedFields: make(map[string][]navigationField), contents: make(map[string]string),
+		byLocation: make(map[string]navigationDeclaration), exports: make(map[string][]navigationExport), fields: make(map[string][]navigationField), embeddedFields: make(map[string][]navigationField), contents: make(map[string]string), goReplacements: make(map[string]string), goPackages: make(map[string][]string),
 	}
 	cwd, _ := os.Getwd()
 	paths := append([]string(nil), files...)
@@ -132,6 +134,7 @@ func buildNavigationIndex(files []string, useCache bool) *navigationIndex {
 	for _, path := range paths {
 		index.addFile(path, cwd, useCache)
 	}
+	index.graph.RepositoryRoots, index.goReplacements, index.goPackages = goRepositoryContext(paths)
 	index.inferReExportTargets()
 	index.inferCrossFileFieldReceivers()
 	index.inferReExportTargets()
@@ -203,6 +206,26 @@ func (index *navigationIndex) resolveImportTargetPaths(fact parser.NavigationImp
 	}
 	sort.Strings(targets)
 	return compactSortedStrings(targets)
+}
+
+func (index *navigationIndex) goReplacementImportTargets(importPath string) []string {
+	root, directory := longestGoReplacementPrefix(importPath, index.goReplacements)
+	if root == "" {
+		return nil
+	}
+	relative := strings.TrimPrefix(strings.TrimPrefix(importPath, root), "/")
+	targetDirectory := filepath.Clean(filepath.Join(directory, filepath.FromSlash(relative)))
+	targets := []string{}
+	for candidatePath := range index.contents {
+		if filepath.Clean(filepath.Dir(candidatePath)) == targetDirectory {
+			targets = append(targets, candidatePath)
+		}
+	}
+	return targets
+}
+
+func (index *navigationIndex) goPackageImportTargets(importPath string) []string {
+	return append([]string(nil), index.goPackages[importPath]...)
 }
 
 func (index *navigationIndex) localGoImportTargets(sourcePath, importPath string) []string {
@@ -323,6 +346,12 @@ func (index *navigationIndex) reExportTargetFiles(sourceFile, importPath, name, 
 }
 
 func (index *navigationIndex) importTargetFiles(sourceFile, importPath, language string) []string {
+	if navigationLanguageFamily(language) == "go" {
+		targets := index.goPackageImportTargets(importPath)
+		targets = append(targets, index.goReplacementImportTargets(importPath)...)
+		sort.Strings(targets)
+		return compactSortedStrings(targets)
+	}
 	files := make([]string, 0, len(index.contents))
 	for candidateFile := range index.contents {
 		files = append(files, candidateFile)

@@ -13,7 +13,7 @@ import (
 	"github.com/greppleai/grepple/search"
 )
 
-const boundaryCacheSchema = "grepple-boundary-cache-v5"
+const boundaryCacheSchema = "grepple-boundary-cache-v6"
 
 type boundaryGraphCache struct {
 	Schema string                `json:"schema"`
@@ -55,6 +55,15 @@ func boundaryInputDigest(paths []string, maxFiles int) (string, error) {
 		language := parser.LanguageFor(path)
 		capabilities, _ := parser.CapabilitiesForLanguage(language)
 		_, _ = fmt.Fprintf(hash, "%s\x00%s\x00%d\x00%s\x00", filepath.ToSlash(path), language, capabilities.GrammarABI, capabilities.GrammarFingerprint)
+		_, _ = hash.Write(content)
+		_, _ = hash.Write([]byte{0})
+	}
+	for _, path := range search.NavigationRepositoryContextFiles(sortedPaths) {
+		content, err := os.ReadFile(path)
+		if err != nil {
+			return "", err
+		}
+		_, _ = fmt.Fprintf(hash, "repository-context\x00%s\x00", filepath.ToSlash(path))
 		_, _ = hash.Write(content)
 		_, _ = hash.Write([]byte{0})
 	}

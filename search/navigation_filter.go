@@ -37,7 +37,7 @@ func FilterNavigationGraph(graph parser.NavigationGraph, filter NavigationGraphF
 	fields := filterNavigationFields(graph.Fields, languages)
 	usages := filterNavigationTypeUsages(graph.TypeUsages, included, languages)
 	accesses := filterNavigationMemberAccesses(graph.MemberAccesses, included, languages)
-	return parser.NavigationGraph{Declarations: declarations, Calls: calls, Imports: imports, Exports: exports, Fields: fields, TypeUsages: usages, MemberAccesses: accesses}, nil
+	return parser.NavigationGraph{Declarations: declarations, Calls: calls, Imports: imports, Exports: exports, Fields: fields, TypeUsages: usages, MemberAccesses: accesses, RepositoryRoots: append([]string(nil), graph.RepositoryRoots...)}, nil
 }
 
 // NormalizeNavigationGraphFilter returns sorted, duplicate-free values after validation.

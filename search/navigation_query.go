@@ -153,13 +153,14 @@ func includeQueryCallDeclarations(call parser.NavigationCall, declarations map[s
 
 func projectNavigationQuery(graph parser.NavigationGraph, included, includedCalls map[string]bool) parser.NavigationGraph {
 	result := parser.NavigationGraph{
-		Declarations:   make([]parser.NavigationDeclaration, 0, len(included)),
-		Imports:        make([]parser.NavigationImport, 0),
-		Calls:          make([]parser.NavigationCall, 0, len(includedCalls)),
-		Exports:        make([]parser.NavigationExport, 0),
-		Fields:         make([]parser.NavigationField, 0),
-		TypeUsages:     make([]parser.NavigationTypeUsage, 0),
-		MemberAccesses: make([]parser.NavigationMemberAccess, 0),
+		Declarations:    make([]parser.NavigationDeclaration, 0, len(included)),
+		Imports:         make([]parser.NavigationImport, 0),
+		Calls:           make([]parser.NavigationCall, 0, len(includedCalls)),
+		Exports:         make([]parser.NavigationExport, 0),
+		Fields:          make([]parser.NavigationField, 0),
+		TypeUsages:      make([]parser.NavigationTypeUsage, 0),
+		MemberAccesses:  make([]parser.NavigationMemberAccess, 0),
+		RepositoryRoots: append([]string(nil), graph.RepositoryRoots...),
 	}
 	for _, declaration := range graph.Declarations {
 		if included[declaration.ID] {

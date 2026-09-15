@@ -117,6 +117,24 @@ func TestBoundaryCacheInvalidatesWhenSourceChanges(t *testing.T) {
 	}
 }
 
+func TestBoundaryCacheInvalidatesWhenRepositoryIdentityChanges(t *testing.T) {
+	dir := chdirTemp(t)
+	writeBoundaryFixture(t, dir)
+	modulePath := filepath.Join(dir, "go.mod")
+	if err := os.WriteFile(modulePath, []byte("module example.com/one\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if _, cache, err := buildCachedBoundaryGraph([]string{"."}, 0, true); err != nil || cache != "miss" {
+		t.Fatalf("initial cache state=%q err=%v", cache, err)
+	}
+	if err := os.WriteFile(modulePath, []byte("module example.com/two\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if _, cache, err := buildCachedBoundaryGraph([]string{"."}, 0, true); err != nil || cache != "miss" {
+		t.Fatalf("identity cache state=%q err=%v", cache, err)
+	}
+}
+
 func writeBoundaryFixture(t *testing.T, dir string) {
 	t.Helper()
 	writeGraphSource(t, dir, "owner.go", "package sample\nfunc Parse(){}\nfunc Validate(){}\n")

@@ -118,13 +118,14 @@ type NavigationMemberAccess struct {
 // type, field, export, and member-access model. Language-specific consumers may
 // enrich its syntax facts with package, module, receiver, or repository context.
 type NavigationGraph struct {
-	Declarations   []NavigationDeclaration  `json:"declarations"`
-	Imports        []NavigationImport       `json:"imports,omitempty"`
-	Calls          []NavigationCall         `json:"calls"`
-	Exports        []NavigationExport       `json:"exports,omitempty"`
-	Fields         []NavigationField        `json:"fields,omitempty"`
-	TypeUsages     []NavigationTypeUsage    `json:"typeUsages,omitempty"`
-	MemberAccesses []NavigationMemberAccess `json:"memberAccesses,omitempty"`
+	Declarations    []NavigationDeclaration  `json:"declarations"`
+	Imports         []NavigationImport       `json:"imports,omitempty"`
+	Calls           []NavigationCall         `json:"calls"`
+	Exports         []NavigationExport       `json:"exports,omitempty"`
+	Fields          []NavigationField        `json:"fields,omitempty"`
+	TypeUsages      []NavigationTypeUsage    `json:"typeUsages,omitempty"`
+	MemberAccesses  []NavigationMemberAccess `json:"memberAccesses,omitempty"`
+	RepositoryRoots []string                 `json:"repositoryRoots,omitempty"`
 }
 
 // Merge appends another source graph while preserving source and syntax order.
@@ -136,6 +137,7 @@ func (graph *NavigationGraph) Merge(other NavigationGraph) {
 	graph.Fields = append(graph.Fields, other.Fields...)
 	graph.TypeUsages = append(graph.TypeUsages, other.TypeUsages...)
 	graph.MemberAccesses = append(graph.MemberAccesses, other.MemberAccesses...)
+	graph.RepositoryRoots = append(graph.RepositoryRoots, other.RepositoryRoots...)
 }
 
 func navigationStableID(parts ...string) string {

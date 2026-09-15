@@ -75,8 +75,14 @@ type boundaryDependencyContext struct {
 	roots []string
 }
 
-func newBoundaryDependencyContext(declarations map[string]parser.NavigationDeclaration) boundaryDependencyContext {
+func newBoundaryDependencyContext(declarations map[string]parser.NavigationDeclaration, repositoryRoots []string) boundaryDependencyContext {
 	rootSet := make(map[string]bool)
+	for _, root := range repositoryRoots {
+		root = normalizeBoundaryImportPath(root)
+		if root != "" && root != "." {
+			rootSet[root] = true
+		}
+	}
 	for _, declaration := range declarations {
 		for _, root := range []string{declaration.ModuleID, declaration.PackageID} {
 			root = normalizeBoundaryImportPath(root)
@@ -182,7 +188,7 @@ func AnalyzeTypeBoundariesWithPolicy(graph parser.NavigationGraph, minOccurrence
 	declarations := indexBoundaryDeclarations(graph.Declarations)
 	usages := append([]parser.NavigationTypeUsage(nil), graph.TypeUsages...)
 	usages = appendBoundaryFieldTypeUsages(usages, graph.Fields, declarations)
-	context := newBoundaryDependencyContext(declarations)
+	context := newBoundaryDependencyContext(declarations, graph.RepositoryRoots)
 	groups := indexBoundaryTypeSpreads(usages, declarations, boundaryTypeOwners(declarations), context)
 	spreads := buildBoundaryTypeSpreads(groups, minOccurrences)
 	for index := range spreads {

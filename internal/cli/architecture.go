@@ -53,6 +53,7 @@ type directoryArchitecture struct {
 	Directories      []architectureDirectory      `json:"directories"`
 	Symbols          []architectureSymbol         `json:"symbols"`
 	Relations        []architectureRelation       `json:"relations"`
+	RepositoryRoots  []string                     `json:"repositoryRoots,omitempty"`
 	RelationCoverage architectureRelationCoverage `json:"relationCoverage"`
 	Truncation       *navigationGraphTruncation   `json:"truncation,omitempty"`
 }
@@ -312,7 +313,7 @@ func buildDirectoryArchitecture(globs []string, maxFiles int) (directoryArchitec
 	sortArchitectureSymbols(symbols)
 	relations, relationCoverage := buildArchitectureRelations(graph, paths)
 	sources := navigationSourceSummary{Discovered: discovered, Selected: graphStats.Attempted, Parsed: graphStats.Parsed, Skipped: discovered - supported + graphStats.Skipped, Failed: graphStats.Failed, Recovered: graphStats.Recovered}
-	return directoryArchitecture{Schema: directoryArchitectureSchema, Root: ".", Files: len(paths), Sources: sources, Directories: buildArchitectureDirectories(directories), Symbols: symbols, Relations: relations, RelationCoverage: relationCoverage, Truncation: truncation}, nil
+	return directoryArchitecture{Schema: directoryArchitectureSchema, Root: ".", Files: len(paths), Sources: sources, Directories: buildArchitectureDirectories(directories), Symbols: symbols, Relations: relations, RepositoryRoots: graph.RepositoryRoots, RelationCoverage: relationCoverage, Truncation: truncation}, nil
 }
 
 func architectureVisibilityIndex(declarations []parser.NavigationDeclaration) map[string][]parser.NavigationDeclaration {
@@ -718,6 +719,9 @@ func renderDirectoryArchitecture(architecture directoryArchitecture, values arch
 	}
 	visibleRelations := projectArchitectureRelations(architecture.Relations, directories[:shown])
 	if !write("architecture %s root=%s files=%d directories=%d shown=%d relations=%d shown-relations=%d sources=%s", architecture.Schema, architecture.Root, architecture.Files, len(directories), shown, len(architecture.Relations), len(visibleRelations), compactNavigationSourceSummary(architecture.Sources)) {
+		return nil
+	}
+	if !write("repository-roots %s", formatArchitectureStrings(architecture.RepositoryRoots)) {
 		return nil
 	}
 	coverage := architecture.RelationCoverage

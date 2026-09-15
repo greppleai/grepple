@@ -4,7 +4,7 @@
 
 ## Recommended next milestone
 
-> Harden repository identity fixtures, add adapter-evidenced entrypoints/routes, and parse each architecture source once. Measure artifact-backed task success before revisiting syntax lifecycle APIs.
+> Add adapter-evidenced entrypoints/routes and parse each architecture source once. Measure artifact-backed task success before revisiting syntax lifecycle APIs.
 
 ## Planning principles
 
@@ -15,16 +15,7 @@
 - Preserve dependency direction toward `api` and `parser`; keep GritQL query semantics out of `parser`.
 - Keep canonical language IDs and grammar-kind policy out of generic navigation engines.
 
-## P0 — restore source-scope and classification trust
-
-### Repository identity hardening
-
-Go navigation facts now receive path-dependent module/package identity after cache loading, and same-module imports classify as first-party before host-qualified third-party fallback.
-
-- [ ] Add explicit nested-module, `go.work`, replacement, and ambiguous-unqualified-import fixtures.
-- [ ] Add cold/warm and focused/full-universe parity coverage for enriched repository identity.
-
-## P1 — simplify architecture discovery and output delivery
+## P0 — simplify architecture discovery and output delivery
 
 ### Directory architecture precision
 
@@ -41,7 +32,7 @@ Observed complete outputs reached about 1.55 MB for boundaries and 6.7 MB for a 
 - [ ] Add an explicit artifact path override without colliding with extraction's existing `--output` meaning.
 - [ ] Benchmark artifact fallback by context bytes and retrieval turns, not only file-write runtime.
 
-## P2 — improve precision and architectural signal
+## P1 — improve precision and architectural signal
 
 ### Public syntax API
 

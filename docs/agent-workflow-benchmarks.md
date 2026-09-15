@@ -59,7 +59,7 @@ Linux/amd64, Intel Core Ultra 7 165H, Go 1.25.14, `-benchtime=10x`:
 | `LineLocateThenAt` | 2 | 152 | 38 | 5.07 ms |
 | `RelatedNavigation` | 1 | 307 | 76.75 | 8.10 ms |
 | `ImpactGraph` | 1 | 978 | 244.5 | 6.33 ms |
-| `ArchitectureResolve` | 1 | 190 | 47.5 | 3.77 ms |
+| `ArchitectureResolve` | 1 | 190 | 47.5 | 4.36 ms |
 | `EnclosingScope` | 1 | 53 | 13.25 | 2.87 ms |
 | `EditLocation` | 1 | 40 | 10 | 2.69 ms |
 
