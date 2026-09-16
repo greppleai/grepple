@@ -72,7 +72,7 @@ grepple ai-provider login openai                # API key
 grepple ai-provider login bedrock               # validate AWS credential chain
 ```
 
-Select another service with `grepple ask --provider NAME --model MODEL`. The model defaults to `ai.models[PROVIDER]` in `~/.grepple/grepple.json`, then the selected provider default; legacy `ai.model` applies only to Codex. Prefer a capable cheaper research model and use explicit `--model` only when an investigation needs a different cost/capability tradeoff.
+Select another service with `grepple ask --model <provider>/<model>`. The same prefixed value in `~/.grepple/grepple.json` `ai.model` is the user default. `--provider` remains available for unprefixed command-line model names, while legacy unprefixed `ai.model` values remain Codex-only. Prefer a capable cheaper research model and override it only when an investigation needs a different cost/capability tradeoff.
 
 ## Recommended workflow
 

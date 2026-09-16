@@ -30,8 +30,8 @@ grepple ai-provider login anthropic-subscription
 grepple ai-provider login openai
 AWS_PROFILE=research AWS_REGION=us-east-1 grepple ai-provider login bedrock
 
-grepple ask --provider copilot --model gpt-4.1 'Question'
-grepple ask --provider anthropic --model claude-sonnet-4-5-20250929 'Question'
+grepple ask --model copilot/gpt-4.1 'Question'
+grepple ask --model anthropic/claude-sonnet-4-5-20250929 'Question'
 ```
 
 Codex and Copilot login print the verification URL and one-time code immediately while authorization polling continues. `--no-browser` suppresses browser launch. Static credentials entered interactively are read without terminal echo. Credentials are atomically stored with mode `0600` in `~/.grepple/ai-providers.json`; override the location with `GREPPLE_AI_CREDENTIALS` for isolated automation or testing. Merely using an API-key environment variable does not copy it into the store. Logout removes only the stored provider entry; an active environment variable continues to authenticate that provider. Concurrent provider updates are serialized so one login cannot overwrite another.
@@ -46,14 +46,14 @@ Questions do not need shell quoting when they contain only ordinary words:
 
 ```bash
 grepple ask Which package owns navigation resolution and what calls it?
-grepple ask --model gpt-5.3-codex \
+grepple ask --model codex/gpt-5.3-codex \
 	Compare the parser lifecycle with the architecture single-parse path
 ```
 
 Options:
 
-- `--provider NAME` selects `anthropic`, `anthropic-subscription`, `bedrock`, `codex`, `copilot`, or `openai` (`codex` by default).
-- `--model MODEL` selects the provider model. When omitted, `ai.models[PROVIDER]` from `~/.grepple/grepple.json` is used, then the provider default. Legacy `ai.model` remains the Codex default only.
+- `--model [PROVIDER/]MODEL` selects both provider and model when prefixed, for example `copilot/gpt-4.1`. An unprefixed command-line model uses `--provider`, or Codex when `--provider` is omitted.
+- `--provider NAME` remains available for unprefixed model names. A conflicting `--provider` and prefixed `--model` is rejected. When both are omitted, `ai.model` selects the provider and model, then Codex's provider default is the final fallback.
 - `--server URL` selects the remote Grepple service available to tools with an indexed-repository selector. When omitted, normal Grepple server configuration applies.
 - `--timeout-seconds N` bounds the whole run from 1 to 3600 seconds (default 600).
 
@@ -62,16 +62,12 @@ Set a non-secret per-user model default independently of credentials:
 ```json
 {
   "ai": {
-    "model": "gpt-5.6-luna",
-    "models": {
-      "copilot": "gpt-4.1",
-      "anthropic": "claude-sonnet-4-5-20250929"
-    }
+    "model": "copilot/gpt-4.1"
   }
 }
 ```
 
-Command-line `--model` always takes precedence. Provider-keyed `ai.models` entries prevent a Codex model alias from leaking into Anthropic, Bedrock, Copilot, or OpenAI requests; legacy `ai.model` remains backward-compatible for Codex. Repository-owned `grepple.json` files cannot select the AI model. Prefer capable cheaper models for broad research and override them only when an investigation needs a different cost/capability tradeoff.
+Command-line `--model` always takes precedence. Prefixing the single `ai.model` value keeps provider and model inseparable and prevents an alias from being sent to the wrong service. Existing unprefixed `ai.model` values remain backward-compatible as Codex models. Repository-owned `grepple.json` files cannot select the AI model. Prefer a capable cheaper model for broad research and override it only when an investigation needs a different cost/capability tradeoff.
 
 Human answers participate in Grepple's normal bounded-output and artifact-spill behavior.
 

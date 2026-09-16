@@ -34,7 +34,7 @@ func TestLoadRepositoryConfigFindsAncestorAndKeepsAuthenticationUserOwned(t *tes
 	}
 }
 
-func TestConfiguredAIModelUsesUserGreppleJSON(t *testing.T) {
+func TestConfiguredAIModelUsesProviderPrefixedUserValue(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("HOME", home)
 	directory := filepath.Join(home, ".grepple")
@@ -42,42 +42,47 @@ func TestConfiguredAIModelUsesUserGreppleJSON(t *testing.T) {
 		t.Fatal(err)
 	}
 	path := filepath.Join(directory, "grepple.json")
-	if err := os.WriteFile(path, []byte(`{"ai":{"model":" luna ","models":{"anthropic":" sonnet "}},"future":true}`), 0o600); err != nil {
+	if err := os.WriteFile(path, []byte(`{"ai":{"model":" anthropic/claude-sonnet "},"future":true}`), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	model, err := configuredAIModel("codex")
-	if err != nil || model != "luna" {
+	model, err := configuredAIModel()
+	if err != nil || model != "anthropic/claude-sonnet" {
 		t.Fatalf("model=%q err=%v", model, err)
 	}
-	providerModel, err := configuredAIModel("anthropic")
-	if err != nil || providerModel != "sonnet" {
-		t.Fatalf("provider model=%q err=%v", providerModel, err)
+	provider, selected, err := resolveAskSelection("", "", model)
+	if err != nil || provider != "anthropic" || selected != "claude-sonnet" {
+		t.Fatalf("provider=%q model=%q err=%v", provider, selected, err)
 	}
-	otherModel, err := configuredAIModel("openai")
-	if err != nil || otherModel != "" {
-		t.Fatalf("other provider model=%q err=%v", otherModel, err)
-	}
-	resolvedOther, err := resolveAskModel("", "openai", "openai-default")
-	if err != nil || resolvedOther != "openai-default" {
-		t.Fatalf("resolved other provider model=%q err=%v", resolvedOther, err)
-	}
-	override, err := resolveAskModel(" explicit ", "anthropic", "provider-default")
-	if err != nil || override != "explicit" {
-		t.Fatalf("override=%q err=%v", override, err)
-	}
-	if err := os.WriteFile(path, []byte(`{"ai":{"model":"luna"}} trailing`), 0o600); err != nil {
+	if err := os.WriteFile(path, []byte(`{"ai":{"model":"codex/luna"}} trailing`), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := configuredAIModel("codex"); err == nil {
+	if _, err := configuredAIModel(); err == nil {
 		t.Fatal("expected malformed user configuration error")
 	}
 }
 
-func TestResolveAskModelFallsBackToProvider(t *testing.T) {
-	t.Setenv("HOME", t.TempDir())
-	model, err := resolveAskModel("", "openai", "provider-default")
-	if err != nil || model != "provider-default" {
-		t.Fatalf("model=%q err=%v", model, err)
+func TestResolveAskSelectionPrecedenceAndCompatibility(t *testing.T) {
+	tests := []struct {
+		name, provider, explicit, configured string
+		wantProvider, wantModel              string
+		wantError                            bool
+	}{
+		{name: "provider prefixed explicit", explicit: "copilot/gpt-4.1", configured: "anthropic/claude", wantProvider: "copilot", wantModel: "gpt-4.1"},
+		{name: "matching explicit provider", provider: "anthropic", explicit: "anthropic/claude", wantProvider: "anthropic", wantModel: "claude"},
+		{name: "conflicting explicit provider", provider: "openai", explicit: "anthropic/claude", wantError: true},
+		{name: "configured selector", configured: "openai/gpt-5.1", wantProvider: "openai", wantModel: "gpt-5.1"},
+		{name: "explicit provider ignores other config", provider: "copilot", configured: "openai/gpt-5.1", wantProvider: "copilot"},
+		{name: "legacy config remains codex", configured: "gpt-5.6-luna", wantProvider: "codex", wantModel: "gpt-5.6-luna"},
+		{name: "unprefixed explicit defaults codex", explicit: "gpt-5.1", wantProvider: "codex", wantModel: "gpt-5.1"},
+		{name: "malformed selector", configured: "copilot/", wantError: true},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			provider, model, err := resolveAskSelection(test.provider, test.explicit, test.configured)
+			if (err != nil) != test.wantError || provider != test.wantProvider || model != test.wantModel {
+				t.Fatalf("provider=%q model=%q err=%v", provider, model, err)
+			}
+		})
 	}
 }
 

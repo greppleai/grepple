@@ -28,9 +28,7 @@ type userPreferences struct {
 }
 
 type userAIPreferences struct {
-	// Model is the legacy Codex model default retained for backward compatibility.
-	Model  string            `json:"model,omitempty"`
-	Models map[string]string `json:"models,omitempty"`
+	Model string `json:"model,omitempty"`
 }
 
 type repositoryConfig struct {
@@ -146,7 +144,7 @@ func userPreferencesPath() (string, error) {
 	return filepath.Join(home, ".grepple", "grepple.json"), nil
 }
 
-func configuredAIModel(provider string) (string, error) {
+func configuredAIModel() (string, error) {
 	path, err := userPreferencesPath()
 	if err != nil {
 		return "", err
@@ -166,14 +164,7 @@ func configuredAIModel(provider string) (string, error) {
 	if err := decoder.Decode(&struct{}{}); err != io.EOF {
 		return "", fmt.Errorf("invalid user configuration %s: trailing JSON content", path)
 	}
-	provider = strings.TrimSpace(strings.ToLower(provider))
-	if model := strings.TrimSpace(preferences.AI.Models[provider]); model != "" {
-		return model, nil
-	}
-	if provider == "codex" {
-		return strings.TrimSpace(preferences.AI.Model), nil
-	}
-	return "", nil
+	return strings.TrimSpace(preferences.AI.Model), nil
 }
 
 // storeLogin persists a token set (access token, optional refresh token, and

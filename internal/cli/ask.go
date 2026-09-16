@@ -25,7 +25,7 @@ const (
 
 type askArgs struct {
 	Provider string   `arg:"--provider" placeholder:"NAME" help:"AI provider: anthropic, anthropic-subscription, bedrock, codex, copilot, or openai"`
-	Model    string   `arg:"--model" placeholder:"MODEL" help:"research model (user/provider default when omitted)"`
+	Model    string   `arg:"--model" placeholder:"[PROVIDER/]MODEL" help:"research model, optionally prefixed with its provider"`
 	Server   string   `arg:"--server" placeholder:"URL" help:"remote Grepple service available to research tools"`
 	Timeout  int      `arg:"--timeout-seconds" placeholder:"N" help:"overall deadline in seconds"`
 	Question []string `arg:"positional" placeholder:"QUESTION"`
@@ -51,7 +51,7 @@ func validateAskArgs(values askArgs) (string, error) {
 }
 
 func runAsk(args []string) error {
-	values := askArgs{Provider: "codex", Timeout: int(defaultAskTimeout.Seconds())}
+	values := askArgs{Timeout: int(defaultAskTimeout.Seconds())}
 	parser, err := arg.NewParser(arg.Config{Program: "grepple ask"}, &values)
 	if err != nil {
 		return err
@@ -71,14 +71,24 @@ func runAsk(args []string) error {
 	if err != nil {
 		return err
 	}
-	provider, err := aiprovider.NewRegistry(store, &http.Client{Timeout: 5 * time.Minute}).Provider(defaultAIProvider(values.Provider))
+	registry := aiprovider.NewRegistry(store, &http.Client{Timeout: 5 * time.Minute})
+	configuredModel, err := configuredAIModel()
 	if err != nil {
 		return err
 	}
-	values.Model, err = resolveAskModel(values.Model, provider.Name(), provider.DefaultModel())
+	providerName, modelName, err := resolveAskSelection(values.Provider, values.Model, configuredModel)
 	if err != nil {
 		return err
 	}
+	provider, err := registry.Provider(providerName)
+	if err != nil {
+		return err
+	}
+	if modelName == "" {
+		modelName = provider.DefaultModel()
+	}
+	values.Provider = provider.Name()
+	values.Model = modelName
 	root, err := os.Getwd()
 	if err != nil {
 		return err
@@ -147,18 +157,65 @@ func recordAskError(log *askLog, err error) error {
 	return errors.Join(err, logErr)
 }
 
-func resolveAskModel(explicit, providerName, providerDefault string) (string, error) {
-	if model := strings.TrimSpace(explicit); model != "" {
-		return model, nil
+func resolveAskSelection(explicitProvider, explicitModel, configuredModel string) (string, string, error) {
+	provider := defaultAIProvider(explicitProvider)
+	if explicit := strings.TrimSpace(explicitModel); explicit != "" {
+		return resolveExplicitAskModel(provider, strings.TrimSpace(explicitProvider) != "", explicit)
 	}
-	model, err := configuredAIModel(providerName)
+	return resolveConfiguredAskModel(provider, strings.TrimSpace(explicitProvider) != "", configuredModel)
+}
+
+func resolveExplicitAskModel(provider string, providerWasExplicit bool, selector string) (string, string, error) {
+	selectedProvider, model, prefixed, err := parseAskModelSelector(selector)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
-	if model != "" {
-		return model, nil
+	if !prefixed {
+		return provider, model, nil
 	}
-	return providerDefault, nil
+	if providerWasExplicit && provider != selectedProvider {
+		return "", "", fmt.Errorf("--provider %q conflicts with --model provider %q", provider, selectedProvider)
+	}
+	return selectedProvider, model, nil
+}
+
+func resolveConfiguredAskModel(provider string, providerWasExplicit bool, configuredModel string) (string, string, error) {
+	configured := strings.TrimSpace(configuredModel)
+	if configured == "" {
+		return provider, "", nil
+	}
+	selectedProvider, model, prefixed, err := parseAskModelSelector(configured)
+	if err != nil {
+		return "", "", fmt.Errorf("configured ai.model: %w", err)
+	}
+	if prefixed {
+		if !providerWasExplicit || provider == selectedProvider {
+			return selectedProvider, model, nil
+		}
+		return provider, "", nil
+	}
+	// Unprefixed user values predate multiple providers and remain Codex-only.
+	if provider == "codex" {
+		return provider, model, nil
+	}
+	return provider, "", nil
+}
+
+func parseAskModelSelector(value string) (provider, model string, prefixed bool, err error) {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return "", "", false, fmt.Errorf("model cannot be empty")
+	}
+	provider, model, found := strings.Cut(value, "/")
+	if !found {
+		return "", value, false, nil
+	}
+	provider = strings.TrimSpace(strings.ToLower(provider))
+	model = strings.TrimSpace(model)
+	if provider == "" || model == "" {
+		return "", "", false, fmt.Errorf("model must use <provider>/<model>")
+	}
+	return provider, model, true, nil
 }
 
 func askSystemPrompt(root string) string {
