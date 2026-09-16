@@ -18,6 +18,7 @@ const researchSessionCacheVersion = "grepple-ask-research-cache-v1"
 type researchSession struct {
 	ctx      context.Context
 	identity string
+	server   string
 	log      *askLog
 
 	mu       sync.Mutex
@@ -49,6 +50,7 @@ func newResearchSession(ctx context.Context, log *askLog, root, server string) *
 	return &researchSession{
 		ctx:       ctx,
 		identity:  researchSourceIdentity(root, server),
+		server:    server,
 		log:       log,
 		values:    make(map[string]fantasy.ToolResponse),
 		inflight:  make(map[string]*researchPendingCall),

@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -18,13 +19,15 @@ const navigationGraphSchema = "grepple-navigation-graph-v2"
 type graphArgs struct {
 	JSON           bool     `arg:"--json" help:"emit the complete normalized navigation graph as JSON"`
 	Compact        bool     `arg:"--compact" help:"emit a bounded agent-facing declaration and call summary"`
+	Server         string   `arg:"--server" placeholder:"URL" help:"remote Grepple service"`
+	Repository     string   `arg:"--repo" placeholder:"OWNER/REPO[@REF]" help:"analyze one exact indexed repository"`
 	MaxFiles       int      `arg:"--max-files" placeholder:"N" help:"parse at most N discovered files (0 = unlimited)"`
 	MaxOutputBytes int      `arg:"--max-output-bytes" placeholder:"N" help:"cap compact output (default 16384; 0 = unlimited; JSON is uncapped)"`
 	Paths          []string `arg:"positional" placeholder:"PATH" help:"file, directory, or glob to include; defaults to the working directory"`
 }
 
 func (graphArgs) Description() string {
-	return "Build a deterministic local navigation graph. Use resolve to preview symbol alternatives, callers/callees/impact for traversal, or diff for comparison. Exactly one of --json or --compact is required."
+	return "Build a deterministic local or exact indexed-repository navigation graph. Use resolve to preview symbol alternatives, callers/callees/impact for traversal, or diff for comparison. Exactly one of --json or --compact is required."
 }
 
 type navigationGraphOutput struct {
@@ -71,15 +74,20 @@ type navigationSourceSummary struct {
 }
 
 func runGraph(args []string) error {
-	if len(args) > 0 && args[0] == "resolve" {
-		return runGraphResolve(args[1:])
+	if len(args) > 0 {
+		switch {
+		case args[0] == "resolve":
+			return runGraphResolve(args[1:])
+		case args[0] == "diff":
+			return runGraphDiff(args[1:])
+		case isGraphQueryDirection(args[0]):
+			return runGraphQuery(search.NavigationQueryDirection(args[0]), args[1:])
+		}
 	}
-	if len(args) > 0 && args[0] == "diff" {
-		return runGraphDiff(args[1:])
-	}
-	if len(args) > 0 && isGraphQueryDirection(args[0]) {
-		return runGraphQuery(search.NavigationQueryDirection(args[0]), args[1:])
-	}
+	return runGraphBuild(args)
+}
+
+func runGraphBuild(args []string) error {
 	values := graphArgs{MaxOutputBytes: DefaultTextOutputBytes}
 	argumentParser, err := arg.NewParser(arg.Config{Program: "grepple graph"}, &values)
 	if err != nil {
@@ -102,11 +110,13 @@ func runGraph(args []string) error {
 	if values.MaxOutputBytes < 0 {
 		return fmt.Errorf("--max-output-bytes must be non-negative")
 	}
-	output, err := buildNavigationGraphOutput(values.Paths, values.MaxFiles)
+	output, remote, err := loadGraphCommandOutput(values)
 	if err != nil {
 		return err
 	}
-	output.Metadata = graphResultMetadata(values.Paths, len(output.Declarations), values.MaxFiles, values.MaxOutputBytes, values.JSON, output.Sources, output.Truncation, graphContinuationCommand("graph", values.Paths, output.Truncation))
+	if values.JSON && remote != nil {
+		return stdoutWriter().writeJSON(remote)
+	}
 	if values.Compact {
 		return renderCompactNavigationGraph(output, values.MaxOutputBytes)
 	}
@@ -114,6 +124,26 @@ func runGraph(args []string) error {
 	encoder.SetEscapeHTML(false)
 	encoder.SetIndent("", "  ")
 	return encoder.Encode(output)
+}
+
+func loadGraphCommandOutput(values graphArgs) (navigationGraphOutput, *api.AnalysisResponse, error) {
+	if values.Repository != "" {
+		response, err := requestAnalysisRemote(context.Background(), api.AnalysisRequest{Operation: api.AnalysisGraph, Repository: values.Repository, Paths: values.Paths, MaxFiles: values.MaxFiles}, serverDefault(values.Server))
+		if err != nil {
+			return navigationGraphOutput{}, nil, err
+		}
+		var output navigationGraphOutput
+		if err := json.Unmarshal(response.Result, &output); err != nil {
+			return navigationGraphOutput{}, nil, fmt.Errorf("decode remote graph: %w", err)
+		}
+		return output, &response, nil
+	}
+	output, err := buildNavigationGraphOutput(values.Paths, values.MaxFiles)
+	if err != nil {
+		return navigationGraphOutput{}, nil, err
+	}
+	output.Metadata = graphResultMetadata(values.Paths, len(output.Declarations), values.MaxFiles, values.MaxOutputBytes, values.JSON, output.Sources, output.Truncation, graphContinuationCommand("graph", values.Paths, output.Truncation))
+	return output, nil, nil
 }
 
 func renderCompactNavigationGraph(graph navigationGraphOutput, maxBytes int) error {

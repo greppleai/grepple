@@ -11,6 +11,8 @@ import (
 	"reflect"
 	"sort"
 	"strings"
+
+	"github.com/greppleai/grepple/api"
 )
 
 const architectureComparisonSchema = "grepple-directory-architecture-comparison-v1"
@@ -104,6 +106,10 @@ func readDirectoryArchitecture(filePath string) (directoryArchitecture, []byte, 
 	if err != nil {
 		return directoryArchitecture{}, nil, err
 	}
+	content, err = unwrapRemoteDirectoryArchitecture(content)
+	if err != nil {
+		return directoryArchitecture{}, nil, err
+	}
 	decoder := json.NewDecoder(bytes.NewReader(content))
 	decoder.DisallowUnknownFields()
 	var architecture directoryArchitecture
@@ -120,6 +126,28 @@ func readDirectoryArchitecture(filePath string) (directoryArchitecture, []byte, 
 		return directoryArchitecture{}, nil, fmt.Errorf("sourceFiles has %d entries; files reports %d", len(architecture.SourceFiles), architecture.Files)
 	}
 	return architecture, content, nil
+}
+
+func unwrapRemoteDirectoryArchitecture(content []byte) ([]byte, error) {
+	var header struct {
+		Schema string `json:"schema"`
+	}
+	if err := json.Unmarshal(content, &header); err != nil || header.Schema != "grepple-remote-analysis-v1" {
+		return content, nil
+	}
+	decoder := json.NewDecoder(bytes.NewReader(content))
+	decoder.DisallowUnknownFields()
+	var response api.AnalysisResponse
+	if err := decoder.Decode(&response); err != nil {
+		return nil, err
+	}
+	if err := requireArchitectureJSONEnd(decoder); err != nil {
+		return nil, err
+	}
+	if response.Operation != api.AnalysisArchitecture {
+		return nil, fmt.Errorf("remote analysis operation %q is unsupported; expected %q", response.Operation, api.AnalysisArchitecture)
+	}
+	return response.Result, nil
 }
 
 func requireArchitectureJSONEnd(decoder *json.Decoder) error {

@@ -37,6 +37,7 @@ Good examples:
 
 - “Which package owns navigation resolution, what calls it, and what would a signature change affect?”
 - “Compare our streaming integration with Fantasy v0.8.0 and cite both repositories.”
+- “On the exact indexed selector, query the impact graph and summarize directory responsibilities without conflating graph edges with ownership.”
 - “Find all direct concrete-type leakage across this boundary and distinguish production from tests.”
 - “Explain why these directories depend on each other and identify the first source-backed relation.”
 

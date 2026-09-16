@@ -40,19 +40,21 @@ type askStructuralInput struct {
 }
 
 type askArchitectureInput struct {
-	Operation string   `json:"operation" description:"One of directory, resolve, or why"`
-	Paths     []string `json:"paths,omitempty" description:"Local files, directories, or globs; defaults to the workspace"`
-	Symbol    string   `json:"symbol,omitempty" description:"Symbol name required by resolve"`
-	From      string   `json:"from,omitempty" description:"Source directory required by why"`
-	To        string   `json:"to,omitempty" description:"Target directory required by why"`
-	MaxFiles  int      `json:"max_files,omitempty" description:"Maximum parsed files; 0 means all"`
+	Operation  string   `json:"operation" description:"One of directory, resolve, why, or responsibilities"`
+	Paths      []string `json:"paths,omitempty" description:"Source files, directories, or globs; defaults to the workspace or selected repository"`
+	Repository string   `json:"repository,omitempty" description:"Exact indexed OWNER/REPO[@REF] selector; omit for local architecture"`
+	Symbol     string   `json:"symbol,omitempty" description:"Symbol name required by resolve"`
+	From       string   `json:"from,omitempty" description:"Source directory required by why"`
+	To         string   `json:"to,omitempty" description:"Target directory required by why"`
+	MaxFiles   int      `json:"max_files,omitempty" description:"Maximum parsed files; 0 means all"`
 }
 
 type askGraphInput struct {
 	Direction  string   `json:"direction" description:"One of callers, callees, dependencies, dependents, or impact"`
 	Symbol     string   `json:"symbol,omitempty" description:"Exact declaration name; provide this or location, not both"`
 	Location   string   `json:"location,omitempty" description:"Repository-relative PATH:LINE selecting one declaration; provide this or symbol, not both"`
-	Paths      []string `json:"paths,omitempty" description:"Local graph source scope; defaults to the workspace"`
+	Paths      []string `json:"paths,omitempty" description:"Graph source scope; defaults to the workspace or selected repository"`
+	Repository string   `json:"repository,omitempty" description:"Exact indexed OWNER/REPO[@REF] selector; omit for the local workspace"`
 	Depth      int      `json:"depth,omitempty" description:"Traversal depth, 1-3; defaults to 1"`
 	Language   string   `json:"language,omitempty" description:"Optional canonical language ID filter such as go or typescript"`
 	Confidence string   `json:"confidence,omitempty" description:"Optional edge-confidence filter such as exact, import-resolved, context-resolved, or candidate"`
@@ -100,10 +102,10 @@ func newAskResearchToolsForSession(session *researchSession, root, server string
 		cachedAskTool(session, "structural_search", "Run a native read-only gritql-v1 syntax query across Tree-sitter-backed source. Use for code shapes, not type resolution, call impact, or data-flow proof.", func(ctx context.Context, input askStructuralInput) (fantasy.ToolResponse, error) {
 			return askToolResult(runAskStructural(ctx, root, server, input))
 		}),
-		cachedAskTool(session, "inspect_architecture", "Inspect local language-neutral directory architecture. directory orients ownership; resolve locates a symbol; why returns exact evidence for a directory relation.", func(_ context.Context, input askArchitectureInput) (fantasy.ToolResponse, error) {
+		cachedAskTool(session, "inspect_architecture", "Inspect local or exact indexed-repository language-neutral architecture. directory orients ownership; resolve locates a symbol; why returns exact relation evidence; responsibilities summarizes physical directory ownership.", func(_ context.Context, input askArchitectureInput) (fantasy.ToolResponse, error) {
 			return askToolResult(runAskArchitectureWithSession(session, root, input))
 		}),
-		cachedAskTool(session, "query_graph", "Query the local parser-owned navigation graph for callers, callees, dependencies, dependents, or impact. Select exactly one symbol or source location and keep depth small.", func(_ context.Context, input askGraphInput) (fantasy.ToolResponse, error) {
+		cachedAskTool(session, "query_graph", "Query a local or exact indexed-repository parser-owned graph for callers, callees, dependencies, dependents, or impact. Select exactly one symbol or source location and keep depth small.", func(_ context.Context, input askGraphInput) (fantasy.ToolResponse, error) {
 			return askToolResult(runAskGraphWithSession(session, root, input))
 		}),
 		cachedAskTool(session, "explain_sources", "Report which local files are selected, excluded, ignored, generated, vendored, tests, fixtures, or production. Use before completeness-sensitive conclusions.", func(_ context.Context, input askSourceScopeInput) (fantasy.ToolResponse, error) {
@@ -290,14 +292,11 @@ func runAskArchitecture(root string, input askArchitectureInput) (any, error) {
 }
 
 func runAskArchitectureWithSession(session *researchSession, root string, input askArchitectureInput) (any, error) {
-	if err := validateAskLocalPaths(root, input.Paths); err != nil {
-		return nil, err
-	}
 	if input.MaxFiles < 0 {
 		return nil, fmt.Errorf("max_files must not be negative")
 	}
 	switch input.Operation {
-	case "directory":
+	case "directory", "responsibilities":
 	case "resolve":
 		if strings.TrimSpace(input.Symbol) == "" {
 			return nil, fmt.Errorf("symbol is required for resolve")
@@ -307,7 +306,13 @@ func runAskArchitectureWithSession(session *researchSession, root string, input 
 			return nil, fmt.Errorf("from and to are required for why")
 		}
 	default:
-		return nil, fmt.Errorf("operation must be directory, resolve, or why")
+		return nil, fmt.Errorf("operation must be directory, resolve, why, or responsibilities")
+	}
+	if input.Repository != "" {
+		return runAskRemoteArchitecture(session, input)
+	}
+	if err := validateAskLocalPaths(root, input.Paths); err != nil {
+		return nil, err
 	}
 	universe, err := session.localUniverse(input.Paths, input.MaxFiles)
 	if err != nil {
@@ -322,8 +327,52 @@ func runAskArchitectureWithSession(session *researchSession, root string, input 
 	case "why":
 		evidence := architectureRelationEvidenceFor(architecture.Relations, input.From, input.To)
 		return architectureWhyOutput{Schema: "grepple-architecture-why-v2", From: cleanArchitectureDirectory(input.From), To: cleanArchitectureDirectory(input.To), Relation: architectureEvidenceRelation(evidence), Sources: architecture.Sources, Evidence: evidence}, nil
+	case "responsibilities":
+		return buildArchitectureResponsibilitiesOutput(architecture), nil
 	}
 	return nil, fmt.Errorf("unsupported architecture operation")
+}
+
+func runAskRemoteArchitecture(session *researchSession, input askArchitectureInput) (any, error) {
+	operation := api.AnalysisArchitecture
+	if input.Operation == "responsibilities" {
+		operation = api.AnalysisResponsibilities
+	}
+	response, err := requestAnalysisRemote(session.ctx, api.AnalysisRequest{Operation: operation, Repository: input.Repository, Paths: input.Paths, MaxFiles: input.MaxFiles}, serverDefault(session.server))
+	if err != nil {
+		return nil, err
+	}
+	if input.Operation == "directory" || input.Operation == "responsibilities" {
+		return response, nil
+	}
+	var architecture directoryArchitecture
+	if err := json.Unmarshal(response.Result, &architecture); err != nil {
+		return nil, fmt.Errorf("decode remote architecture: %w", err)
+	}
+	var projection any
+	switch input.Operation {
+	case "resolve":
+		projection = architectureResolveOutput{Schema: "grepple-architecture-resolve-v1", Symbol: input.Symbol, Sources: architecture.Sources, Matches: resolveArchitectureSymbols(architecture.Symbols, input.Symbol)}
+	case "why":
+		evidence := architectureRelationEvidenceFor(architecture.Relations, input.From, input.To)
+		projection = architectureWhyOutput{Schema: "grepple-architecture-why-v2", From: cleanArchitectureDirectory(input.From), To: cleanArchitectureDirectory(input.To), Relation: architectureEvidenceRelation(evidence), Sources: architecture.Sources, Evidence: evidence}
+	}
+	response.Result, err = json.Marshal(projection)
+	if err != nil {
+		return nil, err
+	}
+	return response, nil
+}
+
+func runAskRemoteGraph(session *researchSession, input askGraphInput, depth int) (any, error) {
+	request := api.AnalysisRequest{Operation: api.AnalysisGraph, Repository: input.Repository, Paths: input.Paths, Graph: &api.GraphQueryRequest{Direction: input.Direction, Depth: depth, Symbol: input.Symbol, At: input.Location}}
+	if input.Language != "" {
+		request.Graph.Languages = []string{input.Language}
+	}
+	if input.Confidence != "" {
+		request.Graph.Confidences = []string{input.Confidence}
+	}
+	return requestAnalysisRemote(session.ctx, request, serverDefault(session.server))
 }
 
 func runAskGraph(root string, input askGraphInput) (any, error) {
@@ -333,24 +382,12 @@ func runAskGraph(root string, input askGraphInput) (any, error) {
 }
 
 func runAskGraphWithSession(session *researchSession, root string, input askGraphInput) (any, error) {
-	if err := validateAskLocalPaths(root, input.Paths); err != nil {
-		return nil, err
-	}
-	if input.Location != "" {
-		if err := validateAskLocation(root, input.Location); err != nil {
-			return nil, err
-		}
-	}
-	direction := search.NavigationQueryDirection(input.Direction)
-	if !isGraphQueryDirection(input.Direction) {
-		return nil, fmt.Errorf("direction must be callers, callees, dependencies, dependents, or impact")
-	}
-	if (input.Symbol == "") == (input.Location == "") {
-		return nil, fmt.Errorf("provide exactly one of symbol or location")
-	}
-	depth, err := askBoundedValue(input.Depth, 1, 1, 3, "depth")
+	direction, depth, err := validateAskGraphInput(root, input)
 	if err != nil {
 		return nil, err
+	}
+	if input.Repository != "" {
+		return runAskRemoteGraph(session, input, depth)
 	}
 	universe, err := session.localUniverse(input.Paths, 0)
 	if err != nil {
@@ -389,6 +426,28 @@ func runAskGraphWithSession(session *researchSession, root string, input askGrap
 	output.Resolution = search.MeasureNavigationResolution(queried)
 	output.Query = &navigationGraphQuery{Direction: input.Direction, Depth: depth, RootIDs: rootIDs, Languages: filter.Languages, Confidences: filter.Confidences}
 	return output, nil
+}
+
+func validateAskGraphInput(root string, input askGraphInput) (search.NavigationQueryDirection, int, error) {
+	if input.Repository == "" {
+		if err := validateAskLocalPaths(root, input.Paths); err != nil {
+			return "", 0, err
+		}
+		if input.Location != "" {
+			if err := validateAskLocation(root, input.Location); err != nil {
+				return "", 0, err
+			}
+		}
+	}
+	direction := search.NavigationQueryDirection(input.Direction)
+	if !isGraphQueryDirection(input.Direction) {
+		return "", 0, fmt.Errorf("direction must be callers, callees, dependencies, dependents, or impact")
+	}
+	if (input.Symbol == "") == (input.Location == "") {
+		return "", 0, fmt.Errorf("provide exactly one of symbol or location")
+	}
+	depth, err := askBoundedValue(input.Depth, 1, 1, 3, "depth")
+	return direction, depth, err
 }
 
 func navigationOutputGraph(output navigationGraphOutput) parser.NavigationGraph {

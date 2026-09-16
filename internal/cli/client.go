@@ -99,6 +99,91 @@ func requestGritRemote(ctx context.Context, request api.GritRequest, server stri
 	return result, nil
 }
 
+func requestAnalysisRemote(ctx context.Context, request api.AnalysisRequest, server string) (api.AnalysisResponse, error) {
+	request.ProductionOnly = request.ProductionOnly || activeRepositoryOptions.productionOnly
+	request.NoConfigIgnore = request.NoConfigIgnore || activeRepositoryOptions.ignoreDisabled
+	request.NoRepoConfig = request.NoRepoConfig || activeRepositoryOptions.disabled
+	body, err := json.Marshal(request)
+	if err != nil {
+		return api.AnalysisResponse{}, err
+	}
+	httpRequest, err := authorizedRequest(http.MethodPost, strings.TrimRight(server, "/")+"/public/analysis", "application/json", bytes.NewReader(body))
+	if err != nil {
+		return api.AnalysisResponse{}, err
+	}
+	response, err := http.DefaultClient.Do(httpRequest.WithContext(ctx))
+	if err != nil {
+		return api.AnalysisResponse{}, err
+	}
+	defer response.Body.Close()
+	if response.StatusCode < http.StatusOK || response.StatusCode >= http.StatusMultipleChoices {
+		message, _ := io.ReadAll(io.LimitReader(response.Body, 64<<10))
+		return api.AnalysisResponse{}, fmt.Errorf("server %s returned %d: %s", server, response.StatusCode, string(message))
+	}
+	payload, err := io.ReadAll(io.LimitReader(response.Body, (64<<20)+1))
+	if err != nil {
+		return api.AnalysisResponse{}, err
+	}
+	if len(payload) > 64<<20 {
+		return api.AnalysisResponse{}, fmt.Errorf("server analysis response exceeds its maximum size")
+	}
+	var result api.AnalysisResponse
+	decoder := json.NewDecoder(bytes.NewReader(payload))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&result); err != nil {
+		return api.AnalysisResponse{}, err
+	}
+	if err := decoder.Decode(&struct{}{}); err != io.EOF {
+		return api.AnalysisResponse{}, fmt.Errorf("server analysis response must contain exactly one JSON value")
+	}
+	if err := validateAnalysisResponse(request, result); err != nil {
+		return api.AnalysisResponse{}, err
+	}
+	warnRemoteAnalysis(result)
+	return result, nil
+}
+
+func validateAnalysisResponse(request api.AnalysisRequest, response api.AnalysisResponse) error {
+	if response.Schema != "grepple-remote-analysis-v1" {
+		return fmt.Errorf("server analysis schema %q is unsupported", response.Schema)
+	}
+	if response.Operation != request.Operation || response.Repository != request.Repository {
+		return fmt.Errorf("server returned mismatched analysis identity")
+	}
+	if !response.Found {
+		return fmt.Errorf("repository not indexed: %s", request.Repository)
+	}
+	if len(response.Result) == 0 {
+		return fmt.Errorf("server returned an empty %s analysis", request.Operation)
+	}
+	var resultHeader struct {
+		Schema string `json:"schema"`
+	}
+	if err := json.Unmarshal(response.Result, &resultHeader); err != nil {
+		return fmt.Errorf("invalid %s analysis result: %w", request.Operation, err)
+	}
+	expected := map[api.AnalysisOperation]string{
+		api.AnalysisGraph: "grepple-navigation-graph-v2", api.AnalysisArchitecture: "grepple-directory-architecture-v4",
+		api.AnalysisBoundaries: "grepple-boundaries-v3", api.AnalysisResponsibilities: "grepple-directory-responsibilities-v1",
+	}[request.Operation]
+	if resultHeader.Schema != expected {
+		return fmt.Errorf("server %s analysis schema %q is unsupported; expected %q", request.Operation, resultHeader.Schema, expected)
+	}
+	return nil
+}
+
+func warnRemoteAnalysis(response api.AnalysisResponse) {
+	for _, notice := range response.Notices {
+		fmt.Fprintln(os.Stderr, "analysis notice:", notice)
+	}
+	for _, shardError := range response.ShardErrors {
+		fmt.Fprintln(os.Stderr, "partial analysis:", shardError)
+	}
+	if !response.Complete {
+		fmt.Fprintln(os.Stderr, "analysis is incomplete; inspect result source counts and truncation")
+	}
+}
+
 // searchRequestFromParams converts resolved CLI parameters into the wire
 // request: zero values stay unset so the server applies its own defaults.
 func searchRequestFromParams(params search.Params) api.SearchRequest {

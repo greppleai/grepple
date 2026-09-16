@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/alexflint/go-arg"
+	"github.com/greppleai/grepple/api"
 	"github.com/greppleai/grepple/parser"
 	"github.com/greppleai/grepple/search"
 )
@@ -19,6 +20,8 @@ const maxNavigationQueryDepth = 10
 type graphQueryArgs struct {
 	JSON           bool     `arg:"--json" help:"emit the complete queried subgraph as JSON"`
 	Compact        bool     `arg:"--compact" help:"emit a bounded agent-facing queried subgraph"`
+	Server         string   `arg:"--server" placeholder:"URL" help:"remote Grepple service"`
+	Repository     string   `arg:"--repo" placeholder:"OWNER/REPO[@REF]" help:"analyze one exact indexed repository"`
 	Symbol         string   `arg:"--symbol" placeholder:"NAME" help:"select one exact declaration name"`
 	At             string   `arg:"--at" placeholder:"PATH:LINE" help:"select the declaration containing a source location"`
 	Package        string   `arg:"--package" placeholder:"NAME" help:"select every declaration in an exact package name or ID"`
@@ -34,7 +37,7 @@ type graphQueryArgs struct {
 }
 
 func (graphQueryArgs) Description() string {
-	return "Query the deterministic local navigation graph. Exactly one of --json or --compact and exactly one root selector are required."
+	return "Query a deterministic local or exact indexed-repository navigation graph. Exactly one of --json or --compact and exactly one root selector are required."
 }
 
 func runGraphQuery(direction search.NavigationQueryDirection, args []string) error {
@@ -54,6 +57,9 @@ func runGraphQuery(direction search.NavigationQueryDirection, args []string) err
 	}
 	if err := validateGraphQueryArgs(values); err != nil {
 		return err
+	}
+	if values.Repository != "" {
+		return runRemoteGraphQuery(context.Background(), direction, values)
 	}
 	output, err := buildNavigationGraphOutput(values.Paths, values.MaxFiles)
 	if err != nil {
@@ -108,6 +114,25 @@ func runGraphQuery(direction search.NavigationQueryDirection, args []string) err
 	encoder.SetEscapeHTML(false)
 	encoder.SetIndent("", "  ")
 	return encoder.Encode(output)
+}
+
+func runRemoteGraphQuery(ctx context.Context, direction search.NavigationQueryDirection, values graphQueryArgs) error {
+	request := api.AnalysisRequest{
+		Operation: api.AnalysisGraph, Repository: values.Repository, Paths: values.Paths, MaxFiles: values.MaxFiles,
+		Graph: &api.GraphQueryRequest{Direction: string(direction), Depth: values.Depth, Symbol: values.Symbol, At: values.At, Package: values.Package, Module: values.Module, RootPath: values.RootPath, Languages: values.Languages, Confidences: values.Confidences, Visibilities: values.Visibilities},
+	}
+	response, err := requestAnalysisRemote(ctx, request, serverDefault(values.Server))
+	if err != nil {
+		return err
+	}
+	if values.JSON {
+		return stdoutWriter().writeJSON(response)
+	}
+	var output navigationGraphOutput
+	if err := json.Unmarshal(response.Result, &output); err != nil {
+		return fmt.Errorf("decode remote graph query: %w", err)
+	}
+	return renderCompactNavigationGraph(output, values.MaxOutputBytes)
 }
 
 func graphQueryContinuationCommand(direction search.NavigationQueryDirection, values graphQueryArgs, truncation *navigationGraphTruncation) string {

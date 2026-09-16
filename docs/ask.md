@@ -90,8 +90,8 @@ The internal agent receives a small set of typed, read-only tools:
 - `search_code`: literal or regex source search with `count`, `files`, and `snippets` result shapes.
 - `navigate_code`: exact `PATH:LINE` declaration retrieval with bounded callers and callees.
 - `structural_search`: native `gritql-v1` syntax matching.
-- `inspect_architecture`: local directory architecture, symbol resolution, and relation evidence.
-- `query_graph`: bounded callers, callees, dependencies, dependents, and impact queries.
+- `inspect_architecture`: local or exact indexed-repository directory architecture, symbol resolution, relation evidence, and responsibility summaries.
+- `query_graph`: local or exact indexed-repository bounded callers, callees, dependencies, dependents, and impact queries.
 - `explain_sources`: source classifications, exclusions, and completeness.
 - `repository_refs`: exact indexed default-branch, branch, and tag selectors for one source repository.
 - `repository_tree`: bounded indexed-repository path discovery.

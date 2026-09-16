@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -19,6 +20,8 @@ const maxHumanBoundaryPatterns = 5
 
 type boundariesArgs struct {
 	JSON           bool     `arg:"--json" help:"emit the complete boundary report as JSON"`
+	Server         string   `arg:"--server" placeholder:"URL" help:"remote Grepple service"`
+	Repository     string   `arg:"--repo" placeholder:"OWNER/REPO[@REF]" help:"analyze one exact indexed repository"`
 	MinOccurrences int      `arg:"--min-occurrences" placeholder:"N" help:"minimum callers sharing a reported pattern (default 2)"`
 	MaxFiles       int      `arg:"--max-files" placeholder:"N" help:"parse at most N discovered files (0 = unlimited)"`
 	Limit          int      `arg:"--limit" placeholder:"N" help:"maximum candidates per human-output section (default 20; 0 = unlimited; JSON is complete)"`
@@ -64,6 +67,9 @@ func runBoundaries(args []string) error {
 	if values.MaxFiles < 0 || values.MaxOutputBytes < 0 || values.Limit < 0 {
 		return fmt.Errorf("--max-files, --max-output-bytes, and --limit must be non-negative")
 	}
+	if values.Repository != "" {
+		return runRemoteBoundaries(context.Background(), values)
+	}
 	policy, policyPath, err := loadBoundaryPolicy(values.Policy)
 	if err != nil {
 		return err
@@ -88,6 +94,21 @@ func runBoundaries(args []string) error {
 		encoder.SetEscapeHTML(false)
 		encoder.SetIndent("", "  ")
 		return encoder.Encode(output)
+	}
+	return renderBoundaries(output, values.MinOccurrences, values.Limit, values.MaxOutputBytes)
+}
+
+func runRemoteBoundaries(ctx context.Context, values boundariesArgs) error {
+	response, err := requestAnalysisRemote(ctx, api.AnalysisRequest{Operation: api.AnalysisBoundaries, Repository: values.Repository, Paths: values.Paths, MaxFiles: values.MaxFiles, MinOccurrences: values.MinOccurrences, Policy: values.Policy}, serverDefault(values.Server))
+	if err != nil {
+		return err
+	}
+	if values.JSON {
+		return stdoutWriter().writeJSON(response)
+	}
+	var output boundariesOutput
+	if err := json.Unmarshal(response.Result, &output); err != nil {
+		return fmt.Errorf("decode remote boundaries: %w", err)
 	}
 	return renderBoundaries(output, values.MinOccurrences, values.Limit, values.MaxOutputBytes)
 }

@@ -2,6 +2,8 @@ package cli
 
 import (
 	"bytes"
+	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -10,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/alexflint/go-arg"
+	"github.com/greppleai/grepple/api"
 	"github.com/greppleai/grepple/internal/sourcekind"
 	"github.com/greppleai/grepple/parser"
 	"github.com/greppleai/grepple/search"
@@ -19,6 +22,8 @@ const directoryArchitectureSchema = "grepple-directory-architecture-v4"
 
 type architectureArgs struct {
 	JSON           bool     `arg:"--json" help:"emit complete directory architecture JSON"`
+	Server         string   `arg:"--server" placeholder:"URL" help:"remote Grepple service"`
+	Repository     string   `arg:"--repo" placeholder:"OWNER/REPO[@REF]" help:"analyze one exact indexed repository"`
 	Compact        bool     `arg:"--compact" help:"emit a bounded agent-facing directory summary"`
 	Depth          int      `arg:"--depth" placeholder:"N" help:"maximum displayed directory depth (default 3; 0 = unlimited)"`
 	MaxNodes       int      `arg:"--max-nodes" placeholder:"N" help:"maximum directories in compact output (default 200; 0 = unlimited)"`
@@ -29,6 +34,8 @@ type architectureArgs struct {
 
 type architectureResolveArgs struct {
 	JSON           bool     `arg:"--json" help:"emit complete matching declarations as JSON"`
+	Server         string   `arg:"--server" placeholder:"URL" help:"remote Grepple service"`
+	Repository     string   `arg:"--repo" placeholder:"OWNER/REPO[@REF]" help:"analyze one exact indexed repository"`
 	Compact        bool     `arg:"--compact" help:"emit bounded source-linked matches"`
 	Symbol         string   `arg:"--symbol,required" placeholder:"NAME" help:"exact or terminal declaration name"`
 	MaxFiles       int      `arg:"--max-files" placeholder:"N" help:"analyze at most N supported files (0 = unlimited)"`
@@ -38,6 +45,8 @@ type architectureResolveArgs struct {
 
 type architectureWhyArgs struct {
 	JSON           bool     `arg:"--json" help:"emit complete source-linked relation evidence as JSON"`
+	Server         string   `arg:"--server" placeholder:"URL" help:"remote Grepple service"`
+	Repository     string   `arg:"--repo" placeholder:"OWNER/REPO[@REF]" help:"analyze one exact indexed repository"`
 	Compact        bool     `arg:"--compact" help:"emit bounded source-linked relation evidence"`
 	MaxFiles       int      `arg:"--max-files" placeholder:"N" help:"analyze at most N supported files (0 = unlimited)"`
 	MaxOutputBytes int      `arg:"--max-output-bytes" placeholder:"N" help:"cap compact output (default 16384; 0 = unlimited)"`
@@ -209,7 +218,7 @@ type directoryAccumulator struct {
 
 func runArchitecture(args []string) error {
 	if len(args) == 0 || isExtractHelp(args[0]) {
-		return stdoutWriter().writeString("Inspect language-neutral directory architecture.\nUsage:\n  grepple architecture directory (--compact | --json) [PATH ...]\n  grepple architecture resolve --symbol NAME (--compact | --json) [PATH ...]\n  grepple architecture why FROM TO (--compact | --json) [PATH ...]\n  grepple architecture compare (--compact | --json) BEFORE.json AFTER.json\n")
+		return stdoutWriter().writeString("Inspect language-neutral directory architecture.\nUsage:\n  grepple architecture directory (--compact | --json) [PATH ...]\n  grepple architecture resolve --symbol NAME (--compact | --json) [PATH ...]\n  grepple architecture why FROM TO (--compact | --json) [PATH ...]\n  grepple architecture responsibilities (--compact | --json) [PATH ...]\n  grepple architecture compare (--compact | --json) BEFORE.json AFTER.json\n")
 	}
 	switch args[0] {
 	case "directory":
@@ -218,6 +227,8 @@ func runArchitecture(args []string) error {
 		return runArchitectureResolve(args[1:])
 	case "why":
 		return runArchitectureWhy(args[1:])
+	case "responsibilities":
+		return runArchitectureResponsibilities(args[1:])
 	case "compare":
 		return runArchitectureCompare(args[1:])
 	default:
@@ -241,11 +252,14 @@ func runArchitectureDirectory(args []string) error {
 	if values.Depth < 0 || values.MaxNodes < 0 || values.MaxFiles < 0 || values.MaxOutputBytes < 0 {
 		return fmt.Errorf("architecture limits must be non-negative")
 	}
-	architecture, err := buildDirectoryArchitecture(values.Paths, values.MaxFiles)
+	architecture, remote, err := loadDirectoryArchitecture(context.Background(), values.Paths, values.MaxFiles, values.Repository, values.Server)
 	if err != nil {
 		return err
 	}
 	if values.JSON {
+		if remote != nil {
+			return stdoutWriter().writeJSON(remote)
+		}
 		return stdoutWriter().writeJSON(architecture)
 	}
 	return renderDirectoryArchitecture(architecture, values)
@@ -265,14 +279,14 @@ func runArchitectureResolve(args []string) error {
 	if err := validateArchitectureOutputLimits(values.MaxFiles, values.MaxOutputBytes); err != nil {
 		return err
 	}
-	architecture, err := buildDirectoryArchitecture(values.Paths, values.MaxFiles)
+	architecture, remote, err := loadDirectoryArchitecture(context.Background(), values.Paths, values.MaxFiles, values.Repository, values.Server)
 	if err != nil {
 		return err
 	}
 	matches := resolveArchitectureSymbols(architecture.Symbols, values.Symbol)
 	output := architectureResolveOutput{Schema: "grepple-architecture-resolve-v1", Symbol: values.Symbol, Sources: architecture.Sources, Matches: matches}
 	if values.JSON {
-		if err := stdoutWriter().writeJSON(output); err != nil {
+		if err := writeArchitectureProjection(remote, output); err != nil {
 			return err
 		}
 	} else if err := renderArchitectureResolve(output, values.MaxOutputBytes); err != nil {
@@ -298,14 +312,14 @@ func runArchitectureWhy(args []string) error {
 	if err := validateArchitectureOutputLimits(values.MaxFiles, values.MaxOutputBytes); err != nil {
 		return err
 	}
-	architecture, err := buildDirectoryArchitecture(values.Paths, values.MaxFiles)
+	architecture, remote, err := loadDirectoryArchitecture(context.Background(), values.Paths, values.MaxFiles, values.Repository, values.Server)
 	if err != nil {
 		return err
 	}
 	evidence := architectureRelationEvidenceFor(architecture.Relations, values.From, values.To)
 	output := architectureWhyOutput{Schema: "grepple-architecture-why-v2", From: cleanArchitectureDirectory(values.From), To: cleanArchitectureDirectory(values.To), Relation: architectureEvidenceRelation(evidence), Sources: architecture.Sources, Evidence: evidence}
 	if values.JSON {
-		if err := stdoutWriter().writeJSON(output); err != nil {
+		if err := writeArchitectureProjection(remote, output); err != nil {
 			return err
 		}
 	} else if err := renderArchitectureWhy(output, values.MaxOutputBytes); err != nil {
@@ -315,6 +329,34 @@ func runArchitectureWhy(args []string) error {
 		requestExit(1)
 	}
 	return nil
+}
+
+func writeArchitectureProjection(remote *api.AnalysisResponse, output any) error {
+	if remote == nil {
+		return stdoutWriter().writeJSON(output)
+	}
+	result, err := json.Marshal(output)
+	if err != nil {
+		return err
+	}
+	remote.Result = result
+	return stdoutWriter().writeJSON(remote)
+}
+
+func loadDirectoryArchitecture(ctx context.Context, paths []string, maxFiles int, repository, server string) (directoryArchitecture, *api.AnalysisResponse, error) {
+	if repository == "" {
+		result, err := buildDirectoryArchitecture(paths, maxFiles)
+		return result, nil, err
+	}
+	response, err := requestAnalysisRemote(ctx, api.AnalysisRequest{Operation: api.AnalysisArchitecture, Repository: repository, Paths: paths, MaxFiles: maxFiles}, serverDefault(server))
+	if err != nil {
+		return directoryArchitecture{}, nil, err
+	}
+	var result directoryArchitecture
+	if err := json.Unmarshal(response.Result, &result); err != nil {
+		return directoryArchitecture{}, nil, fmt.Errorf("decode remote architecture: %w", err)
+	}
+	return result, &response, nil
 }
 
 func validateArchitectureOutputLimits(maxFiles, maxOutputBytes int) error {

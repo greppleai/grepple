@@ -4,6 +4,8 @@
 
 The analyzer consumes `parser.NavigationGraph`, not grammar node names. Consequently the workflow contract is identical across Go, Java, Kotlin, JavaScript/JSX, TypeScript/TSX, Python, C#, C, C++, Rust, and Shell. Type identity is import-qualified where an adapter can resolve an import; otherwise project-owned types require an unambiguous declaration owner. Human and JSON reports include discovered, selected, parsed, skipped, failed, and recovered source counts; `--max-files` omissions remain a separate truncation record.
 
+Use `--server URL --repo OWNER/REPO[@REF]` to run complete-source boundary analysis against one exact indexed checkout. The backend loads the selected checkout's `.grepple/boundary-policy.json`, or a repository-relative `--policy` path, and rejects malformed or escaping policy paths. Remote JSON retains repository and commit identity around the nested `grepple-boundaries-v3` report.
+
 ## Reported signals
 
 Workflow boundary candidates report:

@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/greppleai/grepple/api"
 )
 
 func TestDirectoryArchitectureColdWarmComparisonIsByteIdentical(t *testing.T) {
@@ -181,4 +183,24 @@ func marshalArchitectureFixture(t *testing.T, value directoryArchitecture, inden
 		t.Fatal(err)
 	}
 	return content
+}
+
+func TestReadDirectoryArchitectureAcceptsRemoteEnvelope(t *testing.T) {
+	architecture := architectureComparisonFixture()
+	result := marshalArchitectureFixture(t, architecture, false)
+	envelope, err := json.Marshal(api.AnalysisResponse{Schema: "grepple-remote-analysis-v1", Operation: api.AnalysisArchitecture, Repository: "owner/repo", Found: true, Complete: true, Result: result})
+	if err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(t.TempDir(), "remote.json")
+	if err := os.WriteFile(path, envelope, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	decoded, raw, err := readDirectoryArchitecture(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if decoded.Schema != directoryArchitectureSchema || string(raw) != string(result) {
+		t.Fatalf("decoded=%+v raw=%s", decoded, raw)
+	}
 }
