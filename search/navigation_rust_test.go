@@ -73,7 +73,7 @@ func TestRustInlineAndExplicitPathModulesResolveScopedCalls(t *testing.T) {
 	platform := filepath.Join(root, "src", "platform", "unix.rs")
 	external := filepath.Join(root, "src", "outer", "external.rs")
 	paths := writeRustNavigationFiles(t, map[string]string{
-		lib: `#[path = "platform/unix.rs"]
+		lib: `#[path = r#"platform/unix.rs"#]
 		mod platform;
 		mod outer {
 			pub mod child { pub fn run() {} }

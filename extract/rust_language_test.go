@@ -197,3 +197,30 @@ func TestRustFocusedExtractionDoesNotFallbackForUnresolvedQualifiedImpl(t *testi
 		}
 	}
 }
+
+func TestRustFocusedExtractionChecksCrossModuleItemVisibility(t *testing.T) {
+	root := t.TempDir()
+	lib := Source{Path: filepath.Join(root, "src", "lib.rs"), Text: "mod private_model; mod parent; mod outside;\n"}
+	privateModel := Source{Path: filepath.Join(root, "src", "private_model.rs"), Text: "struct PrivateModel;\n"}
+	parent := Source{Path: filepath.Join(root, "src", "parent.rs"), Text: "pub mod model { pub(super) struct ParentModel; struct PrivateNested; pub mod child { impl super::PrivateNested { pub fn nested(&self) {} } } }\npub mod impls { impl crate::parent::model::ParentModel { pub fn allowed(&self) {} } }\n"}
+	outside := Source{Path: filepath.Join(root, "src", "outside.rs"), Text: "impl crate::private_model::PrivateModel { pub fn denied(&self) {} }\nimpl crate::parent::model::ParentModel { pub fn also_denied(&self) {} }\n"}
+	analysis, err := Analyze([]Source{lib, privateModel, parent, outside})
+	if err != nil {
+		t.Fatal(err)
+	}
+	privateDeclaration := analysis.TSDeclarations[absolutePath(privateModel.Path)+":PrivateModel"]
+	parentDeclaration := analysis.TSDeclarations[absolutePath(parent.Path)+":model::ParentModel"]
+	nestedDeclaration := analysis.TSDeclarations[absolutePath(parent.Path)+":model::PrivateNested"]
+	if privateDeclaration == nil || parentDeclaration == nil || nestedDeclaration == nil {
+		t.Fatalf("Rust declarations=%#v", analysis.TSDeclarations)
+	}
+	assertJVMMember(t, parentDeclaration.Members, Member{Name: "allowed", Kind: "method", Visibility: "public"})
+	assertJVMMember(t, nestedDeclaration.Members, Member{Name: "nested", Kind: "method", Visibility: "public"})
+	for _, declaration := range []*Declaration{privateDeclaration, parentDeclaration} {
+		for _, member := range declaration.Members {
+			if member.Name == "denied" || member.Name == "also_denied" {
+				t.Fatalf("inaccessible Rust impl attached: %#v", declaration.Members)
+			}
+		}
+	}
+}

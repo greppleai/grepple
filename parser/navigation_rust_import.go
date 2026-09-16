@@ -150,8 +150,8 @@ func rustNavigationPathAttribute(value string) (string, bool) {
 	if strings.HasPrefix(inner, "path") {
 		remainder := strings.TrimSpace(inner[len("path"):])
 		if strings.HasPrefix(remainder, "=") {
-			path, err := strconv.Unquote(strings.TrimSpace(strings.TrimPrefix(remainder, "=")))
-			if err != nil || strings.TrimSpace(path) == "" {
+			path, ok := rustNavigationStringLiteral(strings.TrimSpace(strings.TrimPrefix(remainder, "=")))
+			if !ok || strings.TrimSpace(path) == "" {
 				return "", true
 			}
 			return filepath.ToSlash(strings.TrimSpace(path)), true
@@ -159,6 +159,33 @@ func rustNavigationPathAttribute(value string) (string, bool) {
 	}
 	compact := strings.Join(strings.Fields(value), "")
 	return "", strings.Contains(compact, "path=")
+}
+
+func rustNavigationStringLiteral(value string) (string, bool) {
+	if strings.HasPrefix(value, `"`) {
+		path, err := strconv.Unquote(value)
+		return path, err == nil
+	}
+	if !strings.HasPrefix(value, "r") {
+		return "", false
+	}
+	hashes := 0
+	for hashes+1 < len(value) && value[hashes+1] == '#' {
+		hashes++
+	}
+	openingQuote := hashes + 1
+	if openingQuote >= len(value) || value[openingQuote] != '"' {
+		return "", false
+	}
+	suffix := `"` + strings.Repeat("#", hashes)
+	if len(value) < openingQuote+1+len(suffix) || !strings.HasSuffix(value, suffix) {
+		return "", false
+	}
+	content := value[openingQuote+1 : len(value)-len(suffix)]
+	if strings.Contains(content, suffix) {
+		return "", false
+	}
+	return content, true
 }
 
 func rustNavigationUses(node *syntaxNode) []rustNavigationUse {

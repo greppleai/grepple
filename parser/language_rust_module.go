@@ -295,6 +295,50 @@ func compactRustModuleTargets(targets []RustModuleTarget) []RustModuleTarget {
 	return result
 }
 
+// RustItemVisibleFrom reports whether a syntax-evidenced Rust item visibility
+// permits access from sourceModuleKey. Both keys must come from one module index.
+func RustItemVisibleFrom(declarationModuleKey, sourceModuleKey, visibility string) bool {
+	declarationRoot, declarationModule, declarationOK := strings.Cut(declarationModuleKey, "\x00")
+	sourceRoot, sourceModule, sourceOK := strings.Cut(sourceModuleKey, "\x00")
+	if !declarationOK || !sourceOK {
+		return false
+	}
+	visibility = strings.Join(strings.Fields(visibility), "")
+	if visibility == "pub" {
+		return true
+	}
+	if filepath.Clean(declarationRoot) != filepath.Clean(sourceRoot) {
+		return false
+	}
+	switch visibility {
+	case "pub(crate)":
+		return true
+	case "pub(super)":
+		return rustModuleContains(rustParentModule(declarationModule), sourceModule)
+	case "", "pub(self)":
+		return rustModuleContains(declarationModule, sourceModule)
+	}
+	const restrictedPrefix = "pub(in"
+	if strings.HasPrefix(visibility, restrictedPrefix) && strings.HasSuffix(visibility, ")") {
+		path := strings.TrimSuffix(strings.TrimPrefix(visibility, restrictedPrefix), ")")
+		allowed, ok := rustResolveModulePath(RustModuleTarget{CrateRoot: declarationRoot, ModulePath: declarationModule}, path)
+		allowedModule := strings.Join(allowed, "::")
+		return ok && rustModuleContains(allowedModule, declarationModule) && rustModuleContains(allowedModule, sourceModule)
+	}
+	return false
+}
+
+func rustParentModule(module string) string {
+	if index := strings.LastIndex(module, "::"); index >= 0 {
+		return module[:index]
+	}
+	return ""
+}
+
+func rustModuleContains(module, candidate string) bool {
+	return module == "" || candidate == module || strings.HasPrefix(candidate, module+"::")
+}
+
 func compactRustStrings(values []string) []string {
 	result := values[:0]
 	for _, value := range values {

@@ -20,6 +20,7 @@ type rustDeclarationRef struct {
 	path        string
 	scope       string
 	name        string
+	visibility  string
 }
 
 type rustImplementation struct {
@@ -148,12 +149,21 @@ func rustDeclarationMatchesModules(modules *codeparser.RustModuleIndex, referenc
 	if len(moduleKeys) == 0 {
 		return reference.path == implementation.path && reference.scope == implementation.scope
 	}
-	for _, key := range modules.ModuleKeys(reference.path, reference.scope) {
-		if rustStringSliceContains(moduleKeys, key) {
-			return true
-		}
+	sourceKeys := modules.ModuleKeys(implementation.path, implementation.scope)
+	if len(sourceKeys) != 1 {
+		return false
 	}
-	return false
+	matchedKey := ""
+	for _, key := range modules.ModuleKeys(reference.path, reference.scope) {
+		if !rustStringSliceContains(moduleKeys, key) {
+			continue
+		}
+		if matchedKey != "" && matchedKey != key {
+			return false
+		}
+		matchedKey = key
+	}
+	return matchedKey != "" && codeparser.RustItemVisibleFrom(matchedKey, sourceKeys[0], reference.visibility)
 }
 
 func (analysis *rustAnalysis) rustImplementationModuleKeys(modules *codeparser.RustModuleIndex, implementation rustImplementation) []string {
@@ -380,7 +390,7 @@ func (analyzer *rustSourceAnalyzer) storeDeclaration(declaration *Declaration, n
 		return
 	}
 	analyzer.analysis.result.TSDeclarations[key] = declaration
-	analyzer.analysis.declarations = append(analyzer.analysis.declarations, rustDeclarationRef{declaration: declaration, path: analyzer.source.Path, scope: analyzer.scope, name: declaration.Name})
+	analyzer.analysis.declarations = append(analyzer.analysis.declarations, rustDeclarationRef{declaration: declaration, path: analyzer.source.Path, scope: analyzer.scope, name: declaration.Name, visibility: rustItemVisibility(node)})
 	if analyzer.analysis.result.TSSymbolIndex[key] == nil {
 		analyzer.analysis.result.TSSymbolIndex[key] = &Symbol{
 			Name: declaration.Name, Kind: declaration.Kind, Language: "rust", ModuleID: analyzer.moduleID, Key: key, Calls: map[string]bool{},
@@ -435,6 +445,15 @@ func rustVisibility(node codeparser.ViewNode, fallback string) string {
 		return rustVisibilityModifier(child.Text())
 	}
 	return fallback
+}
+
+func rustItemVisibility(node codeparser.ViewNode) string {
+	for _, child := range node.NamedChildren() {
+		if child.Kind() == "visibility_modifier" {
+			return strings.Join(strings.Fields(child.Text()), "")
+		}
+	}
+	return ""
 }
 
 func rustVisibilityModifier(value string) string {

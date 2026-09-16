@@ -26,7 +26,7 @@ func TestRustImportsReachDirectoryArchitecture(t *testing.T) {
 
 func TestRustInlineAndExplicitPathModulesReachDirectoryArchitecture(t *testing.T) {
 	universe, err := NewUniverse([]Source{
-		{Path: "src/lib.rs", Content: []byte("#[path = \"platform/unix.rs\"]\nmod platform;\nmod local { pub fn run() {} }\npub fn boot() { platform::run(); local::run(); }\n")},
+		{Path: "src/lib.rs", Content: []byte("#[path = r#\"platform/unix.rs\"#]\nmod platform;\nmod local { pub fn run() {} }\npub fn boot() { platform::run(); local::run(); }\n")},
 		{Path: "src/platform/unix.rs", Content: []byte("pub fn run() {}\n")},
 	}, 0)
 	if err != nil {

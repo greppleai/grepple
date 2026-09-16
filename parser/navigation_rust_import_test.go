@@ -52,6 +52,23 @@ func TestRustNavigationPathAttributePreservesSpaces(t *testing.T) {
 	assertRustModuleImport(t, graph, "platform", "", "platform/foo bar.rs", false)
 }
 
+func TestRustNavigationPathAttributeSupportsRawStrings(t *testing.T) {
+	content := "#[path = r#\"platform/raw file.rs\"#]\nmod platform;\n"
+	graph := BuildNavigationGraph(content, "rust", "src/lib.rs")
+	assertRustModuleImport(t, graph, "platform", "", "platform/raw file.rs", false)
+}
+
+func TestRustNavigationMalformedRawPathRemainsUnresolved(t *testing.T) {
+	content := "#[path = r#\"platform.rs\"]\nmod platform;\n"
+	graph := BuildNavigationGraph(content, "rust", "src/lib.rs")
+	if len(graph.Imports) != 0 {
+		t.Fatalf("malformed raw-path module imports=%#v", graph.Imports)
+	}
+	if _, ok := rustNavigationStringLiteral(`r"platform.rs"trailing"`); ok {
+		t.Fatal("raw path with an earlier terminator was accepted")
+	}
+}
+
 func TestRustNavigationExportsOnlyPublicTopLevelItems(t *testing.T) {
 	content := `pub struct Public;
 struct Private;
@@ -72,7 +89,7 @@ mod inline { pub fn nested() {} }
 
 func TestCachedRustNavigationFactsInstantiateRequestedPath(t *testing.T) {
 	t.Setenv(NavigationCacheDirectoryEnv, t.TempDir())
-	content := "mod feature;\npub use crate::feature::run;\npub fn boot() { run(); }\n"
+	content := "#[path = r#\"feature.rs\"#]\nmod feature;\npub use crate::feature::run;\npub fn boot() { run(); }\n"
 	cold, _, coldHit, err := CachedNavigationGraph(content, "rust", "first/src/lib.rs")
 	if err != nil {
 		t.Fatal(err)
@@ -118,6 +135,33 @@ func TestRustNavigationScopesInlineModuleImportsAndCalls(t *testing.T) {
 		}
 		if declaration.Name == "run" || declaration.Name == "start" {
 			t.Fatalf("declaration scope=%#v", declaration)
+		}
+	}
+}
+
+func TestRustItemVisibilityUsesModuleAncestry(t *testing.T) {
+	root := "src/lib.rs"
+	module := func(path string) string { return rustModuleKey(root, rustModuleSegments(path)) }
+	cases := []struct {
+		visibility, declaration, source string
+		visible                         bool
+	}{
+		{visibility: "pub", declaration: "model", source: "other", visible: true},
+		{visibility: "pub(crate)", declaration: "model", source: "other", visible: true},
+		{visibility: "", declaration: "model", source: "model::nested", visible: true},
+		{visibility: "", declaration: "model", source: "other"},
+		{visibility: "pub(super)", declaration: "parent::model", source: "parent::other", visible: true},
+		{visibility: "pub(super)", declaration: "parent::model", source: "outside"},
+		{visibility: "pub(self)", declaration: "model", source: "model::nested", visible: true},
+		{visibility: "pub(self)", declaration: "model", source: "outside"},
+		{visibility: "pub(in super)", declaration: "parent::model", source: "parent::other", visible: true},
+		{visibility: "pub(in crate::allowed)", declaration: "allowed::model", source: "allowed::impls", visible: true},
+		{visibility: "pub(in crate::allowed)", declaration: "allowed::model", source: "outside"},
+		{visibility: "pub(in crate::outside)", declaration: "allowed::model", source: "outside"},
+	}
+	for _, test := range cases {
+		if visible := RustItemVisibleFrom(module(test.declaration), module(test.source), test.visibility); visible != test.visible {
+			t.Fatalf("visibility=%q declaration=%q source=%q visible=%v expected=%v", test.visibility, test.declaration, test.source, visible, test.visible)
 		}
 	}
 }
