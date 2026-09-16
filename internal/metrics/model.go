@@ -60,18 +60,12 @@ type Outcome struct {
 type Run struct {
 	Schema                    string         `json:"schema"`
 	RunID                     string         `json:"runId"`
-	TaskID                    string         `json:"taskId"`
-	Repository                string         `json:"repository"`
-	Revision                  string         `json:"revision"`
-	AssignedCohort            string         `json:"assignedCohort"`
+	Agent                     string         `json:"agent"`
 	ObservedGreppleUse        bool           `json:"observedGreppleUse"`
 	GreppleModes              map[string]int `json:"greppleModes"`
 	StartedAt                 time.Time      `json:"startedAt"`
 	EndedAt                   time.Time      `json:"endedAt"`
 	Complete                  bool           `json:"complete"`
-	Model                     string         `json:"model"`
-	Provider                  string         `json:"provider"`
-	ThinkingLevel             string         `json:"thinkingLevel"`
 	Turns                     int            `json:"turns"`
 	Usage                     Usage          `json:"usage"`
 	Tools                     ToolCounts     `json:"tools"`
@@ -109,11 +103,10 @@ type Report struct {
 	Comparisons []Comparison `json:"comparisons,omitempty"`
 }
 
-// ComparisonReport contains an explicit target-minus-baseline cohort comparison.
+// ComparisonReport contains an explicit target-minus-baseline agent comparison.
 type ComparisonReport struct {
 	Schema    string     `json:"schema"`
 	Generated time.Time  `json:"generatedAt"`
-	GroupBy   string     `json:"groupBy"`
 	Baseline  Group      `json:"baseline"`
 	Target    Group      `json:"target"`
 	Delta     Comparison `json:"delta"`
@@ -127,7 +120,7 @@ type Distribution struct {
 	P90    float64 `json:"p90"`
 }
 
-// Group summarizes runs sharing the requested reporting dimension.
+// Group summarizes runs produced by one coding agent.
 type Group struct {
 	Name                    string        `json:"name"`
 	SampleSize              int           `json:"sampleSize"`

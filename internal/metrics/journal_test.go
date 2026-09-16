@@ -8,7 +8,7 @@ import (
 	"testing"
 )
 
-const validStartEvent = `{"schema":"grepple-metrics-event-v1","eventId":"start","time":"2026-09-16T08:00:00Z","runId":"run-1","event":"run_start","data":{"taskId":"task-1","assignedCohort":"control"}}`
+const validStartEvent = `{"schema":"grepple-metrics-event-v1","eventId":"start","time":"2026-09-16T08:00:00Z","runId":"run-1","event":"run_start","data":{"agent":"pi"}}`
 
 func TestReadJournalValidatesDirectJSONLInput(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "run.jsonl")

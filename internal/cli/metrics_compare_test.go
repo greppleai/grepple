@@ -12,12 +12,12 @@ import (
 )
 
 func TestMetricsReportAndCompareAreDeterministic(t *testing.T) {
-	path := filepath.Join(t.TempDir(), "cohorts.jsonl")
+	path := filepath.Join(t.TempDir(), "agents.jsonl")
 	start := time.Date(2026, 9, 16, 8, 0, 0, 0, time.UTC)
-	appendCLITestEvent(t, path, "control-run", "c-start", start, agentmetrics.EventRunStart, agentmetrics.RunStartData{TaskID: "task", AssignedCohort: "control"})
-	appendCLITestEvent(t, path, "control-run", "c-end", start.Add(2*time.Second), agentmetrics.EventRunEnd, agentmetrics.RunEndData{Outcome: "success"})
-	appendCLITestEvent(t, path, "grepple-run", "g-start", start, agentmetrics.EventRunStart, agentmetrics.RunStartData{TaskID: "task", AssignedCohort: "grepple"})
-	appendCLITestEvent(t, path, "grepple-run", "g-end", start.Add(time.Second), agentmetrics.EventRunEnd, agentmetrics.RunEndData{Outcome: "success"})
+	appendCLITestEvent(t, path, "pi-run", "p-start", start, agentmetrics.EventRunStart, agentmetrics.RunStartData{Agent: "pi"})
+	appendCLITestEvent(t, path, "pi-run", "p-end", start.Add(2*time.Second), agentmetrics.EventRunEnd, agentmetrics.RunEndData{Outcome: "success"})
+	appendCLITestEvent(t, path, "claude-run", "c-start", start, agentmetrics.EventRunStart, agentmetrics.RunStartData{Agent: "claude-code"})
+	appendCLITestEvent(t, path, "claude-run", "c-end", start.Add(time.Second), agentmetrics.EventRunEnd, agentmetrics.RunEndData{Outcome: "success"})
 
 	before := metricReportOutputs(t, path)
 	t.Setenv("HOME", t.TempDir())
@@ -33,10 +33,10 @@ func TestMetricsReportAndCompareAreDeterministic(t *testing.T) {
 		t.Fatalf("JSON report does not derive time from evidence: %s", before["json"])
 	}
 
-	compareArgs := []string{"compare", "--input", path, "--baseline", "control", "--target", "grepple", "--format", "json"}
+	compareArgs := []string{"compare", "--input", path, "--baseline", "pi", "--target", "claude-code", "--format", "json"}
 	firstComparison := runMetricsOutput(t, compareArgs)
 	secondComparison := runMetricsOutput(t, compareArgs)
-	if firstComparison != secondComparison || !strings.Contains(firstComparison, `"name": "control"`) || !strings.Contains(firstComparison, `"name": "grepple"`) {
+	if firstComparison != secondComparison || !strings.Contains(firstComparison, `"name": "pi"`) || !strings.Contains(firstComparison, `"name": "claude-code"`) {
 		t.Fatalf("nondeterministic comparison:\n%s\n%s", firstComparison, secondComparison)
 	}
 }

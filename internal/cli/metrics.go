@@ -9,7 +9,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"time"
 
 	agentmetrics "github.com/greppleai/grepple/internal/metrics"
 )
@@ -23,18 +22,10 @@ func (values *stringFlags) Set(value string) error {
 }
 
 type metricsOptions struct {
-	inputs       stringFlags
-	groupBy      string
-	repository   string
-	model        string
-	task         string
-	cohort       string
-	baseline     string
-	target       string
-	since        time.Time
-	until        time.Time
-	onlyComplete bool
-	format       string
+	inputs   stringFlags
+	baseline string
+	target   string
+	format   string
 }
 
 const metricsHelp = `Analyze externally generated, privacy-safe agent utility JSONL.
@@ -43,18 +34,14 @@ Usage:
   grepple metrics report --input PATH [OPTIONS]
   grepple metrics compare --input PATH --baseline NAME --target NAME [OPTIONS]
 
-Report and comparison options:
+Report options:
   --input PATH          journal JSONL file or directory (required; repeatable)
-  --group-by DIMENSION  cohort, observed, model, repository, or task (default cohort)
-  --baseline NAME       explicit comparison baseline group
-  --target NAME         explicit comparison target group
-  --repository NAME     include one repository label
-  --model NAME          include provider/model or model
-  --task ID             include one task ID
-  --cohort NAME         include one assigned cohort
-  --since RFC3339       include runs ending at or after this time
-  --until RFC3339       include runs starting at or before this time
-  --complete            exclude incomplete runs
+  --format FORMAT       text, json, or csv
+
+Compare options:
+  --input PATH          journal JSONL file or directory (required; repeatable)
+  --baseline AGENT      producing agent used as the comparison baseline
+  --target AGENT        producing agent used as the comparison target
   --format FORMAT       text, json, or csv
 
 Grepple reads only explicit --input paths; it does not collect, write, or discover journals.
@@ -85,37 +72,29 @@ func runMetrics(args []string) error {
 		return err
 	}
 	if command == "compare" {
-		comparison, err := agentmetrics.BuildComparison(runs, options.groupBy, options.baseline, options.target)
+		comparison, err := agentmetrics.BuildComparison(runs, options.baseline, options.target)
 		if err != nil {
 			return err
 		}
 		return outputMetricsComparison(comparison, options.format)
 	}
-	report := agentmetrics.BuildReport(runs, options.groupBy)
+	report := agentmetrics.BuildReport(runs)
 	if options.format != "text" {
 		return exportMetrics(report, options.format)
 	}
-	return writeMetricsReport(report, options.groupBy)
+	return writeMetricsReport(report)
 }
 
 func parseMetricsOptions(command string, args []string) (metricsOptions, bool, error) {
-	options := metricsOptions{groupBy: "cohort", format: "text"}
+	options := metricsOptions{format: "text"}
 	flags := flag.NewFlagSet("grepple metrics "+command, flag.ContinueOnError)
 	flags.SetOutput(os.Stderr)
 	flags.Var(&options.inputs, "input", "metrics journal JSONL file or directory")
-	flags.StringVar(&options.groupBy, "group-by", options.groupBy, "grouping dimension")
-	flags.StringVar(&options.repository, "repository", "", "repository filter")
-	flags.StringVar(&options.model, "model", "", "model filter")
-	flags.StringVar(&options.task, "task", "", "task filter")
-	flags.StringVar(&options.cohort, "cohort", "", "cohort filter")
-	flags.StringVar(&options.baseline, "baseline", "", "baseline group name")
-	flags.StringVar(&options.target, "target", "", "target group name")
-	flags.BoolVar(&options.onlyComplete, "complete", false, "complete runs only")
 	flags.StringVar(&options.format, "format", options.format, "text, json, or csv")
-	var since string
-	var until string
-	flags.StringVar(&since, "since", "", "earliest run end")
-	flags.StringVar(&until, "until", "", "latest run start")
+	if command == "compare" {
+		flags.StringVar(&options.baseline, "baseline", "", "baseline agent name")
+		flags.StringVar(&options.target, "target", "", "target agent name")
+	}
 	if err := flags.Parse(args); err != nil {
 		if err == flag.ErrHelp {
 			return options, true, nil
@@ -124,10 +103,6 @@ func parseMetricsOptions(command string, args []string) (metricsOptions, bool, e
 	}
 	if flags.NArg() != 0 {
 		return options, false, fmt.Errorf("unexpected metrics arguments: %s", strings.Join(flags.Args(), " "))
-	}
-	validGroups := map[string]bool{"cohort": true, "observed": true, "model": true, "repository": true, "task": true}
-	if !validGroups[options.groupBy] {
-		return options, false, fmt.Errorf("--group-by must be cohort, observed, model, repository, or task")
 	}
 	if options.format != "text" && options.format != "json" && options.format != "csv" {
 		return options, false, fmt.Errorf("--format must be text, json, or csv")
@@ -138,27 +113,7 @@ func parseMetricsOptions(command string, args []string) (metricsOptions, bool, e
 	if command == "compare" && (options.baseline == "" || options.target == "") {
 		return options, false, fmt.Errorf("metrics compare requires --baseline and --target")
 	}
-	var err error
-	options.since, err = parseOptionalMetricsTime(since, "--since")
-	if err != nil {
-		return options, false, err
-	}
-	options.until, err = parseOptionalMetricsTime(until, "--until")
-	if err != nil {
-		return options, false, err
-	}
 	return options, false, nil
-}
-
-func parseOptionalMetricsTime(value, option string) (time.Time, error) {
-	if value == "" {
-		return time.Time{}, nil
-	}
-	parsed, err := time.Parse(time.RFC3339, value)
-	if err != nil {
-		return time.Time{}, fmt.Errorf("%s: %w", option, err)
-	}
-	return parsed, nil
 }
 
 func loadMetricRuns(options metricsOptions) ([]agentmetrics.Run, error) {
@@ -172,42 +127,16 @@ func loadMetricRuns(options metricsOptions) ([]agentmetrics.Run, error) {
 		if err != nil {
 			return nil, err
 		}
-		for _, run := range runs {
-			if includeMetricRun(run, options) {
-				result = append(result, run)
-			}
-		}
+		result = append(result, runs...)
 	}
 	return result, nil
 }
 
-func includeMetricRun(run agentmetrics.Run, options metricsOptions) bool {
-	if options.repository != "" && run.Repository != options.repository {
-		return false
-	}
-	if options.model != "" && run.Model != options.model && run.Provider+"/"+run.Model != options.model {
-		return false
-	}
-	if options.task != "" && run.TaskID != options.task {
-		return false
-	}
-	if options.cohort != "" && run.AssignedCohort != options.cohort {
-		return false
-	}
-	if options.onlyComplete && !run.Complete {
-		return false
-	}
-	if !options.since.IsZero() && run.EndedAt.Before(options.since) {
-		return false
-	}
-	return options.until.IsZero() || !run.StartedAt.After(options.until)
-}
-
-func writeMetricsReport(report agentmetrics.Report, groupBy string) error {
+func writeMetricsReport(report agentmetrics.Report) error {
 	var output strings.Builder
-	fmt.Fprintf(&output, "Agent utility metrics (grouped by %s)\n", groupBy)
+	fmt.Fprintln(&output, "Agent utility metrics (grouped by agent)")
 	fmt.Fprintf(&output, "runs: %d  groups: %d\n\n", len(report.Runs), len(report.Groups))
-	fmt.Fprintln(&output, "GROUP\tN\tSUCCESS\tTOKENS p50/p90\tCOST p50/p90\tTIME-ms p50/p90")
+	fmt.Fprintln(&output, "AGENT\tN\tSUCCESS\tTOKENS p50/p90\tCOST p50/p90\tTIME-ms p50/p90")
 	for _, group := range report.Groups {
 		writeMetricsGroup(&output, group)
 	}
@@ -265,7 +194,7 @@ func exportMetrics(report agentmetrics.Report, format string) error {
 	}
 	var output bytes.Buffer
 	writer := csv.NewWriter(&output)
-	header := []string{"run_id", "task_id", "repository", "revision", "assigned_cohort", "observed_grepple_use", "complete", "outcome", "provider", "model", "turns", "tool_calls", "grepple_calls", "tokens", "cost", "elapsed_ms", "files_inspected", "files_edited", "test_fix_cycles"}
+	header := []string{"run_id", "agent", "observed_grepple_use", "complete", "outcome", "turns", "tool_calls", "grepple_calls", "tokens", "cost", "elapsed_ms", "files_inspected", "files_edited", "test_fix_cycles"}
 	if err := writer.Write(header); err != nil {
 		return err
 	}
@@ -277,11 +206,11 @@ func exportMetrics(report agentmetrics.Report, format string) error {
 		}
 		tokens := strconv.FormatInt(run.Usage.TotalTokens, 10)
 		cost := strconv.FormatFloat(run.Usage.Cost, 'f', 6, 64)
-		if metricRunMissing(run, "model_usage") {
+		if metricRunMissing(run, "assistant_usage") {
 			tokens = ""
 			cost = ""
 		}
-		row := []string{run.RunID, run.TaskID, run.Repository, run.Revision, run.AssignedCohort, strconv.FormatBool(run.ObservedGreppleUse), strconv.FormatBool(run.Complete), run.Outcome.Status, run.Provider, run.Model, turns, strconv.Itoa(run.Tools.Total), strconv.Itoa(run.Tools.Grepple), tokens, cost, strconv.FormatInt(elapsed, 10), strconv.Itoa(run.DistinctInspectedFiles), strconv.Itoa(run.DistinctEditedFiles), strconv.Itoa(run.TestFixCycles)}
+		row := []string{run.RunID, run.Agent, strconv.FormatBool(run.ObservedGreppleUse), strconv.FormatBool(run.Complete), run.Outcome.Status, turns, strconv.Itoa(run.Tools.Total), strconv.Itoa(run.Tools.Grepple), tokens, cost, strconv.FormatInt(elapsed, 10), strconv.Itoa(run.DistinctInspectedFiles), strconv.Itoa(run.DistinctEditedFiles), strconv.Itoa(run.TestFixCycles)}
 		if err := writer.Write(row); err != nil {
 			return err
 		}
@@ -315,7 +244,7 @@ func outputMetricsComparison(report agentmetrics.ComparisonReport, format string
 		return writeMetricsComparisonCSV(report, metricNames)
 	}
 	var output strings.Builder
-	fmt.Fprintf(&output, "Agent utility comparison (%s): %s -> %s\n", report.GroupBy, report.Baseline.Name, report.Target.Name)
+	fmt.Fprintf(&output, "Agent utility comparison: %s -> %s\n", report.Baseline.Name, report.Target.Name)
 	for _, name := range metricNames {
 		fmt.Fprintf(&output, "%s\t%s\n", name, formatMetricDelta(report.Delta.Metrics[name]))
 	}

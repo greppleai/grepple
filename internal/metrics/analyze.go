@@ -125,10 +125,7 @@ func (analysis *journalAnalysis) processStart(at time.Time, data RunStartData) e
 		return fmt.Errorf("duplicate run_start for run %q", analysis.run.RunID)
 	}
 	analysis.started = true
-	analysis.run.TaskID = data.TaskID
-	analysis.run.Repository = data.Repository
-	analysis.run.Revision = data.Revision
-	analysis.run.AssignedCohort = data.AssignedCohort
+	analysis.run.Agent = data.Agent
 	analysis.run.StartedAt = at
 	return nil
 }
@@ -137,15 +134,6 @@ func (analysis *journalAnalysis) processAssistant(data AssistantData) {
 	analysis.hasAssistant = true
 	analysis.run.Turns++
 	analysis.run.Usage.add(data.Usage)
-	if data.Provider != "" {
-		analysis.run.Provider = data.Provider
-	}
-	if data.Model != "" {
-		analysis.run.Model = data.Model
-	}
-	if data.ThinkingLevel != "" {
-		analysis.run.ThinkingLevel = data.ThinkingLevel
-	}
 }
 
 func (analysis *journalAnalysis) processCommand(at time.Time, data CommandData) {
@@ -347,7 +335,7 @@ func (analysis *journalAnalysis) finalize() (Run, error) {
 	analysis.run.DistinctEditedFiles = len(analysis.edited)
 	analysis.deriveConversions()
 	if !analysis.hasAssistant {
-		analysis.addMissing("agent_turns", "model_usage")
+		analysis.addMissing("agent_turns", "assistant_usage")
 	}
 	if !analysis.ended {
 		analysis.addMissing("run_end")

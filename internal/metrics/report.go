@@ -3,12 +3,11 @@ package metrics
 import (
 	"fmt"
 	"sort"
-	"strconv"
 	"time"
 )
 
-// BuildReport groups runs by a stable, privacy-safe dimension and derives its timestamp from evidence.
-func BuildReport(runs []Run, groupBy string) Report {
+// BuildReport groups runs by coding agent and derives its timestamp from evidence.
+func BuildReport(runs []Run) Report {
 	ordered := append([]Run(nil), runs...)
 	sort.SliceStable(ordered, func(left, right int) bool {
 		return runSortKey(ordered[left]) < runSortKey(ordered[right])
@@ -20,7 +19,7 @@ func BuildReport(runs []Run, groupBy string) Report {
 		if run.EndedAt.After(generated) {
 			generated = run.EndedAt
 		}
-		key := groupKey(*run, groupBy)
+		key := run.Agent
 		buckets[key] = append(buckets[key], run)
 	}
 	names := make([]string, 0, len(buckets))
@@ -41,15 +40,15 @@ func BuildReport(runs []Run, groupBy string) Report {
 	}
 }
 
-// BuildComparison builds one explicit target-minus-baseline comparison.
-func BuildComparison(runs []Run, groupBy, baselineName, targetName string) (ComparisonReport, error) {
+// BuildComparison builds one explicit target-minus-baseline agent comparison.
+func BuildComparison(runs []Run, baselineName, targetName string) (ComparisonReport, error) {
 	if baselineName == "" || targetName == "" {
 		return ComparisonReport{}, fmt.Errorf("baseline and target are required")
 	}
 	if baselineName == targetName {
 		return ComparisonReport{}, fmt.Errorf("baseline and target must differ")
 	}
-	report := BuildReport(runs, groupBy)
+	report := BuildReport(runs)
 	groups := make(map[string]Group, len(report.Groups))
 	for _, group := range report.Groups {
 		groups[group.Name] = group
@@ -63,13 +62,13 @@ func BuildComparison(runs []Run, groupBy, baselineName, targetName string) (Comp
 		return ComparisonReport{}, fmt.Errorf("target group %q not found", targetName)
 	}
 	return ComparisonReport{
-		Schema: "grepple-agent-comparison-v1", Generated: report.Generated, GroupBy: groupBy,
+		Schema: "grepple-agent-comparison-v1", Generated: report.Generated,
 		Baseline: baseline, Target: target, Delta: compareGroupPair(baseline, target),
 	}, nil
 }
 
 func runSortKey(run Run) string {
-	return run.RunID + "\x00" + run.StartedAt.UTC().Format(time.RFC3339Nano) + "\x00" + run.Repository + "\x00" + run.TaskID
+	return run.RunID + "\x00" + run.StartedAt.UTC().Format(time.RFC3339Nano) + "\x00" + run.Agent
 }
 
 func compareGroups(groups []Group) []Comparison {
@@ -120,26 +119,6 @@ func addDelta(metrics map[string]Delta, name string, baseline, target float64) {
 	metrics[name] = delta
 }
 
-func groupKey(run Run, groupBy string) string {
-	var key string
-	switch groupBy {
-	case "observed":
-		key = strconv.FormatBool(run.ObservedGreppleUse)
-	case "model":
-		key = run.Provider + "/" + run.Model
-	case "repository":
-		key = run.Repository
-	case "task":
-		key = run.TaskID
-	default:
-		key = run.AssignedCohort
-	}
-	if key == "" {
-		return "unknown"
-	}
-	return key
-}
-
 func summarizeGroup(name string, runs []*Run) Group {
 	group := Group{Name: name, SampleSize: len(runs)}
 	tokens := make([]float64, 0, len(runs))
@@ -150,7 +129,7 @@ func summarizeGroup(name string, runs []*Run) Group {
 	totalOutcomeTime := float64(0)
 	usageComplete := true
 	for _, run := range runs {
-		usageKnown := !runMissing(*run, "model_usage")
+		usageKnown := !runMissing(*run, "assistant_usage")
 		if usageKnown {
 			group.UsageSampleSize++
 			tokens = append(tokens, float64(run.Usage.TotalTokens))

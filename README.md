@@ -68,6 +68,17 @@ The internal agent retrieves and sifts multi-file evidence; it is not a code-rev
 
 Successful identical typed calls within one ask reuse byte-identical evidence and concurrent duplicates share one execution; cache metadata and JSONL events make this observable. Logs also include response-free per-tool timing records with full typed inputs and a session performance summary separating merged tool wall time from estimated LLM-facing stream time. Local navigation, graph, and architecture tools additionally share one lazily parsed source universe whenever their effective scope agrees. Ask logs are permission-restricted, enabled by default, and retain managed logs for seven days unless `ask.logs` changes that policy. The provider registry supports Codex and GitHub Copilot device login, Anthropic API and subscription tokens, OpenAI API keys, and the AWS Bedrock default credential chain. Set the non-secret user default as `ask.model: "<provider>/<model>"` in `~/.grepple/grepple.json`; the same prefix form works with `--model`. See [Delegated research](docs/ask.md) for provider, model, logging, timeout, credential, timing, and tool-safety details.
 
+## Agent utility metrics
+
+Grepple can analyze externally generated `grepple-metrics-event-v1` JSONL without collecting or discovering evidence itself. Every run identifies its producing coding agent, reports are always grouped by agent, and comparisons explicitly select baseline and target agents:
+
+```bash
+grepple metrics report --input ./evidence --format json
+grepple metrics compare --input ./evidence --baseline pi --target claude-code
+```
+
+Inputs are always explicit. See [Agent utility metrics](docs/agent-utility-metrics.md) for the strict event contract, privacy rules, bounds, and output formats.
+
 ## Search
 
 ```bash

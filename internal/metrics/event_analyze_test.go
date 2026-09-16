@@ -13,8 +13,8 @@ import (
 func TestAnalyzeFileBuildsRunFromNormalizedEvents(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "run.jsonl")
 	start := time.Date(2026, 9, 16, 8, 0, 0, 0, time.UTC)
-	appendTestEvent(t, path, "run-1", "01", start, EventRunStart, RunStartData{TaskID: "task-1", Repository: "repo", Revision: "abc", AssignedCohort: "grepple"})
-	appendTestEvent(t, path, "run-1", "02", start.Add(time.Second), EventAssistant, AssistantData{Turn: 1, Provider: "provider", Model: "model", ThinkingLevel: "high", Usage: Usage{Input: 10, Output: 5, TotalTokens: 15, Cost: 0.02}})
+	appendTestEvent(t, path, "run-1", "01", start, EventRunStart, RunStartData{Agent: "pi"})
+	appendTestEvent(t, path, "run-1", "02", start.Add(time.Second), EventAssistant, AssistantData{Turn: 1, Usage: Usage{Input: 10, Output: 5, TotalTokens: 15, Cost: 0.02}})
 	appendTestEvent(t, path, "run-1", "03", start.Add(2*time.Second), EventCommand, CommandData{Name: "architecture", Success: true, DurationMS: 12, GreppleMode: "architecture"})
 	appendTestEvent(t, path, "run-1", "04", start.Add(3*time.Second), EventToolCall, ToolCallData{CallID: "read-1", Tool: "read", Category: "read", ArgumentShape: "resource-range", ResourceID: "resource-a", Turn: 1})
 	appendTestEvent(t, path, "run-1", "05", start.Add(4*time.Second), EventToolResult, ToolResultData{CallID: "read-1", Success: true, Bytes: 80, Lines: 4})
@@ -35,7 +35,7 @@ func TestAnalyzeFileBuildsRunFromNormalizedEvents(t *testing.T) {
 		t.Fatalf("runs = %d", len(runs))
 	}
 	run := runs[0]
-	if run.RunID != "run-1" || run.TaskID != "task-1" || !run.Complete || run.Outcome.Status != "success" {
+	if run.RunID != "run-1" || run.Agent != "pi" || !run.Complete || run.Outcome.Status != "success" {
 		t.Fatalf("run identity/outcome = %#v", run)
 	}
 	if run.Turns != 1 || run.Usage.TotalTokens != 15 || run.Tools.Total != 4 || run.Tools.Grepple != 1 || run.Tools.Read != 1 || run.Tools.Mutation != 1 || run.Tools.Test != 1 {
@@ -55,14 +55,14 @@ func TestAnalyzeFileBuildsRunFromNormalizedEvents(t *testing.T) {
 func TestAnalyzeFileMarksUnavailableEvidenceMissing(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "run.jsonl")
 	start := time.Date(2026, 9, 16, 8, 0, 0, 0, time.UTC)
-	appendTestEvent(t, path, "run-1", "01", start, EventRunStart, RunStartData{TaskID: "task-1", AssignedCohort: "control"})
+	appendTestEvent(t, path, "run-1", "01", start, EventRunStart, RunStartData{Agent: "pi"})
 	appendTestEvent(t, path, "run-1", "02", start.Add(time.Second), EventCommand, CommandData{Name: "search", Success: true, DurationMS: 10, GreppleMode: "search"})
 	runs, err := AnalyzeFile(path)
 	if err != nil {
 		t.Fatal(err)
 	}
 	missing := runs[0].Missing
-	for _, want := range []string{"agent_turns", "first_attempted_mutation", "first_passing_test", "first_successful_mutation", "model_usage", "run_end", "semantic_relevance", "task_outcome", "tool_result_volume"} {
+	for _, want := range []string{"agent_turns", "assistant_usage", "first_attempted_mutation", "first_passing_test", "first_successful_mutation", "run_end", "semantic_relevance", "task_outcome", "tool_result_volume"} {
 		if !slices.Contains(missing, want) {
 			t.Errorf("missing evidence lacks %q: %v", want, missing)
 		}
@@ -80,21 +80,21 @@ func TestAnalyzeGreppleJournalFixtureCoversSupportedEvidence(t *testing.T) {
 	if len(runs) != 2 {
 		t.Fatalf("runs = %#v", runs)
 	}
-	target := runForCohort(runs, "grepple")
+	target := runForAgent(runs, "pi")
 	assertComprehensiveTarget(t, target)
-	report := BuildReport(runs, "cohort")
+	report := BuildReport(runs)
 	if len(report.Groups) != 2 || !report.Generated.Equal(time.Date(2026, 1, 1, 0, 1, 20, 0, time.UTC)) {
 		t.Fatalf("report = %#v", report)
 	}
-	comparison, err := BuildComparison(runs, "cohort", "control", "grepple")
-	if err != nil || comparison.Baseline.Name != "control" || comparison.Target.Name != "grepple" {
+	comparison, err := BuildComparison(runs, "claude-code", "pi")
+	if err != nil || comparison.Baseline.Name != "claude-code" || comparison.Target.Name != "pi" {
 		t.Fatalf("comparison = %#v, err = %v", comparison, err)
 	}
 }
 
-func runForCohort(runs []Run, cohort string) Run {
+func runForAgent(runs []Run, agent string) Run {
 	for _, run := range runs {
-		if run.AssignedCohort == cohort {
+		if run.Agent == agent {
 			return run
 		}
 	}
@@ -130,11 +130,11 @@ func TestAnalyzeFileRejectsInvalidLifecycleFromJSONL(t *testing.T) {
 			appendTestEvent(t, path, "run-1", "command", start, EventCommand, CommandData{Name: "search"})
 		}},
 		{name: "duplicate start", write: func(t *testing.T, path string) {
-			appendTestEvent(t, path, "run-1", "start-1", start, EventRunStart, RunStartData{TaskID: "task", AssignedCohort: "control"})
-			appendTestEvent(t, path, "run-1", "start-2", start.Add(time.Second), EventRunStart, RunStartData{TaskID: "task", AssignedCohort: "control"})
+			appendTestEvent(t, path, "run-1", "start-1", start, EventRunStart, RunStartData{Agent: "pi"})
+			appendTestEvent(t, path, "run-1", "start-2", start.Add(time.Second), EventRunStart, RunStartData{Agent: "pi"})
 		}},
 		{name: "after end", write: func(t *testing.T, path string) {
-			appendTestEvent(t, path, "run-1", "start", start, EventRunStart, RunStartData{TaskID: "task", AssignedCohort: "control"})
+			appendTestEvent(t, path, "run-1", "start", start, EventRunStart, RunStartData{Agent: "pi"})
 			appendTestEvent(t, path, "run-1", "end", start.Add(time.Second), EventRunEnd, RunEndData{Outcome: "success"})
 			appendTestEvent(t, path, "run-1", "command", start.Add(2*time.Second), EventCommand, CommandData{Name: "search"})
 		}},

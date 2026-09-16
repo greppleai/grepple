@@ -9,21 +9,15 @@ import (
 	"strings"
 )
 
-// RunStartData identifies one controlled unit of work without storing task content.
+// RunStartData identifies the coding agent that produced one controlled run.
 type RunStartData struct {
-	TaskID         string `json:"taskId"`
-	Repository     string `json:"repository"`
-	Revision       string `json:"revision"`
-	AssignedCohort string `json:"assignedCohort"`
+	Agent string `json:"agent"`
 }
 
-// AssistantData records provider-reported usage for one assistant response.
+// AssistantData records usage for one assistant response.
 type AssistantData struct {
-	Turn          int    `json:"turn"`
-	Provider      string `json:"provider"`
-	Model         string `json:"model"`
-	ThinkingLevel string `json:"thinkingLevel"`
-	Usage         Usage  `json:"usage"`
+	Turn  int   `json:"turn"`
+	Usage Usage `json:"usage"`
 }
 
 // ToolCallData records a normalized, content-free tool invocation.
@@ -137,11 +131,8 @@ func validateEventData(value any) error {
 }
 
 func validateRunStartData(data *RunStartData) error {
-	if !validLabel(data.TaskID, 256) || !validLabel(data.AssignedCohort, 128) {
-		return errors.New("run_start requires bounded taskId and assignedCohort labels")
-	}
-	if (data.Repository != "" && !validLabel(data.Repository, 256)) || (data.Revision != "" && !validLabel(data.Revision, 256)) {
-		return errors.New("run_start repository and revision must be bounded labels")
+	if !validLabel(data.Agent, 128) {
+		return errors.New("run_start requires a bounded agent label")
 	}
 	return nil
 }
@@ -152,9 +143,6 @@ func validateAssistantData(data *AssistantData) error {
 	}
 	if data.Usage.Input < 0 || data.Usage.Output < 0 || data.Usage.CacheRead < 0 || data.Usage.CacheWrite < 0 || data.Usage.TotalTokens < 0 || data.Usage.Cost < 0 {
 		return errors.New("assistant usage must be non-negative")
-	}
-	if (data.Provider != "" && !validLabel(data.Provider, 128)) || (data.Model != "" && !validLabel(data.Model, 256)) || (data.ThinkingLevel != "" && !validLabel(data.ThinkingLevel, 64)) {
-		return errors.New("assistant provider, model, and thinkingLevel must be bounded labels")
 	}
 	return nil
 }
