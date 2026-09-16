@@ -42,7 +42,7 @@ func TestClassMetadataDefaultsAreStrictAndOrderIndependent(t *testing.T) {
 		name, body, want string
 	}{
 		{"malformed package", "%% grepple:package-default", "malformed package-default"},
-		{"malformed language", "%% grepple:language-default rust", "malformed language-default"},
+		{"malformed language", "%% grepple:language-default swift", "malformed language-default"},
 		{"malformed exact", "%% grepple:exact-default yes", "malformed exact-default"},
 		{"duplicate package", "%% grepple:package-default one\n%% grepple:package-default two", "duplicate package-default"},
 		{"duplicate language", "%% grepple:language-default go\n%% grepple:language-default go", "duplicate language-default"},

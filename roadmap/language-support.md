@@ -48,7 +48,9 @@ Language identity, extensions, grammar fingerprints, and parser/navigation capab
 - [x] Add Python focused structure/flow with class inheritance, annotated and unannotated attributes, decorators, `.pyi` stubs, and shared navigation-graph calls.
 - [x] Add Java focused structure/flow for classes, interfaces, records, enums, inheritance, fields, constructors, methods, and graph-backed calls.
 - [x] Add Kotlin focused structure/flow for classes, interfaces, objects, data-class constructor properties, delegation inheritance, properties, functions, and graph-backed calls.
-- [x] Add C# focused structure/flow for classes, interfaces, structs, records, enums, inheritance, properties, fields, constructors, methods, visibility, static members, project-root discovery, and graph-backed calls; define non-class architecture contracts before enabling C/C++, Rust, or Shell extraction.
+- [x] Add C# focused structure/flow for classes, interfaces, structs, records, enums, inheritance, properties, fields, constructors, methods, visibility, static members, project-root discovery, and graph-backed calls.
+- [x] Add conservative Rust focused structure/flow for structs, tuple structs, enums, traits, same-file impl blocks, fields, variants, associated types, methods, visibility, trait implementations, Cargo-root discovery, and graph-backed calls without framework semantics.
+- [ ] Define non-class focused architecture contracts before enabling C/C++ or Shell extraction.
 
 ## Next languages
 

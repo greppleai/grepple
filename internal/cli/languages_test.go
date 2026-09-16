@@ -35,12 +35,20 @@ func TestLanguagesJSONReportsRegisteredFeatureParity(t *testing.T) {
 	if javascript.Navigation != api.FeatureProduction || javascript.GritQL != api.FeatureProduction || javascript.FocusedStructure != api.FeatureProduction || javascript.FocusedFlow != api.FeatureProduction || javascript.ImportRelations != api.FeatureProduction {
 		t.Fatalf("javascript capabilities=%#v", javascript)
 	}
+	assertRustLanguageCapabilities(t, byLanguage["rust"])
 	markdown := byLanguage["markdown"]
 	if markdown.StructuralGrep != api.FeatureSpecialized || markdown.Outline != api.FeatureSpecialized || markdown.Navigation != api.FeatureUnsupported || markdown.DirectoryArchitecture != api.FeatureUnsupported || markdown.ImportRelations != api.FeatureUnsupported {
 		t.Fatalf("markdown capabilities=%#v", markdown)
 	}
 	if !strings.Contains(output, `"language": "text"`) || !strings.Contains(output, `"extensions": []`) {
 		t.Fatalf("JSON collections or text fallback missing: %s", output)
+	}
+}
+
+func assertRustLanguageCapabilities(t *testing.T, rust api.LanguageCapabilities) {
+	t.Helper()
+	if rust.Navigation != api.FeatureProduction || rust.GritQL != api.FeatureProduction || rust.FocusedStructure != api.FeatureProduction || rust.FocusedFlow != api.FeatureProduction || rust.ImportRelations != api.FeatureUnsupported || rust.Entrypoints != api.FeatureUnsupported {
+		t.Fatalf("rust capabilities=%#v", rust)
 	}
 }
 

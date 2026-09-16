@@ -51,7 +51,7 @@ func navigationDeclarationSymbol(analysis *Analysis, declaration *codeparser.Nav
 	switch declaration.Language {
 	case "go":
 		symbols = analysis.GoSymbolIndex
-	case "javascript", "typescript", "tsx", "python", "java", "kotlin", "csharp":
+	case "javascript", "typescript", "tsx", "python", "java", "kotlin", "csharp", "rust":
 		symbols = analysis.TSSymbolIndex
 	default:
 		return nil
@@ -89,12 +89,19 @@ func enrichNavigationCall(analysis *Analysis, call *codeparser.NavigationCall) {
 	call.ResolvedName = navigationCallName(owner, call)
 	owner.CallOrder = append(owner.CallOrder, call.ResolvedName)
 	owner.Calls[call.ResolvedName] = true
-	target := resolveNavigationCallTarget(analysis, owner, call)
+	target := analysis.navigationSymbols[call.TargetID]
+	if target == nil {
+		target = resolveNavigationCallTarget(analysis, owner, call)
+	}
 	if target == nil || target.NavigationID == "" {
 		return
 	}
-	call.TargetID = target.NavigationID
-	call.Confidence = navigationResolutionConfidence(owner, call, target)
+	if call.TargetID == "" {
+		call.TargetID = target.NavigationID
+	}
+	if call.Confidence == "" {
+		call.Confidence = navigationResolutionConfidence(owner, call, target)
+	}
 	analysis.navigationCalls[call.CallerID] = append(analysis.navigationCalls[call.CallerID], target)
 }
 
@@ -116,7 +123,7 @@ func resolveNavigationCallTarget(analysis *Analysis, owner *Symbol, call *codepa
 	if owner.Language == "python" {
 		return resolvePythonNavigationCall(analysis, owner, call.ResolvedName)
 	}
-	if owner.Language == "java" || owner.Language == "kotlin" || owner.Language == "csharp" {
+	if owner.Language == "java" || owner.Language == "kotlin" || owner.Language == "csharp" || owner.Language == "rust" {
 		return resolveJVMNavigationCall(analysis, owner, call.ResolvedName)
 	}
 	return nil

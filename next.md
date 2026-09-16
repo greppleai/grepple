@@ -78,8 +78,7 @@ Live `grepple ask` dogfooding showed two distinct bottlenecks: ordinary local/re
 
 ## Language expansion
 
-- [ ] Define a useful non-class focused architecture contract for Rust from real questions before implementing it.
-- [ ] Evaluate C/C++ projections only after Rust or separate dogfooding demonstrates a stable contract.
+- [ ] Evaluate C/C++ projections only after Rust dogfooding demonstrates a stable contract.
 - Keep Shell focused extraction unsupported unless dogfooding defines a useful command/script projection.
 - [ ] Add Swift, Ruby, PHP, or other grammars only after current capability parity, help discoverability, and cross-platform determinism gates are met.
 

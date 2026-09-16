@@ -111,6 +111,7 @@ This file records completed Grepple roadmap work that no longer belongs in `next
 - [x] Moved application-source parsing behind `parser.Document`, callback-scoped `DocumentView`, and shared traversal/range APIs.
 - [x] Documented the ownership, locking, invalidation, retention, recovery, and performance contracts for `Document`, `Node`, `DocumentView`, `ViewNode`, and immutable `SyntaxNode` snapshots.
 - [x] Benchmarked document-tied, callback-scoped, and immutable-snapshot syntax traversal; retained all three because coherent lock scope, retainable borrowed handles, and post-close ownership are distinct contracts rather than aliases.
+- [x] Added conservative Rust focused structure/flow for structs, tuple structs, enums, traits, same-file impl blocks, fields, variants, associated types, methods, visibility, trait implementations, Cargo-root discovery, and graph-backed calls without framework semantics.
 - [x] Removed extraction and hook parser construction, grammar selection, and duplicate application-source parser lifecycles.
 - [x] Added a parser-owned language capability registry with canonical IDs, extensions, grammar ABI/fingerprints, navigation support, and generated grammar cardinality/subtype metadata.
 - [x] Added iterative bounded syntax traversal and immutable subtree snapshot reuse within document views.
