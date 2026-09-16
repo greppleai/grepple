@@ -12,7 +12,6 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
-	"syscall"
 	"time"
 )
 
@@ -81,10 +80,10 @@ func AppendJournalEvent(path string, event JournalEvent) error {
 		return fmt.Errorf("open metrics journal lock: %w", err)
 	}
 	defer lock.Close()
-	if err := syscall.Flock(int(lock.Fd()), syscall.LOCK_EX); err != nil {
+	if err := lockJournalFile(lock, true); err != nil {
 		return fmt.Errorf("lock metrics journal: %w", err)
 	}
-	defer syscall.Flock(int(lock.Fd()), syscall.LOCK_UN) //nolint:errcheck // best-effort release during return
+	defer unlockJournalFile(lock) //nolint:errcheck // best-effort release during return
 	if err := validateJournalAppend(path, event); err != nil {
 		return err
 	}
@@ -131,10 +130,10 @@ func ReadJournal(path string) ([]JournalEvent, error) {
 		return nil, fmt.Errorf("open metrics journal lock: %w", err)
 	}
 	defer lock.Close()
-	if err := syscall.Flock(int(lock.Fd()), syscall.LOCK_SH); err != nil {
+	if err := lockJournalFile(lock, false); err != nil {
 		return nil, fmt.Errorf("lock metrics journal for reading: %w", err)
 	}
-	defer syscall.Flock(int(lock.Fd()), syscall.LOCK_UN) //nolint:errcheck // best-effort release during return
+	defer unlockJournalFile(lock) //nolint:errcheck // best-effort release during return
 	return decodeJournal(file)
 }
 
