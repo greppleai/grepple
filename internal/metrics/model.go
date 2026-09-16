@@ -1,4 +1,4 @@
-// Package metrics records and analyzes privacy-safe coding-agent activity.
+// Package metrics validates and analyzes privacy-safe coding-agent journals.
 package metrics
 
 import "time"

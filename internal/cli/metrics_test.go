@@ -64,15 +64,30 @@ func TestIncludeMetricRunFiltersControlledDimensions(t *testing.T) {
 	}
 }
 
-func TestMetricsHelpDescribesGreppleJournalWorkflow(t *testing.T) {
-	for _, want := range []string{"metrics start", "metrics record", "metrics status", "metrics end", "metrics report", "metrics compare", "~/.grepple/metrics", "--baseline", "--target"} {
+func TestMetricsHelpDescribesJSONLAnalysisWorkflow(t *testing.T) {
+	for _, want := range []string{"metrics report", "metrics compare", "--input", "--baseline", "--target"} {
 		if !strings.Contains(metricsHelp, want) {
 			t.Errorf("metrics help lacks %q", want)
 		}
 	}
-	for _, forbidden := range []string{"Pi", "session", "--leaf", "~/.pi"} {
+	for _, forbidden := range []string{"metrics start", "metrics record", "metrics status", "metrics end", "metrics export", "~/.grepple/metrics", "GREPPLE_METRICS_DIR", "active run", "Pi", "session", "--leaf", "~/.pi"} {
 		if strings.Contains(metricsHelp, forbidden) {
 			t.Errorf("metrics help contains obsolete term %q", forbidden)
+		}
+	}
+}
+
+func TestMetricsCommandsRequireExplicitJSONLInputs(t *testing.T) {
+	missingInputCommands := [][]string{{"report"}, {"compare", "--baseline", "control", "--target", "grepple"}}
+	for _, args := range missingInputCommands {
+		if err := runMetrics(args); err == nil || !strings.Contains(err.Error(), "requires --input") {
+			t.Fatalf("metrics %s error = %v", args[0], err)
+		}
+	}
+	for _, command := range []string{"start", "record", "status", "end", "export"} {
+		err := runMetrics([]string{command})
+		if err == nil || !strings.Contains(err.Error(), "unknown metrics command") {
+			t.Errorf("metrics %s error = %v", command, err)
 		}
 	}
 }

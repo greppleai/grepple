@@ -53,7 +53,7 @@ type ToolResultData struct {
 	TestOutcome       string `json:"testOutcome"`
 }
 
-// CommandData records one Grepple CLI invocation observed by Grepple itself.
+// CommandData records one privacy-safe Grepple CLI invocation observed by a journal producer.
 type CommandData struct {
 	Name        string `json:"name"`
 	Success     bool   `json:"success"`

@@ -37,26 +37,14 @@ type metricsOptions struct {
 	format       string
 }
 
-const metricsHelp = `Record and analyze privacy-safe agent utility metrics in Grepple JSONL journals.
+const metricsHelp = `Analyze externally generated, privacy-safe agent utility JSONL.
 
 Usage:
-  grepple metrics start --task ID --cohort NAME [--run ID]
-  grepple metrics record --event TYPE --data JSON [--run ID]
-  grepple metrics status
-  grepple metrics end --outcome STATUS [--run ID]
-  grepple metrics report [OPTIONS]
-  grepple metrics compare --baseline NAME --target NAME [OPTIONS]
-  grepple metrics export [OPTIONS]
-
-Lifecycle options:
-  --run ID              explicit run identifier
-  --event-id ID         deterministic event identifier
-  --at RFC3339          deterministic event time
-  --repository NAME     repository label (start)
-  --revision REVISION   repository revision (start)
+  grepple metrics report --input PATH [OPTIONS]
+  grepple metrics compare --input PATH --baseline NAME --target NAME [OPTIONS]
 
 Report and comparison options:
-  --input PATH          journal JSONL file or directory (repeatable; default ~/.grepple/metrics)
+  --input PATH          journal JSONL file or directory (required; repeatable)
   --group-by DIMENSION  cohort, observed, model, repository, or task (default cohort)
   --baseline NAME       explicit comparison baseline group
   --target NAME         explicit comparison target group
@@ -69,8 +57,9 @@ Report and comparison options:
   --complete            exclude incomplete runs
   --format FORMAT       text, json, or csv
 
+Grepple reads only explicit --input paths; it does not collect, write, or discover journals.
 Journals contain normalized opaque identifiers, counts, timestamps, and outcomes.
-They never contain prompts, responses, source, tool output, raw queries, raw commands, or content-bearing paths.
+They never contain prompts, responses, source, tool output, raw queries, raw commands, command arguments, or content-bearing paths.
 `
 
 func runMetrics(args []string) error {
@@ -79,15 +68,7 @@ func runMetrics(args []string) error {
 	}
 	command := args[0]
 	switch command {
-	case "start":
-		return runMetricsStart(args[1:])
-	case "record":
-		return runMetricsRecord(args[1:])
-	case "status":
-		return runMetricsStatus(args[1:])
-	case "end":
-		return runMetricsEnd(args[1:])
-	case "report", "export", "compare":
+	case "report", "compare":
 		// Continue with report option parsing below.
 	default:
 		return fmt.Errorf("unknown metrics command %q", command)
@@ -118,11 +99,7 @@ func runMetrics(args []string) error {
 }
 
 func parseMetricsOptions(command string, args []string) (metricsOptions, bool, error) {
-	defaultFormat := "text"
-	if command == "export" {
-		defaultFormat = "json"
-	}
-	options := metricsOptions{groupBy: "cohort", format: defaultFormat}
+	options := metricsOptions{groupBy: "cohort", format: "text"}
 	flags := flag.NewFlagSet("grepple metrics "+command, flag.ContinueOnError)
 	flags.SetOutput(os.Stderr)
 	flags.Var(&options.inputs, "input", "metrics journal JSONL file or directory")
@@ -155,6 +132,9 @@ func parseMetricsOptions(command string, args []string) (metricsOptions, bool, e
 	if options.format != "text" && options.format != "json" && options.format != "csv" {
 		return options, false, fmt.Errorf("--format must be text, json, or csv")
 	}
+	if len(options.inputs) == 0 {
+		return options, false, fmt.Errorf("metrics %s requires --input", command)
+	}
 	if command == "compare" && (options.baseline == "" || options.target == "") {
 		return options, false, fmt.Errorf("metrics compare requires --baseline and --target")
 	}
@@ -182,11 +162,7 @@ func parseOptionalMetricsTime(value, option string) (time.Time, error) {
 }
 
 func loadMetricRuns(options metricsOptions) ([]agentmetrics.Run, error) {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return nil, err
-	}
-	paths, err := agentmetrics.DiscoverJournals(options.inputs, home)
+	paths, err := agentmetrics.DiscoverJournals(options.inputs)
 	if err != nil {
 		return nil, err
 	}

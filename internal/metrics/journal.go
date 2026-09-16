@@ -27,7 +27,7 @@ const (
 	EventToolCall = "tool_call"
 	// EventToolResult identifies the normalized outcome and aggregate volume of a tool invocation.
 	EventToolResult = "tool_result"
-	// EventCommand identifies privacy-safe activity observed directly by Grepple.
+	// EventCommand identifies privacy-safe Grepple activity supplied by a journal producer.
 	EventCommand = "command"
 	// EventCompaction identifies an observed context-compaction boundary.
 	EventCompaction = "compaction"
@@ -54,84 +54,6 @@ type JournalEvent struct {
 	Data    json.RawMessage `json:"data"`
 }
 
-// MarshalJournalData converts typed event data into canonical JSON for a JournalEvent.
-func MarshalJournalData(value any) (json.RawMessage, error) {
-	data, err := json.Marshal(value)
-	if err != nil {
-		return nil, fmt.Errorf("encode metrics event data: %w", err)
-	}
-	return data, nil
-}
-
-// AppendJournalEvent validates and appends one complete JSONL record under an OS file lock.
-func AppendJournalEvent(path string, event JournalEvent) error {
-	line, err := encodeJournalEvent(event)
-	if err != nil {
-		return err
-	}
-	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
-		return fmt.Errorf("create metrics journal directory: %w", err)
-	}
-	if err := os.Chmod(filepath.Dir(path), 0o700); err != nil {
-		return fmt.Errorf("secure metrics journal directory: %w", err)
-	}
-	lock, err := os.OpenFile(path+".lock", os.O_CREATE|os.O_RDWR, 0o600)
-	if err != nil {
-		return fmt.Errorf("open metrics journal lock: %w", err)
-	}
-	defer lock.Close()
-	if err := lockJournalFile(lock, true); err != nil {
-		return fmt.Errorf("lock metrics journal: %w", err)
-	}
-	defer unlockJournalFile(lock) //nolint:errcheck // best-effort release during return
-	if err := validateJournalAppend(path, event); err != nil {
-		return err
-	}
-	if information, statErr := os.Stat(path); statErr == nil && information.Size()+int64(len(line)) > maxJournalBytes {
-		return fmt.Errorf("metrics journal exceeds %d bytes", maxJournalBytes)
-	} else if statErr != nil && !errors.Is(statErr, os.ErrNotExist) {
-		return fmt.Errorf("stat metrics journal: %w", statErr)
-	}
-	return appendJournalLine(path, line)
-}
-
-func encodeJournalEvent(event JournalEvent) ([]byte, error) {
-	if err := validateJournalEvent(event); err != nil {
-		return nil, err
-	}
-	line, err := json.Marshal(event)
-	if err != nil {
-		return nil, fmt.Errorf("encode metrics event: %w", err)
-	}
-	if len(line)+1 > maxJournalLineBytes {
-		return nil, fmt.Errorf("metrics event exceeds %d bytes", maxJournalLineBytes)
-	}
-	return append(line, '\n'), nil
-}
-
-func appendJournalLine(path string, line []byte) error {
-	file, err := os.OpenFile(path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o600)
-	if err != nil {
-		return fmt.Errorf("open metrics journal: %w", err)
-	}
-	if err := os.Chmod(path, 0o600); err != nil {
-		file.Close()
-		return fmt.Errorf("secure metrics journal: %w", err)
-	}
-	if _, err := file.Write(line); err != nil {
-		file.Close()
-		return fmt.Errorf("append metrics journal: %w", err)
-	}
-	if err := file.Sync(); err != nil {
-		file.Close()
-		return fmt.Errorf("sync metrics journal: %w", err)
-	}
-	if err := file.Close(); err != nil {
-		return fmt.Errorf("close metrics journal: %w", err)
-	}
-	return nil
-}
-
 // ReadJournal reads and validates a bounded Grepple metrics JSONL journal.
 func ReadJournal(path string) ([]JournalEvent, error) {
 	file, err := os.Open(path)
@@ -139,89 +61,7 @@ func ReadJournal(path string) ([]JournalEvent, error) {
 		return nil, err
 	}
 	defer file.Close()
-	lock, err := os.Open(path + ".lock")
-	if errors.Is(err, os.ErrNotExist) {
-		return decodeJournal(file)
-	}
-	if err != nil {
-		return nil, fmt.Errorf("open metrics journal lock: %w", err)
-	}
-	defer lock.Close()
-	if err := lockJournalFile(lock, false); err != nil {
-		return nil, fmt.Errorf("lock metrics journal for reading: %w", err)
-	}
-	defer unlockJournalFile(lock) //nolint:errcheck // best-effort release during return
 	return decodeJournal(file)
-}
-
-func validateJournalAppend(path string, candidate JournalEvent) error {
-	events, err := readJournalForAppend(path)
-	if err != nil {
-		return err
-	}
-	if len(events) >= maxJournalEvents {
-		return fmt.Errorf("metrics journal exceeds %d events", maxJournalEvents)
-	}
-	started, ended, err := journalAppendState(events, candidate)
-	if err != nil {
-		return err
-	}
-	return validateJournalLifecycle(candidate, started, ended)
-}
-
-func readJournalForAppend(path string) ([]JournalEvent, error) {
-	file, err := os.Open(path)
-	if errors.Is(err, os.ErrNotExist) {
-		return nil, nil
-	}
-	if err != nil {
-		return nil, fmt.Errorf("open metrics journal for validation: %w", err)
-	}
-	events, decodeErr := decodeJournal(file)
-	closeErr := file.Close()
-	if decodeErr != nil {
-		return nil, decodeErr
-	}
-	if closeErr != nil {
-		return nil, closeErr
-	}
-	return events, nil
-}
-
-func journalAppendState(events []JournalEvent, candidate JournalEvent) (bool, bool, error) {
-	started := false
-	ended := false
-	for _, event := range events {
-		if event.EventID == candidate.EventID {
-			return false, false, fmt.Errorf("duplicate eventId %q", candidate.EventID)
-		}
-		if event.RunID != candidate.RunID {
-			continue
-		}
-		if event.Event == EventRunStart {
-			started = true
-		}
-		if event.Event == EventRunEnd {
-			ended = true
-		}
-	}
-	return started, ended, nil
-}
-
-func validateJournalLifecycle(candidate JournalEvent, started, ended bool) error {
-	if candidate.Event == EventRunStart {
-		if started {
-			return fmt.Errorf("duplicate run_start for run %q", candidate.RunID)
-		}
-		return nil
-	}
-	if !started {
-		return fmt.Errorf("%s appears before run_start", candidate.Event)
-	}
-	if ended {
-		return fmt.Errorf("%s appears after run_end", candidate.Event)
-	}
-	return nil
 }
 
 func decodeJournal(reader io.Reader) ([]JournalEvent, error) {
@@ -289,18 +129,14 @@ func validateJournalEvent(event JournalEvent) error {
 	return nil
 }
 
-// DiscoverJournals returns sorted, deduplicated journal paths. The default is ~/.grepple/metrics.
-func DiscoverJournals(inputs []string, home string) ([]string, error) {
-	explicit := len(inputs) > 0
-	if !explicit {
-		inputs = []string{filepath.Join(home, ".grepple", "metrics")}
+// DiscoverJournals returns sorted, deduplicated journal paths from explicit inputs.
+func DiscoverJournals(inputs []string) ([]string, error) {
+	if len(inputs) == 0 {
+		return nil, errors.New("metrics input is required")
 	}
 	seen := make(map[string]bool)
 	for _, input := range inputs {
 		if err := discoverJournalInput(filepath.Clean(input), seen); err != nil {
-			if !explicit && errors.Is(err, os.ErrNotExist) {
-				continue
-			}
 			return nil, err
 		}
 	}

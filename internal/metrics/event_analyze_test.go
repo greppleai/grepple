@@ -1,7 +1,9 @@
 package metrics
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
 	"path/filepath"
 	"slices"
 	"testing"
@@ -70,13 +72,81 @@ func TestAnalyzeFileMarksUnavailableEvidenceMissing(t *testing.T) {
 	}
 }
 
-func TestAnalyzeGreppleJournalFixture(t *testing.T) {
+func TestAnalyzeGreppleJournalFixtureCoversSupportedEvidence(t *testing.T) {
 	runs, err := AnalyzeFile(filepath.Join("testdata", "comprehensive-v1.jsonl"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(runs) != 1 || runs[0].RunID != "fixture-run" || runs[0].Usage.TotalTokens != 125 || runs[0].Tools.Navigation != 1 || runs[0].Outcome.Status != "success" {
-		t.Fatalf("fixture runs = %#v", runs)
+	if len(runs) != 2 {
+		t.Fatalf("runs = %#v", runs)
+	}
+	target := runForCohort(runs, "grepple")
+	assertComprehensiveTarget(t, target)
+	report := BuildReport(runs, "cohort")
+	if len(report.Groups) != 2 || !report.Generated.Equal(time.Date(2026, 1, 1, 0, 1, 20, 0, time.UTC)) {
+		t.Fatalf("report = %#v", report)
+	}
+	comparison, err := BuildComparison(runs, "cohort", "control", "grepple")
+	if err != nil || comparison.Baseline.Name != "control" || comparison.Target.Name != "grepple" {
+		t.Fatalf("comparison = %#v, err = %v", comparison, err)
+	}
+}
+
+func runForCohort(runs []Run, cohort string) Run {
+	for _, run := range runs {
+		if run.AssignedCohort == cohort {
+			return run
+		}
+	}
+	return Run{}
+}
+
+func assertComprehensiveTarget(t *testing.T, target Run) {
+	t.Helper()
+	if target.RunID != "fixture-target" || !target.Complete || target.Outcome.Status != "success" {
+		t.Fatalf("target identity/outcome = %#v", target)
+	}
+	if target.Usage.TotalTokens != 125 || target.Tools.Navigation != 2 || target.Tools.Read != 2 || target.Tools.Mutation != 2 || target.Tools.Test != 2 || target.Tools.Grepple != 2 {
+		t.Fatalf("target usage/tools = usage %#v tools %#v", target.Usage, target.Tools)
+	}
+	if target.AddedLines != 4 || target.RemovedLines != 1 || target.RepeatedCalls == 0 || target.RedundantReads == 0 || target.SearchToRead == 0 || target.SearchToEdit == 0 || target.TestFixCycles == 0 {
+		t.Fatalf("target derived metrics = %#v", target)
+	}
+	if target.FirstEvidence == nil || target.FirstAttemptedMutation == nil || target.FirstSuccessfulMutation == nil || target.FirstPassingTest == nil || target.Completion == nil {
+		t.Fatalf("target milestones = %#v", target)
+	}
+	if !slices.Contains(target.Missing, "retries") || !slices.Contains(target.Missing, "semantic_relevance") {
+		t.Fatalf("target missing evidence = %v", target.Missing)
+	}
+}
+
+func TestAnalyzeFileRejectsInvalidLifecycleFromJSONL(t *testing.T) {
+	start := time.Date(2026, 9, 16, 8, 0, 0, 0, time.UTC)
+	tests := []struct {
+		name  string
+		write func(*testing.T, string)
+	}{
+		{name: "before start", write: func(t *testing.T, path string) {
+			appendTestEvent(t, path, "run-1", "command", start, EventCommand, CommandData{Name: "search"})
+		}},
+		{name: "duplicate start", write: func(t *testing.T, path string) {
+			appendTestEvent(t, path, "run-1", "start-1", start, EventRunStart, RunStartData{TaskID: "task", AssignedCohort: "control"})
+			appendTestEvent(t, path, "run-1", "start-2", start.Add(time.Second), EventRunStart, RunStartData{TaskID: "task", AssignedCohort: "control"})
+		}},
+		{name: "after end", write: func(t *testing.T, path string) {
+			appendTestEvent(t, path, "run-1", "start", start, EventRunStart, RunStartData{TaskID: "task", AssignedCohort: "control"})
+			appendTestEvent(t, path, "run-1", "end", start.Add(time.Second), EventRunEnd, RunEndData{Outcome: "success"})
+			appendTestEvent(t, path, "run-1", "command", start.Add(2*time.Second), EventCommand, CommandData{Name: "search"})
+		}},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			path := filepath.Join(t.TempDir(), "run.jsonl")
+			test.write(t, path)
+			if _, err := AnalyzeFile(path); err == nil {
+				t.Fatal("expected lifecycle error")
+			}
+		})
 	}
 }
 
@@ -103,11 +173,24 @@ func TestDecodeEventDataRejectsUnsafeOrInvalidNormalizedFields(t *testing.T) {
 
 func appendTestEvent(t *testing.T, path, runID, eventID string, at time.Time, eventType string, value any) {
 	t.Helper()
-	data, err := MarshalJournalData(value)
+	data, err := json.Marshal(value)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := AppendJournalEvent(path, JournalEvent{Schema: JournalSchema, EventID: fmt.Sprintf("event-%s", eventID), Time: at, RunID: runID, Event: eventType, Data: data}); err != nil {
+	event := JournalEvent{Schema: JournalSchema, EventID: fmt.Sprintf("event-%s", eventID), Time: at, RunID: runID, Event: eventType, Data: data}
+	line, err := json.Marshal(event)
+	if err != nil {
+		t.Fatal(err)
+	}
+	file, err := os.OpenFile(path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o600)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := file.Write(append(line, '\n')); err != nil {
+		file.Close()
+		t.Fatal(err)
+	}
+	if err := file.Close(); err != nil {
 		t.Fatal(err)
 	}
 }
