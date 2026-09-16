@@ -73,10 +73,13 @@ func assertAskLog(t *testing.T, directory string) {
 			t.Fatalf("invalid JSONL line: %s", line)
 		}
 	}
-	for _, eventType := range []string{"session.start", "tool.call", "tool.result", "step.finish", "session.finish"} {
+	for _, eventType := range []string{"session.start", "tool.call", "tool.timing", "tool.result", "step.finish", "session.finish", "session.performance"} {
 		if !bytes.Contains(content, []byte(`"type":"`+eventType+`"`)) {
 			t.Fatalf("ask log missing %s: %s", eventType, content)
 		}
+	}
+	if !bytes.Contains(content, []byte(`"schema":"grepple-ask-performance-v1"`)) || !bytes.Contains(content, []byte(`"llmDurationMs":`)) || !bytes.Contains(content, []byte(`"toolWallDurationMs":`)) {
+		t.Fatalf("ask log lacks performance breakdown: %s", content)
 	}
 	if bytes.Contains(content, []byte(`"type":"model.chunk"`)) {
 		t.Fatalf("ask log contains noisy model chunks: %s", content)

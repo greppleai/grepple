@@ -267,8 +267,8 @@ func TestResearchSessionLogsCacheStatusAndPreservesToolEvidence(t *testing.T) {
 		t.Fatal(err)
 	}
 	lines := strings.Split(strings.TrimSpace(string(content)), "\n")
-	if len(lines) != 2 {
-		t.Fatalf("cache log events=%d, want 2: %s", len(lines), content)
+	if len(lines) != 4 {
+		t.Fatalf("cache/timing log events=%d, want 4: %s", len(lines), content)
 	}
 	var statuses []askLogEvent
 	for _, line := range lines {
@@ -278,8 +278,11 @@ func TestResearchSessionLogsCacheStatusAndPreservesToolEvidence(t *testing.T) {
 		}
 		statuses = append(statuses, event)
 	}
-	if statuses[0].Type != "tool.cache" || statuses[1].Type != "tool.cache" || !strings.Contains(lines[1], `"hit":true`) {
-		t.Fatalf("unexpected cache log: %s", content)
+	if statuses[0].Type != "tool.cache" || statuses[1].Type != "tool.timing" || statuses[2].Type != "tool.cache" || statuses[3].Type != "tool.timing" || !strings.Contains(lines[2], `"hit":true`) || !strings.Contains(lines[3], `"cacheHit":true`) {
+		t.Fatalf("unexpected cache/timing log: %s", content)
+	}
+	if !strings.Contains(lines[1], `"input":{}`) || !strings.Contains(lines[1], `"durationMs":`) || !strings.Contains(lines[1], `"executionDurationMs":`) || !strings.Contains(lines[1], `"executed":true`) || !strings.Contains(lines[1], `"responseBytes":13`) || strings.Contains(lines[1], `"response":`) {
+		t.Fatalf("tool timing must include input and metrics without response content: %s", lines[1])
 	}
 }
 

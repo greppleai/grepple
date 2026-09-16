@@ -5,10 +5,12 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"path/filepath"
 	"strings"
 	"sync"
+	"time"
 
 	"charm.land/fantasy"
 )
@@ -16,10 +18,11 @@ import (
 const researchSessionCacheVersion = "grepple-ask-research-cache-v1"
 
 type researchSession struct {
-	ctx      context.Context
-	identity string
-	server   string
-	log      *askLog
+	ctx       context.Context
+	identity  string
+	server    string
+	log       *askLog
+	telemetry *askTelemetry
 
 	mu       sync.Mutex
 	values   map[string]fantasy.ToolResponse
@@ -37,10 +40,11 @@ type researchPendingCall struct {
 }
 
 type researchCacheStatus struct {
-	Tool   string `json:"tool"`
-	Key    string `json:"key"`
-	Hit    bool   `json:"hit"`
-	Shared bool   `json:"shared"`
+	Tool     string `json:"tool"`
+	Key      string `json:"key"`
+	Hit      bool   `json:"hit"`
+	Shared   bool   `json:"shared"`
+	Executed bool   `json:"-"`
 }
 
 func newResearchSession(ctx context.Context, log *askLog, root, server string) *researchSession {
@@ -52,6 +56,7 @@ func newResearchSession(ctx context.Context, log *askLog, root, server string) *
 		identity:  researchSourceIdentity(root, server),
 		server:    server,
 		log:       log,
+		telemetry: newAskTelemetry(time.Now()),
 		values:    make(map[string]fantasy.ToolResponse),
 		inflight:  make(map[string]*researchPendingCall),
 		universes: make(map[string]*localResearchUniverse),
@@ -193,24 +198,42 @@ func (s *researchSession) cacheKey(tool string, input any) (string, error) {
 	return hex.EncodeToString(digest.Sum(nil)), nil
 }
 
-func (s *researchSession) run(ctx context.Context, tool string, input any, execute func(context.Context) (fantasy.ToolResponse, error)) (fantasy.ToolResponse, error) {
+func (s *researchSession) run(ctx context.Context, tool string, input any, execute func(context.Context) (fantasy.ToolResponse, error), calls ...fantasy.ToolCall) (result fantasy.ToolResponse, resultErr error) {
+	callID := ""
+	if len(calls) > 0 {
+		callID = calls[0].ID
+	}
+	measurement := s.telemetry.beginTool(tool, input, time.Now(), callID)
+	status := researchCacheStatus{Tool: tool}
+	defer func() {
+		timing := s.telemetry.finishTool(measurement, time.Now(), result, resultErr, status)
+		if s.log != nil {
+			resultErr = errors.Join(resultErr, s.log.Record("tool.timing", timing))
+		}
+	}()
 	key, err := s.cacheKey(tool, input)
 	if err != nil {
 		return fantasy.ToolResponse{}, err
 	}
+	status.Key = key[:12]
 
 	s.mu.Lock()
 	if response, ok := s.values[key]; ok {
 		s.mu.Unlock()
-		return s.finish(response, nil, researchCacheStatus{Tool: tool, Key: key[:12], Hit: true})
+		status.Hit = true
+		return s.finish(response, nil, status)
 	}
 	if pending, ok := s.inflight[key]; ok {
 		pending.waiters++
 		s.mu.Unlock()
 		select {
 		case <-pending.done:
-			return s.finish(pending.response, pending.err, researchCacheStatus{Tool: tool, Key: key[:12], Hit: true, Shared: true})
+			status.Hit = true
+			status.Shared = true
+			return s.finish(pending.response, pending.err, status)
 		case <-ctx.Done():
+			status.Hit = true
+			status.Shared = true
 			return fantasy.ToolResponse{}, ctx.Err()
 		}
 	}
@@ -218,6 +241,8 @@ func (s *researchSession) run(ctx context.Context, tool string, input any, execu
 	s.inflight[key] = pending
 	s.mu.Unlock()
 
+	status.Executed = true
+	s.telemetry.startToolExecution(measurement, time.Now())
 	response, runErr := execute(s.ctx)
 	s.mu.Lock()
 	pending.response = response
@@ -228,7 +253,7 @@ func (s *researchSession) run(ctx context.Context, tool string, input any, execu
 	delete(s.inflight, key)
 	close(pending.done)
 	s.mu.Unlock()
-	return s.finish(response, runErr, researchCacheStatus{Tool: tool, Key: key[:12]})
+	return s.finish(response, runErr, status)
 }
 
 func (s *researchSession) finish(response fantasy.ToolResponse, runErr error, status researchCacheStatus) (fantasy.ToolResponse, error) {
@@ -246,9 +271,9 @@ func (s *researchSession) finish(response fantasy.ToolResponse, runErr error, st
 }
 
 func cachedAskTool[T any](session *researchSession, name, description string, execute func(context.Context, T) (fantasy.ToolResponse, error)) fantasy.AgentTool {
-	return fantasy.NewAgentTool(name, description, func(ctx context.Context, input T, _ fantasy.ToolCall) (fantasy.ToolResponse, error) {
+	return fantasy.NewAgentTool(name, description, func(ctx context.Context, input T, call fantasy.ToolCall) (fantasy.ToolResponse, error) {
 		return session.run(ctx, name, input, func(runCtx context.Context) (fantasy.ToolResponse, error) {
 			return execute(runCtx, input)
-		})
+		}, call)
 	})
 }

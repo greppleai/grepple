@@ -115,11 +115,14 @@ func runAsk(args []string) error {
 	return errors.Join(runErr, closeErr)
 }
 
-func runLoggedAsk(ctx context.Context, log *askLog, provider aiprovider.Provider, values askArgs, question, root string) error {
+func runLoggedAsk(ctx context.Context, log *askLog, provider aiprovider.Provider, values askArgs, question, root string) (returnErr error) {
 	systemPrompt := askSystemPrompt(root)
 	server := serverDefault(values.Server)
 	session := newResearchSession(ctx, log, root, server)
-	defer session.Close()
+	defer func() {
+		session.Close()
+		returnErr = errors.Join(returnErr, log.Record("session.performance", session.telemetry.performance(time.Now())))
+	}()
 	tools := newAskResearchToolsForSession(session, root, server)
 	if err := log.Record("session.start", map[string]any{
 		"provider": provider.Name(), "model": values.Model, "question": question, "root": root, "server": server,
@@ -133,7 +136,9 @@ func runLoggedAsk(ctx context.Context, log *askLog, provider aiprovider.Provider
 		return recordAskError(log, err)
 	}
 	agent := fantasy.NewAgent(model, fantasy.WithSystemPrompt(systemPrompt), fantasy.WithTools(tools...))
+	session.telemetry.startStream(time.Now())
 	result, err := agent.Stream(ctx, loggedAgentStreamCall(log, question))
+	session.telemetry.finishStream(time.Now())
 	if err != nil {
 		return recordAskError(log, fmt.Errorf("ask %s/%s: %w", provider.Name(), values.Model, err))
 	}
