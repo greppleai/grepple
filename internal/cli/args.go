@@ -51,7 +51,7 @@ type searchArgs struct {
 	MaxOutputBytes   int      `arg:"--max-output-bytes" placeholder:"N" help:"cap human-readable output (default 16384; 0 = unlimited; JSON is uncapped)"`
 	Anchors          bool     `arg:"--anchors" help:"emit configured edit anchors as HASH│LINE│content rows (local structural or --line-only output)"`
 	NoAnchors        bool     `arg:"--no-anchors" help:"disable anchors enabled by user settings"`
-	AnchorProvider   string   `arg:"--anchor-provider" placeholder:"NAME" help:"use a named anchor provider from ~/.grepple/settings.json (implies --anchors)"`
+	AnchorProvider   string   `arg:"--anchor-provider" placeholder:"NAME" help:"use native or a named provider from ~/.grepple/settings.json (implies --anchors)"`
 	Related          bool     `arg:"--related" help:"show repository-local callees and callers for supported source languages"`
 	FollowRelated    int      `arg:"--follow-related" placeholder:"N" help:"expand up to two unique callees per level (1-3; implies --related)"`
 	At               string   `arg:"--at" placeholder:"PATH:LINE" help:"retrieve the declaration containing a source location"`
@@ -381,6 +381,7 @@ Usage:
 
 Commands:
   search       Search local or explicitly selected remote code (default mode)
+  write        Apply transactional multi-file edits using native hashline anchors
   grit         Run native, read-only structural queries
   graph        Build, query, or diff local navigation graphs
   anchors      Diagnose and configure edit-anchor providers
@@ -449,7 +450,7 @@ func runHelp(args []string) error {
 		return stdoutWriter().writeString("Remove stored remote authentication.\nUsage: grepple logout\n")
 	case "version":
 		return stdoutWriter().writeString("Print build and source version information.\nUsage: grepple version\n")
-	case "grit", "graph", "anchors", "boundaries", "examples", "languages", "rules", "get", "tree", "repos", "refs", "artifacts", "architecture", "sources", "ask", "ai-provider":
+	case "grit", "graph", "anchors", "boundaries", "examples", "languages", "rules", "get", "tree", "repos", "refs", "artifacts", "architecture", "sources", "ask", "ai-provider", "write":
 		return runCommand([]string{args[0], "--help"})
 	default:
 		return fmt.Errorf("unknown help topic %q", args[0])
@@ -502,6 +503,8 @@ func runCommand(args []string) error {
 		switch args[0] {
 		case "search":
 			return runSearch(args[1:])
+		case "write":
+			return runWrite(args[1:])
 		case "graph":
 			return runGraph(args[1:])
 		case "anchors":

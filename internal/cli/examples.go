@@ -22,9 +22,9 @@ var taskExamples = []taskExample{
 		"grepple --line-only --enclosing -F 'BuildNavigationGraph' ./parser",
 		"grepple --at parser/navigation.go:113",
 	}},
-	{Name: "edit", Description: "Validate edit anchors, then emit edit-ready source rows", Commands: []string{
-		"grepple anchors doctor",
+	{Name: "edit", Description: "Retrieve native hashline anchors, then validate one multi-file write transaction", Commands: []string{
 		"grepple --anchors --line-only -F 'BuildNavigationGraph' parser/navigation.go",
+		`printf '%s' '{"schema":"grepple-write-v1","files":[{"path":"parser/navigation.go","changes":[{"hash_range_inclusive":["START","END"],"content_lines":["replacement"]}]}]}' | grepple write --root . --dry-run`,
 	}},
 	{Name: "impact", Description: "Resolve an ambiguous symbol before inspecting callers", Commands: []string{
 		"grepple graph resolve --symbol BuildNavigationGraph --compact .",

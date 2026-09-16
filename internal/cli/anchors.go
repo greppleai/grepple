@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/greppleai/grepple/api"
+	"github.com/greppleai/grepple/internal/hashline"
 	"github.com/greppleai/grepple/search"
 )
 
@@ -74,6 +75,18 @@ func prepareResultAnchors(options *cliOptions, results []api.FileResult) error {
 		options.AnchorLines = make(anchorLookup)
 		return nil
 	}
+	native, err := useNativeAnchorProvider(options.AnchorProvider, options.AnchorsDefaulted)
+	if err != nil {
+		return err
+	}
+	if native {
+		anchors, nativeErr := nativeAnchorLookup(request, displayPaths)
+		if nativeErr != nil {
+			return nativeErr
+		}
+		options.AnchorLines = anchors
+		return nil
+	}
 	_, provider, err := resolveAnchorProvider(options.AnchorProvider)
 	if err != nil {
 		return err
@@ -90,6 +103,36 @@ func prepareResultAnchors(options *cliOptions, results []api.FileResult) error {
 	return nil
 }
 
+func useNativeAnchorProvider(name string, defaulted bool) (bool, error) {
+	if name != "" {
+		return name == "native", nil
+	}
+	if !defaulted {
+		return true, nil
+	}
+	settings, err := loadUserSettings()
+	if err != nil {
+		return false, err
+	}
+	return settings.Anchors.DefaultProvider == "" || settings.Anchors.DefaultProvider == "native", nil
+}
+
+func nativeAnchorLookup(request anchorProtocolRequest, displayPaths map[string]string) (anchorLookup, error) {
+	lookup := make(anchorLookup, len(request.Files))
+	for _, file := range request.Files {
+		hashes := hashline.Lines(file.Content)
+		displayPath := displayPaths[file.Path]
+		lookup[displayPath] = make(map[int]string, len(file.Lines))
+		for _, line := range file.Lines {
+			if line < 1 || line > len(hashes) {
+				return nil, fmt.Errorf("invalid anchor line %d for %s", line, displayPath)
+			}
+			lookup[displayPath][line] = hashes[line-1]
+		}
+	}
+	return lookup, nil
+}
+
 func defaultReadAnchors(path, content string, lines []int) (map[int]string, bool, error) {
 	settings, err := loadUserSettings()
 	if err != nil {
@@ -98,13 +141,20 @@ func defaultReadAnchors(path, content string, lines []int) (map[int]string, bool
 	if !settings.Anchors.EnabledByDefault {
 		return nil, false, nil
 	}
+	request := anchorProtocolRequest{ProtocolVersion: anchorProtocolVersion, Files: []anchorProtocolRequestFile{{
+		Path: path, Content: content, SHA256: anchorDigest(content), Lines: lines,
+	}}}
+	if settings.Anchors.DefaultProvider == "" || settings.Anchors.DefaultProvider == "native" {
+		anchors, nativeErr := nativeAnchorLookup(request, map[string]string{path: path})
+		if nativeErr != nil {
+			return nil, false, nativeErr
+		}
+		return anchors[path], true, nil
+	}
 	_, provider, err := resolveAnchorProvider("")
 	if err != nil {
 		return nil, false, err
 	}
-	request := anchorProtocolRequest{ProtocolVersion: anchorProtocolVersion, Files: []anchorProtocolRequestFile{{
-		Path: path, Content: content, SHA256: anchorDigest(content), Lines: lines,
-	}}}
 	response, err := invokeAnchorProvider(provider, request)
 	if err != nil {
 		return nil, false, err

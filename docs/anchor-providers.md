@@ -16,6 +16,8 @@ HASH│LINE│content
 
 Synthetic summary and collapsed-region rows are not anchorable and retain their normal presentation. Anchor output supports local default structural output and `--line-only`. `--line-only --enclosing` uses range-bearing plain output instead: settings-default anchors are disabled for that invocation and explicit `--anchors` is rejected so `HASH│LINE│content` is never overloaded. Settings-based defaults leave remote, JSON, outline, count, context, filename-only, piped-stdin, and `--only-matching` modes unchanged; an explicit `--anchors` still rejects those incompatible modes.
 
+An explicit `--anchors` uses Grepple's built-in `hashline-v1` implementation and requires no setup. `--anchor-provider native` is the explicit equivalent. User settings may enable native anchors by default with `"enabled_by_default": true` and either no `default_provider` or `"default_provider": "native"`; no provider command is needed. Named providers remain available for editor compatibility through `--anchor-provider NAME`. Native anchors can be applied transactionally with [`grepple write`](write.md).
+
 ## Settings
 
 Commands are configured only in the user-owned `~/.grepple/settings.json`. Repository settings cannot introduce executable commands.
@@ -118,4 +120,4 @@ The provider writes one JSON object to stdout:
 
 Every requested file and line must appear exactly once. The response must echo the request path and digest. Anchors are opaque non-empty strings up to 128 bytes and cannot contain CR, LF, or `│`.
 
-Grepple sends whole-file content because anchor algorithms may require file-wide collision handling, duplicate-line disambiguation, or persistent snapshots. Keeping editor-specific algorithms in user-configured providers prevents Grepple from coupling its public distribution to one editing harness.
+Grepple sends whole-file content to named providers because editor-specific algorithms may require file-wide collision handling, duplicate-line disambiguation, or persistent snapshots. The built-in `hashline-v1` path performs the same file-wide collision handling in-process; optional providers keep other editor contracts decoupled from Grepple's native write format.
