@@ -137,7 +137,7 @@ func runLoggedAsk(ctx context.Context, log *askLog, provider aiprovider.Provider
 	}
 	agent := fantasy.NewAgent(model, fantasy.WithSystemPrompt(systemPrompt), fantasy.WithTools(tools...))
 	session.telemetry.startStream(time.Now())
-	result, err := agent.Stream(ctx, loggedAgentStreamCall(log, question))
+	result, err := agent.Stream(ctx, loggedAgentStreamCall(log, session.telemetry, question))
 	session.telemetry.finishStream(time.Now())
 	if err != nil {
 		return recordAskError(log, fmt.Errorf("ask %s/%s: %w", provider.Name(), values.Model, err))
@@ -152,17 +152,34 @@ func runLoggedAsk(ctx context.Context, log *askLog, provider aiprovider.Provider
 	return stdoutWriter().writeString(answer + "\n")
 }
 
-func loggedAgentStreamCall(log *askLog, question string) fantasy.AgentStreamCall {
+func loggedAgentStreamCall(log *askLog, telemetry *askTelemetry, question string) fantasy.AgentStreamCall {
 	return fantasy.AgentStreamCall{
-		Prompt:        question,
-		OnStepStart:   func(step int) error { return log.Record("step.start", map[string]int{"step": step}) },
+		Prompt: question,
+		OnStepStart: func(step int) error {
+			telemetry.beginLLM(step, time.Now())
+			return log.Record("step.start", map[string]int{"step": step})
+		},
+		OnChunk: func(part fantasy.StreamPart) error {
+			telemetry.recordChunk(part, time.Now())
+			return nil
+		},
 		OnToolCall:    func(call fantasy.ToolCallContent) error { return log.Record("tool.call", call) },
 		OnToolResult:  func(result fantasy.ToolResultContent) error { return log.Record("tool.result", result) },
 		OnStepFinish:  func(result fantasy.StepResult) error { return log.Record("step.finish", result) },
 		OnAgentFinish: func(result *fantasy.AgentResult) error { return log.Record("agent.finish", result) },
-		OnError:       func(err error) { _ = log.Record("agent.error", map[string]string{"error": err.Error()}) },
+		OnError: func(err error) {
+			if timing, ok := telemetry.finishLLM(time.Now(), fantasy.Usage{}, fantasy.FinishReasonError); ok {
+				_ = log.Record("llm.timing", timing)
+			}
+			_ = log.Record("agent.error", map[string]string{"error": err.Error()})
+		},
 		OnStreamFinish: func(usage fantasy.Usage, reason fantasy.FinishReason, metadata fantasy.ProviderMetadata) error {
-			return log.Record("stream.finish", map[string]any{"usage": usage, "finishReason": reason, "providerMetadata": metadata})
+			streamErr := log.Record("stream.finish", map[string]any{"usage": usage, "finishReason": reason, "providerMetadata": metadata})
+			timing, ok := telemetry.finishLLM(time.Now(), usage, reason)
+			if !ok {
+				return streamErr
+			}
+			return errors.Join(streamErr, log.Record("llm.timing", timing))
 		},
 	}
 }

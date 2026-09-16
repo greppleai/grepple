@@ -152,6 +152,7 @@ Use the log when the answer is missing, expensive, repetitive, or surprising. Im
 - `research.universe`: whether local navigation, graph, and architecture tools created or reused one parsed source universe;
 - `step.finish`: assembled response and reasoning content for a completed model step;
 - `stream.finish`: finish reason and usage;
+- `llm.timing`: response-free time-to-first-chunk/output, remaining stream time, chunk-type counts, bytes, tokens, and throughput for each provider request;
 - `agent.finish` / `session.finish`: complete result and final answer;
 - `session.performance`: total, LLM-facing, tool-invocation, actual tool-execution, and non-stream wall times plus deterministic per-tool aggregates;
 - `agent.error` / `session.error`: provider or orchestration failure.
