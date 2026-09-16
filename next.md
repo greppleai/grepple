@@ -22,7 +22,6 @@
 - [ ] Expand CRLF, symlink, build-constraint, ambiguous-extension, and Windows/cross-platform path cases.
 - [ ] Run fuzz targets longer in scheduled CI and retain minimized failures as seeds.
 - [ ] Verify generated and queried output determinism on Linux, macOS, and Windows; compare normalized semantics first and raw bytes second, retaining the first source-linked failure as CI evidence.
-- [ ] Add public `api` DTO compatibility tests against the private backend consumer when that checkout is available.
 - [ ] Define schema compatibility and deprecation rules for public `api` DTOs and versioned CLI JSON before the next public release.
 - Keep test, race, vet, lint, schema, architecture benchmark, and agent benchmark gates green after each change.
 
