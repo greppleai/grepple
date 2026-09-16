@@ -1227,7 +1227,7 @@ func (validator *classValidator) declaration(name string) *Declaration {
 		if moduleID == "" {
 			return nil
 		}
-		return validator.analysis.TSDeclarations[moduleID+":"+name]
+		return validator.analysis.TSDeclarations[typeScriptDeclarationKey(validator.analysis, moduleID, name)]
 	}
 	if class != nil && class.Language != "" {
 		return validator.analysis.DeclarationVariants[class.Language+":"+name]

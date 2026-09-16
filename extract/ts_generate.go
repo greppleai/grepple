@@ -15,8 +15,8 @@ func generateTypeScriptClass(entry string, entrySource Source, sources []Source,
 	if err != nil {
 		return "", err
 	}
-	entryKey := absolutePath(entrySource.Path) + ":" + entry
-	if analysis.TSDeclarations[entryKey] == nil {
+	entryKey := typeScriptEntryKey(analysis, entrySource, entry)
+	if entryKey == "" {
 		return "", fmt.Errorf("class or interface '%s' was not found in entry file %s", entry, entrySource.Path)
 	}
 	depth, limit := classOptions(options)
@@ -48,6 +48,27 @@ func generateTypeScriptClass(entry string, entrySource Source, sources []Source,
 		return "", fmt.Errorf("Generated class diagram failed validation:\n%s", formatDiagnostics(diagnostics))
 	}
 	return diagram, nil
+}
+
+func typeScriptEntryKey(analysis *Analysis, entrySource Source, entry string) string {
+	return typeScriptDeclarationKey(analysis, absolutePath(entrySource.Path), entry)
+}
+
+func typeScriptDeclarationKey(analysis *Analysis, moduleID, name string) string {
+	exact := moduleID + ":" + name
+	if analysis.TSDeclarations[exact] != nil {
+		return exact
+	}
+	candidates := []string{}
+	for key, declaration := range analysis.TSDeclarations {
+		if declaration.ModuleID == moduleID && declaration.Name == name {
+			candidates = append(candidates, key)
+		}
+	}
+	if len(candidates) == 1 {
+		return candidates[0]
+	}
+	return ""
 }
 
 func selectTypeScriptClasses(entry string, analysis *Analysis, depth, limit int) ([]string, bool) {

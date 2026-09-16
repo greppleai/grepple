@@ -6,10 +6,14 @@ import (
 )
 
 type navigationImport struct {
-	alias    string
-	path     string
-	imported string
-	line     int
+	alias          string
+	path           string
+	imported       string
+	kind           string
+	scope          string
+	targetPathHint string
+	inline         bool
+	line           int
 }
 
 type navigationBinding struct {
@@ -27,6 +31,21 @@ func emptyNavigationSourceFacts() (map[string]navigationImport, string, map[stri
 	return make(map[string]navigationImport), "", make(map[string]map[string]navigationBinding)
 }
 
+func navigationImportsAtScope(imports map[string]navigationImport, scope string) map[string]navigationImport {
+	selected := make(map[string]navigationImport)
+	for key, item := range imports {
+		if item.scope != scope {
+			continue
+		}
+		if scope == "" {
+			selected[key] = item
+			continue
+		}
+		addScopedNavigationImport(selected, item.alias, item.path, item.imported, item.line)
+	}
+	return selected
+}
+
 func navigationImportFacts(imports map[string]navigationImport, language, sourcePath string) []NavigationImport {
 	keys := make([]string, 0, len(imports))
 	for key := range imports {
@@ -36,7 +55,7 @@ func navigationImportFacts(imports map[string]navigationImport, language, source
 	facts := make([]NavigationImport, 0, len(keys))
 	for _, key := range keys {
 		value := imports[key]
-		facts = append(facts, NavigationImport{Alias: value.alias, ImportPath: value.path, Imported: value.imported, Language: language, Path: sourcePath, Line: value.line})
+		facts = append(facts, NavigationImport{Alias: value.alias, ImportPath: value.path, Imported: value.imported, Kind: value.kind, Scope: value.scope, TargetPathHint: value.targetPathHint, Inline: value.inline, Language: language, Path: sourcePath, Line: value.line})
 	}
 	return facts
 }

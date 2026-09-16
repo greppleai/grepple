@@ -1,6 +1,10 @@
 package parser
 
-import "strings"
+import (
+	"path/filepath"
+	"strconv"
+	"strings"
+)
 
 type rustNavigationUse struct {
 	alias, path, imported string
@@ -9,49 +13,116 @@ type rustNavigationUse struct {
 
 func rustNavigationSourceFacts(root *syntaxNode, _ string, _ *navigationAdapterConfig) (map[string]navigationImport, string, map[string]map[string]navigationBinding) {
 	imports, packageName, fields := emptyNavigationSourceFacts()
-	pathAttribute := false
-	for _, node := range root.NamedChildren() {
-		switch node.Kind() {
-		case "attribute_item", "inner_attribute_item":
-			pathAttribute = pathAttribute || rustNavigationPathAttribute(node.Text())
-			continue
-		case "mod_item":
-			if node.ChildByFieldName("body") == nil && !pathAttribute {
-				name := navigationFieldText(node, "name", "")
-				addScopedNavigationImport(imports, name, "self::"+name, "*", node.StartLine())
-			}
-		case "use_declaration":
-			for _, item := range rustNavigationUses(node) {
-				addScopedNavigationImport(imports, item.alias, item.path, item.imported, item.line)
-			}
-		}
-		pathAttribute = false
-	}
+	collectRustNavigationSourceFacts(root, "", imports)
 	return imports, packageName, fields
+}
+
+func collectRustNavigationSourceFacts(root *syntaxNode, scope string, imports map[string]navigationImport) {
+	pathHint, pathAttribute := "", false
+	for _, node := range root.NamedChildren() {
+		if node.Kind() == "attribute_item" || node.Kind() == "inner_attribute_item" {
+			if hint, present := rustNavigationPathAttribute(node.Text()); present {
+				pathHint, pathAttribute = hint, true
+			}
+			continue
+		}
+		collectRustNavigationSourceNode(node, scope, pathHint, pathAttribute, imports)
+		pathHint, pathAttribute = "", false
+	}
+}
+
+func collectRustNavigationSourceNode(node *syntaxNode, scope, pathHint string, pathAttribute bool, imports map[string]navigationImport) {
+	switch node.Kind() {
+	case "mod_item":
+		collectRustNavigationModule(node, scope, pathHint, pathAttribute, imports)
+	case "use_declaration":
+		for _, item := range rustNavigationUses(node) {
+			addRustNavigationImport(imports, navigationImport{alias: item.alias, path: rustNavigationScopedPath(item.path, scope), imported: item.imported, scope: scope, line: item.line})
+		}
+	}
+}
+
+func collectRustNavigationModule(node *syntaxNode, scope, pathHint string, pathAttribute bool, imports map[string]navigationImport) {
+	name := navigationFieldText(node, "name", "")
+	body := node.ChildByFieldName("body")
+	if name != "" && (body != nil || !pathAttribute || pathHint != "") {
+		addRustNavigationImport(imports, navigationImport{alias: name, path: rustNavigationScopedPath("self::"+name, scope), imported: "*", kind: "module", scope: scope, targetPathHint: pathHint, inline: body != nil, line: node.StartLine()})
+	}
+	if body != nil && name != "" {
+		collectRustNavigationSourceFacts(body, rustNavigationJoinPath(scope, name), imports)
+	}
+}
+
+func addRustNavigationImport(imports map[string]navigationImport, item navigationImport) {
+	if item.alias == "" || item.path == "" {
+		return
+	}
+	key := item.alias
+	if item.scope != "" {
+		key = item.scope + "\x01" + item.alias
+	}
+	if item.alias == "*" {
+		imports[navigationImportUniqueKey(item)] = item
+		return
+	}
+	if existing, ok := imports[key]; ok {
+		delete(imports, key)
+		imports[navigationImportUniqueKey(existing)] = existing
+		imports[navigationImportUniqueKey(item)] = item
+		return
+	}
+	prefix := item.scope + "\x00" + item.alias + "\x00"
+	for existingKey := range imports {
+		if strings.HasPrefix(existingKey, prefix) {
+			imports[navigationImportUniqueKey(item)] = item
+			return
+		}
+	}
+	imports[key] = item
 }
 
 func rustNavigationExports(root *syntaxNode, _ string, language, path string) []NavigationExport {
 	exports := []NavigationExport{}
-	for _, node := range root.NamedChildren() {
-		if !rustNavigationExported(node) {
-			continue
-		}
-		if node.Kind() == "use_declaration" {
-			for _, item := range rustNavigationUses(node) {
-				exports = append(exports, NavigationExport{Name: item.alias, LocalName: item.alias, ImportPath: item.path, ImportedName: item.imported, Language: language, Path: path, Line: item.line})
-			}
-			continue
-		}
-		if !rustNavigationExportKind(node.Kind()) {
-			continue
-		}
-		name := node.ChildByFieldName("name")
-		if name == nil || strings.TrimSpace(name.Text()) == "" {
-			continue
-		}
-		exports = append(exports, NavigationExport{Name: strings.TrimSpace(name.Text()), LocalName: strings.TrimSpace(name.Text()), Language: language, Path: path, Line: node.StartLine()})
-	}
+	collectRustNavigationExports(root, "", language, path, &exports)
 	return exports
+}
+
+func collectRustNavigationExports(root *syntaxNode, scope, language, path string, exports *[]NavigationExport) {
+	for _, node := range root.NamedChildren() {
+		collectRustNestedModuleExports(node, scope, language, path, exports)
+		if rustNavigationExported(node) {
+			*exports = append(*exports, rustNavigationNodeExports(node, scope, language, path)...)
+		}
+	}
+}
+
+func collectRustNestedModuleExports(node *syntaxNode, scope, language, path string, exports *[]NavigationExport) {
+	if node.Kind() != "mod_item" {
+		return
+	}
+	body := node.ChildByFieldName("body")
+	name := navigationFieldText(node, "name", "")
+	if body != nil && name != "" {
+		collectRustNavigationExports(body, rustNavigationJoinPath(scope, name), language, path, exports)
+	}
+}
+
+func rustNavigationNodeExports(node *syntaxNode, scope, language, path string) []NavigationExport {
+	if node.Kind() == "use_declaration" {
+		exports := []NavigationExport{}
+		for _, item := range rustNavigationUses(node) {
+			exports = append(exports, NavigationExport{Name: item.alias, LocalName: item.alias, ImportPath: rustNavigationScopedPath(item.path, scope), ImportedName: item.imported, Scope: scope, Language: language, Path: path, Line: item.line})
+		}
+		return exports
+	}
+	if !rustNavigationExportKind(node.Kind()) {
+		return nil
+	}
+	name := node.ChildByFieldName("name")
+	if name == nil || strings.TrimSpace(name.Text()) == "" {
+		return nil
+	}
+	return []NavigationExport{{Name: strings.TrimSpace(name.Text()), LocalName: strings.TrimSpace(name.Text()), Scope: scope, Language: language, Path: path, Line: node.StartLine()}}
 }
 
 func rustNavigationExported(node *syntaxNode) bool {
@@ -73,9 +144,21 @@ func rustNavigationExportKind(kind string) bool {
 	return false
 }
 
-func rustNavigationPathAttribute(value string) bool {
+func rustNavigationPathAttribute(value string) (string, bool) {
+	trimmed := strings.TrimSpace(value)
+	inner := strings.TrimSuffix(strings.TrimPrefix(strings.TrimPrefix(trimmed, "#["), "#!["), "]")
+	if strings.HasPrefix(inner, "path") {
+		remainder := strings.TrimSpace(inner[len("path"):])
+		if strings.HasPrefix(remainder, "=") {
+			path, err := strconv.Unquote(strings.TrimSpace(strings.TrimPrefix(remainder, "=")))
+			if err != nil || strings.TrimSpace(path) == "" {
+				return "", true
+			}
+			return filepath.ToSlash(strings.TrimSpace(path)), true
+		}
+	}
 	compact := strings.Join(strings.Fields(value), "")
-	return strings.Contains(compact, "path=")
+	return "", strings.Contains(compact, "path=")
 }
 
 func rustNavigationUses(node *syntaxNode) []rustNavigationUse {
@@ -154,6 +237,35 @@ func rustNavigationJoinPath(prefix, value string) string {
 	return prefix + "::" + value
 }
 
+func rustNavigationScopedPath(value, scope string) string {
+	value, scope = rustNavigationCompactPath(value), rustNavigationCompactPath(scope)
+	if scope == "" || value == "" || strings.HasPrefix(value, "crate::") || strings.HasPrefix(value, "::") {
+		return value
+	}
+	scopeParts := strings.Split(scope, "::")
+	parts := strings.Split(value, "::")
+	switch parts[0] {
+	case "self":
+		return rustNavigationJoinPath("self::"+scope, strings.Join(parts[1:], "::"))
+	case "super":
+		count := 0
+		for count < len(parts) && parts[count] == "super" {
+			count++
+		}
+		if count <= len(scopeParts) {
+			prefix := "self"
+			if remaining := scopeParts[:len(scopeParts)-count]; len(remaining) > 0 {
+				prefix += "::" + strings.Join(remaining, "::")
+			}
+			return rustNavigationJoinPath(prefix, strings.Join(parts[count:], "::"))
+		}
+		remaining := append([]string(nil), parts[len(scopeParts):]...)
+		return strings.Join(remaining, "::")
+	default:
+		return value
+	}
+}
+
 func rustNavigationAbsolutePath(value string) bool {
 	first := value
 	if index := strings.Index(value, "::"); index >= 0 {
@@ -164,6 +276,12 @@ func rustNavigationAbsolutePath(value string) bool {
 
 func rustNavigationCompactPath(value string) string {
 	return strings.Join(strings.Fields(strings.TrimSpace(value)), "")
+}
+
+// RustScopedPath normalizes self/super paths from an inline-module scope while
+// preserving crate-qualified and external paths.
+func RustScopedPath(value, scope string) string {
+	return rustNavigationScopedPath(value, scope)
 }
 
 func rustNavigationTerminal(value string) string {

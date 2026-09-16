@@ -10,14 +10,25 @@ import (
 
 type rustAnalysis struct {
 	result          *Analysis
+	sources         []Source
 	implementations []rustImplementation
+	declarations    []rustDeclarationRef
+}
+
+type rustDeclarationRef struct {
+	declaration *Declaration
+	path        string
+	scope       string
+	name        string
 }
 
 type rustImplementation struct {
-	moduleID string
-	target   string
-	trait    string
-	members  []Member
+	path       string
+	scope      string
+	target     string
+	targetPath string
+	trait      string
+	members    []Member
 }
 
 func rustLanguageDefinition() *languageDefinition {
@@ -29,7 +40,7 @@ func rustLanguageDefinition() *languageDefinition {
 		acceptsSource: func(path string) bool { return codeparser.LanguageFor(path) == "rust" },
 		newAnalysis: func(result *Analysis, sources []Source) languageAnalysis {
 			prepareRustModules(result, sources)
-			return &rustAnalysis{result: result}
+			return &rustAnalysis{result: result, sources: append([]Source(nil), sources...)}
 		},
 		nearestProjectRoot: nearestRustRoot,
 		sourceScope: func(source Source) (string, error) {
@@ -92,8 +103,13 @@ func (analysis *rustAnalysis) Finalize() error {
 }
 
 func (analysis *rustAnalysis) attachImplementations() {
+	paths := make([]string, 0, len(analysis.sources))
+	for _, source := range analysis.sources {
+		paths = append(paths, source.Path)
+	}
+	modules := codeparser.BuildRustModuleIndex(analysis.result.Navigation, paths)
 	for _, implementation := range analysis.implementations {
-		declaration := analysis.rustDeclaration(implementation.moduleID, implementation.target)
+		declaration := analysis.rustImplementationDeclaration(modules, implementation)
 		if declaration == nil {
 			continue
 		}
@@ -106,18 +122,97 @@ func (analysis *rustAnalysis) attachImplementations() {
 	}
 }
 
-func (analysis *rustAnalysis) rustDeclaration(moduleID, name string) *Declaration {
-	declaration := analysis.result.TSDeclarations[moduleID+":"+name]
-	if declaration == nil || declaration.Language != "rust" {
+func (analysis *rustAnalysis) rustImplementationDeclaration(modules *codeparser.RustModuleIndex, implementation rustImplementation) *Declaration {
+	moduleKeys := analysis.rustImplementationModuleKeys(modules, implementation)
+	if len(moduleKeys) == 0 && (strings.Contains(implementation.targetPath, "::") || analysis.rustImplementationHasImport(implementation)) {
 		return nil
 	}
-	return declaration
+	candidates := analysis.rustImplementationCandidates(modules, implementation, moduleKeys)
+	if len(candidates) != 1 {
+		return nil
+	}
+	return candidates[0]
+}
+
+func (analysis *rustAnalysis) rustImplementationCandidates(modules *codeparser.RustModuleIndex, implementation rustImplementation, moduleKeys []string) []*Declaration {
+	candidates := []*Declaration{}
+	for _, reference := range analysis.declarations {
+		if reference.name == implementation.target && rustDeclarationMatchesModules(modules, reference, implementation, moduleKeys) {
+			candidates = append(candidates, reference.declaration)
+		}
+	}
+	return candidates
+}
+
+func rustDeclarationMatchesModules(modules *codeparser.RustModuleIndex, reference rustDeclarationRef, implementation rustImplementation, moduleKeys []string) bool {
+	if len(moduleKeys) == 0 {
+		return reference.path == implementation.path && reference.scope == implementation.scope
+	}
+	for _, key := range modules.ModuleKeys(reference.path, reference.scope) {
+		if rustStringSliceContains(moduleKeys, key) {
+			return true
+		}
+	}
+	return false
+}
+
+func (analysis *rustAnalysis) rustImplementationModuleKeys(modules *codeparser.RustModuleIndex, implementation rustImplementation) []string {
+	path := implementation.targetPath
+	if strings.HasPrefix(path, "crate::") || strings.HasPrefix(path, "self::") || strings.HasPrefix(path, "super::") {
+		return rustModuleKeys(modules.ResolveItemModules(implementation.path, codeparser.RustScopedPath(path, implementation.scope)))
+	}
+	if !strings.Contains(path, "::") {
+		imports := []codeparser.NavigationImport{}
+		for _, item := range analysis.result.Navigation.Imports {
+			if item.Path == implementation.path && item.Scope == implementation.scope && item.Kind == "" && item.Alias == path {
+				imports = append(imports, item)
+			}
+		}
+		if len(imports) == 1 {
+			return rustModuleKeys(modules.ResolveImport(implementation.path, imports[0].ImportPath))
+		}
+		if len(imports) > 0 {
+			return nil
+		}
+		return modules.ModuleKeys(implementation.path, implementation.scope)
+	}
+	return nil
+}
+
+func (analysis *rustAnalysis) rustImplementationHasImport(implementation rustImplementation) bool {
+	for _, item := range analysis.result.Navigation.Imports {
+		if item.Path == implementation.path && item.Scope == implementation.scope && item.Kind == "" && item.Alias == implementation.targetPath {
+			return true
+		}
+	}
+	return false
+}
+
+func rustModuleKeys(targets []codeparser.RustModuleTarget) []string {
+	keys := make([]string, 0, len(targets))
+	for _, target := range targets {
+		key := codeparser.RustModuleTargetModuleKey(target)
+		if !rustStringSliceContains(keys, key) {
+			keys = append(keys, key)
+		}
+	}
+	return keys
+}
+
+func rustStringSliceContains(values []string, expected string) bool {
+	for _, value := range values {
+		if value == expected {
+			return true
+		}
+	}
+	return false
 }
 
 type rustSourceAnalyzer struct {
 	analysis *rustAnalysis
 	source   Source
 	moduleID string
+	scope    string
 }
 
 func (analyzer *rustSourceAnalyzer) analyzeItem(node codeparser.ViewNode) {
@@ -130,6 +225,16 @@ func (analyzer *rustSourceAnalyzer) analyzeItem(node codeparser.ViewNode) {
 		analyzer.analyzeTrait(node)
 	case "impl_item":
 		analyzer.analyzeImpl(node)
+	case "mod_item":
+		name := node.ChildByFieldName("name").Text()
+		body := node.ChildByFieldName("body")
+		if name != "" && body.Valid() {
+			nested := *analyzer
+			nested.scope = rustJoinScope(analyzer.scope, name)
+			for _, item := range body.NamedChildren() {
+				nested.analyzeItem(item)
+			}
+		}
 	}
 }
 
@@ -245,7 +350,7 @@ func (analyzer *rustSourceAnalyzer) analyzeImpl(node codeparser.ViewNode) {
 	if target == "" {
 		return
 	}
-	implementation := rustImplementation{moduleID: analyzer.moduleID, target: target, trait: rustTypeName(node.ChildByFieldName("trait"))}
+	implementation := rustImplementation{path: analyzer.source.Path, scope: analyzer.scope, target: target, targetPath: rustTypePath(node.ChildByFieldName("type")), trait: rustTypeName(node.ChildByFieldName("trait"))}
 	for _, item := range node.ChildByFieldName("body").NamedChildren() {
 		if item.Kind() == "function_item" || item.Kind() == "function_signature_item" {
 			implementation.members = append(implementation.members, analyzer.rustFunctionMember(item, "private"))
@@ -267,11 +372,15 @@ func (analyzer *rustSourceAnalyzer) newDeclaration(node codeparser.ViewNode, kin
 
 func (analyzer *rustSourceAnalyzer) storeDeclaration(declaration *Declaration, node codeparser.ViewNode) {
 	key := analyzer.moduleID + ":" + declaration.Name
+	if analyzer.scope != "" {
+		key = analyzer.moduleID + ":" + analyzer.scope + "::" + declaration.Name
+	}
 	if analyzer.analysis.result.TSDeclarations[key] != nil {
 		analyzer.analysis.result.duplicateErrors = append(analyzer.analysis.result.duplicateErrors, "duplicate Rust type "+declaration.Name+" in "+analyzer.source.Path)
 		return
 	}
 	analyzer.analysis.result.TSDeclarations[key] = declaration
+	analyzer.analysis.declarations = append(analyzer.analysis.declarations, rustDeclarationRef{declaration: declaration, path: analyzer.source.Path, scope: analyzer.scope, name: declaration.Name})
 	if analyzer.analysis.result.TSSymbolIndex[key] == nil {
 		analyzer.analysis.result.TSSymbolIndex[key] = &Symbol{
 			Name: declaration.Name, Kind: declaration.Kind, Language: "rust", ModuleID: analyzer.moduleID, Key: key, Calls: map[string]bool{},
@@ -376,6 +485,34 @@ func rustTypeName(node codeparser.ViewNode) string {
 		}
 	}
 	return ""
+}
+
+func rustTypePath(node codeparser.ViewNode) string {
+	if !node.Valid() {
+		return ""
+	}
+	switch node.Kind() {
+	case "type_identifier", "identifier":
+		return strings.TrimSpace(node.Text())
+	case "generic_type":
+		return rustTypePath(node.ChildByFieldName("type"))
+	case "scoped_type_identifier":
+		path := strings.Join(strings.Fields(node.Text()), "")
+		if !strings.ContainsAny(path, "<>()[]{};,") {
+			return path
+		}
+	}
+	if path := rustTypePath(node.ChildByFieldName("name")); path != "" {
+		return path
+	}
+	return ""
+}
+
+func rustJoinScope(scope, name string) string {
+	if scope == "" {
+		return name
+	}
+	return scope + "::" + name
 }
 
 func appendRustMember(members []Member, addition Member) []Member {

@@ -144,7 +144,12 @@ func cFamilyNavigationAdapter(rules *structureRules) navigationAdapter {
 }
 
 func rustNavigationAdapter(rules *structureRules) navigationAdapter {
-	return &navigationAdapterConfig{rules: rules, callTypes: newStringSet("call_expression"), sourceFacts: rustNavigationSourceFacts, exports: rustNavigationExports, containerName: func(node *syntaxNode, content string, envelope *navigationEnvelope) string {
+	return &navigationAdapterConfig{rules: rules, callTypes: newStringSet("call_expression"), sourceFacts: rustNavigationSourceFacts, exports: rustNavigationExports, nestedModulePath: func(node *syntaxNode, current string) string {
+		if node.Kind() != "mod_item" || node.ChildByFieldName("body") == nil {
+			return ""
+		}
+		return rustNavigationJoinPath(current, navigationFieldText(node, "name", ""))
+	}, containerName: func(node *syntaxNode, content string, envelope *navigationEnvelope) string {
 		if node.Kind() == "impl_item" {
 			if target := node.ChildByFieldName("type"); target != nil {
 				return target.Text()
@@ -365,7 +370,7 @@ func addUnboundNavigationImport(imports map[string]navigationImport, alias, impo
 }
 
 func navigationImportUniqueKey(item navigationImport) string {
-	return item.alias + "\x00" + strconv.Itoa(item.line) + "\x00" + item.path + "\x00" + item.imported
+	return item.scope + "\x00" + item.alias + "\x00" + strconv.Itoa(item.line) + "\x00" + item.path + "\x00" + item.imported + "\x00" + item.kind
 }
 
 func javaNavigationSourceFacts(root *syntaxNode, _ string, _ *navigationAdapterConfig) (map[string]navigationImport, string, map[string]map[string]navigationBinding) {

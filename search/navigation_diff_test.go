@@ -46,3 +46,12 @@ func TestDiffNavigationGraphsIgnoresPositionOnlyChanges(t *testing.T) {
 		t.Fatalf("position-only diff=%#v", diff)
 	}
 }
+
+func TestDiffNavigationGraphsTreatsRustModuleScopeAsSemanticIdentity(t *testing.T) {
+	before := parser.NavigationGraph{Declarations: []parser.NavigationDeclaration{{ID: "old", Name: "run", Kind: "function", Language: "rust", Path: "src/lib.rs", Scope: "first", Start: 1, End: 1}}}
+	after := parser.NavigationGraph{Declarations: []parser.NavigationDeclaration{{ID: "new", Name: "run", Kind: "function", Language: "rust", Path: "src/lib.rs", Scope: "second", Start: 1, End: 1}}}
+	diff := DiffNavigationGraphs(before, after)
+	if len(diff.AddedDeclarations) != 1 || len(diff.RemovedDeclarations) != 1 || len(diff.MovedDeclarations) != 0 {
+		t.Fatalf("scoped Rust diff=%#v", diff)
+	}
+}

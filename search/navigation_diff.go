@@ -9,7 +9,7 @@ import (
 )
 
 // NavigationDiffSchema identifies the semantic graph-diff wire contract.
-const NavigationDiffSchema = "grepple-navigation-diff-v3"
+const NavigationDiffSchema = "grepple-navigation-diff-v4"
 
 // NavigationDeclarationDelta pairs a declaration before and after a semantic change.
 type NavigationDeclarationDelta struct {
@@ -56,7 +56,7 @@ func navigationDeclarationSemanticKeys(declarations []parser.NavigationDeclarati
 		if scope == "" {
 			scope = declaration.ModuleID
 		}
-		keys[declaration.ID] = strings.Join([]string{declaration.Language, scope, declaration.Kind, declaration.Name}, "\x00")
+		keys[declaration.ID] = strings.Join([]string{declaration.Language, scope, declaration.Scope, declaration.Kind, declaration.Name}, "\x00")
 	}
 	return keys
 }

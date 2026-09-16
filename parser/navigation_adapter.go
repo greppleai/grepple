@@ -40,6 +40,7 @@ type navigationAdapter interface {
 	IsCall(string) bool
 	IsWrapper(string) bool
 	IsNestedBindingScope(string) bool
+	NestedModulePath(*syntaxNode, string) string
 	MemberAccess(*syntaxNode, string) (navigationMemberSyntax, bool)
 	Visibility(*syntaxNode, string, string) NavigationVisibility
 	SourceFacts(*syntaxNode, string) (map[string]navigationImport, string, map[string]map[string]navigationBinding)
@@ -67,6 +68,7 @@ type navigationAdapterConfig struct {
 	fieldContainerTypes      stringSet
 	wrapperTypes             stringSet
 	nestedBindingScopeTypes  stringSet
+	nestedModulePath         func(*syntaxNode, string) string
 	isCallable               func(*syntaxNode) bool
 	requiresContainer        func(*syntaxNode) bool
 	containerName            func(*syntaxNode, string, *navigationEnvelope) string
@@ -153,6 +155,13 @@ func (adapter *navigationAdapterConfig) IsWrapper(kind string) bool {
 
 func (adapter *navigationAdapterConfig) IsNestedBindingScope(kind string) bool {
 	return defaultNavigationNestedBindingScopes.contains(kind) || adapter.nestedBindingScopeTypes.contains(kind)
+}
+
+func (adapter *navigationAdapterConfig) NestedModulePath(node *syntaxNode, current string) string {
+	if adapter.nestedModulePath == nil {
+		return ""
+	}
+	return adapter.nestedModulePath(node, current)
 }
 
 func (adapter *navigationAdapterConfig) MemberAccess(node *syntaxNode, _ string) (navigationMemberSyntax, bool) {

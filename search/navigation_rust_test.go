@@ -67,6 +67,52 @@ func TestRustModulesPreserveAmbiguousConventionalTargets(t *testing.T) {
 	t.Fatalf("calls=%#v", graph.Calls)
 }
 
+func TestRustInlineAndExplicitPathModulesResolveScopedCalls(t *testing.T) {
+	root := t.TempDir()
+	lib := filepath.Join(root, "src", "lib.rs")
+	platform := filepath.Join(root, "src", "platform", "unix.rs")
+	external := filepath.Join(root, "src", "outer", "external.rs")
+	paths := writeRustNavigationFiles(t, map[string]string{
+		lib: `#[path = "platform/unix.rs"]
+		mod platform;
+		mod outer {
+			pub mod child { pub fn run() {} }
+			pub fn run() {}
+			pub fn call_child() { child::run(); }
+			mod external;
+			pub fn call_external() { external::run(); }
+		}
+		pub fn boot() { outer::run(); platform::start(); }
+		`,
+		platform: "pub fn start() {}",
+		external: "pub fn run() {}",
+	})
+	graph, _ := BuildNavigationGraphWithOptions(paths, NavigationBuildOptions{DisableCache: true})
+	assertRustImportTargets(t, graph.Imports, lib, "self::platform", platform)
+	assertRustImportTargets(t, graph.Imports, lib, "self::outer", lib)
+	assertRustImportTargets(t, graph.Imports, lib, "self::outer::child", lib)
+	assertRustImportTargets(t, graph.Imports, lib, "self::outer::external", external)
+	assertRustResolvedCallScope(t, graph, lib, "outer::run", lib, "outer")
+	assertRustResolvedCallScope(t, graph, lib, "child::run", lib, "outer::child")
+	assertRustResolvedCallScope(t, graph, lib, "external::run", external, "")
+	assertRustResolvedCallScope(t, graph, lib, "platform::start", platform, "")
+}
+
+func assertRustResolvedCallScope(t *testing.T, graph parser.NavigationGraph, source, display, targetPath, targetScope string) {
+	t.Helper()
+	declarations := make(map[string]parser.NavigationDeclaration, len(graph.Declarations))
+	for _, declaration := range graph.Declarations {
+		declarations[declaration.ID] = declaration
+	}
+	for _, call := range graph.Calls {
+		target := declarations[call.TargetID]
+		if call.Path == source && call.Display == display && target.Path == targetPath && target.Scope == targetScope && call.Confidence == "import-resolved" {
+			return
+		}
+	}
+	t.Fatalf("missing resolved Rust call source=%q display=%q target=%q scope=%q: %#v", source, display, targetPath, targetScope, graph.Calls)
+}
+
 func TestRustModulesKeepCrateRootsIsolated(t *testing.T) {
 	root := t.TempDir()
 	firstRoot := filepath.Join(root, "first", "src", "lib.rs")

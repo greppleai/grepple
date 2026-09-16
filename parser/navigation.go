@@ -56,13 +56,17 @@ type NavigationCall struct {
 
 // NavigationImport records one source import recognized by a language adapter.
 type NavigationImport struct {
-	Alias       string   `json:"alias,omitempty"`
-	ImportPath  string   `json:"importPath"`
-	Imported    string   `json:"imported,omitempty"`
-	Language    string   `json:"language"`
-	Path        string   `json:"path"`
-	Line        int      `json:"line"`
-	TargetPaths []string `json:"targetPaths,omitempty"`
+	Alias          string   `json:"alias,omitempty"`
+	ImportPath     string   `json:"importPath"`
+	Imported       string   `json:"imported,omitempty"`
+	Kind           string   `json:"kind,omitempty"`
+	Scope          string   `json:"scope,omitempty"`
+	TargetPathHint string   `json:"targetPathHint,omitempty"`
+	Inline         bool     `json:"inline,omitempty"`
+	Language       string   `json:"language"`
+	Path           string   `json:"path"`
+	Line           int      `json:"line"`
+	TargetPaths    []string `json:"targetPaths,omitempty"`
 }
 
 // NavigationTypeUsage records a callable's explicit use of a normalized type.
@@ -82,6 +86,7 @@ type NavigationExport struct {
 	LocalName    string `json:"localName,omitempty"`
 	ImportPath   string `json:"importPath,omitempty"`
 	ImportedName string `json:"importedName,omitempty"`
+	Scope        string `json:"scope,omitempty"`
 	Language     string `json:"language"`
 	Path         string `json:"path"`
 	Line         int    `json:"line"`
@@ -150,6 +155,15 @@ func navigationStableID(parts ...string) string {
 	return hex.EncodeToString(hash.Sum(nil))
 }
 
+func navigationDeclarationStableID(declaration NavigationDeclaration) string {
+	parts := []string{"declaration", declaration.Language, declaration.Path}
+	if declaration.Scope != "" {
+		parts = append(parts, declaration.Scope)
+	}
+	parts = append(parts, declaration.Name, declaration.Kind, strconv.Itoa(declaration.Start), strconv.Itoa(declaration.End))
+	return navigationStableID(parts...)
+}
+
 // Navigation extracts callable declarations and calls for a structurally supported language.
 // Resolution is intentionally syntax-based; callers decide whether a name is unique.
 func Navigation(content, language string) ([]NavigationDeclaration, []NavigationCall) {
@@ -196,7 +210,7 @@ func navigationGraphFromTree(root *syntaxNode, content, language, path string) N
 	imports, packageName, fields := navigation.SourceFacts(root, content)
 	returnBindings := navigationReturnBindings(root, content, imports, navigation)
 	collector := navigationCollector{content: content, adapter: adapter, navigation: navigation, path: path, imports: imports, fields: fields, returnBindings: returnBindings, packageName: packageName}
-	collector.walk(root, navigationWalkContext{})
+	collector.walk(root, navigationWalkContext{imports: navigationImportsAtScope(imports, "")})
 	return NavigationGraph{Declarations: collector.declarations, Calls: collector.calls, Imports: navigationImportFacts(imports, language, path), Exports: navigation.Exports(root, content, language, path), Fields: navigationFieldFacts(fields, language, path, packageName), TypeUsages: collector.typeUsages, MemberAccesses: collector.memberAccesses}
 }
 
@@ -249,10 +263,12 @@ type navigationEnvelope struct {
 }
 
 type navigationWalkContext struct {
-	envelope  *navigationEnvelope
-	container string
-	bindings  map[string]navigationBinding
-	callable  *NavigationDeclaration
+	envelope   *navigationEnvelope
+	container  string
+	modulePath string
+	bindings   map[string]navigationBinding
+	imports    map[string]navigationImport
+	callable   *NavigationDeclaration
 }
 
 func (c *navigationCollector) walk(node *syntaxNode, context navigationWalkContext) {
@@ -261,7 +277,7 @@ func (c *navigationCollector) walk(node *syntaxNode, context navigationWalkConte
 	}
 	current := c.enterNavigationNode(node, context)
 	c.recordNavigationMemberAccess(node, current)
-	c.recordNavigationCall(node, current.callable, current.bindings)
+	c.recordNavigationCall(node, current.callable, current.bindings, current.imports)
 	c.walkNavigationChildren(node, current)
 }
 
@@ -275,6 +291,10 @@ func cloneNavigationBindings(bindings map[string]navigationBinding) map[string]n
 
 func (c *navigationCollector) enterNavigationNode(node *syntaxNode, context navigationWalkContext) navigationWalkContext {
 	current := context
+	if module := c.navigation.NestedModulePath(node, context.modulePath); module != "" {
+		current.modulePath = module
+		current.imports = navigationImportsAtScope(c.imports, current.modulePath)
+	}
 	if c.navigation.IsContainer(node.Kind()) {
 		if name := c.navigation.ContainerName(node, c.content, context.envelope); name != "" {
 			current.container = name
@@ -294,25 +314,25 @@ func (c *navigationCollector) enterNavigationNode(node *syntaxNode, context navi
 	if current.container != "" && !strings.Contains(name, ".") {
 		name = current.container + "." + name
 	}
-	result := c.navigation.CallableReturnBinding(node, c.content, c.imports)
+	result := c.navigation.CallableReturnBinding(node, c.content, current.imports)
 	declaration := NavigationDeclaration{
-		Name: name, Kind: c.navigation.DeclarationKind(node, current.container), Language: c.adapter.ID(), Path: c.path, Container: current.container, Package: c.packageName,
+		Name: name, Kind: c.navigation.DeclarationKind(node, current.container), Language: c.adapter.ID(), Path: c.path, Container: current.container, Package: c.packageName, Scope: current.modulePath,
 		ResultType: result.typeName, ResultImportPath: result.importPath, Visibility: c.navigation.Visibility(node, name, c.content), Entrypoint: c.navigation.Entrypoint(node, name, current.container, c.packageName, c.content), Start: start, End: end,
 	}
-	declaration.ID = navigationStableID("declaration", declaration.Language, declaration.Path, declaration.Name, declaration.Kind, strconv.Itoa(start), strconv.Itoa(end))
+	declaration.ID = navigationDeclarationStableID(declaration)
 	c.declarations = append(c.declarations, declaration)
 	current.callable = &c.declarations[len(c.declarations)-1]
-	current.bindings = navigationCallableBindings(node, c.content, current.container, c.imports, c.returnBindings, c.navigation)
-	c.addNavigationSignatureBindings(node, current.bindings)
+	current.bindings = navigationCallableBindings(node, c.content, current.container, current.imports, c.returnBindings, c.navigation)
+	c.addNavigationSignatureBindings(node, current.bindings, current.imports)
 	c.recordNavigationTypeUsages(current.callable, current.bindings)
 	return current
 }
 
-func (c *navigationCollector) addNavigationSignatureBindings(node *syntaxNode, bindings map[string]navigationBinding) {
+func (c *navigationCollector) addNavigationSignatureBindings(node *syntaxNode, bindings map[string]navigationBinding, imports map[string]navigationImport) {
 	body := node.ChildByFieldName("body")
 	node.WalkNamed(func(current *syntaxNode) {
 		if body == nil || current.EndByte() <= body.StartByte() {
-			addNavigationParameterBinding(bindings, current, c.content, c.imports, c.navigation)
+			addNavigationParameterBinding(bindings, current, c.content, imports, c.navigation)
 		}
 	})
 }
@@ -367,7 +387,7 @@ func (c *navigationCollector) navigationDeclarationRange(node *syntaxNode, envel
 	return node.StartLine(), node.EndLine()
 }
 
-func (c *navigationCollector) recordNavigationCall(node *syntaxNode, callable *NavigationDeclaration, bindings map[string]navigationBinding) {
+func (c *navigationCollector) recordNavigationCall(node *syntaxNode, callable *NavigationDeclaration, bindings map[string]navigationBinding, imports map[string]navigationImport) {
 	if !c.navigation.IsCall(node.Kind()) || callable == nil {
 		return
 	}
@@ -379,7 +399,7 @@ func (c *navigationCollector) recordNavigationCall(node *syntaxNode, callable *N
 		Name: name, Display: display, Qualifier: navigationCallQualifier(display), Language: c.adapter.ID(), Path: c.path, Line: node.StartLine(),
 		CallerID: callable.ID, EnclosingStart: callable.Start, EnclosingEnd: callable.End,
 	}
-	applyNavigationCallContext(&call, c.imports, bindings, c.fields)
+	applyNavigationCallContext(&call, imports, bindings, c.fields)
 	call.ID = navigationStableID("call", call.CallerID, strconv.Itoa(call.Line), call.Display, strconv.Itoa(len(c.calls)))
 	c.calls = append(c.calls, call)
 }
@@ -420,7 +440,7 @@ func (c *navigationCollector) walkNavigationChildren(node *syntaxNode, context n
 			childContext.envelope = &navigationEnvelope{start: leadingCommentStart(child), end: child.EndLine()}
 		}
 		c.walk(child, childContext)
-		mergeNavigationBindingsAfterNode(context.bindings, child, c.content, c.imports, c.returnBindings, c.navigation)
+		mergeNavigationBindingsAfterNode(context.bindings, child, c.content, context.imports, c.returnBindings, c.navigation)
 	}
 }
 func (c *navigationCollector) wrapperEnvelope(node *syntaxNode, inherited *navigationEnvelope) *navigationEnvelope {

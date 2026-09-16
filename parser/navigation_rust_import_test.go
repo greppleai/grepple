@@ -29,11 +29,8 @@ fn use_all() {
 	assertNavigationImport(t, graph, "shared", "super::shared", "shared", 7)
 	assertNavigationImport(t, graph, "local_alias", "self::local", "local", 8)
 	assertNavigationImport(t, graph, "PublicVisible", "crate::exports::Visible", "Visible", 9)
-	for _, item := range graph.Imports {
-		if item.Alias == "custom" || item.Alias == "inline" {
-			t.Fatalf("non-conventional module was emitted: %#v", item)
-		}
-	}
+	assertRustModuleImport(t, graph, "custom", "", "custom/location.rs", false)
+	assertRustModuleImport(t, graph, "inline", "", "", true)
 	assertRustNavigationExport(t, graph, "PublicVisible", "crate::exports::Visible", "Visible")
 	assertNavigationCallImport(t, graph, "run", "crate::foo::run", "run")
 	assertNavigationCallImport(t, graph, "renamed", "crate::foo::other", "other")
@@ -41,12 +38,18 @@ fn use_all() {
 	assertNavigationCallImport(t, graph, "Thing::new", "crate::foo::Thing", "new")
 }
 
-func TestRustNavigationCustomPathModulesRemainUnresolved(t *testing.T) {
+func TestRustNavigationConditionalPathModulesRemainUnresolved(t *testing.T) {
 	content := "#[cfg_attr(unix, path = \"unix.rs\")]\nmod platform;\n"
 	graph := BuildNavigationGraph(content, "rust", "src/lib.rs")
 	if len(graph.Imports) != 0 {
 		t.Fatalf("custom-path module imports=%#v", graph.Imports)
 	}
+}
+
+func TestRustNavigationPathAttributePreservesSpaces(t *testing.T) {
+	content := "#[path = \"platform/foo bar.rs\"]\nmod platform;\n"
+	graph := BuildNavigationGraph(content, "rust", "src/lib.rs")
+	assertRustModuleImport(t, graph, "platform", "", "platform/foo bar.rs", false)
 }
 
 func TestRustNavigationExportsOnlyPublicTopLevelItems(t *testing.T) {
@@ -59,8 +62,9 @@ mod inline { pub fn nested() {} }
 	graph := BuildNavigationGraph(content, "rust", "src/lib.rs")
 	assertRustNavigationExport(t, graph, "Public", "", "")
 	assertRustNavigationExport(t, graph, "crate_visible", "", "")
+	assertRustNavigationExportAtScope(t, graph, "nested", "inline", "", "")
 	for _, item := range graph.Exports {
-		if item.Name == "Private" || item.Name == "nested" || item.Name == "parent_visible" {
+		if item.Name == "Private" || item.Name == "parent_visible" {
 			t.Fatalf("non-exported Rust item=%#v", item)
 		}
 	}
@@ -92,12 +96,63 @@ func TestCachedRustNavigationFactsInstantiateRequestedPath(t *testing.T) {
 	}
 }
 
-func assertRustNavigationExport(t *testing.T, graph NavigationGraph, name, importPath, imported string) {
+func TestRustNavigationScopesInlineModuleImportsAndCalls(t *testing.T) {
+	content := `mod outer {
+	use self::child::run;
+	mod child {
+		use super::helper;
+		pub fn run() { helper(); }
+	}
+	pub fn helper() {}
+	pub fn start() { run(); }
+}
+`
+	graph := BuildNavigationGraph(content, "rust", "src/lib.rs")
+	assertRustScopedImport(t, graph, "run", "outer", "self::outer::child::run")
+	assertRustScopedImport(t, graph, "helper", "outer::child", "self::outer::helper")
+	assertNavigationCallImport(t, graph, "run", "self::outer::child::run", "run")
+	assertNavigationCallImport(t, graph, "helper", "self::outer::helper", "helper")
+	for _, declaration := range graph.Declarations {
+		if declaration.Name == "run" && declaration.Scope == "outer::child" || declaration.Name == "start" && declaration.Scope == "outer" {
+			continue
+		}
+		if declaration.Name == "run" || declaration.Name == "start" {
+			t.Fatalf("declaration scope=%#v", declaration)
+		}
+	}
+}
+
+func assertRustModuleImport(t *testing.T, graph NavigationGraph, alias, scope, hint string, inline bool) {
 	t.Helper()
-	for _, item := range graph.Exports {
-		if item.Name == name && item.ImportPath == importPath && item.ImportedName == imported {
+	for _, item := range graph.Imports {
+		if item.Kind == "module" && item.Alias == alias && item.Scope == scope && item.TargetPathHint == hint && item.Inline == inline {
 			return
 		}
 	}
-	t.Fatalf("missing Rust export name=%q path=%q imported=%q: %#v", name, importPath, imported, graph.Exports)
+	t.Fatalf("missing Rust module alias=%q scope=%q hint=%q inline=%v: %#v", alias, scope, hint, inline, graph.Imports)
+}
+
+func assertRustScopedImport(t *testing.T, graph NavigationGraph, alias, scope, importPath string) {
+	t.Helper()
+	for _, item := range graph.Imports {
+		if item.Kind == "" && item.Alias == alias && item.Scope == scope && item.ImportPath == importPath {
+			return
+		}
+	}
+	t.Fatalf("missing Rust import alias=%q scope=%q path=%q: %#v", alias, scope, importPath, graph.Imports)
+}
+
+func assertRustNavigationExport(t *testing.T, graph NavigationGraph, name, importPath, imported string) {
+	t.Helper()
+	assertRustNavigationExportAtScope(t, graph, name, "", importPath, imported)
+}
+
+func assertRustNavigationExportAtScope(t *testing.T, graph NavigationGraph, name, scope, importPath, imported string) {
+	t.Helper()
+	for _, item := range graph.Exports {
+		if item.Name == name && item.Scope == scope && item.ImportPath == importPath && item.ImportedName == imported {
+			return
+		}
+	}
+	t.Fatalf("missing Rust export name=%q scope=%q path=%q imported=%q: %#v", name, scope, importPath, imported, graph.Exports)
 }

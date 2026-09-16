@@ -102,3 +102,98 @@ func TestRustFocusedExtractionMergesSameFileImplBlocks(t *testing.T) {
 		t.Fatalf("Rust impl methods missing from structure:\n%s", structure)
 	}
 }
+
+func TestRustFocusedExtractionKeepsInlineModuleOwnership(t *testing.T) {
+	root := t.TempDir()
+	source := Source{Path: filepath.Join(root, "src", "lib.rs"), Text: `mod first {
+	pub struct Model;
+	impl Model { pub fn first(&self) {} }
+}
+mod second {
+	pub struct Model;
+	impl Model { pub fn second(&self) {} }
+}
+`}
+	analysis, err := Analyze([]Source{source})
+	if err != nil {
+		t.Fatal(err)
+	}
+	first := analysis.TSDeclarations[absolutePath(source.Path)+":first::Model"]
+	second := analysis.TSDeclarations[absolutePath(source.Path)+":second::Model"]
+	if first == nil || second == nil {
+		t.Fatalf("inline Rust declarations=%#v", analysis.TSDeclarations)
+	}
+	assertJVMMember(t, first.Members, Member{Name: "first", Kind: "method", Visibility: "public"})
+	assertJVMMember(t, second.Members, Member{Name: "second", Kind: "method", Visibility: "public"})
+	for _, member := range first.Members {
+		if member.Name == "second" {
+			t.Fatalf("second module impl attached to first: %#v", first.Members)
+		}
+	}
+}
+
+func TestRustFocusedExtractionAttachesSyntaxResolvedCrossFileImpls(t *testing.T) {
+	root := t.TempDir()
+	lib := Source{Path: filepath.Join(root, "src", "lib.rs"), Text: "mod model; mod impls;\n"}
+	model := Source{Path: filepath.Join(root, "src", "model.rs"), Text: "pub struct Model;\n"}
+	impls := Source{Path: filepath.Join(root, "src", "impls.rs"), Text: `use crate::model::Model;
+impl Model { pub fn imported(&self) {} }
+impl crate::model::Model { pub fn qualified(&self) {} }
+`}
+	analysis, err := Analyze([]Source{lib, model, impls})
+	if err != nil {
+		t.Fatal(err)
+	}
+	declaration := analysis.TSDeclarations[absolutePath(model.Path)+":Model"]
+	if declaration == nil {
+		t.Fatalf("Rust model declarations=%#v", analysis.TSDeclarations)
+	}
+	assertJVMMember(t, declaration.Members, Member{Name: "imported", Kind: "method", Visibility: "public"})
+	assertJVMMember(t, declaration.Members, Member{Name: "qualified", Kind: "method", Visibility: "public"})
+	structure, err := GenerateClassDiagram("Model", model, []Source{lib, model, impls}, GenerateOptions{Depth: 1, MaxNodes: 10})
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertContainsAll(t, "cross-file Rust impl structure", structure, []string{"+imported()", "+qualified()"})
+}
+
+func TestRustFocusedExtractionLeavesAmbiguousCrossFileImplUnattached(t *testing.T) {
+	root := t.TempDir()
+	lib := Source{Path: filepath.Join(root, "src", "lib.rs"), Text: "mod model; mod impls;\n"}
+	flat := Source{Path: filepath.Join(root, "src", "model.rs"), Text: "pub struct Model;\n"}
+	directory := Source{Path: filepath.Join(root, "src", "model", "mod.rs"), Text: "pub struct Model;\n"}
+	impls := Source{Path: filepath.Join(root, "src", "impls.rs"), Text: "use crate::model::Model;\nimpl Model { pub fn ambiguous(&self) {} }\n"}
+	analysis, err := Analyze([]Source{lib, flat, directory, impls})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, source := range []Source{flat, directory} {
+		declaration := analysis.TSDeclarations[absolutePath(source.Path)+":Model"]
+		if declaration == nil {
+			t.Fatalf("missing Rust model for %s", source.Path)
+		}
+		for _, member := range declaration.Members {
+			if member.Name == "ambiguous" {
+				t.Fatalf("ambiguous impl attached to %s: %#v", source.Path, declaration.Members)
+			}
+		}
+	}
+}
+
+func TestRustFocusedExtractionDoesNotFallbackForUnresolvedQualifiedImpl(t *testing.T) {
+	root := t.TempDir()
+	source := Source{Path: filepath.Join(root, "src", "lib.rs"), Text: "pub struct Model;\nimpl external::Model { pub fn wrong(&self) {} }\n"}
+	analysis, err := Analyze([]Source{source})
+	if err != nil {
+		t.Fatal(err)
+	}
+	declaration := analysis.TSDeclarations[absolutePath(source.Path)+":Model"]
+	if declaration == nil {
+		t.Fatal("missing local Rust model")
+	}
+	for _, member := range declaration.Members {
+		if member.Name == "wrong" {
+			t.Fatalf("unresolved qualified impl attached locally: %#v", declaration.Members)
+		}
+	}
+}

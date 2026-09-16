@@ -163,7 +163,7 @@ func validateAnalysisResponse(request api.AnalysisRequest, response api.Analysis
 		return fmt.Errorf("invalid %s analysis result: %w", request.Operation, err)
 	}
 	expected := map[api.AnalysisOperation]string{
-		api.AnalysisGraph: "grepple-navigation-graph-v3", api.AnalysisArchitecture: "grepple-directory-architecture-v5",
+		api.AnalysisGraph: "grepple-navigation-graph-v4", api.AnalysisArchitecture: "grepple-directory-architecture-v5",
 		api.AnalysisBoundaries: "grepple-boundaries-v3", api.AnalysisResponsibilities: "grepple-directory-responsibilities-v2",
 	}[request.Operation]
 	if resultHeader.Schema != expected {
