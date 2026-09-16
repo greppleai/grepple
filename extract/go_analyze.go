@@ -5,7 +5,6 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"sort"
 	"strconv"
 	"strings"
 	"unicode"
@@ -52,7 +51,7 @@ func analyzeGoSource(source Source, result *Analysis, methods map[string][]Membe
 	if err := document.Read(func(view codeparser.DocumentView) error {
 		root := view.Root()
 		statements := root.NamedChildren()
-		// Imports are file-scoped and must be known before route-bearing methods are analyzed.
+		// Imports are file-scoped and must be known before declarations are analyzed.
 		for _, statement := range statements {
 			if statement.Kind() == "import_declaration" {
 				analyzer.analyzeImports(statement)
@@ -405,7 +404,6 @@ func (analyzer *goSourceAnalyzer) analyzeFunction(node codeparser.ViewNode) {
 	if name == "" {
 		return
 	}
-	analyzer.collectFiberRoutes(node.ChildByFieldName("body"), node.ChildByFieldName("parameters"), "", "")
 	member := analyzer.goCallableMember(node, name)
 	key := analyzer.packageID + ":" + name
 	if functions := analyzer.result.GoFunctions[key]; len(functions) > 0 {
@@ -436,7 +434,6 @@ func (analyzer *goSourceAnalyzer) analyzeMethod(node codeparser.ViewNode) {
 		}
 	}
 	analyzer.methods[methodKey] = append(analyzer.methods[methodKey], member)
-	analyzer.collectFiberRoutes(node.ChildByFieldName("body"), node.ChildByFieldName("parameters"), receiver, owner)
 	analyzer.addGoSymbol(owner+"."+name, "method", node, node.ChildByFieldName("body"), receiver, owner)
 }
 
@@ -452,259 +449,6 @@ func (analyzer *goSourceAnalyzer) receiver(node codeparser.ViewNode) (string, st
 		return goBaseType(parameter.ChildByFieldName("type"), analyzer.text), name
 	}
 	return "", ""
-}
-
-type fiberRouter struct {
-	prefix string
-}
-
-func (analyzer *goSourceAnalyzer) collectFiberRoutes(body, parameters codeparser.ViewNode, receiver, owner string) {
-	if !body.Valid() {
-		return
-	}
-	routers := map[string]fiberRouter{}
-	for name := range fiberAppParameters(parameters, analyzer.text, analyzer.imports) {
-		routers[name] = fiberRouter{}
-	}
-	handlers := goTypedParameters(parameters, analyzer.text)
-	if receiver != "" && owner != "" {
-		handlers[receiver] = owner
-	}
-	analyzer.processFiberNode(body, routers, handlers)
-}
-
-func (analyzer *goSourceAnalyzer) processFiberNode(node codeparser.ViewNode, routers map[string]fiberRouter, handlers map[string]string) {
-	if !node.Valid() || node.Kind() == "function_literal" {
-		return
-	}
-	switch node.Kind() {
-	case "block", "statement_list":
-		for _, child := range node.NamedChildren() {
-			analyzer.processFiberNode(child, routers, handlers)
-		}
-	case "short_var_declaration", "assignment_statement":
-		analyzer.processFiberAssignment(node.ChildByFieldName("left"), node.ChildByFieldName("right"), routers)
-	case "var_declaration":
-		for _, spec := range node.NamedChildren() {
-			if spec.Kind() == "var_spec" {
-				analyzer.processFiberAssignment(spec, spec.ChildByFieldName("value"), routers)
-			}
-		}
-	case "call_expression":
-		analyzer.recordFiberRoute(node, routers, handlers)
-	default:
-		// Control-flow bodies get a private provenance state. This finds routes
-		// inside them without allowing conditional assignments to establish
-		// provenance after the control-flow statement.
-		nested := cloneFiberRouters(routers)
-		for _, child := range node.NamedChildren() {
-			analyzer.processFiberNode(child, nested, handlers)
-		}
-		for name := range fiberAssignedNames(node, analyzer.text) {
-			delete(routers, name)
-		}
-	}
-}
-
-func (analyzer *goSourceAnalyzer) processFiberAssignment(left, right codeparser.ViewNode, routers map[string]fiberRouter) {
-	names := goAssignmentNames(left, analyzer.text)
-	var values []codeparser.ViewNode
-	if right.Valid() {
-		values = right.NamedChildren()
-		if right.Kind() != "expression_list" {
-			values = []codeparser.ViewNode{right}
-		}
-	}
-	resolved := make([]fiberRouter, len(names))
-	valid := make([]bool, len(names))
-	for index := range names {
-		if index < len(values) {
-			resolved[index], valid[index] = analyzer.fiberRouterExpression(values[index], routers)
-		}
-	}
-	for index, name := range names {
-		delete(routers, name)
-		if valid[index] {
-			routers[name] = resolved[index]
-		}
-	}
-}
-
-func goAssignmentNames(left codeparser.ViewNode, source []byte) []string {
-	if !left.Valid() {
-		return nil
-	}
-	if left.Kind() == "identifier" {
-		return []string{nodeText(left, source)}
-	}
-	var names []string
-	for _, child := range left.NamedChildren() {
-		if child.Kind() == "identifier" {
-			names = append(names, nodeText(child, source))
-		}
-	}
-	return names
-}
-
-func (analyzer *goSourceAnalyzer) fiberRouterExpression(expression codeparser.ViewNode, routers map[string]fiberRouter) (fiberRouter, bool) {
-	if !expression.Valid() {
-		return fiberRouter{}, false
-	}
-	if expression.Kind() == "identifier" {
-		router, ok := routers[nodeText(expression, analyzer.text)]
-		return router, ok
-	}
-	if expression.Kind() != "call_expression" {
-		return fiberRouter{}, false
-	}
-	callee := expression.ChildByFieldName("function")
-	if !callee.Valid() || callee.Kind() != "selector_expression" {
-		return fiberRouter{}, false
-	}
-	operand := nodeText(callee.ChildByFieldName("operand"), analyzer.text)
-	method := nodeText(callee.ChildByFieldName("field"), analyzer.text)
-	if method == "New" && supportedFiberModule(analyzer.imports[operand]) {
-		return fiberRouter{}, true
-	}
-	parent, ok := routers[operand]
-	if method != "Group" || !ok {
-		return fiberRouter{}, false
-	}
-	arguments := expression.ChildByFieldName("arguments")
-	if !arguments.Valid() || arguments.NamedChildCount() == 0 {
-		return fiberRouter{}, false
-	}
-	prefix, ok := goStringLiteral(arguments.NamedChild(0), analyzer.text)
-	if !ok {
-		return fiberRouter{}, false
-	}
-	return fiberRouter{prefix: parent.prefix + prefix}, true
-}
-
-func (analyzer *goSourceAnalyzer) recordFiberRoute(node codeparser.ViewNode, routers map[string]fiberRouter, handlers map[string]string) {
-	callee := node.ChildByFieldName("function")
-	if !callee.Valid() || callee.Kind() != "selector_expression" {
-		return
-	}
-	router, ok := routers[nodeText(callee.ChildByFieldName("operand"), analyzer.text)]
-	methodName := nodeText(callee.ChildByFieldName("field"), analyzer.text)
-	if !ok || !fiberRouteMethod(methodName) {
-		return
-	}
-	method := strings.ToUpper(methodName)
-	arguments := node.ChildByFieldName("arguments")
-	if !arguments.Valid() || arguments.NamedChildCount() < 2 {
-		return
-	}
-	routePath, ok := goStringLiteral(arguments.NamedChild(0), analyzer.text)
-	if !ok {
-		return
-	}
-	for index := 1; index < arguments.NamedChildCount(); index++ {
-		handler := arguments.NamedChild(index)
-		if handler.Kind() != "selector_expression" {
-			continue
-		}
-		handlerOwner := handlers[nodeText(handler.ChildByFieldName("operand"), analyzer.text)]
-		name := nodeText(handler.ChildByFieldName("field"), analyzer.text)
-		if handlerOwner == "" || name == "" {
-			continue
-		}
-		analyzer.result.GoFiberRoutes = append(analyzer.result.GoFiberRoutes, FiberRoute{Method: method, Path: router.prefix + routePath, Handler: handlerOwner + "." + name, PackageID: analyzer.packageID, Location: syntaxLocation(analyzer.source.Path, node)})
-	}
-}
-
-func goStringLiteral(node codeparser.ViewNode, source []byte) (string, bool) {
-	if !node.Valid() || (node.Kind() != "interpreted_string_literal" && node.Kind() != "raw_string_literal") {
-		return "", false
-	}
-	value, err := strconv.Unquote(nodeText(node, source))
-	return value, err == nil
-}
-
-func goTypedParameters(parameters codeparser.ViewNode, source []byte) map[string]string {
-	result := map[string]string{}
-	if !parameters.Valid() {
-		return result
-	}
-	for _, parameter := range parameters.NamedChildren() {
-		if parameter.Kind() != "parameter_declaration" {
-			continue
-		}
-		owner := goBaseType(parameter.ChildByFieldName("type"), source)
-		if owner == "" {
-			continue
-		}
-		for _, name := range childFieldTexts(parameter, "name", source) {
-			result[name] = owner
-		}
-	}
-	return result
-}
-
-func cloneFiberRouters(routers map[string]fiberRouter) map[string]fiberRouter {
-	result := make(map[string]fiberRouter, len(routers))
-	for name, router := range routers {
-		result[name] = router
-	}
-	return result
-}
-
-func fiberAssignedNames(node codeparser.ViewNode, source []byte) map[string]bool {
-	result := map[string]bool{}
-	codeparser.WalkNamedView(node, func(child codeparser.ViewNode) {
-		if child != node && child.Kind() == "function_literal" {
-			return
-		}
-		switch child.Kind() {
-		case "short_var_declaration", "assignment_statement":
-			for _, name := range goAssignmentNames(child.ChildByFieldName("left"), source) {
-				result[name] = true
-			}
-		case "var_spec":
-			for _, name := range goAssignmentNames(child, source) {
-				result[name] = true
-			}
-		}
-	})
-	return result
-}
-
-func fiberAppParameters(parameters codeparser.ViewNode, source []byte, imports map[string]string) map[string]bool {
-	result := map[string]bool{}
-	if !parameters.Valid() {
-		return result
-	}
-	for _, parameter := range parameters.NamedChildren() {
-		if parameter.Kind() != "parameter_declaration" {
-			continue
-		}
-		typeName := normalizeGoType(nodeText(parameter.ChildByFieldName("type"), source))
-		if !strings.HasPrefix(typeName, "*") || !strings.HasSuffix(typeName, ".App") {
-			continue
-		}
-		qualifier := strings.TrimSuffix(strings.TrimPrefix(typeName, "*"), ".App")
-		module := imports[qualifier]
-		if !supportedFiberModule(module) {
-			continue
-		}
-		for _, name := range childFieldTexts(parameter, "name", source) {
-			result[name] = true
-		}
-	}
-	return result
-}
-func supportedFiberModule(module string) bool {
-	return module == "github.com/gofiber/fiber/v2" || module == "github.com/gofiber/fiber/v3"
-}
-
-func fiberRouteMethod(method string) bool {
-	switch method {
-	case "Get", "Head", "Post", "Put", "Delete", "Connect", "Options", "Trace", "Patch", "All":
-		return true
-	default:
-		return false
-	}
 }
 
 func (analyzer *goSourceAnalyzer) addGoSymbol(name, kind string, node, _ codeparser.ViewNode, receiver, owner string) {
@@ -760,16 +504,4 @@ func mergeGoMethods(result *Analysis, methods map[string][]Member) {
 			declaration.Members = append(declaration.Members, methods[key]...)
 		}
 	}
-	sort.Slice(result.GoFiberRoutes, func(i, j int) bool {
-		left, right := result.GoFiberRoutes[i], result.GoFiberRoutes[j]
-		leftKey := left.PackageID + "\x00" + left.Method + "\x00" + left.Path + "\x00" + left.Handler + "\x00" + left.Location.Path
-		rightKey := right.PackageID + "\x00" + right.Method + "\x00" + right.Path + "\x00" + right.Handler + "\x00" + right.Location.Path
-		if leftKey != rightKey {
-			return leftKey < rightKey
-		}
-		if left.Location.Line != right.Location.Line {
-			return left.Location.Line < right.Location.Line
-		}
-		return left.Location.Column < right.Location.Column
-	})
 }

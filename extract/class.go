@@ -31,18 +31,11 @@ type StructTagRequirement struct {
 	Line  int
 }
 
-// RouteRequirement is an exact Go Fiber route requirement.
-type RouteRequirement struct {
-	Method, Path, Handler string
-	Line                  int
-}
-
 // DiagramClass is a parsed Mermaid class-like node and its metadata.
 type DiagramClass struct {
 	Name, DisplayLabel, Kind, Language, Package, Module, File, Underlying string
 	Members                                                               []DiagramMember
 	StructTags                                                            map[string]StructTagRequirement
-	Routes                                                                []RouteRequirement
 	Line, FileLine, FileLocalLine, UnderlyingLine                         int
 	PackageLine, ModuleLine, ImportLine                                   int
 	DefaultExportLine                                                     int
@@ -95,7 +88,6 @@ var fileMetadataRE = regexp.MustCompile(`^%%\s*(?:grepple|pi):file\s+(\w+)\s+(\S
 var fileLocalMetadataRE = regexp.MustCompile(`^%%\s*(?:grepple|pi):filelocal\s+(\w+)\s*$`)
 var structTagMetadataRE = regexp.MustCompile(`^%%\s*(?:grepple|pi):struct-tag\s+(\w+)\s+(\w+)\s+(.+?)\s*$`)
 var underlyingMetadataRE = regexp.MustCompile(`^%%\s*(?:grepple|pi):underlying\s+(\w+)\s+(.+?)\s*$`)
-var routeMetadataRE = regexp.MustCompile(`^%%\s*(?:grepple|pi):route\s+([A-Z]+)\s+(\S+)\s+(\w+)\.(\w+)\s*$`)
 var completePackageMetadataRE = regexp.MustCompile(`^%%\s*(?:grepple|pi):complete-package\s+(\S+)\s*$`)
 var packageDefaultMetadataRE = regexp.MustCompile(`^%%\s*(?:grepple|pi):package-default\s+(\S+)\s*$`)
 var languageDefaultMetadataRE = regexp.MustCompile(`^%%\s*(?:grepple|pi):language-default\s+([A-Za-z_][\w-]*)\s*$`)
@@ -428,12 +420,6 @@ func (parser *classParser) parseGoMetadata(value string, line int) (bool, error)
 		}
 		return true, parser.applyUnderlyingMetadata(match[1], match[2], line)
 	}
-	if match := routeMetadataRE.FindStringSubmatch(value); match != nil {
-		if !parser.sawHeader {
-			return true, nil
-		}
-		return true, parser.applyRouteMetadata(match[1], match[2], match[3], match[4], line)
-	}
 	return false, nil
 }
 
@@ -547,7 +533,6 @@ func validateNamespacedClassMetadata(value string, line int) error {
 		"filelocal":        "%% grepple:filelocal <target>",
 		"struct-tag":       "%% grepple:struct-tag <target> <field> <Go-quoted-string>",
 		"underlying":       "%% grepple:underlying <target> <normalized-Go-type-expression>",
-		"route":            "%% grepple:route <METHOD> <PATH> <Type.method>",
 		"complete-package": "%% grepple:complete-package <exact-go-import-path>",
 		"package-default":  "%% grepple:package-default <exact-go-import-path>",
 		"language-default": "%% grepple:language-default <language>",
@@ -643,21 +628,6 @@ func (parser *classParser) applyUnderlyingMetadata(name, expression string, line
 		return fmt.Errorf("Line %d: malformed underlying directive; expected '%%%% grepple:underlying <target> <normalized-Go-type-expression>'", line)
 	}
 	class.Underlying, class.UnderlyingLine = normalized, line
-	return nil
-}
-
-func (parser *classParser) applyRouteMetadata(method, path, typeName, handlerName string, line int) error {
-	class, err := parser.metadataTarget(typeName, line)
-	if err != nil {
-		return err
-	}
-	handler := typeName + "." + handlerName
-	for _, route := range class.Routes {
-		if route.Method == method && route.Path == path && route.Handler == handler {
-			return fmt.Errorf("Line %d: duplicate route directive for '%s %s %s'", line, method, path, handler)
-		}
-	}
-	class.Routes = append(class.Routes, RouteRequirement{Method: method, Path: path, Handler: handler, Line: line})
 	return nil
 }
 
@@ -1308,9 +1278,6 @@ func (validator *classValidator) checkDeclaration(class *DiagramClass) {
 	if class.Underlying != "" {
 		validator.checkUnderlying(class, actual)
 	}
-	if len(class.Routes) > 0 {
-		validator.checkFiberRoutes(class, actual)
-	}
 	if len(class.StructTags) > 0 {
 		validator.checkStructTags(class, actual)
 	}
@@ -1339,25 +1306,6 @@ func (validator *classValidator) checkUnderlying(class *DiagramClass, declaratio
 	}
 	if class.Underlying != declaration.Underlying {
 		validator.add(class.UnderlyingLine, fmt.Sprintf("Expected underlying type of '%s' to be '%s'; found '%s'.", class.Name, class.Underlying, declaration.Underlying))
-	}
-}
-
-func (validator *classValidator) checkFiberRoutes(class *DiagramClass, declaration *Declaration) {
-	for _, expected := range class.Routes {
-		if declaration.Language != "go" {
-			validator.add(expected.Line, fmt.Sprintf("Fiber route metadata on '%s' requires a Go type.", class.Name))
-			continue
-		}
-		found := false
-		for _, actual := range validator.analysis.GoFiberRoutes {
-			if actual.PackageID == declaration.PackageID && actual.Method == expected.Method && actual.Path == expected.Path && actual.Handler == expected.Handler {
-				found = true
-				break
-			}
-		}
-		if !found {
-			validator.add(expected.Line, fmt.Sprintf("Expected Fiber route %s %s handled by '%s' in the Go package scope of '%s'.", expected.Method, expected.Path, expected.Handler, class.Name))
-		}
 	}
 }
 

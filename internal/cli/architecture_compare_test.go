@@ -66,7 +66,6 @@ func TestCompareDirectoryArchitecturesReportsFirstSourceLinkedFact(t *testing.T)
 	}{
 		{name: "file", mutate: func(value *directoryArchitecture) { value.SourceFiles[0].Classification = "test" }, kind: "file", identity: "service/service.go", path: "service/service.go"},
 		{name: "declaration", mutate: func(value *directoryArchitecture) { value.Symbols[0].End++ }, kind: "declaration", identity: "service/service.go|go|func||Run", path: "service/service.go"},
-		{name: "route", mutate: func(value *directoryArchitecture) { value.Routes[0].Framework = "changed" }, kind: "route", identity: "service/service.go|GET|/items|Run|Run", path: "service/service.go"},
 		{name: "relation", mutate: func(value *directoryArchitecture) { value.Relations[0].Count++ }, kind: "relation", identity: "app|service|resolved-call", path: "app/main.go"},
 		{name: "directory", mutate: func(value *directoryArchitecture) { value.Directories[1].PublicCallables++ }, kind: "directory", identity: "service", path: "service"},
 	}
@@ -151,11 +150,10 @@ func architectureComparisonFixture() directoryArchitecture {
 		},
 		SourceFiles: []architectureSourceFile{{Path: "service/service.go", Language: "go", Classification: "production"}},
 		Directories: []architectureDirectory{
-			{Path: ".", Files: 1, Classifications: []architectureCount{{Name: "production", Count: 1}}, Languages: []architectureCount{{Name: "go", Count: 1}}, Declarations: []architectureCount{{Name: "func", Count: 1}}, PublicCallables: 1, Routes: 1},
-			{Path: "service", Files: 1, Classifications: []architectureCount{{Name: "production", Count: 1}}, Languages: []architectureCount{{Name: "go", Count: 1}, {Name: "typescript", Count: 1}}, Declarations: []architectureCount{{Name: "func", Count: 1}}, PublicCallables: 1, Routes: 1},
+			{Path: ".", Files: 1, Classifications: []architectureCount{{Name: "production", Count: 1}}, Languages: []architectureCount{{Name: "go", Count: 1}}, Declarations: []architectureCount{{Name: "func", Count: 1}}, PublicCallables: 1},
+			{Path: "service", Files: 1, Classifications: []architectureCount{{Name: "production", Count: 1}}, Languages: []architectureCount{{Name: "go", Count: 1}, {Name: "typescript", Count: 1}}, Declarations: []architectureCount{{Name: "func", Count: 1}}, PublicCallables: 1},
 		},
 		Symbols:         []architectureSymbol{{Name: "Run", Kind: "func", Language: "go", Classification: "production", Path: "service/service.go", Directory: "service", Visibility: "public", Start: 3, End: 5}},
-		Routes:          []architectureRoute{{Method: "GET", Pattern: "/items", Handler: "Run", Framework: "net/http", Language: "go", Classification: "production", Path: "service/service.go", Directory: "service", Caller: "Run", Line: 4}},
 		Relations:       []architectureRelation{{From: "app", To: "service", Kind: "resolved-call", Count: 1, Classifications: []architectureCount{{Name: "production", Count: 1}}, Evidence: []architectureRelationEvidence{{Path: "app/main.go", Line: 7, Caller: "main", Target: "Run", Kind: "resolved-call", Classification: "production", Confidence: "import-resolved"}}}},
 		RepositoryRoots: []string{"example.com/project"},
 	}

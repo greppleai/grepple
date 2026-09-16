@@ -95,7 +95,7 @@ func TestGraphCompactEmitsBoundedAgentFacingEdges(t *testing.T) {
 			t.Fatal(err)
 		}
 	})
-	for _, expected := range []string{"graph grepple-navigation-graph-v2 files=1 declarations=2 calls=1", "entrypoints=0 routes=0", "D ", " go func Run main.go:2", "C ", " Run -> helper#", "[unique-terminal] main.go:2"} {
+	for _, expected := range []string{"graph grepple-navigation-graph-v3 files=1 declarations=2 calls=1", "entrypoints=0", "D ", " go func Run main.go:2", "C ", " Run -> helper#", "[unique-terminal] main.go:2"} {
 		if !strings.Contains(output, expected) {
 			t.Fatalf("compact graph missing %q:\n%s", expected, output)
 		}
@@ -265,7 +265,7 @@ func TestGraphDiffReportsSemanticChangesAndIgnoresLineShifts(t *testing.T) {
 			t.Fatal(err)
 		}
 	})
-	for _, expected := range []string{"graph-diff grepple-navigation-diff-v2", "sources=before(discovered:1,selected:1,parsed:1,skipped:0,failed:0,recovered:0)", "routes=+0/-0", "+ D go func added", "- D go func removed", "+ C", "- C"} {
+	for _, expected := range []string{"graph-diff grepple-navigation-diff-v3", "sources=before(discovered:1,selected:1,parsed:1,skipped:0,failed:0,recovered:0)", "+ D go func added", "- D go func removed", "+ C", "- C"} {
 		if !strings.Contains(output, expected) {
 			t.Fatalf("diff missing %q:\n%s", expected, output)
 		}

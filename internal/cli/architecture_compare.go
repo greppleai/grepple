@@ -208,15 +208,6 @@ func normalizeDirectoryArchitecture(value directoryArchitecture) directoryArchit
 		return architectureSymbolSortKey(value.Symbols[i]) < architectureSymbolSortKey(value.Symbols[j])
 	})
 
-	value.Routes = append([]architectureRoute{}, value.Routes...)
-	for index := range value.Routes {
-		value.Routes[index].Path = normalizeArchitecturePath(value.Routes[index].Path)
-		value.Routes[index].Directory = normalizeArchitecturePath(value.Routes[index].Directory)
-	}
-	sort.Slice(value.Routes, func(i, j int) bool {
-		return architectureRouteSortKey(value.Routes[i]) < architectureRouteSortKey(value.Routes[j])
-	})
-
 	value.Relations = append([]architectureRelation{}, value.Relations...)
 	for index := range value.Relations {
 		relation := &value.Relations[index]
@@ -268,7 +259,6 @@ func firstArchitectureDifference(before, after directoryArchitecture) *architect
 	groups := [][2][]architectureFact{
 		{architectureSourceFileFacts(before.SourceFiles), architectureSourceFileFacts(after.SourceFiles)},
 		{architectureSymbolFacts(before.Symbols), architectureSymbolFacts(after.Symbols)},
-		{architectureRouteFacts(before.Routes), architectureRouteFacts(after.Routes)},
 		{architectureRelationFacts(before.Relations), architectureRelationFacts(after.Relations)},
 		{architectureDirectoryFacts(before.Directories), architectureDirectoryFacts(after.Directories)},
 		{architectureMetadataFacts(before), architectureMetadataFacts(after)},
@@ -302,15 +292,6 @@ func architectureSymbolFacts(values []architectureSymbol) []architectureFact {
 	for _, value := range values {
 		identity := strings.Join([]string{value.Path, value.Language, value.Kind, value.Container, value.Name}, "|")
 		facts = append(facts, architectureFact{kind: "declaration", key: architectureSymbolComparisonKey(value), identity: identity, path: value.Path, start: value.Start, end: value.End, value: value})
-	}
-	return facts
-}
-
-func architectureRouteFacts(values []architectureRoute) []architectureFact {
-	facts := make([]architectureFact, 0, len(values))
-	for _, value := range values {
-		identity := strings.Join([]string{value.Path, value.Method, value.Pattern, value.Handler, value.Caller}, "|")
-		facts = append(facts, architectureFact{kind: "route", key: architectureRouteComparisonKey(value), identity: identity, path: value.Path, start: value.Line, end: value.Line, value: value})
 	}
 	return facts
 }
@@ -442,14 +423,6 @@ func architectureSymbolComparisonKey(value architectureSymbol) string {
 
 func architectureSymbolSortKey(value architectureSymbol) string {
 	return fmt.Sprintf("%s|%09d|%09d|%s|%s|%s|%s", architectureSymbolComparisonKey(value), value.Start, value.End, value.Classification, value.Directory, value.Visibility, value.Entrypoint)
-}
-
-func architectureRouteComparisonKey(value architectureRoute) string {
-	return architectureStringKey(value.Path, value.Method, value.Pattern, value.Handler, value.Caller)
-}
-
-func architectureRouteSortKey(value architectureRoute) string {
-	return fmt.Sprintf("%s|%09d|%s|%s|%s|%s", architectureRouteComparisonKey(value), value.Line, value.Framework, value.Language, value.Classification, value.Directory)
 }
 
 func architectureRelationComparisonKey(value architectureRelation) string {

@@ -62,17 +62,17 @@ func assertArchitectureSourceFiles(t *testing.T, files []architectureSourceFile)
 	}
 }
 
-func TestArchitectureDirectoryReportsAdapterEvidencedEntrypointsAndRoutes(t *testing.T) {
+func TestArchitectureDirectoryReportsAdapterEvidencedEntrypoints(t *testing.T) {
 	root := t.TempDir()
 	writeArchitectureFixture(t, root, "go.mod", "module example.com/project\n")
-	writeArchitectureFixture(t, root, "cmd/server/main.go", "package main\nimport web \"net/http\"\nfunc main() { web.HandleFunc(\"POST /items\", createItem) }\nfunc createItem(web.ResponseWriter, *web.Request) {}\n")
+	writeArchitectureFixture(t, root, "cmd/server/main.go", "package main\nfunc main() {}\n")
 	chdirForConfigTest(t, root)
 	compact := captureStdout(t, func() {
 		if err := runArchitecture([]string{"directory", "--compact", "."}); err != nil {
 			t.Fatal(err)
 		}
 	})
-	for _, expected := range []string{"entrypoints=1 routes=1", "E process main cmd/server/main.go:3", "P POST /items -> createItem framework=net/http at=cmd/server/main.go:3"} {
+	for _, expected := range []string{"entrypoints=1", "E process main cmd/server/main.go:2"} {
 		if !strings.Contains(compact, expected) {
 			t.Fatalf("compact architecture missing %q:\n%s", expected, compact)
 		}
@@ -80,9 +80,6 @@ func TestArchitectureDirectoryReportsAdapterEvidencedEntrypointsAndRoutes(t *tes
 	architecture, err := buildDirectoryArchitecture([]string{"."}, 0)
 	if err != nil {
 		t.Fatal(err)
-	}
-	if len(architecture.Routes) != 1 || architecture.Routes[0].Classification != "production" || architecture.Routes[0].Directory != "cmd/server" {
-		t.Fatalf("routes=%+v", architecture.Routes)
 	}
 	matches := resolveArchitectureSymbols(architecture.Symbols, "main")
 	if len(matches) != 1 || matches[0].Entrypoint != "process" {

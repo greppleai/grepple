@@ -21,14 +21,13 @@ func TestFilterNavigationGraphPreservesOnlyEligibleClosedEdges(t *testing.T) {
 			{ID: "cross", CallerID: "go-root", TargetID: "python-target", Language: "go", Confidence: "exact"},
 			{ID: "python", CallerID: "python-target", Language: "python", Confidence: "candidate"},
 		},
-		Routes:          []parser.NavigationRoute{{CallerID: "go-root", Language: "go", Pattern: "/go"}, {CallerID: "python-target", Language: "python", Pattern: "/python"}},
 		RepositoryRoots: []string{"example.com/project"},
 	}
 	filtered, err := FilterNavigationGraph(graph, NavigationGraphFilter{Languages: []string{"go"}, Confidences: []string{"candidate"}})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(filtered.Imports) != 1 || filtered.Imports[0].Language != "go" || len(filtered.Routes) != 1 || filtered.Routes[0].Pattern != "/go" || !reflect.DeepEqual(filtered.RepositoryRoots, graph.RepositoryRoots) {
+	if len(filtered.Imports) != 1 || filtered.Imports[0].Language != "go" || !reflect.DeepEqual(filtered.RepositoryRoots, graph.RepositoryRoots) {
 		t.Fatalf("imports=%#v", filtered.Imports)
 	}
 	if got, want := queryDeclarationIDs(filtered), []string{"go-root", "go-target"}; !reflect.DeepEqual(got, want) {

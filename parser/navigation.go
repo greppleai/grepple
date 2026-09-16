@@ -115,18 +115,6 @@ type NavigationMemberAccess struct {
 	StartByte    int    `json:"startByte,omitempty"`
 }
 
-// NavigationRoute records a statically declared route recognized by a language adapter.
-type NavigationRoute struct {
-	CallerID  string `json:"callerId,omitempty"`
-	Method    string `json:"method,omitempty"`
-	Pattern   string `json:"pattern"`
-	Handler   string `json:"handler,omitempty"`
-	Framework string `json:"framework"`
-	Language  string `json:"language"`
-	Path      string `json:"path"`
-	Line      int    `json:"line"`
-}
-
 // NavigationGraph is the normalized, language-neutral declaration, call, import,
 // type, field, export, and member-access model. Language-specific consumers may
 // enrich its syntax facts with package, module, receiver, or repository context.
@@ -138,7 +126,6 @@ type NavigationGraph struct {
 	Fields          []NavigationField        `json:"fields,omitempty"`
 	TypeUsages      []NavigationTypeUsage    `json:"typeUsages,omitempty"`
 	MemberAccesses  []NavigationMemberAccess `json:"memberAccesses,omitempty"`
-	Routes          []NavigationRoute        `json:"routes,omitempty"`
 	RepositoryRoots []string                 `json:"repositoryRoots,omitempty"`
 }
 
@@ -151,7 +138,6 @@ func (graph *NavigationGraph) Merge(other NavigationGraph) {
 	graph.Fields = append(graph.Fields, other.Fields...)
 	graph.TypeUsages = append(graph.TypeUsages, other.TypeUsages...)
 	graph.MemberAccesses = append(graph.MemberAccesses, other.MemberAccesses...)
-	graph.Routes = append(graph.Routes, other.Routes...)
 	graph.RepositoryRoots = append(graph.RepositoryRoots, other.RepositoryRoots...)
 }
 
@@ -211,8 +197,7 @@ func navigationGraphFromTree(root *syntaxNode, content, language, path string) N
 	returnBindings := navigationReturnBindings(root, content, imports, navigation)
 	collector := navigationCollector{content: content, adapter: adapter, navigation: navigation, path: path, imports: imports, fields: fields, returnBindings: returnBindings, packageName: packageName}
 	collector.walk(root, navigationWalkContext{})
-	routes := navigation.Routes(root, content, language, path, imports, collector.declarations)
-	return NavigationGraph{Declarations: collector.declarations, Calls: collector.calls, Imports: navigationImportFacts(imports, language, path), Exports: navigation.Exports(root, content, language, path), Fields: navigationFieldFacts(fields, language, path, packageName), TypeUsages: collector.typeUsages, MemberAccesses: collector.memberAccesses, Routes: routes}
+	return NavigationGraph{Declarations: collector.declarations, Calls: collector.calls, Imports: navigationImportFacts(imports, language, path), Exports: navigation.Exports(root, content, language, path), Fields: navigationFieldFacts(fields, language, path, packageName), TypeUsages: collector.typeUsages, MemberAccesses: collector.memberAccesses}
 }
 
 // DeclarationRangeAt returns the narrowest callable declaration containing line.

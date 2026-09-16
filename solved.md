@@ -73,7 +73,7 @@ This file records completed Grepple roadmap work that no longer belongs in `next
 - [x] Added deterministic ambiguity fixtures for interfaces, overloads, inheritance, re-exports, default imports, aliases, and TSX path aliases.
 - [x] Reported omitted callers and callees in human and JSON related output.
 - [x] Made every human omitted-edge notice provide a copyable focused `graph callers|callees|impact --at PATH:LINE --depth 2 --json .` continuation.
-- [x] Added complete `grepple-navigation-graph-v2` JSON and bounded compact graph projections, including adapter-evidenced entrypoints and routes.
+- [x] Added complete `grepple-navigation-graph-v3` JSON and bounded compact graph projections, including adapter-evidenced process entrypoints.
 - [x] Added deterministic discovered, selected, parsed, skipped, failed, recovered, and truncated source accounting to graphs, focused graph queries, graph diffs, and boundary reports.
 - [x] Added graph-wide and per-language/confidence resolution measurements, including resolved, ambiguous, unresolved, singleton-candidate counts, and ambiguity frequency in complete JSON plus compact aggregate headers.
 - [x] Added parser-owned content- and grammar-addressed per-file navigation facts shared by graph output/queries, `--related`, boundaries, and extraction, with atomic corruption-tolerant storage, path instantiation, explicit bypass, cold/warm parity tests, and a repeatable benchmark.
@@ -81,7 +81,7 @@ This file records completed Grepple roadmap work that no longer belongs in `next
 - [x] Added callers, callees, dependencies, dependents, and bidirectional impact queries with depth bounds, cycle safety, candidate preservation, and exact location/symbol/package/module/path roots.
 - [x] Added traversal-free `graph resolve --symbol NAME` previews with deterministic exact/terminal matches, full stable IDs, exact `--at` alternatives, filters, and copyable focused graph commands in bounded compact and complete JSON output.
 - [x] Added language, confidence, and visibility filtering before root selection and traversal.
-- [x] Added `grepple-navigation-diff-v2`, ignoring line-only movement while reporting semantic declaration, call-edge, entrypoint, and route changes.
+- [x] Added `grepple-navigation-diff-v3`, ignoring line-only movement while reporting semantic declaration, call-edge, and entrypoint changes.
 - [x] Added end-to-end shared-edge parity coverage across JSON, compact graph output, focused Mermaid, directory resolution, and `--related`.
 
 ## Architecture extraction and validation
@@ -101,9 +101,10 @@ This file records completed Grepple roadmap work that no longer belongs in `next
 - [x] Added independently labeled import-only and imported-type directory relations with production/test/fixture/generated/vendor evidence totals and resolved/ambiguous/unresolved/unsupported coverage.
 - [x] Kept compact directory relation output bounded to displayed directory depth while `architecture why` preserves exact uncollapsed evidence.
 - [x] Added `parser.OutlineFromDocument` and document-backed graph construction so directory architecture parses each selected source once for both outlines and navigation.
-- [x] Added adapter-evidenced Go process entrypoints and source-linked `net/http.Handle`/`HandleFunc` routes to shared graph, directory architecture, focused queries, graph filtering, and semantic diffs without inferring unsupported framework semantics.
-- [x] Added a selected source-file inventory and `architecture compare` diagnostics that normalize paths and collection ordering before raw-byte checks, then report the first changed file, declaration, route, relation, or directory with exact before/after evidence.
+- [x] Added adapter-evidenced Go process entrypoints to the shared graph, directory architecture, focused queries, graph filtering, and semantic diffs.
+- [x] Added a selected source-file inventory and `architecture compare` diagnostics that normalize paths and collection ordering before raw-byte checks, then report the first changed file, declaration, relation, or directory with exact before/after evidence.
 - [x] Removed Go-specific package/workspace commands, public capability fields, generators, checkers, hook paths, tests, and committed `.grepple` artifacts without a compatibility period.
+- [x] Removed static route extraction, Fiber route metadata, route capability claims, graph/architecture route fields, renderers, diffs, caches, tests, and documentation because framework registration and runtime reachability cannot be represented as deterministic language-neutral source facts.
 
 ## Parser and language architecture
 

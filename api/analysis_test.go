@@ -27,12 +27,12 @@ func TestAnalysisRequestWireContract(t *testing.T) {
 }
 
 func TestAnalysisResponseEmbedsVersionedResult(t *testing.T) {
-	response := AnalysisResponse{Schema: "grepple-remote-analysis-v1", Operation: AnalysisArchitecture, Repository: "owner/repo", Commit: "abc", Found: true, Complete: true, Result: json.RawMessage(`{"schema":"grepple-directory-architecture-v4"}`)}
+	response := AnalysisResponse{Schema: "grepple-remote-analysis-v1", Operation: AnalysisArchitecture, Repository: "owner/repo", Commit: "abc", Found: true, Complete: true, Result: json.RawMessage(`{"schema":"grepple-directory-architecture-v5"}`)}
 	content, err := json.Marshal(response)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(string(content), `"result":{"schema":"grepple-directory-architecture-v4"}`) {
+	if !strings.Contains(string(content), `"result":{"schema":"grepple-directory-architecture-v5"}`) {
 		t.Fatalf("response=%s", content)
 	}
 }

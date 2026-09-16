@@ -38,7 +38,6 @@ type architectureDirectoryResponsibility struct {
 	Declarations    []architectureCount `json:"declarations"`
 	PublicCallables int                 `json:"publicCallables"`
 	Entrypoints     int                 `json:"entrypoints"`
-	Routes          int                 `json:"routes"`
 	Incoming        int                 `json:"incomingRelations"`
 	Outgoing        int                 `json:"outgoingRelations"`
 }
@@ -95,10 +94,10 @@ func buildArchitectureResponsibilitiesOutput(architecture directoryArchitecture)
 	}
 	items := make([]architectureDirectoryResponsibility, 0, len(architecture.Directories))
 	for _, directory := range architecture.Directories {
-		items = append(items, architectureDirectoryResponsibility{Directory: directory.Path, Files: directory.Files, Classifications: directory.Classifications, Languages: directory.Languages, Declarations: directory.Declarations, PublicCallables: directory.PublicCallables, Entrypoints: directory.Entrypoints, Routes: directory.Routes, Incoming: incoming[directory.Path], Outgoing: outgoing[directory.Path]})
+		items = append(items, architectureDirectoryResponsibility{Directory: directory.Path, Files: directory.Files, Classifications: directory.Classifications, Languages: directory.Languages, Declarations: directory.Declarations, PublicCallables: directory.PublicCallables, Entrypoints: directory.Entrypoints, Incoming: incoming[directory.Path], Outgoing: outgoing[directory.Path]})
 	}
 	sort.Slice(items, func(i, j int) bool { return items[i].Directory < items[j].Directory })
-	return architectureResponsibilitiesOutput{Schema: "grepple-directory-responsibilities-v1", Files: architecture.Files, Sources: architecture.Sources, Responsibilities: items, Truncation: architecture.Truncation}
+	return architectureResponsibilitiesOutput{Schema: "grepple-directory-responsibilities-v2", Files: architecture.Files, Sources: architecture.Sources, Responsibilities: items, Truncation: architecture.Truncation}
 }
 
 func renderArchitectureResponsibilities(report architectureResponsibilitiesOutput, maxBytes int) error {
@@ -115,7 +114,7 @@ func renderArchitectureResponsibilities(report architectureResponsibilitiesOutpu
 		}
 	}
 	for _, item := range report.Responsibilities {
-		if err := output.writeString(fmt.Sprintf("D %s files=%d public=%d entrypoints=%d routes=%d incoming=%d outgoing=%d\n", item.Directory, item.Files, item.PublicCallables, item.Entrypoints, item.Routes, item.Incoming, item.Outgoing)); err != nil {
+		if err := output.writeString(fmt.Sprintf("D %s files=%d public=%d entrypoints=%d incoming=%d outgoing=%d\n", item.Directory, item.Files, item.PublicCallables, item.Entrypoints, item.Incoming, item.Outgoing)); err != nil {
 			return nil
 		}
 	}

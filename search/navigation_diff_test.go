@@ -46,17 +46,3 @@ func TestDiffNavigationGraphsIgnoresPositionOnlyChanges(t *testing.T) {
 		t.Fatalf("position-only diff=%#v", diff)
 	}
 }
-
-func TestDiffNavigationGraphsTracksRouteSemanticsButIgnoresRouteMovement(t *testing.T) {
-	before := parser.NavigationGraph{Declarations: []parser.NavigationDeclaration{{ID: "old", Name: "Main", Kind: "func", Language: "go", PackageID: "example/app"}}, Routes: []parser.NavigationRoute{{CallerID: "old", Method: "GET", Pattern: "/items", Handler: "items", Framework: "net/http", Language: "go", Path: "old/main.go", Line: 4}}}
-	moved := parser.NavigationGraph{Declarations: []parser.NavigationDeclaration{{ID: "new", Name: "Main", Kind: "func", Language: "go", PackageID: "example/app"}}, Routes: []parser.NavigationRoute{{CallerID: "new", Method: "GET", Pattern: "/items", Handler: "items", Framework: "net/http", Language: "go", Path: "new/main.go", Line: 20}}}
-	diff := DiffNavigationGraphs(before, moved)
-	if len(diff.AddedRoutes) != 0 || len(diff.RemovedRoutes) != 0 {
-		t.Fatalf("moved route diff=%+v", diff)
-	}
-	moved.Routes[0].Method = "POST"
-	diff = DiffNavigationGraphs(before, moved)
-	if len(diff.AddedRoutes) != 1 || len(diff.RemovedRoutes) != 1 {
-		t.Fatalf("changed route diff=%+v", diff)
-	}
-}

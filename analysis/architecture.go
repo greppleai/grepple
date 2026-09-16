@@ -11,7 +11,7 @@ import (
 )
 
 // ArchitectureSchema identifies the normalized directory architecture contract.
-const ArchitectureSchema = "grepple-directory-architecture-v4"
+const ArchitectureSchema = "grepple-directory-architecture-v5"
 
 // ArchitectureReport is a complete language-neutral directory projection.
 type ArchitectureReport struct {
@@ -22,7 +22,6 @@ type ArchitectureReport struct {
 	SourceFiles      []ArchitectureSourceFile     `json:"sourceFiles"`
 	Directories      []ArchitectureDirectory      `json:"directories"`
 	Symbols          []ArchitectureSymbol         `json:"symbols"`
-	Routes           []ArchitectureRoute          `json:"routes,omitempty"`
 	Relations        []ArchitectureRelation       `json:"relations"`
 	RepositoryRoots  []string                     `json:"repositoryRoots,omitempty"`
 	RelationCoverage ArchitectureRelationCoverage `json:"relationCoverage"`
@@ -45,7 +44,6 @@ type ArchitectureDirectory struct {
 	Declarations    []ArchitectureCount `json:"declarations"`
 	PublicCallables int                 `json:"publicCallables"`
 	Entrypoints     int                 `json:"entrypoints"`
-	Routes          int                 `json:"routes"`
 }
 
 // ArchitectureCount is one deterministically ordered named tally.
@@ -67,20 +65,6 @@ type ArchitectureSymbol struct {
 	Entrypoint     string                      `json:"entrypoint,omitempty"`
 	Start          int                         `json:"startLine"`
 	End            int                         `json:"endLine"`
-}
-
-// ArchitectureRoute is one adapter-evidenced route.
-type ArchitectureRoute struct {
-	Method         string `json:"method,omitempty"`
-	Pattern        string `json:"pattern"`
-	Handler        string `json:"handler,omitempty"`
-	Framework      string `json:"framework"`
-	Language       string `json:"language"`
-	Classification string `json:"classification"`
-	Path           string `json:"path"`
-	Directory      string `json:"directory"`
-	Caller         string `json:"caller,omitempty"`
-	Line           int    `json:"line"`
 }
 
 // ArchitectureRelation groups source-linked cross-directory evidence.
@@ -121,7 +105,7 @@ type ArchitectureRelationCoverage struct {
 }
 
 type directoryAccumulator struct {
-	files, public, entrypoints, routes       int
+	files, public, entrypoints               int
 	classifications, languages, declarations map[string]int
 }
 
@@ -154,13 +138,12 @@ func BuildArchitecture(universe *Universe) ArchitectureReport {
 		}
 		return symbols[i].Name < symbols[j].Name
 	})
-	routes := buildRoutes(universe.graph, directories)
 	relations, coverage := buildRelations(universe.graph, universe.paths)
 	files := make([]ArchitectureSourceFile, 0, len(universe.paths))
 	for _, path := range universe.paths {
 		files = append(files, ArchitectureSourceFile{Path: filepath.ToSlash(path), Language: parser.LanguageFor(path), Classification: classify(path)})
 	}
-	return ArchitectureReport{Schema: ArchitectureSchema, Root: ".", Files: len(universe.paths), Sources: universe.Summary(), SourceFiles: files, Directories: finalizeDirectories(directories), Symbols: symbols, Routes: routes, Relations: relations, RepositoryRoots: universe.graph.RepositoryRoots, RelationCoverage: coverage, Truncation: universe.Truncation()}
+	return ArchitectureReport{Schema: ArchitectureSchema, Root: ".", Files: len(universe.paths), Sources: universe.Summary(), SourceFiles: files, Directories: finalizeDirectories(directories), Symbols: symbols, Relations: relations, RepositoryRoots: universe.graph.RepositoryRoots, RelationCoverage: coverage, Truncation: universe.Truncation()}
 }
 
 func appendSymbols(target *[]ArchitectureSymbol, directories map[string]*directoryAccumulator, symbols []parser.Symbol, language, path, directory, container string, visibility map[string][]parser.NavigationDeclaration) {
@@ -204,31 +187,6 @@ func architectureSymbolNavigation(candidates []parser.NavigationDeclaration, sta
 		}
 	}
 	return visibility, entrypoint
-}
-
-func buildRoutes(graph parser.NavigationGraph, directories map[string]*directoryAccumulator) []ArchitectureRoute {
-	declarations := map[string]string{}
-	for _, declaration := range graph.Declarations {
-		declarations[declaration.ID] = declaration.Name
-	}
-	result := make([]ArchitectureRoute, 0, len(graph.Routes))
-	for _, route := range graph.Routes {
-		directory := cleanDirectory(filepath.Dir(route.Path))
-		for _, ancestor := range directoryAncestors(directory) {
-			getDirectory(directories, ancestor).routes++
-		}
-		result = append(result, ArchitectureRoute{Method: route.Method, Pattern: route.Pattern, Handler: route.Handler, Framework: route.Framework, Language: route.Language, Classification: classify(route.Path), Path: filepath.ToSlash(route.Path), Directory: directory, Caller: declarations[route.CallerID], Line: route.Line})
-	}
-	sort.Slice(result, func(i, j int) bool {
-		if result[i].Path != result[j].Path {
-			return result[i].Path < result[j].Path
-		}
-		if result[i].Line != result[j].Line {
-			return result[i].Line < result[j].Line
-		}
-		return result[i].Pattern < result[j].Pattern
-	})
-	return result
 }
 
 //revive:disable-next-line:cognitive-complexity
@@ -363,7 +321,7 @@ func finalizeDirectories(index map[string]*directoryAccumulator) []ArchitectureD
 	result := make([]ArchitectureDirectory, 0, len(paths))
 	for _, path := range paths {
 		entry := index[path]
-		result = append(result, ArchitectureDirectory{Path: path, Files: entry.files, Classifications: counts(entry.classifications), Languages: counts(entry.languages), Declarations: counts(entry.declarations), PublicCallables: entry.public, Entrypoints: entry.entrypoints, Routes: entry.routes})
+		result = append(result, ArchitectureDirectory{Path: path, Files: entry.files, Classifications: counts(entry.classifications), Languages: counts(entry.languages), Declarations: counts(entry.declarations), PublicCallables: entry.public, Entrypoints: entry.entrypoints})
 	}
 	return result
 }

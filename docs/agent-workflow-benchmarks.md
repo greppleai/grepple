@@ -63,7 +63,7 @@ Linux/amd64, Intel Core Ultra 7 165H, Go 1.25.14, `-benchtime=10x`:
 | `StructuralLookup` | 1 | 166 | 41.5 | 2.64 ms |
 | `LineLocateThenAt` | 2 | 152 | 38 | 5.07 ms |
 | `RelatedNavigation` | 1 | 307 | 76.75 | 8.10 ms |
-| `ImpactGraph` | 1 | 1,081 | 270.25 | 8.02 ms |
+| `ImpactGraph` | 1 | 1,072 | 268 | 6.55 ms |
 | `DirectoryOrientation` | 1 | 903 | 225.75 | 6.63 ms |
 | `ArchitectureResolve` | 1 | 206 | 51.5 | 5.82 ms |
 | `RelationExplanation` | 1 | 366 | 91.5 | 5.89 ms |
@@ -76,7 +76,7 @@ The three architecture tasks are independently answerable in one retrieval call:
 
 ## Navigation-resolution measurement extension
 
-Compact graph headers now report total calls, visible local edges, resolution outcomes, entrypoints, and routes; declarations expose entrypoint status. The fixed `ImpactGraph` workflow is 1,081 bytes/~270 tokens, retaining bounded resolution and architecture-role context. Complete JSON additionally reports singleton candidates, confidence counts, ambiguity frequency, and adapter-evidenced route facts.
+Compact graph headers now report total calls, visible local edges, resolution outcomes, and process entrypoints; declarations expose entrypoint status. The fixed `ImpactGraph` workflow is 1,072 bytes/~268 tokens, retaining bounded resolution and architecture-role context. Complete JSON additionally reports singleton candidates, confidence counts, and ambiguity frequency.
 
 ## Construct-range extension
 

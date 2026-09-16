@@ -134,19 +134,6 @@ Go structure diagrams emit one `grepple:struct-tag` directive for every present 
 field tag, including explicit empty tags. The legacy `%% pi:struct-tag` spelling is
 accepted, but generation always emits `grepple`.
 
-Go Fiber routes can be checked with exact, opt-in metadata:
-
-```mermaid
-%% grepple:route GET /health Handler.health
-%% grepple:route ALL /index Handler.handleIndex
-```
-
-The method must be an uppercase token and the path must contain no whitespace. The
-checker recognizes HTTP-method calls made through a `*fiber.App` parameter inside a
-Go method and resolves handler selectors on that method's receiver. Method, literal
-path, and `Type.method` handler must all match exactly, in the same Go package as the
-declared type node. Calls to similarly named methods on unrelated values are ignored.
-Duplicate directives are rejected. The legacy `%% pi:route` prefix is accepted.
 
 ## Flow conventions
 
@@ -224,7 +211,7 @@ per-node package/module/language metadata are rejected. Matching explicit metada
 is accepted but redundant. The legacy `pi` namespace is accepted for these defaults.
 Canonical Go package bundles emit package and language defaults once in both Mermaid
 artifacts and emit exact-default only in `structure.mmd`; node kind, file, struct-tag,
-underlying-type, route, and file-local metadata remain explicit.
+underlying-type and file-local metadata remain explicit.
 
 A class or structure schema can require package-level declaration completeness for one
 exact Go import path:

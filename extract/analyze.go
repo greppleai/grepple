@@ -21,12 +21,6 @@ type Member struct {
 	Location                                                                   Location
 }
 
-// FiberRoute describes a route registered through a *fiber.App method parameter.
-type FiberRoute struct {
-	Method, Path, Handler, PackageID string
-	Location                         Location
-}
-
 // GoStructTag preserves both a field tag's value and whether a tag was present.
 // Presence is separate because an explicit empty tag (`""`) is meaningful.
 type GoStructTag struct {
@@ -91,7 +85,6 @@ type Analysis struct {
 	TSSymbolIndex                         map[string]*Symbol
 	GoSymbolIndex                         map[string]*Symbol
 	GoPackageNames                        map[string]string
-	GoFiberRoutes                         []FiberRoute
 	GoPackageImports                      map[string]map[string]string
 	GoImportPathIndex                     map[string]string
 	GoPackagePaths                        map[string]string

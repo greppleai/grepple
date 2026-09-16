@@ -18,7 +18,7 @@ import (
 	"github.com/greppleai/grepple/search"
 )
 
-const directoryArchitectureSchema = "grepple-directory-architecture-v4"
+const directoryArchitectureSchema = "grepple-directory-architecture-v5"
 
 type architectureArgs struct {
 	JSON           bool     `arg:"--json" help:"emit complete directory architecture JSON"`
@@ -63,7 +63,6 @@ type directoryArchitecture struct {
 	SourceFiles      []architectureSourceFile     `json:"sourceFiles"`
 	Directories      []architectureDirectory      `json:"directories"`
 	Symbols          []architectureSymbol         `json:"symbols"`
-	Routes           []architectureRoute          `json:"routes,omitempty"`
 	Relations        []architectureRelation       `json:"relations"`
 	RepositoryRoots  []string                     `json:"repositoryRoots,omitempty"`
 	RelationCoverage architectureRelationCoverage `json:"relationCoverage"`
@@ -84,7 +83,6 @@ type architectureDirectory struct {
 	Declarations    []architectureCount `json:"declarations"`
 	PublicCallables int                 `json:"publicCallables"`
 	Entrypoints     int                 `json:"entrypoints"`
-	Routes          int                 `json:"routes"`
 }
 
 type architectureCount struct {
@@ -104,19 +102,6 @@ type architectureSymbol struct {
 	Entrypoint     string                      `json:"entrypoint,omitempty"`
 	Start          int                         `json:"startLine"`
 	End            int                         `json:"endLine"`
-}
-
-type architectureRoute struct {
-	Method         string `json:"method,omitempty"`
-	Pattern        string `json:"pattern"`
-	Handler        string `json:"handler,omitempty"`
-	Framework      string `json:"framework"`
-	Language       string `json:"language"`
-	Classification string `json:"classification"`
-	Path           string `json:"path"`
-	Directory      string `json:"directory"`
-	Caller         string `json:"caller,omitempty"`
-	Line           int    `json:"line"`
 }
 
 type architectureRelation struct {
@@ -213,7 +198,6 @@ type directoryAccumulator struct {
 	declarations    map[string]int
 	public          int
 	entrypoints     int
-	routes          int
 }
 
 func runArchitecture(args []string) error {
@@ -425,10 +409,9 @@ func buildDirectoryArchitectureFromParts(paths []string, discovered, supported i
 		appendArchitectureSymbols(&symbols, directories, outline.Symbols, outline.Language, sourcePath, directory, "", visibility)
 	}
 	sortArchitectureSymbols(symbols)
-	routes := buildArchitectureRoutes(graph, directories)
 	relations, relationCoverage := buildArchitectureRelations(graph, paths)
 	sources := navigationSourceSummary{Discovered: discovered, Selected: len(paths), Parsed: graphStats.Parsed, Skipped: discovered - supported + parseStats.Skipped + graphStats.Skipped, Failed: parseStats.Failed + graphStats.Failed, Recovered: graphStats.Recovered}
-	return directoryArchitecture{Schema: directoryArchitectureSchema, Root: ".", Files: len(paths), Sources: sources, SourceFiles: buildArchitectureSourceFiles(paths), Directories: buildArchitectureDirectories(directories), Symbols: symbols, Routes: routes, Relations: relations, RepositoryRoots: graph.RepositoryRoots, RelationCoverage: relationCoverage, Truncation: truncation}
+	return directoryArchitecture{Schema: directoryArchitectureSchema, Root: ".", Files: len(paths), Sources: sources, SourceFiles: buildArchitectureSourceFiles(paths), Directories: buildArchitectureDirectories(directories), Symbols: symbols, Relations: relations, RepositoryRoots: graph.RepositoryRoots, RelationCoverage: relationCoverage, Truncation: truncation}
 }
 
 func buildArchitectureSourceFiles(paths []string) []architectureSourceFile {
@@ -522,30 +505,6 @@ func getDirectoryAccumulator(directories map[string]*directoryAccumulator, path 
 	return entry
 }
 
-func buildArchitectureRoutes(graph parser.NavigationGraph, directories map[string]*directoryAccumulator) []architectureRoute {
-	declarations := make(map[string]string, len(graph.Declarations))
-	for _, declaration := range graph.Declarations {
-		declarations[declaration.ID] = declaration.Name
-	}
-	result := make([]architectureRoute, 0, len(graph.Routes))
-	for _, route := range graph.Routes {
-		directory := cleanArchitectureDirectory(filepath.Dir(route.Path))
-		for _, ancestor := range architectureDirectoryAncestors(directory) {
-			getDirectoryAccumulator(directories, ancestor).routes++
-		}
-		result = append(result, architectureRoute{Method: route.Method, Pattern: route.Pattern, Handler: route.Handler, Framework: route.Framework, Language: route.Language, Classification: string(sourcekind.Classify(route.Path, ".")), Path: filepath.ToSlash(route.Path), Directory: directory, Caller: declarations[route.CallerID], Line: route.Line})
-	}
-	sort.Slice(result, func(i, j int) bool {
-		if result[i].Path != result[j].Path {
-			return result[i].Path < result[j].Path
-		}
-		if result[i].Line != result[j].Line {
-			return result[i].Line < result[j].Line
-		}
-		return result[i].Pattern < result[j].Pattern
-	})
-	return result
-}
 func buildArchitectureDirectories(index map[string]*directoryAccumulator) []architectureDirectory {
 	paths := make([]string, 0, len(index))
 	for path := range index {
@@ -555,7 +514,7 @@ func buildArchitectureDirectories(index map[string]*directoryAccumulator) []arch
 	result := make([]architectureDirectory, 0, len(paths))
 	for _, path := range paths {
 		entry := index[path]
-		result = append(result, architectureDirectory{Path: path, Files: entry.files, Classifications: architectureCounts(entry.classifications), Languages: architectureCounts(entry.languages), Declarations: architectureCounts(entry.declarations), PublicCallables: entry.public, Entrypoints: entry.entrypoints, Routes: entry.routes})
+		result = append(result, architectureDirectory{Path: path, Files: entry.files, Classifications: architectureCounts(entry.classifications), Languages: architectureCounts(entry.languages), Declarations: architectureCounts(entry.declarations), PublicCallables: entry.public, Entrypoints: entry.entrypoints})
 	}
 	return result
 }
@@ -875,7 +834,7 @@ func renderDirectoryArchitecture(architecture directoryArchitecture, values arch
 	}
 	visibleRelations := projectArchitectureRelations(architecture.Relations, directories[:shown])
 	entrypoints := countArchitectureEntrypoints(architecture.Symbols)
-	if !write("architecture %s root=%s files=%d directories=%d shown=%d relations=%d shown-relations=%d entrypoints=%d routes=%d sources=%s", architecture.Schema, architecture.Root, architecture.Files, len(directories), shown, len(architecture.Relations), len(visibleRelations), entrypoints, len(architecture.Routes), compactNavigationSourceSummary(architecture.Sources)) {
+	if !write("architecture %s root=%s files=%d directories=%d shown=%d relations=%d shown-relations=%d entrypoints=%d sources=%s", architecture.Schema, architecture.Root, architecture.Files, len(directories), shown, len(architecture.Relations), len(visibleRelations), entrypoints, compactNavigationSourceSummary(architecture.Sources)) {
 		return nil
 	}
 	if !write("repository-roots %s", formatArchitectureStrings(architecture.RepositoryRoots)) {
@@ -888,7 +847,7 @@ func renderDirectoryArchitecture(architecture directoryArchitecture, values arch
 	if !renderArchitectureDirectories(write, directories[:shown]) {
 		return nil
 	}
-	if !renderArchitectureFacts(write, architecture.Symbols, architecture.Routes) {
+	if !renderArchitectureFacts(write, architecture.Symbols) {
 		return nil
 	}
 	if !renderArchitectureRelations(write, visibleRelations) {
@@ -917,25 +876,16 @@ func countArchitectureEntrypoints(symbols []architectureSymbol) int {
 
 func renderArchitectureDirectories(write func(string, ...any) bool, directories []architectureDirectory) bool {
 	for _, directory := range directories {
-		if !write("D %s files=%d classes=%s languages=%s declarations=%s public-callables=%d entrypoints=%d routes=%d", directory.Path, directory.Files, formatArchitectureCounts(directory.Classifications), formatArchitectureCounts(directory.Languages), formatArchitectureCounts(directory.Declarations), directory.PublicCallables, directory.Entrypoints, directory.Routes) {
+		if !write("D %s files=%d classes=%s languages=%s declarations=%s public-callables=%d entrypoints=%d", directory.Path, directory.Files, formatArchitectureCounts(directory.Classifications), formatArchitectureCounts(directory.Languages), formatArchitectureCounts(directory.Declarations), directory.PublicCallables, directory.Entrypoints) {
 			return false
 		}
 	}
 	return true
 }
 
-func renderArchitectureFacts(write func(string, ...any) bool, symbols []architectureSymbol, routes []architectureRoute) bool {
+func renderArchitectureFacts(write func(string, ...any) bool, symbols []architectureSymbol) bool {
 	for _, symbol := range symbols {
 		if symbol.Entrypoint != "" && !write("E %s %s %s class=%s directory=%s", symbol.Entrypoint, symbol.Name, architectureSymbolLocation(symbol), symbol.Classification, symbol.Directory) {
-			return false
-		}
-	}
-	for _, route := range routes {
-		method := route.Method
-		if method == "" {
-			method = "*"
-		}
-		if !write("P %s %s -> %s framework=%s at=%s:%d caller=%s class=%s directory=%s", method, compactRoutePattern(route.Pattern), route.Handler, route.Framework, route.Path, route.Line, route.Caller, route.Classification, route.Directory) {
 			return false
 		}
 	}

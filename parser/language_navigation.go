@@ -47,7 +47,7 @@ func goNavigationAdapter(rules *structureRules) navigationAdapter {
 		visibility: func(_ *syntaxNode, name, _ string) NavigationVisibility {
 			return goNavigationVisibility(navigationTerminal(name))
 		},
-		sourceFacts: goNavigationSourceFacts, entrypoint: goNavigationEntrypoint, routes: goNavigationRoutes,
+		sourceFacts: goNavigationSourceFacts, entrypoint: goNavigationEntrypoint,
 		returnCallableName: func(node *syntaxNode, container, content string, _ *navigationAdapterConfig) string {
 			if node.Kind() == "method_declaration" {
 				return goNavigationMethodName(node, content, rules)
@@ -71,71 +71,6 @@ func goNavigationEntrypoint(node *syntaxNode, name, container, packageName, _ st
 		return "process"
 	}
 	return ""
-}
-
-func goNavigationRoutes(root *syntaxNode, _ string, language, sourcePath string, imports map[string]navigationImport, declarations []NavigationDeclaration) []NavigationRoute {
-	httpAliases := make(map[string]bool)
-	for alias, item := range imports {
-		if item.path == "net/http" && item.alias != "_" && item.alias != "." {
-			httpAliases[alias] = true
-		}
-	}
-	if len(httpAliases) == 0 {
-		return nil
-	}
-	routes := []NavigationRoute{}
-	root.WalkNamed(func(node *syntaxNode) {
-		route, ok := goNavigationRoute(node, language, sourcePath, httpAliases, declarations)
-		if ok {
-			routes = append(routes, route)
-		}
-	})
-	return routes
-}
-
-func goNavigationRoute(node *syntaxNode, language, sourcePath string, httpAliases map[string]bool, declarations []NavigationDeclaration) (NavigationRoute, bool) {
-	if node.Kind() != "call_expression" {
-		return NavigationRoute{}, false
-	}
-	function := node.ChildByFieldName("function")
-	arguments := node.ChildByFieldName("arguments")
-	if function == nil || arguments == nil || function.Kind() != "selector_expression" {
-		return NavigationRoute{}, false
-	}
-	operand := function.ChildByFieldName("operand")
-	field := function.ChildByFieldName("field")
-	if operand == nil || field == nil || !httpAliases[operand.Text()] || (field.Text() != "Handle" && field.Text() != "HandleFunc") {
-		return NavigationRoute{}, false
-	}
-	values := arguments.NamedChildren()
-	if len(values) < 2 {
-		return NavigationRoute{}, false
-	}
-	pattern, err := strconv.Unquote(values[0].Text())
-	if err != nil || pattern == "" {
-		return NavigationRoute{}, false
-	}
-	method := ""
-	if candidate, remainder, found := strings.Cut(pattern, " "); found && strings.HasPrefix(remainder, "/") {
-		method, pattern = candidate, remainder
-	}
-	line := node.StartLine()
-	return NavigationRoute{CallerID: navigationDeclarationIDAtLine(declarations, line), Method: method, Pattern: pattern, Handler: strings.Join(strings.Fields(values[1].Text()), " "), Framework: "net/http", Language: language, Path: sourcePath, Line: line}, true
-}
-
-func navigationDeclarationIDAtLine(declarations []NavigationDeclaration, line int) string {
-	bestID := ""
-	bestSize := 0
-	for _, declaration := range declarations {
-		if line < declaration.Start || line > declaration.End {
-			continue
-		}
-		size := declaration.End - declaration.Start
-		if bestID == "" || size < bestSize {
-			bestID, bestSize = declaration.ID, size
-		}
-	}
-	return bestID
 }
 
 func goNavigationFieldNames(node, typeNode *syntaxNode, content string) []navigationFieldName {

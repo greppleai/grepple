@@ -37,8 +37,7 @@ func FilterNavigationGraph(graph parser.NavigationGraph, filter NavigationGraphF
 	fields := filterNavigationFields(graph.Fields, languages)
 	usages := filterNavigationTypeUsages(graph.TypeUsages, included, languages)
 	accesses := filterNavigationMemberAccesses(graph.MemberAccesses, included, languages)
-	routes := filterNavigationRoutes(graph.Routes, included, languages)
-	return parser.NavigationGraph{Declarations: declarations, Calls: calls, Imports: imports, Exports: exports, Fields: fields, TypeUsages: usages, MemberAccesses: accesses, Routes: routes, RepositoryRoots: append([]string(nil), graph.RepositoryRoots...)}, nil
+	return parser.NavigationGraph{Declarations: declarations, Calls: calls, Imports: imports, Exports: exports, Fields: fields, TypeUsages: usages, MemberAccesses: accesses, RepositoryRoots: append([]string(nil), graph.RepositoryRoots...)}, nil
 }
 
 // NormalizeNavigationGraphFilter returns sorted, duplicate-free values after validation.
@@ -169,16 +168,6 @@ func filterNavigationMemberAccesses(accesses []parser.NavigationMemberAccess, de
 	for _, access := range accesses {
 		if declarations[access.CallerID] && (len(languages) == 0 || languages[access.Language]) {
 			filtered = append(filtered, access)
-		}
-	}
-	return filtered
-}
-
-func filterNavigationRoutes(routes []parser.NavigationRoute, declarations, languages map[string]bool) []parser.NavigationRoute {
-	filtered := make([]parser.NavigationRoute, 0, len(routes))
-	for _, route := range routes {
-		if (route.CallerID == "" || declarations[route.CallerID]) && (len(languages) == 0 || languages[route.Language]) {
-			filtered = append(filtered, route)
 		}
 	}
 	return filtered

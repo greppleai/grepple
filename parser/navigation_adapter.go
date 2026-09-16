@@ -56,9 +56,7 @@ type navigationAdapter interface {
 	FieldNames(*syntaxNode, *syntaxNode, string) []navigationFieldName
 	Exports(*syntaxNode, string, string, string) []NavigationExport
 	Entrypoint(*syntaxNode, string, string, string, string) string
-	Routes(*syntaxNode, string, string, string, map[string]navigationImport, []NavigationDeclaration) []NavigationRoute
 	EntrypointFactsSupported() bool
-	RouteFactsSupported() bool
 }
 
 type navigationAdapterConfig struct {
@@ -83,7 +81,6 @@ type navigationAdapterConfig struct {
 	fieldNames               func(*syntaxNode, *syntaxNode, string) []navigationFieldName
 	exports                  func(*syntaxNode, string, string, string) []NavigationExport
 	entrypoint               func(*syntaxNode, string, string, string, string) string
-	routes                   func(*syntaxNode, string, string, string, map[string]navigationImport, []NavigationDeclaration) []NavigationRoute
 }
 
 func (adapter *navigationAdapterConfig) Entrypoint(node *syntaxNode, name, container, packageName, content string) string {
@@ -93,18 +90,9 @@ func (adapter *navigationAdapterConfig) Entrypoint(node *syntaxNode, name, conta
 	return adapter.entrypoint(node, name, container, packageName, content)
 }
 
-func (adapter *navigationAdapterConfig) Routes(root *syntaxNode, content, language, path string, imports map[string]navigationImport, declarations []NavigationDeclaration) []NavigationRoute {
-	if adapter.routes == nil {
-		return nil
-	}
-	return adapter.routes(root, content, language, path, imports, declarations)
-}
-
 func (adapter *navigationAdapterConfig) EntrypointFactsSupported() bool {
 	return adapter.entrypoint != nil
 }
-
-func (adapter *navigationAdapterConfig) RouteFactsSupported() bool { return adapter.routes != nil }
 
 func (adapter *navigationAdapterConfig) Rules() *structureRules { return adapter.rules }
 

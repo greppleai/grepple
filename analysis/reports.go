@@ -59,7 +59,6 @@ type DirectoryResponsibility struct {
 	Declarations    []ArchitectureCount `json:"declarations"`
 	PublicCallables int                 `json:"publicCallables"`
 	Entrypoints     int                 `json:"entrypoints"`
-	Routes          int                 `json:"routes"`
 	Incoming        int                 `json:"incomingRelations"`
 	Outgoing        int                 `json:"outgoingRelations"`
 }
@@ -74,8 +73,8 @@ func BuildResponsibilities(universe *Universe) ResponsibilityReport {
 	}
 	items := make([]DirectoryResponsibility, 0, len(architecture.Directories))
 	for _, directory := range architecture.Directories {
-		items = append(items, DirectoryResponsibility{Directory: directory.Path, Files: directory.Files, Classifications: directory.Classifications, Languages: directory.Languages, Declarations: directory.Declarations, PublicCallables: directory.PublicCallables, Entrypoints: directory.Entrypoints, Routes: directory.Routes, Incoming: incoming[directory.Path], Outgoing: outgoing[directory.Path]})
+		items = append(items, DirectoryResponsibility{Directory: directory.Path, Files: directory.Files, Classifications: directory.Classifications, Languages: directory.Languages, Declarations: directory.Declarations, PublicCallables: directory.PublicCallables, Entrypoints: directory.Entrypoints, Incoming: incoming[directory.Path], Outgoing: outgoing[directory.Path]})
 	}
 	sort.Slice(items, func(i, j int) bool { return items[i].Directory < items[j].Directory })
-	return ResponsibilityReport{Schema: "grepple-directory-responsibilities-v1", Files: architecture.Files, Sources: architecture.Sources, Responsibilities: items, Truncation: architecture.Truncation}
+	return ResponsibilityReport{Schema: "grepple-directory-responsibilities-v2", Files: architecture.Files, Sources: architecture.Sources, Responsibilities: items, Truncation: architecture.Truncation}
 }

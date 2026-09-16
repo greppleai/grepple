@@ -81,7 +81,7 @@ func runGraphDiff(args []string) error {
 }
 
 func relativeNavigationGraph(output navigationGraphOutput, root string) parser.NavigationGraph {
-	graph := parser.NavigationGraph{Declarations: append([]parser.NavigationDeclaration(nil), output.Declarations...), Calls: append([]parser.NavigationCall(nil), output.Calls...), Routes: append([]parser.NavigationRoute(nil), output.Routes...)}
+	graph := parser.NavigationGraph{Declarations: append([]parser.NavigationDeclaration(nil), output.Declarations...), Calls: append([]parser.NavigationCall(nil), output.Calls...)}
 	absoluteRoot, err := filepath.Abs(root)
 	if err != nil {
 		return graph
@@ -91,9 +91,6 @@ func relativeNavigationGraph(output navigationGraphOutput, root string) parser.N
 	}
 	for index := range graph.Calls {
 		graph.Calls[index].Path = relativeGraphDiffPath(absoluteRoot, graph.Calls[index].Path)
-	}
-	for index := range graph.Routes {
-		graph.Routes[index].Path = relativeGraphDiffPath(absoluteRoot, graph.Routes[index].Path)
 	}
 	return graph
 }
@@ -116,7 +113,7 @@ func renderCompactGraphDiff(diff graphDiffOutput, maxBytes int) error {
 		output = newBoundedOutputWriter(os.Stdout, maxBytes)
 	}
 	write := func(value string) bool { return output.writeString(value+"\n") == nil }
-	if !write(fmt.Sprintf("graph-diff %s files=%d->%d sources=before(%s),after(%s) declarations=+%d/-%d/~%d/>%d calls=+%d/-%d/~%d routes=+%d/-%d", diff.Schema, diff.BeforeFiles, diff.AfterFiles, compactNavigationSourceSummary(diff.BeforeSources), compactNavigationSourceSummary(diff.AfterSources), len(diff.AddedDeclarations), len(diff.RemovedDeclarations), len(diff.ChangedDeclarations), len(diff.MovedDeclarations), len(diff.AddedCalls), len(diff.RemovedCalls), len(diff.ChangedCalls), len(diff.AddedRoutes), len(diff.RemovedRoutes))) {
+	if !write(fmt.Sprintf("graph-diff %s files=%d->%d sources=before(%s),after(%s) declarations=+%d/-%d/~%d/>%d calls=+%d/-%d/~%d", diff.Schema, diff.BeforeFiles, diff.AfterFiles, compactNavigationSourceSummary(diff.BeforeSources), compactNavigationSourceSummary(diff.AfterSources), len(diff.AddedDeclarations), len(diff.RemovedDeclarations), len(diff.ChangedDeclarations), len(diff.MovedDeclarations), len(diff.AddedCalls), len(diff.RemovedCalls), len(diff.ChangedCalls))) {
 		return nil
 	}
 	if diff.Metadata != nil && diff.Metadata.NextCommand != "" && !write("continue: "+diff.Metadata.NextCommand) {
@@ -127,16 +124,6 @@ func renderCompactGraphDiff(diff graphDiffOutput, maxBytes int) error {
 	}
 	if !renderCompactCallDiff(write, diff) {
 		return nil
-	}
-	for _, route := range diff.AddedRoutes {
-		if !write("+ P " + compactDiffRoute(route)) {
-			return nil
-		}
-	}
-	for _, route := range diff.RemovedRoutes {
-		if !write("- P " + compactDiffRoute(route)) {
-			return nil
-		}
 	}
 	return nil
 }
@@ -190,12 +177,4 @@ func compactDiffDeclaration(declaration parser.NavigationDeclaration) string {
 
 func compactDiffCall(call parser.NavigationCall) string {
 	return fmt.Sprintf("%s %s confidence=%s %s:%d", call.Language, call.Display, call.Confidence, call.Path, call.Line)
-}
-
-func compactDiffRoute(route parser.NavigationRoute) string {
-	method := route.Method
-	if method == "" {
-		method = "*"
-	}
-	return fmt.Sprintf("%s %s -> %s framework=%s %s:%d", method, compactRoutePattern(route.Pattern), route.Handler, route.Framework, route.Path, route.Line)
 }

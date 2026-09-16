@@ -10,7 +10,6 @@ type LanguageCapabilities struct {
 	Navigation           bool
 	ImportNavigation     bool
 	EntrypointNavigation bool
-	RouteNavigation      bool
 	GrammarABI           uint32
 	GrammarFingerprint   string
 }
@@ -175,7 +174,6 @@ func enrichLanguageCapabilities(capability LanguageCapabilities) LanguageCapabil
 		if navigation := adapter.Navigation(); navigation != nil {
 			capability.ImportNavigation = navigation.ImportFactsSupported()
 			capability.EntrypointNavigation = navigation.EntrypointFactsSupported()
-			capability.RouteNavigation = navigation.RouteFactsSupported()
 		}
 	}
 	return capability

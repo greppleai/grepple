@@ -99,8 +99,8 @@ func TestAskGraphAndArchitectureSupportRemoteRepository(t *testing.T) {
 
 func remoteAnalysisTestResult(operation api.AnalysisOperation) json.RawMessage {
 	schema := map[api.AnalysisOperation]string{
-		api.AnalysisGraph: "grepple-navigation-graph-v2", api.AnalysisArchitecture: "grepple-directory-architecture-v4",
-		api.AnalysisBoundaries: "grepple-boundaries-v3", api.AnalysisResponsibilities: "grepple-directory-responsibilities-v1",
+		api.AnalysisGraph: "grepple-navigation-graph-v3", api.AnalysisArchitecture: "grepple-directory-architecture-v5",
+		api.AnalysisBoundaries: "grepple-boundaries-v3", api.AnalysisResponsibilities: "grepple-directory-responsibilities-v2",
 	}[operation]
 	content, _ := json.Marshal(map[string]any{"schema": schema})
 	return content

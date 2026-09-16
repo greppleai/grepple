@@ -71,17 +71,13 @@ Alias and named-type nodes can opt into exact underlying Go type validation with
 
 Go structure diagrams can require exact struct tags with
 `%% grepple:struct-tag <Type> <Field> <Go-quoted-string>` (including an explicit empty tag).
-Fiber registrations can be checked with `%% grepple:route <METHOD> <PATH> <Type.method>`.
-Route extraction recognizes HTTP registrations on `*fiber.App` parameters only when the
-parameter qualifier resolves, including aliases, to `github.com/gofiber/fiber/v2` or `/v3`;
-lookalike packages and unrelated `Get` methods are ignored. Underlying-type, route, and
-struct-tag metadata use strict parsing and reject duplicate directives.
+Underlying-type and struct-tag metadata use strict parsing and reject duplicate directives.
 
 Relative TypeScript imports are followed across supported TS extensions and index files.
 Generated diagrams emit applicable scope, file, export, tag, and file-local metadata and
 validate themselves before being written. Namespaced metadata is strict while ordinary
 Mermaid comments remain compatible. See `guides/mermaid-code.md` for full syntax, scope
-resolution, completeness, underlying-type, route, and struct-tag details.
+resolution, completeness, underlying-type, and struct-tag details.
 
 ## Development
 
