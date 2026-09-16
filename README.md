@@ -344,14 +344,17 @@ Run `grepple languages` for terminal feature and navigation-fact matrices or `gr
 
 ## Agent utility metrics
 
-Grepple can analyze local Pi session JSONL to compare assigned Grepple and control cohorts without adding prompt, code, command, edit, or tool-result content to telemetry annotations:
+Grepple records provider-neutral, privacy-safe agent evidence in a local JSONL journal:
 
 ```bash
+grepple metrics start --task issue-123 --cohort grepple
+# Run the task; external harnesses may add normalized evidence with metrics record.
+grepple metrics end --outcome success
 grepple metrics report --group-by cohort --complete
-grepple metrics export --format json --complete > metrics.json
+grepple metrics compare --baseline control --target grepple --format json
 ```
 
-The optional packaged Pi recorder provides `/metrics-start`, `/metrics-status`, and `/metrics-end`; automatic one-prompt recording is opt-in with `pi --grepple-metrics`. Reports separate assigned cohort from observed Grepple use and pair speed with outcome and rework. See [Agent utility metrics](docs/agent-utility-metrics.md) for schemas, privacy/retention, installation, filters, limitations, and the paired A/B protocol.
+Reports separate assigned cohort from observed Grepple use and pair efficiency with explicit outcome and rework evidence. Journals never contain prompts, responses, source, tool output, raw queries, raw commands, or content-bearing paths. See [Agent utility metrics](docs/agent-utility-metrics.md) for event schemas, evidence availability, privacy, retention, filters, deterministic reports, and the controlled-cohort protocol.
 
 ## Agent workflow benchmarks
 

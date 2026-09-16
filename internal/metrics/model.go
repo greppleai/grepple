@@ -1,10 +1,7 @@
-// Package metrics analyzes coding-agent sessions without persisting message or tool content.
+// Package metrics records and analyzes privacy-safe coding-agent activity.
 package metrics
 
 import "time"
-
-// AnnotationType identifies version-one content-free metrics entries in Pi session JSONL.
-const AnnotationType = "grepple-metrics-v1"
 
 // Usage records provider-reported token counts and cost for a run or milestone.
 type Usage struct {
@@ -59,10 +56,9 @@ type Outcome struct {
 	FirstEditSurvived  *bool    `json:"firstEditSurvived"`
 }
 
-// Run is the privacy-safe analysis of one logical run on a selected session branch.
+// Run is the privacy-safe analysis of one logical journal run.
 type Run struct {
 	Schema                    string         `json:"schema"`
-	SessionID                 string         `json:"sessionId"`
 	RunID                     string         `json:"runId"`
 	TaskID                    string         `json:"taskId"`
 	Repository                string         `json:"repository"`
@@ -73,7 +69,6 @@ type Run struct {
 	StartedAt                 time.Time      `json:"startedAt"`
 	EndedAt                   time.Time      `json:"endedAt"`
 	Complete                  bool           `json:"complete"`
-	Inferred                  bool           `json:"inferred"`
 	Model                     string         `json:"model"`
 	Provider                  string         `json:"provider"`
 	ThinkingLevel             string         `json:"thinkingLevel"`
@@ -114,6 +109,16 @@ type Report struct {
 	Comparisons []Comparison `json:"comparisons,omitempty"`
 }
 
+// ComparisonReport contains an explicit target-minus-baseline cohort comparison.
+type ComparisonReport struct {
+	Schema    string     `json:"schema"`
+	Generated time.Time  `json:"generatedAt"`
+	GroupBy   string     `json:"groupBy"`
+	Baseline  Group      `json:"baseline"`
+	Target    Group      `json:"target"`
+	Delta     Comparison `json:"delta"`
+}
+
 // Distribution summarizes a metric across one report group.
 type Distribution struct {
 	Mean   float64 `json:"mean"`
@@ -124,17 +129,18 @@ type Distribution struct {
 
 // Group summarizes runs sharing the requested reporting dimension.
 type Group struct {
-	Name                    string       `json:"name"`
-	SampleSize              int          `json:"sampleSize"`
-	OutcomeSampleSize       int          `json:"outcomeSampleSize"`
-	Successful              int          `json:"successful"`
-	SuccessRate             *float64     `json:"successRate"`
-	Tokens                  Distribution `json:"tokens"`
-	Cost                    Distribution `json:"cost"`
-	ElapsedMS               Distribution `json:"elapsedMs"`
-	TokensPerSuccessfulTask *float64     `json:"tokensPerSuccessfulTask"`
-	CostPerSuccessfulTask   *float64     `json:"costPerSuccessfulTask"`
-	TimePerSuccessfulTask   *float64     `json:"timePerSuccessfulTask"`
+	Name                    string        `json:"name"`
+	SampleSize              int           `json:"sampleSize"`
+	UsageSampleSize         int           `json:"usageSampleSize"`
+	OutcomeSampleSize       int           `json:"outcomeSampleSize"`
+	Successful              int           `json:"successful"`
+	SuccessRate             *float64      `json:"successRate"`
+	Tokens                  *Distribution `json:"tokens"`
+	Cost                    *Distribution `json:"cost"`
+	ElapsedMS               Distribution  `json:"elapsedMs"`
+	TokensPerSuccessfulTask *float64      `json:"tokensPerSuccessfulTask"`
+	CostPerSuccessfulTask   *float64      `json:"costPerSuccessfulTask"`
+	TimePerSuccessfulTask   *float64      `json:"timePerSuccessfulTask"`
 }
 
 // Comparison reports descriptive differences from one baseline group.
