@@ -37,6 +37,15 @@ Live `grepple ask` dogfooding showed two distinct bottlenecks: ordinary local/re
 - [ ] Add answer-gated ask benchmarks for local ownership, subprocess/security audit, graph impact, structural matching, and exact remote-version research. Gate on answer correctness, citation validity, ref fidelity, completeness disclosure, elapsed time, model steps, tool calls, tool time, and tokens rather than latency alone.
 - [ ] Set regression targets from the live baseline: eliminate full-graph work for invalid navigation locations, avoid repeated identical scans within one ask, and reduce routine source-backed investigations from multi-call discovery chains to one or two evidence calls before synthesis.
 
+### Anchored edit-loop dogfooding
+
+Native anchors plus transactional `grepple write` reduced repeated retrieval and made multi-file mutation materially safer. Structured success/rejection responses, stale-anchor checks, overlap checks, and continued use of the previously built binary during temporarily uncompilable self-hosting changes all worked well. The Rust-hardening loop used Grepple for source discovery and every repository edit; only mandatory skill loading used the harness read tool.
+
+- [ ] Support bounded anchored context and exact editable source ranges. `--anchors --line-only -A/--context` was rejected during dogfooding, while `--at` often collapsed declarations; the fallback `-E '.*' --max-segments ...` retrieved substantially more source than required.
+- [ ] Add deterministic unified-diff output to `grepple write --dry-run` so malformed replacement payloads, such as accidentally duplicated closing braces, are visible before mutation rather than only at compile time.
+- [ ] Add safely validated transactional file creation and deletion. Existing-file replacement works well, but new fixtures still require a separate non-Grepple creation path.
+- [ ] Make read-only analysis avoid writes beneath the target repository, with cache and artifact relocation or automatic temporary storage. Dogfooding directly in read-only Go module-cache repositories failed when Grepple attempted to create `.grepple`.
+
 ### Navigation and evidence calibration
 
 - [ ] Publish per-language coverage for declarations, calls, imports, type references, fields, member access, and process entrypoints; distinguish unsupported facts from unresolved facts.
