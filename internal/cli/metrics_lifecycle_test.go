@@ -16,30 +16,22 @@ func TestMetricsLifecycleWritesGreppleJournal(t *testing.T) {
 	t.Setenv(metricsDirectoryEnv, directory)
 
 	startOutput := captureStdout(t, func() {
-		if err := runMetrics([]string{"start", "--run", "run-1", "--event-id", "start-1", "--at", "2026-09-16T08:00:00Z", "--task", "task-1", "--cohort", "grepple", "--repository", "repo", "--revision", "abc"}); err != nil {
-			t.Fatal(err)
-		}
+		runMetricsSuccessfully(t, []string{"start", "--run", "run-1", "--event-id", "start-1", "--at", "2026-09-16T08:00:00Z", "--task", "task-1", "--cohort", "grepple", "--repository", "repo", "--revision", "abc"})
 	})
 	if !strings.Contains(startOutput, "run-1") {
 		t.Fatalf("start output = %q", startOutput)
 	}
 
 	statusOutput := captureStdout(t, func() {
-		if err := runMetrics([]string{"status"}); err != nil {
-			t.Fatal(err)
-		}
+		runMetricsSuccessfully(t, []string{"status"})
 	})
 	if !strings.Contains(statusOutput, "run-1") || !strings.Contains(statusOutput, "task-1") {
 		t.Fatalf("status output = %q", statusOutput)
 	}
 
 	assistant := `{"turn":1,"provider":"provider","model":"model","thinkingLevel":"high","usage":{"input":10,"output":5,"cacheRead":0,"cacheWrite":0,"totalTokens":15,"cost":0.02}}`
-	if err := runMetrics([]string{"record", "--event", "assistant", "--event-id", "assistant-1", "--at", "2026-09-16T08:00:01Z", "--data", assistant}); err != nil {
-		t.Fatal(err)
-	}
-	if err := runMetrics([]string{"end", "--event-id", "end-1", "--at", "2026-09-16T08:01:00Z", "--outcome", "success", "--score", "4.5", "--human-interventions", "0", "--regressions", "0", "--first-edit-survived", "true", "--rubric", "unit"}); err != nil {
-		t.Fatal(err)
-	}
+	runMetricsSuccessfully(t, []string{"record", "--event", "assistant", "--event-id", "assistant-1", "--at", "2026-09-16T08:00:01Z", "--data", assistant})
+	runMetricsSuccessfully(t, []string{"end", "--event-id", "end-1", "--at", "2026-09-16T08:01:00Z", "--outcome", "success", "--score", "4.5", "--human-interventions", "0", "--regressions", "0", "--first-edit-survived", "true", "--rubric", "unit"})
 
 	path := filepath.Join(directory, "runs", "run-1.jsonl")
 	events, err := agentmetrics.ReadJournal(path)
@@ -59,6 +51,13 @@ func TestMetricsLifecycleWritesGreppleJournal(t *testing.T) {
 	}
 	if _, err := os.Stat(metricsActiveStatePath(directory)); !os.IsNotExist(err) {
 		t.Fatalf("active state still exists: %v", err)
+	}
+}
+
+func runMetricsSuccessfully(t *testing.T, args []string) {
+	t.Helper()
+	if err := runMetrics(args); err != nil {
+		t.Fatal(err)
 	}
 }
 

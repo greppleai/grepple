@@ -159,19 +159,26 @@ func parseMetricsOptions(command string, args []string) (metricsOptions, bool, e
 		return options, false, fmt.Errorf("metrics compare requires --baseline and --target")
 	}
 	var err error
-	if since != "" {
-		options.since, err = time.Parse(time.RFC3339, since)
-		if err != nil {
-			return options, false, fmt.Errorf("--since: %w", err)
-		}
+	options.since, err = parseOptionalMetricsTime(since, "--since")
+	if err != nil {
+		return options, false, err
 	}
-	if until != "" {
-		options.until, err = time.Parse(time.RFC3339, until)
-		if err != nil {
-			return options, false, fmt.Errorf("--until: %w", err)
-		}
+	options.until, err = parseOptionalMetricsTime(until, "--until")
+	if err != nil {
+		return options, false, err
 	}
 	return options, false, nil
+}
+
+func parseOptionalMetricsTime(value, option string) (time.Time, error) {
+	if value == "" {
+		return time.Time{}, nil
+	}
+	parsed, err := time.Parse(time.RFC3339, value)
+	if err != nil {
+		return time.Time{}, fmt.Errorf("%s: %w", option, err)
+	}
+	return parsed, nil
 }
 
 func loadMetricRuns(options metricsOptions) ([]agentmetrics.Run, error) {
@@ -226,38 +233,46 @@ func writeMetricsReport(report agentmetrics.Report, groupBy string) error {
 	fmt.Fprintf(&output, "runs: %d  groups: %d\n\n", len(report.Runs), len(report.Groups))
 	fmt.Fprintln(&output, "GROUP\tN\tSUCCESS\tTOKENS p50/p90\tCOST p50/p90\tTIME-ms p50/p90")
 	for _, group := range report.Groups {
-		success := "unknown"
-		if group.SuccessRate != nil {
-			success = fmt.Sprintf("%.1f%% (%d/%d)", *group.SuccessRate*100, group.Successful, group.OutcomeSampleSize)
-		}
-		tokens := "unknown"
-		cost := "unknown"
-		if group.UsageSampleSize > 0 {
-			tokens = fmt.Sprintf("%.0f/%.0f", group.Tokens.P50, group.Tokens.P90)
-			cost = fmt.Sprintf("%.4f/%.4f", group.Cost.P50, group.Cost.P90)
-		}
-		fmt.Fprintf(&output, "%s\t%d\t%s\t%s\t%s\t%.0f/%.0f\n", group.Name, group.SampleSize, success, tokens, cost, group.ElapsedMS.P50, group.ElapsedMS.P90)
-		perSuccess := make([]string, 0, 3)
-		if group.TokensPerSuccessfulTask != nil {
-			perSuccess = append(perSuccess, fmt.Sprintf("tokens %.0f", *group.TokensPerSuccessfulTask), fmt.Sprintf("cost %.4f", *group.CostPerSuccessfulTask))
-		}
-		if group.TimePerSuccessfulTask != nil {
-			perSuccess = append(perSuccess, fmt.Sprintf("time %.0fms", *group.TimePerSuccessfulTask))
-		}
-		if len(perSuccess) > 0 {
-			fmt.Fprintf(&output, "  per successful task: %s\n", strings.Join(perSuccess, ", "))
-		}
+		writeMetricsGroup(&output, group)
 	}
 	for _, comparison := range report.Comparisons {
-		fmt.Fprintf(&output, "\nDescriptive deltas %s - %s (absolute, percent):", comparison.Target, comparison.Baseline)
-		for _, metric := range []string{"tokensMedian", "costMedian", "elapsedMsMedian", "successRate", "tokensPerSuccessfulTask", "costPerSuccessfulTask", "timePerSuccessfulTask"} {
-			if delta, ok := comparison.Metrics[metric]; ok {
-				fmt.Fprintf(&output, " %s %s;", metric, formatMetricDelta(delta))
-			}
-		}
-		fmt.Fprintln(&output, " no significance claim.")
+		writeMetricsReportComparison(&output, comparison)
 	}
 	return newBoundedOutputWriter(os.Stdout, DefaultTextOutputBytes).writeString(output.String())
+}
+
+func writeMetricsGroup(output *strings.Builder, group agentmetrics.Group) {
+	success := "unknown"
+	if group.SuccessRate != nil {
+		success = fmt.Sprintf("%.1f%% (%d/%d)", *group.SuccessRate*100, group.Successful, group.OutcomeSampleSize)
+	}
+	tokens := "unknown"
+	cost := "unknown"
+	if group.UsageSampleSize > 0 {
+		tokens = fmt.Sprintf("%.0f/%.0f", group.Tokens.P50, group.Tokens.P90)
+		cost = fmt.Sprintf("%.4f/%.4f", group.Cost.P50, group.Cost.P90)
+	}
+	fmt.Fprintf(output, "%s\t%d\t%s\t%s\t%s\t%.0f/%.0f\n", group.Name, group.SampleSize, success, tokens, cost, group.ElapsedMS.P50, group.ElapsedMS.P90)
+	perSuccess := make([]string, 0, 3)
+	if group.TokensPerSuccessfulTask != nil {
+		perSuccess = append(perSuccess, fmt.Sprintf("tokens %.0f", *group.TokensPerSuccessfulTask), fmt.Sprintf("cost %.4f", *group.CostPerSuccessfulTask))
+	}
+	if group.TimePerSuccessfulTask != nil {
+		perSuccess = append(perSuccess, fmt.Sprintf("time %.0fms", *group.TimePerSuccessfulTask))
+	}
+	if len(perSuccess) > 0 {
+		fmt.Fprintf(output, "  per successful task: %s\n", strings.Join(perSuccess, ", "))
+	}
+}
+
+func writeMetricsReportComparison(output *strings.Builder, comparison agentmetrics.Comparison) {
+	fmt.Fprintf(output, "\nDescriptive deltas %s - %s (absolute, percent):", comparison.Target, comparison.Baseline)
+	for _, metric := range []string{"tokensMedian", "costMedian", "elapsedMsMedian", "successRate", "tokensPerSuccessfulTask", "costPerSuccessfulTask", "timePerSuccessfulTask"} {
+		if delta, ok := comparison.Metrics[metric]; ok {
+			fmt.Fprintf(output, " %s %s;", metric, formatMetricDelta(delta))
+		}
+	}
+	fmt.Fprintln(output, " no significance claim.")
 }
 
 func formatMetricDelta(delta agentmetrics.Delta) string {
@@ -321,27 +336,7 @@ func outputMetricsComparison(report agentmetrics.ComparisonReport, format string
 	}
 	sort.Strings(metricNames)
 	if format == "csv" {
-		var output bytes.Buffer
-		writer := csv.NewWriter(&output)
-		if err := writer.Write([]string{"metric", "baseline", "target", "absolute", "percent"}); err != nil {
-			return err
-		}
-		for _, name := range metricNames {
-			delta := report.Delta.Metrics[name]
-			percent := ""
-			if delta.Percent != nil {
-				percent = strconv.FormatFloat(*delta.Percent, 'g', -1, 64)
-			}
-			row := []string{name, strconv.FormatFloat(comparisonMetricValue(report.Baseline, name), 'g', -1, 64), strconv.FormatFloat(comparisonMetricValue(report.Target, name), 'g', -1, 64), strconv.FormatFloat(delta.Absolute, 'g', -1, 64), percent}
-			if err := writer.Write(row); err != nil {
-				return err
-			}
-		}
-		writer.Flush()
-		if err := writer.Error(); err != nil {
-			return err
-		}
-		return stdoutWriter().writeString(output.String())
+		return writeMetricsComparisonCSV(report, metricNames)
 	}
 	var output strings.Builder
 	fmt.Fprintf(&output, "Agent utility comparison (%s): %s -> %s\n", report.GroupBy, report.Baseline.Name, report.Target.Name)
@@ -350,6 +345,30 @@ func outputMetricsComparison(report agentmetrics.ComparisonReport, format string
 	}
 	fmt.Fprintln(&output, "Descriptive deltas only; no significance claim.")
 	return newBoundedOutputWriter(os.Stdout, DefaultTextOutputBytes).writeString(output.String())
+}
+
+func writeMetricsComparisonCSV(report agentmetrics.ComparisonReport, metricNames []string) error {
+	var output bytes.Buffer
+	writer := csv.NewWriter(&output)
+	if err := writer.Write([]string{"metric", "baseline", "target", "absolute", "percent"}); err != nil {
+		return err
+	}
+	for _, name := range metricNames {
+		delta := report.Delta.Metrics[name]
+		percent := ""
+		if delta.Percent != nil {
+			percent = strconv.FormatFloat(*delta.Percent, 'g', -1, 64)
+		}
+		row := []string{name, strconv.FormatFloat(comparisonMetricValue(report.Baseline, name), 'g', -1, 64), strconv.FormatFloat(comparisonMetricValue(report.Target, name), 'g', -1, 64), strconv.FormatFloat(delta.Absolute, 'g', -1, 64), percent}
+		if err := writer.Write(row); err != nil {
+			return err
+		}
+	}
+	writer.Flush()
+	if err := writer.Error(); err != nil {
+		return err
+	}
+	return stdoutWriter().writeString(output.String())
 }
 
 func comparisonMetricValue(group agentmetrics.Group, name string) float64 {

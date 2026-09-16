@@ -19,13 +19,20 @@ const (
 	// JournalSchema is the version-one Grepple-owned metrics event schema.
 	JournalSchema = "grepple-metrics-event-v1"
 
-	EventRunStart   = "run_start"
-	EventAssistant  = "assistant"
-	EventToolCall   = "tool_call"
+	// EventRunStart identifies the event that establishes a run and its correlation metadata.
+	EventRunStart = "run_start"
+	// EventAssistant identifies normalized assistant-turn and model-usage evidence.
+	EventAssistant = "assistant"
+	// EventToolCall identifies a normalized tool invocation without content-bearing arguments.
+	EventToolCall = "tool_call"
+	// EventToolResult identifies the normalized outcome and aggregate volume of a tool invocation.
 	EventToolResult = "tool_result"
-	EventCommand    = "command"
+	// EventCommand identifies privacy-safe activity observed directly by Grepple.
+	EventCommand = "command"
+	// EventCompaction identifies an observed context-compaction boundary.
 	EventCompaction = "compaction"
-	EventRunEnd     = "run_end"
+	// EventRunEnd identifies explicit run completion and evaluation evidence.
+	EventRunEnd = "run_end"
 
 	maxJournalLineBytes = 1 << 20
 	maxJournalBytes     = 64 << 20
@@ -58,17 +65,10 @@ func MarshalJournalData(value any) (json.RawMessage, error) {
 
 // AppendJournalEvent validates and appends one complete JSONL record under an OS file lock.
 func AppendJournalEvent(path string, event JournalEvent) error {
-	if err := validateJournalEvent(event); err != nil {
+	line, err := encodeJournalEvent(event)
+	if err != nil {
 		return err
 	}
-	line, err := json.Marshal(event)
-	if err != nil {
-		return fmt.Errorf("encode metrics event: %w", err)
-	}
-	if len(line)+1 > maxJournalLineBytes {
-		return fmt.Errorf("metrics event exceeds %d bytes", maxJournalLineBytes)
-	}
-	line = append(line, '\n')
 	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
 		return fmt.Errorf("create metrics journal directory: %w", err)
 	}
@@ -92,7 +92,24 @@ func AppendJournalEvent(path string, event JournalEvent) error {
 	} else if statErr != nil && !errors.Is(statErr, os.ErrNotExist) {
 		return fmt.Errorf("stat metrics journal: %w", statErr)
 	}
+	return appendJournalLine(path, line)
+}
 
+func encodeJournalEvent(event JournalEvent) ([]byte, error) {
+	if err := validateJournalEvent(event); err != nil {
+		return nil, err
+	}
+	line, err := json.Marshal(event)
+	if err != nil {
+		return nil, fmt.Errorf("encode metrics event: %w", err)
+	}
+	if len(line)+1 > maxJournalLineBytes {
+		return nil, fmt.Errorf("metrics event exceeds %d bytes", maxJournalLineBytes)
+	}
+	return append(line, '\n'), nil
+}
+
+func appendJournalLine(path string, line []byte) error {
 	file, err := os.OpenFile(path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o600)
 	if err != nil {
 		return fmt.Errorf("open metrics journal: %w", err)
@@ -138,32 +155,45 @@ func ReadJournal(path string) ([]JournalEvent, error) {
 }
 
 func validateJournalAppend(path string, candidate JournalEvent) error {
-	file, err := os.Open(path)
-	if errors.Is(err, os.ErrNotExist) {
-		if candidate.Event != EventRunStart {
-			return fmt.Errorf("%s appears before run_start", candidate.Event)
-		}
-		return nil
-	}
+	events, err := readJournalForAppend(path)
 	if err != nil {
-		return fmt.Errorf("open metrics journal for validation: %w", err)
-	}
-	events, decodeErr := decodeJournal(file)
-	closeErr := file.Close()
-	if decodeErr != nil {
-		return decodeErr
-	}
-	if closeErr != nil {
-		return closeErr
+		return err
 	}
 	if len(events) >= maxJournalEvents {
 		return fmt.Errorf("metrics journal exceeds %d events", maxJournalEvents)
 	}
+	started, ended, err := journalAppendState(events, candidate)
+	if err != nil {
+		return err
+	}
+	return validateJournalLifecycle(candidate, started, ended)
+}
+
+func readJournalForAppend(path string) ([]JournalEvent, error) {
+	file, err := os.Open(path)
+	if errors.Is(err, os.ErrNotExist) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("open metrics journal for validation: %w", err)
+	}
+	events, decodeErr := decodeJournal(file)
+	closeErr := file.Close()
+	if decodeErr != nil {
+		return nil, decodeErr
+	}
+	if closeErr != nil {
+		return nil, closeErr
+	}
+	return events, nil
+}
+
+func journalAppendState(events []JournalEvent, candidate JournalEvent) (bool, bool, error) {
 	started := false
 	ended := false
 	for _, event := range events {
 		if event.EventID == candidate.EventID {
-			return fmt.Errorf("duplicate eventId %q", candidate.EventID)
+			return false, false, fmt.Errorf("duplicate eventId %q", candidate.EventID)
 		}
 		if event.RunID != candidate.RunID {
 			continue
@@ -175,6 +205,10 @@ func validateJournalAppend(path string, candidate JournalEvent) error {
 			ended = true
 		}
 	}
+	return started, ended, nil
+}
+
+func validateJournalLifecycle(candidate JournalEvent, started, ended bool) error {
 	if candidate.Event == EventRunStart {
 		if started {
 			return fmt.Errorf("duplicate run_start for run %q", candidate.RunID)

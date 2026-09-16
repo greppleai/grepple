@@ -178,45 +178,64 @@ func (analysis *journalAnalysis) processToolCall(at time.Time, data ToolCallData
 	analysis.calls = append(analysis.calls, call)
 	analysis.callsByID[data.CallID] = call
 	analysis.countCategory(data.Category)
-	if data.GreppleMode != "" {
-		analysis.run.Tools.Grepple++
-		analysis.run.ObservedGreppleUse = true
-		analysis.run.GreppleModes[data.GreppleMode]++
+	analysis.observeGreppleTool(data)
+	analysis.trackRepeatedCall(data)
+	analysis.trackResourceAccess(data)
+	analysis.trackMutationCall(call, at)
+	return nil
+}
+
+func (analysis *journalAnalysis) observeGreppleTool(data ToolCallData) {
+	if data.GreppleMode == "" {
+		return
 	}
+	analysis.run.Tools.Grepple++
+	analysis.run.ObservedGreppleUse = true
+	analysis.run.GreppleModes[data.GreppleMode]++
+}
+
+func (analysis *journalAnalysis) trackRepeatedCall(data ToolCallData) {
 	shape := data.Tool + "\x00" + data.ArgumentShape
 	if analysis.seenShapes[shape] {
 		analysis.run.RepeatedCalls++
 	}
 	analysis.seenShapes[shape] = true
+}
+
+func (analysis *journalAnalysis) trackResourceAccess(data ToolCallData) {
 	if data.ResourceID != "" && (data.Category == "navigation" || data.Category == "read") {
 		analysis.inspected[data.ResourceID] = true
 	}
-	if data.Category == "read" && data.ResourceID != "" {
-		rangeKey := data.ResourceID + "\x00" + optionalInt(data.Offset) + "\x00" + optionalInt(data.Limit)
-		if analysis.seenReads[rangeKey] {
-			analysis.run.RedundantReads++
-		}
-		analysis.seenReads[rangeKey] = true
+	if data.Category != "read" || data.ResourceID == "" {
+		return
 	}
-	if data.Category == "mutation" {
-		analysis.run.EditOperations++
-		if data.ResourceID != "" {
-			analysis.edited[data.ResourceID] = true
-			for key := range analysis.seenReads {
-				if strings.HasPrefix(key, data.ResourceID+"\x00") {
-					delete(analysis.seenReads, key)
-				}
+	rangeKey := data.ResourceID + "\x00" + optionalInt(data.Offset) + "\x00" + optionalInt(data.Limit)
+	if analysis.seenReads[rangeKey] {
+		analysis.run.RedundantReads++
+	}
+	analysis.seenReads[rangeKey] = true
+}
+
+func (analysis *journalAnalysis) trackMutationCall(call *normalizedCall, at time.Time) {
+	if call.data.Category != "mutation" {
+		return
+	}
+	analysis.run.EditOperations++
+	if call.data.ResourceID != "" {
+		analysis.edited[call.data.ResourceID] = true
+		for key := range analysis.seenReads {
+			if strings.HasPrefix(key, call.data.ResourceID+"\x00") {
+				delete(analysis.seenReads, key)
 			}
 		}
-		if analysis.run.FirstAttemptedMutation == nil {
-			analysis.run.FirstAttemptedMutation = analysis.callMilestone(call, at)
-		}
-		if analysis.failedTestSinceEdit {
-			analysis.run.TestFixCycles++
-			analysis.failedTestSinceEdit = false
-		}
 	}
-	return nil
+	if analysis.run.FirstAttemptedMutation == nil {
+		analysis.run.FirstAttemptedMutation = analysis.callMilestone(call, at)
+	}
+	if analysis.failedTestSinceEdit {
+		analysis.run.TestFixCycles++
+		analysis.failedTestSinceEdit = false
+	}
 }
 
 func (analysis *journalAnalysis) countCategory(category string) {
@@ -376,25 +395,30 @@ func (analysis *journalAnalysis) deriveConversions() {
 		if source.data.Category != "navigation" || !source.success || source.data.ResourceID == "" {
 			continue
 		}
-		used := false
-		for _, later := range analysis.calls[index+1:] {
-			if later.data.Category != "read" && later.data.Category != "mutation" {
-				continue
-			}
-			if source.data.ResourceID != later.data.ResourceID {
-				continue
-			}
-			used = true
-			if later.data.Category == "read" {
-				analysis.run.SearchToRead++
-			} else {
-				analysis.run.SearchToEdit++
-			}
-		}
+		used := analysis.deriveConversionsFrom(source, analysis.calls[index+1:])
 		if used && analysis.run.FirstEvidence == nil {
 			analysis.run.FirstEvidence = analysis.callMilestone(source, source.when)
 		}
 	}
+}
+
+func (analysis *journalAnalysis) deriveConversionsFrom(source *normalizedCall, laterCalls []*normalizedCall) bool {
+	used := false
+	for _, later := range laterCalls {
+		if later.data.Category != "read" && later.data.Category != "mutation" {
+			continue
+		}
+		if source.data.ResourceID != later.data.ResourceID {
+			continue
+		}
+		used = true
+		if later.data.Category == "read" {
+			analysis.run.SearchToRead++
+		} else {
+			analysis.run.SearchToEdit++
+		}
+	}
+	return used
 }
 
 func (analysis *journalAnalysis) callMilestone(call *normalizedCall, at time.Time) *Milestone {

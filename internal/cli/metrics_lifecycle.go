@@ -179,19 +179,9 @@ func runMetricsEnd(args []string) error {
 	if flags.NArg() != 0 {
 		return fmt.Errorf("unexpected metrics end arguments: %s", strings.Join(flags.Args(), " "))
 	}
-	data := agentmetrics.RunEndData{Outcome: outcome, Rubric: rubric}
-	var err error
-	if data.EvaluatorScore, err = parseOptionalFloat(score); err != nil {
-		return fmt.Errorf("--score: %w", err)
-	}
-	if data.HumanInterventions, err = parseOptionalInt(interventions); err != nil {
-		return fmt.Errorf("--human-interventions: %w", err)
-	}
-	if data.Regressions, err = parseOptionalInt(regressions); err != nil {
-		return fmt.Errorf("--regressions: %w", err)
-	}
-	if data.FirstEditSurvived, err = parseOptionalBool(survived); err != nil {
-		return fmt.Errorf("--first-edit-survived: %w", err)
+	data, err := parseMetricsRunEndData(outcome, rubric, score, interventions, regressions, survived)
+	if err != nil {
+		return err
 	}
 	encoded, err := agentmetrics.MarshalJournalData(data)
 	if err != nil {
@@ -218,6 +208,24 @@ func runMetricsEnd(args []string) error {
 		}
 	}
 	return stdoutWriter().writeString(fmt.Sprintf("Ended metrics run %s with outcome %s\n", common.runID, outcome))
+}
+
+func parseMetricsRunEndData(outcome, rubric, score, interventions, regressions, survived string) (agentmetrics.RunEndData, error) {
+	data := agentmetrics.RunEndData{Outcome: outcome, Rubric: rubric}
+	var err error
+	if data.EvaluatorScore, err = parseOptionalFloat(score); err != nil {
+		return data, fmt.Errorf("--score: %w", err)
+	}
+	if data.HumanInterventions, err = parseOptionalInt(interventions); err != nil {
+		return data, fmt.Errorf("--human-interventions: %w", err)
+	}
+	if data.Regressions, err = parseOptionalInt(regressions); err != nil {
+		return data, fmt.Errorf("--regressions: %w", err)
+	}
+	if data.FirstEditSurvived, err = parseOptionalBool(survived); err != nil {
+		return data, fmt.Errorf("--first-edit-survived: %w", err)
+	}
+	return data, nil
 }
 
 func appendMetricsEvent(path string, common metricsEventOptions, eventType string, data any) error {

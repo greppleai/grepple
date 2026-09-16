@@ -100,7 +100,7 @@ func DecodeEventData(eventType string, data json.RawMessage) (any, error) {
 	if err := ensureJSONEnd(decoder); err != nil {
 		return nil, fmt.Errorf("decode %s data: %w", eventType, err)
 	}
-	if err := validateEventData(eventType, target); err != nil {
+	if err := validateEventData(target); err != nil {
 		return nil, err
 	}
 	return target, nil
@@ -117,72 +117,103 @@ func ensureJSONEnd(decoder *json.Decoder) error {
 	return nil
 }
 
-func validateEventData(eventType string, value any) error {
+func validateEventData(value any) error {
 	switch data := value.(type) {
 	case *RunStartData:
-		if !validLabel(data.TaskID, 256) || !validLabel(data.AssignedCohort, 128) {
-			return errors.New("run_start requires bounded taskId and assignedCohort labels")
-		}
-		if (data.Repository != "" && !validLabel(data.Repository, 256)) || (data.Revision != "" && !validLabel(data.Revision, 256)) {
-			return errors.New("run_start repository and revision must be bounded labels")
-		}
+		return validateRunStartData(data)
 	case *AssistantData:
-		if data.Turn < 1 {
-			return errors.New("assistant turn must be positive")
-		}
-		if data.Usage.Input < 0 || data.Usage.Output < 0 || data.Usage.CacheRead < 0 || data.Usage.CacheWrite < 0 || data.Usage.TotalTokens < 0 || data.Usage.Cost < 0 {
-			return errors.New("assistant usage must be non-negative")
-		}
-		if (data.Provider != "" && !validLabel(data.Provider, 128)) || (data.Model != "" && !validLabel(data.Model, 256)) || (data.ThinkingLevel != "" && !validLabel(data.ThinkingLevel, 64)) {
-			return errors.New("assistant provider, model, and thinkingLevel must be bounded labels")
-		}
+		return validateAssistantData(data)
 	case *ToolCallData:
-		if !validOpaqueToken(data.CallID) || !validOpaqueToken(data.Tool) || data.Turn < 1 {
-			return errors.New("tool_call requires opaque callId and tool identifiers and a positive turn")
-		}
-		categories := map[string]bool{"navigation": true, "read": true, "mutation": true, "test": true, "verification": true, "ambiguous": true}
-		if !categories[data.Category] {
-			return errors.New("tool_call category must be navigation, read, mutation, test, verification, or ambiguous")
-		}
-		if data.ArgumentShape != "" && !validOpaqueToken(data.ArgumentShape) {
-			return errors.New("tool_call argumentShape must be an opaque identifier")
-		}
-		if data.ResourceID != "" && !validOpaqueToken(data.ResourceID) {
-			return errors.New("tool_call resourceId must be an opaque identifier")
-		}
-		if data.Offset != nil && *data.Offset < 0 {
-			return errors.New("tool_call offset must be non-negative")
-		}
-		if data.Limit != nil && *data.Limit < 1 {
-			return errors.New("tool_call limit must be positive")
-		}
+		return validateToolCallData(data)
 	case *ToolResultData:
-		if !validOpaqueToken(data.CallID) || data.Bytes < 0 || data.Lines < 0 {
-			return errors.New("tool_result requires opaque callId and non-negative volume")
-		}
-		if (data.AddedLines != nil && *data.AddedLines < 0) || (data.RemovedLines != nil && *data.RemovedLines < 0) {
-			return errors.New("tool_result edit counts must be non-negative")
-		}
-		if (data.BeforeFingerprint != "" && !validOpaqueToken(data.BeforeFingerprint)) || (data.AfterFingerprint != "" && !validOpaqueToken(data.AfterFingerprint)) {
-			return errors.New("tool_result fingerprints must be opaque identifiers")
-		}
-		if data.TestOutcome != "" && data.TestOutcome != "pass" && data.TestOutcome != "fail" && data.TestOutcome != "unknown" {
-			return errors.New("tool_result testOutcome must be pass, fail, unknown, or empty")
-		}
+		return validateToolResultData(data)
 	case *CommandData:
-		if !validOpaqueToken(data.Name) || data.DurationMS < 0 || (data.GreppleMode != "" && !validOpaqueToken(data.GreppleMode)) {
-			return errors.New("command requires opaque name/mode identifiers and non-negative duration")
-		}
+		return validateCommandData(data)
 	case *RunEndData:
-		if data.Outcome != "success" && data.Outcome != "failure" && data.Outcome != "abandoned" && data.Outcome != "unknown" {
-			return errors.New("run_end outcome must be success, failure, abandoned, or unknown")
-		}
-		if (data.HumanInterventions != nil && *data.HumanInterventions < 0) || (data.Regressions != nil && *data.Regressions < 0) {
-			return errors.New("run_end counts must be non-negative")
-		}
-		if data.Rubric != "" && !validOpaqueToken(data.Rubric) {
-			return errors.New("run_end rubric must be an opaque identifier")
-		}
+		return validateRunEndData(data)
+	default:
+		return nil
+	}
+}
+
+func validateRunStartData(data *RunStartData) error {
+	if !validLabel(data.TaskID, 256) || !validLabel(data.AssignedCohort, 128) {
+		return errors.New("run_start requires bounded taskId and assignedCohort labels")
+	}
+	if (data.Repository != "" && !validLabel(data.Repository, 256)) || (data.Revision != "" && !validLabel(data.Revision, 256)) {
+		return errors.New("run_start repository and revision must be bounded labels")
+	}
+	return nil
+}
+
+func validateAssistantData(data *AssistantData) error {
+	if data.Turn < 1 {
+		return errors.New("assistant turn must be positive")
+	}
+	if data.Usage.Input < 0 || data.Usage.Output < 0 || data.Usage.CacheRead < 0 || data.Usage.CacheWrite < 0 || data.Usage.TotalTokens < 0 || data.Usage.Cost < 0 {
+		return errors.New("assistant usage must be non-negative")
+	}
+	if (data.Provider != "" && !validLabel(data.Provider, 128)) || (data.Model != "" && !validLabel(data.Model, 256)) || (data.ThinkingLevel != "" && !validLabel(data.ThinkingLevel, 64)) {
+		return errors.New("assistant provider, model, and thinkingLevel must be bounded labels")
+	}
+	return nil
+}
+
+func validateToolCallData(data *ToolCallData) error {
+	if !validOpaqueToken(data.CallID) || !validOpaqueToken(data.Tool) || data.Turn < 1 {
+		return errors.New("tool_call requires opaque callId and tool identifiers and a positive turn")
+	}
+	categories := map[string]bool{"navigation": true, "read": true, "mutation": true, "test": true, "verification": true, "ambiguous": true}
+	if !categories[data.Category] {
+		return errors.New("tool_call category must be navigation, read, mutation, test, verification, or ambiguous")
+	}
+	if data.ArgumentShape != "" && !validOpaqueToken(data.ArgumentShape) {
+		return errors.New("tool_call argumentShape must be an opaque identifier")
+	}
+	if data.ResourceID != "" && !validOpaqueToken(data.ResourceID) {
+		return errors.New("tool_call resourceId must be an opaque identifier")
+	}
+	if data.Offset != nil && *data.Offset < 0 {
+		return errors.New("tool_call offset must be non-negative")
+	}
+	if data.Limit != nil && *data.Limit < 1 {
+		return errors.New("tool_call limit must be positive")
+	}
+	return nil
+}
+
+func validateToolResultData(data *ToolResultData) error {
+	if !validOpaqueToken(data.CallID) || data.Bytes < 0 || data.Lines < 0 {
+		return errors.New("tool_result requires opaque callId and non-negative volume")
+	}
+	if (data.AddedLines != nil && *data.AddedLines < 0) || (data.RemovedLines != nil && *data.RemovedLines < 0) {
+		return errors.New("tool_result edit counts must be non-negative")
+	}
+	if (data.BeforeFingerprint != "" && !validOpaqueToken(data.BeforeFingerprint)) || (data.AfterFingerprint != "" && !validOpaqueToken(data.AfterFingerprint)) {
+		return errors.New("tool_result fingerprints must be opaque identifiers")
+	}
+	if data.TestOutcome != "" && data.TestOutcome != "pass" && data.TestOutcome != "fail" && data.TestOutcome != "unknown" {
+		return errors.New("tool_result testOutcome must be pass, fail, unknown, or empty")
+	}
+	return nil
+}
+
+func validateCommandData(data *CommandData) error {
+	if !validOpaqueToken(data.Name) || data.DurationMS < 0 || (data.GreppleMode != "" && !validOpaqueToken(data.GreppleMode)) {
+		return errors.New("command requires opaque name/mode identifiers and non-negative duration")
+	}
+	return nil
+}
+
+func validateRunEndData(data *RunEndData) error {
+	if data.Outcome != "success" && data.Outcome != "failure" && data.Outcome != "abandoned" && data.Outcome != "unknown" {
+		return errors.New("run_end outcome must be success, failure, abandoned, or unknown")
+	}
+	if (data.HumanInterventions != nil && *data.HumanInterventions < 0) || (data.Regressions != nil && *data.Regressions < 0) {
+		return errors.New("run_end counts must be non-negative")
+	}
+	if data.Rubric != "" && !validOpaqueToken(data.Rubric) {
+		return errors.New("run_end rubric must be an opaque identifier")
 	}
 	return nil
 }
