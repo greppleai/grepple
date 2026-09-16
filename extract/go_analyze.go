@@ -481,7 +481,7 @@ func (analyzer *goSourceAnalyzer) analyzeImportSpec(spec codeparser.ViewNode) {
 	}
 	name := nodeText(spec.ChildByFieldName("name"), analyzer.text)
 	if name == "" {
-		name = defaultGoImportName(module)
+		name = path.Base(module)
 	}
 	if name == "_" || name == "." {
 		return
@@ -489,13 +489,6 @@ func (analyzer *goSourceAnalyzer) analyzeImportSpec(spec codeparser.ViewNode) {
 	analyzer.imports[name] = module
 	analyzer.result.Imports[name] = append(analyzer.result.Imports[name], Import{Source: module, Language: "go", Package: analyzer.packageName, PackageID: analyzer.packageID, File: analyzer.result.SourcePaths[absolutePath(analyzer.source.Path)]})
 	analyzer.result.GoPackageImports[analyzer.packageID][name] = module
-}
-
-func defaultGoImportName(module string) string {
-	if module == "github.com/gofiber/fiber/v2" || module == "github.com/gofiber/fiber/v3" {
-		return "fiber"
-	}
-	return path.Base(module)
 }
 
 func mergeGoMethods(result *Analysis, methods map[string][]Member) {

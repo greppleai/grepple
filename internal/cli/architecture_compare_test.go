@@ -13,7 +13,7 @@ import (
 func TestDirectoryArchitectureColdWarmComparisonIsByteIdentical(t *testing.T) {
 	root := t.TempDir()
 	writeArchitectureFixture(t, root, "go.mod", "module example.com/project\n")
-	writeArchitectureFixture(t, root, "cmd/server/main.go", "package main\nimport \"net/http\"\nfunc main() { http.HandleFunc(\"GET /items\", items) }\nfunc items(http.ResponseWriter, *http.Request) {}\n")
+	writeArchitectureFixture(t, root, "cmd/server/main.go", "package main\nfunc main() { run() }\nfunc run() {}\n")
 	chdirForConfigTest(t, root)
 	build := func() string {
 		return captureStdout(t, func() {
