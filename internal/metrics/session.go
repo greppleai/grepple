@@ -91,7 +91,7 @@ func scanSession(reader io.Reader) (sessionHeader, []entry, error) {
 			}
 			continue
 		}
-		value, err := decodeSessionEntry(scanner.Bytes(), line)
+		value, err := decodeAndLinkSessionEntry(scanner.Bytes(), line, header.Version, entries)
 		if err != nil {
 			return sessionHeader{}, nil, err
 		}
@@ -106,25 +106,50 @@ func scanSession(reader io.Reader) (sessionHeader, []entry, error) {
 	return header, entries, nil
 }
 
+func decodeAndLinkSessionEntry(data []byte, line, version int, previous []entry) (entry, error) {
+	value, err := decodeSessionEntry(data, line, version == 1)
+	if err != nil {
+		return entry{}, err
+	}
+	if version != 1 {
+		return value, nil
+	}
+	value.ID = fmt.Sprintf("legacy-%d", len(previous)+1)
+	if len(previous) > 0 {
+		parentID := previous[len(previous)-1].ID
+		value.ParentID = &parentID
+	}
+	return value, nil
+}
+
 func decodeSessionHeader(data []byte, header *sessionHeader) error {
 	if err := json.Unmarshal(data, header); err != nil {
 		return fmt.Errorf("session header: %w", err)
 	}
+	var version struct {
+		Value *int `json:"version"`
+	}
+	if err := json.Unmarshal(data, &version); err != nil {
+		return fmt.Errorf("session header version: %w", err)
+	}
+	if version.Value == nil {
+		header.Version = 1
+	}
 	if header.Type != "session" {
 		return fmt.Errorf("first record has type %q, want session", header.Type)
 	}
-	if header.Version < 2 || header.Version > 3 {
+	if header.Version < 1 || header.Version > 3 {
 		return fmt.Errorf("unsupported Pi session version %d", header.Version)
 	}
 	return nil
 }
 
-func decodeSessionEntry(data []byte, line int) (entry, error) {
+func decodeSessionEntry(data []byte, line int, allowMissingID bool) (entry, error) {
 	var value entry
 	if err := json.Unmarshal(data, &value); err != nil {
 		return entry{}, fmt.Errorf("session line %d: %w", line, err)
 	}
-	if value.ID == "" {
+	if value.ID == "" && !allowMissingID {
 		return entry{}, fmt.Errorf("session line %d: missing entry id", line)
 	}
 	return value, nil

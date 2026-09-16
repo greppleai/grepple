@@ -3,6 +3,7 @@ package metrics
 import (
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 )
@@ -40,8 +41,36 @@ func TestAnalyzeFileAggregatesUsageToolsAndMilestones(t *testing.T) {
 	if run.FirstPassingTest == nil || run.Outcome.Status != "success" || !run.Complete {
 		t.Fatalf("completion metrics missing: %#v", run)
 	}
+	if run.FirstPassingTest.ElapsedMS != 6000 || run.FirstPassingTest.CumulativeUsage.TotalTokens != 48 {
+		t.Fatalf("first passing test = %#v", run.FirstPassingTest)
+	}
 	if run.DistinctInspectedFiles != 1 || run.DistinctEditedFiles != 1 || run.AddedLines != 1 {
 		t.Fatalf("file/churn metrics unexpected: %#v", run)
+	}
+	if !slices.Contains(run.Missing, "edit_churn") {
+		t.Fatalf("missingness = %v, want edit_churn", run.Missing)
+	}
+}
+
+func TestAnalyzeFileUsesHashlineEditResultEvidence(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "session.jsonl")
+	lines := []string{
+		`{"type":"session","version":3,"id":"hashline","timestamp":"2026-01-01T00:00:00Z","cwd":"/repo"}`,
+		`{"type":"message","id":"a1","parentId":null,"timestamp":"2026-01-01T00:00:01Z","message":{"role":"assistant","content":[{"type":"toolCall","id":"edit-1","name":"functions.edit","arguments":{"path":"main.go","changes":[{"hash_range_inclusive":["abc","abc"],"content_lines":["after"]}]}}]}}`,
+		`{"type":"message","id":"r1","parentId":"a1","timestamp":"2026-01-01T00:00:02Z","message":{"role":"toolResult","toolCallId":"edit-1","toolName":"functions.edit","content":[{"type":"text","text":"Successfully replaced"}],"details":{"patch":"--- main.go\n+++ main.go\n@@ -1 +1 @@\n-before\n+after\n","metrics":{"classification":"applied","added_lines":1,"removed_lines":1}},"isError":false}}`,
+		`{"type":"message","id":"a2","parentId":"r1","timestamp":"2026-01-01T00:00:03Z","message":{"role":"assistant","content":[{"type":"toolCall","id":"edit-2","name":"functions.edit","arguments":{"path":"main.go","changes":[{"hash_range_inclusive":["def","def"],"content_lines":["before"]}]}}]}}`,
+		`{"type":"message","id":"r2","parentId":"a2","timestamp":"2026-01-01T00:00:04Z","message":{"role":"toolResult","toolCallId":"edit-2","toolName":"functions.edit","content":[{"type":"text","text":"Successfully replaced"}],"details":{"patch":"--- main.go\n+++ main.go\n@@ -1 +1 @@\n-after\n+before\n","metrics":{"classification":"applied","added_lines":1,"removed_lines":1}},"isError":false}}`,
+	}
+	if err := os.WriteFile(path, []byte(strings.Join(lines, "\n")), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	runs, err := AnalyzeFile(path, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	run := runs[0]
+	if run.AddedLines != 2 || run.RemovedLines != 2 || run.RevertProxies != 1 {
+		t.Fatalf("hashline edit metrics = %#v", run)
 	}
 }
 

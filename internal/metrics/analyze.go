@@ -100,25 +100,27 @@ type callKind struct {
 }
 
 type analyzedCall struct {
-	id        string
-	name      string
-	args      json.RawMessage
-	kind      callKind
-	paths     []string
-	signature string
-	turn      int
-	ordinal   int
-	when      time.Time
-	usage     Usage
-	success   bool
-	resolved  bool
-	zero      bool
-	bytes     int
-	lines     int
-	added     int
-	removed   int
-	oldHash   string
-	newHash   string
+	id                 string
+	name               string
+	args               json.RawMessage
+	kind               callKind
+	paths              []string
+	signature          string
+	turn               int
+	ordinal            int
+	when               time.Time
+	usage              Usage
+	success            bool
+	resolved           bool
+	zero               bool
+	bytes              int
+	lines              int
+	added              int
+	removed            int
+	churnKnown         bool
+	oldHash            string
+	newHash            string
+	transitionRecorded bool
 }
 
 type runSegment struct {
@@ -135,7 +137,7 @@ type segmentAnalysis struct {
 	inspected           map[string]bool
 	edited              map[string]bool
 	seenSignatures      map[string]bool
-	seenReads           map[string]bool
+	seenReads           map[string]map[string]bool
 	cumulative          Usage
 	firstEvent          time.Time
 	lastEvent           time.Time
@@ -283,7 +285,7 @@ func newSegmentAnalysis(run *Run) *segmentAnalysis {
 		inspected:         make(map[string]bool),
 		edited:            make(map[string]bool),
 		seenSignatures:    make(map[string]bool),
-		seenReads:         make(map[string]bool),
+		seenReads:         make(map[string]map[string]bool),
 		priorEditContents: make(map[string]map[string]bool),
 	}
 }
@@ -339,7 +341,7 @@ func (analysis *segmentAnalysis) processMessage(value entry, when time.Time) err
 	case "assistant":
 		return analysis.processAssistant(value.ID, message, when)
 	case "toolResult":
-		return analysis.processToolResult(value.ID, message)
+		return analysis.processToolResult(value.ID, message, when)
 	default:
 		return nil
 	}
@@ -378,7 +380,9 @@ func (analysis *segmentAnalysis) recordCall(block contentBlock, when time.Time) 
 	paths := extractPaths(block.Name, block.Arguments)
 	call := &analyzedCall{id: block.ID, name: block.Name, args: block.Arguments, kind: kind, paths: paths, signature: callSignature(block.Name, block.Arguments), turn: analysis.turn, ordinal: analysis.callOrdinal, when: when, usage: analysis.cumulative}
 	call.added, call.removed = editChurn(block.Name, block.Arguments)
+	call.churnKnown = editChurnKnown(block.Name, block.Arguments)
 	call.oldHash, call.newHash = editTransition(block.Name, block.Arguments)
+	call.transitionRecorded = call.oldHash != "" || call.newHash != ""
 	analysis.calls = append(analysis.calls, call)
 	analysis.byID[call.id] = call
 	analysis.run.Tools.Total++
@@ -398,11 +402,17 @@ func (analysis *segmentAnalysis) recordRepeatedCall(call *analyzedCall) {
 	if !call.kind.read {
 		return
 	}
+	rangeKey := readRangeSignature(call)
 	for _, path := range call.paths {
-		if analysis.seenReads[path] {
+		seen := analysis.seenReads[path]
+		if seen == nil {
+			seen = make(map[string]bool)
+			analysis.seenReads[path] = seen
+		}
+		if seen[rangeKey] {
 			analysis.run.RedundantReads++
 		}
-		analysis.seenReads[path] = true
+		seen[rangeKey] = true
 	}
 }
 
@@ -422,6 +432,7 @@ func (analysis *segmentAnalysis) recordMutation(call *analyzedCall) {
 	analysis.run.AddedLines += call.added
 	analysis.run.RemovedLines += call.removed
 	for _, path := range call.paths {
+		delete(analysis.seenReads, path)
 		analysis.recordEditTransition(path, call)
 	}
 	if analysis.run.FirstAttemptedMutation == nil {
@@ -447,7 +458,7 @@ func (analysis *segmentAnalysis) recordEditTransition(path string, call *analyze
 	}
 }
 
-func (analysis *segmentAnalysis) processToolResult(entryID string, message rawMessage) error {
+func (analysis *segmentAnalysis) processToolResult(entryID string, message rawMessage, when time.Time) error {
 	call := analysis.byID[message.ToolCallID]
 	if call == nil {
 		return nil
@@ -459,11 +470,32 @@ func (analysis *segmentAnalysis) processToolResult(entryID string, message rawMe
 		return fmt.Errorf("tool result %q: %w", entryID, err)
 	}
 	call.bytes, call.lines, call.zero = textBytes, lines, empty
+	analysis.applyEditResultEvidence(call, message.Details)
 	analysis.run.ToolResultBytes += int64(textBytes)
 	analysis.run.ToolResultLines += int64(lines)
 	analysis.recordToolOutcome(call)
-	analysis.recordTestOutcome(call)
+	analysis.recordTestOutcome(call, when)
 	return nil
+}
+
+func (analysis *segmentAnalysis) applyEditResultEvidence(call *analyzedCall, details json.RawMessage) {
+	if !call.kind.mutation || !call.success {
+		return
+	}
+	added, removed, oldHash, newHash, churnKnown := editResultEvidence(details)
+	if churnKnown {
+		analysis.run.AddedLines += added - call.added
+		analysis.run.RemovedLines += removed - call.removed
+		call.added, call.removed, call.churnKnown = added, removed, true
+	}
+	if call.transitionRecorded || (oldHash == "" && newHash == "") {
+		return
+	}
+	call.oldHash, call.newHash = oldHash, newHash
+	for _, path := range call.paths {
+		analysis.recordEditTransition(path, call)
+	}
+	call.transitionRecorded = true
 }
 
 func (analysis *segmentAnalysis) recordToolOutcome(call *analyzedCall) {
@@ -480,12 +512,16 @@ func (analysis *segmentAnalysis) recordToolOutcome(call *analyzedCall) {
 	}
 }
 
-func (analysis *segmentAnalysis) recordTestOutcome(call *analyzedCall) {
+func (analysis *segmentAnalysis) recordTestOutcome(call *analyzedCall, when time.Time) {
 	if !call.kind.test {
 		return
 	}
 	if call.success && analysis.run.FirstPassingTest == nil {
-		analysis.run.FirstPassingTest = milestone(analysis.firstEvent, call)
+		completed := *call
+		if !when.IsZero() {
+			completed.when = when
+		}
+		analysis.run.FirstPassingTest = milestone(analysis.firstEvent, &completed)
 	}
 	if !call.success {
 		analysis.failedTestSinceEdit = true
@@ -521,6 +557,12 @@ func (analysis *segmentAnalysis) finalize() {
 	run.Missing = append(run.Missing, "semantic_relevance")
 	if run.Tools.Ambiguous > 0 {
 		run.Missing = append(run.Missing, "ambiguous_shell_classification")
+	}
+	for _, call := range analysis.calls {
+		if call.kind.mutation && !call.churnKnown {
+			run.Missing = append(run.Missing, "edit_churn")
+			break
+		}
 	}
 	if run.Complete {
 		completionCall := &analyzedCall{turn: run.Turns, ordinal: run.Tools.Total, when: run.EndedAt, usage: run.Usage}
@@ -814,8 +856,8 @@ func deriveSourceConversions(run *Run, source *analyzedCall, laterCalls []*analy
 }
 
 func pathsRelated(left, right []string) bool {
-	if len(left) == 0 {
-		return len(right) > 0
+	if len(left) == 0 || len(right) == 0 {
+		return false
 	}
 	for _, a := range left {
 		for _, b := range right {
@@ -864,6 +906,26 @@ func stringArgument(raw json.RawMessage, key string) string {
 	return result
 }
 
+func readRangeSignature(call *analyzedCall) string {
+	if baseToolName(call.name) != "read" {
+		return call.signature
+	}
+	var arguments struct {
+		Offset int `json:"offset"`
+		Limit  int `json:"limit"`
+	}
+	if json.Unmarshal(call.args, &arguments) != nil {
+		return call.signature
+	}
+	if arguments.Offset <= 0 {
+		arguments.Offset = 1
+	}
+	if arguments.Limit < 0 {
+		arguments.Limit = 0
+	}
+	return fmt.Sprintf("%d:%d", arguments.Offset, arguments.Limit)
+}
+
 func callSignature(name string, raw json.RawMessage) string {
 	sum := sha256.Sum256(append([]byte(strings.ToLower(name)+"\x00"), raw...))
 	return hex.EncodeToString(sum[:8])
@@ -879,6 +941,62 @@ func editChurn(name string, raw json.RawMessage) (int, int) {
 		return 0, 0
 	}
 	return churnValue(value)
+}
+
+func editChurnKnown(name string, raw json.RawMessage) bool {
+	base := baseToolName(name)
+	if base != "edit" && base != "apply_patch" {
+		return false
+	}
+	var value map[string]any
+	if json.Unmarshal(raw, &value) != nil {
+		return false
+	}
+	_, oldOK := value["oldText"].(string)
+	_, newOK := value["newText"].(string)
+	return oldOK && newOK
+}
+
+func editResultEvidence(raw json.RawMessage) (int, int, string, string, bool) {
+	var details struct {
+		Patch   string `json:"patch"`
+		Metrics *struct {
+			Classification string `json:"classification"`
+			AddedLines     *int   `json:"added_lines"`
+			RemovedLines   *int   `json:"removed_lines"`
+		} `json:"metrics"`
+	}
+	if json.Unmarshal(raw, &details) != nil {
+		return 0, 0, "", "", false
+	}
+	oldHash, newHash := patchTransition(details.Patch)
+	metrics := details.Metrics
+	if metrics == nil || metrics.Classification != "applied" || metrics.AddedLines == nil || metrics.RemovedLines == nil {
+		return 0, 0, oldHash, newHash, false
+	}
+	return *metrics.AddedLines, *metrics.RemovedLines, oldHash, newHash, true
+}
+
+func patchTransition(patch string) (string, string) {
+	var removed, added []string
+	for _, line := range strings.Split(patch, "\n") {
+		switch {
+		case strings.HasPrefix(line, "--- "), strings.HasPrefix(line, "+++ "), strings.HasPrefix(line, "@@"), strings.HasPrefix(line, `\ No newline`):
+			continue
+		case strings.HasPrefix(line, "-"):
+			removed = append(removed, strings.TrimSuffix(line[1:], "\r"))
+		case strings.HasPrefix(line, "+"):
+			added = append(added, strings.TrimSuffix(line[1:], "\r"))
+		}
+	}
+	var oldHash, newHash string
+	if len(removed) > 0 {
+		oldHash = textFingerprint(strings.Join(removed, "\n"))
+	}
+	if len(added) > 0 {
+		newHash = textFingerprint(strings.Join(added, "\n"))
+	}
+	return oldHash, newHash
 }
 
 func editTransition(name string, raw json.RawMessage) (string, string) {

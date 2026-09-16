@@ -43,7 +43,7 @@ func assertFixtureAggregation(t *testing.T, run Run) {
 	if run.Turns != 4 || run.Tools.Total != 8 || run.Tools.Successful != 7 || run.Tools.Failed != 1 {
 		t.Fatalf("turn/tool totals = turns %d, tools %#v", run.Turns, run.Tools)
 	}
-	if run.Compactions != 1 || run.Retries != 1 || run.RepeatedCalls != 2 || run.RedundantReads != 1 {
+	if run.Compactions != 1 || run.Retries != 1 || run.RepeatedCalls != 2 || run.RedundantReads != 0 {
 		t.Fatalf("navigation/retry totals = %#v", run)
 	}
 }

@@ -35,14 +35,14 @@ type metricsOptions struct {
 	format       string
 }
 
-const metricsHelp = `Analyze local Pi session metrics without copying prompt, code, or tool content.
+const metricsHelp = `Analyze local Pi v1-v3 session metrics without copying prompt, code, or tool content.
 
 Usage:
   grepple metrics report [OPTIONS]
   grepple metrics export [OPTIONS]
 
 Options:
-  --input PATH          session JSONL file or directory (repeatable; default ~/.pi/agent/sessions)
+  --input PATH          Pi v1-v3 session JSONL file or directory (repeatable; default ~/.pi/agent/sessions)
   --leaf ID             select an explicit leaf (requires exactly one session)
   --group-by DIMENSION  cohort, observed, model, repository, or task (default cohort)
   --repository NAME     include one repository basename
