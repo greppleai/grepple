@@ -4,11 +4,11 @@ Grepple's utility measurements compare coding-agent work with an assigned Greppl
 
 ## Measurement units
 
-- **Session branch** is the selected root-to-leaf path in a Pi v2/v3 JSONL session. Abandoned sibling branches are excluded.
+- **Session branch** is the full linear record sequence in a legacy Pi v1 JSONL session, or the selected root-to-leaf path in a Pi v2/v3 session. Abandoned sibling branches are excluded.
 - **Logical run** begins at a `grepple-metrics-v1` `run_start` marker and ends at its matching `run_end`. Without markers, the analyzer reports one inferred run for the selected session branch and labels it inferred.
 - **Task** is one or more logical runs sharing an explicitly assigned task ID. Paired experiments require a task ID. Unlabelled daily work can still be summarized, but is not treated as a controlled pair.
 
-Reloading does not start a new logical run. Forking starts a distinct branch. A missing end marker produces an incomplete run rather than an assumed success.
+Reloading does not start a new logical run. Forking starts a distinct branch. If tree navigation leaves an active run's start marker behind, the recorder re-anchors the same explicit task and cohort as a fresh logical run on the selected branch; it never emits an orphaned end marker. A missing end marker produces an incomplete run rather than an assumed success.
 
 ## Exact metrics
 
@@ -27,11 +27,11 @@ Provider token and cost values are exact as reported by the provider. Tool-resul
 
 A milestone records elapsed time, one-based turn ordinal, calls before the milestone, inclusive call ordinal, and cumulative provider usage through the assistant response that emitted the milestone call.
 
-- **First evidence** is the first successful navigation or read call whose path is later read or mutated. This is a downstream-use proxy, not proof that the model reasoned from the result.
+- **First evidence** is the first successful navigation or read call with a non-empty normalized path that is later read or mutated at a related path. This is a downstream-use proxy, not proof that the model reasoned from the result.
 - **First attempted mutation** is the first recognized `edit` or `write`-class call.
 - **First successful mutation** is the first recognized mutation with a non-error result.
-- **First passing test** is the first confidently classified test command with a successful result.
-- **Completion** is the run-end annotation. In inferred runs, it is the last branch event and has unknown outcome.
+- **First passing test** is the first confidently classified test command with a successful result. Its elapsed time uses successful tool-result completion; its cumulative usage remains the usage through the assistant response that emitted the call.
+- **Completion** is the matching run-end annotation. Inferred or incomplete runs have no completion milestone and retain an unknown outcome unless an explicit end marker says otherwise.
 
 “Calls to first edit” means calls before the attempted mutation. `inclusiveCall` is also emitted to remove ambiguity. “Tokens to first edit” includes the complete assistant response that generated the mutation call. Parallel calls retain assistant source order, not completion order.
 
@@ -41,12 +41,12 @@ Shell commands that might mutate files or run tests but cannot be classified con
 
 Derived fields are explicitly marked as exact, estimated, or proxy-based:
 
-- search-to-read and search-to-edit conversion by normalized path;
+- search-to-read and search-to-edit conversion by non-empty normalized related paths; pathless shell navigation is not treated as a wildcard;
 - repeated call count from identical tool name and privacy-safe argument shape;
-- redundant reads of the same path and range;
+- redundant reads of the same normalized path and effective range, reset when that path is mutated;
 - inspected-to-edited file ratio;
-- edit operation count and input-derived added/removed line churn;
-- replacement/revert proxy when later edits replace content introduced earlier;
+- edit operation count and added/removed line churn from current edit-result metrics when available, with legacy edit arguments retained as a compatibility source; unavailable exact churn adds `edit_churn` to `missing`;
+- replacement/revert proxy from current unified edit-result patches or compatible legacy replacement arguments;
 - test/fix cycles between failed and passing verification calls;
 - first-edit survival when the extension records an observation at run end;
 - tokens, cost, and elapsed time per successful task.
