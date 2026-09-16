@@ -144,7 +144,7 @@ func cFamilyNavigationAdapter(rules *structureRules) navigationAdapter {
 }
 
 func rustNavigationAdapter(rules *structureRules) navigationAdapter {
-	return &navigationAdapterConfig{rules: rules, callTypes: newStringSet("call_expression"), containerName: func(node *syntaxNode, content string, envelope *navigationEnvelope) string {
+	return &navigationAdapterConfig{rules: rules, callTypes: newStringSet("call_expression"), sourceFacts: rustNavigationSourceFacts, exports: rustNavigationExports, containerName: func(node *syntaxNode, content string, envelope *navigationEnvelope) string {
 		if node.Kind() == "impl_item" {
 			if target := node.ChildByFieldName("type"); target != nil {
 				return target.Text()

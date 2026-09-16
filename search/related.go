@@ -80,6 +80,7 @@ type navigationIndex struct {
 	contents       map[string]string
 	goReplacements map[string]string
 	goPackages     map[string][]string
+	rustModules    *rustModuleIndex
 	graph          parser.NavigationGraph
 	sourceStats    NavigationSourceStats
 }
@@ -421,6 +422,9 @@ func (index *navigationIndex) importTargetFiles(sourceFile, importPath, imported
 		targets = append(targets, index.goReplacementImportTargets(importPath)...)
 		sort.Strings(targets)
 		return compactSortedStrings(targets)
+	}
+	if family == "rust" {
+		return index.rustImportTargetFiles(sourceFile, importPath)
 	}
 	files := make([]string, 0, len(index.contents))
 	for candidateFile := range index.contents {

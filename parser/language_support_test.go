@@ -46,7 +46,7 @@ func TestSupportedLanguagesOwnsClassificationMetadata(t *testing.T) {
 	if !python.ImportNavigation {
 		t.Fatalf("Python import navigation missing: %#v", python)
 	}
-	assertImportNavigationCapabilities(t, "java", "kotlin", "csharp")
+	assertImportNavigationCapabilities(t, "java", "kotlin", "csharp", "rust")
 }
 
 func assertImportNavigationCapabilities(t *testing.T, ids ...string) {

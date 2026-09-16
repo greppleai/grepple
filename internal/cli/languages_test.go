@@ -35,7 +35,7 @@ func TestLanguagesJSONReportsRegisteredFeatureParity(t *testing.T) {
 	if javascript.Navigation != api.FeatureProduction || javascript.GritQL != api.FeatureProduction || javascript.FocusedStructure != api.FeatureProduction || javascript.FocusedFlow != api.FeatureProduction || javascript.ImportRelations != api.FeatureProduction {
 		t.Fatalf("javascript capabilities=%#v", javascript)
 	}
-	assertImportRelationCapabilities(t, byLanguage, "java", "kotlin", "csharp")
+	assertImportRelationCapabilities(t, byLanguage, "java", "kotlin", "csharp", "rust")
 	assertRustLanguageCapabilities(t, byLanguage["rust"])
 	markdown := byLanguage["markdown"]
 	if markdown.StructuralGrep != api.FeatureSpecialized || markdown.Outline != api.FeatureSpecialized || markdown.Navigation != api.FeatureUnsupported || markdown.DirectoryArchitecture != api.FeatureUnsupported || markdown.ImportRelations != api.FeatureUnsupported {
@@ -58,7 +58,7 @@ func assertImportRelationCapabilities(t *testing.T, capabilities map[string]api.
 
 func assertRustLanguageCapabilities(t *testing.T, rust api.LanguageCapabilities) {
 	t.Helper()
-	if rust.Navigation != api.FeatureProduction || rust.GritQL != api.FeatureProduction || rust.FocusedStructure != api.FeatureProduction || rust.FocusedFlow != api.FeatureProduction || rust.ImportRelations != api.FeatureUnsupported || rust.Entrypoints != api.FeatureUnsupported {
+	if rust.Navigation != api.FeatureProduction || rust.GritQL != api.FeatureProduction || rust.FocusedStructure != api.FeatureProduction || rust.FocusedFlow != api.FeatureProduction || rust.ImportRelations != api.FeatureProduction || rust.Entrypoints != api.FeatureUnsupported {
 		t.Fatalf("rust capabilities=%#v", rust)
 	}
 }

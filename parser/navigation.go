@@ -464,5 +464,8 @@ func navigationCallQualifier(display string) string {
 	if index := strings.Index(display, "."); index > 0 {
 		return strings.TrimSuffix(display[:index], "?")
 	}
+	if index := strings.Index(display, "::"); index > 0 {
+		return display[:index]
+	}
 	return ""
 }
