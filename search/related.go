@@ -430,6 +430,9 @@ func (index *navigationIndex) importTargetFiles(sourceFile, importPath, imported
 	if family == "java" || family == "kotlin" {
 		return index.jvmImportTargetFiles(importPath, imported, family)
 	}
+	if family == "csharp" {
+		return index.cSharpImportTargetFiles(importPath, imported)
+	}
 	if family == "python" {
 		return pythonImportTargetFiles(files, sourceFile, importPath)
 	}

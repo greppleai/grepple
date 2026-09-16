@@ -35,7 +35,7 @@ func TestLanguagesJSONReportsRegisteredFeatureParity(t *testing.T) {
 	if javascript.Navigation != api.FeatureProduction || javascript.GritQL != api.FeatureProduction || javascript.FocusedStructure != api.FeatureProduction || javascript.FocusedFlow != api.FeatureProduction || javascript.ImportRelations != api.FeatureProduction {
 		t.Fatalf("javascript capabilities=%#v", javascript)
 	}
-	assertImportRelationCapabilities(t, byLanguage, "java", "kotlin")
+	assertImportRelationCapabilities(t, byLanguage, "java", "kotlin", "csharp")
 	assertRustLanguageCapabilities(t, byLanguage["rust"])
 	markdown := byLanguage["markdown"]
 	if markdown.StructuralGrep != api.FeatureSpecialized || markdown.Outline != api.FeatureSpecialized || markdown.Navigation != api.FeatureUnsupported || markdown.DirectoryArchitecture != api.FeatureUnsupported || markdown.ImportRelations != api.FeatureUnsupported {
