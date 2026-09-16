@@ -53,7 +53,7 @@ grepple ask --model codex/gpt-5.3-codex \
 Options:
 
 - `--model [PROVIDER/]MODEL` selects both provider and model when prefixed, for example `copilot/gpt-4.1`. An unprefixed command-line model uses `--provider`, or Codex when `--provider` is omitted.
-- `--provider NAME` remains available for unprefixed model names. A conflicting `--provider` and prefixed `--model` is rejected. When both are omitted, `ai.model` selects the provider and model, then Codex's provider default is the final fallback.
+- `--provider NAME` remains available for unprefixed model names. A conflicting `--provider` and prefixed `--model` is rejected. When both are omitted, `ask.model` selects the provider and model, then Codex's provider default is the final fallback.
 - `--server URL` selects the remote Grepple service available to tools with an indexed-repository selector. When omitted, normal Grepple server configuration applies.
 - `--timeout-seconds N` bounds the whole run from 1 to 3600 seconds (default 600).
 
@@ -61,21 +61,27 @@ Set a non-secret per-user model default independently of credentials:
 
 ```json
 {
-  "ai": {
-    "model": "copilot/gpt-4.1"
+  "ask": {
+    "model": "copilot/gpt-4.1",
+    "logs": {
+      "enabled": true,
+      "retentionPeriod": "7d"
+    }
   }
 }
 ```
 
-Command-line `--model` always takes precedence. Prefixing the single `ai.model` value keeps provider and model inseparable and prevents an alias from being sent to the wrong service. Existing unprefixed `ai.model` values remain backward-compatible as Codex models. Repository-owned `grepple.json` files cannot select the AI model. Prefer a capable cheaper model for broad research and override it only when an investigation needs a different cost/capability tradeoff.
+Command-line `--model` always takes precedence. Prefixing the single `ask.model` value keeps provider and model inseparable and prevents an alias from being sent to the wrong service. Repository-owned `grepple.json` files cannot select the AI model. Prefer a capable cheaper model for broad research and override it only when an investigation needs a different cost/capability tradeoff.
 
 Human answers participate in Grepple's normal bounded-output and artifact-spill behavior.
 
 ## Debug logs
 
-Every invocation immediately prints an `Ask log:` path to stderr and writes `grepple-ask-log-v1` JSONL under `~/.grepple/ask-logs/`. The log records the question, selected provider/model, system and tool prompts, assembled model and reasoning content for each completed step, tool calls and complete results, per-call `tool.cache` hit/shared status, shared `research.universe` creation/reuse, usage, final answer, and errors. It intentionally omits noisy per-token stream chunks. Partial logs remain useful if a run is interrupted. Files use mode `0600` and the directory uses `0700`.
+Logging defaults to enabled with a seven-day retention period. An enabled invocation immediately prints an `Ask log:` path to stderr and writes `grepple-ask-log-v1` JSONL under `~/.grepple/ask-logs/`. Set `ask.logs.enabled` to `false` to stop creating logs. `ask.logs.retentionPeriod` accepts positive durations such as `7d`, `168h`, or `30m`.
 
-Logs deliberately omit OAuth credentials and raw authorization headers, but they can contain sensitive questions, model reasoning, and retrieved source. Remove them according to your retention policy. `GREPPLE_ASK_LOG_DIR` selects another directory for isolated automation.
+At the beginning of every ask invocation, Grepple removes managed `.jsonl` logs whose modification time is older than the configured retention period—even when new logging is disabled. Unrelated files and unrecognized names in the directory are retained. `GREPPLE_ASK_LOG_DIR` selects another directory for isolated automation.
+
+The log records the question, selected provider/model, system and tool prompts, assembled model and reasoning content for each completed step, tool calls and complete results, per-call `tool.cache` hit/shared status, shared `research.universe` creation/reuse, usage, final answer, and errors. It intentionally omits noisy per-token stream chunks. Partial logs remain useful if a run is interrupted. Files use mode `0600` and the directory uses `0700`. Logs deliberately omit OAuth credentials and raw authorization headers, but they can contain sensitive questions, model reasoning, and retrieved source.
 
 ## Tool safety and limits
 

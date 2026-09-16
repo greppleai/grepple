@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -24,11 +25,23 @@ type config struct {
 }
 
 type userPreferences struct {
-	AI userAIPreferences `json:"ai,omitempty"`
+	Ask userAskPreferences `json:"ask,omitempty"`
 }
 
-type userAIPreferences struct {
-	Model string `json:"model,omitempty"`
+type userAskPreferences struct {
+	Model string                `json:"model,omitempty"`
+	Logs  userAskLogPreferences `json:"logs,omitempty"`
+}
+
+type userAskLogPreferences struct {
+	Enabled         *bool  `json:"enabled,omitempty"`
+	RetentionPeriod string `json:"retentionPeriod,omitempty"`
+}
+
+type configuredAskPreferences struct {
+	Model        string
+	LogsEnabled  bool
+	LogRetention time.Duration
 }
 
 type repositoryConfig struct {
@@ -144,27 +157,55 @@ func userPreferencesPath() (string, error) {
 	return filepath.Join(home, ".grepple", "grepple.json"), nil
 }
 
-func configuredAIModel() (string, error) {
+func loadConfiguredAskPreferences() (configuredAskPreferences, error) {
+	configured := configuredAskPreferences{LogsEnabled: true, LogRetention: 7 * 24 * time.Hour}
 	path, err := userPreferencesPath()
 	if err != nil {
-		return "", err
+		return configured, err
 	}
 	content, err := os.ReadFile(path)
 	if errors.Is(err, os.ErrNotExist) {
-		return "", nil
+		return configured, nil
 	}
 	if err != nil {
-		return "", fmt.Errorf("read user configuration %s: %w", path, err)
+		return configured, fmt.Errorf("read user configuration %s: %w", path, err)
 	}
 	decoder := json.NewDecoder(bytes.NewReader(content))
 	var preferences userPreferences
 	if err := decoder.Decode(&preferences); err != nil {
-		return "", fmt.Errorf("invalid user configuration %s: %w", path, err)
+		return configured, fmt.Errorf("invalid user configuration %s: %w", path, err)
 	}
 	if err := decoder.Decode(&struct{}{}); err != io.EOF {
-		return "", fmt.Errorf("invalid user configuration %s: trailing JSON content", path)
+		return configured, fmt.Errorf("invalid user configuration %s: trailing JSON content", path)
 	}
-	return strings.TrimSpace(preferences.AI.Model), nil
+	configured.Model = strings.TrimSpace(preferences.Ask.Model)
+	if preferences.Ask.Logs.Enabled != nil {
+		configured.LogsEnabled = *preferences.Ask.Logs.Enabled
+	}
+	if retention := strings.TrimSpace(preferences.Ask.Logs.RetentionPeriod); retention != "" {
+		configured.LogRetention, err = parseAskLogRetention(retention)
+		if err != nil {
+			return configured, fmt.Errorf("invalid user configuration %s ask.logs.retentionPeriod: %w", path, err)
+		}
+	}
+	return configured, nil
+}
+
+func parseAskLogRetention(value string) (time.Duration, error) {
+	value = strings.TrimSpace(strings.ToLower(value))
+	if strings.HasSuffix(value, "d") {
+		days, err := strconv.Atoi(strings.TrimSuffix(value, "d"))
+		maximumDays := int64((1<<63 - 1) / int64(24*time.Hour))
+		if err != nil || days < 1 || int64(days) > maximumDays {
+			return 0, fmt.Errorf("must be a positive duration such as 7d or 168h")
+		}
+		return time.Duration(days) * 24 * time.Hour, nil
+	}
+	duration, err := time.ParseDuration(value)
+	if err != nil || duration <= 0 {
+		return 0, fmt.Errorf("must be a positive duration such as 7d or 168h")
+	}
+	return duration, nil
 }
 
 // storeLogin persists a token set (access token, optional refresh token, and

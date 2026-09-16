@@ -72,11 +72,11 @@ func runAsk(args []string) error {
 		return err
 	}
 	registry := aiprovider.NewRegistry(store, &http.Client{Timeout: 5 * time.Minute})
-	configuredModel, err := configuredAIModel()
+	preferences, err := loadConfiguredAskPreferences()
 	if err != nil {
 		return err
 	}
-	providerName, modelName, err := resolveAskSelection(values.Provider, values.Model, configuredModel)
+	providerName, modelName, err := resolveAskSelection(values.Provider, values.Model, preferences.Model)
 	if err != nil {
 		return err
 	}
@@ -93,11 +93,13 @@ func runAsk(args []string) error {
 	if err != nil {
 		return err
 	}
-	log, err := newAskLog()
+	log, err := newAskLogWithOptions(askLogOptions{enabled: preferences.LogsEnabled, retention: preferences.LogRetention})
 	if err != nil {
 		return err
 	}
-	fmt.Fprintln(os.Stderr, "Ask log:", log.Path())
+	if log.Path() != "" {
+		fmt.Fprintln(os.Stderr, "Ask log:", log.Path())
+	}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(values.Timeout)*time.Second)
 	defer cancel()
 	runErr := runLoggedAsk(ctx, log, provider, values, question, root)
@@ -186,7 +188,7 @@ func resolveConfiguredAskModel(provider string, providerWasExplicit bool, config
 	}
 	selectedProvider, model, prefixed, err := parseAskModelSelector(configured)
 	if err != nil {
-		return "", "", fmt.Errorf("configured ai.model: %w", err)
+		return "", "", fmt.Errorf("configured ask.model: %w", err)
 	}
 	if prefixed {
 		if !providerWasExplicit || provider == selectedProvider {

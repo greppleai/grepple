@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/greppleai/grepple/search"
 )
@@ -34,7 +35,7 @@ func TestLoadRepositoryConfigFindsAncestorAndKeepsAuthenticationUserOwned(t *tes
 	}
 }
 
-func TestConfiguredAIModelUsesProviderPrefixedUserValue(t *testing.T) {
+func TestConfiguredAskPreferencesUsesAskScope(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("HOME", home)
 	directory := filepath.Join(home, ".grepple")
@@ -42,22 +43,45 @@ func TestConfiguredAIModelUsesProviderPrefixedUserValue(t *testing.T) {
 		t.Fatal(err)
 	}
 	path := filepath.Join(directory, "grepple.json")
-	if err := os.WriteFile(path, []byte(`{"ai":{"model":" anthropic/claude-sonnet "},"future":true}`), 0o600); err != nil {
+	content := `{"ask":{"model":" anthropic/claude-sonnet ","logs":{"enabled":false,"retentionPeriod":"3d"}},"ai":{"model":"codex/ignored"},"future":true}`
+	if err := os.WriteFile(path, []byte(content), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	model, err := configuredAIModel()
-	if err != nil || model != "anthropic/claude-sonnet" {
-		t.Fatalf("model=%q err=%v", model, err)
+	preferences, err := loadConfiguredAskPreferences()
+	if err != nil {
+		t.Fatal(err)
 	}
-	provider, selected, err := resolveAskSelection("", "", model)
+	if preferences.Model != "anthropic/claude-sonnet" || preferences.LogsEnabled || preferences.LogRetention != 72*time.Hour {
+		t.Fatalf("preferences=%+v", preferences)
+	}
+	provider, selected, err := resolveAskSelection("", "", preferences.Model)
 	if err != nil || provider != "anthropic" || selected != "claude-sonnet" {
 		t.Fatalf("provider=%q model=%q err=%v", provider, selected, err)
 	}
-	if err := os.WriteFile(path, []byte(`{"ai":{"model":"codex/luna"}} trailing`), 0o600); err != nil {
+	if err := os.WriteFile(path, []byte(`{"ask":{"model":"codex/luna"}} trailing`), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := configuredAIModel(); err == nil {
+	if _, err := loadConfiguredAskPreferences(); err == nil {
 		t.Fatal("expected malformed user configuration error")
+	}
+}
+
+func TestConfiguredAskPreferencesDefaultsAndValidatesRetention(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+	preferences, err := loadConfiguredAskPreferences()
+	if err != nil || !preferences.LogsEnabled || preferences.LogRetention != 7*24*time.Hour {
+		t.Fatalf("defaults=%+v err=%v", preferences, err)
+	}
+	for value, want := range map[string]time.Duration{"7d": 7 * 24 * time.Hour, "168h": 7 * 24 * time.Hour, "30m": 30 * time.Minute} {
+		got, err := parseAskLogRetention(value)
+		if err != nil || got != want {
+			t.Fatalf("retention %q=%s err=%v, want %s", value, got, err, want)
+		}
+	}
+	for _, value := range []string{"", "0d", "-1h", "forever"} {
+		if _, err := parseAskLogRetention(value); err == nil {
+			t.Fatalf("retention %q succeeded", value)
+		}
 	}
 }
 

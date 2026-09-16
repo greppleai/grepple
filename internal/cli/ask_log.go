@@ -4,9 +4,11 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 )
@@ -19,6 +21,13 @@ type askLog struct {
 	encoder  *json.Encoder
 	path     string
 	sequence uint64
+	disabled bool
+}
+
+type askLogOptions struct {
+	enabled   bool
+	retention time.Duration
+	now       func() time.Time
 }
 
 type askLogEvent struct {
@@ -30,13 +39,25 @@ type askLogEvent struct {
 }
 
 func newAskLog() (*askLog, error) {
-	directory := os.Getenv(askLogDirectoryEnv)
-	if directory == "" {
-		home, err := os.UserHomeDir()
-		if err != nil {
-			return nil, err
-		}
-		directory = filepath.Join(home, ".grepple", "ask-logs")
+	return newAskLogWithOptions(askLogOptions{enabled: true, retention: 7 * 24 * time.Hour})
+}
+
+func newAskLogWithOptions(options askLogOptions) (*askLog, error) {
+	if options.now == nil {
+		options.now = time.Now
+	}
+	if options.retention <= 0 {
+		options.retention = 7 * 24 * time.Hour
+	}
+	directory, err := askLogDirectory()
+	if err != nil {
+		return nil, err
+	}
+	if err := cleanExpiredAskLogs(directory, options.now().Add(-options.retention)); err != nil {
+		return nil, err
+	}
+	if !options.enabled {
+		return &askLog{disabled: true}, nil
 	}
 	if err := os.MkdirAll(directory, 0o700); err != nil {
 		return nil, fmt.Errorf("create ask log directory: %w", err)
@@ -48,7 +69,7 @@ func newAskLog() (*askLog, error) {
 	if _, err := rand.Read(suffix); err != nil {
 		return nil, fmt.Errorf("name ask log: %w", err)
 	}
-	name := time.Now().UTC().Format("20060102T150405.000000000Z") + "-" + hex.EncodeToString(suffix) + ".jsonl"
+	name := options.now().UTC().Format("20060102T150405.000000000Z") + "-" + hex.EncodeToString(suffix) + ".jsonl"
 	path := filepath.Join(directory, name)
 	file, err := os.OpenFile(path, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o600)
 	if err != nil {
@@ -57,9 +78,64 @@ func newAskLog() (*askLog, error) {
 	return &askLog{file: file, encoder: json.NewEncoder(file), path: path}, nil
 }
 
+func askLogDirectory() (string, error) {
+	if directory := os.Getenv(askLogDirectoryEnv); directory != "" {
+		return directory, nil
+	}
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(home, ".grepple", "ask-logs"), nil
+}
+
+func cleanExpiredAskLogs(directory string, cutoff time.Time) error {
+	entries, err := os.ReadDir(directory)
+	if errors.Is(err, os.ErrNotExist) {
+		return nil
+	}
+	if err != nil {
+		return fmt.Errorf("inspect ask log directory: %w", err)
+	}
+	for _, entry := range entries {
+		if !entry.Type().IsRegular() || !isManagedAskLogName(entry.Name()) {
+			continue
+		}
+		information, err := entry.Info()
+		if err != nil {
+			return fmt.Errorf("inspect ask log %s: %w", entry.Name(), err)
+		}
+		if information.ModTime().Before(cutoff) {
+			if err := os.Remove(filepath.Join(directory, entry.Name())); err != nil {
+				return fmt.Errorf("remove expired ask log %s: %w", entry.Name(), err)
+			}
+		}
+	}
+	return nil
+}
+
+func isManagedAskLogName(name string) bool {
+	if !strings.HasSuffix(name, ".jsonl") {
+		return false
+	}
+	base := strings.TrimSuffix(name, ".jsonl")
+	timestamp, suffix, found := strings.Cut(base, "-")
+	if !found || len(suffix) != 12 {
+		return false
+	}
+	if _, err := time.Parse("20060102T150405.000000000Z", timestamp); err != nil {
+		return false
+	}
+	_, err := hex.DecodeString(suffix)
+	return err == nil
+}
+
 func (l *askLog) Path() string { return l.path }
 
 func (l *askLog) Record(eventType string, data any) error {
+	if l == nil || l.disabled {
+		return nil
+	}
 	l.mu.Lock()
 	defer l.mu.Unlock()
 	l.sequence++
@@ -71,6 +147,9 @@ func (l *askLog) Record(eventType string, data any) error {
 }
 
 func (l *askLog) Close() error {
+	if l == nil || l.disabled {
+		return nil
+	}
 	l.mu.Lock()
 	defer l.mu.Unlock()
 	if err := l.file.Sync(); err != nil {

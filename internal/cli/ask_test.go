@@ -26,7 +26,7 @@ func TestRunAskUsesFantasyProviderAndReadTool(t *testing.T) {
 	if err := os.MkdirAll(filepath.Join(home, ".grepple"), 0o700); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(home, ".grepple", "grepple.json"), []byte(`{"ai":{"model":"gpt-5.6-luna"}}`), 0o600); err != nil {
+	if err := os.WriteFile(filepath.Join(home, ".grepple", "grepple.json"), []byte(`{"ask":{"model":"codex/gpt-5.6-luna"}}`), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	if err := os.WriteFile(filepath.Join(root, "evidence.txt"), []byte("source evidence\n"), 0o600); err != nil {
