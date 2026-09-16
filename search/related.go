@@ -269,7 +269,7 @@ func (index *navigationIndex) resolveGraphImports() {
 
 func (index *navigationIndex) resolveImportTargetPaths(fact parser.NavigationImport, packageFiles map[string][]string) []string {
 	targets := append([]string(nil), packageFiles[fact.ImportPath]...)
-	targets = append(targets, index.importTargetFiles(fact.Path, fact.ImportPath, fact.Language)...)
+	targets = append(targets, index.importTargetFiles(fact.Path, fact.ImportPath, fact.Imported, fact.Language)...)
 	if len(targets) == 0 && navigationLanguageFamily(fact.Language) == "go" {
 		targets = append(targets, index.localGoImportTargets(fact.Path, fact.ImportPath)...)
 	}
@@ -391,7 +391,7 @@ func (index *navigationIndex) reExportTargetFiles(sourceFile, importPath, name, 
 		return nil
 	}
 	result := []string{}
-	candidateFiles := index.importTargetFiles(sourceFile, importPath, language)
+	candidateFiles := index.importTargetFiles(sourceFile, importPath, "", language)
 	for _, candidateFile := range candidateFiles {
 		key := navigationSymbolKey(language, candidateFile) + "\x00" + name
 		if seen[key] {
@@ -414,7 +414,7 @@ func (index *navigationIndex) reExportTargetFiles(sourceFile, importPath, name, 
 	return compactSortedStrings(result)
 }
 
-func (index *navigationIndex) importTargetFiles(sourceFile, importPath, language string) []string {
+func (index *navigationIndex) importTargetFiles(sourceFile, importPath, imported, language string) []string {
 	family := navigationLanguageFamily(language)
 	if family == "go" {
 		targets := index.goPackageImportTargets(importPath)
@@ -427,6 +427,9 @@ func (index *navigationIndex) importTargetFiles(sourceFile, importPath, language
 		files = append(files, candidateFile)
 	}
 	sort.Strings(files)
+	if family == "java" || family == "kotlin" {
+		return index.jvmImportTargetFiles(importPath, imported, family)
+	}
 	if family == "python" {
 		return pythonImportTargetFiles(files, sourceFile, importPath)
 	}

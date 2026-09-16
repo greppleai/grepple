@@ -40,7 +40,7 @@ Live `grepple ask` dogfooding showed two distinct bottlenecks: ordinary local/re
 ### Navigation and evidence calibration
 
 - [ ] Publish per-language coverage for declarations, calls, imports, type references, fields, member access, and process entrypoints; distinguish unsupported facts from unresolved facts.
-- [ ] Add adapter-owned import-relation parity for Java, Kotlin, C#, Rust, and other supported languages where syntax and repository layout permit conservative local target resolution.
+- [ ] Add adapter-owned import-relation parity for C#, Rust, and other supported languages where syntax and repository layout permit conservative local target resolution.
 - [ ] Add cross-file navigation goldens for aliases, receivers, overload-like declarations, generics, nested scopes, and ambiguous imports in every language that claims the relevant adapter capability.
 - [ ] Measure resolved-local, ambiguous-local, unresolved-local, and expected-external outcomes on representative repositories instead of treating candidate counts as precision.
 - [ ] Add answer-gated tasks that intentionally exercise reflection, dynamic dispatch, generated code, registration, and build-system edges; verify Grepple reports uncertainty rather than unsupported architectural claims.

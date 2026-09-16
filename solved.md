@@ -99,6 +99,7 @@ This file records completed Grepple roadmap work that no longer belongs in `next
 - [x] Added `architecture why` with source-linked cross-directory call evidence restricted to exact/import/context-resolved edges.
 - [x] Added adapter-owned import facts and local target paths to the shared navigation graph for Go and JavaScript/TypeScript, with explicit language capability reporting and cache-safe path instantiation.
 - [x] Added adapter-owned module-level Python import facts for direct, aliased, `from`, wildcard, absolute, and explicit-relative imports; local `.py`/`.pyi`/`.pyw` target resolution preserves ambiguous source roots and feeds graph calls plus directory architecture while function-local imports remain unsupported.
+- [x] Added adapter-owned Java package/type/wildcard/static imports and Kotlin package/declaration/wildcard/aliased imports; syntax-evidenced JVM package and top-level export facts resolve local targets without build-system or source-path guessing.
 - [x] Added independently labeled import-only and imported-type directory relations with production/test/fixture/generated/vendor evidence totals and resolved/ambiguous/unresolved/unsupported coverage.
 - [x] Kept compact directory relation output bounded to displayed directory depth while `architecture why` preserves exact uncollapsed evidence.
 - [x] Added `parser.OutlineFromDocument` and document-backed graph construction so directory architecture parses each selected source once for both outlines and navigation.

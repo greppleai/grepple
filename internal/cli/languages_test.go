@@ -35,6 +35,7 @@ func TestLanguagesJSONReportsRegisteredFeatureParity(t *testing.T) {
 	if javascript.Navigation != api.FeatureProduction || javascript.GritQL != api.FeatureProduction || javascript.FocusedStructure != api.FeatureProduction || javascript.FocusedFlow != api.FeatureProduction || javascript.ImportRelations != api.FeatureProduction {
 		t.Fatalf("javascript capabilities=%#v", javascript)
 	}
+	assertImportRelationCapabilities(t, byLanguage, "java", "kotlin")
 	assertRustLanguageCapabilities(t, byLanguage["rust"])
 	markdown := byLanguage["markdown"]
 	if markdown.StructuralGrep != api.FeatureSpecialized || markdown.Outline != api.FeatureSpecialized || markdown.Navigation != api.FeatureUnsupported || markdown.DirectoryArchitecture != api.FeatureUnsupported || markdown.ImportRelations != api.FeatureUnsupported {
@@ -42,6 +43,16 @@ func TestLanguagesJSONReportsRegisteredFeatureParity(t *testing.T) {
 	}
 	if !strings.Contains(output, `"language": "text"`) || !strings.Contains(output, `"extensions": []`) {
 		t.Fatalf("JSON collections or text fallback missing: %s", output)
+	}
+}
+
+func assertImportRelationCapabilities(t *testing.T, capabilities map[string]api.LanguageCapabilities, ids ...string) {
+	t.Helper()
+	for _, id := range ids {
+		language := capabilities[id]
+		if language.Navigation != api.FeatureProduction || language.DirectoryArchitecture != api.FeatureProduction || language.ImportRelations != api.FeatureProduction {
+			t.Fatalf("%s capabilities=%#v", id, language)
+		}
 	}
 }
 

@@ -452,7 +452,7 @@ func (c *navigationCollector) callName(node *syntaxNode) (string, string) {
 		return "", ""
 	}
 	name := c.navigation.TerminalName(target, c.content)
-	display := strings.Join(strings.Fields(target.Text()), " ")
+	display := strings.Join(strings.Fields(c.navigation.CallDisplay(node, target, c.content)), " ")
 	if len(display) > 80 {
 		display = display[:77] + "..."
 	}

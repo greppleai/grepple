@@ -49,6 +49,7 @@ type navigationAdapter interface {
 	IsFieldContainer(string) bool
 	SelfBinding(string) (string, navigationBinding, bool)
 	TerminalName(*syntaxNode, string) string
+	CallDisplay(*syntaxNode, *syntaxNode, string) string
 	IsFieldDeclaration(string) bool
 	IsParameter(string) bool
 	VariableBindingKind(string) string
@@ -76,6 +77,7 @@ type navigationAdapterConfig struct {
 	returnCallableName       func(*syntaxNode, string, string, *navigationAdapterConfig) string
 	callableReturnBinding    func(*syntaxNode, string, map[string]navigationImport) navigationBinding
 	terminalName             func(*syntaxNode, string) string
+	callDisplay              func(*syntaxNode, *syntaxNode, string) string
 	selfBindingName          string
 	selfBindingFromContainer bool
 	fieldNames               func(*syntaxNode, *syntaxNode, string) []navigationFieldName
@@ -261,6 +263,13 @@ func (adapter *navigationAdapterConfig) TerminalName(node *syntaxNode, content s
 		return adapter.terminalName(node, content)
 	}
 	return defaultNavigationTerminalName(node)
+}
+
+func (adapter *navigationAdapterConfig) CallDisplay(call, target *syntaxNode, content string) string {
+	if adapter.callDisplay != nil {
+		return adapter.callDisplay(call, target, content)
+	}
+	return target.Text()
 }
 
 func (*navigationAdapterConfig) IsFieldDeclaration(kind string) bool {
