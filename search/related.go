@@ -415,7 +415,8 @@ func (index *navigationIndex) reExportTargetFiles(sourceFile, importPath, name, 
 }
 
 func (index *navigationIndex) importTargetFiles(sourceFile, importPath, language string) []string {
-	if navigationLanguageFamily(language) == "go" {
+	family := navigationLanguageFamily(language)
+	if family == "go" {
 		targets := index.goPackageImportTargets(importPath)
 		targets = append(targets, index.goReplacementImportTargets(importPath)...)
 		sort.Strings(targets)
@@ -426,6 +427,9 @@ func (index *navigationIndex) importTargetFiles(sourceFile, importPath, language
 		files = append(files, candidateFile)
 	}
 	sort.Strings(files)
+	if family == "python" {
+		return pythonImportTargetFiles(files, sourceFile, importPath)
+	}
 	if strings.HasPrefix(importPath, ".") {
 		result := []string{}
 		for _, candidateFile := range files {
@@ -435,7 +439,7 @@ func (index *navigationIndex) importTargetFiles(sourceFile, importPath, language
 		}
 		return result
 	}
-	if navigationLanguageFamily(language) == "typescript" || navigationLanguageFamily(language) == "javascript" {
+	if family == "typescript" || family == "javascript" {
 		return typeScriptAliasImportTargets(files, sourceFile, importPath)
 	}
 	return nil

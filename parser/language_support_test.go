@@ -43,8 +43,8 @@ func TestSupportedLanguagesOwnsClassificationMetadata(t *testing.T) {
 		t.Fatalf("Go capability metadata=%#v", fresh)
 	}
 	python, _ := CapabilitiesForLanguage("python")
-	if python.ImportNavigation {
-		t.Fatalf("Python unexpectedly reports import navigation: %#v", python)
+	if !python.ImportNavigation {
+		t.Fatalf("Python import navigation missing: %#v", python)
 	}
 }
 

@@ -57,7 +57,7 @@ func TestLanguageCapabilityMatrixReportsPythonStructuralParity(t *testing.T) {
 		if capability.Language != "python" {
 			continue
 		}
-		if capability.Navigation != api.FeatureProduction || capability.GritQL != api.FeatureProduction || capability.FocusedStructure != api.FeatureProduction || capability.FocusedFlow != api.FeatureProduction {
+		if capability.Navigation != api.FeatureProduction || capability.GritQL != api.FeatureProduction || capability.FocusedStructure != api.FeatureProduction || capability.FocusedFlow != api.FeatureProduction || capability.ImportRelations != api.FeatureProduction {
 			t.Fatalf("python capabilities=%#v", capability)
 		}
 		return

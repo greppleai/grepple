@@ -99,7 +99,7 @@ func ecmaNavigationAdapter(rules *structureRules) navigationAdapter {
 }
 
 func pythonNavigationAdapter(rules *structureRules) navigationAdapter {
-	return &navigationAdapterConfig{rules: rules, callTypes: newStringSet("call"), visibility: func(_ *syntaxNode, name, _ string) NavigationVisibility {
+	return &navigationAdapterConfig{rules: rules, callTypes: newStringSet("call"), sourceFacts: pythonNavigationSourceFacts, visibility: func(_ *syntaxNode, name, _ string) NavigationVisibility {
 		return pythonNavigationVisibility(navigationTerminal(name))
 	}}
 }
@@ -247,6 +247,101 @@ func typeScriptNavigationSourceFacts(root *syntaxNode, content string, adapter *
 	collectNavigationSourceFields(root, content, imports, fields, adapter)
 	collectTypeScriptNavigationHeritage(root, imports, fields)
 	return imports, packageName, fields
+}
+
+func pythonNavigationSourceFacts(root *syntaxNode, _ string, _ *navigationAdapterConfig) (map[string]navigationImport, string, map[string]map[string]navigationBinding) {
+	imports, packageName, fields := emptyNavigationSourceFacts()
+	for _, node := range root.NamedChildren() {
+		switch node.Kind() {
+		case "import_statement":
+			addPythonNavigationImports(imports, node)
+		case "import_from_statement":
+			addPythonNavigationFromImports(imports, node)
+		}
+	}
+	return imports, packageName, fields
+}
+
+func addPythonNavigationImports(imports map[string]navigationImport, node *syntaxNode) {
+	for index, child := range node.NamedChildren() {
+		if node.FieldNameForNamedChild(uint32(index)) != "name" {
+			continue
+		}
+		importPath, alias := pythonNavigationImportName(child)
+		if importPath == "" {
+			continue
+		}
+		if alias == "" {
+			alias = strings.Split(importPath, ".")[0]
+		}
+		addPythonNavigationImport(imports, alias, importPath, "*", node.StartLine())
+	}
+}
+
+func addPythonNavigationFromImports(imports map[string]navigationImport, node *syntaxNode) {
+	module := node.ChildByFieldName("module_name")
+	if module == nil || strings.TrimSpace(module.Text()) == "" {
+		return
+	}
+	importPath := strings.TrimSpace(module.Text())
+	for index, child := range node.NamedChildren() {
+		if child.ID() == module.ID() {
+			continue
+		}
+		field := node.FieldNameForNamedChild(uint32(index))
+		if field != "name" && child.Kind() != "wildcard_import" {
+			continue
+		}
+		imported, alias := pythonNavigationImportName(child)
+		if child.Kind() == "wildcard_import" {
+			imported, alias = "*", "*"
+		} else if alias == "" {
+			alias = navigationTerminal(imported)
+		}
+		addPythonNavigationImport(imports, alias, importPath, imported, node.StartLine())
+	}
+}
+
+func pythonNavigationImportName(node *syntaxNode) (string, string) {
+	if node == nil {
+		return "", ""
+	}
+	if node.Kind() != "aliased_import" {
+		return strings.TrimSpace(node.Text()), ""
+	}
+	name := navigationFirstField(node, "name")
+	alias := navigationFirstField(node, "alias")
+	if name == nil || alias == nil {
+		return "", ""
+	}
+	return strings.TrimSpace(name.Text()), strings.TrimSpace(alias.Text())
+}
+
+func addPythonNavigationImport(imports map[string]navigationImport, alias, importPath, imported string, line int) {
+	if alias == "" || importPath == "" {
+		return
+	}
+	item := navigationImport{alias: alias, path: importPath, imported: imported, line: line}
+	uniqueKey := func(value navigationImport) string {
+		return alias + "\x00" + strconv.Itoa(value.line) + "\x00" + value.path + "\x00" + value.imported
+	}
+	if alias == "*" {
+		imports[uniqueKey(item)] = item
+		return
+	}
+	if existing, ok := imports[alias]; ok {
+		delete(imports, alias)
+		imports[uniqueKey(existing)] = existing
+		imports[uniqueKey(item)] = item
+		return
+	}
+	for key := range imports {
+		if strings.HasPrefix(key, alias+"\x00") {
+			imports[uniqueKey(item)] = item
+			return
+		}
+	}
+	imports[alias] = item
 }
 
 func collectTypeScriptNavigationHeritage(root *syntaxNode, imports map[string]navigationImport, fields map[string]map[string]navigationBinding) {
