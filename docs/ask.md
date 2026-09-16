@@ -1,6 +1,6 @@
 # Delegated research with `grepple ask`
 
-`grepple ask` runs a bounded, read-only internal research agent, usually with a cheaper model than the main coding agent. The delegated model receives focused JSON tools that directly invoke Grepple's search, parser navigation, GritQL, graph, architecture, source-scope, indexed-tree, and file-reading APIs. It receives neither a shell nor a generic Grepple command surface. Its job is to sift through noisy, multi-file evidence and return a compact source-backed handoff, trading modest model/API cost for fewer interactive turns and a cleaner, more focused main-agent context.
+`grepple ask` runs a bounded, read-only source-retrieval agent, usually with a cheaper model than the main coding agent. It can batch-read known file ranges or use focused JSON tools that directly invoke Grepple's search, parser navigation, GritQL, graph, architecture, source-scope, indexed-tree, and file-reading APIs. It receives neither a shell nor a generic Grepple command surface. Its job is to retrieve and sift multi-file evidence—not to act as a code reviewer or approval agent—while keeping implementation and judgment in the main-agent context.
 
 ## Provider authentication
 
@@ -95,12 +95,11 @@ The internal agent receives a small set of typed, read-only tools:
 - `explain_sources`: source classifications, exclusions, and completeness.
 - `repository_refs`: exact indexed default-branch, branch, and tag selectors for one source repository.
 - `repository_tree`: bounded indexed-repository path discovery.
-- `read_file`: bounded local or indexed-repository source ranges and structural outlines.
+- `read_file`: up to eight bounded local or indexed-repository source ranges per call, plus structural outlines. When user settings enable local anchors, source rows use `HASH│LINE│content`; delegated answers are instructed to preserve those rows exactly.
 
 Each tool has a purpose-specific JSON schema with only the relevant options. Tools call Grepple's search, parser, graph, architecture, GritQL, source-scope, and remote HTTP APIs directly. The agent receives no generic argv tool, command parser, executable subprocess, or shell.
 
 One invocation owns a source/config/server-identified research session. Successful identical typed calls reuse byte-identical evidence, and concurrent duplicates share one execution. Cache status is exposed through tool-response metadata and `tool.cache` log events; errors are not cached, and a canceled waiter does not cancel shared work governed by the overall ask timeout. The cache is in-memory and never survives the invocation.
 
-One invocation owns a source/config/server-identified research session. Successful identical typed calls reuse byte-identical evidence, and concurrent duplicates share one execution. Cache status is exposed through tool-response metadata and `tool.cache` log events; errors are not cached, and a canceled waiter does not cancel shared work governed by the overall ask timeout. The cache is in-memory and never survives the invocation.
 
 Local `navigate_code`, `query_graph`, and `inspect_architecture` also share a lazily initialized source universe when their normalized selected paths and `max_files` scope agree. Each selected file is parsed into one caller-owned `parser.Document`; outlines, exact declaration context, related navigation, graph traversal, and directory architecture borrow those documents and one resolved navigation analysis until the ask session closes them. Different effective scopes receive separate universes, and cold versus reused tool evidence remains byte-identical.

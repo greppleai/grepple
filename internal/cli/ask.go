@@ -32,11 +32,19 @@ type askArgs struct {
 }
 
 type readToolInput struct {
-	Path       string `json:"path" description:"Repository-relative file path"`
-	Repository string `json:"repository,omitempty" description:"Exact indexed OWNER/REPO[@REF] selector; omit for local workspace"`
-	StartLine  int    `json:"start_line,omitempty" description:"First 1-indexed line; defaults to 1"`
-	EndLine    int    `json:"end_line,omitempty" description:"Last 1-indexed line; defaults to start+199"`
-	Outline    bool   `json:"outline,omitempty" description:"Return the file's structural outline instead of source lines"`
+	Path       string              `json:"path,omitempty" description:"One repository-relative file path; omit when files is provided"`
+	Files      []readToolFileInput `json:"files,omitempty" description:"Up to eight local or indexed-repository file ranges to read in one call"`
+	Repository string              `json:"repository,omitempty" description:"Exact indexed OWNER/REPO[@REF] selector; omit for local workspace"`
+	StartLine  int                 `json:"start_line,omitempty" description:"First 1-indexed line for path; defaults to 1"`
+	EndLine    int                 `json:"end_line,omitempty" description:"Last 1-indexed line for path; defaults to start+199"`
+	Outline    bool                `json:"outline,omitempty" description:"Return path's structural outline instead of source lines"`
+}
+
+type readToolFileInput struct {
+	Path      string `json:"path" description:"Repository-relative file path"`
+	StartLine int    `json:"start_line,omitempty" description:"First 1-indexed line; defaults to 1"`
+	EndLine   int    `json:"end_line,omitempty" description:"Last 1-indexed line; defaults to start+199"`
+	Outline   bool   `json:"outline,omitempty" description:"Return the structural outline instead of source lines"`
 }
 
 func validateAskArgs(values askArgs) (string, error) {
@@ -221,10 +229,10 @@ func parseAskModelSelector(value string) (provider, model string, prefixed bool,
 }
 
 func askSystemPrompt(root string) string {
-	return "You are Grepple's internal read-only research agent. Answer the user's question with precise, source-backed evidence. " +
-		"Use the focused research tools directly; there is no shell or CLI. Start with search_code count/files or inspect_architecture when scope is unknown, then use snippets, navigate_code, query_graph, structural_search, or read_file only as needed. " +
-		"Use repository_tree and a repository selector for remote indexed source. Use explain_sources before completeness-sensitive conclusions. Cite repository/path:line ranges in the final answer. " +
-		"Make at most two tool calls at a time and stop researching as soon as the evidence answers the question. Do not repeat equivalent searches or read whole files when snippets or navigation suffice. Return the text answer immediately once sufficient evidence is available. " +
+	return "You are Grepple's internal read-only source retrieval agent. Return precise, source-backed evidence; do not act as a code reviewer or provide a second-model approval. " +
+		"Use read_file with its files array to batch-read known local ranges, preserving every HASH│LINE│content row exactly when anchors are present. Use focused discovery tools only when paths or ranges are unknown; after discovery, read the final local ranges and never substitute unanchored search snippets for anchored source rows. " +
+		"Use repository_tree and a repository selector for remote indexed source. Use explain_sources before completeness-sensitive conclusions. Cite repository/path:line ranges in synthesized answers. " +
+		"Make at most two tool calls at a time and stop as soon as the requested source evidence is available. Do not repeat equivalent searches. Return requested batch reads directly rather than narrating a review. " +
 		"Navigation is syntax-based, structural queries prove syntax rather than types or data flow, and bounded results can have more pages. Do not modify files, credentials, artifacts, or configuration. " +
 		"The local workspace root is " + root + "."
 }
@@ -241,7 +249,11 @@ func runSimpleReadTool(root string, input readToolInput) (fantasy.ToolResponse, 
 	if len(content) > maxReadBytes || bytes.IndexByte(content, 0) >= 0 {
 		return fantasy.NewTextErrorResponse("file is binary or exceeds the 256 KiB read limit; use grepple search/outline instead"), nil
 	}
-	lines := strings.Split(strings.ReplaceAll(string(content), "\r\n", "\n"), "\n")
+	normalizedContent, err := normalizeAnchorContent(string(content))
+	if err != nil {
+		return fantasy.NewTextErrorResponse(err.Error()), nil
+	}
+	lines := strings.Split(normalizedContent, "\n")
 	start := input.StartLine
 	if start < 1 {
 		start = 1
@@ -257,9 +269,21 @@ func runSimpleReadTool(root string, input readToolInput) (fantasy.ToolResponse, 
 		return fantasy.NewTextErrorResponse("start_line is beyond the file"), nil
 	}
 	end = min(end, len(lines))
+	lineNumbers := make([]int, 0, end-start+1)
+	for line := start; line <= end; line++ {
+		lineNumbers = append(lineNumbers, line)
+	}
+	anchors, anchored, err := defaultReadAnchors(path, normalizedContent, lineNumbers)
+	if err != nil {
+		return fantasy.NewTextErrorResponse("generate read anchors: " + err.Error()), nil
+	}
 	var output strings.Builder
 	for line := start; line <= end; line++ {
-		fmt.Fprintf(&output, "%d│%s\n", line, lines[line-1])
+		if anchored {
+			fmt.Fprintf(&output, "%s│%d│%s\n", anchors[line], line, lines[line-1])
+		} else {
+			fmt.Fprintf(&output, "%d│%s\n", line, lines[line-1])
+		}
 	}
 	return fantasy.NewTextResponse(output.String()), nil
 }

@@ -1,11 +1,11 @@
 ---
 name: delegated-research-with-ask
-description: "Use when a repository question needs substantial multi-step, source-backed research that is worth delegating to a cheaper model—especially broad architecture, call-path, structural-audit, cross-repository, or exact dependency-version investigations. Prefer direct Grepple lookup for simple questions and keep implementation, mutation, builds, and final verification in the calling agent."
+description: "Use for isolated, read-only source retrieval when a cheaper model can batch-read known file ranges or perform substantial multi-step, source-backed investigation. Never use it as a code-review or approval agent. Keep implementation, judgment, mutation, builds, and final verification in the calling agent."
 ---
 
 # Delegated research with `grepple ask`
 
-Use `grepple ask` as a research subagent, not as a replacement for the coding agent. It gives a usually cheaper model focused, read-only Grepple capabilities so it can perform messy, broad exploration and return a compact source-backed synthesis while preserving the calling agent's context for implementation and verification.
+Use `grepple ask` as a read-only source-retrieval subagent, not as a reviewer or replacement for the coding agent. It can batch-read known ranges or perform messy exploration and return compact source-backed evidence while preserving the calling agent's context for implementation and judgment.
 
 ## Why use it
 
@@ -16,7 +16,7 @@ Benefits:
 - **Context isolation:** tool calls, source excerpts, and intermediate reasoning stay in the delegated run and its JSONL log instead of filling the calling agent's context.
 - **Cost-efficient delegation:** use a cheaper user-configured model for broad retrieval and evidence sifting while retaining the main model's context and capability for implementation, judgment, and verification.
 - **Source-backed answers:** the research agent is instructed to cite repository paths and exact line ranges.
-- **Purpose-built tools:** it receives typed tools for text search, exact navigation, structural search, graph queries, directory architecture, source scope, indexed refs and trees, and bounded file reads.
+- **Purpose-built tools:** it receives typed tools for text search, exact navigation, structural search, graph queries, directory architecture, source scope, indexed refs and trees, and bounded batch file reads.
 - **No shell exposure:** tools invoke Grepple internals directly; the delegated model gets no shell, generic argv command, mutation surface, or recursive `ask` capability.
 - **Local and remote evidence:** one investigation can combine the current checkout with indexed repositories, branches, and tags.
 - **Debuggability:** every run writes a semantic JSONL transcript containing tool schemas, completed model steps, tool calls/results, usage, answer, and errors without noisy token chunks.
@@ -25,20 +25,20 @@ Benefits:
 
 Delegate when at least one of these applies:
 
-- The question requires several search/navigation steps and a synthesized conclusion.
+- Several known files or ranges should be read together without spending one main-agent tool call per file.
+- The question requires several search/navigation steps and a synthesized evidence handoff.
 - Ownership, coupling, responsibilities, architecture, or change impact is unclear.
 - A structural pattern must be found and then interpreted in source context.
 - The answer spans multiple packages or repositories.
 - An exact dependency branch or tag must be inspected remotely.
-- The calling agent needs a compact research report before implementing a larger change.
-- A second-model review would reduce the risk of a premature architectural conclusion.
+- The calling agent needs a compact source retrieval report before implementing a larger change.
 
 Good examples:
 
+- “Read these five implementation ranges and return them verbatim with their local anchors.”
 - “Which package owns navigation resolution, what calls it, and what would a signature change affect?”
 - “Compare our streaming integration with Fantasy v0.8.0 and cite both repositories.”
 - “On the exact indexed selector, query the impact graph and summarize directory responsibilities without conflating graph edges with ownership.”
-- “Find all direct concrete-type leakage across this boundary and distinguish production from tests.”
 - “Explain why these directories depend on each other and identify the first source-backed relation.”
 
 ## Do not use it when
@@ -46,13 +46,13 @@ Good examples:
 Prefer direct Grepple tools or a normal file read when:
 
 - One literal search, outline, or exact `PATH:LINE` lookup answers the question.
-- You already know the file and only need a small edit-ready range.
-- The task is primarily implementation, formatting, running tests, or debugging runtime state.
+- You already know only one small edit-ready range; read it directly instead.
+- The task asks for code review, approval, defect hunting, or a second opinion. The main agent owns review and judgment.
 - The requested operation mutates files, credentials, configuration, rules, indexes, or artifacts.
 - A remote exact ref is not indexed and the conclusion must be version-specific. Ask may identify this gap, but it cannot manufacture missing evidence.
 - Provider cost or latency is not justified by the question's complexity.
 
-Do not invoke `ask` from inside another delegated `ask` run.
+When local anchors are enabled, request known ranges through `read_file` and preserve every `HASH│LINE│content` row exactly in the handoff. If discovery used search or navigation, finish by batch-reading the selected local ranges; never replace anchored source rows with unanchored snippets. This lets the calling agent edit directly without another read. Do not invoke `ask` from inside another delegated `ask` run.
 
 ## Prerequisites
 

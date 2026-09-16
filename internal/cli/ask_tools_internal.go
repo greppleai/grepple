@@ -117,7 +117,7 @@ func newAskResearchToolsForSession(session *researchSession, root, server string
 		cachedAskTool(session, "repository_tree", "List a bounded tree from one exact indexed repository selector returned by repository_refs. Use it to discover remote paths before search or read.", func(ctx context.Context, input askRepositoryTreeInput) (fantasy.ToolResponse, error) {
 			return askToolResult(runAskRepositoryTree(ctx, server, input))
 		}),
-		cachedAskTool(session, "read_file", "Read one bounded local or indexed-repository file range. Prefer navigate_code for declarations and search_code for discovery; use outline=true to return structural symbols instead of content.", func(ctx context.Context, input readToolInput) (fantasy.ToolResponse, error) {
+		cachedAskTool(session, "read_file", "Batch-read up to eight bounded local or indexed-repository file ranges. Use files for implementation-oriented retrieval after paths are known. Local source rows carry HASH│LINE│content whenever anchors are enabled; preserve them exactly. Use outline=true for structural symbols.", func(ctx context.Context, input readToolInput) (fantasy.ToolResponse, error) {
 			return runAskReadTool(ctx, root, server, input)
 		}),
 	}
@@ -490,6 +490,59 @@ func runAskRepositoryTree(ctx context.Context, server string, input askRepositor
 }
 
 func runAskReadTool(ctx context.Context, root, server string, input readToolInput) (fantasy.ToolResponse, error) {
+	inputs, err := expandReadToolInput(input)
+	if err != nil {
+		return fantasy.NewTextErrorResponse(err.Error()), nil
+	}
+	if len(inputs) == 1 {
+		return runAskSingleReadTool(ctx, root, server, inputs[0])
+	}
+	var output strings.Builder
+	for _, current := range inputs {
+		response, err := runAskSingleReadTool(ctx, root, server, current)
+		if err != nil {
+			return response, err
+		}
+		if response.IsError {
+			return response, nil
+		}
+		section := fmt.Sprintf("== %s ==\n%s", current.Path, response.Content)
+		if output.Len()+len(section) > defaultToolOutputSize {
+			output.WriteString("… batch read truncated at 64 KiB; request fewer or narrower ranges …\n")
+			break
+		}
+		output.WriteString(section)
+		if !strings.HasSuffix(section, "\n") {
+			output.WriteByte('\n')
+		}
+	}
+	return fantasy.NewTextResponse(output.String()), nil
+}
+
+func expandReadToolInput(input readToolInput) ([]readToolInput, error) {
+	if len(input.Files) == 0 {
+		if strings.TrimSpace(input.Path) == "" {
+			return nil, fmt.Errorf("path or files is required")
+		}
+		return []readToolInput{input}, nil
+	}
+	if input.Path != "" || input.StartLine != 0 || input.EndLine != 0 || input.Outline {
+		return nil, fmt.Errorf("path, start_line, end_line, and outline cannot be combined with files")
+	}
+	if len(input.Files) > 8 {
+		return nil, fmt.Errorf("files accepts at most eight ranges")
+	}
+	result := make([]readToolInput, 0, len(input.Files))
+	for _, file := range input.Files {
+		if strings.TrimSpace(file.Path) == "" {
+			return nil, fmt.Errorf("every files entry requires path")
+		}
+		result = append(result, readToolInput{Path: file.Path, Repository: input.Repository, StartLine: file.StartLine, EndLine: file.EndLine, Outline: file.Outline})
+	}
+	return result, nil
+}
+
+func runAskSingleReadTool(ctx context.Context, root, server string, input readToolInput) (fantasy.ToolResponse, error) {
 	if input.Repository == "" {
 		return runAskLocalReadTool(root, input)
 	}

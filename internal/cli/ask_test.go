@@ -151,6 +151,7 @@ func askCompletedEvent(id string) string {
 }
 
 func TestSimpleReadToolIsBoundedAndConfined(t *testing.T) {
+	t.Setenv("GREPPLE_SETTINGS", filepath.Join(t.TempDir(), "settings.json"))
 	root := t.TempDir()
 	if err := os.WriteFile(filepath.Join(root, "source.go"), []byte("one\ntwo\nthree\n"), 0o600); err != nil {
 		t.Fatal(err)
@@ -162,6 +163,33 @@ func TestSimpleReadToolIsBoundedAndConfined(t *testing.T) {
 	response, err = runSimpleReadTool(root, readToolInput{Path: "../outside"})
 	if err != nil || !response.IsError {
 		t.Fatalf("escaping read response=%+v err=%v", response, err)
+	}
+}
+
+func TestAskReadToolBatchesAnchoredLocalRanges(t *testing.T) {
+	root := t.TempDir()
+	for path, content := range map[string]string{"first.go": "one\ntwo\n", "second.go": "three\nfour\n"} {
+		if err := os.WriteFile(filepath.Join(root, path), []byte(content), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	settingsPath := filepath.Join(t.TempDir(), "settings.json")
+	writeJSONFile(t, settingsPath, userSettings{Anchors: anchorSettings{
+		EnabledByDefault: true, DefaultProvider: "test",
+		Providers: map[string]anchorProviderSettings{"test": {Command: []string{os.Args[0], "-test.run=TestAnchorProviderProcess"}}},
+	}})
+	t.Setenv("GREPPLE_SETTINGS", settingsPath)
+	t.Setenv("GREPPLE_TEST_ANCHOR_PROVIDER", "1")
+	response, err := runAskReadTool(t.Context(), root, "", readToolInput{Files: []readToolFileInput{
+		{Path: "first.go", StartLine: 2, EndLine: 2}, {Path: "second.go", StartLine: 1, EndLine: 2},
+	}})
+	if err != nil || response.IsError {
+		t.Fatalf("response=%+v err=%v", response, err)
+	}
+	for _, expected := range []string{"== first.go ==", "A02│2│two", "== second.go ==", "A01│1│three", "A02│2│four"} {
+		if !strings.Contains(response.Content, expected) {
+			t.Fatalf("batch output missing %q:\n%s", expected, response.Content)
+		}
 	}
 }
 

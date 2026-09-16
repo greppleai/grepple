@@ -90,6 +90,32 @@ func prepareResultAnchors(options *cliOptions, results []api.FileResult) error {
 	return nil
 }
 
+func defaultReadAnchors(path, content string, lines []int) (map[int]string, bool, error) {
+	settings, err := loadUserSettings()
+	if err != nil {
+		return nil, false, err
+	}
+	if !settings.Anchors.EnabledByDefault {
+		return nil, false, nil
+	}
+	_, provider, err := resolveAnchorProvider("")
+	if err != nil {
+		return nil, false, err
+	}
+	request := anchorProtocolRequest{ProtocolVersion: anchorProtocolVersion, Files: []anchorProtocolRequestFile{{
+		Path: path, Content: content, SHA256: anchorDigest(content), Lines: lines,
+	}}}
+	response, err := invokeAnchorProvider(provider, request)
+	if err != nil {
+		return nil, false, err
+	}
+	anchors, err := validateAnchorResponse(request, response, map[string]string{path: path})
+	if err != nil {
+		return nil, false, err
+	}
+	return anchors[path], true, nil
+}
+
 func buildAnchorRequest(options *cliOptions, results []api.FileResult) (anchorProtocolRequest, map[string]string, error) {
 	selections := collectAnchorSelections(options, results)
 	request := anchorProtocolRequest{

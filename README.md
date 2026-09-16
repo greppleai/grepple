@@ -56,14 +56,14 @@ The default Linux build links the CGO tree-sitter runtime and all grammars into 
 
 ## Delegated research
 
-Authenticate a capable, usually cheaper research model once, then delegate broad source exploration without consuming repeated turns or filling the calling agent's context:
+Authenticate a capable, usually cheaper retrieval model once, then delegate broad source exploration or batch reads without consuming repeated turns or filling the calling agent's context:
 
 ```bash
 grepple ai-provider login codex
 grepple ask Which package owns navigation resolution and what calls it?
 ```
 
-The internal agent is intended to sift through messy, multi-file evidence with a cost-efficient model and return a compact research handoff for the main coding agent to verify and implement. It has focused typed tools for text search, exact navigation, structural search, graph queries, architecture, source scope, indexed refs and trees, and bounded file reads. They call Grepple internals directly: no generic argv tool, command parser, executable subprocess, or shell is exposed to the model.
+The internal agent retrieves and sifts multi-file evidence; it is not a code-review or approval agent. Its `read_file` tool can batch up to eight known ranges, and local source rows retain `HASH│LINE│content` when user anchor settings are enabled so the main coding agent can edit without another read. Focused typed tools also cover text search, exact navigation, structural search, graph queries, architecture, source scope, and indexed refs and trees. They call Grepple internals directly: no generic argv tool, command parser, executable subprocess, or shell is exposed to the model.
 
 Successful identical typed calls within one ask reuse byte-identical evidence and concurrent duplicates share one execution; cache metadata and JSONL events make this observable. Local navigation, graph, and architecture tools additionally share one lazily parsed source universe whenever their effective scope agrees. Ask logs are permission-restricted, enabled by default, and retain managed logs for seven days unless `ask.logs` changes that policy. The provider registry supports Codex and GitHub Copilot device login, Anthropic API and subscription tokens, OpenAI API keys, and the AWS Bedrock default credential chain. Set the non-secret user default as `ask.model: "<provider>/<model>"` in `~/.grepple/grepple.json`; the same prefix form works with `--model`. See [Delegated research](docs/ask.md) for provider, model, logging, timeout, credential, and tool-safety details.
 
