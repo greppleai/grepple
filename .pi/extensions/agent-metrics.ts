@@ -193,6 +193,18 @@ export default function agentMetrics(pi: ExtensionAPI): void {
     setStatus(ctx);
   });
 
+  pi.on("session_tree", async (_event, ctx) => {
+    const branchActive = restoreState(ctx);
+    if (active === null || branchActive !== null) {
+      active = branchActive;
+      setStatus(ctx);
+      return;
+    }
+    const inherited = active;
+    active = null;
+    await start(inherited.taskId, inherited.assignedCohort, inherited.explicit, ctx);
+  });
+
   pi.on("before_agent_start", async (_event, ctx) => {
     if (enabled() && active === null) {
       const cohort = String(pi.getFlag("grepple-metrics-cohort") || "unknown");
@@ -227,7 +239,7 @@ export default function agentMetrics(pi: ExtensionAPI): void {
 
 function restoreState(ctx: ExtensionContext): RunState | null {
   let restored: RunState | null = null;
-  for (const entry of ctx.session.getEntries()) {
+  for (const entry of ctx.session.getBranch()) {
     if (entry.type !== "custom" || entry.customType !== CUSTOM_TYPE) {
       continue;
     }
