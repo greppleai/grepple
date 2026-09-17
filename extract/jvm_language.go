@@ -28,6 +28,8 @@ func cSharpLanguageDefinition() *languageDefinition {
 func jvmLanguageDefinition(language string, projectRoot func(string) string) *languageDefinition {
 	return &languageDefinition{
 		info:          Language{ID: language, Extensions: parserLanguageExtensions(language), FocusedStructure: true, FocusedFlow: true},
+		flowIndex:     moduleFocusedFlowIndex{},
+		classIndex:    moduleFocusedClassIndex{},
 		acceptsSource: func(path string) bool { return codeparser.LanguageFor(path) == language },
 		newAnalysis: func(result *Analysis, sources []Source) languageAnalysis {
 			prepareJVMModules(result, sources, language, projectRoot)
@@ -38,10 +40,10 @@ func jvmLanguageDefinition(language string, projectRoot func(string) string) *la
 			return absolutePath(source.Path), nil
 		},
 		normalizeType:     func(value string) string { return normalizeJVMType(value, language) },
-		generateStructure: generateTypeScriptClass,
-		generateFlow:      generateTypeScriptFlowchart,
+		generateStructure: generateModuleClass,
+		generateFlow:      generateModuleFlowchart,
 		validFlowEdge: func(analysis *Analysis, source, target *Symbol) bool {
-			return hasTypeScriptCallPath(analysis, source, target) || hasTypeScriptOrderedPath(analysis, source, target)
+			return hasModuleCallPath(analysis, source, target) || hasModuleOrderedPath(analysis, source, target)
 		},
 	}
 }
@@ -112,11 +114,11 @@ func prepareJVMModules(analysis *Analysis, sources []Source, language string, pr
 }
 
 func addModulePath(analysis *Analysis, sourcePath, stable string) {
-	analysis.TSModulePaths[sourcePath] = stable
-	if old, ok := analysis.TSModuleIndex[stable]; ok && old != sourcePath {
-		analysis.TSModuleIndex[stable] = ""
+	analysis.ModulePaths[sourcePath] = stable
+	if old, ok := analysis.ModuleIndex[stable]; ok && old != sourcePath {
+		analysis.ModuleIndex[stable] = ""
 	} else {
-		analysis.TSModuleIndex[stable] = sourcePath
+		analysis.ModuleIndex[stable] = sourcePath
 	}
 }
 
@@ -292,11 +294,11 @@ func (analyzer *jvmSourceAnalyzer) newDeclaration(name, kind string, node codepa
 
 func (analyzer *jvmSourceAnalyzer) storeDeclaration(declaration *Declaration, envelope codeparser.ViewNode) {
 	key := analyzer.moduleID + ":" + declaration.Name
-	if analyzer.result.TSDeclarations[key] != nil {
+	if analyzer.result.ModuleDeclarations[key] != nil {
 		analyzer.result.duplicateErrors = append(analyzer.result.duplicateErrors, "duplicate "+analyzer.language+" type "+declaration.Name+" in "+analyzer.source.Path)
 		return
 	}
-	analyzer.result.TSDeclarations[key] = declaration
+	analyzer.result.ModuleDeclarations[key] = declaration
 	analyzer.addTypeSymbol(declaration.Name, envelope)
 }
 
@@ -700,7 +702,7 @@ func descendantHasKind(node codeparser.ViewNode, kind string) bool {
 
 func (analyzer *jvmSourceAnalyzer) addTypeSymbol(name string, node codeparser.ViewNode) {
 	key := analyzer.moduleID + ":" + name
-	analyzer.result.TSSymbolIndex[key] = &Symbol{
+	analyzer.result.ModuleSymbols[key] = &Symbol{
 		Name: name, Kind: "class", Language: analyzer.language, ModuleID: analyzer.moduleID, Key: key,
 		Calls: map[string]bool{}, Locations: []Location{syntaxLocation(analyzer.source.Path, node)},
 	}

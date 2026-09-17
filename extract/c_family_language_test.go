@@ -23,7 +23,7 @@ int run(User *user) { return helper(user->id); }
 	if err != nil {
 		t.Fatal(err)
 	}
-	user := analysis.TSDeclarations[absolutePath(source.Path)+":User"]
+	user := analysis.ModuleDeclarations[absolutePath(source.Path)+":User"]
 	if user == nil || user.Language != "c" || user.Kind != "class" {
 		t.Fatalf("C declaration=%#v", user)
 	}
@@ -31,7 +31,7 @@ int run(User *user) { return helper(user->id); }
 	assertJVMMember(t, user.Members, Member{Name: "name", Kind: "property", Type: "constchar*", Visibility: "public"})
 	assertJVMMember(t, user.Members, Member{Name: "first", Kind: "property", Type: "long", Visibility: "public"})
 	assertJVMMember(t, user.Members, Member{Name: "second", Kind: "property", Type: "long", Visibility: "public"})
-	state := analysis.TSDeclarations[absolutePath(source.Path)+":State"]
+	state := analysis.ModuleDeclarations[absolutePath(source.Path)+":State"]
 	assertJVMMember(t, state.Members, Member{Name: "READY", Kind: "property", Type: "State", Visibility: "public"})
 	assertJVMMember(t, state.Members, Member{Name: "FAILED", Kind: "property", Type: "State", Visibility: "public"})
 
@@ -67,7 +67,7 @@ private:
 	if err != nil {
 		t.Fatal(err)
 	}
-	worker := analysis.TSDeclarations[absolutePath(source.Path)+":app::Worker"]
+	worker := analysis.ModuleDeclarations[absolutePath(source.Path)+":app::Worker"]
 	if worker == nil || worker.Language != "cpp" || worker.Kind != "class" {
 		t.Fatalf("C++ declaration=%#v", worker)
 	}
@@ -128,8 +128,8 @@ union Value { int number; const char *text; };
 	if err != nil {
 		t.Fatal(err)
 	}
-	if cAnalysis.TSDeclarations[absolutePath(cSource.Path)+":Value"] == nil || len(cAnalysis.Navigation.Imports) != 1 {
-		t.Fatalf("C conservative analysis declarations=%#v imports=%#v", cAnalysis.TSDeclarations, cAnalysis.Navigation.Imports)
+	if cAnalysis.ModuleDeclarations[absolutePath(cSource.Path)+":Value"] == nil || len(cAnalysis.Navigation.Imports) != 1 {
+		t.Fatalf("C conservative analysis declarations=%#v imports=%#v", cAnalysis.ModuleDeclarations, cAnalysis.Navigation.Imports)
 	}
 	include := cAnalysis.Navigation.Imports[0]
 	if include.ImportPath != "generated.h" || include.Kind != "include-quoted" || len(include.TargetPaths) != 0 {

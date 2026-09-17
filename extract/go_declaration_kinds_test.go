@@ -22,7 +22,7 @@ func (ID) String() string { return "" }
 		t.Fatal(err)
 	}
 	for name, kind := range map[string]string{"Alias": "alias", "ID": "type", "Records": "type"} {
-		declaration := analysis.GoDeclarations[filepath.Clean(root+"/model")+":model:"+name]
+		declaration := analysis.PackageDeclarations[filepath.Clean(root+"/model")+":model:"+name]
 		if declaration == nil || declaration.Kind != kind || declaration.PackageID == "" {
 			t.Fatalf("%s declaration: %+v", name, declaration)
 		}

@@ -51,7 +51,7 @@ pub enum State<T> {
 	if err != nil {
 		t.Fatal(err)
 	}
-	runner := analysis.TSDeclarations[absolutePath(source.Path)+":Runner"]
+	runner := analysis.ModuleDeclarations[absolutePath(source.Path)+":Runner"]
 	if runner == nil || runner.Language != "rust" || !runner.Implements["Task"] {
 		t.Fatalf("Rust declaration=%#v", runner)
 	}
@@ -60,14 +60,14 @@ pub enum State<T> {
 	assertJVMMember(t, runner.Members, Member{Name: "scoped", Kind: "property", Type: "bool", Visibility: "package"})
 	assertJVMMember(t, runner.Members, Member{Name: "execute", Kind: "method", Type: "Result<String,String>", Visibility: "public"})
 	assertJVMMember(t, runner.Members, Member{Name: "finish", Kind: "method", Visibility: "private"})
-	task := analysis.TSDeclarations[absolutePath(source.Path)+":Task"]
+	task := analysis.ModuleDeclarations[absolutePath(source.Path)+":Task"]
 	if task == nil || task.Kind != "interface" {
 		t.Fatalf("Rust trait=%#v", task)
 	}
 	assertJVMMember(t, task.Members, Member{Name: "Error", Kind: "property", Type: "associated_type", Visibility: "public"})
-	state := analysis.TSDeclarations[absolutePath(source.Path)+":State"]
+	state := analysis.ModuleDeclarations[absolutePath(source.Path)+":State"]
 	assertJVMMember(t, state.Members, Member{Name: "Ready", Kind: "property", Type: "State", Visibility: "public"})
-	pair := analysis.TSDeclarations[absolutePath(source.Path)+":Pair"]
+	pair := analysis.ModuleDeclarations[absolutePath(source.Path)+":Pair"]
 	assertJVMMember(t, pair.Members, Member{Name: "_0", Kind: "property", Type: "u64", Visibility: "public"})
 	assertJVMMember(t, pair.Members, Member{Name: "_1", Kind: "property", Type: "String", Visibility: "private"})
 
@@ -91,7 +91,7 @@ func TestRustFocusedExtractionMergesSameFileImplBlocks(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	declaration := analysis.TSDeclarations[absolutePath(source.Path)+":Model"]
+	declaration := analysis.ModuleDeclarations[absolutePath(source.Path)+":Model"]
 	assertJVMMember(t, declaration.Members, Member{Name: "id", Kind: "method", Type: "u64", Visibility: "public"})
 	assertJVMMember(t, declaration.Members, Member{Name: "update", Kind: "method", Visibility: "public"})
 	structure, err := GenerateClassDiagram("Model", source, []Source{source}, GenerateOptions{Depth: 1, MaxNodes: 10})
@@ -118,10 +118,10 @@ mod second {
 	if err != nil {
 		t.Fatal(err)
 	}
-	first := analysis.TSDeclarations[absolutePath(source.Path)+":first::Model"]
-	second := analysis.TSDeclarations[absolutePath(source.Path)+":second::Model"]
+	first := analysis.ModuleDeclarations[absolutePath(source.Path)+":first::Model"]
+	second := analysis.ModuleDeclarations[absolutePath(source.Path)+":second::Model"]
 	if first == nil || second == nil {
-		t.Fatalf("inline Rust declarations=%#v", analysis.TSDeclarations)
+		t.Fatalf("inline Rust declarations=%#v", analysis.ModuleDeclarations)
 	}
 	assertJVMMember(t, first.Members, Member{Name: "first", Kind: "method", Visibility: "public"})
 	assertJVMMember(t, second.Members, Member{Name: "second", Kind: "method", Visibility: "public"})
@@ -144,9 +144,9 @@ impl crate::model::Model { pub fn qualified(&self) {} }
 	if err != nil {
 		t.Fatal(err)
 	}
-	declaration := analysis.TSDeclarations[absolutePath(model.Path)+":Model"]
+	declaration := analysis.ModuleDeclarations[absolutePath(model.Path)+":Model"]
 	if declaration == nil {
-		t.Fatalf("Rust model declarations=%#v", analysis.TSDeclarations)
+		t.Fatalf("Rust model declarations=%#v", analysis.ModuleDeclarations)
 	}
 	assertJVMMember(t, declaration.Members, Member{Name: "imported", Kind: "method", Visibility: "public"})
 	assertJVMMember(t, declaration.Members, Member{Name: "qualified", Kind: "method", Visibility: "public"})
@@ -168,7 +168,7 @@ func TestRustFocusedExtractionLeavesAmbiguousCrossFileImplUnattached(t *testing.
 		t.Fatal(err)
 	}
 	for _, source := range []Source{flat, directory} {
-		declaration := analysis.TSDeclarations[absolutePath(source.Path)+":Model"]
+		declaration := analysis.ModuleDeclarations[absolutePath(source.Path)+":Model"]
 		if declaration == nil {
 			t.Fatalf("missing Rust model for %s", source.Path)
 		}
@@ -187,7 +187,7 @@ func TestRustFocusedExtractionDoesNotFallbackForUnresolvedQualifiedImpl(t *testi
 	if err != nil {
 		t.Fatal(err)
 	}
-	declaration := analysis.TSDeclarations[absolutePath(source.Path)+":Model"]
+	declaration := analysis.ModuleDeclarations[absolutePath(source.Path)+":Model"]
 	if declaration == nil {
 		t.Fatal("missing local Rust model")
 	}
@@ -208,11 +208,11 @@ func TestRustFocusedExtractionChecksCrossModuleItemVisibility(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	privateDeclaration := analysis.TSDeclarations[absolutePath(privateModel.Path)+":PrivateModel"]
-	parentDeclaration := analysis.TSDeclarations[absolutePath(parent.Path)+":model::ParentModel"]
-	nestedDeclaration := analysis.TSDeclarations[absolutePath(parent.Path)+":model::PrivateNested"]
+	privateDeclaration := analysis.ModuleDeclarations[absolutePath(privateModel.Path)+":PrivateModel"]
+	parentDeclaration := analysis.ModuleDeclarations[absolutePath(parent.Path)+":model::ParentModel"]
+	nestedDeclaration := analysis.ModuleDeclarations[absolutePath(parent.Path)+":model::PrivateNested"]
 	if privateDeclaration == nil || parentDeclaration == nil || nestedDeclaration == nil {
-		t.Fatalf("Rust declarations=%#v", analysis.TSDeclarations)
+		t.Fatalf("Rust declarations=%#v", analysis.ModuleDeclarations)
 	}
 	assertJVMMember(t, parentDeclaration.Members, Member{Name: "allowed", Kind: "method", Visibility: "public"})
 	assertJVMMember(t, nestedDeclaration.Members, Member{Name: "nested", Kind: "method", Visibility: "public"})

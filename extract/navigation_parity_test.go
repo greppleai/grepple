@@ -105,7 +105,7 @@ func TestNavigationGraphCarriesResolvedSemanticContext(t *testing.T) {
 			continue
 		}
 		target := declarations[call.TargetID]
-		if call.CallerID == "" || call.TargetID == "" || call.ResolvedName != "helper.Finish" || call.Confidence != "import-resolved" {
+		if call.CallerID == "" || call.TargetID == "" || call.ResolvedName != "Finish" || call.Confidence != "import-resolved" {
 			t.Fatalf("import call was not semantically resolved: %+v", call)
 		}
 		if target.Package != "helper" || target.PackageID == "" || target.Scope != target.PackageID {

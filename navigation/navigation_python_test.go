@@ -1,4 +1,4 @@
-package search
+package navigation
 
 import (
 	"os"
@@ -23,7 +23,7 @@ func TestPythonNavigationImportsResolveAbsoluteAndRelativeModules(t *testing.T) 
 		shared:  "def execute(): ...\n",
 	}
 	paths := writePythonNavigationFiles(t, files)
-	graph, stats := BuildNavigationGraphWithOptions(paths, NavigationBuildOptions{DisableCache: true})
+	graph, stats := BuildGraphWithOptions(paths, BuildOptions{DisableCache: true})
 	if stats.Parsed != len(files) || len(graph.Imports) != 4 {
 		t.Fatalf("stats=%+v imports=%#v", stats, graph.Imports)
 	}

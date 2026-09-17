@@ -33,29 +33,29 @@ func resolvedGoCalls(analysis *Analysis, symbol *Symbol) []*Symbol {
 
 func resolveGoCall(analysis *Analysis, packageID, call string) *Symbol {
 	if !strings.Contains(call, ".") {
-		return analysis.GoSymbolIndex[packageID+":"+call]
+		return analysis.PackageSymbols[packageID+":"+call]
 	}
-	if local := analysis.GoSymbolIndex[packageID+":"+call]; local != nil {
+	if local := analysis.PackageSymbols[packageID+":"+call]; local != nil {
 		return local
 	}
 	parts := strings.SplitN(call, ".", 2)
-	module := analysis.GoPackageImports[packageID][parts[0]]
+	module := analysis.PackageImports[packageID][parts[0]]
 	if module == "" {
 		return nil
 	}
-	if targetPackageID := analysis.GoImportPathIndex[module]; targetPackageID != "" {
-		return analysis.GoSymbolIndex[targetPackageID+":"+parts[1]]
+	if targetPackageID := analysis.ImportPathPackages[module]; targetPackageID != "" {
+		return analysis.PackageSymbols[targetPackageID+":"+parts[1]]
 	}
 	return uniqueImportedGoSymbol(analysis, path.Base(module), parts[1])
 }
 
 func uniqueImportedGoSymbol(analysis *Analysis, packageName, symbolName string) *Symbol {
 	var result *Symbol
-	for packageID, name := range analysis.GoPackageNames {
+	for packageID, name := range analysis.PackageNames {
 		if name != packageName {
 			continue
 		}
-		candidate := analysis.GoSymbolIndex[packageID+":"+symbolName]
+		candidate := analysis.PackageSymbols[packageID+":"+symbolName]
 		if candidate == nil {
 			continue
 		}
@@ -68,8 +68,8 @@ func uniqueImportedGoSymbol(analysis *Analysis, packageName, symbolName string) 
 }
 
 func hasGoOrderedPhasePath(analysis *Analysis, source, target *Symbol) bool {
-	for _, key := range sortedKeys(analysis.GoSymbolIndex) {
-		calls := resolvedGoCalls(analysis, analysis.GoSymbolIndex[key])
+	for _, key := range sortedKeys(analysis.PackageSymbols) {
+		calls := resolvedGoCalls(analysis, analysis.PackageSymbols[key])
 		if goSymbolsInOrder(calls, source.Key, target.Key) {
 			return true
 		}

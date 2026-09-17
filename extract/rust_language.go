@@ -38,7 +38,11 @@ func rustLanguageDefinition() *languageDefinition {
 			ID: "rust", Extensions: parserLanguageExtensions("rust"),
 			FocusedStructure: true, FocusedFlow: true,
 		},
-		acceptsSource: func(path string) bool { return codeparser.LanguageFor(path) == "rust" },
+		flowIndex:  moduleFocusedFlowIndex{},
+		classIndex: moduleFocusedClassIndex{},
+		acceptsSource: func(path string) bool {
+			return codeparser.LanguageFor(path) == "rust"
+		},
 		newAnalysis: func(result *Analysis, sources []Source) languageAnalysis {
 			prepareRustModules(result, sources)
 			return &rustAnalysis{result: result, sources: append([]Source(nil), sources...)}
@@ -48,10 +52,10 @@ func rustLanguageDefinition() *languageDefinition {
 			return absolutePath(source.Path), nil
 		},
 		normalizeType:     normalizeRustType,
-		generateStructure: generateTypeScriptClass,
-		generateFlow:      generateTypeScriptFlowchart,
+		generateStructure: generateModuleClass,
+		generateFlow:      generateModuleFlowchart,
 		validFlowEdge: func(analysis *Analysis, source, target *Symbol) bool {
-			return hasTypeScriptCallPath(analysis, source, target) || hasTypeScriptOrderedPath(analysis, source, target)
+			return hasModuleCallPath(analysis, source, target) || hasModuleOrderedPath(analysis, source, target)
 		},
 	}
 }
@@ -385,14 +389,14 @@ func (analyzer *rustSourceAnalyzer) storeDeclaration(declaration *Declaration, n
 	if analyzer.scope != "" {
 		key = analyzer.moduleID + ":" + analyzer.scope + "::" + declaration.Name
 	}
-	if analyzer.analysis.result.TSDeclarations[key] != nil {
+	if analyzer.analysis.result.ModuleDeclarations[key] != nil {
 		analyzer.analysis.result.duplicateErrors = append(analyzer.analysis.result.duplicateErrors, "duplicate Rust type "+declaration.Name+" in "+analyzer.source.Path)
 		return
 	}
-	analyzer.analysis.result.TSDeclarations[key] = declaration
+	analyzer.analysis.result.ModuleDeclarations[key] = declaration
 	analyzer.analysis.declarations = append(analyzer.analysis.declarations, rustDeclarationRef{declaration: declaration, path: analyzer.source.Path, scope: analyzer.scope, name: declaration.Name, visibility: rustItemVisibility(node)})
-	if analyzer.analysis.result.TSSymbolIndex[key] == nil {
-		analyzer.analysis.result.TSSymbolIndex[key] = &Symbol{
+	if analyzer.analysis.result.ModuleSymbols[key] == nil {
+		analyzer.analysis.result.ModuleSymbols[key] = &Symbol{
 			Name: declaration.Name, Kind: declaration.Kind, Language: "rust", ModuleID: analyzer.moduleID, Key: key, Calls: map[string]bool{},
 			Locations: []Location{analyzer.location(node)},
 		}

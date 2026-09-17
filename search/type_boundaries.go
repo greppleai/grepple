@@ -107,51 +107,14 @@ func boundaryTypeOriginForImport(language, importPath string, context boundaryDe
 	if boundaryFirstPartyImport(path, context.roots) {
 		return BoundaryTypeOriginFirstParty
 	}
-	if boundaryStandardLibraryImport(language, path) {
+	policy := boundaryPolicyFor(language)
+	if policy.standardLibraryImport(path) {
 		return BoundaryTypeOriginStandardLibrary
 	}
-	if language == "go" && boundaryGoThirdPartyImport(path) {
+	if policy.thirdPartyImport(path) {
 		return BoundaryTypeOriginThirdParty
 	}
 	return BoundaryTypeOriginUnresolved
-}
-
-func boundaryStandardLibraryImport(language, path string) bool {
-	switch language {
-	case "go":
-		return boundaryGoStandardLibraryImport(path)
-	case "javascript", "typescript", "tsx":
-		return strings.HasPrefix(path, "node:")
-	case "java":
-		return path == "java" || strings.HasPrefix(path, "java.") || path == "javax" || strings.HasPrefix(path, "javax.")
-	case "kotlin":
-		return path == "kotlin" || strings.HasPrefix(path, "kotlin.")
-	case "csharp":
-		return path == "System" || strings.HasPrefix(path, "System.")
-	default:
-		return false
-	}
-}
-
-func boundaryGoStandardLibraryImport(path string) bool {
-	first := boundaryFirstImportComponent(path)
-	switch first {
-	case "archive", "arena", "bufio", "builtin", "bytes", "cmp", "compress", "container", "context", "crypto", "database", "debug", "embed", "encoding", "errors", "expvar", "flag", "fmt", "go", "hash", "html", "image", "index", "io", "iter", "log", "maps", "math", "mime", "net", "os", "path", "plugin", "reflect", "regexp", "runtime", "slices", "sort", "strconv", "strings", "structs", "sync", "syscall", "testing", "text", "time", "unicode", "unique", "unsafe", "weak":
-		return true
-	default:
-		return false
-	}
-}
-
-func boundaryGoThirdPartyImport(path string) bool {
-	return strings.Contains(boundaryFirstImportComponent(path), ".")
-}
-
-func boundaryFirstImportComponent(path string) string {
-	if separator := strings.IndexByte(path, '/'); separator >= 0 {
-		return path[:separator]
-	}
-	return path
 }
 
 func boundaryFirstPartyImport(path string, roots []string) bool {
@@ -386,16 +349,8 @@ func boundaryTypeUsageIsPublic(declaration parser.NavigationDeclaration, role st
 	if declaration.Visibility != parser.NavigationVisibilityPublic || boundaryTestPath(declaration.Path) {
 		return false
 	}
-	if declaration.Language == "go" {
-		container := boundaryTerminalTypeName(declaration.Container)
-		if container == "" {
-			if separator := strings.IndexByte(declaration.Name, '.'); separator > 0 {
-				container = boundaryTerminalTypeName(declaration.Name[:separator])
-			}
-		}
-		if container != "" && container[0] >= 'a' && container[0] <= 'z' {
-			return false
-		}
+	if !boundaryPolicyFor(declaration.Language).publicTypeUsage(declaration, role) {
+		return false
 	}
 	return true
 }

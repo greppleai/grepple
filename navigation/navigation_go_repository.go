@@ -1,4 +1,4 @@
-package search
+package navigation
 
 import (
 	"os"
@@ -81,8 +81,8 @@ func sortedGoRepositorySet(values map[string]bool) []string {
 	return result
 }
 
-// NavigationRepositoryContextFiles returns sorted Go module/workspace files that affect repository identity.
-func NavigationRepositoryContextFiles(paths []string) []string {
+// RepositoryContextFiles returns sorted Go module/workspace files that affect repository identity.
+func RepositoryContextFiles(paths []string) []string {
 	configs := make(map[string]bool)
 	for _, sourcePath := range paths {
 		if parser.LanguageFor(sourcePath) != "go" {

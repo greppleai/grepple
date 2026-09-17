@@ -14,8 +14,8 @@ func TestGoPackageIdentityIncludesDirectory(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(analysis.GoDeclarations) != 2 {
-		t.Fatalf("declarations were overwritten: %v", analysis.GoDeclarations)
+	if len(analysis.PackageDeclarations) != 2 {
+		t.Fatalf("declarations were overwritten: %v", analysis.PackageDeclarations)
 	}
 	if analysis.Declarations["Item"] != nil {
 		t.Fatal("ambiguous generic declaration retained a path-dependent value")

@@ -15,6 +15,11 @@ func javaScriptLanguageDefinition() *languageDefinition {
 			ID: "javascript", Extensions: parserLanguageExtensions("javascript"),
 			FocusedStructure: true, FocusedFlow: true,
 		},
+		flowIndex:  moduleFocusedFlowIndex{},
+		classIndex: moduleFocusedClassIndex{},
+		semantics: focusedLanguageSemantics{
+			moduleReferences: true, moduleExports: true,
+		},
 		acceptsSource: isJavaScriptSourceFile,
 		newAnalysis: func(result *Analysis, sources []Source) languageAnalysis {
 			prepareTypeScriptModules(result, sources)
@@ -25,10 +30,10 @@ func javaScriptLanguageDefinition() *languageDefinition {
 			return absolutePath(source.Path), nil
 		},
 		normalizeType:     normalizeTypeScript,
-		generateStructure: generateTypeScriptClass,
-		generateFlow:      generateTypeScriptFlowchart,
+		generateStructure: generateModuleClass,
+		generateFlow:      generateModuleFlowchart,
 		validFlowEdge: func(analysis *Analysis, source, target *Symbol) bool {
-			return hasTypeScriptCallPath(analysis, source, target) || hasTypeScriptOrderedPath(analysis, source, target)
+			return hasModuleCallPath(analysis, source, target) || hasModuleOrderedPath(analysis, source, target)
 		},
 	}
 }

@@ -10,12 +10,12 @@ type typeScriptClassItem struct {
 	depth int
 }
 
-func generateTypeScriptClass(entry string, entrySource Source, sources []Source, options GenerateOptions) (string, error) {
+func generateModuleClass(entry string, entrySource Source, sources []Source, options GenerateOptions) (string, error) {
 	analysis, err := Analyze(sources)
 	if err != nil {
 		return "", err
 	}
-	entryKey := typeScriptEntryKey(analysis, entrySource, entry)
+	entryKey := moduleEntryKey(analysis, entrySource, entry)
 	if entryKey == "" {
 		return "", fmt.Errorf("class or interface '%s' was not found in entry file %s", entry, entrySource.Path)
 	}
@@ -27,7 +27,7 @@ func generateTypeScriptClass(entry string, entrySource Source, sources []Source,
 	}
 	declarations := map[string]*Declaration{}
 	for _, key := range selected {
-		declaration := analysis.TSDeclarations[key]
+		declaration := analysis.ModuleDeclarations[key]
 		if old := declarations[declaration.Name]; old != nil && old.ModuleID != declaration.ModuleID {
 			return "", fmt.Errorf("selected declarations share Mermaid name %s", declaration.Name)
 		}
@@ -38,7 +38,7 @@ func generateTypeScriptClass(entry string, entrySource Source, sources []Source,
 		}
 		lines = append(lines, rendered...)
 	}
-	lines = append(lines, typeScriptClassRelations(selected, analysis)...)
+	lines = append(lines, moduleClassRelations(selected, analysis)...)
 	diagram := strings.TrimRight(strings.Join(lines, "\n"), "\n") + "\n"
 	diagnostics, err := CheckClassDiagramWithAnalysis(diagram, analysis)
 	if err != nil {
@@ -50,17 +50,17 @@ func generateTypeScriptClass(entry string, entrySource Source, sources []Source,
 	return diagram, nil
 }
 
-func typeScriptEntryKey(analysis *Analysis, entrySource Source, entry string) string {
-	return typeScriptDeclarationKey(analysis, absolutePath(entrySource.Path), entry)
+func moduleEntryKey(analysis *Analysis, entrySource Source, entry string) string {
+	return moduleDeclarationKey(analysis, absolutePath(entrySource.Path), entry)
 }
 
-func typeScriptDeclarationKey(analysis *Analysis, moduleID, name string) string {
+func moduleDeclarationKey(analysis *Analysis, moduleID, name string) string {
 	exact := moduleID + ":" + name
-	if analysis.TSDeclarations[exact] != nil {
+	if analysis.ModuleDeclarations[exact] != nil {
 		return exact
 	}
 	candidates := []string{}
-	for key, declaration := range analysis.TSDeclarations {
+	for key, declaration := range analysis.ModuleDeclarations {
 		if declaration.ModuleID == moduleID && declaration.Name == name {
 			candidates = append(candidates, key)
 		}
@@ -78,7 +78,7 @@ func selectTypeScriptClasses(entry string, analysis *Analysis, depth, limit int)
 	for len(pending) > 0 {
 		item := pending[0]
 		pending = pending[1:]
-		if seen[item.key] || analysis.TSDeclarations[item.key] == nil {
+		if seen[item.key] || analysis.ModuleDeclarations[item.key] == nil {
 			continue
 		}
 		if len(result) >= limit {
@@ -88,7 +88,7 @@ func selectTypeScriptClasses(entry string, analysis *Analysis, depth, limit int)
 		if item.depth >= depth {
 			continue
 		}
-		for _, dependency := range typeScriptDeclarationDependencies(analysis.TSDeclarations[item.key], analysis) {
+		for _, dependency := range moduleDeclarationDependencies(analysis.ModuleDeclarations[item.key], analysis) {
 			if !seen[dependency] {
 				pending = append(pending, typeScriptClassItem{dependency, item.depth + 1})
 			}
@@ -97,18 +97,18 @@ func selectTypeScriptClasses(entry string, analysis *Analysis, depth, limit int)
 	return result, false
 }
 
-func typeScriptDeclarationDependencies(declaration *Declaration, analysis *Analysis) []string {
+func moduleDeclarationDependencies(declaration *Declaration, analysis *Analysis) []string {
 	result := map[string]bool{}
-	candidates := typeScriptDependencyCandidates(declaration, analysis)
+	candidates := moduleDependencyCandidates(declaration, analysis)
 	for local, key := range candidates {
-		if typeScriptDeclarationReferences(declaration, local) {
+		if moduleDeclarationReferences(declaration, local) {
 			result[key] = true
 		}
 	}
 	return sortedKeys(result)
 }
 
-func typeScriptDependencyCandidates(declaration *Declaration, analysis *Analysis) map[string]string {
+func moduleDependencyCandidates(declaration *Declaration, analysis *Analysis) map[string]string {
 	result := sameModuleDependencyCandidates(declaration, analysis)
 	if declaration.Language == "python" || declaration.Language == "java" || declaration.Language == "kotlin" {
 		addUniqueModuleDependencyCandidates(result, declaration.Language, analysis)
@@ -119,7 +119,7 @@ func typeScriptDependencyCandidates(declaration *Declaration, analysis *Analysis
 
 func sameModuleDependencyCandidates(declaration *Declaration, analysis *Analysis) map[string]string {
 	result := map[string]string{}
-	for key, candidate := range analysis.TSDeclarations {
+	for key, candidate := range analysis.ModuleDeclarations {
 		if candidate.ModuleID == declaration.ModuleID {
 			result[candidate.Name] = key
 		}
@@ -130,7 +130,7 @@ func sameModuleDependencyCandidates(declaration *Declaration, analysis *Analysis
 func addUniqueModuleDependencyCandidates(result map[string]string, language string, analysis *Analysis) {
 	unique := map[string]string{}
 	ambiguous := map[string]bool{}
-	for key, candidate := range analysis.TSDeclarations {
+	for key, candidate := range analysis.ModuleDeclarations {
 		if candidate.Language != language {
 			continue
 		}
@@ -148,18 +148,18 @@ func addUniqueModuleDependencyCandidates(result map[string]string, language stri
 }
 
 func addImportedDependencyCandidates(result map[string]string, moduleID string, analysis *Analysis) {
-	for local, binding := range analysis.TSImportBindings[moduleID] {
+	for local, binding := range analysis.ModuleImportBindings[moduleID] {
 		if binding.ModuleID == "" || binding.Resolved == "" {
 			continue
 		}
 		key := binding.ModuleID + ":" + binding.Resolved
-		if analysis.TSDeclarations[key] != nil {
+		if analysis.ModuleDeclarations[key] != nil {
 			result[local] = key
 		}
 	}
 }
 
-func typeScriptDeclarationReferences(declaration *Declaration, name string) bool {
+func moduleDeclarationReferences(declaration *Declaration, name string) bool {
 	if declaration.Extends[name] || declaration.Implements[name] {
 		return true
 	}
@@ -176,15 +176,15 @@ func typeScriptDeclarationReferences(declaration *Declaration, name string) bool
 	return false
 }
 
-func typeScriptClassRelations(selected []string, analysis *Analysis) []string {
+func moduleClassRelations(selected []string, analysis *Analysis) []string {
 	chosen, result := stringSet(selected), map[string]bool{}
 	for _, ownerKey := range selected {
-		owner := analysis.TSDeclarations[ownerKey]
-		for alias, targetKey := range typeScriptDependencyCandidates(owner, analysis) {
+		owner := analysis.ModuleDeclarations[ownerKey]
+		for alias, targetKey := range moduleDependencyCandidates(owner, analysis) {
 			if !chosen[targetKey] || targetKey == ownerKey {
 				continue
 			}
-			target := analysis.TSDeclarations[targetKey]
+			target := analysis.ModuleDeclarations[targetKey]
 			addTypeScriptRelation(owner, target, alias, result)
 		}
 	}

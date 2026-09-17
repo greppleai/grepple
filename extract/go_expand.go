@@ -1,13 +1,13 @@
 package extract
 
 func expandGoEmbeddedMembers(result *Analysis) {
-	for _, key := range sortedKeys(result.GoDeclarations) {
+	for _, key := range sortedKeys(result.PackageDeclarations) {
 		expandGoDeclaration(key, result, map[string]bool{})
 	}
 }
 
 func expandGoDeclaration(key string, result *Analysis, visiting map[string]bool) []Member {
-	declaration := result.GoDeclarations[key]
+	declaration := result.PackageDeclarations[key]
 	if declaration == nil || visiting[key] {
 		return nil
 	}

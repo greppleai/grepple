@@ -21,7 +21,7 @@ type Callback func(string) error
 `}
 }
 
-func TestGoDeclarationsCaptureNormalizedUnderlyingTypes(t *testing.T) {
+func TestPackageDeclarationsCaptureNormalizedUnderlyingTypes(t *testing.T) {
 	source := underlyingTestSource(t)
 	analysis, err := Analyze([]Source{source})
 	if err != nil {

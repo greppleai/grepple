@@ -24,6 +24,8 @@ func cFamilyLanguageDefinition(language string, cpp bool) *languageDefinition {
 	noProjectRoot := func(string) string { return "" }
 	return &languageDefinition{
 		info:          Language{ID: language, Extensions: parserLanguageExtensions(language), FocusedStructure: true, FocusedFlow: true},
+		flowIndex:     moduleFocusedFlowIndex{},
+		classIndex:    moduleFocusedClassIndex{},
 		acceptsSource: func(path string) bool { return codeparser.LanguageFor(path) == language },
 		newAnalysis: func(result *Analysis, sources []Source) languageAnalysis {
 			prepareJVMModules(result, sources, language, noProjectRoot)
@@ -34,10 +36,10 @@ func cFamilyLanguageDefinition(language string, cpp bool) *languageDefinition {
 			return absolutePath(source.Path), nil
 		},
 		normalizeType:     normalizeCFamilyType,
-		generateStructure: generateTypeScriptClass,
-		generateFlow:      generateTypeScriptFlowchart,
+		generateStructure: generateModuleClass,
+		generateFlow:      generateModuleFlowchart,
 		validFlowEdge: func(analysis *Analysis, source, target *Symbol) bool {
-			return hasTypeScriptCallPath(analysis, source, target) || hasTypeScriptOrderedPath(analysis, source, target)
+			return hasModuleCallPath(analysis, source, target) || hasModuleOrderedPath(analysis, source, target)
 		},
 	}
 }
@@ -405,12 +407,12 @@ func joinCFamilyScope(scope, name string) string {
 
 func (analyzer *cFamilySourceAnalyzer) storeDeclaration(declaration *Declaration) {
 	key := analyzer.moduleID + ":" + joinCFamilyScope(analyzer.scope, declaration.Name)
-	existing := analyzer.analysis.result.TSDeclarations[key]
+	existing := analyzer.analysis.result.ModuleDeclarations[key]
 	if existing == nil || len(existing.Members) < len(declaration.Members) {
-		analyzer.analysis.result.TSDeclarations[key] = declaration
+		analyzer.analysis.result.ModuleDeclarations[key] = declaration
 	}
-	if analyzer.analysis.result.TSSymbolIndex[key] == nil {
-		analyzer.analysis.result.TSSymbolIndex[key] = &Symbol{
+	if analyzer.analysis.result.ModuleSymbols[key] == nil {
+		analyzer.analysis.result.ModuleSymbols[key] = &Symbol{
 			Name: declaration.Name, Kind: "class", Language: analyzer.language, ModuleID: analyzer.moduleID, Key: key,
 			Calls: map[string]bool{}, Locations: []Location{declaration.Location},
 		}
@@ -430,8 +432,8 @@ func (analyzer *cFamilySourceAnalyzer) location(node codeparser.ViewNode) Locati
 func addCFamilyNavigationSymbols(analysis *Analysis, graph codeparser.NavigationGraph, language, moduleID, sourcePath string) {
 	for _, declaration := range graph.Declarations {
 		base := moduleID + ":" + declaration.Name
-		key := cFamilyNavigationSymbolKey(analysis.TSSymbolIndex, base, declaration.ID)
-		analysis.TSSymbolIndex[key] = &Symbol{
+		key := cFamilyNavigationSymbolKey(analysis.ModuleSymbols, base, declaration.ID)
+		analysis.ModuleSymbols[key] = &Symbol{
 			Name: declaration.Name, Kind: declaration.Kind, Language: language, ModuleID: moduleID, Key: key,
 			Owner: declaration.Container, NavigationID: declaration.ID, Calls: map[string]bool{},
 			Locations: []Location{{Path: sourcePath, Line: declaration.Start, EndLine: declaration.End}},

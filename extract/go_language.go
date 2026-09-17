@@ -19,6 +19,11 @@ func goLanguageDefinition() *languageDefinition {
 			ID: "go", Extensions: parserLanguageExtensions("go"),
 			FocusedStructure: true, FocusedFlow: true,
 		},
+		flowIndex:  packageFocusedFlowIndex{},
+		classIndex: packageFocusedClassIndex{},
+		semantics: focusedLanguageSemantics{
+			packageMetadata: true, explicitDeclarationKinds: true, exactFileMembers: true, underlyingTypes: true, structTags: true, fileLocalTypes: true, structuralInterfaces: true, packageTypeReferences: true, restrictedStructuralMembers: true,
+		},
 		acceptsSource: isGoSourceFile,
 		acceptsInput: func(path string, explicit bool) (bool, error) {
 			if !isGeneratedGoFile(path) {
@@ -75,7 +80,7 @@ func (analysis *goAnalysis) Analyze(source Source) error {
 }
 
 func (analysis *goAnalysis) Finalize() error {
-	prepareGoFallbackScopes(analysis.result, analysis.sources)
+	preparePackageFallbackScopes(analysis.result, analysis.sources)
 	mergeGoMethods(analysis.result, analysis.methods)
 	expandGoEmbeddedMembers(analysis.result)
 	finalizeGoIndexes(analysis.result)

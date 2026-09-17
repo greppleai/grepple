@@ -36,6 +36,9 @@ type languageDefinition struct {
 	generateStructure  func(string, Source, []Source, GenerateOptions) (string, error)
 	generateFlow       func(string, Source, []Source, int, int) (string, error)
 	validFlowEdge      func(*Analysis, *Symbol, *Symbol) bool
+	flowIndex          focusedFlowIndex
+	classIndex         focusedClassIndex
+	semantics          focusedLanguageSemantics
 }
 
 func registeredLanguages() []*languageDefinition {

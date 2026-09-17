@@ -17,6 +17,8 @@ func pythonLanguageDefinition() *languageDefinition {
 			ID: "python", Extensions: parserLanguageExtensions("python"),
 			FocusedStructure: true, FocusedFlow: true,
 		},
+		flowIndex:     moduleFocusedFlowIndex{},
+		classIndex:    moduleFocusedClassIndex{},
 		acceptsSource: isPythonSourceFile,
 		newAnalysis: func(result *Analysis, sources []Source) languageAnalysis {
 			preparePythonModules(result, sources)
@@ -27,10 +29,10 @@ func pythonLanguageDefinition() *languageDefinition {
 			return absolutePath(source.Path), nil
 		},
 		normalizeType:     normalizePythonType,
-		generateStructure: generateTypeScriptClass,
-		generateFlow:      generateTypeScriptFlowchart,
+		generateStructure: generateModuleClass,
+		generateFlow:      generateModuleFlowchart,
 		validFlowEdge: func(analysis *Analysis, source, target *Symbol) bool {
-			return hasTypeScriptCallPath(analysis, source, target) || hasTypeScriptOrderedPath(analysis, source, target)
+			return hasModuleCallPath(analysis, source, target) || hasModuleOrderedPath(analysis, source, target)
 		},
 	}
 }
@@ -74,11 +76,11 @@ func preparePythonModules(analysis *Analysis, sources []Source) {
 			root = fallbackRoot
 		}
 		stable := stableRelativePath(root, sourcePath)
-		analysis.TSModulePaths[sourcePath] = stable
-		if old, ok := analysis.TSModuleIndex[stable]; ok && old != sourcePath {
-			analysis.TSModuleIndex[stable] = ""
+		analysis.ModulePaths[sourcePath] = stable
+		if old, ok := analysis.ModuleIndex[stable]; ok && old != sourcePath {
+			analysis.ModuleIndex[stable] = ""
 		} else {
-			analysis.TSModuleIndex[stable] = sourcePath
+			analysis.ModuleIndex[stable] = sourcePath
 		}
 	}
 }
@@ -153,11 +155,11 @@ func (analyzer *pythonSourceAnalyzer) analyzeClass(node, envelope codeparser.Vie
 	collectPythonSuperclasses(node.ChildByFieldName("superclasses"), declaration)
 	analyzer.collectPythonClassBody(node.ChildByFieldName("body"), declaration)
 	key := analyzer.moduleID + ":" + name
-	if analyzer.result.TSDeclarations[key] != nil {
+	if analyzer.result.ModuleDeclarations[key] != nil {
 		analyzer.result.duplicateErrors = append(analyzer.result.duplicateErrors, "duplicate Python class "+name+" in "+analyzer.source.Path)
 		return
 	}
-	analyzer.result.TSDeclarations[key] = declaration
+	analyzer.result.ModuleDeclarations[key] = declaration
 	analyzer.addSymbol(name, "class", "", envelope)
 }
 
@@ -309,10 +311,10 @@ func pythonVisibility(name string) string {
 
 func (analyzer *pythonSourceAnalyzer) addSymbol(name, kind, owner string, node codeparser.ViewNode) {
 	key := analyzer.moduleID + ":" + name
-	symbol := analyzer.result.TSSymbolIndex[key]
+	symbol := analyzer.result.ModuleSymbols[key]
 	if symbol == nil {
 		symbol = &Symbol{Name: name, Kind: kind, Language: "python", ModuleID: analyzer.moduleID, Key: key, Owner: owner, Calls: map[string]bool{}}
-		analyzer.result.TSSymbolIndex[key] = symbol
+		analyzer.result.ModuleSymbols[key] = symbol
 	}
 	symbol.Locations = append(symbol.Locations, syntaxLocation(analyzer.source.Path, node))
 }

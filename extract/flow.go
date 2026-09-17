@@ -141,11 +141,11 @@ func (parser *flowParser) applyPackage(identifier, packageName string, line int)
 	if node.Module != "" {
 		return fmt.Errorf("Line %d: flow node '%s' cannot have both package and module metadata", line, identifier)
 	}
-	if node.languageLine != 0 && node.Language != "go" {
+	if node.languageLine != 0 && !focusedSemanticsFor(node.Language).packageMetadata {
 		return fmt.Errorf("Line %d: package metadata conflicts with language metadata on flow node '%s'", line, identifier)
 	}
 	node.Package, node.packageLine = packageName, line
-	node.Language = "go"
+	node.Language = packageMetadataLanguage()
 	return nil
 }
 
@@ -162,9 +162,9 @@ func (parser *flowParser) applyModule(identifier, module string, line int) error
 	}
 	language := node.Language
 	if language == "" {
-		language = "typescript"
+		language = defaultModuleMetadataLanguage()
 	}
-	if node.languageLine != 0 && language == "go" {
+	if node.languageLine != 0 && focusedSemanticsFor(language).packageMetadata {
 		return fmt.Errorf("Line %d: module metadata conflicts with language metadata on flow node '%s'", line, identifier)
 	}
 	node.Module, node.moduleLine, node.Language = module, line, language
@@ -182,7 +182,7 @@ func (parser *flowParser) applyLanguage(identifier, language string, line int) e
 	if node.languageLine != 0 {
 		return fmt.Errorf("Line %d: duplicate language directive for flow node '%s'", line, identifier)
 	}
-	if node.Package != "" && language != "go" || node.Module != "" && language != "typescript" && language != "javascript" {
+	if node.Package != "" && !focusedSemanticsFor(language).packageMetadata || node.Module != "" && focusedSemanticsFor(language).packageMetadata {
 		return fmt.Errorf("Line %d: language metadata conflicts with scope metadata on flow node '%s'", line, identifier)
 	}
 	node.Language, node.languageLine = language, line
@@ -266,14 +266,9 @@ func checkFlowNodes(flowchart *Flowchart, analysis *Analysis) []Diagnostic {
 }
 
 func flowSymbol(node *FlowNode, analysis *Analysis) *Symbol {
-	if node.Language == "go" || node.Package != "" {
-		return uniqueGoFlowSymbol(node, analysis)
-	}
-	if node.Language == "typescript" || node.Language == "javascript" {
-		return uniqueTypeScriptFlowSymbol(node, analysis)
-	}
-	if node.Language != "" {
-		return analysis.SymbolVariants[node.Language+":"+node.Symbol]
+	index := focusedFlowIndexForNode(node)
+	if index != nil {
+		return index.symbol(node, analysis)
 	}
 	if flowSymbolAmbiguous(node, analysis) {
 		return nil
@@ -281,81 +276,16 @@ func flowSymbol(node *FlowNode, analysis *Analysis) *Symbol {
 	return analysis.Symbols[node.Symbol]
 }
 
-func uniqueGoFlowSymbol(node *FlowNode, analysis *Analysis) *Symbol {
-	var result *Symbol
-	for _, symbol := range analysis.GoSymbolIndex {
-		if symbol.Name != node.Symbol || !goScopeMatches(node.Package, symbol.Package, symbol.PackageID, analysis) {
-			continue
-		}
-		if result != nil {
-			return nil
-		}
-		result = symbol
-	}
-	return result
-}
-
-func uniqueTypeScriptFlowSymbol(node *FlowNode, analysis *Analysis) *Symbol {
-	if node.Module != "" {
-		moduleID := resolveTypeScriptScope(node.Module, analysis)
-		if moduleID == "" {
-			return nil
-		}
-		symbol := analysis.TSSymbolIndex[moduleID+":"+node.Symbol]
-		if symbol != nil && node.Language != "" && symbol.Language != node.Language {
-			return nil
-		}
-		return symbol
-	}
-	var result *Symbol
-	for _, symbol := range analysis.TSSymbolIndex {
-		if symbol.Name != node.Symbol || node.Language != "" && symbol.Language != node.Language {
-			continue
-		}
-		if result != nil {
-			return nil
-		}
-		result = symbol
-	}
-	return result
-}
-
 func flowSymbolAmbiguous(node *FlowNode, analysis *Analysis) bool {
-	if node.Module != "" && typeScriptScopeAmbiguous(node.Module, analysis) {
+	if node.Module != "" && moduleScopeAmbiguous(node.Module, analysis) {
 		return true
 	}
-	tsCount := typeScriptFlowSymbolCount(node, analysis)
-	if node.Language == "typescript" || node.Language == "javascript" {
-		return tsCount > 1
+	if index := focusedFlowIndexForNode(node); index != nil {
+		return index.symbolCount(node, analysis) > 1
 	}
-	if node.Language != "" && node.Language != "go" {
-		return false
-	}
-	goCount := goFlowSymbolCount(node, analysis)
-	if node.Language == "go" || node.Package != "" {
-		return goCount > 1
-	}
-	return goCount > 1 || tsCount > 1 || goCount == 1 && tsCount == 1
-}
-
-func typeScriptFlowSymbolCount(node *FlowNode, analysis *Analysis) int {
-	count, moduleID := 0, resolveTypeScriptScope(node.Module, analysis)
-	for _, symbol := range analysis.TSSymbolIndex {
-		if symbol.Name == node.Symbol && (node.Language == "" || symbol.Language == node.Language) && (node.Module == "" || symbol.ModuleID == moduleID) {
-			count++
-		}
-	}
-	return count
-}
-
-func goFlowSymbolCount(node *FlowNode, analysis *Analysis) int {
-	count := 0
-	for _, symbol := range analysis.GoSymbolIndex {
-		if symbol.Name == node.Symbol && goScopeMatches(node.Package, symbol.Package, symbol.PackageID, analysis) {
-			count++
-		}
-	}
-	return count
+	packageCount := packageFocusedFlowIndex{}.symbolCount(node, analysis)
+	moduleCount := moduleFocusedFlowIndex{}.symbolCount(node, analysis)
+	return packageCount+moduleCount > 1
 }
 
 func symbolsForLanguage(language string, analysis *Analysis) map[string]*Symbol {

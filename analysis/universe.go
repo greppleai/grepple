@@ -5,8 +5,8 @@ import (
 	"bytes"
 	"sort"
 
+	"github.com/greppleai/grepple/navigation"
 	"github.com/greppleai/grepple/parser"
-	"github.com/greppleai/grepple/search"
 )
 
 // Source is one repository-relative source file and its complete content.
@@ -66,7 +66,7 @@ func NewUniverse(input []Source, maxFiles int) (*Universe, error) {
 		eligible = eligible[:maxFiles]
 	}
 	universe.summary.Selected = len(eligible)
-	documents := make([]search.NavigationDocumentSource, 0, len(eligible))
+	documents := make([]navigation.DocumentSource, 0, len(eligible))
 	for _, source := range eligible {
 		document, err := parser.ParseDocument(parser.LanguageFor(source.Path), string(source.Content))
 		if err != nil {
@@ -75,9 +75,9 @@ func NewUniverse(input []Source, maxFiles int) (*Universe, error) {
 		}
 		universe.sources = append(universe.sources, parsedSource{path: source.Path, document: document, outline: parser.OutlineFromDocument(source.Path, document)})
 		universe.paths = append(universe.paths, source.Path)
-		documents = append(documents, search.NavigationDocumentSource{Path: source.Path, Document: document})
+		documents = append(documents, navigation.DocumentSource{Path: source.Path, Document: document})
 	}
-	graph, stats := search.BuildNavigationGraphFromDocuments(documents, search.NavigationBuildOptions{})
+	graph, stats := navigation.BuildGraphFromDocuments(documents, navigation.BuildOptions{})
 	universe.graph = graph
 	universe.summary.Parsed = stats.Parsed
 	universe.summary.Skipped += stats.Skipped

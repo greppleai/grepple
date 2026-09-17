@@ -187,7 +187,7 @@ func TestRelatedNavigationConnectsTypeScriptAndTSX(t *testing.T) {
 	if err := os.WriteFile(helper, []byte("export function helper(): string { return 'value'; }\n"), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(caller, []byte("function Run() { return <div>{helper() /* needle */}</div>; }\n"), 0o600); err != nil {
+	if err := os.WriteFile(caller, []byte("import { helper } from './helper';\nfunction Run() { return <div>{helper() /* needle */}</div>; }\n"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	matches, err := Files(Params{Query: "needle", Related: true}, []string{caller, helper})
@@ -195,7 +195,7 @@ func TestRelatedNavigationConnectsTypeScriptAndTSX(t *testing.T) {
 		t.Fatal(err)
 	}
 	point := findRelatedPoint(t, matches[0].Related, "helper", "callee")
-	if point.Confidence != "unique-terminal" || !strings.HasSuffix(point.Path, "helper.ts") {
+	if point.Confidence != "import-resolved" || !strings.HasSuffix(point.Path, "helper.ts") {
 		t.Fatalf("unexpected TypeScript-family point: %#v", point)
 	}
 }

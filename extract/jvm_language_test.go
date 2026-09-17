@@ -28,13 +28,13 @@ class Runner extends Base implements Task {
 	if err != nil {
 		t.Fatal(err)
 	}
-	runner := analysis.TSDeclarations[absolutePath(source.Path)+":Runner"]
+	runner := analysis.ModuleDeclarations[absolutePath(source.Path)+":Runner"]
 	if runner == nil || runner.Language != "java" || !runner.Extends["Base"] || !runner.Implements["Task"] {
 		t.Fatalf("Java declaration=%#v", runner)
 	}
 	assertJVMMember(t, runner.Members, Member{Name: "helper", Kind: "property", Type: "Helper", Visibility: "private"})
 	assertJVMMember(t, runner.Members, Member{Name: "execute", Kind: "method", Type: "boolean", Visibility: "public"})
-	task := analysis.TSDeclarations[absolutePath(source.Path)+":Task"]
+	task := analysis.ModuleDeclarations[absolutePath(source.Path)+":Task"]
 	assertJVMMember(t, task.Members, Member{Name: "execute", Kind: "method", Type: "boolean", Visibility: "public"})
 
 	structure, err := GenerateClassDiagram("Runner", source, []Source{source}, GenerateOptions{Depth: 2, MaxNodes: 20})
@@ -73,7 +73,7 @@ class Runner(private val helper: Helper, val name: String) : Base(), Task {
 	if err != nil {
 		t.Fatal(err)
 	}
-	runner := analysis.TSDeclarations[absolutePath(source.Path)+":Runner"]
+	runner := analysis.ModuleDeclarations[absolutePath(source.Path)+":Runner"]
 	if runner == nil || runner.Language != "kotlin" || !runner.Extends["Base"] || !runner.Implements["Task"] {
 		t.Fatalf("Kotlin declaration=%#v", runner)
 	}
@@ -146,17 +146,17 @@ func TestJVMFocusedExtractionSupportsModernTypeShapes(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	user := analysis.TSDeclarations[absolutePath(java.Path)+":User"]
+	user := analysis.ModuleDeclarations[absolutePath(java.Path)+":User"]
 	assertJVMMember(t, user.Members, Member{Name: "name", Kind: "property", Type: "string", Visibility: "package"})
 	assertJVMMember(t, user.Members, Member{Name: "age", Kind: "property", Type: "number", Visibility: "package"})
-	state := analysis.TSDeclarations[absolutePath(java.Path)+":State"]
+	state := analysis.ModuleDeclarations[absolutePath(java.Path)+":State"]
 	if state == nil || len(state.Members) != 2 || !state.Members[0].Static {
 		t.Fatalf("Java enum=%#v", state)
 	}
-	profile := analysis.TSDeclarations[absolutePath(kotlin.Path)+":Profile"]
+	profile := analysis.ModuleDeclarations[absolutePath(kotlin.Path)+":Profile"]
 	assertJVMMember(t, profile.Members, Member{Name: "name", Kind: "property", Type: "string", Visibility: "public"})
 	assertJVMMember(t, profile.Members, Member{Name: "age", Kind: "property", Type: "number", Visibility: "public"})
-	registry := analysis.TSDeclarations[absolutePath(kotlin.Path)+":Registry"]
+	registry := analysis.ModuleDeclarations[absolutePath(kotlin.Path)+":Registry"]
 	if registry == nil || len(registry.Members) != 1 || !registry.Members[0].Static || registry.Members[0].Type != "Profile?" {
 		t.Fatalf("Kotlin object=%#v", registry)
 	}

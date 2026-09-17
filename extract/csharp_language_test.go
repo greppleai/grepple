@@ -25,7 +25,7 @@ public class Worker : BaseWorker, IWorker {
 	if err != nil {
 		t.Fatal(err)
 	}
-	declaration := analysis.TSDeclarations[absolutePath(source.Path)+":Worker"]
+	declaration := analysis.ModuleDeclarations[absolutePath(source.Path)+":Worker"]
 	if declaration == nil || declaration.Language != "csharp" {
 		t.Fatalf("declaration=%#v", declaration)
 	}

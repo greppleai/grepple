@@ -10,7 +10,7 @@ var typeScriptExtensions = []string{".ts", ".tsx", ".mts", ".cts"}
 var ecmaScriptExtensions = []string{".ts", ".tsx", ".mts", ".cts", ".js", ".jsx"}
 
 func prepareTypeScriptModules(analysis *Analysis, sources []Source) {
-	paths := typeScriptSourcePaths(sources)
+	paths := moduleSourcePaths(sources)
 	fallbackRoot := commonDirectory(paths)
 	roots := map[string]bool{}
 	for _, sourcePath := range paths {
@@ -25,11 +25,11 @@ func prepareTypeScriptModules(analysis *Analysis, sources []Source) {
 			root = fallbackRoot
 		}
 		stable := stableRelativePath(root, moduleID)
-		analysis.TSModulePaths[moduleID] = stable
-		if old, ok := analysis.TSModuleIndex[stable]; ok && old != moduleID {
-			analysis.TSModuleIndex[stable] = ""
+		analysis.ModulePaths[moduleID] = stable
+		if old, ok := analysis.ModuleIndex[stable]; ok && old != moduleID {
+			analysis.ModuleIndex[stable] = ""
 		} else {
-			analysis.TSModuleIndex[stable] = moduleID
+			analysis.ModuleIndex[stable] = moduleID
 		}
 	}
 }
@@ -65,10 +65,10 @@ func nearestSourceRoot(language, directory string) string {
 	return adapterProjectRoot(language, directory)
 }
 
-func typeScriptSourcePaths(sources []Source) []string {
+func moduleSourcePaths(sources []Source) []string {
 	result := []string{}
 	for _, source := range sources {
-		if language := languageForPath(source.Path); language == "typescript" || language == "javascript" {
+		if language := languageForPath(source.Path); focusedSemanticsFor(language).moduleReferences {
 			result = append(result, absolutePath(source.Path))
 		}
 	}
@@ -109,7 +109,7 @@ func stableRelativePath(root, item string) string {
 }
 
 func resolveTypeScriptImports(analysis *Analysis) {
-	for moduleID, bindings := range analysis.TSImportBindings {
+	for moduleID, bindings := range analysis.ModuleImportBindings {
 		for local, binding := range bindings {
 			binding.ModuleID = resolveRelativeTypeScriptModule(moduleID, binding.Source, analysis)
 			if binding.ModuleID != "" {
@@ -117,7 +117,7 @@ func resolveTypeScriptImports(analysis *Analysis) {
 				if binding.Default {
 					exported = "default"
 				}
-				binding.Resolved = analysis.TSExportNames[binding.ModuleID][exported]
+				binding.Resolved = analysis.ModuleExportNames[binding.ModuleID][exported]
 			}
 			bindings[local] = binding
 		}
@@ -142,11 +142,11 @@ func resolveRelativeTypeScriptModule(owner, specifier string, analysis *Analysis
 	found := ""
 	for _, candidate := range candidates {
 		candidate = absolutePath(candidate)
-		if _, exists := analysis.TSModulePaths[candidate]; !exists {
+		if _, exists := analysis.ModulePaths[candidate]; !exists {
 			continue
 		}
 		if found != "" && found != candidate {
-			analysis.duplicateErrors = append(analysis.duplicateErrors, "ambiguous ECMAScript import "+specifier+" from "+analysis.TSModulePaths[owner])
+			analysis.duplicateErrors = append(analysis.duplicateErrors, "ambiguous ECMAScript import "+specifier+" from "+analysis.ModulePaths[owner])
 			return ""
 		}
 		found = candidate
@@ -154,13 +154,13 @@ func resolveRelativeTypeScriptModule(owner, specifier string, analysis *Analysis
 	return found
 }
 
-func resolveTypeScriptScope(scope string, analysis *Analysis) string {
+func resolveModuleScope(scope string, analysis *Analysis) string {
 	normalized := filepath.ToSlash(filepath.Clean(filepath.FromSlash(scope)))
-	if moduleID, ok := analysis.TSModuleIndex[normalized]; ok {
+	if moduleID, ok := analysis.ModuleIndex[normalized]; ok {
 		return moduleID
 	}
 	found := ""
-	for moduleID, stable := range analysis.TSModulePaths {
+	for moduleID, stable := range analysis.ModulePaths {
 		if stable == normalized || strings.HasSuffix(stable, "/"+normalized) {
 			if found != "" && found != moduleID {
 				return ""
@@ -181,21 +181,21 @@ func mergeTypeScriptInterfaces(target, addition *Declaration) {
 	}
 }
 
-func goScopeMatches(scope string, declarationPackage, packageID string, analysis *Analysis) bool {
+func packageScopeMatches(scope string, declarationPackage, packageID string, analysis *Analysis) bool {
 	if scope == "" {
 		return true
 	}
-	if importPath := analysis.GoPackagePaths[packageID]; importPath != "" && scope == importPath {
+	if importPath := analysis.PackagePaths[packageID]; importPath != "" && scope == importPath {
 		return true
 	}
-	if analysis.GoFallbackScopes[packageID] == scope {
+	if analysis.PackageFallbackScopes[packageID] == scope {
 		return true
 	}
 	if scope != declarationPackage {
 		return false
 	}
 	count := 0
-	for _, name := range analysis.GoPackageNames {
+	for _, name := range analysis.PackageNames {
 		if name == scope {
 			count++
 		}
@@ -203,12 +203,12 @@ func goScopeMatches(scope string, declarationPackage, packageID string, analysis
 	return count == 1
 }
 
-func goPackageScope(packageID, packageName string, analysis *Analysis) string {
-	if importPath := analysis.GoPackagePaths[packageID]; importPath != "" {
+func packageDisplayScope(packageID, packageName string, analysis *Analysis) string {
+	if importPath := analysis.PackagePaths[packageID]; importPath != "" {
 		return importPath
 	}
 	count := 0
-	for _, name := range analysis.GoPackageNames {
+	for _, name := range analysis.PackageNames {
 		if name == packageName {
 			count++
 		}
@@ -216,16 +216,16 @@ func goPackageScope(packageID, packageName string, analysis *Analysis) string {
 	if count == 1 {
 		return packageName
 	}
-	return analysis.GoFallbackScopes[packageID]
+	return analysis.PackageFallbackScopes[packageID]
 }
 
-func typeScriptScopeAmbiguous(scope string, analysis *Analysis) bool {
+func moduleScopeAmbiguous(scope string, analysis *Analysis) bool {
 	normalized := filepath.ToSlash(filepath.Clean(filepath.FromSlash(scope)))
-	if moduleID, ok := analysis.TSModuleIndex[normalized]; ok && moduleID != "" {
+	if moduleID, ok := analysis.ModuleIndex[normalized]; ok && moduleID != "" {
 		return false
 	}
 	count := 0
-	for _, stable := range analysis.TSModulePaths {
+	for _, stable := range analysis.ModulePaths {
 		if stable == normalized || strings.HasSuffix(stable, "/"+normalized) {
 			count++
 		}
@@ -233,7 +233,7 @@ func typeScriptScopeAmbiguous(scope string, analysis *Analysis) bool {
 	return count > 1
 }
 
-func prepareGoFallbackScopes(analysis *Analysis, sources []Source) {
+func preparePackageFallbackScopes(analysis *Analysis, sources []Source) {
 	paths := []string{}
 	for _, source := range sources {
 		if languageForPath(source.Path) == "go" {
@@ -241,9 +241,9 @@ func prepareGoFallbackScopes(analysis *Analysis, sources []Source) {
 		}
 	}
 	root := commonDirectory(paths)
-	for packageID, packageName := range analysis.GoPackageNames {
+	for packageID, packageName := range analysis.PackageNames {
 		directory := strings.TrimSuffix(packageID, ":"+packageName)
-		analysis.GoFallbackScopes[packageID] = stableRelativePath(root, directory)
+		analysis.PackageFallbackScopes[packageID] = stableRelativePath(root, directory)
 	}
 }
 
@@ -251,18 +251,18 @@ func structuralMembersMatch(required, actual Member) bool {
 	if !membersMatch(required, actual) {
 		return false
 	}
-	if required.Language == "go" && required.Visibility != "public" {
+	if focusedSemanticsFor(required.Language).restrictedStructuralMembers && required.Visibility != "public" {
 		return required.PackageID == actual.PackageID
 	}
 	return true
 }
 
-func typeScriptReferenceName(owner, target *Declaration, analysis *Analysis) string {
-	if owner == nil || target == nil || owner.Language != target.Language || owner.Language != "typescript" && owner.Language != "javascript" {
+func moduleReferenceName(owner, target *Declaration, analysis *Analysis) string {
+	if owner == nil || target == nil || owner.Language != target.Language || !focusedSemanticsFor(owner.Language).moduleReferences {
 		return ""
 	}
 	targetKey := target.ModuleID + ":" + target.Name
-	for alias, key := range typeScriptDependencyCandidates(owner, analysis) {
+	for alias, key := range moduleDependencyCandidates(owner, analysis) {
 		if key == targetKey {
 			return alias
 		}

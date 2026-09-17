@@ -1,4 +1,4 @@
-package search
+package navigation
 
 import (
 	"encoding/json"
@@ -228,6 +228,15 @@ func matchingTypeScriptModuleFiles(files []string, target string) []string {
 }
 
 type ecmaNavigationIndex struct{ baseLanguageNavigationIndex }
+
+func (*ecmaNavigationIndex) filterCandidates(call navigationCall, candidates []navigationDeclaration) []navigationDeclaration {
+	if call.importPath != "" || call.qualifier != "" || strings.Contains(call.display, ".") {
+		return candidates
+	}
+	return filterNavigationCandidates(candidates, func(candidate navigationDeclaration) bool {
+		return candidate.file == call.file
+	})
+}
 
 func (index *ecmaNavigationIndex) importTargets(sourceFile, _, importPath, _, _ string) navigationImportTargets {
 	if strings.HasPrefix(importPath, ".") {

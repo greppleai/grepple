@@ -209,7 +209,7 @@ func renderDeclarationKind(name string, declaration *Declaration) []string {
 	if declaration.Kind == "interface" {
 		return []string{"    <<interface>> " + name}
 	}
-	if isExplicitGoDeclarationKind(declaration.Kind) {
+	if isExplicitDeclarationKind(declaration.Kind) {
 		return []string{"    <<" + declaration.Kind + ">> " + name}
 	}
 	return nil
@@ -217,27 +217,27 @@ func renderDeclarationKind(name string, declaration *Declaration) []string {
 
 func renderDeclarationMetadata(name string, declaration *Declaration, analysis *Analysis) []string {
 	lines := []string{}
-	if declaration.Language == "go" {
-		scope := goPackageScope(declaration.PackageID, declaration.Package, analysis)
+	if declaration.PackageID != "" {
+		scope := packageDisplayScope(declaration.PackageID, declaration.Package, analysis)
 		lines = append(lines, "    %% grepple:package "+name+" "+scope)
 	} else if declaration.ModuleID != "" {
-		lines = append(lines, "    %% grepple:module "+name+" "+analysis.TSModulePaths[declaration.ModuleID])
+		lines = append(lines, "    %% grepple:module "+name+" "+analysis.ModulePaths[declaration.ModuleID])
 	}
-	if declaration.Language == "go" && (declaration.Kind == "alias" || declaration.Kind == "type") {
+	if focusedSemanticsFor(declaration.Language).underlyingTypes && (declaration.Kind == "alias" || declaration.Kind == "type") {
 		lines = append(lines, "    %% grepple:underlying "+name+" "+declaration.Underlying)
 	}
 	if declaration.File != "" {
 		lines = append(lines, "    %% grepple:file "+name+" "+declaration.File)
 	}
 	lines = append(lines, renderDeclarationStructTags(name, declaration)...)
-	if declaration.Language == "go" && declaration.FileLocal {
+	if focusedSemanticsFor(declaration.Language).fileLocalTypes && declaration.FileLocal {
 		lines = append(lines, "    %% grepple:filelocal "+name)
 	}
 	return lines
 }
 
 func renderDeclarationStructTags(name string, declaration *Declaration) []string {
-	if declaration.Language != "go" || declaration.Kind != "struct" {
+	if !focusedSemanticsFor(declaration.Language).structTags || declaration.Kind != "struct" {
 		return nil
 	}
 	lines := []string{}
@@ -253,9 +253,9 @@ func renderDeclarationStructTags(name string, declaration *Declaration) []string
 func renderDeclarationExports(name string, declaration *Declaration, analysis *Analysis) []string {
 	exported := analysis.Exports[name]
 	defaultExported := analysis.DefaultExports[name]
-	if declaration.Language == "javascript" || declaration.Language == "typescript" {
-		exported = analysis.TSExports[declaration.ModuleID][name]
-		defaultExported = analysis.TSDefaultExports[declaration.ModuleID] == name
+	if focusedSemanticsFor(declaration.Language).moduleExports {
+		exported = analysis.ModuleExports[declaration.ModuleID][name]
+		defaultExported = analysis.ModuleDefaultExports[declaration.ModuleID] == name
 	}
 	lines := []string{}
 	if exported {
@@ -381,59 +381,6 @@ func GenerateClassDiagram(entry string, entrySource Source, sources []Source, op
 		return "", unsupportedLanguageError(entrySource.Path)
 	}
 	return definition.generateStructure(entry, entrySource, sources, options)
-}
-
-func generateGoClass(entry string, entrySource Source, sources []Source, options GenerateOptions) (string, error) {
-	depth, nodeLimit := classOptions(options)
-	entryAnalysis, err := Analyze([]Source{entrySource})
-	if err != nil {
-		return "", err
-	}
-	if entryAnalysis.Declarations[entry] == nil {
-		return "", fmt.Errorf("Go declaration '%s' was not found in entry file %s", entry, entrySource.Path)
-	}
-	identity := entryAnalysis.Declarations[entry].PackageID
-	analysis, err := Analyze(sources)
-	if err != nil {
-		return "", err
-	}
-	declarations := map[string]*Declaration{}
-	for _, declaration := range analysis.GoDeclarations {
-		if declaration.PackageID == identity {
-			declarations[declaration.Name] = declaration
-		}
-	}
-	inferGoImplementations(declarations)
-	selected, truncated := selectClasses(entry, declarations, depth, nodeLimit)
-	lines := []string{"classDiagram", fmt.Sprintf("    %%%% grepple:generated entry %s depth %d max-nodes %d", entry, depth, nodeLimit)}
-	if truncated {
-		lines = append(lines, fmt.Sprintf("    %%%% grepple:truncated max-nodes %d", nodeLimit))
-	}
-	for _, name := range selected {
-		rendered, renderErr := renderClass(name, declarations[name], analysis)
-		if renderErr != nil {
-			return "", renderErr
-		}
-		lines = append(lines, rendered...)
-	}
-	lines = append(lines, classRelations(selected, declarations)...)
-	diagram := strings.TrimRight(strings.Join(lines, "\n"), "\n") + "\n"
-	return validateGeneratedClass(diagram, sources)
-}
-
-func inferGoImplementations(declarations map[string]*Declaration) {
-	for _, name := range sortedKeys(declarations) {
-		declaration := declarations[name]
-		if declaration.Language != "go" || declaration.Kind != "struct" {
-			continue
-		}
-		for _, candidateName := range sortedKeys(declarations) {
-			candidate := declarations[candidateName]
-			if candidate.Language == "go" && candidate.Kind == "interface" && len(candidate.Members) > 0 && memberSetSatisfies(declaration.Members, candidate.Members) {
-				declaration.Implements[candidateName] = true
-			}
-		}
-	}
 }
 
 func memberSetSatisfies(actual, required []Member) bool {

@@ -1,6 +1,6 @@
 package extract
 
-func hasTypeScriptCallPath(analysis *Analysis, source, target *Symbol) bool {
+func hasModuleCallPath(analysis *Analysis, source, target *Symbol) bool {
 	if source.Key == target.Key {
 		return true
 	}
@@ -9,7 +9,7 @@ func hasTypeScriptCallPath(analysis *Analysis, source, target *Symbol) bool {
 	for len(pending) > 0 {
 		current := pending[0]
 		pending = pending[1:]
-		for _, called := range resolvedTypeScriptCalls(analysis, current) {
+		for _, called := range resolvedModuleCalls(analysis, current) {
 			if called.Key == target.Key {
 				return true
 			}
@@ -23,11 +23,11 @@ func hasTypeScriptCallPath(analysis *Analysis, source, target *Symbol) bool {
 }
 
 func resolveTypeScriptCall(analysis *Analysis, owner *Symbol, call string) *Symbol {
-	if local := analysis.TSSymbolIndex[owner.ModuleID+":"+call]; local != nil {
+	if local := analysis.ModuleSymbols[owner.ModuleID+":"+call]; local != nil {
 		return local
 	}
 	parts := splitTypeScriptCall(call)
-	binding := analysis.TSImportBindings[owner.ModuleID][parts[0]]
+	binding := analysis.ModuleImportBindings[owner.ModuleID][parts[0]]
 	if binding.ModuleID == "" {
 		return nil
 	}
@@ -38,7 +38,7 @@ func resolveTypeScriptCall(analysis *Analysis, owner *Symbol, call string) *Symb
 	if parts[1] != "" {
 		name += "." + parts[1]
 	}
-	return analysis.TSSymbolIndex[binding.ModuleID+":"+name]
+	return analysis.ModuleSymbols[binding.ModuleID+":"+name]
 }
 
 func splitTypeScriptCall(call string) [2]string {
@@ -50,20 +50,20 @@ func splitTypeScriptCall(call string) [2]string {
 	return [2]string{call, ""}
 }
 
-func hasTypeScriptOrderedPath(analysis *Analysis, source, target *Symbol) bool {
-	for _, key := range sortedKeys(analysis.TSSymbolIndex) {
-		owner := analysis.TSSymbolIndex[key]
+func hasModuleOrderedPath(analysis *Analysis, source, target *Symbol) bool {
+	for _, key := range sortedKeys(analysis.ModuleSymbols) {
+		owner := analysis.ModuleSymbols[key]
 		if owner.ModuleID != source.ModuleID || owner.ModuleID != target.ModuleID {
 			continue
 		}
-		if navigationSymbolsInOrder(resolvedTypeScriptCalls(analysis, owner), source.Key, target.Key) {
+		if navigationSymbolsInOrder(resolvedModuleCalls(analysis, owner), source.Key, target.Key) {
 			return true
 		}
 	}
 	return false
 }
 
-func resolvedTypeScriptCalls(analysis *Analysis, symbol *Symbol) []*Symbol {
+func resolvedModuleCalls(analysis *Analysis, symbol *Symbol) []*Symbol {
 	return resolvedNavigationCalls(analysis, symbol)
 }
 

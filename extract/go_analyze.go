@@ -42,10 +42,10 @@ func analyzeGoSource(source Source, result *Analysis, methods map[string][]Membe
 		return malformedSourceError(source.Path, document)
 	}
 	packageID := filepath.Clean(absolutePath(filepath.Dir(source.Path))) + ":" + packageName
-	result.GoPackageNames[packageID] = packageName
+	result.PackageNames[packageID] = packageName
 	registerGoImportPath(result, source.Path, packageID)
-	if result.GoPackageImports[packageID] == nil {
-		result.GoPackageImports[packageID] = map[string]string{}
+	if result.PackageImports[packageID] == nil {
+		result.PackageImports[packageID] = map[string]string{}
 	}
 	analyzer := goSourceAnalyzer{result: result, source: source, text: []byte(source.Text), methods: methods, imports: map[string]string{}, packageName: packageName, packageID: packageID}
 	if err := document.Read(func(view codeparser.DocumentView) error {
@@ -62,7 +62,7 @@ func analyzeGoSource(source Source, result *Analysis, methods map[string][]Membe
 				analyzer.analyzeStatement(statement)
 			}
 		}
-		analyzer.collectGoTypeReferences(root)
+		analyzer.collectTypeReferencesByPackage(root)
 		return nil
 	}); err != nil {
 		return err
@@ -75,16 +75,16 @@ func analyzeGoSource(source Source, result *Analysis, methods map[string][]Membe
 func registerGoImportPath(result *Analysis, sourcePath, packageID string) {
 	importPath := goImportPath(sourcePath)
 	if importPath != "" {
-		result.GoPackagePaths[packageID] = importPath
+		result.PackagePaths[packageID] = importPath
 	}
 	if importPath == "" {
 		return
 	}
-	if existing, ok := result.GoImportPathIndex[importPath]; ok && existing != packageID {
-		result.GoImportPathIndex[importPath] = ""
+	if existing, ok := result.ImportPathPackages[importPath]; ok && existing != packageID {
+		result.ImportPathPackages[importPath] = ""
 		return
 	}
-	result.GoImportPathIndex[importPath] = packageID
+	result.ImportPathPackages[importPath] = packageID
 }
 
 func goImportPath(sourcePath string) string {
@@ -187,12 +187,12 @@ func (analyzer *goSourceAnalyzer) analyzeTypeSpec(spec codeparser.ViewNode) {
 
 func (analyzer *goSourceAnalyzer) recordGoTypeDeclaration(spec codeparser.ViewNode, declaration *Declaration) {
 	key := analyzer.packageID + ":" + declaration.Name
-	if existing := analyzer.result.GoDeclarations[key]; existing != nil {
+	if existing := analyzer.result.PackageDeclarations[key]; existing != nil {
 		analyzer.addDuplicateGoError("package-level type", declaration.Name, existing.Location, declaration.Location)
-	} else if functions := analyzer.result.GoFunctions[key]; len(functions) > 0 {
+	} else if functions := analyzer.result.FunctionsByPackage[key]; len(functions) > 0 {
 		analyzer.addDuplicateGoError("package-level type/function", declaration.Name, functions[0].Location, declaration.Location)
 	}
-	analyzer.result.GoDeclarations[key] = declaration
+	analyzer.result.PackageDeclarations[key] = declaration
 	analyzer.addGoSymbol(declaration.Name, "class", spec, codeparser.ViewNode{}, "", declaration.Name)
 	if exportedGoName(declaration.Name) {
 		analyzer.recordGoExport(declaration.Name)
@@ -213,7 +213,7 @@ func hasGoFileLocalMarker(source string, declarationRow int) bool {
 	return false
 }
 
-func (analyzer *goSourceAnalyzer) collectGoTypeReferences(root codeparser.ViewNode) {
+func (analyzer *goSourceAnalyzer) collectTypeReferencesByPackage(root codeparser.ViewNode) {
 	file := analyzer.result.SourcePaths[absolutePath(analyzer.source.Path)]
 	codeparser.WalkNamedView(root, func(node codeparser.ViewNode) {
 		if node.Kind() == "type_identifier" {
@@ -235,7 +235,7 @@ func (analyzer *goSourceAnalyzer) addGoTypeReference(name string, node codeparse
 		return
 	}
 	key := analyzer.packageID + ":" + name
-	analyzer.result.GoTypeReferences[key] = append(analyzer.result.GoTypeReferences[key], syntaxLocation(file, node))
+	analyzer.result.TypeReferencesByPackage[key] = append(analyzer.result.TypeReferencesByPackage[key], syntaxLocation(file, node))
 }
 
 func goDeclarationKind(spec, typeNode codeparser.ViewNode) string {
@@ -406,12 +406,12 @@ func (analyzer *goSourceAnalyzer) analyzeFunction(node codeparser.ViewNode) {
 	}
 	member := analyzer.goCallableMember(node, name)
 	key := analyzer.packageID + ":" + name
-	if functions := analyzer.result.GoFunctions[key]; len(functions) > 0 {
+	if functions := analyzer.result.FunctionsByPackage[key]; len(functions) > 0 {
 		analyzer.addDuplicateGoError("package-level function", name, functions[0].Location, member.Location)
-	} else if declaration := analyzer.result.GoDeclarations[key]; declaration != nil {
+	} else if declaration := analyzer.result.PackageDeclarations[key]; declaration != nil {
 		analyzer.addDuplicateGoError("package-level type/function", name, declaration.Location, member.Location)
 	}
-	analyzer.result.GoFunctions[key] = append(analyzer.result.GoFunctions[key], member)
+	analyzer.result.FunctionsByPackage[key] = append(analyzer.result.FunctionsByPackage[key], member)
 	analyzer.result.Functions[name] = append(analyzer.result.Functions[name], member)
 	analyzer.addGoSymbol(name, "function", node, node.ChildByFieldName("body"), "", "")
 	if exportedGoName(name) {
@@ -453,10 +453,10 @@ func (analyzer *goSourceAnalyzer) receiver(node codeparser.ViewNode) (string, st
 
 func (analyzer *goSourceAnalyzer) addGoSymbol(name, kind string, node, _ codeparser.ViewNode, receiver, owner string) {
 	key := analyzer.packageID + ":" + name
-	symbol := analyzer.result.GoSymbolIndex[key]
+	symbol := analyzer.result.PackageSymbols[key]
 	if symbol == nil {
 		symbol = &Symbol{Name: name, Kind: kind, Language: "go", Package: analyzer.packageName, PackageID: analyzer.packageID, Key: analyzer.packageID + ":" + name, Owner: owner, Receiver: receiver, Calls: map[string]bool{}}
-		analyzer.result.GoSymbolIndex[symbol.Key] = symbol
+		analyzer.result.PackageSymbols[symbol.Key] = symbol
 	}
 	symbol.Locations = append(symbol.Locations, syntaxLocation(analyzer.source.Path, node))
 }
@@ -488,13 +488,48 @@ func (analyzer *goSourceAnalyzer) analyzeImportSpec(spec codeparser.ViewNode) {
 	}
 	analyzer.imports[name] = module
 	analyzer.result.Imports[name] = append(analyzer.result.Imports[name], Import{Source: module, Language: "go", Package: analyzer.packageName, PackageID: analyzer.packageID, File: analyzer.result.SourcePaths[absolutePath(analyzer.source.Path)]})
-	analyzer.result.GoPackageImports[analyzer.packageID][name] = module
+	analyzer.result.PackageImports[analyzer.packageID][name] = module
 }
 
 func mergeGoMethods(result *Analysis, methods map[string][]Member) {
 	for _, key := range sortedKeys(methods) {
-		if declaration := result.GoDeclarations[key]; declaration != nil {
+		if declaration := result.PackageDeclarations[key]; declaration != nil {
 			declaration.Members = append(declaration.Members, methods[key]...)
+		}
+	}
+}
+
+func finalizeGoIndexes(result *Analysis) {
+	declarations := map[string][]*Declaration{}
+	for _, key := range sortedKeys(result.PackageDeclarations) {
+		declaration := result.PackageDeclarations[key]
+		declarations[declaration.Name] = append(declarations[declaration.Name], declaration)
+	}
+	for _, name := range sortedKeys(declarations) {
+		if len(declarations[name]) == 1 {
+			result.Declarations[name] = declarations[name][0]
+			result.DeclarationVariants["go:"+name] = declarations[name][0]
+		} else {
+			delete(result.Declarations, name)
+			delete(result.DeclarationVariants, "go:"+name)
+		}
+	}
+	finalizeGoSymbols(result)
+}
+
+func finalizeGoSymbols(result *Analysis) {
+	symbols := map[string][]*Symbol{}
+	for _, key := range sortedKeys(result.PackageSymbols) {
+		symbol := result.PackageSymbols[key]
+		symbols[symbol.Name] = append(symbols[symbol.Name], symbol)
+	}
+	for _, name := range sortedKeys(symbols) {
+		if len(symbols[name]) == 1 {
+			result.Symbols[name] = symbols[name][0]
+			result.SymbolVariants["go:"+name] = symbols[name][0]
+		} else {
+			delete(result.Symbols, name)
+			delete(result.SymbolVariants, "go:"+name)
 		}
 	}
 }

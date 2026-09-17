@@ -55,7 +55,7 @@ func TestTypeScriptInterfaceMergingAndDuplicateDiagnostics(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if declaration := merged.TSDeclarations[absolutePath(path)+":Combined"]; declaration == nil || len(declaration.Members) != 2 {
+	if declaration := merged.ModuleDeclarations[absolutePath(path)+":Combined"]; declaration == nil || len(declaration.Members) != 2 {
 		t.Fatalf("interface was not merged: %+v", declaration)
 	}
 	_, err = Analyze([]Source{{path, `class Conflict {} interface Conflict { value: string }`}})
@@ -106,7 +106,7 @@ func TestTypeScriptRelativeImportResolutionVariants(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	bindings := analysis.TSImportBindings[absolutePath(entry.Path)]
+	bindings := analysis.ModuleImportBindings[absolutePath(entry.Path)]
 	for _, name := range []string{"explicit", "B", "C", "DefaultThing"} {
 		if bindings[name].ModuleID == "" {
 			t.Fatalf("binding %s was not resolved: %+v", name, bindings[name])

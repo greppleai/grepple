@@ -34,12 +34,12 @@ def helper() -> None:
 	if err != nil {
 		t.Fatal(err)
 	}
-	declaration := analysis.TSDeclarations[absolutePath(entry.Path)+":Runner"]
+	declaration := analysis.ModuleDeclarations[absolutePath(entry.Path)+":Runner"]
 	if declaration == nil || declaration.Language != "python" || !declaration.Extends["Base"] {
 		t.Fatalf("declaration=%#v", declaration)
 	}
-	if analysis.Symbols["Runner"] == nil || analysis.TSSymbolIndex[absolutePath(entry.Path)+":Runner.start"] == nil {
-		t.Fatalf("Python method symbols missing: %#v", sortedKeys(analysis.TSSymbolIndex))
+	if analysis.Symbols["Runner"] == nil || analysis.ModuleSymbols[absolutePath(entry.Path)+":Runner.start"] == nil {
+		t.Fatalf("Python method symbols missing: %#v", sortedKeys(analysis.ModuleSymbols))
 	}
 	assertPythonMembers(t, declaration.Members, []Member{
 		{Name: "count", Kind: "property", Type: "number"},
@@ -79,7 +79,7 @@ func TestPythonFocusedExtractionSupportsDecoratorsAndStubFiles(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	declaration := analysis.TSDeclarations[absolutePath(source.Path)+":Service"]
+	declaration := analysis.ModuleDeclarations[absolutePath(source.Path)+":Service"]
 	if declaration == nil || len(declaration.Members) != 2 {
 		t.Fatalf("declaration=%#v", declaration)
 	}
@@ -98,7 +98,7 @@ func TestPythonFocusedExtractionSupportsDecoratorsAndStubFiles(t *testing.T) {
 	}
 }
 
-func TestPythonFocusedFlowUsesUniqueCrossFileTargetsWithoutGuessingAmbiguity(t *testing.T) {
+func TestPythonFocusedFlowUsesImportedTargetDespiteUnrelatedDuplicate(t *testing.T) {
 	root := t.TempDir()
 	entry := Source{Path: filepath.Join(root, "app.py"), Text: "from helper import finish\n\ndef start():\n    finish()\n"}
 	helper := Source{Path: filepath.Join(root, "helper.py"), Text: "def finish():\n    pass\n"}
@@ -119,17 +119,17 @@ func TestPythonFocusedFlowUsesUniqueCrossFileTargetsWithoutGuessingAmbiguity(t *
 			confidence = call.Confidence
 		}
 	}
-	if confidence != "unique-terminal" {
+	if confidence != "import-resolved" {
 		t.Fatalf("cross-file confidence = %q", confidence)
 	}
 
 	duplicate := Source{Path: filepath.Join(root, "other.py"), Text: "def finish():\n    pass\n"}
-	ambiguous, err := GenerateFlowchart("start", entry.Path, []Source{entry, helper, duplicate}, GenerateOptions{Depth: 2, MaxNodes: 20})
+	resolved, err := GenerateFlowchart("start", entry.Path, []Source{entry, helper, duplicate}, GenerateOptions{Depth: 2, MaxNodes: 20})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if strings.Contains(ambiguous, "start --> finish") {
-		t.Fatalf("ambiguous cross-file call was guessed:\n%s", ambiguous)
+	if !strings.Contains(resolved, "start --> finish") {
+		t.Fatalf("imported cross-file call was not retained:\n%s", resolved)
 	}
 }
 

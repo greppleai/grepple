@@ -285,12 +285,13 @@ func applyStereotype(class *DiagramClass, stereotype string, line int) error {
 		}
 		class.Kind = "interface"
 	case "struct", "alias", "type":
-		if class.Language == "javascript" || class.Language == "typescript" || class.Kind == "interface" || isExplicitGoDeclarationKind(class.Kind) && class.Kind != stereotype || class.Function {
+		language := explicitDeclarationKindLanguage()
+		if class.Language != "" && class.Language != language || class.Kind == "interface" || isExplicitDeclarationKind(class.Kind) && class.Kind != stereotype || class.Function {
 			return stereotypeConflict(class, stereotype, line)
 		}
-		class.Kind, class.Language = stereotype, "go"
+		class.Kind, class.Language = stereotype, language
 	case "function":
-		if isExplicitGoDeclarationKind(class.Kind) {
+		if focusedSemanticsFor(class.Language).explicitDeclarationKinds && isExplicitDeclarationKind(class.Kind) {
 			return stereotypeConflict(class, stereotype, line)
 		}
 		class.Function = true
@@ -314,14 +315,14 @@ func applyLanguageStereotype(class *DiagramClass, stereotype string, line int) (
 	if !isSupportedLanguage(stereotype) {
 		return false, nil
 	}
-	if class.Language != "" && class.Language != stereotype || stereotype != "go" && isExplicitGoDeclarationKind(class.Kind) {
+	if class.Language != "" && class.Language != stereotype || stereotype != explicitDeclarationKindLanguage() && isExplicitDeclarationKind(class.Kind) {
 		return true, stereotypeConflict(class, stereotype, line)
 	}
 	class.Language = stereotype
 	return true, nil
 }
 
-func isExplicitGoDeclarationKind(kind string) bool {
+func isExplicitDeclarationKind(kind string) bool {
 	return kind == "struct" || kind == "alias" || kind == "type"
 }
 
@@ -407,35 +408,19 @@ func (parser *classParser) parseDiagramMetadata(value string, line int) (bool, e
 	return false, nil
 }
 
-func (parser *classParser) parseGoMetadata(value string, line int) (bool, error) {
-	if match := structTagMetadataRE.FindStringSubmatch(value); match != nil {
-		if !parser.sawHeader {
-			return true, nil
-		}
-		return true, parser.applyStructTagMetadata(match[1], match[2], match[3], line)
-	}
-	if match := underlyingMetadataRE.FindStringSubmatch(value); match != nil {
-		if !parser.sawHeader {
-			return true, nil
-		}
-		return true, parser.applyUnderlyingMetadata(match[1], match[2], line)
-	}
-	return false, nil
-}
-
 func (parser *classParser) parseClassMetadata(value string, line int) (bool, error) {
 	if match := packageMetadataRE.FindStringSubmatch(value); match != nil {
 		if !parser.sawHeader {
 			return true, nil
 		}
-		return true, parser.applyClassScope(match[1], match[2], "go", line)
+		return true, parser.applyClassScope(match[1], match[2], packageMetadataLanguage(), line)
 	}
 	if match := moduleMetadataRE.FindStringSubmatch(value); match != nil {
 		if !parser.sawHeader {
 			return true, nil
 		}
-		language := "typescript"
-		if class := parser.diagram.Classes[match[1]]; class != nil && class.Language != "" && class.Language != "go" {
+		language := defaultModuleMetadataLanguage()
+		if class := parser.diagram.Classes[match[1]]; class != nil && class.Language != "" && !focusedSemanticsFor(class.Language).packageMetadata {
 			language = class.Language
 		}
 		return true, parser.applyClassScope(match[1], match[2], language, line)
@@ -636,7 +621,7 @@ func (parser *classParser) applyClassScope(name, scope, language string, line in
 	if err != nil {
 		return err
 	}
-	if language == "go" {
+	if focusedSemanticsFor(language).packageMetadata {
 		if class.PackageLine != 0 {
 			return fmt.Errorf("Line %d: duplicate package directive for '%s'", line, name)
 		}
@@ -1047,8 +1032,8 @@ func (validator *classValidator) checkCompletePackage() {
 
 func (validator *classValidator) uncoveredPackageDeclarations(importPath string) []packageCompletenessItem {
 	var uncovered []packageCompletenessItem
-	for _, declaration := range validator.analysis.GoDeclarations {
-		if validator.analysis.GoPackagePaths[declaration.PackageID] != importPath || validator.completePackageContains(declaration) {
+	for _, declaration := range validator.analysis.PackageDeclarations {
+		if validator.analysis.PackagePaths[declaration.PackageID] != importPath || validator.completePackageContains(declaration) {
 			continue
 		}
 		uncovered = append(uncovered, packageCompletenessItem{name: declaration.Name, kind: declaration.Kind, location: declaration.Location})
@@ -1058,9 +1043,9 @@ func (validator *classValidator) uncoveredPackageDeclarations(importPath string)
 
 func (validator *classValidator) uncoveredPackageFunctions(importPath string) []packageCompletenessItem {
 	var uncovered []packageCompletenessItem
-	for _, functions := range validator.analysis.GoFunctions {
+	for _, functions := range validator.analysis.FunctionsByPackage {
 		for _, function := range functions {
-			if !exportedGoName(function.Name) || validator.analysis.GoPackagePaths[function.PackageID] != importPath || validator.completePackageContainsFunction(function) {
+			if !exportedGoName(function.Name) || validator.analysis.PackagePaths[function.PackageID] != importPath || validator.completePackageContainsFunction(function) {
 				continue
 			}
 			uncovered = append(uncovered, packageCompletenessItem{name: function.Name, kind: "function", location: function.Location})
@@ -1219,34 +1204,13 @@ func asyncMarker(async bool) string {
 
 func (validator *classValidator) declaration(name string) *Declaration {
 	class := validator.diagram.Classes[name]
-	if class != nil && class.Package != "" {
-		return validator.goDeclaration(name, class.Package)
-	}
-	if class != nil && class.Module != "" {
-		moduleID := resolveTypeScriptScope(class.Module, validator.analysis)
-		if moduleID == "" {
-			return nil
-		}
-		return validator.analysis.TSDeclarations[typeScriptDeclarationKey(validator.analysis, moduleID, name)]
+	if index := focusedClassIndexFor(class); index != nil {
+		return index.declaration(name, class, validator.analysis)
 	}
 	if class != nil && class.Language != "" {
 		return validator.analysis.DeclarationVariants[class.Language+":"+name]
 	}
 	return validator.analysis.Declarations[name]
-}
-
-func (validator *classValidator) goDeclaration(name, scope string) *Declaration {
-	var result *Declaration
-	for _, declaration := range validator.analysis.GoDeclarations {
-		if declaration.Name != name || !goScopeMatches(scope, declaration.Package, declaration.PackageID, validator.analysis) {
-			continue
-		}
-		if result != nil {
-			return nil
-		}
-		result = declaration
-	}
-	return result
 }
 
 func normalizeFileMetadata(value string) string {
@@ -1282,11 +1246,11 @@ func (validator *classValidator) checkDeclaration(class *DiagramClass) {
 		validator.checkStructTags(class, actual)
 	}
 	if class.FileLocal {
-		validator.checkGoFileLocal(class, actual)
+		validator.checkFileLocal(class, actual)
 	}
 	for _, expected := range class.Members {
 		members := actual.Members
-		if class.Exact && actual.Language == "go" && class.File != "" && validator.diagram.CompletePackage == "" {
+		if class.Exact && focusedSemanticsFor(actual.Language).exactFileMembers && class.File != "" && validator.diagram.CompletePackage == "" {
 			members = membersInFile(members, class.File)
 		}
 		validator.checkMember(class.Name, expected, members)
@@ -1300,7 +1264,7 @@ func (validator *classValidator) checkDeclaration(class *DiagramClass) {
 }
 
 func (validator *classValidator) checkUnderlying(class *DiagramClass, declaration *Declaration) {
-	if declaration.Language != "go" || class.Kind != "alias" && class.Kind != "type" {
+	if !focusedSemanticsFor(declaration.Language).underlyingTypes || class.Kind != "alias" && class.Kind != "type" {
 		validator.add(class.UnderlyingLine, fmt.Sprintf("Underlying metadata on '%s' requires a Go <<type>> or <<alias>> node.", class.Name))
 		return
 	}
@@ -1312,7 +1276,7 @@ func (validator *classValidator) checkUnderlying(class *DiagramClass, declaratio
 func (validator *classValidator) checkStructTags(class *DiagramClass, declaration *Declaration) {
 	for _, field := range sortedKeys(class.StructTags) {
 		requirement := class.StructTags[field]
-		if declaration.Language != "go" || declaration.Kind != "struct" {
+		if !focusedSemanticsFor(declaration.Language).structTags || declaration.Kind != "struct" {
 			validator.add(requirement.Line, fmt.Sprintf("Struct-tag metadata on '%s.%s' requires a Go struct.", class.Name, field))
 			continue
 		}
@@ -1331,22 +1295,22 @@ func (validator *classValidator) checkStructTags(class *DiagramClass, declaratio
 	}
 }
 
-func (validator *classValidator) checkGoFileLocal(class *DiagramClass, declaration *Declaration) {
-	if declaration.Language != "go" {
+func (validator *classValidator) checkFileLocal(class *DiagramClass, declaration *Declaration) {
+	if !focusedSemanticsFor(declaration.Language).fileLocalTypes {
 		validator.add(class.FileLocalLine, fmt.Sprintf("File-local metadata on '%s' requires a Go type.", class.Name))
 		return
 	}
 	if !declaration.FileLocal {
 		validator.add(class.FileLocalLine, fmt.Sprintf("Go type '%s' requires contiguous leading marker comment '//grepple:filelocal'.", class.Name))
 	}
-	location, found := validator.firstExternalGoTypeReference(declaration)
+	location, found := validator.firstExternalPackageTypeReference(declaration)
 	if found {
 		validator.add(class.FileLocalLine, fmt.Sprintf("File-local Go type '%s' is referenced outside declaration file at '%s:%d:%d'.", class.Name, location.Path, location.Line, location.Column))
 	}
 }
 
-func (validator *classValidator) firstExternalGoTypeReference(declaration *Declaration) (Location, bool) {
-	references := validator.analysis.GoTypeReferences[declaration.PackageID+":"+declaration.Name]
+func (validator *classValidator) firstExternalPackageTypeReference(declaration *Declaration) (Location, bool) {
+	references := validator.analysis.TypeReferencesByPackage[declaration.PackageID+":"+declaration.Name]
 	var first Location
 	found := false
 	for _, location := range references {
@@ -1393,20 +1357,16 @@ func (validator *classValidator) memberScopeMatches(class *DiagramClass, member 
 	if !languageMatches(class.Language, member.Language) {
 		return false
 	}
-	if member.Language == "go" {
-		return goScopeMatches(class.Package, member.Package, member.PackageID, validator.analysis)
-	}
-	return class.Module == "" || resolveTypeScriptScope(class.Module, validator.analysis) == member.ModuleID
+	index := focusedClassIndexFor(class)
+	return index == nil || index.memberScopeMatches(class, member, validator.analysis)
 }
 
 func (validator *classValidator) importScopeMatches(class *DiagramClass, item Import) bool {
 	if !languageMatches(class.Language, item.Language) {
 		return false
 	}
-	if item.Language == "go" {
-		return goScopeMatches(class.Package, item.Package, item.PackageID, validator.analysis)
-	}
-	return class.Module == "" || resolveTypeScriptScope(class.Module, validator.analysis) == item.ImporterModuleID
+	index := focusedClassIndexFor(class)
+	return index == nil || index.importScopeMatches(class, item, validator.analysis)
 }
 
 func ambiguityMessage(kind, name string) string {
@@ -1414,38 +1374,15 @@ func ambiguityMessage(kind, name string) string {
 }
 
 func (validator *classValidator) declarationAmbiguous(class *DiagramClass) bool {
-	if class.Module != "" && typeScriptScopeAmbiguous(class.Module, validator.analysis) {
+	if class.Module != "" && moduleScopeAmbiguous(class.Module, validator.analysis) {
 		return true
 	}
-	goCount := validator.goDeclarationCount(class)
-	ecmaCount := validator.ecmaScriptDeclarationCount(class)
-	if class.Language == "go" {
-		return goCount > 1
+	if index := focusedClassIndexFor(class); index != nil {
+		return index.declarationCount(class, validator.analysis) > 1
 	}
-	if class.Language == "typescript" || class.Language == "javascript" {
-		return ecmaCount > 1
-	}
-	return goCount > 1 || ecmaCount > 1 || goCount == 1 && ecmaCount == 1
-}
-func (validator *classValidator) goDeclarationCount(class *DiagramClass) int {
-	count := 0
-	for _, declaration := range validator.analysis.GoDeclarations {
-		if declaration.Name == class.Name && goScopeMatches(class.Package, declaration.Package, declaration.PackageID, validator.analysis) {
-			count++
-		}
-	}
-	return count
-}
-
-func (validator *classValidator) ecmaScriptDeclarationCount(class *DiagramClass) int {
-	count := 0
-	moduleID := resolveTypeScriptScope(class.Module, validator.analysis)
-	for _, declaration := range validator.analysis.TSDeclarations {
-		if declaration.Name == class.Name && (class.Language == "" || declaration.Language == class.Language) && (class.Module == "" || moduleID == declaration.ModuleID) {
-			count++
-		}
-	}
-	return count
+	packageCount := packageFocusedClassIndex{}.declarationCount(class, validator.analysis)
+	moduleCount := moduleFocusedClassIndex{}.declarationCount(class, validator.analysis)
+	return packageCount+moduleCount > 1
 }
 
 func (validator *classValidator) functionAmbiguous(class *DiagramClass) bool {
@@ -1459,8 +1396,8 @@ func (validator *classValidator) functionAmbiguous(class *DiagramClass) bool {
 }
 
 func memberIdentity(member Member) string {
-	if member.Language == "go" {
-		return "go:" + member.PackageID
+	if member.PackageID != "" {
+		return "package:" + member.PackageID
 	}
 	return member.Language + ":" + member.ModuleID
 }
@@ -1508,10 +1445,10 @@ func (validator *classValidator) checkExport(class *DiagramClass) {
 		return
 	}
 	if class.Module != "" {
-		moduleID := resolveTypeScriptScope(class.Module, validator.analysis)
-		found, kind := validator.analysis.TSExports[moduleID][class.Name], "export"
+		moduleID := resolveModuleScope(class.Module, validator.analysis)
+		found, kind := validator.analysis.ModuleExports[moduleID][class.Name], "export"
 		if class.DefaultExport {
-			found, kind = validator.analysis.TSDefaultExports[moduleID] == class.Name, "default export"
+			found, kind = validator.analysis.ModuleDefaultExports[moduleID] == class.Name, "default export"
 		}
 		if !found {
 			validator.add(class.Line, fmt.Sprintf("Missing %s for '%s'.", kind, class.Name))
@@ -1565,7 +1502,7 @@ func (validator *classValidator) checkHeritage(relation Relation) {
 		parents, verb = declaration.Implements, "implement"
 	}
 	parentDeclaration := validator.declaration(parent)
-	resolvedParent := typeScriptReferenceName(declaration, parentDeclaration, validator.analysis)
+	resolvedParent := moduleReferenceName(declaration, parentDeclaration, validator.analysis)
 	if !parents[parent] && (resolvedParent == "" || !parents[resolvedParent]) && !validator.structurallyImplements(declaration, parent, implements) {
 		validator.add(relation.Line, fmt.Sprintf("'%s' must %s '%s'.", child, verb, parent))
 	}
@@ -1573,7 +1510,7 @@ func (validator *classValidator) checkHeritage(relation Relation) {
 
 func (validator *classValidator) structurallyImplements(declaration *Declaration, parent string, implements bool) bool {
 	contract := validator.declaration(parent)
-	if !implements || declaration.Language != "go" || contract == nil || contract.Language != "go" || contract.Kind != "interface" {
+	if !implements || !focusedSemanticsFor(declaration.Language).structuralInterfaces || contract == nil || contract.Language != declaration.Language || contract.Kind != "interface" {
 		return false
 	}
 	for _, required := range contract.Members {
@@ -1667,7 +1604,7 @@ func memberReferences(member Member, target, multiplicity string) bool {
 	return false
 }
 func (validator *classValidator) memberReferences(member Member, target, multiplicity string) bool {
-	if member.Language == "go" {
+	if focusedSemanticsFor(member.Language).packageTypeReferences {
 		return packageMemberReferences(member, target, multiplicity)
 	}
 	return memberReferences(member, target, multiplicity)
@@ -1704,7 +1641,7 @@ func (validator *classValidator) matchingFunctionReferences(class *DiagramClass,
 		return true
 	}
 	ownerDeclaration := &Declaration{Language: candidate.Language, ModuleID: candidate.ModuleID}
-	reference := typeScriptReferenceName(ownerDeclaration, targetDeclaration, validator.analysis)
+	reference := moduleReferenceName(ownerDeclaration, targetDeclaration, validator.analysis)
 	return reference != "" && memberReferences(candidate, reference, multiplicity)
 }
 
@@ -1727,10 +1664,10 @@ func (validator *classValidator) associationExists(owner, target, multiplicity s
 	if declaration == nil {
 		return true
 	}
-	if declaration.Language == "go" {
+	if focusedSemanticsFor(declaration.Language).packageTypeReferences {
 		return packageDeclarationReferences(declaration, target, multiplicity)
 	}
-	reference := typeScriptReferenceName(declaration, targetDeclaration, validator.analysis)
+	reference := moduleReferenceName(declaration, targetDeclaration, validator.analysis)
 	return declarationReferences(declaration, target, multiplicity) || reference != "" && declarationReferences(declaration, reference, multiplicity)
 }
 

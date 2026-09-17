@@ -7,6 +7,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/greppleai/grepple/navigation"
 	codeparser "github.com/greppleai/grepple/parser"
 )
 
@@ -78,23 +79,23 @@ type Analysis struct {
 	ExportVariants, DefaultExportVariants map[string]bool
 	Symbols                               map[string]*Symbol
 	SymbolVariants                        map[string]*Symbol
-	TSDeclarations                        map[string]*Declaration
-	GoDeclarations                        map[string]*Declaration
-	GoTypeReferences                      map[string][]Location
-	GoFunctions                           map[string][]Member
-	TSSymbolIndex                         map[string]*Symbol
-	GoSymbolIndex                         map[string]*Symbol
-	GoPackageNames                        map[string]string
-	GoPackageImports                      map[string]map[string]string
-	GoImportPathIndex                     map[string]string
-	GoPackagePaths                        map[string]string
-	GoFallbackScopes                      map[string]string
-	TSModulePaths, SourcePaths            map[string]string
-	TSModuleIndex                         map[string]string
-	TSImportBindings                      map[string]map[string]Import
-	TSDefaultExports                      map[string]string
-	TSExports                             map[string]map[string]bool
-	TSExportNames                         map[string]map[string]string
+	ModuleDeclarations                    map[string]*Declaration
+	PackageDeclarations                   map[string]*Declaration
+	TypeReferencesByPackage               map[string][]Location
+	FunctionsByPackage                    map[string][]Member
+	ModuleSymbols                         map[string]*Symbol
+	PackageSymbols                        map[string]*Symbol
+	PackageNames                          map[string]string
+	PackageImports                        map[string]map[string]string
+	ImportPathPackages                    map[string]string
+	PackagePaths                          map[string]string
+	PackageFallbackScopes                 map[string]string
+	ModulePaths, SourcePaths              map[string]string
+	ModuleIndex                           map[string]string
+	ModuleImportBindings                  map[string]map[string]Import
+	ModuleDefaultExports                  map[string]string
+	ModuleExports                         map[string]map[string]bool
+	ModuleExportNames                     map[string]map[string]string
 	Navigation                            codeparser.NavigationGraph
 	navigationSymbols                     map[string]*Symbol
 	navigationCalls                       map[string][]*Symbol
@@ -117,36 +118,36 @@ func (analyzer *sourceAnalyzer) location(node codeparser.ViewNode) Location {
 
 func newAnalysis() *Analysis {
 	return &Analysis{
-		Declarations:          map[string]*Declaration{},
-		DeclarationVariants:   map[string]*Declaration{},
-		Functions:             map[string][]Member{},
-		Imports:               map[string][]Import{},
-		Exports:               map[string]bool{},
-		DefaultExports:        map[string]bool{},
-		ExportVariants:        map[string]bool{},
-		DefaultExportVariants: map[string]bool{},
-		Symbols:               map[string]*Symbol{},
-		SymbolVariants:        map[string]*Symbol{},
-		TSDeclarations:        map[string]*Declaration{},
-		GoDeclarations:        map[string]*Declaration{},
-		GoTypeReferences:      map[string][]Location{},
-		GoFunctions:           map[string][]Member{},
-		TSSymbolIndex:         map[string]*Symbol{},
-		GoSymbolIndex:         map[string]*Symbol{},
-		GoPackageNames:        map[string]string{},
-		GoPackageImports:      map[string]map[string]string{},
-		GoImportPathIndex:     map[string]string{},
-		GoPackagePaths:        map[string]string{},
-		GoFallbackScopes:      map[string]string{},
-		TSModulePaths:         map[string]string{},
-		SourcePaths:           map[string]string{},
-		TSModuleIndex:         map[string]string{},
-		TSImportBindings:      map[string]map[string]Import{},
-		TSDefaultExports:      map[string]string{},
-		TSExports:             map[string]map[string]bool{},
-		TSExportNames:         map[string]map[string]string{},
-		navigationSymbols:     map[string]*Symbol{},
-		navigationCalls:       map[string][]*Symbol{},
+		Declarations:            map[string]*Declaration{},
+		DeclarationVariants:     map[string]*Declaration{},
+		Functions:               map[string][]Member{},
+		Imports:                 map[string][]Import{},
+		Exports:                 map[string]bool{},
+		DefaultExports:          map[string]bool{},
+		ExportVariants:          map[string]bool{},
+		DefaultExportVariants:   map[string]bool{},
+		Symbols:                 map[string]*Symbol{},
+		SymbolVariants:          map[string]*Symbol{},
+		ModuleDeclarations:      map[string]*Declaration{},
+		PackageDeclarations:     map[string]*Declaration{},
+		TypeReferencesByPackage: map[string][]Location{},
+		FunctionsByPackage:      map[string][]Member{},
+		ModuleSymbols:           map[string]*Symbol{},
+		PackageSymbols:          map[string]*Symbol{},
+		PackageNames:            map[string]string{},
+		PackageImports:          map[string]map[string]string{},
+		ImportPathPackages:      map[string]string{},
+		PackagePaths:            map[string]string{},
+		PackageFallbackScopes:   map[string]string{},
+		ModulePaths:             map[string]string{},
+		SourcePaths:             map[string]string{},
+		ModuleIndex:             map[string]string{},
+		ModuleImportBindings:    map[string]map[string]Import{},
+		ModuleDefaultExports:    map[string]string{},
+		ModuleExports:           map[string]map[string]bool{},
+		ModuleExportNames:       map[string]map[string]string{},
+		navigationSymbols:       map[string]*Symbol{},
+		navigationCalls:         map[string][]*Symbol{},
 	}
 }
 
@@ -273,10 +274,10 @@ func memberKind(kind string) (string, bool) {
 
 func (analyzer *sourceAnalyzer) addSymbol(name, kind string, node, _ codeparser.ViewNode, owner string) {
 	key := analyzer.moduleID + ":" + name
-	symbol := analyzer.result.TSSymbolIndex[key]
+	symbol := analyzer.result.ModuleSymbols[key]
 	if symbol == nil {
 		symbol = &Symbol{Name: name, Kind: kind, Language: analyzer.language, ModuleID: analyzer.moduleID, Key: key, Owner: owner, Calls: map[string]bool{}}
-		analyzer.result.TSSymbolIndex[key] = symbol
+		analyzer.result.ModuleSymbols[key] = symbol
 	}
 	symbol.Locations = append(symbol.Locations, syntaxLocation(analyzer.source.Path, node))
 }
@@ -287,10 +288,10 @@ func (analyzer *sourceAnalyzer) addImport(name, imported, module string, default
 	}
 	item := Import{Source: module, Imported: imported, Default: defaultImport, TypeOnly: typeOnly, Language: analyzer.language, ImporterModuleID: analyzer.moduleID, File: analyzer.result.SourcePaths[absolutePath(analyzer.source.Path)]}
 	analyzer.result.Imports[name] = append(analyzer.result.Imports[name], item)
-	if analyzer.result.TSImportBindings[analyzer.moduleID] == nil {
-		analyzer.result.TSImportBindings[analyzer.moduleID] = map[string]Import{}
+	if analyzer.result.ModuleImportBindings[analyzer.moduleID] == nil {
+		analyzer.result.ModuleImportBindings[analyzer.moduleID] = map[string]Import{}
 	}
-	analyzer.result.TSImportBindings[analyzer.moduleID][name] = item
+	analyzer.result.ModuleImportBindings[analyzer.moduleID][name] = item
 }
 
 func (analyzer *sourceAnalyzer) analyzeImport(statement codeparser.ViewNode) {
@@ -345,7 +346,7 @@ func (analyzer *sourceAnalyzer) analyzeExportSpecifiers(statement codeparser.Vie
 		if exportedName == "default" {
 			analyzer.result.DefaultExports[localName] = true
 			analyzer.result.DefaultExportVariants[analyzer.language+":"+localName] = true
-			analyzer.result.TSDefaultExports[analyzer.moduleID] = localName
+			analyzer.result.ModuleDefaultExports[analyzer.moduleID] = localName
 			analyzer.recordTypeScriptExport("default", localName)
 		} else if localName != "" {
 			analyzer.result.Exports[localName] = true
@@ -380,7 +381,7 @@ func directHeritageName(node codeparser.ViewNode, source []byte) string {
 	return strings.TrimSpace(nodeText(candidate, source))
 }
 
-func ecmaScriptDisplayName(language string) string {
+func moduleLanguageDisplayName(language string) string {
 	if language == "javascript" {
 		return "JavaScript"
 	}
@@ -425,18 +426,18 @@ func (analyzer *sourceAnalyzer) analyzeDeclaration(node codeparser.ViewNode, exp
 	analyzer.collectMembers(node, declaration)
 	collectHeritage(node, analyzer.text, declaration)
 	key := analyzer.moduleID + ":" + name
-	if existing := analyzer.result.TSDeclarations[key]; existing != nil {
+	if existing := analyzer.result.ModuleDeclarations[key]; existing != nil {
 		if existing.Kind == "interface" && declaration.Kind == "interface" {
 			mergeTypeScriptInterfaces(existing, declaration)
 		} else {
-			analyzer.result.duplicateErrors = append(analyzer.result.duplicateErrors, fmt.Sprintf("incompatible %s declarations %s in %s", ecmaScriptDisplayName(analyzer.language), name, analyzer.source.Path))
+			analyzer.result.duplicateErrors = append(analyzer.result.duplicateErrors, fmt.Sprintf("incompatible %s declarations %s in %s", moduleLanguageDisplayName(analyzer.language), name, analyzer.source.Path))
 		}
 		declaration = existing
 	} else {
-		analyzer.result.TSDeclarations[key] = declaration
+		analyzer.result.ModuleDeclarations[key] = declaration
 	}
 	collectHeritage(node, analyzer.text, declaration)
-	analyzer.result.TSDeclarations[analyzer.moduleID+":"+name] = declaration
+	analyzer.result.ModuleDeclarations[analyzer.moduleID+":"+name] = declaration
 	analyzer.addSymbol(name, "class", node, codeparser.ViewNode{}, name)
 	analyzer.recordExport(name, exported, defaultExport)
 }
@@ -484,20 +485,20 @@ func (analyzer *sourceAnalyzer) recordExport(name string, exported, defaultExpor
 	if defaultExport {
 		analyzer.result.DefaultExports[name] = true
 		analyzer.result.DefaultExportVariants[analyzer.language+":"+name] = true
-		analyzer.result.TSDefaultExports[analyzer.moduleID] = name
+		analyzer.result.ModuleDefaultExports[analyzer.moduleID] = name
 		analyzer.recordTypeScriptExport("default", name)
 	}
 }
 
 func (analyzer *sourceAnalyzer) recordTypeScriptExport(exported, local string) {
-	if analyzer.result.TSExports[analyzer.moduleID] == nil {
-		analyzer.result.TSExports[analyzer.moduleID] = map[string]bool{}
+	if analyzer.result.ModuleExports[analyzer.moduleID] == nil {
+		analyzer.result.ModuleExports[analyzer.moduleID] = map[string]bool{}
 	}
-	if analyzer.result.TSExportNames[analyzer.moduleID] == nil {
-		analyzer.result.TSExportNames[analyzer.moduleID] = map[string]string{}
+	if analyzer.result.ModuleExportNames[analyzer.moduleID] == nil {
+		analyzer.result.ModuleExportNames[analyzer.moduleID] = map[string]string{}
 	}
-	analyzer.result.TSExports[analyzer.moduleID][local] = true
-	analyzer.result.TSExportNames[analyzer.moduleID][exported] = local
+	analyzer.result.ModuleExports[analyzer.moduleID][local] = true
+	analyzer.result.ModuleExportNames[analyzer.moduleID][exported] = local
 }
 
 func (analyzer *sourceAnalyzer) analyzeTopLevel(statement codeparser.ViewNode) {
@@ -526,8 +527,8 @@ func finalizeTypeScriptIndexes(result *Analysis) {
 
 func finalizeTypeScriptDeclarations(result *Analysis) {
 	groups := map[string][]*Declaration{}
-	for _, key := range sortedKeys(result.TSDeclarations) {
-		declaration := result.TSDeclarations[key]
+	for _, key := range sortedKeys(result.ModuleDeclarations) {
+		declaration := result.ModuleDeclarations[key]
 		group := declaration.Language + ":" + declaration.Name
 		groups[group] = append(groups[group], declaration)
 	}
@@ -546,8 +547,8 @@ func finalizeTypeScriptDeclarations(result *Analysis) {
 
 func finalizeTypeScriptSymbols(result *Analysis) {
 	groups := map[string][]*Symbol{}
-	for _, key := range sortedKeys(result.TSSymbolIndex) {
-		symbol := result.TSSymbolIndex[key]
+	for _, key := range sortedKeys(result.ModuleSymbols) {
+		symbol := result.ModuleSymbols[key]
 		group := symbol.Language + ":" + symbol.Name
 		groups[group] = append(groups[group], symbol)
 	}
@@ -606,43 +607,13 @@ func Analyze(sources []Source) (*Analysis, error) {
 		}
 	}
 	removeAmbiguousGenericEntries(result)
-	enrichNavigationGraph(result)
+	navigationSources := make([]navigation.TextSource, 0, len(sources))
+	for _, source := range sources {
+		navigationSources = append(navigationSources, navigation.TextSource{Path: source.Path, Text: source.Text})
+	}
+	result.Navigation, _ = navigation.BuildGraphFromTextSources(navigationSources, navigation.BuildOptions{})
+	projectNavigationGraph(result)
 	return result, nil
-}
-
-func finalizeGoIndexes(result *Analysis) {
-	declarations := map[string][]*Declaration{}
-	for _, key := range sortedKeys(result.GoDeclarations) {
-		declaration := result.GoDeclarations[key]
-		declarations[declaration.Name] = append(declarations[declaration.Name], declaration)
-	}
-	for _, name := range sortedKeys(declarations) {
-		if len(declarations[name]) == 1 {
-			result.Declarations[name] = declarations[name][0]
-			result.DeclarationVariants["go:"+name] = declarations[name][0]
-		} else {
-			delete(result.Declarations, name)
-			delete(result.DeclarationVariants, "go:"+name)
-		}
-	}
-	finalizeGoSymbols(result)
-}
-
-func finalizeGoSymbols(result *Analysis) {
-	symbols := map[string][]*Symbol{}
-	for _, key := range sortedKeys(result.GoSymbolIndex) {
-		symbol := result.GoSymbolIndex[key]
-		symbols[symbol.Name] = append(symbols[symbol.Name], symbol)
-	}
-	for _, name := range sortedKeys(symbols) {
-		if len(symbols[name]) == 1 {
-			result.Symbols[name] = symbols[name][0]
-			result.SymbolVariants["go:"+name] = symbols[name][0]
-		} else {
-			delete(result.Symbols, name)
-			delete(result.SymbolVariants, "go:"+name)
-		}
-	}
 }
 
 func removeAmbiguousGenericEntries(result *Analysis) {

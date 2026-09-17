@@ -1,14 +1,13 @@
 package search
 
 import (
-	"bytes"
 	"fmt"
-	"os"
 	"path/filepath"
 	"sort"
 	"strings"
 	"sync/atomic"
 
+	"github.com/greppleai/grepple/navigation"
 	"github.com/greppleai/grepple/parser"
 )
 
@@ -55,34 +54,21 @@ type navigationCall struct {
 	importedReceiverTypes              []string
 	importedIdentity                   string
 	packageName                        string
+	targetID, confidence               string
+	candidateTargetIDs                 []string
 	line                               int
 }
 
-type navigationExport struct {
-	name, importedName, importPath, scope, language, file string
-}
-
-type navigationField struct {
-	ownerType, name, typeName, importPath string
-	language, packageName, file           string
-	line                                  int
-	embedded                              bool
-	targetFiles                           []string
-}
-
 type navigationIndex struct {
-	declarations    map[string][]navigationDeclaration
-	callers         map[string][]navigationCaller
-	calls           map[string][]navigationCall
-	byFile          map[string][]navigationDeclaration
-	byLocation      map[string]navigationDeclaration
-	exports         map[string][]navigationExport
-	fields          map[string][]navigationField
-	embeddedFields  map[string][]navigationField
-	contents        map[string]string
-	languageIndexes map[string]languageNavigationIndex
-	graph           parser.NavigationGraph
-	sourceStats     NavigationSourceStats
+	declarations      map[string][]navigationDeclaration
+	callersByTargetID map[string][]navigationCaller
+	calls             map[string][]navigationCall
+	byFile            map[string][]navigationDeclaration
+	byLocation        map[string]navigationDeclaration
+	byID              map[string]navigationDeclaration
+	contents          map[string]string
+	graph             parser.NavigationGraph
+	sourceStats       NavigationSourceStats
 }
 
 func hasNavigationMatch(matches []FileMatch) bool {
@@ -95,8 +81,8 @@ func hasNavigationMatch(matches []FileMatch) bool {
 }
 
 func supportsNavigation(language string) bool {
-	_, supported := languageNavigationIndexFactories[navigationLanguageFamily(language)]
-	return supported
+	capabilities, supported := parser.CapabilitiesForLanguage(language)
+	return supported && capabilities.Navigation
 }
 
 func attachRelated(matches []FileMatch, candidates []string, followDepth int) {
@@ -125,79 +111,43 @@ func attachRelated(matches []FileMatch, candidates []string, followDepth int) {
 }
 
 func buildNavigationIndex(files []string, useCache bool) *navigationIndex {
-	index := newNavigationIndex()
-	cwd, _ := os.Getwd()
-	paths := append([]string(nil), files...)
-	sort.Strings(paths)
-	for _, path := range paths {
-		index.addFile(path, cwd, useCache)
-	}
-	index.finalize(paths)
-	return index
+	return buildRelatedNavigationIndexFromFiles(files, NavigationBuildOptions{DisableCache: !useCache})
 }
 
 func newNavigationIndex() *navigationIndex {
 	return &navigationIndex{
-		declarations: make(map[string][]navigationDeclaration), callers: make(map[string][]navigationCaller),
+		declarations: make(map[string][]navigationDeclaration), callersByTargetID: make(map[string][]navigationCaller),
 		calls: make(map[string][]navigationCall), byFile: make(map[string][]navigationDeclaration),
-		byLocation: make(map[string]navigationDeclaration), exports: make(map[string][]navigationExport), fields: make(map[string][]navigationField), embeddedFields: make(map[string][]navigationField), contents: make(map[string]string),
+		byLocation: make(map[string]navigationDeclaration), byID: make(map[string]navigationDeclaration), contents: make(map[string]string),
 	}
-}
-
-func (index *navigationIndex) finalize(paths []string) {
-	files := make([]string, 0, len(index.contents))
-	for path := range index.contents {
-		files = append(files, path)
-	}
-	sort.Strings(files)
-	corpus := &navigationCorpus{contents: index.contents, exports: index.exports, graph: index.graph, files: files}
-	index.languageIndexes, index.graph.RepositoryRoots = newLanguageNavigationIndexes(corpus, paths)
-	index.inferReExportTargets()
-	index.inferCrossFileFieldReceivers()
-	index.inferReExportTargets()
-	index.inferPromotedReceiverTypes()
-	index.inferCallReturnReceivers()
-	index.indexNavigationCallers()
-	index.resolveGraphCalls()
-	index.resolveGraphImports()
 }
 
 // NavigationSourceStats reports the completeness of one navigation graph build.
-type NavigationSourceStats struct {
-	Attempted int `json:"attempted"`
-	Parsed    int `json:"parsed"`
-	Skipped   int `json:"skipped"`
-	Failed    int `json:"failed"`
-	Recovered int `json:"recovered"`
-}
+type NavigationSourceStats = navigation.SourceStats
 
 // BuildNavigationGraph builds the resolved, deterministic navigation graph for local files.
 func BuildNavigationGraph(files []string) parser.NavigationGraph {
-	graph, _ := BuildNavigationGraphWithStats(files)
-	return graph
+	return navigation.BuildGraph(files)
 }
 
 // BuildNavigationGraphWithStats builds the graph and reports source completeness.
 func BuildNavigationGraphWithStats(files []string) (parser.NavigationGraph, NavigationSourceStats) {
-	return BuildNavigationGraphWithOptions(files, NavigationBuildOptions{})
+	return navigation.BuildGraphWithStats(files)
 }
 
 // NavigationBuildOptions controls optional performance behavior without changing graph facts.
-type NavigationBuildOptions struct {
-	DisableCache bool
-}
+type NavigationBuildOptions = navigation.BuildOptions
 
 // BuildNavigationGraphWithOptions builds the graph with explicit cache behavior.
 func BuildNavigationGraphWithOptions(files []string, options NavigationBuildOptions) (parser.NavigationGraph, NavigationSourceStats) {
-	index := buildNavigationIndex(files, !options.DisableCache)
-	return index.graph, index.sourceStats
+	return navigation.BuildGraphWithOptions(files, options)
 }
 
 // NavigationDocumentSource pairs one caller-owned parsed document with its path.
-type NavigationDocumentSource struct {
-	Path     string
-	Document *parser.Document
-}
+type NavigationDocumentSource = navigation.DocumentSource
+
+// NavigationTextSource pairs source text with its repository path.
+type NavigationTextSource = navigation.TextSource
 
 // NavigationAnalysis retains one resolved navigation index for repeated read-only projections.
 // Documents used to build it remain owned by the caller.
@@ -207,17 +157,24 @@ type NavigationAnalysis struct {
 
 // BuildNavigationAnalysisFromDocuments builds one reusable analysis from caller-owned documents.
 func BuildNavigationAnalysisFromDocuments(sources []NavigationDocumentSource, options NavigationBuildOptions) (*NavigationAnalysis, NavigationSourceStats) {
-	ordered := append([]NavigationDocumentSource(nil), sources...)
-	sort.Slice(ordered, func(i, j int) bool { return ordered[i].Path < ordered[j].Path })
-	index := newNavigationIndex()
-	cwd, _ := os.Getwd()
-	paths := make([]string, 0, len(ordered))
-	for _, source := range ordered {
-		paths = append(paths, source.Path)
-		index.addDocument(source, cwd, !options.DisableCache)
+	shared, stats := navigation.BuildAnalysisFromDocuments(sources, options)
+	contents := make(map[string]string, len(sources))
+	for _, source := range sources {
+		if source.Document != nil {
+			contents[source.Path] = source.Document.Source()
+		}
 	}
-	index.finalize(paths)
-	return &NavigationAnalysis{index: index}, index.sourceStats
+	return &NavigationAnalysis{index: newResolvedNavigationIndex(shared.Graph(), contents, stats)}, stats
+}
+
+// BuildNavigationAnalysisFromTextSources builds one reusable analysis from in-memory sources.
+func BuildNavigationAnalysisFromTextSources(sources []NavigationTextSource, options NavigationBuildOptions) (*NavigationAnalysis, NavigationSourceStats) {
+	shared, stats := navigation.BuildAnalysisFromTextSources(sources, options)
+	contents := make(map[string]string, len(sources))
+	for _, source := range sources {
+		contents[source.Path] = source.Text
+	}
+	return &NavigationAnalysis{index: newResolvedNavigationIndex(shared.Graph(), contents, stats)}, stats
 }
 
 // Graph returns the analysis's immutable resolved navigation graph projection.
@@ -246,460 +203,12 @@ func AttachRelatedFromAnalysis(match *FileMatch, analysis *NavigationAnalysis, f
 
 // BuildNavigationGraphFromDocuments resolves a graph from already parsed documents.
 func BuildNavigationGraphFromDocuments(sources []NavigationDocumentSource, options NavigationBuildOptions) (parser.NavigationGraph, NavigationSourceStats) {
-	analysis, stats := BuildNavigationAnalysisFromDocuments(sources, options)
-	return analysis.Graph(), stats
+	return navigation.BuildGraphFromDocuments(sources, options)
 }
 
-func (index *navigationIndex) resolveGraphCalls() {
-	declarationsByID := index.navigationDeclarationsByID()
-	callsByID := index.navigationCallsByID()
-	for callIndex := range index.graph.Calls {
-		index.resolveGraphCall(&index.graph.Calls[callIndex], callsByID, declarationsByID)
-	}
-}
-
-func (index *navigationIndex) resolveGraphImports() {
-	packageFiles := make(map[string][]string)
-	for _, declaration := range index.graph.Declarations {
-		if declaration.PackageID != "" {
-			packageFiles[declaration.PackageID] = append(packageFiles[declaration.PackageID], declaration.Path)
-		}
-	}
-	for importIndex := range index.graph.Imports {
-		fact := &index.graph.Imports[importIndex]
-		fact.TargetPaths = index.resolveImportTargetPaths(*fact, packageFiles)
-	}
-}
-
-func (index *navigationIndex) resolveImportTargetPaths(fact parser.NavigationImport, packageFiles map[string][]string) []string {
-	targets := append([]string(nil), packageFiles[fact.ImportPath]...)
-	if languageIndex := index.languageIndex(fact.Language); languageIndex != nil {
-		resolved := languageIndex.importTargets(fact.Path, fact.Scope, fact.ImportPath, fact.Imported, fact.Kind)
-		targets = append(targets, resolved.files...)
-	}
-	sort.Strings(targets)
-	return compactSortedStrings(targets)
-}
-
-func (index *navigationIndex) languageIndex(language string) languageNavigationIndex {
-	return index.languageIndexes[navigationLanguageFamily(language)]
-}
-
-func (index *navigationIndex) navigationDeclarationsByID() map[string]navigationDeclaration {
-	byID := make(map[string]navigationDeclaration)
-	for _, declarations := range index.declarations {
-		for _, declaration := range declarations {
-			byID[declaration.id] = declaration
-		}
-	}
-	return byID
-}
-
-func (index *navigationIndex) navigationCallsByID() map[string]navigationCall {
-	byID := make(map[string]navigationCall)
-	for _, calls := range index.calls {
-		for _, call := range calls {
-			byID[call.id] = call
-		}
-	}
-	return byID
-}
-
-func (index *navigationIndex) addExports(exports []parser.NavigationExport, language, sourcePath string) {
-	key := navigationSymbolKey(language, sourcePath)
-	for _, export := range exports {
-		index.exports[key] = append(index.exports[key], navigationExport{name: export.Name, importedName: export.ImportedName, importPath: export.ImportPath, scope: export.Scope, language: language, file: sourcePath})
-	}
-}
-
-func (index *navigationIndex) inferReExportTargets() {
-	for location, calls := range index.calls {
-		for callIndex := range calls {
-			index.inferReExportTarget(&calls[callIndex])
-		}
-		index.calls[location] = calls
-	}
-}
-
-func (index *navigationIndex) inferReExportTarget(call *navigationCall) {
-	if call.importedIdentity == "" {
-		call.importedIdentity = navigationImportedIdentity(*call)
-	}
-	identity := call.importedIdentity
-	languageIndex := index.languageIndex(call.language)
-	if languageIndex == nil {
-		return
-	}
-	targets := languageIndex.reExportTargets(call.file, call.moduleScope, call.importPath, identity, map[string]bool{})
-	call.importTargetFiles = targets.files
-	call.importTargetScopes = targets.scopes
-	call.importedReceiverTypes = index.importedTypeNames(call.importTargetFiles, identity, call.language)
-	if len(call.importedReceiverTypes) != 1 {
-		return
-	}
-	if call.receiverType != "" {
-		call.receiverType = call.importedReceiverTypes[0]
-	} else {
-		call.resolvedName = call.importedReceiverTypes[0]
-	}
-}
-
-func (index *navigationIndex) importedTypeNames(files []string, name, language string) []string {
-	result := []string{}
-	for _, file := range files {
-		for _, export := range index.exports[navigationSymbolKey(language, file)] {
-			if export.name == name && export.importedName != "" && export.importedName != "*" {
-				result = append(result, terminalSymbolName(export.importedName))
-			}
-		}
-	}
-	sort.Strings(result)
-	return compactSortedStrings(result)
-}
-
-func navigationImportedIdentity(call navigationCall) string {
-	if call.receiverType != "" {
-		return terminalSymbolName(call.receiverType)
-	}
-	if call.rootType != "" {
-		return terminalSymbolName(call.rootType)
-	}
-	if call.resolvedName != "" {
-		return terminalSymbolName(call.resolvedName)
-	}
-	return terminalSymbolName(call.name)
-}
-
-func compactSortedStrings(values []string) []string {
-	if len(values) < 2 {
-		return values
-	}
-	result := values[:1]
-	for _, value := range values[1:] {
-		if value != result[len(result)-1] {
-			result = append(result, value)
-		}
-	}
-	return result
-}
-func (index *navigationIndex) resolveGraphCall(call *parser.NavigationCall, callsByID map[string]navigationCall, declarationsByID map[string]navigationDeclaration) {
-	indexed, ok := callsByID[call.ID]
-	if !ok {
-		call.Confidence = "candidate"
-		return
-	}
-	call.ImportPath = indexed.importPath
-	call.ReceiverType = indexed.receiverType
-	call.ReceiverFactory = indexed.receiverFactory
-	call.ReceiverFactoryImport = indexed.factoryImport
-	call.ResolvedName = indexed.resolvedName
-	targetName := navigationCallTargetName(indexed)
-	matched := []navigationDeclaration(nil)
-	if caller, exists := declarationsByID[indexed.callerID]; exists {
-		matched = []navigationDeclaration{caller}
-	}
-	resolution := index.resolveNavigationCandidates(indexed, index.declarations[navigationSymbolKey(call.Language, targetName)], matched)
-	call.Confidence = resolution.confidence
-	if call.Confidence == "" {
-		call.Confidence = "candidate"
-	}
-	call.CandidateTargetIDs = make([]string, len(resolution.candidates))
-	for candidateIndex, candidate := range resolution.candidates {
-		call.CandidateTargetIDs[candidateIndex] = candidate.id
-	}
-	if len(resolution.candidates) == 1 && resolution.confidence != "candidate" {
-		call.TargetID = resolution.candidates[0].id
-		call.CandidateTargetIDs = nil
-	}
-}
-func (index *navigationIndex) addFile(path, cwd string, useCache bool) {
-	index.sourceStats.Attempted++
-	language := parser.LanguageFor(path)
-	if !supportsNavigation(language) {
-		index.sourceStats.Skipped++
-		return
-	}
-	contentBytes, err := os.ReadFile(path)
-	if err != nil {
-		index.sourceStats.Failed++
-		return
-	}
-	if bytes.IndexByte(contentBytes, 0) >= 0 {
-		index.sourceStats.Skipped++
-		return
-	}
-	content := string(contentBytes)
-	cleanPath := filepath.Clean(path)
-	displayPath := displayPathFrom(path, cwd)
-	var graph parser.NavigationGraph
-	var recovered bool
-	if useCache {
-		graph, recovered, _, err = parser.CachedNavigationGraph(content, language, displayPath)
-	} else {
-		var document *parser.Document
-		document, err = parser.ParseDocument(language, content)
-		if err == nil {
-			recovered = document.Root().HasError()
-			graph = parser.NavigationGraphFromDocument(document, displayPath)
-			document.Close()
-		}
-	}
-	if err != nil {
-		index.sourceStats.Failed++
-		return
-	}
-	index.addParsedGraph(cleanPath, displayPath, language, content, graph, recovered)
-}
-
-func (index *navigationIndex) addDocument(source NavigationDocumentSource, cwd string, useCache bool) {
-	index.sourceStats.Attempted++
-	if source.Document == nil || !supportsNavigation(source.Document.Language()) {
-		index.sourceStats.Skipped++
-		return
-	}
-	cleanPath := filepath.Clean(source.Path)
-	displayPath := displayPathFrom(source.Path, cwd)
-	recovered := source.Document.Root().HasError()
-	var graph parser.NavigationGraph
-	if useCache {
-		graph, _ = parser.CachedNavigationGraphFromDocument(source.Document, displayPath)
-	} else {
-		graph = parser.NavigationGraphFromDocument(source.Document, displayPath)
-	}
-	index.addParsedGraph(cleanPath, displayPath, source.Document.Language(), source.Document.Source(), graph, recovered)
-}
-
-func (index *navigationIndex) addParsedGraph(cleanPath, displayPath, language, content string, graph parser.NavigationGraph, recovered bool) {
-	if recovered {
-		index.sourceStats.Recovered++
-	}
-	index.sourceStats.Parsed++
-	enrichNavigationRepositoryIdentity(&graph, cleanPath)
-	index.graph.Merge(graph)
-	index.addExports(graph.Exports, language, cleanPath)
-	index.addFields(graph.Fields, language, cleanPath)
-	index.contents[cleanPath] = content
-	if len(graph.Declarations) == 0 {
-		return
-	}
-	displayPath = filepath.Clean(displayPath)
-	indexed := index.addDeclarations(graph.Declarations, language, cleanPath, displayPath)
-	index.addCalls(graph.Calls, indexed, language, cleanPath)
-}
-
-func (index *navigationIndex) addFields(fields []parser.NavigationField, language, sourcePath string) {
-	for _, field := range fields {
-		item := navigationField{ownerType: terminalSymbolName(field.OwnerType), name: field.Name, typeName: field.Type, importPath: field.ImportPath, language: language, packageName: field.Package, file: sourcePath, line: field.Line, embedded: field.Embedded}
-		key := navigationFieldKey(language, item.ownerType, item.name)
-		index.fields[key] = append(index.fields[key], item)
-		if item.embedded {
-			ownerKey := navigationSymbolKey(language, item.ownerType)
-			index.embeddedFields[ownerKey] = append(index.embeddedFields[ownerKey], item)
-		}
-	}
-}
-
-func navigationFieldKey(language, owner, name string) string {
-	return navigationSymbolKey(language, terminalSymbolName(owner)+"."+name)
-}
-
-func (index *navigationIndex) inferCrossFileFieldReceivers() {
-	for location, calls := range index.calls {
-		for callIndex := range calls {
-			index.inferCrossFileFieldReceiver(&calls[callIndex])
-		}
-		index.calls[location] = calls
-	}
-}
-
-func (index *navigationIndex) inferCrossFileFieldReceiver(call *navigationCall) {
-	if call.receiverType != "" || call.rootType == "" || len(call.receiverMembers) == 0 {
-		return
-	}
-	binding := navigationField{typeName: call.rootType, importPath: call.rootImport, language: call.language, packageName: call.packageName, file: call.file}
-	if languageIndex := index.languageIndex(call.language); languageIndex != nil {
-		binding.targetFiles = languageIndex.reExportTargets(call.file, "", call.rootImport, terminalSymbolName(call.rootType), map[string]bool{}).files
-	}
-	for _, member := range call.receiverMembers {
-		candidates := index.fields[navigationFieldKey(call.language, binding.typeName, member)]
-		matched := index.filterNavigationFieldsByOrigin(candidates, binding)
-		if len(matched) != 1 || matched[0].typeName == "" {
-			return
-		}
-		binding = matched[0]
-	}
-	call.receiverType = binding.typeName
-	call.importPath = binding.importPath
-	call.importedIdentity = ""
-	call.importSourceFile = binding.file
-}
-
-func (index *navigationIndex) inferPromotedReceiverTypes() {
-	for location, calls := range index.calls {
-		for callIndex := range calls {
-			call := &calls[callIndex]
-			if call.receiverType == "" {
-				continue
-			}
-			owner := navigationField{typeName: call.receiverType, importPath: call.importPath, language: call.language, packageName: call.packageName, file: call.importSourceFile}
-			call.promotedReceiverTypes = index.promotedTypes(owner, map[string]bool{})
-		}
-		index.calls[location] = calls
-	}
-}
-
-func (index *navigationIndex) promotedTypes(owner navigationField, seen map[string]bool) []string {
-	key := navigationSymbolKey(owner.language, terminalSymbolName(owner.typeName))
-	if seen[key] {
-		return nil
-	}
-	seen[key] = true
-	result := []string{}
-	for _, field := range index.filterNavigationFieldsByOrigin(index.embeddedFields[key], owner) {
-		typeName := terminalSymbolName(field.typeName)
-		if typeName == "" || stringSliceContains(result, typeName) {
-			continue
-		}
-		result = append(result, typeName)
-		result = append(result, index.promotedTypes(field, seen)...)
-	}
-	return result
-}
-
-func stringSliceContains(values []string, target string) bool {
-	for _, value := range values {
-		if value == target {
-			return true
-		}
-	}
-	return false
-}
-
-func (index *navigationIndex) filterNavigationFieldsByOrigin(candidates []navigationField, owner navigationField) []navigationField {
-	result := make([]navigationField, 0, len(candidates))
-	for _, candidate := range candidates {
-		if index.navigationFieldOriginMatches(candidate, owner) {
-			result = append(result, candidate)
-		}
-	}
-	return result
-}
-
-func (index *navigationIndex) navigationFieldOriginMatches(candidate, owner navigationField) bool {
-	if len(owner.targetFiles) > 0 {
-		return stringSliceContains(owner.targetFiles, candidate.file)
-	}
-	languageIndex := index.languageIndex(candidate.language)
-	if languageIndex == nil {
-		return false
-	}
-	if owner.importPath != "" {
-		call := navigationCall{importPath: owner.importPath, importSourceFile: owner.file, file: owner.file}
-		declaration := navigationDeclaration{language: candidate.language, file: candidate.file, packageName: candidate.packageName}
-		return languageIndex.importMatches(call, declaration)
-	}
-	return languageIndex.fieldOriginMatches(candidate, owner)
-}
-
-func (index *navigationIndex) addDeclarations(declarations []parser.NavigationDeclaration, language, path, displayPath string) []navigationDeclaration {
-	indexed := make([]navigationDeclaration, 0, len(declarations))
-	for _, declaration := range declarations {
-		terminal := terminalSymbolName(declaration.Name)
-		if terminal == "" {
-			continue
-		}
-		item := navigationDeclaration{
-			id: declaration.ID, terminal: terminal, container: navigationDeclarationContainer(declaration), returnType: declaration.ResultType, returnImportPath: declaration.ResultImportPath, packageName: declaration.Package, moduleScope: declaration.Scope, visibilityDetail: declaration.VisibilityDetail, language: language, file: path, matchStart: declaration.Start,
-			point: RelatedPoint{Name: declaration.Name, Path: displayPath, File: path, Kind: declaration.Kind, Start: declaration.Start, End: declaration.End},
-		}
-		indexed = append(indexed, item)
-		key := navigationSymbolKey(language, terminal)
-		index.declarations[key] = append(index.declarations[key], item)
-		index.byFile[path] = append(index.byFile[path], item)
-		index.byLocation[relatedLocationKey(item.point)] = item
-	}
-	return indexed
-}
-
-func (index *navigationIndex) addCalls(calls []parser.NavigationCall, declarations []navigationDeclaration, language, sourcePath string) {
-	byID := map[string]navigationDeclaration{}
-	for _, declaration := range declarations {
-		byID[declaration.id] = declaration
-	}
-	for _, call := range calls {
-		caller, ok := byID[call.CallerID]
-		if !ok {
-			continue
-		}
-		location := relatedLocationKey(caller.point)
-		indexedCall := navigationCall{
-			id: call.ID, callerID: call.CallerID, name: call.Name, display: call.Display, resolvedName: call.ResolvedName, qualifier: call.Qualifier, importPath: call.ImportPath, moduleScope: caller.moduleScope, receiverType: call.ReceiverType,
-			rootType: call.ReceiverRootType, rootImport: call.ReceiverRootImport, receiverMembers: append([]string(nil), call.ReceiverMembers...), packageName: caller.packageName,
-			receiverFactory: call.ReceiverFactory, factoryImport: call.ReceiverFactoryImport, file: sourcePath, language: language, importSourceFile: sourcePath, line: call.Line,
-		}
-		index.calls[location] = append(index.calls[location], indexedCall)
-	}
-}
-
-func (index *navigationIndex) inferCallReturnReceivers() {
-	for location, calls := range index.calls {
-		caller, ok := index.byLocation[location]
-		if !ok {
-			continue
-		}
-		for callIndex := range calls {
-			index.inferCallReturnReceiver(&calls[callIndex], caller.language)
-		}
-		index.calls[location] = calls
-	}
-}
-
-func (index *navigationIndex) inferCallReturnReceiver(call *navigationCall, language string) {
-	if call.receiverType != "" || call.receiverFactory == "" {
-		return
-	}
-	declaration, ok := index.resolveReturnFactory(*call, language)
-	if !ok || declaration.returnType == "" {
-		return
-	}
-	call.receiverType = declaration.returnType
-	call.importPath = declaration.returnImportPath
-	call.importSourceFile = declaration.file
-	if call.importPath == "" {
-		call.importPath = call.factoryImport
-		call.importSourceFile = call.file
-	}
-}
-
-func (index *navigationIndex) resolveReturnFactory(call navigationCall, language string) (navigationDeclaration, bool) {
-	factoryCall := navigationCall{
-		name: call.receiverFactory, display: call.receiverFactory, importPath: call.factoryImport,
-		file: call.file, importSourceFile: call.file,
-	}
-	key := navigationSymbolKey(language, call.receiverFactory)
-	resolution := index.resolveNavigationCandidates(factoryCall, index.declarations[key], nil)
-	if len(resolution.candidates) != 1 || resolution.confidence == "candidate" {
-		return navigationDeclaration{}, false
-	}
-	return resolution.candidates[0], true
-}
-
-func (index *navigationIndex) indexNavigationCallers() {
-	locations := make([]string, 0, len(index.calls))
-	for location := range index.calls {
-		locations = append(locations, location)
-	}
-	sort.Strings(locations)
-	for _, location := range locations {
-		caller, ok := index.byLocation[location]
-		if !ok {
-			continue
-		}
-		for _, call := range index.calls[location] {
-			key := navigationSymbolKey(caller.language, navigationCallTargetName(call))
-			index.callers[key] = append(index.callers[key], navigationCaller{declaration: caller, call: call})
-		}
-	}
+// BuildNavigationGraphFromTextSources resolves a graph from in-memory sources.
+func BuildNavigationGraphFromTextSources(sources []NavigationTextSource, options NavigationBuildOptions) (parser.NavigationGraph, NavigationSourceStats) {
+	return navigation.BuildGraphFromTextSources(sources, options)
 }
 
 func relatedPoints(match FileMatch, navigation *navigationIndex) ([]RelatedPoint, int, int) {
@@ -730,17 +239,24 @@ func relatedCallees(match FileMatch, declarations []navigationDeclaration, navig
 	return limitRelatedPoints(uniqueRelatedPoints(related))
 }
 func resolveCallee(call navigationCall, language string, matched []navigationDeclaration, navigation *navigationIndex) []RelatedPoint {
-	targetName := navigationCallTargetName(call)
-	resolution := navigation.resolveNavigationCandidates(call, navigation.declarations[navigationSymbolKey(language, targetName)], matched)
-	resolved := make([]RelatedPoint, 0, len(resolution.candidates))
-	for _, declaration := range resolution.candidates {
-		if !sameNavigationLanguage(declaration.language, language) || declarationIsMatched(declaration, matched) {
+	targetIDs := append([]string(nil), call.candidateTargetIDs...)
+	confidence := call.confidence
+	if call.targetID != "" {
+		targetIDs = []string{call.targetID}
+	}
+	resolved := make([]RelatedPoint, 0, len(targetIDs))
+	for _, targetID := range targetIDs {
+		declaration, ok := navigation.byID[targetID]
+		if !ok || !sameNavigationLanguage(declaration.language, language) || declarationIsMatched(declaration, matched) {
 			continue
 		}
 		point := declaration.point
 		point.Direction = "callee"
 		point.CallLine = call.line
-		point.Confidence = resolution.confidence
+		point.Confidence = confidence
+		if point.Confidence == "" {
+			point.Confidence = "candidate"
+		}
 		if call.display != "" && call.display != point.Name {
 			point.Name = call.display + " → " + point.Name
 		}
@@ -749,166 +265,18 @@ func resolveCallee(call navigationCall, language string, matched []navigationDec
 	return resolved
 }
 
-type navigationCandidateResolution struct {
-	candidates []navigationDeclaration
-	confidence string
-}
-
-func (index *navigationIndex) resolveNavigationCandidates(call navigationCall, candidates, matched []navigationDeclaration) navigationCandidateResolution {
-	if languageIndex := index.languageIndex(call.language); languageIndex != nil {
-		candidates = languageIndex.filterCandidates(call, candidates)
-	}
-	contextConfidence := ""
-	if contextual, confidence := index.navigationContextCandidates(call, candidates); len(contextual) > 0 {
-		candidates = contextual
-		contextConfidence = confidence
-	}
-	if exact := exactNavigationCandidates(call, candidates); len(exact) == 1 {
-		return navigationCandidateResolution{exact, "exact"}
-	} else if len(exact) > 1 {
-		candidates = exact
-	}
-	originalCount := len(candidates)
-	if functions := unqualifiedFunctionCandidates(call, candidates); len(functions) > 0 {
-		candidates = functions
-		if len(candidates) == 1 && originalCount > 1 {
-			return navigationCandidateResolution{candidates, navigationContextConfidence(contextConfidence)}
-		}
-	}
-	beforeLocal := len(candidates)
-	if local := candidatesInMatchedFiles(candidates, matched); len(local) > 0 {
-		candidates = local
-		if len(candidates) == 1 && beforeLocal > 1 {
-			return navigationCandidateResolution{candidates, navigationContextConfidence(contextConfidence)}
-		}
-	}
-	if len(candidates) == 1 {
-		if contextConfidence != "" {
-			return navigationCandidateResolution{candidates, contextConfidence}
-		}
-		return navigationCandidateResolution{candidates, "unique-terminal"}
-	}
-	return navigationCandidateResolution{candidates, "candidate"}
-}
-
-func navigationContextConfidence(confidence string) string {
-	if confidence != "" {
-		return confidence
-	}
-	return "context-resolved"
-}
-
-func navigationCallTargetName(call navigationCall) string {
-	if call.resolvedName != "" {
-		return terminalSymbolName(call.resolvedName)
-	}
-	return call.name
-}
-
-func navigationDeclarationContainer(declaration parser.NavigationDeclaration) string {
-	if declaration.Container != "" {
-		return terminalSymbolName(declaration.Container)
-	}
-	parts := strings.Split(declaration.Name, ".")
-	if len(parts) > 1 {
-		return parts[len(parts)-2]
-	}
-	return ""
-}
-
-func (index *navigationIndex) navigationContextCandidates(call navigationCall, candidates []navigationDeclaration) ([]navigationDeclaration, string) {
-	result := candidates
-	confidence := ""
-	if call.importPath != "" {
-		result = filterNavigationCandidates(result, func(candidate navigationDeclaration) bool {
-			return index.navigationImportMatches(call, candidate)
-		})
-		confidence = "import-resolved"
-	}
-	if call.receiverType != "" {
-		receiverCandidates := filterNavigationCandidates(result, func(candidate navigationDeclaration) bool {
-			return candidate.container == terminalSymbolName(call.receiverType) || stringSliceContains(call.importedReceiverTypes, candidate.container) || stringSliceContains(call.promotedReceiverTypes, candidate.container)
-		})
-		if len(receiverCandidates) > 0 {
-			result = receiverCandidates
-			if confidence == "" {
-				confidence = "context-resolved"
-			}
-		} else if confidence == "" {
-			return nil, ""
-		}
-	}
-	if confidence == "" || len(result) == 0 {
-		return nil, ""
-	}
-	return result, confidence
-}
-
-func (index *navigationIndex) navigationImportMatches(call navigationCall, candidate navigationDeclaration) bool {
-	languageIndex := index.languageIndex(call.language)
-	return languageIndex != nil && languageIndex.importMatches(call, candidate)
-}
-
-func exactNavigationCandidates(call navigationCall, candidates []navigationDeclaration) []navigationDeclaration {
-	if !strings.ContainsAny(call.display, ".:#") {
-		return nil
-	}
-	return filterNavigationCandidates(candidates, func(candidate navigationDeclaration) bool {
-		return candidate.point.Name == call.display
-	})
-}
-
-func unqualifiedFunctionCandidates(call navigationCall, candidates []navigationDeclaration) []navigationDeclaration {
-	if strings.Contains(call.display, ".") {
-		return nil
-	}
-	return filterNavigationCandidates(candidates, func(candidate navigationDeclaration) bool {
-		return candidate.point.Kind == "func" || candidate.point.Kind == "function"
-	})
-}
-
-func filterNavigationCandidates(candidates []navigationDeclaration, keep func(navigationDeclaration) bool) []navigationDeclaration {
-	result := make([]navigationDeclaration, 0, len(candidates))
-	for _, candidate := range candidates {
-		if keep(candidate) {
-			result = append(result, candidate)
-		}
-	}
-	return result
-}
-
-func navigationCandidatesContain(candidates []navigationDeclaration, target navigationDeclaration) bool {
-	for _, candidate := range candidates {
-		if candidate.id == target.id {
-			return true
-		}
-	}
-	return false
-}
-
-func candidatesInMatchedFiles(candidates, matched []navigationDeclaration) []navigationDeclaration {
-	files := map[string]bool{}
-	for _, declaration := range matched {
-		files[declaration.file] = true
-	}
-	return filterNavigationCandidates(candidates, func(candidate navigationDeclaration) bool {
-		return files[candidate.file]
-	})
-}
-
 func navigationCallers(targets []navigationDeclaration, navigation *navigationIndex) ([]RelatedPoint, int) {
 	var related []RelatedPoint
 	for _, target := range targets {
-		terminalCandidates := navigation.declarations[navigationSymbolKey(target.language, target.terminal)]
-		for _, caller := range navigation.callers[navigationSymbolKey(target.language, target.terminal)] {
+		for _, caller := range navigation.callersByTargetID[target.id] {
 			if !sameNavigationLanguage(caller.declaration.language, target.language) || relatedLocationKey(caller.declaration.point) == relatedLocationKey(target.point) {
 				continue
 			}
 			point := caller.declaration.point
 			point.Direction = "caller"
 			point.CallLine = caller.call.line
-			point.Confidence = navigation.navigationCallerConfidence(target, caller, terminalCandidates)
-			if point.Confidence == "" {
+			point.Confidence = caller.call.confidence
+			if !resolvedNavigationConfidence(point.Confidence) {
 				continue
 			}
 			related = append(related, point)
@@ -926,25 +294,6 @@ func navigationCallers(targets []navigationDeclaration, navigation *navigationIn
 		return related[i].CallLine < related[j].CallLine
 	})
 	return limitRelatedPoints(uniqueRelatedPoints(related))
-}
-
-func (index *navigationIndex) navigationCallerConfidence(target navigationDeclaration, caller navigationCaller, terminalCandidates []navigationDeclaration) string {
-	if strings.ContainsAny(caller.call.display, ".:#") && caller.call.display == target.point.Name {
-		return "exact"
-	}
-	if contextual, confidence := index.navigationContextCandidates(caller.call, terminalCandidates); len(contextual) > 0 {
-		if !navigationCandidatesContain(contextual, target) {
-			return ""
-		}
-		if len(contextual) == 1 {
-			return confidence
-		}
-		return "candidate"
-	}
-	if len(terminalCandidates) == 1 {
-		return "unique-terminal"
-	}
-	return "candidate"
 }
 
 func resolvedNavigationConfidence(confidence string) bool {

@@ -32,8 +32,8 @@ func generateGoFlowchart(entry string, entrySource Source, sources []Source, dep
 }
 
 func goEntrySymbol(analysis *Analysis, name, entryPath string) *Symbol {
-	for _, key := range sortedKeys(analysis.GoSymbolIndex) {
-		symbol := analysis.GoSymbolIndex[key]
+	for _, key := range sortedKeys(analysis.PackageSymbols) {
+		symbol := analysis.PackageSymbols[key]
 		if symbol.Name != name {
 			continue
 		}
@@ -102,7 +102,7 @@ func goFlowNodeIDs(selected []selectedGoSymbol) map[string]string {
 }
 
 func goFlowMetadata(symbol *Symbol, identifier string, analysis *Analysis) []string {
-	scope := goPackageScope(symbol.PackageID, symbol.Package, analysis)
+	scope := packageDisplayScope(symbol.PackageID, symbol.Package, analysis)
 	result := []string{fmt.Sprintf("    %%%% grepple:symbol %s %s", identifier, symbol.Name), fmt.Sprintf("    %%%% grepple:language %s go", identifier)}
 	return append(result, fmt.Sprintf("    %%%% grepple:package %s %s", identifier, scope))
 }

@@ -22,7 +22,7 @@ const view = <Runner />;
 	if err != nil {
 		t.Fatal(err)
 	}
-	declaration := analysis.TSDeclarations[absolutePath(source.Path)+":Runner"]
+	declaration := analysis.ModuleDeclarations[absolutePath(source.Path)+":Runner"]
 	if declaration == nil || declaration.Language != "javascript" || len(declaration.Members) != 2 {
 		t.Fatalf("declaration=%#v", declaration)
 	}
