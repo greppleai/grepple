@@ -273,16 +273,33 @@ func (index *navigationIndex) resolveGraphImports() {
 
 func (index *navigationIndex) resolveImportTargetPaths(fact parser.NavigationImport, packageFiles map[string][]string) []string {
 	targets := append([]string(nil), packageFiles[fact.ImportPath]...)
-	if navigationLanguageFamily(fact.Language) == "rust" {
+	family := navigationLanguageFamily(fact.Language)
+	switch family {
+	case "rust":
 		targets = append(targets, index.rustImportTargetFiles(fact.Path, fact.Scope, fact.ImportPath)...)
-	} else {
+	case "c", "cpp":
+		targets = append(targets, index.cFamilyIncludeTargetFiles(fact.Path, fact.ImportPath, fact.Kind)...)
+	default:
 		targets = append(targets, index.importTargetFiles(fact.Path, fact.ImportPath, fact.Imported, fact.Language)...)
 	}
-	if len(targets) == 0 && navigationLanguageFamily(fact.Language) == "go" {
+	if len(targets) == 0 && family == "go" {
 		targets = append(targets, index.localGoImportTargets(fact.Path, fact.ImportPath)...)
 	}
 	sort.Strings(targets)
 	return compactSortedStrings(targets)
+}
+
+func (index *navigationIndex) cFamilyIncludeTargetFiles(sourcePath, importPath, kind string) []string {
+	if kind != "include-quoted" || importPath == "" || filepath.IsAbs(importPath) || filepath.VolumeName(importPath) != "" {
+		return nil
+	}
+	target := filepath.Clean(filepath.Join(filepath.Dir(sourcePath), filepath.FromSlash(importPath)))
+	for candidatePath := range index.contents {
+		if filepath.Clean(candidatePath) == target {
+			return []string{candidatePath}
+		}
+	}
+	return nil
 }
 
 func (index *navigationIndex) goReplacementImportTargets(importPath string) []string {

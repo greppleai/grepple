@@ -95,7 +95,7 @@ func TestGraphCompactEmitsBoundedAgentFacingEdges(t *testing.T) {
 			t.Fatal(err)
 		}
 	})
-	for _, expected := range []string{"graph grepple-navigation-graph-v5 files=1 declarations=2 calls=1", "entrypoints=0", "D ", " go func Run main.go:2", "C ", " Run -> helper#", "[unique-terminal] main.go:2"} {
+	for _, expected := range []string{"graph grepple-navigation-graph-v6 files=1 declarations=2 calls=1", "entrypoints=0", "D ", " go func Run main.go:2", "C ", " Run -> helper#", "[unique-terminal] main.go:2"} {
 		if !strings.Contains(output, expected) {
 			t.Fatalf("compact graph missing %q:\n%s", expected, output)
 		}

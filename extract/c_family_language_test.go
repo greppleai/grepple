@@ -120,7 +120,7 @@ private:
 	}
 }
 
-func TestCFamilyLeavesPreprocessorAndTemplatesUnmodeled(t *testing.T) {
+func TestCFamilyRetainsDirectIncludesButLeavesTemplatesUnmodeled(t *testing.T) {
 	cSource := Source{Path: "model.c", Text: `#include "generated.h"
 union Value { int number; const char *text; };
 `}
@@ -128,8 +128,12 @@ union Value { int number; const char *text; };
 	if err != nil {
 		t.Fatal(err)
 	}
-	if cAnalysis.TSDeclarations[absolutePath(cSource.Path)+":Value"] == nil || len(cAnalysis.Navigation.Imports) != 0 {
+	if cAnalysis.TSDeclarations[absolutePath(cSource.Path)+":Value"] == nil || len(cAnalysis.Navigation.Imports) != 1 {
 		t.Fatalf("C conservative analysis declarations=%#v imports=%#v", cAnalysis.TSDeclarations, cAnalysis.Navigation.Imports)
+	}
+	include := cAnalysis.Navigation.Imports[0]
+	if include.ImportPath != "generated.h" || include.Kind != "include-quoted" || len(include.TargetPaths) != 0 {
+		t.Fatalf("C include=%#v", include)
 	}
 
 	cppSource := Source{Path: "model.cpp", Text: `template <typename T> class Box { T value; };
