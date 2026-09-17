@@ -173,6 +173,7 @@ This file records completed Grepple roadmap work that no longer belongs in `next
 - [x] Added parity tests proving advertised combinations work and unsupported combinations fail explicitly.
 - [x] Added JavaScript/JSX, Python, Java, Kotlin, and C# focused architecture adapters on the shared parser/navigation infrastructure.
 - [x] Added native GritQL support for every Tree-sitter-backed language in the capability registry.
+- [x] Added conservative Rust process-entrypoint facts for top-level `main` functions in selected binary crate roots without treating library or nested-module functions as entrypoints.
 
 ## Reliability and performance
 

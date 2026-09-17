@@ -15,7 +15,8 @@ func cFamilyNavigationAdapter(rules *structureRules) navigationAdapter {
 	}
 }
 
-func cFamilyNavigationEntrypoint(node *syntaxNode, name, _, _, _ string) string {
+func cFamilyNavigationEntrypoint(context navigationEntrypointContext) string {
+	node, name := context.node, context.name
 	if node.Kind() != "function_definition" || name != "main" {
 		return ""
 	}

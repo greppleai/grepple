@@ -29,6 +29,12 @@ type navigationMemberSyntax struct {
 	operation string
 }
 
+type navigationEntrypointContext struct {
+	node                         *syntaxNode
+	name, container, packageName string
+	scope, path, content         string
+}
+
 type navigationAdapter interface {
 	Rules() *structureRules
 	IsCallable(*syntaxNode) bool
@@ -58,7 +64,7 @@ type navigationAdapter interface {
 	ParameterNames(*syntaxNode, *syntaxNode, string) []string
 	FieldNames(*syntaxNode, *syntaxNode, string) []navigationFieldName
 	Exports(*syntaxNode, string, string, string) []NavigationExport
-	Entrypoint(*syntaxNode, string, string, string, string) string
+	Entrypoint(navigationEntrypointContext) string
 	EntrypointFactsSupported() bool
 }
 
@@ -86,14 +92,14 @@ type navigationAdapterConfig struct {
 	selfBindingFromContainer bool
 	fieldNames               func(*syntaxNode, *syntaxNode, string) []navigationFieldName
 	exports                  func(*syntaxNode, string, string, string) []NavigationExport
-	entrypoint               func(*syntaxNode, string, string, string, string) string
+	entrypoint               func(navigationEntrypointContext) string
 }
 
-func (adapter *navigationAdapterConfig) Entrypoint(node *syntaxNode, name, container, packageName, content string) string {
+func (adapter *navigationAdapterConfig) Entrypoint(context navigationEntrypointContext) string {
 	if adapter.entrypoint == nil {
 		return ""
 	}
-	return adapter.entrypoint(node, name, container, packageName, content)
+	return adapter.entrypoint(context)
 }
 
 func (adapter *navigationAdapterConfig) EntrypointFactsSupported() bool {

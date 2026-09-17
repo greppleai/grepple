@@ -66,8 +66,8 @@ func goNavigationAdapter(rules *structureRules) navigationAdapter {
 	return adapter
 }
 
-func goNavigationEntrypoint(node *syntaxNode, name, container, packageName, _ string) string {
-	if node.Kind() == "function_declaration" && name == "main" && container == "" && packageName == "main" {
+func goNavigationEntrypoint(context navigationEntrypointContext) string {
+	if context.node.Kind() == "function_declaration" && context.name == "main" && context.container == "" && context.packageName == "main" {
 		return "process"
 	}
 	return ""

@@ -58,7 +58,7 @@ func assertImportRelationCapabilities(t *testing.T, capabilities map[string]api.
 
 func assertRustLanguageCapabilities(t *testing.T, rust api.LanguageCapabilities) {
 	t.Helper()
-	if rust.Navigation != api.FeatureProduction || rust.GritQL != api.FeatureProduction || rust.FocusedStructure != api.FeatureProduction || rust.FocusedFlow != api.FeatureProduction || rust.ImportRelations != api.FeatureProduction || rust.Entrypoints != api.FeatureUnsupported {
+	if rust.Navigation != api.FeatureProduction || rust.GritQL != api.FeatureProduction || rust.FocusedStructure != api.FeatureProduction || rust.FocusedFlow != api.FeatureProduction || rust.ImportRelations != api.FeatureProduction || rust.Entrypoints != api.FeatureProduction {
 		t.Fatalf("rust capabilities=%#v", rust)
 	}
 }

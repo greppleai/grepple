@@ -1,5 +1,7 @@
 package parser
 
+import "path/filepath"
+
 func rustNavigationAdapter(rules *structureRules) navigationAdapter {
 	return &navigationAdapterConfig{rules: rules, callTypes: newStringSet("call_expression"), sourceFacts: rustNavigationSourceFacts, exports: rustNavigationExports, nestedModulePath: func(node *syntaxNode, current string) string {
 		if node.Kind() != "mod_item" || node.ChildByFieldName("body") == nil {
@@ -15,5 +17,16 @@ func rustNavigationAdapter(rules *structureRules) navigationAdapter {
 		return defaultNavigationDeclarationName(node, content, rules, envelope)
 	}, visibility: func(node *syntaxNode, _ string, content string) NavigationVisibility {
 		return visibilityFromRequiredModifier(navigationDeclarationHeader(node, content), "pub")
-	}, visibilityDetail: rustNavigationVisibilityDetail}
+	}, visibilityDetail: rustNavigationVisibilityDetail, entrypoint: rustNavigationEntrypoint}
+}
+
+func rustNavigationEntrypoint(context navigationEntrypointContext) string {
+	if context.node.Kind() != "function_item" || context.name != "main" || context.container != "" || context.scope != "" {
+		return ""
+	}
+	path := filepath.Clean(context.path)
+	if !rustCrateRootPath(path) || filepath.Base(path) == "lib.rs" {
+		return ""
+	}
+	return "process"
 }

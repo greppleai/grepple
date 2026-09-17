@@ -55,6 +55,33 @@ func TestNavigationGraphCapturesAdapterEvidencedGoEntrypoint(t *testing.T) {
 	}
 }
 
+func TestNavigationGraphCapturesRustProcessEntrypoints(t *testing.T) {
+	for _, test := range []struct {
+		name, path, content string
+		want                int
+	}{
+		{name: "main crate", path: "app/src/main.rs", content: "fn main() {}", want: 1},
+		{name: "bin file", path: "app/src/bin/server.rs", content: "fn main() {}", want: 1},
+		{name: "bin directory", path: "app/src/bin/server/main.rs", content: "fn main() {}", want: 1},
+		{name: "library", path: "app/src/lib.rs", content: "fn main() {}"},
+		{name: "non-root file", path: "app/src/module.rs", content: "fn main() {}"},
+		{name: "inline module", path: "app/src/main.rs", content: "mod nested { fn main() {} }"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			graph := BuildNavigationGraph(test.content, "rust", test.path)
+			got := 0
+			for _, declaration := range graph.Declarations {
+				if declaration.Entrypoint == "process" {
+					got++
+				}
+			}
+			if got != test.want {
+				t.Fatalf("process entrypoints=%d want=%d declarations=%+v", got, test.want, graph.Declarations)
+			}
+		})
+	}
+}
+
 func TestNavigationGraphCapturesCFamilyProcessEntrypoints(t *testing.T) {
 	for _, test := range []struct {
 		language, content string

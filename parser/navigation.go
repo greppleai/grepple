@@ -320,7 +320,7 @@ func (c *navigationCollector) enterNavigationNode(node *syntaxNode, context navi
 	result := c.navigation.CallableReturnBinding(node, c.content, current.imports)
 	declaration := NavigationDeclaration{
 		Name: name, Kind: c.navigation.DeclarationKind(node, current.container), Language: c.adapter.ID(), Path: c.path, Container: current.container, Package: c.packageName, Scope: current.modulePath,
-		ResultType: result.typeName, ResultImportPath: result.importPath, Visibility: c.navigation.Visibility(node, name, c.content), VisibilityDetail: c.navigation.VisibilityDetail(node, name, c.content), Entrypoint: c.navigation.Entrypoint(node, name, current.container, c.packageName, c.content), Start: start, End: end,
+		ResultType: result.typeName, ResultImportPath: result.importPath, Visibility: c.navigation.Visibility(node, name, c.content), VisibilityDetail: c.navigation.VisibilityDetail(node, name, c.content), Entrypoint: c.navigation.Entrypoint(navigationEntrypointContext{node: node, name: name, container: current.container, packageName: c.packageName, scope: current.modulePath, path: c.path, content: c.content}), Start: start, End: end,
 	}
 	declaration.ID = navigationDeclarationStableID(declaration)
 	c.declarations = append(c.declarations, declaration)
