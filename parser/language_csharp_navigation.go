@@ -3,7 +3,7 @@ package parser
 import "strings"
 
 func cSharpNavigationAdapter(rules *structureRules) navigationAdapter {
-	return &navigationAdapterConfig{rules: rules, callTypes: newStringSet("invocation_expression", "object_creation_expression"), sourceFacts: cSharpNavigationSourceFacts, exports: cSharpNavigationExports, entrypoint: cSharpNavigationEntrypoint, memberAccessFacts: true, visibility: func(node *syntaxNode, _ string, content string) NavigationVisibility {
+	return &navigationAdapterConfig{rules: rules, callTypes: newStringSet("invocation_expression", "object_creation_expression"), parameterTypes: newStringSet("parameter"), sourceFacts: cSharpNavigationSourceFacts, exports: cSharpNavigationExports, entrypoint: cSharpNavigationEntrypoint, typeReferenceFacts: true, memberAccessFacts: true, visibility: func(node *syntaxNode, _ string, content string) NavigationVisibility {
 		return cSharpNavigationVisibility(navigationDeclarationHeader(node, content))
 	}}
 }

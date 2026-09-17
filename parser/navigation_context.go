@@ -327,7 +327,7 @@ func addNavigationParameterBinding(bindings map[string]navigationBinding, node *
 	if !adapter.IsParameter(node.Kind()) {
 		return
 	}
-	typeNode := node.ChildByFieldName("type")
+	typeNode := adapter.ParameterType(node)
 	if typeNode == nil {
 		return
 	}

@@ -3,7 +3,7 @@ package parser
 import "path/filepath"
 
 func rustNavigationAdapter(rules *structureRules) navigationAdapter {
-	return &navigationAdapterConfig{rules: rules, callTypes: newStringSet("call_expression"), sourceFacts: rustNavigationSourceFacts, exports: rustNavigationExports, nestedModulePath: func(node *syntaxNode, current string) string {
+	return &navigationAdapterConfig{rules: rules, callTypes: newStringSet("call_expression"), parameterTypes: newStringSet("parameter"), fieldContainerTypes: newStringSet("struct_item"), sourceFacts: rustNavigationSourceFacts, exports: rustNavigationExports, typeReferenceFacts: true, nestedModulePath: func(node *syntaxNode, current string) string {
 		if node.Kind() != "mod_item" || node.ChildByFieldName("body") == nil {
 			return ""
 		}
@@ -17,7 +17,7 @@ func rustNavigationAdapter(rules *structureRules) navigationAdapter {
 		return defaultNavigationDeclarationName(node, content, rules, envelope)
 	}, visibility: func(node *syntaxNode, _ string, content string) NavigationVisibility {
 		return visibilityFromRequiredModifier(navigationDeclarationHeader(node, content), "pub")
-	}, visibilityDetail: rustNavigationVisibilityDetail, entrypoint: rustNavigationEntrypoint, memberAccessFacts: true}
+	}, visibilityDetail: rustNavigationVisibilityDetail, entrypoint: rustNavigationEntrypoint, fieldFacts: true, memberAccessFacts: true}
 }
 
 func rustNavigationEntrypoint(context navigationEntrypointContext) string {

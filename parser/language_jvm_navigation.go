@@ -7,17 +7,35 @@ import (
 
 func javaNavigationAdapter(rules *structureRules) navigationAdapter {
 	return &navigationAdapterConfig{
-		rules:             rules,
-		callTypes:         newStringSet("method_invocation", "object_creation_expression", "explicit_constructor_invocation"),
-		sourceFacts:       javaNavigationSourceFacts,
-		memberAccessFacts: true,
-		callDisplay:       javaNavigationCallDisplay,
-		exports:           jvmNavigationExports,
-		entrypoint:        javaNavigationEntrypoint,
+		rules:               rules,
+		callTypes:           newStringSet("method_invocation", "object_creation_expression", "explicit_constructor_invocation"),
+		parameterTypes:      newStringSet("formal_parameter", "spread_parameter", "receiver_parameter"),
+		sourceFacts:         javaNavigationSourceFacts,
+		typeReferenceFacts:  true,
+		fieldContainerTypes: rules.classDeclarationTypes,
+		fieldFacts:          true,
+		memberAccessFacts:   true,
+		callDisplay:         javaNavigationCallDisplay,
+		exports:             jvmNavigationExports,
+		entrypoint:          javaNavigationEntrypoint,
+		fieldNames:          javaNavigationFieldNames,
 		visibility: func(node *syntaxNode, _ string, content string) NavigationVisibility {
 			return javaNavigationVisibility(node, navigationDeclarationHeader(node, content))
 		},
 	}
+}
+
+func javaNavigationFieldNames(node, typeNode *syntaxNode, _ string) []navigationFieldName {
+	var fields []navigationFieldName
+	for _, child := range node.NamedChildren() {
+		if child.ID() == typeNode.ID() || child.Kind() != "variable_declarator" {
+			continue
+		}
+		if name := child.ChildByFieldName("name"); name != nil && name.Text() != "" {
+			fields = append(fields, navigationFieldName{name: name.Text()})
+		}
+	}
+	return fields
 }
 
 func javaNavigationCallDisplay(call, target *syntaxNode, _ string) string {
@@ -29,9 +47,18 @@ func javaNavigationCallDisplay(call, target *syntaxNode, _ string) string {
 }
 
 func kotlinNavigationAdapter(rules *structureRules) navigationAdapter {
-	return &navigationAdapterConfig{rules: rules, callTypes: newStringSet("call_expression"), sourceFacts: kotlinNavigationSourceFacts, exports: jvmNavigationExports, entrypoint: kotlinNavigationEntrypoint, memberAccessFacts: true, visibility: func(node *syntaxNode, _ string, content string) NavigationVisibility {
+	return &navigationAdapterConfig{rules: rules, callTypes: newStringSet("call_expression"), parameterTypes: newStringSet("parameter", "class_parameter"), parameterType: kotlinNavigationParameterType, sourceFacts: kotlinNavigationSourceFacts, exports: jvmNavigationExports, entrypoint: kotlinNavigationEntrypoint, typeReferenceFacts: true, memberAccessFacts: true, visibility: func(node *syntaxNode, _ string, content string) NavigationVisibility {
 		return visibilityFromModifiers(navigationDeclarationHeader(node, content), true)
 	}}
+}
+
+func kotlinNavigationParameterType(node *syntaxNode) *syntaxNode {
+	for _, child := range node.NamedChildren() {
+		if GrammarSubtype("kotlin", "type", child.Kind()) {
+			return child
+		}
+	}
+	return nil
 }
 
 func javaNavigationEntrypoint(context navigationEntrypointContext) string {
@@ -137,7 +164,7 @@ func kotlinNavigationMainParameters(parameters *syntaxNode) bool {
 	return false
 }
 
-func javaNavigationSourceFacts(root *syntaxNode, _ string, _ *navigationAdapterConfig) (map[string]navigationImport, string, map[string]map[string]navigationBinding) {
+func javaNavigationSourceFacts(root *syntaxNode, content string, adapter *navigationAdapterConfig) (map[string]navigationImport, string, map[string]map[string]navigationBinding) {
 	imports, packageName, fields := emptyNavigationSourceFacts()
 	for _, node := range root.NamedChildren() {
 		switch node.Kind() {
@@ -152,6 +179,7 @@ func javaNavigationSourceFacts(root *syntaxNode, _ string, _ *navigationAdapterC
 			addJVMNavigationImport(imports, compactNavigationQualifiedName(strings.Join(parts, "")), "", static, node.StartLine())
 		}
 	}
+	collectNavigationSourceFields(root, content, imports, fields, adapter)
 	return imports, packageName, fields
 }
 

@@ -102,8 +102,13 @@ func TestLanguageCapabilityMatrixReportsNavigationFacts(t *testing.T) {
 		t.Fatalf("JavaScript facts=%#v", javascript)
 	}
 	java := byLanguage["java"].NavigationFacts
-	if java.Imports != production || java.TypeReferences != unsupported || java.Fields != unsupported || java.MemberAccess != production || java.Entrypoints != production {
+	if java.Imports != production || java.TypeReferences != production || java.Fields != production || java.MemberAccess != production || java.Entrypoints != production {
 		t.Fatalf("Java facts=%#v", java)
+	}
+	for _, id := range []string{"python", "kotlin", "csharp", "rust"} {
+		if facts := byLanguage[id].NavigationFacts; facts.TypeReferences != production {
+			t.Fatalf("%s type-reference facts=%#v", id, facts)
+		}
 	}
 	shell := byLanguage["shell"].NavigationFacts
 	if shell.Declarations != production || shell.Calls != production || shell.Imports != unsupported || shell.MemberAccess != unsupported {

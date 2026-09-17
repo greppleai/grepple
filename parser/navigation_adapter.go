@@ -61,6 +61,7 @@ type navigationAdapter interface {
 	CallDisplay(*syntaxNode, *syntaxNode, string) string
 	IsFieldDeclaration(string) bool
 	IsParameter(string) bool
+	ParameterType(*syntaxNode) *syntaxNode
 	VariableBindingKind(string) string
 	ParameterNames(*syntaxNode, *syntaxNode, string) []string
 	FieldNames(*syntaxNode, *syntaxNode, string) []navigationFieldName
@@ -72,6 +73,7 @@ type navigationAdapter interface {
 type navigationAdapterConfig struct {
 	rules                    *structureRules
 	callTypes                stringSet
+	parameterTypes           stringSet
 	extraContainerTypes      stringSet
 	fieldContainerTypes      stringSet
 	wrapperTypes             stringSet
@@ -91,6 +93,7 @@ type navigationAdapterConfig struct {
 	callDisplay              func(*syntaxNode, *syntaxNode, string) string
 	selfBindingName          string
 	selfBindingFromContainer bool
+	parameterType            func(*syntaxNode) *syntaxNode
 	fieldNames               func(*syntaxNode, *syntaxNode, string) []navigationFieldName
 	exports                  func(*syntaxNode, string, string, string) []NavigationExport
 	entrypoint               func(navigationEntrypointContext) string
@@ -316,8 +319,15 @@ func (*navigationAdapterConfig) IsFieldDeclaration(kind string) bool {
 	return defaultNavigationFieldDeclarationTypes.contains(kind)
 }
 
-func (*navigationAdapterConfig) IsParameter(kind string) bool {
-	return defaultNavigationParameterTypes.contains(kind)
+func (adapter *navigationAdapterConfig) IsParameter(kind string) bool {
+	return defaultNavigationParameterTypes.contains(kind) || adapter.parameterTypes.contains(kind)
+}
+
+func (adapter *navigationAdapterConfig) ParameterType(node *syntaxNode) *syntaxNode {
+	if adapter.parameterType != nil {
+		return adapter.parameterType(node)
+	}
+	return node.ChildByFieldName("type")
 }
 
 func (*navigationAdapterConfig) VariableBindingKind(kind string) string {

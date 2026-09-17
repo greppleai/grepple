@@ -11,9 +11,10 @@ type rustNavigationUse struct {
 	line                  int
 }
 
-func rustNavigationSourceFacts(root *syntaxNode, _ string, _ *navigationAdapterConfig) (map[string]navigationImport, string, map[string]map[string]navigationBinding) {
+func rustNavigationSourceFacts(root *syntaxNode, content string, adapter *navigationAdapterConfig) (map[string]navigationImport, string, map[string]map[string]navigationBinding) {
 	imports, packageName, fields := emptyNavigationSourceFacts()
 	collectRustNavigationSourceFacts(root, "", imports)
+	collectNavigationSourceFields(root, content, imports, fields, adapter)
 	return imports, packageName, fields
 }
 

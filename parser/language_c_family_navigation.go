@@ -7,8 +7,8 @@ import (
 
 func cFamilyNavigationAdapter(rules *structureRules) navigationAdapter {
 	return &navigationAdapterConfig{
-		rules: rules, callTypes: newStringSet("call_expression"), sourceFacts: cFamilyNavigationSourceFacts,
-		typeReferenceFacts: true, memberAccessFacts: true,
+		rules: rules, callTypes: newStringSet("call_expression"), fieldContainerTypes: rules.classDeclarationTypes, sourceFacts: cFamilyNavigationSourceFacts,
+		typeReferenceFacts: true, fieldFacts: true, memberAccessFacts: true,
 		declarationName: func(node *syntaxNode, content string, _ *navigationEnvelope) string {
 			return cFamilyName(node, content, rules)
 		},
@@ -39,7 +39,7 @@ func cFamilyNavigationEntrypoint(context navigationEntrypointContext) string {
 	return "process"
 }
 
-func cFamilyNavigationSourceFacts(root *syntaxNode, _ string, _ *navigationAdapterConfig) (map[string]navigationImport, string, map[string]map[string]navigationBinding) {
+func cFamilyNavigationSourceFacts(root *syntaxNode, content string, adapter *navigationAdapterConfig) (map[string]navigationImport, string, map[string]map[string]navigationBinding) {
 	imports, packageName, fields := emptyNavigationSourceFacts()
 	root.WalkNamed(func(node *syntaxNode) {
 		item, ok := cFamilyNavigationInclude(node)
@@ -47,6 +47,7 @@ func cFamilyNavigationSourceFacts(root *syntaxNode, _ string, _ *navigationAdapt
 			imports[navigationImportUniqueKey(item)] = item
 		}
 	})
+	collectNavigationSourceFields(root, content, imports, fields, adapter)
 	return imports, packageName, fields
 }
 

@@ -101,13 +101,13 @@ func TestNavigationFactCapabilitiesAreAdapterOwned(t *testing.T) {
 		"javascript": {Declarations: true, Calls: true, Imports: true, TypeReferences: true, MemberAccess: true},
 		"typescript": {Declarations: true, Calls: true, Imports: true, TypeReferences: true, Fields: true, MemberAccess: true},
 		"tsx":        {Declarations: true, Calls: true, Imports: true, TypeReferences: true, Fields: true, MemberAccess: true},
-		"python":     {Declarations: true, Calls: true, Imports: true, MemberAccess: true},
-		"java":       {Declarations: true, Calls: true, Imports: true, MemberAccess: true, Entrypoints: true},
-		"kotlin":     {Declarations: true, Calls: true, Imports: true, MemberAccess: true, Entrypoints: true},
-		"csharp":     {Declarations: true, Calls: true, Imports: true, MemberAccess: true, Entrypoints: true},
-		"c":          {Declarations: true, Calls: true, Imports: true, TypeReferences: true, MemberAccess: true, Entrypoints: true},
-		"cpp":        {Declarations: true, Calls: true, Imports: true, TypeReferences: true, MemberAccess: true, Entrypoints: true},
-		"rust":       {Declarations: true, Calls: true, Imports: true, MemberAccess: true, Entrypoints: true},
+		"python":     {Declarations: true, Calls: true, Imports: true, TypeReferences: true, MemberAccess: true},
+		"java":       {Declarations: true, Calls: true, Imports: true, TypeReferences: true, Fields: true, MemberAccess: true, Entrypoints: true},
+		"kotlin":     {Declarations: true, Calls: true, Imports: true, TypeReferences: true, MemberAccess: true, Entrypoints: true},
+		"csharp":     {Declarations: true, Calls: true, Imports: true, TypeReferences: true, MemberAccess: true, Entrypoints: true},
+		"c":          {Declarations: true, Calls: true, Imports: true, TypeReferences: true, Fields: true, MemberAccess: true, Entrypoints: true},
+		"cpp":        {Declarations: true, Calls: true, Imports: true, TypeReferences: true, Fields: true, MemberAccess: true, Entrypoints: true},
+		"rust":       {Declarations: true, Calls: true, Imports: true, TypeReferences: true, Fields: true, MemberAccess: true, Entrypoints: true},
 		"shell":      {Declarations: true, Calls: true},
 	}
 	for _, language := range SupportedLanguages() {
@@ -126,13 +126,13 @@ func TestAdvertisedTypedFieldAndMemberFactsHaveRepresentativeEvidence(t *testing
 		{"javascript", "class Foo { state = 0; use(value) { return value.state; } }\n", true, false, true},
 		{"typescript", "class Foo { state: number = 0; use(value: Foo){ return value.state; } }\n", true, true, true},
 		{"tsx", "class Foo { state: number = 0; use(value: Foo){ return value.state; } }\n", true, true, true},
-		{"python", "class Foo:\n    state = 0\ndef use(value: Foo):\n    return value.state\n", false, false, true},
-		{"java", "class Foo { int state; int use(Foo value){ return value.state; } }\n", false, false, true},
-		{"kotlin", "class Foo(var state: Int)\nfun use(value: Foo): Int { return value.state }\n", false, false, true},
-		{"csharp", "class Foo { public int State; int Use(Foo value){ return value.State; } }\n", false, false, true},
-		{"c", "typedef struct { int state; } Foo;\nint use(Foo value){ return value.state; }\n", true, false, true},
-		{"cpp", "struct Foo { int state; };\nint use(Foo value){ return value.state; }\n", true, false, true},
-		{"rust", "struct Foo { state: i32 }\nfn use(value: Foo) -> i32 { value.state }\n", false, false, true},
+		{"python", "class Foo:\n    state = 0\ndef use(value: Foo):\n    return value.state\n", true, false, true},
+		{"java", "class Foo { int state; int use(Foo value){ return value.state; } }\n", true, true, true},
+		{"kotlin", "class Foo(var state: Int)\nfun use(value: Foo): Int { return value.state }\n", true, false, true},
+		{"csharp", "class Foo { public int State; int Use(Foo value){ return value.State; } }\n", true, false, true},
+		{"c", "struct Foo { int state; };\nint use(struct Foo value){ return value.state; }\n", true, true, true},
+		{"cpp", "struct Foo { int state; };\nint use(Foo value){ return value.state; }\n", true, true, true},
+		{"rust", "struct Foo { state: i32 }\nfn use(value: Foo) -> i32 { value.state }\n", true, true, true},
 		{"shell", "use() { echo value; }\n", false, false, false},
 	}
 	for _, test := range tests {
@@ -148,6 +148,13 @@ func TestAdvertisedTypedFieldAndMemberFactsHaveRepresentativeEvidence(t *testing
 				t.Fatalf("member accesses=%v facts=%#v", got, graph.MemberAccesses)
 			}
 		})
+	}
+}
+
+func TestCAnonymousTypedefDoesNotInventNavigationFieldOwner(t *testing.T) {
+	graph := BuildNavigationGraph("typedef struct { int state; } Foo;\n", "c", "sample.c")
+	if len(graph.Fields) != 0 {
+		t.Fatalf("anonymous typedef fields=%#v", graph.Fields)
 	}
 }
 

@@ -176,6 +176,7 @@ This file records completed Grepple roadmap work that no longer belongs in `next
 - [x] Added conservative Rust process-entrypoint facts for top-level `main` functions in selected binary crate roots without treating library or nested-module functions as entrypoints.
 - [x] Added conservative Java, Kotlin, and C# process-entrypoint facts for syntax-evidenced conventional signatures while leaving project-selected, script, top-level-statement, renamed, and type-inference-dependent startup behavior unclassified.
 - [x] Published adapter-owned navigation-fact capabilities for declarations, calls, imports, type references, fields, member access, and process entrypoints in human, JSON, and generated Markdown output, with tests and explicit unsupported-versus-ambiguous/unresolved semantics.
+- [x] Added syntax-evidenced parameter type facts for Python, Java, Kotlin, C#, and Rust; named field facts for C/C++, Java, and Rust; and imported parameter-type architecture relations for Python, Java, Kotlin, and Rust while retaining C# aliases and anonymous C typedef ownership as unqualified or unsupported rather than guessing.
 
 ## Reliability and performance
 
