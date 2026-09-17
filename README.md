@@ -90,7 +90,7 @@ Supported search options:
 - `--repo PATTERN` (repeatable)
 - `--max-files N`
 - `--max-output-bytes N` caps human-readable output before common agent tool limits (default `16384`; `0` disables the cap). JSON output is never partially truncated.
-- Eligible local source results emit native hashline anchors as `HASH│LINE│content` by default; `--anchors` explicitly forces the native implementation, `--anchor-provider NAME` selects a configured compatibility provider, and `--no-anchors` restores plain output
+- Eligible local source results emit hashline anchors as `HASH│LINE│content` by default; `--no-anchors` restores plain output, and named compatibility providers are selected only through user-owned settings
 - `--related` (experimental: show bounded project-local callees and callers for structurally supported source languages)
 - `--at PATH:LINE` (retrieve the declaration containing an exact local location; related `PATH:START-END` ranges are accepted too)
 - `--follow-related N` (expand up to two unique callees per level, depth 1-3; implies `--related`)

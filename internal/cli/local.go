@@ -74,16 +74,10 @@ func initialSearchResults(options *cliOptions, remote bool) ([]api.FileResult, e
 }
 
 func configureStdinSearch(options *cliOptions) error {
-	// Piped stdin with no path/glob argument switches the local source from the
-	// filesystem to the stream (grep/ripgrep behavior). Automatic anchors are
-	// disabled because stdin has no stable path; an explicit --anchors remains an error.
+	// Piped stdin has no stable path, so automatic anchors are disabled.
 	options.Stdin = stdinSearch(options)
-	if options.AnchorsDefaulted && options.Stdin {
+	if options.Stdin {
 		options.Anchors = false
-		options.AnchorsDefaulted = false
-	}
-	if options.Anchors && options.Stdin {
-		return fmt.Errorf("--anchors requires local files and cannot anchor piped stdin")
 	}
 	return nil
 }

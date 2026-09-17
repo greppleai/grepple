@@ -43,12 +43,9 @@ func TestParseSearchArgs(t *testing.T) {
 	}
 }
 
-func TestEnclosingRequiresLineOnlyAndRejectsExplicitAnchors(t *testing.T) {
+func TestEnclosingRequiresLineOnly(t *testing.T) {
 	if err := validateEnclosingArgs(&searchArgs{Enclosing: true}); err == nil {
 		t.Fatal("expected --enclosing without --line-only to fail")
-	}
-	if err := validateEnclosingArgs(&searchArgs{LineOnly: true, Enclosing: true, Anchors: true}); err == nil {
-		t.Fatal("expected --enclosing with anchors to fail")
 	}
 }
 
@@ -101,13 +98,14 @@ func TestParseSearchArgsEnablesRemoteNavigation(t *testing.T) {
 	}
 }
 
-func TestAnchorProviderFlagEnablesAnchoredOutput(t *testing.T) {
-	options, _, remote, err := parseSearchArgs([]string{"--anchor-provider", "pi", "--line-only", "needle"})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if remote || !options.Anchors || options.AnchorProvider != "pi" {
-		t.Fatalf("anchor provider was not enabled: remote=%v options=%#v", remote, options)
+func TestRemovedAnchorSelectionFlagsAreRejected(t *testing.T) {
+	for _, args := range [][]string{
+		{"--anchors", "--line-only", "needle"},
+		{"--anchor-provider", "pi", "--line-only", "needle"},
+	} {
+		if _, _, _, err := parseSearchArgs(args); err == nil {
+			t.Fatalf("removed anchor selection args %v succeeded", args)
+		}
 	}
 }
 
@@ -119,10 +117,10 @@ func TestAnchorsDefaultToNativeAndCanBeDisabled(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !options.Anchors || !options.AnchorsDefaulted {
+	if !options.Anchors {
 		t.Fatalf("anchors were not enabled by default: %#v", options)
 	}
-	native, err := useNativeAnchorProvider(options.AnchorProvider, options.AnchorsDefaulted)
+	native, err := useNativeAnchorProvider()
 	if err != nil || !native {
 		t.Fatalf("default provider was not native: native=%v err=%v", native, err)
 	}
@@ -132,7 +130,10 @@ func TestAnchorsDefaultToNativeAndCanBeDisabled(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	native, err = useNativeAnchorProvider(configured.AnchorProvider, configured.AnchorsDefaulted)
+	if !configured.Anchors {
+		t.Fatalf("configured provider did not enable anchors: %#v", configured)
+	}
+	native, err = useNativeAnchorProvider()
 	if err != nil || native {
 		t.Fatalf("configured default provider was ignored: native=%v err=%v", native, err)
 	}
@@ -141,7 +142,7 @@ func TestAnchorsDefaultToNativeAndCanBeDisabled(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if disabled.Anchors || disabled.AnchorsDefaulted {
+	if disabled.Anchors {
 		t.Fatalf("--no-anchors did not disable defaults: %#v", disabled)
 	}
 
@@ -194,8 +195,8 @@ func TestParseAtLocationWithoutQuery(t *testing.T) {
 
 func TestParseAtSupportsExactAnchoredAndContextOutput(t *testing.T) {
 	for _, args := range [][]string{
-		{"--at", "search/result.go:40-45", "--line-only", "--anchors"},
-		{"--at", "search/result.go:40-45", "-C", "2", "--anchors"},
+		{"--at", "search/result.go:40-45", "--line-only"},
+		{"--at", "search/result.go:40-45", "-C", "2"},
 	} {
 		options, _, _, err := parseSearchArgs(args)
 		if err != nil {
@@ -216,12 +217,6 @@ func TestRelatedGoNavigationRejectsUnsupportedModes(t *testing.T) {
 		{"--related", "-C", "2", "needle"},
 		{"--follow-related", "4", "needle"},
 		{"--at", "search/result.go:47", "needle"},
-		{"--anchors", "--remote", "needle"},
-		{"--anchors", "--json", "needle"},
-		{"--anchors", "--only-matching", "needle"},
-		{"--anchors", "--outline", "sample.go"},
-		{"--anchors", "--no-anchors", "needle"},
-		{"--anchor-provider", "pi", "--no-anchors", "needle"},
 	} {
 		if _, _, _, err := parseSearchArgs(args); err == nil {
 			t.Fatalf("parseSearchArgs(%q) succeeded, want an error", args)
@@ -270,6 +265,7 @@ func TestHelpCommandAndExplicitSearch(t *testing.T) {
 			t.Fatalf("search help missing %q:\n%s", expected, searchHelp)
 		}
 	}
+	assertSearchHelpOmitsRemovedAnchorFlags(t, searchHelp)
 
 	directory := t.TempDir()
 	path := directory + "/sample.txt"
@@ -287,5 +283,12 @@ func TestHelpCommandAndExplicitSearch(t *testing.T) {
 
 	if err := Run([]string{"help", "not-a-command"}); err == nil {
 		t.Fatal("unknown help topic succeeded")
+	}
+}
+
+func assertSearchHelpOmitsRemovedAnchorFlags(t *testing.T, help string) {
+	t.Helper()
+	if strings.Contains(help, "--anchors") || strings.Contains(help, "--anchor-provider") {
+		t.Fatalf("search help still exposes a removed anchor selection flag:\n%s", help)
 	}
 }

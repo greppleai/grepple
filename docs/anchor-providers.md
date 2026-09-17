@@ -14,9 +14,9 @@ HASH│LINE│content
 
 `HASH` is the edit key; `LINE` is for orientation, cross-references, and recovery. Neither should be treated as durable after the file changes. Re-run Grepple or Read before a follow-up edit.
 
-Synthetic summary and collapsed-region rows are not anchorable and retain their normal presentation. Default anchor output supports local structural, contextual, and `--line-only` output. `--line-only --enclosing` uses range-bearing plain output instead so `HASH│LINE│content` is never overloaded. Remote, JSON, outline, count, filename-only, piped-stdin, and `--only-matching` modes retain their ordinary formats; explicit `--anchors` rejects incompatible modes.
+Synthetic summary and collapsed-region rows are not anchorable and retain their normal presentation. Default anchor output supports local structural, contextual, and `--line-only` output. `--line-only --enclosing` uses range-bearing plain output instead so `HASH│LINE│content` is never overloaded. Remote, JSON, outline, count, filename-only, piped-stdin, and `--only-matching` modes retain their ordinary formats.
 
-The default uses Grepple's built-in `hashline-v1` implementation and requires no setup. Explicit `--anchors` or `--anchor-provider native` forces the same implementation, while `--no-anchors` restores plain output for one invocation. Named providers remain available for editor compatibility through `--anchor-provider NAME` or user settings. Native anchors can be applied transactionally with [`grepple write`](write.md).
+The default uses Grepple's built-in `hashline-v1` implementation and requires no setup. `--no-anchors` restores plain output for one invocation. Named providers remain available for editor compatibility only through user-owned settings. Native anchors can be applied transactionally with [`grepple write`](write.md).
 
 ## Settings
 
@@ -45,12 +45,13 @@ Native anchors require no settings. Setting `enabled_by_default` with a named `d
 grepple -F 'Symbol(' src
 ```
 
-Disable the setting for one invocation, or select a different provider explicitly:
+Disable configured anchors for one invocation with:
 
 ```bash
 grepple --no-anchors --line-only -F 'Symbol' src/file.go
-grepple --anchor-provider editor --line-only -F 'Symbol' src/file.go
 ```
+
+To select a different named provider, change `anchors.default_provider` in user settings or run `grepple anchors setup --provider NAME --set-default --write`.
 
 The command is executed directly, never through a shell. Its executable must be an absolute path. Grepple applies a timeout, caps provider stdout and stderr, rejects malformed/duplicate/missing anchors, and validates source digests before rendering. A provider is trusted user code with the same filesystem permissions as Grepple.
 

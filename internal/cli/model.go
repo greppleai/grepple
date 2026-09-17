@@ -18,8 +18,6 @@ type cliOptions struct {
 	Depth            int
 	MaxOutputBytes   int
 	Anchors          bool
-	AnchorsDefaulted bool
-	AnchorProvider   string
 	AnchorLines      anchorLookup
 	ResultMetadata   *api.ResultMetadata
 	// Stdin is true when the search reads piped standard input instead of

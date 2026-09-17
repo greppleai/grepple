@@ -75,7 +75,7 @@ func prepareResultAnchors(options *cliOptions, results []api.FileResult) error {
 		options.AnchorLines = make(anchorLookup)
 		return nil
 	}
-	native, err := useNativeAnchorProvider(options.AnchorProvider, options.AnchorsDefaulted)
+	native, err := useNativeAnchorProvider()
 	if err != nil {
 		return err
 	}
@@ -87,7 +87,7 @@ func prepareResultAnchors(options *cliOptions, results []api.FileResult) error {
 		options.AnchorLines = anchors
 		return nil
 	}
-	_, provider, err := resolveAnchorProvider(options.AnchorProvider)
+	_, provider, err := resolveAnchorProvider("")
 	if err != nil {
 		return err
 	}
@@ -103,13 +103,7 @@ func prepareResultAnchors(options *cliOptions, results []api.FileResult) error {
 	return nil
 }
 
-func useNativeAnchorProvider(name string, defaulted bool) (bool, error) {
-	if name != "" {
-		return name == "native", nil
-	}
-	if !defaulted {
-		return true, nil
-	}
+func useNativeAnchorProvider() (bool, error) {
 	settings, err := loadUserSettings()
 	if err != nil {
 		return false, err

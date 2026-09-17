@@ -48,9 +48,7 @@ type searchArgs struct {
 	BeforeContext    int      `arg:"-B,--before-context" placeholder:"N" help:"print N lines before matches"`
 	MaxFiles         int      `arg:"--max-files" placeholder:"N" help:"limit matching files"`
 	MaxOutputBytes   int      `arg:"--max-output-bytes" placeholder:"N" help:"cap human-readable output (default 16384; 0 = unlimited; JSON is uncapped)"`
-	Anchors          bool     `arg:"--anchors" help:"force native HASH│LINE│content anchors for supported local output"`
 	NoAnchors        bool     `arg:"--no-anchors" help:"disable default anchored output"`
-	AnchorProvider   string   `arg:"--anchor-provider" placeholder:"NAME" help:"use native or a named provider from ~/.grepple/settings.json (implies --anchors)"`
 	Related          bool     `arg:"--related" help:"show repository-local callees and callers for supported source languages"`
 	FollowRelated    int      `arg:"--follow-related" placeholder:"N" help:"expand up to two unique callees per level (1-3; implies --related)"`
 	At               string   `arg:"--at" placeholder:"PATH:LINE[-END]" help:"retrieve the containing declaration, or exact range with --line-only"`
@@ -86,13 +84,7 @@ func parseSearchArgs(args []string) (*cliOptions, string, bool, error) {
 		return nil, "", false, err
 	}
 	applyCountSummaryAlias(&values)
-	if values.NoAnchors && (values.Anchors || values.AnchorProvider != "") {
-		return nil, "", false, fmt.Errorf("--no-anchors cannot be combined with --anchors or --anchor-provider")
-	}
-	if values.AnchorProvider != "" {
-		values.Anchors = true
-	}
-	anchorsDefaulted, err := applyAnchorSettingsDefault(&values)
+	anchorsEnabled, err := defaultAnchorsEnabled(&values)
 	if err != nil {
 		return nil, "", false, err
 	}
@@ -129,9 +121,7 @@ func parseSearchArgs(args []string) (*cliOptions, string, bool, error) {
 		Outline:          values.Outline,
 		Depth:            values.Depth,
 		MaxOutputBytes:   values.MaxOutputBytes,
-		Anchors:          values.Anchors,
-		AnchorsDefaulted: anchorsDefaulted,
-		AnchorProvider:   values.AnchorProvider,
+		Anchors:          anchorsEnabled,
 	}, values.Server, remoteEnabled, nil
 }
 
@@ -141,15 +131,14 @@ func applyCountSummaryAlias(values *searchArgs) {
 	}
 }
 
-func applyAnchorSettingsDefault(values *searchArgs) (bool, error) {
-	if values.Anchors || values.NoAnchors || !supportsDefaultAnchors(values) {
+func defaultAnchorsEnabled(values *searchArgs) (bool, error) {
+	if values.NoAnchors || !supportsDefaultAnchors(values) {
 		return false, nil
 	}
 	_, err := loadUserSettings()
 	if err != nil {
 		return false, err
 	}
-	values.Anchors = true
 	return true, nil
 }
 
@@ -179,23 +168,6 @@ func validateRelatedArgs(values *searchArgs) error {
 	return nil
 }
 
-func validateAnchorArgs(values *searchArgs) error {
-	if !values.Anchors {
-		return nil
-	}
-	if values.Remote || values.Server != "" {
-		return fmt.Errorf("--anchors currently supports local files only")
-	}
-	if values.JSON || values.JSONMatches {
-		return fmt.Errorf("--anchors cannot be combined with JSON output")
-	}
-	unsupportedCompact := values.Files || values.FilesWithMatches || values.Outline || values.Count || values.CountByRepo || values.OnlyMatching
-	if unsupportedCompact {
-		return fmt.Errorf("--anchors requires structural, contextual, or line-only output")
-	}
-	return nil
-}
-
 func validateAtArgs(values *searchArgs) error {
 	if values.At == "" {
 		return nil
@@ -220,9 +192,6 @@ func validateEnclosingArgs(values *searchArgs) error {
 	if !values.LineOnly {
 		return fmt.Errorf("--enclosing requires --line-only")
 	}
-	if values.Anchors {
-		return fmt.Errorf("--anchors cannot be combined with --enclosing")
-	}
 	incompatibleOutput := values.Files || values.FilesWithMatches || values.Outline || values.Count || values.CountByRepo || values.OnlyMatching
 	contextOutput := values.Context > 0 || values.BeforeContext > 0 || values.AfterContext > 0
 	if incompatibleOutput || contextOutput {
@@ -241,9 +210,6 @@ func validateSearchArgs(values *searchArgs) error {
 		return err
 	}
 	if err := validateRelatedArgs(values); err != nil {
-		return err
-	}
-	if err := validateAnchorArgs(values); err != nil {
 		return err
 	}
 	if err := validateAtArgs(values); err != nil {
