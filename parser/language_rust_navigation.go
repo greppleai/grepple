@@ -17,7 +17,7 @@ func rustNavigationAdapter(rules *structureRules) navigationAdapter {
 		return defaultNavigationDeclarationName(node, content, rules, envelope)
 	}, visibility: func(node *syntaxNode, _ string, content string) NavigationVisibility {
 		return visibilityFromRequiredModifier(navigationDeclarationHeader(node, content), "pub")
-	}, visibilityDetail: rustNavigationVisibilityDetail, entrypoint: rustNavigationEntrypoint}
+	}, visibilityDetail: rustNavigationVisibilityDetail, entrypoint: rustNavigationEntrypoint, memberAccessFacts: true}
 }
 
 func rustNavigationEntrypoint(context navigationEntrypointContext) string {

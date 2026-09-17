@@ -8,6 +8,7 @@ import (
 func cFamilyNavigationAdapter(rules *structureRules) navigationAdapter {
 	return &navigationAdapterConfig{
 		rules: rules, callTypes: newStringSet("call_expression"), sourceFacts: cFamilyNavigationSourceFacts,
+		typeReferenceFacts: true, memberAccessFacts: true,
 		declarationName: func(node *syntaxNode, content string, _ *navigationEnvelope) string {
 			return cFamilyName(node, content, rules)
 		},

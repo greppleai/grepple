@@ -81,6 +81,7 @@ func languageCapabilityMatrix() []api.LanguageCapabilities {
 			DirectoryArchitecture: featureSupport(language.Navigation, false),
 			ImportRelations:       featureSupport(parserLanguages[language.ID].ImportNavigation, false),
 			Entrypoints:           featureSupport(parserLanguages[language.ID].EntrypointNavigation, false),
+			NavigationFacts:       navigationFactSupport(parserLanguages[language.ID].NavigationFacts),
 		})
 	}
 	sort.Slice(result, func(i, j int) bool { return result[i].Language < result[j].Language })
@@ -122,6 +123,18 @@ func featureSupport(supported, specialized bool) api.FeatureSupport {
 	return api.FeatureProduction
 }
 
+func navigationFactSupport(facts parser.NavigationFactCapabilities) api.NavigationFactCapabilities {
+	return api.NavigationFactCapabilities{
+		Declarations:   featureSupport(facts.Declarations, false),
+		Calls:          featureSupport(facts.Calls, false),
+		Imports:        featureSupport(facts.Imports, false),
+		TypeReferences: featureSupport(facts.TypeReferences, false),
+		Fields:         featureSupport(facts.Fields, false),
+		MemberAccess:   featureSupport(facts.MemberAccess, false),
+		Entrypoints:    featureSupport(facts.Entrypoints, false),
+	}
+}
+
 func renderLanguageCapabilities(capabilities []api.LanguageCapabilities) error {
 	writer := tabwriter.NewWriter(os.Stdout, 0, 4, 2, ' ', 0)
 	if _, err := fmt.Fprintln(writer, "LANGUAGE\tEXTENSIONS\tTEXT\tSTRUCTURAL\tOUTLINE\tNAV\tSTRUCTURE\tFLOW\tGRITQL\tDIRECTORY\tIMPORT-RELATIONS\tENTRYPOINTS"); err != nil {
@@ -139,7 +152,18 @@ func renderLanguageCapabilities(capabilities []api.LanguageCapabilities) error {
 			return err
 		}
 	}
-	if _, err := fmt.Fprintln(writer, "\n✓ production  ~ specialized production  - unsupported  ! experimental"); err != nil {
+	if _, err := fmt.Fprintln(writer, "\nNAVIGATION FACT SUPPORT\nLANGUAGE\tDECLARATIONS\tCALLS\tIMPORTS\tTYPE-REFS\tFIELDS\tMEMBER-ACCESS\tENTRYPOINTS"); err != nil {
+		return err
+	}
+	for _, capability := range capabilities {
+		facts := capability.NavigationFacts
+		if _, err := fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", capability.Language,
+			supportIcon(facts.Declarations), supportIcon(facts.Calls), supportIcon(facts.Imports), supportIcon(facts.TypeReferences),
+			supportIcon(facts.Fields), supportIcon(facts.MemberAccess), supportIcon(facts.Entrypoints)); err != nil {
+			return err
+		}
+	}
+	if _, err := fmt.Fprintln(writer, "\n✓ production  ~ specialized production  - unsupported  ! experimental\nFact support means the adapter emits that fact kind; individual facts may remain ambiguous or unresolved."); err != nil {
 		return err
 	}
 	return writer.Flush()
@@ -171,6 +195,15 @@ func renderLanguageCapabilitiesMarkdown(capabilities []api.LanguageCapabilities)
 			capability.Language, extensions, markdownSupportIcon(capability.TextGrep), markdownSupportIcon(capability.StructuralGrep),
 			markdownSupportIcon(capability.Outline), markdownSupportIcon(capability.Navigation), markdownSupportIcon(capability.FocusedStructure),
 			markdownSupportIcon(capability.FocusedFlow), markdownSupportIcon(capability.GritQL), markdownSupportIcon(capability.DirectoryArchitecture), markdownSupportIcon(capability.ImportRelations), markdownSupportIcon(capability.Entrypoints))
+	}
+	output.WriteString("\n### Navigation fact support\n\n")
+	output.WriteString("| Language | Declarations | Calls | Imports | Type references | Fields | Member access | Entrypoints |\n")
+	output.WriteString("| --- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |\n")
+	for _, capability := range capabilities {
+		facts := capability.NavigationFacts
+		fmt.Fprintf(&output, "| `%s` | %s | %s | %s | %s | %s | %s | %s |\n", capability.Language,
+			markdownSupportIcon(facts.Declarations), markdownSupportIcon(facts.Calls), markdownSupportIcon(facts.Imports), markdownSupportIcon(facts.TypeReferences),
+			markdownSupportIcon(facts.Fields), markdownSupportIcon(facts.MemberAccess), markdownSupportIcon(facts.Entrypoints))
 	}
 	return output.String()
 }

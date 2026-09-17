@@ -86,13 +86,41 @@ func TestLanguageCapabilityMatrixReportsPythonStructuralParity(t *testing.T) {
 	t.Fatal("python capabilities missing")
 }
 
+func TestLanguageCapabilityMatrixReportsNavigationFacts(t *testing.T) {
+	byLanguage := make(map[string]api.LanguageCapabilities)
+	for _, capability := range languageCapabilityMatrix() {
+		byLanguage[capability.Language] = capability
+	}
+	production := api.FeatureProduction
+	unsupported := api.FeatureUnsupported
+	goFacts := byLanguage["go"].NavigationFacts
+	if goFacts.Declarations != production || goFacts.Calls != production || goFacts.Imports != production || goFacts.TypeReferences != production || goFacts.Fields != production || goFacts.MemberAccess != production || goFacts.Entrypoints != production {
+		t.Fatalf("Go facts=%#v", goFacts)
+	}
+	javascript := byLanguage["javascript"].NavigationFacts
+	if javascript.TypeReferences != production || javascript.Fields != unsupported || javascript.MemberAccess != production || javascript.Entrypoints != unsupported {
+		t.Fatalf("JavaScript facts=%#v", javascript)
+	}
+	java := byLanguage["java"].NavigationFacts
+	if java.Imports != production || java.TypeReferences != unsupported || java.Fields != unsupported || java.MemberAccess != production || java.Entrypoints != production {
+		t.Fatalf("Java facts=%#v", java)
+	}
+	shell := byLanguage["shell"].NavigationFacts
+	if shell.Declarations != production || shell.Calls != production || shell.Imports != unsupported || shell.MemberAccess != unsupported {
+		t.Fatalf("Shell facts=%#v", shell)
+	}
+	if jsonFacts := byLanguage["json"].NavigationFacts; jsonFacts.Declarations != unsupported || jsonFacts.Calls != unsupported {
+		t.Fatalf("JSON facts=%#v", jsonFacts)
+	}
+}
+
 func TestLanguagesHumanOutputUsesCapabilityIcons(t *testing.T) {
 	output := captureStdout(t, func() {
 		if err := Run([]string{"languages"}); err != nil {
 			t.Fatal(err)
 		}
 	})
-	for _, expected := range []string{"LANGUAGE", "STRUCTURAL", "GRITQL", "javascript", "markdown", "✓ production", "~ specialized production"} {
+	for _, expected := range []string{"LANGUAGE", "STRUCTURAL", "GRITQL", "NAVIGATION FACT SUPPORT", "TYPE-REFS", "individual facts may remain ambiguous or unresolved", "javascript", "markdown", "✓ production", "~ specialized production"} {
 		if !strings.Contains(output, expected) {
 			t.Fatalf("output %q does not contain %q", output, expected)
 		}

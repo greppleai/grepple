@@ -15,18 +15,32 @@ const (
 	FeatureExperimental FeatureSupport = "experimental"
 )
 
+// NavigationFactCapabilities describes normalized facts emitted by the
+// parser-owned navigation adapter. Unsupported is distinct from an emitted fact
+// whose repository target remains ambiguous or unresolved.
+type NavigationFactCapabilities struct {
+	Declarations   FeatureSupport `json:"declarations"`
+	Calls          FeatureSupport `json:"calls"`
+	Imports        FeatureSupport `json:"imports"`
+	TypeReferences FeatureSupport `json:"typeReferences"`
+	Fields         FeatureSupport `json:"fields"`
+	MemberAccess   FeatureSupport `json:"memberAccess"`
+	Entrypoints    FeatureSupport `json:"entrypoints"`
+}
+
 // LanguageCapabilities is one row in the cross-feature language support matrix.
 type LanguageCapabilities struct {
-	Language              string         `json:"language"`
-	Extensions            []string       `json:"extensions"`
-	TextGrep              FeatureSupport `json:"textGrep"`
-	StructuralGrep        FeatureSupport `json:"structuralGrep"`
-	Outline               FeatureSupport `json:"outline"`
-	Navigation            FeatureSupport `json:"navigation"`
-	FocusedStructure      FeatureSupport `json:"focusedStructure"`
-	FocusedFlow           FeatureSupport `json:"focusedFlow"`
-	GritQL                FeatureSupport `json:"gritql"`
-	DirectoryArchitecture FeatureSupport `json:"directoryArchitecture"`
-	ImportRelations       FeatureSupport `json:"importRelations"`
-	Entrypoints           FeatureSupport `json:"entrypoints"`
+	Language              string                     `json:"language"`
+	Extensions            []string                   `json:"extensions"`
+	TextGrep              FeatureSupport             `json:"textGrep"`
+	StructuralGrep        FeatureSupport             `json:"structuralGrep"`
+	Outline               FeatureSupport             `json:"outline"`
+	Navigation            FeatureSupport             `json:"navigation"`
+	FocusedStructure      FeatureSupport             `json:"focusedStructure"`
+	FocusedFlow           FeatureSupport             `json:"focusedFlow"`
+	GritQL                FeatureSupport             `json:"gritql"`
+	DirectoryArchitecture FeatureSupport             `json:"directoryArchitecture"`
+	ImportRelations       FeatureSupport             `json:"importRelations"`
+	Entrypoints           FeatureSupport             `json:"entrypoints"`
+	NavigationFacts       NavigationFactCapabilities `json:"navigationFacts"`
 }

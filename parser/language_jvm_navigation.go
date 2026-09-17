@@ -7,12 +7,13 @@ import (
 
 func javaNavigationAdapter(rules *structureRules) navigationAdapter {
 	return &navigationAdapterConfig{
-		rules:       rules,
-		callTypes:   newStringSet("method_invocation", "object_creation_expression", "explicit_constructor_invocation"),
-		sourceFacts: javaNavigationSourceFacts,
-		callDisplay: javaNavigationCallDisplay,
-		exports:     jvmNavigationExports,
-		entrypoint:  javaNavigationEntrypoint,
+		rules:             rules,
+		callTypes:         newStringSet("method_invocation", "object_creation_expression", "explicit_constructor_invocation"),
+		sourceFacts:       javaNavigationSourceFacts,
+		memberAccessFacts: true,
+		callDisplay:       javaNavigationCallDisplay,
+		exports:           jvmNavigationExports,
+		entrypoint:        javaNavigationEntrypoint,
 		visibility: func(node *syntaxNode, _ string, content string) NavigationVisibility {
 			return javaNavigationVisibility(node, navigationDeclarationHeader(node, content))
 		},
@@ -28,7 +29,7 @@ func javaNavigationCallDisplay(call, target *syntaxNode, _ string) string {
 }
 
 func kotlinNavigationAdapter(rules *structureRules) navigationAdapter {
-	return &navigationAdapterConfig{rules: rules, callTypes: newStringSet("call_expression"), sourceFacts: kotlinNavigationSourceFacts, exports: jvmNavigationExports, entrypoint: kotlinNavigationEntrypoint, visibility: func(node *syntaxNode, _ string, content string) NavigationVisibility {
+	return &navigationAdapterConfig{rules: rules, callTypes: newStringSet("call_expression"), sourceFacts: kotlinNavigationSourceFacts, exports: jvmNavigationExports, entrypoint: kotlinNavigationEntrypoint, memberAccessFacts: true, visibility: func(node *syntaxNode, _ string, content string) NavigationVisibility {
 		return visibilityFromModifiers(navigationDeclarationHeader(node, content), true)
 	}}
 }

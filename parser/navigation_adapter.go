@@ -52,6 +52,7 @@ type navigationAdapter interface {
 	VisibilityDetail(*syntaxNode, string, string) string
 	SourceFacts(*syntaxNode, string) (map[string]navigationImport, string, map[string]map[string]navigationBinding)
 	ImportFactsSupported() bool
+	FactCapabilities() NavigationFactCapabilities
 	ReturnCallableName(*syntaxNode, string, string) string
 	CallableReturnBinding(*syntaxNode, string, map[string]navigationImport) navigationBinding
 	IsFieldContainer(string) bool
@@ -93,6 +94,9 @@ type navigationAdapterConfig struct {
 	fieldNames               func(*syntaxNode, *syntaxNode, string) []navigationFieldName
 	exports                  func(*syntaxNode, string, string, string) []NavigationExport
 	entrypoint               func(navigationEntrypointContext) string
+	typeReferenceFacts       bool
+	fieldFacts               bool
+	memberAccessFacts        bool
 }
 
 func (adapter *navigationAdapterConfig) Entrypoint(context navigationEntrypointContext) string {
@@ -104,6 +108,18 @@ func (adapter *navigationAdapterConfig) Entrypoint(context navigationEntrypointC
 
 func (adapter *navigationAdapterConfig) EntrypointFactsSupported() bool {
 	return adapter.entrypoint != nil
+}
+
+func (adapter *navigationAdapterConfig) FactCapabilities() NavigationFactCapabilities {
+	return NavigationFactCapabilities{
+		Declarations:   adapter.rules != nil,
+		Calls:          len(adapter.callTypes) > 0,
+		Imports:        adapter.sourceFacts != nil,
+		TypeReferences: adapter.typeReferenceFacts,
+		Fields:         adapter.fieldFacts,
+		MemberAccess:   adapter.memberAccessFacts,
+		Entrypoints:    adapter.entrypoint != nil,
+	}
 }
 
 func (adapter *navigationAdapterConfig) Rules() *structureRules { return adapter.rules }

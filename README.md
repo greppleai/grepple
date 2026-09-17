@@ -334,7 +334,7 @@ REST API (all under the org-authed `/public` gate):
 
 Matching is line-based for every readable non-NUL text file. Parser-backed features vary by language.
 
-Run `grepple languages` for the terminal matrix or `grepple languages --json` for machine-readable capabilities. See the generated [language and feature support matrix](docs/file-type-support.md#current-support-matrix) for text grep, structural grep, outlines, navigation, focused structure/flow extraction, and GritQL. Directory architecture applies to every language with parser navigation support.
+Run `grepple languages` for terminal feature and navigation-fact matrices or `grepple languages --json` for machine-readable capabilities. See the generated [language and feature support matrix](docs/file-type-support.md#current-support-matrix) for text grep, structural grep, outlines, navigation, focused structure/flow extraction, GritQL, and adapter-owned declarations, calls, imports, type references, fields, member access, and process entrypoints. Supported fact extraction is distinct from an individual fact remaining ambiguous or unresolved. Directory architecture applies to every language with parser navigation support.
 
 ## Agent workflow benchmarks
 

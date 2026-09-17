@@ -39,7 +39,7 @@ Go additionally recognizes interface methods and function-valued struct fields. 
 
 Language identity, extensions, grammar fingerprints, and parser/navigation capabilities remain canonical in `parser`; extraction and GritQL retain their feature-specific adapters. The current cross-feature matrix and active implementation routes are documented in [`docs/file-type-support.md`](../docs/file-type-support.md). Expose the same facts through one deterministic capability view without creating a second language registry.
 
-- [x] Add human-readable, JSON, and generated-Markdown capability output covering segments, outlines, navigation, focused structure/flow, native GritQL, directory architecture, and adapter-owned import relations.
+- [x] Add human-readable, JSON, and generated-Markdown capability output covering segments, outlines, navigation, focused structure/flow, native GritQL, directory architecture, adapter-owned import relations, and normalized declaration/call/import/type/field/member/entrypoint facts with unsupported distinguished from unresolved evidence.
 - [x] Add JavaScript/JSX to native `gritql-v1` by reusing TypeScript-family behavior where the grammars agree and adding dedicated JavaScript/JSX conformance fixtures.
 - [x] Add JavaScript/JSX focused structure and flow extraction over the shared navigation graph and ECMAScript helpers.
 - [x] Add parity tests that fail when advertised support lacks implementation or unsupported combinations silently fall back.

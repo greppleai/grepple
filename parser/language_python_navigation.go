@@ -3,7 +3,7 @@ package parser
 import "strings"
 
 func pythonNavigationAdapter(rules *structureRules) navigationAdapter {
-	return &navigationAdapterConfig{rules: rules, callTypes: newStringSet("call"), sourceFacts: pythonNavigationSourceFacts, visibility: func(_ *syntaxNode, name, _ string) NavigationVisibility {
+	return &navigationAdapterConfig{rules: rules, callTypes: newStringSet("call"), sourceFacts: pythonNavigationSourceFacts, memberAccessFacts: true, visibility: func(_ *syntaxNode, name, _ string) NavigationVisibility {
 		return pythonNavigationVisibility(navigationTerminal(name))
 	}}
 }

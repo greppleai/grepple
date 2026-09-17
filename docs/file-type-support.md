@@ -36,9 +36,32 @@ Status: ✅ production implementation; 🟡 production but specialized or intent
 | `tsx` | `.tsx` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
 | `typescript` | `.ts`, `.mts`, `.cts` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
 | `yaml` | `.yaml`, `.yml` | ✅ | ❌ | 🟡 | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+
+### Navigation fact support
+
+| Language | Declarations | Calls | Imports | Type references | Fields | Member access | Entrypoints |
+| --- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| `c` | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ |
+| `cpp` | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ |
+| `csharp` | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ |
+| `go` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `java` | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ |
+| `javascript` | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ |
+| `json` | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| `kotlin` | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ |
+| `markdown` | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| `python` | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ |
+| `rust` | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ |
+| `shell` | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| `text` | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| `tsx` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
+| `typescript` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
+| `yaml` | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 <!-- grepple:language-matrix:end -->
 
-The table is generated from parser, focused-extraction, GritQL, directory-architecture, and adapter-owned import/entrypoint registrations. `grepple languages` renders the terminal view, `grepple languages --json` emits the machine-readable matrix, and `grepple languages --markdown` regenerates the table above. Tests reject stale documentation.
+The tables are generated from parser, focused-extraction, GritQL, directory-architecture, and adapter-owned navigation registrations. `grepple languages` renders both terminal views, `grepple languages --json` emits the machine-readable matrix including `navigationFacts`, and `grepple languages --markdown` regenerates the tables above. Tests reject stale documentation.
+
+A ✅ in the navigation-fact table means the parser adapter has a tested contract to emit that normalized `parser.NavigationGraph` fact kind. It does not promise that every language construct is modeled or that a repository target resolves. Emitted imports, calls, type references, and member accesses may remain ambiguous or unresolved and retain that uncertainty in graph output. A ❌ means the normalized fact kind is unsupported for that adapter; focused extraction may still project analogous language-specific structure and must not be mistaken for a navigation fact.
 
 Notes:
 

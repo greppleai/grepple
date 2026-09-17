@@ -2,6 +2,19 @@ package parser
 
 //go:generate go run ./internal/generate
 
+// NavigationFactCapabilities identifies normalized source fact kinds emitted by
+// one language adapter. False means the adapter has no contract for that fact;
+// ambiguous or unresolved emitted facts remain supported facts.
+type NavigationFactCapabilities struct {
+	Declarations   bool
+	Calls          bool
+	Imports        bool
+	TypeReferences bool
+	Fields         bool
+	MemberAccess   bool
+	Entrypoints    bool
+}
+
 // LanguageCapabilities describes one Tree-sitter-backed application language.
 // Returned extension slices are copies and safe for callers to modify.
 type LanguageCapabilities struct {
@@ -10,6 +23,7 @@ type LanguageCapabilities struct {
 	Navigation           bool
 	ImportNavigation     bool
 	EntrypointNavigation bool
+	NavigationFacts      NavigationFactCapabilities
 	GrammarABI           uint32
 	GrammarFingerprint   string
 }
@@ -170,8 +184,9 @@ func enrichLanguageCapabilities(capability LanguageCapabilities) LanguageCapabil
 			capability.GrammarABI = adapter.Grammar().abiVersion()
 		}
 		if navigation := adapter.Navigation(); navigation != nil {
-			capability.ImportNavigation = navigation.ImportFactsSupported()
-			capability.EntrypointNavigation = navigation.EntrypointFactsSupported()
+			capability.NavigationFacts = navigation.FactCapabilities()
+			capability.ImportNavigation = capability.NavigationFacts.Imports
+			capability.EntrypointNavigation = capability.NavigationFacts.Entrypoints
 		}
 	}
 	return capability

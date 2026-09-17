@@ -2,11 +2,12 @@ package parser
 
 import "strings"
 
-func ecmaNavigationAdapter(rules *structureRules) navigationAdapter {
+func ecmaNavigationAdapter(rules *structureRules, fieldFacts bool) navigationAdapter {
 	return &navigationAdapterConfig{
 		rules: rules, callTypes: newStringSet("call_expression", "new_expression"), extraContainerTypes: newStringSet("interface_declaration"),
 		fieldContainerTypes: newStringSet("class_declaration", "interface_declaration"), selfBindingName: "this", selfBindingFromContainer: true,
 		visibility: typeScriptAdapterVisibility, sourceFacts: typeScriptNavigationSourceFacts, exports: typeScriptNavigationExports,
+		typeReferenceFacts: true, fieldFacts: fieldFacts, memberAccessFacts: true,
 		callableReturnBinding: func(node *syntaxNode, content string, imports map[string]navigationImport) navigationBinding {
 			return navigationReturnBindingFromFields(node, content, imports, "return_type", "type")
 		},

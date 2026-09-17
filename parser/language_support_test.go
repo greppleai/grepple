@@ -95,6 +95,62 @@ func TestSupportedContentLanguagesIncludesSpecializedFormats(t *testing.T) {
 	}
 }
 
+func TestNavigationFactCapabilitiesAreAdapterOwned(t *testing.T) {
+	want := map[string]NavigationFactCapabilities{
+		"go":         {Declarations: true, Calls: true, Imports: true, TypeReferences: true, Fields: true, MemberAccess: true, Entrypoints: true},
+		"javascript": {Declarations: true, Calls: true, Imports: true, TypeReferences: true, MemberAccess: true},
+		"typescript": {Declarations: true, Calls: true, Imports: true, TypeReferences: true, Fields: true, MemberAccess: true},
+		"tsx":        {Declarations: true, Calls: true, Imports: true, TypeReferences: true, Fields: true, MemberAccess: true},
+		"python":     {Declarations: true, Calls: true, Imports: true, MemberAccess: true},
+		"java":       {Declarations: true, Calls: true, Imports: true, MemberAccess: true, Entrypoints: true},
+		"kotlin":     {Declarations: true, Calls: true, Imports: true, MemberAccess: true, Entrypoints: true},
+		"csharp":     {Declarations: true, Calls: true, Imports: true, MemberAccess: true, Entrypoints: true},
+		"c":          {Declarations: true, Calls: true, Imports: true, TypeReferences: true, MemberAccess: true, Entrypoints: true},
+		"cpp":        {Declarations: true, Calls: true, Imports: true, TypeReferences: true, MemberAccess: true, Entrypoints: true},
+		"rust":       {Declarations: true, Calls: true, Imports: true, MemberAccess: true, Entrypoints: true},
+		"shell":      {Declarations: true, Calls: true},
+	}
+	for _, language := range SupportedLanguages() {
+		if language.NavigationFacts != want[language.ID] {
+			t.Fatalf("%s facts=%#v, want %#v", language.ID, language.NavigationFacts, want[language.ID])
+		}
+	}
+}
+
+func TestAdvertisedTypedFieldAndMemberFactsHaveRepresentativeEvidence(t *testing.T) {
+	tests := []struct {
+		language, content               string
+		typeReferences, fields, members bool
+	}{
+		{"go", "package p\ntype Foo struct{ State int }\nfunc use(value Foo){ _ = value.State }\n", true, true, true},
+		{"javascript", "class Foo { state = 0; use(value) { return value.state; } }\n", true, false, true},
+		{"typescript", "class Foo { state: number = 0; use(value: Foo){ return value.state; } }\n", true, true, true},
+		{"tsx", "class Foo { state: number = 0; use(value: Foo){ return value.state; } }\n", true, true, true},
+		{"python", "class Foo:\n    state = 0\ndef use(value: Foo):\n    return value.state\n", false, false, true},
+		{"java", "class Foo { int state; int use(Foo value){ return value.state; } }\n", false, false, true},
+		{"kotlin", "class Foo(var state: Int)\nfun use(value: Foo): Int { return value.state }\n", false, false, true},
+		{"csharp", "class Foo { public int State; int Use(Foo value){ return value.State; } }\n", false, false, true},
+		{"c", "typedef struct { int state; } Foo;\nint use(Foo value){ return value.state; }\n", true, false, true},
+		{"cpp", "struct Foo { int state; };\nint use(Foo value){ return value.state; }\n", true, false, true},
+		{"rust", "struct Foo { state: i32 }\nfn use(value: Foo) -> i32 { value.state }\n", false, false, true},
+		{"shell", "use() { echo value; }\n", false, false, false},
+	}
+	for _, test := range tests {
+		t.Run(test.language, func(t *testing.T) {
+			graph := BuildNavigationGraph(test.content, test.language, "sample")
+			if got := len(graph.TypeUsages) > 0; got != test.typeReferences {
+				t.Fatalf("type references=%v facts=%#v", got, graph.TypeUsages)
+			}
+			if got := len(graph.Fields) > 0; got != test.fields {
+				t.Fatalf("fields=%v facts=%#v", got, graph.Fields)
+			}
+			if got := len(graph.MemberAccesses) > 0; got != test.members {
+				t.Fatalf("member accesses=%v facts=%#v", got, graph.MemberAccesses)
+			}
+		})
+	}
+}
+
 func TestGrammarCardinalityComesFromGeneratedMetadata(t *testing.T) {
 	tests := []struct {
 		language, parent, field string

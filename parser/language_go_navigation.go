@@ -48,6 +48,7 @@ func goNavigationAdapter(rules *structureRules) navigationAdapter {
 			return goNavigationVisibility(navigationTerminal(name))
 		},
 		sourceFacts: goNavigationSourceFacts, entrypoint: goNavigationEntrypoint,
+		typeReferenceFacts: true, fieldFacts: true, memberAccessFacts: true,
 		returnCallableName: func(node *syntaxNode, container, content string, _ *navigationAdapterConfig) string {
 			if node.Kind() == "method_declaration" {
 				return goNavigationMethodName(node, content, rules)
