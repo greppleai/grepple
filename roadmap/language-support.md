@@ -54,7 +54,7 @@ Language identity, extensions, grammar fingerprints, and parser/navigation capab
 - [x] Add Kotlin focused structure/flow for classes, interfaces, objects, data-class constructor properties, delegation inheritance, properties, functions, and graph-backed calls.
 - [x] Add C# focused structure/flow for classes, interfaces, structs, records, enums, inheritance, properties, fields, constructors, methods, visibility, static members, project-root discovery, and graph-backed calls.
 - [x] Add conservative Rust focused structure/flow for structs, tuple structs, enums, traits, same-file impl blocks, fields, variants, associated types, methods, visibility, trait implementations, Cargo-root discovery, and graph-backed calls without framework semantics.
-- [ ] Define non-class focused architecture contracts before enabling C/C++ or Shell extraction.
+- [x] Define and implement conservative C/C++ focused architecture contracts without inferring preprocessor, template, linkage, ABI, or build-system semantics.
 
 ## Next languages
 

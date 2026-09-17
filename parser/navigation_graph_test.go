@@ -55,6 +55,31 @@ func TestNavigationGraphCapturesAdapterEvidencedGoEntrypoint(t *testing.T) {
 	}
 }
 
+func TestNavigationGraphCapturesCFamilyProcessEntrypoints(t *testing.T) {
+	for _, test := range []struct {
+		language, content string
+		want              int
+	}{
+		{language: "c", content: "int main(void) { return 0; }", want: 1},
+		{language: "cpp", content: "int main() { return 0; }", want: 1},
+		{language: "c", content: "void main(void) {}"},
+		{language: "c", content: "static int main(void) { return 0; }"},
+		{language: "cpp", content: "namespace app { int main() { return 0; } }"},
+		{language: "cpp", content: "class App { int main() { return 0; } };"},
+	} {
+		graph := BuildNavigationGraph(test.content, test.language, "main."+test.language)
+		got := 0
+		for _, declaration := range graph.Declarations {
+			if declaration.Entrypoint == "process" {
+				got++
+			}
+		}
+		if got != test.want {
+			t.Errorf("language=%s content=%q process entrypoints=%d want=%d declarations=%+v", test.language, test.content, got, test.want, graph.Declarations)
+		}
+	}
+}
+
 func TestNavigationGraphDoesNotInferGoEntrypointsWithoutOwningSemantics(t *testing.T) {
 	content := "package library\nfunc main() {}\n"
 	graph := BuildNavigationGraph(content, "go", "library.go")

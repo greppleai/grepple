@@ -8,7 +8,7 @@ import (
 
 func TestSupportedLanguagesAreStableAndDefensive(t *testing.T) {
 	languages := SupportedLanguages()
-	if len(languages) != 8 {
+	if len(languages) != 10 {
 		t.Fatalf("SupportedLanguages() = %#v", languages)
 	}
 	if languages[0].ID != "go" || !reflect.DeepEqual(languages[0].Extensions, []string{".go"}) || !languages[0].FocusedStructure || !languages[0].FocusedFlow {
@@ -26,7 +26,7 @@ func TestSupportedLanguagesAreStableAndDefensive(t *testing.T) {
 	for index, expected := range []struct {
 		id         string
 		extensions []string
-	}{{"java", []string{".java"}}, {"kotlin", []string{".kt", ".kts"}}, {"csharp", []string{".cs"}}, {"rust", []string{".rs"}}} {
+	}{{"java", []string{".java"}}, {"kotlin", []string{".kt", ".kts"}}, {"csharp", []string{".cs"}}, {"rust", []string{".rs"}}, {"c", []string{".c", ".h"}}, {"cpp", []string{".cc", ".cpp", ".cxx", ".hpp", ".hh", ".hxx"}}} {
 		language := languages[index+4]
 		if language.ID != expected.id || !reflect.DeepEqual(language.Extensions, expected.extensions) || !language.FocusedStructure || !language.FocusedFlow {
 			t.Fatalf("class-model adapter metadata = %#v", language)
@@ -63,7 +63,7 @@ func TestLanguageForPathUsesAdapterExtensions(t *testing.T) {
 		"main.go": "go", "view.ts": "typescript", "view.tsx": "typescript",
 		"module.mts": "typescript", "module.cts": "typescript", "app.js": "javascript", "view.jsx": "javascript",
 		"main.py": "python", "types.pyi": "python", "gui.pyw": "python", "Main.java": "java", "build.kt": "kotlin", "script.kts": "kotlin",
-		"main.rs": "rust",
+		"main.rs": "rust", "main.c": "c", "api.h": "c", "service.cpp": "cpp", "service.hpp": "cpp",
 	} {
 		language, ok := LanguageForPath(path)
 		if !ok || language.ID != expected {

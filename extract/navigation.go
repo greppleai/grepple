@@ -51,7 +51,7 @@ func navigationDeclarationSymbol(analysis *Analysis, declaration *codeparser.Nav
 	switch declaration.Language {
 	case "go":
 		symbols = analysis.GoSymbolIndex
-	case "javascript", "typescript", "tsx", "python", "java", "kotlin", "csharp", "rust":
+	case "javascript", "typescript", "tsx", "python", "java", "kotlin", "csharp", "rust", "c", "cpp":
 		symbols = analysis.TSSymbolIndex
 	default:
 		return nil
@@ -123,6 +123,9 @@ func resolveNavigationCallTarget(analysis *Analysis, owner *Symbol, call *codepa
 	if owner.Language == "python" {
 		return resolvePythonNavigationCall(analysis, owner, call.ResolvedName)
 	}
+	if owner.Language == "c" || owner.Language == "cpp" {
+		return resolveCFamilyNavigationCall(analysis, owner, call.ResolvedName)
+	}
 	if owner.Language == "java" || owner.Language == "kotlin" || owner.Language == "csharp" || owner.Language == "rust" {
 		return resolveJVMNavigationCall(analysis, owner, call.ResolvedName)
 	}
@@ -180,6 +183,42 @@ func resolveJVMNavigationCall(analysis *Analysis, owner *Symbol, name string) *S
 			continue
 		}
 		if found != nil && found.Key != candidate.Key {
+			return nil
+		}
+		found = candidate
+	}
+	return found
+}
+
+func resolveCFamilyNavigationCall(analysis *Analysis, owner *Symbol, name string) *Symbol {
+	name = strings.ReplaceAll(name, "::", ".")
+	terminal := navigationTerminal(name)
+	if owner.Owner != "" {
+		if target := uniqueCFamilyNavigationSymbol(analysis, owner.Language, owner.ModuleID, owner.Owner+"."+terminal); target != nil {
+			return target
+		}
+	}
+	if target := uniqueCFamilyNavigationSymbol(analysis, owner.Language, owner.ModuleID, name); target != nil {
+		return target
+	}
+	return uniqueCFamilyNavigationSymbol(analysis, owner.Language, "", terminal)
+}
+
+func uniqueCFamilyNavigationSymbol(analysis *Analysis, language, moduleID, name string) *Symbol {
+	var found *Symbol
+	for _, key := range sortedKeys(analysis.TSSymbolIndex) {
+		candidate := analysis.TSSymbolIndex[key]
+		if candidate.Language != language || candidate.NavigationID == "" || moduleID != "" && candidate.ModuleID != moduleID {
+			continue
+		}
+		candidateName := candidate.Name
+		if moduleID == "" {
+			candidateName = navigationTerminal(candidateName)
+		}
+		if candidateName != name {
+			continue
+		}
+		if found != nil {
 			return nil
 		}
 		found = candidate
@@ -293,7 +332,7 @@ func navigationCallName(owner *Symbol, call *codeparser.NavigationCall) string {
 }
 
 func navigationResolutionConfidence(owner *Symbol, call *codeparser.NavigationCall, target *Symbol) string {
-	if (owner.Language == "python" || owner.Language == "java" || owner.Language == "kotlin" || owner.Language == "csharp") && navigationSymbolScope(owner) != navigationSymbolScope(target) {
+	if (owner.Language == "python" || owner.Language == "java" || owner.Language == "kotlin" || owner.Language == "csharp" || owner.Language == "c" || owner.Language == "cpp") && navigationSymbolScope(owner) != navigationSymbolScope(target) {
 		return "unique-terminal"
 	}
 	if call.Display == target.Name || call.Name == target.Name && !strings.Contains(call.Display, ".") {

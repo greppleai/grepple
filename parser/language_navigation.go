@@ -138,9 +138,35 @@ func cSharpNavigationAdapter(rules *structureRules) navigationAdapter {
 }
 
 func cFamilyNavigationAdapter(rules *structureRules) navigationAdapter {
-	return &navigationAdapterConfig{rules: rules, callTypes: newStringSet("call_expression"), declarationName: func(node *syntaxNode, content string, _ *navigationEnvelope) string {
-		return cFamilyName(node, content, rules)
-	}}
+	return &navigationAdapterConfig{
+		rules: rules, callTypes: newStringSet("call_expression"),
+		declarationName: func(node *syntaxNode, content string, _ *navigationEnvelope) string {
+			return cFamilyName(node, content, rules)
+		},
+		entrypoint: cFamilyNavigationEntrypoint,
+	}
+}
+
+func cFamilyNavigationEntrypoint(node *syntaxNode, name, _, _, _ string) string {
+	if node.Kind() != "function_definition" || name != "main" {
+		return ""
+	}
+	returnType := node.ChildByFieldName("type")
+	if returnType == nil || strings.TrimSpace(returnType.Text()) != "int" {
+		return ""
+	}
+	for _, child := range node.NamedChildren() {
+		if child.Kind() == "storage_class_specifier" {
+			return ""
+		}
+	}
+	for parent := node.Parent(); parent != nil; parent = parent.Parent() {
+		switch parent.Kind() {
+		case "namespace_definition", "class_specifier", "struct_specifier", "union_specifier":
+			return ""
+		}
+	}
+	return "process"
 }
 
 func rustNavigationAdapter(rules *structureRules) navigationAdapter {

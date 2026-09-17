@@ -13,7 +13,7 @@ import (
 // fact cache. Library callers remain side-effect free unless they set it.
 const NavigationCacheDirectoryEnv = "GREPPLE_NAVIGATION_CACHE_DIR"
 
-const navigationCacheSchema = "grepple-navigation-facts-v13"
+const navigationCacheSchema = "grepple-navigation-facts-v14"
 
 type navigationCacheEntry struct {
 	Schema    string          `json:"schema"`
