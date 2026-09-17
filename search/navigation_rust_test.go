@@ -21,10 +21,11 @@ use crate::foo::{run, Worker};
 use crate::nested::deep;
 use serde::Serialize;
 pub fn bootstrap() { run(); Worker::start(); deep(); }
+pub fn typed(value: Worker) { value.work(); }
 `,
 		foo: `pub fn run() {}
 pub struct Worker;
-impl Worker { pub fn start() {} }
+impl Worker { pub fn start() {} pub fn work(&self) {} }
 `,
 		nested: `pub mod child;
 pub use self::child::deep;
@@ -43,6 +44,7 @@ pub fn deep() { helper(); }
 	assertRustImportTargets(t, graph.Imports, lib, "serde::Serialize")
 	assertRustResolvedCall(t, graph.Calls, lib, "run")
 	assertRustResolvedCall(t, graph.Calls, lib, "Worker::start")
+	assertRustResolvedCall(t, graph.Calls, lib, "value.work")
 	assertRustResolvedCall(t, graph.Calls, lib, "deep")
 	assertRustResolvedCall(t, graph.Calls, child, "helper")
 }

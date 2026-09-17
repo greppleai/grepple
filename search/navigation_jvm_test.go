@@ -19,6 +19,7 @@ import lib.api.Helper;
 import static lib.tools.Actions.run;
 class Service {
     void use() { Helper.work(); run(); }
+    void typed(Helper value) { value.load(); }
 }
 `,
 		helper:  "package lib.api;\npublic class Helper { public static void work() {} public void load() {} }\n",
@@ -29,6 +30,7 @@ class Service {
 	assertJVMImportTarget(t, graph.Imports, "run", actions)
 	assertJVMResolvedCall(t, graph.Calls, service, "Helper.work")
 	assertJVMResolvedCall(t, graph.Calls, service, "run")
+	assertJVMResolvedCall(t, graph.Calls, service, "value.load")
 }
 
 func TestKotlinImportsResolveAliasesAndTopLevelFunctions(t *testing.T) {
@@ -37,7 +39,7 @@ func TestKotlinImportsResolveAliasesAndTopLevelFunctions(t *testing.T) {
 	helper := filepath.Join(root, "lib", "api", "Declarations.kt")
 	tools := filepath.Join(root, "lib", "tools", "Actions.kt")
 	paths := writeJVMNavigationFiles(t, map[string]string{
-		service: "package app\nimport lib.api.Helper as Renamed\nimport lib.tools.run\nclass Service { fun use() { Renamed.work(); run() } }\n",
+		service: "package app\nimport lib.api.Helper as Renamed\nimport lib.tools.run\nclass Service { fun use() { Renamed.work(); run() }; fun typed(value: Renamed) { value.work() } }\n",
 		helper:  "package lib.api\nobject Helper { fun work() {} }\n",
 		tools:   "package lib.tools\nfun run() {}\n",
 	})
@@ -46,6 +48,7 @@ func TestKotlinImportsResolveAliasesAndTopLevelFunctions(t *testing.T) {
 	assertJVMImportTarget(t, graph.Imports, "run", tools)
 	assertJVMResolvedCall(t, graph.Calls, service, "Renamed.work")
 	assertJVMResolvedCall(t, graph.Calls, service, "run")
+	assertJVMResolvedCall(t, graph.Calls, service, "value.work")
 }
 
 func TestJVMImportsPreserveDuplicateQualifiedTargetsAsAmbiguous(t *testing.T) {

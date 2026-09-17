@@ -19,9 +19,9 @@ using HelperAlias = Lib.Api.Helper;
 using ApiAlias = Lib.Api;
 using static Lib.Api.Actions;
 namespace App;
-public class Service { void Use() { HelperAlias.Work(); ApiAlias.Work(); Run(); } }
+public class Service { void Use() { HelperAlias.Work(); ApiAlias.Work(); Run(); } void Typed(Helper value) { value.Load(); } }
 `,
-		helper:  "namespace Lib.Api;\npublic class Helper { public static void Work() {} }\n",
+		helper:  "namespace Lib.Api;\npublic class Helper { public static void Work() {} public void Load() {} }\n",
 		actions: "namespace Lib.Api;\npublic static class Actions { public static void Run() {} }\n",
 	})
 	graph, _ := BuildNavigationGraphWithOptions(paths, NavigationBuildOptions{DisableCache: true})
@@ -30,6 +30,7 @@ public class Service { void Use() { HelperAlias.Work(); ApiAlias.Work(); Run(); 
 	assertCSharpImportTargets(t, graph.Imports, "Lib.Api.Helper", helper)
 	assertCSharpImportTargets(t, graph.Imports, "Lib.Api.Actions", actions)
 	assertCSharpAliasCallsRemainUnbound(t, graph.Calls, service, "HelperAlias.Work", "ApiAlias.Work")
+	assertCSharpResolvedCall(t, graph.Calls, service, "value.Load")
 }
 
 func TestCSharpImportsPreserveDuplicateQualifiedTargetsAsAmbiguous(t *testing.T) {
@@ -75,6 +76,17 @@ func assertCSharpImportTargets(t *testing.T, imports []parser.NavigationImport, 
 		}
 	}
 	t.Fatalf("missing import path=%q targets=%#v: %#v", importPath, expected, imports)
+}
+
+func assertCSharpResolvedCall(t *testing.T, calls []parser.NavigationCall, source, display string) {
+	t.Helper()
+	for _, call := range calls {
+		strong := call.Confidence == "exact" || call.Confidence == "import-resolved" || call.Confidence == "context-resolved"
+		if call.Path == source && call.Display == display && call.TargetID != "" && strong {
+			return
+		}
+	}
+	t.Fatalf("missing resolved C# call source=%q display=%q: %#v", source, display, calls)
 }
 
 func assertCSharpImportAliasTargets(t *testing.T, imports []parser.NavigationImport, alias string, expected ...string) {
