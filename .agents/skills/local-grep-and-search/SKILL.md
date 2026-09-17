@@ -44,4 +44,26 @@ grepple --at path/to/file.go:40-65
 
 Eligible local structural, contextual, and line-only output uses native `HASH│LINE│content` anchors by default. Use `--no-anchors` only when plain output is required. Hashes become stale after edits, so refresh before a later edit. Plain locations remain useful for Read and `--at`.
 
+### Preferred write transport
+
+After retrieving fresh anchors, prefer the literal heredoc transaction for multi-edit or multi-file work. It avoids JSON and shell escaping while compiling to the same strict, prevalidated `grepple-write-v1` transaction:
+
+```sh
+grepple write --root . <<'GREPPLE_WRITE_ab12'
+::grepple file internal/foo.go
+::grepple replace START END
+func updated() {
+    return "quotes ' ` $ stay literal"
+}
+::grepple end
+
+::grepple file internal/bar.go
+::grepple replace START END
+replacement body
+::grepple end
+GREPPLE_WRITE_ab12
+```
+
+Use `::grepple replace START` for a one-line range and an empty body to delete that range. The same envelope supports `::grepple create` and digest-guarded `::grepple delete SHA256`. If source contains an exact `::grepple end` line, add `--end-marker TOKEN` to `replace` or `create` and terminate with `::grepple end TOKEN`. Use strict JSON when a program is already generating `grepple-write-v1`; use `grepple write edit` for a single literal replacement. All modes share confinement, original-snapshot anchors, transaction-wide validation, dry-run, structured output, rollback, and fresh post-write anchors.
+
 For local call impact use `change-impact-analysis`; for package ownership use `architecture-lookup-discovery`; for repeated architectural spread use `architecture-boundary-review`; for syntax-shaped matching use `structural-pattern-audit`. For code outside this checkout use `remote-grep-and-search` rather than cloning merely to inspect it.
