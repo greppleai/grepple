@@ -160,7 +160,7 @@ func TestSimpleReadToolIsBoundedAndConfined(t *testing.T) {
 		t.Fatal(err)
 	}
 	response, err := runSimpleReadTool(root, readToolInput{Path: "source.go", StartLine: 2, EndLine: 3})
-	if err != nil || response.IsError || !strings.Contains(response.Content, "2│two\n3│three") {
+	if err != nil || response.IsError || !strings.Contains(response.Content, "ldf│2│two\nnhJ│3│three") {
 		t.Fatalf("response=%+v err=%v", response, err)
 	}
 	response, err = runSimpleReadTool(root, readToolInput{Path: "../outside"})

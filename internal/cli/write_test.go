@@ -308,12 +308,20 @@ func TestNativeAnchorLookupUsesBuiltInHashline(t *testing.T) {
 	}
 }
 
-func TestDefaultAnchorsCanUseNativeWithoutConfiguredCommand(t *testing.T) {
+func TestDefaultReadAnchorsUseNativeWithoutConfiguredCommand(t *testing.T) {
 	content := "alpha\nbeta\n"
-	for _, defaultProvider := range []string{"", "native"} {
-		t.Run(defaultProvider, func(t *testing.T) {
+	cases := []struct {
+		name     string
+		settings anchorSettings
+	}{
+		{name: "product default"},
+		{name: "enabled without provider", settings: anchorSettings{EnabledByDefault: true}},
+		{name: "explicit native", settings: anchorSettings{EnabledByDefault: true, DefaultProvider: "native"}},
+	}
+	for _, testCase := range cases {
+		t.Run(testCase.name, func(t *testing.T) {
 			settingsPath := filepath.Join(t.TempDir(), "settings.json")
-			writeJSONFile(t, settingsPath, userSettings{Anchors: anchorSettings{EnabledByDefault: true, DefaultProvider: defaultProvider}})
+			writeJSONFile(t, settingsPath, userSettings{Anchors: testCase.settings})
 			t.Setenv("GREPPLE_SETTINGS", settingsPath)
 			anchors, enabled, err := defaultReadAnchors("source.txt", content, []int{1, 2, 3})
 			if err != nil {

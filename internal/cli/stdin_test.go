@@ -167,7 +167,7 @@ func TestRunSearchGlobIgnoresStdin(t *testing.T) {
 	}
 	out := captureStdout(t, func() {
 		withStdin(t, "hello from stdin\n", func() {
-			if err := runSearch([]string{"--line-only", "hello", "*.txt"}); err != nil {
+			if err := runSearch([]string{"--no-anchors", "--line-only", "hello", "*.txt"}); err != nil {
 				t.Fatal(err)
 			}
 		})

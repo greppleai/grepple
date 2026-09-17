@@ -111,9 +111,8 @@ func TestAnchorProviderFlagEnablesAnchoredOutput(t *testing.T) {
 	}
 }
 
-func TestSettingsEnableAnchorsByDefault(t *testing.T) {
+func TestAnchorsDefaultToNativeAndCanBeDisabled(t *testing.T) {
 	settingsPath := t.TempDir() + "/settings.json"
-	writeJSONFile(t, settingsPath, userSettings{Anchors: anchorSettings{EnabledByDefault: true, DefaultProvider: "pi"}})
 	t.Setenv("GREPPLE_SETTINGS", settingsPath)
 
 	options, _, _, err := parseSearchArgs([]string{"--line-only", "needle", "sample.go"})
@@ -121,7 +120,21 @@ func TestSettingsEnableAnchorsByDefault(t *testing.T) {
 		t.Fatal(err)
 	}
 	if !options.Anchors || !options.AnchorsDefaulted {
-		t.Fatalf("settings did not enable anchors: %#v", options)
+		t.Fatalf("anchors were not enabled by default: %#v", options)
+	}
+	native, err := useNativeAnchorProvider(options.AnchorProvider, options.AnchorsDefaulted)
+	if err != nil || !native {
+		t.Fatalf("default provider was not native: native=%v err=%v", native, err)
+	}
+
+	writeJSONFile(t, settingsPath, userSettings{Anchors: anchorSettings{EnabledByDefault: true, DefaultProvider: "pi"}})
+	configured, _, _, err := parseSearchArgs([]string{"--line-only", "needle", "sample.go"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	native, err = useNativeAnchorProvider(configured.AnchorProvider, configured.AnchorsDefaulted)
+	if err != nil || native {
+		t.Fatalf("configured default provider was ignored: native=%v err=%v", native, err)
 	}
 
 	disabled, _, _, err := parseSearchArgs([]string{"--no-anchors", "--line-only", "needle", "sample.go"})
@@ -129,7 +142,7 @@ func TestSettingsEnableAnchorsByDefault(t *testing.T) {
 		t.Fatal(err)
 	}
 	if disabled.Anchors || disabled.AnchorsDefaulted {
-		t.Fatalf("--no-anchors did not disable the setting: %#v", disabled)
+		t.Fatalf("--no-anchors did not disable defaults: %#v", disabled)
 	}
 
 	count, _, _, err := parseSearchArgs([]string{"--count", "needle", "sample.go"})
@@ -137,7 +150,7 @@ func TestSettingsEnableAnchorsByDefault(t *testing.T) {
 		t.Fatal(err)
 	}
 	if count.Anchors {
-		t.Fatalf("settings enabled anchors for unsupported count output: %#v", count)
+		t.Fatalf("default anchors were enabled for unsupported count output: %#v", count)
 	}
 }
 

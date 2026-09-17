@@ -12,7 +12,7 @@ func TestExamplesCoverTaskOrientedWorkflows(t *testing.T) {
 		}
 	})
 	for _, expected := range []string{
-		"orient —", "sources explain", "architecture directory", "architecture resolve", "retrieve —", "--files-with-matches", "--at", "edit —", "--anchors", "grepple write",
+		"orient —", "sources explain", "architecture directory", "architecture resolve", "retrieve —", "--files-with-matches", "--at", "edit —", "--line-only", "grepple write",
 		"impact —", "graph resolve", "graph callers", "boundaries —", "boundaries --json",
 		"audit —", "grit --limit 0 --json", "diagram —", "extract structure", "extract flow",
 		"architecture —", "architecture why",

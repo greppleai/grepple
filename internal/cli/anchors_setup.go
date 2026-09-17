@@ -18,7 +18,7 @@ type anchorSetupArgs struct {
 	CommandArgs     []string `arg:"--command-arg,separate" placeholder:"ARG" help:"append one literal executable argument; repeatable"`
 	TimeoutMS       int      `arg:"--timeout-ms" placeholder:"N" help:"provider timeout in milliseconds (default 5000)"`
 	SetDefault      bool     `arg:"--set-default" help:"select this provider as the user default"`
-	EnableByDefault bool     `arg:"--enable-by-default" help:"anchor eligible searches by default; requires this provider to be default"`
+	EnableByDefault bool     `arg:"--enable-by-default" help:"use this default provider for eligible searches; requires this provider to be default"`
 	Write           bool     `arg:"--write" help:"atomically write the previewed user settings"`
 	Force           bool     `arg:"--force" help:"replace an existing provider with different settings; requires --write"`
 }

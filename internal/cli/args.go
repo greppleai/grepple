@@ -49,8 +49,8 @@ type searchArgs struct {
 	MaxFiles         int      `arg:"--max-files" placeholder:"N" help:"limit matching files"`
 	MaxSegments      int      `arg:"--max-segments" placeholder:"N" help:"limit result segments"`
 	MaxOutputBytes   int      `arg:"--max-output-bytes" placeholder:"N" help:"cap human-readable output (default 16384; 0 = unlimited; JSON is uncapped)"`
-	Anchors          bool     `arg:"--anchors" help:"emit configured edit anchors as HASH│LINE│content rows (local structural or --line-only output)"`
-	NoAnchors        bool     `arg:"--no-anchors" help:"disable anchors enabled by user settings"`
+	Anchors          bool     `arg:"--anchors" help:"force native HASH│LINE│content anchors for supported local output"`
+	NoAnchors        bool     `arg:"--no-anchors" help:"disable default anchored output"`
 	AnchorProvider   string   `arg:"--anchor-provider" placeholder:"NAME" help:"use native or a named provider from ~/.grepple/settings.json (implies --anchors)"`
 	Related          bool     `arg:"--related" help:"show repository-local callees and callers for supported source languages"`
 	FollowRelated    int      `arg:"--follow-related" placeholder:"N" help:"expand up to two unique callees per level (1-3; implies --related)"`
@@ -147,12 +147,9 @@ func applyAnchorSettingsDefault(values *searchArgs) (bool, error) {
 	if values.Anchors || values.NoAnchors || !supportsDefaultAnchors(values) {
 		return false, nil
 	}
-	settings, err := loadUserSettings()
+	_, err := loadUserSettings()
 	if err != nil {
 		return false, err
-	}
-	if !settings.Anchors.EnabledByDefault {
-		return false, nil
 	}
 	values.Anchors = true
 	return true, nil

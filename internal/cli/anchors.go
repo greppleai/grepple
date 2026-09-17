@@ -114,6 +114,9 @@ func useNativeAnchorProvider(name string, defaulted bool) (bool, error) {
 	if err != nil {
 		return false, err
 	}
+	if !settings.Anchors.EnabledByDefault {
+		return true, nil
+	}
 	return settings.Anchors.DefaultProvider == "" || settings.Anchors.DefaultProvider == "native", nil
 }
 
@@ -138,13 +141,10 @@ func defaultReadAnchors(path, content string, lines []int) (map[int]string, bool
 	if err != nil {
 		return nil, false, err
 	}
-	if !settings.Anchors.EnabledByDefault {
-		return nil, false, nil
-	}
 	request := anchorProtocolRequest{ProtocolVersion: anchorProtocolVersion, Files: []anchorProtocolRequestFile{{
 		Path: path, Content: content, SHA256: anchorDigest(content), Lines: lines,
 	}}}
-	if settings.Anchors.DefaultProvider == "" || settings.Anchors.DefaultProvider == "native" {
+	if !settings.Anchors.EnabledByDefault || settings.Anchors.DefaultProvider == "" || settings.Anchors.DefaultProvider == "native" {
 		anchors, nativeErr := nativeAnchorLookup(request, map[string]string{path: path})
 		if nativeErr != nil {
 			return nil, false, nativeErr

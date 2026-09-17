@@ -7,8 +7,8 @@
 Retrieve an exact range or bounded context:
 
 ```text
-grepple --anchors --line-only --at path/to/file.go:40-65
-grepple --anchors --line-only -C 2 -F 'old value' path/to/file.go
+grepple --line-only --at path/to/file.go:40-65
+grepple --line-only -C 2 -F 'old value' path/to/file.go
 ```
 
 Anchor rows are always exactly:

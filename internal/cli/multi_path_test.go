@@ -36,7 +36,7 @@ func TestFilesListsMultipleDirectoryRoots(t *testing.T) {
 func TestContentSearchAcceptsMultipleExplicitPaths(t *testing.T) {
 	dir := writeMultiPathFixture(t)
 	out := captureStdout(t, func() {
-		if err := runSearch([]string{
+		if err := runSearch([]string{"--no-anchors",
 			"--line-only", "needle",
 			filepath.Join(dir, "src", "a.txt"),
 			filepath.Join(dir, "scripts"),
