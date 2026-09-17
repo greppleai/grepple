@@ -56,7 +56,7 @@ Live `grepple ask` dogfooding showed two distinct bottlenecks: ordinary local/re
 
 - [ ] Reconcile or clearly document the different output-mode contracts: search human/JSON/JSON-matches, graph JSON-or-compact, boundaries human/JSON, extract Mermaid, and GritQL human/JSON.
 - [ ] Explain JavaScript-regex defaults at first use and in examples.
-- [ ] Make limit units explicit: files, findings, candidates per section, segments, nodes, bytes, and source files.
+- [ ] Make limit units explicit: files, findings, candidates per section, nodes, bytes, and source files.
 - [ ] Distinguish local and remote feature availability at the attempted command.
 - [ ] Clarify that graph `dependencies`/`dependents` currently describe navigation edges rather than a build-system import graph.
 - [ ] Separate resolution outcomes from confidence labels: report resolution, ambiguous-local, unresolved-local, and expected-external rates. The current `candidate` outcome and `candidate` confidence use different meanings, while ambiguity rate alone hides a large unresolved population.

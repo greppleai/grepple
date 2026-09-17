@@ -202,7 +202,7 @@ func searchLocal(options *cliOptions) ([]api.FileResult, error) {
 		if err != nil {
 			return nil, err
 		}
-		return search.BuildResults([]search.FileMatch{*match}, params.BeforeContext, params.AfterContext, params.MaxSegments, true), nil
+		return search.BuildResults([]search.FileMatch{*match}, params.BeforeContext, params.AfterContext, true), nil
 	}
 	if params.Files {
 		// Filename glob listing only. --files-with-matches is a content search, so
@@ -227,13 +227,13 @@ func searchLocal(options *cliOptions) ([]api.FileResult, error) {
 		if err != nil {
 			return nil, err
 		}
-		return search.BuildResults(matches, params.BeforeContext, params.AfterContext, params.MaxSegments, !params.SkipSegments), nil
+		return search.BuildResults(matches, params.BeforeContext, params.AfterContext, !params.SkipSegments), nil
 	}
 	matches, err := search.Files(params, nil)
 	if err != nil {
 		return nil, err
 	}
-	return search.BuildResults(matches, params.BeforeContext, params.AfterContext, params.MaxSegments, !params.SkipSegments), nil
+	return search.BuildResults(matches, params.BeforeContext, params.AfterContext, !params.SkipSegments), nil
 }
 
 func appendUnique(values []string, value string) []string {

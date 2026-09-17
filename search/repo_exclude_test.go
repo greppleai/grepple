@@ -28,7 +28,6 @@ func TestSearchFilesExcludesRepository(t *testing.T) {
 
 	params := Params{
 		Query:       "needle",
-		MaxSegments: DefaultMaxSegments,
 		ExcludeRepo: []string{"owner/current"},
 	}
 	matches, err := Files(params, nil)

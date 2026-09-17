@@ -77,7 +77,7 @@ func assertAdvancedExampleSegments(t *testing.T, example advancedExample) {
 	_, content := readAdvancedExample(t, example.file)
 	docLine := markerLine(t, content, "ADVANCED_DOC")
 	bodyLine := markerLine(t, content, "ADVANCED_END")
-	segments := BuildSegments(content, example.language, map[int]bool{bodyLine: true}, 64)
+	segments := BuildSegments(content, example.language, map[int]bool{bodyLine: true})
 	covered := coveredSegmentLines(segments)
 
 	if !covered[docLine] || !covered[bodyLine] {

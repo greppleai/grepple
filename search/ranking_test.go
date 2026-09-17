@@ -18,14 +18,14 @@ func TestMatchCountSortIsDeterministicAndOptIn(t *testing.T) {
 		t.Fatal(err)
 	}
 	candidates := []string{high, low}
-	pathResults, err := Files(Params{Query: "needle", Limit: 1, MaxSegments: DefaultMaxSegments, Sort: ResultSortPath}, candidates)
+	pathResults, err := Files(Params{Query: "needle", Limit: 1, Sort: ResultSortPath}, candidates)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if len(pathResults) != 1 || !strings.HasSuffix(pathResults[0].DisplayPath, "a-low.txt") {
 		t.Fatalf("default path order=%#v", pathResults)
 	}
-	matchResults, err := Files(Params{Query: "needle", Limit: 1, MaxSegments: DefaultMaxSegments, Sort: ResultSortMatches}, candidates)
+	matchResults, err := Files(Params{Query: "needle", Limit: 1, Sort: ResultSortMatches}, candidates)
 	if err != nil {
 		t.Fatal(err)
 	}

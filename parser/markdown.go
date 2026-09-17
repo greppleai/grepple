@@ -101,7 +101,7 @@ func outlineMarkdown(content string) []Symbol {
 // each matched line is shown, preceded by its enclosing heading chain as
 // "summary" segments (breadcrumb), with everything else collapsed. So a hit deep
 // in a document reads as `# Doc` › `## Section` › `### Subsection` › <line>.
-func buildMarkdownSegments(content string, hits map[int]bool, maxSegments int) []Segment {
+func buildMarkdownSegments(content string, hits map[int]bool) []Segment {
 	lines := splitLines(content)
 	heads := scanMarkdownHeadings(content)
 	ends := markdownHeadingEnds(heads, len(lines))
@@ -129,7 +129,7 @@ func buildMarkdownSegments(content string, hits map[int]bool, maxSegments int) [
 		}
 		segments = append(segments, Segment{Kind: "lines", Start: ml, End: ml})
 	}
-	return limitSegments(mergeSegments(segments, len(lines)), maxSegments)
+	return mergeSegments(segments, len(lines))
 }
 
 type mdNode struct {

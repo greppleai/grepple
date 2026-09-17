@@ -117,7 +117,7 @@ func prepareAtMatch(match *FileMatch, params Params, path string, line, endLine,
 			match.CallableDeclaration = true
 			match.Segments = []structure.Segment{{Kind: "lines", Start: start, End: end}}
 		} else {
-			match.Segments, match.StructureStatus = structure.BuildSegmentsFromDocument(document, match.MatchLines, params.MaxSegments)
+			match.Segments, match.StructureStatus = structure.BuildSegmentsFromDocument(document, match.MatchLines)
 		}
 		return nil
 	}
@@ -125,7 +125,7 @@ func prepareAtMatch(match *FileMatch, params Params, path string, line, endLine,
 		match.CallableDeclaration = true
 		match.Segments = []structure.Segment{{Kind: "lines", Start: start, End: end}}
 	} else {
-		match.Segments = structure.BuildSegments(match.Content, match.Language, match.MatchLines, params.MaxSegments)
+		match.Segments = structure.BuildSegments(match.Content, match.Language, match.MatchLines)
 	}
 	return nil
 }

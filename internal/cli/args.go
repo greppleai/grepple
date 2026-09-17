@@ -47,7 +47,6 @@ type searchArgs struct {
 	AfterContext     int      `arg:"-A,--after-context" placeholder:"N" help:"print N lines after matches"`
 	BeforeContext    int      `arg:"-B,--before-context" placeholder:"N" help:"print N lines before matches"`
 	MaxFiles         int      `arg:"--max-files" placeholder:"N" help:"limit matching files"`
-	MaxSegments      int      `arg:"--max-segments" placeholder:"N" help:"limit result segments"`
 	MaxOutputBytes   int      `arg:"--max-output-bytes" placeholder:"N" help:"cap human-readable output (default 16384; 0 = unlimited; JSON is uncapped)"`
 	Anchors          bool     `arg:"--anchors" help:"force native HASH│LINE│content anchors for supported local output"`
 	NoAnchors        bool     `arg:"--no-anchors" help:"disable default anchored output"`
@@ -71,7 +70,6 @@ func parseSearchArgs(args []string) (*cliOptions, string, bool, error) {
 	// Limit and text output default to bounded values so broad queries do not
 	// overflow agent tool results. Pass zero explicitly to opt out of either cap.
 	values := searchArgs{
-		MaxSegments:    search.DefaultMaxSegments,
 		MaxOutputBytes: DefaultTextOutputBytes,
 		Limit:          DefaultResultLimit,
 		Sort:           search.ResultSortPath,
@@ -297,9 +295,6 @@ func validateSearchBounds(values *searchArgs) error {
 	if values.MaxFiles < 0 {
 		return fmt.Errorf("--max-files must be a positive number")
 	}
-	if values.MaxSegments < 1 {
-		return fmt.Errorf("--max-segments must be a positive number")
-	}
 	if values.MaxOutputBytes < 0 {
 		return fmt.Errorf("--max-output-bytes must not be negative")
 	}
@@ -323,7 +318,6 @@ func buildSearchParams(parser *arg.Parser, values *searchArgs) (search.Params, e
 		BeforeContext: values.Context,
 		AfterContext:  values.Context,
 		MaxFiles:      values.MaxFiles,
-		MaxSegments:   values.MaxSegments,
 		Related:       values.Related,
 		FollowRelated: values.FollowRelated,
 		At:            values.At,

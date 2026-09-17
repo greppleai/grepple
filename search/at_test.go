@@ -21,7 +21,7 @@ func helper() string {
 
 func other() {}
 `)
-	params := Params{At: fmt.Sprintf("%s:5-6", path), MaxSegments: 20}
+	params := Params{At: fmt.Sprintf("%s:5-6", path)}
 	match, err := At(params)
 	if err != nil {
 		t.Fatal(err)
@@ -54,7 +54,7 @@ func helper() string { return "value" }
 	t.Cleanup(func() { _ = os.Chdir(oldDirectory) })
 
 	relatedBuildInvocations.Store(0)
-	params := Params{At: fmt.Sprintf("%s:2", caller), MaxSegments: 20, Related: true, FollowRelated: 1}
+	params := Params{At: fmt.Sprintf("%s:2", caller), Related: true, FollowRelated: 1}
 	match, err := At(params)
 	if err != nil {
 		t.Fatal(err)
@@ -75,7 +75,7 @@ func TestAtLineRangesReturnExactEditableLines(t *testing.T) {
 	if err := os.WriteFile(path, []byte(content), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	match, err := At(Params{At: path + ":2-4", LineRanges: true, MaxSegments: 20})
+	match, err := At(Params{At: path + ":2-4", LineRanges: true})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -102,7 +102,7 @@ func run() { fmt.Println("ok") }
 `)
 	for _, line := range []int{1, 3, 4} {
 		relatedBuildInvocations.Store(0)
-		match, err := At(Params{At: fmt.Sprintf("%s:%d", path, line), Root: directory, MaxSegments: 4, Related: true, FollowRelated: 2})
+		match, err := At(Params{At: fmt.Sprintf("%s:%d", path, line), Root: directory, Related: true, FollowRelated: 2})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -137,7 +137,7 @@ func TestAtFromDocumentMatchesColdRelatedOutput(t *testing.T) {
 	}
 	defer helperDocument.Close()
 	analysis, _ := BuildNavigationAnalysisFromDocuments([]NavigationDocumentSource{{Path: caller, Document: callerDocument}, {Path: helper, Document: helperDocument}}, NavigationBuildOptions{})
-	params := Params{At: "caller.go:2", Root: directory, MaxSegments: 20, Related: true, FollowRelated: 1}
+	params := Params{At: "caller.go:2", Root: directory, Related: true, FollowRelated: 1}
 	cold, err := At(params)
 	if err != nil {
 		t.Fatal(err)
@@ -152,12 +152,12 @@ func TestAtFromDocumentMatchesColdRelatedOutput(t *testing.T) {
 }
 
 func TestAtRejectsInvalidReferenceAndLine(t *testing.T) {
-	if _, err := At(Params{At: "missing-line", MaxSegments: 20}); err == nil {
+	if _, err := At(Params{At: "missing-line"}); err == nil {
 		t.Fatal("expected malformed reference error")
 	}
 	directory := t.TempDir()
 	path := writeGoFixture(t, directory, "small.go", "package related\n")
-	if _, err := At(Params{At: fmt.Sprintf("%s:20", path), MaxSegments: 20}); err == nil {
+	if _, err := At(Params{At: fmt.Sprintf("%s:20", path)}); err == nil {
 		t.Fatal("expected out-of-range line error")
 	}
 }

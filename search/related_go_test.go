@@ -25,7 +25,7 @@ func helper(value string) string {
 func ignored() {}
 `)
 
-	params := Params{Query: `return helper("needle")`, MaxSegments: 20, Related: true}
+	params := Params{Query: `return helper("needle")`, Related: true}
 	matches, err := Files(params, []string{caller, helper})
 	if err != nil {
 		t.Fatal(err)
@@ -44,7 +44,7 @@ func ignored() {}
 		t.Fatalf("unexpected helper location %#v", point)
 	}
 
-	results := BuildResults(matches, 0, 0, 20, true)
+	results := BuildResults(matches, 0, 0, true)
 	if len(results[0].Related) != 1 || results[0].Related[0].Name != "helper" {
 		t.Fatalf("related result was not preserved: %#v", results[0].Related)
 	}
@@ -80,7 +80,7 @@ func (Second) Analyze() {}
 func Analyze() {}
 func run() { Analyze() } // needle
 `)
-	params := Params{Query: "needle", MaxSegments: 20, Related: true}
+	params := Params{Query: "needle", Related: true}
 	matches, err := Files(params, []string{path})
 	if err != nil {
 		t.Fatal(err)
@@ -103,7 +103,7 @@ type Second struct{}
 func (Second) Load() {}
 func run() { First.Load(); /* needle */ }
 `)
-	matches, err := Files(Params{Query: "needle", MaxSegments: 20, Related: true}, []string{path})
+	matches, err := Files(Params{Query: "needle", Related: true}, []string{path})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -132,7 +132,7 @@ type Second struct{}
 func (*Second) Load() error { return nil }
 `)
 
-	params := Params{Query: "return service.Load()", MaxSegments: 20, Related: true}
+	params := Params{Query: "return service.Load()", Related: true}
 	matches, err := Files(params, []string{caller, first, second})
 	if err != nil {
 		t.Fatal(err)
@@ -170,7 +170,7 @@ func (s Service) run(value string) {
 }
 `)
 
-	params := Params{Query: "needle", MaxSegments: 20, Related: true}
+	params := Params{Query: "needle", Related: true}
 	matches, err := Files(params, []string{path})
 	if err != nil {
 		t.Fatal(err)
@@ -194,7 +194,7 @@ func helper() string {
 }
 `)
 
-	params := Params{Query: `return "needle"`, MaxSegments: 20, Related: true}
+	params := Params{Query: `return "needle"`, Related: true}
 	matches, err := Files(params, []string{caller, helper})
 	if err != nil {
 		t.Fatal(err)
@@ -220,7 +220,7 @@ func first() string { return second() }
 func second() string { return "done" }
 `)
 
-	params := Params{Query: "needle", MaxSegments: 20, Related: true, FollowRelated: 2}
+	params := Params{Query: "needle", Related: true, FollowRelated: 2}
 	matches, err := Files(params, []string{root, first, second})
 	if err != nil {
 		t.Fatal(err)
@@ -285,7 +285,7 @@ nested.Load() // NESTED_CALLER_NEEDLE
 }
 `)
 	files := []string{caller, other, worker}
-	matches, err := Files(Params{Query: "CALLER_NEEDLE", MaxSegments: 20, Related: true}, files)
+	matches, err := Files(Params{Query: "CALLER_NEEDLE", Related: true}, files)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -300,14 +300,14 @@ nested.Load() // NESTED_CALLER_NEEDLE
 
 	assertNestedGoReceiverResolution(t, files)
 
-	otherMatches, err := Files(Params{Query: "OTHER_NEEDLE", MaxSegments: 20, Related: true}, files)
+	otherMatches, err := Files(Params{Query: "OTHER_NEEDLE", Related: true}, files)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if len(otherMatches) != 1 || len(otherMatches[0].Related) != 0 {
 		t.Fatalf("import-resolved call was attributed to the other package: %#v", otherMatches)
 	}
-	otherMethodMatches, err := Files(Params{Query: "OTHER_METHOD_NEEDLE", MaxSegments: 20, Related: true}, files)
+	otherMethodMatches, err := Files(Params{Query: "OTHER_METHOD_NEEDLE", Related: true}, files)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -415,7 +415,7 @@ returned := workers.NewClient()
 returned.Load() // RETURN_CALLER_NEEDLE
 }
 `)
-	matches, err := Files(Params{Query: "RETURN_CALLER_NEEDLE", MaxSegments: 20, Related: true}, []string{caller, model, worker})
+	matches, err := Files(Params{Query: "RETURN_CALLER_NEEDLE", Related: true}, []string{caller, model, worker})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -427,7 +427,7 @@ returned.Load() // RETURN_CALLER_NEEDLE
 
 func assertNestedGoReceiverResolution(t *testing.T, files []string) {
 	t.Helper()
-	matches, err := Files(Params{Query: "NESTED_CALLER_NEEDLE", MaxSegments: 20, Related: true}, files)
+	matches, err := Files(Params{Query: "NESTED_CALLER_NEEDLE", Related: true}, files)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -456,7 +456,7 @@ func caller3() { focus() }
 func caller4() { focus() }
 func caller5() { focus() }
 `)
-	matches, err := Files(Params{Query: "TARGET_NEEDLE", MaxSegments: 20, Related: true}, []string{path})
+	matches, err := Files(Params{Query: "TARGET_NEEDLE", Related: true}, []string{path})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -466,7 +466,7 @@ func caller5() { focus() }
 	if matches[0].OmittedRelatedCallers != 1 || matches[0].OmittedRelatedCallees != 1 {
 		t.Fatalf("omitted callers=%d callees=%d", matches[0].OmittedRelatedCallers, matches[0].OmittedRelatedCallees)
 	}
-	result := BuildResults(matches, 0, 0, 20, true)[0]
+	result := BuildResults(matches, 0, 0, true)[0]
 	if result.OmittedRelatedCallers != 1 || result.OmittedRelatedCallees != 1 {
 		t.Fatalf("result omissions = %#v", result)
 	}
@@ -529,7 +529,7 @@ func TestRelatedUsesAbsoluteRepositoryRootForDisplayPaths(t *testing.T) {
 	}
 	writeGoFixture(t, repo, "caller.go", "package sample\nfunc caller() { helper() } // REMOTE_NEEDLE\n")
 	writeGoFixture(t, repo, "helper.go", "package sample\nfunc helper() {}\n")
-	matches, err := Files(Params{Root: root, Repo: []string{"owner/repo"}, Query: "REMOTE_NEEDLE", Related: true, MaxSegments: 20}, nil)
+	matches, err := Files(Params{Root: root, Repo: []string{"owner/repo"}, Query: "REMOTE_NEEDLE", Related: true}, nil)
 	if err != nil {
 		t.Fatal(err)
 	}

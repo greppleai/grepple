@@ -40,7 +40,7 @@ func TestNewResultRendererSelectsOutputMode(t *testing.T) {
 
 func TestLineRendererWritesToInjectedOutput(t *testing.T) {
 	var output bytes.Buffer
-	renderer := lineRenderer{output: newOutputWriter(&output), maxLines: 10}
+	renderer := lineRenderer{output: newOutputWriter(&output)}
 	results := []api.FileResult{{
 		Path: "example.go",
 		Matches: []api.ResultMatch{
@@ -124,23 +124,6 @@ func TestSegmentRendererPrintsRelatedGoPoints(t *testing.T) {
 		if !strings.Contains(output.String(), command) {
 			t.Fatalf("related output missing continuation %q:\n%s", command, output.String())
 		}
-	}
-}
-
-func TestSegmentRendererReportsMatchesOmittedBySegmentLimit(t *testing.T) {
-	var output bytes.Buffer
-	renderer := segmentRenderer{output: newOutputWriter(&output)}
-	results := []api.FileResult{{
-		Path:     "example.go",
-		Matches:  []api.ResultMatch{{Line: 3, Text: "needle"}, {Line: 40, Text: "needle"}},
-		Segments: []api.ResultSegment{{Kind: "lines", Start: 1, End: 5, Text: "package example"}},
-	}}
-
-	if err := renderer.Render(results); err != nil {
-		t.Fatal(err)
-	}
-	if !strings.Contains(output.String(), "1 matching lines omitted") || !strings.Contains(output.String(), "use --line-only") {
-		t.Fatalf("missing omitted-match guidance:\n%s", output.String())
 	}
 }
 

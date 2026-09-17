@@ -74,7 +74,7 @@ func verifyLanguageParity(t *testing.T, language, path, query, nodeKind string) 
 	if len(hits) == 0 {
 		t.Fatalf("fixture has no %q hit", query)
 	}
-	for _, segment := range BuildSegments(content, language, hits, 20) {
+	for _, segment := range BuildSegments(content, language, hits) {
 		if segment.Kind == "lines" && segment.Start > segment.End {
 			t.Fatalf("invalid segment: %#v", segment)
 		}
@@ -83,7 +83,7 @@ func verifyLanguageParity(t *testing.T, language, path, query, nodeKind string) 
 
 func TestBuildSegmentsParsesSupportedSourceOnce(t *testing.T) {
 	parseInvocations.Store(0)
-	segments := BuildSegments("package p\nfunc Target() {}\n", "go", map[int]bool{2: true}, 20)
+	segments := BuildSegments("package p\nfunc Target() {}\n", "go", map[int]bool{2: true})
 	if len(segments) == 0 {
 		t.Fatal("expected segments")
 	}
@@ -106,7 +106,7 @@ func TestBuildSegmentsReportsStructuralStatus(t *testing.T) {
 		{"invalid UTF-8", string([]byte{0xff}), "go", SegmentBuildFailed},
 	}
 	for _, test := range tests {
-		_, status := BuildSegmentsWithStatus(test.content, test.language, map[int]bool{1: true}, 20)
+		_, status := BuildSegmentsWithStatus(test.content, test.language, map[int]bool{1: true})
 		if status != test.want {
 			t.Errorf("%s: status=%q, want %q", test.name, status, test.want)
 		}

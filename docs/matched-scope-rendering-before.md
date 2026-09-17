@@ -328,24 +328,6 @@ hI6│25│}
 27   main() { … }
 ```
 
-## 8. Segment cap: owner wrapper displaced the directly matching method
-
-```bash
-grepple -F stages.get(index).apply(current) examples/advanced-files/Workflow.java --max-segments 1 --max-output-bytes 0
-```
-
-```text
-examples/advanced-files/Workflow.java
-
-
-// … 7 lines collapsed …
-
-fmv│8│/** Executes named stages and records a typed event history. */
-CI0│9│public final class Workflow<T> {
-
-// … 1 matching lines omitted by --max-segments; use --line-only to locate every match or raise --max-segments …
-```
-
 ## Review notes
 
-The baseline adds one-line summaries for nearby top-level declarations and for nonmatching children of a matched container. The TSX path may also compact a matching function to selected statements. Related navigation is parser-owned, but its direct source rendering still includes the same proximity summaries. Because owner wrappers and matching methods are both ordinary source segments, a tight cap can retain the wrapper while omitting the direct match.
+The baseline adds one-line summaries for nearby top-level declarations and for nonmatching children of a matched container. The TSX path may also compact a matching function to selected statements. Related navigation is parser-owned, but its direct source rendering still includes the same proximity summaries.

@@ -9,7 +9,7 @@ import (
 // ResolveRequest merges a wire api.SearchRequest into validated Params: unset optional
 // fields keep their defaults, and a content search must carry a query.
 func ResolveRequest(r api.SearchRequest) (Params, error) {
-	p := Params{Regex: true, MaxSegments: DefaultMaxSegments, Files: r.Files, At: r.At, Sort: ResultSortPath}
+	p := Params{Regex: true, Files: r.Files, At: r.At, Sort: ResultSortPath}
 	if r.Query != nil {
 		p.Query = *r.Query
 	}
@@ -80,9 +80,6 @@ func applyOptionalFields(p *Params, r api.SearchRequest) {
 	}
 	if r.MaxFiles != nil && *r.MaxFiles >= 1 {
 		p.MaxFiles = *r.MaxFiles
-	}
-	if r.MaxSegments != nil && *r.MaxSegments >= 1 {
-		p.MaxSegments = *r.MaxSegments
 	}
 	if r.Skip != nil && *r.Skip > 0 {
 		p.Skip = *r.Skip

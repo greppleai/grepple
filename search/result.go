@@ -9,8 +9,8 @@ import (
 )
 
 // ToResult converts one internal match into the shared wire api.FileResult: sorted
-// match lines, structural segments, and optional context lines capped at maxWindows.
-func ToResult(m FileMatch, segs []parser.Segment, beforeContext, afterContext, maxWindows int) api.FileResult {
+// match lines, structural segments, and optional context lines.
+func ToResult(m FileMatch, segs []parser.Segment, beforeContext, afterContext int) api.FileResult {
 	lines := SplitLines(m.Content)
 	var ns []int
 	for n := range m.MatchLines {
@@ -35,7 +35,7 @@ func ToResult(m FileMatch, segs []parser.Segment, beforeContext, afterContext, m
 		OmittedRelatedCallers: m.OmittedRelatedCallers, OmittedRelatedCallees: m.OmittedRelatedCallees,
 	}
 	if beforeContext > 0 || afterContext > 0 {
-		r.Context = ContextLines(m.Content, m.MatchLines, beforeContext, afterContext, maxWindows)
+		r.Context = ContextLines(m.Content, m.MatchLines, beforeContext, afterContext)
 	}
 	return r
 }
@@ -95,17 +95,17 @@ func relatedSymbols(points []RelatedPoint) []api.RelatedSymbol {
 }
 
 // BuildResults converts matches concurrently while preserving their ranked order.
-func BuildResults(matches []FileMatch, beforeContext, afterContext, maxSegments int, includeSegments bool) []api.FileResult {
+func BuildResults(matches []FileMatch, beforeContext, afterContext int, includeSegments bool) []api.FileResult {
 	results := make([]api.FileResult, len(matches))
 	runParallel(len(matches), func(index int) {
 		var segments []parser.Segment
 		if includeSegments {
 			segments = matches[index].Segments
 			if !matches[index].SegmentsReady {
-				segments, matches[index].StructureStatus = parser.BuildSegmentsWithStatus(matches[index].Content, matches[index].Language, matches[index].MatchLines, maxSegments)
+				segments, matches[index].StructureStatus = parser.BuildSegmentsWithStatus(matches[index].Content, matches[index].Language, matches[index].MatchLines)
 			}
 		}
-		results[index] = ToResult(matches[index], segments, beforeContext, afterContext, maxSegments)
+		results[index] = ToResult(matches[index], segments, beforeContext, afterContext)
 	})
 	return results
 }

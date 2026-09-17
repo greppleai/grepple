@@ -22,7 +22,7 @@ func TestSegmentsAreBuiltOnceInSearch(t *testing.T) {
 	writeGoFile(t, dir, "c.go", "package c\nfunc Target() {}\n")
 	t.Chdir(dir)
 
-	p := Params{Query: "Target", Regex: true, MaxSegments: DefaultMaxSegments, Limit: 1, Root: dir}
+	p := Params{Query: "Target", Regex: true, Limit: 1, Root: dir}
 	matches, err := Files(p, nil)
 	if err != nil {
 		t.Fatalf("Files: %v", err)
@@ -38,7 +38,7 @@ func TestSegmentsAreBuiltOnceInSearch(t *testing.T) {
 	// asking parser to reconstruct them.
 	matches[0].Segments[0].Kind = "summary"
 	matches[0].Segments[0].Text = "precomputed sentinel"
-	results := BuildResults(matches, 0, 0, DefaultMaxSegments, true)
+	results := BuildResults(matches, 0, 0, true)
 	if len(results) != 1 || len(results[0].Segments) == 0 {
 		t.Fatalf("expected 1 result with segments, got %d results", len(results))
 	}
@@ -55,7 +55,7 @@ func TestSkipSegmentsAvoidsParserOutput(t *testing.T) {
 	writeGoFile(t, dir, "b.go", "package b\nfunc Target() {}\n")
 	t.Chdir(dir)
 
-	p := Params{Query: "Target", Regex: true, MaxSegments: DefaultMaxSegments, Root: dir, SkipSegments: true}
+	p := Params{Query: "Target", Regex: true, Root: dir, SkipSegments: true}
 	matches, err := Files(p, nil)
 	if err != nil {
 		t.Fatalf("Files: %v", err)
@@ -88,7 +88,7 @@ func TestLineRangesBuildWithoutSegments(t *testing.T) {
 	dir := t.TempDir()
 	writeGoFile(t, dir, "a.go", "package a\nfunc Target() {\n\twork()\n}\n")
 	t.Chdir(dir)
-	p := Params{Query: "func Target", Regex: true, MaxSegments: DefaultMaxSegments, Root: dir, SkipSegments: true, LineRanges: true}
+	p := Params{Query: "func Target", Regex: true, Root: dir, SkipSegments: true, LineRanges: true}
 	matches, err := Files(p, nil)
 	if err != nil {
 		t.Fatal(err)
@@ -99,7 +99,7 @@ func TestLineRangesBuildWithoutSegments(t *testing.T) {
 	if got := matches[0].MatchRanges[2]; got.StartLine != 2 || got.EndLine != 4 {
 		t.Fatalf("match range = %#v", got)
 	}
-	result := ToResult(matches[0], nil, 0, 0, DefaultMaxSegments)
+	result := ToResult(matches[0], nil, 0, 0)
 	if len(result.Matches) != 1 || result.Matches[0].EndLine != 4 {
 		t.Fatalf("wire matches = %#v", result.Matches)
 	}
@@ -110,7 +110,7 @@ func TestLineRangesBuildWithoutSegments(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	result = ToResult(matches[0], nil, 0, 0, DefaultMaxSegments)
+	result = ToResult(matches[0], nil, 0, 0)
 	if len(result.Matches) != 1 || result.Matches[0].Line != 3 || result.Matches[0].StartLine != 2 || result.Matches[0].EndLine != 4 {
 		t.Fatalf("enclosing wire matches = %#v", result.Matches)
 	}
@@ -124,7 +124,7 @@ func TestSkipAndLimitWindow(t *testing.T) {
 	writeGoFile(t, dir, "d.go", "package d\n// Target\n")
 	t.Chdir(dir)
 
-	base := Params{Query: "Target", Regex: true, MaxSegments: DefaultMaxSegments, Root: dir}
+	base := Params{Query: "Target", Regex: true, Root: dir}
 	all, err := Files(base, nil)
 	if err != nil {
 		t.Fatalf("Files: %v", err)

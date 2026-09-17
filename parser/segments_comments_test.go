@@ -91,7 +91,7 @@ func TestBuildSegmentsIncludesLeadingComments(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			segments := BuildSegments(test.content, test.language, map[int]bool{test.hitLine: true}, 20)
+			segments := BuildSegments(test.content, test.language, map[int]bool{test.hitLine: true})
 			assertLineRange(t, segments, 1, test.wantEnd)
 		})
 	}
@@ -99,25 +99,25 @@ func TestBuildSegmentsIncludesLeadingComments(t *testing.T) {
 
 func TestBuildSegmentsTreatsCommentMatchAsDeclarationMatch(t *testing.T) {
 	content := "/** Fetches the user. */\nfunction fetchUser() {\n  return user;\n}\n"
-	segments := BuildSegments(content, "javascript", map[int]bool{1: true}, 20)
+	segments := BuildSegments(content, "javascript", map[int]bool{1: true})
 	assertLineRange(t, segments, 1, 4)
 }
 
 func TestLeadingCommentAllowsOneBlankLine(t *testing.T) {
 	content := "/** Fetches the user. */\n\nfunction fetchUser() {\n  return user;\n}\n"
-	segments := BuildSegments(content, "javascript", map[int]bool{4: true}, 20)
+	segments := BuildSegments(content, "javascript", map[int]bool{4: true})
 	assertLineRange(t, segments, 1, 5)
 }
 
 func TestLeadingCommentDoesNotCrossTwoBlankLines(t *testing.T) {
 	content := "/** Unrelated note. */\n\n\nfunction fetchUser() {\n  return user;\n}\n"
-	segments := BuildSegments(content, "javascript", map[int]bool{5: true}, 20)
+	segments := BuildSegments(content, "javascript", map[int]bool{5: true})
 	assertLineRange(t, segments, 4, 6)
 }
 
 func TestTrailingCommentDoesNotAttachToNextDeclaration(t *testing.T) {
 	content := "const value = 1; // not fetchUser documentation\nfunction fetchUser() {\n  return value;\n}\n"
-	segments := BuildSegments(content, "javascript", map[int]bool{3: true}, 20)
+	segments := BuildSegments(content, "javascript", map[int]bool{3: true})
 	assertLineRange(t, segments, 2, 4)
 }
 

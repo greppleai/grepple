@@ -36,7 +36,6 @@ type ResultPage struct {
 // unlimited for the corresponding local operation.
 type ResultLimits struct {
 	MaxFiles         int   `json:"maxFiles"`
-	MaxSegments      int   `json:"maxSegments"`
 	MaxOutputBytes   int   `json:"maxOutputBytes"`
 	MaxSourceBytes   int   `json:"maxSourceBytes"`
 	MaxTotalBytes    int64 `json:"maxTotalBytes"`

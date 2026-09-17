@@ -22,7 +22,7 @@ The strategy was deliberately limited to matching-line count after evaluating mo
 
 ## Segment selection inside a file
 
-Parser-backed segments are built in source order. Before `--max-segments` is applied, Grepple:
+Parser-backed segments are built in source order. Grepple:
 
 1. emits the complete top-level function, method, or declaration containing each direct match;
 2. for class, trait, impl, namespace, and similar containers, retains the owner wrapper and only children containing direct matches;
@@ -30,8 +30,7 @@ Parser-backed segments are built in source order. Before `--max-segments` is app
 4. adds one-line source segments only for matches not covered by a parsed declaration;
 5. merges adjacent retained source ranges.
 
-When the segment cap applies, segments containing direct matching lines rank before required owner-wrapper context. Each class retains source order, and selected segments are sorted back into source order for rendering. If matching lines are omitted, human output reports the count and recommends `--line-only`; complete JSON publishes the configured segment cap in result metadata.
 
-This policy prioritizes complete matching callables without injecting nearby imports, top-level declarations, or nonmatching sibling summaries. Use `--line-only` or bounded context when only evidence lines are wanted, and use a narrower path or higher `--max-segments` when every matching scope matters.
+This policy prioritizes complete matching callables without injecting nearby imports, top-level declarations, or nonmatching sibling summaries. Use `--line-only`, bounded context, or a narrower path when less source is wanted.
 
-Paired review captures show the same commands [before](matched-scope-rendering-before.md) and [after](matched-scope-rendering-after.md) this policy change across Go, Python, Java, Rust, TSX, Shell, related navigation, and a tight segment cap.
+Paired review captures show the same commands [before](matched-scope-rendering-before.md) and [after](matched-scope-rendering-after.md) this policy change across Go, Python, Java, Rust, TSX, Shell, and related navigation.

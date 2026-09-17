@@ -20,7 +20,7 @@ func TestWindowBeforeReadEquivalence(t *testing.T) {
 	}
 	t.Cleanup(func() { _ = os.Chdir(previous) })
 
-	base := Params{Query: "needle", Root: root, MaxSegments: DefaultMaxSegments}
+	base := Params{Query: "needle", Root: root}
 	reference := referenceOrder(t, base, candidates)
 
 	for _, tc := range []struct{ skip, limit int }{{0, 5}, {2, 3}, {5, 100}, {0, 1}, {18, 5}} {
@@ -121,7 +121,7 @@ func TestWindowBeforeReadStopsEarly(t *testing.T) {
 	t.Cleanup(func() { _ = os.Chdir(previous) })
 
 	readInvocations.Store(0)
-	got, err := Files(Params{Query: "needle", Root: root, Limit: 5, MaxSegments: DefaultMaxSegments}, candidates)
+	got, err := Files(Params{Query: "needle", Root: root, Limit: 5}, candidates)
 	if err != nil {
 		t.Fatal(err)
 	}

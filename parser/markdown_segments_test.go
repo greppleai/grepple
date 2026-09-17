@@ -24,7 +24,7 @@ func TestLanguageForMarkdown(t *testing.T) {
 func TestMarkdownSegmentsBreadcrumb(t *testing.T) {
 	content := "# Doc\n\nintro\n\n## Section\n\n### Sub\n\nthe needle here\n"
 	// lines: 1 "# Doc", 5 "## Section", 7 "### Sub", 9 "the needle here"
-	segs := buildMarkdownSegments(content, map[int]bool{9: true}, 20)
+	segs := buildMarkdownSegments(content, map[int]bool{9: true})
 	kinds := segmentKinds(segs)
 	for _, ln := range []int{1, 5, 7} {
 		if kinds[ln] != "summary" {
@@ -46,7 +46,7 @@ func TestMarkdownSegmentsBreadcrumb(t *testing.T) {
 func TestMarkdownSegmentsExcludesSiblingSection(t *testing.T) {
 	content := "# Doc\n\n## Alpha\n\naaa\n\n## Beta\n\nneedle\n"
 	// lines: 1 Doc, 3 ## Alpha, 5 aaa, 7 ## Beta, 9 needle
-	segs := buildMarkdownSegments(content, map[int]bool{9: true}, 20)
+	segs := buildMarkdownSegments(content, map[int]bool{9: true})
 	kinds := segmentKinds(segs)
 	if _, ok := kinds[3]; ok {
 		t.Fatalf("sibling '## Alpha' (line 3) must not appear; segs=%#v", segs)
@@ -60,7 +60,7 @@ func TestMarkdownSegmentsExcludesSiblingSection(t *testing.T) {
 func TestMarkdownSegmentsDedupesSharedHeadings(t *testing.T) {
 	content := "# Doc\n\n## Section\n\nfirst needle\n\nsecond needle\n"
 	// lines: 1 Doc, 3 ## Section, 5 first needle, 7 second needle
-	segs := buildMarkdownSegments(content, map[int]bool{5: true, 7: true}, 20)
+	segs := buildMarkdownSegments(content, map[int]bool{5: true, 7: true})
 	headingCount := 0
 	for _, s := range segs {
 		if s.Start == 3 {
@@ -75,7 +75,7 @@ func TestMarkdownSegmentsDedupesSharedHeadings(t *testing.T) {
 // A match in the preamble (before any heading) is shown with no breadcrumb.
 func TestMarkdownSegmentsPreamble(t *testing.T) {
 	content := "intro needle\n\n# Later\n"
-	segs := buildMarkdownSegments(content, map[int]bool{1: true}, 20)
+	segs := buildMarkdownSegments(content, map[int]bool{1: true})
 	if len(segs) != 1 || segs[0].Kind != "lines" || segs[0].Start != 1 {
 		t.Fatalf("preamble match should be a single line segment; segs=%#v", segs)
 	}

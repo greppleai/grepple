@@ -27,7 +27,7 @@ func withRepoRoot(t *testing.T) {
 
 func TestSearchAndStructuredSegments(t *testing.T) {
 	withRepoRoot(t)
-	p := Params{Query: "formatUser", Globs: []string{"testdata/typescript/*.ts"}, Regex: true, MaxSegments: 20}
+	p := Params{Query: "formatUser", Globs: []string{"testdata/typescript/*.ts"}, Regex: true}
 	matches, err := Files(p, nil)
 	if err != nil {
 		t.Fatal(err)
@@ -64,7 +64,7 @@ func TestSearchAndStructuredSegments(t *testing.T) {
 
 func TestMatchedTSXReturnsCompleteFunction(t *testing.T) {
 	withRepoRoot(t)
-	p := Params{Query: "data-testid='save-dashboard'", Globs: []string{"testdata/typescript/large-component.tsx"}, Regex: true, MaxSegments: 20}
+	p := Params{Query: "data-testid='save-dashboard'", Globs: []string{"testdata/typescript/large-component.tsx"}, Regex: true}
 	m, err := Files(p, nil)
 	if err != nil || len(m) != 1 {
 		t.Fatalf("%v matches=%d", err, len(m))

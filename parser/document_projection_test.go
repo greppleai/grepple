@@ -22,11 +22,11 @@ func TestDocumentStructuralProjectionsDoNotReparse(t *testing.T) {
 	if !ok || start != 3 || end != 4 {
 		t.Fatalf("declaration range=%d-%d ok=%v", start, end, ok)
 	}
-	segments, status := BuildSegmentsFromDocument(document, map[int]bool{4: true}, 20)
+	segments, status := BuildSegmentsFromDocument(document, map[int]bool{4: true})
 	if status != SegmentBuildStructured {
 		t.Fatalf("segment status=%q", status)
 	}
-	cold, coldStatus := BuildSegmentsWithStatus(content, "go", map[int]bool{4: true}, 20)
+	cold, coldStatus := BuildSegmentsWithStatus(content, "go", map[int]bool{4: true})
 	if status != coldStatus || !reflect.DeepEqual(segments, cold) {
 		t.Fatalf("document/cold segments differ:\n%#v\n%#v", segments, cold)
 	}

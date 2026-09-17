@@ -8,9 +8,8 @@ import (
 )
 
 type lineRenderer struct {
-	output   *outputWriter
-	maxLines int
-	anchors  anchorLookup
+	output  *outputWriter
+	anchors anchorLookup
 }
 
 func (renderer lineRenderer) Render(results []api.FileResult) error {
@@ -18,8 +17,7 @@ func (renderer lineRenderer) Render(results []api.FileResult) error {
 		return renderer.renderAnchored(results)
 	}
 	for _, result := range results {
-		limit := min(len(result.Matches), renderer.maxLines)
-		for _, match := range result.Matches[:limit] {
+		for _, match := range result.Matches {
 			location := fmt.Sprintf("%d", match.Line)
 			if match.StartLine > 0 && match.EndLine >= match.StartLine {
 				location = fmt.Sprintf("%d@%d-%d", match.Line, match.StartLine, match.EndLine)
@@ -44,8 +42,7 @@ func (renderer lineRenderer) renderAnchored(results []api.FileResult) error {
 		if err := renderer.output.writeString(result.Path + "\n\n"); err != nil {
 			return err
 		}
-		limit := min(len(result.Matches), renderer.maxLines)
-		for _, match := range result.Matches[:limit] {
+		for _, match := range result.Matches {
 			anchor := renderer.anchors.line(result.Path, match.Line)
 			row := fmt.Sprintf("%s%s%d%s%s\n", anchor, anchorOutputSeparator, match.Line, anchorOutputSeparator, normalizeRenderedAnchorLine(match.Text))
 			if err := renderer.output.writeString(row); err != nil {
@@ -57,15 +54,13 @@ func (renderer lineRenderer) renderAnchored(results []api.FileResult) error {
 }
 
 type onlyMatchingRenderer struct {
-	output   *outputWriter
-	maxLines int
-	matcher  *regexp.Regexp
+	output  *outputWriter
+	matcher *regexp.Regexp
 }
 
 func (renderer onlyMatchingRenderer) Render(results []api.FileResult) error {
 	for _, result := range results {
-		limit := min(len(result.Matches), renderer.maxLines)
-		for _, match := range result.Matches[:limit] {
+		for _, match := range result.Matches {
 			for _, text := range renderer.matcher.FindAllString(match.Text, -1) {
 				if text == "" {
 					continue

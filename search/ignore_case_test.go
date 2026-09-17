@@ -26,7 +26,7 @@ func TestSearchFilesIgnoreCase(t *testing.T) {
 	}
 	t.Cleanup(func() { _ = os.Chdir(previous) })
 
-	insensitive, err := Files(Params{Query: "helloworld", IgnoreCase: true, MaxSegments: DefaultMaxSegments}, nil)
+	insensitive, err := Files(Params{Query: "helloworld", IgnoreCase: true}, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -38,7 +38,7 @@ func TestSearchFilesIgnoreCase(t *testing.T) {
 		t.Fatalf("ignore-case match lines = %v, want {2,4}", got)
 	}
 
-	sensitive, err := Files(Params{Query: "helloworld", MaxSegments: DefaultMaxSegments}, nil)
+	sensitive, err := Files(Params{Query: "helloworld"}, nil)
 	if err != nil {
 		t.Fatal(err)
 	}

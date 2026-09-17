@@ -33,7 +33,7 @@ func TestSearchFilesSkipsBinary(t *testing.T) {
 	}
 	t.Cleanup(func() { _ = os.Chdir(previous) })
 
-	matches, err := Files(Params{Query: "needle", MaxSegments: DefaultMaxSegments}, nil)
+	matches, err := Files(Params{Query: "needle"}, nil)
 	if err != nil {
 		t.Fatal(err)
 	}

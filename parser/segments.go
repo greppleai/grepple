@@ -47,29 +47,29 @@ const (
 // BuildSegments constructs structural segments for content using its detected
 // language and 1-based hit lines. Unsupported languages and parse failures fall
 // back to one-line plain-text segments.
-func BuildSegments(content, language string, hitLines map[int]bool, maxSegments int) []Segment {
-	segments, _ := BuildSegmentsWithStatus(content, language, hitLines, maxSegments)
+func BuildSegments(content, language string, hitLines map[int]bool) []Segment {
+	segments, _ := BuildSegmentsWithStatus(content, language, hitLines)
 	return segments
 }
 
 // BuildSegmentsWithStatus constructs segments and reports parser completeness.
-func BuildSegmentsWithStatus(content, language string, hitLines map[int]bool, maxSegments int) ([]Segment, SegmentBuildStatus) {
+func BuildSegmentsWithStatus(content, language string, hitLines map[int]bool) ([]Segment, SegmentBuildStatus) {
 	if !utf8.ValidString(content) {
-		return buildPlainTextSegments(hitLines, maxSegments), SegmentBuildFailed
+		return buildPlainTextSegments(hitLines), SegmentBuildFailed
 	}
 	if language == "markdown" {
-		return buildMarkdownSegments(content, hitLines, maxSegments), SegmentBuildStructured
+		return buildMarkdownSegments(content, hitLines), SegmentBuildStructured
 	}
 	if language == "text" {
-		return buildPlainTextSegments(hitLines, maxSegments), SegmentBuildPlain
+		return buildPlainTextSegments(hitLines), SegmentBuildPlain
 	}
 	adapter := adapterForLanguage(language)
 	if adapter == nil {
-		return buildPlainTextSegments(hitLines, maxSegments), SegmentBuildUnsupported
+		return buildPlainTextSegments(hitLines), SegmentBuildUnsupported
 	}
-	segments, ok, recovered := analyzeStructure(adapter, content, hitLines, maxSegments)
+	segments, ok, recovered := analyzeStructure(adapter, content, hitLines)
 	if !ok {
-		return buildPlainTextSegments(hitLines, maxSegments), SegmentBuildFailed
+		return buildPlainTextSegments(hitLines), SegmentBuildFailed
 	}
 	if recovered {
 		return segments, SegmentBuildRecovered
@@ -78,36 +78,33 @@ func BuildSegmentsWithStatus(content, language string, hitLines map[int]bool, ma
 }
 
 // BuildSegmentsFromDocument constructs structural segments without reparsing the caller-owned document.
-func BuildSegmentsFromDocument(document *Document, hitLines map[int]bool, maxSegments int) ([]Segment, SegmentBuildStatus) {
+func BuildSegmentsFromDocument(document *Document, hitLines map[int]bool) ([]Segment, SegmentBuildStatus) {
 	if document == nil {
-		return buildPlainTextSegments(hitLines, maxSegments), SegmentBuildFailed
+		return buildPlainTextSegments(hitLines), SegmentBuildFailed
 	}
 	document.mu.RLock()
 	defer document.mu.RUnlock()
 	if document.tree == nil || !utf8.ValidString(document.source) {
-		return buildPlainTextSegments(hitLines, maxSegments), SegmentBuildFailed
+		return buildPlainTextSegments(hitLines), SegmentBuildFailed
 	}
 	adapter := adapterForLanguage(document.language)
 	if adapter == nil {
-		return buildPlainTextSegments(hitLines, maxSegments), SegmentBuildUnsupported
+		return buildPlainTextSegments(hitLines), SegmentBuildUnsupported
 	}
 	root := document.tree.RootNode()
-	segments := buildASTSegments(root, document.source, newMatchLines(hitLines), adapter.Rules(), maxSegments)
+	segments := buildASTSegments(root, document.source, newMatchLines(hitLines), adapter.Rules())
 	if root.HasError() {
 		return segments, SegmentBuildRecovered
 	}
 	return segments, SegmentBuildStructured
 }
 
-func buildPlainTextSegments(hits map[int]bool, maxSegments int) []Segment {
+func buildPlainTextSegments(hits map[int]bool) []Segment {
 	lines := make([]int, 0, len(hits))
 	for line := range hits {
 		lines = append(lines, line)
 	}
 	sort.Ints(lines)
-	if len(lines) > maxSegments {
-		lines = lines[:maxSegments]
-	}
 	segments := make([]Segment, 0, len(lines))
 	for _, line := range lines {
 		segments = append(segments, Segment{Kind: "lines", Start: line, End: line})
@@ -115,7 +112,7 @@ func buildPlainTextSegments(hits map[int]bool, maxSegments int) []Segment {
 	return segments
 }
 
-func buildASTSegments(root *syntaxNode, content string, hits matchLines, config *structureRules, maxSegments int) []Segment {
+func buildASTSegments(root *syntaxNode, content string, hits matchLines, config *structureRules) []Segment {
 	lines := splitLines(content)
 	topLevel := nonPunctuationChildren(root)
 
@@ -129,7 +126,7 @@ func buildASTSegments(root *syntaxNode, content string, hits matchLines, config 
 		}
 	}
 	segments = uncoveredLineSegments(segments, hits)
-	return limitMatchedSegments(mergeSegments(segments, len(lines)), maxSegments, hits)
+	return mergeSegments(segments, len(lines))
 }
 
 // nonPunctuationChildren returns root's named children with punctuation nodes
@@ -319,49 +316,4 @@ func mergeSegments(segments []Segment, lineCount int) []Segment {
 		merged = append(merged, segment)
 	}
 	return merged
-}
-
-func limitMatchedSegments(segments []Segment, maxSegments int, hits matchLines) []Segment {
-	if len(segments) <= maxSegments {
-		return segments
-	}
-	direct, context := make([]Segment, 0, len(segments)), make([]Segment, 0, len(segments))
-	for _, segment := range segments {
-		if hits.hitsRange(segment.Start, segment.End) {
-			direct = append(direct, segment)
-		} else {
-			context = append(context, segment)
-		}
-	}
-	kept := append([]Segment{}, direct[:min(len(direct), maxSegments)]...)
-	remaining := maxSegments - len(kept)
-	if remaining > 0 {
-		kept = append(kept, context[:min(len(context), remaining)]...)
-	}
-	sort.SliceStable(kept, func(i, j int) bool { return kept[i].Start < kept[j].Start })
-	return kept
-}
-
-func limitSegments(segments []Segment, maxSegments int) []Segment {
-	if len(segments) <= maxSegments {
-		return segments
-	}
-	var matching, context []Segment
-	for _, segment := range segments {
-		if segment.Kind == "lines" {
-			matching = append(matching, segment)
-		} else {
-			context = append(context, segment)
-		}
-	}
-	kept := append([]Segment{}, matching[:min(len(matching), maxSegments)]...)
-	remaining := maxSegments - len(kept)
-	if remaining > 0 {
-		kept = append(kept, context[:min(len(context), remaining)]...)
-	}
-	if len(kept) == 0 {
-		kept = append(kept, segments[:min(len(segments), maxSegments)]...)
-	}
-	sort.SliceStable(kept, func(i, j int) bool { return kept[i].Start < kept[j].Start })
-	return kept
 }

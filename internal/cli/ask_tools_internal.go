@@ -162,7 +162,7 @@ func runAskSearch(ctx context.Context, root, server string, input askSearchInput
 		return nil, fmt.Errorf("context must not be negative")
 	}
 	contextLines := min(input.Context, 3)
-	params := search.Params{Query: input.Query, Globs: input.Paths, Regex: input.Regex, IgnoreCase: input.IgnoreCase, Root: root, MaxSegments: 8, Limit: limit + 1, Sort: search.ResultSortPath, BeforeContext: contextLines, AfterContext: contextLines, SkipSegments: mode != "snippets"}
+	params := search.Params{Query: input.Query, Globs: input.Paths, Regex: input.Regex, IgnoreCase: input.IgnoreCase, Root: root, Limit: limit + 1, Sort: search.ResultSortPath, BeforeContext: contextLines, AfterContext: contextLines, SkipSegments: mode != "snippets"}
 	results, err := askSearchResults(ctx, server, params, input.Repository)
 	if err != nil {
 		return nil, err
@@ -195,7 +195,7 @@ func askSearchResults(ctx context.Context, server string, params search.Params, 
 	if err != nil {
 		return nil, err
 	}
-	return search.BuildResults(matches, params.BeforeContext, params.AfterContext, params.MaxSegments, !params.SkipSegments), nil
+	return search.BuildResults(matches, params.BeforeContext, params.AfterContext, !params.SkipSegments), nil
 }
 
 func runAskNavigate(ctx context.Context, root, server string, input askNavigateInput) (any, error) {
@@ -211,7 +211,7 @@ func runAskNavigateWithSession(ctx context.Context, session *researchSession, ro
 	if input.FollowDepth < 0 || input.FollowDepth > 2 {
 		return nil, fmt.Errorf("follow_depth must be between 0 and 2")
 	}
-	params := search.Params{At: input.Location, Root: root, MaxSegments: 12, Related: true, FollowRelated: input.FollowDepth, Sort: search.ResultSortPath, Limit: 1}
+	params := search.Params{At: input.Location, Root: root, Related: true, FollowRelated: input.FollowDepth, Sort: search.ResultSortPath, Limit: 1}
 	if input.Repository != "" {
 		params.Repo = []string{input.Repository}
 		results, err := searchRemoteContext(ctx, &cliOptions{Params: params}, server)
@@ -241,7 +241,7 @@ func runAskNavigateWithSession(ctx context.Context, session *researchSession, ro
 	if err != nil {
 		return nil, err
 	}
-	results := search.BuildResults([]search.FileMatch{*match}, 0, 0, params.MaxSegments, true)
+	results := search.BuildResults([]search.FileMatch{*match}, 0, 0, true)
 	response := map[string]any{"location": input.Location, "results": results}
 	if !match.CallableDeclaration {
 		response["correction"] = map[string]string{

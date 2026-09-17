@@ -3,7 +3,6 @@ package parser
 import (
 	"fmt"
 	"os"
-	"reflect"
 	"strings"
 	"testing"
 )
@@ -44,7 +43,7 @@ func TestASTSegmentsGolden(t *testing.T) {
 			}
 		}
 		var got string
-		for _, segment := range BuildSegments(content, LanguageFor(c.path), hits, 20) {
+		for _, segment := range BuildSegments(content, LanguageFor(c.path), hits) {
 			got += fmt.Sprintf("[%s:%d-%d:%q]", segment.Kind, segment.Start, segment.End, segment.Text)
 		}
 		if got != c.want {
@@ -53,15 +52,22 @@ func TestASTSegmentsGolden(t *testing.T) {
 	}
 }
 
-func TestASTSegmentLimitKeepsDirectMatchingCallable(t *testing.T) {
-	withRepoRoot(t)
-	contentBytes, err := os.ReadFile("testdata/java/Sample.java")
-	if err != nil {
-		t.Fatal(err)
+func TestBuildSegmentsKeepsEveryMatchingScope(t *testing.T) {
+	var content strings.Builder
+	content.WriteString("package p\n\n")
+	hits := make(map[int]bool)
+	for index := 0; index < 25; index++ {
+		fmt.Fprintf(&content, "func f%d() {\n\tmarker%d := true\n}\n\n", index, index)
+		hits[4+index*4] = true
 	}
-	segments := BuildSegments(string(contentBytes), "java", map[int]bool{14: true}, 1)
-	want := []Segment{{Kind: "lines", Start: 12, End: 17}}
-	if !reflect.DeepEqual(segments, want) {
-		t.Fatalf("segments=%#v want=%#v", segments, want)
+	segments := BuildSegments(content.String(), "go", hits)
+	if len(segments) != 25 {
+		t.Fatalf("segments=%d want=25: %#v", len(segments), segments)
+	}
+	for index, segment := range segments {
+		wantStart := 3 + index*4
+		if segment.Kind != "lines" || segment.Start != wantStart || segment.End != wantStart+2 {
+			t.Fatalf("segment %d=%+v want lines %d-%d", index, segment, wantStart, wantStart+2)
+		}
 	}
 }

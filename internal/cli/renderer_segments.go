@@ -53,12 +53,6 @@ func (renderer segmentRenderer) renderFile(result api.FileResult) error {
 		}
 		cursor = segment.End + 1
 	}
-	if omitted := omittedMatchLines(result); omitted > 0 {
-		message := fmt.Sprintf("\n// … %d matching lines omitted by --max-segments; use --line-only to locate every match or raise --max-segments …\n", omitted)
-		if err := renderer.output.writeString(message); err != nil {
-			return err
-		}
-	}
 	line := relatedRootLine(result)
 	return renderer.renderRelated(result.Related, result.OmittedRelatedCallers, result.OmittedRelatedCallees, result.Path, line)
 }
@@ -209,23 +203,6 @@ func (renderer segmentRenderer) renderSourceLine(path string, line int, content 
 		return renderer.output.writeString(fmt.Sprintf("%s%s%d%s%s\n", anchor, anchorOutputSeparator, line, anchorOutputSeparator, content))
 	}
 	return renderer.output.writeString(fmt.Sprintf("%*d   %s\n", width, line, content))
-}
-
-func omittedMatchLines(result api.FileResult) int {
-	omitted := make(map[int]struct{})
-	for _, match := range result.Matches {
-		covered := false
-		for _, segment := range result.Segments {
-			if match.Line >= segment.Start && match.Line <= segment.End {
-				covered = true
-				break
-			}
-		}
-		if !covered {
-			omitted[match.Line] = struct{}{}
-		}
-	}
-	return len(omitted)
 }
 
 func segmentLineWidth(segments []api.ResultSegment) int {

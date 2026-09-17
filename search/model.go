@@ -2,10 +2,6 @@ package search
 
 import "github.com/greppleai/grepple/parser"
 
-// DefaultMaxSegments caps how many structural segments one file result includes
-// when the caller does not set MaxSegments.
-const DefaultMaxSegments = 20
-
 const (
 	// ResultSortPath preserves deterministic repository/path order.
 	ResultSortPath = "path"
@@ -22,7 +18,6 @@ type Params struct {
 	IgnoreCase      bool     `json:"ignoreCase"`
 	InvertMatch     bool     `json:"invertMatch,omitempty"`
 	MaxFiles        int      `json:"maxFiles,omitempty"`
-	MaxSegments     int      `json:"maxSegments"`
 	Skip            int      `json:"skip,omitempty"`
 	Limit           int      `json:"limit,omitempty"`
 	Sort            string   `json:"sort,omitempty"`

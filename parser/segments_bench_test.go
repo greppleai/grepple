@@ -29,6 +29,6 @@ func BenchmarkAnalyzeStructureLarge(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		analyzeStructure(cfg, content, hits, 20)
+		analyzeStructure(cfg, content, hits)
 	}
 }

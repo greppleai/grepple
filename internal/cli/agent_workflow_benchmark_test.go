@@ -29,7 +29,7 @@ func BenchmarkAgentWorkflows(b *testing.B) {
 
 	workflows := []agentWorkflowBenchmark{
 		{name: "BreadthSummary", commands: [][]string{{"-F", "func ", "--count-summary", "service.go", "handler.go"}}, want: []string{"2 files\t5 matches"}},
-		{name: "BroadAccidental", commands: [][]string{{"--line-only", "--no-anchors", "-F", "NOISE_MATCH", "noise.txt", "--limit", "0", "--max-segments", "1000"}}, want: []string{"noise.txt:2:", "grepple output truncated"}},
+		{name: "BroadAccidental", commands: [][]string{{"--line-only", "--no-anchors", "-F", "NOISE_MATCH", "noise.txt", "--limit", "0"}}, want: []string{"noise.txt:2:", "grepple output truncated"}},
 		{name: "OutlineDiscovery", commands: [][]string{{"--outline", "service.go", "--no-anchors"}}, want: []string{"func\tRun", "func\tConsumer"}},
 		{name: "StructuralLookup", commands: [][]string{{"-F", "func Run(", "service.go", "--no-anchors"}}, want: []string{"func Run()", "validate()", "save()"}},
 		{name: "LineLocateThenAt", commands: [][]string{{"--line-only", "-F", "func Run(", "service.go", "--no-anchors"}, {"--at", "service.go:2-6", "--no-anchors"}}, want: []string{"service.go:2-6:func Run()", "validate()", "save()"}},

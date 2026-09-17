@@ -166,7 +166,7 @@ func TestNewLanguagesBuildStructuralSegments(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.language, func(t *testing.T) {
-			segments := BuildSegments(test.content, test.language, map[int]bool{test.hitLine: true}, 20)
+			segments := BuildSegments(test.content, test.language, map[int]bool{test.hitLine: true})
 			if len(segments) == 0 {
 				t.Fatal("expected structural segments")
 			}

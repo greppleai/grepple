@@ -21,7 +21,6 @@ Complete JSON responses from local text search, navigation graph operations, bou
   },
   "limits": {
     "maxFiles": 0,
-    "maxSegments": 20,
     "maxOutputBytes": 16384,
     "maxSourceBytes": 0,
     "maxTotalBytes": 0,

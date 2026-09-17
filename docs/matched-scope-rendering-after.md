@@ -296,32 +296,6 @@ YXE│24│  return 1
 hI6│25│}
 ```
 
-## 8. Segment cap: complete directly matching method outranks its owner wrapper
-
-```bash
-grepple -F stages.get(index).apply(current) examples/advanced-files/Workflow.java --max-segments 1 --max-output-bytes 0
-```
-
-```text
-examples/advanced-files/Workflow.java
-
-
-// … 15 lines collapsed …
-
-gLg│16│    /** ADVANCED_DOC: apply each stage in order while recording lifecycle events. */
-2uE│17│    public T execute(T input, List<Function<T, T>> stages) {
-YlI│18│        T current = input;
-zeW│19│        for (int index = 0; index < stages.size(); index++) {
-9gU│20│            String name = "stage-" + index;
-f40│21│            events.add(new Started(name, Instant.now()));
-pdD│22│            current = stages.get(index).apply(current);
-oJF│23│            events.add(new Completed(name, Instant.now()));
-k1_│24│        }
-MR-│25│        String marker = "ADVANCED_END";
-ixV│26│        return current;
-cOK│27│    }
-```
-
 ## Review notes
 
-The candidate retains complete functions and methods containing direct matches. Container headers and closing delimiters remain where required to identify a class, impl, or equivalent owner when the segment budget permits; direct matching callables take priority under a tight cap. It removes proximity-selected imports, neighboring top-level declarations, nonmatching sibling summaries, and TSX statement-level compaction. `--related` still reports only parser-owned navigation points attached to the matched scopes.
+The candidate retains complete functions and methods containing direct matches. Container headers and closing delimiters remain where required to identify a class, impl, or equivalent owner. It removes proximity-selected imports, neighboring top-level declarations, nonmatching sibling summaries, and TSX statement-level compaction. `--related` still reports only parser-owned navigation points attached to the matched scopes.

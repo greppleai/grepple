@@ -5,19 +5,15 @@ import (
 	"sort"
 )
 
-// ContextLines selects the matching lines (capped at limit, in line order)
-// plus the requested lines before and after each, merging overlaps; each returned
-// line is flagged as a match or context.
-func ContextLines(content string, hits map[int]bool, before, after, limit int) []api.ContextLine {
+// ContextLines selects matching lines plus the requested lines before and after
+// each, merging overlaps; each returned line is flagged as a match or context.
+func ContextLines(content string, hits map[int]bool, before, after int) []api.ContextLine {
 	lines := SplitLines(content)
 	var hs []int
 	for x := range hits {
 		hs = append(hs, x)
 	}
 	sort.Ints(hs)
-	if len(hs) > limit {
-		hs = hs[:limit]
-	}
 	chosen := map[int]bool{}
 	inc := map[int]bool{}
 	for _, x := range hs {

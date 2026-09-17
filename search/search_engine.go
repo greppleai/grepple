@@ -484,7 +484,7 @@ func sortMatches(out []FileMatch, strategy string) {
 // by the caller. Result construction reuses the attached facts.
 func analyzeMatchStructure(fm *FileMatch, p Params) {
 	if !p.SkipSegments {
-		fm.Segments, fm.StructureStatus = parser.BuildSegmentsWithStatus(fm.Content, fm.Language, fm.MatchLines, p.MaxSegments)
+		fm.Segments, fm.StructureStatus = parser.BuildSegmentsWithStatus(fm.Content, fm.Language, fm.MatchLines)
 		fm.SegmentsReady = true
 	}
 	if p.EnclosingRanges {

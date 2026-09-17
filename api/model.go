@@ -14,7 +14,6 @@ type SearchRequest struct {
 	IgnoreCase      *bool    `json:"ignoreCase,omitempty"`
 	InvertMatch     *bool    `json:"invertMatch,omitempty"`
 	MaxFiles        *int     `json:"maxFiles,omitempty"`
-	MaxSegments     *int     `json:"maxSegments,omitempty"`
 	Skip            *int     `json:"skip,omitempty"`
 	Limit           *int     `json:"limit,omitempty"`
 	Sort            string   `json:"sort,omitempty"`

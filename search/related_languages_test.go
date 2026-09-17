@@ -84,7 +84,7 @@ func testRelatedLanguageFixture(t *testing.T, fixture navigationFixture) {
 		t.Fatal(err)
 	}
 
-	callerMatches, err := Files(Params{Query: "NAVIGATION_NEEDLE", MaxSegments: 20, Related: true}, []string{path})
+	callerMatches, err := Files(Params{Query: "NAVIGATION_NEEDLE", Related: true}, []string{path})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -96,7 +96,7 @@ func testRelatedLanguageFixture(t *testing.T, fixture navigationFixture) {
 		t.Fatalf("expected unique callee, got %#v", callee)
 	}
 
-	declarationMatches, err := Files(Params{Query: "DECLARATION_NEEDLE", MaxSegments: 20, Related: true}, []string{path})
+	declarationMatches, err := Files(Params{Query: "DECLARATION_NEEDLE", Related: true}, []string{path})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -106,7 +106,7 @@ func testRelatedLanguageFixture(t *testing.T, fixture navigationFixture) {
 	}
 
 	helperLine := lineContaining(fixture.content, "DECLARATION_NEEDLE")
-	exact, err := At(Params{At: fmt.Sprintf("%s:%d", path, helperLine), MaxSegments: 20})
+	exact, err := At(Params{At: fmt.Sprintf("%s:%d", path, helperLine)})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -126,7 +126,7 @@ class Runner { Object run() { return new Widget(); /* needle */ } }
 	if err := os.WriteFile(path, []byte(content), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	matches, err := Files(Params{Query: "needle", MaxSegments: 20, Related: true}, []string{path})
+	matches, err := Files(Params{Query: "needle", Related: true}, []string{path})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -146,7 +146,7 @@ function root() { return first() + "NAVIGATION_NEEDLE"; }
 	if err := os.WriteFile(path, []byte(content), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	matches, err := Files(Params{Query: "NAVIGATION_NEEDLE", MaxSegments: 20, Related: true, FollowRelated: 2}, []string{path})
+	matches, err := Files(Params{Query: "NAVIGATION_NEEDLE", Related: true, FollowRelated: 2}, []string{path})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -170,7 +170,7 @@ func TestRelatedNamesAreUniqueWithinLanguage(t *testing.T) {
 	if err := os.WriteFile(python, []byte("def helper():\n    pass\n"), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	matches, err := Files(Params{Query: "needle", MaxSegments: 20, Related: true}, []string{javascript, python})
+	matches, err := Files(Params{Query: "needle", Related: true}, []string{javascript, python})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -190,7 +190,7 @@ func TestRelatedNavigationConnectsTypeScriptAndTSX(t *testing.T) {
 	if err := os.WriteFile(caller, []byte("function Run() { return <div>{helper() /* needle */}</div>; }\n"), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	matches, err := Files(Params{Query: "needle", MaxSegments: 20, Related: true}, []string{caller, helper})
+	matches, err := Files(Params{Query: "needle", Related: true}, []string{caller, helper})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -209,7 +209,7 @@ func TestRelatedNavigationResolvesTypeScriptInterfaceMethods(t *testing.T) {
 	if err := os.WriteFile(caller, []byte("function run(clock: Clock) { return clock.now(); /* needle */ }\n"), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	matches, err := Files(Params{Query: "needle", MaxSegments: 20, Related: true}, []string{caller, declaration})
+	matches, err := Files(Params{Query: "needle", Related: true}, []string{caller, declaration})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -253,7 +253,7 @@ nested.load(); // NESTED_CALLER_NEEDLE
 		t.Fatal(err)
 	}
 	files := []string{caller, first, second}
-	matches, err := Files(Params{Query: "CALLER_NEEDLE", MaxSegments: 20, Related: true}, files)
+	matches, err := Files(Params{Query: "CALLER_NEEDLE", Related: true}, files)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -268,14 +268,14 @@ nested.load(); // NESTED_CALLER_NEEDLE
 
 	assertNestedTypeScriptReceiverResolution(t, files)
 
-	secondMatches, err := Files(Params{Query: "SECOND_NEEDLE", MaxSegments: 20, Related: true}, files)
+	secondMatches, err := Files(Params{Query: "SECOND_NEEDLE", Related: true}, files)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if len(secondMatches) != 1 || len(secondMatches[0].Related) != 0 {
 		t.Fatalf("import-resolved call was attributed to the other module: %#v", secondMatches)
 	}
-	secondMethodMatches, err := Files(Params{Query: "SECOND_METHOD_NEEDLE", MaxSegments: 20, Related: true}, files)
+	secondMethodMatches, err := Files(Params{Query: "SECOND_METHOD_NEEDLE", Related: true}, files)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -516,7 +516,7 @@ returned.load(); // RETURN_CALLER_NEEDLE
 `), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	matches, err := Files(Params{Query: "RETURN_CALLER_NEEDLE", MaxSegments: 20, Related: true}, []string{caller, model, worker})
+	matches, err := Files(Params{Query: "RETURN_CALLER_NEEDLE", Related: true}, []string{caller, model, worker})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -528,7 +528,7 @@ returned.load(); // RETURN_CALLER_NEEDLE
 
 func assertNestedTypeScriptReceiverResolution(t *testing.T, files []string) {
 	t.Helper()
-	matches, err := Files(Params{Query: "NESTED_CALLER_NEEDLE", MaxSegments: 20, Related: true}, files)
+	matches, err := Files(Params{Query: "NESTED_CALLER_NEEDLE", Related: true}, files)
 	if err != nil {
 		t.Fatal(err)
 	}

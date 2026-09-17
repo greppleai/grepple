@@ -91,7 +91,7 @@ func searchResultMetadata(options *cliOptions, total int, totalKnown, remote boo
 		Scope:   resultScope(mode, scopePaths, options.Params.Repo, nil),
 		Order:   options.Params.Sort,
 		Page:    api.ResultPage{Skip: options.Params.Skip, Limit: options.Params.Limit, Returned: returned, Total: totalPointer, Complete: complete},
-		Limits:  api.ResultLimits{MaxFiles: options.Params.MaxFiles, MaxSegments: options.Params.MaxSegments, MaxOutputBytes: options.MaxOutputBytes, JSONByteUncapped: options.JSON != "off"},
+		Limits:  api.ResultLimits{MaxFiles: options.Params.MaxFiles, MaxOutputBytes: options.MaxOutputBytes, JSONByteUncapped: options.JSON != "off"},
 		Omitted: api.ResultOmissions{Files: omitted}, Diagnostics: searchResultDiagnostics(options, results),
 	}
 	metadata.Scope.ExcludedRepositories = normalizedResultScope(options.Params.ExcludeRepo, "")

@@ -26,7 +26,6 @@ func TestSearchRemoteSendsAndAppliesRepoExclusion(t *testing.T) {
 	options := &cliOptions{Params: search.Params{
 		Query:       "needle",
 		Regex:       false,
-		MaxSegments: search.DefaultMaxSegments,
 		ExcludeRepo: []string{"owner/current"},
 	}}
 	results, err := searchRemote(options, server.URL)
