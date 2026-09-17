@@ -24,9 +24,9 @@ const (
 )
 
 type askArgs struct {
-	Provider string   `arg:"--provider" placeholder:"NAME" help:"AI provider: anthropic, anthropic-subscription, bedrock, codex, copilot, or openai"`
-	Model    string   `arg:"--model" placeholder:"[PROVIDER/]MODEL" help:"research model, optionally prefixed with its provider"`
-	Server   string   `arg:"--server" placeholder:"URL" help:"remote Grepple service available to research tools"`
+	Provider string `arg:"--provider" placeholder:"NAME" help:"AI provider: anthropic, anthropic-subscription, bedrock, codex, copilot, or openai"`
+	Model    string `arg:"--model" placeholder:"[PROVIDER/]MODEL" help:"research model, optionally prefixed with its provider"`
+	commonArgs
 	Timeout  int      `arg:"--timeout-seconds" placeholder:"N" help:"overall deadline in seconds"`
 	Question []string `arg:"positional" placeholder:"QUESTION"`
 }

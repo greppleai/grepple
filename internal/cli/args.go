@@ -22,10 +22,10 @@ const DefaultResultLimit = search.DefaultPageLimit
 const DefaultTextOutputBytes = 16 * 1024
 
 type searchArgs struct {
-	Local            bool     `arg:"--local" help:"search only the local working directory (this is the default)"`
-	Remote           bool     `arg:"-R,--remote" help:"also query the remote shard/router (default: local only)"`
-	Recursive        bool     `arg:"-r,--recursive" help:"search directories recursively (compatibility alias; already the default)"`
-	Server           string   `arg:"-s,--server" placeholder:"URL" help:"remote shard/router URL (implies --remote)"`
+	Local     bool `arg:"--local" help:"search only the local working directory (this is the default)"`
+	Remote    bool `arg:"-R,--remote" help:"also query the remote shard/router (default: local only)"`
+	Recursive bool `arg:"-r,--recursive" help:"search directories recursively (compatibility alias; already the default)"`
+	commonArgs
 	LineNumber       bool     `arg:"-n,--line-number" help:"include line numbers (enabled by default)"`
 	LineOnly         bool     `arg:"--line-only" help:"print only matching lines; include construct end lines when available"`
 	Enclosing        bool     `arg:"--enclosing" help:"line-only: annotate body matches with the nearest enclosing multi-line syntax range"`

@@ -17,11 +17,11 @@ import (
 )
 
 type treeArgs struct {
-	Server string `arg:"-s,--server" placeholder:"URL" help:"remote shard/router URL"`
-	Depth  int    `arg:"--depth" default:"2" placeholder:"N" help:"levels to descend"`
-	JSON   bool   `arg:"--json" help:"print raw JSON"`
-	Repo   string `arg:"positional,required" placeholder:"OWNER/REPOSITORY"`
-	Path   string `arg:"positional" placeholder:"PATH"`
+	commonArgs
+	Depth int    `arg:"--depth" default:"2" placeholder:"N" help:"levels to descend"`
+	JSON  bool   `arg:"--json" help:"print raw JSON"`
+	Repo  string `arg:"positional,required" placeholder:"OWNER/REPOSITORY"`
+	Path  string `arg:"positional" placeholder:"PATH"`
 }
 
 func (treeArgs) Description() string {

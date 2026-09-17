@@ -19,8 +19,8 @@ import (
 const maxHumanBoundaryPatterns = 5
 
 type boundariesArgs struct {
-	JSON           bool     `arg:"--json" help:"emit the complete boundary report as JSON"`
-	Server         string   `arg:"--server" placeholder:"URL" help:"remote Grepple service"`
+	JSON bool `arg:"--json" help:"emit the complete boundary report as JSON"`
+	commonArgs
 	Repository     string   `arg:"--repo" placeholder:"OWNER/REPO[@REF]" help:"analyze one exact indexed repository"`
 	MinOccurrences int      `arg:"--min-occurrences" placeholder:"N" help:"minimum callers sharing a reported pattern (default 2)"`
 	MaxFiles       int      `arg:"--max-files" placeholder:"N" help:"parse at most N discovered files (0 = unlimited)"`

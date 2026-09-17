@@ -13,9 +13,9 @@ import (
 )
 
 type architectureResponsibilitiesArgs struct {
-	JSON           bool     `arg:"--json" help:"emit complete directory responsibilities JSON"`
-	Compact        bool     `arg:"--compact" help:"emit a bounded directory responsibility summary"`
-	Server         string   `arg:"--server" placeholder:"URL" help:"remote Grepple service"`
+	JSON    bool `arg:"--json" help:"emit complete directory responsibilities JSON"`
+	Compact bool `arg:"--compact" help:"emit a bounded directory responsibility summary"`
+	commonArgs
 	Repository     string   `arg:"--repo" placeholder:"OWNER/REPO[@REF]" help:"analyze one exact indexed repository"`
 	MaxFiles       int      `arg:"--max-files" placeholder:"N" help:"analyze at most N supported files (0 = unlimited)"`
 	MaxOutputBytes int      `arg:"--max-output-bytes" placeholder:"N" help:"cap compact output (default 16384; 0 = unlimited)"`

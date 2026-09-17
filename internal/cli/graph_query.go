@@ -18,9 +18,9 @@ import (
 const maxNavigationQueryDepth = 10
 
 type graphQueryArgs struct {
-	JSON           bool     `arg:"--json" help:"emit the complete queried subgraph as JSON"`
-	Compact        bool     `arg:"--compact" help:"emit a bounded agent-facing queried subgraph"`
-	Server         string   `arg:"--server" placeholder:"URL" help:"remote Grepple service"`
+	JSON    bool `arg:"--json" help:"emit the complete queried subgraph as JSON"`
+	Compact bool `arg:"--compact" help:"emit a bounded agent-facing queried subgraph"`
+	commonArgs
 	Repository     string   `arg:"--repo" placeholder:"OWNER/REPO[@REF]" help:"analyze one exact indexed repository"`
 	Symbol         string   `arg:"--symbol" placeholder:"NAME" help:"select one exact declaration name"`
 	At             string   `arg:"--at" placeholder:"PATH:LINE" help:"select the declaration containing a source location"`

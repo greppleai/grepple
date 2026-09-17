@@ -21,8 +21,8 @@ import (
 const directoryArchitectureSchema = "grepple-directory-architecture-v5"
 
 type architectureArgs struct {
-	JSON           bool     `arg:"--json" help:"emit complete directory architecture JSON"`
-	Server         string   `arg:"--server" placeholder:"URL" help:"remote Grepple service"`
+	JSON bool `arg:"--json" help:"emit complete directory architecture JSON"`
+	commonArgs
 	Repository     string   `arg:"--repo" placeholder:"OWNER/REPO[@REF]" help:"analyze one exact indexed repository"`
 	Compact        bool     `arg:"--compact" help:"emit a bounded agent-facing directory summary"`
 	Depth          int      `arg:"--depth" placeholder:"N" help:"maximum displayed directory depth (default 3; 0 = unlimited)"`
@@ -33,8 +33,8 @@ type architectureArgs struct {
 }
 
 type architectureResolveArgs struct {
-	JSON           bool     `arg:"--json" help:"emit complete matching declarations as JSON"`
-	Server         string   `arg:"--server" placeholder:"URL" help:"remote Grepple service"`
+	JSON bool `arg:"--json" help:"emit complete matching declarations as JSON"`
+	commonArgs
 	Repository     string   `arg:"--repo" placeholder:"OWNER/REPO[@REF]" help:"analyze one exact indexed repository"`
 	Compact        bool     `arg:"--compact" help:"emit bounded source-linked matches"`
 	Symbol         string   `arg:"--symbol,required" placeholder:"NAME" help:"exact or terminal declaration name"`
@@ -44,8 +44,8 @@ type architectureResolveArgs struct {
 }
 
 type architectureWhyArgs struct {
-	JSON           bool     `arg:"--json" help:"emit complete source-linked relation evidence as JSON"`
-	Server         string   `arg:"--server" placeholder:"URL" help:"remote Grepple service"`
+	JSON bool `arg:"--json" help:"emit complete source-linked relation evidence as JSON"`
+	commonArgs
 	Repository     string   `arg:"--repo" placeholder:"OWNER/REPO[@REF]" help:"analyze one exact indexed repository"`
 	Compact        bool     `arg:"--compact" help:"emit bounded source-linked relation evidence"`
 	MaxFiles       int      `arg:"--max-files" placeholder:"N" help:"analyze at most N supported files (0 = unlimited)"`

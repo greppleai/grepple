@@ -11,10 +11,10 @@ import (
 )
 
 type refsArgs struct {
-	Server string `arg:"-s,--server" placeholder:"URL" help:"remote shard/router URL"`
-	JSON   bool   `arg:"--json" help:"print deterministic JSON"`
-	Kind   string `arg:"--kind" placeholder:"KIND" help:"only default, branch, or tag refs"`
-	Repo   string `arg:"positional" placeholder:"OWNER/REPO" help:"only refs for this source repository"`
+	commonArgs
+	JSON bool   `arg:"--json" help:"print deterministic JSON"`
+	Kind string `arg:"--kind" placeholder:"KIND" help:"only default, branch, or tag refs"`
+	Repo string `arg:"positional" placeholder:"OWNER/REPO" help:"only refs for this source repository"`
 }
 
 func (refsArgs) Description() string {

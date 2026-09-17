@@ -568,7 +568,7 @@ func runAskRemoteReadTool(ctx context.Context, server string, input readToolInpu
 	if strings.TrimSpace(input.Path) == "" {
 		return fantasy.NewTextErrorResponse("path is required"), nil
 	}
-	values := getArgs{Server: server, Repo: input.Repository, Path: input.Path, Outline: input.Outline}
+	values := getArgs{commonArgs: commonArgs{Server: server}, Repo: input.Repository, Path: input.Path, Outline: input.Outline}
 	if !input.Outline {
 		start, end, err := askReadRange(input.StartLine, input.EndLine)
 		if err != nil {

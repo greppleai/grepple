@@ -15,7 +15,7 @@ import (
 )
 
 type reposArgs struct {
-	Server string `arg:"-s,--server" placeholder:"URL" help:"remote shard/router URL"`
+	commonArgs
 	JSON   bool   `arg:"--json" help:"print raw JSON"`
 	Filter string `arg:"positional" placeholder:"SUBSTRING" help:"only repos whose OWNER/REPO contains this (case-insensitive)"`
 }

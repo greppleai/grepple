@@ -58,7 +58,7 @@ func rulesUsage() error {
 }
 
 type rulesAddArgs struct {
-	Server      string   `arg:"-s,--server" placeholder:"URL" help:"remote router URL"`
+	commonArgs
 	ID          string   `arg:"--id" placeholder:"ID" help:"stable rule id (default: slug of --name)"`
 	Name        string   `arg:"--name" placeholder:"NAME" help:"human-readable name"`
 	Mode        string   `arg:"--mode" placeholder:"MODE" help:"count | files"`
@@ -334,8 +334,8 @@ func parseRuleArgs(program string, dest any, args []string) error {
 // subcommand.
 func ruleServerFlags(program string, args []string) (server string, jsonOut bool, err error) {
 	var values struct {
-		Server string `arg:"-s,--server" placeholder:"URL"`
-		JSON   bool   `arg:"--json"`
+		commonArgs
+		JSON bool `arg:"--json"`
 	}
 	if err := parseRuleArgs(program, &values, args); err != nil {
 		return "", false, err
@@ -346,9 +346,9 @@ func ruleServerFlags(program string, args []string) (server string, jsonOut bool
 // ruleIDFlags parses a required positional ID plus --server/--json.
 func ruleIDFlags(program string, args []string) (id, server string, jsonOut bool, err error) {
 	var values struct {
-		Server string `arg:"-s,--server" placeholder:"URL"`
-		JSON   bool   `arg:"--json"`
-		ID     string `arg:"positional,required" placeholder:"ID"`
+		commonArgs
+		JSON bool   `arg:"--json"`
+		ID   string `arg:"positional,required" placeholder:"ID"`
 	}
 	if err := parseRuleArgs(program, &values, args); err != nil {
 		return "", "", false, err

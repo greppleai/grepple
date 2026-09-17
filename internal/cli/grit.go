@@ -24,9 +24,9 @@ import (
 const DefaultGritResultLimit = 20
 
 type gritArgs struct {
-	Local                bool     `arg:"--local" help:"search only the local working directory (the default)"`
-	Remote               bool     `arg:"-R,--remote" help:"also query the remote shard/router and merge with local findings"`
-	Server               string   `arg:"-s,--server" placeholder:"URL" help:"remote shard/router URL (implies --remote)"`
+	Local  bool `arg:"--local" help:"search only the local working directory (the default)"`
+	Remote bool `arg:"-R,--remote" help:"also query the remote shard/router and merge with local findings"`
+	commonArgs
 	QueryFile            string   `arg:"-f,--query-file" placeholder:"PATH" help:"read the GritQL query from PATH (- for stdin)"`
 	PatternID            string   `arg:"--pattern-id" placeholder:"ID" help:"attach a pattern identifier to findings"`
 	Message              string   `arg:"--message" placeholder:"TEXT" help:"attach a message to findings"`

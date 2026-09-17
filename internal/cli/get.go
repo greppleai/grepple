@@ -16,7 +16,7 @@ import (
 )
 
 type getArgs struct {
-	Server  string `arg:"-s,--server" placeholder:"URL" help:"remote shard/router URL"`
+	commonArgs
 	Lines   string `arg:"--lines" placeholder:"A:B" help:"inclusive 1-based line range"`
 	JSON    bool   `arg:"--json" help:"print repository metadata and content as JSON"`
 	Outline bool   `arg:"-O,--outline" help:"print the file's structural outline (classes, funcs, ...) instead of its contents"`
