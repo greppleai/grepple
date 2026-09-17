@@ -19,7 +19,7 @@ func newResultRenderer(options *cliOptions, output *outputWriter) resultRenderer
 	case options.JSON != "off":
 		return jsonResultRenderer{output: output, matchesOnly: options.JSON == "matches" || options.LineOnly, metadata: options.ResultMetadata}
 	case options.Params.BeforeContext > 0 || options.Params.AfterContext > 0:
-		return contextRenderer{output: output}
+		return contextRenderer{output: output, anchors: options.AnchorLines}
 	case options.OnlyMatching:
 		return onlyMatchingRenderer{output: output, maxLines: options.Params.MaxSegments, matcher: compileOnlyMatcher(options)}
 	case options.LineOnly:

@@ -188,20 +188,30 @@ func collectAnchorSelections(options *cliOptions, results []api.FileResult) []an
 	selections := make([]anchorFileSelection, 0, len(results))
 	for _, result := range results {
 		selection := anchorFileSelection{displayPath: result.Path, lines: make(map[int]string)}
-		if options.LineOnly {
-			for _, match := range result.Matches {
-				selection.lines[match.Line] = normalizeRenderedAnchorLine(match.Text)
-			}
-		} else {
-			for _, segment := range result.Segments {
-				collectAnchorSegmentLines(selection.lines, segment)
-			}
-		}
+		collectAnchorSelectionLines(options, result, selection.lines)
 		if len(selection.lines) > 0 {
 			selections = append(selections, selection)
 		}
 	}
 	return selections
+}
+
+func collectAnchorSelectionLines(options *cliOptions, result api.FileResult, lines map[int]string) {
+	if options.Params.BeforeContext > 0 || options.Params.AfterContext > 0 {
+		for _, line := range result.Context {
+			lines[line.Line] = normalizeRenderedAnchorLine(line.Text)
+		}
+		return
+	}
+	if options.LineOnly {
+		for _, match := range result.Matches {
+			lines[match.Line] = normalizeRenderedAnchorLine(match.Text)
+		}
+		return
+	}
+	for _, segment := range result.Segments {
+		collectAnchorSegmentLines(lines, segment)
+	}
 }
 
 func collectAnchorSegmentLines(lines map[int]string, segment api.ResultSegment) {

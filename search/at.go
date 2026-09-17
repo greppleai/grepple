@@ -14,7 +14,7 @@ import (
 // At retrieves structural context for one local path and 1-based source line.
 // Callable declarations are returned exactly for every structurally supported language.
 func At(params Params) (*FileMatch, error) {
-	path, line, err := parseAtReference(params.At)
+	path, line, endLine, err := parseAtRange(params.At)
 	if err != nil {
 		return nil, err
 	}
@@ -45,11 +45,8 @@ func At(params Params) (*FileMatch, error) {
 		File: absolute, DisplayPath: displayPathFrom(absolute, displayBase(params.Root)), Content: content, Language: language,
 		MatchLines: map[int]bool{line: true}, SegmentsReady: true,
 	}
-	if start, end, ok := structure.DeclarationRangeAt(content, language, line); ok {
-		match.CallableDeclaration = true
-		match.Segments = []structure.Segment{{Kind: "lines", Start: start, End: end}}
-	} else {
-		match.Segments = structure.BuildSegments(content, language, match.MatchLines, params.MaxSegments)
+	if err := prepareAtMatch(match, params, path, line, endLine, len(lines), nil); err != nil {
+		return nil, err
 	}
 	if params.Related && match.CallableDeclaration {
 		files, collectErr := collectCandidateFiles(nil, params.Root)
@@ -69,7 +66,7 @@ func At(params Params) (*FileMatch, error) {
 // AtFromDocument retrieves local structural context from a caller-owned document
 // and attaches related evidence from an already resolved navigation analysis.
 func AtFromDocument(params Params, document *structure.Document, analysis *NavigationAnalysis) (*FileMatch, error) {
-	path, line, err := parseAtReference(params.At)
+	path, line, endLine, err := parseAtRange(params.At)
 	if err != nil {
 		return nil, err
 	}
@@ -96,11 +93,8 @@ func AtFromDocument(params Params, document *structure.Document, analysis *Navig
 		File: absolute, DisplayPath: displayPathFrom(absolute, displayBase(params.Root)), Content: content, Language: language,
 		MatchLines: map[int]bool{line: true}, SegmentsReady: true,
 	}
-	if start, end, ok := structure.DeclarationRangeAtFromDocument(document, match.DisplayPath, line); ok {
-		match.CallableDeclaration = true
-		match.Segments = []structure.Segment{{Kind: "lines", Start: start, End: end}}
-	} else {
-		match.Segments, match.StructureStatus = structure.BuildSegmentsFromDocument(document, match.MatchLines, params.MaxSegments)
+	if err := prepareAtMatch(match, params, path, line, endLine, len(lines), document); err != nil {
+		return nil, err
 	}
 	if params.Related && match.CallableDeclaration {
 		AttachRelatedFromAnalysis(match, analysis, params.FollowRelated)
@@ -108,20 +102,55 @@ func AtFromDocument(params Params, document *structure.Document, analysis *Navig
 	return match, nil
 }
 
+func prepareAtMatch(match *FileMatch, params Params, path string, line, endLine, lineCount int, document *structure.Document) error {
+	if endLine > lineCount {
+		return fmt.Errorf("--at line %d is outside %s (1-%d)", endLine, path, lineCount)
+	}
+	if params.LineRanges || params.BeforeContext > 0 || params.AfterContext > 0 {
+		for selected := line; selected <= endLine; selected++ {
+			match.MatchLines[selected] = true
+		}
+		return nil
+	}
+	if document != nil {
+		if start, end, ok := structure.DeclarationRangeAtFromDocument(document, match.DisplayPath, line); ok {
+			match.CallableDeclaration = true
+			match.Segments = []structure.Segment{{Kind: "lines", Start: start, End: end}}
+		} else {
+			match.Segments, match.StructureStatus = structure.BuildSegmentsFromDocument(document, match.MatchLines, params.MaxSegments)
+		}
+		return nil
+	}
+	if start, end, ok := structure.DeclarationRangeAt(match.Content, match.Language, line); ok {
+		match.CallableDeclaration = true
+		match.Segments = []structure.Segment{{Kind: "lines", Start: start, End: end}}
+	} else {
+		match.Segments = structure.BuildSegments(match.Content, match.Language, match.MatchLines, params.MaxSegments)
+	}
+	return nil
+}
+
 func parseAtReference(reference string) (string, int, error) {
+	path, start, _, err := parseAtRange(reference)
+	return path, start, err
+}
+
+func parseAtRange(reference string) (string, int, int, error) {
 	separator := strings.LastIndex(reference, ":")
 	if separator <= 0 || separator == len(reference)-1 {
-		return "", 0, fmt.Errorf("--at requires PATH:LINE or PATH:START-END")
+		return "", 0, 0, fmt.Errorf("--at requires PATH:LINE or PATH:START-END")
 	}
 	lineText := reference[separator+1:]
+	startText, endText := lineText, lineText
 	if rangeSeparator := strings.IndexByte(lineText, '-'); rangeSeparator >= 0 {
-		lineText = lineText[:rangeSeparator]
+		startText, endText = lineText[:rangeSeparator], lineText[rangeSeparator+1:]
 	}
-	line, err := strconv.Atoi(lineText)
-	if err != nil || line < 1 {
-		return "", 0, fmt.Errorf("--at requires a positive line in PATH:LINE")
+	start, startErr := strconv.Atoi(startText)
+	end, endErr := strconv.Atoi(endText)
+	if startErr != nil || endErr != nil || start < 1 || end < start {
+		return "", 0, 0, fmt.Errorf("--at requires a positive ascending range in PATH:LINE or PATH:START-END")
 	}
-	return reference[:separator], line, nil
+	return reference[:separator], start, end, nil
 }
 
 func appendFileIfMissing(files []string, path string) []string {

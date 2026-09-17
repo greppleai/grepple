@@ -68,6 +68,30 @@ func helper() string { return "value" }
 	}
 }
 
+func TestAtLineRangesReturnExactEditableLines(t *testing.T) {
+	directory := t.TempDir()
+	path := filepath.Join(directory, "sample.go")
+	content := "package sample\n\nfunc first() {}\nfunc second() {}\n"
+	if err := os.WriteFile(path, []byte(content), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	match, err := At(Params{At: path + ":2-4", LineRanges: true, MaxSegments: 20})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, line := range []int{2, 3, 4} {
+		if !match.MatchLines[line] {
+			t.Fatalf("missing exact line %d: %+v", line, match.MatchLines)
+		}
+	}
+	if len(match.MatchLines) != 3 || len(match.Segments) != 0 {
+		t.Fatalf("match=%+v", match)
+	}
+	if _, _, _, err := parseAtRange(path + ":4-2"); err == nil {
+		t.Fatal("descending --at range succeeded")
+	}
+}
+
 func TestAtSkipsRelatedGraphOutsideCallable(t *testing.T) {
 	directory := t.TempDir()
 	path := writeGoFixture(t, directory, "source.go", `package related

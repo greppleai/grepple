@@ -14,6 +14,7 @@ import (
 	"strings"
 
 	"github.com/greppleai/grepple/internal/hashline"
+	"github.com/pmezard/go-difflib/difflib"
 )
 
 const (
@@ -26,26 +27,27 @@ const (
 	maxWriteDiagnosticBytes = 240
 )
 
-const writeHelp = `Apply one validated, hash-anchored transaction across multiple existing files.
-Usage: grepple write [--root PATH] [--dry-run]
+const writeHelp = `Apply one validated, hash-anchored transaction across multiple files.
+Usage: grepple write [--root PATH] [--dry-run] [--json]
 
-The request is one strict JSON value on stdin:
-{
-  "schema": "grepple-write-v1",
-  "files": [{
-    "path": "relative/file.go",
-    "changes": [{
-      "hash_range_inclusive": ["START", "END"],
-      "content_lines": ["replacement", "lines"]
-    }]
-  }]
-}
+The request is one strict grepple-write-v1 JSON value on stdin. Existing files
+use anchored edits (operation defaults to edit):
+  {"path":"file.go","changes":[{"hash_range_inclusive":["START","END"],"content_lines":["replacement"]}]}
 
-All paths and ranges are validated before any file changes. Ranges are inclusive,
-refer to the original file snapshot, and may not overlap. An empty content_lines
-deletes the range. Existing LF or CRLF style and file permissions are preserved.
-Symlink files, escaping paths, mixed newlines, creates, and binary files are refused.
-Use --dry-run to validate and report the transaction without writing.
+Create and delete are explicit file operations:
+  {"path":"new.go","operation":"create","content_lines":["package sample",""]}
+  {"path":"old.go","operation":"delete","before_sha256":"64-lowercase-hex-digest"}
+
+All paths, identities, files, hashes, ranges, and replacement lines are validated
+before mutation. Ranges are inclusive and refer to the original snapshot. Empty
+change content_lines deletes a range. Create requires an absent target beneath an
+existing confined directory. Delete requires the exact current SHA-256 digest.
+The transaction preserves existing newline style and permissions and rolls back
+normal installation failures.
+
+Default output is edit-ready HASH│LINE│content with a concise summary. Successful
+edits return freshly recomputed anchors; dry runs also print deterministic unified
+diffs and mark anchors as predicted. Use --json for the complete structured response.
 `
 
 type writeRequest struct {
@@ -54,8 +56,11 @@ type writeRequest struct {
 }
 
 type writeRequestFile struct {
-	Path    string        `json:"path"`
-	Changes []writeChange `json:"changes"`
+	Path         string        `json:"path"`
+	Operation    string        `json:"operation,omitempty"`
+	BeforeSHA256 string        `json:"before_sha256,omitempty"`
+	ContentLines []string      `json:"content_lines,omitempty"`
+	Changes      []writeChange `json:"changes,omitempty"`
 }
 
 type writeChange struct {
@@ -72,11 +77,23 @@ type writeResponse struct {
 }
 
 type writeResponseFile struct {
-	Path         string `json:"path"`
-	Changed      bool   `json:"changed"`
-	Changes      int    `json:"changes"`
-	BeforeSHA256 string `json:"before_sha256"`
-	AfterSHA256  string `json:"after_sha256"`
+	Path          string                `json:"path"`
+	Operation     string                `json:"operation"`
+	Changed       bool                  `json:"changed"`
+	Changes       int                   `json:"changes"`
+	BeforeSHA256  string                `json:"before_sha256,omitempty"`
+	AfterSHA256   string                `json:"after_sha256,omitempty"`
+	ChangeDetails []writeResponseChange `json:"change_details,omitempty"`
+	Diff          string                `json:"diff,omitempty"`
+}
+
+type writeResponseChange struct {
+	Index          int           `json:"index"`
+	AfterStartLine int           `json:"after_start_line,omitempty"`
+	AfterEndLine   int           `json:"after_end_line,omitempty"`
+	Deleted        bool          `json:"deleted,omitempty"`
+	Predicted      bool          `json:"predicted,omitempty"`
+	Anchors        []writeAnchor `json:"anchors,omitempty"`
 }
 
 type writeResponseError struct {
@@ -96,17 +113,19 @@ type writeAnchor struct {
 type writeOptions struct {
 	root   string
 	dryRun bool
+	json   bool
 	help   bool
 }
 
 type preparedWriteFile struct {
 	requestPath string
 	path        string
+	operation   string
 	mode        os.FileMode
 	info        os.FileInfo
 	original    []byte
 	updated     []byte
-	changes     int
+	changes     []resolvedWriteChange
 	stagedPath  string
 	backupPath  string
 }
@@ -136,7 +155,7 @@ func runWrite(args []string) error {
 	}
 	request, failure := decodeWriteRequest(os.Stdin)
 	if failure != nil {
-		if err := emitWriteResponse(os.Stdout, failedWriteResponse(options.dryRun, failure)); err != nil {
+		if err := emitWriteResponse(os.Stdout, failedWriteResponse(options.dryRun, failure), options.json); err != nil {
 			return err
 		}
 		requestExit(1)
@@ -146,7 +165,7 @@ func runWrite(args []string) error {
 	if failure != nil {
 		response = failedWriteResponse(options.dryRun, failure)
 	}
-	if err := emitWriteResponse(os.Stdout, response); err != nil {
+	if err := emitWriteResponse(os.Stdout, response, options.json); err != nil {
 		return err
 	}
 	if failure != nil {
@@ -161,6 +180,8 @@ func parseWriteOptions(args []string) (writeOptions, error) {
 		switch args[index] {
 		case "--help", "-h":
 			options.help = true
+		case "--json":
+			options.json = true
 		case "--dry-run":
 			options.dryRun = true
 		case "--root":
@@ -215,6 +236,7 @@ func executeWriteRequest(root string, dryRun bool, request writeRequest) (writeR
 	}
 	response.Files = summaries
 	if dryRun {
+		markWriteResponsePredicted(&response)
 		return response, nil
 	}
 	if failure := commitWriteFiles(prepared); failure != nil {
@@ -248,11 +270,16 @@ func prepareWriteFiles(root string, files []writeRequestFile) ([]preparedWriteFi
 	summaries := make([]writeResponseFile, 0, len(files))
 	totalChanges := 0
 	for _, file := range files {
-		totalChanges += len(file.Changes)
-		if len(file.Changes) == 0 || totalChanges > maxWriteChanges {
-			return nil, nil, newWriteFailure("invalid_request", fmt.Sprintf("each file needs changes and the transaction may contain at most %d changes", maxWriteChanges), file.Path, nil)
+		operation := normalizedWriteOperation(file.Operation)
+		if operation == "edit" {
+			totalChanges += len(file.Changes)
+		} else {
+			totalChanges++
 		}
-		item, summary, failure := prepareWriteFile(root, file)
+		if totalChanges > maxWriteChanges {
+			return nil, nil, newWriteFailure("invalid_request", fmt.Sprintf("transaction may contain at most %d changes", maxWriteChanges), file.Path, nil)
+		}
+		item, summary, failure := prepareWriteFile(root, file, operation)
 		if failure != nil {
 			return nil, nil, failure
 		}
@@ -265,71 +292,126 @@ func prepareWriteFiles(root string, files []writeRequestFile) ([]preparedWriteFi
 	return prepared, summaries, nil
 }
 
+func normalizedWriteOperation(operation string) string {
+	if strings.TrimSpace(operation) == "" {
+		return "edit"
+	}
+	return strings.TrimSpace(operation)
+}
+
 func duplicatePreparedWriteFile(files []preparedWriteFile, candidate preparedWriteFile) bool {
 	for _, file := range files {
-		if file.path == candidate.path || os.SameFile(file.info, candidate.info) {
+		if file.path == candidate.path || (file.info != nil && candidate.info != nil && os.SameFile(file.info, candidate.info)) {
 			return true
 		}
 	}
 	return false
 }
 
-func prepareWriteFile(root string, request writeRequestFile) (preparedWriteFile, writeResponseFile, *writeFailure) {
+func prepareWriteFile(root string, request writeRequestFile, operation string) (preparedWriteFile, writeResponseFile, *writeFailure) {
+	switch operation {
+	case "edit", "delete":
+		return prepareExistingWriteFile(root, request, operation)
+	case "create":
+		return prepareCreatedWriteFile(root, request)
+	default:
+		return preparedWriteFile{}, writeResponseFile{}, newWriteFailure("invalid_operation", "operation must be edit, create, or delete", request.Path, nil)
+	}
+}
+
+func prepareExistingWriteFile(root string, request writeRequestFile, operation string) (preparedWriteFile, writeResponseFile, *writeFailure) {
 	path, info, err := confinedWritePath(root, request.Path)
 	if err != nil {
 		return preparedWriteFile{}, writeResponseFile{}, newWriteFailure("invalid_path", err.Error(), request.Path, nil)
 	}
-	content, err := os.ReadFile(path)
-	if err != nil {
-		return preparedWriteFile{}, writeResponseFile{}, newWriteFailure("read_failed", err.Error(), request.Path, nil)
+	content, failure := readWriteFile(path, request.Path)
+	if failure != nil {
+		return preparedWriteFile{}, writeResponseFile{}, failure
 	}
-	if len(content) > maxWriteFileBytes {
-		return preparedWriteFile{}, writeResponseFile{}, newWriteFailure("file_too_large", fmt.Sprintf("file exceeds %d bytes", maxWriteFileBytes), request.Path, nil)
+	item := preparedWriteFile{requestPath: filepath.ToSlash(filepath.Clean(request.Path)), path: path, operation: operation, mode: info.Mode(), info: info, original: content}
+	if operation == "delete" {
+		if _, _, err := writeLogicalLines(content); err != nil {
+			return preparedWriteFile{}, writeResponseFile{}, newWriteFailure("unsupported_newlines", err.Error(), request.Path, nil)
+		}
+		if len(request.Changes) != 0 || request.ContentLines != nil || !validWriteDigest(request.BeforeSHA256) {
+			return preparedWriteFile{}, writeResponseFile{}, newWriteFailure("invalid_delete", "delete requires before_sha256 and does not accept changes or content_lines", request.Path, nil)
+		}
+		before := writeDigest(content)
+		if request.BeforeSHA256 != before {
+			return preparedWriteFile{}, writeResponseFile{}, newWriteFailure("stale_file", "before_sha256 does not match the current file", request.Path, nil)
+		}
+		summary := writeResponseFile{Path: item.requestPath, Operation: operation, Changed: true, Changes: 1, BeforeSHA256: before, Diff: writeUnifiedDiff(item.requestPath, operation, content, nil)}
+		return item, summary, nil
 	}
-	if bytes.IndexByte(content, 0) >= 0 {
-		return preparedWriteFile{}, writeResponseFile{}, newWriteFailure("binary_file", "NUL-containing files cannot be edited", request.Path, nil)
+	if request.ContentLines != nil || request.BeforeSHA256 != "" || len(request.Changes) == 0 {
+		return preparedWriteFile{}, writeResponseFile{}, newWriteFailure("invalid_edit", "edit requires one or more changes and does not accept file-level content_lines or before_sha256", request.Path, nil)
 	}
 	lines, separator, err := writeLogicalLines(content)
 	if err != nil {
 		return preparedWriteFile{}, writeResponseFile{}, newWriteFailure("unsupported_newlines", err.Error(), request.Path, nil)
 	}
-	changes, failure := resolveWriteChanges(request.Path, string(content), lines, request.Changes)
-	if failure != nil {
-		return preparedWriteFile{}, writeResponseFile{}, failure
+	changes, changeFailure := resolveWriteChanges(request.Path, string(content), lines, request.Changes)
+	if changeFailure != nil {
+		return preparedWriteFile{}, writeResponseFile{}, changeFailure
 	}
 	updatedLines := applyWriteChanges(lines, changes)
 	updated := []byte(strings.Join(updatedLines, separator))
-	before := writeDigest(content)
-	after := writeDigest(updated)
-	item := preparedWriteFile{requestPath: filepath.ToSlash(filepath.Clean(request.Path)), path: path, mode: info.Mode(), info: info, original: content, updated: updated, changes: len(changes)}
-	summary := writeResponseFile{Path: item.requestPath, Changed: !bytes.Equal(content, updated), Changes: len(changes), BeforeSHA256: before, AfterSHA256: after}
+	if len(updated) > maxWriteFileBytes {
+		return preparedWriteFile{}, writeResponseFile{}, newWriteFailure("file_too_large", fmt.Sprintf("result exceeds %d bytes", maxWriteFileBytes), request.Path, nil)
+	}
+	item.updated = updated
+	item.changes = changes
+	summary := writeResponseFile{Path: item.requestPath, Operation: operation, Changed: !bytes.Equal(content, updated), Changes: len(changes), BeforeSHA256: writeDigest(content), AfterSHA256: writeDigest(updated), ChangeDetails: writeChangeDetails(updated, updatedLines, changes), Diff: writeUnifiedDiff(item.requestPath, operation, content, updated)}
 	return item, summary, nil
 }
 
+func prepareCreatedWriteFile(root string, request writeRequestFile) (preparedWriteFile, writeResponseFile, *writeFailure) {
+	if request.ContentLines == nil || len(request.Changes) != 0 || request.BeforeSHA256 != "" {
+		return preparedWriteFile{}, writeResponseFile{}, newWriteFailure("invalid_create", "create requires content_lines and does not accept changes or before_sha256", request.Path, nil)
+	}
+	if failure := validateWriteContentLines(request.Path, nil, request.ContentLines); failure != nil {
+		return preparedWriteFile{}, writeResponseFile{}, failure
+	}
+	path, err := confinedCreatePath(root, request.Path)
+	if err != nil {
+		return preparedWriteFile{}, writeResponseFile{}, newWriteFailure("invalid_path", err.Error(), request.Path, nil)
+	}
+	updated := []byte(strings.Join(request.ContentLines, "\n"))
+	if len(updated) > maxWriteFileBytes {
+		return preparedWriteFile{}, writeResponseFile{}, newWriteFailure("file_too_large", fmt.Sprintf("result exceeds %d bytes", maxWriteFileBytes), request.Path, nil)
+	}
+	requestPath := filepath.ToSlash(filepath.Clean(request.Path))
+	item := preparedWriteFile{requestPath: requestPath, path: path, operation: "create", mode: 0o644, updated: updated}
+	anchors := boundedWriteAnchors(request.ContentLines, hashline.Lines(string(updated)), 0, len(request.ContentLines))
+	details := []writeResponseChange{{Index: 0, AfterStartLine: 1, AfterEndLine: len(request.ContentLines), Anchors: anchors}}
+	if len(request.ContentLines) == 0 {
+		details[0].AfterStartLine, details[0].AfterEndLine = 0, 0
+	}
+	summary := writeResponseFile{Path: requestPath, Operation: "create", Changed: true, Changes: 1, AfterSHA256: writeDigest(updated), ChangeDetails: details, Diff: writeUnifiedDiff(requestPath, "create", nil, updated)}
+	return item, summary, nil
+}
+
+func readWriteFile(path, requestPath string) ([]byte, *writeFailure) {
+	content, err := os.ReadFile(path)
+	if err != nil {
+		return nil, newWriteFailure("read_failed", err.Error(), requestPath, nil)
+	}
+	if len(content) > maxWriteFileBytes {
+		return nil, newWriteFailure("file_too_large", fmt.Sprintf("file exceeds %d bytes", maxWriteFileBytes), requestPath, nil)
+	}
+	if bytes.IndexByte(content, 0) >= 0 {
+		return nil, newWriteFailure("binary_file", "NUL-containing files cannot be edited", requestPath, nil)
+	}
+	return content, nil
+}
+
 func confinedWritePath(root, requested string) (string, os.FileInfo, error) {
-	if strings.TrimSpace(requested) == "" || filepath.IsAbs(requested) {
-		return "", nil, fmt.Errorf("write path must be repository-relative")
-	}
-	clean := filepath.Clean(requested)
-	if clean == "." || clean == ".." || strings.HasPrefix(clean, ".."+string(filepath.Separator)) {
-		return "", nil, fmt.Errorf("write path escapes the root")
-	}
-	requestedPath := filepath.Join(root, clean)
-	requestedInfo, err := os.Lstat(requestedPath)
+	resolved, requestedInfo, err := confinedWriteTarget(root, requested)
 	if err != nil {
-		return "", nil, fmt.Errorf("write target must already exist: %w", err)
+		return "", nil, err
 	}
-	if requestedInfo.Mode()&os.ModeSymlink != 0 {
-		return "", nil, fmt.Errorf("write target may not be a symlink")
-	}
-	resolvedParent, err := filepath.EvalSymlinks(filepath.Dir(requestedPath))
-	if err != nil {
-		return "", nil, fmt.Errorf("resolve write directory: %w", err)
-	}
-	resolved := filepath.Join(resolvedParent, filepath.Base(requestedPath))
-	relative, err := filepath.Rel(root, resolved)
-	if err != nil || relative == ".." || strings.HasPrefix(relative, ".."+string(filepath.Separator)) {
-		return "", nil, fmt.Errorf("write path escapes the root")
+	if requestedInfo == nil {
+		return "", nil, fmt.Errorf("write target must already exist")
 	}
 	info, err := os.Stat(resolved)
 	if err != nil {
@@ -339,6 +421,49 @@ func confinedWritePath(root, requested string) (string, os.FileInfo, error) {
 		return "", nil, fmt.Errorf("write target must be a regular file")
 	}
 	return resolved, info, nil
+}
+
+func confinedCreatePath(root, requested string) (string, error) {
+	resolved, info, err := confinedWriteTarget(root, requested)
+	if err != nil {
+		return "", err
+	}
+	if info != nil {
+		return "", fmt.Errorf("create target already exists")
+	}
+	return resolved, nil
+}
+
+func confinedWriteTarget(root, requested string) (string, os.FileInfo, error) {
+	if strings.TrimSpace(requested) == "" || filepath.IsAbs(requested) {
+		return "", nil, fmt.Errorf("write path must be repository-relative")
+	}
+	clean := filepath.Clean(requested)
+	if clean == "." || clean == ".." || strings.HasPrefix(clean, ".."+string(filepath.Separator)) {
+		return "", nil, fmt.Errorf("write path escapes the root")
+	}
+	requestedPath := filepath.Join(root, clean)
+	requestedInfo, err := os.Lstat(requestedPath)
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
+		return "", nil, fmt.Errorf("inspect write target: %w", err)
+	}
+	if requestedInfo != nil && requestedInfo.Mode()&os.ModeSymlink != 0 {
+		return "", nil, fmt.Errorf("write target may not be a symlink")
+	}
+	resolvedParent, err := filepath.EvalSymlinks(filepath.Dir(requestedPath))
+	if err != nil {
+		return "", nil, fmt.Errorf("resolve write directory: %w", err)
+	}
+	parentInfo, err := os.Stat(resolvedParent)
+	if err != nil || !parentInfo.IsDir() {
+		return "", nil, fmt.Errorf("write parent must be an existing directory")
+	}
+	resolved := filepath.Join(resolvedParent, filepath.Base(requestedPath))
+	relative, err := filepath.Rel(root, resolved)
+	if err != nil || relative == ".." || strings.HasPrefix(relative, ".."+string(filepath.Separator)) {
+		return "", nil, fmt.Errorf("write path escapes the root")
+	}
+	return resolved, requestedInfo, nil
 }
 
 func writeLogicalLines(content []byte) ([]string, string, error) {
@@ -388,10 +513,8 @@ func resolveWriteChange(path string, requestIndex int, request writeChange, line
 	if request.ContentLines == nil {
 		return resolvedWriteChange{}, newWriteFailure("invalid_content", "content_lines is required; use an empty array to delete the range", path, &requestIndex)
 	}
-	for _, line := range request.ContentLines {
-		if strings.ContainsAny(line, "\r\n") {
-			return resolvedWriteChange{}, newWriteFailure("invalid_content", "content_lines entries may not contain newline characters", path, &requestIndex)
-		}
+	if failure := validateWriteContentLines(path, &requestIndex, request.ContentLines); failure != nil {
+		return resolvedWriteChange{}, failure
 	}
 	start, startOK := byHash[request.HashRangeInclusive[0]]
 	end, endOK := byHash[request.HashRangeInclusive[1]]
@@ -451,13 +574,108 @@ func applyWriteChanges(lines []string, changes []resolvedWriteChange) []string {
 	return result
 }
 
+func validWriteDigest(value string) bool {
+	if len(value) != sha256.Size*2 || strings.ToLower(value) != value {
+		return false
+	}
+	decoded, err := hex.DecodeString(value)
+	return err == nil && len(decoded) == sha256.Size
+}
+
+func validateWriteContentLines(path string, changeIndex *int, lines []string) *writeFailure {
+	for _, line := range lines {
+		if strings.ContainsAny(line, "\r\n") {
+			return newWriteFailure("invalid_content", "content_lines entries may not contain newline characters", path, changeIndex)
+		}
+		if strings.ContainsRune(line, '\x00') {
+			return newWriteFailure("invalid_content", "content_lines entries may not contain NUL bytes", path, changeIndex)
+		}
+	}
+	return nil
+}
+
+func writeChangeDetails(updated []byte, lines []string, changes []resolvedWriteChange) []writeResponseChange {
+	hashes := hashline.Lines(string(updated))
+	details := make([]writeResponseChange, 0, len(changes))
+	offset := 0
+	for _, change := range changes {
+		afterStart := change.start + offset
+		afterEnd := afterStart + len(change.content)
+		first, last := afterStart-1, afterEnd+1
+		deleted := len(change.content) == 0
+		if deleted {
+			last = afterStart + 1
+		}
+		anchors := boundedWriteAnchors(lines, hashes, first, last)
+		detail := writeResponseChange{Index: change.requestIndex, Deleted: deleted, Anchors: anchors}
+		if !deleted {
+			detail.AfterStartLine = afterStart + 1
+			detail.AfterEndLine = afterEnd
+		}
+		details = append(details, detail)
+		offset += len(change.content) - (change.end - change.start + 1)
+	}
+	sort.Slice(details, func(i, j int) bool { return details[i].Index < details[j].Index })
+	return details
+}
+
+func boundedWriteAnchors(lines, hashes []string, first, last int) []writeAnchor {
+	if first < 0 {
+		first = 0
+	}
+	if last > len(lines) {
+		last = len(lines)
+	}
+	if last < first {
+		last = first
+	}
+	indices := make([]int, 0, last-first)
+	for index := first; index < last; index++ {
+		indices = append(indices, index)
+	}
+	anchors := make([]writeAnchor, 0, len(indices))
+	for _, index := range indices {
+		if index >= len(hashes) {
+			continue
+		}
+		anchors = append(anchors, writeAnchor{Hash: hashes[index], Line: index + 1, Content: lines[index]})
+	}
+	return anchors
+}
+
+func writeUnifiedDiff(path, operation string, before, after []byte) string {
+	from, to := "a/"+path, "b/"+path
+	if operation == "create" {
+		from = "/dev/null"
+	}
+	if operation == "delete" {
+		to = "/dev/null"
+	}
+	a, b := writeDiffLines(before), writeDiffLines(after)
+	if len(a) == 0 && len(b) == 0 && operation != "edit" {
+		return fmt.Sprintf("--- %s\n+++ %s\n", from, to)
+	}
+	diff, _ := difflib.GetUnifiedDiffString(difflib.UnifiedDiff{
+		A: a, B: b, FromFile: from, ToFile: to, Context: 3,
+	})
+	return diff
+}
+
+func writeDiffLines(content []byte) []string {
+	if len(content) == 0 {
+		return nil
+	}
+	return difflib.SplitLines(strings.ReplaceAll(string(content), "\r\n", "\n"))
+}
+
 func commitWriteFiles(files []preparedWriteFile) *writeFailure {
 	changed := make([]*preparedWriteFile, 0, len(files))
 	for index := range files {
-		if bytes.Equal(files[index].original, files[index].updated) {
+		file := &files[index]
+		if file.operation == "edit" && bytes.Equal(file.original, file.updated) {
 			continue
 		}
-		changed = append(changed, &files[index])
+		changed = append(changed, file)
 	}
 	if len(changed) == 0 {
 		return nil
@@ -468,9 +686,15 @@ func commitWriteFiles(files []preparedWriteFile) *writeFailure {
 	}
 	defer cleanupStagedWriteFiles(changed)
 	for _, file := range changed {
+		if file.operation == "create" {
+			if _, err := os.Lstat(file.path); !errors.Is(err, os.ErrNotExist) {
+				return newWriteFailure("concurrent_change", "create target appeared after validation", file.requestPath, nil)
+			}
+			continue
+		}
 		current, err := os.ReadFile(file.path)
 		if err != nil || !bytes.Equal(current, file.original) {
-			return newWriteFailure("concurrent_change", "file changed after anchor validation", file.requestPath, nil)
+			return newWriteFailure("concurrent_change", "file changed after validation", file.requestPath, nil)
 		}
 	}
 	return installWriteFiles(changed)
@@ -478,6 +702,9 @@ func commitWriteFiles(files []preparedWriteFile) *writeFailure {
 
 func stageWriteFiles(files []*preparedWriteFile) *writeFailure {
 	for _, file := range files {
+		if file.operation == "delete" {
+			continue
+		}
 		temporary, err := os.CreateTemp(filepath.Dir(file.path), ".grepple-write-new-*")
 		if err != nil {
 			return newWriteFailure("write_failed", err.Error(), file.requestPath, nil)
@@ -503,35 +730,76 @@ func stageWriteFiles(files []*preparedWriteFile) *writeFailure {
 }
 
 func installWriteFiles(files []*preparedWriteFile) *writeFailure {
-	moved := 0
-	for index, file := range files {
+	backedUp, failure := backupWriteFiles(files)
+	if failure != nil {
+		return failure
+	}
+	if failure := installStagedWriteFiles(files, backedUp); failure != nil {
+		return failure
+	}
+	for _, file := range backedUp {
+		_ = os.Remove(file.backupPath)
+		file.backupPath = ""
+	}
+	return nil
+}
+
+func backupWriteFiles(files []*preparedWriteFile) ([]*preparedWriteFile, *writeFailure) {
+	backedUp := make([]*preparedWriteFile, 0, len(files))
+	for _, file := range files {
+		if file.operation == "create" {
+			continue
+		}
 		backup, err := reserveWriteBackup(file.path)
 		if err != nil {
-			rollbackErr := restoreWriteBackups(files[:moved])
-			return newWriteFailure("write_failed", writeRollbackMessage(err, rollbackErr), file.requestPath, nil)
+			rollbackErr := restoreWriteBackups(backedUp)
+			return nil, newWriteFailure("write_failed", writeRollbackMessage(err, rollbackErr), file.requestPath, nil)
 		}
 		file.backupPath = backup
 		if err := os.Rename(file.path, backup); err != nil {
 			_ = os.Remove(backup)
 			file.backupPath = ""
-			rollbackErr := restoreWriteBackups(files[:moved])
-			return newWriteFailure("write_failed", writeRollbackMessage(err, rollbackErr), file.requestPath, nil)
+			rollbackErr := restoreWriteBackups(backedUp)
+			return nil, newWriteFailure("write_failed", writeRollbackMessage(err, rollbackErr), file.requestPath, nil)
 		}
-		moved = index + 1
-	}
-	installed := 0
-	for index, file := range files {
-		if err := os.Rename(file.stagedPath, file.path); err != nil {
-			rollbackErr := rollbackInstalledWriteFiles(files, installed)
-			return newWriteFailure("write_failed", writeRollbackMessage(err, rollbackErr), file.requestPath, nil)
+		backedUp = append(backedUp, file)
+		captured, readErr := os.ReadFile(backup)
+		if readErr != nil || !bytes.Equal(captured, file.original) {
+			rollbackErr := restoreWriteBackups(backedUp)
+			primary := fmt.Errorf("file changed during installation")
+			if readErr != nil {
+				primary = readErr
+			}
+			return nil, newWriteFailure("concurrent_change", writeRollbackMessage(primary, rollbackErr), file.requestPath, nil)
 		}
-		file.stagedPath = ""
-		installed = index + 1
 	}
+	return backedUp, nil
+}
+
+func installStagedWriteFiles(files, backedUp []*preparedWriteFile) *writeFailure {
+	installed := make([]*preparedWriteFile, 0, len(files))
 	for _, file := range files {
-		_ = os.Remove(file.backupPath)
-		file.backupPath = ""
+		if file.operation == "delete" {
+			continue
+		}
+		err := installStagedWriteFile(file)
+		if err != nil {
+			rollbackErr := rollbackInstalledWriteFiles(installed, backedUp)
+			return newWriteFailure("write_failed", writeRollbackMessage(err, rollbackErr), file.requestPath, nil)
+		}
+		installed = append(installed, file)
 	}
+	return nil
+}
+
+func installStagedWriteFile(file *preparedWriteFile) error {
+	if file.operation == "create" {
+		return os.Link(file.stagedPath, file.path)
+	}
+	if err := os.Rename(file.stagedPath, file.path); err != nil {
+		return err
+	}
+	file.stagedPath = ""
 	return nil
 }
 
@@ -570,14 +838,14 @@ func restoreWriteBackups(files []*preparedWriteFile) error {
 	return nil
 }
 
-func rollbackInstalledWriteFiles(files []*preparedWriteFile, installed int) error {
+func rollbackInstalledWriteFiles(installed, backedUp []*preparedWriteFile) error {
 	failures := []string{}
-	for index := 0; index < installed; index++ {
-		if err := os.Remove(files[index].path); err != nil && !errors.Is(err, os.ErrNotExist) {
-			failures = append(failures, fmt.Sprintf("remove staged replacement %s: %v", files[index].path, err))
+	for _, file := range installed {
+		if err := os.Remove(file.path); err != nil && !errors.Is(err, os.ErrNotExist) {
+			failures = append(failures, fmt.Sprintf("remove staged replacement %s: %v", file.path, err))
 		}
 	}
-	if err := restoreWriteBackups(files); err != nil {
+	if err := restoreWriteBackups(backedUp); err != nil {
 		failures = append(failures, err.Error())
 	}
 	if len(failures) > 0 {
@@ -614,8 +882,156 @@ func failedWriteResponse(dryRun bool, failure *writeFailure) writeResponse {
 	return writeResponse{Schema: writeSchema, DryRun: dryRun, Error: &writeResponseError{Code: failure.code, Message: failure.message, Path: failure.path, ChangeIndex: failure.changeIndex, Anchors: failure.anchors}}
 }
 
-func emitWriteResponse(writer io.Writer, response writeResponse) error {
-	encoder := json.NewEncoder(writer)
-	encoder.SetEscapeHTML(false)
-	return encoder.Encode(response)
+func markWriteResponsePredicted(response *writeResponse) {
+	for fileIndex := range response.Files {
+		for changeIndex := range response.Files[fileIndex].ChangeDetails {
+			response.Files[fileIndex].ChangeDetails[changeIndex].Predicted = true
+		}
+	}
+}
+
+func emitWriteResponse(writer io.Writer, response writeResponse, jsonMode bool) error {
+	if jsonMode {
+		encoder := json.NewEncoder(writer)
+		encoder.SetEscapeHTML(false)
+		return encoder.Encode(response)
+	}
+	if response.Error != nil {
+		return emitWriteError(writer, response.Error)
+	}
+	if response.DryRun {
+		if err := emitWriteDiffs(writer, response.Files); err != nil {
+			return err
+		}
+	}
+	if err := emitWriteResponseFiles(writer, response); err != nil {
+		return err
+	}
+	return emitWriteSummary(writer, response)
+}
+
+func emitWriteError(writer io.Writer, response *writeResponseError) error {
+	if _, err := fmt.Fprintf(writer, "write rejected: %s: %s\n", response.Code, response.Message); err != nil {
+		return err
+	}
+	if response.Path != "" {
+		if _, err := fmt.Fprintf(writer, "path: %s\n", response.Path); err != nil {
+			return err
+		}
+	}
+	if response.ChangeIndex != nil {
+		if _, err := fmt.Fprintf(writer, "change: %d\n", *response.ChangeIndex); err != nil {
+			return err
+		}
+	}
+	return emitWriteAnchors(writer, response.Anchors)
+}
+
+func emitWriteDiffs(writer io.Writer, files []writeResponseFile) error {
+	if _, err := io.WriteString(writer, "dry-run: no files changed\n\n"); err != nil {
+		return err
+	}
+	for _, file := range files {
+		if file.Diff == "" {
+			continue
+		}
+		if _, err := io.WriteString(writer, file.Diff); err != nil {
+			return err
+		}
+		if !strings.HasSuffix(file.Diff, "\n") {
+			if _, err := io.WriteString(writer, "\n"); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func emitWriteResponseFiles(writer io.Writer, response writeResponse) error {
+	printed := false
+	for _, file := range response.Files {
+		anchors := responseFileAnchors(file)
+		if len(anchors) == 0 && file.Operation == "edit" {
+			continue
+		}
+		if err := emitWriteResponseFile(writer, file, anchors, printed || response.DryRun, response.DryRun); err != nil {
+			return err
+		}
+		printed = true
+	}
+	return nil
+}
+
+func emitWriteResponseFile(writer io.Writer, file writeResponseFile, anchors []writeAnchor, leading, predicted bool) error {
+	if leading {
+		if _, err := io.WriteString(writer, "\n"); err != nil {
+			return err
+		}
+	}
+	if _, err := fmt.Fprintf(writer, "%s\n\n", file.Path); err != nil {
+		return err
+	}
+	if predicted && len(anchors) > 0 {
+		if _, err := fmt.Fprintf(writer, "predicted anchors for sha256:%s\n\n", file.AfterSHA256); err != nil {
+			return err
+		}
+	}
+	return emitWriteFileBody(writer, file.Operation, anchors)
+}
+
+func emitWriteFileBody(writer io.Writer, operation string, anchors []writeAnchor) error {
+	switch {
+	case operation == "create" && len(anchors) == 0:
+		_, err := io.WriteString(writer, "created empty file\n")
+		return err
+	case operation == "delete":
+		_, err := io.WriteString(writer, "deleted\n")
+		return err
+	default:
+		return emitWriteAnchors(writer, anchors)
+	}
+}
+
+func emitWriteSummary(writer io.Writer, response writeResponse) error {
+	files, changes := 0, 0
+	for _, file := range response.Files {
+		if file.Changed {
+			files++
+		}
+		changes += file.Changes
+	}
+	verb := "applied"
+	if response.DryRun {
+		verb = "validated"
+	}
+	_, err := fmt.Fprintf(writer, "\n%s %d files, %d changes\n", verb, files, changes)
+	return err
+}
+
+func responseFileAnchors(file writeResponseFile) []writeAnchor {
+	byLine := map[int]writeAnchor{}
+	for _, change := range file.ChangeDetails {
+		for _, anchor := range change.Anchors {
+			byLine[anchor.Line] = anchor
+		}
+	}
+	lines := make([]int, 0, len(byLine))
+	for line := range byLine {
+		lines = append(lines, line)
+	}
+	sort.Ints(lines)
+	anchors := make([]writeAnchor, 0, len(lines))
+	for _, line := range lines {
+		anchors = append(anchors, byLine[line])
+	}
+	return anchors
+}
+
+func emitWriteAnchors(writer io.Writer, anchors []writeAnchor) error {
+	for _, anchor := range anchors {
+		if _, err := fmt.Fprintf(writer, "%s%s%d%s%s\n", anchor.Hash, anchorOutputSeparator, anchor.Line, anchorOutputSeparator, normalizeRenderedAnchorLine(anchor.Content)); err != nil {
+			return err
+		}
+	}
+	return nil
 }

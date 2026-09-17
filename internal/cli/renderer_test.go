@@ -219,3 +219,16 @@ func TestBoundedOutputWriterStopsBeforeAgentToolLimit(t *testing.T) {
 		t.Fatalf("truncation left a partial output line: %q", output.String())
 	}
 }
+
+func TestAnchoredContextRendererEmitsEditableRows(t *testing.T) {
+	var output bytes.Buffer
+	renderer := contextRenderer{output: newOutputWriter(&output), anchors: anchorLookup{"sample.go": {1: "AAA", 2: "BBB", 3: "CCC"}}}
+	results := []api.FileResult{{Path: "sample.go", Context: []api.ContextLine{{Line: 1, Text: "before"}, {Line: 2, Text: "needle", Match: true}, {Line: 3, Text: "after"}}}}
+	if err := renderer.Render(results); err != nil {
+		t.Fatal(err)
+	}
+	expected := "sample.go\n\nAAA│1│before\nBBB│2│needle\nCCC│3│after\n"
+	if output.String() != expected {
+		t.Fatalf("output=%q expected=%q", output.String(), expected)
+	}
+}

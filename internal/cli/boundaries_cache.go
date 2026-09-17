@@ -33,7 +33,7 @@ func buildCachedBoundaryGraph(globs []string, maxFiles int, useCache bool) (navi
 	if err != nil {
 		return navigationGraphOutput{}, "", err
 	}
-	cachePath := filepath.Join(".grepple", "cache", "boundaries", digest+".json")
+	cachePath := filepath.Join(defaultCacheDirectory(), "boundaries", digest+".json")
 	if cached, ok := readBoundaryGraphCache(cachePath, digest); ok {
 		return cached, "hit", nil
 	}

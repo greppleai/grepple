@@ -54,7 +54,7 @@ type searchArgs struct {
 	AnchorProvider   string   `arg:"--anchor-provider" placeholder:"NAME" help:"use native or a named provider from ~/.grepple/settings.json (implies --anchors)"`
 	Related          bool     `arg:"--related" help:"show repository-local callees and callers for supported source languages"`
 	FollowRelated    int      `arg:"--follow-related" placeholder:"N" help:"expand up to two unique callees per level (1-3; implies --related)"`
-	At               string   `arg:"--at" placeholder:"PATH:LINE" help:"retrieve the declaration containing a source location"`
+	At               string   `arg:"--at" placeholder:"PATH:LINE[-END]" help:"retrieve the containing declaration, or exact range with --line-only"`
 	Skip             int      `arg:"--skip" placeholder:"N" help:"skip the first N ranked result files"`
 	Limit            int      `arg:"--limit" placeholder:"N" help:"return at most N ranked result files (default 20; 0 = all local; servers cap a page at 100 — page further with --skip)"`
 	Sort             string   `arg:"--sort" placeholder:"ORDER" help:"order result files by path (default) or matching-line count (matches)"`
@@ -163,8 +163,7 @@ func supportsDefaultAnchors(values *searchArgs) bool {
 		return false
 	}
 	unsupportedCompact := values.Files || values.FilesWithMatches || values.Outline || values.Count || values.CountByRepo || values.OnlyMatching || values.Enclosing
-	contextOutput := values.Context > 0 || values.BeforeContext > 0 || values.AfterContext > 0
-	return !unsupportedCompact && !contextOutput
+	return !unsupportedCompact
 }
 
 func usesCompactSearchOutput(values *searchArgs) bool {
@@ -196,9 +195,8 @@ func validateAnchorArgs(values *searchArgs) error {
 		return fmt.Errorf("--anchors cannot be combined with JSON output")
 	}
 	unsupportedCompact := values.Files || values.FilesWithMatches || values.Outline || values.Count || values.CountByRepo || values.OnlyMatching
-	contextOutput := values.Context > 0 || values.BeforeContext > 0 || values.AfterContext > 0
-	if unsupportedCompact || contextOutput {
-		return fmt.Errorf("--anchors requires default structural output or --line-only")
+	if unsupportedCompact {
+		return fmt.Errorf("--anchors requires structural, contextual, or line-only output")
 	}
 	return nil
 }
@@ -213,9 +211,9 @@ func validateAtArgs(values *searchArgs) error {
 	if values.Query != "" || len(values.Globs) > 0 {
 		return fmt.Errorf("--at cannot be combined with a search pattern or path")
 	}
-	contextOutput := values.Context > 0 || values.BeforeContext > 0 || values.AfterContext > 0
-	if usesCompactSearchOutput(values) || contextOutput {
-		return fmt.Errorf("--at requires default structural output or --json")
+	incompatibleOutput := values.Files || values.FilesWithMatches || values.Outline || values.Count || values.CountByRepo || values.OnlyMatching || values.Enclosing || values.JSONMatches
+	if incompatibleOutput {
+		return fmt.Errorf("--at requires default structural, contextual, line-only, or JSON output")
 	}
 	return nil
 }
@@ -381,7 +379,7 @@ Usage:
 
 Commands:
   search       Search local or explicitly selected remote code (default mode)
-  write        Apply transactional multi-file edits using native hashline anchors
+  write        Apply transactional anchored edits, creates, and deletes
   grit         Run native, read-only structural queries
   graph        Build, query, or diff local navigation graphs
   anchors      Diagnose and configure edit-anchor providers
@@ -406,7 +404,7 @@ Commands:
 Global output delivery:
 	--no-spill                    keep complete output on stdout regardless of size
 	--spill-threshold-bytes N     spill output above N bytes (default 65536 or grepple.json)
-	--artifact-dir PATH           store spilled content-addressed artifacts under PATH
+	--artifact-dir PATH           store spilled artifacts here (default: user cache or GREPPLE_ARTIFACT_DIR)
 
 Global repository scope:
 	--no-repo-config              ignore repository-owned grepple.json behavior

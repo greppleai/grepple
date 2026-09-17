@@ -10,6 +10,7 @@ import (
 func TestArtifactsCleanRemovesPersistedOutput(t *testing.T) {
 	root := t.TempDir()
 	output := filepath.Join(root, ".grepple", "output")
+	t.Setenv("GREPPLE_ARTIFACT_DIR", output)
 	if err := os.MkdirAll(output, 0o700); err != nil {
 		t.Fatal(err)
 	}

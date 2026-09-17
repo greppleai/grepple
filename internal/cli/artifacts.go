@@ -43,15 +43,10 @@ func runArtifacts(args []string) error {
 }
 
 func cleanOutputArtifacts(jsonMode bool) error {
-	_, configPath, err := loadRepositoryConfig()
+	directory, err := defaultOutputArtifactDirectory()
 	if err != nil {
 		return err
 	}
-	root := mustGetwd()
-	if configPath != "" {
-		root = filepath.Dir(configPath)
-	}
-	directory := filepath.Join(root, ".grepple", "output")
 	result := artifactsCleanOutput{Schema: "grepple-artifact-clean-v1", Path: displayArtifactPath(directory)}
 	entries, err := os.ReadDir(directory)
 	if err != nil && !os.IsNotExist(err) {

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -12,6 +13,7 @@ import (
 
 func TestBoundariesReportsExternalOwnerWorkflowsAndUsesCache(t *testing.T) {
 	dir := chdirTemp(t)
+	t.Setenv("GREPPLE_CACHE_DIR", filepath.Join(dir, ".grepple", "cache"))
 	writeBoundaryFixture(t, dir)
 	first := captureStdout(t, func() {
 		if err := Run([]string{"boundaries", "."}); err != nil {
@@ -40,6 +42,34 @@ func TestBoundariesReportsExternalOwnerWorkflowsAndUsesCache(t *testing.T) {
 	entries, err := os.ReadDir(filepath.Join(".grepple", "cache", "boundaries"))
 	if err != nil || len(entries) != 1 {
 		t.Fatalf("cache entries=%d err=%v", len(entries), err)
+	}
+}
+
+func TestReadOnlyAnalysisStoresCachesAndArtifactsOutsideRepository(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("read-only directory permissions differ on Windows")
+	}
+	dir := chdirTemp(t)
+	writeBoundaryFixture(t, dir)
+	cacheHome := t.TempDir()
+	t.Setenv("XDG_CACHE_HOME", cacheHome)
+	t.Setenv("GREPPLE_CACHE_DIR", "")
+	t.Setenv("GREPPLE_ARTIFACT_DIR", "")
+	if err := os.Chmod(dir, 0o555); err != nil {
+		t.Fatal(err)
+	}
+	defer os.Chmod(dir, 0o755)
+	captureStdout(t, func() {
+		if err := Run([]string{"boundaries", "."}); err != nil {
+			t.Fatal(err)
+		}
+	})
+	if _, err := os.Stat(filepath.Join(dir, ".grepple")); !os.IsNotExist(err) {
+		t.Fatalf("analysis wrote beneath read-only repository: %v", err)
+	}
+	entries, err := os.ReadDir(filepath.Join(cacheHome, "grepple", "cache", writeDigest([]byte(filepath.Clean(dir)))[:16], "boundaries"))
+	if err != nil || len(entries) == 0 {
+		t.Fatalf("external cache entries=%d err=%v", len(entries), err)
 	}
 }
 

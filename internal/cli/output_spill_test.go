@@ -11,6 +11,7 @@ import (
 
 func TestOutputSpillWritesJSONDescriptorAndContentAddressedArtifact(t *testing.T) {
 	root := t.TempDir()
+	t.Setenv("GREPPLE_ARTIFACT_DIR", filepath.Join(root, ".grepple", "output"))
 	if err := os.WriteFile(filepath.Join(root, "grepple.json"), []byte(`{"output":{"spillThresholdBytes":64}}`), 0o600); err != nil {
 		t.Fatal(err)
 	}
@@ -105,6 +106,7 @@ func TestOutputSpillUsesExplicitArtifactDirectoryWithContentAddressedName(t *tes
 
 func TestOutputSpillRerunPreservesRepositoryScopeFlags(t *testing.T) {
 	root := t.TempDir()
+	t.Setenv("GREPPLE_ARTIFACT_DIR", filepath.Join(root, ".grepple", "output"))
 	chdirForConfigTest(t, root)
 	output := captureStdout(t, func() {
 		if err := Run([]string{"languages", "--json", "--production-only", "--no-config-ignore", "--spill-threshold-bytes", "64"}); err != nil {

@@ -179,6 +179,24 @@ func TestParseAtLocationWithoutQuery(t *testing.T) {
 	}
 }
 
+func TestParseAtSupportsExactAnchoredAndContextOutput(t *testing.T) {
+	for _, args := range [][]string{
+		{"--at", "search/result.go:40-45", "--line-only", "--anchors"},
+		{"--at", "search/result.go:40-45", "-C", "2", "--anchors"},
+	} {
+		options, _, _, err := parseSearchArgs(args)
+		if err != nil {
+			t.Fatalf("parseSearchArgs(%q): %v", args, err)
+		}
+		if !options.Anchors || options.Params.At != "search/result.go:40-45" {
+			t.Fatalf("options=%+v", options)
+		}
+	}
+	if _, _, _, err := parseSearchArgs([]string{"--at", "search/result.go:40", "--files"}); err == nil {
+		t.Fatal("--at with --files succeeded")
+	}
+}
+
 func TestRelatedGoNavigationRejectsUnsupportedModes(t *testing.T) {
 	for _, args := range [][]string{
 		{"--related", "--line-only", "needle"},

@@ -38,6 +38,10 @@ func TestExecuteWriteRequestAppliesMultiFileTransaction(t *testing.T) {
 	if !response.Applied || response.DryRun || len(response.Files) != 2 {
 		t.Fatalf("response=%+v", response)
 	}
+	details := response.Files[0].ChangeDetails
+	if len(details) != 2 || details[0].Index != 0 || details[0].AfterStartLine != 4 || details[1].Index != 1 || details[1].AfterStartLine != 1 || details[1].AfterEndLine != 3 {
+		t.Fatalf("change details not in request order: %+v", details)
+	}
 	assertWriteFile(t, firstPath, "ONE\nTWO\ninserted\nTHREE\n", 0o640)
 	assertWriteFile(t, secondPath, "beta\r\n", 0o600)
 }
@@ -93,6 +97,39 @@ func TestCommitWriteFilesRejectsConcurrentChanges(t *testing.T) {
 		t.Fatalf("commit failure=%+v", failure)
 	}
 	assertWriteFile(t, path, "concurrent\n", 0o600)
+}
+
+func TestInstallWriteFilesRollsBackEditsAndDeletesWhenCreateAppears(t *testing.T) {
+	root := t.TempDir()
+	editContent := "before\n"
+	deleteContent := "delete\n"
+	writeTestFile(t, filepath.Join(root, "edit.txt"), editContent, 0o600)
+	writeTestFile(t, filepath.Join(root, "delete.txt"), deleteContent, 0o640)
+	hash := hashline.Lines(editContent)[0]
+	requestFiles := []writeRequestFile{
+		{Path: "edit.txt", Changes: []writeChange{{HashRangeInclusive: []string{hash, hash}, ContentLines: []string{"after"}}}},
+		{Path: "delete.txt", Operation: "delete", BeforeSHA256: writeDigest([]byte(deleteContent))},
+		{Path: "create.txt", Operation: "create", ContentLines: []string{"created", ""}},
+	}
+	prepared, _, failure := prepareWriteFiles(root, requestFiles)
+	if failure != nil {
+		t.Fatal(failure)
+	}
+	files := make([]*preparedWriteFile, 0, len(prepared))
+	for index := range prepared {
+		files = append(files, &prepared[index])
+	}
+	if failure := stageWriteFiles(files); failure != nil {
+		t.Fatal(failure)
+	}
+	defer cleanupStagedWriteFiles(files)
+	writeTestFile(t, filepath.Join(root, "create.txt"), "concurrent\n", 0o600)
+	if failure := installWriteFiles(files); failure == nil || failure.code != "write_failed" {
+		t.Fatalf("failure=%+v", failure)
+	}
+	assertWriteFile(t, filepath.Join(root, "edit.txt"), editContent, 0o600)
+	assertWriteFile(t, filepath.Join(root, "delete.txt"), deleteContent, 0o640)
+	assertWriteFile(t, filepath.Join(root, "create.txt"), "concurrent\n", 0o600)
 }
 
 func TestExecuteWriteRequestRejectsOverlapsAndDuplicateFiles(t *testing.T) {
@@ -154,6 +191,95 @@ func TestExecuteWriteRequestRequiresExplicitContentLines(t *testing.T) {
 		t.Fatalf("failure=%+v", failure)
 	}
 	assertWriteFile(t, path, content, 0o600)
+}
+
+func TestExecuteWriteRequestCreatesAndDeletesTransactionally(t *testing.T) {
+	root := t.TempDir()
+	deletedPath := filepath.Join(root, "deleted.txt")
+	deletedContent := "remove me\n"
+	writeTestFile(t, deletedPath, deletedContent, 0o600)
+	request := writeRequest{Schema: writeSchema, Files: []writeRequestFile{
+		{Path: "created.txt", Operation: "create", ContentLines: []string{"alpha", "beta", ""}},
+		{Path: "deleted.txt", Operation: "delete", BeforeSHA256: writeDigest([]byte(deletedContent))},
+	}}
+	response, failure := executeWriteRequest(root, false, request)
+	if failure != nil || !response.Applied || len(response.Files) != 2 {
+		t.Fatalf("response=%+v failure=%+v", response, failure)
+	}
+	assertWriteFile(t, filepath.Join(root, "created.txt"), "alpha\nbeta\n", 0o644)
+	if _, err := os.Stat(deletedPath); !os.IsNotExist(err) {
+		t.Fatalf("deleted file still exists: %v", err)
+	}
+	if response.Files[0].Operation != "create" || len(response.Files[0].ChangeDetails) != 1 || len(response.Files[0].ChangeDetails[0].Anchors) == 0 {
+		t.Fatalf("create response=%+v", response.Files[0])
+	}
+	if !strings.Contains(response.Files[0].Diff, "--- /dev/null") || !strings.Contains(response.Files[1].Diff, "+++ /dev/null") {
+		t.Fatalf("missing create/delete diff: %+v", response.Files)
+	}
+}
+
+func TestExecuteWriteRequestRejectsStaleDeleteWithoutCreating(t *testing.T) {
+	root := t.TempDir()
+	path := filepath.Join(root, "existing.txt")
+	writeTestFile(t, path, "current\n", 0o600)
+	request := writeRequest{Schema: writeSchema, Files: []writeRequestFile{
+		{Path: "created.txt", Operation: "create", ContentLines: []string{"new", ""}},
+		{Path: "existing.txt", Operation: "delete", BeforeSHA256: strings.Repeat("0", 64)},
+	}}
+	if _, failure := executeWriteRequest(root, false, request); failure == nil || failure.code != "stale_file" {
+		t.Fatalf("failure=%+v", failure)
+	}
+	if _, err := os.Stat(filepath.Join(root, "created.txt")); !os.IsNotExist(err) {
+		t.Fatalf("create escaped rejected transaction: %v", err)
+	}
+	assertWriteFile(t, path, "current\n", 0o600)
+}
+
+func TestWriteDryRunReturnsPredictedAnchorsAndUnifiedDiff(t *testing.T) {
+	root := t.TempDir()
+	path := filepath.Join(root, "file.go")
+	content := "package sample\nfunc run() {}\n"
+	writeTestFile(t, path, content, 0o600)
+	hash := hashline.Lines(content)[1]
+	request := writeRequest{Schema: writeSchema, Files: []writeRequestFile{{Path: "file.go", Changes: []writeChange{{HashRangeInclusive: []string{hash, hash}, ContentLines: []string{"func run() {", "}"}}}}}}
+	response, failure := executeWriteRequest(root, true, request)
+	if failure != nil || response.Applied || len(response.Files[0].ChangeDetails) != 1 || !response.Files[0].ChangeDetails[0].Predicted {
+		t.Fatalf("response=%+v failure=%+v", response, failure)
+	}
+	if !strings.Contains(response.Files[0].Diff, "-func run() {}") || !strings.Contains(response.Files[0].Diff, "+func run() {") {
+		t.Fatalf("diff=%q", response.Files[0].Diff)
+	}
+	var output bytes.Buffer
+	if err := emitWriteResponse(&output, response, false); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(output.String(), "dry-run: no files changed") || !strings.Contains(output.String(), "│2│func run() {") || !strings.Contains(output.String(), "validated 1 files, 1 changes") {
+		t.Fatalf("human output:\n%s", output.String())
+	}
+	assertWriteFile(t, path, content, 0o600)
+}
+
+func TestWriteCreateRejectsUnsafeContentAndTargets(t *testing.T) {
+	root := t.TempDir()
+	writeTestFile(t, filepath.Join(root, "existing.txt"), "current\n", 0o600)
+	tests := []struct {
+		name    string
+		request writeRequestFile
+		code    string
+	}{
+		{name: "nul", request: writeRequestFile{Path: "new.txt", Operation: "create", ContentLines: []string{"bad\x00value"}}, code: "invalid_content"},
+		{name: "existing", request: writeRequestFile{Path: "existing.txt", Operation: "create", ContentLines: []string{"new"}}, code: "invalid_path"},
+		{name: "missing parent", request: writeRequestFile{Path: "missing/new.txt", Operation: "create", ContentLines: []string{"new"}}, code: "invalid_path"},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			_, failure := executeWriteRequest(root, false, writeRequest{Schema: writeSchema, Files: []writeRequestFile{test.request}})
+			if failure == nil || failure.code != test.code {
+				t.Fatalf("failure=%+v", failure)
+			}
+		})
+	}
+	assertWriteFile(t, filepath.Join(root, "existing.txt"), "current\n", 0o600)
 }
 
 func TestDecodeWriteRequestIsStrictAndBounded(t *testing.T) {
@@ -236,7 +362,7 @@ func TestWriteCommandReadsStrictJSONFromStdin(t *testing.T) {
 	var output string
 	withStdin(t, request, func() {
 		output = captureStdout(t, func() {
-			if err := Run([]string{"write", "--root", root}); err != nil {
+			if err := Run([]string{"write", "--root", root, "--json"}); err != nil {
 				t.Fatal(err)
 			}
 		})
@@ -251,13 +377,34 @@ func TestWriteCommandReadsStrictJSONFromStdin(t *testing.T) {
 	assertWriteFile(t, path, "after\n", 0o600)
 }
 
+func TestWriteCommandDefaultsToEditReadyHumanOutput(t *testing.T) {
+	root := t.TempDir()
+	path := filepath.Join(root, "file.txt")
+	content := "before\n"
+	writeTestFile(t, path, content, 0o600)
+	hash := hashline.Lines(content)[0]
+	request := fmt.Sprintf(`{"schema":"grepple-write-v1","files":[{"path":"file.txt","changes":[{"hash_range_inclusive":[%q,%q],"content_lines":["after"]}]}]}`, hash, hash)
+	var output string
+	withStdin(t, request, func() {
+		output = captureStdout(t, func() {
+			if err := Run([]string{"write", "--root", root}); err != nil {
+				t.Fatal(err)
+			}
+		})
+	})
+	updatedHash := hashline.Lines("after\n")[0]
+	if !strings.Contains(output, "file.txt\n\n"+updatedHash+"│1│after\n") || !strings.Contains(output, "applied 1 files, 1 changes") {
+		t.Fatalf("human output:\n%s", output)
+	}
+}
+
 func TestWriteHelpDocumentsTransactionalInput(t *testing.T) {
 	output := captureStdout(t, func() {
 		if err := Run([]string{"help", "write"}); err != nil {
 			t.Fatal(err)
 		}
 	})
-	for _, expected := range []string{"Usage: grepple write", "grepple-write-v1", "hash_range_inclusive", "--dry-run"} {
+	for _, expected := range []string{"Usage: grepple write", "grepple-write-v1", "hash_range_inclusive", "operation", "before_sha256", "--dry-run", "--json", "HASH│LINE│content"} {
 		if !strings.Contains(output, expected) {
 			t.Fatalf("write help missing %q:\n%s", expected, output)
 		}

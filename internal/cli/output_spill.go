@@ -122,7 +122,7 @@ func runWithOutputSpill(args []string, options spillOptions, run func() error) e
 	}
 	outputSpillMutex.Lock()
 	defer outputSpillMutex.Unlock()
-	repository, configPath, err := loadRepositoryConfig()
+	repository, _, err := loadRepositoryConfig()
 	if err != nil {
 		return err
 	}
@@ -133,21 +133,20 @@ func runWithOutputSpill(args []string, options spillOptions, run func() error) e
 	if threshold < 1 {
 		threshold = defaultSpillThresholdBytes
 	}
-	root := mustGetwd()
-	if configPath != "" {
-		root = filepath.Dir(configPath)
-	}
-	outputDirectory := filepath.Join(root, ".grepple", "output")
-	if options.directory != "" {
-		outputDirectory = options.directory
-		if !filepath.IsAbs(outputDirectory) {
-			outputDirectory = filepath.Join(mustGetwd(), outputDirectory)
-		}
-	}
-	if err := os.MkdirAll(outputDirectory, 0o700); err != nil {
+	outputDirectory, err := resolveOutputArtifactDirectory(options.directory)
+	if err != nil {
 		return err
 	}
-	temporary, err := os.CreateTemp(outputDirectory, ".spill-*")
+	if err := os.MkdirAll(outputDirectory, 0o700); err != nil {
+		if options.directory != "" || strings.TrimSpace(os.Getenv("GREPPLE_ARTIFACT_DIR")) != "" {
+			return err
+		}
+		outputDirectory = filepath.Join(os.TempDir(), "grepple", "output")
+		if fallbackErr := os.MkdirAll(outputDirectory, 0o700); fallbackErr != nil {
+			return fmt.Errorf("create artifact directory: %v; temporary fallback: %w", err, fallbackErr)
+		}
+	}
+	temporary, err := os.CreateTemp(outputDirectory, ".grepple-spill-*")
 	if err != nil {
 		return err
 	}
@@ -160,6 +159,17 @@ func runWithOutputSpill(args []string, options spillOptions, run func() error) e
 	os.Stdout = originalStdout
 	return finishOutputSpill(temporary, temporaryPath, outputDirectory, threshold, args, originalStdout, commandErr)
 }
+
+func resolveOutputArtifactDirectory(configured string) (string, error) {
+	if configured == "" {
+		return defaultOutputArtifactDirectory()
+	}
+	if filepath.IsAbs(configured) {
+		return filepath.Clean(configured), nil
+	}
+	return filepath.Join(mustGetwd(), configured), nil
+}
+
 func finishOutputSpill(temporary *os.File, temporaryPath, outputDirectory string, threshold int, args []string, stdout io.Writer, commandErr error) error {
 	if closeErr := temporary.Close(); commandErr == nil && closeErr != nil {
 		commandErr = closeErr

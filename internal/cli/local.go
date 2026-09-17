@@ -202,7 +202,7 @@ func searchLocal(options *cliOptions) ([]api.FileResult, error) {
 		if err != nil {
 			return nil, err
 		}
-		return search.BuildResults([]search.FileMatch{*match}, 0, 0, params.MaxSegments, true), nil
+		return search.BuildResults([]search.FileMatch{*match}, params.BeforeContext, params.AfterContext, params.MaxSegments, true), nil
 	}
 	if params.Files {
 		// Filename glob listing only. --files-with-matches is a content search, so
