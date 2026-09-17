@@ -226,3 +226,25 @@ func matchingTypeScriptModuleFiles(files []string, target string) []string {
 	}
 	return result
 }
+
+type ecmaNavigationIndex struct{ baseLanguageNavigationIndex }
+
+func (index *ecmaNavigationIndex) importTargets(sourceFile, _, importPath, _, _ string) navigationImportTargets {
+	if strings.HasPrefix(importPath, ".") {
+		result := []string{}
+		for _, candidateFile := range index.corpus.files {
+			if navigationRelativeImportMatches(sourceFile, importPath, candidateFile) {
+				result = append(result, candidateFile)
+			}
+		}
+		return navigationImportTargets{files: result}
+	}
+	return navigationImportTargets{files: typeScriptAliasImportTargets(index.corpus.files, sourceFile, importPath)}
+}
+
+func navigationRelativeImportMatches(sourceFile, importPath, candidateFile string) bool {
+	imported := filepath.Clean(filepath.Join(filepath.Dir(sourceFile), filepath.FromSlash(importPath)))
+	candidate := strings.TrimSuffix(filepath.Clean(candidateFile), filepath.Ext(candidateFile))
+	imported = strings.TrimSuffix(imported, filepath.Ext(imported))
+	return candidate == imported || filepath.Base(candidate) == "index" && filepath.Dir(candidate) == imported
+}

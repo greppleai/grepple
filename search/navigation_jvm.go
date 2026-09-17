@@ -2,45 +2,16 @@ package search
 
 import "strings"
 
-func (index *navigationIndex) jvmImportTargetFiles(importPath, imported, language string) []string {
-	return index.qualifiedExportTargetFiles(importPath, imported, language)
-}
+type qualifiedExportNavigationIndex struct{ baseLanguageNavigationIndex }
 
-func (index *navigationIndex) cSharpImportTargetFiles(importPath, imported string) []string {
+func (index *qualifiedExportNavigationIndex) importTargets(_, _, importPath, imported, _ string) navigationImportTargets {
 	importPath = strings.TrimSpace(importPath)
 	if importPath == "" {
-		return nil
+		return navigationImportTargets{}
 	}
 	matches := []string{}
-	for _, item := range index.graph.Exports {
-		if navigationLanguageFamily(item.Language) == "csharp" && cSharpExportMatches(item.ImportPath, item.Name, importPath, imported) {
-			matches = append(matches, item.Path)
-		}
-	}
-	return compactSortedStrings(matches)
-}
-
-func cSharpExportMatches(packageName, name, importPath, imported string) bool {
-	namespaceMatch := packageName == importPath
-	exactMatch := navigationQualifiedExportName(packageName, name) == importPath
-	switch imported {
-	case "*":
-		return namespaceMatch
-	case "":
-		return exactMatch
-	default:
-		return namespaceMatch || exactMatch
-	}
-}
-
-func (index *navigationIndex) qualifiedExportTargetFiles(importPath, imported, language string) []string {
-	importPath = strings.TrimSpace(importPath)
-	if importPath == "" {
-		return nil
-	}
-	matches := []string{}
-	for _, item := range index.graph.Exports {
-		if navigationLanguageFamily(item.Language) != language {
+	for _, item := range index.corpus.graph.Exports {
+		if navigationLanguageFamily(item.Language) != index.family {
 			continue
 		}
 		wildcardMatch := imported == "*" && item.ImportPath == importPath
@@ -49,7 +20,7 @@ func (index *navigationIndex) qualifiedExportTargetFiles(importPath, imported, l
 			matches = append(matches, item.Path)
 		}
 	}
-	return compactSortedStrings(matches)
+	return navigationImportTargets{files: compactSortedStrings(matches)}
 }
 
 func navigationQualifiedExportName(packageName, name string) string {

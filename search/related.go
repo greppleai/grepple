@@ -46,16 +46,15 @@ type navigationCall struct {
 	qualifier, importPath, moduleScope string
 	receiverType, receiverFactory      string
 	factoryImport, file, language      string
-	importSourceFile, importDirectory  string
+	importSourceFile                   string
 	rootType, rootImport               string
 	receiverMembers                    []string
 	importTargetFiles                  []string
-	rustTargetModules                  []string
+	importTargetScopes                 []string
 	promotedReceiverTypes              []string
 	importedReceiverTypes              []string
 	importedIdentity                   string
 	packageName                        string
-	moduleKnown                        bool
 	line                               int
 }
 
@@ -72,20 +71,18 @@ type navigationField struct {
 }
 
 type navigationIndex struct {
-	declarations   map[string][]navigationDeclaration
-	callers        map[string][]navigationCaller
-	calls          map[string][]navigationCall
-	byFile         map[string][]navigationDeclaration
-	byLocation     map[string]navigationDeclaration
-	exports        map[string][]navigationExport
-	fields         map[string][]navigationField
-	embeddedFields map[string][]navigationField
-	contents       map[string]string
-	goReplacements map[string]string
-	goPackages     map[string][]string
-	rustModules    *parser.RustModuleIndex
-	graph          parser.NavigationGraph
-	sourceStats    NavigationSourceStats
+	declarations    map[string][]navigationDeclaration
+	callers         map[string][]navigationCaller
+	calls           map[string][]navigationCall
+	byFile          map[string][]navigationDeclaration
+	byLocation      map[string]navigationDeclaration
+	exports         map[string][]navigationExport
+	fields          map[string][]navigationField
+	embeddedFields  map[string][]navigationField
+	contents        map[string]string
+	languageIndexes map[string]languageNavigationIndex
+	graph           parser.NavigationGraph
+	sourceStats     NavigationSourceStats
 }
 
 func hasNavigationMatch(matches []FileMatch) bool {
@@ -98,11 +95,8 @@ func hasNavigationMatch(matches []FileMatch) bool {
 }
 
 func supportsNavigation(language string) bool {
-	switch navigationLanguageFamily(language) {
-	case "go", "javascript", "typescript", "python", "java", "kotlin", "csharp", "c", "cpp", "rust", "shell":
-		return true
-	}
-	return false
+	_, supported := languageNavigationIndexFactories[navigationLanguageFamily(language)]
+	return supported
 }
 
 func attachRelated(matches []FileMatch, candidates []string, followDepth int) {
@@ -146,12 +140,18 @@ func newNavigationIndex() *navigationIndex {
 	return &navigationIndex{
 		declarations: make(map[string][]navigationDeclaration), callers: make(map[string][]navigationCaller),
 		calls: make(map[string][]navigationCall), byFile: make(map[string][]navigationDeclaration),
-		byLocation: make(map[string]navigationDeclaration), exports: make(map[string][]navigationExport), fields: make(map[string][]navigationField), embeddedFields: make(map[string][]navigationField), contents: make(map[string]string), goReplacements: make(map[string]string), goPackages: make(map[string][]string),
+		byLocation: make(map[string]navigationDeclaration), exports: make(map[string][]navigationExport), fields: make(map[string][]navigationField), embeddedFields: make(map[string][]navigationField), contents: make(map[string]string),
 	}
 }
 
 func (index *navigationIndex) finalize(paths []string) {
-	index.graph.RepositoryRoots, index.goReplacements, index.goPackages = goRepositoryContext(paths)
+	files := make([]string, 0, len(index.contents))
+	for path := range index.contents {
+		files = append(files, path)
+	}
+	sort.Strings(files)
+	corpus := &navigationCorpus{contents: index.contents, exports: index.exports, graph: index.graph, files: files}
+	index.languageIndexes, index.graph.RepositoryRoots = newLanguageNavigationIndexes(corpus, paths)
 	index.inferReExportTargets()
 	index.inferCrossFileFieldReceivers()
 	index.inferReExportTargets()
@@ -273,67 +273,16 @@ func (index *navigationIndex) resolveGraphImports() {
 
 func (index *navigationIndex) resolveImportTargetPaths(fact parser.NavigationImport, packageFiles map[string][]string) []string {
 	targets := append([]string(nil), packageFiles[fact.ImportPath]...)
-	family := navigationLanguageFamily(fact.Language)
-	switch family {
-	case "rust":
-		targets = append(targets, index.rustImportTargetFiles(fact.Path, fact.Scope, fact.ImportPath)...)
-	case "c", "cpp":
-		targets = append(targets, index.cFamilyIncludeTargetFiles(fact.Path, fact.ImportPath, fact.Kind)...)
-	default:
-		targets = append(targets, index.importTargetFiles(fact.Path, fact.ImportPath, fact.Imported, fact.Language)...)
-	}
-	if len(targets) == 0 && family == "go" {
-		targets = append(targets, index.localGoImportTargets(fact.Path, fact.ImportPath)...)
+	if languageIndex := index.languageIndex(fact.Language); languageIndex != nil {
+		resolved := languageIndex.importTargets(fact.Path, fact.Scope, fact.ImportPath, fact.Imported, fact.Kind)
+		targets = append(targets, resolved.files...)
 	}
 	sort.Strings(targets)
 	return compactSortedStrings(targets)
 }
 
-func (index *navigationIndex) cFamilyIncludeTargetFiles(sourcePath, importPath, kind string) []string {
-	if kind != "include-quoted" || importPath == "" || filepath.IsAbs(importPath) || filepath.VolumeName(importPath) != "" {
-		return nil
-	}
-	target := filepath.Clean(filepath.Join(filepath.Dir(sourcePath), filepath.FromSlash(importPath)))
-	for candidatePath := range index.contents {
-		if filepath.Clean(candidatePath) == target {
-			return []string{candidatePath}
-		}
-	}
-	return nil
-}
-
-func (index *navigationIndex) goReplacementImportTargets(importPath string) []string {
-	root, directory := longestGoReplacementPrefix(importPath, index.goReplacements)
-	if root == "" {
-		return nil
-	}
-	relative := strings.TrimPrefix(strings.TrimPrefix(importPath, root), "/")
-	targetDirectory := filepath.Clean(filepath.Join(directory, filepath.FromSlash(relative)))
-	targets := []string{}
-	for candidatePath := range index.contents {
-		if filepath.Clean(filepath.Dir(candidatePath)) == targetDirectory {
-			targets = append(targets, candidatePath)
-		}
-	}
-	return targets
-}
-
-func (index *navigationIndex) goPackageImportTargets(importPath string) []string {
-	return append([]string(nil), index.goPackages[importPath]...)
-}
-
-func (index *navigationIndex) localGoImportTargets(sourcePath, importPath string) []string {
-	directory, known := localGoImportDirectory(sourcePath, importPath)
-	if !known || directory == "" {
-		return nil
-	}
-	targets := []string{}
-	for candidatePath := range index.contents {
-		if filepath.Clean(filepath.Dir(candidatePath)) == directory {
-			targets = append(targets, candidatePath)
-		}
-	}
-	return targets
+func (index *navigationIndex) languageIndex(language string) languageNavigationIndex {
+	return index.languageIndexes[navigationLanguageFamily(language)]
 }
 
 func (index *navigationIndex) navigationDeclarationsByID() map[string]navigationDeclaration {
@@ -377,13 +326,13 @@ func (index *navigationIndex) inferReExportTarget(call *navigationCall) {
 		call.importedIdentity = navigationImportedIdentity(*call)
 	}
 	identity := call.importedIdentity
-	if navigationLanguageFamily(call.language) == "rust" {
-		targets := index.rustReExportTargets(call.file, call.moduleScope, call.importPath, identity, map[string]bool{})
-		call.importTargetFiles = rustModuleTargetFiles(targets)
-		call.rustTargetModules = rustModuleTargetKeys(targets)
-	} else {
-		call.importTargetFiles = index.reExportTargetFiles(call.file, call.importPath, identity, call.language, map[string]bool{})
+	languageIndex := index.languageIndex(call.language)
+	if languageIndex == nil {
+		return
 	}
+	targets := languageIndex.reExportTargets(call.file, call.moduleScope, call.importPath, identity, map[string]bool{})
+	call.importTargetFiles = targets.files
+	call.importTargetScopes = targets.scopes
 	call.importedReceiverTypes = index.importedTypeNames(call.importTargetFiles, identity, call.language)
 	if len(call.importedReceiverTypes) != 1 {
 		return
@@ -419,81 +368,6 @@ func navigationImportedIdentity(call navigationCall) string {
 		return terminalSymbolName(call.resolvedName)
 	}
 	return terminalSymbolName(call.name)
-}
-
-func (index *navigationIndex) reExportTargetFiles(sourceFile, importPath, name, language string, seen map[string]bool) []string {
-	if importPath == "" {
-		return nil
-	}
-	result := []string{}
-	candidateFiles := index.importTargetFiles(sourceFile, importPath, "", language)
-	for _, candidateFile := range candidateFiles {
-		key := navigationSymbolKey(language, candidateFile) + "\x00" + name
-		if seen[key] {
-			continue
-		}
-		seen[key] = true
-		result = append(result, candidateFile)
-		for _, export := range index.exports[navigationSymbolKey(language, candidateFile)] {
-			if export.name != name && export.name != "*" {
-				continue
-			}
-			nextName := export.importedName
-			if nextName == "" || nextName == "*" {
-				nextName = name
-			}
-			result = append(result, index.reExportTargetFiles(export.file, export.importPath, nextName, language, seen)...)
-		}
-	}
-	sort.Strings(result)
-	return compactSortedStrings(result)
-}
-
-func (index *navigationIndex) importTargetFiles(sourceFile, importPath, imported, language string) []string {
-	family := navigationLanguageFamily(language)
-	if family == "go" {
-		targets := index.goPackageImportTargets(importPath)
-		targets = append(targets, index.goReplacementImportTargets(importPath)...)
-		sort.Strings(targets)
-		return compactSortedStrings(targets)
-	}
-	if family == "rust" {
-		return index.rustImportTargetFiles(sourceFile, "", importPath)
-	}
-	files := make([]string, 0, len(index.contents))
-	for candidateFile := range index.contents {
-		files = append(files, candidateFile)
-	}
-	sort.Strings(files)
-	if family == "java" || family == "kotlin" {
-		return index.jvmImportTargetFiles(importPath, imported, family)
-	}
-	if family == "csharp" {
-		return index.cSharpImportTargetFiles(importPath, imported)
-	}
-	if family == "python" {
-		return pythonImportTargetFiles(files, sourceFile, importPath)
-	}
-	if strings.HasPrefix(importPath, ".") {
-		result := []string{}
-		for _, candidateFile := range files {
-			if navigationRelativeImportMatches(sourceFile, importPath, candidateFile) {
-				result = append(result, candidateFile)
-			}
-		}
-		return result
-	}
-	if family == "typescript" || family == "javascript" {
-		return typeScriptAliasImportTargets(files, sourceFile, importPath)
-	}
-	return nil
-}
-
-func navigationRelativeImportMatches(sourceFile, importPath, candidateFile string) bool {
-	imported := filepath.Clean(filepath.Join(filepath.Dir(sourceFile), filepath.FromSlash(importPath)))
-	candidate := strings.TrimSuffix(filepath.Clean(candidateFile), filepath.Ext(candidateFile))
-	imported = strings.TrimSuffix(imported, filepath.Ext(imported))
-	return candidate == imported || filepath.Base(candidate) == "index" && filepath.Dir(candidate) == imported
 }
 
 func compactSortedStrings(values []string) []string {
@@ -643,10 +517,12 @@ func (index *navigationIndex) inferCrossFileFieldReceiver(call *navigationCall) 
 		return
 	}
 	binding := navigationField{typeName: call.rootType, importPath: call.rootImport, language: call.language, packageName: call.packageName, file: call.file}
-	binding.targetFiles = index.reExportTargetFiles(call.file, call.rootImport, terminalSymbolName(call.rootType), call.language, map[string]bool{})
+	if languageIndex := index.languageIndex(call.language); languageIndex != nil {
+		binding.targetFiles = languageIndex.reExportTargets(call.file, "", call.rootImport, terminalSymbolName(call.rootType), map[string]bool{}).files
+	}
 	for _, member := range call.receiverMembers {
 		candidates := index.fields[navigationFieldKey(call.language, binding.typeName, member)]
-		matched := filterNavigationFieldsByOrigin(candidates, binding)
+		matched := index.filterNavigationFieldsByOrigin(candidates, binding)
 		if len(matched) != 1 || matched[0].typeName == "" {
 			return
 		}
@@ -656,7 +532,6 @@ func (index *navigationIndex) inferCrossFileFieldReceiver(call *navigationCall) 
 	call.importPath = binding.importPath
 	call.importedIdentity = ""
 	call.importSourceFile = binding.file
-	resolveNavigationCallImport(call, binding.language)
 }
 
 func (index *navigationIndex) inferPromotedReceiverTypes() {
@@ -680,7 +555,7 @@ func (index *navigationIndex) promotedTypes(owner navigationField, seen map[stri
 	}
 	seen[key] = true
 	result := []string{}
-	for _, field := range filterNavigationFieldsByOrigin(index.embeddedFields[key], owner) {
+	for _, field := range index.filterNavigationFieldsByOrigin(index.embeddedFields[key], owner) {
 		typeName := terminalSymbolName(field.typeName)
 		if typeName == "" || stringSliceContains(result, typeName) {
 			continue
@@ -700,30 +575,30 @@ func stringSliceContains(values []string, target string) bool {
 	return false
 }
 
-func filterNavigationFieldsByOrigin(candidates []navigationField, owner navigationField) []navigationField {
+func (index *navigationIndex) filterNavigationFieldsByOrigin(candidates []navigationField, owner navigationField) []navigationField {
 	result := make([]navigationField, 0, len(candidates))
 	for _, candidate := range candidates {
-		if navigationFieldOriginMatches(candidate, owner) {
+		if index.navigationFieldOriginMatches(candidate, owner) {
 			result = append(result, candidate)
 		}
 	}
 	return result
 }
 
-func navigationFieldOriginMatches(candidate, owner navigationField) bool {
+func (index *navigationIndex) navigationFieldOriginMatches(candidate, owner navigationField) bool {
 	if len(owner.targetFiles) > 0 {
 		return stringSliceContains(owner.targetFiles, candidate.file)
 	}
+	languageIndex := index.languageIndex(candidate.language)
+	if languageIndex == nil {
+		return false
+	}
 	if owner.importPath != "" {
 		call := navigationCall{importPath: owner.importPath, importSourceFile: owner.file, file: owner.file}
-		resolveNavigationCallImport(&call, candidate.language)
 		declaration := navigationDeclaration{language: candidate.language, file: candidate.file, packageName: candidate.packageName}
-		return navigationImportMatches(call, declaration)
+		return languageIndex.importMatches(call, declaration)
 	}
-	if navigationLanguageFamily(candidate.language) == "go" {
-		return candidate.packageName == owner.packageName && filepath.Clean(filepath.Dir(candidate.file)) == filepath.Clean(filepath.Dir(owner.file))
-	}
-	return candidate.file == owner.file
+	return languageIndex.fieldOriginMatches(candidate, owner)
 }
 
 func (index *navigationIndex) addDeclarations(declarations []parser.NavigationDeclaration, language, path, displayPath string) []navigationDeclaration {
@@ -762,7 +637,6 @@ func (index *navigationIndex) addCalls(calls []parser.NavigationCall, declaratio
 			rootType: call.ReceiverRootType, rootImport: call.ReceiverRootImport, receiverMembers: append([]string(nil), call.ReceiverMembers...), packageName: caller.packageName,
 			receiverFactory: call.ReceiverFactory, factoryImport: call.ReceiverFactoryImport, file: sourcePath, language: language, importSourceFile: sourcePath, line: call.Line,
 		}
-		resolveNavigationCallImport(&indexedCall, language)
 		index.calls[location] = append(index.calls[location], indexedCall)
 	}
 }
@@ -795,7 +669,6 @@ func (index *navigationIndex) inferCallReturnReceiver(call *navigationCall, lang
 		call.importPath = call.factoryImport
 		call.importSourceFile = call.file
 	}
-	resolveNavigationCallImport(call, declaration.language)
 }
 
 func (index *navigationIndex) resolveReturnFactory(call navigationCall, language string) (navigationDeclaration, bool) {
@@ -803,7 +676,6 @@ func (index *navigationIndex) resolveReturnFactory(call navigationCall, language
 		name: call.receiverFactory, display: call.receiverFactory, importPath: call.factoryImport,
 		file: call.file, importSourceFile: call.file,
 	}
-	resolveNavigationCallImport(&factoryCall, language)
 	key := navigationSymbolKey(language, call.receiverFactory)
 	resolution := index.resolveNavigationCandidates(factoryCall, index.declarations[key], nil)
 	if len(resolution.candidates) != 1 || resolution.confidence == "candidate" {
@@ -828,13 +700,6 @@ func (index *navigationIndex) indexNavigationCallers() {
 			index.callers[key] = append(index.callers[key], navigationCaller{declaration: caller, call: call})
 		}
 	}
-}
-
-func resolveNavigationCallImport(call *navigationCall, language string) {
-	if navigationLanguageFamily(language) != "go" || call.importPath == "" {
-		return
-	}
-	call.importDirectory, call.moduleKnown = localGoImportDirectory(call.importSourceFile, call.importPath)
 }
 
 func relatedPoints(match FileMatch, navigation *navigationIndex) ([]RelatedPoint, int, int) {
@@ -890,7 +755,9 @@ type navigationCandidateResolution struct {
 }
 
 func (index *navigationIndex) resolveNavigationCandidates(call navigationCall, candidates, matched []navigationDeclaration) navigationCandidateResolution {
-	candidates = index.rustVisibleCandidates(call, candidates)
+	if languageIndex := index.languageIndex(call.language); languageIndex != nil {
+		candidates = languageIndex.filterCandidates(call, candidates)
+	}
 	contextConfidence := ""
 	if contextual, confidence := index.navigationContextCandidates(call, candidates); len(contextual) > 0 {
 		candidates = contextual
@@ -978,105 +845,8 @@ func (index *navigationIndex) navigationContextCandidates(call navigationCall, c
 }
 
 func (index *navigationIndex) navigationImportMatches(call navigationCall, candidate navigationDeclaration) bool {
-	if navigationLanguageFamily(candidate.language) == "rust" && len(call.rustTargetModules) > 0 {
-		for _, candidateModule := range index.rustModuleIndex().ModuleKeys(candidate.file, candidate.moduleScope) {
-			if stringSliceContains(call.rustTargetModules, candidateModule) {
-				return true
-			}
-		}
-		return false
-	}
-	return navigationImportMatches(call, candidate)
-}
-
-func navigationImportMatches(call navigationCall, candidate navigationDeclaration) bool {
-	if stringSliceContains(call.importTargetFiles, candidate.file) {
-		return true
-	}
-	if navigationLanguageFamily(candidate.language) == "go" {
-		if call.moduleKnown {
-			return call.importDirectory != "" && filepath.Clean(filepath.Dir(candidate.file)) == call.importDirectory
-		}
-		return candidate.packageName == filepath.Base(filepath.FromSlash(call.importPath))
-	}
-	if !strings.HasPrefix(call.importPath, ".") {
-		return false
-	}
-	imported := filepath.Clean(filepath.Join(filepath.Dir(call.importSourceFile), filepath.FromSlash(call.importPath)))
-	candidatePath := strings.TrimSuffix(filepath.Clean(candidate.file), filepath.Ext(candidate.file))
-	imported = strings.TrimSuffix(imported, filepath.Ext(imported))
-	return candidatePath == imported || filepath.Base(candidatePath) == "index" && filepath.Dir(candidatePath) == imported
-}
-
-func localGoImportDirectory(sourceFile, importPath string) (string, bool) {
-	directory := filepath.Dir(sourceFile)
-	for {
-		modulePath, ok := goModulePath(filepath.Join(directory, "go.mod"))
-		if ok {
-			if importPath == modulePath {
-				return filepath.Clean(directory), true
-			}
-			prefix := modulePath + "/"
-			if strings.HasPrefix(importPath, prefix) {
-				relative := strings.TrimPrefix(importPath, prefix)
-				return filepath.Clean(filepath.Join(directory, filepath.FromSlash(relative))), true
-			}
-			return "", true
-		}
-		parent := filepath.Dir(directory)
-		if parent == directory {
-			return "", false
-		}
-		directory = parent
-	}
-}
-
-// enrichNavigationRepositoryIdentity applies path-dependent Go module and package
-// identity after path-neutral per-file facts have been loaded from cache.
-func enrichNavigationRepositoryIdentity(graph *parser.NavigationGraph, sourcePath string) {
-	if graph == nil || parser.LanguageFor(sourcePath) != "go" {
-		return
-	}
-	moduleRoot, moduleID, ok := goModuleForFile(sourcePath)
-	if !ok {
-		return
-	}
-	packageID := moduleID
-	if relative, err := filepath.Rel(moduleRoot, filepath.Dir(sourcePath)); err == nil && relative != "." {
-		packageID += "/" + filepath.ToSlash(relative)
-	}
-	for index := range graph.Declarations {
-		graph.Declarations[index].ModuleID = moduleID
-		graph.Declarations[index].PackageID = packageID
-	}
-}
-
-func goModuleForFile(sourcePath string) (root, moduleID string, ok bool) {
-	directory := filepath.Dir(sourcePath)
-	for {
-		if modulePath, found := goModulePath(filepath.Join(directory, "go.mod")); found {
-			return filepath.Clean(directory), modulePath, true
-		}
-		parent := filepath.Dir(directory)
-		if parent == directory {
-			return "", "", false
-		}
-		directory = parent
-	}
-}
-
-func goModulePath(path string) (string, bool) {
-	content, err := os.ReadFile(path)
-	if err != nil {
-		return "", false
-	}
-	for _, line := range strings.Split(string(content), "\n") {
-		fields := strings.Fields(line)
-		if len(fields) >= 2 && fields[0] == "module" {
-			return strings.TrimSpace(fields[1]), true
-		}
-	}
-	return "", false
+	languageIndex := index.languageIndex(call.language)
+	return languageIndex != nil && languageIndex.importMatches(call, candidate)
 }
 
 func exactNavigationCandidates(call navigationCall, candidates []navigationDeclaration) []navigationDeclaration {

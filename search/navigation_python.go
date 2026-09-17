@@ -77,3 +77,9 @@ func pythonImportModuleMatches(module, target, sourceFile string, relative bool)
 	relativeSource, err := filepath.Rel(root, filepath.Clean(sourceFile))
 	return err == nil && relativeSource != ".." && !strings.HasPrefix(relativeSource, ".."+string(filepath.Separator))
 }
+
+type pythonNavigationIndex struct{ baseLanguageNavigationIndex }
+
+func (index *pythonNavigationIndex) importTargets(sourceFile, _, importPath, _, _ string) navigationImportTargets {
+	return navigationImportTargets{files: pythonImportTargetFiles(index.corpus.files, sourceFile, importPath)}
+}
