@@ -174,6 +174,7 @@ This file records completed Grepple roadmap work that no longer belongs in `next
 - [x] Added JavaScript/JSX, Python, Java, Kotlin, and C# focused architecture adapters on the shared parser/navigation infrastructure.
 - [x] Added native GritQL support for every Tree-sitter-backed language in the capability registry.
 - [x] Added conservative Rust process-entrypoint facts for top-level `main` functions in selected binary crate roots without treating library or nested-module functions as entrypoints.
+- [x] Added conservative Java, Kotlin, and C# process-entrypoint facts for syntax-evidenced conventional signatures while leaving project-selected, script, top-level-statement, renamed, and type-inference-dependent startup behavior unclassified.
 
 ## Reliability and performance
 

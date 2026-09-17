@@ -3,9 +3,58 @@ package parser
 import "strings"
 
 func cSharpNavigationAdapter(rules *structureRules) navigationAdapter {
-	return &navigationAdapterConfig{rules: rules, callTypes: newStringSet("invocation_expression", "object_creation_expression"), sourceFacts: cSharpNavigationSourceFacts, exports: cSharpNavigationExports, visibility: func(node *syntaxNode, _ string, content string) NavigationVisibility {
+	return &navigationAdapterConfig{rules: rules, callTypes: newStringSet("invocation_expression", "object_creation_expression"), sourceFacts: cSharpNavigationSourceFacts, exports: cSharpNavigationExports, entrypoint: cSharpNavigationEntrypoint, visibility: func(node *syntaxNode, _ string, content string) NavigationVisibility {
 		return cSharpNavigationVisibility(navigationDeclarationHeader(node, content))
 	}}
+}
+
+func cSharpNavigationEntrypoint(context navigationEntrypointContext) string {
+	node := context.node
+	name := node.ChildByFieldName("name")
+	returnType := node.ChildByFieldName("returns")
+	header := navigationDeclarationHeader(node, context.content)
+	if node.Kind() != "method_declaration" || name == nil || name.Text() != "Main" || context.container == "" || returnType == nil || !navigationHeaderHasWord(header, "static") || cSharpNavigationGenericMethod(node) || !cSharpNavigationMainReturnType(returnType.Text()) || !cSharpNavigationMainParameters(node) {
+		return ""
+	}
+	return "process"
+}
+
+func cSharpNavigationGenericMethod(node *syntaxNode) bool {
+	for _, child := range node.NamedChildren() {
+		if child.Kind() == "type_parameter_list" {
+			return true
+		}
+	}
+	return false
+}
+
+func cSharpNavigationMainReturnType(value string) bool {
+	switch compactNavigationQualifiedName(value) {
+	case "void", "int", "System.Threading.Tasks.Task", "System.Threading.Tasks.Task<int>":
+		return true
+	default:
+		return false
+	}
+}
+
+func cSharpNavigationMainParameters(node *syntaxNode) bool {
+	parameters := node.ChildByFieldName("parameters")
+	if parameters == nil {
+		return false
+	}
+	children := parameters.NamedChildren()
+	if len(children) == 0 {
+		return true
+	}
+	if len(children) != 1 || children[0].Kind() != "parameter" || navigationHeaderHasWord(children[0].Text(), "ref") || navigationHeaderHasWord(children[0].Text(), "out") || navigationHeaderHasWord(children[0].Text(), "in") || navigationHeaderHasWord(children[0].Text(), "params") {
+		return false
+	}
+	typeNode := children[0].ChildByFieldName("type")
+	if typeNode == nil {
+		return false
+	}
+	typeName := compactNavigationQualifiedName(typeNode.Text())
+	return typeName == "string[]" || typeName == "System.String[]"
 }
 
 func cSharpNavigationSourceFacts(root *syntaxNode, _ string, _ *navigationAdapterConfig) (map[string]navigationImport, string, map[string]map[string]navigationBinding) {

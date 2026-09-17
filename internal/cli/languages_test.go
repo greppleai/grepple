@@ -36,6 +36,7 @@ func TestLanguagesJSONReportsRegisteredFeatureParity(t *testing.T) {
 		t.Fatalf("javascript capabilities=%#v", javascript)
 	}
 	assertImportRelationCapabilities(t, byLanguage, "java", "kotlin", "csharp", "rust")
+	assertEntrypointCapabilities(t, byLanguage, "java", "kotlin", "csharp", "rust")
 	assertRustLanguageCapabilities(t, byLanguage["rust"])
 	markdown := byLanguage["markdown"]
 	if markdown.StructuralGrep != api.FeatureSpecialized || markdown.Outline != api.FeatureSpecialized || markdown.Navigation != api.FeatureUnsupported || markdown.DirectoryArchitecture != api.FeatureUnsupported || markdown.ImportRelations != api.FeatureUnsupported {
@@ -52,6 +53,15 @@ func assertImportRelationCapabilities(t *testing.T, capabilities map[string]api.
 		language := capabilities[id]
 		if language.Navigation != api.FeatureProduction || language.DirectoryArchitecture != api.FeatureProduction || language.ImportRelations != api.FeatureProduction {
 			t.Fatalf("%s capabilities=%#v", id, language)
+		}
+	}
+}
+
+func assertEntrypointCapabilities(t *testing.T, capabilities map[string]api.LanguageCapabilities, ids ...string) {
+	t.Helper()
+	for _, id := range ids {
+		if language := capabilities[id]; language.Entrypoints != api.FeatureProduction {
+			t.Fatalf("%s entrypoint capability=%#v", id, language)
 		}
 	}
 }

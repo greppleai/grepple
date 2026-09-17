@@ -82,6 +82,47 @@ func TestNavigationGraphCapturesRustProcessEntrypoints(t *testing.T) {
 	}
 }
 
+func TestNavigationGraphCapturesJVMProcessEntrypoints(t *testing.T) {
+	for _, test := range []struct {
+		name, language, path, content string
+		want                          int
+	}{
+		{name: "java array", language: "java", path: "src/App.java", content: "class App { public static void main(String[] args) {} }", want: 1},
+		{name: "java varargs", language: "java", path: "src/App.java", content: "class App { public static void main(String... args) {} }", want: 1},
+		{name: "java instance", language: "java", path: "src/App.java", content: "class App { public void main(String[] args) {} }"},
+		{name: "java non-public", language: "java", path: "src/App.java", content: "class App { static void main(String[] args) {} }"},
+		{name: "java wrong return", language: "java", path: "src/App.java", content: "class App { public static int main(String[] args) { return 0; } }"},
+		{name: "kotlin no arguments", language: "kotlin", path: "src/App.kt", content: "fun main() {}", want: 1},
+		{name: "kotlin arguments", language: "kotlin", path: "src/App.kt", content: "fun main(args: Array<String>) {}", want: 1},
+		{name: "kotlin unit expression", language: "kotlin", path: "src/App.kt", content: "fun main(): Unit = println(\"ok\")", want: 1},
+		{name: "kotlin inferred expression", language: "kotlin", path: "src/App.kt", content: "fun main() = println(\"unknown return type\")"},
+		{name: "kotlin private", language: "kotlin", path: "src/App.kt", content: "private fun main() {}"},
+		{name: "kotlin class member", language: "kotlin", path: "src/App.kt", content: "class App { fun main() {} }"},
+		{name: "kotlin script", language: "kotlin", path: "src/App.kts", content: "fun main() {}"},
+		{name: "csharp no arguments", language: "csharp", path: "src/App.cs", content: "class App { static void Main() {} }", want: 1},
+		{name: "csharp arguments", language: "csharp", path: "src/App.cs", content: "class App { public static int Main(string[] args) { return 0; } }", want: 1},
+		{name: "csharp task", language: "csharp", path: "src/App.cs", content: "class App { static System.Threading.Tasks.Task Main(string[] args) => null; }", want: 1},
+		{name: "csharp task result", language: "csharp", path: "src/App.cs", content: "class App { static System.Threading.Tasks.Task<int> Main() => null; }", want: 1},
+		{name: "csharp unresolved task", language: "csharp", path: "src/App.cs", content: "class App { static Task<int> Main() => null; }"},
+		{name: "csharp instance", language: "csharp", path: "src/App.cs", content: "class App { void Main() {} }"},
+		{name: "csharp wrong parameter", language: "csharp", path: "src/App.cs", content: "class App { static void Main(string value) {} }"},
+		{name: "csharp ref parameter", language: "csharp", path: "src/App.cs", content: "class App { static void Main(ref string[] args) {} }"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			graph := BuildNavigationGraph(test.content, test.language, test.path)
+			got := 0
+			for _, declaration := range graph.Declarations {
+				if declaration.Entrypoint == "process" {
+					got++
+				}
+			}
+			if got != test.want {
+				t.Fatalf("process entrypoints=%d want=%d declarations=%+v", got, test.want, graph.Declarations)
+			}
+		})
+	}
+}
+
 func TestNavigationGraphCapturesCFamilyProcessEntrypoints(t *testing.T) {
 	for _, test := range []struct {
 		language, content string

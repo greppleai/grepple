@@ -47,6 +47,7 @@ func TestSupportedLanguagesOwnsClassificationMetadata(t *testing.T) {
 		t.Fatalf("Python import navigation missing: %#v", python)
 	}
 	assertImportNavigationCapabilities(t, "java", "kotlin", "csharp", "rust")
+	assertEntrypointNavigationCapabilities(t, "go", "c", "cpp", "java", "kotlin", "csharp", "rust")
 }
 
 func assertImportNavigationCapabilities(t *testing.T, ids ...string) {
@@ -55,6 +56,16 @@ func assertImportNavigationCapabilities(t *testing.T, ids ...string) {
 		language, _ := CapabilitiesForLanguage(id)
 		if !language.ImportNavigation {
 			t.Fatalf("%s import navigation missing: %#v", id, language)
+		}
+	}
+}
+
+func assertEntrypointNavigationCapabilities(t *testing.T, ids ...string) {
+	t.Helper()
+	for _, id := range ids {
+		language, _ := CapabilitiesForLanguage(id)
+		if !language.EntrypointNavigation {
+			t.Fatalf("%s entrypoint navigation missing: %#v", id, language)
 		}
 	}
 }
