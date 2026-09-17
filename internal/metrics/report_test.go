@@ -55,23 +55,39 @@ func TestBuildReportExcludesUnavailableUsageFromAggregates(t *testing.T) {
 	}
 }
 
-func TestBuildComparisonUsesExplicitBaselineAndTargetAgents(t *testing.T) {
+func TestBuildComparisonUsesSeparateSameAgentReports(t *testing.T) {
 	start := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
-	runs := []Run{
-		{RunID: "a", Agent: "pi", StartedAt: start, EndedAt: start.Add(time.Second), Usage: Usage{TotalTokens: 100}, Outcome: Outcome{Status: "success"}},
-		{RunID: "b", Agent: "claude-code", StartedAt: start, EndedAt: start.Add(2 * time.Second), Usage: Usage{TotalTokens: 50}, Outcome: Outcome{Status: "success"}},
-	}
-	comparison, err := BuildComparison(runs, "pi", "claude-code")
+	baseline := BuildReport([]Run{{
+		RunID: "without-grepple", Agent: "pi", StartedAt: start, EndedAt: start.Add(2 * time.Second),
+		Usage: Usage{TotalTokens: 100}, Outcome: Outcome{Status: "success"},
+	}})
+	target := BuildReport([]Run{{
+		RunID: "with-grepple", Agent: "pi", StartedAt: start, EndedAt: start.Add(time.Second),
+		Usage: Usage{TotalTokens: 50}, Outcome: Outcome{Status: "success"},
+	}})
+
+	comparison, err := BuildComparison(baseline, target)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if comparison.Baseline.Name != "pi" || comparison.Target.Name != "claude-code" || comparison.Delta.Baseline != "pi" || comparison.Delta.Target != "claude-code" {
+	if comparison.Baseline.Name != "pi" || comparison.Target.Name != "pi" || comparison.Delta.Baseline != "pi" || comparison.Delta.Target != "pi" {
 		t.Fatalf("comparison = %#v", comparison)
 	}
 	if comparison.Delta.Metrics["tokensMedian"].Absolute != -50 {
 		t.Fatalf("delta = %#v", comparison.Delta)
 	}
-	if _, err := BuildComparison(runs, "missing", "claude-code"); err == nil {
-		t.Fatal("expected missing baseline error")
+	if !comparison.Generated.Equal(baseline.Generated) {
+		t.Fatalf("generatedAt = %s", comparison.Generated)
+	}
+
+	multipleAgents := BuildReport([]Run{
+		{RunID: "pi", Agent: "pi", StartedAt: start, EndedAt: start},
+		{RunID: "claude", Agent: "claude-code", StartedAt: start, EndedAt: start},
+	})
+	if _, err := BuildComparison(multipleAgents, target); err == nil {
+		t.Fatal("expected multi-agent report rejection")
+	}
+	if _, err := BuildComparison(Report{}, target); err == nil {
+		t.Fatal("expected empty report rejection")
 	}
 }

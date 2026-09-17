@@ -40,29 +40,22 @@ func BuildReport(runs []Run) Report {
 	}
 }
 
-// BuildComparison builds one explicit target-minus-baseline agent comparison.
-func BuildComparison(runs []Run, baselineName, targetName string) (ComparisonReport, error) {
-	if baselineName == "" || targetName == "" {
-		return ComparisonReport{}, fmt.Errorf("baseline and target are required")
+// BuildComparison builds a target-minus-baseline comparison from two single-agent reports.
+func BuildComparison(baselineReport, targetReport Report) (ComparisonReport, error) {
+	if len(baselineReport.Groups) != 1 {
+		return ComparisonReport{}, fmt.Errorf("baseline report must contain exactly one agent group")
 	}
-	if baselineName == targetName {
-		return ComparisonReport{}, fmt.Errorf("baseline and target must differ")
+	if len(targetReport.Groups) != 1 {
+		return ComparisonReport{}, fmt.Errorf("target report must contain exactly one agent group")
 	}
-	report := BuildReport(runs)
-	groups := make(map[string]Group, len(report.Groups))
-	for _, group := range report.Groups {
-		groups[group.Name] = group
-	}
-	baseline, ok := groups[baselineName]
-	if !ok {
-		return ComparisonReport{}, fmt.Errorf("baseline group %q not found", baselineName)
-	}
-	target, ok := groups[targetName]
-	if !ok {
-		return ComparisonReport{}, fmt.Errorf("target group %q not found", targetName)
+	baseline := baselineReport.Groups[0]
+	target := targetReport.Groups[0]
+	generated := baselineReport.Generated
+	if targetReport.Generated.After(generated) {
+		generated = targetReport.Generated
 	}
 	return ComparisonReport{
-		Schema: "grepple-agent-comparison-v1", Generated: report.Generated,
+		Schema: "grepple-agent-comparison-v1", Generated: generated.UTC(),
 		Baseline: baseline, Target: target, Delta: compareGroupPair(baseline, target),
 	}, nil
 }

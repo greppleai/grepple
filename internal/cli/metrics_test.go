@@ -34,8 +34,8 @@ func TestWriteMetricsReportIsBounded(t *testing.T) {
 	}
 }
 
-func TestMetricsHelpDescribesJSONLAnalysisWorkflow(t *testing.T) {
-	for _, want := range []string{"metrics report", "metrics compare", "--input", "--baseline", "--target"} {
+func TestMetricsHelpDescribesReportFileComparisonWorkflow(t *testing.T) {
+	for _, want := range []string{"metrics report", "metrics compare", "--input", "--baseline", "--target", "JSON report"} {
 		if !strings.Contains(metricsHelp, want) {
 			t.Errorf("metrics help lacks %q", want)
 		}
@@ -66,12 +66,15 @@ func TestMetricsOptionsRejectRemovedDimensions(t *testing.T) {
 	}
 }
 
-func TestMetricsCommandsRequireExplicitJSONLInputs(t *testing.T) {
-	missingInputCommands := [][]string{{"report"}, {"compare", "--baseline", "pi", "--target", "claude-code"}}
-	for _, args := range missingInputCommands {
-		if err := runMetrics(args); err == nil || !strings.Contains(err.Error(), "requires --input") {
-			t.Fatalf("metrics %s error = %v", args[0], err)
-		}
+func TestMetricsCommandsRequireTheirExplicitEvidenceInputs(t *testing.T) {
+	if err := runMetrics([]string{"report"}); err == nil || !strings.Contains(err.Error(), "requires --input") {
+		t.Fatalf("metrics report error = %v", err)
+	}
+	if err := runMetrics([]string{"compare", "--baseline", "baseline.json"}); err == nil || !strings.Contains(err.Error(), "requires --baseline and --target") {
+		t.Fatalf("metrics compare error = %v", err)
+	}
+	if _, _, err := parseMetricsOptions("compare", []string{"--input", "runs.jsonl", "--baseline", "baseline.json", "--target", "target.json"}); err == nil {
+		t.Fatal("metrics compare accepted JSONL --input")
 	}
 	for _, command := range []string{"start", "record", "status", "end", "export"} {
 		err := runMetrics([]string{command})

@@ -86,7 +86,8 @@ func TestAnalyzeGreppleJournalFixtureCoversSupportedEvidence(t *testing.T) {
 	if len(report.Groups) != 2 || !report.Generated.Equal(time.Date(2026, 1, 1, 0, 1, 20, 0, time.UTC)) {
 		t.Fatalf("report = %#v", report)
 	}
-	comparison, err := BuildComparison(runs, "claude-code", "pi")
+	baseline := BuildReport([]Run{runForAgent(runs, "claude-code")})
+	comparison, err := BuildComparison(baseline, BuildReport([]Run{target}))
 	if err != nil || comparison.Baseline.Name != "claude-code" || comparison.Target.Name != "pi" {
 		t.Fatalf("comparison = %#v, err = %v", comparison, err)
 	}

@@ -12,18 +12,21 @@ import (
 )
 
 func TestMetricsReportAndCompareAreDeterministic(t *testing.T) {
-	path := filepath.Join(t.TempDir(), "agents.jsonl")
+	directory := t.TempDir()
+	baselineJournal := filepath.Join(directory, "without-grepple.jsonl")
+	targetJournal := filepath.Join(directory, "with-grepple.jsonl")
 	start := time.Date(2026, 9, 16, 8, 0, 0, 0, time.UTC)
-	appendCLITestEvent(t, path, "pi-run", "p-start", start, agentmetrics.EventRunStart, agentmetrics.RunStartData{Agent: "pi"})
-	appendCLITestEvent(t, path, "pi-run", "p-end", start.Add(2*time.Second), agentmetrics.EventRunEnd, agentmetrics.RunEndData{Outcome: "success"})
-	appendCLITestEvent(t, path, "claude-run", "c-start", start, agentmetrics.EventRunStart, agentmetrics.RunStartData{Agent: "claude-code"})
-	appendCLITestEvent(t, path, "claude-run", "c-end", start.Add(time.Second), agentmetrics.EventRunEnd, agentmetrics.RunEndData{Outcome: "success"})
+	appendCLITestEvent(t, baselineJournal, "baseline-run", "b-start", start, agentmetrics.EventRunStart, agentmetrics.RunStartData{Agent: "pi"})
+	appendCLITestEvent(t, baselineJournal, "baseline-run", "b-end", start.Add(2*time.Second), agentmetrics.EventRunEnd, agentmetrics.RunEndData{Outcome: "success"})
+	appendCLITestEvent(t, targetJournal, "target-run", "t-start", start, agentmetrics.EventRunStart, agentmetrics.RunStartData{Agent: "pi"})
+	appendCLITestEvent(t, targetJournal, "target-run", "t-command", start.Add(500*time.Millisecond), agentmetrics.EventCommand, agentmetrics.CommandData{Name: "search", Success: true, DurationMS: 10, GreppleMode: "search"})
+	appendCLITestEvent(t, targetJournal, "target-run", "t-end", start.Add(time.Second), agentmetrics.EventRunEnd, agentmetrics.RunEndData{Outcome: "success"})
 
-	before := metricReportOutputs(t, path)
+	before := metricReportOutputs(t, baselineJournal)
 	t.Setenv("HOME", t.TempDir())
 	t.Setenv("GREPPLE_METRICS_DIR", filepath.Join(t.TempDir(), "ignored"))
 	t.Chdir(t.TempDir())
-	after := metricReportOutputs(t, path)
+	after := metricReportOutputs(t, baselineJournal)
 	for format, output := range before {
 		if output != after[format] {
 			t.Fatalf("nondeterministic %s report:\n%s\n%s", format, output, after[format])
@@ -33,11 +36,28 @@ func TestMetricsReportAndCompareAreDeterministic(t *testing.T) {
 		t.Fatalf("JSON report does not derive time from evidence: %s", before["json"])
 	}
 
-	compareArgs := []string{"compare", "--input", path, "--baseline", "pi", "--target", "claude-code", "--format", "json"}
+	baselineReport := filepath.Join(directory, "baseline-report.json")
+	targetReport := filepath.Join(directory, "target-report.json")
+	if err := os.WriteFile(baselineReport, []byte(before["json"]), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	targetJSON := runMetricsOutput(t, []string{"report", "--input", targetJournal, "--format", "json"})
+	if err := os.WriteFile(targetReport, []byte(targetJSON), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	compareArgs := []string{"compare", "--baseline", baselineReport, "--target", targetReport, "--format", "json"}
 	firstComparison := runMetricsOutput(t, compareArgs)
 	secondComparison := runMetricsOutput(t, compareArgs)
-	if firstComparison != secondComparison || !strings.Contains(firstComparison, `"name": "pi"`) || !strings.Contains(firstComparison, `"name": "claude-code"`) {
+	if firstComparison != secondComparison {
 		t.Fatalf("nondeterministic comparison:\n%s\n%s", firstComparison, secondComparison)
+	}
+	var comparison agentmetrics.ComparisonReport
+	if err := json.Unmarshal([]byte(firstComparison), &comparison); err != nil {
+		t.Fatal(err)
+	}
+	if comparison.Baseline.Name != "pi" || comparison.Target.Name != "pi" || comparison.Delta.Metrics["elapsedMsMedian"].Absolute != -1000 {
+		t.Fatalf("same-agent report comparison = %#v", comparison)
 	}
 }
 

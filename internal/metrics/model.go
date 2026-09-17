@@ -103,7 +103,7 @@ type Report struct {
 	Comparisons []Comparison `json:"comparisons,omitempty"`
 }
 
-// ComparisonReport contains an explicit target-minus-baseline agent comparison.
+// ComparisonReport contains an explicit target-minus-baseline report comparison.
 type ComparisonReport struct {
 	Schema    string     `json:"schema"`
 	Generated time.Time  `json:"generatedAt"`
