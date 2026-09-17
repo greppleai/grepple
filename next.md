@@ -46,6 +46,7 @@ Live `grepple ask` dogfooding showed two distinct bottlenecks: ordinary local/re
 - [ ] Measure resolved-local, ambiguous-local, unresolved-local, and expected-external outcomes on representative repositories instead of treating candidate counts as precision.
 - [ ] Add answer-gated tasks that intentionally exercise reflection, dynamic dispatch, generated code, registration, and build-system edges; verify Grepple reports uncertainty rather than unsupported architectural claims.
 - [ ] Document when users must hand evidence to a compiler, language server, build-system query, or runtime tool for refactor safety; do not imply Grepple alone proves exact semantic impact.
+- [ ] Low priority, evidence-triggered: improve ambiguous navigation resolution only when representative tasks show that conservative candidate or unresolved edges materially block work. Keep improvements adapter-owned and syntax- or manifest-evidenced; do not pursue compiler-grade whole-program analysis, dynamic-runtime inference, or framework guessing merely to increase edge counts.
 
 ### Structural-query reliability
 
