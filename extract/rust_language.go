@@ -169,7 +169,7 @@ func rustDeclarationMatchesModules(modules *codeparser.RustModuleIndex, referenc
 func (analysis *rustAnalysis) rustImplementationModuleKeys(modules *codeparser.RustModuleIndex, implementation rustImplementation) []string {
 	path := implementation.targetPath
 	if strings.HasPrefix(path, "crate::") || strings.HasPrefix(path, "self::") || strings.HasPrefix(path, "super::") {
-		return rustModuleKeys(modules.ResolveItemModules(implementation.path, codeparser.RustScopedPath(path, implementation.scope)))
+		return rustModuleKeys(modules.ResolveItemModulesFrom(implementation.path, implementation.scope, codeparser.RustScopedPath(path, implementation.scope)))
 	}
 	if !strings.Contains(path, "::") {
 		imports := []codeparser.NavigationImport{}
@@ -179,7 +179,7 @@ func (analysis *rustAnalysis) rustImplementationModuleKeys(modules *codeparser.R
 			}
 		}
 		if len(imports) == 1 {
-			return rustModuleKeys(modules.ResolveImport(implementation.path, imports[0].ImportPath))
+			return rustModuleKeys(modules.ResolveImportFrom(implementation.path, implementation.scope, imports[0].ImportPath))
 		}
 		if len(imports) > 0 {
 			return nil

@@ -6,14 +6,15 @@ import (
 )
 
 type navigationImport struct {
-	alias          string
-	path           string
-	imported       string
-	kind           string
-	scope          string
-	targetPathHint string
-	inline         bool
-	line           int
+	alias            string
+	path             string
+	imported         string
+	kind             string
+	scope            string
+	visibilityDetail string
+	targetPathHint   string
+	inline           bool
+	line             int
 }
 
 type navigationBinding struct {
@@ -55,7 +56,7 @@ func navigationImportFacts(imports map[string]navigationImport, language, source
 	facts := make([]NavigationImport, 0, len(keys))
 	for _, key := range keys {
 		value := imports[key]
-		facts = append(facts, NavigationImport{Alias: value.alias, ImportPath: value.path, Imported: value.imported, Kind: value.kind, Scope: value.scope, TargetPathHint: value.targetPathHint, Inline: value.inline, Language: language, Path: sourcePath, Line: value.line})
+		facts = append(facts, NavigationImport{Alias: value.alias, ImportPath: value.path, Imported: value.imported, Kind: value.kind, Scope: value.scope, VisibilityDetail: value.visibilityDetail, TargetPathHint: value.targetPathHint, Inline: value.inline, Language: language, Path: sourcePath, Line: value.line})
 	}
 	return facts
 }

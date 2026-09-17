@@ -113,6 +113,111 @@ func assertRustResolvedCallScope(t *testing.T, graph parser.NavigationGraph, sou
 	t.Fatalf("missing resolved Rust call source=%q display=%q target=%q scope=%q: %#v", source, display, targetPath, targetScope, graph.Calls)
 }
 
+func TestRustRestrictedVisibilityControlsImportsAndCalls(t *testing.T) {
+	root := t.TempDir()
+	lib := filepath.Join(root, "src", "lib.rs")
+	parent := filepath.Join(root, "src", "parent", "mod.rs")
+	model := filepath.Join(root, "src", "parent", "model.rs")
+	allowed := filepath.Join(root, "src", "parent", "allowed", "mod.rs")
+	allowedModel := filepath.Join(root, "src", "parent", "allowed", "model.rs")
+	allowedCaller := filepath.Join(root, "src", "parent", "allowed", "caller.rs")
+	branch := filepath.Join(root, "src", "parent", "branch.rs")
+	holder := filepath.Join(root, "src", "parent", "holder", "mod.rs")
+	holderScoped := filepath.Join(root, "src", "parent", "holder", "scoped.rs")
+	outside := filepath.Join(root, "src", "outside.rs")
+	paths := writeRustNavigationFiles(t, map[string]string{
+		lib: "pub(crate) mod parent; mod outside;",
+		parent: `pub(crate) mod model;
+pub(crate) mod allowed;
+pub(in crate::parent) mod branch;
+pub(crate) mod holder;
+pub(in crate::parent) use self::model::parent_only as parent_exposed;
+use self::model::parent_only;
+use self::allowed::model::branch_only;
+use self::branch::module_run;
+use self::holder::scoped::super_run;
+pub fn allowed_parent() { parent_only(); parent_exposed(); module_run(); super_run(); }
+pub fn denied_branch() { branch_only(); }
+`,
+		model:        "pub(super) fn parent_only() {}",
+		allowed:      "pub(crate) mod model; pub(crate) mod caller;",
+		allowedModel: "pub(in crate::parent::allowed) fn branch_only() {}",
+		allowedCaller: `use super::model::branch_only;
+pub fn allowed_branch() { branch_only(); }
+`,
+		branch:       "pub fn module_run() {}",
+		holder:       "pub(super) mod scoped;",
+		holderScoped: "pub fn super_run() {}",
+		outside: `use crate::parent::model::parent_only;
+use crate::parent::parent_exposed;
+use crate::parent::branch::module_run;
+use crate::parent::holder::scoped::super_run;
+pub fn denied_outside() { parent_only(); parent_exposed(); module_run(); super_run(); }
+`,
+	})
+	graph, _ := BuildNavigationGraphWithOptions(paths, NavigationBuildOptions{DisableCache: true})
+	assertRustImportTargets(t, graph.Imports, parent, "self::model::parent_only", model)
+	assertRustImportTargets(t, graph.Imports, allowedCaller, "super::model::branch_only", allowedModel)
+	assertRustImportTargets(t, graph.Imports, parent, "self::allowed::model::branch_only")
+	assertRustImportTargets(t, graph.Imports, outside, "crate::parent::parent_exposed")
+	assertRustImportTargets(t, graph.Imports, parent, "self::branch::module_run", branch)
+	assertRustImportTargets(t, graph.Imports, parent, "self::holder::scoped::super_run", holderScoped)
+	assertRustImportTargets(t, graph.Imports, outside, "crate::parent::model::parent_only")
+	assertRustImportTargets(t, graph.Imports, outside, "crate::parent::branch::module_run")
+	assertRustImportTargets(t, graph.Imports, outside, "crate::parent::holder::scoped::super_run")
+	assertRustResolvedCallTarget(t, graph, parent, "parent_only", model)
+	assertRustResolvedCallTarget(t, graph, parent, "parent_exposed", model)
+	assertRustResolvedCallTarget(t, graph, allowedCaller, "branch_only", allowedModel)
+	assertRustResolvedCallTarget(t, graph, parent, "module_run", branch)
+	assertRustResolvedCallTarget(t, graph, parent, "super_run", holderScoped)
+	assertRustUnresolvedCall(t, graph.Calls, parent, "branch_only")
+	assertRustUnresolvedCall(t, graph.Calls, outside, "parent_only")
+	assertRustUnresolvedCall(t, graph.Calls, outside, "parent_exposed")
+	assertRustUnresolvedCall(t, graph.Calls, outside, "module_run")
+	assertRustUnresolvedCall(t, graph.Calls, outside, "super_run")
+}
+
+func assertRustUnresolvedCall(t *testing.T, calls []parser.NavigationCall, source, display string) {
+	t.Helper()
+	for _, call := range calls {
+		if call.Path == source && call.Display == display {
+			if call.TargetID != "" || len(call.CandidateTargetIDs) != 0 || call.Confidence != "candidate" {
+				t.Fatalf("Rust call unexpectedly resolved source=%q display=%q: %#v", source, display, call)
+			}
+			return
+		}
+	}
+	t.Fatalf("missing Rust call source=%q display=%q: %#v", source, display, calls)
+}
+
+func TestRustRestrictedVisibilityUsesInlineCallerScope(t *testing.T) {
+	root := t.TempDir()
+	lib := filepath.Join(root, "src", "lib.rs")
+	paths := writeRustNavigationFiles(t, map[string]string{
+		lib: `mod outer {
+	pub mod child { pub(super) fn limited() {} }
+	pub fn allowed() { child::limited(); }
+}
+pub fn denied() { outer::child::limited(); }
+`,
+	})
+	graph, _ := BuildNavigationGraphWithOptions(paths, NavigationBuildOptions{DisableCache: true})
+	assertRustResolvedCallScope(t, graph, lib, "child::limited", lib, "outer::child")
+	assertRustUnresolvedCall(t, graph.Calls, lib, "outer::child::limited")
+}
+
+func TestRustUnqualifiedCallsDoNotCrossCrateRoots(t *testing.T) {
+	root := t.TempDir()
+	firstRoot := filepath.Join(root, "first", "src", "lib.rs")
+	secondRoot := filepath.Join(root, "second", "src", "lib.rs")
+	paths := writeRustNavigationFiles(t, map[string]string{
+		firstRoot:  "pub fn boot() { external_only(); }",
+		secondRoot: "pub fn external_only() {}",
+	})
+	graph, _ := BuildNavigationGraphWithOptions(paths, NavigationBuildOptions{DisableCache: true})
+	assertRustUnresolvedCall(t, graph.Calls, firstRoot, "external_only")
+}
+
 func TestRustModulesKeepCrateRootsIsolated(t *testing.T) {
 	root := t.TempDir()
 	firstRoot := filepath.Join(root, "first", "src", "lib.rs")

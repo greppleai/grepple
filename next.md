@@ -41,7 +41,6 @@ Live `grepple ask` dogfooding showed two distinct bottlenecks: ordinary local/re
 
 - [ ] Publish per-language coverage for declarations, calls, imports, type references, fields, member access, and process entrypoints; distinguish unsupported facts from unresolved facts.
 - [ ] Add adapter-owned import-relation parity for other supported languages where syntax and repository layout permit conservative local target resolution.
-- [ ] Extend Rust restricted-visibility handling from focused cross-file `impl` ownership into conservative `pub(super)` and `pub(in path)` import/call resolution; continue representative-crate dogfooding without evaluating conditional `cfg` expressions or guessing external-crate ownership.
 - [ ] Add cross-file navigation goldens for aliases, receivers, overload-like declarations, generics, nested scopes, and ambiguous imports in every language that claims the relevant adapter capability.
 - [ ] Measure resolved-local, ambiguous-local, unresolved-local, and expected-external outcomes on representative repositories instead of treating candidate counts as precision.
 - [ ] Add answer-gated tasks that intentionally exercise reflection, dynamic dispatch, generated code, registration, and build-system edges; verify Grepple reports uncertainty rather than unsupported architectural claims.
@@ -81,7 +80,7 @@ Live `grepple ask` dogfooding showed two distinct bottlenecks: ordinary local/re
 
 ## Language expansion
 
-- [ ] Evaluate C/C++ projections only after Rust dogfooding demonstrates a stable contract.
+- [ ] Evaluate C/C++ projections now that Rust module ownership and restricted-visibility contracts have cross-file goldens and representative upstream dogfooding.
 - Keep Shell focused extraction unsupported unless dogfooding defines a useful command/script projection.
 - [ ] Add Swift, Ruby, PHP, or other grammars only after current capability parity, help discoverability, and cross-platform determinism gates are met.
 

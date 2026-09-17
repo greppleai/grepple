@@ -55,3 +55,12 @@ func TestDiffNavigationGraphsTreatsRustModuleScopeAsSemanticIdentity(t *testing.
 		t.Fatalf("scoped Rust diff=%#v", diff)
 	}
 }
+
+func TestDiffNavigationGraphsReportsRestrictedRustVisibilityChanges(t *testing.T) {
+	before := parser.NavigationGraph{Declarations: []parser.NavigationDeclaration{{ID: "old", Name: "run", Kind: "function", Language: "rust", Path: "src/lib.rs", Scope: "model", Visibility: parser.NavigationVisibilityNonPublic, VisibilityDetail: "pub(super)", Start: 1, End: 1}}}
+	after := parser.NavigationGraph{Declarations: []parser.NavigationDeclaration{{ID: "new", Name: "run", Kind: "function", Language: "rust", Path: "src/lib.rs", Scope: "model", Visibility: parser.NavigationVisibilityNonPublic, VisibilityDetail: "pub(in crate::model)", Start: 1, End: 1}}}
+	diff := DiffNavigationGraphs(before, after)
+	if len(diff.ChangedDeclarations) != 1 || diff.ChangedDeclarations[0].After.VisibilityDetail != "pub(in crate::model)" {
+		t.Fatalf("restricted visibility diff=%#v", diff)
+	}
+}

@@ -9,7 +9,7 @@ import (
 )
 
 // NavigationDiffSchema identifies the semantic graph-diff wire contract.
-const NavigationDiffSchema = "grepple-navigation-diff-v4"
+const NavigationDiffSchema = "grepple-navigation-diff-v5"
 
 // NavigationDeclarationDelta pairs a declaration before and after a semantic change.
 type NavigationDeclarationDelta struct {

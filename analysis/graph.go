@@ -13,7 +13,7 @@ import (
 )
 
 // GraphSchema identifies the normalized navigation graph contract.
-const GraphSchema = "grepple-navigation-graph-v4"
+const GraphSchema = "grepple-navigation-graph-v5"
 
 // GraphReport is the complete normalized graph or one deterministic queried projection.
 type GraphReport struct {

@@ -69,7 +69,7 @@ func TestRustNavigationMalformedRawPathRemainsUnresolved(t *testing.T) {
 	}
 }
 
-func TestRustNavigationExportsOnlyPublicTopLevelItems(t *testing.T) {
+func TestRustNavigationExportsVisibleTopLevelItems(t *testing.T) {
 	content := `pub struct Public;
 struct Private;
 pub(crate) fn crate_visible() {}
@@ -80,16 +80,32 @@ mod inline { pub fn nested() {} }
 	assertRustNavigationExport(t, graph, "Public", "", "")
 	assertRustNavigationExport(t, graph, "crate_visible", "", "")
 	assertRustNavigationExportAtScope(t, graph, "nested", "inline", "", "")
+	restricted := false
 	for _, item := range graph.Exports {
-		if item.Name == "Private" || item.Name == "parent_visible" {
-			t.Fatalf("non-exported Rust item=%#v", item)
+		if item.Name == "Private" {
+			t.Fatalf("private Rust export=%#v", item)
+		}
+		if item.Name == "parent_visible" && item.VisibilityDetail == "pub(super)" {
+			restricted = true
+		}
+	}
+	if !restricted {
+		t.Fatalf("missing restricted Rust export: %#v", graph.Exports)
+	}
+	for _, declaration := range graph.Declarations {
+		if declaration.Name == "parent_visible" && declaration.VisibilityDetail != "pub(super)" {
+			t.Fatalf("restricted declaration=%#v", declaration)
 		}
 	}
 }
 
 func TestCachedRustNavigationFactsInstantiateRequestedPath(t *testing.T) {
 	t.Setenv(NavigationCacheDirectoryEnv, t.TempDir())
-	content := "#[path = r#\"feature.rs\"#]\nmod feature;\npub use crate::feature::run;\npub fn boot() { run(); }\n"
+	content := `#[path = r#"feature.rs"#]
+pub(crate) mod feature;
+pub(crate) use crate::feature::run;
+pub fn boot() { run(); }
+`
 	cold, _, coldHit, err := CachedNavigationGraph(content, "rust", "first/src/lib.rs")
 	if err != nil {
 		t.Fatal(err)
@@ -101,15 +117,39 @@ func TestCachedRustNavigationFactsInstantiateRequestedPath(t *testing.T) {
 	if coldHit || !warmHit || len(cold.Imports) != 2 || len(warm.Imports) != 2 || len(cold.Exports) != 2 || len(warm.Exports) != 2 {
 		t.Fatalf("coldHit=%v warmHit=%v cold=%#v warm=%#v", coldHit, warmHit, cold, warm)
 	}
-	for index := range cold.Imports {
-		if cold.Imports[index].Path != "first/src/lib.rs" || warm.Imports[index].Path != "moved/src/lib.rs" {
-			t.Fatalf("cold imports=%#v warm=%#v", cold.Imports, warm.Imports)
+	assertCachedRustImports(t, cold.Imports, warm.Imports)
+	assertCachedRustExports(t, cold.Exports, warm.Exports)
+}
+
+func assertCachedRustImports(t *testing.T, cold, warm []NavigationImport) {
+	t.Helper()
+	visibility := false
+	for index := range cold {
+		if cold[index].Path != "first/src/lib.rs" || warm[index].Path != "moved/src/lib.rs" || cold[index].VisibilityDetail != warm[index].VisibilityDetail {
+			t.Fatalf("cold imports=%#v warm=%#v", cold, warm)
+		}
+		if cold[index].Kind == "module" && cold[index].VisibilityDetail == "pub(crate)" {
+			visibility = true
 		}
 	}
-	for index := range cold.Exports {
-		if cold.Exports[index].Path != "first/src/lib.rs" || warm.Exports[index].Path != "moved/src/lib.rs" {
-			t.Fatalf("cold exports=%#v warm=%#v", cold.Exports, warm.Exports)
+	if !visibility {
+		t.Fatalf("restricted module visibility missing after cache round trip: %#v", cold)
+	}
+}
+
+func assertCachedRustExports(t *testing.T, cold, warm []NavigationExport) {
+	t.Helper()
+	visibility := false
+	for index := range cold {
+		if cold[index].Path != "first/src/lib.rs" || warm[index].Path != "moved/src/lib.rs" || cold[index].VisibilityDetail != warm[index].VisibilityDetail {
+			t.Fatalf("cold exports=%#v warm=%#v", cold, warm)
 		}
+		if cold[index].Name == "run" && cold[index].VisibilityDetail == "pub(crate)" {
+			visibility = true
+		}
+	}
+	if !visibility {
+		t.Fatalf("restricted export visibility missing after cache round trip: %#v", cold)
 	}
 }
 
@@ -150,6 +190,7 @@ func TestRustItemVisibilityUsesModuleAncestry(t *testing.T) {
 		{visibility: "pub(crate)", declaration: "model", source: "other", visible: true},
 		{visibility: "", declaration: "model", source: "model::nested", visible: true},
 		{visibility: "", declaration: "model", source: "other"},
+		{visibility: "pub(super)", declaration: "", source: "other"},
 		{visibility: "pub(super)", declaration: "parent::model", source: "parent::other", visible: true},
 		{visibility: "pub(super)", declaration: "parent::model", source: "outside"},
 		{visibility: "pub(self)", declaration: "model", source: "model::nested", visible: true},

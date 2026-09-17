@@ -43,6 +43,7 @@ type navigationAdapter interface {
 	NestedModulePath(*syntaxNode, string) string
 	MemberAccess(*syntaxNode, string) (navigationMemberSyntax, bool)
 	Visibility(*syntaxNode, string, string) NavigationVisibility
+	VisibilityDetail(*syntaxNode, string, string) string
 	SourceFacts(*syntaxNode, string) (map[string]navigationImport, string, map[string]map[string]navigationBinding)
 	ImportFactsSupported() bool
 	ReturnCallableName(*syntaxNode, string, string) string
@@ -75,6 +76,7 @@ type navigationAdapterConfig struct {
 	declarationName          func(*syntaxNode, string, *navigationEnvelope) string
 	declarationKind          func(*syntaxNode, string) string
 	visibility               func(*syntaxNode, string, string) NavigationVisibility
+	visibilityDetail         func(*syntaxNode, string, string) string
 	sourceFacts              func(*syntaxNode, string, *navigationAdapterConfig) (map[string]navigationImport, string, map[string]map[string]navigationBinding)
 	returnCallableName       func(*syntaxNode, string, string, *navigationAdapterConfig) string
 	callableReturnBinding    func(*syntaxNode, string, map[string]navigationImport) navigationBinding
@@ -225,6 +227,13 @@ func (adapter *navigationAdapterConfig) Visibility(node *syntaxNode, name, conte
 		return NavigationVisibilityUnknown
 	}
 	return adapter.visibility(node, name, content)
+}
+
+func (adapter *navigationAdapterConfig) VisibilityDetail(node *syntaxNode, name, content string) string {
+	if adapter.visibilityDetail == nil {
+		return ""
+	}
+	return adapter.visibilityDetail(node, name, content)
 }
 
 func (adapter *navigationAdapterConfig) ImportFactsSupported() bool {

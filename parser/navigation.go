@@ -25,6 +25,7 @@ type NavigationDeclaration struct {
 	Scope            string               `json:"scope,omitempty"`
 	Entrypoint       string               `json:"entrypoint,omitempty"`
 	Visibility       NavigationVisibility `json:"visibility"`
+	VisibilityDetail string               `json:"visibilityDetail,omitempty"`
 	Start            int                  `json:"startLine"`
 	End              int                  `json:"endLine"`
 }
@@ -56,17 +57,18 @@ type NavigationCall struct {
 
 // NavigationImport records one source import recognized by a language adapter.
 type NavigationImport struct {
-	Alias          string   `json:"alias,omitempty"`
-	ImportPath     string   `json:"importPath"`
-	Imported       string   `json:"imported,omitempty"`
-	Kind           string   `json:"kind,omitempty"`
-	Scope          string   `json:"scope,omitempty"`
-	TargetPathHint string   `json:"targetPathHint,omitempty"`
-	Inline         bool     `json:"inline,omitempty"`
-	Language       string   `json:"language"`
-	Path           string   `json:"path"`
-	Line           int      `json:"line"`
-	TargetPaths    []string `json:"targetPaths,omitempty"`
+	Alias            string   `json:"alias,omitempty"`
+	ImportPath       string   `json:"importPath"`
+	Imported         string   `json:"imported,omitempty"`
+	Kind             string   `json:"kind,omitempty"`
+	Scope            string   `json:"scope,omitempty"`
+	VisibilityDetail string   `json:"visibilityDetail,omitempty"`
+	TargetPathHint   string   `json:"targetPathHint,omitempty"`
+	Inline           bool     `json:"inline,omitempty"`
+	Language         string   `json:"language"`
+	Path             string   `json:"path"`
+	Line             int      `json:"line"`
+	TargetPaths      []string `json:"targetPaths,omitempty"`
 }
 
 // NavigationTypeUsage records a callable's explicit use of a normalized type.
@@ -82,14 +84,15 @@ type NavigationTypeUsage struct {
 
 // NavigationExport describes a module export or re-export used for import resolution.
 type NavigationExport struct {
-	Name         string `json:"name"`
-	LocalName    string `json:"localName,omitempty"`
-	ImportPath   string `json:"importPath,omitempty"`
-	ImportedName string `json:"importedName,omitempty"`
-	Scope        string `json:"scope,omitempty"`
-	Language     string `json:"language"`
-	Path         string `json:"path"`
-	Line         int    `json:"line"`
+	Name             string `json:"name"`
+	LocalName        string `json:"localName,omitempty"`
+	ImportPath       string `json:"importPath,omitempty"`
+	ImportedName     string `json:"importedName,omitempty"`
+	Scope            string `json:"scope,omitempty"`
+	VisibilityDetail string `json:"visibilityDetail,omitempty"`
+	Language         string `json:"language"`
+	Path             string `json:"path"`
+	Line             int    `json:"line"`
 }
 
 // NavigationField describes one typed field or property owned by a declared type.
@@ -317,7 +320,7 @@ func (c *navigationCollector) enterNavigationNode(node *syntaxNode, context navi
 	result := c.navigation.CallableReturnBinding(node, c.content, current.imports)
 	declaration := NavigationDeclaration{
 		Name: name, Kind: c.navigation.DeclarationKind(node, current.container), Language: c.adapter.ID(), Path: c.path, Container: current.container, Package: c.packageName, Scope: current.modulePath,
-		ResultType: result.typeName, ResultImportPath: result.importPath, Visibility: c.navigation.Visibility(node, name, c.content), Entrypoint: c.navigation.Entrypoint(node, name, current.container, c.packageName, c.content), Start: start, End: end,
+		ResultType: result.typeName, ResultImportPath: result.importPath, Visibility: c.navigation.Visibility(node, name, c.content), VisibilityDetail: c.navigation.VisibilityDetail(node, name, c.content), Entrypoint: c.navigation.Entrypoint(node, name, current.container, c.packageName, c.content), Start: start, End: end,
 	}
 	declaration.ID = navigationDeclarationStableID(declaration)
 	c.declarations = append(c.declarations, declaration)

@@ -76,7 +76,7 @@ This file records completed Grepple roadmap work that no longer belongs in `next
 - [x] Added deterministic ambiguity fixtures for interfaces, overloads, inheritance, re-exports, default imports, aliases, and TSX path aliases.
 - [x] Reported omitted callers and callees in human and JSON related output.
 - [x] Made every human omitted-edge notice provide a copyable focused `graph callers|callees|impact --at PATH:LINE --depth 2 --json .` continuation.
-- [x] Added complete `grepple-navigation-graph-v4` JSON and bounded compact graph projections, including adapter-evidenced process entrypoints and scoped Rust modules.
+- [x] Added complete `grepple-navigation-graph-v5` JSON and bounded compact graph projections, including adapter-evidenced process entrypoints, scoped Rust modules, and exact restricted-visibility details.
 - [x] Added deterministic discovered, selected, parsed, skipped, failed, recovered, and truncated source accounting to graphs, focused graph queries, graph diffs, and boundary reports.
 - [x] Added graph-wide and per-language/confidence resolution measurements, including resolved, ambiguous, unresolved, singleton-candidate counts, and ambiguity frequency in complete JSON plus compact aggregate headers.
 - [x] Added parser-owned content- and grammar-addressed per-file navigation facts shared by graph output/queries, `--related`, boundaries, and extraction, with atomic corruption-tolerant storage, path instantiation, explicit bypass, cold/warm parity tests, and a repeatable benchmark.
@@ -84,7 +84,7 @@ This file records completed Grepple roadmap work that no longer belongs in `next
 - [x] Added callers, callees, dependencies, dependents, and bidirectional impact queries with depth bounds, cycle safety, candidate preservation, and exact location/symbol/package/module/path roots.
 - [x] Added traversal-free `graph resolve --symbol NAME` previews with deterministic exact/terminal matches, full stable IDs, exact `--at` alternatives, filters, and copyable focused graph commands in bounded compact and complete JSON output.
 - [x] Added language, confidence, and visibility filtering before root selection and traversal.
-- [x] Added `grepple-navigation-diff-v4`, ignoring line-only movement while reporting semantic declaration, call-edge, entrypoint, and scoped Rust ownership changes.
+- [x] Added `grepple-navigation-diff-v5`, ignoring line-only movement while reporting semantic declaration, call-edge, entrypoint, scoped Rust ownership, and restricted-visibility changes.
 - [x] Added end-to-end shared-edge parity coverage across JSON, compact graph output, focused Mermaid, directory resolution, and `--related`.
 
 ## Architecture extraction and validation
@@ -104,7 +104,7 @@ This file records completed Grepple roadmap work that no longer belongs in `next
 - [x] Added adapter-owned module-level Python import facts for direct, aliased, `from`, wildcard, absolute, and explicit-relative imports; local `.py`/`.pyi`/`.pyw` target resolution preserves ambiguous source roots and feeds graph calls plus directory architecture while function-local imports remain unsupported.
 - [x] Added adapter-owned Java package/type/wildcard/static imports and Kotlin package/declaration/wildcard/aliased imports; syntax-evidenced JVM package and top-level export facts resolve local targets without build-system or source-path guessing.
 - [x] Added adapter-owned C# namespace and `using` facts for aliases, static owners, global usings, and namespace imports; public top-level targets resolve without project or source-path guessing, while multi-namespace files remain unscoped.
-- [x] Added parser-owned Rust `mod` and `use` facts with grouped paths, aliases, globs, public re-exports, syntax-evidenced external and inline module identities, direct normal/raw string-literal `#[path]` targets, deterministic ambiguity, scoped cross-file call resolution, directory architecture, nested focused ownership, and visibility-checked unambiguous same-crate cross-file `impl` attachment without guessing external crates or conditional module ownership.
+- [x] Added parser-owned Rust `mod` and `use` facts with grouped paths, aliases, globs, visibility-aware re-exports, syntax-evidenced external and inline module identities, direct normal/raw string-literal `#[path]` targets, deterministic ambiguity, scoped cross-file call resolution, directory architecture, nested focused ownership, and visibility-checked unambiguous same-crate cross-file `impl` attachment. Restricted `pub(super)`, `pub(self)`, and ancestor-valid `pub(in path)` declarations and modules now constrain imports, calls, and implementation attachment without guessing external crates or conditional module ownership.
 - [x] Added independently labeled import-only and imported-type directory relations with production/test/fixture/generated/vendor evidence totals and resolved/ambiguous/unresolved/unsupported coverage.
 - [x] Kept compact directory relation output bounded to displayed directory depth while `architecture why` preserves exact uncollapsed evidence.
 - [x] Added `parser.OutlineFromDocument` and document-backed graph construction so directory architecture parses each selected source once for both outlines and navigation.

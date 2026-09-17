@@ -18,16 +18,48 @@ func (index *navigationIndex) rustModuleIndex() *parser.RustModuleIndex {
 	return index.rustModules
 }
 
-func (index *navigationIndex) rustImportTargetFiles(sourceFile, importPath string) []string {
-	return rustModuleTargetFiles(index.rustModuleIndex().ResolveImport(sourceFile, importPath))
+func (index *navigationIndex) rustImportTargetFiles(sourceFile, sourceScope, importPath string) []string {
+	return rustModuleTargetFiles(index.rustModuleIndex().ResolveImportFrom(sourceFile, sourceScope, importPath))
 }
 
-func (index *navigationIndex) rustReExportTargets(sourceFile, importPath, name string, seen map[string]bool) []parser.RustModuleTarget {
+func (index *navigationIndex) rustVisibleCandidates(call navigationCall, candidates []navigationDeclaration) []navigationDeclaration {
+	if navigationLanguageFamily(call.language) != "rust" {
+		return candidates
+	}
+	if call.importPath != "" && len(call.rustTargetModules) == 0 {
+		return nil
+	}
+	sourceModules := index.rustModuleIndex().ModuleKeys(call.file, call.moduleScope)
+	if len(sourceModules) == 0 {
+		return candidates
+	}
+	visible := make([]navigationDeclaration, 0, len(candidates))
+	for _, candidate := range candidates {
+		if index.rustCandidateVisibleFrom(candidate, sourceModules) {
+			visible = append(visible, candidate)
+		}
+	}
+	return visible
+}
+
+func (index *navigationIndex) rustCandidateVisibleFrom(candidate navigationDeclaration, sourceModules []string) bool {
+	declarationModules := index.rustModuleIndex().ModuleKeys(candidate.file, candidate.moduleScope)
+	for _, declarationModule := range declarationModules {
+		for _, sourceModule := range sourceModules {
+			if parser.RustModulesShareCrate(declarationModule, sourceModule) && parser.RustItemVisibleFrom(declarationModule, sourceModule, candidate.visibilityDetail) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func (index *navigationIndex) rustReExportTargets(sourceFile, sourceScope, importPath, name string, seen map[string]bool) []parser.RustModuleTarget {
 	if importPath == "" {
 		return nil
 	}
 	result := []parser.RustModuleTarget{}
-	for _, candidate := range index.rustModuleIndex().ResolveImport(sourceFile, importPath) {
+	for _, candidate := range index.rustModuleIndex().ResolveImportFrom(sourceFile, sourceScope, importPath) {
 		key := parser.RustModuleTargetModuleKey(candidate) + "\x00" + name
 		if seen[key] {
 			continue
@@ -42,7 +74,7 @@ func (index *navigationIndex) rustReExportTargets(sourceFile, importPath, name s
 			if nextName == "" || nextName == "*" {
 				nextName = name
 			}
-			result = append(result, index.rustReExportTargets(export.file, export.importPath, nextName, seen)...)
+			result = append(result, index.rustReExportTargets(export.file, export.scope, export.importPath, nextName, seen)...)
 		}
 	}
 	return compactRustModuleTargets(result)

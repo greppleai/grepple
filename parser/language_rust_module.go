@@ -9,10 +9,11 @@ import (
 // RustModuleTarget identifies one syntax-evidenced module in a selected crate.
 // ModulePath is crate-relative and LocalScope is the inline-module path within Path.
 type RustModuleTarget struct {
-	Path       string
-	CrateRoot  string
-	ModulePath string
-	LocalScope string
+	Path             string
+	CrateRoot        string
+	ModulePath       string
+	LocalScope       string
+	VisibilityDetail string
 }
 
 type rustModuleQueueItem = RustModuleTarget
@@ -71,11 +72,11 @@ func rustModuleChildren(current RustModuleTarget, facts []NavigationImport, file
 		}
 		modulePath := rustJoinModulePath(current.ModulePath, fact.Alias)
 		if fact.Inline {
-			children = append(children, RustModuleTarget{Path: current.Path, CrateRoot: current.CrateRoot, ModulePath: modulePath, LocalScope: rustJoinModulePath(current.LocalScope, fact.Alias)})
+			children = append(children, RustModuleTarget{Path: current.Path, CrateRoot: current.CrateRoot, ModulePath: modulePath, LocalScope: rustJoinModulePath(current.LocalScope, fact.Alias), VisibilityDetail: fact.VisibilityDetail})
 			continue
 		}
 		for _, candidate := range rustModuleDeclarationTargets(current, fact.Alias, fact.TargetPathHint, files) {
-			children = append(children, RustModuleTarget{Path: candidate, CrateRoot: current.CrateRoot, ModulePath: modulePath})
+			children = append(children, RustModuleTarget{Path: candidate, CrateRoot: current.CrateRoot, ModulePath: modulePath, VisibilityDetail: fact.VisibilityDetail})
 		}
 	}
 	return children
@@ -97,10 +98,17 @@ func (index *RustModuleIndex) add(target RustModuleTarget) {
 }
 
 // ResolveImport returns modules directly named by importPath or containing its
-// final exported item. Bare external-crate paths remain unresolved.
+// final visible item. Bare external-crate paths remain unresolved.
 func (index *RustModuleIndex) ResolveImport(sourceFile, importPath string) []RustModuleTarget {
+	return index.ResolveImportFrom(sourceFile, "", importPath)
+}
+
+// ResolveImportFrom resolves an import from one syntax-evidenced lexical module scope.
+func (index *RustModuleIndex) ResolveImportFrom(sourceFile, sourceScope, importPath string) []RustModuleTarget {
 	matches := []RustModuleTarget{}
-	for _, source := range index.byFile[filepath.Clean(sourceFile)] {
+	allSources := index.byFile[filepath.Clean(sourceFile)]
+	visibilitySources := rustModuleTargetsAtScope(allSources, sourceScope)
+	for _, source := range allSources {
 		if source.LocalScope != "" {
 			continue
 		}
@@ -108,15 +116,10 @@ func (index *RustModuleIndex) ResolveImport(sourceFile, importPath string) []Rus
 		if !ok {
 			continue
 		}
-		matches = append(matches, index.byModule[rustModuleKey(source.CrateRoot, targetPath)]...)
-		if len(targetPath) == 0 {
-			continue
-		}
-		module, member := targetPath[:len(targetPath)-1], targetPath[len(targetPath)-1]
-		for _, candidate := range index.byModule[rustModuleKey(source.CrateRoot, module)] {
-			if rustTargetExports(index.exports, candidate, member) {
-				matches = append(matches, candidate)
-			}
+		matches = append(matches, index.rustVisibleModuleTargets(source.CrateRoot, targetPath, visibilitySources)...)
+		if len(targetPath) > 0 {
+			module, member := targetPath[:len(targetPath)-1], targetPath[len(targetPath)-1]
+			matches = append(matches, index.rustVisibleItemTargets(source.CrateRoot, module, member, visibilitySources)...)
 		}
 	}
 	return compactRustModuleTargets(matches)
@@ -126,8 +129,15 @@ func (index *RustModuleIndex) ResolveImport(sourceFile, importPath string) []Rus
 // requiring the item to be publicly exported. It is intended for same-crate
 // ownership checks such as explicitly qualified impl targets.
 func (index *RustModuleIndex) ResolveItemModules(sourceFile, itemPath string) []RustModuleTarget {
+	return index.ResolveItemModulesFrom(sourceFile, "", itemPath)
+}
+
+// ResolveItemModulesFrom resolves item ownership from one lexical module scope.
+func (index *RustModuleIndex) ResolveItemModulesFrom(sourceFile, sourceScope, itemPath string) []RustModuleTarget {
 	matches := []RustModuleTarget{}
-	for _, source := range index.byFile[filepath.Clean(sourceFile)] {
+	allSources := index.byFile[filepath.Clean(sourceFile)]
+	visibilitySources := rustModuleTargetsAtScope(allSources, sourceScope)
+	for _, source := range allSources {
 		if source.LocalScope != "" {
 			continue
 		}
@@ -135,9 +145,51 @@ func (index *RustModuleIndex) ResolveItemModules(sourceFile, itemPath string) []
 		if !ok || len(targetPath) == 0 {
 			continue
 		}
-		matches = append(matches, index.byModule[rustModuleKey(source.CrateRoot, targetPath[:len(targetPath)-1])]...)
+		matches = append(matches, index.rustVisibleModuleTargets(source.CrateRoot, targetPath[:len(targetPath)-1], visibilitySources)...)
 	}
 	return compactRustModuleTargets(matches)
+}
+
+func rustModuleTargetsAtScope(targets []RustModuleTarget, scope string) []RustModuleTarget {
+	result := []RustModuleTarget{}
+	for _, target := range targets {
+		if target.LocalScope == scope {
+			result = append(result, target)
+		}
+	}
+	return result
+}
+
+func (index *RustModuleIndex) rustVisibleModuleTargets(crateRoot string, modulePath []string, sources []RustModuleTarget) []RustModuleTarget {
+	result := []RustModuleTarget{}
+	for _, candidate := range index.byModule[rustModuleKey(crateRoot, modulePath)] {
+		if index.rustModuleTargetVisibleFromAny(candidate, sources) {
+			result = append(result, candidate)
+		}
+	}
+	return result
+}
+
+func (index *RustModuleIndex) rustVisibleItemTargets(crateRoot string, modulePath []string, member string, sources []RustModuleTarget) []RustModuleTarget {
+	result := []RustModuleTarget{}
+	for _, candidate := range index.byModule[rustModuleKey(crateRoot, modulePath)] {
+		for _, source := range sources {
+			if index.rustModuleTargetVisibleFrom(candidate, source) && rustTargetExports(index.exports, candidate, source, member) {
+				result = append(result, candidate)
+				break
+			}
+		}
+	}
+	return result
+}
+
+func (index *RustModuleIndex) rustModuleTargetVisibleFromAny(candidate RustModuleTarget, sources []RustModuleTarget) bool {
+	for _, source := range sources {
+		if index.rustModuleTargetVisibleFrom(candidate, source) {
+			return true
+		}
+	}
+	return false
 }
 
 // ModuleKeys returns absolute crate/module identities for a declaration scope.
@@ -150,6 +202,29 @@ func (index *RustModuleIndex) ModuleKeys(path, localScope string) []string {
 	}
 	sort.Strings(keys)
 	return compactRustStrings(keys)
+}
+
+func (index *RustModuleIndex) rustModuleTargetVisibleFrom(target, source RustModuleTarget) bool {
+	segments := rustModuleSegments(target.ModulePath)
+	sourceKey := RustModuleTargetModuleKey(source)
+	for end := 1; end <= len(segments); end++ {
+		moduleTargets := index.byModule[rustModuleKey(target.CrateRoot, segments[:end])]
+		visible := false
+		for _, moduleTarget := range moduleTargets {
+			if end == len(segments) && RustModuleTargetKey(moduleTarget) != RustModuleTargetKey(target) {
+				continue
+			}
+			declarationKey := rustModuleKey(target.CrateRoot, segments[:end-1])
+			if RustItemVisibleFrom(declarationKey, sourceKey, moduleTarget.VisibilityDetail) {
+				visible = true
+				break
+			}
+		}
+		if !visible {
+			return false
+		}
+	}
+	return true
 }
 
 func rustResolveModulePath(source RustModuleTarget, importPath string) ([]string, bool) {
@@ -244,9 +319,11 @@ func rustCrateRootPath(path string) bool {
 	return base == "main.rs" && filepath.Base(filepath.Dir(filepath.Dir(path))) == "bin" && filepath.Base(filepath.Dir(filepath.Dir(filepath.Dir(path)))) == "src"
 }
 
-func rustTargetExports(exports []NavigationExport, target RustModuleTarget, name string) bool {
+func rustTargetExports(exports []NavigationExport, target, source RustModuleTarget, name string) bool {
+	declarationModule := RustModuleTargetModuleKey(target)
+	sourceModule := RustModuleTargetModuleKey(source)
 	for _, item := range exports {
-		if item.Language == "rust" && filepath.Clean(item.Path) == filepath.Clean(target.Path) && item.Scope == target.LocalScope && (item.Name == name || item.Name == "*") {
+		if item.Language == "rust" && filepath.Clean(item.Path) == filepath.Clean(target.Path) && item.Scope == target.LocalScope && (item.Name == name || item.Name == "*") && RustItemVisibleFrom(declarationModule, sourceModule, item.VisibilityDetail) {
 			return true
 		}
 	}
@@ -295,6 +372,13 @@ func compactRustModuleTargets(targets []RustModuleTarget) []RustModuleTarget {
 	return result
 }
 
+// RustModulesShareCrate reports whether two module identities belong to one selected crate.
+func RustModulesShareCrate(leftModuleKey, rightModuleKey string) bool {
+	leftRoot, _, leftOK := strings.Cut(leftModuleKey, "\x00")
+	rightRoot, _, rightOK := strings.Cut(rightModuleKey, "\x00")
+	return leftOK && rightOK && filepath.Clean(leftRoot) == filepath.Clean(rightRoot)
+}
+
 // RustItemVisibleFrom reports whether a syntax-evidenced Rust item visibility
 // permits access from sourceModuleKey. Both keys must come from one module index.
 func RustItemVisibleFrom(declarationModuleKey, sourceModuleKey, visibility string) bool {
@@ -314,7 +398,7 @@ func RustItemVisibleFrom(declarationModuleKey, sourceModuleKey, visibility strin
 	case "pub(crate)":
 		return true
 	case "pub(super)":
-		return rustModuleContains(rustParentModule(declarationModule), sourceModule)
+		return declarationModule != "" && rustModuleContains(rustParentModule(declarationModule), sourceModule)
 	case "", "pub(self)":
 		return rustModuleContains(declarationModule, sourceModule)
 	}

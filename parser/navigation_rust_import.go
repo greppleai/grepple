@@ -46,7 +46,7 @@ func collectRustNavigationModule(node *syntaxNode, scope, pathHint string, pathA
 	name := navigationFieldText(node, "name", "")
 	body := node.ChildByFieldName("body")
 	if name != "" && (body != nil || !pathAttribute || pathHint != "") {
-		addRustNavigationImport(imports, navigationImport{alias: name, path: rustNavigationScopedPath("self::"+name, scope), imported: "*", kind: "module", scope: scope, targetPathHint: pathHint, inline: body != nil, line: node.StartLine()})
+		addRustNavigationImport(imports, navigationImport{alias: name, path: rustNavigationScopedPath("self::"+name, scope), imported: "*", kind: "module", scope: scope, visibilityDetail: rustNavigationItemVisibility(node), targetPathHint: pathHint, inline: body != nil, line: node.StartLine()})
 	}
 	if body != nil && name != "" {
 		collectRustNavigationSourceFacts(body, rustNavigationJoinPath(scope, name), imports)
@@ -90,9 +90,15 @@ func rustNavigationExports(root *syntaxNode, _ string, language, path string) []
 func collectRustNavigationExports(root *syntaxNode, scope, language, path string, exports *[]NavigationExport) {
 	for _, node := range root.NamedChildren() {
 		collectRustNestedModuleExports(node, scope, language, path, exports)
-		if rustNavigationExported(node) {
-			*exports = append(*exports, rustNavigationNodeExports(node, scope, language, path)...)
+		visibility, visible := rustNavigationExportVisibility(node)
+		if !visible {
+			continue
 		}
+		items := rustNavigationNodeExports(node, scope, language, path)
+		for index := range items {
+			items[index].VisibilityDetail = visibility
+		}
+		*exports = append(*exports, items...)
 	}
 }
 
@@ -125,15 +131,22 @@ func rustNavigationNodeExports(node *syntaxNode, scope, language, path string) [
 	return []NavigationExport{{Name: strings.TrimSpace(name.Text()), LocalName: strings.TrimSpace(name.Text()), Scope: scope, Language: language, Path: path, Line: node.StartLine()}}
 }
 
-func rustNavigationExported(node *syntaxNode) bool {
+func rustNavigationVisibilityDetail(node *syntaxNode, _, _ string) string {
+	return rustNavigationItemVisibility(node)
+}
+
+func rustNavigationItemVisibility(node *syntaxNode) string {
 	for _, child := range node.NamedChildren() {
-		if child.Kind() != "visibility_modifier" {
-			continue
+		if child.Kind() == "visibility_modifier" {
+			return strings.Join(strings.Fields(child.Text()), "")
 		}
-		visibility := strings.Join(strings.Fields(child.Text()), "")
-		return visibility == "pub" || visibility == "pub(crate)"
 	}
-	return false
+	return ""
+}
+
+func rustNavigationExportVisibility(node *syntaxNode) (string, bool) {
+	visibility := rustNavigationItemVisibility(node)
+	return visibility, visibility == "pub" || strings.HasPrefix(visibility, "pub(") && strings.HasSuffix(visibility, ")")
 }
 
 func rustNavigationExportKind(kind string) bool {

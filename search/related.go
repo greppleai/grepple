@@ -28,6 +28,7 @@ type navigationDeclaration struct {
 	returnImportPath string
 	packageName      string
 	moduleScope      string
+	visibilityDetail string
 	language         string
 	file             string
 	matchStart       int
@@ -40,22 +41,22 @@ type navigationCaller struct {
 }
 
 type navigationCall struct {
-	id, callerID                      string
-	name, display, resolvedName       string
-	qualifier, importPath             string
-	receiverType, receiverFactory     string
-	factoryImport, file, language     string
-	importSourceFile, importDirectory string
-	rootType, rootImport              string
-	receiverMembers                   []string
-	importTargetFiles                 []string
-	rustTargetModules                 []string
-	promotedReceiverTypes             []string
-	importedReceiverTypes             []string
-	importedIdentity                  string
-	packageName                       string
-	moduleKnown                       bool
-	line                              int
+	id, callerID                       string
+	name, display, resolvedName        string
+	qualifier, importPath, moduleScope string
+	receiverType, receiverFactory      string
+	factoryImport, file, language      string
+	importSourceFile, importDirectory  string
+	rootType, rootImport               string
+	receiverMembers                    []string
+	importTargetFiles                  []string
+	rustTargetModules                  []string
+	promotedReceiverTypes              []string
+	importedReceiverTypes              []string
+	importedIdentity                   string
+	packageName                        string
+	moduleKnown                        bool
+	line                               int
 }
 
 type navigationExport struct {
@@ -272,7 +273,11 @@ func (index *navigationIndex) resolveGraphImports() {
 
 func (index *navigationIndex) resolveImportTargetPaths(fact parser.NavigationImport, packageFiles map[string][]string) []string {
 	targets := append([]string(nil), packageFiles[fact.ImportPath]...)
-	targets = append(targets, index.importTargetFiles(fact.Path, fact.ImportPath, fact.Imported, fact.Language)...)
+	if navigationLanguageFamily(fact.Language) == "rust" {
+		targets = append(targets, index.rustImportTargetFiles(fact.Path, fact.Scope, fact.ImportPath)...)
+	} else {
+		targets = append(targets, index.importTargetFiles(fact.Path, fact.ImportPath, fact.Imported, fact.Language)...)
+	}
 	if len(targets) == 0 && navigationLanguageFamily(fact.Language) == "go" {
 		targets = append(targets, index.localGoImportTargets(fact.Path, fact.ImportPath)...)
 	}
@@ -356,7 +361,7 @@ func (index *navigationIndex) inferReExportTarget(call *navigationCall) {
 	}
 	identity := call.importedIdentity
 	if navigationLanguageFamily(call.language) == "rust" {
-		targets := index.rustReExportTargets(call.file, call.importPath, identity, map[string]bool{})
+		targets := index.rustReExportTargets(call.file, call.moduleScope, call.importPath, identity, map[string]bool{})
 		call.importTargetFiles = rustModuleTargetFiles(targets)
 		call.rustTargetModules = rustModuleTargetKeys(targets)
 	} else {
@@ -436,7 +441,7 @@ func (index *navigationIndex) importTargetFiles(sourceFile, importPath, imported
 		return compactSortedStrings(targets)
 	}
 	if family == "rust" {
-		return index.rustImportTargetFiles(sourceFile, importPath)
+		return index.rustImportTargetFiles(sourceFile, "", importPath)
 	}
 	files := make([]string, 0, len(index.contents))
 	for candidateFile := range index.contents {
@@ -712,7 +717,7 @@ func (index *navigationIndex) addDeclarations(declarations []parser.NavigationDe
 			continue
 		}
 		item := navigationDeclaration{
-			id: declaration.ID, terminal: terminal, container: navigationDeclarationContainer(declaration), returnType: declaration.ResultType, returnImportPath: declaration.ResultImportPath, packageName: declaration.Package, moduleScope: declaration.Scope, language: language, file: path, matchStart: declaration.Start,
+			id: declaration.ID, terminal: terminal, container: navigationDeclarationContainer(declaration), returnType: declaration.ResultType, returnImportPath: declaration.ResultImportPath, packageName: declaration.Package, moduleScope: declaration.Scope, visibilityDetail: declaration.VisibilityDetail, language: language, file: path, matchStart: declaration.Start,
 			point: RelatedPoint{Name: declaration.Name, Path: displayPath, File: path, Kind: declaration.Kind, Start: declaration.Start, End: declaration.End},
 		}
 		indexed = append(indexed, item)
@@ -736,7 +741,7 @@ func (index *navigationIndex) addCalls(calls []parser.NavigationCall, declaratio
 		}
 		location := relatedLocationKey(caller.point)
 		indexedCall := navigationCall{
-			id: call.ID, callerID: call.CallerID, name: call.Name, display: call.Display, resolvedName: call.ResolvedName, qualifier: call.Qualifier, importPath: call.ImportPath, receiverType: call.ReceiverType,
+			id: call.ID, callerID: call.CallerID, name: call.Name, display: call.Display, resolvedName: call.ResolvedName, qualifier: call.Qualifier, importPath: call.ImportPath, moduleScope: caller.moduleScope, receiverType: call.ReceiverType,
 			rootType: call.ReceiverRootType, rootImport: call.ReceiverRootImport, receiverMembers: append([]string(nil), call.ReceiverMembers...), packageName: caller.packageName,
 			receiverFactory: call.ReceiverFactory, factoryImport: call.ReceiverFactoryImport, file: sourcePath, language: language, importSourceFile: sourcePath, line: call.Line,
 		}
@@ -868,6 +873,7 @@ type navigationCandidateResolution struct {
 }
 
 func (index *navigationIndex) resolveNavigationCandidates(call navigationCall, candidates, matched []navigationDeclaration) navigationCandidateResolution {
+	candidates = index.rustVisibleCandidates(call, candidates)
 	contextConfidence := ""
 	if contextual, confidence := index.navigationContextCandidates(call, candidates); len(contextual) > 0 {
 		candidates = contextual

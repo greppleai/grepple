@@ -14,7 +14,7 @@ import (
 	"github.com/greppleai/grepple/search"
 )
 
-const navigationGraphSchema = "grepple-navigation-graph-v4"
+const navigationGraphSchema = "grepple-navigation-graph-v5"
 
 type graphArgs struct {
 	JSON           bool     `arg:"--json" help:"emit the complete normalized navigation graph as JSON"`
