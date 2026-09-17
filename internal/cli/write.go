@@ -31,8 +31,9 @@ const writeHelp = `Apply one validated, hash-anchored transaction across multipl
 Usage: grepple write [--root PATH] [--dry-run] [--json]
        grepple write edit --path PATH --start HASH [--end HASH] [--content-file PATH|-] [OPTIONS]
 
-The default mode reads one strict grepple-write-v1 JSON value from stdin. Existing
-files use anchored edits (operation defaults to edit):
+The default mode auto-detects either one strict grepple-write-v1 JSON value or a
+literal ::grepple heredoc transaction from stdin. Existing JSON files use anchored
+edits (operation defaults to edit):
   {"path":"file.go","changes":[{"hash_range_inclusive":["START","END"],"content_lines":["replacement"]}]}
 
 Literal edit mode avoids JSON escaping for one edit. Replacement text is read
@@ -42,7 +43,19 @@ separates lines but does not add a blank line. Empty input deletes the range.
   literal replacement text
   EOF
 
-Create and delete are explicit JSON file operations:
+Literal heredoc transactions support the same edits, creates, and deletes:
+  ::grepple file file.go
+  ::grepple replace START END [--end-marker TOKEN]
+  literal replacement text
+  ::grepple end [TOKEN]
+  ::grepple file new.go
+  ::grepple create [--end-marker TOKEN]
+  literal new-file content
+  ::grepple end [TOKEN]
+  ::grepple file old.go
+  ::grepple delete 64-lowercase-hex-digest
+
+Create and delete are also explicit JSON file operations:
   {"path":"new.go","operation":"create","content_lines":["package sample",""]}
   {"path":"old.go","operation":"delete","before_sha256":"64-lowercase-hex-digest"}
 
@@ -324,6 +337,10 @@ func decodeWriteRequest(reader io.Reader) (writeRequest, *writeFailure) {
 	}
 	if len(content) > maxWriteRequestBytes {
 		return writeRequest{}, newWriteFailure("request_too_large", fmt.Sprintf("request exceeds %d bytes", maxWriteRequestBytes), "", nil)
+	}
+	trimmed := bytes.TrimSpace(content)
+	if bytes.HasPrefix(trimmed, []byte(writeHeredocDirective)) {
+		return decodeHeredocWriteRequest(content)
 	}
 	decoder := json.NewDecoder(bytes.NewReader(content))
 	decoder.DisallowUnknownFields()

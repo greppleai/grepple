@@ -295,6 +295,129 @@ func TestDecodeWriteRequestIsStrictAndBounded(t *testing.T) {
 	}
 }
 
+func TestDecodeWriteHeredocRequestSupportsJSONFeatureParity(t *testing.T) {
+	digest := strings.Repeat("a", 64)
+	literalLine := "    return \"anything ' ` $ here\""
+	input := fmt.Sprintf(`
+::grepple file internal/foo.go
+::grepple replace a83 e11 --end-marker GREPPLE_WRITE_ab12
+func foo() {
+%s
+}
+::grepple end
+::grepple file literal.go
+::grepple end GREPPLE_WRITE_ab12
+::grepple replace c22
+::grepple end
+
+::grepple file internal/new file.go
+::grepple create --end-marker CREATE_ab12
+package sample
+
+::grepple end CREATE_ab12
+
+::grepple file internal/old.go
+::grepple delete %s
+::grepple end
+`, literalLine, digest)
+	request, failure := decodeWriteRequest(strings.NewReader(input))
+	if failure != nil {
+		t.Fatal(failure)
+	}
+	want := writeRequest{Schema: writeSchema, Files: []writeRequestFile{
+		{Path: "internal/foo.go", Changes: []writeChange{
+			{HashRangeInclusive: []string{"a83", "e11"}, ContentLines: []string{"func foo() {", literalLine, "}", "::grepple end", "::grepple file literal.go"}},
+			{HashRangeInclusive: []string{"c22", "c22"}, ContentLines: []string{}},
+		}},
+		{Path: "internal/new file.go", Operation: "create", ContentLines: []string{"package sample", ""}},
+		{Path: "internal/old.go", Operation: "delete", BeforeSHA256: digest},
+	}}
+	if !reflect.DeepEqual(request, want) {
+		t.Fatalf("request=%#v\nwant=%#v", request, want)
+	}
+	crlf := strings.ReplaceAll(input, "\n", "\r\n")
+	if request, failure := decodeWriteRequest(strings.NewReader(crlf)); failure != nil || !reflect.DeepEqual(request, want) {
+		t.Fatalf("CRLF request=%#v failure=%+v", request, failure)
+	}
+}
+
+func TestWriteHeredocCommandAppliesMixedTransaction(t *testing.T) {
+	root := t.TempDir()
+	editContent := "before\nsecond\n"
+	deleteContent := "delete me\n"
+	writeTestFile(t, filepath.Join(root, "edit.txt"), editContent, 0o640)
+	writeTestFile(t, filepath.Join(root, "delete.txt"), deleteContent, 0o600)
+	hash := hashline.Lines(editContent)[0]
+	replacement := "after \" ' ` $ literal"
+	request := fmt.Sprintf(`::grepple file edit.txt
+::grepple replace %s
+%s
+::grepple end
+
+::grepple file created.txt
+::grepple create
+created
+
+::grepple end
+
+::grepple file delete.txt
+::grepple delete %s
+`, hash, replacement, writeDigest([]byte(deleteContent)))
+	withStdin(t, request, func() {
+		captureStdout(t, func() {
+			if err := Run([]string{"write", "--root", root}); err != nil {
+				t.Fatal(err)
+			}
+		})
+	})
+	assertWriteFile(t, filepath.Join(root, "edit.txt"), replacement+"\nsecond\n", 0o640)
+	assertWriteFile(t, filepath.Join(root, "created.txt"), "created\n", 0o644)
+	if _, err := os.Stat(filepath.Join(root, "delete.txt")); !os.IsNotExist(err) {
+		t.Fatalf("deleted file still exists: %v", err)
+	}
+}
+
+func TestWriteHeredocDryRunUsesStructuredOutputWithoutMutation(t *testing.T) {
+	root := t.TempDir()
+	path := filepath.Join(root, "file.txt")
+	content := "before\n"
+	writeTestFile(t, path, content, 0o600)
+	hash := hashline.Lines(content)[0]
+	request := fmt.Sprintf("::grepple file file.txt\n::grepple replace %s\nafter\n::grepple end\n", hash)
+	var output string
+	withStdin(t, request, func() {
+		output = captureStdout(t, func() {
+			if err := Run([]string{"write", "--root", root, "--dry-run", "--json"}); err != nil {
+				t.Fatal(err)
+			}
+		})
+	})
+	var response writeResponse
+	if err := json.Unmarshal([]byte(output), &response); err != nil {
+		t.Fatal(err)
+	}
+	if response.Applied || !response.DryRun || len(response.Files) != 1 || !response.Files[0].Changed {
+		t.Fatalf("response=%+v", response)
+	}
+	assertWriteFile(t, path, content, 0o600)
+}
+
+func TestDecodeWriteHeredocRequestRejectsMalformedEnvelopes(t *testing.T) {
+	tests := []string{
+		"::grepple replace AAA\n::grepple end\n",
+		"::grepple file file.go\n::grepple unknown\n",
+		"::grepple file file.go\n::grepple replace AAA\nunterminated\n",
+		"::grepple file file.go\n::grepple replace AAA --end-marker TOKEN\n::grepple end OTHER\n",
+		"::grepple file file.go\n::grepple create\n::grepple end\n::grepple replace AAA\n::grepple end\n",
+		"::grepple file file.go\nnot a directive\n",
+	}
+	for _, input := range tests {
+		if _, failure := decodeWriteRequest(strings.NewReader(input)); failure == nil || failure.code != "invalid_request" {
+			t.Fatalf("input=%q failure=%+v", input, failure)
+		}
+	}
+}
+
 func TestLiteralWriteLinesTreatsTerminalNewlineAsSeparator(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -488,7 +611,7 @@ func TestWriteHelpDocumentsTransactionalInput(t *testing.T) {
 			t.Fatal(err)
 		}
 	})
-	for _, expected := range []string{"Usage: grepple write", "grepple write edit", "--content-file", "grepple-write-v1", "hash_range_inclusive", "operation", "before_sha256", "--dry-run", "--json", "HASH│LINE│content"} {
+	for _, expected := range []string{"Usage: grepple write", "grepple write edit", "--content-file", "grepple-write-v1", "::grepple file", "--end-marker", "hash_range_inclusive", "operation", "before_sha256", "--dry-run", "--json", "HASH│LINE│content"} {
 		if !strings.Contains(output, expected) {
 			t.Fatalf("write help missing %q:\n%s", expected, output)
 		}
