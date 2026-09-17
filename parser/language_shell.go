@@ -20,8 +20,6 @@ func newShellLanguage() languageAdapter {
 			classBodyTypes:        newStringSet("compound_statement", "do_group"),
 			exportTypes:           newStringSet(),
 			functionLikeTypes:     newStringSet("function_definition"),
-			blockTypes:            newStringSet("compound_statement", "do_group"),
-			jsxElementTypes:       newStringSet(),
 			nameFieldCandidates:   newStringSet("word", "command_name"),
 		},
 	}

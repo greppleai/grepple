@@ -20,8 +20,6 @@ func newRustLanguage() languageAdapter {
 			classBodyTypes:        newStringSet("declaration_list", "field_declaration_list", "enum_variant_list"),
 			exportTypes:           newStringSet(),
 			functionLikeTypes:     newStringSet("function_item", "function_signature_item", "closure_expression"),
-			blockTypes:            newStringSet("block"),
-			jsxElementTypes:       newStringSet(),
 			nameFieldCandidates:   newStringSet("identifier", "type_identifier", "field_identifier"),
 		},
 	}

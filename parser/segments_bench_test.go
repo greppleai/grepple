@@ -6,9 +6,8 @@ import (
 	"testing"
 )
 
-// genLargeGoSource builds a big, match-dense Go file so segment building visits
-// many nodes and emits many summaries — the scenario where summarizeNode used to
-// re-split the whole file on every call.
+// genLargeGoSource builds a large, match-dense Go file so segment building visits
+// many declarations while selecting complete directly matching scopes under a cap.
 func genLargeGoSource() (string, map[int]bool) {
 	var b strings.Builder
 	b.WriteString("package main\n\n")

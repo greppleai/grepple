@@ -116,26 +116,20 @@ func buildPlainTextSegments(hits map[int]bool, maxSegments int) []Segment {
 }
 
 func buildASTSegments(root *syntaxNode, content string, hits matchLines, config *structureRules, maxSegments int) []Segment {
-	// Split the file once and thread it through segment building. summarizeNode
-	// used to re-split the whole file on every call, which is O(summaries × lines).
 	lines := splitLines(content)
 	topLevel := nonPunctuationChildren(root)
-	matchedIndexes := matchedTopLevelIndexes(topLevel, hits)
 
 	var segments []Segment
-	for index, node := range topLevel {
-		start, end := node.StartLine(), node.EndLine()
+	for _, node := range topLevel {
+		end := node.EndLine()
 		matchStart := leadingCommentStart(node)
 		if hits.hitsRange(matchStart, end) {
-			segments = append(segments, buildMatchingStructureSegments(node, content, lines, hits, config)...)
+			segments = append(segments, buildMatchingStructureSegments(node, hits, config)...)
 			continue
-		}
-		if config.structuralTypes.contains(node.Kind()) && nearMatchedTopLevel(index, matchedIndexes) {
-			segments = append(segments, Segment{Kind: "summary", Start: start, End: end, Text: summarizeNode(node, content, lines)})
 		}
 	}
 	segments = uncoveredLineSegments(segments, hits)
-	return limitSegments(mergeSegments(segments, len(lines)), maxSegments)
+	return limitMatchedSegments(mergeSegments(segments, len(lines)), maxSegments, hits)
 }
 
 // nonPunctuationChildren returns root's named children with punctuation nodes
@@ -148,18 +142,6 @@ func nonPunctuationChildren(root *syntaxNode) []*syntaxNode {
 		}
 	}
 	return topLevel
-}
-
-// matchedTopLevelIndexes returns the indexes of the top-level nodes whose
-// line range contains a hit.
-func matchedTopLevelIndexes(topLevel []*syntaxNode, hits matchLines) []int {
-	var matched []int
-	for index, node := range topLevel {
-		if hits.hitsRange(leadingCommentStart(node), node.EndLine()) {
-			matched = append(matched, index)
-		}
-	}
-	return matched
 }
 
 // leadingCommentStart extends a declaration to an attached leading comment block.
@@ -217,23 +199,14 @@ func uncoveredLineSegments(segments []Segment, hits matchLines) []Segment {
 	return segments
 }
 
-func nearMatchedTopLevel(index int, matchedIndexes []int) bool {
-	for _, matched := range matchedIndexes {
-		if abs(index-matched) <= 2 {
-			return true
-		}
-	}
-	return false
-}
-
-func buildMatchingStructureSegments(node *syntaxNode, content string, lines []string, hits matchLines, config *structureRules) []Segment {
+func buildMatchingStructureSegments(node *syntaxNode, hits matchLines, config *structureRules) []Segment {
 	start := leadingCommentStart(node)
 	declarationStart := node.StartLine()
 	node = unwrapExport(node, config)
-	end := node.EndLine()
-	if shouldCompactJSXFunction(node, hits, config) {
-		return buildCompactFunctionSegments(node, content, lines, hits, config, start, declarationStart)
+	if config.functionLikeTypes.contains(node.Kind()) {
+		return []Segment{{Kind: "lines", Start: start, End: node.EndLine()}}
 	}
+	end := node.EndLine()
 	if !config.containerTypes.contains(node.Kind()) {
 		return []Segment{{Kind: "lines", Start: start, End: end}}
 	}
@@ -243,7 +216,7 @@ func buildMatchingStructureSegments(node *syntaxNode, content string, lines []st
 		return []Segment{{Kind: "lines", Start: start, End: end}}
 	}
 	segments := []Segment{{Kind: "lines", Start: start, End: declarationStart}}
-	segments = append(segments, containerChildSegments(children, content, lines, hits)...)
+	segments = append(segments, matchingContainerChildSegments(children, hits)...)
 	if end > start {
 		segments = append(segments, Segment{Kind: "lines", Start: end, End: end})
 	}
@@ -281,99 +254,17 @@ func anyChildHasMatch(children []*syntaxNode, hits matchLines) bool {
 	return false
 }
 
-// containerChildSegments renders each structural child: full lines when it
-// contains a match, a one-line summary otherwise.
-func containerChildSegments(children []*syntaxNode, content string, lines []string, hits matchLines) []Segment {
+// matchingContainerChildSegments renders only structural children containing direct matches.
+func matchingContainerChildSegments(children []*syntaxNode, hits matchLines) []Segment {
 	var segments []Segment
 	for _, child := range children {
-		childStart, childEnd := child.StartLine(), child.EndLine()
+		childEnd := child.EndLine()
 		matchStart := leadingCommentStart(child)
 		if hits.hitsRange(matchStart, childEnd) {
 			segments = append(segments, Segment{Kind: "lines", Start: matchStart, End: childEnd})
-		} else {
-			segments = append(segments, Segment{Kind: "summary", Start: childStart, End: childEnd, Text: summarizeNode(child, content, lines)})
 		}
 	}
 	return segments
-}
-
-func shouldCompactJSXFunction(node *syntaxNode, hits matchLines, config *structureRules) bool {
-	return config.functionLikeTypes.contains(node.Kind()) &&
-		containsNodeType(node, config.jsxElementTypes) &&
-		nodeHasMatchInTypes(node, hits, config.jsxElementTypes) &&
-		node.EndLine()-node.StartLine() >= 6
-}
-
-func buildCompactFunctionSegments(node *syntaxNode, content string, lines []string, hits matchLines, config *structureRules, start, declarationStart int) []Segment {
-	end := node.EndLine()
-	body := node.ChildByFieldName("body")
-	if body == nil {
-		for _, child := range node.NamedChildren() {
-			if config.blockTypes.contains(child.Kind()) {
-				body = child
-				break
-			}
-		}
-	}
-	if body == nil {
-		return []Segment{{Kind: "lines", Start: start, End: end}}
-	}
-	segments := []Segment{{Kind: "lines", Start: start, End: declarationStart}}
-	for _, child := range body.NamedChildren() {
-		childStart, childEnd := child.StartLine(), child.EndLine()
-		matchStart := leadingCommentStart(child)
-		if hits.hitsRange(matchStart, childEnd) {
-			if containsNodeType(child, config.jsxElementTypes) {
-				segments = append(segments, focusedLineSegments(childStart, childEnd, hits)...)
-			} else {
-				segments = append(segments, Segment{Kind: "lines", Start: matchStart, End: childEnd})
-			}
-		} else {
-			segments = append(segments, Segment{Kind: "summary", Start: childStart, End: childEnd, Text: summarizeNode(child, content, lines)})
-		}
-	}
-	if end > start {
-		segments = append(segments, Segment{Kind: "lines", Start: end, End: end})
-	}
-	return segments
-}
-
-func focusedLineSegments(start, end int, hits matchLines) []Segment {
-	var lines []int
-	for _, line := range hits.sorted {
-		if line >= start && line <= end {
-			lines = append(lines, line)
-		}
-	}
-	sort.Ints(lines)
-	segments := make([]Segment, 0, len(lines))
-	for _, line := range lines {
-		segments = append(segments, Segment{Kind: "lines", Start: max(start, line-1), End: min(end, line+1)})
-	}
-	return segments
-}
-
-func containsNodeType(node *syntaxNode, types stringSet) bool {
-	if len(types) == 0 {
-		return false
-	}
-	found := false
-	node.WalkNamed(func(candidate *syntaxNode) {
-		if !found && types.contains(candidate.Kind()) {
-			found = true
-		}
-	})
-	return found
-}
-
-func nodeHasMatchInTypes(node *syntaxNode, hits matchLines, types stringSet) bool {
-	found := false
-	node.WalkNamed(func(candidate *syntaxNode) {
-		if !found && types.contains(candidate.Kind()) && hits.hitsRange(candidate.StartLine(), candidate.EndLine()) {
-			found = true
-		}
-	})
-	return found
 }
 
 func structuralChildren(node *syntaxNode, config *structureRules) []*syntaxNode {
@@ -405,29 +296,6 @@ func childrenInTypes(node *syntaxNode, types stringSet) []*syntaxNode {
 	return children
 }
 
-func summarizeNode(node *syntaxNode, _ string, lines []string) string {
-	start, end := node.StartLine(), node.EndLine()
-	firstLine := ""
-	if start >= 1 && start <= len(lines) {
-		firstLine = lines[start-1]
-	}
-	if strings.TrimSpace(firstLine) == "" {
-		for _, line := range strings.Split(node.Text(), "\n") {
-			if strings.TrimSpace(line) != "" {
-				firstLine = line
-				break
-			}
-		}
-	}
-	if start == end {
-		return strings.TrimRight(firstLine, " \t")
-	}
-	if index := strings.Index(firstLine, "{"); index >= 0 {
-		return strings.TrimRight(firstLine[:index], " \t") + " { … }"
-	}
-	return strings.TrimRight(firstLine, " \t") + " …"
-}
-
 func mergeSegments(segments []Segment, lineCount int) []Segment {
 	for index := range segments {
 		if segments[index].Kind == "lines" {
@@ -453,6 +321,27 @@ func mergeSegments(segments []Segment, lineCount int) []Segment {
 	return merged
 }
 
+func limitMatchedSegments(segments []Segment, maxSegments int, hits matchLines) []Segment {
+	if len(segments) <= maxSegments {
+		return segments
+	}
+	direct, context := make([]Segment, 0, len(segments)), make([]Segment, 0, len(segments))
+	for _, segment := range segments {
+		if hits.hitsRange(segment.Start, segment.End) {
+			direct = append(direct, segment)
+		} else {
+			context = append(context, segment)
+		}
+	}
+	kept := append([]Segment{}, direct[:min(len(direct), maxSegments)]...)
+	remaining := maxSegments - len(kept)
+	if remaining > 0 {
+		kept = append(kept, context[:min(len(context), remaining)]...)
+	}
+	sort.SliceStable(kept, func(i, j int) bool { return kept[i].Start < kept[j].Start })
+	return kept
+}
+
 func limitSegments(segments []Segment, maxSegments int) []Segment {
 	if len(segments) <= maxSegments {
 		return segments
@@ -475,11 +364,4 @@ func limitSegments(segments []Segment, maxSegments int) []Segment {
 	}
 	sort.SliceStable(kept, func(i, j int) bool { return kept[i].Start < kept[j].Start })
 	return kept
-}
-
-func abs(value int) int {
-	if value < 0 {
-		return -value
-	}
-	return value
 }

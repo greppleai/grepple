@@ -3,6 +3,7 @@ package parser
 import (
 	"fmt"
 	"os"
+	"reflect"
 	"strings"
 	"testing"
 )
@@ -15,19 +16,19 @@ func TestASTSegmentsGolden(t *testing.T) {
 	}{
 		{
 			"testdata/go/sample.go", "FormatUser",
-			`[summary:3-3:"import \"fmt\""][summary:5-8:"type User struct { … }"][lines:10-12:""][summary:14-14:"type Reporter struct{}"][lines:16-18:""]`,
+			`[lines:10-12:""][lines:16-18:""]`,
 		},
 		{
 			"testdata/typescript/large-component.tsx", "data-testid",
-			`[summary:1-5:"type DashboardProps = { … }"][lines:7-7:""][summary:8-8:"  const displayName = userName.trim() || 'friend';"][summary:9-9:"  const subtitle = ` + "`" + `Welcome ${displayName}` + "`" + `;"][lines:18-20:""][lines:27-27:""]`,
+			`[lines:7-27:""]`,
 		},
 		{
 			"testdata/java/Sample.java", "println",
-			`[summary:3-3:"import java.util.List;"][lines:5-5:""][summary:6-6:"    record User(String id, String name) {}"][summary:8-10:"    public static String formatUser(User user) { … }"][lines:12-17:""]`,
+			`[lines:5-5:""][lines:12-17:""]`,
 		},
 		{
 			"testdata/kotlin/Sample.kt", "println",
-			`[summary:3-3:"data class User(val id: String, val name: String)"][lines:5-5:""][summary:6-8:"    fun findUser(id: String): User? { … }"][lines:10-14:""]`,
+			`[lines:5-5:""][lines:10-14:""]`,
 		},
 	}
 	for _, c := range cases {
@@ -49,5 +50,18 @@ func TestASTSegmentsGolden(t *testing.T) {
 		if got != c.want {
 			t.Errorf("%s segments mismatch:\n got: %s\nwant: %s", c.path, got, c.want)
 		}
+	}
+}
+
+func TestASTSegmentLimitKeepsDirectMatchingCallable(t *testing.T) {
+	withRepoRoot(t)
+	contentBytes, err := os.ReadFile("testdata/java/Sample.java")
+	if err != nil {
+		t.Fatal(err)
+	}
+	segments := BuildSegments(string(contentBytes), "java", map[int]bool{14: true}, 1)
+	want := []Segment{{Kind: "lines", Start: 12, End: 17}}
+	if !reflect.DeepEqual(segments, want) {
+		t.Fatalf("segments=%#v want=%#v", segments, want)
 	}
 }

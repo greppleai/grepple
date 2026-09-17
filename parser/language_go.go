@@ -20,8 +20,6 @@ func newGoLanguage() languageAdapter {
 			classBodyTypes:        newStringSet(),
 			exportTypes:           newStringSet(),
 			functionLikeTypes:     newStringSet("function_declaration", "method_declaration"),
-			blockTypes:            newStringSet("block"),
-			jsxElementTypes:       newStringSet(),
 			nameFieldCandidates:   newStringSet("identifier", "field_identifier", "type_identifier"),
 		},
 	}

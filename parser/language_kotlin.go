@@ -22,8 +22,6 @@ func newKotlinLanguage() languageAdapter {
 			classBodyTypes:        newStringSet("class_body"),
 			exportTypes:           newStringSet(),
 			functionLikeTypes:     newStringSet("function_declaration"),
-			blockTypes:            newStringSet("function_body", "control_structure_body", "statements"),
-			jsxElementTypes:       newStringSet(),
 			nameFieldCandidates:   newStringSet("simple_identifier", "identifier", "type_identifier"),
 		},
 	}

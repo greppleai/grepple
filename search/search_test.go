@@ -37,12 +37,8 @@ func TestSearchAndStructuredSegments(t *testing.T) {
 	}
 	segments := matches[0].Segments
 	wantSegments := []parser.Segment{
-		{Kind: "summary", Start: 1, End: 1, Text: `import { logger } from "./logger";`},
-		{Kind: "summary", Start: 3, End: 6, Text: "type User = { … }"},
 		{Kind: "lines", Start: 8, End: 12},
 		{Kind: "lines", Start: 14, End: 14},
-		{Kind: "summary", Start: 15, End: 15, Text: "  constructor(private readonly users: User[]) {}"},
-		{Kind: "summary", Start: 17, End: 19, Text: "  findUser(id: string): User | undefined { … }"},
 		{Kind: "lines", Start: 21, End: 26},
 	}
 	if !reflect.DeepEqual(segments, wantSegments) {
@@ -66,7 +62,7 @@ func TestSearchAndStructuredSegments(t *testing.T) {
 	}
 }
 
-func TestCompactTSX(t *testing.T) {
+func TestMatchedTSXReturnsCompleteFunction(t *testing.T) {
 	withRepoRoot(t)
 	p := Params{Query: "data-testid='save-dashboard'", Globs: []string{"testdata/typescript/large-component.tsx"}, Regex: true, MaxSegments: 20}
 	m, err := Files(p, nil)
@@ -87,7 +83,7 @@ func TestCompactTSX(t *testing.T) {
 	if !strings.Contains(got, "displayName") || !strings.Contains(got, "save-dashboard") {
 		t.Fatalf("unexpected segments: %s", got)
 	}
-	if strings.Contains(got, "Last updated today") {
-		t.Fatalf("footer should be collapsed: %s", got)
+	if !strings.Contains(got, "Last updated today") {
+		t.Fatalf("matched function was incomplete: %s", got)
 	}
 }

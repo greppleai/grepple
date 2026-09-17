@@ -20,8 +20,6 @@ func newJavaLanguage() languageAdapter {
 			classBodyTypes:        newStringSet("class_body", "interface_body", "enum_body", "record_body"),
 			exportTypes:           newStringSet(),
 			functionLikeTypes:     newStringSet("method_declaration", "constructor_declaration"),
-			blockTypes:            newStringSet("block"),
-			jsxElementTypes:       newStringSet(),
 			nameFieldCandidates:   newStringSet("identifier", "type_identifier"),
 		},
 	}

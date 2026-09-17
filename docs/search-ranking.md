@@ -24,12 +24,14 @@ The strategy was deliberately limited to matching-line count after evaluating mo
 
 Parser-backed segments are built in source order. Before `--max-segments` is applied, Grepple:
 
-1. emits source lines for every matching top-level declaration or matched container child;
-2. collapses nonmatching children inside a matched container to one-line summaries;
-3. includes nearby top-level structural summaries (within two siblings of a matched declaration);
-4. adds one-line source segments for uncovered matching lines;
-5. merges adjacent source ranges and removes a summary that starts where retained source already starts.
+1. emits the complete top-level function, method, or declaration containing each direct match;
+2. for class, trait, impl, namespace, and similar containers, retains the owner wrapper and only children containing direct matches;
+3. keeps function-like scopes complete, including JSX/TSX functions, rather than compacting them to matching statements;
+4. adds one-line source segments only for matches not covered by a parsed declaration;
+5. merges adjacent retained source ranges.
 
-When the segment cap applies, matching source segments rank before summary/context segments. Each class retains source order, and the selected segments are sorted back into source order for rendering. If matching lines are omitted, human output reports the count and recommends `--line-only`; complete JSON publishes the configured segment cap in result metadata.
+When the segment cap applies, segments containing direct matching lines rank before required owner-wrapper context. Each class retains source order, and selected segments are sorted back into source order for rendering. If matching lines are omitted, human output reports the count and recommends `--line-only`; complete JSON publishes the configured segment cap in result metadata.
 
-This policy prioritizes direct evidence over contextual summaries without pretending that a later declaration is less semantically relevant than an earlier one. Use `--line-only`, a narrower path, or a higher `--max-segments` when every occurrence matters.
+This policy prioritizes complete matching callables without injecting nearby imports, top-level declarations, or nonmatching sibling summaries. Use `--line-only` or bounded context when only evidence lines are wanted, and use a narrower path or higher `--max-segments` when every matching scope matters.
+
+Paired review captures show the same commands [before](matched-scope-rendering-before.md) and [after](matched-scope-rendering-after.md) this policy change across Go, Python, Java, Rust, TSX, Shell, related navigation, and a tight segment cap.

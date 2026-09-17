@@ -68,8 +68,6 @@ type structureRules struct {
 	classBodyTypes        stringSet
 	exportTypes           stringSet
 	functionLikeTypes     stringSet
-	blockTypes            stringSet
-	jsxElementTypes       stringSet
 	nameFieldCandidates   stringSet
 }
 

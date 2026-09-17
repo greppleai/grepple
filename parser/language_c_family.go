@@ -22,8 +22,6 @@ func newCFamilyRules(cpp bool) structureRules {
 		classBodyTypes:        newStringSet("field_declaration_list", "declaration_list"),
 		exportTypes:           newStringSet("template_declaration"),
 		functionLikeTypes:     newStringSet("function_definition", "lambda_expression"),
-		blockTypes:            newStringSet("compound_statement"),
-		jsxElementTypes:       newStringSet(),
 		nameFieldCandidates:   newStringSet("identifier", "field_identifier", "type_identifier", "namespace_identifier"),
 	}
 }

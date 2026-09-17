@@ -39,8 +39,6 @@ func newTypeScriptLanguage(id string, tsx bool) languageAdapter {
 			classBodyTypes:        newStringSet("class_body"),
 			exportTypes:           newStringSet("export_statement"),
 			functionLikeTypes:     newStringSet("function_declaration", "generator_function_declaration", "method_definition", "method_signature", "arrow_function", "function"),
-			blockTypes:            newStringSet("statement_block"),
-			jsxElementTypes:       newStringSet("jsx_element", "jsx_self_closing_element", "jsx_fragment"),
 			nameFieldCandidates:   newStringSet("identifier", "type_identifier", "property_identifier", "field_identifier", "private_property_identifier"),
 		},
 	}

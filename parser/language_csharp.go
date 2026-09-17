@@ -21,8 +21,6 @@ func newCSharpLanguage() languageAdapter {
 			classBodyTypes:        newStringSet("declaration_list", "enum_member_declaration_list"),
 			exportTypes:           newStringSet(),
 			functionLikeTypes:     newStringSet("method_declaration", "constructor_declaration", "local_function_statement", "lambda_expression", "anonymous_method_expression"),
-			blockTypes:            newStringSet("block"),
-			jsxElementTypes:       newStringSet(),
 			nameFieldCandidates:   newStringSet("identifier"),
 		},
 	}

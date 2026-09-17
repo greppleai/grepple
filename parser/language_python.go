@@ -20,8 +20,6 @@ func newPythonLanguage() languageAdapter {
 			classBodyTypes:        newStringSet("block"),
 			exportTypes:           newStringSet(),
 			functionLikeTypes:     newStringSet("function_definition", "lambda"),
-			blockTypes:            newStringSet("block"),
-			jsxElementTypes:       newStringSet(),
 			nameFieldCandidates:   newStringSet("identifier"),
 		},
 	}
