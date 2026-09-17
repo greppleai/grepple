@@ -3,9 +3,61 @@ package parser
 import "strings"
 
 func cSharpNavigationAdapter(rules *structureRules) navigationAdapter {
-	return &navigationAdapterConfig{rules: rules, callTypes: newStringSet("invocation_expression", "object_creation_expression"), parameterTypes: newStringSet("parameter"), sourceFacts: cSharpNavigationSourceFacts, exports: cSharpNavigationExports, entrypoint: cSharpNavigationEntrypoint, typeReferenceFacts: true, memberAccessFacts: true, visibility: func(node *syntaxNode, _ string, content string) NavigationVisibility {
-		return cSharpNavigationVisibility(navigationDeclarationHeader(node, content))
-	}}
+	return &navigationAdapterConfig{
+		rules: rules, callTypes: newStringSet("invocation_expression", "object_creation_expression"), parameterTypes: newStringSet("parameter"),
+		fieldDeclarationTypes: newStringSet("property_declaration"), fieldContainerTypes: rules.classDeclarationTypes,
+		fieldType: cSharpNavigationFieldType, fieldNames: cSharpNavigationFieldNames,
+		sourceFacts: cSharpNavigationSourceFacts, exports: cSharpNavigationExports, entrypoint: cSharpNavigationEntrypoint,
+		typeReferenceFacts: true, fieldFacts: true, memberAccessFacts: true,
+		visibility: func(node *syntaxNode, _ string, content string) NavigationVisibility {
+			return cSharpNavigationVisibility(navigationDeclarationHeader(node, content))
+		},
+	}
+}
+
+func cSharpNavigationFieldType(node *syntaxNode) *syntaxNode {
+	if node.Kind() == "property_declaration" {
+		return node.ChildByFieldName("type")
+	}
+	declaration := cSharpNavigationVariableDeclaration(node)
+	if declaration == nil {
+		return nil
+	}
+	return declaration.ChildByFieldName("type")
+}
+
+func cSharpNavigationFieldNames(node, typeNode *syntaxNode, content string) []navigationFieldName {
+	if node.Kind() == "property_declaration" {
+		names := defaultNavigationParameterNames(node, typeNode, content)
+		result := make([]navigationFieldName, 0, len(names))
+		for _, name := range names {
+			result = append(result, navigationFieldName{name: name})
+		}
+		return result
+	}
+	declaration := cSharpNavigationVariableDeclaration(node)
+	if declaration == nil {
+		return nil
+	}
+	var result []navigationFieldName
+	for _, child := range declaration.NamedChildren() {
+		if child.Kind() != "variable_declarator" {
+			continue
+		}
+		if name := child.ChildByFieldName("name"); name != nil && name.Text() != "" {
+			result = append(result, navigationFieldName{name: name.Text()})
+		}
+	}
+	return result
+}
+
+func cSharpNavigationVariableDeclaration(node *syntaxNode) *syntaxNode {
+	for _, child := range node.NamedChildren() {
+		if child.Kind() == "variable_declaration" {
+			return child
+		}
+	}
+	return nil
 }
 
 func cSharpNavigationEntrypoint(context navigationEntrypointContext) string {
@@ -57,13 +109,14 @@ func cSharpNavigationMainParameters(node *syntaxNode) bool {
 	return typeName == "string[]" || typeName == "System.String[]"
 }
 
-func cSharpNavigationSourceFacts(root *syntaxNode, _ string, _ *navigationAdapterConfig) (map[string]navigationImport, string, map[string]map[string]navigationBinding) {
+func cSharpNavigationSourceFacts(root *syntaxNode, content string, adapter *navigationAdapterConfig) (map[string]navigationImport, string, map[string]map[string]navigationBinding) {
 	imports, packageName, fields := emptyNavigationSourceFacts()
 	packageName, scope, unambiguous := cSharpNavigationScope(root)
 	addCSharpNavigationUsings(imports, root)
 	if unambiguous && scope != nil && scope.ID() != root.ID() {
 		addCSharpNavigationUsings(imports, scope)
 	}
+	collectNavigationSourceFields(root, content, imports, fields, adapter)
 	return imports, packageName, fields
 }
 

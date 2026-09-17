@@ -3,12 +3,18 @@ package parser
 import "strings"
 
 func pythonNavigationAdapter(rules *structureRules) navigationAdapter {
-	return &navigationAdapterConfig{rules: rules, callTypes: newStringSet("call"), parameterTypes: newStringSet("typed_parameter", "typed_default_parameter"), sourceFacts: pythonNavigationSourceFacts, typeReferenceFacts: true, memberAccessFacts: true, visibility: func(_ *syntaxNode, name, _ string) NavigationVisibility {
-		return pythonNavigationVisibility(navigationTerminal(name))
-	}}
+	return &navigationAdapterConfig{
+		rules: rules, callTypes: newStringSet("call"), parameterTypes: newStringSet("typed_parameter", "typed_default_parameter"),
+		fieldDeclarationTypes: newStringSet("assignment"), fieldContainerTypes: rules.classDeclarationTypes,
+		sourceFacts: pythonNavigationSourceFacts, typeReferenceFacts: true, fieldFacts: true, memberAccessFacts: true,
+		fieldNames: pythonNavigationFieldNames,
+		visibility: func(_ *syntaxNode, name, _ string) NavigationVisibility {
+			return pythonNavigationVisibility(navigationTerminal(name))
+		},
+	}
 }
 
-func pythonNavigationSourceFacts(root *syntaxNode, _ string, _ *navigationAdapterConfig) (map[string]navigationImport, string, map[string]map[string]navigationBinding) {
+func pythonNavigationSourceFacts(root *syntaxNode, content string, adapter *navigationAdapterConfig) (map[string]navigationImport, string, map[string]map[string]navigationBinding) {
 	imports, packageName, fields := emptyNavigationSourceFacts()
 	for _, node := range root.NamedChildren() {
 		switch node.Kind() {
@@ -18,7 +24,29 @@ func pythonNavigationSourceFacts(root *syntaxNode, _ string, _ *navigationAdapte
 			addPythonNavigationFromImports(imports, node)
 		}
 	}
+	collectNavigationSourceFields(root, content, imports, fields, adapter)
 	return imports, packageName, fields
+}
+
+func pythonNavigationFieldNames(node, typeNode *syntaxNode, content string) []navigationFieldName {
+	statement := node.Parent()
+	if statement == nil || statement.Kind() != "expression_statement" {
+		return nil
+	}
+	body := statement.Parent()
+	if body == nil || body.Kind() != "block" {
+		return nil
+	}
+	owner := body.Parent()
+	if owner == nil || owner.Kind() != "class_definition" {
+		return nil
+	}
+	names := defaultNavigationParameterNames(node, typeNode, content)
+	result := make([]navigationFieldName, 0, len(names))
+	for _, name := range names {
+		result = append(result, navigationFieldName{name: name})
+	}
+	return result
 }
 
 func addPythonNavigationImports(imports map[string]navigationImport, node *syntaxNode) {

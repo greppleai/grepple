@@ -47,9 +47,16 @@ func javaNavigationCallDisplay(call, target *syntaxNode, _ string) string {
 }
 
 func kotlinNavigationAdapter(rules *structureRules) navigationAdapter {
-	return &navigationAdapterConfig{rules: rules, callTypes: newStringSet("call_expression"), parameterTypes: newStringSet("parameter", "class_parameter"), parameterType: kotlinNavigationParameterType, sourceFacts: kotlinNavigationSourceFacts, exports: jvmNavigationExports, entrypoint: kotlinNavigationEntrypoint, typeReferenceFacts: true, memberAccessFacts: true, visibility: func(node *syntaxNode, _ string, content string) NavigationVisibility {
-		return visibilityFromModifiers(navigationDeclarationHeader(node, content), true)
-	}}
+	return &navigationAdapterConfig{
+		rules: rules, callTypes: newStringSet("call_expression"), parameterTypes: newStringSet("parameter", "class_parameter"),
+		fieldDeclarationTypes: newStringSet("class_parameter", "property_declaration"), fieldContainerTypes: rules.classDeclarationTypes,
+		parameterType: kotlinNavigationParameterType, fieldType: kotlinNavigationFieldType, fieldNames: kotlinNavigationFieldNames,
+		sourceFacts: kotlinNavigationSourceFacts, exports: jvmNavigationExports, entrypoint: kotlinNavigationEntrypoint,
+		typeReferenceFacts: true, fieldFacts: true, memberAccessFacts: true,
+		visibility: func(node *syntaxNode, _ string, content string) NavigationVisibility {
+			return visibilityFromModifiers(navigationDeclarationHeader(node, content), true)
+		},
+	}
 }
 
 func kotlinNavigationParameterType(node *syntaxNode) *syntaxNode {
@@ -61,6 +68,58 @@ func kotlinNavigationParameterType(node *syntaxNode) *syntaxNode {
 	return nil
 }
 
+func kotlinNavigationFieldType(node *syntaxNode) *syntaxNode {
+	if node.Kind() == "class_parameter" {
+		return kotlinNavigationParameterType(node)
+	}
+	declaration := kotlinNavigationPropertyDeclaration(node)
+	if declaration == nil {
+		return nil
+	}
+	return kotlinNavigationParameterType(declaration)
+}
+
+func kotlinNavigationFieldNames(node, typeNode *syntaxNode, content string) []navigationFieldName {
+	var declaration *syntaxNode
+	switch node.Kind() {
+	case "class_parameter":
+		if !navigationHeaderHasWord(node.Text(), "val") && !navigationHeaderHasWord(node.Text(), "var") {
+			return nil
+		}
+		parameters := node.Parent()
+		if parameters == nil || parameters.Kind() != "class_parameters" {
+			return nil
+		}
+		constructor := parameters.Parent()
+		if constructor == nil || constructor.Kind() != "primary_constructor" || constructor.Parent() == nil || constructor.Parent().Kind() != "class_declaration" {
+			return nil
+		}
+		declaration = node
+	case "property_declaration":
+		if node.Parent() == nil || node.Parent().Kind() != "class_body" {
+			return nil
+		}
+		declaration = kotlinNavigationPropertyDeclaration(node)
+	}
+	if declaration == nil {
+		return nil
+	}
+	names := defaultNavigationParameterNames(declaration, typeNode, content)
+	result := make([]navigationFieldName, 0, len(names))
+	for _, name := range names {
+		result = append(result, navigationFieldName{name: name})
+	}
+	return result
+}
+
+func kotlinNavigationPropertyDeclaration(node *syntaxNode) *syntaxNode {
+	for _, child := range node.NamedChildren() {
+		if child.Kind() == "variable_declaration" {
+			return child
+		}
+	}
+	return nil
+}
 func javaNavigationEntrypoint(context navigationEntrypointContext) string {
 	node := context.node
 	name := node.ChildByFieldName("name")
@@ -183,7 +242,7 @@ func javaNavigationSourceFacts(root *syntaxNode, content string, adapter *naviga
 	return imports, packageName, fields
 }
 
-func kotlinNavigationSourceFacts(root *syntaxNode, _ string, _ *navigationAdapterConfig) (map[string]navigationImport, string, map[string]map[string]navigationBinding) {
+func kotlinNavigationSourceFacts(root *syntaxNode, content string, adapter *navigationAdapterConfig) (map[string]navigationImport, string, map[string]map[string]navigationBinding) {
 	imports, packageName, fields := emptyNavigationSourceFacts()
 	for _, node := range root.NamedChildren() {
 		switch node.Kind() {
@@ -200,6 +259,7 @@ func kotlinNavigationSourceFacts(root *syntaxNode, _ string, _ *navigationAdapte
 			addJVMNavigationImport(imports, compactNavigationQualifiedName(strings.Join(parts, "")), alias, false, node.StartLine())
 		}
 	}
+	collectNavigationSourceFields(root, content, imports, fields, adapter)
 	return imports, packageName, fields
 }
 

@@ -120,18 +120,18 @@ func addNavigationContainerFields(fields map[string]map[string]navigationBinding
 	containerFields := make(map[string]navigationBinding)
 	ownerVisibility := adapter.Visibility(node, name, "")
 	node.WalkNamed(func(current *syntaxNode) {
-		addNavigationFieldBinding(containerFields, current, name, ownerVisibility, content, imports, adapter)
+		addNavigationFieldBinding(containerFields, current, node, name, ownerVisibility, content, imports, adapter)
 	})
 	if len(containerFields) > 0 {
 		fields[name] = containerFields
 	}
 }
 
-func addNavigationFieldBinding(fields map[string]navigationBinding, node *syntaxNode, owner string, ownerVisibility NavigationVisibility, content string, imports map[string]navigationImport, adapter navigationAdapter) {
-	if !adapter.IsFieldDeclaration(node.Kind()) {
+func addNavigationFieldBinding(fields map[string]navigationBinding, node, ownerNode *syntaxNode, owner string, ownerVisibility NavigationVisibility, content string, imports map[string]navigationImport, adapter navigationAdapter) {
+	if !adapter.IsFieldDeclaration(node.Kind()) || !navigationFieldOwnedBy(node, ownerNode, adapter) {
 		return
 	}
-	typeNode := node.ChildByFieldName("type")
+	typeNode := adapter.FieldType(node)
 	if typeNode == nil {
 		return
 	}
@@ -146,6 +146,15 @@ func addNavigationFieldBinding(fields map[string]navigationBinding, node *syntax
 		}
 		fields[field.name] = fieldBinding
 	}
+}
+
+func navigationFieldOwnedBy(node, owner *syntaxNode, adapter navigationAdapter) bool {
+	for parent := node.Parent(); parent != nil; parent = parent.Parent() {
+		if adapter.IsFieldContainer(parent.Kind()) {
+			return parent.ID() == owner.ID()
+		}
+	}
+	return false
 }
 
 func navigationFieldFacts(fields map[string]map[string]navigationBinding, language, path, packageName string) []NavigationField {

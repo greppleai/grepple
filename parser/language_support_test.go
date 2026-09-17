@@ -101,10 +101,10 @@ func TestNavigationFactCapabilitiesAreAdapterOwned(t *testing.T) {
 		"javascript": {Declarations: true, Calls: true, Imports: true, TypeReferences: true, MemberAccess: true},
 		"typescript": {Declarations: true, Calls: true, Imports: true, TypeReferences: true, Fields: true, MemberAccess: true},
 		"tsx":        {Declarations: true, Calls: true, Imports: true, TypeReferences: true, Fields: true, MemberAccess: true},
-		"python":     {Declarations: true, Calls: true, Imports: true, TypeReferences: true, MemberAccess: true},
+		"python":     {Declarations: true, Calls: true, Imports: true, TypeReferences: true, Fields: true, MemberAccess: true},
 		"java":       {Declarations: true, Calls: true, Imports: true, TypeReferences: true, Fields: true, MemberAccess: true, Entrypoints: true},
-		"kotlin":     {Declarations: true, Calls: true, Imports: true, TypeReferences: true, MemberAccess: true, Entrypoints: true},
-		"csharp":     {Declarations: true, Calls: true, Imports: true, TypeReferences: true, MemberAccess: true, Entrypoints: true},
+		"kotlin":     {Declarations: true, Calls: true, Imports: true, TypeReferences: true, Fields: true, MemberAccess: true, Entrypoints: true},
+		"csharp":     {Declarations: true, Calls: true, Imports: true, TypeReferences: true, Fields: true, MemberAccess: true, Entrypoints: true},
 		"c":          {Declarations: true, Calls: true, Imports: true, TypeReferences: true, Fields: true, MemberAccess: true, Entrypoints: true},
 		"cpp":        {Declarations: true, Calls: true, Imports: true, TypeReferences: true, Fields: true, MemberAccess: true, Entrypoints: true},
 		"rust":       {Declarations: true, Calls: true, Imports: true, TypeReferences: true, Fields: true, MemberAccess: true, Entrypoints: true},
@@ -126,10 +126,10 @@ func TestAdvertisedTypedFieldAndMemberFactsHaveRepresentativeEvidence(t *testing
 		{"javascript", "class Foo { state = 0; use(value) { return value.state; } }\n", true, false, true},
 		{"typescript", "class Foo { state: number = 0; use(value: Foo){ return value.state; } }\n", true, true, true},
 		{"tsx", "class Foo { state: number = 0; use(value: Foo){ return value.state; } }\n", true, true, true},
-		{"python", "class Foo:\n    state = 0\ndef use(value: Foo):\n    return value.state\n", true, false, true},
+		{"python", "class Foo:\n    state: int = 0\ndef use(value: Foo):\n    return value.state\n", true, true, true},
 		{"java", "class Foo { int state; int use(Foo value){ return value.state; } }\n", true, true, true},
-		{"kotlin", "class Foo(var state: Int)\nfun use(value: Foo): Int { return value.state }\n", true, false, true},
-		{"csharp", "class Foo { public int State; int Use(Foo value){ return value.State; } }\n", true, false, true},
+		{"kotlin", "class Foo(var state: Int)\nfun use(value: Foo): Int { return value.state }\n", true, true, true},
+		{"csharp", "class Foo { public int State; int Use(Foo value){ return value.State; } }\n", true, true, true},
 		{"c", "struct Foo { int state; };\nint use(struct Foo value){ return value.state; }\n", true, true, true},
 		{"cpp", "struct Foo { int state; };\nint use(Foo value){ return value.state; }\n", true, true, true},
 		{"rust", "struct Foo { state: i32 }\nfn use(value: Foo) -> i32 { value.state }\n", true, true, true},
@@ -148,6 +148,60 @@ func TestAdvertisedTypedFieldAndMemberFactsHaveRepresentativeEvidence(t *testing
 				t.Fatalf("member accesses=%v facts=%#v", got, graph.MemberAccesses)
 			}
 		})
+	}
+}
+
+func TestNavigationFieldsRemainClassOwned(t *testing.T) {
+	tests := []struct {
+		language, content string
+		want              map[string]string
+	}{
+		{
+			language: "python",
+			content:  "class Foo:\n    state: int\n    def method(self):\n        local: str\n",
+			want:     map[string]string{"state": "int"},
+		},
+		{
+			language: "kotlin",
+			content:  "class Foo(input: String, val state: Int) {\n  var other: String = \"\"\n  fun method() { val local: Long = 0 }\n}\n",
+			want:     map[string]string{"state": "Int", "other": "String"},
+		},
+		{
+			language: "csharp",
+			content:  "class Foo { int first, second; string Property { get; set; } void Method() { int local; } }\n",
+			want:     map[string]string{"first": "int", "second": "int", "Property": "string"},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.language, func(t *testing.T) {
+			graph := BuildNavigationGraph(test.content, test.language, "sample")
+			got := make(map[string]string, len(graph.Fields))
+			for _, field := range graph.Fields {
+				got[field.Name] = field.Type
+			}
+			if len(got) != len(test.want) {
+				t.Fatalf("fields=%#v", graph.Fields)
+			}
+			for name, fieldType := range test.want {
+				if got[name] != fieldType {
+					t.Fatalf("field %q=%q, want %q; facts=%#v", name, got[name], fieldType, graph.Fields)
+				}
+			}
+		})
+	}
+}
+
+func TestNestedNavigationFieldsRemainOnNearestOwner(t *testing.T) {
+	graph := BuildNavigationGraph("class Outer { int own; class Inner { string nested; } }\n", "csharp", "sample.cs")
+	owners := map[string]map[string]bool{}
+	for _, field := range graph.Fields {
+		if owners[field.OwnerType] == nil {
+			owners[field.OwnerType] = map[string]bool{}
+		}
+		owners[field.OwnerType][field.Name] = true
+	}
+	if !owners["Outer"]["own"] || owners["Outer"]["nested"] || !owners["Inner"]["nested"] {
+		t.Fatalf("fields=%#v", graph.Fields)
 	}
 }
 

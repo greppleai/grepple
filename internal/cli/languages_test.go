@@ -106,8 +106,9 @@ func TestLanguageCapabilityMatrixReportsNavigationFacts(t *testing.T) {
 		t.Fatalf("Java facts=%#v", java)
 	}
 	for _, id := range []string{"python", "kotlin", "csharp", "rust"} {
-		if facts := byLanguage[id].NavigationFacts; facts.TypeReferences != production {
-			t.Fatalf("%s type-reference facts=%#v", id, facts)
+		facts := byLanguage[id].NavigationFacts
+		if facts.TypeReferences != production || facts.Fields != production {
+			t.Fatalf("%s typed facts=%#v", id, facts)
 		}
 	}
 	shell := byLanguage["shell"].NavigationFacts
