@@ -29,12 +29,20 @@ const (
 
 const writeHelp = `Apply one validated, hash-anchored transaction across multiple files.
 Usage: grepple write [--root PATH] [--dry-run] [--json]
+       grepple write edit --path PATH --start HASH [--end HASH] [--content-file PATH|-] [OPTIONS]
 
-The request is one strict grepple-write-v1 JSON value on stdin. Existing files
-use anchored edits (operation defaults to edit):
+The default mode reads one strict grepple-write-v1 JSON value from stdin. Existing
+files use anchored edits (operation defaults to edit):
   {"path":"file.go","changes":[{"hash_range_inclusive":["START","END"],"content_lines":["replacement"]}]}
 
-Create and delete are explicit file operations:
+Literal edit mode avoids JSON escaping for one edit. Replacement text is read
+verbatim from stdin by default, or from --content-file PATH. One terminal newline
+separates lines but does not add a blank line. Empty input deletes the range.
+  grepple write edit --root . --path file.go --start START --end END <<'EOF'
+  literal replacement text
+  EOF
+
+Create and delete are explicit JSON file operations:
   {"path":"new.go","operation":"create","content_lines":["package sample",""]}
   {"path":"old.go","operation":"delete","before_sha256":"64-lowercase-hex-digest"}
 
@@ -111,10 +119,15 @@ type writeAnchor struct {
 }
 
 type writeOptions struct {
-	root   string
-	dryRun bool
-	json   bool
-	help   bool
+	root        string
+	dryRun      bool
+	json        bool
+	help        bool
+	literalEdit bool
+	path        string
+	start       string
+	end         string
+	contentFile string
 }
 
 type preparedWriteFile struct {
@@ -153,7 +166,13 @@ func runWrite(args []string) error {
 	if options.help {
 		return stdoutWriter().writeString(writeHelp)
 	}
-	request, failure := decodeWriteRequest(os.Stdin)
+	var request writeRequest
+	var failure *writeFailure
+	if options.literalEdit {
+		request, failure = decodeLiteralWriteRequest(options, os.Stdin)
+	} else {
+		request, failure = decodeWriteRequest(os.Stdin)
+	}
 	if failure != nil {
 		if err := emitWriteResponse(os.Stdout, failedWriteResponse(options.dryRun, failure), options.json); err != nil {
 			return err
@@ -175,26 +194,127 @@ func runWrite(args []string) error {
 }
 
 func parseWriteOptions(args []string) (writeOptions, error) {
-	options := writeOptions{root: "."}
+	options := writeOptions{root: ".", contentFile: "-"}
+	if len(args) > 0 && args[0] == "edit" {
+		options.literalEdit = true
+		args = args[1:]
+	}
 	for index := 0; index < len(args); index++ {
-		switch args[index] {
+		argument := args[index]
+		switch argument {
 		case "--help", "-h":
 			options.help = true
 		case "--json":
 			options.json = true
 		case "--dry-run":
 			options.dryRun = true
-		case "--root":
+		default:
+			if !writeOptionTakesValue(argument) {
+				return options, fmt.Errorf("unknown write option %q", argument)
+			}
 			if index+1 >= len(args) || strings.TrimSpace(args[index+1]) == "" {
-				return options, fmt.Errorf("--root requires a path")
+				return options, fmt.Errorf("%s requires a value", argument)
 			}
 			index++
-			options.root = args[index]
-		default:
-			return options, fmt.Errorf("unknown write option %q", args[index])
+			setWriteOptionValue(&options, argument, args[index])
 		}
 	}
+	return validateWriteOptions(options)
+}
+
+func writeOptionTakesValue(argument string) bool {
+	switch argument {
+	case "--root", "--path", "--start", "--end", "--content-file":
+		return true
+	default:
+		return false
+	}
+}
+
+func setWriteOptionValue(options *writeOptions, flag, value string) {
+	switch flag {
+	case "--root":
+		options.root = value
+	case "--path":
+		options.path = value
+	case "--start":
+		options.start = value
+	case "--end":
+		options.end = value
+	case "--content-file":
+		options.contentFile = value
+	}
+}
+
+func validateWriteOptions(options writeOptions) (writeOptions, error) {
+	if options.help {
+		return options, nil
+	}
+	if !options.literalEdit && (options.path != "" || options.start != "" || options.end != "" || options.contentFile != "-") {
+		return options, fmt.Errorf("--path, --start, --end, and --content-file require 'grepple write edit'")
+	}
+	if !options.literalEdit {
+		return options, nil
+	}
+	if options.path == "" {
+		return options, fmt.Errorf("write edit requires --path")
+	}
+	if options.start == "" {
+		return options, fmt.Errorf("write edit requires --start")
+	}
+	if options.end == "" {
+		options.end = options.start
+	}
 	return options, nil
+}
+
+func decodeLiteralWriteRequest(options writeOptions, stdin io.Reader) (writeRequest, *writeFailure) {
+	reader := stdin
+	var contentFile *os.File
+	if options.contentFile != "-" {
+		file, err := os.Open(options.contentFile)
+		if err != nil {
+			return writeRequest{}, newWriteFailure("invalid_request", fmt.Sprintf("open literal content: %v", err), options.path, nil)
+		}
+		contentFile = file
+		reader = file
+		defer contentFile.Close()
+	}
+	content, err := io.ReadAll(io.LimitReader(reader, maxWriteFileBytes+1))
+	if err != nil {
+		return writeRequest{}, newWriteFailure("invalid_request", fmt.Sprintf("read literal content: %v", err), options.path, nil)
+	}
+	if len(content) > maxWriteFileBytes {
+		return writeRequest{}, newWriteFailure("file_too_large", fmt.Sprintf("literal content exceeds %d bytes", maxWriteFileBytes), options.path, nil)
+	}
+	lines, err := literalWriteLines(content)
+	if err != nil {
+		return writeRequest{}, newWriteFailure("invalid_content", err.Error(), options.path, intPointer(0))
+	}
+	if failure := validateWriteContentLines(options.path, intPointer(0), lines); failure != nil {
+		return writeRequest{}, failure
+	}
+	return writeRequest{Schema: writeSchema, Files: []writeRequestFile{{
+		Path: options.path,
+		Changes: []writeChange{{
+			HashRangeInclusive: []string{options.start, options.end},
+			ContentLines:       lines,
+		}},
+	}}}, nil
+}
+
+func literalWriteLines(content []byte) ([]string, error) {
+	if len(content) == 0 {
+		return []string{}, nil
+	}
+	lines, _, err := writeLogicalLines(content)
+	if err != nil {
+		return nil, err
+	}
+	if content[len(content)-1] == '\n' {
+		lines = lines[:len(lines)-1]
+	}
+	return lines, nil
 }
 
 func decodeWriteRequest(reader io.Reader) (writeRequest, *writeFailure) {

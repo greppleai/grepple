@@ -295,6 +295,67 @@ func TestDecodeWriteRequestIsStrictAndBounded(t *testing.T) {
 	}
 }
 
+func TestLiteralWriteLinesTreatsTerminalNewlineAsSeparator(t *testing.T) {
+	tests := []struct {
+		name    string
+		content string
+		want    []string
+	}{
+		{name: "empty deletes", want: []string{}},
+		{name: "one line", content: "literal", want: []string{"literal"}},
+		{name: "terminal newline", content: "literal\n", want: []string{"literal"}},
+		{name: "intentional blank line", content: "literal\n\n", want: []string{"literal", ""}},
+		{name: "crlf", content: "first\r\nsecond\r\n", want: []string{"first", "second"}},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			got, err := literalWriteLines([]byte(test.content))
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !reflect.DeepEqual(got, test.want) {
+				t.Fatalf("lines=%#v want=%#v", got, test.want)
+			}
+		})
+	}
+	if _, err := literalWriteLines([]byte("first\rsecond")); err == nil {
+		t.Fatal("bare carriage return succeeded")
+	}
+}
+
+func TestWriteEditReadsLiteralContentFromStdin(t *testing.T) {
+	root := t.TempDir()
+	path := filepath.Join(root, "file.kt")
+	before := "before\n"
+	replacement := `val payload = """{"labels":["owner"]}"""` + "\n"
+	writeTestFile(t, path, before, 0o600)
+	hash := hashline.Lines(before)[0]
+	withStdin(t, replacement, func() {
+		captureStdout(t, func() {
+			if err := Run([]string{"write", "edit", "--root", root, "--path", "file.kt", "--start", hash}); err != nil {
+				t.Fatal(err)
+			}
+		})
+	})
+	assertWriteFile(t, path, replacement, 0o600)
+}
+
+func TestWriteEditReadsLiteralContentFile(t *testing.T) {
+	root := t.TempDir()
+	target := filepath.Join(root, "file.txt")
+	payload := filepath.Join(t.TempDir(), "replacement.txt")
+	before := "before\n"
+	writeTestFile(t, target, before, 0o640)
+	writeTestFile(t, payload, "first\nsecond\n", 0o600)
+	hash := hashline.Lines(before)[0]
+	captureStdout(t, func() {
+		if err := Run([]string{"write", "edit", "--root", root, "--path", "file.txt", "--start", hash, "--end", hash, "--content-file", payload}); err != nil {
+			t.Fatal(err)
+		}
+	})
+	assertWriteFile(t, target, "first\nsecond\n", 0o640)
+}
+
 func TestNativeAnchorLookupUsesBuiltInHashline(t *testing.T) {
 	content := "alpha\nbeta\n"
 	request := anchorProtocolRequest{ProtocolVersion: anchorProtocolVersion, Files: []anchorProtocolRequestFile{{Path: "/tmp/source", Content: content, Lines: []int{1, 2, 3}}}}
@@ -406,13 +467,28 @@ func TestWriteCommandDefaultsToEditReadyHumanOutput(t *testing.T) {
 	}
 }
 
+func TestParseWriteEditOptions(t *testing.T) {
+	options, err := parseWriteOptions([]string{"edit", "--path", "file.kt", "--start", "Ab3"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !options.literalEdit || options.path != "file.kt" || options.start != "Ab3" || options.end != "Ab3" || options.contentFile != "-" {
+		t.Fatalf("options=%+v", options)
+	}
+	for _, args := range [][]string{{"edit", "--start", "Ab3"}, {"edit", "--path", "file.kt"}, {"--path", "file.kt"}} {
+		if _, err := parseWriteOptions(args); err == nil {
+			t.Fatalf("args %v succeeded", args)
+		}
+	}
+}
+
 func TestWriteHelpDocumentsTransactionalInput(t *testing.T) {
 	output := captureStdout(t, func() {
 		if err := Run([]string{"help", "write"}); err != nil {
 			t.Fatal(err)
 		}
 	})
-	for _, expected := range []string{"Usage: grepple write", "grepple-write-v1", "hash_range_inclusive", "operation", "before_sha256", "--dry-run", "--json", "HASH│LINE│content"} {
+	for _, expected := range []string{"Usage: grepple write", "grepple write edit", "--content-file", "grepple-write-v1", "hash_range_inclusive", "operation", "before_sha256", "--dry-run", "--json", "HASH│LINE│content"} {
 		if !strings.Contains(output, expected) {
 			t.Fatalf("write help missing %q:\n%s", expected, output)
 		}

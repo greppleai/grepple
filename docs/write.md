@@ -36,6 +36,20 @@ JSON
 
 Ranges are inclusive and always refer to the original file snapshot. `content_lines: []` deletes a range. To insert around an existing line, replace that line with the original line plus the inserted lines. Multiple changes in one file may be supplied in any order but cannot overlap.
 
+## Literal single-edit input
+
+For one edit, avoid JSON and shell escaping by reading the replacement as literal text:
+
+```sh
+grepple write edit --root . --path path/to/file.kt --start abc --end def <<'EOF'
+val payload = """{"labels":["owner"]}"""
+EOF
+```
+
+`--end` defaults to the `--start` anchor for a one-line replacement. Use `--content-file PATH` to read the replacement from a file, or `--content-file -` (the default) to read stdin. One terminal LF or CRLF terminates the final replacement line and does not create an extra blank line; use two terminal newlines to retain one blank line. Empty input deletes the anchored range.
+
+Literal mode builds the same in-memory `grepple-write-v1` edit and uses the same confinement, stale-anchor, size, newline, transactional installation, output, and dry-run behavior. Use the JSON mode above when multiple edits or files must be committed atomically.
+
 A successful human response returns the resulting edit-ready rows:
 
 ```text
