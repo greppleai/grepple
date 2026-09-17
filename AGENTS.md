@@ -30,6 +30,18 @@ Architecture orientation is generated dynamically across supported languages:
 
 Do not infer package semantics from directory ownership. Use `--production-only` only for explicitly production-scoped questions; retain full-universe evidence otherwise. `make schema-generate` and `make schema-check` validate generated parser metadata; architecture views do not require committed package/workspace bundles.
 
+## Agent tool policy
+
+Always use Grepple for repository operations:
+
+- Use Grepple search, `--at`, `--outline`, graph, architecture, and related commands for discovery, navigation, and source retrieval. Do not use generic filesystem or text-search tools when Grepple can answer the question.
+- Use `grepple ask` for delegated, source-backed repository research.
+- Use `grepple write` for source and documentation changes, including anchored JSON transactions or literal edit input.
+- Treat generic `read`, `edit`, and `write` tools as fallbacks only when Grepple is unavailable or cannot represent the required operation.
+- The `read` tool may be used directly to load skill instructions and files referenced by those skills.
+
+When a fallback is necessary, keep it narrowly scoped and return to the Grepple workflow afterward.
+
 ## Validation
 
 Format Go code with `gofmt` and run `make test` before finishing.
