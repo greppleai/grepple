@@ -3,10 +3,12 @@
 This directory is a small Go module containing project-local Pi hook orchestration.
 Mermaid analysis is imported from the main module's `extract` package so CLI focused generation, checks, and automatic Stop validation share one implementation.
 
+The PostToolUse context guard records SHA-256 digests—not source bodies—for human-readable Grepple output blocks and successful Pi `Read` results in `~/.grepple/context-guard/<session-id>.json`. When the same unchanged block would be returned again in that Pi session, the hook replaces it with an explicit already-in-context notice. Grepple JSON, spilled-output descriptors, images, and unsupported response shapes fail open unchanged. PostCompact clears that session's cache; SessionStart also clears contexts started from Pi's `clear`, `compact`, or `fork` lifecycle sources. Cache corruption, lock contention, and filesystem failures never suppress tool output.
+
 ## Layout
 
 - `cmd/pi-hook` — command-hook protocol entry point.
-- `internal/pihooks` — grep guard, lint orchestration, feedback, schema discovery, and adapters.
+- `internal/pihooks` — grep guard, context deduplication, lint orchestration, feedback, schema discovery, and adapters.
 - `../extract` — shared Tree-sitter Mermaid generation and validation engine.
 - `guides` — remediation text returned by the Stop hook.
 

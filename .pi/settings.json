@@ -13,6 +13,44 @@
         ]
       }
     ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash|Read",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh",
+            "args": ["-c", "if [ -d hooks ]; then hook_dir=hooks; else hook_dir=grepple/hooks; fi; make --no-print-directory -C \"$hook_dir\" run-context-guard"],
+            "timeout": 30,
+            "statusMessage": "Deduplicating Grepple context"
+          }
+        ]
+      }
+    ],
+    "PostCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh",
+            "args": ["-c", "if [ -d hooks ]; then hook_dir=hooks; else hook_dir=grepple/hooks; fi; make --no-print-directory -C \"$hook_dir\" run-context-invalidate"],
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh",
+            "args": ["-c", "if [ -d hooks ]; then hook_dir=hooks; else hook_dir=grepple/hooks; fi; make --no-print-directory -C \"$hook_dir\" run-context-invalidate"],
+            "timeout": 30
+          }
+        ]
+      }
+    ],
     "Stop": [
       {
         "hooks": [

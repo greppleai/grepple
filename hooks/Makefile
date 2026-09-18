@@ -5,7 +5,7 @@ PI_HOOK_SOURCES := $(shell find cmd/pi-hook internal/pihooks -type f -name '*.go
 LDFLAGS ?= -s -w
 REVIVE_CONFIG ?= ../revive.toml
 
-.PHONY: build test lint clean run-grep-guard run-lint-check
+.PHONY: build test lint clean run-grep-guard run-context-guard run-context-invalidate run-lint-check
 
 build: $(PI_HOOK_BINARY)
 
@@ -23,6 +23,12 @@ lint:
 
 run-grep-guard: $(PI_HOOK_BINARY)
 	@./$(PI_HOOK_BINARY) grep-guard
+
+run-context-guard: $(PI_HOOK_BINARY)
+	@./$(PI_HOOK_BINARY) context-guard
+
+run-context-invalidate: $(PI_HOOK_BINARY)
+	@./$(PI_HOOK_BINARY) context-invalidate
 
 run-lint-check: $(PI_HOOK_BINARY)
 	@./$(PI_HOOK_BINARY) lint-check
