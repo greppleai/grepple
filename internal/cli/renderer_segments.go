@@ -49,7 +49,7 @@ func (renderer segmentRenderer) renderFile(result api.FileResult) error {
 				return err
 			}
 		}
-		if err := renderer.renderSegment(resultSourceIdentity(result), result.Path, nil, segment, width, ""); err != nil {
+		if err := renderer.renderSegment(resultSourceIdentity(result), result.Path, nil, segment, width, "", ""); err != nil {
 			return err
 		}
 		cursor = segment.End + 1
@@ -229,14 +229,14 @@ func (renderer segmentRenderer) renderRelatedSegments(path string, artifact *api
 	indent := strings.Repeat("  ", depth)
 	width := segmentLineWidth(segments)
 	for _, segment := range segments {
-		if err := renderer.renderSegment(path, path, artifact, segment, width, indent); err != nil {
+		if err := renderer.renderSegment(path, path, artifact, segment, width, indent, ""); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (renderer segmentRenderer) renderSegment(source, path string, artifact *api.NavigationArtifactIdentity, segment api.ResultSegment, width int, prefix string) error {
+func (renderer segmentRenderer) renderSegment(source, path string, artifact *api.NavigationArtifactIdentity, segment api.ResultSegment, width int, prefix, contextLabel string) error {
 	if segment.Kind == "spacing" {
 		return renderer.output.writeString(strings.Repeat("\n", segment.End-segment.Start+1))
 	}
@@ -244,7 +244,7 @@ func (renderer segmentRenderer) renderSegment(source, path string, artifact *api
 		return renderer.output.writeString(fmt.Sprintf("%s%*d   %s\n", prefix, width, segment.Start, segment.Text))
 	}
 	if renderer.contextGuard.seen(source, artifact, segment) {
-		marker := prefix + segmentContextMarker(source, segment)
+		marker := prefix + segmentContextMarker(source, segment, contextLabel)
 		renderer.contextGuard.recordMarker(len(marker))
 		return renderer.output.writeString(marker)
 	}

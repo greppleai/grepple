@@ -176,7 +176,10 @@ func structuralSegmentIdentity(source string, artifact *api.NavigationArtifactId
 	return "sha256:" + hex.EncodeToString(identityDigest[:]), "sha256:" + sourceDigest, len(segment.Text)
 }
 
-func segmentContextMarker(source string, segment api.ResultSegment) string {
+func segmentContextMarker(source string, segment api.ResultSegment, contextLabel string) string {
+	if contextLabel != "" {
+		return fmt.Sprintf("// … unchanged %s already emitted at %s:%d-%d (%d source bytes) …\n", contextLabel, source, segment.Start, segment.End, len(segment.Text))
+	}
 	return fmt.Sprintf("// … unchanged segment already emitted: %s:%d-%d (%d source bytes) …\n", source, segment.Start, segment.End, len(segment.Text))
 }
 

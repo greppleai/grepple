@@ -3,6 +3,7 @@ package cli
 import (
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/greppleai/grepple/api"
 )
@@ -12,6 +13,7 @@ type relatedTypeDefinition struct {
 	artifact   *api.NavigationArtifactIdentity
 	start, end int
 	segments   []api.ResultSegment
+	roles      []string
 }
 
 func collectRelatedTypeDefinitions(results []api.FileResult) []relatedTypeDefinition {
@@ -57,12 +59,15 @@ func collectRelatedTypePoints(points []api.RelatedSymbol, definitions map[string
 				artifactKey = point.Artifact.Digest
 			}
 			key := fmt.Sprintf("%s\x00%s\x00%d\x00%d", artifactKey, point.Path, point.Start, point.End)
-			if _, exists := definitions[key]; !exists {
-				definitions[key] = relatedTypeDefinition{
+			definition, exists := definitions[key]
+			if !exists {
+				definition = relatedTypeDefinition{
 					name: point.Name, path: point.Path, artifact: point.Artifact, start: point.Start, end: point.End,
 					segments: append([]api.ResultSegment(nil), point.Segments...),
 				}
 			}
+			definition.roles = appendUniqueRelatedTypeRole(definition.roles, point.Role)
+			definitions[key] = definition
 		}
 		collectRelatedTypePoints(point.Related, definitions)
 	}
@@ -87,10 +92,36 @@ func (renderer segmentRenderer) renderRelatedTypeDefinitions(definitions []relat
 		}
 		width := segmentLineWidth(definition.segments)
 		for _, segment := range definition.segments {
-			if err := renderer.renderSegment(definition.path, path, definition.artifact, segment, width, ""); err != nil {
+			if err := renderer.renderSegment(definition.path, path, definition.artifact, segment, width, "", relatedTypeContextLabel(definition)); err != nil {
 				return err
 			}
 		}
 	}
 	return nil
+}
+
+func appendUniqueRelatedTypeRole(roles []string, role string) []string {
+	role = strings.TrimSpace(role)
+	if role == "" {
+		return roles
+	}
+	for _, existing := range roles {
+		if existing == role {
+			return roles
+		}
+	}
+	return append(roles, role)
+}
+
+func relatedTypeContextLabel(definition relatedTypeDefinition) string {
+	roles := append([]string(nil), definition.roles...)
+	sort.Strings(roles)
+	qualifier := ""
+	if definition.artifact != nil {
+		qualifier = "remote "
+	}
+	if len(roles) == 0 {
+		return qualifier + "type " + definition.name
+	}
+	return qualifier + strings.Join(roles, "/") + " type " + definition.name
 }

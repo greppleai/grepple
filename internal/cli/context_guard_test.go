@@ -62,11 +62,26 @@ func TestSegmentContextGuardOmitsExactExternalTypeBody(t *testing.T) {
 		t.Fatalf("external type missing: %q", first)
 	}
 	second := renderWithSegmentGuard(t, result)
-	if strings.Contains(second, "export interface Client") || !strings.Contains(second, "unchanged segment already emitted: src/client.ts:20-22") {
+	if strings.Contains(second, "export interface Client") || !strings.Contains(second, "unchanged remote parameter type Client already emitted at src/client.ts:20-22") {
 		t.Fatalf("external type body was not omitted: %q", second)
 	}
 	if !strings.Contains(second, "acme/client@tag~v1.0.0:src/client.ts:20-22") {
 		t.Fatalf("external provenance was lost: %q", second)
+	}
+}
+
+func TestRelatedTypeContextLabelPreservesAllRoles(t *testing.T) {
+	artifact := &api.NavigationArtifactIdentity{Digest: "artifact-one"}
+	segment := api.ResultSegment{Kind: "lines", Start: 1, End: 1, Text: "type Client struct{}"}
+	definitions := collectRelatedTypeDefinitions([]api.FileResult{{Related: []api.RelatedSymbol{
+		{Name: "Client", Path: "client.go", Direction: "type", Role: "result", Start: 1, End: 1, Artifact: artifact, Segments: []api.ResultSegment{segment}},
+		{Name: "Client", Path: "client.go", Direction: "type", Role: "parameter", Start: 1, End: 1, Artifact: artifact, Segments: []api.ResultSegment{segment}},
+	}}})
+	if len(definitions) != 1 {
+		t.Fatalf("got %d definitions", len(definitions))
+	}
+	if label := relatedTypeContextLabel(definitions[0]); label != "remote parameter/result type Client" {
+		t.Fatalf("unexpected label %q", label)
 	}
 }
 
