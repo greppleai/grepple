@@ -144,12 +144,51 @@ func TestContextGuardIsDisabledForPotentiallySpilledResult(t *testing.T) {
 	defer func() { activeInlineOutputThreshold = previous }()
 	options := &cliOptions{JSON: "off"}
 	results := []api.FileResult{{Path: "large.go", Segments: []api.ResultSegment{{Kind: "lines", Start: 1, End: 1, Text: "type Large struct{}"}}}}
-	if guard := contextGuardForResults(options, results); guard != nil {
-		guard.close()
-		t.Fatal("potentially spilled result enabled context guard")
+	guard := contextGuardForResults(options, results)
+	if guard == nil || guard.deduplicate || guard.bypassReason != "potential-spill" {
+		t.Fatalf("potential spill was not tracked as a bypass: %#v", guard)
 	}
+	guard.close()
 	if _, err := os.Stat(filepath.Join(directory, "cache.json")); !os.IsNotExist(err) {
 		t.Fatalf("spill preflight created cache: %v", err)
+	}
+	stats := readRenderedContextStats(filepath.Join(directory, "stats-0.json"), 0)
+	if stats.ObservedCalls != 1 || stats.PotentialSpillCalls != 1 || stats.DeduplicationEnabledCalls != 0 {
+		t.Fatalf("potential spill call was not recorded: %#v", stats)
+	}
+}
+
+func TestContextGuardRecordsNonStructuralSearchCalls(t *testing.T) {
+	directory := t.TempDir()
+	t.Setenv("GREPPLE_CONTEXT_GUARD_DIR", directory)
+	previous := activeInlineOutputThreshold
+	activeInlineOutputThreshold = 1024
+	defer func() { activeInlineOutputThreshold = previous }()
+	guard := contextGuardForResults(&cliOptions{JSON: "off", LineOnly: true}, []api.FileResult{{Path: "one.go"}, {Path: "two.go"}})
+	if guard == nil || guard.deduplicate || guard.bypassReason != "non-structural" {
+		t.Fatalf("non-structural call was not tracked: %#v", guard)
+	}
+	guard.returnedBytes = 321
+	guard.close()
+	stats := readRenderedContextStats(filepath.Join(directory, "stats-0.json"), 0)
+	if stats.ObservedCalls != 1 || stats.NonStructuralCalls != 1 || stats.ResultFiles != 2 || stats.ReturnedBytes != 321 {
+		t.Fatalf("non-structural call was not recorded: %#v", stats)
+	}
+}
+
+func TestContextStatsSurviveCacheWriteFailure(t *testing.T) {
+	directory := t.TempDir()
+	t.Setenv("GREPPLE_CONTEXT_GUARD_DIR", directory)
+	guard, err := openSegmentContextGuard()
+	if err != nil {
+		t.Fatal(err)
+	}
+	guard.observed = true
+	guard.cachePath = t.TempDir() // Renaming a cache file over this directory must fail.
+	guard.close()
+	stats := readRenderedContextStats(filepath.Join(directory, "stats-0.json"), 0)
+	if stats.ObservedCalls != 1 || stats.DeduplicationEnabledCalls != 1 {
+		t.Fatalf("cache failure prevented statistics: %#v", stats)
 	}
 }
 

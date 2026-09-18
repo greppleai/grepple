@@ -17,7 +17,7 @@ import (
 
 const (
 	contextGuardSchema      = "grepple-context-segments-v1"
-	contextGuardStatsSchema = "grepple-context-segment-stats-v1"
+	contextGuardStatsSchema = "grepple-context-segment-stats-v2"
 	contextGuardMaxEntries  = 50_000
 	contextGuardMaxFileSize = 16 << 20
 	contextGuardLockTimeout = 2 * time.Second
@@ -34,18 +34,23 @@ type renderedContextEntry struct {
 }
 
 type renderedContextStats struct {
-	Schema             string  `json:"schema"`
-	Period             int     `json:"period"`
-	ResetReason        string  `json:"resetReason"`
-	CreatedAt          string  `json:"createdAt"`
-	UpdatedAt          string  `json:"updatedAt"`
-	ObservedCalls      int     `json:"observedCalls"`
-	EmittedSegments    int     `json:"emittedSegments"`
-	RemovedSegments    int     `json:"removedSegments"`
-	EmittedSourceBytes int64   `json:"emittedSourceBytes"`
-	GrossRemovedBytes  int64   `json:"grossRemovedBytes"`
-	NetSavedBytes      int64   `json:"netSavedBytes"`
-	NetSavingsPercent  float64 `json:"netSavingsPercent"`
+	Schema                    string  `json:"schema"`
+	Period                    int     `json:"period"`
+	ResetReason               string  `json:"resetReason"`
+	CreatedAt                 string  `json:"createdAt"`
+	UpdatedAt                 string  `json:"updatedAt"`
+	ObservedCalls             int     `json:"observedCalls"`
+	DeduplicationEnabledCalls int     `json:"deduplicationEnabledCalls"`
+	NonStructuralCalls        int     `json:"nonStructuralCalls"`
+	PotentialSpillCalls       int     `json:"potentialSpillCalls"`
+	ResultFiles               int     `json:"resultFiles"`
+	ReturnedBytes             int64   `json:"returnedBytes"`
+	EmittedSegments           int     `json:"emittedSegments"`
+	RemovedSegments           int     `json:"removedSegments"`
+	EmittedSourceBytes        int64   `json:"emittedSourceBytes"`
+	GrossRemovedBytes         int64   `json:"grossRemovedBytes"`
+	NetSavedBytes             int64   `json:"netSavedBytes"`
+	NetSavingsPercent         float64 `json:"netSavingsPercent"`
 }
 
 type segmentContextGuard struct {
@@ -54,6 +59,10 @@ type segmentContextGuard struct {
 	cache           renderedContextCache
 	release         func()
 	observed        bool
+	deduplicate     bool
+	bypassReason    string
+	resultFiles     int
+	returnedBytes   int
 	emittedSegments int
 	removedSegments int
 	emittedBytes    int
@@ -107,7 +116,7 @@ func openSegmentContextGuard() (*segmentContextGuard, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &segmentContextGuard{directory: directory, cachePath: cachePath, cache: readRenderedContextCache(cachePath), release: release}, nil
+	return &segmentContextGuard{directory: directory, cachePath: cachePath, cache: readRenderedContextCache(cachePath), release: release, deduplicate: true}, nil
 }
 
 func (guard *segmentContextGuard) close() {
@@ -118,14 +127,14 @@ func (guard *segmentContextGuard) close() {
 	if !guard.observed {
 		return
 	}
-	if writeRenderedContextJSON(guard.cachePath, guard.cache) != nil {
-		return
+	if guard.deduplicate {
+		_ = writeRenderedContextJSON(guard.cachePath, guard.cache)
 	}
 	_ = updateRenderedContextStats(guard)
 }
 
 func (guard *segmentContextGuard) seen(source string, artifact *api.NavigationArtifactIdentity, segment api.ResultSegment) bool {
-	if guard == nil || !completeStructuralSegment(segment) {
+	if guard == nil || !guard.deduplicate || !completeStructuralSegment(segment) {
 		return false
 	}
 	guard.observed = true
@@ -139,7 +148,7 @@ func (guard *segmentContextGuard) seen(source string, artifact *api.NavigationAr
 }
 
 func (guard *segmentContextGuard) record(source string, artifact *api.NavigationArtifactIdentity, segment api.ResultSegment) {
-	if guard == nil || !completeStructuralSegment(segment) {
+	if guard == nil || !guard.deduplicate || !completeStructuralSegment(segment) {
 		return
 	}
 	guard.observed = true
@@ -220,6 +229,15 @@ func updateRenderedContextStats(guard *segmentContextGuard) error {
 	}
 	stats.UpdatedAt = now
 	stats.ObservedCalls++
+	stats.ResultFiles += guard.resultFiles
+	stats.ReturnedBytes += int64(guard.returnedBytes)
+	if guard.deduplicate {
+		stats.DeduplicationEnabledCalls++
+	} else if guard.bypassReason == "potential-spill" {
+		stats.PotentialSpillCalls++
+	} else {
+		stats.NonStructuralCalls++
+	}
 	stats.EmittedSegments += guard.emittedSegments
 	stats.RemovedSegments += guard.removedSegments
 	stats.EmittedSourceBytes += int64(guard.emittedBytes)
@@ -289,9 +307,10 @@ func readRenderedContextStats(path string, period int) renderedContextStats {
 		return fresh
 	}
 	var restored renderedContextStats
-	if json.Unmarshal(content, &restored) != nil || restored.Schema != contextGuardStatsSchema || restored.Period != period {
+	if json.Unmarshal(content, &restored) != nil || (restored.Schema != contextGuardStatsSchema && restored.Schema != "grepple-context-segment-stats-v1") || restored.Period != period {
 		return fresh
 	}
+	restored.Schema = contextGuardStatsSchema
 	return restored
 }
 

@@ -40,8 +40,14 @@ func outputForOptions(options *cliOptions) *outputWriter {
 
 func renderResults(options *cliOptions, results []api.FileResult) error {
 	guard := contextGuardForResults(options, results)
-	defer guard.close()
-	renderer := newResultRenderer(options, outputForOptions(options), guard)
+	output := outputForOptions(options)
+	defer func() {
+		if guard != nil {
+			guard.returnedBytes = output.written
+		}
+		guard.close()
+	}()
+	renderer := newResultRenderer(options, output, guard)
 	if err := renderer.Render(results); err != nil && !errors.Is(err, errOutputTruncated) {
 		return err
 	}
@@ -49,25 +55,35 @@ func renderResults(options *cliOptions, results []api.FileResult) error {
 }
 
 func contextGuardForResults(options *cliOptions, results []api.FileResult) *segmentContextGuard {
-	if !segmentOutputMode(options) || activeInlineOutputThreshold < 1 {
+	if activeInlineOutputThreshold < 1 {
 		return nil
+	}
+	guard, err := openSegmentContextGuard()
+	if err != nil {
+		return nil
+	}
+	guard.observed = true
+	guard.resultFiles = len(results)
+	if !segmentOutputMode(options) {
+		guard.deduplicate = false
+		guard.bypassReason = "non-structural"
+		return guard
 	}
 	var rendered bytes.Buffer
 	output := newOutputWriter(&rendered)
 	if options.MaxOutputBytes > 0 {
 		output = newBoundedOutputWriter(&rendered, options.MaxOutputBytes)
 	}
-	err := newResultRenderer(options, output, nil).Render(results)
+	err = newResultRenderer(options, output, nil).Render(results)
 	if err != nil && !errors.Is(err, errOutputTruncated) {
-		return nil
+		guard.deduplicate = false
+		guard.bypassReason = "render-error"
+		return guard
 	}
 	headroom := completeResultSegmentCount(results) * 128
 	if rendered.Len()+headroom > activeInlineOutputThreshold {
-		return nil
-	}
-	guard, err := openSegmentContextGuard()
-	if err != nil {
-		return nil
+		guard.deduplicate = false
+		guard.bypassReason = "potential-spill"
 	}
 	return guard
 }
