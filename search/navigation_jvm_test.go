@@ -96,6 +96,36 @@ func TestKotlinImportsResolveAliasesAndTopLevelFunctions(t *testing.T) {
 	assertJVMResolvedCall(t, graph.Calls, service, "value.work")
 }
 
+func TestKotlinGenericImportedParameterTypeResolvesReceiverCall(t *testing.T) {
+	root := t.TempDir()
+	service := filepath.Join(root, "app", "Service.kt")
+	box := filepath.Join(root, "lib", "api", "Box.kt")
+	paths := writeJVMNavigationFiles(t, map[string]string{
+		service: "package app\nimport lib.api.Box\nclass Service { fun use(value: Box<String>) { value.load() } }\n",
+		box:     "package lib.api\nclass Box<T> { fun load() {} }\n",
+	})
+	graph, _ := BuildNavigationGraphWithOptions(paths, NavigationBuildOptions{DisableCache: true})
+	assertJVMImportTarget(t, graph.Imports, "Box", box)
+	assertJVMResolvedCallTargetPath(t, graph, service, "value.load", box)
+}
+
+func TestKotlinOverloadLikeTargetsRemainAmbiguous(t *testing.T) {
+	root := t.TempDir()
+	service := filepath.Join(root, "app", "Service.kt")
+	helper := filepath.Join(root, "lib", "api", "Helper.kt")
+	paths := writeJVMNavigationFiles(t, map[string]string{
+		service: "package app\nimport lib.api.Helper\nclass Service { fun use(value: Helper) { value.work(1) } }\n",
+		helper:  "package lib.api\nclass Helper {\n    fun work(value: Int) {}\n    fun work(value: String) {}\n}\n",
+	})
+	graph, _ := BuildNavigationGraphWithOptions(paths, NavigationBuildOptions{DisableCache: true})
+	for _, call := range graph.Calls {
+		if call.Path == service && call.Display == "value.work" && call.TargetID == "" && len(call.CandidateTargetIDs) == 2 && call.Confidence == "candidate" {
+			return
+		}
+	}
+	t.Fatalf("Kotlin overload-like call was not preserved as ambiguous: %#v", graph.Calls)
+}
+
 func TestJVMImportsPreserveDuplicateQualifiedTargetsAsAmbiguous(t *testing.T) {
 	root := t.TempDir()
 	caller := filepath.Join(root, "app", "Service.java")

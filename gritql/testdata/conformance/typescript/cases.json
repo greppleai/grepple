@@ -46,5 +46,23 @@
     "path": "src/view.tsx",
     "source": "const view = <Button value={item} />;\n",
     "findings": ["<Button value={item} />"]
+  },
+  {
+    "name": "typescript-malformed-source",
+    "language": "typescript",
+    "query": "language typescript\n`target($value)`",
+    "path": "src/broken.ts",
+    "source": "function broken(\n",
+    "findings": [],
+    "diagnostics": ["SOURCE_PARSE"]
+  },
+  {
+    "name": "tsx-malformed-source",
+    "language": "tsx",
+    "query": "language tsx\n`<Button value={$value} />`",
+    "path": "src/broken.tsx",
+    "source": "const view = <Button\n",
+    "findings": [],
+    "diagnostics": ["SOURCE_PARSE"]
   }
 ]

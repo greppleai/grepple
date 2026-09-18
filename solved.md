@@ -174,6 +174,7 @@ This file records completed Grepple roadmap work that no longer belongs in `next
 - [x] Added parity tests proving advertised combinations work and unsupported combinations fail explicitly.
 - [x] Added JavaScript/JSX, Python, Java, Kotlin, and C# focused architecture adapters on the shared parser/navigation infrastructure.
 - [x] Added native GritQL support for every Tree-sitter-backed language in the capability registry.
+- [x] Made target-language GritQL conformance fixtures diagnostics-aware and added explicit malformed-source `SOURCE_PARSE` cases for JavaScript, TypeScript, TSX, Python, C, C++, C#, Java, Kotlin, Rust, and Shell alongside existing Go scanner/integration coverage.
 - [x] Added conservative Rust process-entrypoint facts for top-level `main` functions in selected binary crate roots without treating library or nested-module functions as entrypoints.
 - [x] Added conservative Java, Kotlin, and C# process-entrypoint facts for syntax-evidenced conventional signatures while leaving project-selected, script, top-level-statement, renamed, and type-inference-dependent startup behavior unclassified.
 - [x] Published adapter-owned navigation-fact capabilities for declarations, calls, imports, type references, fields, member access, and process entrypoints in human, JSON, and generated Markdown output, with tests and explicit unsupported-versus-ambiguous/unresolved semantics.
@@ -181,7 +182,7 @@ This file records completed Grepple roadmap work that no longer belongs in `next
 - [x] Added conservative field facts for directly annotated Python class assignments, explicitly typed Kotlin constructor/class-body properties, and explicitly typed C# fields/properties; nested fields remain attached to their nearest owner and local variables are excluded.
 - [x] Kept JavaScript normalized field facts explicitly unsupported because JavaScript class-field syntax has no type annotation; initializer and JSDoc inference remain outside the conservative evidence contract, while TypeScript/TSX retain typed field facts.
 - [x] Added cross-file typed-receiver call goldens for Python, Java, Kotlin, C#, and Rust, covering explicit imports, aliases, namespace imports, and Rust module imports without relaxing strong-resolution confidence.
-- [x] Expanded cross-file navigation goldens with Java generic and nested imported receiver types, conservative overload ambiguity, Python duplicate-root import ambiguity, and retained unresolved external import/call evidence.
+- [x] Expanded cross-file navigation goldens with generic and nested imported receiver types in Python, Java, Kotlin, C#, and Rust; conservative JVM/C# overload ambiguity; Python duplicate-root import ambiguity; retained unresolved external Python evidence; and retained C# nested-type ambiguity where namespace evidence cannot bind the qualified type safely.
 
 ## Reliability and performance
 

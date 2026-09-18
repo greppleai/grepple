@@ -46,5 +46,14 @@
     "path": "src/view.jsx",
     "source": "const view = <Button value={item} />;\n",
     "findings": ["<Button value={item} />"]
+  },
+  {
+    "name": "javascript-malformed-source",
+    "language": "javascript",
+    "query": "language javascript\n`target($value)`",
+    "path": "src/broken.js",
+    "source": "function broken(\n",
+    "findings": [],
+    "diagnostics": ["SOURCE_PARSE"]
   }
 ]

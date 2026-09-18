@@ -62,5 +62,14 @@
     "path": "src/models.py",
     "source": "def first():\n    pass\nclass Second:\n    pass\ndef third():\n    pass\n",
     "findings": ["def first():\n    pass\nclass Second:\n    pass"]
+  },
+  {
+    "name": "python-malformed-source",
+    "language": "python",
+    "query": "language python\n`target($value)`",
+    "path": "src/broken.py",
+    "source": "def broken(\n",
+    "findings": [],
+    "diagnostics": ["SOURCE_PARSE"]
   }
 ]

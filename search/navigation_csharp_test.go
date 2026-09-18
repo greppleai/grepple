@@ -33,6 +33,56 @@ public class Service { void Use() { HelperAlias.Work(); ApiAlias.Work(); Run(); 
 	assertCSharpResolvedCall(t, graph.Calls, service, "value.Load")
 }
 
+func TestCSharpGenericImportedParameterTypeResolvesReceiverCall(t *testing.T) {
+	root := t.TempDir()
+	service := filepath.Join(root, "app", "Service.cs")
+	box := filepath.Join(root, "lib", "Box.cs")
+	paths := writeCSharpNavigationFiles(t, map[string]string{
+		service: "using Lib.Api; namespace App; public class Service { void Use(Box<string> value) { value.Load(); } }",
+		box:     "namespace Lib.Api; public class Box<T> { public void Load() {} }",
+	})
+	graph, _ := BuildNavigationGraphWithOptions(paths, NavigationBuildOptions{DisableCache: true})
+	assertCSharpImportTargets(t, graph.Imports, "Lib.Api", box)
+	assertCSharpResolvedCallTargetPath(t, graph, service, "value.Load", box)
+}
+
+func TestCSharpOverloadLikeTargetsRemainAmbiguous(t *testing.T) {
+	root := t.TempDir()
+	service := filepath.Join(root, "app", "Service.cs")
+	helper := filepath.Join(root, "lib", "Helper.cs")
+	paths := writeCSharpNavigationFiles(t, map[string]string{
+		service: "using Lib.Api; namespace App; public class Service { void Use(Helper value) { value.Work(1); } }",
+		helper:  "namespace Lib.Api; public class Helper {\npublic void Work(int value) {}\npublic void Work(string value) {}\n}",
+	})
+	graph, _ := BuildNavigationGraphWithOptions(paths, NavigationBuildOptions{DisableCache: true})
+	for _, call := range graph.Calls {
+		if call.Path == service && call.Display == "value.Work" && call.TargetID == "" && len(call.CandidateTargetIDs) == 2 && call.Confidence == "candidate" {
+			return
+		}
+	}
+	t.Fatalf("C# overload-like call was not preserved as ambiguous: %#v", graph.Calls)
+}
+
+func TestCSharpNestedParameterTypePreservesAmbiguityWithoutTypeBinding(t *testing.T) {
+	root := t.TempDir()
+	service := filepath.Join(root, "app", "Service.cs")
+	outer := filepath.Join(root, "lib", "Outer.cs")
+	decoy := filepath.Join(root, "other", "Inner.cs")
+	paths := writeCSharpNavigationFiles(t, map[string]string{
+		service: "using Lib.Api; namespace App; public class Service { void Use(Outer.Inner value) { value.Load(); } }",
+		outer:   "namespace Lib.Api; public class Outer { public class Inner { public void Load() {} } }",
+		decoy:   "namespace Other; public class Inner { public void Load() {} }",
+	})
+	graph, _ := BuildNavigationGraphWithOptions(paths, NavigationBuildOptions{DisableCache: true})
+	assertCSharpImportTargets(t, graph.Imports, "Lib.Api", outer)
+	for _, call := range graph.Calls {
+		if call.Path == service && call.Display == "value.Load" && call.TargetID == "" && len(call.CandidateTargetIDs) == 2 && call.Confidence == "candidate" {
+			return
+		}
+	}
+	t.Fatalf("nested C# receiver was guessed despite an unbound qualified type: %#v", graph.Calls)
+}
+
 func TestCSharpImportsPreserveDuplicateQualifiedTargetsAsAmbiguous(t *testing.T) {
 	root := t.TempDir()
 	caller := filepath.Join(root, "app", "Service.cs")
@@ -87,6 +137,22 @@ func assertCSharpResolvedCall(t *testing.T, calls []parser.NavigationCall, sourc
 		}
 	}
 	t.Fatalf("missing resolved C# call source=%q display=%q: %#v", source, display, calls)
+}
+
+func assertCSharpResolvedCallTargetPath(t *testing.T, graph parser.NavigationGraph, source, display, targetPath string) {
+	t.Helper()
+	for _, call := range graph.Calls {
+		strong := call.Confidence == "exact" || call.Confidence == "import-resolved" || call.Confidence == "context-resolved"
+		if call.Path != source || call.Display != display || call.TargetID == "" || !strong {
+			continue
+		}
+		for _, declaration := range graph.Declarations {
+			if declaration.ID == call.TargetID && declaration.Path == targetPath {
+				return
+			}
+		}
+	}
+	t.Fatalf("missing resolved C# call source=%q display=%q target=%q: %#v", source, display, targetPath, graph.Calls)
 }
 
 func assertCSharpImportAliasTargets(t *testing.T, imports []parser.NavigationImport, alias string, expected ...string) {

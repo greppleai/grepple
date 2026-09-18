@@ -16,6 +16,7 @@ type languageEvaluationCase struct {
 type targetConformanceCase struct {
 	Name, Language, Query, Path, Source string
 	Findings                            []string
+	Diagnostics                         []string
 }
 
 func TestTypeScriptAndTSXStructuralEvaluation(t *testing.T) {
@@ -99,8 +100,13 @@ func assertTargetConformanceCase(t *testing.T, test targetConformanceCase) {
 		t.Fatal(err)
 	}
 	result := EvaluateFile(context.Background(), program, FileInput{Path: test.Path, Language: test.Language, Content: []byte(test.Source)}, EvaluateOptions{})
-	if diagnostics := result.Diagnostics(); len(diagnostics) != 0 {
-		t.Fatalf("diagnostics=%v", diagnostics)
+	diagnostics := result.Diagnostics()
+	codes := make([]string, len(diagnostics))
+	for index := range diagnostics {
+		codes[index] = diagnostics[index].Code()
+	}
+	if !slices.Equal(codes, test.Diagnostics) {
+		t.Fatalf("diagnostic codes=%q want %q diagnostics=%v", codes, test.Diagnostics, diagnostics)
 	}
 	findings := result.Findings()
 	texts := make([]string, len(findings))

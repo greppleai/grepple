@@ -54,5 +54,68 @@
     "path": "scripts/app.sh",
     "source": "first\nsecond\nthird\n",
     "findings": ["first\nsecond"]
+  },
+  {
+    "name": "c-malformed-source",
+    "language": "c",
+    "query": "language c\n`target($value)`",
+    "path": "src/broken.c",
+    "source": "void broken(\n",
+    "findings": [],
+    "diagnostics": ["SOURCE_PARSE"]
+  },
+  {
+    "name": "cpp-malformed-source",
+    "language": "cpp",
+    "query": "language cpp\n`target($value)`",
+    "path": "src/broken.cpp",
+    "source": "void broken(\n",
+    "findings": [],
+    "diagnostics": ["SOURCE_PARSE"]
+  },
+  {
+    "name": "csharp-malformed-source",
+    "language": "csharp",
+    "query": "language csharp\n`Target($value)`",
+    "path": "src/Broken.cs",
+    "source": "class Broken { void Run(\n",
+    "findings": [],
+    "diagnostics": ["SOURCE_PARSE"]
+  },
+  {
+    "name": "java-malformed-source",
+    "language": "java",
+    "query": "language java\n`target($value)`",
+    "path": "src/Broken.java",
+    "source": "class Broken { void run(\n",
+    "findings": [],
+    "diagnostics": ["SOURCE_PARSE"]
+  },
+  {
+    "name": "kotlin-malformed-source",
+    "language": "kotlin",
+    "query": "language kotlin\n`target($value)`",
+    "path": "src/Broken.kt",
+    "source": "fun broken(\n",
+    "findings": [],
+    "diagnostics": ["SOURCE_PARSE"]
+  },
+  {
+    "name": "rust-malformed-source",
+    "language": "rust",
+    "query": "language rust\n`target($value)`",
+    "path": "src/broken.rs",
+    "source": "fn broken(\n",
+    "findings": [],
+    "diagnostics": ["SOURCE_PARSE"]
+  },
+  {
+    "name": "shell-malformed-source",
+    "language": "shell",
+    "query": "language shell\n`target $value`",
+    "path": "scripts/broken.sh",
+    "source": "if then\n",
+    "findings": [],
+    "diagnostics": ["SOURCE_PARSE"]
   }
 ]

@@ -208,6 +208,34 @@ pub fn denied() { outer::child::limited(); }
 	assertRustUnresolvedCall(t, graph.Calls, lib, "outer::child::limited")
 }
 
+func TestRustGenericImportedParameterTypeResolvesReceiverCall(t *testing.T) {
+	root := t.TempDir()
+	lib := filepath.Join(root, "src", "lib.rs")
+	worker := filepath.Join(root, "src", "worker.rs")
+	paths := writeRustNavigationFiles(t, map[string]string{
+		lib:    "mod worker; use crate::worker::Worker; pub fn typed(value: Worker<String>) { value.work(); }",
+		worker: "pub struct Worker<T>(T); impl<T> Worker<T> { pub fn work(&self) {} }",
+	})
+	graph, _ := BuildNavigationGraphWithOptions(paths, NavigationBuildOptions{DisableCache: true})
+	assertRustImportTargets(t, graph.Imports, lib, "crate::worker::Worker", worker)
+	assertRustResolvedCallTarget(t, graph, lib, "value.work", worker)
+}
+
+func TestRustNestedModuleImportedTypeSelectsScopedReceiver(t *testing.T) {
+	root := t.TempDir()
+	lib := filepath.Join(root, "src", "lib.rs")
+	models := filepath.Join(root, "src", "models.rs")
+	decoy := filepath.Join(root, "src", "decoy.rs")
+	paths := writeRustNavigationFiles(t, map[string]string{
+		lib:    "mod models; mod decoy; use crate::models::outer::Worker; pub fn typed(value: Worker) { value.work(); }",
+		models: "pub mod outer { pub struct Worker; impl Worker { pub fn work(&self) {} } }",
+		decoy:  "pub struct Worker; impl Worker { pub fn work(&self) {} }",
+	})
+	graph, _ := BuildNavigationGraphWithOptions(paths, NavigationBuildOptions{DisableCache: true})
+	assertRustImportTargets(t, graph.Imports, lib, "crate::models::outer::Worker", models)
+	assertRustResolvedCallTarget(t, graph, lib, "value.work", models)
+}
+
 func TestRustUnqualifiedCallsDoNotCrossCrateRoots(t *testing.T) {
 	root := t.TempDir()
 	firstRoot := filepath.Join(root, "first", "src", "lib.rs")
