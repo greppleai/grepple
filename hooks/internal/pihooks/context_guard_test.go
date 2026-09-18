@@ -55,10 +55,18 @@ func TestHandleContextGuardOmitsOnlyPreviouslyEmittedBlocks(t *testing.T) {
 	if !strings.Contains(guarded, "third source line") {
 		t.Fatalf("new block was omitted: %q", guarded)
 	}
+	stats := readContextGuardStatsForTest(t, directory, "session-a", 0)
+	if stats.ObservedResponses != 2 || stats.GreppleResponses != 2 || stats.NewBlocks != 3 || stats.RemovedBlocks != 1 {
+		t.Fatalf("unexpected removal stats: %#v", stats)
+	}
+	if stats.GrossRemovedBytes != int64(len(first)) || stats.NetSavedBytes <= 0 || stats.NetSavingsPercent <= 0 {
+		t.Fatalf("missing byte savings: %#v", stats)
+	}
 }
 
 func TestHandleContextGuardSeparatesSessionsAndInvalidatesAfterCompaction(t *testing.T) {
-	t.Setenv("GREPPLE_CONTEXT_GUARD_DIR", t.TempDir())
+	directory := t.TempDir()
+	t.Setenv("GREPPLE_CONTEXT_GUARD_DIR", directory)
 	output := strings.Repeat("stable external dependency source\n", 8)
 	first := contextGuardPayload(t, "session-a", "grepple --at dependency.ts:1", output)
 	if got := HandleContextGuard(first); len(got) != 0 {
@@ -70,9 +78,26 @@ func TestHandleContextGuardSeparatesSessionsAndInvalidatesAfterCompaction(t *tes
 	if got := HandleContextGuard(first); len(got) == 0 {
 		t.Fatal("same session did not suppress repeated output")
 	}
+	before := readContextGuardStatsForTest(t, directory, "session-a", 0)
 	HandleContextInvalidation([]byte(`{"session_id":"session-a","hook_event_name":"PostCompact"}`))
+	rotated := readContextGuardStatsForTest(t, directory, "session-a", 1)
+	if rotated.Period != 1 || rotated.ResetReason != "compact" || rotated.ObservedResponses != 0 {
+		t.Fatalf("compaction did not create the next stats period: %#v", rotated)
+	}
 	if got := HandleContextGuard(first); len(got) != 0 {
 		t.Fatalf("compaction did not reset cache: %s", got)
+	}
+	after := readContextGuardStatsForTest(t, directory, "session-a", 1)
+	if after.ObservedResponses != 1 || after.NewBlocks != 1 {
+		t.Fatalf("new period did not receive post-compaction stats: %#v", after)
+	}
+	if unchanged := readContextGuardStatsForTest(t, directory, "session-a", 0); unchanged.ObservedResponses != before.ObservedResponses {
+		t.Fatalf("completed stats period changed: before=%#v after=%#v", before, unchanged)
+	}
+	HandleContextInvalidation([]byte(`{"session_id":"session-a","hook_event_name":"PostCompact"}`))
+	secondRotation := readContextGuardStatsForTest(t, directory, "session-a", 2)
+	if secondRotation.Period != 2 || secondRotation.ResetReason != "compact" {
+		t.Fatalf("second compaction did not increment stats period: %#v", secondRotation)
 	}
 }
 
@@ -123,6 +148,27 @@ func TestContextGuardConcurrentUpdatesPreserveEntries(t *testing.T) {
 	if len(cache.Entries) != 12 {
 		t.Fatalf("concurrent cache entries=%d want 12", len(cache.Entries))
 	}
+	stats := readContextGuardStatsForTest(t, os.Getenv("GREPPLE_CONTEXT_GUARD_DIR"), "session", 0)
+	if stats.ObservedResponses != 12 || stats.NewBlocks != 12 {
+		t.Fatalf("concurrent stats=%#v", stats)
+	}
+}
+
+func readContextGuardStatsForTest(t *testing.T, directory, sessionID string, period int) contextGuardStats {
+	t.Helper()
+	path := contextGuardStatsPath(directory, contextGuardSessionName(sessionID), period)
+	content, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read stats %s: %v", path, err)
+	}
+	if strings.Contains(string(content), "source line") || strings.Contains(string(content), "external dependency") {
+		t.Fatalf("stats persisted source content: %s", content)
+	}
+	stats := readContextGuardStats(path, sessionID, period)
+	if stats.Schema != contextGuardStatsSchema {
+		t.Fatalf("stats schema=%q", stats.Schema)
+	}
+	return stats
 }
 
 func contextGuardPayloadForTool(t *testing.T, sessionID, toolName string, toolInput map[string]any, output string) []byte {

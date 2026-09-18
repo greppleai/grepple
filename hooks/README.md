@@ -5,6 +5,8 @@ Mermaid analysis is imported from the main module's `extract` package so CLI foc
 
 The PostToolUse context guard records SHA-256 digests—not source bodies—for human-readable Grepple output blocks and successful Pi `Read` results in `~/.grepple/context-guard/<session-id>.json`. When the same unchanged block would be returned again in that Pi session, the hook replaces it with an explicit already-in-context notice. Grepple JSON, spilled-output descriptors, images, and unsupported response shapes fail open unchanged. PostCompact clears that session's cache; SessionStart also clears contexts started from Pi's `clear`, `compact`, or `fork` lifecycle sources. Cache corruption, lock contention, and filesystem failures never suppress tool output.
 
+Impact statistics are written beside the cache as `<session-id>-stats-0.json`, `<session-id>-stats-1.json`, and so on. They contain timestamps, reset reason, Grepple/Read response counts, observed/new/removed block counts, input and returned bytes, gross removed bytes, net saved bytes, and cumulative net-savings percentage. Stats files contain no source bodies. Each successful compaction closes the current period and atomically creates the next numbered stats file; subsequent hook observations update only that new period.
+
 ## Layout
 
 - `cmd/pi-hook` — command-hook protocol entry point.

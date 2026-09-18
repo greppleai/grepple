@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -16,6 +17,7 @@ import (
 
 const (
 	contextGuardSchema       = "grepple-context-guard-v1"
+	contextGuardStatsSchema  = "grepple-context-guard-stats-v1"
 	contextGuardMinBlockSize = 128
 	contextGuardMaxEntries   = 50_000
 	contextGuardMaxCacheSize = 16 << 20
@@ -39,6 +41,26 @@ type contextGuardCache struct {
 
 type contextGuardEntry struct {
 	Bytes int `json:"bytes"`
+}
+
+type contextGuardStats struct {
+	Schema            string  `json:"schema"`
+	SessionID         string  `json:"sessionId"`
+	Period            int     `json:"period"`
+	ResetReason       string  `json:"resetReason"`
+	CreatedAt         string  `json:"createdAt"`
+	UpdatedAt         string  `json:"updatedAt"`
+	ObservedResponses int     `json:"observedResponses"`
+	GreppleResponses  int     `json:"greppleResponses"`
+	ReadResponses     int     `json:"readResponses"`
+	ObservedBlocks    int     `json:"observedBlocks"`
+	NewBlocks         int     `json:"newBlocks"`
+	RemovedBlocks     int     `json:"removedBlocks"`
+	InputBytes        int64   `json:"inputBytes"`
+	ReturnedBytes     int64   `json:"returnedBytes"`
+	GrossRemovedBytes int64   `json:"grossRemovedBytes"`
+	NetSavedBytes     int64   `json:"netSavedBytes"`
+	NetSavingsPercent float64 `json:"netSavingsPercent"`
 }
 
 type contextGuardHookOutput struct {
@@ -76,12 +98,10 @@ func HandleContextGuard(input []byte) []byte {
 	if !ok || !guardableContextOutput(output) {
 		return nil
 	}
-	guarded, omittedBlocks, omittedBytes, err := guardContextOutput(payload.SessionID, output)
+	guarded, omittedBlocks, _, err := guardContextOutput(payload.SessionID, payload.ToolName, output)
 	if err != nil || omittedBlocks == 0 {
 		return nil
 	}
-	marker := fmt.Sprintf("[grepple context guard: omitted %d unchanged output %s (%d bytes) already emitted in this session; cache resets after compaction]\n", omittedBlocks, pluralWord("block", omittedBlocks), omittedBytes)
-	guarded = marker + guarded
 	encoded, err := json.Marshal(contextGuardHookOutput{HookSpecificOutput: contextGuardHookSpecificOutput{
 		HookEventName: "PostToolUse", UpdatedToolOutput: guarded,
 	}})
@@ -122,9 +142,14 @@ func HandleContextInvalidation(input []byte) []byte {
 	if json.Unmarshal(input, &payload) != nil || payload.SessionID == "" {
 		return nil
 	}
-	invalidate := payload.HookEventName == "PostCompact" ||
-		(payload.HookEventName == "SessionStart" && (payload.Source == "clear" || payload.Source == "compact" || payload.Source == "fork"))
-	if invalidate {
+	switch {
+	case payload.HookEventName == "PostCompact":
+		_ = rotateContextGuardSession(payload.SessionID, "compact")
+	case payload.HookEventName == "SessionStart" && (payload.Source == "clear" || payload.Source == "fork"):
+		_ = rotateContextGuardSession(payload.SessionID, payload.Source)
+	case payload.HookEventName == "SessionStart" && payload.Source == "compact":
+		// PostCompact normally rotated the period. This fallback only clears a
+		// cache left by an older hook version, avoiding a double rotation.
 		_ = invalidateContextGuardSession(payload.SessionID)
 	}
 	return nil
@@ -210,29 +235,89 @@ func guardableContextOutput(output string) bool {
 		!strings.HasPrefix(trimmed, "{") && !strings.HasPrefix(trimmed, "[")
 }
 
-func guardContextOutput(sessionID, output string) (string, int, int, error) {
+func guardContextOutput(sessionID, toolName, output string) (string, int, int, error) {
+	directory, err := contextGuardDirectory()
+	if err != nil {
+		return "", 0, 0, err
+	}
+	if err := os.MkdirAll(directory, 0o700); err != nil {
+		return "", 0, 0, err
+	}
+	base := contextGuardSessionName(sessionID)
+	cachePath := filepath.Join(directory, base+".json")
+	release, err := acquireContextGuardLock(cachePath + ".lock")
+	if err != nil {
+		return "", 0, 0, err
+	}
+	defer release()
+
+	cache := readContextGuardCache(cachePath, sessionID)
 	blocks := splitContextBlocks(output)
 	guarded := make([]string, 0, len(blocks))
-	omittedBlocks, omittedBytes := 0, 0
-	err := updateContextGuardCache(sessionID, func(cache *contextGuardCache) {
-		for _, block := range blocks {
-			if len(strings.TrimSpace(block)) < contextGuardMinBlockSize {
-				guarded = append(guarded, block)
-				continue
-			}
-			digest := contextBlockDigest(block)
-			if _, seen := cache.Entries[digest]; seen {
-				omittedBlocks++
-				omittedBytes += len(block)
-				continue
-			}
+	omittedBlocks, omittedBytes, newBlocks := 0, 0, 0
+	for _, block := range blocks {
+		if len(strings.TrimSpace(block)) < contextGuardMinBlockSize {
 			guarded = append(guarded, block)
-			if len(cache.Entries) < contextGuardMaxEntries {
-				cache.Entries[digest] = contextGuardEntry{Bytes: len(block)}
-			}
+			continue
 		}
-	})
-	return strings.Join(guarded, ""), omittedBlocks, omittedBytes, err
+		digest := contextBlockDigest(block)
+		if _, seen := cache.Entries[digest]; seen {
+			omittedBlocks++
+			omittedBytes += len(block)
+			continue
+		}
+		guarded = append(guarded, block)
+		newBlocks++
+		if len(cache.Entries) < contextGuardMaxEntries {
+			cache.Entries[digest] = contextGuardEntry{Bytes: len(block)}
+		}
+	}
+	if err := writeContextGuardCache(cachePath, cache); err != nil {
+		return "", 0, 0, err
+	}
+	returned := output
+	if omittedBlocks > 0 {
+		marker := fmt.Sprintf("[grepple context guard: omitted %d unchanged output %s (%d bytes) already emitted in this session; cache resets after compaction]\n", omittedBlocks, pluralWord("block", omittedBlocks), omittedBytes)
+		returned = marker + strings.Join(guarded, "")
+	}
+	// Statistics are observational and must never decide whether source is
+	// suppressed. A stats write failure therefore leaves cache behavior intact.
+	_ = updateContextGuardStats(directory, base, sessionID, toolName, len(blocks), newBlocks, omittedBlocks, len(output), len(returned), omittedBytes)
+	return returned, omittedBlocks, omittedBytes, nil
+}
+
+func updateContextGuardStats(directory, base, sessionID, toolName string, observedBlocks, newBlocks, removedBlocks, inputBytes, returnedBytes, removedBytes int) error {
+	period := latestContextGuardStatsPeriod(directory, base)
+	if period < 0 {
+		period = 0
+	}
+	path := contextGuardStatsPath(directory, base, period)
+	stats := readContextGuardStats(path, sessionID, period)
+	now := time.Now().UTC().Format(time.RFC3339Nano)
+	if stats.CreatedAt == "" {
+		stats.CreatedAt = now
+		stats.ResetReason = "session-start"
+	}
+	stats.UpdatedAt = now
+	stats.ObservedResponses++
+	if toolName == "Read" {
+		stats.ReadResponses++
+	} else {
+		stats.GreppleResponses++
+	}
+	stats.ObservedBlocks += observedBlocks
+	stats.NewBlocks += newBlocks
+	stats.RemovedBlocks += removedBlocks
+	stats.InputBytes += int64(inputBytes)
+	stats.ReturnedBytes += int64(returnedBytes)
+	stats.GrossRemovedBytes += int64(removedBytes)
+	if saved := inputBytes - returnedBytes; saved > 0 {
+		stats.NetSavedBytes += int64(saved)
+	}
+	if stats.InputBytes > 0 {
+		stats.NetSavingsPercent = float64(stats.NetSavedBytes) * 100 / float64(stats.InputBytes)
+	}
+	return writeContextGuardJSON(path, stats)
 }
 
 func splitContextBlocks(output string) []string {
@@ -253,25 +338,6 @@ func splitContextBlocks(output string) []string {
 func contextBlockDigest(block string) string {
 	digest := sha256.Sum256([]byte(block))
 	return "sha256:" + hex.EncodeToString(digest[:])
-}
-
-func updateContextGuardCache(sessionID string, update func(*contextGuardCache)) error {
-	directory, err := contextGuardDirectory()
-	if err != nil {
-		return err
-	}
-	if err := os.MkdirAll(directory, 0o700); err != nil {
-		return err
-	}
-	path := filepath.Join(directory, contextGuardSessionName(sessionID)+".json")
-	release, err := acquireContextGuardLock(path + ".lock")
-	if err != nil {
-		return err
-	}
-	defer release()
-	cache := readContextGuardCache(path, sessionID)
-	update(&cache)
-	return writeContextGuardCache(path, cache)
 }
 
 func contextGuardDirectory() (string, error) {
@@ -313,6 +379,60 @@ func readContextGuardCache(path, sessionID string) contextGuardCache {
 }
 
 func writeContextGuardCache(path string, cache contextGuardCache) error {
+	return writeContextGuardJSON(path, cache)
+}
+
+func contextGuardStatsPath(directory, base string, period int) string {
+	return filepath.Join(directory, fmt.Sprintf("%s-stats-%d.json", base, period))
+}
+
+func latestContextGuardStatsPeriod(directory, base string) int {
+	entries, err := os.ReadDir(directory)
+	if err != nil {
+		return -1
+	}
+	prefix := base + "-stats-"
+	latest := -1
+	for _, entry := range entries {
+		name := entry.Name()
+		if entry.IsDir() || !strings.HasPrefix(name, prefix) || !strings.HasSuffix(name, ".json") {
+			continue
+		}
+		periodText := strings.TrimSuffix(strings.TrimPrefix(name, prefix), ".json")
+		period, err := strconv.Atoi(periodText)
+		if err == nil && period >= 0 && period > latest {
+			latest = period
+		}
+	}
+	return latest
+}
+
+func readContextGuardStats(path, sessionID string, period int) contextGuardStats {
+	stats := contextGuardStats{Schema: contextGuardStatsSchema, SessionID: sessionID, Period: period}
+	info, err := os.Stat(path)
+	if err != nil || info.Size() > contextGuardMaxCacheSize {
+		return stats
+	}
+	content, err := os.ReadFile(path)
+	if err != nil {
+		return stats
+	}
+	var restored contextGuardStats
+	if json.Unmarshal(content, &restored) != nil || restored.Schema != contextGuardStatsSchema || restored.SessionID != sessionID || restored.Period != period {
+		return stats
+	}
+	return restored
+}
+
+func newContextGuardStats(sessionID string, period int, reason string) contextGuardStats {
+	now := time.Now().UTC().Format(time.RFC3339Nano)
+	return contextGuardStats{
+		Schema: contextGuardStatsSchema, SessionID: sessionID, Period: period,
+		ResetReason: reason, CreatedAt: now, UpdatedAt: now,
+	}
+}
+
+func writeContextGuardJSON(path string, value any) error {
 	temporary, err := os.CreateTemp(filepath.Dir(path), ".context-guard-*")
 	if err != nil {
 		return err
@@ -324,7 +444,8 @@ func writeContextGuardCache(path string, cache contextGuardCache) error {
 		return err
 	}
 	encoder := json.NewEncoder(temporary)
-	if err := encoder.Encode(cache); err != nil {
+	encoder.SetIndent("", "  ")
+	if err := encoder.Encode(value); err != nil {
 		_ = temporary.Close()
 		return err
 	}
@@ -365,11 +486,49 @@ func invalidateContextGuardSession(sessionID string) error {
 	if err != nil {
 		return err
 	}
-	path := filepath.Join(directory, contextGuardSessionName(sessionID)+".json")
+	base := contextGuardSessionName(sessionID)
+	path := filepath.Join(directory, base+".json")
+	if _, err := os.Stat(directory); errors.Is(err, os.ErrNotExist) {
+		return nil
+	}
+	release, err := acquireContextGuardLock(path + ".lock")
+	if err != nil {
+		return err
+	}
+	defer release()
 	if err := os.Remove(path); err != nil && !errors.Is(err, os.ErrNotExist) {
 		return err
 	}
 	return nil
+}
+
+func rotateContextGuardSession(sessionID, reason string) error {
+	directory, err := contextGuardDirectory()
+	if err != nil {
+		return err
+	}
+	if err := os.MkdirAll(directory, 0o700); err != nil {
+		return err
+	}
+	base := contextGuardSessionName(sessionID)
+	cachePath := filepath.Join(directory, base+".json")
+	release, err := acquireContextGuardLock(cachePath + ".lock")
+	if err != nil {
+		return err
+	}
+	defer release()
+	if err := os.Remove(cachePath); err != nil && !errors.Is(err, os.ErrNotExist) {
+		return err
+	}
+	period := latestContextGuardStatsPeriod(directory, base)
+	if period < 0 {
+		period = 0
+		if err := writeContextGuardJSON(contextGuardStatsPath(directory, base, period), newContextGuardStats(sessionID, period, "session-start")); err != nil {
+			return err
+		}
+	}
+	next := period + 1
+	return writeContextGuardJSON(contextGuardStatsPath(directory, base, next), newContextGuardStats(sessionID, next, reason))
 }
 
 func pluralWord(word string, count int) string {
