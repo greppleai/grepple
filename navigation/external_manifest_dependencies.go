@@ -169,18 +169,17 @@ type npmManifest struct {
 	Dependencies map[string]string `json:"dependencies"`
 }
 
+type npmLockEntry struct {
+	Version   string `json:"version"`
+	Integrity string `json:"integrity"`
+	Resolved  string `json:"resolved"`
+	Link      bool   `json:"link"`
+}
+
 type npmLock struct {
-	Packages map[string]struct {
-		Version   string `json:"version"`
-		Integrity string `json:"integrity"`
-		Resolved  string `json:"resolved"`
-		Link      bool   `json:"link"`
-	} `json:"packages"`
-	Dependencies map[string]struct {
-		Version   string `json:"version"`
-		Integrity string `json:"integrity"`
-		Resolved  string `json:"resolved"`
-	} `json:"dependencies"`
+	LockfileVersion int                     `json:"lockfileVersion"`
+	Packages        map[string]npmLockEntry `json:"packages"`
+	Dependencies    map[string]npmLockEntry `json:"dependencies"`
 }
 
 func readNPMDependencies(path string) ([]dependencyEvidence, error) {
@@ -199,27 +198,41 @@ func readNPMDependencies(path string) ([]dependencyEvidence, error) {
 	if err != nil {
 		return nil, err
 	}
+	// A lockfile is optional qualification evidence. Malformed or unknown schemas
+	// must leave the original import unresolved rather than fail the search or guess.
 	var lock npmLock
 	if err := json.Unmarshal(lockContent, &lock); err != nil {
-		return nil, err
+		return nil, nil
+	}
+	if lock.LockfileVersion < 1 || lock.LockfileVersion > 3 {
+		return nil, nil
 	}
 	dependencies := make([]dependencyEvidence, 0, len(manifest.Dependencies))
 	for name := range manifest.Dependencies {
-		entry, ok := lock.Packages["node_modules/"+name]
-		version, integrity, resolved, linked := entry.Version, entry.Integrity, entry.Resolved, entry.Link
+		entry, ok := npmLockedDirectDependency(lock, name)
 		if !ok {
-			legacy, legacyOK := lock.Dependencies[name]
-			if !legacyOK {
-				continue
-			}
-			version, integrity, resolved = legacy.Version, legacy.Integrity, legacy.Resolved
+			continue
 		}
+		version, integrity, resolved, linked := entry.Version, entry.Integrity, entry.Resolved, entry.Link
 		if version == "" || linked || strings.HasPrefix(resolved, "file:") || strings.HasPrefix(resolved, "link:") {
 			continue
 		}
 		dependencies = append(dependencies, dependencyEvidence{ecosystem: "npm", importName: name, module: name, version: version, integrity: integrity})
 	}
 	return dependencies, nil
+}
+
+func npmLockedDirectDependency(lock npmLock, name string) (npmLockEntry, bool) {
+	if lock.LockfileVersion == 1 {
+		entry, ok := lock.Dependencies[name]
+		return entry, ok
+	}
+	entry, ok := lock.Packages["node_modules/"+name]
+	if ok || lock.LockfileVersion == 3 {
+		return entry, ok
+	}
+	entry, ok = lock.Dependencies[name]
+	return entry, ok
 }
 
 type cargoManifest struct {

@@ -43,19 +43,65 @@ replace github.com/gofiber/fiber/v3 => ../fiber
 	}
 }
 
-func TestQualifyExternalDependenciesFromNPMLock(t *testing.T) {
-	root := t.TempDir()
-	mustWriteDependencyFile(t, filepath.Join(root, "package.json"), `{"dependencies":{"@acme/widgets":"^1.2.3"}}`)
-	mustWriteDependencyFile(t, filepath.Join(root, "package-lock.json"), `{"lockfileVersion":3,"packages":{"node_modules/@acme/widgets":{"version":"1.2.3","resolved":"https://registry.npmjs.org/@acme/widgets/-/widgets-1.2.3.tgz","integrity":"sha512-npm"}}}`)
-	mustWriteDependencyFile(t, filepath.Join(root, "main.ts"), "export {}")
-	results := []api.FileResult{{Path: "main.ts", Language: "typescript", Related: []api.RelatedSymbol{{External: &api.ExternalNavigationReference{ID: "widget", Language: "typescript", ImportPath: "@acme/widgets/subpath", Symbol: "Widget", Kind: "type"}}}}}
-	if err := QualifyExternalDependencies(results, root); err != nil {
-		t.Fatal(err)
+func TestQualifyExternalDependenciesFromNPMLockVersions(t *testing.T) {
+	tests := []struct {
+		name string
+		lock string
+	}{
+		{name: "v1-legacy-dependencies", lock: `{"lockfileVersion":1,"dependencies":{"@acme/widgets":{"version":"1.2.3","resolved":"https://registry.npmjs.org/@acme/widgets/-/widgets-1.2.3.tgz","integrity":"sha512-v1"}}}`},
+		{name: "v2-packages", lock: `{"lockfileVersion":2,"packages":{"node_modules/@acme/widgets":{"version":"1.2.3","resolved":"https://registry.npmjs.org/@acme/widgets/-/widgets-1.2.3.tgz","integrity":"sha512-v2"}}}`},
+		{name: "v2-legacy-fallback", lock: `{"lockfileVersion":2,"dependencies":{"@acme/widgets":{"version":"1.2.3","resolved":"https://registry.npmjs.org/@acme/widgets/-/widgets-1.2.3.tgz","integrity":"sha512-v2-fallback"}}}`},
+		{name: "v3-packages", lock: `{"lockfileVersion":3,"packages":{"node_modules/@acme/widgets":{"version":"1.2.3","resolved":"https://registry.npmjs.org/@acme/widgets/-/widgets-1.2.3.tgz","integrity":"sha512-v3"}}}`},
 	}
-	reference := results[0].Related[0].External
-	if reference.Module != "@acme/widgets" || reference.Package != "@acme/widgets/subpath" || reference.Version != "1.2.3" || reference.Integrity != "sha512-npm" {
-		t.Fatalf("npm reference = %#v", reference)
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			root := t.TempDir()
+			mustWriteDependencyFile(t, filepath.Join(root, "package.json"), `{"dependencies":{"@acme/widgets":"^1.2.3"}}`)
+			mustWriteDependencyFile(t, filepath.Join(root, "package-lock.json"), test.lock)
+			mustWriteDependencyFile(t, filepath.Join(root, "main.ts"), "export {}")
+			results := npmExternalDependencyResults()
+			if err := QualifyExternalDependencies(results, root); err != nil {
+				t.Fatal(err)
+			}
+			reference := results[0].Related[0].External
+			if reference.Module != "@acme/widgets" || reference.Package != "@acme/widgets/subpath" || reference.Version != "1.2.3" || reference.Integrity == "" {
+				t.Fatalf("npm reference = %#v", reference)
+			}
+		})
 	}
+}
+
+func TestQualifyExternalDependenciesRejectsNonAuthoritativeNPMLocks(t *testing.T) {
+	tests := []struct {
+		name string
+		lock string
+	}{
+		{name: "missing-version", lock: `{"packages":{"node_modules/@acme/widgets":{"version":"1.2.3"}}}`},
+		{name: "unsupported-version", lock: `{"lockfileVersion":4,"packages":{"node_modules/@acme/widgets":{"version":"1.2.3"}}}`},
+		{name: "malformed", lock: `{"lockfileVersion":3`},
+		{name: "v1-packages-shape", lock: `{"lockfileVersion":1,"packages":{"node_modules/@acme/widgets":{"version":"1.2.3"}}}`},
+		{name: "v3-legacy-shape", lock: `{"lockfileVersion":3,"dependencies":{"@acme/widgets":{"version":"1.2.3"}}}`},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			root := t.TempDir()
+			mustWriteDependencyFile(t, filepath.Join(root, "package.json"), `{"dependencies":{"@acme/widgets":"^1.2.3"}}`)
+			mustWriteDependencyFile(t, filepath.Join(root, "package-lock.json"), test.lock)
+			mustWriteDependencyFile(t, filepath.Join(root, "main.ts"), "export {}")
+			results := npmExternalDependencyResults()
+			if err := QualifyExternalDependencies(results, root); err != nil {
+				t.Fatal(err)
+			}
+			reference := results[0].Related[0].External
+			if reference.Module != "" || reference.Version != "" || reference.Integrity != "" {
+				t.Fatalf("non-authoritative lock qualified dependency: %#v", reference)
+			}
+		})
+	}
+}
+
+func npmExternalDependencyResults() []api.FileResult {
+	return []api.FileResult{{Path: "main.ts", Language: "typescript", Related: []api.RelatedSymbol{{External: &api.ExternalNavigationReference{ID: "widget", Language: "typescript", ImportPath: "@acme/widgets/subpath", Symbol: "Widget", Kind: "type"}}}}}
 }
 
 func TestQualifyExternalDependenciesFromCargoLock(t *testing.T) {
