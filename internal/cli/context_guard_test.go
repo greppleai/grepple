@@ -256,6 +256,30 @@ func TestWriteAnchorsDoNotSuppressPartiallyCoveredSegment(t *testing.T) {
 	guard.close()
 }
 
+func TestContextGuardCanBeDisabledInUserSettings(t *testing.T) {
+	directory := t.TempDir()
+	t.Setenv("GREPPLE_CONTEXT_GUARD_DIR", directory)
+	settingsPath := filepath.Join(t.TempDir(), "settings.json")
+	t.Setenv("GREPPLE_SETTINGS", settingsPath)
+	disabled := false
+	writeJSONFile(t, settingsPath, userSettings{ContextGuard: contextGuardSettings{Enabled: &disabled}})
+	previous := activeInlineOutputThreshold
+	activeInlineOutputThreshold = 4096
+	defer func() { activeInlineOutputThreshold = previous }()
+	result := api.FileResult{Path: "disabled.go", Segments: []api.ResultSegment{{Kind: "function", Start: 1, End: 1, Text: "func Disabled() {}"}}}
+	if guard := contextGuardForResults(&cliOptions{JSON: "off"}, []api.FileResult{result}); guard != nil {
+		guard.close()
+		t.Fatal("disabled context guard opened for search output")
+	}
+	recordWriteResponseContext(t.TempDir(), writeResponse{Applied: true}, 10)
+	if _, err := os.Stat(filepath.Join(directory, "cache.json")); !os.IsNotExist(err) {
+		t.Fatalf("disabled context guard wrote cache state: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(directory, "stats-0.json")); !os.IsNotExist(err) {
+		t.Fatalf("disabled context guard wrote statistics: %v", err)
+	}
+}
+
 func TestContextStatsSurviveCacheWriteFailure(t *testing.T) {
 	directory := t.TempDir()
 	t.Setenv("GREPPLE_CONTEXT_GUARD_DIR", directory)

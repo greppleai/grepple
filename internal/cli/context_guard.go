@@ -274,7 +274,7 @@ func (guard *segmentContextGuard) removeContextFile(source string) {
 }
 
 func recordWriteResponseContext(root string, response writeResponse, returnedBytes int) {
-	if activeInlineOutputThreshold < 1 || returnedBytes > activeInlineOutputThreshold {
+	if activeInlineOutputThreshold < 1 || returnedBytes > activeInlineOutputThreshold || !contextGuardEnabled() {
 		return
 	}
 	resolvedRoot, err := resolveWriteRoot(root)

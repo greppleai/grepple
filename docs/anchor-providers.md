@@ -35,10 +35,14 @@ Commands are configured only in the user-owned `~/.grepple/settings.json`. Repos
         "timeout_ms": 5000
       }
     }
+  },
+  "context_guard": {
+    "enabled": true
   }
 }
 ```
 
+`context_guard.enabled` defaults to `true`. Set it to `false` to disable experimental source and write-anchor context deduplication completely; disabled calls do not read or update the context cache or statistics. Keep it enabled and use `--repeat-source` when only one structural search needs complete source again.
 Native anchors require no settings. Setting `enabled_by_default` with a named `default_provider` replaces the native product default for eligible local structural, contextual, and `--line-only` searches:
 
 ```bash

@@ -15,7 +15,12 @@ const (
 )
 
 type userSettings struct {
-	Anchors anchorSettings `json:"anchors"`
+	Anchors      anchorSettings       `json:"anchors"`
+	ContextGuard contextGuardSettings `json:"context_guard,omitempty"`
+}
+
+type contextGuardSettings struct {
+	Enabled *bool `json:"enabled,omitempty"`
 }
 
 type anchorSettings struct {
@@ -52,6 +57,13 @@ func loadUserSettings() (userSettings, error) {
 		return userSettings{}, fmt.Errorf("parse %s: %w", path, err)
 	}
 	return settings, nil
+}
+func contextGuardEnabled() bool {
+	settings, err := loadUserSettings()
+	if err != nil {
+		return false
+	}
+	return settings.ContextGuard.Enabled == nil || *settings.ContextGuard.Enabled
 }
 
 func ensureJSONEnd(decoder *json.Decoder) error {

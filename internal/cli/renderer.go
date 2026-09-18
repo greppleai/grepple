@@ -55,7 +55,7 @@ func renderResults(options *cliOptions, results []api.FileResult) error {
 }
 
 func contextGuardForResults(options *cliOptions, results []api.FileResult) *segmentContextGuard {
-	if activeInlineOutputThreshold < 1 {
+	if activeInlineOutputThreshold < 1 || !contextGuardEnabled() {
 		return nil
 	}
 	guard, err := openSegmentContextGuard()
