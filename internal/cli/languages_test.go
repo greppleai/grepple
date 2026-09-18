@@ -28,15 +28,15 @@ func TestLanguagesJSONReportsRegisteredFeatureParity(t *testing.T) {
 		t.Fatalf("go capabilities=%#v", goLanguage)
 	}
 	tsx := byLanguage["tsx"]
-	if tsx.GritQL != api.FeatureProduction || tsx.FocusedStructure != api.FeatureProduction || tsx.DirectoryArchitecture != api.FeatureProduction || tsx.ImportRelations != api.FeatureProduction || tsx.Entrypoints != api.FeatureUnsupported {
+	if tsx.GritQL != api.FeatureProduction || tsx.FocusedStructure != api.FeatureProduction || tsx.DirectoryArchitecture != api.FeatureProduction || tsx.ImportRelations != api.FeatureProduction || tsx.Entrypoints != api.FeatureProduction {
 		t.Fatalf("tsx capabilities=%#v", tsx)
 	}
 	javascript := byLanguage["javascript"]
-	if javascript.Navigation != api.FeatureProduction || javascript.GritQL != api.FeatureProduction || javascript.FocusedStructure != api.FeatureProduction || javascript.FocusedFlow != api.FeatureProduction || javascript.ImportRelations != api.FeatureProduction {
+	if javascript.Navigation != api.FeatureProduction || javascript.GritQL != api.FeatureProduction || javascript.FocusedStructure != api.FeatureProduction || javascript.FocusedFlow != api.FeatureProduction || javascript.ImportRelations != api.FeatureProduction || javascript.Entrypoints != api.FeatureProduction {
 		t.Fatalf("javascript capabilities=%#v", javascript)
 	}
 	assertImportRelationCapabilities(t, byLanguage, "java", "kotlin", "csharp", "rust")
-	assertEntrypointCapabilities(t, byLanguage, "java", "kotlin", "csharp", "rust")
+	assertEntrypointCapabilities(t, byLanguage, "java", "javascript", "kotlin", "csharp", "rust", "tsx", "typescript")
 	assertRustLanguageCapabilities(t, byLanguage["rust"])
 	markdown := byLanguage["markdown"]
 	if markdown.StructuralGrep != api.FeatureSpecialized || markdown.Outline != api.FeatureSpecialized || markdown.Navigation != api.FeatureUnsupported || markdown.DirectoryArchitecture != api.FeatureUnsupported || markdown.ImportRelations != api.FeatureUnsupported {
@@ -97,10 +97,7 @@ func TestLanguageCapabilityMatrixReportsNavigationFacts(t *testing.T) {
 	if goFacts.Declarations != production || goFacts.Calls != production || goFacts.Imports != production || goFacts.TypeReferences != production || goFacts.Fields != production || goFacts.MemberAccess != production || goFacts.Entrypoints != production {
 		t.Fatalf("Go facts=%#v", goFacts)
 	}
-	javascript := byLanguage["javascript"].NavigationFacts
-	if javascript.TypeReferences != production || javascript.Fields != unsupported || javascript.MemberAccess != production || javascript.Entrypoints != unsupported {
-		t.Fatalf("JavaScript facts=%#v", javascript)
-	}
+	assertECMANavigationFacts(t, byLanguage)
 	java := byLanguage["java"].NavigationFacts
 	if java.Imports != production || java.TypeReferences != production || java.Fields != production || java.MemberAccess != production || java.Entrypoints != production {
 		t.Fatalf("Java facts=%#v", java)
@@ -117,6 +114,20 @@ func TestLanguageCapabilityMatrixReportsNavigationFacts(t *testing.T) {
 	}
 	if jsonFacts := byLanguage["json"].NavigationFacts; jsonFacts.Declarations != unsupported || jsonFacts.Calls != unsupported {
 		t.Fatalf("JSON facts=%#v", jsonFacts)
+	}
+}
+
+func assertECMANavigationFacts(t *testing.T, byLanguage map[string]api.LanguageCapabilities) {
+	t.Helper()
+	production := api.FeatureProduction
+	unsupported := api.FeatureUnsupported
+	javascript := byLanguage["javascript"].NavigationFacts
+	if javascript.TypeReferences != production || javascript.Fields != unsupported || javascript.MemberAccess != production || javascript.Entrypoints != production {
+		t.Fatalf("JavaScript facts=%#v", javascript)
+	}
+	typescript := byLanguage["typescript"].NavigationFacts
+	if typescript.Entrypoints != production || byLanguage["tsx"].NavigationFacts.Entrypoints != production {
+		t.Fatalf("TypeScript facts=%#v TSX facts=%#v", typescript, byLanguage["tsx"].NavigationFacts)
 	}
 }
 

@@ -47,7 +47,7 @@ func TestSupportedLanguagesOwnsClassificationMetadata(t *testing.T) {
 		t.Fatalf("Python import navigation missing: %#v", python)
 	}
 	assertImportNavigationCapabilities(t, "java", "kotlin", "csharp", "rust")
-	assertEntrypointNavigationCapabilities(t, "go", "c", "cpp", "java", "kotlin", "csharp", "python", "rust")
+	assertEntrypointNavigationCapabilities(t, "go", "c", "cpp", "java", "javascript", "kotlin", "csharp", "python", "rust", "tsx", "typescript")
 }
 
 func assertImportNavigationCapabilities(t *testing.T, ids ...string) {
@@ -98,9 +98,9 @@ func TestSupportedContentLanguagesIncludesSpecializedFormats(t *testing.T) {
 func TestNavigationFactCapabilitiesAreAdapterOwned(t *testing.T) {
 	want := map[string]NavigationFactCapabilities{
 		"go":         {Declarations: true, Calls: true, Imports: true, TypeReferences: true, Fields: true, MemberAccess: true, Entrypoints: true},
-		"javascript": {Declarations: true, Calls: true, Imports: true, TypeReferences: true, MemberAccess: true},
-		"typescript": {Declarations: true, Calls: true, Imports: true, TypeReferences: true, Fields: true, MemberAccess: true},
-		"tsx":        {Declarations: true, Calls: true, Imports: true, TypeReferences: true, Fields: true, MemberAccess: true},
+		"javascript": {Declarations: true, Calls: true, Imports: true, TypeReferences: true, MemberAccess: true, Entrypoints: true},
+		"typescript": {Declarations: true, Calls: true, Imports: true, TypeReferences: true, Fields: true, MemberAccess: true, Entrypoints: true},
+		"tsx":        {Declarations: true, Calls: true, Imports: true, TypeReferences: true, Fields: true, MemberAccess: true, Entrypoints: true},
 		"python":     {Declarations: true, Calls: true, Imports: true, TypeReferences: true, Fields: true, MemberAccess: true, Entrypoints: true},
 		"java":       {Declarations: true, Calls: true, Imports: true, TypeReferences: true, Fields: true, MemberAccess: true, Entrypoints: true},
 		"kotlin":     {Declarations: true, Calls: true, Imports: true, TypeReferences: true, Fields: true, MemberAccess: true, Entrypoints: true},

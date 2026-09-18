@@ -89,6 +89,39 @@ func TestNavigationGraphCapturesPythonProcessEntrypoints(t *testing.T) {
 	}
 }
 
+func TestNavigationGraphCapturesCommonJSProcessEntrypoints(t *testing.T) {
+	for _, test := range []struct {
+		name, language, path, content string
+		want                          int
+	}{
+		{name: "javascript block guard", language: "javascript", path: "app.js", content: "function launch() {}\nif (require.main === module) { launch(); }\n", want: 1},
+		{name: "javascript reversed direct guard", language: "javascript", path: "app.js", content: "function launch() {}\nif (module === require.main) launch();\n", want: 1},
+		{name: "javascript exported function", language: "javascript", path: "app.js", content: "export function launch() {}\nif (require.main === module) { launch(); }\n", want: 1},
+		{name: "typescript guard", language: "typescript", path: "app.ts", content: "function launch(): void {}\nif (require.main === module) { launch(); }\n", want: 1},
+		{name: "typescript commonjs extension", language: "typescript", path: "app.cts", content: "function launch(): void {}\nif (require.main === module) { launch(); }\n", want: 1},
+		{name: "name only", language: "javascript", path: "app.js", content: "function main() {}\n"},
+		{name: "loose equality", language: "javascript", path: "app.js", content: "function launch() {}\nif (require.main == module) { launch(); }\n"},
+		{name: "indirect call", language: "javascript", path: "app.js", content: "function launch() {}\nif (require.main === module) { const selected = launch; selected(); }\n"},
+		{name: "duplicate declarations", language: "javascript", path: "app.js", content: "function launch() {}\nfunction launch() {}\nif (require.main === module) { launch(); }\n"},
+		{name: "nested declaration", language: "javascript", path: "app.js", content: "function outer() { function launch() {} }\nif (require.main === module) { launch(); }\n"},
+		{name: "explicit esm typescript", language: "typescript", path: "app.mts", content: "function launch(): void {}\nif (require.main === module) { launch(); }\n"},
+		{name: "tsx guard", language: "tsx", path: "app.tsx", content: "function launch(): void {}\nif (require.main === module) { launch(); }\n", want: 1},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			graph := BuildNavigationGraph(test.content, test.language, test.path)
+			got := 0
+			for _, declaration := range graph.Declarations {
+				if declaration.Entrypoint == "process" {
+					got++
+				}
+			}
+			if got != test.want {
+				t.Fatalf("process entrypoints=%d want=%d declarations=%+v", got, test.want, graph.Declarations)
+			}
+		})
+	}
+}
+
 func TestNavigationGraphCapturesRustProcessEntrypoints(t *testing.T) {
 	for _, test := range []struct {
 		name, path, content string

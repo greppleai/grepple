@@ -2,8 +2,8 @@ package parser
 
 import "strings"
 
-func ecmaNavigationAdapter(rules *structureRules, fieldFacts bool) navigationAdapter {
-	return &navigationAdapterConfig{
+func ecmaNavigationAdapter(rules *structureRules, fieldFacts, entrypointFacts bool) navigationAdapter {
+	adapter := &navigationAdapterConfig{
 		rules: rules, callTypes: newStringSet("call_expression", "new_expression"), extraContainerTypes: newStringSet("interface_declaration"),
 		fieldContainerTypes: newStringSet("class_declaration", "interface_declaration"), selfBindingName: "this", selfBindingFromContainer: true,
 		visibility: typeScriptAdapterVisibility, sourceFacts: typeScriptNavigationSourceFacts, exports: typeScriptNavigationExports,
@@ -12,6 +12,130 @@ func ecmaNavigationAdapter(rules *structureRules, fieldFacts bool) navigationAda
 			return navigationReturnBindingFromFields(node, content, imports, "return_type", "type")
 		},
 	}
+	if entrypointFacts {
+		adapter.entrypoint = ecmaNavigationEntrypoint
+	}
+	return adapter
+}
+
+func ecmaNavigationEntrypoint(context navigationEntrypointContext) string {
+	if context.node.Kind() != "function_declaration" || context.name == "" || strings.HasSuffix(strings.ToLower(context.path), ".mts") {
+		return ""
+	}
+	root := ecmaTopLevelRoot(context.node)
+	if root == nil || ecmaTopLevelFunctionCount(root, context.name) != 1 {
+		return ""
+	}
+	for _, statement := range root.NamedChildren() {
+		if statement.Kind() == "if_statement" && ecmaCommonJSGuardCalls(statement, context.name) {
+			return "process"
+		}
+	}
+	return ""
+}
+
+func ecmaTopLevelRoot(node *syntaxNode) *syntaxNode {
+	parent := node.Parent()
+	if parent != nil && parent.Kind() == "export_statement" {
+		parent = parent.Parent()
+	}
+	if parent != nil && parent.Kind() == "program" {
+		return parent
+	}
+	return nil
+}
+
+func ecmaTopLevelFunctionCount(root *syntaxNode, name string) int {
+	count := 0
+	for _, statement := range root.NamedChildren() {
+		candidate := statement
+		if statement.Kind() == "export_statement" {
+			for _, child := range statement.NamedChildren() {
+				if child.Kind() == "function_declaration" {
+					candidate = child
+					break
+				}
+			}
+		}
+		if candidate.Kind() == "function_declaration" && navigationFieldText(candidate, "name", "") == name {
+			count++
+		}
+	}
+	return count
+}
+
+func ecmaCommonJSGuardCalls(statement *syntaxNode, name string) bool {
+	if !ecmaCommonJSMainCondition(statement.ChildByFieldName("condition")) {
+		return false
+	}
+	consequence := statement.ChildByFieldName("consequence")
+	if consequence == nil {
+		return false
+	}
+	if consequence.Kind() == "expression_statement" {
+		return ecmaDirectCallStatement(consequence, name)
+	}
+	if consequence.Kind() != "statement_block" {
+		return false
+	}
+	for _, child := range consequence.NamedChildren() {
+		if ecmaDirectCallStatement(child, name) {
+			return true
+		}
+	}
+	return false
+}
+
+func ecmaDirectCallStatement(statement *syntaxNode, name string) bool {
+	if statement.Kind() != "expression_statement" {
+		return false
+	}
+	expressions := statement.NamedChildren()
+	if len(expressions) != 1 || expressions[0].Kind() != "call_expression" {
+		return false
+	}
+	function := expressions[0].ChildByFieldName("function")
+	return function != nil && function.Kind() == "identifier" && function.Text() == name
+}
+
+func ecmaCommonJSMainCondition(condition *syntaxNode) bool {
+	for condition != nil && condition.Kind() == "parenthesized_expression" {
+		children := condition.NamedChildren()
+		if len(children) != 1 {
+			return false
+		}
+		condition = children[0]
+	}
+	if condition == nil || condition.Kind() != "binary_expression" {
+		return false
+	}
+	left := condition.ChildByFieldName("left")
+	right := condition.ChildByFieldName("right")
+	if left == nil || right == nil || !ecmaStrictEqualityOperator(condition) {
+		return false
+	}
+	return ecmaCommonJSMainOperands(left, right) || ecmaCommonJSMainOperands(right, left)
+}
+
+func ecmaStrictEqualityOperator(condition *syntaxNode) bool {
+	if operator := condition.ChildByFieldName("operator"); operator != nil {
+		return operator.Text() == "==="
+	}
+	for _, child := range condition.Children() {
+		if child.Kind() == "===" {
+			return true
+		}
+	}
+	return false
+}
+
+func ecmaCommonJSMainOperands(requireMain, module *syntaxNode) bool {
+	if module.Kind() != "identifier" || module.Text() != "module" || requireMain.Kind() != "member_expression" {
+		return false
+	}
+	object := requireMain.ChildByFieldName("object")
+	property := requireMain.ChildByFieldName("property")
+	return object != nil && property != nil && object.Kind() == "identifier" && object.Text() == "require" && property.Text() == "main"
 }
 
 func typeScriptNavigationSourceFacts(root *syntaxNode, content string, adapter *navigationAdapterConfig) (map[string]navigationImport, string, map[string]map[string]navigationBinding) {

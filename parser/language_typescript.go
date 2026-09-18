@@ -51,7 +51,7 @@ func (language *typeScriptLanguage) Parse(content string) (*syntaxTree, error) {
 }
 func (language *typeScriptLanguage) Rules() *structureRules { return &language.rules }
 func (language *typeScriptLanguage) Navigation() navigationAdapter {
-	return ecmaNavigationAdapter(&language.rules, true)
+	return ecmaNavigationAdapter(&language.rules, true, true)
 }
 func (language *typeScriptLanguage) Outline(root *syntaxNode, content string) []Symbol {
 	return outlineTSJS(root, content, &language.rules)
