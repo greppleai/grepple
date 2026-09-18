@@ -62,6 +62,7 @@ type NavigationArtifactIdentity struct {
 	Ecosystem  string `json:"ecosystem"`
 	Module     string `json:"module"`
 	Version    string `json:"version"`
+	RefKind    string `json:"refKind,omitempty"`
 	Integrity  string `json:"integrity,omitempty"`
 	Repository string `json:"repository,omitempty"`
 	Commit     string `json:"commit,omitempty"`
