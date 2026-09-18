@@ -93,7 +93,7 @@ The internal agent receives a small set of typed, read-only tools:
 - `navigate_code`: exact `PATH:LINE` declaration retrieval with bounded callers and callees.
 - `structural_search`: native `gritql-v1` syntax matching.
 - `inspect_architecture`: local or exact indexed-repository directory architecture, symbol resolution, relation evidence, and responsibility summaries.
-- `query_graph`: local or exact indexed-repository bounded callers, callees, dependencies, dependents, and impact queries.
+- `query_graph`: local or exact indexed-repository bounded navigation queries. `dependencies` traverses outgoing call/navigation edges and `dependents` traverses incoming edges; neither represents a package-manager or build-system dependency graph.
 - `explain_sources`: source classifications, exclusions, and completeness.
 - `repository_refs`: exact indexed default-branch, branch, and tag selectors for one source repository.
 - `repository_tree`: bounded indexed-repository path discovery.

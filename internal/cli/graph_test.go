@@ -347,6 +347,28 @@ func TestGraphRecursiveHelpStatesOutputContract(t *testing.T) {
 	}
 }
 
+func TestGraphDependencyHelpDefinesNavigationSemantics(t *testing.T) {
+	tests := []struct {
+		command string
+		want    string
+	}{
+		{command: "dependencies", want: "dependencies traverse outgoing call/navigation edges; they are not build-system or package-manager dependencies"},
+		{command: "dependents", want: "dependents traverse incoming call/navigation edges; they are not build-system or package-manager dependents"},
+	}
+	for _, test := range tests {
+		t.Run(test.command, func(t *testing.T) {
+			output := captureStdout(t, func() {
+				if err := Run([]string{"help", "graph", test.command}); err != nil {
+					t.Fatal(err)
+				}
+			})
+			if !strings.Contains(output, test.want) {
+				t.Fatalf("graph %s help did not define its edge semantics:\n%s", test.command, output)
+			}
+		})
+	}
+}
+
 func TestGraphReportsDiscoveredParsedSkippedFailedAndRecoveredSources(t *testing.T) {
 	root := t.TempDir()
 	writeGraphSource(t, root, "valid.go", "package sample\nfunc Valid() {}\n")

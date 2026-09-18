@@ -40,6 +40,17 @@ func (graphQueryArgs) Description() string {
 	return "Query a deterministic local or exact indexed-repository navigation graph. Exactly one of --json or --compact and exactly one root selector are required."
 }
 
+func graphQuerySemantics(direction search.NavigationQueryDirection) string {
+	switch direction {
+	case search.NavigationQueryDependencies:
+		return "Navigation semantics: dependencies traverse outgoing call/navigation edges; they are not build-system or package-manager dependencies."
+	case search.NavigationQueryDependents:
+		return "Navigation semantics: dependents traverse incoming call/navigation edges; they are not build-system or package-manager dependents."
+	default:
+		return ""
+	}
+}
+
 func runGraphQuery(direction search.NavigationQueryDirection, args []string) error {
 	values := graphQueryArgs{MaxOutputBytes: DefaultTextOutputBytes, Depth: 1}
 	argumentParser, err := arg.NewParser(arg.Config{Program: "grepple graph " + string(direction)}, &values)
@@ -51,6 +62,9 @@ func runGraphQuery(direction search.NavigationQueryDirection, args []string) err
 			argumentParser.WriteHelp(os.Stdout)
 			fmt.Fprintln(os.Stdout, "Required output mode: (--json | --compact); choose exactly one.")
 			fmt.Fprintln(os.Stdout, "Required root selector: choose exactly one of --symbol, --at, --package, --module, or --root-path.")
+			if semantics := graphQuerySemantics(direction); semantics != "" {
+				fmt.Fprintln(os.Stdout, semantics)
+			}
 			return nil
 		}
 		return err
