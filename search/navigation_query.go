@@ -153,14 +153,15 @@ func includeQueryCallDeclarations(call parser.NavigationCall, declarations map[s
 
 func projectNavigationQuery(graph parser.NavigationGraph, included, includedCalls map[string]bool) parser.NavigationGraph {
 	result := parser.NavigationGraph{
-		Declarations:    make([]parser.NavigationDeclaration, 0, len(included)),
-		Imports:         make([]parser.NavigationImport, 0),
-		Calls:           make([]parser.NavigationCall, 0, len(includedCalls)),
-		Exports:         make([]parser.NavigationExport, 0),
-		Fields:          make([]parser.NavigationField, 0),
-		TypeUsages:      make([]parser.NavigationTypeUsage, 0),
-		MemberAccesses:  make([]parser.NavigationMemberAccess, 0),
-		RepositoryRoots: append([]string(nil), graph.RepositoryRoots...),
+		Declarations:     make([]parser.NavigationDeclaration, 0, len(included)),
+		TypeDeclarations: make([]parser.NavigationTypeDeclaration, 0),
+		Imports:          make([]parser.NavigationImport, 0),
+		Calls:            make([]parser.NavigationCall, 0, len(includedCalls)),
+		Exports:          make([]parser.NavigationExport, 0),
+		Fields:           make([]parser.NavigationField, 0),
+		TypeUsages:       make([]parser.NavigationTypeUsage, 0),
+		MemberAccesses:   make([]parser.NavigationMemberAccess, 0),
+		RepositoryRoots:  append([]string(nil), graph.RepositoryRoots...),
 	}
 	for _, declaration := range graph.Declarations {
 		if included[declaration.ID] {
@@ -185,6 +186,11 @@ func projectNavigationContextFacts(graph parser.NavigationGraph, result *parser.
 		}
 	}
 	files := navigationQueryFiles(result.Declarations, result.Calls, result.Fields)
+	for _, declaration := range graph.TypeDeclarations {
+		if files[declaration.Path] {
+			result.TypeDeclarations = append(result.TypeDeclarations, declaration)
+		}
+	}
 	for _, item := range graph.Imports {
 		if files[item.Path] {
 			result.Imports = append(result.Imports, item)

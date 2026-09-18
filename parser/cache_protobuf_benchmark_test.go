@@ -43,6 +43,7 @@ func Run() { client := NewClient(); client.Load() }
 	}
 	projection := graph
 	projection.Calls = append([]NavigationCall(nil), graph.Calls...)
+	projection.TypeDeclarations = nil
 	projection.Imports = nil
 	projection.Exports = nil
 	projection.Fields = nil

@@ -226,6 +226,10 @@ func enrichNavigationRepositoryIdentity(graph *parser.NavigationGraph, sourcePat
 		graph.Declarations[index].ModuleID = moduleID
 		graph.Declarations[index].PackageID = packageID
 	}
+	for index := range graph.TypeDeclarations {
+		graph.TypeDeclarations[index].ModuleID = moduleID
+		graph.TypeDeclarations[index].PackageID = packageID
+	}
 }
 
 func goModuleForFile(sourcePath string) (root, moduleID string, ok bool) {

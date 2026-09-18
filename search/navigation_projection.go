@@ -37,21 +37,8 @@ func newResolvedNavigationIndex(graph parser.NavigationGraph, contents map[strin
 		graphPaths[filepath.Clean(displayPathFrom(sourcePath, cwd))] = cleanPath
 	}
 	sort.Strings(paths)
-	for _, declaration := range graph.Declarations {
-		terminal := terminalSymbolName(declaration.Name)
-		if terminal == "" {
-			continue
-		}
-		cleanPath := resolvedNavigationSourcePath(declaration.Path, graphPaths)
-		item := navigationDeclaration{
-			id: declaration.ID, terminal: terminal, container: navigationDeclarationContainer(declaration), returnType: declaration.ResultType, returnImportPath: declaration.ResultImportPath, packageName: declaration.Package, moduleScope: declaration.Scope, visibilityDetail: declaration.VisibilityDetail, language: declaration.Language, file: cleanPath, matchStart: declaration.Start,
-			point: RelatedPoint{Name: declaration.Name, Path: declaration.Path, File: cleanPath, Kind: declaration.Kind, Start: declaration.Start, End: declaration.End},
-		}
-		index.declarations[navigationSymbolKey(declaration.Language, terminal)] = append(index.declarations[navigationSymbolKey(declaration.Language, terminal)], item)
-		index.byFile[cleanPath] = append(index.byFile[cleanPath], item)
-		index.byLocation[relatedLocationKey(item.point)] = item
-		index.byID[item.id] = item
-	}
+	indexRelatedDeclarations(index, graph.Declarations, graphPaths)
+	indexRelatedTypeFacts(index, graph, graphPaths)
 	for _, call := range graph.Calls {
 		caller, ok := index.byID[call.CallerID]
 		if !ok {
@@ -66,6 +53,57 @@ func newResolvedNavigationIndex(graph parser.NavigationGraph, contents map[strin
 		}
 	}
 	return index
+}
+
+func indexRelatedDeclarations(index *navigationIndex, declarations []parser.NavigationDeclaration, graphPaths map[string]string) {
+	for _, declaration := range declarations {
+		terminal := terminalSymbolName(declaration.Name)
+		if terminal == "" {
+			continue
+		}
+		cleanPath := resolvedNavigationSourcePath(declaration.Path, graphPaths)
+		item := navigationDeclaration{
+			id: declaration.ID, terminal: terminal, container: navigationDeclarationContainer(declaration), returnType: declaration.ResultType, returnImportPath: declaration.ResultImportPath, packageName: declaration.Package, packageID: declaration.PackageID, moduleScope: declaration.Scope, visibilityDetail: declaration.VisibilityDetail, language: declaration.Language, file: cleanPath, matchStart: declaration.Start,
+			point: RelatedPoint{Name: declaration.Name, Path: declaration.Path, File: cleanPath, Kind: declaration.Kind, Start: declaration.Start, End: declaration.End},
+		}
+		index.declarations[navigationSymbolKey(declaration.Language, terminal)] = append(index.declarations[navigationSymbolKey(declaration.Language, terminal)], item)
+		index.byFile[cleanPath] = append(index.byFile[cleanPath], item)
+		index.byLocation[relatedLocationKey(item.point)] = item
+		index.byID[item.id] = item
+	}
+}
+
+func indexRelatedTypeFacts(index *navigationIndex, graph parser.NavigationGraph, graphPaths map[string]string) {
+	for _, declaration := range graph.TypeDeclarations {
+		terminal := terminalSymbolName(declaration.Name)
+		if terminal == "" {
+			continue
+		}
+		cleanPath := resolvedNavigationSourcePath(declaration.Path, graphPaths)
+		item := navigationTypeDeclaration{
+			terminal: terminal, packageName: declaration.Package, packageID: declaration.PackageID, language: declaration.Language, file: cleanPath,
+			point: RelatedPoint{Name: declaration.Name, Path: declaration.Path, File: cleanPath, Kind: declaration.Kind, Start: declaration.Start, End: declaration.End},
+		}
+		key := navigationSymbolKey(declaration.Language, terminal)
+		index.types[key] = append(index.types[key], item)
+	}
+	for _, usage := range graph.TypeUsages {
+		index.typeUsages[usage.CallerID] = append(index.typeUsages[usage.CallerID], navigationTypeUsage{typeName: usage.Type, importPath: usage.ImportPath, role: usage.Role, line: usage.Line})
+	}
+	for _, fact := range graph.Imports {
+		indexRelatedTypeImport(index, fact, graphPaths)
+	}
+}
+
+func indexRelatedTypeImport(index *navigationIndex, fact parser.NavigationImport, graphPaths map[string]string) {
+	if fact.ImportPath == "" || len(fact.TargetPaths) == 0 {
+		return
+	}
+	sourcePath := resolvedNavigationSourcePath(fact.Path, graphPaths)
+	key := typeImportTargetKey(sourcePath, fact.ImportPath)
+	for _, target := range fact.TargetPaths {
+		index.typeImportTargets[key] = append(index.typeImportTargets[key], resolvedNavigationSourcePath(target, graphPaths))
+	}
 }
 
 func resolvedNavigationSourcePath(graphPath string, paths map[string]string) string {

@@ -31,13 +31,14 @@ func FilterNavigationGraph(graph parser.NavigationGraph, filter NavigationGraphF
 		return parser.NavigationGraph{}, err
 	}
 	declarations, included := filterNavigationDeclarations(graph.Declarations, languages, visibilities)
+	typeDeclarations := filterNavigationTypeDeclarations(graph.TypeDeclarations, languages)
 	imports := filterNavigationImports(graph.Imports, languages)
 	calls := filterNavigationCalls(graph.Calls, included, languages, confidences)
 	exports := filterNavigationExports(graph.Exports, languages)
 	fields := filterNavigationFields(graph.Fields, languages)
 	usages := filterNavigationTypeUsages(graph.TypeUsages, included, languages)
 	accesses := filterNavigationMemberAccesses(graph.MemberAccesses, included, languages)
-	return parser.NavigationGraph{Declarations: declarations, Calls: calls, Imports: imports, Exports: exports, Fields: fields, TypeUsages: usages, MemberAccesses: accesses, RepositoryRoots: append([]string(nil), graph.RepositoryRoots...)}, nil
+	return parser.NavigationGraph{Declarations: declarations, TypeDeclarations: typeDeclarations, Calls: calls, Imports: imports, Exports: exports, Fields: fields, TypeUsages: usages, MemberAccesses: accesses, RepositoryRoots: append([]string(nil), graph.RepositoryRoots...)}, nil
 }
 
 // NormalizeNavigationGraphFilter returns sorted, duplicate-free values after validation.
@@ -119,6 +120,16 @@ func filterNavigationCalls(calls []parser.NavigationCall, declarations, language
 		}
 		call.CandidateTargetIDs = filterNavigationTargetIDs(call.CandidateTargetIDs, declarations)
 		filtered = append(filtered, call)
+	}
+	return filtered
+}
+
+func filterNavigationTypeDeclarations(declarations []parser.NavigationTypeDeclaration, languages map[string]bool) []parser.NavigationTypeDeclaration {
+	filtered := make([]parser.NavigationTypeDeclaration, 0, len(declarations))
+	for _, declaration := range declarations {
+		if len(languages) == 0 || languages[declaration.Language] {
+			filtered = append(filtered, declaration)
+		}
 	}
 	return filtered
 }

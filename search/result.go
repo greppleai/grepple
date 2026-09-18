@@ -32,7 +32,7 @@ func ToResult(m FileMatch, segs []parser.Segment, beforeContext, afterContext in
 	related := relatedSymbols(m.Related)
 	r := api.FileResult{
 		Path: m.DisplayPath, Language: m.Language, StructureStatus: string(m.StructureStatus), Matches: matches, Segments: rs, Related: related,
-		OmittedRelatedCallers: m.OmittedRelatedCallers, OmittedRelatedCallees: m.OmittedRelatedCallees,
+		OmittedRelatedCallers: m.OmittedRelatedCallers, OmittedRelatedCallees: m.OmittedRelatedCallees, OmittedRelatedTypes: m.OmittedRelatedTypes,
 	}
 	if beforeContext > 0 || afterContext > 0 {
 		r.Context = ContextLines(m.Content, m.MatchLines, beforeContext, afterContext)
@@ -81,13 +81,14 @@ func relatedSymbols(points []RelatedPoint) []api.RelatedSymbol {
 	for _, point := range points {
 		symbol := api.RelatedSymbol{
 			Name: point.Name, Path: point.Path, Kind: point.Kind, Direction: point.Direction,
-			Start: point.Start, End: point.End, CallLine: point.CallLine, Confidence: point.Confidence,
+			Start: point.Start, End: point.End, CallLine: point.CallLine, Confidence: point.Confidence, Role: point.Role,
 		}
 		if point.Preview != nil {
 			symbol.Segments = resultSegments(point.Preview.Content, []parser.Segment{{Kind: "lines", Start: point.Preview.Start, End: point.Preview.End}})
 			symbol.Related = relatedSymbols(point.Preview.Related)
 			symbol.OmittedCallers = point.Preview.OmittedCallers
 			symbol.OmittedCallees = point.Preview.OmittedCallees
+			symbol.OmittedTypes = point.Preview.OmittedTypes
 		}
 		related = append(related, symbol)
 	}

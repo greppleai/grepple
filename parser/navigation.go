@@ -82,6 +82,20 @@ type NavigationTypeUsage struct {
 	Line       int    `json:"line"`
 }
 
+// NavigationTypeDeclaration records a source-declared type and its complete syntax range.
+type NavigationTypeDeclaration struct {
+	Name      string `json:"name"`
+	Kind      string `json:"kind"`
+	Language  string `json:"language"`
+	Path      string `json:"path"`
+	Container string `json:"container,omitempty"`
+	Package   string `json:"package,omitempty"`
+	PackageID string `json:"packageId,omitempty"`
+	ModuleID  string `json:"moduleId,omitempty"`
+	Start     int    `json:"startLine"`
+	End       int    `json:"endLine"`
+}
+
 // NavigationExport describes a module export or re-export used for import resolution.
 type NavigationExport struct {
 	Name             string `json:"name"`
@@ -127,19 +141,21 @@ type NavigationMemberAccess struct {
 // type, field, export, and member-access model. Language-specific consumers may
 // enrich its syntax facts with package, module, receiver, or repository context.
 type NavigationGraph struct {
-	Declarations    []NavigationDeclaration  `json:"declarations"`
-	Imports         []NavigationImport       `json:"imports,omitempty"`
-	Calls           []NavigationCall         `json:"calls"`
-	Exports         []NavigationExport       `json:"exports,omitempty"`
-	Fields          []NavigationField        `json:"fields,omitempty"`
-	TypeUsages      []NavigationTypeUsage    `json:"typeUsages,omitempty"`
-	MemberAccesses  []NavigationMemberAccess `json:"memberAccesses,omitempty"`
-	RepositoryRoots []string                 `json:"repositoryRoots,omitempty"`
+	Declarations     []NavigationDeclaration     `json:"declarations"`
+	TypeDeclarations []NavigationTypeDeclaration `json:"typeDeclarations,omitempty"`
+	Imports          []NavigationImport          `json:"imports,omitempty"`
+	Calls            []NavigationCall            `json:"calls"`
+	Exports          []NavigationExport          `json:"exports,omitempty"`
+	Fields           []NavigationField           `json:"fields,omitempty"`
+	TypeUsages       []NavigationTypeUsage       `json:"typeUsages,omitempty"`
+	MemberAccesses   []NavigationMemberAccess    `json:"memberAccesses,omitempty"`
+	RepositoryRoots  []string                    `json:"repositoryRoots,omitempty"`
 }
 
 // Merge appends another source graph while preserving source and syntax order.
 func (graph *NavigationGraph) Merge(other NavigationGraph) {
 	graph.Declarations = append(graph.Declarations, other.Declarations...)
+	graph.TypeDeclarations = append(graph.TypeDeclarations, other.TypeDeclarations...)
 	graph.Imports = append(graph.Imports, other.Imports...)
 	graph.Calls = append(graph.Calls, other.Calls...)
 	graph.Exports = append(graph.Exports, other.Exports...)
@@ -214,7 +230,7 @@ func navigationGraphFromTree(root *syntaxNode, content, language, path string) N
 	returnBindings := navigationReturnBindings(root, content, imports, navigation)
 	collector := navigationCollector{content: content, adapter: adapter, navigation: navigation, path: path, imports: imports, fields: fields, returnBindings: returnBindings, packageName: packageName}
 	collector.walk(root, navigationWalkContext{imports: navigationImportsAtScope(imports, "")})
-	return NavigationGraph{Declarations: collector.declarations, Calls: collector.calls, Imports: navigationImportFacts(imports, language, path), Exports: navigation.Exports(root, content, language, path), Fields: navigationFieldFacts(fields, language, path, packageName), TypeUsages: collector.typeUsages, MemberAccesses: collector.memberAccesses}
+	return NavigationGraph{Declarations: collector.declarations, TypeDeclarations: navigationTypeDeclarations(adapter.Outline(root, content), language, path, packageName), Calls: collector.calls, Imports: navigationImportFacts(imports, language, path), Exports: navigation.Exports(root, content, language, path), Fields: navigationFieldFacts(fields, language, path, packageName), TypeUsages: collector.typeUsages, MemberAccesses: collector.memberAccesses}
 }
 
 // DeclarationRangeAt returns the narrowest callable declaration containing line.

@@ -272,14 +272,14 @@ nested.load(); // NESTED_CALLER_NEEDLE
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(secondMatches) != 1 || len(secondMatches[0].Related) != 0 {
+	if len(secondMatches) != 1 || len(relatedCallPoints(secondMatches[0].Related)) != 0 {
 		t.Fatalf("import-resolved call was attributed to the other module: %#v", secondMatches)
 	}
 	secondMethodMatches, err := Files(Params{Query: "SECOND_METHOD_NEEDLE", Related: true}, files)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(secondMethodMatches) != 1 || len(secondMethodMatches[0].Related) != 0 {
+	if len(secondMethodMatches) != 1 || len(relatedCallPoints(secondMethodMatches[0].Related)) != 0 {
 		t.Fatalf("receiver-resolved call was attributed to the other module: %#v", secondMethodMatches)
 	}
 }

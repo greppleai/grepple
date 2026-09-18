@@ -15,7 +15,7 @@ import (
 func TestGraphJSONEmitsResolvedDeterministicGraph(t *testing.T) {
 	dir := chdirTemp(t)
 	t.Setenv(parser.NavigationCacheDirectoryEnv, filepath.Join(dir, ".grepple", "cache", "navigation"))
-	writeGraphSource(t, dir, "main.go", "package sample\nfunc Run(){ helper() }\n")
+	writeGraphSource(t, dir, "main.go", "package sample\ntype Input struct{ Value string }\nfunc Run(input Input){ helper() }\n")
 	writeGraphSource(t, dir, "helper.go", "package sample\nfunc helper() {}\n")
 	writeGraphSource(t, dir, "notes.txt", "ignored\n")
 	first := captureStdout(t, func() {
@@ -35,7 +35,7 @@ func TestGraphJSONEmitsResolvedDeterministicGraph(t *testing.T) {
 	if err := json.Unmarshal([]byte(first), &output); err != nil {
 		t.Fatal(err)
 	}
-	if output.Schema != navigationGraphSchema || output.Files != 2 || len(output.Declarations) != 2 || len(output.Calls) != 1 {
+	if output.Schema != navigationGraphSchema || output.Files != 2 || len(output.Declarations) != 2 || len(output.TypeDeclarations) != 1 || len(output.TypeUsages) != 1 || len(output.Calls) != 1 {
 		t.Fatalf("output=%#v", output)
 	}
 	assertGraphResolutionStats(t, output.Resolution)
@@ -95,7 +95,7 @@ func TestGraphCompactEmitsBoundedAgentFacingEdges(t *testing.T) {
 			t.Fatal(err)
 		}
 	})
-	for _, expected := range []string{"graph grepple-navigation-graph-v6 files=1 declarations=2 calls=1", "entrypoints=0", "D ", " go func Run main.go:2", "C ", " Run -> helper#", "[unique-terminal] main.go:2"} {
+	for _, expected := range []string{"graph grepple-navigation-graph-v7 files=1 declarations=2 calls=1", "entrypoints=0", "D ", " go func Run main.go:2", "C ", " Run -> helper#", "[unique-terminal] main.go:2"} {
 		if !strings.Contains(output, expected) {
 			t.Fatalf("compact graph missing %q:\n%s", expected, output)
 		}

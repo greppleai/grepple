@@ -77,7 +77,7 @@ This file records completed Grepple roadmap work that no longer belongs in `next
 - [x] Added deterministic ambiguity fixtures for interfaces, overloads, inheritance, re-exports, default imports, aliases, and TSX path aliases.
 - [x] Reported omitted callers and callees in human and JSON related output.
 - [x] Made every human omitted-edge notice provide a copyable focused `graph callers|callees|impact --at PATH:LINE --depth 2 --json .` continuation.
-- [x] Added complete `grepple-navigation-graph-v6` JSON and bounded compact graph projections, including adapter-evidenced process entrypoints, C/C++ include facts, scoped Rust modules, and exact restricted-visibility details.
+- [x] Added complete `grepple-navigation-graph-v7` JSON with source-declared type ranges and callable type-use roles, while retaining bounded compact callable projections, adapter-evidenced process entrypoints, C/C++ include facts, scoped Rust modules, and exact restricted-visibility details.
 - [x] Added deterministic discovered, selected, parsed, skipped, failed, recovered, and truncated source accounting to graphs, focused graph queries, graph diffs, and boundary reports.
 - [x] Added graph-wide and per-language/confidence resolution measurements, including resolved, ambiguous, unresolved, singleton-candidate counts, and ambiguity frequency in complete JSON plus compact aggregate headers.
 - [x] Added parser-owned content- and grammar-addressed per-file navigation facts shared by graph output/queries, `--related`, boundaries, and extraction, with atomic corruption-tolerant storage, path instantiation, explicit bypass, cold/warm parity tests, and a repeatable benchmark.
@@ -175,6 +175,7 @@ This file records completed Grepple roadmap work that no longer belongs in `next
 - [x] Added JavaScript/JSX, Python, Java, Kotlin, and C# focused architecture adapters on the shared parser/navigation infrastructure.
 - [x] Added native GritQL support for every Tree-sitter-backed language in the capability registry.
 - [x] Made target-language GritQL conformance fixtures diagnostics-aware and added explicit malformed-source `SOURCE_PARSE` cases for JavaScript, TypeScript, TSX, Python, C, C++, C#, Java, Kotlin, Rust, and Shell alongside existing Go scanner/integration coverage.
+- [x] Added bounded `--related` parameter, receiver, local, and result type evidence with complete inline source declarations, explicit omission counts, and project-universe import resolution even when the text-search path is narrower.
 - [x] Added conservative JavaScript and TypeScript/TSX process-entrypoint facts for a unique top-level function directly called by a syntax-evidenced strict `require.main === module` CommonJS guard, while leaving loose, indirect, nested, duplicate, explicit `.mts` ESM, manifest-selected, and build-output forms unclassified.
 - [x] Added conservative Python process-entrypoint facts for a unique synchronous top-level runtime-source function directly called by a syntax-evidenced top-level `if __name__ == "__main__"` guard, without promoting `.pyi` stubs, naming-only, indirect, method, duplicate, async-without-await, or alternate-condition forms.
 - [x] Added conservative Rust process-entrypoint facts for top-level `main` functions in selected binary crate roots without treating library or nested-module functions as entrypoints.

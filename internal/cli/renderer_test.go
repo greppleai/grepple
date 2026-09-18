@@ -86,6 +86,7 @@ func TestSegmentRendererPrintsRelatedGoPoints(t *testing.T) {
 	results := []api.FileResult{{
 		Path: "caller.go",
 		Related: []api.RelatedSymbol{
+			{Name: "Request", Path: "request.go", Kind: "struct", Direction: "type", Role: "parameter", Start: 2, End: 4, CallLine: 7, Confidence: "import-resolved", Segments: []api.ResultSegment{{Kind: "lines", Start: 2, End: 4, Text: "type Request struct {\n\tName string\n}"}}},
 			{
 				Name: "service.Load → (*Store).Load", Path: "store.go", Kind: "method", Direction: "callee",
 				Start: 12, End: 24, CallLine: 8, Confidence: "candidate",
@@ -93,11 +94,13 @@ func TestSegmentRendererPrintsRelatedGoPoints(t *testing.T) {
 				Related:        []api.RelatedSymbol{{Name: "validate", Path: "validate.go", Direction: "callee", Start: 3, End: 7, CallLine: 13, Confidence: "unique"}},
 				OmittedCallers: 2,
 				OmittedCallees: 1,
+				OmittedTypes:   1,
 			},
 			{Name: "handle", Path: "handler.go", Kind: "func", Direction: "caller", Start: 30, End: 40, CallLine: 35, Confidence: "unique"},
 		},
 		OmittedRelatedCallers: 3,
 		OmittedRelatedCallees: 1,
+		OmittedRelatedTypes:   2,
 	}}
 
 	if err := renderer.Render(results); err != nil {
@@ -105,13 +108,16 @@ func TestSegmentRendererPrintsRelatedGoPoints(t *testing.T) {
 	}
 	want := "  → service.Load → (*Store).Load  store.go:12-24  call:8 [candidate; try --at store.go:12]\n"
 	caller := "  ← handle  handler.go:30-40  call:35\n"
+	typePoint := "  → Request  request.go:2-4  parameter-type:7\n    2   type Request struct {"
 	preview := "    12   func (s *Store) Load() {\n    13   }\n    next:\n      → validate"
-	if !strings.Contains(output.String(), "Next points (code navigation):\n") || !strings.Contains(output.String(), want) || !strings.Contains(output.String(), caller) || !strings.Contains(output.String(), preview) {
+	if !strings.Contains(output.String(), "Next points (code navigation):\n") || !strings.Contains(output.String(), want) || !strings.Contains(output.String(), caller) || !strings.Contains(output.String(), typePoint) || !strings.Contains(output.String(), preview) {
 		t.Fatalf("related navigation missing from output:\n%s", output.String())
 	}
 	for _, omission := range []string{
 		"      … 1 additional callee and 2 additional callers omitted",
+		"      … 1 additional type declaration omitted",
 		"  … 1 additional callee and 3 additional callers omitted",
+		"  … 2 additional type declarations omitted",
 	} {
 		if !strings.Contains(output.String(), omission) {
 			t.Fatalf("related omission %q missing from output:\n%s", omission, output.String())

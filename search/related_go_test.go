@@ -70,6 +70,62 @@ func TestNavigationImportsResolveLocalTargetPaths(t *testing.T) {
 		t.Fatalf("resolved import=%#v", graph.Imports[0])
 	}
 }
+
+func TestRelatedGoTypesExpandImportedParametersAndResults(t *testing.T) {
+	root := t.TempDir()
+	mustMkdirAll(t, filepath.Join(root, "navigation"))
+	mustMkdirAll(t, filepath.Join(root, "parser"))
+	if err := os.WriteFile(filepath.Join(root, "go.mod"), []byte("module example.com/project\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	writeGoFixture(t, root, "parser/types.go", `package parser
+
+type Request struct {
+	Name string
+}
+type Response struct {
+	Accepted bool
+}
+`)
+	writeGoFixture(t, root, "navigation/run.go", `package navigation
+import "example.com/project/parser"
+func Run(request parser.Request) parser.Response {
+	_ = request // run-needle
+	return parser.Response{Accepted: true}
+}
+func Echo(request parser.Request) parser.Request {
+	_ = request // echo-needle
+	return request
+}
+`)
+	t.Chdir(root)
+	matches, err := Files(Params{Query: "run-needle", Root: root, Globs: []string{"navigation/**"}, Related: true}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(matches) != 1 || len(matches[0].Related) != 2 {
+		t.Fatalf("related type points=%#v", matches)
+	}
+	parameter, result := matches[0].Related[0], matches[0].Related[1]
+	if parameter.Name != "Request" || parameter.Direction != "type" || parameter.Role != "parameter" || parameter.Confidence != "import-resolved" || parameter.Preview == nil || parameter.Preview.Start != 3 || parameter.Preview.End != 5 {
+		t.Fatalf("parameter type=%#v", parameter)
+	}
+	if result.Name != "Response" || result.Direction != "type" || result.Role != "result" || result.Confidence != "import-resolved" || result.Preview == nil || result.Preview.Start != 6 || result.Preview.End != 8 {
+		t.Fatalf("result type=%#v", result)
+	}
+	wire := BuildResults(matches, 0, 0, true)[0].Related
+	if len(wire) != 2 || wire[0].Role != "parameter" || len(wire[0].Segments) != 1 || !strings.Contains(wire[0].Segments[0].Text, "type Request struct") {
+		t.Fatalf("wire type previews=%#v", wire)
+	}
+	echoMatches, err := Files(Params{Query: "echo-needle", Root: root, Globs: []string{"navigation/**"}, Related: true}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(echoMatches) != 1 || len(echoMatches[0].Related) != 2 || echoMatches[0].Related[0].Role != "parameter" || echoMatches[0].Related[1].Role != "result" {
+		t.Fatalf("same declaration type roles=%#v", echoMatches)
+	}
+}
+
 func TestRelatedGoCallsPreferFunctionForUnqualifiedCall(t *testing.T) {
 	directory := t.TempDir()
 	path := writeGoFixture(t, directory, "analysis.go", `package related
@@ -175,10 +231,11 @@ func (s Service) run(value string) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(matches) != 1 || len(matches[0].Related) != 2 {
+	calls := relatedCallPoints(matches[0].Related)
+	if len(matches) != 1 || len(calls) != 2 {
 		t.Fatalf("expected interface method and function field, got %#v", matches)
 	}
-	if matches[0].Related[0].Kind != "field" || matches[0].Related[1].Kind != "method" {
+	if calls[0].Kind != "field" || calls[1].Kind != "method" {
 		t.Fatalf("unexpected callable kinds: %#v", matches[0].Related)
 	}
 }
@@ -244,6 +301,16 @@ func findRelatedPoint(t *testing.T, points []RelatedPoint, name, direction strin
 	}
 	t.Fatalf("related point %s/%s not found in %#v", direction, name, points)
 	return RelatedPoint{}
+}
+
+func relatedCallPoints(points []RelatedPoint) []RelatedPoint {
+	var calls []RelatedPoint
+	for _, point := range points {
+		if point.Direction == "caller" || point.Direction == "callee" {
+			calls = append(calls, point)
+		}
+	}
+	return calls
 }
 
 func TestRelatedGoCallsUseImportAndReceiverTypeContext(t *testing.T) {
@@ -535,6 +602,13 @@ func TestRelatedUsesAbsoluteRepositoryRootForDisplayPaths(t *testing.T) {
 	}
 	if len(matches) != 1 || matches[0].DisplayPath != "owner/repo/caller.go" || len(matches[0].Related) == 0 {
 		t.Fatalf("remote-root navigation = %#v", matches)
+	}
+}
+
+func mustMkdirAll(t *testing.T, path string) {
+	t.Helper()
+	if err := os.MkdirAll(path, 0o755); err != nil {
+		t.Fatal(err)
 	}
 }
 

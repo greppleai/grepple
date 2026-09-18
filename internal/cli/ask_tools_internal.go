@@ -420,7 +420,7 @@ func runAskGraphWithSession(session *researchSession, root string, input askGrap
 	if err != nil {
 		return nil, err
 	}
-	output.Declarations, output.Calls, output.Imports = queried.Declarations, queried.Calls, queried.Imports
+	output.Declarations, output.TypeDeclarations, output.Calls, output.Imports = queried.Declarations, queried.TypeDeclarations, queried.Calls, queried.Imports
 	output.Exports, output.Fields, output.TypeUsages = queried.Exports, queried.Fields, queried.TypeUsages
 	output.MemberAccesses, output.RepositoryRoots = queried.MemberAccesses, queried.RepositoryRoots
 	output.Resolution = search.MeasureNavigationResolution(queried)
@@ -451,7 +451,7 @@ func validateAskGraphInput(root string, input askGraphInput) (search.NavigationQ
 }
 
 func navigationOutputGraph(output navigationGraphOutput) parser.NavigationGraph {
-	return parser.NavigationGraph{Declarations: output.Declarations, Calls: output.Calls, Imports: output.Imports, Exports: output.Exports, Fields: output.Fields, TypeUsages: output.TypeUsages, MemberAccesses: output.MemberAccesses, RepositoryRoots: output.RepositoryRoots}
+	return parser.NavigationGraph{Declarations: output.Declarations, TypeDeclarations: output.TypeDeclarations, Calls: output.Calls, Imports: output.Imports, Exports: output.Exports, Fields: output.Fields, TypeUsages: output.TypeUsages, MemberAccesses: output.MemberAccesses, RepositoryRoots: output.RepositoryRoots}
 }
 
 func runAskSourceScope(root string, input askSourceScopeInput) (sourceScopeReport, error) {

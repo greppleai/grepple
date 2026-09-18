@@ -13,24 +13,25 @@ import (
 )
 
 // GraphSchema identifies the normalized navigation graph contract.
-const GraphSchema = "grepple-navigation-graph-v6"
+const GraphSchema = "grepple-navigation-graph-v7"
 
 // GraphReport is the complete normalized graph or one deterministic queried projection.
 type GraphReport struct {
-	Schema          string                           `json:"schema"`
-	Files           int                              `json:"files"`
-	Sources         SourceSummary                    `json:"sources"`
-	Declarations    []parser.NavigationDeclaration   `json:"declarations"`
-	Imports         []parser.NavigationImport        `json:"imports,omitempty"`
-	Calls           []parser.NavigationCall          `json:"calls"`
-	Exports         []parser.NavigationExport        `json:"exports,omitempty"`
-	Fields          []parser.NavigationField         `json:"fields,omitempty"`
-	Resolution      search.NavigationResolutionStats `json:"resolution"`
-	TypeUsages      []parser.NavigationTypeUsage     `json:"typeUsages,omitempty"`
-	MemberAccesses  []parser.NavigationMemberAccess  `json:"memberAccesses,omitempty"`
-	RepositoryRoots []string                         `json:"repositoryRoots,omitempty"`
-	Query           *GraphQuery                      `json:"query,omitempty"`
-	Truncation      *Truncation                      `json:"truncation,omitempty"`
+	Schema           string                             `json:"schema"`
+	Files            int                                `json:"files"`
+	Sources          SourceSummary                      `json:"sources"`
+	Declarations     []parser.NavigationDeclaration     `json:"declarations"`
+	TypeDeclarations []parser.NavigationTypeDeclaration `json:"typeDeclarations,omitempty"`
+	Imports          []parser.NavigationImport          `json:"imports,omitempty"`
+	Calls            []parser.NavigationCall            `json:"calls"`
+	Exports          []parser.NavigationExport          `json:"exports,omitempty"`
+	Fields           []parser.NavigationField           `json:"fields,omitempty"`
+	Resolution       search.NavigationResolutionStats   `json:"resolution"`
+	TypeUsages       []parser.NavigationTypeUsage       `json:"typeUsages,omitempty"`
+	MemberAccesses   []parser.NavigationMemberAccess    `json:"memberAccesses,omitempty"`
+	RepositoryRoots  []string                           `json:"repositoryRoots,omitempty"`
+	Query            *GraphQuery                        `json:"query,omitempty"`
+	Truncation       *Truncation                        `json:"truncation,omitempty"`
 }
 
 // GraphQuery records the normalized traversal that produced a graph report.
@@ -90,7 +91,7 @@ func graphReport(graph parser.NavigationGraph, universe *Universe) GraphReport {
 	if calls == nil {
 		calls = []parser.NavigationCall{}
 	}
-	return GraphReport{Schema: GraphSchema, Files: universe.summary.Selected, Sources: universe.Summary(), Declarations: declarations, Imports: graph.Imports, Calls: calls, Exports: graph.Exports, Fields: graph.Fields, Resolution: search.MeasureNavigationResolution(graph), TypeUsages: graph.TypeUsages, MemberAccesses: graph.MemberAccesses, RepositoryRoots: graph.RepositoryRoots, Truncation: universe.Truncation()}
+	return GraphReport{Schema: GraphSchema, Files: universe.summary.Selected, Sources: universe.Summary(), Declarations: declarations, TypeDeclarations: graph.TypeDeclarations, Imports: graph.Imports, Calls: calls, Exports: graph.Exports, Fields: graph.Fields, Resolution: search.MeasureNavigationResolution(graph), TypeUsages: graph.TypeUsages, MemberAccesses: graph.MemberAccesses, RepositoryRoots: graph.RepositoryRoots, Truncation: universe.Truncation()}
 }
 
 func validateGraphQuery(request api.GraphQueryRequest) error {

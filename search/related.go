@@ -15,6 +15,8 @@ var relatedBuildInvocations atomic.Int64
 
 const (
 	maxRelatedPoints      = 5
+	maxRelatedTypes       = 5
+	maxRelatedTypeLines   = 240
 	maxFollowedPerLevel   = 2
 	maxFollowedTotalLines = 400
 )
@@ -26,12 +28,23 @@ type navigationDeclaration struct {
 	returnType       string
 	returnImportPath string
 	packageName      string
+	packageID        string
 	moduleScope      string
 	visibilityDetail string
 	language         string
 	file             string
 	matchStart       int
 	point            RelatedPoint
+}
+
+type navigationTypeDeclaration struct {
+	terminal, packageName, packageID, language, file string
+	point                                            RelatedPoint
+}
+
+type navigationTypeUsage struct {
+	typeName, importPath, role string
+	line                       int
 }
 
 type navigationCaller struct {
@@ -61,6 +74,9 @@ type navigationCall struct {
 
 type navigationIndex struct {
 	declarations      map[string][]navigationDeclaration
+	types             map[string][]navigationTypeDeclaration
+	typeUsages        map[string][]navigationTypeUsage
+	typeImportTargets map[string][]string
 	callersByTargetID map[string][]navigationCaller
 	calls             map[string][]navigationCall
 	byFile            map[string][]navigationDeclaration
@@ -98,7 +114,7 @@ func attachRelated(matches []FileMatch, candidates []string, followDepth int) {
 		if !supportsNavigation(matches[index].Language) {
 			continue
 		}
-		related, omittedCallers, omittedCallees := relatedPoints(matches[index], navigation)
+		related, omittedCallers, omittedCallees, omittedTypes := relatedPoints(matches[index], navigation)
 		if followDepth > 0 {
 			seen := matchedLocations(matches[index], navigation)
 			lineBudget := maxFollowedTotalLines
@@ -107,6 +123,7 @@ func attachRelated(matches []FileMatch, candidates []string, followDepth int) {
 		matches[index].Related = related
 		matches[index].OmittedRelatedCallers = omittedCallers
 		matches[index].OmittedRelatedCallees = omittedCallees
+		matches[index].OmittedRelatedTypes = omittedTypes
 	}
 }
 
@@ -116,7 +133,7 @@ func buildNavigationIndex(files []string, useCache bool) *navigationIndex {
 
 func newNavigationIndex() *navigationIndex {
 	return &navigationIndex{
-		declarations: make(map[string][]navigationDeclaration), callersByTargetID: make(map[string][]navigationCaller),
+		declarations: make(map[string][]navigationDeclaration), types: make(map[string][]navigationTypeDeclaration), typeUsages: make(map[string][]navigationTypeUsage), typeImportTargets: make(map[string][]string), callersByTargetID: make(map[string][]navigationCaller),
 		calls: make(map[string][]navigationCall), byFile: make(map[string][]navigationDeclaration),
 		byLocation: make(map[string]navigationDeclaration), byID: make(map[string]navigationDeclaration), contents: make(map[string]string),
 	}
@@ -190,7 +207,7 @@ func AttachRelatedFromAnalysis(match *FileMatch, analysis *NavigationAnalysis, f
 	if match == nil || analysis == nil || analysis.index == nil || !match.CallableDeclaration || !supportsNavigation(match.Language) {
 		return
 	}
-	related, omittedCallers, omittedCallees := relatedPoints(*match, analysis.index)
+	related, omittedCallers, omittedCallees, omittedTypes := relatedPoints(*match, analysis.index)
 	if followDepth > 0 {
 		seen := matchedLocations(*match, analysis.index)
 		lineBudget := maxFollowedTotalLines
@@ -199,6 +216,7 @@ func AttachRelatedFromAnalysis(match *FileMatch, analysis *NavigationAnalysis, f
 	match.Related = related
 	match.OmittedRelatedCallers = omittedCallers
 	match.OmittedRelatedCallees = omittedCallees
+	match.OmittedRelatedTypes = omittedTypes
 }
 
 // BuildNavigationGraphFromDocuments resolves a graph from already parsed documents.
@@ -211,11 +229,148 @@ func BuildNavigationGraphFromTextSources(sources []NavigationTextSource, options
 	return navigation.BuildGraphFromTextSources(sources, options)
 }
 
-func relatedPoints(match FileMatch, navigation *navigationIndex) ([]RelatedPoint, int, int) {
+func relatedPoints(match FileMatch, navigation *navigationIndex) ([]RelatedPoint, int, int, int) {
 	declarations := matchedDeclarations(match, navigation)
+	types, omittedTypes := relatedTypes(declarations, navigation)
 	callees, omittedCallees := relatedCallees(match, declarations, navigation)
 	callers, omittedCallers := navigationCallers(declarations, navigation)
-	return append(callees, callers...), omittedCallers, omittedCallees
+	return append(append(types, callees...), callers...), omittedCallers, omittedCallees, omittedTypes
+}
+
+func relatedTypes(declarations []navigationDeclaration, navigation *navigationIndex) ([]RelatedPoint, int) {
+	var related []RelatedPoint
+	lineBudget := maxRelatedTypeLines
+	for _, declaration := range declarations {
+		related = append(related, relatedTypesForDeclaration(declaration, navigation, &lineBudget)...)
+	}
+	return limitRelatedTypePoints(uniqueRelatedPoints(related))
+}
+
+func relatedTypesForDeclaration(declaration navigationDeclaration, navigation *navigationIndex, lineBudget *int) []RelatedPoint {
+	usages := append([]navigationTypeUsage(nil), navigation.typeUsages[declaration.id]...)
+	sort.SliceStable(usages, func(i, j int) bool { return relatedTypeUsageLess(usages[i], usages[j]) })
+	var related []RelatedPoint
+	for _, usage := range usages {
+		candidates, confidence := resolveRelatedType(usage, declaration, navigation)
+		for _, candidate := range candidates {
+			point := candidate.point
+			point.Name, point.Direction, point.Role = usage.typeName, "type", usage.role
+			point.CallLine, point.Confidence = usage.line, confidence
+			lines := point.End - point.Start + 1
+			if lines > 0 && lines <= *lineBudget {
+				point.Preview = &RelatedPreview{Content: navigation.contents[candidate.file], Start: point.Start, End: point.End}
+				*lineBudget -= lines
+			}
+			related = append(related, point)
+		}
+	}
+	return related
+}
+
+func relatedTypeUsageLess(left, right navigationTypeUsage) bool {
+	leftRole, rightRole := relatedTypeRolePriority(left.role), relatedTypeRolePriority(right.role)
+	if leftRole != rightRole {
+		return leftRole < rightRole
+	}
+	if left.typeName != right.typeName {
+		return left.typeName < right.typeName
+	}
+	return left.line < right.line
+}
+
+func relatedTypeRolePriority(role string) int {
+	switch role {
+	case "receiver":
+		return 0
+	case "parameter":
+		return 1
+	case "result":
+		return 2
+	default:
+		return 3
+	}
+}
+
+func resolveRelatedType(usage navigationTypeUsage, declaration navigationDeclaration, navigation *navigationIndex) ([]navigationTypeDeclaration, string) {
+	terminal := terminalSymbolName(usage.typeName)
+	candidates := append([]navigationTypeDeclaration(nil), navigation.types[navigationSymbolKey(declaration.language, terminal)]...)
+	if usage.importPath != "" {
+		return resolveImportedRelatedType(candidates, usage, declaration, navigation)
+	}
+	return resolveContextualRelatedType(candidates, declaration)
+}
+
+func resolveImportedRelatedType(candidates []navigationTypeDeclaration, usage navigationTypeUsage, declaration navigationDeclaration, navigation *navigationIndex) ([]navigationTypeDeclaration, string) {
+	targets := navigation.typeImportTargets[typeImportTargetKey(declaration.file, usage.importPath)]
+	selected := filterRelatedTypes(candidates, declaration.language, func(candidate navigationTypeDeclaration) bool {
+		return candidate.packageID == usage.importPath || stringSliceContains(targets, candidate.file)
+	})
+	if len(selected) == 0 {
+		return nil, ""
+	}
+	return selected, relatedTypeConfidence(selected, "import-resolved")
+}
+
+func resolveContextualRelatedType(candidates []navigationTypeDeclaration, declaration navigationDeclaration) ([]navigationTypeDeclaration, string) {
+	filter := func(matches func(navigationTypeDeclaration) bool) []navigationTypeDeclaration {
+		return filterRelatedTypes(candidates, declaration.language, matches)
+	}
+	if selected := filter(func(candidate navigationTypeDeclaration) bool { return candidate.file == declaration.file }); len(selected) > 0 {
+		return selected, relatedTypeConfidence(selected, "context-resolved")
+	}
+	if declaration.packageID != "" {
+		if selected := filter(func(candidate navigationTypeDeclaration) bool { return candidate.packageID == declaration.packageID }); len(selected) > 0 {
+			return selected, relatedTypeConfidence(selected, "context-resolved")
+		}
+	}
+	selected := filter(func(candidate navigationTypeDeclaration) bool {
+		return declaration.packageName != "" && candidate.packageName == declaration.packageName && filepath.Dir(candidate.file) == filepath.Dir(declaration.file)
+	})
+	if len(selected) > 0 {
+		return selected, relatedTypeConfidence(selected, "context-resolved")
+	}
+	selected = filter(func(navigationTypeDeclaration) bool { return true })
+	if len(selected) == 1 {
+		return selected, "unique-terminal"
+	}
+	return selected, "candidate"
+}
+
+func filterRelatedTypes(candidates []navigationTypeDeclaration, language string, matches func(navigationTypeDeclaration) bool) []navigationTypeDeclaration {
+	var selected []navigationTypeDeclaration
+	for _, candidate := range candidates {
+		if sameNavigationLanguage(candidate.language, language) && matches(candidate) {
+			selected = append(selected, candidate)
+		}
+	}
+	return selected
+}
+
+func relatedTypeConfidence(candidates []navigationTypeDeclaration, resolved string) string {
+	if len(candidates) == 1 {
+		return resolved
+	}
+	return "candidate"
+}
+
+func stringSliceContains(values []string, target string) bool {
+	for _, value := range values {
+		if value == target {
+			return true
+		}
+	}
+	return false
+}
+
+func typeImportTargetKey(path, importPath string) string {
+	return filepath.Clean(path) + "\x00" + importPath
+}
+
+func limitRelatedTypePoints(points []RelatedPoint) ([]RelatedPoint, int) {
+	if len(points) > maxRelatedTypes {
+		return points[:maxRelatedTypes], len(points) - maxRelatedTypes
+	}
+	return points, 0
 }
 
 func relatedCallees(match FileMatch, declarations []navigationDeclaration, navigation *navigationIndex) ([]RelatedPoint, int) {
@@ -364,11 +519,11 @@ func expandRelated(points []RelatedPoint, navigation *navigationIndex, depth int
 			File: declaration.file, DisplayPath: point.Path, Content: content, Language: declaration.language,
 			MatchLines: map[int]bool{point.Start: true},
 		}
-		nested, omittedCallers, omittedCallees := relatedPoints(match, navigation)
+		nested, omittedCallers, omittedCallees, omittedTypes := relatedPoints(match, navigation)
 		nested = expandRelated(nested, navigation, depth-1, copyLocations(seen), lineBudget)
 		point.Preview = &RelatedPreview{
 			Content: content, Start: declaration.matchStart, End: declaration.point.End, Related: nested,
-			OmittedCallers: omittedCallers, OmittedCallees: omittedCallees,
+			OmittedCallers: omittedCallers, OmittedCallees: omittedCallees, OmittedTypes: omittedTypes,
 		}
 		followed++
 	}
@@ -417,6 +572,9 @@ func uniqueRelatedPoints(points []RelatedPoint) []RelatedPoint {
 	unique := points[:0]
 	for _, point := range points {
 		key := relatedLocationKey(point)
+		if point.Direction == "type" {
+			key += "\x00" + point.Role
+		}
 		if seen[key] {
 			continue
 		}

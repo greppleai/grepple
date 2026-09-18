@@ -212,7 +212,14 @@ func Files(p Params, candidates []string) ([]FileMatch, error) {
 	}
 	out = applyResultWindow(out, p)
 	if p.Related {
-		attachRelated(out, scan.relatedFiles(files), p.FollowRelated)
+		relatedCandidates := files
+		if candidates == nil {
+			relatedCandidates, e = collectCandidateFilesConfiguredContext(context.Background(), nil, p.Root, sourceIgnoreConfig{root: p.IgnoreRoot, patterns: p.IgnorePaths, productionOnly: p.ProductionOnly})
+			if e != nil {
+				return nil, e
+			}
+		}
+		attachRelated(out, scan.relatedFiles(relatedCandidates), p.FollowRelated)
 	}
 	// Parse returned files only when the caller needs structural segments or
 	// multi-line construct ranges for matching lines.

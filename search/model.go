@@ -43,29 +43,29 @@ type Params struct {
 // RelatedPreview is an optionally expanded declaration and its next navigation
 // points. Content stays internal and is converted to wire segments at the boundary.
 type RelatedPreview struct {
-	Content                        string
-	Start, End                     int
-	Related                        []RelatedPoint
-	OmittedCallers, OmittedCallees int
+	Content                                      string
+	Start, End                                   int
+	Related                                      []RelatedPoint
+	OmittedCallers, OmittedCallees, OmittedTypes int
 }
 
 // RelatedPoint is an internal navigation hint between matched source declarations.
 type RelatedPoint struct {
-	Name, Path, File, Kind, Direction, Confidence string
-	Start, End, CallLine, Distance                int
-	Preview                                       *RelatedPreview
+	Name, Path, File, Kind, Direction, Confidence, Role string
+	Start, End, CallLine, Distance                      int
+	Preview                                             *RelatedPreview
 }
 
 // FileMatch is the engine's internal per-file match: content, matching lines,
 // parser-produced structural segments, and optional related declarations.
 type FileMatch struct {
-	File, DisplayPath, Content, Language         string
-	MatchLines                                   map[int]bool
-	MatchRanges                                  map[int]parser.StructuralLineRange
-	Segments                                     []parser.Segment
-	Related                                      []RelatedPoint
-	OmittedRelatedCallers, OmittedRelatedCallees int
-	SegmentsReady                                bool
-	CallableDeclaration                          bool
-	StructureStatus                              parser.SegmentBuildStatus
+	File, DisplayPath, Content, Language                              string
+	MatchLines                                                        map[int]bool
+	MatchRanges                                                       map[int]parser.StructuralLineRange
+	Segments                                                          []parser.Segment
+	Related                                                           []RelatedPoint
+	OmittedRelatedCallers, OmittedRelatedCallees, OmittedRelatedTypes int
+	SegmentsReady                                                     bool
+	CallableDeclaration                                               bool
+	StructureStatus                                                   parser.SegmentBuildStatus
 }

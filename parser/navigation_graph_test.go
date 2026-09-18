@@ -23,6 +23,21 @@ func TestNavigationGraphFromDocumentDoesNotReparse(t *testing.T) {
 	}
 }
 
+func TestNavigationGraphCapturesTypeDeclarationRanges(t *testing.T) {
+	content := "package sample\ntype Request struct { Name string }\nfunc Run(request Request) Request { return request }\n"
+	graph := BuildNavigationGraph(content, "go", "sample/main.go")
+	if len(graph.TypeDeclarations) != 1 {
+		t.Fatalf("type declarations=%+v", graph.TypeDeclarations)
+	}
+	declaration := graph.TypeDeclarations[0]
+	if declaration.Name != "Request" || declaration.Kind != "struct" || declaration.Path != "sample/main.go" || declaration.Start != 2 || declaration.End != 2 {
+		t.Fatalf("type declaration=%+v", declaration)
+	}
+	if len(graph.TypeUsages) != 2 {
+		t.Fatalf("type usages=%+v", graph.TypeUsages)
+	}
+}
+
 func TestBuildNavigationGraphRetainsSourceIdentity(t *testing.T) {
 	content := "package sample\nfunc Start() { Finish() }\nfunc Finish() {}\n"
 	graph := BuildNavigationGraph(content, "go", "sample/main.go")

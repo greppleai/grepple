@@ -54,7 +54,7 @@ func (renderer segmentRenderer) renderFile(result api.FileResult) error {
 		cursor = segment.End + 1
 	}
 	line := relatedRootLine(result)
-	return renderer.renderRelated(result.Related, result.OmittedRelatedCallers, result.OmittedRelatedCallees, result.Path, line)
+	return renderer.renderRelated(result.Related, result.OmittedRelatedCallers, result.OmittedRelatedCallees, result.OmittedRelatedTypes, result.Path, line)
 }
 
 func relatedRootLine(result api.FileResult) int {
@@ -72,8 +72,8 @@ func relatedRootLine(result api.FileResult) int {
 	return 1
 }
 
-func (renderer segmentRenderer) renderRelated(related []api.RelatedSymbol, omittedCallers, omittedCallees int, path string, line int) error {
-	if len(related) == 0 && omittedCallers == 0 && omittedCallees == 0 {
+func (renderer segmentRenderer) renderRelated(related []api.RelatedSymbol, omittedCallers, omittedCallees, omittedTypes int, path string, line int) error {
+	if len(related) == 0 && omittedCallers == 0 && omittedCallees == 0 && omittedTypes == 0 {
 		return nil
 	}
 	if err := renderer.output.writeString("\nNext points (code navigation):\n"); err != nil {
@@ -82,7 +82,7 @@ func (renderer segmentRenderer) renderRelated(related []api.RelatedSymbol, omitt
 	if err := renderer.renderRelatedPoints(related, 1); err != nil {
 		return err
 	}
-	return renderer.renderRelatedOmissions(omittedCallers, omittedCallees, path, line, 1)
+	return renderer.renderRelatedOmissions(omittedCallers, omittedCallees, omittedTypes, path, line, 1)
 }
 
 func (renderer segmentRenderer) renderRelatedPoints(related []api.RelatedSymbol, depth int) error {
@@ -104,7 +104,15 @@ func (renderer segmentRenderer) renderRelatedPoint(point api.RelatedSymbol, dept
 	if point.Confidence == "candidate" {
 		suffix = fmt.Sprintf(" [candidate; try --at %s:%d]", point.Path, point.Start)
 	}
-	line := fmt.Sprintf("%s%s %s  %s:%d-%d  call:%d%s\n", indent, arrow, point.Name, point.Path, point.Start, point.End, point.CallLine, suffix)
+	label := fmt.Sprintf("call:%d", point.CallLine)
+	if point.Direction == "type" {
+		role := point.Role
+		if role == "" {
+			role = "used"
+		}
+		label = fmt.Sprintf("%s-type:%d", role, point.CallLine)
+	}
+	line := fmt.Sprintf("%s%s %s  %s:%d-%d  %s%s\n", indent, arrow, point.Name, point.Path, point.Start, point.End, label, suffix)
 	if err := renderer.output.writeString(line); err != nil {
 		return err
 	}
@@ -114,34 +122,42 @@ func (renderer segmentRenderer) renderRelatedPoint(point api.RelatedSymbol, dept
 	if err := renderer.renderRelatedSegments(point.Segments, depth+1); err != nil {
 		return err
 	}
-	if len(point.Related) > 0 || point.OmittedCallers > 0 || point.OmittedCallees > 0 {
+	if len(point.Related) > 0 || point.OmittedCallers > 0 || point.OmittedCallees > 0 || point.OmittedTypes > 0 {
 		if err := renderer.output.writeString(strings.Repeat("  ", depth+1) + "next:\n"); err != nil {
 			return err
 		}
 		if err := renderer.renderRelatedPoints(point.Related, depth+2); err != nil {
 			return err
 		}
-		return renderer.renderRelatedOmissions(point.OmittedCallers, point.OmittedCallees, point.Path, point.Start, depth+2)
+		return renderer.renderRelatedOmissions(point.OmittedCallers, point.OmittedCallees, point.OmittedTypes, point.Path, point.Start, depth+2)
 	}
 	return nil
 }
 
-func (renderer segmentRenderer) renderRelatedOmissions(callers, callees int, path string, line, depth int) error {
-	if callers == 0 && callees == 0 {
+func (renderer segmentRenderer) renderRelatedOmissions(callers, callees, types int, path string, line, depth int) error {
+	if callers == 0 && callees == 0 && types == 0 {
 		return nil
 	}
-	parts := make([]string, 0, 2)
-	if callees > 0 {
-		parts = append(parts, fmt.Sprintf("%d additional %s", callees, pluralizeRelated("callee", callees)))
+	indent := strings.Repeat("  ", depth)
+	if callers > 0 || callees > 0 {
+		parts := make([]string, 0, 2)
+		if callees > 0 {
+			parts = append(parts, fmt.Sprintf("%d additional %s", callees, pluralizeRelated("callee", callees)))
+		}
+		if callers > 0 {
+			parts = append(parts, fmt.Sprintf("%d additional %s", callers, pluralizeRelated("caller", callers)))
+		}
+		direction := relatedGraphDirection(callers, callees)
+		location := fmt.Sprintf("%s:%d", path, line)
+		command := fmt.Sprintf("grepple graph %s --at %s --depth 2 --json .", direction, quoteCommandArgument(location))
+		if err := renderer.output.writeString(fmt.Sprintf("%s… %s omitted; continue: %s …\n", indent, strings.Join(parts, " and "), command)); err != nil {
+			return err
+		}
 	}
-	if callers > 0 {
-		parts = append(parts, fmt.Sprintf("%d additional %s", callers, pluralizeRelated("caller", callers)))
+	if types > 0 {
+		return renderer.output.writeString(fmt.Sprintf("%s… %d additional %s omitted\n", indent, types, pluralizeRelated("type declaration", types)))
 	}
-	direction := relatedGraphDirection(callers, callees)
-	location := fmt.Sprintf("%s:%d", path, line)
-	command := fmt.Sprintf("grepple graph %s --at %s --depth 2 --json .", direction, quoteCommandArgument(location))
-	message := fmt.Sprintf("%s… %s omitted; continue: %s …\n", strings.Repeat("  ", depth), strings.Join(parts, " and "), command)
-	return renderer.output.writeString(message)
+	return nil
 }
 
 func relatedGraphDirection(callers, callees int) string {

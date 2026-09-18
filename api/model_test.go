@@ -9,16 +9,16 @@ import (
 func TestRelatedOmissionCountsUseStableJSONFields(t *testing.T) {
 	result := FileResult{
 		Path: "caller.go", Language: "go", Matches: []ResultMatch{}, Segments: []ResultSegment{},
-		OmittedRelatedCallers: 2, OmittedRelatedCallees: 1,
-		Related: []RelatedSymbol{{Name: "target", OmittedCallers: 4, OmittedCallees: 3}},
+		OmittedRelatedCallers: 2, OmittedRelatedCallees: 1, OmittedRelatedTypes: 6,
+		Related: []RelatedSymbol{{Name: "target", Role: "parameter", OmittedCallers: 4, OmittedCallees: 3, OmittedTypes: 5}},
 	}
 	encoded, err := json.Marshal(result)
 	if err != nil {
 		t.Fatal(err)
 	}
 	for _, field := range []string{
-		`"omittedRelatedCallers":2`, `"omittedRelatedCallees":1`,
-		`"omittedCallers":4`, `"omittedCallees":3`,
+		`"omittedRelatedCallers":2`, `"omittedRelatedCallees":1`, `"omittedRelatedTypes":6`,
+		`"role":"parameter"`, `"omittedCallers":4`, `"omittedCallees":3`, `"omittedTypes":5`,
 	} {
 		if !strings.Contains(string(encoded), field) {
 			t.Fatalf("JSON missing %s: %s", field, encoded)

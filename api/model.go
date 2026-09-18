@@ -71,10 +71,12 @@ type RelatedSymbol struct {
 	End            int             `json:"end"`
 	CallLine       int             `json:"callLine"`
 	Confidence     string          `json:"confidence"`
+	Role           string          `json:"role,omitempty"`
 	Segments       []ResultSegment `json:"segments,omitempty"`
 	Related        []RelatedSymbol `json:"related,omitempty"`
 	OmittedCallers int             `json:"omittedCallers,omitempty"`
 	OmittedCallees int             `json:"omittedCallees,omitempty"`
+	OmittedTypes   int             `json:"omittedTypes,omitempty"`
 }
 
 // FileResult is one matching file.
@@ -89,6 +91,7 @@ type FileResult struct {
 	Related               []RelatedSymbol `json:"related,omitempty"`
 	OmittedRelatedCallers int             `json:"omittedRelatedCallers,omitempty"`
 	OmittedRelatedCallees int             `json:"omittedRelatedCallees,omitempty"`
+	OmittedRelatedTypes   int             `json:"omittedRelatedTypes,omitempty"`
 }
 
 // RepoCount is a per-repository tally of matching files and lines.
