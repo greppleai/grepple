@@ -6,42 +6,109 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/greppleai/grepple/api"
 )
 
-func TestRenderedContextGuardOmitsRepeatedSourceBlocks(t *testing.T) {
+func TestSegmentContextGuardOmitsUnchangedCompleteDeclaration(t *testing.T) {
 	directory := t.TempDir()
 	t.Setenv("GREPPLE_CONTEXT_GUARD_DIR", directory)
-	firstBlock := "source.go\n\n" + strings.Repeat("abc│12│func unchanged() {}\n", 8) + "\n"
-	secondBlock := strings.Repeat("def│30│func changed() {}\n", 8)
-	first := []byte(firstBlock + secondBlock)
-	guarded, err := guardRenderedOutput(first)
-	if err != nil || string(guarded) != string(first) {
-		t.Fatalf("first rendering changed: %q err=%v", guarded, err)
+	segment := api.ResultSegment{Kind: "lines", Start: 10, End: 12, Text: "type Something struct {\n\tName string // " + strings.Repeat("unchanged declaration detail ", 8) + "\n}"}
+	result := api.FileResult{Path: "model.go", Segments: []api.ResultSegment{segment}}
+	first := renderWithSegmentGuard(t, result)
+	if !strings.Contains(first, "type Something struct") {
+		t.Fatalf("first declaration missing: %q", first)
 	}
-	modified := []byte(firstBlock + strings.ReplaceAll(secondBlock, "changed", "newValue"))
-	guarded, err = guardRenderedOutput(modified)
+	second := renderWithSegmentGuard(t, result)
+	if strings.Contains(second, "type Something struct") || !strings.Contains(second, "unchanged segment already emitted: model.go:10-12") {
+		t.Fatalf("unchanged declaration was not omitted: %q", second)
+	}
+	cacheContent, err := os.ReadFile(filepath.Join(directory, "cache.json"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(string(guarded), "omitted 1 unchanged source block") || strings.Contains(string(guarded), "unchanged()") {
-		t.Fatalf("repeated block was not omitted: %q", guarded)
-	}
-	if !strings.Contains(string(guarded), "newValue") {
-		t.Fatalf("modified block was omitted: %q", guarded)
+	if strings.Contains(string(cacheContent), "Something") || strings.Contains(string(cacheContent), "Name string") {
+		t.Fatalf("cache persisted source: %s", cacheContent)
 	}
 	stats := readRenderedContextStats(filepath.Join(directory, "stats-0.json"), 0)
-	if stats.ObservedCalls != 2 || stats.NewBlocks != 3 || stats.RemovedBlocks != 1 || stats.NetSavedBytes <= 0 {
+	if stats.ObservedCalls != 2 || stats.EmittedSegments != 1 || stats.RemovedSegments != 1 || stats.NetSavedBytes <= 0 {
 		t.Fatalf("unexpected stats: %#v", stats)
 	}
 }
 
-func TestRenderedContextInvalidationRotatesStatsAndRestoresOutput(t *testing.T) {
-	directory := t.TempDir()
-	t.Setenv("GREPPLE_CONTEXT_GUARD_DIR", directory)
-	content := []byte(strings.Repeat("abc│1│external dependency declaration\n", 8))
-	if _, err := guardRenderedOutput(content); err != nil {
+func TestSegmentContextGuardEmitsChangedDeclaration(t *testing.T) {
+	t.Setenv("GREPPLE_CONTEXT_GUARD_DIR", t.TempDir())
+	original := api.FileResult{Path: "service.go", Segments: []api.ResultSegment{{Kind: "function", Start: 4, End: 6, Text: "func Run() {\n\toldCall()\n}"}}}
+	if output := renderWithSegmentGuard(t, original); !strings.Contains(output, "oldCall") {
+		t.Fatalf("original missing: %q", output)
+	}
+	changed := original
+	changed.Segments = []api.ResultSegment{{Kind: "function", Start: 4, End: 6, Text: "func Run() {\n\tnewCall()\n}"}}
+	if output := renderWithSegmentGuard(t, changed); !strings.Contains(output, "newCall") || strings.Contains(output, "already emitted") {
+		t.Fatalf("changed declaration was suppressed: %q", output)
+	}
+}
+
+func TestSegmentContextGuardOmitsExactExternalTypeBody(t *testing.T) {
+	t.Setenv("GREPPLE_CONTEXT_GUARD_DIR", t.TempDir())
+	artifact := &api.NavigationArtifactIdentity{Module: "client", Version: "1.0.0", Commit: "one", Digest: "artifact-one", Repository: "acme/client@tag~v1.0.0"}
+	segment := api.ResultSegment{Kind: "lines", Start: 20, End: 22, Text: "export interface Client {\n  request(): Promise<Response>\n}"}
+	result := api.FileResult{Path: "consumer.ts", Related: []api.RelatedSymbol{{
+		Name: "Client", Path: "src/client.ts", Direction: "type", Role: "parameter", Start: 20, End: 22,
+		Artifact: artifact, Segments: []api.ResultSegment{segment},
+	}}}
+	first := renderWithSegmentGuard(t, result)
+	if !strings.Contains(first, "export interface Client") {
+		t.Fatalf("external type missing: %q", first)
+	}
+	second := renderWithSegmentGuard(t, result)
+	if strings.Contains(second, "export interface Client") || !strings.Contains(second, "unchanged segment already emitted: src/client.ts:20-22") {
+		t.Fatalf("external type body was not omitted: %q", second)
+	}
+	if !strings.Contains(second, "acme/client@tag~v1.0.0:src/client.ts:20-22") {
+		t.Fatalf("external provenance was lost: %q", second)
+	}
+}
+
+func TestSegmentContextGuardUsesExactArtifactIdentity(t *testing.T) {
+	t.Setenv("GREPPLE_CONTEXT_GUARD_DIR", t.TempDir())
+	segment := api.ResultSegment{Kind: "lines", Start: 1, End: 1, Text: "export interface Client {}"}
+	first := &api.NavigationArtifactIdentity{Module: "client", Version: "1.0.0", Commit: "one", Digest: "artifact-one"}
+	second := &api.NavigationArtifactIdentity{Module: "client", Version: "2.0.0", Commit: "two", Digest: "artifact-two"}
+	guard, err := openSegmentContextGuard()
+	if err != nil {
 		t.Fatal(err)
 	}
+	if guard.seen("client.ts", first, segment) {
+		t.Fatal("new artifact was already present")
+	}
+	guard.record("client.ts", first, segment)
+	guard.close()
+	guard, err = openSegmentContextGuard()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer guard.close()
+	if !guard.seen("client.ts", first, segment) {
+		t.Fatal("same exact artifact was not recognized")
+	}
+	if guard.seen("client.ts", second, segment) {
+		t.Fatal("different artifact version was suppressed")
+	}
+}
+
+func TestSegmentContextGuardRejectsPartialRanges(t *testing.T) {
+	partial := api.ResultSegment{Kind: "lines", Start: 10, End: 20, Text: "only one returned line"}
+	if completeStructuralSegment(partial) {
+		t.Fatal("partial range treated as a complete declaration")
+	}
+}
+
+func TestSegmentContextInvalidationRotatesStatsAndRestoresDeclaration(t *testing.T) {
+	directory := t.TempDir()
+	t.Setenv("GREPPLE_CONTEXT_GUARD_DIR", directory)
+	result := api.FileResult{Path: "model.go", Segments: []api.ResultSegment{{Kind: "lines", Start: 1, End: 1, Text: "type Model struct{}"}}}
+	renderWithSegmentGuard(t, result)
 	if err := invalidateRenderedContext("compact"); err != nil {
 		t.Fatal(err)
 	}
@@ -49,58 +116,25 @@ func TestRenderedContextInvalidationRotatesStatsAndRestoresOutput(t *testing.T) 
 	if rotated.Period != 1 || rotated.ResetReason != "compact" || rotated.ObservedCalls != 0 {
 		t.Fatalf("stats did not rotate: %#v", rotated)
 	}
-	guarded, err := guardRenderedOutput(content)
-	if err != nil || string(guarded) != string(content) {
-		t.Fatalf("invalidated output remained suppressed: %q err=%v", guarded, err)
-	}
-	if stats := readRenderedContextStats(filepath.Join(directory, "stats-1.json"), 1); stats.ObservedCalls != 1 {
-		t.Fatalf("new period not updated: %#v", stats)
+	if output := renderWithSegmentGuard(t, result); !strings.Contains(output, "type Model struct") {
+		t.Fatalf("declaration remained suppressed after invalidation: %q", output)
 	}
 }
 
-func TestRenderedContextGuardIgnoresNonSourceAndJSON(t *testing.T) {
+func TestContextGuardIsDisabledForPotentiallySpilledResult(t *testing.T) {
 	directory := t.TempDir()
 	t.Setenv("GREPPLE_CONTEXT_GUARD_DIR", directory)
-	plain := []byte(strings.Repeat("ordinary command output\n", 20))
-	guarded, err := guardRenderedOutput(plain)
-	if err != nil || string(guarded) != string(plain) {
-		t.Fatalf("non-source output changed: %q err=%v", guarded, err)
+	previous := activeInlineOutputThreshold
+	activeInlineOutputThreshold = 1
+	defer func() { activeInlineOutputThreshold = previous }()
+	options := &cliOptions{JSON: "off"}
+	results := []api.FileResult{{Path: "large.go", Segments: []api.ResultSegment{{Kind: "lines", Start: 1, End: 1, Text: "type Large struct{}"}}}}
+	if guard := contextGuardForResults(options, results); guard != nil {
+		guard.close()
+		t.Fatal("potentially spilled result enabled context guard")
 	}
 	if _, err := os.Stat(filepath.Join(directory, "cache.json")); !os.IsNotExist(err) {
-		t.Fatalf("non-source output created cache: %v", err)
-	}
-	path := filepath.Join(t.TempDir(), "output.json")
-	jsonOutput := []byte(`{"line":"abc│1│source"}`)
-	if err := os.WriteFile(path, jsonOutput, 0o600); err != nil {
-		t.Fatal(err)
-	}
-	result, err := guardRenderedOutputFile(path, true)
-	if err != nil || string(result) != string(jsonOutput) {
-		t.Fatalf("JSON output changed: %q err=%v", result, err)
-	}
-}
-
-func TestSpilledSourceIsNotRecordedByContextGuard(t *testing.T) {
-	guardDirectory := t.TempDir()
-	t.Setenv("GREPPLE_CONTEXT_GUARD_DIR", guardDirectory)
-	outputDirectory := t.TempDir()
-	temporary, err := os.CreateTemp(outputDirectory, ".spill-*")
-	if err != nil {
-		t.Fatal(err)
-	}
-	content := strings.Repeat("abc│1│large external declaration\n", 20)
-	if _, err := temporary.WriteString(content); err != nil {
-		t.Fatal(err)
-	}
-	var stdout bytes.Buffer
-	if err := finishOutputSpill(temporary, temporary.Name(), outputDirectory, 1, []string{"--at", "external.go:1"}, &stdout, nil); err != nil {
-		t.Fatal(err)
-	}
-	if !strings.Contains(stdout.String(), "grepple output spilled") {
-		t.Fatalf("missing spill descriptor: %q", stdout.String())
-	}
-	if _, err := os.Stat(filepath.Join(guardDirectory, "cache.json")); !os.IsNotExist(err) {
-		t.Fatalf("spilled source was recorded: %v", err)
+		t.Fatalf("spill preflight created cache: %v", err)
 	}
 }
 
@@ -112,4 +146,20 @@ func TestRunContextInvalidateValidation(t *testing.T) {
 	if err := runContext([]string{"invalidate", "--unknown"}); err == nil {
 		t.Fatal("unknown argument accepted")
 	}
+}
+
+func renderWithSegmentGuard(t *testing.T, result api.FileResult) string {
+	t.Helper()
+	guard, err := openSegmentContextGuard()
+	if err != nil {
+		t.Fatal(err)
+	}
+	var output bytes.Buffer
+	renderer := segmentRenderer{output: newOutputWriter(&output), contextGuard: guard}
+	if err := renderer.Render([]api.FileResult{result}); err != nil {
+		guard.close()
+		t.Fatal(err)
+	}
+	guard.close()
+	return output.String()
 }

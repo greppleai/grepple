@@ -366,7 +366,7 @@ Commands:
   boundaries   Find repeated workflows and concrete-type spread
   examples     Print task-oriented, copyable CLI workflows
   artifacts    Manage spilled output artifacts
-  context      Manage rendered-context deduplication
+  context      Manage structural-segment context deduplication
   extract      Generate or check focused architecture projections
   architecture Inspect language-neutral directory architecture
   sources      Explain repository configuration and source selection

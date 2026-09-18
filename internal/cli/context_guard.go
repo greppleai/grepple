@@ -11,16 +11,16 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/greppleai/grepple/api"
 )
 
 const (
-	contextGuardSchema       = "grepple-context-guard-v2"
-	contextGuardStatsSchema  = "grepple-context-guard-stats-v2"
-	contextGuardMinBlockSize = 128
-	contextGuardMaxEntries   = 50_000
-	contextGuardMaxFileSize  = 16 << 20
-	contextGuardMaxOutput    = 64 << 20
-	contextGuardLockTimeout  = 2 * time.Second
+	contextGuardSchema      = "grepple-context-segments-v1"
+	contextGuardStatsSchema = "grepple-context-segment-stats-v1"
+	contextGuardMaxEntries  = 50_000
+	contextGuardMaxFileSize = 16 << 20
+	contextGuardLockTimeout = 2 * time.Second
 )
 
 type renderedContextCache struct {
@@ -29,35 +29,55 @@ type renderedContextCache struct {
 }
 
 type renderedContextEntry struct {
-	Bytes int `json:"bytes"`
+	SourceDigest string `json:"sourceDigest"`
+	SourceBytes  int    `json:"sourceBytes"`
 }
 
 type renderedContextStats struct {
-	Schema            string  `json:"schema"`
-	Period            int     `json:"period"`
-	ResetReason       string  `json:"resetReason"`
-	CreatedAt         string  `json:"createdAt"`
-	UpdatedAt         string  `json:"updatedAt"`
-	ObservedCalls     int     `json:"observedCalls"`
-	ObservedBlocks    int     `json:"observedBlocks"`
-	NewBlocks         int     `json:"newBlocks"`
-	RemovedBlocks     int     `json:"removedBlocks"`
-	InputBytes        int64   `json:"inputBytes"`
-	ReturnedBytes     int64   `json:"returnedBytes"`
-	GrossRemovedBytes int64   `json:"grossRemovedBytes"`
-	NetSavedBytes     int64   `json:"netSavedBytes"`
-	NetSavingsPercent float64 `json:"netSavingsPercent"`
+	Schema             string  `json:"schema"`
+	Period             int     `json:"period"`
+	ResetReason        string  `json:"resetReason"`
+	CreatedAt          string  `json:"createdAt"`
+	UpdatedAt          string  `json:"updatedAt"`
+	ObservedCalls      int     `json:"observedCalls"`
+	EmittedSegments    int     `json:"emittedSegments"`
+	RemovedSegments    int     `json:"removedSegments"`
+	EmittedSourceBytes int64   `json:"emittedSourceBytes"`
+	GrossRemovedBytes  int64   `json:"grossRemovedBytes"`
+	NetSavedBytes      int64   `json:"netSavedBytes"`
+	NetSavingsPercent  float64 `json:"netSavingsPercent"`
+}
+
+type segmentContextGuard struct {
+	directory       string
+	cachePath       string
+	cache           renderedContextCache
+	release         func()
+	observed        bool
+	emittedSegments int
+	removedSegments int
+	emittedBytes    int
+	removedBytes    int
+	markerBytes     int
 }
 
 func runContext(args []string) error {
 	if len(args) == 1 && (args[0] == "--help" || args[0] == "-h") {
-		return stdoutWriter().writeString("Manage session-agnostic rendered-context deduplication.\nUsage:\n  grepple context invalidate [--reason REASON]\n")
+		return stdoutWriter().writeString("Manage session-agnostic structural-segment context deduplication.\nUsage:\n  grepple context invalidate [--reason REASON]\n")
 	}
 	if len(args) == 0 || args[0] != "invalidate" {
 		return fmt.Errorf("usage: grepple context invalidate [--reason REASON]")
 	}
+	reason, err := parseContextInvalidationReason(args[1:])
+	if err != nil {
+		return err
+	}
+	return invalidateRenderedContext(reason)
+}
+
+func parseContextInvalidationReason(args []string) (string, error) {
 	reason := "manual"
-	for index := 1; index < len(args); index++ {
+	for index := 0; index < len(args); index++ {
 		switch {
 		case args[index] == "--reason" && index+1 < len(args):
 			reason = strings.TrimSpace(args[index+1])
@@ -65,51 +85,16 @@ func runContext(args []string) error {
 		case strings.HasPrefix(args[index], "--reason="):
 			reason = strings.TrimSpace(strings.TrimPrefix(args[index], "--reason="))
 		default:
-			return fmt.Errorf("unknown context invalidate argument %q", args[index])
+			return "", fmt.Errorf("unknown context invalidate argument %q", args[index])
 		}
 	}
 	if reason == "" {
-		return fmt.Errorf("--reason requires a value")
+		return "", fmt.Errorf("--reason requires a value")
 	}
-	return invalidateRenderedContext(reason)
+	return reason, nil
 }
 
-func guardRenderedOutputFile(path string, outputJSON bool) ([]byte, error) {
-	if outputJSON {
-		return os.ReadFile(path)
-	}
-	info, err := os.Stat(path)
-	if err != nil {
-		return nil, err
-	}
-	if info.Size() > contextGuardMaxOutput {
-		return os.ReadFile(path)
-	}
-	content, err := os.ReadFile(path)
-	if err != nil {
-		return nil, err
-	}
-	guarded, err := guardRenderedOutput(content)
-	if err != nil {
-		return content, nil
-	}
-	return guarded, nil
-}
-
-type renderedContextObservation struct {
-	blocks        []string
-	eligible      int
-	newBlocks     int
-	removedBlocks int
-	removedBytes  int
-}
-
-func guardRenderedOutput(content []byte) ([]byte, error) {
-	blocks := splitRenderedContextBlocks(string(content))
-	eligible := countRenderedSourceBlocks(blocks)
-	if eligible == 0 {
-		return content, nil
-	}
+func openSegmentContextGuard() (*segmentContextGuard, error) {
 	directory, err := renderedContextDirectory()
 	if err != nil {
 		return nil, err
@@ -122,94 +107,77 @@ func guardRenderedOutput(content []byte) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer release()
-	cache := readRenderedContextCache(cachePath)
-	observation := observeRenderedContext(blocks, &cache)
-	if err := writeRenderedContextJSON(cachePath, cache); err != nil {
-		return nil, err
-	}
-	result := renderContextObservation(observation)
-	_ = updateRenderedContextStats(directory, eligible, observation.newBlocks, observation.removedBlocks, len(content), len(result), observation.removedBytes)
-	return []byte(result), nil
+	return &segmentContextGuard{directory: directory, cachePath: cachePath, cache: readRenderedContextCache(cachePath), release: release}, nil
 }
 
-func countRenderedSourceBlocks(blocks []string) int {
-	count := 0
-	for _, block := range blocks {
-		if renderedSourceBlock(block) {
-			count++
-		}
+func (guard *segmentContextGuard) close() {
+	if guard == nil {
+		return
 	}
-	return count
+	defer guard.release()
+	if !guard.observed {
+		return
+	}
+	if writeRenderedContextJSON(guard.cachePath, guard.cache) != nil {
+		return
+	}
+	_ = updateRenderedContextStats(guard)
 }
 
-func observeRenderedContext(blocks []string, cache *renderedContextCache) renderedContextObservation {
-	observation := renderedContextObservation{blocks: make([]string, 0, len(blocks)+1)}
-	for _, block := range blocks {
-		if !renderedSourceBlock(block) {
-			observation.blocks = append(observation.blocks, block)
-			continue
-		}
-		digest := renderedContextDigest(block)
-		if _, seen := cache.Entries[digest]; seen {
-			observation.removedBlocks++
-			observation.removedBytes += len(block)
-			continue
-		}
-		observation.blocks = append(observation.blocks, block)
-		observation.newBlocks++
-		if len(cache.Entries) < contextGuardMaxEntries {
-			cache.Entries[digest] = renderedContextEntry{Bytes: len(block)}
-		}
+func (guard *segmentContextGuard) seen(source string, artifact *api.NavigationArtifactIdentity, segment api.ResultSegment) bool {
+	if guard == nil || !completeStructuralSegment(segment) {
+		return false
 	}
-	observation.eligible = observation.newBlocks + observation.removedBlocks
-	return observation
+	guard.observed = true
+	key, _, _ := structuralSegmentIdentity(source, artifact, segment)
+	if _, exists := guard.cache.Entries[key]; !exists {
+		return false
+	}
+	guard.removedSegments++
+	guard.removedBytes += len(segment.Text)
+	return true
 }
 
-func renderContextObservation(observation renderedContextObservation) string {
-	result := strings.Join(observation.blocks, "")
-	if observation.removedBlocks == 0 {
-		return result
+func (guard *segmentContextGuard) record(source string, artifact *api.NavigationArtifactIdentity, segment api.ResultSegment) {
+	if guard == nil || !completeStructuralSegment(segment) {
+		return
 	}
-	marker := fmt.Sprintf("[grepple context guard: omitted %d unchanged source %s (%d bytes) already emitted since the last context invalidation]\n", observation.removedBlocks, pluralizeContextWord("block", observation.removedBlocks), observation.removedBytes)
-	return marker + result
+	guard.observed = true
+	key, sourceDigest, sourceBytes := structuralSegmentIdentity(source, artifact, segment)
+	if len(guard.cache.Entries) < contextGuardMaxEntries {
+		guard.cache.Entries[key] = renderedContextEntry{SourceDigest: sourceDigest, SourceBytes: sourceBytes}
+	}
+	guard.emittedSegments++
+	guard.emittedBytes += sourceBytes
 }
 
-func renderedSourceBlock(block string) bool {
-	return len(strings.TrimSpace(block)) >= contextGuardMinBlockSize && renderedBlockContainsSource(block)
+func (guard *segmentContextGuard) recordMarker(bytes int) {
+	if guard != nil {
+		guard.markerBytes += bytes
+	}
 }
 
-func splitRenderedContextBlocks(output string) []string {
-	blocks := make([]string, 0, strings.Count(output, "\n\n")+1)
-	for len(output) > 0 {
-		end := strings.Index(output, "\n\n")
-		if end < 0 {
-			blocks = append(blocks, output)
-			break
-		}
-		end += 2
-		blocks = append(blocks, output[:end])
-		output = output[end:]
+func completeStructuralSegment(segment api.ResultSegment) bool {
+	if segment.Kind == "" || segment.Kind == "spacing" || segment.Kind == "summary" || segment.Start < 1 || segment.End < segment.Start || segment.Text == "" {
+		return false
 	}
-	return blocks
+	return strings.Count(segment.Text, "\n")+1 == segment.End-segment.Start+1
 }
 
-func renderedBlockContainsSource(block string) bool {
-	for _, line := range strings.Split(block, "\n") {
-		first := strings.Index(line, "│")
-		if first < 1 {
-			continue
-		}
-		second := strings.Index(line[first+len("│"):], "│")
-		if second < 1 {
-			continue
-		}
-		lineNumber := line[first+len("│") : first+len("│")+second]
-		if _, err := strconv.Atoi(lineNumber); err == nil {
-			return true
-		}
+func structuralSegmentIdentity(source string, artifact *api.NavigationArtifactIdentity, segment api.ResultSegment) (string, string, int) {
+	sourceDigestBytes := sha256.Sum256([]byte(segment.Text))
+	sourceDigest := hex.EncodeToString(sourceDigestBytes[:])
+	artifactIdentity := "local"
+	if artifact != nil {
+		artifactIdentity = strings.Join([]string{artifact.Digest, artifact.Repository, artifact.Commit, artifact.Module, artifact.Version, artifact.RefKind}, "\x00")
 	}
-	return false
+	identity := strings.Join([]string{artifactIdentity, source, segment.Kind, strconv.Itoa(segment.Start), strconv.Itoa(segment.End), sourceDigest}, "\x00")
+	identityDigest := sha256.Sum256([]byte(identity))
+	return "sha256:" + hex.EncodeToString(identityDigest[:]), "sha256:" + sourceDigest, len(segment.Text)
+}
+
+func segmentContextMarker(source string, segment api.ResultSegment) string {
+	return fmt.Sprintf("// … unchanged segment already emitted: %s:%d-%d (%d source bytes) …\n", source, segment.Start, segment.End, len(segment.Text))
 }
 
 func renderedContextDirectory() (string, error) {
@@ -221,11 +189,6 @@ func renderedContextDirectory() (string, error) {
 		return "", err
 	}
 	return filepath.Join(home, ".grepple", "context-guard"), nil
-}
-
-func renderedContextDigest(block string) string {
-	digest := sha256.Sum256([]byte(block))
-	return "sha256:" + hex.EncodeToString(digest[:])
 }
 
 func readRenderedContextCache(path string) renderedContextCache {
@@ -241,12 +204,12 @@ func readRenderedContextCache(path string) renderedContextCache {
 	return restored
 }
 
-func updateRenderedContextStats(directory string, observed, added, removed, inputBytes, returnedBytes, removedBytes int) error {
-	period := latestRenderedContextStatsPeriod(directory)
+func updateRenderedContextStats(guard *segmentContextGuard) error {
+	period := latestRenderedContextStatsPeriod(guard.directory)
 	if period < 0 {
 		period = 0
 	}
-	path := renderedContextStatsPath(directory, period)
+	path := renderedContextStatsPath(guard.directory, period)
 	stats := readRenderedContextStats(path, period)
 	now := time.Now().UTC().Format(time.RFC3339Nano)
 	if stats.CreatedAt == "" {
@@ -254,17 +217,16 @@ func updateRenderedContextStats(directory string, observed, added, removed, inpu
 	}
 	stats.UpdatedAt = now
 	stats.ObservedCalls++
-	stats.ObservedBlocks += observed
-	stats.NewBlocks += added
-	stats.RemovedBlocks += removed
-	stats.InputBytes += int64(inputBytes)
-	stats.ReturnedBytes += int64(returnedBytes)
-	stats.GrossRemovedBytes += int64(removedBytes)
-	if saved := inputBytes - returnedBytes; saved > 0 {
+	stats.EmittedSegments += guard.emittedSegments
+	stats.RemovedSegments += guard.removedSegments
+	stats.EmittedSourceBytes += int64(guard.emittedBytes)
+	stats.GrossRemovedBytes += int64(guard.removedBytes)
+	if saved := guard.removedBytes - guard.markerBytes; saved > 0 {
 		stats.NetSavedBytes += int64(saved)
 	}
-	if stats.InputBytes > 0 {
-		stats.NetSavingsPercent = float64(stats.NetSavedBytes) * 100 / float64(stats.InputBytes)
+	totalSource := stats.EmittedSourceBytes + stats.GrossRemovedBytes
+	if totalSource > 0 {
+		stats.NetSavingsPercent = float64(stats.NetSavedBytes) * 100 / float64(totalSource)
 	}
 	return writeRenderedContextJSON(path, stats)
 }
@@ -391,11 +353,4 @@ func acquireRenderedContextLock(path string) (func(), error) {
 		}
 		time.Sleep(10 * time.Millisecond)
 	}
-}
-
-func pluralizeContextWord(word string, count int) string {
-	if count == 1 {
-		return word
-	}
-	return word + "s"
 }

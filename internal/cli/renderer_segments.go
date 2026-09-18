@@ -9,8 +9,9 @@ import (
 )
 
 type segmentRenderer struct {
-	output  *outputWriter
-	anchors anchorLookup
+	output       *outputWriter
+	anchors      anchorLookup
+	contextGuard *segmentContextGuard
 }
 
 func (renderer segmentRenderer) Render(results []api.FileResult) error {
@@ -48,7 +49,7 @@ func (renderer segmentRenderer) renderFile(result api.FileResult) error {
 				return err
 			}
 		}
-		if err := renderer.renderSegment(result.Path, segment, width); err != nil {
+		if err := renderer.renderSegment(resultSourceIdentity(result), result.Path, nil, segment, width, ""); err != nil {
 			return err
 		}
 		cursor = segment.End + 1
@@ -112,7 +113,7 @@ func (renderer segmentRenderer) renderRelatedPoint(point api.RelatedSymbol, dept
 	if len(point.Segments) == 0 || point.Direction == "type" {
 		return nil
 	}
-	if err := renderer.renderRelatedSegments(point.Segments, depth+1); err != nil {
+	if err := renderer.renderRelatedSegments(point.Path, point.Artifact, point.Segments, depth+1); err != nil {
 		return err
 	}
 	if len(point.Related) > 0 || point.OmittedCallers > 0 || point.OmittedCallees > 0 || point.OmittedTypes > 0 {
@@ -224,34 +225,50 @@ func pluralizeRelated(noun string, count int) string {
 	return noun + "s"
 }
 
-func (renderer segmentRenderer) renderRelatedSegments(segments []api.ResultSegment, depth int) error {
+func (renderer segmentRenderer) renderRelatedSegments(path string, artifact *api.NavigationArtifactIdentity, segments []api.ResultSegment, depth int) error {
 	indent := strings.Repeat("  ", depth)
 	width := segmentLineWidth(segments)
 	for _, segment := range segments {
-		for index, line := range strings.Split(segment.Text, "\n") {
-			output := fmt.Sprintf("%s%*d   %s\n", indent, width, segment.Start+index, line)
-			if err := renderer.output.writeString(output); err != nil {
-				return err
-			}
+		if err := renderer.renderSegment(path, path, artifact, segment, width, indent); err != nil {
+			return err
 		}
 	}
 	return nil
 }
 
-func (renderer segmentRenderer) renderSegment(path string, segment api.ResultSegment, width int) error {
+func (renderer segmentRenderer) renderSegment(source, path string, artifact *api.NavigationArtifactIdentity, segment api.ResultSegment, width int, prefix string) error {
 	if segment.Kind == "spacing" {
 		return renderer.output.writeString(strings.Repeat("\n", segment.End-segment.Start+1))
 	}
 	if segment.Kind == "summary" {
-		return renderer.output.writeString(fmt.Sprintf("%*d   %s\n", width, segment.Start, segment.Text))
+		return renderer.output.writeString(fmt.Sprintf("%s%*d   %s\n", prefix, width, segment.Start, segment.Text))
+	}
+	if renderer.contextGuard.seen(source, artifact, segment) {
+		marker := prefix + segmentContextMarker(source, segment)
+		renderer.contextGuard.recordMarker(len(marker))
+		return renderer.output.writeString(marker)
 	}
 	for index, line := range strings.Split(segment.Text, "\n") {
 		lineNumber := segment.Start + index
+		if prefix != "" {
+			if err := renderer.output.writeString(fmt.Sprintf("%s%*d   %s\n", prefix, width, lineNumber, line)); err != nil {
+				return err
+			}
+			continue
+		}
 		if err := renderer.renderSourceLine(path, lineNumber, normalizeRenderedAnchorLine(line), width); err != nil {
 			return err
 		}
 	}
+	renderer.contextGuard.record(source, artifact, segment)
 	return nil
+}
+
+func resultSourceIdentity(result api.FileResult) string {
+	if result.Repo == "" {
+		return result.Path
+	}
+	return result.Repo + "\x00" + result.Path
 }
 
 func (renderer segmentRenderer) renderSourceLine(path string, line int, content string, width int) error {

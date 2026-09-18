@@ -15,7 +15,10 @@ import (
 
 const defaultSpillThresholdBytes = 64 * 1024
 
-var outputSpillMutex sync.Mutex
+var (
+	outputSpillMutex            sync.Mutex
+	activeInlineOutputThreshold int
+)
 
 type spillOptions struct {
 	disabled  bool
@@ -136,6 +139,9 @@ func runWithOutputSpill(args []string, options spillOptions, run func() error) e
 	if threshold < 1 {
 		threshold = defaultSpillThresholdBytes
 	}
+	previousThreshold := activeInlineOutputThreshold
+	activeInlineOutputThreshold = threshold
+	defer func() { activeInlineOutputThreshold = previousThreshold }()
 	outputDirectory, err := resolveOutputArtifactDirectory(options.directory)
 	if err != nil {
 		return err
@@ -186,7 +192,7 @@ func finishOutputSpill(temporary *os.File, temporaryPath, outputDirectory string
 		return statErr
 	}
 	if info.Size() <= int64(threshold) {
-		copyErr := copySpillToStdout(temporaryPath, stdout, args)
+		copyErr := copySpillToStdout(temporaryPath, stdout)
 		_ = os.Remove(temporaryPath)
 		if commandErr != nil {
 			return commandErr
@@ -203,12 +209,13 @@ func finishOutputSpill(temporary *os.File, temporaryPath, outputDirectory string
 	return err
 }
 
-func copySpillToStdout(path string, stdout io.Writer, args []string) error {
-	content, err := guardRenderedOutputFile(path, outputIsJSON(args))
+func copySpillToStdout(path string, stdout io.Writer) error {
+	file, err := os.Open(path)
 	if err != nil {
 		return err
 	}
-	_, err = stdout.Write(content)
+	defer file.Close()
+	_, err = io.Copy(stdout, file)
 	return err
 }
 

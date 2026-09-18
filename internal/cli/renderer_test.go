@@ -30,7 +30,7 @@ func TestNewResultRendererSelectsOutputMode(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			renderer := newResultRenderer(&test.options, newOutputWriter(&bytes.Buffer{}))
+			renderer := newResultRenderer(&test.options, newOutputWriter(&bytes.Buffer{}), nil)
 			if got := reflect.TypeOf(renderer).Name(); got != test.want {
 				t.Fatalf("expected %s, got %s", test.want, got)
 			}

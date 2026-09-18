@@ -87,7 +87,7 @@ func (renderer segmentRenderer) renderRelatedTypeDefinitions(definitions []relat
 		}
 		width := segmentLineWidth(definition.segments)
 		for _, segment := range definition.segments {
-			if err := renderer.renderSegment(path, segment, width); err != nil {
+			if err := renderer.renderSegment(definition.path, path, definition.artifact, segment, width, ""); err != nil {
 				return err
 			}
 		}
