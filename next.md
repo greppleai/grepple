@@ -46,6 +46,62 @@ Live `grepple ask` dogfooding showed two distinct bottlenecks: ordinary local/re
 - [ ] Document when users must hand evidence to a compiler, language server, build-system query, or runtime tool for refactor safety; do not imply Grepple alone proves exact semantic impact.
 - [ ] Low priority, evidence-triggered: improve ambiguous navigation resolution only when representative tasks show that conservative candidate or unresolved edges materially block work. Keep improvements adapter-owned and syntax- or manifest-evidenced; do not pursue compiler-grade whole-program analysis, dynamic-runtime inference, or framework guessing merely to increase edge counts.
 
+### Package-manager production hardening
+
+The first exact external-resolution matrix covers Go modules, npm lockfiles, Cargo registry locks, and direct Maven coordinates. Production support must model the package manager's resolved graph rather than treating a manifest version string, repository tag, or terminal import name as sufficient identity.
+
+**Cross-ecosystem invariants**
+
+- [ ] Define a versioned dependency-evidence contract containing ecosystem, package coordinate, resolved version, source/registry identity, integrity/checksum, replacement kind, target conditions, owning workspace member, and the manifest/lock location that supplied each field.
+- [ ] Distinguish declared constraints from selected versions. Never send ranges, dynamic versions, inherited properties, unresolved variables, or floating Git references as exact artifact evidence.
+- [ ] Make source identity part of matching. The same name/version from a public registry, private registry, Git repository, vendored tree, local path, mirror, or replacement is not automatically the same artifact.
+- [ ] Stop assuming package versions map to Git tags. Registry tarballs, crate archives, Maven coordinates, Git revisions, monorepo release tags, subdirectory packages, and generated source bundles need explicit provenance links before source navigation is called exact.
+- [ ] Preserve multiple exact dependency candidates when source syntax cannot identify artifact ownership. Package/class/module membership in the indexed artifact must disambiguate; terminal-name, group-prefix, repository-name, and popular-package guesses must not.
+- [ ] Model nested modules and monorepos explicitly. Manifest ownership must follow the nearest applicable workspace/package root, while an indexed repository artifact may publish many independently versioned modules.
+- [ ] Apply target and configuration conditions: operating system, architecture, runtime, build profile, feature set, optional dependency activation, test/dev scope, and generated-source selection. If the active condition is unknown, retain conditional candidates rather than asserting one edge.
+- [ ] Define integrity policy per source kind. Missing checksums, mutable snapshots, local paths, Git branches, and registries without trusted integrity evidence need explicit weaker/unresolved states instead of sharing registry-lock confidence.
+- [ ] Handle lockfile schema/tool-version evolution with bounded parsers, fixtures from real package-manager versions, unknown-field tolerance, deterministic ordering, and explicit unsupported-version diagnostics.
+- [ ] Treat malformed, partially merged, stale, platform-specific, and manifest/lock-mismatched files as non-authoritative. Qualification failure must preserve the original unresolved syntax evidence.
+- [ ] Resolve private registries and repositories through repository-aware authorization. Never leak global artifact existence, credentials, package URLs containing secrets, or cross-tenant cache hits.
+- [ ] Add acquisition policy for an exact dependency that is not indexed: authorization, allowlists, rate/concurrency limits, immutable fetch keys, checksum verification, retry/backoff, quarantine, and observable unresolved reasons.
+- [ ] Separate package artifact identity from source artifact identity. Record how a package archive/JAR/crate maps to a repository commit and path; do not infer that mapping solely from package metadata or a matching version label.
+- [ ] Define pruning and invalidation for manifests, lockfiles, resolved snapshots, package archives, source artifacts, and dirty-worktree overlays. Resolver inputs—not only source bytes—must participate in cache keys.
+
+**Go modules**
+
+- [ ] Cover minimal-version selection across the complete module graph, multiple `require` blocks, indirect requirements, `exclude`, `retract`, tool dependencies, `vendor/modules.txt`, and workspace module selection.
+- [ ] Preserve exact semantics for module-path/version suffixes, submodules, pseudo-versions, versioned and local `replace`, root and nested `go.work`, private proxies, `GONOSUMDB`/`GOPRIVATE`, and alternate `GOPROXY` sources.
+- [ ] Validate module zip/checksum provenance rather than assuming `go.sum` proves a GitHub repository/tag mapping; distinguish module and `/go.mod` hashes and handle sum-database-disabled private modules conservatively.
+
+**Node/npm**
+
+- [ ] Support npm lockfile versions 1–3 and decide explicit support for npm shrinkwrap, Yarn classic/Berry, pnpm, Bun, and Corepack-selected package-manager versions. Never parse one lock format as another.
+- [ ] Model workspaces, hoisting, nested `node_modules`, peer dependencies, optional dependencies, bundled dependencies, overrides/resolutions, npm aliases (`npm:`), and file/link/workspace/Git/tarball sources.
+- [ ] Resolve package subpaths through `exports`, `imports`, `main`, `module`, `types`, `typesVersions`, conditional exports, and runtime/module conditions. A package name alone does not prove which source declaration an import reaches.
+- [ ] Preserve scoped names and aliases separately from the resolved package identity, and enforce `os`, `cpu`, engine, and optional-install conditions when they affect the selected graph.
+- [ ] Verify registry URL and SRI integrity for exact archives; custom registries and mirrors must not silently collapse into the public npm identity.
+
+**Rust/Cargo**
+
+- [ ] Support renamed dependencies, workspace-inherited dependencies, target-specific tables, optional dependencies/features, dev/build dependencies, multiple versions of one crate, alternate registries, registry source replacement, `[patch]`, Git revisions, and path dependencies.
+- [ ] Distinguish package name from crate/library target name and map `use` paths through `lib.name`, module declarations, re-exports, enabled features, and generated code before resolving source declarations.
+- [ ] Treat Cargo checksums as registry-package evidence only. Git/path packages require exact commit or local snapshot identity, and absence of `Cargo.lock` for libraries must remain an explicit completeness limitation.
+
+**Maven, Gradle, Java, and Kotlin**
+
+- [ ] Build an effective Maven model: parent POMs, properties, profiles, dependency management, imported BOMs, transitive dependencies, exclusions, scopes, optional dependencies, relocation, repositories/mirrors, and reactor modules.
+- [ ] Include Maven type/classifier and snapshot timestamp/build identity. `groupId:artifactId:version` alone is insufficient for classifiers, platform artifacts, test fixtures, multi-release JARs, and mutable `-SNAPSHOT` versions.
+- [ ] Add Gradle support separately rather than treating Gradle files as Maven syntax: Groovy/Kotlin DSL, version catalogs, dependency constraints/platforms, lockfiles, dependency verification metadata, substitutions, composite builds, included builds, variants, capabilities, and dynamic versions.
+- [ ] Do not infer Maven/Gradle ownership from Java/Kotlin package prefixes. One artifact may contain many packages and split packages may appear in many artifacts; exact indexed archive/source membership must perform final disambiguation.
+- [ ] Account for Kotlin metadata, multiplatform source sets, JVM names, generated declarations, and Java/Kotlin mixed modules when mapping a selected artifact to source.
+
+**Production verification**
+
+- [ ] Keep hermetic provider/consumer fixtures for every ecosystem, generated by real package-manager versions where possible. Cover exact resolution, wrong version, missing lock, stale lock, local/path replacement, aliases, multiple exact providers, conditional dependencies, private/custom registries, and corrupt integrity.
+- [ ] Add HTTP-level multi-shard E2E tests through authenticated `/public/navigation/resolve` and artifact download, including candidate merging, immutable provenance, source bodies, unavailable shards, authorization denial, and deterministic repeated results.
+- [ ] Add representative real-package fixtures pinned to immutable archive/checksum and source-commit identities, while keeping network access out of ordinary unit tests.
+- [ ] Emit per-ecosystem telemetry for references observed, exactly qualified, conditionally qualified, unresolved by reason, artifact missing, version/source mismatch, ambiguous providers, and successfully source-resolved declarations.
+
 ### Structural-query reliability
 
 - [ ] Expand `gritql-v1` conformance fixtures across every supported language for named/list metavariables, ambiguous snippet contexts, malformed syntax, cancellation, and resource limits.
