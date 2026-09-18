@@ -366,6 +366,7 @@ Commands:
   boundaries   Find repeated workflows and concrete-type spread
   examples     Print task-oriented, copyable CLI workflows
   artifacts    Manage spilled output artifacts
+  context      Manage rendered-context deduplication
   extract      Generate or check focused architecture projections
   architecture Inspect language-neutral directory architecture
   sources      Explain repository configuration and source selection
@@ -428,7 +429,7 @@ func runHelp(args []string) error {
 		return stdoutWriter().writeString("Remove stored remote authentication.\nUsage: grepple logout\n")
 	case "version":
 		return stdoutWriter().writeString("Print build and source version information.\nUsage: grepple version\n")
-	case "grit", "graph", "anchors", "boundaries", "examples", "languages", "rules", "get", "tree", "repos", "refs", "artifacts", "architecture", "sources", "ask", "ai-provider", "write":
+	case "grit", "graph", "anchors", "boundaries", "examples", "languages", "rules", "get", "tree", "repos", "refs", "artifacts", "context", "architecture", "sources", "ask", "ai-provider", "write":
 		return runCommand([]string{args[0], "--help"})
 	default:
 		return fmt.Errorf("unknown help topic %q", args[0])
@@ -493,6 +494,8 @@ func runCommand(args []string) error {
 			return runExamples(args[1:])
 		case "artifacts":
 			return runArtifacts(args[1:])
+		case "context":
+			return runContext(args[1:])
 		case "languages":
 			return runLanguages(args[1:])
 		case "get":

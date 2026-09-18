@@ -117,8 +117,11 @@ func parseSpillThreshold(args []string, index int) (threshold, consumed int, mat
 }
 
 func runWithOutputSpill(args []string, options spillOptions, run func() error) error {
-	if options.disabled {
+	if options.disabled && len(args) >= 2 && args[0] == "artifacts" && args[1] == "clean" {
 		return run()
+	}
+	if options.disabled {
+		options.threshold = int(^uint(0) >> 1)
 	}
 	outputSpillMutex.Lock()
 	defer outputSpillMutex.Unlock()
@@ -183,7 +186,7 @@ func finishOutputSpill(temporary *os.File, temporaryPath, outputDirectory string
 		return statErr
 	}
 	if info.Size() <= int64(threshold) {
-		copyErr := copySpillToStdout(temporaryPath, stdout)
+		copyErr := copySpillToStdout(temporaryPath, stdout, args)
 		_ = os.Remove(temporaryPath)
 		if commandErr != nil {
 			return commandErr
@@ -200,13 +203,12 @@ func finishOutputSpill(temporary *os.File, temporaryPath, outputDirectory string
 	return err
 }
 
-func copySpillToStdout(path string, stdout io.Writer) error {
-	file, err := os.Open(path)
+func copySpillToStdout(path string, stdout io.Writer, args []string) error {
+	content, err := guardRenderedOutputFile(path, outputIsJSON(args))
 	if err != nil {
 		return err
 	}
-	defer file.Close()
-	_, err = io.Copy(stdout, file)
+	_, err = stdout.Write(content)
 	return err
 }
 

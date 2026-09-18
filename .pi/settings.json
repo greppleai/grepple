@@ -13,27 +13,13 @@
         ]
       }
     ],
-    "PostToolUse": [
-      {
-        "matcher": "Bash|Read",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "sh",
-            "args": ["-c", "if [ -d hooks ]; then hook_dir=hooks; else hook_dir=grepple/hooks; fi; make --no-print-directory -C \"$hook_dir\" run-context-guard"],
-            "timeout": 30,
-            "statusMessage": "Deduplicating Grepple context"
-          }
-        ]
-      }
-    ],
     "PostCompact": [
       {
         "hooks": [
           {
             "type": "command",
             "command": "sh",
-            "args": ["-c", "if [ -d hooks ]; then hook_dir=hooks; else hook_dir=grepple/hooks; fi; make --no-print-directory -C \"$hook_dir\" run-context-invalidate"],
+            "args": ["-c", "if [ -d grepple ]; then root=grepple; else root=.; fi; make --no-print-directory -C \"$root\" bin/grepple >/dev/null && \"$root/bin/grepple\" context invalidate --reason compact"],
             "timeout": 30
           }
         ]
@@ -45,7 +31,7 @@
           {
             "type": "command",
             "command": "sh",
-            "args": ["-c", "if [ -d hooks ]; then hook_dir=hooks; else hook_dir=grepple/hooks; fi; make --no-print-directory -C \"$hook_dir\" run-context-invalidate"],
+            "args": ["-c", "if [ -d grepple ]; then root=grepple; else root=.; fi; make --no-print-directory -C \"$root\" bin/grepple >/dev/null && \"$root/bin/grepple\" context invalidate --reason session-start"],
             "timeout": 30
           }
         ]

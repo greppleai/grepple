@@ -11,7 +11,7 @@ import (
 
 func main() {
 	if len(os.Args) != 2 {
-		fmt.Fprintln(os.Stderr, "usage: pi-hook <grep-guard|context-guard|context-invalidate|lint-check>")
+		fmt.Fprintln(os.Stderr, "usage: pi-hook <grep-guard|lint-check>")
 		os.Exit(2)
 	}
 	input, err := io.ReadAll(os.Stdin)
@@ -22,10 +22,6 @@ func main() {
 	switch os.Args[1] {
 	case "grep-guard":
 		output = pihooks.HandleHook(input)
-	case "context-guard":
-		output = pihooks.HandleContextGuard(input)
-	case "context-invalidate":
-		output = pihooks.HandleContextInvalidation(input)
 	case "lint-check":
 		hookRoot, err := os.Getwd()
 		if err != nil {

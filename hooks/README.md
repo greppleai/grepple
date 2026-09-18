@@ -3,14 +3,12 @@
 This directory is a small Go module containing project-local Pi hook orchestration.
 Mermaid analysis is imported from the main module's `extract` package so CLI focused generation, checks, and automatic Stop validation share one implementation.
 
-The PostToolUse context guard records SHA-256 digests—not source bodies—for human-readable Grepple output blocks and successful Pi `Read` results in `~/.grepple/context-guard/<session-id>.json`. When the same unchanged block would be returned again in that Pi session, the hook replaces it with an explicit already-in-context notice. Grepple JSON, spilled-output descriptors, images, and unsupported response shapes fail open unchanged. PostCompact clears that session's cache; SessionStart also clears contexts started from Pi's `clear`, `compact`, or `fork` lifecycle sources. Cache corruption, lock contention, and filesystem failures never suppress tool output.
-
-Impact statistics are written beside the cache as `<session-id>-stats-0.json`, `<session-id>-stats-1.json`, and so on. They contain timestamps, reset reason, Grepple/Read response counts, observed/new/removed block counts, input and returned bytes, gross removed bytes, net saved bytes, and cumulative net-savings percentage. Stats files contain no source bodies. Each successful compaction closes the current period and atomically creates the next numbered stats file; subsequent hook observations update only that new period.
+Grepple performs rendered-source context deduplication inside the CLI itself. Human output that actually reaches stdout is checked for anchored source blocks; unchanged blocks are omitted on later Grepple calls. JSON and spilled artifact bodies are not recorded because they are not injected as human source output. The session-agnostic state lives in `~/.grepple/context-guard/cache.json`, with impact counters in `stats-0.json`, `stats-1.json`, and so on. The Pi lifecycle hooks only run `grepple context invalidate`: SessionStart establishes a fresh cache, and PostCompact clears it and opens the next statistics period. See `grepple context --help`.
 
 ## Layout
 
 - `cmd/pi-hook` — command-hook protocol entry point.
-- `internal/pihooks` — grep guard, context deduplication, lint orchestration, feedback, schema discovery, and adapters.
+- `internal/pihooks` — grep guard, lint orchestration, feedback, schema discovery, and adapters.
 - `../extract` — shared Tree-sitter Mermaid generation and validation engine.
 - `guides` — remediation text returned by the Stop hook.
 
