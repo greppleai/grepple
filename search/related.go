@@ -454,11 +454,28 @@ func externalCalleePoint(call navigationCall, language string, matched []navigat
 }
 
 func externalNavigationEligible(language, importPath string) bool {
-	if language != "go" || importPath == "" {
+	if importPath == "" {
 		return false
 	}
-	root, _, _ := strings.Cut(importPath, "/")
-	return strings.Contains(root, ".")
+	switch language {
+	case "go":
+		root, _, _ := strings.Cut(importPath, "/")
+		return strings.Contains(root, ".")
+	case "javascript", "typescript", "tsx":
+		return !strings.HasPrefix(importPath, ".") && !strings.HasPrefix(importPath, "/") && !strings.HasPrefix(importPath, "node:")
+	case "rust":
+		root, _, _ := strings.Cut(importPath, "::")
+		switch root {
+		case "crate", "self", "super", "std", "core", "alloc":
+			return false
+		default:
+			return root != ""
+		}
+	case "java", "kotlin":
+		return true
+	default:
+		return false
+	}
 }
 
 func newExternalNavigationReference(language, importPath, symbol, consumerPackage, receiverType, kind string, line int) *api.ExternalNavigationReference {

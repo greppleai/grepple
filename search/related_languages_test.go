@@ -544,9 +544,13 @@ function run(client: Client): void {
 	}
 	for _, point := range matches[0].Related {
 		if point.Direction == "callee" && strings.Contains(point.Name, "load") {
-			t.Fatalf("external TypeScript receiver resolved to local declaration: %#v", point)
+			if point.Confidence != "dependency-unresolved" || point.External == nil || point.External.ImportPath != "@scope/client" {
+				t.Fatalf("external TypeScript receiver did not preserve dependency evidence: %#v", point)
+			}
+			return
 		}
 	}
+	t.Fatal("missing external TypeScript receiver evidence")
 }
 
 func assertNestedTypeScriptReceiverResolution(t *testing.T, files []string) {

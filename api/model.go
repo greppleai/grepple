@@ -69,19 +69,30 @@ type NavigationArtifactIdentity struct {
 	Digest     string `json:"digest,omitempty"`
 }
 
+// ExternalDependencyCandidate is one exact manifest/lockfile identity that may
+// provide an externally referenced symbol. Multiple candidates preserve JVM
+// package-to-artifact ambiguity until indexed source declarations disambiguate it.
+type ExternalDependencyCandidate struct {
+	Ecosystem string `json:"ecosystem"`
+	Module    string `json:"module"`
+	Version   string `json:"version"`
+	Integrity string `json:"integrity,omitempty"`
+}
+
 // ExternalNavigationReference retains syntax evidence needed to resolve one dependency symbol.
 type ExternalNavigationReference struct {
-	ID              string `json:"id"`
-	Language        string `json:"language"`
-	ImportPath      string `json:"importPath"`
-	Package         string `json:"package,omitempty"`
-	Symbol          string `json:"symbol"`
-	ConsumerPackage string `json:"consumerPackage,omitempty"`
-	ReceiverType    string `json:"receiverType,omitempty"`
-	Kind            string `json:"kind"`
-	Module          string `json:"module,omitempty"`
-	Version         string `json:"version,omitempty"`
-	Integrity       string `json:"integrity,omitempty"`
+	ID              string                        `json:"id"`
+	Language        string                        `json:"language"`
+	ImportPath      string                        `json:"importPath"`
+	Package         string                        `json:"package,omitempty"`
+	Symbol          string                        `json:"symbol"`
+	ConsumerPackage string                        `json:"consumerPackage,omitempty"`
+	ReceiverType    string                        `json:"receiverType,omitempty"`
+	Kind            string                        `json:"kind"`
+	Module          string                        `json:"module,omitempty"`
+	Version         string                        `json:"version,omitempty"`
+	Integrity       string                        `json:"integrity,omitempty"`
+	Candidates      []ExternalDependencyCandidate `json:"candidates,omitempty"`
 }
 
 // NavigationResolveRequest batches exact dependency references for shard-local artifact lookup.

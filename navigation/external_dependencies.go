@@ -13,34 +13,72 @@ import (
 // QualifyExternalDependencies adds exact local manifest evidence to unresolved
 // dependency references. References without an exact version remain unchanged.
 func QualifyExternalDependencies(results []api.FileResult, workingDirectory string) error {
+	return qualifyExternalDependencies(results, workingDirectory, false)
+}
+
+// QualifyRepositoryExternalDependencies qualifies server-side results whose paths
+// are relative to an indexed repository root.
+func QualifyRepositoryExternalDependencies(results []api.FileResult, repositoryRoot string) error {
+	return qualifyExternalDependencies(results, repositoryRoot, true)
+}
+
+func qualifyExternalDependencies(results []api.FileResult, workingDirectory string, includeRepositoryResults bool) error {
 	if workingDirectory == "" {
 		workingDirectory, _ = os.Getwd()
 	}
-	modules := make(map[string]goDependencyModule)
+	contexts := make(map[string]dependencyContext)
 	for resultIndex := range results {
-		if results[resultIndex].Repo != "" {
-			continue
+		if err := qualifyExternalDependencyResult(&results[resultIndex], workingDirectory, includeRepositoryResults, contexts); err != nil {
+			return err
 		}
-		path := results[resultIndex].Path
-		if !filepath.IsAbs(path) {
-			path = filepath.Join(workingDirectory, path)
-		}
-		modulePath, ok := nearestFile(filepath.Dir(path), "go.mod")
-		if !ok {
-			continue
-		}
-		module, exists := modules[modulePath]
-		if !exists {
-			parsed, err := readGoDependencyModule(modulePath)
-			if err != nil {
-				return err
-			}
-			module = parsed
-			modules[modulePath] = module
-		}
-		qualifyDependencySymbols(results[resultIndex].Related, module.dependencies)
 	}
 	return nil
+}
+
+func qualifyExternalDependencyResult(result *api.FileResult, workingDirectory string, includeRepositoryResults bool, contexts map[string]dependencyContext) error {
+	if result.Repo != "" && !includeRepositoryResults {
+		return nil
+	}
+	path := result.Path
+	if !filepath.IsAbs(path) {
+		path = filepath.Join(workingDirectory, path)
+	}
+	language := result.Language
+	if language == "" {
+		language = firstExternalReferenceLanguage(result.Related)
+	}
+	manifestName := dependencyManifestName(language)
+	if manifestName == "" {
+		return nil
+	}
+	manifestPath, ok := nearestFile(filepath.Dir(path), manifestName)
+	if !ok {
+		return nil
+	}
+	key := language + "\x00" + manifestPath
+	dependencyContext, exists := contexts[key]
+	if !exists {
+		parsed, err := readDependencyContext(language, manifestPath)
+		if err != nil {
+			return err
+		}
+		dependencyContext = parsed
+		contexts[key] = dependencyContext
+	}
+	qualifyDependencySymbolsForContext(result.Related, dependencyContext)
+	return nil
+}
+
+func firstExternalReferenceLanguage(symbols []api.RelatedSymbol) string {
+	for _, symbol := range symbols {
+		if symbol.External != nil && symbol.External.Language != "" {
+			return symbol.External.Language
+		}
+		if language := firstExternalReferenceLanguage(symbol.Related); language != "" {
+			return language
+		}
+	}
+	return ""
 }
 
 type goDependency struct {
@@ -119,17 +157,12 @@ func applyGoDependencyReplacements(dependency *goDependency, replacements []*mod
 	}
 }
 
-func qualifyDependencySymbols(symbols []api.RelatedSymbol, dependencies []goDependency) {
+func qualifyDependencySymbolsForContext(symbols []api.RelatedSymbol, dependencyContext dependencyContext) {
 	for index := range symbols {
-		if reference := symbols[index].External; reference != nil && reference.Language == "go" {
-			if dependency, ok := dependencyForImport(reference.ImportPath, dependencies); ok {
-				reference.Module = dependency.sourceModule
-				reference.Package = dependency.sourceModule + strings.TrimPrefix(reference.ImportPath, dependency.module)
-				reference.Version = dependency.version
-				reference.Integrity = dependency.integrity
-			}
+		if reference := symbols[index].External; reference != nil {
+			qualifyExternalReference(reference, dependencyContext)
 		}
-		qualifyDependencySymbols(symbols[index].Related, dependencies)
+		qualifyDependencySymbolsForContext(symbols[index].Related, dependencyContext)
 	}
 }
 
@@ -167,7 +200,7 @@ func ExternalDependencyReferences(results []api.FileResult) []api.ExternalNaviga
 	var collect func([]api.RelatedSymbol)
 	collect = func(symbols []api.RelatedSymbol) {
 		for _, symbol := range symbols {
-			if reference := symbol.External; reference != nil && reference.ID != "" && reference.Module != "" && reference.Version != "" {
+			if reference := symbol.External; reference != nil && reference.ID != "" && externalReferenceQualified(*reference) {
 				byID[reference.ID] = *reference
 			}
 			collect(symbol.Related)
@@ -186,6 +219,18 @@ func ExternalDependencyReferences(results []api.FileResult) []api.ExternalNaviga
 		references = append(references, byID[id])
 	}
 	return references
+}
+
+func externalReferenceQualified(reference api.ExternalNavigationReference) bool {
+	if reference.Module != "" && reference.Version != "" {
+		return true
+	}
+	for _, candidate := range reference.Candidates {
+		if candidate.Ecosystem != "" && candidate.Module != "" && candidate.Version != "" {
+			return true
+		}
+	}
+	return false
 }
 
 // ApplyExternalDependencyResolution replaces unresolved references with exact

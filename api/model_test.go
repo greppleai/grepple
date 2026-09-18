@@ -53,6 +53,22 @@ func TestRelatedDependencyIdentityUsesStableJSONFields(t *testing.T) {
 	}
 }
 
+func TestExternalDependencyCandidatesUseStableJSONFields(t *testing.T) {
+	reference := ExternalNavigationReference{
+		ID: "reference", Language: "java", ImportPath: "com.acme.Widget", Symbol: "Widget", Kind: "type",
+		Candidates: []ExternalDependencyCandidate{{Ecosystem: "maven", Module: "com.acme:widgets", Version: "2.3.0"}},
+	}
+	encoded, err := json.Marshal(reference)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, field := range []string{`"candidates"`, `"ecosystem":"maven"`, `"module":"com.acme:widgets"`, `"version":"2.3.0"`} {
+		if !strings.Contains(string(encoded), field) {
+			t.Fatalf("candidate JSON missing %s: %s", field, encoded)
+		}
+	}
+}
+
 func TestResultMatchRangesAreAdditive(t *testing.T) {
 	encoded, err := json.Marshal(ResultMatch{Line: 3, EndLine: 5, Text: "if ready {"})
 	if err != nil {

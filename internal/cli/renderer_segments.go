@@ -160,6 +160,12 @@ func dependencyUnresolvedSuffix(reference api.ExternalNavigationReference) strin
 	identity := reference.ImportPath
 	if reference.Version != "" {
 		identity = reference.Module + "@" + reference.Version
+	} else if len(reference.Candidates) > 0 {
+		candidates := make([]string, 0, len(reference.Candidates))
+		for _, candidate := range reference.Candidates {
+			candidates = append(candidates, candidate.Ecosystem+":"+candidate.Module+"@"+candidate.Version)
+		}
+		identity += "; candidates " + strings.Join(candidates, ", ")
 	}
 	suffix := " [dependency-unresolved; " + identity
 	if reference.Integrity != "" {
