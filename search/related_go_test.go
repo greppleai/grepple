@@ -663,6 +663,55 @@ func mustMkdirAll(t *testing.T, path string) {
 	}
 }
 
+func TestRelatedGoSemanticImportVersionPreservesExternalTypesAndCalls(t *testing.T) {
+	directory := t.TempDir()
+	if err := os.WriteFile(filepath.Join(directory, "go.mod"), []byte("module example.com/service\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	path := writeGoFixture(t, directory, "service.go", `package service
+import "github.com/gofiber/fiber/v3"
+type Registry struct{}
+func (*Registry) Get(string) {}
+func register(app *fiber.App) {
+	app.Get("/health", nil) // EXTERNAL_FIBER_NEEDLE
+}
+func health(ctx fiber.Ctx) {
+	_ = ctx // EXTERNAL_FIBER_CTX_NEEDLE
+}
+`)
+	matches, err := Files(Params{Query: "EXTERNAL_FIBER_NEEDLE", Related: true}, []string{path})
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertNoResolvedExternalCallee(t, matches[0].Related)
+	assertExternalReference(t, matches[0].Related, "call", "Get")
+	assertExternalReference(t, matches[0].Related, "type", "App")
+	ctxMatches, err := Files(Params{Query: "EXTERNAL_FIBER_CTX_NEEDLE", Related: true}, []string{path})
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertExternalReference(t, ctxMatches[0].Related, "type", "Ctx")
+}
+
+func assertNoResolvedExternalCallee(t *testing.T, points []RelatedPoint) {
+	t.Helper()
+	for _, point := range points {
+		if point.Direction == "callee" && point.External == nil {
+			t.Fatalf("external call resolved to local declaration: %#v", point)
+		}
+	}
+}
+
+func assertExternalReference(t *testing.T, points []RelatedPoint, kind, symbol string) {
+	t.Helper()
+	for _, point := range points {
+		if point.External != nil && point.External.ImportPath == "github.com/gofiber/fiber/v3" && point.External.Kind == kind && point.External.Symbol == symbol {
+			return
+		}
+	}
+	t.Fatalf("missing %s:%s external evidence: %#v", kind, symbol, points)
+}
+
 func writeGoFixture(t *testing.T, directory, name, content string) string {
 	t.Helper()
 	path := filepath.Join(directory, name)

@@ -149,6 +149,28 @@ func TestJVMImportsPreserveDuplicateQualifiedTargetsAsAmbiguous(t *testing.T) {
 	t.Fatalf("imports=%#v calls=%#v", graph.Imports, graph.Calls)
 }
 
+func TestJVMExternalTypedReceiverDoesNotResolveLocalTerminal(t *testing.T) {
+	root := t.TempDir()
+	service := filepath.Join(root, "Service.java")
+	paths := writeJVMNavigationFiles(t, map[string]string{
+		service: `package app;
+import external.Client;
+class Decoy { void load() {} }
+class Service { void use(Client value) { value.load(); } }
+`,
+	})
+	graph, _ := BuildNavigationGraphWithOptions(paths, NavigationBuildOptions{DisableCache: true})
+	for _, call := range graph.Calls {
+		if call.Path == service && call.Display == "value.load" {
+			if call.TargetID != "" || len(call.CandidateTargetIDs) != 0 {
+				t.Fatalf("external JVM receiver resolved to local declaration: %#v", call)
+			}
+			return
+		}
+	}
+	t.Fatalf("missing external JVM call: %#v", graph.Calls)
+}
+
 func writeJVMNavigationFiles(t *testing.T, files map[string]string) []string {
 	t.Helper()
 	paths := make([]string, 0, len(files))

@@ -526,6 +526,29 @@ returned.load(); // RETURN_CALLER_NEEDLE
 	}
 }
 
+func TestRelatedTypeScriptExternalTypedReceiverDoesNotResolveLocalTerminal(t *testing.T) {
+	directory := t.TempDir()
+	path := filepath.Join(directory, "service.ts")
+	content := `import { Client } from "@scope/client";
+class Decoy { load(): void {} }
+function run(client: Client): void {
+	client.load(); // EXTERNAL_TYPESCRIPT_NEEDLE
+}
+`
+	if err := os.WriteFile(path, []byte(content), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	matches, err := Files(Params{Query: "EXTERNAL_TYPESCRIPT_NEEDLE", Related: true}, []string{path})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, point := range matches[0].Related {
+		if point.Direction == "callee" && strings.Contains(point.Name, "load") {
+			t.Fatalf("external TypeScript receiver resolved to local declaration: %#v", point)
+		}
+	}
+}
+
 func assertNestedTypeScriptReceiverResolution(t *testing.T, files []string) {
 	t.Helper()
 	matches, err := Files(Params{Query: "NESTED_CALLER_NEEDLE", Related: true}, files)

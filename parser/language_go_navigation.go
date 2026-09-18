@@ -111,7 +111,7 @@ func addGoNavigationImport(imports map[string]navigationImport, node *syntaxNode
 	if importPath == "" {
 		return
 	}
-	alias := path.Base(importPath)
+	alias := defaultGoNavigationImportAlias(importPath)
 	if name := node.ChildByFieldName("name"); name != nil {
 		alias = name.Text()
 	}
@@ -123,4 +123,14 @@ func addGoNavigationImport(imports map[string]navigationImport, node *syntaxNode
 		key += "\x00" + strconv.Itoa(node.StartLine())
 	}
 	imports[key] = navigationImport{alias: alias, path: importPath, imported: "*", line: node.StartLine()}
+}
+
+func defaultGoNavigationImportAlias(importPath string) string {
+	alias := path.Base(importPath)
+	if len(alias) > 1 && alias[0] == 'v' {
+		if major, err := strconv.Atoi(alias[1:]); err == nil && major >= 2 {
+			return path.Base(path.Dir(importPath))
+		}
+	}
+	return alias
 }

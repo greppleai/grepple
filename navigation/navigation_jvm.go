@@ -4,6 +4,13 @@ import "strings"
 
 type qualifiedExportNavigationIndex struct{ baseLanguageNavigationIndex }
 
+func (*qualifiedExportNavigationIndex) filterCandidates(call navigationCall, candidates []navigationDeclaration) []navigationDeclaration {
+	if call.importPath != "" && len(call.importTargetFiles) == 0 {
+		return nil
+	}
+	return candidates
+}
+
 func (index *qualifiedExportNavigationIndex) importTargets(_, _, importPath, imported, _ string) navigationImportTargets {
 	importPath = strings.TrimSpace(importPath)
 	if importPath == "" {

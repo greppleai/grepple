@@ -230,6 +230,9 @@ func matchingTypeScriptModuleFiles(files []string, target string) []string {
 type ecmaNavigationIndex struct{ baseLanguageNavigationIndex }
 
 func (*ecmaNavigationIndex) filterCandidates(call navigationCall, candidates []navigationDeclaration) []navigationDeclaration {
+	if call.importPath != "" && len(call.importTargetFiles) == 0 && !strings.HasPrefix(call.importPath, ".") {
+		return nil
+	}
 	if call.importPath != "" || call.qualifier != "" || strings.Contains(call.display, ".") {
 		return candidates
 	}

@@ -103,6 +103,27 @@ func TestCSharpImportsPreserveDuplicateQualifiedTargetsAsAmbiguous(t *testing.T)
 	t.Fatalf("calls=%#v", graph.Calls)
 }
 
+func TestCSharpExternalTypedReceiverDoesNotResolveLocalTerminal(t *testing.T) {
+	root := t.TempDir()
+	service := filepath.Join(root, "Service.cs")
+	paths := writeCSharpNavigationFiles(t, map[string]string{
+		service: `using External;
+class Decoy { public void Load() {} }
+class Service { void Use(Client value) { value.Load(); } }
+`,
+	})
+	graph, _ := BuildNavigationGraphWithOptions(paths, NavigationBuildOptions{DisableCache: true})
+	for _, call := range graph.Calls {
+		if call.Path == service && call.Display == "value.Load" {
+			if call.TargetID != "" || len(call.CandidateTargetIDs) != 0 {
+				t.Fatalf("external C# receiver resolved to local declaration: %#v", call)
+			}
+			return
+		}
+	}
+	t.Fatalf("missing external C# call: %#v", graph.Calls)
+}
+
 func writeCSharpNavigationFiles(t *testing.T, files map[string]string) []string {
 	t.Helper()
 	paths := make([]string, 0, len(files))

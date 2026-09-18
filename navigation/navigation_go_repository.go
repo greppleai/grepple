@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/greppleai/grepple/parser"
@@ -296,15 +297,33 @@ func (index *goNavigationIndex) filesInDirectory(directory string) []string {
 	return files
 }
 
+func (index *goNavigationIndex) filterCandidates(call navigationCall, candidates []navigationDeclaration) []navigationDeclaration {
+	if call.importPath == "" {
+		return candidates
+	}
+	return filterNavigationCandidates(candidates, func(candidate navigationDeclaration) bool {
+		return index.importMatches(call, candidate)
+	})
+}
+
 func (index *goNavigationIndex) importMatches(call navigationCall, candidate navigationDeclaration) bool {
+	if directory, known := localGoImportDirectory(call.importSourceFile, call.importPath); known && directory != "" {
+		return filepath.Clean(filepath.Dir(candidate.file)) == directory
+	}
 	if index.baseLanguageNavigationIndex.importMatches(call, candidate) {
 		return true
 	}
-	directory, known := localGoImportDirectory(call.importSourceFile, call.importPath)
-	if known {
-		return directory != "" && filepath.Clean(filepath.Dir(candidate.file)) == directory
+	return candidate.packageName == goImportPackageName(call.importPath)
+}
+
+func goImportPackageName(importPath string) string {
+	name := filepath.Base(filepath.FromSlash(importPath))
+	if len(name) > 1 && name[0] == 'v' {
+		if major, err := strconv.Atoi(name[1:]); err == nil && major >= 2 {
+			return filepath.Base(filepath.Dir(filepath.FromSlash(importPath)))
+		}
 	}
-	return candidate.packageName == filepath.Base(filepath.FromSlash(call.importPath))
+	return name
 }
 
 func (*goNavigationIndex) fieldOriginMatches(candidate, owner navigationField) bool {
