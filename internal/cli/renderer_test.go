@@ -161,6 +161,38 @@ func TestSegmentRendererDeduplicatesAnchoredRelatedTypeAppendix(t *testing.T) {
 	}
 }
 
+func TestSegmentRendererShowsResolvedExternalTypeDefinition(t *testing.T) {
+	var output bytes.Buffer
+	renderer := segmentRenderer{output: newOutputWriter(&output)}
+	artifact := &api.NavigationArtifactIdentity{
+		Ecosystem: "go", Module: "github.com/gofiber/fiber/v3", Version: "v3.5.0",
+		Repository: "gofiber/fiber@tag~v3.5.0", Commit: "abcdef", Digest: "artifact-digest",
+	}
+	results := []api.FileResult{{
+		Path: "internal/shard/health_controller.go",
+		Related: []api.RelatedSymbol{{
+			Name: "Ctx", Path: "ctx.go", Kind: "interface", Direction: "type", Role: "parameter",
+			Start: 17, End: 20, CallLine: 15, Confidence: "dependency-resolved", Artifact: artifact,
+			Segments: []api.ResultSegment{{Kind: "lines", Start: 17, End: 20, Text: "type Ctx interface {\n\tRequest() *Request\n\tResponse() *Response\n}"}},
+		}},
+	}}
+	if err := renderer.Render(results); err != nil {
+		t.Fatal(err)
+	}
+	rendered := output.String()
+	for _, expected := range []string{
+		"→ Ctx  gofiber/fiber@tag~v3.5.0:ctx.go:17-20  parameter-type:15",
+		"Related type definitions:",
+		"gofiber/fiber@tag~v3.5.0:ctx.go:17-20  Ctx [github.com/gofiber/fiber/v3@v3.5.0; commit abcdef]",
+		"type Ctx interface {",
+		"Request() *Request",
+	} {
+		if !strings.Contains(rendered, expected) {
+			t.Fatalf("resolved external type output missing %q:\n%s", expected, rendered)
+		}
+	}
+}
+
 func TestSegmentRendererReportsIncompleteSourceAnalysis(t *testing.T) {
 	var output bytes.Buffer
 	renderer := segmentRenderer{output: newOutputWriter(&output)}
