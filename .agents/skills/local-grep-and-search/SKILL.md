@@ -20,7 +20,7 @@ Use the smallest result shape that can answer the question. Grepple is determini
 | Locate exact evidence lines | `grepple --line-only -F 'Name' SCOPE` |
 | Find the owner of a body match | `grepple --line-only --enclosing -F 'call()' file.go` |
 | Retrieve a known exact range | `grepple --line-only --at path/to/file.go:START-END` |
-| Control edit anchors | native anchors are automatic for eligible local output; use `--no-anchors` for plain output |
+| Edit anchors | eligible local source output always uses native anchors; named compatibility providers come only from user settings |
 
 Default search returns every complete enclosing function or method containing a direct match, with required owner wrappers but without proximity-selected imports, neighboring declarations, or nonmatching siblings. Use `--line-only` only when the evidence lines themselves are sufficient or when obtaining an exact range for the next `--at`/Read call.
 
@@ -42,7 +42,7 @@ grepple --line-only --enclosing -F 'targetCall(' path/to/package
 grepple --at path/to/file.go:40-65
 ```
 
-Eligible local structural, contextual, and line-only output uses native `HASH│LINE│content` anchors by default. Use `--no-anchors` only when plain output is required. Hashes become stale after edits, so refresh before a later edit. Plain locations remain useful for Read and `--at`.
+Eligible local structural, contextual, and line-only output always uses native `HASH│LINE│content` anchors. There is no per-search plain-output override. Hashes become stale after edits, so refresh before a later edit. Line locations remain useful for Read and `--at`.
 
 ### Preferred write transport
 

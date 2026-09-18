@@ -16,7 +16,7 @@ HASH│LINE│content
 
 Synthetic summary and collapsed-region rows are not anchorable and retain their normal presentation. Default anchor output supports local structural, contextual, and `--line-only` output. `--line-only --enclosing` uses range-bearing plain output instead so `HASH│LINE│content` is never overloaded. Remote, JSON, outline, count, filename-only, piped-stdin, and `--only-matching` modes retain their ordinary formats.
 
-The default uses Grepple's built-in `hashline-v1` implementation and requires no setup. `--no-anchors` restores plain output for one invocation. Named providers remain available for editor compatibility only through user-owned settings. Native anchors can be applied transactionally with [`grepple write`](write.md).
+The default uses Grepple's built-in `hashline-v1` implementation and requires no setup. Eligible local source retrieval always emits anchors; there is no per-search disable flag. Named providers remain available for editor compatibility only through user-owned settings. Native anchors can be applied transactionally with [`grepple write`](write.md).
 
 ## Settings
 
@@ -45,11 +45,7 @@ Native anchors require no settings. Setting `enabled_by_default` with a named `d
 grepple -F 'Symbol(' src
 ```
 
-Disable configured anchors for one invocation with:
-
-```bash
-grepple --no-anchors --line-only -F 'Symbol' src/file.go
-```
+Anchors are part of eligible local source output rather than a per-invocation display mode.
 
 To select a different named provider, change `anchors.default_provider` in user settings or run `grepple anchors setup --provider NAME --set-default --write`.
 

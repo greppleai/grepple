@@ -57,7 +57,7 @@ func assertParityFocusedFlow(t *testing.T) {
 func assertParityRelatedOutput(t *testing.T, call parser.NavigationCall) {
 	t.Helper()
 	related := captureStdout(t, func() {
-		if err := Run([]string{"--related", "--at", "service.go:3", "--no-anchors"}); err != nil {
+		if err := Run([]string{"--related", "--at", "service.go:3"}); err != nil {
 			t.Fatal(err)
 		}
 	})

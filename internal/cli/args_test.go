@@ -138,14 +138,9 @@ func TestAnchorsDefaultToNativeAndCanBeDisabled(t *testing.T) {
 		t.Fatalf("configured default provider was ignored: native=%v err=%v", native, err)
 	}
 
-	disabled, _, _, err := parseSearchArgs([]string{"--no-anchors", "--line-only", "needle", "sample.go"})
-	if err != nil {
-		t.Fatal(err)
+	if _, _, _, err := parseSearchArgs([]string{"--no-anchors", "needle", "sample.go"}); err == nil {
+		t.Fatal("removed --no-anchors flag succeeded")
 	}
-	if disabled.Anchors {
-		t.Fatalf("--no-anchors did not disable defaults: %#v", disabled)
-	}
-
 	count, _, _, err := parseSearchArgs([]string{"--count", "needle", "sample.go"})
 	if err != nil {
 		t.Fatal(err)
@@ -273,7 +268,7 @@ func TestHelpCommandAndExplicitSearch(t *testing.T) {
 		t.Fatal(err)
 	}
 	output := captureStdout(t, func() {
-		if err := Run([]string{"search", "--line-only", "--no-anchors", "-F", "graph", path}); err != nil {
+		if err := Run([]string{"search", "--line-only", "-F", "graph", path}); err != nil {
 			t.Fatal(err)
 		}
 	})
@@ -288,7 +283,7 @@ func TestHelpCommandAndExplicitSearch(t *testing.T) {
 
 func assertSearchHelpOmitsRemovedAnchorFlags(t *testing.T, help string) {
 	t.Helper()
-	if strings.Contains(help, "--anchors") || strings.Contains(help, "--anchor-provider") {
-		t.Fatalf("search help still exposes a removed anchor selection flag:\n%s", help)
+	if strings.Contains(help, "--anchors") || strings.Contains(help, "--anchor-provider") || strings.Contains(help, "--no-anchors") {
+		t.Fatalf("search help still exposes a removed anchor flag:\n%s", help)
 	}
 }

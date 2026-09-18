@@ -29,17 +29,17 @@ func BenchmarkAgentWorkflows(b *testing.B) {
 
 	workflows := []agentWorkflowBenchmark{
 		{name: "BreadthSummary", commands: [][]string{{"-F", "func ", "--count-summary", "service.go", "handler.go"}}, want: []string{"2 files\t5 matches"}},
-		{name: "BroadAccidental", commands: [][]string{{"--line-only", "--no-anchors", "-F", "NOISE_MATCH", "noise.txt", "--limit", "0"}}, want: []string{"noise.txt:2:", "grepple output truncated"}},
-		{name: "OutlineDiscovery", commands: [][]string{{"--outline", "service.go", "--no-anchors"}}, want: []string{"func\tRun", "func\tConsumer"}},
-		{name: "StructuralLookup", commands: [][]string{{"-F", "func Run(", "service.go", "--no-anchors"}}, want: []string{"func Run()", "validate()", "save()"}},
-		{name: "LineLocateThenAt", commands: [][]string{{"--line-only", "-F", "func Run(", "service.go", "--no-anchors"}, {"--at", "service.go:2-6", "--no-anchors"}}, want: []string{"service.go:2-6:func Run()", "validate()", "save()"}},
-		{name: "RelatedNavigation", commands: [][]string{{"--related", "--at", "service.go:2", "--no-anchors"}}, want: []string{"Next points", "→ validate", "← Handler"}},
-		{name: "ImpactGraph", commands: [][]string{{"graph", "impact", "--at", "service.go:2", "--depth", "1", "--compact", "."}}, want: []string{"query impact depth=1", "Run -> validate#", "Handler -> Run#"}},
-		{name: "DirectoryOrientation", commands: [][]string{{"architecture", "directory", "--depth", "1", "--max-nodes", "20", "--compact", "."}}, want: []string{"D app files=1", "D service files=1", "R app -> service kind=import", "R app -> service kind=resolved-call"}},
-		{name: "ArchitectureResolve", commands: [][]string{{"architecture", "resolve", "--symbol", "Run", "--compact", "."}}, want: []string{"architecture resolve symbol=Run matches=1", "service.go:2-6"}},
-		{name: "RelationExplanation", commands: [][]string{{"architecture", "why", "app", "service", "--compact", "."}}, want: []string{"relation=import,resolved-call evidence=2", "app/entry.go:2 service -> example.com/agentbench/service kind=import", "app/entry.go:3 Entry -> RunService kind=resolved-call"}},
-		{name: "EnclosingScope", commands: [][]string{{"--line-only", "--enclosing", "-F", "save()", "service.go", "--no-anchors"}}, want: []string{"service.go:5@2-6:\tsave()"}},
-		{name: "EditLocation", commands: [][]string{{"--line-only", "-F", "EDIT_NEEDLE", "service.go", "--no-anchors"}}, want: []string{"service.go:4:\tvalidate() // EDIT_NEEDLE"}},
+		{name: "BroadAccidental", commands: [][]string{{"--line-only", "-F", "NOISE_MATCH", "noise.txt", "--limit", "0"}}, want: []string{"noise.txt", "NOISE_MATCH", "grepple output truncated"}},
+		{name: "OutlineDiscovery", commands: [][]string{{"--outline", "service.go"}}, want: []string{"func\tRun", "func\tConsumer"}},
+		{name: "StructuralLookup", commands: [][]string{{"-F", "func Run(", "service.go"}}, want: []string{"func Run()", "validate()", "save()"}},
+		{name: "LineLocateThenAt", commands: [][]string{{"--line-only", "-F", "func Run(", "service.go"}, {"--at", "service.go:2-6"}}, want: []string{"service.go", "2", "func Run()", "validate()", "save()"}},
+		{name: "RelatedNavigation", commands: [][]string{{"--related", "--at", "service.go:2"}}, want: []string{"Next points", "→ validate", "← Handler"}},
+		{name: "FocusedFlow", commands: [][]string{{"extract", "flow", "--at", "service.go:2", "--source", ".", "--depth", "1"}}, want: []string{"flowchart TD", "Run --> validate", "Run --> save", "grepple:symbol Run"}},
+		{name: "GraphCallees", commands: [][]string{{"graph", "callees", "--at", "service.go:2", "--depth", "1", "--compact", "."}}, want: []string{"validate", "save", "resolved edges"}},
+		{name: "ArchitectureResolve", commands: [][]string{{"architecture", "resolve", "--symbol", "Run", "--compact", "."}}, want: []string{"kind: function", "directory: .", "production"}},
+		{name: "CountSummary", commands: [][]string{{"--count-summary", "-F", "NOISE_MATCH", "."}}, want: []string{"files", "matches"}},
+		{name: "EnclosingScope", commands: [][]string{{"--line-only", "--enclosing", "-F", "save()", "service.go"}}, want: []string{"service.go:5@2-6:\tsave()"}},
+		{name: "EditLocation", commands: [][]string{{"--line-only", "-F", "EDIT_NEEDLE", "service.go"}}, want: []string{"service.go", "4", "validate() // EDIT_NEEDLE"}},
 	}
 	for _, workflow := range workflows {
 		workflow := workflow

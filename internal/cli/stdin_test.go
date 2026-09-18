@@ -167,7 +167,7 @@ func TestRunSearchGlobIgnoresStdin(t *testing.T) {
 	}
 	out := captureStdout(t, func() {
 		withStdin(t, "hello from stdin\n", func() {
-			if err := runSearch([]string{"--no-anchors", "--line-only", "hello", "*.txt"}); err != nil {
+			if err := runSearch([]string{"--line-only", "hello", "*.txt"}); err != nil {
 				t.Fatal(err)
 			}
 		})
@@ -175,7 +175,7 @@ func TestRunSearchGlobIgnoresStdin(t *testing.T) {
 	if strings.Contains(out, "<stdin>") {
 		t.Fatalf("expected stdin to be ignored when a glob is given, got %q", out)
 	}
-	if !strings.Contains(out, "note.txt:1:hello from file") {
-		t.Fatalf("expected the filesystem match, got %q", out)
+	if !strings.Contains(out, "note.txt") || !strings.Contains(out, "│1│hello from file") {
+		t.Fatalf("expected the anchored filesystem match, got %q", out)
 	}
 }

@@ -7,45 +7,45 @@ import (
 	"testing"
 )
 
-func TestLineOnlyReportsConstructEndRange(t *testing.T) {
+func TestLineOnlyReportsAnchoredLocations(t *testing.T) {
 	path := writeLineRangeFixture(t)
 	functionOutput := captureStdout(t, func() {
-		if err := runSearch([]string{"--line-only", "--no-anchors", "-F", "func Run", path}); err != nil {
+		if err := runSearch([]string{"--line-only", "-F", "func Run", path}); err != nil {
 			t.Fatal(err)
 		}
 	})
-	if !strings.Contains(functionOutput, "sample.go:2-6:func Run() {") {
-		t.Fatalf("function range missing: %s", functionOutput)
+	if !strings.Contains(functionOutput, "sample.go") || !strings.Contains(functionOutput, "│2│func Run() {") {
+		t.Fatalf("anchored function location missing: %s", functionOutput)
 	}
 
 	branchOutput := captureStdout(t, func() {
-		if err := runSearch([]string{"--line-only", "--no-anchors", "-F", "if ready", path}); err != nil {
+		if err := runSearch([]string{"--line-only", "-F", "if ready", path}); err != nil {
 			t.Fatal(err)
 		}
 	})
-	if !strings.Contains(branchOutput, "sample.go:3-5:\tif ready {") {
-		t.Fatalf("branch range missing: %s", branchOutput)
+	if !strings.Contains(branchOutput, "sample.go") || !strings.Contains(branchOutput, "│3│\tif ready {") {
+		t.Fatalf("anchored branch location missing: %s", branchOutput)
 	}
 
 	plainOutput := captureStdout(t, func() {
-		if err := runSearch([]string{"--line-only", "--no-anchors", "-F", "const plain", path}); err != nil {
+		if err := runSearch([]string{"--line-only", "-F", "const plain", path}); err != nil {
 			t.Fatal(err)
 		}
 	})
-	if !strings.Contains(plainOutput, "sample.go:7:const plain = 1") {
-		t.Fatalf("single-line location changed: %s", plainOutput)
+	if !strings.Contains(plainOutput, "sample.go") || !strings.Contains(plainOutput, "│7│const plain = 1") {
+		t.Fatalf("anchored single-line location missing: %s", plainOutput)
 	}
 }
 
 func TestLineOnlyEnclosingReportsNearestBodyScope(t *testing.T) {
 	path := writeLineRangeFixture(t)
 	bodyOutput := captureStdout(t, func() {
-		if err := runSearch([]string{"--line-only", "--no-anchors", "-F", "work()", path}); err != nil {
+		if err := runSearch([]string{"--line-only", "-F", "work()", path}); err != nil {
 			t.Fatal(err)
 		}
 	})
-	if !strings.Contains(bodyOutput, "sample.go:4:\t\twork()") {
-		t.Fatalf("default body location changed: %s", bodyOutput)
+	if !strings.Contains(bodyOutput, "sample.go") || !strings.Contains(bodyOutput, "│4│\t\twork()") {
+		t.Fatalf("anchored body location missing: %s", bodyOutput)
 	}
 
 	enclosingOutput := captureStdout(t, func() {

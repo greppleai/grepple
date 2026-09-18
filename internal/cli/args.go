@@ -48,7 +48,6 @@ type searchArgs struct {
 	BeforeContext    int      `arg:"-B,--before-context" placeholder:"N" help:"print N lines before matches"`
 	MaxFiles         int      `arg:"--max-files" placeholder:"N" help:"limit matching files"`
 	MaxOutputBytes   int      `arg:"--max-output-bytes" placeholder:"N" help:"cap human-readable output (default 16384; 0 = unlimited; JSON is uncapped)"`
-	NoAnchors        bool     `arg:"--no-anchors" help:"disable default anchored output"`
 	Related          bool     `arg:"--related" help:"show repository-local callees and callers for supported source languages"`
 	FollowRelated    int      `arg:"--follow-related" placeholder:"N" help:"expand up to two unique callees per level (1-3; implies --related)"`
 	At               string   `arg:"--at" placeholder:"PATH:LINE[-END]" help:"retrieve the containing declaration, or exact range with --line-only"`
@@ -132,7 +131,7 @@ func applyCountSummaryAlias(values *searchArgs) {
 }
 
 func defaultAnchorsEnabled(values *searchArgs) (bool, error) {
-	if values.NoAnchors || !supportsDefaultAnchors(values) {
+	if !supportsDefaultAnchors(values) {
 		return false, nil
 	}
 	_, err := loadUserSettings()

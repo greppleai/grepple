@@ -3,6 +3,7 @@ package cli
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -36,15 +37,16 @@ func TestFilesListsMultipleDirectoryRoots(t *testing.T) {
 func TestContentSearchAcceptsMultipleExplicitPaths(t *testing.T) {
 	dir := writeMultiPathFixture(t)
 	out := captureStdout(t, func() {
-		if err := runSearch([]string{"--no-anchors",
-			"--line-only", "needle",
+		if err := runSearch([]string{"--line-only", "needle",
 			filepath.Join(dir, "src", "a.txt"),
 			filepath.Join(dir, "scripts"),
 		}); err != nil {
 			t.Fatal(err)
 		}
 	})
-	if want := "scripts/b.txt:1:needle\nsrc/a.txt:1:needle\n"; out != want {
-		t.Fatalf("expected %q, got %q", want, out)
+	first := strings.Index(out, "scripts/b.txt")
+	second := strings.Index(out, "src/a.txt")
+	if first < 0 || second <= first || strings.Count(out, "│1│needle") != 2 {
+		t.Fatalf("unexpected anchored multi-path output %q", out)
 	}
 }
