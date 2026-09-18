@@ -179,15 +179,43 @@ func buildAnchorRequest(options *cliOptions, results []api.FileResult) (anchorPr
 }
 
 func collectAnchorSelections(options *cliOptions, results []api.FileResult) []anchorFileSelection {
-	selections := make([]anchorFileSelection, 0, len(results))
+	byPath := make(map[string]map[int]string)
 	for _, result := range results {
-		selection := anchorFileSelection{displayPath: result.Path, lines: make(map[int]string)}
-		collectAnchorSelectionLines(options, result, selection.lines)
-		if len(selection.lines) > 0 {
-			selections = append(selections, selection)
+		lines := anchorSelectionLines(byPath, result.Path)
+		collectAnchorSelectionLines(options, result, lines)
+		collectRelatedTypeAnchorLines(result.Related, byPath)
+	}
+	paths := make([]string, 0, len(byPath))
+	for path, lines := range byPath {
+		if len(lines) > 0 {
+			paths = append(paths, path)
 		}
 	}
+	sort.Strings(paths)
+	selections := make([]anchorFileSelection, 0, len(paths))
+	for _, path := range paths {
+		selections = append(selections, anchorFileSelection{displayPath: path, lines: byPath[path]})
+	}
 	return selections
+}
+
+func anchorSelectionLines(byPath map[string]map[int]string, path string) map[int]string {
+	if byPath[path] == nil {
+		byPath[path] = make(map[int]string)
+	}
+	return byPath[path]
+}
+
+func collectRelatedTypeAnchorLines(points []api.RelatedSymbol, byPath map[string]map[int]string) {
+	for _, point := range points {
+		if point.Direction == "type" && point.Path != "" {
+			lines := anchorSelectionLines(byPath, point.Path)
+			for _, segment := range point.Segments {
+				collectAnchorSegmentLines(lines, segment)
+			}
+		}
+		collectRelatedTypeAnchorLines(point.Related, byPath)
+	}
 }
 
 func collectAnchorSelectionLines(options *cliOptions, result api.FileResult, lines map[int]string) {

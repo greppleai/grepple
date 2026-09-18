@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -236,6 +237,25 @@ func TestNoAnchorableResultsSkipProvider(t *testing.T) {
 	}
 	if options.AnchorLines == nil {
 		t.Fatal("expected initialized empty anchor lookup")
+	}
+}
+func TestAnchorRequestIncludesRelatedTypeAppendixLines(t *testing.T) {
+	directory := t.TempDir()
+	t.Chdir(directory)
+	content := "package sample\ntype Request struct {\n\tName string\n}\n"
+	if err := os.WriteFile("request.go", []byte(content), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	results := []api.FileResult{{Path: "caller.go", Related: []api.RelatedSymbol{{
+		Name: "Request", Path: "request.go", Direction: "type", Start: 2, End: 4,
+		Segments: []api.ResultSegment{{Kind: "lines", Start: 2, End: 4, Text: "type Request struct {\n\tName string\n}"}},
+	}}}}
+	request, displayPaths, err := buildAnchorRequest(&cliOptions{}, results)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(request.Files) != 1 || !strings.HasSuffix(request.Files[0].Path, "request.go") || !reflect.DeepEqual(request.Files[0].Lines, []int{2, 3, 4}) || displayPaths[request.Files[0].Path] != "request.go" {
+		t.Fatalf("related type anchor request=%#v paths=%#v", request, displayPaths)
 	}
 }
 

@@ -108,9 +108,10 @@ func TestSegmentRendererPrintsRelatedGoPoints(t *testing.T) {
 	}
 	want := "  → service.Load → (*Store).Load  store.go:12-24  call:8 [candidate; try --at store.go:12]\n"
 	caller := "  ← handle  handler.go:30-40  call:35\n"
-	typePoint := "  → Request  request.go:2-4  parameter-type:7\n    2   type Request struct {"
+	typePoint := "  → Request  request.go:2-4  parameter-type:7\n"
+	typeDefinition := "Related type definitions:\n\nrequest.go:2-4  Request\n2   type Request struct {"
 	preview := "    12   func (s *Store) Load() {\n    13   }\n    next:\n      → validate"
-	if !strings.Contains(output.String(), "Next points (code navigation):\n") || !strings.Contains(output.String(), want) || !strings.Contains(output.String(), caller) || !strings.Contains(output.String(), typePoint) || !strings.Contains(output.String(), preview) {
+	if !strings.Contains(output.String(), "Next points (code navigation):\n") || !strings.Contains(output.String(), want) || !strings.Contains(output.String(), caller) || !strings.Contains(output.String(), typePoint) || !strings.Contains(output.String(), typeDefinition) || !strings.Contains(output.String(), preview) {
 		t.Fatalf("related navigation missing from output:\n%s", output.String())
 	}
 	for _, omission := range []string{
@@ -130,6 +131,33 @@ func TestSegmentRendererPrintsRelatedGoPoints(t *testing.T) {
 		if !strings.Contains(output.String(), command) {
 			t.Fatalf("related output missing continuation %q:\n%s", command, output.String())
 		}
+	}
+}
+
+func TestSegmentRendererDeduplicatesAnchoredRelatedTypeAppendix(t *testing.T) {
+	var output bytes.Buffer
+	renderer := segmentRenderer{
+		output:  newOutputWriter(&output),
+		anchors: anchorLookup{"request.go": {2: "AAA", 3: "BBB", 4: "CCC"}},
+	}
+	typePoint := api.RelatedSymbol{
+		Name: "Request", Path: "request.go", Kind: "struct", Direction: "type", Role: "parameter",
+		Start: 2, End: 4, CallLine: 7, Confidence: "import-resolved",
+		Segments: []api.ResultSegment{{Kind: "lines", Start: 2, End: 4, Text: "type Request struct {\n\tName string\n}"}},
+	}
+	results := []api.FileResult{
+		{Path: "first.go", Related: []api.RelatedSymbol{typePoint}},
+		{Path: "second.go", Related: []api.RelatedSymbol{typePoint}},
+	}
+	if err := renderer.Render(results); err != nil {
+		t.Fatal(err)
+	}
+	rendered := output.String()
+	if strings.Count(rendered, "type Request struct {") != 1 {
+		t.Fatalf("related type definition was not deduplicated:\n%s", rendered)
+	}
+	if !strings.Contains(rendered, "AAA│2│type Request struct {") || strings.LastIndex(rendered, "Related type definitions:") < strings.LastIndex(rendered, "second.go") {
+		t.Fatalf("related type appendix is not anchored at the end:\n%s", rendered)
 	}
 }
 

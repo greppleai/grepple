@@ -30,7 +30,7 @@ func (renderer segmentRenderer) Render(results []api.FileResult) error {
 			return err
 		}
 	}
-	return nil
+	return renderer.renderRelatedTypeDefinitions(collectRelatedTypeDefinitions(results))
 }
 
 func (renderer segmentRenderer) renderFile(result api.FileResult) error {
@@ -116,7 +116,7 @@ func (renderer segmentRenderer) renderRelatedPoint(point api.RelatedSymbol, dept
 	if err := renderer.output.writeString(line); err != nil {
 		return err
 	}
-	if len(point.Segments) == 0 {
+	if len(point.Segments) == 0 || point.Direction == "type" {
 		return nil
 	}
 	if err := renderer.renderRelatedSegments(point.Segments, depth+1); err != nil {
