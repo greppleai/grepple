@@ -349,9 +349,11 @@ func (c *navigationCollector) enterNavigationNode(node *syntaxNode, context navi
 
 func (c *navigationCollector) addNavigationSignatureBindings(node *syntaxNode, bindings map[string]navigationBinding, imports map[string]navigationImport) {
 	body := node.ChildByFieldName("body")
+	receiver := node.ChildByFieldName("receiver")
 	node.WalkNamed(func(current *syntaxNode) {
-		if body == nil || current.EndByte() <= body.StartByte() {
-			addNavigationParameterBinding(bindings, current, c.content, imports, c.navigation)
+		insideReceiver := receiver != nil && current.StartByte() >= receiver.StartByte() && current.EndByte() <= receiver.EndByte()
+		if (body == nil || current.EndByte() <= body.StartByte()) && !insideReceiver {
+			addNavigationParameterBinding(bindings, current, c.content, imports, c.navigation, "parameter")
 		}
 	})
 }

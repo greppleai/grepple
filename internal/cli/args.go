@@ -48,8 +48,9 @@ type searchArgs struct {
 	BeforeContext    int      `arg:"-B,--before-context" placeholder:"N" help:"print N lines before matches"`
 	MaxFiles         int      `arg:"--max-files" placeholder:"N" help:"limit matching files"`
 	MaxOutputBytes   int      `arg:"--max-output-bytes" placeholder:"N" help:"cap human-readable output (default 16384; 0 = unlimited; JSON is uncapped)"`
-	Related          bool     `arg:"--related" help:"show repository-local callees and callers for supported source languages"`
-	FollowRelated    int      `arg:"--follow-related" placeholder:"N" help:"expand up to two unique callees per level (1-3; implies --related)"`
+	Related          bool     `arg:"--related" help:"show repository-local types, callees, and callers (default for structural search)"`
+	NoRelated        bool     `arg:"--no-related" help:"disable automatic code navigation"`
+	FollowRelated    int      `arg:"--follow-related" placeholder:"N" help:"expand up to two callers and callees per level (1-3; default 1)"`
 	At               string   `arg:"--at" placeholder:"PATH:LINE[-END]" help:"retrieve the containing declaration, or exact range with --line-only"`
 	Skip             int      `arg:"--skip" placeholder:"N" help:"skip the first N ranked result files"`
 	Limit            int      `arg:"--limit" placeholder:"N" help:"return at most N ranked result files (default 20; 0 = all local; servers cap a page at 100 — page further with --skip)"`
@@ -83,12 +84,12 @@ func parseSearchArgs(args []string) (*cliOptions, string, bool, error) {
 		return nil, "", false, err
 	}
 	applyCountSummaryAlias(&values)
+	if err := configureRelatedDefaults(&values); err != nil {
+		return nil, "", false, err
+	}
 	anchorsEnabled, err := defaultAnchorsEnabled(&values)
 	if err != nil {
 		return nil, "", false, err
-	}
-	if values.FollowRelated > 0 {
-		values.Related = true
 	}
 	if err := validateSearchArgs(&values); err != nil {
 		return nil, "", false, err
@@ -151,6 +152,28 @@ func supportsDefaultAnchors(values *searchArgs) bool {
 
 func usesCompactSearchOutput(values *searchArgs) bool {
 	return values.Files || values.FilesWithMatches || values.Outline || values.Count || values.CountByRepo || values.LineOnly || values.OnlyMatching || values.JSONMatches
+}
+
+func configureRelatedDefaults(values *searchArgs) error {
+	if values.NoRelated {
+		if values.Related || values.FollowRelated > 0 {
+			return fmt.Errorf("--no-related cannot be combined with --related or --follow-related")
+		}
+		return nil
+	}
+	if values.Related || values.FollowRelated > 0 {
+		values.Related = true
+		if values.FollowRelated == 0 {
+			values.FollowRelated = 1
+		}
+		return nil
+	}
+	contextOutput := values.Context > 0 || values.BeforeContext > 0 || values.AfterContext > 0
+	if !usesCompactSearchOutput(values) && !contextOutput {
+		values.Related = true
+		values.FollowRelated = 1
+	}
+	return nil
 }
 
 // validateRelatedArgs keeps experimental source navigation scoped to modes
@@ -285,6 +308,7 @@ func buildSearchParams(parser *arg.Parser, values *searchArgs) (search.Params, e
 		MaxFiles:      values.MaxFiles,
 		Related:       values.Related,
 		FollowRelated: values.FollowRelated,
+		NoRelated:     values.NoRelated,
 		At:            values.At,
 		Skip:          values.Skip,
 		Limit:         values.Limit,

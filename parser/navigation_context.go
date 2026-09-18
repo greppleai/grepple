@@ -193,13 +193,18 @@ func navigationCallableBindings(node *syntaxNode, content, container string, imp
 		bindings[name] = binding
 		bindings["this"] = navigationBinding{typeName: container, role: "receiver"}
 	}
-	for _, field := range []string{"receiver", "parameters"} {
-		root := node.ChildByFieldName(field)
+	for _, field := range []struct {
+		name, role string
+	}{
+		{name: "receiver", role: "receiver"},
+		{name: "parameters", role: "parameter"},
+	} {
+		root := node.ChildByFieldName(field.name)
 		if root == nil {
 			continue
 		}
 		root.WalkNamed(func(current *syntaxNode) {
-			addNavigationParameterBinding(bindings, current, content, imports, adapter)
+			addNavigationParameterBinding(bindings, current, content, imports, adapter, field.role)
 		})
 	}
 	addNavigationLocalBindings(bindings, node.ChildByFieldName("body"), content, imports, returnBindings, adapter)
@@ -332,7 +337,7 @@ func navigationCallReturnBinding(node *syntaxNode, content string, imports map[s
 	return binding, binding.factoryName != ""
 }
 
-func addNavigationParameterBinding(bindings map[string]navigationBinding, node *syntaxNode, content string, imports map[string]navigationImport, adapter navigationAdapter) {
+func addNavigationParameterBinding(bindings map[string]navigationBinding, node *syntaxNode, content string, imports map[string]navigationImport, adapter navigationAdapter, role string) {
 	if !adapter.IsParameter(node.Kind()) {
 		return
 	}
@@ -344,10 +349,14 @@ func addNavigationParameterBinding(bindings map[string]navigationBinding, node *
 	if binding.typeName == "" {
 		return
 	}
-	binding.role = "parameter"
+	binding.role = role
 	for _, name := range adapter.ParameterNames(node, typeNode, content) {
-		binding.line = node.StartLine()
-		bindings[name] = binding
+		namedBinding := binding
+		if existing, ok := bindings[name]; ok && existing.role == "receiver" {
+			namedBinding.role = "receiver"
+		}
+		namedBinding.line = node.StartLine()
+		bindings[name] = namedBinding
 	}
 }
 

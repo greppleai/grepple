@@ -54,6 +54,31 @@ func TestResolveRequestStaysUncapped(t *testing.T) {
 	}
 }
 
+func TestResolveRequestDefaultsToRelatedNavigation(t *testing.T) {
+	query := "needle"
+	params, err := ResolveRequest(api.SearchRequest{Query: &query})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !params.Related || params.FollowRelated != 1 {
+		t.Fatalf("automatic API navigation=%#v", params)
+	}
+	disabled, err := ResolveRequest(api.SearchRequest{Query: &query, NoRelated: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if disabled.Related || disabled.FollowRelated != 0 || !disabled.NoRelated {
+		t.Fatalf("noRelated API navigation=%#v", disabled)
+	}
+	compact, err := ResolveRequest(api.SearchRequest{Query: &query, SkipSegments: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if compact.Related || compact.FollowRelated != 0 {
+		t.Fatalf("compact API navigation=%#v", compact)
+	}
+}
+
 func TestResolveRequestAsymmetricContext(t *testing.T) {
 	query := "deploy"
 	before, after := 1, 5

@@ -91,9 +91,9 @@ Supported search options:
 - `--max-files N`
 - `--max-output-bytes N` caps human-readable output before common agent tool limits (default `16384`; `0` disables the cap). JSON output is never partially truncated.
 - Eligible local source results always emit hashline anchors as `HASH│LINE│content`; named compatibility providers are selected only through user-owned settings
-- `--related` (experimental: show bounded project-local callees and callers for structurally supported source languages)
-- `--at PATH:LINE` (retrieve the declaration containing an exact local location; related `PATH:START-END` ranges are accepted too)
-- `--follow-related N` (expand up to two unique callees per level, depth 1-3; implies `--related`)
+- `--related` (explicitly request the default bounded repository-local type/caller/callee navigation)
+- `--no-related` (disable automatic navigation for structural search)
+- `--follow-related N` (expand up to two unique callers and callees per level, depth 1-3; structural search defaults to depth 1)
 - `--skip N`, `--limit N` (page through results in deterministic order: skip the first `N` files / return at most `N`; **`--limit` defaults to `20`**, use `--limit 0` for all). A server never returns more than **100 files per page** — `--limit 0` or a larger value gets the maximum page, and you page further with `--skip N`; local-only searches stay uncapped
 - `--sort path|matches` keeps repository/path order by default or opts into matching-line count descending with repository/path tie-breakers. Match-count sorting scans the full selected candidate universe before paging.
 
@@ -114,7 +114,7 @@ Default structural output shows complete enclosing functions and methods, retain
 
 ### Source call navigation
 
-`--related` adds bounded navigation hints after each structural result for local or remotely indexed repositories. It supports Go, JavaScript/JSX, TypeScript/TSX, Python, Java, Kotlin, C#, C, C++, Rust, and Shell:
+Structural search automatically adds bounded navigation hints with one level of caller and callee previews for local or remotely indexed repositories; use `--no-related` to suppress navigation or `--follow-related N` to select depth 1-3. It supports Go, JavaScript/JSX, TypeScript/TSX, Python, Java, Kotlin, C#, C, C++, Rust, and Shell:
 
 ```bash
 grepple --related -F "g.auditor.Record" examples/advanced-files
@@ -126,7 +126,7 @@ Next points (code navigation):
   → g.deliver → Gateway.deliver  examples/advanced-files/gateway.go:18-18  call:35
 ```
 
-Grepple searches only files selected by the requested paths/globs, while local `--related` resolves against the complete configured project source universe so imported declarations outside the text-search scope remain available; indexed remote navigation likewise uses the complete selected repository universe. `→` marks callees and source-declared parameter, receiver, local, or result types, while `←` marks potential callers. Type points identify their role (for example, `parameter-type` or `result-type`); human output deduplicates each referenced type by source range into one final **Related type definitions** appendix with editable `HASH│LINE│content` rows. Functions, methods, constructors, and source-declared types are indexed across supported languages. Go additionally indexes interface methods, function-valued struct fields, cross-file typed fields, and embedded/promoted methods. TypeScript/TSX additionally use inheritance, named/default aliases, barrel re-exports, cross-file member chains, and nearest-`tsconfig.json` path aliases. Nested bindings remain scoped to their branch or block. JSON confidence is `exact` for a qualified identity match, `import-resolved` when an explicit import identifies the target package/module, `context-resolved` when declaration kind, file locality, receiver type, inheritance, or promotion safely narrows candidates, `unique-terminal` when only one declaration has the terminal name, and `candidate` when ambiguity remains. Text output gives candidates an explicit `--at PATH:LINE` suggestion. This remains syntax-based navigation, not compiler dispatch: interface implementations, overloads, conflicting promotions, malformed configuration, and unresolved aliases remain explicit candidates. Standard-library and external calls or types have no local target. Callees, callers, and type declarations are each capped at five points per declaration, and production callers are preferred over conventional test filenames. When a cap omits evidence, text and JSON report directional omission counts; caller/callee omissions point to the complete graph.
+Grepple searches only files selected by the requested paths/globs, while local navigation discovers the nearest repository/workspace root from `grepple.json`, `.git`, or `go.work` and resolves against that complete source universe; an explicit root remains authoritative. This keeps text matching narrow while making sibling packages and manifest-evidenced sibling modules available. Indexed remote navigation likewise uses the complete selected repository universe. `→` marks callees and source-declared parameter, receiver, local, or result types, while `←` marks potential callers. Type points identify their role (for example, `receiver-type` or `result-type`); human output deduplicates each referenced type by source range into one final **Related type definitions** appendix with editable `HASH│LINE│content` rows. Functions, methods, constructors, and source-declared types are indexed across supported languages. Go additionally indexes interface methods, function-valued struct fields, cross-file typed fields, and embedded/promoted methods. TypeScript/TSX additionally use inheritance, named/default aliases, barrel re-exports, cross-file member chains, and nearest-`tsconfig.json` path aliases. Nested bindings remain scoped to their branch or block. JSON confidence is `exact` for a qualified identity match, `import-resolved` when an explicit import identifies the target package/module, `context-resolved` when declaration kind, file locality, receiver type, inheritance, or promotion safely narrows candidates, `unique-terminal` when only one declaration has the terminal name, and `candidate` when ambiguity remains. Text output gives candidates an explicit `--at PATH:LINE` suggestion. This remains syntax-based navigation, not compiler dispatch: interface implementations, overloads, conflicting promotions, malformed configuration, and unresolved aliases remain explicit candidates. Standard-library and external calls or types have no local target. Callees, callers, and type declarations are each capped at five points per declaration, and production callers are preferred over conventional test filenames. When a cap omits evidence, text and JSON report directional omission counts; caller/callee omissions point to the complete graph.
 
 Retrieve one declaration directly from a navigation location:
 
@@ -135,13 +135,12 @@ grepple --at search/result.go:32
 grepple --server http://localhost:8080 --repo gofiber/fiber --at app.go:721
 ```
 
-Or explicitly spend more tokens to inline a bounded call chain:
-
+Increase the default depth when a larger bounded call chain is useful:
 ```bash
-grepple --follow-related 1 -F "attachRelated(out" search
+  grepple --follow-related 2 -F "attachRelated(out" search
 ```
 
-Each level expands at most two resolved outgoing callees; callers and ambiguous candidates remain compact hints. Expansion depth is capped at three, cycles are not expanded again, and expanded declarations share a 400-line budget per root result. Every expansion remains available structurally in full `--json`. Navigation modes support local and remote default structural output and full JSON. Remote `--at` requires exactly one `--repo`, and remote navigation deliberately scans the complete selected repository source universe rather than a text-index candidate subset so declarations in non-matching files remain available.
+Each level expands at most two resolved callers and two resolved callees; ambiguous candidates remain compact hints. Expansion depth is capped at three, cycles are not expanded again, and expanded declarations share a 400-line budget per root result. Every expansion remains available structurally in full `--json`. Navigation defaults apply to local and remote structural output and full JSON, while count, file-list, line-only, context, and other compact modes remain navigation-free. Remote `--at` requires exactly one `--repo`, and remote navigation deliberately scans the complete selected repository source universe rather than a text-index candidate subset so declarations in non-matching files remain available.
 
 File patterns use Go's `filepath.Glob` syntax, extended with `**` to match across directory boundaries (for example `**/*.yaml` or `charts/**/values.yaml`). Omit globs to search recursively from the working directory; a matched directory is also searched recursively. `.git` directories and repository `.gitignore` entries are excluded. Shard searches are confined to the served repository root, so client-supplied globs and paths cannot escape it. Globs compose with every output mode, including `-c`/`--count`. When a Zoekt index is available the globs are translated into a `file:` atom and pushed down to the index (a deliberate superset — the shard still applies the exact glob matcher to what the index returns), so the index pre-filters by path instead of shipping every content match for the shard to discard.
 

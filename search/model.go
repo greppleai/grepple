@@ -32,6 +32,7 @@ type Params struct {
 	EnclosingRanges bool     `json:"enclosingLineRanges,omitempty"`
 	Related         bool     `json:"related,omitempty"`
 	FollowRelated   int      `json:"followRelated,omitempty"`
+	NoRelated       bool     `json:"-"`
 	At              string   `json:"-"`
 	Root            string   `json:"-"`
 	IgnorePaths     []string `json:"-"`

@@ -211,15 +211,8 @@ func Files(p Params, candidates []string) ([]FileMatch, error) {
 		out = scan.scanWindowed(files, p.Skip+limit)
 	}
 	out = applyResultWindow(out, p)
-	if p.Related {
-		relatedCandidates := files
-		if candidates == nil {
-			relatedCandidates, e = collectCandidateFilesConfiguredContext(context.Background(), nil, p.Root, sourceIgnoreConfig{root: p.IgnoreRoot, patterns: p.IgnorePaths, productionOnly: p.ProductionOnly})
-			if e != nil {
-				return nil, e
-			}
-		}
-		attachRelated(out, scan.relatedFiles(relatedCandidates), p.FollowRelated)
+	if err := attachSearchNavigation(p, out, files, candidates != nil, scan); err != nil {
+		return nil, err
 	}
 	// Parse returned files only when the caller needs structural segments or
 	// multi-line construct ranges for matching lines.
@@ -229,6 +222,22 @@ func Files(p Params, candidates []string) ([]FileMatch, error) {
 		})
 	}
 	return out, nil
+}
+
+func attachSearchNavigation(params Params, matches []FileMatch, files []string, suppliedCandidates bool, scan candidateScan) error {
+	if !params.Related || !hasNavigationMatch(matches) {
+		return nil
+	}
+	relatedCandidates := files
+	if !suppliedCandidates {
+		var err error
+		relatedCandidates, err = collectRelatedRepositoryFiles(context.Background(), params, matches)
+		if err != nil {
+			return err
+		}
+	}
+	attachRelated(matches, scan.relatedFiles(relatedCandidates), params.FollowRelated)
+	return nil
 }
 
 // candidateScan bundles the per-candidate scan inputs (params, matcher, repo

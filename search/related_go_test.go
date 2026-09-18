@@ -238,6 +238,10 @@ func (s Service) run(value string) {
 	if calls[0].Kind != "field" || calls[1].Kind != "method" {
 		t.Fatalf("unexpected callable kinds: %#v", matches[0].Related)
 	}
+	serviceType := findRelatedPoint(t, matches[0].Related, "Service", "type")
+	if serviceType.Role != "receiver" {
+		t.Fatalf("Go receiver type role=%#v", serviceType)
+	}
 }
 
 func TestRelatedGoCallsIncludeCallers(t *testing.T) {
@@ -289,6 +293,25 @@ func second() string { return "done" }
 	secondPoint := findRelatedPoint(t, firstPoint.Preview.Related, "second", "callee")
 	if secondPoint.Preview == nil {
 		t.Fatal("second callee was not expanded at depth two")
+	}
+}
+
+func TestFollowRelatedExpandsCallersAndCallees(t *testing.T) {
+	directory := t.TempDir()
+	caller := writeGoFixture(t, directory, "caller.go", "package related\nfunc caller() string { return target() }\n")
+	target := writeGoFixture(t, directory, "target.go", "package related\nfunc target() string { return callee() + \"FOLLOW_BOTH_NEEDLE\" }\n")
+	callee := writeGoFixture(t, directory, "callee.go", "package related\nfunc callee() string { return \"done\" }\n")
+	matches, err := Files(Params{Query: "FOLLOW_BOTH_NEEDLE", Related: true, FollowRelated: 1}, []string{caller, target, callee})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(matches) != 1 {
+		t.Fatalf("matches=%#v", matches)
+	}
+	callerPoint := findRelatedPoint(t, matches[0].Related, "caller", "caller")
+	calleePoint := findRelatedPoint(t, matches[0].Related, "callee", "callee")
+	if callerPoint.Preview == nil || calleePoint.Preview == nil {
+		t.Fatalf("caller/callee previews caller=%#v callee=%#v", callerPoint, calleePoint)
 	}
 }
 

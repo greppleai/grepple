@@ -73,17 +73,63 @@ func TestParseSearchArgsAcceptsSafeGrepCompatibilityAliases(t *testing.T) {
 	}
 }
 
+func TestParseSearchArgsDefaultsToOneLevelRelatedNavigation(t *testing.T) {
+	options, _, _, err := parseSearchArgs([]string{"needle", "sample.go"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !options.Params.Related || options.Params.FollowRelated != 1 {
+		t.Fatalf("automatic navigation=%#v", options.Params)
+	}
+
+	lineOnly, _, _, err := parseSearchArgs([]string{"--line-only", "needle", "sample.go"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if lineOnly.Params.Related || lineOnly.Params.FollowRelated != 0 {
+		t.Fatalf("line-only unexpectedly enabled navigation: %#v", lineOnly.Params)
+	}
+
+	disabled, _, _, err := parseSearchArgs([]string{"--no-related", "needle", "sample.go"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if disabled.Params.Related || disabled.Params.FollowRelated != 0 {
+		t.Fatalf("--no-related did not disable navigation: %#v", disabled.Params)
+	}
+	if _, _, _, err := parseSearchArgs([]string{"--no-related", "--related", "needle"}); err == nil {
+		t.Fatal("expected contradictory related flags to fail")
+	}
+}
+
 func TestParseSearchArgsEnablesRelatedGoNavigation(t *testing.T) {
 	options, _, remote, err := parseSearchArgs([]string{"--related", "needle", "**/*.go"})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if remote || options == nil || !options.Params.Related {
+	if remote || options == nil || !options.Params.Related || options.Params.FollowRelated != 1 {
 		t.Fatalf("related navigation was not enabled: remote=%v options=%#v", remote, options)
 	}
 	request := searchRequestFromParams(options.Params)
-	if !request.Related {
+	if !request.Related || request.FollowRelated != 1 {
 		t.Fatalf("related navigation was not preserved in request: %#v", request)
+	}
+}
+
+func TestStructuralSearchDefaultsToCallerAndCalleePreviews(t *testing.T) {
+	directory := chdirTemp(t)
+	writeGraphSource(t, directory, "caller.go", "package sample\nfunc caller() string { return target() }\n")
+	writeGraphSource(t, directory, "target.go", "package sample\nfunc target() string { return callee() + \"DEFAULT_RELATED_NEEDLE\" }\n")
+	writeGraphSource(t, directory, "callee.go", "package sample\nfunc callee() string { return \"done\" }\n")
+	output := captureStdout(t, func() {
+		if err := Run([]string{"-F", "DEFAULT_RELATED_NEEDLE", "target.go"}); err != nil {
+			t.Fatal(err)
+		}
+	})
+	for _, expected := range []string{"← caller", "→ callee", "func caller() string", "func callee() string"} {
+		if !strings.Contains(output, expected) {
+			t.Fatalf("automatic related output missing %q:\n%s", expected, output)
+		}
 	}
 }
 

@@ -139,10 +139,11 @@ func searchNextCommand(options *cliOptions, skip int, remote bool) string {
 	if options.Params.InvertMatch {
 		parts = append(parts, "-v")
 	}
-	if options.Params.Related {
+	if options.Params.NoRelated {
+		parts = append(parts, "--no-related")
+	} else if options.Params.Related && options.Params.FollowRelated == 0 {
 		parts = append(parts, "--related")
-	}
-	if options.Params.FollowRelated > 0 {
+	} else if options.Params.FollowRelated > 1 {
 		parts = append(parts, "--follow-related", fmt.Sprint(options.Params.FollowRelated))
 	}
 	for _, repository := range options.Params.Repo {

@@ -27,6 +27,7 @@ type SearchRequest struct {
 	LineRanges      bool     `json:"matchLineRanges,omitempty"`
 	EnclosingRanges bool     `json:"enclosingLineRanges,omitempty"`
 	Related         bool     `json:"related,omitempty"`
+	NoRelated       bool     `json:"noRelated,omitempty"`
 	At              string   `json:"at,omitempty"`
 	FollowRelated   int      `json:"followRelated,omitempty"`
 	CountByRepo     bool     `json:"countByRepo,omitempty"`

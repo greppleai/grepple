@@ -497,10 +497,10 @@ func expandRelated(points []RelatedPoint, navigation *navigationIndex, depth int
 	if depth <= 0 {
 		return points
 	}
-	followed := 0
+	followed := map[string]int{"caller": 0, "callee": 0}
 	for index := range points {
 		point := &points[index]
-		if followed >= maxFollowedPerLevel || point.Direction != "callee" || !resolvedNavigationConfidence(point.Confidence) {
+		if (point.Direction != "caller" && point.Direction != "callee") || followed[point.Direction] >= maxFollowedPerLevel || !resolvedNavigationConfidence(point.Confidence) {
 			continue
 		}
 		key := relatedLocationKey(*point)
@@ -525,7 +525,7 @@ func expandRelated(points []RelatedPoint, navigation *navigationIndex, depth int
 			Content: content, Start: declaration.matchStart, End: declaration.point.End, Related: nested,
 			OmittedCallers: omittedCallers, OmittedCallees: omittedCallees, OmittedTypes: omittedTypes,
 		}
-		followed++
+		followed[point.Direction]++
 	}
 	return points
 }

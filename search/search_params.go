@@ -34,6 +34,7 @@ func ResolveRequest(r api.SearchRequest) (Params, error) {
 	if p.EnclosingRanges {
 		p.LineRanges = true
 	}
+	applyDefaultNavigation(&p, r)
 	if r.CountByRepo {
 		// A count probe never needs structural segments.
 		p.CountByRepo = true
@@ -53,14 +54,33 @@ func applyNavigationFields(params *Params, request api.SearchRequest) error {
 		return fmt.Errorf("search request 'at' cannot be combined with query or globs")
 	}
 	params.Related = request.Related
+	params.NoRelated = request.NoRelated
 	params.FollowRelated = request.FollowRelated
+	if params.NoRelated && (params.Related || params.FollowRelated > 0) {
+		return fmt.Errorf("noRelated cannot be combined with related or followRelated")
+	}
 	if params.FollowRelated < 0 || params.FollowRelated > 3 {
 		return fmt.Errorf("followRelated must be between 0 and 3")
 	}
 	if params.FollowRelated > 0 {
 		params.Related = true
 	}
+	if params.Related && params.FollowRelated == 0 {
+		params.FollowRelated = 1
+	}
 	return nil
+}
+
+func applyDefaultNavigation(params *Params, request api.SearchRequest) {
+	if params.NoRelated || params.Related {
+		return
+	}
+	contextOutput := params.Context > 0 || params.BeforeContext > 0 || params.AfterContext > 0
+	compactOutput := request.Files || request.SkipSegments || request.LineRanges || request.EnclosingRanges || request.CountByRepo
+	if !contextOutput && !compactOutput {
+		params.Related = true
+		params.FollowRelated = 1
+	}
 }
 
 // applyOptionalFields copies the request's explicitly set fields into p;

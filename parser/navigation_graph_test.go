@@ -38,6 +38,18 @@ func TestNavigationGraphCapturesTypeDeclarationRanges(t *testing.T) {
 	}
 }
 
+func TestNavigationGraphLabelsGoReceiverTypeUsage(t *testing.T) {
+	content := "package sample\ntype Service struct{}\nfunc (service Service) Run() {}\n"
+	graph := BuildNavigationGraph(content, "go", "sample/main.go")
+	roles := make(map[string]int)
+	for _, usage := range graph.TypeUsages {
+		roles[usage.Role]++
+	}
+	if roles["receiver"] != 1 || roles["parameter"] != 0 {
+		t.Fatalf("type usage roles=%+v usages=%+v", roles, graph.TypeUsages)
+	}
+}
+
 func TestBuildNavigationGraphRetainsSourceIdentity(t *testing.T) {
 	content := "package sample\nfunc Start() { Finish() }\nfunc Finish() {}\n"
 	graph := BuildNavigationGraph(content, "go", "sample/main.go")
