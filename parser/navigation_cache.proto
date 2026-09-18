@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+package grepple.parser.cache;
+
+// NavigationCacheEntry wraps one path-neutral NavigationGraph payload. The
+// payload checksum makes cache corruption non-authoritative.
+message NavigationCacheEntry {
+  string schema = 1;
+  string digest = 2;
+  bool recovered = 3;
+  bytes graph = 4;
+  bytes graph_sha256 = 5;
+}
+
+// PackedNavigationGraph is decoded directly into parser.NavigationGraph. Each
+// *_strings column contains indexes into strings. Each *_values column contains
+// ranges, booleans, and variable-column counts in the widths defined by the v25
+// codec. Separate variable columns preserve source order without nested message
+// allocations.
+message PackedNavigationGraph {
+  repeated string strings = 1;
+  repeated uint32 declaration_strings = 2 [packed = true];
+  repeated uint32 declaration_values = 3 [packed = true];
+  repeated uint32 type_declaration_strings = 4 [packed = true];
+  repeated uint32 type_declaration_values = 5 [packed = true];
+  repeated uint32 import_strings = 6 [packed = true];
+  repeated uint32 import_values = 7 [packed = true];
+  repeated uint32 import_target_paths = 8 [packed = true];
+  repeated uint32 call_strings = 9 [packed = true];
+  repeated uint32 call_values = 10 [packed = true];
+  repeated uint32 call_candidate_target_ids = 11 [packed = true];
+  repeated uint32 call_receiver_members = 12 [packed = true];
+  repeated uint32 export_strings = 13 [packed = true];
+  repeated uint32 export_values = 14 [packed = true];
+  repeated uint32 field_strings = 15 [packed = true];
+  repeated uint32 field_values = 16 [packed = true];
+  repeated uint32 type_usage_strings = 17 [packed = true];
+  repeated uint32 type_usage_values = 18 [packed = true];
+  repeated uint32 member_access_strings = 19 [packed = true];
+  repeated uint32 member_access_values = 20 [packed = true];
+  repeated uint32 repository_roots = 21 [packed = true];
+  uint32 present_slices = 22;
+}

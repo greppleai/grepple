@@ -3,7 +3,6 @@ package parser
 import (
 	"crypto/sha256"
 	"encoding/hex"
-	"encoding/json"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -13,13 +12,15 @@ import (
 // fact cache. Library callers remain side-effect free unless they set it.
 const NavigationCacheDirectoryEnv = "GREPPLE_NAVIGATION_CACHE_DIR"
 
-const navigationCacheSchema = "grepple-navigation-facts-v24"
+const navigationCacheSchema = "grepple-navigation-facts-v25"
+
+const maxNavigationCacheEntryBytes = 64 << 20
 
 type navigationCacheEntry struct {
-	Schema    string          `json:"schema"`
-	Digest    string          `json:"digest"`
-	Recovered bool            `json:"recovered"`
-	Graph     NavigationGraph `json:"graph"`
+	Schema    string
+	Digest    string
+	Recovered bool
+	Graph     NavigationGraph
 }
 
 // CachedNavigationGraph returns path-instantiated navigation facts for source.
@@ -81,12 +82,17 @@ func readNavigationCache(digest string) (navigationCacheEntry, bool) {
 	if directory == "" {
 		return navigationCacheEntry{}, false
 	}
-	content, err := os.ReadFile(filepath.Join(directory, digest+".json"))
+	path := filepath.Join(directory, digest+".pb")
+	information, err := os.Stat(path)
+	if err != nil || information.Size() < 0 || information.Size() > maxNavigationCacheEntryBytes {
+		return navigationCacheEntry{}, false
+	}
+	content, err := os.ReadFile(path)
 	if err != nil {
 		return navigationCacheEntry{}, false
 	}
-	var cached navigationCacheEntry
-	if json.Unmarshal(content, &cached) != nil || cached.Schema != navigationCacheSchema || cached.Digest != digest {
+	cached, err := unmarshalNavigationCacheEntry(content)
+	if err != nil || cached.Schema != navigationCacheSchema || cached.Digest != digest {
 		return navigationCacheEntry{}, false
 	}
 	return cached, true
@@ -97,7 +103,7 @@ func writeNavigationCache(digest string, cached navigationCacheEntry) {
 	if directory == "" || os.MkdirAll(directory, 0o755) != nil {
 		return
 	}
-	content, err := json.Marshal(cached)
+	content, err := marshalNavigationCacheEntry(cached)
 	if err != nil {
 		return
 	}
@@ -113,7 +119,7 @@ func writeNavigationCache(digest string, cached navigationCacheEntry) {
 		_ = temporary.Close()
 	}
 	if err == nil {
-		_ = os.Rename(temporaryPath, filepath.Join(directory, digest+".json"))
+		_ = os.Rename(temporaryPath, filepath.Join(directory, digest+".pb"))
 	}
 }
 

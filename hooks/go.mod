@@ -19,6 +19,7 @@ require (
 	github.com/tree-sitter/tree-sitter-rust v0.24.2 // indirect
 	github.com/tree-sitter/tree-sitter-typescript v0.23.2 // indirect
 	go.yaml.in/yaml/v3 v3.0.5 // indirect
+	google.golang.org/protobuf v1.36.12 // indirect
 )
 
 replace github.com/greppleai/grepple => ..

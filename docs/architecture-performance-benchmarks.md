@@ -27,7 +27,6 @@ Run the benchmark on the same machine and Go version when comparing changes. Use
 `BenchmarkNavigationFactCache` measures a 101-callable Go source as a forced cold parse/write and as a warm content-and-grammar-addressed read:
 
 ```bash
-go test ./parser -run '^$' -bench '^BenchmarkNavigationFactCache$' -benchtime=10x -benchmem
-```
+go test ./parser -run '^$' -bench '^BenchmarkNavigationFactCache$' -benchtime=3s -benchmem -count=3
 
-On the baseline host, the initial reviewed sample measured 8.80 ms cold and 0.47 ms warm. The benchmark also asserts the expected miss/hit state. Output parity is enforced separately by parser and CLI tests so performance cannot justify cache-dependent results.
+On the baseline host, the current packed-protobuf implementation measured a median 9.05 ms cold and 0.15 ms warm over three three-second samples. The native `NavigationGraph` is encoded directly through a deterministic string-table and packed-column protobuf codec rather than a JSON mirror; entries include a graph checksum and preserve nil-versus-empty slices so cache state cannot change output. The benchmark also asserts the expected miss/hit state. Output parity is enforced separately by parser and CLI tests so performance cannot justify cache-dependent results.

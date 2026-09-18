@@ -19,7 +19,7 @@ func BenchmarkNavigationFactCache(b *testing.B) {
 	content := source.String()
 	directory := b.TempDir()
 	b.Setenv(NavigationCacheDirectoryEnv, directory)
-	cachePath := filepath.Join(directory, navigationCacheDigest(content, "go")+".json")
+	cachePath := filepath.Join(directory, navigationCacheDigest(content, "go")+".pb")
 
 	b.Run("cold", func(b *testing.B) {
 		b.ReportAllocs()
