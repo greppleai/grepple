@@ -29,6 +29,7 @@ func AnalyzeMermaidSchemas(root string) ([]Diagnostic, error) {
 		if loadErr != nil {
 			return nil, fmt.Errorf("load sources for Mermaid schemas: %w", loadErr)
 		}
+		sources = filterMermaidAnalysisSources(sources)
 		analysis, analyzeErr := mermaidcode.Analyze(sources)
 		if analyzeErr != nil {
 			return nil, fmt.Errorf("analyze sources for Mermaid schemas: %w", analyzeErr)
@@ -41,6 +42,50 @@ func AnalyzeMermaidSchemas(root string) ([]Diagnostic, error) {
 	}
 	sortMermaidDiagnostics(result)
 	return result, nil
+}
+
+func filterMermaidAnalysisSources(sources []mermaidcode.Source) []mermaidcode.Source {
+	generatedRoots := make([]string, 0)
+	for _, source := range sources {
+		if !isGeneratedTreeSitterParser(source) {
+			continue
+		}
+		root := filepath.Dir(source.Path)
+		if filepath.Base(root) == "src" {
+			root = filepath.Dir(root)
+		}
+		generatedRoots = append(generatedRoots, filepath.Clean(root))
+	}
+	if len(generatedRoots) == 0 {
+		return sources
+	}
+	filtered := sources[:0]
+	for _, source := range sources {
+		if sourceWithinAnyRoot(source.Path, generatedRoots) {
+			continue
+		}
+		filtered = append(filtered, source)
+	}
+	return filtered
+}
+
+func sourceWithinAnyRoot(path string, roots []string) bool {
+	path = filepath.Clean(path)
+	for _, root := range roots {
+		relative, err := filepath.Rel(root, path)
+		if err == nil && relative != ".." && !strings.HasPrefix(relative, ".."+string(filepath.Separator)) {
+			return true
+		}
+	}
+	return false
+}
+
+func isGeneratedTreeSitterParser(source mermaidcode.Source) bool {
+	return filepath.Base(source.Path) == "parser.c" &&
+		strings.Contains(source.Text, "#define LANGUAGE_VERSION ") &&
+		strings.Contains(source.Text, "#define STATE_COUNT ") &&
+		strings.Contains(source.Text, "ts_lex_modes[") &&
+		strings.Contains(source.Text, "const TSLanguage *")
 }
 
 type mermaidSchemaDiscovery struct {

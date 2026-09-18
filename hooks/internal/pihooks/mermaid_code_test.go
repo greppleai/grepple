@@ -87,6 +87,20 @@ func TestLintEvaluationAppendsMermaidDiagnostics(t *testing.T) {
 	}
 }
 
+func TestAnalyzeMermaidSchemasSkipsGeneratedTreeSitterParser(t *testing.T) {
+	root := t.TempDir()
+	writeHookTestFile(t, filepath.Join(root, "code.go"), "package sample\ntype Worker struct{}\n")
+	writeHookTestFile(t, filepath.Join(root, "worker.structure.mmd"), "classDiagram\n class Worker\n <<struct>> Worker\n")
+	writeHookTestFile(t, filepath.Join(root, "gritgrammar", "parser.c"), strings.Join([]string{
+		"#define LANGUAGE_VERSION 14", "#define STATE_COUNT 2", "static const int ts_lex_modes[1] = {", "BROKEN }", "const TSLanguage *tree_sitter_test(void);",
+	}, "\n"))
+	writeHookTestFile(t, filepath.Join(root, "gritgrammar", "tree_sitter", "alloc.h"), "typedef broken }\n#endif\n")
+	diagnostics, err := AnalyzeMermaidSchemas(root)
+	if err != nil || len(diagnostics) != 0 {
+		t.Fatalf("generated parser affected schema analysis: diagnostics=%+v err=%v", diagnostics, err)
+	}
+}
+
 func TestAnalyzeMermaidSchemasSurfacesSourceErrors(t *testing.T) {
 	root := t.TempDir()
 	writeHookTestFile(t, filepath.Join(root, "broken.go"), "package broken\ntype Broken struct {")
