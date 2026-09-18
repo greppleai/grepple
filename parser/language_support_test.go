@@ -47,7 +47,7 @@ func TestSupportedLanguagesOwnsClassificationMetadata(t *testing.T) {
 		t.Fatalf("Python import navigation missing: %#v", python)
 	}
 	assertImportNavigationCapabilities(t, "java", "kotlin", "csharp", "rust")
-	assertEntrypointNavigationCapabilities(t, "go", "c", "cpp", "java", "kotlin", "csharp", "rust")
+	assertEntrypointNavigationCapabilities(t, "go", "c", "cpp", "java", "kotlin", "csharp", "python", "rust")
 }
 
 func assertImportNavigationCapabilities(t *testing.T, ids ...string) {
@@ -101,7 +101,7 @@ func TestNavigationFactCapabilitiesAreAdapterOwned(t *testing.T) {
 		"javascript": {Declarations: true, Calls: true, Imports: true, TypeReferences: true, MemberAccess: true},
 		"typescript": {Declarations: true, Calls: true, Imports: true, TypeReferences: true, Fields: true, MemberAccess: true},
 		"tsx":        {Declarations: true, Calls: true, Imports: true, TypeReferences: true, Fields: true, MemberAccess: true},
-		"python":     {Declarations: true, Calls: true, Imports: true, TypeReferences: true, Fields: true, MemberAccess: true},
+		"python":     {Declarations: true, Calls: true, Imports: true, TypeReferences: true, Fields: true, MemberAccess: true, Entrypoints: true},
 		"java":       {Declarations: true, Calls: true, Imports: true, TypeReferences: true, Fields: true, MemberAccess: true, Entrypoints: true},
 		"kotlin":     {Declarations: true, Calls: true, Imports: true, TypeReferences: true, Fields: true, MemberAccess: true, Entrypoints: true},
 		"csharp":     {Declarations: true, Calls: true, Imports: true, TypeReferences: true, Fields: true, MemberAccess: true, Entrypoints: true},

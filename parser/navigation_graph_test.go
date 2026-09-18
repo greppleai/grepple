@@ -55,6 +55,40 @@ func TestNavigationGraphCapturesAdapterEvidencedGoEntrypoint(t *testing.T) {
 	}
 }
 
+func TestNavigationGraphCapturesPythonProcessEntrypoints(t *testing.T) {
+	for _, test := range []struct {
+		name, path, content string
+		want                int
+	}{
+		{name: "module guard", content: "def launch():\n    pass\nif __name__ == \"__main__\":\n    launch()\n", want: 1},
+		{name: "reversed module guard", content: "def launch():\n    pass\nif '__main__' == __name__:\n    launch()\n", want: 1},
+		{name: "name only", content: "def main():\n    pass\n"},
+		{name: "wrong comparison", content: "def launch():\n    pass\nif __name__ != \"__main__\":\n    launch()\n"},
+		{name: "indirect call", content: "def launch():\n    pass\nif __name__ == \"__main__\":\n    selected = launch\n    selected()\n"},
+		{name: "class method", content: "class App:\n    def launch(self):\n        pass\nif __name__ == \"__main__\":\n    App().launch()\n"},
+		{name: "duplicate definitions", content: "def launch():\n    pass\ndef launch():\n    pass\nif __name__ == \"__main__\":\n    launch()\n"},
+		{name: "async call without await", content: "async def launch():\n    pass\nif __name__ == \"__main__\":\n    launch()\n"},
+		{name: "type stub", path: "app.pyi", content: "def launch():\n    pass\nif __name__ == \"__main__\":\n    launch()\n"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			path := test.path
+			if path == "" {
+				path = "app.py"
+			}
+			graph := BuildNavigationGraph(test.content, "python", path)
+			got := 0
+			for _, declaration := range graph.Declarations {
+				if declaration.Entrypoint == "process" {
+					got++
+				}
+			}
+			if got != test.want {
+				t.Fatalf("process entrypoints=%d want=%d declarations=%+v", got, test.want, graph.Declarations)
+			}
+		})
+	}
+}
+
 func TestNavigationGraphCapturesRustProcessEntrypoints(t *testing.T) {
 	for _, test := range []struct {
 		name, path, content string
