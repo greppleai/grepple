@@ -194,7 +194,7 @@ func validateAtArgs(values *searchArgs) error {
 	if values.At == "" {
 		return nil
 	}
-	if (values.Remote || values.Server != "") && len(values.Repos) != 1 {
+	if !values.Local && (values.Remote || values.Server != "") && len(values.Repos) != 1 {
 		return fmt.Errorf("remote --at requires exactly one --repo OWNER/REPO[@REF]")
 	}
 	if values.Query != "" || len(values.Globs) > 0 {

@@ -51,6 +51,7 @@ func runSearch(args []string) error {
 	if err != nil {
 		return err
 	}
+	results = resolveLocalExternalNavigation(results, explicitServer)
 
 	results = sortResults(results, options.Params.Sort)
 	fetched := len(results)

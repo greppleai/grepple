@@ -143,7 +143,7 @@ func relatedPointPresentation(point api.RelatedSymbol) (string, string, string) 
 	} else if point.Confidence == "candidate" {
 		suffix = fmt.Sprintf(" [candidate; try --at %s:%d]", point.Path, point.Start)
 	} else if point.Confidence == "dependency-unresolved" && point.External != nil {
-		suffix = fmt.Sprintf(" [dependency-unresolved; %s]", point.External.ImportPath)
+		suffix = dependencyUnresolvedSuffix(*point.External)
 	}
 	label := fmt.Sprintf("call:%d", point.CallLine)
 	if point.Direction == "type" {
@@ -154,6 +154,18 @@ func relatedPointPresentation(point api.RelatedSymbol) (string, string, string) 
 		label = fmt.Sprintf("%s-type:%d", role, point.CallLine)
 	}
 	return locationPath, label, suffix
+}
+
+func dependencyUnresolvedSuffix(reference api.ExternalNavigationReference) string {
+	identity := reference.ImportPath
+	if reference.Version != "" {
+		identity = reference.Module + "@" + reference.Version
+	}
+	suffix := " [dependency-unresolved; " + identity
+	if reference.Integrity != "" {
+		suffix += "; sum " + reference.Integrity
+	}
+	return suffix + "]"
 }
 
 func (renderer segmentRenderer) renderRelatedOmissions(callers, callees, types int, path string, line, depth int) error {

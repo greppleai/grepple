@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/greppleai/grepple/api"
+	"github.com/greppleai/grepple/navigation"
 	"github.com/greppleai/grepple/search"
 	"io"
 	"net/http"
@@ -44,6 +45,51 @@ func searchRemoteContext(ctx context.Context, options *cliOptions, server string
 	}
 	warnPartialResults(result)
 	return dropExcludedRepos(result.Results, options.Params.ExcludeRepo), nil
+}
+
+func resolveLocalExternalNavigation(results []api.FileResult, server string) []api.FileResult {
+	workingDirectory, _ := os.Getwd()
+	if err := navigation.QualifyExternalDependencies(results, workingDirectory); err != nil {
+		fmt.Fprintf(os.Stderr, "warning: dependency navigation evidence failed: %v\n", err)
+		return results
+	}
+	references := navigation.ExternalDependencyReferences(results)
+	if len(references) == 0 {
+		return results
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	response, err := requestNavigationResolve(ctx, api.NavigationResolveRequest{References: references}, serverDefault(server))
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "warning: dependency navigation lookup failed: %v\n", err)
+		return results
+	}
+	return navigation.ApplyExternalDependencyResolution(results, response)
+}
+
+func requestNavigationResolve(ctx context.Context, request api.NavigationResolveRequest, server string) (api.NavigationResolveResponse, error) {
+	content, err := json.Marshal(request)
+	if err != nil {
+		return api.NavigationResolveResponse{}, err
+	}
+	req, err := authorizedRequest(http.MethodPost, strings.TrimRight(server, "/")+"/public/navigation/resolve", "application/json", bytes.NewReader(content))
+	if err != nil {
+		return api.NavigationResolveResponse{}, err
+	}
+	response, err := http.DefaultClient.Do(req.WithContext(ctx))
+	if err != nil {
+		return api.NavigationResolveResponse{}, err
+	}
+	defer response.Body.Close()
+	if response.StatusCode < http.StatusOK || response.StatusCode >= http.StatusMultipleChoices {
+		message, _ := io.ReadAll(response.Body)
+		return api.NavigationResolveResponse{}, fmt.Errorf("server %s returned %d: %s", server, response.StatusCode, string(message))
+	}
+	var decoded api.NavigationResolveResponse
+	if err := json.NewDecoder(response.Body).Decode(&decoded); err != nil {
+		return api.NavigationResolveResponse{}, err
+	}
+	return decoded, nil
 }
 
 func requestGritRemote(ctx context.Context, request api.GritRequest, server string) (api.GritResponse, error) {

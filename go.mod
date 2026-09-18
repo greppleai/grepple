@@ -22,6 +22,7 @@ require (
 	github.com/tree-sitter/tree-sitter-rust v0.24.2
 	github.com/tree-sitter/tree-sitter-typescript v0.23.2
 	go.yaml.in/yaml/v3 v3.0.5
+	golang.org/x/mod v0.38.0
 	golang.org/x/term v0.37.0
 	google.golang.org/protobuf v1.36.12
 )

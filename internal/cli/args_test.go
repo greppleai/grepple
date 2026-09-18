@@ -327,6 +327,16 @@ func TestHelpCommandAndExplicitSearch(t *testing.T) {
 	}
 }
 
+func TestParseAtAllowsExplicitServerForLocalDependencyResolution(t *testing.T) {
+	options, server, remote, err := parseSearchArgs([]string{"--local", "--server", "http://localhost:8080", "--at", "sample.go:3"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if options == nil || server != "http://localhost:8080" || remote {
+		t.Fatalf("options=%#v server=%q remote=%v", options, server, remote)
+	}
+}
+
 func assertSearchHelpOmitsRemovedAnchorFlags(t *testing.T, help string) {
 	t.Helper()
 	if strings.Contains(help, "--anchors") || strings.Contains(help, "--anchor-provider") || strings.Contains(help, "--no-anchors") {
