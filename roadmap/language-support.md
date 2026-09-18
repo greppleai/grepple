@@ -58,14 +58,17 @@ Language identity, extensions, grammar fingerprints, and parser/navigation capab
 
 ## Next languages
 
-- [ ] Swift
+1. [ ] Terraform/HCL
+2. [ ] Swift
+3. [ ] Dart
+4. [ ] PHP
+
+Later languages remain demand-driven rather than implicitly ordered:
+
 - [ ] Ruby
-- [ ] PHP
 - [ ] Scala
-- [ ] Terraform/HCL
 - [ ] Protocol Buffers
 - [ ] SQL, with an explicit dialect policy
-- [ ] Dart
 - [ ] Lua
 - [ ] Elixir
 - [ ] Objective-C

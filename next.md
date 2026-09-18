@@ -80,7 +80,8 @@ Live `grepple ask` dogfooding showed two distinct bottlenecks: ordinary local/re
 ## Language expansion
 
 - Keep Shell focused extraction unsupported unless dogfooding defines a useful command/script projection.
-- [ ] Add Swift, Ruby, PHP, or other grammars only after current capability parity, help discoverability, and cross-platform determinism gates are met.
+- [ ] Add new grammars in priority order: Terraform/HCL, Swift, Dart, then PHP. Apply current capability-parity, help-discoverability, malformed-source, and cross-platform determinism gates to each language before treating it as production-ready.
+- [ ] Prioritize later grammars such as Ruby, Scala, Protocol Buffers, SQL, Lua, and Elixir from measured user demand and repository dogfooding rather than declaration syntax alone.
 
 ## Success measures
 
