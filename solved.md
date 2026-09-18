@@ -180,6 +180,7 @@ This file records completed Grepple roadmap work that no longer belongs in `next
 - [x] Added syntax-evidenced parameter type facts for Python, Java, Kotlin, C#, and Rust; named field facts for C/C++, Java, and Rust; and imported parameter-type architecture relations for Python, Java, Kotlin, and Rust while retaining C# aliases and anonymous C typedef ownership as unqualified or unsupported rather than guessing.
 - [x] Added conservative field facts for directly annotated Python class assignments, explicitly typed Kotlin constructor/class-body properties, and explicitly typed C# fields/properties; nested fields remain attached to their nearest owner and local variables are excluded.
 - [x] Added cross-file typed-receiver call goldens for Python, Java, Kotlin, C#, and Rust, covering explicit imports, aliases, namespace imports, and Rust module imports without relaxing strong-resolution confidence.
+- [x] Expanded cross-file navigation goldens with Java generic and nested imported receiver types, conservative overload ambiguity, Python duplicate-root import ambiguity, and retained unresolved external import/call evidence.
 
 ## Reliability and performance
 
