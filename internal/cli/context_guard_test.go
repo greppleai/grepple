@@ -176,6 +176,86 @@ func TestContextGuardRecordsNonStructuralSearchCalls(t *testing.T) {
 	}
 }
 
+func TestRepeatSourceBypassesAndRecordsContextCache(t *testing.T) {
+	directory := t.TempDir()
+	t.Setenv("GREPPLE_CONTEXT_GUARD_DIR", directory)
+	previous := activeInlineOutputThreshold
+	activeInlineOutputThreshold = 4096
+	defer func() { activeInlineOutputThreshold = previous }()
+	result := api.FileResult{Path: "repeat.go", Segments: []api.ResultSegment{{Kind: "function", Start: 1, End: 1, Text: "func Repeat() {}"}}}
+	renderWithSegmentGuard(t, result)
+	guard := contextGuardForResults(&cliOptions{JSON: "off", RepeatSource: true}, []api.FileResult{result})
+	if guard == nil || guard.deduplicate || !guard.recordSegments || guard.bypassReason != "requested" {
+		t.Fatalf("repeat-source guard = %#v", guard)
+	}
+	var output bytes.Buffer
+	if err := (segmentRenderer{output: newOutputWriter(&output), contextGuard: guard}).Render([]api.FileResult{result}); err != nil {
+		t.Fatal(err)
+	}
+	guard.returnedBytes = output.Len()
+	guard.close()
+	if !strings.Contains(output.String(), "func Repeat()") || strings.Contains(output.String(), "already emitted") {
+		t.Fatalf("repeat source did not emit the declaration: %q", output.String())
+	}
+	stats := readRenderedContextStats(filepath.Join(directory, "stats-0.json"), 0)
+	if stats.BypassRequestedCalls != 1 {
+		t.Fatalf("requested bypass was not counted: %#v", stats)
+	}
+}
+
+func TestWriteAnchorsCompletePreviouslyEmittedSegmentCoverage(t *testing.T) {
+	directory := t.TempDir()
+	t.Setenv("GREPPLE_CONTEXT_GUARD_DIR", directory)
+	previous := activeInlineOutputThreshold
+	activeInlineOutputThreshold = 4096
+	defer func() { activeInlineOutputThreshold = previous }()
+	root := t.TempDir()
+	path := filepath.Join(root, "service.go")
+	oldSegment := api.ResultSegment{Kind: "function", Start: 1, End: 3, Text: "func Run() {\n\toldCall()\n}"}
+	renderWithSegmentGuard(t, api.FileResult{Path: path, Segments: []api.ResultSegment{oldSegment}})
+	recordWriteResponseContext(root, writeResponse{Applied: true, Files: []writeResponseFile{{
+		Path: "service.go", Operation: "edit", Changed: true,
+		ChangeDetails: []writeResponseChange{{Anchors: []writeAnchor{{Line: 2, Content: "\tnewCall()"}}}},
+	}}}, 100)
+	cacheContent, err := os.ReadFile(filepath.Join(directory, "cache.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(cacheContent), "newCall") {
+		t.Fatalf("write coverage persisted source text: %s", cacheContent)
+	}
+	newSegment := api.ResultSegment{Kind: "function", Start: 1, End: 3, Text: "func Run() {\n\tnewCall()\n}"}
+	guard, err := openSegmentContextGuard()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !guard.seen(path, nil, newSegment) {
+		guard.close()
+		t.Fatal("write delta did not complete coverage for the updated segment")
+	}
+	guard.close()
+	stats := readRenderedContextStats(filepath.Join(directory, "stats-0.json"), 0)
+	if stats.WriteCalls != 1 || stats.WriteAnchorsRecorded != 1 || stats.LineCoverageRemovedSegments != 1 {
+		t.Fatalf("write coverage statistics = %#v", stats)
+	}
+}
+
+func TestWriteAnchorsDoNotSuppressPartiallyCoveredSegment(t *testing.T) {
+	t.Setenv("GREPPLE_CONTEXT_GUARD_DIR", t.TempDir())
+	guard, err := openSegmentContextGuard()
+	if err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(t.TempDir(), "partial.go")
+	guard.recordWriteAnchors(path, []writeAnchor{{Line: 2, Content: "\tcovered()"}})
+	segment := api.ResultSegment{Kind: "function", Start: 1, End: 3, Text: "func Partial() {\n\tcovered()\n}"}
+	if guard.seen(path, nil, segment) {
+		guard.close()
+		t.Fatal("partial write coverage suppressed a complete declaration")
+	}
+	guard.close()
+}
+
 func TestContextStatsSurviveCacheWriteFailure(t *testing.T) {
 	directory := t.TempDir()
 	t.Setenv("GREPPLE_CONTEXT_GUARD_DIR", directory)
@@ -184,6 +264,7 @@ func TestContextStatsSurviveCacheWriteFailure(t *testing.T) {
 		t.Fatal(err)
 	}
 	guard.observed = true
+	guard.cacheDirty = true
 	guard.cachePath = t.TempDir() // Renaming a cache file over this directory must fail.
 	guard.close()
 	stats := readRenderedContextStats(filepath.Join(directory, "stats-0.json"), 0)

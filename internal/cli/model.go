@@ -17,6 +17,7 @@ type cliOptions struct {
 	Outline          bool
 	Depth            int
 	MaxOutputBytes   int
+	RepeatSource     bool
 	Anchors          bool
 	AnchorLines      anchorLookup
 	ResultMetadata   *api.ResultMetadata

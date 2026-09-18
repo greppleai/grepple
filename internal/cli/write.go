@@ -171,6 +171,17 @@ type writeFailure struct {
 	anchors     []writeAnchor
 }
 
+type writeResponseCounter struct {
+	writer  io.Writer
+	written int
+}
+
+func (counter *writeResponseCounter) Write(content []byte) (int, error) {
+	written, err := counter.writer.Write(content)
+	counter.written += written
+	return written, err
+}
+
 func runWrite(args []string) error {
 	options, err := parseWriteOptions(args)
 	if err != nil {
@@ -197,8 +208,12 @@ func runWrite(args []string) error {
 	if failure != nil {
 		response = failedWriteResponse(options.dryRun, failure)
 	}
-	if err := emitWriteResponse(os.Stdout, response, options.json); err != nil {
+	output := &writeResponseCounter{writer: os.Stdout}
+	if err := emitWriteResponse(output, response, options.json); err != nil {
 		return err
+	}
+	if failure == nil && response.Applied && !options.json {
+		recordWriteResponseContext(options.root, response, output.written)
 	}
 	if failure != nil {
 		requestExit(1)

@@ -16,16 +16,22 @@ import (
 )
 
 const (
-	contextGuardSchema      = "grepple-context-segments-v1"
-	contextGuardStatsSchema = "grepple-context-segment-stats-v2"
-	contextGuardMaxEntries  = 50_000
-	contextGuardMaxFileSize = 16 << 20
-	contextGuardLockTimeout = 2 * time.Second
+	contextGuardSchema         = "grepple-context-segments-v2"
+	contextGuardStatsSchema    = "grepple-context-segment-stats-v3"
+	contextGuardMaxEntries     = 50_000
+	contextGuardMaxLineEntries = 200_000
+	contextGuardMaxFileSize    = 16 << 20
+	contextGuardLockTimeout    = 2 * time.Second
 )
 
 type renderedContextCache struct {
-	Schema  string                          `json:"schema"`
-	Entries map[string]renderedContextEntry `json:"entries"`
+	Schema  string                                 `json:"schema"`
+	Entries map[string]renderedContextEntry        `json:"entries"`
+	Files   map[string]renderedContextFileCoverage `json:"files,omitempty"`
+}
+
+type renderedContextFileCoverage struct {
+	Lines map[int]string `json:"lines"`
 }
 
 type renderedContextEntry struct {
@@ -34,40 +40,51 @@ type renderedContextEntry struct {
 }
 
 type renderedContextStats struct {
-	Schema                    string  `json:"schema"`
-	Period                    int     `json:"period"`
-	ResetReason               string  `json:"resetReason"`
-	CreatedAt                 string  `json:"createdAt"`
-	UpdatedAt                 string  `json:"updatedAt"`
-	ObservedCalls             int     `json:"observedCalls"`
-	DeduplicationEnabledCalls int     `json:"deduplicationEnabledCalls"`
-	NonStructuralCalls        int     `json:"nonStructuralCalls"`
-	PotentialSpillCalls       int     `json:"potentialSpillCalls"`
-	ResultFiles               int     `json:"resultFiles"`
-	ReturnedBytes             int64   `json:"returnedBytes"`
-	EmittedSegments           int     `json:"emittedSegments"`
-	RemovedSegments           int     `json:"removedSegments"`
-	EmittedSourceBytes        int64   `json:"emittedSourceBytes"`
-	GrossRemovedBytes         int64   `json:"grossRemovedBytes"`
-	NetSavedBytes             int64   `json:"netSavedBytes"`
-	NetSavingsPercent         float64 `json:"netSavingsPercent"`
+	Schema                      string  `json:"schema"`
+	Period                      int     `json:"period"`
+	ResetReason                 string  `json:"resetReason"`
+	CreatedAt                   string  `json:"createdAt"`
+	UpdatedAt                   string  `json:"updatedAt"`
+	ObservedCalls               int     `json:"observedCalls"`
+	DeduplicationEnabledCalls   int     `json:"deduplicationEnabledCalls"`
+	BypassRequestedCalls        int     `json:"bypassRequestedCalls"`
+	NonStructuralCalls          int     `json:"nonStructuralCalls"`
+	PotentialSpillCalls         int     `json:"potentialSpillCalls"`
+	WriteCalls                  int     `json:"writeCalls"`
+	WriteAnchorsRecorded        int     `json:"writeAnchorsRecorded"`
+	LineCoverageRemovedSegments int     `json:"lineCoverageRemovedSegments"`
+	ResultFiles                 int     `json:"resultFiles"`
+	ReturnedBytes               int64   `json:"returnedBytes"`
+	EmittedSegments             int     `json:"emittedSegments"`
+	RemovedSegments             int     `json:"removedSegments"`
+	EmittedSourceBytes          int64   `json:"emittedSourceBytes"`
+	GrossRemovedBytes           int64   `json:"grossRemovedBytes"`
+	NetSavedBytes               int64   `json:"netSavedBytes"`
+	NetSavingsPercent           float64 `json:"netSavingsPercent"`
 }
 
 type segmentContextGuard struct {
-	directory       string
-	cachePath       string
-	cache           renderedContextCache
-	release         func()
-	observed        bool
-	deduplicate     bool
-	bypassReason    string
-	resultFiles     int
-	returnedBytes   int
-	emittedSegments int
-	removedSegments int
-	emittedBytes    int
-	removedBytes    int
-	markerBytes     int
+	directory                   string
+	cachePath                   string
+	cache                       renderedContextCache
+	release                     func()
+	observed                    bool
+	deduplicate                 bool
+	recordSegments              bool
+	cacheDirty                  bool
+	writeCall                   bool
+	bypassRequested             bool
+	bypassReason                string
+	resultFiles                 int
+	returnedBytes               int
+	writeAnchorsRecorded        int
+	lineCoverageRemovedSegments int
+	emittedSegments             int
+	removedSegments             int
+	emittedBytes                int
+	removedBytes                int
+	markerBytes                 int
+	lineEntries                 int
 }
 
 func runContext(args []string) error {
@@ -116,7 +133,8 @@ func openSegmentContextGuard() (*segmentContextGuard, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &segmentContextGuard{directory: directory, cachePath: cachePath, cache: readRenderedContextCache(cachePath), release: release, deduplicate: true}, nil
+	cache := readRenderedContextCache(cachePath)
+	return &segmentContextGuard{directory: directory, cachePath: cachePath, cache: cache, release: release, deduplicate: true, recordSegments: true, lineEntries: renderedContextLineEntries(cache)}, nil
 }
 
 func (guard *segmentContextGuard) close() {
@@ -127,7 +145,7 @@ func (guard *segmentContextGuard) close() {
 	if !guard.observed {
 		return
 	}
-	if guard.deduplicate {
+	if guard.cacheDirty {
 		_ = writeRenderedContextJSON(guard.cachePath, guard.cache)
 	}
 	_ = updateRenderedContextStats(guard)
@@ -139,8 +157,13 @@ func (guard *segmentContextGuard) seen(source string, artifact *api.NavigationAr
 	}
 	guard.observed = true
 	key, _, _ := structuralSegmentIdentity(source, artifact, segment)
-	if _, exists := guard.cache.Entries[key]; !exists {
+	_, exact := guard.cache.Entries[key]
+	covered := !exact && artifact == nil && guard.segmentCoveredByLines(source, segment)
+	if !exact && !covered {
 		return false
+	}
+	if covered {
+		guard.lineCoverageRemovedSegments++
 	}
 	guard.removedSegments++
 	guard.removedBytes += len(segment.Text)
@@ -148,13 +171,17 @@ func (guard *segmentContextGuard) seen(source string, artifact *api.NavigationAr
 }
 
 func (guard *segmentContextGuard) record(source string, artifact *api.NavigationArtifactIdentity, segment api.ResultSegment) {
-	if guard == nil || !guard.deduplicate || !completeStructuralSegment(segment) {
+	if guard == nil || !guard.recordSegments || !completeStructuralSegment(segment) {
 		return
 	}
 	guard.observed = true
 	key, sourceDigest, sourceBytes := structuralSegmentIdentity(source, artifact, segment)
 	if len(guard.cache.Entries) < contextGuardMaxEntries {
 		guard.cache.Entries[key] = renderedContextEntry{SourceDigest: sourceDigest, SourceBytes: sourceBytes}
+		guard.cacheDirty = true
+	}
+	if artifact == nil {
+		guard.recordSegmentLines(source, segment)
 	}
 	guard.emittedSegments++
 	guard.emittedBytes += sourceBytes
@@ -166,6 +193,144 @@ func (guard *segmentContextGuard) recordMarker(bytes int) {
 	}
 }
 
+func (guard *segmentContextGuard) segmentCoveredByLines(source string, segment api.ResultSegment) bool {
+	path, ok := localContextSourcePath(source)
+	if !ok {
+		return false
+	}
+	coverage, ok := guard.cache.Files[path]
+	if !ok {
+		return false
+	}
+	for index, line := range strings.Split(segment.Text, "\n") {
+		if coverage.Lines[segment.Start+index] != contextLineDigest(line) {
+			return false
+		}
+	}
+	return true
+}
+
+func (guard *segmentContextGuard) recordSegmentLines(source string, segment api.ResultSegment) {
+	path, ok := localContextSourcePath(source)
+	if !ok {
+		return
+	}
+	for index, line := range strings.Split(segment.Text, "\n") {
+		guard.recordContextLine(path, segment.Start+index, line)
+	}
+}
+
+func (guard *segmentContextGuard) recordWriteAnchors(source string, anchors []writeAnchor) {
+	path, ok := localContextSourcePath(source)
+	if !ok {
+		return
+	}
+	for _, anchor := range anchors {
+		if anchor.Line < 1 {
+			continue
+		}
+		guard.writeAnchorsRecorded++
+		guard.recordContextLine(path, anchor.Line, anchor.Content)
+	}
+}
+
+func (guard *segmentContextGuard) recordContextLine(path string, line int, content string) bool {
+	if line < 1 {
+		return false
+	}
+	coverage, ok := guard.cache.Files[path]
+	if !ok {
+		if guard.lineEntries >= contextGuardMaxLineEntries {
+			return false
+		}
+		coverage = renderedContextFileCoverage{Lines: map[int]string{}}
+	}
+	digest := contextLineDigest(content)
+	if coverage.Lines[line] == digest {
+		return false
+	}
+	if _, exists := coverage.Lines[line]; !exists {
+		if guard.lineEntries >= contextGuardMaxLineEntries {
+			return false
+		}
+		guard.lineEntries++
+	}
+	coverage.Lines[line] = digest
+	guard.cache.Files[path] = coverage
+	guard.cacheDirty = true
+	return true
+}
+
+func (guard *segmentContextGuard) removeContextFile(source string) {
+	path, ok := localContextSourcePath(source)
+	if !ok {
+		return
+	}
+	if coverage, exists := guard.cache.Files[path]; exists {
+		guard.lineEntries -= len(coverage.Lines)
+		delete(guard.cache.Files, path)
+		guard.cacheDirty = true
+	}
+}
+
+func recordWriteResponseContext(root string, response writeResponse, returnedBytes int) {
+	if activeInlineOutputThreshold < 1 || returnedBytes > activeInlineOutputThreshold {
+		return
+	}
+	resolvedRoot, err := resolveWriteRoot(root)
+	if err != nil {
+		return
+	}
+	guard, err := openSegmentContextGuard()
+	if err != nil {
+		return
+	}
+	guard.observed = true
+	guard.deduplicate = false
+	guard.recordSegments = false
+	guard.writeCall = true
+	guard.resultFiles = len(response.Files)
+	guard.returnedBytes = returnedBytes
+	for _, file := range response.Files {
+		if !file.Changed {
+			continue
+		}
+		source := file.Path
+		if !filepath.IsAbs(source) {
+			source = filepath.Join(resolvedRoot, source)
+		}
+		if file.Operation == "delete" {
+			guard.removeContextFile(source)
+			continue
+		}
+		guard.recordWriteAnchors(source, responseFileAnchors(file))
+	}
+	guard.close()
+}
+
+func localContextSourcePath(source string) (string, bool) {
+	if source == "" || strings.ContainsRune(source, '\x00') {
+		return "", false
+	}
+	absolute, err := filepath.Abs(source)
+	if err != nil {
+		return "", false
+	}
+	return filepath.Clean(absolute), true
+}
+
+func contextLineDigest(content string) string {
+	digest := sha256.Sum256([]byte(normalizeRenderedAnchorLine(content)))
+	return "sha256:" + hex.EncodeToString(digest[:])
+}
+
+func renderedContextLineEntries(cache renderedContextCache) int {
+	total := 0
+	for _, coverage := range cache.Files {
+		total += len(coverage.Lines)
+	}
+	return total
+}
 func completeStructuralSegment(segment api.ResultSegment) bool {
 	if segment.Kind == "" || segment.Kind == "spacing" || segment.Kind == "summary" || segment.Start < 1 || segment.End < segment.Start || segment.Text == "" {
 		return false
@@ -204,15 +369,28 @@ func renderedContextDirectory() (string, error) {
 }
 
 func readRenderedContextCache(path string) renderedContextCache {
-	fresh := renderedContextCache{Schema: contextGuardSchema, Entries: map[string]renderedContextEntry{}}
+	fresh := renderedContextCache{Schema: contextGuardSchema, Entries: map[string]renderedContextEntry{}, Files: map[string]renderedContextFileCoverage{}}
 	content, ok := readBoundedContextFile(path)
 	if !ok {
 		return fresh
 	}
 	var restored renderedContextCache
-	if json.Unmarshal(content, &restored) != nil || restored.Schema != contextGuardSchema || restored.Entries == nil || len(restored.Entries) > contextGuardMaxEntries {
+	if json.Unmarshal(content, &restored) != nil || (restored.Schema != contextGuardSchema && restored.Schema != "grepple-context-segments-v1") || restored.Entries == nil || len(restored.Entries) > contextGuardMaxEntries {
 		return fresh
 	}
+	if restored.Files == nil {
+		restored.Files = map[string]renderedContextFileCoverage{}
+	}
+	for path, coverage := range restored.Files {
+		if coverage.Lines == nil {
+			coverage.Lines = map[int]string{}
+			restored.Files[path] = coverage
+		}
+	}
+	if renderedContextLineEntries(restored) > contextGuardMaxLineEntries {
+		return fresh
+	}
+	restored.Schema = contextGuardSchema
 	return restored
 }
 
@@ -231,13 +409,20 @@ func updateRenderedContextStats(guard *segmentContextGuard) error {
 	stats.ObservedCalls++
 	stats.ResultFiles += guard.resultFiles
 	stats.ReturnedBytes += int64(guard.returnedBytes)
-	if guard.deduplicate {
+	if guard.bypassRequested {
+		stats.BypassRequestedCalls++
+	}
+	if guard.writeCall {
+		stats.WriteCalls++
+	} else if guard.deduplicate {
 		stats.DeduplicationEnabledCalls++
 	} else if guard.bypassReason == "potential-spill" {
 		stats.PotentialSpillCalls++
-	} else {
+	} else if guard.bypassReason != "requested" {
 		stats.NonStructuralCalls++
 	}
+	stats.WriteAnchorsRecorded += guard.writeAnchorsRecorded
+	stats.LineCoverageRemovedSegments += guard.lineCoverageRemovedSegments
 	stats.EmittedSegments += guard.emittedSegments
 	stats.RemovedSegments += guard.removedSegments
 	stats.EmittedSourceBytes += int64(guard.emittedBytes)
@@ -307,7 +492,7 @@ func readRenderedContextStats(path string, period int) renderedContextStats {
 		return fresh
 	}
 	var restored renderedContextStats
-	if json.Unmarshal(content, &restored) != nil || (restored.Schema != contextGuardStatsSchema && restored.Schema != "grepple-context-segment-stats-v1") || restored.Period != period {
+	if json.Unmarshal(content, &restored) != nil || (restored.Schema != contextGuardStatsSchema && restored.Schema != "grepple-context-segment-stats-v1" && restored.Schema != "grepple-context-segment-stats-v2") || restored.Period != period {
 		return fresh
 	}
 	restored.Schema = contextGuardStatsSchema

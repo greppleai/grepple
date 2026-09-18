@@ -102,6 +102,21 @@ func TestParseSearchArgsDefaultsToOneLevelRelatedNavigation(t *testing.T) {
 	}
 }
 
+func TestParseSearchArgsSupportsRepeatSource(t *testing.T) {
+	options, _, _, err := parseSearchArgs([]string{"--repeat-source", "needle"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !options.RepeatSource {
+		t.Fatal("--repeat-source was not retained")
+	}
+	for _, args := range [][]string{{"--repeat-source", "--line-only", "needle"}, {"--repeat-source", "--json", "needle"}, {"--repeat-source", "-C", "2", "needle"}} {
+		if _, _, _, err := parseSearchArgs(args); err == nil {
+			t.Fatalf("--repeat-source accepted unsupported output: %v", args)
+		}
+	}
+}
+
 func TestParseSearchArgsEnablesRelatedGoNavigation(t *testing.T) {
 	options, _, remote, err := parseSearchArgs([]string{"--related", "needle", "**/*.go"})
 	if err != nil {

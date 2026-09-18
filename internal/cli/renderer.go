@@ -66,6 +66,7 @@ func contextGuardForResults(options *cliOptions, results []api.FileResult) *segm
 	guard.resultFiles = len(results)
 	if !segmentOutputMode(options) {
 		guard.deduplicate = false
+		guard.recordSegments = false
 		guard.bypassReason = "non-structural"
 		return guard
 	}
@@ -77,13 +78,23 @@ func contextGuardForResults(options *cliOptions, results []api.FileResult) *segm
 	err = newResultRenderer(options, output, nil).Render(results)
 	if err != nil && !errors.Is(err, errOutputTruncated) {
 		guard.deduplicate = false
+		guard.recordSegments = false
 		guard.bypassReason = "render-error"
 		return guard
 	}
 	headroom := completeResultSegmentCount(results) * 128
 	if rendered.Len()+headroom > activeInlineOutputThreshold {
 		guard.deduplicate = false
+		guard.recordSegments = false
 		guard.bypassReason = "potential-spill"
+	}
+	if options.RepeatSource {
+		guard.bypassRequested = true
+		if guard.bypassReason != "potential-spill" {
+			guard.deduplicate = false
+			guard.recordSegments = true
+			guard.bypassReason = "requested"
+		}
 	}
 	return guard
 }
