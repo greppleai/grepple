@@ -315,6 +315,34 @@ func TestFollowRelatedExpandsCallersAndCallees(t *testing.T) {
 	}
 }
 
+func TestRelatedGoPreservesExternalDependencyReferences(t *testing.T) {
+	directory := t.TempDir()
+	path := writeGoFixture(t, directory, "main.go", `package sample
+import dependency "example.com/acme/client"
+func run(client dependency.Client, request dependency.Request) {
+	client.Send(request) // needle
+}
+`)
+	matches, err := Files(Params{Query: "needle", Related: true}, []string{path})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var callFound, clientTypeFound bool
+	for _, point := range matches[0].Related {
+		if point.External == nil {
+			continue
+		}
+		if point.External.ImportPath != "example.com/acme/client" || point.Confidence != "dependency-unresolved" {
+			t.Fatalf("unexpected external evidence: %#v", point)
+		}
+		callFound = callFound || point.External.Kind == "call" && point.External.Symbol == "Send"
+		clientTypeFound = clientTypeFound || point.External.Kind == "type" && point.External.Symbol == "Client"
+	}
+	if !callFound || !clientTypeFound {
+		t.Fatalf("missing external call/type references: %#v", matches[0].Related)
+	}
+}
+
 func findRelatedPoint(t *testing.T, points []RelatedPoint, name, direction string) RelatedPoint {
 	t.Helper()
 	for _, point := range points {

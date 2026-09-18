@@ -3,6 +3,7 @@ package parser
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -16,11 +17,43 @@ const navigationCacheSchema = "grepple-navigation-facts-v25"
 
 const maxNavigationCacheEntryBytes = 64 << 20
 
+// NavigationFactArtifactSchema identifies the portable packed-protobuf fact format.
+const NavigationFactArtifactSchema = navigationCacheSchema
+
+// NavigationFactArtifact is one path-neutral native graph serialized for cache or server distribution.
+type NavigationFactArtifact struct {
+	Digest    string
+	Recovered bool
+	Graph     NavigationGraph
+}
+
 type navigationCacheEntry struct {
 	Schema    string
 	Digest    string
 	Recovered bool
 	Graph     NavigationGraph
+}
+
+// NavigationFactDigest returns the content, language, grammar, and schema identity used by fact artifacts.
+func NavigationFactDigest(content, language string) string {
+	return navigationCacheDigest(content, language)
+}
+
+// MarshalNavigationFactArtifact serializes the native graph without a JSON mirror.
+func MarshalNavigationFactArtifact(artifact NavigationFactArtifact) ([]byte, error) {
+	return marshalNavigationCacheEntry(navigationCacheEntry{Schema: navigationCacheSchema, Digest: artifact.Digest, Recovered: artifact.Recovered, Graph: artifact.Graph})
+}
+
+// UnmarshalNavigationFactArtifact validates and decodes one portable native graph artifact.
+func UnmarshalNavigationFactArtifact(content []byte) (NavigationFactArtifact, error) {
+	entry, err := unmarshalNavigationCacheEntry(content)
+	if err != nil {
+		return NavigationFactArtifact{}, err
+	}
+	if entry.Schema != navigationCacheSchema {
+		return NavigationFactArtifact{}, fmt.Errorf("unsupported navigation fact schema %q", entry.Schema)
+	}
+	return NavigationFactArtifact{Digest: entry.Digest, Recovered: entry.Recovered, Graph: entry.Graph}, nil
 }
 
 // CachedNavigationGraph returns path-instantiated navigation facts for source.

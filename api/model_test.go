@@ -36,6 +36,23 @@ func TestSearchRequestLineRangesUseStableJSONFields(t *testing.T) {
 	}
 }
 
+func TestRelatedDependencyIdentityUsesStableJSONFields(t *testing.T) {
+	symbol := RelatedSymbol{
+		Name: "Client.Send", Path: "client/client.go", Confidence: "dependency-resolved",
+		External: &ExternalNavigationReference{ID: "reference", Language: "go", ImportPath: "example.com/acme/client/client", Package: "example.com/acme/client/client", Symbol: "Send", ConsumerPackage: "example.com/consumer", ReceiverType: "Client", Kind: "call", Module: "example.com/acme/client", Version: "v1.4.2", Integrity: "h1:checksum"},
+		Artifact: &NavigationArtifactIdentity{Ecosystem: "go", Module: "example.com/acme/client", Version: "v1.4.2", Repository: "acme/client@tag~v1.4.2", Commit: "abc", Digest: "digest"},
+	}
+	encoded, err := json.Marshal(symbol)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, field := range []string{`"confidence":"dependency-resolved"`, `"importPath":"example.com/acme/client/client"`, `"consumerPackage":"example.com/consumer"`, `"module":"example.com/acme/client"`, `"version":"v1.4.2"`, `"integrity":"h1:checksum"`, `"commit":"abc"`, `"digest":"digest"`} {
+		if !strings.Contains(string(encoded), field) {
+			t.Fatalf("dependency JSON missing %s: %s", field, encoded)
+		}
+	}
+}
+
 func TestResultMatchRangesAreAdditive(t *testing.T) {
 	encoded, err := json.Marshal(ResultMatch{Line: 3, EndLine: 5, Text: "if ready {"})
 	if err != nil {

@@ -198,6 +198,7 @@ This file records completed Grepple roadmap work that no longer belongs in `next
 - [x] Added parse, navigation-index, cache-format, focused extraction, and directory architecture benchmarks; retired package/workspace bundle benchmarks with those features.
 - [x] Compared JSON, gob, protobuf variants, packed layouts, and experimental native tree serialization for cache design.
 - [x] Replaced per-file navigation JSON entries with deterministic path-neutral packed-protobuf facts decoded directly into the native graph, including payload checksums, bounded reads and columns, exact slice-presence parity, atomic writes, and full fact-field round-trip coverage.
+- [x] Added version-exact remote Go dependency navigation: unresolved imported calls and type usages retain resolver evidence, shards prebuild downloadable packed-protobuf repository artifacts during ingestion, `go.mod`/`go.sum`/versioned replace/`go.work` context qualifies exact module versions, and the router resolves declarations and source previews across shards without wrong-version fallback.
 - [x] Added reviewed runtime/allocation budgets as benchmark gates rather than host-sensitive unit assertions.
 - [x] Kept `go test -race ./...`, generated parser metadata checks, and deterministic architecture tests green through the completed refactors.
 - [x] Added reproducible version, revision, source time, toolchain, and platform output through `--version`.

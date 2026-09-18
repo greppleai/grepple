@@ -208,7 +208,7 @@ func anchorSelectionLines(byPath map[string]map[int]string, path string) map[int
 
 func collectRelatedTypeAnchorLines(points []api.RelatedSymbol, byPath map[string]map[int]string) {
 	for _, point := range points {
-		if point.Direction == "type" && point.Path != "" {
+		if point.Direction == "type" && point.Path != "" && point.Artifact == nil {
 			lines := anchorSelectionLines(byPath, point.Path)
 			for _, segment := range point.Segments {
 				collectAnchorSegmentLines(lines, segment)

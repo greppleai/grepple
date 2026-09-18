@@ -1,12 +1,15 @@
 package search
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"path/filepath"
 	"sort"
 	"strings"
 	"sync/atomic"
 
+	"github.com/greppleai/grepple/api"
 	"github.com/greppleai/grepple/navigation"
 	"github.com/greppleai/grepple/parser"
 )
@@ -252,6 +255,11 @@ func relatedTypesForDeclaration(declaration navigationDeclaration, navigation *n
 	var related []RelatedPoint
 	for _, usage := range usages {
 		candidates, confidence := resolveRelatedType(usage, declaration, navigation)
+		if len(candidates) == 0 && externalNavigationEligible(declaration.language, usage.importPath) {
+			reference := newExternalNavigationReference(declaration.language, usage.importPath, usage.typeName, declaration.packageID, "", "type", usage.line)
+			related = append(related, RelatedPoint{Name: usage.typeName, Path: "dependency:" + usage.importPath, Kind: "external", Direction: "type", Confidence: "dependency-unresolved", Role: usage.role, CallLine: usage.line, External: reference})
+			continue
+		}
 		for _, candidate := range candidates {
 			point := candidate.point
 			point.Name, point.Direction, point.Role = usage.typeName, "type", usage.role
@@ -417,7 +425,45 @@ func resolveCallee(call navigationCall, language string, matched []navigationDec
 		}
 		resolved = append(resolved, point)
 	}
+	if len(resolved) == 0 {
+		if external := externalCalleePoint(call, language, matched); external != nil {
+			resolved = append(resolved, *external)
+		}
+	}
 	return resolved
+}
+
+func externalCalleePoint(call navigationCall, language string, matched []navigationDeclaration) *RelatedPoint {
+	if !externalNavigationEligible(language, call.importPath) {
+		return nil
+	}
+	symbol := call.resolvedName
+	if symbol == "" {
+		symbol = call.name
+	}
+	name := call.display
+	if name == "" {
+		name = symbol
+	}
+	consumerPackage := ""
+	if len(matched) > 0 {
+		consumerPackage = matched[0].packageID
+	}
+	reference := newExternalNavigationReference(language, call.importPath, symbol, consumerPackage, call.receiverType, "call", call.line)
+	return &RelatedPoint{Name: name, Path: "dependency:" + call.importPath, Kind: "external", Direction: "callee", Confidence: "dependency-unresolved", CallLine: call.line, External: reference}
+}
+
+func externalNavigationEligible(language, importPath string) bool {
+	if language != "go" || importPath == "" {
+		return false
+	}
+	root, _, _ := strings.Cut(importPath, "/")
+	return strings.Contains(root, ".")
+}
+
+func newExternalNavigationReference(language, importPath, symbol, consumerPackage, receiverType, kind string, line int) *api.ExternalNavigationReference {
+	digest := sha256.Sum256([]byte(fmt.Sprintf("%s\x00%s\x00%s\x00%s\x00%s\x00%s\x00%d", language, importPath, symbol, consumerPackage, receiverType, kind, line)))
+	return &api.ExternalNavigationReference{ID: hex.EncodeToString(digest[:]), Language: language, ImportPath: importPath, Symbol: symbol, ConsumerPackage: consumerPackage, ReceiverType: receiverType, Kind: kind}
 }
 
 func navigationCallers(targets []navigationDeclaration, navigation *navigationIndex) ([]RelatedPoint, int) {

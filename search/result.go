@@ -81,7 +81,7 @@ func relatedSymbols(points []RelatedPoint) []api.RelatedSymbol {
 	for _, point := range points {
 		symbol := api.RelatedSymbol{
 			Name: point.Name, Path: point.Path, Kind: point.Kind, Direction: point.Direction,
-			Start: point.Start, End: point.End, CallLine: point.CallLine, Confidence: point.Confidence, Role: point.Role,
+			Start: point.Start, End: point.End, CallLine: point.CallLine, Confidence: point.Confidence, Role: point.Role, External: point.External,
 		}
 		if point.Preview != nil {
 			symbol.Segments = resultSegments(point.Preview.Content, []parser.Segment{{Kind: "lines", Start: point.Preview.Start, End: point.Preview.End}})

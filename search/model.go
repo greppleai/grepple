@@ -1,6 +1,9 @@
 package search
 
-import "github.com/greppleai/grepple/parser"
+import (
+	"github.com/greppleai/grepple/api"
+	"github.com/greppleai/grepple/parser"
+)
 
 const (
 	// ResultSortPath preserves deterministic repository/path order.
@@ -54,6 +57,7 @@ type RelatedPreview struct {
 type RelatedPoint struct {
 	Name, Path, File, Kind, Direction, Confidence, Role string
 	Start, End, CallLine, Distance                      int
+	External                                            *api.ExternalNavigationReference
 	Preview                                             *RelatedPreview
 }
 

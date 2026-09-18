@@ -100,19 +100,12 @@ func (renderer segmentRenderer) renderRelatedPoint(point api.RelatedSymbol, dept
 	if point.Direction == "caller" {
 		arrow = "←"
 	}
-	suffix := ""
-	if point.Confidence == "candidate" {
-		suffix = fmt.Sprintf(" [candidate; try --at %s:%d]", point.Path, point.Start)
+	locationPath, label, suffix := relatedPointPresentation(point)
+	location := fmt.Sprintf("%s:%d-%d", locationPath, point.Start, point.End)
+	if point.Confidence == "dependency-unresolved" && point.Artifact == nil {
+		location = locationPath
 	}
-	label := fmt.Sprintf("call:%d", point.CallLine)
-	if point.Direction == "type" {
-		role := point.Role
-		if role == "" {
-			role = "used"
-		}
-		label = fmt.Sprintf("%s-type:%d", role, point.CallLine)
-	}
-	line := fmt.Sprintf("%s%s %s  %s:%d-%d  %s%s\n", indent, arrow, point.Name, point.Path, point.Start, point.End, label, suffix)
+	line := fmt.Sprintf("%s%s %s  %s  %s%s\n", indent, arrow, point.Name, location, label, suffix)
 	if err := renderer.output.writeString(line); err != nil {
 		return err
 	}
@@ -132,6 +125,35 @@ func (renderer segmentRenderer) renderRelatedPoint(point api.RelatedSymbol, dept
 		return renderer.renderRelatedOmissions(point.OmittedCallers, point.OmittedCallees, point.OmittedTypes, point.Path, point.Start, depth+2)
 	}
 	return nil
+}
+
+func relatedPointPresentation(point api.RelatedSymbol) (string, string, string) {
+	locationPath := point.Path
+	suffix := ""
+	if point.Artifact != nil {
+		identity := point.Artifact.Module + "@" + point.Artifact.Version
+		if point.Artifact.Repository != "" {
+			locationPath = point.Artifact.Repository + ":" + point.Path
+		}
+		suffix = " [" + point.Confidence + "; " + identity + "; commit " + point.Artifact.Commit
+		if point.External != nil && point.External.Integrity != "" {
+			suffix += "; sum " + point.External.Integrity
+		}
+		suffix += "]"
+	} else if point.Confidence == "candidate" {
+		suffix = fmt.Sprintf(" [candidate; try --at %s:%d]", point.Path, point.Start)
+	} else if point.Confidence == "dependency-unresolved" && point.External != nil {
+		suffix = fmt.Sprintf(" [dependency-unresolved; %s]", point.External.ImportPath)
+	}
+	label := fmt.Sprintf("call:%d", point.CallLine)
+	if point.Direction == "type" {
+		role := point.Role
+		if role == "" {
+			role = "used"
+		}
+		label = fmt.Sprintf("%s-type:%d", role, point.CallLine)
+	}
+	return locationPath, label, suffix
 }
 
 func (renderer segmentRenderer) renderRelatedOmissions(callers, callees, types int, path string, line, depth int) error {

@@ -57,27 +57,72 @@ type ContextLine struct {
 	Match bool   `json:"match"`
 }
 
-// RelatedSymbol points between matched code and a project-local declaration.
+// NavigationArtifactIdentity pins a related declaration to one immutable dependency source artifact.
+type NavigationArtifactIdentity struct {
+	Ecosystem  string `json:"ecosystem"`
+	Module     string `json:"module"`
+	Version    string `json:"version"`
+	Integrity  string `json:"integrity,omitempty"`
+	Repository string `json:"repository,omitempty"`
+	Commit     string `json:"commit,omitempty"`
+	Digest     string `json:"digest,omitempty"`
+}
+
+// ExternalNavigationReference retains syntax evidence needed to resolve one dependency symbol.
+type ExternalNavigationReference struct {
+	ID              string `json:"id"`
+	Language        string `json:"language"`
+	ImportPath      string `json:"importPath"`
+	Package         string `json:"package,omitempty"`
+	Symbol          string `json:"symbol"`
+	ConsumerPackage string `json:"consumerPackage,omitempty"`
+	ReceiverType    string `json:"receiverType,omitempty"`
+	Kind            string `json:"kind"`
+	Module          string `json:"module,omitempty"`
+	Version         string `json:"version,omitempty"`
+	Integrity       string `json:"integrity,omitempty"`
+}
+
+// NavigationResolveRequest batches exact dependency references for shard-local artifact lookup.
+type NavigationResolveRequest struct {
+	References []ExternalNavigationReference `json:"references"`
+}
+
+// NavigationResolveResult preserves correlation between a reference and exact declaration candidates.
+type NavigationResolveResult struct {
+	ID      string          `json:"id"`
+	Symbols []RelatedSymbol `json:"symbols,omitempty"`
+}
+
+// NavigationResolveResponse is returned by a shard's immutable navigation artifact index.
+type NavigationResolveResponse struct {
+	Results []NavigationResolveResult `json:"results"`
+}
+
+// RelatedSymbol points between matched code and a local or artifact-qualified dependency declaration.
 // Confidence is "exact" for a qualified identity match, "import-resolved" when an
-// explicit Go or TypeScript import identifies the target module, "context-resolved"
-// when declaration kind, file context, or receiver type disambiguates it,
-// "unique-terminal" when only one declaration has the terminal name, and
-// "candidate" when ambiguity remains.
+// explicit import identifies the target module, "context-resolved" when declaration
+// kind, file context, or receiver type disambiguates it, "unique-terminal" when only
+// one declaration has the terminal name, "dependency-resolved" for one exact
+// versioned artifact declaration, "dependency-candidate" for multiple exact-version
+// declarations, and "dependency-unresolved" when versioned evidence has no artifact target.
 type RelatedSymbol struct {
-	Name           string          `json:"name"`
-	Path           string          `json:"path"`
-	Kind           string          `json:"kind"`
-	Direction      string          `json:"direction"`
-	Start          int             `json:"start"`
-	End            int             `json:"end"`
-	CallLine       int             `json:"callLine"`
-	Confidence     string          `json:"confidence"`
-	Role           string          `json:"role,omitempty"`
-	Segments       []ResultSegment `json:"segments,omitempty"`
-	Related        []RelatedSymbol `json:"related,omitempty"`
-	OmittedCallers int             `json:"omittedCallers,omitempty"`
-	OmittedCallees int             `json:"omittedCallees,omitempty"`
-	OmittedTypes   int             `json:"omittedTypes,omitempty"`
+	Name           string                       `json:"name"`
+	Path           string                       `json:"path"`
+	Kind           string                       `json:"kind"`
+	Direction      string                       `json:"direction"`
+	Start          int                          `json:"start"`
+	End            int                          `json:"end"`
+	CallLine       int                          `json:"callLine"`
+	Confidence     string                       `json:"confidence"`
+	Role           string                       `json:"role,omitempty"`
+	External       *ExternalNavigationReference `json:"external,omitempty"`
+	Artifact       *NavigationArtifactIdentity  `json:"artifact,omitempty"`
+	Segments       []ResultSegment              `json:"segments,omitempty"`
+	Related        []RelatedSymbol              `json:"related,omitempty"`
+	OmittedCallers int                          `json:"omittedCallers,omitempty"`
+	OmittedCallees int                          `json:"omittedCallees,omitempty"`
+	OmittedTypes   int                          `json:"omittedTypes,omitempty"`
 }
 
 // FileResult is one matching file.
