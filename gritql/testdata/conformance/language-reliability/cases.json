@@ -1,0 +1,154 @@
+{
+  "schema_version": 1,
+  "suite": "language-reliability",
+  "provenance": {
+    "kind": "grepple-original",
+    "note": "Cross-language gritql-v1 reliability vectors for bindings, snippet contexts, malformed syntax, cancellation, and resource limits."
+  },
+  "cases": [
+    {
+      "name": "c-reliability",
+      "language": "c",
+      "features": ["named-metavariable", "list-metavariable", "ambiguous-snippet-context", "malformed-syntax", "cancellation", "resource-limit"],
+      "query": "language c\n`target($args)`",
+      "context_query": "language c\n`value;`",
+      "min_contexts": 2,
+      "path": "src/app.c",
+      "source": "void run(void) { target(one, two, three); }\n",
+      "malformed_source": "void broken(\n",
+      "findings": ["target(one, two, three)"]
+    },
+    {
+      "name": "cpp-reliability",
+      "language": "cpp",
+      "features": ["named-metavariable", "list-metavariable", "ambiguous-snippet-context", "malformed-syntax", "cancellation", "resource-limit"],
+      "query": "language cpp\n`target($args)`",
+      "context_query": "language cpp\n`value;`",
+      "min_contexts": 2,
+      "path": "src/app.cpp",
+      "source": "void run() { target(one, two, three); }\n",
+      "malformed_source": "void broken(\n",
+      "findings": ["target(one, two, three)"]
+    },
+    {
+      "name": "csharp-reliability",
+      "language": "csharp",
+      "features": ["named-metavariable", "list-metavariable", "ambiguous-snippet-context", "malformed-syntax", "cancellation", "resource-limit"],
+      "query": "language csharp\n`Target($args)`",
+      "context_query": "language csharp\n`void Run() {}`",
+      "min_contexts": 3,
+      "path": "src/App.cs",
+      "source": "class App { void Run() { Target(one, two, three); } }\n",
+      "malformed_source": "class Broken { void Run(\n",
+      "findings": ["Target(one, two, three)"]
+    },
+    {
+      "name": "go-reliability",
+      "language": "go",
+      "features": ["named-metavariable", "list-metavariable", "ambiguous-snippet-context", "malformed-syntax", "cancellation", "resource-limit"],
+      "query": "language go\n`target($args)`",
+      "context_query": "language go\n`target($args)`",
+      "min_contexts": 1,
+      "path": "src/app.go",
+      "source": "package sample\nfunc run() { target(one, two, three) }\n",
+      "malformed_source": "package sample\nfunc broken(\n",
+      "findings": ["target(one, two, three)"]
+    },
+    {
+      "name": "javascript-reliability",
+      "language": "javascript",
+      "features": ["named-metavariable", "list-metavariable", "ambiguous-snippet-context", "malformed-syntax", "cancellation", "resource-limit"],
+      "query": "language javascript\n`target($args)`",
+      "context_query": "language javascript\n`target($args)`",
+      "min_contexts": 3,
+      "path": "src/app.js",
+      "source": "const result = target(one, two, three);\n",
+      "malformed_source": "function broken(\n",
+      "findings": ["target(one, two, three)"]
+    },
+    {
+      "name": "java-reliability",
+      "language": "java",
+      "features": ["named-metavariable", "list-metavariable", "ambiguous-snippet-context", "malformed-syntax", "cancellation", "resource-limit"],
+      "query": "language java\n`target($args)`",
+      "context_query": "language java\n`value;`",
+      "min_contexts": 2,
+      "path": "src/App.java",
+      "source": "class App { void run() { target(one, two, three); } }\n",
+      "malformed_source": "class Broken { void run(\n",
+      "findings": ["target(one, two, three)"]
+    },
+    {
+      "name": "kotlin-reliability",
+      "language": "kotlin",
+      "features": ["named-metavariable", "list-metavariable", "ambiguous-snippet-context", "malformed-syntax", "cancellation", "resource-limit"],
+      "query": "language kotlin\n`target($args)`",
+      "context_query": "language kotlin\n`target($args)`",
+      "min_contexts": 3,
+      "path": "src/App.kt",
+      "source": "fun run() { target(one, two, three) }\n",
+      "malformed_source": "fun broken(\n",
+      "findings": ["target(one, two, three)"]
+    },
+    {
+      "name": "python-reliability",
+      "language": "python",
+      "features": ["named-metavariable", "list-metavariable", "ambiguous-snippet-context", "malformed-syntax", "cancellation", "resource-limit"],
+      "query": "language python\n`target($args)`",
+      "context_query": "language python\n`target($args)`",
+      "min_contexts": 3,
+      "path": "src/app.py",
+      "source": "result = target(one, two, three)\n",
+      "malformed_source": "def broken(\n",
+      "findings": ["target(one, two, three)"]
+    },
+    {
+      "name": "rust-reliability",
+      "language": "rust",
+      "features": ["named-metavariable", "list-metavariable", "ambiguous-snippet-context", "malformed-syntax", "cancellation", "resource-limit"],
+      "query": "language rust\n`target($args)`",
+      "context_query": "language rust\n`target($args)`",
+      "min_contexts": 2,
+      "path": "src/app.rs",
+      "source": "fn run() { target(one, two, three); }\n",
+      "malformed_source": "fn broken(\n",
+      "findings": ["target(one, two, three)"]
+    },
+    {
+      "name": "shell-reliability",
+      "language": "shell",
+      "features": ["named-metavariable", "list-metavariable", "ambiguous-snippet-context", "malformed-syntax", "cancellation", "resource-limit"],
+      "query": "language shell\n`target $args`",
+      "context_query": "language shell\n`target $args`",
+      "min_contexts": 2,
+      "path": "scripts/app.sh",
+      "source": "run() { target one two three; }\n",
+      "malformed_source": "if then\n",
+      "findings": ["target one two three"]
+    },
+    {
+      "name": "typescript-reliability",
+      "language": "typescript",
+      "features": ["named-metavariable", "list-metavariable", "ambiguous-snippet-context", "malformed-syntax", "cancellation", "resource-limit"],
+      "query": "language typescript\n`target($args)`",
+      "context_query": "language typescript\n`target($args)`",
+      "min_contexts": 4,
+      "path": "src/app.ts",
+      "source": "const result = target(one, two, three);\n",
+      "malformed_source": "function broken(\n",
+      "findings": ["target(one, two, three)"]
+    },
+    {
+      "name": "tsx-reliability",
+      "language": "tsx",
+      "features": ["named-metavariable", "list-metavariable", "ambiguous-snippet-context", "malformed-syntax", "cancellation", "resource-limit"],
+      "query": "language tsx\n`target($args)`",
+      "context_query": "language tsx\n`target($args)`",
+      "min_contexts": 4,
+      "path": "src/app.tsx",
+      "source": "const result = target(one, two, three);\n",
+      "malformed_source": "const view = <Button\n",
+      "findings": ["target(one, two, three)"]
+    }
+  ]
+}

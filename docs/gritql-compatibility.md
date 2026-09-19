@@ -309,8 +309,16 @@ for target in CompileNoPanicDeterministic CompileSnippetNoPanicDeterministic Bin
 done
 ```
 
+Representative scan benchmarks supplement the 100-file microbenchmarks with deterministic 500-file medium and 5,000-file large repository shapes. They distribute files across every registered target language, nested module/package paths, varied source sizes, and one structural finding per file. `cold-compile-and-scan` includes query compilation; `warm-precompiled` reuses immutable programs. Separate benchmarks report sampled Go heap peaks as `peak-heap-bytes/op` and measure active cancellation from the first filesystem read to transactional return as `cancel-ns/op`:
+
+```bash
+go test ./gritql -run '^$' -bench '^BenchmarkRepresentative' -benchmem -benchtime=1x
+```
+
+The peak metric samples `runtime.MemStats.HeapAlloc` every 100 microseconds and is not an operating-system RSS measurement. Benchmark corpora are deterministic and network-free; absolute values remain review evidence rather than portable assertions.
+
 ## 10. Conformance and versioning
 
-A conforming implementation must fixture-test every grammar production, supported snippet context, binding transaction, range rule, diagnostic code, ordering key, limit outcome, and unsupported category. `gritql-v1` metadata publishes the canonical target language and grammar identifier, every effective limit, and the pinned Tree-sitter implementation identity for Go callers.
+A conforming implementation must fixture-test every grammar production, supported snippet context, binding transaction, range rule, diagnostic code, ordering key, limit outcome, and unsupported category. The versioned `language-reliability` fixture additionally requires every registered target language to cover named/list metavariables, deterministic snippet-context selection (including competing interpretations where its grammar permits them), malformed query and source syntax, cancellation, and a resource-limit outcome. Its coverage test is derived from `SupportedLanguages`, so registering a language without all required vectors fails the suite. `gritql-v1` metadata publishes the canonical target language and grammar identifier, every effective limit, and the pinned Tree-sitter implementation identity for Go callers.
 
 The accepted target set is closed: adding syntax or changing matching, range, ordering, cancellation, or diagnostic classification requires a new compatibility contract. Clarifications that do not change observable behavior may retain `gritql-v1`. Existing stable codes may not be reassigned.

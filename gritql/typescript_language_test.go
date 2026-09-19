@@ -1,8 +1,10 @@
 package gritql
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"io"
 	"os"
 	"slices"
 	"strings"
@@ -13,10 +15,25 @@ import (
 type languageEvaluationCase struct {
 	name, language, snippet, source, path, want string
 }
+type targetConformanceFixture struct {
+	SchemaVersion int                     `json:"schema_version"`
+	Suite         string                  `json:"suite"`
+	Provenance    map[string]string       `json:"provenance"`
+	Cases         []targetConformanceCase `json:"cases"`
+}
+
 type targetConformanceCase struct {
-	Name, Language, Query, Path, Source string
-	Findings                            []string
-	Diagnostics                         []string
+	Name            string   `json:"name"`
+	Language        string   `json:"language"`
+	Features        []string `json:"features,omitempty"`
+	Query           string   `json:"query"`
+	ContextQuery    string   `json:"context_query,omitempty"`
+	MinContexts     int      `json:"min_contexts,omitempty"`
+	Path            string   `json:"path"`
+	Source          string   `json:"source"`
+	MalformedSource string   `json:"malformed_source,omitempty"`
+	Findings        []string `json:"findings"`
+	Diagnostics     []string `json:"diagnostics,omitempty"`
 }
 
 func TestTypeScriptAndTSXStructuralEvaluation(t *testing.T) {
@@ -61,6 +78,10 @@ func assertLanguageEvaluation(t *testing.T, test languageEvaluationCase) {
 		t.Fatalf("findings=%v, want %q", findings, test.want)
 	}
 }
+func TestLanguageReliabilityConformanceFixture(t *testing.T) {
+	runTargetConformanceFixture(t, "testdata/conformance/language-reliability/cases.json")
+}
+
 func TestTypeScriptConformanceFixture(t *testing.T) {
 	runTargetConformanceFixture(t, "testdata/conformance/typescript/cases.json")
 }
@@ -75,17 +96,7 @@ func TestPythonConformanceFixture(t *testing.T) {
 
 func runTargetConformanceFixture(t *testing.T, path string) {
 	t.Helper()
-	content, err := os.ReadFile(path)
-	if err != nil {
-		t.Fatal(err)
-	}
-	var cases []targetConformanceCase
-	if err := json.Unmarshal(content, &cases); err != nil {
-		t.Fatal(err)
-	}
-	if len(cases) == 0 {
-		t.Fatalf("conformance fixture %s is empty", path)
-	}
+	cases := loadTargetConformanceFixture(t, path)
 	for _, test := range cases {
 		test := test
 		t.Run(test.Name, func(t *testing.T) {
@@ -93,28 +104,188 @@ func runTargetConformanceFixture(t *testing.T, path string) {
 		})
 	}
 }
+
+func loadTargetConformanceFixture(t *testing.T, path string) []targetConformanceCase {
+	t.Helper()
+	content, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(bytes.TrimSpace(content)) == 0 {
+		t.Fatalf("conformance fixture %s is empty", path)
+	}
+	if bytes.TrimSpace(content)[0] == '[' {
+		var cases []targetConformanceCase
+		if err := json.Unmarshal(content, &cases); err != nil {
+			t.Fatal(err)
+		}
+		return cases
+	}
+	decoder := json.NewDecoder(bytes.NewReader(content))
+	decoder.DisallowUnknownFields()
+	var fixture targetConformanceFixture
+	if err := decoder.Decode(&fixture); err != nil {
+		t.Fatal(err)
+	}
+	if err := decoder.Decode(&struct{}{}); err != io.EOF {
+		t.Fatalf("conformance fixture %s has trailing JSON", path)
+	}
+	if fixture.SchemaVersion != 1 || fixture.Suite == "" || len(fixture.Cases) == 0 {
+		t.Fatalf("invalid gritql-v1 target fixture %s: schema=%d suite=%q cases=%d", path, fixture.SchemaVersion, fixture.Suite, len(fixture.Cases))
+	}
+	return fixture.Cases
+}
 func assertTargetConformanceCase(t *testing.T, test targetConformanceCase) {
 	t.Helper()
 	program, err := Compile([]byte(test.Query), CompileOptions{})
 	if err != nil {
 		t.Fatal(err)
 	}
+	if program.Compatibility() != Compatibility || program.Language() != test.Language {
+		t.Fatalf("compiled contract=%q language=%q want %q/%q", program.Compatibility(), program.Language(), Compatibility, test.Language)
+	}
 	result := EvaluateFile(context.Background(), program, FileInput{Path: test.Path, Language: test.Language, Content: []byte(test.Source)}, EvaluateOptions{})
+	assertTargetDiagnostics(t, result, test.Diagnostics)
+	assertTargetFindings(t, result, test.Findings)
+	if len(test.Features) > 0 {
+		assertLanguageReliability(t, test, program, result)
+	}
+}
+
+func assertTargetDiagnostics(t *testing.T, result FileEvaluation, want []string) {
+	t.Helper()
 	diagnostics := result.Diagnostics()
 	codes := make([]string, len(diagnostics))
 	for index := range diagnostics {
 		codes[index] = diagnostics[index].Code()
 	}
-	if !slices.Equal(codes, test.Diagnostics) {
-		t.Fatalf("diagnostic codes=%q want %q diagnostics=%v", codes, test.Diagnostics, diagnostics)
+	if !slices.Equal(codes, want) {
+		t.Fatalf("diagnostic codes=%q want %q diagnostics=%v", codes, want, diagnostics)
 	}
+}
+
+func assertTargetFindings(t *testing.T, result FileEvaluation, want []string) {
+	t.Helper()
 	findings := result.Findings()
 	texts := make([]string, len(findings))
 	for index := range findings {
 		texts[index] = findings[index].Text()
 	}
-	if !slices.Equal(texts, test.Findings) {
-		t.Fatalf("finding texts=%q want %q", texts, test.Findings)
+	if !slices.Equal(texts, want) {
+		t.Fatalf("finding texts=%q want %q", texts, want)
+	}
+}
+
+func assertLanguageReliability(t *testing.T, test targetConformanceCase, program *Program, result FileEvaluation) {
+	t.Helper()
+	assertReliabilityBindings(t, result)
+	assertReliabilityContexts(t, test)
+	assertReliabilityMalformedSyntax(t, test, program)
+	assertReliabilityCancellation(t, test, program)
+	assertReliabilitySourceLimit(t, test, program)
+}
+
+func assertReliabilityBindings(t *testing.T, result FileEvaluation) {
+	t.Helper()
+	findings := result.Findings()
+	if len(findings) != 1 {
+		t.Fatalf("reliability finding count=%d want 1", len(findings))
+	}
+	kinds := map[string]BindingKind{}
+	for _, binding := range findings[0].Bindings() {
+		kinds[binding.Name()] = binding.Kind()
+	}
+	if kinds["args"] != BindingList {
+		t.Fatalf("binding kinds=%v want named args=list", kinds)
+	}
+}
+
+func assertReliabilityContexts(t *testing.T, test targetConformanceCase) {
+	t.Helper()
+	program, err := Compile([]byte(test.ContextQuery), CompileOptions{})
+	if err != nil {
+		t.Fatalf("compile context query: %v", err)
+	}
+	contexts := len(program.Root().Templates())
+	if contexts < test.MinContexts {
+		t.Fatalf("context templates=%d want at least %d", contexts, test.MinContexts)
+	}
+}
+
+func assertReliabilityMalformedSyntax(t *testing.T, test targetConformanceCase, program *Program) {
+	t.Helper()
+	result := EvaluateFile(context.Background(), program, FileInput{Path: test.Path, Language: test.Language, Content: []byte(test.MalformedSource)}, EvaluateOptions{})
+	assertTargetDiagnostics(t, result, []string{"SOURCE_PARSE"})
+	if _, err := Compile([]byte("language "+test.Language+"\n`unterminated"), CompileOptions{}); err == nil {
+		t.Fatal("malformed query compiled successfully")
+	}
+}
+
+func assertReliabilityCancellation(t *testing.T, test targetConformanceCase, program *Program) {
+	t.Helper()
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	result := EvaluateFile(ctx, program, FileInput{Path: test.Path, Language: test.Language, Content: []byte(test.Source)}, EvaluateOptions{})
+	assertTargetDiagnostics(t, result, []string{"EVALUATION_CANCELLED"})
+}
+
+func assertReliabilitySourceLimit(t *testing.T, test targetConformanceCase, program *Program) {
+	t.Helper()
+	result := EvaluateFile(context.Background(), program, FileInput{Path: test.Path, Language: test.Language, Content: []byte(test.Source)}, EvaluateOptions{MaxSourceBytes: 1})
+	assertTargetDiagnostics(t, result, []string{"LIMIT_SOURCE_BYTES"})
+}
+
+func TestLanguageReliabilityFixtureCoversRegisteredLanguages(t *testing.T) {
+	cases := loadTargetConformanceFixture(t, "testdata/conformance/language-reliability/cases.json")
+	registeredLanguages := SupportedLanguages()
+	registered := registeredLanguageIDs(registeredLanguages)
+	featuresByLanguage := reliabilityFeaturesByLanguage(t, cases, registered)
+	required := []string{"named-metavariable", "list-metavariable", "ambiguous-snippet-context", "malformed-syntax", "cancellation", "resource-limit"}
+	for _, language := range registeredLanguages {
+		assertReliabilityFeatureCoverage(t, language.ID, featuresByLanguage[language.ID], required)
+	}
+	if len(featuresByLanguage) != len(registeredLanguages) {
+		t.Errorf("fixture languages=%d registered languages=%d", len(featuresByLanguage), len(registeredLanguages))
+	}
+}
+
+func registeredLanguageIDs(languages []LanguageCapabilities) map[string]bool {
+	registered := make(map[string]bool, len(languages))
+	for _, language := range languages {
+		registered[language.ID] = true
+	}
+	return registered
+}
+
+func reliabilityFeaturesByLanguage(t *testing.T, cases []targetConformanceCase, registered map[string]bool) map[string]map[string]bool {
+	t.Helper()
+	featuresByLanguage := map[string]map[string]bool{}
+	for _, fixtureCase := range cases {
+		if !registered[fixtureCase.Language] {
+			t.Errorf("reliability fixture language %q is not registered", fixtureCase.Language)
+		}
+		if _, duplicate := featuresByLanguage[fixtureCase.Language]; duplicate {
+			t.Errorf("reliability fixture language %q is duplicated", fixtureCase.Language)
+		}
+		features := map[string]bool{}
+		for _, feature := range fixtureCase.Features {
+			features[feature] = true
+		}
+		featuresByLanguage[fixtureCase.Language] = features
+	}
+	return featuresByLanguage
+}
+
+func assertReliabilityFeatureCoverage(t *testing.T, language string, features map[string]bool, required []string) {
+	t.Helper()
+	if features == nil {
+		t.Errorf("registered language %q lacks a reliability fixture", language)
+		return
+	}
+	for _, feature := range required {
+		if !features[feature] {
+			t.Errorf("registered language %q lacks reliability feature %q", language, feature)
+		}
 	}
 }
 

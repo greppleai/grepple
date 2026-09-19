@@ -110,8 +110,8 @@ The first exact external-resolution matrix covers Go modules, npm lockfiles, Car
 
 ### Structural-query reliability
 
-- [ ] Expand `gritql-v1` conformance fixtures across every supported language for named/list metavariables, ambiguous snippet contexts, malformed syntax, cancellation, and resource limits.
-- [ ] Benchmark structural scans on representative medium and large repositories, including peak memory, cancellation latency, and cold/warm behavior.
+- [x] Expand `gritql-v1` conformance fixtures across every supported language for named/list metavariables, ambiguous snippet contexts, malformed syntax, cancellation, and resource limits. The registered-language coverage gate derives from `SupportedLanguages`; C# `argument` and Kotlin `value_argument` wrappers retain list cardinality.
+- [x] Benchmark structural scans on deterministic representative medium (500-file) and large (5,000-file) multilingual repository shapes, including sampled peak Go heap, active cancellation latency, and explicit cold-compile/warm-precompiled paths.
 
 ## Output and CLI consistency
 
