@@ -116,12 +116,9 @@ The first exact external-resolution matrix covers Go modules, npm lockfiles, Car
 ## Output and CLI consistency
 
 - [ ] Reconcile or clearly document the different output-mode contracts: search human/JSON/JSON-matches, graph JSON-or-compact, boundaries human/JSON, extract Mermaid, and GritQL human/JSON.
-- [ ] Explain JavaScript-regex defaults at first use and in examples.
 - [ ] Make limit units explicit: files, findings, candidates per section, nodes, bytes, and source files.
 - [ ] Distinguish local and remote feature availability at the attempted command.
-- [x] Clarify that graph `dependencies`/`dependents` currently describe navigation edges rather than a build-system import graph.
 - [ ] Separate resolution outcomes from confidence labels: report resolution, ambiguous-local, unresolved-local, and expected-external rates. The current `candidate` outcome and `candidate` confidence use different meanings, while ambiguity rate alone hides a large unresolved population.
-- [ ] Keep complete JSON available for scripts, but direct agents toward filtered projections and artifact descriptors rather than multi-megabyte graph/boundary documents.
 - [ ] Remove guidance drift such as duplicate workflow steps and completed milestones still named in the recommendation; add lightweight documentation consistency checks.
 
 ## Operational and release readiness

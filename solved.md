@@ -32,6 +32,7 @@ This file records completed Grepple roadmap work that no longer belongs in `next
 - [x] Applied one ordered `**`/negation-capable ignore matcher to search, graph, boundaries, GritQL, and focused extraction; recursive discovery honors ignores while explicitly named files bypass them.
 - [x] Excluded `.grepple/cache/` and `.grepple/output/` from recursive source discovery and Git.
 - [x] Added default 64 KiB output spilling to content-addressed mode-0600 artifacts with valid human/JSON descriptors, original schema/source metadata, exact `--no-spill` reruns, threshold overrides, and an explicit global `--artifact-dir PATH` destination.
+- [x] Kept complete JSON byte-uncapped for scripts while directing agents toward bounded compact projections, `--json-matches`, paging continuations, and `grepple-artifact-v1` descriptors with focused artifact-range reads instead of multi-megabyte graph or boundary documents.
 - [x] Added answer-gated artifact workflow benchmarks covering context bytes, retrieval turns, artifact reads, and correctness; one bounded artifact read reduced a synthetic 1 MiB task from 1,048,676 to 902 context bytes while recovering the same answer.
 - [x] Added `grepple artifacts clean` for explicit deterministic artifact cleanup.
 - [x] Replaced process-exiting library paths with propagated command exit statuses so output delivery is finalized before grep-style exit code 1.
@@ -46,7 +47,7 @@ This file records completed Grepple roadmap work that no longer belongs in `next
 
 - [x] Added `--count-summary` for complete matched-file and matching-line breadth independent of output paging.
 - [x] Kept grep-compatible per-file `--count` and grouped `--count-by-repo` output.
-- [x] Added safe compatibility aliases: `-E` selects JavaScript regex and `-r` is a recursive-search no-op.
+- [x] Added safe compatibility aliases and first-use guidance: JavaScript regular expressions are the default pattern syntax, `-E` selects that mode explicitly, `-F` selects fixed strings, and `-r` is a recursive-search no-op; CLI help, README examples, agent skills, and hook guidance use the same terminology.
 - [x] Bounded human-readable output at 16,384 bytes while keeping JSON valid and byte-uncapped.
 - [x] Reported broad-output truncation with narrowing guidance; short whitespace-only gaps render as whitespace instead of verbose collapsed-line markers.
 - [x] Added parser-backed construct ranges to `--line-only` and opt-in enclosing ranges without changing anchor rows.
@@ -87,7 +88,7 @@ This file records completed Grepple roadmap work that no longer belongs in `next
 - [x] Registered boundary import-origin and public-surface policies by language and moved GritQL unfielded-cardinality behavior into its target-language adapter.
 - [x] Split parser navigation callbacks into language-local files, leaving only language-neutral fact helpers in the shared parser navigation module.
 - [x] Enriched path-neutral cached Go facts with owning module/package identity after loading so host-qualified same-module imports classify as first-party instead of critical third-party leakage.
-- [x] Added callers, callees, dependencies, dependents, and bidirectional impact queries with depth bounds, cycle safety, candidate preservation, and exact location/symbol/package/module/path roots.
+- [x] Added callers, callees, dependencies, dependents, and bidirectional impact queries with depth bounds, cycle safety, candidate preservation, and exact location/symbol/package/module/path roots; documented that `dependencies` and `dependents` traverse navigation edges rather than a package-manager or build-system dependency graph.
 - [x] Added traversal-free `graph resolve --symbol NAME` previews with deterministic exact/terminal matches, full stable IDs, exact `--at` alternatives, filters, and copyable focused graph commands in bounded compact and complete JSON output.
 - [x] Added language, confidence, and visibility filtering before root selection and traversal.
 - [x] Added `grepple-navigation-diff-v5`, ignoring line-only movement while reporting semantic declaration, call-edge, entrypoint, scoped Rust ownership, and restricted-visibility changes.
