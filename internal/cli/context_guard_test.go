@@ -324,6 +324,54 @@ func TestContextGuardCanBeDisabledInUserSettings(t *testing.T) {
 	}
 }
 
+func TestAnchoredContextReadProducesCoverageWithoutChangingOutput(t *testing.T) {
+	directory := t.TempDir()
+	t.Setenv("GREPPLE_CONTEXT_GUARD_DIR", directory)
+	previous := activeInlineOutputThreshold
+	activeInlineOutputThreshold = 4096
+	defer func() { activeInlineOutputThreshold = previous }()
+	lineResult, segment, anchors := focusedLineCoverageFixture(t)
+	contextLines := make([]api.ContextLine, len(lineResult.Matches))
+	for index, match := range lineResult.Matches {
+		contextLines[index] = api.ContextLine{Line: match.Line, Text: match.Text, Match: index == 3}
+	}
+	result := api.FileResult{Path: lineResult.Path, Context: contextLines}
+	first := renderContextWithGuard(t, result, anchors)
+	second := renderContextWithGuard(t, result, anchors)
+	if first != second || strings.Contains(second, "omitted; unchanged") || !strings.Contains(second, "lineThree") {
+		t.Fatalf("context output changed after recording coverage: first=%q second=%q", first, second)
+	}
+	stats := readRenderedContextStats(filepath.Join(directory, "stats-0.json"), 0)
+	if stats.Calls.OtherReads != 2 || stats.Details.SearchLinesRecorded != 8 || stats.TotalBytesRemoved != 0 {
+		t.Fatalf("context producer statistics = %#v", stats)
+	}
+	guard, err := openSegmentContextGuard()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !guard.seen(result.Path, nil, segment) {
+		guard.close()
+		t.Fatal("anchored context lines did not cover the later structural segment")
+	}
+	guard.close()
+}
+
+func TestContextProducerDoesNotRecordPotentiallySpilledRows(t *testing.T) {
+	t.Setenv("GREPPLE_CONTEXT_GUARD_DIR", t.TempDir())
+	previous := activeInlineOutputThreshold
+	activeInlineOutputThreshold = 1
+	defer func() { activeInlineOutputThreshold = previous }()
+	lineResult, _, anchors := focusedLineCoverageFixture(t)
+	result := api.FileResult{Path: lineResult.Path, Context: []api.ContextLine{{Line: 1, Text: "lineOne", Match: true}}}
+	options := &cliOptions{JSON: "off", AnchorLines: anchors}
+	options.Params.BeforeContext = 1
+	guard := contextGuardForResults(options, []api.FileResult{result})
+	if guard == nil || guard.recordLines || guard.bypassReason != "potential-spill" {
+		t.Fatalf("context potential-spill guard = %#v", guard)
+	}
+	guard.close()
+}
+
 func TestBroadLineProducerDoesNotRecordPotentiallySpilledRows(t *testing.T) {
 	t.Setenv("GREPPLE_CONTEXT_GUARD_DIR", t.TempDir())
 	previous := activeInlineOutputThreshold
@@ -466,6 +514,25 @@ func focusedLineCoverageFixture(t *testing.T) (api.FileResult, api.ResultSegment
 		anchors[path][lineNumber] = fmt.Sprintf("h%02d", lineNumber)
 	}
 	return api.FileResult{Path: path, Matches: matches}, api.ResultSegment{Kind: "function", Start: 1, End: len(lines), Text: strings.Join(lines, "\n")}, anchors
+}
+
+func renderContextWithGuard(t *testing.T, result api.FileResult, anchors anchorLookup) string {
+	t.Helper()
+	options := &cliOptions{JSON: "off", AnchorLines: anchors}
+	options.Params.BeforeContext = 1
+	guard := contextGuardForResults(options, []api.FileResult{result})
+	if guard == nil || !guard.recordLines || guard.deduplicate {
+		t.Fatalf("context producer guard = %#v", guard)
+	}
+	var output bytes.Buffer
+	renderer := contextRenderer{output: newOutputWriter(&output), anchors: anchors, contextGuard: guard}
+	if err := renderer.Render([]api.FileResult{result}); err != nil {
+		guard.close()
+		t.Fatal(err)
+	}
+	guard.returnedBytes = output.Len()
+	guard.close()
+	return output.String()
 }
 
 func renderBroadLinesWithGuard(t *testing.T, result api.FileResult, anchors anchorLookup) string {

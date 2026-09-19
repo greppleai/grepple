@@ -20,7 +20,7 @@ func newResultRenderer(options *cliOptions, output *outputWriter, guard *segment
 	case options.JSON != "off":
 		return jsonResultRenderer{output: output, matchesOnly: options.JSON == "matches" || options.LineOnly, metadata: options.ResultMetadata}
 	case options.Params.BeforeContext > 0 || options.Params.AfterContext > 0:
-		return contextRenderer{output: output, anchors: options.AnchorLines}
+		return contextRenderer{output: output, anchors: options.AnchorLines, contextGuard: guard}
 	case options.OnlyMatching:
 		return onlyMatchingRenderer{output: output, matcher: compileOnlyMatcher(options)}
 	case options.LineOnly:
@@ -67,17 +67,15 @@ func contextGuardForResults(options *cliOptions, results []api.FileResult) *segm
 	segmentMode := segmentOutputMode(options)
 	focusedLineMode := focusedLineCoverageMode(options)
 	broadLineMode := broadLineCoverageProducerMode(options)
+	contextMode := contextCoverageProducerMode(options)
 	guard.structuredRead = segmentMode
 	guard.deduplicate = segmentMode || focusedLineMode
 	guard.recordSegments = segmentMode
-	guard.recordLines = focusedLineMode || broadLineMode
+	guard.recordLines = focusedLineMode || broadLineMode || contextMode
 	guard.lineCoverageCall = focusedLineMode
-	if !segmentMode && !focusedLineMode && !broadLineMode {
-		guard.bypassReason = "non-structural"
+	guard.bypassReason = initialReadBypassReason(segmentMode, focusedLineMode)
+	if !segmentMode && !focusedLineMode && !broadLineMode && !contextMode {
 		return guard
-	}
-	if broadLineMode {
-		guard.bypassReason = "non-structural"
 	}
 	var rendered bytes.Buffer
 	output := newOutputWriter(&rendered)
@@ -110,6 +108,12 @@ func contextGuardForResults(options *cliOptions, results []api.FileResult) *segm
 	}
 	return guard
 }
+func initialReadBypassReason(segmentMode, focusedLineMode bool) string {
+	if segmentMode || focusedLineMode {
+		return ""
+	}
+	return "non-structural"
+}
 
 func focusedLineCoverageMode(options *cliOptions) bool {
 	return options.LineOnly && options.Params.At != "" && options.AnchorLines != nil
@@ -117,6 +121,10 @@ func focusedLineCoverageMode(options *cliOptions) bool {
 
 func broadLineCoverageProducerMode(options *cliOptions) bool {
 	return options.LineOnly && options.Params.At == "" && !options.Params.EnclosingRanges && options.AnchorLines != nil
+}
+
+func contextCoverageProducerMode(options *cliOptions) bool {
+	return (options.Params.BeforeContext > 0 || options.Params.AfterContext > 0) && options.AnchorLines != nil
 }
 
 func focusedLineResultCount(options *cliOptions, results []api.FileResult) int {

@@ -7,14 +7,15 @@ import (
 )
 
 type contextRenderer struct {
-	output  *outputWriter
-	anchors anchorLookup
+	output       *outputWriter
+	anchors      anchorLookup
+	contextGuard *segmentContextGuard
 }
 
 func (renderer contextRenderer) Render(results []api.FileResult) error {
 	contextPrinted := false
 	for _, result := range results {
-		didPrint, err := printContext(renderer.output, renderer.anchors, result.Path, result.Context, contextPrinted)
+		didPrint, err := printContext(renderer.output, renderer.anchors, renderer.contextGuard, resultSourceIdentity(result), result.Path, result.Context, contextPrinted)
 		if err != nil {
 			return err
 		}
@@ -23,9 +24,9 @@ func (renderer contextRenderer) Render(results []api.FileResult) error {
 	return nil
 }
 
-func printContext(output *outputWriter, anchors anchorLookup, path string, lines []api.ContextLine, leading bool) (bool, error) {
+func printContext(output *outputWriter, anchors anchorLookup, guard *segmentContextGuard, source, path string, lines []api.ContextLine, leading bool) (bool, error) {
 	if anchors != nil {
-		return printAnchoredContext(output, anchors, path, lines, leading)
+		return printAnchoredContext(output, anchors, guard, source, path, lines, leading)
 	}
 	last := 0
 	for index, line := range lines {
@@ -46,7 +47,7 @@ func printContext(output *outputWriter, anchors anchorLookup, path string, lines
 	return len(lines) > 0, nil
 }
 
-func printAnchoredContext(output *outputWriter, anchors anchorLookup, path string, lines []api.ContextLine, leading bool) (bool, error) {
+func printAnchoredContext(output *outputWriter, anchors anchorLookup, guard *segmentContextGuard, source, path string, lines []api.ContextLine, leading bool) (bool, error) {
 	if len(lines) == 0 {
 		return false, nil
 	}
@@ -69,6 +70,7 @@ func printAnchoredContext(output *outputWriter, anchors anchorLookup, path strin
 		if err := output.writeString(row); err != nil {
 			return false, err
 		}
+		guard.recordSearchLine(source, line.Line, line.Text)
 		last = line.Line
 	}
 	return true, nil
