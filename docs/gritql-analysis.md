@@ -196,15 +196,11 @@ Before enabling the kernel in `make lint`, the Stop hook, or production:
 7. **Output stability:** Structured ranges and rule identities can be consumed without parsing human-readable output.
 8. **Security:** Verification performs no network access, external commands, or source writes.
 
-## Recommended next step
+## Current maintenance focus
 
-Implement the native `gritql-go-v1` detection kernel and validate it with a golden fixture corpus against three initial project-owned patterns:
+The native `gritql-v1` kernel is implemented across every registered Tree-sitter-backed language. Ongoing work must preserve the closed compatibility contract, add registry-derived conformance vectors whenever a target language changes, and compare representative cold/warm, peak-heap, and cancellation benchmarks before broadening syntax or resource ceilings.
 
-1. Prevent server packages from importing `internal/grepplecli`.
-2. Flag production use of `exec.Command` for review.
-3. Require timeouts on HTTP clients.
-
-The proof of concept should measure parsing coverage, range stability, ordering, and runtime. It should not depend on an external engine or fallback runner.
+Project-owned rules should be promoted only after golden positive/negative review demonstrates acceptable precision and recall. New syntax or observable matching behavior requires an explicit compatibility-version decision rather than being described as unfinished `gritql-go-v1` implementation work.
 
 ## Sources
 

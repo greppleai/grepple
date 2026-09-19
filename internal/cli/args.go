@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/greppleai/grepple/search"
 
@@ -46,7 +47,7 @@ type searchArgs struct {
 	Context          int      `arg:"-C,--context" placeholder:"N" help:"print N lines before and after matches"`
 	AfterContext     int      `arg:"-A,--after-context" placeholder:"N" help:"print N lines after matches"`
 	BeforeContext    int      `arg:"-B,--before-context" placeholder:"N" help:"print N lines before matches"`
-	MaxFiles         int      `arg:"--max-files" placeholder:"N" help:"limit matching files"`
+	MaxFiles         int      `arg:"--max-files" placeholder:"N" help:"admit at most N matching result files before paging (0 = unlimited)"`
 	MaxOutputBytes   int      `arg:"--max-output-bytes" placeholder:"N" help:"cap human-readable output (default 16384; 0 = unlimited; JSON is uncapped)"`
 	Related          bool     `arg:"--related" help:"show repository-local types, callees, and callers (default for structural search)"`
 	NoRelated        bool     `arg:"--no-related" help:"disable automatic code navigation"`
@@ -366,25 +367,25 @@ Usage:
   grepple COMMAND [OPTIONS]
 
 Commands:
-  search       Search local or explicitly selected remote code (default mode)
-  write        Apply transactional anchored edits, creates, and deletes
-  grit         Run native, read-only structural queries
-  graph        Build, query, or diff local navigation graphs
-  anchors      Diagnose and configure edit-anchor providers
-  boundaries   Find repeated workflows and concrete-type spread
+  search       Search local or explicitly selected remote code (local default; --remote merges)
+  write        Apply local transactional anchored edits, creates, and deletes (local-only)
+  grit         Run native structural queries (local default; --remote merges)
+  graph        Build or query navigation graphs (local default; --repo selects indexed remote)
+  anchors      Diagnose and configure local edit-anchor providers (local-only)
+  boundaries   Analyze boundaries (local default; --repo selects indexed remote)
   examples     Print task-oriented, copyable CLI workflows
-  artifacts    Manage spilled output artifacts
-  context      Manage structural-segment context deduplication
-  extract      Generate or check focused architecture projections
-  architecture Inspect language-neutral directory architecture
-  sources      Explain repository configuration and source selection
-  languages    Show the language capability matrix
-  rules        Manage and inspect saved remote rules
-  repos        List indexed repositories
-  get          Read one indexed repository file or outline
-  tree         List an indexed repository tree
-  refs         List indexed repository branches, tags, and commits
-  ask          Delegate bounded code research to a larger tool-using model
+  artifacts    Manage local spilled output artifacts (local-only)
+  context      Manage local structural-segment context deduplication (local-only)
+  extract      Generate or check focused Mermaid projections (local-only)
+  architecture Inspect directory architecture (local default; --repo selects indexed remote)
+  sources      Explain local repository configuration and source selection (local-only)
+  languages    Show the language capability matrix (source-independent)
+  rules        Manage saved remote rules (remote service)
+  repos        List indexed repositories (remote service)
+  get          Read one indexed repository file or outline (remote service)
+  tree         List an indexed repository tree (remote service)
+  refs         List indexed repository branches, tags, and commits (remote service)
+  ask          Delegate bounded local or exact-selector remote code research
   ai-provider  Authenticate and inspect AI model providers
   login        Authenticate with the remote service
   logout       Remove stored remote authentication
@@ -487,6 +488,9 @@ func runCommand(args []string) error {
 		return nil
 	}
 	if len(args) > 0 {
+		if err := validateCommandAvailability(args[0], args[1:]); err != nil {
+			return err
+		}
 		switch args[0] {
 		case "search":
 			return runSearch(args[1:])
@@ -535,4 +539,28 @@ func runCommand(args []string) error {
 		}
 	}
 	return runSearch(args)
+}
+
+func validateCommandAvailability(command string, args []string) error {
+	availability := map[string]string{
+		"write": "local-only", "anchors": "local-only", "examples": "source-independent", "artifacts": "local-only", "context": "local-only",
+		"languages": "source-independent", "extract": "local-only", "sources": "local-only", "ai-provider": "source-independent",
+	}
+	remoteOnly := map[string]bool{"get": true, "tree": true, "repos": true, "refs": true, "rules": true, "login": true, "logout": true}
+	for _, argument := range args {
+		if argument == "--" {
+			break
+		}
+		option := argument
+		if equals := strings.IndexByte(option, '='); equals >= 0 {
+			option = option[:equals]
+		}
+		if mode, unsupported := availability[command]; unsupported && (option == "--remote" || option == "-R" || option == "--repo" || option == "--server") {
+			return fmt.Errorf("%s is %s; remote selector %s is not supported", command, mode, option)
+		}
+		if remoteOnly[command] && option == "--local" {
+			return fmt.Errorf("%s uses the remote service; --local is not supported", command)
+		}
+	}
+	return nil
 }

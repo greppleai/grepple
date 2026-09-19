@@ -24,7 +24,7 @@ type extractArgs struct {
 }
 
 func (extractArgs) Description() string {
-	return "Extract a validated, source-linked Mermaid structure or call-flow diagram from supported code."
+	return "Extract a validated, source-linked Mermaid structure or call-flow diagram from local supported code; remote selectors are not supported."
 }
 
 const extractHelp = `Extract source-backed focused architecture projections.
@@ -38,6 +38,8 @@ Modes:
   structure   Generate a focused type structure diagram
   flow        Generate a focused callable flow diagram
   check       Validate a focused diagram against source
+
+Availability: local checkout only; remote selectors are not supported.
 
 Use grepple architecture directory|resolve|why for language-neutral repository orientation.
 Run grepple help extract MODE for mode-specific help.

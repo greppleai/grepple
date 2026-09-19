@@ -76,7 +76,7 @@ The three architecture tasks are independently answerable in one retrieval call:
 
 ## Navigation-resolution measurement extension
 
-Compact graph headers now report total calls, visible local edges, resolution outcomes, and process entrypoints; declarations expose entrypoint status. The fixed `ImpactGraph` workflow is 1,072 bytes/~268 tokens, retaining bounded resolution and architecture-role context. Complete JSON additionally reports singleton candidates, confidence counts, and ambiguity frequency.
+Compact graph headers report total calls, visible local edges, partitioned `resolved-local`/`ambiguous-local`/`unresolved-local`/`expected-external` counts and rates, and process entrypoints; declarations expose entrypoint status. The fixed `ImpactGraph` workflow is 1,072 bytes/~268 tokens, retaining bounded resolution and architecture-role context. Complete JSON reports the same outcomes separately from confidence-label counts overall and by language, while preserving legacy cardinality fields for compatible consumers.
 
 ## Construct-range extension
 

@@ -202,7 +202,7 @@ type directoryAccumulator struct {
 
 func runArchitecture(args []string) error {
 	if len(args) == 0 || isExtractHelp(args[0]) {
-		return stdoutWriter().writeString("Inspect language-neutral directory architecture.\nUsage:\n  grepple architecture directory (--compact | --json) [PATH ...]\n  grepple architecture resolve --symbol NAME (--compact | --json) [PATH ...]\n  grepple architecture why FROM TO (--compact | --json) [PATH ...]\n  grepple architecture responsibilities (--compact | --json) [PATH ...]\n  grepple architecture compare (--compact | --json) BEFORE.json AFTER.json\n")
+		return stdoutWriter().writeString("Inspect language-neutral directory architecture. Local checkout is the default; --repo selects one exact indexed remote repository for directory, resolve, why, or responsibilities. Compare reads two local JSON snapshots.\nUsage:\n  grepple architecture directory (--compact | --json) [PATH ...]\n  grepple architecture resolve --symbol NAME (--compact | --json) [PATH ...]\n  grepple architecture why FROM TO (--compact | --json) [PATH ...]\n  grepple architecture responsibilities (--compact | --json) [PATH ...]\n  grepple architecture compare (--compact | --json) BEFORE.json AFTER.json\n")
 	}
 	switch args[0] {
 	case "directory":

@@ -304,6 +304,23 @@ func TestTopLevelHelpListsCommandFamilies(t *testing.T) {
 	}
 }
 
+func TestCommandAvailabilityRejectsWrongExecutionUniverse(t *testing.T) {
+	for _, test := range []struct {
+		args []string
+		want string
+	}{
+		{args: []string{"extract", "--remote"}, want: "extract is local-only"},
+		{args: []string{"write", "--repo", "owner/repo"}, want: "write is local-only"},
+		{args: []string{"languages", "--server", "https://example.test"}, want: "languages is source-independent"},
+		{args: []string{"repos", "--local"}, want: "repos uses the remote service"},
+	} {
+		err := Run(test.args)
+		if err == nil || !strings.Contains(err.Error(), test.want) {
+			t.Fatalf("Run(%q) error=%v want %q", test.args, err, test.want)
+		}
+	}
+}
+
 func TestHelpCommandAndExplicitSearch(t *testing.T) {
 	help := captureStdout(t, func() {
 		if err := Run([]string{"help"}); err != nil {

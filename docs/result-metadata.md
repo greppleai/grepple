@@ -1,6 +1,6 @@
 # Result metadata
 
-Complete JSON responses from local text search, navigation graph operations, boundary analysis, and CLI GritQL include the same bounded-execution envelope. Search uses `metadata`; GritQL uses `resultMetadata` because `metadata` already names its grammar/compatibility contract.
+Complete JSON responses from local text search, navigation graph operations, boundary analysis, and CLI GritQL include the same bounded-execution envelope. Search uses `metadata`; GritQL uses `resultMetadata` because `metadata` already names its grammar/compatibility contract. See [`output-contracts.md`](output-contracts.md) for how this envelope relates to human/compact modes, paging units, source acquisition, local/remote availability, and artifact delivery.
 
 ```json
 {

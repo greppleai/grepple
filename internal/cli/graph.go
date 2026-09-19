@@ -158,7 +158,7 @@ func renderCompactNavigationGraph(graph navigationGraphOutput, maxBytes int) err
 	visibleCalls := compactNavigationCalls(graph.Calls)
 	entrypoints := countNavigationEntrypoints(graph.Declarations)
 	resolution := graph.Resolution
-	if !write(fmt.Sprintf("graph %s files=%d declarations=%d calls=%d visible-calls=%d resolved=%d ambiguous=%d unresolved=%d entrypoints=%d sources=%s", graph.Schema, graph.Files, len(graph.Declarations), resolution.Calls, len(visibleCalls), resolution.Resolved, resolution.Ambiguous, resolution.Unresolved, entrypoints, compactNavigationSourceSummary(graph.Sources))) {
+	if !write(fmt.Sprintf("graph %s files=%d declarations=%d calls=%d visible-calls=%d outcomes=resolved-local:%d,ambiguous-local:%d,unresolved-local:%d,expected-external:%d rates=resolution:%.1f%%,ambiguous-local:%.1f%%,unresolved-local:%.1f%%,expected-external:%.1f%% entrypoints=%d sources=%s", graph.Schema, graph.Files, len(graph.Declarations), resolution.Calls, len(visibleCalls), resolution.ResolvedLocal, resolution.AmbiguousLocal, resolution.UnresolvedLocal, resolution.ExpectedExternal, resolution.ResolutionRate*100, resolution.AmbiguousLocalRate*100, resolution.UnresolvedLocalRate*100, resolution.ExpectedExternalRate*100, entrypoints, compactNavigationSourceSummary(graph.Sources))) {
 		return nil
 	}
 	if graph.Query != nil && !write(compactGraphQueryLine(*graph.Query)) {

@@ -76,15 +76,10 @@ The first exact external-resolution matrix covers Go modules, npm lockfiles, Car
 **Node/npm**
 
 - [ ] Complete explicit Node lockfile and package-manager compatibility without parsing one format as another.
-  - [x] Support `package-lock.json` lockfile versions 1–3 with version-specific top-level layouts; malformed, missing-version, and unsupported-version locks remain non-authoritative.
-  - [x] Support `npm-shrinkwrap.json` lockfile versions 1–3 with npm precedence over `package-lock.json`; an invalid selected shrinkwrap remains non-authoritative instead of falling back.
-  - [x] Honor exact Corepack `packageManager` selections: exact npm versions allow npm locks, while non-npm, floating, and malformed selections prevent stale npm locks from qualifying dependencies.
   - [ ] Not yet supported: Yarn classic/Berry, pnpm, and Bun lockfiles.
 - [ ] Model workspaces, hoisting, nested `node_modules`, peer dependencies, optional dependencies, bundled dependencies, overrides/resolutions, and file/link/workspace/Git/tarball sources.
-- [x] Preserve npm import aliases (`npm:`), including scoped targets, separately from the exact resolved package identity in lockfile versions 1–3.
 - [ ] Resolve package subpaths through `exports`, `imports`, `main`, `module`, `types`, `typesVersions`, conditional exports, and runtime/module conditions. A package name alone does not prove which source declaration an import reaches.
 - [ ] Enforce `os`, `cpu`, engine, and optional-install conditions when they affect the selected graph.
-- [x] Require canonical public npm archive URLs and structurally valid SHA-256/384/512 SRI before exact qualification; carry registry source through requests, artifact provenance, rendering, and context identity while leaving custom registries and mirrors unresolved.
 - [ ] Fetch and hash exact archives before claiming cryptographic SRI verification, and add authenticated source identities for custom registries and mirrors without collapsing them into public npm.
 
 **Rust/Cargo**
@@ -107,19 +102,6 @@ The first exact external-resolution matrix covers Go modules, npm lockfiles, Car
 - [ ] Add HTTP-level multi-shard E2E tests through authenticated `/public/navigation/resolve` and artifact download, including candidate merging, immutable provenance, source bodies, unavailable shards, authorization denial, and deterministic repeated results.
 - [ ] Add representative real-package fixtures pinned to immutable archive/checksum and source-commit identities, while keeping network access out of ordinary unit tests.
 - [ ] Emit per-ecosystem telemetry for references observed, exactly qualified, conditionally qualified, unresolved by reason, artifact missing, version/source mismatch, ambiguous providers, and successfully source-resolved declarations.
-
-### Structural-query reliability
-
-- [x] Expand `gritql-v1` conformance fixtures across every supported language for named/list metavariables, ambiguous snippet contexts, malformed syntax, cancellation, and resource limits. The registered-language coverage gate derives from `SupportedLanguages`; C# `argument` and Kotlin `value_argument` wrappers retain list cardinality.
-- [x] Benchmark structural scans on deterministic representative medium (500-file) and large (5,000-file) multilingual repository shapes, including sampled peak Go heap, active cancellation latency, and explicit cold-compile/warm-precompiled paths.
-
-## Output and CLI consistency
-
-- [ ] Reconcile or clearly document the different output-mode contracts: search human/JSON/JSON-matches, graph JSON-or-compact, boundaries human/JSON, extract Mermaid, and GritQL human/JSON.
-- [ ] Make limit units explicit: files, findings, candidates per section, nodes, bytes, and source files.
-- [ ] Distinguish local and remote feature availability at the attempted command.
-- [ ] Separate resolution outcomes from confidence labels: report resolution, ambiguous-local, unresolved-local, and expected-external rates. The current `candidate` outcome and `candidate` confidence use different meanings, while ambiguity rate alone hides a large unresolved population.
-- [ ] Remove guidance drift such as duplicate workflow steps and completed milestones still named in the recommendation; add lightweight documentation consistency checks.
 
 ## Operational and release readiness
 

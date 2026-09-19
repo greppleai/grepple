@@ -32,7 +32,7 @@ type boundariesArgs struct {
 }
 
 func (boundariesArgs) Description() string {
-	return "Find repeated workflows, type/field spread, and policy-backed facade bypasses."
+	return "Find repeated workflows, type/field spread, and policy-backed facade bypasses locally by default; --repo selects one exact indexed remote repository."
 }
 
 type boundariesOutput struct {

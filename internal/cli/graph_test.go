@@ -53,6 +53,24 @@ func TestGraphJSONEmitsResolvedDeterministicGraph(t *testing.T) {
 	}
 }
 
+func TestGraphResolutionSeparatesExpectedExternalFromCandidateConfidence(t *testing.T) {
+	dir := chdirTemp(t)
+	writeGraphSource(t, dir, "main.ts", "import { client } from \"remote-package\";\nexport function run(){ client.send(); }\n")
+	outputText := captureStdout(t, func() {
+		if err := Run([]string{"graph", "--json"}); err != nil {
+			t.Fatal(err)
+		}
+	})
+	var output navigationGraphOutput
+	if err := json.Unmarshal([]byte(outputText), &output); err != nil {
+		t.Fatal(err)
+	}
+	stats := output.Resolution
+	if stats.ExpectedExternal != 1 || stats.ExpectedExternalRate != 1 || stats.UnresolvedLocal != 0 || len(stats.Confidences) != 1 || stats.Confidences[0] != (search.NavigationResolutionCount{Name: "candidate", Count: 1}) {
+		t.Fatalf("external resolution stats=%#v", stats)
+	}
+}
+
 func TestGraphJSONReportsFileTruncation(t *testing.T) {
 	dir := chdirTemp(t)
 	writeGraphSource(t, dir, "a.go", "package sample\nfunc A() {}\n")
@@ -95,7 +113,7 @@ func TestGraphCompactEmitsBoundedAgentFacingEdges(t *testing.T) {
 			t.Fatal(err)
 		}
 	})
-	for _, expected := range []string{"graph grepple-navigation-graph-v7 files=1 declarations=2 calls=1", "entrypoints=0", "D ", " go func Run main.go:2", "C ", " Run -> helper#", "[unique-terminal] main.go:2"} {
+	for _, expected := range []string{"graph grepple-navigation-graph-v7 files=1 declarations=2 calls=1", "outcomes=resolved-local:1,ambiguous-local:0,unresolved-local:0,expected-external:0", "rates=resolution:100.0%", "entrypoints=0", "D ", " go func Run main.go:2", "C ", " Run -> helper#", "[unique-terminal] main.go:2"} {
 		if !strings.Contains(output, expected) {
 			t.Fatalf("compact graph missing %q:\n%s", expected, output)
 		}
@@ -425,7 +443,7 @@ func writeGraphSource(t *testing.T, root, path, content string) string {
 
 func assertGraphResolutionStats(t *testing.T, stats search.NavigationResolutionStats) {
 	t.Helper()
-	if stats.Calls != 1 || stats.Resolved != 1 || stats.Ambiguous != 0 || len(stats.Languages) != 1 || stats.Languages[0].Language != "go" {
+	if stats.Calls != 1 || stats.Resolved != 1 || stats.Ambiguous != 0 || stats.ResolvedLocal != 1 || stats.ResolutionRate != 1 || len(stats.Outcomes) != 1 || stats.Outcomes[0] != (search.NavigationResolutionCount{Name: "resolved-local", Count: 1}) || len(stats.Languages) != 1 || stats.Languages[0].Language != "go" || stats.Languages[0].ResolvedLocal != 1 {
 		t.Fatalf("graph resolution stats=%#v", stats)
 	}
 }
