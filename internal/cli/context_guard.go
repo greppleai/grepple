@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -12,16 +13,17 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gofrs/flock"
 	"github.com/greppleai/grepple/api"
 )
 
 const (
 	contextGuardSchema         = "grepple-context-segments-v2"
-	contextGuardStatsSchema    = "grepple-context-stats-v5"
+	contextGuardStatsSchema    = "grepple-context-stats-v6"
 	contextGuardMaxEntries     = 50_000
 	contextGuardMaxLineEntries = 200_000
 	contextGuardMaxFileSize    = 16 << 20
-	contextGuardLockTimeout    = 2 * time.Second
+	contextGuardLockTimeout    = 30 * time.Second
 )
 
 type renderedContextCache struct {
@@ -68,14 +70,15 @@ type renderedContextCallStats struct {
 }
 
 type renderedContextDetails struct {
-	ResultFiles                   int `json:"resultFiles"`
-	SegmentsEmitted               int `json:"segmentsEmitted"`
-	SegmentsRemoved               int `json:"segmentsRemoved"`
-	SegmentsRemovedByLineCoverage int `json:"segmentsRemovedByLineCoverage"`
-	SearchLinesRecorded           int `json:"searchLinesRecorded"`
-	LineRangesRemoved             int `json:"lineRangesRemoved"`
-	LinesRemoved                  int `json:"linesRemoved"`
-	WriteAnchorsRecorded          int `json:"writeAnchorsRecorded"`
+	CoverageBytesEmitted          int64 `json:"coverageBytesEmitted"`
+	ResultFiles                   int   `json:"resultFiles"`
+	SegmentsEmitted               int   `json:"segmentsEmitted"`
+	SegmentsRemoved               int   `json:"segmentsRemoved"`
+	SegmentsRemovedByLineCoverage int   `json:"segmentsRemovedByLineCoverage"`
+	SearchLinesRecorded           int   `json:"searchLinesRecorded"`
+	LineRangesRemoved             int   `json:"lineRangesRemoved"`
+	LinesRemoved                  int   `json:"linesRemoved"`
+	WriteAnchorsRecorded          int   `json:"writeAnchorsRecorded"`
 }
 
 type legacyRenderedContextStats struct {
@@ -537,8 +540,7 @@ func updateRenderedContextStats(guard *segmentContextGuard) error {
 	}
 	stats.UpdatedAt = now
 	stats.Calls.Total++
-	stats.TotalBytesReturned += int64(guard.returnedBytes)
-	stats.TotalBytesEmitted += int64(guard.emittedBytes + guard.searchLineBytesEmitted)
+	stats.Details.CoverageBytesEmitted += int64(guard.emittedBytes + guard.searchLineBytesEmitted)
 	stats.Details.ResultFiles += guard.resultFiles
 	if guard.writeCall {
 		stats.Calls.Writes++
@@ -575,9 +577,13 @@ func updateRenderedContextStats(guard *segmentContextGuard) error {
 	stats.Details.SegmentsEmitted += guard.emittedSegments
 	stats.Details.SegmentsRemoved += guard.removedSegments
 	saved := guard.removedBytes - guard.markerBytes + guard.lineRenderedBytesRemoved - guard.lineMarkerBytes
-	if saved > 0 {
-		stats.TotalBytesRemoved += int64(saved)
+	if saved < 0 {
+		saved = 0
 	}
+	actualReturned := int64(guard.returnedBytes)
+	stats.TotalBytesReturned += actualReturned + int64(saved)
+	stats.TotalBytesRemoved += int64(saved)
+	stats.TotalBytesEmitted += actualReturned
 	if stats.TotalBytesReturned > 0 {
 		stats.SavingsPercent = float64(stats.TotalBytesRemoved) * 100 / float64(stats.TotalBytesReturned)
 	}
@@ -652,6 +658,13 @@ func readRenderedContextStats(path string, period int) renderedContextStats {
 		}
 		return fresh
 	}
+	if identity.Schema == "grepple-context-stats-v5" {
+		var restored renderedContextStats
+		if json.Unmarshal(content, &restored) == nil {
+			return migrateV5ContextStats(restored)
+		}
+		return fresh
+	}
 	if !legacyContextStatsSchema(identity.Schema) {
 		return fresh
 	}
@@ -662,6 +675,17 @@ func readRenderedContextStats(path string, period int) renderedContextStats {
 	return migrateLegacyContextStats(legacy)
 }
 
+func migrateV5ContextStats(stats renderedContextStats) renderedContextStats {
+	actualReturned := stats.TotalBytesReturned
+	stats.Schema = contextGuardStatsSchema
+	stats.Details.CoverageBytesEmitted += stats.TotalBytesEmitted
+	stats.TotalBytesReturned = actualReturned + stats.TotalBytesRemoved
+	stats.TotalBytesEmitted = actualReturned
+	if stats.TotalBytesReturned > 0 {
+		stats.SavingsPercent = float64(stats.TotalBytesRemoved) * 100 / float64(stats.TotalBytesReturned)
+	}
+	return stats
+}
 func legacyContextStatsSchema(schema string) bool {
 	switch schema {
 	case "grepple-context-segment-stats-v1", "grepple-context-segment-stats-v2", "grepple-context-segment-stats-v3", "grepple-context-segment-stats-v4":
@@ -690,9 +714,9 @@ func migrateLegacyContextStats(legacy legacyRenderedContextStats) renderedContex
 		ResetReason:        legacy.ResetReason,
 		CreatedAt:          legacy.CreatedAt,
 		UpdatedAt:          legacy.UpdatedAt,
-		TotalBytesReturned: legacy.ReturnedBytes,
+		TotalBytesReturned: legacy.ReturnedBytes + legacy.NetSavedBytes,
 		TotalBytesRemoved:  legacy.NetSavedBytes,
-		TotalBytesEmitted:  legacy.EmittedSourceBytes + legacy.SearchLineBytesEmitted,
+		TotalBytesEmitted:  legacy.ReturnedBytes,
 		Calls: renderedContextCallStats{
 			Total:               legacy.ObservedCalls,
 			Reads:               reads,
@@ -706,6 +730,7 @@ func migrateLegacyContextStats(legacy legacyRenderedContextStats) renderedContex
 			AppliedWrites:       legacy.WriteCalls,
 		},
 		Details: renderedContextDetails{
+			CoverageBytesEmitted:          legacy.EmittedSourceBytes + legacy.SearchLineBytesEmitted,
 			ResultFiles:                   legacy.ResultFiles,
 			SegmentsEmitted:               legacy.EmittedSegments,
 			SegmentsRemoved:               legacy.RemovedSegments,
@@ -764,23 +789,19 @@ func writeRenderedContextJSON(path string, value any) error {
 }
 
 func acquireRenderedContextLock(path string) (func(), error) {
-	deadline := time.Now().Add(contextGuardLockTimeout)
-	for {
-		file, err := os.OpenFile(path, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o600)
-		if err == nil {
-			_ = file.Close()
-			return func() { _ = os.Remove(path) }, nil
-		}
-		if !errors.Is(err, os.ErrExist) {
-			return nil, err
-		}
-		if info, statErr := os.Stat(path); statErr == nil && time.Since(info.ModTime()) > contextGuardLockTimeout*2 {
-			_ = os.Remove(path)
-			continue
-		}
-		if time.Now().After(deadline) {
-			return nil, fmt.Errorf("context guard lock timeout")
-		}
-		time.Sleep(10 * time.Millisecond)
+	return acquireRenderedContextLockWithTiming(path, contextGuardLockTimeout)
+}
+
+func acquireRenderedContextLockWithTiming(path string, waitTimeout time.Duration) (func(), error) {
+	lock := flock.New(path)
+	lockContext, cancel := context.WithTimeout(context.Background(), waitTimeout)
+	defer cancel()
+	locked, err := lock.TryLockContext(lockContext, 10*time.Millisecond)
+	if err != nil {
+		return nil, err
 	}
+	if !locked {
+		return nil, fmt.Errorf("context guard lock timeout")
+	}
+	return func() { _ = lock.Unlock() }, nil
 }

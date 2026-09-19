@@ -7,7 +7,9 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
+	"time"
 
 	"github.com/greppleai/grepple/api"
 )
@@ -35,6 +37,9 @@ func TestSegmentContextGuardOmitsUnchangedCompleteDeclaration(t *testing.T) {
 	stats := readRenderedContextStats(filepath.Join(directory, "stats-0.json"), 0)
 	if stats.Calls.Total != 2 || stats.Details.SegmentsEmitted != 1 || stats.Details.SegmentsRemoved != 1 || stats.TotalBytesRemoved <= 0 {
 		t.Fatalf("unexpected stats: %#v", stats)
+	}
+	if stats.TotalBytesReturned != stats.TotalBytesRemoved+stats.TotalBytesEmitted {
+		t.Fatalf("byte totals are not additive: %#v", stats)
 	}
 	expectedPercent := float64(stats.TotalBytesRemoved) * 100 / float64(stats.TotalBytesReturned)
 	if stats.SavingsPercent != expectedPercent {
@@ -181,7 +186,7 @@ func TestContextGuardRecordsNonStructuralSearchCalls(t *testing.T) {
 	guard.returnedBytes = 321
 	guard.close()
 	stats := readRenderedContextStats(filepath.Join(directory, "stats-0.json"), 0)
-	if stats.Calls.Total != 1 || stats.Calls.Reads != 1 || stats.Calls.OtherReads != 1 || stats.Details.ResultFiles != 2 || stats.TotalBytesReturned != 321 {
+	if stats.Calls.Total != 1 || stats.Calls.Reads != 1 || stats.Calls.OtherReads != 1 || stats.Details.ResultFiles != 2 || stats.TotalBytesReturned != 321 || stats.TotalBytesEmitted != 321 {
 		t.Fatalf("non-structural call was not recorded: %#v", stats)
 	}
 }
@@ -258,7 +263,7 @@ func TestWriteFailureIsRecordedInContextStats(t *testing.T) {
 	if stats.Calls.Total != 1 || stats.Calls.Writes != 1 || stats.Calls.FailedWrites != 1 || stats.Calls.SuccessfulWrites != 0 || stats.Calls.AppliedWrites != 0 {
 		t.Fatalf("write failure statistics = %#v", stats)
 	}
-	if stats.TotalBytesReturned != 123 {
+	if stats.TotalBytesReturned != 123 || stats.TotalBytesEmitted != 123 {
 		t.Fatalf("write failure returned bytes = %d", stats.TotalBytesReturned)
 	}
 }
@@ -280,7 +285,7 @@ func TestLegacyContextStatsMigrateToSimpleTotals(t *testing.T) {
 		t.Fatal(err)
 	}
 	stats := readRenderedContextStats(path, 0)
-	if stats.Schema != contextGuardStatsSchema || stats.TotalBytesReturned != 1000 || stats.TotalBytesRemoved != 50 || stats.TotalBytesEmitted != 325 || stats.SavingsPercent != 5 {
+	if stats.Schema != contextGuardStatsSchema || stats.TotalBytesReturned != 1050 || stats.TotalBytesRemoved != 50 || stats.TotalBytesEmitted != 1000 || stats.Details.CoverageBytesEmitted != 325 || stats.SavingsPercent != float64(50)*100/1050 {
 		t.Fatalf("migrated byte totals = %#v", stats)
 	}
 	if stats.Calls.Total != 10 || stats.Calls.Reads != 8 || stats.Calls.StructuredReads != 3 || stats.Calls.FocusedReads != 2 || stats.Calls.OtherReads != 3 || stats.Calls.Writes != 2 {
@@ -733,6 +738,110 @@ func TestRunContextInvalidateValidation(t *testing.T) {
 	if err := runContext([]string{"invalidate", "--unknown"}); err == nil {
 		t.Fatal("unknown argument accepted")
 	}
+}
+
+func TestV5ContextStatsMigrateToAdditiveTotals(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "stats-0.json")
+	legacy := renderedContextStats{
+		Schema: "grepple-context-stats-v5", Period: 0,
+		TotalBytesReturned: 176013, TotalBytesRemoved: 6552, TotalBytesEmitted: 84649,
+	}
+	content, err := json.Marshal(legacy)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(path, content, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	stats := readRenderedContextStats(path, 0)
+	if stats.Schema != contextGuardStatsSchema || stats.TotalBytesReturned != 182565 || stats.TotalBytesRemoved != 6552 || stats.TotalBytesEmitted != 176013 || stats.Details.CoverageBytesEmitted != 84649 {
+		t.Fatalf("v5 migration = %#v", stats)
+	}
+	if stats.TotalBytesReturned != stats.TotalBytesRemoved+stats.TotalBytesEmitted {
+		t.Fatalf("migrated totals are not additive: %#v", stats)
+	}
+}
+
+func TestContextStatsConcurrentUpdatesRemainAdditive(t *testing.T) {
+	directory := t.TempDir()
+	t.Setenv("GREPPLE_CONTEXT_GUARD_DIR", directory)
+	const calls = 20
+	var wait sync.WaitGroup
+	wait.Add(calls)
+	for range calls {
+		go func() {
+			defer wait.Done()
+			guard, err := openSegmentContextGuard()
+			if err != nil {
+				t.Errorf("open context guard: %v", err)
+				return
+			}
+			guard.observed = true
+			guard.returnedBytes = 100
+			guard.removedBytes = 100
+			guard.markerBytes = 20
+			guard.close()
+		}()
+	}
+	wait.Wait()
+	stats := readRenderedContextStats(filepath.Join(directory, "stats-0.json"), 0)
+	if stats.Calls.Total != calls || stats.TotalBytesReturned != 3600 || stats.TotalBytesRemoved != 1600 || stats.TotalBytesEmitted != 2000 {
+		t.Fatalf("concurrent statistics lost updates: %#v", stats)
+	}
+	if stats.TotalBytesReturned != stats.TotalBytesRemoved+stats.TotalBytesEmitted {
+		t.Fatalf("concurrent totals are not additive: %#v", stats)
+	}
+}
+
+func TestRenderedContextAdvisoryLockPreventsConcurrentOwner(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "cache.lock")
+	first, err := acquireRenderedContextLockWithTiming(path, time.Second)
+	if err != nil {
+		t.Fatal(err)
+	}
+	type acquiredLock struct {
+		release func()
+		err     error
+	}
+	acquired := make(chan acquiredLock, 1)
+	go func() {
+		release, acquireErr := acquireRenderedContextLockWithTiming(path, time.Second)
+		acquired <- acquiredLock{release: release, err: acquireErr}
+	}()
+	time.Sleep(200 * time.Millisecond)
+	select {
+	case result := <-acquired:
+		if result.release != nil {
+			result.release()
+		}
+		first()
+		t.Fatalf("live lock was stolen: %v", result.err)
+	default:
+	}
+	first()
+	select {
+	case result := <-acquired:
+		if result.err != nil {
+			t.Fatal(result.err)
+		}
+		result.release()
+	case <-time.After(time.Second):
+		t.Fatal("waiting lock did not acquire after release")
+	}
+}
+
+func TestRenderedContextAdvisoryLockReleasesForNextOwner(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "cache.lock")
+	first, err := acquireRenderedContextLockWithTiming(path, time.Second)
+	if err != nil {
+		t.Fatal(err)
+	}
+	first()
+	second, err := acquireRenderedContextLockWithTiming(path, time.Second)
+	if err != nil {
+		t.Fatal(err)
+	}
+	second()
 }
 
 func renderWithSegmentGuard(t *testing.T, result api.FileResult) string {

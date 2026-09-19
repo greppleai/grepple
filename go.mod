@@ -6,6 +6,7 @@ require (
 	charm.land/fantasy v0.8.0
 	github.com/alexflint/go-arg v1.6.1
 	github.com/aws/aws-sdk-go-v2/config v1.32.7
+	github.com/gofrs/flock v0.12.1
 	github.com/openai/openai-go/v2 v2.7.1
 	github.com/pelletier/go-toml/v2 v2.2.4
 	github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10
