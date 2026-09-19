@@ -491,6 +491,19 @@ func segmentContextMarker(source string, segment api.ResultSegment, contextLabel
 }
 
 func renderedContextDirectory() (string, error) {
+	base, err := renderedContextBaseDirectory()
+	if err != nil {
+		return "", err
+	}
+	sessionID := strings.TrimSpace(os.Getenv("PI_SESSION_ID"))
+	if sessionID == "" {
+		return base, nil
+	}
+	digest := sha256.Sum256([]byte(sessionID))
+	return filepath.Join(base, "sessions", hex.EncodeToString(digest[:])), nil
+}
+
+func renderedContextBaseDirectory() (string, error) {
 	if configured := strings.TrimSpace(os.Getenv("GREPPLE_CONTEXT_GUARD_DIR")); configured != "" {
 		return filepath.Clean(configured), nil
 	}

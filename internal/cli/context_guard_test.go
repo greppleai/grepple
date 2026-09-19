@@ -893,6 +893,70 @@ func TestCompleteResultSegmentCountMatchesHumanRelatedRendering(t *testing.T) {
 	}
 }
 
+func TestContextGuardScopesCacheAndStatsByPiSession(t *testing.T) {
+	base := t.TempDir()
+	t.Setenv("GREPPLE_CONTEXT_GUARD_DIR", base)
+	result := api.FileResult{Path: "session.go", Segments: []api.ResultSegment{{
+		Kind: "function", Start: 1, End: 3,
+		Text: "func SessionScoped() {\n\t" + strings.Repeat("work(); ", 24) + "\n}",
+	}}}
+
+	t.Setenv("PI_SESSION_ID", "../../first-session")
+	firstDirectory, err := renderedContextDirectory()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if filepath.Dir(firstDirectory) != filepath.Join(base, "sessions") || strings.Contains(firstDirectory, "first-session") {
+		t.Fatalf("unsafe or unscoped first session directory %q", firstDirectory)
+	}
+	if output := renderWithSegmentGuard(t, result); !strings.Contains(output, "SessionScoped") {
+		t.Fatalf("first session did not emit source: %q", output)
+	}
+
+	t.Setenv("PI_SESSION_ID", "second-session")
+	secondDirectory, err := renderedContextDirectory()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if secondDirectory == firstDirectory {
+		t.Fatalf("distinct sessions share %q", firstDirectory)
+	}
+	if output := renderWithSegmentGuard(t, result); !strings.Contains(output, "SessionScoped") {
+		t.Fatalf("second session reused first-session coverage: %q", output)
+	}
+
+	t.Setenv("PI_SESSION_ID", "../../first-session")
+	if output := renderWithSegmentGuard(t, result); strings.Contains(output, "func SessionScoped") {
+		t.Fatalf("first session lost its own coverage: %q", output)
+	}
+	firstStats := readRenderedContextStats(renderedContextStatsPath(firstDirectory, 0), 0)
+	secondStats := readRenderedContextStats(renderedContextStatsPath(secondDirectory, 0), 0)
+	if firstStats.Calls.Total != 2 || secondStats.Calls.Total != 1 {
+		t.Fatalf("session stats mixed: first=%#v second=%#v", firstStats.Calls, secondStats.Calls)
+	}
+	for _, directory := range []string{firstDirectory, secondDirectory} {
+		if _, err := os.Stat(filepath.Join(directory, "cache.json")); err != nil {
+			t.Fatalf("session cache missing from %q: %v", directory, err)
+		}
+		if _, err := os.Stat(renderedContextStatsPath(directory, 0)); err != nil {
+			t.Fatalf("session stats missing from %q: %v", directory, err)
+		}
+	}
+}
+
+func TestContextGuardWithoutPiSessionUsesBaseDirectory(t *testing.T) {
+	base := t.TempDir()
+	t.Setenv("GREPPLE_CONTEXT_GUARD_DIR", base)
+	t.Setenv("PI_SESSION_ID", "  ")
+	directory, err := renderedContextDirectory()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if directory != base {
+		t.Fatalf("context directory = %q, want base %q", directory, base)
+	}
+}
+
 func renderWithSegmentGuard(t *testing.T, result api.FileResult) string {
 	t.Helper()
 	guard, err := openSegmentContextGuard()

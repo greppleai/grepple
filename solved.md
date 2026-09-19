@@ -38,6 +38,7 @@ This file records completed Grepple roadmap work that no longer belongs in `next
 - [x] Added default 64 KiB output spilling to content-addressed mode-0600 artifacts with valid human/JSON descriptors, original schema/source metadata, exact `--no-spill` reruns, threshold overrides, and an explicit global `--artifact-dir PATH` destination.
 - [x] Kept complete JSON byte-uncapped for scripts while directing agents toward bounded compact projections, `--json-matches`, paging continuations, and `grepple-artifact-v1` descriptors with focused artifact-range reads instead of multi-megabyte graph or boundary documents.
 - [x] Added answer-gated artifact workflow benchmarks covering context bytes, retrieval turns, artifact reads, and correctness; one bounded artifact read reduced a synthetic 1 MiB task from 1,048,676 to 902 context bytes while recovering the same answer.
+- [x] Scoped context-guard caches, advisory locks, and additive statistics to a path-safe digest of `PI_SESSION_ID`, preventing concurrent Pi sessions from sharing coverage or counters while preserving legacy base-directory behavior outside Pi.
 - [x] Added `grepple artifacts clean` for explicit deterministic artifact cleanup.
 - [x] Replaced process-exiting library paths with propagated command exit statuses so output delivery is finalized before grep-style exit code 1.
 - [x] Added `grepple sources explain` with deterministic config path/digest, selection decisions, classification totals, exclusion reasons, explicit bypasses, and omitted infrastructure subtrees.
