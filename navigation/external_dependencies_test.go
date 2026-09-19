@@ -180,6 +180,39 @@ func TestQualifyExternalDependenciesRejectsMismatchedNPMAliasIdentity(t *testing
 	}
 }
 
+func TestQualifyExternalDependenciesRejectsUnsupportedNPMSourceKinds(t *testing.T) {
+	constraints := []string{
+		"file:../widget",
+		"link:../widget",
+		"workspace:*",
+		"portal:../widget",
+		"patch:widget@npm%3A1.2.3#./widget.patch",
+		"catalog:default",
+		"git+https://github.com/acme/widget.git#0123456789abcdef",
+		"github:acme/widget#0123456789abcdef",
+		"acme/widget#0123456789abcdef",
+		"https://packages.example.test/widget-1.2.3.tgz",
+		"../widget-1.2.3.tgz",
+		"widget-1.2.3.tgz",
+		`C:\\packages\\widget`,
+	}
+	for _, constraint := range constraints {
+		t.Run(constraint, func(t *testing.T) {
+			root := t.TempDir()
+			mustWriteDependencyFile(t, filepath.Join(root, "package.json"), fmt.Sprintf(`{"dependencies":{"widget":%q}}`, constraint))
+			mustWriteDependencyFile(t, filepath.Join(root, "package-lock.json"), `{"lockfileVersion":3,"packages":{"node_modules/widget":{"version":"1.2.3","integrity":"sha512-registry-looking"}}}`)
+			mustWriteDependencyFile(t, filepath.Join(root, "main.ts"), "export {}")
+			results := npmExternalDependencyResultsFor("widget")
+			if err := QualifyExternalDependencies(results, root); err != nil {
+				t.Fatal(err)
+			}
+			if reference := results[0].Related[0].External; reference.Module != "" || reference.Version != "" || reference.Integrity != "" {
+				t.Fatalf("unsupported npm source %q was qualified: %#v", constraint, reference)
+			}
+		})
+	}
+}
+
 func TestQualifyExternalDependenciesRejectsNonAuthoritativeNPMLocks(t *testing.T) {
 	tests := []struct {
 		name string

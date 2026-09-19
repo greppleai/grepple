@@ -207,6 +207,9 @@ func readNPMDependencies(path string) ([]dependencyEvidence, error) {
 	}
 	dependencies := make([]dependencyEvidence, 0, len(manifest.Dependencies))
 	for name, constraint := range manifest.Dependencies {
+		if npmUnsupportedDependencySource(constraint) {
+			continue
+		}
 		entry, ok := npmLockedDirectDependency(lock, name)
 		if !ok {
 			continue
@@ -289,6 +292,26 @@ func npmAliasSpecifier(specifier string) (string, string, bool) {
 	}
 	name, version := value[:separator], value[separator+1:]
 	return name, version, name != ""
+}
+
+func npmUnsupportedDependencySource(specifier string) bool {
+	value := strings.ToLower(strings.TrimSpace(specifier))
+	for _, prefix := range []string{
+		"file:", "link:", "workspace:", "portal:", "patch:", "catalog:",
+		"git:", "git+", "github:", "gitlab:", "bitbucket:",
+		"http:", "https:",
+	} {
+		if strings.HasPrefix(value, prefix) {
+			return true
+		}
+	}
+	if strings.HasPrefix(value, "./") || strings.HasPrefix(value, "../") || strings.HasPrefix(value, "/") || strings.HasPrefix(value, "~") {
+		return true
+	}
+	if strings.HasPrefix(value, "npm:") {
+		return false
+	}
+	return strings.ContainsAny(value, `/\\`) || strings.HasSuffix(value, ".tgz") || strings.HasSuffix(value, ".tar.gz") || strings.HasSuffix(value, ".tar")
 }
 
 type cargoManifest struct {
