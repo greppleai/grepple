@@ -1,6 +1,7 @@
 package navigation
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -129,6 +130,56 @@ func TestQualifyExternalDependenciesDoesNotFallbackFromInvalidNPMShrinkwrap(t *t
 	}
 }
 
+func TestQualifyExternalDependenciesFromNPMAliases(t *testing.T) {
+	tests := []struct {
+		name        string
+		dependency  string
+		lockVersion int
+		entry       string
+		module      string
+		version     string
+		packageName string
+	}{
+		{name: "v1-unscoped", dependency: `"widget-alias":"npm:acme-widget@^1.2.0"`, lockVersion: 1, entry: `"widget-alias":{"version":"npm:acme-widget@1.2.3","integrity":"sha512-v1"}`, module: "acme-widget", version: "1.2.3", packageName: "acme-widget/subpath"},
+		{name: "v2-scoped", dependency: `"widget-alias":"npm:@acme/widgets@^2.0.0"`, lockVersion: 2, entry: `"node_modules/widget-alias":{"name":"@acme/widgets","version":"2.1.0","integrity":"sha512-v2"}`, module: "@acme/widgets", version: "2.1.0", packageName: "@acme/widgets/subpath"},
+		{name: "v3-unscoped", dependency: `"widget-alias":"npm:acme-widget@^3.0.0"`, lockVersion: 3, entry: `"node_modules/widget-alias":{"name":"acme-widget","version":"3.2.1","integrity":"sha512-v3"}`, module: "acme-widget", version: "3.2.1", packageName: "acme-widget/subpath"},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			root := t.TempDir()
+			mustWriteDependencyFile(t, filepath.Join(root, "package.json"), `{"dependencies":{`+test.dependency+`}}`)
+			layout := `"packages":{` + test.entry + `}`
+			if test.lockVersion == 1 {
+				layout = `"dependencies":{` + test.entry + `}`
+			}
+			mustWriteDependencyFile(t, filepath.Join(root, "package-lock.json"), fmt.Sprintf(`{"lockfileVersion":%d,%s}`, test.lockVersion, layout))
+			mustWriteDependencyFile(t, filepath.Join(root, "main.ts"), "export {}")
+			results := npmExternalDependencyResultsFor("widget-alias/subpath")
+			if err := QualifyExternalDependencies(results, root); err != nil {
+				t.Fatal(err)
+			}
+			reference := results[0].Related[0].External
+			if reference.ImportPath != "widget-alias/subpath" || reference.Module != test.module || reference.Version != test.version || reference.Package != test.packageName {
+				t.Fatalf("npm alias reference = %#v", reference)
+			}
+		})
+	}
+}
+
+func TestQualifyExternalDependenciesRejectsMismatchedNPMAliasIdentity(t *testing.T) {
+	root := t.TempDir()
+	mustWriteDependencyFile(t, filepath.Join(root, "package.json"), `{"dependencies":{"widget-alias":"npm:@acme/widgets@^2.0.0"}}`)
+	mustWriteDependencyFile(t, filepath.Join(root, "package-lock.json"), `{"lockfileVersion":3,"packages":{"node_modules/widget-alias":{"name":"@other/widgets","version":"2.1.0","integrity":"sha512-other"}}}`)
+	mustWriteDependencyFile(t, filepath.Join(root, "main.ts"), "export {}")
+	results := npmExternalDependencyResultsFor("widget-alias/subpath")
+	if err := QualifyExternalDependencies(results, root); err != nil {
+		t.Fatal(err)
+	}
+	if reference := results[0].Related[0].External; reference.Module != "" || reference.Version != "" || reference.Package != "" {
+		t.Fatalf("mismatched npm alias was qualified: %#v", reference)
+	}
+}
+
 func TestQualifyExternalDependenciesRejectsNonAuthoritativeNPMLocks(t *testing.T) {
 	tests := []struct {
 		name string
@@ -159,7 +210,11 @@ func TestQualifyExternalDependenciesRejectsNonAuthoritativeNPMLocks(t *testing.T
 }
 
 func npmExternalDependencyResults() []api.FileResult {
-	return []api.FileResult{{Path: "main.ts", Language: "typescript", Related: []api.RelatedSymbol{{External: &api.ExternalNavigationReference{ID: "widget", Language: "typescript", ImportPath: "@acme/widgets/subpath", Symbol: "Widget", Kind: "type"}}}}}
+	return npmExternalDependencyResultsFor("@acme/widgets/subpath")
+}
+
+func npmExternalDependencyResultsFor(importPath string) []api.FileResult {
+	return []api.FileResult{{Path: "main.ts", Language: "typescript", Related: []api.RelatedSymbol{{External: &api.ExternalNavigationReference{ID: "widget", Language: "typescript", ImportPath: importPath, Symbol: "Widget", Kind: "type"}}}}}
 }
 
 func TestQualifyExternalDependenciesFromCargoLock(t *testing.T) {

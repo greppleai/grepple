@@ -80,7 +80,7 @@ func qualifyExternalReference(reference *api.ExternalNavigationReference, contex
 		match := matches[0]
 		reference.Module, reference.Version, reference.Integrity = match.module, match.version, match.integrity
 		reference.Package = reference.ImportPath
-		if match.ecosystem == "go" {
+		if match.ecosystem == "go" || match.ecosystem == "npm" {
 			reference.Package = match.module + strings.TrimPrefix(reference.ImportPath, match.importName)
 		}
 		return
@@ -170,6 +170,7 @@ type npmManifest struct {
 }
 
 type npmLockEntry struct {
+	Name      string `json:"name"`
 	Version   string `json:"version"`
 	Integrity string `json:"integrity"`
 	Resolved  string `json:"resolved"`
@@ -205,16 +206,17 @@ func readNPMDependencies(path string) ([]dependencyEvidence, error) {
 		return nil, nil
 	}
 	dependencies := make([]dependencyEvidence, 0, len(manifest.Dependencies))
-	for name := range manifest.Dependencies {
+	for name, constraint := range manifest.Dependencies {
 		entry, ok := npmLockedDirectDependency(lock, name)
 		if !ok {
 			continue
 		}
-		version, integrity, resolved, linked := entry.Version, entry.Integrity, entry.Resolved, entry.Link
-		if version == "" || linked || strings.HasPrefix(resolved, "file:") || strings.HasPrefix(resolved, "link:") {
+		module, version, ok := npmLockedDependencyIdentity(name, constraint, entry)
+		integrity, resolved, linked := entry.Integrity, entry.Resolved, entry.Link
+		if !ok || linked || strings.HasPrefix(resolved, "file:") || strings.HasPrefix(resolved, "link:") {
 			continue
 		}
-		dependencies = append(dependencies, dependencyEvidence{ecosystem: "npm", importName: name, module: name, version: version, integrity: integrity})
+		dependencies = append(dependencies, dependencyEvidence{ecosystem: "npm", importName: name, module: module, version: version, integrity: integrity})
 	}
 	return dependencies, nil
 }
@@ -246,6 +248,47 @@ func npmLockedDirectDependency(lock npmLock, name string) (npmLockEntry, bool) {
 	}
 	entry, ok = lock.Dependencies[name]
 	return entry, ok
+}
+
+func npmLockedDependencyIdentity(importName, constraint string, entry npmLockEntry) (string, string, bool) {
+	aliasName, _, alias := npmAliasSpecifier(constraint)
+	if alias {
+		if entry.Name != "" {
+			return aliasName, entry.Version, entry.Name == aliasName && entry.Version != "" && !strings.HasPrefix(entry.Version, "npm:")
+		}
+		lockedName, lockedVersion, lockedAlias := npmAliasSpecifier(entry.Version)
+		return lockedName, lockedVersion, lockedAlias && lockedName == aliasName && lockedVersion != ""
+	}
+	if entry.Name != "" && entry.Name != importName {
+		return "", "", false
+	}
+	if _, _, lockedAlias := npmAliasSpecifier(entry.Version); lockedAlias || entry.Version == "" {
+		return "", "", false
+	}
+	return importName, entry.Version, true
+}
+
+func npmAliasSpecifier(specifier string) (string, string, bool) {
+	if !strings.HasPrefix(specifier, "npm:") {
+		return "", "", false
+	}
+	value := strings.TrimPrefix(specifier, "npm:")
+	separator := strings.Index(value, "@")
+	if strings.HasPrefix(value, "@") {
+		slash := strings.Index(value, "/")
+		if slash < 2 {
+			return "", "", false
+		}
+		separator = strings.Index(value[slash+1:], "@")
+		if separator >= 0 {
+			separator += slash + 1
+		}
+	}
+	if separator < 0 {
+		return value, "", value != ""
+	}
+	name, version := value[:separator], value[separator+1:]
+	return name, version, name != ""
 }
 
 type cargoManifest struct {

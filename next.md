@@ -79,9 +79,10 @@ The first exact external-resolution matrix covers Go modules, npm lockfiles, Car
   - [x] Support `package-lock.json` lockfile versions 1–3 with version-specific top-level layouts; malformed, missing-version, and unsupported-version locks remain non-authoritative.
   - [x] Support `npm-shrinkwrap.json` lockfile versions 1–3 with npm precedence over `package-lock.json`; an invalid selected shrinkwrap remains non-authoritative instead of falling back.
   - [ ] Not yet supported: Yarn classic/Berry, pnpm, Bun, and Corepack-selected package-manager versions.
-- [ ] Model workspaces, hoisting, nested `node_modules`, peer dependencies, optional dependencies, bundled dependencies, overrides/resolutions, npm aliases (`npm:`), and file/link/workspace/Git/tarball sources.
+- [ ] Model workspaces, hoisting, nested `node_modules`, peer dependencies, optional dependencies, bundled dependencies, overrides/resolutions, and file/link/workspace/Git/tarball sources.
+- [x] Preserve npm import aliases (`npm:`), including scoped targets, separately from the exact resolved package identity in lockfile versions 1–3.
 - [ ] Resolve package subpaths through `exports`, `imports`, `main`, `module`, `types`, `typesVersions`, conditional exports, and runtime/module conditions. A package name alone does not prove which source declaration an import reaches.
-- [ ] Preserve scoped names and aliases separately from the resolved package identity, and enforce `os`, `cpu`, engine, and optional-install conditions when they affect the selected graph.
+- [ ] Enforce `os`, `cpu`, engine, and optional-install conditions when they affect the selected graph.
 - [ ] Verify registry URL and SRI integrity for exact archives; custom registries and mirrors must not silently collapse into the public npm identity.
 
 **Rust/Cargo**
