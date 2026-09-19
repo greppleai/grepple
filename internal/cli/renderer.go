@@ -18,7 +18,7 @@ func newResultRenderer(options *cliOptions, output *outputWriter, guard *segment
 	case options.Count:
 		return countRenderer{output: output, json: options.JSON != "off"}
 	case options.JSON != "off":
-		return jsonResultRenderer{output: output, matchesOnly: options.JSON == "matches" || options.LineOnly, metadata: options.ResultMetadata}
+		return jsonResultRenderer{output: output, matchesOnly: options.JSON == "matches" || options.LineOnly, metadata: options.ResultMetadata, contextGuard: guard}
 	case options.Params.BeforeContext > 0 || options.Params.AfterContext > 0:
 		return contextRenderer{output: output, anchors: options.AnchorLines, contextGuard: guard}
 	case options.OnlyMatching:
@@ -68,14 +68,15 @@ func contextGuardForResults(options *cliOptions, results []api.FileResult) *segm
 	focusedLineMode := focusedLineCoverageMode(options)
 	broadLineMode := broadLineCoverageProducerMode(options)
 	enclosingMode := enclosingLineCoverageProducerMode(options)
+	jsonMode := jsonCoverageProducerMode(options)
 	contextMode := contextCoverageProducerMode(options)
 	guard.structuredRead = segmentMode
 	guard.deduplicate = segmentMode || focusedLineMode
-	guard.recordSegments = segmentMode
-	guard.recordLines = focusedLineMode || broadLineMode || contextMode || enclosingMode
+	guard.recordLines = focusedLineMode || broadLineMode || contextMode || enclosingMode || jsonMode
+	guard.recordSegments = segmentMode || jsonMode
 	guard.lineCoverageCall = focusedLineMode
 	guard.bypassReason = initialReadBypassReason(segmentMode, focusedLineMode)
-	if !contextCoverageEligible(segmentMode, focusedLineMode, broadLineMode, contextMode, enclosingMode) {
+	if !contextCoverageEligible(segmentMode, focusedLineMode, broadLineMode, contextMode, enclosingMode, jsonMode) {
 		return guard
 	}
 	var rendered bytes.Buffer
@@ -136,6 +137,10 @@ func broadLineCoverageProducerMode(options *cliOptions) bool {
 func contextCoverageProducerMode(options *cliOptions) bool {
 	return (options.Params.BeforeContext > 0 || options.Params.AfterContext > 0) && options.AnchorLines != nil
 }
+func jsonCoverageProducerMode(options *cliOptions) bool {
+	return options.JSON == "full" && !options.Stdin
+}
+
 func enclosingLineCoverageProducerMode(options *cliOptions) bool {
 	return options.JSON == "off" && options.LineOnly && options.Params.EnclosingRanges && !options.Stdin
 }

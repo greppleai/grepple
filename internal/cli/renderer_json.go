@@ -6,16 +6,53 @@ import (
 )
 
 type jsonResultRenderer struct {
-	output      *outputWriter
-	matchesOnly bool
-	metadata    *api.ResultMetadata
+	output       *outputWriter
+	matchesOnly  bool
+	metadata     *api.ResultMetadata
+	contextGuard *segmentContextGuard
 }
 
 func (renderer jsonResultRenderer) Render(results []api.FileResult) error {
 	if renderer.matchesOnly {
 		return renderer.output.writeJSON(map[string]any{"matches": flatMatches(results), "metadata": renderer.metadata})
 	}
-	return renderer.output.writeJSON(api.SearchResponse{Results: results, Metadata: renderer.metadata, SourceAnalysis: searchSourceAnalysis(results)})
+	if err := renderer.output.writeJSON(api.SearchResponse{Results: results, Metadata: renderer.metadata, SourceAnalysis: searchSourceAnalysis(results)}); err != nil {
+		return err
+	}
+	recordJSONResultCoverage(renderer.contextGuard, results)
+	return nil
+}
+
+func recordJSONResultCoverage(guard *segmentContextGuard, results []api.FileResult) {
+	if guard == nil {
+		return
+	}
+	for _, result := range results {
+		source := resultSourceIdentity(result)
+		for _, segment := range result.Segments {
+			guard.record(source, nil, segment)
+		}
+		for _, match := range result.Matches {
+			guard.recordSearchLine(source, match.Line, match.Text)
+		}
+		for _, line := range result.Context {
+			guard.recordSearchLine(source, line.Line, line.Text)
+		}
+		recordJSONRelatedCoverage(guard, result.Repo, result.Related)
+	}
+}
+
+func recordJSONRelatedCoverage(guard *segmentContextGuard, repository string, points []api.RelatedSymbol) {
+	for _, point := range points {
+		source := point.Path
+		if point.Artifact == nil && repository != "" {
+			source = repository + "\x00" + point.Path
+		}
+		for _, segment := range point.Segments {
+			guard.record(source, point.Artifact, segment)
+		}
+		recordJSONRelatedCoverage(guard, repository, point.Related)
+	}
 }
 
 func searchSourceAnalysis(results []api.FileResult) *api.SourceAnalysis {

@@ -324,6 +324,55 @@ func TestContextGuardCanBeDisabledInUserSettings(t *testing.T) {
 	}
 }
 
+func TestCompleteJSONProducesCoverageWithoutChangingOutput(t *testing.T) {
+	directory := t.TempDir()
+	t.Setenv("GREPPLE_CONTEXT_GUARD_DIR", directory)
+	previous := activeInlineOutputThreshold
+	activeInlineOutputThreshold = 4096
+	defer func() { activeInlineOutputThreshold = previous }()
+	lineResult, segment, _ := focusedLineCoverageFixture(t)
+	result := lineResult
+	result.Segments = []api.ResultSegment{segment}
+	first := renderCompleteJSONWithGuard(t, result)
+	second := renderCompleteJSONWithGuard(t, result)
+	if first != second || !strings.Contains(second, "lineThree") || strings.Contains(second, "omitted; unchanged") {
+		t.Fatalf("complete JSON changed after recording coverage: first=%q second=%q", first, second)
+	}
+	stats := readRenderedContextStats(filepath.Join(directory, "stats-0.json"), 0)
+	if stats.Calls.OtherReads != 2 || stats.Details.SegmentsEmitted != 2 || stats.TotalBytesRemoved != 0 {
+		t.Fatalf("complete JSON producer statistics = %#v", stats)
+	}
+	guard, err := openSegmentContextGuard()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !guard.seen(result.Path, nil, segment) {
+		guard.close()
+		t.Fatal("complete JSON did not cover the later structural segment")
+	}
+	guard.close()
+}
+
+func TestJSONProducerRequiresCompleteInlineOutput(t *testing.T) {
+	t.Setenv("GREPPLE_CONTEXT_GUARD_DIR", t.TempDir())
+	previous := activeInlineOutputThreshold
+	activeInlineOutputThreshold = 4096
+	defer func() { activeInlineOutputThreshold = previous }()
+	result, segment, _ := focusedLineCoverageFixture(t)
+	result.Segments = []api.ResultSegment{segment}
+	matchesOnly := contextGuardForResults(&cliOptions{JSON: "matches"}, []api.FileResult{result})
+	if matchesOnly == nil || matchesOnly.recordLines || matchesOnly.recordSegments {
+		t.Fatalf("JSON matches unexpectedly produced coverage: %#v", matchesOnly)
+	}
+	matchesOnly.close()
+	activeInlineOutputThreshold = 1
+	complete := contextGuardForResults(&cliOptions{JSON: "full"}, []api.FileResult{result})
+	if complete == nil || complete.recordLines || complete.recordSegments || complete.bypassReason != "potential-spill" {
+		t.Fatalf("spilled complete JSON guard = %#v", complete)
+	}
+	complete.close()
+}
+
 func TestEnclosingLineReadProducesCoverageWithoutChangingOutput(t *testing.T) {
 	directory := t.TempDir()
 	t.Setenv("GREPPLE_CONTEXT_GUARD_DIR", directory)
@@ -560,6 +609,24 @@ func focusedLineCoverageFixture(t *testing.T) (api.FileResult, api.ResultSegment
 		anchors[path][lineNumber] = fmt.Sprintf("h%02d", lineNumber)
 	}
 	return api.FileResult{Path: path, Matches: matches}, api.ResultSegment{Kind: "function", Start: 1, End: len(lines), Text: strings.Join(lines, "\n")}, anchors
+}
+
+func renderCompleteJSONWithGuard(t *testing.T, result api.FileResult) string {
+	t.Helper()
+	options := &cliOptions{JSON: "full"}
+	guard := contextGuardForResults(options, []api.FileResult{result})
+	if guard == nil || !guard.recordLines || !guard.recordSegments || guard.deduplicate {
+		t.Fatalf("complete JSON producer guard = %#v", guard)
+	}
+	var output bytes.Buffer
+	renderer := jsonResultRenderer{output: newOutputWriter(&output), contextGuard: guard}
+	if err := renderer.Render([]api.FileResult{result}); err != nil {
+		guard.close()
+		t.Fatal(err)
+	}
+	guard.returnedBytes = output.Len()
+	guard.close()
+	return output.String()
 }
 
 func renderEnclosingLinesWithGuard(t *testing.T, result api.FileResult) string {
