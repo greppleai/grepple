@@ -71,6 +71,64 @@ func TestQualifyExternalDependenciesFromNPMLockVersions(t *testing.T) {
 	}
 }
 
+func TestQualifyExternalDependenciesFromNPMShrinkwrapVersions(t *testing.T) {
+	tests := []struct {
+		name string
+		lock string
+	}{
+		{name: "v1-legacy-dependencies", lock: `{"lockfileVersion":1,"dependencies":{"@acme/widgets":{"version":"1.2.3","resolved":"https://registry.npmjs.org/@acme/widgets/-/widgets-1.2.3.tgz","integrity":"sha512-v1"}}}`},
+		{name: "v2-packages", lock: `{"lockfileVersion":2,"packages":{"node_modules/@acme/widgets":{"version":"1.2.3","resolved":"https://registry.npmjs.org/@acme/widgets/-/widgets-1.2.3.tgz","integrity":"sha512-v2"}}}`},
+		{name: "v2-legacy-fallback", lock: `{"lockfileVersion":2,"dependencies":{"@acme/widgets":{"version":"1.2.3","resolved":"https://registry.npmjs.org/@acme/widgets/-/widgets-1.2.3.tgz","integrity":"sha512-v2-fallback"}}}`},
+		{name: "v3-packages", lock: `{"lockfileVersion":3,"packages":{"node_modules/@acme/widgets":{"version":"1.2.3","resolved":"https://registry.npmjs.org/@acme/widgets/-/widgets-1.2.3.tgz","integrity":"sha512-v3"}}}`},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			root := t.TempDir()
+			mustWriteDependencyFile(t, filepath.Join(root, "package.json"), `{"dependencies":{"@acme/widgets":"^1.2.3"}}`)
+			mustWriteDependencyFile(t, filepath.Join(root, "npm-shrinkwrap.json"), test.lock)
+			mustWriteDependencyFile(t, filepath.Join(root, "main.ts"), "export {}")
+			results := npmExternalDependencyResults()
+			if err := QualifyExternalDependencies(results, root); err != nil {
+				t.Fatal(err)
+			}
+			reference := results[0].Related[0].External
+			if reference.Module != "@acme/widgets" || reference.Package != "@acme/widgets/subpath" || reference.Version != "1.2.3" || reference.Integrity == "" {
+				t.Fatalf("npm shrinkwrap reference = %#v", reference)
+			}
+		})
+	}
+}
+
+func TestQualifyExternalDependenciesPrefersNPMShrinkwrap(t *testing.T) {
+	root := t.TempDir()
+	mustWriteDependencyFile(t, filepath.Join(root, "package.json"), `{"dependencies":{"@acme/widgets":"^1.0.0"}}`)
+	mustWriteDependencyFile(t, filepath.Join(root, "package-lock.json"), `{"lockfileVersion":3,"packages":{"node_modules/@acme/widgets":{"version":"1.0.0","integrity":"sha512-package-lock"}}}`)
+	mustWriteDependencyFile(t, filepath.Join(root, "npm-shrinkwrap.json"), `{"lockfileVersion":3,"packages":{"node_modules/@acme/widgets":{"version":"2.0.0","integrity":"sha512-shrinkwrap"}}}`)
+	mustWriteDependencyFile(t, filepath.Join(root, "main.ts"), "export {}")
+	results := npmExternalDependencyResults()
+	if err := QualifyExternalDependencies(results, root); err != nil {
+		t.Fatal(err)
+	}
+	if reference := results[0].Related[0].External; reference.Version != "2.0.0" || reference.Integrity != "sha512-shrinkwrap" {
+		t.Fatalf("npm shrinkwrap did not take precedence: %#v", reference)
+	}
+}
+
+func TestQualifyExternalDependenciesDoesNotFallbackFromInvalidNPMShrinkwrap(t *testing.T) {
+	root := t.TempDir()
+	mustWriteDependencyFile(t, filepath.Join(root, "package.json"), `{"dependencies":{"@acme/widgets":"^1.0.0"}}`)
+	mustWriteDependencyFile(t, filepath.Join(root, "package-lock.json"), `{"lockfileVersion":3,"packages":{"node_modules/@acme/widgets":{"version":"1.0.0","integrity":"sha512-package-lock"}}}`)
+	mustWriteDependencyFile(t, filepath.Join(root, "npm-shrinkwrap.json"), `{"lockfileVersion":3`)
+	mustWriteDependencyFile(t, filepath.Join(root, "main.ts"), "export {}")
+	results := npmExternalDependencyResults()
+	if err := QualifyExternalDependencies(results, root); err != nil {
+		t.Fatal(err)
+	}
+	if reference := results[0].Related[0].External; reference.Module != "" || reference.Version != "" || reference.Integrity != "" {
+		t.Fatalf("invalid shrinkwrap fell back to package-lock.json: %#v", reference)
+	}
+}
+
 func TestQualifyExternalDependenciesRejectsNonAuthoritativeNPMLocks(t *testing.T) {
 	tests := []struct {
 		name string

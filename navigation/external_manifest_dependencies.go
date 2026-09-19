@@ -191,11 +191,8 @@ func readNPMDependencies(path string) ([]dependencyEvidence, error) {
 	if err := json.Unmarshal(content, &manifest); err != nil {
 		return nil, err
 	}
-	lockContent, err := os.ReadFile(filepath.Join(filepath.Dir(path), "package-lock.json"))
-	if os.IsNotExist(err) {
-		return nil, nil
-	}
-	if err != nil {
+	lockContent, err := readNPMLockfile(filepath.Dir(path))
+	if err != nil || lockContent == nil {
 		return nil, err
 	}
 	// A lockfile is optional qualification evidence. Malformed or unknown schemas
@@ -220,6 +217,22 @@ func readNPMDependencies(path string) ([]dependencyEvidence, error) {
 		dependencies = append(dependencies, dependencyEvidence{ecosystem: "npm", importName: name, module: name, version: version, integrity: integrity})
 	}
 	return dependencies, nil
+}
+
+func readNPMLockfile(directory string) ([]byte, error) {
+	// npm-shrinkwrap.json is publishable and takes precedence over package-lock.json.
+	// Once present, even an invalid shrinkwrap remains the selected lockfile: falling
+	// back would qualify a dependency graph that npm itself does not select.
+	for _, name := range []string{"npm-shrinkwrap.json", "package-lock.json"} {
+		content, err := os.ReadFile(filepath.Join(directory, name))
+		if err == nil {
+			return content, nil
+		}
+		if !os.IsNotExist(err) {
+			return nil, err
+		}
+	}
+	return nil, nil
 }
 
 func npmLockedDirectDependency(lock npmLock, name string) (npmLockEntry, bool) {
