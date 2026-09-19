@@ -77,7 +77,7 @@ func TestQualifyExternalDependenciesHonorsCorepackPackageManager(t *testing.T) {
 				t.Fatal(err)
 			}
 			mustWriteDependencyFile(t, filepath.Join(root, "package.json"), string(content))
-			mustWriteDependencyFile(t, filepath.Join(root, "package-lock.json"), `{"lockfileVersion":3,"packages":{"node_modules/@acme/widgets":{"version":"1.2.3","integrity":"sha512-lock"}}}`)
+			mustWriteDependencyFile(t, filepath.Join(root, "package-lock.json"), `{"lockfileVersion":3,"packages":{"node_modules/@acme/widgets":{"version":"1.2.3","resolved":"https://registry.npmjs.org/@acme/widgets/-/widgets-1.2.3.tgz","integrity":"sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="}}}`)
 			mustWriteDependencyFile(t, filepath.Join(root, "yarn.lock"), "stale conflicting lock")
 			mustWriteDependencyFile(t, filepath.Join(root, "pnpm-lock.yaml"), "lockfileVersion: '9.0'")
 			mustWriteDependencyFile(t, filepath.Join(root, "main.ts"), "export {}")
@@ -98,10 +98,10 @@ func TestQualifyExternalDependenciesFromNPMLockVersions(t *testing.T) {
 		name string
 		lock string
 	}{
-		{name: "v1-legacy-dependencies", lock: `{"lockfileVersion":1,"dependencies":{"@acme/widgets":{"version":"1.2.3","resolved":"https://registry.npmjs.org/@acme/widgets/-/widgets-1.2.3.tgz","integrity":"sha512-v1"}}}`},
-		{name: "v2-packages", lock: `{"lockfileVersion":2,"packages":{"node_modules/@acme/widgets":{"version":"1.2.3","resolved":"https://registry.npmjs.org/@acme/widgets/-/widgets-1.2.3.tgz","integrity":"sha512-v2"}}}`},
-		{name: "v2-legacy-fallback", lock: `{"lockfileVersion":2,"dependencies":{"@acme/widgets":{"version":"1.2.3","resolved":"https://registry.npmjs.org/@acme/widgets/-/widgets-1.2.3.tgz","integrity":"sha512-v2-fallback"}}}`},
-		{name: "v3-packages", lock: `{"lockfileVersion":3,"packages":{"node_modules/@acme/widgets":{"version":"1.2.3","resolved":"https://registry.npmjs.org/@acme/widgets/-/widgets-1.2.3.tgz","integrity":"sha512-v3"}}}`},
+		{name: "v1-legacy-dependencies", lock: `{"lockfileVersion":1,"dependencies":{"@acme/widgets":{"version":"1.2.3","resolved":"https://registry.npmjs.org/@acme/widgets/-/widgets-1.2.3.tgz","integrity":"sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="}}}`},
+		{name: "v2-packages", lock: `{"lockfileVersion":2,"packages":{"node_modules/@acme/widgets":{"version":"1.2.3","resolved":"https://registry.npmjs.org/@acme/widgets/-/widgets-1.2.3.tgz","integrity":"sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="}}}`},
+		{name: "v2-legacy-fallback", lock: `{"lockfileVersion":2,"dependencies":{"@acme/widgets":{"version":"1.2.3","resolved":"https://registry.npmjs.org/@acme/widgets/-/widgets-1.2.3.tgz","integrity":"sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="}}}`},
+		{name: "v3-packages", lock: `{"lockfileVersion":3,"packages":{"node_modules/@acme/widgets":{"version":"1.2.3","resolved":"https://registry.npmjs.org/@acme/widgets/-/widgets-1.2.3.tgz","integrity":"sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="}}}`},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -114,7 +114,7 @@ func TestQualifyExternalDependenciesFromNPMLockVersions(t *testing.T) {
 				t.Fatal(err)
 			}
 			reference := results[0].Related[0].External
-			if reference.Module != "@acme/widgets" || reference.Package != "@acme/widgets/subpath" || reference.Version != "1.2.3" || reference.Integrity == "" {
+			if reference.Module != "@acme/widgets" || reference.Package != "@acme/widgets/subpath" || reference.Version != "1.2.3" || reference.Integrity == "" || reference.Source != NPMRegistrySource {
 				t.Fatalf("npm reference = %#v", reference)
 			}
 		})
@@ -126,10 +126,10 @@ func TestQualifyExternalDependenciesFromNPMShrinkwrapVersions(t *testing.T) {
 		name string
 		lock string
 	}{
-		{name: "v1-legacy-dependencies", lock: `{"lockfileVersion":1,"dependencies":{"@acme/widgets":{"version":"1.2.3","resolved":"https://registry.npmjs.org/@acme/widgets/-/widgets-1.2.3.tgz","integrity":"sha512-v1"}}}`},
-		{name: "v2-packages", lock: `{"lockfileVersion":2,"packages":{"node_modules/@acme/widgets":{"version":"1.2.3","resolved":"https://registry.npmjs.org/@acme/widgets/-/widgets-1.2.3.tgz","integrity":"sha512-v2"}}}`},
-		{name: "v2-legacy-fallback", lock: `{"lockfileVersion":2,"dependencies":{"@acme/widgets":{"version":"1.2.3","resolved":"https://registry.npmjs.org/@acme/widgets/-/widgets-1.2.3.tgz","integrity":"sha512-v2-fallback"}}}`},
-		{name: "v3-packages", lock: `{"lockfileVersion":3,"packages":{"node_modules/@acme/widgets":{"version":"1.2.3","resolved":"https://registry.npmjs.org/@acme/widgets/-/widgets-1.2.3.tgz","integrity":"sha512-v3"}}}`},
+		{name: "v1-legacy-dependencies", lock: `{"lockfileVersion":1,"dependencies":{"@acme/widgets":{"version":"1.2.3","resolved":"https://registry.npmjs.org/@acme/widgets/-/widgets-1.2.3.tgz","integrity":"sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="}}}`},
+		{name: "v2-packages", lock: `{"lockfileVersion":2,"packages":{"node_modules/@acme/widgets":{"version":"1.2.3","resolved":"https://registry.npmjs.org/@acme/widgets/-/widgets-1.2.3.tgz","integrity":"sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="}}}`},
+		{name: "v2-legacy-fallback", lock: `{"lockfileVersion":2,"dependencies":{"@acme/widgets":{"version":"1.2.3","resolved":"https://registry.npmjs.org/@acme/widgets/-/widgets-1.2.3.tgz","integrity":"sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="}}}`},
+		{name: "v3-packages", lock: `{"lockfileVersion":3,"packages":{"node_modules/@acme/widgets":{"version":"1.2.3","resolved":"https://registry.npmjs.org/@acme/widgets/-/widgets-1.2.3.tgz","integrity":"sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="}}}`},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -142,7 +142,7 @@ func TestQualifyExternalDependenciesFromNPMShrinkwrapVersions(t *testing.T) {
 				t.Fatal(err)
 			}
 			reference := results[0].Related[0].External
-			if reference.Module != "@acme/widgets" || reference.Package != "@acme/widgets/subpath" || reference.Version != "1.2.3" || reference.Integrity == "" {
+			if reference.Module != "@acme/widgets" || reference.Package != "@acme/widgets/subpath" || reference.Version != "1.2.3" || reference.Integrity == "" || reference.Source != NPMRegistrySource {
 				t.Fatalf("npm shrinkwrap reference = %#v", reference)
 			}
 		})
@@ -152,14 +152,14 @@ func TestQualifyExternalDependenciesFromNPMShrinkwrapVersions(t *testing.T) {
 func TestQualifyExternalDependenciesPrefersNPMShrinkwrap(t *testing.T) {
 	root := t.TempDir()
 	mustWriteDependencyFile(t, filepath.Join(root, "package.json"), `{"dependencies":{"@acme/widgets":"^1.0.0"}}`)
-	mustWriteDependencyFile(t, filepath.Join(root, "package-lock.json"), `{"lockfileVersion":3,"packages":{"node_modules/@acme/widgets":{"version":"1.0.0","integrity":"sha512-package-lock"}}}`)
-	mustWriteDependencyFile(t, filepath.Join(root, "npm-shrinkwrap.json"), `{"lockfileVersion":3,"packages":{"node_modules/@acme/widgets":{"version":"2.0.0","integrity":"sha512-shrinkwrap"}}}`)
+	mustWriteDependencyFile(t, filepath.Join(root, "package-lock.json"), `{"lockfileVersion":3,"packages":{"node_modules/@acme/widgets":{"version":"1.0.0","resolved":"https://registry.npmjs.org/@acme/widgets/-/widgets-1.0.0.tgz","integrity":"sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="}}}`)
+	mustWriteDependencyFile(t, filepath.Join(root, "npm-shrinkwrap.json"), `{"lockfileVersion":3,"packages":{"node_modules/@acme/widgets":{"version":"2.0.0","resolved":"https://registry.npmjs.org/@acme/widgets/-/widgets-2.0.0.tgz","integrity":"sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="}}}`)
 	mustWriteDependencyFile(t, filepath.Join(root, "main.ts"), "export {}")
 	results := npmExternalDependencyResults()
 	if err := QualifyExternalDependencies(results, root); err != nil {
 		t.Fatal(err)
 	}
-	if reference := results[0].Related[0].External; reference.Version != "2.0.0" || reference.Integrity != "sha512-shrinkwrap" {
+	if reference := results[0].Related[0].External; reference.Version != "2.0.0" || reference.Integrity != "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=" || reference.Source != NPMRegistrySource {
 		t.Fatalf("npm shrinkwrap did not take precedence: %#v", reference)
 	}
 }
@@ -189,9 +189,9 @@ func TestQualifyExternalDependenciesFromNPMAliases(t *testing.T) {
 		version     string
 		packageName string
 	}{
-		{name: "v1-unscoped", dependency: `"widget-alias":"npm:acme-widget@^1.2.0"`, lockVersion: 1, entry: `"widget-alias":{"version":"npm:acme-widget@1.2.3","integrity":"sha512-v1"}`, module: "acme-widget", version: "1.2.3", packageName: "acme-widget/subpath"},
-		{name: "v2-scoped", dependency: `"widget-alias":"npm:@acme/widgets@^2.0.0"`, lockVersion: 2, entry: `"node_modules/widget-alias":{"name":"@acme/widgets","version":"2.1.0","integrity":"sha512-v2"}`, module: "@acme/widgets", version: "2.1.0", packageName: "@acme/widgets/subpath"},
-		{name: "v3-unscoped", dependency: `"widget-alias":"npm:acme-widget@^3.0.0"`, lockVersion: 3, entry: `"node_modules/widget-alias":{"name":"acme-widget","version":"3.2.1","integrity":"sha512-v3"}`, module: "acme-widget", version: "3.2.1", packageName: "acme-widget/subpath"},
+		{name: "v1-unscoped", dependency: `"widget-alias":"npm:acme-widget@^1.2.0"`, lockVersion: 1, entry: `"widget-alias":{"version":"npm:acme-widget@1.2.3","resolved":"https://registry.npmjs.org/acme-widget/-/acme-widget-1.2.3.tgz","integrity":"sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="}`, module: "acme-widget", version: "1.2.3", packageName: "acme-widget/subpath"},
+		{name: "v2-scoped", dependency: `"widget-alias":"npm:@acme/widgets@^2.0.0"`, lockVersion: 2, entry: `"node_modules/widget-alias":{"name":"@acme/widgets","version":"2.1.0","resolved":"https://registry.npmjs.org/@acme/widgets/-/widgets-2.1.0.tgz","integrity":"sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="}`, module: "@acme/widgets", version: "2.1.0", packageName: "@acme/widgets/subpath"},
+		{name: "v3-unscoped", dependency: `"widget-alias":"npm:acme-widget@^3.0.0"`, lockVersion: 3, entry: `"node_modules/widget-alias":{"name":"acme-widget","version":"3.2.1","resolved":"https://registry.npmjs.org/acme-widget/-/acme-widget-3.2.1.tgz","integrity":"sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="}`, module: "acme-widget", version: "3.2.1", packageName: "acme-widget/subpath"},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -208,7 +208,7 @@ func TestQualifyExternalDependenciesFromNPMAliases(t *testing.T) {
 				t.Fatal(err)
 			}
 			reference := results[0].Related[0].External
-			if reference.ImportPath != "widget-alias/subpath" || reference.Module != test.module || reference.Version != test.version || reference.Package != test.packageName {
+			if reference.ImportPath != "widget-alias/subpath" || reference.Module != test.module || reference.Version != test.version || reference.Package != test.packageName || reference.Source != NPMRegistrySource {
 				t.Fatalf("npm alias reference = %#v", reference)
 			}
 		})
@@ -226,6 +226,39 @@ func TestQualifyExternalDependenciesRejectsMismatchedNPMAliasIdentity(t *testing
 	}
 	if reference := results[0].Related[0].External; reference.Module != "" || reference.Version != "" || reference.Package != "" {
 		t.Fatalf("mismatched npm alias was qualified: %#v", reference)
+	}
+}
+
+func TestNormalizeNPMRegistryEvidence(t *testing.T) {
+	validIntegrity := "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+	tests := []struct {
+		name      string
+		module    string
+		resolved  string
+		integrity string
+		valid     bool
+	}{
+		{name: "public scoped package", module: "@acme/widgets", resolved: "https://registry.npmjs.org/@acme/widgets/-/widgets-1.2.3.tgz", integrity: validIntegrity, valid: true},
+		{name: "public unscoped package", module: "widget", resolved: "https://registry.npmjs.org/widget/-/widget-1.2.3.tgz", integrity: validIntegrity, valid: true},
+		{name: "valid token after invalid token", module: "widget", resolved: "https://registry.npmjs.org/widget/-/widget-1.2.3.tgz", integrity: "sha1-AAAA " + validIntegrity, valid: true},
+		{name: "custom registry", module: "widget", resolved: "https://npm.example.test/widget/-/widget-1.2.3.tgz", integrity: validIntegrity},
+		{name: "insecure registry", module: "widget", resolved: "http://registry.npmjs.org/widget/-/widget-1.2.3.tgz", integrity: validIntegrity},
+		{name: "registry credentials", module: "widget", resolved: "https://token@registry.npmjs.org/widget/-/widget-1.2.3.tgz", integrity: validIntegrity},
+		{name: "registry port", module: "widget", resolved: "https://registry.npmjs.org:443/widget/-/widget-1.2.3.tgz", integrity: validIntegrity},
+		{name: "query", module: "widget", resolved: "https://registry.npmjs.org/widget/-/widget-1.2.3.tgz?token=secret", integrity: validIntegrity},
+		{name: "wrong package path", module: "widget", resolved: "https://registry.npmjs.org/other/-/other-1.2.3.tgz", integrity: validIntegrity},
+		{name: "missing integrity", module: "widget", resolved: "https://registry.npmjs.org/widget/-/widget-1.2.3.tgz"},
+		{name: "invalid base64", module: "widget", resolved: "https://registry.npmjs.org/widget/-/widget-1.2.3.tgz", integrity: "sha256-not-base64!"},
+		{name: "wrong digest length", module: "widget", resolved: "https://registry.npmjs.org/widget/-/widget-1.2.3.tgz", integrity: "sha256-YQ=="},
+		{name: "unsupported digest", module: "widget", resolved: "https://registry.npmjs.org/widget/-/widget-1.2.3.tgz", integrity: "sha1-AAAAAAAAAAAAAAAAAAAAAAAAAAA="},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			source, valid := NormalizeNPMRegistryEvidence(test.module, "1.2.3", test.resolved, test.integrity)
+			if valid != test.valid || (valid && source != NPMRegistrySource) || (!valid && source != "") {
+				t.Fatalf("NormalizeNPMRegistryEvidence() = %q, %v", source, valid)
+			}
+		})
 	}
 }
 

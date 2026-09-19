@@ -85,7 +85,7 @@ func (renderer segmentRenderer) renderRelatedTypeDefinitions(definitions []relat
 		suffix := ""
 		if definition.artifact != nil {
 			path = definition.artifact.Repository + ":" + path
-			suffix = " [" + definition.artifact.Module + "@" + definition.artifact.Version + "; commit " + definition.artifact.Commit + "]"
+			suffix = " [" + navigationArtifactProvenance(definition.artifact) + "]"
 		}
 		if err := renderer.output.writeString(fmt.Sprintf("\n%s:%d-%d  %s%s\n", path, definition.start, definition.end, definition.name, suffix)); err != nil {
 			return err

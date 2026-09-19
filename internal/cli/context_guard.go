@@ -473,7 +473,7 @@ func structuralSegmentIdentity(source string, artifact *api.NavigationArtifactId
 	sourceDigest := hex.EncodeToString(sourceDigestBytes[:])
 	artifactIdentity := "local"
 	if artifact != nil {
-		artifactIdentity = strings.Join([]string{artifact.Digest, artifact.Repository, artifact.Commit, artifact.Module, artifact.Version, artifact.RefKind}, "\x00")
+		artifactIdentity = strings.Join([]string{artifact.Digest, artifact.Repository, artifact.Commit, artifact.Module, artifact.Version, artifact.RefKind, artifact.Source}, "\x00")
 	}
 	identity := strings.Join([]string{artifactIdentity, source, segment.Kind, strconv.Itoa(segment.Start), strconv.Itoa(segment.End), sourceDigest}, "\x00")
 	identityDigest := sha256.Sum256([]byte(identity))

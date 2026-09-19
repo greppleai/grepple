@@ -132,15 +132,11 @@ func relatedPointPresentation(point api.RelatedSymbol) (string, string, string) 
 	locationPath := point.Path
 	suffix := ""
 	if point.Artifact != nil {
-		identity := point.Artifact.Module + "@" + point.Artifact.Version
+		identity := navigationArtifactProvenance(point.Artifact)
 		if point.Artifact.Repository != "" {
 			locationPath = point.Artifact.Repository + ":" + point.Path
 		}
-		suffix = " [" + point.Confidence + "; " + identity + "; commit " + point.Artifact.Commit
-		if point.External != nil && point.External.Integrity != "" {
-			suffix += "; sum " + point.External.Integrity
-		}
-		suffix += "]"
+		suffix = " [" + point.Confidence + "; " + identity + "]"
 	} else if point.Confidence == "candidate" {
 		suffix = fmt.Sprintf(" [candidate; try --at %s:%d]", point.Path, point.Start)
 	} else if point.Confidence == "dependency-unresolved" && point.External != nil {
@@ -157,6 +153,20 @@ func relatedPointPresentation(point api.RelatedSymbol) (string, string, string) 
 	return locationPath, label, suffix
 }
 
+func navigationArtifactProvenance(artifact *api.NavigationArtifactIdentity) string {
+	parts := []string{artifact.Module + "@" + artifact.Version}
+	if artifact.Source != "" {
+		parts = append(parts, "source "+artifact.Source)
+	}
+	if artifact.Commit != "" {
+		parts = append(parts, "commit "+artifact.Commit)
+	}
+	if artifact.Integrity != "" {
+		parts = append(parts, "sum "+artifact.Integrity)
+	}
+	return strings.Join(parts, "; ")
+}
+
 func dependencyUnresolvedSuffix(reference api.ExternalNavigationReference) string {
 	identity := reference.ImportPath
 	if reference.Version != "" {
@@ -169,6 +179,9 @@ func dependencyUnresolvedSuffix(reference api.ExternalNavigationReference) strin
 		identity += "; candidates " + strings.Join(candidates, ", ")
 	}
 	suffix := " [dependency-unresolved; " + identity
+	if reference.Source != "" {
+		suffix += "; source " + reference.Source
+	}
 	if reference.Integrity != "" {
 		suffix += "; sum " + reference.Integrity
 	}

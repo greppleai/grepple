@@ -94,8 +94,9 @@ func TestRelatedTypeContextLabelPreservesAllRoles(t *testing.T) {
 func TestSegmentContextGuardUsesExactArtifactIdentity(t *testing.T) {
 	t.Setenv("GREPPLE_CONTEXT_GUARD_DIR", t.TempDir())
 	segment := api.ResultSegment{Kind: "lines", Start: 1, End: 1, Text: "export interface Client {}"}
-	first := &api.NavigationArtifactIdentity{Module: "client", Version: "1.0.0", Commit: "one", Digest: "artifact-one"}
-	second := &api.NavigationArtifactIdentity{Module: "client", Version: "2.0.0", Commit: "two", Digest: "artifact-two"}
+	first := &api.NavigationArtifactIdentity{Module: "client", Version: "1.0.0", Commit: "one", Digest: "artifact-one", Source: "https://registry.npmjs.org"}
+	second := &api.NavigationArtifactIdentity{Module: "client", Version: "1.0.0", Commit: "one", Digest: "artifact-one", Source: "https://npm.example.test"}
+	third := &api.NavigationArtifactIdentity{Module: "client", Version: "2.0.0", Commit: "two", Digest: "artifact-two", Source: "https://registry.npmjs.org"}
 	guard, err := openSegmentContextGuard()
 	if err != nil {
 		t.Fatal(err)
@@ -114,6 +115,9 @@ func TestSegmentContextGuardUsesExactArtifactIdentity(t *testing.T) {
 		t.Fatal("same exact artifact was not recognized")
 	}
 	if guard.seen("client.ts", second, segment) {
+		t.Fatal("different artifact source was suppressed")
+	}
+	if guard.seen("client.ts", third, segment) {
 		t.Fatal("different artifact version was suppressed")
 	}
 }

@@ -165,7 +165,7 @@ func TestSegmentRendererShowsResolvedExternalTypeDefinition(t *testing.T) {
 	var output bytes.Buffer
 	renderer := segmentRenderer{output: newOutputWriter(&output)}
 	artifact := &api.NavigationArtifactIdentity{
-		Ecosystem: "go", Module: "github.com/gofiber/fiber/v3", Version: "v3.5.0",
+		Ecosystem: "go", Module: "github.com/gofiber/fiber/v3", Version: "v3.5.0", Source: "https://proxy.golang.org", Integrity: "h1:exact",
 		Repository: "gofiber/fiber@tag~v3.5.0", Commit: "abcdef", Digest: "artifact-digest",
 	}
 	results := []api.FileResult{{
@@ -182,8 +182,9 @@ func TestSegmentRendererShowsResolvedExternalTypeDefinition(t *testing.T) {
 	rendered := output.String()
 	for _, expected := range []string{
 		"→ Ctx  gofiber/fiber@tag~v3.5.0:ctx.go:17-20  parameter-type:15",
+		"source https://proxy.golang.org; commit abcdef; sum h1:exact",
 		"Related type definitions:",
-		"gofiber/fiber@tag~v3.5.0:ctx.go:17-20  Ctx [github.com/gofiber/fiber/v3@v3.5.0; commit abcdef]",
+		"gofiber/fiber@tag~v3.5.0:ctx.go:17-20  Ctx [github.com/gofiber/fiber/v3@v3.5.0; source https://proxy.golang.org; commit abcdef; sum h1:exact]",
 		"type Ctx interface {",
 		"Request() *Request",
 	} {

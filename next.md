@@ -84,7 +84,8 @@ The first exact external-resolution matrix covers Go modules, npm lockfiles, Car
 - [x] Preserve npm import aliases (`npm:`), including scoped targets, separately from the exact resolved package identity in lockfile versions 1–3.
 - [ ] Resolve package subpaths through `exports`, `imports`, `main`, `module`, `types`, `typesVersions`, conditional exports, and runtime/module conditions. A package name alone does not prove which source declaration an import reaches.
 - [ ] Enforce `os`, `cpu`, engine, and optional-install conditions when they affect the selected graph.
-- [ ] Verify registry URL and SRI integrity for exact archives; custom registries and mirrors must not silently collapse into the public npm identity.
+- [x] Require canonical public npm archive URLs and structurally valid SHA-256/384/512 SRI before exact qualification; carry registry source through requests, artifact provenance, rendering, and context identity while leaving custom registries and mirrors unresolved.
+- [ ] Fetch and hash exact archives before claiming cryptographic SRI verification, and add authenticated source identities for custom registries and mirrors without collapsing them into public npm.
 
 **Rust/Cargo**
 

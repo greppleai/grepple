@@ -64,6 +64,7 @@ type NavigationArtifactIdentity struct {
 	Version    string `json:"version"`
 	RefKind    string `json:"refKind,omitempty"`
 	Integrity  string `json:"integrity,omitempty"`
+	Source     string `json:"source,omitempty"`
 	Repository string `json:"repository,omitempty"`
 	Commit     string `json:"commit,omitempty"`
 	Digest     string `json:"digest,omitempty"`
@@ -77,6 +78,7 @@ type ExternalDependencyCandidate struct {
 	Module    string `json:"module"`
 	Version   string `json:"version"`
 	Integrity string `json:"integrity,omitempty"`
+	Source    string `json:"source,omitempty"`
 }
 
 // ExternalNavigationReference retains syntax evidence needed to resolve one dependency symbol.
@@ -92,6 +94,7 @@ type ExternalNavigationReference struct {
 	Module          string                        `json:"module,omitempty"`
 	Version         string                        `json:"version,omitempty"`
 	Integrity       string                        `json:"integrity,omitempty"`
+	Source          string                        `json:"source,omitempty"`
 	Candidates      []ExternalDependencyCandidate `json:"candidates,omitempty"`
 }
 

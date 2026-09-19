@@ -1,12 +1,15 @@
 package navigation
 
 import (
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
 	"io/fs"
+	"net/url"
 	"os"
+	"path"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -26,7 +29,7 @@ type ArtifactModule struct {
 }
 
 type dependencyEvidence struct {
-	ecosystem, importName, module, version, integrity string
+	ecosystem, importName, module, version, integrity, source string
 }
 
 type dependencyContext struct {
@@ -80,7 +83,7 @@ func qualifyExternalReference(reference *api.ExternalNavigationReference, contex
 	matches := dependencyMatches(reference.ImportPath, context)
 	if len(matches) == 1 && context.language != "java" && context.language != "kotlin" {
 		match := matches[0]
-		reference.Module, reference.Version, reference.Integrity = match.module, match.version, match.integrity
+		reference.Module, reference.Version, reference.Integrity, reference.Source = match.module, match.version, match.integrity, match.source
 		reference.Package = reference.ImportPath
 		if match.ecosystem == "go" || match.ecosystem == "npm" {
 			reference.Package = match.module + strings.TrimPrefix(reference.ImportPath, match.importName)
@@ -92,7 +95,7 @@ func qualifyExternalReference(reference *api.ExternalNavigationReference, contex
 	}
 	reference.Candidates = make([]api.ExternalDependencyCandidate, 0, len(matches))
 	for _, match := range matches {
-		reference.Candidates = append(reference.Candidates, api.ExternalDependencyCandidate{Ecosystem: match.ecosystem, Module: match.module, Version: match.version, Integrity: match.integrity})
+		reference.Candidates = append(reference.Candidates, api.ExternalDependencyCandidate{Ecosystem: match.ecosystem, Module: match.module, Version: match.version, Integrity: match.integrity, Source: match.source})
 	}
 }
 
@@ -116,7 +119,10 @@ func dependencyMatches(importPath string, context dependencyContext) []dependenc
 		if matches[i].module != matches[j].module {
 			return matches[i].module < matches[j].module
 		}
-		return matches[i].version < matches[j].version
+		if matches[i].version != matches[j].version {
+			return matches[i].version < matches[j].version
+		}
+		return matches[i].source < matches[j].source
 	})
 	return matches
 }
@@ -266,11 +272,14 @@ func npmLockedDependencyEvidence(lock npmLock, name, constraint string) (depende
 		return dependencyEvidence{}, false
 	}
 	module, version, ok := npmLockedDependencyIdentity(name, constraint, entry)
-	resolved := entry.Resolved
-	if !ok || entry.Link || strings.HasPrefix(resolved, "file:") || strings.HasPrefix(resolved, "link:") {
+	if !ok || entry.Link {
 		return dependencyEvidence{}, false
 	}
-	return dependencyEvidence{ecosystem: "npm", importName: name, module: module, version: version, integrity: entry.Integrity}, true
+	source, ok := NormalizeNPMRegistryEvidence(module, version, entry.Resolved, entry.Integrity)
+	if !ok {
+		return dependencyEvidence{}, false
+	}
+	return dependencyEvidence{ecosystem: "npm", importName: name, module: module, version: version, integrity: entry.Integrity, source: source}, true
 }
 
 func readNPMLockfile(directory string) ([]byte, error) {
@@ -300,6 +309,46 @@ func npmLockedDirectDependency(lock npmLock, name string) (npmLockEntry, bool) {
 	}
 	entry, ok = lock.Dependencies[name]
 	return entry, ok
+}
+
+// NPMRegistrySource is the only npm registry identity currently accepted as exact evidence.
+const NPMRegistrySource = "https://registry.npmjs.org"
+
+// NormalizeNPMRegistryEvidence validates canonical public-registry archive evidence.
+// It validates the URL and SRI digest shape, not the archive bytes themselves.
+func NormalizeNPMRegistryEvidence(module, version, resolved, integrity string) (string, bool) {
+	archive, err := url.Parse(resolved)
+	if err != nil || archive.Scheme != "https" || archive.Host != "registry.npmjs.org" || archive.User != nil || archive.RawQuery != "" || archive.Fragment != "" {
+		return "", false
+	}
+	name := path.Base(module)
+	expectedPath := "/" + module + "/-/" + name + "-" + version + ".tgz"
+	if module == "" || version == "" || archive.Path != expectedPath || !ValidNPMIntegrity(integrity) {
+		return "", false
+	}
+	return NPMRegistrySource, true
+}
+
+// ValidNPMIntegrity reports whether at least one SRI token has a supported
+// algorithm, decodable base64 digest, and the algorithm's exact digest length.
+func ValidNPMIntegrity(integrity string) bool {
+	digestLengths := map[string]int{"sha256": 32, "sha384": 48, "sha512": 64}
+	for _, token := range strings.Fields(integrity) {
+		token, _, _ = strings.Cut(token, "?")
+		algorithm, encoded, ok := strings.Cut(token, "-")
+		expected := digestLengths[algorithm]
+		if !ok || expected == 0 {
+			continue
+		}
+		decoded, err := base64.StdEncoding.DecodeString(encoded)
+		if err != nil {
+			decoded, err = base64.RawStdEncoding.DecodeString(encoded)
+		}
+		if err == nil && len(decoded) == expected {
+			return true
+		}
+	}
+	return false
 }
 
 func npmLockedDependencyIdentity(importName, constraint string, entry npmLockEntry) (string, string, bool) {
