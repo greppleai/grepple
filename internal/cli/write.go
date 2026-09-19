@@ -61,10 +61,10 @@ Create and delete are also explicit JSON file operations:
 
 All paths, identities, files, hashes, ranges, and replacement lines are validated
 before mutation. Ranges are inclusive and refer to the original snapshot. Empty
-change content_lines deletes a range. Create requires an absent target beneath an
-existing confined directory. Delete requires the exact current SHA-256 digest.
-The transaction preserves existing newline style and permissions and rolls back
-normal installation failures.
+change content_lines deletes a range. Create requires an absent target beneath the
+confined root and creates missing parent directories. Delete requires the exact
+current SHA-256 digest. The transaction preserves existing newline style and
+permissions and rolls back normal installation failures.
 
 Default output is edit-ready HASH│LINE│content with a concise summary. Successful
 edits return freshly recomputed anchors; dry runs also print deterministic unified
@@ -577,14 +577,73 @@ func confinedWritePath(root, requested string) (string, os.FileInfo, error) {
 }
 
 func confinedCreatePath(root, requested string) (string, error) {
-	resolved, info, err := confinedWriteTarget(root, requested)
+	requestedPath, err := confinedCreateRequestPath(root, requested)
 	if err != nil {
 		return "", err
 	}
-	if info != nil {
+	existingParent, missing, err := nearestExistingWriteParent(filepath.Dir(requestedPath))
+	if err != nil {
+		return "", err
+	}
+	resolvedParent, err := filepath.EvalSymlinks(existingParent)
+	if err != nil {
+		return "", fmt.Errorf("resolve write directory: %w", err)
+	}
+	resolvedParentInfo, err := os.Stat(resolvedParent)
+	if err != nil || !resolvedParentInfo.IsDir() {
+		return "", fmt.Errorf("write parent must be a directory")
+	}
+	for index := len(missing) - 1; index >= 0; index-- {
+		resolvedParent = filepath.Join(resolvedParent, missing[index])
+	}
+	resolved := filepath.Join(resolvedParent, filepath.Base(requestedPath))
+	if !writePathWithinRoot(root, resolved) {
+		return "", fmt.Errorf("write path escapes the root")
+	}
+	if _, err := os.Lstat(resolved); err == nil {
 		return "", fmt.Errorf("create target already exists")
+	} else if !errors.Is(err, os.ErrNotExist) {
+		return "", fmt.Errorf("inspect create target: %w", err)
 	}
 	return resolved, nil
+}
+
+func confinedCreateRequestPath(root, requested string) (string, error) {
+	if strings.TrimSpace(requested) == "" || filepath.IsAbs(requested) {
+		return "", fmt.Errorf("write path must be repository-relative")
+	}
+	clean := filepath.Clean(requested)
+	if clean == "." || clean == ".." || strings.HasPrefix(clean, ".."+string(filepath.Separator)) {
+		return "", fmt.Errorf("write path escapes the root")
+	}
+	return filepath.Join(root, clean), nil
+}
+
+func nearestExistingWriteParent(directory string) (string, []string, error) {
+	var missing []string
+	for {
+		info, err := os.Lstat(directory)
+		if err == nil {
+			if !info.IsDir() && info.Mode()&os.ModeSymlink == 0 {
+				return "", nil, fmt.Errorf("write parent must be a directory")
+			}
+			return directory, missing, nil
+		}
+		if !errors.Is(err, os.ErrNotExist) {
+			return "", nil, fmt.Errorf("inspect write directory: %w", err)
+		}
+		missing = append(missing, filepath.Base(directory))
+		parent := filepath.Dir(directory)
+		if parent == directory {
+			return "", nil, fmt.Errorf("write parent must be beneath the root")
+		}
+		directory = parent
+	}
+}
+
+func writePathWithinRoot(root, path string) bool {
+	relative, err := filepath.Rel(root, path)
+	return err == nil && relative != ".." && !strings.HasPrefix(relative, ".."+string(filepath.Separator))
 }
 
 func confinedWriteTarget(root, requested string) (string, os.FileInfo, error) {
@@ -858,7 +917,11 @@ func stageWriteFiles(files []*preparedWriteFile) *writeFailure {
 		if file.operation == "delete" {
 			continue
 		}
-		temporary, err := os.CreateTemp(filepath.Dir(file.path), ".grepple-write-new-*")
+		directory, directoryErr := writeStageDirectory(file.path)
+		if directoryErr != nil {
+			return newWriteFailure("write_failed", directoryErr.Error(), file.requestPath, nil)
+		}
+		temporary, err := os.CreateTemp(directory, ".grepple-write-new-*")
 		if err != nil {
 			return newWriteFailure("write_failed", err.Error(), file.requestPath, nil)
 		}
@@ -883,16 +946,107 @@ func stageWriteFiles(files []*preparedWriteFile) *writeFailure {
 }
 
 func installWriteFiles(files []*preparedWriteFile) *writeFailure {
-	backedUp, failure := backupWriteFiles(files)
+	createdDirectories, failure := createWriteDirectories(files)
 	if failure != nil {
 		return failure
 	}
-	if failure := installStagedWriteFiles(files, backedUp); failure != nil {
+	backedUp, failure := backupWriteFiles(files)
+	if failure != nil {
+		if cleanupErr := removeWriteDirectories(createdDirectories); cleanupErr != nil {
+			failure.message = writeRollbackMessage(errors.New(failure.message), cleanupErr)
+		}
+		return failure
+	}
+	if failure := installStagedWriteFiles(files, backedUp, createdDirectories); failure != nil {
 		return failure
 	}
 	for _, file := range backedUp {
 		_ = os.Remove(file.backupPath)
 		file.backupPath = ""
+	}
+	return nil
+}
+
+func writeStageDirectory(path string) (string, error) {
+	directory := filepath.Dir(path)
+	for {
+		info, err := os.Lstat(directory)
+		if err == nil {
+			if info.Mode()&os.ModeSymlink != 0 || !info.IsDir() {
+				return "", fmt.Errorf("write staging parent must be a directory")
+			}
+			return directory, nil
+		}
+		if !errors.Is(err, os.ErrNotExist) {
+			return "", err
+		}
+		parent := filepath.Dir(directory)
+		if parent == directory {
+			return "", fmt.Errorf("write staging parent does not exist")
+		}
+		directory = parent
+	}
+}
+
+func createWriteDirectories(files []*preparedWriteFile) ([]string, *writeFailure) {
+	var created []string
+	for _, file := range files {
+		if file.operation != "create" {
+			continue
+		}
+		missing, err := missingWriteDirectories(file.path)
+		if err != nil {
+			cleanupErr := removeWriteDirectories(created)
+			return nil, newWriteFailure("write_failed", writeRollbackMessage(err, cleanupErr), file.requestPath, nil)
+		}
+		for _, directory := range missing {
+			if err := os.Mkdir(directory, 0o755); err != nil {
+				cleanupErr := removeWriteDirectories(created)
+				return nil, newWriteFailure("write_failed", writeRollbackMessage(err, cleanupErr), file.requestPath, nil)
+			}
+			created = append(created, directory)
+		}
+	}
+	return created, nil
+}
+
+func missingWriteDirectories(path string) ([]string, error) {
+	directory := filepath.Dir(path)
+	var reverse []string
+	for {
+		info, err := os.Lstat(directory)
+		if err == nil {
+			if info.Mode()&os.ModeSymlink != 0 || !info.IsDir() {
+				return nil, fmt.Errorf("write parent must be a directory")
+			}
+			break
+		}
+		if !errors.Is(err, os.ErrNotExist) {
+			return nil, err
+		}
+		reverse = append(reverse, directory)
+		parent := filepath.Dir(directory)
+		if parent == directory {
+			return nil, fmt.Errorf("write parent does not exist")
+		}
+		directory = parent
+	}
+	missing := make([]string, len(reverse))
+	for index := range reverse {
+		missing[index] = reverse[len(reverse)-1-index]
+	}
+	return missing, nil
+}
+
+func removeWriteDirectories(directories []string) error {
+	var failures []string
+	for index := len(directories) - 1; index >= 0; index-- {
+		if err := os.Remove(directories[index]); err != nil && !errors.Is(err, os.ErrNotExist) {
+			failures = append(failures, fmt.Sprintf("remove created directory %s: %v", directories[index], err))
+		}
+	}
+	if len(failures) > 0 {
+		return errors.New(strings.Join(failures, "; "))
 	}
 	return nil
 }
@@ -929,7 +1083,7 @@ func backupWriteFiles(files []*preparedWriteFile) ([]*preparedWriteFile, *writeF
 	return backedUp, nil
 }
 
-func installStagedWriteFiles(files, backedUp []*preparedWriteFile) *writeFailure {
+func installStagedWriteFiles(files, backedUp []*preparedWriteFile, createdDirectories []string) *writeFailure {
 	installed := make([]*preparedWriteFile, 0, len(files))
 	for _, file := range files {
 		if file.operation == "delete" {
@@ -938,6 +1092,12 @@ func installStagedWriteFiles(files, backedUp []*preparedWriteFile) *writeFailure
 		err := installStagedWriteFile(file)
 		if err != nil {
 			rollbackErr := rollbackInstalledWriteFiles(installed, backedUp)
+			directoryErr := removeWriteDirectories(createdDirectories)
+			if rollbackErr == nil {
+				rollbackErr = directoryErr
+			} else if directoryErr != nil {
+				rollbackErr = fmt.Errorf("%v; %w", rollbackErr, directoryErr)
+			}
 			return newWriteFailure("write_failed", writeRollbackMessage(err, rollbackErr), file.requestPath, nil)
 		}
 		installed = append(installed, file)

@@ -118,7 +118,7 @@ JSON includes operation, before/after SHA-256 digests, unified diffs for dry-run
 
 ## Creating files
 
-Creation is explicit and only targets an absent repository-relative path beneath an existing confined directory:
+Creation is explicit and only targets an absent repository-relative path beneath the confined root. Missing parent directories are created automatically:
 
 ```json
 {
@@ -130,7 +130,7 @@ Creation is explicit and only targets an absent repository-relative path beneath
 
 The equivalent literal operation is `::grepple file path/to/new.go` followed by `::grepple create`, its body, and `::grepple end`.
 
-Each array entry is one logical line. A trailing empty entry preserves a final newline. Created files use mode `0644`, subject to platform support, and participate in the same transaction and rollback as edits and deletions. Existing targets, symlink targets, missing parents, directory escapes, embedded newlines, NUL bytes, and oversized results are rejected.
+Each array entry is one logical line. A trailing empty entry preserves a final newline. Created files use mode `0644` and automatically created directories use mode `0755`, both subject to the process umask and platform support. New directories participate in transaction rollback: a later installation failure removes files and directories created by the transaction in reverse order. Existing targets, symlink escapes, parent paths that are files, embedded newlines, NUL bytes, and oversized results are rejected.
 
 ## Deleting files
 
@@ -150,7 +150,7 @@ A stale digest rejects the entire transaction. Deletions are installed through t
 
 ## Transaction contract
 
-Before mutation, Grepple validates every operation, path, filesystem identity, file type, digest, anchor, range, replacement line, overlap, newline style, and size limit. Duplicate lexical paths and hardlink identities are rejected. Changed content is staged beside its destination, existing bytes are rechecked for concurrent changes, creates are installed without replacing a target that appeared concurrently, and existing files are backed up before installation.
+Before mutation, Grepple validates every operation, path, filesystem identity, file type, digest, anchor, range, replacement line, overlap, newline style, and size limit. Duplicate lexical paths and hardlink identities are rejected. Changed content is staged on the destination filesystem before missing create directories are made, existing bytes are rechecked for concurrent changes, creates are installed without replacing a target that appeared concurrently, and existing files are backed up before installation. A failed installation removes files and directories created by the transaction and restores backups.
 
 A rejection changes no requested file and exits with status 1. Human errors include concise path/change context and fresh nearby anchor rows when available. `--json` returns a structured error with the same evidence. Rollback failures remain visible in the error rather than being discarded.
 
@@ -161,7 +161,7 @@ As with any multi-file operation on ordinary filesystems, an operating-system cr
 - `--root` defaults to the working directory.
 - Request paths must be relative and resolve inside the root.
 - Existing file and directory symlink escapes, directories, non-regular files, and missing edit/delete targets are refused.
-- Create requires an absent target and an existing confined parent directory.
+- Create requires an absent target; missing parent directories beneath the confined root are created automatically.
 - Delete requires a lowercase 64-character SHA-256 digest.
 - Existing LF or CRLF style and final-newline behavior are preserved by edits.
 - Mixed or bare-CR source files and NUL-containing existing files are refused.

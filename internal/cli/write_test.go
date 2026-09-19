@@ -218,18 +218,95 @@ func TestExecuteWriteRequestCreatesAndDeletesTransactionally(t *testing.T) {
 	}
 }
 
+func TestExecuteWriteRequestCreatesMissingDirectoryTree(t *testing.T) {
+	root := t.TempDir()
+	request := writeRequest{Schema: writeSchema, Files: []writeRequestFile{{
+		Path: "generated/client/models.go", Operation: "create", ContentLines: []string{"package client", ""},
+	}}}
+	response, failure := executeWriteRequest(root, false, request)
+	if failure != nil || !response.Applied {
+		t.Fatalf("response=%+v failure=%+v", response, failure)
+	}
+	assertWriteFile(t, filepath.Join(root, "generated", "client", "models.go"), "package client\n", 0o644)
+	for _, directory := range []string{"generated", filepath.Join("generated", "client")} {
+		info, err := os.Stat(filepath.Join(root, directory))
+		if err != nil || !info.IsDir() {
+			t.Fatalf("created directory %q: info=%v err=%v", directory, info, err)
+		}
+	}
+}
+
+func TestWriteCreateDryRunDoesNotCreateDirectoryTree(t *testing.T) {
+	root := t.TempDir()
+	request := writeRequest{Schema: writeSchema, Files: []writeRequestFile{{
+		Path: "predicted/deep/new.go", Operation: "create", ContentLines: []string{"package deep"},
+	}}}
+	response, failure := executeWriteRequest(root, true, request)
+	if failure != nil || response.Applied || !response.DryRun {
+		t.Fatalf("response=%+v failure=%+v", response, failure)
+	}
+	if _, err := os.Stat(filepath.Join(root, "predicted")); !os.IsNotExist(err) {
+		t.Fatalf("dry run created directory tree: %v", err)
+	}
+}
+
+func TestWriteCreateRollsBackCreatedDirectoryTree(t *testing.T) {
+	root := t.TempDir()
+	requests := []writeRequestFile{
+		{Path: "generated/deep/first.go", Operation: "create", ContentLines: []string{"package deep"}},
+		{Path: "blocked.go", Operation: "create", ContentLines: []string{"package blocked"}},
+	}
+	prepared, _, failure := prepareWriteFiles(root, requests)
+	if failure != nil {
+		t.Fatal(failure)
+	}
+	files := make([]*preparedWriteFile, 0, len(prepared))
+	for index := range prepared {
+		files = append(files, &prepared[index])
+	}
+	if failure := stageWriteFiles(files); failure != nil {
+		t.Fatal(failure)
+	}
+	defer cleanupStagedWriteFiles(files)
+	writeTestFile(t, filepath.Join(root, "blocked.go"), "concurrent\n", 0o600)
+	if failure := installWriteFiles(files); failure == nil || failure.code != "write_failed" {
+		t.Fatalf("failure=%+v", failure)
+	}
+	if _, err := os.Stat(filepath.Join(root, "generated")); !os.IsNotExist(err) {
+		t.Fatalf("rollback retained created directory tree: %v", err)
+	}
+	assertWriteFile(t, filepath.Join(root, "blocked.go"), "concurrent\n", 0o600)
+}
+
+func TestWriteCreateRejectsMissingTreeThroughEscapingSymlink(t *testing.T) {
+	root := t.TempDir()
+	outside := t.TempDir()
+	if err := os.Symlink(outside, filepath.Join(root, "linked")); err != nil {
+		t.Fatal(err)
+	}
+	request := writeRequest{Schema: writeSchema, Files: []writeRequestFile{{
+		Path: "linked/missing/new.go", Operation: "create", ContentLines: []string{"package escaped"},
+	}}}
+	if _, failure := executeWriteRequest(root, false, request); failure == nil || failure.code != "invalid_path" {
+		t.Fatalf("failure=%+v", failure)
+	}
+	if _, err := os.Stat(filepath.Join(outside, "missing")); !os.IsNotExist(err) {
+		t.Fatalf("escaping create mutated outside root: %v", err)
+	}
+}
+
 func TestExecuteWriteRequestRejectsStaleDeleteWithoutCreating(t *testing.T) {
 	root := t.TempDir()
 	path := filepath.Join(root, "existing.txt")
 	writeTestFile(t, path, "current\n", 0o600)
 	request := writeRequest{Schema: writeSchema, Files: []writeRequestFile{
-		{Path: "created.txt", Operation: "create", ContentLines: []string{"new", ""}},
+		{Path: "nested/new/created.txt", Operation: "create", ContentLines: []string{"new", ""}},
 		{Path: "existing.txt", Operation: "delete", BeforeSHA256: strings.Repeat("0", 64)},
 	}}
 	if _, failure := executeWriteRequest(root, false, request); failure == nil || failure.code != "stale_file" {
 		t.Fatalf("failure=%+v", failure)
 	}
-	if _, err := os.Stat(filepath.Join(root, "created.txt")); !os.IsNotExist(err) {
+	if _, err := os.Stat(filepath.Join(root, "nested")); !os.IsNotExist(err) {
 		t.Fatalf("create escaped rejected transaction: %v", err)
 	}
 	assertWriteFile(t, path, "current\n", 0o600)
@@ -269,7 +346,7 @@ func TestWriteCreateRejectsUnsafeContentAndTargets(t *testing.T) {
 	}{
 		{name: "nul", request: writeRequestFile{Path: "new.txt", Operation: "create", ContentLines: []string{"bad\x00value"}}, code: "invalid_content"},
 		{name: "existing", request: writeRequestFile{Path: "existing.txt", Operation: "create", ContentLines: []string{"new"}}, code: "invalid_path"},
-		{name: "missing parent", request: writeRequestFile{Path: "missing/new.txt", Operation: "create", ContentLines: []string{"new"}}, code: "invalid_path"},
+		{name: "parent file", request: writeRequestFile{Path: "existing.txt/new.txt", Operation: "create", ContentLines: []string{"new"}}, code: "invalid_path"},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
