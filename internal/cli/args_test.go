@@ -115,6 +115,9 @@ func TestParseSearchArgsSupportsRepeatSource(t *testing.T) {
 			t.Fatalf("--repeat-source accepted unsupported output: %v", args)
 		}
 	}
+	if _, _, _, err := parseSearchArgs([]string{"--repeat-source", "--at", "sample.go:1-3", "--line-only"}); err != nil {
+		t.Fatalf("--repeat-source rejected focused line output: %v", err)
+	}
 }
 
 func TestParseSearchArgsEnablesRelatedGoNavigation(t *testing.T) {

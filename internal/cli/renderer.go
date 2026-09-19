@@ -24,7 +24,7 @@ func newResultRenderer(options *cliOptions, output *outputWriter, guard *segment
 	case options.OnlyMatching:
 		return onlyMatchingRenderer{output: output, matcher: compileOnlyMatcher(options)}
 	case options.LineOnly:
-		return lineRenderer{output: output, anchors: options.AnchorLines}
+		return lineRenderer{output: output, anchors: options.AnchorLines, contextGuard: guard, repeatSource: options.RepeatSource}
 	default:
 		return segmentRenderer{output: output, anchors: options.AnchorLines, contextGuard: guard}
 	}
@@ -64,12 +64,17 @@ func contextGuardForResults(options *cliOptions, results []api.FileResult) *segm
 	}
 	guard.observed = true
 	guard.resultFiles = len(results)
-	if !segmentOutputMode(options) {
+	segmentMode := segmentOutputMode(options)
+	focusedLineMode := focusedLineCoverageMode(options)
+	if !segmentMode && !focusedLineMode {
 		guard.deduplicate = false
 		guard.recordSegments = false
 		guard.bypassReason = "non-structural"
 		return guard
 	}
+	guard.recordSegments = segmentMode
+	guard.recordLines = focusedLineMode
+	guard.lineCoverageCall = focusedLineMode
 	var rendered bytes.Buffer
 	output := newOutputWriter(&rendered)
 	if options.MaxOutputBytes > 0 {
@@ -82,7 +87,7 @@ func contextGuardForResults(options *cliOptions, results []api.FileResult) *segm
 		guard.bypassReason = "render-error"
 		return guard
 	}
-	headroom := completeResultSegmentCount(results) * 128
+	headroom := completeResultSegmentCount(results)*128 + focusedLineResultCount(options, results)*128
 	if rendered.Len()+headroom > activeInlineOutputThreshold {
 		guard.deduplicate = false
 		guard.recordSegments = false
@@ -92,11 +97,27 @@ func contextGuardForResults(options *cliOptions, results []api.FileResult) *segm
 		guard.bypassRequested = true
 		if guard.bypassReason != "potential-spill" {
 			guard.deduplicate = false
-			guard.recordSegments = true
+			guard.recordSegments = segmentMode
+			guard.recordLines = focusedLineMode
 			guard.bypassReason = "requested"
 		}
 	}
 	return guard
+}
+
+func focusedLineCoverageMode(options *cliOptions) bool {
+	return options.LineOnly && options.Params.At != "" && options.AnchorLines != nil
+}
+
+func focusedLineResultCount(options *cliOptions, results []api.FileResult) int {
+	if !focusedLineCoverageMode(options) {
+		return 0
+	}
+	count := 0
+	for _, result := range results {
+		count += len(result.Matches)
+	}
+	return count
 }
 
 func segmentOutputMode(options *cliOptions) bool {

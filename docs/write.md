@@ -97,7 +97,7 @@ applied 1 files, 1 changes
 
 Fresh anchors are recomputed against the complete resulting file and are associated with `after_sha256` in `--json` output. Replacement rows include neighboring anchors for orientation. Range deletions return surviving neighbors.
 
-Successful, non-dry-run human writes also add those exact post-write rows to Grepple's session context coverage. If prior structural output plus the write anchors cover every current line of a declaration, a later structural search may replace the declaration with an unchanged-source marker. Partial coverage never suppresses a declaration. JSON, predicted dry-run anchors, failed writes, and output that spills are not recorded. Use `--repeat-source` on the later structural search to force complete source and increment the context guard's `bypassRequestedCalls` statistic.
+Successful, non-dry-run human writes add their exact post-write rows to Grepple's shared session coverage. Structural output and focused local anchored `--at --line-only` reads contribute to and consume the same line ledger. If prior output plus write anchors cover current declaration lines, later structural or focused `--at` output may preserve boundary rows while replacing covered interior runs with explicit range markers; complete declarations may use one declaration marker. Changed and unseen lines always render, and partial coverage is never represented as complete coverage. JSON, predicted dry-run anchors, failed writes, broad line-only searches, and output that spills are not recorded. Use `--repeat-source` on default structural output or focused `--at --line-only` output to force complete source and increment `bypassRequestedCalls`.
 
 ## Dry runs and structured output
 

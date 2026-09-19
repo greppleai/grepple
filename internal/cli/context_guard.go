@@ -17,7 +17,7 @@ import (
 
 const (
 	contextGuardSchema         = "grepple-context-segments-v2"
-	contextGuardStatsSchema    = "grepple-context-segment-stats-v3"
+	contextGuardStatsSchema    = "grepple-context-segment-stats-v4"
 	contextGuardMaxEntries     = 50_000
 	contextGuardMaxLineEntries = 200_000
 	contextGuardMaxFileSize    = 16 << 20
@@ -52,6 +52,12 @@ type renderedContextStats struct {
 	PotentialSpillCalls         int     `json:"potentialSpillCalls"`
 	WriteCalls                  int     `json:"writeCalls"`
 	WriteAnchorsRecorded        int     `json:"writeAnchorsRecorded"`
+	LineCoverageCalls           int     `json:"lineCoverageCalls"`
+	SearchLinesRecorded         int     `json:"searchLinesRecorded"`
+	SearchLineBytesEmitted      int64   `json:"searchLineBytesEmitted"`
+	LineRangesRemoved           int     `json:"lineRangesRemoved"`
+	LinesRemoved                int     `json:"linesRemoved"`
+	LineBytesRemoved            int64   `json:"lineBytesRemoved"`
 	LineCoverageRemovedSegments int     `json:"lineCoverageRemovedSegments"`
 	ResultFiles                 int     `json:"resultFiles"`
 	ReturnedBytes               int64   `json:"returnedBytes"`
@@ -71,13 +77,22 @@ type segmentContextGuard struct {
 	observed                    bool
 	deduplicate                 bool
 	recordSegments              bool
+	recordLines                 bool
 	cacheDirty                  bool
 	writeCall                   bool
+	lineCoverageCall            bool
 	bypassRequested             bool
 	bypassReason                string
 	resultFiles                 int
 	returnedBytes               int
 	writeAnchorsRecorded        int
+	searchLinesRecorded         int
+	searchLineBytesEmitted      int
+	lineRangesRemoved           int
+	linesRemoved                int
+	lineBytesRemoved            int
+	lineRenderedBytesRemoved    int
+	lineMarkerBytes             int
 	lineCoverageRemovedSegments int
 	emittedSegments             int
 	removedSegments             int
@@ -191,6 +206,77 @@ func (guard *segmentContextGuard) recordMarker(bytes int) {
 	if guard != nil {
 		guard.markerBytes += bytes
 	}
+}
+
+type contextSourceLine struct {
+	number int
+	text   string
+}
+
+type contextLineRun struct {
+	start int
+	end   int
+	omit  bool
+}
+
+func contextLineRuns(guard *segmentContextGuard, source string, lines []contextSourceLine) []contextLineRun {
+	if len(lines) == 0 {
+		return nil
+	}
+	runs := make([]contextLineRun, 0, len(lines))
+	start := 0
+	covered := guard.lineCovered(source, lines[0].number, lines[0].text)
+	for index := 1; index <= len(lines); index++ {
+		nextCovered := false
+		consecutive := false
+		if index < len(lines) {
+			nextCovered = guard.lineCovered(source, lines[index].number, lines[index].text)
+			consecutive = lines[index].number == lines[index-1].number+1
+		}
+		if index < len(lines) && nextCovered == covered && consecutive {
+			continue
+		}
+		runs = append(runs, contextLineRun{start: start, end: index, omit: covered && index-start >= 6})
+		start, covered = index, nextCovered
+	}
+	return runs
+}
+
+func (guard *segmentContextGuard) lineCovered(source string, line int, content string) bool {
+	if guard == nil || !guard.deduplicate || line < 1 {
+		return false
+	}
+	path, ok := localContextSourcePath(source)
+	if !ok {
+		return false
+	}
+	coverage, ok := guard.cache.Files[path]
+	return ok && coverage.Lines[line] == contextLineDigest(content)
+}
+
+func (guard *segmentContextGuard) recordSearchLine(source string, line int, content string) {
+	if guard == nil || !guard.recordLines {
+		return
+	}
+	guard.searchLineBytesEmitted += len(content)
+	path, ok := localContextSourcePath(source)
+	if !ok {
+		return
+	}
+	if guard.recordContextLine(path, line, content) {
+		guard.searchLinesRecorded++
+	}
+}
+
+func (guard *segmentContextGuard) recordLineRangeOmission(lines, sourceBytes, renderedBytes, markerBytes int) {
+	if guard == nil || lines < 1 {
+		return
+	}
+	guard.lineRangesRemoved++
+	guard.linesRemoved += lines
+	guard.lineBytesRemoved += sourceBytes
+	guard.lineRenderedBytesRemoved += renderedBytes
+	guard.lineMarkerBytes += markerBytes
 }
 
 func (guard *segmentContextGuard) segmentCoveredByLines(source string, segment api.ResultSegment) bool {
@@ -422,15 +508,23 @@ func updateRenderedContextStats(guard *segmentContextGuard) error {
 		stats.NonStructuralCalls++
 	}
 	stats.WriteAnchorsRecorded += guard.writeAnchorsRecorded
+	if guard.lineCoverageCall {
+		stats.LineCoverageCalls++
+	}
+	stats.SearchLinesRecorded += guard.searchLinesRecorded
+	stats.SearchLineBytesEmitted += int64(guard.searchLineBytesEmitted)
+	stats.LineRangesRemoved += guard.lineRangesRemoved
+	stats.LinesRemoved += guard.linesRemoved
+	stats.LineBytesRemoved += int64(guard.lineBytesRemoved)
 	stats.LineCoverageRemovedSegments += guard.lineCoverageRemovedSegments
 	stats.EmittedSegments += guard.emittedSegments
 	stats.RemovedSegments += guard.removedSegments
 	stats.EmittedSourceBytes += int64(guard.emittedBytes)
-	stats.GrossRemovedBytes += int64(guard.removedBytes)
-	if saved := guard.removedBytes - guard.markerBytes; saved > 0 {
+	stats.GrossRemovedBytes += int64(guard.removedBytes + guard.lineBytesRemoved)
+	if saved := guard.removedBytes - guard.markerBytes + guard.lineRenderedBytesRemoved - guard.lineMarkerBytes; saved > 0 {
 		stats.NetSavedBytes += int64(saved)
 	}
-	totalSource := stats.EmittedSourceBytes + stats.GrossRemovedBytes
+	totalSource := stats.EmittedSourceBytes + stats.SearchLineBytesEmitted + stats.GrossRemovedBytes
 	if totalSource > 0 {
 		stats.NetSavingsPercent = float64(stats.NetSavedBytes) * 100 / float64(totalSource)
 	}
@@ -492,7 +586,7 @@ func readRenderedContextStats(path string, period int) renderedContextStats {
 		return fresh
 	}
 	var restored renderedContextStats
-	if json.Unmarshal(content, &restored) != nil || (restored.Schema != contextGuardStatsSchema && restored.Schema != "grepple-context-segment-stats-v1" && restored.Schema != "grepple-context-segment-stats-v2") || restored.Period != period {
+	if json.Unmarshal(content, &restored) != nil || (restored.Schema != contextGuardStatsSchema && restored.Schema != "grepple-context-segment-stats-v1" && restored.Schema != "grepple-context-segment-stats-v2" && restored.Schema != "grepple-context-segment-stats-v3") || restored.Period != period {
 		return fresh
 	}
 	restored.Schema = contextGuardStatsSchema

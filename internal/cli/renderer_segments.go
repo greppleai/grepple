@@ -248,20 +248,64 @@ func (renderer segmentRenderer) renderSegment(source, path string, artifact *api
 		renderer.contextGuard.recordMarker(len(marker))
 		return renderer.output.writeString(marker)
 	}
-	for index, line := range strings.Split(segment.Text, "\n") {
-		lineNumber := segment.Start + index
-		if prefix != "" {
-			if err := renderer.output.writeString(fmt.Sprintf("%s%*d   %s\n", prefix, width, lineNumber, line)); err != nil {
-				return err
-			}
-			continue
-		}
-		if err := renderer.renderSourceLine(path, lineNumber, normalizeRenderedAnchorLine(line), width); err != nil {
-			return err
-		}
+	if err := renderer.renderSegmentLines(source, path, artifact, segment, width, prefix); err != nil {
+		return err
 	}
 	renderer.contextGuard.record(source, artifact, segment)
 	return nil
+}
+
+func (renderer segmentRenderer) renderSegmentLines(source, path string, artifact *api.NavigationArtifactIdentity, segment api.ResultSegment, width int, prefix string) error {
+	texts := strings.Split(segment.Text, "\n")
+	lines := make([]contextSourceLine, len(texts))
+	for index, text := range texts {
+		lines[index] = contextSourceLine{number: segment.Start + index, text: text}
+	}
+	if artifact != nil {
+		return renderer.renderExpandedSegmentLines(path, lines, width, prefix)
+	}
+	for _, run := range contextLineRuns(renderer.contextGuard, source, lines) {
+		if err := renderer.renderSegmentRun(path, lines, run, width, prefix); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (renderer segmentRenderer) renderSegmentRun(path string, lines []contextSourceLine, run contextLineRun, width int, prefix string) error {
+	if !run.omit {
+		return renderer.renderExpandedSegmentLines(path, lines[run.start:run.end], width, prefix)
+	}
+	if err := renderer.output.writeString(renderer.segmentLineRow(path, lines[run.start].number, lines[run.start].text, width, prefix)); err != nil {
+		return err
+	}
+	omitted := lines[run.start+1 : run.end-1]
+	marker := fmt.Sprintf("%s… lines %d-%d omitted; unchanged anchored source already exists in context …\n", prefix, omitted[0].number, omitted[len(omitted)-1].number)
+	if err := renderer.output.writeString(marker); err != nil {
+		return err
+	}
+	sourceBytes, renderedBytes := renderer.segmentRunBytes(path, omitted, width, prefix)
+	renderer.contextGuard.recordLineRangeOmission(len(omitted), sourceBytes, renderedBytes, len(marker))
+	last := lines[run.end-1]
+	return renderer.output.writeString(renderer.segmentLineRow(path, last.number, last.text, width, prefix))
+}
+
+func (renderer segmentRenderer) renderExpandedSegmentLines(path string, lines []contextSourceLine, width int, prefix string) error {
+	for _, line := range lines {
+		if err := renderer.output.writeString(renderer.segmentLineRow(path, line.number, line.text, width, prefix)); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (renderer segmentRenderer) segmentRunBytes(path string, lines []contextSourceLine, width int, prefix string) (int, int) {
+	sourceBytes, renderedBytes := 0, 0
+	for _, line := range lines {
+		sourceBytes += len(line.text)
+		renderedBytes += len(renderer.segmentLineRow(path, line.number, line.text, width, prefix))
+	}
+	return sourceBytes, renderedBytes
 }
 
 func resultSourceIdentity(result api.FileResult) string {
@@ -272,10 +316,18 @@ func resultSourceIdentity(result api.FileResult) string {
 }
 
 func (renderer segmentRenderer) renderSourceLine(path string, line int, content string, width int) error {
-	if anchor := renderer.anchors.line(path, line); anchor != "" {
-		return renderer.output.writeString(fmt.Sprintf("%s%s%d%s%s\n", anchor, anchorOutputSeparator, line, anchorOutputSeparator, content))
+	return renderer.output.writeString(renderer.segmentLineRow(path, line, content, width, ""))
+}
+
+func (renderer segmentRenderer) segmentLineRow(path string, line int, content string, width int, prefix string) string {
+	content = normalizeRenderedAnchorLine(content)
+	if prefix != "" {
+		return fmt.Sprintf("%s%*d   %s\n", prefix, width, line, content)
 	}
-	return renderer.output.writeString(fmt.Sprintf("%*d   %s\n", width, line, content))
+	if anchor := renderer.anchors.line(path, line); anchor != "" {
+		return fmt.Sprintf("%s%s%d%s%s\n", anchor, anchorOutputSeparator, line, anchorOutputSeparator, content)
+	}
+	return fmt.Sprintf("%*d   %s\n", width, line, content)
 }
 
 func segmentLineWidth(segments []api.ResultSegment) int {

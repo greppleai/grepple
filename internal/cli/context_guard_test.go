@@ -2,6 +2,7 @@ package cli
 
 import (
 	"bytes"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -278,6 +279,129 @@ func TestContextGuardCanBeDisabledInUserSettings(t *testing.T) {
 	if _, err := os.Stat(filepath.Join(directory, "stats-0.json")); !os.IsNotExist(err) {
 		t.Fatalf("disabled context guard wrote statistics: %v", err)
 	}
+}
+
+func TestStructuralCoverageCollapsesFocusedAtRange(t *testing.T) {
+	directory := t.TempDir()
+	t.Setenv("GREPPLE_CONTEXT_GUARD_DIR", directory)
+	previous := activeInlineOutputThreshold
+	activeInlineOutputThreshold = 4096
+	defer func() { activeInlineOutputThreshold = previous }()
+	result, segment, anchors := focusedLineCoverageFixture(t)
+	renderWithSegmentGuard(t, api.FileResult{Path: result.Path, Segments: []api.ResultSegment{segment}})
+	output := renderFocusedAtWithGuard(t, result, anchors, false)
+	if !strings.Contains(output, "lines 2-7 omitted; unchanged anchored source already exists in context") {
+		t.Fatalf("focused range was not collapsed: %q", output)
+	}
+	if !strings.Contains(output, "lineOne") || strings.Contains(output, "lineThree") || !strings.Contains(output, "lineEight") {
+		t.Fatalf("focused range boundaries were not preserved: %q", output)
+	}
+	stats := readRenderedContextStats(filepath.Join(directory, "stats-0.json"), 0)
+	if stats.LineCoverageCalls != 1 || stats.LineRangesRemoved != 1 || stats.LinesRemoved != 6 {
+		t.Fatalf("focused range statistics = %#v", stats)
+	}
+}
+
+func TestFocusedAtCoverageSuppressesLaterStructuralSegment(t *testing.T) {
+	t.Setenv("GREPPLE_CONTEXT_GUARD_DIR", t.TempDir())
+	previous := activeInlineOutputThreshold
+	activeInlineOutputThreshold = 4096
+	defer func() { activeInlineOutputThreshold = previous }()
+	result, segment, anchors := focusedLineCoverageFixture(t)
+	first := renderFocusedAtWithGuard(t, result, anchors, false)
+	if strings.Contains(first, "omitted; unchanged") {
+		t.Fatalf("new focused range was unexpectedly collapsed: %q", first)
+	}
+	guard, err := openSegmentContextGuard()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !guard.seen(result.Path, nil, segment) {
+		guard.close()
+		t.Fatal("focused --at coverage did not suppress the complete structural segment")
+	}
+	guard.close()
+}
+
+func TestPartialFocusedCoverageCollapsesStructuralRuns(t *testing.T) {
+	t.Setenv("GREPPLE_CONTEXT_GUARD_DIR", t.TempDir())
+	previous := activeInlineOutputThreshold
+	activeInlineOutputThreshold = 4096
+	defer func() { activeInlineOutputThreshold = previous }()
+	result, segment, anchors := focusedLineCoverageFixture(t)
+	guard, err := openSegmentContextGuard()
+	if err != nil {
+		t.Fatal(err)
+	}
+	guard.observed = true
+	for _, match := range result.Matches[1:7] {
+		guard.recordWriteAnchors(result.Path, []writeAnchor{{Line: match.Line, Content: match.Text}})
+	}
+	guard.close()
+	guard = contextGuardForResults(&cliOptions{JSON: "off", AnchorLines: anchors}, []api.FileResult{{Path: result.Path, Segments: []api.ResultSegment{segment}}})
+	if guard == nil {
+		t.Fatal("structural context guard was not enabled")
+	}
+	var output bytes.Buffer
+	if err := (segmentRenderer{output: newOutputWriter(&output), anchors: anchors, contextGuard: guard}).Render([]api.FileResult{{Path: result.Path, Segments: []api.ResultSegment{segment}}}); err != nil {
+		guard.close()
+		t.Fatal(err)
+	}
+	guard.returnedBytes = output.Len()
+	guard.close()
+	if !strings.Contains(output.String(), "lines 3-6 omitted; unchanged anchored source already exists in context") || !strings.Contains(output.String(), "lineOne") || !strings.Contains(output.String(), "lineEight") {
+		t.Fatalf("structural covered run was not collapsed safely: %q", output.String())
+	}
+}
+
+func TestRepeatSourceRestoresFocusedAtRange(t *testing.T) {
+	t.Setenv("GREPPLE_CONTEXT_GUARD_DIR", t.TempDir())
+	previous := activeInlineOutputThreshold
+	activeInlineOutputThreshold = 4096
+	defer func() { activeInlineOutputThreshold = previous }()
+	result, segment, anchors := focusedLineCoverageFixture(t)
+	renderWithSegmentGuard(t, api.FileResult{Path: result.Path, Segments: []api.ResultSegment{segment}})
+	output := renderFocusedAtWithGuard(t, result, anchors, true)
+	if strings.Contains(output, "omitted; unchanged") || !strings.Contains(output, "lineThree") {
+		t.Fatalf("--repeat-source did not restore focused lines: %q", output)
+	}
+	stats := readRenderedContextStats(filepath.Join(os.Getenv("GREPPLE_CONTEXT_GUARD_DIR"), "stats-0.json"), 0)
+	if stats.BypassRequestedCalls != 1 {
+		t.Fatalf("focused bypass was not counted: %#v", stats)
+	}
+}
+
+func focusedLineCoverageFixture(t *testing.T) (api.FileResult, api.ResultSegment, anchorLookup) {
+	t.Helper()
+	path := filepath.Join(t.TempDir(), "focused.go")
+	lines := []string{"lineOne", "lineTwo", "lineThree", "lineFour", "lineFive", "lineSix", "lineSeven", "lineEight"}
+	matches := make([]api.ResultMatch, 0, len(lines))
+	anchors := anchorLookup{path: map[int]string{}}
+	for index, line := range lines {
+		lineNumber := index + 1
+		matches = append(matches, api.ResultMatch{Line: lineNumber, Text: line})
+		anchors[path][lineNumber] = fmt.Sprintf("h%02d", lineNumber)
+	}
+	return api.FileResult{Path: path, Matches: matches}, api.ResultSegment{Kind: "function", Start: 1, End: len(lines), Text: strings.Join(lines, "\n")}, anchors
+}
+
+func renderFocusedAtWithGuard(t *testing.T, result api.FileResult, anchors anchorLookup, repeat bool) string {
+	t.Helper()
+	options := &cliOptions{JSON: "off", LineOnly: true, RepeatSource: repeat, AnchorLines: anchors}
+	options.Params.At = result.Path + ":1-8"
+	guard := contextGuardForResults(options, []api.FileResult{result})
+	if guard == nil {
+		t.Fatal("focused line context guard was not enabled")
+	}
+	var output bytes.Buffer
+	renderer := lineRenderer{output: newOutputWriter(&output), anchors: anchors, contextGuard: guard, repeatSource: repeat}
+	if err := renderer.Render([]api.FileResult{result}); err != nil {
+		guard.close()
+		t.Fatal(err)
+	}
+	guard.returnedBytes = output.Len()
+	guard.close()
+	return output.String()
 }
 
 func TestContextStatsSurviveCacheWriteFailure(t *testing.T) {
