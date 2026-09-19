@@ -324,6 +324,52 @@ func TestContextGuardCanBeDisabledInUserSettings(t *testing.T) {
 	}
 }
 
+func TestEnclosingLineReadProducesCoverageWithoutChangingOutput(t *testing.T) {
+	directory := t.TempDir()
+	t.Setenv("GREPPLE_CONTEXT_GUARD_DIR", directory)
+	previous := activeInlineOutputThreshold
+	activeInlineOutputThreshold = 4096
+	defer func() { activeInlineOutputThreshold = previous }()
+	result, segment, _ := focusedLineCoverageFixture(t)
+	for index := range result.Matches {
+		result.Matches[index].StartLine = segment.Start
+		result.Matches[index].EndLine = segment.End
+	}
+	first := renderEnclosingLinesWithGuard(t, result)
+	second := renderEnclosingLinesWithGuard(t, result)
+	if first != second || strings.Contains(second, "omitted; unchanged") || !strings.Contains(second, result.Path+":3@1-8:lineThree") {
+		t.Fatalf("enclosing output changed after recording coverage: first=%q second=%q", first, second)
+	}
+	stats := readRenderedContextStats(filepath.Join(directory, "stats-0.json"), 0)
+	if stats.Calls.OtherReads != 2 || stats.Details.SearchLinesRecorded != 8 || stats.TotalBytesRemoved != 0 {
+		t.Fatalf("enclosing producer statistics = %#v", stats)
+	}
+	guard, err := openSegmentContextGuard()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !guard.seen(result.Path, nil, segment) {
+		guard.close()
+		t.Fatal("enclosing output lines did not cover the later structural segment")
+	}
+	guard.close()
+}
+
+func TestEnclosingProducerDoesNotRecordPotentiallySpilledRows(t *testing.T) {
+	t.Setenv("GREPPLE_CONTEXT_GUARD_DIR", t.TempDir())
+	previous := activeInlineOutputThreshold
+	activeInlineOutputThreshold = 1
+	defer func() { activeInlineOutputThreshold = previous }()
+	result, _, _ := focusedLineCoverageFixture(t)
+	options := &cliOptions{JSON: "off", LineOnly: true}
+	options.Params.EnclosingRanges = true
+	guard := contextGuardForResults(options, []api.FileResult{result})
+	if guard == nil || guard.recordLines || guard.bypassReason != "potential-spill" {
+		t.Fatalf("enclosing potential-spill guard = %#v", guard)
+	}
+	guard.close()
+}
+
 func TestAnchoredContextReadProducesCoverageWithoutChangingOutput(t *testing.T) {
 	directory := t.TempDir()
 	t.Setenv("GREPPLE_CONTEXT_GUARD_DIR", directory)
@@ -514,6 +560,25 @@ func focusedLineCoverageFixture(t *testing.T) (api.FileResult, api.ResultSegment
 		anchors[path][lineNumber] = fmt.Sprintf("h%02d", lineNumber)
 	}
 	return api.FileResult{Path: path, Matches: matches}, api.ResultSegment{Kind: "function", Start: 1, End: len(lines), Text: strings.Join(lines, "\n")}, anchors
+}
+
+func renderEnclosingLinesWithGuard(t *testing.T, result api.FileResult) string {
+	t.Helper()
+	options := &cliOptions{JSON: "off", LineOnly: true}
+	options.Params.EnclosingRanges = true
+	guard := contextGuardForResults(options, []api.FileResult{result})
+	if guard == nil || !guard.recordLines || guard.deduplicate {
+		t.Fatalf("enclosing producer guard = %#v", guard)
+	}
+	var output bytes.Buffer
+	renderer := lineRenderer{output: newOutputWriter(&output), contextGuard: guard}
+	if err := renderer.Render([]api.FileResult{result}); err != nil {
+		guard.close()
+		t.Fatal(err)
+	}
+	guard.returnedBytes = output.Len()
+	guard.close()
+	return output.String()
 }
 
 func renderContextWithGuard(t *testing.T, result api.FileResult, anchors anchorLookup) string {

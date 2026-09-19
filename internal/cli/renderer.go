@@ -67,14 +67,15 @@ func contextGuardForResults(options *cliOptions, results []api.FileResult) *segm
 	segmentMode := segmentOutputMode(options)
 	focusedLineMode := focusedLineCoverageMode(options)
 	broadLineMode := broadLineCoverageProducerMode(options)
+	enclosingMode := enclosingLineCoverageProducerMode(options)
 	contextMode := contextCoverageProducerMode(options)
 	guard.structuredRead = segmentMode
 	guard.deduplicate = segmentMode || focusedLineMode
 	guard.recordSegments = segmentMode
-	guard.recordLines = focusedLineMode || broadLineMode || contextMode
+	guard.recordLines = focusedLineMode || broadLineMode || contextMode || enclosingMode
 	guard.lineCoverageCall = focusedLineMode
 	guard.bypassReason = initialReadBypassReason(segmentMode, focusedLineMode)
-	if !segmentMode && !focusedLineMode && !broadLineMode && !contextMode {
+	if !contextCoverageEligible(segmentMode, focusedLineMode, broadLineMode, contextMode, enclosingMode) {
 		return guard
 	}
 	var rendered bytes.Buffer
@@ -108,6 +109,15 @@ func contextGuardForResults(options *cliOptions, results []api.FileResult) *segm
 	}
 	return guard
 }
+func contextCoverageEligible(modes ...bool) bool {
+	for _, enabled := range modes {
+		if enabled {
+			return true
+		}
+	}
+	return false
+}
+
 func initialReadBypassReason(segmentMode, focusedLineMode bool) string {
 	if segmentMode || focusedLineMode {
 		return ""
@@ -125,6 +135,9 @@ func broadLineCoverageProducerMode(options *cliOptions) bool {
 
 func contextCoverageProducerMode(options *cliOptions) bool {
 	return (options.Params.BeforeContext > 0 || options.Params.AfterContext > 0) && options.AnchorLines != nil
+}
+func enclosingLineCoverageProducerMode(options *cliOptions) bool {
+	return options.JSON == "off" && options.LineOnly && options.Params.EnclosingRanges && !options.Stdin
 }
 
 func focusedLineResultCount(options *cliOptions, results []api.FileResult) int {

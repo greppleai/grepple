@@ -30,6 +30,7 @@ func (renderer lineRenderer) Render(results []api.FileResult) error {
 			if err := renderer.output.writeString(fmt.Sprintf("%s:%s:%s\n", result.Path, location, match.Text)); err != nil {
 				return err
 			}
+			renderer.contextGuard.recordSearchLine(resultSourceIdentity(result), match.Line, match.Text)
 		}
 	}
 	return nil
