@@ -190,6 +190,7 @@ func runWrite(args []string) error {
 	if options.help {
 		return stdoutWriter().writeString(writeHelp)
 	}
+	output := &writeResponseCounter{writer: os.Stdout}
 	var request writeRequest
 	var failure *writeFailure
 	if options.literalEdit {
@@ -198,9 +199,11 @@ func runWrite(args []string) error {
 		request, failure = decodeWriteRequest(os.Stdin)
 	}
 	if failure != nil {
-		if err := emitWriteResponse(os.Stdout, failedWriteResponse(options.dryRun, failure), options.json); err != nil {
+		response := failedWriteResponse(options.dryRun, failure)
+		if err := emitWriteResponse(output, response, options.json); err != nil {
 			return err
 		}
+		recordWriteResponseContext(options.root, response, output.written, false, true, false)
 		requestExit(1)
 		return nil
 	}
@@ -208,13 +211,11 @@ func runWrite(args []string) error {
 	if failure != nil {
 		response = failedWriteResponse(options.dryRun, failure)
 	}
-	output := &writeResponseCounter{writer: os.Stdout}
 	if err := emitWriteResponse(output, response, options.json); err != nil {
 		return err
 	}
-	if failure == nil && response.Applied && !options.json {
-		recordWriteResponseContext(options.root, response, output.written)
-	}
+	recordAnchors := failure == nil && response.Applied && !options.dryRun && !options.json
+	recordWriteResponseContext(options.root, response, output.written, response.Applied, failure != nil, recordAnchors)
 	if failure != nil {
 		requestExit(1)
 	}

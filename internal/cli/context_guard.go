@@ -17,7 +17,7 @@ import (
 
 const (
 	contextGuardSchema         = "grepple-context-segments-v2"
-	contextGuardStatsSchema    = "grepple-context-segment-stats-v4"
+	contextGuardStatsSchema    = "grepple-context-stats-v5"
 	contextGuardMaxEntries     = 50_000
 	contextGuardMaxLineEntries = 200_000
 	contextGuardMaxFileSize    = 16 << 20
@@ -40,33 +40,69 @@ type renderedContextEntry struct {
 }
 
 type renderedContextStats struct {
-	Schema                      string  `json:"schema"`
-	Period                      int     `json:"period"`
-	ResetReason                 string  `json:"resetReason"`
-	CreatedAt                   string  `json:"createdAt"`
-	UpdatedAt                   string  `json:"updatedAt"`
-	ObservedCalls               int     `json:"observedCalls"`
-	DeduplicationEnabledCalls   int     `json:"deduplicationEnabledCalls"`
-	BypassRequestedCalls        int     `json:"bypassRequestedCalls"`
-	NonStructuralCalls          int     `json:"nonStructuralCalls"`
-	PotentialSpillCalls         int     `json:"potentialSpillCalls"`
-	WriteCalls                  int     `json:"writeCalls"`
-	WriteAnchorsRecorded        int     `json:"writeAnchorsRecorded"`
-	LineCoverageCalls           int     `json:"lineCoverageCalls"`
-	SearchLinesRecorded         int     `json:"searchLinesRecorded"`
-	SearchLineBytesEmitted      int64   `json:"searchLineBytesEmitted"`
-	LineRangesRemoved           int     `json:"lineRangesRemoved"`
-	LinesRemoved                int     `json:"linesRemoved"`
-	LineBytesRemoved            int64   `json:"lineBytesRemoved"`
-	LineCoverageRemovedSegments int     `json:"lineCoverageRemovedSegments"`
-	ResultFiles                 int     `json:"resultFiles"`
-	ReturnedBytes               int64   `json:"returnedBytes"`
-	EmittedSegments             int     `json:"emittedSegments"`
-	RemovedSegments             int     `json:"removedSegments"`
-	EmittedSourceBytes          int64   `json:"emittedSourceBytes"`
-	GrossRemovedBytes           int64   `json:"grossRemovedBytes"`
-	NetSavedBytes               int64   `json:"netSavedBytes"`
-	NetSavingsPercent           float64 `json:"netSavingsPercent"`
+	Schema             string                   `json:"schema"`
+	Period             int                      `json:"period"`
+	ResetReason        string                   `json:"resetReason"`
+	CreatedAt          string                   `json:"createdAt"`
+	UpdatedAt          string                   `json:"updatedAt"`
+	TotalBytesReturned int64                    `json:"totalBytesReturned"`
+	TotalBytesRemoved  int64                    `json:"totalBytesRemoved"`
+	TotalBytesEmitted  int64                    `json:"totalBytesEmitted"`
+	SavingsPercent     float64                  `json:"savingsPercent"`
+	Calls              renderedContextCallStats `json:"calls"`
+	Details            renderedContextDetails   `json:"details"`
+}
+
+type renderedContextCallStats struct {
+	Total               int `json:"total"`
+	Reads               int `json:"reads"`
+	StructuredReads     int `json:"structuredReads"`
+	FocusedReads        int `json:"focusedReads"`
+	OtherReads          int `json:"otherReads"`
+	BypassReads         int `json:"bypassReads"`
+	PotentialSpillReads int `json:"potentialSpillReads"`
+	Writes              int `json:"writes"`
+	SuccessfulWrites    int `json:"successfulWrites"`
+	AppliedWrites       int `json:"appliedWrites"`
+	FailedWrites        int `json:"failedWrites"`
+}
+
+type renderedContextDetails struct {
+	ResultFiles                   int `json:"resultFiles"`
+	SegmentsEmitted               int `json:"segmentsEmitted"`
+	SegmentsRemoved               int `json:"segmentsRemoved"`
+	SegmentsRemovedByLineCoverage int `json:"segmentsRemovedByLineCoverage"`
+	SearchLinesRecorded           int `json:"searchLinesRecorded"`
+	LineRangesRemoved             int `json:"lineRangesRemoved"`
+	LinesRemoved                  int `json:"linesRemoved"`
+	WriteAnchorsRecorded          int `json:"writeAnchorsRecorded"`
+}
+
+type legacyRenderedContextStats struct {
+	Schema                      string `json:"schema"`
+	Period                      int    `json:"period"`
+	ResetReason                 string `json:"resetReason"`
+	CreatedAt                   string `json:"createdAt"`
+	UpdatedAt                   string `json:"updatedAt"`
+	ObservedCalls               int    `json:"observedCalls"`
+	DeduplicationEnabledCalls   int    `json:"deduplicationEnabledCalls"`
+	BypassRequestedCalls        int    `json:"bypassRequestedCalls"`
+	NonStructuralCalls          int    `json:"nonStructuralCalls"`
+	PotentialSpillCalls         int    `json:"potentialSpillCalls"`
+	WriteCalls                  int    `json:"writeCalls"`
+	WriteAnchorsRecorded        int    `json:"writeAnchorsRecorded"`
+	LineCoverageCalls           int    `json:"lineCoverageCalls"`
+	SearchLinesRecorded         int    `json:"searchLinesRecorded"`
+	SearchLineBytesEmitted      int64  `json:"searchLineBytesEmitted"`
+	LineRangesRemoved           int    `json:"lineRangesRemoved"`
+	LinesRemoved                int    `json:"linesRemoved"`
+	LineCoverageRemovedSegments int    `json:"lineCoverageRemovedSegments"`
+	ResultFiles                 int    `json:"resultFiles"`
+	ReturnedBytes               int64  `json:"returnedBytes"`
+	EmittedSegments             int    `json:"emittedSegments"`
+	RemovedSegments             int    `json:"removedSegments"`
+	EmittedSourceBytes          int64  `json:"emittedSourceBytes"`
+	NetSavedBytes               int64  `json:"netSavedBytes"`
 }
 
 type segmentContextGuard struct {
@@ -80,6 +116,9 @@ type segmentContextGuard struct {
 	recordLines                 bool
 	cacheDirty                  bool
 	writeCall                   bool
+	writeApplied                bool
+	writeFailed                 bool
+	structuredRead              bool
 	lineCoverageCall            bool
 	bypassRequested             bool
 	bypassReason                string
@@ -359,12 +398,8 @@ func (guard *segmentContextGuard) removeContextFile(source string) {
 	}
 }
 
-func recordWriteResponseContext(root string, response writeResponse, returnedBytes int) {
-	if activeInlineOutputThreshold < 1 || returnedBytes > activeInlineOutputThreshold || !contextGuardEnabled() {
-		return
-	}
-	resolvedRoot, err := resolveWriteRoot(root)
-	if err != nil {
+func recordWriteResponseContext(root string, response writeResponse, returnedBytes int, applied, failed, recordAnchors bool) {
+	if !contextGuardEnabled() {
 		return
 	}
 	guard, err := openSegmentContextGuard()
@@ -375,8 +410,18 @@ func recordWriteResponseContext(root string, response writeResponse, returnedByt
 	guard.deduplicate = false
 	guard.recordSegments = false
 	guard.writeCall = true
+	guard.writeApplied = applied
+	guard.writeFailed = failed
 	guard.resultFiles = len(response.Files)
 	guard.returnedBytes = returnedBytes
+	defer guard.close()
+	if !recordAnchors || activeInlineOutputThreshold < 1 || returnedBytes > activeInlineOutputThreshold {
+		return
+	}
+	resolvedRoot, err := resolveWriteRoot(root)
+	if err != nil {
+		return
+	}
 	for _, file := range response.Files {
 		if !file.Changed {
 			continue
@@ -391,7 +436,6 @@ func recordWriteResponseContext(root string, response writeResponse, returnedByt
 		}
 		guard.recordWriteAnchors(source, responseFileAnchors(file))
 	}
-	guard.close()
 }
 
 func localContextSourcePath(source string) (string, bool) {
@@ -492,41 +536,50 @@ func updateRenderedContextStats(guard *segmentContextGuard) error {
 		stats.CreatedAt, stats.ResetReason = now, "session-start"
 	}
 	stats.UpdatedAt = now
-	stats.ObservedCalls++
-	stats.ResultFiles += guard.resultFiles
-	stats.ReturnedBytes += int64(guard.returnedBytes)
-	if guard.bypassRequested {
-		stats.BypassRequestedCalls++
-	}
+	stats.Calls.Total++
+	stats.TotalBytesReturned += int64(guard.returnedBytes)
+	stats.TotalBytesEmitted += int64(guard.emittedBytes + guard.searchLineBytesEmitted)
+	stats.Details.ResultFiles += guard.resultFiles
 	if guard.writeCall {
-		stats.WriteCalls++
-	} else if guard.deduplicate {
-		stats.DeduplicationEnabledCalls++
-	} else if guard.bypassReason == "potential-spill" {
-		stats.PotentialSpillCalls++
-	} else if guard.bypassReason != "requested" {
-		stats.NonStructuralCalls++
+		stats.Calls.Writes++
+		if guard.writeFailed {
+			stats.Calls.FailedWrites++
+		} else {
+			stats.Calls.SuccessfulWrites++
+		}
+		if guard.writeApplied {
+			stats.Calls.AppliedWrites++
+		}
+	} else {
+		stats.Calls.Reads++
+		switch {
+		case guard.structuredRead:
+			stats.Calls.StructuredReads++
+		case guard.lineCoverageCall:
+			stats.Calls.FocusedReads++
+		default:
+			stats.Calls.OtherReads++
+		}
+		if guard.bypassRequested {
+			stats.Calls.BypassReads++
+		}
+		if guard.bypassReason == "potential-spill" {
+			stats.Calls.PotentialSpillReads++
+		}
 	}
-	stats.WriteAnchorsRecorded += guard.writeAnchorsRecorded
-	if guard.lineCoverageCall {
-		stats.LineCoverageCalls++
+	stats.Details.WriteAnchorsRecorded += guard.writeAnchorsRecorded
+	stats.Details.SearchLinesRecorded += guard.searchLinesRecorded
+	stats.Details.LineRangesRemoved += guard.lineRangesRemoved
+	stats.Details.LinesRemoved += guard.linesRemoved
+	stats.Details.SegmentsRemovedByLineCoverage += guard.lineCoverageRemovedSegments
+	stats.Details.SegmentsEmitted += guard.emittedSegments
+	stats.Details.SegmentsRemoved += guard.removedSegments
+	saved := guard.removedBytes - guard.markerBytes + guard.lineRenderedBytesRemoved - guard.lineMarkerBytes
+	if saved > 0 {
+		stats.TotalBytesRemoved += int64(saved)
 	}
-	stats.SearchLinesRecorded += guard.searchLinesRecorded
-	stats.SearchLineBytesEmitted += int64(guard.searchLineBytesEmitted)
-	stats.LineRangesRemoved += guard.lineRangesRemoved
-	stats.LinesRemoved += guard.linesRemoved
-	stats.LineBytesRemoved += int64(guard.lineBytesRemoved)
-	stats.LineCoverageRemovedSegments += guard.lineCoverageRemovedSegments
-	stats.EmittedSegments += guard.emittedSegments
-	stats.RemovedSegments += guard.removedSegments
-	stats.EmittedSourceBytes += int64(guard.emittedBytes)
-	stats.GrossRemovedBytes += int64(guard.removedBytes + guard.lineBytesRemoved)
-	if saved := guard.removedBytes - guard.markerBytes + guard.lineRenderedBytesRemoved - guard.lineMarkerBytes; saved > 0 {
-		stats.NetSavedBytes += int64(saved)
-	}
-	totalSource := stats.EmittedSourceBytes + stats.SearchLineBytesEmitted + stats.GrossRemovedBytes
-	if totalSource > 0 {
-		stats.NetSavingsPercent = float64(stats.NetSavedBytes) * 100 / float64(totalSource)
+	if stats.TotalBytesReturned > 0 {
+		stats.SavingsPercent = float64(stats.TotalBytesRemoved) * 100 / float64(stats.TotalBytesReturned)
 	}
 	return writeRenderedContextJSON(path, stats)
 }
@@ -585,12 +638,88 @@ func readRenderedContextStats(path string, period int) renderedContextStats {
 	if !ok {
 		return fresh
 	}
-	var restored renderedContextStats
-	if json.Unmarshal(content, &restored) != nil || (restored.Schema != contextGuardStatsSchema && restored.Schema != "grepple-context-segment-stats-v1" && restored.Schema != "grepple-context-segment-stats-v2" && restored.Schema != "grepple-context-segment-stats-v3") || restored.Period != period {
+	var identity struct {
+		Schema string `json:"schema"`
+		Period int    `json:"period"`
+	}
+	if json.Unmarshal(content, &identity) != nil || identity.Period != period {
 		return fresh
 	}
-	restored.Schema = contextGuardStatsSchema
-	return restored
+	if identity.Schema == contextGuardStatsSchema {
+		var restored renderedContextStats
+		if json.Unmarshal(content, &restored) == nil {
+			return restored
+		}
+		return fresh
+	}
+	if !legacyContextStatsSchema(identity.Schema) {
+		return fresh
+	}
+	var legacy legacyRenderedContextStats
+	if json.Unmarshal(content, &legacy) != nil {
+		return fresh
+	}
+	return migrateLegacyContextStats(legacy)
+}
+
+func legacyContextStatsSchema(schema string) bool {
+	switch schema {
+	case "grepple-context-segment-stats-v1", "grepple-context-segment-stats-v2", "grepple-context-segment-stats-v3", "grepple-context-segment-stats-v4":
+		return true
+	default:
+		return false
+	}
+}
+
+func migrateLegacyContextStats(legacy legacyRenderedContextStats) renderedContextStats {
+	reads := legacy.ObservedCalls - legacy.WriteCalls
+	if reads < 0 {
+		reads = 0
+	}
+	structured := legacy.DeduplicationEnabledCalls - legacy.LineCoverageCalls
+	other := reads - structured - legacy.LineCoverageCalls
+	if structured < 0 {
+		structured = 0
+	}
+	if other < 0 {
+		other = 0
+	}
+	stats := renderedContextStats{
+		Schema:             contextGuardStatsSchema,
+		Period:             legacy.Period,
+		ResetReason:        legacy.ResetReason,
+		CreatedAt:          legacy.CreatedAt,
+		UpdatedAt:          legacy.UpdatedAt,
+		TotalBytesReturned: legacy.ReturnedBytes,
+		TotalBytesRemoved:  legacy.NetSavedBytes,
+		TotalBytesEmitted:  legacy.EmittedSourceBytes + legacy.SearchLineBytesEmitted,
+		Calls: renderedContextCallStats{
+			Total:               legacy.ObservedCalls,
+			Reads:               reads,
+			StructuredReads:     structured,
+			FocusedReads:        legacy.LineCoverageCalls,
+			OtherReads:          other,
+			BypassReads:         legacy.BypassRequestedCalls,
+			PotentialSpillReads: legacy.PotentialSpillCalls,
+			Writes:              legacy.WriteCalls,
+			SuccessfulWrites:    legacy.WriteCalls,
+			AppliedWrites:       legacy.WriteCalls,
+		},
+		Details: renderedContextDetails{
+			ResultFiles:                   legacy.ResultFiles,
+			SegmentsEmitted:               legacy.EmittedSegments,
+			SegmentsRemoved:               legacy.RemovedSegments,
+			SegmentsRemovedByLineCoverage: legacy.LineCoverageRemovedSegments,
+			SearchLinesRecorded:           legacy.SearchLinesRecorded,
+			LineRangesRemoved:             legacy.LineRangesRemoved,
+			LinesRemoved:                  legacy.LinesRemoved,
+			WriteAnchorsRecorded:          legacy.WriteAnchorsRecorded,
+		},
+	}
+	if stats.TotalBytesReturned > 0 {
+		stats.SavingsPercent = float64(stats.TotalBytesRemoved) * 100 / float64(stats.TotalBytesReturned)
+	}
+	return stats
 }
 
 func newRenderedContextStats(period int, reason string) renderedContextStats {

@@ -66,6 +66,7 @@ func contextGuardForResults(options *cliOptions, results []api.FileResult) *segm
 	guard.resultFiles = len(results)
 	segmentMode := segmentOutputMode(options)
 	focusedLineMode := focusedLineCoverageMode(options)
+	guard.structuredRead = segmentMode
 	if !segmentMode && !focusedLineMode {
 		guard.deduplicate = false
 		guard.recordSegments = false

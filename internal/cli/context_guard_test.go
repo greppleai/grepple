@@ -2,6 +2,7 @@ package cli
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -32,8 +33,12 @@ func TestSegmentContextGuardOmitsUnchangedCompleteDeclaration(t *testing.T) {
 		t.Fatalf("cache persisted source: %s", cacheContent)
 	}
 	stats := readRenderedContextStats(filepath.Join(directory, "stats-0.json"), 0)
-	if stats.ObservedCalls != 2 || stats.EmittedSegments != 1 || stats.RemovedSegments != 1 || stats.NetSavedBytes <= 0 {
+	if stats.Calls.Total != 2 || stats.Details.SegmentsEmitted != 1 || stats.Details.SegmentsRemoved != 1 || stats.TotalBytesRemoved <= 0 {
 		t.Fatalf("unexpected stats: %#v", stats)
+	}
+	expectedPercent := float64(stats.TotalBytesRemoved) * 100 / float64(stats.TotalBytesReturned)
+	if stats.SavingsPercent != expectedPercent {
+		t.Fatalf("savings percentage = %v, want %v from returned bytes", stats.SavingsPercent, expectedPercent)
 	}
 }
 
@@ -129,7 +134,7 @@ func TestSegmentContextInvalidationRotatesStatsAndRestoresDeclaration(t *testing
 		t.Fatal(err)
 	}
 	rotated := readRenderedContextStats(filepath.Join(directory, "stats-1.json"), 1)
-	if rotated.Period != 1 || rotated.ResetReason != "compact" || rotated.ObservedCalls != 0 {
+	if rotated.Period != 1 || rotated.ResetReason != "compact" || rotated.Calls.Total != 0 {
 		t.Fatalf("stats did not rotate: %#v", rotated)
 	}
 	if output := renderWithSegmentGuard(t, result); !strings.Contains(output, "type Model struct") {
@@ -154,7 +159,7 @@ func TestContextGuardIsDisabledForPotentiallySpilledResult(t *testing.T) {
 		t.Fatalf("spill preflight created cache: %v", err)
 	}
 	stats := readRenderedContextStats(filepath.Join(directory, "stats-0.json"), 0)
-	if stats.ObservedCalls != 1 || stats.PotentialSpillCalls != 1 || stats.DeduplicationEnabledCalls != 0 {
+	if stats.Calls.Total != 1 || stats.Calls.PotentialSpillReads != 1 || stats.Calls.StructuredReads != 1 {
 		t.Fatalf("potential spill call was not recorded: %#v", stats)
 	}
 }
@@ -172,7 +177,7 @@ func TestContextGuardRecordsNonStructuralSearchCalls(t *testing.T) {
 	guard.returnedBytes = 321
 	guard.close()
 	stats := readRenderedContextStats(filepath.Join(directory, "stats-0.json"), 0)
-	if stats.ObservedCalls != 1 || stats.NonStructuralCalls != 1 || stats.ResultFiles != 2 || stats.ReturnedBytes != 321 {
+	if stats.Calls.Total != 1 || stats.Calls.Reads != 1 || stats.Calls.OtherReads != 1 || stats.Details.ResultFiles != 2 || stats.TotalBytesReturned != 321 {
 		t.Fatalf("non-structural call was not recorded: %#v", stats)
 	}
 }
@@ -199,7 +204,7 @@ func TestRepeatSourceBypassesAndRecordsContextCache(t *testing.T) {
 		t.Fatalf("repeat source did not emit the declaration: %q", output.String())
 	}
 	stats := readRenderedContextStats(filepath.Join(directory, "stats-0.json"), 0)
-	if stats.BypassRequestedCalls != 1 {
+	if stats.Calls.BypassReads != 1 {
 		t.Fatalf("requested bypass was not counted: %#v", stats)
 	}
 }
@@ -217,7 +222,7 @@ func TestWriteAnchorsCompletePreviouslyEmittedSegmentCoverage(t *testing.T) {
 	recordWriteResponseContext(root, writeResponse{Applied: true, Files: []writeResponseFile{{
 		Path: "service.go", Operation: "edit", Changed: true,
 		ChangeDetails: []writeResponseChange{{Anchors: []writeAnchor{{Line: 2, Content: "\tnewCall()"}}}},
-	}}}, 100)
+	}}}, 100, true, false, true)
 	cacheContent, err := os.ReadFile(filepath.Join(directory, "cache.json"))
 	if err != nil {
 		t.Fatal(err)
@@ -236,8 +241,46 @@ func TestWriteAnchorsCompletePreviouslyEmittedSegmentCoverage(t *testing.T) {
 	}
 	guard.close()
 	stats := readRenderedContextStats(filepath.Join(directory, "stats-0.json"), 0)
-	if stats.WriteCalls != 1 || stats.WriteAnchorsRecorded != 1 || stats.LineCoverageRemovedSegments != 1 {
+	if stats.Calls.Writes != 1 || stats.Calls.AppliedWrites != 1 || stats.Details.WriteAnchorsRecorded != 1 || stats.Details.SegmentsRemovedByLineCoverage != 1 {
 		t.Fatalf("write coverage statistics = %#v", stats)
+	}
+}
+
+func TestWriteFailureIsRecordedInContextStats(t *testing.T) {
+	directory := t.TempDir()
+	t.Setenv("GREPPLE_CONTEXT_GUARD_DIR", directory)
+	recordWriteResponseContext(t.TempDir(), writeResponse{}, 123, false, true, false)
+	stats := readRenderedContextStats(filepath.Join(directory, "stats-0.json"), 0)
+	if stats.Calls.Total != 1 || stats.Calls.Writes != 1 || stats.Calls.FailedWrites != 1 || stats.Calls.SuccessfulWrites != 0 || stats.Calls.AppliedWrites != 0 {
+		t.Fatalf("write failure statistics = %#v", stats)
+	}
+	if stats.TotalBytesReturned != 123 {
+		t.Fatalf("write failure returned bytes = %d", stats.TotalBytesReturned)
+	}
+}
+
+func TestLegacyContextStatsMigrateToSimpleTotals(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "stats-0.json")
+	legacy := legacyRenderedContextStats{
+		Schema: "grepple-context-segment-stats-v4", Period: 0, ObservedCalls: 10,
+		DeduplicationEnabledCalls: 5, LineCoverageCalls: 2, WriteCalls: 2,
+		BypassRequestedCalls: 1, PotentialSpillCalls: 1, ReturnedBytes: 1000,
+		NetSavedBytes: 50, EmittedSourceBytes: 300, SearchLineBytesEmitted: 25,
+		EmittedSegments: 4, RemovedSegments: 3, WriteAnchorsRecorded: 2,
+	}
+	content, err := json.Marshal(legacy)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(path, content, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	stats := readRenderedContextStats(path, 0)
+	if stats.Schema != contextGuardStatsSchema || stats.TotalBytesReturned != 1000 || stats.TotalBytesRemoved != 50 || stats.TotalBytesEmitted != 325 || stats.SavingsPercent != 5 {
+		t.Fatalf("migrated byte totals = %#v", stats)
+	}
+	if stats.Calls.Total != 10 || stats.Calls.Reads != 8 || stats.Calls.StructuredReads != 3 || stats.Calls.FocusedReads != 2 || stats.Calls.OtherReads != 3 || stats.Calls.Writes != 2 {
+		t.Fatalf("migrated call totals = %#v", stats.Calls)
 	}
 }
 
@@ -272,7 +315,7 @@ func TestContextGuardCanBeDisabledInUserSettings(t *testing.T) {
 		guard.close()
 		t.Fatal("disabled context guard opened for search output")
 	}
-	recordWriteResponseContext(t.TempDir(), writeResponse{Applied: true}, 10)
+	recordWriteResponseContext(t.TempDir(), writeResponse{Applied: true}, 10, true, false, true)
 	if _, err := os.Stat(filepath.Join(directory, "cache.json")); !os.IsNotExist(err) {
 		t.Fatalf("disabled context guard wrote cache state: %v", err)
 	}
@@ -297,7 +340,7 @@ func TestStructuralCoverageCollapsesFocusedAtRange(t *testing.T) {
 		t.Fatalf("focused range boundaries were not preserved: %q", output)
 	}
 	stats := readRenderedContextStats(filepath.Join(directory, "stats-0.json"), 0)
-	if stats.LineCoverageCalls != 1 || stats.LineRangesRemoved != 1 || stats.LinesRemoved != 6 {
+	if stats.Calls.FocusedReads != 1 || stats.Details.LineRangesRemoved != 1 || stats.Details.LinesRemoved != 6 {
 		t.Fatalf("focused range statistics = %#v", stats)
 	}
 }
@@ -366,7 +409,7 @@ func TestRepeatSourceRestoresFocusedAtRange(t *testing.T) {
 		t.Fatalf("--repeat-source did not restore focused lines: %q", output)
 	}
 	stats := readRenderedContextStats(filepath.Join(os.Getenv("GREPPLE_CONTEXT_GUARD_DIR"), "stats-0.json"), 0)
-	if stats.BypassRequestedCalls != 1 {
+	if stats.Calls.BypassReads != 1 {
 		t.Fatalf("focused bypass was not counted: %#v", stats)
 	}
 }
@@ -416,7 +459,7 @@ func TestContextStatsSurviveCacheWriteFailure(t *testing.T) {
 	guard.cachePath = t.TempDir() // Renaming a cache file over this directory must fail.
 	guard.close()
 	stats := readRenderedContextStats(filepath.Join(directory, "stats-0.json"), 0)
-	if stats.ObservedCalls != 1 || stats.DeduplicationEnabledCalls != 1 {
+	if stats.Calls.Total != 1 || stats.Calls.Reads != 1 {
 		t.Fatalf("cache failure prevented statistics: %#v", stats)
 	}
 }
@@ -443,6 +486,7 @@ func renderWithSegmentGuard(t *testing.T, result api.FileResult) string {
 		guard.close()
 		t.Fatal(err)
 	}
+	guard.returnedBytes = output.Len()
 	guard.close()
 	return output.String()
 }
