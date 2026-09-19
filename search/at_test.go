@@ -1,12 +1,15 @@
 package search
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"reflect"
+	"strings"
 	"testing"
 
+	"github.com/greppleai/grepple/linerange"
 	"github.com/greppleai/grepple/parser"
 )
 
@@ -92,6 +95,56 @@ func TestAtLineRangesReturnExactEditableLines(t *testing.T) {
 	}
 }
 
+func TestAtClampsPartialEOFRangesAndRejectsFullMisses(t *testing.T) {
+	directory := t.TempDir()
+	path := filepath.Join(directory, "sample.go")
+	lines := []string{"package sample"}
+	for line := 2; line <= 28; line++ {
+		lines = append(lines, fmt.Sprintf("// line %d", line))
+	}
+	if err := os.WriteFile(path, []byte(strings.Join(lines, "\n")+"\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	for _, test := range []struct {
+		start, end, wantStart, wantEnd int
+	}{
+		{1, 30, 1, 28},
+		{20, 40, 20, 28},
+		{28, 40, 28, 28},
+	} {
+		assertPartialAtRange(t, path, test.start, test.end, test.wantStart, test.wantEnd)
+	}
+	for _, requested := range []string{"29-40", "50-60"} {
+		assertFullAtRange(t, path, requested)
+	}
+}
+func assertPartialAtRange(t *testing.T, path string, start, end, wantStart, wantEnd int) {
+	t.Helper()
+	match, err := At(Params{At: fmt.Sprintf("%s:%d-%d", path, start, end), LineRanges: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if match.LineRange == nil || match.LineRange.Outcome != linerange.OutcomePartialMiss || match.LineRange.Warning == "" {
+		t.Fatalf("range %d-%d metadata=%#v", start, end, match.LineRange)
+	}
+	if len(match.MatchLines) != wantEnd-wantStart+1 || !match.MatchLines[wantStart] || !match.MatchLines[wantEnd] {
+		t.Fatalf("range %d-%d lines=%v", start, end, match.MatchLines)
+	}
+	result := BuildResults([]FileMatch{*match}, 0, 0, true)[0]
+	if result.LineRange == nil || result.LineRange.ReturnedEnd != 28 {
+		t.Fatalf("range metadata lost in result: %#v", result.LineRange)
+	}
+}
+
+func assertFullAtRange(t *testing.T, path, requested string) {
+	t.Helper()
+	_, err := At(Params{At: path + ":" + requested, LineRanges: true})
+	var outside *linerange.OutsideError
+	if !errors.As(err, &outside) || outside.Result.Outcome != linerange.OutcomeFullMiss {
+		t.Fatalf("range %s error=%v", requested, err)
+	}
+}
+
 func TestAtSkipsRelatedGraphOutsideCallable(t *testing.T) {
 	directory := t.TempDir()
 	path := writeGoFixture(t, directory, "source.go", `package related
@@ -137,7 +190,7 @@ func TestAtFromDocumentMatchesColdRelatedOutput(t *testing.T) {
 	}
 	defer helperDocument.Close()
 	analysis, _ := BuildNavigationAnalysisFromDocuments([]NavigationDocumentSource{{Path: caller, Document: callerDocument}, {Path: helper, Document: helperDocument}}, NavigationBuildOptions{})
-	params := Params{At: "caller.go:2", Root: directory, Related: true, FollowRelated: 1}
+	params := Params{At: "caller.go:2-20", Root: directory, Related: true, FollowRelated: 1}
 	cold, err := At(params)
 	if err != nil {
 		t.Fatal(err)
@@ -145,6 +198,9 @@ func TestAtFromDocumentMatchesColdRelatedOutput(t *testing.T) {
 	prepared, err := AtFromDocument(params, callerDocument, analysis)
 	if err != nil {
 		t.Fatal(err)
+	}
+	if prepared.LineRange == nil || prepared.LineRange.Outcome != linerange.OutcomePartialMiss || prepared.LineRange.ReturnedEnd != 2 {
+		t.Fatalf("prepared range metadata=%#v", prepared.LineRange)
 	}
 	if !reflect.DeepEqual(cold, prepared) {
 		t.Fatalf("cold/prepared navigation differs:\n%#v\n%#v", cold, prepared)

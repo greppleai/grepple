@@ -53,7 +53,7 @@ type searchArgs struct {
 	NoRelated        bool     `arg:"--no-related" help:"disable automatic code navigation"`
 	RepeatSource     bool     `arg:"--repeat-source" help:"bypass session source deduplication and emit complete focused source again"`
 	FollowRelated    int      `arg:"--follow-related" placeholder:"N" help:"expand up to two callers and callees per level (1-3; default 1)"`
-	At               string   `arg:"--at" placeholder:"PATH:LINE[-END]" help:"retrieve the containing declaration, or exact range with --line-only"`
+	At               string   `arg:"--at" placeholder:"PATH:LINE[-END]" help:"retrieve a declaration, or exact lines with --line-only; ranges that start in-file clamp at EOF"`
 	Skip             int      `arg:"--skip" placeholder:"N" help:"skip the first N ranked result files"`
 	Limit            int      `arg:"--limit" placeholder:"N" help:"return at most N ranked result files (default 20; 0 = all local; servers cap a page at 100 — page further with --skip)"`
 	Sort             string   `arg:"--sort" placeholder:"ORDER" help:"order result files by path (default) or matching-line count (matches)"`

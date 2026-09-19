@@ -762,6 +762,26 @@ func TestV5ContextStatsMigrateToAdditiveTotals(t *testing.T) {
 	}
 }
 
+func TestV6ContextStatsMigrateWithoutLosingTotals(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "stats-0.json")
+	legacy := renderedContextStats{
+		Schema: "grepple-context-stats-v6", Period: 0,
+		TotalBytesReturned: 100, TotalBytesRemoved: 25, TotalBytesEmitted: 75,
+		Calls: renderedContextCallStats{Total: 3},
+	}
+	content, err := json.Marshal(legacy)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(path, content, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	stats := readRenderedContextStats(path, 0)
+	if stats.Schema != contextGuardStatsSchema || stats.TotalBytesReturned != 100 || stats.TotalBytesRemoved != 25 || stats.TotalBytesEmitted != 75 || stats.Calls.Total != 3 {
+		t.Fatalf("v6 migration = %#v", stats)
+	}
+}
+
 func TestContextStatsConcurrentUpdatesRemainAdditive(t *testing.T) {
 	directory := t.TempDir()
 	t.Setenv("GREPPLE_CONTEXT_GUARD_DIR", directory)
@@ -954,6 +974,39 @@ func TestContextGuardWithoutPiSessionUsesBaseDirectory(t *testing.T) {
 	}
 	if directory != base {
 		t.Fatalf("context directory = %q, want base %q", directory, base)
+	}
+}
+
+func TestContextStatsCountPartialAndFullLineRangeMisses(t *testing.T) {
+	directory := t.TempDir()
+	t.Setenv("GREPPLE_CONTEXT_GUARD_DIR", directory)
+	path := filepath.Join(t.TempDir(), "sample.go")
+	lines := []string{"package sample"}
+	for line := 2; line <= 28; line++ {
+		lines = append(lines, fmt.Sprintf("// line %d", line))
+	}
+	if err := os.WriteFile(path, []byte(strings.Join(lines, "\n")+"\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	var partialErr error
+	warning := captureStderr(t, func() {
+		captureStdout(t, func() {
+			partialErr = Run([]string{"--at", path + ":20-40", "--line-only", "--max-output-bytes", "0"})
+		})
+	})
+	if partialErr != nil || !strings.Contains(warning, "EOF") || !strings.Contains(warning, "returned 20-28") {
+		t.Fatalf("partial range err=%v warning=%q", partialErr, warning)
+	}
+	var fullErr error
+	fullWarning := captureStderr(t, func() {
+		fullErr = Run([]string{"--at", path + ":29-40", "--line-only", "--max-output-bytes", "0"})
+	})
+	if code, ok := ExitCode(fullErr); !ok || code != 1 || !strings.Contains(fullWarning, "outside file") {
+		t.Fatalf("full range error=%v warning=%q", fullErr, fullWarning)
+	}
+	stats := readRenderedContextStats(filepath.Join(directory, "stats-0.json"), 0)
+	if stats.Details.PartialLineRangeMisses != 1 || stats.Details.FullLineRangeMisses != 1 {
+		t.Fatalf("line range miss stats=%#v", stats.Details)
 	}
 }
 

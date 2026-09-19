@@ -45,11 +45,13 @@ func runSearch(args []string) error {
 
 	results, err := initialSearchResults(&child, remote)
 	if err != nil {
-		return err
+		recordLineRangeError(err)
+		return reportLineRangeCommandError(err)
 	}
 	results, err = appendRemoteResults(results, &child, explicitServer, remote)
 	if err != nil {
-		return err
+		recordLineRangeError(err)
+		return reportLineRangeCommandError(err)
 	}
 	results = resolveLocalExternalNavigation(results, explicitServer)
 

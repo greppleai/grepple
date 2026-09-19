@@ -11,6 +11,7 @@ import (
 
 	"charm.land/fantasy"
 	"github.com/greppleai/grepple/api"
+	"github.com/greppleai/grepple/linerange"
 	"github.com/greppleai/grepple/parser"
 	"github.com/greppleai/grepple/search"
 )
@@ -580,10 +581,11 @@ func runAskRemoteReadTool(ctx context.Context, server string, input readToolInpu
 	if err != nil {
 		return fantasy.NewTextErrorResponse(err.Error()), nil
 	}
-	content, err := fetchRawContext(ctx, target.String(), server)
+	response, err := fetchRawContext(ctx, target.String(), server)
 	if err != nil {
 		return fantasy.NewTextErrorResponse(err.Error()), nil
 	}
+	content := response.Body
 	if len(content) > maxReadBytes || bytes.IndexByte(content, 0) >= 0 {
 		return fantasy.NewTextErrorResponse("file response is binary or exceeds 256 KiB"), nil
 	}
@@ -591,11 +593,15 @@ func runAskRemoteReadTool(ctx context.Context, server string, input readToolInpu
 		return askToolResult(parser.OutlineFileDepth(input.Path, string(content), 0), nil)
 	}
 	start, _, _ := askReadRange(input.StartLine, input.EndLine)
-	lines := strings.Split(strings.ReplaceAll(string(content), "\r\n", "\n"), "\n")
+	lines := linerange.SplitLines(string(content))
 	var output strings.Builder
 	fmt.Fprintf(&output, "%s/%s\n", input.Repository, input.Path)
 	for index, line := range lines {
 		fmt.Fprintf(&output, "%d│%s\n", start+index, line)
+	}
+	if input.EndLine > 0 && response.RangeWarning != "" {
+		recordStandaloneLineRangeOutcome(response.RangeOutcome)
+		fmt.Fprintf(&output, "warning: %s\n", response.RangeWarning)
 	}
 	return fantasy.NewTextResponse(output.String()), nil
 }

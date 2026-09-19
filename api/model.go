@@ -140,19 +140,31 @@ type RelatedSymbol struct {
 	OmittedTypes   int                          `json:"omittedTypes,omitempty"`
 }
 
+// LineRangeResult reports how an inclusive source range intersected a file.
+type LineRangeResult struct {
+	RequestedStart int    `json:"requestedStart"`
+	RequestedEnd   int    `json:"requestedEnd"`
+	ReturnedStart  int    `json:"returnedStart,omitempty"`
+	ReturnedEnd    int    `json:"returnedEnd,omitempty"`
+	FileLines      int    `json:"fileLines"`
+	Outcome        string `json:"outcome"`
+	Warning        string `json:"warning,omitempty"`
+}
+
 // FileResult is one matching file.
 type FileResult struct {
-	Path                  string          `json:"path"`
-	Repo                  string          `json:"repo,omitempty"`
-	Language              string          `json:"language"`
-	StructureStatus       string          `json:"structureStatus,omitempty"`
-	Matches               []ResultMatch   `json:"matches"`
-	Segments              []ResultSegment `json:"segments"`
-	Context               []ContextLine   `json:"context,omitempty"`
-	Related               []RelatedSymbol `json:"related,omitempty"`
-	OmittedRelatedCallers int             `json:"omittedRelatedCallers,omitempty"`
-	OmittedRelatedCallees int             `json:"omittedRelatedCallees,omitempty"`
-	OmittedRelatedTypes   int             `json:"omittedRelatedTypes,omitempty"`
+	Path                  string           `json:"path"`
+	Repo                  string           `json:"repo,omitempty"`
+	Language              string           `json:"language"`
+	StructureStatus       string           `json:"structureStatus,omitempty"`
+	Matches               []ResultMatch    `json:"matches"`
+	Segments              []ResultSegment  `json:"segments"`
+	Context               []ContextLine    `json:"context,omitempty"`
+	LineRange             *LineRangeResult `json:"lineRange,omitempty"`
+	Related               []RelatedSymbol  `json:"related,omitempty"`
+	OmittedRelatedCallers int              `json:"omittedRelatedCallers,omitempty"`
+	OmittedRelatedCallees int              `json:"omittedRelatedCallees,omitempty"`
+	OmittedRelatedTypes   int              `json:"omittedRelatedTypes,omitempty"`
 }
 
 // RepoCount is a per-repository tally of matching files and lines.

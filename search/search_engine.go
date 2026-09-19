@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"github.com/greppleai/grepple/api"
+	"github.com/greppleai/grepple/linerange"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -22,14 +23,7 @@ var readInvocations atomic.Int64
 // SplitLines splits content into lines, dropping the trailing empty element a
 // final newline produces (so line numbers match editor expectations).
 func SplitLines(content string) []string {
-	lines := strings.Split(content, "\n")
-	if len(lines) > 0 && lines[len(lines)-1] == "" {
-		lines = lines[:len(lines)-1]
-	}
-	if len(lines) == 0 {
-		return []string{""}
-	}
-	return lines
+	return linerange.SplitLines(content)
 }
 
 func displayPath(file string) string {

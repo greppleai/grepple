@@ -34,6 +34,10 @@ Global delivery spilling is not semantic truncation. Output larger than `--spill
 
 Zero means unlimited only where the command help explicitly says so. Remote services may impose stricter page or resource ceilings; metadata and diagnostics disclose the effective result rather than presenting a partial page as complete.
 
+## Line-range bounds
+
+Every source-reading range uses the same inclusive, 1-based EOF policy. When the requested start exists but the end exceeds the file, Grepple clamps the end to the final line, returns the available source, emits an explicit EOF warning, and succeeds. When the requested start is beyond the final line, the whole range is outside the file and the command fails. Complete search JSON carries `lineRange`; JSON-matches carries `lineRanges`; remote raw JSON carries `lineRange` and `warnings`; plain remote reads carry the same classification in `X-Grepple-Line-Range-Outcome` and `X-Grepple-Line-Range-Warning` headers. Context statistics schema `grepple-context-stats-v7` counts these as `details.partialLineRangeMisses` and `details.fullLineRangeMisses`.
+
 ## Local and remote availability
 
 | Command family | Local checkout | Indexed remote repository | Selection |

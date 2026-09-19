@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/greppleai/grepple/linerange"
 	structure "github.com/greppleai/grepple/parser"
 )
 
@@ -37,15 +38,20 @@ func At(params Params) (*FileMatch, error) {
 	}
 	content := strings.ToValidUTF8(string(contentBytes), "\uFFFD")
 	lines := SplitLines(content)
-	if line < 1 || line > len(lines) {
-		return nil, fmt.Errorf("--at line %d is outside %s (1-%d)", line, path, len(lines))
+	resolved, err := linerange.Resolve(line, endLine, len(lines))
+	if err != nil {
+		return nil, fmt.Errorf("--at %s: %w", path, err)
 	}
+	endLine = resolved.ReturnedEnd
 	language := structure.LanguageFor(path)
 	match := &FileMatch{
 		File: absolute, DisplayPath: displayPathFrom(absolute, displayBase(params.Root)), Content: content, Language: language,
 		MatchLines: map[int]bool{line: true}, SegmentsReady: true,
 	}
-	if err := prepareAtMatch(match, params, path, line, endLine, len(lines), nil); err != nil {
+	if resolved.Outcome != linerange.OutcomeExact {
+		match.LineRange = &resolved
+	}
+	if err := prepareAtMatch(match, params, line, endLine, nil); err != nil {
 		return nil, err
 	}
 	if params.Related && match.CallableDeclaration {
@@ -85,15 +91,20 @@ func AtFromDocument(params Params, document *structure.Document, analysis *Navig
 	}
 	content := document.Source()
 	lines := SplitLines(content)
-	if line < 1 || line > len(lines) {
-		return nil, fmt.Errorf("--at line %d is outside %s (1-%d)", line, path, len(lines))
+	resolved, err := linerange.Resolve(line, endLine, len(lines))
+	if err != nil {
+		return nil, fmt.Errorf("--at %s: %w", path, err)
 	}
+	endLine = resolved.ReturnedEnd
 	language := document.Language()
 	match := &FileMatch{
 		File: absolute, DisplayPath: displayPathFrom(absolute, displayBase(params.Root)), Content: content, Language: language,
 		MatchLines: map[int]bool{line: true}, SegmentsReady: true,
 	}
-	if err := prepareAtMatch(match, params, path, line, endLine, len(lines), document); err != nil {
+	if resolved.Outcome != linerange.OutcomeExact {
+		match.LineRange = &resolved
+	}
+	if err := prepareAtMatch(match, params, line, endLine, document); err != nil {
 		return nil, err
 	}
 	if params.Related && match.CallableDeclaration {
@@ -102,10 +113,7 @@ func AtFromDocument(params Params, document *structure.Document, analysis *Navig
 	return match, nil
 }
 
-func prepareAtMatch(match *FileMatch, params Params, path string, line, endLine, lineCount int, document *structure.Document) error {
-	if endLine > lineCount {
-		return fmt.Errorf("--at line %d is outside %s (1-%d)", endLine, path, lineCount)
-	}
+func prepareAtMatch(match *FileMatch, params Params, line, endLine int, document *structure.Document) error {
 	if params.LineRanges || params.BeforeContext > 0 || params.AfterContext > 0 {
 		for selected := line; selected <= endLine; selected++ {
 			match.MatchLines[selected] = true

@@ -1,10 +1,11 @@
 package search
 
 import (
-	"github.com/greppleai/grepple/api"
 	"sort"
 	"strings"
 
+	"github.com/greppleai/grepple/api"
+	"github.com/greppleai/grepple/linerange"
 	"github.com/greppleai/grepple/parser"
 )
 
@@ -31,13 +32,24 @@ func ToResult(m FileMatch, segs []parser.Segment, beforeContext, afterContext in
 	rs := resultSegments(m.Content, segs)
 	related := relatedSymbols(m.Related)
 	r := api.FileResult{
-		Path: m.DisplayPath, Language: m.Language, StructureStatus: string(m.StructureStatus), Matches: matches, Segments: rs, Related: related,
+		Path: m.DisplayPath, Language: m.Language, StructureStatus: string(m.StructureStatus), Matches: matches, Segments: rs, Related: related, LineRange: apiLineRange(m.LineRange),
 		OmittedRelatedCallers: m.OmittedRelatedCallers, OmittedRelatedCallees: m.OmittedRelatedCallees, OmittedRelatedTypes: m.OmittedRelatedTypes,
 	}
 	if beforeContext > 0 || afterContext > 0 {
 		r.Context = ContextLines(m.Content, m.MatchLines, beforeContext, afterContext)
 	}
 	return r
+}
+
+func apiLineRange(result *linerange.Result) *api.LineRangeResult {
+	if result == nil {
+		return nil
+	}
+	return &api.LineRangeResult{
+		RequestedStart: result.RequestedStart, RequestedEnd: result.RequestedEnd,
+		ReturnedStart: result.ReturnedStart, ReturnedEnd: result.ReturnedEnd,
+		FileLines: result.FileLines, Outcome: string(result.Outcome), Warning: result.Warning,
+	}
 }
 
 const maxInlineWhitespaceGap = 2

@@ -3,8 +3,11 @@ package cli
 import (
 	"bytes"
 	"errors"
+	"fmt"
+	"os"
 
 	"github.com/greppleai/grepple/api"
+	"github.com/greppleai/grepple/linerange"
 )
 
 type resultRenderer interface {
@@ -39,6 +42,7 @@ func outputForOptions(options *cliOptions) *outputWriter {
 }
 
 func renderResults(options *cliOptions, results []api.FileResult) error {
+	warnLineRangeResults(results)
 	guard := contextGuardForResults(options, results)
 	output := outputForOptions(options)
 	defer func() {
@@ -54,6 +58,34 @@ func renderResults(options *cliOptions, results []api.FileResult) error {
 	return setSearchExit(results)
 }
 
+func warnLineRangeResults(results []api.FileResult) {
+	seen := map[string]bool{}
+	for _, result := range results {
+		if result.LineRange == nil || result.LineRange.Warning == "" {
+			continue
+		}
+		warning := result.Path + ": " + result.LineRange.Warning
+		if !seen[warning] {
+			fmt.Fprintln(os.Stderr, "warning:", warning)
+			seen[warning] = true
+		}
+	}
+}
+
+func recordGuardLineRangeOutcomes(guard *segmentContextGuard, results []api.FileResult) {
+	for _, result := range results {
+		if result.LineRange == nil {
+			continue
+		}
+		switch linerange.Outcome(result.LineRange.Outcome) {
+		case linerange.OutcomePartialMiss:
+			guard.partialLineRangeMisses++
+		case linerange.OutcomeFullMiss:
+			guard.fullLineRangeMisses++
+		}
+	}
+}
+
 func contextGuardForResults(options *cliOptions, results []api.FileResult) *segmentContextGuard {
 	if activeInlineOutputThreshold < 1 || !contextGuardEnabled() {
 		return nil
@@ -64,6 +96,7 @@ func contextGuardForResults(options *cliOptions, results []api.FileResult) *segm
 	}
 	guard.observed = true
 	guard.resultFiles = len(results)
+	recordGuardLineRangeOutcomes(guard, results)
 	segmentMode := segmentOutputMode(options)
 	focusedLineMode := focusedLineCoverageMode(options)
 	broadLineMode := broadLineCoverageProducerMode(options)

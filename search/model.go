@@ -2,6 +2,7 @@ package search
 
 import (
 	"github.com/greppleai/grepple/api"
+	"github.com/greppleai/grepple/linerange"
 	"github.com/greppleai/grepple/parser"
 )
 
@@ -69,6 +70,7 @@ type FileMatch struct {
 	MatchRanges                                                       map[int]parser.StructuralLineRange
 	Segments                                                          []parser.Segment
 	Related                                                           []RelatedPoint
+	LineRange                                                         *linerange.Result
 	OmittedRelatedCallers, OmittedRelatedCallees, OmittedRelatedTypes int
 	SegmentsReady                                                     bool
 	CallableDeclaration                                               bool

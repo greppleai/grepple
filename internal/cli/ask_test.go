@@ -163,6 +163,14 @@ func TestSimpleReadToolIsBoundedAndConfined(t *testing.T) {
 	if err != nil || response.IsError || !strings.Contains(response.Content, "ldf│2│two\nnhJ│3│three") {
 		t.Fatalf("response=%+v err=%v", response, err)
 	}
+	response, err = runSimpleReadTool(root, readToolInput{Path: "source.go", StartLine: 2, EndLine: 30})
+	if err != nil || response.IsError || !strings.Contains(response.Content, "2│two") || !strings.Contains(response.Content, "3│three") || !strings.Contains(response.Content, "warning: EOF") {
+		t.Fatalf("clamped read response=%+v err=%v", response, err)
+	}
+	response, err = runSimpleReadTool(root, readToolInput{Path: "source.go", StartLine: 4, EndLine: 30})
+	if err != nil || !response.IsError || !strings.Contains(response.Content, "outside file") {
+		t.Fatalf("outside read response=%+v err=%v", response, err)
+	}
 	response, err = runSimpleReadTool(root, readToolInput{Path: "../outside"})
 	if err != nil || !response.IsError {
 		t.Fatalf("escaping read response=%+v err=%v", response, err)

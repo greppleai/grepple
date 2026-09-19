@@ -15,11 +15,12 @@ import (
 
 	"github.com/gofrs/flock"
 	"github.com/greppleai/grepple/api"
+	"github.com/greppleai/grepple/linerange"
 )
 
 const (
 	contextGuardSchema         = "grepple-context-segments-v2"
-	contextGuardStatsSchema    = "grepple-context-stats-v6"
+	contextGuardStatsSchema    = "grepple-context-stats-v7"
 	contextGuardMaxEntries     = 50_000
 	contextGuardMaxLineEntries = 200_000
 	contextGuardMaxFileSize    = 16 << 20
@@ -79,6 +80,8 @@ type renderedContextDetails struct {
 	LineRangesRemoved             int   `json:"lineRangesRemoved"`
 	LinesRemoved                  int   `json:"linesRemoved"`
 	WriteAnchorsRecorded          int   `json:"writeAnchorsRecorded"`
+	PartialLineRangeMisses        int   `json:"partialLineRangeMisses"`
+	FullLineRangeMisses           int   `json:"fullLineRangeMisses"`
 }
 
 type legacyRenderedContextStats struct {
@@ -142,6 +145,8 @@ type segmentContextGuard struct {
 	removedBytes                int
 	markerBytes                 int
 	lineEntries                 int
+	partialLineRangeMisses      int
+	fullLineRangeMisses         int
 }
 
 func runContext(args []string) error {
@@ -584,6 +589,8 @@ func updateRenderedContextStats(guard *segmentContextGuard) error {
 	}
 	stats.Details.WriteAnchorsRecorded += guard.writeAnchorsRecorded
 	stats.Details.SearchLinesRecorded += guard.searchLinesRecorded
+	stats.Details.PartialLineRangeMisses += guard.partialLineRangeMisses
+	stats.Details.FullLineRangeMisses += guard.fullLineRangeMisses
 	stats.Details.LineRangesRemoved += guard.lineRangesRemoved
 	stats.Details.LinesRemoved += guard.linesRemoved
 	stats.Details.SegmentsRemovedByLineCoverage += guard.lineCoverageRemovedSegments
@@ -601,6 +608,30 @@ func updateRenderedContextStats(guard *segmentContextGuard) error {
 		stats.SavingsPercent = float64(stats.TotalBytesRemoved) * 100 / float64(stats.TotalBytesReturned)
 	}
 	return writeRenderedContextJSON(path, stats)
+}
+
+func recordStandaloneLineRangeOutcome(outcome linerange.Outcome) {
+	if !contextGuardEnabled() || (outcome != linerange.OutcomePartialMiss && outcome != linerange.OutcomeFullMiss) {
+		return
+	}
+	guard, err := openSegmentContextGuard()
+	if err != nil {
+		return
+	}
+	guard.observed = true
+	if outcome == linerange.OutcomePartialMiss {
+		guard.partialLineRangeMisses = 1
+	} else {
+		guard.fullLineRangeMisses = 1
+	}
+	guard.close()
+}
+
+func recordLineRangeError(err error) {
+	var outside *linerange.OutsideError
+	if errors.As(err, &outside) {
+		recordStandaloneLineRangeOutcome(linerange.OutcomeFullMiss)
+	}
 }
 
 func invalidateRenderedContext(reason string) error {
@@ -667,6 +698,14 @@ func readRenderedContextStats(path string, period int) renderedContextStats {
 	if identity.Schema == contextGuardStatsSchema {
 		var restored renderedContextStats
 		if json.Unmarshal(content, &restored) == nil {
+			return restored
+		}
+		return fresh
+	}
+	if identity.Schema == "grepple-context-stats-v6" {
+		var restored renderedContextStats
+		if json.Unmarshal(content, &restored) == nil {
+			restored.Schema = contextGuardStatsSchema
 			return restored
 		}
 		return fresh

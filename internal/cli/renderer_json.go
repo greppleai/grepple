@@ -14,7 +14,11 @@ type jsonResultRenderer struct {
 
 func (renderer jsonResultRenderer) Render(results []api.FileResult) error {
 	if renderer.matchesOnly {
-		return renderer.output.writeJSON(map[string]any{"matches": flatMatches(results), "metadata": renderer.metadata})
+		response := map[string]any{"matches": flatMatches(results), "metadata": renderer.metadata}
+		if ranges := resultLineRanges(results); len(ranges) > 0 {
+			response["lineRanges"] = ranges
+		}
+		return renderer.output.writeJSON(response)
 	}
 	if err := renderer.output.writeJSON(api.SearchResponse{Results: results, Metadata: renderer.metadata, SourceAnalysis: searchSourceAnalysis(results)}); err != nil {
 		return err
@@ -101,4 +105,14 @@ func flatMatches(results []api.FileResult) []map[string]any {
 		}
 	}
 	return matches
+}
+
+func resultLineRanges(results []api.FileResult) []map[string]any {
+	ranges := []map[string]any{}
+	for _, result := range results {
+		if result.LineRange != nil {
+			ranges = append(ranges, map[string]any{"path": result.Path, "range": result.LineRange})
+		}
+	}
+	return ranges
 }
