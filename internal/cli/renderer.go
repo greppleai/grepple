@@ -66,16 +66,19 @@ func contextGuardForResults(options *cliOptions, results []api.FileResult) *segm
 	guard.resultFiles = len(results)
 	segmentMode := segmentOutputMode(options)
 	focusedLineMode := focusedLineCoverageMode(options)
+	broadLineMode := broadLineCoverageProducerMode(options)
 	guard.structuredRead = segmentMode
-	if !segmentMode && !focusedLineMode {
-		guard.deduplicate = false
-		guard.recordSegments = false
+	guard.deduplicate = segmentMode || focusedLineMode
+	guard.recordSegments = segmentMode
+	guard.recordLines = focusedLineMode || broadLineMode
+	guard.lineCoverageCall = focusedLineMode
+	if !segmentMode && !focusedLineMode && !broadLineMode {
 		guard.bypassReason = "non-structural"
 		return guard
 	}
-	guard.recordSegments = segmentMode
-	guard.recordLines = focusedLineMode
-	guard.lineCoverageCall = focusedLineMode
+	if broadLineMode {
+		guard.bypassReason = "non-structural"
+	}
 	var rendered bytes.Buffer
 	output := newOutputWriter(&rendered)
 	if options.MaxOutputBytes > 0 {
@@ -85,6 +88,7 @@ func contextGuardForResults(options *cliOptions, results []api.FileResult) *segm
 	if err != nil && !errors.Is(err, errOutputTruncated) {
 		guard.deduplicate = false
 		guard.recordSegments = false
+		guard.recordLines = false
 		guard.bypassReason = "render-error"
 		return guard
 	}
@@ -92,6 +96,7 @@ func contextGuardForResults(options *cliOptions, results []api.FileResult) *segm
 	if rendered.Len()+headroom > activeInlineOutputThreshold {
 		guard.deduplicate = false
 		guard.recordSegments = false
+		guard.recordLines = false
 		guard.bypassReason = "potential-spill"
 	}
 	if options.RepeatSource {
@@ -108,6 +113,10 @@ func contextGuardForResults(options *cliOptions, results []api.FileResult) *segm
 
 func focusedLineCoverageMode(options *cliOptions) bool {
 	return options.LineOnly && options.Params.At != "" && options.AnchorLines != nil
+}
+
+func broadLineCoverageProducerMode(options *cliOptions) bool {
+	return options.LineOnly && options.Params.At == "" && !options.Params.EnclosingRanges && options.AnchorLines != nil
 }
 
 func focusedLineResultCount(options *cliOptions, results []api.FileResult) int {
