@@ -53,23 +53,23 @@ func relatedTypeArtifactDigest(definition relatedTypeDefinition) string {
 
 func collectRelatedTypePoints(points []api.RelatedSymbol, definitions map[string]relatedTypeDefinition) {
 	for _, point := range points {
-		if point.Direction == "type" && point.Path != "" && len(point.Segments) > 0 {
-			artifactKey := ""
-			if point.Artifact != nil {
-				artifactKey = point.Artifact.Digest
-			}
-			key := fmt.Sprintf("%s\x00%s\x00%d\x00%d", artifactKey, point.Path, point.Start, point.End)
-			definition, exists := definitions[key]
-			if !exists {
-				definition = relatedTypeDefinition{
-					name: point.Name, path: point.Path, artifact: point.Artifact, start: point.Start, end: point.End,
-					segments: append([]api.ResultSegment(nil), point.Segments...),
-				}
-			}
-			definition.roles = appendUniqueRelatedTypeRole(definition.roles, point.Role)
-			definitions[key] = definition
+		if point.Direction != "type" || point.Path == "" || len(point.Segments) == 0 {
+			continue
 		}
-		collectRelatedTypePoints(point.Related, definitions)
+		artifactKey := ""
+		if point.Artifact != nil {
+			artifactKey = point.Artifact.Digest
+		}
+		key := fmt.Sprintf("%s\x00%s\x00%d\x00%d", artifactKey, point.Path, point.Start, point.End)
+		definition, exists := definitions[key]
+		if !exists {
+			definition = relatedTypeDefinition{
+				name: point.Name, path: point.Path, artifact: point.Artifact, start: point.Start, end: point.End,
+				segments: append([]api.ResultSegment(nil), point.Segments...),
+			}
+		}
+		definition.roles = appendUniqueRelatedTypeRole(definition.roles, point.Role)
+		definitions[key] = definition
 	}
 }
 

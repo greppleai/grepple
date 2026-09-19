@@ -80,14 +80,17 @@ func (renderer segmentRenderer) renderRelated(related []api.RelatedSymbol, omitt
 	if err := renderer.output.writeString("\nNext points (code navigation):\n"); err != nil {
 		return err
 	}
-	if err := renderer.renderRelatedPoints(related, 1); err != nil {
+	if err := renderer.renderRelatedPoints(related, 1, true); err != nil {
 		return err
 	}
 	return renderer.renderRelatedOmissions(omittedCallers, omittedCallees, omittedTypes, path, line, 1)
 }
 
-func (renderer segmentRenderer) renderRelatedPoints(related []api.RelatedSymbol, depth int) error {
+func (renderer segmentRenderer) renderRelatedPoints(related []api.RelatedSymbol, depth int, includeTypes bool) error {
 	for _, point := range related {
+		if point.Direction == "type" && !includeTypes {
+			continue
+		}
 		if err := renderer.renderRelatedPoint(point, depth); err != nil {
 			return err
 		}
@@ -110,22 +113,30 @@ func (renderer segmentRenderer) renderRelatedPoint(point api.RelatedSymbol, dept
 	if err := renderer.output.writeString(line); err != nil {
 		return err
 	}
-	if len(point.Segments) == 0 || point.Direction == "type" {
+	if point.Direction == "type" {
 		return nil
 	}
-	if err := renderer.renderRelatedSegments(point.Path, point.Artifact, point.Segments, depth+1); err != nil {
-		return err
-	}
-	if len(point.Related) > 0 || point.OmittedCallers > 0 || point.OmittedCallees > 0 || point.OmittedTypes > 0 {
+	calls := relatedCallPoints(point.Related)
+	if len(calls) > 0 || point.OmittedCallers > 0 || point.OmittedCallees > 0 {
 		if err := renderer.output.writeString(strings.Repeat("  ", depth+1) + "next:\n"); err != nil {
 			return err
 		}
-		if err := renderer.renderRelatedPoints(point.Related, depth+2); err != nil {
+		if err := renderer.renderRelatedPoints(calls, depth+2, false); err != nil {
 			return err
 		}
-		return renderer.renderRelatedOmissions(point.OmittedCallers, point.OmittedCallees, point.OmittedTypes, point.Path, point.Start, depth+2)
+		return renderer.renderRelatedOmissions(point.OmittedCallers, point.OmittedCallees, 0, point.Path, point.Start, depth+2)
 	}
 	return nil
+}
+
+func relatedCallPoints(points []api.RelatedSymbol) []api.RelatedSymbol {
+	calls := make([]api.RelatedSymbol, 0, len(points))
+	for _, point := range points {
+		if point.Direction != "type" {
+			calls = append(calls, point)
+		}
+	}
+	return calls
 }
 
 func relatedPointPresentation(point api.RelatedSymbol) (string, string, string) {
@@ -236,17 +247,6 @@ func pluralizeRelated(noun string, count int) string {
 		return noun
 	}
 	return noun + "s"
-}
-
-func (renderer segmentRenderer) renderRelatedSegments(path string, artifact *api.NavigationArtifactIdentity, segments []api.ResultSegment, depth int) error {
-	indent := strings.Repeat("  ", depth)
-	width := segmentLineWidth(segments)
-	for _, segment := range segments {
-		if err := renderer.renderSegment(path, path, artifact, segment, width, indent, ""); err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 func (renderer segmentRenderer) renderSegment(source, path string, artifact *api.NavigationArtifactIdentity, segment api.ResultSegment, width int, prefix, contextLabel string) error {

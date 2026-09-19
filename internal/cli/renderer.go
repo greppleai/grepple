@@ -92,7 +92,7 @@ func contextGuardForResults(options *cliOptions, results []api.FileResult) *segm
 		guard.bypassReason = "render-error"
 		return guard
 	}
-	headroom := completeResultSegmentCount(results)*128 + focusedLineResultCount(options, results)*128
+	headroom := completeResultSegmentCount(results, jsonMode)*128 + focusedLineResultCount(options, results)*128
 	if rendered.Len()+headroom > activeInlineOutputThreshold {
 		guard.deduplicate = false
 		guard.recordSegments = false
@@ -161,26 +161,34 @@ func segmentOutputMode(options *cliOptions) bool {
 		options.Params.BeforeContext == 0 && options.Params.AfterContext == 0 && !options.OnlyMatching && !options.LineOnly
 }
 
-func completeResultSegmentCount(results []api.FileResult) int {
+func completeResultSegmentCount(results []api.FileResult, includeAllRelated bool) int {
 	count := 0
-	var countRelated func([]api.RelatedSymbol)
-	countRelated = func(points []api.RelatedSymbol) {
-		for _, point := range points {
-			for _, segment := range point.Segments {
-				if completeStructuralSegment(segment) {
-					count++
-				}
-			}
-			countRelated(point.Related)
+	for _, result := range results {
+		count += completeSegmentCount(result.Segments)
+		count += completeRelatedSegmentCount(result.Related, includeAllRelated)
+	}
+	return count
+}
+
+func completeRelatedSegmentCount(points []api.RelatedSymbol, includeAll bool) int {
+	count := 0
+	for _, point := range points {
+		if includeAll || point.Direction == "type" {
+			count += completeSegmentCount(point.Segments)
+		}
+		if includeAll {
+			count += completeRelatedSegmentCount(point.Related, true)
 		}
 	}
-	for _, result := range results {
-		for _, segment := range result.Segments {
-			if completeStructuralSegment(segment) {
-				count++
-			}
+	return count
+}
+
+func completeSegmentCount(segments []api.ResultSegment) int {
+	count := 0
+	for _, segment := range segments {
+		if completeStructuralSegment(segment) {
+			count++
 		}
-		countRelated(result.Related)
 	}
 	return count
 }

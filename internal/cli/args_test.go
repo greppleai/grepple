@@ -134,7 +134,7 @@ func TestParseSearchArgsEnablesRelatedGoNavigation(t *testing.T) {
 	}
 }
 
-func TestStructuralSearchDefaultsToCallerAndCalleePreviews(t *testing.T) {
+func TestStructuralSearchDefaultsToCallerAndCalleeLocations(t *testing.T) {
 	directory := chdirTemp(t)
 	writeGraphSource(t, directory, "caller.go", "package sample\nfunc caller() string { return target() }\n")
 	writeGraphSource(t, directory, "target.go", "package sample\nfunc target() string { return callee() + \"DEFAULT_RELATED_NEEDLE\" }\n")
@@ -144,9 +144,14 @@ func TestStructuralSearchDefaultsToCallerAndCalleePreviews(t *testing.T) {
 			t.Fatal(err)
 		}
 	})
-	for _, expected := range []string{"← caller", "→ callee", "func caller() string", "func callee() string"} {
+	for _, expected := range []string{"← caller  caller.go:2-2", "→ callee  callee.go:2-2"} {
 		if !strings.Contains(output, expected) {
 			t.Fatalf("automatic related output missing %q:\n%s", expected, output)
+		}
+	}
+	for _, body := range []string{"func caller() string", "func callee() string"} {
+		if strings.Contains(output, body) {
+			t.Fatalf("automatic related output inlined %q:\n%s", body, output)
 		}
 	}
 }

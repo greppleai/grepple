@@ -90,8 +90,11 @@ func TestSegmentRendererPrintsRelatedGoPoints(t *testing.T) {
 			{
 				Name: "service.Load → (*Store).Load", Path: "store.go", Kind: "method", Direction: "callee",
 				Start: 12, End: 24, CallLine: 8, Confidence: "candidate",
-				Segments:       []api.ResultSegment{{Kind: "lines", Start: 12, End: 13, Text: "func (s *Store) Load() {\n}"}},
-				Related:        []api.RelatedSymbol{{Name: "validate", Path: "validate.go", Direction: "callee", Start: 3, End: 7, CallLine: 13, Confidence: "unique"}},
+				Segments: []api.ResultSegment{{Kind: "lines", Start: 12, End: 13, Text: "func (s *Store) Load() {\n}"}},
+				Related: []api.RelatedSymbol{
+					{Name: "validate", Path: "validate.go", Direction: "callee", Start: 3, End: 7, CallLine: 13, Confidence: "unique"},
+					{Name: "Nested", Path: "nested.go", Kind: "struct", Direction: "type", Role: "local", Start: 2, End: 4, CallLine: 14, Confidence: "exact", Segments: []api.ResultSegment{{Kind: "lines", Start: 2, End: 4, Text: "type Nested struct {\n\tValue string\n}"}}},
+				},
 				OmittedCallers: 2,
 				OmittedCallees: 1,
 				OmittedTypes:   1,
@@ -110,13 +113,17 @@ func TestSegmentRendererPrintsRelatedGoPoints(t *testing.T) {
 	caller := "  ← handle  handler.go:30-40  call:35\n"
 	typePoint := "  → Request  request.go:2-4  parameter-type:7\n"
 	typeDefinition := "Related type definitions:\n\nrequest.go:2-4  Request\n2   type Request struct {"
-	preview := "    12   func (s *Store) Load() {\n    13   }\n    next:\n      → validate"
-	if !strings.Contains(output.String(), "Next points (code navigation):\n") || !strings.Contains(output.String(), want) || !strings.Contains(output.String(), caller) || !strings.Contains(output.String(), typePoint) || !strings.Contains(output.String(), typeDefinition) || !strings.Contains(output.String(), preview) {
+	callTree := "    next:\n      → validate"
+	if !strings.Contains(output.String(), "Next points (code navigation):\n") || !strings.Contains(output.String(), want) || !strings.Contains(output.String(), caller) || !strings.Contains(output.String(), typePoint) || !strings.Contains(output.String(), typeDefinition) || !strings.Contains(output.String(), callTree) {
 		t.Fatalf("related navigation missing from output:\n%s", output.String())
+	}
+	for _, unwanted := range []string{"func (s *Store) Load()", "type Nested struct", "→ Nested"} {
+		if strings.Contains(output.String(), unwanted) {
+			t.Fatalf("secondary related source %q should not render:\n%s", unwanted, output.String())
+		}
 	}
 	for _, omission := range []string{
 		"      … 1 additional callee and 2 additional callers omitted",
-		"      … 1 additional type declaration omitted",
 		"  … 1 additional callee and 3 additional callers omitted",
 		"  … 2 additional type declarations omitted",
 	} {

@@ -844,6 +844,55 @@ func TestRenderedContextAdvisoryLockReleasesForNextOwner(t *testing.T) {
 	second()
 }
 
+func TestRelatedCallablePreviewDoesNotContributeContextCoverage(t *testing.T) {
+	directory := t.TempDir()
+	t.Setenv("GREPPLE_CONTEXT_GUARD_DIR", directory)
+	path := filepath.Join(t.TempDir(), "callee.go")
+	segment := api.ResultSegment{Kind: "function", Start: 1, End: 3, Text: "func Callee() {\n\twork()\n}"}
+	guard, err := openSegmentContextGuard()
+	if err != nil {
+		t.Fatal(err)
+	}
+	var output bytes.Buffer
+	renderer := segmentRenderer{output: newOutputWriter(&output), contextGuard: guard}
+	result := api.FileResult{Path: "caller.go", Related: []api.RelatedSymbol{{
+		Name: "Callee", Path: path, Direction: "callee", Start: 1, End: 3, CallLine: 10, Segments: []api.ResultSegment{segment},
+	}}}
+	if err := renderer.Render([]api.FileResult{result}); err != nil {
+		guard.close()
+		t.Fatal(err)
+	}
+	guard.close()
+	if strings.Contains(output.String(), "func Callee") {
+		t.Fatalf("related callable body rendered without editable anchors:\n%s", output.String())
+	}
+	verification, err := openSegmentContextGuard()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer verification.close()
+	if verification.seen(path, nil, segment) {
+		t.Fatal("unrendered related callable polluted context coverage")
+	}
+}
+
+func TestCompleteResultSegmentCountMatchesHumanRelatedRendering(t *testing.T) {
+	segment := api.ResultSegment{Kind: "lines", Start: 1, End: 1, Text: "source"}
+	results := []api.FileResult{{
+		Segments: []api.ResultSegment{segment},
+		Related: []api.RelatedSymbol{
+			{Direction: "type", Segments: []api.ResultSegment{segment}},
+			{Direction: "callee", Segments: []api.ResultSegment{segment}, Related: []api.RelatedSymbol{{Direction: "type", Segments: []api.ResultSegment{segment}}}},
+		},
+	}}
+	if got := completeResultSegmentCount(results, false); got != 2 {
+		t.Fatalf("human complete segment count = %d, want 2", got)
+	}
+	if got := completeResultSegmentCount(results, true); got != 4 {
+		t.Fatalf("JSON complete segment count = %d, want 4", got)
+	}
+}
+
 func renderWithSegmentGuard(t *testing.T, result api.FileResult) string {
 	t.Helper()
 	guard, err := openSegmentContextGuard()
