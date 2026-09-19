@@ -1,9 +1,11 @@
 package navigation
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/greppleai/grepple/api"
@@ -41,6 +43,53 @@ replace github.com/gofiber/fiber/v3 => ../fiber
 	}
 	if reference := results[0].Related[0].External; reference.Module != "" || reference.Version != "" {
 		t.Fatalf("local replacement was qualified as exact: %#v", reference)
+	}
+}
+
+func TestQualifyExternalDependenciesHonorsCorepackPackageManager(t *testing.T) {
+	validHash := strings.Repeat("a", 56)
+	tests := []struct {
+		name           string
+		packageManager string
+		qualified      bool
+	}{
+		{name: "absent", qualified: true},
+		{name: "exact npm", packageManager: "npm@10.8.2", qualified: true},
+		{name: "exact npm with corepack hash", packageManager: "npm@10.8.2+sha224." + validHash, qualified: true},
+		{name: "yarn selected", packageManager: "yarn@4.5.0"},
+		{name: "pnpm selected", packageManager: "pnpm@9.12.0"},
+		{name: "bun selected", packageManager: "bun@1.1.29"},
+		{name: "floating npm major", packageManager: "npm@10"},
+		{name: "floating npm tag", packageManager: "npm@latest"},
+		{name: "missing npm version", packageManager: "npm@"},
+		{name: "malformed corepack hash", packageManager: "npm@10.8.2+sha224.short"},
+		{name: "surrounding whitespace", packageManager: " npm@10.8.2"},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			root := t.TempDir()
+			manifest := map[string]any{"dependencies": map[string]string{"@acme/widgets": "^1.2.3"}}
+			if test.packageManager != "" {
+				manifest["packageManager"] = test.packageManager
+			}
+			content, err := json.Marshal(manifest)
+			if err != nil {
+				t.Fatal(err)
+			}
+			mustWriteDependencyFile(t, filepath.Join(root, "package.json"), string(content))
+			mustWriteDependencyFile(t, filepath.Join(root, "package-lock.json"), `{"lockfileVersion":3,"packages":{"node_modules/@acme/widgets":{"version":"1.2.3","integrity":"sha512-lock"}}}`)
+			mustWriteDependencyFile(t, filepath.Join(root, "yarn.lock"), "stale conflicting lock")
+			mustWriteDependencyFile(t, filepath.Join(root, "pnpm-lock.yaml"), "lockfileVersion: '9.0'")
+			mustWriteDependencyFile(t, filepath.Join(root, "main.ts"), "export {}")
+			results := npmExternalDependencyResults()
+			if err := QualifyExternalDependencies(results, root); err != nil {
+				t.Fatal(err)
+			}
+			reference := results[0].Related[0].External
+			if got := reference.Module != ""; got != test.qualified {
+				t.Fatalf("packageManager %q qualified=%v, reference=%#v", test.packageManager, got, reference)
+			}
+		})
 	}
 }
 

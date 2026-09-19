@@ -1,6 +1,7 @@
 package navigation
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
@@ -13,6 +14,7 @@ import (
 	"github.com/greppleai/grepple/api"
 	toml "github.com/pelletier/go-toml/v2"
 	"golang.org/x/mod/modfile"
+	"golang.org/x/mod/semver"
 )
 
 // ArtifactModule identifies one publishable module found in a repository.
@@ -164,9 +166,38 @@ func npmPackageName(importPath string) string {
 func normalizedCrateName(name string) string { return strings.ReplaceAll(name, "-", "_") }
 
 type npmManifest struct {
-	Name         string            `json:"name"`
-	Version      string            `json:"version"`
-	Dependencies map[string]string `json:"dependencies"`
+	Name           string            `json:"name"`
+	Version        string            `json:"version"`
+	PackageManager string            `json:"packageManager"`
+	Dependencies   map[string]string `json:"dependencies"`
+}
+
+func npmPackageManagerAllowsLockfile(specifier string) bool {
+	if specifier == "" {
+		return true
+	}
+	if strings.TrimSpace(specifier) != specifier || !strings.HasPrefix(specifier, "npm@") {
+		return false
+	}
+	versionSpec := strings.TrimPrefix(specifier, "npm@")
+	version, integrity, hasIntegrity := strings.Cut(versionSpec, "+")
+	if !semver.IsValid("v" + version) {
+		return false
+	}
+	coreVersion, _, _ := strings.Cut(version, "-")
+	if len(strings.Split(coreVersion, ".")) != 3 {
+		return false
+	}
+	if !hasIntegrity {
+		return true
+	}
+	algorithm, digest, ok := strings.Cut(integrity, ".")
+	if !ok {
+		return false
+	}
+	expectedBytes := map[string]int{"sha224": 28, "sha256": 32, "sha384": 48, "sha512": 64}[algorithm]
+	decoded, err := hex.DecodeString(digest)
+	return err == nil && expectedBytes > 0 && len(decoded) == expectedBytes
 }
 
 type npmLockEntry struct {
@@ -192,36 +223,54 @@ func readNPMDependencies(path string) ([]dependencyEvidence, error) {
 	if err := json.Unmarshal(content, &manifest); err != nil {
 		return nil, err
 	}
-	lockContent, err := readNPMLockfile(filepath.Dir(path))
-	if err != nil || lockContent == nil {
+	if !npmPackageManagerAllowsLockfile(manifest.PackageManager) {
+		return nil, nil
+	}
+	lock, authoritative, err := readAuthoritativeNPMLock(filepath.Dir(path))
+	if err != nil || !authoritative {
 		return nil, err
+	}
+	dependencies := make([]dependencyEvidence, 0, len(manifest.Dependencies))
+	for name, constraint := range manifest.Dependencies {
+		evidence, ok := npmLockedDependencyEvidence(lock, name, constraint)
+		if ok {
+			dependencies = append(dependencies, evidence)
+		}
+	}
+	return dependencies, nil
+}
+
+func readAuthoritativeNPMLock(directory string) (npmLock, bool, error) {
+	content, err := readNPMLockfile(directory)
+	if err != nil || content == nil {
+		return npmLock{}, false, err
 	}
 	// A lockfile is optional qualification evidence. Malformed or unknown schemas
 	// must leave the original import unresolved rather than fail the search or guess.
 	var lock npmLock
-	if err := json.Unmarshal(lockContent, &lock); err != nil {
-		return nil, nil
+	if err := json.Unmarshal(content, &lock); err != nil {
+		return npmLock{}, false, nil
 	}
 	if lock.LockfileVersion < 1 || lock.LockfileVersion > 3 {
-		return nil, nil
+		return npmLock{}, false, nil
 	}
-	dependencies := make([]dependencyEvidence, 0, len(manifest.Dependencies))
-	for name, constraint := range manifest.Dependencies {
-		if npmUnsupportedDependencySource(constraint) {
-			continue
-		}
-		entry, ok := npmLockedDirectDependency(lock, name)
-		if !ok {
-			continue
-		}
-		module, version, ok := npmLockedDependencyIdentity(name, constraint, entry)
-		integrity, resolved, linked := entry.Integrity, entry.Resolved, entry.Link
-		if !ok || linked || strings.HasPrefix(resolved, "file:") || strings.HasPrefix(resolved, "link:") {
-			continue
-		}
-		dependencies = append(dependencies, dependencyEvidence{ecosystem: "npm", importName: name, module: module, version: version, integrity: integrity})
+	return lock, true, nil
+}
+
+func npmLockedDependencyEvidence(lock npmLock, name, constraint string) (dependencyEvidence, bool) {
+	if npmUnsupportedDependencySource(constraint) {
+		return dependencyEvidence{}, false
 	}
-	return dependencies, nil
+	entry, ok := npmLockedDirectDependency(lock, name)
+	if !ok {
+		return dependencyEvidence{}, false
+	}
+	module, version, ok := npmLockedDependencyIdentity(name, constraint, entry)
+	resolved := entry.Resolved
+	if !ok || entry.Link || strings.HasPrefix(resolved, "file:") || strings.HasPrefix(resolved, "link:") {
+		return dependencyEvidence{}, false
+	}
+	return dependencyEvidence{ecosystem: "npm", importName: name, module: module, version: version, integrity: entry.Integrity}, true
 }
 
 func readNPMLockfile(directory string) ([]byte, error) {
