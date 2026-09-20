@@ -733,10 +733,10 @@ func TestContextStatsSurviveCacheWriteFailure(t *testing.T) {
 
 func TestRunContextInvalidateValidation(t *testing.T) {
 	t.Setenv("GREPPLE_CONTEXT_GUARD_DIR", t.TempDir())
-	if err := runContext([]string{"invalidate", "--reason", "compact"}); err != nil {
+	if err := Run([]string{"context", "invalidate", "--reason", "compact"}); err != nil {
 		t.Fatal(err)
 	}
-	if err := runContext([]string{"invalidate", "--unknown"}); err == nil {
+	if err := Run([]string{"context", "invalidate", "--unknown"}); err == nil {
 		t.Fatal("unknown argument accepted")
 	}
 }

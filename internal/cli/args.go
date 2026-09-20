@@ -8,12 +8,14 @@ import (
 
 	artifactscommand "github.com/greppleai/grepple/internal/cli/artifacts"
 	askcommand "github.com/greppleai/grepple/internal/cli/ask"
+	contextcommand "github.com/greppleai/grepple/internal/cli/context"
 	"github.com/greppleai/grepple/internal/cli/examples"
 	getcommand "github.com/greppleai/grepple/internal/cli/get"
 	languagescommand "github.com/greppleai/grepple/internal/cli/languages"
 	refscommand "github.com/greppleai/grepple/internal/cli/refs"
 	reposcommand "github.com/greppleai/grepple/internal/cli/repos"
 	cliruntime "github.com/greppleai/grepple/internal/cli/runtime"
+	sourcescommand "github.com/greppleai/grepple/internal/cli/sources"
 	treecommand "github.com/greppleai/grepple/internal/cli/tree"
 	versioncommand "github.com/greppleai/grepple/internal/cli/version"
 	writecommand "github.com/greppleai/grepple/internal/cli/write"
@@ -518,7 +520,7 @@ func runCommand(args []string) error {
 		case "artifacts":
 			return artifactscommand.Run(args[1:], artifactscommand.Dependencies{Stdout: os.Stdout, ArtifactDirectory: defaultOutputArtifactDirectory, WorkingDirectory: mustGetwd})
 		case "context":
-			return runContext(args[1:])
+			return contextcommand.Run(args[1:], contextcommand.Dependencies{Stdout: os.Stdout, Invalidate: invalidateRenderedContext})
 		case "languages":
 			return languagescommand.Run(args[1:], languagescommand.Dependencies{Stdout: os.Stdout})
 		case "get":
@@ -546,7 +548,7 @@ func runCommand(args []string) error {
 		case "architecture":
 			return runArchitecture(args[1:])
 		case "sources":
-			return runSources(args[1:])
+			return sourcescommand.Run(args[1:], sourceCommandDependencies(os.Stdout))
 		}
 	}
 	return runSearch(args)

@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	sourcescommand "github.com/greppleai/grepple/internal/cli/sources"
 )
 
 func TestSourcesExplainReportsConfigExclusionsAndClassifications(t *testing.T) {
@@ -33,7 +35,7 @@ func TestSourcesExplainReportsConfigExclusionsAndClassifications(t *testing.T) {
 	if !report.ProductionOnly || report.SelectedFiles != 2 || report.ExcludedFiles != 2 {
 		t.Fatalf("report=%+v", report)
 	}
-	if formatSourceScopeCounts(report.Exclusions) != "config-ignore:1,non-production:1" {
+	if sourcescommand.FormatCounts(report.Exclusions) != "config-ignore:1,non-production:1" {
 		t.Fatalf("exclusions=%+v", report.Exclusions)
 	}
 	spooled := captureStdout(t, func() {

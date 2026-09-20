@@ -150,39 +150,6 @@ type segmentContextGuard struct {
 	fullLineRangeMisses         int
 }
 
-func runContext(args []string) error {
-	if len(args) == 1 && (args[0] == "--help" || args[0] == "-h") {
-		return stdoutWriter().writeString("Manage session-agnostic structural-segment context deduplication.\nUsage:\n  grepple context invalidate [--reason REASON]\n")
-	}
-	if len(args) == 0 || args[0] != "invalidate" {
-		return fmt.Errorf("usage: grepple context invalidate [--reason REASON]")
-	}
-	reason, err := parseContextInvalidationReason(args[1:])
-	if err != nil {
-		return err
-	}
-	return invalidateRenderedContext(reason)
-}
-
-func parseContextInvalidationReason(args []string) (string, error) {
-	reason := "manual"
-	for index := 0; index < len(args); index++ {
-		switch {
-		case args[index] == "--reason" && index+1 < len(args):
-			reason = strings.TrimSpace(args[index+1])
-			index++
-		case strings.HasPrefix(args[index], "--reason="):
-			reason = strings.TrimSpace(strings.TrimPrefix(args[index], "--reason="))
-		default:
-			return "", fmt.Errorf("unknown context invalidate argument %q", args[index])
-		}
-	}
-	if reason == "" {
-		return "", fmt.Errorf("--reason requires a value")
-	}
-	return reason, nil
-}
-
 func openSegmentContextGuard() (*segmentContextGuard, error) {
 	directory, err := renderedContextDirectory()
 	if err != nil {

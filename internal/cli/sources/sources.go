@@ -1,4 +1,4 @@
-package cli
+package sources
 
 import (
 	"crypto/sha256"
@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/alexflint/go-arg"
+	cliruntime "github.com/greppleai/grepple/internal/cli/runtime"
 	"github.com/greppleai/grepple/search"
 )
 
@@ -23,48 +24,52 @@ type sourceExplainArgs struct {
 	Paths          []string `arg:"positional" placeholder:"PATH" help:"file or directory to inspect; defaults to the repository root"`
 }
 
-type sourceScopeConfig struct {
+// Config describes the repository configuration applied to source selection.
+type Config struct {
 	Loaded        bool   `json:"loaded"`
 	Path          string `json:"path,omitempty"`
 	Digest        string `json:"digest,omitempty"`
 	IgnoreEnabled bool   `json:"ignoreEnabled"`
 }
 
-type sourceScopeCount struct {
+// Count is one deterministic source classification total.
+type Count struct {
 	Name  string `json:"name"`
 	Count int    `json:"count"`
 }
 
-type sourceScopeReport struct {
+// Report describes repository source selection decisions.
+type Report struct {
 	Schema                  string                      `json:"schema"`
 	Root                    string                      `json:"root"`
-	Config                  sourceScopeConfig           `json:"config"`
+	Config                  Config                      `json:"config"`
 	ProductionOnly          bool                        `json:"productionOnly"`
 	DiscoveredFiles         int                         `json:"discoveredFiles"`
 	SelectedFiles           int                         `json:"selectedFiles"`
 	ExcludedFiles           int                         `json:"excludedFiles"`
 	OmittedSubtrees         int                         `json:"omittedSubtrees"`
 	UnconditionalExclusions []string                    `json:"unconditionalExclusions"`
-	Classifications         []sourceScopeCount          `json:"classifications"`
-	Exclusions              []sourceScopeCount          `json:"exclusions"`
+	Classifications         []Count                     `json:"classifications"`
+	Exclusions              []Count                     `json:"exclusions"`
 	Decisions               []search.SourcePathDecision `json:"decisions"`
 }
 
-func runSources(args []string) error {
-	if len(args) == 0 || isExtractHelp(args[0]) {
-		return stdoutWriter().writeString("Explain repository source selection.\nUsage:\n  grepple sources explain (--compact | --json) [PATH ...]\n")
+// Run executes the sources command.
+func Run(args []string, dependencies Dependencies) error {
+	if len(args) == 0 || isHelp(args[0]) {
+		return cliruntime.NewOutput(dependencies.stdout()).WriteString("Explain repository source selection.\nUsage:\n  grepple sources explain (--compact | --json) [PATH ...]\n")
 	}
 	if args[0] != "explain" {
 		return fmt.Errorf("unknown sources command %q", args[0])
 	}
-	values := sourceExplainArgs{MaxOutputBytes: DefaultTextOutputBytes}
+	values := sourceExplainArgs{MaxOutputBytes: 16 * 1024}
 	parser, err := arg.NewParser(arg.Config{Program: "grepple sources explain"}, &values)
 	if err != nil {
 		return err
 	}
 	if err := parser.Parse(args[1:]); err != nil {
 		if errors.Is(err, arg.ErrHelp) {
-			parser.WriteHelp(os.Stdout)
+			parser.WriteHelp(dependencies.stdout())
 			return nil
 		}
 		return err
@@ -75,50 +80,48 @@ func runSources(args []string) error {
 	if values.MaxOutputBytes < 0 {
 		return fmt.Errorf("--max-output-bytes must not be negative")
 	}
-	report, err := buildSourceScopeReport(values.Paths)
+	report, err := Build(values.Paths, dependencies)
 	if err != nil {
 		return err
 	}
 	if values.JSON {
-		return stdoutWriter().writeJSON(report)
+		return cliruntime.NewOutput(dependencies.stdout()).WriteJSON(report)
 	}
-	return renderSourceScopeReport(report, values.MaxOutputBytes)
+	return renderSourceScopeReport(report, values.MaxOutputBytes, dependencies)
 }
 
-func buildSourceScopeReport(paths []string) (sourceScopeReport, error) {
-	config, configPath, err := loadRepositoryConfig()
+func isHelp(value string) bool { return value == "--help" || value == "-h" || value == "help" }
+
+// Build inspects and summarizes repository source selection.
+func Build(paths []string, dependencies Dependencies) (Report, error) {
+	environment, err := dependencies.environment()
 	if err != nil {
-		return sourceScopeReport{}, err
+		return Report{}, err
 	}
-	root := mustGetwd()
-	if configPath != "" {
-		root = filepath.Dir(configPath)
-	}
+	root, configPath := environment.Root, environment.ConfigPath
 	if len(paths) == 0 {
 		paths = []string{root}
 	}
-	options := search.SourceScopeOptions{Root: root, IgnoreRoot: root, ProductionOnly: activeRepositoryOptions.productionOnly}
-	if !activeRepositoryOptions.ignoreDisabled {
-		options.IgnorePaths = append([]string(nil), config.Ignore.Paths...)
+	options := search.SourceScopeOptions{Root: root, IgnoreRoot: root, ProductionOnly: environment.ProductionOnly}
+	if !environment.IgnoreDisabled {
+		options.IgnorePaths = append([]string(nil), environment.IgnorePaths...)
 	}
 	decisions, err := search.InspectSourceScope(paths, options)
 	if err != nil {
-		return sourceScopeReport{}, err
+		return Report{}, err
 	}
-	report := sourceScopeReport{
-		Schema: sourceScopeSchema, Root: displayRepositoryPath(root), ProductionOnly: options.ProductionOnly,
-		Config:                  sourceScopeConfig{Loaded: configPath != "", Path: displayRepositoryPath(configPath), IgnoreEnabled: configPath != "" && !activeRepositoryOptions.ignoreDisabled},
-		Decisions:               decisions,
-		UnconditionalExclusions: []string{".git/**", ".grepple/**", ".worktrees/**"},
+	report := Report{
+		Schema: sourceScopeSchema, Root: displayRepositoryPath(root, dependencies), ProductionOnly: options.ProductionOnly,
+		Config:    Config{Loaded: configPath != "", Path: displayRepositoryPath(configPath, dependencies), IgnoreEnabled: configPath != "" && !environment.IgnoreDisabled},
+		Decisions: decisions, UnconditionalExclusions: []string{".git/**", ".grepple/**", ".worktrees/**"},
 	}
 	if configPath != "" {
 		report.Config.Digest, err = fileSHA256(configPath)
 		if err != nil {
-			return sourceScopeReport{}, err
+			return Report{}, err
 		}
 	}
-	classifications := map[string]int{}
-	exclusions := map[string]int{}
+	classifications, exclusions := map[string]int{}, map[string]int{}
 	for _, decision := range decisions {
 		if decision.Subtree {
 			report.OmittedSubtrees++
@@ -138,26 +141,26 @@ func buildSourceScopeReport(paths []string) (sourceScopeReport, error) {
 	return report, nil
 }
 
-func renderSourceScopeReport(report sourceScopeReport, maxBytes int) error {
-	writer := architectureOutputWriter(maxBytes)
+func renderSourceScopeReport(report Report, maxBytes int, dependencies Dependencies) error {
+	writer := cliruntime.NewBoundedOutput(dependencies.stdout(), maxBytes)
 	config := "none"
 	if report.Config.Loaded {
 		config = fmt.Sprintf("%s@%s", report.Config.Path, shortSourceDigest(report.Config.Digest))
 	}
-	if err := writer.writeString(fmt.Sprintf("sources %s root=%s config=%s config-ignore=%t production-only=%t discovered=%d selected=%d excluded=%d omitted-subtrees=%d unconditional=%s\n", report.Schema, report.Root, config, report.Config.IgnoreEnabled, report.ProductionOnly, report.DiscoveredFiles, report.SelectedFiles, report.ExcludedFiles, report.OmittedSubtrees, strings.Join(report.UnconditionalExclusions, ","))); err != nil {
+	if err := writer.WriteString(fmt.Sprintf("sources %s root=%s config=%s config-ignore=%t production-only=%t discovered=%d selected=%d excluded=%d omitted-subtrees=%d unconditional=%s\n", report.Schema, report.Root, config, report.Config.IgnoreEnabled, report.ProductionOnly, report.DiscoveredFiles, report.SelectedFiles, report.ExcludedFiles, report.OmittedSubtrees, strings.Join(report.UnconditionalExclusions, ","))); err != nil {
 		return nil
 	}
-	if err := writer.writeString(fmt.Sprintf("classifications %s\n", formatSourceScopeCounts(report.Classifications))); err != nil {
+	if err := writer.WriteString(fmt.Sprintf("classifications %s\n", FormatCounts(report.Classifications))); err != nil {
 		return nil
 	}
-	if err := writer.writeString(fmt.Sprintf("exclusions %s\n", formatSourceScopeCounts(report.Exclusions))); err != nil {
+	if err := writer.WriteString(fmt.Sprintf("exclusions %s\n", FormatCounts(report.Exclusions))); err != nil {
 		return nil
 	}
 	for _, decision := range report.Decisions {
 		if decision.Selected && !strings.Contains(decision.Reason, "bypass") {
 			continue
 		}
-		if err := writer.writeString(fmt.Sprintf("%s %s reason=%s class=%s language=%s explicit=%t\n", sourceDecisionMarker(decision), decision.Path, decision.Reason, decision.Classification, decision.Language, decision.Explicit)); err != nil {
+		if err := writer.WriteString(fmt.Sprintf("%s %s reason=%s class=%s language=%s explicit=%t\n", sourceDecisionMarker(decision), decision.Path, decision.Reason, decision.Classification, decision.Language, decision.Explicit)); err != nil {
 			return nil
 		}
 	}
@@ -174,7 +177,7 @@ func sourceDecisionMarker(decision search.SourcePathDecision) string {
 	return "X"
 }
 
-func sortedSourceScopeCounts(values map[string]int) []sourceScopeCount {
+func sortedSourceScopeCounts(values map[string]int) []Count {
 	names := make([]string, 0, len(values))
 	for name := range values {
 		if name != "" {
@@ -182,14 +185,15 @@ func sortedSourceScopeCounts(values map[string]int) []sourceScopeCount {
 		}
 	}
 	sort.Strings(names)
-	result := make([]sourceScopeCount, 0, len(names))
+	result := make([]Count, 0, len(names))
 	for _, name := range names {
-		result = append(result, sourceScopeCount{Name: name, Count: values[name]})
+		result = append(result, Count{Name: name, Count: values[name]})
 	}
 	return result
 }
 
-func formatSourceScopeCounts(values []sourceScopeCount) string {
+// FormatCounts renders deterministic source-scope count summaries.
+func FormatCounts(values []Count) string {
 	if len(values) == 0 {
 		return "none"
 	}
@@ -217,11 +221,11 @@ func shortSourceDigest(digest string) string {
 	return "sha256:" + value
 }
 
-func displayRepositoryPath(path string) string {
+func displayRepositoryPath(path string, dependencies Dependencies) string {
 	if path == "" {
 		return ""
 	}
-	working, _ := os.Getwd()
+	working := dependencies.workingDirectory()
 	if relative, err := filepath.Rel(working, path); err == nil && relative != ".." && !strings.HasPrefix(relative, ".."+string(filepath.Separator)) {
 		return filepath.ToSlash(relative)
 	}
