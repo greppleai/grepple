@@ -392,7 +392,8 @@ grepple --remote --repo owner/repo "useEffect"  # local plus configured service
 grepple --server https://grepple.example.com --repo owner/repo "useEffect"
 grepple repos                                    # indexed repository catalog
 grepple get owner/repo path/to/file --lines 20:50
-grepple tree owner/repo src --depth 3
+grepple tree internal/cli --depth 3              # local source tree
+grepple tree --repo owner/repo src --depth 3     # indexed repository tree
 ```
 
 Remote server URLs are resolved from `--server`, `GREPPLE_SERVER`, `./grepple.json`, `~/.grepple/config.json`, and finally `http://127.0.0.1:8787`.

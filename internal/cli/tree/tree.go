@@ -8,6 +8,8 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 
@@ -19,15 +21,17 @@ import (
 // Request contains parsed tree command options.
 type Request struct {
 	cliruntime.CommonArgs
-	Depth int    `arg:"--depth" default:"2" placeholder:"N" help:"levels to descend"`
-	JSON  bool   `arg:"--json" help:"print raw JSON"`
-	Repo  string `arg:"positional,required" placeholder:"OWNER/REPOSITORY"`
-	Path  string `arg:"positional" placeholder:"PATH"`
+	Depth      int      `arg:"--depth" default:"2" placeholder:"N" help:"levels to descend"`
+	JSON       bool     `arg:"--json" help:"print raw JSON"`
+	Repository string   `arg:"--repo" placeholder:"OWNER/REPOSITORY[@REF]" help:"show one exact indexed repository instead of the local checkout"`
+	Repo       string   `arg:"-"`
+	Path       string   `arg:"-"`
+	Targets    []string `arg:"positional" placeholder:"PATH" help:"local path (default .); legacy remote syntax also accepts OWNER/REPOSITORY [PATH]"`
 }
 
 // Description returns the command description used by the argument parser.
 func (Request) Description() string {
-	return "Show the directory tree of an indexed repository."
+	return "Show the local source tree by default; --repo selects an exact indexed repository."
 }
 
 type treeNode struct {
@@ -53,8 +57,17 @@ func Run(args []string, dependencies Dependencies) error {
 	if values.Depth < 1 {
 		return fmt.Errorf("--depth must be a positive integer")
 	}
-	base := dependencies.serverDefault(values.Server)
-	data, err := FetchContext(context.Background(), base, values, dependencies)
+	remote, err := normalizeRequest(&values)
+	if err != nil {
+		return err
+	}
+	var data api.TreeResponse
+	if remote {
+		base := dependencies.serverDefault(values.Server)
+		data, err = FetchContext(context.Background(), base, values, dependencies)
+	} else {
+		data, err = dependencies.localTree(values.Path, values.Depth)
+	}
 	if err != nil {
 		return err
 	}
@@ -62,6 +75,50 @@ func Run(args []string, dependencies Dependencies) error {
 		return cliruntime.NewOutput(dependencies.stdout()).WriteJSON(data)
 	}
 	return printTree(data, dependencies)
+}
+
+func normalizeRequest(values *Request) (bool, error) {
+	if values == nil {
+		return false, fmt.Errorf("tree request is required")
+	}
+	if values.Repository != "" {
+		if len(values.Targets) > 1 {
+			return false, fmt.Errorf("tree --repo accepts at most one PATH")
+		}
+		values.Repo = values.Repository
+		if len(values.Targets) == 1 {
+			values.Path = values.Targets[0]
+		}
+		return true, nil
+	}
+	if len(values.Targets) > 2 {
+		return false, fmt.Errorf("tree accepts one local PATH or legacy OWNER/REPOSITORY [PATH]")
+	}
+	if len(values.Targets) == 2 {
+		values.Repo, values.Path = values.Targets[0], values.Targets[1]
+		return true, nil
+	}
+	if len(values.Targets) == 0 {
+		values.Path = "."
+		return false, nil
+	}
+	candidate := values.Targets[0]
+	if legacyRepositoryTarget(candidate) {
+		if _, err := os.Stat(candidate); os.IsNotExist(err) {
+			values.Repo = candidate
+			return true, nil
+		}
+	}
+	values.Path = candidate
+	return false, nil
+}
+
+func legacyRepositoryTarget(value string) bool {
+	if strings.HasPrefix(value, ".") || filepath.IsAbs(value) {
+		return false
+	}
+	parts := strings.Split(filepath.ToSlash(filepath.Clean(value)), "/")
+	return len(parts) == 2 && parts[0] != "" && parts[1] != "" && parts[0] != ".." && parts[1] != ".."
 }
 
 // FetchContext retrieves a directory listing from the server.
