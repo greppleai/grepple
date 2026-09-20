@@ -9,6 +9,7 @@ import (
 	askcommand "github.com/greppleai/grepple/internal/cli/ask"
 	"github.com/greppleai/grepple/internal/cli/examples"
 	cliruntime "github.com/greppleai/grepple/internal/cli/runtime"
+	writecommand "github.com/greppleai/grepple/internal/cli/write"
 	"github.com/greppleai/grepple/search"
 
 	"github.com/alexflint/go-arg"
@@ -498,7 +499,7 @@ func runCommand(args []string) error {
 		case "search":
 			return runSearch(args[1:])
 		case "write":
-			return runWrite(args[1:])
+			return writecommand.Run(args[1:], writecommand.Dependencies{Stdin: os.Stdin, Stdout: os.Stdout, RequestExit: requestExit, RecordResponse: recordWriteResponseContext})
 		case "graph":
 			return runGraph(args[1:])
 		case "anchors":

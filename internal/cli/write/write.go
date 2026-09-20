@@ -1,4 +1,4 @@
-package cli
+package write
 
 import (
 	"bytes"
@@ -13,6 +13,7 @@ import (
 	"sort"
 	"strings"
 
+	cliruntime "github.com/greppleai/grepple/internal/cli/runtime"
 	"github.com/greppleai/grepple/internal/hashline"
 	"github.com/pmezard/go-difflib/difflib"
 )
@@ -26,6 +27,36 @@ const (
 	maxWriteDiagnosticLines = 5
 	maxWriteDiagnosticBytes = 240
 )
+
+// Response is the complete structured result of a write transaction.
+type Response = writeResponse
+
+// ResponseFile describes one file in a write transaction result.
+type ResponseFile = writeResponseFile
+
+// ResponseChange describes one anchored change in a write result.
+type ResponseChange = writeResponseChange
+
+// Anchor identifies one editable source line after a write.
+type Anchor = writeAnchor
+
+// Dependencies supplies process-owned streams and lifecycle callbacks.
+type Dependencies struct {
+	Stdin          io.Reader
+	Stdout         io.Writer
+	RequestExit    func(int)
+	RecordResponse func(root string, response Response, returnedBytes int, applied, failed, recordAnchors bool)
+}
+
+func (dependencies Dependencies) withDefaults() Dependencies {
+	if dependencies.Stdin == nil {
+		dependencies.Stdin = os.Stdin
+	}
+	if dependencies.Stdout == nil {
+		dependencies.Stdout = os.Stdout
+	}
+	return dependencies
+}
 
 const writeHelp = `Apply one validated, hash-anchored transaction across multiple files.
 Usage: grepple write [--root PATH] [--dry-run] [--json]
@@ -182,29 +213,31 @@ func (counter *writeResponseCounter) Write(content []byte) (int, error) {
 	return written, err
 }
 
-func runWrite(args []string) error {
+// Run executes the write command with process dependencies supplied by its caller.
+func Run(args []string, dependencies Dependencies) error {
+	dependencies = dependencies.withDefaults()
 	options, err := parseWriteOptions(args)
 	if err != nil {
 		return err
 	}
 	if options.help {
-		return stdoutWriter().writeString(writeHelp)
+		return cliruntime.NewOutput(dependencies.Stdout).WriteString(writeHelp)
 	}
-	output := &writeResponseCounter{writer: os.Stdout}
+	output := &writeResponseCounter{writer: dependencies.Stdout}
 	var request writeRequest
 	var failure *writeFailure
 	if options.literalEdit {
-		request, failure = decodeLiteralWriteRequest(options, os.Stdin)
+		request, failure = decodeLiteralWriteRequest(options, dependencies.Stdin)
 	} else {
-		request, failure = decodeWriteRequest(os.Stdin)
+		request, failure = decodeWriteRequest(dependencies.Stdin)
 	}
 	if failure != nil {
 		response := failedWriteResponse(options.dryRun, failure)
 		if err := emitWriteResponse(output, response, options.json); err != nil {
 			return err
 		}
-		recordWriteResponseContext(options.root, response, output.written, false, true, false)
-		requestExit(1)
+		recordWriteResponse(dependencies, options.root, response, output.written, false, true, false)
+		requestWriteExit(dependencies, 1)
 		return nil
 	}
 	response, failure := executeWriteRequest(options.root, options.dryRun, request)
@@ -215,11 +248,23 @@ func runWrite(args []string) error {
 		return err
 	}
 	recordAnchors := failure == nil && response.Applied && !options.dryRun && !options.json
-	recordWriteResponseContext(options.root, response, output.written, response.Applied, failure != nil, recordAnchors)
+	recordWriteResponse(dependencies, options.root, response, output.written, response.Applied, failure != nil, recordAnchors)
 	if failure != nil {
-		requestExit(1)
+		requestWriteExit(dependencies, 1)
 	}
 	return nil
+}
+
+func recordWriteResponse(dependencies Dependencies, root string, response Response, returnedBytes int, applied, failed, recordAnchors bool) {
+	if dependencies.RecordResponse != nil {
+		dependencies.RecordResponse(root, response, returnedBytes, applied, failed, recordAnchors)
+	}
+}
+
+func requestWriteExit(dependencies Dependencies, code int) {
+	if dependencies.RequestExit != nil {
+		dependencies.RequestExit(code)
+	}
 }
 
 func parseWriteOptions(args []string) (writeOptions, error) {
@@ -1340,9 +1385,19 @@ func responseFileAnchors(file writeResponseFile) []writeAnchor {
 	return anchors
 }
 
+// ResolveRoot resolves and validates a write transaction root.
+func ResolveRoot(root string) (string, error) { return resolveWriteRoot(root) }
+
+// ResponseFileAnchors returns the deduplicated anchors rendered for file.
+func ResponseFileAnchors(file ResponseFile) []Anchor { return responseFileAnchors(file) }
+
+// Digest returns the write protocol's SHA-256 content identity.
+func Digest(content []byte) string { return writeDigest(content) }
+
+func intPointer(value int) *int { return &value }
 func emitWriteAnchors(writer io.Writer, anchors []writeAnchor) error {
 	for _, anchor := range anchors {
-		if _, err := fmt.Fprintf(writer, "%s%s%d%s%s\n", anchor.Hash, anchorOutputSeparator, anchor.Line, anchorOutputSeparator, normalizeRenderedAnchorLine(anchor.Content)); err != nil {
+		if _, err := fmt.Fprintf(writer, "%s│%d│%s\n", anchor.Hash, anchor.Line, strings.TrimSuffix(anchor.Content, "\r")); err != nil {
 			return err
 		}
 	}

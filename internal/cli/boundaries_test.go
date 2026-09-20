@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	writecommand "github.com/greppleai/grepple/internal/cli/write"
 	"github.com/greppleai/grepple/parser"
 )
 
@@ -67,7 +68,7 @@ func TestReadOnlyAnalysisStoresCachesAndArtifactsOutsideRepository(t *testing.T)
 	if _, err := os.Stat(filepath.Join(dir, ".grepple")); !os.IsNotExist(err) {
 		t.Fatalf("analysis wrote beneath read-only repository: %v", err)
 	}
-	entries, err := os.ReadDir(filepath.Join(cacheHome, "grepple", "cache", writeDigest([]byte(filepath.Clean(dir)))[:16], "boundaries"))
+	entries, err := os.ReadDir(filepath.Join(cacheHome, "grepple", "cache", writecommand.Digest([]byte(filepath.Clean(dir)))[:16], "boundaries"))
 	if err != nil || len(entries) == 0 {
 		t.Fatalf("external cache entries=%d err=%v", len(entries), err)
 	}

@@ -15,6 +15,7 @@ import (
 
 	"github.com/gofrs/flock"
 	"github.com/greppleai/grepple/api"
+	writecommand "github.com/greppleai/grepple/internal/cli/write"
 	"github.com/greppleai/grepple/linerange"
 )
 
@@ -353,7 +354,7 @@ func (guard *segmentContextGuard) recordSegmentLines(source string, segment api.
 	}
 }
 
-func (guard *segmentContextGuard) recordWriteAnchors(source string, anchors []writeAnchor) {
+func (guard *segmentContextGuard) recordWriteAnchors(source string, anchors []writecommand.Anchor) {
 	path, ok := localContextSourcePath(source)
 	if !ok {
 		return
@@ -406,7 +407,7 @@ func (guard *segmentContextGuard) removeContextFile(source string) {
 	}
 }
 
-func recordWriteResponseContext(root string, response writeResponse, returnedBytes int, applied, failed, recordAnchors bool) {
+func recordWriteResponseContext(root string, response writecommand.Response, returnedBytes int, applied, failed, recordAnchors bool) {
 	if !contextGuardEnabled() {
 		return
 	}
@@ -426,7 +427,7 @@ func recordWriteResponseContext(root string, response writeResponse, returnedByt
 	if !recordAnchors || activeInlineOutputThreshold < 1 || returnedBytes > activeInlineOutputThreshold {
 		return
 	}
-	resolvedRoot, err := resolveWriteRoot(root)
+	resolvedRoot, err := writecommand.ResolveRoot(root)
 	if err != nil {
 		return
 	}
@@ -442,7 +443,7 @@ func recordWriteResponseContext(root string, response writeResponse, returnedByt
 			guard.removeContextFile(source)
 			continue
 		}
-		guard.recordWriteAnchors(source, responseFileAnchors(file))
+		guard.recordWriteAnchors(source, writecommand.ResponseFileAnchors(file))
 	}
 }
 

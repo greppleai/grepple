@@ -1,4 +1,4 @@
-package cli
+package write
 
 import (
 	"bytes"
@@ -442,7 +442,7 @@ created
 `, hash, replacement, writeDigest([]byte(deleteContent)))
 	withStdin(t, request, func() {
 		captureStdout(t, func() {
-			if err := Run([]string{"write", "--root", root}); err != nil {
+			if err := Run([]string{"--root", root}, Dependencies{}); err != nil {
 				t.Fatal(err)
 			}
 		})
@@ -464,7 +464,7 @@ func TestWriteHeredocDryRunUsesStructuredOutputWithoutMutation(t *testing.T) {
 	var output string
 	withStdin(t, request, func() {
 		output = captureStdout(t, func() {
-			if err := Run([]string{"write", "--root", root, "--dry-run", "--json"}); err != nil {
+			if err := Run([]string{"--root", root, "--dry-run", "--json"}, Dependencies{}); err != nil {
 				t.Fatal(err)
 			}
 		})
@@ -532,7 +532,7 @@ func TestWriteEditReadsLiteralContentFromStdin(t *testing.T) {
 	hash := hashline.Lines(before)[0]
 	withStdin(t, replacement, func() {
 		captureStdout(t, func() {
-			if err := Run([]string{"write", "edit", "--root", root, "--path", "file.kt", "--start", hash}); err != nil {
+			if err := Run([]string{"edit", "--root", root, "--path", "file.kt", "--start", hash}, Dependencies{}); err != nil {
 				t.Fatal(err)
 			}
 		})
@@ -549,51 +549,11 @@ func TestWriteEditReadsLiteralContentFile(t *testing.T) {
 	writeTestFile(t, payload, "first\nsecond\n", 0o600)
 	hash := hashline.Lines(before)[0]
 	captureStdout(t, func() {
-		if err := Run([]string{"write", "edit", "--root", root, "--path", "file.txt", "--start", hash, "--end", hash, "--content-file", payload}); err != nil {
+		if err := Run([]string{"edit", "--root", root, "--path", "file.txt", "--start", hash, "--end", hash, "--content-file", payload}, Dependencies{}); err != nil {
 			t.Fatal(err)
 		}
 	})
 	assertWriteFile(t, target, "first\nsecond\n", 0o640)
-}
-
-func TestNativeAnchorLookupUsesBuiltInHashline(t *testing.T) {
-	content := "alpha\nbeta\n"
-	request := anchorProtocolRequest{ProtocolVersion: anchorProtocolVersion, Files: []anchorProtocolRequestFile{{Path: "/tmp/source", Content: content, Lines: []int{1, 2, 3}}}}
-	lookup, err := nativeAnchorLookup(request, map[string]string{"/tmp/source": "source.txt"})
-	if err != nil {
-		t.Fatal(err)
-	}
-	expected := map[int]string{1: "VAS", 2: "nF3", 3: "Asx"}
-	if !reflect.DeepEqual(lookup["source.txt"], expected) {
-		t.Fatalf("lookup=%#v expected=%#v", lookup, expected)
-	}
-}
-
-func TestDefaultReadAnchorsUseNativeWithoutConfiguredCommand(t *testing.T) {
-	content := "alpha\nbeta\n"
-	cases := []struct {
-		name     string
-		settings anchorSettings
-	}{
-		{name: "product default"},
-		{name: "enabled without provider", settings: anchorSettings{EnabledByDefault: true}},
-		{name: "explicit native", settings: anchorSettings{EnabledByDefault: true, DefaultProvider: "native"}},
-	}
-	for _, testCase := range cases {
-		t.Run(testCase.name, func(t *testing.T) {
-			settingsPath := filepath.Join(t.TempDir(), "settings.json")
-			writeJSONFile(t, settingsPath, userSettings{Anchors: testCase.settings})
-			t.Setenv("GREPPLE_SETTINGS", settingsPath)
-			anchors, enabled, err := defaultReadAnchors("source.txt", content, []int{1, 2, 3})
-			if err != nil {
-				t.Fatal(err)
-			}
-			expected := map[int]string{1: "VAS", 2: "nF3", 3: "Asx"}
-			if !enabled || !reflect.DeepEqual(anchors, expected) {
-				t.Fatalf("enabled=%v anchors=%#v expected=%#v", enabled, anchors, expected)
-			}
-		})
-	}
 }
 
 func writeTestFile(t *testing.T, path, content string, mode os.FileMode) {
@@ -631,7 +591,7 @@ func TestWriteCommandReadsStrictJSONFromStdin(t *testing.T) {
 	var output string
 	withStdin(t, request, func() {
 		output = captureStdout(t, func() {
-			if err := Run([]string{"write", "--root", root, "--json"}); err != nil {
+			if err := Run([]string{"--root", root, "--json"}, Dependencies{}); err != nil {
 				t.Fatal(err)
 			}
 		})
@@ -656,7 +616,7 @@ func TestWriteCommandDefaultsToEditReadyHumanOutput(t *testing.T) {
 	var output string
 	withStdin(t, request, func() {
 		output = captureStdout(t, func() {
-			if err := Run([]string{"write", "--root", root}); err != nil {
+			if err := Run([]string{"--root", root}, Dependencies{}); err != nil {
 				t.Fatal(err)
 			}
 		})
@@ -684,7 +644,7 @@ func TestParseWriteEditOptions(t *testing.T) {
 
 func TestWriteHelpDocumentsTransactionalInput(t *testing.T) {
 	output := captureStdout(t, func() {
-		if err := Run([]string{"help", "write"}); err != nil {
+		if err := Run([]string{"--help"}, Dependencies{}); err != nil {
 			t.Fatal(err)
 		}
 	})

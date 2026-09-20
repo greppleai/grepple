@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/greppleai/grepple/api"
+	writecommand "github.com/greppleai/grepple/internal/cli/write"
 )
 
 func TestSegmentContextGuardOmitsUnchangedCompleteDeclaration(t *testing.T) {
@@ -228,9 +229,9 @@ func TestWriteAnchorsCompletePreviouslyEmittedSegmentCoverage(t *testing.T) {
 	path := filepath.Join(root, "service.go")
 	oldSegment := api.ResultSegment{Kind: "function", Start: 1, End: 3, Text: "func Run() {\n\toldCall()\n}"}
 	renderWithSegmentGuard(t, api.FileResult{Path: path, Segments: []api.ResultSegment{oldSegment}})
-	recordWriteResponseContext(root, writeResponse{Applied: true, Files: []writeResponseFile{{
+	recordWriteResponseContext(root, writecommand.Response{Applied: true, Files: []writecommand.ResponseFile{{
 		Path: "service.go", Operation: "edit", Changed: true,
-		ChangeDetails: []writeResponseChange{{Anchors: []writeAnchor{{Line: 2, Content: "\tnewCall()"}}}},
+		ChangeDetails: []writecommand.ResponseChange{{Anchors: []writecommand.Anchor{{Line: 2, Content: "\tnewCall()"}}}},
 	}}}, 100, true, false, true)
 	cacheContent, err := os.ReadFile(filepath.Join(directory, "cache.json"))
 	if err != nil {
@@ -258,7 +259,7 @@ func TestWriteAnchorsCompletePreviouslyEmittedSegmentCoverage(t *testing.T) {
 func TestWriteFailureIsRecordedInContextStats(t *testing.T) {
 	directory := t.TempDir()
 	t.Setenv("GREPPLE_CONTEXT_GUARD_DIR", directory)
-	recordWriteResponseContext(t.TempDir(), writeResponse{}, 123, false, true, false)
+	recordWriteResponseContext(t.TempDir(), writecommand.Response{}, 123, false, true, false)
 	stats := readRenderedContextStats(filepath.Join(directory, "stats-0.json"), 0)
 	if stats.Calls.Total != 1 || stats.Calls.Writes != 1 || stats.Calls.FailedWrites != 1 || stats.Calls.SuccessfulWrites != 0 || stats.Calls.AppliedWrites != 0 {
 		t.Fatalf("write failure statistics = %#v", stats)
@@ -300,7 +301,7 @@ func TestWriteAnchorsDoNotSuppressPartiallyCoveredSegment(t *testing.T) {
 		t.Fatal(err)
 	}
 	path := filepath.Join(t.TempDir(), "partial.go")
-	guard.recordWriteAnchors(path, []writeAnchor{{Line: 2, Content: "\tcovered()"}})
+	guard.recordWriteAnchors(path, []writecommand.Anchor{{Line: 2, Content: "\tcovered()"}})
 	segment := api.ResultSegment{Kind: "function", Start: 1, End: 3, Text: "func Partial() {\n\tcovered()\n}"}
 	if guard.seen(path, nil, segment) {
 		guard.close()
@@ -324,7 +325,7 @@ func TestContextGuardCanBeDisabledInUserSettings(t *testing.T) {
 		guard.close()
 		t.Fatal("disabled context guard opened for search output")
 	}
-	recordWriteResponseContext(t.TempDir(), writeResponse{Applied: true}, 10, true, false, true)
+	recordWriteResponseContext(t.TempDir(), writecommand.Response{Applied: true}, 10, true, false, true)
 	if _, err := os.Stat(filepath.Join(directory, "cache.json")); !os.IsNotExist(err) {
 		t.Fatalf("disabled context guard wrote cache state: %v", err)
 	}
@@ -570,7 +571,7 @@ func TestPartialFocusedCoverageCollapsesStructuralRuns(t *testing.T) {
 	}
 	guard.observed = true
 	for _, match := range result.Matches[1:7] {
-		guard.recordWriteAnchors(result.Path, []writeAnchor{{Line: match.Line, Content: match.Text}})
+		guard.recordWriteAnchors(result.Path, []writecommand.Anchor{{Line: match.Line, Content: match.Text}})
 	}
 	guard.close()
 	guard = contextGuardForResults(&cliOptions{JSON: "off", AnchorLines: anchors}, []api.FileResult{{Path: result.Path, Segments: []api.ResultSegment{segment}}})
