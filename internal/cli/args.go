@@ -6,9 +6,12 @@ import (
 	"os"
 	"strings"
 
+	artifactscommand "github.com/greppleai/grepple/internal/cli/artifacts"
 	askcommand "github.com/greppleai/grepple/internal/cli/ask"
 	"github.com/greppleai/grepple/internal/cli/examples"
 	getcommand "github.com/greppleai/grepple/internal/cli/get"
+	languagescommand "github.com/greppleai/grepple/internal/cli/languages"
+	refscommand "github.com/greppleai/grepple/internal/cli/refs"
 	reposcommand "github.com/greppleai/grepple/internal/cli/repos"
 	cliruntime "github.com/greppleai/grepple/internal/cli/runtime"
 	treecommand "github.com/greppleai/grepple/internal/cli/tree"
@@ -513,11 +516,11 @@ func runCommand(args []string) error {
 		case "examples":
 			return examples.Run(args[1:], os.Stdout)
 		case "artifacts":
-			return runArtifacts(args[1:])
+			return artifactscommand.Run(args[1:], artifactscommand.Dependencies{Stdout: os.Stdout, ArtifactDirectory: defaultOutputArtifactDirectory, WorkingDirectory: mustGetwd})
 		case "context":
 			return runContext(args[1:])
 		case "languages":
-			return runLanguages(args[1:])
+			return languagescommand.Run(args[1:], languagescommand.Dependencies{Stdout: os.Stdout})
 		case "get":
 			return getcommand.Run(args[1:], getcommand.Dependencies{Stdout: os.Stdout, Stderr: os.Stderr, ServerDefault: serverDefault, NewRequest: authorizedRequest, RequestExit: setExit, RecordRangeOutcome: recordStandaloneLineRangeOutcome, ReportRangeError: reportLineRangeCommandError, FullMissError: func(err error) error { return remoteFullLineRangeMissError{err: err} }, RenderOutline: RenderOutlineOrContent})
 		case "tree":
@@ -525,7 +528,7 @@ func runCommand(args []string) error {
 		case "repos":
 			return reposcommand.Run(args[1:], reposcommand.Dependencies{Stdout: os.Stdout, ServerDefault: serverDefault, NewRequest: authorizedRequest, RequestExit: setExit})
 		case "refs":
-			return runRefs(args[1:])
+			return refscommand.Run(args[1:], refscommand.Dependencies{Stdout: os.Stdout, ServerDefault: serverDefault, NewRequest: authorizedRequest, RequestExit: setExit})
 		case "ask":
 			return askcommand.Run(args[1:], askcommand.Dependencies{Stdout: os.Stdout, Stderr: os.Stderr, RunSession: runAskSession})
 		case "ai-provider":

@@ -1,4 +1,4 @@
-package cli
+package languages
 
 import (
 	"encoding/json"
@@ -11,7 +11,7 @@ import (
 
 func TestLanguagesJSONReportsRegisteredFeatureParity(t *testing.T) {
 	output := captureStdout(t, func() {
-		if err := Run([]string{"languages", "--json"}); err != nil {
+		if err := Run([]string{"--json"}, Dependencies{}); err != nil {
 			t.Fatal(err)
 		}
 	})
@@ -133,7 +133,7 @@ func assertECMANavigationFacts(t *testing.T, byLanguage map[string]api.LanguageC
 
 func TestLanguagesHumanOutputUsesCapabilityIcons(t *testing.T) {
 	output := captureStdout(t, func() {
-		if err := Run([]string{"languages"}); err != nil {
+		if err := Run(nil, Dependencies{}); err != nil {
 			t.Fatal(err)
 		}
 	})
@@ -145,7 +145,7 @@ func TestLanguagesHumanOutputUsesCapabilityIcons(t *testing.T) {
 }
 
 func TestLanguagesRejectsUnexpectedArguments(t *testing.T) {
-	if err := Run([]string{"languages", "extra"}); err == nil {
+	if err := Run([]string{"extra"}, Dependencies{}); err == nil {
 		t.Fatal("expected unexpected argument to fail")
 	}
 }
@@ -159,7 +159,7 @@ func TestLanguageCapabilityMatrixGritQLCoversTreeSitterLanguages(t *testing.T) {
 }
 
 func TestLanguageCapabilityDocumentationIsGeneratedFromRegistrations(t *testing.T) {
-	content, err := os.ReadFile("../../docs/file-type-support.md")
+	content, err := os.ReadFile("../../../docs/file-type-support.md")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -179,7 +179,7 @@ func TestLanguageCapabilityDocumentationIsGeneratedFromRegistrations(t *testing.
 }
 
 func TestLanguagesRejectsConflictingOutputFormats(t *testing.T) {
-	if err := Run([]string{"languages", "--json", "--markdown"}); err == nil {
+	if err := Run([]string{"--json", "--markdown"}, Dependencies{}); err == nil {
 		t.Fatal("expected conflicting output formats to fail")
 	}
 }

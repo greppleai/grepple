@@ -1,4 +1,4 @@
-package cli
+package artifacts
 
 import (
 	"errors"
@@ -7,22 +7,25 @@ import (
 	"path/filepath"
 
 	"github.com/alexflint/go-arg"
+	cliruntime "github.com/greppleai/grepple/internal/cli/runtime"
 )
 
 type artifactsCleanArgs struct {
 	JSON bool `arg:"--json" help:"emit cleanup totals as JSON"`
 }
 
-type artifactsCleanOutput struct {
+// CleanOutput describes one artifact cleanup result.
+type CleanOutput struct {
 	Schema string `json:"schema"`
 	Path   string `json:"path"`
 	Files  int    `json:"files"`
 	Bytes  int64  `json:"bytes"`
 }
 
-func runArtifacts(args []string) error {
+// Run executes the artifacts command.
+func Run(args []string, dependencies Dependencies) error {
 	if len(args) == 0 || args[0] == "--help" || args[0] == "-h" {
-		return stdoutWriter().writeString("Manage content-addressed command output artifacts.\nUsage:\n  grepple artifacts clean [--json]\n")
+		return cliruntime.NewOutput(dependencies.stdout()).WriteString("Manage content-addressed command output artifacts.\nUsage:\n  grepple artifacts clean [--json]\n")
 	}
 	if args[0] != "clean" {
 		return fmt.Errorf("usage: grepple artifacts clean [--json]")
@@ -34,20 +37,20 @@ func runArtifacts(args []string) error {
 	}
 	if err := parser.Parse(args[1:]); err != nil {
 		if errors.Is(err, arg.ErrHelp) {
-			parser.WriteHelp(os.Stdout)
+			parser.WriteHelp(dependencies.stdout())
 			return nil
 		}
 		return err
 	}
-	return cleanOutputArtifacts(values.JSON)
+	return cleanOutputArtifacts(values.JSON, dependencies)
 }
 
-func cleanOutputArtifacts(jsonMode bool) error {
-	directory, err := defaultOutputArtifactDirectory()
+func cleanOutputArtifacts(jsonMode bool, dependencies Dependencies) error {
+	directory, err := dependencies.artifactDirectory()
 	if err != nil {
 		return err
 	}
-	result := artifactsCleanOutput{Schema: "grepple-artifact-clean-v1", Path: displayArtifactPath(directory)}
+	result := CleanOutput{Schema: "grepple-artifact-clean-v1", Path: displayArtifactPath(directory, dependencies)}
 	entries, err := os.ReadDir(directory)
 	if err != nil && !os.IsNotExist(err) {
 		return err
@@ -66,13 +69,13 @@ func cleanOutputArtifacts(jsonMode bool) error {
 		result.Files++
 	}
 	if jsonMode {
-		return stdoutWriter().writeJSON(result)
+		return cliruntime.NewOutput(dependencies.stdout()).WriteJSON(result)
 	}
-	return stdoutWriter().writeString(fmt.Sprintf("removed artifacts path=%s files=%d bytes=%d\n", result.Path, result.Files, result.Bytes))
+	return cliruntime.NewOutput(dependencies.stdout()).WriteString(fmt.Sprintf("removed artifacts path=%s files=%d bytes=%d\n", result.Path, result.Files, result.Bytes))
 }
 
-func displayArtifactPath(path string) string {
-	relative, err := filepath.Rel(mustGetwd(), path)
+func displayArtifactPath(path string, dependencies Dependencies) string {
+	relative, err := filepath.Rel(dependencies.workingDirectory(), path)
 	if err != nil {
 		return filepath.ToSlash(path)
 	}

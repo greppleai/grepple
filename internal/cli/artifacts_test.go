@@ -5,6 +5,8 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	artifactscommand "github.com/greppleai/grepple/internal/cli/artifacts"
 )
 
 func TestArtifactsCleanRemovesPersistedOutput(t *testing.T) {
@@ -27,7 +29,7 @@ func TestArtifactsCleanRemovesPersistedOutput(t *testing.T) {
 			t.Fatal(err)
 		}
 	})
-	var result artifactsCleanOutput
+	var result artifactscommand.CleanOutput
 	if err := json.Unmarshal([]byte(text), &result); err != nil {
 		t.Fatal(err)
 	}

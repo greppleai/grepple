@@ -13,6 +13,7 @@ import (
 	"github.com/greppleai/grepple/api"
 	askcommand "github.com/greppleai/grepple/internal/cli/ask"
 	getcommand "github.com/greppleai/grepple/internal/cli/get"
+	refscommand "github.com/greppleai/grepple/internal/cli/refs"
 	reposcommand "github.com/greppleai/grepple/internal/cli/repos"
 	treecommand "github.com/greppleai/grepple/internal/cli/tree"
 	"github.com/greppleai/grepple/linerange"
@@ -365,7 +366,7 @@ func runAskRepositoryRefs(ctx context.Context, server string, input askRepositor
 	if err != nil {
 		return api.ReposResponse{}, err
 	}
-	entries = refsForRepository(entries, repository, kind)
+	entries = refscommand.Filter(entries, repository, kind)
 	return api.ReposResponse{OK: true, Count: len(entries), Repos: entries}, nil
 }
 

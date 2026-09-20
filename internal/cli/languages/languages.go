@@ -1,10 +1,10 @@
-package cli
+package languages
 
 import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
+	"io"
 	"sort"
 	"strings"
 	"text/tabwriter"
@@ -25,7 +25,8 @@ func (languagesArgs) Description() string {
 	return "Show language extensions and support across search, navigation, focused extraction, GritQL, and directory architecture."
 }
 
-func runLanguages(args []string) error {
+// Run executes the languages command.
+func Run(args []string, dependencies Dependencies) error {
 	values := languagesArgs{}
 	argumentParser, err := arg.NewParser(arg.Config{Program: "grepple languages"}, &values)
 	if err != nil {
@@ -33,7 +34,7 @@ func runLanguages(args []string) error {
 	}
 	if err := argumentParser.Parse(args); err != nil {
 		if errors.Is(err, arg.ErrHelp) {
-			argumentParser.WriteHelp(os.Stdout)
+			argumentParser.WriteHelp(dependencies.stdout())
 			return nil
 		}
 		return err
@@ -43,15 +44,15 @@ func runLanguages(args []string) error {
 	}
 	capabilities := languageCapabilityMatrix()
 	if values.JSON {
-		encoder := json.NewEncoder(os.Stdout)
+		encoder := json.NewEncoder(dependencies.stdout())
 		encoder.SetIndent("", "  ")
 		return encoder.Encode(capabilities)
 	}
 	if values.Markdown {
-		_, err := fmt.Fprint(os.Stdout, renderLanguageCapabilitiesMarkdown(capabilities))
+		_, err := fmt.Fprint(dependencies.stdout(), renderLanguageCapabilitiesMarkdown(capabilities))
 		return err
 	}
-	return renderLanguageCapabilities(capabilities)
+	return renderLanguageCapabilities(capabilities, dependencies.stdout())
 }
 
 func languageCapabilityMatrix() []api.LanguageCapabilities {
@@ -135,8 +136,8 @@ func navigationFactSupport(facts parser.NavigationFactCapabilities) api.Navigati
 	}
 }
 
-func renderLanguageCapabilities(capabilities []api.LanguageCapabilities) error {
-	writer := tabwriter.NewWriter(os.Stdout, 0, 4, 2, ' ', 0)
+func renderLanguageCapabilities(capabilities []api.LanguageCapabilities, output io.Writer) error {
+	writer := tabwriter.NewWriter(output, 0, 4, 2, ' ', 0)
 	if _, err := fmt.Fprintln(writer, "LANGUAGE\tEXTENSIONS\tTEXT\tSTRUCTURAL\tOUTLINE\tNAV\tSTRUCTURE\tFLOW\tGRITQL\tDIRECTORY\tIMPORT-RELATIONS\tENTRYPOINTS"); err != nil {
 		return err
 	}
