@@ -1,4 +1,4 @@
-package cli
+package agent
 
 import (
 	"crypto/rand"
@@ -13,9 +13,10 @@ import (
 	"time"
 )
 
-const askLogDirectoryEnv = "GREPPLE_ASK_LOG_DIR"
+const logDirectoryEnv = "GREPPLE_ASK_LOG_DIR"
 
-type askLog struct {
+// Log is a concurrency-safe JSONL event sink for one agent session.
+type Log struct {
 	mu       sync.Mutex
 	file     *os.File
 	encoder  *json.Encoder
@@ -24,13 +25,14 @@ type askLog struct {
 	disabled bool
 }
 
-type askLogOptions struct {
-	enabled   bool
-	retention time.Duration
+// LogOptions configure persistence and retention for agent logs.
+type LogOptions struct {
+	Enabled   bool
+	Retention time.Duration
 	now       func() time.Time
 }
 
-type askLogEvent struct {
+type logEvent struct {
 	Schema   string    `json:"schema"`
 	Sequence uint64    `json:"sequence"`
 	Time     time.Time `json:"time"`
@@ -38,26 +40,28 @@ type askLogEvent struct {
 	Data     any       `json:"data,omitempty"`
 }
 
-func newAskLog() (*askLog, error) {
-	return newAskLogWithOptions(askLogOptions{enabled: true, retention: 7 * 24 * time.Hour})
+// NewLog creates an enabled log with the default retention period.
+func NewLog() (*Log, error) {
+	return NewLogWithOptions(LogOptions{Enabled: true, Retention: 7 * 24 * time.Hour})
 }
 
-func newAskLogWithOptions(options askLogOptions) (*askLog, error) {
+// NewLogWithOptions creates a log using the supplied persistence policy.
+func NewLogWithOptions(options LogOptions) (*Log, error) {
 	if options.now == nil {
 		options.now = time.Now
 	}
-	if options.retention <= 0 {
-		options.retention = 7 * 24 * time.Hour
+	if options.Retention <= 0 {
+		options.Retention = 7 * 24 * time.Hour
 	}
-	directory, err := askLogDirectory()
+	directory, err := logDirectory()
 	if err != nil {
 		return nil, err
 	}
-	if err := cleanExpiredAskLogs(directory, options.now().Add(-options.retention)); err != nil {
+	if err := cleanExpiredLogs(directory, options.now().Add(-options.Retention)); err != nil {
 		return nil, err
 	}
-	if !options.enabled {
-		return &askLog{disabled: true}, nil
+	if !options.Enabled {
+		return &Log{disabled: true}, nil
 	}
 	if err := os.MkdirAll(directory, 0o700); err != nil {
 		return nil, fmt.Errorf("create ask log directory: %w", err)
@@ -75,11 +79,11 @@ func newAskLogWithOptions(options askLogOptions) (*askLog, error) {
 	if err != nil {
 		return nil, fmt.Errorf("create ask log: %w", err)
 	}
-	return &askLog{file: file, encoder: json.NewEncoder(file), path: path}, nil
+	return &Log{file: file, encoder: json.NewEncoder(file), path: path}, nil
 }
 
-func askLogDirectory() (string, error) {
-	if directory := os.Getenv(askLogDirectoryEnv); directory != "" {
+func logDirectory() (string, error) {
+	if directory := os.Getenv(logDirectoryEnv); directory != "" {
 		return directory, nil
 	}
 	home, err := os.UserHomeDir()
@@ -89,7 +93,7 @@ func askLogDirectory() (string, error) {
 	return filepath.Join(home, ".grepple", "ask-logs"), nil
 }
 
-func cleanExpiredAskLogs(directory string, cutoff time.Time) error {
+func cleanExpiredLogs(directory string, cutoff time.Time) error {
 	entries, err := os.ReadDir(directory)
 	if errors.Is(err, os.ErrNotExist) {
 		return nil
@@ -98,7 +102,7 @@ func cleanExpiredAskLogs(directory string, cutoff time.Time) error {
 		return fmt.Errorf("inspect ask log directory: %w", err)
 	}
 	for _, entry := range entries {
-		if !entry.Type().IsRegular() || !isManagedAskLogName(entry.Name()) {
+		if !entry.Type().IsRegular() || !isManagedLogName(entry.Name()) {
 			continue
 		}
 		information, err := entry.Info()
@@ -114,7 +118,7 @@ func cleanExpiredAskLogs(directory string, cutoff time.Time) error {
 	return nil
 }
 
-func isManagedAskLogName(name string) bool {
+func isManagedLogName(name string) bool {
 	if !strings.HasSuffix(name, ".jsonl") {
 		return false
 	}
@@ -130,23 +134,26 @@ func isManagedAskLogName(name string) bool {
 	return err == nil
 }
 
-func (l *askLog) Path() string { return l.path }
+// Path returns the JSONL path, or an empty string when logging is disabled.
+func (l *Log) Path() string { return l.path }
 
-func (l *askLog) Record(eventType string, data any) error {
+// Record appends one semantic event to the session log.
+func (l *Log) Record(eventType string, data any) error {
 	if l == nil || l.disabled {
 		return nil
 	}
 	l.mu.Lock()
 	defer l.mu.Unlock()
 	l.sequence++
-	event := askLogEvent{Schema: "grepple-ask-log-v1", Sequence: l.sequence, Time: time.Now().UTC(), Type: eventType, Data: data}
+	event := logEvent{Schema: "grepple-ask-log-v1", Sequence: l.sequence, Time: time.Now().UTC(), Type: eventType, Data: data}
 	if err := l.encoder.Encode(event); err != nil {
 		return fmt.Errorf("write ask log %s: %w", l.path, err)
 	}
 	return nil
 }
 
-func (l *askLog) Close() error {
+// Close durably flushes and closes the log.
+func (l *Log) Close() error {
 	if l == nil || l.disabled {
 		return nil
 	}

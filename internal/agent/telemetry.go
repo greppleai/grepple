@@ -1,4 +1,4 @@
-package cli
+package agent
 
 import (
 	"encoding/json"
@@ -9,19 +9,30 @@ import (
 	"charm.land/fantasy"
 )
 
-const askPerformanceSchema = "grepple-ask-performance-v1"
+const performanceSchema = "grepple-ask-performance-v1"
 
-type askTelemetry struct {
+// Telemetry accumulates agent stream and tool execution measurements.
+type Telemetry struct {
 	mu          sync.Mutex
 	started     time.Time
 	streamStart time.Time
 	streamEnd   time.Time
-	tools       []*askToolMeasurement
-	llms        []*askLLMMeasurement
-	currentLLM  *askLLMMeasurement
+	tools       []*ToolMeasurement
+	llms        []*llmMeasurement
+	currentLLM  *llmMeasurement
 }
 
-type askToolMeasurement struct {
+// CacheStatus describes how a tool call used the research-session cache.
+type CacheStatus struct {
+	Tool     string `json:"tool"`
+	Key      string `json:"key"`
+	Hit      bool   `json:"hit"`
+	Shared   bool   `json:"shared"`
+	Executed bool   `json:"-"`
+}
+
+// ToolMeasurement tracks one in-flight tool invocation.
+type ToolMeasurement struct {
 	tool             string
 	callID           string
 	input            json.RawMessage
@@ -30,11 +41,12 @@ type askToolMeasurement struct {
 	executionStarted time.Time
 	executionEnded   time.Time
 	responseBytes    int
-	cache            researchCacheStatus
+	cache            CacheStatus
 	failed           bool
 }
 
-type askToolTimingEvent struct {
+// ToolTimingEvent is the persisted timing projection for one tool call.
+type ToolTimingEvent struct {
 	Tool                string          `json:"tool"`
 	CallID              string          `json:"callId,omitempty"`
 	Input               json.RawMessage `json:"input"`
@@ -49,7 +61,7 @@ type askToolTimingEvent struct {
 	Failed              bool            `json:"failed"`
 }
 
-type askLLMMeasurement struct {
+type llmMeasurement struct {
 	step        int
 	started     time.Time
 	firstChunk  time.Time
@@ -61,7 +73,7 @@ type askLLMMeasurement struct {
 	reason      fantasy.FinishReason
 }
 
-type askLLMTimingEvent struct {
+type llmTimingEvent struct {
 	Step                        int                  `json:"step"`
 	StartedMS                   float64              `json:"startedMs"`
 	DurationMS                  float64              `json:"durationMs"`
@@ -77,31 +89,33 @@ type askLLMTimingEvent struct {
 	FinishReason                fantasy.FinishReason `json:"finishReason"`
 }
 
-type askPerformance struct {
-	Schema                            string                      `json:"schema"`
-	TotalDurationMS                   float64                     `json:"totalDurationMs"`
-	StreamDurationMS                  float64                     `json:"streamDurationMs"`
-	LLMDurationMS                     float64                     `json:"llmDurationMs"`
-	NonToolWallDurationMS             float64                     `json:"nonToolWallDurationMs"`
-	LLMRequestDurationMS              float64                     `json:"llmRequestDurationMs"`
-	LLMTimeToFirstChunkMS             float64                     `json:"llmTimeToFirstChunkMs"`
-	LLMTimeToFirstOutputMS            float64                     `json:"llmTimeToFirstOutputMs"`
-	LLMStreamingAfterFirstOutputMS    float64                     `json:"llmStreamingAfterFirstOutputMs"`
-	LLMRequests                       int                         `json:"llmRequests"`
-	LLMChunks                         int                         `json:"llmChunks"`
-	LLMDeltaBytes                     int                         `json:"llmDeltaBytes"`
-	LLMOutputTokens                   int64                       `json:"llmOutputTokens"`
-	ToolWallDurationMS                float64                     `json:"toolWallDurationMs"`
-	ToolCumulativeDurationMS          float64                     `json:"toolCumulativeDurationMs"`
-	ToolExecutionWallDurationMS       float64                     `json:"toolExecutionWallDurationMs"`
-	ToolExecutionCumulativeDurationMS float64                     `json:"toolExecutionCumulativeDurationMs"`
-	OtherDurationMS                   float64                     `json:"otherDurationMs"`
-	ToolCalls                         int                         `json:"toolCalls"`
-	ToolExecutions                    int                         `json:"toolExecutions"`
-	Tools                             []askToolPerformanceSummary `json:"tools,omitempty"`
+// Performance summarizes one complete agent session.
+type Performance struct {
+	Schema                            string                   `json:"schema"`
+	TotalDurationMS                   float64                  `json:"totalDurationMs"`
+	StreamDurationMS                  float64                  `json:"streamDurationMs"`
+	LLMDurationMS                     float64                  `json:"llmDurationMs"`
+	NonToolWallDurationMS             float64                  `json:"nonToolWallDurationMs"`
+	LLMRequestDurationMS              float64                  `json:"llmRequestDurationMs"`
+	LLMTimeToFirstChunkMS             float64                  `json:"llmTimeToFirstChunkMs"`
+	LLMTimeToFirstOutputMS            float64                  `json:"llmTimeToFirstOutputMs"`
+	LLMStreamingAfterFirstOutputMS    float64                  `json:"llmStreamingAfterFirstOutputMs"`
+	LLMRequests                       int                      `json:"llmRequests"`
+	LLMChunks                         int                      `json:"llmChunks"`
+	LLMDeltaBytes                     int                      `json:"llmDeltaBytes"`
+	LLMOutputTokens                   int64                    `json:"llmOutputTokens"`
+	ToolWallDurationMS                float64                  `json:"toolWallDurationMs"`
+	ToolCumulativeDurationMS          float64                  `json:"toolCumulativeDurationMs"`
+	ToolExecutionWallDurationMS       float64                  `json:"toolExecutionWallDurationMs"`
+	ToolExecutionCumulativeDurationMS float64                  `json:"toolExecutionCumulativeDurationMs"`
+	OtherDurationMS                   float64                  `json:"otherDurationMs"`
+	ToolCalls                         int                      `json:"toolCalls"`
+	ToolExecutions                    int                      `json:"toolExecutions"`
+	Tools                             []ToolPerformanceSummary `json:"tools,omitempty"`
 }
 
-type askToolPerformanceSummary struct {
+// ToolPerformanceSummary aggregates measurements for one tool name.
+type ToolPerformanceSummary struct {
 	Tool                string  `json:"tool"`
 	Calls               int     `json:"calls"`
 	Executions          int     `json:"executions"`
@@ -114,32 +128,33 @@ type askToolPerformanceSummary struct {
 	ResponseBytes       int     `json:"responseBytes"`
 }
 
-func newAskTelemetry(started time.Time) *askTelemetry {
-	return &askTelemetry{started: started}
+// NewTelemetry starts a telemetry accumulator at started.
+func NewTelemetry(started time.Time) *Telemetry {
+	return &Telemetry{started: started}
 }
 
-func (telemetry *askTelemetry) startStream(now time.Time) {
+func (telemetry *Telemetry) startStream(now time.Time) {
 	telemetry.mu.Lock()
 	defer telemetry.mu.Unlock()
 	telemetry.streamStart = now
 	telemetry.streamEnd = time.Time{}
 }
 
-func (telemetry *askTelemetry) finishStream(now time.Time) {
+func (telemetry *Telemetry) finishStream(now time.Time) {
 	telemetry.mu.Lock()
 	defer telemetry.mu.Unlock()
 	telemetry.streamEnd = now
 }
 
-func (telemetry *askTelemetry) beginLLM(step int, now time.Time) {
+func (telemetry *Telemetry) beginLLM(step int, now time.Time) {
 	telemetry.mu.Lock()
 	defer telemetry.mu.Unlock()
-	measurement := &askLLMMeasurement{step: step, started: now, chunks: make(map[string]int)}
+	measurement := &llmMeasurement{step: step, started: now, chunks: make(map[string]int)}
 	telemetry.llms = append(telemetry.llms, measurement)
 	telemetry.currentLLM = measurement
 }
 
-func (telemetry *askTelemetry) recordChunk(part fantasy.StreamPart, now time.Time) {
+func (telemetry *Telemetry) recordChunk(part fantasy.StreamPart, now time.Time) {
 	telemetry.mu.Lock()
 	defer telemetry.mu.Unlock()
 	measurement := telemetry.currentLLM
@@ -156,12 +171,12 @@ func (telemetry *askTelemetry) recordChunk(part fantasy.StreamPart, now time.Tim
 	measurement.deltaBytes += len(part.Delta)
 }
 
-func (telemetry *askTelemetry) finishLLM(now time.Time, usage fantasy.Usage, reason fantasy.FinishReason) (askLLMTimingEvent, bool) {
+func (telemetry *Telemetry) finishLLM(now time.Time, usage fantasy.Usage, reason fantasy.FinishReason) (llmTimingEvent, bool) {
 	telemetry.mu.Lock()
 	defer telemetry.mu.Unlock()
 	measurement := telemetry.currentLLM
 	if measurement == nil {
-		return askLLMTimingEvent{}, false
+		return llmTimingEvent{}, false
 	}
 	measurement.ended = now
 	measurement.usage = usage
@@ -170,7 +185,7 @@ func (telemetry *askTelemetry) finishLLM(now time.Time, usage fantasy.Usage, rea
 	return telemetry.llmTimingEvent(measurement), true
 }
 
-func (telemetry *askTelemetry) llmTimingEvent(measurement *askLLMMeasurement) askLLMTimingEvent {
+func (telemetry *Telemetry) llmTimingEvent(measurement *llmMeasurement) llmTimingEvent {
 	duration := nonNegativeDuration(measurement.ended.Sub(measurement.started))
 	timeToFirstChunk := durationUntil(measurement.started, measurement.firstChunk)
 	timeToFirstOutput := durationUntil(measurement.started, measurement.firstOutput)
@@ -183,7 +198,7 @@ func (telemetry *askTelemetry) llmTimingEvent(measurement *askLLMMeasurement) as
 	if streamingAfterOutput > 0 {
 		outputTokensPerSecond = float64(measurement.usage.OutputTokens) / streamingAfterOutput.Seconds()
 	}
-	return askLLMTimingEvent{
+	return llmTimingEvent{
 		Step: measurement.step, StartedMS: milliseconds(measurement.started.Sub(telemetry.started)), DurationMS: milliseconds(duration),
 		TimeToFirstChunkMS: milliseconds(timeToFirstChunk), TimeToFirstOutputMS: milliseconds(timeToFirstOutput), StreamingAfterFirstOutputMS: milliseconds(streamingAfterOutput),
 		Chunks: chunks, ChunksByType: cloneChunkCounts(measurement.chunks), DeltaBytes: measurement.deltaBytes,
@@ -208,12 +223,13 @@ func cloneChunkCounts(source map[string]int) map[string]int {
 	return result
 }
 
-func (telemetry *askTelemetry) beginTool(tool string, input any, now time.Time, callID ...string) *askToolMeasurement {
+// BeginTool starts measuring one tool invocation.
+func (telemetry *Telemetry) BeginTool(tool string, input any, now time.Time, callID ...string) *ToolMeasurement {
 	encoded, err := json.Marshal(input)
 	if err != nil {
 		encoded = []byte("null")
 	}
-	measurement := &askToolMeasurement{tool: tool, input: encoded, started: now}
+	measurement := &ToolMeasurement{tool: tool, input: encoded, started: now}
 	if len(callID) > 0 {
 		measurement.callID = callID[0]
 	}
@@ -223,13 +239,15 @@ func (telemetry *askTelemetry) beginTool(tool string, input any, now time.Time, 
 	return measurement
 }
 
-func (telemetry *askTelemetry) startToolExecution(measurement *askToolMeasurement, now time.Time) {
+// StartToolExecution marks the beginning of uncached tool work.
+func (telemetry *Telemetry) StartToolExecution(measurement *ToolMeasurement, now time.Time) {
 	telemetry.mu.Lock()
 	defer telemetry.mu.Unlock()
 	measurement.executionStarted = now
 }
 
-func (telemetry *askTelemetry) finishTool(measurement *askToolMeasurement, now time.Time, response fantasy.ToolResponse, runErr error, cache researchCacheStatus) askToolTimingEvent {
+// FinishTool completes a tool measurement and returns its log event.
+func (telemetry *Telemetry) FinishTool(measurement *ToolMeasurement, now time.Time, response fantasy.ToolResponse, runErr error, cache CacheStatus) ToolTimingEvent {
 	telemetry.mu.Lock()
 	defer telemetry.mu.Unlock()
 	measurement.ended = now
@@ -239,7 +257,7 @@ func (telemetry *askTelemetry) finishTool(measurement *askToolMeasurement, now t
 		measurement.executionEnded = now
 	}
 	measurement.failed = runErr != nil || response.IsError
-	return askToolTimingEvent{
+	return ToolTimingEvent{
 		Tool: measurement.tool, CallID: measurement.callID, Input: measurement.input,
 		StartedMS: milliseconds(measurement.started.Sub(telemetry.started)), DurationMS: milliseconds(measurement.ended.Sub(measurement.started)),
 		ExecutionDurationMS: milliseconds(nonNegativeDuration(measurement.executionEnded.Sub(measurement.executionStarted))),
@@ -247,7 +265,8 @@ func (telemetry *askTelemetry) finishTool(measurement *askToolMeasurement, now t
 	}
 }
 
-func (telemetry *askTelemetry) performance(now time.Time) askPerformance {
+// Performance returns the current aggregate session measurements.
+func (telemetry *Telemetry) Performance(now time.Time) Performance {
 	telemetry.mu.Lock()
 	defer telemetry.mu.Unlock()
 	streamEnd := telemetry.streamEnd
@@ -258,7 +277,7 @@ func (telemetry *askTelemetry) performance(now time.Time) askPerformance {
 	if telemetry.streamStart.IsZero() {
 		streamDuration = 0
 	}
-	accumulator := newAskPerformanceAccumulator(len(telemetry.tools))
+	accumulator := newPerformanceAccumulator(len(telemetry.tools))
 	for _, tool := range telemetry.tools {
 		accumulator.add(tool, now, telemetry.streamStart, streamEnd)
 	}
@@ -268,13 +287,13 @@ func (telemetry *askTelemetry) performance(now time.Time) askPerformance {
 	llm := summarizeLLMPerformance(telemetry.llms, now)
 	totalDuration := nonNegativeDuration(now.Sub(telemetry.started))
 	otherDuration := nonNegativeDuration(totalDuration - streamDuration)
-	tools := make([]askToolPerformanceSummary, 0, len(accumulator.summaries))
+	tools := make([]ToolPerformanceSummary, 0, len(accumulator.summaries))
 	for _, summary := range accumulator.summaries {
 		tools = append(tools, *summary)
 	}
 	sort.Slice(tools, func(i, j int) bool { return tools[i].Tool < tools[j].Tool })
-	return askPerformance{
-		Schema: askPerformanceSchema, TotalDurationMS: milliseconds(totalDuration), StreamDurationMS: milliseconds(streamDuration),
+	return Performance{
+		Schema: performanceSchema, TotalDurationMS: milliseconds(totalDuration), StreamDurationMS: milliseconds(streamDuration),
 		LLMDurationMS: milliseconds(llm.duration), NonToolWallDurationMS: milliseconds(llmDuration), LLMRequestDurationMS: milliseconds(llm.duration),
 		LLMTimeToFirstChunkMS: milliseconds(llm.timeToFirstChunk), LLMTimeToFirstOutputMS: milliseconds(llm.timeToFirstOutput),
 		LLMStreamingAfterFirstOutputMS: milliseconds(llm.streamingAfterFirstOutput), LLMRequests: len(telemetry.llms), LLMChunks: llm.chunks, LLMDeltaBytes: llm.deltaBytes, LLMOutputTokens: llm.outputTokens,
@@ -284,7 +303,7 @@ func (telemetry *askTelemetry) performance(now time.Time) askPerformance {
 	}
 }
 
-type askLLMPerformanceSummary struct {
+type llmPerformanceSummary struct {
 	duration                  time.Duration
 	timeToFirstChunk          time.Duration
 	timeToFirstOutput         time.Duration
@@ -294,8 +313,8 @@ type askLLMPerformanceSummary struct {
 	outputTokens              int64
 }
 
-func summarizeLLMPerformance(measurements []*askLLMMeasurement, now time.Time) askLLMPerformanceSummary {
-	var summary askLLMPerformanceSummary
+func summarizeLLMPerformance(measurements []*llmMeasurement, now time.Time) llmPerformanceSummary {
+	var summary llmPerformanceSummary
 	for _, measurement := range measurements {
 		end := measurement.ended
 		if end.IsZero() {
@@ -314,23 +333,23 @@ func summarizeLLMPerformance(measurements []*askLLMMeasurement, now time.Time) a
 	return summary
 }
 
-type askPerformanceAccumulator struct {
+type performanceAccumulator struct {
 	intervals           []timeInterval
 	executionIntervals  []timeInterval
-	summaries           map[string]*askToolPerformanceSummary
+	summaries           map[string]*ToolPerformanceSummary
 	cumulative          time.Duration
 	executionCumulative time.Duration
 	executions          int
 }
 
-func newAskPerformanceAccumulator(capacity int) *askPerformanceAccumulator {
-	return &askPerformanceAccumulator{
+func newPerformanceAccumulator(capacity int) *performanceAccumulator {
+	return &performanceAccumulator{
 		intervals: make([]timeInterval, 0, capacity), executionIntervals: make([]timeInterval, 0, capacity),
-		summaries: make(map[string]*askToolPerformanceSummary),
+		summaries: make(map[string]*ToolPerformanceSummary),
 	}
 }
 
-func (accumulator *askPerformanceAccumulator) add(tool *askToolMeasurement, now, streamStart, streamEnd time.Time) {
+func (accumulator *performanceAccumulator) add(tool *ToolMeasurement, now, streamStart, streamEnd time.Time) {
 	end := tool.ended
 	if end.IsZero() {
 		end = now
@@ -341,10 +360,10 @@ func (accumulator *askPerformanceAccumulator) add(tool *askToolMeasurement, now,
 	accumulator.addStreamIntervals(tool, end, streamStart, streamEnd)
 }
 
-func (accumulator *askPerformanceAccumulator) addSummary(tool *askToolMeasurement, duration time.Duration) {
+func (accumulator *performanceAccumulator) addSummary(tool *ToolMeasurement, duration time.Duration) {
 	summary := accumulator.summaries[tool.tool]
 	if summary == nil {
-		summary = &askToolPerformanceSummary{Tool: tool.tool}
+		summary = &ToolPerformanceSummary{Tool: tool.tool}
 		accumulator.summaries[tool.tool] = summary
 	}
 	summary.Calls++
@@ -372,7 +391,7 @@ func (accumulator *askPerformanceAccumulator) addSummary(tool *askToolMeasuremen
 	summary.ResponseBytes += tool.responseBytes
 }
 
-func (accumulator *askPerformanceAccumulator) addStreamIntervals(tool *askToolMeasurement, end, streamStart, streamEnd time.Time) {
+func (accumulator *performanceAccumulator) addStreamIntervals(tool *ToolMeasurement, end, streamStart, streamEnd time.Time) {
 	if streamStart.IsZero() {
 		return
 	}

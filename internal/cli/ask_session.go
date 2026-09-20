@@ -39,14 +39,6 @@ type researchPendingCall struct {
 	err      error
 }
 
-type researchCacheStatus struct {
-	Tool     string `json:"tool"`
-	Key      string `json:"key"`
-	Hit      bool   `json:"hit"`
-	Shared   bool   `json:"shared"`
-	Executed bool   `json:"-"`
-}
-
 func newResearchSession(ctx context.Context, log *askLog, root, server string) *researchSession {
 	if ctx == nil {
 		ctx = context.Background()
@@ -203,10 +195,10 @@ func (s *researchSession) run(ctx context.Context, tool string, input any, execu
 	if len(calls) > 0 {
 		callID = calls[0].ID
 	}
-	measurement := s.telemetry.beginTool(tool, input, time.Now(), callID)
+	measurement := s.telemetry.BeginTool(tool, input, time.Now(), callID)
 	status := researchCacheStatus{Tool: tool}
 	defer func() {
-		timing := s.telemetry.finishTool(measurement, time.Now(), result, resultErr, status)
+		timing := s.telemetry.FinishTool(measurement, time.Now(), result, resultErr, status)
 		if s.log != nil {
 			resultErr = errors.Join(resultErr, s.log.Record("tool.timing", timing))
 		}
@@ -242,7 +234,7 @@ func (s *researchSession) run(ctx context.Context, tool string, input any, execu
 	s.mu.Unlock()
 
 	status.Executed = true
-	s.telemetry.startToolExecution(measurement, time.Now())
+	s.telemetry.StartToolExecution(measurement, time.Now())
 	response, runErr := execute(s.ctx)
 	s.mu.Lock()
 	pending.response = response

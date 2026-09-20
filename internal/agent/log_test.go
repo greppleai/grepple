@@ -1,4 +1,4 @@
-package cli
+package agent
 
 import (
 	"os"
@@ -7,9 +7,9 @@ import (
 	"time"
 )
 
-func TestAskLogRetentionRemovesOnlyExpiredManagedLogs(t *testing.T) {
+func TestLogRetentionRemovesOnlyExpiredManagedLogs(t *testing.T) {
 	directory := t.TempDir()
-	t.Setenv(askLogDirectoryEnv, directory)
+	t.Setenv(logDirectoryEnv, directory)
 	now := time.Date(2026, 9, 16, 12, 0, 0, 0, time.UTC)
 	oldLog := filepath.Join(directory, "20260901T120000.000000000Z-001122334455.jsonl")
 	recentLog := filepath.Join(directory, "20260915T120000.000000000Z-66778899aabb.jsonl")
@@ -29,7 +29,7 @@ func TestAskLogRetentionRemovesOnlyExpiredManagedLogs(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	log, err := newAskLogWithOptions(askLogOptions{enabled: false, retention: 7 * 24 * time.Hour, now: func() time.Time { return now }})
+	log, err := NewLogWithOptions(LogOptions{Enabled: false, Retention: 7 * 24 * time.Hour, now: func() time.Time { return now }})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -54,8 +54,8 @@ func TestAskLogRetentionRemovesOnlyExpiredManagedLogs(t *testing.T) {
 
 func TestDisabledAskLogsDoNotCreateDirectory(t *testing.T) {
 	directory := filepath.Join(t.TempDir(), "missing")
-	t.Setenv(askLogDirectoryEnv, directory)
-	log, err := newAskLogWithOptions(askLogOptions{enabled: false, retention: 7 * 24 * time.Hour})
+	t.Setenv(logDirectoryEnv, directory)
+	log, err := NewLogWithOptions(LogOptions{Enabled: false, Retention: 7 * 24 * time.Hour})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -69,8 +69,8 @@ func TestDisabledAskLogsDoNotCreateDirectory(t *testing.T) {
 
 func TestEnabledAskLogUsesPrivatePermissions(t *testing.T) {
 	directory := t.TempDir()
-	t.Setenv(askLogDirectoryEnv, directory)
-	log, err := newAskLogWithOptions(askLogOptions{enabled: true, retention: 7 * 24 * time.Hour})
+	t.Setenv(logDirectoryEnv, directory)
+	log, err := NewLogWithOptions(LogOptions{Enabled: true, Retention: 7 * 24 * time.Hour})
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -47,7 +47,7 @@ func TestRunAskUsesFantasyProviderAndReadTool(t *testing.T) {
 		t.Fatal(err)
 	}
 	output := captureStdout(t, func() {
-		if err := runAsk([]string{"where", "is", "parsing"}); err != nil {
+		if err := Run([]string{"ask", "where", "is", "parsing"}); err != nil {
 			t.Fatal(err)
 		}
 	})

@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 
+	askcommand "github.com/greppleai/grepple/internal/cli/ask"
 	"github.com/greppleai/grepple/internal/cli/examples"
 	cliruntime "github.com/greppleai/grepple/internal/cli/runtime"
 	"github.com/greppleai/grepple/search"
@@ -521,7 +522,7 @@ func runCommand(args []string) error {
 		case "refs":
 			return runRefs(args[1:])
 		case "ask":
-			return runAsk(args[1:])
+			return askcommand.Run(args[1:], askcommand.Dependencies{Stdout: os.Stdout, Stderr: os.Stderr, RunSession: runAskSession})
 		case "ai-provider":
 			return runAIProvider(args[1:])
 		case "login":

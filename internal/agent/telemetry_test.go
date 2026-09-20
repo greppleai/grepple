@@ -1,4 +1,4 @@
-package cli
+package agent
 
 import (
 	"encoding/json"
@@ -10,18 +10,18 @@ import (
 	"charm.land/fantasy"
 )
 
-func TestAskTelemetrySeparatesLLMAndOverlappingToolWallTime(t *testing.T) {
+func TestTelemetrySeparatesLLMAndOverlappingToolWallTime(t *testing.T) {
 	start := time.Date(2026, 9, 16, 8, 0, 0, 0, time.UTC)
-	telemetry := newAskTelemetry(start)
+	telemetry := NewTelemetry(start)
 	telemetry.startStream(start.Add(10 * time.Millisecond))
-	first := telemetry.beginTool("search_code", map[string]any{"query": "Symbol", "mode": "files"}, start.Add(20*time.Millisecond))
-	telemetry.startToolExecution(first, start.Add(25*time.Millisecond))
-	second := telemetry.beginTool("read_file", map[string]any{"path": "source.go", "start_line": 4, "end_line": 9}, start.Add(40*time.Millisecond))
-	firstEvent := telemetry.finishTool(first, start.Add(50*time.Millisecond), fantasy.NewTextResponse("first evidence"), nil, researchCacheStatus{Tool: "search_code", Key: "first", Executed: true})
-	telemetry.finishTool(second, start.Add(70*time.Millisecond), fantasy.NewTextResponse("second evidence"), nil, researchCacheStatus{Tool: "read_file", Key: "second", Hit: true})
+	first := telemetry.BeginTool("search_code", map[string]any{"query": "Symbol", "mode": "files"}, start.Add(20*time.Millisecond))
+	telemetry.StartToolExecution(first, start.Add(25*time.Millisecond))
+	second := telemetry.BeginTool("read_file", map[string]any{"path": "source.go", "start_line": 4, "end_line": 9}, start.Add(40*time.Millisecond))
+	firstEvent := telemetry.FinishTool(first, start.Add(50*time.Millisecond), fantasy.NewTextResponse("first evidence"), nil, CacheStatus{Tool: "search_code", Key: "first", Executed: true})
+	telemetry.FinishTool(second, start.Add(70*time.Millisecond), fantasy.NewTextResponse("second evidence"), nil, CacheStatus{Tool: "read_file", Key: "second", Hit: true})
 	telemetry.finishStream(start.Add(100 * time.Millisecond))
 
-	performance := telemetry.performance(start.Add(120 * time.Millisecond))
+	performance := telemetry.Performance(start.Add(120 * time.Millisecond))
 	assertMilliseconds(t, "total", performance.TotalDurationMS, 120)
 	assertMilliseconds(t, "stream", performance.StreamDurationMS, 90)
 	assertMilliseconds(t, "tool wall", performance.ToolWallDurationMS, 50)
@@ -31,7 +31,7 @@ func TestAskTelemetrySeparatesLLMAndOverlappingToolWallTime(t *testing.T) {
 	assertMilliseconds(t, "LLM requests", performance.LLMDurationMS, 0)
 	assertMilliseconds(t, "non-tool wall", performance.NonToolWallDurationMS, 40)
 	assertMilliseconds(t, "other", performance.OtherDurationMS, 30)
-	if performance.Schema != askPerformanceSchema || performance.ToolCalls != 2 || performance.ToolExecutions != 1 || len(performance.Tools) != 2 || performance.Tools[0].Tool != "read_file" || performance.Tools[1].Tool != "search_code" {
+	if performance.Schema != performanceSchema || performance.ToolCalls != 2 || performance.ToolExecutions != 1 || len(performance.Tools) != 2 || performance.Tools[0].Tool != "read_file" || performance.Tools[1].Tool != "search_code" {
 		t.Fatalf("performance=%+v", performance)
 	}
 	encoded, err := json.Marshal(firstEvent)
@@ -44,9 +44,9 @@ func TestAskTelemetrySeparatesLLMAndOverlappingToolWallTime(t *testing.T) {
 	}
 }
 
-func TestAskTelemetryMeasuresTimeToFirstOutputWithoutLoggingChunks(t *testing.T) {
+func TestTelemetryMeasuresTimeToFirstOutputWithoutLoggingChunks(t *testing.T) {
 	start := time.Date(2026, 9, 16, 8, 0, 0, 0, time.UTC)
-	telemetry := newAskTelemetry(start)
+	telemetry := NewTelemetry(start)
 	telemetry.beginLLM(1, start)
 	telemetry.recordChunk(fantasy.StreamPart{Type: fantasy.StreamPartTypeTextStart}, start.Add(10*time.Millisecond))
 	telemetry.recordChunk(fantasy.StreamPart{Type: fantasy.StreamPartTypeTextDelta, Delta: "secret response"}, start.Add(20*time.Millisecond))
@@ -68,7 +68,7 @@ func TestAskTelemetryMeasuresTimeToFirstOutputWithoutLoggingChunks(t *testing.T)
 	if strings.Contains(string(encoded), "secret response") {
 		t.Fatalf("LLM timing leaked streamed content: %s", encoded)
 	}
-	performance := telemetry.performance(start.Add(60 * time.Millisecond))
+	performance := telemetry.Performance(start.Add(60 * time.Millisecond))
 	assertMilliseconds(t, "LLM requests", performance.LLMRequestDurationMS, 50)
 	assertMilliseconds(t, "LLM cumulative first output", performance.LLMTimeToFirstOutputMS, 10)
 	if performance.LLMRequests != 1 || performance.LLMChunks != 2 || performance.LLMDeltaBytes != len("secret response") || performance.LLMOutputTokens != 10 {
