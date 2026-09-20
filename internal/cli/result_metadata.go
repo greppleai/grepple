@@ -177,47 +177,6 @@ func graphContinuationCommand(mode string, paths []string, truncation *navigatio
 	return strings.Join(parts, " ")
 }
 
-func boundaryResultMetadata(values boundariesArgs, report boundariesOutput) *api.ResultMetadata {
-	total := len(report.Candidates) + len(report.TypeBoundaries) + len(report.FacadeBypasses)
-	returned := total
-	omittedCandidates := 0
-	if !values.JSON {
-		returned = boundaryVisibleCount(len(report.Candidates), values.Limit) + boundaryVisibleCount(len(report.TypeBoundaries), values.Limit) + boundaryVisibleCount(len(report.FacadeBypasses), values.Limit)
-		omittedCandidates = total - returned
-	}
-	omittedSources := 0
-	if report.Truncation != nil {
-		omittedSources = report.Truncation.Skipped
-	}
-	metadata := &api.ResultMetadata{
-		Scope:   resultScope("local", report.Paths, nil, nil),
-		Order:   "risk-breadth",
-		Page:    api.ResultPage{Skip: 0, Limit: values.Limit, Returned: returned, Total: &total, Complete: omittedCandidates == 0 && omittedSources == 0 && report.Sources.Failed == 0 && report.Sources.Recovered == 0},
-		Limits:  api.ResultLimits{MaxFiles: values.MaxFiles, MaxOutputBytes: values.MaxOutputBytes, JSONByteUncapped: values.JSON},
-		Omitted: api.ResultOmissions{Sources: omittedSources, Findings: omittedCandidates}, Diagnostics: sourceResultDiagnostics(report.Sources),
-	}
-	if omittedCandidates > 0 || omittedSources > 0 {
-		metadata.NextCommand = boundaryContinuationCommand(values, omittedSources > 0)
-	}
-	return metadata
-}
-
-func boundaryContinuationCommand(values boundariesArgs, removeSourceCap bool) string {
-	parts := appendActiveRepositoryScopeFlags([]string{"grepple", "boundaries", "--json", "--min-occurrences", fmt.Sprint(values.MinOccurrences)})
-	if values.Policy != "" {
-		parts = append(parts, "--policy", quoteCommandArgument(values.Policy))
-	}
-	if removeSourceCap {
-		parts = append(parts, "--max-files", "0")
-	} else if values.MaxFiles > 0 {
-		parts = append(parts, "--max-files", fmt.Sprint(values.MaxFiles))
-	}
-	for _, path := range normalizedResultScope(values.Paths, ".") {
-		parts = append(parts, quoteCommandArgument(path))
-	}
-	return strings.Join(parts, " ")
-}
-
 func gritResultMetadata(values gritArgs, response api.GritResponse, remote bool) *api.ResultMetadata {
 	total := response.Total
 	pageComplete := values.Skip+len(response.Findings) >= total

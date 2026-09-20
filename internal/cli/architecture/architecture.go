@@ -1,4 +1,5 @@
-package cli
+// Package architecture implements source-linked directory architecture commands.
+package architecture
 
 import (
 	"bytes"
@@ -55,18 +56,19 @@ type architectureWhyArgs struct {
 	Paths          []string `arg:"positional" placeholder:"PATH" help:"source universe; defaults to the working directory"`
 }
 
-type directoryArchitecture struct {
+// Report is a complete source-linked directory architecture.
+type Report struct {
 	Schema           string                       `json:"schema"`
 	Root             string                       `json:"root"`
 	Files            int                          `json:"files"`
-	Sources          navigationSourceSummary      `json:"sources"`
+	Sources          SourceSummary                `json:"sources"`
 	SourceFiles      []architectureSourceFile     `json:"sourceFiles"`
 	Directories      []architectureDirectory      `json:"directories"`
 	Symbols          []architectureSymbol         `json:"symbols"`
 	Relations        []architectureRelation       `json:"relations"`
 	RepositoryRoots  []string                     `json:"repositoryRoots,omitempty"`
 	RelationCoverage architectureRelationCoverage `json:"relationCoverage"`
-	Truncation       *navigationGraphTruncation   `json:"truncation,omitempty"`
+	Truncation       *Truncation                  `json:"truncation,omitempty"`
 }
 
 type architectureSourceFile struct {
@@ -139,10 +141,10 @@ type architectureRelationCoverage struct {
 }
 
 type architectureResolveOutput struct {
-	Schema  string                  `json:"schema"`
-	Symbol  string                  `json:"symbol"`
-	Sources navigationSourceSummary `json:"sources"`
-	Matches []architectureSymbol    `json:"matches"`
+	Schema  string               `json:"schema"`
+	Symbol  string               `json:"symbol"`
+	Sources SourceSummary        `json:"sources"`
+	Matches []architectureSymbol `json:"matches"`
 }
 
 type architectureWhyOutput struct {
@@ -150,19 +152,21 @@ type architectureWhyOutput struct {
 	From     string                         `json:"from"`
 	To       string                         `json:"to"`
 	Relation string                         `json:"relation"`
-	Sources  navigationSourceSummary        `json:"sources"`
+	Sources  SourceSummary                  `json:"sources"`
 	Evidence []architectureRelationEvidence `json:"evidence"`
 }
 
-type architectureParsedSource struct {
-	path     string
-	document *parser.Document
-	outline  parser.FileOutline
+// ParsedSource owns one parsed architecture source document.
+type ParsedSource struct {
+	Path     string
+	Document *parser.Document
+	Outline  parser.FileOutline
 }
 
-func loadArchitectureDocuments(paths []string) ([]architectureParsedSource, search.NavigationSourceStats) {
+// LoadDocuments parses source paths for architecture and reusable research analysis.
+func LoadDocuments(paths []string) ([]ParsedSource, search.NavigationSourceStats) {
 	stats := search.NavigationSourceStats{Attempted: len(paths)}
-	result := make([]architectureParsedSource, 0, len(paths))
+	result := make([]ParsedSource, 0, len(paths))
 	for _, sourcePath := range paths {
 		content, err := os.ReadFile(sourcePath)
 		if err != nil {
@@ -178,15 +182,16 @@ func loadArchitectureDocuments(paths []string) ([]architectureParsedSource, sear
 			stats.Failed++
 			continue
 		}
-		result = append(result, architectureParsedSource{path: sourcePath, document: document, outline: parser.OutlineFromDocument(sourcePath, document)})
+		result = append(result, ParsedSource{Path: sourcePath, Document: document, Outline: parser.OutlineFromDocument(sourcePath, document)})
 	}
 	return result, stats
 }
 
-func architectureNavigationDocuments(sources []architectureParsedSource) []search.NavigationDocumentSource {
+// NavigationDocuments projects parsed architecture sources for graph construction.
+func NavigationDocuments(sources []ParsedSource) []search.NavigationDocumentSource {
 	result := make([]search.NavigationDocumentSource, 0, len(sources))
 	for _, source := range sources {
-		result = append(result, search.NavigationDocumentSource{Path: source.path, Document: source.document})
+		result = append(result, search.NavigationDocumentSource{Path: source.Path, Document: source.Document})
 	}
 	return result
 }
@@ -200,21 +205,22 @@ type directoryAccumulator struct {
 	entrypoints     int
 }
 
-func runArchitecture(args []string) error {
+// Run executes the architecture command family.
+func Run(args []string, dependencies Dependencies) error {
 	if len(args) == 0 || isExtractHelp(args[0]) {
 		return stdoutWriter().writeString("Inspect language-neutral directory architecture. Local checkout is the default; --repo selects one exact indexed remote repository for directory, resolve, why, or responsibilities. Compare reads two local JSON snapshots.\nUsage:\n  grepple architecture directory (--compact | --json) [PATH ...]\n  grepple architecture resolve --symbol NAME (--compact | --json) [PATH ...]\n  grepple architecture why FROM TO (--compact | --json) [PATH ...]\n  grepple architecture responsibilities (--compact | --json) [PATH ...]\n  grepple architecture compare (--compact | --json) BEFORE.json AFTER.json\n")
 	}
 	switch args[0] {
 	case "directory":
-		return runArchitectureDirectory(args[1:])
+		return runArchitectureDirectory(args[1:], dependencies)
 	case "resolve":
-		return runArchitectureResolve(args[1:])
+		return runArchitectureResolve(args[1:], dependencies)
 	case "why":
-		return runArchitectureWhy(args[1:])
+		return runArchitectureWhy(args[1:], dependencies)
 	case "responsibilities":
-		return runArchitectureResponsibilities(args[1:])
+		return runArchitectureResponsibilities(args[1:], dependencies)
 	case "compare":
-		return runArchitectureCompare(args[1:])
+		return runArchitectureCompare(args[1:], dependencies)
 	default:
 		return fmt.Errorf("unknown architecture command %q", args[0])
 	}
@@ -222,8 +228,8 @@ func runArchitecture(args []string) error {
 
 var errArchitectureHelp = errors.New("architecture help displayed")
 
-func runArchitectureDirectory(args []string) error {
-	values := architectureArgs{Depth: 3, MaxNodes: 200, MaxOutputBytes: DefaultTextOutputBytes}
+func runArchitectureDirectory(args []string, dependencies Dependencies) error {
+	values := architectureArgs{Depth: 3, MaxNodes: 200, MaxOutputBytes: defaultTextOutputBytes}
 	if err := parseArchitectureArgs("grepple architecture directory", args, &values); err != nil {
 		if errors.Is(err, errArchitectureHelp) {
 			return nil
@@ -236,7 +242,7 @@ func runArchitectureDirectory(args []string) error {
 	if values.Depth < 0 || values.MaxNodes < 0 || values.MaxFiles < 0 || values.MaxOutputBytes < 0 {
 		return fmt.Errorf("architecture limits must be non-negative")
 	}
-	architecture, remote, err := loadDirectoryArchitecture(context.Background(), values.Paths, values.MaxFiles, values.Repository, values.Server)
+	architecture, remote, err := loadDirectoryArchitecture(context.Background(), values.Paths, values.MaxFiles, values.Repository, values.Server, dependencies)
 	if err != nil {
 		return err
 	}
@@ -249,8 +255,8 @@ func runArchitectureDirectory(args []string) error {
 	return renderDirectoryArchitecture(architecture, values)
 }
 
-func runArchitectureResolve(args []string) error {
-	values := architectureResolveArgs{MaxOutputBytes: DefaultTextOutputBytes}
+func runArchitectureResolve(args []string, dependencies Dependencies) error {
+	values := architectureResolveArgs{MaxOutputBytes: defaultTextOutputBytes}
 	if err := parseArchitectureArgs("grepple architecture resolve", args, &values); err != nil {
 		if errors.Is(err, errArchitectureHelp) {
 			return nil
@@ -263,7 +269,7 @@ func runArchitectureResolve(args []string) error {
 	if err := validateArchitectureOutputLimits(values.MaxFiles, values.MaxOutputBytes); err != nil {
 		return err
 	}
-	architecture, remote, err := loadDirectoryArchitecture(context.Background(), values.Paths, values.MaxFiles, values.Repository, values.Server)
+	architecture, remote, err := loadDirectoryArchitecture(context.Background(), values.Paths, values.MaxFiles, values.Repository, values.Server, dependencies)
 	if err != nil {
 		return err
 	}
@@ -277,13 +283,13 @@ func runArchitectureResolve(args []string) error {
 		return err
 	}
 	if len(matches) == 0 {
-		requestExit(1)
+		dependencies.requestExit(1)
 	}
 	return nil
 }
 
-func runArchitectureWhy(args []string) error {
-	values := architectureWhyArgs{MaxOutputBytes: DefaultTextOutputBytes}
+func runArchitectureWhy(args []string, dependencies Dependencies) error {
+	values := architectureWhyArgs{MaxOutputBytes: defaultTextOutputBytes}
 	if err := parseArchitectureArgs("grepple architecture why", args, &values); err != nil {
 		if errors.Is(err, errArchitectureHelp) {
 			return nil
@@ -296,7 +302,7 @@ func runArchitectureWhy(args []string) error {
 	if err := validateArchitectureOutputLimits(values.MaxFiles, values.MaxOutputBytes); err != nil {
 		return err
 	}
-	architecture, remote, err := loadDirectoryArchitecture(context.Background(), values.Paths, values.MaxFiles, values.Repository, values.Server)
+	architecture, remote, err := loadDirectoryArchitecture(context.Background(), values.Paths, values.MaxFiles, values.Repository, values.Server, dependencies)
 	if err != nil {
 		return err
 	}
@@ -310,7 +316,7 @@ func runArchitectureWhy(args []string) error {
 		return err
 	}
 	if len(evidence) == 0 {
-		requestExit(1)
+		dependencies.requestExit(1)
 	}
 	return nil
 }
@@ -327,18 +333,18 @@ func writeArchitectureProjection(remote *api.AnalysisResponse, output any) error
 	return stdoutWriter().writeJSON(remote)
 }
 
-func loadDirectoryArchitecture(ctx context.Context, paths []string, maxFiles int, repository, server string) (directoryArchitecture, *api.AnalysisResponse, error) {
+func loadDirectoryArchitecture(ctx context.Context, paths []string, maxFiles int, repository, server string, dependencies Dependencies) (Report, *api.AnalysisResponse, error) {
 	if repository == "" {
-		result, err := buildDirectoryArchitecture(paths, maxFiles)
+		result, err := Build(paths, maxFiles, dependencies)
 		return result, nil, err
 	}
-	response, err := requestAnalysisRemote(ctx, api.AnalysisRequest{Operation: api.AnalysisArchitecture, Repository: repository, Paths: paths, MaxFiles: maxFiles}, serverDefault(server))
+	response, err := dependencies.remote(ctx, api.AnalysisRequest{Operation: api.AnalysisArchitecture, Repository: repository, Paths: paths, MaxFiles: maxFiles}, dependencies.serverDefault(server))
 	if err != nil {
-		return directoryArchitecture{}, nil, err
+		return Report{}, nil, err
 	}
-	var result directoryArchitecture
+	var result Report
 	if err := json.Unmarshal(response.Result, &result); err != nil {
-		return directoryArchitecture{}, nil, fmt.Errorf("decode remote architecture: %w", err)
+		return Report{}, nil, fmt.Errorf("decode remote architecture: %w", err)
 	}
 	return result, &response, nil
 }
@@ -365,14 +371,15 @@ func parseArchitectureArgs(program string, args []string, values any) error {
 	return nil
 }
 
-func buildDirectoryArchitecture(globs []string, maxFiles int) (directoryArchitecture, error) {
+// Build constructs a directory architecture from local sources.
+func Build(globs []string, maxFiles int, dependencies Dependencies) (Report, error) {
 	params := search.Params{Files: true, Globs: globs}
-	if err := applyRepositorySourceConfig(&params); err != nil {
-		return directoryArchitecture{}, err
+	if err := dependencies.applySourceConfig(&params); err != nil {
+		return Report{}, err
 	}
 	paths, err := search.ListFilePaths(params, nil)
 	if err != nil {
-		return directoryArchitecture{}, err
+		return Report{}, err
 	}
 	discovered := len(paths)
 	paths = navigationSourcePaths(paths)
@@ -382,22 +389,23 @@ func buildDirectoryArchitecture(globs []string, maxFiles int) (directoryArchitec
 		truncation = &navigationGraphTruncation{Reason: "max_files", Limit: maxFiles, Skipped: len(paths) - maxFiles}
 		paths = paths[:maxFiles]
 	}
-	parsedSources, parseStats := loadArchitectureDocuments(paths)
-	graph, graphStats := search.BuildNavigationGraphFromDocuments(architectureNavigationDocuments(parsedSources), search.NavigationBuildOptions{})
-	architecture := buildDirectoryArchitectureFromParts(paths, discovered, supported, truncation, parsedSources, parseStats, graph, graphStats)
+	parsedSources, parseStats := LoadDocuments(paths)
+	graph, graphStats := search.BuildNavigationGraphFromDocuments(NavigationDocuments(parsedSources), search.NavigationBuildOptions{})
+	architecture := BuildFromParts(paths, discovered, supported, truncation, parsedSources, parseStats, graph, graphStats)
 	for _, source := range parsedSources {
-		source.document.Close()
+		source.Document.Close()
 	}
 	return architecture, nil
 }
 
-func buildDirectoryArchitectureFromParts(paths []string, discovered, supported int, truncation *navigationGraphTruncation, parsedSources []architectureParsedSource, parseStats search.NavigationSourceStats, graph parser.NavigationGraph, graphStats search.NavigationSourceStats) directoryArchitecture {
+// BuildFromParts projects an already parsed navigation universe into directory architecture.
+func BuildFromParts(paths []string, discovered, supported int, truncation *Truncation, parsedSources []ParsedSource, parseStats search.NavigationSourceStats, graph parser.NavigationGraph, graphStats search.NavigationSourceStats) Report {
 	visibility := architectureVisibilityIndex(graph.Declarations)
 	directories := make(map[string]*directoryAccumulator)
 	symbols := make([]architectureSymbol, 0)
 	for _, source := range parsedSources {
-		sourcePath := source.path
-		outline := source.outline
+		sourcePath := source.Path
+		outline := source.Outline
 		directory := cleanArchitectureDirectory(filepath.Dir(sourcePath))
 		classification := string(sourcekind.Classify(sourcePath, "."))
 		for _, ancestor := range architectureDirectoryAncestors(directory) {

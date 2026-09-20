@@ -65,11 +65,11 @@ func (universe *localResearchUniverse) load() {
 	universe.graph = universe.analysis.Graph()
 	universe.documents = make(map[string]*parser.Document, len(universe.sources))
 	for _, source := range universe.sources {
-		absolute, err := filepath.Abs(source.path)
+		absolute, err := filepath.Abs(source.Path)
 		if err != nil {
 			continue
 		}
-		universe.documents[filepath.Clean(absolute)] = source.document
+		universe.documents[filepath.Clean(absolute)] = source.Document
 	}
 }
 
@@ -107,7 +107,7 @@ func (universe *localResearchUniverse) close() {
 	}
 	universe.closeOnce.Do(func() {
 		for _, source := range universe.sources {
-			source.document.Close()
+			source.Document.Close()
 		}
 	})
 }

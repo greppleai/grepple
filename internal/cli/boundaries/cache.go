@@ -1,4 +1,4 @@
-package cli
+package boundaries
 
 import (
 	"crypto/sha256"
@@ -13,31 +13,31 @@ import (
 	"github.com/greppleai/grepple/search"
 )
 
-const boundaryCacheSchema = "grepple-boundary-cache-v6"
+const boundaryCacheSchema = "grepple-boundary-cache-v7"
 
 type boundaryGraphCache struct {
-	Schema string                `json:"schema"`
-	Digest string                `json:"digest"`
-	Graph  navigationGraphOutput `json:"graph"`
+	Schema string      `json:"schema"`
+	Digest string      `json:"digest"`
+	Graph  GraphOutput `json:"graph"`
 }
 
-func buildCachedBoundaryGraph(globs []string, maxFiles int, useCache bool) (navigationGraphOutput, string, error) {
-	paths, err := navigationInputPaths(globs)
+func buildCachedBoundaryGraph(globs []string, maxFiles int, useCache bool, dependencies Dependencies) (GraphOutput, string, error) {
+	paths, err := dependencies.resolvePaths(globs)
 	if err != nil {
-		return navigationGraphOutput{}, "", err
+		return GraphOutput{}, "", err
 	}
 	if !useCache {
-		return buildNavigationGraphOutputFromPathsWithOptions(paths, maxFiles, search.NavigationBuildOptions{DisableCache: true}), "disabled", nil
+		return dependencies.buildGraph(paths, maxFiles, search.NavigationBuildOptions{DisableCache: true}), "disabled", nil
 	}
 	digest, err := boundaryInputDigest(paths, maxFiles)
 	if err != nil {
-		return navigationGraphOutput{}, "", err
+		return GraphOutput{}, "", err
 	}
-	cachePath := filepath.Join(defaultCacheDirectory(), "boundaries", digest+".json")
+	cachePath := filepath.Join(dependencies.cacheDirectory(), "boundaries", digest+".json")
 	if cached, ok := readBoundaryGraphCache(cachePath, digest); ok {
 		return cached, "hit", nil
 	}
-	output := buildNavigationGraphOutputFromPaths(paths, maxFiles)
+	output := dependencies.buildGraph(paths, maxFiles, search.NavigationBuildOptions{})
 	_ = writeBoundaryGraphCache(cachePath, boundaryGraphCache{Schema: boundaryCacheSchema, Digest: digest, Graph: output})
 	return output, "miss", nil
 }
@@ -70,14 +70,14 @@ func boundaryInputDigest(paths []string, maxFiles int) (string, error) {
 	return hex.EncodeToString(hash.Sum(nil)), nil
 }
 
-func readBoundaryGraphCache(path, digest string) (navigationGraphOutput, bool) {
+func readBoundaryGraphCache(path, digest string) (GraphOutput, bool) {
 	content, err := os.ReadFile(path)
 	if err != nil {
-		return navigationGraphOutput{}, false
+		return GraphOutput{}, false
 	}
 	var cached boundaryGraphCache
 	if json.Unmarshal(content, &cached) != nil || cached.Schema != boundaryCacheSchema || cached.Digest != digest {
-		return navigationGraphOutput{}, false
+		return GraphOutput{}, false
 	}
 	return cached.Graph, true
 }

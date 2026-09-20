@@ -145,7 +145,7 @@ func architectureComparisonFixture() directoryArchitecture {
 		Schema: directoryArchitectureSchema,
 		Root:   ".",
 		Files:  1,
-		Sources: navigationSourceSummary{
+		Sources: architectureSourceSummary{
 			Discovered: 1, Selected: 1, Parsed: 1,
 		},
 		SourceFiles: []architectureSourceFile{{Path: "service/service.go", Language: "go", Classification: "production"}},

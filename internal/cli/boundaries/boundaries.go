@@ -1,4 +1,5 @@
-package cli
+// Package boundaries implements repeated-workflow and representation-boundary analysis commands.
+package boundaries
 
 import (
 	"context"
@@ -17,6 +18,7 @@ import (
 )
 
 const maxHumanBoundaryPatterns = 5
+const defaultTextOutputBytes = 16 * 1024
 
 type boundariesArgs struct {
 	JSON bool `arg:"--json" help:"emit the complete boundary report as JSON"`
@@ -35,21 +37,23 @@ func (boundariesArgs) Description() string {
 	return "Find repeated workflows, type/field spread, and policy-backed facade bypasses locally by default; --repo selects one exact indexed remote repository."
 }
 
-type boundariesOutput struct {
+// Report is the complete boundary analysis output.
+type Report struct {
 	Schema         string                        `json:"schema"`
 	Metadata       *api.ResultMetadata           `json:"metadata,omitempty"`
 	Paths          []string                      `json:"paths"`
 	Files          int                           `json:"files"`
-	Sources        navigationSourceSummary       `json:"sources"`
+	Sources        SourceSummary                 `json:"sources"`
 	Policy         string                        `json:"policy,omitempty"`
 	Candidates     []search.BoundaryCandidate    `json:"candidates"`
 	TypeBoundaries []search.BoundaryTypeSpread   `json:"typeBoundaries"`
 	FacadeBypasses []search.BoundaryFacadeBypass `json:"facadeBypasses,omitempty"`
-	Truncation     *navigationGraphTruncation    `json:"truncation,omitempty"`
+	Truncation     *Truncation                   `json:"truncation,omitempty"`
 }
 
-func runBoundaries(args []string) error {
-	values := boundariesArgs{MinOccurrences: 2, MaxOutputBytes: DefaultTextOutputBytes, Limit: 20}
+// Run executes boundary analysis.
+func Run(args []string, dependencies Dependencies) error {
+	values := boundariesArgs{MinOccurrences: 2, MaxOutputBytes: defaultTextOutputBytes, Limit: 20}
 	argumentParser, err := arg.NewParser(arg.Config{Program: "grepple boundaries"}, &values)
 	if err != nil {
 		return err
@@ -68,13 +72,13 @@ func runBoundaries(args []string) error {
 		return fmt.Errorf("--max-files, --max-output-bytes, and --limit must be non-negative")
 	}
 	if values.Repository != "" {
-		return runRemoteBoundaries(context.Background(), values)
+		return runRemoteBoundaries(context.Background(), values, dependencies)
 	}
 	policy, policyPath, err := loadBoundaryPolicy(values.Policy)
 	if err != nil {
 		return err
 	}
-	graphOutput, _, err := buildCachedBoundaryGraph(values.Paths, values.MaxFiles, !values.NoCache)
+	graphOutput, _, err := buildCachedBoundaryGraph(values.Paths, values.MaxFiles, !values.NoCache, dependencies)
 	if err != nil {
 		return err
 	}
@@ -88,7 +92,7 @@ func runBoundaries(args []string) error {
 		return err
 	}
 	output := boundariesOutput{Schema: "grepple-boundaries-v3", Paths: boundaryDisplayPaths(values.Paths), Files: graphOutput.Files, Sources: graphOutput.Sources, Policy: policyPath, Candidates: candidates, TypeBoundaries: typeBoundaries, FacadeBypasses: search.AnalyzeFacadeBypasses(graph, policy), Truncation: graphOutput.Truncation}
-	output.Metadata = boundaryResultMetadata(values, output)
+	output.Metadata = dependencies.metadata(MetadataInput{JSON: values.JSON, Paths: values.Paths, MinOccurrences: values.MinOccurrences, MaxFiles: values.MaxFiles, Limit: values.Limit, MaxOutputBytes: values.MaxOutputBytes, Policy: values.Policy, Report: output})
 	if values.JSON {
 		encoder := json.NewEncoder(os.Stdout)
 		encoder.SetEscapeHTML(false)
@@ -98,8 +102,8 @@ func runBoundaries(args []string) error {
 	return renderBoundaries(output, values.MinOccurrences, values.Limit, values.MaxOutputBytes)
 }
 
-func runRemoteBoundaries(ctx context.Context, values boundariesArgs) error {
-	response, err := requestAnalysisRemote(ctx, api.AnalysisRequest{Operation: api.AnalysisBoundaries, Repository: values.Repository, Paths: values.Paths, MaxFiles: values.MaxFiles, MinOccurrences: values.MinOccurrences, Policy: values.Policy}, serverDefault(values.Server))
+func runRemoteBoundaries(ctx context.Context, values boundariesArgs, dependencies Dependencies) error {
+	response, err := dependencies.remote(ctx, api.AnalysisRequest{Operation: api.AnalysisBoundaries, Repository: values.Repository, Paths: values.Paths, MaxFiles: values.MaxFiles, MinOccurrences: values.MinOccurrences, Policy: values.Policy}, dependencies.serverDefault(values.Server))
 	if err != nil {
 		return err
 	}

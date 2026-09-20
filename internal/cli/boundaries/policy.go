@@ -1,4 +1,4 @@
-package cli
+package boundaries
 
 import (
 	"encoding/json"
@@ -11,6 +11,9 @@ import (
 )
 
 const defaultBoundaryPolicyPath = ".grepple/boundary-policy.json"
+
+// DefaultPolicyPath is the conventional repository boundary-policy location.
+const DefaultPolicyPath = defaultBoundaryPolicyPath
 
 func loadBoundaryPolicy(requested string) (search.BoundaryPolicy, string, error) {
 	policyPath := requested

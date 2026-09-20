@@ -1,4 +1,4 @@
-package cli
+package architecture
 
 import (
 	"context"
@@ -25,9 +25,9 @@ type architectureResponsibilitiesArgs struct {
 type architectureResponsibilitiesOutput struct {
 	Schema           string                                `json:"schema"`
 	Files            int                                   `json:"files"`
-	Sources          navigationSourceSummary               `json:"sources"`
+	Sources          SourceSummary                         `json:"sources"`
 	Responsibilities []architectureDirectoryResponsibility `json:"responsibilities"`
-	Truncation       *navigationGraphTruncation            `json:"truncation,omitempty"`
+	Truncation       *Truncation                           `json:"truncation,omitempty"`
 }
 
 type architectureDirectoryResponsibility struct {
@@ -42,8 +42,8 @@ type architectureDirectoryResponsibility struct {
 	Outgoing        int                 `json:"outgoingRelations"`
 }
 
-func runArchitectureResponsibilities(args []string) error {
-	values := architectureResponsibilitiesArgs{MaxOutputBytes: DefaultTextOutputBytes}
+func runArchitectureResponsibilities(args []string, dependencies Dependencies) error {
+	values := architectureResponsibilitiesArgs{MaxOutputBytes: defaultTextOutputBytes}
 	argumentParser, err := arg.NewParser(arg.Config{Program: "grepple architecture responsibilities"}, &values)
 	if err != nil {
 		return err
@@ -62,7 +62,7 @@ func runArchitectureResponsibilities(args []string) error {
 		return err
 	}
 	if values.Repository != "" {
-		response, requestErr := requestAnalysisRemote(context.Background(), api.AnalysisRequest{Operation: api.AnalysisResponsibilities, Repository: values.Repository, Paths: values.Paths, MaxFiles: values.MaxFiles}, serverDefault(values.Server))
+		response, requestErr := dependencies.remote(context.Background(), api.AnalysisRequest{Operation: api.AnalysisResponsibilities, Repository: values.Repository, Paths: values.Paths, MaxFiles: values.MaxFiles}, dependencies.serverDefault(values.Server))
 		if requestErr != nil {
 			return requestErr
 		}
@@ -75,7 +75,7 @@ func runArchitectureResponsibilities(args []string) error {
 		}
 		return renderArchitectureResponsibilities(output, values.MaxOutputBytes)
 	}
-	architecture, err := buildDirectoryArchitecture(values.Paths, values.MaxFiles)
+	architecture, err := Build(values.Paths, values.MaxFiles, dependencies)
 	if err != nil {
 		return err
 	}
@@ -86,7 +86,7 @@ func runArchitectureResponsibilities(args []string) error {
 	return renderArchitectureResponsibilities(output, values.MaxOutputBytes)
 }
 
-func buildArchitectureResponsibilitiesOutput(architecture directoryArchitecture) architectureResponsibilitiesOutput {
+func buildArchitectureResponsibilitiesOutput(architecture Report) architectureResponsibilitiesOutput {
 	incoming, outgoing := map[string]int{}, map[string]int{}
 	for _, relation := range architecture.Relations {
 		outgoing[relation.From] += relation.Count

@@ -1,4 +1,4 @@
-package cli
+package architecture
 
 import (
 	"bytes"
@@ -64,8 +64,8 @@ type architectureFact struct {
 	value    any
 }
 
-func runArchitectureCompare(args []string) error {
-	values := architectureCompareArgs{MaxOutputBytes: DefaultTextOutputBytes}
+func runArchitectureCompare(args []string, dependencies Dependencies) error {
+	values := architectureCompareArgs{MaxOutputBytes: defaultTextOutputBytes}
 	if err := parseArchitectureArgs("grepple architecture compare", args, &values); err != nil {
 		if errors.Is(err, errArchitectureHelp) {
 			return nil
@@ -96,23 +96,23 @@ func runArchitectureCompare(args []string) error {
 		return err
 	}
 	if !comparison.SemanticEqual || !comparison.ByteEqual {
-		requestExit(1)
+		dependencies.requestExit(1)
 	}
 	return nil
 }
 
-func readDirectoryArchitecture(filePath string) (directoryArchitecture, []byte, error) {
+func readDirectoryArchitecture(filePath string) (Report, []byte, error) {
 	content, err := os.ReadFile(filePath)
 	if err != nil {
-		return directoryArchitecture{}, nil, err
+		return Report{}, nil, err
 	}
 	content, err = unwrapRemoteDirectoryArchitecture(content)
 	if err != nil {
-		return directoryArchitecture{}, nil, err
+		return Report{}, nil, err
 	}
 	decoder := json.NewDecoder(bytes.NewReader(content))
 	decoder.DisallowUnknownFields()
-	var architecture directoryArchitecture
+	var architecture Report
 	if err := decoder.Decode(&architecture); err != nil {
 		return directoryArchitecture{}, nil, err
 	}
