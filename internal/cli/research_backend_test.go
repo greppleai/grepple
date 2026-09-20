@@ -20,7 +20,7 @@ import (
 func TestRunAskUsesFantasyProviderAndReadTool(t *testing.T) {
 	root := t.TempDir()
 	logDirectory := filepath.Join(t.TempDir(), "ask-logs")
-	t.Setenv(askLogDirectoryEnv, logDirectory)
+	t.Setenv("GREPPLE_ASK_LOG_DIR", logDirectory)
 	home := t.TempDir()
 	t.Setenv("HOME", home)
 	if err := os.MkdirAll(filepath.Join(home, ".grepple"), 0o700); err != nil {
@@ -204,17 +204,7 @@ func TestAskReadToolBatchesAnchoredLocalRanges(t *testing.T) {
 	}
 }
 
-func TestAskResearchToolsAreTypedAndDirect(t *testing.T) {
-	names := askResearchToolNames()
-	if strings.Contains(strings.Join(names, ","), "grepple") {
-		t.Fatalf("generic CLI tool is still exposed: %v", names)
-	}
-	info, _ := json.Marshal(askResearchToolInfo(newAskResearchTools(t.TempDir(), "https://example.invalid")))
-	for _, field := range []string{`"query"`, `"location"`, `"operation"`, `"direction"`, `"repository"`} {
-		if !bytes.Contains(info, []byte(field)) {
-			t.Fatalf("typed tool schemas missing %s: %s", field, info)
-		}
-	}
+func TestResearchSearchIsDirectAndConfined(t *testing.T) {
 	root := t.TempDir()
 	if err := os.WriteFile(filepath.Join(root, "source.go"), []byte("package sample\n\nfunc Parse() {}\n"), 0o600); err != nil {
 		t.Fatal(err)
@@ -301,13 +291,6 @@ func TestAskRemoteToolsUseSelectedServer(t *testing.T) {
 func jsonContains(value any, text string) bool {
 	encoded, _ := json.Marshal(value)
 	return bytes.Contains(encoded, []byte(text))
-}
-
-func TestAskToolResultDisclosesTruncation(t *testing.T) {
-	response, err := askToolResult(strings.Repeat("x", defaultToolOutputSize+1), nil)
-	if err != nil || response.IsError || !strings.Contains(response.Content, `"truncated":true`) {
-		t.Fatalf("response=%+v err=%v", response, err)
-	}
 }
 
 func TestAIProviderListShowsBuiltInsLoggedOut(t *testing.T) {

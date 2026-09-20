@@ -3,16 +3,13 @@ package cli
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"charm.land/fantasy"
 	internalagent "github.com/greppleai/grepple/internal/agent"
-	agentresearch "github.com/greppleai/grepple/internal/agent/research"
 	"github.com/greppleai/grepple/internal/aiprovider"
 	askcommand "github.com/greppleai/grepple/internal/cli/ask"
 	"github.com/greppleai/grepple/linerange"
@@ -24,49 +21,14 @@ const (
 	maxReadLines          = 1000
 )
 
-type readToolInput struct {
-	Path       string              `json:"path,omitempty" description:"One repository-relative file path; omit when files is provided"`
-	Files      []readToolFileInput `json:"files,omitempty" description:"Up to eight local or indexed-repository file ranges to read in one call"`
-	Repository string              `json:"repository,omitempty" description:"Exact indexed OWNER/REPO[@REF] selector; omit for local workspace"`
-	StartLine  int                 `json:"start_line,omitempty" description:"First 1-indexed line for path; defaults to 1"`
-	EndLine    int                 `json:"end_line,omitempty" description:"Last 1-indexed line for path; defaults to start+199; explicit ranges clamp at EOF when start exists"`
-	Outline    bool                `json:"outline,omitempty" description:"Return path's structural outline instead of source lines"`
-}
+type readToolInput = askcommand.ReadInput
+type readToolFileInput = askcommand.ReadRange
 
-type readToolFileInput struct {
-	Path      string `json:"path" description:"Repository-relative file path"`
-	StartLine int    `json:"start_line,omitempty" description:"First 1-indexed line; defaults to 1"`
-	EndLine   int    `json:"end_line,omitempty" description:"Last 1-indexed line; defaults to start+199"`
-	Outline   bool   `json:"outline,omitempty" description:"Return the structural outline instead of source lines"`
-}
-
-func runAskSession(ctx context.Context, log *internalagent.Log, provider aiprovider.Provider, request askcommand.SessionRequest) (returnAnswer string, returnErr error) {
-	systemPrompt := agentresearch.SystemPrompt(request.Root)
+func runAskSession(ctx context.Context, log *internalagent.Log, provider aiprovider.Provider, request askcommand.SessionRequest) (string, error) {
 	server := serverDefault(request.Server)
 	session := newResearchSession(ctx, log, request.Root, server)
-	defer func() {
-		session.Close()
-		returnErr = errors.Join(returnErr, log.Record("session.performance", session.telemetry.Performance(time.Now())))
-	}()
-	tools := newAskResearchToolsForSession(session, request.Root, server)
-	if err := log.Record("session.start", map[string]any{
-		"provider": provider.Name(), "model": request.Model, "question": request.Question, "root": request.Root, "server": server,
-		"timeoutSeconds": request.Timeout, "systemPrompt": systemPrompt,
-		"tools": askResearchToolInfo(tools),
-	}); err != nil {
-		return "", err
-	}
-	result, err := internalagent.Run(ctx, log, internalagent.Request{
-		Name: "ask", Prompt: request.Question, SystemPrompt: systemPrompt, Provider: provider.Name(), Model: request.Model,
-		ModelFactory: func(ctx context.Context) (fantasy.LanguageModel, error) {
-			return provider.LanguageModel(ctx, request.Model)
-		},
-		Tools: tools, Telemetry: session.telemetry,
-	})
-	if err != nil {
-		return "", err
-	}
-	return result.Answer, nil
+	backend := &cliResearchBackend{root: request.Root, server: server, session: session}
+	return askcommand.RunResearch(ctx, log, provider, request, backend)
 }
 
 func runSimpleReadTool(root string, input readToolInput) (fantasy.ToolResponse, error) {

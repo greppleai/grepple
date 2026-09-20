@@ -11,133 +11,20 @@ import (
 
 	"charm.land/fantasy"
 	"github.com/greppleai/grepple/api"
+	askcommand "github.com/greppleai/grepple/internal/cli/ask"
 	"github.com/greppleai/grepple/linerange"
 	"github.com/greppleai/grepple/parser"
 	"github.com/greppleai/grepple/search"
 )
 
-type askSearchInput struct {
-	Query      string   `json:"query" description:"Literal text to find, or a regular expression when regex is true"`
-	Paths      []string `json:"paths,omitempty" description:"Local repository-relative files, directories, or globs; defaults to the workspace"`
-	Repository string   `json:"repository,omitempty" description:"Exact indexed OWNER/REPO[@REF] selector; omit for local search"`
-	Regex      bool     `json:"regex,omitempty" description:"Interpret query as a JavaScript regular expression; false means literal text"`
-	IgnoreCase bool     `json:"ignore_case,omitempty" description:"Match without case distinctions"`
-	Mode       string   `json:"mode,omitempty" description:"Result shape: snippets (default), files, or count"`
-	Limit      int      `json:"limit,omitempty" description:"Maximum returned files, 1-20; defaults to 8"`
-	Context    int      `json:"context,omitempty" description:"Context lines around matches, 0-3"`
-}
-
-type askNavigateInput struct {
-	Location    string `json:"location" description:"Repository-relative PATH:LINE or PATH:START-END inside a declaration"`
-	Repository  string `json:"repository,omitempty" description:"Exact indexed OWNER/REPO[@REF] selector; omit for the local workspace"`
-	FollowDepth int    `json:"follow_depth,omitempty" description:"Inline resolved callees this many levels, 0-2; immediate callers/callees are always returned"`
-}
-
-type askStructuralInput struct {
-	Query      string   `json:"query" description:"Native gritql-v1 structural query text"`
-	Paths      []string `json:"paths,omitempty" description:"Local source files, directories, or globs; defaults to the workspace"`
-	Repository string   `json:"repository,omitempty" description:"Exact indexed OWNER/REPO[@REF] selector; omit for local structural search"`
-	Limit      int      `json:"limit,omitempty" description:"Maximum findings, 1-20; defaults to 10"`
-}
-
-type askArchitectureInput struct {
-	Operation  string   `json:"operation" description:"One of directory, resolve, why, or responsibilities"`
-	Paths      []string `json:"paths,omitempty" description:"Source files, directories, or globs; defaults to the workspace or selected repository"`
-	Repository string   `json:"repository,omitempty" description:"Exact indexed OWNER/REPO[@REF] selector; omit for local architecture"`
-	Symbol     string   `json:"symbol,omitempty" description:"Symbol name required by resolve"`
-	From       string   `json:"from,omitempty" description:"Source directory required by why"`
-	To         string   `json:"to,omitempty" description:"Target directory required by why"`
-	MaxFiles   int      `json:"max_files,omitempty" description:"Maximum parsed files; 0 means all"`
-}
-
-type askGraphInput struct {
-	Direction  string   `json:"direction" description:"One of callers, callees, dependencies, dependents, or impact"`
-	Symbol     string   `json:"symbol,omitempty" description:"Exact declaration name; provide this or location, not both"`
-	Location   string   `json:"location,omitempty" description:"Repository-relative PATH:LINE selecting one declaration; provide this or symbol, not both"`
-	Paths      []string `json:"paths,omitempty" description:"Graph source scope; defaults to the workspace or selected repository"`
-	Repository string   `json:"repository,omitempty" description:"Exact indexed OWNER/REPO[@REF] selector; omit for the local workspace"`
-	Depth      int      `json:"depth,omitempty" description:"Traversal depth, 1-3; defaults to 1"`
-	Language   string   `json:"language,omitempty" description:"Optional canonical language ID filter such as go or typescript"`
-	Confidence string   `json:"confidence,omitempty" description:"Optional edge-confidence filter such as exact, import-resolved, context-resolved, or candidate"`
-}
-
-type askSourceScopeInput struct {
-	Paths []string `json:"paths,omitempty" description:"Local files or directories to classify; defaults to the repository root"`
-}
-
-type askRepositoryRefsInput struct {
-	Repository string `json:"repository" description:"Source OWNER/REPO whose indexed selectors should be listed"`
-	Kind       string `json:"kind,omitempty" description:"Optional ref kind: default, branch, or tag"`
-}
-
-type askRepositoryTreeInput struct {
-	Repository string `json:"repository" description:"Exact indexed OWNER/REPO[@REF] selector"`
-	Path       string `json:"path,omitempty" description:"Optional repository-relative subtree"`
-	Depth      int    `json:"depth,omitempty" description:"Tree depth, 1-4; defaults to 2"`
-}
-
-func askResearchToolNames() []string {
-	return []string{"search_code", "navigate_code", "structural_search", "inspect_architecture", "query_graph", "explain_sources", "repository_refs", "repository_tree", "read_file"}
-}
-
-func askResearchToolInfo(tools []fantasy.AgentTool) []fantasy.ToolInfo {
-	info := make([]fantasy.ToolInfo, 0, len(tools))
-	for _, tool := range tools {
-		info = append(info, tool.Info())
-	}
-	return info
-}
-
-func newAskResearchTools(root, server string) []fantasy.AgentTool {
-	return newAskResearchToolsForSession(newResearchSession(context.Background(), nil, root, server), root, server)
-}
-
-func newAskResearchToolsForSession(session *researchSession, root, server string) []fantasy.AgentTool {
-	return []fantasy.AgentTool{
-		cachedAskTool(session, "search_code", "Search source text directly. Use mode=count to locate concentration, mode=files to choose files, then mode=snippets for bounded source-backed context. Set repository for remote indexed code.", func(ctx context.Context, input askSearchInput) (fantasy.ToolResponse, error) {
-			return askToolResult(runAskSearch(ctx, root, server, input))
-		}),
-		cachedAskTool(session, "navigate_code", "Retrieve the exact declaration containing a known PATH:LINE and its immediate callers/callees. Use after search_code; candidate edges are leads, while exact/import-resolved/context-resolved edges are stronger evidence.", func(ctx context.Context, input askNavigateInput) (fantasy.ToolResponse, error) {
-			return askToolResult(runAskNavigateWithSession(ctx, session, root, server, input))
-		}),
-		cachedAskTool(session, "structural_search", "Run a native read-only gritql-v1 syntax query across Tree-sitter-backed source. Use for code shapes, not type resolution, call impact, or data-flow proof.", func(ctx context.Context, input askStructuralInput) (fantasy.ToolResponse, error) {
-			return askToolResult(runAskStructural(ctx, root, server, input))
-		}),
-		cachedAskTool(session, "inspect_architecture", "Inspect local or exact indexed-repository language-neutral architecture. directory orients ownership; resolve locates a symbol; why returns exact relation evidence; responsibilities summarizes physical directory ownership.", func(_ context.Context, input askArchitectureInput) (fantasy.ToolResponse, error) {
-			return askToolResult(runAskArchitectureWithSession(session, root, input))
-		}),
-		cachedAskTool(session, "query_graph", "Query a local or exact indexed-repository parser-owned graph for callers, callees, dependencies, dependents, or impact. Select exactly one symbol or source location and keep depth small.", func(_ context.Context, input askGraphInput) (fantasy.ToolResponse, error) {
-			return askToolResult(runAskGraphWithSession(session, root, input))
-		}),
-		cachedAskTool(session, "explain_sources", "Report which local files are selected, excluded, ignored, generated, vendored, tests, fixtures, or production. Use before completeness-sensitive conclusions.", func(_ context.Context, input askSourceScopeInput) (fantasy.ToolResponse, error) {
-			return askToolResult(runAskSourceScope(root, input))
-		}),
-		cachedAskTool(session, "repository_refs", "Resolve a source OWNER/REPO and requested version to exact indexed repository selectors. Use before remote search, navigation, tree, or read when a branch or tag matters.", func(ctx context.Context, input askRepositoryRefsInput) (fantasy.ToolResponse, error) {
-			return askToolResult(runAskRepositoryRefs(ctx, server, input))
-		}),
-		cachedAskTool(session, "repository_tree", "List a bounded tree from one exact indexed repository selector returned by repository_refs. Use it to discover remote paths before search or read.", func(ctx context.Context, input askRepositoryTreeInput) (fantasy.ToolResponse, error) {
-			return askToolResult(runAskRepositoryTree(ctx, server, input))
-		}),
-		cachedAskTool(session, "read_file", "Batch-read up to eight bounded local or indexed-repository file ranges. Use files for implementation-oriented retrieval after paths are known. Local source rows carry HASH│LINE│content whenever anchors are enabled; preserve them exactly. Use outline=true for structural symbols.", func(ctx context.Context, input readToolInput) (fantasy.ToolResponse, error) {
-			return runAskReadTool(ctx, root, server, input)
-		}),
-	}
-}
-
-func askToolResult(value any, err error) (fantasy.ToolResponse, error) {
-	if err != nil {
-		return fantasy.NewTextErrorResponse(err.Error()), nil
-	}
-	encoded, err := json.Marshal(value)
-	if err != nil {
-		return fantasy.NewTextErrorResponse(err.Error()), nil
-	}
-	if len(encoded) > defaultToolOutputSize {
-		prefix := string(encoded[:defaultToolOutputSize/2])
-		encoded, _ = json.Marshal(map[string]any{"truncated": true, "message": "result exceeded 64 KiB; narrow scope, limit, depth, or paths", "jsonPrefix": prefix})
-	}
-	return fantasy.NewTextResponse(string(encoded)), nil
-}
+type askSearchInput = askcommand.SearchInput
+type askNavigateInput = askcommand.NavigateInput
+type askStructuralInput = askcommand.StructuralInput
+type askArchitectureInput = askcommand.ArchitectureInput
+type askGraphInput = askcommand.GraphInput
+type askSourceScopeInput = askcommand.SourceScopeInput
+type askRepositoryRefsInput = askcommand.RepositoryRefsInput
+type askRepositoryTreeInput = askcommand.RepositoryTreeInput
 
 func runAskSearch(ctx context.Context, root, server string, input askSearchInput) (any, error) {
 	if strings.TrimSpace(input.Query) == "" {
@@ -562,7 +449,7 @@ func runAskLocalReadTool(root string, input readToolInput) (fantasy.ToolResponse
 	if err != nil {
 		return fantasy.NewTextErrorResponse(err.Error()), nil
 	}
-	return askToolResult(parser.OutlineFileDepth(input.Path, string(content), 0), nil)
+	return backendToolResult(parser.OutlineFileDepth(input.Path, string(content), 0), nil)
 }
 
 func runAskRemoteReadTool(ctx context.Context, server string, input readToolInput) (fantasy.ToolResponse, error) {
@@ -590,7 +477,7 @@ func runAskRemoteReadTool(ctx context.Context, server string, input readToolInpu
 		return fantasy.NewTextErrorResponse("file response is binary or exceeds 256 KiB"), nil
 	}
 	if input.Outline {
-		return askToolResult(parser.OutlineFileDepth(input.Path, string(content), 0), nil)
+		return backendToolResult(parser.OutlineFileDepth(input.Path, string(content), 0), nil)
 	}
 	start, _, _ := askReadRange(input.StartLine, input.EndLine)
 	lines := linerange.SplitLines(string(content))
