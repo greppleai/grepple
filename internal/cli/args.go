@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/greppleai/grepple/internal/cli/examples"
 	cliruntime "github.com/greppleai/grepple/internal/cli/runtime"
 	"github.com/greppleai/grepple/search"
 
@@ -504,7 +505,7 @@ func runCommand(args []string) error {
 		case "boundaries":
 			return runBoundaries(args[1:])
 		case "examples":
-			return runExamples(args[1:])
+			return examples.Run(args[1:], os.Stdout)
 		case "artifacts":
 			return runArtifacts(args[1:])
 		case "context":

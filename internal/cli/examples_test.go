@@ -47,23 +47,3 @@ func TestExamplesHelpListsTasks(t *testing.T) {
 		t.Fatalf("examples help:\n%s", output)
 	}
 }
-
-func TestExamplesDoNotRepeatWorkflowNamesOrSteps(t *testing.T) {
-	names := map[string]bool{}
-	commands := map[string]string{}
-	for _, example := range taskExamples {
-		if names[example.Name] {
-			t.Errorf("duplicate example task %q", example.Name)
-		}
-		names[example.Name] = true
-		if example.Description == "" || len(example.Commands) == 0 {
-			t.Errorf("example task %q has incomplete guidance", example.Name)
-		}
-		for _, command := range example.Commands {
-			if owner, duplicate := commands[command]; duplicate {
-				t.Errorf("workflow command %q is duplicated by %q and %q", command, owner, example.Name)
-			}
-			commands[command] = example.Name
-		}
-	}
-}

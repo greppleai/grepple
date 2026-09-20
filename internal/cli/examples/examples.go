@@ -1,8 +1,12 @@
-package cli
+// Package examples implements the task-oriented examples command.
+package examples
 
 import (
 	"fmt"
+	"io"
 	"strings"
+
+	cliruntime "github.com/greppleai/grepple/internal/cli/runtime"
 )
 
 type taskExample struct {
@@ -48,18 +52,20 @@ var taskExamples = []taskExample{
 	}},
 }
 
-func runExamples(args []string) error {
+// Run executes the examples command using output as its destination.
+func Run(args []string, output io.Writer) error {
 	if len(args) > 1 {
 		return fmt.Errorf("examples accepts at most one task")
 	}
+	writer := cliruntime.NewOutput(output)
 	if len(args) == 1 && (args[0] == "--help" || args[0] == "-h") {
-		return stdoutWriter().writeString(examplesHelp())
+		return writer.WriteString(help())
 	}
 	selected, err := selectTaskExamples(args)
 	if err != nil {
 		return err
 	}
-	return stdoutWriter().writeString(renderTaskExamples(selected))
+	return writer.WriteString(renderTaskExamples(selected))
 }
 
 func selectTaskExamples(args []string) ([]taskExample, error) {
@@ -88,7 +94,7 @@ func renderTaskExamples(examples []taskExample) string {
 	return output.String()
 }
 
-func examplesHelp() string {
+func help() string {
 	return "Task-oriented Grepple workflows.\nUsage: grepple examples [TASK]\nTasks: " + taskExampleNames() + "\nOmit TASK to print every workflow. Commands are copyable templates; replace example paths and symbols.\n"
 }
 

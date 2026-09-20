@@ -33,6 +33,7 @@ func Classify(path, root string) Kind {
 	}
 	relative = strings.ToLower(filepath.ToSlash(relative))
 	parts := strings.Split(strings.Trim(relative, "/"), "/")
+	cliCommandPath := len(parts) >= 3 && parts[0] == "internal" && parts[1] == "cli"
 	for _, part := range parts[:max(0, len(parts)-1)] {
 		switch part {
 		case "vendor", "node_modules", "third_party", "third-party":
@@ -40,7 +41,9 @@ func Classify(path, root string) Kind {
 		case "generated", "gen", "dist", "build", "target":
 			return Generated
 		case "testdata", "fixture", "fixtures", "examples", "samples":
-			return Fixture
+			if !cliCommandPath {
+				return Fixture
+			}
 		case "test", "tests", "__tests__":
 			return Test
 		}
