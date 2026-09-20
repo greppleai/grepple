@@ -1,5 +1,5 @@
 package cli
 
-type commonArgs struct {
-	Server string `arg:"-s,--server" placeholder:"URL" help:"remote Grepple service URL"`
-}
+import cliruntime "github.com/greppleai/grepple/internal/cli/runtime"
+
+type commonArgs = cliruntime.CommonArgs

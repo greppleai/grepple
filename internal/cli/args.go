@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 
+	cliruntime "github.com/greppleai/grepple/internal/cli/runtime"
 	"github.com/greppleai/grepple/search"
 
 	"github.com/alexflint/go-arg"
@@ -471,7 +472,7 @@ func Run(args []string) error {
 		return err
 	}
 	if code := requestedExit(); code != 0 {
-		return commandExitError{code: code}
+		return cliruntime.NewExitError(code)
 	}
 	return nil
 }

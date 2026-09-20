@@ -4,37 +4,26 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"sync/atomic"
 
+	cliruntime "github.com/greppleai/grepple/internal/cli/runtime"
 	"github.com/greppleai/grepple/linerange"
 )
 
-var requestedExitCode atomic.Int32
-
-type commandExitError struct{ code int }
+var commandExitState cliruntime.ExitState
 
 type remoteFullLineRangeMissError struct{ err error }
 
 func (err remoteFullLineRangeMissError) Error() string { return err.err.Error() }
 func (err remoteFullLineRangeMissError) Unwrap() error { return err.err }
 
-func (err commandExitError) Error() string { return "command exit status" }
+func requestExit(code int) { commandExitState.Request(code) }
 
-func requestExit(code int) {
-	if code > 0 {
-		requestedExitCode.Store(int32(code))
-	}
-}
+func resetRequestedExit() { commandExitState.Reset() }
 
-func resetRequestedExit() { requestedExitCode.Store(0) }
-
-func requestedExit() int { return int(requestedExitCode.Load()) }
+func requestedExit() int { return commandExitState.Requested() }
 
 // ExitCode returns a requested non-error command status such as no matches.
-func ExitCode(err error) (int, bool) {
-	status, ok := err.(commandExitError)
-	return status.code, ok
-}
+func ExitCode(err error) (int, bool) { return cliruntime.ExitCode(err) }
 
 func reportLineRangeCommandError(err error) error {
 	var local *linerange.OutsideError
