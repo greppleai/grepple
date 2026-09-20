@@ -1,4 +1,4 @@
-package cli
+package version
 
 import (
 	"fmt"
@@ -17,7 +17,8 @@ var Commit = "unknown"
 // commit timestamp instead of the wall-clock build time keeps builds reproducible.
 var BuildDate = "unknown"
 
-func versionString() string {
+// String returns reproducible version and runtime metadata.
+func String() string {
 	version, commit, buildDate := Version, Commit, BuildDate
 	if info, ok := debug.ReadBuildInfo(); ok {
 		version = preferModuleVersion(version, info.Main.Version)

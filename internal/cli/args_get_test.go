@@ -31,7 +31,7 @@ func TestGetPreservesRemoteRangeClampWarningsAndMissStats(t *testing.T) {
 	var partialErr error
 	warning := captureStderr(t, func() {
 		output := captureStdout(t, func() {
-			partialErr = runGet([]string{"--server", server.URL, "--lines", "20:40", "owner/repo", "sample.go"})
+			partialErr = Run([]string{"get", "--server", server.URL, "--lines", "20:40", "owner/repo", "sample.go"})
 		})
 		if output != "line 20\nline 21" {
 			t.Fatalf("clamped output=%q", output)

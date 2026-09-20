@@ -12,6 +12,9 @@ import (
 	"charm.land/fantasy"
 	"github.com/greppleai/grepple/api"
 	askcommand "github.com/greppleai/grepple/internal/cli/ask"
+	getcommand "github.com/greppleai/grepple/internal/cli/get"
+	reposcommand "github.com/greppleai/grepple/internal/cli/repos"
+	treecommand "github.com/greppleai/grepple/internal/cli/tree"
 	"github.com/greppleai/grepple/linerange"
 	"github.com/greppleai/grepple/parser"
 	"github.com/greppleai/grepple/search"
@@ -358,7 +361,7 @@ func runAskRepositoryRefs(ctx context.Context, server string, input askRepositor
 	if kind != "" && kind != "default" && kind != "branch" && kind != "tag" {
 		return api.ReposResponse{}, fmt.Errorf("kind must be default, branch, or tag")
 	}
-	entries, err := fetchRepoListContext(ctx, server)
+	entries, err := reposcommand.FetchContext(ctx, server, reposcommand.Dependencies{NewRequest: authorizedRequest})
 	if err != nil {
 		return api.ReposResponse{}, err
 	}
@@ -374,7 +377,7 @@ func runAskRepositoryTree(ctx context.Context, server string, input askRepositor
 	if err != nil {
 		return api.TreeResponse{}, err
 	}
-	return fetchTreeContext(ctx, server, treeArgs{Repo: input.Repository, Path: input.Path, Depth: depth})
+	return treecommand.FetchContext(ctx, server, treecommand.Request{Repo: input.Repository, Path: input.Path, Depth: depth}, treecommand.Dependencies{NewRequest: authorizedRequest})
 }
 
 func runAskReadTool(ctx context.Context, root, server string, input readToolInput) (fantasy.ToolResponse, error) {
@@ -456,7 +459,7 @@ func runAskRemoteReadTool(ctx context.Context, server string, input readToolInpu
 	if strings.TrimSpace(input.Path) == "" {
 		return fantasy.NewTextErrorResponse("path is required"), nil
 	}
-	values := getArgs{commonArgs: commonArgs{Server: server}, Repo: input.Repository, Path: input.Path, Outline: input.Outline}
+	values := getcommand.Request{Repo: input.Repository, Path: input.Path, Outline: input.Outline}
 	if !input.Outline {
 		start, end, err := askReadRange(input.StartLine, input.EndLine)
 		if err != nil {
@@ -464,11 +467,11 @@ func runAskRemoteReadTool(ctx context.Context, server string, input readToolInpu
 		}
 		values.Lines = fmt.Sprintf("%d:%d", start, end)
 	}
-	target, err := getRawURL(values)
+	target, err := getcommand.RawURL(values, getcommand.Dependencies{ServerDefault: func(string) string { return server }})
 	if err != nil {
 		return fantasy.NewTextErrorResponse(err.Error()), nil
 	}
-	response, err := fetchRawContext(ctx, target.String(), server)
+	response, err := getcommand.FetchContext(ctx, target.String(), server, getcommand.Dependencies{NewRequest: authorizedRequest, RecordRangeOutcome: recordStandaloneLineRangeOutcome, FullMissError: func(err error) error { return remoteFullLineRangeMissError{err: err} }})
 	if err != nil {
 		return fantasy.NewTextErrorResponse(err.Error()), nil
 	}

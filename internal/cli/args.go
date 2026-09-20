@@ -8,7 +8,11 @@ import (
 
 	askcommand "github.com/greppleai/grepple/internal/cli/ask"
 	"github.com/greppleai/grepple/internal/cli/examples"
+	getcommand "github.com/greppleai/grepple/internal/cli/get"
+	reposcommand "github.com/greppleai/grepple/internal/cli/repos"
 	cliruntime "github.com/greppleai/grepple/internal/cli/runtime"
+	treecommand "github.com/greppleai/grepple/internal/cli/tree"
+	versioncommand "github.com/greppleai/grepple/internal/cli/version"
 	writecommand "github.com/greppleai/grepple/internal/cli/write"
 	"github.com/greppleai/grepple/search"
 
@@ -488,7 +492,7 @@ func runCommand(args []string) error {
 		return runHelp(args[1:])
 	}
 	if len(args) == 1 && (args[0] == "--version" || args[0] == "version") {
-		fmt.Fprintln(os.Stdout, versionString())
+		fmt.Fprintln(os.Stdout, versioncommand.String())
 		return nil
 	}
 	if len(args) > 0 {
@@ -515,11 +519,11 @@ func runCommand(args []string) error {
 		case "languages":
 			return runLanguages(args[1:])
 		case "get":
-			return runGet(args[1:])
+			return getcommand.Run(args[1:], getcommand.Dependencies{Stdout: os.Stdout, Stderr: os.Stderr, ServerDefault: serverDefault, NewRequest: authorizedRequest, RequestExit: setExit, RecordRangeOutcome: recordStandaloneLineRangeOutcome, ReportRangeError: reportLineRangeCommandError, FullMissError: func(err error) error { return remoteFullLineRangeMissError{err: err} }, RenderOutline: RenderOutlineOrContent})
 		case "tree":
-			return runTree(args[1:])
+			return treecommand.Run(args[1:], treecommand.Dependencies{Stdout: os.Stdout, ServerDefault: serverDefault, NewRequest: authorizedRequest, RequestExit: setExit})
 		case "repos":
-			return runRepos(args[1:])
+			return reposcommand.Run(args[1:], reposcommand.Dependencies{Stdout: os.Stdout, ServerDefault: serverDefault, NewRequest: authorizedRequest, RequestExit: setExit})
 		case "refs":
 			return runRefs(args[1:])
 		case "ask":

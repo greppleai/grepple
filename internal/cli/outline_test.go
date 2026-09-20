@@ -110,7 +110,7 @@ func TestGetOutlineRemote(t *testing.T) {
 	defer server.Close()
 
 	out := captureStdout(t, func() {
-		if err := runGet([]string{"--server", server.URL, "--outline", "owner/repo", "widget.go"}); err != nil {
+		if err := Run([]string{"get", "--server", server.URL, "--outline", "owner/repo", "widget.go"}); err != nil {
 			t.Fatal(err)
 		}
 	})

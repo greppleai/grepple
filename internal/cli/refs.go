@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -8,6 +9,7 @@ import (
 
 	"github.com/alexflint/go-arg"
 	"github.com/greppleai/grepple/api"
+	reposcommand "github.com/greppleai/grepple/internal/cli/repos"
 )
 
 type refsArgs struct {
@@ -38,7 +40,7 @@ func runRefs(args []string) error {
 	if values.Kind != "" && values.Kind != "default" && values.Kind != "branch" && values.Kind != "tag" {
 		return fmt.Errorf("--kind must be default, branch, or tag")
 	}
-	entries, err := fetchRepoList(serverDefault(values.Server))
+	entries, err := reposcommand.FetchContext(context.Background(), serverDefault(values.Server), reposcommand.Dependencies{NewRequest: authorizedRequest})
 	if err != nil {
 		return err
 	}

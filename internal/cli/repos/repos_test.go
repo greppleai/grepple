@@ -1,4 +1,4 @@
-package cli
+package repos
 
 import (
 	"encoding/json"
@@ -30,11 +30,10 @@ func reposTestServer(t *testing.T) (*httptest.Server, *string) {
 }
 
 func TestReposListsNamesOnePerLine(t *testing.T) {
-	isolateCLIAuth(t)
 	server, gotPath := reposTestServer(t)
 
 	out := captureStdout(t, func() {
-		if err := runRepos([]string{"--server", server.URL}); err != nil {
+		if err := Run([]string{"--server", server.URL}, Dependencies{}); err != nil {
 			t.Fatal(err)
 		}
 	})
@@ -49,11 +48,10 @@ func TestReposListsNamesOnePerLine(t *testing.T) {
 }
 
 func TestReposFilterSubstringCaseInsensitive(t *testing.T) {
-	isolateCLIAuth(t)
 	server, _ := reposTestServer(t)
 
 	out := captureStdout(t, func() {
-		if err := runRepos([]string{"--server", server.URL, "ACME"}); err != nil {
+		if err := Run([]string{"--server", server.URL, "ACME"}, Dependencies{}); err != nil {
 			t.Fatal(err)
 		}
 	})
@@ -64,11 +62,10 @@ func TestReposFilterSubstringCaseInsensitive(t *testing.T) {
 }
 
 func TestReposJSONMode(t *testing.T) {
-	isolateCLIAuth(t)
 	server, _ := reposTestServer(t)
 
 	out := captureStdout(t, func() {
-		if err := runRepos([]string{"--server", server.URL, "--json", "web"}); err != nil {
+		if err := Run([]string{"--server", server.URL, "--json", "web"}, Dependencies{}); err != nil {
 			t.Fatal(err)
 		}
 	})

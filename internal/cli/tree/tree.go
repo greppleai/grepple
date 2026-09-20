@@ -1,30 +1,32 @@
-package cli
+package tree
 
 import (
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/greppleai/grepple/api"
 	"io"
 	"net/http"
 	"net/url"
-	"os"
 	"sort"
 	"strings"
 
 	"github.com/alexflint/go-arg"
+	"github.com/greppleai/grepple/api"
+	cliruntime "github.com/greppleai/grepple/internal/cli/runtime"
 )
 
-type treeArgs struct {
-	commonArgs
+// Request contains parsed tree command options.
+type Request struct {
+	cliruntime.CommonArgs
 	Depth int    `arg:"--depth" default:"2" placeholder:"N" help:"levels to descend"`
 	JSON  bool   `arg:"--json" help:"print raw JSON"`
 	Repo  string `arg:"positional,required" placeholder:"OWNER/REPOSITORY"`
 	Path  string `arg:"positional" placeholder:"PATH"`
 }
 
-func (treeArgs) Description() string {
+// Description returns the command description used by the argument parser.
+func (Request) Description() string {
 	return "Show the directory tree of an indexed repository."
 }
 
@@ -34,15 +36,16 @@ type treeNode struct {
 	children map[string]*treeNode
 }
 
-func runTree(args []string) error {
-	values := treeArgs{Depth: 2}
+// Run executes the tree command.
+func Run(args []string, dependencies Dependencies) error {
+	values := Request{Depth: 2}
 	parser, err := arg.NewParser(arg.Config{Program: "grepple tree"}, &values)
 	if err != nil {
 		return err
 	}
 	if err := parser.Parse(args); err != nil {
 		if errors.Is(err, arg.ErrHelp) {
-			parser.WriteHelp(os.Stdout)
+			parser.WriteHelp(dependencies.stdout())
 			return nil
 		}
 		return err
@@ -50,24 +53,19 @@ func runTree(args []string) error {
 	if values.Depth < 1 {
 		return fmt.Errorf("--depth must be a positive integer")
 	}
-	base := serverDefault(values.Server)
-	data, err := fetchTree(base, values)
+	base := dependencies.serverDefault(values.Server)
+	data, err := FetchContext(context.Background(), base, values, dependencies)
 	if err != nil {
 		return err
 	}
 	if values.JSON {
-		return stdoutWriter().writeJSON(data)
+		return cliruntime.NewOutput(dependencies.stdout()).WriteJSON(data)
 	}
-	return printTree(data)
+	return printTree(data, dependencies)
 }
 
-// fetchTree retrieves the directory listing from the server's /public/tree,
-// surfacing the server's error text for non-2xx responses.
-func fetchTree(base string, values treeArgs) (api.TreeResponse, error) {
-	return fetchTreeContext(context.Background(), base, values)
-}
-
-func fetchTreeContext(ctx context.Context, base string, values treeArgs) (api.TreeResponse, error) {
+// FetchContext retrieves a directory listing from the server.
+func FetchContext(ctx context.Context, base string, values Request, dependencies Dependencies) (api.TreeResponse, error) {
 	target, err := url.Parse(strings.TrimRight(base, "/") + "/public/tree")
 	if err != nil {
 		return api.TreeResponse{}, err
@@ -79,7 +77,7 @@ func fetchTreeContext(ctx context.Context, base string, values treeArgs) (api.Tr
 	}
 	query.Set("depth", fmt.Sprint(values.Depth))
 	target.RawQuery = query.Encode()
-	req, err := authorizedRequest(http.MethodGet, target.String(), "", nil)
+	req, err := dependencies.newRequest(http.MethodGet, target.String(), "", nil)
 	if err != nil {
 		return api.TreeResponse{}, err
 	}
@@ -102,19 +100,19 @@ func fetchTreeContext(ctx context.Context, base string, values treeArgs) (api.Tr
 
 // printTree renders the listing as a repo[/path] header plus the indented
 // tree, exiting 1 when the listing is empty.
-func printTree(data api.TreeResponse) error {
+func printTree(data api.TreeResponse, dependencies Dependencies) error {
 	header := data.Repo
 	if data.Path != "" && data.Path != "." {
 		header += "/" + data.Path
 	}
-	if err := stdoutWriter().writeString(header + "\n"); err != nil {
+	if err := cliruntime.NewOutput(dependencies.stdout()).WriteString(header + "\n"); err != nil {
 		return err
 	}
-	if err := renderTree(buildTree(data.Entries), ""); err != nil {
+	if err := renderTree(buildTree(data.Entries), "", dependencies); err != nil {
 		return err
 	}
 	if len(data.Entries) == 0 {
-		setExit(1)
+		dependencies.requestExit(1)
 	}
 	return nil
 }
@@ -138,7 +136,7 @@ func buildTree(entries []api.TreeEntry) *treeNode {
 	return root
 }
 
-func renderTree(node *treeNode, prefix string) error {
+func renderTree(node *treeNode, prefix string, dependencies Dependencies) error {
 	children := make([]*treeNode, 0, len(node.children))
 	for _, child := range node.children {
 		children = append(children, child)
@@ -161,11 +159,11 @@ func renderTree(node *treeNode, prefix string) error {
 		if child.dir {
 			suffix = "/"
 		}
-		if err := stdoutWriter().writeString(prefix + branch + child.name + suffix + "\n"); err != nil {
+		if err := cliruntime.NewOutput(dependencies.stdout()).WriteString(prefix + branch + child.name + suffix + "\n"); err != nil {
 			return err
 		}
 		if len(child.children) > 0 {
-			if err := renderTree(child, next); err != nil {
+			if err := renderTree(child, next, dependencies); err != nil {
 				return err
 			}
 		}

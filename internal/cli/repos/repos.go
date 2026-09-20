@@ -1,21 +1,21 @@
-package cli
+package repos
 
 import (
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/greppleai/grepple/api"
 	"io"
 	"net/http"
-	"os"
 	"strings"
 
 	"github.com/alexflint/go-arg"
+	"github.com/greppleai/grepple/api"
+	cliruntime "github.com/greppleai/grepple/internal/cli/runtime"
 )
 
 type reposArgs struct {
-	commonArgs
+	cliruntime.CommonArgs
 	JSON   bool   `arg:"--json" help:"print raw JSON"`
 	Filter string `arg:"positional" placeholder:"SUBSTRING" help:"only repos whose OWNER/REPO contains this (case-insensitive)"`
 }
@@ -24,10 +24,8 @@ func (reposArgs) Description() string {
 	return "List repositories indexed by the remote shard/router."
 }
 
-// runRepos implements `grepple repos`: list the repositories a server has indexed,
-// so callers can discover the exact OWNER/REPO name to use with get/tree/--repo
-// without probing via a throwaway --count search.
-func runRepos(args []string) error {
+// Run lists repositories indexed by the configured service so callers can discover exact selectors for other commands.
+func Run(args []string, dependencies Dependencies) error {
 	values := reposArgs{}
 	parser, err := arg.NewParser(arg.Config{Program: "grepple repos"}, &values)
 	if err != nil {
@@ -35,40 +33,36 @@ func runRepos(args []string) error {
 	}
 	if err := parser.Parse(args); err != nil {
 		if errors.Is(err, arg.ErrHelp) {
-			parser.WriteHelp(os.Stdout)
+			parser.WriteHelp(dependencies.stdout())
 			return nil
 		}
 		return err
 	}
-	base := serverDefault(values.Server)
-	repos, err := fetchRepoList(base)
+	base := dependencies.serverDefault(values.Server)
+	repos, err := FetchContext(context.Background(), base, dependencies)
 	if err != nil {
 		return err
 	}
 	repos = filterRepos(uniqueSourceRepos(repos), values.Filter)
 	if values.JSON {
-		return stdoutWriter().writeJSON(api.ReposResponse{OK: true, Count: len(repos), Repos: repos})
+		return cliruntime.NewOutput(dependencies.stdout()).WriteJSON(api.ReposResponse{OK: true, Count: len(repos), Repos: repos})
 	}
+	output := cliruntime.NewOutput(dependencies.stdout())
 	for _, entry := range repos {
-		if err := stdoutWriter().writeString(entry.Repo + "\n"); err != nil {
+		if err := output.WriteString(entry.Repo + "\n"); err != nil {
 			return err
 		}
 	}
 	if len(repos) == 0 {
-		setExit(1)
+		dependencies.requestExit(1)
 	}
 	return nil
 }
 
-// fetchRepoList retrieves the server's indexed repository list, surfacing the
-// server's error text for non-2xx responses.
-func fetchRepoList(base string) ([]api.RepoListEntry, error) {
-	return fetchRepoListContext(context.Background(), base)
-}
-
-func fetchRepoListContext(ctx context.Context, base string) ([]api.RepoListEntry, error) {
+// FetchContext retrieves the server's indexed repository list.
+func FetchContext(ctx context.Context, base string, dependencies Dependencies) ([]api.RepoListEntry, error) {
 	target := strings.TrimRight(base, "/") + "/public/repos"
-	req, err := authorizedRequest(http.MethodGet, target, "", nil)
+	req, err := dependencies.newRequest(http.MethodGet, target, "", nil)
 	if err != nil {
 		return nil, err
 	}

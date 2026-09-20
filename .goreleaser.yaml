@@ -21,9 +21,9 @@ builds:
     ldflags:
       - -s -w
       - -linkmode external -extldflags -static
-      - -X github.com/greppleai/grepple/internal/cli.Version={{ .Version }}
-      - -X github.com/greppleai/grepple/internal/cli.Commit={{ .Commit }}
-      - -X github.com/greppleai/grepple/internal/cli.BuildDate={{ .Env.GREPPLE_BUILD_DATE }}
+      - -X github.com/greppleai/grepple/internal/cli/version.Version={{ .Version }}
+      - -X github.com/greppleai/grepple/internal/cli/version.Commit={{ .Commit }}
+      - -X github.com/greppleai/grepple/internal/cli/version.BuildDate={{ .Env.GREPPLE_BUILD_DATE }}
 
   - id: grepple-darwin
     main: ./cmd/grepple
@@ -42,9 +42,9 @@ builds:
       - osusergo
     ldflags:
       - -s -w
-      - -X github.com/greppleai/grepple/internal/cli.Version={{ .Version }}
-      - -X github.com/greppleai/grepple/internal/cli.Commit={{ .Commit }}
-      - -X github.com/greppleai/grepple/internal/cli.BuildDate={{ .Env.GREPPLE_BUILD_DATE }}
+      - -X github.com/greppleai/grepple/internal/cli/version.Version={{ .Version }}
+      - -X github.com/greppleai/grepple/internal/cli/version.Commit={{ .Commit }}
+      - -X github.com/greppleai/grepple/internal/cli/version.BuildDate={{ .Env.GREPPLE_BUILD_DATE }}
 
   - id: grepple-windows
     main: ./cmd/grepple
@@ -62,6 +62,6 @@ builds:
       - osusergo
     ldflags:
       - -s -w
-      - -X github.com/greppleai/grepple/internal/cli.Version={{ .Version }}
-      - -X github.com/greppleai/grepple/internal/cli.Commit={{ .Commit }}
-      - -X github.com/greppleai/grepple/internal/cli.BuildDate={{ .Env.GREPPLE_BUILD_DATE }}
+      - -X github.com/greppleai/grepple/internal/cli/version.Version={{ .Version }}
+      - -X github.com/greppleai/grepple/internal/cli/version.Commit={{ .Commit }}
+      - -X github.com/greppleai/grepple/internal/cli/version.BuildDate={{ .Env.GREPPLE_BUILD_DATE }}
