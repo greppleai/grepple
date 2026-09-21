@@ -134,16 +134,18 @@ Progress: graph dispatch is now an invocation-scoped `runtime.Command` construct
 
 ### Phase 6: search
 
-- [ ] Create `internal/cli/search` after its renderer, context, repository, anchor, and transport boundaries are stable.
-- [ ] Make one search command instance serve explicit `search` dispatch and implicit default dispatch.
-- [ ] Keep output spilling and repository invocation scope at the application layer.
-- [ ] Decide separately whether `grep` becomes a supported alias.
+- [x] Create `internal/cli/search` after its renderer, context, repository, anchor, and transport boundaries are stable.
+- [x] Make one search command instance serve explicit `search` dispatch and implicit default dispatch.
+- [x] Keep output spilling and repository invocation scope at the application layer.
+- [x] Decide separately whether `grep` becomes a supported alias. Decision: retain `search` and implicit search only; do not add a `grep` alias.
 
 ### Phase 7: settings and authentication families
 
-- [ ] Convert anchors after introducing narrow settings/provider services.
-- [ ] Convert ai-provider, login, and logout together around shared credential and provider state.
-- [ ] Avoid a broad settings service locator.
+- [x] Convert anchors after introducing narrow settings/provider services.
+- [x] Convert ai-provider, login, and logout together around shared credential and provider state.
+- [x] Avoid a broad settings service locator.
+
+Phase 7 uses narrow command operation dependencies: anchors receives help, doctor, and setup operations; authentication commands share one credential/provider dependency bundle. Existing settings stores and provider registries remain parent-owned and are not exposed as a general service locator.
 
 ## Testing and architecture gates
 

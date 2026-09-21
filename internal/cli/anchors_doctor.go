@@ -43,18 +43,8 @@ type anchorDoctorCheck struct {
 	Detail string `json:"detail,omitempty"`
 }
 
-func runAnchors(args []string) error {
-	if len(args) == 0 || args[0] == "--help" || args[0] == "-h" {
-		return stdoutWriter().writeString("Diagnose or configure user-owned edit-anchor providers.\nUsage:\n  grepple anchors doctor [--provider NAME] [--json]\n  grepple anchors setup --provider NAME --command /ABSOLUTE/PATH [OPTIONS]\n\nRun grepple help anchors doctor or grepple help anchors setup for details.\n")
-	}
-	switch args[0] {
-	case "doctor":
-		return runAnchorsDoctor(args[1:])
-	case "setup":
-		return runAnchorsSetup(args[1:])
-	default:
-		return fmt.Errorf("unknown anchors command %q; expected doctor or setup", args[0])
-	}
+func writeAnchorsHelp() error {
+	return stdoutWriter().writeString("Diagnose or configure user-owned edit-anchor providers.\nUsage:\n  grepple anchors doctor [--provider NAME] [--json]\n  grepple anchors setup --provider NAME --command /ABSOLUTE/PATH [OPTIONS]\n\nRun grepple help anchors doctor or grepple help anchors setup for details.\n")
 }
 
 func runAnchorsDoctor(args []string) error {

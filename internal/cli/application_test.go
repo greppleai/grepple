@@ -41,4 +41,7 @@ func TestNewApplicationRegistersCommandSurface(t *testing.T) {
 	if app.defaultCommand == nil {
 		t.Fatal("default command is nil")
 	}
+	if app.commands["search"].command != app.defaultCommand {
+		t.Fatal("explicit and default search commands are different instances")
+	}
 }

@@ -3,9 +3,11 @@ package cli
 import (
 	"os"
 
+	anchorscommand "github.com/greppleai/grepple/internal/cli/anchors"
 	architecturecommand "github.com/greppleai/grepple/internal/cli/architecture"
 	artifactscommand "github.com/greppleai/grepple/internal/cli/artifacts"
 	askcommand "github.com/greppleai/grepple/internal/cli/ask"
+	authcommand "github.com/greppleai/grepple/internal/cli/auth"
 	boundariescommand "github.com/greppleai/grepple/internal/cli/boundaries"
 	contextcommand "github.com/greppleai/grepple/internal/cli/context"
 	examplescommand "github.com/greppleai/grepple/internal/cli/examples"
@@ -18,6 +20,7 @@ import (
 	reposcommand "github.com/greppleai/grepple/internal/cli/repos"
 	rulescommand "github.com/greppleai/grepple/internal/cli/rules"
 	cliruntime "github.com/greppleai/grepple/internal/cli/runtime"
+	searchcommand "github.com/greppleai/grepple/internal/cli/search"
 	sourcescommand "github.com/greppleai/grepple/internal/cli/sources"
 	treecommand "github.com/greppleai/grepple/internal/cli/tree"
 	versioncommand "github.com/greppleai/grepple/internal/cli/version"
@@ -35,13 +38,13 @@ type application struct {
 }
 
 func newApplication() *application {
-	searchCommand := cliruntime.CommandFunc(runSearch)
+	searchCommand := searchcommand.New(searchcommand.Dependencies{Execute: runSearch})
 	app := &application{commands: make(map[string]commandSpec), defaultCommand: searchCommand}
 	app.register("search", searchCommand)
 	app.register("version", versioncommand.New(versioncommand.Dependencies{Stdout: os.Stdout}))
 	app.register("write", writecommand.New(writecommand.Dependencies{Stdin: os.Stdin, Stdout: os.Stdout, RequestExit: requestExit, RecordResponse: recordWriteResponseContext}))
 	app.register("graph", graphcommand.New(graphDependencies()))
-	app.register("anchors", cliruntime.CommandFunc(runAnchors))
+	app.register("anchors", anchorscommand.New(anchorsDependencies()))
 	app.register("boundaries", boundariescommand.New(boundariesDependencies()))
 	app.register("examples", examplescommand.New(examplescommand.Dependencies{Output: os.Stdout}))
 	app.register("artifacts", artifactscommand.New(artifactscommand.Dependencies{Stdout: os.Stdout, ArtifactDirectory: defaultOutputArtifactDirectory, WorkingDirectory: mustGetwd}))
@@ -54,9 +57,10 @@ func newApplication() *application {
 	app.register("ask", cliruntime.CommandFunc(func(args []string) error {
 		return askcommand.Run(args, askcommand.Dependencies{Stdout: os.Stdout, Stderr: os.Stderr, RunSession: runAskSession})
 	}))
-	app.register("ai-provider", cliruntime.CommandFunc(runAIProvider))
-	app.register("login", cliruntime.CommandFunc(runLogin))
-	app.register("logout", cliruntime.CommandFunc(runLogout))
+	authentication := authenticationDependencies()
+	app.register("ai-provider", authcommand.NewAIProvider(authentication))
+	app.register("login", authcommand.NewLogin(authentication))
+	app.register("logout", authcommand.NewLogout(authentication))
 	app.register("rules", rulescommand.New(rulescommand.Dependencies{ServerDefault: serverDefault, NewRequest: authorizedRequest, RequestExit: setExit}))
 	app.register("grit", gritcommand.New(gritDependencies()))
 	app.register("extract", extractcommand.New(extractDependencies()))
