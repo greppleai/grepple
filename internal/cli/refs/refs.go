@@ -23,8 +23,18 @@ func (refsArgs) Description() string {
 	return "List the branches, tags, and resolved commits currently indexed by the remote service."
 }
 
+// command owns indexed-ref command dependencies.
+type command struct{ dependencies Dependencies }
+
+// New constructs the refs command.
+func New(dependencies Dependencies) cliruntime.Command { return &command{dependencies: dependencies} }
+
+// Run executes the refs command. Deprecated: construct the command with New.
+func Run(args []string, dependencies Dependencies) error { return New(dependencies).Run(args) }
+
 // Run executes the refs command.
-func Run(args []string, dependencies Dependencies) error {
+func (command *command) Run(args []string) error {
+	dependencies := command.dependencies
 	values := refsArgs{}
 	parser, err := arg.NewParser(arg.Config{Program: "grepple refs"}, &values)
 	if err != nil {

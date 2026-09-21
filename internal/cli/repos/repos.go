@@ -24,8 +24,18 @@ func (reposArgs) Description() string {
 	return "List repositories indexed by the remote shard/router."
 }
 
-// Run lists repositories indexed by the configured service so callers can discover exact selectors for other commands.
-func Run(args []string, dependencies Dependencies) error {
+// command owns repository-listing command dependencies.
+type command struct{ dependencies Dependencies }
+
+// New constructs the repos command.
+func New(dependencies Dependencies) cliruntime.Command { return &command{dependencies: dependencies} }
+
+// Run lists repositories. Deprecated: construct the command with New.
+func Run(args []string, dependencies Dependencies) error { return New(dependencies).Run(args) }
+
+// Run lists repositories indexed by the configured service.
+func (command *command) Run(args []string) error {
+	dependencies := command.dependencies
 	values := reposArgs{}
 	parser, err := arg.NewParser(arg.Config{Program: "grepple repos"}, &values)
 	if err != nil {

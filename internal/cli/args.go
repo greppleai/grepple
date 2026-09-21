@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	cliruntime "github.com/greppleai/grepple/internal/cli/runtime"
-	versioncommand "github.com/greppleai/grepple/internal/cli/version"
 	"github.com/greppleai/grepple/search"
 
 	"github.com/alexflint/go-arg"
@@ -485,9 +484,8 @@ func runCommand(args []string) error {
 	if len(args) > 0 && args[0] == "help" {
 		return runHelp(args[1:])
 	}
-	if len(args) == 1 && (args[0] == "--version" || args[0] == "version") {
-		fmt.Fprintln(os.Stdout, versioncommand.String())
-		return nil
+	if len(args) == 1 && args[0] == "--version" {
+		return newApplication().run([]string{"version"})
 	}
 	return newApplication().run(args)
 }

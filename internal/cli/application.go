@@ -6,7 +6,7 @@ import (
 	artifactscommand "github.com/greppleai/grepple/internal/cli/artifacts"
 	askcommand "github.com/greppleai/grepple/internal/cli/ask"
 	contextcommand "github.com/greppleai/grepple/internal/cli/context"
-	"github.com/greppleai/grepple/internal/cli/examples"
+	examplescommand "github.com/greppleai/grepple/internal/cli/examples"
 	getcommand "github.com/greppleai/grepple/internal/cli/get"
 	languagescommand "github.com/greppleai/grepple/internal/cli/languages"
 	refscommand "github.com/greppleai/grepple/internal/cli/refs"
@@ -14,6 +14,7 @@ import (
 	cliruntime "github.com/greppleai/grepple/internal/cli/runtime"
 	sourcescommand "github.com/greppleai/grepple/internal/cli/sources"
 	treecommand "github.com/greppleai/grepple/internal/cli/tree"
+	versioncommand "github.com/greppleai/grepple/internal/cli/version"
 	writecommand "github.com/greppleai/grepple/internal/cli/write"
 )
 
@@ -31,34 +32,19 @@ func newApplication() *application {
 	searchCommand := cliruntime.CommandFunc(runSearch)
 	app := &application{commands: make(map[string]commandSpec), defaultCommand: searchCommand}
 	app.register("search", searchCommand)
-	app.register("write", cliruntime.CommandFunc(func(args []string) error {
-		return writecommand.Run(args, writecommand.Dependencies{Stdin: os.Stdin, Stdout: os.Stdout, RequestExit: requestExit, RecordResponse: recordWriteResponseContext})
-	}))
+	app.register("version", versioncommand.New(versioncommand.Dependencies{Stdout: os.Stdout}))
+	app.register("write", writecommand.New(writecommand.Dependencies{Stdin: os.Stdin, Stdout: os.Stdout, RequestExit: requestExit, RecordResponse: recordWriteResponseContext}))
 	app.register("graph", cliruntime.CommandFunc(runGraph))
 	app.register("anchors", cliruntime.CommandFunc(runAnchors))
 	app.register("boundaries", cliruntime.CommandFunc(runBoundaries))
-	app.register("examples", cliruntime.CommandFunc(func(args []string) error { return examples.Run(args, os.Stdout) }))
-	app.register("artifacts", cliruntime.CommandFunc(func(args []string) error {
-		return artifactscommand.Run(args, artifactscommand.Dependencies{Stdout: os.Stdout, ArtifactDirectory: defaultOutputArtifactDirectory, WorkingDirectory: mustGetwd})
-	}))
-	app.register("context", cliruntime.CommandFunc(func(args []string) error {
-		return contextcommand.Run(args, contextcommand.Dependencies{Stdout: os.Stdout, Invalidate: invalidateRenderedContext})
-	}))
-	app.register("languages", cliruntime.CommandFunc(func(args []string) error {
-		return languagescommand.Run(args, languagescommand.Dependencies{Stdout: os.Stdout})
-	}))
-	app.register("get", cliruntime.CommandFunc(func(args []string) error {
-		return getcommand.Run(args, getcommand.Dependencies{Stdout: os.Stdout, Stderr: os.Stderr, ServerDefault: serverDefault, NewRequest: authorizedRequest, RequestExit: setExit, RecordRangeOutcome: recordStandaloneLineRangeOutcome, ReportRangeError: reportLineRangeCommandError, FullMissError: func(err error) error { return remoteFullLineRangeMissError{err: err} }, RenderOutline: RenderOutlineOrContent})
-	}))
-	app.register("tree", cliruntime.CommandFunc(func(args []string) error {
-		return treecommand.Run(args, treecommand.Dependencies{Stdout: os.Stdout, ServerDefault: serverDefault, NewRequest: authorizedRequest, RequestExit: setExit, LocalTree: localTree})
-	}))
-	app.register("repos", cliruntime.CommandFunc(func(args []string) error {
-		return reposcommand.Run(args, reposcommand.Dependencies{Stdout: os.Stdout, ServerDefault: serverDefault, NewRequest: authorizedRequest, RequestExit: setExit})
-	}))
-	app.register("refs", cliruntime.CommandFunc(func(args []string) error {
-		return refscommand.Run(args, refscommand.Dependencies{Stdout: os.Stdout, ServerDefault: serverDefault, NewRequest: authorizedRequest, RequestExit: setExit})
-	}))
+	app.register("examples", examplescommand.New(examplescommand.Dependencies{Output: os.Stdout}))
+	app.register("artifacts", artifactscommand.New(artifactscommand.Dependencies{Stdout: os.Stdout, ArtifactDirectory: defaultOutputArtifactDirectory, WorkingDirectory: mustGetwd}))
+	app.register("context", contextcommand.New(contextcommand.Dependencies{Stdout: os.Stdout, Invalidate: invalidateRenderedContext}))
+	app.register("languages", languagescommand.New(languagescommand.Dependencies{Stdout: os.Stdout}))
+	app.register("get", getcommand.New(getcommand.Dependencies{Stdout: os.Stdout, Stderr: os.Stderr, ServerDefault: serverDefault, NewRequest: authorizedRequest, RequestExit: setExit, RecordRangeOutcome: recordStandaloneLineRangeOutcome, ReportRangeError: reportLineRangeCommandError, FullMissError: func(err error) error { return remoteFullLineRangeMissError{err: err} }, RenderOutline: RenderOutlineOrContent}))
+	app.register("tree", treecommand.New(treecommand.Dependencies{Stdout: os.Stdout, ServerDefault: serverDefault, NewRequest: authorizedRequest, RequestExit: setExit, LocalTree: localTree}))
+	app.register("repos", reposcommand.New(reposcommand.Dependencies{Stdout: os.Stdout, ServerDefault: serverDefault, NewRequest: authorizedRequest, RequestExit: setExit}))
+	app.register("refs", refscommand.New(refscommand.Dependencies{Stdout: os.Stdout, ServerDefault: serverDefault, NewRequest: authorizedRequest, RequestExit: setExit}))
 	app.register("ask", cliruntime.CommandFunc(func(args []string) error {
 		return askcommand.Run(args, askcommand.Dependencies{Stdout: os.Stdout, Stderr: os.Stderr, RunSession: runAskSession})
 	}))

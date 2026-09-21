@@ -22,8 +22,18 @@ type CleanOutput struct {
 	Bytes  int64  `json:"bytes"`
 }
 
+// command owns artifact command dependencies.
+type command struct{ dependencies Dependencies }
+
+// New constructs the artifacts command.
+func New(dependencies Dependencies) cliruntime.Command { return &command{dependencies: dependencies} }
+
+// Run executes the artifacts command. Deprecated: construct the command with New.
+func Run(args []string, dependencies Dependencies) error { return New(dependencies).Run(args) }
+
 // Run executes the artifacts command.
-func Run(args []string, dependencies Dependencies) error {
+func (command *command) Run(args []string) error {
+	dependencies := command.dependencies
 	if len(args) == 0 || args[0] == "--help" || args[0] == "-h" {
 		return cliruntime.NewOutput(dependencies.stdout()).WriteString("Manage content-addressed command output artifacts.\nUsage:\n  grepple artifacts clean [--json]\n")
 	}

@@ -2,9 +2,13 @@ package version
 
 import (
 	"fmt"
+	"io"
+	"os"
 	"runtime"
 	"runtime/debug"
 	"strings"
+
+	cliruntime "github.com/greppleai/grepple/internal/cli/runtime"
 )
 
 // Version is the release tag or source description injected at build time.
@@ -16,6 +20,26 @@ var Commit = "unknown"
 // BuildDate is the source commit timestamp injected at build time. Using the
 // commit timestamp instead of the wall-clock build time keeps builds reproducible.
 var BuildDate = "unknown"
+
+// Dependencies supplies process-owned version command resources.
+type Dependencies struct{ Stdout io.Writer }
+
+type command struct{ dependencies Dependencies }
+
+// New constructs the version command.
+func New(dependencies Dependencies) cliruntime.Command { return &command{dependencies: dependencies} }
+
+// Run writes build and runtime version metadata.
+func (command *command) Run(args []string) error {
+	if len(args) != 0 {
+		return fmt.Errorf("usage: grepple version")
+	}
+	output := command.dependencies.Stdout
+	if output == nil {
+		output = os.Stdout
+	}
+	return cliruntime.NewOutput(output).WriteString(String() + "\n")
+}
 
 // String returns reproducible version and runtime metadata.
 func String() string {

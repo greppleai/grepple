@@ -33,7 +33,7 @@ func TestApplicationDispatchesNamedAndDefaultCommands(t *testing.T) {
 
 func TestNewApplicationRegistersCommandSurface(t *testing.T) {
 	app := newApplication()
-	for _, name := range []string{"search", "write", "graph", "anchors", "boundaries", "examples", "artifacts", "context", "languages", "get", "tree", "repos", "refs", "ask", "ai-provider", "login", "logout", "rules", "grit", "extract", "architecture", "sources"} {
+	for _, name := range []string{"search", "version", "write", "graph", "anchors", "boundaries", "examples", "artifacts", "context", "languages", "get", "tree", "repos", "refs", "ask", "ai-provider", "login", "logout", "rules", "grit", "extract", "architecture", "sources"} {
 		if _, ok := app.commands[name]; !ok {
 			t.Errorf("command %q is not registered", name)
 		}

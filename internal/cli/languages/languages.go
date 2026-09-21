@@ -13,6 +13,7 @@ import (
 	"github.com/greppleai/grepple/api"
 	"github.com/greppleai/grepple/extract"
 	"github.com/greppleai/grepple/gritql"
+	cliruntime "github.com/greppleai/grepple/internal/cli/runtime"
 	"github.com/greppleai/grepple/parser"
 )
 
@@ -25,8 +26,18 @@ func (languagesArgs) Description() string {
 	return "Show language extensions and support across search, navigation, focused extraction, GritQL, and directory architecture."
 }
 
+// command owns one languages command invocation's dependencies.
+type command struct{ dependencies Dependencies }
+
+// New constructs the languages command.
+func New(dependencies Dependencies) cliruntime.Command { return &command{dependencies: dependencies} }
+
+// Run executes the languages command. Deprecated: construct the command with New.
+func Run(args []string, dependencies Dependencies) error { return New(dependencies).Run(args) }
+
 // Run executes the languages command.
-func Run(args []string, dependencies Dependencies) error {
+func (command *command) Run(args []string) error {
+	dependencies := command.dependencies
 	values := languagesArgs{}
 	argumentParser, err := arg.NewParser(arg.Config{Program: "grepple languages"}, &values)
 	if err != nil {

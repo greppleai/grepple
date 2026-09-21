@@ -32,8 +32,18 @@ func (Request) Description() string {
 	return "Fetch a file from an indexed repository."
 }
 
+// command owns indexed-file retrieval dependencies.
+type command struct{ dependencies Dependencies }
+
+// New constructs the get command.
+func New(dependencies Dependencies) cliruntime.Command { return &command{dependencies: dependencies} }
+
+// Run executes the get command. Deprecated: construct the command with New.
+func Run(args []string, dependencies Dependencies) error { return New(dependencies).Run(args) }
+
 // Run executes the get command.
-func Run(args []string, dependencies Dependencies) error {
+func (command *command) Run(args []string) error {
+	dependencies := command.dependencies
 	var values Request
 	parser, err := arg.NewParser(arg.Config{Program: "grepple get"}, &values)
 	if err != nil {

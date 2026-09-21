@@ -1,6 +1,7 @@
 package version
 
 import (
+	"bytes"
 	"strings"
 	"testing"
 )
@@ -14,5 +15,15 @@ func TestStringIncludesReproducibleMetadata(t *testing.T) {
 		if !strings.Contains(output, expected) {
 			t.Fatalf("output %q does not contain %q", output, expected)
 		}
+	}
+}
+
+func TestCommandWritesVersion(t *testing.T) {
+	var output bytes.Buffer
+	if err := New(Dependencies{Stdout: &output}).Run(nil); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.HasPrefix(output.String(), "grepple ") || !strings.HasSuffix(output.String(), "\n") {
+		t.Fatalf("version output = %q", output.String())
 	}
 }

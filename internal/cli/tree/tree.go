@@ -40,8 +40,18 @@ type treeNode struct {
 	children map[string]*treeNode
 }
 
+// command owns tree command dependencies.
+type command struct{ dependencies Dependencies }
+
+// New constructs the tree command.
+func New(dependencies Dependencies) cliruntime.Command { return &command{dependencies: dependencies} }
+
+// Run executes the tree command. Deprecated: construct the command with New.
+func Run(args []string, dependencies Dependencies) error { return New(dependencies).Run(args) }
+
 // Run executes the tree command.
-func Run(args []string, dependencies Dependencies) error {
+func (command *command) Run(args []string) error {
+	dependencies := command.dependencies
 	values := Request{Depth: 2}
 	parser, err := arg.NewParser(arg.Config{Program: "grepple tree"}, &values)
 	if err != nil {

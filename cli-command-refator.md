@@ -97,18 +97,18 @@ Search is registered under `search` and as `defaultCommand`. A `grep` alias shou
 
 Convert, in small independently buildable commits:
 
-- [ ] version
-- [ ] languages
-- [ ] examples
-- [ ] context
-- [ ] artifacts
-- [ ] repos
-- [ ] refs
-- [ ] get
-- [ ] tree
-- [ ] write
+- [x] version
+- [x] languages
+- [x] examples
+- [x] context
+- [x] artifacts
+- [x] repos
+- [x] refs
+- [x] get
+- [x] tree
+- [x] write
 
-For each package, add an unexported `command`, add `New`, move `Run` to a method, update registration, colocate command tests, and then remove temporary package-level wrappers.
+For each package, add an unexported `command`, add `New`, move `Run` to a method, update registration, and colocate command tests. Deprecated package-level wrappers remain temporarily for test and embedded-call compatibility; remove them after all consumers migrate and before the completion criteria are closed.
 
 ### Phase 3: behavior-rich extracted commands
 

@@ -16,8 +16,18 @@ type Dependencies struct {
 	Invalidate func(reason string) error
 }
 
+// command owns context command dependencies.
+type command struct{ dependencies Dependencies }
+
+// New constructs the context command.
+func New(dependencies Dependencies) cliruntime.Command { return &command{dependencies: dependencies} }
+
+// Run executes the context command. Deprecated: construct the command with New.
+func Run(args []string, dependencies Dependencies) error { return New(dependencies).Run(args) }
+
 // Run executes the context command.
-func Run(args []string, dependencies Dependencies) error {
+func (command *command) Run(args []string) error {
+	dependencies := command.dependencies
 	if len(args) == 1 && (args[0] == "--help" || args[0] == "-h") {
 		return cliruntime.NewOutput(dependencies.stdout()).WriteString("Manage session-agnostic structural-segment context deduplication.\nUsage:\n  grepple context invalidate [--reason REASON]\n")
 	}

@@ -52,8 +52,20 @@ var taskExamples = []taskExample{
 	}},
 }
 
-// Run executes the examples command using output as its destination.
-func Run(args []string, output io.Writer) error {
+// Dependencies supplies process-owned examples command resources.
+type Dependencies struct{ Output io.Writer }
+
+type command struct{ dependencies Dependencies }
+
+// New constructs the examples command.
+func New(dependencies Dependencies) cliruntime.Command { return &command{dependencies: dependencies} }
+
+// Run executes the examples command. Deprecated: construct the command with New.
+func Run(args []string, output io.Writer) error { return New(Dependencies{Output: output}).Run(args) }
+
+// Run executes the examples command.
+func (command *command) Run(args []string) error {
+	output := command.dependencies.Output
 	if len(args) > 1 {
 		return fmt.Errorf("examples accepts at most one task")
 	}

@@ -213,8 +213,18 @@ func (counter *writeResponseCounter) Write(content []byte) (int, error) {
 	return written, err
 }
 
-// Run executes the write command with process dependencies supplied by its caller.
-func Run(args []string, dependencies Dependencies) error {
+// command owns transactional write dependencies.
+type command struct{ dependencies Dependencies }
+
+// New constructs the write command.
+func New(dependencies Dependencies) cliruntime.Command { return &command{dependencies: dependencies} }
+
+// Run executes the write command. Deprecated: construct the command with New.
+func Run(args []string, dependencies Dependencies) error { return New(dependencies).Run(args) }
+
+// Run executes the write command.
+func (command *command) Run(args []string) error {
+	dependencies := command.dependencies
 	dependencies = dependencies.withDefaults()
 	options, err := parseWriteOptions(args)
 	if err != nil {
