@@ -5,8 +5,12 @@ import (
 	"github.com/greppleai/grepple/search"
 )
 
-func runGraph(args []string) error {
-	return graphcommand.Run(args, graphcommand.Dependencies{Build: runGraphBuild, Resolve: runGraphResolve, Diff: runGraphDiff, Query: func(queryArgs []string) error {
+func graphDependencies() graphcommand.Dependencies {
+	return graphcommand.Dependencies{Build: runGraphBuild, Resolve: runGraphResolve, Diff: runGraphDiff, Query: func(queryArgs []string) error {
 		return runGraphQuery(search.NavigationQueryDirection(queryArgs[0]), queryArgs[1:])
-	}})
+	}}
+}
+
+func runGraph(args []string) error {
+	return graphcommand.New(graphDependencies()).Run(args)
 }

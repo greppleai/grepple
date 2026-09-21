@@ -22,7 +22,7 @@ func architectureDependencies() architecturecommand.Dependencies {
 	return architecturecommand.Dependencies{ApplySourceConfig: applyRepositorySourceConfig, Remote: requestAnalysisRemote, ServerDefault: serverDefault, RequestExit: requestExit}
 }
 func runArchitecture(args []string) error {
-	return architecturecommand.Run(args, architectureDependencies())
+	return architecturecommand.New(architectureDependencies()).Run(args)
 }
 func runArchitectureDirectory(args []string) error {
 	return runArchitecture(append([]string{"directory"}, args...))

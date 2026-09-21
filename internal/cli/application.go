@@ -3,12 +3,15 @@ package cli
 import (
 	"os"
 
+	architecturecommand "github.com/greppleai/grepple/internal/cli/architecture"
 	artifactscommand "github.com/greppleai/grepple/internal/cli/artifacts"
 	askcommand "github.com/greppleai/grepple/internal/cli/ask"
+	boundariescommand "github.com/greppleai/grepple/internal/cli/boundaries"
 	contextcommand "github.com/greppleai/grepple/internal/cli/context"
 	examplescommand "github.com/greppleai/grepple/internal/cli/examples"
 	extractcommand "github.com/greppleai/grepple/internal/cli/extract"
 	getcommand "github.com/greppleai/grepple/internal/cli/get"
+	graphcommand "github.com/greppleai/grepple/internal/cli/graph"
 	gritcommand "github.com/greppleai/grepple/internal/cli/grit"
 	languagescommand "github.com/greppleai/grepple/internal/cli/languages"
 	refscommand "github.com/greppleai/grepple/internal/cli/refs"
@@ -37,9 +40,9 @@ func newApplication() *application {
 	app.register("search", searchCommand)
 	app.register("version", versioncommand.New(versioncommand.Dependencies{Stdout: os.Stdout}))
 	app.register("write", writecommand.New(writecommand.Dependencies{Stdin: os.Stdin, Stdout: os.Stdout, RequestExit: requestExit, RecordResponse: recordWriteResponseContext}))
-	app.register("graph", cliruntime.CommandFunc(runGraph))
+	app.register("graph", graphcommand.New(graphDependencies()))
 	app.register("anchors", cliruntime.CommandFunc(runAnchors))
-	app.register("boundaries", cliruntime.CommandFunc(runBoundaries))
+	app.register("boundaries", boundariescommand.New(boundariesDependencies()))
 	app.register("examples", examplescommand.New(examplescommand.Dependencies{Output: os.Stdout}))
 	app.register("artifacts", artifactscommand.New(artifactscommand.Dependencies{Stdout: os.Stdout, ArtifactDirectory: defaultOutputArtifactDirectory, WorkingDirectory: mustGetwd}))
 	app.register("context", contextcommand.New(contextcommand.Dependencies{Stdout: os.Stdout, Invalidate: invalidateRenderedContext}))
@@ -57,7 +60,7 @@ func newApplication() *application {
 	app.register("rules", rulescommand.New(rulescommand.Dependencies{ServerDefault: serverDefault, NewRequest: authorizedRequest, RequestExit: setExit}))
 	app.register("grit", gritcommand.New(gritDependencies()))
 	app.register("extract", extractcommand.New(extractDependencies()))
-	app.register("architecture", cliruntime.CommandFunc(runArchitecture))
+	app.register("architecture", architecturecommand.New(architectureDependencies()))
 	app.register("sources", cliruntime.CommandFunc(func(args []string) error {
 		return sourcescommand.Run(args, sourceCommandDependencies(os.Stdout))
 	}))

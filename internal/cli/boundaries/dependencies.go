@@ -63,6 +63,11 @@ type Dependencies struct {
 	Metadata       func(MetadataInput) *api.ResultMetadata
 }
 
+type command struct{ dependencies Dependencies }
+
+// New constructs the boundaries command.
+func New(dependencies Dependencies) cliruntime.Command { return &command{dependencies: dependencies} }
+
 func (d Dependencies) resolvePaths(paths []string) ([]string, error) {
 	if d.ResolvePaths == nil {
 		return nil, fmt.Errorf("boundary source resolution is unavailable")

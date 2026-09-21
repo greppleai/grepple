@@ -1,7 +1,11 @@
 // Package graph implements navigation graph command dispatch.
 package graph
 
-import "fmt"
+import (
+	"fmt"
+
+	cliruntime "github.com/greppleai/grepple/internal/cli/runtime"
+)
 
 // Dependencies supplies independently testable graph operations.
 type Dependencies struct {
@@ -11,8 +15,18 @@ type Dependencies struct {
 	Query   func([]string) error
 }
 
+// command owns navigation graph command operations.
+type command struct{ dependencies Dependencies }
+
+// New constructs the graph command.
+func New(dependencies Dependencies) cliruntime.Command { return &command{dependencies: dependencies} }
+
+// Run dispatches graph subcommands. Deprecated: construct the command with New.
+func Run(args []string, dependencies Dependencies) error { return New(dependencies).Run(args) }
+
 // Run dispatches graph subcommands without depending on the parent CLI package.
-func Run(args []string, dependencies Dependencies) error {
+func (command *command) Run(args []string) error {
+	dependencies := command.dependencies
 	if len(args) > 0 {
 		switch args[0] {
 		case "resolve":

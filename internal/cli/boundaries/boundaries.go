@@ -51,8 +51,12 @@ type Report struct {
 	Truncation     *Truncation                   `json:"truncation,omitempty"`
 }
 
+// Run executes boundary analysis. Deprecated: construct the command with New.
+func Run(args []string, dependencies Dependencies) error { return New(dependencies).Run(args) }
+
 // Run executes boundary analysis.
-func Run(args []string, dependencies Dependencies) error {
+func (command *command) Run(args []string) error {
+	dependencies := command.dependencies
 	values := boundariesArgs{MinOccurrences: 2, MaxOutputBytes: defaultTextOutputBytes, Limit: 20}
 	argumentParser, err := arg.NewParser(arg.Config{Program: "grepple boundaries"}, &values)
 	if err != nil {

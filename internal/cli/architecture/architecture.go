@@ -205,25 +205,44 @@ type directoryAccumulator struct {
 	entrypoints     int
 }
 
+// Run executes architecture commands. Deprecated: construct the command with New.
+func Run(args []string, dependencies Dependencies) error { return New(dependencies).Run(args) }
+
 // Run executes the architecture command family.
-func Run(args []string, dependencies Dependencies) error {
+func (command *command) Run(args []string) error {
 	if len(args) == 0 || isExtractHelp(args[0]) {
 		return stdoutWriter().writeString("Inspect language-neutral directory architecture. Local checkout is the default; --repo selects one exact indexed remote repository for directory, resolve, why, or responsibilities. Compare reads two local JSON snapshots.\nUsage:\n  grepple architecture directory (--compact | --json) [PATH ...]\n  grepple architecture resolve --symbol NAME (--compact | --json) [PATH ...]\n  grepple architecture why FROM TO (--compact | --json) [PATH ...]\n  grepple architecture responsibilities (--compact | --json) [PATH ...]\n  grepple architecture compare (--compact | --json) BEFORE.json AFTER.json\n")
 	}
 	switch args[0] {
 	case "directory":
-		return runArchitectureDirectory(args[1:], dependencies)
+		return command.runDirectory(args[1:])
 	case "resolve":
-		return runArchitectureResolve(args[1:], dependencies)
+		return command.runResolve(args[1:])
 	case "why":
-		return runArchitectureWhy(args[1:], dependencies)
+		return command.runWhy(args[1:])
 	case "responsibilities":
-		return runArchitectureResponsibilities(args[1:], dependencies)
+		return command.runResponsibilities(args[1:])
 	case "compare":
-		return runArchitectureCompare(args[1:], dependencies)
+		return command.runCompare(args[1:])
 	default:
 		return fmt.Errorf("unknown architecture command %q", args[0])
 	}
+}
+
+func (command *command) runDirectory(args []string) error {
+	return runArchitectureDirectory(args, command.dependencies)
+}
+func (command *command) runResolve(args []string) error {
+	return runArchitectureResolve(args, command.dependencies)
+}
+func (command *command) runWhy(args []string) error {
+	return runArchitectureWhy(args, command.dependencies)
+}
+func (command *command) runResponsibilities(args []string) error {
+	return runArchitectureResponsibilities(args, command.dependencies)
+}
+func (command *command) runCompare(args []string) error {
+	return runArchitectureCompare(args, command.dependencies)
 }
 
 var errArchitectureHelp = errors.New("architecture help displayed")

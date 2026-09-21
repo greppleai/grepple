@@ -16,7 +16,9 @@ const defaultBoundaryPolicyPath = boundariescommand.DefaultPolicyPath
 func boundariesDependencies() boundariescommand.Dependencies {
 	return boundariescommand.Dependencies{ResolvePaths: navigationInputPaths, BuildGraph: buildBoundaryGraph, CacheDirectory: defaultCacheDirectory, Remote: requestAnalysisRemote, ServerDefault: serverDefault, Metadata: boundaryResultMetadata}
 }
-func runBoundaries(args []string) error { return boundariescommand.Run(args, boundariesDependencies()) }
+func runBoundaries(args []string) error {
+	return boundariescommand.New(boundariesDependencies()).Run(args)
+}
 func buildCachedBoundaryGraph(paths []string, maxFiles int, useCache bool) (boundariescommand.GraphOutput, string, error) {
 	return boundariescommand.BuildCachedGraph(paths, maxFiles, useCache, boundariesDependencies())
 }
