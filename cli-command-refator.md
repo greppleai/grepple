@@ -125,7 +125,7 @@ Subcommand behavior is attached to command receivers (`runAdd`, `runList`, `runR
 - [ ] Leave reusable navigation and analysis primitives below the command package.
 - [ ] Remove parent graph behavior adapters after all consumers use reusable APIs.
 
-Progress: graph dispatch is now an invocation-scoped `runtime.Command` constructed through `graph.New`. Build, resolve, diff, and query callbacks remain parent-owned until their shared projection consumers are moved behind command-neutral graph APIs.
+Progress: graph dispatch is now an invocation-scoped `runtime.Command` constructed through `graph.New`. The graph package now owns the normalized projection model, supported-source selection, graph assembly, and source accounting used by commands, boundaries, research, and parity tests through parent compatibility aliases. Build, resolve, diff, and query parsing/rendering callbacks remain parent-owned until those consumers are migrated to the exported projection API.
 
 ### Phase 5: architecture and boundaries
 

@@ -11,6 +11,7 @@ import (
 
 	"github.com/alexflint/go-arg"
 	"github.com/greppleai/grepple/api"
+	graphcommand "github.com/greppleai/grepple/internal/cli/graph"
 	"github.com/greppleai/grepple/parser"
 	"github.com/greppleai/grepple/search"
 )
@@ -245,33 +246,11 @@ func buildNavigationGraphOutputFromPaths(paths []string, maxFiles int) navigatio
 }
 
 func buildNavigationGraphOutputFromPathsWithOptions(paths []string, maxFiles int, options search.NavigationBuildOptions) navigationGraphOutput {
-	discovered := len(paths)
-	eligible := navigationSourcePaths(paths)
-	unsupported := discovered - len(eligible)
-	var truncation *navigationGraphTruncation
-	if maxFiles > 0 && len(eligible) > maxFiles {
-		truncation = &navigationGraphTruncation{Reason: "max_files", Limit: maxFiles, Skipped: len(eligible) - maxFiles}
-		eligible = eligible[:maxFiles]
-	}
-	graph, stats := search.BuildNavigationGraphWithOptions(eligible, options)
-	return navigationGraphOutputFromParts(eligible, discovered, unsupported, truncation, graph, stats)
+	return graphcommand.BuildOutput(paths, maxFiles, options)
 }
 
 func navigationGraphOutputFromParts(paths []string, discovered, unsupported int, truncation *navigationGraphTruncation, graph parser.NavigationGraph, stats search.NavigationSourceStats) navigationGraphOutput {
-	declarations := graph.Declarations
-	if declarations == nil {
-		declarations = []parser.NavigationDeclaration{}
-	}
-	calls := graph.Calls
-	if calls == nil {
-		calls = []parser.NavigationCall{}
-	}
-	sourceSummary := navigationSourceSummary{
-		Discovered: discovered, Selected: stats.Attempted, Parsed: stats.Parsed, Skipped: unsupported + stats.Skipped, Failed: stats.Failed, Recovered: stats.Recovered,
-	}
-	return navigationGraphOutput{
-		Schema: navigationGraphSchema, Files: len(paths), Sources: sourceSummary, Declarations: declarations, TypeDeclarations: graph.TypeDeclarations, Calls: calls, Imports: graph.Imports, Exports: graph.Exports, Fields: graph.Fields, TypeUsages: graph.TypeUsages, MemberAccesses: graph.MemberAccesses, RepositoryRoots: graph.RepositoryRoots, Resolution: search.MeasureNavigationResolution(graph), Truncation: truncation,
-	}
+	return graphcommand.OutputFromParts(paths, discovered, unsupported, truncation, graph, stats)
 }
 
 func selectNavigationQueryRoots(declarations []parser.NavigationDeclaration, values graphQueryArgs) ([]parser.NavigationDeclaration, error) {

@@ -10,8 +10,8 @@ import (
 
 	"github.com/alexflint/go-arg"
 	"github.com/greppleai/grepple/api"
+	graphcommand "github.com/greppleai/grepple/internal/cli/graph"
 	"github.com/greppleai/grepple/parser"
-	"github.com/greppleai/grepple/search"
 )
 
 const navigationGraphSchema = "grepple-navigation-graph-v7"
@@ -30,48 +30,11 @@ func (graphArgs) Description() string {
 	return "Build a deterministic local or exact indexed-repository navigation graph. Use resolve to preview symbol alternatives, callers/callees/impact for traversal, or diff for comparison. Exactly one of --json or --compact is required."
 }
 
-type navigationGraphOutput struct {
-	Schema           string                             `json:"schema"`
-	Files            int                                `json:"files"`
-	Metadata         *api.ResultMetadata                `json:"metadata,omitempty"`
-	Sources          navigationSourceSummary            `json:"sources"`
-	Declarations     []parser.NavigationDeclaration     `json:"declarations"`
-	TypeDeclarations []parser.NavigationTypeDeclaration `json:"typeDeclarations,omitempty"`
-	Imports          []parser.NavigationImport          `json:"imports,omitempty"`
-	Calls            []parser.NavigationCall            `json:"calls"`
-	Exports          []parser.NavigationExport          `json:"exports,omitempty"`
-	Fields           []parser.NavigationField           `json:"fields,omitempty"`
-	Resolution       search.NavigationResolutionStats   `json:"resolution"`
-	TypeUsages       []parser.NavigationTypeUsage       `json:"typeUsages,omitempty"`
-	MemberAccesses   []parser.NavigationMemberAccess    `json:"memberAccesses,omitempty"`
-	RepositoryRoots  []string                           `json:"repositoryRoots,omitempty"`
-	Query            *navigationGraphQuery              `json:"query,omitempty"`
-	Truncation       *navigationGraphTruncation         `json:"truncation,omitempty"`
-}
-
-type navigationGraphQuery struct {
-	Direction    string   `json:"direction"`
-	Depth        int      `json:"depth"`
-	RootIDs      []string `json:"rootIds"`
-	Languages    []string `json:"languages,omitempty"`
-	Confidences  []string `json:"confidences,omitempty"`
-	Visibilities []string `json:"visibilities,omitempty"`
-}
-
-type navigationGraphTruncation struct {
-	Reason  string `json:"reason"`
-	Limit   int    `json:"limit"`
-	Skipped int    `json:"skipped"`
-}
-
-type navigationSourceSummary struct {
-	Discovered int `json:"discovered"`
-	Selected   int `json:"selected"`
-	Parsed     int `json:"parsed"`
-	Skipped    int `json:"skipped"`
-	Failed     int `json:"failed"`
-	Recovered  int `json:"recovered"`
-}
+// Parent aliases preserve integrations while graph projection ownership moves to the command package.
+type navigationGraphOutput = graphcommand.Output
+type navigationGraphQuery = graphcommand.Query
+type navigationGraphTruncation = graphcommand.Truncation
+type navigationSourceSummary = graphcommand.SourceSummary
 
 func runGraphBuild(args []string) error {
 	values := graphArgs{MaxOutputBytes: DefaultTextOutputBytes}
@@ -295,14 +258,4 @@ func compactCallTarget(call parser.NavigationCall, declarations map[string]parse
 	return "? " + strings.Join(candidates, ",")
 }
 
-func navigationSourcePaths(paths []string) []string {
-	sources := make([]string, 0, len(paths))
-	for _, path := range paths {
-		language := parser.LanguageFor(path)
-		capabilities, ok := parser.CapabilitiesForLanguage(language)
-		if ok && capabilities.Navigation {
-			sources = append(sources, path)
-		}
-	}
-	return sources
-}
+func navigationSourcePaths(paths []string) []string { return graphcommand.SourcePaths(paths) }
