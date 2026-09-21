@@ -12,6 +12,8 @@ import (
 	"github.com/alexflint/go-arg"
 	"github.com/greppleai/grepple/api"
 	graphcommand "github.com/greppleai/grepple/internal/cli/graph"
+	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
+	"github.com/greppleai/grepple/internal/shellquote"
 	"github.com/greppleai/grepple/parser"
 	"github.com/greppleai/grepple/search"
 )
@@ -21,7 +23,7 @@ const maxNavigationQueryDepth = 10
 type graphQueryArgs struct {
 	JSON    bool `arg:"--json" help:"emit the complete queried subgraph as JSON"`
 	Compact bool `arg:"--compact" help:"emit a bounded agent-facing queried subgraph"`
-	commonArgs
+	cliruntime.CommonArgs
 	Repository     string   `arg:"--repo" placeholder:"OWNER/REPO[@REF]" help:"analyze one exact indexed repository"`
 	Symbol         string   `arg:"--symbol" placeholder:"NAME" help:"select one exact declaration name"`
 	At             string   `arg:"--at" placeholder:"PATH:LINE" help:"select the declaration containing a source location"`
@@ -141,7 +143,7 @@ func runRemoteGraphQuery(ctx context.Context, direction search.NavigationQueryDi
 		return err
 	}
 	if values.JSON {
-		return stdoutWriter().writeJSON(response)
+		return cliruntime.NewOutput(os.Stdout).WriteJSON(response)
 	}
 	var output navigationGraphOutput
 	if err := json.Unmarshal(response.Result, &output); err != nil {
@@ -157,20 +159,20 @@ func graphQueryContinuationCommand(direction search.NavigationQueryDirection, va
 	parts := appendActiveRepositoryScopeFlags([]string{"grepple", "graph", string(direction), "--max-files", "0", "--depth", fmt.Sprint(values.Depth), "--json"})
 	for _, selector := range []struct{ flag, value string }{{"--symbol", values.Symbol}, {"--at", values.At}, {"--package", values.Package}, {"--module", values.Module}, {"--root-path", values.RootPath}} {
 		if selector.value != "" {
-			parts = append(parts, selector.flag, quoteCommandArgument(selector.value))
+			parts = append(parts, selector.flag, shellquote.Argument(selector.value))
 		}
 	}
 	for _, language := range values.Languages {
-		parts = append(parts, "--language", quoteCommandArgument(language))
+		parts = append(parts, "--language", shellquote.Argument(language))
 	}
 	for _, confidence := range values.Confidences {
-		parts = append(parts, "--confidence", quoteCommandArgument(confidence))
+		parts = append(parts, "--confidence", shellquote.Argument(confidence))
 	}
 	for _, visibility := range values.Visibilities {
-		parts = append(parts, "--visibility", quoteCommandArgument(visibility))
+		parts = append(parts, "--visibility", shellquote.Argument(visibility))
 	}
 	for _, path := range normalizedResultScope(values.Paths, ".") {
-		parts = append(parts, quoteCommandArgument(path))
+		parts = append(parts, shellquote.Argument(path))
 	}
 	return strings.Join(parts, " ")
 }

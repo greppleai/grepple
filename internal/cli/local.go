@@ -7,6 +7,8 @@ import (
 	"sort"
 
 	"github.com/greppleai/grepple/api"
+	anchorscommand "github.com/greppleai/grepple/internal/cli/anchors"
+	"github.com/greppleai/grepple/internal/gitcontext"
 	outlinecommand "github.com/greppleai/grepple/internal/outline"
 	rendercommand "github.com/greppleai/grepple/internal/render"
 	"github.com/greppleai/grepple/search"
@@ -63,10 +65,11 @@ func runSearch(args []string) error {
 	results = windowResults(results, options.Params)
 	options.ResultMetadata = searchResultMetadata(options, fetched, totalKnown, remote, results)
 	noteDefaultLimitCap(options, results)
-	noteSearchContinuation(options)
-	if err := prepareResultAnchors(options, results); err != nil {
+	anchorLines, err := anchorscommand.Prepare(&anchorscommand.SearchOptions{Enabled: options.Anchors, LineOnly: options.LineOnly, Params: options.Params}, results)
+	if err != nil {
 		return err
 	}
+	options.AnchorLines = anchorLines
 	// Group the selected page by repo/path for readable output.
 	renderOptions := rendercommand.Options{Params: options.Params, LineOnly: options.LineOnly, OnlyMatching: options.OnlyMatching, JSON: options.JSON, Count: options.Count, FilesWithMatches: options.FilesWithMatches, MaxOutputBytes: options.MaxOutputBytes, RepeatSource: options.RepeatSource, Stdin: options.Stdin, Anchors: rendercommand.AnchorLookup(options.AnchorLines), Metadata: options.ResultMetadata}
 	if err := rendercommand.Search(rendercommand.SearchOptions{Options: renderOptions, Output: os.Stdout, ErrorOutput: os.Stderr, ContextEnabled: contextGuardEnabled(), InlineThreshold: activeInlineOutputThreshold}, results); err != nil {
@@ -96,7 +99,7 @@ func appendRemoteResults(results []api.FileResult, options *cliOptions, explicit
 		return results, nil
 	}
 	server := serverDefault(explicitServer)
-	if repo := currentGitRepoID(); repo != "" {
+	if repo := gitcontext.Current(); repo != "" {
 		options.Params.ExcludeRepo = appendUnique(options.Params.ExcludeRepo, repo)
 	}
 	remoteResults, err := searchRemote(options, server)

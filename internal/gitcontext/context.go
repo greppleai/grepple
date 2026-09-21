@@ -1,4 +1,5 @@
-package cli
+// Package gitcontext discovers canonical repository identities from Git metadata.
+package gitcontext
 
 import (
 	"net/url"
@@ -11,15 +12,17 @@ import (
 
 var repoIDPart = regexp.MustCompile(`^[A-Za-z0-9._-]+$`)
 
-func currentGitRepoID() string {
+// Current returns the repository identity for the current working directory.
+func Current() string {
 	cwd, err := os.Getwd()
 	if err != nil {
 		return ""
 	}
-	return gitRepoIDFrom(cwd)
+	return From(cwd)
 }
 
-func gitRepoIDFrom(start string) string {
+// From returns the repository identity containing start.
+func From(start string) string {
 	root := findGitRoot(start)
 	if root == "" {
 		return ""

@@ -1,4 +1,5 @@
-package cli
+// Package outputspill captures large command output in immutable artifacts.
+package outputspill
 
 import (
 	"crypto/sha256"
@@ -11,22 +12,24 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+
+	"github.com/greppleai/grepple/internal/shellquote"
+	"github.com/greppleai/grepple/internal/storagepaths"
 )
 
 const defaultSpillThresholdBytes = 64 * 1024
 
-var (
-	outputSpillMutex            sync.Mutex
-	activeInlineOutputThreshold int
-)
+var outputSpillMutex sync.Mutex
 
-type spillOptions struct {
-	disabled  bool
-	threshold int
-	directory string
+// Options contains process-level output spill controls.
+type Options struct {
+	Disabled  bool
+	Threshold int
+	Directory string
 }
 
-type spilledOutputDescriptor struct {
+// Descriptor points to immutable spilled output.
+type Descriptor struct {
 	Schema         string          `json:"schema"`
 	Path           string          `json:"path"`
 	Bytes          int64           `json:"bytes"`
@@ -38,8 +41,9 @@ type spilledOutputDescriptor struct {
 	Rerun          string          `json:"rerun"`
 }
 
-func parseSpillOptions(args []string) ([]string, spillOptions, error) {
-	options := spillOptions{threshold: -1}
+// Parse removes process-level spill flags from command arguments.
+func Parse(args []string) ([]string, Options, error) {
+	options := Options{Threshold: -1}
 	filtered := make([]string, 0, len(args))
 	literal := false
 	for index := 0; index < len(args); index++ {
@@ -54,7 +58,7 @@ func parseSpillOptions(args []string) ([]string, spillOptions, error) {
 			continue
 		}
 		if argument == "--no-spill" {
-			options.disabled = true
+			options.Disabled = true
 			continue
 		}
 		directory, directoryConsumed, directoryMatched, directoryErr := parseArtifactDirectory(args, index)
@@ -62,7 +66,7 @@ func parseSpillOptions(args []string) ([]string, spillOptions, error) {
 			return nil, options, directoryErr
 		}
 		if directoryMatched {
-			options.directory = directory
+			options.Directory = directory
 			index += directoryConsumed
 			continue
 		}
@@ -71,7 +75,7 @@ func parseSpillOptions(args []string) ([]string, spillOptions, error) {
 			return nil, options, err
 		}
 		if matched {
-			options.threshold = threshold
+			options.Threshold = threshold
 			index += consumed
 			continue
 		}
@@ -119,35 +123,29 @@ func parseSpillThreshold(args []string, index int) (threshold, consumed int, mat
 	return threshold, consumed, true, nil
 }
 
-func runWithOutputSpill(args []string, options spillOptions, run func() error) error {
-	if options.disabled && len(args) >= 2 && args[0] == "artifacts" && args[1] == "clean" {
-		return run()
+// Run captures command output and spills oversized results to an immutable artifact.
+func Run(args []string, options Options, defaultThreshold int, workingDirectory string, run func(int) error) error {
+	if options.Disabled && len(args) >= 2 && args[0] == "artifacts" && args[1] == "clean" {
+		return run(int(^uint(0) >> 1))
 	}
-	if options.disabled {
-		options.threshold = int(^uint(0) >> 1)
+	if options.Disabled {
+		options.Threshold = int(^uint(0) >> 1)
 	}
 	outputSpillMutex.Lock()
 	defer outputSpillMutex.Unlock()
-	repository, _, err := loadRepositoryConfig()
-	if err != nil {
-		return err
-	}
-	threshold := options.threshold
+	threshold := options.Threshold
 	if threshold < 1 {
-		threshold = repository.Output.SpillThresholdBytes
+		threshold = defaultThreshold
 	}
 	if threshold < 1 {
 		threshold = defaultSpillThresholdBytes
 	}
-	previousThreshold := activeInlineOutputThreshold
-	activeInlineOutputThreshold = threshold
-	defer func() { activeInlineOutputThreshold = previousThreshold }()
-	outputDirectory, err := resolveOutputArtifactDirectory(options.directory)
+	outputDirectory, err := resolveOutputArtifactDirectory(options.Directory, workingDirectory)
 	if err != nil {
 		return err
 	}
 	if err := os.MkdirAll(outputDirectory, 0o700); err != nil {
-		if options.directory != "" || strings.TrimSpace(os.Getenv("GREPPLE_ARTIFACT_DIR")) != "" {
+		if options.Directory != "" || strings.TrimSpace(os.Getenv("GREPPLE_ARTIFACT_DIR")) != "" {
 			return err
 		}
 		outputDirectory = filepath.Join(os.TempDir(), "grepple", "output")
@@ -164,22 +162,22 @@ func runWithOutputSpill(args []string, options spillOptions, run func() error) e
 	originalStdout := os.Stdout
 	defer func() { os.Stdout = originalStdout }()
 	os.Stdout = temporary
-	commandErr := run()
+	commandErr := run(threshold)
 	os.Stdout = originalStdout
-	return finishOutputSpill(temporary, temporaryPath, outputDirectory, threshold, args, originalStdout, commandErr)
+	return finishOutputSpill(temporary, temporaryPath, outputDirectory, workingDirectory, threshold, args, originalStdout, commandErr)
 }
 
-func resolveOutputArtifactDirectory(configured string) (string, error) {
+func resolveOutputArtifactDirectory(configured, workingDirectory string) (string, error) {
 	if configured == "" {
-		return defaultOutputArtifactDirectory()
+		return storagepaths.OutputArtifacts()
 	}
 	if filepath.IsAbs(configured) {
 		return filepath.Clean(configured), nil
 	}
-	return filepath.Join(mustGetwd(), configured), nil
+	return filepath.Join(workingDirectory, configured), nil
 }
 
-func finishOutputSpill(temporary *os.File, temporaryPath, outputDirectory string, threshold int, args []string, stdout io.Writer, commandErr error) error {
+func finishOutputSpill(temporary *os.File, temporaryPath, outputDirectory, workingDirectory string, threshold int, args []string, stdout io.Writer, commandErr error) error {
 	if closeErr := temporary.Close(); commandErr == nil && closeErr != nil {
 		commandErr = closeErr
 	}
@@ -199,7 +197,7 @@ func finishOutputSpill(temporary *os.File, temporaryPath, outputDirectory string
 		}
 		return copyErr
 	}
-	descriptor, err := persistSpilledOutput(temporaryPath, outputDirectory, info.Size(), args)
+	descriptor, err := persistSpilledOutput(temporaryPath, outputDirectory, workingDirectory, info.Size(), args)
 	if err == nil {
 		err = writeSpillDescriptor(stdout, descriptor, outputIsJSON(args))
 	}
@@ -219,18 +217,18 @@ func copySpillToStdout(path string, stdout io.Writer) error {
 	return err
 }
 
-func persistSpilledOutput(temporaryPath, outputDirectory string, size int64, args []string) (spilledOutputDescriptor, error) {
+func persistSpilledOutput(temporaryPath, outputDirectory, workingDirectory string, size int64, args []string) (Descriptor, error) {
 	file, err := os.Open(temporaryPath)
 	if err != nil {
-		return spilledOutputDescriptor{}, err
+		return Descriptor{}, err
 	}
 	hash := sha256.New()
 	if _, err := io.Copy(hash, file); err != nil {
 		_ = file.Close()
-		return spilledOutputDescriptor{}, err
+		return Descriptor{}, err
 	}
 	if err := file.Close(); err != nil {
-		return spilledOutputDescriptor{}, err
+		return Descriptor{}, err
 	}
 	digest := hex.EncodeToString(hash.Sum(nil))
 	format := "text"
@@ -242,14 +240,13 @@ func persistSpilledOutput(temporaryPath, outputDirectory string, size int64, arg
 	if _, err := os.Stat(finalPath); err == nil {
 		_ = os.Remove(temporaryPath)
 	} else if err := os.Rename(temporaryPath, finalPath); err != nil {
-		return spilledOutputDescriptor{}, err
+		return Descriptor{}, err
 	}
-	cwd := mustGetwd()
-	displayPath, err := filepath.Rel(cwd, finalPath)
+	displayPath, err := filepath.Rel(workingDirectory, finalPath)
 	if err != nil {
 		displayPath = finalPath
 	}
-	descriptor := spilledOutputDescriptor{Schema: "grepple-artifact-v1", Path: filepath.ToSlash(displayPath), Bytes: size, Digest: "sha256:" + digest, Format: format, Rerun: spillRerunCommand(args)}
+	descriptor := Descriptor{Schema: "grepple-artifact-v1", Path: filepath.ToSlash(displayPath), Bytes: size, Digest: "sha256:" + digest, Format: format, Rerun: spillRerunCommand(args)}
 	if format == "json" {
 		file, openErr := os.Open(finalPath)
 		if openErr == nil {
@@ -269,7 +266,7 @@ func persistSpilledOutput(temporaryPath, outputDirectory string, size int64, arg
 	return descriptor, nil
 }
 
-func writeSpillDescriptor(writer io.Writer, descriptor spilledOutputDescriptor, jsonMode bool) error {
+func writeSpillDescriptor(writer io.Writer, descriptor Descriptor, jsonMode bool) error {
 	if jsonMode {
 		encoder := json.NewEncoder(writer)
 		encoder.SetEscapeHTML(false)
@@ -296,17 +293,8 @@ func spillRerunCommand(args []string) string {
 	quoted := make([]string, 0, len(args)+2)
 	quoted = append(quoted, "grepple")
 	for _, argument := range args {
-		quoted = append(quoted, shellQuote(argument))
+		quoted = append(quoted, shellquote.Argument(argument))
 	}
 	quoted = append(quoted, "--no-spill")
 	return strings.Join(quoted, " ")
-}
-
-func shellQuote(value string) string {
-	if value != "" && strings.IndexFunc(value, func(r rune) bool {
-		return !(r >= 'a' && r <= 'z' || r >= 'A' && r <= 'Z' || r >= '0' && r <= '9' || strings.ContainsRune("_./:@%+=,-", r))
-	}) < 0 {
-		return value
-	}
-	return "'" + strings.ReplaceAll(value, "'", "'\"'\"'") + "'"
 }

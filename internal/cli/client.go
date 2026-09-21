@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/greppleai/grepple/api"
+	"github.com/greppleai/grepple/internal/authstate"
 	rendercommand "github.com/greppleai/grepple/internal/render"
 	"github.com/greppleai/grepple/linerange"
 	"github.com/greppleai/grepple/navigation"
@@ -426,38 +427,45 @@ func freshToken(target string) string {
 	if nextRefresh == "" {
 		nextRefresh = c.RefreshToken
 	}
-	if err := storeLogin(refreshed.AccessToken, nextRefresh, refreshed.ExpiresIn, refreshed.RefreshTokenExpiresIn, ""); err != nil {
+	if err := authstate.StoreLogin(refreshed.AccessToken, nextRefresh, refreshed.ExpiresIn, refreshed.RefreshTokenExpiresIn, ""); err != nil {
 		return refreshed.AccessToken // use it even if persisting failed
 	}
 	return refreshed.AccessToken
 }
 
+type refreshTokenResponse struct {
+	AccessToken           string `json:"access_token"`
+	RefreshToken          string `json:"refresh_token"`
+	ExpiresIn             int    `json:"expires_in"`
+	RefreshTokenExpiresIn int    `json:"refresh_token_expires_in"`
+}
+
 // refreshLogin asks the grepple server to exchange a refresh token for a new user
 // access token. The exchange runs server-side because it needs the GitHub App
 // client secret, which never leaves the router.
-func refreshLogin(serverBase, refreshToken string) (deviceTokenResponse, error) {
+func refreshLogin(serverBase, refreshToken string) (refreshTokenResponse, error) {
 	body, _ := json.Marshal(map[string]string{"refresh_token": refreshToken})
 	req, err := http.NewRequest(http.MethodPost, strings.TrimRight(serverBase, "/")+"/auth/refresh", bytes.NewReader(body))
 	if err != nil {
-		return deviceTokenResponse{}, err
+		return refreshTokenResponse{}, err
 	}
 	req.Header.Set("content-type", "application/json")
 	req.Header.Set("accept", "application/json")
 	client := &http.Client{Timeout: 20 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
-		return deviceTokenResponse{}, err
+		return refreshTokenResponse{}, err
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return deviceTokenResponse{}, fmt.Errorf("refresh failed: HTTP %d", resp.StatusCode)
+		return refreshTokenResponse{}, fmt.Errorf("refresh failed: HTTP %d", resp.StatusCode)
 	}
-	var tr deviceTokenResponse
+	var tr refreshTokenResponse
 	if err := json.NewDecoder(resp.Body).Decode(&tr); err != nil {
-		return deviceTokenResponse{}, err
+		return refreshTokenResponse{}, err
 	}
 	if tr.AccessToken == "" {
-		return deviceTokenResponse{}, fmt.Errorf("refresh response had no access token")
+		return refreshTokenResponse{}, fmt.Errorf("refresh response had no access token")
 	}
 	return tr, nil
 }

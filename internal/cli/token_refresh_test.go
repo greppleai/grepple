@@ -8,6 +8,8 @@ import (
 	"sync/atomic"
 	"testing"
 	"time"
+
+	"github.com/greppleai/grepple/internal/authstate"
 )
 
 func writeConfigFile(t *testing.T, path string, c config) {
@@ -40,7 +42,7 @@ func TestFreshTokenRefreshesExpiring(t *testing.T) {
 	defer srv.Close()
 
 	// Stored token already expired 1 minute ago.
-	if err := storeLogin("ghu_old", "ghr_old", 0, 0, "octocat"); err != nil {
+	if err := authstate.StoreLogin("ghu_old", "ghr_old", 0, 0, "octocat"); err != nil {
 		t.Fatal(err)
 	}
 	// storeLogin with expiresIn=0 records no expiry; force a past expiry directly.
@@ -74,7 +76,7 @@ func TestFreshTokenSkipsWhenValid(t *testing.T) {
 	defer srv.Close()
 
 	// Expires in 8 hours — well beyond the skew window.
-	if err := storeLogin("ghu_valid", "ghr", 8*3600, 15897600, "octocat"); err != nil {
+	if err := authstate.StoreLogin("ghu_valid", "ghr", 8*3600, 15897600, "octocat"); err != nil {
 		t.Fatal(err)
 	}
 	if got := freshToken(srv.URL + "/public/search"); got != "ghu_valid" {
@@ -86,7 +88,7 @@ func TestFreshTokenSkipsWhenValid(t *testing.T) {
 func TestFreshTokenEnvWins(t *testing.T) {
 	t.Setenv("HOME", t.TempDir())
 	t.Setenv("GREPPLE_TOKEN", "env_token")
-	_ = storeLogin("ghu_old", "ghr_old", 0, 0, "octocat")
+	_ = authstate.StoreLogin("ghu_old", "ghr_old", 0, 0, "octocat")
 	writeExpiredToken(t, "ghu_old", "ghr_old")
 	if got := freshToken("http://127.0.0.1:0/public/search"); got != "env_token" {
 		t.Fatalf("env token must win, got %q", got)
@@ -103,7 +105,7 @@ func TestFreshTokenDegradesOnRefreshFailure(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	_ = storeLogin("ghu_old", "ghr_old", 0, 0, "octocat")
+	_ = authstate.StoreLogin("ghu_old", "ghr_old", 0, 0, "octocat")
 	writeExpiredToken(t, "ghu_old", "ghr_old")
 	if got := freshToken(srv.URL + "/public/search"); got != "ghu_old" {
 		t.Fatalf("expected stale token fallback, got %q", got)
@@ -114,7 +116,7 @@ func TestFreshTokenDegradesOnRefreshFailure(t *testing.T) {
 // minute ago (storeLogin can only set future/zero expiries).
 func writeExpiredToken(t *testing.T, token, refresh string) {
 	t.Helper()
-	path, err := userConfigPath()
+	path, err := authstate.Path()
 	if err != nil {
 		t.Fatal(err)
 	}

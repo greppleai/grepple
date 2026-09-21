@@ -1,4 +1,4 @@
-package cli
+package anchors
 
 import (
 	"encoding/json"
@@ -11,35 +11,9 @@ import (
 	"time"
 
 	"github.com/greppleai/grepple/api"
+
+	"github.com/greppleai/grepple/internal/usersettings"
 )
-
-func TestAnchorsEnabledBySettingsUseConfiguredProvider(t *testing.T) {
-	directory := t.TempDir()
-	t.Chdir(directory)
-	if err := os.WriteFile("sample.go", []byte("package sample\r\n// needle\r\nfunc run() {}\r\n"), 0o600); err != nil {
-		t.Fatal(err)
-	}
-	settingsPath := filepath.Join(directory, "settings.json")
-	settings := userSettings{Anchors: anchorSettings{
-		EnabledByDefault: true,
-		DefaultProvider:  "test",
-		Providers: map[string]anchorProviderSettings{
-			"test": {Command: []string{os.Args[0], "-test.run=TestAnchorProviderProcess"}},
-		},
-	}}
-	writeJSONFile(t, settingsPath, settings)
-	t.Setenv("GREPPLE_SETTINGS", settingsPath)
-	t.Setenv("GREPPLE_TEST_ANCHOR_PROVIDER", "1")
-
-	output := captureStdout(t, func() {
-		if err := Run([]string{"--line-only", "needle", "sample.go"}); err != nil {
-			t.Fatal(err)
-		}
-	})
-	if output != "sample.go\n\nA02│2│// needle\n" {
-		t.Fatalf("anchored output = %q", output)
-	}
-}
 
 func TestAnchorsDoctorHelpIsRecursive(t *testing.T) {
 	output := captureStdout(t, func() {
@@ -55,8 +29,8 @@ func TestAnchorsDoctorHelpIsRecursive(t *testing.T) {
 func TestAnchorsDoctorReportsIdentityProtocolAndRoundTrip(t *testing.T) {
 	directory := t.TempDir()
 	settingsPath := filepath.Join(directory, "settings.json")
-	writeJSONFile(t, settingsPath, userSettings{Anchors: anchorSettings{
-		DefaultProvider: "test", Providers: map[string]anchorProviderSettings{
+	writeJSONFile(t, settingsPath, usersettings.Config{Anchors: usersettings.Anchors{
+		DefaultProvider: "test", Providers: map[string]usersettings.Provider{
 			"test": {Command: []string{os.Args[0], "-test.run=TestAnchorProviderProcess"}},
 		},
 	}})
@@ -102,8 +76,8 @@ func TestAnchorsDoctorGivesSetupGuidanceWithoutConfiguration(t *testing.T) {
 func TestAnchorsDoctorReportsTimeout(t *testing.T) {
 	directory := t.TempDir()
 	settingsPath := filepath.Join(directory, "settings.json")
-	writeJSONFile(t, settingsPath, userSettings{Anchors: anchorSettings{
-		DefaultProvider: "slow", Providers: map[string]anchorProviderSettings{
+	writeJSONFile(t, settingsPath, usersettings.Config{Anchors: usersettings.Anchors{
+		DefaultProvider: "slow", Providers: map[string]usersettings.Provider{
 			"slow": {Command: []string{os.Args[0], "-test.run=TestAnchorProviderProcess"}, TimeoutMS: 10},
 		},
 	}})
@@ -144,7 +118,7 @@ func TestAnchorsSetupWritesUserSettingsExplicitly(t *testing.T) {
 	if !strings.Contains(output, "anchor setup written") || !strings.Contains(output, "anchors doctor --provider test") {
 		t.Fatalf("setup write output is incomplete:\n%s", output)
 	}
-	settings, err := loadUserSettings()
+	settings, err := usersettings.Load()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -164,7 +138,7 @@ func TestAnchorsSetupWritesUserSettingsExplicitly(t *testing.T) {
 func TestAnchorsSetupRequiresForceToReplaceProvider(t *testing.T) {
 	settingsPath := filepath.Join(t.TempDir(), "settings.json")
 	t.Setenv("GREPPLE_SETTINGS", settingsPath)
-	writeJSONFile(t, settingsPath, userSettings{Anchors: anchorSettings{Providers: map[string]anchorProviderSettings{"test": {Command: []string{os.Args[0]}, TimeoutMS: 10}}}})
+	writeJSONFile(t, settingsPath, usersettings.Config{Anchors: usersettings.Anchors{Providers: map[string]usersettings.Provider{"test": {Command: []string{os.Args[0]}, TimeoutMS: 10}}}})
 	args := []string{"anchors", "setup", "--provider", "test", "--command", os.Args[0], "--timeout-ms", "20", "--write"}
 	if err := Run(args); err == nil || !strings.Contains(err.Error(), "--force") {
 		t.Fatalf("replacement error = %v", err)
@@ -173,7 +147,7 @@ func TestAnchorsSetupRequiresForceToReplaceProvider(t *testing.T) {
 	if err := Run(args); err != nil {
 		t.Fatal(err)
 	}
-	settings, err := loadUserSettings()
+	settings, err := usersettings.Load()
 	if err != nil || settings.Anchors.Providers["test"].TimeoutMS != 20 {
 		t.Fatalf("forced settings=%#v err=%v", settings, err)
 	}
@@ -216,7 +190,7 @@ func TestAnchorProviderProcess(_ *testing.T) {
 }
 
 func TestEmptyAnchorRequestUsesJSONArrays(t *testing.T) {
-	request, _, err := buildAnchorRequest(&cliOptions{}, nil)
+	request, _, err := buildAnchorRequest(&SearchOptions{}, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -250,7 +224,7 @@ func TestAnchorRequestIncludesRelatedTypeAppendixLines(t *testing.T) {
 		Name: "Request", Path: "request.go", Direction: "type", Start: 2, End: 4,
 		Segments: []api.ResultSegment{{Kind: "lines", Start: 2, End: 4, Text: "type Request struct {\n\tName string\n}"}},
 	}}}}
-	request, displayPaths, err := buildAnchorRequest(&cliOptions{}, results)
+	request, displayPaths, err := buildAnchorRequest(&SearchOptions{}, results)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -281,7 +255,7 @@ func TestAnchorResponseRejectsDuplicateAnchorsWithinFile(t *testing.T) {
 }
 
 func TestAnchorProviderSettingsRequireAbsoluteExecutable(t *testing.T) {
-	err := validateAnchorProviderSettings(anchorProviderSettings{Command: []string{"node", "provider.mjs"}})
+	err := usersettings.ValidateProvider(usersettings.Provider{Command: []string{"node", "provider.mjs"}})
 	if err == nil || !strings.Contains(err.Error(), "absolute path") {
 		t.Fatalf("relative provider command error = %v", err)
 	}

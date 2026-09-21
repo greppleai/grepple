@@ -4,12 +4,13 @@ import (
 	"testing"
 
 	"github.com/alexflint/go-arg"
+	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
 )
 
 func TestCommonArgsExposeServerAliasesWhenEmbedded(t *testing.T) {
 	for _, arguments := range [][]string{{"--server", "https://example.test"}, {"-s", "https://example.test"}} {
 		var values struct {
-			commonArgs
+			cliruntime.CommonArgs
 		}
 		parser, err := arg.NewParser(arg.Config{Program: "grepple test"}, &values)
 		if err != nil {

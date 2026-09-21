@@ -1,4 +1,4 @@
-package cli
+package auth
 
 import (
 	"encoding/json"
@@ -7,7 +7,13 @@ import (
 	"os"
 	"testing"
 	"time"
+
+	"github.com/greppleai/grepple/internal/authstate"
 )
+
+func runLogin(args []string) error {
+	return executeLogin(args, Dependencies{ServerDefault: func(value string) string { return value }, StoreLogin: authstate.StoreLogin, ClearToken: authstate.Clear, ConfigPath: authstate.Path})
+}
 
 // TestDeviceFlowAndTokenStorage runs the full device flow against a mock GitHub
 // (device code → poll with one pending → token → user lookup) and verifies the
@@ -85,16 +91,16 @@ func runDeviceFlow(t *testing.T, client *http.Client, baseURL string, polls *int
 func verifyTokenPersistence(t *testing.T, token string) {
 	t.Helper()
 	t.Setenv("HOME", t.TempDir())
-	if err := saveToken(token, "octocat"); err != nil {
+	if err := authstate.SaveToken(token, "octocat"); err != nil {
 		t.Fatalf("saveToken: %v", err)
 	}
-	if got := configuredToken(); got != "gho_test" {
+	if got := authstate.Token(); got != "gho_test" {
 		t.Fatalf("configuredToken = %q", got)
 	}
-	if got := loadConfig(); got.Token != "gho_test" || got.User != "octocat" {
+	if got := authstate.Load(); got.Token != "gho_test" || got.User != "octocat" {
 		t.Fatalf("loadConfig = %+v", got)
 	}
-	path, _ := userConfigPath()
+	path, _ := authstate.Path()
 	if info, _ := os.Stat(path); info == nil || info.Mode().Perm() != 0o600 {
 		t.Fatalf("config perms = %v", info.Mode().Perm())
 	}
@@ -103,10 +109,10 @@ func verifyTokenPersistence(t *testing.T, token string) {
 // verifyLogoutClearsToken checks that clearToken empties the stored token.
 func verifyLogoutClearsToken(t *testing.T) {
 	t.Helper()
-	if err := clearToken(); err != nil {
+	if err := authstate.Clear(); err != nil {
 		t.Fatalf("clearToken: %v", err)
 	}
-	if got := loadConfig().Token; got != "" {
+	if got := authstate.Load().Token; got != "" {
 		t.Fatalf("token after logout = %q", got)
 	}
 }
@@ -197,7 +203,7 @@ func TestRunLoginFetchesClientIDFromServer(t *testing.T) {
 	if gotClientID != "Iv1.fromserver" {
 		t.Fatalf("device flow used client_id=%q, want the server-advertised one", gotClientID)
 	}
-	if got := configuredToken(); got != "gho_srv" {
+	if got := authstate.Token(); got != "gho_srv" {
 		t.Fatalf("configuredToken = %q", got)
 	}
 }

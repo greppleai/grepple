@@ -1,4 +1,4 @@
-package cli
+package tree
 
 import (
 	"fmt"
@@ -11,23 +11,28 @@ import (
 	"github.com/greppleai/grepple/search"
 )
 
-func localTree(path string, depth int) (api.TreeResponse, error) {
+// SourceConfigurator applies repository source-selection policy.
+type SourceConfigurator func(*search.Params) error
+
+// NewLocal constructs local tree inspection from source policy and working-directory services.
+func NewLocal(configure SourceConfigurator, workingDirectory func() string) LocalTree {
+	return func(path string, depth int) (api.TreeResponse, error) {
+		return buildLocal(path, depth, configure, workingDirectory)
+	}
+}
+
+func buildLocal(path string, depth int, configure SourceConfigurator, workingDirectory func() string) (api.TreeResponse, error) {
 	if path == "" {
 		path = "."
 	}
-	info, err := os.Stat(path)
+	info, files, err := localSourcePaths(path, configure)
 	if err != nil {
 		return api.TreeResponse{}, err
 	}
-	params := search.Params{Files: true, Globs: []string{path}}
-	if err := applyRepositorySourceConfig(&params); err != nil {
-		return api.TreeResponse{}, err
+	working := "."
+	if workingDirectory != nil {
+		working = workingDirectory()
 	}
-	files, err := search.ListFilePaths(params, nil)
-	if err != nil {
-		return api.TreeResponse{}, err
-	}
-	working := mustGetwd()
 	absolute, err := filepath.Abs(path)
 	if err != nil {
 		return api.TreeResponse{}, err
@@ -36,7 +41,7 @@ func localTree(path string, depth int) (api.TreeResponse, error) {
 	if !info.IsDir() {
 		base = filepath.Dir(absolute)
 	}
-	result := localTreeEntries(files, base, working, depth)
+	result := localEntries(files, base, working, depth)
 	display, err := filepath.Rel(working, absolute)
 	if err != nil {
 		return api.TreeResponse{}, fmt.Errorf("display local tree path: %w", err)
@@ -44,10 +49,25 @@ func localTree(path string, depth int) (api.TreeResponse, error) {
 	return api.TreeResponse{Repo: ".", Path: filepath.ToSlash(display), Depth: depth, Entries: result}, nil
 }
 
-func localTreeEntries(files []string, base, working string, depth int) []api.TreeEntry {
+func localSourcePaths(path string, configure SourceConfigurator) (os.FileInfo, []string, error) {
+	info, err := os.Stat(path)
+	if err != nil {
+		return nil, nil, err
+	}
+	params := search.Params{Files: true, Globs: []string{path}}
+	if configure != nil {
+		if err := configure(&params); err != nil {
+			return nil, nil, err
+		}
+	}
+	files, err := search.ListFilePaths(params, nil)
+	return info, files, err
+}
+
+func localEntries(files []string, base, working string, depth int) []api.TreeEntry {
 	entries := map[string]bool{}
 	for _, file := range files {
-		appendLocalTreePath(entries, file, base, working, depth)
+		appendLocalPath(entries, file, base, working, depth)
 	}
 	result := make([]api.TreeEntry, 0, len(entries))
 	for entryPath, directory := range entries {
@@ -62,7 +82,7 @@ func localTreeEntries(files []string, base, working string, depth int) []api.Tre
 	return result
 }
 
-func appendLocalTreePath(entries map[string]bool, file, base, working string, depth int) {
+func appendLocalPath(entries map[string]bool, file, base, working string, depth int) {
 	filePath := file
 	if !filepath.IsAbs(filePath) {
 		filePath = filepath.Join(working, filepath.FromSlash(filePath))

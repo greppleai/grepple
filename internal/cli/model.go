@@ -2,6 +2,7 @@ package cli
 
 import (
 	"github.com/greppleai/grepple/api"
+	anchorscommand "github.com/greppleai/grepple/internal/cli/anchors"
 	"github.com/greppleai/grepple/search"
 )
 
@@ -19,7 +20,7 @@ type cliOptions struct {
 	MaxOutputBytes   int
 	RepeatSource     bool
 	Anchors          bool
-	AnchorLines      anchorLookup
+	AnchorLines      anchorscommand.Lookup
 	ResultMetadata   *api.ResultMetadata
 	// Stdin is true when the search reads piped standard input instead of
 	// walking the filesystem (see stdinSearch).

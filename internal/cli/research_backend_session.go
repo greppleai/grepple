@@ -10,6 +10,7 @@ import (
 	"sync"
 
 	"github.com/greppleai/grepple/internal/agent"
+	"github.com/greppleai/grepple/internal/filedigest"
 )
 
 const researchSessionCacheVersion = "grepple-ask-research-cache-v1"
@@ -78,7 +79,7 @@ func researchSourceIdentity(root, server string) string {
 	if !activeRepositoryOptions.disabled {
 		if path, found := findRepositoryConfig(canonicalRoot); found {
 			configPath = filepath.Clean(path)
-			if digest, digestErr := fileSHA256(path); digestErr != nil {
+			if digest, digestErr := filedigest.SHA256(path); digestErr != nil {
 				configDigest = "error:" + digestErr.Error()
 			} else {
 				configDigest = digest

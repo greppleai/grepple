@@ -8,6 +8,7 @@ import (
 	"github.com/greppleai/grepple/api"
 	gritcommand "github.com/greppleai/grepple/internal/cli/grit"
 	"github.com/greppleai/grepple/internal/resultanalysis"
+	"github.com/greppleai/grepple/internal/shellquote"
 	"github.com/greppleai/grepple/search"
 )
 
@@ -149,17 +150,17 @@ func searchNextCommand(options *cliOptions, skip int, remote bool) string {
 		parts = append(parts, "--follow-related", fmt.Sprint(options.Params.FollowRelated))
 	}
 	for _, repository := range options.Params.Repo {
-		parts = append(parts, "--repo", quoteCommandArgument(repository))
+		parts = append(parts, "--repo", shellquote.Argument(repository))
 	}
 	if options.Params.Sort == search.ResultSortMatches {
 		parts = append(parts, "--sort", search.ResultSortMatches)
 	}
 	for _, repository := range options.Params.ExcludeRepo {
-		parts = append(parts, "--exclude-repo", quoteCommandArgument(repository))
+		parts = append(parts, "--exclude-repo", shellquote.Argument(repository))
 	}
-	parts = append(parts, "--skip", fmt.Sprint(skip), "--limit", fmt.Sprint(options.Params.Limit), "--json", quoteCommandArgument(options.Params.Query))
+	parts = append(parts, "--skip", fmt.Sprint(skip), "--limit", fmt.Sprint(options.Params.Limit), "--json", shellquote.Argument(options.Params.Query))
 	for _, path := range options.Params.Globs {
-		parts = append(parts, quoteCommandArgument(path))
+		parts = append(parts, shellquote.Argument(path))
 	}
 	return strings.Join(parts, " ")
 }
@@ -174,7 +175,7 @@ func graphContinuationCommand(mode string, paths []string, truncation *navigatio
 	}
 	parts = append(parts, "--max-files", "0", "--json")
 	for _, path := range normalizedResultScope(paths, ".") {
-		parts = append(parts, quoteCommandArgument(path))
+		parts = append(parts, shellquote.Argument(path))
 	}
 	return strings.Join(parts, " ")
 }
@@ -227,7 +228,7 @@ func gritContinuationCommand(values gritcommand.Arguments, nextSkip int, removeS
 		parts = append(parts, "--remote")
 	}
 	if values.Server != "" {
-		parts = append(parts, "--server", quoteCommandArgument(values.Server))
+		parts = append(parts, "--server", shellquote.Argument(values.Server))
 	}
 	if removeSourceCaps {
 		parts = append(parts, "--max-files", "0", "--max-total-bytes", "0")
@@ -236,21 +237,21 @@ func gritContinuationCommand(values gritcommand.Arguments, nextSkip int, removeS
 		parts = append(parts, "--skip", fmt.Sprint(nextSkip), "--limit", fmt.Sprint(values.Limit))
 	}
 	for _, repository := range values.Repositories {
-		parts = append(parts, "--repo", quoteCommandArgument(repository))
+		parts = append(parts, "--repo", shellquote.Argument(repository))
 	}
 	for _, repository := range values.ExcludeRepositories {
-		parts = append(parts, "--exclude-repo", quoteCommandArgument(repository))
+		parts = append(parts, "--exclude-repo", shellquote.Argument(repository))
 	}
 	for _, glob := range values.ExcludeGlobs {
-		parts = append(parts, "--exclude-glob", quoteCommandArgument(glob))
+		parts = append(parts, "--exclude-glob", shellquote.Argument(glob))
 	}
 	if values.QueryFile != "" {
-		parts = append(parts, "--query-file", quoteCommandArgument(values.QueryFile))
+		parts = append(parts, "--query-file", shellquote.Argument(values.QueryFile))
 	} else {
-		parts = append(parts, quoteCommandArgument(values.Query))
+		parts = append(parts, shellquote.Argument(values.Query))
 	}
 	for _, glob := range values.Globs {
-		parts = append(parts, quoteCommandArgument(glob))
+		parts = append(parts, shellquote.Argument(glob))
 	}
 	return strings.Join(parts, " ")
 }
@@ -270,7 +271,7 @@ func graphDiffResultMetadata(values graphDiffArgs, before, after navigationGraph
 		Omitted: api.ResultOmissions{Sources: omitted}, Diagnostics: sourceResultDiagnostics(sources),
 	}
 	if !metadata.Page.Complete {
-		parts := appendActiveRepositoryScopeFlags([]string{"grepple", "graph", "diff", "--before", quoteCommandArgument(values.Before), "--after", quoteCommandArgument(values.After), "--max-files", "0", "--json"})
+		parts := appendActiveRepositoryScopeFlags([]string{"grepple", "graph", "diff", "--before", shellquote.Argument(values.Before), "--after", shellquote.Argument(values.After), "--max-files", "0", "--json"})
 		metadata.NextCommand = strings.Join(parts, " ")
 	}
 	return metadata

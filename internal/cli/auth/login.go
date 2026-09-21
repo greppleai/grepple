@@ -1,4 +1,4 @@
-package cli
+package auth
 
 import (
 	"encoding/json"
@@ -208,9 +208,9 @@ func fetchLoginConfig(client *http.Client, server string) (loginConfig, error) {
 // runLogin performs the GitHub device-flow login and stores the token in
 // ~/.grepple/config.json. The GitHub client ID is fetched from the grepple server
 // (--url), so it is configured only server-side.
-func runLogin(args []string) error {
+func executeLogin(args []string, dependencies Dependencies) error {
 	fs := flag.NewFlagSet("login", flag.ContinueOnError)
-	serverURL := fs.String("url", serverDefault(""), "grepple server URL to fetch the login client ID from")
+	serverURL := fs.String("url", dependencies.server(""), "grepple server URL to fetch the login client ID from")
 	scope := fs.String("scope", "", "OAuth scopes, space-separated (overrides the server's advertised scopes)")
 	noBrowser := fs.Bool("no-browser", false, "do not attempt to open a browser")
 	if err := fs.Parse(args); err != nil {
@@ -231,37 +231,46 @@ func runLogin(args []string) error {
 	if err != nil {
 		return err
 	}
-	fmt.Fprintf(os.Stderr, "\nTo authorize grepple, open:\n  %s\nand enter the code:\n  %s\n\n", dc.VerificationURI, dc.UserCode)
+	fmt.Fprintf(dependencies.stderr(), "\nTo authorize grepple, open:\n  %s\nand enter the code:\n  %s\n\n", dc.VerificationURI, dc.UserCode)
 	if !*noBrowser {
 		_ = openBrowser(dc.VerificationURI)
 	}
-	fmt.Fprintln(os.Stderr, "Waiting for authorization…")
+	fmt.Fprintln(dependencies.stderr(), "Waiting for authorization…")
 
 	tok, err := pollDeviceToken(client, githubWebHost(), cfg.ClientID, dc, time.Sleep)
 	if err != nil {
 		return err
 	}
 	login := fetchGitHubLogin(client, githubAPIHost(), tok.AccessToken)
-	if err := storeLogin(tok.AccessToken, tok.RefreshToken, tok.ExpiresIn, tok.RefreshTokenExpiresIn, login); err != nil {
+	if dependencies.StoreLogin == nil {
+		return fmt.Errorf("store token: unavailable")
+	}
+	if err := dependencies.StoreLogin(tok.AccessToken, tok.RefreshToken, tok.ExpiresIn, tok.RefreshTokenExpiresIn, login); err != nil {
 		return fmt.Errorf("store token: %w", err)
 	}
-	path, _ := userConfigPath()
+	path := ""
+	if dependencies.ConfigPath != nil {
+		path, _ = dependencies.ConfigPath()
+	}
 	if login != "" {
-		fmt.Fprintf(os.Stderr, "Logged in as %s. Token saved to %s\n", login, path)
+		fmt.Fprintf(dependencies.stderr(), "Logged in as %s. Token saved to %s\n", login, path)
 	} else {
-		fmt.Fprintf(os.Stderr, "Logged in. Token saved to %s\n", path)
+		fmt.Fprintf(dependencies.stderr(), "Logged in. Token saved to %s\n", path)
 	}
 	if tok.RefreshToken != "" {
-		fmt.Fprintln(os.Stderr, "This token auto-renews — you won't need to log in again until the refresh token expires.")
+		fmt.Fprintln(dependencies.stderr(), "This token auto-renews — you won't need to log in again until the refresh token expires.")
 	}
 	return nil
 }
 
 // runLogout removes the stored token.
-func runLogout(_ []string) error {
-	if err := clearToken(); err != nil {
+func executeLogout(_ []string, dependencies Dependencies) error {
+	if dependencies.ClearToken == nil {
+		return fmt.Errorf("clear token: unavailable")
+	}
+	if err := dependencies.ClearToken(); err != nil {
 		return err
 	}
-	fmt.Fprintln(os.Stderr, "Logged out; token removed from config.")
+	fmt.Fprintln(dependencies.stderr(), "Logged out; token removed from config.")
 	return nil
 }

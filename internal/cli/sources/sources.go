@@ -1,17 +1,15 @@
 package sources
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
 	"errors"
 	"fmt"
-	"os"
 	"path/filepath"
 	"sort"
 	"strings"
 
 	"github.com/alexflint/go-arg"
 	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
+	"github.com/greppleai/grepple/internal/filedigest"
 	"github.com/greppleai/grepple/search"
 )
 
@@ -116,7 +114,7 @@ func Build(paths []string, dependencies Dependencies) (Report, error) {
 		Decisions: decisions, UnconditionalExclusions: []string{".git/**", ".grepple/**", ".worktrees/**"},
 	}
 	if configPath != "" {
-		report.Config.Digest, err = fileSHA256(configPath)
+		report.Config.Digest, err = filedigest.SHA256(configPath)
 		if err != nil {
 			return Report{}, err
 		}
@@ -202,15 +200,6 @@ func FormatCounts(values []Count) string {
 		parts = append(parts, fmt.Sprintf("%s:%d", value.Name, value.Count))
 	}
 	return strings.Join(parts, ",")
-}
-
-func fileSHA256(path string) (string, error) {
-	content, err := os.ReadFile(path)
-	if err != nil {
-		return "", err
-	}
-	digest := sha256.Sum256(content)
-	return "sha256:" + hex.EncodeToString(digest[:]), nil
 }
 
 func shortSourceDigest(digest string) string {

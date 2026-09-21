@@ -1,4 +1,5 @@
-package cli
+// Package storagepaths resolves user-owned cache and output artifact locations.
+package storagepaths
 
 import (
 	"crypto/sha256"
@@ -8,7 +9,8 @@ import (
 	"strings"
 )
 
-func defaultOutputArtifactDirectory() (string, error) {
+// OutputArtifacts returns the configured or default output artifact directory.
+func OutputArtifacts() (string, error) {
 	if configured := strings.TrimSpace(os.Getenv("GREPPLE_ARTIFACT_DIR")); configured != "" {
 		if filepath.IsAbs(configured) {
 			return filepath.Clean(configured), nil
@@ -22,11 +24,12 @@ func defaultOutputArtifactDirectory() (string, error) {
 	return filepath.Join(os.TempDir(), "grepple", "output"), nil
 }
 
-func defaultCacheDirectory() string {
+// Cache returns the repository-specific cache directory.
+func Cache(workingDirectory string) string {
 	if configured := strings.TrimSpace(os.Getenv("GREPPLE_CACHE_DIR")); configured != "" {
 		return configured
 	}
-	key := fmt.Sprintf("%x", sha256.Sum256([]byte(filepath.Clean(mustGetwd()))))[:16]
+	key := fmt.Sprintf("%x", sha256.Sum256([]byte(filepath.Clean(workingDirectory))))[:16]
 	cache, err := os.UserCacheDir()
 	if err == nil && strings.TrimSpace(cache) != "" {
 		candidate := filepath.Join(cache, "grepple", "cache", key)

@@ -1,4 +1,4 @@
-package cli
+package gitcontext
 
 import (
 	"os"
@@ -15,7 +15,7 @@ func TestGitRepoIDFromNestedDirectory(t *testing.T) {
 	if err := os.MkdirAll(nested, 0755); err != nil {
 		t.Fatal(err)
 	}
-	if got := gitRepoIDFrom(nested); got != "acme/widgets" {
+	if got := From(nested); got != "acme/widgets" {
 		t.Fatalf("repo=%q", got)
 	}
 }
@@ -24,7 +24,7 @@ func TestGitRepoIDUsesNonOriginRemote(t *testing.T) {
 	root := t.TempDir()
 	runGitForTest(t, root, "init")
 	runGitForTest(t, root, "remote", "add", "upstream", "https://github.com/acme/upstream.git")
-	if got := gitRepoIDFrom(root); got != "acme/upstream" {
+	if got := From(root); got != "acme/upstream" {
 		t.Fatalf("repo=%q", got)
 	}
 }
@@ -56,7 +56,7 @@ func TestRepoIDFromRemote(t *testing.T) {
 }
 
 func TestGitRepoIDOutsideRepository(t *testing.T) {
-	if got := gitRepoIDFrom(t.TempDir()); got != "" {
+	if got := From(t.TempDir()); got != "" {
 		t.Fatalf("repo=%q", got)
 	}
 }

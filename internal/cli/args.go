@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
+	"github.com/greppleai/grepple/internal/outputspill"
 	"github.com/greppleai/grepple/search"
 
 	"github.com/alexflint/go-arg"
@@ -19,15 +20,16 @@ import (
 // in sync.
 const DefaultResultLimit = search.DefaultPageLimit
 
-// DefaultTextOutputBytes keeps human-readable search output comfortably below
-// common agent tool-result limits. JSON remains uncapped so it is never partial.
+var activeInlineOutputThreshold int
+
+// DefaultTextOutputBytes keeps human-readable search output below common agent tool-result limits. JSON remains uncapped so it is never partial.
 const DefaultTextOutputBytes = 16 * 1024
 
 type searchArgs struct {
 	Local     bool `arg:"--local" help:"search only the local working directory (this is the default)"`
 	Remote    bool `arg:"-R,--remote" help:"also query the remote shard/router (default: local only)"`
 	Recursive bool `arg:"-r,--recursive" help:"search directories recursively (compatibility alias; already the default)"`
-	commonArgs
+	cliruntime.CommonArgs
 	LineNumber       bool     `arg:"-n,--line-number" help:"include line numbers (enabled by default)"`
 	LineOnly         bool     `arg:"--line-only" help:"print only matching lines; include construct end lines when available"`
 	Enclosing        bool     `arg:"--enclosing" help:"line-only: annotate body matches with the nearest enclosing multi-line syntax range"`
@@ -434,11 +436,11 @@ func runHelp(args []string) error {
 	case "extract":
 		return runExtract([]string{"--help"})
 	case "login":
-		return stdoutWriter().writeString("Authenticate with the remote service.\nUsage: grepple login [--url URL] [--scope SCOPES] [--no-browser]\n")
+		return cliruntime.NewOutput(os.Stdout).WriteString("Authenticate with the remote service.\nUsage: grepple login [--url URL] [--scope SCOPES] [--no-browser]\n")
 	case "logout":
-		return stdoutWriter().writeString("Remove stored remote authentication.\nUsage: grepple logout\n")
+		return cliruntime.NewOutput(os.Stdout).WriteString("Remove stored remote authentication.\nUsage: grepple logout\n")
 	case "version":
-		return stdoutWriter().writeString("Print build and source version information.\nUsage: grepple version\n")
+		return cliruntime.NewOutput(os.Stdout).WriteString("Print build and source version information.\nUsage: grepple version\n")
 	case "grit", "graph", "anchors", "boundaries", "examples", "languages", "rules", "get", "tree", "repos", "refs", "artifacts", "context", "architecture", "sources", "ask", "ai-provider", "write":
 		return runCommand([]string{args[0], "--help"})
 	default:
@@ -459,15 +461,24 @@ func Run(args []string) error {
 	activeRepositoryOptions = repositoryOptions
 	defer func() { activeRepositoryOptions = previousRepositoryOptions }()
 	resetRequestedExit()
-	commandArgs, spill, err := parseSpillOptions(repositoryArgs)
+	commandArgs, spill, err := outputspill.Parse(repositoryArgs)
 	if err != nil {
 		return err
 	}
 	if len(commandArgs) >= 2 && commandArgs[0] == "artifacts" && commandArgs[1] == "clean" {
-		spill.disabled = true
+		spill.Disabled = true
 	}
 	descriptorArgs := append(activeRepositoryScopeFlags(), commandArgs...)
-	err = runWithOutputSpill(descriptorArgs, spill, func() error { return runCommand(commandArgs) })
+	repository, _, err := loadRepositoryConfig()
+	if err != nil {
+		return err
+	}
+	err = outputspill.Run(descriptorArgs, spill, repository.Output.SpillThresholdBytes, mustGetwd(), func(threshold int) error {
+		previousThreshold := activeInlineOutputThreshold
+		activeInlineOutputThreshold = threshold
+		defer func() { activeInlineOutputThreshold = previousThreshold }()
+		return runCommand(commandArgs)
+	})
 	if err != nil {
 		return err
 	}

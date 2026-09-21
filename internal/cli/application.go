@@ -28,6 +28,7 @@ import (
 	writecommand "github.com/greppleai/grepple/internal/cli/write"
 	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
 	rendercommand "github.com/greppleai/grepple/internal/render"
+	"github.com/greppleai/grepple/internal/storagepaths"
 )
 
 type commandSpec struct {
@@ -47,16 +48,16 @@ func newApplication() *application {
 	app.register("version", versioncommand.New(versioncommand.Dependencies{Stdout: os.Stdout}))
 	app.register("write", writecommand.New(writecommand.Dependencies{Stdin: os.Stdin, Stdout: os.Stdout, RequestExit: requestExit, RecordResponse: writecommand.NewContextRecorder(contextGuardEnabled(), activeInlineOutputThreshold)}))
 	app.register("graph", graphcommand.New(graphDependencies()))
-	app.register("anchors", anchorscommand.New(anchorsDependencies()))
+	app.register("anchors", anchorscommand.New(anchorscommand.Dependencies{}))
 	app.register("boundaries", boundariescommand.New(boundariesDependencies()))
 	app.register("examples", examplescommand.New(examplescommand.Dependencies{Output: os.Stdout}))
-	app.register("artifacts", artifactscommand.New(artifactscommand.Dependencies{Stdout: os.Stdout, ArtifactDirectory: defaultOutputArtifactDirectory, WorkingDirectory: mustGetwd}))
+	app.register("artifacts", artifactscommand.New(artifactscommand.Dependencies{Stdout: os.Stdout, ArtifactDirectory: storagepaths.OutputArtifacts, WorkingDirectory: mustGetwd}))
 	app.register("context", contextcommand.New(contextcommand.Dependencies{Stdout: os.Stdout, Invalidate: rendercommand.InvalidateContext}))
 	app.register("languages", languagescommand.New(languagescommand.Dependencies{Stdout: os.Stdout}))
 	app.register("get", getcommand.New(getcommand.Dependencies{Stdout: os.Stdout, Stderr: os.Stderr, ServerDefault: serverDefault, NewRequest: authorizedRequest, RequestExit: setExit, RecordRangeOutcome: func(outcome linerange.Outcome) {
 		rendercommand.RecordStandaloneLineRangeOutcome(outcome, contextGuardEnabled())
 	}, ReportRangeError: reportLineRangeCommandError, FullMissError: func(err error) error { return remoteFullLineRangeMissError{err: err} }, RenderOutline: rendercommand.OutlineOrContent}))
-	app.register("tree", treecommand.New(treecommand.Dependencies{Stdout: os.Stdout, ServerDefault: serverDefault, NewRequest: authorizedRequest, RequestExit: setExit, LocalTree: localTree}))
+	app.register("tree", treecommand.New(treecommand.Dependencies{Stdout: os.Stdout, ServerDefault: serverDefault, NewRequest: authorizedRequest, RequestExit: setExit, LocalTree: treecommand.NewLocal(applyRepositorySourceConfig, mustGetwd)}))
 	app.register("repos", reposcommand.New(reposcommand.Dependencies{Stdout: os.Stdout, ServerDefault: serverDefault, NewRequest: authorizedRequest, RequestExit: setExit}))
 	app.register("refs", refscommand.New(refscommand.Dependencies{Stdout: os.Stdout, ServerDefault: serverDefault, NewRequest: authorizedRequest, RequestExit: setExit}))
 	app.register("ask", cliruntime.CommandFunc(func(args []string) error {

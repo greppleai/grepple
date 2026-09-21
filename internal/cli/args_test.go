@@ -4,6 +4,8 @@ import (
 	"os"
 	"strings"
 	"testing"
+
+	anchorscommand "github.com/greppleai/grepple/internal/cli/anchors"
 )
 
 func TestParseSearchArgs(t *testing.T) {
@@ -189,7 +191,7 @@ func TestAnchorsDefaultToNativeAndCanBeDisabled(t *testing.T) {
 	if !options.Anchors {
 		t.Fatalf("anchors were not enabled by default: %#v", options)
 	}
-	native, err := useNativeAnchorProvider()
+	native, err := anchorscommand.UseNativeProvider()
 	if err != nil || !native {
 		t.Fatalf("default provider was not native: native=%v err=%v", native, err)
 	}
@@ -202,7 +204,7 @@ func TestAnchorsDefaultToNativeAndCanBeDisabled(t *testing.T) {
 	if !configured.Anchors {
 		t.Fatalf("configured provider did not enable anchors: %#v", configured)
 	}
-	native, err = useNativeAnchorProvider()
+	native, err = anchorscommand.UseNativeProvider()
 	if err != nil || native {
 		t.Fatalf("configured default provider was ignored: native=%v err=%v", native, err)
 	}

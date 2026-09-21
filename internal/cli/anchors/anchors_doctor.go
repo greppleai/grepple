@@ -1,4 +1,4 @@
-package cli
+package anchors
 
 import (
 	"encoding/json"
@@ -9,6 +9,9 @@ import (
 	"strings"
 
 	"github.com/alexflint/go-arg"
+	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
+	"github.com/greppleai/grepple/internal/shellquote"
+	"github.com/greppleai/grepple/internal/usersettings"
 )
 
 const anchorDoctorSchema = "grepple-anchor-doctor-v1"
@@ -43,11 +46,13 @@ type anchorDoctorCheck struct {
 	Detail string `json:"detail,omitempty"`
 }
 
-func writeAnchorsHelp() error {
-	return stdoutWriter().writeString("Diagnose or configure user-owned edit-anchor providers.\nUsage:\n  grepple anchors doctor [--provider NAME] [--json]\n  grepple anchors setup --provider NAME --command /ABSOLUTE/PATH [OPTIONS]\n\nRun grepple help anchors doctor or grepple help anchors setup for details.\n")
+// WriteHelp writes anchors command help.
+func WriteHelp() error {
+	return cliruntime.NewOutput(os.Stdout).WriteString("Diagnose or configure user-owned edit-anchor providers.\nUsage:\n  grepple anchors doctor [--provider NAME] [--json]\n  grepple anchors setup --provider NAME --command /ABSOLUTE/PATH [OPTIONS]\n\nRun grepple help anchors doctor or grepple help anchors setup for details.\n")
 }
 
-func runAnchorsDoctor(args []string) error {
+// RunDoctor diagnoses the configured anchor provider.
+func RunDoctor(args []string) error {
 	values := anchorDoctorArgs{}
 	argumentParser, err := arg.NewParser(arg.Config{Program: "grepple anchors doctor"}, &values)
 	if err != nil {
@@ -74,7 +79,7 @@ func runAnchorsDoctor(args []string) error {
 		return renderErr
 	}
 	if !report.OK {
-		setExit(1)
+		return cliruntime.NewExitError(1)
 	}
 	return nil
 }
@@ -85,12 +90,12 @@ func diagnoseAnchorProvider(requestedProvider string) anchorDoctorReport {
 		MaxResponseBytes: maxAnchorResponseBytes, MaxStderrBytes: maxAnchorProviderStderr,
 		Checks: []anchorDoctorCheck{},
 	}
-	settingsPath, err := userSettingsPath()
+	settingsPath, err := usersettings.Path()
 	if err != nil {
 		return failAnchorDoctor(report, "settings", err.Error())
 	}
 	report.SettingsPath = settingsPath
-	name, provider, err := resolveAnchorProvider(requestedProvider)
+	name, provider, err := usersettings.ResolveProvider(requestedProvider)
 	if err != nil {
 		return failAnchorDoctor(report, "configuration", err.Error())
 	}
@@ -113,7 +118,7 @@ func diagnoseAnchorProvider(requestedProvider string) anchorDoctorReport {
 	return report
 }
 
-func anchorDoctorRoundTrip(provider anchorProviderSettings) (int, error) {
+func anchorDoctorRoundTrip(provider usersettings.Provider) (int, error) {
 	directory, err := os.MkdirTemp("", "grepple-anchor-doctor-")
 	if err != nil {
 		return 0, err
@@ -146,7 +151,7 @@ func sanitizeAnchorDoctorError(err error, temporaryPath string) error {
 func failAnchorDoctor(report anchorDoctorReport, check, detail string) anchorDoctorReport {
 	report.Checks = append(report.Checks, anchorDoctorCheck{Name: check, Status: "failed", Detail: detail})
 	report.Guidance = []string{
-		"Configure an absolute executable under anchors.providers in " + displaySettingsPath(report.SettingsPath) + ".",
+		"Configure an absolute executable under anchors.providers in " + usersettings.DisplayPath(report.SettingsPath) + ".",
 		"Select it with anchors.default_provider or rerun with --provider NAME.",
 		"See docs/anchor-providers.md for protocol-v1 request and response examples.",
 	}
@@ -177,13 +182,13 @@ func renderAnchorDoctorReport(report anchorDoctorReport) error {
 	for _, guidance := range report.Guidance {
 		fmt.Fprintf(&output, "setup: %s\n", guidance)
 	}
-	return stdoutWriter().writeString(output.String())
+	return cliruntime.NewOutput(os.Stdout).WriteString(output.String())
 }
 
 func quotedAnchorDoctorCommand(command []string) string {
 	quoted := make([]string, len(command))
 	for index, value := range command {
-		quoted[index] = quoteCommandArgument(value)
+		quoted[index] = shellquote.Argument(value)
 	}
 	return strings.Join(quoted, " ")
 }

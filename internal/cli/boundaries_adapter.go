@@ -6,6 +6,8 @@ import (
 
 	"github.com/greppleai/grepple/api"
 	boundariescommand "github.com/greppleai/grepple/internal/cli/boundaries"
+	"github.com/greppleai/grepple/internal/shellquote"
+	"github.com/greppleai/grepple/internal/storagepaths"
 	"github.com/greppleai/grepple/search"
 )
 
@@ -14,7 +16,7 @@ type boundariesOutput = boundariescommand.Report
 const defaultBoundaryPolicyPath = boundariescommand.DefaultPolicyPath
 
 func boundariesDependencies() boundariescommand.Dependencies {
-	return boundariescommand.Dependencies{ResolvePaths: navigationInputPaths, BuildGraph: buildBoundaryGraph, CacheDirectory: defaultCacheDirectory, Remote: requestAnalysisRemote, ServerDefault: serverDefault, Metadata: boundaryResultMetadata}
+	return boundariescommand.Dependencies{ResolvePaths: navigationInputPaths, BuildGraph: buildBoundaryGraph, CacheDirectory: func() string { return storagepaths.Cache(mustGetwd()) }, Remote: requestAnalysisRemote, ServerDefault: serverDefault, Metadata: boundaryResultMetadata}
 }
 func runBoundaries(args []string) error {
 	return boundariescommand.New(boundariesDependencies()).Run(args)
@@ -60,7 +62,7 @@ func visibleBoundaryCount(total, limit int) int {
 func boundaryContinuationCommand(input boundariescommand.MetadataInput, removeSourceCap bool) string {
 	parts := appendActiveRepositoryScopeFlags([]string{"grepple", "boundaries", "--json", "--min-occurrences", fmt.Sprint(input.MinOccurrences)})
 	if input.Policy != "" {
-		parts = append(parts, "--policy", quoteCommandArgument(input.Policy))
+		parts = append(parts, "--policy", shellquote.Argument(input.Policy))
 	}
 	if removeSourceCap {
 		parts = append(parts, "--max-files", "0")
@@ -68,7 +70,7 @@ func boundaryContinuationCommand(input boundariescommand.MetadataInput, removeSo
 		parts = append(parts, "--max-files", fmt.Sprint(input.MaxFiles))
 	}
 	for _, path := range normalizedResultScope(input.Paths, ".") {
-		parts = append(parts, quoteCommandArgument(path))
+		parts = append(parts, shellquote.Argument(path))
 	}
 	return strings.Join(parts, " ")
 }

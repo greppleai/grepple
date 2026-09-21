@@ -1,4 +1,4 @@
-package cli
+package anchors
 
 import (
 	"bytes"
@@ -17,6 +17,7 @@ import (
 
 	"github.com/greppleai/grepple/api"
 	"github.com/greppleai/grepple/internal/hashline"
+	"github.com/greppleai/grepple/internal/usersettings"
 	"github.com/greppleai/grepple/search"
 )
 
@@ -28,7 +29,15 @@ const (
 	anchorOutputSeparator   = "│"
 )
 
-type anchorLookup map[string]map[int]string
+// SearchOptions selects source lines that need edit anchors.
+type SearchOptions struct {
+	Enabled  bool
+	LineOnly bool
+	Params   search.Params
+}
+
+// Lookup maps source paths and lines to edit anchors.
+type Lookup map[string]map[int]string
 
 type anchorProtocolRequest struct {
 	ProtocolVersion int                         `json:"protocol_version"`
@@ -63,48 +72,47 @@ type anchorFileSelection struct {
 	lines       map[int]string
 }
 
-func prepareResultAnchors(options *cliOptions, results []api.FileResult) error {
-	if !options.Anchors {
-		return nil
+// Prepare generates result anchors selected by options.
+func Prepare(options *SearchOptions, results []api.FileResult) (Lookup, error) {
+	if !options.Enabled {
+		return nil, nil
 	}
 	request, displayPaths, err := buildAnchorRequest(options, results)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if len(request.Files) == 0 {
-		options.AnchorLines = make(anchorLookup)
-		return nil
+		return make(Lookup), nil
 	}
-	native, err := useNativeAnchorProvider()
+	native, err := UseNativeProvider()
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if native {
 		anchors, nativeErr := nativeAnchorLookup(request, displayPaths)
 		if nativeErr != nil {
-			return nativeErr
+			return nil, nativeErr
 		}
-		options.AnchorLines = anchors
-		return nil
+		return anchors, nil
 	}
-	_, provider, err := resolveAnchorProvider("")
+	_, provider, err := usersettings.ResolveProvider("")
 	if err != nil {
-		return err
+		return nil, err
 	}
 	response, err := invokeAnchorProvider(provider, request)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	anchors, err := validateAnchorResponse(request, response, displayPaths)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	options.AnchorLines = anchors
-	return nil
+	return anchors, nil
 }
 
-func useNativeAnchorProvider() (bool, error) {
-	settings, err := loadUserSettings()
+// UseNativeProvider reports whether native anchors are enabled.
+func UseNativeProvider() (bool, error) {
+	settings, err := usersettings.Load()
 	if err != nil {
 		return false, err
 	}
@@ -114,8 +122,8 @@ func useNativeAnchorProvider() (bool, error) {
 	return settings.Anchors.DefaultProvider == "" || settings.Anchors.DefaultProvider == "native", nil
 }
 
-func nativeAnchorLookup(request anchorProtocolRequest, displayPaths map[string]string) (anchorLookup, error) {
-	lookup := make(anchorLookup, len(request.Files))
+func nativeAnchorLookup(request anchorProtocolRequest, displayPaths map[string]string) (Lookup, error) {
+	lookup := make(Lookup, len(request.Files))
 	for _, file := range request.Files {
 		hashes := hashline.Lines(file.Content)
 		displayPath := displayPaths[file.Path]
@@ -130,8 +138,9 @@ func nativeAnchorLookup(request anchorProtocolRequest, displayPaths map[string]s
 	return lookup, nil
 }
 
-func defaultReadAnchors(path, content string, lines []int) (map[int]string, bool, error) {
-	settings, err := loadUserSettings()
+// Read generates anchors for selected lines using the configured provider.
+func Read(path, content string, lines []int) (map[int]string, bool, error) {
+	settings, err := usersettings.Load()
 	if err != nil {
 		return nil, false, err
 	}
@@ -145,7 +154,7 @@ func defaultReadAnchors(path, content string, lines []int) (map[int]string, bool
 		}
 		return anchors[path], true, nil
 	}
-	_, provider, err := resolveAnchorProvider("")
+	_, provider, err := usersettings.ResolveProvider("")
 	if err != nil {
 		return nil, false, err
 	}
@@ -160,7 +169,7 @@ func defaultReadAnchors(path, content string, lines []int) (map[int]string, bool
 	return anchors[path], true, nil
 }
 
-func buildAnchorRequest(options *cliOptions, results []api.FileResult) (anchorProtocolRequest, map[string]string, error) {
+func buildAnchorRequest(options *SearchOptions, results []api.FileResult) (anchorProtocolRequest, map[string]string, error) {
 	selections := collectAnchorSelections(options, results)
 	request := anchorProtocolRequest{
 		ProtocolVersion: anchorProtocolVersion,
@@ -178,7 +187,7 @@ func buildAnchorRequest(options *cliOptions, results []api.FileResult) (anchorPr
 	return request, displayPaths, nil
 }
 
-func collectAnchorSelections(options *cliOptions, results []api.FileResult) []anchorFileSelection {
+func collectAnchorSelections(options *SearchOptions, results []api.FileResult) []anchorFileSelection {
 	byPath := make(map[string]map[int]string)
 	for _, result := range results {
 		lines := anchorSelectionLines(byPath, result.Path)
@@ -218,7 +227,7 @@ func collectRelatedTypeAnchorLines(points []api.RelatedSymbol, byPath map[string
 	}
 }
 
-func collectAnchorSelectionLines(options *cliOptions, result api.FileResult, lines map[int]string) {
+func collectAnchorSelectionLines(options *SearchOptions, result api.FileResult, lines map[int]string) {
 	if options.Params.BeforeContext > 0 || options.Params.AfterContext > 0 {
 		for _, line := range result.Context {
 			lines[line.Line] = normalizeRenderedAnchorLine(line.Text)
@@ -254,7 +263,7 @@ func anchorRequestFile(selection anchorFileSelection) (anchorProtocolRequestFile
 	if err != nil {
 		return anchorProtocolRequestFile{}, fmt.Errorf("read anchor source %s: %w", selection.displayPath, err)
 	}
-	content, err := normalizeAnchorContent(string(contentBytes))
+	content, err := NormalizeContent(string(contentBytes))
 	if err != nil {
 		return anchorProtocolRequestFile{}, fmt.Errorf("anchor source %s: %w", selection.displayPath, err)
 	}
@@ -268,7 +277,8 @@ func anchorRequestFile(selection anchorFileSelection) (anchorProtocolRequestFile
 	return anchorProtocolRequestFile{Path: absolutePath, Content: content, SHA256: anchorDigest(content), Lines: lineNumbers}, nil
 }
 
-func normalizeAnchorContent(content string) (string, error) {
+// NormalizeContent normalizes source before anchor generation.
+func NormalizeContent(content string) (string, error) {
 	content = strings.ReplaceAll(content, "\r\n", "\n")
 	if strings.Contains(content, "\r") {
 		return "", fmt.Errorf("bare carriage returns are not supported because anchor line numbering would be ambiguous")
@@ -294,7 +304,7 @@ func anchorDigest(content string) string {
 	return hex.EncodeToString(digest[:])
 }
 
-func invokeAnchorProvider(provider anchorProviderSettings, request anchorProtocolRequest) (anchorProtocolResponse, error) {
+func invokeAnchorProvider(provider usersettings.Provider, request anchorProtocolRequest) (anchorProtocolResponse, error) {
 	input, err := json.Marshal(request)
 	if err != nil {
 		return anchorProtocolResponse{}, err
@@ -320,7 +330,8 @@ func invokeAnchorProvider(provider anchorProviderSettings, request anchorProtoco
 	if err := decoder.Decode(&response); err != nil {
 		return anchorProtocolResponse{}, fmt.Errorf("parse anchor provider response: %w", err)
 	}
-	if err := ensureJSONEnd(decoder); err != nil {
+	var extra any
+	if err := decoder.Decode(&extra); err != io.EOF {
 		return anchorProtocolResponse{}, fmt.Errorf("parse anchor provider response: %w", err)
 	}
 	return response, nil
@@ -359,7 +370,7 @@ func anchorStderrSuffix(stderr string) string {
 	return ": " + stderr
 }
 
-func validateAnchorResponse(request anchorProtocolRequest, response anchorProtocolResponse, displayPaths map[string]string) (anchorLookup, error) {
+func validateAnchorResponse(request anchorProtocolRequest, response anchorProtocolResponse, displayPaths map[string]string) (Lookup, error) {
 	if response.ProtocolVersion != anchorProtocolVersion {
 		return nil, fmt.Errorf("anchor provider protocol version %d is unsupported; expected %d", response.ProtocolVersion, anchorProtocolVersion)
 	}
@@ -367,7 +378,7 @@ func validateAnchorResponse(request anchorProtocolRequest, response anchorProtoc
 	for _, file := range request.Files {
 		requested[file.Path] = file
 	}
-	result := make(anchorLookup, len(request.Files))
+	result := make(Lookup, len(request.Files))
 	for _, file := range response.Files {
 		requestFile, ok := requested[file.Path]
 		if !ok || file.SHA256 != requestFile.SHA256 {
@@ -412,6 +423,6 @@ func validateFileAnchors(file anchorProtocolRequestFile, anchors []anchorProtoco
 	return result, nil
 }
 
-func (anchors anchorLookup) line(path string, line int) string {
+func (anchors Lookup) line(path string, line int) string {
 	return anchors[path][line]
 }

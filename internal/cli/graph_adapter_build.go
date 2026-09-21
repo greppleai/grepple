@@ -11,6 +11,7 @@ import (
 	"github.com/alexflint/go-arg"
 	"github.com/greppleai/grepple/api"
 	graphcommand "github.com/greppleai/grepple/internal/cli/graph"
+	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
 	"github.com/greppleai/grepple/parser"
 )
 
@@ -19,7 +20,7 @@ const navigationGraphSchema = "grepple-navigation-graph-v7"
 type graphArgs struct {
 	JSON    bool `arg:"--json" help:"emit the complete normalized navigation graph as JSON"`
 	Compact bool `arg:"--compact" help:"emit a bounded agent-facing declaration and call summary"`
-	commonArgs
+	cliruntime.CommonArgs
 	Repository     string   `arg:"--repo" placeholder:"OWNER/REPO[@REF]" help:"analyze one exact indexed repository"`
 	MaxFiles       int      `arg:"--max-files" placeholder:"N" help:"parse at most N discovered files (0 = unlimited)"`
 	MaxOutputBytes int      `arg:"--max-output-bytes" placeholder:"N" help:"cap compact output (default 16384; 0 = unlimited; JSON is uncapped)"`
@@ -64,7 +65,7 @@ func runGraphBuild(args []string) error {
 		return err
 	}
 	if values.JSON && remote != nil {
-		return stdoutWriter().writeJSON(remote)
+		return cliruntime.NewOutput(os.Stdout).WriteJSON(remote)
 	}
 	if values.Compact {
 		return renderCompactNavigationGraph(output, values.MaxOutputBytes)
@@ -96,12 +97,12 @@ func loadGraphCommandOutput(values graphArgs) (navigationGraphOutput, *api.Analy
 }
 
 func renderCompactNavigationGraph(graph navigationGraphOutput, maxBytes int) error {
-	output := stdoutWriter()
+	output := cliruntime.NewOutput(os.Stdout)
 	if maxBytes > 0 {
-		output = newBoundedOutputWriter(os.Stdout, maxBytes)
+		output = cliruntime.NewBoundedOutput(os.Stdout, maxBytes)
 	}
 	write := func(line string) bool {
-		err := output.writeString(line + "\n")
+		err := output.WriteString(line + "\n")
 		return err == nil
 	}
 	visibleCalls := compactNavigationCalls(graph.Calls)

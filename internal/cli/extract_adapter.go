@@ -1,11 +1,10 @@
 package cli
 
 import (
-	"os"
-	"path/filepath"
-
 	codeextract "github.com/greppleai/grepple/extract"
 	extractcommand "github.com/greppleai/grepple/internal/cli/extract"
+	"github.com/greppleai/grepple/internal/repositoryscope"
+	"os"
 )
 
 func extractDependencies() extractcommand.Dependencies {
@@ -15,15 +14,9 @@ func runExtract(args []string) error              { return extractcommand.New(ex
 func extractAt(value string) (string, int, error) { return extractcommand.ParseAt(value) }
 
 func loadExtractCommandSources(roots []string) ([]codeextract.Source, error) {
-	config, path, err := loadRepositoryConfig()
+	options, err := repositoryScopeOptions()
 	if err != nil {
 		return nil, err
 	}
-	options := codeextract.DiscoveryOptions{IgnoreRoot: mustGetwd(), ProductionOnly: activeRepositoryOptions.productionOnly}
-	if path != "" && !activeRepositoryOptions.ignoreDisabled {
-		options.IgnoreRoot = filepath.Dir(path)
-		options.IgnorePaths = append([]string(nil), config.Ignore.Paths...)
-	}
-	reportExplicitSourceBypasses(roots, options.IgnoreRoot, options.IgnorePaths, options.ProductionOnly)
-	return codeextract.LoadSourcesWithOptions(roots, options)
+	return repositoryscope.LoadSources(roots, options)
 }

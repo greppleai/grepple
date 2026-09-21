@@ -10,6 +10,7 @@ import (
 
 	"github.com/alexflint/go-arg"
 	"github.com/greppleai/grepple/api"
+	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
 	"github.com/greppleai/grepple/parser"
 	"github.com/greppleai/grepple/search"
 )
@@ -108,11 +109,11 @@ func relativeGraphDiffPath(root, path string) string {
 }
 
 func renderCompactGraphDiff(diff graphDiffOutput, maxBytes int) error {
-	output := stdoutWriter()
+	output := cliruntime.NewOutput(os.Stdout)
 	if maxBytes > 0 {
-		output = newBoundedOutputWriter(os.Stdout, maxBytes)
+		output = cliruntime.NewBoundedOutput(os.Stdout, maxBytes)
 	}
-	write := func(value string) bool { return output.writeString(value+"\n") == nil }
+	write := func(value string) bool { return output.WriteString(value+"\n") == nil }
 	if !write(fmt.Sprintf("graph-diff %s files=%d->%d sources=before(%s),after(%s) declarations=+%d/-%d/~%d/>%d calls=+%d/-%d/~%d", diff.Schema, diff.BeforeFiles, diff.AfterFiles, compactNavigationSourceSummary(diff.BeforeSources), compactNavigationSourceSummary(diff.AfterSources), len(diff.AddedDeclarations), len(diff.RemovedDeclarations), len(diff.ChangedDeclarations), len(diff.MovedDeclarations), len(diff.AddedCalls), len(diff.RemovedCalls), len(diff.ChangedCalls))) {
 		return nil
 	}

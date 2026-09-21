@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/greppleai/grepple/internal/aiprovider"
+	authcommand "github.com/greppleai/grepple/internal/cli/auth"
 )
 
 func TestRunAskUsesFantasyProviderAndReadTool(t *testing.T) {
@@ -299,7 +300,7 @@ func TestAIProviderListShowsBuiltInsLoggedOut(t *testing.T) {
 		t.Setenv(name, "")
 	}
 	output := captureStdout(t, func() {
-		if err := runAIProvider([]string{"list"}); err != nil {
+		if err := authcommand.RunAIProvider([]string{"list"}); err != nil {
 			t.Fatal(err)
 		}
 	})

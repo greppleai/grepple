@@ -1,4 +1,4 @@
-package cli
+package auth
 
 import (
 	"bufio"
@@ -12,6 +12,7 @@ import (
 
 	"github.com/alexflint/go-arg"
 	"github.com/greppleai/grepple/internal/aiprovider"
+	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
 	"golang.org/x/term"
 )
 
@@ -26,7 +27,8 @@ type aiProviderNameArgs struct {
 	Provider string `arg:"positional" placeholder:"PROVIDER" help:"registered provider name (default codex)"`
 }
 
-func runAIProvider(args []string) error {
+// RunAIProvider manages configured AI providers.
+func RunAIProvider(args []string) error {
 	if len(args) == 0 {
 		return fmt.Errorf("ai-provider requires login, logout, or list")
 	}
@@ -65,7 +67,7 @@ func runAIProviderLogin(registry *aiprovider.Registry, store *aiprovider.Store, 
 	if err := provider.Login(context.Background(), loginOptions); err != nil {
 		return err
 	}
-	return stdoutWriter().writeString(fmt.Sprintf("Authentication configured for %s; provider state: %s\n", provider.Name(), store.Path()))
+	return cliruntime.NewOutput(os.Stdout).WriteString(fmt.Sprintf("Authentication configured for %s; provider state: %s\n", provider.Name(), store.Path()))
 }
 
 func runAIProviderLogout(registry *aiprovider.Registry, args []string) error {
@@ -83,12 +85,12 @@ func runAIProviderLogout(registry *aiprovider.Registry, args []string) error {
 	if err := provider.Logout(); err != nil {
 		return err
 	}
-	return stdoutWriter().writeString("Logged out of " + provider.Name() + ".\n")
+	return cliruntime.NewOutput(os.Stdout).WriteString("Logged out of " + provider.Name() + ".\n")
 }
 
 func runAIProviderList(registry *aiprovider.Registry, args []string) error {
 	if len(args) > 0 && (args[0] == "--help" || args[0] == "-h") {
-		return stdoutWriter().writeString("Usage: grepple ai-provider list\n")
+		return cliruntime.NewOutput(os.Stdout).WriteString("Usage: grepple ai-provider list\n")
 	}
 	if len(args) != 0 {
 		return fmt.Errorf("ai-provider list accepts no arguments")
@@ -103,7 +105,7 @@ func runAIProviderList(registry *aiprovider.Registry, args []string) error {
 		if loggedIn {
 			status = "logged-in"
 		}
-		if err := stdoutWriter().writeString(name + "\t" + status + "\n"); err != nil {
+		if err := cliruntime.NewOutput(os.Stdout).WriteString(name + "\t" + status + "\n"); err != nil {
 			return err
 		}
 	}

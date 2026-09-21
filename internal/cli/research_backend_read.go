@@ -11,6 +11,7 @@ import (
 	"charm.land/fantasy"
 	internalagent "github.com/greppleai/grepple/internal/agent"
 	"github.com/greppleai/grepple/internal/aiprovider"
+	anchorscommand "github.com/greppleai/grepple/internal/cli/anchors"
 	askcommand "github.com/greppleai/grepple/internal/cli/ask"
 	rendercommand "github.com/greppleai/grepple/internal/render"
 	"github.com/greppleai/grepple/linerange"
@@ -44,7 +45,7 @@ func runSimpleReadTool(root string, input readToolInput) (fantasy.ToolResponse, 
 	if len(content) > maxReadBytes || bytes.IndexByte(content, 0) >= 0 {
 		return fantasy.NewTextErrorResponse("file is binary or exceeds the 256 KiB read limit; use grepple search/outline instead"), nil
 	}
-	normalizedContent, err := normalizeAnchorContent(string(content))
+	normalizedContent, err := anchorscommand.NormalizeContent(string(content))
 	if err != nil {
 		return fantasy.NewTextErrorResponse(err.Error()), nil
 	}
@@ -61,7 +62,7 @@ func runSimpleReadTool(root string, input readToolInput) (fantasy.ToolResponse, 
 	for line := start; line <= end; line++ {
 		lineNumbers = append(lineNumbers, line)
 	}
-	anchors, anchored, err := defaultReadAnchors(path, normalizedContent, lineNumbers)
+	anchors, anchored, err := anchorscommand.Read(path, normalizedContent, lineNumbers)
 	if err != nil {
 		return fantasy.NewTextErrorResponse("generate read anchors: " + err.Error()), nil
 	}
