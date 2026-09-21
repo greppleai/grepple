@@ -4,7 +4,7 @@ package anchors
 import (
 	"fmt"
 
-	cliruntime "github.com/greppleai/grepple/internal/cli/runtime"
+	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
 )
 
 // Dependencies supplies settings/provider operations owned by the parent application.

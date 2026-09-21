@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	rendercommand "github.com/greppleai/grepple/internal/render"
 	"github.com/greppleai/grepple/linerange"
 )
 
@@ -24,7 +25,7 @@ func TestRemoteSearchPreservesAndCountsFullLineRangeMiss(t *testing.T) {
 	if !errors.As(err, &full) {
 		t.Fatalf("remote range error=%T %v", err, err)
 	}
-	stats := readRenderedContextStats(filepath.Join(directory, "stats-0.json"), 0)
+	stats := rendercommand.ReadContextStatistics(filepath.Join(directory, "stats-0.json"), 0)
 	if stats.Details.FullLineRangeMisses != 1 {
 		t.Fatalf("full range stats=%#v", stats.Details)
 	}

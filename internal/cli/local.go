@@ -7,7 +7,8 @@ import (
 	"sort"
 
 	"github.com/greppleai/grepple/api"
-	rendercommand "github.com/greppleai/grepple/internal/cli/render"
+	outlinecommand "github.com/greppleai/grepple/internal/outline"
+	rendercommand "github.com/greppleai/grepple/internal/render"
 	"github.com/greppleai/grepple/search"
 )
 
@@ -20,7 +21,8 @@ func runSearch(args []string) error {
 		return err
 	}
 	if options.Outline {
-		return runOutline(options)
+		_, outlineErr := outlinecommand.Run(outlinecommand.Options{Params: options.Params, Depth: options.Depth, JSON: options.JSON != "off", MaxOutputBytes: options.MaxOutputBytes, DefaultLimit: DefaultResultLimit, Output: os.Stdout, ErrorOutput: os.Stderr, RequestExit: setExit})
+		return outlineErr
 	}
 	if options.CountByRepo {
 		// --count-by-repo is a compact per-repository probe: aggregate the full match set
@@ -45,12 +47,12 @@ func runSearch(args []string) error {
 
 	results, err := initialSearchResults(&child, remote)
 	if err != nil {
-		recordLineRangeError(err)
+		rendercommand.RecordLineRangeError(err, contextGuardEnabled())
 		return reportLineRangeCommandError(err)
 	}
 	results, err = appendRemoteResults(results, &child, explicitServer, remote)
 	if err != nil {
-		recordLineRangeError(err)
+		rendercommand.RecordLineRangeError(err, contextGuardEnabled())
 		return reportLineRangeCommandError(err)
 	}
 	results = resolveLocalExternalNavigation(results, explicitServer)
@@ -66,7 +68,11 @@ func runSearch(args []string) error {
 		return err
 	}
 	// Group the selected page by repo/path for readable output.
-	return renderResults(options, results)
+	renderOptions := rendercommand.Options{Params: options.Params, LineOnly: options.LineOnly, OnlyMatching: options.OnlyMatching, JSON: options.JSON, Count: options.Count, FilesWithMatches: options.FilesWithMatches, MaxOutputBytes: options.MaxOutputBytes, RepeatSource: options.RepeatSource, Stdin: options.Stdin, Anchors: rendercommand.AnchorLookup(options.AnchorLines), Metadata: options.ResultMetadata}
+	if err := rendercommand.Search(rendercommand.SearchOptions{Options: renderOptions, Output: os.Stdout, ErrorOutput: os.Stderr, ContextEnabled: contextGuardEnabled(), InlineThreshold: activeInlineOutputThreshold}, results); err != nil {
+		return err
+	}
+	return setSearchExit(results)
 }
 
 func initialSearchResults(options *cliOptions, remote bool) ([]api.FileResult, error) {

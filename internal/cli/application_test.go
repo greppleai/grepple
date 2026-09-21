@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	cliruntime "github.com/greppleai/grepple/internal/cli/runtime"
+	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
 )
 
 func TestApplicationDispatchesNamedAndDefaultCommands(t *testing.T) {

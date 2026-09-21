@@ -6,7 +6,7 @@ import (
 	"io"
 	"strings"
 
-	cliruntime "github.com/greppleai/grepple/internal/cli/runtime"
+	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
 )
 
 type taskExample struct {

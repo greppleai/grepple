@@ -13,8 +13,9 @@ import (
 	"sort"
 	"strings"
 
-	cliruntime "github.com/greppleai/grepple/internal/cli/runtime"
+	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
 	"github.com/greppleai/grepple/internal/hashline"
+	rendercommand "github.com/greppleai/grepple/internal/render"
 	"github.com/pmezard/go-difflib/difflib"
 )
 
@@ -48,6 +49,21 @@ type Dependencies struct {
 	RecordResponse func(root string, response Response, returnedBytes int, applied, failed, recordAnchors bool)
 }
 
+// NewContextRecorder adapts write responses to rendered-context coverage.
+func NewContextRecorder(enabled bool, inlineThreshold int) func(string, Response, int, bool, bool, bool) {
+	return func(root string, response Response, returnedBytes int, applied, failed, recordAnchors bool) {
+		files := make([]rendercommand.WriteFile, 0, len(response.Files))
+		for _, file := range response.Files {
+			anchors := responseFileAnchors(file)
+			converted := make([]rendercommand.WriteAnchor, 0, len(anchors))
+			for _, anchor := range anchors {
+				converted = append(converted, rendercommand.WriteAnchor{Line: anchor.Line, Content: anchor.Content})
+			}
+			files = append(files, rendercommand.WriteFile{Path: file.Path, Operation: file.Operation, Changed: file.Changed, Anchors: converted})
+		}
+		rendercommand.RecordWriteResponse(root, files, returnedBytes, applied, failed, recordAnchors, enabled, inlineThreshold)
+	}
+}
 func (dependencies Dependencies) withDefaults() Dependencies {
 	if dependencies.Stdin == nil {
 		dependencies.Stdin = os.Stdin

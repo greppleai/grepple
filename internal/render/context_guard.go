@@ -1,4 +1,4 @@
-package cli
+package render
 
 import (
 	"context"
@@ -15,7 +15,6 @@ import (
 
 	"github.com/gofrs/flock"
 	"github.com/greppleai/grepple/api"
-	writecommand "github.com/greppleai/grepple/internal/cli/write"
 	"github.com/greppleai/grepple/linerange"
 )
 
@@ -42,6 +41,9 @@ type renderedContextEntry struct {
 	SourceDigest string `json:"sourceDigest"`
 	SourceBytes  int    `json:"sourceBytes"`
 }
+
+// ContextStatistics is the persisted context-coverage statistics model.
+type ContextStatistics = renderedContextStats
 
 type renderedContextStats struct {
 	Schema             string                   `json:"schema"`
@@ -150,6 +152,23 @@ type segmentContextGuard struct {
 	fullLineRangeMisses         int
 }
 
+func (guard *segmentContextGuard) Seen(source string, artifact *api.NavigationArtifactIdentity, segment api.ResultSegment) bool {
+	return guard.seen(source, artifact, segment)
+}
+func (guard *segmentContextGuard) Record(source string, artifact *api.NavigationArtifactIdentity, segment api.ResultSegment) {
+	guard.record(source, artifact, segment)
+}
+func (guard *segmentContextGuard) RecordMarker(bytes int) { guard.recordMarker(bytes) }
+func (guard *segmentContextGuard) RecordSearchLine(source string, line int, text string) {
+	guard.recordSearchLine(source, line, text)
+}
+func (guard *segmentContextGuard) RecordLineRangeOmission(lines, sourceBytes, renderedBytes, markerBytes int) {
+	guard.recordLineRangeOmission(lines, sourceBytes, renderedBytes, markerBytes)
+}
+func (guard *segmentContextGuard) LineCovered(source string, line int, text string) bool {
+	return guard.lineCovered(source, line, text)
+}
+
 func openSegmentContextGuard() (*segmentContextGuard, error) {
 	directory, err := renderedContextDirectory()
 	if err != nil {
@@ -223,40 +242,6 @@ func (guard *segmentContextGuard) recordMarker(bytes int) {
 	}
 }
 
-type contextSourceLine struct {
-	number int
-	text   string
-}
-
-type contextLineRun struct {
-	start int
-	end   int
-	omit  bool
-}
-
-func contextLineRuns(guard *segmentContextGuard, source string, lines []contextSourceLine) []contextLineRun {
-	if len(lines) == 0 {
-		return nil
-	}
-	runs := make([]contextLineRun, 0, len(lines))
-	start := 0
-	covered := guard.lineCovered(source, lines[0].number, lines[0].text)
-	for index := 1; index <= len(lines); index++ {
-		nextCovered := false
-		consecutive := false
-		if index < len(lines) {
-			nextCovered = guard.lineCovered(source, lines[index].number, lines[index].text)
-			consecutive = lines[index].number == lines[index-1].number+1
-		}
-		if index < len(lines) && nextCovered == covered && consecutive {
-			continue
-		}
-		runs = append(runs, contextLineRun{start: start, end: index, omit: covered && index-start >= 6})
-		start, covered = index, nextCovered
-	}
-	return runs
-}
-
 func (guard *segmentContextGuard) lineCovered(source string, line int, content string) bool {
 	if guard == nil || !guard.deduplicate || line < 1 {
 		return false
@@ -321,7 +306,20 @@ func (guard *segmentContextGuard) recordSegmentLines(source string, segment api.
 	}
 }
 
-func (guard *segmentContextGuard) recordWriteAnchors(source string, anchors []writecommand.Anchor) {
+// WriteAnchor is an editable line emitted by a successful write.
+type WriteAnchor struct {
+	Line    int
+	Content string
+}
+
+// WriteFile contains the write outcome data needed for context coverage.
+type WriteFile struct {
+	Path, Operation string
+	Changed         bool
+	Anchors         []WriteAnchor
+}
+
+func (guard *segmentContextGuard) recordWriteAnchors(source string, anchors []WriteAnchor) {
 	path, ok := localContextSourcePath(source)
 	if !ok {
 		return
@@ -374,8 +372,9 @@ func (guard *segmentContextGuard) removeContextFile(source string) {
 	}
 }
 
-func recordWriteResponseContext(root string, response writecommand.Response, returnedBytes int, applied, failed, recordAnchors bool) {
-	if !contextGuardEnabled() {
+// RecordWriteResponse records write output and changed source coverage.
+func RecordWriteResponse(root string, files []WriteFile, returnedBytes int, applied, failed, recordAnchors, enabled bool, inlineThreshold int) {
+	if !enabled {
 		return
 	}
 	guard, err := openSegmentContextGuard()
@@ -388,17 +387,17 @@ func recordWriteResponseContext(root string, response writecommand.Response, ret
 	guard.writeCall = true
 	guard.writeApplied = applied
 	guard.writeFailed = failed
-	guard.resultFiles = len(response.Files)
+	guard.resultFiles = len(files)
 	guard.returnedBytes = returnedBytes
 	defer guard.close()
-	if !recordAnchors || activeInlineOutputThreshold < 1 || returnedBytes > activeInlineOutputThreshold {
+	if !recordAnchors || inlineThreshold < 1 || returnedBytes > inlineThreshold {
 		return
 	}
-	resolvedRoot, err := writecommand.ResolveRoot(root)
+	resolvedRoot, err := resolveContextRoot(root)
 	if err != nil {
 		return
 	}
-	for _, file := range response.Files {
+	for _, file := range files {
 		if !file.Changed {
 			continue
 		}
@@ -410,8 +409,15 @@ func recordWriteResponseContext(root string, response writecommand.Response, ret
 			guard.removeContextFile(source)
 			continue
 		}
-		guard.recordWriteAnchors(source, writecommand.ResponseFileAnchors(file))
+		guard.recordWriteAnchors(source, file.Anchors)
 	}
+}
+func resolveContextRoot(root string) (string, error) {
+	absolute, err := filepath.Abs(root)
+	if err != nil {
+		return "", err
+	}
+	return filepath.EvalSymlinks(absolute)
 }
 
 func localContextSourcePath(source string) (string, bool) {
@@ -456,13 +462,6 @@ func structuralSegmentIdentity(source string, artifact *api.NavigationArtifactId
 	return "sha256:" + hex.EncodeToString(identityDigest[:]), "sha256:" + sourceDigest, len(segment.Text)
 }
 
-func segmentContextMarker(source string, segment api.ResultSegment, contextLabel string) string {
-	if contextLabel != "" {
-		return fmt.Sprintf("// … unchanged %s already emitted at %s:%d-%d (%d source bytes) …\n", contextLabel, source, segment.Start, segment.End, len(segment.Text))
-	}
-	return fmt.Sprintf("// … unchanged segment already emitted: %s:%d-%d (%d source bytes) …\n", source, segment.Start, segment.End, len(segment.Text))
-}
-
 func renderedContextDirectory() (string, error) {
 	base, err := renderedContextBaseDirectory()
 	if err != nil {
@@ -485,6 +484,11 @@ func renderedContextBaseDirectory() (string, error) {
 		return "", err
 	}
 	return filepath.Join(home, ".grepple", "context-guard"), nil
+}
+
+// ReadContextStatistics reads one statistics period.
+func ReadContextStatistics(path string, period int) ContextStatistics {
+	return readRenderedContextStats(path, period)
 }
 
 func readRenderedContextCache(path string) renderedContextCache {
@@ -578,8 +582,9 @@ func updateRenderedContextStats(guard *segmentContextGuard) error {
 	return writeRenderedContextJSON(path, stats)
 }
 
-func recordStandaloneLineRangeOutcome(outcome linerange.Outcome) {
-	if !contextGuardEnabled() || (outcome != linerange.OutcomePartialMiss && outcome != linerange.OutcomeFullMiss) {
+// RecordStandaloneLineRangeOutcome records a non-search range outcome.
+func RecordStandaloneLineRangeOutcome(outcome linerange.Outcome, enabled bool) {
+	if !enabled || (outcome != linerange.OutcomePartialMiss && outcome != linerange.OutcomeFullMiss) {
 		return
 	}
 	guard, err := openSegmentContextGuard()
@@ -595,14 +600,16 @@ func recordStandaloneLineRangeOutcome(outcome linerange.Outcome) {
 	guard.close()
 }
 
-func recordLineRangeError(err error) {
+// RecordLineRangeError records a full miss represented by an error.
+func RecordLineRangeError(err error, enabled bool) {
 	var outside *linerange.OutsideError
 	if errors.As(err, &outside) {
-		recordStandaloneLineRangeOutcome(linerange.OutcomeFullMiss)
+		RecordStandaloneLineRangeOutcome(linerange.OutcomeFullMiss, enabled)
 	}
 }
 
-func invalidateRenderedContext(reason string) error {
+// InvalidateContext clears rendered coverage and starts a new statistics period.
+func InvalidateContext(reason string) error {
 	directory, err := renderedContextDirectory()
 	if err != nil {
 		return err

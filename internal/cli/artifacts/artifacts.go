@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/alexflint/go-arg"
-	cliruntime "github.com/greppleai/grepple/internal/cli/runtime"
+	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
 )
 
 type artifactsCleanArgs struct {

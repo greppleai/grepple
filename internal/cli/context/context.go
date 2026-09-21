@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	cliruntime "github.com/greppleai/grepple/internal/cli/runtime"
+	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
 )
 
 // Dependencies supplies process-owned context-guard operations.

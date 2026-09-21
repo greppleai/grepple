@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	cliruntime "github.com/greppleai/grepple/internal/cli/runtime"
+	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
 	"github.com/greppleai/grepple/linerange"
 )
 

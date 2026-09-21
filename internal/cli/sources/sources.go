@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	"github.com/alexflint/go-arg"
-	cliruntime "github.com/greppleai/grepple/internal/cli/runtime"
+	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
 	"github.com/greppleai/grepple/search"
 )
 

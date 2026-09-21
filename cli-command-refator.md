@@ -7,7 +7,7 @@ Represent every CLI command as an object implementing one command-neutral interf
 ## Current architecture
 
 - `internal/cli/args.go` owns dispatch and invokes package-level `Run(args, Dependencies)` functions.
-- Extracted command packages already import `internal/cli/runtime`; production imports remain one-way.
+- Extracted command packages import command infrastructure from `internal/cliruntime`; production imports remain one-way.
 - Most command packages repeat a `Dependencies` bundle, which is a strong signal for a command object.
 - Parent adapters bridge process-owned streams, configuration, authentication, repository state, remote transport, caches, and shared analysis services.
 - Search remains in the parent package and is both the explicit `search` command and the implicit default.
@@ -17,7 +17,7 @@ Represent every CLI command as an object implementing one command-neutral interf
 
 ### Minimal command contract
 
-Add the contract to `internal/cli/runtime`:
+The contract lives in `internal/cliruntime`:
 
 ```go
 type Command interface {
@@ -139,15 +139,17 @@ Progress: graph dispatch is now an invocation-scoped `runtime.Command` construct
 - [x] Keep output spilling and repository invocation scope at the application layer.
 - [x] Decide separately whether `grep` becomes a supported alias. Decision: retain `search` and implicit search only; do not add a `grep` alias.
 
-### Search renderer extraction
+### Search rendering and support boundaries
 
-- [x] Move search result renderer selection and implementations into `internal/cli/render`.
-- [x] Move outline and repository-count formatting into the renderer package.
-- [x] Keep context-cache lifecycle, line-range warnings, and search exit state in the parent adapter.
-- [x] Inject anchor lookup and context coverage through renderer-owned types and interfaces.
-- [x] Move renderer behavior tests with the renderer package and retain only adapter/integration coverage in `internal/cli`.
+- [x] Move search result renderer selection and implementations into `internal/render`.
+- [x] Move persistent context coverage, deduplication, statistics, and invalidation into `internal/render`.
+- [x] Move outline formatting into `internal/render` and outline loading/emission into `internal/outline`.
+- [x] Move generic command runtime primitives from `internal/cli/runtime` to `internal/cliruntime`.
+- [x] Move structural result summaries into `internal/resultanalysis`.
+- [x] Keep `internal/cli` subpackages command-owned; non-command support packages live directly under `internal`.
+- [x] Retain only command wiring and observable CLI integration tests in parent `internal/cli`.
 
-The parent `renderResults` function is now an adapter that projects `cliOptions` into `render.Options`, bridges the context guard, and delegates formatting. The renderer package has no reverse dependency on parent `internal/cli`.
+Search now projects parsed command options directly into `render.SearchOptions`. The renderer owns preflight eligibility, output limits, warnings, context coverage, and deduplication without a parent rendering adapter. `internal/cli` has no production renderer, outline, or context-cache implementation.
 
 ### Phase 7: settings and authentication families
 

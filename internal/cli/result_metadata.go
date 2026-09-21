@@ -7,6 +7,7 @@ import (
 
 	"github.com/greppleai/grepple/api"
 	gritcommand "github.com/greppleai/grepple/internal/cli/grit"
+	"github.com/greppleai/grepple/internal/resultanalysis"
 	"github.com/greppleai/grepple/search"
 )
 
@@ -107,7 +108,7 @@ func searchResultDiagnostics(options *cliOptions, results []api.FileResult) []ap
 	if options.Params.MaxFiles > 0 {
 		diagnostics = append(diagnostics, api.ResultDiagnostic{Code: "source-cap", Message: fmt.Sprintf("source selection is capped at %d files", options.Params.MaxFiles)})
 	}
-	if analysis := searchSourceAnalysis(results); analysis != nil {
+	if analysis := resultanalysis.Sources(results); analysis != nil {
 		if analysis.Failed > 0 {
 			diagnostics = append(diagnostics, api.ResultDiagnostic{Code: "source-failed", Message: fmt.Sprintf("%d returned files failed structural analysis", analysis.Failed)})
 		}
@@ -122,7 +123,7 @@ func searchResultDiagnostics(options *cliOptions, results []api.FileResult) []ap
 }
 
 func searchAnalysisIncomplete(results []api.FileResult) bool {
-	analysis := searchSourceAnalysis(results)
+	analysis := resultanalysis.Sources(results)
 	return analysis != nil && (analysis.Failed > 0 || analysis.Recovered > 0 || analysis.Unsupported > 0)
 }
 

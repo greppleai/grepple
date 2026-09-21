@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	rendercommand "github.com/greppleai/grepple/internal/render"
 	"github.com/greppleai/grepple/linerange"
 )
 
@@ -47,7 +48,7 @@ func TestGetPreservesRemoteRangeClampWarningsAndMissStats(t *testing.T) {
 	if code, ok := ExitCode(fullErr); !ok || code != 1 || !strings.Contains(fullWarning, "outside file") {
 		t.Fatalf("full miss error=%v warning=%q", fullErr, fullWarning)
 	}
-	stats := readRenderedContextStats(filepath.Join(directory, "stats-0.json"), 0)
+	stats := rendercommand.ReadContextStatistics(filepath.Join(directory, "stats-0.json"), 0)
 	if stats.Details.PartialLineRangeMisses != 1 || stats.Details.FullLineRangeMisses != 1 {
 		t.Fatalf("range stats=%s", fmt.Sprintf("%#v", stats.Details))
 	}

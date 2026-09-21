@@ -6,7 +6,7 @@ import (
 	"os"
 
 	codeextract "github.com/greppleai/grepple/extract"
-	cliruntime "github.com/greppleai/grepple/internal/cli/runtime"
+	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
 )
 
 // Dependencies supplies source discovery and process-owned output.

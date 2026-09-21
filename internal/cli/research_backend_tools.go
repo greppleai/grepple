@@ -17,6 +17,7 @@ import (
 	refscommand "github.com/greppleai/grepple/internal/cli/refs"
 	reposcommand "github.com/greppleai/grepple/internal/cli/repos"
 	treecommand "github.com/greppleai/grepple/internal/cli/tree"
+	rendercommand "github.com/greppleai/grepple/internal/render"
 	"github.com/greppleai/grepple/linerange"
 	"github.com/greppleai/grepple/parser"
 	"github.com/greppleai/grepple/search"
@@ -473,7 +474,9 @@ func runAskRemoteReadTool(ctx context.Context, server string, input readToolInpu
 	if err != nil {
 		return fantasy.NewTextErrorResponse(err.Error()), nil
 	}
-	response, err := getcommand.FetchContext(ctx, target.String(), server, getcommand.Dependencies{NewRequest: authorizedRequest, RecordRangeOutcome: recordStandaloneLineRangeOutcome, FullMissError: func(err error) error { return remoteFullLineRangeMissError{err: err} }})
+	response, err := getcommand.FetchContext(ctx, target.String(), server, getcommand.Dependencies{NewRequest: authorizedRequest, RecordRangeOutcome: func(outcome linerange.Outcome) {
+		rendercommand.RecordStandaloneLineRangeOutcome(outcome, contextGuardEnabled())
+	}, FullMissError: func(err error) error { return remoteFullLineRangeMissError{err: err} }})
 	if err != nil {
 		return fantasy.NewTextErrorResponse(err.Error()), nil
 	}
@@ -492,7 +495,7 @@ func runAskRemoteReadTool(ctx context.Context, server string, input readToolInpu
 		fmt.Fprintf(&output, "%d│%s\n", start+index, line)
 	}
 	if input.EndLine > 0 && response.RangeWarning != "" {
-		recordStandaloneLineRangeOutcome(response.RangeOutcome)
+		rendercommand.RecordStandaloneLineRangeOutcome(response.RangeOutcome, contextGuardEnabled())
 		fmt.Fprintf(&output, "warning: %s\n", response.RangeWarning)
 	}
 	return fantasy.NewTextResponse(output.String()), nil

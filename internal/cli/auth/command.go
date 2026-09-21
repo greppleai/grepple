@@ -4,7 +4,7 @@ package auth
 import (
 	"fmt"
 
-	cliruntime "github.com/greppleai/grepple/internal/cli/runtime"
+	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
 )
 
 // Dependencies supplies shared credential and provider operations.

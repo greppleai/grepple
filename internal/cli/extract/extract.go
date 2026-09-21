@@ -11,7 +11,7 @@ import (
 
 	"github.com/alexflint/go-arg"
 	codeextract "github.com/greppleai/grepple/extract"
-	cliruntime "github.com/greppleai/grepple/internal/cli/runtime"
+	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
 	codeparser "github.com/greppleai/grepple/parser"
 )
 

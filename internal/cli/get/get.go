@@ -9,7 +9,7 @@ import (
 	"net/url"
 	"strings"
 
-	cliruntime "github.com/greppleai/grepple/internal/cli/runtime"
+	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
 	"github.com/greppleai/grepple/linerange"
 	"github.com/greppleai/grepple/parser"
 

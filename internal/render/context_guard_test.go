@@ -1,4 +1,4 @@
-package cli
+package render
 
 import (
 	"bytes"
@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/greppleai/grepple/api"
-	writecommand "github.com/greppleai/grepple/internal/cli/write"
 )
 
 func TestSegmentContextGuardOmitsUnchangedCompleteDeclaration(t *testing.T) {
@@ -214,10 +213,7 @@ func TestWriteAnchorsCompletePreviouslyEmittedSegmentCoverage(t *testing.T) {
 	path := filepath.Join(root, "service.go")
 	oldSegment := api.ResultSegment{Kind: "function", Start: 1, End: 3, Text: "func Run() {\n\toldCall()\n}"}
 	renderWithSegmentGuard(t, api.FileResult{Path: path, Segments: []api.ResultSegment{oldSegment}})
-	recordWriteResponseContext(root, writecommand.Response{Applied: true, Files: []writecommand.ResponseFile{{
-		Path: "service.go", Operation: "edit", Changed: true,
-		ChangeDetails: []writecommand.ResponseChange{{Anchors: []writecommand.Anchor{{Line: 2, Content: "\tnewCall()"}}}},
-	}}}, 100, true, false, true)
+	RecordWriteResponse(root, []WriteFile{{Path: "service.go", Operation: "edit", Changed: true, Anchors: []WriteAnchor{{Line: 2, Content: "\tnewCall()"}}}}, 100, true, false, true, true, activeInlineOutputThreshold)
 	cacheContent, err := os.ReadFile(filepath.Join(directory, "cache.json"))
 	if err != nil {
 		t.Fatal(err)
@@ -244,7 +240,7 @@ func TestWriteAnchorsCompletePreviouslyEmittedSegmentCoverage(t *testing.T) {
 func TestWriteFailureIsRecordedInContextStats(t *testing.T) {
 	directory := t.TempDir()
 	t.Setenv("GREPPLE_CONTEXT_GUARD_DIR", directory)
-	recordWriteResponseContext(t.TempDir(), writecommand.Response{}, 123, false, true, false)
+	RecordWriteResponse(t.TempDir(), nil, 123, false, true, false, true, activeInlineOutputThreshold)
 	stats := readRenderedContextStats(filepath.Join(directory, "stats-0.json"), 0)
 	if stats.Calls.Total != 1 || stats.Calls.Writes != 1 || stats.Calls.FailedWrites != 1 || stats.Calls.SuccessfulWrites != 0 || stats.Calls.AppliedWrites != 0 {
 		t.Fatalf("write failure statistics = %#v", stats)
@@ -286,37 +282,13 @@ func TestWriteAnchorsDoNotSuppressPartiallyCoveredSegment(t *testing.T) {
 		t.Fatal(err)
 	}
 	path := filepath.Join(t.TempDir(), "partial.go")
-	guard.recordWriteAnchors(path, []writecommand.Anchor{{Line: 2, Content: "\tcovered()"}})
+	guard.recordWriteAnchors(path, []WriteAnchor{{Line: 2, Content: "\tcovered()"}})
 	segment := api.ResultSegment{Kind: "function", Start: 1, End: 3, Text: "func Partial() {\n\tcovered()\n}"}
 	if guard.seen(path, nil, segment) {
 		guard.close()
 		t.Fatal("partial write coverage suppressed a complete declaration")
 	}
 	guard.close()
-}
-
-func TestContextGuardCanBeDisabledInUserSettings(t *testing.T) {
-	directory := t.TempDir()
-	t.Setenv("GREPPLE_CONTEXT_GUARD_DIR", directory)
-	settingsPath := filepath.Join(t.TempDir(), "settings.json")
-	t.Setenv("GREPPLE_SETTINGS", settingsPath)
-	disabled := false
-	writeJSONFile(t, settingsPath, userSettings{ContextGuard: contextGuardSettings{Enabled: &disabled}})
-	previous := activeInlineOutputThreshold
-	activeInlineOutputThreshold = 4096
-	defer func() { activeInlineOutputThreshold = previous }()
-	result := api.FileResult{Path: "disabled.go", Segments: []api.ResultSegment{{Kind: "function", Start: 1, End: 1, Text: "func Disabled() {}"}}}
-	if guard := contextGuardForResults(&cliOptions{JSON: "off"}, []api.FileResult{result}); guard != nil {
-		guard.close()
-		t.Fatal("disabled context guard opened for search output")
-	}
-	recordWriteResponseContext(t.TempDir(), writecommand.Response{Applied: true}, 10, true, false, true)
-	if _, err := os.Stat(filepath.Join(directory, "cache.json")); !os.IsNotExist(err) {
-		t.Fatalf("disabled context guard wrote cache state: %v", err)
-	}
-	if _, err := os.Stat(filepath.Join(directory, "stats-0.json")); !os.IsNotExist(err) {
-		t.Fatalf("disabled context guard wrote statistics: %v", err)
-	}
 }
 
 func TestCompleteJSONProducesCoverageWithoutChangingOutput(t *testing.T) {
@@ -556,7 +528,7 @@ func TestPartialFocusedCoverageCollapsesStructuralRuns(t *testing.T) {
 	}
 	guard.observed = true
 	for _, match := range result.Matches[1:7] {
-		guard.recordWriteAnchors(result.Path, []writecommand.Anchor{{Line: match.Line, Content: match.Text}})
+		guard.recordWriteAnchors(result.Path, []WriteAnchor{{Line: match.Line, Content: match.Text}})
 	}
 	guard.close()
 	guard = contextGuardForResults(&cliOptions{JSON: "off", AnchorLines: anchors}, []api.FileResult{{Path: result.Path, Segments: []api.ResultSegment{segment}}})
@@ -592,12 +564,12 @@ func TestRepeatSourceRestoresFocusedAtRange(t *testing.T) {
 	}
 }
 
-func focusedLineCoverageFixture(t *testing.T) (api.FileResult, api.ResultSegment, anchorLookup) {
+func focusedLineCoverageFixture(t *testing.T) (api.FileResult, api.ResultSegment, AnchorLookup) {
 	t.Helper()
 	path := filepath.Join(t.TempDir(), "focused.go")
 	lines := []string{"lineOne", "lineTwo", "lineThree", "lineFour", "lineFive", "lineSix", "lineSeven", "lineEight"}
 	matches := make([]api.ResultMatch, 0, len(lines))
-	anchors := anchorLookup{path: map[int]string{}}
+	anchors := AnchorLookup{path: map[int]string{}}
 	for index, line := range lines {
 		lineNumber := index + 1
 		matches = append(matches, api.ResultMatch{Line: lineNumber, Text: line})
@@ -643,7 +615,7 @@ func renderEnclosingLinesWithGuard(t *testing.T, result api.FileResult) string {
 	return output.String()
 }
 
-func renderContextWithGuard(t *testing.T, result api.FileResult, anchors anchorLookup) string {
+func renderContextWithGuard(t *testing.T, result api.FileResult, anchors AnchorLookup) string {
 	t.Helper()
 	options := &cliOptions{JSON: "off", AnchorLines: anchors}
 	options.Params.BeforeContext = 1
@@ -662,7 +634,7 @@ func renderContextWithGuard(t *testing.T, result api.FileResult, anchors anchorL
 	return output.String()
 }
 
-func renderBroadLinesWithGuard(t *testing.T, result api.FileResult, anchors anchorLookup) string {
+func renderBroadLinesWithGuard(t *testing.T, result api.FileResult, anchors AnchorLookup) string {
 	t.Helper()
 	options := &cliOptions{JSON: "off", LineOnly: true, AnchorLines: anchors}
 	guard := contextGuardForResults(options, []api.FileResult{result})
@@ -680,7 +652,7 @@ func renderBroadLinesWithGuard(t *testing.T, result api.FileResult, anchors anch
 	return output.String()
 }
 
-func renderFocusedAtWithGuard(t *testing.T, result api.FileResult, anchors anchorLookup, repeat bool) string {
+func renderFocusedAtWithGuard(t *testing.T, result api.FileResult, anchors AnchorLookup, repeat bool) string {
 	t.Helper()
 	options := &cliOptions{JSON: "off", LineOnly: true, RepeatSource: repeat, AnchorLines: anchors}
 	options.Params.At = result.Path + ":1-8"
@@ -713,16 +685,6 @@ func TestContextStatsSurviveCacheWriteFailure(t *testing.T) {
 	stats := readRenderedContextStats(filepath.Join(directory, "stats-0.json"), 0)
 	if stats.Calls.Total != 1 || stats.Calls.Reads != 1 {
 		t.Fatalf("cache failure prevented statistics: %#v", stats)
-	}
-}
-
-func TestRunContextInvalidateValidation(t *testing.T) {
-	t.Setenv("GREPPLE_CONTEXT_GUARD_DIR", t.TempDir())
-	if err := Run([]string{"context", "invalidate", "--reason", "compact"}); err != nil {
-		t.Fatal(err)
-	}
-	if err := Run([]string{"context", "invalidate", "--unknown"}); err == nil {
-		t.Fatal("unknown argument accepted")
 	}
 }
 
@@ -960,39 +922,6 @@ func TestContextGuardWithoutPiSessionUsesBaseDirectory(t *testing.T) {
 	}
 	if directory != base {
 		t.Fatalf("context directory = %q, want base %q", directory, base)
-	}
-}
-
-func TestContextStatsCountPartialAndFullLineRangeMisses(t *testing.T) {
-	directory := t.TempDir()
-	t.Setenv("GREPPLE_CONTEXT_GUARD_DIR", directory)
-	path := filepath.Join(t.TempDir(), "sample.go")
-	lines := []string{"package sample"}
-	for line := 2; line <= 28; line++ {
-		lines = append(lines, fmt.Sprintf("// line %d", line))
-	}
-	if err := os.WriteFile(path, []byte(strings.Join(lines, "\n")+"\n"), 0o600); err != nil {
-		t.Fatal(err)
-	}
-	var partialErr error
-	warning := captureStderr(t, func() {
-		captureStdout(t, func() {
-			partialErr = Run([]string{"--at", path + ":20-40", "--line-only", "--max-output-bytes", "0"})
-		})
-	})
-	if partialErr != nil || !strings.Contains(warning, "EOF") || !strings.Contains(warning, "returned 20-28") {
-		t.Fatalf("partial range err=%v warning=%q", partialErr, warning)
-	}
-	var fullErr error
-	fullWarning := captureStderr(t, func() {
-		fullErr = Run([]string{"--at", path + ":29-40", "--line-only", "--max-output-bytes", "0"})
-	})
-	if code, ok := ExitCode(fullErr); !ok || code != 1 || !strings.Contains(fullWarning, "outside file") {
-		t.Fatalf("full range error=%v warning=%q", fullErr, fullWarning)
-	}
-	stats := readRenderedContextStats(filepath.Join(directory, "stats-0.json"), 0)
-	if stats.Details.PartialLineRangeMisses != 1 || stats.Details.FullLineRangeMisses != 1 {
-		t.Fatalf("line range miss stats=%#v", stats.Details)
 	}
 }
 

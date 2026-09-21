@@ -1,4 +1,4 @@
-package cli
+package render
 
 import (
 	"testing"
@@ -6,14 +6,14 @@ import (
 	"github.com/greppleai/grepple/parser"
 )
 
-func TestRenderOutlineOrContentDumpsTinyFile(t *testing.T) {
+func TestOutlineOrContentDumpsTinyFile(t *testing.T) {
 	content := "a:\n  b:\n    c: 1\n"
 	outline := parser.OutlineFile("tiny.yaml", content)
 	if len(outline.Symbols) == 0 {
 		t.Fatal("expected structured symbols for the yaml fixture")
 	}
-	rendered := RenderOutline(outline)
-	got := RenderOutlineOrContent(outline, content)
+	rendered := Outline(outline)
+	got := OutlineOrContent(outline, content)
 	if len(rendered) <= len("tiny.yaml\tyaml\n"+content) {
 		t.Skip("outline is not larger than the file; nothing to fall back from")
 	}
@@ -23,23 +23,23 @@ func TestRenderOutlineOrContentDumpsTinyFile(t *testing.T) {
 	}
 }
 
-func TestRenderOutlineOrContentKeepsCompactOutline(t *testing.T) {
+func TestOutlineOrContentKeepsCompactOutline(t *testing.T) {
 	source := "package p\n\nfunc Alpha() {}\n\nfunc Beta() {}\n\nfunc Gamma() {}\n"
 	outline := parser.OutlineFile("small.go", source)
 	if len(outline.Symbols) == 0 {
 		t.Fatal("expected go symbols")
 	}
-	rendered := RenderOutline(outline)
-	if got := RenderOutlineOrContent(outline, source); got != rendered {
+	rendered := Outline(outline)
+	if got := OutlineOrContent(outline, source); got != rendered {
 		t.Fatalf("expected compact outline to be kept, got:\n%q", got)
 	}
 }
 
-func TestRenderOutlineOrContentAppendsTrailingNewline(t *testing.T) {
+func TestOutlineOrContentAppendsTrailingNewline(t *testing.T) {
 	content := "a:\n  b:\n    c: 1"
 	outline := parser.OutlineFile("tiny.yaml", content)
-	got := RenderOutlineOrContent(outline, content)
-	if got == RenderOutline(outline) {
+	got := OutlineOrContent(outline, content)
+	if got == Outline(outline) {
 		t.Skip("outline chosen; trailing-newline path not exercised")
 	}
 	if got[len(got)-1] != '\n' {

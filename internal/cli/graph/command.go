@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"io"
 
-	cliruntime "github.com/greppleai/grepple/internal/cli/runtime"
+	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
 )
 
 // Dependencies supplies independently testable graph operations.

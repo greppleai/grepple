@@ -14,7 +14,7 @@ import (
 	"github.com/alexflint/go-arg"
 	"github.com/greppleai/grepple/internal/agent"
 	"github.com/greppleai/grepple/internal/aiprovider"
-	cliruntime "github.com/greppleai/grepple/internal/cli/runtime"
+	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
 )
 
 const defaultTimeout = 10 * time.Minute

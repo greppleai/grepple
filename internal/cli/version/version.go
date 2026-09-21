@@ -8,7 +8,7 @@ import (
 	"runtime/debug"
 	"strings"
 
-	cliruntime "github.com/greppleai/grepple/internal/cli/runtime"
+	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
 )
 
 // Version is the release tag or source description injected at build time.

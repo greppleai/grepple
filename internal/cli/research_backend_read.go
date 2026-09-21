@@ -12,6 +12,7 @@ import (
 	internalagent "github.com/greppleai/grepple/internal/agent"
 	"github.com/greppleai/grepple/internal/aiprovider"
 	askcommand "github.com/greppleai/grepple/internal/cli/ask"
+	rendercommand "github.com/greppleai/grepple/internal/render"
 	"github.com/greppleai/grepple/linerange"
 )
 
@@ -50,11 +51,11 @@ func runSimpleReadTool(root string, input readToolInput) (fantasy.ToolResponse, 
 	lines := linerange.SplitLines(normalizedContent)
 	start, end, resolved, explicitEnd, rangeErr := resolveReadToolRange(input, len(lines))
 	if rangeErr != nil {
-		recordLineRangeError(rangeErr)
+		rendercommand.RecordLineRangeError(rangeErr, contextGuardEnabled())
 		return fantasy.NewTextErrorResponse(rangeErr.Error()), nil
 	}
 	if explicitEnd && resolved.Outcome == linerange.OutcomePartialMiss {
-		recordStandaloneLineRangeOutcome(resolved.Outcome)
+		rendercommand.RecordStandaloneLineRangeOutcome(resolved.Outcome, contextGuardEnabled())
 	}
 	lineNumbers := make([]int, 0, end-start+1)
 	for line := start; line <= end; line++ {

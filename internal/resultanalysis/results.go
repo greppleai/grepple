@@ -1,19 +1,13 @@
-package cli
+// Package resultanalysis summarizes structural search result outcomes.
+package resultanalysis
 
 import (
 	"github.com/greppleai/grepple/api"
 	"github.com/greppleai/grepple/parser"
-	"strings"
 )
 
-func quoteCommandArgument(value string) string {
-	if value != "" && !strings.ContainsAny(value, " \t\r\n'\"") {
-		return value
-	}
-	return "'" + strings.ReplaceAll(value, "'", "'\"'\"'") + "'"
-}
-
-func searchSourceAnalysis(results []api.FileResult) *api.SourceAnalysis {
+// Sources returns structural source-analysis totals when results contain classifications.
+func Sources(results []api.FileResult) *api.SourceAnalysis {
 	analysis := &api.SourceAnalysis{Returned: len(results)}
 	classified := 0
 	for _, result := range results {

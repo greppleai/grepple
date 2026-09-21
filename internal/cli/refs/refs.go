@@ -9,7 +9,7 @@ import (
 	"github.com/alexflint/go-arg"
 	"github.com/greppleai/grepple/api"
 	reposcommand "github.com/greppleai/grepple/internal/cli/repos"
-	cliruntime "github.com/greppleai/grepple/internal/cli/runtime"
+	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
 )
 
 type refsArgs struct {

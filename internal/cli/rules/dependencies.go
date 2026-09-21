@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/greppleai/grepple/api"
-	cliruntime "github.com/greppleai/grepple/internal/cli/runtime"
+	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
 )
 
 type commonArgs = cliruntime.CommonArgs

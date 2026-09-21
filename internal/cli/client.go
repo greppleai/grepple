@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/greppleai/grepple/api"
+	rendercommand "github.com/greppleai/grepple/internal/render"
 	"github.com/greppleai/grepple/linerange"
 	"github.com/greppleai/grepple/navigation"
 	"github.com/greppleai/grepple/search"
@@ -38,7 +39,7 @@ func searchRemoteContext(ctx context.Context, options *cliOptions, server string
 	defer response.Body.Close()
 	if response.StatusCode < http.StatusOK || response.StatusCode >= http.StatusMultipleChoices {
 		if linerange.Outcome(response.Header.Get(linerange.HeaderOutcome)) == linerange.OutcomeFullMiss {
-			recordStandaloneLineRangeOutcome(linerange.OutcomeFullMiss)
+			rendercommand.RecordStandaloneLineRangeOutcome(linerange.OutcomeFullMiss, contextGuardEnabled())
 		}
 		message, _ := io.ReadAll(response.Body)
 		failure := fmt.Errorf("server %s returned %d: %s", server, response.StatusCode, string(message))

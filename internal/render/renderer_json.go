@@ -2,7 +2,7 @@ package render
 
 import (
 	"github.com/greppleai/grepple/api"
-	"github.com/greppleai/grepple/parser"
+	"github.com/greppleai/grepple/internal/resultanalysis"
 )
 
 type jsonResultRenderer struct {
@@ -63,31 +63,7 @@ func recordJSONRelatedCoverage(guard ContextGuard, repository string, points []a
 }
 
 func searchSourceAnalysis(results []api.FileResult) *api.SourceAnalysis {
-	analysis := &api.SourceAnalysis{Returned: len(results)}
-	classified := 0
-	for _, result := range results {
-		switch parser.SegmentBuildStatus(result.StructureStatus) {
-		case parser.SegmentBuildStructured:
-			analysis.Structured++
-			classified++
-		case parser.SegmentBuildRecovered:
-			analysis.Recovered++
-			classified++
-		case parser.SegmentBuildPlain:
-			analysis.Plain++
-			classified++
-		case parser.SegmentBuildUnsupported:
-			analysis.Unsupported++
-			classified++
-		case parser.SegmentBuildFailed:
-			analysis.Failed++
-			classified++
-		}
-	}
-	if classified == 0 {
-		return nil
-	}
-	return analysis
+	return resultanalysis.Sources(results)
 }
 
 func flatMatches(results []api.FileResult) []map[string]any {

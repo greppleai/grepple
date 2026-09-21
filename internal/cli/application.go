@@ -3,6 +3,8 @@ package cli
 import (
 	"os"
 
+	"github.com/greppleai/grepple/linerange"
+
 	anchorscommand "github.com/greppleai/grepple/internal/cli/anchors"
 	architecturecommand "github.com/greppleai/grepple/internal/cli/architecture"
 	artifactscommand "github.com/greppleai/grepple/internal/cli/artifacts"
@@ -19,12 +21,13 @@ import (
 	refscommand "github.com/greppleai/grepple/internal/cli/refs"
 	reposcommand "github.com/greppleai/grepple/internal/cli/repos"
 	rulescommand "github.com/greppleai/grepple/internal/cli/rules"
-	cliruntime "github.com/greppleai/grepple/internal/cli/runtime"
 	searchcommand "github.com/greppleai/grepple/internal/cli/search"
 	sourcescommand "github.com/greppleai/grepple/internal/cli/sources"
 	treecommand "github.com/greppleai/grepple/internal/cli/tree"
 	versioncommand "github.com/greppleai/grepple/internal/cli/version"
 	writecommand "github.com/greppleai/grepple/internal/cli/write"
+	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
+	rendercommand "github.com/greppleai/grepple/internal/render"
 )
 
 type commandSpec struct {
@@ -42,15 +45,17 @@ func newApplication() *application {
 	app := &application{commands: make(map[string]commandSpec), defaultCommand: searchCommand}
 	app.register("search", searchCommand)
 	app.register("version", versioncommand.New(versioncommand.Dependencies{Stdout: os.Stdout}))
-	app.register("write", writecommand.New(writecommand.Dependencies{Stdin: os.Stdin, Stdout: os.Stdout, RequestExit: requestExit, RecordResponse: recordWriteResponseContext}))
+	app.register("write", writecommand.New(writecommand.Dependencies{Stdin: os.Stdin, Stdout: os.Stdout, RequestExit: requestExit, RecordResponse: writecommand.NewContextRecorder(contextGuardEnabled(), activeInlineOutputThreshold)}))
 	app.register("graph", graphcommand.New(graphDependencies()))
 	app.register("anchors", anchorscommand.New(anchorsDependencies()))
 	app.register("boundaries", boundariescommand.New(boundariesDependencies()))
 	app.register("examples", examplescommand.New(examplescommand.Dependencies{Output: os.Stdout}))
 	app.register("artifacts", artifactscommand.New(artifactscommand.Dependencies{Stdout: os.Stdout, ArtifactDirectory: defaultOutputArtifactDirectory, WorkingDirectory: mustGetwd}))
-	app.register("context", contextcommand.New(contextcommand.Dependencies{Stdout: os.Stdout, Invalidate: invalidateRenderedContext}))
+	app.register("context", contextcommand.New(contextcommand.Dependencies{Stdout: os.Stdout, Invalidate: rendercommand.InvalidateContext}))
 	app.register("languages", languagescommand.New(languagescommand.Dependencies{Stdout: os.Stdout}))
-	app.register("get", getcommand.New(getcommand.Dependencies{Stdout: os.Stdout, Stderr: os.Stderr, ServerDefault: serverDefault, NewRequest: authorizedRequest, RequestExit: setExit, RecordRangeOutcome: recordStandaloneLineRangeOutcome, ReportRangeError: reportLineRangeCommandError, FullMissError: func(err error) error { return remoteFullLineRangeMissError{err: err} }, RenderOutline: RenderOutlineOrContent}))
+	app.register("get", getcommand.New(getcommand.Dependencies{Stdout: os.Stdout, Stderr: os.Stderr, ServerDefault: serverDefault, NewRequest: authorizedRequest, RequestExit: setExit, RecordRangeOutcome: func(outcome linerange.Outcome) {
+		rendercommand.RecordStandaloneLineRangeOutcome(outcome, contextGuardEnabled())
+	}, ReportRangeError: reportLineRangeCommandError, FullMissError: func(err error) error { return remoteFullLineRangeMissError{err: err} }, RenderOutline: rendercommand.OutlineOrContent}))
 	app.register("tree", treecommand.New(treecommand.Dependencies{Stdout: os.Stdout, ServerDefault: serverDefault, NewRequest: authorizedRequest, RequestExit: setExit, LocalTree: localTree}))
 	app.register("repos", reposcommand.New(reposcommand.Dependencies{Stdout: os.Stdout, ServerDefault: serverDefault, NewRequest: authorizedRequest, RequestExit: setExit}))
 	app.register("refs", refscommand.New(refscommand.Dependencies{Stdout: os.Stdout, ServerDefault: serverDefault, NewRequest: authorizedRequest, RequestExit: setExit}))

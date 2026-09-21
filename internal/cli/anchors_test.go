@@ -259,21 +259,6 @@ func TestAnchorRequestIncludesRelatedTypeAppendixLines(t *testing.T) {
 	}
 }
 
-func TestSegmentRendererEmitsHashLineContentRows(t *testing.T) {
-	var output strings.Builder
-	renderer := segmentRenderer{
-		output:  newOutputWriter(&output),
-		anchors: anchorLookup{"sample.go": {1: "abc", 2: "def"}},
-	}
-	result := api.FileResult{Path: "sample.go", Segments: []api.ResultSegment{{Kind: "lines", Start: 1, End: 2, Text: "first\nsecond"}}}
-	if err := renderer.Render([]api.FileResult{result}); err != nil {
-		t.Fatal(err)
-	}
-	if rendered := output.String(); rendered != "sample.go\n\nabc│1│first\ndef│2│second\n" {
-		t.Fatalf("segment output = %q", rendered)
-	}
-}
-
 func TestAnchorResponseRejectsMissingAndUnsafeAnchors(t *testing.T) {
 	request := anchorProtocolRequest{ProtocolVersion: 1, Files: []anchorProtocolRequestFile{{Path: "/tmp/a", SHA256: "digest", Lines: []int{1}}}}
 	paths := map[string]string{"/tmp/a": "a"}

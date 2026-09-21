@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/greppleai/grepple/api"
-	cliruntime "github.com/greppleai/grepple/internal/cli/runtime"
+	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
 	"github.com/greppleai/grepple/search"
 )
 
@@ -54,6 +54,7 @@ type Options struct {
 	FilesWithMatches bool
 	MaxOutputBytes   int
 	RepeatSource     bool
+	Stdin            bool
 	Anchors          AnchorLookup
 	Metadata         *api.ResultMetadata
 }

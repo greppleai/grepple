@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/greppleai/grepple/api"
-	cliruntime "github.com/greppleai/grepple/internal/cli/runtime"
+	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
 	"github.com/greppleai/grepple/parser"
 	"github.com/greppleai/grepple/search"
 )

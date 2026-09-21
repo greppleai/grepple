@@ -13,7 +13,7 @@ import (
 	"github.com/greppleai/grepple/api"
 	"github.com/greppleai/grepple/extract"
 	"github.com/greppleai/grepple/gritql"
-	cliruntime "github.com/greppleai/grepple/internal/cli/runtime"
+	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
 	"github.com/greppleai/grepple/parser"
 )
 
