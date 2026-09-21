@@ -21,6 +21,11 @@ type Dependencies struct {
 	RequestExit   func(int)
 }
 
+type command struct{ dependencies Dependencies }
+
+// New constructs the rules command.
+func New(dependencies Dependencies) cliruntime.Command { return &command{dependencies: dependencies} }
+
 func (d Dependencies) serverDefault(value string) string {
 	if d.ServerDefault != nil {
 		return d.ServerDefault(value)

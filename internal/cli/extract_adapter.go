@@ -11,7 +11,7 @@ import (
 func extractDependencies() extractcommand.Dependencies {
 	return extractcommand.Dependencies{Stdout: os.Stdout, LoadSources: loadExtractCommandSources}
 }
-func runExtract(args []string) error              { return extractcommand.Run(args, extractDependencies()) }
+func runExtract(args []string) error              { return extractcommand.New(extractDependencies()).Run(args) }
 func extractAt(value string) (string, int, error) { return extractcommand.ParseAt(value) }
 
 func loadExtractCommandSources(roots []string) ([]codeextract.Source, error) {

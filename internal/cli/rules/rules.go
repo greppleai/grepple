@@ -17,27 +17,40 @@ import (
 	"github.com/alexflint/go-arg"
 )
 
+// Run dispatches the rules command family. Deprecated: construct the command with New.
+func Run(args []string, dependencies Dependencies) error { return New(dependencies).Run(args) }
+
 // Run dispatches the predefined-search command family.
-func Run(args []string, dependencies Dependencies) error {
+func (command *command) Run(args []string) error {
 	if len(args) == 0 {
 		return rulesUsage()
 	}
 	switch args[0] {
 	case "add", "create":
-		return runRulesAdd(args[1:], dependencies)
+		return command.runAdd(args[1:])
 	case "list", "ls":
-		return runRulesList(args[1:], dependencies)
+		return command.runList(args[1:])
 	case "get", "show":
-		return runRulesGet(args[1:], dependencies)
+		return command.runGet(args[1:])
 	case "rm", "remove", "delete":
-		return runRulesDelete(args[1:], dependencies)
+		return command.runDelete(args[1:])
 	case "results":
-		return runRulesResults(args[1:], dependencies)
+		return command.runResults(args[1:])
 	case "-h", "--help", "help":
 		return rulesUsage()
 	default:
 		return fmt.Errorf("unknown `grepple rules` subcommand %q (want add|list|get|rm|results)", args[0])
 	}
+}
+
+func (command *command) runAdd(args []string) error  { return runRulesAdd(args, command.dependencies) }
+func (command *command) runList(args []string) error { return runRulesList(args, command.dependencies) }
+func (command *command) runGet(args []string) error  { return runRulesGet(args, command.dependencies) }
+func (command *command) runDelete(args []string) error {
+	return runRulesDelete(args, command.dependencies)
+}
+func (command *command) runResults(args []string) error {
+	return runRulesResults(args, command.dependencies)
 }
 
 func rulesUsage() error {

@@ -112,11 +112,11 @@ For each package, add an unexported `command`, add `New`, move `Run` to a method
 
 ### Phase 3: behavior-rich extracted commands
 
-- [ ] rules
-- [ ] extract
-- [ ] grit
+- [x] rules
+- [x] extract
+- [x] grit
 
-Attach subcommand behavior to the command receiver, for example `runAdd`, `runList`, and `runResults` on the rules command.
+Subcommand behavior is attached to command receivers (`runAdd`, `runList`, `runResults`, focused extraction operations, and local/remote/explain GritQL execution). Deprecated package-level wrappers remain only as temporary compatibility entrypoints.
 
 ### Phase 4: complete graph ownership
 

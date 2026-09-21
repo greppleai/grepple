@@ -66,8 +66,11 @@ func writeExtractCheckHelp(mode string) error {
 	}
 }
 
+// Run executes the extract command family. Deprecated: construct the command with New.
+func Run(args []string, dependencies Dependencies) error { return New(dependencies).Run(args) }
+
 // Run executes the extract command family.
-func Run(args []string, dependencies Dependencies) error {
+func (command *command) Run(args []string) error {
 	if len(args) == 0 {
 		return extractUsageError()
 	}
@@ -75,7 +78,7 @@ func Run(args []string, dependencies Dependencies) error {
 		return writeExtractHelp()
 	}
 	if args[0] == "check" {
-		return runExtractCheck(args[1:])
+		return command.runCheck(args[1:])
 	}
 	if args[0] != "structure" && args[0] != "flow" {
 		return extractUsageError()
@@ -88,9 +91,17 @@ func Run(args []string, dependencies Dependencies) error {
 		return err
 	}
 	if mode == "structure" {
-		return runExtractStructure(values, dependencies)
+		return command.runStructure(values)
 	}
-	return runExtractFlow(values, dependencies)
+	return command.runFlow(values)
+}
+
+func (command *command) runCheck(args []string) error { return runExtractCheck(args) }
+func (command *command) runStructure(values *extractArgs) error {
+	return runExtractStructure(values, command.dependencies)
+}
+func (command *command) runFlow(values *extractArgs) error {
+	return runExtractFlow(values, command.dependencies)
 }
 
 func extractUsageError() error {

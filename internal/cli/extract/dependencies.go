@@ -6,6 +6,7 @@ import (
 	"os"
 
 	codeextract "github.com/greppleai/grepple/extract"
+	cliruntime "github.com/greppleai/grepple/internal/cli/runtime"
 )
 
 // Dependencies supplies source discovery and process-owned output.
@@ -13,6 +14,11 @@ type Dependencies struct {
 	Stdout      io.Writer
 	LoadSources func([]string) ([]codeextract.Source, error)
 }
+
+type command struct{ dependencies Dependencies }
+
+// New constructs the extract command.
+func New(dependencies Dependencies) cliruntime.Command { return &command{dependencies: dependencies} }
 
 func (d Dependencies) stdout() io.Writer {
 	if d.Stdout != nil {

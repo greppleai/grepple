@@ -7,10 +7,13 @@ import (
 	askcommand "github.com/greppleai/grepple/internal/cli/ask"
 	contextcommand "github.com/greppleai/grepple/internal/cli/context"
 	examplescommand "github.com/greppleai/grepple/internal/cli/examples"
+	extractcommand "github.com/greppleai/grepple/internal/cli/extract"
 	getcommand "github.com/greppleai/grepple/internal/cli/get"
+	gritcommand "github.com/greppleai/grepple/internal/cli/grit"
 	languagescommand "github.com/greppleai/grepple/internal/cli/languages"
 	refscommand "github.com/greppleai/grepple/internal/cli/refs"
 	reposcommand "github.com/greppleai/grepple/internal/cli/repos"
+	rulescommand "github.com/greppleai/grepple/internal/cli/rules"
 	cliruntime "github.com/greppleai/grepple/internal/cli/runtime"
 	sourcescommand "github.com/greppleai/grepple/internal/cli/sources"
 	treecommand "github.com/greppleai/grepple/internal/cli/tree"
@@ -51,9 +54,9 @@ func newApplication() *application {
 	app.register("ai-provider", cliruntime.CommandFunc(runAIProvider))
 	app.register("login", cliruntime.CommandFunc(runLogin))
 	app.register("logout", cliruntime.CommandFunc(runLogout))
-	app.register("rules", cliruntime.CommandFunc(runRules))
-	app.register("grit", cliruntime.CommandFunc(runGrit))
-	app.register("extract", cliruntime.CommandFunc(runExtract))
+	app.register("rules", rulescommand.New(rulescommand.Dependencies{ServerDefault: serverDefault, NewRequest: authorizedRequest, RequestExit: setExit}))
+	app.register("grit", gritcommand.New(gritDependencies()))
+	app.register("extract", extractcommand.New(extractDependencies()))
 	app.register("architecture", cliruntime.CommandFunc(runArchitecture))
 	app.register("sources", cliruntime.CommandFunc(func(args []string) error {
 		return sourcescommand.Run(args, sourceCommandDependencies(os.Stdout))

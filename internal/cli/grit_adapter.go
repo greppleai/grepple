@@ -7,5 +7,5 @@ func gritDependencies() gritcommand.Dependencies {
 }
 
 func runGrit(args []string) error {
-	return gritcommand.Run(args, gritDependencies())
+	return gritcommand.New(gritDependencies()).Run(args)
 }

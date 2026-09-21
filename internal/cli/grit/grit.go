@@ -186,10 +186,13 @@ func readGritQuery(reader io.Reader) (string, error) {
 	return string(content), nil
 }
 
+// Run executes structural queries. Deprecated: construct the command with New.
+func Run(args []string, dependencies Dependencies) error { return New(dependencies).Run(args) }
+
 // Run executes structural query commands.
-func Run(args []string, dependencies Dependencies) error {
+func (command *command) Run(args []string) error {
 	if len(args) > 0 && args[0] == "explain" {
-		return runGritExplain(args[1:], dependencies)
+		return command.runExplain(args[1:])
 	}
 	values, err := parseGritArgs(args)
 	if err != nil {
@@ -201,9 +204,19 @@ func Run(args []string, dependencies Dependencies) error {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 	if !values.Local && (values.Remote || values.Server != "") {
-		return runGritRemote(ctx, values, dependencies)
+		return command.runRemote(ctx, values)
 	}
-	return runGritLocal(ctx, values, dependencies)
+	return command.runLocal(ctx, values)
+}
+
+func (command *command) runExplain(args []string) error {
+	return runGritExplain(args, command.dependencies)
+}
+func (command *command) runRemote(ctx context.Context, values gritArgs) error {
+	return runGritRemote(ctx, values, command.dependencies)
+}
+func (command *command) runLocal(ctx context.Context, values gritArgs) error {
+	return runGritLocal(ctx, values, command.dependencies)
 }
 
 func runGritLocal(ctx context.Context, values gritArgs, supplied ...Dependencies) error {

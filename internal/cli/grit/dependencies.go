@@ -35,6 +35,11 @@ type Dependencies struct {
 	RequestExit       func(int)
 }
 
+type command struct{ dependencies Dependencies }
+
+// New constructs the grit command.
+func New(dependencies Dependencies) cliruntime.Command { return &command{dependencies: dependencies} }
+
 func (d Dependencies) applySourceConfig(params *search.Params) error {
 	if d.ApplySourceConfig == nil {
 		return nil
