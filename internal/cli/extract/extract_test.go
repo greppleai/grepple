@@ -1,4 +1,4 @@
-package cli
+package extract
 
 import (
 	"os"
@@ -159,15 +159,15 @@ func TestExtractRecursiveHelp(t *testing.T) {
 		args []string
 		want string
 	}{
-		{[]string{"extract", "--help"}, "grepple extract structure (--entry SYMBOL | --at PATH:LINE)"},
-		{[]string{"help", "extract", "structure"}, "Usage: grepple extract structure"},
-		{[]string{"help", "extract", "flow"}, "Usage: grepple extract flow"},
-		{[]string{"help", "extract", "check"}, "grepple extract check <structure|flow>"},
-		{[]string{"help", "extract", "check", "flow"}, "grepple extract check flow TARGET"},
+		{[]string{"--help"}, "grepple extract structure (--entry SYMBOL | --at PATH:LINE)"},
+		{[]string{"structure", "--help"}, "Usage: grepple extract structure"},
+		{[]string{"flow", "--help"}, "Usage: grepple extract flow"},
+		{[]string{"check", "--help"}, "grepple extract check <structure|flow>"},
+		{[]string{"check", "flow", "--help"}, "grepple extract check flow TARGET"},
 	}
 	for _, test := range tests {
 		output := captureStdout(t, func() {
-			if err := Run(test.args); err != nil {
+			if err := runExtract(test.args); err != nil {
 				t.Fatalf("Run(%q): %v", test.args, err)
 			}
 		})

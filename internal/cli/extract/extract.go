@@ -1,4 +1,5 @@
-package cli
+// Package extract implements focused Mermaid extraction commands.
+package extract
 
 import (
 	"errors"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/alexflint/go-arg"
 	codeextract "github.com/greppleai/grepple/extract"
+	cliruntime "github.com/greppleai/grepple/internal/cli/runtime"
 	codeparser "github.com/greppleai/grepple/parser"
 )
 
@@ -50,21 +52,22 @@ func isExtractHelp(value string) bool {
 }
 
 func writeExtractHelp() error {
-	return stdoutWriter().writeString(extractHelp)
+	return cliruntime.NewOutput(os.Stdout).WriteString(extractHelp)
 }
 
 func writeExtractCheckHelp(mode string) error {
 	switch mode {
 	case "":
-		return stdoutWriter().writeString("Validate generated architecture against source.\nUsage: grepple extract check <structure|flow> TARGET [SOURCE ...]\n")
+		return cliruntime.NewOutput(os.Stdout).WriteString("Validate generated architecture against source.\nUsage: grepple extract check <structure|flow> TARGET [SOURCE ...]\n")
 	case "structure", "flow":
-		return stdoutWriter().writeString(fmt.Sprintf("Validate a generated %s diagram.\nUsage: grepple extract check %s TARGET [SOURCE ...]\n", mode, mode))
+		return cliruntime.NewOutput(os.Stdout).WriteString(fmt.Sprintf("Validate a generated %s diagram.\nUsage: grepple extract check %s TARGET [SOURCE ...]\n", mode, mode))
 	default:
 		return fmt.Errorf("unknown extract check mode %q", mode)
 	}
 }
 
-func runExtract(args []string) error {
+// Run executes the extract command family.
+func Run(args []string, dependencies Dependencies) error {
 	if len(args) == 0 {
 		return extractUsageError()
 	}
@@ -85,9 +88,9 @@ func runExtract(args []string) error {
 		return err
 	}
 	if mode == "structure" {
-		return runExtractStructure(values)
+		return runExtractStructure(values, dependencies)
 	}
-	return runExtractFlow(values)
+	return runExtractFlow(values, dependencies)
 }
 
 func extractUsageError() error {
@@ -124,22 +127,22 @@ func validateExtractArgs(values *extractArgs) error {
 	return nil
 }
 
-func runExtractStructure(values *extractArgs) error {
+func runExtractStructure(values *extractArgs, dependencies Dependencies) error {
 	if values.Entry == "" && values.At == "" {
 		return fmt.Errorf("extract structure requires --entry SYMBOL or --at PATH:LINE; use grepple architecture directory for repository orientation")
 	}
-	return runFocusedStructure(values)
+	return runFocusedStructure(values, dependencies)
 }
 
-func runFocusedStructure(values *extractArgs) error {
-	entryFile, entry, roots, err := resolveExtractEntry(values, true)
+func runFocusedStructure(values *extractArgs, dependencies Dependencies) error {
+	entryFile, entry, roots, err := resolveExtractEntry(values, true, dependencies)
 	if err != nil {
 		return err
 	}
 	if separator := strings.Index(entry, "."); separator > 0 {
 		entry = entry[:separator]
 	}
-	sources, err := loadExtractSources(roots)
+	sources, err := dependencies.loadSources(roots)
 	if err != nil {
 		return err
 	}
@@ -151,18 +154,18 @@ func runFocusedStructure(values *extractArgs) error {
 	if err != nil {
 		return err
 	}
-	return writeExtractOutput(values.Output, diagram)
+	return writeExtractOutput(values.Output, diagram, dependencies)
 }
 
-func runExtractFlow(values *extractArgs) error {
+func runExtractFlow(values *extractArgs, dependencies Dependencies) error {
 	if values.Entry == "" && values.At == "" {
 		return fmt.Errorf("extract flow requires --entry SYMBOL or --at PATH:LINE")
 	}
-	entryFile, entry, roots, err := resolveExtractEntry(values, false)
+	entryFile, entry, roots, err := resolveExtractEntry(values, false, dependencies)
 	if err != nil {
 		return err
 	}
-	sources, err := loadExtractSources(roots)
+	sources, err := dependencies.loadSources(roots)
 	if err != nil {
 		return err
 	}
@@ -170,13 +173,13 @@ func runExtractFlow(values *extractArgs) error {
 	if err != nil {
 		return err
 	}
-	return writeExtractOutput(values.Output, diagram)
+	return writeExtractOutput(values.Output, diagram, dependencies)
 }
 
-func resolveExtractEntry(values *extractArgs, allowStructure bool) (string, string, []string, error) {
+func resolveExtractEntry(values *extractArgs, allowStructure bool, dependencies Dependencies) (string, string, []string, error) {
 	roots := append([]string(nil), values.Source...)
 	if values.At != "" {
-		path, line, err := extractAt(values.At)
+		path, line, err := ParseAt(values.At)
 		if err != nil {
 			return "", "", nil, err
 		}
@@ -192,7 +195,7 @@ func resolveExtractEntry(values *extractArgs, allowStructure bool) (string, stri
 	if len(roots) == 0 {
 		roots = defaultExtractRoots(values.Paths, "")
 	}
-	sources, err := loadExtractSources(roots)
+	sources, err := dependencies.loadSources(roots)
 	if err != nil {
 		return "", "", nil, err
 	}
@@ -264,20 +267,6 @@ func structureDeclarationAt(symbols []codeparser.Symbol, line int) string {
 	return ""
 }
 
-func loadExtractSources(roots []string) ([]codeextract.Source, error) {
-	config, path, err := loadRepositoryConfig()
-	if err != nil {
-		return nil, err
-	}
-	options := codeextract.DiscoveryOptions{IgnoreRoot: mustGetwd(), ProductionOnly: activeRepositoryOptions.productionOnly}
-	if path != "" && !activeRepositoryOptions.ignoreDisabled {
-		options.IgnoreRoot = filepath.Dir(path)
-		options.IgnorePaths = append([]string(nil), config.Ignore.Paths...)
-	}
-	reportExplicitSourceBypasses(roots, options.IgnoreRoot, options.IgnorePaths, options.ProductionOnly)
-	return codeextract.LoadSourcesWithOptions(roots, options)
-}
-
 func extractGenerateOptions(values *extractArgs) codeextract.GenerateOptions {
 	return codeextract.GenerateOptions{Depth: values.Depth, DepthSet: true, MaxNodes: values.MaxNodes}
 }
@@ -302,7 +291,8 @@ func extractSourceByPath(sources []codeextract.Source, path string) *codeextract
 	return nil
 }
 
-func extractAt(value string) (string, int, error) {
+// ParseAt parses one PATH:LINE source selector.
+func ParseAt(value string) (string, int, error) {
 	index := strings.LastIndex(value, ":")
 	if index < 1 {
 		return "", 0, fmt.Errorf("--at must be PATH:LINE")
@@ -314,9 +304,9 @@ func extractAt(value string) (string, int, error) {
 	return value[:index], line, nil
 }
 
-func writeExtractOutput(path, content string) error {
+func writeExtractOutput(path, content string, dependencies Dependencies) error {
 	if path == "" {
-		return stdoutWriter().writeString(content)
+		return cliruntime.NewOutput(dependencies.stdout()).WriteString(content)
 	}
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		return err
