@@ -6,19 +6,8 @@ import (
 	"os"
 	"strings"
 
-	artifactscommand "github.com/greppleai/grepple/internal/cli/artifacts"
-	askcommand "github.com/greppleai/grepple/internal/cli/ask"
-	contextcommand "github.com/greppleai/grepple/internal/cli/context"
-	"github.com/greppleai/grepple/internal/cli/examples"
-	getcommand "github.com/greppleai/grepple/internal/cli/get"
-	languagescommand "github.com/greppleai/grepple/internal/cli/languages"
-	refscommand "github.com/greppleai/grepple/internal/cli/refs"
-	reposcommand "github.com/greppleai/grepple/internal/cli/repos"
 	cliruntime "github.com/greppleai/grepple/internal/cli/runtime"
-	sourcescommand "github.com/greppleai/grepple/internal/cli/sources"
-	treecommand "github.com/greppleai/grepple/internal/cli/tree"
 	versioncommand "github.com/greppleai/grepple/internal/cli/version"
-	writecommand "github.com/greppleai/grepple/internal/cli/write"
 	"github.com/greppleai/grepple/search"
 
 	"github.com/alexflint/go-arg"
@@ -500,58 +489,7 @@ func runCommand(args []string) error {
 		fmt.Fprintln(os.Stdout, versioncommand.String())
 		return nil
 	}
-	if len(args) > 0 {
-		if err := validateCommandAvailability(args[0], args[1:]); err != nil {
-			return err
-		}
-		switch args[0] {
-		case "search":
-			return runSearch(args[1:])
-		case "write":
-			return writecommand.Run(args[1:], writecommand.Dependencies{Stdin: os.Stdin, Stdout: os.Stdout, RequestExit: requestExit, RecordResponse: recordWriteResponseContext})
-		case "graph":
-			return runGraph(args[1:])
-		case "anchors":
-			return runAnchors(args[1:])
-		case "boundaries":
-			return runBoundaries(args[1:])
-		case "examples":
-			return examples.Run(args[1:], os.Stdout)
-		case "artifacts":
-			return artifactscommand.Run(args[1:], artifactscommand.Dependencies{Stdout: os.Stdout, ArtifactDirectory: defaultOutputArtifactDirectory, WorkingDirectory: mustGetwd})
-		case "context":
-			return contextcommand.Run(args[1:], contextcommand.Dependencies{Stdout: os.Stdout, Invalidate: invalidateRenderedContext})
-		case "languages":
-			return languagescommand.Run(args[1:], languagescommand.Dependencies{Stdout: os.Stdout})
-		case "get":
-			return getcommand.Run(args[1:], getcommand.Dependencies{Stdout: os.Stdout, Stderr: os.Stderr, ServerDefault: serverDefault, NewRequest: authorizedRequest, RequestExit: setExit, RecordRangeOutcome: recordStandaloneLineRangeOutcome, ReportRangeError: reportLineRangeCommandError, FullMissError: func(err error) error { return remoteFullLineRangeMissError{err: err} }, RenderOutline: RenderOutlineOrContent})
-		case "tree":
-			return treecommand.Run(args[1:], treecommand.Dependencies{Stdout: os.Stdout, ServerDefault: serverDefault, NewRequest: authorizedRequest, RequestExit: setExit, LocalTree: localTree})
-		case "repos":
-			return reposcommand.Run(args[1:], reposcommand.Dependencies{Stdout: os.Stdout, ServerDefault: serverDefault, NewRequest: authorizedRequest, RequestExit: setExit})
-		case "refs":
-			return refscommand.Run(args[1:], refscommand.Dependencies{Stdout: os.Stdout, ServerDefault: serverDefault, NewRequest: authorizedRequest, RequestExit: setExit})
-		case "ask":
-			return askcommand.Run(args[1:], askcommand.Dependencies{Stdout: os.Stdout, Stderr: os.Stderr, RunSession: runAskSession})
-		case "ai-provider":
-			return runAIProvider(args[1:])
-		case "login":
-			return runLogin(args[1:])
-		case "logout":
-			return runLogout(args[1:])
-		case "rules":
-			return runRules(args[1:])
-		case "grit":
-			return runGrit(args[1:])
-		case "extract":
-			return runExtract(args[1:])
-		case "architecture":
-			return runArchitecture(args[1:])
-		case "sources":
-			return sourcescommand.Run(args[1:], sourceCommandDependencies(os.Stdout))
-		}
-	}
-	return runSearch(args)
+	return newApplication().run(args)
 }
 
 func validateCommandAvailability(command string, args []string) error {
