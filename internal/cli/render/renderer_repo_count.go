@@ -1,11 +1,17 @@
-package cli
+package render
 
 import (
 	"fmt"
+	"io"
 
 	"github.com/greppleai/grepple/api"
 	"github.com/greppleai/grepple/search"
 )
+
+// RepoCounts renders repository count output.
+func RepoCounts(counts []api.RepoCount, destination io.Writer, jsonMode, summaryOnly bool, maxBytes int) error {
+	return (repoCountRenderer{output: newOutputWriter(destination, maxBytes), json: jsonMode, summaryOnly: summaryOnly}).Render(counts)
+}
 
 type repoCountRenderer struct {
 	output      *outputWriter

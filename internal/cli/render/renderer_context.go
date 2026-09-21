@@ -1,4 +1,4 @@
-package cli
+package render
 
 import (
 	"fmt"
@@ -8,11 +8,14 @@ import (
 
 type contextRenderer struct {
 	output       *outputWriter
-	anchors      anchorLookup
-	contextGuard *segmentContextGuard
+	anchors      AnchorLookup
+	contextGuard ContextGuard
 }
 
 func (renderer contextRenderer) Render(results []api.FileResult) error {
+	if renderer.contextGuard == nil {
+		renderer.contextGuard = noopContextGuard{}
+	}
 	contextPrinted := false
 	for _, result := range results {
 		didPrint, err := printContext(renderer.output, renderer.anchors, renderer.contextGuard, resultSourceIdentity(result), result.Path, result.Context, contextPrinted)
@@ -24,7 +27,7 @@ func (renderer contextRenderer) Render(results []api.FileResult) error {
 	return nil
 }
 
-func printContext(output *outputWriter, anchors anchorLookup, guard *segmentContextGuard, source, path string, lines []api.ContextLine, leading bool) (bool, error) {
+func printContext(output *outputWriter, anchors AnchorLookup, guard ContextGuard, source, path string, lines []api.ContextLine, leading bool) (bool, error) {
 	if anchors != nil {
 		return printAnchoredContext(output, anchors, guard, source, path, lines, leading)
 	}
@@ -47,7 +50,7 @@ func printContext(output *outputWriter, anchors anchorLookup, guard *segmentCont
 	return len(lines) > 0, nil
 }
 
-func printAnchoredContext(output *outputWriter, anchors anchorLookup, guard *segmentContextGuard, source, path string, lines []api.ContextLine, leading bool) (bool, error) {
+func printAnchoredContext(output *outputWriter, anchors AnchorLookup, guard ContextGuard, source, path string, lines []api.ContextLine, leading bool) (bool, error) {
 	if len(lines) == 0 {
 		return false, nil
 	}
@@ -66,11 +69,11 @@ func printAnchoredContext(output *outputWriter, anchors anchorLookup, guard *seg
 				return false, err
 			}
 		}
-		row := fmt.Sprintf("%s%s%d%s%s\n", anchors.line(path, line.Line), anchorOutputSeparator, line.Line, anchorOutputSeparator, normalizeRenderedAnchorLine(line.Text))
+		row := fmt.Sprintf("%s%s%d%s%s\n", anchors.Line(path, line.Line), anchorOutputSeparator, line.Line, anchorOutputSeparator, normalizeRenderedAnchorLine(line.Text))
 		if err := output.writeString(row); err != nil {
 			return false, err
 		}
-		guard.recordSearchLine(source, line.Line, line.Text)
+		guard.RecordSearchLine(source, line.Line, line.Text)
 		last = line.Line
 	}
 	return true, nil

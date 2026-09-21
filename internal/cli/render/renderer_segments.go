@@ -1,4 +1,4 @@
-package cli
+package render
 
 import (
 	"fmt"
@@ -10,11 +10,14 @@ import (
 
 type segmentRenderer struct {
 	output       *outputWriter
-	anchors      anchorLookup
-	contextGuard *segmentContextGuard
+	anchors      AnchorLookup
+	contextGuard ContextGuard
 }
 
 func (renderer segmentRenderer) Render(results []api.FileResult) error {
+	if renderer.contextGuard == nil {
+		renderer.contextGuard = noopContextGuard{}
+	}
 	if analysis := searchSourceAnalysis(results); analysis != nil && analysis.Unsupported+analysis.Failed+analysis.Recovered > 0 {
 		message := fmt.Sprintf("! incomplete source analysis returned=%d structured=%d plain=%d unsupported=%d failed=%d recovered=%d\n\n", analysis.Returned, analysis.Structured, analysis.Plain, analysis.Unsupported, analysis.Failed, analysis.Recovered)
 		if err := renderer.output.writeString(message); err != nil {
@@ -256,15 +259,15 @@ func (renderer segmentRenderer) renderSegment(source, path string, artifact *api
 	if segment.Kind == "summary" {
 		return renderer.output.writeString(fmt.Sprintf("%s%*d   %s\n", prefix, width, segment.Start, segment.Text))
 	}
-	if renderer.contextGuard.seen(source, artifact, segment) {
+	if renderer.contextGuard.Seen(source, artifact, segment) {
 		marker := prefix + segmentContextMarker(source, segment, contextLabel)
-		renderer.contextGuard.recordMarker(len(marker))
+		renderer.contextGuard.RecordMarker(len(marker))
 		return renderer.output.writeString(marker)
 	}
 	if err := renderer.renderSegmentLines(source, path, artifact, segment, width, prefix); err != nil {
 		return err
 	}
-	renderer.contextGuard.record(source, artifact, segment)
+	renderer.contextGuard.Record(source, artifact, segment)
 	return nil
 }
 
@@ -298,7 +301,7 @@ func (renderer segmentRenderer) renderSegmentRun(path string, lines []contextSou
 		return err
 	}
 	sourceBytes, renderedBytes := renderer.segmentRunBytes(path, omitted, width, prefix)
-	renderer.contextGuard.recordLineRangeOmission(len(omitted), sourceBytes, renderedBytes, len(marker))
+	renderer.contextGuard.RecordLineRangeOmission(len(omitted), sourceBytes, renderedBytes, len(marker))
 	last := lines[run.end-1]
 	return renderer.output.writeString(renderer.segmentLineRow(path, last.number, last.text, width, prefix))
 }
@@ -337,7 +340,7 @@ func (renderer segmentRenderer) segmentLineRow(path string, line int, content st
 	if prefix != "" {
 		return fmt.Sprintf("%s%*d   %s\n", prefix, width, line, content)
 	}
-	if anchor := renderer.anchors.line(path, line); anchor != "" {
+	if anchor := renderer.anchors.Line(path, line); anchor != "" {
 		return fmt.Sprintf("%s%s%d%s%s\n", anchor, anchorOutputSeparator, line, anchorOutputSeparator, content)
 	}
 	return fmt.Sprintf("%*d   %s\n", width, line, content)
@@ -362,4 +365,11 @@ func collapsedLines(count int) string {
 		word = "line"
 	}
 	return fmt.Sprintf("\n// … %d %s collapsed …\n\n", count, word)
+}
+
+func segmentContextMarker(source string, segment api.ResultSegment, contextLabel string) string {
+	if contextLabel != "" {
+		return fmt.Sprintf("// … unchanged %s already emitted at %s:%d-%d (%d source bytes) …\n", contextLabel, source, segment.Start, segment.End, len(segment.Text))
+	}
+	return fmt.Sprintf("// … unchanged segment already emitted: %s:%d-%d (%d source bytes) …\n", source, segment.Start, segment.End, len(segment.Text))
 }

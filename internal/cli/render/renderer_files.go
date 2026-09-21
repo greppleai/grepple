@@ -1,4 +1,4 @@
-package cli
+package render
 
 import "github.com/greppleai/grepple/api"
 

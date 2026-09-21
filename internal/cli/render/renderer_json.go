@@ -1,4 +1,4 @@
-package cli
+package render
 
 import (
 	"github.com/greppleai/grepple/api"
@@ -9,10 +9,13 @@ type jsonResultRenderer struct {
 	output       *outputWriter
 	matchesOnly  bool
 	metadata     *api.ResultMetadata
-	contextGuard *segmentContextGuard
+	contextGuard ContextGuard
 }
 
 func (renderer jsonResultRenderer) Render(results []api.FileResult) error {
+	if renderer.contextGuard == nil {
+		renderer.contextGuard = noopContextGuard{}
+	}
 	if renderer.matchesOnly {
 		response := map[string]any{"matches": flatMatches(results), "metadata": renderer.metadata}
 		if ranges := resultLineRanges(results); len(ranges) > 0 {
@@ -27,33 +30,33 @@ func (renderer jsonResultRenderer) Render(results []api.FileResult) error {
 	return nil
 }
 
-func recordJSONResultCoverage(guard *segmentContextGuard, results []api.FileResult) {
+func recordJSONResultCoverage(guard ContextGuard, results []api.FileResult) {
 	if guard == nil {
 		return
 	}
 	for _, result := range results {
 		source := resultSourceIdentity(result)
 		for _, segment := range result.Segments {
-			guard.record(source, nil, segment)
+			guard.Record(source, nil, segment)
 		}
 		for _, match := range result.Matches {
-			guard.recordSearchLine(source, match.Line, match.Text)
+			guard.RecordSearchLine(source, match.Line, match.Text)
 		}
 		for _, line := range result.Context {
-			guard.recordSearchLine(source, line.Line, line.Text)
+			guard.RecordSearchLine(source, line.Line, line.Text)
 		}
 		recordJSONRelatedCoverage(guard, result.Repo, result.Related)
 	}
 }
 
-func recordJSONRelatedCoverage(guard *segmentContextGuard, repository string, points []api.RelatedSymbol) {
+func recordJSONRelatedCoverage(guard ContextGuard, repository string, points []api.RelatedSymbol) {
 	for _, point := range points {
 		source := point.Path
 		if point.Artifact == nil && repository != "" {
 			source = repository + "\x00" + point.Path
 		}
 		for _, segment := range point.Segments {
-			guard.record(source, point.Artifact, segment)
+			guard.Record(source, point.Artifact, segment)
 		}
 		recordJSONRelatedCoverage(guard, repository, point.Related)
 	}

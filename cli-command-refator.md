@@ -139,6 +139,16 @@ Progress: graph dispatch is now an invocation-scoped `runtime.Command` construct
 - [x] Keep output spilling and repository invocation scope at the application layer.
 - [x] Decide separately whether `grep` becomes a supported alias. Decision: retain `search` and implicit search only; do not add a `grep` alias.
 
+### Search renderer extraction
+
+- [x] Move search result renderer selection and implementations into `internal/cli/render`.
+- [x] Move outline and repository-count formatting into the renderer package.
+- [x] Keep context-cache lifecycle, line-range warnings, and search exit state in the parent adapter.
+- [x] Inject anchor lookup and context coverage through renderer-owned types and interfaces.
+- [x] Move renderer behavior tests with the renderer package and retain only adapter/integration coverage in `internal/cli`.
+
+The parent `renderResults` function is now an adapter that projects `cliOptions` into `render.Options`, bridges the context guard, and delegates formatting. The renderer package has no reverse dependency on parent `internal/cli`.
+
 ### Phase 7: settings and authentication families
 
 - [x] Convert anchors after introducing narrow settings/provider services.

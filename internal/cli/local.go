@@ -1,13 +1,13 @@
 package cli
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"os"
 	"sort"
 
 	"github.com/greppleai/grepple/api"
+	rendercommand "github.com/greppleai/grepple/internal/cli/render"
 	"github.com/greppleai/grepple/search"
 )
 
@@ -315,12 +315,15 @@ func runCountByRepo(options *cliOptions, explicitServer string, remote bool) err
 	for repo, a := range repos {
 		out = append(out, api.RepoCount{Repo: repo, Files: a.files, Matches: a.matches})
 	}
-	renderer := repoCountRenderer{output: outputForOptions(options), json: options.JSON != "off", summaryOnly: options.CountSummary}
-	if err := renderer.Render(out); err != nil && !errors.Is(err, errOutputTruncated) {
+	maxBytes := 0
+	if options.JSON == "off" {
+		maxBytes = options.MaxOutputBytes
+	}
+	if err := rendercommand.RepoCounts(out, os.Stdout, options.JSON != "off", options.CountSummary, maxBytes); err != nil {
 		return err
 	}
 	if len(out) == 0 {
-		setExit(1) // no matches: exit 1, consistent with grep
+		setExit(1)
 	}
 	return nil
 }

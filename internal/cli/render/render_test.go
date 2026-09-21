@@ -1,4 +1,4 @@
-package cli
+package render
 
 import (
 	"bytes"
@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/greppleai/grepple/api"
+	cliruntime "github.com/greppleai/grepple/internal/cli/runtime"
 	"github.com/greppleai/grepple/parser"
 	"github.com/greppleai/grepple/search"
 )
@@ -16,21 +17,21 @@ import (
 func TestNewResultRendererSelectsOutputMode(t *testing.T) {
 	tests := []struct {
 		name    string
-		options cliOptions
+		options Options
 		want    string
 	}{
-		{name: "files", options: cliOptions{Params: search.Params{Files: true}, JSON: "off"}, want: "filesRenderer"},
-		{name: "count", options: cliOptions{Count: true, JSON: "off"}, want: "countRenderer"},
-		{name: "json", options: cliOptions{JSON: "full"}, want: "jsonResultRenderer"},
-		{name: "context", options: cliOptions{Params: search.Params{BeforeContext: 1}, JSON: "off"}, want: "contextRenderer"},
-		{name: "only matching", options: cliOptions{OnlyMatching: true, JSON: "off"}, want: "onlyMatchingRenderer"},
-		{name: "lines", options: cliOptions{LineOnly: true, JSON: "off"}, want: "lineRenderer"},
-		{name: "segments", options: cliOptions{JSON: "off"}, want: "segmentRenderer"},
+		{name: "files", options: Options{Params: search.Params{Files: true}, JSON: "off"}, want: "filesRenderer"},
+		{name: "count", options: Options{Count: true, JSON: "off"}, want: "countRenderer"},
+		{name: "json", options: Options{JSON: "full"}, want: "jsonResultRenderer"},
+		{name: "context", options: Options{Params: search.Params{BeforeContext: 1}, JSON: "off"}, want: "contextRenderer"},
+		{name: "only matching", options: Options{OnlyMatching: true, JSON: "off"}, want: "onlyMatchingRenderer"},
+		{name: "lines", options: Options{LineOnly: true, JSON: "off"}, want: "lineRenderer"},
+		{name: "segments", options: Options{JSON: "off"}, want: "segmentRenderer"},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			renderer := newResultRenderer(&test.options, newOutputWriter(&bytes.Buffer{}), nil)
+			renderer := newResultRenderer(test.options, newOutputWriter(&bytes.Buffer{}), nil)
 			if got := reflect.TypeOf(renderer).Name(); got != test.want {
 				t.Fatalf("expected %s, got %s", test.want, got)
 			}
@@ -40,7 +41,7 @@ func TestNewResultRendererSelectsOutputMode(t *testing.T) {
 
 func TestLineRendererWritesToInjectedOutput(t *testing.T) {
 	var output bytes.Buffer
-	renderer := lineRenderer{output: newOutputWriter(&output)}
+	renderer := lineRenderer{contextGuard: noopContextGuard{}, output: newOutputWriter(&output)}
 	results := []api.FileResult{{
 		Path: "example.go",
 		Matches: []api.ResultMatch{
@@ -60,7 +61,7 @@ func TestLineRendererWritesToInjectedOutput(t *testing.T) {
 
 func TestSegmentRendererUsesWhitespaceForShortSpacingSegments(t *testing.T) {
 	var output bytes.Buffer
-	renderer := segmentRenderer{output: newOutputWriter(&output)}
+	renderer := segmentRenderer{contextGuard: noopContextGuard{}, output: newOutputWriter(&output)}
 	results := []api.FileResult{{
 		Path: "example.go",
 		Segments: []api.ResultSegment{
@@ -82,7 +83,7 @@ func TestSegmentRendererUsesWhitespaceForShortSpacingSegments(t *testing.T) {
 
 func TestSegmentRendererPrintsRelatedGoPoints(t *testing.T) {
 	var output bytes.Buffer
-	renderer := segmentRenderer{output: newOutputWriter(&output)}
+	renderer := segmentRenderer{contextGuard: noopContextGuard{}, output: newOutputWriter(&output)}
 	results := []api.FileResult{{
 		Path: "caller.go",
 		Related: []api.RelatedSymbol{
@@ -145,7 +146,7 @@ func TestSegmentRendererDeduplicatesAnchoredRelatedTypeAppendix(t *testing.T) {
 	var output bytes.Buffer
 	renderer := segmentRenderer{
 		output:  newOutputWriter(&output),
-		anchors: anchorLookup{"request.go": {2: "AAA", 3: "BBB", 4: "CCC"}},
+		anchors: AnchorLookup{"request.go": {2: "AAA", 3: "BBB", 4: "CCC"}},
 	}
 	typePoint := api.RelatedSymbol{
 		Name: "Request", Path: "request.go", Kind: "struct", Direction: "type", Role: "parameter",
@@ -170,7 +171,7 @@ func TestSegmentRendererDeduplicatesAnchoredRelatedTypeAppendix(t *testing.T) {
 
 func TestSegmentRendererShowsResolvedExternalTypeDefinition(t *testing.T) {
 	var output bytes.Buffer
-	renderer := segmentRenderer{output: newOutputWriter(&output)}
+	renderer := segmentRenderer{contextGuard: noopContextGuard{}, output: newOutputWriter(&output)}
 	artifact := &api.NavigationArtifactIdentity{
 		Ecosystem: "go", Module: "github.com/gofiber/fiber/v3", Version: "v3.5.0", Source: "https://proxy.golang.org", Integrity: "h1:exact",
 		Repository: "gofiber/fiber@tag~v3.5.0", Commit: "abcdef", Digest: "artifact-digest",
@@ -203,7 +204,7 @@ func TestSegmentRendererShowsResolvedExternalTypeDefinition(t *testing.T) {
 
 func TestSegmentRendererReportsIncompleteSourceAnalysis(t *testing.T) {
 	var output bytes.Buffer
-	renderer := segmentRenderer{output: newOutputWriter(&output)}
+	renderer := segmentRenderer{contextGuard: noopContextGuard{}, output: newOutputWriter(&output)}
 	results := []api.FileResult{
 		{Path: "valid.go", StructureStatus: string(parser.SegmentBuildStructured)},
 		{Path: "recovered.go", StructureStatus: string(parser.SegmentBuildRecovered)},
@@ -224,7 +225,7 @@ func TestSegmentRendererReportsIncompleteSourceAnalysis(t *testing.T) {
 	}
 
 	output.Reset()
-	jsonRenderer := jsonResultRenderer{output: newOutputWriter(&output)}
+	jsonRenderer := jsonResultRenderer{contextGuard: noopContextGuard{}, output: newOutputWriter(&output)}
 	if err := jsonRenderer.Render(results); err != nil {
 		t.Fatal(err)
 	}
@@ -237,33 +238,11 @@ func TestSegmentRendererReportsIncompleteSourceAnalysis(t *testing.T) {
 	}
 }
 
-func TestSearchJSONIncludesStandardPagingMetadata(t *testing.T) {
-	dir := chdirTemp(t)
-	writeGraphSource(t, dir, "a.txt", "needle\n")
-	writeGraphSource(t, dir, "b.txt", "needle\n")
-	output := captureStdout(t, func() {
-		if err := Run([]string{"search", "--json", "--limit", "1", "needle", "."}); err != nil {
-			t.Fatal(err)
-		}
-	})
-	var response api.SearchResponse
-	if err := json.Unmarshal([]byte(output), &response); err != nil {
-		t.Fatal(err)
-	}
-	metadata := response.Metadata
-	if metadata == nil || metadata.Page.Returned != 1 || metadata.Page.Limit != 1 || metadata.Page.Complete || metadata.NextCommand == "" {
-		t.Fatalf("search metadata=%#v", metadata)
-	}
-	if !strings.Contains(metadata.NextCommand, "grepple search --skip 1 --limit 1 --json") {
-		t.Fatalf("search continuation is not copyable: %q", metadata.NextCommand)
-	}
-}
-
 func TestBoundedOutputWriterStopsBeforeAgentToolLimit(t *testing.T) {
 	var output bytes.Buffer
 	writer := newBoundedOutputWriter(&output, 256)
 	err := writer.writeString(strings.Repeat("a", 500))
-	if !errors.Is(err, errOutputTruncated) {
+	if !errors.Is(err, cliruntime.ErrOutputTruncated) {
 		t.Fatalf("write error = %v, want output truncation", err)
 	}
 	if output.Len() > 256 {
@@ -279,7 +258,7 @@ func TestBoundedOutputWriterStopsBeforeAgentToolLimit(t *testing.T) {
 
 func TestAnchoredContextRendererEmitsEditableRows(t *testing.T) {
 	var output bytes.Buffer
-	renderer := contextRenderer{output: newOutputWriter(&output), anchors: anchorLookup{"sample.go": {1: "AAA", 2: "BBB", 3: "CCC"}}}
+	renderer := contextRenderer{contextGuard: noopContextGuard{}, output: newOutputWriter(&output), anchors: AnchorLookup{"sample.go": {1: "AAA", 2: "BBB", 3: "CCC"}}}
 	results := []api.FileResult{{Path: "sample.go", Context: []api.ContextLine{{Line: 1, Text: "before"}, {Line: 2, Text: "needle", Match: true}, {Line: 3, Text: "after"}}}}
 	if err := renderer.Render(results); err != nil {
 		t.Fatal(err)

@@ -1,4 +1,4 @@
-package cli
+package render
 
 import (
 	"fmt"
@@ -10,12 +10,15 @@ import (
 
 type lineRenderer struct {
 	output       *outputWriter
-	anchors      anchorLookup
-	contextGuard *segmentContextGuard
+	anchors      AnchorLookup
+	contextGuard ContextGuard
 	repeatSource bool
 }
 
 func (renderer lineRenderer) Render(results []api.FileResult) error {
+	if renderer.contextGuard == nil {
+		renderer.contextGuard = noopContextGuard{}
+	}
 	if renderer.anchors != nil {
 		return renderer.renderAnchored(results)
 	}
@@ -30,7 +33,7 @@ func (renderer lineRenderer) Render(results []api.FileResult) error {
 			if err := renderer.output.writeString(fmt.Sprintf("%s:%s:%s\n", result.Path, location, match.Text)); err != nil {
 				return err
 			}
-			renderer.contextGuard.recordSearchLine(resultSourceIdentity(result), match.Line, match.Text)
+			renderer.contextGuard.RecordSearchLine(resultSourceIdentity(result), match.Line, match.Text)
 		}
 	}
 	return nil
@@ -86,7 +89,7 @@ func (renderer lineRenderer) renderAnchoredRun(result api.FileResult, matches []
 		return err
 	}
 	sourceBytes, renderedBytes := renderer.anchoredRunBytes(result, omitted)
-	renderer.contextGuard.recordLineRangeOmission(len(omitted), sourceBytes, renderedBytes, len(marker))
+	renderer.contextGuard.RecordLineRangeOmission(len(omitted), sourceBytes, renderedBytes, len(marker))
 	return renderer.renderAnchoredMatch(result, matches[run.end-1])
 }
 
@@ -104,12 +107,12 @@ func (renderer lineRenderer) renderAnchoredMatch(result api.FileResult, match ap
 	if err := renderer.output.writeString(row); err != nil {
 		return err
 	}
-	renderer.contextGuard.recordSearchLine(resultSourceIdentity(result), match.Line, match.Text)
+	renderer.contextGuard.RecordSearchLine(resultSourceIdentity(result), match.Line, match.Text)
 	return nil
 }
 
 func (renderer lineRenderer) anchoredMatchRow(result api.FileResult, match api.ResultMatch) string {
-	anchor := renderer.anchors.line(result.Path, match.Line)
+	anchor := renderer.anchors.Line(result.Path, match.Line)
 	return fmt.Sprintf("%s%s%d%s%s\n", anchor, anchorOutputSeparator, match.Line, anchorOutputSeparator, normalizeRenderedAnchorLine(match.Text))
 }
 
@@ -134,7 +137,7 @@ func (renderer onlyMatchingRenderer) Render(results []api.FileResult) error {
 	return nil
 }
 
-func compileOnlyMatcher(options *cliOptions) *regexp.Regexp {
+func compileOnlyMatcher(options *Options) *regexp.Regexp {
 	pattern := options.Params.Query
 	if !options.Params.Regex {
 		pattern = regexp.QuoteMeta(pattern)

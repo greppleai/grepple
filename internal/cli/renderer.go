@@ -2,35 +2,16 @@ package cli
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"os"
 
 	"github.com/greppleai/grepple/api"
+	rendercommand "github.com/greppleai/grepple/internal/cli/render"
 	"github.com/greppleai/grepple/linerange"
 )
 
-type resultRenderer interface {
-	Render([]api.FileResult) error
-}
-
-func newResultRenderer(options *cliOptions, output *outputWriter, guard *segmentContextGuard) resultRenderer {
-	switch {
-	case options.Params.Files || options.FilesWithMatches:
-		return filesRenderer{output: output, json: options.JSON != "off"}
-	case options.Count:
-		return countRenderer{output: output, json: options.JSON != "off"}
-	case options.JSON != "off":
-		return jsonResultRenderer{output: output, matchesOnly: options.JSON == "matches" || options.LineOnly, metadata: options.ResultMetadata, contextGuard: guard}
-	case options.Params.BeforeContext > 0 || options.Params.AfterContext > 0:
-		return contextRenderer{output: output, anchors: options.AnchorLines, contextGuard: guard}
-	case options.OnlyMatching:
-		return onlyMatchingRenderer{output: output, matcher: compileOnlyMatcher(options)}
-	case options.LineOnly:
-		return lineRenderer{output: output, anchors: options.AnchorLines, contextGuard: guard, repeatSource: options.RepeatSource}
-	default:
-		return segmentRenderer{output: output, anchors: options.AnchorLines, contextGuard: guard}
-	}
+func rendererOptions(options *cliOptions) rendercommand.Options {
+	return rendercommand.Options{Params: options.Params, LineOnly: options.LineOnly, OnlyMatching: options.OnlyMatching, JSON: options.JSON, Count: options.Count, FilesWithMatches: options.FilesWithMatches, MaxOutputBytes: options.MaxOutputBytes, RepeatSource: options.RepeatSource, Anchors: rendercommand.AnchorLookup(options.AnchorLines), Metadata: options.ResultMetadata}
 }
 
 func outputForOptions(options *cliOptions) *outputWriter {
@@ -41,18 +22,38 @@ func outputForOptions(options *cliOptions) *outputWriter {
 	return output
 }
 
+type renderContextGuard struct{ guard *segmentContextGuard }
+
+func (adapter renderContextGuard) Seen(source string, artifact *api.NavigationArtifactIdentity, segment api.ResultSegment) bool {
+	return adapter.guard.seen(source, artifact, segment)
+}
+func (adapter renderContextGuard) Record(source string, artifact *api.NavigationArtifactIdentity, segment api.ResultSegment) {
+	adapter.guard.record(source, artifact, segment)
+}
+func (adapter renderContextGuard) RecordMarker(bytes int) { adapter.guard.recordMarker(bytes) }
+func (adapter renderContextGuard) RecordSearchLine(source string, line int, text string) {
+	adapter.guard.recordSearchLine(source, line, text)
+}
+func (adapter renderContextGuard) RecordLineRangeOmission(lines, sourceBytes, renderedBytes, markerBytes int) {
+	adapter.guard.recordLineRangeOmission(lines, sourceBytes, renderedBytes, markerBytes)
+}
+func (adapter renderContextGuard) LineCovered(source string, line int, text string) bool {
+	return adapter.guard.lineCovered(source, line, text)
+}
+
 func renderResults(options *cliOptions, results []api.FileResult) error {
 	warnLineRangeResults(results)
 	guard := contextGuardForResults(options, results)
-	output := outputForOptions(options)
-	defer func() {
-		if guard != nil {
-			guard.returnedBytes = output.written
-		}
-		guard.close()
-	}()
-	renderer := newResultRenderer(options, output, guard)
-	if err := renderer.Render(results); err != nil && !errors.Is(err, errOutputTruncated) {
+	var renderGuard rendercommand.ContextGuard
+	if guard != nil {
+		renderGuard = renderContextGuard{guard: guard}
+	}
+	written, err := rendercommand.Render(rendererOptions(options), results, os.Stdout, renderGuard)
+	if guard != nil {
+		guard.returnedBytes = written
+	}
+	guard.close()
+	if err != nil {
 		return err
 	}
 	return setSearchExit(results)
@@ -113,12 +114,8 @@ func contextGuardForResults(options *cliOptions, results []api.FileResult) *segm
 		return guard
 	}
 	var rendered bytes.Buffer
-	output := newOutputWriter(&rendered)
-	if options.MaxOutputBytes > 0 {
-		output = newBoundedOutputWriter(&rendered, options.MaxOutputBytes)
-	}
-	err = newResultRenderer(options, output, nil).Render(results)
-	if err != nil && !errors.Is(err, errOutputTruncated) {
+	_, err = rendercommand.Render(rendererOptions(options), results, &rendered, nil)
+	if err != nil {
 		guard.deduplicate = false
 		guard.recordSegments = false
 		guard.recordLines = false
