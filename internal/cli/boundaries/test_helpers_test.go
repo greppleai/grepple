@@ -9,7 +9,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/greppleai/grepple/api"
 	"github.com/greppleai/grepple/parser"
 	"github.com/greppleai/grepple/search"
 )
@@ -37,10 +36,6 @@ func testBoundaryDependencies() Dependencies {
 			return GraphOutput{Files: len(eligible), Sources: SourceSummary{Discovered: discovered, Selected: stats.Attempted, Parsed: stats.Parsed, Skipped: discovered - len(paths) + stats.Skipped, Failed: stats.Failed, Recovered: stats.Recovered}, Declarations: graph.Declarations, Calls: graph.Calls, Fields: graph.Fields, TypeUsages: graph.TypeUsages, MemberAccesses: graph.MemberAccesses, Truncation: truncation}
 		},
 		CacheDirectory: testBoundaryCacheDirectory,
-		Metadata: func(input MetadataInput) *api.ResultMetadata {
-			total := len(input.Report.Candidates) + len(input.Report.TypeBoundaries) + len(input.Report.FacadeBypasses)
-			return &api.ResultMetadata{Scope: api.ResultScope{Mode: "local", Paths: boundaryDisplayPaths(input.Paths)}, Page: api.ResultPage{Limit: input.Limit, Returned: total, Total: &total, Complete: input.Report.Truncation == nil && input.Report.Sources.Failed == 0 && input.Report.Sources.Recovered == 0}}
-		},
 	}
 }
 

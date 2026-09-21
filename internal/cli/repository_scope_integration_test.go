@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	sourcescommand "github.com/greppleai/grepple/internal/cli/sources"
 )
 
 func TestRepositoryScopeFlagsBypassOnlyRequestedBehavior(t *testing.T) {
@@ -21,7 +23,7 @@ func TestRepositoryScopeFlagsBypassOnlyRequestedBehavior(t *testing.T) {
 			t.Fatal(err)
 		}
 	})
-	var report sourceScopeReport
+	var report sourcescommand.Report
 	if err := json.Unmarshal([]byte(withoutIgnore), &report); err != nil {
 		t.Fatal(err)
 	}

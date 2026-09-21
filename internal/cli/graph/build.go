@@ -1,4 +1,4 @@
-package cli
+package graph
 
 import (
 	"context"
@@ -10,12 +10,10 @@ import (
 
 	"github.com/alexflint/go-arg"
 	"github.com/greppleai/grepple/api"
-	graphcommand "github.com/greppleai/grepple/internal/cli/graph"
 	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
+	"github.com/greppleai/grepple/internal/shellquote"
 	"github.com/greppleai/grepple/parser"
 )
-
-const navigationGraphSchema = "grepple-navigation-graph-v7"
 
 type graphArgs struct {
 	JSON    bool `arg:"--json" help:"emit the complete normalized navigation graph as JSON"`
@@ -32,13 +30,14 @@ func (graphArgs) Description() string {
 }
 
 // Parent aliases preserve integrations while graph projection ownership moves to the command package.
-type navigationGraphOutput = graphcommand.Output
-type navigationGraphQuery = graphcommand.Query
-type navigationGraphTruncation = graphcommand.Truncation
-type navigationSourceSummary = graphcommand.SourceSummary
+type navigationGraphOutput = Output
+type navigationGraphQuery = Query
+type navigationGraphTruncation = Truncation
+type navigationSourceSummary = SourceSummary
 
-func runGraphBuild(args []string) error {
-	values := graphArgs{MaxOutputBytes: DefaultTextOutputBytes}
+// RunBuild builds a navigation graph.
+func RunBuild(args []string, services Services) error {
+	values := graphArgs{MaxOutputBytes: defaultTextOutputBytes}
 	argumentParser, err := arg.NewParser(arg.Config{Program: "grepple graph"}, &values)
 	if err != nil {
 		return err
@@ -60,7 +59,7 @@ func runGraphBuild(args []string) error {
 	if values.MaxOutputBytes < 0 {
 		return fmt.Errorf("--max-output-bytes must be non-negative")
 	}
-	output, remote, err := loadGraphCommandOutput(values)
+	output, remote, err := loadGraphCommandOutput(values, services)
 	if err != nil {
 		return err
 	}
@@ -76,9 +75,9 @@ func runGraphBuild(args []string) error {
 	return encoder.Encode(output)
 }
 
-func loadGraphCommandOutput(values graphArgs) (navigationGraphOutput, *api.AnalysisResponse, error) {
+func loadGraphCommandOutput(values graphArgs, services Services) (navigationGraphOutput, *api.AnalysisResponse, error) {
 	if values.Repository != "" {
-		response, err := requestAnalysisRemote(context.Background(), api.AnalysisRequest{Operation: api.AnalysisGraph, Repository: values.Repository, Paths: values.Paths, MaxFiles: values.MaxFiles}, serverDefault(values.Server))
+		response, err := services.Remote(context.Background(), api.AnalysisRequest{Operation: api.AnalysisGraph, Repository: values.Repository, Paths: values.Paths, MaxFiles: values.MaxFiles}, services.server(values.Server))
 		if err != nil {
 			return navigationGraphOutput{}, nil, err
 		}
@@ -88,12 +87,34 @@ func loadGraphCommandOutput(values graphArgs) (navigationGraphOutput, *api.Analy
 		}
 		return output, &response, nil
 	}
-	output, err := buildNavigationGraphOutput(values.Paths, values.MaxFiles)
+	output, err := buildNavigationGraphOutput(values.Paths, values.MaxFiles, services)
 	if err != nil {
 		return navigationGraphOutput{}, nil, err
 	}
-	output.Metadata = graphResultMetadata(values.Paths, len(output.Declarations), values.MaxFiles, values.MaxOutputBytes, values.JSON, output.Sources, output.Truncation, graphContinuationCommand("graph", values.Paths, output.Truncation))
+	if services.Metadata != nil {
+		output.Metadata = services.Metadata(MetadataInput{Paths: values.Paths, Returned: len(output.Declarations), MaxFiles: values.MaxFiles, MaxOutputBytes: values.MaxOutputBytes, JSON: values.JSON, Sources: output.Sources, Truncation: output.Truncation, NextCommand: graphContinuationCommand("graph", values.Paths, output.Truncation, services)})
+	}
 	return output, nil, nil
+}
+func graphContinuationCommand(mode string, paths []string, truncation *Truncation, services Services) string {
+	if truncation == nil {
+		return ""
+	}
+	parts := []string{"grepple", "graph"}
+	if services.ActiveScopeFlags != nil {
+		parts = services.ActiveScopeFlags(parts)
+	}
+	if mode != "graph" {
+		parts = append(parts, mode)
+	}
+	parts = append(parts, "--max-files", "0", "--json")
+	if len(paths) == 0 {
+		paths = []string{"."}
+	}
+	for _, path := range paths {
+		parts = append(parts, shellquote.Argument(path))
+	}
+	return strings.Join(parts, " ")
 }
 
 func renderCompactNavigationGraph(graph navigationGraphOutput, maxBytes int) error {
@@ -259,4 +280,7 @@ func compactCallTarget(call parser.NavigationCall, declarations map[string]parse
 	return "? " + strings.Join(candidates, ",")
 }
 
-func navigationSourcePaths(paths []string) []string { return graphcommand.SourcePaths(paths) }
+func navigationSourcePaths(paths []string) []string { return SourcePaths(paths) }
+
+// ShortID returns the compact stable suffix used in graph output.
+func ShortID(id string) string { return shortGraphID(id) }

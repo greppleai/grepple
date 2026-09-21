@@ -6,12 +6,12 @@ Represent every CLI command as an object implementing one command-neutral interf
 
 ## Current architecture
 
-- `internal/cli/args.go` owns dispatch and invokes package-level `Run(args, Dependencies)` functions.
-- Extracted command packages import command infrastructure from `internal/cliruntime`; production imports remain one-way.
-- Most command packages repeat a `Dependencies` bundle, which is a strong signal for a command object.
-- Parent adapters bridge process-owned streams, configuration, authentication, repository state, remote transport, caches, and shared analysis services.
+- `internal/cli/application.go` constructs a fresh command registry for each invocation; `args.go` retains top-level parsing and help behavior.
+- Command packages import command infrastructure from `internal/cliruntime`; production imports remain one-way.
+- Command constructors receive command-owned dependency bundles; defaulting and validation remain within the owning package.
+- Root `internal/cli` performs application composition directly. It has no production `*_adapter.go` or `*dependencies*.go` files.
 - Search remains in the parent package and is both the explicit `search` command and the implicit default.
-- Graph has child-owned dispatch, but build, resolve, diff, and query behavior still lives in parent adapters.
+- Graph owns build, resolve, diff, query, compact rendering, and reusable in-memory graph operations under `internal/cli/graph`.
 
 ## Decisions
 
@@ -27,7 +27,7 @@ type Command interface {
 type CommandFunc func(args []string) error
 ```
 
-`CommandFunc` permits behavior-preserving adapters during incremental migration. Do not add names, aliases, help, or availability to the interface; application registration owns that metadata.
+`CommandFunc` is reserved for genuinely function-shaped commands such as the remaining ask and sources entrypoints. Do not use it to add forwarding adapters; application registration owns names, aliases, help, and availability.
 
 A future cancellation-oriented change may add `context.Context`, but this refactor preserves the current signature.
 
@@ -120,12 +120,12 @@ Subcommand behavior is attached to command receivers (`runAdd`, `runList`, `runR
 
 ### Phase 4: complete graph ownership
 
-- [ ] Move graph build, resolve, diff, and query orchestration onto one graph command object.
-- [ ] Inject narrow graph-building, remote-analysis, repository, and output services.
-- [ ] Leave reusable navigation and analysis primitives below the command package.
-- [ ] Remove parent graph behavior adapters after all consumers use reusable APIs.
+- [x] Move graph build, resolve, diff, and query orchestration into the graph command package.
+- [x] Inject narrow graph-building, remote-analysis, repository, and output services.
+- [x] Leave reusable navigation and analysis primitives below the command package.
+- [x] Remove parent graph behavior adapters after all consumers use reusable APIs.
 
-Progress: graph dispatch is now an invocation-scoped `runtime.Command` constructed through `graph.New`. The graph package owns the normalized projection model, supported-source selection, graph assembly, and source accounting used by commands, boundaries, research, and parity tests through parent compatibility aliases. Symbol resolution now also owns its argument parsing, filtering, metadata, continuation commands, rendering, and exit behavior in `internal/cli/graph`; the parent supplies only output, graph loading, repository flags, and exit state. Build, diff, and query parsing/rendering callbacks remain parent-owned.
+Progress: `internal/cli/graph` owns graph argument parsing, local and remote orchestration, projection, build, resolve, diff, query, metadata inputs, continuation commands, and rendering. Boundaries and research consume exported graph projections and in-memory operations directly. The parent application supplies invocation-scoped transport, source policy, output, and process services without forwarding adapters.
 
 ### Phase 5: architecture and boundaries
 
@@ -176,6 +176,6 @@ For every phase:
 - The dispatcher no longer contains a command switch.
 - Package-level command entrypoints and compatibility wrappers are removed.
 - Search is both registered explicitly and configured as the application default.
-- Parent adapters contain only application/process infrastructure.
+- Root CLI production files are application/process composition or behavior awaiting extraction; no forwarding adapter files remain.
 - Command behavior tests are colocated with their owning package.
 - No child command package imports parent `internal/cli`.

@@ -16,6 +16,7 @@ import (
 
 	"github.com/greppleai/grepple/internal/aiprovider"
 	authcommand "github.com/greppleai/grepple/internal/cli/auth"
+	sourcescommand "github.com/greppleai/grepple/internal/cli/sources"
 )
 
 func TestRunAskUsesFantasyProviderAndReadTool(t *testing.T) {
@@ -257,7 +258,7 @@ func TestAskAnalysisToolsCallInternalEngines(t *testing.T) {
 	if err != nil || len(structural.Findings) != 1 {
 		t.Fatalf("structural findings=%d err=%v", len(structural.Findings), err)
 	}
-	sources, err := buildSourceScopeReport([]string{"source.go"})
+	sources, err := sourcescommand.Build([]string{"source.go"}, sourcescommand.Dependencies{Environment: sourceScopeEnvironment, WorkingDirectory: mustGetwd})
 	if err != nil || sources.SelectedFiles != 1 {
 		t.Fatalf("sources=%+v err=%v", sources, err)
 	}

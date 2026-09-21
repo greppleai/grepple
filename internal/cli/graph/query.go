@@ -1,4 +1,4 @@
-package cli
+package graph
 
 import (
 	"context"
@@ -11,7 +11,7 @@ import (
 
 	"github.com/alexflint/go-arg"
 	"github.com/greppleai/grepple/api"
-	graphcommand "github.com/greppleai/grepple/internal/cli/graph"
+	codeextract "github.com/greppleai/grepple/internal/cli/extract"
 	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
 	"github.com/greppleai/grepple/internal/shellquote"
 	"github.com/greppleai/grepple/parser"
@@ -54,31 +54,16 @@ func graphQuerySemantics(direction search.NavigationQueryDirection) string {
 	}
 }
 
-func runGraphQuery(direction search.NavigationQueryDirection, args []string) error {
-	values := graphQueryArgs{MaxOutputBytes: DefaultTextOutputBytes, Depth: 1}
-	argumentParser, err := arg.NewParser(arg.Config{Program: "grepple graph " + string(direction)}, &values)
-	if err != nil {
-		return err
-	}
-	if err := argumentParser.Parse(args); err != nil {
-		if errors.Is(err, arg.ErrHelp) {
-			argumentParser.WriteHelp(os.Stdout)
-			fmt.Fprintln(os.Stdout, "Required output mode: (--json | --compact); choose exactly one.")
-			fmt.Fprintln(os.Stdout, "Required root selector: choose exactly one of --symbol, --at, --package, --module, or --root-path.")
-			if semantics := graphQuerySemantics(direction); semantics != "" {
-				fmt.Fprintln(os.Stdout, semantics)
-			}
-			return nil
-		}
-		return err
-	}
-	if err := validateGraphQueryArgs(values); err != nil {
+// RunQuery traverses a navigation graph.
+func RunQuery(direction search.NavigationQueryDirection, args []string, services Services) error {
+	values, help, err := parseGraphQueryArgs(direction, args)
+	if err != nil || help {
 		return err
 	}
 	if values.Repository != "" {
-		return runRemoteGraphQuery(context.Background(), direction, values)
+		return runRemoteGraphQuery(context.Background(), direction, values, services)
 	}
-	output, err := buildNavigationGraphOutput(values.Paths, values.MaxFiles)
+	output, err := buildNavigationGraphOutput(values.Paths, values.MaxFiles, services)
 	if err != nil {
 		return err
 	}
@@ -122,8 +107,10 @@ func runGraphQuery(direction search.NavigationQueryDirection, args []string) err
 		Direction: string(direction), Depth: values.Depth, RootIDs: rootIDs,
 		Languages: filter.Languages, Confidences: filter.Confidences, Visibilities: filter.Visibilities,
 	}
-	output.Metadata = graphResultMetadata(values.Paths, len(output.Declarations), values.MaxFiles, values.MaxOutputBytes, values.JSON, output.Sources, output.Truncation, graphQueryContinuationCommand(direction, values, output.Truncation))
-	output.Metadata.Scope.Languages = normalizedResultScope(filter.Languages, "")
+	if services.Metadata != nil {
+		output.Metadata = services.Metadata(MetadataInput{Paths: values.Paths, Returned: len(output.Declarations), MaxFiles: values.MaxFiles, MaxOutputBytes: values.MaxOutputBytes, JSON: values.JSON, Sources: output.Sources, Truncation: output.Truncation, NextCommand: graphQueryContinuationCommand(direction, values, output.Truncation, services)})
+		output.Metadata.Scope.Languages = normalizedScope(filter.Languages, "")
+	}
 	if values.Compact {
 		return renderCompactNavigationGraph(output, values.MaxOutputBytes)
 	}
@@ -132,13 +119,36 @@ func runGraphQuery(direction search.NavigationQueryDirection, args []string) err
 	encoder.SetIndent("", "  ")
 	return encoder.Encode(output)
 }
+func parseGraphQueryArgs(direction search.NavigationQueryDirection, args []string) (graphQueryArgs, bool, error) {
+	values := graphQueryArgs{MaxOutputBytes: defaultTextOutputBytes, Depth: 1}
+	argumentParser, err := arg.NewParser(arg.Config{Program: "grepple graph " + string(direction)}, &values)
+	if err != nil {
+		return values, false, err
+	}
+	if err := argumentParser.Parse(args); err != nil {
+		if errors.Is(err, arg.ErrHelp) {
+			argumentParser.WriteHelp(os.Stdout)
+			fmt.Fprintln(os.Stdout, "Required output mode: (--json | --compact); choose exactly one.")
+			fmt.Fprintln(os.Stdout, "Required root selector: choose exactly one of --symbol, --at, --package, --module, or --root-path.")
+			if semantics := graphQuerySemantics(direction); semantics != "" {
+				fmt.Fprintln(os.Stdout, semantics)
+			}
+			return values, true, nil
+		}
+		return values, false, err
+	}
+	if err := validateGraphQueryArgs(values); err != nil {
+		return values, false, err
+	}
+	return values, false, nil
+}
 
-func runRemoteGraphQuery(ctx context.Context, direction search.NavigationQueryDirection, values graphQueryArgs) error {
+func runRemoteGraphQuery(ctx context.Context, direction search.NavigationQueryDirection, values graphQueryArgs, services Services) error {
 	request := api.AnalysisRequest{
 		Operation: api.AnalysisGraph, Repository: values.Repository, Paths: values.Paths, MaxFiles: values.MaxFiles,
 		Graph: &api.GraphQueryRequest{Direction: string(direction), Depth: values.Depth, Symbol: values.Symbol, At: values.At, Package: values.Package, Module: values.Module, RootPath: values.RootPath, Languages: values.Languages, Confidences: values.Confidences, Visibilities: values.Visibilities},
 	}
-	response, err := requestAnalysisRemote(ctx, request, serverDefault(values.Server))
+	response, err := services.Remote(ctx, request, services.server(values.Server))
 	if err != nil {
 		return err
 	}
@@ -152,11 +162,14 @@ func runRemoteGraphQuery(ctx context.Context, direction search.NavigationQueryDi
 	return renderCompactNavigationGraph(output, values.MaxOutputBytes)
 }
 
-func graphQueryContinuationCommand(direction search.NavigationQueryDirection, values graphQueryArgs, truncation *navigationGraphTruncation) string {
+func graphQueryContinuationCommand(direction search.NavigationQueryDirection, values graphQueryArgs, truncation *navigationGraphTruncation, services Services) string {
 	if truncation == nil {
 		return ""
 	}
-	parts := appendActiveRepositoryScopeFlags([]string{"grepple", "graph", string(direction), "--max-files", "0", "--depth", fmt.Sprint(values.Depth), "--json"})
+	parts := []string{"grepple", "graph", string(direction), "--max-files", "0", "--depth", fmt.Sprint(values.Depth), "--json"}
+	if services.ActiveScopeFlags != nil {
+		parts = services.ActiveScopeFlags(parts)
+	}
 	for _, selector := range []struct{ flag, value string }{{"--symbol", values.Symbol}, {"--at", values.At}, {"--package", values.Package}, {"--module", values.Module}, {"--root-path", values.RootPath}} {
 		if selector.value != "" {
 			parts = append(parts, selector.flag, shellquote.Argument(selector.value))
@@ -171,7 +184,7 @@ func graphQueryContinuationCommand(direction search.NavigationQueryDirection, va
 	for _, visibility := range values.Visibilities {
 		parts = append(parts, "--visibility", shellquote.Argument(visibility))
 	}
-	for _, path := range normalizedResultScope(values.Paths, ".") {
+	for _, path := range normalizedScope(values.Paths, ".") {
 		parts = append(parts, shellquote.Argument(path))
 	}
 	return strings.Join(parts, " ")
@@ -215,18 +228,21 @@ func graphQuerySelectorCount(values graphQueryArgs) int {
 	return count
 }
 
-func buildNavigationGraphOutput(globs []string, maxFiles int) (navigationGraphOutput, error) {
-	paths, err := navigationInputPaths(globs)
+func buildNavigationGraphOutput(globs []string, maxFiles int, services Services) (navigationGraphOutput, error) {
+	paths, err := ResolveInputPaths(globs, services.ApplySourceConfig)
 	if err != nil {
 		return navigationGraphOutput{}, err
 	}
-	return buildNavigationGraphOutputFromPaths(paths, maxFiles), nil
+	return BuildFromPaths(paths, maxFiles), nil
 }
 
-func navigationInputPaths(globs []string) ([]string, error) {
+// ResolveInputPaths applies repository source policy and resolves local graph paths.
+func ResolveInputPaths(globs []string, applySourceConfig func(*search.Params) error) ([]string, error) {
 	params := search.Params{Files: true, Globs: globs}
-	if err := applyRepositorySourceConfig(&params); err != nil {
-		return nil, err
+	if applySourceConfig != nil {
+		if err := applySourceConfig(&params); err != nil {
+			return nil, err
+		}
 	}
 	paths, err := search.ListFilePathsContext(context.Background(), params, nil)
 	if err != nil {
@@ -243,17 +259,58 @@ func navigationInputPaths(globs []string) ([]string, error) {
 	return filtered, nil
 }
 
-func buildNavigationGraphOutputFromPaths(paths []string, maxFiles int) navigationGraphOutput {
-	return buildNavigationGraphOutputFromPathsWithOptions(paths, maxFiles, search.NavigationBuildOptions{})
+// BuildFromPaths builds a graph projection from resolved paths.
+func BuildFromPaths(paths []string, maxFiles int) Output {
+	return BuildFromPathsWithOptions(paths, maxFiles, search.NavigationBuildOptions{})
 }
 
-func buildNavigationGraphOutputFromPathsWithOptions(paths []string, maxFiles int, options search.NavigationBuildOptions) navigationGraphOutput {
-	return graphcommand.BuildOutput(paths, maxFiles, options)
+// BuildFromPathsWithOptions builds a graph projection from resolved paths and options.
+func BuildFromPathsWithOptions(paths []string, maxFiles int, options search.NavigationBuildOptions) Output {
+	return BuildOutput(paths, maxFiles, options)
 }
 
-func navigationGraphOutputFromParts(paths []string, discovered, unsupported int, truncation *navigationGraphTruncation, graph parser.NavigationGraph, stats search.NavigationSourceStats) navigationGraphOutput {
-	return graphcommand.OutputFromParts(paths, discovered, unsupported, truncation, graph, stats)
+// FromParts projects an existing navigation graph.
+func FromParts(paths []string, discovered, unsupported int, truncation *Truncation, graph parser.NavigationGraph, stats search.NavigationSourceStats) Output {
+	return OutputFromParts(paths, discovered, unsupported, truncation, graph, stats)
 }
+
+// QuerySelection selects and filters an in-memory graph traversal.
+type QuerySelection struct {
+	Symbol, At string
+	Depth      int
+	Filter     search.NavigationGraphFilter
+}
+
+// QueryOutput traverses an existing graph projection.
+func QueryOutput(output Output, direction search.NavigationQueryDirection, selection QuerySelection) (Output, error) {
+	filter, err := search.NormalizeNavigationGraphFilter(selection.Filter)
+	if err != nil {
+		return Output{}, err
+	}
+	graph := parser.NavigationGraph{Declarations: output.Declarations, TypeDeclarations: output.TypeDeclarations, Calls: output.Calls, Imports: output.Imports, Exports: output.Exports, Fields: output.Fields, TypeUsages: output.TypeUsages, MemberAccesses: output.MemberAccesses, RepositoryRoots: output.RepositoryRoots}
+	graph, err = search.FilterNavigationGraph(graph, filter)
+	if err != nil {
+		return Output{}, err
+	}
+	roots, err := selectNavigationQueryRoots(graph.Declarations, graphQueryArgs{Symbol: selection.Symbol, At: selection.At, Depth: selection.Depth})
+	if err != nil {
+		return Output{}, err
+	}
+	rootIDs := navigationDeclarationIDs(roots)
+	queried, err := search.QueryNavigationGraph(graph, rootIDs, direction, selection.Depth)
+	if err != nil {
+		return Output{}, err
+	}
+	output.Declarations, output.TypeDeclarations, output.Calls, output.Imports = queried.Declarations, queried.TypeDeclarations, queried.Calls, queried.Imports
+	output.Exports, output.Fields, output.TypeUsages = queried.Exports, queried.Fields, queried.TypeUsages
+	output.MemberAccesses, output.RepositoryRoots = queried.MemberAccesses, queried.RepositoryRoots
+	output.Resolution = search.MeasureNavigationResolution(queried)
+	output.Query = &Query{Direction: string(direction), Depth: selection.Depth, RootIDs: rootIDs, Languages: filter.Languages, Confidences: filter.Confidences}
+	return output, nil
+}
+
+// IsQueryDirection reports whether value names a supported traversal.
+func IsQueryDirection(value string) bool { return isGraphQueryDirection(value) }
 
 func selectNavigationQueryRoots(declarations []parser.NavigationDeclaration, values graphQueryArgs) ([]parser.NavigationDeclaration, error) {
 	if values.Symbol != "" || values.At != "" {
@@ -315,7 +372,7 @@ func selectNavigationQueryRoot(declarations []parser.NavigationDeclaration, symb
 		}
 		return requireUniqueNavigationRoot(matches, "symbol "+fmt.Sprintf("%q", symbol))
 	}
-	path, line, err := extractAt(at)
+	path, line, err := codeextract.ParseAt(at)
 	if err != nil {
 		return parser.NavigationDeclaration{}, err
 	}

@@ -6,7 +6,9 @@ import (
 	"github.com/greppleai/grepple/search"
 )
 
-const navigationGraphSchema = "grepple-navigation-graph-v7"
+// Schema identifies the normalized navigation graph projection.
+const Schema = "grepple-navigation-graph-v7"
+const navigationGraphSchema = Schema
 
 // Output is the complete normalized navigation graph command projection.
 type Output struct {
@@ -80,7 +82,7 @@ func OutputFromParts(paths []string, discovered, unsupported int, truncation *Tr
 		calls = []parser.NavigationCall{}
 	}
 	return Output{
-		Schema: navigationGraphSchema, Files: len(paths),
+		Schema: Schema, Files: len(paths),
 		Sources:      SourceSummary{Discovered: discovered, Selected: stats.Attempted, Parsed: stats.Parsed, Skipped: unsupported + stats.Skipped, Failed: stats.Failed, Recovered: stats.Recovered},
 		Declarations: declarations, TypeDeclarations: graph.TypeDeclarations, Calls: calls, Imports: graph.Imports, Exports: graph.Exports, Fields: graph.Fields, TypeUsages: graph.TypeUsages, MemberAccesses: graph.MemberAccesses, RepositoryRoots: graph.RepositoryRoots, Resolution: search.MeasureNavigationResolution(graph), Truncation: truncation,
 	}

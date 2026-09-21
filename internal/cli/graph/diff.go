@@ -1,4 +1,4 @@
-package cli
+package graph
 
 import (
 	"encoding/json"
@@ -28,7 +28,8 @@ func (graphDiffArgs) Description() string {
 	return "Compare semantic declarations and calls while ignoring position-only movement. Exactly one of --json or --compact is required."
 }
 
-type graphDiffOutput struct {
+// DiffOutput is the complete navigation graph diff projection.
+type DiffOutput struct {
 	Metadata      *api.ResultMetadata     `json:"metadata,omitempty"`
 	BeforeFiles   int                     `json:"beforeFiles"`
 	BeforeSources navigationSourceSummary `json:"beforeSources"`
@@ -37,8 +38,9 @@ type graphDiffOutput struct {
 	search.NavigationGraphDiff
 }
 
-func runGraphDiff(args []string) error {
-	values := graphDiffArgs{MaxOutputBytes: DefaultTextOutputBytes}
+// RunDiff compares two navigation graphs.
+func RunDiff(args []string, services Services) error {
+	values := graphDiffArgs{MaxOutputBytes: defaultTextOutputBytes}
 	argumentParser, err := arg.NewParser(arg.Config{Program: "grepple graph diff"}, &values)
 	if err != nil {
 		return err
@@ -57,21 +59,23 @@ func runGraphDiff(args []string) error {
 	if values.MaxFiles < 0 || values.MaxOutputBytes < 0 {
 		return fmt.Errorf("graph diff limits must be non-negative")
 	}
-	before, err := buildNavigationGraphOutput([]string{values.Before}, values.MaxFiles)
+	before, err := buildNavigationGraphOutput([]string{values.Before}, values.MaxFiles, services)
 	if err != nil {
 		return err
 	}
-	after, err := buildNavigationGraphOutput([]string{values.After}, values.MaxFiles)
+	after, err := buildNavigationGraphOutput([]string{values.After}, values.MaxFiles, services)
 	if err != nil {
 		return err
 	}
 	beforeGraph := relativeNavigationGraph(before, values.Before)
 	afterGraph := relativeNavigationGraph(after, values.After)
-	output := graphDiffOutput{BeforeFiles: before.Files, BeforeSources: before.Sources, AfterFiles: after.Files, AfterSources: after.Sources, NavigationGraphDiff: search.DiffNavigationGraphs(
+	output := DiffOutput{BeforeFiles: before.Files, BeforeSources: before.Sources, AfterFiles: after.Files, AfterSources: after.Sources, NavigationGraphDiff: search.DiffNavigationGraphs(
 		beforeGraph,
 		afterGraph,
 	)}
-	output.Metadata = graphDiffResultMetadata(values, before, after)
+	if services.DiffMetadata != nil {
+		output.Metadata = services.DiffMetadata(DiffMetadataInput{BeforePath: values.Before, AfterPath: values.After, MaxFiles: values.MaxFiles, MaxOutputBytes: values.MaxOutputBytes, JSON: values.JSON, Before: before, After: after, Diff: output.NavigationGraphDiff})
+	}
 	if values.JSON {
 		encoder := json.NewEncoder(os.Stdout)
 		encoder.SetEscapeHTML(false)
@@ -108,7 +112,7 @@ func relativeGraphDiffPath(root, path string) string {
 	return filepath.ToSlash(relative)
 }
 
-func renderCompactGraphDiff(diff graphDiffOutput, maxBytes int) error {
+func renderCompactGraphDiff(diff DiffOutput, maxBytes int) error {
 	output := cliruntime.NewOutput(os.Stdout)
 	if maxBytes > 0 {
 		output = cliruntime.NewBoundedOutput(os.Stdout, maxBytes)
@@ -129,7 +133,7 @@ func renderCompactGraphDiff(diff graphDiffOutput, maxBytes int) error {
 	return nil
 }
 
-func renderCompactDeclarationDiff(write func(string) bool, diff graphDiffOutput) bool {
+func renderCompactDeclarationDiff(write func(string) bool, diff DiffOutput) bool {
 	for _, declaration := range diff.AddedDeclarations {
 		if !write("+ D " + compactDiffDeclaration(declaration)) {
 			return false
@@ -153,7 +157,7 @@ func renderCompactDeclarationDiff(write func(string) bool, diff graphDiffOutput)
 	return true
 }
 
-func renderCompactCallDiff(write func(string) bool, diff graphDiffOutput) bool {
+func renderCompactCallDiff(write func(string) bool, diff DiffOutput) bool {
 	for _, call := range diff.AddedCalls {
 		if !write("+ C " + compactDiffCall(call)) {
 			return false

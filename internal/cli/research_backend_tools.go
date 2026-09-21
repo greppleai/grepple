@@ -11,12 +11,16 @@ import (
 
 	"charm.land/fantasy"
 	"github.com/greppleai/grepple/api"
+	architecturecommand "github.com/greppleai/grepple/internal/cli/architecture"
 	askcommand "github.com/greppleai/grepple/internal/cli/ask"
 	getcommand "github.com/greppleai/grepple/internal/cli/get"
+	graphcommand "github.com/greppleai/grepple/internal/cli/graph"
 	gritcommand "github.com/greppleai/grepple/internal/cli/grit"
 	refscommand "github.com/greppleai/grepple/internal/cli/refs"
 	reposcommand "github.com/greppleai/grepple/internal/cli/repos"
+	sourcescommand "github.com/greppleai/grepple/internal/cli/sources"
 	treecommand "github.com/greppleai/grepple/internal/cli/tree"
+	"github.com/greppleai/grepple/internal/gitcontext"
 	rendercommand "github.com/greppleai/grepple/internal/render"
 	"github.com/greppleai/grepple/linerange"
 	"github.com/greppleai/grepple/parser"
@@ -171,7 +175,7 @@ func runAskStructural(ctx context.Context, root, server string, input askStructu
 	if input.Repository != "" {
 		return requestGritRemote(ctx, gritcommand.Request(values, query), server)
 	}
-	response, err := gritcommand.AcquireLocal(ctx, values, program, gritDependencies())
+	response, err := gritcommand.AcquireLocal(ctx, values, program, gritcommand.Dependencies{ApplySourceConfig: applyRepositorySourceConfig, CurrentRepository: gitcontext.Current, ServerDefault: serverDefault, RequestRemote: requestGritRemote, Metadata: gritResultMetadata, RequestExit: setExit})
 	if err != nil {
 		return api.GritResponse{}, err
 	}
@@ -217,12 +221,12 @@ func runAskArchitectureWithSession(session *researchSession, root string, input 
 	case "directory":
 		return architecture, nil
 	case "resolve":
-		return architectureResolveOutput{Schema: "grepple-architecture-resolve-v1", Symbol: input.Symbol, Sources: architecture.Sources, Matches: resolveArchitectureSymbols(architecture.Symbols, input.Symbol)}, nil
+		return architecturecommand.ResolveOutput{Schema: "grepple-architecture-resolve-v1", Symbol: input.Symbol, Sources: architecture.Sources, Matches: architecturecommand.ResolveSymbols(architecture.Symbols, input.Symbol)}, nil
 	case "why":
-		evidence := architectureRelationEvidenceFor(architecture.Relations, input.From, input.To)
-		return architectureWhyOutput{Schema: "grepple-architecture-why-v2", From: cleanArchitectureDirectory(input.From), To: cleanArchitectureDirectory(input.To), Relation: architectureEvidenceRelation(evidence), Sources: architecture.Sources, Evidence: evidence}, nil
+		evidence := architecturecommand.RelationEvidenceFor(architecture.Relations, input.From, input.To)
+		return architecturecommand.WhyOutput{Schema: "grepple-architecture-why-v2", From: architecturecommand.CleanDirectory(input.From), To: architecturecommand.CleanDirectory(input.To), Relation: architecturecommand.EvidenceRelation(evidence), Sources: architecture.Sources, Evidence: evidence}, nil
 	case "responsibilities":
-		return buildArchitectureResponsibilitiesOutput(architecture), nil
+		return architecturecommand.BuildResponsibilities(architecture), nil
 	}
 	return nil, fmt.Errorf("unsupported architecture operation")
 }
@@ -239,17 +243,17 @@ func runAskRemoteArchitecture(session *researchSession, input askArchitectureInp
 	if input.Operation == "directory" || input.Operation == "responsibilities" {
 		return response, nil
 	}
-	var architecture directoryArchitecture
+	var architecture architecturecommand.Report
 	if err := json.Unmarshal(response.Result, &architecture); err != nil {
 		return nil, fmt.Errorf("decode remote architecture: %w", err)
 	}
 	var projection any
 	switch input.Operation {
 	case "resolve":
-		projection = architectureResolveOutput{Schema: "grepple-architecture-resolve-v1", Symbol: input.Symbol, Sources: architecture.Sources, Matches: resolveArchitectureSymbols(architecture.Symbols, input.Symbol)}
+		projection = architecturecommand.ResolveOutput{Schema: "grepple-architecture-resolve-v1", Symbol: input.Symbol, Sources: architecture.Sources, Matches: architecturecommand.ResolveSymbols(architecture.Symbols, input.Symbol)}
 	case "why":
-		evidence := architectureRelationEvidenceFor(architecture.Relations, input.From, input.To)
-		projection = architectureWhyOutput{Schema: "grepple-architecture-why-v2", From: cleanArchitectureDirectory(input.From), To: cleanArchitectureDirectory(input.To), Relation: architectureEvidenceRelation(evidence), Sources: architecture.Sources, Evidence: evidence}
+		evidence := architecturecommand.RelationEvidenceFor(architecture.Relations, input.From, input.To)
+		projection = architecturecommand.WhyOutput{Schema: "grepple-architecture-why-v2", From: architecturecommand.CleanDirectory(input.From), To: architecturecommand.CleanDirectory(input.To), Relation: architecturecommand.EvidenceRelation(evidence), Sources: architecture.Sources, Evidence: evidence}
 	}
 	response.Result, err = json.Marshal(projection)
 	if err != nil {
@@ -295,31 +299,7 @@ func runAskGraphWithSession(session *researchSession, root string, input askGrap
 	if input.Confidence != "" {
 		filter.Confidences = []string{input.Confidence}
 	}
-	filter, err = search.NormalizeNavigationGraphFilter(filter)
-	if err != nil {
-		return nil, err
-	}
-	graph := navigationOutputGraph(output)
-	graph, err = search.FilterNavigationGraph(graph, filter)
-	if err != nil {
-		return nil, err
-	}
-	values := graphQueryArgs{Symbol: input.Symbol, At: input.Location, Depth: depth}
-	roots, err := selectNavigationQueryRoots(graph.Declarations, values)
-	if err != nil {
-		return nil, err
-	}
-	rootIDs := navigationDeclarationIDs(roots)
-	queried, err := search.QueryNavigationGraph(graph, rootIDs, direction, depth)
-	if err != nil {
-		return nil, err
-	}
-	output.Declarations, output.TypeDeclarations, output.Calls, output.Imports = queried.Declarations, queried.TypeDeclarations, queried.Calls, queried.Imports
-	output.Exports, output.Fields, output.TypeUsages = queried.Exports, queried.Fields, queried.TypeUsages
-	output.MemberAccesses, output.RepositoryRoots = queried.MemberAccesses, queried.RepositoryRoots
-	output.Resolution = search.MeasureNavigationResolution(queried)
-	output.Query = &navigationGraphQuery{Direction: input.Direction, Depth: depth, RootIDs: rootIDs, Languages: filter.Languages, Confidences: filter.Confidences}
-	return output, nil
+	return graphcommand.QueryOutput(output, direction, graphcommand.QuerySelection{Symbol: input.Symbol, At: input.Location, Depth: depth, Filter: filter})
 }
 
 func validateAskGraphInput(root string, input askGraphInput) (search.NavigationQueryDirection, int, error) {
@@ -334,7 +314,7 @@ func validateAskGraphInput(root string, input askGraphInput) (search.NavigationQ
 		}
 	}
 	direction := search.NavigationQueryDirection(input.Direction)
-	if !isGraphQueryDirection(input.Direction) {
+	if !graphcommand.IsQueryDirection(input.Direction) {
 		return "", 0, fmt.Errorf("direction must be callers, callees, dependencies, dependents, or impact")
 	}
 	if (input.Symbol == "") == (input.Location == "") {
@@ -344,15 +324,15 @@ func validateAskGraphInput(root string, input askGraphInput) (search.NavigationQ
 	return direction, depth, err
 }
 
-func navigationOutputGraph(output navigationGraphOutput) parser.NavigationGraph {
+func navigationOutputGraph(output graphcommand.Output) parser.NavigationGraph {
 	return parser.NavigationGraph{Declarations: output.Declarations, TypeDeclarations: output.TypeDeclarations, Calls: output.Calls, Imports: output.Imports, Exports: output.Exports, Fields: output.Fields, TypeUsages: output.TypeUsages, MemberAccesses: output.MemberAccesses, RepositoryRoots: output.RepositoryRoots}
 }
 
-func runAskSourceScope(root string, input askSourceScopeInput) (sourceScopeReport, error) {
+func runAskSourceScope(root string, input askSourceScopeInput) (sourcescommand.Report, error) {
 	if err := validateAskLocalPaths(root, input.Paths); err != nil {
-		return sourceScopeReport{}, err
+		return sourcescommand.Report{}, err
 	}
-	return buildSourceScopeReport(input.Paths)
+	return sourcescommand.Build(input.Paths, sourcescommand.Dependencies{Environment: sourceScopeEnvironment, WorkingDirectory: mustGetwd})
 }
 
 func runAskRepositoryRefs(ctx context.Context, server string, input askRepositoryRefsInput) (api.ReposResponse, error) {

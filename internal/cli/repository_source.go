@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 
+	sourcescommand "github.com/greppleai/grepple/internal/cli/sources"
 	"github.com/greppleai/grepple/internal/repositoryscope"
 	"github.com/greppleai/grepple/search"
 )
@@ -29,6 +30,17 @@ func applyRepositorySourceConfig(params *search.Params) error {
 	}
 	repositoryscope.Configure(params, options)
 	return nil
+}
+func sourceScopeEnvironment() (sourcescommand.Environment, error) {
+	config, configPath, err := loadRepositoryConfig()
+	if err != nil {
+		return sourcescommand.Environment{}, err
+	}
+	root := mustGetwd()
+	if configPath != "" {
+		root = filepath.Dir(configPath)
+	}
+	return sourcescommand.Environment{Root: root, ConfigPath: configPath, IgnorePaths: append([]string(nil), config.Ignore.Paths...), IgnoreDisabled: activeRepositoryOptions.ignoreDisabled, ProductionOnly: activeRepositoryOptions.productionOnly}, nil
 }
 
 func configureResolvedSearchParams(params search.Params, err error) (search.Params, error) {

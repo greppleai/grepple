@@ -55,12 +55,12 @@ type MetadataInput struct {
 
 // Dependencies supplies shared navigation, storage, remote transport, and metadata services.
 type Dependencies struct {
-	ResolvePaths   func([]string) ([]string, error)
-	BuildGraph     func([]string, int, search.NavigationBuildOptions) GraphOutput
-	CacheDirectory func() string
-	Remote         func(context.Context, api.AnalysisRequest, string) (api.AnalysisResponse, error)
-	ServerDefault  func(string) string
-	Metadata       func(MetadataInput) *api.ResultMetadata
+	ResolvePaths     func([]string) ([]string, error)
+	BuildGraph       func([]string, int, search.NavigationBuildOptions) GraphOutput
+	CacheDirectory   func() string
+	Remote           func(context.Context, api.AnalysisRequest, string) (api.AnalysisResponse, error)
+	ServerDefault    func(string) string
+	ActiveScopeFlags func([]string) []string
 }
 
 type command struct{ dependencies Dependencies }
@@ -96,10 +96,7 @@ func (d Dependencies) serverDefault(server string) string {
 	return d.ServerDefault(server)
 }
 func (d Dependencies) metadata(input MetadataInput) *api.ResultMetadata {
-	if d.Metadata == nil {
-		return nil
-	}
-	return d.Metadata(input)
+	return resultMetadata(input, d.ActiveScopeFlags)
 }
 
 type outputWriter struct{ output *cliruntime.Output }

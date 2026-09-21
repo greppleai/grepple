@@ -434,7 +434,7 @@ func runHelp(args []string) error {
 	case "search":
 		return runSearch([]string{"--help"})
 	case "extract":
-		return runExtract([]string{"--help"})
+		return runCommand([]string{"extract", "--help"})
 	case "login":
 		return cliruntime.NewOutput(os.Stdout).WriteString("Authenticate with the remote service.\nUsage: grepple login [--url URL] [--scope SCOPES] [--no-browser]\n")
 	case "logout":

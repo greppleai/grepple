@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/greppleai/grepple/api"
+	graphcommand "github.com/greppleai/grepple/internal/cli/graph"
 	gritcommand "github.com/greppleai/grepple/internal/cli/grit"
 	"github.com/greppleai/grepple/internal/resultanalysis"
 	"github.com/greppleai/grepple/internal/shellquote"
@@ -41,7 +42,7 @@ func normalizedResultScope(values []string, fallback string) []string {
 	return result
 }
 
-func sourceResultDiagnostics(sources navigationSourceSummary) []api.ResultDiagnostic {
+func sourceResultDiagnostics(sources graphcommand.SourceSummary) []api.ResultDiagnostic {
 	diagnostics := []api.ResultDiagnostic{}
 	if sources.Failed > 0 {
 		diagnostics = append(diagnostics, api.ResultDiagnostic{Code: "source-failed", Message: fmt.Sprintf("%d selected source files failed analysis", sources.Failed)})
@@ -55,7 +56,8 @@ func sourceResultDiagnostics(sources navigationSourceSummary) []api.ResultDiagno
 	return diagnostics
 }
 
-func graphResultMetadata(paths []string, returned, maxFiles, maxOutputBytes int, jsonMode bool, sources navigationSourceSummary, truncation *navigationGraphTruncation, nextCommand string) *api.ResultMetadata {
+func graphResultMetadata(input graphcommand.MetadataInput) *api.ResultMetadata {
+	paths, returned, maxFiles, maxOutputBytes, jsonMode, sources, truncation, nextCommand := input.Paths, input.Returned, input.MaxFiles, input.MaxOutputBytes, input.JSON, input.Sources, input.Truncation, input.NextCommand
 	omitted := 0
 	if truncation != nil {
 		omitted = truncation.Skipped
@@ -165,21 +167,6 @@ func searchNextCommand(options *cliOptions, skip int, remote bool) string {
 	return strings.Join(parts, " ")
 }
 
-func graphContinuationCommand(mode string, paths []string, truncation *navigationGraphTruncation) string {
-	if truncation == nil {
-		return ""
-	}
-	parts := appendActiveRepositoryScopeFlags([]string{"grepple", "graph"})
-	if mode != "graph" {
-		parts = append(parts, mode)
-	}
-	parts = append(parts, "--max-files", "0", "--json")
-	for _, path := range normalizedResultScope(paths, ".") {
-		parts = append(parts, shellquote.Argument(path))
-	}
-	return strings.Join(parts, " ")
-}
-
 func gritResultMetadata(values gritcommand.Arguments, response api.GritResponse, remote bool) *api.ResultMetadata {
 	total := response.Total
 	pageComplete := values.Skip+len(response.Findings) >= total
@@ -256,28 +243,29 @@ func gritContinuationCommand(values gritcommand.Arguments, nextSkip int, removeS
 	return strings.Join(parts, " ")
 }
 
-func graphDiffResultMetadata(values graphDiffArgs, before, after navigationGraphOutput) *api.ResultMetadata {
+func graphDiffResultMetadata(input graphcommand.DiffMetadataInput) *api.ResultMetadata {
+	before, after := input.Before, input.After
 	omitted := graphTruncatedSources(before.Truncation) + graphTruncatedSources(after.Truncation)
-	sources := navigationSourceSummary{
+	sources := graphcommand.SourceSummary{
 		Discovered: before.Sources.Discovered + after.Sources.Discovered, Selected: before.Sources.Selected + after.Sources.Selected,
 		Parsed: before.Sources.Parsed + after.Sources.Parsed, Skipped: before.Sources.Skipped + after.Sources.Skipped,
 		Failed: before.Sources.Failed + after.Sources.Failed, Recovered: before.Sources.Recovered + after.Sources.Recovered,
 	}
 	metadata := &api.ResultMetadata{
-		Scope:   resultScope("local-diff", []string{values.Before, values.After}, nil, nil),
+		Scope:   resultScope("local-diff", []string{input.BeforePath, input.AfterPath}, nil, nil),
 		Order:   "semantic-identity",
 		Page:    api.ResultPage{Returned: sources.Parsed, Complete: omitted == 0 && sources.Failed == 0},
-		Limits:  api.ResultLimits{MaxFiles: values.MaxFiles, MaxOutputBytes: values.MaxOutputBytes, JSONByteUncapped: values.JSON},
+		Limits:  api.ResultLimits{MaxFiles: input.MaxFiles, MaxOutputBytes: input.MaxOutputBytes, JSONByteUncapped: input.JSON},
 		Omitted: api.ResultOmissions{Sources: omitted}, Diagnostics: sourceResultDiagnostics(sources),
 	}
 	if !metadata.Page.Complete {
-		parts := appendActiveRepositoryScopeFlags([]string{"grepple", "graph", "diff", "--before", shellquote.Argument(values.Before), "--after", shellquote.Argument(values.After), "--max-files", "0", "--json"})
+		parts := appendActiveRepositoryScopeFlags([]string{"grepple", "graph", "diff", "--before", shellquote.Argument(input.BeforePath), "--after", shellquote.Argument(input.AfterPath), "--max-files", "0", "--json"})
 		metadata.NextCommand = strings.Join(parts, " ")
 	}
 	return metadata
 }
 
-func graphTruncatedSources(truncation *navigationGraphTruncation) int {
+func graphTruncatedSources(truncation *graphcommand.Truncation) int {
 	if truncation == nil {
 		return 0
 	}
