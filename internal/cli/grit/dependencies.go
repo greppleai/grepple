@@ -13,6 +13,7 @@ import (
 	"github.com/greppleai/grepple/search"
 )
 
+// DefaultTextOutputBytes is the default human-readable GritQL output cap.
 const DefaultTextOutputBytes = 16 * 1024
 
 type commonArgs = cliruntime.CommonArgs
@@ -81,8 +82,8 @@ func (d Dependencies) requestExit(code int) {
 type outputWriter struct{ output *cliruntime.Output }
 
 func stdoutWriter() *outputWriter { return &outputWriter{cliruntime.NewOutput(os.Stdout)} }
-func newBoundedOutputWriter(writer io.Writer, max int) *outputWriter {
-	return &outputWriter{cliruntime.NewBoundedOutput(writer, max)}
+func newBoundedOutputWriter(writer io.Writer, maxBytes int) *outputWriter {
+	return &outputWriter{cliruntime.NewBoundedOutput(writer, maxBytes)}
 }
 func (w *outputWriter) writeString(value string) error { return w.output.WriteString(value) }
 func (w *outputWriter) writeJSON(value any) error      { return w.output.WriteJSON(value) }

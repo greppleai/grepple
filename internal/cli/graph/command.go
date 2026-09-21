@@ -3,16 +3,20 @@ package graph
 
 import (
 	"fmt"
+	"io"
 
 	cliruntime "github.com/greppleai/grepple/internal/cli/runtime"
 )
 
 // Dependencies supplies independently testable graph operations.
 type Dependencies struct {
-	Build   func([]string) error
-	Resolve func([]string) error
-	Diff    func([]string) error
-	Query   func([]string) error
+	Build            func([]string) error
+	Diff             func([]string) error
+	Query            func([]string) error
+	Stdout           io.Writer
+	LoadOutput       func([]string, int) (Output, error)
+	ActiveScopeFlags func([]string) []string
+	RequestExit      func(int)
 }
 
 // command owns navigation graph command operations.
@@ -30,10 +34,7 @@ func (command *command) Run(args []string) error {
 	if len(args) > 0 {
 		switch args[0] {
 		case "resolve":
-			if dependencies.Resolve == nil {
-				return fmt.Errorf("graph resolve is unavailable")
-			}
-			return dependencies.Resolve(args[1:])
+			return command.runResolve(args[1:])
 		case "diff":
 			if dependencies.Diff == nil {
 				return fmt.Errorf("graph diff is unavailable")

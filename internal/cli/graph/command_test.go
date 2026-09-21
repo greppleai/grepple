@@ -4,11 +4,11 @@ import "testing"
 
 func TestRunDispatchesGraphOperations(t *testing.T) {
 	called := ""
-	dependencies := Dependencies{Build: func([]string) error { called = "build"; return nil }, Resolve: func([]string) error { called = "resolve"; return nil }, Diff: func([]string) error { called = "diff"; return nil }, Query: func([]string) error { called = "query"; return nil }}
+	dependencies := Dependencies{Build: func([]string) error { called = "build"; return nil }, Diff: func([]string) error { called = "diff"; return nil }, Query: func([]string) error { called = "query"; return nil }}
 	for _, test := range []struct {
 		args []string
 		want string
-	}{{nil, "build"}, {[]string{"resolve"}, "resolve"}, {[]string{"diff"}, "diff"}, {[]string{"callers"}, "query"}} {
+	}{{nil, "build"}, {[]string{"diff"}, "diff"}, {[]string{"callers"}, "query"}} {
 		called = ""
 		if err := Run(test.args, dependencies); err != nil {
 			t.Fatal(err)
