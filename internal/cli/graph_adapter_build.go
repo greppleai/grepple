@@ -73,20 +73,6 @@ type navigationSourceSummary struct {
 	Recovered  int `json:"recovered"`
 }
 
-func runGraph(args []string) error {
-	if len(args) > 0 {
-		switch {
-		case args[0] == "resolve":
-			return runGraphResolve(args[1:])
-		case args[0] == "diff":
-			return runGraphDiff(args[1:])
-		case isGraphQueryDirection(args[0]):
-			return runGraphQuery(search.NavigationQueryDirection(args[0]), args[1:])
-		}
-	}
-	return runGraphBuild(args)
-}
-
 func runGraphBuild(args []string) error {
 	values := graphArgs{MaxOutputBytes: DefaultTextOutputBytes}
 	argumentParser, err := arg.NewParser(arg.Config{Program: "grepple graph"}, &values)
