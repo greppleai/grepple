@@ -1,4 +1,4 @@
-package cli
+package boundaries
 
 import (
 	"encoding/json"
@@ -22,12 +22,12 @@ func TestBoundariesLoadsRepositoryPolicyAndReportsFacadeBypass(t *testing.T) {
 		t.Fatal(err)
 	}
 	cold := captureStdout(t, func() {
-		if err := Run([]string{"boundaries", "."}); err != nil {
+		if err := runBoundaries([]string{"."}); err != nil {
 			t.Fatal(err)
 		}
 	})
 	warm := captureStdout(t, func() {
-		if err := Run([]string{"boundaries", "."}); err != nil {
+		if err := runBoundaries([]string{"."}); err != nil {
 			t.Fatal(err)
 		}
 	})
@@ -35,7 +35,7 @@ func TestBoundariesLoadsRepositoryPolicyAndReportsFacadeBypass(t *testing.T) {
 		t.Fatalf("policy cache parity failed:\ncold=%s\nwarm=%s", cold, warm)
 	}
 	output := captureStdout(t, func() {
-		if err := Run([]string{"boundaries", "--json", "--no-cache", "."}); err != nil {
+		if err := runBoundaries([]string{"--json", "--no-cache", "."}); err != nil {
 			t.Fatal(err)
 		}
 	})
@@ -54,7 +54,7 @@ func TestBoundariesRejectsInvalidPolicyWithoutReadingSources(t *testing.T) {
 	if err := os.WriteFile(policyPath, []byte(`{"schema":"future"}`), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	err := Run([]string{"boundaries", "--policy", policyPath, "."})
+	err := runBoundaries([]string{"--policy", policyPath, "."})
 	if err == nil || !strings.Contains(err.Error(), "unsupported boundary policy schema") {
 		t.Fatalf("err=%v", err)
 	}

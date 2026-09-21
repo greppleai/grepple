@@ -1,18 +1,16 @@
-package cli
+package artifacts
 
 import (
+	"bytes"
 	"encoding/json"
 	"os"
 	"path/filepath"
 	"testing"
-
-	artifactscommand "github.com/greppleai/grepple/internal/cli/artifacts"
 )
 
 func TestArtifactsCleanRemovesPersistedOutput(t *testing.T) {
 	root := t.TempDir()
 	output := filepath.Join(root, ".grepple", "output")
-	t.Setenv("GREPPLE_ARTIFACT_DIR", output)
 	if err := os.MkdirAll(output, 0o700); err != nil {
 		t.Fatal(err)
 	}
@@ -22,15 +20,12 @@ func TestArtifactsCleanRemovesPersistedOutput(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(output, "two.txt"), []byte("12"), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	chdirForConfigTest(t, root)
-
-	text := captureStdout(t, func() {
-		if err := Run([]string{"artifacts", "clean", "--json"}); err != nil {
-			t.Fatal(err)
-		}
-	})
-	var result artifactscommand.CleanOutput
-	if err := json.Unmarshal([]byte(text), &result); err != nil {
+	var stdout bytes.Buffer
+	if err := Run([]string{"clean", "--json"}, Dependencies{Stdout: &stdout, ArtifactDirectory: func() (string, error) { return output, nil }, WorkingDirectory: func() string { return root }}); err != nil {
+		t.Fatal(err)
+	}
+	var result CleanOutput
+	if err := json.Unmarshal(stdout.Bytes(), &result); err != nil {
 		t.Fatal(err)
 	}
 	if result.Files != 2 || result.Bytes != 6 {

@@ -1,4 +1,4 @@
-package cli
+package boundaries
 
 import (
 	"encoding/json"
@@ -17,7 +17,7 @@ func TestBoundariesReportsExternalOwnerWorkflowsAndUsesCache(t *testing.T) {
 	t.Setenv("GREPPLE_CACHE_DIR", filepath.Join(dir, ".grepple", "cache"))
 	writeBoundaryFixture(t, dir)
 	first := captureStdout(t, func() {
-		if err := Run([]string{"boundaries", "."}); err != nil {
+		if err := runBoundaries([]string{"."}); err != nil {
 			t.Fatal(err)
 		}
 	})
@@ -30,14 +30,14 @@ func TestBoundariesReportsExternalOwnerWorkflowsAndUsesCache(t *testing.T) {
 		}
 	}
 	second := captureStdout(t, func() {
-		if err := Run([]string{"boundaries", "."}); err != nil {
+		if err := runBoundaries([]string{"."}); err != nil {
 			t.Fatal(err)
 		}
 	})
 	if second != first {
 		t.Fatalf("cache changed deterministic output:\nfirst=%s\nsecond=%s", first, second)
 	}
-	if _, cache, err := buildCachedBoundaryGraph([]string{"."}, 0, true); err != nil || cache != "hit" {
+	if _, cache, err := buildCachedBoundaryGraphForTest([]string{"."}, 0, true); err != nil || cache != "hit" {
 		t.Fatalf("cache state=%q err=%v", cache, err)
 	}
 	entries, err := os.ReadDir(filepath.Join(".grepple", "cache", "boundaries"))
@@ -61,7 +61,7 @@ func TestReadOnlyAnalysisStoresCachesAndArtifactsOutsideRepository(t *testing.T)
 	}
 	defer os.Chmod(dir, 0o755)
 	captureStdout(t, func() {
-		if err := Run([]string{"boundaries", "."}); err != nil {
+		if err := runBoundaries([]string{"."}); err != nil {
 			t.Fatal(err)
 		}
 	})
@@ -82,7 +82,7 @@ func TestBoundariesHumanLimitDoesNotLimitJSON(t *testing.T) {
 	writeGraphSource(t, dir, "other_one.go", "package sample\nfunc OtherOne(){ Read(); Write() }\n")
 	writeGraphSource(t, dir, "other_two.go", "package sample\nfunc OtherTwo(){ Read(); Write() }\n")
 	limited := captureStdout(t, func() {
-		if err := Run([]string{"boundaries", "--no-cache", "--limit", "1", "."}); err != nil {
+		if err := runBoundaries([]string{"--no-cache", "--limit", "1", "."}); err != nil {
 			t.Fatal(err)
 		}
 	})
@@ -90,7 +90,7 @@ func TestBoundariesHumanLimitDoesNotLimitJSON(t *testing.T) {
 		t.Fatalf("limited output is misleading:\n%s", limited)
 	}
 	jsonText := captureStdout(t, func() {
-		if err := Run([]string{"boundaries", "--json", "--no-cache", "--limit", "1", "."}); err != nil {
+		if err := runBoundaries([]string{"--json", "--no-cache", "--limit", "1", "."}); err != nil {
 			t.Fatal(err)
 		}
 	})
@@ -120,7 +120,7 @@ import sitter "github.com/tree-sitter/go-tree-sitter"
 func private(node *sitter.Node) {}
 `)
 	output := captureStdout(t, func() {
-		if err := Run([]string{"boundaries", "--no-cache", "."}); err != nil {
+		if err := runBoundaries([]string{"--no-cache", "."}); err != nil {
 			t.Fatal(err)
 		}
 	})
@@ -135,7 +135,7 @@ func TestBoundaryCacheInvalidatesWhenSourceChanges(t *testing.T) {
 	dir := chdirTemp(t)
 	writeBoundaryFixture(t, dir)
 	captureStdout(t, func() {
-		if err := Run([]string{"boundaries", "."}); err != nil {
+		if err := runBoundaries([]string{"."}); err != nil {
 			t.Fatal(err)
 		}
 	})
@@ -143,7 +143,7 @@ func TestBoundaryCacheInvalidatesWhenSourceChanges(t *testing.T) {
 	if err := os.WriteFile(path, []byte("package sample\nfunc Two(){ Parse(); Validate(); Parse() }\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if _, cache, err := buildCachedBoundaryGraph([]string{"."}, 0, true); err != nil || cache != "miss" {
+	if _, cache, err := buildCachedBoundaryGraphForTest([]string{"."}, 0, true); err != nil || cache != "miss" {
 		t.Fatalf("cache state=%q err=%v", cache, err)
 	}
 }
@@ -155,13 +155,13 @@ func TestBoundaryCacheInvalidatesWhenRepositoryIdentityChanges(t *testing.T) {
 	if err := os.WriteFile(modulePath, []byte("module example.com/one\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if _, cache, err := buildCachedBoundaryGraph([]string{"."}, 0, true); err != nil || cache != "miss" {
+	if _, cache, err := buildCachedBoundaryGraphForTest([]string{"."}, 0, true); err != nil || cache != "miss" {
 		t.Fatalf("initial cache state=%q err=%v", cache, err)
 	}
 	if err := os.WriteFile(modulePath, []byte("module example.com/two\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if _, cache, err := buildCachedBoundaryGraph([]string{"."}, 0, true); err != nil || cache != "miss" {
+	if _, cache, err := buildCachedBoundaryGraphForTest([]string{"."}, 0, true); err != nil || cache != "miss" {
 		t.Fatalf("identity cache state=%q err=%v", cache, err)
 	}
 }

@@ -1,4 +1,4 @@
-package cli
+package architecture
 
 import (
 	"encoding/json"
@@ -90,9 +90,9 @@ func TestArchitectureDirectoryReportsAdapterEvidencedEntrypoints(t *testing.T) {
 func assertProductionOnlyArchitectureResolve(t *testing.T) {
 	t.Helper()
 	production := captureStdout(t, func() {
-		err := Run([]string{"architecture", "resolve", "--symbol", "TestDocument", "--compact", "--production-only", ".", "--no-spill"})
-		if code, ok := ExitCode(err); !ok || code != 1 {
-			t.Fatalf("production-only resolve error=%v", err)
+		code, err := runArchitectureWithExit([]string{"resolve", "--symbol", "TestDocument", "--compact", "."}, true)
+		if err != nil || code != 1 {
+			t.Fatalf("production-only resolve code=%d error=%v", code, err)
 		}
 	})
 	if !strings.Contains(production, "matches=0") {

@@ -1,4 +1,4 @@
-package cli
+package architecture
 
 import (
 	"encoding/json"

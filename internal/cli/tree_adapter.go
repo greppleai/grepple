@@ -36,21 +36,18 @@ func localTree(path string, depth int) (api.TreeResponse, error) {
 	if !info.IsDir() {
 		base = filepath.Dir(absolute)
 	}
+	result := localTreeEntries(files, base, working, depth)
+	display, err := filepath.Rel(working, absolute)
+	if err != nil {
+		return api.TreeResponse{}, fmt.Errorf("display local tree path: %w", err)
+	}
+	return api.TreeResponse{Repo: ".", Path: filepath.ToSlash(display), Depth: depth, Entries: result}, nil
+}
+
+func localTreeEntries(files []string, base, working string, depth int) []api.TreeEntry {
 	entries := map[string]bool{}
 	for _, file := range files {
-		filePath := file
-		if !filepath.IsAbs(filePath) {
-			filePath = filepath.Join(working, filepath.FromSlash(filePath))
-		}
-		relative, relErr := filepath.Rel(base, filePath)
-		if relErr != nil || relative == "." || relative == ".." || strings.HasPrefix(relative, ".."+string(filepath.Separator)) {
-			continue
-		}
-		parts := strings.Split(filepath.ToSlash(relative), "/")
-		for index := 0; index < len(parts) && index < depth; index++ {
-			entryPath := strings.Join(parts[:index+1], "/")
-			entries[entryPath] = entries[entryPath] || index < len(parts)-1
-		}
+		appendLocalTreePath(entries, file, base, working, depth)
 	}
 	result := make([]api.TreeEntry, 0, len(entries))
 	for entryPath, directory := range entries {
@@ -62,9 +59,21 @@ func localTree(path string, depth int) (api.TreeResponse, error) {
 		}
 		return result[i].Dir && !result[j].Dir
 	})
-	display, err := filepath.Rel(working, absolute)
-	if err != nil {
-		return api.TreeResponse{}, fmt.Errorf("display local tree path: %w", err)
+	return result
+}
+
+func appendLocalTreePath(entries map[string]bool, file, base, working string, depth int) {
+	filePath := file
+	if !filepath.IsAbs(filePath) {
+		filePath = filepath.Join(working, filepath.FromSlash(filePath))
 	}
-	return api.TreeResponse{Repo: ".", Path: filepath.ToSlash(display), Depth: depth, Entries: result}, nil
+	relative, err := filepath.Rel(base, filePath)
+	if err != nil || relative == "." || relative == ".." || strings.HasPrefix(relative, ".."+string(filepath.Separator)) {
+		return
+	}
+	parts := strings.Split(filepath.ToSlash(relative), "/")
+	for index := 0; index < len(parts) && index < depth; index++ {
+		entryPath := strings.Join(parts[:index+1], "/")
+		entries[entryPath] = entries[entryPath] || index < len(parts)-1
+	}
 }

@@ -1,4 +1,4 @@
-package cli
+package architecture
 
 import (
 	"encoding/json"
@@ -102,9 +102,9 @@ func TestArchitectureCompareCommandReportsSemanticDifference(t *testing.T) {
 		t.Fatal(err)
 	}
 	output := captureStdout(t, func() {
-		err := Run([]string{"architecture", "compare", "--compact", beforePath, afterPath, "--no-spill"})
-		if code, ok := ExitCode(err); !ok || code != 1 {
-			t.Fatalf("compare error=%v", err)
+		code, err := runArchitectureWithExit([]string{"compare", "--compact", beforePath, afterPath}, false)
+		if err != nil || code != 1 {
+			t.Fatalf("compare code=%d error=%v", code, err)
 		}
 	})
 	if !strings.Contains(output, "semantic-equal=false byte-equal=false") || !strings.Contains(output, "! declaration changed") || !strings.Contains(output, "at=service/service.go:3") {
@@ -145,7 +145,7 @@ func architectureComparisonFixture() directoryArchitecture {
 		Schema: directoryArchitectureSchema,
 		Root:   ".",
 		Files:  1,
-		Sources: architectureSourceSummary{
+		Sources: SourceSummary{
 			Discovered: 1, Selected: 1, Parsed: 1,
 		},
 		SourceFiles: []architectureSourceFile{{Path: "service/service.go", Language: "go", Classification: "production"}},
