@@ -1,4 +1,4 @@
-package cli
+package rules
 
 import (
 	"encoding/json"
