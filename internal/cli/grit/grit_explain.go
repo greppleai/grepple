@@ -1,4 +1,4 @@
-package cli
+package grit
 
 import (
 	"errors"
@@ -73,7 +73,7 @@ type gritVariableExplanation struct {
 	roles        map[string]bool
 }
 
-func runGritExplain(args []string) error {
+func runGritExplain(args []string, dependencies Dependencies) error {
 	values := gritExplainArgs{MaxOutputBytes: DefaultTextOutputBytes}
 	argumentParser, err := arg.NewParser(arg.Config{Program: "grepple grit explain"}, &values)
 	if err != nil {
@@ -99,7 +99,7 @@ func runGritExplain(args []string) error {
 		return err
 	}
 	if !output.OK {
-		setExit(1)
+		dependencies.requestExit(1)
 	}
 	return nil
 }

@@ -1,4 +1,4 @@
-package cli
+package grit
 
 import (
 	"context"
@@ -6,7 +6,11 @@ import (
 	"github.com/greppleai/grepple/api"
 )
 
-func collectGritRemote(ctx context.Context, request api.GritRequest, server string, required int) (api.GritResponse, error) {
+func collectGritRemote(ctx context.Context, request api.GritRequest, server string, required int, supplied ...Dependencies) (api.GritResponse, error) {
+	dependencies := Dependencies{}
+	if len(supplied) > 0 {
+		dependencies = supplied[0]
+	}
 	if required <= 0 {
 		required = api.MaxGritPageLimit
 	}
@@ -22,7 +26,7 @@ func collectGritRemote(ctx context.Context, request api.GritRequest, server stri
 		}
 		request.Skip = intPointer(offset)
 		request.Limit = intPointer(pageLimit)
-		page, err := requestGritRemote(ctx, request, server)
+		page, err := dependencies.requestRemote(ctx, request, server)
 		if err != nil {
 			return api.GritResponse{}, err
 		}

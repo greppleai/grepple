@@ -1,4 +1,4 @@
-package cli
+package grit
 
 import (
 	"context"
@@ -186,9 +186,10 @@ func readGritQuery(reader io.Reader) (string, error) {
 	return string(content), nil
 }
 
-func runGrit(args []string) error {
+// Run executes structural query commands.
+func Run(args []string, dependencies Dependencies) error {
 	if len(args) > 0 && args[0] == "explain" {
-		return runGritExplain(args[1:])
+		return runGritExplain(args[1:], dependencies)
 	}
 	values, err := parseGritArgs(args)
 	if err != nil {
@@ -200,36 +201,40 @@ func runGrit(args []string) error {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 	if !values.Local && (values.Remote || values.Server != "") {
-		return runGritRemote(ctx, values)
+		return runGritRemote(ctx, values, dependencies)
 	}
-	return runGritLocal(ctx, values)
+	return runGritLocal(ctx, values, dependencies)
 }
 
-func runGritLocal(ctx context.Context, values gritArgs) error {
-	return executeGrit(ctx, values, false)
+func runGritLocal(ctx context.Context, values gritArgs, supplied ...Dependencies) error {
+	dependencies := Dependencies{}
+	if len(supplied) > 0 {
+		dependencies = supplied[0]
+	}
+	return executeGrit(ctx, values, false, dependencies)
 }
 
-func runGritRemote(ctx context.Context, values gritArgs) error {
-	return executeGrit(ctx, values, true)
+func runGritRemote(ctx context.Context, values gritArgs, dependencies Dependencies) error {
+	return executeGrit(ctx, values, true, dependencies)
 }
 
-func executeGrit(ctx context.Context, values gritArgs, includeRemote bool) error {
+func executeGrit(ctx context.Context, values gritArgs, includeRemote bool, dependencies Dependencies) error {
 	query, program, err := compileGritQuery(values)
 	if err != nil {
 		return err
 	}
-	local, err := acquireGritLocal(ctx, values, program)
+	local, err := acquireGritLocal(ctx, values, program, dependencies)
 	if err != nil {
 		return err
 	}
 	response := local
 	if includeRemote {
-		currentRepo := currentGitRepoID()
+		currentRepo := dependencies.currentRepository()
 		request := gritRequest(values, query)
 		if currentRepo != "" {
 			request.ExcludeRepositories = appendUnique(request.ExcludeRepositories, currentRepo)
 		}
-		remote, requestErr := collectGritRemote(ctx, request, serverDefault(values.Server), requiredGritRemoteFindings(values.Skip, values.Limit))
+		remote, requestErr := collectGritRemote(ctx, request, dependencies.serverDefault(values.Server), requiredGritRemoteFindings(values.Skip, values.Limit), dependencies)
 		if requestErr != nil {
 			return requestErr
 		}
@@ -239,8 +244,8 @@ func executeGrit(ctx context.Context, values gritArgs, includeRemote bool) error
 		}
 	}
 	response.Findings = windowGritFindings(response.Findings, values.Skip, values.Limit)
-	response.ResultMetadata = gritResultMetadata(values, response, includeRemote)
-	return outputGritResponse(values, response)
+	response.ResultMetadata = dependencies.metadata(values, response, includeRemote)
+	return outputGritResponse(values, response, dependencies)
 }
 
 func compileGritQuery(values gritArgs) (string, *gritql.Program, error) {
@@ -258,7 +263,7 @@ func compileGritQuery(values gritArgs) (string, *gritql.Program, error) {
 	return query, program, nil
 }
 
-func acquireGritLocal(ctx context.Context, values gritArgs, program *gritql.Program) (api.GritResponse, error) {
+func acquireGritLocal(ctx context.Context, values gritArgs, program *gritql.Program, dependencies Dependencies) (api.GritResponse, error) {
 	if err := ctx.Err(); err != nil {
 		return api.GritResponse{}, err
 	}
@@ -266,7 +271,7 @@ func acquireGritLocal(ctx context.Context, values gritArgs, program *gritql.Prog
 	if err != nil {
 		return api.GritResponse{}, err
 	}
-	candidates, err := gritCandidates(ctx, cwd, values.Globs)
+	candidates, err := gritCandidates(ctx, cwd, values.Globs, dependencies)
 	if err != nil {
 		return api.GritResponse{}, err
 	}
@@ -279,9 +284,13 @@ func acquireGritLocal(ctx context.Context, values gritArgs, program *gritql.Prog
 	return response, nil
 }
 
-func gritCandidates(ctx context.Context, root string, globs []string) ([]gritql.ScanCandidate, error) {
+func gritCandidates(ctx context.Context, root string, globs []string, supplied ...Dependencies) ([]gritql.ScanCandidate, error) {
+	dependencies := Dependencies{}
+	if len(supplied) > 0 {
+		dependencies = supplied[0]
+	}
 	params := search.Params{Files: true, Globs: globs, Root: root}
-	if err := applyRepositorySourceConfig(&params); err != nil {
+	if err := dependencies.applySourceConfig(&params); err != nil {
 		return nil, err
 	}
 	paths, err := search.ListFilePathsContext(ctx, params, nil)
@@ -296,7 +305,7 @@ func gritCandidates(ctx context.Context, root string, globs []string) ([]gritql.
 	return candidates, nil
 }
 
-func outputGritResponse(values gritArgs, response api.GritResponse) error {
+func outputGritResponse(values gritArgs, response api.GritResponse, dependencies Dependencies) error {
 	if values.JSON {
 		if err := stdoutWriter().writeJSON(response); err != nil {
 			return err
@@ -305,7 +314,7 @@ func outputGritResponse(values gritArgs, response api.GritResponse) error {
 		return err
 	}
 	if len(response.Findings) == 0 {
-		setExit(1)
+		dependencies.requestExit(1)
 	}
 	return nil
 }

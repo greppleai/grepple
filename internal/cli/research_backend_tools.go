@@ -13,6 +13,7 @@ import (
 	"github.com/greppleai/grepple/api"
 	askcommand "github.com/greppleai/grepple/internal/cli/ask"
 	getcommand "github.com/greppleai/grepple/internal/cli/get"
+	gritcommand "github.com/greppleai/grepple/internal/cli/grit"
 	refscommand "github.com/greppleai/grepple/internal/cli/refs"
 	reposcommand "github.com/greppleai/grepple/internal/cli/repos"
 	treecommand "github.com/greppleai/grepple/internal/cli/tree"
@@ -154,26 +155,26 @@ func runAskStructural(ctx context.Context, root, server string, input askStructu
 	if err != nil {
 		return api.GritResponse{}, err
 	}
-	values := gritArgs{Query: input.Query, Globs: input.Paths, Limit: limit, MaxFindings: 100}
+	values := gritcommand.Arguments{Query: input.Query, Globs: input.Paths, Limit: limit, MaxFindings: 100}
 	if input.Repository != "" {
 		values.Remote = true
 		values.Repositories = []string{input.Repository}
 	}
-	if err := validateGritArgs(values); err != nil {
+	if err := gritcommand.Validate(values); err != nil {
 		return api.GritResponse{}, err
 	}
-	query, program, err := compileGritQuery(values)
+	query, program, err := gritcommand.Compile(values)
 	if err != nil {
 		return api.GritResponse{}, err
 	}
 	if input.Repository != "" {
-		return requestGritRemote(ctx, gritRequest(values, query), server)
+		return requestGritRemote(ctx, gritcommand.Request(values, query), server)
 	}
-	response, err := acquireGritLocal(ctx, values, program)
+	response, err := gritcommand.AcquireLocal(ctx, values, program, gritDependencies())
 	if err != nil {
 		return api.GritResponse{}, err
 	}
-	response.Findings = windowGritFindings(response.Findings, 0, limit)
+	response.Findings = gritcommand.WindowFindings(response.Findings, 0, limit)
 	return response, nil
 }
 

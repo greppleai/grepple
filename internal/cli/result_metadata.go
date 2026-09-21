@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/greppleai/grepple/api"
+	gritcommand "github.com/greppleai/grepple/internal/cli/grit"
 	"github.com/greppleai/grepple/search"
 )
 
@@ -177,7 +178,7 @@ func graphContinuationCommand(mode string, paths []string, truncation *navigatio
 	return strings.Join(parts, " ")
 }
 
-func gritResultMetadata(values gritArgs, response api.GritResponse, remote bool) *api.ResultMetadata {
+func gritResultMetadata(values gritcommand.Arguments, response api.GritResponse, remote bool) *api.ResultMetadata {
 	total := response.Total
 	pageComplete := values.Skip+len(response.Findings) >= total
 	omittedSources := 0
@@ -219,7 +220,7 @@ func gritResultLanguages(response api.GritResponse) []string {
 	return normalizedResultScope(languages, "")
 }
 
-func gritContinuationCommand(values gritArgs, nextSkip int, removeSourceCaps bool) string {
+func gritContinuationCommand(values gritcommand.Arguments, nextSkip int, removeSourceCaps bool) string {
 	parts := appendActiveRepositoryScopeFlags([]string{"grepple", "grit", "--json"})
 	if values.Remote {
 		parts = append(parts, "--remote")
