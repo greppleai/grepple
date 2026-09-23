@@ -44,7 +44,7 @@ func TestArchitectureDirectoryAndResolveAcrossLanguages(t *testing.T) {
 	}
 
 	resolved := captureStdout(t, func() {
-		if err := runArchitecture([]string{"resolve", "--symbol", "Document", "--compact", "."}); err != nil {
+		if err := runArchitecture([]string{"resolve", "--symbol", "Document", "."}); err != nil {
 			t.Fatal(err)
 		}
 	})
@@ -71,7 +71,7 @@ func TestArchitectureDirectoryReportsAdapterEvidencedEntrypoints(t *testing.T) {
 	writeArchitectureFixture(t, root, "cmd/server/main.go", "package main\nfunc main() {}\n")
 	chdirForConfigTest(t, root)
 	compact := captureStdout(t, func() {
-		if err := runArchitecture([]string{"directory", "--compact", "."}); err != nil {
+		if err := runArchitecture([]string{"directory", "."}); err != nil {
 			t.Fatal(err)
 		}
 	})
@@ -93,7 +93,7 @@ func TestArchitectureDirectoryReportsAdapterEvidencedEntrypoints(t *testing.T) {
 func assertProductionOnlyArchitectureResolve(t *testing.T) {
 	t.Helper()
 	production := captureStdout(t, func() {
-		code, err := runArchitectureWithExit([]string{"resolve", "--symbol", "TestDocument", "--compact", "."}, true)
+		code, err := runArchitectureWithExit([]string{"resolve", "--symbol", "TestDocument", "."}, true)
 		if err != nil || code != 1 {
 			t.Fatalf("production-only resolve code=%d error=%v", code, err)
 		}
@@ -113,7 +113,7 @@ func TestArchitectureWhyUsesResolvedCrossDirectoryCalls(t *testing.T) {
 	assertArchitectureRelationCoverage(t)
 
 	output := captureStdout(t, func() {
-		if err := runArchitecture([]string{"why", "rulespec", "search", "--compact", "."}); err != nil {
+		if err := runArchitecture([]string{"why", "rulespec", "search", "."}); err != nil {
 			t.Fatal(err)
 		}
 	})
@@ -137,7 +137,7 @@ func TestArchitectureWhyReportsImportOnlyRelation(t *testing.T) {
 	writeArchitectureFixture(t, root, "side/effect.go", "package side\nimport _ \"example.com/project/target\"\n")
 	chdirForConfigTest(t, root)
 	output := captureStdout(t, func() {
-		if err := runArchitecture([]string{"why", "side", "target", "--compact", "."}); err != nil {
+		if err := runArchitecture([]string{"why", "side", "target", "."}); err != nil {
 			t.Fatal(err)
 		}
 	})
@@ -153,7 +153,7 @@ func TestArchitectureHelpStopsBeforeAnalysis(t *testing.T) {
 				t.Fatal(err)
 			}
 		})
-		if !strings.Contains(output, "--compact") || strings.Contains(output, "requires exactly one") {
+		if strings.Contains(output, "--compact") || !strings.Contains(output, "--json") {
 			t.Fatalf("%s help output:\n%s", command, output)
 		}
 	}

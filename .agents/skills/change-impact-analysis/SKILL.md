@@ -12,7 +12,7 @@ Prevent the two common mistakes: treating every name occurrence as a caller, and
 1. Resolve the exact declaration location. Prefer an existing range; otherwise locate it:
    ```bash
 grepple --line-only --enclosing -F 'Symbol' SCOPE
-grepple graph resolve --symbol Symbol --compact SCOPE
+grepple graph resolve --symbol Symbol SCOPE
 grepple --at path/to/file.go:LINE
    ```
    Use `graph resolve` when a name is overloaded or appears in multiple containers; continue with one emitted `--at` selector rather than guessing.
@@ -22,9 +22,9 @@ grepple --at path/to/file.go:LINE
    ```
 3. For a refactor decision, query the needed direction over the relevant source universe:
    ```bash
-   grepple graph callers --at path/to/file.go:LINE --depth 2 --compact SCOPE
-   grepple graph callees --at path/to/file.go:LINE --depth 2 --compact SCOPE
-   grepple graph impact  --at path/to/file.go:LINE --depth 2 --compact SCOPE
+   grepple graph callers --at path/to/file.go:LINE --depth 2 SCOPE
+   grepple graph callees --at path/to/file.go:LINE --depth 2 SCOPE
+   grepple graph impact  --at path/to/file.go:LINE --depth 2 SCOPE
    ```
 4. If compact output reports omissions or completeness is required, narrow the universe or rerun the focused query with `--json`; do not replace it with a whole-repository graph dump. If JSON spills, inspect the `grepple-artifact-v1` descriptor and read only relevant artifact ranges. Use resolution totals and per-language/confidence ambiguity rates to decide whether candidate inspection is material for this scope.
 

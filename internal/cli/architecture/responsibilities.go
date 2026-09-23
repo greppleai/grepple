@@ -12,12 +12,11 @@ import (
 )
 
 type architectureResponsibilitiesArgs struct {
-	JSON    bool `arg:"--json" help:"emit complete directory responsibilities JSON"`
-	Compact bool `arg:"--compact" help:"emit a bounded directory responsibility summary"`
+	JSON bool `arg:"--json" help:"emit complete directory responsibilities JSON"`
 	commonArgs
 	Repository     string   `arg:"--repo" placeholder:"OWNER/REPO[@REF]" help:"analyze one exact indexed repository"`
 	MaxFiles       int      `arg:"--max-files" placeholder:"N" help:"analyze at most N supported files (0 = unlimited)"`
-	MaxOutputBytes int      `arg:"--max-output-bytes" default:"16384" placeholder:"N" help:"cap compact output (default 16384; 0 = unlimited)"`
+	MaxOutputBytes int      `arg:"--max-output-bytes" default:"16384" placeholder:"N" help:"cap human-readable output (default 16384; 0 = unlimited)"`
 	Paths          []string `arg:"positional" placeholder:"PATH" help:"source universe; defaults to the working directory"`
 }
 
@@ -42,9 +41,6 @@ func runArchitectureResponsibilities(args []string, dependencies Dependencies) e
 }
 
 func executeArchitectureResponsibilities(values *ResponsibilitiesArgs, dependencies Dependencies) error {
-	if values.JSON == values.Compact {
-		return fmt.Errorf("architecture responsibilities requires exactly one of --json or --compact")
-	}
 	if err := validateArchitectureOutputLimits(values.MaxFiles, values.MaxOutputBytes); err != nil {
 		return err
 	}

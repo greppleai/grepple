@@ -1,60 +1,60 @@
-description: Defines Grepple's parser, search, navigation, analysis, source-selection, output, editing, research, indexing, architecture, and release contracts.
+description: Defines Grepple's contracts for parsing, search, navigation, analysis, source selection, output, editing, indexing, benchmarking, and release workflows.
 responsibilities:
-    - Specify parser ownership, syntax access, language support, and lifecycle behavior.
-    - Define deterministic search ranking, structural matching, navigation, and scope rendering.
+    - Specify parser ownership, syntax lifecycles, language support, and compatibility.
+    - Define deterministic search, structural matching, ranking, navigation, and scope rendering.
     - Document architecture, graph, boundary, ownership, and dependency analysis.
     - Specify bounded output, metadata, artifacts, completeness, and resolution behavior.
     - Describe delegated research, provider safety, benchmarks, and performance budgets.
     - Define anchored transactional editing and deterministic source selection.
-    - Record indexing, compatibility, release, and implementation-boundary workflows.
+    - Record indexing, release, and implementation-boundary workflows.
 files:
     - path: agent-workflow-benchmarks.md
       description: Defines deterministic agent retrieval benchmarks for correctness, cost, latency, output size, and truncation.
-      kind: unknown
-      checksum: b8ad4182612c85c7aea75851c3e69b301dcf22d4b131597c4407ecab3930c9e4
+      kind: production
+      checksum: 9bd16544e045cfc694c97cfe06613d1c07a21b84c131692e623e0a7e2a21270d
     - path: anchor-providers.md
       description: Specifies native and user-selected edit-anchor providers, configuration, validation, and protocol behavior.
-      kind: unknown
+      kind: production
       checksum: 846c89ccd77ad886874aeb3ed80affe0805e38908f96cffa06f99b55e2c091c7
     - path: architecture-performance-benchmarks.md
       description: Records performance baselines and review budgets for architecture generation and navigation fact caching.
-      kind: unknown
+      kind: production
       checksum: a73fddcda10bd6e03234e56f03bc87c65f62899628fb7ac5fe7e5ea214c8f895
     - path: ask.md
       description: Documents the bounded read-only research agent, provider authentication, typed tools, logging, caching, and safety limits.
-      kind: unknown
+      kind: production
       checksum: bc0d1a17dcd90ca234c149e258df34e970ed2320de329a36a6583700afcbf780
     - path: boundary-analysis.md
       description: Describes source-linked workflow and type boundary analysis, policy interpretation, evidence, and caching.
-      kind: unknown
+      kind: production
       checksum: b1da140752568d2f0dd1ec750602df3ccc0563aaaaa6a7f514f8fb9d68b204fd
     - path: directory-architecture.md
       description: Specifies language-neutral directory orientation, declaration resolution, relation evidence, and responsibility reporting.
-      kind: unknown
-      checksum: 8cd68d42103eecfa19c00d4302d1f59985a31a75dc7b3a6bec13b55956c9bf7f
+      kind: production
+      checksum: cd0c1b21937b0fb751a571cc417930aba75d299a617ea0242644fc9ec540217d
     - path: directory-metadata.md
-      description: Defines repository-owned grepple.yaml generation, verification, freshness, and tree integration.
-      kind: unknown
-      checksum: c8c9996b1728a673bc249dda4dc4b65a4018d82ef2f2c97ea4a1c1ac5f5986ca
+      description: Defines repository-owned grepple.yaml generation, verification, freshness, classification, and tree integration.
+      kind: production
+      checksum: c59630173351e89036e465b7287aa1caa51516b85ad233832d01a8b24fb8916d
     - path: domain-boundaries.md
       description: Records package ownership, API compatibility boundaries, dependency classifications, and cohesive subsystem guidance.
-      kind: unknown
+      kind: production
       checksum: 2a55c63866f4e8d59603114a3c555c527f7ba56867b0e785ef61f215cbc97495
     - path: file-type-support.md
       description: Catalogs supported file languages, parser capabilities, navigation facts, extraction paths, and evidence limits.
-      kind: unknown
-      checksum: 93bfb21fad29ef33f07a83fbff838b9269a910b00c679a93d8fdef8880c42664
+      kind: generated
+      checksum: 4c9c565b21f8e276d1bae92edab10b758aecaffcc61ab43931c4eb1914e0d13f
     - path: gritql-analysis.md
       description: Presents historical design analysis for a native read-only GritQL-compatible detection kernel and future uses.
-      kind: unknown
+      kind: production
       checksum: 7581abcfdd05f5e2c772c31a61e140e8a3a4b6ea6ca79a63dd47e00b22a1e573
     - path: gritql-compatibility.md
       description: Defines the closed gritql-v1 syntax, parsing, matching, limits, diagnostics, and language compatibility contract.
-      kind: unknown
+      kind: production
       checksum: c5b2ddc15d2fb76e6ea71cd56bbdf863c2faca322894752ace49ec6f27f6d1e5
     - path: implementation-ownership-inventory.md
       description: Records authoritative ownership of parser, navigation, search, extraction, analysis, and dependency boundaries.
-      kind: unknown
+      kind: production
       checksum: fb38d67ee48abaeaac715165b98e9b49f8a53a01401fbbec5b6fbb952cb7e28b
     - path: matched-scope-rendering-after.md
       description: Captures candidate structural search output that renders complete matching scopes without unrelated sibling summaries.
@@ -66,37 +66,37 @@ files:
       checksum: 0c24dbe1dd620c5841cd73c0bc927cb93d773813b459e6160e1e4be69e3c0035
     - path: output-contracts.md
       description: Specifies command output modes, completeness, limits, spilling, source availability, and resolution outcomes.
-      kind: unknown
-      checksum: 6ebda1d6abf5a1a02b108e9e89bbdc0a14b8020e59973356b75057b7fb25cce9
+      kind: production
+      checksum: 49f7f14dfe8255a5d6c21479ee6c6058a3366c54faff42c6a6df4cb4be048b0b
     - path: parser-syntax-lifecycle.md
       description: Documents parser Document ownership, borrowed syntax views, snapshots, locking, invalidation, and access tradeoffs.
-      kind: unknown
+      kind: production
       checksum: 0032f1823e78c5790d0ea5dd8c9ac709c928cc4a3178ca5a25d50e0ccb2486b8
     - path: releases.md
       description: Describes coordinated release creation, native CGO builds, artifact targets, publishing, validation, and dependencies.
-      kind: unknown
+      kind: production
       checksum: 2662af82b1363b0a1b6d8eef5a4aaaeef5754e58f233c4521880e366cd66a6bf
     - path: restructure-relations.md
       description: Reviews production dependency restructuring, removed architecture leaks, intentional edges, and DAG containment.
-      kind: unknown
+      kind: production
       checksum: f9922175e7e0ac62843f46be4cb5e05e01eda4f03fdf3ae57c2e5f21c776de0d
     - path: result-metadata.md
       description: Defines the shared bounded-execution metadata envelope for search, graph, boundary, and GritQL JSON results.
-      kind: unknown
-      checksum: 82b192362051142b5c6ba4f28bcc3fffaf28efb057e10695e43007631e341ae8
+      kind: production
+      checksum: 01c9766a4032a457ebc6ef29a252f93f6e5d1b980be2d6cece811dc3eb483e2e
     - path: search-ranking.md
       description: Specifies deterministic file ordering and parser-backed segment selection for search results.
-      kind: unknown
+      kind: production
       checksum: fb697d4ae036f855cf2e9b2620ef77c0fb9b82a9b6def2afa4c4e57d926bf814
     - path: source-scope.md
       description: Documents observable repository source selection, ignore controls, classifications, exclusions, and completeness.
-      kind: unknown
-      checksum: e9c1d514df3195ddae81be7eb2b73d31d8e41bece734370f119743ad832026e0
+      kind: production
+      checksum: b5790d507c9472f9fc44b0259eb1c2311971b4c03a341fe5cb7e0f9a9353fa73
     - path: versioned-indexing.md
       description: Specifies repository-owned remote index declarations, ref discovery, versioned selectors, and exact commits.
-      kind: unknown
+      kind: production
       checksum: 41461f32acaf7e1e6b9ece1b21f5032f7121ad037bc4ec54643451afc3aea5d8
     - path: write.md
       description: Defines transactional hashline edits, creations, deletions, validation, dry runs, output, and coverage tracking.
-      kind: unknown
+      kind: production
       checksum: 9f3af1ee709980d196383dbb715e29fc7b410630766da1882631f1e551e6615d

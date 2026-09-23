@@ -21,17 +21,16 @@ const defaultTextOutputBytes = 16 * 1024
 
 type resolveArgs struct {
 	JSON           bool     `arg:"--json" help:"emit every matching declaration and continuation command as JSON"`
-	Compact        bool     `arg:"--compact" help:"emit bounded declaration alternatives with copyable commands"`
 	Symbol         string   `arg:"--symbol,required" placeholder:"NAME" help:"preview exact or terminal-name declaration matches"`
 	Languages      []string `arg:"--language,separate" placeholder:"ID" help:"retain one navigation language; repeatable"`
 	Visibilities   []string `arg:"--visibility,separate" placeholder:"LEVEL" help:"retain public, non-public, or unknown declarations; repeatable"`
 	MaxFiles       int      `arg:"--max-files" placeholder:"N" help:"parse at most N discovered files (0 = unlimited)"`
-	MaxOutputBytes int      `arg:"--max-output-bytes" default:"16384" placeholder:"N" help:"cap compact output (default 16384; 0 = unlimited; JSON is uncapped)"`
+	MaxOutputBytes int      `arg:"--max-output-bytes" default:"16384" placeholder:"N" help:"cap human-readable output (default 16384; 0 = unlimited; JSON is uncapped)"`
 	Paths          []string `arg:"positional" placeholder:"PATH" help:"graph universe; defaults to the working directory"`
 }
 
 func (resolveArgs) Description() string {
-	return "Preview every declaration matching a symbol without graph traversal. Exactly one of --json or --compact is required."
+	return "Preview every declaration matching a symbol without graph traversal. Human output is the default; --json emits every match."
 }
 
 // ResolveOutput is the complete graph symbol-resolution response.
@@ -69,7 +68,6 @@ func (command *command) runResolve(args []string) error {
 	if err := argumentParser.Parse(args); err != nil {
 		if errors.Is(err, arg.ErrHelp) {
 			argumentParser.WriteHelp(command.context.Stdout())
-			fmt.Fprintln(command.context.Stdout(), "Required output mode: (--json | --compact); choose exactly one.")
 			fmt.Fprintln(command.context.Stdout(), "Required selector: --symbol NAME.")
 			return nil
 		}
@@ -98,7 +96,7 @@ func executeResolve(application cliruntime.Context, values *ResolveArgs) error {
 	output := ResolveOutput{Schema: NavigationResolveSchema, Symbol: values.Symbol, Sources: graph.Sources, Matches: matches, Truncation: graph.Truncation}
 	output.Metadata = resolveMetadata(*values, graph, len(matches), application.Repository().AppendScopeFlags)
 	output.Metadata.Scope.Languages = normalizedScope(filter.Languages, "")
-	if values.Compact {
+	if !values.JSON {
 		err = renderCompactResolve(application.Stdout(), output, values.MaxOutputBytes)
 	} else {
 		err = writeResolveJSON(application.Stdout(), output)
@@ -113,9 +111,6 @@ func executeResolve(application cliruntime.Context, values *ResolveArgs) error {
 }
 
 func validateResolveArgs(values resolveArgs) error {
-	if values.JSON == values.Compact {
-		return fmt.Errorf("grepple graph resolve requires exactly one of --json or --compact")
-	}
 	if strings.TrimSpace(values.Symbol) == "" {
 		return fmt.Errorf("grepple graph resolve requires --symbol NAME")
 	}
@@ -140,7 +135,7 @@ func resolveMatches(declarations []parser.NavigationDeclaration, symbol string, 
 	result := make([]ResolveMatch, 0, len(matched))
 	for _, declaration := range matched {
 		at := fmt.Sprintf("%s:%d", declaration.Path, declaration.Start)
-		prefix := " --at " + quoteArgument(at) + " --depth 2 --compact " + scope
+		prefix := " --at " + quoteArgument(at) + " --depth 2 " + scope
 		result = append(result, ResolveMatch{ID: declaration.ID, Name: declaration.Name, Kind: declaration.Kind, Language: declaration.Language, Path: declaration.Path, StartLine: declaration.Start, EndLine: declaration.End, Visibility: declaration.Visibility, At: at, CallersCommand: "grepple graph callers" + prefix, CalleesCommand: "grepple graph callees" + prefix, ImpactCommand: "grepple graph impact" + prefix})
 	}
 	return result
@@ -241,8 +236,13 @@ func writeResolveJSON(writer io.Writer, output ResolveOutput) error {
 func renderCompactResolve(destination io.Writer, output ResolveOutput, maxBytes int) error {
 	writer := cliruntime.NewBoundedOutput(destination, maxBytes)
 	write := func(value string) bool { return writer.WriteString(value) == nil }
-	if !write(fmt.Sprintf("resolve %s symbol=%s matches=%d sources=%s\n", output.Schema, quoteArgument(output.Symbol), len(output.Matches), compactSourceSummary(output.Sources))) {
+	if len(output.Matches) == 0 && !write("no matches for "+quoteArgument(output.Symbol)+"\n") {
 		return nil
+	}
+	if output.Sources.Failed > 0 || output.Sources.Recovered > 0 {
+		if !write("! incomplete sources=" + compactSourceSummary(output.Sources) + "; inspect --json diagnostics\n") {
+			return nil
+		}
 	}
 	if output.Truncation != nil && !write(fmt.Sprintf("! truncated %s limit=%d skipped=%d\n", output.Truncation.Reason, output.Truncation.Limit, output.Truncation.Skipped)) {
 		return nil

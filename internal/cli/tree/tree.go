@@ -13,6 +13,7 @@ import (
 	"github.com/greppleai/grepple/internal/apiclient"
 	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
 	rendercommand "github.com/greppleai/grepple/internal/render"
+	sourcedomain "github.com/greppleai/grepple/internal/sources"
 )
 
 // Request contains parsed tree command options.
@@ -20,6 +21,7 @@ type Request struct {
 	cliruntime.CommonArgs
 	Depth      int      `arg:"--depth" default:"2" placeholder:"N" help:"levels to descend"`
 	JSON       bool     `arg:"--json" help:"print raw JSON"`
+	Kind       string   `arg:"--kind" placeholder:"KIND" help:"show only locally classified files of this kind (production, test, fixture, generated, vendor, unknown)"`
 	Repository string   `arg:"--repo" placeholder:"OWNER/REPOSITORY[@REF]" help:"show one exact indexed repository instead of the local checkout"`
 	Repo       string   `arg:"-"`
 	Path       string   `arg:"-"`
@@ -80,6 +82,17 @@ func (command *command) execute(values *Request) error {
 	if err != nil {
 		return err
 	}
+	var kind sourcedomain.Kind
+	if values.Kind != "" {
+		var valid bool
+		kind, valid = sourcedomain.ParseKind(values.Kind)
+		if !valid {
+			return fmt.Errorf("invalid --kind %q: expected production, test, fixture, generated, vendor, or unknown", values.Kind)
+		}
+		if remote {
+			return fmt.Errorf("--kind is only supported for local trees; indexed tree entries have no source-kind metadata")
+		}
+	}
 	var data api.TreeResponse
 	if remote {
 		configuration := application.Configuration()
@@ -89,7 +102,7 @@ func (command *command) execute(values *Request) error {
 		}
 		data, err = application.APIClient().Tree(context.Background(), server, apiclient.TreeRequest{Repo: values.Repo, Path: values.Path, Depth: values.Depth})
 	} else {
-		data, err = command.local(values.Path, values.Depth)
+		data, err = command.local(values.Path, values.Depth, kind)
 	}
 	if err != nil {
 		return err

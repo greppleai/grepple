@@ -9,8 +9,8 @@ Choose the projection by question; do not generate a repository-wide diagram by 
 
 ## Projection choice
 
-- **Repository/directory orientation:** use `grepple architecture directory --compact`.
-- **Declaration ownership:** use `grepple architecture resolve --symbol NAME --compact`.
+- **Repository/directory orientation:** use `grepple architecture directory`.
+- **Declaration ownership:** use `grepple architecture resolve --symbol NAME`.
 - **Type, field, method, or dependency shape:** use focused `extract structure`.
 - **Callable sequence or path:** use focused `extract flow`.
 

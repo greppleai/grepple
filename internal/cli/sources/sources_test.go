@@ -43,6 +43,16 @@ func TestSourcesExplainReportsConfigExclusionsAndClassifications(t *testing.T) {
 	if FormatCounts(report.Exclusions) != "config-ignore:1,non-production:1" {
 		t.Fatalf("exclusions=%+v", report.Exclusions)
 	}
+	output.Reset()
+	if err := run([]string{"explain"}, dependencies); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(output.String(), "sources grepple-source-scope-v2") || !strings.Contains(output.String(), "production:") {
+		t.Fatalf("default human output=%q", output.String())
+	}
+	if err := run([]string{"explain", "--compact"}, dependencies); err == nil {
+		t.Fatal("obsolete --compact flag should be rejected")
+	}
 }
 func writeSourceKinds(t *testing.T, root string, kinds map[string]string) {
 	t.Helper()

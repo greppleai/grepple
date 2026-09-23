@@ -1,12 +1,12 @@
-description: Provides guidance for deterministic local file, text, declaration, and evidence retrieval with Grepple.
+description: Provides deterministic guidance for local file discovery, text and declaration search, evidence retrieval, and edit-safe writes with Grepple.
 responsibilities:
-    - Select appropriate Grepple search intents
+    - Select appropriate local search intents
     - Define evidence completeness and scope rules
     - Retrieve exact implementation ranges and edit anchors
-    - Describe safe write workflows
-    - Direct architectural and impact questions to specialized skills
+    - Apply safe transactional write workflows
+    - Route impact, architecture, and structural questions to specialized skills
 files:
     - path: SKILL.md
-      description: Documents local Grepple search, evidence retrieval, and edit-safe workflows.
+      description: Documents Grepple workflows for local discovery, evidence retrieval, and safe source edits.
       kind: production
-      checksum: a9c984e514523e67411b5e200d17315abfc3b4eb527e6b9b4565f48fb06dbbaa
+      checksum: 5caf39f876b3a292e795c2ae66c0a28c2b964b2b2d916c3bbde127c4beb30410

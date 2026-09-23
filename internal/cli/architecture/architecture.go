@@ -25,7 +25,6 @@ type architectureArgs struct {
 	JSON bool `arg:"--json" help:"emit complete directory architecture JSON"`
 	commonArgs
 	Repository     string   `arg:"--repo" placeholder:"OWNER/REPO[@REF]" help:"analyze one exact indexed repository"`
-	Compact        bool     `arg:"--compact" help:"emit a bounded agent-facing directory summary"`
 	Relations      bool     `arg:"--relations" help:"emit one compressed relation per directory pair"`
 	Mermaid        bool     `arg:"--mermaid" help:"emit a Mermaid directory dependency flowchart with source-colored links"`
 	Output         string   `arg:"--output" placeholder:"PATH" help:"write Mermaid output instead of stdout"`
@@ -40,10 +39,9 @@ type architectureResolveArgs struct {
 	JSON bool `arg:"--json" help:"emit complete matching declarations as JSON"`
 	commonArgs
 	Repository     string   `arg:"--repo" placeholder:"OWNER/REPO[@REF]" help:"analyze one exact indexed repository"`
-	Compact        bool     `arg:"--compact" help:"emit bounded source-linked matches"`
 	Symbol         string   `arg:"--symbol,required" placeholder:"NAME" help:"exact or terminal declaration name"`
 	MaxFiles       int      `arg:"--max-files" placeholder:"N" help:"analyze at most N supported files (0 = unlimited)"`
-	MaxOutputBytes int      `arg:"--max-output-bytes" default:"16384" placeholder:"N" help:"cap compact output (default 16384; 0 = unlimited)"`
+	MaxOutputBytes int      `arg:"--max-output-bytes" default:"16384" placeholder:"N" help:"cap human-readable output (default 16384; 0 = unlimited)"`
 	Paths          []string `arg:"positional" placeholder:"PATH" help:"source universe; defaults to the working directory"`
 }
 
@@ -51,9 +49,8 @@ type architectureWhyArgs struct {
 	JSON bool `arg:"--json" help:"emit complete source-linked relation evidence as JSON"`
 	commonArgs
 	Repository     string   `arg:"--repo" placeholder:"OWNER/REPO[@REF]" help:"analyze one exact indexed repository"`
-	Compact        bool     `arg:"--compact" help:"emit bounded source-linked relation evidence"`
 	MaxFiles       int      `arg:"--max-files" placeholder:"N" help:"analyze at most N supported files (0 = unlimited)"`
-	MaxOutputBytes int      `arg:"--max-output-bytes" default:"16384" placeholder:"N" help:"cap compact output (default 16384; 0 = unlimited)"`
+	MaxOutputBytes int      `arg:"--max-output-bytes" default:"16384" placeholder:"N" help:"cap human-readable output (default 16384; 0 = unlimited)"`
 	From           string   `arg:"positional,required" placeholder:"FROM"`
 	To             string   `arg:"positional,required" placeholder:"TO"`
 	Paths          []string `arg:"positional" placeholder:"PATH" help:"source universe; defaults to the working directory"`
@@ -79,7 +76,7 @@ type architectureWhyOutput struct {
 func (command *command) Run(args []string) error {
 	dependencies := command.services()
 	if len(args) == 0 || isExtractHelp(args[0]) {
-		return stdoutWriter(dependencies).writeString("Inspect language-neutral directory architecture. Local checkout is the default; --repo selects one exact indexed remote repository for directory, resolve, why, or responsibilities. Compare reads two local JSON snapshots.\nUsage:\n  grepple architecture directory (--compact | --relations | --mermaid | --json) [PATH ...]\n  grepple architecture resolve --symbol NAME (--compact | --json) [PATH ...]\n  grepple architecture why FROM TO (--compact | --json) [PATH ...]\n  grepple architecture responsibilities (--compact | --json) [PATH ...]\n  grepple architecture compare (--compact | --json) BEFORE.json AFTER.json\n")
+		return stdoutWriter(dependencies).writeString("Inspect language-neutral directory architecture. Local checkout is the default; --repo selects one exact indexed remote repository for directory, resolve, why, or responsibilities. Compare reads two local JSON snapshots. Human output is the default; use --json for complete machine output.\nUsage:\n  grepple architecture directory [--relations | --mermaid | --json] [PATH ...]\n  grepple architecture resolve --symbol NAME [--json] [PATH ...]\n  grepple architecture why FROM TO [--json] [PATH ...]\n  grepple architecture responsibilities [--json] [PATH ...]\n  grepple architecture compare [--json] BEFORE.json AFTER.json\n")
 	}
 	switch args[0] {
 	case "directory":
@@ -128,13 +125,13 @@ func runArchitectureDirectory(args []string, dependencies Dependencies) error {
 
 func executeArchitectureDirectory(values *DirectoryArgs, dependencies Dependencies) error {
 	outputModes := 0
-	for _, enabled := range []bool{values.JSON, values.Compact, values.Relations, values.Mermaid} {
+	for _, enabled := range []bool{values.JSON, values.Relations, values.Mermaid} {
 		if enabled {
 			outputModes++
 		}
 	}
-	if outputModes != 1 {
-		return fmt.Errorf("architecture directory requires exactly one of --json, --compact, --relations, or --mermaid")
+	if outputModes > 1 {
+		return fmt.Errorf("architecture directory output modes --json, --relations, and --mermaid cannot be combined")
 	}
 	if values.Output != "" && !values.Mermaid {
 		return fmt.Errorf("architecture directory --output requires --mermaid")
@@ -173,9 +170,6 @@ func runArchitectureResolve(args []string, dependencies Dependencies) error {
 }
 
 func executeArchitectureResolve(values *ResolveArgs, dependencies Dependencies) error {
-	if values.JSON == values.Compact {
-		return fmt.Errorf("architecture resolve requires exactly one of --json or --compact")
-	}
 	if err := validateArchitectureOutputLimits(values.MaxFiles, values.MaxOutputBytes); err != nil {
 		return err
 	}
@@ -210,9 +204,6 @@ func runArchitectureWhy(args []string, dependencies Dependencies) error {
 }
 
 func executeArchitectureWhy(values *WhyArgs, dependencies Dependencies) error {
-	if values.JSON == values.Compact {
-		return fmt.Errorf("architecture why requires exactly one of --json or --compact")
-	}
 	if err := validateArchitectureOutputLimits(values.MaxFiles, values.MaxOutputBytes); err != nil {
 		return err
 	}
@@ -434,13 +425,13 @@ func renderDirectoryArchitecture(architecture directoryArchitecture, values arch
 	if !write("coverage imports=%d resolved=%d ambiguous=%d unresolved=%d types=%d type-resolved=%d type-ambiguous=%d type-unresolved=%d type-unqualified=%d import-unsupported=%s", coverage.ImportFacts, coverage.ResolvedImports, coverage.AmbiguousImports, coverage.UnresolvedImports, coverage.TypeReferences, coverage.ResolvedTypeReferences, coverage.AmbiguousTypeReferences, coverage.UnresolvedTypeReferences, coverage.UnqualifiedTypeReferences, formatArchitectureStrings(coverage.UnsupportedImportLanguages)) {
 		return nil
 	}
-	if !renderArchitectureDirectories(write, directories[:shown]) {
-		return nil
-	}
 	if !renderArchitectureFacts(write, architecture.Symbols) {
 		return nil
 	}
-	if !renderArchitectureRelations(write, visibleRelations) {
+	if len(visibleRelations) > 0 && !write("") {
+		return nil
+	}
+	if !renderArchitectureRelations(write, visibleRelations) || !renderUnconnectedArchitectureDirectories(write, directories[:shown], architecture.Directories, visibleRelations) {
 		return nil
 	}
 	if len(visibleRelations) < len(architecture.Relations) {
@@ -494,11 +485,36 @@ func countArchitectureEntrypoints(symbols []architectureSymbol) int {
 	return count
 }
 
-func renderArchitectureDirectories(write func(string, ...any) bool, directories []architectureDirectory) bool {
+// renderUnconnectedArchitectureDirectories reports visible leaf directories that
+// would otherwise vanish from the relation-first human projection. Use the full
+// inventory to avoid mislabeling ancestors when depth or node limits hide children.
+func renderUnconnectedArchitectureDirectories(write func(string, ...any) bool, directories, allDirectories []architectureDirectory, relations []architectureRelation) bool {
+	connected := make(map[string]bool, len(relations)*2)
+	for _, relation := range relations {
+		connected[relation.From], connected[relation.To] = true, true
+	}
+	wrote := false
 	for _, directory := range directories {
-		if !write("D %s files=%d classes=%s languages=%s declarations=%s public-callables=%d entrypoints=%d", directory.Path, directory.Files, formatArchitectureCounts(directory.Classifications), formatArchitectureCounts(directory.Languages), formatArchitectureCounts(directory.Declarations), directory.PublicCallables, directory.Entrypoints) {
+		if connected[directory.Path] {
+			continue
+		}
+		ancestor := false
+		for _, other := range allDirectories {
+			if other.Path != directory.Path && (directory.Path == "." || strings.HasPrefix(other.Path, directory.Path+"/")) {
+				ancestor = true
+				break
+			}
+		}
+		if ancestor {
+			continue
+		}
+		if !wrote && len(relations) > 0 && !write("") {
 			return false
 		}
+		if !write("unconnected %s", directory.Path) {
+			return false
+		}
+		wrote = true
 	}
 	return true
 }
@@ -513,8 +529,18 @@ func renderArchitectureFacts(write func(string, ...any) bool, symbols []architec
 }
 
 func renderArchitectureRelations(write func(string, ...any) bool, relations []architectureRelation) bool {
+	from, to := "", ""
 	for _, relation := range relations {
-		if !write("R %s -> %s kind=%s count=%d classes=%s at=%s", relation.From, relation.To, relation.Kind, relation.Count, formatArchitectureCounts(relation.Classifications), architectureEvidenceLocation(relation.Evidence)) {
+		if relation.From != from || relation.To != to {
+			if from != "" && !write("") {
+				return false
+			}
+			from, to = relation.From, relation.To
+			if !write("%s -> %s", from, to) {
+				return false
+			}
+		}
+		if !write("  %-15s count=%d classes=%s at=%s", relation.Kind, relation.Count, formatArchitectureCounts(relation.Classifications), architectureEvidenceLocation(relation.Evidence)) {
 			return false
 		}
 	}

@@ -16,14 +16,13 @@ const architectureComparisonSchema = "grepple-directory-architecture-comparison-
 
 type architectureCompareArgs struct {
 	JSON           bool   `arg:"--json" help:"emit the complete normalized comparison as JSON"`
-	Compact        bool   `arg:"--compact" help:"emit the first source-linked difference"`
-	MaxOutputBytes int    `arg:"--max-output-bytes" default:"16384" placeholder:"N" help:"cap compact output (default 16384; 0 = unlimited)"`
+	MaxOutputBytes int    `arg:"--max-output-bytes" default:"16384" placeholder:"N" help:"cap human-readable output (default 16384; 0 = unlimited)"`
 	Before         string `arg:"positional,required" placeholder:"BEFORE.json" help:"earlier directory architecture JSON"`
 	After          string `arg:"positional,required" placeholder:"AFTER.json" help:"later directory architecture JSON"`
 }
 
 func (architectureCompareArgs) Description() string {
-	return "Normalize and compare complete directory architecture reports before diagnosing byte drift. Exactly one of --json or --compact is required."
+	return "Normalize and compare complete directory architecture reports before diagnosing byte drift. Human output is the default; --json emits the complete comparison."
 }
 
 type architectureComparison struct {
@@ -49,9 +48,6 @@ func runArchitectureCompare(args []string, dependencies Dependencies) error {
 }
 
 func executeArchitectureCompare(values *CompareArgs, dependencies Dependencies) error {
-	if values.JSON == values.Compact {
-		return fmt.Errorf("architecture compare requires exactly one of --json or --compact")
-	}
 	if values.MaxOutputBytes < 0 {
 		return fmt.Errorf("architecture compare limits must be non-negative")
 	}

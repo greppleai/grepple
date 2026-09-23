@@ -102,7 +102,7 @@ func TestArchitectureCompareCommandReportsSemanticDifference(t *testing.T) {
 		t.Fatal(err)
 	}
 	output := captureStdout(t, func() {
-		code, err := runArchitectureWithExit([]string{"compare", "--compact", beforePath, afterPath}, false)
+		code, err := runArchitectureWithExit([]string{"compare", beforePath, afterPath}, false)
 		if err != nil || code != 1 {
 			t.Fatalf("compare code=%d error=%v", code, err)
 		}

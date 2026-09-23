@@ -1,17 +1,22 @@
-description: Implements the tree command for depth-limited local and indexed repository source trees with metadata-aware rendering.
+description: Implements the tree command for depth-limited local and indexed repository source trees with kind filtering and metadata-aware rendering.
 responsibilities:
     - Parse and validate tree command options
     - Normalize explicit and legacy repository targets
     - Dispatch local or indexed repository tree requests
     - Build sorted depth-limited local entries
-    - Apply directory and file metadata
+    - Filter local entries by source kind
+    - Attach directory and file metadata
     - Render tree responses and manage empty-result exits
-    - Test local metadata handling and request routing
+    - Test tree routing, kind filtering, and metadata behavior
 files:
+    - path: kind_test.go
+      description: Tests source-kind filtering, argument validation, remote rejection, metadata preservation, and production-only conflicts.
+      kind: test
+      checksum: 460c70a13ea7f6a5981d46fd008ef627a75e756685f877ab1b06026de57cb997
     - path: local.go
-      description: Builds sorted depth-limited local entries and attaches directory and file metadata.
+      description: Builds sorted depth-limited local entries, filters source kinds, and attaches directory and file metadata.
       kind: production
-      checksum: daafea048e702b5c58d4d65db609617090021be0528e604e58d9f260a44c8d8d
+      checksum: c322842fc2770f3a528909567c18a821fb29f656a8087eca12cb45ebd7617560
     - path: local_test.go
       description: Tests local file descriptions, stale metadata, and missing metadata reporting.
       kind: test
@@ -19,12 +24,12 @@ files:
     - path: runtime.go
       description: Adapts the command context repository into a local tree function.
       kind: production
-      checksum: 7dd4a9e8b19fc072ba604ede1d25392341ab13c63493a6c21eac657c58b782a0
+      checksum: 75bd18a1b2f33924b7566c8ae3aa75b02fa82e5b77f239188b68317dac53f5b3
     - path: tree.go
-      description: Defines tree options, normalizes targets, dispatches requests, and renders responses.
+      description: Defines tree options, validates and normalizes targets, dispatches requests, and renders responses.
       kind: production
-      checksum: e819ae09dc6d9eece83112e8c8c6533ab48c06625ff8e9c36855dbb9627338aa
+      checksum: 0ceb13f9c3ffb4c7b24c67fc76211263a16227f777c4c52dc0d335791cbd9345
     - path: tree_test.go
       description: Tests default local execution and explicit or legacy remote repository normalization.
       kind: test
-      checksum: 10bee186d3a08d1eaf107c2dbd542421013e2a9f526591f00b5939b491c93e96
+      checksum: de28ff059ca901eac8bab217a72045a4d1016cbf21aff74f052fe9cdc27d1c39

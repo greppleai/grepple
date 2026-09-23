@@ -3,7 +3,7 @@
 `grepple sources explain` makes repository-owned source selection observable before an agent treats missing results as evidence.
 
 ```bash
-grepple sources explain --compact .
+grepple sources explain .
 grepple sources explain --json --production-only src services
 ```
 
@@ -29,4 +29,4 @@ Classification comes from each file's current `grepple.yaml` entry rather than p
 - `vendor`: vendored third-party source;
 - `unknown`: evidence is insufficient or no trustworthy classification is available.
 
-A classification is trusted only when its path is a direct file entry, its kind is valid, and its recorded SHA-256 checksum matches current content. Missing metadata, omitted kinds, invalid kinds, and stale checksums classify the file as `unknown`; Grepple does not infer production status from a filename. Run `grepple init --force --only-directory PATH` after source changes to refresh descriptions, checksums, and kinds. Classification is source-scope metadata, not an ownership or deployment verdict. Use the complete universe unless the task explicitly asks about production code.
+A classification is trusted only when its path is a direct file entry, its kind is valid, and its recorded SHA-256 checksum matches current content. Missing metadata, omitted kinds, invalid kinds, and stale checksums classify the file as `unknown`; Grepple does not infer production status from a filename. Run `grepple init` after source changes to refresh stale or missing descriptions, checksums, and kinds (or `--only-directory PATH` to limit the refresh). Classification is source-scope metadata, not an ownership or deployment verdict. Use the complete universe unless the task explicitly asks about production code.

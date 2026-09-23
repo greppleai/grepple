@@ -1,7 +1,7 @@
-description: The search package resolves search requests, discovers and filters source files, matches content, builds navigation context, analyzes boundaries, and produces ranked API results.
+description: The search package discovers and filters source files, matches queries, resolves exact references, analyzes structure, builds navigation context, and produces ranked results.
 responsibilities:
     - Resolve and validate search requests
-    - Discover and filter candidate source files
+    - Discover and filter candidate files
     - Match literal and regular-expression queries
     - Support exact references and line ranges
     - Extract structural and contextual match data
@@ -14,11 +14,15 @@ files:
     - path: at.go
       description: Implements exact file and line-range lookup with structural and related context.
       kind: production
-      checksum: 997061096ea3b4fc31d264c6ae9fe24267fbfbe28d5a22efe11f3b0ddebe7b55
+      checksum: d7fb9d03380940b10a10498cd77dddff39c4db069acc4e6e611ae21f0c85c52f
+    - path: at_direction_test.go
+      description: Tests depth-bounded outgoing callee navigation for exact lookups.
+      kind: test
+      checksum: 0ffa01f4ed30c6e0792ab4f50712aaeffc22448d1fbba822dbd07a2648eb5b99
     - path: at_test.go
       description: Tests exact reference lookup, ranges, clamping, and related navigation.
       kind: test
-      checksum: 1f7f48427d98ae4090766a092470d5c9916c9d8981c3430ed3e2791e9276ba59
+      checksum: 3455cb7a55e41b7127d5db7e101ba137b6b8252e8bd8134c6f4574d7e2083d02
     - path: binary_skip_test.go
       description: Tests that binary files are excluded from content searches.
       kind: test
@@ -150,15 +154,15 @@ files:
     - path: related.go
       description: Builds navigation graphs and attaches bounded related declarations and type context.
       kind: production
-      checksum: 29f5c71dafc4595e35bcb50b8db53520f9c9b0da9d65ce5ade89aa7d1db37116
+      checksum: 635618f496704034c2deadda2e653b9c3754fad18c1516d6979f0a39933f515a
     - path: related_go_test.go
       description: Tests Go call, import, and type related-navigation resolution.
       kind: test
-      checksum: c12ba2c06d0a57b2d3e3b4e0c9ff874a15cc0f565d4b6a2e7dbb0229acad45bf
+      checksum: 64a4176eaf2b877d031f4e9946e40d9fa86adc2bd9c0832a0ed9eabfdb146bc4
     - path: related_languages_test.go
       description: Tests related navigation across supported languages.
       kind: test
-      checksum: 484f78d66168f753f9979675ec7e3ad28607cfaaf9a7a9655346f585ae1d879c
+      checksum: 015d27f54f4b20d5afbe561bdcc7e651f5272bc6f0d3862bcc4046c8af976262
     - path: repo_counts_test.go
       description: Tests repository-level result counting.
       kind: test

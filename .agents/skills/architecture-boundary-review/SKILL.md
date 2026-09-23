@@ -11,9 +11,9 @@ A clean directory diagram can hide behavioral coupling; a broad type can be a he
 
 1. Establish the source universe, then inspect physical ownership and source-linked call/import/type relations:
    ```bash
-   grepple sources explain --compact SCOPE
-   grepple architecture directory --depth 2 --compact .
-   grepple architecture why FROM TO --compact SCOPE
+   grepple sources explain SCOPE
+   grepple architecture directory --depth 2 .
+   grepple architecture why FROM TO SCOPE
    ```
 2. Find repeated behavior and concrete-type spread:
    ```bash
@@ -25,8 +25,8 @@ grepple boundaries --policy .grepple/boundary-policy.json --json path/to/scope
 3. Inspect each high-value evidence location with `grepple --at`. Do not recommend a move from counts alone.
 4. Test the proposed boundary from both sides with focused callers/callees:
    ```bash
-   grepple graph callers --at owner/file.go:LINE --depth 2 --compact SCOPE
-   grepple graph callees --at consumer/file.go:LINE --depth 2 --compact SCOPE
+   grepple graph callers --at owner/file.go:LINE --depth 2 SCOPE
+   grepple graph callees --at consumer/file.go:LINE --depth 2 SCOPE
    ```
 5. Verify public signatures and relevant directory relations in exact source before claiming API leakage.
 

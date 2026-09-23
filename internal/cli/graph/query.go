@@ -23,8 +23,7 @@ import (
 const maxNavigationQueryDepth = 10
 
 type graphQueryArgs struct {
-	JSON    bool `arg:"--json" help:"emit the complete queried subgraph as JSON"`
-	Compact bool `arg:"--compact" help:"emit a bounded agent-facing queried subgraph"`
+	JSON bool `arg:"--json" help:"emit the complete queried subgraph as JSON"`
 	cliruntime.CommonArgs
 	Repository     string   `arg:"--repo" placeholder:"OWNER/REPO[@REF]" help:"analyze one exact indexed repository"`
 	Symbol         string   `arg:"--symbol" placeholder:"NAME" help:"select one exact declaration name"`
@@ -37,12 +36,12 @@ type graphQueryArgs struct {
 	Visibilities   []string `arg:"--visibility,separate" placeholder:"LEVEL" help:"retain public, non-public, or unknown declarations; repeatable"`
 	Depth          int      `arg:"--depth" default:"1" placeholder:"N" help:"maximum traversal depth (1-10)"`
 	MaxFiles       int      `arg:"--max-files" placeholder:"N" help:"parse at most N discovered files (0 = unlimited)"`
-	MaxOutputBytes int      `arg:"--max-output-bytes" default:"16384" placeholder:"N" help:"cap compact output (default 16384; 0 = unlimited; JSON is uncapped)"`
+	MaxOutputBytes int      `arg:"--max-output-bytes" default:"16384" placeholder:"N" help:"cap human-readable output (default 16384; 0 = unlimited; JSON is uncapped)"`
 	Paths          []string `arg:"positional" placeholder:"PATH" help:"file, directory, or glob to include; defaults to the working directory"`
 }
 
 func (graphQueryArgs) Description() string {
-	return "Query a deterministic local or exact indexed-repository navigation graph. Exactly one of --json or --compact and exactly one root selector are required."
+	return "Query a deterministic local or exact indexed-repository navigation graph. Human output is the default; --json emits the complete subgraph. Exactly one root selector is required."
 }
 
 func graphQuerySemantics(direction search.NavigationQueryDirection) string {
@@ -92,7 +91,7 @@ func executeQuery(application cliruntime.Context, direction search.NavigationQue
 	output := FromAnalysis(report)
 	output.Metadata = graphResultMetadata(metadataInput{Paths: values.Paths, Returned: len(output.Declarations), MaxFiles: values.MaxFiles, MaxOutputBytes: values.MaxOutputBytes, JSON: values.JSON, Sources: output.Sources, Truncation: output.Truncation, NextCommand: graphQueryContinuationCommand(application, direction, *values, output.Truncation)})
 	output.Metadata.Scope.Languages = normalizedScope(output.Query.Languages, "")
-	if values.Compact {
+	if !values.JSON {
 		return renderCompactNavigationGraph(application.Stdout(), output, values.MaxOutputBytes)
 	}
 	encoder := json.NewEncoder(application.Stdout())
@@ -109,7 +108,6 @@ func parseGraphQueryArgs(application cliruntime.Context, direction search.Naviga
 	if err := argumentParser.Parse(args); err != nil {
 		if errors.Is(err, arg.ErrHelp) {
 			argumentParser.WriteHelp(application.Stdout())
-			fmt.Fprintln(application.Stdout(), "Required output mode: (--json | --compact); choose exactly one.")
 			fmt.Fprintln(application.Stdout(), "Required root selector: choose exactly one of --symbol, --at, --package, --module, or --root-path.")
 			if semantics := graphQuerySemantics(direction); semantics != "" {
 				fmt.Fprintln(application.Stdout(), semantics)
@@ -170,9 +168,6 @@ func graphQueryContinuationCommand(application cliruntime.Context, direction sea
 }
 
 func validateGraphQueryArgs(values graphQueryArgs) error {
-	if values.JSON == values.Compact {
-		return fmt.Errorf("grepple graph query requires exactly one of --json or --compact")
-	}
 	if graphQuerySelectorCount(values) != 1 {
 		return fmt.Errorf("grepple graph query requires exactly one of --symbol, --at, --package, --module, or --root-path")
 	}

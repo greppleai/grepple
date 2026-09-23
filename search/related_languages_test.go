@@ -155,8 +155,8 @@ function root() { return first() + "NAVIGATION_NEEDLE"; }
 		t.Fatal("first JavaScript callee was not expanded")
 	}
 	second := findRelatedPoint(t, first.Preview.Related, "second", "callee")
-	if second.Preview == nil {
-		t.Fatal("second JavaScript callee was not expanded")
+	if second.Preview != nil {
+		t.Fatal("depth two expanded a third JavaScript call hop")
 	}
 }
 

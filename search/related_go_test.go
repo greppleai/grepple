@@ -291,17 +291,18 @@ func second() string { return "done" }
 		t.Fatal("first callee was not expanded")
 	}
 	secondPoint := findRelatedPoint(t, firstPoint.Preview.Related, "second", "callee")
-	if secondPoint.Preview == nil {
-		t.Fatal("second callee was not expanded at depth two")
+	if secondPoint.Preview != nil {
+		t.Fatal("depth two expanded a third call hop")
 	}
 }
 
-func TestFollowRelatedExpandsCallersAndCallees(t *testing.T) {
+func TestFollowRelatedKeepsDirectCallersButExpandsOnlyCallees(t *testing.T) {
 	directory := t.TempDir()
 	caller := writeGoFixture(t, directory, "caller.go", "package related\nfunc caller() string { return target() }\n")
 	target := writeGoFixture(t, directory, "target.go", "package related\nfunc target() string { return callee() + \"FOLLOW_BOTH_NEEDLE\" }\n")
-	callee := writeGoFixture(t, directory, "callee.go", "package related\nfunc callee() string { return \"done\" }\n")
-	matches, err := Files(Params{Query: "FOLLOW_BOTH_NEEDLE", Related: true, FollowRelated: 1}, []string{caller, target, callee})
+	callee := writeGoFixture(t, directory, "callee.go", "package related\nfunc callee() string { return leaf() }\nfunc sibling() string { return callee() }\n")
+	leaf := writeGoFixture(t, directory, "leaf.go", "package related\nfunc leaf() string { return \"done\" }\n")
+	matches, err := Files(Params{Query: "FOLLOW_BOTH_NEEDLE", Related: true, FollowRelated: 2}, []string{caller, target, callee, leaf})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -310,8 +311,15 @@ func TestFollowRelatedExpandsCallersAndCallees(t *testing.T) {
 	}
 	callerPoint := findRelatedPoint(t, matches[0].Related, "caller", "caller")
 	calleePoint := findRelatedPoint(t, matches[0].Related, "callee", "callee")
-	if callerPoint.Preview == nil || calleePoint.Preview == nil {
-		t.Fatalf("caller/callee previews caller=%#v callee=%#v", callerPoint, calleePoint)
+	if callerPoint.Preview != nil {
+		t.Fatalf("root caller should remain a link, not a reverse call tree: %#v", callerPoint.Preview)
+	}
+	if calleePoint.Preview == nil || calleePoint.Preview.OmittedCallers != 0 || len(calleePoint.Preview.Related) != 1 {
+		t.Fatalf("callee preview should contain only its outgoing leaf: %#v", calleePoint.Preview)
+	}
+	leafPoint := findRelatedPoint(t, calleePoint.Preview.Related, "leaf", "callee")
+	if leafPoint.Preview != nil {
+		t.Fatalf("depth two expanded a third hop: %#v", leafPoint.Preview)
 	}
 }
 

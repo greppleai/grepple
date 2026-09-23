@@ -33,8 +33,8 @@ flow checker. Generated repository orientation is provided dynamically by `grepp
 ```bash
 make build
 
-bin/grepple architecture directory --depth 2 --compact .
-bin/grepple architecture resolve --symbol Service --compact .
+bin/grepple architecture directory --depth 2 .
+bin/grepple architecture resolve --symbol Service .
 bin/grepple extract structure internal/service --entry Service --source . --output .grepple/service.class.mmd
 bin/grepple extract flow internal/service --entry Service.Run --source . --output .grepple/service.flow.mmd
 bin/grepple extract check structure .grepple/service.class.mmd .

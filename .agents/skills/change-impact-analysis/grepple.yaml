@@ -1,12 +1,13 @@
-description: Defines a Grepple workflow for analyzing the impact of local code changes.
+description: Defines a Grepple workflow for resolving symbols and assessing scoped code-change impact.
 responsibilities:
     - Resolve exact symbol declarations
     - Preview related behavior and consumers
     - Trace callers, callees, and impact
     - Assess graph completeness and confidence
-    - Record scoped change-impact evidence
+    - Check non-static impact mechanisms
+    - Record scoped impact evidence
 files:
     - path: SKILL.md
-      description: Documents the workflow and evidence rules for analyzing code-change impact with Grepple.
+      description: Documents Grepple commands, confidence rules, completeness checks, and decision records for code-change impact analysis.
       kind: production
-      checksum: 4d19b97bb22e880e70fac12afd664d4a120268f96f45ab9e1aacfa0e4b02570d
+      checksum: b949a1f4c936c356165db4d238c5d0af2c7daca0f5f6509702e614b676d87ddb

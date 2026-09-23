@@ -57,7 +57,7 @@ func helper() string { return "value" }
 	t.Cleanup(func() { _ = os.Chdir(oldDirectory) })
 
 	relatedBuildInvocations.Store(0)
-	params := Params{At: fmt.Sprintf("%s:2", caller), Related: true, FollowRelated: 1}
+	params := Params{At: fmt.Sprintf("%s:2", caller), Related: true, FollowRelated: 2}
 	match, err := At(params)
 	if err != nil {
 		t.Fatal(err)
@@ -212,7 +212,7 @@ func TestAtFromDocumentMatchesColdRelatedOutput(t *testing.T) {
 	}
 	defer helperDocument.Close()
 	analysis, _ := BuildNavigationAnalysisFromDocuments([]NavigationDocumentSource{{Path: caller, Document: callerDocument}, {Path: helper, Document: helperDocument}}, NavigationBuildOptions{})
-	params := Params{At: "caller.go:2-20", Root: directory, Related: true, FollowRelated: 1}
+	params := Params{At: "caller.go:2-20", Root: directory, Related: true, FollowRelated: 2}
 	cold, err := At(params)
 	if err != nil {
 		t.Fatal(err)

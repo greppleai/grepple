@@ -23,7 +23,8 @@ import (
 )
 
 type Args struct {
-	Force         bool     `arg:"--force" help:"replace existing grepple.yaml files"`
+	Force         bool     `arg:"--force" help:"replace all existing grepple.yaml files, including current ones"`
+	Concurrency   int      `arg:"--concurrency" default:"1" placeholder:"N" help:"generate metadata for N directories in parallel (default: 1)"`
 	OnlyDirectory string   `arg:"--only-directory" placeholder:"PATH" help:"generate metadata for exactly one directory without its ancestors"`
 	Paths         []string `arg:"positional" placeholder:"PATH" help:"source path or glob; defaults to the repository"`
 }
@@ -50,77 +51,33 @@ func (command *command) Run(args []string) error {
 
 // Execute generates directory metadata from application-parsed arguments.
 func Execute(application cliruntime.Context, values *Args) error {
-	provider, modelID, err := configuredModel(context.Background())
-	if err != nil {
-		return err
+	if values.Concurrency < 1 {
+		return fmt.Errorf("--concurrency must be at least 1")
 	}
-	model, err := provider.LanguageModel(context.Background(), modelID)
-	if err != nil {
-		return err
-	}
-	return generate(context.Background(), application, model, values.Paths, values.Force, values.OnlyDirectory)
-}
-
-func generate(ctx context.Context, application cliruntime.Context, model fantasy.LanguageModel, globs []string, force bool, onlyDirectory string) error {
+	ctx := context.Background()
 	root := application.Repository().WorkingDirectory()
-	var exactDirectory string
-	if onlyDirectory != "" && len(globs) != 0 {
-		return fmt.Errorf("--only-directory cannot be combined with positional paths")
-	}
-	if onlyDirectory != "" {
-		resolved, err := confinedDirectory(root, onlyDirectory)
-		if err != nil {
-			return err
-		}
-		exactDirectory = resolved
-		globs = nil
-	}
-	policy, err := application.Repository().ScopeOptions()
+	plan, err := planGeneration(ctx, application, values.Paths, values.Force, values.OnlyDirectory)
 	if err != nil {
 		return err
 	}
-	paths, err := sourcedomain.ListWithPolicy(ctx, globs, root, policy)
+	if !plan.needsGeneration() {
+		return runGeneration(ctx, application, root, plan, values.Concurrency, nil)
+	}
+	provider, modelID, err := configuredModel(ctx)
 	if err != nil {
 		return err
 	}
-	if exactDirectory != "" {
-		paths = pathsWithinDirectory(root, exactDirectory, paths)
+	model, err := provider.LanguageModel(ctx, modelID)
+	if err != nil {
+		return err
 	}
-	var directories []string
-	if onlyDirectory != "" {
-		directories = []string{exactDirectory}
-	} else {
-		directories, err = directorymeta.Directories(root, paths)
+	return runGeneration(ctx, application, root, plan, values.Concurrency, func(ctx context.Context, job generationJob) (directorymeta.Metadata, error) {
+		prompt, err := generationPrompt(root, job.directory, job.files)
 		if err != nil {
-			return err
+			return directorymeta.Metadata{}, err
 		}
-	}
-	for _, directory := range directories {
-		metadataPath := filepath.Join(directory, directorymeta.FileName)
-		if !force {
-			if _, statErr := os.Stat(metadataPath); statErr == nil {
-				fmt.Fprintln(application.Stdout(), "skip", displayPath(root, directory))
-				continue
-			}
-		}
-		files, err := directorymeta.FilesForDirectory(root, directory, paths)
-		if err != nil {
-			return err
-		}
-		prompt, err := generationPrompt(root, directory, files)
-		if err != nil {
-			return err
-		}
-		metadata, err := generateDirectoryMetadata(ctx, application, model, root, directory, prompt, files)
-		if err != nil {
-			return fmt.Errorf("generate %s: %w", displayPath(root, directory), err)
-		}
-		if err := directorymeta.Write(directory, metadata); err != nil {
-			return err
-		}
-		fmt.Fprintln(application.Stdout(), "write", filepath.ToSlash(filepath.Join(displayPath(root, directory), directorymeta.FileName)))
-	}
-	return nil
+		return generateDirectoryMetadata(ctx, application, model, root, job.directory, prompt, job.files)
+	})
 }
 
 func generateDirectoryMetadata(ctx context.Context, application cliruntime.Context, model fantasy.LanguageModel, root, directory, prompt string, files []directorymeta.File) (directorymeta.Metadata, error) {

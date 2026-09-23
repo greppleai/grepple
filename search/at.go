@@ -63,7 +63,7 @@ func At(params Params) (*FileMatch, error) {
 		scan := candidateScan{p: params, repoFilter: NewRepoFilter(params.Repo, params.ExcludeRepo)}
 		// Navigation attachment receives values, so copy its result back.
 		attached := []FileMatch{*match}
-		attachRelated(attached, scan.relatedFiles(files), params.FollowRelated)
+		attachRelatedAt(attached, scan.relatedFiles(files), params.FollowRelated)
 		*match = attached[0]
 	}
 	return match, nil

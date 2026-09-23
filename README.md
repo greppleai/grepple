@@ -94,7 +94,7 @@ Supported search options:
 - Eligible local source results always emit hashline anchors as `HASH│LINE│content`; named compatibility providers are selected only through user-owned settings
 - `--related` (explicitly request the default bounded repository-local type/caller/callee navigation)
 - `--no-related` (disable automatic navigation for structural search)
-- `--follow-related N` (expand up to two unique callers and callees per level, depth 1-3; structural search defaults to depth 1)
+- `--follow-related N` (1-3 outgoing call hops, up to two followed callees per level; structural search also shows immediate callers of the matched declaration, but never follows them)
 - `--skip N`, `--limit N` (page through results in deterministic order: skip the first `N` files / return at most `N`; **`--limit` defaults to `20`**, use `--limit 0` for all). A server never returns more than **100 files per page** — `--limit 0` or a larger value gets the maximum page, and you page further with `--skip N`; local-only searches stay uncapped
 - `--sort path|matches` keeps repository/path order by default or opts into matching-line count descending with repository/path tie-breakers. Match-count sorting scans the full selected candidate universe before paging.
 
@@ -115,7 +115,7 @@ Default structural output shows complete enclosing functions and methods, retain
 
 ### Source call navigation
 
-Structural search automatically adds bounded navigation hints with one level of caller/callee locations for local or remotely indexed repositories; use `--no-related` to suppress navigation or `--follow-related N` to select depth 1-3. Human output keeps callers and callees as a compact call tree with exact `PATH:LINE` selectors instead of rendering their source bodies. It supports Go, JavaScript/JSX, TypeScript/TSX, Python, Java, Kotlin, C#, C, C++, Rust, and Shell:
+Structural search automatically adds bounded navigation hints for local or remotely indexed repositories; use `--no-related` to suppress navigation or `--follow-related N` to select 1-3 call hops. It retains immediate caller links for the matched declaration but expands only outgoing callees (A → B → C, not other callers of B). Depth 1 shows direct calls; depth 2 adds their callees. Human output keeps navigation as a compact call tree with exact `PATH:LINE` selectors instead of rendering source bodies. Exact `--at PATH:LINE` retrieval shows only outgoing calls, including at the root. It supports Go, JavaScript/JSX, TypeScript/TSX, Python, Java, Kotlin, C#, C, C++, Rust, and Shell:
 
 ```bash
 grepple --related -F "g.auditor.Record" examples/advanced-files
@@ -229,24 +229,24 @@ Per-file parser facts are cached as deterministic path-neutral packed-protobuf e
 ```bash
 grepple graph --json .
 grepple graph --json ./internal/cli --max-files 200
-grepple graph --compact ./internal/cli
-grepple graph callers --at internal/cli/extract.go:32 --depth 2 --language go --compact .
-grepple graph resolve --symbol runExtract --compact ./internal/cli
+grepple graph ./internal/cli
+grepple graph callers --at internal/cli/extract.go:32 --depth 2 --language go .
+grepple graph resolve --symbol runExtract ./internal/cli
 grepple graph callees --symbol runExtract --depth 2 --json ./internal/cli
-grepple graph dependencies --root-path internal/cli --depth 1 --compact .
-grepple graph impact --symbol runExtract --depth 2 --compact ./internal/cli
-grepple graph diff --before ./old-tree --after ./new-tree --compact
-grepple graph impact --server http://127.0.0.1:8080 --repo OWNER/REPO@tag~v1.2.3 --symbol Run --compact
+grepple graph dependencies --root-path internal/cli --depth 1 .
+grepple graph impact --symbol runExtract --depth 2 ./internal/cli
+grepple graph diff --before ./old-tree --after ./new-tree
+grepple graph impact --server http://127.0.0.1:8080 --repo OWNER/REPO@tag~v1.2.3 --symbol Run
 ```
 
-`--compact` emits a bounded agent-facing declaration/edge list with 16-character stable ID prefixes, source locations, arrow direction, confidence, aggregate `resolved-local`, `ambiguous-local`, `unresolved-local`, and `expected-external` outcome counts/rates, source-completeness totals, and truncation warnings; `--max-output-bytes` defaults to 16384 and never applies to JSON. Full JSON reports the same authoritative outcomes separately from deterministic confidence-label counts, overall and by language. Legacy resolved/ambiguous/unresolved/candidate fields remain additive compatibility projections and do not redefine `candidate` confidence as an outcome. Unsupported file types are counted as skipped before the file limit. Files containing NUL are skipped, hard read/UTF-8/parse failures are counted as failed, and recovery parses are counted separately while retaining their conservative graph facts. Complete JSON retains unresolved/external calls with `candidate` confidence and ordered candidate IDs; compact output omits calls with no repository-local target and retains ambiguous calls without guessing one target. Exactly one of `--json` or `--compact` is required.
+Human output is the default: bounded file-grouped build declarations, directional call trees for callers/callees, and root-grouped impact call trees, with source locations and per-edge confidence. Focused queries omit routine headers; build displays only short file/declaration/call counts, and incomplete or truncated analysis emits warnings; `--max-output-bytes` defaults to 16384 and never applies to JSON. Full JSON retains the schema, source accounting, query roots/filters, complete graph facts, and authoritative outcomes separately from deterministic confidence-label counts, overall and by language. Legacy resolved/ambiguous/unresolved/candidate fields remain additive compatibility projections and do not redefine `candidate` confidence as an outcome. Unsupported file types are counted as skipped before the file limit. Files containing NUL are skipped, hard read/UTF-8/parse failures are counted as failed, and recovery parses are counted separately while retaining their conservative graph facts. Complete JSON retains unresolved/external calls with `candidate` confidence and ordered candidate IDs; human output omits calls with no repository-local target and retains ambiguous calls without guessing one target. Use `--json` only when the complete machine-readable graph is needed.
 
 CLI graph, focused graph query, `--related`, boundary, and extraction workflows share parser-owned per-file navigation facts under `.grepple/cache/navigation/`. Entries are addressed by source content, language, grammar ABI/fingerprint, and a cache schema; path-neutral facts are instantiated with each command's requested path so stable IDs and output remain unchanged. Corrupt or unwritable entries are ignored, writes are atomic, and cold and warm reports are byte-identical. Set `GREPPLE_NAVIGATION_CACHE_DIR` explicitly to relocate the cache or to an empty value to disable it.
 
-`graph resolve --symbol NAME` performs no traversal. It previews all exact-name matches, or terminal-name matches when there is no exact match, with full stable declaration IDs, exact `PATH:LINE` selectors, and copyable callers/callees/impact commands. Repeatable language and visibility filters narrow alternatives before selection. Complete `grepple-navigation-resolve-v1` JSON or bounded compact output is required, making overloaded or cross-container names cheap to disambiguate before a graph query.
-`graph callers`, `callees`, `dependencies`, `dependents`, and `impact` return deterministic subgraphs over repository-local navigation edges. Select one exact declaration with `--symbol NAME` or `--at PATH:LINE`, or select a scope with `--package`, `--module`, or `--root-path`; scope selectors may produce multiple roots. `callers` and `dependents` traverse incoming call/navigation edges, while `callees` and `dependencies` traverse outgoing call/navigation edges; `dependencies` and `dependents` are navigation terminology and do not describe package-manager, module, or build-system dependency graphs. `impact` traverses both directions. Repeatable `--language ID`, `--confidence LEVEL`, and `--visibility LEVEL` filters apply before root selection and traversal; confidence accepts `exact`, `import-resolved`, `context-resolved`, `unique-terminal`, and `candidate`, while visibility accepts `public`, `non-public`, and `unknown`. JSON and compact declarations expose visibility and entrypoint facts. `unknown` visibility is retained where a language lacks reliable public/export semantics. `--depth N` is bounded to 1–10, cycles are visited once, and ambiguous candidate targets remain explicit rather than being guessed. JSON retains the `grepple-navigation-graph-v7` facts and adds normalized query direction, depth, root IDs, and filters; compact mode adds concise query metadata to its header. Positional paths define the larger graph universe, while the root selector chooses where traversal starts. `--repo OWNER/REPO[@REF] --server URL` runs the same complete-source graph and query over one exact indexed checkout; remote JSON wraps the versioned result with repository, commit, completeness, notices, and shard errors.
+`graph resolve --symbol NAME` performs no traversal. It previews all exact-name matches, or terminal-name matches when there is no exact match, with full stable declaration IDs, exact `PATH:LINE` selectors, and copyable callers/callees/impact commands. Repeatable language and visibility filters narrow alternatives before selection. Bounded human-readable output is the default; use `--json` for the complete `grepple-navigation-resolve-v1` projection when overloaded or cross-container names require machine-readable disambiguation.
+`graph callers`, `callees`, `dependencies`, `dependents`, and `impact` return deterministic subgraphs over repository-local navigation edges. Select one exact declaration with `--symbol NAME` or `--at PATH:LINE`, or select a scope with `--package`, `--module`, or `--root-path`; scope selectors may produce multiple roots. `callers` and `dependents` traverse incoming call/navigation edges, while `callees` and `dependencies` traverse outgoing call/navigation edges; `dependencies` and `dependents` are navigation terminology and do not describe package-manager, module, or build-system dependency graphs. `impact` traverses both directions. Repeatable `--language ID`, `--confidence LEVEL`, and `--visibility LEVEL` filters apply before root selection and traversal; confidence accepts `exact`, `import-resolved`, `context-resolved`, `unique-terminal`, and `candidate`, while visibility accepts `public`, `non-public`, and `unknown`. JSON declarations expose visibility and entrypoint facts; human build retains these labels. Human `graph build` groups declarations by file with calls beneath their owner, omitting repetitive IDs and path prefixes; human `callers`, `callees`, and `impact` group call sites under each root as `<-` and/or `->` lines, indent further hops, and label confidence on the edge. JSON retains declaration/call IDs and full facts. `unknown` visibility is retained where a language lacks reliable public/export semantics. `--depth N` is bounded to 1–10, cycles are visited once, and ambiguous candidate targets remain explicit rather than being guessed. JSON retains the `grepple-navigation-graph-v7` facts and adds normalized query direction, depth, root IDs, and filters; focused human callers/callees/impact output omits routine query headers. Positional paths define the larger graph universe, while the root selector chooses where traversal starts. `--repo OWNER/REPO[@REF] --server URL` runs the same complete-source graph and query over one exact indexed checkout; remote JSON wraps the versioned result with repository, commit, completeness, notices, and shard errors.
 
-`graph diff` compares two source trees using `grepple-navigation-diff-v5`. It classifies added, removed, moved, and semantically changed declarations plus added, removed, and changed calls. Position-only line shifts are ignored, and call owners are compared through semantic declaration identities rather than unstable source IDs. Exactly one of complete `--json` or bounded `--compact` is required.
+`graph diff` compares two source trees using `grepple-navigation-diff-v5`. It classifies added, removed, moved, and semantically changed declarations plus added, removed, and changed calls. Position-only line shifts are ignored, and call owners are compared through semantic declaration identities rather than unstable source IDs. Bounded human output is the default; `--json` emits the complete diff.
 
 ## Boundary analysis
 
@@ -263,18 +263,18 @@ grepple boundaries --server http://127.0.0.1:8080 --repo OWNER/REPO@branch~main 
 Human output is bounded to 16,384 bytes and shows at most 20 ranked candidates per workflow/type/facade section by default; evidence and omissions remain explicit. `--limit 0` shows all candidates, while `grepple-boundaries-v3` JSON is complete. Optional parser facts use `GREPPLE_NAVIGATION_CACHE_DIR`; resolved boundary graph inputs default to the platform user cache under a repository-keyed `grepple/cache` directory and can be relocated with `GREPPLE_CACHE_DIR`. Read-only analysis does not create `.grepple` beneath the target repository. Use `--no-cache` to bypass boundary and parser cache layers. `--max-files` remains explicit when source discovery is incomplete. Remote boundaries load `.grepple/boundary-policy.json` from the selected checkout by default; `--policy` remains repository-relative and malformed policy fails explicitly.
 
 ## Directory architecture and focused diagrams
-`grepple architecture` provides deterministic, language-neutral directory orientation over every Tree-sitter-backed language. `directory` summarizes physical ownership and separately labeled call/import/type relations, `resolve` locates types and callables with exact ranges, `why` returns source-linked evidence for one directory relation, `responsibilities` summarizes each directory's ownership plus incoming/outgoing relation participation, and `compare` diagnoses semantic or byte-level drift between complete directory JSON reports. Relation coverage preserves unresolved and adapter-unsupported semantics. Directory ownership is intentionally not presented as package, module, or layer intent. See [Directory architecture](docs/directory-architecture.md) for schemas and evidence limits. Package ownership and API transport boundaries are summarized in [Domain and transport boundaries](docs/domain-boundaries.md), with source grouping decisions in the [implementation ownership inventory](docs/implementation-ownership-inventory.md).
+`grepple architecture` provides deterministic, language-neutral directory orientation over every Tree-sitter-backed language. `directory` groups source-linked call/import/type relations by directory pair and discloses unconnected leaf directories; its complete `--json` report retains the full directory inventory and declaration counts, `resolve` locates types and callables with exact ranges, `why` returns source-linked evidence for one directory relation, `responsibilities` summarizes each directory's ownership plus incoming/outgoing relation participation, and `compare` diagnoses semantic or byte-level drift between complete directory JSON reports. Relation coverage preserves unresolved and adapter-unsupported semantics. Directory ownership is intentionally not presented as package, module, or layer intent. See [Directory architecture](docs/directory-architecture.md) for schemas and evidence limits. Package ownership and API transport boundaries are summarized in [Domain and transport boundaries](docs/domain-boundaries.md), with source grouping decisions in the [implementation ownership inventory](docs/implementation-ownership-inventory.md).
 
 `grepple extract` creates deterministic, self-validated focused Mermaid navigation maps from Tree-sitter source analysis. Focused structure and flow extraction support Go, JavaScript/JSX, TypeScript/TSX, Python, Java, Kotlin, C#, Rust, C, and C++. Python covers classes, inheritance, annotated and unannotated attributes, decorators, and `.pyi` stubs. Java, Kotlin, and C# cover their class/interface models, inheritance, fields/properties, methods, records/data classes, enums, objects where applicable, and conservative language-defined process-entrypoint signatures. Rust covers structs, tuple structs, enums, traits, same-file and visibility-checked same-crate cross-file `impl` blocks, fields, variants, associated types, methods, visibility, trait implementations, graph-backed calls, and top-level `main` process entrypoints in selected binary crate roots without interpreting framework APIs. C and C++ conservatively cover named aggregates, fields, enum values, direct base classes, functions, methods, visibility, static members, graph-backed calls, global `main` process entrypoints, and direct include evidence while leaving macro-computed and system include resolution, templates, overload selection, linkage, and build-system ownership uninterpreted. Generic callable declarations and calls use the normalized `parser.NavigationGraph` shared with `--at` and `--related`.
 
 ```bash
-grepple architecture directory --depth 2 --compact .
+grepple architecture directory --depth 2 .
 grepple architecture directory --relations --depth 0 --max-nodes 0 --max-output-bytes 0 .
 grepple architecture directory --mermaid --depth 0 --max-nodes 0 --output architecture.mmd .
-grepple architecture resolve --symbol Document --compact .
-grepple architecture why rulespec search --compact rulespec search
-grepple architecture responsibilities --compact .
-grepple architecture directory --server http://127.0.0.1:8080 --repo OWNER/REPO --compact
+grepple architecture resolve --symbol Document .
+grepple architecture why rulespec search rulespec search
+grepple architecture responsibilities .
+grepple architecture directory --server http://127.0.0.1:8080 --repo OWNER/REPO
 grepple extract structure internal/cli --entry cliOptions --source .
 grepple extract flow internal/cli --entry runSearch --depth 2
 grepple extract flow --at internal/cli/local.go:13 --source .
@@ -374,7 +374,7 @@ When this repository is indexed by the Grepple backend, its `index.repositories`
 Inspect the effective source universe before drawing completeness conclusions:
 
 ```bash
-grepple sources explain --compact .
+grepple sources explain .
 grepple sources explain --json --production-only .
 ```
 
@@ -384,7 +384,7 @@ Complete output larger than the threshold is stored in the platform user cache (
 
 ## Directory metadata
 
-Use `grepple init` to generate one `grepple.yaml` per selected source directory with the model configured for `grepple ask`, including an evidence-backed source kind for every file, then use `grepple verify` in local validation. Local `grepple tree` displays directory descriptions, and Ask is preloaded with the top-level described tree. See [Directory metadata](docs/directory-metadata.md).
+Use `grepple init` to create missing or refresh stale directory `grepple.yaml` files with the model configured for `grepple ask`, including an evidence-backed source kind for every file, then use `grepple verify` in local validation. Use `--concurrency N` for bounded parallel directory generation or `--force` to regenerate current metadata too. Local `grepple tree` displays directory descriptions, and Ask is preloaded with the top-level described tree. See [Directory metadata](docs/directory-metadata.md).
 
 ```bash
 grepple init --only-directory internal/parser
@@ -405,7 +405,8 @@ grepple --server https://grepple.example.com --repo owner/repo "useEffect"
 grepple repos                                    # indexed repository catalog
 grepple get owner/repo path/to/file --lines 20:50
 grepple tree internal/cli --depth 3              # local source tree
-grepple tree --repo owner/repo src --depth 3     # indexed repository tree
+grepple tree --kind test --depth 2 internal/cli    # only checksum-validated test files and their parent directories
+grepple tree --repo owner/repo src --depth 3     # indexed repository tree (no --kind)
 ```
 
 Remote server URLs are resolved from `--server`, `GREPPLE_SERVER`, `./grepple.json`, `~/.grepple/config.json`, and finally `http://127.0.0.1:8787`.

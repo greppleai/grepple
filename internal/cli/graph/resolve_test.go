@@ -44,4 +44,12 @@ func TestResolveCommandRequestsNonzeroExitForNoMatches(t *testing.T) {
 	if exitCode != 1 {
 		t.Fatalf("exit code = %d, want 1", exitCode)
 	}
+	output.Reset()
+	exitCode = 0
+	if err := command.Run([]string{"resolve", "--symbol", "Missing", path}); err != nil {
+		t.Fatal(err)
+	}
+	if exitCode != 1 || output.String() != "no matches for Missing\n" {
+		t.Fatalf("human no-match output=%q exit=%d", output.String(), exitCode)
+	}
 }

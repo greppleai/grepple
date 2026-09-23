@@ -2,6 +2,7 @@ package cli
 
 import (
 	"encoding/json"
+	"fmt"
 	"strings"
 	"testing"
 
@@ -14,7 +15,7 @@ func TestSharedNavigationEdgeParityAcrossAgentProjections(t *testing.T) {
 	writeGraphSource(t, root, "service.go", "package parity\ntype Worker struct{}\nfunc (Worker) Run() { Helper() }\nfunc Helper() {}\n")
 	graph := loadParityJSONGraph(t)
 	caller, target, call := parityGraphEdge(t, graph, "Worker.Run", "Helper")
-	assertParityCompactGraph(t, caller, target)
+	assertParityCompactGraph(t, caller, target, call)
 	assertParityFocusedFlow(t)
 	assertParityRelatedOutput(t, call)
 	assertParityArchitectureResolve(t)
@@ -34,14 +35,18 @@ func loadParityJSONGraph(t *testing.T) navigationGraphOutput {
 	return graph
 }
 
-func assertParityCompactGraph(t *testing.T, caller, target parser.NavigationDeclaration) {
+func assertParityCompactGraph(t *testing.T, caller, target parser.NavigationDeclaration, call parser.NavigationCall) {
 	t.Helper()
 	compact := captureStdout(t, func() {
-		if err := Run([]string{"graph", "--compact", "."}); err != nil {
+		if err := Run([]string{"graph", "."}); err != nil {
 			t.Fatal(err)
 		}
 	})
-	assertContainsAll(t, compact, []string{shortGraphID(caller.ID), shortGraphID(target.ID), "Worker.Run -> Helper#" + shortGraphID(target.ID)}, "compact graph")
+	assertContainsAll(t, compact, []string{
+		"\n" + caller.Path + "\n",
+		fmt.Sprintf("  %d %s %s visibility=%s", caller.Start, caller.Kind, caller.Name, caller.Visibility),
+		fmt.Sprintf("    -> %s:%d call:%d [%s]", target.Name, target.Start, call.Line, call.Confidence),
+	}, "compact graph")
 }
 
 func assertParityFocusedFlow(t *testing.T) {
@@ -69,7 +74,7 @@ func assertParityRelatedOutput(t *testing.T, call parser.NavigationCall) {
 func assertParityArchitectureResolve(t *testing.T) {
 	t.Helper()
 	resolved := captureStdout(t, func() {
-		if err := Run([]string{"architecture", "resolve", "--symbol", "Worker", "--compact", "."}); err != nil {
+		if err := Run([]string{"architecture", "resolve", "--symbol", "Worker", "."}); err != nil {
 			t.Fatal(err)
 		}
 	})

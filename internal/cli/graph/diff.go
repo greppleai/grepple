@@ -17,15 +17,14 @@ import (
 
 type graphDiffArgs struct {
 	JSON           bool   `arg:"--json" help:"emit the complete semantic graph diff as JSON"`
-	Compact        bool   `arg:"--compact" help:"emit a bounded agent-facing semantic graph diff"`
 	Before         string `arg:"--before,required" placeholder:"PATH" help:"source tree before the change"`
 	After          string `arg:"--after,required" placeholder:"PATH" help:"source tree after the change"`
 	MaxFiles       int    `arg:"--max-files" placeholder:"N" help:"parse at most N files in each tree (0 = unlimited)"`
-	MaxOutputBytes int    `arg:"--max-output-bytes" default:"16384" placeholder:"N" help:"cap compact output (default 16384; 0 = unlimited; JSON is uncapped)"`
+	MaxOutputBytes int    `arg:"--max-output-bytes" default:"16384" placeholder:"N" help:"cap human-readable output (default 16384; 0 = unlimited; JSON is uncapped)"`
 }
 
 func (graphDiffArgs) Description() string {
-	return "Compare semantic declarations and calls while ignoring position-only movement. Exactly one of --json or --compact is required."
+	return "Compare semantic declarations and calls while ignoring position-only movement. Human output is the default; --json emits the complete diff."
 }
 
 // DiffOutput is the complete navigation graph diff projection.
@@ -48,7 +47,6 @@ func runDiff(application cliruntime.Context, args []string) error {
 	if err := argumentParser.Parse(args); err != nil {
 		if errors.Is(err, arg.ErrHelp) {
 			argumentParser.WriteHelp(application.Stdout())
-			fmt.Fprintln(application.Stdout(), "Required output mode: (--json | --compact); choose exactly one.")
 			return nil
 		}
 		return err
@@ -57,9 +55,6 @@ func runDiff(application cliruntime.Context, args []string) error {
 }
 
 func executeDiff(application cliruntime.Context, values *DiffArgs) error {
-	if values.JSON == values.Compact {
-		return fmt.Errorf("grepple graph diff requires exactly one of --json or --compact")
-	}
 	if values.MaxFiles < 0 || values.MaxOutputBytes < 0 {
 		return fmt.Errorf("graph diff limits must be non-negative")
 	}
@@ -120,8 +115,13 @@ func renderCompactGraphDiff(destination io.Writer, diff DiffOutput, maxBytes int
 		output = cliruntime.NewBoundedOutput(destination, maxBytes)
 	}
 	write := func(value string) bool { return output.WriteString(value+"\n") == nil }
-	if !write(fmt.Sprintf("graph-diff %s files=%d->%d sources=before(%s),after(%s) declarations=+%d/-%d/~%d/>%d calls=+%d/-%d/~%d", diff.Schema, diff.BeforeFiles, diff.AfterFiles, compactNavigationSourceSummary(diff.BeforeSources), compactNavigationSourceSummary(diff.AfterSources), len(diff.AddedDeclarations), len(diff.RemovedDeclarations), len(diff.ChangedDeclarations), len(diff.MovedDeclarations), len(diff.AddedCalls), len(diff.RemovedCalls), len(diff.ChangedCalls))) {
+	if !write(fmt.Sprintf("graph-diff files=%d->%d declarations=+%d/-%d/~%d/>%d calls=+%d/-%d/~%d", diff.BeforeFiles, diff.AfterFiles, len(diff.AddedDeclarations), len(diff.RemovedDeclarations), len(diff.ChangedDeclarations), len(diff.MovedDeclarations), len(diff.AddedCalls), len(diff.RemovedCalls), len(diff.ChangedCalls))) {
 		return nil
+	}
+	if (diff.Metadata != nil && !diff.Metadata.Page.Complete) || diff.BeforeSources.Recovered > 0 || diff.AfterSources.Recovered > 0 {
+		if !write(fmt.Sprintf("! incomplete before(%s) after(%s); inspect --json diagnostics", compactNavigationSourceSummary(diff.BeforeSources), compactNavigationSourceSummary(diff.AfterSources))) {
+			return nil
+		}
 	}
 	if diff.Metadata != nil && diff.Metadata.NextCommand != "" && !write("continue: "+diff.Metadata.NextCommand) {
 		return nil

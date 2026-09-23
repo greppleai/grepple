@@ -11,17 +11,17 @@ Directory architecture is a language-neutral orientation index, not proof of pac
 
 1. **Unknown owner:** inspect the source universe, then request a bounded directory map.
    ```bash
-   grepple sources explain --compact .
-   grepple architecture directory --depth 2 --max-nodes 80 --compact .
+   grepple sources explain .
+   grepple architecture directory --depth 2 --max-nodes 80 .
    ```
 2. **Known symbol:** resolve it directly across types and callables.
    ```bash
-   grepple architecture resolve --symbol Document --compact .
+   grepple architecture resolve --symbol Document .
    ```
    Retain every emitted match when the name is ambiguous; narrow PATH instead of guessing.
 3. **Why two directories are related:** request exact call/import/type evidence.
    ```bash
-   grepple architecture why rulespec search --compact rulespec search
+   grepple architecture why rulespec search rulespec search
    ```
 4. **Verify source:** follow the emitted `PATH:START-END`.
    ```bash
@@ -30,7 +30,7 @@ Directory architecture is a language-neutral orientation index, not proof of pac
 5. **Only if behavioral impact matters:** switch to `change-impact-analysis` instead of inferring complete behavior from a directory relation.
 6. **Diagnose unexpected architecture drift:** compare complete reports from the same intended source universe before inspecting checksums.
    ```bash
-   grepple architecture compare --compact before.json after.json
+   grepple architecture compare before.json after.json
    ```
    A semantic difference identifies the first source-linked fact. Semantic equality with byte inequality identifies encoding or ordering drift.
 
@@ -39,7 +39,7 @@ Directory architecture is a language-neutral orientation index, not proof of pac
 - Directory names establish physical ownership, not language package/module/layer intent.
 - Directory `why` relations distinguish strongly resolved static calls, adapter-owned imports, and imported type references. Inspect relation coverage: ambiguous, unresolved, unqualified, and adapter-unsupported facts are not asserted as edges, so absence is not proof that no reflection, registration, build-system, or runtime dependency exists.
 - Declaration visibility and process entrypoints are reported only when an owning language adapter provides the corresponding contract; unsupported semantics must stay unknown.
-- Inspect `sources` and truncation before making a completeness claim. Use `grepple sources explain --compact PATH` when skipped input or repository configuration could matter; use `--production-only` only when the question is explicitly about production code.
+- Inspect `sources` and truncation before making a completeness claim. Use `grepple sources explain PATH` when skipped input or repository configuration could matter; use `--production-only` only when the question is explicitly about production code.
 - Large JSON may be returned as a `grepple-artifact-v1` descriptor. Read only relevant artifact ranges or rerun a narrower command; use the descriptor's exact `--no-spill` command only when the complete stdout stream is required.
 - Do not invent a package boundary from directory names alone.
 

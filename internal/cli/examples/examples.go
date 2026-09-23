@@ -16,9 +16,9 @@ type taskExample struct {
 
 var taskExamples = []taskExample{
 	{Name: "orient", Description: "Inspect source scope, orient by directory, and resolve one declaration", Commands: []string{
-		"grepple sources explain --compact .",
-		"grepple architecture directory --depth 2 --compact .",
-		"grepple architecture resolve --symbol Document --compact .",
+		"grepple sources explain .",
+		"grepple architecture directory --depth 2 .",
+		"grepple architecture resolve --symbol Document .",
 	}},
 	{Name: "retrieve", Description: "Find content-matching files, then retrieve an exact declaration range", Commands: []string{
 		"grepple -F 'BuildNavigationGraph' --files-with-matches ./parser",
@@ -30,8 +30,8 @@ var taskExamples = []taskExample{
 		"printf '%s\n' 'literal replacement' | grepple write edit --root . --path parser/navigation.go --start START --end END",
 	}},
 	{Name: "impact", Description: "Resolve an ambiguous symbol before inspecting callers", Commands: []string{
-		"grepple graph resolve --symbol BuildNavigationGraph --compact .",
-		"grepple graph callers --at parser/navigation.go:113 --depth 2 --compact .",
+		"grepple graph resolve --symbol BuildNavigationGraph .",
+		"grepple graph callers --at parser/navigation.go:113 --depth 2 .",
 	}},
 	{Name: "boundaries", Description: "Triage boundary signals, then request complete evidence", Commands: []string{
 		"grepple boundaries ./parser",
@@ -46,8 +46,8 @@ var taskExamples = []taskExample{
 		"grepple extract flow --entry BuildNavigationGraph --source ./parser",
 	}},
 	{Name: "architecture", Description: "Explain one relation or diagnose drift between complete directory reports", Commands: []string{
-		"grepple architecture why rulespec search --compact rulespec search",
-		"grepple architecture compare --compact before.json after.json",
+		"grepple architecture why rulespec search rulespec search",
+		"grepple architecture compare before.json after.json",
 	}},
 }
 

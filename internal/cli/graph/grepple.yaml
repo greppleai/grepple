@@ -1,24 +1,33 @@
 description: Implements deterministic CLI commands for building, querying, resolving, diffing, and rendering source navigation graphs.
 responsibilities:
-    - Dispatch graph subcommands and validate arguments
-    - Build normalized local and remote navigation graphs
+    - Dispatch graph build, resolve, diff, and traversal subcommands
+    - Build normalized local and exact remote navigation graphs
     - Traverse callers, callees, impact, dependencies, and dependents
-    - Resolve declarations into deterministic alternatives
-    - Compare semantic declarations and calls
-    - Render complete JSON and bounded compact output
-    - Filter sources, languages, confidences, and visibilities
-    - Report source processing, truncation, diagnostics, and continuation metadata
+    - Select roots by symbols, locations, packages, modules, and paths
+    - Filter graph results by languages, confidences, and visibilities
+    - Resolve declarations into deterministic matches and follow-up commands
+    - Compare semantic declarations and calls with normalized paths
+    - Render complete JSON and bounded compact graph output
+    - Report source statistics, truncation, diagnostics, and continuation commands
 files:
     - path: arguments.go
       description: Defines graph argument aliases and dispatches build, resolve, diff, and traversal operations.
       kind: production
       checksum: ab32232f5a7b5c61d1f98f5b214914f82cc7855b8d6b8a5fb6733e3b773c73ce
     - path: build.go
-      description: Builds local or exact remote navigation graphs and renders complete or bounded output.
+      description: Parses build options, loads local or exact remote graphs, and renders complete or bounded compact output.
       kind: production
-      checksum: 6aef1e05de70ba79712463dd69c16976fcfb61ded99093cbdb929ad9207fe044
+      checksum: e46acc4d982672f2ca7c0625deb2ca0ecf6eeeb60d8482140219c44eab6c47b8
+    - path: build_compact.go
+      description: Groups compact build graph declarations by file and renders deterministic calls, candidates, and unavailable targets.
+      kind: production
+      checksum: 749429a72d21b2a36699d7b9408eb61460bfa3cfa6addb4e13e51a4fd5e7a74e
+    - path: build_compact_test.go
+      description: Verifies compact build grouping, call-site retention, candidate disclosure, and missing-target rendering.
+      kind: test
+      checksum: 10288f16eaa9a2acf014929081bf6f8ea8da57bff00fcd0d4251f53de31196b3
     - path: command.go
-      description: Constructs the graph command and routes subcommands to their handlers.
+      description: Constructs the graph command and routes build, resolve, diff, and traversal subcommands.
       kind: production
       checksum: 0e70d32d640956ff33ebd79b8c0e7dfda8a2d67698fae93e912d2c309d08e54c
     - path: command_test.go
@@ -26,38 +35,50 @@ files:
       kind: test
       checksum: 3dc17f1e213c238810d98f0c0cdb81b1bbca3ba3779edb9ec73b0fabbcdc9473
     - path: diff.go
-      description: Compares semantic navigation graph declarations and calls while ignoring position-only movement.
+      description: Builds semantic graph comparisons, normalizes paths, and renders compact declaration and call differences.
       kind: production
-      checksum: d452439203790930e0ccf278ded73fd66c253190b99749cbbbe3cc711f5fc121
+      checksum: e8deb8c10e6e2e0cb16dda2ea56496fed26d5151556efa41a7f7d038452e36d3
+    - path: header_test.go
+      description: Verifies compact build and diff output expose unresolved calls and recovered-source warnings without redundant headers.
+      kind: test
+      checksum: 613209a782eab560b372c9754e2cebbcb381caa4aa9055d3f4fa5b8ce199fb2a
     - path: integration_helpers_test.go
-      description: Provides integration helpers for graph command execution, output capture, and temporary environments.
+      description: Provides test helpers for command execution, output capture, temporary directories, and compatibility aliases.
       kind: test
       checksum: ce1b673901d86b4ecbea7d232a15d698dfeeec340ad15f3a80c3ef9eeb3b7a63
     - path: integration_test.go
-      description: Validates deterministic graph construction, traversal, filtering, diffing, resolution, and metadata.
+      description: Validates deterministic graph construction, traversal, filtering, diffing, resolution, truncation, and metadata.
       kind: test
-      checksum: 13d967dc90b59a5297c681206b960dc2aaa92102330a71282372ad06ee9336a7
+      checksum: 347df859da16199dd477631e5a6c3e7d8fe4257123bb88f7c44bcd4b93a6218e
     - path: projection.go
-      description: Defines normalized graph output projections and adapts analysis reports for CLI rendering.
+      description: Defines normalized graph output structures and converts analysis reports into command projections.
       kind: production
       checksum: ceeff0f299c4c4ac7e02a11af7fd0c07bcf01cbc80c09e378b6c7317daf589b1
     - path: query.go
-      description: Parses selectors and executes filtered graph traversals over local or exact remote graphs.
+      description: Parses selectors, resolves source paths, executes filtered local or exact remote traversals, and exposes graph helpers.
       kind: production
-      checksum: db46e33d32f572df1c2619a71b421696a69e532b272c396345e8beedefe6155f
+      checksum: 0794790707efdd02f1e50600235cbece7ffa5b4a03bc57d0c77922b16a4b46ad
+    - path: query_compact.go
+      description: Renders directional traversal results with grouped edges, ambiguity markers, deterministic ordering, and cycle bounds.
+      kind: production
+      checksum: 36bb398e2840161c80292fc046742b3d1809d19535d49a7453e1023988a1b8e1
+    - path: query_compact_test.go
+      description: Tests compact directional rendering, edge ordering, ambiguity preservation, and cycle handling.
+      kind: test
+      checksum: edb47fab0f10c4a659137b1aa6b04940d020ae4a867e6d9f96d3a1bdfbdf1ebe
     - path: remote_test.go
-      description: Verifies remote graph analysis preserves exact repository identifiers.
+      description: Verifies remote graph requests preserve exact repository identifiers and return projected results.
       kind: test
       checksum: e4b19124869d4e0609c06d0fc87da248efce7f34e3c591fc2d5250935491bf9a
     - path: resolve.go
-      description: Resolves symbol declarations and emits deterministic alternatives with follow-up traversal commands.
+      description: Resolves symbol declarations into deterministic matches with filtering, metadata, and follow-up traversal commands.
       kind: production
-      checksum: e653055df69b5cdb50bfb48916f567be1bc1b97ff68c0341acaea4ffade9dbd1
+      checksum: c734385ec0252c852a0248e3e8aba24047710deaea9b5f31981e39c6d4b21aa9
     - path: resolve_test.go
-      description: Tests symbol resolution output, filtering, validation, and exit behavior.
+      description: Tests symbol resolution output and nonzero exit behavior for missing declarations.
       kind: test
-      checksum: 10fe4de427cd4d246008be3cc16c3fc8362989a33a5152cb83599d68e77c5592
+      checksum: 1997da41ead93716e64812d11bc954afba1126aabd0b39959764162ebf300085
     - path: runtime.go
-      description: Builds graph result metadata and performs remote analysis requests with partial-result reporting.
+      description: Builds graph result metadata and performs remote analysis requests with notices and partial-result reporting.
       kind: production
       checksum: fb7ffc3acd50010a78d1e57d76ed97f02723e4b8e1e971fdc609b6231f413d21

@@ -16,17 +16,16 @@ import (
 )
 
 type graphArgs struct {
-	JSON    bool `arg:"--json" help:"emit the complete normalized navigation graph as JSON"`
-	Compact bool `arg:"--compact" help:"emit a bounded agent-facing declaration and call summary"`
+	JSON bool `arg:"--json" help:"emit the complete normalized navigation graph as JSON"`
 	cliruntime.CommonArgs
 	Repository     string   `arg:"--repo" placeholder:"OWNER/REPO[@REF]" help:"analyze one exact indexed repository"`
 	MaxFiles       int      `arg:"--max-files" placeholder:"N" help:"parse at most N discovered files (0 = unlimited)"`
-	MaxOutputBytes int      `arg:"--max-output-bytes" default:"16384" placeholder:"N" help:"cap compact output (default 16384; 0 = unlimited; JSON is uncapped)"`
+	MaxOutputBytes int      `arg:"--max-output-bytes" default:"16384" placeholder:"N" help:"cap human-readable output (default 16384; 0 = unlimited; JSON is uncapped)"`
 	Paths          []string `arg:"positional" placeholder:"PATH" help:"file, directory, or glob to include; defaults to the working directory"`
 }
 
 func (graphArgs) Description() string {
-	return "Build a deterministic local or exact indexed-repository navigation graph. Use resolve to preview symbol alternatives, callers/callees/impact for traversal, or diff for comparison. Exactly one of --json or --compact is required."
+	return "Build a deterministic local or exact indexed-repository navigation graph. Use resolve to preview symbol alternatives, callers/callees/impact for traversal, or diff for comparison. Human output is the default; --json emits the complete graph."
 }
 
 // Parent aliases preserve integrations while graph projection ownership moves to the command package.
@@ -45,7 +44,6 @@ func runBuild(application cliruntime.Context, args []string) error {
 	if err := argumentParser.Parse(args); err != nil {
 		if errors.Is(err, arg.ErrHelp) {
 			argumentParser.WriteHelp(application.Stdout())
-			fmt.Fprintln(application.Stdout(), "Required output mode: (--json | --compact); choose exactly one.")
 			return nil
 		}
 		return err
@@ -54,9 +52,6 @@ func runBuild(application cliruntime.Context, args []string) error {
 }
 
 func executeBuild(application cliruntime.Context, values *BuildArgs) error {
-	if values.JSON == values.Compact {
-		return fmt.Errorf("grepple graph requires exactly one of --json or --compact")
-	}
 	if values.MaxFiles < 0 {
 		return fmt.Errorf("--max-files must be non-negative")
 	}
@@ -70,7 +65,7 @@ func executeBuild(application cliruntime.Context, values *BuildArgs) error {
 	if values.JSON && remote != nil {
 		return cliruntime.NewOutput(application.Stdout()).WriteJSON(remote)
 	}
-	if values.Compact {
+	if !values.JSON {
 		return renderCompactNavigationGraph(application.Stdout(), output, values.MaxOutputBytes)
 	}
 	encoder := json.NewEncoder(application.Stdout())
@@ -127,13 +122,21 @@ func renderCompactNavigationGraph(destination io.Writer, graph navigationGraphOu
 		return err == nil
 	}
 	visibleCalls := compactNavigationCalls(graph.Calls)
-	entrypoints := countNavigationEntrypoints(graph.Declarations)
-	resolution := graph.Resolution
-	if !write(fmt.Sprintf("graph %s files=%d declarations=%d calls=%d visible-calls=%d outcomes=resolved-local:%d,ambiguous-local:%d,unresolved-local:%d,expected-external:%d rates=resolution:%.1f%%,ambiguous-local:%.1f%%,unresolved-local:%.1f%%,expected-external:%.1f%% entrypoints=%d sources=%s", graph.Schema, graph.Files, len(graph.Declarations), resolution.Calls, len(visibleCalls), resolution.ResolvedLocal, resolution.AmbiguousLocal, resolution.UnresolvedLocal, resolution.ExpectedExternal, resolution.ResolutionRate*100, resolution.AmbiguousLocalRate*100, resolution.UnresolvedLocalRate*100, resolution.ExpectedExternalRate*100, entrypoints, compactNavigationSourceSummary(graph.Sources))) {
+	if graph.Query == nil {
+		summary := fmt.Sprintf("graph files=%d declarations=%d calls=%d", graph.Files, len(graph.Declarations), len(graph.Calls))
+		if len(visibleCalls) != len(graph.Calls) {
+			summary += fmt.Sprintf(" shown=%d", len(visibleCalls))
+		}
+		if !write(summary) {
+			return nil
+		}
+	} else if graph.Query.Direction != "callers" && graph.Query.Direction != "callees" && graph.Query.Direction != "impact" && !write(compactGraphQueryLine(*graph.Query)) {
 		return nil
 	}
-	if graph.Query != nil && !write(compactGraphQueryLine(*graph.Query)) {
-		return nil
+	if graph.Sources.Failed > 0 || graph.Sources.Recovered > 0 {
+		if !write("! incomplete sources=" + compactNavigationSourceSummary(graph.Sources) + "; inspect --json diagnostics") {
+			return nil
+		}
 	}
 	if graph.Truncation != nil && !write(fmt.Sprintf("! truncated %s limit=%d skipped=%d", graph.Truncation.Reason, graph.Truncation.Limit, graph.Truncation.Skipped)) {
 		return nil
@@ -141,21 +144,19 @@ func renderCompactNavigationGraph(destination io.Writer, graph navigationGraphOu
 	if graph.Metadata != nil && graph.Metadata.NextCommand != "" && !write("continue: "+graph.Metadata.NextCommand) {
 		return nil
 	}
+	if graph.Query != nil && (graph.Query.Direction == "callers" || graph.Query.Direction == "callees" || graph.Query.Direction == "impact") {
+		writeCompactDirectionalQuery(write, *graph.Query, graph.Declarations, visibleCalls)
+		return nil
+	}
+	if graph.Query == nil {
+		writeCompactBuildGraph(write, graph.Declarations, visibleCalls)
+		return nil
+	}
 	declarations, callsByCaller := indexCompactNavigationGraph(graph.Declarations, visibleCalls)
 	if !writeCompactNavigationDeclarations(write, graph.Declarations, declarations, callsByCaller) {
 		return nil
 	}
 	return nil
-}
-
-func countNavigationEntrypoints(declarations []parser.NavigationDeclaration) int {
-	count := 0
-	for _, declaration := range declarations {
-		if declaration.Entrypoint != "" {
-			count++
-		}
-	}
-	return count
 }
 
 func compactNavigationSourceSummary(summary navigationSourceSummary) string {

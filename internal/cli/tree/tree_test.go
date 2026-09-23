@@ -6,13 +6,14 @@ import (
 
 	"github.com/greppleai/grepple/api"
 	"github.com/greppleai/grepple/internal/cliruntime"
+	sourcedomain "github.com/greppleai/grepple/internal/sources"
 )
 
 func TestRunUsesLocalTreeByDefault(t *testing.T) {
 	var stdout bytes.Buffer
 	calledPath, calledDepth := "", 0
 	application := cliruntime.Environment{Output: &stdout}
-	command := &command{context: application, local: func(path string, depth int) (api.TreeResponse, error) {
+	command := &command{context: application, local: func(path string, depth int, kind sourcedomain.Kind) (api.TreeResponse, error) {
 		calledPath, calledDepth = path, depth
 		return api.TreeResponse{Repo: ".", Path: path, Depth: depth, Entries: []api.TreeEntry{{Path: "main.go"}}}, nil
 	}}

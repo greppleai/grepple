@@ -103,7 +103,19 @@ func supportsNavigation(language string) bool {
 	return supported && capabilities.Navigation
 }
 
+// Structural search keeps immediate callers of each matched declaration, but
+// follows only callees beyond the root to avoid unrelated sibling call trees.
 func attachRelated(matches []FileMatch, candidates []string, followDepth int) {
+	attachRelatedDirection(matches, candidates, followDepth, false)
+}
+
+// An exact --at lookup follows only calls made by the retrieved declaration.
+// The root's immediate callees are depth one; previews begin at depth two.
+func attachRelatedAt(matches []FileMatch, candidates []string, followDepth int) {
+	attachRelatedDirection(matches, candidates, followDepth, true)
+}
+
+func attachRelatedDirection(matches []FileMatch, candidates []string, followDepth int, outgoingOnly bool) {
 	if !hasNavigationMatch(matches) {
 		return
 	}
@@ -116,11 +128,13 @@ func attachRelated(matches []FileMatch, candidates []string, followDepth int) {
 		if !supportsNavigation(matches[index].Language) {
 			continue
 		}
-		related, omittedCallers, omittedCallees, omittedTypes := relatedPoints(matches[index], navigation)
-		if followDepth > 0 {
+		related, omittedCallers, omittedCallees, omittedTypes := relatedPointsDirection(matches[index], navigation, outgoingOnly)
+		// One hop is the root's immediate callees; previews add further hops.
+		previewDepth := followDepth - 1
+		if previewDepth > 0 {
 			seen := matchedLocations(matches[index], navigation)
 			lineBudget := maxFollowedTotalLines
-			related = expandRelated(related, navigation, followDepth, seen, &lineBudget)
+			related = expandRelated(related, navigation, previewDepth, seen, &lineBudget)
 		}
 		matches[index].Related = related
 		matches[index].OmittedRelatedCallers = omittedCallers
@@ -204,16 +218,16 @@ func (analysis *NavigationAnalysis) Graph() parser.NavigationGraph {
 	return analysis.index.graph
 }
 
-// AttachRelatedFromAnalysis adds bounded navigation evidence without parsing or rebuilding the graph.
+// AttachRelatedFromAnalysis adds outgoing --at call navigation from a reusable analysis without reparsing.
 func AttachRelatedFromAnalysis(match *FileMatch, analysis *NavigationAnalysis, followDepth int) {
 	if match == nil || analysis == nil || analysis.index == nil || !match.CallableDeclaration || !supportsNavigation(match.Language) {
 		return
 	}
-	related, omittedCallers, omittedCallees, omittedTypes := relatedPoints(*match, analysis.index)
-	if followDepth > 0 {
+	related, omittedCallers, omittedCallees, omittedTypes := relatedPointsDirection(*match, analysis.index, true)
+	if followDepth > 1 {
 		seen := matchedLocations(*match, analysis.index)
 		lineBudget := maxFollowedTotalLines
-		related = expandRelated(related, analysis.index, followDepth, seen, &lineBudget)
+		related = expandRelated(related, analysis.index, followDepth-1, seen, &lineBudget)
 	}
 	match.Related = related
 	match.OmittedRelatedCallers = omittedCallers
@@ -231,10 +245,13 @@ func BuildNavigationGraphFromTextSources(sources []NavigationTextSource, options
 	return navigation.BuildGraphFromTextSources(sources, options)
 }
 
-func relatedPoints(match FileMatch, navigation *navigationIndex) ([]RelatedPoint, int, int, int) {
+func relatedPointsDirection(match FileMatch, navigation *navigationIndex, outgoingOnly bool) ([]RelatedPoint, int, int, int) {
 	declarations := matchedDeclarations(match, navigation)
 	types, omittedTypes := relatedTypes(declarations, navigation)
 	callees, omittedCallees := relatedCallees(match, declarations, navigation)
+	if outgoingOnly {
+		return append(types, callees...), 0, omittedCallees, omittedTypes
+	}
 	callers, omittedCallers := navigationCallers(declarations, navigation)
 	return append(append(types, callees...), callers...), omittedCallers, omittedCallees, omittedTypes
 }
@@ -559,10 +576,10 @@ func expandRelated(points []RelatedPoint, navigation *navigationIndex, depth int
 	if depth <= 0 {
 		return points
 	}
-	followed := map[string]int{"caller": 0, "callee": 0}
+	followed := 0
 	for index := range points {
 		point := &points[index]
-		if (point.Direction != "caller" && point.Direction != "callee") || followed[point.Direction] >= maxFollowedPerLevel || !resolvedNavigationConfidence(point.Confidence) {
+		if point.Direction != "callee" || followed >= maxFollowedPerLevel || !resolvedNavigationConfidence(point.Confidence) {
 			continue
 		}
 		key := relatedLocationKey(*point)
@@ -581,13 +598,13 @@ func expandRelated(points []RelatedPoint, navigation *navigationIndex, depth int
 			File: declaration.file, DisplayPath: point.Path, Content: content, Language: declaration.language,
 			MatchLines: map[int]bool{point.Start: true},
 		}
-		nested, omittedCallers, omittedCallees, omittedTypes := relatedPoints(match, navigation)
+		nested, omittedCallers, omittedCallees, omittedTypes := relatedPointsDirection(match, navigation, true)
 		nested = expandRelated(nested, navigation, depth-1, copyLocations(seen), lineBudget)
 		point.Preview = &RelatedPreview{
 			Content: content, Start: declaration.matchStart, End: declaration.point.End, Related: nested,
 			OmittedCallers: omittedCallers, OmittedCallees: omittedCallees, OmittedTypes: omittedTypes,
 		}
-		followed[point.Direction]++
+		followed++
 	}
 	return points
 }

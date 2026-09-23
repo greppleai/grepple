@@ -1,25 +1,34 @@
-description: Generates validated grepple.yaml metadata for policy-selected source directories using configured language models and confined inspection tools.
+description: Generates and persists validated grepple.yaml metadata for selected source directories using confined inspection tools and configurable language models.
 responsibilities:
     - Parse initialization arguments
     - Select policy-compliant source files
-    - Support exact-directory generation
-    - Build prompts from existing metadata and authoritative manifests
-    - Generate and validate directory metadata
+    - Plan metadata generation and refreshes
+    - Support forced and exact-directory generation
+    - Generate metadata with configured language models
+    - Validate descriptions and source kinds
     - Preserve authoritative paths and checksums
-    - Configure language model providers
-    - Persist generated metadata
+    - Bound concurrent generation workers
+    - Persist directory metadata
     - Enforce repository and tool path confinement
     - Provide bounded tree, grep, and file-reading tools
 files:
     - path: command.go
-      description: Coordinates initialization parsing, policy-based source selection, prompt construction, model-driven metadata generation, validation, persistence, provider configuration, and path confinement.
+      description: Coordinates initialization parsing, metadata generation, model configuration, validation, persistence, and repository confinement.
       kind: production
-      checksum: 102ea7cd18fc1f03fda92546a04af0332f179fb2af79478a81107b66016a2946
+      checksum: 04136f59a0cf4abd42ca5d8b20d0f258be3c719afff8517c2a3e631818a8d7b8
     - path: command_test.go
-      description: Tests metadata preservation, source-kind validation, prompt context, confined inspection tools, and exact-directory resolution.
+      description: Tests metadata validation, prompt context, confined inspection tools, and exact-directory confinement.
       kind: test
       checksum: 297d6471b781fa0cd8dff3e690a2d9f7d5406481e07c9f269ac05d73d373b742
+    - path: plan.go
+      description: Builds freshness-aware generation plans and executes bounded concurrent metadata refreshes with ordered reporting.
+      kind: production
+      checksum: 96817bc1ad7703035cf3d26e7cf9f3f652e940f73f198c62e566115fb53b6e56
+    - path: plan_test.go
+      description: Tests freshness planning, forced and exact-directory refreshes, concurrency limits, ordered output, and failure handling.
+      kind: test
+      checksum: 0c02c9c59611fc2b86f07bb618808f291a4a5038a88737653ef64d00efd33085
     - path: tools.go
-      description: Implements bounded directory-tree, source-search, and line-range reading tools with source-policy filtering and current-directory confinement.
+      description: Implements policy-filtered directory-tree, source-search, and bounded line-reading tools confined to the documented directory.
       kind: production
       checksum: 8e6fec51be6a51a60b44db6db063b1755895eb6eeed77469d8ee47c46f8ce506

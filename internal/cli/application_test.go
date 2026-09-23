@@ -19,7 +19,7 @@ func TestApplicationParserSelectsExplicitAndDefaultSearch(t *testing.T) {
 }
 
 func TestApplicationParserOwnsGlobalAndNestedArguments(t *testing.T) {
-	values, help, err := parseApplicationArgs([]string{"--production-only", "--no-spill", "graph", "callers", "--compact", "--symbol", "Run", "."})
+	values, help, err := parseApplicationArgs([]string{"--production-only", "--no-spill", "graph", "callers", "--symbol", "Run", "."})
 	if err != nil || help {
 		t.Fatalf("parse: help=%v err=%v", help, err)
 	}
@@ -27,16 +27,16 @@ func TestApplicationParserOwnsGlobalAndNestedArguments(t *testing.T) {
 		t.Fatalf("parsed arguments = %#v", values)
 	}
 	query := values.Graph.Callers
-	if !query.Compact || query.Symbol != "Run" || len(query.Paths) != 1 || query.Paths[0] != "." {
+	if query.JSON || query.Symbol != "Run" || len(query.Paths) != 1 || query.Paths[0] != "." {
 		t.Fatalf("graph callers = %#v", query)
 	}
 }
 func TestApplicationParserNormalizesLegacyDefaultModesAndDefaults(t *testing.T) {
-	graphValues, help, err := parseApplicationArgs([]string{"graph", "--compact", "."})
+	graphValues, help, err := parseApplicationArgs([]string{"graph", "."})
 	if err != nil || help {
 		t.Fatalf("graph parse: help=%v err=%v", help, err)
 	}
-	if graphValues.Graph == nil || graphValues.Graph.Build == nil || !graphValues.Graph.Build.Compact || graphValues.Graph.Build.MaxOutputBytes != 16*1024 {
+	if graphValues.Graph == nil || graphValues.Graph.Build == nil || graphValues.Graph.Build.JSON || graphValues.Graph.Build.MaxOutputBytes != 16*1024 {
 		t.Fatalf("graph build arguments = %#v", graphValues.Graph)
 	}
 
@@ -50,11 +50,26 @@ func TestApplicationParserNormalizesLegacyDefaultModesAndDefaults(t *testing.T) 
 }
 
 func TestApplicationParserAcceptsGlobalsAroundNestedSubcommands(t *testing.T) {
-	values, help, err := parseApplicationArgs([]string{"graph", "--no-spill", "callers", "--production-only", "--compact", "--symbol", "Run"})
+	values, help, err := parseApplicationArgs([]string{"graph", "--no-spill", "callers", "--production-only", "--symbol", "Run"})
 	if err != nil || help {
 		t.Fatalf("parse: help=%v err=%v", help, err)
 	}
-	if !values.NoSpill || !values.ProductionOnly || values.Graph == nil || values.Graph.Callers == nil || !values.Graph.Callers.Compact {
+	if !values.NoSpill || !values.ProductionOnly || values.Graph == nil || values.Graph.Callers == nil || values.Graph.Callers.JSON {
 		t.Fatalf("arguments = %#v", values)
+	}
+}
+
+func TestApplicationParserInitConcurrencyDefaultsAndOverrides(t *testing.T) {
+	for _, test := range []struct {
+		args []string
+		want int
+	}{
+		{args: []string{"init"}, want: 1},
+		{args: []string{"init", "--concurrency", "4", "--only-directory", "internal/cli/init"}, want: 4},
+	} {
+		values, help, err := parseApplicationArgs(test.args)
+		if err != nil || help || values.Init == nil || values.Init.Concurrency != test.want {
+			t.Fatalf("parse %v: values=%+v help=%v err=%v", test.args, values, help, err)
+		}
 	}
 }

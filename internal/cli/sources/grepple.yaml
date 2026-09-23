@@ -1,26 +1,26 @@
-description: Implements the sources CLI for inspecting repository source-selection decisions, applying configuration and production filters, and rendering deterministic reports.
+description: Implements the sources CLI for explaining repository source-selection decisions, configuration effects, production filtering, and deterministic report output.
 responsibilities:
     - Construct repository source-selection dependencies
-    - Derive environment and configuration settings
+    - Derive environment, ignore, and production settings
     - Parse and validate explain command arguments
     - Build source-selection reports
-    - Render compact and JSON output
-    - Format classification and exclusion counts
-    - Verify command help and report behavior
+    - Render human-readable and JSON reports
+    - Format deterministic classification and exclusion counts
+    - Test command help and source-selection reporting
 files:
     - path: context_test.go
-      description: Verifies that the sources command writes help output through its command context.
+      description: Verifies that the sources command writes its help text through the command context output.
       kind: test
       checksum: a160eb7bf5040cde61443a1edc3cd89febaed2c95c40c1c4a9c0c702972ef1d2
     - path: environment.go
-      description: Defines source-selection dependencies and derives repository environment settings from application context.
+      description: Defines source-selection dependencies and derives repository, configuration, ignore, and production settings from the application context.
       kind: production
       checksum: 2737dde2b60fae86ac7a4de2aac4e4afc8276055e461f2b7840fa3b030149415
     - path: sources.go
-      description: Implements source inspection, argument validation, deterministic count formatting, and compact or JSON report rendering.
+      description: Implements source inspection, argument validation, report construction, deterministic count formatting, and human-readable or JSON rendering.
       kind: production
-      checksum: 51c7eb9a6a5f995fa5a3b7047932e43f6c03803ab144c1e90aeb76762a536c31
+      checksum: 7d23d379f2bbfba6893c7ddbe22e36d02e46b634556ef53fe399ff001d559d57
     - path: sources_test.go
-      description: Verifies source reports account for configuration exclusions, production filtering, digests, and classification counts.
+      description: Verifies source reports capture configuration exclusions, production filtering, digests, classifications, and obsolete option rejection.
       kind: test
-      checksum: 1a33afffb8688538b5dcee6311450ef629af5b689ef455a5fb4abefeeec7f5cb
+      checksum: fa5f7c4fce4337d3759a1c3b33d6c055f12a9312e4cc99794ded59154fb72625

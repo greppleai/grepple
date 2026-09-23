@@ -17,8 +17,7 @@ const sourceScopeSchema = sourcedomain.Schema
 
 type ExplainArgs struct {
 	JSON           bool     `arg:"--json" help:"emit complete source decisions as JSON"`
-	Compact        bool     `arg:"--compact" help:"emit a bounded source-scope summary"`
-	MaxOutputBytes int      `arg:"--max-output-bytes" default:"16384" placeholder:"N" help:"cap compact output (default 16384; 0 = unlimited)"`
+	MaxOutputBytes int      `arg:"--max-output-bytes" default:"16384" placeholder:"N" help:"cap human-readable output (default 16384; 0 = unlimited)"`
 	Paths          []string `arg:"positional" placeholder:"PATH" help:"file or directory to inspect; defaults to the repository root"`
 }
 
@@ -59,7 +58,7 @@ func (command *command) Run(args []string) error {
 // run executes the sources command with explicit reusable build dependencies.
 func run(args []string, dependencies Dependencies) error {
 	if len(args) == 0 || isHelp(args[0]) {
-		return cliruntime.NewOutput(dependencies.stdout()).WriteString("Explain repository source selection.\nUsage:\n  grepple sources explain (--compact | --json) [PATH ...]\n")
+		return cliruntime.NewOutput(dependencies.stdout()).WriteString("Explain repository source selection.\nUsage:\n  grepple sources explain [--json] [PATH ...]\n")
 	}
 	if args[0] != "explain" {
 		return fmt.Errorf("unknown sources command %q", args[0])
@@ -88,9 +87,6 @@ func Execute(application cliruntime.Context, values *Args) error {
 }
 
 func execute(values *ExplainArgs, dependencies Dependencies) error {
-	if values.JSON == values.Compact {
-		return fmt.Errorf("sources explain requires exactly one of --json or --compact")
-	}
 	if values.MaxOutputBytes < 0 {
 		return fmt.Errorf("--max-output-bytes must not be negative")
 	}

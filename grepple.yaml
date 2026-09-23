@@ -1,11 +1,13 @@
-description: Provides the public Grepple Go code-search engine, structural parser, navigation graph, analysis tools, CLI, configuration, documentation, testing, and release automation.
+description: Provides the public Grepple Go code-search engine, parser, structural query system, navigation and architecture analysis, CLI, documentation, tests, configuration, and release tooling.
 responsibilities:
-    - Parse supported source languages
+    - Parse supported programming languages
     - Search and filter source repositories
-    - Build navigation and architecture evidence
-    - Execute structural queries and analysis
+    - Execute bounded structural queries
+    - Build navigation and architecture graphs
+    - Resolve package dependencies
     - Expose CLI and API contracts
-    - Validate source, schemas, and workflows
+    - Validate schemas and architecture boundaries
+    - Document workflows and capabilities
     - Build and release portable binaries
 files:
     - path: .dockerignore
@@ -31,7 +33,7 @@ files:
     - path: AGENTS.md
       description: Guides agents on project architecture, dependency direction, source inspection, and validation.
       kind: production
-      checksum: 7e42723d8d5f210bd57fc131e07333074300810f7e9581815251aa95efd65369
+      checksum: 3207b7a0a36cf63fc9a7b1cfd204d437bafcbd49670815c985e04554a454b6d9
     - path: CHANGELOG.md
       description: Records released Grepple features, fixes, performance improvements, and version history.
       kind: production
@@ -47,7 +49,7 @@ files:
     - path: README.md
       description: Documents Grepple capabilities, commands, architecture, workflows, output contracts, and build requirements.
       kind: production
-      checksum: 16ebf180d0e3bcd96e2908a1bc2924e613d4a4ca0a4db0039c06776c9b5576d0
+      checksum: fc499a781dea0a2660911dcc9add9204dda464d92d0eec576db4a935d37354c4
     - path: architecture-production.mmd
       description: Contains a generated Mermaid graph of production package relationships.
       kind: generated

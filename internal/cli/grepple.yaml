@@ -1,37 +1,38 @@
-description: The cli package parses, normalizes, dispatches, and validates Grepple commands while applying repository scope, output, environment, and projection policies.
+description: The cli package parses, normalizes, validates, and dispatches Grepple commands while managing repository scope, output spilling, process defaults, and projection consistency.
 responsibilities:
     - Register and dispatch application commands
-    - Parse global options and help requests
-    - Normalize default commands and nested modes
-    - Enforce local, remote, and source-independent availability
-    - Apply repository configuration and production-only scope
+    - Parse global and nested command arguments
+    - Normalize default command modes and help requests
+    - Validate command availability across execution universes
+    - Apply repository configuration and source-selection scope
     - Spill oversized output into managed artifacts
-    - Preserve repository options across continuations
+    - Preserve invocation options across continuations and reruns
     - Propagate requested command exit statuses
     - Configure navigation cache defaults
-    - Validate CLI import and documentation boundaries
-    - Compare local and remote analysis projections
+    - Document CLI workflows and output contracts
+    - Enforce CLI import boundaries
+    - Compare local and public analysis projections
     - Verify parity across navigation projections
-    - Benchmark agent workflow artifact handling
+    - Benchmark agent workflows and artifact retrieval
 files:
     - path: agent_workflow_benchmark_test.go
-      description: Benchmarks agent workflows that retrieve inline results or spilled artifacts.
+      description: Benchmarks agent workflows for search, navigation, and spilled-artifact retrieval.
       kind: test
-      checksum: 0173d2dc83ff239e315bc960952123c67ecd864256c56d951080ca0381b5cc0b
+      checksum: 781901877b38edec8db1933eae0400ee424e4ff4317c576ebec9fa184055b021
     - path: application.go
       description: Defines global arguments and dispatches normalized commands to their implementations.
       kind: production
       checksum: 1d4daa205ad0c45bcd63065c62200535c280fcfdc8cece1a471773d2d45c97a2
     - path: application_test.go
-      description: Tests command selection, global option ownership, and nested argument normalization.
+      description: Tests command selection, global option ownership, nested normalization, and command defaults.
       kind: test
-      checksum: cc762a3381b4c995fe50c9616d1fa6e1cce3e2dcb4259a3371d39e997199d5c6
+      checksum: 920bea7abff8fa71e351fb3772716a467c747efb98501182c104430de578b22c
     - path: architecture_test_helpers_test.go
-      description: Provides test helpers for building architecture reports and responsibility outputs.
+      description: Provides helpers for constructing architecture reports and responsibility outputs.
       kind: test
       checksum: a863315f1d8f14e4fa19a04158d2d427f12342515479c617bf178f0d576c6df2
     - path: args.go
-      description: Parses application arguments, routes help, validates command availability, and runs output spilling.
+      description: Parses application arguments, routes help, validates availability, and executes output spilling.
       kind: production
       checksum: 1755710fc2796d16a3cbb1c9b1a47bbda6ed11840964c48639341d910c850f55
     - path: args_test.go
@@ -59,7 +60,7 @@ files:
       kind: production
       checksum: 612a8f1c13c30265f0a22574830e90f526e0ad6429571bcd9c65ad724a1edf3c
     - path: graph_test_helpers_test.go
-      description: Provides test helpers for navigation graph outputs and continuation commands.
+      description: Provides helpers for navigation graph outputs and continuation commands.
       kind: test
       checksum: 86267374fb37feac85516db12b5c579a54d091ecdce8b12940b072292df56213
     - path: import_policy_test.go
@@ -105,4 +106,4 @@ files:
     - path: shared_projection_parity_test.go
       description: Verifies consistent navigation facts across graph, flow, related, and architecture projections.
       kind: test
-      checksum: 8f8a3aa98222973557671336089c70334667abf05c1e2ee8c5f1bbfd21786a84
+      checksum: 001e6d7a2047a2884e8efdc20dbe286c4b4e4659bfe9d2f449d3722f5952dd0e

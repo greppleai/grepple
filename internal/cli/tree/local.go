@@ -13,7 +13,7 @@ import (
 	sourcedomain "github.com/greppleai/grepple/internal/sources"
 )
 
-func buildLocal(path string, depth int, repository cliruntime.Repository) (api.TreeResponse, error) {
+func buildLocal(path string, depth int, kind sourcedomain.Kind, repository cliruntime.Repository) (api.TreeResponse, error) {
 
 	if path == "" {
 		path = "."
@@ -40,6 +40,25 @@ func buildLocal(path string, depth int, repository cliruntime.Repository) (api.T
 		}
 	}
 	inspection := directorymeta.Inspect(working, base, metadataFiles)
+	if kind != "" {
+		if repository != nil {
+			policy, err := repository.ScopeOptions()
+			if err != nil {
+				return api.TreeResponse{}, err
+			}
+			if policy.ProductionOnly && kind != sourcedomain.Production {
+				return api.TreeResponse{}, fmt.Errorf("--kind %s cannot be combined with --production-only", kind)
+			}
+		}
+		classifier := sourcedomain.NewClassifier(working)
+		selected := files[:0:0]
+		for _, file := range files {
+			if classifier.Classify(file) == kind {
+				selected = append(selected, file)
+			}
+		}
+		files = selected
+	}
 	result := localEntries(files, metadataFiles, base, working, depth)
 	display, err := filepath.Rel(working, absolute)
 	if err != nil {

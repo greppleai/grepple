@@ -51,7 +51,7 @@ type Args struct {
 	Related          bool     `arg:"--related" help:"show repository-local types, callees, and callers (default for structural search)"`
 	NoRelated        bool     `arg:"--no-related" help:"disable automatic code navigation"`
 	RepeatSource     bool     `arg:"--repeat-source" help:"bypass session source deduplication and emit complete focused source again"`
-	FollowRelated    int      `arg:"--follow-related" placeholder:"N" help:"expand up to two callers and callees per level (1-3; default 1)"`
+	FollowRelated    int      `arg:"--follow-related" placeholder:"N" help:"follow 1-3 outgoing call hops; search also shows direct callers of matches"`
 	At               string   `arg:"--at" placeholder:"PATH:LINE[-END]" help:"retrieve a declaration at PATH:LINE or exact lines for PATH:START-END; ranges that start in-file clamp at EOF"`
 	Skip             int      `arg:"--skip" placeholder:"N" help:"skip the first N ranked result files"`
 	Limit            int      `arg:"--limit" default:"20" placeholder:"N" help:"return at most N ranked result files (default 20; 0 = all local; servers cap a page at 100 — page further with --skip)"`
