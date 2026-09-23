@@ -1,0 +1,10 @@
+description: GitHub configuration for automated dependency updates and release operations.
+responsibilities:
+    - Schedule Go module dependency updates
+    - Schedule GitHub Actions dependency updates
+    - Group minor and patch updates
+files:
+    - path: dependabot.yml
+      description: Configures weekly Dependabot updates for Go modules and GitHub Actions.
+      kind: production
+      checksum: c26f14ca4f399fd571fa9108a14319e19ca2551036df6e30cc6f3b2b8a445a8f

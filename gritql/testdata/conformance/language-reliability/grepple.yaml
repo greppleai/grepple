@@ -1,0 +1,9 @@
+description: Cross-language reliability vectors for the gritql conformance suite.
+responsibilities:
+    - Define reliability cases across supported languages
+    - Exercise bindings, snippet contexts, malformed syntax, cancellation, and resource limits
+files:
+    - path: cases.json
+      description: Defines cross-language gritql-v1 reliability test vectors and expected findings.
+      kind: fixture
+      checksum: d93a4f14cb5904a91d54a99c4a413567557b54d33acbf353edd88c0e6ccba18b

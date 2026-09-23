@@ -1,0 +1,12 @@
+description: Workflow for creating, inspecting, and validating focused source-backed Mermaid architecture diagrams with Grepple.
+responsibilities:
+    - Select an architecture projection based on the question
+    - Generate focused structure and flow diagrams from source locations
+    - Validate diagrams before using them for decisions or documentation
+    - Apply trust rules to generated relationships and source metadata
+    - Direct users to discovery and impact-analysis workflows
+files:
+    - path: SKILL.md
+      description: Defines the source-backed workflow for generating and validating focused Mermaid architecture diagrams.
+      kind: production
+      checksum: 4a72ee7d8320c4779a938802bcec681073edffc13a05c06d2116452c1f3930d6

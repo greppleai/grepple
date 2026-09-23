@@ -1,0 +1,9 @@
+description: Repository dependency update configuration for Docker-based dependencies.
+responsibilities:
+    - Configure automated dependency update checks.
+    - Target Docker package dependencies.
+files:
+    - path: dependabot.yml
+      description: Defines Dependabot version 2 updates for Docker dependencies.
+      kind: production
+      checksum: 02e2c83649377b86c8400f22585c164fd5d61fe3e271529c856aabe729b66811

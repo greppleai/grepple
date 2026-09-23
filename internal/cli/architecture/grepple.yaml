@@ -1,0 +1,71 @@
+description: Provides CLI commands and public APIs for building, querying, rendering, comparing, and summarizing source-linked directory architecture.
+responsibilities:
+    - Build language-neutral architecture reports from local or indexed sources
+    - Resolve source-linked declarations and relation evidence
+    - Render bounded summaries, compressed relations, and Mermaid diagrams
+    - Project directory responsibility reports
+    - Compare normalized architecture snapshots and byte encodings
+    - Support exact remote repository analysis requests
+    - Expose injectable command dependencies and public projections
+    - Parse architecture subcommands and execution modes
+files:
+    - path: architecture.go
+      description: Builds architecture reports and renders directory, symbol, relation, and Mermaid command output.
+      kind: production
+      checksum: a00247a06218524b88eda81ec47ddc5b5b0d18f09890f8d1e4f30b1d7b8ea66e
+    - path: architecture_benchmark_test.go
+      description: Benchmarks architecture construction and JSON serialization across multiple service directories.
+      kind: test
+      checksum: 9fc0c40f79e28204a87fa16fcba6578fd9280ca8f11536ca6ae5f41320bbf251
+    - path: architecture_test.go
+      description: Tests cross-language architecture reports, source resolution, entrypoints, relations, filtering, and command output.
+      kind: test
+      checksum: 9bb06134b99f2a19079212dae7163c4f1eea04d0e21bbdedb64e7e5e46fabc1e
+    - path: arguments.go
+      description: Defines public architecture subcommand arguments and dependency-backed execution dispatch.
+      kind: production
+      checksum: 0f61d7672977c2f9d8ff509a4d802b656c7314baa5f2f44906304f463feca4e0
+    - path: compare.go
+      description: Validates, normalizes, compares, and renders semantic and byte-level architecture differences.
+      kind: production
+      checksum: 08d50aa1760eb1fbd99611375b22e4d46987deeeb6ad052c316ee13c00089aeb
+    - path: compare_test.go
+      description: Tests deterministic comparison, normalization, schema validation, remote envelopes, encoding drift, and source-linked differences.
+      kind: test
+      checksum: b339de13d3d4bbc6e74b8c62fa4820b7b97f207701abc48aaadff4bff31f00da
+    - path: context_test.go
+      description: Verifies that architecture help uses the injected command context output.
+      kind: test
+      checksum: 5cd511d6c50d5e3f6ff86a7f4e4f5f8e53d968ca6994d48484da959b6c00522e
+    - path: dispatch_test.go
+      description: Tests injected source configuration handling and rejection of unknown architecture commands.
+      kind: test
+      checksum: 75d68c1d85746d02efcde094f3fc8d659d53b3defa4f429cd2ba50368a3fd49d
+    - path: mermaid_colors.go
+      description: Generates deterministic high-contrast colors for Mermaid source directories and relation links.
+      kind: production
+      checksum: 91e4e3c79c9bb91b09841d7a415c5ce42d14195be23ed29860450375735ec2b9
+    - path: mermaid_colors_test.go
+      description: Tests Mermaid color determinism, distinctness, contrast, and source-directory link styling.
+      kind: test
+      checksum: 4fd74bf0eb261a90a83c79f9df47d416d035cabcbcac6bcd2bca8b4dcc01a69d
+    - path: relations_test.go
+      description: Tests compressed directory-pair relation output and Mermaid dependency diagram generation.
+      kind: test
+      checksum: 0a2acd0046f6f91d7f93e238c1bb1b7368fe43f72b3d731d19c477e50a9cf8b1
+    - path: remote_test.go
+      description: Verifies remote architecture and responsibility commands preserve repository references and operations.
+      kind: test
+      checksum: b9d7fb31c220b47176cb02fe87a4b3eb7e03990a9dfff526922545d38f5aa4c3
+    - path: responsibilities.go
+      description: Implements local and remote directory responsibility projections and bounded rendering.
+      kind: production
+      checksum: 689adb7f57ae4c3979e51b3d1680aa0f9affa94eb4d89ec14f4fcc1e594d6923
+    - path: test_helpers_test.go
+      description: Provides test dependencies, source fixtures, command runners, directory isolation, and output capture.
+      kind: test
+      checksum: ab131ca461e9ab0aabe0fb4b131d8f561aefe9d1ae41adb8c94274cb15e1786a
+    - path: types.go
+      description: Defines architecture report types, public projections, command dependencies, context integration, and output utilities.
+      kind: production
+      checksum: 5e59d4b9bebee8d23e13a1f41c3401c966ce845958b9ef286b34d5b9f326bf21

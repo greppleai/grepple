@@ -1,14 +1,18 @@
 package auth
 
-import "testing"
+import (
+	"testing"
 
-func TestCommandsShareAuthenticationDependencies(t *testing.T) {
+	"github.com/greppleai/grepple/internal/cliruntime"
+)
+
+func TestCommandsDispatchOwnedAuthenticationOperations(t *testing.T) {
 	called := ""
-	dependencies := Dependencies{AIProvider: func([]string) error { called = "provider"; return nil }, Login: func([]string) error { called = "login"; return nil }, Logout: func([]string) error { called = "logout"; return nil }}
+	application := cliruntime.Environment{}
 	for _, test := range []struct {
 		command interface{ Run([]string) error }
 		want    string
-	}{{NewAIProvider(dependencies), "provider"}, {NewLogin(dependencies), "login"}, {NewLogout(dependencies), "logout"}} {
+	}{{newCommand(application, operationAIProvider, func([]string) error { called = "provider"; return nil }), "provider"}, {newCommand(application, operationLogin, func([]string) error { called = "login"; return nil }), "login"}, {newCommand(application, operationLogout, func([]string) error { called = "logout"; return nil }), "logout"}} {
 		called = ""
 		if err := test.command.Run(nil); err != nil {
 			t.Fatal(err)

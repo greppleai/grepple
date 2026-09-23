@@ -114,10 +114,14 @@ func AtFromDocument(params Params, document *structure.Document, analysis *Navig
 }
 
 func prepareAtMatch(match *FileMatch, params Params, line, endLine int, document *structure.Document) error {
+	for selected := line; selected <= endLine; selected++ {
+		match.MatchLines[selected] = true
+	}
 	if params.LineRanges || params.BeforeContext > 0 || params.AfterContext > 0 {
-		for selected := line; selected <= endLine; selected++ {
-			match.MatchLines[selected] = true
-		}
+		return nil
+	}
+	if endLine > line {
+		match.Segments = []structure.Segment{{Kind: "lines", Start: line, End: endLine}}
 		return nil
 	}
 	if document != nil {

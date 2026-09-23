@@ -9,8 +9,8 @@ import (
 	"path/filepath"
 	"sort"
 
+	"github.com/greppleai/grepple/navigation"
 	"github.com/greppleai/grepple/parser"
-	"github.com/greppleai/grepple/search"
 )
 
 const boundaryCacheSchema = "grepple-boundary-cache-v7"
@@ -27,7 +27,7 @@ func buildCachedBoundaryGraph(globs []string, maxFiles int, useCache bool, depen
 		return GraphOutput{}, "", err
 	}
 	if !useCache {
-		return dependencies.buildGraph(paths, maxFiles, search.NavigationBuildOptions{DisableCache: true}), "disabled", nil
+		return dependencies.buildGraph(paths, maxFiles, navigation.BuildOptions{DisableCache: true}), "disabled", nil
 	}
 	digest, err := boundaryInputDigest(paths, maxFiles)
 	if err != nil {
@@ -37,7 +37,7 @@ func buildCachedBoundaryGraph(globs []string, maxFiles int, useCache bool, depen
 	if cached, ok := readBoundaryGraphCache(cachePath, digest); ok {
 		return cached, "hit", nil
 	}
-	output := dependencies.buildGraph(paths, maxFiles, search.NavigationBuildOptions{})
+	output := dependencies.buildGraph(paths, maxFiles, navigation.BuildOptions{})
 	_ = writeBoundaryGraphCache(cachePath, boundaryGraphCache{Schema: boundaryCacheSchema, Digest: digest, Graph: output})
 	return output, "miss", nil
 }
@@ -58,7 +58,7 @@ func boundaryInputDigest(paths []string, maxFiles int) (string, error) {
 		_, _ = hash.Write(content)
 		_, _ = hash.Write([]byte{0})
 	}
-	for _, path := range search.NavigationRepositoryContextFiles(sortedPaths) {
+	for _, path := range navigation.RepositoryContextFiles(sortedPaths) {
 		content, err := os.ReadFile(path)
 		if err != nil {
 			return "", err

@@ -5,18 +5,18 @@ import (
 	"testing"
 
 	"github.com/greppleai/grepple/api"
+	"github.com/greppleai/grepple/internal/cliruntime"
 )
 
 func TestRunUsesLocalTreeByDefault(t *testing.T) {
 	var stdout bytes.Buffer
 	calledPath, calledDepth := "", 0
-	err := Run([]string{"src", "--depth", "3"}, Dependencies{
-		Stdout: &stdout,
-		LocalTree: func(path string, depth int) (api.TreeResponse, error) {
-			calledPath, calledDepth = path, depth
-			return api.TreeResponse{Repo: ".", Path: path, Depth: depth, Entries: []api.TreeEntry{{Path: "main.go"}}}, nil
-		},
-	})
+	application := cliruntime.Environment{Output: &stdout}
+	command := &command{context: application, local: func(path string, depth int) (api.TreeResponse, error) {
+		calledPath, calledDepth = path, depth
+		return api.TreeResponse{Repo: ".", Path: path, Depth: depth, Entries: []api.TreeEntry{{Path: "main.go"}}}, nil
+	}}
+	err := command.Run([]string{"src", "--depth", "3"})
 	if err != nil {
 		t.Fatal(err)
 	}

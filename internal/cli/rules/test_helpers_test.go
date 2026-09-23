@@ -2,19 +2,14 @@ package rules
 
 import (
 	"io"
-	"net/http"
 	"os"
 	"testing"
+
+	"github.com/greppleai/grepple/internal/cliruntime"
 )
 
 func runRules(args []string) error {
-	return Run(args, Dependencies{ServerDefault: func(value string) string { return value }, NewRequest: func(method, target, contentType string, body io.Reader) (*http.Request, error) {
-		request, err := http.NewRequest(method, target, body)
-		if err == nil && contentType != "" {
-			request.Header.Set("Content-Type", contentType)
-		}
-		return request, err
-	}})
+	return New(cliruntime.Environment{Output: os.Stdout, Config: cliruntime.ConfigurationServices{ResolveServer: func(value string) string { return value }}}).Run(args)
 }
 func captureStdout(t *testing.T, run func()) string {
 	t.Helper()

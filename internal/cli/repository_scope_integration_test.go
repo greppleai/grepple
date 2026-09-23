@@ -8,16 +8,25 @@ import (
 	"testing"
 
 	sourcescommand "github.com/greppleai/grepple/internal/cli/sources"
+	"github.com/greppleai/grepple/internal/directorymeta"
+	"github.com/greppleai/grepple/internal/filedigest"
 )
 
 func TestRepositoryScopeFlagsBypassOnlyRequestedBehavior(t *testing.T) {
 	root := t.TempDir()
 	writeGraphSource(t, root, "main.go", "package sample\n")
 	writeGraphSource(t, root, "sandbox/ignored.go", "package sandbox\n")
+	digest, err := filedigest.SHA256Hex(filepath.Join(root, "main.go"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := directorymeta.Write(root, directorymeta.Metadata{Description: "Scope fixture.", Responsibilities: []string{"Test invocation scope."}, Files: []directorymeta.File{{Path: "main.go", Description: "Production fixture.", Kind: "production", Checksum: digest}}}); err != nil {
+		t.Fatal(err)
+	}
 	if err := os.WriteFile(filepath.Join(root, "grepple.json"), []byte(`{"ignore":{"paths":["sandbox/**"]}}`), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	chdirForConfigTest(t, root)
+	t.Chdir(root)
 	withoutIgnore := captureStdout(t, func() {
 		if err := Run([]string{"sources", "explain", "--json", "--no-config-ignore", "--no-spill"}); err != nil {
 			t.Fatal(err)

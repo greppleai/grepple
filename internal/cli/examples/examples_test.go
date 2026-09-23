@@ -8,7 +8,7 @@ import (
 
 func TestRunSelectsAndDescribesExamples(t *testing.T) {
 	var output bytes.Buffer
-	if err := Run([]string{"impact"}, &output); err != nil {
+	if err := runExamples([]string{"impact"}, &output); err != nil {
 		t.Fatal(err)
 	}
 	if !strings.Contains(output.String(), "graph callers") || strings.Contains(output.String(), "extract flow") {
@@ -18,16 +18,16 @@ func TestRunSelectsAndDescribesExamples(t *testing.T) {
 
 func TestRunHelpAndValidation(t *testing.T) {
 	var output bytes.Buffer
-	if err := Run([]string{"--help"}, &output); err != nil {
+	if err := runExamples([]string{"--help"}, &output); err != nil {
 		t.Fatal(err)
 	}
 	if !strings.Contains(output.String(), "Usage: grepple examples [TASK]") {
 		t.Fatalf("help=%q", output.String())
 	}
-	if err := Run([]string{"missing"}, &output); err == nil || !strings.Contains(err.Error(), "orient, retrieve, edit") {
+	if err := runExamples([]string{"missing"}, &output); err == nil || !strings.Contains(err.Error(), "orient, retrieve, edit") {
 		t.Fatalf("unknown task error=%v", err)
 	}
-	if err := Run([]string{"orient", "retrieve"}, &output); err == nil {
+	if err := runExamples([]string{"orient", "retrieve"}, &output); err == nil {
 		t.Fatal("expected too-many-arguments error")
 	}
 }

@@ -1,16 +1,30 @@
 package context
 
-import "testing"
+import (
+	"os"
+	"path/filepath"
+	"strings"
+	"testing"
+
+	"github.com/greppleai/grepple/internal/cliruntime"
+)
 
 func TestRunParsesInvalidationReason(t *testing.T) {
-	got := ""
-	if err := Run([]string{"invalidate", "--reason", "compact"}, Dependencies{Invalidate: func(reason string) error { got = reason; return nil }}); err != nil {
+	directory := t.TempDir()
+	t.Setenv("GREPPLE_CONTEXT_GUARD_DIR", directory)
+	t.Setenv("PI_SESSION_ID", "")
+	application := cliruntime.Environment{}
+	if err := New(application).Run([]string{"invalidate", "--reason", "compact"}); err != nil {
 		t.Fatal(err)
 	}
-	if got != "compact" {
-		t.Fatalf("reason=%q", got)
+	content, err := os.ReadFile(filepath.Join(directory, "stats-0.json"))
+	if err != nil {
+		t.Fatal(err)
 	}
-	if err := Run([]string{"invalidate", "--unknown"}, Dependencies{Invalidate: func(string) error { return nil }}); err == nil {
+	if !strings.Contains(string(content), `"resetReason": "compact"`) {
+		t.Fatalf("stats=%s", content)
+	}
+	if err := New(application).Run([]string{"invalidate", "--unknown"}); err == nil {
 		t.Fatal("expected unknown argument error")
 	}
 }

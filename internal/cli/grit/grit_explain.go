@@ -17,7 +17,7 @@ const gritExplainSchema = "grepple-grit-explain-v1"
 type gritExplainArgs struct {
 	QueryFile            string `arg:"-f,--query-file" placeholder:"PATH" help:"read the GritQL query from PATH (- for stdin)"`
 	JSON                 bool   `arg:"--json" help:"emit complete machine-readable compile output"`
-	MaxOutputBytes       int    `arg:"--max-output-bytes" placeholder:"N" help:"cap human output (default 16384; 0 = unlimited; JSON is uncapped)"`
+	MaxOutputBytes       int    `arg:"--max-output-bytes" default:"16384" placeholder:"N" help:"cap human output (default 16384; 0 = unlimited; JSON is uncapped)"`
 	MaxPatternBytes      int    `arg:"--max-pattern-bytes" placeholder:"N" help:"bound query source bytes"`
 	MaxRegexBytes        int    `arg:"--max-regex-bytes" placeholder:"N" help:"bound one regex constraint"`
 	MaxRegexInstructions int    `arg:"--max-regex-instructions" placeholder:"N" help:"bound compiled regex instructions"`
@@ -81,21 +81,29 @@ func runGritExplain(args []string, dependencies Dependencies) error {
 	}
 	if err := argumentParser.Parse(args); err != nil {
 		if errors.Is(err, arg.ErrHelp) {
-			argumentParser.WriteHelp(os.Stdout)
-			fmt.Fprintln(os.Stdout, "No source files are read. Human diagnostics are bounded; JSON is complete under compile limits.")
+			output := dependencies.Stdout
+			if output == nil {
+				output = os.Stdout
+			}
+			argumentParser.WriteHelp(output)
+			fmt.Fprintln(output, "No source files are read. Human diagnostics are bounded; JSON is complete under compile limits.")
 			return nil
 		}
 		return err
 	}
-	if err := validateGritExplainArgs(values); err != nil {
+	return executeGritExplain(&values, dependencies)
+}
+
+func executeGritExplain(values *ExplainArgs, dependencies Dependencies) error {
+	if err := validateGritExplainArgs(*values); err != nil {
 		return err
 	}
 	query, err := loadGritQuery(gritArgs{Query: values.Query, QueryFile: values.QueryFile})
 	if err != nil {
 		return err
 	}
-	output := explainGritQuery(query, values)
-	if err := outputGritExplain(values, output); err != nil {
+	output := explainGritQuery(query, *values)
+	if err := outputGritExplain(*values, output, dependencies); err != nil {
 		return err
 	}
 	if !output.OK {
@@ -117,11 +125,11 @@ func validateGritExplainArgs(values gritExplainArgs) error {
 	return nil
 }
 
-func outputGritExplain(values gritExplainArgs, output gritExplainOutput) error {
+func outputGritExplain(values gritExplainArgs, output gritExplainOutput, dependencies Dependencies) error {
 	if values.JSON {
-		return stdoutWriter().writeJSON(output)
+		return stdoutWriter(dependencies).writeJSON(output)
 	}
-	if err := renderGritExplain(output, values.MaxOutputBytes); err != nil && !errors.Is(err, errOutputTruncated) {
+	if err := renderGritExplain(output, values.MaxOutputBytes, dependencies); err != nil && !errors.Is(err, errOutputTruncated) {
 		return err
 	}
 	return nil
@@ -301,10 +309,10 @@ func gritRangeString(value gritql.Range) string {
 	return fmt.Sprintf("%d:%d-%d:%d", value.Start.Line, value.Start.Column, value.End.Line, value.End.Column)
 }
 
-func renderGritExplain(output gritExplainOutput, maxOutputBytes int) error {
-	writer := stdoutWriter()
+func renderGritExplain(output gritExplainOutput, maxOutputBytes int, dependencies Dependencies) error {
+	writer := stdoutWriter(dependencies)
 	if maxOutputBytes > 0 {
-		writer = newBoundedOutputWriter(os.Stdout, maxOutputBytes)
+		writer = newBoundedOutputWriter(outputDestination(dependencies), maxOutputBytes)
 	}
 	if !output.OK {
 		for _, diagnostic := range output.Diagnostics {

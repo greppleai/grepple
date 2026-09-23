@@ -6,7 +6,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/greppleai/grepple/internal/sourcekind"
+	sourcedomain "github.com/greppleai/grepple/internal/sources"
 	"github.com/greppleai/grepple/parser"
 )
 
@@ -111,6 +111,7 @@ type directoryAccumulator struct {
 
 // BuildArchitecture projects a language-neutral physical architecture from one parsed universe.
 func BuildArchitecture(universe *Universe) ArchitectureReport {
+	classifier := sourcedomain.NewClassifier(".")
 	visibility := map[string][]parser.NavigationDeclaration{}
 	for _, declaration := range universe.graph.Declarations {
 		key := symbolKey(declaration.Path, declaration.Name)
@@ -120,14 +121,14 @@ func BuildArchitecture(universe *Universe) ArchitectureReport {
 	symbols := []ArchitectureSymbol{}
 	for _, source := range universe.sources {
 		directory := cleanDirectory(filepath.Dir(source.path))
-		classification := classify(source.path)
+		classification := classify(classifier, source.path)
 		for _, ancestor := range directoryAncestors(directory) {
 			entry := getDirectory(directories, ancestor)
 			entry.files++
 			entry.languages[source.outline.Language]++
 			entry.classifications[classification]++
 		}
-		appendSymbols(&symbols, directories, source.outline.Symbols, source.outline.Language, source.path, directory, "", visibility)
+		appendSymbols(&symbols, directories, source.outline.Symbols, source.outline.Language, source.path, directory, "", visibility, classifier)
 	}
 	sort.Slice(symbols, func(i, j int) bool {
 		if symbols[i].Path != symbols[j].Path {
@@ -138,17 +139,17 @@ func BuildArchitecture(universe *Universe) ArchitectureReport {
 		}
 		return symbols[i].Name < symbols[j].Name
 	})
-	relations, coverage := buildRelations(universe.graph, universe.paths)
+	relations, coverage := buildRelations(universe.graph, universe.paths, classifier)
 	files := make([]ArchitectureSourceFile, 0, len(universe.paths))
 	for _, path := range universe.paths {
-		files = append(files, ArchitectureSourceFile{Path: filepath.ToSlash(path), Language: parser.LanguageFor(path), Classification: classify(path)})
+		files = append(files, ArchitectureSourceFile{Path: filepath.ToSlash(path), Language: parser.LanguageFor(path), Classification: classify(classifier, path)})
 	}
 	return ArchitectureReport{Schema: ArchitectureSchema, Root: ".", Files: len(universe.paths), Sources: universe.Summary(), SourceFiles: files, Directories: finalizeDirectories(directories), Symbols: symbols, Relations: relations, RepositoryRoots: universe.graph.RepositoryRoots, RelationCoverage: coverage, Truncation: universe.Truncation()}
 }
 
-func appendSymbols(target *[]ArchitectureSymbol, directories map[string]*directoryAccumulator, symbols []parser.Symbol, language, path, directory, container string, visibility map[string][]parser.NavigationDeclaration) {
+func appendSymbols(target *[]ArchitectureSymbol, directories map[string]*directoryAccumulator, symbols []parser.Symbol, language, path, directory, container string, visibility map[string][]parser.NavigationDeclaration, classifier *sourcedomain.Classifier) {
 	for _, symbol := range symbols {
-		item := ArchitectureSymbol{Name: symbol.Name, Kind: symbol.Kind, Language: language, Classification: classify(path), Path: filepath.ToSlash(path), Directory: directory, Container: container, Start: symbol.Start, End: symbol.End}
+		item := ArchitectureSymbol{Name: symbol.Name, Kind: symbol.Kind, Language: language, Classification: classify(classifier, path), Path: filepath.ToSlash(path), Directory: directory, Container: container, Start: symbol.Start, End: symbol.End}
 		item.Visibility, item.Entrypoint = architectureSymbolNavigation(visibility[symbolKey(path, symbol.Name)], symbol.Start, symbol.End)
 		*target = append(*target, item)
 		for _, ancestor := range directoryAncestors(directory) {
@@ -165,7 +166,7 @@ func appendSymbols(target *[]ArchitectureSymbol, directories map[string]*directo
 		if container != "" {
 			next = container + "." + item.Name
 		}
-		appendSymbols(target, directories, symbol.Children, language, path, directory, next, visibility)
+		appendSymbols(target, directories, symbol.Children, language, path, directory, next, visibility, classifier)
 	}
 }
 
@@ -190,7 +191,7 @@ func architectureSymbolNavigation(candidates []parser.NavigationDeclaration, sta
 }
 
 //revive:disable-next-line:cognitive-complexity
-func buildRelations(graph parser.NavigationGraph, paths []string) ([]ArchitectureRelation, ArchitectureRelationCoverage) {
+func buildRelations(graph parser.NavigationGraph, paths []string, classifier *sourcedomain.Classifier) ([]ArchitectureRelation, ArchitectureRelationCoverage) {
 	declarations := map[string]parser.NavigationDeclaration{}
 	packageFiles := map[string][]string{}
 	for _, declaration := range graph.Declarations {
@@ -207,7 +208,7 @@ func buildRelations(graph parser.NavigationGraph, paths []string) ([]Architectur
 		if !callerOK || !targetOK || !strongConfidence(call.Confidence) {
 			continue
 		}
-		addRelation(grouped, seen, cleanDirectory(filepath.Dir(caller.Path)), cleanDirectory(filepath.Dir(target.Path)), ArchitectureRelationEvidence{Path: call.Path, Line: call.Line, Caller: caller.Name, Target: target.Name, Kind: "resolved-call", Classification: classify(call.Path), Confidence: call.Confidence})
+		addRelation(grouped, seen, cleanDirectory(filepath.Dir(caller.Path)), cleanDirectory(filepath.Dir(target.Path)), ArchitectureRelationEvidence{Path: call.Path, Line: call.Line, Caller: caller.Name, Target: target.Name, Kind: "resolved-call", Classification: classify(classifier, call.Path), Confidence: call.Confidence})
 	}
 	coverage := ArchitectureRelationCoverage{UnsupportedImportLanguages: unsupportedImportLanguages(paths)}
 	importTargets := map[string][]string{}
@@ -227,7 +228,7 @@ func buildRelations(graph parser.NavigationGraph, paths []string) ([]Architectur
 			coverage.UnresolvedImports++
 		case 1:
 			coverage.ResolvedImports++
-			addRelation(grouped, seen, cleanDirectory(filepath.Dir(item.Path)), targets[0], ArchitectureRelationEvidence{Path: item.Path, Line: item.Line, Caller: item.Alias, Target: item.ImportPath, Kind: "import", Classification: classify(item.Path), Confidence: "local-import-resolved", ImportPath: item.ImportPath})
+			addRelation(grouped, seen, cleanDirectory(filepath.Dir(item.Path)), targets[0], ArchitectureRelationEvidence{Path: item.Path, Line: item.Line, Caller: item.Alias, Target: item.ImportPath, Kind: "import", Classification: classify(classifier, item.Path), Confidence: "local-import-resolved", ImportPath: item.ImportPath})
 		default:
 			coverage.AmbiguousImports++
 		}
@@ -254,7 +255,7 @@ func buildRelations(graph parser.NavigationGraph, paths []string) ([]Architectur
 			if caller == "" {
 				caller = usage.CallerID
 			}
-			addRelation(grouped, seen, cleanDirectory(filepath.Dir(usage.Path)), directories[0], ArchitectureRelationEvidence{Path: usage.Path, Line: usage.Line, Caller: caller, Target: usage.Type, Kind: "type-reference", Classification: classify(usage.Path), Confidence: "local-import-resolved", ImportPath: usage.ImportPath, Role: usage.Role})
+			addRelation(grouped, seen, cleanDirectory(filepath.Dir(usage.Path)), directories[0], ArchitectureRelationEvidence{Path: usage.Path, Line: usage.Line, Caller: caller, Target: usage.Type, Kind: "type-reference", Classification: classify(classifier, usage.Path), Confidence: "local-import-resolved", ImportPath: usage.ImportPath, Role: usage.Role})
 		default:
 			coverage.AmbiguousTypeReferences++
 		}
@@ -369,7 +370,9 @@ func cleanDirectory(path string) string {
 func symbolKey(path, name string) string {
 	return filepath.ToSlash(filepath.Clean(path)) + "\x00" + name
 }
-func classify(path string) string { return string(sourcekind.Classify(path, ".")) }
+func classify(classifier *sourcedomain.Classifier, path string) string {
+	return string(classifier.Classify(path))
+}
 func strongConfidence(value string) bool {
 	return value == "exact" || value == "import-resolved" || value == "context-resolved"
 }

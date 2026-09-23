@@ -3,23 +3,9 @@ package auth
 
 import (
 	"fmt"
-	"io"
-	"os"
 
 	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
 )
-
-// Dependencies supplies shared credential operations.
-type Dependencies struct {
-	AIProvider    func([]string) error
-	Login         func([]string) error
-	Logout        func([]string) error
-	ServerDefault func(string) string
-	StoreLogin    func(string, string, int, int, string) error
-	ClearToken    func() error
-	ConfigPath    func() (string, error)
-	Stderr        io.Writer
-}
 
 type operation string
 
@@ -30,55 +16,48 @@ const (
 )
 
 type command struct {
-	dependencies Dependencies
-	operation    operation
+	application cliruntime.Context
+	operation   operation
+	execute     func([]string) error
 }
 
-// NewAIProvider constructs the AI-provider command.
-func NewAIProvider(dependencies Dependencies) cliruntime.Command {
-	return &command{dependencies: dependencies, operation: operationAIProvider}
+// NewAIProvider constructs the AI-provider command from the common command context.
+func NewAIProvider(application cliruntime.Context) cliruntime.Command {
+	return newCommand(application, operationAIProvider, nil)
 }
 
-// NewLogin constructs the remote-login command.
-func NewLogin(dependencies Dependencies) cliruntime.Command {
-	return &command{dependencies: dependencies, operation: operationLogin}
+// NewLogin constructs the remote-login command from the common command context.
+func NewLogin(application cliruntime.Context) cliruntime.Command {
+	return newCommand(application, operationLogin, nil)
 }
 
-// NewLogout constructs the remote-logout command.
-func NewLogout(dependencies Dependencies) cliruntime.Command {
-	return &command{dependencies: dependencies, operation: operationLogout}
+// NewLogout constructs the remote-logout command from the common command context.
+func NewLogout(application cliruntime.Context) cliruntime.Command {
+	return newCommand(application, operationLogout, nil)
 }
-func (dependencies Dependencies) stderr() io.Writer {
-	if dependencies.Stderr != nil {
-		return dependencies.Stderr
-	}
-	return os.Stderr
-}
-func (dependencies Dependencies) server(value string) string {
-	if dependencies.ServerDefault != nil {
-		return dependencies.ServerDefault(value)
-	}
-	return value
+
+func newCommand(application cliruntime.Context, operation operation, execute func([]string) error) cliruntime.Command {
+	return &command{application: application, operation: operation, execute: execute}
 }
 
 // Run executes the configured authentication operation.
 func (command *command) Run(args []string) error {
-	var execute func([]string) error
+	if command.application == nil {
+		return fmt.Errorf("%s command context is unavailable", command.operation)
+	}
+	execute := command.execute
 	switch command.operation {
 	case operationAIProvider:
-		execute = command.dependencies.AIProvider
 		if execute == nil {
-			execute = RunAIProvider
+			execute = func(args []string) error { return runAIProvider(command.application, args) }
 		}
 	case operationLogin:
-		execute = command.dependencies.Login
 		if execute == nil {
-			execute = func(args []string) error { return executeLogin(args, command.dependencies) }
+			execute = func(args []string) error { return executeLogin(command.application, args) }
 		}
 	case operationLogout:
-		execute = command.dependencies.Logout
 		if execute == nil {
-			execute = func(args []string) error { return executeLogout(args, command.dependencies) }
+			execute = func(args []string) error { return executeLogout(command.application, args) }
 		}
 	}
 	if execute == nil {

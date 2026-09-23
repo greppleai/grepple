@@ -1,0 +1,104 @@
+description: The render package formats search, navigation, outline, and tree results while tracking reusable source coverage and bounded output.
+responsibilities:
+    - Dispatch search results to specialized text and JSON renderers
+    - Render structural segments, matches, context lines, and editable anchors
+    - Deduplicate covered source and persist context statistics
+    - Render navigation points and related type definitions
+    - Discover files and format structural outlines
+    - Render repository trees with descriptions and metadata statuses
+    - Render file, match, repository, and aggregate counts
+    - Enforce output limits and report range warnings
+    - Validate rendering, coverage, navigation, outline, and tree behavior
+files:
+    - path: anchors_test.go
+      description: Tests that segment rendering emits editable anchor and line-content rows.
+      kind: test
+      checksum: a8e4ccde6be60cc9bda35cf922c4b5d080a8bde88c52f6cb344eedde3d844275
+    - path: context_guard.go
+      description: Tracks rendered segments and lines, suppresses covered output, records writes, and maintains durable statistics.
+      kind: production
+      checksum: 2f00ad58edc144b48b9c05b005de87ab805f419074b482afa6b2791ff466e624
+    - path: context_guard_compat_test.go
+      description: Supplies compatibility test helpers for constructing context guards and invalidating coverage.
+      kind: test
+      checksum: 3976c9c20fa48c6bce68ee415c70d1963cbe4d021fe2f2b69dce2f524a110ea7
+    - path: context_guard_test.go
+      description: Tests context deduplication, line coverage, spill bypasses, write tracking, migration, persistence, and locking.
+      kind: test
+      checksum: 51b03d604474b65b46088234558a664c478e6e36b49269123feec8311e975274
+    - path: context_lines.go
+      description: Groups consecutive source lines into covered and emitted runs for anchored rendering.
+      kind: production
+      checksum: bf07e91bf5e0a0de000326161bfcb898aae55c61b61c91fc7098bf02ce2b5877
+    - path: main_test.go
+      description: Initializes the render package test process without inheriting a session identifier.
+      kind: test
+      checksum: 2f8e05c33f6331fced42fa7c9f1787877ecfd1fa622bc127a5bd0ea23b9b1480
+    - path: outline.go
+      description: Formats parser file outlines and falls back to complete content when the outline is larger.
+      kind: production
+      checksum: e5753102553256d4ae9a660ba48a584a22bcedae737c6da906b41343031fa7b4
+    - path: outline_test.go
+      description: Tests compact outline selection, raw-content fallback, and trailing-newline handling.
+      kind: test
+      checksum: e15c1e983f897957eb8651eea8102c22b4987dbffb5f265474645a30c80fbfcd
+    - path: outlines.go
+      description: Discovers files, loads parser outlines, applies output bounds, and emits human or JSON outline results.
+      kind: production
+      checksum: 020b636d46f344b6bf22865b732b1c6ab2863d160744eed5038fcff5bdc828ff
+    - path: render.go
+      description: Defines render options and context interfaces, bounds output, normalizes anchors, and selects result renderers.
+      kind: production
+      checksum: e9d0627e5990153c5e19ca2a6b9d5623cb73b4c83953881c0e531b7d76af8a20
+    - path: render_test.go
+      description: Tests renderer dispatch, line and segment formatting, navigation, analysis warnings, bounds, JSON, context, and anchors.
+      kind: test
+      checksum: fa5de46ffc828323aa77d7e0f7063d68c94db491152dd023d12bc1fc778f09c6
+    - path: renderer_context.go
+      description: Renders context lines with separators or editable anchors while recording emitted line coverage.
+      kind: production
+      checksum: 7e3c94bd373d1e9165b8cd5bc6b04a4a104c0d12e470b953f7d6e9689a4e95c0
+    - path: renderer_count.go
+      description: Renders per-file match counts as tab-separated text or JSON objects.
+      kind: production
+      checksum: 854c257e2703e6a5f66a2596623230ecbb0934cb68567ae8a10b1d624f10ef67
+    - path: renderer_files.go
+      description: Renders matching file paths as newline-delimited text or JSON objects.
+      kind: production
+      checksum: 0289dcfdabaa1c5d7b0e68cfa8448437b355073b7926036e8bf9668fee64a0fe
+    - path: renderer_json.go
+      description: Renders complete search responses or flattened matches with metadata, ranges, analysis, and coverage recording.
+      kind: production
+      checksum: bccf93e3fde9e91daa37c68b97c46848b61e49cecbad372f676fefc06e20387f
+    - path: renderer_matches.go
+      description: Renders line matches, anchored match runs, omitted covered ranges, and regex-selected matching text.
+      kind: production
+      checksum: fd95229fab6aabf0e7ff55e8fada24449fb45f429e99dd96fb3d6fe239e12016
+    - path: renderer_related_types.go
+      description: Collects, deduplicates, sorts, labels, and renders related type definitions with provenance.
+      kind: production
+      checksum: d2df51c50cbac380f5c77b5b119bbf262647191bab7b8a819e522e32eb7c3b2e
+    - path: renderer_related_types_test.go
+      description: Tests that related type labels preserve and sort multiple navigation roles.
+      kind: test
+      checksum: 3aa650fb6a1962cc03d0820a5c5a1451b8dbc0da03489178b2a03955dddd17d8
+    - path: renderer_repo_count.go
+      description: Sorts repository counts and renders detailed or summary text and JSON totals.
+      kind: production
+      checksum: ec1bbb4bae06cd9fbc285df1b347a2bd85d5ed816f4ea5834823445eb5e8dbac
+    - path: renderer_segments.go
+      description: Renders source segments, collapsed gaps, navigation graphs, omissions, provenance, and related definitions.
+      kind: production
+      checksum: 2a5d0ddd246cdba7b4c55eba84172d283c8f228ecb1136a90b032a2fe6234ec2
+    - path: search.go
+      description: Coordinates search rendering, warning output, context-guard setup, coverage eligibility, and spill bypasses.
+      kind: production
+      checksum: 016c9239ffdd70bd667347b35964fcebec28ff5ec15ce3f6cf30dfcccd47ccff
+    - path: tree.go
+      description: Builds directory-first hierarchies and renders repository trees as text or JSON with metadata status suffixes.
+      kind: production
+      checksum: 87f452e9b309c2d4e184e2a2528f44f321497176c0bc542831d412a853a9e8dc
+    - path: tree_test.go
+      description: Tests tree hierarchy ordering, JSON preservation, descriptions, headers, and metadata status rendering.
+      kind: test
+      checksum: 9ed7f77f57946f633a252592659cc2e39a5490ec8fe29c6bc4bd71ec4b8d91c7

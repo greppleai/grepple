@@ -7,9 +7,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/greppleai/grepple/api"
+	"github.com/greppleai/grepple/navigation"
 	"github.com/greppleai/grepple/parser"
-	"github.com/greppleai/grepple/search"
 )
 
 // GraphSchema identifies the normalized navigation graph contract.
@@ -17,35 +16,40 @@ const GraphSchema = "grepple-navigation-graph-v7"
 
 // GraphReport is the complete normalized graph or one deterministic queried projection.
 type GraphReport struct {
-	Schema           string                             `json:"schema"`
-	Files            int                                `json:"files"`
-	Sources          SourceSummary                      `json:"sources"`
-	Declarations     []parser.NavigationDeclaration     `json:"declarations"`
-	TypeDeclarations []parser.NavigationTypeDeclaration `json:"typeDeclarations,omitempty"`
-	Imports          []parser.NavigationImport          `json:"imports,omitempty"`
-	Calls            []parser.NavigationCall            `json:"calls"`
-	Exports          []parser.NavigationExport          `json:"exports,omitempty"`
-	Fields           []parser.NavigationField           `json:"fields,omitempty"`
-	Resolution       search.NavigationResolutionStats   `json:"resolution"`
-	TypeUsages       []parser.NavigationTypeUsage       `json:"typeUsages,omitempty"`
-	MemberAccesses   []parser.NavigationMemberAccess    `json:"memberAccesses,omitempty"`
-	RepositoryRoots  []string                           `json:"repositoryRoots,omitempty"`
-	Query            *GraphQuery                        `json:"query,omitempty"`
-	Truncation       *Truncation                        `json:"truncation,omitempty"`
+	Schema           string                               `json:"schema"`
+	Files            int                                  `json:"files"`
+	Sources          SourceSummary                        `json:"sources"`
+	Declarations     []parser.NavigationDeclaration       `json:"declarations"`
+	TypeDeclarations []parser.NavigationTypeDeclaration   `json:"typeDeclarations,omitempty"`
+	Imports          []parser.NavigationImport            `json:"imports,omitempty"`
+	Calls            []parser.NavigationCall              `json:"calls"`
+	Exports          []parser.NavigationExport            `json:"exports,omitempty"`
+	Fields           []parser.NavigationField             `json:"fields,omitempty"`
+	Resolution       navigation.NavigationResolutionStats `json:"resolution"`
+	TypeUsages       []parser.NavigationTypeUsage         `json:"typeUsages,omitempty"`
+	MemberAccesses   []parser.NavigationMemberAccess      `json:"memberAccesses,omitempty"`
+	RepositoryRoots  []string                             `json:"repositoryRoots,omitempty"`
+	Query            *GraphQuery                          `json:"query,omitempty"`
+	Truncation       *Truncation                          `json:"truncation,omitempty"`
 }
 
 // GraphQuery records the normalized traversal that produced a graph report.
 type GraphQuery struct {
 	Direction    string   `json:"direction"`
 	Depth        int      `json:"depth"`
-	RootIDs      []string `json:"rootIds"`
+	Symbol       string   `json:"symbol,omitempty"`
+	At           string   `json:"at,omitempty"`
+	Package      string   `json:"package,omitempty"`
+	Module       string   `json:"module,omitempty"`
+	RootPath     string   `json:"rootPath,omitempty"`
+	RootIDs      []string `json:"rootIds,omitempty"`
 	Languages    []string `json:"languages,omitempty"`
 	Confidences  []string `json:"confidences,omitempty"`
 	Visibilities []string `json:"visibilities,omitempty"`
 }
 
 // BuildGraph returns a complete graph or applies the optional validated query.
-func BuildGraph(universe *Universe, request *api.GraphQueryRequest) (GraphReport, error) {
+func BuildGraph(universe *Universe, request *GraphQuery) (GraphReport, error) {
 	if universe == nil {
 		return GraphReport{}, fmt.Errorf("analysis universe is required")
 	}
@@ -57,11 +61,11 @@ func BuildGraph(universe *Universe, request *api.GraphQueryRequest) (GraphReport
 	if err := validateGraphQuery(*request); err != nil {
 		return GraphReport{}, err
 	}
-	filter, err := search.NormalizeNavigationGraphFilter(search.NavigationGraphFilter{Languages: request.Languages, Confidences: request.Confidences, Visibilities: request.Visibilities})
+	filter, err := navigation.NormalizeNavigationGraphFilter(navigation.NavigationGraphFilter{Languages: request.Languages, Confidences: request.Confidences, Visibilities: request.Visibilities})
 	if err != nil {
 		return GraphReport{}, err
 	}
-	filtered, err := search.FilterNavigationGraph(graph, filter)
+	filtered, err := navigation.FilterNavigationGraph(graph, filter)
 	if err != nil {
 		return GraphReport{}, err
 	}
@@ -73,7 +77,7 @@ func BuildGraph(universe *Universe, request *api.GraphQueryRequest) (GraphReport
 	for _, root := range roots {
 		rootIDs = append(rootIDs, root.ID)
 	}
-	queried, err := search.QueryNavigationGraph(filtered, rootIDs, search.NavigationQueryDirection(request.Direction), request.Depth)
+	queried, err := navigation.QueryNavigationGraph(filtered, rootIDs, navigation.NavigationQueryDirection(request.Direction), request.Depth)
 	if err != nil {
 		return GraphReport{}, err
 	}
@@ -91,13 +95,13 @@ func graphReport(graph parser.NavigationGraph, universe *Universe) GraphReport {
 	if calls == nil {
 		calls = []parser.NavigationCall{}
 	}
-	return GraphReport{Schema: GraphSchema, Files: universe.summary.Selected, Sources: universe.Summary(), Declarations: declarations, TypeDeclarations: graph.TypeDeclarations, Imports: graph.Imports, Calls: calls, Exports: graph.Exports, Fields: graph.Fields, Resolution: search.MeasureNavigationResolution(graph), TypeUsages: graph.TypeUsages, MemberAccesses: graph.MemberAccesses, RepositoryRoots: graph.RepositoryRoots, Truncation: universe.Truncation()}
+	return GraphReport{Schema: GraphSchema, Files: universe.summary.Selected, Sources: universe.Summary(), Declarations: declarations, TypeDeclarations: graph.TypeDeclarations, Imports: graph.Imports, Calls: calls, Exports: graph.Exports, Fields: graph.Fields, Resolution: navigation.MeasureNavigationResolution(graph), TypeUsages: graph.TypeUsages, MemberAccesses: graph.MemberAccesses, RepositoryRoots: graph.RepositoryRoots, Truncation: universe.Truncation()}
 }
 
-func validateGraphQuery(request api.GraphQueryRequest) error {
-	direction := search.NavigationQueryDirection(request.Direction)
+func validateGraphQuery(request GraphQuery) error {
+	direction := navigation.NavigationQueryDirection(request.Direction)
 	switch direction {
-	case search.NavigationQueryCallers, search.NavigationQueryCallees, search.NavigationQueryDependencies, search.NavigationQueryDependents, search.NavigationQueryImpact:
+	case navigation.NavigationQueryCallers, navigation.NavigationQueryCallees, navigation.NavigationQueryDependencies, navigation.NavigationQueryDependents, navigation.NavigationQueryImpact:
 	default:
 		return fmt.Errorf("unsupported graph direction %q", request.Direction)
 	}
@@ -116,7 +120,7 @@ func validateGraphQuery(request api.GraphQueryRequest) error {
 	return nil
 }
 
-func selectGraphRoots(declarations []parser.NavigationDeclaration, request api.GraphQueryRequest) ([]parser.NavigationDeclaration, error) {
+func selectGraphRoots(declarations []parser.NavigationDeclaration, request GraphQuery) ([]parser.NavigationDeclaration, error) {
 	if request.Symbol != "" || request.At != "" {
 		root, err := selectSingleGraphRoot(declarations, request.Symbol, request.At)
 		if err != nil {
@@ -215,7 +219,15 @@ func parseAt(value string) (string, int, error) {
 }
 
 func cleanPath(value string) string {
-	cleaned := filepath.ToSlash(filepath.Clean(value))
+	cleaned := filepath.Clean(value)
+	if absolute, err := filepath.Abs(cleaned); err == nil {
+		if workingDirectory, cwdErr := filepath.Abs("."); cwdErr == nil {
+			if relative, relativeErr := filepath.Rel(workingDirectory, absolute); relativeErr == nil {
+				cleaned = relative
+			}
+		}
+	}
+	cleaned = filepath.ToSlash(cleaned)
 	cleaned = strings.TrimPrefix(cleaned, "./")
 	if cleaned == "" {
 		return "."

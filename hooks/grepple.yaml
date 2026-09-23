@@ -1,0 +1,25 @@
+description: The hooks module builds, tests, lints, and runs project-local Pi hooks for grep protection, lint feedback, and Mermaid validation.
+responsibilities:
+    - Build the Pi hook executable
+    - Run Go tests and lint checks
+    - Dispatch grep-guard and lint-check commands
+    - Validate Mermaid schemas during Stop hooks
+    - Manage Go module dependencies
+    - Document hook architecture and development workflows
+files:
+    - path: Makefile
+      description: Defines build, test, lint, hook execution, and cleanup targets for the Pi hook module.
+      kind: production
+      checksum: 1bee0174c3baf48ed988bb2f070a78f832a8175cfe41efdf1fbeb3aa3b31a503
+    - path: README.md
+      description: Documents hook architecture, context-guard behavior, Mermaid validation, CLI usage, and development commands.
+      kind: production
+      checksum: bd396edafe68008dcd635de99e8d67ac876f6dcedbe99e4aa7340a3eddbc17b3
+    - path: go.mod
+      description: Declares the hooks Go module, its Grepple dependency, indirect parser dependencies, and local replacement.
+      kind: production
+      checksum: 95e1c234651d6d6462ce89b263dcadb67a5ca84f1cdaf902e3f03a808d3f95ac
+    - path: go.sum
+      description: Records checksums for the hooks module and its transitive dependencies.
+      kind: production
+      checksum: d6a27db7070d4466741323be43989ab51a18da8fbc7723bfdf3c436d65c5de6e

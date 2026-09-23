@@ -3,8 +3,10 @@ package architecture
 import (
 	"context"
 	"fmt"
+	"io"
 	"os"
 
+	"github.com/greppleai/grepple/analysis"
 	"github.com/greppleai/grepple/api"
 	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
 	"github.com/greppleai/grepple/parser"
@@ -16,21 +18,19 @@ const defaultTextOutputBytes = 16 * 1024
 type commonArgs = cliruntime.CommonArgs
 
 // SourceSummary describes source-universe processing.
-type SourceSummary struct {
-	Discovered int `json:"discovered"`
-	Selected   int `json:"selected"`
-	Parsed     int `json:"parsed"`
-	Skipped    int `json:"skipped"`
-	Failed     int `json:"failed"`
-	Recovered  int `json:"recovered"`
-}
+type SourceSummary = analysis.SourceSummary
 
 // Truncation describes a source-universe limit.
-type Truncation struct {
-	Reason  string `json:"reason"`
-	Limit   int    `json:"limit"`
-	Skipped int    `json:"skipped"`
-}
+type Truncation = analysis.Truncation
+
+type Report = analysis.ArchitectureReport
+type architectureSourceFile = analysis.ArchitectureSourceFile
+type architectureDirectory = analysis.ArchitectureDirectory
+type architectureCount = analysis.ArchitectureCount
+type architectureSymbol = analysis.ArchitectureSymbol
+type architectureRelation = analysis.ArchitectureRelation
+type architectureRelationEvidence = analysis.ArchitectureRelationEvidence
+type architectureRelationCoverage = analysis.ArchitectureRelationCoverage
 
 type directoryArchitecture = Report
 type navigationGraphTruncation = Truncation
@@ -111,12 +111,52 @@ type Dependencies struct {
 	Remote            func(context.Context, api.AnalysisRequest, string) (api.AnalysisResponse, error)
 	ServerDefault     func(string) string
 	RequestExit       func(int)
+	Stdout            io.Writer
 }
 
-type command struct{ dependencies Dependencies }
+type command struct {
+	application  cliruntime.Context
+	dependencies Dependencies
+}
 
-// New constructs the architecture command.
-func New(dependencies Dependencies) cliruntime.Command { return &command{dependencies: dependencies} }
+// New constructs the architecture command from the common command context.
+func New(application cliruntime.Context) cliruntime.Command {
+	return &command{application: application}
+}
+
+func newWithDependencies(dependencies Dependencies) cliruntime.Command {
+	return &command{dependencies: dependencies}
+}
+
+func (command *command) services() Dependencies {
+	if command.application == nil {
+		return command.dependencies
+	}
+	application := command.application
+	return Dependencies{
+		ApplySourceConfig: search.SourcePolicyConfigurer(application.Repository()),
+		Remote: func(ctx context.Context, request api.AnalysisRequest, server string) (api.AnalysisResponse, error) {
+			invocation := application.Repository().InvocationOptions()
+			request.ProductionOnly = request.ProductionOnly || invocation.ProductionOnly
+			request.NoConfigIgnore = request.NoConfigIgnore || invocation.NoConfigIgnore
+			request.NoRepoConfig = request.NoRepoConfig || invocation.NoRepositoryConfig
+			response, err := application.APIClient().Analysis(ctx, server, request)
+			if err != nil {
+				return api.AnalysisResponse{}, err
+			}
+			for _, notice := range response.Notices {
+				fmt.Fprintln(application.Stderr(), "analysis notice:", notice)
+			}
+			for _, shardError := range response.ShardErrors {
+				fmt.Fprintln(application.Stderr(), "partial analysis:", shardError)
+			}
+			return response, nil
+		},
+		ServerDefault: application.Configuration().ServerDefault,
+		RequestExit:   application.RequestExit,
+		Stdout:        application.Stdout(),
+	}
+}
 
 func (d Dependencies) applySourceConfig(params *search.Params) error {
 	if d.ApplySourceConfig == nil {
@@ -144,8 +184,16 @@ func (d Dependencies) requestExit(code int) {
 
 type outputWriter struct{ output *cliruntime.Output }
 
-func stdoutWriter() *outputWriter { return &outputWriter{output: cliruntime.NewOutput(os.Stdout)} }
-func newBoundedOutputWriter(writer *os.File, maxBytes int) *outputWriter {
+func outputDestination(dependencies Dependencies) io.Writer {
+	if dependencies.Stdout != nil {
+		return dependencies.Stdout
+	}
+	return os.Stdout
+}
+func stdoutWriter(dependencies Dependencies) *outputWriter {
+	return &outputWriter{output: cliruntime.NewOutput(outputDestination(dependencies))}
+}
+func newBoundedOutputWriter(writer io.Writer, maxBytes int) *outputWriter {
 	return &outputWriter{output: cliruntime.NewBoundedOutput(writer, maxBytes)}
 }
 func (w *outputWriter) writeString(value string) error { return w.output.WriteString(value) }

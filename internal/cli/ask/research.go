@@ -11,8 +11,9 @@ import (
 
 	"charm.land/fantasy"
 	"github.com/greppleai/grepple/internal/agent"
-	agentresearch "github.com/greppleai/grepple/internal/agent/research"
 	"github.com/greppleai/grepple/internal/aiprovider"
+	"github.com/greppleai/grepple/internal/directorymeta"
+	searchengine "github.com/greppleai/grepple/search"
 )
 
 const researchToolOutputLimit = 64 << 10
@@ -118,7 +119,7 @@ type ResearchBackend interface {
 	Close()
 }
 
-type researchSession struct {
+type toolSession struct {
 	ctx       context.Context
 	log       *agent.Log
 	telemetry *agent.Telemetry
@@ -134,8 +135,8 @@ type researchCall struct {
 	err      error
 }
 
-func newResearchSession(ctx context.Context, log *agent.Log, identity string) *researchSession {
-	return &researchSession{ctx: ctx, log: log, telemetry: agent.NewTelemetry(time.Now()), identity: identity, values: make(map[string]fantasy.ToolResponse), inflight: make(map[string]*researchCall)}
+func newToolSession(ctx context.Context, log *agent.Log, identity string) *toolSession {
+	return &toolSession{ctx: ctx, log: log, telemetry: agent.NewTelemetry(time.Now()), identity: identity, values: make(map[string]fantasy.ToolResponse), inflight: make(map[string]*researchCall)}
 }
 
 func normalizeResearchInput(input any) any {
@@ -217,7 +218,7 @@ type researchAcquireResult struct {
 	err      error
 }
 
-func (s *researchSession) acquire(ctx context.Context, key string) researchAcquireResult {
+func (s *toolSession) acquire(ctx context.Context, key string) researchAcquireResult {
 	s.mu.Lock()
 	if value, ok := s.values[key]; ok {
 		s.mu.Unlock()
@@ -237,7 +238,7 @@ func (s *researchSession) acquire(ctx context.Context, key string) researchAcqui
 	s.mu.Unlock()
 	return researchAcquireResult{pending: pending}
 }
-func (s *researchSession) run(ctx context.Context, name string, input any, execute func(context.Context) (fantasy.ToolResponse, error), calls ...fantasy.ToolCall) (result fantasy.ToolResponse, resultErr error) {
+func (s *toolSession) run(ctx context.Context, name string, input any, execute func(context.Context) (fantasy.ToolResponse, error), calls ...fantasy.ToolCall) (result fantasy.ToolResponse, resultErr error) {
 	input = normalizeResearchInput(input)
 	encoded, err := json.Marshal(input)
 	if err != nil {
@@ -286,7 +287,7 @@ func (s *researchSession) run(ctx context.Context, name string, input any, execu
 	return result, resultErr
 }
 
-func cachedResearchTool[I any](session *researchSession, name, description string, run func(context.Context, I) (fantasy.ToolResponse, error)) fantasy.AgentTool {
+func cachedResearchTool[I any](session *toolSession, name, description string, run func(context.Context, I) (fantasy.ToolResponse, error)) fantasy.AgentTool {
 	return fantasy.NewAgentTool(name, description, func(ctx context.Context, input I, call fantasy.ToolCall) (fantasy.ToolResponse, error) {
 		return session.run(ctx, name, input, func(runCtx context.Context) (fantasy.ToolResponse, error) { return run(runCtx, input) }, call)
 	})
@@ -307,7 +308,7 @@ func researchResult(value any, err error) (fantasy.ToolResponse, error) {
 	return fantasy.NewTextResponse(string(encoded)), nil
 }
 
-func researchTools(session *researchSession, backend ResearchBackend) []fantasy.AgentTool {
+func researchTools(session *toolSession, backend ResearchBackend) []fantasy.AgentTool {
 	return []fantasy.AgentTool{
 		cachedResearchTool(session, "search_code", "Search source text directly. Use count, files, then snippets for bounded evidence.", func(ctx context.Context, input SearchInput) (fantasy.ToolResponse, error) {
 			return researchResult(backend.Search(ctx, input))
@@ -347,12 +348,13 @@ func researchToolInfo(tools []fantasy.AgentTool) []fantasy.ToolInfo {
 
 // RunResearch executes one source-research agent session.
 func RunResearch(ctx context.Context, log *agent.Log, provider aiprovider.Provider, request SessionRequest, backend ResearchBackend) (answer string, returnErr error) {
-	session := newResearchSession(ctx, log, backend.Identity())
+	session := newToolSession(ctx, log, backend.Identity())
 	defer func() {
 		backend.Close()
 		returnErr = errors.Join(returnErr, log.Record("session.performance", session.telemetry.Performance(time.Now())))
 	}()
-	prompt := agentresearch.SystemPrompt(request.Root)
+	paths, _ := searchengine.ListFilePaths(searchengine.Params{Files: true, Root: request.Root, Globs: []string{request.Root}}, nil)
+	prompt := researchSystemPrompt(request.Root, directorymeta.TreeSummary(request.Root, paths, 2))
 	tools := researchTools(session, backend)
 	if err := log.Record("session.start", map[string]any{"provider": provider.Name(), "model": request.Model, "question": request.Question, "root": request.Root, "server": request.Server, "timeoutSeconds": request.Timeout, "systemPrompt": prompt, "tools": researchToolInfo(tools)}); err != nil {
 		return "", err

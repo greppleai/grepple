@@ -17,53 +17,61 @@ import (
 	"github.com/greppleai/grepple/parser"
 )
 
-type languagesArgs struct {
+type Args struct {
 	JSON     bool `arg:"--json" help:"print the complete capability matrix as JSON"`
 	Markdown bool `arg:"--markdown" help:"print the generated documentation table"`
 }
 
-func (languagesArgs) Description() string {
+func (Args) Description() string {
 	return "Show language extensions and support across search, navigation, focused extraction, GritQL, and directory architecture."
 }
 
-// command owns one languages command invocation's dependencies.
-type command struct{ dependencies Dependencies }
+// command owns one languages command invocation.
+type command struct{ context cliruntime.Context }
 
 // New constructs the languages command.
-func New(dependencies Dependencies) cliruntime.Command { return &command{dependencies: dependencies} }
+func New(context cliruntime.Context) cliruntime.Command { return &command{context: context} }
 
-// Run executes the languages command. Deprecated: construct the command with New.
-func Run(args []string, dependencies Dependencies) error { return New(dependencies).Run(args) }
+// Run executes the languages command with the common command context.
+
+// Dependencies is retained as a source-compatible alias of the shared context.
+type Dependencies = cliruntime.Environment
 
 // Run executes the languages command.
 func (command *command) Run(args []string) error {
-	dependencies := command.dependencies
-	values := languagesArgs{}
+	output := command.context.Stdout()
+	values := Args{}
 	argumentParser, err := arg.NewParser(arg.Config{Program: "grepple languages"}, &values)
 	if err != nil {
 		return err
 	}
 	if err := argumentParser.Parse(args); err != nil {
 		if errors.Is(err, arg.ErrHelp) {
-			argumentParser.WriteHelp(dependencies.stdout())
+			argumentParser.WriteHelp(output)
 			return nil
 		}
 		return err
 	}
+	return Execute(command.context, &values)
+}
+
+// Execute renders language capabilities from application-parsed arguments.
+func Execute(application cliruntime.Context, values *Args) error {
+	output := application.Stdout()
 	if values.JSON && values.Markdown {
 		return fmt.Errorf("--json cannot be combined with --markdown")
 	}
 	capabilities := languageCapabilityMatrix()
 	if values.JSON {
-		encoder := json.NewEncoder(dependencies.stdout())
+		encoder := json.NewEncoder(output)
 		encoder.SetIndent("", "  ")
 		return encoder.Encode(capabilities)
 	}
 	if values.Markdown {
-		_, err := fmt.Fprint(dependencies.stdout(), renderLanguageCapabilitiesMarkdown(capabilities))
+		_, err := fmt.Fprint(output, renderLanguageCapabilitiesMarkdown(capabilities))
 		return err
 	}
-	return renderLanguageCapabilities(capabilities, dependencies.stdout())
+	return renderLanguageCapabilities(capabilities, output)
 }
 
 func languageCapabilityMatrix() []api.LanguageCapabilities {

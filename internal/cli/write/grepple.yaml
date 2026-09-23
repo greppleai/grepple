@@ -1,0 +1,33 @@
+description: Implements a strict, hash-anchored transactional write command supporting JSON, heredoc, and literal edit inputs.
+responsibilities:
+    - Parse bounded JSON, heredoc, and literal edit requests
+    - Validate schemas, paths, anchors, content, operations, and transaction limits
+    - Prepare confined edits, creates, and deletes
+    - Preserve newline styles and existing permissions
+    - Produce dry-run diffs and structured or human-readable responses
+    - Commit changes with concurrency checks, atomic installation, and rollback
+files:
+    - path: batch.go
+      description: Decodes heredoc transactions containing anchored edits, file creation, and file deletion directives.
+      kind: production
+      checksum: 6e37531ccaa2099c402e5d38f973646202c8b20ddc521312b8e96cb37d58c3cf
+    - path: command_context_test.go
+      description: Verifies command execution uses configured context streams and reports failures through the exit callback.
+      kind: test
+      checksum: 1fdebe9615f39a18d7b366759e5170c9025472bdcb65e0e354dcc03e146cefb7
+    - path: doc.go
+      description: Documents the package as a strict, transactional, hash-anchored write command.
+      kind: production
+      checksum: 786fa8a271a048611aa78f88566f3d01362995fd7def63a11af05b9c0191f892
+    - path: process_test.go
+      description: Provides test compatibility helpers for invoking the command and capturing standard input and output.
+      kind: test
+      checksum: f69efc8284b4a48fe615b0c9c41c649ad652ae32dd2c46f870d4e8c382b91bd3
+    - path: write.go
+      description: Implements request parsing, validation, confined file preparation, transactional installation, rollback, and response rendering.
+      kind: production
+      checksum: 602f31e0f971241954b20465cd12c1a7402d7f8e2877cd1a43032f75d0d48030
+    - path: write_test.go
+      description: Tests transactional edits, creates, deletes, dry runs, rollback, confinement, decoding, and command output.
+      kind: test
+      checksum: 2b6f73fc63b4acef2d842130fe3bc55c5857a7bd7f1ca6095c514c0c3bd15f0b

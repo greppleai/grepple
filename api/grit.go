@@ -1,27 +1,29 @@
 package api
 
+import "github.com/greppleai/grepple/rulespec"
+
 const (
 	// GritCompatibilityV1 is the unified native structural-search contract.
-	GritCompatibilityV1 = "gritql-v1"
+	GritCompatibilityV1 = rulespec.GritCompatibilityV1
 	// GritMultilingualCompatibilityV1 is retained as a source-compatible alias.
 	// Deprecated: use GritCompatibilityV1.
 	GritMultilingualCompatibilityV1 = GritCompatibilityV1
 	// MaxGritRequestBodyBytes bounds one encoded structural-search request.
 	MaxGritRequestBodyBytes = 2 << 20
 	// MaxGritQueryBytes bounds the UTF-8 query source carried by a request.
-	MaxGritQueryBytes = 1 << 20
+	MaxGritQueryBytes = rulespec.MaxGritQueryBytes
 	// MaxGritPatternIDBytes bounds a caller-provided pattern identifier.
-	MaxGritPatternIDBytes = 256
+	MaxGritPatternIDBytes = rulespec.MaxGritPatternIDBytes
 	// MaxGritMessageBytes bounds a caller-provided finding message.
-	MaxGritMessageBytes = 16 << 10
+	MaxGritMessageBytes = rulespec.MaxGritMessageBytes
 	// MaxGritGlobs bounds the number of include and exclude globs combined.
-	MaxGritGlobs = 256
+	MaxGritGlobs = rulespec.MaxGritGlobs
 	// MaxGritGlobBytes bounds one UTF-8 glob.
-	MaxGritGlobBytes = 4 << 10
+	MaxGritGlobBytes = rulespec.MaxGritGlobBytes
 	// MaxGritRepositories bounds the number of include and exclude repositories combined.
-	MaxGritRepositories = 1024
+	MaxGritRepositories = rulespec.MaxGritRepositories
 	// MaxGritRepositoryBytes bounds one UTF-8 repository identifier.
-	MaxGritRepositoryBytes = 1024
+	MaxGritRepositoryBytes = rulespec.MaxGritRepositoryBytes
 	// MaxGritPageLimit bounds one public structural-search response page.
 	MaxGritPageLimit = 100
 )
@@ -33,41 +35,9 @@ const (
 	GritBindingList = "list"
 )
 
-// GritRequest is the dedicated structural-search request. Query and
-// Compatibility are required on the wire; pointer options preserve unset
-// values so the receiving execution surface can apply v1 defaults.
-type GritRequest struct {
-	Query               string      `json:"query"`
-	Compatibility       string      `json:"compatibility"`
-	PatternID           string      `json:"patternId,omitempty"`
-	Message             string      `json:"message,omitempty"`
-	Globs               []string    `json:"globs,omitempty"`
-	ExcludeGlobs        []string    `json:"excludeGlobs,omitempty"`
-	Repositories        []string    `json:"repositories,omitempty"`
-	ExcludeRepositories []string    `json:"excludeRepositories,omitempty"`
-	Skip                *int        `json:"skip,omitempty"`
-	Limit               *int        `json:"limit,omitempty"`
-	Limits              *GritLimits `json:"limits,omitempty"`
-}
-
-// GritLimits carries optional compiler, evaluator, and scanner limits. Nil
-// fields select contract defaults; hosts clamp supplied values to hard maxima.
-type GritLimits struct {
-	PatternBytes      *int   `json:"patternBytes,omitempty"`
-	RegexBytes        *int   `json:"regexBytes,omitempty"`
-	RegexInstructions *int   `json:"regexInstructions,omitempty"`
-	ParseDepth        *int   `json:"parseDepth,omitempty"`
-	SourceBytes       *int   `json:"sourceBytes,omitempty"`
-	Candidates        *int   `json:"candidates,omitempty"`
-	ASTSteps          *int   `json:"astSteps,omitempty"`
-	Findings          *int   `json:"findings,omitempty"`
-	FileTimeMillis    *int64 `json:"fileTimeMillis,omitempty"`
-	BatchTimeMillis   *int64 `json:"batchTimeMillis,omitempty"`
-	MemoryBytes       *int64 `json:"memoryBytes,omitempty"`
-	Files             *int   `json:"files,omitempty"`
-	TotalBytes        *int64 `json:"totalBytes,omitempty"`
-	Workers           *int   `json:"workers,omitempty"`
-}
+// GritRequest and GritLimits retain wire-compatible names for Rules-owned models.
+type GritRequest = rulespec.StructuralRequest
+type GritLimits = rulespec.StructuralLimits
 
 // GritPosition is a one-based Unicode-scalar source position.
 type GritPosition struct {

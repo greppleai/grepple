@@ -2,23 +2,17 @@ package graph
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	"github.com/greppleai/grepple/api"
+	"github.com/greppleai/grepple/internal/cliruntime"
+	"github.com/greppleai/grepple/internal/shellquote"
 	"github.com/greppleai/grepple/search"
 )
 
-// Services supplies invocation-scoped graph I/O and repository policy.
-type Services struct {
-	ApplySourceConfig func(*search.Params) error
-	Remote            func(context.Context, api.AnalysisRequest, string) (api.AnalysisResponse, error)
-	ServerDefault     func(string) string
-	ActiveScopeFlags  func([]string) []string
-	Metadata          func(MetadataInput) *api.ResultMetadata
-	DiffMetadata      func(DiffMetadataInput) *api.ResultMetadata
-}
-
-// MetadataInput describes one graph result page.
-type MetadataInput struct {
+// metadataInput describes one graph result page.
+type metadataInput struct {
 	Paths                              []string
 	Returned, MaxFiles, MaxOutputBytes int
 	JSON                               bool
@@ -27,8 +21,8 @@ type MetadataInput struct {
 	NextCommand                        string
 }
 
-// DiffMetadataInput describes one graph diff result.
-type DiffMetadataInput struct {
+// diffMetadataInput describes one graph diff result.
+type diffMetadataInput struct {
 	BeforePath, AfterPath    string
 	MaxFiles, MaxOutputBytes int
 	JSON                     bool
@@ -37,13 +31,69 @@ type DiffMetadataInput struct {
 }
 
 // ContinuationCommand builds the uncapped continuation for a truncated graph.
-func ContinuationCommand(mode string, paths []string, truncation *Truncation, services Services) string {
-	return graphContinuationCommand(mode, paths, truncation, services)
+func ContinuationCommand(application cliruntime.Context, mode string, paths []string, truncation *Truncation) string {
+	return graphContinuationCommand(application, mode, paths, truncation)
 }
 
-func (services Services) server(value string) string {
-	if services.ServerDefault == nil {
-		return value
+func requestRemoteAnalysis(application cliruntime.Context, ctx context.Context, request api.AnalysisRequest, server string) (api.AnalysisResponse, error) {
+	options := application.Repository().InvocationOptions()
+	request.ProductionOnly = request.ProductionOnly || options.ProductionOnly
+	request.NoConfigIgnore = request.NoConfigIgnore || options.NoConfigIgnore
+	request.NoRepoConfig = request.NoRepoConfig || options.NoRepositoryConfig
+	response, err := application.APIClient().Analysis(ctx, server, request)
+	if err != nil {
+		return api.AnalysisResponse{}, err
 	}
-	return services.ServerDefault(value)
+	for _, notice := range response.Notices {
+		fmt.Fprintln(application.Stderr(), "analysis notice:", notice)
+	}
+	for _, shardError := range response.ShardErrors {
+		fmt.Fprintln(application.Stderr(), "partial analysis:", shardError)
+	}
+	if !response.Complete {
+		fmt.Fprintln(application.Stderr(), "analysis is incomplete; inspect result source counts and truncation")
+	}
+	return response, nil
+}
+
+func graphResultMetadata(input metadataInput) *api.ResultMetadata {
+	omitted := 0
+	if input.Truncation != nil {
+		omitted = input.Truncation.Skipped
+	}
+	return &api.ResultMetadata{
+		Scope:   api.ResultScope{Mode: "local", Paths: normalizedScope(input.Paths, "."), ExcludedPaths: []string{}, Repositories: []string{}, ExcludedRepositories: []string{}, Languages: []string{}},
+		Order:   "source",
+		Page:    api.ResultPage{Returned: input.Returned, Complete: omitted == 0 && input.Sources.Failed == 0 && input.Sources.Recovered == 0},
+		Limits:  api.ResultLimits{MaxFiles: input.MaxFiles, MaxOutputBytes: input.MaxOutputBytes, JSONByteUncapped: input.JSON},
+		Omitted: api.ResultOmissions{Sources: omitted}, Diagnostics: sourceDiagnostics(input.Sources), NextCommand: input.NextCommand,
+	}
+}
+
+func graphDiffResultMetadata(application cliruntime.Context, input diffMetadataInput) *api.ResultMetadata {
+	omitted := truncatedSources(input.Before.Truncation) + truncatedSources(input.After.Truncation)
+	sources := SourceSummary{
+		Discovered: input.Before.Sources.Discovered + input.After.Sources.Discovered, Selected: input.Before.Sources.Selected + input.After.Sources.Selected,
+		Parsed: input.Before.Sources.Parsed + input.After.Sources.Parsed, Skipped: input.Before.Sources.Skipped + input.After.Sources.Skipped,
+		Failed: input.Before.Sources.Failed + input.After.Sources.Failed, Recovered: input.Before.Sources.Recovered + input.After.Sources.Recovered,
+	}
+	metadata := &api.ResultMetadata{
+		Scope:   api.ResultScope{Mode: "local-diff", Paths: normalizedScope([]string{input.BeforePath, input.AfterPath}, "."), ExcludedPaths: []string{}, Repositories: []string{}, ExcludedRepositories: []string{}, Languages: []string{}},
+		Order:   "semantic-identity",
+		Page:    api.ResultPage{Returned: sources.Parsed, Complete: omitted == 0 && sources.Failed == 0},
+		Limits:  api.ResultLimits{MaxFiles: input.MaxFiles, MaxOutputBytes: input.MaxOutputBytes, JSONByteUncapped: input.JSON},
+		Omitted: api.ResultOmissions{Sources: omitted}, Diagnostics: sourceDiagnostics(sources),
+	}
+	if !metadata.Page.Complete {
+		parts := application.Repository().AppendScopeFlags([]string{"grepple", "graph", "diff", "--before", shellquote.Argument(input.BeforePath), "--after", shellquote.Argument(input.AfterPath), "--max-files", "0", "--json"})
+		metadata.NextCommand = strings.Join(parts, " ")
+	}
+	return metadata
+}
+
+func truncatedSources(truncation *Truncation) int {
+	if truncation == nil {
+		return 0
+	}
+	return truncation.Skipped
 }

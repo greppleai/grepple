@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"testing"
 
+	boundaryanalysis "github.com/greppleai/grepple/internal/boundaryanalysis"
 	"github.com/greppleai/grepple/parser"
 )
 
@@ -140,7 +141,7 @@ func TestBoundaryPolicyDownranksReviewedIntentionalRolesWithoutHidingEvidence(t 
 			if err != nil {
 				t.Fatal(err)
 			}
-			if len(spreads) != 1 || spreads[0].Risk != BoundaryRiskMedium || !hasBoundaryCategory(spreads[0].Reasons, "repository-approved-usage-role") || len(spreads[0].UsageDetails) != 2 {
+			if len(spreads) != 1 || spreads[0].Risk != BoundaryRiskMedium || !boundaryanalysis.HasCategory(spreads[0].Reasons, "repository-approved-usage-role") || len(spreads[0].UsageDetails) != 2 {
 				t.Fatalf("%s spread=%#v", category, spreads)
 			}
 		})
@@ -166,7 +167,7 @@ func TestBoundaryParallelAbstractionSignalRequiresMatchingReviewedSurface(t *tes
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(candidates) != 2 || !hasBoundaryCategory(candidates[0].Signals, "parallel-abstraction") || !hasBoundaryCategory(candidates[1].Signals, "parallel-abstraction") {
+	if len(candidates) != 2 || !boundaryanalysis.HasCategory(candidates[0].Signals, "parallel-abstraction") || !boundaryanalysis.HasCategory(candidates[1].Signals, "parallel-abstraction") {
 		t.Fatalf("parallel candidates=%#v", candidates)
 	}
 }

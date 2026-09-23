@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
+	"io"
 	"strings"
 
 	"github.com/alexflint/go-arg"
@@ -21,7 +21,7 @@ type graphArgs struct {
 	cliruntime.CommonArgs
 	Repository     string   `arg:"--repo" placeholder:"OWNER/REPO[@REF]" help:"analyze one exact indexed repository"`
 	MaxFiles       int      `arg:"--max-files" placeholder:"N" help:"parse at most N discovered files (0 = unlimited)"`
-	MaxOutputBytes int      `arg:"--max-output-bytes" placeholder:"N" help:"cap compact output (default 16384; 0 = unlimited; JSON is uncapped)"`
+	MaxOutputBytes int      `arg:"--max-output-bytes" default:"16384" placeholder:"N" help:"cap compact output (default 16384; 0 = unlimited; JSON is uncapped)"`
 	Paths          []string `arg:"positional" placeholder:"PATH" help:"file, directory, or glob to include; defaults to the working directory"`
 }
 
@@ -35,8 +35,8 @@ type navigationGraphQuery = Query
 type navigationGraphTruncation = Truncation
 type navigationSourceSummary = SourceSummary
 
-// RunBuild builds a navigation graph.
-func RunBuild(args []string, services Services) error {
+// runBuild builds a navigation graph.
+func runBuild(application cliruntime.Context, args []string) error {
 	values := graphArgs{MaxOutputBytes: defaultTextOutputBytes}
 	argumentParser, err := arg.NewParser(arg.Config{Program: "grepple graph"}, &values)
 	if err != nil {
@@ -44,12 +44,16 @@ func RunBuild(args []string, services Services) error {
 	}
 	if err := argumentParser.Parse(args); err != nil {
 		if errors.Is(err, arg.ErrHelp) {
-			argumentParser.WriteHelp(os.Stdout)
-			fmt.Fprintln(os.Stdout, "Required output mode: (--json | --compact); choose exactly one.")
+			argumentParser.WriteHelp(application.Stdout())
+			fmt.Fprintln(application.Stdout(), "Required output mode: (--json | --compact); choose exactly one.")
 			return nil
 		}
 		return err
 	}
+	return executeBuild(application, &values)
+}
+
+func executeBuild(application cliruntime.Context, values *BuildArgs) error {
 	if values.JSON == values.Compact {
 		return fmt.Errorf("grepple graph requires exactly one of --json or --compact")
 	}
@@ -59,25 +63,25 @@ func RunBuild(args []string, services Services) error {
 	if values.MaxOutputBytes < 0 {
 		return fmt.Errorf("--max-output-bytes must be non-negative")
 	}
-	output, remote, err := loadGraphCommandOutput(values, services)
+	output, remote, err := loadGraphCommandOutput(application, *values)
 	if err != nil {
 		return err
 	}
 	if values.JSON && remote != nil {
-		return cliruntime.NewOutput(os.Stdout).WriteJSON(remote)
+		return cliruntime.NewOutput(application.Stdout()).WriteJSON(remote)
 	}
 	if values.Compact {
-		return renderCompactNavigationGraph(output, values.MaxOutputBytes)
+		return renderCompactNavigationGraph(application.Stdout(), output, values.MaxOutputBytes)
 	}
-	encoder := json.NewEncoder(os.Stdout)
+	encoder := json.NewEncoder(application.Stdout())
 	encoder.SetEscapeHTML(false)
 	encoder.SetIndent("", "  ")
 	return encoder.Encode(output)
 }
 
-func loadGraphCommandOutput(values graphArgs, services Services) (navigationGraphOutput, *api.AnalysisResponse, error) {
+func loadGraphCommandOutput(application cliruntime.Context, values graphArgs) (navigationGraphOutput, *api.AnalysisResponse, error) {
 	if values.Repository != "" {
-		response, err := services.Remote(context.Background(), api.AnalysisRequest{Operation: api.AnalysisGraph, Repository: values.Repository, Paths: values.Paths, MaxFiles: values.MaxFiles}, services.server(values.Server))
+		response, err := requestRemoteAnalysis(application, context.Background(), api.AnalysisRequest{Operation: api.AnalysisGraph, Repository: values.Repository, Paths: values.Paths, MaxFiles: values.MaxFiles}, application.Configuration().ServerDefault(values.Server))
 		if err != nil {
 			return navigationGraphOutput{}, nil, err
 		}
@@ -87,23 +91,19 @@ func loadGraphCommandOutput(values graphArgs, services Services) (navigationGrap
 		}
 		return output, &response, nil
 	}
-	output, err := buildNavigationGraphOutput(values.Paths, values.MaxFiles, services)
+	output, err := buildNavigationGraphOutput(application, values.Paths, values.MaxFiles)
 	if err != nil {
 		return navigationGraphOutput{}, nil, err
 	}
-	if services.Metadata != nil {
-		output.Metadata = services.Metadata(MetadataInput{Paths: values.Paths, Returned: len(output.Declarations), MaxFiles: values.MaxFiles, MaxOutputBytes: values.MaxOutputBytes, JSON: values.JSON, Sources: output.Sources, Truncation: output.Truncation, NextCommand: graphContinuationCommand("graph", values.Paths, output.Truncation, services)})
-	}
+	output.Metadata = graphResultMetadata(metadataInput{Paths: values.Paths, Returned: len(output.Declarations), MaxFiles: values.MaxFiles, MaxOutputBytes: values.MaxOutputBytes, JSON: values.JSON, Sources: output.Sources, Truncation: output.Truncation, NextCommand: graphContinuationCommand(application, "graph", values.Paths, output.Truncation)})
 	return output, nil, nil
 }
-func graphContinuationCommand(mode string, paths []string, truncation *Truncation, services Services) string {
+func graphContinuationCommand(application cliruntime.Context, mode string, paths []string, truncation *Truncation) string {
 	if truncation == nil {
 		return ""
 	}
 	parts := []string{"grepple", "graph"}
-	if services.ActiveScopeFlags != nil {
-		parts = services.ActiveScopeFlags(parts)
-	}
+	parts = application.Repository().AppendScopeFlags(parts)
 	if mode != "graph" {
 		parts = append(parts, mode)
 	}
@@ -117,10 +117,10 @@ func graphContinuationCommand(mode string, paths []string, truncation *Truncatio
 	return strings.Join(parts, " ")
 }
 
-func renderCompactNavigationGraph(graph navigationGraphOutput, maxBytes int) error {
-	output := cliruntime.NewOutput(os.Stdout)
+func renderCompactNavigationGraph(destination io.Writer, graph navigationGraphOutput, maxBytes int) error {
+	output := cliruntime.NewOutput(destination)
 	if maxBytes > 0 {
-		output = cliruntime.NewBoundedOutput(os.Stdout, maxBytes)
+		output = cliruntime.NewBoundedOutput(destination, maxBytes)
 	}
 	write := func(line string) bool {
 		err := output.WriteString(line + "\n")

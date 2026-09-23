@@ -1,0 +1,14 @@
+description: JavaScript and JSX fixture sources demonstrating a UI component and configuration utilities.
+responsibilities:
+    - Render a labeled button component.
+    - Load and parse JSON configuration files.
+    - Report messages and errors to the console.
+files:
+    - path: component.jsx
+      description: Defines a JSX button component that trims and displays a label.
+      kind: fixture
+      checksum: 7db0e1e5340f2d39b4533fd80eebd2236f7c0ac1dad8aadc099ead8b40288be3
+    - path: sample.js
+      description: Provides JSON configuration loading and console reporting utilities.
+      kind: fixture
+      checksum: e45870810799010613a7b49f9480947e3bdebf445d582236e2da5e446ea22e9f

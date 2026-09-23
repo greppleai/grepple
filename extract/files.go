@@ -1,14 +1,14 @@
 package extract
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
-	"sort"
 	"strings"
 
 	"github.com/greppleai/grepple/internal/pathfilter"
-	"github.com/greppleai/grepple/internal/sourcekind"
+	sourcedomain "github.com/greppleai/grepple/internal/sources"
 )
 
 var excludedDirectories = map[string]bool{
@@ -54,7 +54,7 @@ func (collector *sourceCollector) collect(path string, explicit bool) error {
 		return nil
 	}
 	if info.IsDir() {
-		return collector.collectInputDirectory(path, explicit)
+		return invalidSourceInput(path, explicit)
 	}
 	if collector.ignoredFile(path, explicit) {
 		return nil
@@ -70,18 +70,8 @@ func (collector *sourceCollector) unconditionallyExcluded(candidate string) bool
 	return pathfilter.Match(".git/**", relative) || pathfilter.Match(".grepple/**", relative) || pathfilter.Match(".worktrees/**", relative)
 }
 
-func (collector *sourceCollector) collectInputDirectory(path string, explicit bool) error {
-	if !explicit && collector.productionOnly && !sourcekind.IsProduction(path, collector.ignore.Root) {
-		return nil
-	}
-	if !explicit && collector.ignore.Ignored(path) && !collector.ignore.HasNegation() {
-		return nil
-	}
-	return collector.collectDirectory(path)
-}
-
 func (collector *sourceCollector) ignoredFile(path string, explicit bool) bool {
-	return !explicit && (collector.ignore.Ignored(path) || collector.productionOnly && !sourcekind.IsProduction(path, collector.ignore.Root))
+	return !explicit && (collector.ignore.Ignored(path) || collector.productionOnly && !sourcedomain.IsProduction(path, collector.ignore.Root))
 }
 
 func (collector *sourceCollector) collectFile(path string, info os.FileInfo, explicit bool) error {
@@ -143,29 +133,6 @@ func invalidCodeInput(path string, explicit bool) error {
 	return nil
 }
 
-func (collector *sourceCollector) collectDirectory(path string) error {
-	entries, err := os.ReadDir(path)
-	if err != nil {
-		return err
-	}
-	sort.Slice(entries, func(left, right int) bool { return entries[left].Name() < entries[right].Name() })
-	for _, entry := range entries {
-		if collector.shouldSkip(entry) {
-			continue
-		}
-		if entry.IsDir() || isSourceFile(entry.Name()) {
-			if err := collector.collect(filepath.Join(path, entry.Name()), false); err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
-
-func (collector *sourceCollector) shouldSkip(entry os.DirEntry) bool {
-	return entry.Type()&os.ModeSymlink != 0 || entry.IsDir() && excludedDirectories[entry.Name()]
-}
-
 // DiscoverSources recursively finds files supported by the registered language adapters.
 func DiscoverSources(inputs []string) ([]string, error) {
 	return DiscoverSourcesWithOptions(inputs, DiscoveryOptions{})
@@ -175,8 +142,31 @@ func DiscoverSources(inputs []string) ([]string, error) {
 func DiscoverSourcesWithOptions(inputs []string, options DiscoveryOptions) ([]string, error) {
 	collector := sourceCollector{paths: map[string]bool{}, ignore: pathfilter.Config{Root: options.IgnoreRoot, Patterns: options.IgnorePaths}, productionOnly: options.ProductionOnly}
 	for _, input := range inputs {
-		if err := collector.collect(absolutePath(input), true); err != nil {
+		path := absolutePath(input)
+		info, err := os.Lstat(path)
+		if err != nil {
 			return nil, err
+		}
+		if info.Mode()&os.ModeSymlink != 0 {
+			return nil, invalidSourceInput(path, true)
+		}
+		if !info.IsDir() {
+			if err := collector.collect(path, true); err != nil {
+				return nil, err
+			}
+			continue
+		}
+		candidates, err := sourcedomain.Candidates(context.Background(), []string{path}, sourcedomain.DiscoveryOptions{IgnoreRoot: options.IgnoreRoot, IgnorePaths: options.IgnorePaths, ProductionOnly: options.ProductionOnly})
+		if err != nil {
+			return nil, err
+		}
+		for _, candidate := range candidates {
+			if containsExcludedDirectory(path, candidate) {
+				continue
+			}
+			if err := collector.collect(candidate, false); err != nil {
+				return nil, err
+			}
 		}
 	}
 	paths := sortedKeys(collector.paths)
@@ -184,6 +174,20 @@ func DiscoverSourcesWithOptions(inputs []string, options DiscoveryOptions) ([]st
 		return nil, fmt.Errorf("no supported source files found in the supplied paths (%s)", supportedSourceDescription())
 	}
 	return paths, nil
+}
+
+func containsExcludedDirectory(root, path string) bool {
+	relative, err := filepath.Rel(root, path)
+	if err != nil {
+		return false
+	}
+	parts := strings.Split(filepath.Clean(relative), string(filepath.Separator))
+	for _, part := range parts[:len(parts)-1] {
+		if excludedDirectories[part] {
+			return true
+		}
+	}
+	return false
 }
 
 // LoadSources discovers and reads sources supported by the registered language adapters.

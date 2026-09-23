@@ -1,0 +1,11 @@
+description: API conformance cases define expected findings, diagnostics, metadata, limits, and path-validation behavior.
+responsibilities:
+    - Exercise API finding ordering and deduplication.
+    - Verify normalized paths and invalid-path rejection.
+    - Validate diagnostic ordering and evaluation metadata.
+    - Check finding-limit enforcement.
+files:
+    - path: cases.json
+      description: Grepple-original API conformance cases specify local executions and their expected results.
+      kind: fixture
+      checksum: 72b4e811056c1abfc5236cc1871bba09b887adecd1a7aae358858e7677f0a7cd

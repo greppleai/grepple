@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/greppleai/grepple/api"
+	searchengine "github.com/greppleai/grepple/search"
 )
 
 func TestSegmentContextGuardOmitsUnchangedCompleteDeclaration(t *testing.T) {
@@ -472,6 +473,55 @@ func TestBroadAnchoredLineReadProducesCoverageWithoutSuppressingRows(t *testing.
 		t.Fatal("broad anchored lines did not cover the later structural segment")
 	}
 	guard.close()
+}
+
+func TestExplicitAtRangeDedupeAndMetricsCoverTheWholeRequestedRange(t *testing.T) {
+	directory := t.TempDir()
+	t.Setenv("GREPPLE_CONTEXT_GUARD_DIR", directory)
+	path := filepath.Join(t.TempDir(), "sample.go")
+	content := "package sample\n\nfunc first() {}\nfunc second() {}\nvar third = 3\nvar fourth = 4\nvar fifth = 5\nvar sixth = 6\n"
+	if err := os.WriteFile(path, []byte(content), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	match, err := searchengine.At(searchengine.Params{At: path + ":1-8"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	result := searchengine.BuildResults([]searchengine.FileMatch{*match}, 0, 0, true)
+	if len(result) != 1 || len(result[0].Segments) != 1 || result[0].Segments[0].End != 8 {
+		t.Fatalf("focused range result=%#v", result)
+	}
+
+	seed, err := openSegmentContextGuard()
+	if err != nil {
+		t.Fatal(err)
+	}
+	seed.observed, seed.writeCall = true, true
+	seed.recordWriteAnchors(result[0].Path, []WriteAnchor{{Line: 1, Content: "package sample"}})
+	seed.close()
+
+	options := SearchOptions{Options: Options{Params: searchengine.Params{At: path + ":1-8"}, JSON: "off"}, ContextEnabled: true, InlineThreshold: 4096}
+	var first bytes.Buffer
+	options.Output = &first
+	if err := Search(options, result); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(first.String(), "var sixth = 6") || strings.Contains(first.String(), "unchanged segment already emitted") {
+		t.Fatalf("first complete range was incorrectly deduplicated: %q", first.String())
+	}
+
+	var second bytes.Buffer
+	options.Output = &second
+	if err := Search(options, result); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(second.String(), "unchanged segment already emitted") || strings.Contains(second.String(), "var sixth = 6") {
+		t.Fatalf("second complete range was not deduplicated: %q", second.String())
+	}
+	stats := readRenderedContextStats(filepath.Join(directory, "stats-0.json"), 0)
+	if stats.Calls.StructuredReads != 2 || stats.Details.SegmentsEmitted != 1 || stats.Details.SegmentsRemoved != 1 {
+		t.Fatalf("explicit range statistics=%#v", stats)
+	}
 }
 
 func TestStructuralCoverageCollapsesFocusedAtRange(t *testing.T) {

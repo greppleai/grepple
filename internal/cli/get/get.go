@@ -4,20 +4,18 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
-	"net/http"
-	"net/url"
 	"strings"
 
+	"github.com/alexflint/go-arg"
+	"github.com/greppleai/grepple/internal/apiclient"
 	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
+	rendercommand "github.com/greppleai/grepple/internal/render"
 	"github.com/greppleai/grepple/linerange"
 	"github.com/greppleai/grepple/parser"
-
-	"github.com/alexflint/go-arg"
 )
 
-// Request contains parsed get command options.
-type Request struct {
+// request contains parsed get command options.
+type Args struct {
 	cliruntime.CommonArgs
 	Lines   string `arg:"--lines" placeholder:"A:B" help:"inclusive 1-based range; ranges that start in-file clamp at EOF"`
 	JSON    bool   `arg:"--json" help:"print repository metadata and content as JSON"`
@@ -27,125 +25,81 @@ type Request struct {
 	Path    string `arg:"positional,required" placeholder:"PATH"`
 }
 
-// Description returns the command description used by the argument parser.
-func (Request) Description() string {
+// request is retained for package-local compatibility.
+type request = Args
+
+func (Args) Description() string {
 	return "Fetch a file from an indexed repository."
 }
 
-// command owns indexed-file retrieval dependencies.
-type command struct{ dependencies Dependencies }
+// command owns indexed-file retrieval behavior.
+type command struct{ context cliruntime.Context }
 
-// New constructs the get command.
-func New(dependencies Dependencies) cliruntime.Command { return &command{dependencies: dependencies} }
-
-// Run executes the get command. Deprecated: construct the command with New.
-func Run(args []string, dependencies Dependencies) error { return New(dependencies).Run(args) }
+// New constructs the get command from the common command context.
+func New(context cliruntime.Context) cliruntime.Command { return &command{context: context} }
 
 // Run executes the get command.
 func (command *command) Run(args []string) error {
-	dependencies := command.dependencies
-	var values Request
+	application := command.context
+	if application == nil {
+		return fmt.Errorf("get command context is unavailable")
+	}
+	var values Args
 	parser, err := arg.NewParser(arg.Config{Program: "grepple get"}, &values)
 	if err != nil {
 		return err
 	}
 	if err := parser.Parse(args); err != nil {
 		if errors.Is(err, arg.ErrHelp) {
-			parser.WriteHelp(dependencies.stdout())
+			parser.WriteHelp(application.Stdout())
 			return nil
 		}
 		return err
 	}
-	base := dependencies.serverDefault(values.Server)
-	target, err := RawURL(values, dependencies)
-	if err != nil {
-		return err
-	}
-	response, err := FetchContext(context.Background(), target.String(), base, dependencies)
-	if err != nil {
-		return dependencies.reportRangeError(err)
-	}
-	if response.RangeWarning != "" {
-		fmt.Fprintln(dependencies.stderr(), "warning:", response.RangeWarning)
-	}
-	if response.RangeOutcome == linerange.OutcomePartialMiss {
-		dependencies.recordRangeOutcome(response.RangeOutcome)
-	}
-	return render(values, response.Body, dependencies)
+	return Execute(application, &values)
 }
 
-// RawURL builds the /public/raw URL.
-func RawURL(values Request, dependencies Dependencies) (*url.URL, error) {
-	base := dependencies.serverDefault(values.Server)
-	target, err := url.Parse(strings.TrimRight(base, "/") + "/public/raw")
-	if err != nil {
-		return nil, err
+// Execute fetches a repository file from application-parsed arguments.
+func Execute(application cliruntime.Context, values *Args) error {
+	if application == nil {
+		return fmt.Errorf("get command context is unavailable")
 	}
-	query := target.Query()
-	query.Set("repo", values.Repo)
-	query.Set("path", values.Path)
+	base := application.Configuration().ServerDefault(values.Server)
+	request := apiclient.RawRequest{Repo: values.Repo, Path: values.Path, FormatJSON: values.JSON && !values.Outline}
 	if values.Lines != "" {
 		lineRange := strings.SplitN(values.Lines, ":", 2)
-		if lineRange[0] != "" {
-			query.Set("start", lineRange[0])
-		}
-		if len(lineRange) > 1 && lineRange[1] != "" {
-			query.Set("end", lineRange[1])
+		request.Start = lineRange[0]
+		if len(lineRange) > 1 {
+			request.End = lineRange[1]
 		}
 	}
-	if values.JSON && !values.Outline {
-		query.Set("format", "json")
-	}
-	target.RawQuery = query.Encode()
-	return target, nil
-}
-
-// FetchResult carries source bytes plus range metadata from /public/raw.
-type FetchResult struct {
-	Body         []byte
-	RangeOutcome linerange.Outcome
-	RangeWarning string
-}
-
-// FetchContext performs the authorized GET and returns source and range metadata.
-func FetchContext(ctx context.Context, target, base string, dependencies Dependencies) (FetchResult, error) {
-	req, err := dependencies.newRequest(http.MethodGet, target, "", nil)
+	response, err := application.APIClient().Raw(context.Background(), base, request)
 	if err != nil {
-		return FetchResult{}, err
-	}
-	req = req.WithContext(ctx)
-	response, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return FetchResult{}, err
-	}
-	defer response.Body.Close()
-	outcome := linerange.Outcome(response.Header.Get(linerange.HeaderOutcome))
-	warning := response.Header.Get(linerange.HeaderWarning)
-	if response.StatusCode >= http.StatusMultipleChoices {
-		if outcome == linerange.OutcomeFullMiss {
-			dependencies.recordRangeOutcome(outcome)
+		if apiclient.RangeOutcome(err) == linerange.OutcomeFullMiss {
+			rendercommand.RecordStandaloneLineRangeOutcome(linerange.OutcomeFullMiss, application.Configuration().ContextGuardEnabled())
+			return reportRangeError(application, err, true)
 		}
-		body, _ := io.ReadAll(response.Body)
-		failure := fmt.Errorf("server %s returned %d: %s", base, response.StatusCode, string(body))
-		if outcome == linerange.OutcomeFullMiss {
-			return FetchResult{}, dependencies.fullMissError(failure)
-		}
-		return FetchResult{}, failure
+		return reportRangeError(application, err, false)
 	}
-	body, err := io.ReadAll(response.Body)
-	return FetchResult{Body: body, RangeOutcome: outcome, RangeWarning: warning}, err
+	if response.RangeWarning != "" {
+		fmt.Fprintln(application.Stderr(), "warning:", response.RangeWarning)
+	}
+	if response.RangeOutcome == linerange.OutcomePartialMiss {
+		rendercommand.RecordStandaloneLineRangeOutcome(response.RangeOutcome, application.Configuration().ContextGuardEnabled())
+	}
+	return render(application, *values, response.Body)
 }
 
-func render(values Request, body []byte, dependencies Dependencies) error {
+func render(application cliruntime.Context, values Args, body []byte) error {
 	if !values.Outline {
-		return cliruntime.NewOutput(dependencies.stdout()).WriteString(string(body))
+		return cliruntime.NewOutput(application.Stdout()).WriteString(string(body))
 	}
 	outline := parser.OutlineFileDepth(values.Path, string(body), values.Depth)
 	if values.JSON {
-		return cliruntime.NewOutput(dependencies.stdout()).WriteJSON(outline)
+		return cliruntime.NewOutput(application.Stdout()).WriteJSON(outline)
 	}
 	if len(outline.Symbols) == 0 {
-		dependencies.requestExit(1)
+		application.RequestExit(1)
 	}
-	return cliruntime.NewOutput(dependencies.stdout()).WriteString(dependencies.renderOutline(outline, string(body)))
+	return cliruntime.NewOutput(application.Stdout()).WriteString(rendercommand.OutlineOrContent(outline, string(body)))
 }

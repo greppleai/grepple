@@ -5,15 +5,14 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"os"
 	"sort"
 	"strings"
 
 	"github.com/alexflint/go-arg"
 	"github.com/greppleai/grepple/api"
 	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
+	"github.com/greppleai/grepple/navigation"
 	"github.com/greppleai/grepple/parser"
-	"github.com/greppleai/grepple/search"
 )
 
 // NavigationResolveSchema identifies graph symbol-resolution responses.
@@ -27,7 +26,7 @@ type resolveArgs struct {
 	Languages      []string `arg:"--language,separate" placeholder:"ID" help:"retain one navigation language; repeatable"`
 	Visibilities   []string `arg:"--visibility,separate" placeholder:"LEVEL" help:"retain public, non-public, or unknown declarations; repeatable"`
 	MaxFiles       int      `arg:"--max-files" placeholder:"N" help:"parse at most N discovered files (0 = unlimited)"`
-	MaxOutputBytes int      `arg:"--max-output-bytes" placeholder:"N" help:"cap compact output (default 16384; 0 = unlimited; JSON is uncapped)"`
+	MaxOutputBytes int      `arg:"--max-output-bytes" default:"16384" placeholder:"N" help:"cap compact output (default 16384; 0 = unlimited; JSON is uncapped)"`
 	Paths          []string `arg:"positional" placeholder:"PATH" help:"graph universe; defaults to the working directory"`
 }
 
@@ -69,60 +68,48 @@ func (command *command) runResolve(args []string) error {
 	}
 	if err := argumentParser.Parse(args); err != nil {
 		if errors.Is(err, arg.ErrHelp) {
-			argumentParser.WriteHelp(command.stdout())
-			fmt.Fprintln(command.stdout(), "Required output mode: (--json | --compact); choose exactly one.")
-			fmt.Fprintln(command.stdout(), "Required selector: --symbol NAME.")
+			argumentParser.WriteHelp(command.context.Stdout())
+			fmt.Fprintln(command.context.Stdout(), "Required output mode: (--json | --compact); choose exactly one.")
+			fmt.Fprintln(command.context.Stdout(), "Required selector: --symbol NAME.")
 			return nil
 		}
 		return err
 	}
-	if err := validateResolveArgs(values); err != nil {
+	return executeResolve(command.context, &values)
+}
+
+func executeResolve(application cliruntime.Context, values *ResolveArgs) error {
+	if err := validateResolveArgs(*values); err != nil {
 		return err
 	}
-	if command.dependencies.LoadOutput == nil {
-		return fmt.Errorf("graph source loading is unavailable")
-	}
-	graph, err := command.dependencies.LoadOutput(values.Paths, values.MaxFiles)
+	graph, err := buildNavigationGraphOutput(application, values.Paths, values.MaxFiles)
 	if err != nil {
 		return err
 	}
-	filter, err := search.NormalizeNavigationGraphFilter(search.NavigationGraphFilter{Languages: values.Languages, Visibilities: values.Visibilities})
+	filter, err := navigation.NormalizeNavigationGraphFilter(navigation.NavigationGraphFilter{Languages: values.Languages, Visibilities: values.Visibilities})
 	if err != nil {
 		return err
 	}
-	filtered, err := search.FilterNavigationGraph(parser.NavigationGraph{Declarations: graph.Declarations}, filter)
+	filtered, err := navigation.FilterNavigationGraph(parser.NavigationGraph{Declarations: graph.Declarations}, filter)
 	if err != nil {
 		return err
 	}
 	matches := resolveMatches(filtered.Declarations, values.Symbol, values.Paths)
 	output := ResolveOutput{Schema: NavigationResolveSchema, Symbol: values.Symbol, Sources: graph.Sources, Matches: matches, Truncation: graph.Truncation}
-	output.Metadata = resolveMetadata(values, graph, len(matches), command.activeScopeFlags)
+	output.Metadata = resolveMetadata(*values, graph, len(matches), application.Repository().AppendScopeFlags)
 	output.Metadata.Scope.Languages = normalizedScope(filter.Languages, "")
 	if values.Compact {
-		err = command.renderCompactResolve(output, values.MaxOutputBytes)
+		err = renderCompactResolve(application.Stdout(), output, values.MaxOutputBytes)
 	} else {
-		err = writeResolveJSON(command.stdout(), output)
+		err = writeResolveJSON(application.Stdout(), output)
 	}
 	if err != nil {
 		return err
 	}
-	if len(matches) == 0 && command.dependencies.RequestExit != nil {
-		command.dependencies.RequestExit(1)
+	if len(matches) == 0 {
+		application.RequestExit(1)
 	}
 	return nil
-}
-
-func (command *command) stdout() io.Writer {
-	if command.dependencies.Stdout != nil {
-		return command.dependencies.Stdout
-	}
-	return os.Stdout
-}
-func (command *command) activeScopeFlags(parts []string) []string {
-	if command.dependencies.ActiveScopeFlags == nil {
-		return parts
-	}
-	return command.dependencies.ActiveScopeFlags(parts)
 }
 
 func validateResolveArgs(values resolveArgs) error {
@@ -251,8 +238,8 @@ func writeResolveJSON(writer io.Writer, output ResolveOutput) error {
 	return encoder.Encode(output)
 }
 
-func (command *command) renderCompactResolve(output ResolveOutput, maxBytes int) error {
-	writer := cliruntime.NewBoundedOutput(command.stdout(), maxBytes)
+func renderCompactResolve(destination io.Writer, output ResolveOutput, maxBytes int) error {
+	writer := cliruntime.NewBoundedOutput(destination, maxBytes)
 	write := func(value string) bool { return writer.WriteString(value) == nil }
 	if !write(fmt.Sprintf("resolve %s symbol=%s matches=%d sources=%s\n", output.Schema, quoteArgument(output.Symbol), len(output.Matches), compactSourceSummary(output.Sources))) {
 		return nil

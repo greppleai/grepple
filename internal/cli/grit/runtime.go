@@ -34,12 +34,44 @@ type Dependencies struct {
 	RequestRemote     func(context.Context, api.GritRequest, string) (api.GritResponse, error)
 	Metadata          MetadataBuilder
 	RequestExit       func(int)
+	Stdout            io.Writer
+	Stderr            io.Writer
 }
 
-type command struct{ dependencies Dependencies }
+type command struct {
+	application  cliruntime.Context
+	dependencies Dependencies
+}
 
-// New constructs the grit command.
-func New(dependencies Dependencies) cliruntime.Command { return &command{dependencies: dependencies} }
+// New constructs the grit command from the common command context.
+func New(application cliruntime.Context) cliruntime.Command {
+	return &command{application: application}
+}
+
+func newWithDependencies(dependencies Dependencies) cliruntime.Command {
+	return &command{dependencies: dependencies}
+}
+
+func (command *command) services() Dependencies {
+	if command.application == nil {
+		return command.dependencies
+	}
+	application := command.application
+	return Dependencies{
+		ApplySourceConfig: search.SourcePolicyConfigurer(application.Repository()),
+		CurrentRepository: application.Repository().Current,
+		ServerDefault:     application.Configuration().ServerDefault,
+		RequestRemote: func(ctx context.Context, request api.GritRequest, server string) (api.GritResponse, error) {
+			return application.APIClient().Grit(ctx, server, request)
+		},
+		Metadata: func(values Arguments, response api.GritResponse, remote bool) *api.ResultMetadata {
+			return gritResultMetadata(application, values, response, remote)
+		},
+		RequestExit: application.RequestExit,
+		Stdout:      application.Stdout(),
+		Stderr:      application.Stderr(),
+	}
+}
 
 func (d Dependencies) applySourceConfig(params *search.Params) error {
 	if d.ApplySourceConfig == nil {
@@ -81,7 +113,15 @@ func (d Dependencies) requestExit(code int) {
 
 type outputWriter struct{ output *cliruntime.Output }
 
-func stdoutWriter() *outputWriter { return &outputWriter{cliruntime.NewOutput(os.Stdout)} }
+func outputDestination(dependencies Dependencies) io.Writer {
+	if dependencies.Stdout != nil {
+		return dependencies.Stdout
+	}
+	return os.Stdout
+}
+func stdoutWriter(dependencies Dependencies) *outputWriter {
+	return &outputWriter{cliruntime.NewOutput(outputDestination(dependencies))}
+}
 func newBoundedOutputWriter(writer io.Writer, maxBytes int) *outputWriter {
 	return &outputWriter{cliruntime.NewBoundedOutput(writer, maxBytes)}
 }

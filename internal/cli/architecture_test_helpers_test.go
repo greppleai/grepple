@@ -1,19 +1,19 @@
 package cli
 
-import architecturecommand "github.com/greppleai/grepple/internal/cli/architecture"
+import (
+	"os"
+
+	architecturecommand "github.com/greppleai/grepple/internal/cli/architecture"
+	"github.com/greppleai/grepple/internal/cliruntime"
+	"github.com/greppleai/grepple/search"
+)
 
 type directoryArchitecture = architecturecommand.Report
 type architectureDirectory = architecturecommand.Directory
 type architectureRelation = architecturecommand.Relation
 
-func runArchitectureDirectory(args []string) error {
-	return runCommand(append([]string{"architecture", "directory"}, args...))
-}
-func runArchitectureResponsibilities(args []string) error {
-	return runCommand(append([]string{"architecture", "responsibilities"}, args...))
-}
 func buildDirectoryArchitecture(paths []string, maxFiles int) (directoryArchitecture, error) {
-	return architecturecommand.Build(paths, maxFiles, architecturecommand.Dependencies{ApplySourceConfig: applyRepositorySourceConfig})
+	return architecturecommand.Build(paths, maxFiles, architecturecommand.Dependencies{ApplySourceConfig: search.SourcePolicyConfigurer(cliruntime.NewRepository(cliruntime.RepositoryInvocationOptions{}, os.Stderr))})
 }
 func buildArchitectureResponsibilitiesOutput(report directoryArchitecture) architecturecommand.ResponsibilitiesOutput {
 	return architecturecommand.BuildResponsibilities(report)

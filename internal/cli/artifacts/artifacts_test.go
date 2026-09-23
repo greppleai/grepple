@@ -6,11 +6,14 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/greppleai/grepple/internal/cliruntime"
 )
 
 func TestArtifactsCleanRemovesPersistedOutput(t *testing.T) {
 	root := t.TempDir()
 	output := filepath.Join(root, ".grepple", "output")
+	t.Setenv("GREPPLE_ARTIFACT_DIR", output)
 	if err := os.MkdirAll(output, 0o700); err != nil {
 		t.Fatal(err)
 	}
@@ -21,7 +24,8 @@ func TestArtifactsCleanRemovesPersistedOutput(t *testing.T) {
 		t.Fatal(err)
 	}
 	var stdout bytes.Buffer
-	if err := Run([]string{"clean", "--json"}, Dependencies{Stdout: &stdout, ArtifactDirectory: func() (string, error) { return output, nil }, WorkingDirectory: func() string { return root }}); err != nil {
+	application := cliruntime.Environment{Output: &stdout, RepositoryContext: cliruntime.RepositoryServices{WorkingDirectoryFunc: func() string { return root }}}
+	if err := New(application).Run([]string{"clean", "--json"}); err != nil {
 		t.Fatal(err)
 	}
 	var result CleanOutput

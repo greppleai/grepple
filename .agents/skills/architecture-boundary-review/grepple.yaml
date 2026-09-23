@@ -1,0 +1,12 @@
+description: Provides a Grepple workflow for reviewing architecture boundaries, coupling, ownership, and dependency leakage.
+responsibilities:
+    - Establish source and ownership context
+    - Analyze boundary and dependency signals
+    - Inspect focused callers and callees
+    - Verify public signatures and directory relations
+    - Report source-backed architectural recommendations
+files:
+    - path: SKILL.md
+      description: Defines the architecture boundary review workflow and interpretation rules for Grepple evidence.
+      kind: production
+      checksum: fea4b929e427f3806089fd02ffdabc2bb9763d9326015a0285a111d9a9e4f1bf

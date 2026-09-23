@@ -1,0 +1,63 @@
+description: Implements deterministic CLI commands for building, querying, resolving, diffing, and rendering source navigation graphs.
+responsibilities:
+    - Dispatch graph subcommands and validate arguments
+    - Build normalized local and remote navigation graphs
+    - Traverse callers, callees, impact, dependencies, and dependents
+    - Resolve declarations into deterministic alternatives
+    - Compare semantic declarations and calls
+    - Render complete JSON and bounded compact output
+    - Filter sources, languages, confidences, and visibilities
+    - Report source processing, truncation, diagnostics, and continuation metadata
+files:
+    - path: arguments.go
+      description: Defines graph argument aliases and dispatches build, resolve, diff, and traversal operations.
+      kind: production
+      checksum: ab32232f5a7b5c61d1f98f5b214914f82cc7855b8d6b8a5fb6733e3b773c73ce
+    - path: build.go
+      description: Builds local or exact remote navigation graphs and renders complete or bounded output.
+      kind: production
+      checksum: 6aef1e05de70ba79712463dd69c16976fcfb61ded99093cbdb929ad9207fe044
+    - path: command.go
+      description: Constructs the graph command and routes subcommands to their handlers.
+      kind: production
+      checksum: 0e70d32d640956ff33ebd79b8c0e7dfda8a2d67698fae93e912d2c309d08e54c
+    - path: command_test.go
+      description: Verifies graph command dispatch and help output.
+      kind: test
+      checksum: 3dc17f1e213c238810d98f0c0cdb81b1bbca3ba3779edb9ec73b0fabbcdc9473
+    - path: diff.go
+      description: Compares semantic navigation graph declarations and calls while ignoring position-only movement.
+      kind: production
+      checksum: d452439203790930e0ccf278ded73fd66c253190b99749cbbbe3cc711f5fc121
+    - path: integration_helpers_test.go
+      description: Provides integration helpers for graph command execution, output capture, and temporary environments.
+      kind: test
+      checksum: ce1b673901d86b4ecbea7d232a15d698dfeeec340ad15f3a80c3ef9eeb3b7a63
+    - path: integration_test.go
+      description: Validates deterministic graph construction, traversal, filtering, diffing, resolution, and metadata.
+      kind: test
+      checksum: 13d967dc90b59a5297c681206b960dc2aaa92102330a71282372ad06ee9336a7
+    - path: projection.go
+      description: Defines normalized graph output projections and adapts analysis reports for CLI rendering.
+      kind: production
+      checksum: ceeff0f299c4c4ac7e02a11af7fd0c07bcf01cbc80c09e378b6c7317daf589b1
+    - path: query.go
+      description: Parses selectors and executes filtered graph traversals over local or exact remote graphs.
+      kind: production
+      checksum: db46e33d32f572df1c2619a71b421696a69e532b272c396345e8beedefe6155f
+    - path: remote_test.go
+      description: Verifies remote graph analysis preserves exact repository identifiers.
+      kind: test
+      checksum: e4b19124869d4e0609c06d0fc87da248efce7f34e3c591fc2d5250935491bf9a
+    - path: resolve.go
+      description: Resolves symbol declarations and emits deterministic alternatives with follow-up traversal commands.
+      kind: production
+      checksum: e653055df69b5cdb50bfb48916f567be1bc1b97ff68c0341acaea4ffade9dbd1
+    - path: resolve_test.go
+      description: Tests symbol resolution output, filtering, validation, and exit behavior.
+      kind: test
+      checksum: 10fe4de427cd4d246008be3cc16c3fc8362989a33a5152cb83599d68e77c5592
+    - path: runtime.go
+      description: Builds graph result metadata and performs remote analysis requests with partial-result reporting.
+      kind: production
+      checksum: fb7ffc3acd50010a78d1e57d76ed97f02723e4b8e1e971fdc609b6231f413d21

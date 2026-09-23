@@ -5,12 +5,9 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"reflect"
 	"strings"
 	"testing"
 	"time"
-
-	"github.com/greppleai/grepple/api"
 
 	"github.com/greppleai/grepple/internal/usersettings"
 )
@@ -164,6 +161,33 @@ func TestAnchorsSetupHelpStatesWriteSafety(t *testing.T) {
 	}
 }
 
+type testProtocolRequest struct {
+	ProtocolVersion int                       `json:"protocol_version"`
+	Files           []testProtocolRequestFile `json:"files"`
+}
+
+type testProtocolRequestFile struct {
+	Path   string `json:"path"`
+	SHA256 string `json:"sha256"`
+	Lines  []int  `json:"lines"`
+}
+
+type testProtocolResponse struct {
+	ProtocolVersion int                        `json:"protocol_version"`
+	Files           []testProtocolResponseFile `json:"files"`
+}
+
+type testProtocolResponseFile struct {
+	Path    string             `json:"path"`
+	SHA256  string             `json:"sha256"`
+	Anchors []testProtocolLine `json:"anchors"`
+}
+
+type testProtocolLine struct {
+	Line   int    `json:"line"`
+	Anchor string `json:"anchor"`
+}
+
 func TestAnchorProviderProcess(_ *testing.T) {
 	if os.Getenv("GREPPLE_TEST_ANCHOR_PROVIDER") != "1" {
 		return
@@ -171,15 +195,15 @@ func TestAnchorProviderProcess(_ *testing.T) {
 	if os.Getenv("GREPPLE_TEST_ANCHOR_PROVIDER_SLOW") == "1" {
 		time.Sleep(200 * time.Millisecond)
 	}
-	var request anchorProtocolRequest
+	var request testProtocolRequest
 	if err := json.NewDecoder(os.Stdin).Decode(&request); err != nil {
 		os.Exit(41)
 	}
-	response := anchorProtocolResponse{ProtocolVersion: request.ProtocolVersion}
+	response := testProtocolResponse{ProtocolVersion: request.ProtocolVersion}
 	for _, file := range request.Files {
-		output := anchorProtocolResponseFile{Path: file.Path, SHA256: file.SHA256}
+		output := testProtocolResponseFile{Path: file.Path, SHA256: file.SHA256}
 		for _, line := range file.Lines {
-			output.Anchors = append(output.Anchors, anchorProtocolLine{Line: line, Anchor: fmt.Sprintf("A%02d", line)})
+			output.Anchors = append(output.Anchors, testProtocolLine{Line: line, Anchor: fmt.Sprintf("A%02d", line)})
 		}
 		response.Files = append(response.Files, output)
 	}
@@ -187,71 +211,6 @@ func TestAnchorProviderProcess(_ *testing.T) {
 		os.Exit(42)
 	}
 	os.Exit(0)
-}
-
-func TestEmptyAnchorRequestUsesJSONArrays(t *testing.T) {
-	request, _, err := buildAnchorRequest(&SearchOptions{}, nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-	encoded, err := json.Marshal(request)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if string(encoded) != `{"protocol_version":1,"files":[]}` {
-		t.Fatalf("empty request = %s", encoded)
-	}
-}
-
-func TestNoAnchorableResultsSkipProvider(t *testing.T) {
-	t.Setenv("GREPPLE_SETTINGS", filepath.Join(t.TempDir(), "missing.json"))
-	options := &cliOptions{Anchors: true}
-	if err := prepareResultAnchors(options, nil); err != nil {
-		t.Fatal(err)
-	}
-	if options.AnchorLines == nil {
-		t.Fatal("expected initialized empty anchor lookup")
-	}
-}
-func TestAnchorRequestIncludesRelatedTypeAppendixLines(t *testing.T) {
-	directory := t.TempDir()
-	t.Chdir(directory)
-	content := "package sample\ntype Request struct {\n\tName string\n}\n"
-	if err := os.WriteFile("request.go", []byte(content), 0o600); err != nil {
-		t.Fatal(err)
-	}
-	results := []api.FileResult{{Path: "caller.go", Related: []api.RelatedSymbol{{
-		Name: "Request", Path: "request.go", Direction: "type", Start: 2, End: 4,
-		Segments: []api.ResultSegment{{Kind: "lines", Start: 2, End: 4, Text: "type Request struct {\n\tName string\n}"}},
-	}}}}
-	request, displayPaths, err := buildAnchorRequest(&SearchOptions{}, results)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(request.Files) != 1 || !strings.HasSuffix(request.Files[0].Path, "request.go") || !reflect.DeepEqual(request.Files[0].Lines, []int{2, 3, 4}) || displayPaths[request.Files[0].Path] != "request.go" {
-		t.Fatalf("related type anchor request=%#v paths=%#v", request, displayPaths)
-	}
-}
-
-func TestAnchorResponseRejectsMissingAndUnsafeAnchors(t *testing.T) {
-	request := anchorProtocolRequest{ProtocolVersion: 1, Files: []anchorProtocolRequestFile{{Path: "/tmp/a", SHA256: "digest", Lines: []int{1}}}}
-	paths := map[string]string{"/tmp/a": "a"}
-	for _, anchor := range []string{"", "bad│anchor", "bad\nanchor"} {
-		response := anchorProtocolResponse{ProtocolVersion: 1, Files: []anchorProtocolResponseFile{{Path: "/tmp/a", SHA256: "digest", Anchors: []anchorProtocolLine{{Line: 1, Anchor: anchor}}}}}
-		if _, err := validateAnchorResponse(request, response, paths); err == nil {
-			t.Fatalf("unsafe anchor %q was accepted", anchor)
-		}
-	}
-}
-
-func TestAnchorResponseRejectsDuplicateAnchorsWithinFile(t *testing.T) {
-	request := anchorProtocolRequest{ProtocolVersion: 1, Files: []anchorProtocolRequestFile{{Path: "/tmp/a", SHA256: "digest", Lines: []int{1, 2}}}}
-	response := anchorProtocolResponse{ProtocolVersion: 1, Files: []anchorProtocolResponseFile{{
-		Path: "/tmp/a", SHA256: "digest", Anchors: []anchorProtocolLine{{Line: 1, Anchor: "same"}, {Line: 2, Anchor: "same"}},
-	}}}
-	if _, err := validateAnchorResponse(request, response, map[string]string{"/tmp/a": "a"}); err == nil {
-		t.Fatal("duplicate anchors were accepted")
-	}
 }
 
 func TestAnchorProviderSettingsRequireAbsoluteExecutable(t *testing.T) {

@@ -9,58 +9,62 @@ import (
 
 	"github.com/alexflint/go-arg"
 	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
-	"github.com/greppleai/grepple/internal/filedigest"
+	sourcedomain "github.com/greppleai/grepple/internal/sources"
 	"github.com/greppleai/grepple/search"
 )
 
-const sourceScopeSchema = "grepple-source-scope-v1"
+const sourceScopeSchema = sourcedomain.Schema
 
-type sourceExplainArgs struct {
+type ExplainArgs struct {
 	JSON           bool     `arg:"--json" help:"emit complete source decisions as JSON"`
 	Compact        bool     `arg:"--compact" help:"emit a bounded source-scope summary"`
-	MaxOutputBytes int      `arg:"--max-output-bytes" placeholder:"N" help:"cap compact output (default 16384; 0 = unlimited)"`
+	MaxOutputBytes int      `arg:"--max-output-bytes" default:"16384" placeholder:"N" help:"cap compact output (default 16384; 0 = unlimited)"`
 	Paths          []string `arg:"positional" placeholder:"PATH" help:"file or directory to inspect; defaults to the repository root"`
 }
 
-// Config describes the repository configuration applied to source selection.
-type Config struct {
-	Loaded        bool   `json:"loaded"`
-	Path          string `json:"path,omitempty"`
-	Digest        string `json:"digest,omitempty"`
-	IgnoreEnabled bool   `json:"ignoreEnabled"`
+// Args contains source command subcommands.
+type Args struct {
+	Explain *ExplainArgs `arg:"subcommand:explain"`
 }
+
+// DefaultArgs returns source arguments with compact output defaults.
+func DefaultArgs() Args {
+	return Args{Explain: &ExplainArgs{MaxOutputBytes: 16 * 1024}}
+}
+
+// Config describes the repository configuration applied to source selection.
+type Config = sourcedomain.Config
 
 // Count is one deterministic source classification total.
-type Count struct {
-	Name  string `json:"name"`
-	Count int    `json:"count"`
-}
+type Count = sourcedomain.Count
 
 // Report describes repository source selection decisions.
-type Report struct {
-	Schema                  string                      `json:"schema"`
-	Root                    string                      `json:"root"`
-	Config                  Config                      `json:"config"`
-	ProductionOnly          bool                        `json:"productionOnly"`
-	DiscoveredFiles         int                         `json:"discoveredFiles"`
-	SelectedFiles           int                         `json:"selectedFiles"`
-	ExcludedFiles           int                         `json:"excludedFiles"`
-	OmittedSubtrees         int                         `json:"omittedSubtrees"`
-	UnconditionalExclusions []string                    `json:"unconditionalExclusions"`
-	Classifications         []Count                     `json:"classifications"`
-	Exclusions              []Count                     `json:"exclusions"`
-	Decisions               []search.SourcePathDecision `json:"decisions"`
+type Report = sourcedomain.Report
+
+// command owns repository source-scope reporting.
+type command struct{ application cliruntime.Context }
+
+// New constructs the sources command from the common command context.
+func New(application cliruntime.Context) cliruntime.Command {
+	return &command{application: application}
 }
 
-// Run executes the sources command.
-func Run(args []string, dependencies Dependencies) error {
+func (command *command) Run(args []string) error {
+	if command.application == nil {
+		return fmt.Errorf("sources command context is unavailable")
+	}
+	return run(args, dependenciesFromApplication(command.application))
+}
+
+// run executes the sources command with explicit reusable build dependencies.
+func run(args []string, dependencies Dependencies) error {
 	if len(args) == 0 || isHelp(args[0]) {
 		return cliruntime.NewOutput(dependencies.stdout()).WriteString("Explain repository source selection.\nUsage:\n  grepple sources explain (--compact | --json) [PATH ...]\n")
 	}
 	if args[0] != "explain" {
 		return fmt.Errorf("unknown sources command %q", args[0])
 	}
-	values := sourceExplainArgs{MaxOutputBytes: 16 * 1024}
+	values := ExplainArgs{MaxOutputBytes: 16 * 1024}
 	parser, err := arg.NewParser(arg.Config{Program: "grepple sources explain"}, &values)
 	if err != nil {
 		return err
@@ -72,6 +76,18 @@ func Run(args []string, dependencies Dependencies) error {
 		}
 		return err
 	}
+	return execute(&values, dependencies)
+}
+
+// Execute reports source selection from application-parsed arguments.
+func Execute(application cliruntime.Context, values *Args) error {
+	if values == nil || values.Explain == nil {
+		return fmt.Errorf("sources requires explain")
+	}
+	return execute(values.Explain, dependenciesFromApplication(application))
+}
+
+func execute(values *ExplainArgs, dependencies Dependencies) error {
 	if values.JSON == values.Compact {
 		return fmt.Errorf("sources explain requires exactly one of --json or --compact")
 	}
@@ -96,47 +112,7 @@ func Build(paths []string, dependencies Dependencies) (Report, error) {
 	if err != nil {
 		return Report{}, err
 	}
-	root, configPath := environment.Root, environment.ConfigPath
-	if len(paths) == 0 {
-		paths = []string{root}
-	}
-	options := search.SourceScopeOptions{Root: root, IgnoreRoot: root, ProductionOnly: environment.ProductionOnly}
-	if !environment.IgnoreDisabled {
-		options.IgnorePaths = append([]string(nil), environment.IgnorePaths...)
-	}
-	decisions, err := search.InspectSourceScope(paths, options)
-	if err != nil {
-		return Report{}, err
-	}
-	report := Report{
-		Schema: sourceScopeSchema, Root: displayRepositoryPath(root, dependencies), ProductionOnly: options.ProductionOnly,
-		Config:    Config{Loaded: configPath != "", Path: displayRepositoryPath(configPath, dependencies), IgnoreEnabled: configPath != "" && !environment.IgnoreDisabled},
-		Decisions: decisions, UnconditionalExclusions: []string{".git/**", ".grepple/**", ".worktrees/**"},
-	}
-	if configPath != "" {
-		report.Config.Digest, err = filedigest.SHA256(configPath)
-		if err != nil {
-			return Report{}, err
-		}
-	}
-	classifications, exclusions := map[string]int{}, map[string]int{}
-	for _, decision := range decisions {
-		if decision.Subtree {
-			report.OmittedSubtrees++
-			continue
-		}
-		report.DiscoveredFiles++
-		classifications[decision.Classification]++
-		if decision.Selected {
-			report.SelectedFiles++
-		} else {
-			report.ExcludedFiles++
-			exclusions[decision.Reason]++
-		}
-	}
-	report.Classifications = sortedSourceScopeCounts(classifications)
-	report.Exclusions = sortedSourceScopeCounts(exclusions)
-	return report, nil
+	return sourcedomain.Build(paths, environment, dependencies.workingDirectory())
 }
 
 func renderSourceScopeReport(report Report, maxBytes int, dependencies Dependencies) error {

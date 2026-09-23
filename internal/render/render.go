@@ -2,6 +2,7 @@
 package render
 
 import (
+	"github.com/greppleai/grepple/navigation"
 	"io"
 	"strings"
 
@@ -25,8 +26,8 @@ func (lookup AnchorLookup) Line(path string, line int) string {
 
 // ContextGuard records and suppresses source already returned in the active context.
 type ContextGuard interface {
-	Seen(string, *api.NavigationArtifactIdentity, api.ResultSegment) bool
-	Record(string, *api.NavigationArtifactIdentity, api.ResultSegment)
+	Seen(string, *navigation.ArtifactIdentity, search.ResultSegment) bool
+	Record(string, *navigation.ArtifactIdentity, search.ResultSegment)
 	RecordMarker(int)
 	RecordSearchLine(string, int, string)
 	RecordLineRangeOmission(int, int, int, int)
@@ -35,10 +36,10 @@ type ContextGuard interface {
 
 type noopContextGuard struct{}
 
-func (noopContextGuard) Seen(string, *api.NavigationArtifactIdentity, api.ResultSegment) bool {
+func (noopContextGuard) Seen(string, *navigation.ArtifactIdentity, search.ResultSegment) bool {
 	return false
 }
-func (noopContextGuard) Record(string, *api.NavigationArtifactIdentity, api.ResultSegment) {}
+func (noopContextGuard) Record(string, *navigation.ArtifactIdentity, search.ResultSegment) {}
 func (noopContextGuard) RecordMarker(int)                                                  {}
 func (noopContextGuard) RecordSearchLine(string, int, string)                              {}
 func (noopContextGuard) RecordLineRangeOmission(int, int, int, int)                        {}
@@ -59,7 +60,9 @@ type Options struct {
 	Metadata         *api.ResultMetadata
 }
 
-type resultRenderer interface{ Render([]api.FileResult) error }
+type resultRenderer interface {
+	Render([]search.FileResult) error
+}
 
 type outputWriter struct {
 	writer io.Writer
@@ -84,7 +87,7 @@ func (output *outputWriter) writeJSON(value any) error      { return output.outp
 func (output *outputWriter) written() int                   { return output.output.Written() }
 
 // Render formats results and returns the emitted byte count.
-func Render(options Options, results []api.FileResult, destination io.Writer, guard ContextGuard) (int, error) {
+func Render(options Options, results []search.FileResult, destination io.Writer, guard ContextGuard) (int, error) {
 	if guard == nil {
 		guard = noopContextGuard{}
 	}
@@ -120,7 +123,7 @@ func newResultRenderer(options Options, output *outputWriter, guard ContextGuard
 	}
 }
 
-func filePathObjects(results []api.FileResult) []map[string]string {
+func filePathObjects(results []search.FileResult) []map[string]string {
 	files := make([]map[string]string, 0, len(results))
 	for _, result := range results {
 		files = append(files, map[string]string{"path": result.Path})

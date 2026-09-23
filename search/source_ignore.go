@@ -4,7 +4,7 @@ import (
 	"os"
 
 	"github.com/greppleai/grepple/internal/pathfilter"
-	"github.com/greppleai/grepple/internal/sourcekind"
+	sourcedomain "github.com/greppleai/grepple/internal/sources"
 )
 
 type sourceIgnoreConfig struct {
@@ -17,7 +17,7 @@ func (config sourceIgnoreConfig) ignored(candidate string) bool {
 	if config.builtIn(candidate) {
 		return true
 	}
-	if config.productionOnly && !sourcekind.IsProduction(candidate, config.root) {
+	if config.productionOnly && !sourcedomain.IsProduction(candidate, config.root) {
 		return true
 	}
 	filter := config.filter()

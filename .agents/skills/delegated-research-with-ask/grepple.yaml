@@ -1,0 +1,12 @@
+description: A guide for using grepple ask as an isolated, read-only research subagent for source retrieval and evidence-backed investigation.
+responsibilities:
+    - Define when to delegate source research
+    - Document delegation prerequisites and workflows
+    - Specify evidence evaluation and verification practices
+    - Explain debug-log inspection and failure handling
+    - Standardize concise research handoffs
+files:
+    - path: SKILL.md
+      description: Documents the delegated research workflow, usage boundaries, evidence requirements, and handoff practices for grepple ask.
+      kind: production
+      checksum: eea3ed980ce9de340bac228829369b2a00ee6ef228ccd6a86de6e8e71223e344

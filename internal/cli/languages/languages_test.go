@@ -11,7 +11,7 @@ import (
 
 func TestLanguagesJSONReportsRegisteredFeatureParity(t *testing.T) {
 	output := captureStdout(t, func() {
-		if err := Run([]string{"--json"}, Dependencies{}); err != nil {
+		if err := New(Dependencies{}).Run([]string{"--json"}); err != nil {
 			t.Fatal(err)
 		}
 	})
@@ -133,7 +133,7 @@ func assertECMANavigationFacts(t *testing.T, byLanguage map[string]api.LanguageC
 
 func TestLanguagesHumanOutputUsesCapabilityIcons(t *testing.T) {
 	output := captureStdout(t, func() {
-		if err := Run(nil, Dependencies{}); err != nil {
+		if err := New(Dependencies{}).Run(nil); err != nil {
 			t.Fatal(err)
 		}
 	})
@@ -145,7 +145,7 @@ func TestLanguagesHumanOutputUsesCapabilityIcons(t *testing.T) {
 }
 
 func TestLanguagesRejectsUnexpectedArguments(t *testing.T) {
-	if err := Run([]string{"extra"}, Dependencies{}); err == nil {
+	if err := New(Dependencies{}).Run([]string{"extra"}); err == nil {
 		t.Fatal("expected unexpected argument to fail")
 	}
 }
@@ -179,7 +179,7 @@ func TestLanguageCapabilityDocumentationIsGeneratedFromRegistrations(t *testing.
 }
 
 func TestLanguagesRejectsConflictingOutputFormats(t *testing.T) {
-	if err := Run([]string{"--json", "--markdown"}, Dependencies{}); err == nil {
+	if err := New(Dependencies{}).Run([]string{"--json", "--markdown"}); err == nil {
 		t.Fatal("expected conflicting output formats to fail")
 	}
 }

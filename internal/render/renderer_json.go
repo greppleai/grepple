@@ -3,6 +3,8 @@ package render
 import (
 	"github.com/greppleai/grepple/api"
 	"github.com/greppleai/grepple/internal/resultanalysis"
+	"github.com/greppleai/grepple/navigation"
+	"github.com/greppleai/grepple/search"
 )
 
 type jsonResultRenderer struct {
@@ -12,7 +14,7 @@ type jsonResultRenderer struct {
 	contextGuard ContextGuard
 }
 
-func (renderer jsonResultRenderer) Render(results []api.FileResult) error {
+func (renderer jsonResultRenderer) Render(results []search.FileResult) error {
 	if renderer.contextGuard == nil {
 		renderer.contextGuard = noopContextGuard{}
 	}
@@ -30,7 +32,7 @@ func (renderer jsonResultRenderer) Render(results []api.FileResult) error {
 	return nil
 }
 
-func recordJSONResultCoverage(guard ContextGuard, results []api.FileResult) {
+func recordJSONResultCoverage(guard ContextGuard, results []search.FileResult) {
 	if guard == nil {
 		return
 	}
@@ -49,7 +51,7 @@ func recordJSONResultCoverage(guard ContextGuard, results []api.FileResult) {
 	}
 }
 
-func recordJSONRelatedCoverage(guard ContextGuard, repository string, points []api.RelatedSymbol) {
+func recordJSONRelatedCoverage(guard ContextGuard, repository string, points []navigation.RelatedSymbol) {
 	for _, point := range points {
 		source := point.Path
 		if point.Artifact == nil && repository != "" {
@@ -62,11 +64,11 @@ func recordJSONRelatedCoverage(guard ContextGuard, repository string, points []a
 	}
 }
 
-func searchSourceAnalysis(results []api.FileResult) *api.SourceAnalysis {
+func searchSourceAnalysis(results []search.FileResult) *api.SourceAnalysis {
 	return resultanalysis.Sources(results)
 }
 
-func flatMatches(results []api.FileResult) []map[string]any {
+func flatMatches(results []search.FileResult) []map[string]any {
 	matches := []map[string]any{}
 	for _, result := range results {
 		for _, match := range result.Matches {
@@ -86,7 +88,7 @@ func flatMatches(results []api.FileResult) []map[string]any {
 	return matches
 }
 
-func resultLineRanges(results []api.FileResult) []map[string]any {
+func resultLineRanges(results []search.FileResult) []map[string]any {
 	ranges := []map[string]any{}
 	for _, result := range results {
 		if result.LineRange != nil {

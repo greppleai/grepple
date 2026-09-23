@@ -7,6 +7,9 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/greppleai/grepple/internal/directorymeta"
+	"github.com/greppleai/grepple/internal/filedigest"
 )
 
 func TestSourcesExplainReportsConfigExclusionsAndClassifications(t *testing.T) {
@@ -18,12 +21,13 @@ func TestSourcesExplainReportsConfigExclusionsAndClassifications(t *testing.T) {
 	if err := os.WriteFile(configPath, []byte(`{"ignore":{"paths":["sandbox/**"]}}`), 0o600); err != nil {
 		t.Fatal(err)
 	}
+	writeSourceKinds(t, root, map[string]string{"main.go": "production", "main_test.go": "test", "grepple.json": "production"})
 	dependencies := Dependencies{Environment: func() (Environment, error) {
 		return Environment{Root: root, ConfigPath: configPath, IgnorePaths: []string{"sandbox/**"}, ProductionOnly: true}, nil
 	}, WorkingDirectory: func() string { return root }}
 	var output bytes.Buffer
 	dependencies.Stdout = &output
-	if err := Run([]string{"explain", "--json"}, dependencies); err != nil {
+	if err := run([]string{"explain", "--json"}, dependencies); err != nil {
 		t.Fatal(err)
 	}
 	var report Report
@@ -38,6 +42,20 @@ func TestSourcesExplainReportsConfigExclusionsAndClassifications(t *testing.T) {
 	}
 	if FormatCounts(report.Exclusions) != "config-ignore:1,non-production:1" {
 		t.Fatalf("exclusions=%+v", report.Exclusions)
+	}
+}
+func writeSourceKinds(t *testing.T, root string, kinds map[string]string) {
+	t.Helper()
+	files := make([]directorymeta.File, 0, len(kinds))
+	for name, kind := range kinds {
+		digest, err := filedigest.SHA256Hex(filepath.Join(root, name))
+		if err != nil {
+			t.Fatal(err)
+		}
+		files = append(files, directorymeta.File{Path: name, Description: "Source fixture.", Kind: kind, Checksum: digest})
+	}
+	if err := directorymeta.Write(root, directorymeta.Metadata{Description: "Source fixtures.", Responsibilities: []string{"Test source reporting."}, Files: files}); err != nil {
+		t.Fatal(err)
 	}
 }
 

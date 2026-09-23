@@ -4,15 +4,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
+	"io"
 	"path/filepath"
 	"strings"
 
 	"github.com/alexflint/go-arg"
 	"github.com/greppleai/grepple/api"
 	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
+	"github.com/greppleai/grepple/navigation"
 	"github.com/greppleai/grepple/parser"
-	"github.com/greppleai/grepple/search"
 )
 
 type graphDiffArgs struct {
@@ -21,7 +21,7 @@ type graphDiffArgs struct {
 	Before         string `arg:"--before,required" placeholder:"PATH" help:"source tree before the change"`
 	After          string `arg:"--after,required" placeholder:"PATH" help:"source tree after the change"`
 	MaxFiles       int    `arg:"--max-files" placeholder:"N" help:"parse at most N files in each tree (0 = unlimited)"`
-	MaxOutputBytes int    `arg:"--max-output-bytes" placeholder:"N" help:"cap compact output (default 16384; 0 = unlimited; JSON is uncapped)"`
+	MaxOutputBytes int    `arg:"--max-output-bytes" default:"16384" placeholder:"N" help:"cap compact output (default 16384; 0 = unlimited; JSON is uncapped)"`
 }
 
 func (graphDiffArgs) Description() string {
@@ -35,11 +35,11 @@ type DiffOutput struct {
 	BeforeSources navigationSourceSummary `json:"beforeSources"`
 	AfterFiles    int                     `json:"afterFiles"`
 	AfterSources  navigationSourceSummary `json:"afterSources"`
-	search.NavigationGraphDiff
+	navigation.NavigationGraphDiff
 }
 
-// RunDiff compares two navigation graphs.
-func RunDiff(args []string, services Services) error {
+// runDiff compares two navigation graphs.
+func runDiff(application cliruntime.Context, args []string) error {
 	values := graphDiffArgs{MaxOutputBytes: defaultTextOutputBytes}
 	argumentParser, err := arg.NewParser(arg.Config{Program: "grepple graph diff"}, &values)
 	if err != nil {
@@ -47,42 +47,44 @@ func RunDiff(args []string, services Services) error {
 	}
 	if err := argumentParser.Parse(args); err != nil {
 		if errors.Is(err, arg.ErrHelp) {
-			argumentParser.WriteHelp(os.Stdout)
-			fmt.Fprintln(os.Stdout, "Required output mode: (--json | --compact); choose exactly one.")
+			argumentParser.WriteHelp(application.Stdout())
+			fmt.Fprintln(application.Stdout(), "Required output mode: (--json | --compact); choose exactly one.")
 			return nil
 		}
 		return err
 	}
+	return executeDiff(application, &values)
+}
+
+func executeDiff(application cliruntime.Context, values *DiffArgs) error {
 	if values.JSON == values.Compact {
 		return fmt.Errorf("grepple graph diff requires exactly one of --json or --compact")
 	}
 	if values.MaxFiles < 0 || values.MaxOutputBytes < 0 {
 		return fmt.Errorf("graph diff limits must be non-negative")
 	}
-	before, err := buildNavigationGraphOutput([]string{values.Before}, values.MaxFiles, services)
+	before, err := buildNavigationGraphOutput(application, []string{values.Before}, values.MaxFiles)
 	if err != nil {
 		return err
 	}
-	after, err := buildNavigationGraphOutput([]string{values.After}, values.MaxFiles, services)
+	after, err := buildNavigationGraphOutput(application, []string{values.After}, values.MaxFiles)
 	if err != nil {
 		return err
 	}
 	beforeGraph := relativeNavigationGraph(before, values.Before)
 	afterGraph := relativeNavigationGraph(after, values.After)
-	output := DiffOutput{BeforeFiles: before.Files, BeforeSources: before.Sources, AfterFiles: after.Files, AfterSources: after.Sources, NavigationGraphDiff: search.DiffNavigationGraphs(
+	output := DiffOutput{BeforeFiles: before.Files, BeforeSources: before.Sources, AfterFiles: after.Files, AfterSources: after.Sources, NavigationGraphDiff: navigation.DiffNavigationGraphs(
 		beforeGraph,
 		afterGraph,
 	)}
-	if services.DiffMetadata != nil {
-		output.Metadata = services.DiffMetadata(DiffMetadataInput{BeforePath: values.Before, AfterPath: values.After, MaxFiles: values.MaxFiles, MaxOutputBytes: values.MaxOutputBytes, JSON: values.JSON, Before: before, After: after, Diff: output.NavigationGraphDiff})
-	}
+	output.Metadata = graphDiffResultMetadata(application, diffMetadataInput{BeforePath: values.Before, AfterPath: values.After, MaxFiles: values.MaxFiles, MaxOutputBytes: values.MaxOutputBytes, JSON: values.JSON, Before: before, After: after, Diff: output.NavigationGraphDiff})
 	if values.JSON {
-		encoder := json.NewEncoder(os.Stdout)
+		encoder := json.NewEncoder(application.Stdout())
 		encoder.SetEscapeHTML(false)
 		encoder.SetIndent("", "  ")
 		return encoder.Encode(output)
 	}
-	return renderCompactGraphDiff(output, values.MaxOutputBytes)
+	return renderCompactGraphDiff(application.Stdout(), output, values.MaxOutputBytes)
 }
 
 func relativeNavigationGraph(output navigationGraphOutput, root string) parser.NavigationGraph {
@@ -112,10 +114,10 @@ func relativeGraphDiffPath(root, path string) string {
 	return filepath.ToSlash(relative)
 }
 
-func renderCompactGraphDiff(diff DiffOutput, maxBytes int) error {
-	output := cliruntime.NewOutput(os.Stdout)
+func renderCompactGraphDiff(destination io.Writer, diff DiffOutput, maxBytes int) error {
+	output := cliruntime.NewOutput(destination)
 	if maxBytes > 0 {
-		output = cliruntime.NewBoundedOutput(os.Stdout, maxBytes)
+		output = cliruntime.NewBoundedOutput(destination, maxBytes)
 	}
 	write := func(value string) bool { return output.WriteString(value+"\n") == nil }
 	if !write(fmt.Sprintf("graph-diff %s files=%d->%d sources=before(%s),after(%s) declarations=+%d/-%d/~%d/>%d calls=+%d/-%d/~%d", diff.Schema, diff.BeforeFiles, diff.AfterFiles, compactNavigationSourceSummary(diff.BeforeSources), compactNavigationSourceSummary(diff.AfterSources), len(diff.AddedDeclarations), len(diff.RemovedDeclarations), len(diff.ChangedDeclarations), len(diff.MovedDeclarations), len(diff.AddedCalls), len(diff.RemovedCalls), len(diff.ChangedCalls))) {

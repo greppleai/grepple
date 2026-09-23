@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"strings"
@@ -27,8 +28,7 @@ type aiProviderNameArgs struct {
 	Provider string `arg:"positional" placeholder:"PROVIDER" help:"registered provider name (default codex)"`
 }
 
-// RunAIProvider manages configured AI providers.
-func RunAIProvider(args []string) error {
+func runAIProvider(application cliruntime.Context, args []string) error {
 	if len(args) == 0 {
 		return fmt.Errorf("ai-provider requires login, logout, or list")
 	}
@@ -39,45 +39,55 @@ func RunAIProvider(args []string) error {
 	registry := aiprovider.NewRegistry(store, &http.Client{Timeout: 30 * time.Second})
 	switch args[0] {
 	case "login":
-		return runAIProviderLogin(registry, store, args[1:])
+		return runAIProviderLogin(application, registry, store, args[1:])
 	case "logout":
-		return runAIProviderLogout(registry, args[1:])
+		return runAIProviderLogout(application, registry, args[1:])
 	case "list":
-		return runAIProviderList(registry, args[1:])
+		return runAIProviderList(application, registry, args[1:])
 	default:
 		return fmt.Errorf("unknown ai-provider command %q", args[0])
 	}
 }
 
-func runAIProviderLogin(registry *aiprovider.Registry, store *aiprovider.Store, args []string) error {
-	values := aiProviderLoginArgs{}
-	if err := parseAIProviderArgs("grepple ai-provider login", args, &values); err != nil {
+func runAIProviderLogin(application cliruntime.Context, registry *aiprovider.Registry, store *aiprovider.Store, args []string) error {
+	values := ProviderLoginArgs{}
+	if err := parseAIProviderArgs(application.Stdout(), "grepple ai-provider login", args, &values); err != nil {
 		if errors.Is(err, errAIProviderHelp) {
 			return nil
 		}
 		return err
 	}
+	return executeAIProviderLogin(application, registry, store, &values)
+}
+
+func executeAIProviderLogin(application cliruntime.Context, registry *aiprovider.Registry, store *aiprovider.Store, values *ProviderLoginArgs) error {
 	provider, err := registry.Provider(defaultAIProvider(values.Provider))
 	if err != nil {
 		return err
 	}
 	// Device instructions must bypass the bounded stdout collector so they are
 	// visible while Login waits for browser authorization.
-	loginOptions := aiprovider.LoginOptions{NoBrowser: values.NoBrowser, Output: os.Stderr, ReadSecret: readAIProviderSecret}
+	loginOptions := aiprovider.LoginOptions{NoBrowser: values.NoBrowser, Output: application.Stderr(), ReadSecret: func(ctx context.Context, prompt string) (string, error) {
+		return readAIProviderSecret(application, ctx, prompt)
+	}}
 	if err := provider.Login(context.Background(), loginOptions); err != nil {
 		return err
 	}
-	return cliruntime.NewOutput(os.Stdout).WriteString(fmt.Sprintf("Authentication configured for %s; provider state: %s\n", provider.Name(), store.Path()))
+	return cliruntime.NewOutput(application.Stdout()).WriteString(fmt.Sprintf("Authentication configured for %s; provider state: %s\n", provider.Name(), store.Path()))
 }
 
-func runAIProviderLogout(registry *aiprovider.Registry, args []string) error {
-	values := aiProviderNameArgs{}
-	if err := parseAIProviderArgs("grepple ai-provider logout", args, &values); err != nil {
+func runAIProviderLogout(application cliruntime.Context, registry *aiprovider.Registry, args []string) error {
+	values := ProviderNameArgs{}
+	if err := parseAIProviderArgs(application.Stdout(), "grepple ai-provider logout", args, &values); err != nil {
 		if errors.Is(err, errAIProviderHelp) {
 			return nil
 		}
 		return err
 	}
+	return executeAIProviderLogout(application, registry, &values)
+}
+
+func executeAIProviderLogout(application cliruntime.Context, registry *aiprovider.Registry, values *ProviderNameArgs) error {
 	provider, err := registry.Provider(defaultAIProvider(values.Provider))
 	if err != nil {
 		return err
@@ -85,16 +95,20 @@ func runAIProviderLogout(registry *aiprovider.Registry, args []string) error {
 	if err := provider.Logout(); err != nil {
 		return err
 	}
-	return cliruntime.NewOutput(os.Stdout).WriteString("Logged out of " + provider.Name() + ".\n")
+	return cliruntime.NewOutput(application.Stdout()).WriteString("Logged out of " + provider.Name() + ".\n")
 }
 
-func runAIProviderList(registry *aiprovider.Registry, args []string) error {
+func runAIProviderList(application cliruntime.Context, registry *aiprovider.Registry, args []string) error {
 	if len(args) > 0 && (args[0] == "--help" || args[0] == "-h") {
-		return cliruntime.NewOutput(os.Stdout).WriteString("Usage: grepple ai-provider list\n")
+		return cliruntime.NewOutput(application.Stdout()).WriteString("Usage: grepple ai-provider list\n")
 	}
 	if len(args) != 0 {
 		return fmt.Errorf("ai-provider list accepts no arguments")
 	}
+	return executeAIProviderList(application, registry)
+}
+
+func executeAIProviderList(application cliruntime.Context, registry *aiprovider.Registry) error {
 	for _, name := range registry.Names() {
 		provider, _ := registry.Provider(name)
 		loggedIn, err := provider.LoggedIn()
@@ -105,21 +119,21 @@ func runAIProviderList(registry *aiprovider.Registry, args []string) error {
 		if loggedIn {
 			status = "logged-in"
 		}
-		if err := cliruntime.NewOutput(os.Stdout).WriteString(name + "\t" + status + "\n"); err != nil {
+		if err := cliruntime.NewOutput(application.Stdout()).WriteString(name + "\t" + status + "\n"); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func parseAIProviderArgs(program string, args []string, target any) error {
+func parseAIProviderArgs(output io.Writer, program string, args []string, target any) error {
 	parser, err := arg.NewParser(arg.Config{Program: program}, target)
 	if err != nil {
 		return err
 	}
 	if err := parser.Parse(args); err != nil {
 		if errors.Is(err, arg.ErrHelp) {
-			parser.WriteHelp(os.Stdout)
+			parser.WriteHelp(output)
 			return errAIProviderHelp
 		}
 		return err
@@ -127,22 +141,22 @@ func parseAIProviderArgs(program string, args []string, target any) error {
 	return nil
 }
 
-func readAIProviderSecret(ctx context.Context, prompt string) (string, error) {
+func readAIProviderSecret(application cliruntime.Context, ctx context.Context, prompt string) (string, error) {
 	select {
 	case <-ctx.Done():
 		return "", ctx.Err()
 	default:
 	}
-	fmt.Fprint(os.Stderr, prompt+": ")
-	if term.IsTerminal(int(os.Stdin.Fd())) {
-		secret, err := term.ReadPassword(int(os.Stdin.Fd()))
-		fmt.Fprintln(os.Stderr)
+	fmt.Fprint(application.Stderr(), prompt+": ")
+	if input, ok := application.Stdin().(*os.File); ok && term.IsTerminal(int(input.Fd())) {
+		secret, err := term.ReadPassword(int(input.Fd()))
+		fmt.Fprintln(application.Stderr())
 		if err != nil {
 			return "", err
 		}
 		return strings.TrimSpace(string(secret)), nil
 	}
-	line, err := bufio.NewReader(os.Stdin).ReadString('\n')
+	line, err := bufio.NewReader(application.Stdin()).ReadString('\n')
 	if err != nil && line == "" {
 		return "", err
 	}

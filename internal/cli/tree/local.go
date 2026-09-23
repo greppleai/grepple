@@ -8,70 +8,82 @@ import (
 	"strings"
 
 	"github.com/greppleai/grepple/api"
-	"github.com/greppleai/grepple/search"
+	"github.com/greppleai/grepple/internal/cliruntime"
+	"github.com/greppleai/grepple/internal/directorymeta"
+	sourcedomain "github.com/greppleai/grepple/internal/sources"
 )
 
-// SourceConfigurator applies repository source-selection policy.
-type SourceConfigurator func(*search.Params) error
+func buildLocal(path string, depth int, repository cliruntime.Repository) (api.TreeResponse, error) {
 
-// NewLocal constructs local tree inspection from source policy and working-directory services.
-func NewLocal(configure SourceConfigurator, workingDirectory func() string) LocalTree {
-	return func(path string, depth int) (api.TreeResponse, error) {
-		return buildLocal(path, depth, configure, workingDirectory)
-	}
-}
-
-func buildLocal(path string, depth int, configure SourceConfigurator, workingDirectory func() string) (api.TreeResponse, error) {
 	if path == "" {
 		path = "."
 	}
-	info, files, err := localSourcePaths(path, configure)
+	info, files, err := localSourcePaths(path, repository)
 	if err != nil {
 		return api.TreeResponse{}, err
 	}
 	working := "."
-	if workingDirectory != nil {
-		working = workingDirectory()
+	if repository != nil {
+		working = repository.WorkingDirectory()
 	}
 	absolute, err := filepath.Abs(path)
 	if err != nil {
 		return api.TreeResponse{}, err
 	}
 	base := absolute
+	metadataFiles := files
 	if !info.IsDir() {
 		base = filepath.Dir(absolute)
+		_, metadataFiles, err = localSourcePaths(base, repository)
+		if err != nil {
+			return api.TreeResponse{}, err
+		}
 	}
-	result := localEntries(files, base, working, depth)
+	inspection := directorymeta.Inspect(working, base, metadataFiles)
+	result := localEntries(files, metadataFiles, base, working, depth)
 	display, err := filepath.Rel(working, absolute)
 	if err != nil {
 		return api.TreeResponse{}, fmt.Errorf("display local tree path: %w", err)
 	}
-	return api.TreeResponse{Repo: ".", Path: filepath.ToSlash(display), Depth: depth, Entries: result}, nil
+	response := api.TreeResponse{
+		Repo:           ".",
+		Path:           filepath.ToSlash(display),
+		Depth:          depth,
+		Entries:        result,
+		Description:    inspection.Metadata.Description,
+		MetadataStatus: inspection.Status,
+		MetadataIssues: append([]string(nil), inspection.Issues...),
+	}
+	return response, nil
 }
 
-func localSourcePaths(path string, configure SourceConfigurator) (os.FileInfo, []string, error) {
+func localSourcePaths(path string, repository cliruntime.Repository) (os.FileInfo, []string, error) {
 	info, err := os.Stat(path)
 	if err != nil {
 		return nil, nil, err
 	}
-	params := search.Params{Files: true, Globs: []string{path}}
-	if configure != nil {
-		if err := configure(&params); err != nil {
+	policy := sourcedomain.Options{}
+	if repository != nil {
+		policy, err = repository.ScopeOptions()
+		if err != nil {
 			return nil, nil, err
 		}
 	}
-	files, err := search.ListFilePaths(params, nil)
+	files, err := sourcedomain.ListWithPolicy(nil, []string{path}, "", policy)
 	return info, files, err
 }
 
-func localEntries(files []string, base, working string, depth int) []api.TreeEntry {
+func localEntries(files, metadataFiles []string, base, working string, depth int) []api.TreeEntry {
 	entries := map[string]bool{}
+	metadataCache := map[string]directorymeta.Inspection{}
 	for _, file := range files {
 		appendLocalPath(entries, file, base, working, depth)
 	}
 	result := make([]api.TreeEntry, 0, len(entries))
 	for entryPath, directory := range entries {
-		result = append(result, api.TreeEntry{Path: entryPath, Dir: directory})
+		entry := api.TreeEntry{Path: entryPath, Dir: directory}
+		entry.Description, entry.MetadataStatus, entry.MetadataIssues = localEntryMetadata(base, working, entryPath, directory, metadataFiles, metadataCache)
+		result = append(result, entry)
 	}
 	sort.Slice(result, func(i, j int) bool {
 		if result[i].Path != result[j].Path {
@@ -80,6 +92,30 @@ func localEntries(files []string, base, working string, depth int) []api.TreeEnt
 		return result[i].Dir && !result[j].Dir
 	})
 	return result
+}
+func localEntryMetadata(base, working, entryPath string, directory bool, files []string, cache map[string]directorymeta.Inspection) (string, string, []string) {
+	metadataDirectory := filepath.Join(base, filepath.FromSlash(entryPath))
+	if !directory {
+		metadataDirectory = filepath.Dir(metadataDirectory)
+	}
+	metadataDirectory = filepath.Clean(metadataDirectory)
+	inspection, found := cache[metadataDirectory]
+	if !found {
+		inspection = directorymeta.Inspect(working, metadataDirectory, files)
+		cache[metadataDirectory] = inspection
+	}
+	if directory {
+		return inspection.Metadata.Description, inspection.Status, append([]string(nil), inspection.Issues...)
+	}
+	name := filepath.Base(filepath.FromSlash(entryPath))
+	if name == directorymeta.FileName {
+		return "Describes this directory's responsibilities and files for Grepple.", inspection.Status, append([]string(nil), inspection.Issues...)
+	}
+	state, exists := inspection.Files[name]
+	if !exists {
+		return "", directorymeta.StatusMissing, []string{"file entry is missing from grepple.yaml"}
+	}
+	return state.Description, state.Status, append([]string(nil), state.Issues...)
 }
 
 func appendLocalPath(entries map[string]bool, file, base, working string, depth int) {

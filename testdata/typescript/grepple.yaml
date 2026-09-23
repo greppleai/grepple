@@ -1,0 +1,18 @@
+description: TypeScript and TSX source fixtures demonstrating functions, React components, and service logic.
+responsibilities:
+    - Demonstrate TypeScript function and class implementations
+    - Exercise React TSX component parsing
+    - Provide representative source structures for analysis
+files:
+    - path: component.tsx
+      description: Defines a simple greeting React component with typed props.
+      kind: fixture
+      checksum: c2dfa751ff0c1bb697fd02b6d608a4e23268999d0c6dc1affc6a75b1791e8539
+    - path: large-component.tsx
+      description: Defines a typed dashboard panel with user messaging and action controls.
+      kind: fixture
+      checksum: fcf57fc5e6a7f5f07592903586b2a2c15d7b0d3d9be5b0883d36aa1ffcc67cf1
+    - path: sample.ts
+      description: Defines typed user formatting and lookup service behavior.
+      kind: fixture
+      checksum: ce01bf3056c1200032f5a095214f7b0c9ddca8798ef3cec8597d735111265f5f

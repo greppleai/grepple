@@ -1,0 +1,108 @@
+description: The cli package parses, normalizes, dispatches, and validates Grepple commands while applying repository scope, output, environment, and projection policies.
+responsibilities:
+    - Register and dispatch application commands
+    - Parse global options and help requests
+    - Normalize default commands and nested modes
+    - Enforce local, remote, and source-independent availability
+    - Apply repository configuration and production-only scope
+    - Spill oversized output into managed artifacts
+    - Preserve repository options across continuations
+    - Propagate requested command exit statuses
+    - Configure navigation cache defaults
+    - Validate CLI import and documentation boundaries
+    - Compare local and remote analysis projections
+    - Verify parity across navigation projections
+    - Benchmark agent workflow artifact handling
+files:
+    - path: agent_workflow_benchmark_test.go
+      description: Benchmarks agent workflows that retrieve inline results or spilled artifacts.
+      kind: test
+      checksum: 0173d2dc83ff239e315bc960952123c67ecd864256c56d951080ca0381b5cc0b
+    - path: application.go
+      description: Defines global arguments and dispatches normalized commands to their implementations.
+      kind: production
+      checksum: 1d4daa205ad0c45bcd63065c62200535c280fcfdc8cece1a471773d2d45c97a2
+    - path: application_test.go
+      description: Tests command selection, global option ownership, and nested argument normalization.
+      kind: test
+      checksum: cc762a3381b4c995fe50c9616d1fa6e1cce3e2dcb4259a3371d39e997199d5c6
+    - path: architecture_test_helpers_test.go
+      description: Provides test helpers for building architecture reports and responsibility outputs.
+      kind: test
+      checksum: a863315f1d8f14e4fa19a04158d2d427f12342515479c617bf178f0d576c6df2
+    - path: args.go
+      description: Parses application arguments, routes help, validates command availability, and runs output spilling.
+      kind: production
+      checksum: 1755710fc2796d16a3cbb1c9b1a47bbda6ed11840964c48639341d910c850f55
+    - path: args_test.go
+      description: Tests top-level help, execution-universe validation, help routing, and default searches.
+      kind: test
+      checksum: 5809a3661bac3cad00658f792b6a6f006823a03131d2171527b663c4c40391cf
+    - path: args_version_test.go
+      description: Tests version dispatch through explicit and aliased invocations.
+      kind: test
+      checksum: f8c8afc0fecadde433092512bd9e9e6e8f5cf31fcffffe1242b4a939073c97ad
+    - path: common_args_test.go
+      description: Verifies common argument server aliases when embedded in command arguments.
+      kind: test
+      checksum: ac9c4f7992a4bd24e3e8b69d75cbbc86c4220dfb60a56fc64c8fec8d27f7c401
+    - path: doc.go
+      description: Documents CLI search, extraction, repository inspection, authentication, rules, and presentation workflows.
+      kind: production
+      checksum: 687f358f00db4608c86c011542417761314d54a9948ef45a5a213f5ab4da62dc
+    - path: documentation_consistency_test.go
+      description: Checks roadmap separation and discoverability of current output-contract documentation.
+      kind: test
+      checksum: fe25c62d8097f47ef0db105b3b8d1543f85eab9c4a4ccec09eb99ce791919764
+    - path: exit.go
+      description: Converts requested non-error command statuses into CLI exit codes.
+      kind: production
+      checksum: 612a8f1c13c30265f0a22574830e90f526e0ad6429571bcd9c65ad724a1edf3c
+    - path: graph_test_helpers_test.go
+      description: Provides test helpers for navigation graph outputs and continuation commands.
+      kind: test
+      checksum: 86267374fb37feac85516db12b5c579a54d091ecdce8b12940b072292df56213
+    - path: import_policy_test.go
+      description: Enforces production import boundaries among CLI adapters, reusable engines, and transport layers.
+      kind: test
+      checksum: 675a881cf128dc45c8ac5ca0b315f841dc43c79c2f1d91d0115c86525fda0a74
+    - path: main_test.go
+      description: Initializes isolated process-level settings for CLI tests.
+      kind: test
+      checksum: eef441bf12a7ffcce1d56eeb61b664b6c6af016b126242877714f765c1871032
+    - path: output_capture_test.go
+      description: Provides helpers for capturing standard output and error during tests.
+      kind: test
+      checksum: 728436758432850ca14756c4f2e16e0a1230913a3fe57482f46721003fb705ce
+    - path: output_spill_compat_test.go
+      description: Adapts output-spill options and execution for CLI tests.
+      kind: test
+      checksum: ada2dcbb97060691c5d1cc3ca60e053309204b8b0cc0bfce75299f2a356a8872
+    - path: output_spill_test.go
+      description: Tests artifact spilling, direct output, option parsing, naming, and repository-scope preservation.
+      kind: test
+      checksum: a241d3d8b086c3f8b8d0b79c9d19ef162d1ca04210b4024b9196df462a86e80f
+    - path: process_defaults.go
+      description: Applies the default navigation cache directory when the environment leaves it unspecified.
+      kind: production
+      checksum: ed491ede49164196e5b441731a65ee00add0cb2623aebbd47e10d92ea08f5d6b
+    - path: process_defaults_test.go
+      description: Tests process defaults while preserving explicit overrides and disabled values.
+      kind: test
+      checksum: fe94a0301813ed654d38745ced96fce1ea6463ae28a800fbb294b273a680d58a
+    - path: remote_analysis_parity_test.go
+      description: Compares local architecture and graph projections with public analysis results.
+      kind: test
+      checksum: 7856be77e6f2f5c0d94c207a23bd87b8c4352ab2f4d373e40ea12c954ab79aec
+    - path: repository_options_test.go
+      description: Tests propagation of repository scope options into graph continuation commands.
+      kind: test
+      checksum: 9fa03aaa25289e87d6ac83eaa4d2fcacc23f77188565e4879942f8ddb3036f14
+    - path: repository_scope_integration_test.go
+      description: Verifies repository configuration bypasses, ignore behavior, and production-only source selection.
+      kind: test
+      checksum: 6e412e01a4397f841baf50edeaf03682dcc487e451cc918d1ea5c7b9b1a9c6b8
+    - path: shared_projection_parity_test.go
+      description: Verifies consistent navigation facts across graph, flow, related, and architecture projections.
+      kind: test
+      checksum: 8f8a3aa98222973557671336089c70334667abf05c1e2ee8c5f1bbfd21786a84

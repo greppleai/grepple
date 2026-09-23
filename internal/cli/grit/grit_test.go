@@ -81,7 +81,7 @@ func TestGritExplainReportsWrappersVariablesAndCompatibility(t *testing.T) {
 	query := "language go\n`exec.Command($args)` where { $args <: r\"^ctx\" }"
 	run := func() string {
 		return captureStdout(t, func() {
-			if err := Run([]string{"explain", "--json", query}, Dependencies{}); err != nil {
+			if err := newWithDependencies(Dependencies{}).Run([]string{"explain", "--json", query}); err != nil {
 				t.Fatal(err)
 			}
 		})
@@ -116,7 +116,7 @@ func TestGritExplainReturnsBoundedCompileDiagnostics(t *testing.T) {
 		t.Fatalf("compile diagnostics=%#v", output)
 	}
 	human := captureStdout(t, func() {
-		if err := Run([]string{"explain", "--max-output-bytes", "120", "language go\n`target($value)`"}, Dependencies{}); err != nil {
+		if err := newWithDependencies(Dependencies{}).Run([]string{"explain", "--max-output-bytes", "120", "language go\n`target($value)`"}); err != nil {
 			t.Fatal(err)
 		}
 	})
@@ -127,7 +127,7 @@ func TestGritExplainReturnsBoundedCompileDiagnostics(t *testing.T) {
 
 func TestGritExplainHelpIsRecursive(t *testing.T) {
 	output := captureStdout(t, func() {
-		if err := Run([]string{"explain", "--help"}, Dependencies{}); err != nil {
+		if err := newWithDependencies(Dependencies{}).Run([]string{"explain", "--help"}); err != nil {
 			t.Fatal(err)
 		}
 	})
@@ -265,7 +265,7 @@ func TestRunGritLocalHumanOutputUsesStructuralRange(t *testing.T) {
 }
 
 func TestRunDispatchesGritWithoutChangingSearchParsing(t *testing.T) {
-	if err := Run([]string{"language go\n`=>`"}, Dependencies{}); err == nil {
+	if err := newWithDependencies(Dependencies{}).Run([]string{"language go\n`=>`"}); err == nil {
 		t.Fatal("invalid structural query was dispatched as legacy text search")
 	}
 }

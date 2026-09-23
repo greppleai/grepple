@@ -21,7 +21,7 @@ func TestBuildCachedGraphUsesInjectedNavigationWithoutCache(t *testing.T) {
 }
 
 func TestRunRejectsInvalidBoundaryLimit(t *testing.T) {
-	if err := Run([]string{"--limit", "-1"}, Dependencies{}); err == nil {
+	if err := newWithDependencies(Dependencies{}).Run([]string{"--limit", "-1"}); err == nil {
 		t.Fatal("negative limit accepted")
 	}
 }

@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"testing"
 
+	boundaryanalysis "github.com/greppleai/grepple/internal/boundaryanalysis"
 	"github.com/greppleai/grepple/parser"
 )
 
@@ -157,7 +158,7 @@ func TestAnalyzeTypeBoundariesFindsImportedAndOwnedTypeSpread(t *testing.T) {
 }
 
 func TestBoundaryTypeOriginClassification(t *testing.T) {
-	context := boundaryDependencyContext{roots: []string{"example.com/app", "com.example.app"}}
+	roots := []string{"example.com/app", "com.example.app"}
 	tests := []struct {
 		language string
 		path     string
@@ -178,7 +179,7 @@ func TestBoundaryTypeOriginClassification(t *testing.T) {
 		{"python", "requests", BoundaryTypeOriginUnresolved},
 	}
 	for _, test := range tests {
-		if got := boundaryTypeOriginForImport(test.language, test.path, context); got != test.want {
+		if got := boundaryanalysis.TypeOriginForImport(test.language, test.path, roots); got != test.want {
 			t.Errorf("origin(%q, %q) = %q, want %q", test.language, test.path, got, test.want)
 		}
 	}
@@ -202,7 +203,7 @@ func TestClassifyTypeBoundaryRisk(t *testing.T) {
 		{"test only third-party", BoundaryTypeSpread{Origin: BoundaryTypeOriginThirdParty, Tests: BoundaryBreadth{Files: 2}}, BoundaryRiskInformational, "test-only-spread"},
 	}
 	for _, test := range tests {
-		risk, reasons := classifyTypeBoundary(test.spread)
+		risk, reasons := boundaryanalysis.ClassifyTypeBoundary(test.spread)
 		if risk != test.risk || !reflect.DeepEqual(reasons, []string{test.reason}) {
 			t.Errorf("%s: risk=%q reasons=%v, want %q [%s]", test.name, risk, reasons, test.risk, test.reason)
 		}

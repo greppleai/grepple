@@ -1,0 +1,26 @@
+description: Provides the examples command and its task-oriented Grepple workflow catalog for source orientation, retrieval, editing, impact analysis, boundary triage, auditing, diagramming, and architecture analysis.
+responsibilities:
+    - Define copyable workflow tasks and command sequences
+    - Select all workflows or one named workflow
+    - Render workflow descriptions and commands
+    - Validate task names and argument counts
+    - Display workflow help and supported task names
+    - Enforce unique workflow names and commands
+    - Test command execution through configurable output writers
+files:
+    - path: examples.go
+      description: Implements the examples command, workflow catalog, task selection, rendering, help output, and argument validation.
+      kind: production
+      checksum: b54ef1ec629d9d86d4325c1a426409f9f17a42aef6af33a910b5d01867b69f01
+    - path: examples_test.go
+      description: Tests workflow selection, help and validation errors, and uniqueness and completeness of workflow guidance.
+      kind: test
+      checksum: 6c6fdeca5d9a374238f95efdcb0e0d6c9ec3276c38a1d9d59334c99cfea58d96
+    - path: integration_test.go
+      description: Verifies complete workflow coverage, single-task filtering, unknown-task rejection, and help task listings.
+      kind: test
+      checksum: 6634d2750ccc0b1f3d2ff89a03259c27a791ab9aa900e47270b7ab4d33760cbb
+    - path: test_helpers_test.go
+      description: Provides a test helper that runs the examples command with supplied arguments and an output writer.
+      kind: test
+      checksum: 5ae1d7cdb83d816988e5e6c7999c1220c38da98cb71879e03bff7e4885a93fbc

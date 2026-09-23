@@ -14,7 +14,7 @@ import (
 	"github.com/greppleai/grepple/internal/usersettings"
 )
 
-type anchorSetupArgs struct {
+type SetupArgs struct {
 	Provider        string   `arg:"--provider,required" placeholder:"NAME" help:"provider name to add or update"`
 	Command         string   `arg:"--command,required" placeholder:"ABSOLUTE_PATH" help:"absolute provider executable path"`
 	CommandArgs     []string `arg:"--command-arg,separate" placeholder:"ARG" help:"append one literal executable argument; repeatable"`
@@ -25,13 +25,13 @@ type anchorSetupArgs struct {
 	Force           bool     `arg:"--force" help:"replace an existing provider with different settings; requires --write"`
 }
 
-func (anchorSetupArgs) Description() string {
+func (SetupArgs) Description() string {
 	return "Preview or explicitly write a user-owned anchor provider. Without --write, settings are printed and the filesystem is unchanged."
 }
 
 // RunSetup previews or writes anchor-provider settings.
 func RunSetup(args []string) error {
-	values := anchorSetupArgs{}
+	values := SetupArgs{}
 	argumentParser, err := arg.NewParser(arg.Config{Program: "grepple anchors setup"}, &values)
 	if err != nil {
 		return err
@@ -44,7 +44,11 @@ func RunSetup(args []string) error {
 		}
 		return err
 	}
-	settings, settingsPath, _, err := prepareAnchorSetup(values)
+	return executeSetup(&values)
+}
+
+func executeSetup(values *SetupArgs) error {
+	settings, settingsPath, _, err := prepareAnchorSetup(*values)
 	if err != nil {
 		return err
 	}
@@ -58,7 +62,7 @@ func RunSetup(args []string) error {
 	return cliruntime.NewOutput(os.Stdout).WriteString(message)
 }
 
-func prepareAnchorSetup(values anchorSetupArgs) (usersettings.Config, string, usersettings.Provider, error) {
+func prepareAnchorSetup(values SetupArgs) (usersettings.Config, string, usersettings.Provider, error) {
 	if values.Force && !values.Write {
 		return usersettings.Config{}, "", usersettings.Provider{}, fmt.Errorf("--force requires --write")
 	}

@@ -2,21 +2,21 @@ package render
 
 import (
 	"fmt"
+	"github.com/greppleai/grepple/navigation"
+	"github.com/greppleai/grepple/search"
 	"sort"
 	"strings"
-
-	"github.com/greppleai/grepple/api"
 )
 
 type relatedTypeDefinition struct {
 	name, path string
-	artifact   *api.NavigationArtifactIdentity
+	artifact   *navigation.ArtifactIdentity
 	start, end int
-	segments   []api.ResultSegment
+	segments   []search.ResultSegment
 	roles      []string
 }
 
-func collectRelatedTypeDefinitions(results []api.FileResult) []relatedTypeDefinition {
+func collectRelatedTypeDefinitions(results []search.FileResult) []relatedTypeDefinition {
 	definitions := make(map[string]relatedTypeDefinition)
 	for _, result := range results {
 		collectRelatedTypePoints(result.Related, definitions)
@@ -51,7 +51,7 @@ func relatedTypeArtifactDigest(definition relatedTypeDefinition) string {
 	return definition.artifact.Digest
 }
 
-func collectRelatedTypePoints(points []api.RelatedSymbol, definitions map[string]relatedTypeDefinition) {
+func collectRelatedTypePoints(points []navigation.RelatedSymbol, definitions map[string]relatedTypeDefinition) {
 	for _, point := range points {
 		if point.Direction != "type" || point.Path == "" || len(point.Segments) == 0 {
 			continue
@@ -65,7 +65,7 @@ func collectRelatedTypePoints(points []api.RelatedSymbol, definitions map[string
 		if !exists {
 			definition = relatedTypeDefinition{
 				name: point.Name, path: point.Path, artifact: point.Artifact, start: point.Start, end: point.End,
-				segments: append([]api.ResultSegment(nil), point.Segments...),
+				segments: append([]search.ResultSegment(nil), point.Segments...),
 			}
 		}
 		definition.roles = appendUniqueRelatedTypeRole(definition.roles, point.Role)

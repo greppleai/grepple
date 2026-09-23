@@ -1,0 +1,19 @@
+description: The version package formats reproducible release and runtime metadata and exposes it through the CLI.
+responsibilities:
+    - Define injected release and source metadata
+    - Incorporate Go module and VCS build settings
+    - Mark versions built from modified sources
+    - Expose version metadata through the CLI
+files:
+    - path: doc.go
+      description: This file documents the package as responsible for formatting reproducible build and runtime version metadata.
+      kind: production
+      checksum: b724ad4dcaf2c28fb625967c51ca265608b41854f2f857fad5f9b12d7b9db377
+    - path: version.go
+      description: This file defines build metadata, reproducible version formatting, VCS setting handling, and the version command.
+      kind: production
+      checksum: bc4682b350dcbcd1a402ff2e02e33bf06fb4ad4cb13cf426bd3748fb00b2a8f1
+    - path: version_test.go
+      description: This file tests reproducible metadata formatting and version command output.
+      kind: test
+      checksum: e1d614014dc4461ddee31081b81cb4f44eb3d3059834f91e840a9bf3f23b24d8

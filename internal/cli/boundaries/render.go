@@ -3,10 +3,10 @@ package boundaries
 import (
 	"strings"
 
-	"github.com/greppleai/grepple/search"
+	"github.com/greppleai/grepple/analysis"
 )
 
-func writeBoundaryFacadeBypasses(write func(string, ...any) bool, bypasses []search.BoundaryFacadeBypass, limit int) bool {
+func writeBoundaryFacadeBypasses(write func(string, ...any) bool, bypasses []analysis.BoundaryFacadeBypass, limit int) bool {
 	if !write("\nfacade bypass signals:") {
 		return false
 	}
@@ -25,7 +25,7 @@ func writeBoundaryFacadeBypasses(write func(string, ...any) bool, bypasses []sea
 	return true
 }
 
-func writeBoundarySignals(write func(string, ...any) bool, candidate search.BoundaryCandidate) bool {
+func writeBoundarySignals(write func(string, ...any) bool, candidate analysis.BoundaryCandidate) bool {
 	if len(candidate.Signals) == 0 {
 		return true
 	}

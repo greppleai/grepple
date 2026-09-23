@@ -3,9 +3,10 @@ package render
 import (
 	"bytes"
 	"fmt"
+	"github.com/greppleai/grepple/navigation"
+	"github.com/greppleai/grepple/search"
 	"io"
 
-	"github.com/greppleai/grepple/api"
 	"github.com/greppleai/grepple/linerange"
 )
 
@@ -19,7 +20,7 @@ type SearchOptions struct {
 }
 
 // Search renders search results and updates output-context coverage.
-func Search(options SearchOptions, results []api.FileResult) error {
+func Search(options SearchOptions, results []search.FileResult) error {
 	warnLineRangeResults(results, options.ErrorOutput)
 	guard := newContextGuard(options, results)
 	written, err := Render(options.Options, results, options.Output, guard)
@@ -30,7 +31,7 @@ func Search(options SearchOptions, results []api.FileResult) error {
 	return err
 }
 
-func warnLineRangeResults(results []api.FileResult, destination io.Writer) {
+func warnLineRangeResults(results []search.FileResult, destination io.Writer) {
 	if destination == nil {
 		return
 	}
@@ -47,7 +48,7 @@ func warnLineRangeResults(results []api.FileResult, destination io.Writer) {
 	}
 }
 
-func recordGuardLineRangeOutcomes(guard *segmentContextGuard, results []api.FileResult) {
+func recordGuardLineRangeOutcomes(guard *segmentContextGuard, results []search.FileResult) {
 	for _, result := range results {
 		if result.LineRange == nil {
 			continue
@@ -61,7 +62,7 @@ func recordGuardLineRangeOutcomes(guard *segmentContextGuard, results []api.File
 	}
 }
 
-func newContextGuard(options SearchOptions, results []api.FileResult) *segmentContextGuard {
+func newContextGuard(options SearchOptions, results []search.FileResult) *segmentContextGuard {
 	if options.InlineThreshold < 1 || !options.ContextEnabled {
 		return nil
 	}
@@ -133,7 +134,7 @@ func jsonCoverageProducerMode(options Options) bool { return options.JSON == "fu
 func enclosingLineCoverageProducerMode(options Options) bool {
 	return options.JSON == "off" && options.LineOnly && options.Params.EnclosingRanges && !options.Stdin
 }
-func focusedLineResultCount(options Options, results []api.FileResult) int {
+func focusedLineResultCount(options Options, results []search.FileResult) int {
 	if !focusedLineCoverageMode(options) {
 		return 0
 	}
@@ -146,7 +147,7 @@ func focusedLineResultCount(options Options, results []api.FileResult) int {
 func segmentOutputMode(options Options) bool {
 	return options.JSON == "off" && !options.Params.Files && !options.FilesWithMatches && !options.Count && options.Params.BeforeContext == 0 && options.Params.AfterContext == 0 && !options.OnlyMatching && !options.LineOnly
 }
-func completeResultSegmentCount(results []api.FileResult, includeAllRelated bool) int {
+func completeResultSegmentCount(results []search.FileResult, includeAllRelated bool) int {
 	count := 0
 	for _, result := range results {
 		count += completeSegmentCount(result.Segments)
@@ -154,7 +155,7 @@ func completeResultSegmentCount(results []api.FileResult, includeAllRelated bool
 	}
 	return count
 }
-func completeRelatedSegmentCount(points []api.RelatedSymbol, includeAll bool) int {
+func completeRelatedSegmentCount(points []navigation.RelatedSymbol, includeAll bool) int {
 	count := 0
 	for _, point := range points {
 		if includeAll || point.Direction == "type" {
@@ -166,7 +167,7 @@ func completeRelatedSegmentCount(points []api.RelatedSymbol, includeAll bool) in
 	}
 	return count
 }
-func completeSegmentCount(segments []api.ResultSegment) int {
+func completeSegmentCount(segments []search.ResultSegment) int {
 	count := 0
 	for _, segment := range segments {
 		if completeStructuralSegment(segment) {

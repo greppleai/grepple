@@ -1,0 +1,10 @@
+description: This directory defines conformance cases for Tree-sitter language parsing and query matching.
+responsibilities:
+    - Define valid source matching cases
+    - Define malformed source diagnostic cases
+    - Record expected findings and parse diagnostics
+files:
+    - path: cases.json
+      description: This file records Tree-sitter language conformance inputs, queries, findings, and parse diagnostics.
+      kind: test
+      checksum: 927fc74906bbdca4a3ea7023f048cb5f96899748b321cc88d69365e4dcbbe79f

@@ -4,7 +4,7 @@ import "testing"
 
 func TestCommandDispatchesOperations(t *testing.T) {
 	called := ""
-	command := New(Dependencies{Help: func() error { called = "help"; return nil }, Doctor: func([]string) error { called = "doctor"; return nil }, Setup: func([]string) error { called = "setup"; return nil }})
+	command := newWithDependencies(dependencies{Help: func() error { called = "help"; return nil }, Doctor: func([]string) error { called = "doctor"; return nil }, Setup: func([]string) error { called = "setup"; return nil }})
 	for _, test := range []struct {
 		args []string
 		want string

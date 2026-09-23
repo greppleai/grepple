@@ -1,6 +1,9 @@
 package cli
 
-import "github.com/greppleai/grepple/internal/outputspill"
+import (
+	"github.com/greppleai/grepple/internal/cliruntime"
+	"github.com/greppleai/grepple/internal/outputspill"
+)
 
 type spillOptions struct {
 	disabled  bool
@@ -15,9 +18,9 @@ func parseSpillOptions(args []string) ([]string, spillOptions, error) {
 }
 
 func runWithOutputSpill(args []string, options spillOptions, run func() error) error {
-	repository, _, err := loadRepositoryConfig()
+	repository, _, err := cliruntime.LoadInvocationRepositoryConfig(cliruntime.RepositoryInvocationOptions{})
 	if err != nil {
 		return err
 	}
-	return outputspill.Run(args, outputspill.Options{Disabled: options.disabled, Threshold: options.threshold, Directory: options.directory}, repository.Output.SpillThresholdBytes, mustGetwd(), func(int) error { return run() })
+	return outputspill.Run(args, outputspill.Options{Disabled: options.disabled, Threshold: options.threshold, Directory: options.directory}, repository.Output.SpillThresholdBytes, cliruntime.WorkingDirectory(), func(int) error { return run() })
 }

@@ -1,0 +1,10 @@
+description: This directory contains a Kotlin sample model and service for user lookup.
+responsibilities:
+    - Define the User data model
+    - Find users by identifier
+    - Print trimmed user names
+files:
+    - path: Sample.kt
+      description: This Kotlin sample defines a user model and a service for lookup and display.
+      kind: fixture
+      checksum: 1c260d4af48a75959706126beaebd4c4d5687eb4e97307f8402302b3a487d700

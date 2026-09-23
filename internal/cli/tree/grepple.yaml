@@ -1,0 +1,30 @@
+description: Implements the tree command for depth-limited local and indexed repository source trees with metadata-aware rendering.
+responsibilities:
+    - Parse and validate tree command options
+    - Normalize explicit and legacy repository targets
+    - Dispatch local or indexed repository tree requests
+    - Build sorted depth-limited local entries
+    - Apply directory and file metadata
+    - Render tree responses and manage empty-result exits
+    - Test local metadata handling and request routing
+files:
+    - path: local.go
+      description: Builds sorted depth-limited local entries and attaches directory and file metadata.
+      kind: production
+      checksum: daafea048e702b5c58d4d65db609617090021be0528e604e58d9f260a44c8d8d
+    - path: local_test.go
+      description: Tests local file descriptions, stale metadata, and missing metadata reporting.
+      kind: test
+      checksum: 4bfbe6679f67ad771efad3b36f293ed07362782b2ed7f59d344f411bef05e9f9
+    - path: runtime.go
+      description: Adapts the command context repository into a local tree function.
+      kind: production
+      checksum: 7dd4a9e8b19fc072ba604ede1d25392341ab13c63493a6c21eac657c58b782a0
+    - path: tree.go
+      description: Defines tree options, normalizes targets, dispatches requests, and renders responses.
+      kind: production
+      checksum: e819ae09dc6d9eece83112e8c8c6533ab48c06625ff8e9c36855dbb9627338aa
+    - path: tree_test.go
+      description: Tests default local execution and explicit or legacy remote repository normalization.
+      kind: test
+      checksum: 10bee186d3a08d1eaf107c2dbd542421013e2a9f526591f00b5939b491c93e96

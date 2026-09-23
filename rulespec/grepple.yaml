@@ -1,0 +1,24 @@
+description: The rulespec package defines, normalizes, validates, and serializes legacy text and structural search rules.
+responsibilities:
+    - Define rule models, engines, modes, and resource limits
+    - Normalize text and structural search requests
+    - Validate queries, scopes, compatibility, metadata, and limits
+    - Compile structural queries and preserve legacy text wire compatibility
+    - Test normalization, validation, copying, and serialization behavior
+files:
+    - path: doc.go
+      description: Documents package behavior for normalizing text and structural rules while preserving the legacy text-rule wire shape.
+      kind: production
+      checksum: ca7bfce09e88e2f432c7f59a4a25f509ca9946560e8350e591c2e5fd30548af6
+    - path: model.go
+      description: Defines rule models, structural requests, resource limits, engine identifiers, mode identifiers, and validation constants.
+      kind: production
+      checksum: 32c617a2d1ccb45be1a6a1556745e4a77db412e93ced66ed9ffd0938520194cb
+    - path: rule.go
+      description: Implements engine selection, rule normalization, structural compilation, request validation, metadata defaulting, and identifier generation.
+      kind: production
+      checksum: 2d1eacf8dffa0cbdf8440951d4e6f04370a059d6702e3e438a2b82eb48c6cada
+    - path: rule_test.go
+      description: Verifies structural compilation, invalid-definition rejection, defensive copying, and legacy text-rule serialization.
+      kind: test
+      checksum: f2e9118936b6b4bbd90c5e70b7f7434ff44b8623287d3dc3eb5185209a792815

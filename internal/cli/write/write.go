@@ -15,7 +15,7 @@ import (
 
 	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
 	"github.com/greppleai/grepple/internal/hashline"
-	rendercommand "github.com/greppleai/grepple/internal/render"
+	"github.com/greppleai/grepple/internal/render"
 	"github.com/pmezard/go-difflib/difflib"
 )
 
@@ -29,49 +29,17 @@ const (
 	maxWriteDiagnosticBytes = 240
 )
 
-// Response is the complete structured result of a write transaction.
-type Response = writeResponse
-
-// ResponseFile describes one file in a write transaction result.
-type ResponseFile = writeResponseFile
-
-// ResponseChange describes one anchored change in a write result.
-type ResponseChange = writeResponseChange
-
-// Anchor identifies one editable source line after a write.
-type Anchor = writeAnchor
-
-// Dependencies supplies process-owned streams and lifecycle callbacks.
-type Dependencies struct {
-	Stdin          io.Reader
-	Stdout         io.Writer
-	RequestExit    func(int)
-	RecordResponse func(root string, response Response, returnedBytes int, applied, failed, recordAnchors bool)
-}
-
-// NewContextRecorder adapts write responses to rendered-context coverage.
-func NewContextRecorder(enabled bool, inlineThreshold int) func(string, Response, int, bool, bool, bool) {
-	return func(root string, response Response, returnedBytes int, applied, failed, recordAnchors bool) {
-		files := make([]rendercommand.WriteFile, 0, len(response.Files))
-		for _, file := range response.Files {
-			anchors := responseFileAnchors(file)
-			converted := make([]rendercommand.WriteAnchor, 0, len(anchors))
-			for _, anchor := range anchors {
-				converted = append(converted, rendercommand.WriteAnchor{Line: anchor.Line, Content: anchor.Content})
-			}
-			files = append(files, rendercommand.WriteFile{Path: file.Path, Operation: file.Operation, Changed: file.Changed, Anchors: converted})
+func recordWriteResponse(application cliruntime.Context, root string, response writeResponse, returnedBytes int, applied, failed, recordAnchors bool) {
+	files := make([]render.WriteFile, 0, len(response.Files))
+	for _, file := range response.Files {
+		anchors := responseFileAnchors(file)
+		converted := make([]render.WriteAnchor, 0, len(anchors))
+		for _, anchor := range anchors {
+			converted = append(converted, render.WriteAnchor{Line: anchor.Line, Content: anchor.Content})
 		}
-		rendercommand.RecordWriteResponse(root, files, returnedBytes, applied, failed, recordAnchors, enabled, inlineThreshold)
+		files = append(files, render.WriteFile{Path: file.Path, Operation: file.Operation, Changed: file.Changed, Anchors: converted})
 	}
-}
-func (dependencies Dependencies) withDefaults() Dependencies {
-	if dependencies.Stdin == nil {
-		dependencies.Stdin = os.Stdin
-	}
-	if dependencies.Stdout == nil {
-		dependencies.Stdout = os.Stdout
-	}
-	return dependencies
+	render.RecordWriteResponse(root, files, returnedBytes, applied, failed, recordAnchors, application.Configuration().ContextGuardEnabled(), application.Configuration().InlineOutputThreshold())
 }
 
 const writeHelp = `Apply one validated, hash-anchored transaction across multiple files.
@@ -178,6 +146,24 @@ type writeAnchor struct {
 	Content string `json:"content"`
 }
 
+// Args contains transactional write arguments.
+type Args struct {
+	Root   string    `arg:"--root" default:"." placeholder:"PATH" help:"repository root (default .)"`
+	DryRun bool      `arg:"--dry-run" help:"validate and report without applying changes"`
+	JSON   bool      `arg:"--json" help:"emit the write response as JSON"`
+	Edit   *EditArgs `arg:"subcommand:edit"`
+}
+
+// EditArgs contains literal single-edit arguments.
+type EditArgs struct {
+	Path        string `arg:"--path,required" placeholder:"PATH"`
+	Start       string `arg:"--start,required" placeholder:"HASH"`
+	End         string `arg:"--end" placeholder:"HASH"`
+	ContentFile string `arg:"--content-file" placeholder:"PATH" help:"replacement content file (default stdin)"`
+}
+
+func DefaultArgs() Args { return Args{Root: "."} }
+
 type writeOptions struct {
 	root        string
 	dryRun      bool
@@ -229,41 +215,69 @@ func (counter *writeResponseCounter) Write(content []byte) (int, error) {
 	return written, err
 }
 
-// command owns transactional write dependencies.
-type command struct{ dependencies Dependencies }
+// command owns transactional write behavior.
+type command struct{ context cliruntime.Context }
 
-// New constructs the write command.
-func New(dependencies Dependencies) cliruntime.Command { return &command{dependencies: dependencies} }
-
-// Run executes the write command. Deprecated: construct the command with New.
-func Run(args []string, dependencies Dependencies) error { return New(dependencies).Run(args) }
+// New constructs the write command from the common command context.
+func New(context cliruntime.Context) cliruntime.Command { return &command{context: context} }
 
 // Run executes the write command.
 func (command *command) Run(args []string) error {
-	dependencies := command.dependencies
-	dependencies = dependencies.withDefaults()
+	if command.context == nil {
+		return fmt.Errorf("write command context is unavailable")
+	}
 	options, err := parseWriteOptions(args)
 	if err != nil {
 		return err
 	}
-	if options.help {
-		return cliruntime.NewOutput(dependencies.Stdout).WriteString(writeHelp)
+	return command.execute(options)
+}
+
+// Execute applies application-parsed transactional write arguments.
+func Execute(application cliruntime.Context, values *Args) error {
+	if application == nil {
+		return fmt.Errorf("write command context is unavailable")
 	}
-	output := &writeResponseCounter{writer: dependencies.Stdout}
+	options := writeOptions{root: values.Root, dryRun: values.DryRun, json: values.JSON, contentFile: "-"}
+	if options.root == "" {
+		options.root = "."
+	}
+	if values.Edit != nil {
+		options.literalEdit = true
+		options.path = values.Edit.Path
+		options.start = values.Edit.Start
+		options.end = values.Edit.End
+		if values.Edit.ContentFile != "" {
+			options.contentFile = values.Edit.ContentFile
+		}
+	}
+	validated, err := validateWriteOptions(options)
+	if err != nil {
+		return err
+	}
+	return (&command{context: application}).execute(validated)
+}
+
+func (command *command) execute(options writeOptions) error {
+	application := command.context
+	if options.help {
+		return cliruntime.NewOutput(application.Stdout()).WriteString(writeHelp)
+	}
+	output := &writeResponseCounter{writer: application.Stdout()}
 	var request writeRequest
 	var failure *writeFailure
 	if options.literalEdit {
-		request, failure = decodeLiteralWriteRequest(options, dependencies.Stdin)
+		request, failure = decodeLiteralWriteRequest(options, application.Stdin())
 	} else {
-		request, failure = decodeWriteRequest(dependencies.Stdin)
+		request, failure = decodeWriteRequest(application.Stdin())
 	}
 	if failure != nil {
 		response := failedWriteResponse(options.dryRun, failure)
 		if err := emitWriteResponse(output, response, options.json); err != nil {
 			return err
 		}
-		recordWriteResponse(dependencies, options.root, response, output.written, false, true, false)
-		requestWriteExit(dependencies, 1)
+		recordWriteResponse(application, options.root, response, output.written, false, true, false)
+		application.RequestExit(1)
 		return nil
 	}
 	response, failure := executeWriteRequest(options.root, options.dryRun, request)
@@ -274,23 +288,11 @@ func (command *command) Run(args []string) error {
 		return err
 	}
 	recordAnchors := failure == nil && response.Applied && !options.dryRun && !options.json
-	recordWriteResponse(dependencies, options.root, response, output.written, response.Applied, failure != nil, recordAnchors)
+	recordWriteResponse(application, options.root, response, output.written, response.Applied, failure != nil, recordAnchors)
 	if failure != nil {
-		requestWriteExit(dependencies, 1)
+		application.RequestExit(1)
 	}
 	return nil
-}
-
-func recordWriteResponse(dependencies Dependencies, root string, response Response, returnedBytes int, applied, failed, recordAnchors bool) {
-	if dependencies.RecordResponse != nil {
-		dependencies.RecordResponse(root, response, returnedBytes, applied, failed, recordAnchors)
-	}
-}
-
-func requestWriteExit(dependencies Dependencies, code int) {
-	if dependencies.RequestExit != nil {
-		dependencies.RequestExit(code)
-	}
 }
 
 func parseWriteOptions(args []string) (writeOptions, error) {
@@ -1410,12 +1412,6 @@ func responseFileAnchors(file writeResponseFile) []writeAnchor {
 	}
 	return anchors
 }
-
-// ResolveRoot resolves and validates a write transaction root.
-func ResolveRoot(root string) (string, error) { return resolveWriteRoot(root) }
-
-// ResponseFileAnchors returns the deduplicated anchors rendered for file.
-func ResponseFileAnchors(file ResponseFile) []Anchor { return responseFileAnchors(file) }
 
 // Digest returns the write protocol's SHA-256 content identity.
 func Digest(content []byte) string { return writeDigest(content) }

@@ -1,0 +1,15 @@
+description: Parses command-neutral source locations expressed as paths, single lines, or explicit line ranges.
+responsibilities:
+    - Parse path-only source locations
+    - Parse single-line and line-range selectors
+    - Validate positive and ordered line numbers
+    - Expose starting-line parsing for command consumers
+files:
+    - path: location.go
+      description: Defines source-location data and parsing functions for paths, lines, and ranges.
+      kind: production
+      checksum: c8d0f427700762406b3e5f806a6e6dd1a83ce7cc8886291606bf3d3053b8fd9c
+    - path: location_test.go
+      description: Tests single-line parsing, invalid selectors, explicit ranges, and descending-range rejection.
+      kind: test
+      checksum: 3d104cd0da80770e4ebc26a5081530682e1218a995a255b9734ef059f8e508fc

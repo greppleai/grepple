@@ -1,4 +1,4 @@
-package runtime
+package cliruntime
 
 // Command executes one CLI command from its command-specific arguments.
 type Command interface {

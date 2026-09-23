@@ -6,6 +6,9 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/greppleai/grepple/internal/directorymeta"
+	"github.com/greppleai/grepple/internal/filedigest"
 )
 
 func TestArchitectureDirectoryAndResolveAcrossLanguages(t *testing.T) {
@@ -188,6 +191,43 @@ func writeArchitectureFixture(t testing.TB, root, relative, content string) {
 		t.Fatal(err)
 	}
 	if err := os.WriteFile(path, []byte(content), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if filepath.Base(path) != directorymeta.FileName {
+		writeArchitectureFixtureMetadata(t, path)
+	}
+}
+
+func writeArchitectureFixtureMetadata(t testing.TB, path string) {
+	t.Helper()
+	directory, name := filepath.Dir(path), filepath.Base(path)
+	metadata, err := directorymeta.Read(directory)
+	if err != nil && !os.IsNotExist(err) {
+		t.Fatal(err)
+	}
+	if os.IsNotExist(err) {
+		metadata = directorymeta.Metadata{Description: "Architecture fixtures.", Responsibilities: []string{"Test architecture analysis."}}
+	}
+	digest, err := filedigest.SHA256Hex(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	kind := "production"
+	if strings.HasSuffix(name, "_test.go") || strings.Contains(name, ".test.") || strings.Contains(name, ".spec.") {
+		kind = "test"
+	}
+	entry := directorymeta.File{Path: name, Description: "Architecture fixture.", Kind: kind, Checksum: digest}
+	updated := false
+	for index := range metadata.Files {
+		if metadata.Files[index].Path == name {
+			metadata.Files[index] = entry
+			updated = true
+		}
+	}
+	if !updated {
+		metadata.Files = append(metadata.Files, entry)
+	}
+	if err := directorymeta.Write(directory, metadata); err != nil {
 		t.Fatal(err)
 	}
 }

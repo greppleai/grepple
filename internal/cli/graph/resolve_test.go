@@ -3,21 +3,22 @@ package graph
 import (
 	"bytes"
 	"encoding/json"
+	"os"
+	"path/filepath"
 	"testing"
 
-	"github.com/greppleai/grepple/parser"
+	"github.com/greppleai/grepple/internal/cliruntime"
 )
 
-func TestResolveCommandUsesInjectedGraph(t *testing.T) {
+func TestResolveCommandBuildsItsGraph(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "service.go")
+	if err := os.WriteFile(path, []byte("package service\nfunc Run() {}\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
 	var output bytes.Buffer
 	exitCode := 0
-	command := New(Dependencies{Stdout: &output, LoadOutput: func(paths []string, maxFiles int) (Output, error) {
-		if len(paths) != 1 || paths[0] != "scope" || maxFiles != 3 {
-			t.Fatalf("LoadOutput(%v, %d)", paths, maxFiles)
-		}
-		return Output{Schema: navigationGraphSchema, Sources: SourceSummary{Discovered: 1, Selected: 1, Parsed: 1}, Declarations: []parser.NavigationDeclaration{{ID: "go:function:scope/service.go:1:Run", Name: "Run", Kind: "function", Language: "go", Path: "scope/service.go", Start: 1, End: 2, Visibility: parser.NavigationVisibilityPublic}}}, nil
-	}, RequestExit: func(code int) { exitCode = code }})
-	if err := command.Run([]string{"resolve", "--json", "--symbol", "Run", "--max-files", "3", "scope"}); err != nil {
+	command := New(cliruntime.Environment{Output: &output, Exit: func(code int) { exitCode = code }})
+	if err := command.Run([]string{"resolve", "--json", "--symbol", "Run", "--max-files", "3", path}); err != nil {
 		t.Fatal(err)
 	}
 	var response ResolveOutput
@@ -30,12 +31,14 @@ func TestResolveCommandUsesInjectedGraph(t *testing.T) {
 }
 
 func TestResolveCommandRequestsNonzeroExitForNoMatches(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "service.go")
+	if err := os.WriteFile(path, []byte("package service\nfunc Present() {}\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
 	var output bytes.Buffer
 	exitCode := 0
-	command := New(Dependencies{Stdout: &output, LoadOutput: func([]string, int) (Output, error) {
-		return Output{Declarations: []parser.NavigationDeclaration{}}, nil
-	}, RequestExit: func(code int) { exitCode = code }})
-	if err := command.Run([]string{"resolve", "--json", "--symbol", "Missing"}); err != nil {
+	command := New(cliruntime.Environment{Output: &output, Exit: func(code int) { exitCode = code }})
+	if err := command.Run([]string{"resolve", "--json", "--symbol", "Missing", path}); err != nil {
 		t.Fatal(err)
 	}
 	if exitCode != 1 {

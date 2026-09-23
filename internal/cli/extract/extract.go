@@ -6,12 +6,12 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 
 	"github.com/alexflint/go-arg"
 	codeextract "github.com/greppleai/grepple/extract"
 	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
+	"github.com/greppleai/grepple/internal/sourcelocation"
 	codeparser "github.com/greppleai/grepple/parser"
 )
 
@@ -66,8 +66,7 @@ func writeExtractCheckHelp(mode string) error {
 	}
 }
 
-// Run executes the extract command family. Deprecated: construct the command with New.
-func Run(args []string, dependencies Dependencies) error { return New(dependencies).Run(args) }
+// Run executes extract with the common command context.
 
 // Run executes the extract command family.
 func (command *command) Run(args []string) error {
@@ -138,14 +137,14 @@ func validateExtractArgs(values *extractArgs) error {
 	return nil
 }
 
-func runExtractStructure(values *extractArgs, dependencies Dependencies) error {
+func runExtractStructure(values *extractArgs, dependencies dependencies) error {
 	if values.Entry == "" && values.At == "" {
 		return fmt.Errorf("extract structure requires --entry SYMBOL or --at PATH:LINE; use grepple architecture directory for repository orientation")
 	}
 	return runFocusedStructure(values, dependencies)
 }
 
-func runFocusedStructure(values *extractArgs, dependencies Dependencies) error {
+func runFocusedStructure(values *extractArgs, dependencies dependencies) error {
 	entryFile, entry, roots, err := resolveExtractEntry(values, true, dependencies)
 	if err != nil {
 		return err
@@ -168,7 +167,7 @@ func runFocusedStructure(values *extractArgs, dependencies Dependencies) error {
 	return writeExtractOutput(values.Output, diagram, dependencies)
 }
 
-func runExtractFlow(values *extractArgs, dependencies Dependencies) error {
+func runExtractFlow(values *extractArgs, dependencies dependencies) error {
 	if values.Entry == "" && values.At == "" {
 		return fmt.Errorf("extract flow requires --entry SYMBOL or --at PATH:LINE")
 	}
@@ -187,10 +186,10 @@ func runExtractFlow(values *extractArgs, dependencies Dependencies) error {
 	return writeExtractOutput(values.Output, diagram, dependencies)
 }
 
-func resolveExtractEntry(values *extractArgs, allowStructure bool, dependencies Dependencies) (string, string, []string, error) {
+func resolveExtractEntry(values *extractArgs, allowStructure bool, dependencies dependencies) (string, string, []string, error) {
 	roots := append([]string(nil), values.Source...)
 	if values.At != "" {
-		path, line, err := ParseAt(values.At)
+		path, line, err := sourcelocation.ParseLine(values.At)
 		if err != nil {
 			return "", "", nil, err
 		}
@@ -302,20 +301,7 @@ func extractSourceByPath(sources []codeextract.Source, path string) *codeextract
 	return nil
 }
 
-// ParseAt parses one PATH:LINE source selector.
-func ParseAt(value string) (string, int, error) {
-	index := strings.LastIndex(value, ":")
-	if index < 1 {
-		return "", 0, fmt.Errorf("--at must be PATH:LINE")
-	}
-	line, err := strconv.Atoi(value[index+1:])
-	if err != nil || line < 1 {
-		return "", 0, fmt.Errorf("--at line must be positive")
-	}
-	return value[:index], line, nil
-}
-
-func writeExtractOutput(path, content string, dependencies Dependencies) error {
+func writeExtractOutput(path, content string, dependencies dependencies) error {
 	if path == "" {
 		return cliruntime.NewOutput(dependencies.stdout()).WriteString(content)
 	}

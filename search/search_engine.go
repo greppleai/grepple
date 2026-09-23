@@ -3,7 +3,6 @@ package search
 import (
 	"bytes"
 	"context"
-	"github.com/greppleai/grepple/api"
 	"github.com/greppleai/grepple/linerange"
 	"os"
 	"path/filepath"
@@ -508,7 +507,7 @@ func analyzeMatchStructure(fm *FileMatch, p Params) {
 // set of FileMatches (files = matched files, matches = matching lines). The repo
 // id is derived from each match's display path. Results are returned in the
 // deterministic narrowing order defined by SortRepoCounts.
-func AggregateRepoCounts(matches []FileMatch) []api.RepoCount {
+func AggregateRepoCounts(matches []FileMatch) []RepoCount {
 	type agg struct{ files, matches int }
 	repos := map[string]*agg{}
 	for _, m := range matches {
@@ -521,9 +520,9 @@ func AggregateRepoCounts(matches []FileMatch) []api.RepoCount {
 		a.files++
 		a.matches += len(m.MatchLines)
 	}
-	out := make([]api.RepoCount, 0, len(repos))
+	out := make([]RepoCount, 0, len(repos))
 	for repo, a := range repos {
-		out = append(out, api.RepoCount{Repo: repo, Files: a.files, Matches: a.matches})
+		out = append(out, RepoCount{Repo: repo, Files: a.files, Matches: a.matches})
 	}
 	SortRepoCounts(out)
 	return out
@@ -532,7 +531,7 @@ func AggregateRepoCounts(matches []FileMatch) []api.RepoCount {
 // SortRepoCounts orders counts by matches desc, then files desc, then repo asc.
 // The order is deterministic and surfaces the biggest concentrations first so an
 // agent can narrow to the hottest repositories.
-func SortRepoCounts(counts []api.RepoCount) {
+func SortRepoCounts(counts []RepoCount) {
 	sort.Slice(counts, func(i, j int) bool {
 		if counts[i].Matches != counts[j].Matches {
 			return counts[i].Matches > counts[j].Matches

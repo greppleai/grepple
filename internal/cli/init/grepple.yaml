@@ -1,0 +1,25 @@
+description: Generates validated grepple.yaml metadata for policy-selected source directories using configured language models and confined inspection tools.
+responsibilities:
+    - Parse initialization arguments
+    - Select policy-compliant source files
+    - Support exact-directory generation
+    - Build prompts from existing metadata and authoritative manifests
+    - Generate and validate directory metadata
+    - Preserve authoritative paths and checksums
+    - Configure language model providers
+    - Persist generated metadata
+    - Enforce repository and tool path confinement
+    - Provide bounded tree, grep, and file-reading tools
+files:
+    - path: command.go
+      description: Coordinates initialization parsing, policy-based source selection, prompt construction, model-driven metadata generation, validation, persistence, provider configuration, and path confinement.
+      kind: production
+      checksum: 102ea7cd18fc1f03fda92546a04af0332f179fb2af79478a81107b66016a2946
+    - path: command_test.go
+      description: Tests metadata preservation, source-kind validation, prompt context, confined inspection tools, and exact-directory resolution.
+      kind: test
+      checksum: 297d6471b781fa0cd8dff3e690a2d9f7d5406481e07c9f269ac05d73d373b742
+    - path: tools.go
+      description: Implements bounded directory-tree, source-search, and line-range reading tools with source-policy filtering and current-directory confinement.
+      kind: production
+      checksum: 8e6fec51be6a51a60b44db6db063b1755895eb6eeed77469d8ee47c46f8ce506

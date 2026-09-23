@@ -1,0 +1,16 @@
+description: Generates deterministic parser language metadata from Tree-sitter grammar modules.
+responsibilities:
+    - Inspect configured grammar modules
+    - Parse node, field, child, and subtype metadata
+    - Compute grammar source fingerprints
+    - Expand transitive subtype relationships
+    - Render or validate generated Go metadata
+files:
+    - path: main.go
+      description: Implements the command that inspects Tree-sitter grammars and renders parser metadata.
+      kind: production
+      checksum: 38a9250449194a248843418f954ebcd61c1830114cd9bb63d22db1252c6f4f77
+    - path: main_test.go
+      description: Tests grammar fingerprinting, deterministic rendering, and transitive subtype closure.
+      kind: test
+      checksum: 5b52cdc20b9a8c922936a66718944869397ec1c22924f9b4340bf9d2d4441569

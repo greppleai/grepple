@@ -1,0 +1,17 @@
+description: Captures oversized command output as immutable, content-addressed artifacts and validates spill option parsing.
+responsibilities:
+    - Parse and remove output-spill process flags
+    - Capture command output through temporary files
+    - Persist oversized output using SHA-256 artifact identities
+    - Emit text or JSON spill descriptors
+    - Generate rerunnable no-spill commands
+    - Validate literal separator and invalid flag handling
+files:
+    - path: spill.go
+      description: Implements spill option parsing, output capture, artifact persistence, and descriptor emission.
+      kind: production
+      checksum: f77c02890aacc6e9fbffc152f5af2412c613acadde81c41463432e76f33fa83d
+    - path: spill_test.go
+      description: Tests process flag consumption, literal separator handling, and invalid flag rejection.
+      kind: test
+      checksum: f16e5ea32b94f747f2249a253ae7ee882c481467f7e8551ce383c877cb432cbe

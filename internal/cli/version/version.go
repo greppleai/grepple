@@ -2,8 +2,6 @@ package version
 
 import (
 	"fmt"
-	"io"
-	"os"
 	"runtime"
 	"runtime/debug"
 	"strings"
@@ -21,24 +19,25 @@ var Commit = "unknown"
 // commit timestamp instead of the wall-clock build time keeps builds reproducible.
 var BuildDate = "unknown"
 
-// Dependencies supplies process-owned version command resources.
-type Dependencies struct{ Stdout io.Writer }
+// Args contains version command arguments.
+type Args struct{}
 
-type command struct{ dependencies Dependencies }
+type command struct{ context cliruntime.Context }
 
 // New constructs the version command.
-func New(dependencies Dependencies) cliruntime.Command { return &command{dependencies: dependencies} }
+func New(context cliruntime.Context) cliruntime.Command { return &command{context: context} }
 
 // Run writes build and runtime version metadata.
 func (command *command) Run(args []string) error {
 	if len(args) != 0 {
 		return fmt.Errorf("usage: grepple version")
 	}
-	output := command.dependencies.Stdout
-	if output == nil {
-		output = os.Stdout
-	}
-	return cliruntime.NewOutput(output).WriteString(String() + "\n")
+	return Execute(command.context, &Args{})
+}
+
+// Execute writes build metadata from application-parsed arguments.
+func Execute(application cliruntime.Context, _ *Args) error {
+	return cliruntime.NewOutput(application.Stdout()).WriteString(String() + "\n")
 }
 
 // String returns reproducible version and runtime metadata.

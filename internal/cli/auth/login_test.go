@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -8,11 +9,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/greppleai/grepple/internal/apiclient"
 	"github.com/greppleai/grepple/internal/authstate"
+	"github.com/greppleai/grepple/internal/cliruntime"
 )
 
 func runLogin(args []string) error {
-	return executeLogin(args, Dependencies{ServerDefault: func(value string) string { return value }, StoreLogin: authstate.StoreLogin, ClearToken: authstate.Clear, ConfigPath: authstate.Path})
+	return executeLogin(cliruntime.Environment{}, args)
 }
 
 // TestDeviceFlowAndTokenStorage runs the full device flow against a mock GitHub
@@ -62,14 +65,15 @@ func newDeviceFlowServer(polls *int) *httptest.Server {
 // against the mock, asserting each step, and returns the access token.
 func runDeviceFlow(t *testing.T, client *http.Client, baseURL string, polls *int) string {
 	t.Helper()
-	dc, err := requestDeviceCode(client, baseURL, "cid", "read:user")
+	apiClient := apiclient.New(apiclient.WithHTTPClient(client))
+	dc, err := apiClient.RequestDeviceCode(context.Background(), baseURL, "cid", "read:user")
 	if err != nil {
 		t.Fatalf("requestDeviceCode: %v", err)
 	}
 	if dc.UserCode != "WXYZ-1234" {
 		t.Fatalf("user code = %q", dc.UserCode)
 	}
-	tok, err := pollDeviceToken(client, baseURL, "cid", dc, func(time.Duration) {})
+	tok, err := apiClient.PollDeviceToken(context.Background(), baseURL, "cid", dc, func(time.Duration) {})
 	if err != nil {
 		t.Fatalf("pollDeviceToken: %v", err)
 	}
@@ -80,7 +84,7 @@ func runDeviceFlow(t *testing.T, client *http.Client, baseURL string, polls *int
 	if *polls < 2 {
 		t.Fatalf("expected polling through authorization_pending, polls=%d", *polls)
 	}
-	if login := fetchGitHubLogin(client, baseURL, token); login != "octocat" {
+	if login := apiClient.GitHubLogin(context.Background(), baseURL, token); login != "octocat" {
 		t.Fatalf("login = %q", login)
 	}
 	return token
@@ -124,8 +128,9 @@ func TestDeviceFlowDenied(t *testing.T) {
 		_ = json.NewEncoder(w).Encode(map[string]any{"error": "access_denied"})
 	}))
 	defer srv.Close()
-	dc := deviceCodeResponse{DeviceCode: "D", UserCode: "U", Interval: 1, ExpiresIn: 900}
-	if _, err := pollDeviceToken(srv.Client(), srv.URL, "cid", dc, func(time.Duration) {}); err == nil {
+	dc := apiclient.DeviceCode{DeviceCode: "D", UserCode: "U", Interval: 1, ExpiresIn: 900}
+	client := apiclient.New(apiclient.WithHTTPClient(srv.Client()))
+	if _, err := client.PollDeviceToken(context.Background(), srv.URL, "cid", dc, func(time.Duration) {}); err == nil {
 		t.Fatal("expected error for access_denied")
 	}
 }
@@ -142,7 +147,8 @@ func TestFetchLoginConfig(t *testing.T) {
 		_ = json.NewEncoder(w).Encode(map[string]any{"clientId": "Iv1.server", "scopes": "read:user repo"})
 	}))
 	defer srv.Close()
-	cfg, err := fetchLoginConfig(srv.Client(), srv.URL)
+	client := apiclient.New(apiclient.WithHTTPClient(srv.Client()))
+	cfg, err := client.LoginConfig(context.Background(), srv.URL)
 	if err != nil {
 		t.Fatalf("fetchLoginConfig: %v", err)
 	}
@@ -154,7 +160,7 @@ func TestFetchLoginConfig(t *testing.T) {
 		w.WriteHeader(http.StatusNotFound)
 	}))
 	defer bare.Close()
-	if _, err := fetchLoginConfig(bare.Client(), bare.URL); err == nil {
+	if _, err := apiclient.New(apiclient.WithHTTPClient(bare.Client())).LoginConfig(context.Background(), bare.URL); err == nil {
 		t.Fatal("expected error when server has no /auth/config")
 	}
 }

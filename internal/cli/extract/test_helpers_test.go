@@ -5,11 +5,11 @@ import (
 	"os"
 	"testing"
 
-	codeextract "github.com/greppleai/grepple/extract"
+	"github.com/greppleai/grepple/internal/cliruntime"
 )
 
 func runExtract(args []string) error {
-	return Run(args, Dependencies{LoadSources: func(roots []string) ([]codeextract.Source, error) { return codeextract.LoadSources(roots) }})
+	return New(cliruntime.Environment{Output: os.Stdout, RepositoryContext: cliruntime.RepositoryServices{}}).Run(args)
 }
 
 func captureStdout(t *testing.T, run func()) string {

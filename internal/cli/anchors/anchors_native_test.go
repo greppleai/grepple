@@ -5,13 +5,15 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/greppleai/grepple/internal/anchor"
 	"github.com/greppleai/grepple/internal/usersettings"
 )
 
 func TestNativeAnchorLookupUsesBuiltInHashline(t *testing.T) {
-	content := "alpha\nbeta\n"
-	request := anchorProtocolRequest{ProtocolVersion: anchorProtocolVersion, Files: []anchorProtocolRequestFile{{Path: "/tmp/source", Content: content, Lines: []int{1, 2, 3}}}}
-	lookup, err := nativeAnchorLookup(request, map[string]string{"/tmp/source": "source.txt"})
+	settingsPath := filepath.Join(t.TempDir(), "settings.json")
+	writeJSONFile(t, settingsPath, usersettings.Config{})
+	t.Setenv("GREPPLE_SETTINGS", settingsPath)
+	lookup, err := anchor.Generate([]anchor.File{{Path: "/tmp/source", DisplayPath: "source.txt", Content: "alpha\nbeta\n", Lines: []int{1, 2, 3}}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -36,7 +38,7 @@ func TestDefaultReadAnchorsUseNativeWithoutConfiguredCommand(t *testing.T) {
 			settingsPath := filepath.Join(t.TempDir(), "settings.json")
 			writeJSONFile(t, settingsPath, usersettings.Config{Anchors: testCase.settings})
 			t.Setenv("GREPPLE_SETTINGS", settingsPath)
-			anchors, enabled, err := Read("source.txt", content, []int{1, 2, 3})
+			anchors, enabled, err := anchor.Read("source.txt", content, []int{1, 2, 3})
 			if err != nil {
 				t.Fatal(err)
 			}

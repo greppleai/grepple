@@ -3,7 +3,6 @@ package examples
 
 import (
 	"fmt"
-	"io"
 	"strings"
 
 	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
@@ -52,26 +51,37 @@ var taskExamples = []taskExample{
 	}},
 }
 
-// Dependencies supplies process-owned examples command resources.
-type Dependencies struct{ Output io.Writer }
+// Args contains examples command arguments.
+type Args struct {
+	Task string `arg:"positional" placeholder:"TASK"`
+}
 
-type command struct{ dependencies Dependencies }
+type command struct{ context cliruntime.Context }
 
 // New constructs the examples command.
-func New(dependencies Dependencies) cliruntime.Command { return &command{dependencies: dependencies} }
-
-// Run executes the examples command. Deprecated: construct the command with New.
-func Run(args []string, output io.Writer) error { return New(Dependencies{Output: output}).Run(args) }
+func New(context cliruntime.Context) cliruntime.Command { return &command{context: context} }
 
 // Run executes the examples command.
 func (command *command) Run(args []string) error {
-	output := command.dependencies.Output
 	if len(args) > 1 {
 		return fmt.Errorf("examples accepts at most one task")
 	}
-	writer := cliruntime.NewOutput(output)
 	if len(args) == 1 && (args[0] == "--help" || args[0] == "-h") {
-		return writer.WriteString(help())
+		return cliruntime.NewOutput(command.context.Stdout()).WriteString(help())
+	}
+	values := Args{}
+	if len(args) == 1 {
+		values.Task = args[0]
+	}
+	return Execute(command.context, &values)
+}
+
+// Execute renders examples from application-parsed arguments.
+func Execute(application cliruntime.Context, values *Args) error {
+	writer := cliruntime.NewOutput(application.Stdout())
+	args := []string{}
+	if values.Task != "" {
+		args = append(args, values.Task)
 	}
 	selected, err := selectTaskExamples(args)
 	if err != nil {

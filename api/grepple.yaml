@@ -1,0 +1,47 @@
+description: The api package defines wire-compatible contracts for search, structural analysis, repository navigation, indexing, language capabilities, rules, and bounded result metadata.
+responsibilities:
+    - Define versioned analysis requests and responses.
+    - Model bounded graph traversal and repository analysis.
+    - Specify structural search bindings, findings, diagnostics, limits, and truncation.
+    - Preserve wire-compatible search and navigation contracts.
+    - Represent repository listings, trees, index targets, and rule results.
+    - Validate repository identifiers and reference patterns.
+    - Publish language feature and navigation-fact capabilities.
+    - Standardize result scope, pagination, limits, omissions, and diagnostics.
+files:
+    - path: analysis.go
+      description: Defines versioned graph-backed repository analysis operations, bounded traversal requests, and checkout-aware responses.
+      kind: production
+      checksum: 849834bcd3f8f88469d4b73726f1cb40bbe8c4b822f7896d2bc63689f89d085c
+    - path: analysis_test.go
+      description: Verifies JSON serialization and round-trip behavior for analysis requests and versioned responses.
+      kind: test
+      checksum: d79592d509c958e44c68b62e8855af4cc3700063a1ebd9f3d1b91016df0b919f
+    - path: grit.go
+      description: Defines wire-compatible structural-search requests, bindings, findings, diagnostics, limits, statistics, and responses.
+      kind: production
+      checksum: 8913ae8d6278c704b5e35f5f471e814cbf4c1be80246c765d16a17b5125ed0b1
+    - path: grit_test.go
+      description: Verifies structural-search JSON compatibility, stable response shapes, nullable diagnostics, limits, and legacy rule serialization.
+      kind: test
+      checksum: 480b6161e486790a6014b59135683313ac4a734a0ccf020a64b296a6da66caa6
+    - path: index_config.go
+      description: Validates repository identities and branch or tag glob patterns before indexing configuration crosses trust or filesystem boundaries.
+      kind: production
+      checksum: 40a7f6327b76d1dd3eeaff603bd260657564f5144a3147a0258d548448f54d11
+    - path: language.go
+      description: Models language feature support and normalized navigation-fact capabilities across the feature matrix.
+      kind: production
+      checksum: cd60a1fd53594a25ce5ed65d5ce6b5a6c68ea8711457424a963fdbabdc20b036
+    - path: model.go
+      description: Defines transport contracts and wire-compatible aliases for search, navigation, repositories, trees, rules, and results.
+      kind: production
+      checksum: 1204a457bd33be1b9d00b5901ebd97bb1016a21f9239ff59bedce85e3d42e3c7
+    - path: model_test.go
+      description: Verifies stable JSON fields for search results, ranges, navigation identities, dependency data, source analysis, and metadata.
+      kind: test
+      checksum: e54c73146ef4d876d77b23c88f971e2415f38c352535e8345928daf56fbf10a5
+    - path: result_metadata.go
+      description: Defines the shared result envelope for scope, ordering, pagination, limits, omissions, and diagnostics.
+      kind: production
+      checksum: 30b444e939b26fed543e8f9e16a81fafdd68d0219ee6ba52b21f5327d9ceeb2b

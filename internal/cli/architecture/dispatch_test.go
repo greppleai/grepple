@@ -16,7 +16,7 @@ func TestBuildUsesInjectedSourceConfiguration(t *testing.T) {
 }
 
 func TestRunRejectsUnknownArchitectureCommand(t *testing.T) {
-	if err := Run([]string{"unknown"}, Dependencies{}); err == nil {
+	if err := newWithDependencies(Dependencies{}).Run([]string{"unknown"}); err == nil {
 		t.Fatal("unknown command accepted")
 	}
 }

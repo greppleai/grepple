@@ -1,0 +1,26 @@
+description: The refs package provides a CLI command for listing, filtering, and rendering repository references indexed by a remote service.
+responsibilities:
+    - Parse refs command arguments and validate reference kinds
+    - Resolve server configuration and retrieve indexed references
+    - Filter references by repository and kind
+    - Render tabular or deterministic JSON output
+    - Signal empty non-JSON results through the command context
+    - Capture command output for tests
+    - Verify reference listing and filtering behavior
+files:
+    - path: process_test.go
+      description: This test helper captures standard output while executing command functions.
+      kind: test
+      checksum: b36438b8f79e98b625bf2d805298283c89652b866027c41f34b6bb9144ce1a62
+    - path: refs.go
+      description: This file defines refs command parsing, validation, retrieval, filtering, and output rendering.
+      kind: production
+      checksum: 9beb3d90c5b30eca10e5f19246fe810a3f911689f55aa3c4d0755f846755a48b
+    - path: refs_test.go
+      description: These tests verify indexed reference listing and filtering by repository and reference kind.
+      kind: test
+      checksum: ffce5c33bedbb7bb3b6f729aedea76dbb66fbdbdeb82a5da10cb6600620afbd4
+    - path: runtime.go
+      description: This file declares the refs package and documents its indexed repository reference listing purpose.
+      kind: production
+      checksum: 2e9bc427c5e70f30525af98d83aedc6b604d55711e4dd76da50ed4318ef9a0ae

@@ -1,8 +1,8 @@
 package search
 
 import (
-	"github.com/greppleai/grepple/api"
 	"github.com/greppleai/grepple/linerange"
+	"github.com/greppleai/grepple/navigation"
 	"github.com/greppleai/grepple/parser"
 )
 
@@ -58,7 +58,7 @@ type RelatedPreview struct {
 type RelatedPoint struct {
 	Name, Path, File, Kind, Direction, Confidence, Role string
 	Start, End, CallLine, Distance                      int
-	External                                            *api.ExternalNavigationReference
+	External                                            *navigation.ExternalReference
 	Preview                                             *RelatedPreview
 }
 

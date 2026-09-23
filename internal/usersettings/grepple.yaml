@@ -1,0 +1,16 @@
+description: Manages user-owned Grepple settings, anchor providers, context-guard behavior, and legacy Ask preferences.
+responsibilities:
+    - Load and validate user settings
+    - Resolve settings paths and anchor providers
+    - Report context-guard status
+    - Parse Ask logging preferences and retention periods
+    - Persist settings atomically with private permissions
+files:
+    - path: ask.go
+      description: Loads legacy Ask model and logging preferences and parses positive log-retention durations.
+      kind: production
+      checksum: 889a2f20fff5053571f279639a0ec7171e40cc8c7a36df2244e5b798c15ce70d
+    - path: settings.go
+      description: Defines user settings models and implements JSON loading, provider validation, path resolution, context-guard status, and secure atomic persistence.
+      kind: production
+      checksum: 55dfcded3f60ce737177772f4c1d9dcb7bb500b9d6057d06d4e6a1985e2caadf

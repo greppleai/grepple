@@ -1,0 +1,68 @@
+description: Provides deterministic source-universe analysis through reusable navigation graphs, directory architecture and responsibility projections, boundary reports, relationship evidence, and normalized architecture comparison.
+responsibilities:
+    - Parse selected sources once
+    - Track completeness, failures, and truncation
+    - Build validated navigation graph reports
+    - Project directory architecture and responsibilities
+    - Resolve imports, calls, and type relationships
+    - Generate boundary and facade reports
+    - Normalize and compare architecture reports
+    - Provide symbol and relation evidence projections
+    - Validate deterministic multilingual analysis
+files:
+    - path: analysis_test.go
+      description: Tests deterministic graph, architecture, responsibility, boundary, truncation, unsupported-source, and read-failure analysis.
+      kind: test
+      checksum: 47dbc31d80bf5bd8f49e9695e791bac5c2317c768f4b87fe36d00df14b9fcf0f
+    - path: architecture.go
+      description: Builds language-neutral directory architecture reports with declarations, relations, evidence, and resolution coverage.
+      kind: production
+      checksum: a2a1d42b478c1d56f3ff0e7d88dd1f8c5ec171d4b23d7d623e8df259784bcf5b
+    - path: c_family_import_test.go
+      description: Verifies quoted C-family includes resolve into directory relations with source evidence.
+      kind: test
+      checksum: d0bd03386bf0e1d5e34357c7bbf69f99c90e462cb9d71fe6e21e95e7182ea7c2
+    - path: compare.go
+      description: Normalizes architecture reports and identifies their first deterministic semantic difference.
+      kind: production
+      checksum: da9cad2dff5ec704d9362c146f40728571a33808594ba481306bab33335f2f65
+    - path: compare_test.go
+      description: Verifies architecture comparison normalizes paths and ordering while reporting source-linked changes.
+      kind: test
+      checksum: da93a54c9628672e42181c67456fa034d14986d701393481fd08978e14e07257
+    - path: csharp_import_test.go
+      description: Verifies C# namespace imports resolve into directory architecture relations.
+      kind: test
+      checksum: e6f816b476fbbfbe584d16301215d81b5682076c0585b069c7220ea943ef99a7
+    - path: graph.go
+      description: Constructs complete or queried navigation graph reports with validated filters, traversal, and root selection.
+      kind: production
+      checksum: 333a0d0109649647ee8df1d4011e396869ec1b35b0f14d2857c1c985f6a8b907
+    - path: jvm_import_test.go
+      description: Verifies Java and Kotlin imports resolve into directory architecture relations.
+      kind: test
+      checksum: 319950bf40bc9a1bf49ed1beb3d3530961486d7bb5c6014514498c0d4a446f71
+    - path: projections.go
+      description: Provides deterministic symbol matching, directory normalization, and relation-evidence projection helpers.
+      kind: production
+      checksum: 1430b9abdf0ec90c6c9da661ea7f4e6ad90891638186f8c2d4a81224630b6c9b
+    - path: python_import_test.go
+      description: Verifies Python imports resolve into directory architecture relations with accurate evidence.
+      kind: test
+      checksum: 050759b2f0e265aa76d11fbbe9c4d87f2d3aa95b3d2148a11db7ec2b62425314
+    - path: reports.go
+      description: Builds graph-backed boundary reports and deterministic directory responsibility summaries.
+      kind: production
+      checksum: 3bf89f13b915695c872c526776184518cd35481397ed4fe0853c68785990f011
+    - path: rust_import_test.go
+      description: Verifies Rust module, use, inline, and explicit-path imports resolve into directory relations.
+      kind: test
+      checksum: b94b96bb0915e9aa930aeab8021db1ec92f6006b7d43f81997c9c065b9fe17f1
+    - path: type_relation_test.go
+      description: Verifies imported parameter and field types produce relations while C# aliases remain unqualified.
+      kind: test
+      checksum: 800f2c8465d4f0064c23a2fe44e60726bccd5a6deff48a3f5ee97bb9a14853ca
+    - path: universe.go
+      description: Owns parsed source documents, completeness accounting, reusable navigation analysis, and immutable graph access.
+      kind: production
+      checksum: dceea48caeb331a5b4e611988f1b7b00eb75fa13baa2aba36a0869c2ded41ca8

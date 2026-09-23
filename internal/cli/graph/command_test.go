@@ -1,20 +1,25 @@
 package graph
 
-import "testing"
+import (
+	"bytes"
+	"strings"
+	"testing"
 
-func TestRunDispatchesGraphOperations(t *testing.T) {
-	called := ""
-	dependencies := Dependencies{Build: func([]string) error { called = "build"; return nil }, Diff: func([]string) error { called = "diff"; return nil }, Query: func([]string) error { called = "query"; return nil }}
+	"github.com/greppleai/grepple/internal/cliruntime"
+)
+
+func TestCommandOwnsGraphDispatchAndHelp(t *testing.T) {
 	for _, test := range []struct {
 		args []string
 		want string
-	}{{nil, "build"}, {[]string{"diff"}, "diff"}, {[]string{"callers"}, "query"}} {
-		called = ""
-		if err := Run(test.args, dependencies); err != nil {
-			t.Fatal(err)
+	}{{[]string{"--help"}, "Build a deterministic"}, {[]string{"diff", "--help"}, "Compare semantic"}, {[]string{"callers", "--help"}, "Query a deterministic"}, {[]string{"resolve", "--help"}, "Preview every declaration"}} {
+		var output bytes.Buffer
+		command := New(cliruntime.Environment{Output: &output})
+		if err := command.Run(test.args); err != nil {
+			t.Fatalf("Run(%v): %v", test.args, err)
 		}
-		if called != test.want {
-			t.Fatalf("Run(%v) called %q, want %q", test.args, called, test.want)
+		if !strings.Contains(output.String(), test.want) {
+			t.Fatalf("Run(%v) output=%q", test.args, output.String())
 		}
 	}
 }

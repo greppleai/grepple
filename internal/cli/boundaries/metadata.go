@@ -5,8 +5,8 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/greppleai/grepple/analysis"
 	"github.com/greppleai/grepple/api"
-	graphcommand "github.com/greppleai/grepple/internal/cli/graph"
 	"github.com/greppleai/grepple/internal/shellquote"
 )
 
@@ -21,7 +21,7 @@ func resultMetadata(input MetadataInput, activeScopeFlags func([]string) []strin
 	if report.Truncation != nil {
 		omittedSources = report.Truncation.Skipped
 	}
-	sources := graphcommand.SourceSummary{Discovered: report.Sources.Discovered, Selected: report.Sources.Selected, Parsed: report.Sources.Parsed, Skipped: report.Sources.Skipped, Failed: report.Sources.Failed, Recovered: report.Sources.Recovered}
+	sources := report.Sources
 	metadata := &api.ResultMetadata{Scope: api.ResultScope{Mode: "local", Paths: normalized(input.Paths, "."), ExcludedPaths: []string{}, Repositories: []string{}, ExcludedRepositories: []string{}, Languages: []string{}}, Order: "risk-breadth", Page: api.ResultPage{Limit: input.Limit, Returned: returned, Total: &total, Complete: omittedFindings == 0 && omittedSources == 0 && sources.Failed == 0 && sources.Recovered == 0}, Limits: api.ResultLimits{MaxFiles: input.MaxFiles, MaxOutputBytes: input.MaxOutputBytes, JSONByteUncapped: input.JSON}, Omitted: api.ResultOmissions{Sources: omittedSources, Findings: omittedFindings}, Diagnostics: sourceDiagnostics(sources)}
 	if omittedFindings > 0 || omittedSources > 0 {
 		metadata.NextCommand = continuationCommand(input, omittedSources > 0, activeScopeFlags)
@@ -43,7 +43,7 @@ func normalized(values []string, fallback string) []string {
 	sort.Strings(result)
 	return result
 }
-func sourceDiagnostics(s graphcommand.SourceSummary) []api.ResultDiagnostic {
+func sourceDiagnostics(s SourceSummary) []api.ResultDiagnostic {
 	var result []api.ResultDiagnostic
 	if s.Failed > 0 {
 		result = append(result, api.ResultDiagnostic{Code: "source-failed", Message: fmt.Sprintf("%d selected source files failed analysis", s.Failed)})
@@ -75,11 +75,7 @@ func continuationCommand(input MetadataInput, removeSourceCap bool, activeScopeF
 	return strings.Join(parts, " ")
 }
 
-// GraphFromNavigation projects shared graph output for boundary analysis.
-func GraphFromNavigation(graph graphcommand.Output) GraphOutput {
-	var truncation *Truncation
-	if graph.Truncation != nil {
-		truncation = &Truncation{Reason: graph.Truncation.Reason, Limit: graph.Truncation.Limit, Skipped: graph.Truncation.Skipped}
-	}
-	return GraphOutput{Files: graph.Files, Sources: SourceSummary{Discovered: graph.Sources.Discovered, Selected: graph.Sources.Selected, Parsed: graph.Sources.Parsed, Skipped: graph.Sources.Skipped, Failed: graph.Sources.Failed, Recovered: graph.Sources.Recovered}, Declarations: graph.Declarations, Calls: graph.Calls, Fields: graph.Fields, TypeUsages: graph.TypeUsages, MemberAccesses: graph.MemberAccesses, Truncation: truncation}
+// GraphFromAnalysis projects shared graph output for boundary analysis.
+func GraphFromAnalysis(graph analysis.GraphReport) GraphOutput {
+	return GraphOutput{Files: graph.Files, Sources: graph.Sources, Declarations: graph.Declarations, Calls: graph.Calls, Fields: graph.Fields, TypeUsages: graph.TypeUsages, MemberAccesses: graph.MemberAccesses, Truncation: graph.Truncation}
 }

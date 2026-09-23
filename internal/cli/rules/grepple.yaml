@@ -1,0 +1,31 @@
+description: Implements the predefined remote search command family for creating, managing, and retrieving text and structural rules.
+responsibilities:
+    - Dispatch rule commands and aliases
+    - Parse command arguments and flags
+    - Build and validate text and structural rule requests
+    - Load bounded structural queries
+    - Create, list, inspect, and delete remote rules
+    - Fetch and render materialized rule results
+    - Resolve servers and API dependencies
+    - Test request construction, validation, transport, and output
+files:
+    - path: arguments.go
+      description: Defines rule subcommand argument structures and dispatches parsed commands to their operations.
+      kind: production
+      checksum: 53ca9c5d6da59bb10f295f710b902a05f847641f5c5180f803dd4f3d09300106
+    - path: rules.go
+      description: Implements rule command parsing, request construction, remote operations, validation, and output rendering.
+      kind: production
+      checksum: 4cdeb77bdbd15dbf5fb8fec122fefb7cccee60afc80562243e6be2a8a59f91d6
+    - path: rules_test.go
+      description: Tests rule creation requests, structural query validation, remote interactions, and formatted results.
+      kind: test
+      checksum: f010173284ad39a5e7679001eedc2c23f720e04418d1fc3d522439e80bff86da
+    - path: runtime.go
+      description: Provides command construction, shared dependencies, server resolution, API access, exit handling, and bounded query reading.
+      kind: production
+      checksum: 7e99a1d1afa1ac0edf52bb07f34b4bf001b3cf5bf192be01f1d50753746ba1ae
+    - path: test_helpers_test.go
+      description: Provides test helpers for running rules commands and capturing isolated standard output.
+      kind: test
+      checksum: dd193190ff539b182c03649ff2074718a850d90c48eaf981f5a22827acd1d95a

@@ -43,7 +43,7 @@ func (testResearchBackend) Read(context.Context, ReadInput) (fantasy.ToolRespons
 }
 
 func TestResearchToolsAreTypedAndDirect(t *testing.T) {
-	tools := researchTools(newResearchSession(context.Background(), nil, "test"), testResearchBackend{})
+	tools := researchTools(newToolSession(context.Background(), nil, "test"), testResearchBackend{})
 	info := researchToolInfo(tools)
 	encoded, err := json.Marshal(info)
 	if err != nil {
@@ -60,7 +60,7 @@ func TestResearchToolsAreTypedAndDirect(t *testing.T) {
 }
 
 func TestResearchSessionCachesEquivalentDefaultInputs(t *testing.T) {
-	session := newResearchSession(context.Background(), nil, "test")
+	session := newToolSession(context.Background(), nil, "test")
 	calls := 0
 	execute := func(context.Context) (fantasy.ToolResponse, error) {
 		calls++
@@ -87,7 +87,7 @@ func TestResearchResultDisclosesTruncation(t *testing.T) {
 }
 
 func TestResearchSessionDoesNotCacheToolErrors(t *testing.T) {
-	session := newResearchSession(context.Background(), nil, "test")
+	session := newToolSession(context.Background(), nil, "test")
 	calls := 0
 	execute := func(context.Context) (fantasy.ToolResponse, error) {
 		calls++
@@ -107,7 +107,7 @@ func TestResearchSessionDoesNotCacheToolErrors(t *testing.T) {
 func TestResearchSessionExecutesWithSessionContext(t *testing.T) {
 	type contextKey struct{}
 	sessionContext := context.WithValue(context.Background(), contextKey{}, "session")
-	session := newResearchSession(sessionContext, nil, "test")
+	session := newToolSession(sessionContext, nil, "test")
 	response, err := session.run(context.Background(), "search_code", SearchInput{Query: "needle"}, func(ctx context.Context) (fantasy.ToolResponse, error) {
 		return fantasy.NewTextResponse(ctx.Value(contextKey{}).(string)), nil
 	})

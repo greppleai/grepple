@@ -1,0 +1,38 @@
+description: The anchors CLI dispatches provider doctor and setup commands, validates provider executables and protocols, safely manages user settings, and verifies native anchor behavior.
+responsibilities:
+    - Dispatch doctor and setup subcommands
+    - Diagnose provider configuration and protocol round trips
+    - Render human-readable and JSON diagnostics
+    - Preview and safely persist provider settings
+    - Enforce executable, timeout, and replacement validation
+    - Verify native hashline generation and defaults
+    - Test command routing and provider workflows
+files:
+    - path: anchors_doctor.go
+      description: Diagnoses anchor-provider configuration, executable availability, and temporary-file protocol round trips.
+      kind: production
+      checksum: 31055c40c1e4dec76ac75ec8ecb6403ae990c3c6493629598e718f7df90521e2
+    - path: anchors_native_test.go
+      description: Verifies built-in hashline generation and native anchors when no provider command is configured.
+      kind: test
+      checksum: 9644ed65069c6c64be8f9e061f469e12e5bc3cf05da793b66a9ca024f4dcac2f
+    - path: anchors_setup.go
+      description: Previews or atomically writes validated user-owned anchor-provider settings with explicit safety controls.
+      kind: production
+      checksum: 6e5efb0a9ba14ffd79497ff1f98b995bc51b33c164ee5db66be7904b4c24ae0d
+    - path: anchors_test.go
+      description: Tests doctor diagnostics, setup safety, provider protocol behavior, and executable validation.
+      kind: test
+      checksum: 68d5eb1cda61433efc6872f64a0eab9159d7dac896217950f187e6d476503a0c
+    - path: command.go
+      description: Constructs the anchors command and dispatches help, doctor, and setup operations.
+      kind: production
+      checksum: 7dee5dcef2eacf628405b6db17d8b17b62e56d15aeef5019ba49d1e9c6c0f84d
+    - path: command_test.go
+      description: Tests anchors command dispatch through injectable help, doctor, and setup dependencies.
+      kind: test
+      checksum: bdd66d796cdb77a53736fae59a6b6b265655d044076c8d6041e948ab0e6aadf7
+    - path: test_helpers_test.go
+      description: Provides test command routing, standard-output capture, and JSON settings helpers.
+      kind: test
+      checksum: ab7a2297cccae50e3f4c76c0d40a1429301ba6bb40aba5b52c0bc0cf164ef681

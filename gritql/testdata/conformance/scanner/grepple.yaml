@@ -1,0 +1,10 @@
+description: Scanner conformance data defines expected behavior for UTF-8 handling, parsing, trivia, and resource limits.
+responsibilities:
+    - Define scanner conformance cases
+    - Specify expected findings and diagnostics
+    - Exercise source and resource-limit failures
+files:
+    - path: cases.json
+      description: Grepple-original scanner cases encode inputs, execution limits, findings, and diagnostics.
+      kind: fixture
+      checksum: f909472b57dc0988eeb5f9a0cb544408a4913e9fd414343ca6b831077aae6ee6

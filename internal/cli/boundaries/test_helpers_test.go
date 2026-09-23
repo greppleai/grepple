@@ -48,7 +48,9 @@ func testBoundaryCacheDirectory() string {
 	cache, _ := os.UserCacheDir()
 	return filepath.Join(cache, "grepple", "cache", digest)
 }
-func runBoundaries(args []string) error { return Run(args, testBoundaryDependencies()) }
+func runBoundaries(args []string) error {
+	return newWithDependencies(testBoundaryDependencies()).Run(args)
+}
 func buildCachedBoundaryGraphForTest(paths []string, maxFiles int, useCache bool) (GraphOutput, string, error) {
 	return buildCachedBoundaryGraph(paths, maxFiles, useCache, testBoundaryDependencies())
 }

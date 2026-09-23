@@ -7,7 +7,7 @@ grepple sources explain --compact .
 grepple sources explain --json --production-only src services
 ```
 
-The `grepple-source-scope-v1` report includes the discovered `grepple.json` path and SHA-256 digest, whether configured ignores are active, selected and excluded file totals, exclusion counts by reason, source classifications, and deterministic per-path decisions. Infrastructure patterns such as `.git/**`, `.grepple/**`, and `.worktrees/**` are always listed as unconditional exclusions and are not traversed, so cache or artifact presence cannot change reported file totals. Unreadable or symlinked subtrees are reported separately as omissions rather than misrepresented as known file counts.
+The `grepple-source-scope-v2` report includes the discovered `grepple.json` path and SHA-256 digest, whether configured ignores are active, selected and excluded file totals, exclusion counts by reason, metadata-backed source classifications, and deterministic per-path decisions. Infrastructure patterns such as `.git/**`, `.grepple/**`, and `.worktrees/**` are always listed as unconditional exclusions and are not traversed, so cache or artifact presence cannot change reported file totals. Unreadable or symlinked subtrees are reported separately as omissions rather than misrepresented as known file counts.
 
 ## Scope controls
 
@@ -20,12 +20,13 @@ These are global flags and may appear with search, graph, boundaries, GritQL, fo
 
 ## Classifications
 
-Classification is conservative and language-neutral:
+Classification comes from each file's current `grepple.yaml` entry rather than path or filename conventions. `grepple init` asks the configured model to classify every authoritative file from source evidence using exactly:
 
-- `test`: conventional test directories and filenames such as `tests/`, `_test.go`, `.test.*`, and `.spec.*`;
-- `fixture`: `testdata/`, fixture, example, and sample trees;
-- `generated`: conventional generated/build directory and filename forms;
-- `vendor`: vendored and third-party dependency trees;
-- `production`: everything not confidently classified above.
+- `production`: application or library source used in normal operation;
+- `test`: test implementation or test-only support;
+- `fixture`: examples, samples, or fixture data/source;
+- `generated`: generated or build-produced source;
+- `vendor`: vendored third-party source;
+- `unknown`: evidence is insufficient or no trustworthy classification is available.
 
-Classification is source-scope metadata, not an ownership or deployment verdict. Use the complete universe unless the task explicitly asks about production code. Repository-specific exceptions belong in `grepple.json` ignore policy rather than in inferred package semantics.
+A classification is trusted only when its path is a direct file entry, its kind is valid, and its recorded SHA-256 checksum matches current content. Missing metadata, omitted kinds, invalid kinds, and stale checksums classify the file as `unknown`; Grepple does not infer production status from a filename. Run `grepple init --force --only-directory PATH` after source changes to refresh descriptions, checksums, and kinds. Classification is source-scope metadata, not an ownership or deployment verdict. Use the complete universe unless the task explicitly asks about production code.

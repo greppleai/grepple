@@ -1,0 +1,53 @@
+description: Pi hook internals block legacy search commands, run Stop-hook linting, format diagnostics, validate Mermaid schemas, and detect cross-file struct methods.
+responsibilities:
+    - Block legacy search invocations
+    - Run Go and Mermaid Stop-hook checks
+    - Format bounded diagnostic feedback
+    - Validate source-backed Mermaid schemas
+    - Detect methods separated from struct declarations
+    - Test hook protocols and analyzers
+files:
+    - path: grep_guard.go
+      description: Parses shell commands, detects blocked search invocations through wrappers and interpreters, and emits Claude-compatible denial responses.
+      kind: production
+      checksum: f63f13c502840cad8cc5434516d404e35c9838a208c25f4a42e42dcaefcb6fd8
+    - path: grep_guard_test.go
+      description: Tests blocked-command detection, wrapper and interpreter handling, allow markers, fail-open behavior, and denial output.
+      kind: test
+      checksum: 29ae206265b93bc9b710298d3a57060f76907878232138192cffd8dc429f4e0a
+    - path: lint_check.go
+      description: Executes the Stop-hook lint pipeline with gofmt, revive, custom diagnostics, Mermaid validation, and bounded feedback.
+      kind: production
+      checksum: f51bc61b673c9e0a78494f99eef8071486f7f9ef0ed5afa9f2b8e6831f92cb95
+    - path: lint_check_test.go
+      description: Tests lint-hook input handling, Stop feedback encoding, UTF-8 truncation, line parsing, and Go package errors.
+      kind: test
+      checksum: 398d8e0d381fb3f5e03300bb348211aca652171e47bec8f7eaafd9d692aea75d
+    - path: lint_feedback.go
+      description: Parses revive reports, groups diagnostics deterministically, loads remediation guides, and formats actionable feedback.
+      kind: production
+      checksum: ed91527670b0d611cf75e519178539ec8538b10891c0f9ef73c451b02b3592ab
+    - path: lint_feedback_test.go
+      description: Tests revive parsing, diagnostic grouping, guide fallback, and formatted remediation feedback.
+      kind: test
+      checksum: c8251405ef7498b2b5b5c974dc75d5ecd58c69aeb2c8ad19d6a6066a5405a03f
+    - path: mermaid_code.go
+      description: Discovers Mermaid schemas, analyzes source files, excludes generated parsers, and converts mismatches into diagnostics.
+      kind: production
+      checksum: f42eefe8b34b79e772d149a3a0513f03d1616cd30c5437285926886d1c26ccfc
+    - path: mermaid_code_test.go
+      description: Tests Mermaid class and flow validation, deterministic ordering, error propagation, generated-source filtering, and lint integration.
+      kind: test
+      checksum: 98ea69b29e10c600e19fce581c42a1d8136f1840519b8e59483e4a3da649946e
+    - path: same_file_struct_methods.go
+      description: Scans Go syntax trees to report struct methods declared outside the file containing their struct type.
+      kind: production
+      checksum: 566174cd9ae04742d536b8149a21fbcd20368a683084aeb59988baf2adb22da8
+    - path: same_file_struct_methods_test.go
+      description: Tests receiver forms, package and directory scoping, syntax parsing, skipped directories, ambiguity handling, and diagnostic shape.
+      kind: test
+      checksum: 3b3d7751e78701a370ed99415eaa59d97bd2943b5538734d0a77759ed47064f0
+    - path: typescript_stop_test.go
+      description: Tests Stop-hook Mermaid validation for TypeScript sources, schema absence, and bounded malformed-schema feedback.
+      kind: test
+      checksum: fb6b803f7132937e9e6ed059b4aa0aaa2c1e94bac4ded99af4bd08fe377c7235

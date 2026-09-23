@@ -1,0 +1,9 @@
+description: A small React component package that defines a titled widget.
+responsibilities:
+    - Define widget properties
+    - Render a titled section
+files:
+    - path: widget.tsx
+      description: Defines a React Widget component that renders its title inside a section.
+      kind: production
+      checksum: f37de049334c8a1cd0cfdeaa6129bcf93b125be539771ea0e41cf2c98f39f145

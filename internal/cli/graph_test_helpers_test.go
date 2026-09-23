@@ -1,23 +1,38 @@
 package cli
 
-import graphcommand "github.com/greppleai/grepple/internal/cli/graph"
+import (
+	"os"
+	"path/filepath"
+	"testing"
+
+	graphcommand "github.com/greppleai/grepple/internal/cli/graph"
+	"github.com/greppleai/grepple/internal/cliruntime"
+)
 
 type navigationGraphOutput = graphcommand.Output
 
-const navigationGraphSchema = graphcommand.Schema
-
 type navigationGraphTruncation = graphcommand.Truncation
-type navigationSourceSummary = graphcommand.SourceSummary
-type graphDiffOutput = graphcommand.DiffOutput
-type graphResolveOutput = graphcommand.ResolveOutput
 
-const navigationResolveSchema = graphcommand.NavigationResolveSchema
-
-func runGraph(args []string) error { return runCommand(append([]string{"graph"}, args...)) }
 func buildNavigationGraphOutputFromPaths(paths []string, maxFiles int) navigationGraphOutput {
 	return graphcommand.BuildFromPaths(paths, maxFiles)
 }
 func graphContinuationCommand(mode string, paths []string, truncation *navigationGraphTruncation) string {
-	return graphcommand.ContinuationCommand(mode, paths, truncation, graphcommand.Services{ActiveScopeFlags: appendActiveRepositoryScopeFlags})
+	return graphContinuationCommandWithOptions(cliruntime.RepositoryInvocationOptions{}, mode, paths, truncation)
+}
+
+func graphContinuationCommandWithOptions(options cliruntime.RepositoryInvocationOptions, mode string, paths []string, truncation *navigationGraphTruncation) string {
+	return graphcommand.ContinuationCommand(newCommandContextWith(options, 0, nil), mode, paths, truncation)
 }
 func shortGraphID(id string) string { return graphcommand.ShortID(id) }
+
+func writeGraphSource(t *testing.T, root, path, content string) string {
+	t.Helper()
+	fullPath := filepath.Join(root, path)
+	if err := os.MkdirAll(filepath.Dir(fullPath), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(fullPath, []byte(content), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	return fullPath
+}

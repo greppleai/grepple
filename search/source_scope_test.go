@@ -4,6 +4,9 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/greppleai/grepple/internal/directorymeta"
+	"github.com/greppleai/grepple/internal/filedigest"
 )
 
 func TestInspectSourceScopeExplainsIgnoresProductionAndExplicitBypass(t *testing.T) {
@@ -13,6 +16,7 @@ func TestInspectSourceScopeExplainsIgnoresProductionAndExplicitBypass(t *testing
 	writeScopeFile(t, root, "sandbox/ignored.go")
 	writeScopeFile(t, root, ".grepple/cache/facts.bin")
 	writeScopeFile(t, root, ".gitignore")
+	writeScopeMetadata(t, root, map[string]string{"main.go": "production", "main_test.go": "test"})
 	if err := os.WriteFile(filepath.Join(root, ".gitignore"), []byte("ignored.txt\n"), 0o600); err != nil {
 		t.Fatal(err)
 	}
@@ -69,6 +73,20 @@ func writeScopeFile(t *testing.T, root, relative string) {
 	}
 }
 
+func writeScopeMetadata(t *testing.T, root string, kinds map[string]string) {
+	t.Helper()
+	files := make([]directorymeta.File, 0, len(kinds))
+	for name, kind := range kinds {
+		digest, err := filedigest.SHA256Hex(filepath.Join(root, name))
+		if err != nil {
+			t.Fatal(err)
+		}
+		files = append(files, directorymeta.File{Path: name, Description: "Scope fixture.", Kind: kind, Checksum: digest})
+	}
+	if err := directorymeta.Write(root, directorymeta.Metadata{Description: "Scope fixtures.", Responsibilities: []string{"Test source scope."}, Files: files}); err != nil {
+		t.Fatal(err)
+	}
+}
 func assertScopeDecision(t *testing.T, decision SourcePathDecision, selected bool, reason string) {
 	t.Helper()
 	if decision.Selected != selected || decision.Reason != reason {

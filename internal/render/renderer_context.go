@@ -2,8 +2,7 @@ package render
 
 import (
 	"fmt"
-
-	"github.com/greppleai/grepple/api"
+	"github.com/greppleai/grepple/search"
 )
 
 type contextRenderer struct {
@@ -12,7 +11,7 @@ type contextRenderer struct {
 	contextGuard ContextGuard
 }
 
-func (renderer contextRenderer) Render(results []api.FileResult) error {
+func (renderer contextRenderer) Render(results []search.FileResult) error {
 	if renderer.contextGuard == nil {
 		renderer.contextGuard = noopContextGuard{}
 	}
@@ -27,7 +26,7 @@ func (renderer contextRenderer) Render(results []api.FileResult) error {
 	return nil
 }
 
-func printContext(output *outputWriter, anchors AnchorLookup, guard ContextGuard, source, path string, lines []api.ContextLine, leading bool) (bool, error) {
+func printContext(output *outputWriter, anchors AnchorLookup, guard ContextGuard, source, path string, lines []search.ContextLine, leading bool) (bool, error) {
 	if anchors != nil {
 		return printAnchoredContext(output, anchors, guard, source, path, lines, leading)
 	}
@@ -50,7 +49,7 @@ func printContext(output *outputWriter, anchors AnchorLookup, guard ContextGuard
 	return len(lines) > 0, nil
 }
 
-func printAnchoredContext(output *outputWriter, anchors AnchorLookup, guard ContextGuard, source, path string, lines []api.ContextLine, leading bool) (bool, error) {
+func printAnchoredContext(output *outputWriter, anchors AnchorLookup, guard ContextGuard, source, path string, lines []search.ContextLine, leading bool) (bool, error) {
 	if len(lines) == 0 {
 		return false, nil
 	}

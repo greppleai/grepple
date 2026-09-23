@@ -1,178 +1,43 @@
 // Package api defines Grepple-controlled HTTP request and response contracts.
 //
-// It intentionally contains only dependency-free data types and constants. Wire
-// validation, defaults, transport behavior, persistence, and application logic
-// belong to the packages that consume these contracts.
+// It owns transport-only envelopes and aliases canonical domain models when the
+// wire schema is identical. Validation, defaults, persistence, and algorithms
+// belong to the domain packages that consume these contracts.
 package api
 
-// SearchRequest is the on-the-wire search request. Nil pointer fields mean
-// "unset", allowing each HTTP surface to apply its defaults.
-type SearchRequest struct {
-	Query           *string  `json:"query,omitempty"`
-	Globs           []string `json:"globs,omitempty"`
-	Regex           *bool    `json:"regex,omitempty"`
-	IgnoreCase      *bool    `json:"ignoreCase,omitempty"`
-	InvertMatch     *bool    `json:"invertMatch,omitempty"`
-	MaxFiles        *int     `json:"maxFiles,omitempty"`
-	Skip            *int     `json:"skip,omitempty"`
-	Limit           *int     `json:"limit,omitempty"`
-	Sort            string   `json:"sort,omitempty"`
-	Repo            any      `json:"repo,omitempty"`
-	ExcludeRepo     any      `json:"excludeRepo,omitempty"`
-	Files           bool     `json:"files,omitempty"`
-	Context         any      `json:"context,omitempty"`
-	BeforeContext   *int     `json:"beforeContext,omitempty"`
-	AfterContext    *int     `json:"afterContext,omitempty"`
-	SkipSegments    bool     `json:"skipSegments,omitempty"`
-	LineRanges      bool     `json:"matchLineRanges,omitempty"`
-	EnclosingRanges bool     `json:"enclosingLineRanges,omitempty"`
-	Related         bool     `json:"related,omitempty"`
-	NoRelated       bool     `json:"noRelated,omitempty"`
-	At              string   `json:"at,omitempty"`
-	FollowRelated   int      `json:"followRelated,omitempty"`
-	CountByRepo     bool     `json:"countByRepo,omitempty"`
-}
+import (
+	"github.com/greppleai/grepple/navigation"
+	"github.com/greppleai/grepple/rulespec"
+	searchdomain "github.com/greppleai/grepple/search"
+)
 
-// ResultMatch is one matching line inside a file.
-type ResultMatch struct {
-	Line      int    `json:"line"`
-	StartLine int    `json:"startLine,omitempty"`
-	EndLine   int    `json:"endLine,omitempty"`
-	Text      string `json:"text"`
-}
+// SearchRequest is retained as a wire-compatible alias of the Search domain request.
+type SearchRequest = searchdomain.Request
 
-// ResultSegment is one structural segment around a file's matches. Kind "spacing"
-// preserves a short whitespace-only gap without a verbose omission marker.
-type ResultSegment struct {
-	Kind  string `json:"kind"`
-	Start int    `json:"start"`
-	End   int    `json:"end"`
-	Text  string `json:"text"`
-}
+// ResultMatch is retained as a wire-compatible alias of the Search domain model.
+type ResultMatch = searchdomain.ResultMatch
 
-// ContextLine is one line of match context.
-type ContextLine struct {
-	Line  int    `json:"line"`
-	Text  string `json:"text"`
-	Match bool   `json:"match"`
-}
+// ResultSegment is retained as a wire-compatible alias of the Search domain model.
+type ResultSegment = searchdomain.ResultSegment
 
-// NavigationArtifactIdentity pins a related declaration to one immutable dependency source artifact.
-type NavigationArtifactIdentity struct {
-	Ecosystem  string `json:"ecosystem"`
-	Module     string `json:"module"`
-	Version    string `json:"version"`
-	RefKind    string `json:"refKind,omitempty"`
-	Integrity  string `json:"integrity,omitempty"`
-	Source     string `json:"source,omitempty"`
-	Repository string `json:"repository,omitempty"`
-	Commit     string `json:"commit,omitempty"`
-	Digest     string `json:"digest,omitempty"`
-}
+// ContextLine is retained as a wire-compatible alias of the Search domain model.
+type ContextLine = searchdomain.ContextLine
 
-// ExternalDependencyCandidate is one exact manifest/lockfile identity that may
-// provide an externally referenced symbol. Multiple candidates preserve JVM
-// package-to-artifact ambiguity until indexed source declarations disambiguate it.
-type ExternalDependencyCandidate struct {
-	Ecosystem string `json:"ecosystem"`
-	Module    string `json:"module"`
-	Version   string `json:"version"`
-	Integrity string `json:"integrity,omitempty"`
-	Source    string `json:"source,omitempty"`
-}
+// Navigation models remain API aliases so existing wire and library consumers
+// preserve their source and JSON compatibility while algorithms use their owner.
+type NavigationArtifactIdentity = navigation.ArtifactIdentity
+type ExternalDependencyCandidate = navigation.ExternalDependencyCandidate
+type ExternalNavigationReference = navigation.ExternalReference
+type NavigationResolveRequest = navigation.ResolveRequest
+type NavigationResolveResult = navigation.ResolveResult
+type NavigationResolveResponse = navigation.ResolveResponse
+type RelatedSymbol = navigation.RelatedSymbol
 
-// ExternalNavigationReference retains syntax evidence needed to resolve one dependency symbol.
-type ExternalNavigationReference struct {
-	ID              string                        `json:"id"`
-	Language        string                        `json:"language"`
-	ImportPath      string                        `json:"importPath"`
-	Package         string                        `json:"package,omitempty"`
-	Symbol          string                        `json:"symbol"`
-	ConsumerPackage string                        `json:"consumerPackage,omitempty"`
-	ReceiverType    string                        `json:"receiverType,omitempty"`
-	Kind            string                        `json:"kind"`
-	Module          string                        `json:"module,omitempty"`
-	Version         string                        `json:"version,omitempty"`
-	Integrity       string                        `json:"integrity,omitempty"`
-	Source          string                        `json:"source,omitempty"`
-	Candidates      []ExternalDependencyCandidate `json:"candidates,omitempty"`
-}
-
-// NavigationResolveRequest batches exact dependency references for shard-local artifact lookup.
-type NavigationResolveRequest struct {
-	References []ExternalNavigationReference `json:"references"`
-}
-
-// NavigationResolveResult preserves correlation between a reference and exact declaration candidates.
-type NavigationResolveResult struct {
-	ID      string          `json:"id"`
-	Symbols []RelatedSymbol `json:"symbols,omitempty"`
-}
-
-// NavigationResolveResponse is returned by a shard's immutable navigation artifact index.
-type NavigationResolveResponse struct {
-	Results []NavigationResolveResult `json:"results"`
-}
-
-// RelatedSymbol points between matched code and a local or artifact-qualified dependency declaration.
-// Confidence is "exact" for a qualified identity match, "import-resolved" when an
-// explicit import identifies the target module, "context-resolved" when declaration
-// kind, file context, or receiver type disambiguates it, "unique-terminal" when only
-// one declaration has the terminal name, "dependency-resolved" for one exact
-// versioned artifact declaration, "dependency-candidate" for multiple exact-version
-// declarations, and "dependency-unresolved" when versioned evidence has no artifact target.
-type RelatedSymbol struct {
-	Name           string                       `json:"name"`
-	Path           string                       `json:"path"`
-	Kind           string                       `json:"kind"`
-	Direction      string                       `json:"direction"`
-	Start          int                          `json:"start"`
-	End            int                          `json:"end"`
-	CallLine       int                          `json:"callLine"`
-	Confidence     string                       `json:"confidence"`
-	Role           string                       `json:"role,omitempty"`
-	External       *ExternalNavigationReference `json:"external,omitempty"`
-	Artifact       *NavigationArtifactIdentity  `json:"artifact,omitempty"`
-	Segments       []ResultSegment              `json:"segments,omitempty"`
-	Related        []RelatedSymbol              `json:"related,omitempty"`
-	OmittedCallers int                          `json:"omittedCallers,omitempty"`
-	OmittedCallees int                          `json:"omittedCallees,omitempty"`
-	OmittedTypes   int                          `json:"omittedTypes,omitempty"`
-}
-
-// LineRangeResult reports how an inclusive source range intersected a file.
-type LineRangeResult struct {
-	RequestedStart int    `json:"requestedStart"`
-	RequestedEnd   int    `json:"requestedEnd"`
-	ReturnedStart  int    `json:"returnedStart,omitempty"`
-	ReturnedEnd    int    `json:"returnedEnd,omitempty"`
-	FileLines      int    `json:"fileLines"`
-	Outcome        string `json:"outcome"`
-	Warning        string `json:"warning,omitempty"`
-}
-
-// FileResult is one matching file.
-type FileResult struct {
-	Path                  string           `json:"path"`
-	Repo                  string           `json:"repo,omitempty"`
-	Language              string           `json:"language"`
-	StructureStatus       string           `json:"structureStatus,omitempty"`
-	Matches               []ResultMatch    `json:"matches"`
-	Segments              []ResultSegment  `json:"segments"`
-	Context               []ContextLine    `json:"context,omitempty"`
-	LineRange             *LineRangeResult `json:"lineRange,omitempty"`
-	Related               []RelatedSymbol  `json:"related,omitempty"`
-	OmittedRelatedCallers int              `json:"omittedRelatedCallers,omitempty"`
-	OmittedRelatedCallees int              `json:"omittedRelatedCallees,omitempty"`
-	OmittedRelatedTypes   int              `json:"omittedRelatedTypes,omitempty"`
-}
-
-// RepoCount is a per-repository tally of matching files and lines.
-type RepoCount struct {
-	Repo    string `json:"repo"`
-	Files   int    `json:"files"`
-	Matches int    `json:"matches"`
-}
+// Search result models remain aliases so existing API consumers preserve source
+// and JSON compatibility while Search owns their behavior and representation.
+type LineRangeResult = searchdomain.LineRangeResult
+type FileResult = searchdomain.FileResult
+type RepoCount = searchdomain.RepoCount
 
 // SearchResponse is the on-the-wire search response.
 type SearchResponse struct {
@@ -228,41 +93,38 @@ type ReposResponse struct {
 
 // TreeEntry is one path in a repository tree listing.
 type TreeEntry struct {
-	Path string `json:"path"`
-	Dir  bool   `json:"dir"`
+	Path           string   `json:"path"`
+	Dir            bool     `json:"dir"`
+	Description    string   `json:"description,omitempty"`
+	MetadataStatus string   `json:"metadataStatus,omitempty"`
+	MetadataIssues []string `json:"metadataIssues,omitempty"`
 }
 
 // TreeResponse is the tree endpoint payload.
 type TreeResponse struct {
-	Repo    string      `json:"repo"`
-	Path    string      `json:"path"`
-	Depth   int         `json:"depth"`
-	Commit  *string     `json:"commit"`
-	Entries []TreeEntry `json:"entries"`
+	Repo           string      `json:"repo"`
+	Path           string      `json:"path"`
+	Description    string      `json:"description,omitempty"`
+	MetadataStatus string      `json:"metadataStatus,omitempty"`
+	MetadataIssues []string    `json:"metadataIssues,omitempty"`
+	Depth          int         `json:"depth"`
+	Commit         *string     `json:"commit"`
+	Entries        []TreeEntry `json:"entries"`
 }
 
 const (
 	// RuleModeCount stores per-repository file and match tallies.
-	RuleModeCount = "count"
+	RuleModeCount = rulespec.ModeCount
 	// RuleModeFiles additionally stores matching file paths.
-	RuleModeFiles = "files"
-	// RuleEngineText identifies legacy literal or regular-expression rules. The empty engine is also text.
-	RuleEngineText = "text"
+	RuleModeFiles = rulespec.ModeFiles
+	// RuleEngineText identifies legacy literal or regular-expression rules.
+	RuleEngineText = rulespec.EngineText
 	// RuleEngineGritQL identifies native structural rules.
-	RuleEngineGritQL = "gritql"
+	RuleEngineGritQL = rulespec.EngineGritQL
 )
 
-// Rule is a saved search materialized per repository.
-type Rule struct {
-	ID         string        `json:"id"`
-	Name       string        `json:"name,omitempty"`
-	Mode       string        `json:"mode"`
-	Engine     string        `json:"engine,omitempty"`
-	Request    SearchRequest `json:"request"`
-	Structural *GritRequest  `json:"structural,omitempty"`
-	CreatedAt  string        `json:"createdAt,omitempty"`
-	UpdatedAt  string        `json:"updatedAt,omitempty"`
-}
+// Rule is retained as a wire-compatible alias of the Rules domain model.
+type Rule = rulespec.Rule
 
 // RuleRepoResult is a rule's materialized result for one repository.
 type RuleRepoResult struct {

@@ -1,0 +1,32 @@
+description: Implements local extract commands that generate and validate source-linked Mermaid structure and call-flow diagrams from supported source code.
+responsibilities:
+    - Parse structure, flow, and check modes
+    - Validate extraction options and entry selectors
+    - Resolve entries by symbol or source location
+    - Load scoped source files through repository services
+    - Generate focused Mermaid structure diagrams
+    - Generate focused Mermaid call-flow diagrams
+    - Validate diagrams against source
+    - Write diagrams to stdout or files
+    - Provide recursive command help and diagnostics
+files:
+    - path: arguments.go
+      description: Defines extract command arguments and dispatches structure, flow, and diagram-check operations.
+      kind: production
+      checksum: 9ead25362a21e4e7561e3a8e25d749e0601b611d5522c3f0a6ce6257c2fdf50f
+    - path: extract.go
+      description: Parses extract commands, resolves entries, generates and validates Mermaid diagrams, and writes their output.
+      kind: production
+      checksum: 3f1783001c3985eb962e4c4ca819bab5875dc023fd1029f4c6b174fbb6abf8c7
+    - path: extract_test.go
+      description: Tests diagram generation, source validation, language adapters, entry selectors, argument validation, and recursive help.
+      kind: test
+      checksum: 9efe0dc4ac8c22bbd661012c34d8718bdc1877bc54a9a63a9ac8b2563b6a529b
+    - path: runtime.go
+      description: Constructs extract commands and loads scoped source files through repository-backed runtime dependencies.
+      kind: production
+      checksum: e599ce5771dc1a469e60adf0daf86c68fa40539227228dda1c4df118b417273c
+    - path: test_helpers_test.go
+      description: Provides helpers for running extract commands and capturing standard output in tests.
+      kind: test
+      checksum: b7243c81c813fd9db10f27a8ac3b17fa800f90d4440506936d48482ba0b81489

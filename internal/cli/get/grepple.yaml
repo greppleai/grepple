@@ -1,0 +1,25 @@
+description: Implements the get command for retrieving indexed repository files, handling line ranges, and rendering content or structural outlines.
+responsibilities:
+    - Parse repository, path, server, range, JSON, outline, and depth options
+    - Fetch raw indexed file content from the configured API
+    - Render plain content, JSON outlines, and textual structural outlines
+    - Report range warnings and errors through diagnostics and exit handling
+    - Record line-range outcomes in context statistics
+    - Test command-context output, range handling, remote retrieval, and outline rendering
+files:
+    - path: context_test.go
+      description: Tests help and outline rendering with command-context output and exit handling.
+      kind: test
+      checksum: 8f9843fa620cbc86089e23d95583fd3ff0befb6f6b6e37ce62b0efb4a89ece48
+    - path: get.go
+      description: Defines get command arguments, indexed file retrieval, range handling, and content or outline rendering.
+      kind: production
+      checksum: d8a71a7696d028de237c47b11db704a658baa2421e7025b8c9622f3033f55988
+    - path: integration_test.go
+      description: Tests HTTP-backed range outcomes, context statistics, exits, and local outline rendering.
+      kind: test
+      checksum: d6c06780e8ab4faef324a1ee6a7efb1c65a66ae5bf1d4f979224a90311084481
+    - path: runtime.go
+      description: Reports line-range errors through diagnostics, context statistics, and command exits.
+      kind: production
+      checksum: 6628ea2608142f08bde890eac19377388f8b1e07fb92e4dc1ed819517436fabd

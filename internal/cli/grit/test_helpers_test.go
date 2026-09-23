@@ -1,21 +1,18 @@
 package grit
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
-	"fmt"
 	"io"
-	"net/http"
 	"os"
 	"os/exec"
 	"strings"
 	"testing"
 
 	"github.com/greppleai/grepple/api"
+	"github.com/greppleai/grepple/internal/apiclient"
 )
 
-func runGrit(args []string) error { return Run(args, testGritDependencies()) }
+func runGrit(args []string) error { return newWithDependencies(testGritDependencies()).Run(args) }
 func testGritDependencies() Dependencies {
 	return Dependencies{CurrentRepository: testCurrentRepository, ServerDefault: func(value string) string { return value }, RequestRemote: testRequestGritRemote, Metadata: func(values Arguments, response api.GritResponse, _ bool) *api.ResultMetadata {
 		total := response.Total
@@ -37,29 +34,7 @@ func testCurrentRepository() string {
 	return value
 }
 func testRequestGritRemote(ctx context.Context, request api.GritRequest, server string) (api.GritResponse, error) {
-	body, err := json.Marshal(request)
-	if err != nil {
-		return api.GritResponse{}, err
-	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, strings.TrimRight(server, "/")+"/public/grit", bytes.NewReader(body))
-	if err != nil {
-		return api.GritResponse{}, err
-	}
-	req.Header.Set("Content-Type", "application/json")
-	if token := os.Getenv("GREPPLE_TOKEN"); token != "" {
-		req.Header.Set("Authorization", "Bearer "+token)
-	}
-	response, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return api.GritResponse{}, err
-	}
-	defer response.Body.Close()
-	if response.StatusCode >= 300 {
-		return api.GritResponse{}, fmt.Errorf("server returned %d", response.StatusCode)
-	}
-	var result api.GritResponse
-	err = json.NewDecoder(response.Body).Decode(&result)
-	return result, err
+	return apiclient.New().Grit(ctx, server, request)
 }
 func withStdin(t *testing.T, content string, run func()) {
 	t.Helper()

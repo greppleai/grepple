@@ -7,9 +7,21 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
-
-	"github.com/greppleai/grepple/api"
 )
+
+type externalDependencyTestResult struct {
+	Path, Repo, Language string
+	Related              []RelatedSymbol
+}
+
+func (result externalDependencyTestResult) ExternalDependencyData() ExternalDependencyData {
+	return ExternalDependencyData{Path: result.Path, Repo: result.Repo, Language: result.Language, Related: result.Related}
+}
+
+func (result externalDependencyTestResult) WithExternalDependencyRelated(related []RelatedSymbol) externalDependencyTestResult {
+	result.Related = related
+	return result
+}
 
 func TestQualifyExternalDependenciesFromGoModule(t *testing.T) {
 	root := t.TempDir()
@@ -18,7 +30,7 @@ require github.com/gofiber/fiber/v3 v3.5.0
 `)
 	mustWriteDependencyFile(t, filepath.Join(root, "go.sum"), "github.com/gofiber/fiber/v3 v3.5.0 h1:exact\n")
 	mustWriteDependencyFile(t, filepath.Join(root, "service.go"), "package service\n")
-	results := []api.FileResult{{Path: "service.go", Related: []api.RelatedSymbol{{External: &api.ExternalNavigationReference{ID: "ctx", Language: "go", ImportPath: "github.com/gofiber/fiber/v3", Symbol: "Ctx", Kind: "type"}}}}}
+	results := []externalDependencyTestResult{{Path: "service.go", Related: []RelatedSymbol{{External: &ExternalReference{ID: "ctx", Language: "go", ImportPath: "github.com/gofiber/fiber/v3", Symbol: "Ctx", Kind: "type"}}}}}
 
 	if err := QualifyExternalDependencies(results, root); err != nil {
 		t.Fatal(err)
@@ -36,7 +48,7 @@ require github.com/gofiber/fiber/v3 v3.5.0
 replace github.com/gofiber/fiber/v3 => ../fiber
 `)
 	mustWriteDependencyFile(t, filepath.Join(root, "service.go"), "package service\n")
-	results := []api.FileResult{{Path: "service.go", Related: []api.RelatedSymbol{{External: &api.ExternalNavigationReference{ID: "ctx", Language: "go", ImportPath: "github.com/gofiber/fiber/v3", Symbol: "Ctx", Kind: "type"}}}}}
+	results := []externalDependencyTestResult{{Path: "service.go", Related: []RelatedSymbol{{External: &ExternalReference{ID: "ctx", Language: "go", ImportPath: "github.com/gofiber/fiber/v3", Symbol: "Ctx", Kind: "type"}}}}}
 
 	if err := QualifyExternalDependencies(results, root); err != nil {
 		t.Fatal(err)
@@ -324,12 +336,12 @@ func TestQualifyExternalDependenciesRejectsNonAuthoritativeNPMLocks(t *testing.T
 	}
 }
 
-func npmExternalDependencyResults() []api.FileResult {
+func npmExternalDependencyResults() []externalDependencyTestResult {
 	return npmExternalDependencyResultsFor("@acme/widgets/subpath")
 }
 
-func npmExternalDependencyResultsFor(importPath string) []api.FileResult {
-	return []api.FileResult{{Path: "main.ts", Language: "typescript", Related: []api.RelatedSymbol{{External: &api.ExternalNavigationReference{ID: "widget", Language: "typescript", ImportPath: importPath, Symbol: "Widget", Kind: "type"}}}}}
+func npmExternalDependencyResultsFor(importPath string) []externalDependencyTestResult {
+	return []externalDependencyTestResult{{Path: "main.ts", Language: "typescript", Related: []RelatedSymbol{{External: &ExternalReference{ID: "widget", Language: "typescript", ImportPath: importPath, Symbol: "Widget", Kind: "type"}}}}}
 }
 
 func TestQualifyExternalDependenciesFromCargoLock(t *testing.T) {
@@ -337,7 +349,7 @@ func TestQualifyExternalDependenciesFromCargoLock(t *testing.T) {
 	mustWriteDependencyFile(t, filepath.Join(root, "Cargo.toml"), "[package]\nname='consumer'\nversion='0.1.0'\n[dependencies]\nacme_widgets={ package='acme-widgets', version='1' }\n")
 	mustWriteDependencyFile(t, filepath.Join(root, "Cargo.lock"), "version = 3\n[[package]]\nname = 'acme-widgets'\nversion = '1.4.0'\nsource = 'registry+https://github.com/rust-lang/crates.io-index'\nchecksum = 'cargo-sum'\n")
 	mustWriteDependencyFile(t, filepath.Join(root, "main.rs"), "fn main() {}")
-	results := []api.FileResult{{Path: "main.rs", Language: "rust", Related: []api.RelatedSymbol{{External: &api.ExternalNavigationReference{ID: "widget", Language: "rust", ImportPath: "acme_widgets::Widget", Symbol: "Widget", Kind: "type"}}}}}
+	results := []externalDependencyTestResult{{Path: "main.rs", Language: "rust", Related: []RelatedSymbol{{External: &ExternalReference{ID: "widget", Language: "rust", ImportPath: "acme_widgets::Widget", Symbol: "Widget", Kind: "type"}}}}}
 	if err := QualifyExternalDependencies(results, root); err != nil {
 		t.Fatal(err)
 	}
@@ -351,7 +363,7 @@ func TestQualifyExternalDependenciesPreservesMavenCandidates(t *testing.T) {
 	root := t.TempDir()
 	mustWriteDependencyFile(t, filepath.Join(root, "pom.xml"), `<project><modelVersion>4.0.0</modelVersion><groupId>consumer</groupId><artifactId>app</artifactId><version>1</version><dependencies><dependency><groupId>com.acme</groupId><artifactId>widgets</artifactId><version>2.3.0</version></dependency><dependency><groupId>com.acme</groupId><artifactId>support</artifactId><version>4.0.0</version></dependency></dependencies></project>`)
 	mustWriteDependencyFile(t, filepath.Join(root, "Main.java"), "class Main {}")
-	results := []api.FileResult{{Path: "Main.java", Language: "java", Related: []api.RelatedSymbol{{External: &api.ExternalNavigationReference{ID: "widget", Language: "java", ImportPath: "com.acme.widgets.Widget", Symbol: "Widget", Kind: "type"}}}}}
+	results := []externalDependencyTestResult{{Path: "Main.java", Language: "java", Related: []RelatedSymbol{{External: &ExternalReference{ID: "widget", Language: "java", ImportPath: "com.acme.widgets.Widget", Symbol: "Widget", Kind: "type"}}}}}
 	if err := QualifyExternalDependencies(results, root); err != nil {
 		t.Fatal(err)
 	}

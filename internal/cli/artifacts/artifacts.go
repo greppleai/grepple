@@ -8,10 +8,16 @@ import (
 
 	"github.com/alexflint/go-arg"
 	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
+	"github.com/greppleai/grepple/internal/storagepaths"
 )
 
-type artifactsCleanArgs struct {
+type CleanArgs struct {
 	JSON bool `arg:"--json" help:"emit cleanup totals as JSON"`
+}
+
+// Args contains artifact command subcommands.
+type Args struct {
+	Clean *CleanArgs `arg:"subcommand:clean"`
 }
 
 // CleanOutput describes one artifact cleanup result.
@@ -22,45 +28,50 @@ type CleanOutput struct {
 	Bytes  int64  `json:"bytes"`
 }
 
-// command owns artifact command dependencies.
-type command struct{ dependencies Dependencies }
+// command owns artifact command behavior.
+type command struct{ context cliruntime.Context }
 
 // New constructs the artifacts command.
-func New(dependencies Dependencies) cliruntime.Command { return &command{dependencies: dependencies} }
-
-// Run executes the artifacts command. Deprecated: construct the command with New.
-func Run(args []string, dependencies Dependencies) error { return New(dependencies).Run(args) }
+func New(context cliruntime.Context) cliruntime.Command { return &command{context: context} }
 
 // Run executes the artifacts command.
 func (command *command) Run(args []string) error {
-	dependencies := command.dependencies
+	application := command.context
 	if len(args) == 0 || args[0] == "--help" || args[0] == "-h" {
-		return cliruntime.NewOutput(dependencies.stdout()).WriteString("Manage content-addressed command output artifacts.\nUsage:\n  grepple artifacts clean [--json]\n")
+		return cliruntime.NewOutput(application.Stdout()).WriteString("Manage content-addressed command output artifacts.\nUsage:\n  grepple artifacts clean [--json]\n")
 	}
 	if args[0] != "clean" {
 		return fmt.Errorf("usage: grepple artifacts clean [--json]")
 	}
-	values := artifactsCleanArgs{}
+	values := CleanArgs{}
 	parser, err := arg.NewParser(arg.Config{Program: "grepple artifacts clean"}, &values)
 	if err != nil {
 		return err
 	}
 	if err := parser.Parse(args[1:]); err != nil {
 		if errors.Is(err, arg.ErrHelp) {
-			parser.WriteHelp(dependencies.stdout())
+			parser.WriteHelp(application.Stdout())
 			return nil
 		}
 		return err
 	}
-	return cleanOutputArtifacts(values.JSON, dependencies)
+	return Execute(application, &Args{Clean: &values})
 }
 
-func cleanOutputArtifacts(jsonMode bool, dependencies Dependencies) error {
-	directory, err := dependencies.artifactDirectory()
+// Execute applies an application-parsed artifact command.
+func Execute(application cliruntime.Context, values *Args) error {
+	if values == nil || values.Clean == nil {
+		return fmt.Errorf("usage: grepple artifacts clean [--json]")
+	}
+	return cleanOutputArtifacts(values.Clean.JSON, application)
+}
+
+func cleanOutputArtifacts(jsonMode bool, application cliruntime.Context) error {
+	directory, err := storagepaths.OutputArtifacts()
 	if err != nil {
 		return err
 	}
-	result := CleanOutput{Schema: "grepple-artifact-clean-v1", Path: displayArtifactPath(directory, dependencies)}
+	result := CleanOutput{Schema: "grepple-artifact-clean-v1", Path: displayArtifactPath(directory, application)}
 	entries, err := os.ReadDir(directory)
 	if err != nil && !os.IsNotExist(err) {
 		return err
@@ -79,13 +90,17 @@ func cleanOutputArtifacts(jsonMode bool, dependencies Dependencies) error {
 		result.Files++
 	}
 	if jsonMode {
-		return cliruntime.NewOutput(dependencies.stdout()).WriteJSON(result)
+		return cliruntime.NewOutput(application.Stdout()).WriteJSON(result)
 	}
-	return cliruntime.NewOutput(dependencies.stdout()).WriteString(fmt.Sprintf("removed artifacts path=%s files=%d bytes=%d\n", result.Path, result.Files, result.Bytes))
+	return cliruntime.NewOutput(application.Stdout()).WriteString(fmt.Sprintf("removed artifacts path=%s files=%d bytes=%d\n", result.Path, result.Files, result.Bytes))
 }
 
-func displayArtifactPath(path string, dependencies Dependencies) string {
-	relative, err := filepath.Rel(dependencies.workingDirectory(), path)
+func displayArtifactPath(path string, application cliruntime.Context) string {
+	workingDirectory := "."
+	if repository := application.Repository(); repository != nil {
+		workingDirectory = repository.WorkingDirectory()
+	}
+	relative, err := filepath.Rel(workingDirectory, path)
 	if err != nil {
 		return filepath.ToSlash(path)
 	}

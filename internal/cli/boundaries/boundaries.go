@@ -12,52 +12,49 @@ import (
 	"strings"
 
 	"github.com/alexflint/go-arg"
+	"github.com/greppleai/grepple/analysis"
 	"github.com/greppleai/grepple/api"
+	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
 	"github.com/greppleai/grepple/parser"
-	"github.com/greppleai/grepple/search"
 )
 
 const maxHumanBoundaryPatterns = 5
 const defaultTextOutputBytes = 16 * 1024
 
-type boundariesArgs struct {
+type Args struct {
 	JSON bool `arg:"--json" help:"emit the complete boundary report as JSON"`
 	commonArgs
 	Repository     string   `arg:"--repo" placeholder:"OWNER/REPO[@REF]" help:"analyze one exact indexed repository"`
-	MinOccurrences int      `arg:"--min-occurrences" placeholder:"N" help:"minimum callers sharing a reported pattern (default 2)"`
+	MinOccurrences int      `arg:"--min-occurrences" default:"2" placeholder:"N" help:"minimum callers sharing a reported pattern (default 2)"`
 	MaxFiles       int      `arg:"--max-files" placeholder:"N" help:"parse at most N discovered files (0 = unlimited)"`
-	Limit          int      `arg:"--limit" placeholder:"N" help:"maximum candidates per human-output section (default 20; 0 = unlimited; JSON is complete)"`
-	MaxOutputBytes int      `arg:"--max-output-bytes" placeholder:"N" help:"cap human output (default 16384; 0 = unlimited; JSON is uncapped)"`
+	Limit          int      `arg:"--limit" default:"20" placeholder:"N" help:"maximum candidates per human-output section (default 20; 0 = unlimited; JSON is complete)"`
+	MaxOutputBytes int      `arg:"--max-output-bytes" default:"16384" placeholder:"N" help:"cap human output (default 16384; 0 = unlimited; JSON is uncapped)"`
 	NoCache        bool     `arg:"--no-cache" help:"bypass the content-addressed .grepple boundary cache"`
 	Policy         string   `arg:"--policy" placeholder:"PATH" help:"repository-owned boundary policy (default .grepple/boundary-policy.json when present)"`
 	Paths          []string `arg:"positional" placeholder:"PATH" help:"file, directory, or glob to include; defaults to the working directory"`
 }
 
-func (boundariesArgs) Description() string {
+func (Args) Description() string {
 	return "Find repeated workflows, type/field spread, and policy-backed facade bypasses locally by default; --repo selects one exact indexed remote repository."
 }
 
 // Report is the complete boundary analysis output.
 type Report struct {
-	Schema         string                        `json:"schema"`
-	Metadata       *api.ResultMetadata           `json:"metadata,omitempty"`
-	Paths          []string                      `json:"paths"`
-	Files          int                           `json:"files"`
-	Sources        SourceSummary                 `json:"sources"`
-	Policy         string                        `json:"policy,omitempty"`
-	Candidates     []search.BoundaryCandidate    `json:"candidates"`
-	TypeBoundaries []search.BoundaryTypeSpread   `json:"typeBoundaries"`
-	FacadeBypasses []search.BoundaryFacadeBypass `json:"facadeBypasses,omitempty"`
-	Truncation     *Truncation                   `json:"truncation,omitempty"`
+	Schema         string                          `json:"schema"`
+	Metadata       *api.ResultMetadata             `json:"metadata,omitempty"`
+	Paths          []string                        `json:"paths"`
+	Files          int                             `json:"files"`
+	Sources        SourceSummary                   `json:"sources"`
+	Policy         string                          `json:"policy,omitempty"`
+	Candidates     []analysis.BoundaryCandidate    `json:"candidates"`
+	TypeBoundaries []analysis.BoundaryTypeSpread   `json:"typeBoundaries"`
+	FacadeBypasses []analysis.BoundaryFacadeBypass `json:"facadeBypasses,omitempty"`
+	Truncation     *Truncation                     `json:"truncation,omitempty"`
 }
-
-// Run executes boundary analysis. Deprecated: construct the command with New.
-func Run(args []string, dependencies Dependencies) error { return New(dependencies).Run(args) }
 
 // Run executes boundary analysis.
 func (command *command) Run(args []string) error {
-	dependencies := command.dependencies
-	values := boundariesArgs{MinOccurrences: 2, MaxOutputBytes: defaultTextOutputBytes, Limit: 20}
+	values := DefaultArgs()
 	argumentParser, err := arg.NewParser(arg.Config{Program: "grepple boundaries"}, &values)
 	if err != nil {
 		return err
@@ -69,6 +66,21 @@ func (command *command) Run(args []string) error {
 		}
 		return err
 	}
+	return command.execute(&values)
+}
+
+// DefaultArgs returns boundary arguments with human-output defaults.
+func DefaultArgs() Args {
+	return Args{MinOccurrences: 2, MaxOutputBytes: defaultTextOutputBytes, Limit: 20}
+}
+
+// Execute analyzes boundaries from application-parsed arguments.
+func Execute(application cliruntime.Context, values *Args) error {
+	return New(application).(*command).execute(values)
+}
+
+func (command *command) execute(values *Args) error {
+	dependencies := command.dependencies
 	if values.MinOccurrences < 1 {
 		return fmt.Errorf("--min-occurrences must be positive")
 	}
@@ -76,7 +88,7 @@ func (command *command) Run(args []string) error {
 		return fmt.Errorf("--max-files, --max-output-bytes, and --limit must be non-negative")
 	}
 	if values.Repository != "" {
-		return runRemoteBoundaries(context.Background(), values, dependencies)
+		return runRemoteBoundaries(context.Background(), *values, dependencies)
 	}
 	policy, policyPath, err := loadBoundaryPolicy(values.Policy)
 	if err != nil {
@@ -87,15 +99,11 @@ func (command *command) Run(args []string) error {
 		return err
 	}
 	graph := parser.NavigationGraph{Declarations: graphOutput.Declarations, Calls: graphOutput.Calls, Fields: graphOutput.Fields, TypeUsages: graphOutput.TypeUsages, MemberAccesses: graphOutput.MemberAccesses}
-	candidates, err := search.AnalyzeBoundariesWithPolicy(graph, values.MinOccurrences, policy)
+	boundaryResult, err := analysis.AnalyzeBoundaries(graph, values.MinOccurrences, policy)
 	if err != nil {
 		return err
 	}
-	typeBoundaries, err := search.AnalyzeTypeBoundariesWithPolicy(graph, values.MinOccurrences, policy)
-	if err != nil {
-		return err
-	}
-	output := boundariesOutput{Schema: "grepple-boundaries-v3", Paths: boundaryDisplayPaths(values.Paths), Files: graphOutput.Files, Sources: graphOutput.Sources, Policy: policyPath, Candidates: candidates, TypeBoundaries: typeBoundaries, FacadeBypasses: search.AnalyzeFacadeBypasses(graph, policy), Truncation: graphOutput.Truncation}
+	output := boundariesOutput{Schema: "grepple-boundaries-v3", Paths: boundaryDisplayPaths(values.Paths), Files: graphOutput.Files, Sources: graphOutput.Sources, Policy: policyPath, Candidates: boundaryResult.Candidates, TypeBoundaries: boundaryResult.TypeBoundaries, FacadeBypasses: boundaryResult.FacadeBypasses, Truncation: graphOutput.Truncation}
 	output.Metadata = dependencies.metadata(MetadataInput{JSON: values.JSON, Paths: values.Paths, MinOccurrences: values.MinOccurrences, MaxFiles: values.MaxFiles, Limit: values.Limit, MaxOutputBytes: values.MaxOutputBytes, Policy: values.Policy, Report: output})
 	if values.JSON {
 		encoder := json.NewEncoder(os.Stdout)
@@ -106,7 +114,7 @@ func (command *command) Run(args []string) error {
 	return renderBoundaries(output, values.MinOccurrences, values.Limit, values.MaxOutputBytes)
 }
 
-func runRemoteBoundaries(ctx context.Context, values boundariesArgs, dependencies Dependencies) error {
+func runRemoteBoundaries(ctx context.Context, values Args, dependencies Dependencies) error {
 	response, err := dependencies.remote(ctx, api.AnalysisRequest{Operation: api.AnalysisBoundaries, Repository: values.Repository, Paths: values.Paths, MaxFiles: values.MaxFiles, MinOccurrences: values.MinOccurrences, Policy: values.Policy}, dependencies.serverDefault(values.Server))
 	if err != nil {
 		return err
@@ -183,7 +191,7 @@ func writeBoundaryContinuation(write func(string, ...any) bool, metadata *api.Re
 	}
 }
 
-func writeBoundaryTypeSpreads(write func(string, ...any) bool, spreads []search.BoundaryTypeSpread, limit int) bool {
+func writeBoundaryTypeSpreads(write func(string, ...any) bool, spreads []analysis.BoundaryTypeSpread, limit int) bool {
 	if !write("\ntype boundary spread:") {
 		return false
 	}
@@ -209,7 +217,7 @@ func boundaryVisibleCount(count, limit int) int {
 	return count
 }
 
-func writeBoundaryTypeSpread(write func(string, ...any) bool, spread search.BoundaryTypeSpread) bool {
+func writeBoundaryTypeSpread(write func(string, ...any) bool, spread analysis.BoundaryTypeSpread) bool {
 	origin := string(spread.Origin)
 	if origin == "" {
 		origin = "unresolved"
@@ -231,17 +239,17 @@ func writeBoundaryTypeSpread(write func(string, ...any) bool, spread search.Boun
 	return write("    usages: %s", boundaryTypeLocations(spread.UsageDetails))
 }
 
-func writeBoundaryTypePublicExposures(write func(string, ...any) bool, spread search.BoundaryTypeSpread) bool {
+func writeBoundaryTypePublicExposures(write func(string, ...any) bool, spread analysis.BoundaryTypeSpread) bool {
 	label := "public API exposures"
 	prefix := ""
-	if spread.Origin == search.BoundaryTypeOriginThirdParty {
+	if spread.Origin == analysis.BoundaryTypeOriginThirdParty {
 		label = "public third-party exposures"
 		prefix = "! "
 	}
 	return write("    %s%d %s: %s", prefix, len(spread.PublicExposures), label, boundaryTypeLocations(spread.PublicExposures))
 }
 
-func boundaryTypeLocations(usages []search.BoundaryTypeUsage) string {
+func boundaryTypeLocations(usages []analysis.BoundaryTypeUsage) string {
 	const maximum = 3
 	count := len(usages)
 	if count > maximum {
@@ -261,7 +269,7 @@ func boundaryTypeLocations(usages []search.BoundaryTypeUsage) string {
 	return strings.Join(locations, "; ")
 }
 
-func writeBoundaryCandidate(write func(string, ...any) bool, candidate search.BoundaryCandidate, minimum int) bool {
+func writeBoundaryCandidate(write func(string, ...any) bool, candidate analysis.BoundaryCandidate, minimum int) bool {
 	if !write("owner: %s [%s, spread=%s, containment=%s, risk=%s]", candidate.OwnerFile, candidate.Language, candidate.Spread, candidate.Containment, candidate.Risk) ||
 		!write("  reasons: %s", strings.Join(candidate.Reasons, ", ")) ||
 		!write("  external consumers: %d functions / %d files / %d packages", candidate.Consumers.Functions, candidate.Consumers.Files, candidate.Consumers.Packages) ||
@@ -287,7 +295,7 @@ func writeBoundaryCandidate(write func(string, ...any) bool, candidate search.Bo
 	return writeBoundaryPatterns(write, candidate.MemberCallCombinations, " + ")
 }
 
-func writeBoundaryPatterns(write func(string, ...any) bool, patterns []search.BoundaryPattern, separator string) bool {
+func writeBoundaryPatterns(write func(string, ...any) bool, patterns []analysis.BoundaryPattern, separator string) bool {
 	if len(patterns) == 0 {
 		return write("    (none)")
 	}
@@ -308,7 +316,7 @@ func writeBoundaryPatterns(write func(string, ...any) bool, patterns []search.Bo
 	return true
 }
 
-func boundaryPatternLocations(consumers []search.BoundaryConsumer) string {
+func boundaryPatternLocations(consumers []analysis.BoundaryConsumer) string {
 	const maximum = 3
 	count := len(consumers)
 	if count > maximum {

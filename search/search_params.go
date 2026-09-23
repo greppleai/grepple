@@ -2,13 +2,12 @@ package search
 
 import (
 	"fmt"
-	"github.com/greppleai/grepple/api"
 	"strconv"
 )
 
-// ResolveRequest merges a wire api.SearchRequest into validated Params: unset optional
+// ResolveRequest merges a wire Request into validated Params: unset optional
 // fields keep their defaults, and a content search must carry a query.
-func ResolveRequest(r api.SearchRequest) (Params, error) {
+func ResolveRequest(r Request) (Params, error) {
 	p := Params{Regex: true, Files: r.Files, At: r.At, Sort: ResultSortPath}
 	if r.Query != nil {
 		p.Query = *r.Query
@@ -49,7 +48,7 @@ func ResolveRequest(r api.SearchRequest) (Params, error) {
 	return p, nil
 }
 
-func applyNavigationFields(params *Params, request api.SearchRequest) error {
+func applyNavigationFields(params *Params, request Request) error {
 	if params.At != "" && (params.Query != "" || len(request.Globs) > 0) {
 		return fmt.Errorf("search request 'at' cannot be combined with query or globs")
 	}
@@ -71,7 +70,7 @@ func applyNavigationFields(params *Params, request api.SearchRequest) error {
 	return nil
 }
 
-func applyDefaultNavigation(params *Params, request api.SearchRequest) {
+func applyDefaultNavigation(params *Params, request Request) {
 	if params.NoRelated || params.Related {
 		return
 	}
@@ -85,7 +84,7 @@ func applyDefaultNavigation(params *Params, request api.SearchRequest) {
 
 // applyOptionalFields copies the request's explicitly set fields into p;
 // unset (nil/zero) fields keep their defaults.
-func applyOptionalFields(p *Params, r api.SearchRequest) {
+func applyOptionalFields(p *Params, r Request) {
 	if len(r.Globs) > 0 {
 		p.Globs = r.Globs
 	}
@@ -144,7 +143,7 @@ const MaxPageLimit = 100
 // windows above the cap and must never be clamped, or deep pages would lose
 // results. The shard's in-cluster /search endpoint stays uncapped for that
 // reason.
-func EnforcePageLimit(p *Params, r api.SearchRequest) {
+func EnforcePageLimit(p *Params, r Request) {
 	switch {
 	case r.Limit == nil:
 		p.Limit = DefaultPageLimit

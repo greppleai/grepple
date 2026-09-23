@@ -9,7 +9,6 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/greppleai/grepple/api"
 	"github.com/greppleai/grepple/gritql"
 	"github.com/greppleai/grepple/search"
 )
@@ -17,19 +16,19 @@ import (
 var ruleIDPattern = regexp.MustCompile(`^[a-z0-9][a-z0-9_-]{0,63}$`)
 
 // Engine returns the effective rule engine, including the legacy empty-as-text default.
-func Engine(rule api.Rule) string {
+func Engine(rule Rule) string {
 	if rule.Engine == "" {
-		return api.RuleEngineText
+		return EngineText
 	}
 	return rule.Engine
 }
 
 // Normalize fills rule defaults and validates the engine-specific request.
-func Normalize(rule api.Rule) (api.Rule, error) {
+func Normalize(rule Rule) (Rule, error) {
 	rule.Name = strings.TrimSpace(rule.Name)
 	rule.ID = strings.TrimSpace(rule.ID)
 	switch Engine(rule) {
-	case api.RuleEngineText:
+	case EngineText:
 		if rule.Structural != nil {
 			return rule, fmt.Errorf("text rule must not include a structural request")
 		}
@@ -37,8 +36,8 @@ func Normalize(rule api.Rule) (api.Rule, error) {
 		if err := normalizeTextRequest(&rule); err != nil {
 			return rule, err
 		}
-	case api.RuleEngineGritQL:
-		if !reflect.DeepEqual(rule.Request, api.SearchRequest{}) {
+	case EngineGritQL:
+		if !reflect.DeepEqual(rule.Request, search.Request{}) {
 			return rule, fmt.Errorf("structural rule must not include a text request")
 		}
 		if err := normalizeStructuralRequest(&rule); err != nil {
@@ -53,16 +52,16 @@ func Normalize(rule api.Rule) (api.Rule, error) {
 	return rule, nil
 }
 
-func normalizeTextRequest(rule *api.Rule) error {
+func normalizeTextRequest(rule *Rule) error {
 	if rule.Mode == "" {
 		if rule.Request.Files {
-			rule.Mode = api.RuleModeFiles
+			rule.Mode = ModeFiles
 		} else {
-			rule.Mode = api.RuleModeCount
+			rule.Mode = ModeCount
 		}
 	}
 	request := rule.Request
-	request.Files = rule.Mode == api.RuleModeFiles
+	request.Files = rule.Mode == ModeFiles
 	params, err := search.ResolveRequest(request)
 	if err != nil {
 		return err
@@ -78,7 +77,7 @@ func normalizeTextRequest(rule *api.Rule) error {
 	return nil
 }
 
-func normalizeStructuralRequest(rule *api.Rule) error {
+func normalizeStructuralRequest(rule *Rule) error {
 	if rule.Structural == nil {
 		return fmt.Errorf("structural rule requires a structural request")
 	}
@@ -93,7 +92,7 @@ func normalizeStructuralRequest(rule *api.Rule) error {
 	if err := validateStructuralRequest(request); err != nil {
 		return err
 	}
-	limits := api.GritLimits{}
+	limits := StructuralLimits{}
 	if request.Limits != nil {
 		limits = *request.Limits
 	}
@@ -108,36 +107,36 @@ func normalizeStructuralRequest(rule *api.Rule) error {
 		return fmt.Errorf("query language requires structural compatibility %q", program.Compatibility())
 	}
 	if rule.Mode == "" {
-		rule.Mode = api.RuleModeCount
+		rule.Mode = ModeCount
 	}
 	rule.Structural = &request
 	return nil
 }
 func supportedStructuralCompatibility(compatibility string) bool {
-	return compatibility == api.GritCompatibilityV1
+	return compatibility == GritCompatibilityV1
 }
 
-func validateStructuralRequest(request api.GritRequest) error {
+func validateStructuralRequest(request StructuralRequest) error {
 	if !supportedStructuralCompatibility(request.Compatibility) {
 		return fmt.Errorf("unsupported structural compatibility %q", request.Compatibility)
 	}
-	if request.Query == "" || len(request.Query) > api.MaxGritQueryBytes {
+	if request.Query == "" || len(request.Query) > MaxGritQueryBytes {
 		return fmt.Errorf("structural query is empty or exceeds its maximum size")
 	}
-	if len(request.PatternID) > api.MaxGritPatternIDBytes || len(request.Message) > api.MaxGritMessageBytes {
+	if len(request.PatternID) > MaxGritPatternIDBytes || len(request.Message) > MaxGritMessageBytes {
 		return fmt.Errorf("structural pattern identifier or message exceeds its maximum size")
 	}
-	if len(request.Globs)+len(request.ExcludeGlobs) > api.MaxGritGlobs || len(request.Repositories)+len(request.ExcludeRepositories) > api.MaxGritRepositories {
+	if len(request.Globs)+len(request.ExcludeGlobs) > MaxGritGlobs || len(request.Repositories)+len(request.ExcludeRepositories) > MaxGritRepositories {
 		return fmt.Errorf("structural scope contains too many values")
 	}
 	for _, selector := range append(append([]string{}, request.Repositories...), request.ExcludeRepositories...) {
-		if selector == "" || len(selector) > api.MaxGritRepositoryBytes {
+		if selector == "" || len(selector) > MaxGritRepositoryBytes {
 			return fmt.Errorf("structural repository selector is invalid")
 		}
 	}
 	globs := append(append([]string{}, request.Globs...), request.ExcludeGlobs...)
 	for _, glob := range globs {
-		if len(glob) > api.MaxGritGlobBytes {
+		if len(glob) > MaxGritGlobBytes {
 			return fmt.Errorf("structural glob exceeds its maximum size")
 		}
 	}
@@ -147,7 +146,7 @@ func validateStructuralRequest(request api.GritRequest) error {
 	return validateStructuralLimits(request.Limits)
 }
 
-func validateStructuralLimits(limits *api.GritLimits) error {
+func validateStructuralLimits(limits *StructuralLimits) error {
 	if limits == nil {
 		return nil
 	}
@@ -165,9 +164,9 @@ func validateStructuralLimits(limits *api.GritLimits) error {
 	return nil
 }
 
-func normalizeRuleMetadata(rule *api.Rule) error {
-	if rule.Mode != api.RuleModeCount && rule.Mode != api.RuleModeFiles {
-		return fmt.Errorf("invalid mode %q (want %q or %q)", rule.Mode, api.RuleModeCount, api.RuleModeFiles)
+func normalizeRuleMetadata(rule *Rule) error {
+	if rule.Mode != ModeCount && rule.Mode != ModeFiles {
+		return fmt.Errorf("invalid mode %q (want %q or %q)", rule.Mode, ModeCount, ModeFiles)
 	}
 	if rule.ID == "" {
 		rule.ID = slugID(rule.Name)

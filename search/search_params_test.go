@@ -1,7 +1,6 @@
 package search
 
 import (
-	"github.com/greppleai/grepple/api"
 	"testing"
 )
 
@@ -28,11 +27,11 @@ func TestEnforcePageLimit(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			p, err := ResolveRequest(api.SearchRequest{Query: &query, Limit: c.limit})
+			p, err := ResolveRequest(Request{Query: &query, Limit: c.limit})
 			if err != nil {
 				t.Fatalf("ResolveRequest: %v", err)
 			}
-			EnforcePageLimit(&p, api.SearchRequest{Query: &query, Limit: c.limit})
+			EnforcePageLimit(&p, Request{Query: &query, Limit: c.limit})
 			if p.Limit != c.want {
 				t.Fatalf("limit %v -> %d, want %d", c.limit, p.Limit, c.want)
 			}
@@ -45,7 +44,7 @@ func TestEnforcePageLimit(t *testing.T) {
 // collapse and deep pages would lose results.
 func TestResolveRequestStaysUncapped(t *testing.T) {
 	query := "deploy"
-	p, err := ResolveRequest(api.SearchRequest{Query: &query, Limit: func() *int { n := 5000; return &n }()})
+	p, err := ResolveRequest(Request{Query: &query, Limit: func() *int { n := 5000; return &n }()})
 	if err != nil {
 		t.Fatalf("ResolveRequest: %v", err)
 	}
@@ -56,21 +55,21 @@ func TestResolveRequestStaysUncapped(t *testing.T) {
 
 func TestResolveRequestDefaultsToRelatedNavigation(t *testing.T) {
 	query := "needle"
-	params, err := ResolveRequest(api.SearchRequest{Query: &query})
+	params, err := ResolveRequest(Request{Query: &query})
 	if err != nil {
 		t.Fatal(err)
 	}
 	if !params.Related || params.FollowRelated != 1 {
 		t.Fatalf("automatic API navigation=%#v", params)
 	}
-	disabled, err := ResolveRequest(api.SearchRequest{Query: &query, NoRelated: true})
+	disabled, err := ResolveRequest(Request{Query: &query, NoRelated: true})
 	if err != nil {
 		t.Fatal(err)
 	}
 	if disabled.Related || disabled.FollowRelated != 0 || !disabled.NoRelated {
 		t.Fatalf("noRelated API navigation=%#v", disabled)
 	}
-	compact, err := ResolveRequest(api.SearchRequest{Query: &query, SkipSegments: true})
+	compact, err := ResolveRequest(Request{Query: &query, SkipSegments: true})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -82,7 +81,7 @@ func TestResolveRequestDefaultsToRelatedNavigation(t *testing.T) {
 func TestResolveRequestAsymmetricContext(t *testing.T) {
 	query := "deploy"
 	before, after := 1, 5
-	p, err := ResolveRequest(api.SearchRequest{
+	p, err := ResolveRequest(Request{
 		Query:         &query,
 		Context:       float64(3),
 		BeforeContext: &before,
@@ -98,7 +97,7 @@ func TestResolveRequestAsymmetricContext(t *testing.T) {
 
 func TestResolveRequestEnclosingImpliesLineRanges(t *testing.T) {
 	query := "work()"
-	params, err := ResolveRequest(api.SearchRequest{Query: &query, EnclosingRanges: true})
+	params, err := ResolveRequest(Request{Query: &query, EnclosingRanges: true})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -109,40 +108,40 @@ func TestResolveRequestEnclosingImpliesLineRanges(t *testing.T) {
 
 func TestResolveRequestValidatesDeterministicSort(t *testing.T) {
 	query := "work"
-	defaults, err := ResolveRequest(api.SearchRequest{Query: &query})
+	defaults, err := ResolveRequest(Request{Query: &query})
 	if err != nil || defaults.Sort != ResultSortPath {
 		t.Fatalf("default sort=%q err=%v", defaults.Sort, err)
 	}
-	ranked, err := ResolveRequest(api.SearchRequest{Query: &query, Sort: ResultSortMatches})
+	ranked, err := ResolveRequest(Request{Query: &query, Sort: ResultSortMatches})
 	if err != nil || ranked.Sort != ResultSortMatches {
 		t.Fatalf("match sort=%q err=%v", ranked.Sort, err)
 	}
-	if _, err := ResolveRequest(api.SearchRequest{Query: &query, Sort: "score"}); err == nil {
+	if _, err := ResolveRequest(Request{Query: &query, Sort: "score"}); err == nil {
 		t.Fatal("expected invalid sort to fail")
 	}
 }
 
 func TestResolveRequestAcceptsAtWithoutQuery(t *testing.T) {
-	params, err := ResolveRequest(api.SearchRequest{At: "app.go:20"})
+	params, err := ResolveRequest(Request{At: "app.go:20"})
 	if err != nil || params.At != "app.go:20" {
 		t.Fatalf("at params=%#v err=%v", params, err)
 	}
 	query := "work"
-	if _, err := ResolveRequest(api.SearchRequest{At: "app.go:20", Query: &query}); err == nil {
+	if _, err := ResolveRequest(Request{At: "app.go:20", Query: &query}); err == nil {
 		t.Fatal("at with query succeeded")
 	}
 }
 
 func TestResolveRequestPreservesNavigation(t *testing.T) {
 	query := "work"
-	params, err := ResolveRequest(api.SearchRequest{Query: &query, FollowRelated: 2})
+	params, err := ResolveRequest(Request{Query: &query, FollowRelated: 2})
 	if err != nil {
 		t.Fatal(err)
 	}
 	if !params.Related || params.FollowRelated != 2 {
 		t.Fatalf("navigation was not preserved: %#v", params)
 	}
-	if _, err := ResolveRequest(api.SearchRequest{Query: &query, FollowRelated: 4}); err == nil {
+	if _, err := ResolveRequest(Request{Query: &query, FollowRelated: 4}); err == nil {
 		t.Fatal("expected invalid followRelated to fail")
 	}
 }

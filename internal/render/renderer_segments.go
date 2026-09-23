@@ -2,10 +2,10 @@ package render
 
 import (
 	"fmt"
+	"github.com/greppleai/grepple/navigation"
+	"github.com/greppleai/grepple/search"
 	"sort"
 	"strings"
-
-	"github.com/greppleai/grepple/api"
 )
 
 type segmentRenderer struct {
@@ -14,7 +14,7 @@ type segmentRenderer struct {
 	contextGuard ContextGuard
 }
 
-func (renderer segmentRenderer) Render(results []api.FileResult) error {
+func (renderer segmentRenderer) Render(results []search.FileResult) error {
 	if renderer.contextGuard == nil {
 		renderer.contextGuard = noopContextGuard{}
 	}
@@ -37,7 +37,7 @@ func (renderer segmentRenderer) Render(results []api.FileResult) error {
 	return renderer.renderRelatedTypeDefinitions(collectRelatedTypeDefinitions(results))
 }
 
-func (renderer segmentRenderer) renderFile(result api.FileResult) error {
+func (renderer segmentRenderer) renderFile(result search.FileResult) error {
 	if err := renderer.output.writeString(result.Path + "\n\n"); err != nil {
 		return err
 	}
@@ -61,7 +61,7 @@ func (renderer segmentRenderer) renderFile(result api.FileResult) error {
 	return renderer.renderRelated(result.Related, result.OmittedRelatedCallers, result.OmittedRelatedCallees, result.OmittedRelatedTypes, result.Path, line)
 }
 
-func relatedRootLine(result api.FileResult) int {
+func relatedRootLine(result search.FileResult) int {
 	if len(result.Segments) > 0 && result.Segments[0].Start > 0 {
 		return result.Segments[0].Start
 	}
@@ -76,7 +76,7 @@ func relatedRootLine(result api.FileResult) int {
 	return 1
 }
 
-func (renderer segmentRenderer) renderRelated(related []api.RelatedSymbol, omittedCallers, omittedCallees, omittedTypes int, path string, line int) error {
+func (renderer segmentRenderer) renderRelated(related []navigation.RelatedSymbol, omittedCallers, omittedCallees, omittedTypes int, path string, line int) error {
 	if len(related) == 0 && omittedCallers == 0 && omittedCallees == 0 && omittedTypes == 0 {
 		return nil
 	}
@@ -89,7 +89,7 @@ func (renderer segmentRenderer) renderRelated(related []api.RelatedSymbol, omitt
 	return renderer.renderRelatedOmissions(omittedCallers, omittedCallees, omittedTypes, path, line, 1)
 }
 
-func (renderer segmentRenderer) renderRelatedPoints(related []api.RelatedSymbol, depth int, includeTypes bool) error {
+func (renderer segmentRenderer) renderRelatedPoints(related []navigation.RelatedSymbol, depth int, includeTypes bool) error {
 	for _, point := range related {
 		if point.Direction == "type" && !includeTypes {
 			continue
@@ -101,7 +101,7 @@ func (renderer segmentRenderer) renderRelatedPoints(related []api.RelatedSymbol,
 	return nil
 }
 
-func (renderer segmentRenderer) renderRelatedPoint(point api.RelatedSymbol, depth int) error {
+func (renderer segmentRenderer) renderRelatedPoint(point navigation.RelatedSymbol, depth int) error {
 	indent := strings.Repeat("  ", depth)
 	arrow := "→"
 	if point.Direction == "caller" {
@@ -132,8 +132,8 @@ func (renderer segmentRenderer) renderRelatedPoint(point api.RelatedSymbol, dept
 	return nil
 }
 
-func relatedCallPoints(points []api.RelatedSymbol) []api.RelatedSymbol {
-	calls := make([]api.RelatedSymbol, 0, len(points))
+func relatedCallPoints(points []navigation.RelatedSymbol) []navigation.RelatedSymbol {
+	calls := make([]navigation.RelatedSymbol, 0, len(points))
 	for _, point := range points {
 		if point.Direction != "type" {
 			calls = append(calls, point)
@@ -142,7 +142,7 @@ func relatedCallPoints(points []api.RelatedSymbol) []api.RelatedSymbol {
 	return calls
 }
 
-func relatedPointPresentation(point api.RelatedSymbol) (string, string, string) {
+func relatedPointPresentation(point navigation.RelatedSymbol) (string, string, string) {
 	locationPath := point.Path
 	suffix := ""
 	if point.Artifact != nil {
@@ -167,7 +167,7 @@ func relatedPointPresentation(point api.RelatedSymbol) (string, string, string) 
 	return locationPath, label, suffix
 }
 
-func navigationArtifactProvenance(artifact *api.NavigationArtifactIdentity) string {
+func navigationArtifactProvenance(artifact *navigation.ArtifactIdentity) string {
 	parts := []string{artifact.Module + "@" + artifact.Version}
 	if artifact.Source != "" {
 		parts = append(parts, "source "+artifact.Source)
@@ -181,7 +181,7 @@ func navigationArtifactProvenance(artifact *api.NavigationArtifactIdentity) stri
 	return strings.Join(parts, "; ")
 }
 
-func dependencyUnresolvedSuffix(reference api.ExternalNavigationReference) string {
+func dependencyUnresolvedSuffix(reference navigation.ExternalReference) string {
 	identity := reference.ImportPath
 	if reference.Version != "" {
 		identity = reference.Module + "@" + reference.Version
@@ -252,7 +252,7 @@ func pluralizeRelated(noun string, count int) string {
 	return noun + "s"
 }
 
-func (renderer segmentRenderer) renderSegment(source, path string, artifact *api.NavigationArtifactIdentity, segment api.ResultSegment, width int, prefix, contextLabel string) error {
+func (renderer segmentRenderer) renderSegment(source, path string, artifact *navigation.ArtifactIdentity, segment search.ResultSegment, width int, prefix, contextLabel string) error {
 	if segment.Kind == "spacing" {
 		return renderer.output.writeString(strings.Repeat("\n", segment.End-segment.Start+1))
 	}
@@ -271,7 +271,7 @@ func (renderer segmentRenderer) renderSegment(source, path string, artifact *api
 	return nil
 }
 
-func (renderer segmentRenderer) renderSegmentLines(source, path string, artifact *api.NavigationArtifactIdentity, segment api.ResultSegment, width int, prefix string) error {
+func (renderer segmentRenderer) renderSegmentLines(source, path string, artifact *navigation.ArtifactIdentity, segment search.ResultSegment, width int, prefix string) error {
 	texts := strings.Split(segment.Text, "\n")
 	lines := make([]contextSourceLine, len(texts))
 	for index, text := range texts {
@@ -324,7 +324,7 @@ func (renderer segmentRenderer) segmentRunBytes(path string, lines []contextSour
 	return sourceBytes, renderedBytes
 }
 
-func resultSourceIdentity(result api.FileResult) string {
+func resultSourceIdentity(result search.FileResult) string {
 	if result.Repo == "" {
 		return result.Path
 	}
@@ -346,7 +346,7 @@ func (renderer segmentRenderer) segmentLineRow(path string, line int, content st
 	return fmt.Sprintf("%*d   %s\n", width, line, content)
 }
 
-func segmentLineWidth(segments []api.ResultSegment) int {
+func segmentLineWidth(segments []search.ResultSegment) int {
 	width := 1
 	for _, segment := range segments {
 		if digits := len(fmt.Sprint(segment.End)); digits > width {
@@ -367,7 +367,7 @@ func collapsedLines(count int) string {
 	return fmt.Sprintf("\n// … %d %s collapsed …\n\n", count, word)
 }
 
-func segmentContextMarker(source string, segment api.ResultSegment, contextLabel string) string {
+func segmentContextMarker(source string, segment search.ResultSegment, contextLabel string) string {
 	if contextLabel != "" {
 		return fmt.Sprintf("// … unchanged %s already emitted at %s:%d-%d (%d source bytes) …\n", contextLabel, source, segment.Start, segment.End, len(segment.Text))
 	}

@@ -20,7 +20,7 @@ func TestRefsListsSelectorsAndResolvedCommits(t *testing.T) {
 	}))
 	defer server.Close()
 	out := captureStdout(t, func() {
-		if err := Run([]string{"--server", server.URL, "owner/repo"}, Dependencies{}); err != nil {
+		if err := New(Dependencies{}).Run([]string{"--server", server.URL, "owner/repo"}); err != nil {
 			t.Fatal(err)
 		}
 	})

@@ -1,0 +1,8 @@
+description: Generates deterministic parser language metadata from pinned Tree-sitter grammar sources.
+responsibilities:
+    - Inspect configured grammar modules
+    - Extract node, field, child, and subtype metadata
+    - Compute grammar source fingerprints
+    - Render deterministic Go metadata
+    - Validate or write generated metadata
+files: []

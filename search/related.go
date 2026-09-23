@@ -9,7 +9,6 @@ import (
 	"strings"
 	"sync/atomic"
 
-	"github.com/greppleai/grepple/api"
 	"github.com/greppleai/grepple/navigation"
 	"github.com/greppleai/grepple/parser"
 )
@@ -478,9 +477,9 @@ func externalNavigationEligible(language, importPath string) bool {
 	}
 }
 
-func newExternalNavigationReference(language, importPath, symbol, consumerPackage, receiverType, kind string, line int) *api.ExternalNavigationReference {
+func newExternalNavigationReference(language, importPath, symbol, consumerPackage, receiverType, kind string, line int) *navigation.ExternalReference {
 	digest := sha256.Sum256([]byte(fmt.Sprintf("%s\x00%s\x00%s\x00%s\x00%s\x00%s\x00%d", language, importPath, symbol, consumerPackage, receiverType, kind, line)))
-	return &api.ExternalNavigationReference{ID: hex.EncodeToString(digest[:]), Language: language, ImportPath: importPath, Symbol: symbol, ConsumerPackage: consumerPackage, ReceiverType: receiverType, Kind: kind}
+	return &navigation.ExternalReference{ID: hex.EncodeToString(digest[:]), Language: language, ImportPath: importPath, Symbol: symbol, ConsumerPackage: consumerPackage, ReceiverType: receiverType, Kind: kind}
 }
 
 func navigationCallers(targets []navigationDeclaration, navigation *navigationIndex) ([]RelatedPoint, int) {

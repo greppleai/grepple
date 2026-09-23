@@ -1,14 +1,6 @@
 package cli
 
 import (
-	"os"
-
-	codeextract "github.com/greppleai/grepple/extract"
-
-	"github.com/greppleai/grepple/internal/authstate"
-	"github.com/greppleai/grepple/linerange"
-	"github.com/greppleai/grepple/search"
-
 	anchorscommand "github.com/greppleai/grepple/internal/cli/anchors"
 	architecturecommand "github.com/greppleai/grepple/internal/cli/architecture"
 	artifactscommand "github.com/greppleai/grepple/internal/cli/artifacts"
@@ -21,6 +13,7 @@ import (
 	getcommand "github.com/greppleai/grepple/internal/cli/get"
 	graphcommand "github.com/greppleai/grepple/internal/cli/graph"
 	gritcommand "github.com/greppleai/grepple/internal/cli/grit"
+	initcommand "github.com/greppleai/grepple/internal/cli/init"
 	languagescommand "github.com/greppleai/grepple/internal/cli/languages"
 	refscommand "github.com/greppleai/grepple/internal/cli/refs"
 	reposcommand "github.com/greppleai/grepple/internal/cli/repos"
@@ -28,107 +21,116 @@ import (
 	searchcommand "github.com/greppleai/grepple/internal/cli/search"
 	sourcescommand "github.com/greppleai/grepple/internal/cli/sources"
 	treecommand "github.com/greppleai/grepple/internal/cli/tree"
+	verifycommand "github.com/greppleai/grepple/internal/cli/verify"
 	versioncommand "github.com/greppleai/grepple/internal/cli/version"
 	writecommand "github.com/greppleai/grepple/internal/cli/write"
 	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
-	"github.com/greppleai/grepple/internal/gitcontext"
-	rendercommand "github.com/greppleai/grepple/internal/render"
-	"github.com/greppleai/grepple/internal/repositoryscope"
-	"github.com/greppleai/grepple/internal/storagepaths"
+	"github.com/greppleai/grepple/internal/outputspill"
 )
 
-type commandSpec struct {
-	name    string
-	command cliruntime.Command
+// Arguments is the complete application command tree. go-arg populates one
+// command pointer and all process-level controls in a single parse.
+type Arguments struct {
+	NoSpill            bool   `arg:"--no-spill" help:"keep complete output on stdout regardless of size"`
+	SpillThreshold     int    `arg:"--spill-threshold-bytes" default:"-1" placeholder:"N" help:"spill output above N bytes"`
+	ArtifactDirectory  string `arg:"--artifact-dir" placeholder:"PATH" help:"store spilled artifacts here"`
+	NoRepositoryConfig bool   `arg:"--no-repo-config" help:"ignore repository-owned grepple.json behavior"`
+	NoConfigIgnore     bool   `arg:"--no-config-ignore" help:"load grepple.json but ignore ignore.paths"`
+	ProductionOnly     bool   `arg:"--production-only" help:"recursively select production-classified sources"`
+	VersionFlag        bool   `arg:"--version" help:"print build and source version information"`
+
+	Search       *searchcommand.Args         `arg:"subcommand:search" help:"search local or explicitly selected remote code"`
+	Write        *writecommand.Args          `arg:"subcommand:write" help:"apply local transactional anchored writes"`
+	Grit         *gritcommand.Args           `arg:"subcommand:grit" help:"run native structural queries"`
+	Graph        *graphcommand.Args          `arg:"subcommand:graph" help:"build or query navigation graphs"`
+	Anchors      *anchorscommand.Args        `arg:"subcommand:anchors" help:"diagnose edit-anchor providers"`
+	Boundaries   *boundariescommand.Args     `arg:"subcommand:boundaries" help:"analyze representation and workflow boundaries"`
+	Examples     *examplescommand.Args       `arg:"subcommand:examples" help:"print task-oriented CLI workflows"`
+	Artifacts    *artifactscommand.Args      `arg:"subcommand:artifacts" help:"manage spilled output artifacts"`
+	Context      *contextcommand.Args        `arg:"subcommand:context" help:"manage context deduplication"`
+	Extract      *extractcommand.Args        `arg:"subcommand:extract" help:"generate or check focused Mermaid projections"`
+	Architecture *architecturecommand.Args   `arg:"subcommand:architecture" help:"inspect directory architecture"`
+	Sources      *sourcescommand.Args        `arg:"subcommand:sources" help:"explain source selection"`
+	Init         *initcommand.Args           `arg:"subcommand:init" help:"generate directory metadata"`
+	Verify       *verifycommand.Args         `arg:"subcommand:verify" help:"verify directory metadata"`
+	Languages    *languagescommand.Args      `arg:"subcommand:languages" help:"show language capabilities"`
+	Rules        *rulescommand.Args          `arg:"subcommand:rules" help:"manage saved remote rules"`
+	Repos        *reposcommand.Args          `arg:"subcommand:repos" help:"list indexed repositories"`
+	Get          *getcommand.Args            `arg:"subcommand:get" help:"read one indexed repository file"`
+	Tree         *treecommand.Request        `arg:"subcommand:tree" help:"show a local or indexed repository tree"`
+	Refs         *refscommand.Args           `arg:"subcommand:refs" help:"list indexed repository refs"`
+	Ask          *askcommand.Args            `arg:"subcommand:ask" help:"delegate bounded code research"`
+	AIProvider   *authcommand.AIProviderArgs `arg:"subcommand:ai-provider" help:"authenticate AI model providers"`
+	Login        *authcommand.LoginArgs      `arg:"subcommand:login" help:"authenticate with the remote service"`
+	Logout       *authcommand.LogoutArgs     `arg:"subcommand:logout" help:"remove remote authentication"`
+	Version      *versioncommand.Args        `arg:"subcommand:version" help:"print version information"`
 }
 
-type application struct {
-	commands       map[string]commandSpec
-	defaultCommand cliruntime.Command
+func (values *Arguments) repositoryOptions() cliruntime.RepositoryInvocationOptions {
+	return cliruntime.RepositoryInvocationOptions{NoRepositoryConfig: values.NoRepositoryConfig, NoConfigIgnore: values.NoConfigIgnore, ProductionOnly: values.ProductionOnly}
 }
 
-func newApplication() *application {
-	searchCommand := searchcommand.New(searchcommand.Dependencies{Execute: runSearch})
-	graphServices := graphcommand.Services{ApplySourceConfig: applyRepositorySourceConfig, Remote: requestAnalysisRemote, ServerDefault: serverDefault, ActiveScopeFlags: appendActiveRepositoryScopeFlags, Metadata: graphResultMetadata, DiffMetadata: graphDiffResultMetadata}
-	graphCommand := graphcommand.New(graphcommand.Dependencies{
-		Build: func(args []string) error { return graphcommand.RunBuild(args, graphServices) },
-		Diff:  func(args []string) error { return graphcommand.RunDiff(args, graphServices) },
-		Query: func(args []string) error {
-			return graphcommand.RunQuery(search.NavigationQueryDirection(args[0]), args[1:], graphServices)
-		},
-		Stdout: os.Stdout,
-		LoadOutput: func(globs []string, maxFiles int) (graphcommand.Output, error) {
-			paths, err := graphcommand.ResolveInputPaths(globs, applyRepositorySourceConfig)
-			if err != nil {
-				return graphcommand.Output{}, err
-			}
-			return graphcommand.BuildFromPaths(paths, maxFiles), nil
-		},
-		ActiveScopeFlags: appendActiveRepositoryScopeFlags,
-		RequestExit:      setExit,
-	})
-	app := &application{commands: make(map[string]commandSpec), defaultCommand: searchCommand}
-	app.register("search", searchCommand)
-	app.register("version", versioncommand.New(versioncommand.Dependencies{Stdout: os.Stdout}))
-	app.register("write", writecommand.New(writecommand.Dependencies{Stdin: os.Stdin, Stdout: os.Stdout, RequestExit: requestExit, RecordResponse: writecommand.NewContextRecorder(contextGuardEnabled(), activeInlineOutputThreshold)}))
-	app.register("graph", graphCommand)
-	app.register("anchors", anchorscommand.New(anchorscommand.Dependencies{}))
-	app.register("boundaries", boundariescommand.New(boundariescommand.Dependencies{ResolvePaths: func(paths []string) ([]string, error) {
-		return graphcommand.ResolveInputPaths(paths, applyRepositorySourceConfig)
-	}, BuildGraph: func(paths []string, maxFiles int, options search.NavigationBuildOptions) boundariescommand.GraphOutput {
-		return boundariescommand.GraphFromNavigation(graphcommand.BuildFromPathsWithOptions(paths, maxFiles, options))
-	}, CacheDirectory: func() string { return storagepaths.Cache(mustGetwd()) }, Remote: requestAnalysisRemote, ServerDefault: serverDefault, ActiveScopeFlags: appendActiveRepositoryScopeFlags}))
-	app.register("examples", examplescommand.New(examplescommand.Dependencies{Output: os.Stdout}))
-	app.register("artifacts", artifactscommand.New(artifactscommand.Dependencies{Stdout: os.Stdout, ArtifactDirectory: storagepaths.OutputArtifacts, WorkingDirectory: mustGetwd}))
-	app.register("context", contextcommand.New(contextcommand.Dependencies{Stdout: os.Stdout, Invalidate: rendercommand.InvalidateContext}))
-	app.register("languages", languagescommand.New(languagescommand.Dependencies{Stdout: os.Stdout}))
-	app.register("get", getcommand.New(getcommand.Dependencies{Stdout: os.Stdout, Stderr: os.Stderr, ServerDefault: serverDefault, NewRequest: authorizedRequest, RequestExit: setExit, RecordRangeOutcome: func(outcome linerange.Outcome) {
-		rendercommand.RecordStandaloneLineRangeOutcome(outcome, contextGuardEnabled())
-	}, ReportRangeError: reportLineRangeCommandError, FullMissError: func(err error) error { return remoteFullLineRangeMissError{err: err} }, RenderOutline: rendercommand.OutlineOrContent}))
-	app.register("tree", treecommand.New(treecommand.Dependencies{Stdout: os.Stdout, ServerDefault: serverDefault, NewRequest: authorizedRequest, RequestExit: setExit, LocalTree: treecommand.NewLocal(applyRepositorySourceConfig, mustGetwd)}))
-	app.register("repos", reposcommand.New(reposcommand.Dependencies{Stdout: os.Stdout, ServerDefault: serverDefault, NewRequest: authorizedRequest, RequestExit: setExit}))
-	app.register("refs", refscommand.New(refscommand.Dependencies{Stdout: os.Stdout, ServerDefault: serverDefault, NewRequest: authorizedRequest, RequestExit: setExit}))
-	app.register("ask", cliruntime.CommandFunc(func(args []string) error {
-		return askcommand.Run(args, askcommand.Dependencies{Stdout: os.Stdout, Stderr: os.Stderr, RunSession: runAskSession})
-	}))
-	authentication := authcommand.Dependencies{ServerDefault: serverDefault, StoreLogin: authstate.StoreLogin, ClearToken: authstate.Clear, ConfigPath: authstate.Path}
-	app.register("ai-provider", authcommand.NewAIProvider(authentication))
-	app.register("login", authcommand.NewLogin(authentication))
-	app.register("logout", authcommand.NewLogout(authentication))
-	app.register("rules", rulescommand.New(rulescommand.Dependencies{ServerDefault: serverDefault, NewRequest: authorizedRequest, RequestExit: setExit}))
-	app.register("grit", gritcommand.New(gritcommand.Dependencies{ApplySourceConfig: applyRepositorySourceConfig, CurrentRepository: gitcontext.Current, ServerDefault: serverDefault, RequestRemote: requestGritRemote, Metadata: gritResultMetadata, RequestExit: setExit}))
-	app.register("extract", extractcommand.New(extractcommand.Dependencies{Stdout: os.Stdout, LoadSources: func(roots []string) ([]codeextract.Source, error) {
-		options, err := repositoryScopeOptions()
-		if err != nil {
-			return nil, err
-		}
-		return repositoryscope.LoadSources(roots, options)
-	}}))
-	app.register("architecture", architecturecommand.New(architecturecommand.Dependencies{ApplySourceConfig: applyRepositorySourceConfig, Remote: requestAnalysisRemote, ServerDefault: serverDefault, RequestExit: requestExit}))
-	app.register("sources", cliruntime.CommandFunc(func(args []string) error {
-		return sourcescommand.Run(args, sourcescommand.Dependencies{Stdout: os.Stdout, Environment: sourceScopeEnvironment, WorkingDirectory: mustGetwd})
-	}))
-	return app
+func (values *Arguments) spillOptions() outputspill.Options {
+	return outputspill.Options{Disabled: values.NoSpill, Threshold: values.SpillThreshold, Directory: values.ArtifactDirectory}
 }
 
-func (app *application) register(name string, command cliruntime.Command) {
-	if name == "" || command == nil {
-		panic("CLI command registration requires a name and command")
+func executeArguments(context cliruntime.Context, values *Arguments) error {
+	switch {
+	case values.VersionFlag || values.Version != nil:
+		return versioncommand.Execute(context, &versioncommand.Args{})
+	case values.Search != nil:
+		return searchcommand.Execute(context, values.Search)
+	case values.Write != nil:
+		return writecommand.Execute(context, values.Write)
+	case values.Grit != nil:
+		return gritcommand.Execute(context, values.Grit)
+	case values.Graph != nil:
+		return graphcommand.Execute(context, values.Graph)
+	case values.Anchors != nil:
+		return anchorscommand.Execute(context, values.Anchors)
+	case values.Boundaries != nil:
+		return boundariescommand.Execute(context, values.Boundaries)
+	case values.Examples != nil:
+		return examplescommand.Execute(context, values.Examples)
+	case values.Artifacts != nil:
+		return artifactscommand.Execute(context, values.Artifacts)
+	case values.Context != nil:
+		return contextcommand.Execute(context, values.Context)
+	case values.Extract != nil:
+		return extractcommand.Execute(context, values.Extract)
+	case values.Architecture != nil:
+		return architecturecommand.Execute(context, values.Architecture)
+	case values.Sources != nil:
+		return sourcescommand.Execute(context, values.Sources)
+	case values.Init != nil:
+		return initcommand.Execute(context, values.Init)
+	case values.Verify != nil:
+		return verifycommand.Execute(context, values.Verify)
+	case values.Languages != nil:
+		return languagescommand.Execute(context, values.Languages)
+	case values.Rules != nil:
+		return rulescommand.Execute(context, values.Rules)
+	case values.Repos != nil:
+		return reposcommand.Execute(context, values.Repos)
+	case values.Get != nil:
+		return getcommand.Execute(context, values.Get)
+	case values.Tree != nil:
+		return treecommand.Execute(context, values.Tree)
+	case values.Refs != nil:
+		return refscommand.Execute(context, values.Refs)
+	case values.Ask != nil:
+		return askcommand.Execute(context, values.Ask)
+	case values.AIProvider != nil:
+		return authcommand.ExecuteAIProvider(context, values.AIProvider)
+	case values.Login != nil:
+		return authcommand.ExecuteLogin(context, values.Login)
+	case values.Logout != nil:
+		return authcommand.ExecuteLogout(context, values.Logout)
+	default:
+		return searchcommand.Execute(context, &searchcommand.Args{})
 	}
-	if _, exists := app.commands[name]; exists {
-		panic("duplicate CLI command registration: " + name)
-	}
-	app.commands[name] = commandSpec{name: name, command: command}
 }
 
-func (app *application) run(args []string) error {
-	if len(args) > 0 {
-		if err := validateCommandAvailability(args[0], args[1:]); err != nil {
-			return err
-		}
-		if spec, ok := app.commands[args[0]]; ok {
-			return spec.command.Run(args[1:])
-		}
-	}
-	return app.defaultCommand.Run(args)
+func newCommandContextWith(repository cliruntime.RepositoryInvocationOptions, threshold int, exit func(int)) cliruntime.Context {
+	return cliruntime.NewContext(cliruntime.ContextOptions{Repository: repository, InlineOutputThreshold: threshold, Exit: exit})
 }

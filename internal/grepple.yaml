@@ -1,0 +1,10 @@
+description: The internal directory provides shared Grepple services for command execution, source discovery, code analysis, rendering, authentication, persistence, and repository integration.
+responsibilities:
+    - Execute reusable CLI workflows
+    - Discover and classify repository sources
+    - Analyze boundaries, graphs, and search results
+    - Render search, navigation, and architecture output
+    - Manage AI providers, authentication, and user settings
+    - Coordinate remote APIs and repository references
+    - Persist metadata, caches, artifacts, and storage paths
+files: []

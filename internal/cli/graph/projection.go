@@ -1,13 +1,14 @@
 package graph
 
 import (
+	"github.com/greppleai/grepple/analysis"
 	"github.com/greppleai/grepple/api"
 	"github.com/greppleai/grepple/parser"
 	"github.com/greppleai/grepple/search"
 )
 
 // Schema identifies the normalized navigation graph projection.
-const Schema = "grepple-navigation-graph-v7"
+const Schema = analysis.GraphSchema
 const navigationGraphSchema = Schema
 
 // Output is the complete normalized navigation graph command projection.
@@ -31,60 +32,37 @@ type Output struct {
 }
 
 // Query describes a graph traversal projection.
-type Query struct {
-	Direction    string   `json:"direction"`
-	Depth        int      `json:"depth"`
-	RootIDs      []string `json:"rootIds"`
-	Languages    []string `json:"languages,omitempty"`
-	Confidences  []string `json:"confidences,omitempty"`
-	Visibilities []string `json:"visibilities,omitempty"`
-}
+type Query = analysis.GraphQuery
 
 // Truncation describes source-universe truncation.
-type Truncation struct {
-	Reason  string `json:"reason"`
-	Limit   int    `json:"limit"`
-	Skipped int    `json:"skipped"`
-}
+type Truncation = analysis.Truncation
 
 // SourceSummary describes graph source processing.
-type SourceSummary struct {
-	Discovered int `json:"discovered"`
-	Selected   int `json:"selected"`
-	Parsed     int `json:"parsed"`
-	Skipped    int `json:"skipped"`
-	Failed     int `json:"failed"`
-	Recovered  int `json:"recovered"`
-}
+type SourceSummary = analysis.SourceSummary
 
 // BuildOutput constructs a complete graph projection from already resolved paths.
 func BuildOutput(paths []string, maxFiles int, options search.NavigationBuildOptions) Output {
-	discovered := len(paths)
-	eligible := SourcePaths(paths)
-	unsupported := discovered - len(eligible)
-	var truncation *Truncation
-	if maxFiles > 0 && len(eligible) > maxFiles {
-		truncation = &Truncation{Reason: "max_files", Limit: maxFiles, Skipped: len(eligible) - maxFiles}
-		eligible = eligible[:maxFiles]
+	sources := analysis.ReadSources(paths)
+	universe, err := analysis.NewUniverseWithOptions(sources, maxFiles, options)
+	if err != nil {
+		return Output{}
 	}
-	graph, stats := search.BuildNavigationGraphWithOptions(eligible, options)
-	return OutputFromParts(eligible, discovered, unsupported, truncation, graph, stats)
+	defer universe.Close()
+	report, err := analysis.BuildGraph(universe, nil)
+	if err != nil {
+		return Output{}
+	}
+	return FromAnalysis(report)
 }
 
-// OutputFromParts projects an existing parser graph and source statistics.
-func OutputFromParts(paths []string, discovered, unsupported int, truncation *Truncation, graph parser.NavigationGraph, stats search.NavigationSourceStats) Output {
-	declarations := graph.Declarations
-	if declarations == nil {
-		declarations = []parser.NavigationDeclaration{}
-	}
-	calls := graph.Calls
-	if calls == nil {
-		calls = []parser.NavigationCall{}
-	}
+// FromAnalysis adapts a canonical analysis report for command metadata and rendering.
+func FromAnalysis(report analysis.GraphReport) Output {
 	return Output{
-		Schema: Schema, Files: len(paths),
-		Sources:      SourceSummary{Discovered: discovered, Selected: stats.Attempted, Parsed: stats.Parsed, Skipped: unsupported + stats.Skipped, Failed: stats.Failed, Recovered: stats.Recovered},
-		Declarations: declarations, TypeDeclarations: graph.TypeDeclarations, Calls: calls, Imports: graph.Imports, Exports: graph.Exports, Fields: graph.Fields, TypeUsages: graph.TypeUsages, MemberAccesses: graph.MemberAccesses, RepositoryRoots: graph.RepositoryRoots, Resolution: search.MeasureNavigationResolution(graph), Truncation: truncation,
+		Schema: report.Schema, Files: report.Files, Sources: report.Sources,
+		Declarations: report.Declarations, TypeDeclarations: report.TypeDeclarations,
+		Imports: report.Imports, Calls: report.Calls, Exports: report.Exports, Fields: report.Fields,
+		Resolution: report.Resolution, TypeUsages: report.TypeUsages, MemberAccesses: report.MemberAccesses,
+		RepositoryRoots: report.RepositoryRoots, Query: report.Query, Truncation: report.Truncation,
 	}
 }
 

@@ -3,52 +3,31 @@ package graph
 
 import (
 	"fmt"
-	"io"
 
 	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
+	"github.com/greppleai/grepple/search"
 )
 
-// Dependencies supplies independently testable graph operations.
-type Dependencies struct {
-	Build            func([]string) error
-	Diff             func([]string) error
-	Query            func([]string) error
-	Stdout           io.Writer
-	LoadOutput       func([]string, int) (Output, error)
-	ActiveScopeFlags func([]string) []string
-	RequestExit      func(int)
-}
-
 // command owns navigation graph command operations.
-type command struct{ dependencies Dependencies }
+type command struct{ context cliruntime.Context }
 
-// New constructs the graph command.
-func New(dependencies Dependencies) cliruntime.Command { return &command{dependencies: dependencies} }
-
-// Run dispatches graph subcommands. Deprecated: construct the command with New.
-func Run(args []string, dependencies Dependencies) error { return New(dependencies).Run(args) }
+// New constructs the graph command from the common command context.
+func New(context cliruntime.Context) cliruntime.Command { return &command{context: context} }
 
 // Run dispatches graph subcommands without depending on the parent CLI package.
 func (command *command) Run(args []string) error {
-	dependencies := command.dependencies
+	if command.context == nil {
+		return fmt.Errorf("graph command context is unavailable")
+	}
 	if len(args) > 0 {
 		switch args[0] {
 		case "resolve":
 			return command.runResolve(args[1:])
 		case "diff":
-			if dependencies.Diff == nil {
-				return fmt.Errorf("graph diff is unavailable")
-			}
-			return dependencies.Diff(args[1:])
+			return runDiff(command.context, args[1:])
 		case "callers", "callees", "impact", "dependencies", "dependents":
-			if dependencies.Query == nil {
-				return fmt.Errorf("graph query is unavailable")
-			}
-			return dependencies.Query(args)
+			return runQuery(command.context, search.NavigationQueryDirection(args[0]), args[1:])
 		}
 	}
-	if dependencies.Build == nil {
-		return fmt.Errorf("graph build is unavailable")
-	}
-	return dependencies.Build(args)
+	return runBuild(command.context, args)
 }

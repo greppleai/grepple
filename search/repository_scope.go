@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+
+	sourcedomain "github.com/greppleai/grepple/internal/sources"
 )
 
 var navigationRootMarkers = []string{"grepple.json", ".git", "go.work"}
@@ -19,7 +21,7 @@ func collectRelatedRepositoryFiles(ctx context.Context, params Params, matches [
 	seen := make(map[string]bool)
 	var files []string
 	for _, root := range roots {
-		candidates, collectErr := collectCandidateFilesConfiguredContext(ctx, nil, root, ignore)
+		candidates, collectErr := sourcedomain.Candidates(ctx, nil, sourcedomain.DiscoveryOptions{Root: root, IgnoreRoot: ignore.root, IgnorePaths: ignore.patterns, ProductionOnly: ignore.productionOnly})
 		if collectErr != nil {
 			return nil, collectErr
 		}

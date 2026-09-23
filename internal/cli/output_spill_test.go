@@ -15,7 +15,7 @@ func TestOutputSpillWritesJSONDescriptorAndContentAddressedArtifact(t *testing.T
 	if err := os.WriteFile(filepath.Join(root, "grepple.json"), []byte(`{"output":{"spillThresholdBytes":64}}`), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	chdirForConfigTest(t, root)
+	t.Chdir(root)
 	payload := `{"schema":"example-v1","sources":{"parsed":2},"value":"` + strings.Repeat("x", 200) + `"}` + "\n"
 	args := []string{"graph", "--json", "."}
 
@@ -45,7 +45,7 @@ func TestOutputSpillWritesJSONDescriptorAndContentAddressedArtifact(t *testing.T
 
 func TestOutputSpillKeepsSmallAndDisabledOutputOnStdout(t *testing.T) {
 	root := t.TempDir()
-	chdirForConfigTest(t, root)
+	t.Chdir(root)
 	for _, test := range []struct {
 		name    string
 		options spillOptions
@@ -82,7 +82,7 @@ func TestParseSpillOptionsRemovesGlobalFlags(t *testing.T) {
 
 func TestOutputSpillUsesExplicitArtifactDirectoryWithContentAddressedName(t *testing.T) {
 	root := t.TempDir()
-	chdirForConfigTest(t, root)
+	t.Chdir(root)
 	output := captureStdout(t, func() {
 		if err := Run([]string{"languages", "--json", "--spill-threshold-bytes", "64", "--artifact-dir", "agent-output"}); err != nil {
 			t.Fatal(err)
@@ -107,7 +107,7 @@ func TestOutputSpillUsesExplicitArtifactDirectoryWithContentAddressedName(t *tes
 func TestOutputSpillRerunPreservesRepositoryScopeFlags(t *testing.T) {
 	root := t.TempDir()
 	t.Setenv("GREPPLE_ARTIFACT_DIR", filepath.Join(root, ".grepple", "output"))
-	chdirForConfigTest(t, root)
+	t.Chdir(root)
 	output := captureStdout(t, func() {
 		if err := Run([]string{"languages", "--json", "--production-only", "--no-config-ignore", "--spill-threshold-bytes", "64"}); err != nil {
 			t.Fatal(err)

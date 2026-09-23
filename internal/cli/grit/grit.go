@@ -31,12 +31,12 @@ type gritArgs struct {
 	PatternID            string   `arg:"--pattern-id" placeholder:"ID" help:"attach a pattern identifier to findings"`
 	Message              string   `arg:"--message" placeholder:"TEXT" help:"attach a message to findings"`
 	JSON                 bool     `arg:"--json" help:"print the complete structural response as JSON"`
-	MaxOutputBytes       int      `arg:"--max-output-bytes" placeholder:"N" help:"cap human-readable output (default 16384; 0 = unlimited; JSON is uncapped)"`
+	MaxOutputBytes       int      `arg:"--max-output-bytes" default:"16384" placeholder:"N" help:"cap human-readable output (default 16384; 0 = unlimited; JSON is uncapped)"`
 	ExcludeGlobs         []string `arg:"--exclude-glob,separate" placeholder:"GLOB" help:"exclude a source path; repeatable"`
 	Repositories         []string `arg:"--repo,separate" placeholder:"PATTERN" help:"restrict remote repositories; repeatable"`
 	ExcludeRepositories  []string `arg:"--exclude-repo,separate" placeholder:"PATTERN" help:"exclude remote repositories; repeatable"`
 	Skip                 int      `arg:"--skip" placeholder:"N" help:"skip the first N ordered findings"`
-	Limit                int      `arg:"--limit" placeholder:"N" help:"return at most N findings (default 20; 0 = all local)"`
+	Limit                int      `arg:"--limit" default:"20" placeholder:"N" help:"return at most N findings (default 20; 0 = all local)"`
 	MaxFiles             int      `arg:"--max-files" placeholder:"N" help:"bound eligible source files"`
 	MaxTotalBytes        int64    `arg:"--max-total-bytes" placeholder:"N" help:"bound aggregate source bytes"`
 	MaxPatternBytes      int      `arg:"--max-pattern-bytes" placeholder:"N" help:"bound query source bytes during compilation"`
@@ -59,7 +59,11 @@ func (gritArgs) Description() string {
 	return "Run native GritQL structural search over every local Tree-sitter-backed language; use grit explain for compile-only inspection or add --remote to merge findings."
 }
 
-func parseGritArgs(args []string) (gritArgs, error) {
+func parseGritArgs(args []string, outputs ...io.Writer) (gritArgs, error) {
+	var output io.Writer
+	if len(outputs) > 0 {
+		output = outputs[0]
+	}
 	values := gritArgs{Limit: DefaultGritResultLimit, MaxOutputBytes: DefaultTextOutputBytes}
 	argumentParser, err := arg.NewParser(arg.Config{Program: "grepple grit"}, &values)
 	if err != nil {
@@ -67,7 +71,10 @@ func parseGritArgs(args []string) (gritArgs, error) {
 	}
 	if err := argumentParser.Parse(args); err != nil {
 		if errors.Is(err, arg.ErrHelp) {
-			argumentParser.WriteHelp(os.Stdout)
+			if output == nil {
+				output = os.Stdout
+			}
+			argumentParser.WriteHelp(output)
 			return values, nil
 		}
 		return values, err
@@ -186,37 +193,43 @@ func readGritQuery(reader io.Reader) (string, error) {
 	return string(content), nil
 }
 
-// Run executes structural queries. Deprecated: construct the command with New.
-func Run(args []string, dependencies Dependencies) error { return New(dependencies).Run(args) }
-
 // Run executes structural query commands.
 func (command *command) Run(args []string) error {
+	dependencies := command.services()
 	if len(args) > 0 && args[0] == "explain" {
-		return command.runExplain(args[1:])
+		return runGritExplain(args[1:], dependencies)
 	}
-	values, err := parseGritArgs(args)
+	values, err := parseGritArgs(args, dependencies.Stdout)
 	if err != nil {
 		return err
 	}
+	return command.execute(&values)
+}
+
+func (command *command) execute(values *Arguments) error {
+	dependencies := command.services()
 	if values.Query == "" && values.QueryFile == "" {
 		return nil
+	}
+	if err := validateGritArgs(*values); err != nil {
+		return err
 	}
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 	if !values.Local && (values.Remote || values.Server != "") {
-		return command.runRemote(ctx, values)
+		return runGritRemote(ctx, *values, dependencies)
 	}
-	return command.runLocal(ctx, values)
+	return runGritLocal(ctx, *values, dependencies)
 }
 
 func (command *command) runExplain(args []string) error {
-	return runGritExplain(args, command.dependencies)
+	return runGritExplain(args, command.services())
 }
 func (command *command) runRemote(ctx context.Context, values gritArgs) error {
-	return runGritRemote(ctx, values, command.dependencies)
+	return runGritRemote(ctx, values, command.services())
 }
 func (command *command) runLocal(ctx context.Context, values gritArgs) error {
-	return runGritLocal(ctx, values, command.dependencies)
+	return runGritLocal(ctx, values, command.services())
 }
 
 func runGritLocal(ctx context.Context, values gritArgs, supplied ...Dependencies) error {
@@ -320,10 +333,10 @@ func gritCandidates(ctx context.Context, root string, globs []string, supplied .
 
 func outputGritResponse(values gritArgs, response api.GritResponse, dependencies Dependencies) error {
 	if values.JSON {
-		if err := stdoutWriter().writeJSON(response); err != nil {
+		if err := stdoutWriter(dependencies).writeJSON(response); err != nil {
 			return err
 		}
-	} else if err := renderGritHuman(response, values.MaxOutputBytes); err != nil && !errors.Is(err, errOutputTruncated) {
+	} else if err := renderGritHuman(response, values.MaxOutputBytes, dependencies); err != nil && !errors.Is(err, errOutputTruncated) {
 		return err
 	}
 	if len(response.Findings) == 0 {
@@ -430,14 +443,25 @@ func windowGritFindings(findings []api.GritFinding, skip, limit int) []api.GritF
 	return findings
 }
 
-func renderGritHuman(response api.GritResponse, maxOutputBytes int) error {
-	output := newBoundedOutputWriter(os.Stdout, maxOutputBytes)
+func renderGritHuman(response api.GritResponse, maxOutputBytes int, supplied ...Dependencies) error {
+	dependencies := Dependencies{}
+	if len(supplied) > 0 {
+		dependencies = supplied[0]
+	}
+	stdout, stderr := dependencies.Stdout, dependencies.Stderr
+	if stdout == nil {
+		stdout = os.Stdout
+	}
+	if stderr == nil {
+		stderr = os.Stderr
+	}
+	output := newBoundedOutputWriter(stdout, maxOutputBytes)
 	for _, finding := range response.Findings {
 		if err := renderGritFinding(output, finding); err != nil {
 			return err
 		}
 	}
-	return renderGritDiagnostics(newBoundedOutputWriter(os.Stderr, maxOutputBytes), response)
+	return renderGritDiagnostics(newBoundedOutputWriter(stderr, maxOutputBytes), response)
 }
 
 func renderGritFinding(output *outputWriter, finding api.GritFinding) error {

@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"strings"
 	"testing"
+
+	"github.com/greppleai/grepple/internal/cliruntime"
 )
 
 func TestStringIncludesReproducibleMetadata(t *testing.T) {
@@ -20,7 +22,7 @@ func TestStringIncludesReproducibleMetadata(t *testing.T) {
 
 func TestCommandWritesVersion(t *testing.T) {
 	var output bytes.Buffer
-	if err := New(Dependencies{Stdout: &output}).Run(nil); err != nil {
+	if err := New(cliruntime.Environment{Output: &output}).Run(nil); err != nil {
 		t.Fatal(err)
 	}
 	if !strings.HasPrefix(output.String(), "grepple ") || !strings.HasSuffix(output.String(), "\n") {

@@ -1,0 +1,25 @@
+description: The languages package exposes a command that aggregates registered language capabilities and renders them as tabular, JSON, or Markdown reports.
+responsibilities:
+    - Define and execute the languages command
+    - Aggregate parser, extractor, and GritQL registrations
+    - Map feature and navigation-fact support to report statuses
+    - Render human-readable, JSON, and Markdown capability matrices
+    - Validate capability parity and generated documentation
+    - Capture command output for tests
+files:
+    - path: languages.go
+      description: Defines command parsing, capability aggregation, support mapping, and tabular, JSON, and Markdown renderers.
+      kind: production
+      checksum: 17d937af500d34b41bf4d791f1445cfbf5d653e30b70266cba66d16c5454e777
+    - path: languages_test.go
+      description: Verifies capability parity, navigation facts, output formats, argument validation, and generated documentation consistency.
+      kind: test
+      checksum: 3c62e5bd5862d59dfa5358dc0f389fb6f68f52838adaaf3e6ba6098d8b05f3c8
+    - path: output.go
+      description: Declares the languages package and documents its language-capability reporting purpose.
+      kind: production
+      checksum: 6bd4a4b6881353f384d2c5dad17fa1b6ae29a2ec6ed0fc053c3d9ee0692fed4c
+    - path: process_test.go
+      description: Provides a test helper that captures standard output while executing a callback.
+      kind: test
+      checksum: 2112b4b189b7c9d256a0d14540ce8dd09226f6cf17121d34c33262e3b55b6c74

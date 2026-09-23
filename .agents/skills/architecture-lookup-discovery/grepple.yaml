@@ -1,0 +1,12 @@
+description: Provides a Grepple workflow for discovering repository architecture and verifying source ownership and relationships.
+responsibilities:
+    - Orient in unfamiliar repositories
+    - Resolve symbols to source declarations
+    - Explain cross-directory call and type relationships
+    - Verify emitted source ranges
+    - Identify architecture-report uncertainty
+files:
+    - path: SKILL.md
+      description: Defines the architecture lookup and discovery workflow for Grepple.
+      kind: production
+      checksum: 1371fb9d6634d6a8a9603468fcda38a23d129876847afb9863c562cb017f5a90

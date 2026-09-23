@@ -1,0 +1,17 @@
+description: Verifies repository-owned directory metadata for selected source paths and reports missing, stale, or invalid entries.
+responsibilities:
+    - Parse verification paths and JSON output options
+    - Discover policy-scoped source files
+    - Inspect directory metadata status
+    - Build metadata verification reports
+    - Emit text or JSON results
+    - Request failure exits for metadata problems
+files:
+    - path: command.go
+      description: Parses verification arguments, discovers policy-scoped files, inspects directory metadata, emits text or JSON reports, and requests failure exits for metadata problems.
+      kind: production
+      checksum: 5e217f618d83ffe598d1cc61540814b4a99cda3cd0cbe97ca485cb4e6b97aab2
+    - path: command_test.go
+      description: Tests detection of missing, valid, and stale directory metadata as repository files and metadata change.
+      kind: test
+      checksum: 0572ac977ed7ea995882150043090784b122ce231394965945dba6c5a98cb62f

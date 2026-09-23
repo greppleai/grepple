@@ -1,0 +1,43 @@
+description: Runnable documentation examples that demonstrate Grepple search, outlining, filtering, output, paging, and language-navigation features.
+responsibilities:
+    - Demonstrate structural code search
+    - Explain Markdown and plain-text matching
+    - Show source and configuration outlines
+    - Demonstrate counting and file listing
+    - Document matching options and flags
+    - Demonstrate JSON output and paging
+    - Exercise advanced language fixtures
+    - Provide setup and fixture guidance
+files:
+    - path: 01-code-search.md
+      description: Demonstrates structural search context for Go, TypeScript, Java, and Kotlin.
+      kind: production
+      checksum: 5102825a28476425426ae5d65466b5b84ca6688a87fe2fbeb533270cdad68ea1
+    - path: 02-markdown-and-text.md
+      description: Explains heading-aware Markdown search and plain-text or log matching.
+      kind: production
+      checksum: 5c0bf0881ae8586a1d8eb1c93103e31c185af85f83fed1e2db4135b2367592d2
+    - path: 03-outline.md
+      description: Documents structural outlines for source code, configuration, and Markdown files.
+      kind: production
+      checksum: c21635cfd4ed60705c91d8f9505d13e89629e0cdd860deffb0bd16500d2e56e8
+    - path: 04-counting-and-listing.md
+      description: Shows bounded match counts and filename listing probes with glob scoping.
+      kind: production
+      checksum: c22eef570ac9776ac9856f50b555abc0c2c9c8a1df60850d6d7b8ce6493b2a71
+    - path: 05-options-and-flags.md
+      description: Describes regular-expression, fixed-string, and case-insensitive matching options.
+      kind: production
+      checksum: 5eb02f1e75c382c3c9b0333c139cb1628c5c0c98c0ae073c7190dfd2bc5d91f6
+    - path: 06-json-and-paging.md
+      description: Demonstrates structured JSON matches and deterministic file-based paging.
+      kind: production
+      checksum: 8f4c82381b935ab51786801ecf515d03a4f3737b4a25c7efca8ad3b1e8ffc8e5
+    - path: 07-advanced-language-fixtures.md
+      description: Introduces advanced parser fixtures, code navigation, and regression tests.
+      kind: production
+      checksum: 77cffd12f5929a0c676080a18a4bba3ab48c9ae25a62ab02fb13e4c692807f1f
+    - path: README.md
+      description: Provides setup instructions, fixture references, and a guide index for the examples.
+      kind: production
+      checksum: 5dc660f915ba91cf270128c1b14487ed8b088b1a313cd559742a558fb62fb499

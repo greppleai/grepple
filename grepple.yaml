@@ -1,0 +1,110 @@
+description: Provides the public Grepple Go code-search engine, structural parser, navigation graph, analysis tools, CLI, configuration, documentation, testing, and release automation.
+responsibilities:
+    - Parse supported source languages
+    - Search and filter source repositories
+    - Build navigation and architecture evidence
+    - Execute structural queries and analysis
+    - Expose CLI and API contracts
+    - Validate source, schemas, and workflows
+    - Build and release portable binaries
+files:
+    - path: .dockerignore
+      description: Excludes local, credential, dependency, and sandbox files from Docker build contexts.
+      kind: production
+      checksum: e33b9a1a4839b9b9f67407461f6fc347633ae1b447df52354a757f0efa58bc4c
+    - path: .gitignore
+      description: Excludes generated binaries, caches, artifacts, credentials, and distribution files from version control.
+      kind: production
+      checksum: 5601a9e6dc457ba614d0c43cc008708558ae292b298825133c3a13504f06b662
+    - path: .go-version
+      description: Pins the repository Go toolchain version.
+      kind: production
+      checksum: 12d7b149a16b75ddcaf2da98eb9261931a797a798f2b9562b8b6e3b0b8a22fbe
+    - path: .goreleaser.yaml
+      description: Configures cross-platform Grepple builds and release binary metadata.
+      kind: production
+      checksum: 648b9a113c4d3d7b3b714ec62759c3be55e5bdd47bd56f3363dba158300077b3
+    - path: .release-please-manifest.json
+      description: Records the current Release Please package version.
+      kind: production
+      checksum: e5484fb61a43b6a55a7c7ade5df36671956106a3cc182605369f73e086e83278
+    - path: AGENTS.md
+      description: Guides agents on project architecture, dependency direction, source inspection, and validation.
+      kind: production
+      checksum: 7e42723d8d5f210bd57fc131e07333074300810f7e9581815251aa95efd65369
+    - path: CHANGELOG.md
+      description: Records released Grepple features, fixes, performance improvements, and version history.
+      kind: production
+      checksum: 61d49e02991c6186c2bd9ea96f3f1b8f120b4114304fd09d4049f1448d4acdd9
+    - path: Dockerfile
+      description: Builds a statically linked Grepple executable and runs it in a minimal non-root image.
+      kind: production
+      checksum: c0d17831d95a44c924d5e370655dd86d10077b672c460b620ef4b6e27eebc273
+    - path: Makefile
+      description: Automates builds, tests, linting, schema checks, benchmarks, installation, smoke tests, and cleanup.
+      kind: production
+      checksum: 3712d12417594a790a61aa4695981e641971cd0758bc025eb70e9b2e693a7c5a
+    - path: README.md
+      description: Documents Grepple capabilities, commands, architecture, workflows, output contracts, and build requirements.
+      kind: production
+      checksum: 16ebf180d0e3bcd96e2908a1bc2924e613d4a4ca0a4db0039c06776c9b5576d0
+    - path: architecture-production.mmd
+      description: Contains a generated Mermaid graph of production package relationships.
+      kind: generated
+      checksum: dcd4ddb5ef13dc775713034ddf876a7805d18644431a74fee106df915dff9ee8
+    - path: architecture-production.txt
+      description: Contains a generated text report of production package relationships.
+      kind: generated
+      checksum: 9d50fa37ad3a54838f6820699280c8c1805e96a65d236e0cc2edede85897d194
+    - path: architecture.mmd
+      description: Contains a generated Mermaid graph of repository package relationships.
+      kind: generated
+      checksum: 8e261e6ad76ac533f00978fdafadd7828863c464c6ac995bd86641249f97e410
+    - path: boundary-improvements.md
+      description: Proposes evidence-based checks for dependency permeability, abstraction boundaries, adapter ownership, and cohesion.
+      kind: production
+      checksum: 1968f76402cd63564b8c22eb05085def5f1c08c796819254f54396014ac2712c
+    - path: cli-command-refator.md
+      description: Describes the command-object refactor and invocation-neutral CLI runtime architecture.
+      kind: production
+      checksum: a4b2df937ac9636c47cde831efd33f22b829da87ccdf4f0cfce1d0425e612e63
+    - path: go.mod
+      description: Declares the Go module, toolchain version, and direct and indirect dependencies.
+      kind: production
+      checksum: 1a8a776f60012554de432609688ab69c87cc169b4c5ffd14b9ee3a4439bcf787
+    - path: go.sum
+      description: Records cryptographic checksums for resolved Go module dependencies.
+      kind: production
+      checksum: c49a7ba550031c0d987f5638d445583d0203a226f7736c88c3d7c00c81d1a31c
+    - path: grepple.json
+      description: Configures the repository server, ignored paths, output spilling, and indexed repositories.
+      kind: production
+      checksum: 25a2020335d44bd617c25fe251e0cedb8f99e6fc18d15bb6767332f3cd786edb
+    - path: grepple.json.example
+      description: Provides a minimal example of Grepple server configuration.
+      kind: fixture
+      checksum: 04f07751abf02f7862c4cbcf0ece59a7c74a99561e55923a95efcd83e06cb87c
+    - path: next.md
+      description: Tracks open improvements, reliability gates, performance work, and future navigation capabilities.
+      kind: production
+      checksum: 3ec0d0e30a49b2f6c52f95e881e1939a059722ca316a95f882dba70cd3d6b399
+    - path: refactor-nav.md
+      description: Documents the navigation graph refactor toward shared coordination and language-owned semantics.
+      kind: production
+      checksum: 16bc72f1078dd1131551f7be7a3579770e37e80b6454a69841670e3ebb604095
+    - path: release-please-config.json
+      description: Configures Release Please versioning, changelog generation, and Go package release behavior.
+      kind: production
+      checksum: 4d6fde2c42f4414b3052278ffe05afc15b49f3d2ae2c03c06e85e50941fa671d
+    - path: restructure.md
+      description: Defines the target layered repository structure and dependency ownership rules.
+      kind: production
+      checksum: b09ff913539f28e23fed69f8b7f1e6005230e9d901dd8ca9fba0eff6abef8603
+    - path: revive.toml
+      description: Pins Revive lint rules, severity, confidence, and cognitive-complexity thresholds.
+      kind: production
+      checksum: 448ce82f48e47e43e625ade1c99991725b72cc9b4e4002759240cdc8763dc6a7
+    - path: solved.md
+      description: Records completed roadmap capabilities across agent workflows, CLI behavior, search, navigation, and analysis.
+      kind: production
+      checksum: eebb53e592156dd6c6a51e6c685258cbcda1f63f749c7e6f99af33dd7f9ce510

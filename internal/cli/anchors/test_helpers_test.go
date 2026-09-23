@@ -5,25 +5,12 @@ import (
 	"os"
 	"testing"
 
-	"github.com/greppleai/grepple/api"
-	"github.com/greppleai/grepple/search"
+	"github.com/greppleai/grepple/internal/cliruntime"
 )
 
-type cliOptions struct {
-	Anchors     bool
-	LineOnly    bool
-	Params      search.Params
-	AnchorLines Lookup
-}
-
-func prepareResultAnchors(options *cliOptions, results []api.FileResult) error {
-	lookup, err := Prepare(&SearchOptions{Enabled: options.Anchors, LineOnly: options.LineOnly, Params: options.Params}, results)
-	options.AnchorLines = lookup
-	return err
-}
 func Run(args []string) error {
 	if len(args) >= 2 && args[0] == "anchors" {
-		return New(Dependencies{}).Run(args[1:])
+		return New(cliruntime.Environment{}).Run(args[1:])
 	}
 	if len(args) >= 3 && args[0] == "help" && args[1] == "anchors" {
 		switch args[2] {
@@ -33,7 +20,7 @@ func Run(args []string) error {
 			return RunSetup([]string{"--help"})
 		}
 	}
-	return New(Dependencies{}).Run(args)
+	return New(cliruntime.Environment{}).Run(args)
 }
 
 func captureStdout(t *testing.T, run func()) string {

@@ -4,12 +4,11 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/greppleai/grepple/api"
 	"github.com/greppleai/grepple/search"
 )
 
 // RepoCounts renders repository count output.
-func RepoCounts(counts []api.RepoCount, destination io.Writer, jsonMode, summaryOnly bool, maxBytes int) error {
+func RepoCounts(counts []search.RepoCount, destination io.Writer, jsonMode, summaryOnly bool, maxBytes int) error {
 	return (repoCountRenderer{output: newOutputWriter(destination, maxBytes), json: jsonMode, summaryOnly: summaryOnly}).Render(counts)
 }
 
@@ -19,7 +18,7 @@ type repoCountRenderer struct {
 	summaryOnly bool
 }
 
-func (renderer repoCountRenderer) Render(counts []api.RepoCount) error {
+func (renderer repoCountRenderer) Render(counts []search.RepoCount) error {
 	search.SortRepoCounts(counts)
 	totalFiles, totalMatches := 0, 0
 	for _, count := range counts {
@@ -42,7 +41,7 @@ func (renderer repoCountRenderer) renderSummary(totalFiles, totalMatches int) er
 	return renderer.output.writeString(fmt.Sprintf("%d files\t%d matches\n", totalFiles, totalMatches))
 }
 
-func (renderer repoCountRenderer) renderJSON(counts []api.RepoCount, totalFiles, totalMatches int) error {
+func (renderer repoCountRenderer) renderJSON(counts []search.RepoCount, totalFiles, totalMatches int) error {
 	repos := map[string]any{}
 	for _, count := range counts {
 		if count.Repo != "" {
@@ -54,7 +53,7 @@ func (renderer repoCountRenderer) renderJSON(counts []api.RepoCount, totalFiles,
 	})
 }
 
-func (renderer repoCountRenderer) renderText(counts []api.RepoCount, totalFiles, totalMatches int) error {
+func (renderer repoCountRenderer) renderText(counts []search.RepoCount, totalFiles, totalMatches int) error {
 	printedRepo := false
 	for _, count := range counts {
 		if count.Repo == "" {

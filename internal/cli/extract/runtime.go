@@ -3,32 +3,29 @@ package extract
 import (
 	"fmt"
 	"io"
-	"os"
 
 	codeextract "github.com/greppleai/grepple/extract"
 	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
 )
 
-// Dependencies supplies source discovery and process-owned output.
-type Dependencies struct {
-	Stdout      io.Writer
-	LoadSources func([]string) ([]codeextract.Source, error)
-}
+type dependencies struct{ cliruntime.Context }
 
-type command struct{ dependencies Dependencies }
+type command struct{ dependencies dependencies }
 
 // New constructs the extract command.
-func New(dependencies Dependencies) cliruntime.Command { return &command{dependencies: dependencies} }
-
-func (d Dependencies) stdout() io.Writer {
-	if d.Stdout != nil {
-		return d.Stdout
-	}
-	return os.Stdout
+func New(context cliruntime.Context) cliruntime.Command {
+	return &command{dependencies: dependencies{Context: context}}
 }
-func (d Dependencies) loadSources(roots []string) ([]codeextract.Source, error) {
-	if d.LoadSources == nil {
+
+func (dependencies dependencies) stdout() io.Writer { return dependencies.Stdout() }
+func (dependencies dependencies) loadSources(roots []string) ([]codeextract.Source, error) {
+	repository := dependencies.Repository()
+	if repository == nil {
 		return nil, fmt.Errorf("extract source discovery is unavailable")
 	}
-	return d.LoadSources(roots)
+	options, err := repository.ScopeOptions()
+	if err != nil {
+		return nil, err
+	}
+	return codeextract.LoadSourcesWithPolicy(roots, options)
 }

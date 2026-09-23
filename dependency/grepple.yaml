@@ -1,0 +1,33 @@
+description: Dependency resolution provides a common registry for Go, npm, Cargo, and Maven manifests, lockfiles, import matching, and artifact discovery.
+responsibilities:
+    - Resolve manager-specific manifests and lockfiles
+    - Match source imports to dependency evidence
+    - Discover publishable artifact modules
+    - Validate registry and integrity metadata
+    - Select applicable projects through resolver registries
+    - Test resolver registration and project selection
+files:
+    - path: cargo.go
+      description: Resolves Cargo manifests and lockfiles, matches Rust imports, and discovers Cargo artifact modules.
+      kind: production
+      checksum: c0a18be7a8abffc803cce09a23b563889d5beba759dfbf78059899fac91ef31e
+    - path: gomod.go
+      description: Resolves Go modules using go.mod, go.sum, go.work, and replacement directives.
+      kind: production
+      checksum: 9a1322281aeff471de89564643219b6160b5a9559bb7c76225f73023c4058f1a
+    - path: maven.go
+      description: Parses Maven projects, resolves dependencies and properties, and discovers Maven artifact modules.
+      kind: production
+      checksum: ee585607d8a201c7f68d37b635b3a5424f02610cd2616153cad700c755c481e2
+    - path: npm.go
+      description: Resolves npm manifests and lockfiles while validating package-manager, registry, alias, and integrity metadata.
+      kind: production
+      checksum: 81b708a4381157db78c6f02be7ec02ae13f62e0b5e8a26b3dd5c4df174d01b70
+    - path: resolver.go
+      description: Defines dependency evidence, resolver interfaces, registry selection, import matching, and artifact discovery.
+      kind: production
+      checksum: 89c5440eb330c195d0fbf55e4d3b3411c5c73a0bfd9a67e37fcb28e26adc6583
+    - path: resolver_test.go
+      description: Tests default resolver registration, npm project selection, and extensible registry coordination.
+      kind: test
+      checksum: e4175e8f0403e06236530d9a3ce2a90c93fe6f0053a0a25b281267d610f9c75a

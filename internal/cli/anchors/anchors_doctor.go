@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/alexflint/go-arg"
+	"github.com/greppleai/grepple/internal/anchor"
 	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
 	"github.com/greppleai/grepple/internal/shellquote"
 	"github.com/greppleai/grepple/internal/usersettings"
@@ -16,12 +17,12 @@ import (
 
 const anchorDoctorSchema = "grepple-anchor-doctor-v1"
 
-type anchorDoctorArgs struct {
+type DoctorArgs struct {
 	Provider string `arg:"--provider" placeholder:"NAME" help:"diagnose a named provider instead of the configured default"`
 	JSON     bool   `arg:"--json" help:"emit machine-readable diagnostics"`
 }
 
-func (anchorDoctorArgs) Description() string {
+func (DoctorArgs) Description() string {
 	return "Validate anchor-provider configuration and perform one temporary-file protocol round trip."
 }
 
@@ -53,7 +54,7 @@ func WriteHelp() error {
 
 // RunDoctor diagnoses the configured anchor provider.
 func RunDoctor(args []string) error {
-	values := anchorDoctorArgs{}
+	values := DoctorArgs{}
 	argumentParser, err := arg.NewParser(arg.Config{Program: "grepple anchors doctor"}, &values)
 	if err != nil {
 		return err
@@ -65,6 +66,10 @@ func RunDoctor(args []string) error {
 		}
 		return err
 	}
+	return executeDoctor(&values)
+}
+
+func executeDoctor(values *DoctorArgs) error {
 	report := diagnoseAnchorProvider(values.Provider)
 	var renderErr error
 	if values.JSON {
@@ -86,8 +91,8 @@ func RunDoctor(args []string) error {
 
 func diagnoseAnchorProvider(requestedProvider string) anchorDoctorReport {
 	report := anchorDoctorReport{
-		Schema: anchorDoctorSchema, ProtocolVersion: anchorProtocolVersion,
-		MaxResponseBytes: maxAnchorResponseBytes, MaxStderrBytes: maxAnchorProviderStderr,
+		Schema: anchorDoctorSchema, ProtocolVersion: anchor.ProtocolVersion,
+		MaxResponseBytes: anchor.MaxResponseBytes, MaxStderrBytes: anchor.MaxStderrBytes,
 		Checks: []anchorDoctorCheck{},
 	}
 	settingsPath, err := usersettings.Path()
@@ -129,19 +134,11 @@ func anchorDoctorRoundTrip(provider usersettings.Provider) (int, error) {
 	if err := os.WriteFile(path, []byte(content), 0o600); err != nil {
 		return 0, err
 	}
-	request := anchorProtocolRequest{ProtocolVersion: anchorProtocolVersion, Files: []anchorProtocolRequestFile{{Path: path, Content: content, SHA256: anchorDigest(content), Lines: []int{2}}}}
-	response, err := invokeAnchorProvider(provider, request)
+	responseBytes, err := anchor.RoundTrip(provider, anchor.File{Path: path, DisplayPath: "<temporary-file>", Content: content, Lines: []int{2}})
 	if err != nil {
 		return 0, sanitizeAnchorDoctorError(err, path)
 	}
-	if _, err := validateAnchorResponse(request, response, map[string]string{path: "<temporary-file>"}); err != nil {
-		return 0, sanitizeAnchorDoctorError(err, path)
-	}
-	encoded, err := json.Marshal(response)
-	if err != nil {
-		return 0, err
-	}
-	return len(encoded), nil
+	return responseBytes, nil
 }
 
 func sanitizeAnchorDoctorError(err error, temporaryPath string) error {

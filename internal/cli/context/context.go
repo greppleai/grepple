@@ -3,33 +3,32 @@ package context
 
 import (
 	"fmt"
-	"io"
-	"os"
 	"strings"
 
 	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
+	"github.com/greppleai/grepple/internal/render"
 )
 
-// Dependencies supplies process-owned context-guard operations.
-type Dependencies struct {
-	Stdout     io.Writer
-	Invalidate func(reason string) error
+// InvalidateArgs contains context invalidation arguments.
+type InvalidateArgs struct {
+	Reason string `arg:"--reason" placeholder:"REASON" help:"reason recorded for invalidation"`
 }
 
-// command owns context command dependencies.
-type command struct{ dependencies Dependencies }
+// Args contains context command subcommands.
+type Args struct {
+	Invalidate *InvalidateArgs `arg:"subcommand:invalidate"`
+}
+
+type command struct{ context cliruntime.Context }
 
 // New constructs the context command.
-func New(dependencies Dependencies) cliruntime.Command { return &command{dependencies: dependencies} }
-
-// Run executes the context command. Deprecated: construct the command with New.
-func Run(args []string, dependencies Dependencies) error { return New(dependencies).Run(args) }
+func New(context cliruntime.Context) cliruntime.Command { return &command{context: context} }
 
 // Run executes the context command.
 func (command *command) Run(args []string) error {
-	dependencies := command.dependencies
+	application := command.context
 	if len(args) == 1 && (args[0] == "--help" || args[0] == "-h") {
-		return cliruntime.NewOutput(dependencies.stdout()).WriteString("Manage session-agnostic structural-segment context deduplication.\nUsage:\n  grepple context invalidate [--reason REASON]\n")
+		return cliruntime.NewOutput(application.Stdout()).WriteString("Manage session-agnostic structural-segment context deduplication.\nUsage:\n  grepple context invalidate [--reason REASON]\n")
 	}
 	if len(args) == 0 || args[0] != "invalidate" {
 		return fmt.Errorf("usage: grepple context invalidate [--reason REASON]")
@@ -38,17 +37,19 @@ func (command *command) Run(args []string) error {
 	if err != nil {
 		return err
 	}
-	if dependencies.Invalidate == nil {
-		return fmt.Errorf("context invalidation is unavailable")
-	}
-	return dependencies.Invalidate(reason)
+	return Execute(command.context, &Args{Invalidate: &InvalidateArgs{Reason: reason}})
 }
 
-func (dependencies Dependencies) stdout() io.Writer {
-	if dependencies.Stdout != nil {
-		return dependencies.Stdout
+// Execute applies an application-parsed context command.
+func Execute(_ cliruntime.Context, values *Args) error {
+	if values == nil || values.Invalidate == nil {
+		return fmt.Errorf("usage: grepple context invalidate [--reason REASON]")
 	}
-	return os.Stdout
+	reason := strings.TrimSpace(values.Invalidate.Reason)
+	if reason == "" {
+		reason = "manual"
+	}
+	return render.InvalidateContext(reason)
 }
 
 func parseInvalidationReason(args []string) (string, error) {

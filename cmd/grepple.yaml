@@ -1,0 +1,8 @@
+description: Entry point for the Grepple command-line application that executes CLI requests and translates failures into process behavior.
+responsibilities:
+    - Ignore broken-pipe signals.
+    - Run the CLI with command-line arguments.
+    - Apply recognized error exit codes.
+    - Suppress broken-pipe errors.
+    - Report unexpected errors and exit unsuccessfully.
+files: []

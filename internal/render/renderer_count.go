@@ -2,8 +2,7 @@ package render
 
 import (
 	"fmt"
-
-	"github.com/greppleai/grepple/api"
+	"github.com/greppleai/grepple/search"
 )
 
 type countRenderer struct {
@@ -11,7 +10,7 @@ type countRenderer struct {
 	json   bool
 }
 
-func (renderer countRenderer) Render(results []api.FileResult) error {
+func (renderer countRenderer) Render(results []search.FileResult) error {
 	type fileCount struct {
 		Path  string `json:"path"`
 		Count int    `json:"count"`

@@ -2,28 +2,25 @@
 package rules
 
 import (
-	"bytes"
-	"encoding/json"
+	"context"
 	"errors"
 	"fmt"
-	"github.com/greppleai/grepple/api"
-	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
-	"github.com/greppleai/grepple/rulespec"
 	"io"
-	"net/http"
 	"os"
 	"strings"
 
 	"github.com/alexflint/go-arg"
+	"github.com/greppleai/grepple/api"
+	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
+	"github.com/greppleai/grepple/rulespec"
 )
 
-// Run dispatches the rules command family. Deprecated: construct the command with New.
-func Run(args []string, dependencies Dependencies) error { return New(dependencies).Run(args) }
+// Run dispatches rules with the common command context.
 
 // Run dispatches the predefined-search command family.
 func (command *command) Run(args []string) error {
 	if len(args) == 0 {
-		return rulesUsage()
+		return rulesUsage(command.dependencies.Stdout())
 	}
 	switch args[0] {
 	case "add", "create":
@@ -37,7 +34,7 @@ func (command *command) Run(args []string) error {
 	case "results":
 		return command.runResults(args[1:])
 	case "-h", "--help", "help":
-		return rulesUsage()
+		return rulesUsage(command.dependencies.Stdout())
 	default:
 		return fmt.Errorf("unknown `grepple rules` subcommand %q (want add|list|get|rm|results)", args[0])
 	}
@@ -53,8 +50,8 @@ func (command *command) runResults(args []string) error {
 	return runRulesResults(args, command.dependencies)
 }
 
-func rulesUsage() error {
-	return cliruntime.NewOutput(os.Stdout).WriteString(strings.Join([]string{
+func rulesUsage(output io.Writer) error {
+	return cliruntime.NewOutput(output).WriteString(strings.Join([]string{
 		"Predefined searches: saved searches whose results are materialized per repo",
 		"and refreshed whenever a repository is reindexed.",
 		"",
@@ -189,100 +186,119 @@ func loadRuleQuery(inline, path string) (string, error) {
 
 func boolPointer(value bool) *bool { return &value }
 
-func runRulesAdd(args []string, dependencies Dependencies) error {
+func runRulesAdd(args []string, dependencies dependencies) error {
 	var values rulesAddArgs
 	if err := parseRuleArgs("rules add", &values, args); err != nil {
 		return err
 	}
-	rule, err := buildRule(values)
+	return executeRulesAdd(&values, dependencies)
+}
+
+func executeRulesAdd(values *AddArgs, dependencies dependencies) error {
+	rule, err := buildRule(*values)
 	if err != nil {
 		return err
 	}
 	base := dependencies.serverDefault(values.Server)
-	body, err := json.Marshal(rule)
+	created, err := dependencies.client().CreateRule(context.Background(), base, rule)
 	if err != nil {
 		return err
 	}
-	var created api.Rule
-	if err := ruleRequest(http.MethodPost, base+"/public/rules", body, &created, dependencies); err != nil {
-		return err
-	}
 	if values.JSON {
-		return cliruntime.NewOutput(os.Stdout).WriteJSON(created)
+		return cliruntime.NewOutput(dependencies.Stdout()).WriteJSON(created)
 	}
 	if created.Engine == api.RuleEngineGritQL {
-		return cliruntime.NewOutput(os.Stdout).WriteString(fmt.Sprintf("created structural rule %s (mode=%s, engine=%s)\n", created.ID, created.Mode, created.Engine))
+		return cliruntime.NewOutput(dependencies.Stdout()).WriteString(fmt.Sprintf("created structural rule %s (mode=%s, engine=%s)\n", created.ID, created.Mode, created.Engine))
 	}
-	return cliruntime.NewOutput(os.Stdout).WriteString(fmt.Sprintf("created rule %s (mode=%s)\n", created.ID, created.Mode))
+	return cliruntime.NewOutput(dependencies.Stdout()).WriteString(fmt.Sprintf("created rule %s (mode=%s)\n", created.ID, created.Mode))
 }
 
-func runRulesList(args []string, dependencies Dependencies) error {
+func runRulesList(args []string, dependencies dependencies) error {
 	server, jsonOut, err := ruleServerFlags("rules list", args)
 	if err != nil {
 		return err
 	}
-	var set api.RuleSet
-	if err := ruleRequest(http.MethodGet, dependencies.serverDefault(server)+"/public/rules", nil, &set, dependencies); err != nil {
+	return executeRulesList(&ServerArgs{commonArgs: commonArgs{Server: server}, JSON: jsonOut}, dependencies)
+}
+
+func executeRulesList(values *ServerArgs, dependencies dependencies) error {
+	set, err := dependencies.client().Rules(context.Background(), dependencies.serverDefault(values.Server))
+	if err != nil {
 		return err
 	}
-	if jsonOut {
-		return cliruntime.NewOutput(os.Stdout).WriteJSON(set)
+	if values.JSON {
+		return cliruntime.NewOutput(dependencies.Stdout()).WriteJSON(set)
 	}
 	if len(set.Rules) == 0 {
-		return cliruntime.NewOutput(os.Stdout).WriteString("no rules defined\n")
+		return cliruntime.NewOutput(dependencies.Stdout()).WriteString("no rules defined\n")
 	}
 	for _, r := range set.Rules {
 		line := fmt.Sprintf("%s\t%s\t%s\n", r.ID, r.Mode, r.Name)
 		if r.Engine == api.RuleEngineGritQL {
 			line = fmt.Sprintf("%s\t%s\t%s\t%s\n", r.ID, r.Mode, r.Engine, r.Name)
 		}
-		if err := cliruntime.NewOutput(os.Stdout).WriteString(line); err != nil {
+		if err := cliruntime.NewOutput(dependencies.Stdout()).WriteString(line); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func runRulesGet(args []string, dependencies Dependencies) error {
+func runRulesGet(args []string, dependencies dependencies) error {
 	id, server, jsonOut, err := ruleIDFlags("rules get", args)
 	if err != nil {
 		return err
 	}
-	var rule api.Rule
-	if err := ruleRequest(http.MethodGet, dependencies.serverDefault(server)+"/public/rules/"+id, nil, &rule, dependencies); err != nil {
+	return executeRulesGet(&IDArgs{commonArgs: commonArgs{Server: server}, JSON: jsonOut, ID: id}, dependencies)
+}
+
+func executeRulesGet(values *IDArgs, dependencies dependencies) error {
+	id, server, jsonOut := values.ID, values.Server, values.JSON
+	rule, err := dependencies.client().Rule(context.Background(), dependencies.serverDefault(server), id)
+	if err != nil {
 		return err
 	}
 	if jsonOut {
-		return cliruntime.NewOutput(os.Stdout).WriteJSON(rule)
+		return cliruntime.NewOutput(dependencies.Stdout()).WriteJSON(rule)
 	}
-	return cliruntime.NewOutput(os.Stdout).WriteJSON(rule)
+	return cliruntime.NewOutput(dependencies.Stdout()).WriteJSON(rule)
 }
 
-func runRulesDelete(args []string, dependencies Dependencies) error {
+func runRulesDelete(args []string, dependencies dependencies) error {
 	id, server, _, err := ruleIDFlags("rules rm", args)
 	if err != nil {
 		return err
 	}
-	if err := ruleRequest(http.MethodDelete, dependencies.serverDefault(server)+"/public/rules/"+id, nil, nil, dependencies); err != nil {
-		return err
-	}
-	return cliruntime.NewOutput(os.Stdout).WriteString(fmt.Sprintf("deleted rule %s\n", id))
+	return executeRulesDelete(&IDArgs{commonArgs: commonArgs{Server: server}, ID: id}, dependencies)
 }
 
-func runRulesResults(args []string, dependencies Dependencies) error {
+func executeRulesDelete(values *IDArgs, dependencies dependencies) error {
+	id, server := values.ID, values.Server
+	if err := dependencies.client().DeleteRule(context.Background(), dependencies.serverDefault(server), id); err != nil {
+		return err
+	}
+	return cliruntime.NewOutput(dependencies.Stdout()).WriteString(fmt.Sprintf("deleted rule %s\n", id))
+}
+
+func runRulesResults(args []string, dependencies dependencies) error {
 	id, server, jsonOut, err := ruleIDFlags("rules results", args)
 	if err != nil {
 		return err
 	}
-	var results api.RuleResults
-	if err := ruleRequest(http.MethodGet, dependencies.serverDefault(server)+"/public/rules/"+id+"/results", nil, &results, dependencies); err != nil {
+	return executeRulesResults(&IDArgs{commonArgs: commonArgs{Server: server}, JSON: jsonOut, ID: id}, dependencies)
+}
+
+func executeRulesResults(values *IDArgs, dependencies dependencies) error {
+	id, server, jsonOut := values.ID, values.Server, values.JSON
+	results, err := dependencies.client().RuleResults(context.Background(), dependencies.serverDefault(server), id)
+	if err != nil {
 		return err
 	}
 	if jsonOut {
-		return cliruntime.NewOutput(os.Stdout).WriteJSON(results)
+		return cliruntime.NewOutput(dependencies.Stdout()).WriteJSON(results)
 	}
 	if len(results.Repos) == 0 {
-		if err := cliruntime.NewOutput(os.Stdout).WriteString("no matches\n"); err != nil {
+		if err := cliruntime.NewOutput(dependencies.Stdout()).WriteString("no matches\n"); err != nil {
 			return err
 		}
 		dependencies.requestExit(1)
@@ -293,41 +309,11 @@ func runRulesResults(args []string, dependencies Dependencies) error {
 		if len(r.Paths) > 0 {
 			line += "\t" + strings.Join(r.Paths, ",")
 		}
-		if err := cliruntime.NewOutput(os.Stdout).WriteString(line + "\n"); err != nil {
+		if err := cliruntime.NewOutput(dependencies.Stdout()).WriteString(line + "\n"); err != nil {
 			return err
 		}
 	}
 	return nil
-}
-
-// --- small shared helpers ---
-
-// ruleRequest performs an authorized JSON request and decodes the response into
-// out (when non-nil), surfacing non-2xx bodies as errors.
-func ruleRequest(method, target string, body []byte, out any, dependencies Dependencies) error {
-	var reader io.Reader
-	contentType := ""
-	if body != nil {
-		reader = bytes.NewReader(body)
-		contentType = "application/json"
-	}
-	req, err := dependencies.newRequest(method, target, contentType, reader)
-	if err != nil {
-		return err
-	}
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode >= http.StatusMultipleChoices {
-		data, _ := io.ReadAll(resp.Body)
-		return fmt.Errorf("server returned %d: %s", resp.StatusCode, strings.TrimSpace(string(data)))
-	}
-	if out == nil {
-		return nil
-	}
-	return json.NewDecoder(resp.Body).Decode(out)
 }
 
 func parseRuleArgs(program string, dest any, args []string) error {

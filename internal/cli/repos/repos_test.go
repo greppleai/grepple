@@ -33,7 +33,7 @@ func TestReposListsNamesOnePerLine(t *testing.T) {
 	server, gotPath := reposTestServer(t)
 
 	out := captureStdout(t, func() {
-		if err := Run([]string{"--server", server.URL}, Dependencies{}); err != nil {
+		if err := New(Dependencies{}).Run([]string{"--server", server.URL}); err != nil {
 			t.Fatal(err)
 		}
 	})
@@ -51,7 +51,7 @@ func TestReposFilterSubstringCaseInsensitive(t *testing.T) {
 	server, _ := reposTestServer(t)
 
 	out := captureStdout(t, func() {
-		if err := Run([]string{"--server", server.URL, "ACME"}, Dependencies{}); err != nil {
+		if err := New(Dependencies{}).Run([]string{"--server", server.URL, "ACME"}); err != nil {
 			t.Fatal(err)
 		}
 	})
@@ -65,7 +65,7 @@ func TestReposJSONMode(t *testing.T) {
 	server, _ := reposTestServer(t)
 
 	out := captureStdout(t, func() {
-		if err := Run([]string{"--server", server.URL, "--json", "web"}, Dependencies{}); err != nil {
+		if err := New(Dependencies{}).Run([]string{"--server", server.URL, "--json", "web"}); err != nil {
 			t.Fatal(err)
 		}
 	})

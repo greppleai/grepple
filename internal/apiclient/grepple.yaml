@@ -1,0 +1,20 @@
+description: The apiclient package provides typed HTTP operations for Grepple APIs and GitHub device-flow authentication.
+responsibilities:
+    - Expose typed search, navigation, analysis, repository, tree, rule, and raw-content operations
+    - Construct and execute authenticated HTTP requests
+    - Enforce response size and schema validation
+    - Refresh and persist expiring authentication tokens
+    - Support GitHub device-code login and identity lookup
+files:
+    - path: auth.go
+      description: This file implements login configuration retrieval, GitHub device-code requests, token polling, and user authentication.
+      kind: production
+      checksum: 062dfcbd70ff67ad5c07f7570fa2022e88ba9cb6ee9465d3c0f3b91d940c9bcf
+    - path: client.go
+      description: This file defines the typed HTTP client, remote API operations, request handling, response validation, and token refresh logic.
+      kind: production
+      checksum: e08d156e8b872fd4c2bb4e535b53938bdf9f20f31b918c716b1b496d66c66228
+    - path: client_test.go
+      description: This file tests token selection, token refresh persistence and fallback, and analysis response validation.
+      kind: test
+      checksum: 00377f0941eac2377a2c648d6b6359f81732cdf99d82127b8f491e34453e1945

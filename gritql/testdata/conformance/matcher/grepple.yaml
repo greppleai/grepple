@@ -1,0 +1,10 @@
+description: Matcher conformance fixtures define expected behavior for structural pattern matching.
+responsibilities:
+    - Exercise repeated bindings and branch isolation
+    - Validate list binding and backtracking behavior
+    - Verify optional, negative, and constraint matching
+files:
+    - path: cases.json
+      description: Grepple-original matcher cases specify patterns, source inputs, and expected findings.
+      kind: fixture
+      checksum: 0950e62305b1b38f22663fcb2e87d8d0ddeb178d233aead2ba158e9c088fa728

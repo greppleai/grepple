@@ -24,7 +24,7 @@ func helper() string {
 
 func other() {}
 `)
-	params := Params{At: fmt.Sprintf("%s:5-6", path)}
+	params := Params{At: fmt.Sprintf("%s:5", path)}
 	match, err := At(params)
 	if err != nil {
 		t.Fatal(err)
@@ -68,6 +68,28 @@ func helper() string { return "value" }
 	point := findRelatedPoint(t, match.Related, "helper", "callee")
 	if point.Preview == nil {
 		t.Fatalf("expected followed helper declaration, got %#v", point)
+	}
+}
+
+func TestAtExplicitRangeReturnsTheWholeRangeWithoutDeclarationExpansion(t *testing.T) {
+	directory := t.TempDir()
+	path := writeGoFixture(t, directory, "sample.go", "package sample\n\nfunc first() {}\nfunc second() {}\n")
+	match, err := At(Params{At: path + ":1-4"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if match.CallableDeclaration {
+		t.Fatal("explicit range was incorrectly treated as one callable declaration")
+	}
+	if len(match.Segments) != 1 || match.Segments[0].Kind != "lines" || match.Segments[0].Start != 1 || match.Segments[0].End != 4 {
+		t.Fatalf("explicit range segments=%#v", match.Segments)
+	}
+	if len(match.MatchLines) != 4 {
+		t.Fatalf("explicit range match lines=%v", match.MatchLines)
+	}
+	result := BuildResults([]FileMatch{*match}, 0, 0, true)[0]
+	if len(result.Segments) != 1 || result.Segments[0].Text != "package sample\n\nfunc first() {}\nfunc second() {}" {
+		t.Fatalf("explicit range result=%#v", result.Segments)
 	}
 }
 

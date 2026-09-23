@@ -1,0 +1,13 @@
+description: A Go command-line entry point that reads pi hook input and dispatches grep-guard or lint-check processing.
+responsibilities:
+    - Validate the hook command argument
+    - Read hook input from standard input
+    - Dispatch grep-guard processing
+    - Dispatch lint-check processing with the working directory
+    - Write hook output to standard output
+    - Report invalid invocation errors
+files:
+    - path: main.go
+      description: Defines the executable entry point for validating commands, reading hook input, dispatching handlers, and writing results.
+      kind: production
+      checksum: b47411fa3ff6220c7f7012d61aa79c47e7753766ddce9564d718bde236903bb1

@@ -1,0 +1,571 @@
+flowchart LR
+    d0["analysis"]
+    d1["api"]
+    d2["cmd/grepple"]
+    d3["dependency"]
+    d4["extract"]
+    d5["gritql"]
+    d6["gritql/internal/gritgrammar"]
+    d7["gritqlapi"]
+    d8["hooks/cmd/pi-hook"]
+    d9["hooks/internal/pihooks"]
+    d10["internal/agent"]
+    d11["internal/aiprovider"]
+    d12["internal/anchor"]
+    d13["internal/apiclient"]
+    d14["internal/authstate"]
+    d15["internal/boundaryanalysis"]
+    d16["internal/cli"]
+    d17["internal/cli/anchors"]
+    d18["internal/cli/architecture"]
+    d19["internal/cli/artifacts"]
+    d20["internal/cli/ask"]
+    d21["internal/cli/auth"]
+    d22["internal/cli/boundaries"]
+    d23["internal/cli/context"]
+    d24["internal/cli/examples"]
+    d25["internal/cli/extract"]
+    d26["internal/cli/get"]
+    d27["internal/cli/graph"]
+    d28["internal/cli/grit"]
+    d29["internal/cli/init"]
+    d30["internal/cli/languages"]
+    d31["internal/cli/refs"]
+    d32["internal/cli/repos"]
+    d33["internal/cli/rules"]
+    d34["internal/cli/search"]
+    d35["internal/cli/sources"]
+    d36["internal/cli/tree"]
+    d37["internal/cli/verify"]
+    d38["internal/cli/version"]
+    d39["internal/cli/write"]
+    d40["internal/cliruntime"]
+    d41["internal/directorymeta"]
+    d42["internal/filedigest"]
+    d43["internal/hashline"]
+    d44["internal/outputspill"]
+    d45["internal/pathfilter"]
+    d46["internal/render"]
+    d47["internal/repositoryrefs"]
+    d48["internal/resultanalysis"]
+    d49["internal/shellquote"]
+    d50["internal/sourcelocation"]
+    d51["internal/sources"]
+    d52["internal/storagepaths"]
+    d53["internal/usersettings"]
+    d54["linerange"]
+    d55["navigation"]
+    d56["parser"]
+    d57["rulespec"]
+    d58["search"]
+
+    %% Link strokes use the source directory color; node borders are the legend.
+    style d0 stroke:#1576d7,stroke-width:2px
+    style d1 stroke:#e71742,stroke-width:2px
+    style d2 stroke:#0e8918,stroke-width:2px
+    style d3 stroke:#8d53ee,stroke-width:2px
+    style d4 stroke:#9c6d0f,stroke-width:2px
+    style d5 stroke:#0d847f,stroke-width:2px
+    style d6 stroke:#d815a7,stroke-width:2px
+    style d7 stroke:#44850d,stroke-width:2px
+    style d8 stroke:#4f69ee,stroke-width:2px
+    style d9 stroke:#e03016,stroke-width:2px
+    style d10 stroke:#0d8841,stroke-width:2px
+    style d11 stroke:#b531eb,stroke-width:2px
+    style d12 stroke:#7a7a0c,stroke-width:2px
+    style d13 stroke:#117eab,stroke-width:2px
+    style d14 stroke:#e3166b,stroke-width:2px
+    style d15 stroke:#1d880d,stroke-width:2px
+    style d16 stroke:#765def,stroke-width:2px
+    style d17 stroke:#b65e12,stroke-width:2px
+    style d18 stroke:#0d8668,stroke-width:2px
+    style d19 stroke:#d015c7,stroke-width:2px
+    style d20 stroke:#5a810d,stroke-width:2px
+    style d21 stroke:#2870ea,stroke-width:2px
+    style d22 stroke:#e81829,stroke-width:2px
+    style d23 stroke:#0e8928,stroke-width:2px
+    style d24 stroke:#9c4aed,stroke-width:2px
+    style d25 stroke:#8d730e,stroke-width:2px
+    style d26 stroke:#0e828d,stroke-width:2px
+    style d27 stroke:#dd1692,stroke-width:2px
+    style d28 stroke:#35870d,stroke-width:2px
+    style d29 stroke:#5f65ef,stroke-width:2px
+    style d30 stroke:#d24515,stroke-width:2px
+    style d31 stroke:#0d8750,stroke-width:2px
+    style d32 stroke:#c417e5,stroke-width:2px
+    style d33 stroke:#6e7d0c,stroke-width:2px
+    style d34 stroke:#137ac4,stroke-width:2px
+    style d35 stroke:#e61752,stroke-width:2px
+    style d36 stroke:#0e890e,stroke-width:2px
+    style d37 stroke:#8457ee,stroke-width:2px
+    style d38 stroke:#a56810,stroke-width:2px
+    style d39 stroke:#0d8476,stroke-width:2px
+    style d40 stroke:#d515b4,stroke-width:2px
+    style d41 stroke:#4d840d,stroke-width:2px
+    style d42 stroke:#436cec,stroke-width:2px
+    style d43 stroke:#e62117,stroke-width:2px
+    style d44 stroke:#0d8837,stroke-width:2px
+    style d45 stroke:#ab3dec,stroke-width:2px
+    style d46 stroke:#81780d,stroke-width:2px
+    style d47 stroke:#10809f,stroke-width:2px
+    style d48 stroke:#e1167a,stroke-width:2px
+    style d49 stroke:#26880d,stroke-width:2px
+    style d50 stroke:#6d61ef,stroke-width:2px
+    style d51 stroke:#c15613,stroke-width:2px
+    style d52 stroke:#0d865f,stroke-width:2px
+    style d53 stroke:#cc15d2,stroke-width:2px
+    style d54 stroke:#62800d,stroke-width:2px
+    style d55 stroke:#1673e3,stroke-width:2px
+    style d56 stroke:#e81738,stroke-width:2px
+    style d57 stroke:#0e891e,stroke-width:2px
+    style d58 stroke:#9350ee,stroke-width:2px
+
+    d0 -->|import, resolved-call| d15
+    d0 -->|import, resolved-call, type-reference| d51
+    d0 -->|import, resolved-call, type-reference| d55
+    d0 -->|import, resolved-call, type-reference| d56
+    d0 -->|import, resolved-call, type-reference| d58
+    d1 -->|import| d55
+    d1 -->|import| d57
+    d1 -->|import| d58
+    d2 -->|import, resolved-call| d16
+    d4 -->|import, resolved-call, type-reference| d45
+    d4 -->|import, resolved-call, type-reference| d51
+    d4 -->|import, resolved-call| d55
+    d4 -->|import, resolved-call, type-reference| d56
+    d5 -->|import, resolved-call| d6
+    d5 -->|import, resolved-call, type-reference| d56
+    d7 -->|import, type-reference| d1
+    d7 -->|import, resolved-call, type-reference| d5
+    d7 -->|import, type-reference| d56
+    d8 -->|import, resolved-call| d9
+    d9 -->|import, resolved-call, type-reference| d4
+    d9 -->|import, resolved-call, type-reference| d56
+    d12 -->|import, resolved-call| d43
+    d12 -->|import, resolved-call, type-reference| d53
+    d13 -->|import, type-reference| d1
+    d13 -->|import, resolved-call| d14
+    d13 -->|import, type-reference| d54
+    d15 -->|import, resolved-call| d51
+    d15 -->|import, type-reference| d56
+    d16 -->|import, resolved-call| d0
+    d16 -->|import, resolved-call, type-reference| d17
+    d16 -->|import, resolved-call, type-reference| d18
+    d16 -->|import, resolved-call, type-reference| d19
+    d16 -->|import, resolved-call, type-reference| d20
+    d16 -->|import, resolved-call, type-reference| d21
+    d16 -->|import, resolved-call, type-reference| d22
+    d16 -->|import, resolved-call, type-reference| d23
+    d16 -->|import, resolved-call, type-reference| d24
+    d16 -->|import, resolved-call, type-reference| d25
+    d16 -->|import, resolved-call, type-reference| d26
+    d16 -->|import, resolved-call, type-reference| d27
+    d16 -->|import, resolved-call, type-reference| d28
+    d16 -->|import, resolved-call, type-reference| d29
+    d16 -->|import, resolved-call, type-reference| d30
+    d16 -->|import, resolved-call, type-reference| d31
+    d16 -->|import, resolved-call, type-reference| d32
+    d16 -->|import, resolved-call, type-reference| d33
+    d16 -->|import, resolved-call, type-reference| d34
+    d16 -->|import, resolved-call, type-reference| d35
+    d16 -->|import, resolved-call, type-reference| d36
+    d16 -->|import, resolved-call, type-reference| d37
+    d16 -->|import, resolved-call, type-reference| d38
+    d16 -->|import, resolved-call, type-reference| d39
+    d16 -->|import, resolved-call, type-reference| d40
+    d16 -->|import, resolved-call| d41
+    d16 -->|import, resolved-call| d42
+    d16 -->|import, resolved-call, type-reference| d44
+    d16 -->|import, type-reference| d56
+    d16 -->|import, resolved-call| d58
+    d17 -->|import, resolved-call| d12
+    d17 -->|resolved-call| d35
+    d17 -->|import, resolved-call, type-reference| d40
+    d17 -->|import, resolved-call| d49
+    d17 -->|import, resolved-call, type-reference| d53
+    d18 -->|import, resolved-call| d0
+    d18 -->|import, type-reference| d1
+    d18 -->|resolved-call| d35
+    d18 -->|import, resolved-call, type-reference| d40
+    d18 -->|import, resolved-call, type-reference| d41
+    d18 -->|import, resolved-call| d42
+    d18 -->|import, resolved-call| d56
+    d18 -->|import, resolved-call, type-reference| d58
+    d19 -->|import, resolved-call, type-reference| d40
+    d19 -->|import, resolved-call| d52
+    d20 -->|import, resolved-call, type-reference| d0
+    d20 -->|import, type-reference| d1
+    d20 -->|import, resolved-call| d5
+    d20 -->|import, resolved-call| d7
+    d20 -->|import, resolved-call, type-reference| d10
+    d20 -->|import, resolved-call, type-reference| d11
+    d20 -->|import, resolved-call| d12
+    d20 -->|import, resolved-call, type-reference| d13
+    d20 -->|resolved-call| d35
+    d20 -->|import, resolved-call, type-reference| d40
+    d20 -->|import, resolved-call| d41
+    d20 -->|import, resolved-call| d46
+    d20 -->|import, resolved-call| d47
+    d20 -->|import, resolved-call, type-reference| d51
+    d20 -->|import, resolved-call, type-reference| d53
+    d20 -->|import, resolved-call| d54
+    d20 -->|import, resolved-call, type-reference| d56
+    d20 -->|import, resolved-call, type-reference| d58
+    d21 -->|import, resolved-call, type-reference| d11
+    d21 -->|import, resolved-call, type-reference| d13
+    d21 -->|import, resolved-call| d14
+    d21 -->|resolved-call| d35
+    d21 -->|import, resolved-call, type-reference| d40
+    d22 -->|import, resolved-call, type-reference| d0
+    d22 -->|import, type-reference| d1
+    d22 -->|resolved-call| d35
+    d22 -->|import, resolved-call| d39
+    d22 -->|import, resolved-call, type-reference| d40
+    d22 -->|import, resolved-call| d49
+    d22 -->|import, resolved-call, type-reference| d55
+    d22 -->|import, resolved-call, type-reference| d56
+    d22 -->|import, resolved-call| d58
+    d23 -->|import, resolved-call, type-reference| d40
+    d23 -->|import, resolved-call| d46
+    d24 -->|import, resolved-call, type-reference| d40
+    d25 -->|import, resolved-call, type-reference| d4
+    d25 -->|resolved-call| d35
+    d25 -->|import, resolved-call, type-reference| d40
+    d25 -->|import, resolved-call| d50
+    d25 -->|import, resolved-call, type-reference| d56
+    d26 -->|import, resolved-call, type-reference| d13
+    d26 -->|import, resolved-call, type-reference| d40
+    d26 -->|import, resolved-call| d46
+    d26 -->|import, type-reference| d54
+    d26 -->|import, resolved-call| d56
+    d27 -->|import, resolved-call, type-reference| d0
+    d27 -->|import, type-reference| d1
+    d27 -->|import, resolved-call, type-reference| d40
+    d27 -->|import, resolved-call| d49
+    d27 -->|import, resolved-call| d50
+    d27 -->|import, resolved-call, type-reference| d55
+    d27 -->|import, resolved-call, type-reference| d56
+    d27 -->|import, resolved-call, type-reference| d58
+    d28 -->|import, type-reference| d1
+    d28 -->|import, resolved-call, type-reference| d5
+    d28 -->|import, resolved-call| d7
+    d28 -->|import, resolved-call| d13
+    d28 -->|resolved-call| d35
+    d28 -->|import, resolved-call, type-reference| d40
+    d28 -->|import, resolved-call| d49
+    d28 -->|import, resolved-call| d56
+    d28 -->|import, resolved-call, type-reference| d58
+    d29 -->|import, resolved-call| d10
+    d29 -->|import, resolved-call| d11
+    d29 -->|import, resolved-call, type-reference| d40
+    d29 -->|import, resolved-call, type-reference| d41
+    d29 -->|import, resolved-call, type-reference| d51
+    d29 -->|import, resolved-call| d53
+    d29 -->|import, resolved-call, type-reference| d58
+    d30 -->|import, type-reference| d1
+    d30 -->|import, resolved-call, type-reference| d4
+    d30 -->|import, resolved-call| d5
+    d30 -->|import, resolved-call, type-reference| d40
+    d30 -->|import, resolved-call, type-reference| d56
+    d31 -->|import, type-reference| d1
+    d31 -->|import, resolved-call, type-reference| d40
+    d31 -->|import, resolved-call| d47
+    d32 -->|import, type-reference| d1
+    d32 -->|import, resolved-call, type-reference| d40
+    d33 -->|import, type-reference| d1
+    d33 -->|import, type-reference| d13
+    d33 -->|resolved-call| d35
+    d33 -->|import, resolved-call, type-reference| d40
+    d33 -->|import, resolved-call| d57
+    d34 -->|import, type-reference| d1
+    d34 -->|import, resolved-call, type-reference| d12
+    d34 -->|import, resolved-call| d13
+    d34 -->|import, resolved-call, type-reference| d40
+    d34 -->|import, resolved-call, type-reference| d46
+    d34 -->|import, resolved-call| d48
+    d34 -->|import, resolved-call| d49
+    d34 -->|import, type-reference| d53
+    d34 -->|import, type-reference| d54
+    d34 -->|import, resolved-call| d55
+    d34 -->|import| d56
+    d34 -->|import, resolved-call, type-reference| d58
+    d35 -->|import, resolved-call, type-reference| d40
+    d35 -->|import, resolved-call| d41
+    d35 -->|import, resolved-call| d42
+    d35 -->|import, resolved-call| d51
+    d35 -->|import, type-reference| d58
+    d36 -->|import, type-reference| d1
+    d36 -->|import| d13
+    d36 -->|import, resolved-call, type-reference| d40
+    d36 -->|import, resolved-call| d41
+    d36 -->|import, resolved-call| d46
+    d36 -->|import, resolved-call, type-reference| d51
+    d37 -->|import, resolved-call, type-reference| d40
+    d37 -->|import, resolved-call| d41
+    d37 -->|import, resolved-call| d51
+    d38 -->|import, resolved-call, type-reference| d40
+    d39 -->|import, resolved-call, type-reference| d40
+    d39 -->|import, resolved-call| d43
+    d39 -->|import, resolved-call| d46
+    d40 -->|import, resolved-call, type-reference| d1
+    d40 -->|import, resolved-call, type-reference| d13
+    d40 -->|import, resolved-call, type-reference| d14
+    d40 -->|import, type-reference| d51
+    d40 -->|import, resolved-call| d52
+    d40 -->|import, resolved-call| d53
+    d40 -->|import, resolved-call, type-reference| d58
+    d41 -->|import, resolved-call| d42
+    d44 -->|resolved-call| d35
+    d44 -->|import, resolved-call| d49
+    d44 -->|import, resolved-call| d52
+    d46 -->|import, type-reference| d1
+    d46 -->|import, resolved-call, type-reference| d40
+    d46 -->|import, resolved-call| d48
+    d46 -->|import, type-reference| d54
+    d46 -->|import, type-reference| d55
+    d46 -->|import, resolved-call, type-reference| d56
+    d46 -->|import, resolved-call, type-reference| d58
+    d47 -->|import, type-reference| d1
+    d48 -->|import, type-reference| d1
+    d48 -->|import| d56
+    d51 -->|import, resolved-call, type-reference| d41
+    d51 -->|import, resolved-call| d42
+    d51 -->|import, resolved-call, type-reference| d45
+    d51 -->|import, resolved-call| d56
+    d55 -->|import, resolved-call, type-reference| d3
+    d55 -->|import, resolved-call, type-reference| d56
+    d57 -->|import, resolved-call| d5
+    d57 -->|import, resolved-call, type-reference| d58
+    d58 -->|import, resolved-call| d15
+    d58 -->|import, resolved-call| d41
+    d58 -->|import, resolved-call| d42
+    d58 -->|import, resolved-call, type-reference| d45
+    d58 -->|import, resolved-call, type-reference| d51
+    d58 -->|import, resolved-call, type-reference| d54
+    d58 -->|import, resolved-call, type-reference| d55
+    d58 -->|import, resolved-call, type-reference| d56
+
+    linkStyle 0 stroke:#1576d7,stroke-width:2px
+    linkStyle 1 stroke:#1576d7,stroke-width:2px
+    linkStyle 2 stroke:#1576d7,stroke-width:2px
+    linkStyle 3 stroke:#1576d7,stroke-width:2px
+    linkStyle 4 stroke:#1576d7,stroke-width:2px
+    linkStyle 5 stroke:#e71742,stroke-width:2px
+    linkStyle 6 stroke:#e71742,stroke-width:2px
+    linkStyle 7 stroke:#e71742,stroke-width:2px
+    linkStyle 8 stroke:#0e8918,stroke-width:2px
+    linkStyle 9 stroke:#9c6d0f,stroke-width:2px
+    linkStyle 10 stroke:#9c6d0f,stroke-width:2px
+    linkStyle 11 stroke:#9c6d0f,stroke-width:2px
+    linkStyle 12 stroke:#9c6d0f,stroke-width:2px
+    linkStyle 13 stroke:#0d847f,stroke-width:2px
+    linkStyle 14 stroke:#0d847f,stroke-width:2px
+    linkStyle 15 stroke:#44850d,stroke-width:2px
+    linkStyle 16 stroke:#44850d,stroke-width:2px
+    linkStyle 17 stroke:#44850d,stroke-width:2px
+    linkStyle 18 stroke:#4f69ee,stroke-width:2px
+    linkStyle 19 stroke:#e03016,stroke-width:2px
+    linkStyle 20 stroke:#e03016,stroke-width:2px
+    linkStyle 21 stroke:#7a7a0c,stroke-width:2px
+    linkStyle 22 stroke:#7a7a0c,stroke-width:2px
+    linkStyle 23 stroke:#117eab,stroke-width:2px
+    linkStyle 24 stroke:#117eab,stroke-width:2px
+    linkStyle 25 stroke:#117eab,stroke-width:2px
+    linkStyle 26 stroke:#1d880d,stroke-width:2px
+    linkStyle 27 stroke:#1d880d,stroke-width:2px
+    linkStyle 28 stroke:#765def,stroke-width:2px
+    linkStyle 29 stroke:#765def,stroke-width:2px
+    linkStyle 30 stroke:#765def,stroke-width:2px
+    linkStyle 31 stroke:#765def,stroke-width:2px
+    linkStyle 32 stroke:#765def,stroke-width:2px
+    linkStyle 33 stroke:#765def,stroke-width:2px
+    linkStyle 34 stroke:#765def,stroke-width:2px
+    linkStyle 35 stroke:#765def,stroke-width:2px
+    linkStyle 36 stroke:#765def,stroke-width:2px
+    linkStyle 37 stroke:#765def,stroke-width:2px
+    linkStyle 38 stroke:#765def,stroke-width:2px
+    linkStyle 39 stroke:#765def,stroke-width:2px
+    linkStyle 40 stroke:#765def,stroke-width:2px
+    linkStyle 41 stroke:#765def,stroke-width:2px
+    linkStyle 42 stroke:#765def,stroke-width:2px
+    linkStyle 43 stroke:#765def,stroke-width:2px
+    linkStyle 44 stroke:#765def,stroke-width:2px
+    linkStyle 45 stroke:#765def,stroke-width:2px
+    linkStyle 46 stroke:#765def,stroke-width:2px
+    linkStyle 47 stroke:#765def,stroke-width:2px
+    linkStyle 48 stroke:#765def,stroke-width:2px
+    linkStyle 49 stroke:#765def,stroke-width:2px
+    linkStyle 50 stroke:#765def,stroke-width:2px
+    linkStyle 51 stroke:#765def,stroke-width:2px
+    linkStyle 52 stroke:#765def,stroke-width:2px
+    linkStyle 53 stroke:#765def,stroke-width:2px
+    linkStyle 54 stroke:#765def,stroke-width:2px
+    linkStyle 55 stroke:#765def,stroke-width:2px
+    linkStyle 56 stroke:#765def,stroke-width:2px
+    linkStyle 57 stroke:#765def,stroke-width:2px
+    linkStyle 58 stroke:#b65e12,stroke-width:2px
+    linkStyle 59 stroke:#b65e12,stroke-width:2px
+    linkStyle 60 stroke:#b65e12,stroke-width:2px
+    linkStyle 61 stroke:#b65e12,stroke-width:2px
+    linkStyle 62 stroke:#b65e12,stroke-width:2px
+    linkStyle 63 stroke:#0d8668,stroke-width:2px
+    linkStyle 64 stroke:#0d8668,stroke-width:2px
+    linkStyle 65 stroke:#0d8668,stroke-width:2px
+    linkStyle 66 stroke:#0d8668,stroke-width:2px
+    linkStyle 67 stroke:#0d8668,stroke-width:2px
+    linkStyle 68 stroke:#0d8668,stroke-width:2px
+    linkStyle 69 stroke:#0d8668,stroke-width:2px
+    linkStyle 70 stroke:#0d8668,stroke-width:2px
+    linkStyle 71 stroke:#d015c7,stroke-width:2px
+    linkStyle 72 stroke:#d015c7,stroke-width:2px
+    linkStyle 73 stroke:#5a810d,stroke-width:2px
+    linkStyle 74 stroke:#5a810d,stroke-width:2px
+    linkStyle 75 stroke:#5a810d,stroke-width:2px
+    linkStyle 76 stroke:#5a810d,stroke-width:2px
+    linkStyle 77 stroke:#5a810d,stroke-width:2px
+    linkStyle 78 stroke:#5a810d,stroke-width:2px
+    linkStyle 79 stroke:#5a810d,stroke-width:2px
+    linkStyle 80 stroke:#5a810d,stroke-width:2px
+    linkStyle 81 stroke:#5a810d,stroke-width:2px
+    linkStyle 82 stroke:#5a810d,stroke-width:2px
+    linkStyle 83 stroke:#5a810d,stroke-width:2px
+    linkStyle 84 stroke:#5a810d,stroke-width:2px
+    linkStyle 85 stroke:#5a810d,stroke-width:2px
+    linkStyle 86 stroke:#5a810d,stroke-width:2px
+    linkStyle 87 stroke:#5a810d,stroke-width:2px
+    linkStyle 88 stroke:#5a810d,stroke-width:2px
+    linkStyle 89 stroke:#5a810d,stroke-width:2px
+    linkStyle 90 stroke:#5a810d,stroke-width:2px
+    linkStyle 91 stroke:#2870ea,stroke-width:2px
+    linkStyle 92 stroke:#2870ea,stroke-width:2px
+    linkStyle 93 stroke:#2870ea,stroke-width:2px
+    linkStyle 94 stroke:#2870ea,stroke-width:2px
+    linkStyle 95 stroke:#2870ea,stroke-width:2px
+    linkStyle 96 stroke:#e81829,stroke-width:2px
+    linkStyle 97 stroke:#e81829,stroke-width:2px
+    linkStyle 98 stroke:#e81829,stroke-width:2px
+    linkStyle 99 stroke:#e81829,stroke-width:2px
+    linkStyle 100 stroke:#e81829,stroke-width:2px
+    linkStyle 101 stroke:#e81829,stroke-width:2px
+    linkStyle 102 stroke:#e81829,stroke-width:2px
+    linkStyle 103 stroke:#e81829,stroke-width:2px
+    linkStyle 104 stroke:#e81829,stroke-width:2px
+    linkStyle 105 stroke:#0e8928,stroke-width:2px
+    linkStyle 106 stroke:#0e8928,stroke-width:2px
+    linkStyle 107 stroke:#9c4aed,stroke-width:2px
+    linkStyle 108 stroke:#8d730e,stroke-width:2px
+    linkStyle 109 stroke:#8d730e,stroke-width:2px
+    linkStyle 110 stroke:#8d730e,stroke-width:2px
+    linkStyle 111 stroke:#8d730e,stroke-width:2px
+    linkStyle 112 stroke:#8d730e,stroke-width:2px
+    linkStyle 113 stroke:#0e828d,stroke-width:2px
+    linkStyle 114 stroke:#0e828d,stroke-width:2px
+    linkStyle 115 stroke:#0e828d,stroke-width:2px
+    linkStyle 116 stroke:#0e828d,stroke-width:2px
+    linkStyle 117 stroke:#0e828d,stroke-width:2px
+    linkStyle 118 stroke:#dd1692,stroke-width:2px
+    linkStyle 119 stroke:#dd1692,stroke-width:2px
+    linkStyle 120 stroke:#dd1692,stroke-width:2px
+    linkStyle 121 stroke:#dd1692,stroke-width:2px
+    linkStyle 122 stroke:#dd1692,stroke-width:2px
+    linkStyle 123 stroke:#dd1692,stroke-width:2px
+    linkStyle 124 stroke:#dd1692,stroke-width:2px
+    linkStyle 125 stroke:#dd1692,stroke-width:2px
+    linkStyle 126 stroke:#35870d,stroke-width:2px
+    linkStyle 127 stroke:#35870d,stroke-width:2px
+    linkStyle 128 stroke:#35870d,stroke-width:2px
+    linkStyle 129 stroke:#35870d,stroke-width:2px
+    linkStyle 130 stroke:#35870d,stroke-width:2px
+    linkStyle 131 stroke:#35870d,stroke-width:2px
+    linkStyle 132 stroke:#35870d,stroke-width:2px
+    linkStyle 133 stroke:#35870d,stroke-width:2px
+    linkStyle 134 stroke:#35870d,stroke-width:2px
+    linkStyle 135 stroke:#5f65ef,stroke-width:2px
+    linkStyle 136 stroke:#5f65ef,stroke-width:2px
+    linkStyle 137 stroke:#5f65ef,stroke-width:2px
+    linkStyle 138 stroke:#5f65ef,stroke-width:2px
+    linkStyle 139 stroke:#5f65ef,stroke-width:2px
+    linkStyle 140 stroke:#5f65ef,stroke-width:2px
+    linkStyle 141 stroke:#5f65ef,stroke-width:2px
+    linkStyle 142 stroke:#d24515,stroke-width:2px
+    linkStyle 143 stroke:#d24515,stroke-width:2px
+    linkStyle 144 stroke:#d24515,stroke-width:2px
+    linkStyle 145 stroke:#d24515,stroke-width:2px
+    linkStyle 146 stroke:#d24515,stroke-width:2px
+    linkStyle 147 stroke:#0d8750,stroke-width:2px
+    linkStyle 148 stroke:#0d8750,stroke-width:2px
+    linkStyle 149 stroke:#0d8750,stroke-width:2px
+    linkStyle 150 stroke:#c417e5,stroke-width:2px
+    linkStyle 151 stroke:#c417e5,stroke-width:2px
+    linkStyle 152 stroke:#6e7d0c,stroke-width:2px
+    linkStyle 153 stroke:#6e7d0c,stroke-width:2px
+    linkStyle 154 stroke:#6e7d0c,stroke-width:2px
+    linkStyle 155 stroke:#6e7d0c,stroke-width:2px
+    linkStyle 156 stroke:#6e7d0c,stroke-width:2px
+    linkStyle 157 stroke:#137ac4,stroke-width:2px
+    linkStyle 158 stroke:#137ac4,stroke-width:2px
+    linkStyle 159 stroke:#137ac4,stroke-width:2px
+    linkStyle 160 stroke:#137ac4,stroke-width:2px
+    linkStyle 161 stroke:#137ac4,stroke-width:2px
+    linkStyle 162 stroke:#137ac4,stroke-width:2px
+    linkStyle 163 stroke:#137ac4,stroke-width:2px
+    linkStyle 164 stroke:#137ac4,stroke-width:2px
+    linkStyle 165 stroke:#137ac4,stroke-width:2px
+    linkStyle 166 stroke:#137ac4,stroke-width:2px
+    linkStyle 167 stroke:#137ac4,stroke-width:2px
+    linkStyle 168 stroke:#137ac4,stroke-width:2px
+    linkStyle 169 stroke:#e61752,stroke-width:2px
+    linkStyle 170 stroke:#e61752,stroke-width:2px
+    linkStyle 171 stroke:#e61752,stroke-width:2px
+    linkStyle 172 stroke:#e61752,stroke-width:2px
+    linkStyle 173 stroke:#e61752,stroke-width:2px
+    linkStyle 174 stroke:#0e890e,stroke-width:2px
+    linkStyle 175 stroke:#0e890e,stroke-width:2px
+    linkStyle 176 stroke:#0e890e,stroke-width:2px
+    linkStyle 177 stroke:#0e890e,stroke-width:2px
+    linkStyle 178 stroke:#0e890e,stroke-width:2px
+    linkStyle 179 stroke:#0e890e,stroke-width:2px
+    linkStyle 180 stroke:#8457ee,stroke-width:2px
+    linkStyle 181 stroke:#8457ee,stroke-width:2px
+    linkStyle 182 stroke:#8457ee,stroke-width:2px
+    linkStyle 183 stroke:#a56810,stroke-width:2px
+    linkStyle 184 stroke:#0d8476,stroke-width:2px
+    linkStyle 185 stroke:#0d8476,stroke-width:2px
+    linkStyle 186 stroke:#0d8476,stroke-width:2px
+    linkStyle 187 stroke:#d515b4,stroke-width:2px
+    linkStyle 188 stroke:#d515b4,stroke-width:2px
+    linkStyle 189 stroke:#d515b4,stroke-width:2px
+    linkStyle 190 stroke:#d515b4,stroke-width:2px
+    linkStyle 191 stroke:#d515b4,stroke-width:2px
+    linkStyle 192 stroke:#d515b4,stroke-width:2px
+    linkStyle 193 stroke:#d515b4,stroke-width:2px
+    linkStyle 194 stroke:#4d840d,stroke-width:2px
+    linkStyle 195 stroke:#0d8837,stroke-width:2px
+    linkStyle 196 stroke:#0d8837,stroke-width:2px
+    linkStyle 197 stroke:#0d8837,stroke-width:2px
+    linkStyle 198 stroke:#81780d,stroke-width:2px
+    linkStyle 199 stroke:#81780d,stroke-width:2px
+    linkStyle 200 stroke:#81780d,stroke-width:2px
+    linkStyle 201 stroke:#81780d,stroke-width:2px
+    linkStyle 202 stroke:#81780d,stroke-width:2px
+    linkStyle 203 stroke:#81780d,stroke-width:2px
+    linkStyle 204 stroke:#81780d,stroke-width:2px
+    linkStyle 205 stroke:#10809f,stroke-width:2px
+    linkStyle 206 stroke:#e1167a,stroke-width:2px
+    linkStyle 207 stroke:#e1167a,stroke-width:2px
+    linkStyle 208 stroke:#c15613,stroke-width:2px
+    linkStyle 209 stroke:#c15613,stroke-width:2px
+    linkStyle 210 stroke:#c15613,stroke-width:2px
+    linkStyle 211 stroke:#c15613,stroke-width:2px
+    linkStyle 212 stroke:#1673e3,stroke-width:2px
+    linkStyle 213 stroke:#1673e3,stroke-width:2px
+    linkStyle 214 stroke:#0e891e,stroke-width:2px
+    linkStyle 215 stroke:#0e891e,stroke-width:2px
+    linkStyle 216 stroke:#9350ee,stroke-width:2px
+    linkStyle 217 stroke:#9350ee,stroke-width:2px
+    linkStyle 218 stroke:#9350ee,stroke-width:2px
+    linkStyle 219 stroke:#9350ee,stroke-width:2px
+    linkStyle 220 stroke:#9350ee,stroke-width:2px
+    linkStyle 221 stroke:#9350ee,stroke-width:2px
+    linkStyle 222 stroke:#9350ee,stroke-width:2px
+    linkStyle 223 stroke:#9350ee,stroke-width:2px

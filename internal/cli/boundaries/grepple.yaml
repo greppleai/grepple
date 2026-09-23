@@ -1,0 +1,54 @@
+description: Implements local and remote boundary analysis for repeated workflows, type representation spread, and policy-defined facade bypasses with cached navigation graphs and bounded reporting.
+responsibilities:
+    - Parse and validate boundary command options
+    - Resolve source paths and build navigation graphs
+    - Cache graphs with source, parser, and repository-context invalidation
+    - Analyze repeated workflows, type spreads, and facade bypasses
+    - Load and validate repository boundary policies
+    - Render complete JSON and bounded human-readable reports
+    - Attach source diagnostics, truncation details, limits, and continuation commands
+files:
+    - path: boundaries.go
+      description: Defines the boundaries command, executes local or remote workflow and type analysis, and renders complete JSON or bounded human-readable reports.
+      kind: production
+      checksum: e9384644fbfa46cf3ce41f929f1c75b3674a33cf7f4f00803127940aba0310b7
+    - path: boundaries_test.go
+      description: Tests workflow and type-boundary reporting, cache reuse and invalidation, read-only operation, output limits, and complete JSON results.
+      kind: test
+      checksum: 2a8cc9eed40083722ce7adf8f062916cf68214c6a18b8a5721139c33cc8a11b1
+    - path: cache.go
+      description: Computes source-, parser-, and repository-context-aware graph digests and reads or atomically writes cached boundary graphs.
+      kind: production
+      checksum: e76cdec4fab8e8b19a871394e06e3c4147c5fbb827b78d4d8753063a2240eca3
+    - path: dispatch_test.go
+      description: Tests injected graph construction without caching and rejection of negative boundary command limits.
+      kind: test
+      checksum: 5c45ca6a4decb11c38cc6a58ed3444c32f80edb8f1c2981c5bd2adfa5c07a660
+    - path: metadata.go
+      description: Builds result metadata containing normalized scope, source diagnostics, omission counts, limits, completeness, and continuation commands.
+      kind: production
+      checksum: 7abec1eaf6e314ce2b6bdfbb5b992d91406b614fa69f0868f00bf94dbb2aca39
+    - path: policy.go
+      description: Loads and validates the optional repository boundary policy from the default or explicitly requested path.
+      kind: production
+      checksum: 0aa1de6ca874bb6b9145c9ce7b0098a3681a0c94c236c1a516e83d9bd11804e6
+    - path: policy_test.go
+      description: Tests policy-driven facade-bypass detection and rejection of invalid policies before source analysis.
+      kind: test
+      checksum: 9bc2bd0062b14bf55ab8ff9cd696d0f60bf112d30694b241c51b3506faedfe34
+    - path: remote_test.go
+      description: Verifies remote boundary requests preserve exact repository identifiers and return JSON responses.
+      kind: test
+      checksum: 8453ebcaaac0f17f21c6243a3dd304348fbd58bfc295fd158480780b4bf4e892
+    - path: render.go
+      description: Renders bounded facade-bypass signals and candidate boundary signals for human-readable output.
+      kind: production
+      checksum: d31ee4c679d61dfdbdfaadccf1874e5c089a58bd1de35ca68c365c3b4c48cba5
+    - path: test_helpers_test.go
+      description: Provides injected test dependencies, temporary source fixtures, cache helpers, graph construction, and stdout capture.
+      kind: test
+      checksum: fa723ae9e9194ea8b40593c0ee058a5675b3ecbcb7e7d8a905c7ce20a14343cf
+    - path: types.go
+      description: Defines boundary reports, graph outputs, metadata inputs, dependency services, remote transport, and bounded output writers.
+      kind: production
+      checksum: d2fd35f77c5c64090deab8992b9b1705281bde6dac66a6d5d92bda64c963332e

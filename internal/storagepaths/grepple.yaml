@@ -1,0 +1,11 @@
+description: Resolves configured or fallback locations for output artifacts and repository-specific caches.
+responsibilities:
+    - Resolve configured or platform-default output artifact directories
+    - Derive repository-specific cache keys
+    - Create cache directories with restricted permissions
+    - Fall back to temporary storage when user cache directories are unavailable
+files:
+    - path: paths.go
+      description: Implements output artifact and repository-specific cache path resolution with configurable and temporary-directory fallbacks.
+      kind: production
+      checksum: a8c162ddc7daec4d0c597595257083bbbcc4877e6a3af970c2da9281850be1b3

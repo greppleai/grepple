@@ -7,6 +7,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/greppleai/grepple/navigation"
+	"github.com/greppleai/grepple/search"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -14,7 +16,6 @@ import (
 	"time"
 
 	"github.com/gofrs/flock"
-	"github.com/greppleai/grepple/api"
 	"github.com/greppleai/grepple/linerange"
 )
 
@@ -152,10 +153,10 @@ type segmentContextGuard struct {
 	fullLineRangeMisses         int
 }
 
-func (guard *segmentContextGuard) Seen(source string, artifact *api.NavigationArtifactIdentity, segment api.ResultSegment) bool {
+func (guard *segmentContextGuard) Seen(source string, artifact *navigation.ArtifactIdentity, segment search.ResultSegment) bool {
 	return guard.seen(source, artifact, segment)
 }
-func (guard *segmentContextGuard) Record(source string, artifact *api.NavigationArtifactIdentity, segment api.ResultSegment) {
+func (guard *segmentContextGuard) Record(source string, artifact *navigation.ArtifactIdentity, segment search.ResultSegment) {
 	guard.record(source, artifact, segment)
 }
 func (guard *segmentContextGuard) RecordMarker(bytes int) { guard.recordMarker(bytes) }
@@ -200,7 +201,7 @@ func (guard *segmentContextGuard) close() {
 	_ = updateRenderedContextStats(guard)
 }
 
-func (guard *segmentContextGuard) seen(source string, artifact *api.NavigationArtifactIdentity, segment api.ResultSegment) bool {
+func (guard *segmentContextGuard) seen(source string, artifact *navigation.ArtifactIdentity, segment search.ResultSegment) bool {
 	if guard == nil || !guard.deduplicate || !completeStructuralSegment(segment) {
 		return false
 	}
@@ -219,7 +220,7 @@ func (guard *segmentContextGuard) seen(source string, artifact *api.NavigationAr
 	return true
 }
 
-func (guard *segmentContextGuard) record(source string, artifact *api.NavigationArtifactIdentity, segment api.ResultSegment) {
+func (guard *segmentContextGuard) record(source string, artifact *navigation.ArtifactIdentity, segment search.ResultSegment) {
 	if guard == nil || !guard.recordSegments || !completeStructuralSegment(segment) {
 		return
 	}
@@ -279,7 +280,7 @@ func (guard *segmentContextGuard) recordLineRangeOmission(lines, sourceBytes, re
 	guard.lineMarkerBytes += markerBytes
 }
 
-func (guard *segmentContextGuard) segmentCoveredByLines(source string, segment api.ResultSegment) bool {
+func (guard *segmentContextGuard) segmentCoveredByLines(source string, segment search.ResultSegment) bool {
 	path, ok := localContextSourcePath(source)
 	if !ok {
 		return false
@@ -296,7 +297,7 @@ func (guard *segmentContextGuard) segmentCoveredByLines(source string, segment a
 	return true
 }
 
-func (guard *segmentContextGuard) recordSegmentLines(source string, segment api.ResultSegment) {
+func (guard *segmentContextGuard) recordSegmentLines(source string, segment search.ResultSegment) {
 	path, ok := localContextSourcePath(source)
 	if !ok {
 		return
@@ -443,14 +444,14 @@ func renderedContextLineEntries(cache renderedContextCache) int {
 	}
 	return total
 }
-func completeStructuralSegment(segment api.ResultSegment) bool {
+func completeStructuralSegment(segment search.ResultSegment) bool {
 	if segment.Kind == "" || segment.Kind == "spacing" || segment.Kind == "summary" || segment.Start < 1 || segment.End < segment.Start || segment.Text == "" {
 		return false
 	}
 	return strings.Count(segment.Text, "\n")+1 == segment.End-segment.Start+1
 }
 
-func structuralSegmentIdentity(source string, artifact *api.NavigationArtifactIdentity, segment api.ResultSegment) (string, string, int) {
+func structuralSegmentIdentity(source string, artifact *navigation.ArtifactIdentity, segment search.ResultSegment) (string, string, int) {
 	sourceDigestBytes := sha256.Sum256([]byte(segment.Text))
 	sourceDigest := hex.EncodeToString(sourceDigestBytes[:])
 	artifactIdentity := "local"

@@ -1,0 +1,31 @@
+description: Manages YAML directory metadata, selected-file coverage, checksum freshness, validation, and bounded directory summaries.
+responsibilities:
+    - Read and write directory metadata
+    - Model directory descriptions and file entries
+    - Discover selected-file ancestor directories
+    - Select direct files and calculate SHA-256 checksums
+    - Inspect metadata coverage and freshness
+    - Validate metadata paths, descriptions, and source kinds
+    - Render bounded directory summaries with status indicators
+    - Test metadata persistence, inspection, checksums, and summaries
+files:
+    - path: metadata.go
+      description: Defines metadata models, YAML persistence, ancestor discovery, direct-file selection, and checksum calculation.
+      kind: production
+      checksum: 0dfb085c0f775059e32c153b37bad6955d25643e8484f10deb38ef4486399fbe
+    - path: metadata_test.go
+      description: Tests metadata round trips, ancestor discovery, direct-file selection, checksums, and tree summaries.
+      kind: test
+      checksum: 5fb4f3ff058f0692a1c437128521a428dc65b4b042598f51cbf5057df3181bc4
+    - path: status.go
+      description: Inspects directory metadata and selected files for coverage, validity, existence, and checksum freshness.
+      kind: production
+      checksum: 31b58ba9c17165fc02702794364f2b8506d3cd45fbd2c27798a29274fdb35507
+    - path: status_test.go
+      description: Tests missing, current, stale, invalid, and incomplete metadata inspection states.
+      kind: test
+      checksum: d495f794822d5a8e85888621394d527ceb98eddf52b492d2e3805500dd0b1004
+    - path: tree.go
+      description: Renders bounded directory-only summaries with descriptions and metadata status indicators.
+      kind: production
+      checksum: bd1195866a0263d7722fa8024d2a85c50fd093f99a67fa0ec7ba3a7d732b542d

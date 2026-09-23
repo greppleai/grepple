@@ -1,26 +1,26 @@
 package search
 
 import (
+	"github.com/greppleai/grepple/navigation"
 	"sort"
 	"strings"
 
-	"github.com/greppleai/grepple/api"
 	"github.com/greppleai/grepple/linerange"
 	"github.com/greppleai/grepple/parser"
 )
 
-// ToResult converts one internal match into the shared wire api.FileResult: sorted
+// ToResult converts one internal match into the shared wire FileResult: sorted
 // match lines, structural segments, and optional context lines.
-func ToResult(m FileMatch, segs []parser.Segment, beforeContext, afterContext int) api.FileResult {
+func ToResult(m FileMatch, segs []parser.Segment, beforeContext, afterContext int) FileResult {
 	lines := SplitLines(m.Content)
 	var ns []int
 	for n := range m.MatchLines {
 		ns = append(ns, n)
 	}
 	sort.Ints(ns)
-	matches := make([]api.ResultMatch, 0, len(ns))
+	matches := make([]ResultMatch, 0, len(ns))
 	for _, n := range ns {
-		match := api.ResultMatch{Line: n, Text: lines[n-1]}
+		match := ResultMatch{Line: n, Text: lines[n-1]}
 		if structuralRange, ok := m.MatchRanges[n]; ok {
 			if structuralRange.StartLine != n {
 				match.StartLine = structuralRange.StartLine
@@ -31,7 +31,7 @@ func ToResult(m FileMatch, segs []parser.Segment, beforeContext, afterContext in
 	}
 	rs := resultSegments(m.Content, segs)
 	related := relatedSymbols(m.Related)
-	r := api.FileResult{
+	r := FileResult{
 		Path: m.DisplayPath, Language: m.Language, StructureStatus: string(m.StructureStatus), Matches: matches, Segments: rs, Related: related, LineRange: apiLineRange(m.LineRange),
 		OmittedRelatedCallers: m.OmittedRelatedCallers, OmittedRelatedCallees: m.OmittedRelatedCallees, OmittedRelatedTypes: m.OmittedRelatedTypes,
 	}
@@ -41,11 +41,11 @@ func ToResult(m FileMatch, segs []parser.Segment, beforeContext, afterContext in
 	return r
 }
 
-func apiLineRange(result *linerange.Result) *api.LineRangeResult {
+func apiLineRange(result *linerange.Result) *LineRangeResult {
 	if result == nil {
 		return nil
 	}
-	return &api.LineRangeResult{
+	return &LineRangeResult{
 		RequestedStart: result.RequestedStart, RequestedEnd: result.RequestedEnd,
 		ReturnedStart: result.ReturnedStart, ReturnedEnd: result.ReturnedEnd,
 		FileLines: result.FileLines, Outcome: string(result.Outcome), Warning: result.Warning,
@@ -54,9 +54,9 @@ func apiLineRange(result *linerange.Result) *api.LineRangeResult {
 
 const maxInlineWhitespaceGap = 2
 
-func resultSegments(content string, segments []parser.Segment) []api.ResultSegment {
+func resultSegments(content string, segments []parser.Segment) []ResultSegment {
 	lines := SplitLines(content)
-	result := make([]api.ResultSegment, 0, len(segments))
+	result := make([]ResultSegment, 0, len(segments))
 	previousEnd := 0
 	for _, segment := range segments {
 		if len(result) > 0 {
@@ -68,30 +68,30 @@ func resultSegments(content string, segments []parser.Segment) []api.ResultSegme
 		if segment.Kind == "lines" {
 			text = strings.Join(lines[segment.Start-1:segment.End], "\n")
 		}
-		result = append(result, api.ResultSegment{Kind: segment.Kind, Start: segment.Start, End: segment.End, Text: text})
+		result = append(result, ResultSegment{Kind: segment.Kind, Start: segment.Start, End: segment.End, Text: text})
 		previousEnd = max(previousEnd, segment.End)
 	}
 	return result
 }
 
-func inlineWhitespaceGap(lines []string, start, end int) (api.ResultSegment, bool) {
+func inlineWhitespaceGap(lines []string, start, end int) (ResultSegment, bool) {
 	count := end - start + 1
 	if count <= 0 || count > maxInlineWhitespaceGap || start < 1 || end > len(lines) {
-		return api.ResultSegment{}, false
+		return ResultSegment{}, false
 	}
 	gapLines := lines[start-1 : end]
 	for _, line := range gapLines {
 		if strings.TrimSpace(line) != "" {
-			return api.ResultSegment{}, false
+			return ResultSegment{}, false
 		}
 	}
-	return api.ResultSegment{Kind: "spacing", Start: start, End: end, Text: strings.Join(gapLines, "\n")}, true
+	return ResultSegment{Kind: "spacing", Start: start, End: end, Text: strings.Join(gapLines, "\n")}, true
 }
 
-func relatedSymbols(points []RelatedPoint) []api.RelatedSymbol {
-	related := make([]api.RelatedSymbol, 0, len(points))
+func relatedSymbols(points []RelatedPoint) []navigation.RelatedSymbol {
+	related := make([]navigation.RelatedSymbol, 0, len(points))
 	for _, point := range points {
-		symbol := api.RelatedSymbol{
+		symbol := navigation.RelatedSymbol{
 			Name: point.Name, Path: point.Path, Kind: point.Kind, Direction: point.Direction,
 			Start: point.Start, End: point.End, CallLine: point.CallLine, Confidence: point.Confidence, Role: point.Role, External: point.External,
 		}
@@ -108,8 +108,8 @@ func relatedSymbols(points []RelatedPoint) []api.RelatedSymbol {
 }
 
 // BuildResults converts matches concurrently while preserving their ranked order.
-func BuildResults(matches []FileMatch, beforeContext, afterContext int, includeSegments bool) []api.FileResult {
-	results := make([]api.FileResult, len(matches))
+func BuildResults(matches []FileMatch, beforeContext, afterContext int, includeSegments bool) []FileResult {
+	results := make([]FileResult, len(matches))
 	runParallel(len(matches), func(index int) {
 		var segments []parser.Segment
 		if includeSegments {

@@ -8,61 +8,72 @@ import (
 
 	"github.com/alexflint/go-arg"
 	"github.com/greppleai/grepple/api"
-	reposcommand "github.com/greppleai/grepple/internal/cli/repos"
 	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
+	"github.com/greppleai/grepple/internal/repositoryrefs"
 )
 
-type refsArgs struct {
+type Args struct {
 	cliruntime.CommonArgs
 	JSON bool   `arg:"--json" help:"print deterministic JSON"`
 	Kind string `arg:"--kind" placeholder:"KIND" help:"only default, branch, or tag refs"`
 	Repo string `arg:"positional" placeholder:"OWNER/REPO" help:"only refs for this source repository"`
 }
 
-func (refsArgs) Description() string {
+func (Args) Description() string {
 	return "List the branches, tags, and resolved commits currently indexed by the remote service."
 }
 
-// command owns indexed-ref command dependencies.
-type command struct{ dependencies Dependencies }
+// command owns indexed-ref behavior.
+type command struct{ context cliruntime.Context }
 
 // New constructs the refs command.
-func New(dependencies Dependencies) cliruntime.Command { return &command{dependencies: dependencies} }
+func New(context cliruntime.Context) cliruntime.Command { return &command{context: context} }
 
-// Run executes the refs command. Deprecated: construct the command with New.
-func Run(args []string, dependencies Dependencies) error { return New(dependencies).Run(args) }
+// Run executes refs with the common command context.
+
+// Dependencies is retained as a source-compatible alias of the shared context.
+type Dependencies = cliruntime.Environment
 
 // Run executes the refs command.
 func (command *command) Run(args []string) error {
-	dependencies := command.dependencies
-	values := refsArgs{}
+	application := command.context
+	values := Args{}
 	parser, err := arg.NewParser(arg.Config{Program: "grepple refs"}, &values)
 	if err != nil {
 		return err
 	}
 	if err := parser.Parse(args); err != nil {
 		if errors.Is(err, arg.ErrHelp) {
-			parser.WriteHelp(dependencies.stdout())
+			parser.WriteHelp(application.Stdout())
 			return nil
 		}
 		return err
 	}
+	return Execute(application, &values)
+}
+
+// Execute lists indexed refs from application-parsed arguments.
+func Execute(application cliruntime.Context, values *Args) error {
 	values.Kind = strings.ToLower(strings.TrimSpace(values.Kind))
 	if values.Kind != "" && values.Kind != "default" && values.Kind != "branch" && values.Kind != "tag" {
 		return fmt.Errorf("--kind must be default, branch, or tag")
 	}
-	entries, err := reposcommand.FetchContext(context.Background(), dependencies.serverDefault(values.Server), reposcommand.Dependencies{NewRequest: dependencies.NewRequest})
+	server := values.Server
+	if configuration := application.Configuration(); configuration != nil {
+		server = configuration.ServerDefault(server)
+	}
+	entries, err := application.APIClient().Repos(context.Background(), server)
 	if err != nil {
 		return err
 	}
-	entries = Filter(entries, values.Repo, values.Kind)
+	entries = repositoryrefs.Filter(entries, values.Repo, values.Kind)
 	if values.JSON {
-		return cliruntime.NewOutput(dependencies.stdout()).WriteJSON(api.ReposResponse{OK: true, Count: len(entries), Repos: entries})
+		return cliruntime.NewOutput(application.Stdout()).WriteJSON(api.ReposResponse{OK: true, Count: len(entries), Repos: entries})
 	}
-	return renderRefs(entries, dependencies)
+	return renderRefs(entries, application)
 }
 
-func renderRefs(entries []api.RepoListEntry, dependencies Dependencies) error {
+func renderRefs(entries []api.RepoListEntry, application cliruntime.Context) error {
 	for _, entry := range entries {
 		head := ""
 		if entry.Head != nil {
@@ -72,28 +83,17 @@ func renderRefs(entries []api.RepoListEntry, dependencies Dependencies) error {
 		if selector == "" {
 			selector = entry.Repo
 		}
-		if err := cliruntime.NewOutput(dependencies.stdout()).WriteString(fmt.Sprintf("%s\t%s\t%s\t%s\n", selector, entry.RefKind, entry.Ref, head)); err != nil {
+		if err := cliruntime.NewOutput(application.Stdout()).WriteString(fmt.Sprintf("%s\t%s\t%s\t%s\n", selector, entry.RefKind, entry.Ref, head)); err != nil {
 			return err
 		}
 	}
 	if len(entries) == 0 {
-		dependencies.requestExit(1)
+		application.RequestExit(1)
 	}
 	return nil
 }
 
 // Filter selects references by source repository and reference kind.
 func Filter(entries []api.RepoListEntry, repo, kind string) []api.RepoListEntry {
-	repo = strings.TrimSpace(repo)
-	kind = strings.TrimSpace(strings.ToLower(kind))
-	if repo == "" && kind == "" {
-		return entries
-	}
-	kept := make([]api.RepoListEntry, 0, len(entries))
-	for _, entry := range entries {
-		if (repo == "" || entry.Repo == repo) && (kind == "" || entry.RefKind == kind) {
-			kept = append(kept, entry)
-		}
-	}
-	return kept
+	return repositoryrefs.Filter(entries, repo, kind)
 }

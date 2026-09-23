@@ -10,10 +10,12 @@ import (
 	"strings"
 
 	"github.com/alexflint/go-arg"
+	"github.com/greppleai/grepple/analysis"
 	"github.com/greppleai/grepple/api"
-	codeextract "github.com/greppleai/grepple/internal/cli/extract"
 	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
 	"github.com/greppleai/grepple/internal/shellquote"
+	"github.com/greppleai/grepple/internal/sourcelocation"
+	"github.com/greppleai/grepple/navigation"
 	"github.com/greppleai/grepple/parser"
 	"github.com/greppleai/grepple/search"
 )
@@ -35,7 +37,7 @@ type graphQueryArgs struct {
 	Visibilities   []string `arg:"--visibility,separate" placeholder:"LEVEL" help:"retain public, non-public, or unknown declarations; repeatable"`
 	Depth          int      `arg:"--depth" default:"1" placeholder:"N" help:"maximum traversal depth (1-10)"`
 	MaxFiles       int      `arg:"--max-files" placeholder:"N" help:"parse at most N discovered files (0 = unlimited)"`
-	MaxOutputBytes int      `arg:"--max-output-bytes" placeholder:"N" help:"cap compact output (default 16384; 0 = unlimited; JSON is uncapped)"`
+	MaxOutputBytes int      `arg:"--max-output-bytes" default:"16384" placeholder:"N" help:"cap compact output (default 16384; 0 = unlimited; JSON is uncapped)"`
 	Paths          []string `arg:"positional" placeholder:"PATH" help:"file, directory, or glob to include; defaults to the working directory"`
 }
 
@@ -54,72 +56,51 @@ func graphQuerySemantics(direction search.NavigationQueryDirection) string {
 	}
 }
 
-// RunQuery traverses a navigation graph.
-func RunQuery(direction search.NavigationQueryDirection, args []string, services Services) error {
-	values, help, err := parseGraphQueryArgs(direction, args)
+// runQuery traverses a navigation graph.
+func runQuery(application cliruntime.Context, direction search.NavigationQueryDirection, args []string) error {
+	values, help, err := parseGraphQueryArgs(application, direction, args)
 	if err != nil || help {
 		return err
 	}
+	return executeQuery(application, direction, &values)
+}
+
+func executeQuery(application cliruntime.Context, direction search.NavigationQueryDirection, values *QueryArgs) error {
+	if err := validateGraphQueryArgs(*values); err != nil {
+		return err
+	}
 	if values.Repository != "" {
-		return runRemoteGraphQuery(context.Background(), direction, values, services)
+		return runRemoteGraphQuery(application, context.Background(), direction, *values)
 	}
-	output, err := buildNavigationGraphOutput(values.Paths, values.MaxFiles, services)
+	paths, err := ResolveInputPaths(values.Paths, search.SourcePolicyConfigurer(application.Repository()))
 	if err != nil {
 		return err
 	}
-	filter, err := search.NormalizeNavigationGraphFilter(search.NavigationGraphFilter{Languages: values.Languages, Confidences: values.Confidences, Visibilities: values.Visibilities})
+	universe, err := analysis.NewUniverse(analysis.ReadSources(paths), values.MaxFiles)
 	if err != nil {
 		return err
 	}
-	filtered, err := search.FilterNavigationGraph(parser.NavigationGraph{Declarations: output.Declarations, TypeDeclarations: output.TypeDeclarations, Calls: output.Calls, Imports: output.Imports, Exports: output.Exports, Fields: output.Fields, TypeUsages: output.TypeUsages, MemberAccesses: output.MemberAccesses, RepositoryRoots: output.RepositoryRoots}, filter)
+	defer universe.Close()
+	report, err := analysis.BuildGraph(universe, &analysis.GraphQuery{
+		Direction: string(direction), Depth: values.Depth,
+		Symbol: values.Symbol, At: values.At, Package: values.Package, Module: values.Module, RootPath: values.RootPath,
+		Languages: values.Languages, Confidences: values.Confidences, Visibilities: values.Visibilities,
+	})
 	if err != nil {
 		return err
 	}
-	output.Declarations = filtered.Declarations
-	output.TypeDeclarations = filtered.TypeDeclarations
-	output.Calls = filtered.Calls
-	output.Imports = filtered.Imports
-	output.RepositoryRoots = filtered.RepositoryRoots
-	output.Exports = filtered.Exports
-	output.Fields = filtered.Fields
-	output.TypeUsages = filtered.TypeUsages
-	output.MemberAccesses = filtered.MemberAccesses
-	roots, err := selectNavigationQueryRoots(output.Declarations, values)
-	if err != nil {
-		return err
-	}
-	rootIDs := navigationDeclarationIDs(roots)
-	queried, err := search.QueryNavigationGraph(parser.NavigationGraph{Declarations: output.Declarations, TypeDeclarations: output.TypeDeclarations, Calls: output.Calls, Imports: output.Imports, Exports: output.Exports, Fields: output.Fields, TypeUsages: output.TypeUsages, MemberAccesses: output.MemberAccesses, RepositoryRoots: output.RepositoryRoots}, rootIDs, direction, values.Depth)
-	if err != nil {
-		return err
-	}
-	output.Declarations = queried.Declarations
-	output.TypeDeclarations = queried.TypeDeclarations
-	output.Calls = queried.Calls
-	output.Imports = queried.Imports
-	output.RepositoryRoots = queried.RepositoryRoots
-	output.Exports = queried.Exports
-	output.Fields = queried.Fields
-	output.TypeUsages = queried.TypeUsages
-	output.MemberAccesses = queried.MemberAccesses
-	output.Resolution = search.MeasureNavigationResolution(queried)
-	output.Query = &navigationGraphQuery{
-		Direction: string(direction), Depth: values.Depth, RootIDs: rootIDs,
-		Languages: filter.Languages, Confidences: filter.Confidences, Visibilities: filter.Visibilities,
-	}
-	if services.Metadata != nil {
-		output.Metadata = services.Metadata(MetadataInput{Paths: values.Paths, Returned: len(output.Declarations), MaxFiles: values.MaxFiles, MaxOutputBytes: values.MaxOutputBytes, JSON: values.JSON, Sources: output.Sources, Truncation: output.Truncation, NextCommand: graphQueryContinuationCommand(direction, values, output.Truncation, services)})
-		output.Metadata.Scope.Languages = normalizedScope(filter.Languages, "")
-	}
+	output := FromAnalysis(report)
+	output.Metadata = graphResultMetadata(metadataInput{Paths: values.Paths, Returned: len(output.Declarations), MaxFiles: values.MaxFiles, MaxOutputBytes: values.MaxOutputBytes, JSON: values.JSON, Sources: output.Sources, Truncation: output.Truncation, NextCommand: graphQueryContinuationCommand(application, direction, *values, output.Truncation)})
+	output.Metadata.Scope.Languages = normalizedScope(output.Query.Languages, "")
 	if values.Compact {
-		return renderCompactNavigationGraph(output, values.MaxOutputBytes)
+		return renderCompactNavigationGraph(application.Stdout(), output, values.MaxOutputBytes)
 	}
-	encoder := json.NewEncoder(os.Stdout)
+	encoder := json.NewEncoder(application.Stdout())
 	encoder.SetEscapeHTML(false)
 	encoder.SetIndent("", "  ")
 	return encoder.Encode(output)
 }
-func parseGraphQueryArgs(direction search.NavigationQueryDirection, args []string) (graphQueryArgs, bool, error) {
+func parseGraphQueryArgs(application cliruntime.Context, direction search.NavigationQueryDirection, args []string) (graphQueryArgs, bool, error) {
 	values := graphQueryArgs{MaxOutputBytes: defaultTextOutputBytes, Depth: 1}
 	argumentParser, err := arg.NewParser(arg.Config{Program: "grepple graph " + string(direction)}, &values)
 	if err != nil {
@@ -127,11 +108,11 @@ func parseGraphQueryArgs(direction search.NavigationQueryDirection, args []strin
 	}
 	if err := argumentParser.Parse(args); err != nil {
 		if errors.Is(err, arg.ErrHelp) {
-			argumentParser.WriteHelp(os.Stdout)
-			fmt.Fprintln(os.Stdout, "Required output mode: (--json | --compact); choose exactly one.")
-			fmt.Fprintln(os.Stdout, "Required root selector: choose exactly one of --symbol, --at, --package, --module, or --root-path.")
+			argumentParser.WriteHelp(application.Stdout())
+			fmt.Fprintln(application.Stdout(), "Required output mode: (--json | --compact); choose exactly one.")
+			fmt.Fprintln(application.Stdout(), "Required root selector: choose exactly one of --symbol, --at, --package, --module, or --root-path.")
 			if semantics := graphQuerySemantics(direction); semantics != "" {
-				fmt.Fprintln(os.Stdout, semantics)
+				fmt.Fprintln(application.Stdout(), semantics)
 			}
 			return values, true, nil
 		}
@@ -143,33 +124,31 @@ func parseGraphQueryArgs(direction search.NavigationQueryDirection, args []strin
 	return values, false, nil
 }
 
-func runRemoteGraphQuery(ctx context.Context, direction search.NavigationQueryDirection, values graphQueryArgs, services Services) error {
+func runRemoteGraphQuery(application cliruntime.Context, ctx context.Context, direction search.NavigationQueryDirection, values graphQueryArgs) error {
 	request := api.AnalysisRequest{
 		Operation: api.AnalysisGraph, Repository: values.Repository, Paths: values.Paths, MaxFiles: values.MaxFiles,
 		Graph: &api.GraphQueryRequest{Direction: string(direction), Depth: values.Depth, Symbol: values.Symbol, At: values.At, Package: values.Package, Module: values.Module, RootPath: values.RootPath, Languages: values.Languages, Confidences: values.Confidences, Visibilities: values.Visibilities},
 	}
-	response, err := services.Remote(ctx, request, services.server(values.Server))
+	response, err := requestRemoteAnalysis(application, ctx, request, application.Configuration().ServerDefault(values.Server))
 	if err != nil {
 		return err
 	}
 	if values.JSON {
-		return cliruntime.NewOutput(os.Stdout).WriteJSON(response)
+		return cliruntime.NewOutput(application.Stdout()).WriteJSON(response)
 	}
 	var output navigationGraphOutput
 	if err := json.Unmarshal(response.Result, &output); err != nil {
 		return fmt.Errorf("decode remote graph query: %w", err)
 	}
-	return renderCompactNavigationGraph(output, values.MaxOutputBytes)
+	return renderCompactNavigationGraph(application.Stdout(), output, values.MaxOutputBytes)
 }
 
-func graphQueryContinuationCommand(direction search.NavigationQueryDirection, values graphQueryArgs, truncation *navigationGraphTruncation, services Services) string {
+func graphQueryContinuationCommand(application cliruntime.Context, direction search.NavigationQueryDirection, values graphQueryArgs, truncation *navigationGraphTruncation) string {
 	if truncation == nil {
 		return ""
 	}
 	parts := []string{"grepple", "graph", string(direction), "--max-files", "0", "--depth", fmt.Sprint(values.Depth), "--json"}
-	if services.ActiveScopeFlags != nil {
-		parts = services.ActiveScopeFlags(parts)
-	}
+	parts = application.Repository().AppendScopeFlags(parts)
 	for _, selector := range []struct{ flag, value string }{{"--symbol", values.Symbol}, {"--at", values.At}, {"--package", values.Package}, {"--module", values.Module}, {"--root-path", values.RootPath}} {
 		if selector.value != "" {
 			parts = append(parts, selector.flag, shellquote.Argument(selector.value))
@@ -228,8 +207,8 @@ func graphQuerySelectorCount(values graphQueryArgs) int {
 	return count
 }
 
-func buildNavigationGraphOutput(globs []string, maxFiles int, services Services) (navigationGraphOutput, error) {
-	paths, err := ResolveInputPaths(globs, services.ApplySourceConfig)
+func buildNavigationGraphOutput(application cliruntime.Context, globs []string, maxFiles int) (navigationGraphOutput, error) {
+	paths, err := ResolveInputPaths(globs, search.SourcePolicyConfigurer(application.Repository()))
 	if err != nil {
 		return navigationGraphOutput{}, err
 	}
@@ -269,26 +248,21 @@ func BuildFromPathsWithOptions(paths []string, maxFiles int, options search.Navi
 	return BuildOutput(paths, maxFiles, options)
 }
 
-// FromParts projects an existing navigation graph.
-func FromParts(paths []string, discovered, unsupported int, truncation *Truncation, graph parser.NavigationGraph, stats search.NavigationSourceStats) Output {
-	return OutputFromParts(paths, discovered, unsupported, truncation, graph, stats)
-}
-
 // QuerySelection selects and filters an in-memory graph traversal.
 type QuerySelection struct {
 	Symbol, At string
 	Depth      int
-	Filter     search.NavigationGraphFilter
+	Filter     navigation.NavigationGraphFilter
 }
 
 // QueryOutput traverses an existing graph projection.
-func QueryOutput(output Output, direction search.NavigationQueryDirection, selection QuerySelection) (Output, error) {
-	filter, err := search.NormalizeNavigationGraphFilter(selection.Filter)
+func QueryOutput(output Output, direction navigation.NavigationQueryDirection, selection QuerySelection) (Output, error) {
+	filter, err := navigation.NormalizeNavigationGraphFilter(selection.Filter)
 	if err != nil {
 		return Output{}, err
 	}
 	graph := parser.NavigationGraph{Declarations: output.Declarations, TypeDeclarations: output.TypeDeclarations, Calls: output.Calls, Imports: output.Imports, Exports: output.Exports, Fields: output.Fields, TypeUsages: output.TypeUsages, MemberAccesses: output.MemberAccesses, RepositoryRoots: output.RepositoryRoots}
-	graph, err = search.FilterNavigationGraph(graph, filter)
+	graph, err = navigation.FilterNavigationGraph(graph, filter)
 	if err != nil {
 		return Output{}, err
 	}
@@ -297,14 +271,14 @@ func QueryOutput(output Output, direction search.NavigationQueryDirection, selec
 		return Output{}, err
 	}
 	rootIDs := navigationDeclarationIDs(roots)
-	queried, err := search.QueryNavigationGraph(graph, rootIDs, direction, selection.Depth)
+	queried, err := navigation.QueryNavigationGraph(graph, rootIDs, direction, selection.Depth)
 	if err != nil {
 		return Output{}, err
 	}
 	output.Declarations, output.TypeDeclarations, output.Calls, output.Imports = queried.Declarations, queried.TypeDeclarations, queried.Calls, queried.Imports
 	output.Exports, output.Fields, output.TypeUsages = queried.Exports, queried.Fields, queried.TypeUsages
 	output.MemberAccesses, output.RepositoryRoots = queried.MemberAccesses, queried.RepositoryRoots
-	output.Resolution = search.MeasureNavigationResolution(queried)
+	output.Resolution = navigation.MeasureNavigationResolution(queried)
 	output.Query = &Query{Direction: string(direction), Depth: selection.Depth, RootIDs: rootIDs, Languages: filter.Languages, Confidences: filter.Confidences}
 	return output, nil
 }
@@ -372,7 +346,7 @@ func selectNavigationQueryRoot(declarations []parser.NavigationDeclaration, symb
 		}
 		return requireUniqueNavigationRoot(matches, "symbol "+fmt.Sprintf("%q", symbol))
 	}
-	path, line, err := codeextract.ParseAt(at)
+	path, line, err := sourcelocation.ParseLine(at)
 	if err != nil {
 		return parser.NavigationDeclaration{}, err
 	}

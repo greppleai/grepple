@@ -8,9 +8,9 @@ Represent every CLI command as an object implementing one command-neutral interf
 
 - `internal/cli/application.go` constructs a fresh command registry for each invocation; `args.go` retains top-level parsing and help behavior.
 - Command packages import command infrastructure from `internal/cliruntime`; production imports remain one-way.
-- Command constructors receive command-owned dependency bundles; defaulting and validation remain within the owning package.
+- Command constructors receive the shared command context; command-specific workflows and implementations remain private to the owning package.
 - Root `internal/cli` performs application composition directly. It has no production `*_adapter.go` or `*dependencies*.go` files.
-- Search remains in the parent package and is both the explicit `search` command and the implicit default.
+- `internal/cli/search` owns parsing, local and remote execution, result metadata, rendering orchestration, and serves both explicit `search` and implicit default dispatch.
 - Graph owns build, resolve, diff, query, compact rendering, and reusable in-memory graph operations under `internal/cli/graph`.
 
 ## Decisions
@@ -24,24 +24,33 @@ type Command interface {
     Run(args []string) error
 }
 
+type Context interface {
+    Stdin() io.Reader
+    Stdout() io.Writer
+    Stderr() io.Writer
+    APIClient() apiclient.APIClient
+    Configuration() Configuration
+    Repository() Repository
+    RequestExit(int)
+}
+
 type CommandFunc func(args []string) error
 ```
 
-`CommandFunc` is reserved for genuinely function-shaped commands such as the remaining ask and sources entrypoints. Do not use it to add forwarding adapters; application registration owns names, aliases, help, and availability.
+`CommandFunc` remains a runtime convenience for tests and genuinely function-shaped embedded callers; production command registration uses command objects constructed from `cliruntime.Context`.
 
 A future cancellation-oriented change may add `context.Context`, but this refactor preserves the current signature.
 
 ### Command construction
 
-Each command package should expose `New(Dependencies) runtime.Command` and keep its implementation private:
+Each command package should expose `New(cliruntime.Context) cliruntime.Command` and keep its implementation private:
 
-```go
 type command struct {
-    dependencies Dependencies
+    application cliruntime.Context
 }
 
-func New(dependencies Dependencies) runtime.Command {
-    return &command{dependencies: dependencies}
+func New(application cliruntime.Context) cliruntime.Command {
+    return &command{application: application}
 }
 
 func (c *command) Run(args []string) error {
@@ -53,13 +62,16 @@ Use `rules.New`, not `NewRulesCommand`, because the package name already supplie
 
 ### Configuration and services
 
-Do not inject one broad shared `*Config` into every command. Keep these concerns distinct:
+Every command receives the same command-neutral command context. The context is the boundary for infrastructure assembled by the application layer:
 
-1. Immutable configuration values such as server defaults and output limits.
-2. Runtime services such as authenticated requests, source loading, Git inspection, caches, and remote analysis.
-3. Process streams: stdin, stdout, and stderr.
+1. Immutable configuration such as server defaults and output limits.
+2. The shared API client.
+3. Repository invocation context, including the working directory, current repository, source policy, and scope flags.
+4. Process streams and exit signaling.
 
-Dependencies should remain narrow and command-specific. Store `io.Writer` rather than a reusable `*runtime.Output`; create mutable output state per execution.
+`internal/cliruntime` owns both the command protocol and the concrete invocation environment: streams, API access, immutable configuration, repository identity, repository scope options, global flags, and exit signaling. `internal/sources` projects neutral scope options into source-loader parameters. Commands own their rendering and command-specific workflows.
+
+Command-specific workflows and implementations remain private to their owning package. They are constructed from the shared context rather than exposed to the application composition root; for example, tree owns local tree discovery and graph owns graph build/query orchestration. Mutable output state is still created per execution.
 
 ### Application registry
 
@@ -69,13 +81,13 @@ The parent package owns an invocation-scoped application registry:
 type commandSpec struct {
     name         string
     aliases      []string
-    command      runtime.Command
+    command      cliruntime.Command
     availability commandAvailability
 }
 
 type application struct {
     commands       map[string]commandSpec
-    defaultCommand runtime.Command
+    defaultCommand cliruntime.Command
 }
 ```
 
@@ -87,7 +99,7 @@ Search is registered under `search` and as `defaultCommand`. A `grep` alias shou
 
 ### Phase 1: command contract and application registry
 
-- [x] Add `runtime.Command` and `runtime.CommandFunc` with unit tests.
+- [x] Add `cliruntime.Command` and `cliruntime.CommandFunc` with unit tests.
 - [x] Add an invocation-scoped application registry.
 - [x] Register existing command functions through `CommandFunc` without changing behavior.
 - [x] Preserve help, availability checks, repository scope, output spilling, version handling, and exit-state conversion.
@@ -104,9 +116,10 @@ Convert, in small independently buildable commits:
 - [x] artifacts
 - [x] repos
 - [x] refs
-- [x] get
+- [x] get — owns remote retrieval, range outcomes, error reporting, outline rendering, and exit signaling through `cliruntime.Context`.
+- [x] sources — owns repository configuration projection, source-scope reporting, rendering, and streams through `cliruntime.Context`.
 - [x] tree
-- [x] write
+- [x] write — owns input decoding, transactional mutation, response emission, exit signaling, and write-coverage projection through `cliruntime.Context`.
 
 For each package, add an unexported `command`, add `New`, move `Run` to a method, update registration, and colocate command tests. Deprecated package-level wrappers remain temporarily for test and embedded-call compatibility; remove them after all consumers migrate and before the completion criteria are closed.
 
@@ -114,23 +127,25 @@ For each package, add an unexported `command`, add `New`, move `Run` to a method
 
 - [x] rules
 - [x] extract
-- [x] grit
+- [x] grit — owns local/remote structural execution, metadata, continuation commands, rendering, and exit signaling through `cliruntime.Context`.
+- [x] ask — owns provider selection, research-session construction, local/remote research tools, caching, rendering, and process interaction through `cliruntime.Context`.
 
 Subcommand behavior is attached to command receivers (`runAdd`, `runList`, `runResults`, focused extraction operations, and local/remote/explain GritQL execution). Deprecated package-level wrappers remain only as temporary compatibility entrypoints.
 
 ### Phase 4: complete graph ownership
 
 - [x] Move graph build, resolve, diff, and query orchestration into the graph command package.
-- [x] Inject narrow graph-building, remote-analysis, repository, and output services.
+- [x] Construct graph from the shared command context while keeping graph-specific loading, transport, metadata, and rendering private.
 - [x] Leave reusable navigation and analysis primitives below the command package.
 - [x] Remove parent graph behavior adapters after all consumers use reusable APIs.
 
-Progress: `internal/cli/graph` owns graph argument parsing, local and remote orchestration, projection, build, resolve, diff, query, metadata inputs, continuation commands, and rendering. Boundaries and research consume exported graph projections and in-memory operations directly. The parent application supplies invocation-scoped transport, source policy, output, and process services without forwarding adapters.
+Progress: `internal/cli/graph` owns graph argument parsing, local and remote orchestration, projection, build, resolve, diff, query, metadata, continuation commands, exit signaling, and rendering. `application.go` now supplies only `cliruntime.Context`; boundaries and research consume reusable graph projections and in-memory operations outside composition wiring.
 
 ### Phase 5: architecture and boundaries
 
-- [x] Convert command entrypoints to objects.
+- [x] Convert command entrypoints to objects constructed from `cliruntime.Context`.
 - [x] Keep reusable report construction and analysis APIs independent of command execution.
+- [x] Keep architecture source loading, remote transport, rendering, and exit signaling inside `internal/cli/architecture` rather than the composition root.
 
 ### Phase 6: search
 
@@ -143,21 +158,21 @@ Progress: `internal/cli/graph` owns graph argument parsing, local and remote orc
 
 - [x] Move search result renderer selection and implementations into `internal/render`.
 - [x] Move persistent context coverage, deduplication, statistics, and invalidation into `internal/render`.
-- [x] Move outline formatting into `internal/render` and outline loading/emission into `internal/outline`.
+- [x] Consolidate outline loading, formatting, and emission in `internal/render`.
 - [x] Move generic command runtime primitives from `internal/cli/runtime` to `internal/cliruntime`.
 - [x] Move structural result summaries into `internal/resultanalysis`.
 - [x] Keep `internal/cli` subpackages command-owned; non-command support packages live directly under `internal`.
 - [x] Retain only command wiring and observable CLI integration tests in parent `internal/cli`.
 
-Search now projects parsed command options directly into `render.SearchOptions`. The renderer owns preflight eligibility, output limits, warnings, context coverage, and deduplication without a parent rendering adapter. `internal/cli` has no production renderer, outline, or context-cache implementation.
+Search owns its argument model, local and remote execution, merge/window policy, continuation metadata, anchor preparation, and rendering orchestration. It projects parsed options directly into `render.SearchOptions`; the renderer owns preflight eligibility, output limits, warnings, context coverage, and deduplication. The parent package supplies only `cliruntime.Context`, retains invocation/output-spill lifecycle, and contains observable CLI integration tests rather than search implementation.
 
 ### Phase 7: settings and authentication families
 
 - [x] Convert anchors after introducing narrow settings/provider services.
-- [x] Convert ai-provider, login, and logout together around shared credential and provider state.
+- [x] Convert ai-provider, login, and logout together around `cliruntime.Context`, with credential persistence and provider workflows owned by `internal/cli/auth`.
 - [x] Avoid a broad settings service locator.
 
-Phase 7 uses narrow command operation dependencies: anchors receives help, doctor, and setup operations; authentication commands share one credential/provider dependency bundle. Existing settings stores and provider registries remain parent-owned and are not exposed as a general service locator.
+Authentication commands receive only the shared command context and own provider selection, interactive streams, remote login transport, credential persistence, and logout behavior. The composition root registers the three command objects without credential callbacks or an authentication dependency bundle. Anchors retains its narrow settings-operation dependencies until its own context migration.
 
 ## Testing and architecture gates
 
@@ -171,8 +186,8 @@ For every phase:
 
 ## Completion criteria
 
-- Every CLI command implements `runtime.Command`.
-- Constructors receive explicit narrow dependencies.
+- Every CLI command implements `cliruntime.Command`.
+- Constructors receive the shared `cliruntime.Context`; command packages derive narrow private runtimes from it.
 - The dispatcher no longer contains a command switch.
 - Package-level command entrypoints and compatibility wrappers are removed.
 - Search is both registered explicitly and configured as the application default.

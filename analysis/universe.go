@@ -3,16 +3,31 @@ package analysis
 
 import (
 	"bytes"
+	"os"
+	"path/filepath"
 	"sort"
 
 	"github.com/greppleai/grepple/navigation"
 	"github.com/greppleai/grepple/parser"
+	"github.com/greppleai/grepple/search"
 )
 
-// Source is one repository-relative source file and its complete content.
+// Source is one repository-relative source file and its complete content. ReadError
+// preserves discovery accounting when a caller cannot load a discovered source.
 type Source struct {
-	Path    string
-	Content []byte
+	Path      string
+	Content   []byte
+	ReadError error
+}
+
+// ReadSources loads already selected paths while retaining read failures for completeness accounting.
+func ReadSources(paths []string) []Source {
+	sources := make([]Source, 0, len(paths))
+	for _, path := range paths {
+		content, err := os.ReadFile(path)
+		sources = append(sources, Source{Path: path, Content: content, ReadError: err})
+	}
+	return sources
 }
 
 // SourceSummary reports analysis completeness.
@@ -40,22 +55,28 @@ type parsedSource struct {
 
 // Universe owns parsed documents and one resolved navigation graph.
 type Universe struct {
-	sources    []parsedSource
-	paths      []string
-	graph      parser.NavigationGraph
-	summary    SourceSummary
-	truncation *Truncation
+	sources            []parsedSource
+	paths              []string
+	graph              parser.NavigationGraph
+	navigationAnalysis *search.NavigationAnalysis
+	summary            SourceSummary
+	truncation         *Truncation
 }
 
 // NewUniverse parses each selected source once. Sources must use repository-relative paths.
 func NewUniverse(input []Source, maxFiles int) (*Universe, error) {
+	return NewUniverseWithOptions(input, maxFiles, navigation.BuildOptions{})
+}
+
+// NewUniverseWithOptions parses each selected source once using the requested graph options.
+func NewUniverseWithOptions(input []Source, maxFiles int, options navigation.BuildOptions) (*Universe, error) {
 	ordered := append([]Source(nil), input...)
 	sort.Slice(ordered, func(i, j int) bool { return ordered[i].Path < ordered[j].Path })
 	universe := &Universe{summary: SourceSummary{Discovered: len(ordered)}}
 	eligible := ordered[:0]
 	for _, source := range ordered {
 		capabilities, supported := parser.CapabilitiesForLanguage(parser.LanguageFor(source.Path))
-		if !supported || !capabilities.Navigation || bytes.IndexByte(source.Content, 0) >= 0 {
+		if !supported || !capabilities.Navigation {
 			universe.summary.Skipped++
 			continue
 		}
@@ -68,6 +89,14 @@ func NewUniverse(input []Source, maxFiles int) (*Universe, error) {
 	universe.summary.Selected = len(eligible)
 	documents := make([]navigation.DocumentSource, 0, len(eligible))
 	for _, source := range eligible {
+		if source.ReadError != nil {
+			universe.summary.Failed++
+			continue
+		}
+		if bytes.IndexByte(source.Content, 0) >= 0 {
+			universe.summary.Skipped++
+			continue
+		}
 		document, err := parser.ParseDocument(parser.LanguageFor(source.Path), string(source.Content))
 		if err != nil {
 			universe.summary.Failed++
@@ -77,8 +106,9 @@ func NewUniverse(input []Source, maxFiles int) (*Universe, error) {
 		universe.paths = append(universe.paths, source.Path)
 		documents = append(documents, navigation.DocumentSource{Path: source.Path, Document: document})
 	}
-	graph, stats := navigation.BuildGraphFromDocuments(documents, navigation.BuildOptions{})
-	universe.graph = graph
+	navigationAnalysis, stats := search.BuildNavigationAnalysisFromDocuments(documents, options)
+	universe.navigationAnalysis = navigationAnalysis
+	universe.graph = navigationAnalysis.Graph()
 	universe.summary.Parsed = stats.Parsed
 	universe.summary.Skipped += stats.Skipped
 	universe.summary.Failed += stats.Failed
@@ -99,6 +129,27 @@ func (u *Universe) Close() {
 
 // Graph returns the immutable resolved graph projection.
 func (u *Universe) Graph() parser.NavigationGraph { return u.graph }
+
+// NavigationAnalysis returns the reusable resolved search index.
+func (u *Universe) NavigationAnalysis() *search.NavigationAnalysis { return u.navigationAnalysis }
+
+// Document returns the caller-owned parsed document for one source path.
+func (u *Universe) Document(path string) *parser.Document {
+	if u == nil {
+		return nil
+	}
+	requested, err := filepath.Abs(path)
+	if err != nil {
+		return nil
+	}
+	for _, source := range u.sources {
+		candidate, candidateErr := filepath.Abs(source.path)
+		if candidateErr == nil && filepath.Clean(candidate) == filepath.Clean(requested) {
+			return source.document
+		}
+	}
+	return nil
+}
 
 // Summary returns source completeness counters.
 func (u *Universe) Summary() SourceSummary { return u.summary }

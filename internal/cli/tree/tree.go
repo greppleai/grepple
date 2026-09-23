@@ -2,20 +2,17 @@ package tree
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
-	"net/http"
-	"net/url"
 	"os"
 	"path/filepath"
-	"sort"
 	"strings"
 
 	"github.com/alexflint/go-arg"
 	"github.com/greppleai/grepple/api"
+	"github.com/greppleai/grepple/internal/apiclient"
 	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
+	rendercommand "github.com/greppleai/grepple/internal/render"
 )
 
 // Request contains parsed tree command options.
@@ -34,57 +31,76 @@ func (Request) Description() string {
 	return "Show the local source tree by default; --repo selects an exact indexed repository."
 }
 
-type treeNode struct {
-	name     string
-	dir      bool
-	children map[string]*treeNode
+// command owns tree command behavior and its private local implementation.
+type command struct {
+	context cliruntime.Context
+	local   localTree
 }
 
-// command owns tree command dependencies.
-type command struct{ dependencies Dependencies }
-
-// New constructs the tree command.
-func New(dependencies Dependencies) cliruntime.Command { return &command{dependencies: dependencies} }
-
-// Run executes the tree command. Deprecated: construct the command with New.
-func Run(args []string, dependencies Dependencies) error { return New(dependencies).Run(args) }
+// New constructs the tree command from the common command context.
+func New(context cliruntime.Context) cliruntime.Command {
+	return &command{context: context, local: newLocal(context)}
+}
 
 // Run executes the tree command.
 func (command *command) Run(args []string) error {
-	dependencies := command.dependencies
-	values := Request{Depth: 2}
+	application := command.context
+	values := DefaultArgs()
 	parser, err := arg.NewParser(arg.Config{Program: "grepple tree"}, &values)
 	if err != nil {
 		return err
 	}
 	if err := parser.Parse(args); err != nil {
 		if errors.Is(err, arg.ErrHelp) {
-			parser.WriteHelp(dependencies.stdout())
+			parser.WriteHelp(application.Stdout())
 			return nil
 		}
 		return err
 	}
+	return command.execute(&values)
+}
+
+// DefaultArgs returns tree arguments with application defaults.
+func DefaultArgs() Request { return Request{Depth: 2} }
+
+// Execute renders a tree from application-parsed arguments.
+func Execute(application cliruntime.Context, values *Request) error {
+	return (&command{context: application, local: newLocal(application)}).execute(values)
+}
+
+func (command *command) execute(values *Request) error {
+	application := command.context
+	if application == nil {
+		return fmt.Errorf("tree command context is unavailable")
+	}
 	if values.Depth < 1 {
 		return fmt.Errorf("--depth must be a positive integer")
 	}
-	remote, err := normalizeRequest(&values)
+	remote, err := normalizeRequest(values)
 	if err != nil {
 		return err
 	}
 	var data api.TreeResponse
 	if remote {
-		base := dependencies.serverDefault(values.Server)
-		data, err = FetchContext(context.Background(), base, values, dependencies)
+		configuration := application.Configuration()
+		server := values.Server
+		if configuration != nil {
+			server = configuration.ServerDefault(server)
+		}
+		data, err = application.APIClient().Tree(context.Background(), server, apiclient.TreeRequest{Repo: values.Repo, Path: values.Path, Depth: values.Depth})
 	} else {
-		data, err = dependencies.localTree(values.Path, values.Depth)
+		data, err = command.local(values.Path, values.Depth)
 	}
 	if err != nil {
 		return err
 	}
-	if values.JSON {
-		return cliruntime.NewOutput(dependencies.stdout()).WriteJSON(data)
+	if err := rendercommand.Tree(data, application.Stdout(), values.JSON); err != nil {
+		return err
 	}
-	return printTree(data, dependencies)
+	if !values.JSON && len(data.Entries) == 0 {
+		application.RequestExit(1)
+	}
+	return nil
 }
 
 func normalizeRequest(values *Request) (bool, error) {
@@ -129,111 +145,4 @@ func legacyRepositoryTarget(value string) bool {
 	}
 	parts := strings.Split(filepath.ToSlash(filepath.Clean(value)), "/")
 	return len(parts) == 2 && parts[0] != "" && parts[1] != "" && parts[0] != ".." && parts[1] != ".."
-}
-
-// FetchContext retrieves a directory listing from the server.
-func FetchContext(ctx context.Context, base string, values Request, dependencies Dependencies) (api.TreeResponse, error) {
-	target, err := url.Parse(strings.TrimRight(base, "/") + "/public/tree")
-	if err != nil {
-		return api.TreeResponse{}, err
-	}
-	query := target.Query()
-	query.Set("repo", values.Repo)
-	if values.Path != "" {
-		query.Set("path", values.Path)
-	}
-	query.Set("depth", fmt.Sprint(values.Depth))
-	target.RawQuery = query.Encode()
-	req, err := dependencies.newRequest(http.MethodGet, target.String(), "", nil)
-	if err != nil {
-		return api.TreeResponse{}, err
-	}
-	req = req.WithContext(ctx)
-	response, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return api.TreeResponse{}, err
-	}
-	defer response.Body.Close()
-	if response.StatusCode >= http.StatusMultipleChoices {
-		body, _ := io.ReadAll(response.Body)
-		return api.TreeResponse{}, fmt.Errorf("server %s returned %d: %s", base, response.StatusCode, string(body))
-	}
-	var data api.TreeResponse
-	if err := json.NewDecoder(response.Body).Decode(&data); err != nil {
-		return api.TreeResponse{}, err
-	}
-	return data, nil
-}
-
-// printTree renders the listing as a repo[/path] header plus the indented
-// tree, exiting 1 when the listing is empty.
-func printTree(data api.TreeResponse, dependencies Dependencies) error {
-	header := data.Repo
-	if data.Path != "" && data.Path != "." {
-		header += "/" + data.Path
-	}
-	if err := cliruntime.NewOutput(dependencies.stdout()).WriteString(header + "\n"); err != nil {
-		return err
-	}
-	if err := renderTree(buildTree(data.Entries), "", dependencies); err != nil {
-		return err
-	}
-	if len(data.Entries) == 0 {
-		dependencies.requestExit(1)
-	}
-	return nil
-}
-
-// buildTree folds the flat entry list into a treeNode hierarchy; intermediate
-// path components become directory nodes.
-func buildTree(entries []api.TreeEntry) *treeNode {
-	root := &treeNode{children: map[string]*treeNode{}}
-	for _, entry := range entries {
-		parts := strings.Split(entry.Path, "/")
-		node := root
-		for index, part := range parts {
-			child := node.children[part]
-			if child == nil {
-				child = &treeNode{name: part, dir: index < len(parts)-1 || entry.Dir, children: map[string]*treeNode{}}
-				node.children[part] = child
-			}
-			node = child
-		}
-	}
-	return root
-}
-
-func renderTree(node *treeNode, prefix string, dependencies Dependencies) error {
-	children := make([]*treeNode, 0, len(node.children))
-	for _, child := range node.children {
-		children = append(children, child)
-	}
-	sort.Slice(children, func(i, j int) bool {
-		if children[i].dir != children[j].dir {
-			return children[i].dir
-		}
-		return children[i].name < children[j].name
-	})
-	for index, child := range children {
-		last := index == len(children)-1
-		branch := "├── "
-		next := prefix + "│   "
-		if last {
-			branch = "└── "
-			next = prefix + "    "
-		}
-		suffix := ""
-		if child.dir {
-			suffix = "/"
-		}
-		if err := cliruntime.NewOutput(dependencies.stdout()).WriteString(prefix + branch + child.name + suffix + "\n"); err != nil {
-			return err
-		}
-		if len(child.children) > 0 {
-			if err := renderTree(child, next, dependencies); err != nil {
-				return err
-			}
-		}
-	}
-	return nil
 }

@@ -1,0 +1,11 @@
+description: Implements deterministic repository-relative filtering with ordered ignore patterns, negation, and segment-aware glob matching.
+responsibilities:
+    - Resolve candidate paths relative to a repository root
+    - Apply ordered ignore and re-inclusion patterns
+    - Match single-segment and recursive slash-separated globs
+    - Detect patterns that may re-include descendants
+files:
+    - path: filter.go
+      description: Defines path filtering configuration, relative path resolution, ordered pattern evaluation, negation detection, and recursive glob matching.
+      kind: production
+      checksum: 36ef54e6cf9ccfc4f36e00b8fede35df4e8339b17d507d98e2e21fa557ac8a85

@@ -3,42 +3,88 @@ package analysis
 import (
 	"sort"
 
-	"github.com/greppleai/grepple/search"
+	boundaryanalysis "github.com/greppleai/grepple/internal/boundaryanalysis"
+	"github.com/greppleai/grepple/parser"
 )
 
-// BoundaryReport is the complete graph-backed boundary analysis.
-type BoundaryReport struct {
-	Schema         string                        `json:"schema"`
-	Paths          []string                      `json:"paths"`
-	Files          int                           `json:"files"`
-	Sources        SourceSummary                 `json:"sources"`
-	Policy         string                        `json:"policy,omitempty"`
-	Candidates     []search.BoundaryCandidate    `json:"candidates"`
-	TypeBoundaries []search.BoundaryTypeSpread   `json:"typeBoundaries"`
-	FacadeBypasses []search.BoundaryFacadeBypass `json:"facadeBypasses,omitempty"`
-	Truncation     *Truncation                   `json:"truncation,omitempty"`
+type BoundaryPolicy = boundaryanalysis.BoundaryPolicy
+type BoundaryLayer = boundaryanalysis.BoundaryLayer
+type BoundaryContainmentRule = boundaryanalysis.BoundaryContainmentRule
+type BoundaryFacadeRule = boundaryanalysis.BoundaryFacadeRule
+type BoundaryPathClassification = boundaryanalysis.BoundaryPathClassification
+type BoundaryCandidate = boundaryanalysis.BoundaryCandidate
+type BoundaryTypeSpread = boundaryanalysis.BoundaryTypeSpread
+type BoundaryFacadeBypass = boundaryanalysis.BoundaryFacadeBypass
+type BoundaryRisk = boundaryanalysis.BoundaryRisk
+type BoundaryConsumer = boundaryanalysis.BoundaryConsumer
+type BoundaryPattern = boundaryanalysis.BoundaryPattern
+type BoundaryTypeOrigin = boundaryanalysis.BoundaryTypeOrigin
+type BoundaryTypeUsage = boundaryanalysis.BoundaryTypeUsage
+
+const BoundaryPolicySchema = boundaryanalysis.BoundaryPolicySchema
+
+const (
+	BoundaryTypeOriginLocal           = boundaryanalysis.BoundaryTypeOriginLocal
+	BoundaryTypeOriginFirstParty      = boundaryanalysis.BoundaryTypeOriginFirstParty
+	BoundaryTypeOriginStandardLibrary = boundaryanalysis.BoundaryTypeOriginStandardLibrary
+	BoundaryTypeOriginThirdParty      = boundaryanalysis.BoundaryTypeOriginThirdParty
+	BoundaryTypeOriginUnresolved      = boundaryanalysis.BoundaryTypeOriginUnresolved
+)
+
+// BoundaryAnalysis is the reusable graph-backed boundary result.
+type BoundaryAnalysis struct {
+	Candidates     []BoundaryCandidate
+	TypeBoundaries []BoundaryTypeSpread
+	FacadeBypasses []BoundaryFacadeBypass
 }
 
-// BuildBoundaries applies validated repository-owned policy to one universe.
-func BuildBoundaries(universe *Universe, paths []string, minimum int, policy search.BoundaryPolicy, policyPath string) (BoundaryReport, error) {
+// ValidateBoundaryPolicy validates repository-owned boundary policy.
+func ValidateBoundaryPolicy(policy BoundaryPolicy) error {
+	return boundaryanalysis.ValidateBoundaryPolicy(policy)
+}
+
+// AnalyzeBoundaries applies repository policy to an existing navigation graph.
+func AnalyzeBoundaries(graph parser.NavigationGraph, minimum int, policy BoundaryPolicy) (BoundaryAnalysis, error) {
 	if minimum < 1 {
 		minimum = 2
 	}
-	if err := search.ValidateBoundaryPolicy(policy); err != nil {
-		return BoundaryReport{}, err
+	if err := boundaryanalysis.ValidateBoundaryPolicy(policy); err != nil {
+		return BoundaryAnalysis{}, err
 	}
-	candidates, err := search.AnalyzeBoundariesWithPolicy(universe.graph, minimum, policy)
+	candidates, err := boundaryanalysis.AnalyzeBoundariesWithPolicy(graph, minimum, policy)
 	if err != nil {
-		return BoundaryReport{}, err
+		return BoundaryAnalysis{}, err
 	}
-	types, err := search.AnalyzeTypeBoundariesWithPolicy(universe.graph, minimum, policy)
+	types, err := boundaryanalysis.AnalyzeTypeBoundariesWithPolicy(graph, minimum, policy)
+	if err != nil {
+		return BoundaryAnalysis{}, err
+	}
+	return BoundaryAnalysis{Candidates: candidates, TypeBoundaries: types, FacadeBypasses: boundaryanalysis.AnalyzeFacadeBypasses(graph, policy)}, nil
+}
+
+// BoundaryReport is the complete graph-backed boundary analysis.
+type BoundaryReport struct {
+	Schema         string                 `json:"schema"`
+	Paths          []string               `json:"paths"`
+	Files          int                    `json:"files"`
+	Sources        SourceSummary          `json:"sources"`
+	Policy         string                 `json:"policy,omitempty"`
+	Candidates     []BoundaryCandidate    `json:"candidates"`
+	TypeBoundaries []BoundaryTypeSpread   `json:"typeBoundaries"`
+	FacadeBypasses []BoundaryFacadeBypass `json:"facadeBypasses,omitempty"`
+	Truncation     *Truncation            `json:"truncation,omitempty"`
+}
+
+// BuildBoundaries applies validated repository-owned policy to one universe.
+func BuildBoundaries(universe *Universe, paths []string, minimum int, policy BoundaryPolicy, policyPath string) (BoundaryReport, error) {
+	result, err := AnalyzeBoundaries(universe.graph, minimum, policy)
 	if err != nil {
 		return BoundaryReport{}, err
 	}
 	if len(paths) == 0 {
 		paths = []string{"."}
 	}
-	return BoundaryReport{Schema: "grepple-boundaries-v3", Paths: paths, Files: len(universe.paths), Sources: universe.Summary(), Policy: policyPath, Candidates: candidates, TypeBoundaries: types, FacadeBypasses: search.AnalyzeFacadeBypasses(universe.graph, policy), Truncation: universe.Truncation()}, nil
+	return BoundaryReport{Schema: "grepple-boundaries-v3", Paths: paths, Files: len(universe.paths), Sources: universe.Summary(), Policy: policyPath, Candidates: result.Candidates, TypeBoundaries: result.TypeBoundaries, FacadeBypasses: result.FacadeBypasses, Truncation: universe.Truncation()}, nil
 }
 
 // ResponsibilityReport summarizes what each directory owns and how it participates in relations.
@@ -65,7 +111,11 @@ type DirectoryResponsibility struct {
 
 // BuildResponsibilities derives a deterministic ownership summary from directory architecture.
 func BuildResponsibilities(universe *Universe) ResponsibilityReport {
-	architecture := BuildArchitecture(universe)
+	return BuildResponsibilitiesFromArchitecture(BuildArchitecture(universe))
+}
+
+// BuildResponsibilitiesFromArchitecture derives responsibilities from an existing architecture report.
+func BuildResponsibilitiesFromArchitecture(architecture ArchitectureReport) ResponsibilityReport {
 	incoming, outgoing := map[string]int{}, map[string]int{}
 	for _, relation := range architecture.Relations {
 		outgoing[relation.From] += relation.Count

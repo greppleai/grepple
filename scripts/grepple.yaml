@@ -1,0 +1,13 @@
+description: Shell scripts for validating the native Docker image and installing Grepple locally.
+responsibilities:
+    - Run a native-only Docker smoke test.
+    - Build and install a statically linked Grepple binary.
+files:
+    - path: docker-smoke.sh
+      description: Runs a Docker-based smoke test for the native Grepple image.
+      kind: test
+      checksum: 966a593835de9429b800d039466857af9d10e42b7dacb59fbd82bef80be6709f
+    - path: install-local.sh
+      description: Builds and installs a statically linked Grepple executable in the local bin directory.
+      kind: production
+      checksum: cfdd0032ffaf10807fdfa329964307195f0ce9e7fa217f49f133d0c909ee3800

@@ -2,10 +2,9 @@ package render
 
 import (
 	"fmt"
+	"github.com/greppleai/grepple/search"
 	"regexp"
 	"sort"
-
-	"github.com/greppleai/grepple/api"
 )
 
 type lineRenderer struct {
@@ -15,7 +14,7 @@ type lineRenderer struct {
 	repeatSource bool
 }
 
-func (renderer lineRenderer) Render(results []api.FileResult) error {
+func (renderer lineRenderer) Render(results []search.FileResult) error {
 	if renderer.contextGuard == nil {
 		renderer.contextGuard = noopContextGuard{}
 	}
@@ -39,7 +38,7 @@ func (renderer lineRenderer) Render(results []api.FileResult) error {
 	return nil
 }
 
-func (renderer lineRenderer) renderAnchored(results []api.FileResult) error {
+func (renderer lineRenderer) renderAnchored(results []search.FileResult) error {
 	for resultIndex, result := range results {
 		if resultIndex > 0 {
 			if err := renderer.output.writeString("\n"); err != nil {
@@ -56,8 +55,8 @@ func (renderer lineRenderer) renderAnchored(results []api.FileResult) error {
 	return nil
 }
 
-func (renderer lineRenderer) renderAnchoredResult(result api.FileResult) error {
-	matches := append([]api.ResultMatch(nil), result.Matches...)
+func (renderer lineRenderer) renderAnchoredResult(result search.FileResult) error {
+	matches := append([]search.ResultMatch(nil), result.Matches...)
 	sort.SliceStable(matches, func(i, j int) bool { return matches[i].Line < matches[j].Line })
 	lines := make([]contextSourceLine, len(matches))
 	for index, match := range matches {
@@ -71,7 +70,7 @@ func (renderer lineRenderer) renderAnchoredResult(result api.FileResult) error {
 	return nil
 }
 
-func (renderer lineRenderer) renderAnchoredRun(result api.FileResult, matches []api.ResultMatch, run contextLineRun) error {
+func (renderer lineRenderer) renderAnchoredRun(result search.FileResult, matches []search.ResultMatch, run contextLineRun) error {
 	if !run.omit || renderer.repeatSource {
 		for _, match := range matches[run.start:run.end] {
 			if err := renderer.renderAnchoredMatch(result, match); err != nil {
@@ -93,7 +92,7 @@ func (renderer lineRenderer) renderAnchoredRun(result api.FileResult, matches []
 	return renderer.renderAnchoredMatch(result, matches[run.end-1])
 }
 
-func (renderer lineRenderer) anchoredRunBytes(result api.FileResult, matches []api.ResultMatch) (int, int) {
+func (renderer lineRenderer) anchoredRunBytes(result search.FileResult, matches []search.ResultMatch) (int, int) {
 	sourceBytes, renderedBytes := 0, 0
 	for _, match := range matches {
 		sourceBytes += len(match.Text)
@@ -102,7 +101,7 @@ func (renderer lineRenderer) anchoredRunBytes(result api.FileResult, matches []a
 	return sourceBytes, renderedBytes
 }
 
-func (renderer lineRenderer) renderAnchoredMatch(result api.FileResult, match api.ResultMatch) error {
+func (renderer lineRenderer) renderAnchoredMatch(result search.FileResult, match search.ResultMatch) error {
 	row := renderer.anchoredMatchRow(result, match)
 	if err := renderer.output.writeString(row); err != nil {
 		return err
@@ -111,7 +110,7 @@ func (renderer lineRenderer) renderAnchoredMatch(result api.FileResult, match ap
 	return nil
 }
 
-func (renderer lineRenderer) anchoredMatchRow(result api.FileResult, match api.ResultMatch) string {
+func (renderer lineRenderer) anchoredMatchRow(result search.FileResult, match search.ResultMatch) string {
 	anchor := renderer.anchors.Line(result.Path, match.Line)
 	return fmt.Sprintf("%s%s%d%s%s\n", anchor, anchorOutputSeparator, match.Line, anchorOutputSeparator, normalizeRenderedAnchorLine(match.Text))
 }
@@ -121,7 +120,7 @@ type onlyMatchingRenderer struct {
 	matcher *regexp.Regexp
 }
 
-func (renderer onlyMatchingRenderer) Render(results []api.FileResult) error {
+func (renderer onlyMatchingRenderer) Render(results []search.FileResult) error {
 	for _, result := range results {
 		for _, match := range result.Matches {
 			for _, text := range renderer.matcher.FindAllString(match.Text, -1) {

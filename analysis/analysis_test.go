@@ -2,10 +2,10 @@ package analysis
 
 import (
 	"encoding/json"
+	"os"
 	"strings"
 	"testing"
 
-	"github.com/greppleai/grepple/api"
 	"github.com/greppleai/grepple/search"
 )
 
@@ -51,7 +51,7 @@ func TestAnalysisProjectionsAreDeterministicAndQueryable(t *testing.T) {
 	if symbol == "" {
 		t.Fatalf("declarations=%+v", full.Declarations)
 	}
-	queried, err := BuildGraph(firstUniverse, &api.GraphQueryRequest{Direction: string(search.NavigationQueryCallers), Depth: 1, Symbol: symbol})
+	queried, err := BuildGraph(firstUniverse, &GraphQuery{Direction: string(search.NavigationQueryCallers), Depth: 1, Symbol: symbol})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -82,6 +82,17 @@ func TestUniverseReportsTruncationAndUnsupportedSources(t *testing.T) {
 		t.Fatalf("truncation=%+v", universe.Truncation())
 	}
 	if universe.Summary().Skipped == 0 || universe.Summary().Selected != 1 {
+		t.Fatalf("summary=%+v", universe.Summary())
+	}
+}
+
+func TestUniverseReportsDiscoveredReadFailures(t *testing.T) {
+	universe, err := NewUniverse([]Source{{Path: "missing.go", ReadError: os.ErrNotExist}}, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer universe.Close()
+	if universe.Summary().Discovered != 1 || universe.Summary().Selected != 1 || universe.Summary().Failed != 1 {
 		t.Fatalf("summary=%+v", universe.Summary())
 	}
 }
