@@ -9,10 +9,9 @@ func (index *cFamilyNavigationIndex) importTargets(sourceFile, _, importPath, _,
 		return navigationImportTargets{}
 	}
 	target := filepath.Clean(filepath.Join(filepath.Dir(sourceFile), filepath.FromSlash(importPath)))
-	for candidatePath := range index.corpus.contents {
-		if filepath.Clean(candidatePath) == target {
-			return navigationImportTargets{files: []string{candidatePath}}
-		}
+	matches := index.corpus.pathIndex().byPath[target]
+	if len(matches) > 0 {
+		return navigationImportTargets{files: []string{matches[0]}}
 	}
 	return navigationImportTargets{}
 }

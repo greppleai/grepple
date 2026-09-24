@@ -21,13 +21,7 @@ func (index *cSharpNavigationIndex) importTargets(_, _, importPath, imported, _ 
 	if importPath == "" {
 		return navigationImportTargets{}
 	}
-	matches := []string{}
-	for _, item := range index.corpus.graph.Exports {
-		if navigationLanguageFamily(item.Language) == "csharp" && cSharpExportMatches(item.ImportPath, item.Name, importPath, imported) {
-			matches = append(matches, item.Path)
-		}
-	}
-	return navigationImportTargets{files: compactSortedStrings(matches)}
+	return navigationImportTargets{files: index.corpus.exportIndex().targetFiles("csharp", importPath, imported != "", imported != "*")}
 }
 
 func cSharpExportMatches(packageName, name, importPath, imported string) bool {

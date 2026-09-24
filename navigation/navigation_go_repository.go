@@ -187,26 +187,22 @@ func longestGoReplacementPrefix(importPath string, replacements map[string]strin
 }
 
 func localGoImportDirectory(sourceFile, importPath string) (string, bool) {
-	directory := filepath.Dir(sourceFile)
-	for {
-		modulePath, ok := goModulePath(filepath.Join(directory, "go.mod"))
-		if ok {
-			if importPath == modulePath {
-				return filepath.Clean(directory), true
-			}
-			prefix := modulePath + "/"
-			if strings.HasPrefix(importPath, prefix) {
-				relative := strings.TrimPrefix(importPath, prefix)
-				return filepath.Clean(filepath.Join(directory, filepath.FromSlash(relative))), true
-			}
-			return "", true
-		}
-		parent := filepath.Dir(directory)
-		if parent == directory {
-			return "", false
-		}
-		directory = parent
+	root, module, ok := goModuleForFile(sourceFile)
+	return goImportDirectory(root, module, ok, importPath)
+}
+
+func goImportDirectory(root, module string, known bool, importPath string) (string, bool) {
+	if !known {
+		return "", false
 	}
+	if importPath == module {
+		return root, true
+	}
+	if strings.HasPrefix(importPath, module+"/") {
+		relative := strings.TrimPrefix(importPath, module+"/")
+		return filepath.Clean(filepath.Join(root, filepath.FromSlash(relative))), true
+	}
+	return "", true
 }
 
 // enrichNavigationRepositoryIdentity applies path-dependent Go module and package
@@ -265,6 +261,26 @@ type goNavigationIndex struct {
 	baseLanguageNavigationIndex
 	replacements map[string]string
 	packages     map[string][]string
+	modules      map[string]goSourceModule
+}
+
+type goSourceModule struct {
+	root, name string
+	known      bool
+}
+
+// Local import checks revisit the same source for many candidate declarations.
+// Keep filesystem-derived module identity scoped to this one graph build.
+func (index *goNavigationIndex) localImportDirectory(sourceFile, importPath string) (string, bool) {
+	if index.modules == nil {
+		index.modules = make(map[string]goSourceModule)
+	}
+	module, found := index.modules[sourceFile]
+	if !found {
+		module.root, module.name, module.known = goModuleForFile(sourceFile)
+		index.modules[sourceFile] = module
+	}
+	return goImportDirectory(module.root, module.name, module.known, importPath)
 }
 
 func (index *goNavigationIndex) importTargets(sourceFile, _, importPath, _, _ string) navigationImportTargets {
@@ -275,7 +291,7 @@ func (index *goNavigationIndex) importTargets(sourceFile, _, importPath, _, _ st
 		targets = append(targets, index.filesInDirectory(filepath.Join(directory, filepath.FromSlash(relative)))...)
 	}
 	if len(targets) == 0 {
-		if directory, known := localGoImportDirectory(sourceFile, importPath); known {
+		if directory, known := index.localImportDirectory(sourceFile, importPath); known {
 			targets = append(targets, index.filesInDirectory(directory)...)
 		}
 	}
@@ -287,14 +303,7 @@ func (index *goNavigationIndex) filesInDirectory(directory string) []string {
 	if directory == "" {
 		return nil
 	}
-	directory = filepath.Clean(directory)
-	files := []string{}
-	for candidatePath := range index.corpus.contents {
-		if filepath.Clean(filepath.Dir(candidatePath)) == directory {
-			files = append(files, candidatePath)
-		}
-	}
-	return files
+	return index.corpus.pathIndex().byDirectory[filepath.Clean(directory)]
 }
 
 func (index *goNavigationIndex) filterCandidates(call navigationCall, candidates []navigationDeclaration) []navigationDeclaration {
@@ -307,7 +316,7 @@ func (index *goNavigationIndex) filterCandidates(call navigationCall, candidates
 }
 
 func (index *goNavigationIndex) importMatches(call navigationCall, candidate navigationDeclaration) bool {
-	if directory, known := localGoImportDirectory(call.importSourceFile, call.importPath); known && directory != "" {
+	if directory, known := index.localImportDirectory(call.importSourceFile, call.importPath); known && directory != "" {
 		return filepath.Clean(filepath.Dir(candidate.file)) == directory
 	}
 	if index.baseLanguageNavigationIndex.importMatches(call, candidate) {

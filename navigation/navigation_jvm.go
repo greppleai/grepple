@@ -16,18 +16,7 @@ func (index *qualifiedExportNavigationIndex) importTargets(_, _, importPath, imp
 	if importPath == "" {
 		return navigationImportTargets{}
 	}
-	matches := []string{}
-	for _, item := range index.corpus.graph.Exports {
-		if navigationLanguageFamily(item.Language) != index.family {
-			continue
-		}
-		wildcardMatch := imported == "*" && item.ImportPath == importPath
-		exactMatch := imported != "*" && navigationQualifiedExportName(item.ImportPath, item.Name) == importPath
-		if wildcardMatch || exactMatch {
-			matches = append(matches, item.Path)
-		}
-	}
-	return navigationImportTargets{files: compactSortedStrings(matches)}
+	return navigationImportTargets{files: index.corpus.exportIndex().targetFiles(index.family, importPath, imported == "*", imported != "*")}
 }
 
 func navigationQualifiedExportName(packageName, name string) string {

@@ -1,24 +1,24 @@
-description: Provides CLI commands and public APIs for constructing, querying, rendering, comparing, and summarizing source-linked directory architecture.
+description: Provides CLI commands and public APIs for building, querying, rendering, comparing, and summarizing source-linked directory architecture.
 responsibilities:
     - Build architecture reports from configured local source paths
-    - Resolve source-linked symbols and directory relation evidence
-    - Render directory summaries, relation views, and Mermaid diagrams
+    - Resolve source-linked declarations and directory relation evidence
+    - Render directory inventories, compressed relations, and Mermaid diagrams
     - Project bounded directory responsibility reports
-    - Compare normalized architecture reports and JSON encodings
+    - Compare normalized reports and serialized JSON encodings
     - Execute exact remote repository architecture requests
     - Expose injectable dependencies and public architecture projections
     - Parse architecture subcommands and dispatch execution
-    - Generate deterministic Mermaid directory colors
-    - Test multilingual analysis, source classification, relations, rendering, comparison, and remote operations
+    - Generate deterministic high-contrast Mermaid directory colors
+    - Test multilingual analysis, classification, relations, rendering, comparison, and remote operations
 files:
     - path: architecture.go
-      description: Builds architecture reports and executes directory, resolve, why, responsibility, and comparison command output.
+      description: Builds local architecture reports and executes directory, resolve, why, responsibility, and comparison commands.
       kind: production
       checksum: 6a6b1c3d4d77ce0217f564506427a0f6fb54c7e8f16f97ebd66734ae937e9453
     - path: architecture_benchmark_test.go
-      description: Benchmarks architecture construction and JSON serialization across generated service directories.
+      description: Benchmarks architecture construction and JSON serialization over generated service directories and optional repository checkouts.
       kind: test
-      checksum: 9fc0c40f79e28204a87fa16fcba6578fd9280ca8f11536ca6ae5f41320bbf251
+      checksum: 84abf48df38414617f6d2f0a943f11eddab4accbcd2f8eb8973f0946dd673074
     - path: architecture_test.go
       description: Tests multilingual architecture reports, source classification, entrypoints, relations, filtering, and command help.
       kind: test
@@ -40,7 +40,7 @@ files:
       kind: test
       checksum: 5cd511d6c50d5e3f6ff86a7f4e4f5f8e53d968ca6994d48484da959b6c00522e
     - path: directory_text_test.go
-      description: Tests human-readable directory inventory, compressed relation rendering, and unconnected directory handling.
+      description: Tests human-readable directory inventories, grouped relation rendering, and unconnected directory handling.
       kind: test
       checksum: 297ddf00e34dea607e3b007402f4ae658890f21ae2af5a3c6f7489e71da712ad
     - path: dispatch_test.go
@@ -64,7 +64,7 @@ files:
       kind: test
       checksum: b9d7fb31c220b47176cb02fe87a4b3eb7e03990a9dfff526922545d38f5aa4c3
     - path: responsibilities.go
-      description: Implements local and remote directory responsibility projections with bounded rendering.
+      description: Builds and renders local or remote directory responsibility projections with bounded output.
       kind: production
       checksum: 8a4b005c4a9b75b946437810f9e9132ba0878bdf1e88c6d913bda3dfcd41b208
     - path: test_helpers_test.go

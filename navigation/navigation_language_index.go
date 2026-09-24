@@ -12,10 +12,12 @@ type navigationImportTargets struct {
 }
 
 type navigationCorpus struct {
-	contents map[string]string
-	exports  map[string][]navigationExport
-	graph    parser.NavigationGraph
-	files    []string
+	contents     map[string]string
+	exports      map[string][]navigationExport
+	graph        parser.NavigationGraph
+	files        []string
+	paths        *navigationPathIndex
+	exportLookup *navigationExportIndex
 }
 
 type languageNavigationIndex interface {
@@ -109,10 +111,10 @@ var languageNavigationIndexFactories = map[string]languageNavigationIndexFactory
 		return &pythonNavigationIndex{baseLanguageNavigationIndex: base}
 	},
 	"javascript": func(_ string, base baseLanguageNavigationIndex, _ languageNavigationIndexBuildContext) languageNavigationIndex {
-		return &ecmaNavigationIndex{baseLanguageNavigationIndex: base}
+		return newECMANavigationIndex(base)
 	},
 	"typescript": func(_ string, base baseLanguageNavigationIndex, _ languageNavigationIndexBuildContext) languageNavigationIndex {
-		return &ecmaNavigationIndex{baseLanguageNavigationIndex: base}
+		return newECMANavigationIndex(base)
 	},
 	"java": func(_ string, base baseLanguageNavigationIndex, _ languageNavigationIndexBuildContext) languageNavigationIndex {
 		return &qualifiedExportNavigationIndex{baseLanguageNavigationIndex: base}

@@ -1,13 +1,23 @@
-description: Shell scripts for validating the native Docker image and installing Grepple locally.
+description: Scripts for benchmarking Grepple across repositories, validating its native Docker image, installing it locally, and testing benchmark behavior.
 responsibilities:
-    - Run a native-only Docker smoke test.
+    - Run bounded Grepple CLI benchmarks against repository checkouts.
+    - Validate native-only Docker image behavior.
     - Build and install a statically linked Grepple binary.
+    - Test repository benchmark selection, execution, caching, and reporting.
 files:
+    - path: benchmark-repositories.py
+      description: Runs reproducible, bounded Grepple CLI benchmarks against explicit local or remote repository checkouts.
+      kind: production
+      checksum: f6b959f2aefde7e9761e6778d267a389a94dcc154b9f4c2753f9eabd08f333f9
     - path: docker-smoke.sh
-      description: Runs a Docker-based smoke test for the native Grepple image.
+      description: Builds the native Docker image and verifies its structural query behavior without prohibited runtimes.
       kind: test
       checksum: 966a593835de9429b800d039466857af9d10e42b7dacb59fbd82bef80be6709f
     - path: install-local.sh
-      description: Builds and installs a statically linked Grepple executable in the local bin directory.
+      description: Builds and installs a statically linked Grepple executable in the configured local bin directory.
       kind: production
       checksum: cfdd0032ffaf10807fdfa329964307195f0ce9e7fa217f49f133d0c909ee3800
+    - path: test_benchmark_repositories.py
+      description: Tests repository benchmark selection, parsing, caching, timeout handling, and checkout integrity.
+      kind: test
+      checksum: e365e179a7bd4a1898b8757f5ec6feb367add6591aa52bbd80b8e2f7867a3bee

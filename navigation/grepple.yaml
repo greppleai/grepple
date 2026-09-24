@@ -1,9 +1,10 @@
-description: The navigation package builds deterministic multilingual repository graphs, resolves local and external relationships, and supports filtering, traversal, diffing, and resolution analysis.
+description: The navigation package builds deterministic multilingual repository graphs, indexes corpus paths and exports, resolves local and external relationships, and supports filtering, traversal, diffing, and resolution analysis.
 responsibilities:
     - Build deterministic navigation graphs from files, documents, and text sources
+    - Index corpus paths, modules, exports, and language-specific lookup data
     - Resolve declarations, calls, imports, exports, fields, receivers, re-exports, and repository identities
-    - Apply language-specific navigation rules for Go, Rust, Python, JavaScript, TypeScript, Java, Kotlin, C#, C, C++, and shell
-    - Resolve Go modules, workspaces, packages, replacements, and repository context
+    - Apply navigation rules for Go, Rust, Python, JavaScript, TypeScript, Java, Kotlin, C#, C, C++, and shell
+    - Resolve Go modules, workspaces, packages, replacements, ownership, and repository context
     - Qualify external references from manifests, lockfiles, dependency evidence, and artifact responses
     - Filter graphs by language, confidence, and visibility while preserving referential integrity
     - Traverse bounded caller, callee, dependency, dependent, and impact subgraphs
@@ -53,23 +54,35 @@ files:
     - path: navigation_c_family.go
       description: Resolves quoted relative include targets for C and C++ source files.
       kind: production
-      checksum: de8d182f612cda39d3c62972392a2948643a5b0e7e2749560e00b60c36154463
+      checksum: 2776304e44274cfc5c84c45b36ea097ed4a34ab94c36c37fbeded6ec708df178
+    - path: navigation_corpus_index.go
+      description: Builds shared deterministic path and module indexes for corpus-wide language navigation.
+      kind: production
+      checksum: a27ea2f228fd884bc00eaf5997745252dca0e4f75a71816cf0a4c27903d00781
+    - path: navigation_corpus_index_test.go
+      description: Verifies shared path indexing and indexed Python, TypeScript, export, and Go lookups against scan-based behavior.
+      kind: test
+      checksum: 274092e70624b357048871dbb9246c0e706cdfb7c8a4740d30b4467b5f4c1dbe
     - path: navigation_csharp.go
       description: Resolves C# imports and filters candidates using namespaces, exports, and containing types.
       kind: production
-      checksum: 01c2287d65e630eef683f63833b3f779bfbef3755ef5b84f0ba5e58292482579
+      checksum: 698337c6b67104a4e2a739d617d94eb17f53446341487ec0f557f6693596ff6b
+    - path: navigation_export_index.go
+      description: Indexes graph exports by language family, package path, and qualified name while preserving source order.
+      kind: production
+      checksum: f1869687676dd4e53ecd35e99a7a020b8dd5c9940a0cf237470d9824079462b4
     - path: navigation_go_repository.go
       description: Derives Go module, workspace, package, replacement, ownership, and repository context from source paths.
       kind: production
-      checksum: 87e530d262007bdf5c5919ee5ec6c3ee451688436f2c96eec3d4f4cd04d2a9a4
+      checksum: ad38b1ad1623ac589f6e807ae7e5e4846db0e31e77dc164c1ce7b2d39f7d44f4
     - path: navigation_jvm.go
       description: Resolves qualified Java and Kotlin exports and imports against graph export facts.
       kind: production
-      checksum: a30502cc152b4859fee054dcc9cc5c2e2f2a9dc8ae01c16014b99b9908b1643e
+      checksum: f5be3f86559c5dc28670f7fe7f5c24519337903234c75854995754c5357fc96c
     - path: navigation_language_index.go
       description: Defines language navigation index behavior and registers resolvers for supported language families.
       kind: production
-      checksum: de3f5c0ad333eafc396b222d9afb5551518b7d41c9ddbda74714fa4b63716be4
+      checksum: 69bd9d12c212d2841cba1590b250d568deb844f9a7e438bed4006bd77f788bae
     - path: navigation_language_index_test.go
       description: Verifies resolver registration covers every parser-supported navigation language family.
       kind: test
@@ -77,7 +90,7 @@ files:
     - path: navigation_python.go
       description: Resolves absolute and relative Python modules across source, stub, package, and initialization files.
       kind: production
-      checksum: 2a1abc711d453002ef20f064c958efca8935ca5999d4f9bfe546b34c93e788ea
+      checksum: 9ad04c98e4ee09c912a0583e4403e3aaab91e2f19e5536e184b2a00579f6c082
     - path: navigation_python_test.go
       description: Tests Python absolute, relative, package, stub, ambiguous-root, and unrelated-root import resolution.
       kind: test
@@ -89,7 +102,11 @@ files:
     - path: navigation_typescript.go
       description: Resolves JavaScript and TypeScript module aliases using tsconfig base URLs, paths, and tolerant JSON parsing.
       kind: production
-      checksum: 57ae5b04cafa6e5828d6d0e49e5f2e1d0e1af85a37194f4e1007565b00e943a7
+      checksum: 32b9a152573c34cd957e5f7254714554c2f4ec03fb7e0a5891344a011cb1377a
+    - path: navigation_typescript_index_test.go
+      description: Verifies indexed JavaScript and TypeScript relative import targets match corpus scanning across module variants.
+      kind: test
+      checksum: 8e8c3fce84ca353396ea30ad9908bb6454669f9d145c16c2f975ac3763fcf24a
     - path: query.go
       description: Traverses bounded directional navigation subgraphs and projects declarations, calls, and related context facts.
       kind: production

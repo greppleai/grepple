@@ -18,7 +18,7 @@ type typeScriptConfig struct {
 	} `json:"compilerOptions"`
 }
 
-func typeScriptAliasImportTargets(files []string, sourceFile, importPath string) []string {
+func typeScriptAliasImportTargets(paths *navigationPathIndex, sourceFile, importPath string) []string {
 	configPath := nearestTypeScriptConfig(sourceFile)
 	if configPath == "" {
 		return nil
@@ -44,11 +44,11 @@ func typeScriptAliasImportTargets(files []string, sourceFile, importPath string)
 		}
 		for _, replacement := range config.CompilerOptions.Paths[pattern] {
 			target := strings.Replace(filepath.FromSlash(replacement), "*", filepath.FromSlash(wildcard), 1)
-			targets = append(targets, matchingTypeScriptModuleFiles(files, filepath.Join(base, target))...)
+			targets = append(targets, paths.moduleFiles(filepath.Join(base, target))...)
 		}
 	}
 	if len(targets) == 0 && config.CompilerOptions.BaseURL != "" {
-		targets = matchingTypeScriptModuleFiles(files, filepath.Join(base, filepath.FromSlash(importPath)))
+		targets = paths.moduleFiles(filepath.Join(base, filepath.FromSlash(importPath)))
 	}
 	sort.Strings(targets)
 	return compactSortedStrings(targets)
@@ -215,19 +215,19 @@ func typeScriptPathPatternMatch(pattern, value string) (string, bool) {
 	return value[len(prefix) : len(value)-len(suffix)], true
 }
 
-func matchingTypeScriptModuleFiles(files []string, target string) []string {
+func (paths *navigationPathIndex) moduleFiles(target string) []string {
 	target = strings.TrimSuffix(filepath.Clean(target), filepath.Ext(target))
-	result := []string{}
-	for _, file := range files {
-		candidate := strings.TrimSuffix(filepath.Clean(file), filepath.Ext(file))
-		if candidate == target || filepath.Base(candidate) == "index" && filepath.Dir(candidate) == target {
-			result = append(result, file)
-		}
-	}
-	return result
+	return paths.byModule[target]
 }
 
-type ecmaNavigationIndex struct{ baseLanguageNavigationIndex }
+type ecmaNavigationIndex struct {
+	baseLanguageNavigationIndex
+	paths *navigationPathIndex
+}
+
+func newECMANavigationIndex(base baseLanguageNavigationIndex) *ecmaNavigationIndex {
+	return &ecmaNavigationIndex{baseLanguageNavigationIndex: base, paths: base.corpus.pathIndex()}
+}
 
 func (*ecmaNavigationIndex) filterCandidates(call navigationCall, candidates []navigationDeclaration) []navigationDeclaration {
 	if call.importPath != "" && len(call.importTargetFiles) == 0 && !strings.HasPrefix(call.importPath, ".") {
@@ -243,20 +243,9 @@ func (*ecmaNavigationIndex) filterCandidates(call navigationCall, candidates []n
 
 func (index *ecmaNavigationIndex) importTargets(sourceFile, _, importPath, _, _ string) navigationImportTargets {
 	if strings.HasPrefix(importPath, ".") {
-		result := []string{}
-		for _, candidateFile := range index.corpus.files {
-			if navigationRelativeImportMatches(sourceFile, importPath, candidateFile) {
-				result = append(result, candidateFile)
-			}
-		}
-		return navigationImportTargets{files: result}
+		imported := filepath.Clean(filepath.Join(filepath.Dir(sourceFile), filepath.FromSlash(importPath)))
+		imported = strings.TrimSuffix(imported, filepath.Ext(imported))
+		return navigationImportTargets{files: index.paths.byModule[imported]}
 	}
-	return navigationImportTargets{files: typeScriptAliasImportTargets(index.corpus.files, sourceFile, importPath)}
-}
-
-func navigationRelativeImportMatches(sourceFile, importPath, candidateFile string) bool {
-	imported := filepath.Clean(filepath.Join(filepath.Dir(sourceFile), filepath.FromSlash(importPath)))
-	candidate := strings.TrimSuffix(filepath.Clean(candidateFile), filepath.Ext(candidateFile))
-	imported = strings.TrimSuffix(imported, filepath.Ext(imported))
-	return candidate == imported || filepath.Base(candidate) == "index" && filepath.Dir(candidate) == imported
+	return navigationImportTargets{files: typeScriptAliasImportTargets(index.paths, sourceFile, importPath)}
 }

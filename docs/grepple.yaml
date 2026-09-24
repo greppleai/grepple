@@ -1,39 +1,38 @@
-description: Defines Grepple's contracts for parsing, search, navigation, analysis, source selection, output, editing, indexing, benchmarking, and release workflows.
+description: Defines Grepple's authoritative documentation for source parsing, search, navigation, architecture analysis, output contracts, editing, indexing, benchmarking, and releases.
 responsibilities:
-    - Specify parser ownership, syntax lifecycles, language support, and compatibility.
-    - Define deterministic search, structural matching, ranking, navigation, and scope rendering.
-    - Document architecture, graph, boundary, ownership, and dependency analysis.
-    - Specify bounded output, metadata, artifacts, completeness, and resolution behavior.
-    - Describe delegated research, provider safety, benchmarks, and performance budgets.
-    - Define anchored transactional editing and deterministic source selection.
-    - Record indexing, release, and implementation-boundary workflows.
+    - Define parser ownership, syntax lifecycles, language support, and GritQL compatibility.
+    - Specify deterministic search ranking, structural matching, navigation, source scope, and classifications.
+    - Document architecture, graph, boundary, ownership, dependency, and responsibility analysis.
+    - Specify bounded output, metadata, artifacts, completeness, resolution, and remote indexing.
+    - Describe delegated research, provider safety, benchmarks, performance budgets, and release validation.
+    - Define anchored transactional editing and source classification workflows.
 files:
     - path: agent-workflow-benchmarks.md
-      description: Defines deterministic agent retrieval benchmarks for correctness, cost, latency, output size, and truncation.
+      description: Defines deterministic retrieval workflows and measures correctness, calls, bytes, tokens, latency, and truncation.
       kind: production
       checksum: 9bd16544e045cfc694c97cfe06613d1c07a21b84c131692e623e0a7e2a21270d
     - path: anchor-providers.md
-      description: Specifies native and user-selected edit-anchor providers, configuration, validation, and protocol behavior.
+      description: Specifies native and user-selected edit-anchor providers, settings, validation, safety limits, and protocol behavior.
       kind: production
       checksum: 846c89ccd77ad886874aeb3ed80affe0805e38908f96cffa06f99b55e2c091c7
     - path: architecture-performance-benchmarks.md
-      description: Records performance baselines and review budgets for architecture generation and navigation fact caching.
+      description: Records architecture and navigation benchmark baselines, review budgets, cache measurements, and checkout diagnostics.
       kind: production
-      checksum: a73fddcda10bd6e03234e56f03bc87c65f62899628fb7ac5fe7e5ea214c8f895
+      checksum: 4038ef632702795d33286d33fb4b2abeb948fedcd0886d47210e68231ae71250
     - path: ask.md
-      description: Documents the bounded read-only research agent, provider authentication, typed tools, logging, caching, and safety limits.
+      description: Documents bounded delegated research, provider authentication, typed tools, logging, caching, and safety limits.
       kind: production
       checksum: bc0d1a17dcd90ca234c149e258df34e970ed2320de329a36a6583700afcbf780
     - path: boundary-analysis.md
-      description: Describes source-linked workflow and type boundary analysis, policy interpretation, evidence, and caching.
+      description: Describes source-linked workflow and type boundary signals, policy interpretation, evidence, risk, and caching.
       kind: production
       checksum: b1da140752568d2f0dd1ec750602df3ccc0563aaaaa6a7f514f8fb9d68b204fd
     - path: directory-architecture.md
-      description: Specifies language-neutral directory orientation, declaration resolution, relation evidence, and responsibility reporting.
+      description: Specifies language-neutral directory orientation, declaration resolution, relation evidence, responsibilities, and determinism diagnostics.
       kind: production
       checksum: cd0c1b21937b0fb751a571cc417930aba75d299a617ea0242644fc9ec540217d
     - path: directory-metadata.md
-      description: Defines repository-owned grepple.yaml generation, verification, freshness, classification, and tree integration.
+      description: Defines repository-owned metadata generation, verification, freshness, classification, and tree integration.
       kind: production
       checksum: c59630173351e89036e465b7287aa1caa51516b85ad233832d01a8b24fb8916d
     - path: domain-boundaries.md
@@ -45,23 +44,23 @@ files:
       kind: generated
       checksum: 4c9c565b21f8e276d1bae92edab10b758aecaffcc61ab43931c4eb1914e0d13f
     - path: gritql-analysis.md
-      description: Presents historical design analysis for a native read-only GritQL-compatible detection kernel and future uses.
+      description: Presents historical design analysis for a native read-only GritQL-compatible detection kernel and future integrations.
       kind: production
       checksum: 7581abcfdd05f5e2c772c31a61e140e8a3a4b6ea6ca79a63dd47e00b22a1e573
     - path: gritql-compatibility.md
-      description: Defines the closed gritql-v1 syntax, parsing, matching, limits, diagnostics, and language compatibility contract.
+      description: Defines the closed gritql-v1 syntax, parsing, matching, limits, diagnostics, security, and language compatibility contract.
       kind: production
       checksum: c5b2ddc15d2fb76e6ea71cd56bbdf863c2faca322894752ace49ec6f27f6d1e5
     - path: implementation-ownership-inventory.md
-      description: Records authoritative ownership of parser, navigation, search, extraction, analysis, and dependency boundaries.
+      description: Records authoritative ownership of parser, navigation, search, extraction, analysis, source, and CLI implementation boundaries.
       kind: production
       checksum: fb38d67ee48abaeaac715165b98e9b49f8a53a01401fbbec5b6fbb952cb7e28b
     - path: matched-scope-rendering-after.md
-      description: Captures candidate structural search output that renders complete matching scopes without unrelated sibling summaries.
+      description: Captures candidate structural-search output that renders complete matching scopes without unrelated sibling summaries.
       kind: fixture
       checksum: 628a5f6b0a1f0188e70f15fd58726cb4625d86d2e99820a88f18ce5c9ab46267
     - path: matched-scope-rendering-before.md
-      description: Captures baseline structural search output that includes matching scopes alongside neighboring summaries.
+      description: Captures baseline structural-search output that includes matching scopes alongside neighboring summaries.
       kind: fixture
       checksum: 0c24dbe1dd620c5841cd73c0bc927cb93d773813b459e6160e1e4be69e3c0035
     - path: output-contracts.md

@@ -6,17 +6,7 @@ import (
 )
 
 func pythonImportTargetFiles(files []string, sourceFile, importPath string) []string {
-	importPath = strings.TrimSpace(importPath)
-	if importPath == "" {
-		return nil
-	}
-	relative := strings.HasPrefix(importPath, ".")
-	target := ""
-	if relative {
-		target = pythonRelativeImportTarget(sourceFile, importPath)
-	} else {
-		target = filepath.FromSlash(strings.ReplaceAll(importPath, ".", "/"))
-	}
+	target, relative := pythonImportTarget(sourceFile, importPath)
 	if target == "" {
 		return nil
 	}
@@ -31,6 +21,17 @@ func pythonImportTargetFiles(files []string, sourceFile, importPath string) []st
 		}
 	}
 	return compactSortedStrings(matches)
+}
+
+func pythonImportTarget(sourceFile, importPath string) (string, bool) {
+	importPath = strings.TrimSpace(importPath)
+	if importPath == "" {
+		return "", false
+	}
+	if strings.HasPrefix(importPath, ".") {
+		return pythonRelativeImportTarget(sourceFile, importPath), true
+	}
+	return filepath.FromSlash(strings.ReplaceAll(importPath, ".", "/")), false
 }
 
 func pythonRelativeImportTarget(sourceFile, importPath string) string {
@@ -81,5 +82,20 @@ func pythonImportModuleMatches(module, target, sourceFile string, relative bool)
 type pythonNavigationIndex struct{ baseLanguageNavigationIndex }
 
 func (index *pythonNavigationIndex) importTargets(sourceFile, _, importPath, _, _ string) navigationImportTargets {
-	return navigationImportTargets{files: pythonImportTargetFiles(index.corpus.files, sourceFile, importPath)}
+	target, relative := pythonImportTarget(sourceFile, importPath)
+	if target == "" {
+		return navigationImportTargets{}
+	}
+	paths := index.corpus.pathIndex()
+	if relative {
+		return navigationImportTargets{files: compactSortedStrings(append([]string(nil), paths.pythonExact[filepath.Clean(target)]...))}
+	}
+	matches := []string{}
+	for _, candidate := range paths.pythonSuffixes[filepath.Clean(target)] {
+		module, _ := pythonModuleFilePath(candidate)
+		if pythonImportModuleMatches(module, target, sourceFile, false) {
+			matches = append(matches, candidate)
+		}
+	}
+	return navigationImportTargets{files: compactSortedStrings(matches)}
 }
