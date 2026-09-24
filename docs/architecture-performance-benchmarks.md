@@ -74,3 +74,20 @@ For a Go-heavy comparison, the local `grepple-backend` checkout (84 parsed files
 Complete `graph build --json .` output also matched byte-for-byte before and after shared indexing on both checkouts: Pi (60,252,988 bytes, SHA-256 `845b0300618f69bd415d42cae18509ce7ab509b21e0e4a490c67466ae943d146`) and the Go backend (4,382,279 bytes, SHA-256 `01af016fda029200ae4667bae1bd2c0eca96b0543e1f8db66baa8c9e48d3f3cb`). Python, C-family, and JVM/C# resolvers additionally have focused indexed-versus-scan tests; these two repositories are not comprehensive performance samples for those language families.
 
 These timings are diagnostics, not latency guarantees: CPU scheduling, cold/warm disk and cache state, source mix, repository size, and fresh metadata affect results. Parsing and TypeScript configuration resolution remain possible bottlenecks on other repositories. Projection limits such as `--depth` and `--max-nodes` do not avoid full source indexing; narrow paths or use `--max-files` only when a partial result is acceptable.
+
+### Persistent resolved-graph cache (no trigram index)
+
+When `GREPPLE_NAVIGATION_CACHE_DIR` is set, document-based navigation analysis stores the fully resolved graph under its `resolved/` subdirectory, alongside the existing per-file fact cache. The CLI sets its usual navigation cache directory by default; library callers can opt in by setting the environment variable, or bypass both caches with `BuildOptions.DisableCache`. Entries are bounded packed-protobuf artifacts with graph checksums, digest checks, and atomic writes. Missing, corrupt, unreadable, or oversized entries fall back to a fresh graph build without changing the output.
+
+The cache key covers the executable and artifact schema, working directory, ordered source paths and source/grammar digests, plus the existence and contents of ancestor `go.mod`, `go.work`, and `tsconfig.json` files that can affect import resolution. A hit skips cross-file graph construction, **not** source discovery, document parsing, outlines, or search-index construction; source failures, recovery, and truncation are still accounted for by the current invocation. Config files that cannot be safely fingerprinted bypass the resolved-graph cache.
+
+One cold and one warm isolated-cache run on the same checkouts as above (seconds; diagnostic only):
+
+| Full command | Shared indexes cold / warm | Resolved cache cold / warm |
+| --- | ---: | ---: |
+| Pi `architecture directory --depth 2 --max-nodes 80 .` | 13.91 / 3.68 | 14.96 / 2.97 |
+| Pi `architecture resolve --symbol AgentSession .` | 14.16 / 3.77 | 14.61 / 2.87 |
+| Go backend `architecture directory --depth 2 --max-nodes 80 .` | 1.97 / 0.77 | 1.87 / 0.47 |
+| Go backend `graph build .` | 1.82 / 0.62 | 1.87 / 0.37 |
+
+Complete cold and warm architecture and graph JSON remained byte-for-byte identical to the pre-cache output on both checkouts. Cold runs may be slower because they serialize the graph; large repositories retain parsing and source-selection costs even on a cache hit. The benchmark harness above provides isolated caches and records checkout revision, source accounting, elapsed time, and peak RSS for additional repositories.

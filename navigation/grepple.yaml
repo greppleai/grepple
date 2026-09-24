@@ -1,4 +1,4 @@
-description: The navigation package builds deterministic multilingual repository graphs, indexes corpus paths and exports, resolves local and external relationships, and supports filtering, traversal, diffing, and resolution analysis.
+description: The navigation package builds deterministic multilingual repository graphs, resolves local and external relationships, caches resolved analyses, and supports filtering, traversal, diffing, and resolution statistics.
 responsibilities:
     - Build deterministic navigation graphs from files, documents, and text sources
     - Index corpus paths, modules, exports, and language-specific lookup data
@@ -6,6 +6,7 @@ responsibilities:
     - Apply navigation rules for Go, Rust, Python, JavaScript, TypeScript, Java, Kotlin, C#, C, C++, and shell
     - Resolve Go modules, workspaces, packages, replacements, ownership, and repository context
     - Qualify external references from manifests, lockfiles, dependency evidence, and artifact responses
+    - Cache resolved graphs with source, executable, repository-context, and schema invalidation
     - Filter graphs by language, confidence, and visibility while preserving referential integrity
     - Traverse bounded caller, callee, dependency, dependent, and impact subgraphs
     - Classify semantic declaration and call changes while ignoring position-only shifts
@@ -20,9 +21,9 @@ files:
       kind: test
       checksum: a446ba4286173a45b4c400aaf4585fa0cf5be21c5e190f5a850c3638e9a56ada
     - path: engine.go
-      description: Builds deterministic navigation indexes and resolves graph calls, imports, receivers, exports, and repository relationships.
+      description: Builds navigation indexes from files, documents, and text sources and resolves graph calls, imports, receivers, exports, and repository relationships.
       kind: production
-      checksum: 2e03079db3058c14b9b9e0b2e1b80a6dd6f1acf4ce8fd0f0226becaf1ba9c769
+      checksum: 2cddbd037f3eb8aaa7b1f4f8f50217999d77fd9e8a954880f9a6167bc2b810a4
     - path: engine_test.go
       description: Verifies equivalent graph construction from text and document sources and stable source ordering.
       kind: test
@@ -95,6 +96,14 @@ files:
       description: Tests Python absolute, relative, package, stub, ambiguous-root, and unrelated-root import resolution.
       kind: test
       checksum: 9e4ea0106c908afb5afaa32fb4fd522479a7e60d389a5792d2a7269c8d76245b
+    - path: navigation_resolved_cache.go
+      description: Computes cache keys, accounts for document parsing, and reads and writes bounded resolved navigation graph artifacts atomically.
+      kind: production
+      checksum: a2cf4222a5e103d72de9732ab5687ea3a42abe23b102e57f4ea8aaaead5299f6
+    - path: navigation_resolved_cache_test.go
+      description: Verifies opt-in resolved graph caching, context invalidation, corruption recovery, accounting, and concurrent writers.
+      kind: test
+      checksum: c9fdf015c8a90b5dfd01b97a2d837dcd839aabb7a8712ec532c457cfb41830ad
     - path: navigation_rust.go
       description: Resolves Rust imports and re-exports using crate modules, scopes, visibility, and candidate files.
       kind: production
