@@ -23,10 +23,16 @@ type Args struct {
 func DefaultArgs() Args { return Args{} }
 
 func Execute(application cliruntime.Context, values *Args) error {
+	return ExecuteWithDaemon(application, values, false)
+}
+
+// ExecuteWithDaemon enables the optional local architecture worker for this invocation.
+func ExecuteWithDaemon(application cliruntime.Context, values *Args, daemon bool) error {
 	if values == nil {
 		return fmt.Errorf("architecture requires directory, resolve, why, responsibilities, or compare")
 	}
 	dependencies := New(application).(*command).services()
+	dependencies.Daemon = daemon
 	switch {
 	case values.Directory != nil:
 		return executeArchitectureDirectory(values.Directory, dependencies)

@@ -115,7 +115,7 @@ func nextApplicationCommandToken(args []string, start int) string {
 			index++
 			continue
 		}
-		if strings.HasPrefix(value, "--artifact-dir=") || strings.HasPrefix(value, "--spill-threshold-bytes=") || value == "--no-spill" || value == "--no-repo-config" || value == "--no-config-ignore" || value == "--production-only" {
+		if strings.HasPrefix(value, "--artifact-dir=") || strings.HasPrefix(value, "--spill-threshold-bytes=") || value == "--no-spill" || value == "--no-repo-config" || value == "--no-config-ignore" || value == "--production-only" || value == "--daemon" {
 			continue
 		}
 		return value
@@ -138,7 +138,7 @@ func explicitApplicationCommand(args []string) (string, []string) {
 			index++
 			continue
 		}
-		if strings.HasPrefix(value, "--artifact-dir=") || strings.HasPrefix(value, "--spill-threshold-bytes=") || value == "--no-spill" || value == "--no-repo-config" || value == "--no-config-ignore" || value == "--production-only" {
+		if strings.HasPrefix(value, "--artifact-dir=") || strings.HasPrefix(value, "--spill-threshold-bytes=") || value == "--no-spill" || value == "--no-repo-config" || value == "--no-config-ignore" || value == "--production-only" || value == "--daemon" {
 			continue
 		}
 		if commands[value] {
@@ -160,7 +160,7 @@ func hasExplicitApplicationCommand(args []string) bool {
 			index++
 			continue
 		}
-		if strings.HasPrefix(value, "--artifact-dir=") || strings.HasPrefix(value, "--spill-threshold-bytes=") || value == "--no-spill" || value == "--no-repo-config" || value == "--no-config-ignore" || value == "--production-only" {
+		if strings.HasPrefix(value, "--artifact-dir=") || strings.HasPrefix(value, "--spill-threshold-bytes=") || value == "--no-spill" || value == "--no-repo-config" || value == "--no-config-ignore" || value == "--production-only" || value == "--daemon" {
 			continue
 		}
 		return commands[value]

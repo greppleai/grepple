@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"fmt"
 	anchorscommand "github.com/greppleai/grepple/internal/cli/anchors"
 	architecturecommand "github.com/greppleai/grepple/internal/cli/architecture"
 	artifactscommand "github.com/greppleai/grepple/internal/cli/artifacts"
@@ -38,6 +39,7 @@ type Arguments struct {
 	NoConfigIgnore     bool   `arg:"--no-config-ignore" help:"load grepple.json but ignore ignore.paths"`
 	ProductionOnly     bool   `arg:"--production-only" help:"recursively select production-classified sources"`
 	VersionFlag        bool   `arg:"--version" help:"print build and source version information"`
+	Daemon             bool   `arg:"--daemon" help:"use a running greppled for local architecture (fallback to direct)"`
 
 	Search       *searchcommand.Args         `arg:"subcommand:search" help:"search local or explicitly selected remote code"`
 	Write        *writecommand.Args          `arg:"subcommand:write" help:"apply local transactional anchored writes"`
@@ -75,6 +77,9 @@ func (values *Arguments) spillOptions() outputspill.Options {
 }
 
 func executeArguments(context cliruntime.Context, values *Arguments) error {
+	if values.Daemon && values.Architecture == nil {
+		return fmt.Errorf("--daemon currently supports only architecture commands")
+	}
 	switch {
 	case values.VersionFlag || values.Version != nil:
 		return versioncommand.Execute(context, &versioncommand.Args{})
@@ -99,7 +104,7 @@ func executeArguments(context cliruntime.Context, values *Arguments) error {
 	case values.Extract != nil:
 		return extractcommand.Execute(context, values.Extract)
 	case values.Architecture != nil:
-		return architecturecommand.Execute(context, values.Architecture)
+		return architecturecommand.ExecuteWithDaemon(context, values.Architecture, values.Daemon)
 	case values.Sources != nil:
 		return sourcescommand.Execute(context, values.Sources)
 	case values.Init != nil:

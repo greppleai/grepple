@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/greppleai/grepple/internal/storagepaths"
 	"github.com/greppleai/grepple/parser"
 )
 
@@ -11,6 +12,9 @@ import (
 // an invocation. Explicit environment values, including empty values, win.
 func configureProcessDefaults() {
 	if _, configured := os.LookupEnv(parser.NavigationCacheDirectoryEnv); !configured {
-		_ = os.Setenv(parser.NavigationCacheDirectoryEnv, filepath.Join(".grepple", "cache", "navigation"))
+		cwd, err := os.Getwd()
+		if err == nil {
+			_ = os.Setenv(parser.NavigationCacheDirectoryEnv, filepath.Join(storagepaths.Cache(cwd), "navigation"))
+		}
 	}
 }

@@ -30,9 +30,9 @@ func Cache(workingDirectory string) string {
 		return configured
 	}
 	key := fmt.Sprintf("%x", sha256.Sum256([]byte(filepath.Clean(workingDirectory))))[:16]
-	cache, err := os.UserCacheDir()
-	if err == nil && strings.TrimSpace(cache) != "" {
-		candidate := filepath.Join(cache, "grepple", "cache", key)
+	home, err := os.UserHomeDir()
+	if err == nil && strings.TrimSpace(home) != "" {
+		candidate := filepath.Join(home, ".grepple", "cache", key)
 		if os.MkdirAll(candidate, 0o700) == nil {
 			return candidate
 		}

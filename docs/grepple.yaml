@@ -8,7 +8,7 @@ responsibilities:
     - Define anchored transactional editing and source classification workflows.
 files:
     - path: agent-workflow-benchmarks.md
-      description: Defines deterministic retrieval workflows and measures correctness, calls, bytes, tokens, latency, and truncation.
+      description: Measures deterministic retrieval workflows by correctness, calls, bytes, tokens, latency, and truncation.
       kind: production
       checksum: 9bd16544e045cfc694c97cfe06613d1c07a21b84c131692e623e0a7e2a21270d
     - path: anchor-providers.md
@@ -18,7 +18,7 @@ files:
     - path: architecture-performance-benchmarks.md
       description: Records architecture and navigation benchmark baselines, review budgets, cache measurements, and checkout diagnostics.
       kind: production
-      checksum: dd9e27c714378b99ab4406072e36e2bc7fe8ab8a04ab06396f00b2591e0a0794
+      checksum: 0b7fe28bb7eb4063c0e7ce6922a0c9fbd4ac1cac28d0fc70c6d55087c282232d
     - path: ask.md
       description: Documents bounded delegated research, provider authentication, typed tools, logging, caching, and safety limits.
       kind: production
@@ -26,7 +26,7 @@ files:
     - path: boundary-analysis.md
       description: Describes source-linked workflow and type boundary signals, policy interpretation, evidence, risk, and caching.
       kind: production
-      checksum: b1da140752568d2f0dd1ec750602df3ccc0563aaaaa6a7f514f8fb9d68b204fd
+      checksum: d2ebd5ce2155b221e5b9e0e5f604dade28c73186396a737ecc2e2eb3ef64543e
     - path: directory-architecture.md
       description: Specifies language-neutral directory orientation, declaration resolution, relation evidence, responsibilities, and determinism diagnostics.
       kind: production

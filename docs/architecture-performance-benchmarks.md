@@ -91,3 +91,31 @@ One cold and one warm isolated-cache run on the same checkouts as above (seconds
 | Go backend `graph build .` | 1.82 / 0.62 | 1.87 / 0.37 |
 
 Complete cold and warm architecture and graph JSON remained byte-for-byte identical to the pre-cache output on both checkouts. Cold runs may be slower because they serialize the graph; large repositories retain parsing and source-selection costs even on a cache hit. The benchmark harness above provides isolated caches and records checkout revision, source accounting, elapsed time, and peak RSS for additional repositories.
+
+### Optional foreground architecture worker
+
+`make bin/grepple bin/greppled` builds both commands. From the repository root, run `greppled` in one terminal; in another run `grepple --daemon architecture directory --json .` or `grepple architecture resolve --daemon --symbol Symbol .`. The CLI still applies repository source selection, renders text/JSON, and handles spilling; only local directory-architecture construction is delegated. The worker is explicit, stays in the foreground until Ctrl-C/SIGTERM, and is never automatically spawned. If absent or incompatible, `--daemon` falls back to direct analysis. It does not accelerate graph, search, GritQL, or remote architecture commands.
+
+Navigation caches now default to `~/.grepple/cache/<repository-id>/navigation` for both binaries rather than the repository's `.grepple/cache/navigation`; `GREPPLE_CACHE_DIR` overrides the base directory and an explicitly set `GREPPLE_NAVIGATION_CACHE_DIR` (including the empty value, which disables that cache) wins. Existing checkout-local caches are not migrated. Output-artifact storage is separate. The worker publishes a repository-specific descriptor in a private cache directory, using a random bearer token and a loopback-only TCP HTTP listener so the transport works on Linux, macOS, and Windows without platform-specific socket APIs. Keep the user cache directory private: Unix enforces directory/file permissions and Windows relies on the user-profile ACL. Clients validate the descriptor, loopback address, protocol, and build identity. Treat local processes with access to your user profile as trusted.
+
+The worker keeps **one** architecture report in memory. It rereads the CLI-selected source files for each request and fingerprints their contents, source paths, scope limit, and relevant ancestor configuration; a changed source or config rebuilds the report. Paths outside the worker's directory are rejected and cause the CLI to run directly. Requests/responses are size-bounded, and the worker falls back to rebuilding when it cannot safely fingerprint inputs. This is a best-effort local performance cache, not a snapshot or a substitute for source accounting; restart the worker when upgrading or rebuilding Grepple.
+
+Single-run timings on the same Pi checkout and a Go-heavy backend checkout (seconds; process startup excluded, cold worker report builds measured after a direct run with a warm navigation cache):
+
+| Full local request | Direct first / warmed | Worker first / warmed |
+| --- | ---: | ---: |
+| Pi `architecture directory --json .` | 15.97 / 3.23 | 4.95 / 0.41 |
+| Pi `architecture resolve --symbol AgentSession .` | 3.02 / 2.95 | 0.34 / 0.32 |
+| Go backend `architecture directory --json .` | 2.02 / 0.45 | 1.31 / 0.31 |
+
+Full JSON was byte-for-byte identical across direct and worker output for these requests; both checkouts remained unchanged. Timings are diagnostics, not latency guarantees: the worker's report miss can be slower than an already warm direct run, and its in-memory cache is lost on exit. The existing benchmark harness measures direct CLI requests; compare daemon requests with equivalent scope, cache state, and process-lifetime controls rather than treating warmed numbers as cold-start speedups.
+
+To repeat the comparison on any checkout, build both binaries, run `greppled` in that checkout in a separate terminal, and wait for it to start. In the checkout, use the same scope and cache settings for both modes; repeat each timed command to distinguish first use from warm use:
+
+```sh
+time grepple --no-spill architecture directory --json . > /tmp/grepple-direct.json
+time grepple --no-spill --daemon architecture directory --json . > /tmp/grepple-daemon.json
+cmp /tmp/grepple-direct.json /tmp/grepple-daemon.json
+```
+
+Use different output filenames per checkout and verify the worker is still running: `--daemon` intentionally falls back to direct analysis when no compatible worker is available. Record the repository revision and CLI/worker build identity with each measurement. The timed CLI calls exclude worker startup; the worker's first request may include a report build, while subsequent requests reuse its in-memory report.

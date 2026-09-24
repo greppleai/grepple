@@ -1,0 +1,30 @@
+description: Provides an optional authenticated local worker for generating cached architecture reports from validated source selections.
+responsibilities:
+    - Run a foreground architecture HTTP worker
+    - Authenticate and validate local report requests
+    - Validate source boundaries and snapshot project context
+    - Cache reports for stable source snapshots
+    - Publish and validate secure daemon descriptors
+    - Query compatible local workers with bounded transport
+    - Fall back when workers are unavailable
+files:
+    - path: daemon_test.go
+      description: Verifies snapshot invalidation, source-boundary enforcement, descriptor security, worker behavior, authentication, report parity, concurrency, and fallback.
+      kind: test
+      checksum: 6a812e7932b11ebb2ca9633678ad85ad31d929f858ca529405172a00f1f3bd76
+    - path: identity.go
+      description: Constructs worker identities from protocol, build metadata, VCS state, and the Go runtime version.
+      kind: production
+      checksum: fb4256417aa6dc33a13bb5f799104739f5b349436329e0a9abd2ddc0bfa1b4f8
+    - path: server.go
+      description: Runs the authenticated worker, builds architecture reports, synchronizes snapshot caching, and manages daemon descriptors.
+      kind: production
+      checksum: 48e05cec46d8af5a9ffb14537e23d9a413fc4f783a30a5f4451476b7334a71c9
+    - path: snapshot.go
+      description: Validates source boundaries and hashes selected files, limits, and relevant project context for cache safety.
+      kind: production
+      checksum: d28ef1cf66049b196469f69f099acdfd2f97160e14934cb824dd515537cce7c5
+    - path: transport.go
+      description: Defines daemon protocol data and securely discovers, authenticates, queries, and validates local architecture workers.
+      kind: production
+      checksum: 205081cf5d13c6f17b9dd2a8eef6e076606be70ddd552bfa227a2786774fd1cf

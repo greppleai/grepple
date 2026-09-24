@@ -73,3 +73,16 @@ func TestApplicationParserInitConcurrencyDefaultsAndOverrides(t *testing.T) {
 		}
 	}
 }
+
+func TestApplicationParserDaemonGlobalAroundArchitecture(t *testing.T) {
+	for _, args := range [][]string{
+		{"--daemon", "architecture", "directory", "--json", "."},
+		{"architecture", "--daemon", "directory", "--json", "."},
+		{"architecture", "directory", "--daemon", "--json", "."},
+	} {
+		values, help, err := parseApplicationArgs(args)
+		if err != nil || help || !values.Daemon || values.Architecture == nil || values.Architecture.Directory == nil {
+			t.Fatalf("parse %v: %+v help=%v err=%v", args, values, help, err)
+		}
+	}
+}

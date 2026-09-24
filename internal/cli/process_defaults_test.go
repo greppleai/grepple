@@ -17,12 +17,13 @@ func TestConfigureProcessDefaultsPreservesOverridesAndExplicitDisable(t *testing
 			_ = os.Unsetenv(parser.NavigationCacheDirectoryEnv)
 		}
 	})
+	t.Setenv("GREPPLE_CACHE_DIR", filepath.Join(t.TempDir(), "cache"))
 
 	if err := os.Unsetenv(parser.NavigationCacheDirectoryEnv); err != nil {
 		t.Fatal(err)
 	}
 	configureProcessDefaults()
-	if value := os.Getenv(parser.NavigationCacheDirectoryEnv); value != filepath.Join(".grepple", "cache", "navigation") {
+	if value := os.Getenv(parser.NavigationCacheDirectoryEnv); value != filepath.Join(os.Getenv("GREPPLE_CACHE_DIR"), "navigation") {
 		t.Fatalf("default=%q", value)
 	}
 

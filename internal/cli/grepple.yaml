@@ -1,12 +1,13 @@
-description: The cli package parses, normalizes, validates, and dispatches Grepple commands while managing repository scope, output spilling, process defaults, and projection consistency.
+description: The cli package parses and dispatches Grepple commands while coordinating repository scope, output spilling, process defaults, exit statuses, and projection consistency.
 responsibilities:
     - Register and dispatch application commands
     - Parse global and nested command arguments
-    - Normalize default command modes and help requests
-    - Validate command availability across execution universes
+    - Normalize implicit commands and legacy modes
+    - Route command and topic help
+    - Validate command execution universes
     - Apply repository configuration and source-selection scope
     - Spill oversized output into managed artifacts
-    - Preserve invocation options across continuations and reruns
+    - Preserve invocation options across reruns and continuations
     - Propagate requested command exit statuses
     - Configure navigation cache defaults
     - Document CLI workflows and output contracts
@@ -16,25 +17,25 @@ responsibilities:
     - Benchmark agent workflows and artifact retrieval
 files:
     - path: agent_workflow_benchmark_test.go
-      description: Benchmarks agent workflows for search, navigation, and spilled-artifact retrieval.
+      description: Benchmarks search, navigation, and spilled-artifact retrieval workflows for agents.
       kind: test
       checksum: 781901877b38edec8db1933eae0400ee424e4ff4317c576ebec9fa184055b021
     - path: application.go
-      description: Defines global arguments and dispatches normalized commands to their implementations.
+      description: Defines global controls and dispatches normalized application commands to their implementations.
       kind: production
-      checksum: 1d4daa205ad0c45bcd63065c62200535c280fcfdc8cece1a471773d2d45c97a2
+      checksum: 78c62b028389d37663bcd5100e1201302d6322b9a5753de7b984638759555365
     - path: application_test.go
-      description: Tests command selection, global option ownership, nested normalization, and command defaults.
+      description: Tests application command selection, global option ownership, nested normalization, and defaults.
       kind: test
-      checksum: 920bea7abff8fa71e351fb3772716a467c747efb98501182c104430de578b22c
+      checksum: a111c0779821d73be1040176d3103681704a09252028758afdf211ada9b5d990
     - path: architecture_test_helpers_test.go
-      description: Provides helpers for constructing architecture reports and responsibility outputs.
+      description: Provides test helpers for building architecture reports and responsibility outputs.
       kind: test
       checksum: a863315f1d8f14e4fa19a04158d2d427f12342515479c617bf178f0d576c6df2
     - path: args.go
-      description: Parses application arguments, routes help, validates availability, and executes output spilling.
+      description: Parses application arguments, normalizes commands, validates availability, and runs output spilling.
       kind: production
-      checksum: 1755710fc2796d16a3cbb1c9b1a47bbda6ed11840964c48639341d910c850f55
+      checksum: 446a727116159bc67b352a566daf480dd15dd9ac4b3c07dd59a0dea423979b0b
     - path: args_test.go
       description: Tests top-level help, execution-universe validation, help routing, and default searches.
       kind: test
@@ -60,7 +61,7 @@ files:
       kind: production
       checksum: 612a8f1c13c30265f0a22574830e90f526e0ad6429571bcd9c65ad724a1edf3c
     - path: graph_test_helpers_test.go
-      description: Provides helpers for navigation graph outputs and continuation commands.
+      description: Provides test helpers for navigation graph outputs and continuation commands.
       kind: test
       checksum: 86267374fb37feac85516db12b5c579a54d091ecdce8b12940b072292df56213
     - path: import_policy_test.go
@@ -86,11 +87,11 @@ files:
     - path: process_defaults.go
       description: Applies the default navigation cache directory when the environment leaves it unspecified.
       kind: production
-      checksum: ed491ede49164196e5b441731a65ee00add0cb2623aebbd47e10d92ea08f5d6b
+      checksum: 5c51b620511327e5833cae86649f1aba0221de5587c2874220f5e38ba2efb53f
     - path: process_defaults_test.go
       description: Tests process defaults while preserving explicit overrides and disabled values.
       kind: test
-      checksum: fe94a0301813ed654d38745ced96fce1ea6463ae28a800fbb294b273a680d58a
+      checksum: 0311b6e4a44f879939e1affd2e25fa67d36132f5adbb61ca56b12121532a5454
     - path: remote_analysis_parity_test.go
       description: Compares local architecture and graph projections with public analysis results.
       kind: test

@@ -90,7 +90,7 @@ Paths are repository-relative prefixes or slash-separated glob patterns. Support
 
 The command can use two cache layers: parser-owned path-neutral per-file facts shared with graph, related-navigation, and extraction workflows, plus resolved graph inputs for the selected boundary source universe.
 
-Parser facts are enabled and located by `GREPPLE_NAVIGATION_CACHE_DIR`. Boundary inputs default to the platform user cache under a repository-keyed `grepple/cache/<repository-key>/boundaries/` directory, falling back to platform temporary storage when the user cache is unavailable; set `GREPPLE_CACHE_DIR` to select an explicit location. Neither default writes beneath the analyzed repository, so read-only checkouts remain analyzable.
+Parser facts are enabled and located by `GREPPLE_NAVIGATION_CACHE_DIR`. Boundary inputs default to `~/.grepple/cache/<repository-id>/boundaries/`, falling back to platform temporary storage when the user home is unavailable; set `GREPPLE_CACHE_DIR` to select an explicit location. Neither default writes beneath the analyzed repository, so read-only checkouts remain analyzable.
 
 The digest covers source paths and bytes, relevant `go.mod`/`go.work` repository-identity files, the file limit, language identity, grammar ABI, and generated grammar fingerprint. Any source, repository identity, or grammar change therefore causes a cache miss. Cache schema `grepple-boundary-cache-v6` stores graph inputs with repository roots, import targets, and field visibility; policy is applied after cache loading. Cache writes use an atomic rename, corrupt entries are ignored, and inability to write the optional cache does not fail analysis.
 

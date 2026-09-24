@@ -1,4 +1,4 @@
-description: Provides the public Grepple Go code-search engine, parser, structural query system, navigation and architecture analysis, CLI, documentation, tests, configuration, and release tooling.
+description: Provides the public Grepple Go code-search engine, structural query system, parser and navigation infrastructure, architecture analysis, CLI, documentation, tests, configuration, and release tooling.
 responsibilities:
     - Parse supported programming languages
     - Search and filter source repositories
@@ -23,9 +23,9 @@ files:
       kind: production
       checksum: 12d7b149a16b75ddcaf2da98eb9261931a797a798f2b9562b8b6e3b0b8a22fbe
     - path: .goreleaser.yaml
-      description: Configures cross-platform Grepple builds and release binary metadata.
+      description: Configures cross-platform Grepple and greppled builds with release metadata.
       kind: production
-      checksum: 648b9a113c4d3d7b3b714ec62759c3be55e5bdd47bd56f3363dba158300077b3
+      checksum: 26ba1b4ddac6675457977b4b3d7464edfc27b3f919da15b481fe53b8292d8cc7
     - path: .release-please-manifest.json
       description: Records the current Release Please package version.
       kind: production
@@ -45,11 +45,11 @@ files:
     - path: Makefile
       description: Automates builds, tests, linting, schema checks, benchmarks, installation, smoke tests, and cleanup.
       kind: production
-      checksum: 3712d12417594a790a61aa4695981e641971cd0758bc025eb70e9b2e693a7c5a
+      checksum: 870eaf9ab44fbb5b4c2203922be3557f13b11ba84df65c9ba9a01984357f19ab
     - path: README.md
       description: Documents Grepple capabilities, commands, architecture, workflows, output contracts, and build requirements.
       kind: production
-      checksum: fc499a781dea0a2660911dcc9add9204dda464d92d0eec576db4a935d37354c4
+      checksum: 2eb5761262310e76f43f0f32aa03b7e49196f872df6af6babd6a4a1a6063f7f2
     - path: architecture-production.mmd
       description: Contains a generated Mermaid graph of production package relationships.
       kind: generated
