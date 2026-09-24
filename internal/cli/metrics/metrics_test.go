@@ -1,13 +1,40 @@
-package cli
+package metrics
 
 import (
 	"errors"
+	"io"
+	"os"
 	"strings"
 	"testing"
 	"time"
 
+	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
 	agentmetrics "github.com/greppleai/grepple/internal/metrics"
 )
+
+func captureStdout(t testing.TB, fn func()) string {
+	t.Helper()
+	previous := os.Stdout
+	reader, writer, err := os.Pipe()
+	if err != nil {
+		t.Fatal(err)
+	}
+	os.Stdout = writer
+	done := make(chan string, 1)
+	go func() { content, _ := io.ReadAll(reader); done <- string(content) }()
+	fn()
+	_ = writer.Close()
+	os.Stdout = previous
+	return <-done
+}
+
+func runMetrics(args []string) error {
+	return New(cliruntime.Environment{}).Run(args)
+}
+
+func parseMetricsOptions(command string, args []string) (*Args, bool, error) {
+	return parseMetricsArgs(append([]string{command}, args...))
+}
 
 func TestWriteMetricsReportIsBounded(t *testing.T) {
 	groups := make([]agentmetrics.Group, 2_000)
@@ -24,12 +51,12 @@ func TestWriteMetricsReportIsBounded(t *testing.T) {
 	report := agentmetrics.Report{Generated: time.Now(), Groups: groups}
 	var renderErr error
 	output := captureStdout(t, func() {
-		renderErr = writeMetricsReport(report)
+		renderErr = writeMetricsReport(os.Stdout, report)
 	})
-	if !errors.Is(renderErr, errOutputTruncated) {
+	if !errors.Is(renderErr, cliruntime.ErrOutputTruncated) {
 		t.Fatalf("render error = %v", renderErr)
 	}
-	if len(output) > DefaultTextOutputBytes || !strings.Contains(output, "truncated") {
+	if len(output) > defaultTextOutputBytes || !strings.Contains(output, "truncated") {
 		t.Fatalf("bounded output length = %d", len(output))
 	}
 }
@@ -90,7 +117,7 @@ func TestMetricsOutputsLeaveUnavailableUsageBlankOrUnknown(t *testing.T) {
 		Groups: []agentmetrics.Group{{Name: "pi", SampleSize: 1, ElapsedMS: agentmetrics.Distribution{}}},
 	}
 	human := captureStdout(t, func() {
-		if err := writeMetricsReport(report); err != nil {
+		if err := writeMetricsReport(os.Stdout, report); err != nil {
 			t.Fatal(err)
 		}
 	})
@@ -98,7 +125,7 @@ func TestMetricsOutputsLeaveUnavailableUsageBlankOrUnknown(t *testing.T) {
 		t.Fatalf("human report = %q", human)
 	}
 	csvOutput := captureStdout(t, func() {
-		if err := exportMetrics(report, "csv"); err != nil {
+		if err := exportMetrics(os.Stdout, report, "csv"); err != nil {
 			t.Fatal(err)
 		}
 	})

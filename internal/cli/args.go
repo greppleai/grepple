@@ -66,6 +66,8 @@ func parseApplicationArgs(args []string) (*Arguments, bool, error) {
 		if errors.Is(err, arg.ErrHelp) {
 			if values.Search != nil {
 				fmt.Fprintln(os.Stdout, values.Search.Description())
+			} else if values.Metrics != nil {
+				fmt.Fprintln(os.Stdout, values.Metrics.Description())
 			}
 			parser.WriteHelp(os.Stdout)
 			return values, true, nil
@@ -131,7 +133,7 @@ func insertApplicationArgument(args []string, index int, value string) []string 
 }
 
 func explicitApplicationCommand(args []string) (string, []string) {
-	commands := map[string]bool{"search": true, "write": true, "grit": true, "graph": true, "anchors": true, "boundaries": true, "examples": true, "artifacts": true, "context": true, "extract": true, "architecture": true, "sources": true, "init": true, "verify": true, "languages": true, "rules": true, "repos": true, "get": true, "tree": true, "refs": true, "ask": true, "ai-provider": true, "login": true, "logout": true, "version": true}
+	commands := map[string]bool{"search": true, "write": true, "grit": true, "graph": true, "anchors": true, "boundaries": true, "examples": true, "artifacts": true, "context": true, "extract": true, "architecture": true, "sources": true, "init": true, "verify": true, "languages": true, "metrics": true, "rules": true, "repos": true, "get": true, "tree": true, "refs": true, "ask": true, "ai-provider": true, "login": true, "logout": true, "version": true}
 	for index := 0; index < len(args); index++ {
 		value := args[index]
 		if value == "--artifact-dir" || value == "--spill-threshold-bytes" {
@@ -150,7 +152,7 @@ func explicitApplicationCommand(args []string) (string, []string) {
 }
 
 func hasExplicitApplicationCommand(args []string) bool {
-	commands := map[string]bool{"search": true, "write": true, "grit": true, "graph": true, "anchors": true, "boundaries": true, "examples": true, "artifacts": true, "context": true, "extract": true, "architecture": true, "sources": true, "init": true, "verify": true, "languages": true, "rules": true, "repos": true, "get": true, "tree": true, "refs": true, "ask": true, "ai-provider": true, "login": true, "logout": true, "version": true}
+	commands := map[string]bool{"search": true, "write": true, "grit": true, "graph": true, "anchors": true, "boundaries": true, "examples": true, "artifacts": true, "context": true, "extract": true, "architecture": true, "sources": true, "init": true, "verify": true, "languages": true, "metrics": true, "rules": true, "repos": true, "get": true, "tree": true, "refs": true, "ask": true, "ai-provider": true, "login": true, "logout": true, "version": true}
 	for index := 0; index < len(args); index++ {
 		value := args[index]
 		if value == "--help" || value == "-h" || value == "--version" {
@@ -171,7 +173,7 @@ func hasExplicitApplicationCommand(args []string) bool {
 func validateCommandAvailability(command string, args []string) error {
 	availability := map[string]string{
 		"write": "local-only", "anchors": "local-only", "examples": "source-independent", "artifacts": "local-only", "context": "local-only",
-		"languages": "source-independent", "extract": "local-only", "sources": "local-only", "init": "local-only", "verify": "local-only", "ai-provider": "source-independent",
+		"languages": "source-independent", "extract": "local-only", "sources": "local-only", "init": "local-only", "verify": "local-only", "ai-provider": "source-independent", "metrics": "local-only",
 	}
 	remoteOnly := map[string]bool{"get": true, "repos": true, "refs": true, "rules": true, "login": true, "logout": true}
 	for _, argument := range args {
