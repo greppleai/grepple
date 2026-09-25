@@ -31,6 +31,10 @@ const (
 	RustGrammar = "rust"
 	// TreeSitterRustGrammar identifies the pinned Rust grammar implementation.
 	TreeSitterRustGrammar = "tree-sitter-rust@0.24.2"
+	// PHPGrammar identifies PHP source syntax.
+	PHPGrammar = "php"
+	// TreeSitterPHPGrammar identifies the pinned PHP grammar.
+	TreeSitterPHPGrammar = "tree-sitter-php@0.25.0"
 	// ShellGrammar identifies the Shell syntax contract.
 	ShellGrammar = "shell"
 	// TreeSitterShellGrammar identifies the pinned Bash grammar implementation.
@@ -174,9 +178,13 @@ func wrappedSnippetAttempts(config wrappedLanguageConfig) []snippetAttempt {
 			snippetAttempt{SnippetContextStatementList, config.statementPrefix, config.statementSuffix, selectWrappedSequence(config.statementBlocks, "statement_sequence")},
 		)
 	}
+	declarationPrefix := ""
+	if config.language == "php" {
+		declarationPrefix = "<?php\n"
+	}
 	attempts = append(attempts,
-		snippetAttempt{SnippetContextDeclaration, "", "\n", selectExactDeclaration(config.declarations)},
-		snippetAttempt{SnippetContextDeclarationList, "", "\n", selectRootSequence(config.rootKind, "declaration_sequence")},
+		snippetAttempt{SnippetContextDeclaration, declarationPrefix, "\n", selectExactDeclaration(config.declarations)},
+		snippetAttempt{SnippetContextDeclarationList, declarationPrefix, "\n", selectRootSequence(config.rootKind, "declaration_sequence")},
 	)
 	if config.memberPrefix != "" {
 		attempts = append(attempts,
@@ -186,6 +194,21 @@ func wrappedSnippetAttempts(config wrappedLanguageConfig) []snippetAttempt {
 	}
 	attempts = append(attempts, snippetAttempt{SnippetContextFile, "", "", selectWrappedFile(config.rootKind)})
 	return attempts
+}
+
+func compilePHPTemplates(decoded decodedSnippet, maxDepth int) ([]Template, string, error) {
+	return compileWrappedLanguageTemplates(phpLanguageConfig(), decoded, maxDepth)
+}
+
+func phpLanguageConfig() wrappedLanguageConfig {
+	return wrappedLanguageConfig{
+		language: "php", rootKind: "program",
+		expressionPrefix: "<?php\nfunction __grit_func(){ $x = ", expressionSuffix: "; }\n",
+		statementPrefix: "<?php\nfunction __grit_func(){\n", statementSuffix: "\n}\n",
+		statementBlocks: stringSet("compound_statement"),
+		declarations:    stringSet("class_declaration", "interface_declaration", "trait_declaration", "enum_declaration", "function_definition", "namespace_definition", "namespace_use_declaration", "const_declaration"),
+		memberPrefix:    "<?php\nclass __G {\n", memberSuffix: "\n}\n", memberBlocks: stringSet("declaration_list"),
+	}
 }
 
 func selectExactSnippetNode(root parser.Node, start, end int) (selectedRoot, bool) {

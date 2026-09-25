@@ -34,6 +34,7 @@ func TestTreeSitterLanguageParity(t *testing.T) {
 		{"go", "testdata/go/sample.go", "FormatUser", "function_declaration"},
 		{"kotlin", "testdata/kotlin/Sample.kt", "println", "class_declaration"},
 		{"java", "testdata/java/Sample.java", "System.out.println", "class_declaration"},
+		{"php", "testdata/php/sample.php", "Format::render", "class_declaration"},
 	}
 	for _, test := range tests {
 		t.Run(test.language, func(t *testing.T) {

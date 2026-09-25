@@ -15,6 +15,7 @@ func TestWrappedTreeSitterLanguagesEvaluateCalls(t *testing.T) {
 		{name: "java", language: "java", snippet: "target($args)", source: "class App { void run() { target(value); } }\n", path: "src/App.java", want: "target(value)"},
 		{name: "kotlin", language: "kotlin", snippet: "target($args)", source: "fun run() { target(value) }\n", path: "src/App.kt", want: "target(value)"},
 		{name: "rust", language: "rust", snippet: "target($args)", source: "fn run() { target(value); }\n", path: "src/app.rs", want: "target(value)"},
+		{name: "php", language: "php", snippet: "target($args)", source: "<?php\nfunction run() { target($value); }\n", path: "src/app.php", want: "target($value)"},
 		{name: "shell", language: "shell", snippet: "target $args", source: "run() { target value; }\n", path: "scripts/app.sh", want: "target value"},
 	}
 	for _, test := range tests {
@@ -23,6 +24,15 @@ func TestWrappedTreeSitterLanguagesEvaluateCalls(t *testing.T) {
 			t.Parallel()
 			assertLanguageEvaluation(t, test)
 		})
+	}
+}
+
+func TestPHPGritQLDeclarationAndMemberSnippets(t *testing.T) {
+	for _, test := range []languageEvaluationCase{
+		{name: "top-level", language: "php", snippet: "class Greeter {}", source: "<?php\nclass Greeter {}\n", path: "src/app.php", want: "class Greeter {}"},
+		{name: "method", language: "php", snippet: "public function greet() {}", source: "<?php\nclass Greeter { public function greet() {} }\n", path: "src/app.php", want: "public function greet() {}"},
+	} {
+		t.Run(test.name, func(t *testing.T) { assertLanguageEvaluation(t, test) })
 	}
 }
 
