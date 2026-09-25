@@ -489,6 +489,8 @@ func externalNavigationEligible(language, importPath string) bool {
 		}
 	case "java", "kotlin":
 		return true
+	case "php":
+		return strings.Contains(importPath, "\\")
 	default:
 		return false
 	}

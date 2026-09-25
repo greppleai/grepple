@@ -82,10 +82,17 @@ func sortedGoRepositorySet(values map[string]bool) []string {
 	return result
 }
 
-// RepositoryContextFiles returns sorted Go module/workspace files that affect repository identity.
+// RepositoryContextFiles returns sorted Go module/workspace and PHP Composer
+// manifests that affect repository navigation (and therefore cached graph identity).
 func RepositoryContextFiles(paths []string) []string {
 	configs := make(map[string]bool)
 	for _, sourcePath := range paths {
+		if parser.LanguageFor(sourcePath) == "php" {
+			if manifest, ok := nearestGoRepositoryFile(filepath.Dir(sourcePath), "composer.json"); ok {
+				configs[manifest] = true
+			}
+			continue
+		}
 		if parser.LanguageFor(sourcePath) != "go" {
 			continue
 		}

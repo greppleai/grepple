@@ -17,6 +17,7 @@ func TestDefaultRegistryProvidesManagerResolvers(t *testing.T) {
 		{language: "typescript", manifest: "package.json", wantID: "npm"},
 		{language: "rust", manifest: "Cargo.toml", wantID: "cargo"},
 		{language: "kotlin", manifest: "pom.xml", wantID: "maven"},
+		{language: "php", manifest: "composer.json", wantID: "composer"},
 	}
 	for _, test := range tests {
 		t.Run(test.wantID, func(t *testing.T) {

@@ -79,7 +79,7 @@ func NewRegistry(resolvers ...Resolver) Registry {
 
 // DefaultRegistry returns all dependency managers currently implemented.
 func DefaultRegistry() Registry {
-	return NewRegistry(NewGoModResolver(), NewNPMResolver(), NewCargoResolver(), NewMavenResolver())
+	return NewRegistry(NewGoModResolver(), NewNPMResolver(), NewCargoResolver(), NewMavenResolver(), NewComposerResolver())
 }
 
 // Projects returns resolver/manifest candidates nearest to directory.
