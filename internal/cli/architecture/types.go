@@ -112,6 +112,7 @@ type Dependencies struct {
 	ServerDefault     func(string) string
 	RequestExit       func(int)
 	Stdout            io.Writer
+	Daemon            bool
 }
 
 type command struct {

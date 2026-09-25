@@ -1,4 +1,4 @@
-description: Defines Grepple's authoritative documentation for source parsing, search, navigation, architecture analysis, output contracts, editing, indexing, benchmarking, and releases.
+description: Defines Grepple's authoritative documentation for parser behavior, language support, search, analysis, output contracts, editing, indexing, benchmarking, and releases.
 responsibilities:
     - Define parser ownership, syntax lifecycles, language support, and GritQL compatibility.
     - Specify deterministic search ranking, structural matching, navigation, source scope, and classifications.
@@ -8,7 +8,7 @@ responsibilities:
     - Define anchored transactional editing and source classification workflows.
 files:
     - path: agent-workflow-benchmarks.md
-      description: Defines deterministic retrieval workflows and measures correctness, calls, bytes, tokens, latency, and truncation.
+      description: Measures deterministic retrieval workflows by correctness, calls, bytes, tokens, latency, and truncation.
       kind: production
       checksum: 9bd16544e045cfc694c97cfe06613d1c07a21b84c131692e623e0a7e2a21270d
     - path: anchor-providers.md
@@ -18,7 +18,7 @@ files:
     - path: architecture-performance-benchmarks.md
       description: Records architecture and navigation benchmark baselines, review budgets, cache measurements, and checkout diagnostics.
       kind: production
-      checksum: 4038ef632702795d33286d33fb4b2abeb948fedcd0886d47210e68231ae71250
+      checksum: 211ef3850be997739653cdd65c81621395d649942d7b1d44b1eef0d706f85e08
     - path: ask.md
       description: Documents bounded delegated research, provider authentication, typed tools, logging, caching, and safety limits.
       kind: production
@@ -26,7 +26,7 @@ files:
     - path: boundary-analysis.md
       description: Describes source-linked workflow and type boundary signals, policy interpretation, evidence, risk, and caching.
       kind: production
-      checksum: b1da140752568d2f0dd1ec750602df3ccc0563aaaaa6a7f514f8fb9d68b204fd
+      checksum: d2ebd5ce2155b221e5b9e0e5f604dade28c73186396a737ecc2e2eb3ef64543e
     - path: directory-architecture.md
       description: Specifies language-neutral directory orientation, declaration resolution, relation evidence, responsibilities, and determinism diagnostics.
       kind: production

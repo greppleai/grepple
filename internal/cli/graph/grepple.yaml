@@ -13,7 +13,7 @@ files:
     - path: arguments.go
       description: Defines graph argument aliases and dispatches build, resolve, diff, and traversal operations.
       kind: production
-      checksum: ab32232f5a7b5c61d1f98f5b214914f82cc7855b8d6b8a5fb6733e3b773c73ce
+      checksum: e215b611b49b6336dcae614bc5ab5cfc13eefbbc0990532381b91d14e1cc6767
     - path: build.go
       description: Parses build options, loads local or exact remote graphs, and renders complete or bounded compact output.
       kind: production
@@ -39,7 +39,7 @@ files:
       kind: production
       checksum: e8deb8c10e6e2e0cb16dda2ea56496fed26d5151556efa41a7f7d038452e36d3
     - path: header_test.go
-      description: Verifies compact build and diff output expose unresolved calls and recovered-source warnings without redundant headers.
+      description: Verifies compact build and diff output expose incomplete-source warnings without redundant headers.
       kind: test
       checksum: 613209a782eab560b372c9754e2cebbcb381caa4aa9055d3f4fa5b8ce199fb2a
     - path: integration_helpers_test.go
@@ -47,7 +47,7 @@ files:
       kind: test
       checksum: ce1b673901d86b4ecbea7d232a15d698dfeeec340ad15f3a80c3ef9eeb3b7a63
     - path: integration_test.go
-      description: Validates deterministic graph construction, traversal, filtering, diffing, resolution, truncation, and metadata.
+      description: Validates deterministic graph construction, traversal, filtering, truncation, metadata, and output behavior.
       kind: test
       checksum: 347df859da16199dd477631e5a6c3e7d8fe4257123bb88f7c44bcd4b93a6218e
     - path: projection.go
@@ -57,7 +57,7 @@ files:
     - path: query.go
       description: Parses selectors, resolves source paths, executes filtered local or exact remote traversals, and exposes graph helpers.
       kind: production
-      checksum: 0794790707efdd02f1e50600235cbece7ffa5b4a03bc57d0c77922b16a4b46ad
+      checksum: d1671c869c4dc04361bcedff526962f079f2868c68d6fc444adb7aee8c9de887
     - path: query_compact.go
       description: Renders directional traversal results with grouped edges, ambiguity markers, deterministic ordering, and cycle bounds.
       kind: production
@@ -73,7 +73,7 @@ files:
     - path: resolve.go
       description: Resolves symbol declarations into deterministic matches with filtering, metadata, and follow-up traversal commands.
       kind: production
-      checksum: c734385ec0252c852a0248e3e8aba24047710deaea9b5f31981e39c6d4b21aa9
+      checksum: 5d5a783c85d0ce43e8ae98a4cc30449a1f1db78ad1264947232bfe8cd25d51d2
     - path: resolve_test.go
       description: Tests symbol resolution output and nonzero exit behavior for missing declarations.
       kind: test

@@ -154,14 +154,27 @@ func BuildGraphWithOptions(files []string, options BuildOptions) (parser.Navigat
 func BuildAnalysisFromDocuments(sources []DocumentSource, options BuildOptions) (*Analysis, SourceStats) {
 	ordered := append([]DocumentSource(nil), sources...)
 	sort.Slice(ordered, func(i, j int) bool { return ordered[i].Path < ordered[j].Path })
-	index := newNavigationIndex()
 	cwd, _ := os.Getwd()
+	cacheKey := ""
+	if !options.DisableCache {
+		if key, ok := resolvedGraphCacheKey(ordered, cwd); ok {
+			cacheKey = key
+			if graph, hit := readResolvedGraphCache(key); hit {
+				stats := documentSourceStats(ordered)
+				return &Analysis{index: &navigationIndex{graph: graph, sourceStats: stats}}, stats
+			}
+		}
+	}
+	index := newNavigationIndex()
 	paths := make([]string, 0, len(ordered))
 	for _, source := range ordered {
 		paths = append(paths, source.Path)
 		index.addDocument(source, cwd, !options.DisableCache)
 	}
 	index.finalize(paths)
+	if cacheKey != "" && index.sourceStats.Failed == 0 {
+		writeResolvedGraphCache(cacheKey, index.graph, index.sourceStats.Recovered > 0)
+	}
 	return &Analysis{index: index}, index.sourceStats
 }
 

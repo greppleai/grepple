@@ -55,6 +55,29 @@ func TestArchitectureDirectoryAndResolveAcrossLanguages(t *testing.T) {
 	assertProductionOnlyArchitectureResolve(t)
 }
 
+func TestArchitectureDaemonUnavailableFallsBackToDirect(t *testing.T) {
+	root := t.TempDir()
+	writeArchitectureFixture(t, root, "main.go", "package main\nfunc main() {}\n")
+	chdirForConfigTest(t, root)
+	t.Setenv("GREPPLE_CACHE_DIR", filepath.Join(t.TempDir(), "absent-cache"))
+	direct, err := Build([]string{"."}, 0, Dependencies{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	fallback, err := Build([]string{"."}, 0, Dependencies{Daemon: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	want, err := json.Marshal(direct)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got, err := json.Marshal(fallback)
+	if err != nil || string(got) != string(want) {
+		t.Fatalf("unavailable daemon changed report: %v", err)
+	}
+}
+
 func assertArchitectureSourceFiles(t *testing.T, files []architectureSourceFile) {
 	t.Helper()
 	if len(files) != 3 {

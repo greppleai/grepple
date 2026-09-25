@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/greppleai/grepple/parser"
 	"github.com/greppleai/grepple/search"
 )
 
@@ -94,5 +95,43 @@ func TestUniverseReportsDiscoveredReadFailures(t *testing.T) {
 	defer universe.Close()
 	if universe.Summary().Discovered != 1 || universe.Summary().Selected != 1 || universe.Summary().Failed != 1 {
 		t.Fatalf("summary=%+v", universe.Summary())
+	}
+}
+
+func TestUniverseCachedGraphPreservesIncompleteSourceAccounting(t *testing.T) {
+	t.Setenv(parser.NavigationCacheDirectoryEnv, t.TempDir())
+	sources := []Source{
+		{Path: "a.go", Content: []byte("package sample\nfunc Caller() { Target() }\n")},
+		{Path: "b.go", ReadError: os.ErrNotExist},
+		{Path: "c.go", Content: []byte("package sample\nfunc Broken( {\n")},
+		{Path: "d.go", Content: []byte("package sample\nfunc Target() {}\n")},
+		{Path: "notes.md", Content: []byte("not a navigation source")},
+	}
+	var previous []byte
+	for attempt := 0; attempt < 2; attempt++ {
+		universe, err := NewUniverse(sources, 3)
+		if err != nil {
+			t.Fatal(err)
+		}
+		summary := universe.Summary()
+		if summary.Discovered != 5 || summary.Selected != 3 || summary.Parsed != 2 || summary.Skipped != 1 || summary.Failed != 1 || summary.Recovered != 1 {
+			t.Fatalf("attempt %d: summary=%+v", attempt, summary)
+		}
+		if truncation := universe.Truncation(); truncation == nil || truncation.Skipped != 1 {
+			t.Fatalf("attempt %d: truncation=%+v", attempt, truncation)
+		}
+		report, err := BuildGraph(universe, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		content, err := json.Marshal(report)
+		universe.Close()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if attempt > 0 && string(content) != string(previous) {
+			t.Fatal("cached incomplete graph changed JSON output")
+		}
+		previous = content
 	}
 }

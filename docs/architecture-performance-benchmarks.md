@@ -74,3 +74,51 @@ For a Go-heavy comparison, the local `grepple-backend` checkout (84 parsed files
 Complete `graph build --json .` output also matched byte-for-byte before and after shared indexing on both checkouts: Pi (60,252,988 bytes, SHA-256 `845b0300618f69bd415d42cae18509ce7ab509b21e0e4a490c67466ae943d146`) and the Go backend (4,382,279 bytes, SHA-256 `01af016fda029200ae4667bae1bd2c0eca96b0543e1f8db66baa8c9e48d3f3cb`). Python, C-family, and JVM/C# resolvers additionally have focused indexed-versus-scan tests; these two repositories are not comprehensive performance samples for those language families.
 
 These timings are diagnostics, not latency guarantees: CPU scheduling, cold/warm disk and cache state, source mix, repository size, and fresh metadata affect results. Parsing and TypeScript configuration resolution remain possible bottlenecks on other repositories. Projection limits such as `--depth` and `--max-nodes` do not avoid full source indexing; narrow paths or use `--max-files` only when a partial result is acceptable.
+
+### Persistent resolved-graph cache (no trigram index)
+
+When `GREPPLE_NAVIGATION_CACHE_DIR` is set, document-based navigation analysis stores the fully resolved graph under its `resolved/` subdirectory, alongside the existing per-file fact cache. The CLI sets its usual navigation cache directory by default; library callers can opt in by setting the environment variable, or bypass both caches with `BuildOptions.DisableCache`. Entries are bounded packed-protobuf artifacts with graph checksums, digest checks, and atomic writes. Missing, corrupt, unreadable, or oversized entries fall back to a fresh graph build without changing the output.
+
+The cache key covers the executable and artifact schema, working directory, ordered source paths and source/grammar digests, plus the existence and contents of ancestor `go.mod`, `go.work`, and `tsconfig.json` files that can affect import resolution. A hit skips cross-file graph construction, **not** source discovery, document parsing, outlines, or search-index construction; source failures, recovery, and truncation are still accounted for by the current invocation. Config files that cannot be safely fingerprinted bypass the resolved-graph cache.
+
+One cold and one warm isolated-cache run on the same checkouts as above (seconds; diagnostic only):
+
+| Full command | Shared indexes cold / warm | Resolved cache cold / warm |
+| --- | ---: | ---: |
+| Pi `architecture directory --depth 2 --max-nodes 80 .` | 13.91 / 3.68 | 14.96 / 2.97 |
+| Pi `architecture resolve --symbol AgentSession .` | 14.16 / 3.77 | 14.61 / 2.87 |
+| Go backend `architecture directory --depth 2 --max-nodes 80 .` | 1.97 / 0.77 | 1.87 / 0.47 |
+| Go backend `graph build .` | 1.82 / 0.62 | 1.87 / 0.37 |
+
+Complete cold and warm architecture and graph JSON remained byte-for-byte identical to the pre-cache output on both checkouts. Cold runs may be slower because they serialize the graph; large repositories retain parsing and source-selection costs even on a cache hit. The benchmark harness above provides isolated caches and records checkout revision, source accounting, elapsed time, and peak RSS for additional repositories.
+
+### One optional foreground user-level report cache
+
+`make bin/grepple bin/greppled` builds both commands. Start one `greppled` from **any directory** in one terminal; it does not scan any repositories until requested. From any checkout, run `grepple --daemon architecture directory --json .`, `grepple architecture resolve --daemon --symbol Symbol .`, `grepple --daemon graph resolve --symbol Symbol .`, or `grepple --daemon graph callers --symbol Symbol .`. Focused graph `callees`, `impact`, `dependencies`, and `dependents` are also supported. The CLI applies source policy and renders/spills output. On a report miss, the **CLI** builds it in its own working directory and publishes it; the worker never changes its own working directory or builds reports for arbitrary checkouts. If unavailable or incompatible, the CLI runs directly. The worker stays in the foreground until Ctrl-C/SIGTERM. Graph build/diff, search, GritQL, and remote requests do not use it.
+
+The worker's single authenticated descriptor lives at `~/.grepple/cache/daemon.json`, or under an absolute, private `GREPPLE_CACHE_DIR` override. It uses a random bearer token and loopback-only TCP HTTP, with no platform-specific socket API; Unix enforces directory/file permissions and Windows relies on user-profile ACLs. Clients validate protocol, build identity, and listener address. Treat other processes with access to your user profile as trusted. Navigation caches remain per-repository at `~/.grepple/cache/<repository-id>/navigation` by default; an explicit `GREPPLE_NAVIGATION_CACHE_DIR` (including empty, disabling that cache) wins. Existing checkout-local caches are not migrated; output artifacts are separate.
+
+The worker retains at most **four repository roots** and **eight report variants per root** under a **64 MiB serialized-report budget**, evicting least-recently-used entries or roots. Graph traversals are keyed by direction, depth, selector, and filters; resolve stores matching declarations, not the full graph, and rebuilds follow-up commands and output metadata for each invocation. Every request fingerprints the CLI-selected source paths, bytes, scope limit, and relevant ancestor configuration for its root. Changes cause a miss; reports built locally are revalidated by the worker before publication. Outside-root paths and symlink escapes are rejected; the CLI falls back to direct analysis. The cache is best effort, not a snapshot or substitute for current source accounting; restart the worker after upgrading/rebuilding Grepple. No repositories are indexed on startup.
+
+Single diagnostic cold/warm-ish runs with one shared worker serving both the Pi checkout and a Go-heavy backend checkout (seconds; worker startup excluded; each worker's first request came after a direct run warmed the navigation cache):
+
+| Full local request | Direct first / warmed | Worker miss / hit |
+| --- | ---: | ---: |
+| Pi `architecture directory --json .` | 18.03 / 3.62 | 3.73 / 0.33 |
+| Go backend `architecture directory --json .` | 2.25 / 0.52 | 1.83 / 0.46 |
+| Pi `graph resolve --symbol parseSkillBlock --json .` | 20.17 / 3.02 | 3.11 / 0.09 |
+| Pi `graph callers --at packages/coding-agent/src/core/agent-session.ts:251 --depth 1 --json .` | 5.34 / 5.59 | 5.90 / 0.11 |
+| Go backend `graph resolve --symbol WalkTree --json .` | 2.19 / 0.37 | 1.50 / 0.39 |
+| Go backend `graph callers --symbol WalkTree --depth 1 --json .` | 0.40 / 0.34 | 1.60 / 0.38 |
+
+Full JSON matched byte-for-byte in direct and worker modes for the sampled architecture and graph commands on both checkouts; neither checkout changed. These are one-run diagnostics, not latency guarantees. A worker miss adds request/publication overhead and can be slower than warm direct analysis; the cached report is lost on worker exit. The warmed speedup is substantial on the TypeScript-heavy Pi checkout, while this small Go backend did not benefit from the extra request round trip.
+
+To repeat the comparison on another checkout, build both binaries, start `greppled` in a separate terminal (it need not run in that checkout), then time identical commands in the checkout and repeat each for warm behavior:
+
+```sh
+time grepple --no-spill architecture directory --json . > /tmp/grepple-direct.json
+time grepple --no-spill --daemon architecture directory --json . > /tmp/grepple-daemon.json
+cmp /tmp/grepple-direct.json /tmp/grepple-daemon.json
+```
+
+Use distinct output filenames per checkout, identical cache settings, and verify the worker is running: `--daemon` intentionally falls back to direct analysis if unavailable. Record the repository revision and binary identity. CLI timing excludes worker startup; the worker's first request includes local report construction on the client, while later requests reuse its in-memory report.

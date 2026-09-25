@@ -1,25 +1,25 @@
-description: Provides deterministic source-universe analysis through reusable navigation graphs, directory architecture and responsibility projections, boundary reports, relationship evidence, and normalized architecture comparison.
+description: Provides deterministic source-universe analysis through reusable navigation graphs, directory architecture and responsibility reports, boundary analysis, relationship evidence, projections, and normalized architecture comparison.
 responsibilities:
-    - Parse selected sources once
-    - Track completeness, failures, and truncation
+    - Load and account for selected sources
+    - Parse supported sources into reusable documents
     - Build validated navigation graph reports
-    - Project directory architecture and responsibilities
+    - Project directory architecture and symbol ownership
     - Resolve imports, calls, and type relationships
-    - Generate boundary and facade reports
+    - Analyze boundaries, facades, and directory responsibilities
+    - Provide deterministic symbol and relation evidence projections
     - Normalize and compare architecture reports
-    - Provide symbol and relation evidence projections
-    - Validate deterministic multilingual analysis
+    - Preserve completeness, failure, and truncation metadata
 files:
     - path: analysis_test.go
-      description: Tests deterministic graph, architecture, responsibility, boundary, truncation, unsupported-source, and read-failure analysis.
+      description: Tests deterministic graph, architecture, boundary, completeness, truncation, unsupported-source, and read-failure analysis.
       kind: test
-      checksum: 47dbc31d80bf5bd8f49e9695e791bac5c2317c768f4b87fe36d00df14b9fcf0f
+      checksum: 5819811d35e2ac0bd150c2df28f49fdfaaf82862c2cd0c889efe560d369b0e13
     - path: architecture.go
-      description: Builds language-neutral directory architecture reports with declarations, relations, evidence, and resolution coverage.
+      description: Builds language-neutral directory architecture reports with declarations, classifications, relations, evidence, and resolution coverage.
       kind: production
       checksum: a2a1d42b478c1d56f3ff0e7d88dd1f8c5ec171d4b23d7d623e8df259784bcf5b
     - path: c_family_import_test.go
-      description: Verifies quoted C-family includes resolve into directory relations with source evidence.
+      description: Verifies quoted C-family includes resolve into directory relations with source-backed evidence.
       kind: test
       checksum: d0bd03386bf0e1d5e34357c7bbf69f99c90e462cb9d71fe6e21e95e7182ea7c2
     - path: compare.go

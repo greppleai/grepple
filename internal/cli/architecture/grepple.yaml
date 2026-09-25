@@ -1,42 +1,42 @@
-description: Provides CLI commands and public APIs for building, querying, rendering, comparing, and summarizing source-linked directory architecture.
+description: Implements source-linked directory architecture analysis, projections, rendering, comparison, and CLI integration.
 responsibilities:
-    - Build architecture reports from configured local source paths
-    - Resolve source-linked declarations and directory relation evidence
-    - Render directory inventories, compressed relations, and Mermaid diagrams
-    - Project bounded directory responsibility reports
-    - Compare normalized reports and serialized JSON encodings
-    - Execute exact remote repository architecture requests
-    - Expose injectable dependencies and public architecture projections
-    - Parse architecture subcommands and dispatch execution
+    - Build deterministic architecture reports from local source paths
+    - Query exact indexed repositories for architecture data
+    - Resolve source declarations and directory relationships
+    - Render inventories, relations, Mermaid diagrams, and bounded text
+    - Project directory responsibilities from architecture reports
+    - Normalize and compare architecture JSON reports and encodings
+    - Expose architecture command arguments and public APIs
+    - Integrate injected source configuration, remote transport, and output handling
     - Generate deterministic high-contrast Mermaid directory colors
-    - Test multilingual analysis, classification, relations, rendering, comparison, and remote operations
+    - Test multilingual analysis, relations, rendering, comparison, remote operations, and command dispatch
 files:
     - path: architecture.go
-      description: Builds local architecture reports and executes directory, resolve, why, responsibility, and comparison commands.
+      description: Builds architecture reports, executes architecture subcommands, resolves symbols, and renders directory facts and relations.
       kind: production
-      checksum: 6a6b1c3d4d77ce0217f564506427a0f6fb54c7e8f16f97ebd66734ae937e9453
+      checksum: 07e96d422c718dc75fca4db55a16dbfa6dcfd14bd25033c7089c1957672dbf14
     - path: architecture_benchmark_test.go
-      description: Benchmarks architecture construction and JSON serialization over generated service directories and optional repository checkouts.
+      description: Benchmarks local architecture construction, serialization, and optional repository checkout analysis.
       kind: test
       checksum: 84abf48df38414617f6d2f0a943f11eddab4accbcd2f8eb8973f0946dd673074
     - path: architecture_test.go
-      description: Tests multilingual architecture reports, source classification, entrypoints, relations, filtering, and command help.
+      description: Tests multilingual source analysis, entrypoints, symbol resolution, relation evidence, filtering, and command help.
       kind: test
-      checksum: 1e3d3ed77a7959de802d10f8494d86ce30f54a0b81fdaab164ac754acb36f45f
+      checksum: 411dff126617d69c50f313e4ba6aa7e4effb98ceda6038aca09a940b8ba2cb53
     - path: arguments.go
-      description: Defines public architecture subcommand arguments and dependency-backed execution dispatch.
+      description: Defines public architecture subcommand arguments and dispatches execution with optional daemon support.
       kind: production
-      checksum: 0f61d7672977c2f9d8ff509a4d802b656c7314baa5f2f44906304f463feca4e0
+      checksum: c1da21af6cfcbfcc0bbde540a016294c40e750a55948e3af9e05c1d99fecfea9
     - path: compare.go
       description: Validates, normalizes, compares, and renders semantic and byte-level architecture differences.
       kind: production
       checksum: 14ac0ce0e46982c14050f3d81574701bd2f1b1cef0a944adbaebb881518af220
     - path: compare_test.go
-      description: Tests deterministic comparison, normalization, schema validation, remote envelopes, encoding drift, and source-linked differences.
+      description: Tests architecture comparison normalization, schema validation, remote envelopes, encoding drift, and source-linked differences.
       kind: test
       checksum: fe4db3ab2498250c87933747bbcad5ec07849e445cdec19dd0c39407af1a392e
     - path: context_test.go
-      description: Verifies that architecture help uses the injected command context output.
+      description: Verifies that architecture command help uses the injected command context output.
       kind: test
       checksum: 5cd511d6c50d5e3f6ff86a7f4e4f5f8e53d968ca6994d48484da959b6c00522e
     - path: directory_text_test.go
@@ -56,15 +56,15 @@ files:
       kind: test
       checksum: 4fd74bf0eb261a90a83c79f9df47d416d035cabcbcac6bcd2bca8b4dcc01a69d
     - path: relations_test.go
-      description: Tests compressed directory-pair relation output and Mermaid dependency diagram generation.
+      description: Tests compressed directory-pair relations and Mermaid dependency diagram file output.
       kind: test
       checksum: 0a2acd0046f6f91d7f93e238c1bb1b7368fe43f72b3d731d19c477e50a9cf8b1
     - path: remote_test.go
-      description: Verifies remote architecture and responsibility commands preserve exact repository references and operations.
+      description: Verifies remote architecture and responsibility commands preserve repository references and operation types.
       kind: test
       checksum: b9d7fb31c220b47176cb02fe87a4b3eb7e03990a9dfff526922545d38f5aa4c3
     - path: responsibilities.go
-      description: Builds and renders local or remote directory responsibility projections with bounded output.
+      description: Builds and renders bounded local or remote directory responsibility reports.
       kind: production
       checksum: 8a4b005c4a9b75b946437810f9e9132ba0878bdf1e88c6d913bda3dfcd41b208
     - path: test_helpers_test.go
@@ -72,6 +72,6 @@ files:
       kind: test
       checksum: ab131ca461e9ab0aabe0fb4b131d8f561aefe9d1ae41adb8c94274cb15e1786a
     - path: types.go
-      description: Defines architecture report types, public projections, command dependencies, context integration, and output utilities.
+      description: Defines architecture report types, public projections, injectable dependencies, context integration, and output utilities.
       kind: production
-      checksum: 5e59d4b9bebee8d23e13a1f41c3401c966ce845958b9ef286b34d5b9f326bf21
+      checksum: 3a85341839b2bc5f38956b9d4aea1342ad47e121a1082ef4696a5d96b266b685
