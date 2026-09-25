@@ -91,6 +91,18 @@
       "findings": ["target(one, two, three)"]
     },
     {
+      "name": "php-reliability",
+      "language": "php",
+      "features": ["named-metavariable", "list-metavariable", "ambiguous-snippet-context", "malformed-syntax", "cancellation", "resource-limit"],
+      "query": "language php\n`target($args)`",
+      "context_query": "language php\n`class Greeter {}`",
+      "min_contexts": 2,
+      "path": "src/app.php",
+      "source": "<?php\nfunction run() { target($one, $two, $three); }\n",
+      "malformed_source": "<?php\nfunction broken(\n",
+      "findings": ["target($one, $two, $three)"]
+    },
+    {
       "name": "python-reliability",
       "language": "python",
       "features": ["named-metavariable", "list-metavariable", "ambiguous-snippet-context", "malformed-syntax", "cancellation", "resource-limit"],

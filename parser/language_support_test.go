@@ -8,7 +8,7 @@ func TestLanguageForMinimumSupportedSet(t *testing.T) {
 		"app.cts": "typescript", "app.tsx": "tsx", "app.py": "python", "types.pyi": "python",
 		"Main.java": "java", "Main.kt": "kotlin",
 		"Program.cs": "csharp", "main.c": "c", "header.h": "c", "main.cpp": "cpp",
-		"header.hpp": "cpp", "main.rs": "rust", "build.sh": "shell", "build.zsh": "shell",
+		"header.hpp": "cpp", "main.rs": "rust", "index.php": "php", "build.sh": "shell", "build.zsh": "shell",
 	}
 	for path, want := range tests {
 		t.Run(path, func(t *testing.T) {
@@ -108,6 +108,7 @@ func TestNavigationFactCapabilitiesAreAdapterOwned(t *testing.T) {
 		"c":          {Declarations: true, Calls: true, Imports: true, TypeReferences: true, Fields: true, MemberAccess: true, Entrypoints: true},
 		"cpp":        {Declarations: true, Calls: true, Imports: true, TypeReferences: true, Fields: true, MemberAccess: true, Entrypoints: true},
 		"rust":       {Declarations: true, Calls: true, Imports: true, TypeReferences: true, Fields: true, MemberAccess: true, Entrypoints: true},
+		"php":        {Declarations: true, Calls: true, Imports: true, TypeReferences: true, Fields: true, MemberAccess: true},
 		"shell":      {Declarations: true, Calls: true},
 	}
 	for _, language := range SupportedLanguages() {
@@ -133,6 +134,7 @@ func TestAdvertisedTypedFieldAndMemberFactsHaveRepresentativeEvidence(t *testing
 		{"c", "struct Foo { int state; };\nint use(struct Foo value){ return value.state; }\n", true, true, true},
 		{"cpp", "struct Foo { int state; };\nint use(Foo value){ return value.state; }\n", true, true, true},
 		{"rust", "struct Foo { state: i32 }\nfn use(value: Foo) -> i32 { value.state }\n", true, true, true},
+		{"php", "<?php\nclass Foo { public int $state; }\nfunction consume(Foo $value) { return $value->state; }\n", true, true, true},
 		{"shell", "use() { echo value; }\n", false, false, false},
 	}
 	for _, test := range tests {

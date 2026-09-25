@@ -35,7 +35,7 @@ func TestLanguagesJSONReportsRegisteredFeatureParity(t *testing.T) {
 	if javascript.Navigation != api.FeatureProduction || javascript.GritQL != api.FeatureProduction || javascript.FocusedStructure != api.FeatureProduction || javascript.FocusedFlow != api.FeatureProduction || javascript.ImportRelations != api.FeatureProduction || javascript.Entrypoints != api.FeatureProduction {
 		t.Fatalf("javascript capabilities=%#v", javascript)
 	}
-	assertImportRelationCapabilities(t, byLanguage, "java", "kotlin", "csharp", "rust")
+	assertImportRelationCapabilities(t, byLanguage, "java", "kotlin", "csharp", "rust", "php")
 	assertEntrypointCapabilities(t, byLanguage, "java", "javascript", "kotlin", "csharp", "rust", "tsx", "typescript")
 	assertRustLanguageCapabilities(t, byLanguage["rust"])
 	markdown := byLanguage["markdown"]
@@ -102,7 +102,7 @@ func TestLanguageCapabilityMatrixReportsNavigationFacts(t *testing.T) {
 	if java.Imports != production || java.TypeReferences != production || java.Fields != production || java.MemberAccess != production || java.Entrypoints != production {
 		t.Fatalf("Java facts=%#v", java)
 	}
-	for _, id := range []string{"python", "kotlin", "csharp", "rust"} {
+	for _, id := range []string{"python", "kotlin", "csharp", "rust", "php"} {
 		facts := byLanguage[id].NavigationFacts
 		if facts.TypeReferences != production || facts.Fields != production {
 			t.Fatalf("%s typed facts=%#v", id, facts)

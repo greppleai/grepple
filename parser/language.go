@@ -118,6 +118,7 @@ var languageAdapters = buildLanguageAdapters(
 	newCLanguage(),
 	newCPPLanguage(),
 	newRustLanguage(),
+	newPHPLanguage(),
 	newShellLanguage(),
 )
 
@@ -135,6 +136,7 @@ var languageCapabilities = []LanguageCapabilities{
 	{ID: "c", Extensions: []string{".c", ".h"}, Navigation: true},
 	{ID: "cpp", Extensions: []string{".cc", ".cpp", ".cxx", ".hpp", ".hh", ".hxx"}, Navigation: true},
 	{ID: "rust", Extensions: []string{".rs"}, Navigation: true},
+	{ID: "php", Extensions: []string{".php"}, Navigation: true},
 	{ID: "shell", Extensions: []string{".sh", ".bash", ".zsh"}, Navigation: true},
 }
 

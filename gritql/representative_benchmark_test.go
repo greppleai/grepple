@@ -34,6 +34,7 @@ var structuralBenchmarkLanguages = []structuralBenchmarkLanguage{
 	{language: "javascript", extension: "js", source: "const result = target(one, two);\n", comment: "// padding\n"},
 	{language: "java", extension: "java", source: "class App { void run() { target(one, two); } }\n", comment: "// padding\n"},
 	{language: "kotlin", extension: "kt", source: "fun run() { target(one, two) }\n", comment: "// padding\n"},
+	{language: "php", extension: "php", source: "<?php\nfunction run() { target($one, $two); }\n", comment: "// padding\n"},
 	{language: "python", extension: "py", source: "result = target(one, two)\n", comment: "# padding\n"},
 	{language: "rust", extension: "rs", source: "fn run() { target(one, two); }\n", comment: "// padding\n"},
 	{language: "shell", extension: "sh", source: "run() { target one two; }\n", comment: "# padding\n"},

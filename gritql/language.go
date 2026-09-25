@@ -116,6 +116,7 @@ func newTargetLanguageAdapters() map[string]targetLanguageAdapter {
 			compileTemplates: compilePythonTemplates,
 			rootCategory:     pythonRootCategoryAccepts,
 		},
+		"php":   wrappedTargetLanguageAdapter("php", PHPGrammar, TreeSitterPHPGrammar, compilePHPTemplates),
 		"rust":  wrappedTargetLanguageAdapter("rust", RustGrammar, TreeSitterRustGrammar, compileRustTemplates),
 		"shell": wrappedTargetLanguageAdapter("shell", ShellGrammar, TreeSitterShellGrammar, compileShellTemplates),
 		"typescript": {
