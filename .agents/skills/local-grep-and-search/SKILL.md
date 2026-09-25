@@ -42,7 +42,7 @@ grepple --line-only --enclosing -F 'targetCall(' path/to/package
 grepple --at path/to/file.go:40-65
 ```
 
-Eligible local structural, contextual, and line-only output always uses native `HASH│LINE│content` anchors. There is no per-search plain-output override. Hashes become stale after edits, so use fresh anchors returned by `grepple write` or retrieve a new focused range after other file changes. Line locations remain useful for `--at`; generic Read/Edit tools are fallbacks, not the default write workflow.
+Eligible local structural, contextual, and line-only output always uses native `HASH│LINE│content` anchors. There is no per-search plain-output override. Hashes become stale after edits. `grepple write` now returns compact `PATH:START-END|FIRST-LAST` receipts by default, not source rows; use `--return` when you need edit-ready rows immediately, or follow the receipt with a focused `grepple --line-only --at PATH:START-END` when needed. Generic Read/Edit tools are fallbacks, not the default write workflow.
 
 ### Preferred write transport
 
@@ -64,6 +64,6 @@ replacement body
 GREPPLE_WRITE_ab12
 ```
 
-Use `::grepple replace START` for a one-line range and an empty body to delete that range. Ranges are inclusive: when replacing an `if` and its body, include its closing brace in the anchored range to avoid leaving a duplicate brace. The same envelope supports `::grepple create` and digest-guarded `::grepple delete SHA256`. If source contains an exact `::grepple end` line, add `--end-marker TOKEN` to `replace` or `create` and terminate with `::grepple end TOKEN`. Use strict JSON when a program is already generating `grepple-write-v1`; use `grepple write edit` for a single literal replacement. The abbreviated `grepple write --help` synopsis may list only `edit`; stdin transactions still support `replace`, `create`, and `delete` (verify with `--dry-run`). All modes share confinement, original-snapshot anchors, transaction-wide validation, dry-run, structured output, rollback, and fresh post-write anchors.
+Use `::grepple replace START` for a one-line range and an empty body to delete that range. Ranges are inclusive: when replacing an `if` and its body, include its closing brace in the anchored range to avoid leaving a duplicate brace. The same envelope supports `::grepple create` and digest-guarded `::grepple delete SHA256`. If source contains an exact `::grepple end` line, add `--end-marker TOKEN` to `replace` or `create` and terminate with `::grepple end TOKEN`. Use strict JSON when a program is already generating `grepple-write-v1`; use `grepple write edit` for a single literal replacement. The abbreviated `grepple write --help` synopsis may list only `edit`; stdin transactions still support `replace`, `create`, and `delete` (verify with `--dry-run`). All modes share confinement, original-snapshot anchors, transaction-wide validation, dry-run, structured output, rollback, and compact post-write ranges (or full rows with `--return`).
 
 For local call impact use `change-impact-analysis`; for package ownership use `architecture-lookup-discovery`; for repeated architectural spread use `architecture-boundary-review`; for syntax-shaped matching use `structural-pattern-audit`. For code outside this checkout use `remote-grep-and-search` rather than cloning merely to inspect it.

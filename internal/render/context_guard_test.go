@@ -238,6 +238,31 @@ func TestWriteAnchorsCompletePreviouslyEmittedSegmentCoverage(t *testing.T) {
 	}
 }
 
+func TestCompactWriteReceiptsInvalidateOldSourceCoverage(t *testing.T) {
+	for _, operation := range []string{"edit", "delete"} {
+		t.Run(operation, func(t *testing.T) {
+			t.Setenv("GREPPLE_CONTEXT_GUARD_DIR", t.TempDir())
+			root := t.TempDir()
+			path := filepath.Join(root, "service.go")
+			oldSegment := api.ResultSegment{Kind: "function", Start: 1, End: 3, Text: "func Run() {\n\toldCall()\n}"}
+			renderWithSegmentGuard(t, api.FileResult{Path: path, Segments: []api.ResultSegment{oldSegment}})
+			RecordWriteResponse(root, []WriteFile{{Path: "service.go", Operation: operation, Changed: true}}, 60, true, false, false, true, activeInlineOutputThreshold)
+			guard, err := openSegmentContextGuard()
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer guard.close()
+			if _, exists := guard.cache.Files[path]; exists {
+				t.Fatalf("stale line coverage survived compact %s receipt", operation)
+			}
+			changedSegment := api.ResultSegment{Kind: "function", Start: 1, End: 3, Text: "func Run() {\n\tnewCall()\n}"}
+			if guard.seen(path, nil, changedSegment) {
+				t.Fatalf("changed source incorrectly covered after compact %s receipt", operation)
+			}
+		})
+	}
+}
+
 func TestWriteFailureIsRecordedInContextStats(t *testing.T) {
 	directory := t.TempDir()
 	t.Setenv("GREPPLE_CONTEXT_GUARD_DIR", directory)

@@ -1,6 +1,6 @@
 # Transactional hashline writes
 
-`grepple write` applies one prevalidated transaction across edits, creates, and deletions. It uses Grepple's native `hashline-v1` implementation, so rows emitted by anchored search and successful writes can be reused without an editor-specific adapter.
+`grepple write` applies one prevalidated transaction across edits, creates, and deletions. It uses Grepple's native `hashline-v1` implementation, so anchors from local source retrieval and optional `write --return` rows can be reused without an editor-specific adapter.
 
 ## Anchored edit workflow
 
@@ -83,7 +83,14 @@ EOF
 
 Literal single-edit mode builds the same in-memory `grepple-write-v1` edit and uses the same confinement, stale-anchor, size, newline, transactional installation, output, and dry-run behavior. Use either the literal multi-file envelope or strict JSON when multiple edits or files must be committed atomically.
 
-A successful human response returns the resulting edit-ready rows:
+A successful human response reports each changed post-write line range with its first and last fresh hashes, without echoing source content:
+
+```text
+path/to/file.go:42-44|Ab3-Pq2
+applied 1 files, 1 changes
+```
+
+Use `--return` to include the resulting edit-ready rows instead:
 
 ```text
 path/to/file.go
@@ -95,13 +102,13 @@ Pq2│44│}
 applied 1 files, 1 changes
 ```
 
-Fresh anchors are recomputed against the complete resulting file and are associated with `after_sha256` in `--json` output. Replacement rows include neighboring anchors for orientation. Range deletions return surviving neighbors.
+Fresh hashes are recomputed against the complete resulting file. Compact receipts use `PATH:START-END|FIRST-LAST` for replacements and creates, `PATH:deleted at LINE (near LINE|HASH)` for range deletions with surviving context (or just the insertion point when the file becomes empty), and `PATH:deleted`, `PATH:created empty`, or `PATH:unchanged` for whole-file operations and no-op edits. Each change gets its own line. Use `grepple --line-only --at PATH:START-END` to retrieve content when needed. With `--return`, replacement rows include neighboring anchors for orientation, and deletions return surviving neighbors. The complete structured `--json` response still includes content-bearing anchors and `after_sha256`.
 
-Successful, non-dry-run human writes add their exact post-write rows to Grepple's shared session coverage. Structural output, focused local anchored `--at --line-only` reads, broad anchored line-only searches, anchored context output, local `--line-only --enclosing` output, and complete inline JSON contribute to the same line ledger. Broad searches, context output, enclosing output, and JSON remain producer-only and always retain their complete format; enclosing annotations cover only the matching lines actually printed, not the rest of the annotated range. If prior output plus line or write coverage covers current declaration lines, later structural or focused `--at` output may preserve boundary rows while replacing covered interior runs with explicit range markers; complete declarations may use one declaration marker. Changed and unseen lines always render, and partial coverage is never represented as complete coverage. Compact, truncated, or potentially spilled JSON, predicted dry-run anchors, failed writes, ordinary unanchored or only-matching searches, and output that spills are not recorded as coverage. Context statistics still count human and JSON write attempts, successful and applied writes, failed decode or transaction attempts, returned response bytes, and anchors recorded from eligible successful writes. Use `--repeat-source` on default structural output or focused `--at --line-only` output to force complete source.
+Successful, non-dry-run human writes with `--return` add their exact post-write rows to Grepple's shared session coverage. Compact receipts do not claim source coverage; changed files instead invalidate stale coverage. Structural output, focused local anchored `--at --line-only` reads, broad anchored line-only searches, anchored context output, local `--line-only --enclosing` output, and complete inline JSON contribute to the same line ledger. Broad searches, context output, enclosing output, and JSON remain producer-only and always retain their complete format; enclosing annotations cover only the matching lines actually printed, not the rest of the annotated range. If prior output plus line or write coverage covers current declaration lines, later structural or focused `--at` output may preserve boundary rows while replacing covered interior runs with explicit range markers; complete declarations may use one declaration marker. Changed and unseen lines always render, and partial coverage is never represented as complete coverage. Compact, truncated, or potentially spilled JSON, predicted dry-run anchors, failed writes, ordinary unanchored or only-matching searches, and output that spills are not recorded as coverage. Context statistics still count human and JSON write attempts, successful and applied writes, failed decode or transaction attempts, returned response bytes, and anchors recorded from eligible successful writes. Use `--repeat-source` on default structural output or focused `--at --line-only` output to force complete source.
 
 ## Dry runs and structured output
 
-`--dry-run` performs all validation without mutation. Human output includes deterministic unified diffs followed by predicted anchors:
+`--dry-run` performs all validation without mutation. Human output includes deterministic unified diffs followed by predicted ranges; add `--return` to see predicted anchor rows:
 
 ```text
 grepple write --root . --dry-run < request.json
@@ -114,7 +121,7 @@ grepple write --root . --json < request.json
 grepple write --root . --dry-run --json < request.json
 ```
 
-JSON includes operation, before/after SHA-256 digests, unified diffs for dry-run inspection, request-ordered change details, resulting line ranges, deletion markers, and anchors. The default changed from JSON to edit-ready human output before a stable release; automation must pass `--json` explicitly. Large complete responses use the normal content-addressed spill mechanism unless `--no-spill` is requested.
+JSON includes operation, before/after SHA-256 digests, unified diffs for dry-run inspection, request-ordered change details, resulting line ranges, deletion markers, and anchors. Automation needing this complete response must pass `--json` explicitly; ordinary writes print compact human receipts, with edit-ready rows opt-in via `--return`. Large complete responses use the normal content-addressed spill mechanism unless `--no-spill` is requested.
 
 ## Creating files
 

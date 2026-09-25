@@ -391,11 +391,21 @@ func RecordWriteResponse(root string, files []WriteFile, returnedBytes int, appl
 	guard.resultFiles = len(files)
 	guard.returnedBytes = returnedBytes
 	defer guard.close()
-	if !recordAnchors || inlineThreshold < 1 || returnedBytes > inlineThreshold {
-		return
-	}
 	resolvedRoot, err := resolveContextRoot(root)
 	if err != nil {
+		return
+	}
+	canRecordRows := recordAnchors && inlineThreshold > 0 && returnedBytes <= inlineThreshold
+	if applied {
+		// Compact receipts and deletions contain no source rows. Discard old
+		// coverage rather than treating changed source as already returned.
+		for _, file := range files {
+			if file.Changed && (file.Operation == "delete" || !canRecordRows) {
+				guard.removeContextFile(filepath.Join(resolvedRoot, file.Path))
+			}
+		}
+	}
+	if !canRecordRows {
 		return
 	}
 	for _, file := range files {
@@ -407,7 +417,6 @@ func RecordWriteResponse(root string, files []WriteFile, returnedBytes int, appl
 			source = filepath.Join(resolvedRoot, source)
 		}
 		if file.Operation == "delete" {
-			guard.removeContextFile(source)
 			continue
 		}
 		guard.recordWriteAnchors(source, file.Anchors)

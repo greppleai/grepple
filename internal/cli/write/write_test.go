@@ -327,7 +327,7 @@ func TestWriteDryRunReturnsPredictedAnchorsAndUnifiedDiff(t *testing.T) {
 		t.Fatalf("diff=%q", response.Files[0].Diff)
 	}
 	var output bytes.Buffer
-	if err := emitWriteResponse(&output, response, false); err != nil {
+	if err := emitWriteResponse(&output, response, false, true); err != nil {
 		t.Fatal(err)
 	}
 	if !strings.Contains(output.String(), "dry-run: no files changed") || !strings.Contains(output.String(), "│2│func run() {") || !strings.Contains(output.String(), "validated 1 files, 1 changes") {
@@ -606,7 +606,7 @@ func TestWriteCommandReadsStrictJSONFromStdin(t *testing.T) {
 	assertWriteFile(t, path, "after\n", 0o600)
 }
 
-func TestWriteCommandDefaultsToEditReadyHumanOutput(t *testing.T) {
+func TestWriteCommandDefaultsToCompactHumanOutput(t *testing.T) {
 	root := t.TempDir()
 	path := filepath.Join(root, "file.txt")
 	content := "before\n"
@@ -622,17 +622,103 @@ func TestWriteCommandDefaultsToEditReadyHumanOutput(t *testing.T) {
 		})
 	})
 	updatedHash := hashline.Lines("after\n")[0]
+	if !strings.Contains(output, "file.txt:1-1|"+updatedHash+"-"+updatedHash) || !strings.Contains(output, "applied 1 files, 1 changes") || strings.Contains(output, "after\n") {
+		t.Fatalf("compact output:\n%s", output)
+	}
+	assertWriteFile(t, path, "after\n", 0o600)
+}
+
+func TestWriteReturnIncludesEditReadyRows(t *testing.T) {
+	root := t.TempDir()
+	path := filepath.Join(root, "file.txt")
+	content := "before\n"
+	writeTestFile(t, path, content, 0o600)
+	hash := hashline.Lines(content)[0]
+	request := fmt.Sprintf(`{"schema":"grepple-write-v1","files":[{"path":"file.txt","changes":[{"hash_range_inclusive":[%q,%q],"content_lines":["after"]}]}]}`, hash, hash)
+	var output string
+	withStdin(t, request, func() {
+		output = captureStdout(t, func() {
+			if err := Run([]string{"--root", root, "--return"}, Dependencies{}); err != nil {
+				t.Fatal(err)
+			}
+		})
+	})
+	updatedHash := hashline.Lines("after\n")[0]
 	if !strings.Contains(output, "file.txt\n\n"+updatedHash+"│1│after\n") || !strings.Contains(output, "applied 1 files, 1 changes") {
-		t.Fatalf("human output:\n%s", output)
+		t.Fatalf("returned rows:\n%s", output)
+	}
+}
+
+func TestWriteCompactResponseCoversMultipleEditsAndFileOperations(t *testing.T) {
+	root := t.TempDir()
+	original := "alpha\nbeta\ngamma\ndelta\n"
+	writeTestFile(t, filepath.Join(root, "edited.txt"), original, 0o600)
+	writeTestFile(t, filepath.Join(root, "removed.txt"), "gone\n", 0o600)
+	writeTestFile(t, filepath.Join(root, "same.txt"), "same\n", 0o600)
+	writeTestFile(t, filepath.Join(root, "wiped.txt"), "only", 0o600)
+	hashes := hashline.Lines(original)
+	sameHash := hashline.Lines("same\n")[0]
+	request := writeRequest{Schema: writeSchema, Files: []writeRequestFile{
+		{Path: "edited.txt", Changes: []writeChange{
+			{HashRangeInclusive: []string{hashes[2], hashes[2]}, ContentLines: []string{}},
+			{HashRangeInclusive: []string{hashes[0], hashes[0]}, ContentLines: []string{"ALPHA", "insert"}},
+		}},
+		{Path: "new.txt", Operation: "create", ContentLines: []string{"new", ""}},
+		{Path: "empty.txt", Operation: "create", ContentLines: []string{}},
+		{Path: "removed.txt", Operation: "delete", BeforeSHA256: writeDigest([]byte("gone\n"))},
+		{Path: "same.txt", Changes: []writeChange{{HashRangeInclusive: []string{sameHash, sameHash}, ContentLines: []string{"same"}}}},
+		{Path: "wiped.txt", Changes: []writeChange{{HashRangeInclusive: []string{hashline.Lines("only")[0], hashline.Lines("only")[0]}, ContentLines: []string{}}}},
+	}}
+	response, failure := executeWriteRequest(root, false, request)
+	if failure != nil {
+		t.Fatal(failure)
+	}
+	var output bytes.Buffer
+	if err := emitWriteResponse(&output, response, false, false); err != nil {
+		t.Fatal(err)
+	}
+	updated := hashline.Lines("ALPHA\ninsert\nbeta\ndelta\n")
+	created := hashline.Lines("new\n")
+	for _, expected := range []string{
+		"edited.txt:1-2|" + updated[0] + "-" + updated[1],
+		"edited.txt:deleted at 4 (near 4|" + updated[3] + ")",
+		"new.txt:1-2|" + created[0] + "-" + created[1],
+		"empty.txt:created empty", "removed.txt:deleted", "same.txt:unchanged",
+		"wiped.txt:deleted at 1",
+		"applied 5 files, 7 changes",
+	} {
+		if !strings.Contains(output.String(), expected) {
+			t.Fatalf("missing %q in compact output:\n%s", expected, output.String())
+		}
+	}
+	if strings.Contains(output.String(), "│") || strings.Contains(output.String(), "ALPHA\n") {
+		t.Fatalf("source content leaked into compact output:\n%s", output.String())
+	}
+}
+
+func TestWriteCompactDryRunMarksRangesPredicted(t *testing.T) {
+	root := t.TempDir()
+	writeTestFile(t, filepath.Join(root, "file.txt"), "old\n", 0o600)
+	hash := hashline.Lines("old\n")[0]
+	response, failure := executeWriteRequest(root, true, writeRequest{Schema: writeSchema, Files: []writeRequestFile{{Path: "file.txt", Changes: []writeChange{{HashRangeInclusive: []string{hash, hash}, ContentLines: []string{"new"}}}}}})
+	if failure != nil {
+		t.Fatal(failure)
+	}
+	var output bytes.Buffer
+	if err := emitWriteResponse(&output, response, false, false); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(output.String(), "dry-run: no files changed") || !strings.Contains(output.String(), "file.txt:1-1|"+hashline.Lines("new\n")[0]+"-"+hashline.Lines("new\n")[0]+" (predicted)") {
+		t.Fatalf("dry-run output:\n%s", output.String())
 	}
 }
 
 func TestParseWriteEditOptions(t *testing.T) {
-	options, err := parseWriteOptions([]string{"edit", "--path", "file.kt", "--start", "Ab3"})
+	options, err := parseWriteOptions([]string{"edit", "--return", "--path", "file.kt", "--start", "Ab3"})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !options.literalEdit || options.path != "file.kt" || options.start != "Ab3" || options.end != "Ab3" || options.contentFile != "-" {
+	if !options.literalEdit || !options.returnRows || options.path != "file.kt" || options.start != "Ab3" || options.end != "Ab3" || options.contentFile != "-" {
 		t.Fatalf("options=%+v", options)
 	}
 	for _, args := range [][]string{{"edit", "--start", "Ab3"}, {"edit", "--path", "file.kt"}, {"--path", "file.kt"}} {
@@ -648,7 +734,7 @@ func TestWriteHelpDocumentsTransactionalInput(t *testing.T) {
 			t.Fatal(err)
 		}
 	})
-	for _, expected := range []string{"Usage: grepple write", "grepple write edit", "--content-file", "grepple-write-v1", "::grepple file", "--end-marker", "hash_range_inclusive", "operation", "before_sha256", "--dry-run", "--json", "HASH│LINE│content"} {
+	for _, expected := range []string{"Usage: grepple write", "grepple write edit", "--content-file", "grepple-write-v1", "::grepple file", "--end-marker", "hash_range_inclusive", "operation", "before_sha256", "--dry-run", "--json", "--return", "HASH│LINE│content"} {
 		if !strings.Contains(output, expected) {
 			t.Fatalf("write help missing %q:\n%s", expected, output)
 		}

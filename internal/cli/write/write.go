@@ -32,10 +32,13 @@ const (
 func recordWriteResponse(application cliruntime.Context, root string, response writeResponse, returnedBytes int, applied, failed, recordAnchors bool) {
 	files := make([]render.WriteFile, 0, len(response.Files))
 	for _, file := range response.Files {
-		anchors := responseFileAnchors(file)
-		converted := make([]render.WriteAnchor, 0, len(anchors))
-		for _, anchor := range anchors {
-			converted = append(converted, render.WriteAnchor{Line: anchor.Line, Content: anchor.Content})
+		var converted []render.WriteAnchor
+		if recordAnchors {
+			anchors := responseFileAnchors(file)
+			converted = make([]render.WriteAnchor, 0, len(anchors))
+			for _, anchor := range anchors {
+				converted = append(converted, render.WriteAnchor{Line: anchor.Line, Content: anchor.Content})
+			}
 		}
 		files = append(files, render.WriteFile{Path: file.Path, Operation: file.Operation, Changed: file.Changed, Anchors: converted})
 	}
@@ -43,7 +46,7 @@ func recordWriteResponse(application cliruntime.Context, root string, response w
 }
 
 const writeHelp = `Apply one validated, hash-anchored transaction across multiple files.
-Usage: grepple write [--root PATH] [--dry-run] [--json]
+Usage: grepple write [--root PATH] [--dry-run] [--return] [--json]
        grepple write edit --path PATH --start HASH [--end HASH] [--content-file PATH|-] [OPTIONS]
 
 The default mode auto-detects either one strict grepple-write-v1 JSON value or a
@@ -81,9 +84,10 @@ confined root and creates missing parent directories. Delete requires the exact
 current SHA-256 digest. The transaction preserves existing newline style and
 permissions and rolls back normal installation failures.
 
-Default output is edit-ready HASH│LINE│content with a concise summary. Successful
-edits return freshly recomputed anchors; dry runs also print deterministic unified
-diffs and mark anchors as predicted. Use --json for the complete structured response.
+Default human output reports changed line ranges and their first/last fresh hashes,
+without source content. Use --return to include edit-ready HASH│LINE│content
+rows (including neighboring rows); --json returns the complete structured response.
+Dry runs still show unified diffs and mark any returned anchors as predicted.
 `
 
 type writeRequest struct {
@@ -150,6 +154,7 @@ type writeAnchor struct {
 type Args struct {
 	Root   string    `arg:"--root" default:"." placeholder:"PATH" help:"repository root (default .)"`
 	DryRun bool      `arg:"--dry-run" help:"validate and report without applying changes"`
+	Return bool      `arg:"--return" help:"include resulting source rows with fresh anchors in human output"`
 	JSON   bool      `arg:"--json" help:"emit the write response as JSON"`
 	Edit   *EditArgs `arg:"subcommand:edit"`
 }
@@ -167,6 +172,7 @@ func DefaultArgs() Args { return Args{Root: "."} }
 type writeOptions struct {
 	root        string
 	dryRun      bool
+	returnRows  bool
 	json        bool
 	help        bool
 	literalEdit bool
@@ -238,7 +244,7 @@ func Execute(application cliruntime.Context, values *Args) error {
 	if application == nil {
 		return fmt.Errorf("write command context is unavailable")
 	}
-	options := writeOptions{root: values.Root, dryRun: values.DryRun, json: values.JSON, contentFile: "-"}
+	options := writeOptions{root: values.Root, dryRun: values.DryRun, returnRows: values.Return, json: values.JSON, contentFile: "-"}
 	if options.root == "" {
 		options.root = "."
 	}
@@ -273,7 +279,7 @@ func (command *command) execute(options writeOptions) error {
 	}
 	if failure != nil {
 		response := failedWriteResponse(options.dryRun, failure)
-		if err := emitWriteResponse(output, response, options.json); err != nil {
+		if err := emitWriteResponse(output, response, options.json, options.returnRows); err != nil {
 			return err
 		}
 		recordWriteResponse(application, options.root, response, output.written, false, true, false)
@@ -284,10 +290,10 @@ func (command *command) execute(options writeOptions) error {
 	if failure != nil {
 		response = failedWriteResponse(options.dryRun, failure)
 	}
-	if err := emitWriteResponse(output, response, options.json); err != nil {
+	if err := emitWriteResponse(output, response, options.json, options.returnRows); err != nil {
 		return err
 	}
-	recordAnchors := failure == nil && response.Applied && !options.dryRun && !options.json
+	recordAnchors := failure == nil && response.Applied && !options.dryRun && !options.json && options.returnRows
 	recordWriteResponse(application, options.root, response, output.written, response.Applied, failure != nil, recordAnchors)
 	if failure != nil {
 		application.RequestExit(1)
@@ -308,6 +314,8 @@ func parseWriteOptions(args []string) (writeOptions, error) {
 			options.help = true
 		case "--json":
 			options.json = true
+		case "--return":
+			options.returnRows = true
 		case "--dry-run":
 			options.dryRun = true
 		default:
@@ -892,9 +900,8 @@ func writeChangeDetails(updated []byte, lines []string, changes []resolvedWriteC
 			last = afterStart + 1
 		}
 		anchors := boundedWriteAnchors(lines, hashes, first, last)
-		detail := writeResponseChange{Index: change.requestIndex, Deleted: deleted, Anchors: anchors}
+		detail := writeResponseChange{Index: change.requestIndex, AfterStartLine: afterStart + 1, Deleted: deleted, Anchors: anchors}
 		if !deleted {
-			detail.AfterStartLine = afterStart + 1
 			detail.AfterEndLine = afterEnd
 		}
 		details = append(details, detail)
@@ -1276,7 +1283,7 @@ func markWriteResponsePredicted(response *writeResponse) {
 	}
 }
 
-func emitWriteResponse(writer io.Writer, response writeResponse, jsonMode bool) error {
+func emitWriteResponse(writer io.Writer, response writeResponse, jsonMode, returnRows bool) error {
 	if jsonMode {
 		encoder := json.NewEncoder(writer)
 		encoder.SetEscapeHTML(false)
@@ -1290,7 +1297,11 @@ func emitWriteResponse(writer io.Writer, response writeResponse, jsonMode bool) 
 			return err
 		}
 	}
-	if err := emitWriteResponseFiles(writer, response); err != nil {
+	if returnRows {
+		if err := emitWriteResponseFiles(writer, response); err != nil {
+			return err
+		}
+	} else if err := emitWriteCompactFiles(writer, response.Files, response.DryRun); err != nil {
 		return err
 	}
 	return emitWriteSummary(writer, response)
@@ -1331,6 +1342,67 @@ func emitWriteDiffs(writer io.Writer, files []writeResponseFile) error {
 		}
 	}
 	return nil
+}
+
+func emitWriteCompactFiles(writer io.Writer, files []writeResponseFile, predicted bool) error {
+	for _, file := range files {
+		if !file.Changed {
+			if _, err := fmt.Fprintf(writer, "%s:unchanged\n", file.Path); err != nil {
+				return err
+			}
+			continue
+		}
+		switch file.Operation {
+		case "delete":
+			if _, err := fmt.Fprintf(writer, "%s:deleted\n", file.Path); err != nil {
+				return err
+			}
+		case "create", "edit":
+			for _, detail := range file.ChangeDetails {
+				if err := emitWriteCompactChange(writer, file.Path, detail, predicted); err != nil {
+					return err
+				}
+			}
+		}
+	}
+	return nil
+}
+
+func emitWriteCompactChange(writer io.Writer, path string, detail writeResponseChange, predicted bool) error {
+	suffix := ""
+	if predicted {
+		suffix = " (predicted)"
+	}
+	if detail.Deleted {
+		near := ""
+		if len(detail.Anchors) > 0 {
+			anchor := detail.Anchors[len(detail.Anchors)-1]
+			for _, candidate := range detail.Anchors {
+				if candidate.Line >= detail.AfterStartLine {
+					anchor = candidate
+					break
+				}
+			}
+			near = fmt.Sprintf(" (near %d|%s)", anchor.Line, anchor.Hash)
+		}
+		_, err := fmt.Fprintf(writer, "%s:deleted at %d%s%s\n", path, detail.AfterStartLine, near, suffix)
+		return err
+	}
+	if detail.AfterStartLine == 0 {
+		_, err := fmt.Fprintf(writer, "%s:created empty%s\n", path, suffix)
+		return err
+	}
+	var firstHash, lastHash string
+	for _, anchor := range detail.Anchors {
+		if anchor.Line == detail.AfterStartLine {
+			firstHash = anchor.Hash
+		}
+		if anchor.Line == detail.AfterEndLine {
+			lastHash = anchor.Hash
+		}
+	}
+	_, err := fmt.Fprintf(writer, "%s:%d-%d|%s-%s%s\n", path, detail.AfterStartLine, detail.AfterEndLine, firstHash, lastHash, suffix)
+	return err
 }
 
 func emitWriteResponseFiles(writer io.Writer, response writeResponse) error {
