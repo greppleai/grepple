@@ -297,12 +297,20 @@ func Build(globs []string, maxFiles int, dependencies Dependencies) (Report, err
 		}
 	}
 	sources := analysis.ReadSources(paths)
+	key := ""
+	if dependencies.Daemon {
+		key, _ = archdaemon.Key(paths, maxFiles, sources)
+	}
 	universe, err := analysis.NewUniverse(sources, maxFiles)
 	if err != nil {
 		return Report{}, err
 	}
 	defer universe.Close()
-	return analysis.BuildArchitecture(universe), nil
+	report := analysis.BuildArchitecture(universe)
+	if key != "" {
+		_ = archdaemon.Store(paths, maxFiles, key, report)
+	}
+	return report, nil
 }
 
 func projectArchitectureRelations(relations []architectureRelation, directories []architectureDirectory) []architectureRelation {

@@ -17,42 +17,66 @@ import (
 
 const maxContextFileBytes = 8 << 20
 
-// architectureSnapshot reads exactly the CLI-selected sources. Missing or
-// unreadable sources retain current-invocation accounting but are not cached.
+// architectureSnapshot independently reads the client's selected files under
+// its root; source paths retain their original spelling for report parity.
 func architectureSnapshot(root string, paths []string, maxFiles int) ([]analysis.Source, string, bool, error) {
-	if maxFiles < 0 {
-		return nil, "", false, fmt.Errorf("invalid max-files")
+	absolute, err := validatedArchitecturePaths(root, paths)
+	if err != nil || maxFiles < 0 {
+		return nil, "", false, fmt.Errorf("invalid repository source selection")
+	}
+	sources := make([]analysis.Source, 0, len(paths))
+	for index, path := range paths {
+		content, readErr := os.ReadFile(absolute[index])
+		sources = append(sources, analysis.Source{Path: path, Content: content, ReadError: readErr})
+	}
+	key, cacheable := architectureFingerprint(root, paths, maxFiles, sources)
+	return sources, key, cacheable, nil
+}
+
+// architectureFingerprint hashes exactly the caller-owned source bytes and
+// external navigation/metadata context, before the caller builds a report.
+func architectureFingerprint(root string, paths []string, maxFiles int, sources []analysis.Source) (string, bool) {
+	if maxFiles < 0 || len(paths) != len(sources) {
+		return "", false
 	}
 	absolute, err := validatedArchitecturePaths(root, paths)
 	if err != nil {
-		return nil, "", false, err
+		return "", false
 	}
-	sources := analysis.ReadSources(paths)
 	digest := sha256.New()
 	writeKeyPart(digest, protocol)
 	writeKeyPart(digest, root)
 	writeKeyPart(digest, fmt.Sprint(maxFiles))
-	cacheable := true
-	for _, source := range sources {
-		writeKeyPart(digest, source.Path)
-		if source.ReadError != nil {
-			cacheable = false
-			continue
+	for index, source := range sources {
+		if source.Path != paths[index] || source.ReadError != nil {
+			return "", false
 		}
+		writeKeyPart(digest, source.Path)
 		writeKeyPart(digest, string(source.Content))
 	}
 	if !fingerprintArchitectureContext(digest, ancestorArchitectureContextPaths(absolute)) {
-		cacheable = false
+		return "", false
 	}
-	return sources, hex.EncodeToString(digest.Sum(nil)), cacheable, nil
+	return hex.EncodeToString(digest.Sum(nil)), true
 }
 
 func validatedArchitecturePaths(root string, paths []string) ([]string, error) {
+	if !filepath.IsAbs(root) || root != filepath.Clean(root) {
+		return nil, fmt.Errorf("invalid repository root")
+	}
+	info, err := os.Stat(root)
+	if err != nil || !info.IsDir() {
+		return nil, fmt.Errorf("unavailable repository root")
+	}
 	absolute := make([]string, 0, len(paths))
 	for _, path := range paths {
-		resolved, err := filepath.Abs(path)
-		if err != nil || !withinRoot(root, resolved) || !withinRootResolved(root, resolved) {
-			return nil, fmt.Errorf("source outside worker root")
+		resolved := path
+		if !filepath.IsAbs(resolved) {
+			resolved = filepath.Join(root, resolved)
+		}
+		resolved = filepath.Clean(resolved)
+		if !withinRoot(root, resolved) || !withinRootResolved(root, resolved) {
+			return nil, fmt.Errorf("source outside repository root")
 		}
 		absolute = append(absolute, resolved)
 	}

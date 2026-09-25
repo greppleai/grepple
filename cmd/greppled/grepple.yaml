@@ -1,12 +1,11 @@
-description: Foreground command that runs the local architecture worker.
+description: Foreground command that validates usage and runs the local architecture daemon until termination.
 responsibilities:
-    - Validate command-line usage
-    - Configure the navigation cache directory
+    - Validate zero-argument command usage
     - Handle interrupt and termination signals
     - Serve the architecture daemon
     - Report daemon errors
 files:
     - path: main.go
-      description: Starts and manages the foreground local architecture worker.
+      description: Defines the foreground command entry point for serving the local architecture daemon.
       kind: production
-      checksum: c28d8d8e141bcb420cc9d90ea1196fbb3db14e356bc20cad469757ec224350d2
+      checksum: 065cbc84d1d38cc5a650fe9a673b161a49834a82bfdd4ca7fae972e1172575b1

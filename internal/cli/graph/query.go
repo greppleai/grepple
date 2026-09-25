@@ -12,6 +12,7 @@ import (
 	"github.com/alexflint/go-arg"
 	"github.com/greppleai/grepple/analysis"
 	"github.com/greppleai/grepple/api"
+	"github.com/greppleai/grepple/internal/archdaemon"
 	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
 	"github.com/greppleai/grepple/internal/shellquote"
 	"github.com/greppleai/grepple/internal/sourcelocation"
@@ -65,6 +66,10 @@ func runQuery(application cliruntime.Context, direction search.NavigationQueryDi
 }
 
 func executeQuery(application cliruntime.Context, direction search.NavigationQueryDirection, values *QueryArgs) error {
+	return executeQueryWithDaemon(application, direction, values, false)
+}
+
+func executeQueryWithDaemon(application cliruntime.Context, direction search.NavigationQueryDirection, values *QueryArgs, daemon bool) error {
 	if err := validateGraphQueryArgs(*values); err != nil {
 		return err
 	}
@@ -75,18 +80,35 @@ func executeQuery(application cliruntime.Context, direction search.NavigationQue
 	if err != nil {
 		return err
 	}
-	universe, err := analysis.NewUniverse(analysis.ReadSources(paths), values.MaxFiles)
-	if err != nil {
-		return err
-	}
-	defer universe.Close()
-	report, err := analysis.BuildGraph(universe, &analysis.GraphQuery{
+	query := analysis.GraphQuery{
 		Direction: string(direction), Depth: values.Depth,
 		Symbol: values.Symbol, At: values.At, Package: values.Package, Module: values.Module, RootPath: values.RootPath,
 		Languages: values.Languages, Confidences: values.Confidences, Visibilities: values.Visibilities,
-	})
-	if err != nil {
-		return err
+	}
+	var report analysis.GraphReport
+	if daemon {
+		if cached, ok := archdaemon.QueryGraph(paths, values.MaxFiles, query); ok {
+			report = cached
+		}
+	}
+	if report.Schema == "" {
+		sources := analysis.ReadSources(paths)
+		key := ""
+		if daemon {
+			key, _ = archdaemon.KeyGraph(paths, values.MaxFiles, sources, query)
+		}
+		universe, err := analysis.NewUniverse(sources, values.MaxFiles)
+		if err != nil {
+			return err
+		}
+		defer universe.Close()
+		report, err = analysis.BuildGraph(universe, &query)
+		if err != nil {
+			return err
+		}
+		if key != "" {
+			_ = archdaemon.StoreGraph(paths, values.MaxFiles, key, query, report)
+		}
 	}
 	output := FromAnalysis(report)
 	output.Metadata = graphResultMetadata(metadataInput{Paths: values.Paths, Returned: len(output.Declarations), MaxFiles: values.MaxFiles, MaxOutputBytes: values.MaxOutputBytes, JSON: values.JSON, Sources: output.Sources, Truncation: output.Truncation, NextCommand: graphQueryContinuationCommand(application, direction, *values, output.Truncation)})

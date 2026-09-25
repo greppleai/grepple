@@ -1,4 +1,4 @@
-description: Defines Grepple's authoritative documentation for parsing, search, navigation, architecture analysis, output contracts, editing, indexing, benchmarking, and releases.
+description: Defines Grepple's authoritative documentation for parser behavior, language support, search, analysis, output contracts, editing, indexing, benchmarking, and releases.
 responsibilities:
     - Define parser ownership, syntax lifecycles, language support, and GritQL compatibility.
     - Specify deterministic search ranking, structural matching, navigation, source scope, and classifications.
@@ -18,7 +18,7 @@ files:
     - path: architecture-performance-benchmarks.md
       description: Records architecture and navigation benchmark baselines, review budgets, cache measurements, and checkout diagnostics.
       kind: production
-      checksum: 0b7fe28bb7eb4063c0e7ce6922a0c9fbd4ac1cac28d0fc70c6d55087c282232d
+      checksum: 211ef3850be997739653cdd65c81621395d649942d7b1d44b1eef0d706f85e08
     - path: ask.md
       description: Documents bounded delegated research, provider authentication, typed tools, logging, caching, and safety limits.
       kind: production

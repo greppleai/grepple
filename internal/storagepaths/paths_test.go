@@ -31,3 +31,28 @@ func TestCacheLivesUnderUserHomeAndRespectsOverride(t *testing.T) {
 		t.Fatalf("override=%q", got)
 	}
 }
+
+func TestDaemonCacheIsPrivateAndSharedAcrossRepositories(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home)
+	t.Setenv("GREPPLE_CACHE_DIR", "")
+	shared := DaemonCache()
+	if shared != filepath.Join(home, ".grepple", "cache") {
+		t.Fatalf("shared cache=%q", shared)
+	}
+	if info, err := os.Stat(shared); err != nil || !info.IsDir() {
+		t.Fatalf("shared cache directory: %v", err)
+	}
+	if Cache("/one") == Cache("/two") {
+		t.Fatal("repository navigation caches collided")
+	}
+	t.Setenv("GREPPLE_CACHE_DIR", filepath.Join(t.TempDir(), "custom"))
+	if DaemonCache() != os.Getenv("GREPPLE_CACHE_DIR") {
+		t.Fatal("absolute cache override ignored")
+	}
+	t.Setenv("GREPPLE_CACHE_DIR", "relative/cache")
+	if DaemonCache() != "" {
+		t.Fatal("relative cache override was accepted for user-level daemon")
+	}
+}

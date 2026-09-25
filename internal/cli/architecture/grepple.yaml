@@ -1,31 +1,30 @@
-description: Implements source-linked directory architecture analysis, CLI commands, public APIs, rendering, comparison, and responsibility projections.
+description: Implements source-linked directory architecture analysis, projections, rendering, comparison, and CLI integration.
 responsibilities:
     - Build deterministic architecture reports from local source paths
     - Query exact indexed repositories for architecture data
-    - Classify source files and resolve declarations across languages
-    - Collect and project source-linked directory relations and evidence
-    - Render inventories, compressed relations, Mermaid diagrams, and bounded text
-    - Generate deterministic high-contrast Mermaid directory colors
-    - Build directory responsibility projections from architecture reports
+    - Resolve source declarations and directory relationships
+    - Render inventories, relations, Mermaid diagrams, and bounded text
+    - Project directory responsibilities from architecture reports
     - Normalize and compare architecture JSON reports and encodings
-    - Parse architecture subcommands and dispatch injected dependencies
-    - Expose public report types, projections, readers, and comparison APIs
-    - Test multilingual analysis, relations, rendering, comparison, remote operations, and command integration
+    - Expose architecture command arguments and public APIs
+    - Integrate injected source configuration, remote transport, and output handling
+    - Generate deterministic high-contrast Mermaid directory colors
+    - Test multilingual analysis, relations, rendering, comparison, remote operations, and command dispatch
 files:
     - path: architecture.go
-      description: Builds local architecture reports and executes directory, resolve, why, responsibility, and comparison commands.
+      description: Builds architecture reports, executes architecture subcommands, resolves symbols, and renders directory facts and relations.
       kind: production
-      checksum: 599db993515542ed7dadb7b35434a16789b7c7e6e7a101f1b3ca637cc583f166
+      checksum: 07e96d422c718dc75fca4db55a16dbfa6dcfd14bd25033c7089c1957672dbf14
     - path: architecture_benchmark_test.go
-      description: Benchmarks architecture construction and JSON serialization for generated service trees and optional repository checkouts.
+      description: Benchmarks local architecture construction, serialization, and optional repository checkout analysis.
       kind: test
       checksum: 84abf48df38414617f6d2f0a943f11eddab4accbcd2f8eb8973f0946dd673074
     - path: architecture_test.go
-      description: Tests multilingual source classification, entrypoints, symbol resolution, relation evidence, filtering, and command help.
+      description: Tests multilingual source analysis, entrypoints, symbol resolution, relation evidence, filtering, and command help.
       kind: test
       checksum: 411dff126617d69c50f313e4ba6aa7e4effb98ceda6038aca09a940b8ba2cb53
     - path: arguments.go
-      description: Defines public architecture subcommand arguments and dependency-backed execution dispatch.
+      description: Defines public architecture subcommand arguments and dispatches execution with optional daemon support.
       kind: production
       checksum: c1da21af6cfcbfcc0bbde540a016294c40e750a55948e3af9e05c1d99fecfea9
     - path: compare.go
@@ -33,11 +32,11 @@ files:
       kind: production
       checksum: 14ac0ce0e46982c14050f3d81574701bd2f1b1cef0a944adbaebb881518af220
     - path: compare_test.go
-      description: Tests deterministic comparison, normalization, schema validation, remote envelopes, encoding drift, and source-linked differences.
+      description: Tests architecture comparison normalization, schema validation, remote envelopes, encoding drift, and source-linked differences.
       kind: test
       checksum: fe4db3ab2498250c87933747bbcad5ec07849e445cdec19dd0c39407af1a392e
     - path: context_test.go
-      description: Verifies that architecture help writes through the injected command context output.
+      description: Verifies that architecture command help uses the injected command context output.
       kind: test
       checksum: 5cd511d6c50d5e3f6ff86a7f4e4f5f8e53d968ca6994d48484da959b6c00522e
     - path: directory_text_test.go
@@ -61,11 +60,11 @@ files:
       kind: test
       checksum: 0a2acd0046f6f91d7f93e238c1bb1b7368fe43f72b3d731d19c477e50a9cf8b1
     - path: remote_test.go
-      description: Verifies remote architecture and responsibility commands preserve exact repository references and operation types.
+      description: Verifies remote architecture and responsibility commands preserve repository references and operation types.
       kind: test
       checksum: b9d7fb31c220b47176cb02fe87a4b3eb7e03990a9dfff526922545d38f5aa4c3
     - path: responsibilities.go
-      description: Builds and renders bounded local or remote directory responsibility projections.
+      description: Builds and renders bounded local or remote directory responsibility reports.
       kind: production
       checksum: 8a4b005c4a9b75b946437810f9e9132ba0878bdf1e88c6d913bda3dfcd41b208
     - path: test_helpers_test.go

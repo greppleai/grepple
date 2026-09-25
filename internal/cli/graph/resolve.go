@@ -9,10 +9,13 @@ import (
 	"strings"
 
 	"github.com/alexflint/go-arg"
+	"github.com/greppleai/grepple/analysis"
 	"github.com/greppleai/grepple/api"
+	"github.com/greppleai/grepple/internal/archdaemon"
 	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
 	"github.com/greppleai/grepple/navigation"
 	"github.com/greppleai/grepple/parser"
+	"github.com/greppleai/grepple/search"
 )
 
 // NavigationResolveSchema identifies graph symbol-resolution responses.
@@ -77,24 +80,53 @@ func (command *command) runResolve(args []string) error {
 }
 
 func executeResolve(application cliruntime.Context, values *ResolveArgs) error {
+	return executeResolveWithDaemon(application, values, false)
+}
+
+func executeResolveWithDaemon(application cliruntime.Context, values *ResolveArgs, daemon bool) error {
 	if err := validateResolveArgs(*values); err != nil {
-		return err
-	}
-	graph, err := buildNavigationGraphOutput(application, values.Paths, values.MaxFiles)
-	if err != nil {
 		return err
 	}
 	filter, err := navigation.NormalizeNavigationGraphFilter(navigation.NavigationGraphFilter{Languages: values.Languages, Visibilities: values.Visibilities})
 	if err != nil {
 		return err
 	}
-	filtered, err := navigation.FilterNavigationGraph(parser.NavigationGraph{Declarations: graph.Declarations}, filter)
+	paths, err := ResolveInputPaths(values.Paths, search.SourcePolicyConfigurer(application.Repository()))
 	if err != nil {
 		return err
 	}
-	matches := resolveMatches(filtered.Declarations, values.Symbol, values.Paths)
-	output := ResolveOutput{Schema: NavigationResolveSchema, Symbol: values.Symbol, Sources: graph.Sources, Matches: matches, Truncation: graph.Truncation}
-	output.Metadata = resolveMetadata(*values, graph, len(matches), application.Repository().AppendScopeFlags)
+	selection := archdaemon.ResolveSelection{Symbol: values.Symbol, Languages: filter.Languages, Visibilities: filter.Visibilities}
+	var projection archdaemon.ResolveProjection
+	if daemon {
+		projection, _ = archdaemon.QueryResolve(paths, values.MaxFiles, selection)
+	}
+	if projection.Schema == "" {
+		sources := analysis.ReadSources(paths)
+		key := ""
+		if daemon {
+			key, _ = archdaemon.KeyResolve(paths, values.MaxFiles, sources, selection)
+		}
+		universe, err := analysis.NewUniverse(sources, values.MaxFiles)
+		if err != nil {
+			return err
+		}
+		defer universe.Close()
+		report, err := analysis.BuildGraph(universe, nil)
+		if err != nil {
+			return err
+		}
+		filtered, err := navigation.FilterNavigationGraph(parser.NavigationGraph{Declarations: report.Declarations}, filter)
+		if err != nil {
+			return err
+		}
+		projection = archdaemon.ResolveProjection{Schema: archdaemon.ResolveProjectionSchema, Sources: report.Sources, Truncation: report.Truncation, Declarations: matchingDeclarations(filtered.Declarations, values.Symbol)}
+		if key != "" {
+			_ = archdaemon.StoreResolve(paths, values.MaxFiles, key, selection, projection)
+		}
+	}
+	matches := resolveMatches(projection.Declarations, values.Symbol, values.Paths)
+	output := ResolveOutput{Schema: NavigationResolveSchema, Symbol: values.Symbol, Sources: projection.Sources, Matches: matches, Truncation: projection.Truncation}
+	output.Metadata = resolveMetadata(*values, Output{Sources: projection.Sources, Truncation: projection.Truncation}, len(matches), application.Repository().AppendScopeFlags)
 	output.Metadata.Scope.Languages = normalizedScope(filter.Languages, "")
 	if !values.JSON {
 		err = renderCompactResolve(application.Stdout(), output, values.MaxOutputBytes)

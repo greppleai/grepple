@@ -1,4 +1,4 @@
-description: Provides the public Grepple Go code-search engine, structural query system, parser and navigation infrastructure, architecture analysis, CLI, documentation, tests, configuration, and release tooling.
+description: Provides the Grepple Go code-search engine, parser and navigation infrastructure, structural query system, architecture analysis, CLI, documentation, configuration, testing, and release automation.
 responsibilities:
     - Parse supported programming languages
     - Search and filter source repositories
@@ -49,7 +49,7 @@ files:
     - path: README.md
       description: Documents Grepple capabilities, commands, architecture, workflows, output contracts, and build requirements.
       kind: production
-      checksum: 2eb5761262310e76f43f0f32aa03b7e49196f872df6af6babd6a4a1a6063f7f2
+      checksum: 13cc01c269a0db74822f630e6eca40bfde1d6a580b99e13e9090a1ff00c3b29f
     - path: architecture-production.mmd
       description: Contains a generated Mermaid graph of production package relationships.
       kind: generated

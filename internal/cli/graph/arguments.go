@@ -24,24 +24,32 @@ type Args struct {
 }
 
 func Execute(application cliruntime.Context, values *Args) error {
+	return ExecuteWithDaemon(application, values, false)
+}
+
+// ExecuteWithDaemon opts focused local graph commands into the shared report cache.
+func ExecuteWithDaemon(application cliruntime.Context, values *Args, daemon bool) error {
 	if values == nil {
 		return fmt.Errorf("graph arguments are required")
 	}
+	if daemon && (values.Build != nil || values.Diff != nil) {
+		return fmt.Errorf("--daemon supports graph resolve, callers, callees, impact, dependencies, and dependents; not build or diff")
+	}
 	switch {
 	case values.Resolve != nil:
-		return executeResolve(application, values.Resolve)
+		return executeResolveWithDaemon(application, values.Resolve, daemon)
 	case values.Diff != nil:
 		return executeDiff(application, values.Diff)
 	case values.Callers != nil:
-		return executeQuery(application, search.NavigationQueryCallers, values.Callers)
+		return executeQueryWithDaemon(application, search.NavigationQueryCallers, values.Callers, daemon)
 	case values.Callees != nil:
-		return executeQuery(application, search.NavigationQueryCallees, values.Callees)
+		return executeQueryWithDaemon(application, search.NavigationQueryCallees, values.Callees, daemon)
 	case values.Impact != nil:
-		return executeQuery(application, search.NavigationQueryImpact, values.Impact)
+		return executeQueryWithDaemon(application, search.NavigationQueryImpact, values.Impact, daemon)
 	case values.Dependencies != nil:
-		return executeQuery(application, search.NavigationQueryDependencies, values.Dependencies)
+		return executeQueryWithDaemon(application, search.NavigationQueryDependencies, values.Dependencies, daemon)
 	case values.Dependents != nil:
-		return executeQuery(application, search.NavigationQueryDependents, values.Dependents)
+		return executeQueryWithDaemon(application, search.NavigationQueryDependents, values.Dependents, daemon)
 	case values.Build != nil:
 		return executeBuild(application, values.Build)
 	default:

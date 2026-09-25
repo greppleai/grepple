@@ -18,25 +18,36 @@ import (
 )
 
 type service struct {
-	root   string
-	token  string
-	mu     sync.Mutex
-	key    string
-	report analysis.ArchitectureReport
+	token string
+	mu    sync.Mutex
+	cache reportCache
 }
 
-// Serve runs a foreground worker for the current directory until ctx is cancelled.
-// It never changes process-global working directory or standard streams.
+// Serve runs one foreground, user-level report cache until ctx is cancelled.
+// It does not inspect any repository until an authenticated client requests it.
 func Serve(ctx context.Context) error {
-	root, err := os.Getwd()
+	if !permittedCacheDirectory() {
+		return fmt.Errorf("greppled requires a private absolute user cache directory")
+	}
+	if existing, ok := readDescriptor(); ok && daemonAlive(existing) {
+		return fmt.Errorf("greppled is already running")
+	}
+	lockPath := descriptorPath() + ".lock"
+	lock, err := os.OpenFile(lockPath, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o600)
+	if os.IsExist(err) {
+		info, statErr := os.Stat(lockPath)
+		if statErr == nil && time.Since(info.ModTime()) > 30*time.Second {
+			_ = os.Remove(lockPath)
+			lock, err = os.OpenFile(lockPath, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o600)
+		}
+	}
 	if err != nil {
-		return err
+		return fmt.Errorf("greppled startup lock: %w", err)
 	}
-	if !permittedCacheDirectory(root) {
-		return fmt.Errorf("greppled requires a private cache directory")
-	}
-	if existing, ok := readDescriptor(root); ok && daemonAlive(existing) {
-		return fmt.Errorf("greppled is already running for %s", root)
+	defer os.Remove(lockPath)
+	_ = lock.Close()
+	if existing, ok := readDescriptor(); ok && daemonAlive(existing) {
+		return fmt.Errorf("greppled is already running")
 	}
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
@@ -47,18 +58,17 @@ func Serve(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	details := descriptor{Protocol: protocol, Root: root, Version: sourceIdentity(), Address: listener.Addr().String(), Token: token}
-	if err := publishDescriptor(root, details); err != nil {
+	details := descriptor{Protocol: protocol, Version: sourceIdentity(), Address: listener.Addr().String(), Token: token}
+	if err := publishDescriptor(details); err != nil {
 		return err
 	}
-	defer clearDescriptor(root, token)
-	worker := &service{root: root, token: token}
+	_ = os.Remove(lockPath)
+	defer clearDescriptor(token)
+	worker := &service{token: token, cache: newReportCache()}
 	server := &http.Server{
-		Handler:           worker,
-		ReadHeaderTimeout: 3 * time.Second,
-		ReadTimeout:       10 * time.Second,
-		WriteTimeout:      120 * time.Second,
-		IdleTimeout:       10 * time.Second,
+		Handler: worker, ReadHeaderTimeout: 3 * time.Second,
+		ReadTimeout: 10 * time.Second, WriteTimeout: 120 * time.Second,
+		IdleTimeout: 10 * time.Second,
 	}
 	go func() {
 		<-ctx.Done()
@@ -81,11 +91,15 @@ func (s *service) ServeHTTP(writer http.ResponseWriter, httpRequest *http.Reques
 		writer.WriteHeader(http.StatusNoContent)
 		return
 	}
-	if httpRequest.URL.Path != "/architecture" || httpRequest.Method != http.MethodPost {
+	if httpRequest.Method != http.MethodPost || (httpRequest.URL.Path != "/architecture" && httpRequest.URL.Path != "/graph" && httpRequest.URL.Path != "/resolve" && httpRequest.URL.Path != "/store") {
 		http.NotFound(writer, httpRequest)
 		return
 	}
-	body := http.MaxBytesReader(writer, httpRequest.Body, maxRequestBytes)
+	maximum := int64(maxRequestBytes)
+	if httpRequest.URL.Path == "/store" {
+		maximum = maxResponseBytes
+	}
+	body := http.MaxBytesReader(writer, httpRequest.Body, maximum)
 	defer body.Close()
 	decoder := json.NewDecoder(body)
 	decoder.DisallowUnknownFields()
@@ -94,12 +108,29 @@ func (s *service) ServeHTTP(writer http.ResponseWriter, httpRequest *http.Reques
 		http.Error(writer, "invalid request", http.StatusBadRequest)
 		return
 	}
-	report, err := s.architecture(request)
-	if err != nil {
-		http.Error(writer, "source selection changed or could not be read", http.StatusServiceUnavailable)
+	if httpRequest.URL.Path == "/store" {
+		if err := s.store(request); err != nil {
+			http.Error(writer, "report could not be cached", http.StatusServiceUnavailable)
+			return
+		}
+		writer.WriteHeader(http.StatusOK)
 		return
 	}
-	content, err := json.Marshal(response{Report: report})
+	var result response
+	var hit bool
+	switch httpRequest.URL.Path {
+	case "/architecture":
+		result.Report, hit = s.architecture(request)
+	case "/graph":
+		result, hit = s.variant(request, graphVariant)
+	case "/resolve":
+		result, hit = s.variant(request, resolveVariant)
+	}
+	if !hit {
+		writer.WriteHeader(http.StatusNoContent)
+		return
+	}
+	content, err := json.Marshal(result)
 	if err != nil || len(content) > maxResponseBytes {
 		http.Error(writer, "report exceeds response limit", http.StatusServiceUnavailable)
 		return
@@ -108,32 +139,72 @@ func (s *service) ServeHTTP(writer http.ResponseWriter, httpRequest *http.Reques
 	_, _ = writer.Write(content)
 }
 
-func (s *service) architecture(request request) (analysis.ArchitectureReport, error) {
+func (s *service) architecture(request request) (analysis.ArchitectureReport, bool) {
+	sources, key, stable, err := architectureSnapshot(request.Root, request.Paths, request.MaxFiles)
+	if err != nil || !stable {
+		return analysis.ArchitectureReport{}, false
+	}
+	_ = sources
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	sources, key, cacheable, err := architectureSnapshot(s.root, request.Paths, request.MaxFiles)
-	if err != nil {
-		return analysis.ArchitectureReport{}, err
+	return s.cache.get(request.Root, key)
+}
+
+func (s *service) store(payload request) error {
+	kind := payload.Kind
+	if kind == "" {
+		kind = architectureVariant
 	}
-	if cacheable && key == s.key {
-		return s.report, nil
+	if len(payload.Key) != 64 {
+		return fmt.Errorf("invalid report key")
 	}
-	universe, err := analysis.NewUniverse(sources, request.MaxFiles)
-	if err != nil {
-		return analysis.ArchitectureReport{}, err
-	}
-	report := analysis.BuildArchitecture(universe)
-	universe.Close()
-	if cacheable {
-		_, after, stable, err := architectureSnapshot(s.root, request.Paths, request.MaxFiles)
-		if err != nil || !stable || after != key {
-			return analysis.ArchitectureReport{}, fmt.Errorf("sources changed while building")
+	var result response
+	switch kind {
+	case architectureVariant:
+		if payload.Report == nil || payload.Report.Schema != analysis.ArchitectureSchema {
+			return fmt.Errorf("invalid architecture report")
 		}
-		s.key, s.report = key, report
-	} else {
-		s.key, s.report = "", analysis.ArchitectureReport{}
+		result.Report = *payload.Report
+	case graphVariant:
+		if payload.Graph == nil || payload.Graph.Schema != analysis.GraphSchema {
+			return fmt.Errorf("invalid graph report")
+		}
+		result.Graph = payload.Graph
+	case resolveVariant:
+		if payload.Projection == nil || payload.Projection.Schema != ResolveProjectionSchema {
+			return fmt.Errorf("invalid resolve projection")
+		}
+		result.Projection = payload.Projection
+	default:
+		return fmt.Errorf("invalid report kind")
 	}
-	return report, nil
+	_, base, stable, err := architectureSnapshot(payload.Root, payload.Paths, payload.MaxFiles)
+	if err != nil || !stable {
+		return fmt.Errorf("source snapshot changed")
+	}
+	key, ok := selectedVariantKey(base, payload, kind)
+	if !ok || key != payload.Key {
+		return fmt.Errorf("report selection or snapshot changed")
+	}
+	content, err := json.Marshal(result)
+	if err != nil || len(content) > maxResponseBytes {
+		return fmt.Errorf("report exceeds cache limit")
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	// Guard against a mutation between the initial read and publication.
+	_, after, unchanged, err := architectureSnapshot(payload.Root, payload.Paths, payload.MaxFiles)
+	if err != nil || !unchanged || after != base {
+		return fmt.Errorf("source snapshot changed during publication")
+	}
+	switch kind {
+	case architectureVariant:
+		return s.cache.put(payload.Root, key, *payload.Report, len(content))
+	case graphVariant:
+		return s.cache.putVariant(payload.Root, kind, key, *payload.Graph, len(content))
+	default:
+		return s.cache.putVariant(payload.Root, kind, key, *payload.Projection, len(content))
+	}
 }
 
 func daemonAlive(details descriptor) bool {
@@ -153,8 +224,8 @@ func daemonAlive(details descriptor) bool {
 	return result.StatusCode == http.StatusNoContent
 }
 
-func publishDescriptor(root string, details descriptor) error {
-	path := descriptorPath(root)
+func publishDescriptor(details descriptor) error {
+	path := descriptorPath()
 	content, err := json.Marshal(details)
 	if err != nil {
 		return err
@@ -178,8 +249,8 @@ func publishDescriptor(root string, details descriptor) error {
 	return os.Rename(temporary.Name(), path)
 }
 
-func clearDescriptor(root, token string) {
-	if details, ok := readDescriptor(root); ok && details.Token == token {
-		_ = os.Remove(descriptorPath(root))
+func clearDescriptor(token string) {
+	if details, ok := readDescriptor(); ok && details.Token == token {
+		_ = os.Remove(descriptorPath())
 	}
 }

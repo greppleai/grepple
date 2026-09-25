@@ -1,4 +1,4 @@
-description: The cli package parses and dispatches Grepple commands while coordinating repository scope, output spilling, process defaults, exit statuses, and projection consistency.
+description: The cli package parses, normalizes, and dispatches Grepple commands while applying repository scope, daemon execution, output spilling, process defaults, exit statuses, and projection consistency.
 responsibilities:
     - Register and dispatch application commands
     - Parse global and nested command arguments
@@ -6,24 +6,25 @@ responsibilities:
     - Route command and topic help
     - Validate command execution universes
     - Apply repository configuration and source-selection scope
+    - Coordinate daemon-backed architecture and graph execution
     - Spill oversized output into managed artifacts
     - Preserve invocation options across reruns and continuations
     - Propagate requested command exit statuses
     - Configure navigation cache defaults
-    - Document CLI workflows and output contracts
+    - Document CLI workflows and presentation contracts
     - Enforce CLI import boundaries
     - Compare local and public analysis projections
-    - Verify parity across navigation projections
+    - Verify navigation projection parity
     - Benchmark agent workflows and artifact retrieval
 files:
     - path: agent_workflow_benchmark_test.go
-      description: Benchmarks search, navigation, and spilled-artifact retrieval workflows for agents.
+      description: Benchmarks search, navigation, architecture, and spilled-artifact agent workflows.
       kind: test
       checksum: 781901877b38edec8db1933eae0400ee424e4ff4317c576ebec9fa184055b021
     - path: application.go
       description: Defines global controls and dispatches normalized application commands to their implementations.
       kind: production
-      checksum: 78c62b028389d37663bcd5100e1201302d6322b9a5753de7b984638759555365
+      checksum: 37a0d9bf55f547a8777241e398283ec55915b21c80c9c45a07219c41adbd9daa
     - path: application_test.go
       description: Tests application command selection, global option ownership, nested normalization, and defaults.
       kind: test
@@ -60,8 +61,12 @@ files:
       description: Converts requested non-error command statuses into CLI exit codes.
       kind: production
       checksum: 612a8f1c13c30265f0a22574830e90f526e0ad6429571bcd9c65ad724a1edf3c
+    - path: graph_daemon_test.go
+      description: Verifies daemon-backed graph output parity, remote routing, and unsupported-command restrictions.
+      kind: test
+      checksum: c0024c643f446fbef6a6c1316ac3761971c350965b2602c073c31bcd129c2145
     - path: graph_test_helpers_test.go
-      description: Provides test helpers for navigation graph outputs and continuation commands.
+      description: Provides helpers for navigation graph outputs and repository-preserving continuation commands.
       kind: test
       checksum: 86267374fb37feac85516db12b5c579a54d091ecdce8b12940b072292df56213
     - path: import_policy_test.go

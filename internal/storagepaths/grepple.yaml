@@ -1,15 +1,15 @@
-description: Resolves configured, user-specific, and temporary locations for output artifacts and repository caches.
+description: Resolves configured output and private cache directories with repository-specific cache isolation and secure fallbacks.
 responsibilities:
-    - Resolve artifact directories from environment or platform defaults
-    - Derive repository-specific cache keys
-    - Create user and temporary cache directories with restricted permissions
-    - Validate cache-home selection and environment overrides
+    - Resolve artifact directories from environment or platform cache defaults
+    - Validate absolute cache overrides
+    - Create private user and temporary cache directories
+    - Derive hashed repository-specific cache paths
 files:
     - path: paths.go
-      description: Provides configurable output artifact paths and hashed repository-specific cache directories with user-home and temporary fallbacks.
+      description: Resolves configured or platform-default artifact locations and creates private user, temporary, and repository-specific cache directories.
       kind: production
-      checksum: b17e82fdc8afdc844a976217e1cf91623954d710d9414515dc1d1fa489cdb4ca
+      checksum: b02cfa7904b7cce070de83aad6c5601e4ed576bf67b75f039277b6c478c2fd6b
     - path: paths_test.go
-      description: Tests repository-specific cache placement, directory creation, and configured cache overrides.
+      description: Verifies repository cache isolation, directory creation, private shared caches, and absolute or relative cache override handling.
       kind: test
-      checksum: 7cceabae5f0620beb625030a906aefd7171a5da063a4554d038a546ccc575341
+      checksum: 0117411f1036285c90c01ea3c26438cdccd12fc3ce4c7bd1604c2a1b57684ebb

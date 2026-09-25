@@ -39,7 +39,7 @@ type Arguments struct {
 	NoConfigIgnore     bool   `arg:"--no-config-ignore" help:"load grepple.json but ignore ignore.paths"`
 	ProductionOnly     bool   `arg:"--production-only" help:"recursively select production-classified sources"`
 	VersionFlag        bool   `arg:"--version" help:"print build and source version information"`
-	Daemon             bool   `arg:"--daemon" help:"use a running greppled for local architecture (fallback to direct)"`
+	Daemon             bool   `arg:"--daemon" help:"use a running greppled for local architecture or focused graph commands (fallback to direct)"`
 
 	Search       *searchcommand.Args         `arg:"subcommand:search" help:"search local or explicitly selected remote code"`
 	Write        *writecommand.Args          `arg:"subcommand:write" help:"apply local transactional anchored writes"`
@@ -77,8 +77,8 @@ func (values *Arguments) spillOptions() outputspill.Options {
 }
 
 func executeArguments(context cliruntime.Context, values *Arguments) error {
-	if values.Daemon && values.Architecture == nil {
-		return fmt.Errorf("--daemon currently supports only architecture commands")
+	if values.Daemon && values.Architecture == nil && values.Graph == nil {
+		return fmt.Errorf("--daemon supports only architecture and focused graph commands")
 	}
 	switch {
 	case values.VersionFlag || values.Version != nil:
@@ -90,7 +90,7 @@ func executeArguments(context cliruntime.Context, values *Arguments) error {
 	case values.Grit != nil:
 		return gritcommand.Execute(context, values.Grit)
 	case values.Graph != nil:
-		return graphcommand.Execute(context, values.Graph)
+		return graphcommand.ExecuteWithDaemon(context, values.Graph, values.Daemon)
 	case values.Anchors != nil:
 		return anchorscommand.Execute(context, values.Anchors)
 	case values.Boundaries != nil:

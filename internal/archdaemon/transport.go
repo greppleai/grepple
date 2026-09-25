@@ -1,11 +1,10 @@
-// Package archdaemon provides an optional, local, authenticated architecture worker.
+// Package archdaemon provides an optional authenticated user-level architecture cache.
 package archdaemon
 
 import (
 	"bytes"
 	"context"
 	"crypto/rand"
-	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
 	"io"
@@ -20,38 +19,46 @@ import (
 	"github.com/greppleai/grepple/internal/storagepaths"
 )
 
-const protocol = "grepple-architecture-daemon-v1"
+const protocol = "grepple-architecture-daemon-v2"
 const maxDescriptorBytes = 4096
 const maxRequestBytes = 1 << 20
 const maxResponseBytes = 128 << 20
 
 type descriptor struct {
 	Protocol string `json:"protocol"`
-	Root     string `json:"root"`
 	Version  string `json:"version"`
 	Address  string `json:"address"`
 	Token    string `json:"token"`
 }
 
 type request struct {
-	Paths    []string `json:"paths"`
-	MaxFiles int      `json:"maxFiles"`
+	Root       string                       `json:"root"`
+	Paths      []string                     `json:"paths"`
+	MaxFiles   int                          `json:"maxFiles"`
+	Key        string                       `json:"key,omitempty"`
+	Kind       string                       `json:"kind,omitempty"`
+	Report     *analysis.ArchitectureReport `json:"report,omitempty"`
+	GraphQuery *analysis.GraphQuery         `json:"graphQuery,omitempty"`
+	Graph      *analysis.GraphReport        `json:"graph,omitempty"`
+	Selection  *ResolveSelection            `json:"selection,omitempty"`
+	Projection *ResolveProjection           `json:"projection,omitempty"`
 }
 
 type response struct {
-	Report analysis.ArchitectureReport `json:"report"`
+	Report     analysis.ArchitectureReport `json:"report"`
+	Graph      *analysis.GraphReport       `json:"graph,omitempty"`
+	Projection *ResolveProjection          `json:"projection,omitempty"`
 }
 
-func descriptorPath(root string) string {
-	key := sha256.Sum256([]byte(filepath.Clean(root)))
-	return filepath.Join(storagepaths.Cache(root), "daemon-"+hex.EncodeToString(key[:8])+".json")
+func descriptorPath() string {
+	return filepath.Join(storagepaths.DaemonCache(), "daemon.json")
 }
 
-func readDescriptor(root string) (descriptor, bool) {
-	if !permittedCacheDirectory(root) {
+func readDescriptor() (descriptor, bool) {
+	if !permittedCacheDirectory() {
 		return descriptor{}, false
 	}
-	path := descriptorPath(root)
+	path := descriptorPath()
 	info, err := os.Stat(path)
 	if err != nil || !info.Mode().IsRegular() || info.Size() > maxDescriptorBytes || (runtime.GOOS != "windows" && info.Mode().Perm()&0o077 != 0) {
 		return descriptor{}, false
@@ -61,7 +68,7 @@ func readDescriptor(root string) (descriptor, bool) {
 		return descriptor{}, false
 	}
 	var details descriptor
-	if json.Unmarshal(content, &details) != nil || details.Protocol != protocol || details.Root != root || details.Version != sourceIdentity() || !loopbackAddress(details.Address) {
+	if json.Unmarshal(content, &details) != nil || details.Protocol != protocol || details.Version != sourceIdentity() || !loopbackAddress(details.Address) {
 		return descriptor{}, false
 	}
 	token, err := hex.DecodeString(details.Token)
@@ -89,41 +96,15 @@ func localClient() *http.Client {
 	}}
 }
 
-// Query obtains an architecture report only from the authenticated worker for
-// this directory. Any unavailable or incompatible daemon falls back to the CLI.
+// Query returns a previously published architecture report. A cache miss or
+// incompatible worker is not an error: the client must build locally.
 func Query(paths []string, maxFiles int) (analysis.ArchitectureReport, bool) {
 	root, err := os.Getwd()
 	if err != nil {
 		return analysis.ArchitectureReport{}, false
 	}
-	details, ok := readDescriptor(root)
+	body, ok := postDaemon("/architecture", request{Root: root, Paths: paths, MaxFiles: maxFiles}, maxRequestBytes)
 	if !ok {
-		return analysis.ArchitectureReport{}, false
-	}
-	encoded, err := json.Marshal(request{Paths: paths, MaxFiles: maxFiles})
-	if err != nil || len(encoded) > maxRequestBytes {
-		return analysis.ArchitectureReport{}, false
-	}
-	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
-	defer cancel()
-	httpRequest, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://"+details.Address+"/architecture", bytes.NewReader(encoded))
-	if err != nil {
-		return analysis.ArchitectureReport{}, false
-	}
-	httpRequest.Header.Set("X-Grepple-Token", details.Token)
-	httpRequest.Header.Set("Content-Type", "application/json")
-	client := localClient()
-	defer client.CloseIdleConnections()
-	httpResponse, err := client.Do(httpRequest)
-	if err != nil {
-		return analysis.ArchitectureReport{}, false
-	}
-	defer httpResponse.Body.Close()
-	if httpResponse.StatusCode != http.StatusOK || httpResponse.ContentLength > maxResponseBytes {
-		return analysis.ArchitectureReport{}, false
-	}
-	body, err := io.ReadAll(io.LimitReader(httpResponse.Body, maxResponseBytes+1))
-	if err != nil || len(body) > maxResponseBytes {
 		return analysis.ArchitectureReport{}, false
 	}
 	var result response
@@ -133,8 +114,68 @@ func Query(paths []string, maxFiles int) (analysis.ArchitectureReport, bool) {
 	return result.Report, true
 }
 
-func permittedCacheDirectory(root string) bool {
-	path := filepath.Dir(descriptorPath(root))
+// Key fingerprints the caller's already-read sources before it builds the
+// report. The worker independently rechecks this key before publishing it.
+func Key(paths []string, maxFiles int, sources []analysis.Source) (string, bool) {
+	if _, ok := readDescriptor(); !ok {
+		return "", false
+	}
+	root, err := os.Getwd()
+	if err != nil {
+		return "", false
+	}
+	return architectureFingerprint(root, paths, maxFiles, sources)
+}
+
+// Store best-effort publishes a locally constructed report to the shared cache.
+func Store(paths []string, maxFiles int, key string, report analysis.ArchitectureReport) bool {
+	if key == "" || report.Schema != analysis.ArchitectureSchema {
+		return false
+	}
+	root, err := os.Getwd()
+	if err != nil {
+		return false
+	}
+	_, ok := postDaemon("/store", request{Root: root, Paths: paths, MaxFiles: maxFiles, Key: key, Report: &report}, maxResponseBytes)
+	return ok
+}
+
+func postDaemon(route string, payload request, maxBody int64) ([]byte, bool) {
+	details, ok := readDescriptor()
+	if !ok {
+		return nil, false
+	}
+	encoded, err := json.Marshal(payload)
+	if err != nil || int64(len(encoded)) > maxBody {
+		return nil, false
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
+	defer cancel()
+	httpRequest, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://"+details.Address+route, bytes.NewReader(encoded))
+	if err != nil {
+		return nil, false
+	}
+	httpRequest.Header.Set("X-Grepple-Token", details.Token)
+	httpRequest.Header.Set("Content-Type", "application/json")
+	client := localClient()
+	defer client.CloseIdleConnections()
+	httpResponse, err := client.Do(httpRequest)
+	if err != nil {
+		return nil, false
+	}
+	defer httpResponse.Body.Close()
+	if httpResponse.StatusCode != http.StatusOK || httpResponse.ContentLength > maxResponseBytes {
+		return nil, false
+	}
+	body, err := io.ReadAll(io.LimitReader(httpResponse.Body, maxResponseBytes+1))
+	return body, err == nil && len(body) <= maxResponseBytes
+}
+
+func permittedCacheDirectory() bool {
+	path := storagepaths.DaemonCache()
+	if !filepath.IsAbs(path) {
+		return false
+	}
 	info, err := os.Stat(path)
 	return err == nil && info.IsDir() && (runtime.GOOS == "windows" || info.Mode().Perm()&0o077 == 0)
 }
