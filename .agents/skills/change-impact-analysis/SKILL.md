@@ -26,7 +26,7 @@ grepple --at path/to/file.go:LINE
    grepple graph callees --at path/to/file.go:LINE --depth 2 SCOPE
    grepple graph impact  --at path/to/file.go:LINE --depth 2 SCOPE
    ```
-4. If compact output reports omissions or completeness is required, narrow the universe or rerun the focused query with `--json`; do not replace it with a whole-repository graph dump. If JSON spills, inspect the `grepple-artifact-v1` descriptor and read only relevant artifact ranges. Use resolution totals and per-language/confidence ambiguity rates to decide whether candidate inspection is material for this scope.
+4. If bounded human output reports omissions or completeness is required, narrow the universe or rerun the focused query with `--json`; do not replace it with a whole-repository graph dump. If JSON spills, inspect the `grepple-artifact-v1` descriptor and read only relevant artifact ranges. Use resolution totals and per-language/confidence ambiguity rates to decide whether candidate inspection is material for this scope.
 
 ## Confidence rules
 
