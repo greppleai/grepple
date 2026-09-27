@@ -36,17 +36,6 @@ func SequenceTarget(kind string, parent parser.Node, childStart, childEnd int) M
 	return MatchTarget{language: parent.Language(), kind: kind, parent: parent, childStart: childStart, childEnd: childEnd, sequence: true}
 }
 
-// RepeatedSequenceTarget constructs a grammar-generic list target. The parent
-// kind and field name must identify a repeated position in the node's pinned grammar;
-// the span may contain only that position's named elements and intervening syntax.
-func RepeatedSequenceTarget(parent parser.Node, field string, childStart, childEnd int) MatchTarget {
-	return MatchTarget{language: parent.Language(), kind: "list_sequence", field: field, parent: parent, childStart: childStart, childEnd: childEnd, sequence: true}
-}
-
-func repeatedSequenceTarget(parent parser.Node, field string, childStart, childEnd int) MatchTarget {
-	return RepeatedSequenceTarget(parent, field, childStart, childEnd)
-}
-
 func viewNodeTarget(node parser.ViewNode) MatchTarget {
 	return MatchTarget{viewNode: node, language: node.Language()}
 }

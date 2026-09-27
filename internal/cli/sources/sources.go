@@ -3,17 +3,13 @@ package sources
 import (
 	"errors"
 	"fmt"
-	"path/filepath"
-	"sort"
 	"strings"
 
 	"github.com/alexflint/go-arg"
 	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
-	sourcedomain "github.com/greppleai/grepple/internal/sources"
 	"github.com/greppleai/grepple/internal/search"
+	sourcedomain "github.com/greppleai/grepple/internal/sources"
 )
-
-const sourceScopeSchema = sourcedomain.Schema
 
 type ExplainArgs struct {
 	JSON           bool     `arg:"--json" help:"emit complete source decisions as JSON"`
@@ -147,21 +143,6 @@ func sourceDecisionMarker(decision search.SourcePathDecision) string {
 	return "X"
 }
 
-func sortedSourceScopeCounts(values map[string]int) []Count {
-	names := make([]string, 0, len(values))
-	for name := range values {
-		if name != "" {
-			names = append(names, name)
-		}
-	}
-	sort.Strings(names)
-	result := make([]Count, 0, len(names))
-	for _, name := range names {
-		result = append(result, Count{Name: name, Count: values[name]})
-	}
-	return result
-}
-
 // FormatCounts renders deterministic source-scope count summaries.
 func FormatCounts(values []Count) string {
 	if len(values) == 0 {
@@ -180,15 +161,4 @@ func shortSourceDigest(digest string) string {
 		value = value[:12]
 	}
 	return "sha256:" + value
-}
-
-func displayRepositoryPath(path string, dependencies Dependencies) string {
-	if path == "" {
-		return ""
-	}
-	working := dependencies.workingDirectory()
-	if relative, err := filepath.Rel(working, path); err == nil && relative != ".." && !strings.HasPrefix(relative, ".."+string(filepath.Separator)) {
-		return filepath.ToSlash(relative)
-	}
-	return filepath.ToSlash(path)
 }

@@ -298,10 +298,3 @@ func TestParseAtAllowsExplicitServerForLocalDependencyResolution(t *testing.T) {
 		t.Fatalf("options=%#v server=%q remote=%v", options, server, remote)
 	}
 }
-
-func assertSearchHelpOmitsRemovedAnchorFlags(t *testing.T, help string) {
-	t.Helper()
-	if strings.Contains(help, "--anchors") || strings.Contains(help, "--anchor-provider") || strings.Contains(help, "--no-anchors") {
-		t.Fatalf("search help still exposes a removed anchor flag:\n%s", help)
-	}
-}

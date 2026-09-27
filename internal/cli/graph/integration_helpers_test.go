@@ -34,11 +34,6 @@ func Run(args []string) error {
 	return runBuild(cliruntime.Environment{}, args)
 }
 
-func runGraph(args []string) error { return New(cliruntime.Environment{}).Run(args) }
-func buildNavigationGraphOutputFromPaths(paths []string, maxFiles int) navigationGraphOutput {
-	return BuildFromPaths(paths, maxFiles)
-}
-
 func captureStdout(t testing.TB, fn func()) string {
 	t.Helper()
 	previous := os.Stdout

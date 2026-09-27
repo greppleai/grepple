@@ -6,7 +6,7 @@ import (
 	"github.com/greppleai/grepple/internal/parser"
 )
 
-type goBoundaryLanguagePolicy struct{ baseBoundaryLanguagePolicy }
+type goBoundaryLanguagePolicy struct{}
 
 func (goBoundaryLanguagePolicy) standardLibraryImport(path string) bool {
 	first := boundaryFirstImportComponent(path)

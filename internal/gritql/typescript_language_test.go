@@ -94,6 +94,10 @@ func TestPythonConformanceFixture(t *testing.T) {
 	runTargetConformanceFixture(t, "testdata/conformance/python/cases.json")
 }
 
+func TestHookSelectorsConformanceFixture(t *testing.T) {
+	runTargetConformanceFixture(t, "testdata/conformance/hook-selectors/cases.json")
+}
+
 func runTargetConformanceFixture(t *testing.T, path string) {
 	t.Helper()
 	cases := loadTargetConformanceFixture(t, path)

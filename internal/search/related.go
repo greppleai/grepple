@@ -63,11 +63,6 @@ type navigationCall struct {
 	importSourceFile                   string
 	rootType, rootImport               string
 	receiverMembers                    []string
-	importTargetFiles                  []string
-	importTargetScopes                 []string
-	promotedReceiverTypes              []string
-	importedReceiverTypes              []string
-	importedIdentity                   string
 	packageName                        string
 	targetID, confidence               string
 	candidateTargetIDs                 []string

@@ -288,19 +288,6 @@ func flowSymbolAmbiguous(node *FlowNode, analysis *Analysis) bool {
 	return packageCount+moduleCount > 1
 }
 
-func symbolsForLanguage(language string, analysis *Analysis) map[string]*Symbol {
-	if language == "" {
-		return analysis.Symbols
-	}
-	result := map[string]*Symbol{}
-	for _, symbol := range analysis.SymbolVariants {
-		if symbol.Language == language {
-			result[symbol.Name] = symbol
-		}
-	}
-	return result
-}
-
 func checkFlowEdge(edge FlowEdge, nodes map[string]*FlowNode, analysis *Analysis) *Diagnostic {
 	source, target := nodes[edge.Source], nodes[edge.Target]
 	if source.Concept || target.Concept {

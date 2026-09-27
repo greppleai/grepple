@@ -15,20 +15,12 @@ func collectCandidateFiles(globs []string, root string) ([]string, error) {
 	return sourcedomain.Candidates(context.Background(), globs, sourcedomain.DiscoveryOptions{Root: root})
 }
 
-func collectCandidateFilesContext(ctx context.Context, globs []string, root string) ([]string, error) {
-	return sourcedomain.Candidates(ctx, globs, sourcedomain.DiscoveryOptions{Root: root})
-}
-
 func collectCandidateFilesConfiguredContext(ctx context.Context, globs []string, root string, ignore sourceIgnoreConfig) ([]string, error) {
 	return sourcedomain.Candidates(ctx, globs, sourcedomain.DiscoveryOptions{Root: root, IgnoreRoot: ignore.root, IgnorePaths: ignore.patterns, ProductionOnly: ignore.productionOnly})
 }
 
 func collectListingFiles(globs []string, root string) ([]string, error) {
 	return sourcedomain.Listing(context.Background(), globs, sourcedomain.DiscoveryOptions{Root: root})
-}
-
-func collectListingFilesContext(ctx context.Context, globs []string, root string) ([]string, error) {
-	return sourcedomain.Listing(ctx, globs, sourcedomain.DiscoveryOptions{Root: root})
 }
 
 func collectListingFilesConfiguredContext(ctx context.Context, globs []string, root string, ignore sourceIgnoreConfig) ([]string, error) {

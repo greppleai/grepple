@@ -22,8 +22,6 @@ type architectureResponsibilitiesArgs struct {
 
 type architectureResponsibilitiesOutput = analysis.ResponsibilityReport
 
-type architectureDirectoryResponsibility = analysis.DirectoryResponsibility
-
 func runArchitectureResponsibilities(args []string, dependencies Dependencies) error {
 	values := architectureResponsibilitiesArgs{MaxOutputBytes: defaultTextOutputBytes}
 	argumentParser, err := arg.NewParser(arg.Config{Program: "grepple architecture responsibilities"}, &values)

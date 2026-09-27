@@ -142,11 +142,6 @@ func prepareAtMatch(match *FileMatch, params Params, line, endLine int, document
 	return nil
 }
 
-func parseAtReference(reference string) (string, int, error) {
-	path, start, _, err := parseAtRange(reference)
-	return path, start, err
-}
-
 func parseAtRange(reference string) (string, int, int, error) {
 	separator := strings.LastIndex(reference, ":")
 	if separator <= 0 || separator == len(reference)-1 {

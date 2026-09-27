@@ -9,10 +9,10 @@ import (
 	"strings"
 
 	"github.com/alexflint/go-arg"
-	"github.com/greppleai/grepple/internal/wire"
 	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
-	"github.com/greppleai/grepple/internal/shellquote"
 	"github.com/greppleai/grepple/internal/parser"
+	"github.com/greppleai/grepple/internal/shellquote"
+	"github.com/greppleai/grepple/internal/wire"
 )
 
 type graphArgs struct {
@@ -280,8 +280,3 @@ func compactCallTarget(call parser.NavigationCall, declarations map[string]parse
 	}
 	return "? " + strings.Join(candidates, ",")
 }
-
-func navigationSourcePaths(paths []string) []string { return SourcePaths(paths) }
-
-// ShortID returns the compact stable suffix used in graph output.
-func ShortID(id string) string { return shortGraphID(id) }

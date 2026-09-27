@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "suite": "hook-selectors",
+  "provenance": {
+    "kind": "grepple-original",
+    "note": "GritQL selector vectors drawn from installed hook queries; syntax and results are checked by the common target-language conformance runner."
+  },
+  "cases": [
+    {
+      "name": "dart-whole-declaration-slot",
+      "language": "dart",
+      "query": "language dart\nand { `$node`, function_declaration() }",
+      "path": "lib/app.dart",
+      "source": "void run() { target(); }\nvoid other() {}\n",
+      "findings": [
+        "void run() { target(); }",
+        "void other() {}"
+      ]
+    },
+    {
+      "name": "dart-whole-statement-slot",
+      "language": "dart",
+      "query": "language dart\nand { `$node`, return_statement() }",
+      "path": "lib/app.dart",
+      "source": "void run() { target(); return; }\n",
+      "findings": ["return;"]
+    },
+    {
+      "name": "hook-empty-body-parent-and-scope-exclusions",
+      "language": "go",
+      "query": "language go\nor { and { `{ $body }` where { $body <: empty }, not parent kind(\"function\"), not within `select {}`, not within `for $callee($callArgs) {}` }, `switch $condition {}` }",
+      "path": "pkg/app.go",
+      "source": "package p\nfunc run(ok bool) { if ok {}; for goNow() {}; select {} }\n",
+      "findings": [
+        "{}"
+      ]
+    },
+    {
+      "name": "hook-type-reference-capture-and-own-declaration-exclusion",
+      "language": "go",
+      "query": "language go\nand { type_identifier() as $name, not within type_spec(name=$name), } where { $name <: r\"^[a-z]\" }",
+      "path": "pkg/app.go",
+      "source": "package p\ntype used struct{}\nvar item used\ntype dead struct{}\n",
+      "findings": [
+        "used"
+      ]
+    },
+    {
+      "name": "hook-direct-dot-import-placeholder",
+      "language": "go",
+      "query": "language go\n`import . $path`",
+      "path": "pkg/app.go",
+      "source": "package p\nimport . \"fmt\"\nvar _ = Println\n",
+      "findings": [
+        "import . \"fmt\""
+      ]
+    },
+    {
+      "name": "hook-structural-empty-argument-list",
+      "language": "go",
+      "query": "language go\n`target($args)` where { $args <: empty }",
+      "path": "pkg/app.go",
+      "source": "package p\nfunc run() { target(); target(x) }\n",
+      "findings": [
+        "target()"
+      ]
+    },
+    {
+      "name": "hook-node-field-selector-regex",
+      "language": "go",
+      "query": "language go\nselector_expression(field=$name) where { $name <: r\"^save$\" }",
+      "path": "pkg/app.go",
+      "source": "package p\ntype Item struct{}\nfunc (i Item) use(){ i.save(); i.drop() }\n",
+      "findings": [
+        "i.save"
+      ]
+    }
+  ]
+}

@@ -143,7 +143,16 @@ func compilePHPTemplates(decoded decodedSnippet, maxDepth int) ([]Template, stri
 }
 
 func compileDartTemplates(decoded decodedSnippet, maxDepth int) ([]Template, string, error) {
-	return compileWrappedLanguageTemplates(dartLanguageConfig(), decoded, maxDepth)
+	roles := make([]placeholderRole, len(decoded.placeholders))
+	assignments := [][]placeholderRole{roles}
+	if wholeSnippetPlaceholder(decoded) {
+		statementRoles := append([]placeholderRole(nil), roles...)
+		statementRoles[0] = roleDartStatement
+		declarationRoles := append([]placeholderRole(nil), roles...)
+		declarationRoles[0] = roleDartDeclaration
+		assignments = append(assignments, statementRoles, declarationRoles)
+	}
+	return compileWrappedLanguageTemplatesWithRoles(dartLanguageConfig(), decoded, maxDepth, assignments)
 }
 
 func dartLanguageConfig() wrappedLanguageConfig {
@@ -180,7 +189,10 @@ func shellLanguageConfig() wrappedLanguageConfig {
 
 func compileWrappedLanguageTemplates(config wrappedLanguageConfig, decoded decodedSnippet, maxDepth int) ([]Template, string, error) {
 	roles := make([]placeholderRole, len(decoded.placeholders))
-	assignments := [][]placeholderRole{roles}
+	return compileWrappedLanguageTemplatesWithRoles(config, decoded, maxDepth, [][]placeholderRole{roles})
+}
+
+func compileWrappedLanguageTemplatesWithRoles(config wrappedLanguageConfig, decoded decodedSnippet, maxDepth int, assignments [][]placeholderRole) ([]Template, string, error) {
 	attempts := wrappedSnippetAttempts(config)
 	var templates []Template
 	for _, attempt := range attempts {
@@ -321,6 +333,9 @@ func namedDescendants(root parser.Node) []parser.Node {
 func wrappedRootCategoryAccepts(language string, declarations map[string]bool, context SnippetContext, kind string) bool {
 	switch context {
 	case SnippetContextExpression:
+		if language == "dart" {
+			return dartExpressionRootCategory(kind)
+		}
 		return grammarSubtypeAny(language, kind, "expression", "_expression", "primary_expression")
 	case SnippetContextStatement, SnippetContextStatementList:
 		return grammarSubtypeAny(language, kind, "statement", "_statement", "simple_statement", "_simple_statement") || declarations[kind]
@@ -331,6 +346,12 @@ func wrappedRootCategoryAccepts(language string, declarations map[string]bool, c
 	default:
 		return false
 	}
+}
+
+// Dart's pinned grammar has no declared expression supertype in node-types.json.
+// Accept grammar-backed expression nodes and literal/instantiation subtypes only.
+func dartExpressionRootCategory(kind string) bool {
+	return kind == "identifier" || kind == "pattern_assignment" || strings.HasSuffix(kind, "_expression") && parser.GrammarNodeKind("dart", kind) || grammarSubtypeAny("dart", kind, "_literal", "_instantiation")
 }
 
 func grammarSubtypeAny(language, kind string, supertypes ...string) bool {
@@ -350,6 +371,8 @@ func wrappedLanguageByID(language string) wrappedLanguageConfig {
 		return cLanguageConfig(true)
 	case "csharp":
 		return cSharpLanguageConfig()
+	case "dart":
+		return dartLanguageConfig()
 	case "java":
 		return javaLanguageConfig()
 	case "kotlin":

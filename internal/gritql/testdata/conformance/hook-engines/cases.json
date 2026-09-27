@@ -1,0 +1,162 @@
+{
+  "schema_version": 1,
+  "suite": "hook-engines",
+  "provenance": {
+    "kind": "grepple-original",
+    "note": "Source-authored hook-engine conformance cases for relational joins, unmatched-left completeness, and scoped metrics."
+  },
+  "cases": [
+    {
+      "name": "cross-file-pair-with-package-partition",
+      "engine": "gritql-relational-v1",
+      "sources": {
+        "pkg/a.go": "package demo\ntype thing struct{}\n",
+        "pkg/b.go": "package demo\ntype thing struct{}\n"
+      },
+      "relation": {
+        "left_query": "language go\ntype_spec(name=$name)",
+        "partition_query": "language go\npackage_clause($package)",
+        "left_key": "name",
+        "right_key": "name",
+        "partition_key": "package",
+        "scope": "directory"
+      },
+      "expected": {
+        "hits": [
+          "pkg/a.go|pkg/b.go|thing",
+          "pkg/b.go|pkg/a.go|thing"
+        ]
+      }
+    },
+    {
+      "name": "unmatched-method-across-complete-partitioned-snapshot",
+      "engine": "gritql-relational-v1",
+      "sources": {
+        "pkg/defs.go": "package demo\ntype thing struct{}\nfunc (thing) used() {}\nfunc (thing) missing() {}\n",
+        "pkg/uses.go": "package demo\nfunc use(t thing) { t.used() }\n",
+        "pkg/other.go": "package other\ntype thing struct{}\nfunc (thing) otherMissing() {}\nfunc unrelated(t thing) { t.missing() }\n"
+      },
+      "relation": {
+        "left_query": "language go\nmethod_declaration(name=$name) where { $name <: r\"^[a-z]\" }",
+        "right_query": "language go\nselector_expression(field=$name) where { $name <: r\"^[a-z]\" }",
+        "partition_query": "language go\npackage_clause($package)",
+        "left_key": "name",
+        "right_key": "name",
+        "partition_key": "package",
+        "scope": "directory",
+        "mode": "unmatched_left",
+        "left_include": [
+          "pkg/defs.go"
+        ]
+      },
+      "expected": {
+        "hits": [
+          "pkg/defs.go||missing"
+        ]
+      }
+    },
+    {
+      "name": "unmatched-relation-fails-closed-on-partial-scan",
+      "engine": "gritql-relational-v1",
+      "sources": {
+        "pkg/defs.go": "package demo\nfunc (thing) missing() {}\n",
+        "pkg/uses.go": "package demo\nfunc call(t thing) { t.missing() }\n"
+      },
+      "relation": {
+        "left_query": "language go\nmethod_declaration(name=$name) where { $name <: r\"^[a-z]\" }",
+        "right_query": "language go\nselector_expression(field=$name) where { $name <: r\"^[a-z]\" }",
+        "left_key": "name",
+        "right_key": "name",
+        "scope": "directory",
+        "mode": "unmatched_left",
+        "max_files": 1
+      },
+      "expected": {
+        "error_contains": "incomplete"
+      }
+    },
+    {
+      "name": "go-standalone-functions-any-declared-interface",
+      "engine": "gritql-relational-v1",
+      "sources": {
+        "pkg/functions.go": "package demo\nfunc Missing() {}\nfunc Concrete() S { return S{} }\nfunc Multiple() (S, I) { return S{}, nil }\nfunc Inline() interface{} { return nil }\nfunc WithError() (S, error) { return S{}, nil }\nfunc (S) Method() S { return S{} }\n",
+        "pkg/types.go": "package demo\ntype I interface { Run() }\ntype S struct{}\n"
+      },
+      "relation": {
+        "left_query": "language go\nand { function_declaration(name=$name), maybe function_declaration(result=$result), }",
+        "right_query": "language go\ntype_spec(name=$type, type=interface_type())",
+        "partition_query": "language go\npackage_clause($package)",
+        "left_key": "result",
+        "left_projection": "go-return-types",
+        "right_key": "type",
+        "partition_key": "package",
+        "scope": "directory",
+        "mode": "unmatched_left_any"
+      },
+      "expected": {
+        "hits": ["pkg/functions.go||", "pkg/functions.go||"]
+      }
+    },
+    {
+      "name": "cross-file-method-receiver-descendant-and-unique-owner",
+      "engine": "gritql-relational-v1",
+      "sources": {
+        "pkg/types.go": "package demo\ntype pair[A,B any] struct{}\n",
+        "pkg/method.go": "package demo\nfunc (p *pair[A,B]) Valid() {}\n"
+      },
+      "relation": {
+        "left_query": "language go\ntype_spec(name=$name, type=struct_type())",
+        "right_query": "language go\nmethod_declaration(name=$method, receiver=parameter_list(parameter_declaration(type=$receiver)))",
+        "partition_query": "language go\npackage_clause($package)",
+        "left_key": "name",
+        "right_key": "receiver",
+        "right_descendant_kind": "type_identifier",
+        "partition_key": "package",
+        "scope": "directory",
+        "unique_left": true
+      },
+      "expected": {
+        "hits": [
+          "pkg/types.go|pkg/method.go|pair"
+        ]
+      }
+    },
+    {
+      "name": "authored-mccabe-logical-operator-count",
+      "engine": "gritql-metric-v1",
+      "sources": {
+        "pkg/app.go": "package demo\nfunc f(a,b,c,d bool){if a && b && c || d {}}\n"
+      },
+      "metric": {
+        "query": "language go\n{ metric: { scope: or { function_declaration(), method_declaration() }, name: \"name\", base: 1, above: 3, boundary: func_literal(), rules: [{id: \"if\", query: if_statement(), points: 1}, {id: \"loop\", query: for_statement(), points: 1}, {id: \"arm\", query: or { expression_case(), type_case(), communication_case() }, points: 1}, {id: \"short-circuit\", query: binary_expression(), points: 1, logical: \"each\", operators: [\"&&\", \"||\"]}] } }",
+        "path": "pkg/app.go"
+      },
+      "expected": {
+        "above": 3,
+        "scores": {
+          "f": 5
+        }
+      }
+    },
+    {
+      "name": "authored-nesting-depth-and-anonymous-function-boundary",
+      "engine": "gritql-metric-v1",
+      "sources": {
+        "pkg/app.go": "package demo\nfunc nested() { for range a { for range b {} } }\nfunc siblings() { for range a {}; for range b {} }\nfunc triple() { for range a { for range b { for range c {} } } }\nfunc closure() { for range a { _ = func() { for range b {} } } }\n"
+      },
+      "metric": {
+        "query": "language go\n{ metric: { scope: or { function_declaration(), method_declaration() }, name: \"name\", base: 0, above: 1, boundary: func_literal(), rules: [{id: \"nested-loop\", query: for_statement(), points: 0, depth: 1, opens: true}] } }",
+        "path": "pkg/app.go"
+      },
+      "expected": {
+        "above": 1,
+        "scores": {
+          "nested": 1,
+          "siblings": 0,
+          "triple": 3,
+          "closure": 0
+        }
+      }
+    }
+  ]
+}

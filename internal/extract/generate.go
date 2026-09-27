@@ -470,29 +470,3 @@ func findSourceByPath(sources []Source, path string) *Source {
 	}
 	return nil
 }
-
-func sourcesForEntry(sources []Source, language, identity string) ([]Source, error) {
-	var result []Source
-	for _, source := range sources {
-		matches, err := sourceMatchesEntry(source, language, identity)
-		if err != nil {
-			return nil, err
-		}
-		if matches {
-			result = append(result, source)
-		}
-	}
-	return result, nil
-}
-
-func sourceMatchesEntry(source Source, language, identity string) (bool, error) {
-	definition, ok := languageDefinitionForPath(source.Path)
-	if !ok || definition.info.ID != language {
-		return false, nil
-	}
-	scope, err := definition.sourceScope(source)
-	if err != nil {
-		return false, err
-	}
-	return scope == identity, nil
-}

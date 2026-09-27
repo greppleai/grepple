@@ -22,34 +22,6 @@ func hasModuleCallPath(analysis *Analysis, source, target *Symbol) bool {
 	return false
 }
 
-func resolveTypeScriptCall(analysis *Analysis, owner *Symbol, call string) *Symbol {
-	if local := analysis.ModuleSymbols[owner.ModuleID+":"+call]; local != nil {
-		return local
-	}
-	parts := splitTypeScriptCall(call)
-	binding := analysis.ModuleImportBindings[owner.ModuleID][parts[0]]
-	if binding.ModuleID == "" {
-		return nil
-	}
-	name := binding.Resolved
-	if name == "" {
-		return nil
-	}
-	if parts[1] != "" {
-		name += "." + parts[1]
-	}
-	return analysis.ModuleSymbols[binding.ModuleID+":"+name]
-}
-
-func splitTypeScriptCall(call string) [2]string {
-	for index, character := range call {
-		if character == '.' {
-			return [2]string{call[:index], call[index+1:]}
-		}
-	}
-	return [2]string{call, ""}
-}
-
 func hasModuleOrderedPath(analysis *Analysis, source, target *Symbol) bool {
 	for _, key := range sortedKeys(analysis.ModuleSymbols) {
 		owner := analysis.ModuleSymbols[key]

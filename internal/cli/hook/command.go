@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"github.com/alexflint/go-arg"
-	"github.com/greppleai/grepple/internal/gritql"
 	"github.com/greppleai/grepple/internal/cliruntime"
+	"github.com/greppleai/grepple/internal/gritql"
 )
 
 // Args runs configured read-only checks against changed files, or the full repository.
@@ -129,6 +129,31 @@ func Execute(application cliruntime.Context, values *Args) error {
 				found, err := scanRelationalRulesCached(ctx, root, files, relationalRules, values.Workers)
 				if err != nil {
 					return err
+				}
+				if !values.All {
+					changedOnly := make(map[string]bool)
+					for _, item := range relationalRules {
+						if item.Relation != nil && item.Relation.ReportChangedOnly {
+							changedOnly[item.ID] = true
+						}
+					}
+					if len(changedOnly) > 0 {
+						changedFiles, err := selectedFiles(ctx, root, false, policy)
+						if err != nil {
+							return err
+						}
+						changed := make(map[string]bool, len(changedFiles))
+						for _, path := range changedFiles {
+							changed[path] = true
+						}
+						filtered := found[:0]
+						for _, finding := range found {
+							if !changedOnly[finding.ID] || changed[finding.Path] {
+								filtered = append(filtered, finding)
+							}
+						}
+						found = filtered
+					}
 				}
 				report.Findings = append(report.Findings, found...)
 			}

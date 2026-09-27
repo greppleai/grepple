@@ -803,15 +803,6 @@ func filterNavigationCandidates(candidates []navigationDeclaration, keep func(na
 	return result
 }
 
-func navigationCandidatesContain(candidates []navigationDeclaration, target navigationDeclaration) bool {
-	for _, candidate := range candidates {
-		if candidate.id == target.id {
-			return true
-		}
-	}
-	return false
-}
-
 func candidatesInMatchedFiles(candidates, matched []navigationDeclaration) []navigationDeclaration {
 	files := map[string]bool{}
 	for _, declaration := range matched {
@@ -830,17 +821,8 @@ func terminalSymbolName(name string) string {
 	return parts[len(parts)-1]
 }
 
-func isTestSourcePath(path string) bool {
-	base := strings.ToLower(filepath.Base(path))
-	return strings.HasSuffix(base, "_test.go") || strings.Contains(base, ".test.") || strings.Contains(base, "_test.") || strings.HasPrefix(base, "test_")
-}
-
 func navigationSymbolKey(language, name string) string {
 	return navigationLanguageFamily(language) + "\x00" + name
-}
-
-func sameNavigationLanguage(left, right string) bool {
-	return navigationLanguageFamily(left) == navigationLanguageFamily(right)
 }
 
 func navigationLanguageFamily(language string) string {

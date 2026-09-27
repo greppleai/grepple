@@ -101,3 +101,41 @@ func compileWrappedLanguageScannerPattern(t *testing.T, language string) *Progra
 	}
 	return program
 }
+
+func TestWrappedAdaptersHaveMatchingSnippetAndRootConfigurations(t *testing.T) {
+	for _, id := range []string{"c", "cpp", "csharp", "dart", "java", "kotlin", "rust", "shell"} {
+		t.Run(id, func(t *testing.T) {
+			adapter, ok := targetLanguageByID(id)
+			config := wrappedLanguageByID(id)
+			if !ok || adapter.compileTemplates == nil || config.language != id || config.rootKind == "" || len(config.declarations) == 0 {
+				t.Fatalf("missing wrapped target configuration for %q: %+v", id, config)
+			}
+		})
+	}
+}
+
+func TestDartWholePlaceholderCanBindTopLevelDeclarations(t *testing.T) {
+	program, err := Compile([]byte("language dart\n`$node`"), CompileOptions{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	contexts := map[SnippetContext]bool{}
+	for _, template := range program.Root().Templates() {
+		if template.RootSlot().Valid() {
+			contexts[template.Context()] = true
+		}
+	}
+	if !contexts[SnippetContextDeclaration] || !contexts[SnippetContextStatement] || !contexts[SnippetContextExpression] {
+		t.Fatalf("Dart whole-node placeholder lacks expression, statement, or declaration context: %v", contexts)
+	}
+	result := EvaluateFile(context.Background(), program, FileInput{Path: "lib/app.dart", Content: []byte("void run() { target(); return; }\nvoid other() {}\n")}, EvaluateOptions{})
+	found := map[string]bool{}
+	for _, finding := range result.Findings() {
+		found[finding.Text()] = true
+	}
+	for _, want := range []string{"void run() { target(); return; }", "target()", "return;"} {
+		if !found[want] || len(result.Diagnostics()) != 0 {
+			t.Fatalf("Dart root category %q not matched: texts=%v diagnostics=%v", want, found, result.Diagnostics())
+		}
+	}
+}

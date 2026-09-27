@@ -1,10 +1,5 @@
 package extract
 
-import (
-	"path"
-	"strings"
-)
-
 func hasGoCallPath(analysis *Analysis, source, target *Symbol) bool {
 	if source.Key == target.Key {
 		return true
@@ -29,42 +24,6 @@ func hasGoCallPath(analysis *Analysis, source, target *Symbol) bool {
 
 func resolvedGoCalls(analysis *Analysis, symbol *Symbol) []*Symbol {
 	return resolvedNavigationCalls(analysis, symbol)
-}
-
-func resolveGoCall(analysis *Analysis, packageID, call string) *Symbol {
-	if !strings.Contains(call, ".") {
-		return analysis.PackageSymbols[packageID+":"+call]
-	}
-	if local := analysis.PackageSymbols[packageID+":"+call]; local != nil {
-		return local
-	}
-	parts := strings.SplitN(call, ".", 2)
-	module := analysis.PackageImports[packageID][parts[0]]
-	if module == "" {
-		return nil
-	}
-	if targetPackageID := analysis.ImportPathPackages[module]; targetPackageID != "" {
-		return analysis.PackageSymbols[targetPackageID+":"+parts[1]]
-	}
-	return uniqueImportedGoSymbol(analysis, path.Base(module), parts[1])
-}
-
-func uniqueImportedGoSymbol(analysis *Analysis, packageName, symbolName string) *Symbol {
-	var result *Symbol
-	for packageID, name := range analysis.PackageNames {
-		if name != packageName {
-			continue
-		}
-		candidate := analysis.PackageSymbols[packageID+":"+symbolName]
-		if candidate == nil {
-			continue
-		}
-		if result != nil {
-			return nil
-		}
-		result = candidate
-	}
-	return result
 }
 
 func hasGoOrderedPhasePath(analysis *Analysis, source, target *Symbol) bool {

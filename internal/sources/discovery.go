@@ -104,14 +104,6 @@ func CollectFilesUnder(dirs []string, root string) ([]string, error) {
 	return files, nil
 }
 
-func collectCandidateFiles(globs []string, root string) ([]string, error) {
-	return collectCandidateFilesContext(context.Background(), globs, root)
-}
-
-func collectCandidateFilesContext(ctx context.Context, globs []string, root string) ([]string, error) {
-	return collectCandidateFilesConfiguredContext(ctx, globs, root, ignoreConfig{})
-}
-
 func collectCandidateFilesConfiguredContext(ctx context.Context, globs []string, root string, ignore ignoreConfig) ([]string, error) {
 	cwd, err := os.Getwd()
 	if err != nil {
@@ -265,7 +257,7 @@ func (c *candidateCollector) addRecursiveGlob(pattern string) error {
 	return nil
 }
 
-// collectListingFiles resolves positionals for path-listing modes (--files and
+// collectListingFilesConfiguredContext resolves positionals for path-listing modes (--files and
 // --outline). Bare positionals that name an existing directory act as scope
 // roots (where to look); positionals containing glob metacharacters, or naming
 // individual files, act as path filters (what to keep). A file is listed when it
@@ -273,14 +265,6 @@ func (c *candidateCollector) addRecursiveGlob(pattern string) error {
 // filter (or any file when no filters are given). This makes "grepple -l GLOB DIR"
 // mean "paths matching GLOB, scoped to DIR" instead of unioning every file under
 // DIR with the glob results.
-func collectListingFiles(globs []string, root string) ([]string, error) {
-	return collectListingFilesContext(context.Background(), globs, root)
-}
-
-func collectListingFilesContext(ctx context.Context, globs []string, root string) ([]string, error) {
-	return collectListingFilesConfiguredContext(ctx, globs, root, ignoreConfig{})
-}
-
 func collectListingFilesConfiguredContext(ctx context.Context, globs []string, root string, ignore ignoreConfig) ([]string, error) {
 	roots, filters := splitGlobRoots(globs)
 

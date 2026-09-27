@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/greppleai/grepple/internal/gritql"
 	"github.com/greppleai/grepple/internal/cliruntime"
+	"github.com/greppleai/grepple/internal/gritql"
 	sourcedomain "github.com/greppleai/grepple/internal/sources"
 )
 
@@ -49,9 +49,9 @@ func compileRelationConfig(config *relationConfig) (gritql.RelationSpec, error) 
 	}
 	spec := gritql.RelationSpec{
 		Left: left, Right: right, Partition: partition,
-		LeftKey:      gritql.RelationKey{Binding: config.LeftKey.Binding, DescendantKind: config.LeftKey.DescendantKind},
-		RightKey:     gritql.RelationKey{Binding: config.RightKey.Binding, DescendantKind: config.RightKey.DescendantKind},
-		PartitionKey: gritql.RelationKey{Binding: config.PartitionKey.Binding, DescendantKind: config.PartitionKey.DescendantKind},
+		LeftKey:      gritql.RelationKey{Binding: config.LeftKey.Binding, DescendantKind: config.LeftKey.DescendantKind, Projection: config.LeftKey.Projection},
+		RightKey:     gritql.RelationKey{Binding: config.RightKey.Binding, DescendantKind: config.RightKey.DescendantKind, Projection: config.RightKey.Projection},
+		PartitionKey: gritql.RelationKey{Binding: config.PartitionKey.Binding, DescendantKind: config.PartitionKey.DescendantKind, Projection: config.PartitionKey.Projection},
 		Scope:        config.Scope, Mode: config.Mode, LeftInclude: config.LeftInclude, UniqueLeft: config.UniqueLeft,
 	}
 	if err := spec.Validate(); err != nil {
@@ -63,7 +63,7 @@ func compileRelationConfig(config *relationConfig) (gritql.RelationSpec, error) 
 func validateRelationMessage(message string, spec gritql.RelationSpec) error {
 	for _, match := range relationPlaceholder.FindAllStringSubmatch(message, -1) {
 		key := match[1]
-		if spec.Mode == "unmatched_left" && strings.HasPrefix(key, "right.") {
+		if (spec.Mode == "unmatched_left" || spec.Mode == "unmatched_left_any") && strings.HasPrefix(key, "right.") {
 			return fmt.Errorf("relation message placeholder %q requires a matched right finding", key)
 		}
 		if key == "key" || key == "left.path" || key == "left.basename" || key == "right.path" || key == "right.basename" {
@@ -164,7 +164,7 @@ func scanRelationalRules(ctx context.Context, root string, paths []string, rules
 				return nil, fmt.Errorf("hook %s: %w", item.ID, err)
 			}
 			reported := hit.Right
-			if item.relation.Mode == "unmatched_left" {
+			if item.relation.Mode == "unmatched_left" || item.relation.Mode == "unmatched_left_any" {
 				reported = hit.Left
 			}
 			start := reported.Start()

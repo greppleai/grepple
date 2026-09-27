@@ -265,11 +265,6 @@ func appendEvaluationRecords(out []EvaluationMatch, records []queryRecord, candi
 	return out, nil
 }
 
-// EvaluateDocument is an explicit-name alias for Evaluate.
-func EvaluateDocument(ctx context.Context, program *Program, document *parser.Document, options EvaluateOptions) ([]EvaluationMatch, error) {
-	return Evaluate(ctx, program, document, options)
-}
-
 func normalizeEvaluateOptions(o EvaluateOptions) EvaluateOptions {
 	o.MaxDepth = boundedOption(o.MaxDepth, defaultMaxDepth, hardMaxDepth)
 	o.MaxCandidates = boundedOption(o.MaxCandidates, defaultMaxCandidates, hardMaxCandidates)

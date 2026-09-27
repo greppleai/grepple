@@ -1402,14 +1402,6 @@ func memberIdentity(member Member) string {
 	return member.Language + ":" + member.ModuleID
 }
 
-func memberLanguageCount(members []Member) int {
-	languages := map[string]bool{}
-	for _, member := range members {
-		languages[member.Language] = true
-	}
-	return len(languages)
-}
-
 func kindMismatch(expected *DiagramClass, actual *Declaration) string {
 	article := "a"
 	if expected.Kind == "interface" || expected.Kind == "alias" {

@@ -13,18 +13,22 @@ import (
 
 // RelationKey projects one named structural capture. DescendantKind optionally
 // selects its first descendant of that grammar kind (including the root).
+// Projection "go-return-types" extracts all declared result types (or no keys
+// for a function with no results) for unmatched_left_any in Go.
 // Keys compare normalized structure, not whitespace or textual coincidence.
 type RelationKey struct {
 	Binding        string
 	DescendantKind string
+	Projection     string
 }
 
 // RelationSpec joins two GritQL result sets across complete source files.
 // Scope is "directory" or "repository". A partition program can further
 // restrict matches to one source-declared namespace (for example Go packages).
 // Mode "unmatched_left" reports left findings without a matching right finding,
-// including in the same file. The default mode reports pairs in different files.
-// UniqueLeft suppresses ambiguous declaration matches in the default mode.
+// including in the same file. "unmatched_left_any" reports left findings only
+// when none of their projected keys match. The default mode reports pairs in
+// different files. UniqueLeft suppresses ambiguous default-mode matches.
 type RelationSpec struct {
 	Left, Right, Partition *Program
 	LeftKey, RightKey      RelationKey
@@ -35,7 +39,7 @@ type RelationSpec struct {
 }
 
 // RelationHit contains the reported finding on Right for pairs, or on Left
-// for unmatched_left. The opposite side is absent in unmatched_left results.
+// for unmatched modes. The opposite side is absent in unmatched results.
 type RelationHit struct {
 	Left, Right  Finding
 	Key, KeyText string
@@ -45,6 +49,8 @@ type relationFact struct {
 	finding   Finding
 	key       string
 	keyText   string
+	keys      []string
+	satisfied bool
 	partition string
 	group     string
 }
@@ -141,6 +147,9 @@ func (spec RelationSpec) JoinRows(rows [][]ProgramScanResult) ([]RelationHit, er
 	if spec.Mode == "unmatched_left" {
 		return unmatchedRelationFacts(left, right), nil
 	}
+	if spec.Mode == "unmatched_left_any" {
+		return unmatchedAnyRelationFacts(left, right), nil
+	}
 	return joinRelationFacts(left, right, spec.UniqueLeft), nil
 }
 
@@ -151,11 +160,21 @@ func validateRelationSpec(spec RelationSpec) error {
 	if spec.Left == nil || spec.Right == nil || spec.Scope != "directory" && spec.Scope != "repository" {
 		return fmt.Errorf("relation requires two programs and scope directory or repository")
 	}
-	if spec.Mode != "" && spec.Mode != "unmatched_left" {
+	if spec.Mode != "" && spec.Mode != "unmatched_left" && spec.Mode != "unmatched_left_any" {
 		return fmt.Errorf("unsupported relation mode %q", spec.Mode)
 	}
-	if spec.Mode == "unmatched_left" && spec.UniqueLeft {
-		return fmt.Errorf("unique_left is not supported in unmatched_left mode")
+	if spec.Mode != "" && spec.UniqueLeft {
+		return fmt.Errorf("unique_left is not supported in unmatched mode")
+	}
+	if spec.LeftKey.Projection != "" {
+		if spec.LeftKey.Projection != "go-return-types" || spec.Mode != "unmatched_left_any" || spec.Left.Language() != "go" || spec.LeftKey.DescendantKind != "" || spec.Scope != "directory" || spec.Partition == nil {
+			return fmt.Errorf("go-return-types projection requires directory-scoped Go unmatched_left_any with a package partition and no descendant_kind")
+		}
+	} else if spec.Mode == "unmatched_left_any" {
+		return fmt.Errorf("unmatched_left_any requires a projected left key")
+	}
+	if spec.RightKey.Projection != "" || spec.PartitionKey.Projection != "" {
+		return fmt.Errorf("only the left key supports a projection")
 	}
 	if len(spec.LeftInclude) > 32 || ValidateGlobs(spec.LeftInclude, nil) != nil {
 		return fmt.Errorf("relation left_include requires at most 32 valid globs")
@@ -203,7 +222,11 @@ func validateRelationSpec(spec RelationSpec) error {
 func relationFacts(findings []Finding, key RelationKey, scope string, partitions map[string]string, partitioned bool) ([]relationFact, error) {
 	facts := make([]relationFact, 0, len(findings))
 	for _, finding := range findings {
-		value, text, err := relationKey(finding, key)
+		var value, text string
+		var err error
+		if key.Projection == "" {
+			value, text, err = relationKey(finding, key)
+		}
 		if err != nil {
 			return nil, err
 		}
@@ -219,7 +242,14 @@ func relationFacts(findings []Finding, key RelationKey, scope string, partitions
 				return nil, fmt.Errorf("missing source partition for %s", finding.Path())
 			}
 		}
-		facts = append(facts, relationFact{finding: finding, key: value, keyText: text, group: group, partition: partition})
+		fact := relationFact{finding: finding, key: value, keyText: text, group: group, partition: partition}
+		if key.Projection == "go-return-types" {
+			fact.keys, fact.satisfied, err = goResultTypeKeys(finding, key.Binding)
+			if err != nil {
+				return nil, err
+			}
+		}
+		facts = append(facts, fact)
 	}
 	return facts, nil
 }

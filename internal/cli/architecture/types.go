@@ -7,10 +7,9 @@ import (
 	"os"
 
 	"github.com/greppleai/grepple/internal/analysis"
-	"github.com/greppleai/grepple/internal/wire"
 	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
-	"github.com/greppleai/grepple/internal/parser"
 	"github.com/greppleai/grepple/internal/search"
+	"github.com/greppleai/grepple/internal/wire"
 )
 
 const defaultTextOutputBytes = 16 * 1024
@@ -30,11 +29,8 @@ type architectureCount = analysis.ArchitectureCount
 type architectureSymbol = analysis.ArchitectureSymbol
 type architectureRelation = analysis.ArchitectureRelation
 type architectureRelationEvidence = analysis.ArchitectureRelationEvidence
-type architectureRelationCoverage = analysis.ArchitectureRelationCoverage
 
 type directoryArchitecture = Report
-type navigationGraphTruncation = Truncation
-type navigationSourceSummary = SourceSummary
 
 func isExtractHelp(value string) bool { return value == "--help" || value == "-h" || value == "help" }
 
@@ -202,14 +198,4 @@ func (w *outputWriter) writeJSON(value any) error      { return w.output.WriteJS
 
 func compactNavigationSourceSummary(s SourceSummary) string {
 	return fmt.Sprintf("discovered:%d,selected:%d,parsed:%d,skipped:%d,failed:%d,recovered:%d", s.Discovered, s.Selected, s.Parsed, s.Skipped, s.Failed, s.Recovered)
-}
-func navigationSourcePaths(paths []string) []string {
-	result := make([]string, 0, len(paths))
-	for _, path := range paths {
-		capabilities, ok := parser.CapabilitiesForLanguage(parser.LanguageFor(path))
-		if ok && capabilities.Navigation {
-			result = append(result, path)
-		}
-	}
-	return result
 }

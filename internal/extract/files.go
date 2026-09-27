@@ -16,11 +16,6 @@ var excludedDirectories = map[string]bool{
 	"node_modules": true, "vendor": true,
 }
 
-func isSourceFile(path string) bool {
-	definition, ok := languageDefinitionForPath(path)
-	return ok && definition.acceptsSource(path)
-}
-
 func isTypeScriptDeclaration(path string) bool {
 	return strings.HasSuffix(path, ".d.ts") || strings.HasSuffix(path, ".d.mts") || strings.HasSuffix(path, ".d.cts")
 }

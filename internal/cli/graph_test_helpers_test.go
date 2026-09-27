@@ -16,14 +16,9 @@ type navigationGraphTruncation = graphcommand.Truncation
 func buildNavigationGraphOutputFromPaths(paths []string, maxFiles int) navigationGraphOutput {
 	return graphcommand.BuildFromPaths(paths, maxFiles)
 }
-func graphContinuationCommand(mode string, paths []string, truncation *navigationGraphTruncation) string {
-	return graphContinuationCommandWithOptions(cliruntime.RepositoryInvocationOptions{}, mode, paths, truncation)
-}
-
 func graphContinuationCommandWithOptions(options cliruntime.RepositoryInvocationOptions, mode string, paths []string, truncation *navigationGraphTruncation) string {
 	return graphcommand.ContinuationCommand(newCommandContextWith(options, 0, nil), mode, paths, truncation)
 }
-func shortGraphID(id string) string { return graphcommand.ShortID(id) }
 
 func writeGraphSource(t *testing.T, root, path, content string) string {
 	t.Helper()

@@ -35,20 +35,22 @@ type rule struct {
 type relationKeyConfig struct {
 	Binding        string `yaml:"binding"`
 	DescendantKind string `yaml:"descendant_kind"`
+	Projection     string `yaml:"projection"`
 }
 
 type relationConfig struct {
-	LeftQuery      string            `yaml:"left_query"`
-	RightQuery     string            `yaml:"right_query"`
-	PartitionQuery string            `yaml:"partition_query"`
-	LeftKey        relationKeyConfig `yaml:"left_key"`
-	RightKey       relationKeyConfig `yaml:"right_key"`
-	PartitionKey   relationKeyConfig `yaml:"partition_key"`
-	Scope          string            `yaml:"scope"`
-	Mode           string            `yaml:"mode"`
-	LeftInclude    []string          `yaml:"left_include"`
-	MaxFindings    int               `yaml:"max_findings"`
-	UniqueLeft     bool              `yaml:"unique_left"`
+	LeftQuery         string            `yaml:"left_query"`
+	RightQuery        string            `yaml:"right_query"`
+	PartitionQuery    string            `yaml:"partition_query"`
+	LeftKey           relationKeyConfig `yaml:"left_key"`
+	RightKey          relationKeyConfig `yaml:"right_key"`
+	PartitionKey      relationKeyConfig `yaml:"partition_key"`
+	Scope             string            `yaml:"scope"`
+	Mode              string            `yaml:"mode"`
+	LeftInclude       []string          `yaml:"left_include"`
+	MaxFindings       int               `yaml:"max_findings"`
+	ReportChangedOnly bool              `yaml:"report_changed_only"`
+	UniqueLeft        bool              `yaml:"unique_left"`
 }
 
 type compiledRule struct {

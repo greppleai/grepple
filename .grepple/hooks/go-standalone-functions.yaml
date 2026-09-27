@@ -1,0 +1,40 @@
+# Structural package-boundary warning. Methods, init, and main are exempt.
+# A standalone function is exempt when any declared result type is an inline,
+# predeclared (error/any), or same-package named interface, even across files.
+# Imported interfaces, indirect aliases, and build-tag selection are not resolved.
+version: 1
+id: go-standalone-functions
+event: Stop
+engine: gritql-relational-v1
+include:
+  - "**/*.go"
+exclude:
+  - "**/*_test.go"
+  - "**/vendor/**"
+  - "**/testdata/**"
+  - "**/node_modules/**"
+  - "**/.*/**"
+  - "**/.*"
+severity: warning
+message: "Review this package-level function: no declared result is a known interface in its package. Methods are exempt; justified stateless helpers may remain."
+relation:
+  report_changed_only: true
+  left_query: |
+    language go
+    and {
+      function_declaration(name=$name),
+      maybe function_declaration(result=$result),
+      not `func init() { $body }`,
+      not `func main() { $body }`,
+    }
+  right_query: |
+    language go
+    type_spec(name=$type, type=interface_type())
+  partition_query: |
+    language go
+    package_clause($package)
+  left_key: {binding: result, projection: go-return-types}
+  right_key: {binding: type}
+  partition_key: {binding: package}
+  scope: directory
+  mode: unmatched_left_any
