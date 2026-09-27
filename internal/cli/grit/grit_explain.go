@@ -181,7 +181,11 @@ func collectGritExpressionExplanations(expression gritql.Expression, interpretat
 	for _, reference := range expression.Variables() {
 		if !reference.Anonymous {
 			addGritVariableOccurrence(variables, reference.Name, reference.Range)
-			addGritVariableRole(variables, reference.Name, "expression:"+kind, "")
+			bindingKind := ""
+			if expression.Kind() == gritql.KindAs {
+				bindingKind = "node"
+			}
+			addGritVariableRole(variables, reference.Name, "expression:"+kind, bindingKind)
 		}
 	}
 	for _, template := range expression.Templates() {
@@ -278,7 +282,7 @@ func gritProgramFeatures(features gritql.FeatureSet) []string {
 	known := []struct {
 		flag gritql.FeatureSet
 		name string
-	}{{gritql.FeatureSnippet, "snippet"}, {gritql.FeatureRegex, "regex"}, {gritql.FeatureAnd, "and"}, {gritql.FeatureOr, "or"}, {gritql.FeatureNot, "not"}, {gritql.FeatureMaybe, "maybe"}, {gritql.FeatureContains, "contains"}, {gritql.FeatureWithin, "within"}, {gritql.FeatureWhere, "where"}, {gritql.FeatureVariables, "variables"}}
+	}{{gritql.FeatureSnippet, "snippet"}, {gritql.FeatureRegex, "regex"}, {gritql.FeatureAnd, "and"}, {gritql.FeatureOr, "or"}, {gritql.FeatureNot, "not"}, {gritql.FeatureMaybe, "maybe"}, {gritql.FeatureContains, "contains"}, {gritql.FeatureWithin, "within"}, {gritql.FeatureWhere, "where"}, {gritql.FeatureVariables, "variables"}, {gritql.FeatureAs, "as"}}
 	result := []string{}
 	for _, feature := range known {
 		if features.Has(feature.flag) {

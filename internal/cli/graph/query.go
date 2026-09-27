@@ -45,17 +45,6 @@ func (graphQueryArgs) Description() string {
 	return "Query a deterministic local or exact indexed-repository navigation graph. Human output is the default; --json emits the complete subgraph. Exactly one root selector is required."
 }
 
-func graphQuerySemantics(direction search.NavigationQueryDirection) string {
-	switch direction {
-	case search.NavigationQueryDependencies:
-		return "Navigation semantics: dependencies traverse outgoing call/navigation edges; they are not build-system or package-manager dependencies."
-	case search.NavigationQueryDependents:
-		return "Navigation semantics: dependents traverse incoming call/navigation edges; they are not build-system or package-manager dependents."
-	default:
-		return ""
-	}
-}
-
 // runQuery traverses a navigation graph.
 func runQuery(application cliruntime.Context, direction search.NavigationQueryDirection, args []string) error {
 	values, help, err := parseGraphQueryArgs(application, direction, args)
@@ -131,9 +120,6 @@ func parseGraphQueryArgs(application cliruntime.Context, direction search.Naviga
 		if errors.Is(err, arg.ErrHelp) {
 			argumentParser.WriteHelp(application.Stdout())
 			fmt.Fprintln(application.Stdout(), "Required root selector: choose exactly one of --symbol, --at, --package, --module, or --root-path.")
-			if semantics := graphQuerySemantics(direction); semantics != "" {
-				fmt.Fprintln(application.Stdout(), semantics)
-			}
 			return values, true, nil
 		}
 		return values, false, err

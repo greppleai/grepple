@@ -13,14 +13,15 @@ func newGoLanguage() languageAdapter {
 	return &goLanguage{
 		grammar: newSyntaxLanguage(golang.Language()),
 		rules: structureRules{
-			structuralTypes:       newStringSet("import_declaration", "function_declaration", "method_declaration", "type_declaration", "var_declaration", "const_declaration"),
-			contextTypes:          newStringSet("function_declaration", "method_declaration", "type_declaration", "var_declaration", "const_declaration"),
-			containerTypes:        newStringSet("type_declaration"),
-			classDeclarationTypes: newStringSet(),
-			classBodyTypes:        newStringSet(),
-			exportTypes:           newStringSet(),
-			functionLikeTypes:     newStringSet("function_declaration", "method_declaration"),
-			nameFieldCandidates:   newStringSet("identifier", "field_identifier", "type_identifier"),
+			structuralTypes:         newStringSet("import_declaration", "function_declaration", "method_declaration", "type_declaration", "var_declaration", "const_declaration"),
+			contextTypes:            newStringSet("function_declaration", "method_declaration", "type_declaration", "var_declaration", "const_declaration"),
+			containerTypes:          newStringSet("type_declaration"),
+			classDeclarationTypes:   newStringSet(),
+			classBodyTypes:          newStringSet(),
+			exportTypes:             newStringSet(),
+			functionLikeTypes:       newStringSet("function_declaration", "method_declaration"),
+			functionExpressionTypes: newStringSet("func_literal"),
+			nameFieldCandidates:     newStringSet("identifier", "field_identifier", "type_identifier"),
 		},
 	}
 }

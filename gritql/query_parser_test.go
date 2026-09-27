@@ -17,7 +17,9 @@ func TestParseQueryClosedGrammar(t *testing.T) {
 	}{
 		{"snippet", "language go\n`exec.Command($args)`", "codeSnippet"},
 		{"regex constraint", "language go\n`f($x)` where { $x <: r\"^x$\", }", "patternWhere"},
+		{"empty constraint", "language go\n`f($args)` where { $args <: empty }", "patternWhere"},
 		{"boolean", "language go\nand { `x`, not `y`, }", "patternAnd"},
+		{"direct function parent", "language go\nand { `{}`, not parent kind(\"function\"), }", "patternAnd"},
 		{"right associative", "language go\nnot maybe `x`", "patternNot"},
 		{"comments CRLF", "language go // header\r\n// lead\r\ncontains // separator\r\n`茶` // eof", "patternContains"},
 		{"snippet escapes", "language go\n`var s = \\`raw\\``", "codeSnippet"},
@@ -37,7 +39,7 @@ func TestParseQueryClosedGrammar(t *testing.T) {
 			}
 			pattern := doc.root().childByFieldName("pattern")
 			if got := pattern.kind(); got != tt.kind {
-				t.Fatalf("pattern kind = %q, want %q; tree: %s", got, tt.kind, doc.root().sexp())
+				t.Fatalf("pattern kind = %q, want %q; source: %q", got, tt.kind, tt.src)
 			}
 			if got := doc.rangeForBytes(0, len(tt.src)); got.Start.Line != 1 || got.Start.Column != 1 {
 				t.Fatalf("bad whole range: %+v", got)
@@ -112,7 +114,7 @@ func TestParseQueryRecognizesUnsupported(t *testing.T) {
 		defer doc.close()
 		var syntaxErr *querySyntaxError
 		if !errors.As(err, &syntaxErr) || syntaxErr.Kind != queryUnsupported {
-			t.Errorf("parseQuery(%q) error = %#v, want unsupported; tree: %s", src, err, doc.root().sexp())
+			t.Errorf("parseQuery(%q) error = %#v, want unsupported", src, err)
 		}
 	}
 }
@@ -126,7 +128,7 @@ func TestQueryRangesConcreteChildrenAndClose(t *testing.T) {
 	}
 	n := doc.root().childByFieldName("pattern")
 	if n.kind() != "patternContains" || len(n.children()) == 0 || n.children()[0].text() != "contains" {
-		t.Fatalf("concrete node facade lost order/text: %s", n.sexp())
+		t.Fatalf("concrete node facade lost order/text: kind=%q source=%q", n.kind(), src)
 	}
 	snippet := n.childByFieldName("contains")
 	r := snippet.byteRange()

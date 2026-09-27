@@ -33,6 +33,15 @@ func OutlineOrContent(outline parser.FileOutline, content string) string {
 	return rendered
 }
 
+// outlineOutput never falls back to raw content when filtering, because that
+// would reveal declarations that the caller explicitly excluded.
+func outlineOutput(outline parser.FileOutline, content string, filtered bool) string {
+	if filtered {
+		return Outline(outline)
+	}
+	return OutlineOrContent(outline, content)
+}
+
 func renderSymbols(output *strings.Builder, symbols []parser.Symbol, depth int) {
 	indent := strings.Repeat("  ", depth)
 	for _, symbol := range symbols {

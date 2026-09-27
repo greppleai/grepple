@@ -24,7 +24,6 @@ grepple --at path/to/file.go:LINE
    ```bash
    grepple graph callers --at path/to/file.go:LINE --depth 2 SCOPE
    grepple graph callees --at path/to/file.go:LINE --depth 2 SCOPE
-   grepple graph impact  --at path/to/file.go:LINE --depth 2 SCOPE
    ```
 4. If bounded human output reports omissions or completeness is required, narrow the universe or rerun the focused query with `--json`; do not replace it with a whole-repository graph dump. If JSON spills, inspect the `grepple-artifact-v1` descriptor and read only relevant artifact ranges. Use resolution totals and per-language/confidence ambiguity rates to decide whether candidate inspection is material for this scope.
 
@@ -36,7 +35,7 @@ grepple --at path/to/file.go:LINE
 - Paths passed to the command define the graph universe. Include consumers outside the declaration's package when claiming repository impact.
 - Check `metadata.page.complete` plus discovered/selected/parsed/skipped/failed/recovered source totals. Failed, recovered, or truncated source prevents a complete static-impact claim; use `nextCommand` when supplied.
 - Navigation does not prove interface dispatch, reflection, generated calls, runtime registration, data flow, or string-based lookup. Search those mechanisms explicitly when relevant.
-- Directory relation evidence and callable impact differ. Use `architecture directory|resolve|why` for physical ownership and source-linked call/import/type relations, but use graph traversal for callable impact and inspect architecture coverage before treating an absent relation as evidence.
+- Directory relation evidence and callable impact differ. Use bounded `architecture directory` for physical ownership, `--outline` for declaration shape, and focused graph traversal for callable impact; inspect architecture coverage before treating absent relations as evidence.
 
 ## Decision record
 

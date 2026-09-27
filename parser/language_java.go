@@ -13,14 +13,15 @@ func newJavaLanguage() languageAdapter {
 	return &javaLanguage{
 		grammar: newSyntaxLanguage(java.Language()),
 		rules: structureRules{
-			structuralTypes:       newStringSet("import_declaration", "class_declaration", "interface_declaration", "enum_declaration", "record_declaration", "method_declaration", "constructor_declaration", "field_declaration"),
-			contextTypes:          newStringSet("class_declaration", "interface_declaration", "enum_declaration", "record_declaration", "method_declaration", "constructor_declaration", "field_declaration"),
-			containerTypes:        newStringSet("class_declaration", "interface_declaration", "enum_declaration", "record_declaration"),
-			classDeclarationTypes: newStringSet("class_declaration", "interface_declaration", "enum_declaration", "record_declaration"),
-			classBodyTypes:        newStringSet("class_body", "interface_body", "enum_body", "record_body"),
-			exportTypes:           newStringSet(),
-			functionLikeTypes:     newStringSet("method_declaration", "constructor_declaration"),
-			nameFieldCandidates:   newStringSet("identifier", "type_identifier"),
+			structuralTypes:         newStringSet("import_declaration", "class_declaration", "interface_declaration", "enum_declaration", "record_declaration", "method_declaration", "constructor_declaration", "field_declaration"),
+			contextTypes:            newStringSet("class_declaration", "interface_declaration", "enum_declaration", "record_declaration", "method_declaration", "constructor_declaration", "field_declaration"),
+			containerTypes:          newStringSet("class_declaration", "interface_declaration", "enum_declaration", "record_declaration"),
+			classDeclarationTypes:   newStringSet("class_declaration", "interface_declaration", "enum_declaration", "record_declaration"),
+			classBodyTypes:          newStringSet("class_body", "interface_body", "enum_body", "record_body"),
+			exportTypes:             newStringSet(),
+			functionLikeTypes:       newStringSet("method_declaration", "constructor_declaration"),
+			functionExpressionTypes: newStringSet("lambda_expression"),
+			nameFieldCandidates:     newStringSet("identifier", "type_identifier"),
 		},
 	}
 }

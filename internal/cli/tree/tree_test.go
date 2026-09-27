@@ -2,6 +2,8 @@ package tree
 
 import (
 	"bytes"
+	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/greppleai/grepple/api"
@@ -13,7 +15,7 @@ func TestRunUsesLocalTreeByDefault(t *testing.T) {
 	var stdout bytes.Buffer
 	calledPath, calledDepth := "", 0
 	application := cliruntime.Environment{Output: &stdout}
-	command := &command{context: application, local: func(path string, depth int, kind sourcedomain.Kind) (api.TreeResponse, error) {
+	command := &command{context: application, local: func(path string, depth int, kind sourcedomain.Kind, areas []string) (api.TreeResponse, error) {
 		calledPath, calledDepth = path, depth
 		return api.TreeResponse{Repo: ".", Path: path, Depth: depth, Entries: []api.TreeEntry{{Path: "main.go"}}}, nil
 	}}
@@ -26,6 +28,44 @@ func TestRunUsesLocalTreeByDefault(t *testing.T) {
 	}
 	if stdout.String() != "./src\n└── main.go\n" {
 		t.Fatalf("output=%q", stdout.String())
+	}
+}
+
+func TestTreeDefaultsToOneLevelAndAllowsExplicitExpansion(t *testing.T) {
+	var stdout bytes.Buffer
+	calledDepth := 0
+	cmd := &command{context: cliruntime.Environment{Output: &stdout}, local: func(path string, depth int, kind sourcedomain.Kind, areas []string) (api.TreeResponse, error) {
+		calledDepth = depth
+		return api.TreeResponse{Repo: ".", Depth: depth, Entries: []api.TreeEntry{{Path: "pkg", Dir: true}}}, nil
+	}}
+	if err := cmd.Run([]string{"."}); err != nil || calledDepth != 1 {
+		t.Fatalf("default tree depth=%d err=%v", calledDepth, err)
+	}
+	if err := cmd.Run([]string{"--depth", "3", "."}); err != nil || calledDepth != 3 {
+		t.Fatalf("expanded tree depth=%d err=%v", calledDepth, err)
+	}
+}
+
+func TestTreeAreaFlagsAreRepeatableAndLocalOnly(t *testing.T) {
+	var stdout bytes.Buffer
+	var selected []string
+	cmd := &command{context: cliruntime.Environment{Output: &stdout}, local: func(path string, depth int, kind sourcedomain.Kind, areas []string) (api.TreeResponse, error) {
+		selected = append([]string(nil), areas...)
+		return api.TreeResponse{Repo: ".", Entries: []api.TreeEntry{{Path: "pkg", Dir: true}}}, nil
+	}}
+	if err := cmd.Run([]string{"--area", "backend", "--area", "tests", "."}); err != nil || !reflect.DeepEqual(selected, []string{"backend", "tests"}) {
+		t.Fatalf("repeatable areas=%v err=%v", selected, err)
+	}
+	for _, args := range [][]string{
+		{"--area", "Bad", "."},
+		{"--area", "", "."},
+		{"--area", "two--words", "."},
+		{"--area", "backend", "--repo", "owner/repo"},
+		{"--area", "backend", "owner/repo", "src"},
+	} {
+		if err := cmd.Run(args); err == nil || !strings.Contains(err.Error(), "--area") {
+			t.Fatalf("area args=%q err=%v", args, err)
+		}
 	}
 }
 

@@ -96,7 +96,7 @@ func TestGraphJSONReportsFileTruncation(t *testing.T) {
 			t.Fatal(err)
 		}
 	})
-	for _, expected := range []string{"! truncated max_files limit=1 skipped=1", "continue: grepple graph callees", "go func A a.go:2"} {
+	for _, expected := range []string{"! truncated max_files limit=1 skipped=1", "continue: grepple graph callees", "go func A() @ a.go:2"} {
 		if !strings.Contains(human, expected) {
 			t.Fatalf("incomplete human graph hides %q:\n%s", expected, human)
 		}
@@ -204,66 +204,35 @@ func TestGraphCallersQuerySupportsAtAndCompactOutput(t *testing.T) {
 			t.Fatal(err)
 		}
 	})
-	want := "go func Middle flow.go:3\n" +
-		"<- func Root flow.go:2 call:2 [unique-terminal]\n" +
-		"  <- func Consumer flow.go:4 call:4 [unique-terminal]\n"
+	want := "go func Middle() @ flow.go:3\n" +
+		"<- func Root() @ flow.go:2 call:2 [unique-terminal]\n" +
+		"  <- func Consumer() @ flow.go:4 call:4 [unique-terminal]\n"
 	if output != want {
 		t.Fatalf("focused callers should not repeat query metadata:\n%s\nwant:\n%s", output, want)
 	}
 }
 
-func TestGraphDependencyQueriesSupportScopeRoots(t *testing.T) {
+func TestGraphCallersAndCalleesSupportScopeRoots(t *testing.T) {
 	dir := chdirTemp(t)
 	writeGraphSource(t, dir, "go.mod", "module example.com/project\n")
 	writeGraphSource(t, dir, "app/app.go", "package app\nimport \"example.com/project/helper\"\nfunc Run(){ helper.Work() }\n")
 	writeGraphSource(t, dir, "helper/helper.go", "package helper\nfunc Work() {}\n")
-	for _, test := range []struct {
-		direction, rootPath string
-	}{
-		{"dependencies", "app"},
-		{"dependents", "helper"},
+	for _, test := range []struct{ direction, rootPath string }{
+		{"callees", "app"},
+		{"callers", "helper"},
 	} {
-		output := captureStdout(t, func() {
-			if err := Run([]string{"graph", test.direction, "--root-path", test.rootPath, "--depth", "1", "."}); err != nil {
+		jsonText := captureStdout(t, func() {
+			if err := Run([]string{"graph", test.direction, "--root-path", test.rootPath, "--depth", "1", "--json", "."}); err != nil {
 				t.Fatal(err)
 			}
 		})
-		for _, expected := range []string{"query " + test.direction + " depth=1 roots=", " go func Run ", " go func Work ", "Run -> Work#"} {
-			if !strings.Contains(output, expected) {
-				t.Fatalf("%s output missing %q:\n%s", test.direction, expected, output)
-			}
-		}
-	}
-}
-
-func TestGraphImpactQueryTraversesBothDirections(t *testing.T) {
-	dir := chdirTemp(t)
-	writeGraphSource(t, dir, "flow.go", "package sample\nfunc Root(){ Middle() }\nfunc Middle(){ Leaf() }\nfunc Leaf() {}\n")
-	output := captureStdout(t, func() {
-		if err := Run([]string{"graph", "impact", "--symbol", "Middle", "--depth", "1"}); err != nil {
+		var result navigationGraphOutput
+		if err := json.Unmarshal([]byte(jsonText), &result); err != nil {
 			t.Fatal(err)
 		}
-	})
-	want := "go func Middle flow.go:3\n" +
-		"<- func Root flow.go:2 call:2 [unique-terminal]\n" +
-		"-> func Leaf flow.go:4 call:3 [unique-terminal]\n"
-	if output != want {
-		t.Fatalf("focused impact should not repeat query metadata:\n%s\nwant:\n%s", output, want)
-	}
-	if strings.Contains(output, "\nD ") || strings.Contains(output, "\nC ") {
-		t.Fatalf("impact output repeats declaration/call rows:\n%s", output)
-	}
-	jsonText := captureStdout(t, func() {
-		if err := Run([]string{"graph", "impact", "--symbol", "Middle", "--depth", "1", "--json"}); err != nil {
-			t.Fatal(err)
+		if result.Query == nil || result.Query.Direction != test.direction || len(result.Calls) != 1 {
+			t.Fatalf("%s scope query=%+v", test.direction, result.Query)
 		}
-	})
-	var full navigationGraphOutput
-	if err := json.Unmarshal([]byte(jsonText), &full); err != nil {
-		t.Fatal(err)
-	}
-	if full.Query == nil || full.Query.Direction != "impact" || len(full.Query.RootIDs) != 1 || len(full.Calls) != 2 || full.Calls[0].ID == "" || full.Calls[1].ID == "" {
-		t.Fatalf("complete impact JSON lost traversal facts: %+v", full)
 	}
 }
 
@@ -299,8 +268,8 @@ func TestGraphQueryRejectsMissingAndAmbiguousSelectors(t *testing.T) {
 		{"graph", "callers"},
 		{"graph", "callees", "--symbol", "helper"},
 		{"graph", "callers", "--symbol", "helper", "--at", "a.go:2"},
-		{"graph", "dependencies", "--package", "sample", "--module", "sample"},
-		{"graph", "dependents", "--root-path", "missing"},
+		{"graph", "callees", "--package", "sample", "--module", "sample"},
+		{"graph", "callers", "--root-path", "missing"},
 		{"graph", "callers", "--symbol", "helper", "--language", "text"},
 		{"graph", "callers", "--symbol", "helper", "--confidence", "likely"},
 		{"graph", "callers", "--symbol", "helper", "--visibility", "maybe"},
@@ -361,7 +330,7 @@ func TestGraphResolvePreviewsDeterministicAtAlternatives(t *testing.T) {
 		t.Fatalf("unexpected resolve output: %#v", output)
 	}
 	for _, match := range output.Matches {
-		if match.ID == "" || match.At == "" || !strings.Contains(match.CallersCommand, "graph callers --at") || !strings.Contains(match.ImpactCommand, "graph impact --at") {
+		if match.ID == "" || match.At == "" || !strings.Contains(match.CallersCommand, "graph callers --at") || !strings.Contains(match.CalleesCommand, "graph callees --at") {
 			t.Fatalf("resolve match is not actionable: %#v", match)
 		}
 	}
@@ -394,14 +363,9 @@ func TestGraphResolveDefaultsToHumanOutputAndRequiresSelector(t *testing.T) {
 
 func TestGraphRecursiveHelpStatesOutputContract(t *testing.T) {
 	tests := [][]string{
-		{"help", "graph"},
 		{"help", "graph", "callers"},
 		{"help", "graph", "callees"},
-		{"help", "graph", "dependencies"},
-		{"help", "graph", "dependents"},
-		{"help", "graph", "impact"},
 		{"help", "graph", "resolve"},
-		{"help", "graph", "diff"},
 	}
 	for _, args := range tests {
 		output := captureStdout(t, func() {
@@ -415,25 +379,14 @@ func TestGraphRecursiveHelpStatesOutputContract(t *testing.T) {
 	}
 }
 
-func TestGraphDependencyHelpDefinesNavigationSemantics(t *testing.T) {
-	tests := []struct {
-		command string
-		want    string
-	}{
-		{command: "dependencies", want: "dependencies traverse outgoing call/navigation edges; they are not build-system or package-manager dependencies"},
-		{command: "dependents", want: "dependents traverse incoming call/navigation edges; they are not build-system or package-manager dependents"},
-	}
-	for _, test := range tests {
-		t.Run(test.command, func(t *testing.T) {
-			output := captureStdout(t, func() {
-				if err := Run([]string{"help", "graph", test.command}); err != nil {
-					t.Fatal(err)
-				}
-			})
-			if !strings.Contains(output, test.want) {
-				t.Fatalf("graph %s help did not define its edge semantics:\n%s", test.command, output)
-			}
-		})
+func TestGraphRemovedTraversalCommandsFailClearly(t *testing.T) {
+	for _, name := range []string{"impact", "dependencies", "dependents"} {
+		if err := Run([]string{"graph", name, "--symbol", "Run"}); err == nil || !strings.Contains(err.Error(), "has been removed") {
+			t.Fatalf("graph %s returned %v", name, err)
+		}
+		if err := Run([]string{"graph", name, "--help"}); err == nil || !strings.Contains(err.Error(), "has been removed") {
+			t.Fatalf("graph %s help returned %v", name, err)
+		}
 	}
 }
 

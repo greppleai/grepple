@@ -59,7 +59,6 @@ type ResolveMatch struct {
 	At             string                      `json:"at"`
 	CallersCommand string                      `json:"callersCommand"`
 	CalleesCommand string                      `json:"calleesCommand"`
-	ImpactCommand  string                      `json:"impactCommand"`
 }
 
 func (command *command) runResolve(args []string) error {
@@ -168,7 +167,7 @@ func resolveMatches(declarations []parser.NavigationDeclaration, symbol string, 
 	for _, declaration := range matched {
 		at := fmt.Sprintf("%s:%d", declaration.Path, declaration.Start)
 		prefix := " --at " + quoteArgument(at) + " --depth 2 " + scope
-		result = append(result, ResolveMatch{ID: declaration.ID, Name: declaration.Name, Kind: declaration.Kind, Language: declaration.Language, Path: declaration.Path, StartLine: declaration.Start, EndLine: declaration.End, Visibility: declaration.Visibility, At: at, CallersCommand: "grepple graph callers" + prefix, CalleesCommand: "grepple graph callees" + prefix, ImpactCommand: "grepple graph impact" + prefix})
+		result = append(result, ResolveMatch{ID: declaration.ID, Name: declaration.Name, Kind: declaration.Kind, Language: declaration.Language, Path: declaration.Path, StartLine: declaration.Start, EndLine: declaration.End, Visibility: declaration.Visibility, At: at, CallersCommand: "grepple graph callers" + prefix, CalleesCommand: "grepple graph callees" + prefix})
 	}
 	return result
 }
@@ -283,7 +282,7 @@ func renderCompactResolve(destination io.Writer, output ResolveOutput, maxBytes 
 		return nil
 	}
 	for _, match := range output.Matches {
-		line := fmt.Sprintf("D %s %s %s %s %s visibility=%s\n  at: %s\n  callers: %s\n  callees: %s\n  impact: %s\n", shortID(match.ID), match.Language, match.Kind, match.Name, resolveLocation(match), match.Visibility, match.At, match.CallersCommand, match.CalleesCommand, match.ImpactCommand)
+		line := fmt.Sprintf("D %s %s %s %s %s visibility=%s\n  at: %s\n  callers: %s\n  callees: %s\n", shortID(match.ID), match.Language, match.Kind, match.Name, resolveLocation(match), match.Visibility, match.At, match.CallersCommand, match.CalleesCommand)
 		if !write(line) {
 			return nil
 		}

@@ -12,9 +12,14 @@ func TestTopLevelHelpListsCommandFamilies(t *testing.T) {
 			t.Fatal(err)
 		}
 	})
-	for _, expected := range []string{"search", "write", "grit", "graph", "anchors", "boundaries", "examples", "extract", "architecture", "sources", "artifacts", "languages", "rules", "get", "tree", "repos", "refs", "ask", "ai-provider", "login", "logout", "version", "--production-only", "--no-repo-config"} {
+	for _, expected := range []string{"search", "write", "grit", "hook", "graph", "anchors", "examples", "architecture", "sources", "artifacts", "languages", "rules", "get", "tree", "repos", "refs", "ai-provider", "login", "logout", "version", "--production-only", "--no-repo-config"} {
 		if !strings.Contains(output, expected) {
 			t.Fatalf("top-level help missing %q:\n%s", expected, output)
+		}
+	}
+	for _, removed := range []string{"boundaries", "extract", "area", "start", "ask"} {
+		if strings.Contains(output, "  "+removed+" ") {
+			t.Fatalf("top-level help exposes removed command %q:\n%s", removed, output)
 		}
 	}
 	if count := strings.Count(output, "  refs         "); count != 1 {
@@ -27,8 +32,23 @@ func TestCommandAvailabilityRejectsWrongExecutionUniverse(t *testing.T) {
 		args []string
 		want string
 	}{
-		{args: []string{"extract", "--remote"}, want: "extract is local-only"},
+		{args: []string{"graph", "impact", "--symbol", "Run"}, want: "graph impact has been removed"},
+		{args: []string{"help", "graph", "impact"}, want: "graph impact has been removed"},
+		{args: []string{"graph", "dependencies", "--root-path", "pkg"}, want: "graph dependencies has been removed"},
+		{args: []string{"graph", "dependents", "--at", "file.go:1"}, want: "graph dependents has been removed"},
+		{args: []string{"area", "list", "--remote"}, want: "area has been removed"},
+		{args: []string{"start", "--remote"}, want: "start has been removed"},
+		{args: []string{"extract", "--remote"}, want: "extract has been removed"},
+		{args: []string{"boundaries"}, want: "boundaries has been removed"},
+		{args: []string{"ask", "question"}, want: "ask has been removed"},
+		{args: []string{"graph", "build"}, want: "graph build has been removed"},
+		{args: []string{"graph", "diff"}, want: "graph diff has been removed"},
+		{args: []string{"architecture", "why", "a", "b"}, want: "architecture why has been removed"},
+		{args: []string{"architecture", "resolve", "--symbol", "Run"}, want: "architecture resolve has been removed"},
+		{args: []string{"architecture", "responsibilities"}, want: "architecture responsibilities has been removed"},
+		{args: []string{"architecture", "compare"}, want: "architecture compare has been removed"},
 		{args: []string{"write", "--repo", "owner/repo"}, want: "write is local-only"},
+		{args: []string{"hook", "--repo", "owner/repo"}, want: "hook is local-only"},
 		{args: []string{"languages", "--server", "https://example.test"}, want: "languages is source-independent"},
 		{args: []string{"repos", "--local"}, want: "repos uses the remote service"},
 	} {

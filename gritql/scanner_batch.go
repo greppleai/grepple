@@ -184,7 +184,6 @@ func commitProgramRead(ctx context.Context, programs []ProgramScan, states []sca
 		return
 	}
 	batch.stats.FilesParsed++
-	defer document.Close()
 	for index, program := range programs {
 		if states[index].stop || !programMatchesCandidate(program.Program, candidate) || !programAnchorMatches(states[index], read.content) {
 			continue
@@ -192,6 +191,7 @@ func commitProgramRead(ctx context.Context, programs []ProgramScan, states []sca
 		evaluation := EvaluateDocumentFindings(ctx, program.Program, document, DocumentInput{Path: candidate.path, PatternID: program.PatternID, Message: program.Message}, states[index].options.EvaluateOptions)
 		commitProgramEvaluation(program.Program, &states[index], evaluation)
 	}
+	document.Close()
 }
 func programMatchesCandidate(program *Program, candidate preparedScanCandidate) bool {
 	return program != nil && program.Language() == candidate.language

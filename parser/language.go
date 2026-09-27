@@ -75,14 +75,15 @@ func (set stringSet) contains(value string) bool {
 }
 
 type structureRules struct {
-	structuralTypes       stringSet
-	contextTypes          stringSet
-	containerTypes        stringSet
-	classDeclarationTypes stringSet
-	classBodyTypes        stringSet
-	exportTypes           stringSet
-	functionLikeTypes     stringSet
-	nameFieldCandidates   stringSet
+	structuralTypes         stringSet
+	contextTypes            stringSet
+	containerTypes          stringSet
+	classDeclarationTypes   stringSet
+	classBodyTypes          stringSet
+	exportTypes             stringSet
+	functionLikeTypes       stringSet
+	functionExpressionTypes stringSet
+	nameFieldCandidates     stringSet
 }
 
 func extractNodeName(node *syntaxNode, _ string, config *structureRules) string {
@@ -192,6 +193,39 @@ func enrichLanguageCapabilities(capability LanguageCapabilities) LanguageCapabil
 		}
 	}
 	return capability
+}
+
+// GrammarNodeKind reports whether a named syntax kind belongs to the pinned
+// grammar for language. It does not parse source or infer runtime types.
+func GrammarNodeKind(language, kind string) bool {
+	adapter := adapterForLanguage(language)
+	if adapter == nil || kind == "" {
+		return false
+	}
+	grammar := adapter.Grammar()
+	return grammar.valid() && grammar.raw.IdForNodeKind(kind, true) != 0
+}
+
+// GrammarFieldName reports whether a field name exists anywhere in the pinned
+// grammar. Use GrammarFieldCardinality for a known parent node kind.
+func GrammarFieldName(language, field string) bool {
+	adapter := adapterForLanguage(language)
+	if adapter == nil || field == "" {
+		return false
+	}
+	grammar := adapter.Grammar()
+	return grammar.valid() && grammar.raw.FieldIdForName(field) != 0
+}
+
+// GrammarTokenKind reports whether an anonymous syntax token is present in
+// the pinned target grammar (for example Go's && and || operators).
+func GrammarTokenKind(language, kind string) bool {
+	adapter := adapterForLanguage(language)
+	if adapter == nil || kind == "" {
+		return false
+	}
+	grammar := adapter.Grammar()
+	return grammar.valid() && grammar.raw.IdForNodeKind(kind, false) != 0
 }
 
 // GrammarFieldCardinality returns the cardinality of a named field on a node kind.

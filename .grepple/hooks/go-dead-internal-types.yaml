@@ -1,0 +1,30 @@
+# Declarations must be under internal/, but references are scanned throughout
+# the selected repository (including cmd/ and other allowed importers).
+version: 1
+id: go-dead-internal-types
+event: Stop
+engine: gritql-relational-v1
+include:
+  - "**/*.go"
+exclude:
+  - "**/*_test.go"
+  - "**/vendor/**"
+  - "**/testdata/**"
+  - "**/node_modules/**"
+  - "**/.*/**"
+  - "**/.*"
+severity: warning
+message: "exported internal type {{left.name}} has no matching type identifier in selected repository source; review external or dynamic uses"
+relation:
+  left_include:
+    - "internal/**/*.go"
+  left_query: |
+    language go
+    type_spec(name=$name) where { $name <: r"^[A-Z]" }
+  right_query: |
+    language go
+    and { type_identifier() as $name, not within type_spec(name=$name), } where { $name <: r"^[A-Z]" }
+  left_key: {binding: name}
+  right_key: {binding: name}
+  scope: repository
+  mode: unmatched_left

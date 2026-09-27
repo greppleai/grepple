@@ -18,42 +18,6 @@ Repository `grepple.json` ignores apply before analysis. Explicitly named files 
 
 For Go, repository import roots come from the nearest module identity for every selected file plus unambiguous local `go.mod`/`go.work` replacements. Nested modules retain their nearest identity; conflicting replacements remain unresolved. This context is rebuilt after path-neutral cache loading, so focused/full and cold/warm runs do not inherit stale repository identity.
 
-## Declaration resolution
+## Focused navigation
 
-```bash
-grepple architecture resolve --symbol Document .
-```
-
-`grepple-architecture-resolve-v1` searches parser outlines, so it covers types and nested declarations as well as callables. Results are deterministic path/source order and retain every same-name match. Visibility is `unknown` when no adapter-owned navigation fact establishes it.
-
-## Relation evidence
-
-```bash
-grepple architecture why rulespec search rulespec search
-```
-
-`grepple-architecture-why-v2` reports all available relation kinds between the selected directories. Resolved calls remain restricted to `exact`, `import-resolved`, or `context-resolved` confidence. Adapter-owned Go, JavaScript/TypeScript, module-level Python, Java, Kotlin, C#, and Rust import facts add import-only edges; imported callable parameter/result/local/field types add type-reference edges where supported and when the local target directory resolves uniquely. JVM imports resolve against syntax-evidenced package and top-level export facts, including Java static owners and Kotlin aliases, without build-system or source-path conventions. C# namespace, alias, static-owner, and global using targets resolve against syntax-evidenced public top-level exports; files with multiple block namespaces remain unscoped. Rust relations traverse conventional selected crate roots, inline modules, explicit external `mod` declarations, and directly specified normal or raw string-literal `#[path]` modules before resolving `crate`, `self`, `super`, grouped, aliased, glob, and public re-export paths. External crates and conditional or unparseable path attributes remain unresolved. Python absolute imports are suffix-matched against plausible selected source roots, explicit relative imports are resolved from the importer, and multiple matching source roots remain ambiguous. Function-local Python imports are not promoted into file-wide facts. Every item includes relation kind, source classification, source path, line, and confidence. Ambiguous and unresolved facts remain coverage counts rather than asserted edges.
-
-Absence is not proof that no dependency exists: coverage explicitly lists languages without import facts and counts unresolved evidence. Build-system, generated, reflective, registration, data-flow, and runtime relationships are not represented. Use navigation graph queries for callable impact and boundary analysis for heuristic architecture review.
-
-## Directory responsibilities
-
-```bash
-grepple architecture responsibilities .
-grepple architecture responsibilities --server http://127.0.0.1:8080 --repo OWNER/REPO --json
-```
-
-`grepple-directory-responsibilities-v2` summarizes each physical directory's selected files, classifications, languages, declaration kinds, public callables, process entrypoints, and incoming/outgoing source-evidenced relation counts. It does not infer team ownership, business domains, or policy intent.
-
-## Determinism diagnostics
-
-Generate complete reports on two runs or operating systems, then compare them before relying on a raw checksum:
-
-```bash
-grepple architecture directory --json --no-spill . > before.json
-grepple architecture directory --json --no-spill . > after.json
-grepple architecture compare before.json after.json
-grepple architecture compare --json before.json after.json
-```
-
-`grepple-directory-architecture-comparison-v1` normalizes path separators and every unordered architecture collection before semantic comparison. It reports `semanticEqual` and `byteEqual` independently. A semantic mismatch identifies the first changed file, declaration, relation, or directory; source-backed facts include their path, line range, and exact before/after JSON values. If normalized reports agree but bytes differ, the diagnostic reports the first raw byte offset, line, column, and byte values. Comparison accepts current `grepple-directory-architecture-v5` documents directly or nested in `grepple-remote-analysis-v1`, rejects unknown fields and trailing JSON, and exits with status 1 for either semantic or byte differences.
+Use `grepple --outline PATH` or `grepple graph resolve --symbol NAME` to locate declarations, and `grepple graph callers|callees --at PATH:LINE` for static call relations. Directory JSON retains relation evidence and coverage; unresolved, generated, reflective, and runtime dependencies cannot be ruled out from missing static edges.

@@ -52,7 +52,7 @@ func executeSearch(application cliruntime.Context, options *Options, explicitSer
 		return err
 	}
 	if options.Outline {
-		printed, outlineErr := rendercommand.Outlines(rendercommand.OutlineOptions{Params: options.Params, Depth: options.Depth, JSON: options.JSON != "off", MaxOutputBytes: options.MaxOutputBytes, DefaultLimit: DefaultResultLimit, Output: application.Stdout(), ErrorOutput: application.Stderr()})
+		printed, outlineErr := rendercommand.Outlines(rendercommand.OutlineOptions{Params: options.Params, Depth: options.Depth, Kinds: options.Kinds, JSON: options.JSON != "off", MaxOutputBytes: options.MaxOutputBytes, DefaultLimit: DefaultResultLimit, Output: application.Stdout(), ErrorOutput: application.Stderr()})
 		if outlineErr == nil && !printed {
 			application.RequestExit(1)
 		}

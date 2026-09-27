@@ -78,7 +78,7 @@ func TestAnalyzeMermaidSchemasDeterministicOrdering(t *testing.T) {
 }
 
 func TestLintEvaluationAppendsMermaidDiagnostics(t *testing.T) {
-	root := t.TempDir()
+	root := makeRepository(t, map[string]string{"code.go": "package sample\n"})
 	writeHookTestFile(t, filepath.Join(root, "code.go"), "package sample\n")
 	writeHookTestFile(t, filepath.Join(root, "missing.class.mmd"), "classDiagram\n class Missing\n <<struct>> Missing\n")
 	output := evaluateLintResult(commandResult{stdout: "[]"}, root, filepath.Join("..", ".."), nil)

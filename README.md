@@ -44,29 +44,16 @@ Linting uses [revive](https://github.com/mgechev/revive) with the pinned rule se
 on every agent Stop: it auto-fixes formatting with `gofmt -w`, then feeds one revive rule-group (worst file first, one
 rule at a time) back to the agent with a remediation guide from `hooks/guides/<rule>.md` until the tree is clean.
 Project analyzers in `hooks/internal/pihooks/` add repo-specific checks that revive cannot express. The current
-`same-file-struct-methods` analyzer uses tree-sitter Go syntax trees and requires every method of a struct to live in the file that declares the type.
+`same-file-struct-methods` is now declared in `.grepple/hooks/same-file-struct-methods.yaml`: GritQL node patterns capture Go struct types and method receivers, and a reusable cross-file relation joins them by directory, package, and normalized type. The standalone Pi Stop module only adapts the resulting findings to its revive-shaped feedback protocol.
 The PreToolUse grep guard is also implemented in the standalone module and uses the tree-sitter Bash grammar to inspect actual command invocations.
 
-Mermaid extraction and validation live in the main `extract` package and are exposed through focused `grepple extract structure|flow` commands; the hooks module imports that package for automatic Stop validation rather than maintaining a second analyzer. Language-neutral repository orientation is generated dynamically through `grepple architecture directory|resolve|why|responsibilities`, while `architecture compare` diagnoses drift between complete reports, so no package/workspace artifacts need to be committed under `.grepple/`. Graph, architecture, boundary, and responsibility analysis can target one exact indexed checkout through `--server` and `--repo`. `make schema-generate` and `make schema-check` validate parser-generated language metadata. The Stop hook validates `*.class.mmd`, `*.structure.mmd`, and `*.flow.mmd` schemas.
+Mermaid extraction and validation remain available in the `extract` package for the Stop hook, but are no longer CLI commands. Use `grepple architecture directory` for source-linked directory orientation and `grepple graph callers|callees` for focused call navigation. `make schema-generate` and `make schema-check` validate parser-generated language metadata. The Stop hook validates `*.class.mmd`, `*.structure.mmd`, and `*.flow.mmd` schemas.
 
 Public parser consumers should treat `Document` as the owning parse boundary, `Node` as a document-tied handle, `DocumentView`/`ViewNode` as callback-scoped lock-free traversal, and `SyntaxNode` as the persistent immutable snapshot. See [Parser syntax lifecycle](docs/parser-syntax-lifecycle.md) for ownership, locking, invalidation, and snapshot guidance.
 
-The `grepple` application binary and optional user-level `greppled` report cache are built into `bin/`. Start one `greppled` from any directory; from any repository, use `grepple --daemon architecture directory .` (or `resolve`, `why`, or `responsibilities`) or a focused graph command such as `grepple --daemon graph callers --symbol Run .` (`resolve`, `callees`, `impact`, `dependencies`, and `dependents` are also supported). On a miss the CLI builds locally in its own working directory and publishes the completed report; later matching requests use the shared worker. No repositories are eagerly scanned. The worker stays in the foreground until interrupted; an unavailable or incompatible worker silently falls back to direct local analysis. Graph build/diff and remote requests do not use it. See [architecture performance benchmarks](docs/architecture-performance-benchmarks.md) for limits and measurements.
+The `grepple` application binary and optional user-level `greppled` report cache are built into `bin/`. Start one `greppled` from any directory; from any repository, use `grepple --daemon architecture directory .` or a focused graph command such as `grepple --daemon graph callers --symbol Run .` (`resolve` and `callees` are also supported). On a miss the CLI builds locally in its own working directory and publishes the completed report; later matching requests use the shared worker. No repositories are eagerly scanned. The worker stays in the foreground until interrupted; an unavailable or incompatible worker silently falls back to direct local analysis. Remote requests do not use it. See [architecture performance benchmarks](docs/architecture-performance-benchmarks.md) for limits and measurements.
 
-The default Linux build links the CGO tree-sitter runtime and all grammars into self-contained static binaries. Command-line parsing uses [`go-arg`](https://github.com/alexflint/go-arg). Delegated research uses [`charm.land/fantasy`](https://github.com/charmbracelet/fantasy), currently pinned to the newest release compatible with Go 1.25.
-
-## Delegated research
-
-Authenticate a capable, usually cheaper retrieval model once, then delegate broad source exploration or batch reads without consuming repeated turns or filling the calling agent's context:
-
-```bash
-grepple ai-provider login codex
-grepple ask Which package owns navigation resolution and what calls it?
-```
-
-The internal agent retrieves and sifts multi-file evidence; it is not a code-review or approval agent. Its `read_file` tool can batch up to eight known ranges, and local source rows retain `HASH│LINE│content` when user anchor settings are enabled so the main coding agent can edit without another read. Focused typed tools also cover text search, exact navigation, structural search, graph queries, architecture, source scope, and indexed refs and trees. They call Grepple internals directly: no generic argv tool, command parser, executable subprocess, or shell is exposed to the model.
-
-Successful identical typed calls within one ask reuse byte-identical evidence and concurrent duplicates share one execution; cache metadata and JSONL events make this observable. Logs also include response-free per-tool timing records with full typed inputs and a session performance summary separating merged tool wall time from estimated LLM-facing stream time. Local navigation, graph, and architecture tools additionally share one lazily parsed source universe whenever their effective scope agrees. Ask logs are permission-restricted, enabled by default, and retain managed logs for seven days unless `ask.logs` changes that policy. The provider registry supports Codex and GitHub Copilot device login, Anthropic API and subscription tokens, OpenAI API keys, and the AWS Bedrock default credential chain. Set the non-secret user default as `ask.model: "<provider>/<model>"` in `~/.grepple/grepple.json`; the same prefix form works with `--model`. See [Delegated research](docs/ask.md) for provider, model, logging, timeout, credential, timing, and tool-safety details.
+The default Linux build links the CGO tree-sitter runtime and all grammars into self-contained static binaries. Command-line parsing uses [`go-arg`](https://github.com/alexflint/go-arg).
 
 ## Agent utility metrics
 
@@ -168,6 +155,8 @@ Complete search, graph, boundary, and CLI GritQL JSON also share a [result metad
 
 `grepple grit` runs the unified native, read-only `gritql-v1` structural-search engine over every Tree-sitter-backed Grepple language: Go, JavaScript/JSX, TypeScript/TSX, Python, Java, Kotlin, C#, C, C++, Rust, and Shell. The target language is declared in the query; no separate compatibility flag is required. The engine is separate from text and regex search and has no external runtime, subprocess, rewrite engine, or fallback interpreter. The supported detection subset includes snippets, metavariables, repeated-binding equality, `where`, `contains`, `within`, `and`, `or`, `not`, `maybe`, and RE2 constraints.
 
+The [`gritql-metric-v1` engine](docs/gritql-compatibility.md#31-source-authored-scoped-metrics) computes bounded per-function scores from **source-authored GritQL metric rules**. This repository enables [McCabe](.grepple/hooks/go-mccabe.yaml) and [nested-loop](.grepple/hooks/go-nested-loops.yaml) warnings; run `grepple hook --id go-mccabe` or `grepple hook --id go-nested-loops`. The nested-loop score is a syntactic heuristic, **not a Big-O proof**. The [cognitive example](examples/go-cognitive.yaml) is still disabled: [Revive parity measurements](docs/gritql-metric-parity.md) show remaining differences, so Revive remains authoritative.
+
 ```bash
 # Quote inline queries so the shell does not expand metavariables.
 grepple grit $'language go\n`exec.Command($args)`' '**/*.go'
@@ -193,6 +182,26 @@ Findings contain exact half-open byte ranges, one-based Unicode-scalar positions
 
 Remote structural search requires a backend implementing `POST /public/grit`. See [`docs/gritql-compatibility.md`](docs/gritql-compatibility.md) for the exact closed syntax, evaluation rules, diagnostics, limits, security guarantees, conformance fixtures, and benchmark gates.
 
+### Local hooks
+
+`grepple hook` loads `*.yaml` from the nearest ancestor's `.grepple/hooks/` directory. File-local `gritql-v1` checks default to staged, unstaged, and untracked Git files; deleted files and symlinks are skipped. Selecting a `gritql-relational-v1` rule automatically uses the complete repository snapshot, including unchanged files needed for cross-file joins, even without `--all`. From a nested directory, paths and hooks remain relative to the repository root. `--all` scans all selected sources, including outside Git repositories. Repeat `--id ID` to run only named hooks; unknown IDs and invalid selected configs fail instead of silently succeeding. These checks are read-only; this CLI command does not run Pi's grep guard, format code, invoke Revive, or emit Pi hook protocol output.
+
+```bash
+grepple hook                                      # all configured checks; relations force full scope
+grepple hook --id go-empty-if --id go-direct-dot-import # changed-file checks only
+grepple hook --id same-file-struct-methods        # full cross-file Go rule
+grepple hook --all --json                         # full repository audit
+```
+Each config declares `version: 1`, an ID matching its filename, `event: Stop`, a repository-relative `include` list (optional `exclude` globs), `severity: warning|error`, and a message. File-local rules use `engine: gritql-v1` and one GritQL `query`; relational rules use `engine: gritql-relational-v1` with `relation.left_query`, optional `right_query` and `partition_query`, captured keys, `scope: directory|repository`, and optional `unique_left`. Message placeholders include `{{key}}`, `{{left.basename}}`, and named captures such as `{{right.method}}`. `--workers N` scans up to four files in parallel (default four; `--workers 1` runs serially). Applicable queries share a parse within each file in their scan group, and findings are ordered deterministically. File-local results are cached by source SHA-256, selected rules, and executable identity. Relational results use a complete-snapshot cache with the same integrity checks; changing an eligible source invalidates that relation's cached result. Failed or truncated scans are never cached as clean. Findings include source location, ID, severity, and message; human output ends with a scope/count summary. No findings exit 0, any findings exit 1 (including warnings); invalid config, Git discovery failures, source diagnostics, and scan truncation fail with an error rather than reporting a clean audit. The legacy `go-empty-if` ID also detects empty loops, switches, and standalone blocks; `parent kind("function")` excludes empty function bodies without enumerating declaration signatures. Empty selects and condition-call loops remain exempt. The demo direct-dot-import hook matches only ungrouped imports. Neither demo claims full Revive-rule parity.
+
+Relational rules can also use `relation.mode: unmatched_left` to report source-authored declarations without a matching right-side reference anywhere in their selected scope. The [installed Go uncalled-method candidate hook](.grepple/hooks/go-uncalled-methods.yaml) can be run with `grepple hook --id go-uncalled-methods --all`; its [reusable example](examples/go-uncalled-methods.yaml) can be copied to other repositories. It excludes `*_test.go`, so a method referenced only by Go tests is reported, while methods declared in tests are outside the rule. Name-based absence is a review lead, not proof of unreachable code.
+
+The [private Go type](.grepple/hooks/go-dead-private-types.yaml), [exported internal type](.grepple/hooks/go-dead-internal-types.yaml), and [exported internal method](.grepple/hooks/go-dead-internal-methods.yaml) rules use the same source-authored relation engine. `node_pattern() as $name` captures a matched leaf node; `relation.left_include` limits declarations to `internal/` while references still come from all included Go sources. Large reference sets can opt into a bounded `relation.max_findings` (up to 100,000). All three exclude `_test.go` and report review candidates, not safe-to-delete declarations.
+
+Each source-authored metric rule uses `engine: gritql-metric-v1` with a GritQL metric document in `query` and a strictly greater-than threshold declared as `above` inside that document. Metric rules use changed-file discovery and content-validated caching; metric file scanning is currently serial and does not use `--workers`.
+
+The Go rule’s control-flow branch uses `` `{ $body }` where { $body <: empty } `` to test structural emptiness. Separate switch patterns cover Go’s different switch-body syntax.
+
 ## Outline
 
 `--outline` (`-O`) prints a file's structural map instead of searching its contents:
@@ -205,11 +214,14 @@ are parsed with yaml.v3.
 
 ```bash
 grepple --outline search/search_engine.go     # one local file
+grepple --outline --kind types parser/language.go  # declarations only (struct/interface/type/etc.)
+grepple --outline --kind functions --kind variables src/  # combine categories
 grepple --outline "**/*.go"                   # every Go file
 grepple --outline --json src/app.ts            # machine-readable {"files":[...]}
 grepple --outline values.yaml                  # JSON/YAML: key tree, values omitted
 grepple --outline --depth 2 large-config.json  # cap nesting (JSON/YAML only)
 grepple get OWNER/REPO path/to/File.java -O    # a remote indexed file
+grepple get OWNER/REPO path/to/File.java -O --kind functions  # methods/constructors
 ```
 
 Output is `START-END<TAB>KIND<TAB>NAME`, with members indented under their
@@ -222,6 +234,15 @@ search/search_engine.go	go
 254-277	method	(candidateScan).scanWindowed
 ```
 
+`--kind types|functions|variables` filters code declarations in both local and
+`get --outline` output (repeat the flag or comma-separate names to combine them).
+Types include classes, structs, interfaces, enums, traits and aliases; functions
+include methods and constructors; variables include constants, fields and
+properties. Matching members inside an unselected container are still shown,
+without that container. With a filter, human output never falls back to raw
+source, even for short files. JSON/YAML key trees and Markdown headings do not
+belong to these declaration categories.
+
 The tree-sitter languages (Go, JavaScript/TypeScript, Python, Java, Kotlin, C#,
 C, C++, Rust, and Shell) get full symbol outlines; Markdown gets a heading outline (`h1`…`h6`, code-fence aware);
 **JSON/YAML** get a key/type tree (`object`/`array`/`string`/`number`/`bool`/`null`)
@@ -233,76 +254,35 @@ produce an empty outline. Go methods are shown at top level as `(*Type).Method`.
 0 = unlimited) and cannot be combined with `--count` or `--files-with-matches`.
 
 ## Normalized navigation graph
+Focused `grepple graph callers|callees --json [PATH...]` returns the relevant subgraph of the deterministic `grepple-navigation-graph-v7` parser facts shared with `--at`, `--related`, and directory architecture. Callable nodes include stable IDs, language, repository-relative paths, declaration line ranges, package/module/container context, source-written signatures, adapter-evidenced entrypoint roles, and visibility. Calls include caller IDs, resolved target IDs, deterministic candidate target IDs, line locations, and resolution confidence. Resolution remains syntax-based and preserves ambiguity rather than claiming runtime dispatch. Reports include discovered, selected, parsed, skipped, failed, and recovery-parse source counts. JSON is never byte-truncated; `--max-files N` records deterministic source-file truncation separately.
 
-`grepple graph --json [PATH...]` emits a deterministic `grepple-navigation-graph-v7` document from the same parser-owned facts used by `--at`, `--related`, and directory architecture. Callable nodes include stable IDs, language, repository-relative paths, declaration line ranges, package/module/container context, callable kinds, adapter-evidenced entrypoint roles, and language-specific visibility details where required. Source-declared type facts include normalized names, kinds, complete line ranges, and package/module identity; callable type usages retain parameter, receiver, local, and result roles. Calls include caller IDs, resolved target IDs, deterministic candidate target IDs, receiver/import context, line locations, and resolution confidence. Typed field/property, module re-export, and scoped Rust module facts support cross-file member chains, embedded/promoted Go methods, TypeScript/TSX inheritance, named/default aliases, barrel re-exports, nearest-`tsconfig.json` `baseUrl`/`paths` aliases, Rust inline or direct normal/raw-string `#[path]` ownership, and exact source-relative quoted C/C++ includes. Rust import and call resolution enforces syntax-evidenced private, crate, parent, self, and ancestor-restricted visibility while leaving external crates and conditional ownership unresolved. C/C++ angle-bracket includes, macro-computed paths, and compiler/build include directories remain unresolved. Resolution remains syntax-based and preserves ambiguity rather than claiming compiler dispatch. Every graph, focused query, diff side, and boundary report includes discovered, selected, parsed, skipped, failed, and recovery-parse source counts. JSON is never byte-truncated; `--max-files N` applies deterministic source-file truncation and records it separately.
-
-Per-file parser facts are cached as deterministic path-neutral packed-protobuf entries under `~/.grepple/cache/<repository-id>/navigation/` by default. The v26 codec serializes the native graph directly through a shared string table and packed columns, validates a payload checksum, bounds entry and column sizes, and atomically writes immutable content-addressed `.pb` files. Cache failures remain non-authoritative, and cold/warm graph output is identical.
+Per-file parser facts are cached as deterministic path-neutral packed-protobuf entries under `~/.grepple/cache/<repository-id>/navigation/` by default. The v27 codec serializes the native graph directly through a shared string table and packed columns, validates a payload checksum, bounds entry and column sizes, and atomically writes immutable content-addressed `.pb` files. Cache failures remain non-authoritative, and cold/warm graph output is identical.
 
 ```bash
-grepple graph --json .
-grepple graph --json ./internal/cli --max-files 200
-grepple graph ./internal/cli
 grepple graph callers --at internal/cli/extract.go:32 --depth 2 --language go .
 grepple graph resolve --symbol runExtract ./internal/cli
 grepple graph callees --symbol runExtract --depth 2 --json ./internal/cli
-grepple graph dependencies --root-path internal/cli --depth 1 .
-grepple graph impact --symbol runExtract --depth 2 ./internal/cli
-grepple graph diff --before ./old-tree --after ./new-tree
-grepple graph impact --server http://127.0.0.1:8080 --repo OWNER/REPO@tag~v1.2.3 --symbol Run
+grepple graph callees --root-path internal/cli --depth 1 .
+grepple graph callers --symbol runExtract --depth 2 ./internal/cli
+grepple graph callers --server http://127.0.0.1:8080 --repo OWNER/REPO@tag~v1.2.3 --symbol Run
 ```
 
-Human output is the default: bounded file-grouped build declarations, directional call trees for callers/callees, and root-grouped impact call trees, with source locations and per-edge confidence. Focused queries omit routine headers; build displays only short file/declaration/call counts, and incomplete or truncated analysis emits warnings; `--max-output-bytes` defaults to 16384 and never applies to JSON. Full JSON retains the schema, source accounting, query roots/filters, complete graph facts, and authoritative outcomes separately from deterministic confidence-label counts, overall and by language. Legacy resolved/ambiguous/unresolved/candidate fields remain additive compatibility projections and do not redefine `candidate` confidence as an outcome. Unsupported file types are counted as skipped before the file limit. Files containing NUL are skipped, hard read/UTF-8/parse failures are counted as failed, and recovery parses are counted separately while retaining their conservative graph facts. Complete JSON retains unresolved/external calls with `candidate` confidence and ordered candidate IDs; human output omits calls with no repository-local target and retains ambiguous calls without guessing one target. Use `--json` only when the complete machine-readable graph is needed.
+Focused caller/callee trees show available source-written callable signatures (parameters and explicit return syntax) by default; they do not infer runtime argument values or missing types. `graph resolve` lists ambiguous declaration matches with copyable selectors. Human output is bounded and includes per-edge confidence and incomplete/truncated-source warnings; `--max-output-bytes` never applies to JSON. Complete JSON retains candidate IDs and diagnostics. Human output omits calls without a repository-local target, and ambiguous candidates remain explicit rather than being guessed.
 
-CLI graph, focused graph query, `--related`, boundary, and extraction workflows share parser-owned per-file navigation facts under `~/.grepple/cache/<repository-id>/navigation/`. Entries are addressed by source content, language, grammar ABI/fingerprint, and a cache schema; path-neutral facts are instantiated with each command's requested path so stable IDs and output remain unchanged. Corrupt or unwritable entries are ignored, writes are atomic, and cold and warm reports are byte-identical. Set `GREPPLE_CACHE_DIR` to override the base cache location, or set `GREPPLE_NAVIGATION_CACHE_DIR` explicitly to relocate navigation entries (an empty value disables them).
+Graph queries, `--related`, and directory architecture share parser-owned per-file navigation facts under `~/.grepple/cache/<repository-id>/navigation/`. Entries are addressed by source content, language, grammar ABI/fingerprint, and a cache schema; path-neutral facts are instantiated with each command's requested path. Corrupt or unwritable entries are ignored, writes are atomic, and cold and warm reports are byte-identical. Set `GREPPLE_CACHE_DIR` to override the base cache location, or `GREPPLE_NAVIGATION_CACHE_DIR` to relocate navigation entries (an empty value disables them).
 
-`graph resolve --symbol NAME` performs no traversal. It previews all exact-name matches, or terminal-name matches when there is no exact match, with full stable declaration IDs, exact `PATH:LINE` selectors, and copyable callers/callees/impact commands. Repeatable language and visibility filters narrow alternatives before selection. Bounded human-readable output is the default; use `--json` for the complete `grepple-navigation-resolve-v1` projection when overloaded or cross-container names require machine-readable disambiguation.
-`graph callers`, `callees`, `dependencies`, `dependents`, and `impact` return deterministic subgraphs over repository-local navigation edges. Select one exact declaration with `--symbol NAME` or `--at PATH:LINE`, or select a scope with `--package`, `--module`, or `--root-path`; scope selectors may produce multiple roots. `callers` and `dependents` traverse incoming call/navigation edges, while `callees` and `dependencies` traverse outgoing call/navigation edges; `dependencies` and `dependents` are navigation terminology and do not describe package-manager, module, or build-system dependency graphs. `impact` traverses both directions. Repeatable `--language ID`, `--confidence LEVEL`, and `--visibility LEVEL` filters apply before root selection and traversal; confidence accepts `exact`, `import-resolved`, `context-resolved`, `unique-terminal`, and `candidate`, while visibility accepts `public`, `non-public`, and `unknown`. JSON declarations expose visibility and entrypoint facts; human build retains these labels. Human `graph build` groups declarations by file with calls beneath their owner, omitting repetitive IDs and path prefixes; human `callers`, `callees`, and `impact` group call sites under each root as `<-` and/or `->` lines, indent further hops, and label confidence on the edge. JSON retains declaration/call IDs and full facts. `unknown` visibility is retained where a language lacks reliable public/export semantics. `--depth N` is bounded to 1–10, cycles are visited once, and ambiguous candidate targets remain explicit rather than being guessed. JSON retains the `grepple-navigation-graph-v7` facts and adds normalized query direction, depth, root IDs, and filters; focused human callers/callees/impact output omits routine query headers. Positional paths define the larger graph universe, while the root selector chooses where traversal starts. `--repo OWNER/REPO[@REF] --server URL` runs the same complete-source graph and query over one exact indexed checkout; remote JSON wraps the versioned result with repository, commit, completeness, notices, and shard errors.
+`graph resolve --symbol NAME` performs no traversal. It previews all exact-name matches, or terminal-name matches when there is no exact match, with full stable declaration IDs, exact `PATH:LINE` selectors, and copyable callers/callees commands. Repeatable language and visibility filters narrow alternatives before selection. Bounded human-readable output is the default; use `--json` for the complete `grepple-navigation-resolve-v1` projection when overloaded or cross-container names require machine-readable disambiguation.
+`graph callers` and `callees` return deterministic subgraphs over repository-local navigation edges. Select one declaration with `--symbol NAME` or `--at PATH:LINE`, or select a scope with `--package`, `--module`, or `--root-path`. `callers` traverses incoming edges and `callees` outgoing edges; each displays source-written signatures by default. Repeatable language, confidence, and visibility filters apply before traversal. JSON retains declaration/call IDs, source facts, query roots, filters, and diagnostics. `--depth N` is bounded to 1–10, cycles are visited once, and ambiguous candidate targets remain explicit rather than guessed. Positional paths define the larger graph universe; remote queries accept `--repo OWNER/REPO[@REF] --server URL` for one exact indexed checkout.
 
-`graph diff` compares two source trees using `grepple-navigation-diff-v5`. It classifies added, removed, moved, and semantically changed declarations plus added, removed, and changed calls. Position-only line shifts are ignored, and call owners are compared through semantic declaration identities rather than unstable source IDs. Bounded human output is the default; `--json` emits the complete diff.
+## Directory architecture
 
-## Boundary analysis
-
-`grepple boundaries [PATH...]` reports repeated owner-file workflows, concrete type spread, owned field/property surface, and policy-backed facade bypasses. Spread is classified as `package-internal`, `cross-package`, `cross-layer`, or `public-api`; containment is `approved`, `escaped`, or `unknown`. Type usage distinguishes public API, private signatures, field representation, and body-local use. Repository policy can identify layers, containment rules, facade/implementation path sets, and intentional utility, test-framework, declarative-configuration, lifecycle-cleanup, or adapter-protocol paths. Without policy, same-directory ownership facts can establish approved package-internal use, but cross-boundary intent remains unknown. Signals are conservative review leads, never policy-independent violations.
-
-```bash
-grepple boundaries parser
-grepple boundaries ./src ./lib --min-occurrences 3
-grepple boundaries --json ./internal
-grepple boundaries --policy .grepple/boundary-policy.json --json .
-grepple boundaries --server http://127.0.0.1:8080 --repo OWNER/REPO@branch~main --json
-```
-
-Human output is bounded to 16,384 bytes and shows at most 20 ranked candidates per workflow/type/facade section by default; evidence and omissions remain explicit. `--limit 0` shows all candidates, while `grepple-boundaries-v3` JSON is complete. Optional parser facts use `GREPPLE_NAVIGATION_CACHE_DIR`; resolved boundary graph inputs default to `~/.grepple/cache/<repository-id>/boundaries/` and can be relocated with `GREPPLE_CACHE_DIR`. Read-only analysis does not create `.grepple` beneath the target repository. Use `--no-cache` to bypass boundary and parser cache layers. `--max-files` remains explicit when source discovery is incomplete. Remote boundaries load `.grepple/boundary-policy.json` from the selected checkout by default; `--policy` remains repository-relative and malformed policy fails explicitly.
-
-## Directory architecture and focused diagrams
-`grepple architecture` provides deterministic, language-neutral directory orientation over every Tree-sitter-backed language. `directory` groups source-linked call/import/type relations by directory pair and discloses unconnected leaf directories; its complete `--json` report retains the full directory inventory and declaration counts, `resolve` locates types and callables with exact ranges, `why` returns source-linked evidence for one directory relation, `responsibilities` summarizes each directory's ownership plus incoming/outgoing relation participation, and `compare` diagnoses semantic or byte-level drift between complete directory JSON reports. Relation coverage preserves unresolved and adapter-unsupported semantics. Directory ownership is intentionally not presented as package, module, or layer intent. See [Directory architecture](docs/directory-architecture.md) for schemas and evidence limits. Package ownership and API transport boundaries are summarized in [Domain and transport boundaries](docs/domain-boundaries.md), with source grouping decisions in the [implementation ownership inventory](docs/implementation-ownership-inventory.md).
-
-`grepple extract` creates deterministic, self-validated focused Mermaid navigation maps from Tree-sitter source analysis. Focused structure and flow extraction support Go, JavaScript/JSX, TypeScript/TSX, Python, Java, Kotlin, C#, Rust, C, and C++. Python covers classes, inheritance, annotated and unannotated attributes, decorators, and `.pyi` stubs. Java, Kotlin, and C# cover their class/interface models, inheritance, fields/properties, methods, records/data classes, enums, objects where applicable, and conservative language-defined process-entrypoint signatures. Rust covers structs, tuple structs, enums, traits, same-file and visibility-checked same-crate cross-file `impl` blocks, fields, variants, associated types, methods, visibility, trait implementations, graph-backed calls, and top-level `main` process entrypoints in selected binary crate roots without interpreting framework APIs. C and C++ conservatively cover named aggregates, fields, enum values, direct base classes, functions, methods, visibility, static members, graph-backed calls, global `main` process entrypoints, and direct include evidence while leaving macro-computed and system include resolution, templates, overload selection, linkage, and build-system ownership uninterpreted. Generic callable declarations and calls use the normalized `parser.NavigationGraph` shared with `--at` and `--related`.
+`grepple architecture directory` provides bounded, source-linked directory orientation without inferring package or team intent. Use `--relations` for one compressed relation per directory pair, `--mermaid` to export a directory-level dependency diagram, and `--json` for the complete inventory and evidence. Scope it to the relevant directories; missing static edges do not prove that no runtime dependency exists.
 
 ```bash
 grepple architecture directory --depth 2 .
-grepple architecture directory --relations --depth 0 --max-nodes 0 --max-output-bytes 0 .
-grepple architecture directory --mermaid --depth 0 --max-nodes 0 --output architecture.mmd .
-grepple architecture resolve --symbol Document .
-grepple architecture why rulespec search rulespec search
-grepple architecture responsibilities .
-grepple architecture directory --server http://127.0.0.1:8080 --repo OWNER/REPO
-grepple extract structure internal/cli --entry cliOptions --source .
-grepple extract flow internal/cli --entry runSearch --depth 2
-grepple extract flow --at internal/cli/local.go:13 --source .
-grepple extract structure --at web/store.ts:8 --source web
-grepple extract flow --at services/worker.py:20 --source services
-grepple extract structure --at src/main/java/acme/Service.java:12 --source .
-grepple extract flow --at src/main/kotlin/acme/Worker.kt:30 --source .
+grepple architecture directory --relations ./internal/cli
+grepple architecture directory --mermaid --output architecture.mmd .
 ```
-
-`architecture directory --relations` emits one compressed `R FROM -> TO kinds=...` line per directory pair for high-level dependency visualization. `--mermaid` renders the same grouped relations as a deterministic left-to-right flowchart on stdout or at `--output PATH`; each directory's node border and outgoing links share a distinct, theme-visible stroke color for tracing connections. Directory output uses explicit depth, node, and file bounds; text output additionally supports a byte bound, while complete JSON may spill to a disclosed artifact according to repository output policy. `architecture resolve` indexes declaration outlines rather than only callable graph nodes. `architecture why` currently reports only `exact`, `import-resolved`, and `context-resolved` static calls, so absence does not prove that no build-system, reflective, registration, or runtime dependency exists. `architecture responsibilities` is a physical ownership summary, not an inferred team or business-domain assignment. Directory, resolve, why, and responsibilities accept `--server URL --repo OWNER/REPO[@REF]`; exact checkout identity and commit are retained in remote JSON. `architecture compare` first normalizes paths and collection order, reports the first source-linked semantic difference, and only then diagnoses raw-byte drift.
-
-Focused extraction requires `--entry` or `--at PATH:LINE`. `flow` follows statically resolved outgoing calls. `--source` can be repeated to define analysis roots; `--depth`, `--max-nodes`, and `--output` control projection and writing. A flow that reaches `--max-nodes` remains valid and deterministic, and includes `%% grepple:truncated max-nodes N` instead of failing after useful nodes have already been selected.
-
-Every generated type/function node includes its exact `PATH:START-END` definition range; type notes also list exact member ranges. Flow nodes display their definition range directly. Generated diagrams are checked against the same source analysis before being returned.
-
-Validation is available through `grepple extract check structure|flow`. `extract.SupportedLanguages` and `extract.LanguageForPath` expose focused adapter metadata. To add a focused language, implement one adapter with its Tree-sitter analyzer and structure/flow projections, then add it to `registeredLanguages`; directory architecture uses parser capabilities directly.
 
 ## Predefined searches (rules)
 
@@ -367,7 +347,7 @@ It reports modeled retrieval calls, returned bytes, approximate tokens, elapsed 
 
 ## Repository configuration
 
-Grepple discovers the nearest ancestor `grepple.json`. Repository-owned ignore paths apply consistently to recursive local search, graph, boundary, GritQL, focused extraction, and architecture discovery. Explicitly named files bypass ignores and emit a notice.
+Grepple discovers the nearest ancestor `grepple.json`. Repository-owned ignore paths apply consistently to recursive local search, graph queries, GritQL, and architecture discovery. Explicitly named files bypass ignores and emit a notice.
 
 ```json
 {
@@ -397,12 +377,14 @@ Complete output larger than the threshold is stored in the platform user cache (
 
 ## Directory metadata
 
-Use `grepple init` to create missing or refresh stale directory `grepple.yaml` files with the model configured for `grepple ask`, including an evidence-backed source kind for every file, then use `grepple verify` in local validation. Use `--concurrency N` for bounded parallel directory generation or `--force` to regenerate current metadata too. Local `grepple tree` displays directory descriptions, and Ask is preloaded with the top-level described tree. See [Directory metadata](docs/directory-metadata.md).
+Use `grepple init` to create missing or refresh stale directory `grepple.yaml` files using the configured model. Local `grepple tree` shows current per-file `areas` tags and sorted unions of selected descendant tags on directories. Tree defaults to top-level files and directories; `--depth N` expands. Repeat `--area NAME` to keep files tagged with **any** requested area and their parent directories; `--kind` narrows those matches further. Shown files retain all their tags, including ones not used as filters. Stale or invalid tags never qualify a file; remote indexed trees cannot verify tags and reject `--area`. There is no top-level area or start command. `grepple verify --areas` reports stale or invalid memberships. See [Directory metadata](docs/directory-metadata.md).
 
 ```bash
 grepple init --only-directory internal/parser
 grepple verify
-grepple tree --depth 2
+grepple tree                             # one level, with available areas
+grepple tree --depth 2                   # expand one subtree
+grepple tree --area navigation-resolution --area remote-search internal/cli
 ```
 
 ## Remote service

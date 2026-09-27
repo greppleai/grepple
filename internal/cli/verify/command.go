@@ -14,17 +14,19 @@ import (
 
 type Args struct {
 	JSON  bool     `arg:"--json" help:"emit a structured verification report"`
+	Areas bool     `arg:"--areas" help:"report stale or invalid area membership leads"`
 	Paths []string `arg:"positional" placeholder:"PATH" help:"source path or glob; defaults to the repository"`
 }
 
 type Report struct {
-	Schema      string   `json:"schema"`
-	Root        string   `json:"root"`
-	Directories int      `json:"directories"`
-	Valid       int      `json:"valid"`
-	Missing     []string `json:"missing,omitempty"`
-	Stale       []string `json:"stale,omitempty"`
-	Invalid     []string `json:"invalid,omitempty"`
+	Schema      string                        `json:"schema"`
+	Root        string                        `json:"root"`
+	Directories int                           `json:"directories"`
+	Valid       int                           `json:"valid"`
+	Missing     []string                      `json:"missing,omitempty"`
+	Stale       []string                      `json:"stale,omitempty"`
+	Invalid     []string                      `json:"invalid,omitempty"`
+	AreaIssues  []directorymeta.AreaReference `json:"areaIssues,omitempty"`
 }
 
 type command struct{ context cliruntime.Context }
@@ -49,7 +51,7 @@ func (command *command) Run(args []string) error {
 
 // Execute verifies metadata from application-parsed arguments.
 func Execute(application cliruntime.Context, values *Args) error {
-	report, err := Build(application, values.Paths)
+	report, err := BuildWithAreas(application, values.Paths, values.Areas)
 	if err != nil {
 		return err
 	}
@@ -68,14 +70,25 @@ func Execute(application cliruntime.Context, values *Args) error {
 		for _, path := range report.Invalid {
 			fmt.Fprintln(application.Stdout(), "I", path)
 		}
+		if values.Areas {
+			fmt.Fprintf(application.Stdout(), "verify area-leads=%d\n", len(report.AreaIssues))
+			for _, ref := range report.AreaIssues {
+				fmt.Fprintf(application.Stdout(), "A %s %s %s: %v\n", ref.Status, ref.Area, ref.Path, ref.Issues)
+			}
+		}
 	}
-	if len(report.Missing) > 0 || len(report.Stale) > 0 || len(report.Invalid) > 0 {
+	if len(report.Missing) > 0 || len(report.Stale) > 0 || len(report.Invalid) > 0 || len(report.AreaIssues) > 0 {
 		application.RequestExit(1)
 	}
 	return nil
 }
 
 func Build(context cliruntime.Context, paths []string) (Report, error) {
+	return BuildWithAreas(context, paths, false)
+}
+
+// BuildWithAreas adds scoped membership leads to the ordinary metadata report.
+func BuildWithAreas(context cliruntime.Context, paths []string, areas bool) (Report, error) {
 	root := context.Repository().WorkingDirectory()
 	policy, err := context.Repository().ScopeOptions()
 	if err != nil {
@@ -103,6 +116,17 @@ func Build(context cliruntime.Context, paths []string) (Report, error) {
 			report.Invalid = append(report.Invalid, display)
 		default:
 			report.Valid++
+		}
+	}
+	if areas {
+		refs, err := directorymeta.AreaIndex(root, files)
+		if err != nil {
+			return Report{}, err
+		}
+		for _, ref := range refs {
+			if ref.Status != directorymeta.StatusCurrent {
+				report.AreaIssues = append(report.AreaIssues, ref)
+			}
 		}
 	}
 	return report, nil

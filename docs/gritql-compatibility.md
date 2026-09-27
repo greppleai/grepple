@@ -14,10 +14,12 @@ language         = "language", hspace1, ( "c" | "cpp" | "csharp" | "go" | "java"
 
 query            = prefix, [ spacing, where_clause ] ;
 prefix           = snippet
+                 | node_pattern, [ req_sep, "as", req_sep, named_metavariable ]
                  | regex
                  | "and", req_sep, query_block
                  | "or", req_sep, query_block
-                 | unary, req_sep, prefix ;
+                 | unary, req_sep, prefix
+                 | "parent", req_sep, "kind", spacing, "(", spacing, "\"function\"", spacing, ")" ;
 unary            = "not" | "maybe" | "contains" | "within" ;
 
 query_block      = "{", spacing, query, spacing, ",", spacing,
@@ -27,8 +29,12 @@ where_clause     = "where", req_sep, constraint_block ;
 constraint_block = "{", spacing, constraint,
                    { spacing, ",", spacing, constraint },
                    [ spacing, "," ], spacing, "}" ;
-constraint       = metavariable, spacing, "<:", spacing, query ;
-
+constraint       = metavariable, spacing, "<:", spacing, ( "empty" | query ) ;
+node_pattern     = node_name, "(", [ node_arg, { ",", node_arg } ], ")" ;
+node_arg         = metavariable | node_pattern
+                 | node_name, "=", ( metavariable | node_pattern ) ;
+node_name        = ( "A"…"Z" | "a"…"z" | "_" ),
+                   { "A"…"Z" | "a"…"z" | "0"…"9" | "_" } ;
 snippet          = "`", { snippet_char | snippet_escape | snippet_newline }, "`" ;
 snippet_escape   = "\\`" | "\\\\" ;
 snippet_newline  = "\n" | "\r\n" ;
@@ -40,6 +46,7 @@ regex_char       = ? any Unicode scalar value except '"', "\\", CR, or LF ? ;
 hex              = "0"…"9" | "a"…"f" | "A"…"F" ;
 
 metavariable     = "$_" | "$", meta_start, { meta_continue } ;
+named_metavariable = "$", meta_start, { meta_continue } ;
 meta_start       = "A"…"Z" | "a"…"z" ;
 meta_continue    = meta_start | "0"…"9" | "_" ;
 
@@ -54,7 +61,7 @@ line_comment     = "//", { ? any scalar except CR or LF ? } ;
 
 The `EOF` alternative in `comment` is lexical only; it does not let `line_end` omit its newline. A pattern must therefore start with exactly one supported `language` directive on its own logical line. Keywords and language identifiers are lowercase and case-sensitive. Comments have no meaning inside snippets or regex literals. Bare CR, invalid UTF-8, empty `and`/`or` blocks, one-element `and`/`or` blocks, and omitted commas are syntax errors.
 
-There are no infix query operators, parentheses, implicit sequences, or precedence rules. Unary prefix operators associate right-to-left, so `not maybe` followed by a snippet means `not (maybe snippet)`. The optional postfix `where` applies to the complete `prefix` immediately before it; to constrain a unary operand instead, place that operand in an `and` or `or` block. A second `where` is invalid. Blocks are comma-separated, evaluated left to right, and may have one trailing comma. These rules make every parse unique.
+There are no infix query operators, parentheses, implicit sequences, or precedence rules. The one postfix capture, `node_pattern as $name`, binds the exact matched node before an optional `where`. It does not accept `$_` or arbitrary snippets. Unary prefix operators associate right-to-left, so `not maybe` followed by a snippet means `not (maybe snippet)`. The optional postfix `where` applies to the complete `prefix` immediately before it; to constrain a unary operand instead, place that operand in an `and` or `or` block. A second `where` is invalid. Blocks are comma-separated, evaluated left to right, and may have one trailing comma. These rules make every parse unique.
 
 Valid examples are:
 
@@ -78,7 +85,24 @@ language go
 contains `http.Client{$_}`
 ```
 
-A regex is a predicate, not a top-level structural search: it is syntactically accepted as a `query` so it can occur after `<:`, but a top-level regex has no candidate text and produces `PATTERN_INVALID_CONTEXT`.
+```grit
+language go
+and {
+  `{}`,
+  not parent kind("function"),
+}
+```
+
+```grit
+language go
+type_spec(name=$name, type=struct_type())
+```
+
+`type_identifier() as $name` captures the matched identifier node itself rather than one of its children. This is useful for leaf nodes with no named fields, and `where { $name <: r"^[A-Z]" }` can then constrain its exact source-written spelling. The capture preserves structural equality for repeated metavariables, normal source ranges, and the evaluator's resource bounds. Only node patterns support `as` in this v1 subset.
+
+A node pattern matches a pinned Tree-sitter grammar node by its exact kind. Named arguments select direct grammar fields; positional arguments select direct named children in order, ignoring comments and extra nodes. Nested node patterns constrain field/child kinds, and `$name` binds one structural node. Unmentioned fields/children are unconstrained, so `struct_type()` matches any struct body. Node and field names are ASCII and at most 128 bytes; unknown kinds and fields are compile errors, not clean searches. These patterns and bindings work in all twelve supported target languages; grammar kinds and field names are language-specific. Arbitrary upstream AST constructors with embedded snippets (for example `Call(name=\`x\`)`) remain unsupported.
+
+A regex is a predicate, not a top-level structural search: it is syntactically accepted as a `query` so it can occur after `<:`, but a top-level regex has no candidate text and produces `PATTERN_INVALID_CONTEXT`. `empty` is valid only as a direct `<:` right-hand side; elsewhere it is a syntax error.
 
 ### 1.1 Identifiers and metavariables
 
@@ -139,7 +163,50 @@ Whitespace, line terminators, comments, and automatically inserted semicolons ar
 
 A named metavariable's first occurrence binds the subtree permitted by its snippet grammar position. Later occurrences of that name must be structurally equal. A metavariable in an entire repeated-child slot may bind a consecutive list of zero or more children; it cannot splice through punctuation or across different parents. Repeated-list equality compares only corresponding normalized elements; separators are never equality members, so a trailing comma does not distinguish `f(a,)` from `f(a)`. Separators authored as literal template/node syntax, including explicit semicolons, remain structurally significant. List choice is greedy: try the longest sequence first, then shorter sequences, while alternatives and later snippet elements are tried left to right. The first complete structural match wins for that candidate. This deterministic backtracking rule also applies to multiple list metavariables. Bindings retain source order and are scoped to one candidate evaluation. Every list binding has one overall span for its grammar slot plus one ordered, non-overlapping element range per structural element. A non-empty overall span starts at the first normalized element and ends after the last normalized element, including intervening trivia and separators but excluding leading and trailing separators. An empty list has no element ranges and has a zero-width overall span immediately before the next concrete token, or immediately after the previous concrete token when there is no next token.
 
-A `where` block is evaluated after its prefix succeeds. Constraints are evaluated left to right. Its left side must already have a binding from the prefix or a committed earlier constraint; this v1 grammar has no construct that can create such a binding solely on a left side. `$x <: P` runs `P` with `$x` as its candidate (or each list element in source order, succeeding once for each successful element). For `r"..."`, it instead tests the binding text as specified above. Every constraint must succeed.
+A `where` block is evaluated after its prefix succeeds. Constraints are evaluated left to right. Its left side must already have a binding from the prefix or a committed earlier constraint; this v1 grammar has no construct that can create such a binding solely on a left side. `$x <: P` runs `P` with `$x` as its candidate (or each list element in source order, succeeding once for each successful element). For `r"..."`, it instead tests the binding text as specified above. `$x <: empty` succeeds exactly once when `$x` is a bound list with **zero structural elements**; it fails for non-empty lists and scalar node bindings, even if their text is empty. It tests structural cardinality, not trimmed source text. Every constraint must succeed.
+
+For example, `language go` followed by `` `for { $body }` where { $body <: empty } `` detects an empty Go loop body without matching a function body. Other languages may use an argument-list metavariable such as `` `target($args)` where { $args <: empty } ``; which syntactic positions admit a zero-length list is determined by that language's pinned grammar and adapter. `parent kind("function")` checks **only the immediate syntax parent** of the current node (or the list's grammar parent for a list candidate). It recognizes the parser's pinned function-like node kinds, including methods and supported anonymous function forms; it does not look through intermediate blocks, infer types, or resolve calls. It preserves the current match range and bindings, so `not parent kind("function")` excludes only direct function bodies. Only the `"function"` category is supported.
+
+### 3.1 Cross-file relations (versioned hook runner)
+
+The `gritql-relational-v1` hook engine joins findings from **complete** local source snapshots; it is not the standalone unsupported `multifile` query expression. A rule compiles `left_query` and optional `right_query` (defaults to the left query) and `partition_query` as ordinary language-qualified GritQL programs. `left_key` and `right_key` select named scalar node bindings; optional `descendant_kind` chooses the first matching syntax descendant, useful for unwrapping a Go pointer/generic receiver. Keys compare normalized structural values, not source whitespace. `scope` is `directory` or `repository`; an optional per-file partition query/key prevents matches across namespaces or packages. A right finding is reported when a matching left finding is in **another file**. `unique_left: true` suppresses ambiguous declarations; false reports duplicate occurrences across files, with one result per right location. All programs in a relation must target the same language. Source diagnostics, truncation, missing/ambiguous partitions, and missing required bindings are errors, not clean results. `relation.left_include` optionally narrows **reported left declarations** by repository-relative glob without narrowing the right reference universe or skipping validation of scanned files. `relation.max_findings` optionally raises the per-program finding bound from 10,000 to at most 100,000; exceeding that explicit bound still fails closed.
+
+For example, `variable_declarator(name=$name)` on both sides with `scope: repository` finds TypeScript declarations repeated between files:
+
+```yaml
+version: 1
+id: duplicate-symbol
+event: Stop
+engine: gritql-relational-v1
+include: ["**/*.ts"]
+severity: warning
+message: "duplicate {{key}} also appears in {{left.basename}}"
+relation:
+  left_query: |
+    language typescript
+    variable_declarator(name=$name)
+  left_key: {binding: name}
+  right_key: {binding: name}
+  scope: repository
+```
+
+`relation.mode: unmatched_left` reports each **left** finding whose key has no right-side match in the same scope/partition, including the same file. The default mode retains cross-file pair behavior. This is a bounded, source-authored anti-join over the entire selected snapshot; `unique_left` and `{{right.*}}` message placeholders are invalid in unmatched mode. `{{left.*}}` and `{{key}}` describe the reported left finding. Missing sources, parser diagnostics, resource limits, and missing/ambiguous partitions still fail closed; absence in a partial scan is never a clean result.
+
+[The installed Go method candidate hook](../.grepple/hooks/go-uncalled-methods.yaml) (also available as a [reusable example](../examples/go-uncalled-methods.yaml)) authors its two selectors in GritQL: `method_declaration(name=$name) where { $name <: r"^[a-z]" }` (ASCII-unexported declarations) and `selector_expression(field=$name) where { $name <: r"^[a-z]" }` (any same-name selector reference), joined by name within a directory and source-written Go package. It excludes `**/*_test.go` from **both** declaration and reference scans: a production method referenced only in tests becomes a candidate, while methods declared in tests are not checked. Run it with `grepple hook --id go-uncalled-methods --all`; a relational rule forces a complete scan of included sources even without `--all`. It flags **no matching selector name in the selected source universe**, not proven dead code: method values are included, unrelated fields or another receiver with the same name can hide candidates, and unresolved dynamic calls, reflection, generated files, build-tag variants, excluded sources, and external uses can create false alarms. Review each warning before removal. No type, receiver, dispatch, or reachability inference is implied.
+
+The installed [private Go type rule](../.grepple/hooks/go-dead-private-types.yaml) joins source-written `type_spec` names with type-identifier references in the same directory and package. The [exported internal type](../.grepple/hooks/go-dead-internal-types.yaml) and [exported internal method](../.grepple/hooks/go-dead-internal-methods.yaml) rules limit **declarations** to `internal/**/*.go` but scan references from all included Go files, including `cmd/`. Each excludes `*_test.go`, so a test-only reference does not suppress a candidate. The type rules use `type_identifier() as $name` and exclude each declaration's own name with `not within type_spec(name=$name)`. These are name-based candidates, not proof of dead code: different packages/receivers with the same name can hide findings, self-references and method receivers can mask dead types, and interface calls (such as `ServeHTTP`, `Unwrap`, and `UnmarshalText`), reflection, code generation, and external users can cause false alarms. Review warnings before removal.
+
+`.grepple/hooks/same-file-struct-methods.yaml` instead joins Go `type_spec` nodes to `method_declaration` receivers, partitioned by `package_clause`. Configured `include`/`exclude` globs constrain the source universe. Choosing a relation forces `grepple hook` to scan all selected repository sources even without `--all`, because unchanged declarations can affect changed methods. Complete results are cached by selected source bytes, rule definition, and executable; incomplete results are never cached.
+
+### 3.2 Source-authored scoped metrics
+
+`gritql-metric-v1` accepts a **GritQL metric document**, not a Go implementation of a rule. Its top-level map contains one `metric` map; `scope`, `base`, `above`, and nonempty `rules` are required. Optional `name` identifies the scope's grammar name field, and `boundary` skips nested subtrees. Each rule has `id`, GritQL `query`, and nonnegative `points`; optional `depth` multiplies enclosing nesting, `opens: true` increases nesting for descendants, `flat` suppresses an else-if nesting increase, `logical: "each"|"runs"` and `operators` count short-circuit tokens or operator runs, `child` requires a named child kind, and `self` compares a direct call field to the source-written scope name. All selectors use the document's language header and the closed `gritql-v1` selector contract. Unknown map fields, duplicate IDs, invalid grammar kinds/fields, malformed sources, truncation, or exhausted budgets are errors, never clean scores. The calculation traverses the source tree under one shared step/time budget and returns a score with a per-event breakdown for each scope.
+
+The installed [McCabe hook](../.grepple/hooks/go-mccabe.yaml) defines `scope: or { function_declaration(), method_declaration() }`, `base: 1`, `above: 10`, and GritQL rules for `if`, `for`, non-default switch/type-switch/select arms, and `&&`/`||`. Multiple case labels with one body count as one arm; nested function literals are excluded. A separate [cognitive example](../examples/go-cognitive.yaml) authors Revive-style structural weights in GritQL. Direct recursion currently compares **lexical names**, not resolved Go object identities, so shadowing can differ from Revive. The existing Revive cognitive-complexity rule remains enabled; see the [Revive parity report](gritql-metric-parity.md) before enabling that example.
+
+The installed [nested-loop rule](../.grepple/hooks/go-nested-loops.yaml) selects Go `for_statement()` nodes and scores each inner loop once per enclosing loop via `points: 0, depth: 1, opens: true`. It warns only when the function score is **above 1**, meaning at least two inner-loop occurrences: a single outer/inner pair scores 1 and stays quiet, while two separate pairs score 2 and a three-deep chain scores 3. It includes range loops and loops separated by an `if`, but excludes nested function-literal bodies. Sequential loops score zero. The score is the sum of enclosing-loop depths, **not an estimate of time complexity**: it does not know bounds, input sizes, whether loops run, or call costs. The warning is located at the named function or method.
+
+Metric hooks use changed-file discovery when selected alone; they report functions strictly **above** `above`, with `{{name}}`, `{{score}}`, and `{{above}}` message placeholders. Selecting a repository relation alongside them (as the default set does here) forces a complete scan, including unchanged files. Use `--id go-nested-loops` or `--id go-mccabe` for changed-file scope. Selected source is content-validated, and only complete per-file scans are cached. Metric scans currently run serially, independent of `--workers`. The Go API `CompileMetric` and `AnalyzeMetrics` can run the same authored document without a hook. Metric documents are not ordinary `grepple grit` search patterns; the ordinary `gritql-v1` contract remains closed.
 
 ## 4. Evaluation model
 
@@ -147,8 +214,9 @@ The evaluator visits named source AST nodes in preorder: parent before children,
 
 Queries return zero or more match records. Each record contains a primary range and a binding map:
 
+- `parent kind("function")` succeeds once only when the current candidate's direct grammar parent is function-like, retaining the candidate range and bindings. An ancestor at greater depth does not suffice.
 - A snippet matches the current candidate structurally and returns that candidate's range.
-- A regex is valid only as a `<:` predicate and returns its input binding's range.
+- A regex or `empty` predicate is valid only as a direct `<:` right-hand side; a successful constraint retains its prefix match range.
 - `and { A, B, ... }` evaluates every member against the same candidate. It forms the left-to-right Cartesian join of successful records, retaining only compatible bindings. Its range is the smallest byte span covering all member ranges.
 - `or { A, B, ... }` evaluates every branch against the same candidate in source order and concatenates their records in branch order. It does not stop at the first success.
 - `not P` succeeds once, with the current candidate's range and no new bindings, exactly when `P` returns no record.
@@ -275,8 +343,8 @@ The following are recognized but unsupported and fail closed with `PATTERN_UNSUP
 - rewrites or replacement arrows such as `=>`;
 - pattern definitions, named definitions, and calls to them;
 - imports, modules, libraries, and remote patterns;
-- multifile patterns, sequential patterns, and cross-file state;
-- named AST constructors;
+- standalone `multifile` and `sequential` query expressions (cross-file joins are supported by the separate relational hook engine);
+- arbitrary upstream AST constructors with snippets or calls (the bounded node-pattern subset above is supported);
 - language prefixes or qualifiers on snippets/patterns (the only language syntax is the required header);
 - `as` captures;
 - assignments, predicates/functions, custom or foreign functions;
@@ -321,4 +389,4 @@ The peak metric samples `runtime.MemStats.HeapAlloc` every 100 microseconds and 
 
 A conforming implementation must fixture-test every grammar production, supported snippet context, binding transaction, range rule, diagnostic code, ordering key, limit outcome, and unsupported category. The versioned `language-reliability` fixture additionally requires every registered target language to cover named/list metavariables, deterministic snippet-context selection (including competing interpretations where its grammar permits them), malformed query and source syntax, cancellation, and a resource-limit outcome. Its coverage test is derived from `SupportedLanguages`, so registering a language without all required vectors fails the suite. `gritql-v1` metadata publishes the canonical target language and grammar identifier, every effective limit, and the pinned Tree-sitter implementation identity for Go callers.
 
-The accepted target set is closed: adding syntax or changing matching, range, ordering, cancellation, or diagnostic classification requires a new compatibility contract. Clarifications that do not change observable behavior may retain `gritql-v1`. Existing stable codes may not be reassigned.
+The supported language set remains closed. Additive read-only syntax is documented and fixture-tested within this `gritql-v1` implementation (including structural node patterns); changing established matching, range, ordering, cancellation, or diagnostic behavior requires a new compatibility contract. The separate `gritql-relational-v1` hook engine versions cross-file semantics explicitly. Existing stable codes may not be reassigned.

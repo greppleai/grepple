@@ -1,0 +1,20 @@
+version: 1
+id: go-mccabe
+event: Stop
+engine: gritql-metric-v1
+include: ["**/*.go"]
+severity: warning
+message: "function {{name}} has McCabe complexity {{score}} (> {{above}})"
+query: |
+  language go
+  { metric: {
+    scope: or { function_declaration(), method_declaration() },
+    name: "name", base: 1, above: 10,
+    boundary: func_literal(),
+    rules: [
+      {id: "if", query: if_statement(), points: 1},
+      {id: "loop", query: for_statement(), points: 1},
+      {id: "arm", query: or { expression_case(), type_case(), communication_case() }, points: 1},
+      {id: "short-circuit", query: binary_expression(), points: 1, logical: "each", operators: ["&&", "||"]}
+    ]
+  } }

@@ -3,7 +3,7 @@
 - Upstream URL: <https://github.com/getgrit/tree-sitter-gritql.git>
 - Commit: `f9d98660bd7ae78c9211cb52e295bcd6531a8121`
 - Upstream relationship: derived from the exact gitlink used by `getgrit/gritql` commit `4ca283484ab9bd11ca3cbc9e14b5ad2db5d61a37`.
-- Grepple patch: `languageName` additionally accepts `javascript`, `typescript`, `tsx`, and `shell`; no query operators or runtime behavior were added to the vendored grammar.
+- Grepple patch: `languageName` additionally accepts `javascript`, `typescript`, `tsx`, and `shell`; `predicateMatch` additionally accepts `emptyPredicate` as a direct right-hand side; `_pattern` additionally accepts `patternParent` for the direct `parent kind("function")` test. The evaluator implements both predicates without an external runtime.
 
 ## Files and SHA-256
 
@@ -12,10 +12,10 @@ All copied upstream files are covered by the exact vendored `LICENSE` (MIT, copy
 | File | Origin | SHA-256 |
 | --- | --- | --- |
 | `LICENSE` | `LICENSE` | `efa8bfef33f67df331a760fbadae76841d5ccab4135fa5c53e44b5b3253d55cb` |
-| `grammar.js` | Upstream plus the documented Grepple language-name patch | `4cd04e80b11eb64a191afacc1d35d1db18c3311265417fe7446db4d8999d875b` |
-| `grammar.json` | Generated from patched `grammar.js` | `7fccb5ce9c8499bff599a3b146b0197e044b5c21ae8d85f814f5b7b86dd6bfea` |
-| `node-types.json` | Generated from patched `grammar.js` | `7f5b2ea5b69bdc7ebdfbe32a019d7a1153006ef6ef5b1e9bcfbcfe9dad0b056a` |
-| `parser.c` | Generated from patched `grammar.js` | `9c2f12ca89c46dfb4d404dd74c08cbbf5fcf3f9ac5e0bddf32f7d1193e4f47a3` |
+| `grammar.js` | Upstream plus the documented Grepple patches | `0a968ace505e3c599ea0fdedbec6338933fbba63b4eb782aa3845fac471fb4c9` |
+| `grammar.json` | Generated from patched `grammar.js` | `1c21a011fea56b0d98f53f76de3d26ee445a4e20efe5613bc102581a6436e7bb` |
+| `node-types.json` | Generated from patched `grammar.js` | `673425bc01a63427f434b731f36c15ef60797721fdaf82bffe506fa3b6db8b79` |
+| `parser.c` | Generated from patched `grammar.js` | `ea4ad7148fae865d6fa03a379bc258703f5bd7340e7f861c5f8e46bbaedce37f` |
 | `scanner.c` | `src/scanner.c` | `6d0af8aa49c59b08107c9e66f45010da7b53a1982a6ec10dfb26f3a4fe0c37f0` |
 | `tree_sitter/alloc.h` | `src/tree_sitter/alloc.h` | `253b44a7b4313a7afd0c505c2fc6e7ce4b8e78955ebf4be3ea000532ec060673` |
 | `tree_sitter/array.h` | `src/tree_sitter/array.h` | `4ff743903dc46f5db6aa54f31c6b4d160a8a9779e5b2ab1ee59ae7ebcd850ea1` |
@@ -29,7 +29,7 @@ From `gritql/internal/gritgrammar` in this checkout:
 ```sh
 npx --yes tree-sitter-cli@0.22.6 generate
 sha256sum src/parser.c
-# 9c2f12ca89c46dfb4d404dd74c08cbbf5fcf3f9ac5e0bddf32f7d1193e4f47a3
+# ea4ad7148fae865d6fa03a379bc258703f5bd7340e7f861c5f8e46bbaedce37f
 ```
 
 This command was verified to reproduce the vendored patched `parser.c` exactly. The `src/` output is copied into this flat vendored runtime layout; generated package scaffolding is not retained. The `tree-sitter-cli` devDependency declared by upstream `package.json` is stale (`~0.21.0-pre-release-1`) and **does not** reproduce that parser hash. Version `0.22.6`, rather than the stale package declaration, is therefore the pinned regeneration tool. Regeneration is a maintainer provenance check only; Node.js is not needed to build or run Grepple.

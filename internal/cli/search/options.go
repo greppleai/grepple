@@ -3,6 +3,7 @@ package search
 import (
 	"github.com/greppleai/grepple/api"
 	"github.com/greppleai/grepple/internal/anchor"
+	rendercommand "github.com/greppleai/grepple/internal/render"
 	"github.com/greppleai/grepple/search"
 )
 
@@ -16,6 +17,7 @@ type Options struct {
 	CountSummary     bool
 	FilesWithMatches bool
 	Outline          bool
+	Kinds            rendercommand.OutlineKinds
 	Depth            int
 	MaxOutputBytes   int
 	RepeatSource     bool

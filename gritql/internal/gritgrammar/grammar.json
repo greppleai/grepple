@@ -481,6 +481,10 @@
           },
           {
             "type": "SYMBOL",
+            "name": "patternParent"
+          },
+          {
+            "type": "SYMBOL",
             "name": "patternIncludes"
           },
           {
@@ -1293,6 +1297,31 @@
               ]
             }
           ]
+        }
+      ]
+    },
+    "patternParent": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "STRING",
+          "value": "parent"
+        },
+        {
+          "type": "STRING",
+          "value": "kind"
+        },
+        {
+          "type": "STRING",
+          "value": "("
+        },
+        {
+          "type": "STRING",
+          "value": "\"function\""
+        },
+        {
+          "type": "STRING",
+          "value": ")"
         }
       ]
     },
@@ -5687,11 +5716,24 @@
           "type": "FIELD",
           "name": "right",
           "content": {
-            "type": "SYMBOL",
-            "name": "_pattern"
+            "type": "CHOICE",
+            "members": [
+              {
+                "type": "SYMBOL",
+                "name": "_pattern"
+              },
+              {
+                "type": "SYMBOL",
+                "name": "emptyPredicate"
+              }
+            ]
           }
         }
       ]
+    },
+    "emptyPredicate": {
+      "type": "STRING",
+      "value": "empty"
     },
     "predicateCall": {
       "type": "SEQ",

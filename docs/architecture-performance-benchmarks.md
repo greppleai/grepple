@@ -1,5 +1,7 @@
 # Architecture performance benchmarks
 
+Historical benchmark rows below include CLI modes removed during simplification; retain their measurements for regression context, not as runnable command suggestions.
+
 `BenchmarkArchitectureWorkflows` measures focused Mermaid structure/flow generation, while `BenchmarkDirectoryArchitecture` measures language-neutral directory indexing and JSON projection:
 
 ```bash
@@ -40,7 +42,7 @@ go build -o /tmp/grepple-bench-bin ./cmd/grepple
 PYTHONDONTWRITEBYTECODE=1 python3 scripts/benchmark-repositories.py \
   --binary /tmp/grepple-bench-bin --repo /path/to/checkout \
   --case 'directory=architecture directory --depth 2 --max-nodes 80 .' \
-  --case 'resolve=architecture resolve --symbol SomeSymbol .' \
+  --case 'resolve=graph resolve --symbol SomeSymbol .' \
   --runs 2 --timeout 90 --output /tmp/grepple-bench-run
 ```
 
@@ -94,7 +96,7 @@ Complete cold and warm architecture and graph JSON remained byte-for-byte identi
 
 ### One optional foreground user-level report cache
 
-`make bin/grepple bin/greppled` builds both commands. Start one `greppled` from **any directory** in one terminal; it does not scan any repositories until requested. From any checkout, run `grepple --daemon architecture directory --json .`, `grepple architecture resolve --daemon --symbol Symbol .`, `grepple --daemon graph resolve --symbol Symbol .`, or `grepple --daemon graph callers --symbol Symbol .`. Focused graph `callees`, `impact`, `dependencies`, and `dependents` are also supported. The CLI applies source policy and renders/spills output. On a report miss, the **CLI** builds it in its own working directory and publishes it; the worker never changes its own working directory or builds reports for arbitrary checkouts. If unavailable or incompatible, the CLI runs directly. The worker stays in the foreground until Ctrl-C/SIGTERM. Graph build/diff, search, GritQL, and remote requests do not use it.
+`make bin/grepple bin/greppled` builds both commands. Start one `greppled` from any directory. From a checkout, run `grepple --daemon architecture directory --json .`, `grepple --daemon graph resolve --symbol Symbol .`, or `grepple --daemon graph callers --symbol Symbol .`; focused `callees` is also supported. On a miss the CLI builds locally and publishes the report; an unavailable worker falls back to direct analysis. Search, GritQL, and remote requests do not use the worker.
 
 The worker's single authenticated descriptor lives at `~/.grepple/cache/daemon.json`, or under an absolute, private `GREPPLE_CACHE_DIR` override. It uses a random bearer token and loopback-only TCP HTTP, with no platform-specific socket API; Unix enforces directory/file permissions and Windows relies on user-profile ACLs. Clients validate protocol, build identity, and listener address. Treat other processes with access to your user profile as trusted. Navigation caches remain per-repository at `~/.grepple/cache/<repository-id>/navigation` by default; an explicit `GREPPLE_NAVIGATION_CACHE_DIR` (including empty, disabling that cache) wins. Existing checkout-local caches are not migrated; output artifacts are separate.
 

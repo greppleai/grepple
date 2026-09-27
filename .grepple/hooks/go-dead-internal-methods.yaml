@@ -1,0 +1,31 @@
+# Candidate exported methods in internal/ may still be invoked via interfaces,
+# reflection, generated code, or source outside this selected repository.
+version: 1
+id: go-dead-internal-methods
+event: Stop
+engine: gritql-relational-v1
+include:
+  - "**/*.go"
+exclude:
+  - "**/*_test.go"
+  - "**/vendor/**"
+  - "**/testdata/**"
+  - "**/node_modules/**"
+  - "**/.*/**"
+  - "**/.*"
+severity: warning
+message: "exported internal method {{left.name}} has no matching selector name in selected repository source; review interface or external uses"
+relation:
+  max_findings: 50000
+  left_include:
+    - "internal/**/*.go"
+  left_query: |
+    language go
+    method_declaration(name=$name) where { $name <: r"^[A-Z]" }
+  right_query: |
+    language go
+    selector_expression(field=$name) where { $name <: r"^[A-Z]" }
+  left_key: {binding: name}
+  right_key: {binding: name}
+  scope: repository
+  mode: unmatched_left

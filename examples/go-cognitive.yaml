@@ -1,0 +1,22 @@
+version: 1
+id: go-cognitive
+event: Stop
+engine: gritql-metric-v1
+include: ["**/*.go"]
+severity: warning
+message: "function {{name}} has cognitive complexity {{score}} (> {{above}})"
+query: |
+  language go
+  { metric: {
+    scope: or { function_declaration(), method_declaration() },
+    name: "name", base: 0, above: 15,
+    rules: [
+      {id: "if", query: if_statement(), points: 1, depth: 1, opens: true, flat: "alternative"},
+      {id: "loop", query: for_statement(), points: 1, depth: 1, opens: true},
+      {id: "switch", query: or { expression_switch_statement(), type_switch_statement(), select_statement() }, points: 1, depth: 1, opens: true},
+      {id: "closure", query: func_literal(), points: 0, depth: 1, opens: true},
+      {id: "logical", query: binary_expression(), points: 1, logical: "runs", operators: ["&&", "||"]},
+      {id: "label", query: or { break_statement(), continue_statement(), goto_statement() }, points: 1, child: "label_name"},
+      {id: "recursion", query: call_expression(), points: 1, self: "function"}
+    ]
+  } }

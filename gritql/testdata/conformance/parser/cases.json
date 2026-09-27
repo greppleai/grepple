@@ -7,6 +7,17 @@
   },
   "cases": [
     {
+      "name": "parser/nested-ast-node-fields",
+      "description": "Named and positional structural grammar-node captures are accepted.",
+      "features": ["positive", "node-like"],
+      "pattern_id": "rule",
+      "message": "match",
+      "pattern": "language go\nmethod_declaration(name=$method, receiver=parameter_list(parameter_declaration(type=$receiver)))",
+      "sources": [],
+      "execution": {"mode": "local"},
+      "expected": {"findings": [], "diagnostics": []}
+    },
+    {
       "name": "parser/snippet",
       "description": "Accepted closed-grammar production.",
       "features": [

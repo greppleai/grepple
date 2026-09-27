@@ -43,12 +43,27 @@ func testArchitectureDependencies(productionOnly bool, exitCode *int) Dependenci
 }
 
 func runArchitecture(args []string) error {
-	return newWithDependencies(testArchitectureDependencies(false, nil)).Run(args)
+	return runArchitectureInternal(args, testArchitectureDependencies(false, nil))
 }
 func runArchitectureWithExit(args []string, productionOnly bool) (int, error) {
 	code := 0
-	err := newWithDependencies(testArchitectureDependencies(productionOnly, &code)).Run(args)
+	err := runArchitectureInternal(args, testArchitectureDependencies(productionOnly, &code))
 	return code, err
+}
+func runArchitectureInternal(args []string, dependencies Dependencies) error {
+	if len(args) > 0 {
+		switch args[0] {
+		case "resolve":
+			return runArchitectureResolve(args[1:], dependencies)
+		case "why":
+			return runArchitectureWhy(args[1:], dependencies)
+		case "responsibilities":
+			return runArchitectureResponsibilities(args[1:], dependencies)
+		case "compare":
+			return runArchitectureCompare(args[1:], dependencies)
+		}
+	}
+	return newWithDependencies(dependencies).Run(args)
 }
 func buildDirectoryArchitecture(paths []string, maxFiles int) (Report, error) {
 	return Build(paths, maxFiles, testArchitectureDependencies(false, nil))

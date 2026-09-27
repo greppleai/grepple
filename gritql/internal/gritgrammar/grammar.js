@@ -98,6 +98,7 @@ module.exports = grammar({
           $.patternMaybe,
           $.patternIfElse,
           $.patternContains,
+          $.patternParent,
           $.patternIncludes,
           $.patternAfter,
           $.patternBefore,
@@ -197,6 +198,9 @@ module.exports = grammar({
     patternAnd: ($) => seq('and', '{', field('patterns', commaSep($._pattern)), '}'),
 
     patternMaybe: ($) => seq('maybe', allowCurly(field('pattern', $._pattern))),
+
+    // A direct-parent function-like category check, never an ancestor search.
+    patternParent: (_$) => seq('parent', 'kind', '(', '"function"', ')'),
 
     patternAfter: ($) => seq('after', field('pattern', $._pattern)),
 
@@ -561,8 +565,10 @@ module.exports = grammar({
     predicateEqual: ($) => seq(field('left', $.variable), '==', field('right', $._pattern)),
 
     predicateMatch: ($) =>
-      seq(field('left', choice($._container, $._literal)), '<:', field('right', $._pattern)),
+      seq(field('left', choice($._container, $._literal)), '<:', field('right', choice($._pattern, $.emptyPredicate))),
 
+    // A binding-list cardinality predicate, valid only as a direct constraint RHS.
+    emptyPredicate: (_$) => 'empty',
     predicateCall: ($) =>
       seq(field('name', $.name), seq('(', field('named_args', commaSep($.namedArg)), ')')),
 

@@ -14,30 +14,14 @@ Directory architecture is a language-neutral orientation index, not proof of pac
    grepple sources explain .
    grepple architecture directory --depth 2 --max-nodes 80 .
    ```
-2. **Known symbol:** resolve it directly across types and callables.
-   ```bash
-   grepple architecture resolve --symbol Document .
-   ```
-   Retain every emitted match when the name is ambiguous; narrow PATH instead of guessing.
-3. **Why two directories are related:** request exact call/import/type evidence.
-   ```bash
-   grepple architecture why rulespec search rulespec search
-   ```
-4. **Verify source:** follow the emitted `PATH:START-END`.
-   ```bash
-   grepple --at path/to/file.go:40-80
-   ```
-5. **Only if behavioral impact matters:** switch to `change-impact-analysis` instead of inferring complete behavior from a directory relation.
-6. **Diagnose unexpected architecture drift:** compare complete reports from the same intended source universe before inspecting checksums.
-   ```bash
-   grepple architecture compare before.json after.json
-   ```
-   A semantic difference identifies the first source-linked fact. Semantic equality with byte inequality identifies encoding or ordering drift.
+2. **Known symbol:** use `grepple --outline PATH`, or `grepple graph resolve --symbol NAME SCOPE` for an ambiguous callable. Verify one emitted location with `grepple --at PATH:LINE`.
+3. **Why two directories are related:** scope `grepple architecture directory --relations FROM TO`, then inspect the source-linked relation evidence in its `--json` output or search exact imports/calls. A static relation does not prove runtime behavior.
+4. **Behavioral impact:** switch to `change-impact-analysis` and focused `graph callers|callees`.
 
 ## Trust rules
 
 - Directory names establish physical ownership, not language package/module/layer intent.
-- Directory `why` relations distinguish strongly resolved static calls, adapter-owned imports, and imported type references. Inspect relation coverage: ambiguous, unresolved, unqualified, and adapter-unsupported facts are not asserted as edges, so absence is not proof that no reflection, registration, build-system, or runtime dependency exists.
+- Directory relations distinguish syntax-resolved calls, imports, and type references. Inspect coverage; ambiguity, unresolved inputs, and adapter-unsupported facts make absence inconclusive.
 - Declaration visibility and process entrypoints are reported only when an owning language adapter provides the corresponding contract; unsupported semantics must stay unknown.
 - Inspect `sources` and truncation before making a completeness claim. Use `grepple sources explain PATH` when skipped input or repository configuration could matter; use `--production-only` only when the question is explicitly about production code.
 - Large JSON may be returned as a `grepple-artifact-v1` descriptor. Read only relevant artifact ranges or rerun a narrower command; use the descriptor's exact `--no-spill` command only when the complete stdout stream is required.

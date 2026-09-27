@@ -55,9 +55,13 @@ func (e *EvaluationError) Error() string { return e.Message }
 func (e *EvaluationError) Unwrap() error { return e.cause }
 
 // EvaluationMatch is one query record emitted by a top-level candidate.
+// EvaluationMatch is one query record emitted by a top-level candidate.
 type EvaluationMatch struct {
 	rng      parser.Range
 	bindings BindingSet
+	kind     string
+	node     parser.Range
+	hasNode  bool
 }
 
 // Range returns the exact significant source range emitted for the match.
@@ -65,6 +69,12 @@ func (m EvaluationMatch) Range() parser.Range { return m.rng }
 
 // Bindings returns the immutable binding set committed by the evaluation.
 func (m EvaluationMatch) Bindings() BindingSet { return m.bindings }
+
+// CandidateNode identifies the concrete syntax node that produced this match.
+// Sequence candidates have no single node. Neither result retains a document handle.
+func (m EvaluationMatch) CandidateNode() (string, parser.Range, bool) {
+	return m.kind, m.node, m.hasNode
+}
 
 type evaluationBudget struct {
 	ctx      context.Context
@@ -115,15 +125,34 @@ type queryRecord struct {
 // Evaluate evaluates a compiled Program against one already-parsed target document.
 // Candidates and records are deterministic and no path or Finding model is used.
 func Evaluate(ctx context.Context, program *Program, document *parser.Document, options EvaluateOptions) ([]EvaluationMatch, error) {
+	rows, err := EvaluatePrograms(ctx, []*Program{program}, document, options)
+	if err != nil {
+		return nil, err
+	}
+	return rows[0], nil
+}
+
+// EvaluatePrograms shares one bounded syntax traversal, source validation, and
+// step/time budget among ordered programs. Errors discard every program's result.
+func EvaluatePrograms(ctx context.Context, programs []*Program, document *parser.Document, options EvaluateOptions) ([][]EvaluationMatch, error) {
 	if ctx == nil {
 		ctx = context.Background()
 	}
-	if err := validateEvaluationInputs(program, document); err != nil {
-		return nil, err
+	if len(programs) == 0 {
+		return nil, evaluationFailure("INTERNAL_ERROR", "internal", "no compiled programs", nil)
+	}
+	for _, program := range programs {
+		if err := validateEvaluationInputs(program, document); err != nil {
+			return nil, err
+		}
 	}
 	options = normalizeEvaluateOptions(options)
 	budget := newEvaluationBudget(ctx, options)
-	var matches []EvaluationMatch
+	return evaluateProgramsWithBudget(programs, document, options, budget)
+}
+
+func evaluateProgramsWithBudget(programs []*Program, document *parser.Document, options EvaluateOptions, budget *evaluationBudget) ([][]EvaluationMatch, error) {
+	var rows [][]EvaluationMatch
 	err := document.Read(func(view parser.DocumentView) error {
 		root := view.Root()
 		if err := inspectEvaluationSource(root, options.MaxDepth, budget); err != nil {
@@ -133,8 +162,14 @@ func Evaluate(ctx context.Context, program *Program, document *parser.Document, 
 		if err != nil {
 			return err
 		}
-		matches, err = evaluateCandidates(program.root, candidates, nodesByRange, budget)
-		return err
+		rows = make([][]EvaluationMatch, len(programs))
+		for i, program := range programs {
+			rows[i], err = evaluateCandidates(program.root, candidates, nodesByRange, budget)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
 	})
 	if err != nil {
 		if errors.Is(err, parser.ErrDocumentClosed) {
@@ -142,9 +177,8 @@ func Evaluate(ctx context.Context, program *Program, document *parser.Document, 
 		}
 		return nil, err
 	}
-	return matches, nil
+	return rows, nil
 }
-
 func validateEvaluationInputs(program *Program, document *parser.Document) error {
 	if program == nil || program.root == nil {
 		return evaluationFailure("INTERNAL_ERROR", "internal", "invalid compiled program", nil)
@@ -201,7 +235,7 @@ func evaluateCandidates(root *expression, candidates []evalCandidate, nodes map[
 			return nil, budget.err
 		}
 		var err error
-		out, err = appendEvaluationRecords(out, records, seen, budget)
+		out, err = appendEvaluationRecords(out, records, candidate, seen, budget)
 		if err != nil {
 			return nil, err
 		}
@@ -212,12 +246,15 @@ func evaluateCandidates(root *expression, candidates []evalCandidate, nodes map[
 	return out, nil
 }
 
-func appendEvaluationRecords(out []EvaluationMatch, records []queryRecord, seen map[string]struct{}, budget *evaluationBudget) ([]EvaluationMatch, error) {
+func appendEvaluationRecords(out []EvaluationMatch, records []queryRecord, candidate evalCandidate, seen map[string]struct{}, budget *evaluationBudget) ([]EvaluationMatch, error) {
 	for _, record := range records {
 		if !budget.take() {
 			return nil, budget.err
 		}
 		match := EvaluationMatch{rng: record.rng, bindings: record.bindings}
+		if !candidate.sequence && candidate.node.Valid() {
+			match.kind, match.node, match.hasNode = candidate.node.Kind(), candidate.node.Range(), true
+		}
 		key := evaluationMatchKey(match)
 		if _, duplicate := seen[key]; duplicate {
 			continue
@@ -625,6 +662,34 @@ func evaluateExpression(expr *expression, candidate evalCandidate, incoming Bind
 	switch expr.kind {
 	case KindSnippet:
 		return evaluateSnippetExpression(expr, candidate, incoming, budget)
+	case KindNodeLike:
+		if candidate.sequence || !candidate.node.Valid() || candidate.node.Kind() != expr.text {
+			return nil
+		}
+		state, ok := matchNodeLike(expr, candidate.node, cloneBindingMap(incoming.values), budget)
+		if !ok {
+			return nil
+		}
+		return []queryRecord{{rng: candidate.rng, bindings: BindingSet{values: state}}}
+	case KindAs:
+		if candidate.sequence || !candidate.node.Valid() {
+			return nil
+		}
+		matched := evaluateExpression(expr.children[0], candidate, incoming, nodes, budget)
+		var out []queryRecord
+		for _, record := range matched {
+			snapshot, valid := candidate.node.Snapshot()
+			if !valid {
+				budget.err = evaluationFailure("INTERNAL_ERROR", "internal", "capture source view is unavailable", nil)
+				return nil
+			}
+			state, _, ok := bindNodes(&templateSlot{ref: expr.refs[0], cardinality: SlotOne}, []parser.SyntaxNode{snapshot}, cloneBindingMap(record.bindings.values), candidate.rng, budget)
+			if ok {
+				record.bindings = BindingSet{values: state}
+				out = append(out, record)
+			}
+		}
+		return out
 	case KindRegex:
 		return nil
 	case KindAnd:
@@ -641,12 +706,75 @@ func evaluateExpression(expr *expression, candidate evalCandidate, incoming Bind
 		return evaluateWithinExpression(expr, candidate, incoming, nodes, budget)
 	case KindWhere:
 		return evaluateWhereExpression(expr, candidate, incoming, nodes, budget)
+	case KindParent:
+		parent := candidate.parent
+		if !candidate.sequence {
+			parent = candidate.node.Parent()
+		}
+		if parent.IsFunctionLike() {
+			return []queryRecord{{rng: candidate.rng, bindings: incoming}}
+		}
+		return nil
 	default:
 		budget.err = evaluationFailure("INTERNAL_ERROR", "internal", "unknown compiled expression", nil)
 		return nil
 	}
 }
 
+// matchNodeLike matches named syntax fields (or ordered positional named
+// children) without freezing unrelated siblings. Captures use the same
+// immutable normalized binding semantics as snippet metavariables.
+func matchNodeLike(expr *expression, node parser.ViewNode, state map[VariableID]*bindingValue, budget *evaluationBudget) (map[VariableID]*bindingValue, bool) {
+	if !budget.take() || !node.Valid() || node.Kind() != expr.text || node.HasError() {
+		return nil, false
+	}
+	positional := 0
+	for index, child := range expr.children {
+		var target parser.ViewNode
+		if field := expr.fields[index]; field != "" {
+			target = node.ChildByFieldName(field)
+		} else {
+			seen := 0
+			for _, element := range node.NamedChildren() {
+				if element.IsExtra() || element.Kind() == "comment" {
+					continue
+				}
+				if seen == positional {
+					target = element
+					break
+				}
+				seen++
+			}
+			positional++
+		}
+		if !target.Valid() {
+			return nil, false
+		}
+		if child.kind == KindNodeLike {
+			var ok bool
+			state, ok = matchNodeLike(child, target, state, budget)
+			if !ok {
+				return nil, false
+			}
+			continue
+		}
+		if child.kind != KindNodeCapture || len(child.refs) != 1 {
+			budget.err = evaluationFailure("INTERNAL_ERROR", "internal", "invalid compiled node capture", nil)
+			return nil, false
+		}
+		snapshot, ok := target.Snapshot()
+		if !ok {
+			budget.err = evaluationFailure("INTERNAL_ERROR", "internal", "source document closed during capture", nil)
+			return nil, false
+		}
+		slot := &templateSlot{ref: child.refs[0], cardinality: SlotOne}
+		state, _, ok = bindNodes(slot, []parser.SyntaxNode{snapshot}, state, target.Range(), budget)
+		if !ok {
+			return nil, false
+		}
+	}
+	return state, true
+}
 func evaluateSnippetExpression(expr *expression, candidate evalCandidate, incoming BindingSet, budget *evaluationBudget) []queryRecord {
 	templates := expr.templates
 	if len(templates) == 0 {
@@ -772,6 +900,12 @@ func evaluateConstraint(item constraint, record queryRecord, nodes map[string]ev
 	}
 	if item.rhs.kind == KindRegex {
 		return evaluateRegexConstraint(item, record, bound)
+	}
+	if item.rhs.kind == KindEmpty {
+		if bound.Kind() == BindingList && len(bound.value.structural) == 0 {
+			return []queryRecord{record}
+		}
+		return nil
 	}
 	return evaluateStructuralConstraint(item, record, bound, nodes, budget)
 }

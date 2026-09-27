@@ -43,6 +43,11 @@ func Run() { client := NewClient(); client.Load() }
 	}
 	projection := graph
 	projection.Calls = append([]NavigationCall(nil), graph.Calls...)
+	// Legacy message-oriented benchmark codec omits newer native signature facts.
+	projection.Declarations = append([]NavigationDeclaration(nil), graph.Declarations...)
+	for index := range projection.Declarations {
+		projection.Declarations[index].Signature = ""
+	}
 	projection.TypeDeclarations = nil
 	projection.Imports = nil
 	projection.Exports = nil

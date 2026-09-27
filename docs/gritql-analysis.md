@@ -35,7 +35,7 @@ Grepple currently uses:
 
 - `gofmt`
 - Revive with the pinned rules in `revive.toml`
-- The custom `same-file-struct-methods` analyzer
+- The declarative `same-file-struct-methods` GritQL relation in `.grepple/hooks/`, adapted into Pi Stop feedback by the standalone hook module
 - Generated architecture-schema validation
 - CodeQL and Trivy in CI
 

@@ -238,11 +238,11 @@ func (d *queryDocument) diagnostics() []queryParseDiagnostic {
 
 var supportedV1SyntaxKinds = map[string]bool{
 	"source_file": true, "comment": true, "langdecl": true, "languageName": true, "name": true,
-	"codeSnippet": true, "backtickSnippet": true,
-	"regexPattern": true, "regex": true, "variable": true,
+	"codeSnippet": true, "backtickSnippet": true, "nodeLike": true, "namedArg": true,
+	"regexPattern": true, "regex": true, "variable": true, "emptyPredicate": true,
 	"patternAnd": true, "patternOr": true, "patternNot": true,
-	"patternMaybe": true, "patternContains": true, "within": true,
-	"patternWhere": true, "predicateAnd": true, "predicateMatch": true,
+	"patternMaybe": true, "patternContains": true, "patternParent": true, "within": true,
+	"patternWhere": true, "patternAs": true, "predicateAnd": true, "predicateMatch": true,
 }
 
 var unsupportedErrorNames = map[string]bool{
@@ -279,6 +279,19 @@ func (d *queryDocument) hasUnsupportedConstruct() bool {
 func unsupportedSyntaxNode(source []byte, node *sitter.Node, hasLanguageDeclaration bool) bool {
 	if node.IsNamed() && !node.IsError() && !node.IsMissing() && !supportedV1SyntaxKinds[node.Kind()] {
 		return true
+	}
+	// Constructor patterns with snippets remain outside this subset. Node-like
+	// selectors accept only structural nested nodes and metavariable captures.
+	if node.Kind() == "namedArg" {
+		if pattern := node.ChildByFieldName("pattern"); pattern != nil && pattern.Kind() != "nodeLike" && pattern.Kind() != "variable" {
+			return true
+		}
+	}
+	if node.Kind() == "patternAs" {
+		pattern := node.ChildByFieldName("pattern")
+		if pattern == nil || pattern.Kind() != "nodeLike" {
+			return true
+		}
 	}
 	text := source[int(node.StartByte()):int(node.EndByte())]
 	if node.Kind() == "comment" && bytes.HasPrefix(text, []byte("/*")) {
@@ -417,12 +430,6 @@ func (n queryNode) namedChildren() []queryNode {
 		}
 	})
 	return result
-}
-
-func (n queryNode) sexp() string {
-	var value string
-	n.read(func() { value = n.raw.ToSexp() })
-	return value
 }
 
 func lineStarts(source []byte) []int {
@@ -640,6 +647,9 @@ func validTrivia(value []byte) (bool, bool) {
 type v1NodeValidator func(queryNode, []queryNode) bool
 
 var v1NodeValidators = map[string]v1NodeValidator{
+	"nodeLike":     validNodeLikeNode,
+	"namedArg":     validNodeArgument,
+	"name":         validNamedTerminalNode,
 	"source_file":  validSourceFileNode,
 	"langdecl":     validLanguageDeclarationNode,
 	"languageName": validLanguageNameNode,
@@ -660,8 +670,15 @@ var v1NodeValidators = map[string]v1NodeValidator{
 	"patternContains": func(n queryNode, children []queryNode) bool {
 		return validUnaryNode(n, children, "contains", "contains")
 	},
-	"within":          validWithinNode,
+	"within": validWithinNode,
+	"patternParent": func(n queryNode, children []queryNode) bool {
+		return n.named() && len(children) == 5 && isNode(children[0], "parent", "", false) && isNode(children[1], "kind", "", false) && isNode(children[2], "(", "", false) && isNode(children[3], "\"function\"", "", false) && isNode(children[4], ")", "", false) && children[0].byteRange().EndByte < children[1].byteRange().StartByte
+	},
+	"emptyPredicate": func(n queryNode, children []queryNode) bool {
+		return n.named() && len(children) == 0 && n.text() == "empty"
+	},
 	"patternWhere":    validWhereNode,
+	"patternAs":       validAsNode,
 	"predicateAnd":    validPredicateBlock,
 	"predicateMatch":  validPredicateMatchNode,
 	"comment":         validCommentNode,
@@ -685,9 +702,16 @@ var v1NodeValidators = map[string]v1NodeValidator{
 	"and":             validAnonymousTerminalNode,
 	"or":              validAnonymousTerminalNode,
 	"not":             validAnonymousTerminalNode,
+	"parent":          validAnonymousTerminalNode,
+	"kind":            validAnonymousTerminalNode,
+	"=":               validAnonymousTerminalNode,
+	"(":               validAnonymousTerminalNode,
+	")":               validAnonymousTerminalNode,
+	"\"function\"":    validAnonymousTerminalNode,
 	"maybe":           validAnonymousTerminalNode,
 	"contains":        validAnonymousTerminalNode,
 	"where":           validAnonymousTerminalNode,
+	"as":              validAnonymousTerminalNode,
 	"{":               validAnonymousTerminalNode,
 	"}":               validAnonymousTerminalNode,
 	"<:":              validAnonymousTerminalNode,
@@ -752,7 +776,7 @@ func validAnonymousTerminalNode(node queryNode, children []queryNode) bool {
 }
 
 func validCommaNode(node queryNode, children []queryNode) bool {
-	return !node.named() && (node.fieldName() == "patterns" || node.fieldName() == "predicates") && len(children) == 0
+	return !node.named() && (node.fieldName() == "patterns" || node.fieldName() == "predicates" || node.fieldName() == "named_args") && len(children) == 0
 }
 
 func validBlockNode(node queryNode, concrete []queryNode, keyword string) bool {
@@ -781,6 +805,14 @@ func validUnaryNode(node queryNode, concrete []queryNode, keyword, field string)
 	return node.named() && len(concrete) == 2 && isNode(concrete[0], keyword, "", false) && concrete[1].named() && concrete[1].fieldName() == field && isV1Expression(concrete[1].kind()) && concrete[0].byteRange().EndByte < concrete[1].byteRange().StartByte
 }
 
+// Only node-like selectors may capture the exact matched root in gritql-v1.
+func validAsNode(node queryNode, concrete []queryNode) bool {
+	return node.named() && len(concrete) == 3 && isNode(concrete[0], "nodeLike", "pattern", true) &&
+		isNode(concrete[1], "as", "", false) && isNode(concrete[2], "variable", "variable", true) &&
+		concrete[2].text() != "$_" && concrete[0].byteRange().EndByte < concrete[1].byteRange().StartByte &&
+		concrete[1].byteRange().EndByte < concrete[2].byteRange().StartByte
+}
+
 func validWhereNode(node queryNode, concrete []queryNode) bool {
 	return node.named() && len(concrete) == 3 && concrete[0].named() && concrete[0].kind() != "patternWhere" && concrete[0].fieldName() == "pattern" && isV1Expression(concrete[0].kind()) && isNode(concrete[1], "where", "", false) && isNode(concrete[2], "predicateAnd", "side_condition", true) && concrete[1].byteRange().EndByte < concrete[2].byteRange().StartByte
 }
@@ -804,6 +836,29 @@ func validPredicateBlock(node queryNode, concrete []queryNode) bool {
 	return count > 0
 }
 
+func validNodeLikeNode(node queryNode, concrete []queryNode) bool {
+	if !node.named() || len(concrete) < 3 || !isNode(concrete[0], "name", "name", true) || !isNode(concrete[1], "(", "", false) || !isNode(concrete[len(concrete)-1], ")", "", false) {
+		return false
+	}
+	expectArg := true
+	for _, child := range concrete[2 : len(concrete)-1] {
+		if expectArg && !isNode(child, "namedArg", "named_args", true) || !expectArg && !isNode(child, ",", "named_args", false) {
+			return false
+		}
+		expectArg = !expectArg
+	}
+	return len(concrete) == 3 || !expectArg
+}
+
+func validNodeArgument(node queryNode, concrete []queryNode) bool {
+	if !node.named() || node.fieldName() != "named_args" {
+		return false
+	}
+	if len(concrete) == 1 {
+		return concrete[0].named() && concrete[0].fieldName() == "variable" && (concrete[0].kind() == "variable" || concrete[0].kind() == "nodeLike")
+	}
+	return len(concrete) == 3 && isNode(concrete[0], "name", "name", true) && isNode(concrete[1], "=", "", false) && concrete[2].named() && concrete[2].fieldName() == "pattern" && (concrete[2].kind() == "variable" || concrete[2].kind() == "nodeLike")
+}
 func isNode(node queryNode, kind, field string, named bool) bool {
 	return node.valid() && node.kind() == kind && node.fieldName() == field && node.named() == named && !node.error() && !node.missing()
 }
@@ -820,7 +875,7 @@ func withoutComments(children []queryNode) []queryNode {
 
 func isV1Expression(kind string) bool {
 	switch kind {
-	case "codeSnippet", "regexPattern", "patternAnd", "patternOr", "patternNot", "patternMaybe", "patternContains", "within", "patternWhere":
+	case "codeSnippet", "nodeLike", "patternAs", "regexPattern", "emptyPredicate", "patternParent", "patternAnd", "patternOr", "patternNot", "patternMaybe", "patternContains", "within", "patternWhere":
 		return true
 	default:
 		return false

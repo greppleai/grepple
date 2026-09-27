@@ -1,0 +1,22 @@
+# Retain the original ID for compatibility; this now checks Go empty blocks, not only if bodies.
+version: 1
+id: go-empty-if
+event: Stop
+engine: gritql-v1
+include:
+  - "**/*.go"
+severity: warning
+message: "Remove the empty block or explain the intended behavior."
+query: |
+  language go
+  or {
+    and {
+      `{ $body }` where { $body <: empty },
+      not parent kind("function"),
+      not within `select {}`,
+      not within `for $callee($callArgs) {}`,
+    },
+    `switch $condition {}`,
+    `switch {}`,
+    `switch $binding := $value.(type) {}`,
+  }

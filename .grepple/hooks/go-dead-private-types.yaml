@@ -1,0 +1,32 @@
+# Source-level candidates only; lexical names do not establish reachability.
+version: 1
+id: go-dead-private-types
+event: Stop
+engine: gritql-relational-v1
+include:
+  - "**/*.go"
+exclude:
+  - "**/*_test.go"
+  - "**/vendor/**"
+  - "**/testdata/**"
+  - "**/node_modules/**"
+  - "**/.*/**"
+  - "**/.*"
+severity: warning
+message: "private type {{left.name}} has no matching type identifier in its package outside its declaration; review before removal"
+relation:
+  max_findings: 50000
+  left_query: |
+    language go
+    type_spec(name=$name) where { $name <: r"^[a-z]" }
+  right_query: |
+    language go
+    and { type_identifier() as $name, not within type_spec(name=$name), } where { $name <: r"^[a-z]" }
+  partition_query: |
+    language go
+    package_clause($package)
+  left_key: {binding: name}
+  right_key: {binding: name}
+  partition_key: {binding: package}
+  scope: directory
+  mode: unmatched_left

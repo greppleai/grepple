@@ -13,7 +13,7 @@ import (
 	sourcedomain "github.com/greppleai/grepple/internal/sources"
 )
 
-func buildLocal(path string, depth int, kind sourcedomain.Kind, repository cliruntime.Repository) (api.TreeResponse, error) {
+func buildLocal(path string, depth int, kind sourcedomain.Kind, selectedAreas []string, repository cliruntime.Repository) (api.TreeResponse, error) {
 
 	if path == "" {
 		path = "."
@@ -25,6 +25,10 @@ func buildLocal(path string, depth int, kind sourcedomain.Kind, repository cliru
 	working := "."
 	if repository != nil {
 		working = repository.WorkingDirectory()
+	}
+	working, err = filepath.Abs(working)
+	if err != nil {
+		return api.TreeResponse{}, err
 	}
 	absolute, err := filepath.Abs(path)
 	if err != nil {
@@ -59,7 +63,15 @@ func buildLocal(path string, depth int, kind sourcedomain.Kind, repository cliru
 		}
 		files = selected
 	}
-	result := localEntries(files, metadataFiles, base, working, depth)
+	areaReferences, err := directorymeta.AreaIndex(working, files)
+	if err != nil {
+		return api.TreeResponse{}, err
+	}
+	if len(selectedAreas) > 0 {
+		files, areaReferences = filterLocalAreas(files, areaReferences, working, selectedAreas)
+	}
+	areas := localAreaMembership(areaReferences, base, working)
+	result := localEntries(files, metadataFiles, base, working, depth, areas)
 	display, err := filepath.Rel(working, absolute)
 	if err != nil {
 		return api.TreeResponse{}, fmt.Errorf("display local tree path: %w", err)
@@ -67,6 +79,7 @@ func buildLocal(path string, depth int, kind sourcedomain.Kind, repository cliru
 	response := api.TreeResponse{
 		Repo:           ".",
 		Path:           filepath.ToSlash(display),
+		Areas:          areas["."],
 		Depth:          depth,
 		Entries:        result,
 		Description:    inspection.Metadata.Description,
@@ -92,7 +105,40 @@ func localSourcePaths(path string, repository cliruntime.Repository) (os.FileInf
 	return info, files, err
 }
 
-func localEntries(files, metadataFiles []string, base, working string, depth int) []api.TreeEntry {
+// filterLocalAreas keeps current files matching any requested tag. Other tags
+// on those same files remain visible to explain the areas each result touches.
+func filterLocalAreas(files []string, references []directorymeta.AreaReference, working string, requested []string) ([]string, []directorymeta.AreaReference) {
+	wanted := make(map[string]bool, len(requested))
+	for _, area := range requested {
+		wanted[area] = true
+	}
+	matched := map[string]bool{}
+	for _, reference := range references {
+		if reference.Status == directorymeta.StatusCurrent && wanted[reference.Area] {
+			matched[reference.Path] = true
+		}
+	}
+	selected := make([]string, 0, len(files))
+	for _, file := range files {
+		absolute := file
+		if !filepath.IsAbs(absolute) {
+			absolute = filepath.Join(working, filepath.FromSlash(file))
+		}
+		relative, err := filepath.Rel(working, absolute)
+		if err == nil && matched[filepath.ToSlash(relative)] {
+			selected = append(selected, file)
+		}
+	}
+	visible := make([]directorymeta.AreaReference, 0, len(references))
+	for _, reference := range references {
+		if matched[reference.Path] {
+			visible = append(visible, reference)
+		}
+	}
+	return selected, visible
+}
+
+func localEntries(files, metadataFiles []string, base, working string, depth int, areas map[string][]string) []api.TreeEntry {
 	entries := map[string]bool{}
 	metadataCache := map[string]directorymeta.Inspection{}
 	for _, file := range files {
@@ -100,7 +146,7 @@ func localEntries(files, metadataFiles []string, base, working string, depth int
 	}
 	result := make([]api.TreeEntry, 0, len(entries))
 	for entryPath, directory := range entries {
-		entry := api.TreeEntry{Path: entryPath, Dir: directory}
+		entry := api.TreeEntry{Path: entryPath, Dir: directory, Areas: areas[entryPath]}
 		entry.Description, entry.MetadataStatus, entry.MetadataIssues = localEntryMetadata(base, working, entryPath, directory, metadataFiles, metadataCache)
 		result = append(result, entry)
 	}
@@ -112,6 +158,43 @@ func localEntries(files, metadataFiles []string, base, working string, depth int
 	})
 	return result
 }
+
+// localAreaMembership rolls fresh selected-file tags up to every ancestor,
+// including directories hidden by a shallow tree depth. Stale tags stay review
+// leads in metadata, never authoritative area labels in tree output.
+func localAreaMembership(references []directorymeta.AreaReference, base, working string) map[string][]string {
+	sets := map[string]map[string]bool{}
+	for _, reference := range references {
+		if reference.Status != directorymeta.StatusCurrent || !directorymeta.ValidArea(reference.Area) {
+			continue
+		}
+		path := filepath.Join(working, filepath.FromSlash(reference.Path))
+		relative, err := filepath.Rel(base, path)
+		if err != nil || relative == "." || relative == ".." || strings.HasPrefix(relative, ".."+string(filepath.Separator)) {
+			continue
+		}
+		parts := strings.Split(filepath.ToSlash(relative), "/")
+		for index := 0; index <= len(parts); index++ {
+			entry := "."
+			if index > 0 {
+				entry = strings.Join(parts[:index], "/")
+			}
+			if sets[entry] == nil {
+				sets[entry] = map[string]bool{}
+			}
+			sets[entry][reference.Area] = true
+		}
+	}
+	areas := make(map[string][]string, len(sets))
+	for path, values := range sets {
+		for area := range values {
+			areas[path] = append(areas[path], area)
+		}
+		sort.Strings(areas[path])
+	}
+	return areas
+}
+
 func localEntryMetadata(base, working, entryPath string, directory bool, files []string, cache map[string]directorymeta.Inspection) (string, string, []string) {
 	metadataDirectory := filepath.Join(base, filepath.FromSlash(entryPath))
 	if !directory {

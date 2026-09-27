@@ -221,13 +221,9 @@ func TestAnalyzeRepositorySkipsNonProjectDirectoriesAndHiddenEntries(t *testing.
 	}
 }
 
-func TestAnalyzeRepositoryMissingRootIsClean(t *testing.T) {
-	diagnostics, err := analyzeRepository(filepath.Join(t.TempDir(), "does-not-exist"))
-	if err != nil {
-		t.Fatalf("analyzeRepository() error = %v", err)
-	}
-	if len(diagnostics) != 0 {
-		t.Fatalf("analyzeRepository() = %#v, want no diagnostics", diagnostics)
+func TestAnalyzeRepositoryMissingRootIsAnError(t *testing.T) {
+	if _, err := analyzeRepository(filepath.Join(t.TempDir(), "does-not-exist")); err == nil {
+		t.Fatal("missing hook configuration reported a clean repository")
 	}
 }
 
@@ -242,6 +238,17 @@ func makeRepository(t *testing.T, files map[string]string) string {
 		if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
 			t.Fatalf("WriteFile(%q): %v", path, err)
 		}
+	}
+	configDir := filepath.Join(root, ".grepple", "hooks")
+	if err := os.MkdirAll(configDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	config, err := os.ReadFile("../../../.grepple/hooks/same-file-struct-methods.yaml")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(configDir, "same-file-struct-methods.yaml"), config, 0o644); err != nil {
+		t.Fatal(err)
 	}
 	return root
 }

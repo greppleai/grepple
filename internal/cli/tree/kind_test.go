@@ -53,18 +53,18 @@ func treeKindFixture(t *testing.T) string {
 func TestLocalTreeFiltersKindsBeforeDepthAndPreservesMetadata(t *testing.T) {
 	root := treeKindFixture(t)
 	repository := cliruntime.NewRepository(cliruntime.RepositoryInvocationOptions{}, nil)
-	response, err := buildLocal(root, 2, sourcedomain.Test, repository)
+	response, err := buildLocal(root, 2, sourcedomain.Test, nil, repository)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if len(response.Entries) != 2 || response.Entries[0].Path != "pkg" || !response.Entries[0].Dir || response.Entries[1].Path != "pkg/spec.go" || response.Entries[1].MetadataStatus != directorymeta.StatusCurrent {
 		t.Fatalf("test-only entries=%+v", response.Entries)
 	}
-	depthOne, err := buildLocal(root, 1, sourcedomain.Test, repository)
+	depthOne, err := buildLocal(root, 1, sourcedomain.Test, nil, repository)
 	if err != nil || len(depthOne.Entries) != 1 || depthOne.Entries[0].Path != "pkg" {
 		t.Fatalf("depth-one entries=%+v err=%v", depthOne.Entries, err)
 	}
-	unknown, err := buildLocal(root, 2, sourcedomain.Unknown, repository)
+	unknown, err := buildLocal(root, 2, sourcedomain.Unknown, nil, repository)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -75,11 +75,11 @@ func TestLocalTreeFiltersKindsBeforeDepthAndPreservesMetadata(t *testing.T) {
 	if !paths["unclassified.txt"] || !paths["pkg/stale.go"] || !paths["pkg/invalid.go"] || paths["pkg/spec.go"] || paths["pkg/prod.go"] {
 		t.Fatalf("unknown entries=%+v", unknown.Entries)
 	}
-	file, err := buildLocal(filepath.Join(root, "pkg", "spec.go"), 1, sourcedomain.Test, repository)
+	file, err := buildLocal(filepath.Join(root, "pkg", "spec.go"), 1, sourcedomain.Test, nil, repository)
 	if err != nil || len(file.Entries) != 1 || file.Entries[0].Path != "spec.go" {
 		t.Fatalf("explicit file entries=%+v err=%v", file.Entries, err)
 	}
-	noMatch, err := buildLocal(filepath.Join(root, "pkg"), 2, sourcedomain.Vendor, repository)
+	noMatch, err := buildLocal(filepath.Join(root, "pkg"), 2, sourcedomain.Vendor, nil, repository)
 	if err != nil || len(noMatch.Entries) != 0 {
 		t.Fatalf("unmatched entries=%+v err=%v", noMatch.Entries, err)
 	}
@@ -89,7 +89,7 @@ func TestTreeKindArgumentValidationAndRemoteRejection(t *testing.T) {
 	var output bytes.Buffer
 	calledKind := sourcedomain.Kind("")
 	application := cliruntime.Environment{Output: &output}
-	cmd := &command{context: application, local: func(path string, depth int, kind sourcedomain.Kind) (api.TreeResponse, error) {
+	cmd := &command{context: application, local: func(path string, depth int, kind sourcedomain.Kind, areas []string) (api.TreeResponse, error) {
 		calledKind = kind
 		return api.TreeResponse{Repo: ".", Entries: []api.TreeEntry{{Path: "spec.go"}}}, nil
 	}}
@@ -110,7 +110,7 @@ func TestTreeKindArgumentValidationAndRemoteRejection(t *testing.T) {
 func TestTreeKindRejectsProductionOnlyConflict(t *testing.T) {
 	root := treeKindFixture(t)
 	repository := cliruntime.NewRepository(cliruntime.RepositoryInvocationOptions{ProductionOnly: true}, nil)
-	if _, err := buildLocal(root, 2, sourcedomain.Test, repository); err == nil || !strings.Contains(err.Error(), "--production-only") {
+	if _, err := buildLocal(root, 2, sourcedomain.Test, nil, repository); err == nil || !strings.Contains(err.Error(), "--production-only") {
 		t.Fatalf("conflict error=%v", err)
 	}
 }

@@ -77,19 +77,11 @@ type architectureWhyOutput struct {
 func (command *command) Run(args []string) error {
 	dependencies := command.services()
 	if len(args) == 0 || isExtractHelp(args[0]) {
-		return stdoutWriter(dependencies).writeString("Inspect language-neutral directory architecture. Local checkout is the default; --repo selects one exact indexed remote repository for directory, resolve, why, or responsibilities. Compare reads two local JSON snapshots. Human output is the default; use --json for complete machine output.\nUsage:\n  grepple architecture directory [--relations | --mermaid | --json] [PATH ...]\n  grepple architecture resolve --symbol NAME [--json] [PATH ...]\n  grepple architecture why FROM TO [--json] [PATH ...]\n  grepple architecture responsibilities [--json] [PATH ...]\n  grepple architecture compare [--json] BEFORE.json AFTER.json\n")
+		return stdoutWriter(dependencies).writeString("Inspect language-neutral directory architecture. Local checkout is the default; --repo selects one exact indexed remote repository. Human output is the default; use --json for complete machine output.\nUsage:\n  grepple architecture directory [--relations | --mermaid | --json] [PATH ...]\n")
 	}
 	switch args[0] {
 	case "directory":
 		return command.runDirectory(args[1:])
-	case "resolve":
-		return command.runResolve(args[1:])
-	case "why":
-		return command.runWhy(args[1:])
-	case "responsibilities":
-		return command.runResponsibilities(args[1:])
-	case "compare":
-		return command.runCompare(args[1:])
 	default:
 		return fmt.Errorf("unknown architecture command %q", args[0])
 	}
@@ -97,18 +89,6 @@ func (command *command) Run(args []string) error {
 
 func (command *command) runDirectory(args []string) error {
 	return runArchitectureDirectory(args, command.services())
-}
-func (command *command) runResolve(args []string) error {
-	return runArchitectureResolve(args, command.services())
-}
-func (command *command) runWhy(args []string) error {
-	return runArchitectureWhy(args, command.services())
-}
-func (command *command) runResponsibilities(args []string) error {
-	return runArchitectureResponsibilities(args, command.services())
-}
-func (command *command) runCompare(args []string) error {
-	return runArchitectureCompare(args, command.services())
 }
 
 var errArchitectureHelp = errors.New("architecture help displayed")

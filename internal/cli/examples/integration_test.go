@@ -11,9 +11,14 @@ func TestExamplesCoverTaskOrientedWorkflows(t *testing.T) {
 	if err := runExamples(nil, &output); err != nil {
 		t.Fatal(err)
 	}
-	for _, expected := range []string{"orient —", "sources explain", "architecture directory", "architecture resolve", "retrieve —", "--files-with-matches", "--at", "edit —", "--line-only", "grepple write", "impact —", "graph resolve", "graph callers", "boundaries —", "boundaries --json", "audit —", "grit --limit 0 --json", "diagram —", "extract structure", "extract flow", "architecture —", "architecture why"} {
+	for _, expected := range []string{"orient —", "tree --depth 1", "--outline", "retrieve —", "--files-with-matches", "--at", "edit —", "--line-only", "grepple write", "impact —", "graph resolve", "graph callers", "audit —", "grit --limit 0 --json"} {
 		if !strings.Contains(output.String(), expected) {
 			t.Fatalf("examples output missing %q:\n%s", expected, output.String())
+		}
+	}
+	for _, removed := range []string{"grepple ask", "grepple boundaries", "grepple extract", "architecture why", "architecture resolve"} {
+		if strings.Contains(output.String(), removed) {
+			t.Fatalf("examples expose removed command %q:\n%s", removed, output.String())
 		}
 	}
 }
@@ -36,7 +41,7 @@ func TestExamplesHelpListsTasks(t *testing.T) {
 	if err := runExamples([]string{"--help"}, &output); err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(output.String(), "Usage: grepple examples [TASK]") || !strings.Contains(output.String(), "architecture") {
+	if !strings.Contains(output.String(), "Usage: grepple examples [TASK]") || !strings.Contains(output.String(), "orient, retrieve, edit, impact, audit") {
 		t.Fatalf("examples help:\n%s", output.String())
 	}
 }

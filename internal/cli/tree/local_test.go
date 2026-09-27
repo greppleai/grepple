@@ -25,7 +25,7 @@ func TestLocalEntriesIncludeFileDescriptions(t *testing.T) {
 	}); err != nil {
 		t.Fatal(err)
 	}
-	entries := localEntries([]string{file}, []string{file}, root, root, 1)
+	entries := localEntries([]string{file}, []string{file}, root, root, 1, nil)
 	if len(entries) != 1 || entries[0].Path != "main.go" || entries[0].Description != "Starts the command-line application." || entries[0].MetadataStatus != directorymeta.StatusStale {
 		t.Fatalf("entries=%+v", entries)
 	}

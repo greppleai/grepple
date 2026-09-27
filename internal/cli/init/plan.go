@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"path/filepath"
+	"strings"
 	"sync"
 
 	"github.com/greppleai/grepple/internal/cliruntime"
@@ -89,8 +90,9 @@ func planGeneration(ctx context.Context, application cliruntime.Context, globs [
 func runGeneration(ctx context.Context, application cliruntime.Context, root string, plan generationPlan, concurrency int, generate func(context.Context, generationJob) (directorymeta.Metadata, error)) error {
 	indices := make(chan int, len(plan))
 	type result struct {
-		index int
-		err   error
+		index     int
+		err       error
+		proposals []directorymeta.AreaProposal
 	}
 	completed := make(chan result, len(plan))
 	pending := 0
@@ -120,11 +122,12 @@ func runGeneration(ctx context.Context, application cliruntime.Context, root str
 				if err == nil {
 					err = directorymeta.Write(job.directory, metadata)
 				}
-				completed <- result{index: index, err: err}
+				completed <- result{index: index, err: err, proposals: metadata.AreaProposals}
 			}
 		}()
 	}
 	ready := make([]bool, len(plan))
+	proposals := make([][]directorymeta.AreaProposal, len(plan))
 	results := make([]error, len(plan))
 	for index, job := range plan {
 		ready[index] = job.skip
@@ -141,6 +144,10 @@ func runGeneration(ctx context.Context, application cliruntime.Context, root str
 				failures = append(failures, fmt.Errorf("generate %s: %w", path, err))
 			} else {
 				fmt.Fprintln(application.Stdout(), "write", filepath.ToSlash(filepath.Join(path, directorymeta.FileName)))
+				for _, proposal := range proposals[next] {
+					evidence := strings.Join(strings.Fields(proposal.Evidence), " ")
+					fmt.Fprintf(application.Stdout(), "area-proposal %s %s %s/%s: %s\n", proposal.Action, proposal.Area, path, proposal.Path, evidence)
+				}
 			}
 			next++
 		}
@@ -149,6 +156,7 @@ func runGeneration(ctx context.Context, application cliruntime.Context, root str
 	for range pending {
 		result := <-completed
 		results[result.index] = result.err
+		proposals[result.index] = result.proposals
 		ready[result.index] = true
 		flush()
 	}

@@ -23,11 +23,11 @@ func (command *command) Run(args []string) error {
 		switch args[0] {
 		case "resolve":
 			return command.runResolve(args[1:])
-		case "diff":
-			return runDiff(command.context, args[1:])
-		case "callers", "callees", "impact", "dependencies", "dependents":
+		case "callers", "callees":
 			return runQuery(command.context, search.NavigationQueryDirection(args[0]), args[1:])
+		case "build", "diff", "impact", "dependencies", "dependents":
+			return fmt.Errorf("graph %s has been removed; use graph callers or graph callees", args[0])
 		}
 	}
-	return runBuild(command.context, args)
+	return fmt.Errorf("graph requires resolve, callers, or callees")
 }

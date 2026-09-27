@@ -16,15 +16,13 @@ func TestSharedNavigationEdgeParityAcrossAgentProjections(t *testing.T) {
 	graph := loadParityJSONGraph(t)
 	caller, target, call := parityGraphEdge(t, graph, "Worker.Run", "Helper")
 	assertParityCompactGraph(t, caller, target, call)
-	assertParityFocusedFlow(t)
 	assertParityRelatedOutput(t, call)
-	assertParityArchitectureResolve(t)
 }
 
 func loadParityJSONGraph(t *testing.T) navigationGraphOutput {
 	t.Helper()
 	jsonText := captureStdout(t, func() {
-		if err := Run([]string{"graph", "--json", "."}); err != nil {
+		if err := Run([]string{"graph", "callees", "--symbol", "Worker.Run", "--json", "."}); err != nil {
 			t.Fatal(err)
 		}
 	})
@@ -38,25 +36,15 @@ func loadParityJSONGraph(t *testing.T) navigationGraphOutput {
 func assertParityCompactGraph(t *testing.T, caller, target parser.NavigationDeclaration, call parser.NavigationCall) {
 	t.Helper()
 	compact := captureStdout(t, func() {
-		if err := Run([]string{"graph", "."}); err != nil {
+		if err := Run([]string{"graph", "callees", "--symbol", "Worker.Run", "."}); err != nil {
 			t.Fatal(err)
 		}
 	})
 	assertContainsAll(t, compact, []string{
-		"\n" + caller.Path + "\n",
-		fmt.Sprintf("  %d %s %s visibility=%s", caller.Start, caller.Kind, caller.Name, caller.Visibility),
-		fmt.Sprintf("    -> %s:%d call:%d [%s]", target.Name, target.Start, call.Line, call.Confidence),
-	}, "compact graph")
-}
-
-func assertParityFocusedFlow(t *testing.T) {
-	t.Helper()
-	flow := captureStdout(t, func() {
-		if err := Run([]string{"extract", "flow", "--at", "service.go:3", "--source", ".", "--depth", "1"}); err != nil {
-			t.Fatal(err)
-		}
-	})
-	assertContainsAll(t, flow, []string{"Worker_Run --> Helper", "%% grepple:symbol Worker_Run Worker.Run", "service.go:3"}, "focused Mermaid")
+		caller.Signature + " @ " + caller.Path + ":3",
+		target.Signature + " @ " + target.Path + ":4",
+		fmt.Sprintf("call:%d [%s]", call.Line, call.Confidence),
+	}, "focused graph")
 }
 
 func assertParityRelatedOutput(t *testing.T, call parser.NavigationCall) {
@@ -69,16 +57,6 @@ func assertParityRelatedOutput(t *testing.T, call parser.NavigationCall) {
 	if !strings.Contains(related, "→ Helper") || !strings.Contains(related, "service.go:4") {
 		t.Fatalf("related output disagrees with graph call %#v:\n%s", call, related)
 	}
-}
-
-func assertParityArchitectureResolve(t *testing.T) {
-	t.Helper()
-	resolved := captureStdout(t, func() {
-		if err := Run([]string{"architecture", "resolve", "--symbol", "Worker", "."}); err != nil {
-			t.Fatal(err)
-		}
-	})
-	assertContainsAll(t, resolved, []string{"matches=1", "go struct Worker service.go:2"}, "architecture resolve")
 }
 
 func assertContainsAll(t *testing.T, content string, expected []string, projection string) {

@@ -16,6 +16,7 @@ import (
 type OutlineOptions struct {
 	Params         search.Params
 	Depth          int
+	Kinds          OutlineKinds
 	JSON           bool
 	MaxOutputBytes int
 	DefaultLimit   int
@@ -41,7 +42,7 @@ func Outlines(options OutlineOptions) (bool, error) {
 	if maxBytes > 0 {
 		output = cliruntime.NewBoundedOutput(options.Output, maxBytes)
 	}
-	outlines, printed, err := outlineFiles(options.Depth, paths, options.JSON, output)
+	outlines, printed, err := outlineFiles(options.Depth, options.Kinds, paths, options.JSON, output)
 	if err != nil && !errors.Is(err, cliruntime.ErrOutputTruncated) {
 		return false, err
 	}
@@ -51,7 +52,7 @@ func Outlines(options OutlineOptions) (bool, error) {
 	return printed, nil
 }
 
-func outlineFiles(depth int, paths []string, jsonMode bool, output *cliruntime.Output) ([]parser.FileOutline, bool, error) {
+func outlineFiles(depth int, kinds OutlineKinds, paths []string, jsonMode bool, output *cliruntime.Output) ([]parser.FileOutline, bool, error) {
 	outlines := make([]parser.FileOutline, 0, len(paths))
 	printed := false
 	for _, path := range paths {
@@ -59,6 +60,7 @@ func outlineFiles(depth int, paths []string, jsonMode bool, output *cliruntime.O
 		if !ok {
 			continue
 		}
+		outline = FilterOutline(outline, kinds)
 		if jsonMode {
 			outlines = append(outlines, outline)
 			continue
@@ -71,7 +73,7 @@ func outlineFiles(depth int, paths []string, jsonMode bool, output *cliruntime.O
 				return nil, false, err
 			}
 		}
-		if err := output.WriteString(OutlineOrContent(outline, string(data))); err != nil {
+		if err := output.WriteString(outlineOutput(outline, string(data), len(kinds) > 0)); err != nil {
 			return nil, false, err
 		}
 		printed = true

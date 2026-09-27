@@ -215,10 +215,15 @@ func (renderer segmentRenderer) renderRelatedOmissions(callers, callees, types i
 		if callers > 0 {
 			parts = append(parts, fmt.Sprintf("%d additional %s", callers, pluralizeRelated("caller", callers)))
 		}
-		direction := relatedGraphDirection(callers, callees)
-		location := fmt.Sprintf("%s:%d", path, line)
-		command := fmt.Sprintf("grepple graph %s --at %s --depth 2 --json .", direction, quoteCommandArgument(location))
-		if err := renderer.output.writeString(fmt.Sprintf("%s… %s omitted; continue: %s …\n", indent, strings.Join(parts, " and "), command)); err != nil {
+		location := quoteCommandArgument(fmt.Sprintf("%s:%d", path, line))
+		commands := make([]string, 0, 2)
+		if callers > 0 {
+			commands = append(commands, fmt.Sprintf("grepple graph callers --at %s --depth 2 --json .", location))
+		}
+		if callees > 0 {
+			commands = append(commands, fmt.Sprintf("grepple graph callees --at %s --depth 2 --json .", location))
+		}
+		if err := renderer.output.writeString(fmt.Sprintf("%s… %s omitted; continue: %s …\n", indent, strings.Join(parts, " and "), strings.Join(commands, " ; "))); err != nil {
 			return err
 		}
 	}
@@ -226,16 +231,6 @@ func (renderer segmentRenderer) renderRelatedOmissions(callers, callees, types i
 		return renderer.output.writeString(fmt.Sprintf("%s… %d additional %s omitted\n", indent, types, pluralizeRelated("type declaration", types)))
 	}
 	return nil
-}
-
-func relatedGraphDirection(callers, callees int) string {
-	if callers > 0 && callees == 0 {
-		return "callers"
-	}
-	if callees > 0 && callers == 0 {
-		return "callees"
-	}
-	return "impact"
 }
 
 func quoteCommandArgument(value string) string {
@@ -329,10 +324,6 @@ func resultSourceIdentity(result search.FileResult) string {
 		return result.Path
 	}
 	return result.Repo + "\x00" + result.Path
-}
-
-func (renderer segmentRenderer) renderSourceLine(path string, line int, content string, width int) error {
-	return renderer.output.writeString(renderer.segmentLineRow(path, line, content, width, ""))
 }
 
 func (renderer segmentRenderer) segmentLineRow(path string, line int, content string, width int, prefix string) string {

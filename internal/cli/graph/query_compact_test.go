@@ -31,6 +31,31 @@ func TestCompactCallersGroupsCallSitesUnderTheRoot(t *testing.T) {
 	}
 }
 
+func TestCompactDirectionalQueryDisplaysAvailableSignaturesByDefault(t *testing.T) {
+	declarations := []parser.NavigationDeclaration{
+		{ID: "root", Name: "Start", Signature: "func Start(value Input) (Output, error)", Kind: "func", Language: "go", Path: "start.go", Start: 2, End: 4},
+		{ID: "target", Name: "Load", Signature: "func Load(input Input) Output", Kind: "func", Language: "go", Path: "load.go", Start: 5, End: 8},
+	}
+	calls := []parser.NavigationCall{{ID: "call", CallerID: "root", TargetID: "target", Confidence: "exact", Path: "start.go", Line: 3}}
+	for _, test := range []struct{ direction, rootID, want string }{
+		{"callees", "root", "go func Start(value Input) (Output, error) @ start.go:2-4\n-> func Load(input Input) Output @ load.go:5-8 call:3 [exact]\n"},
+		{"callers", "target", "go func Load(input Input) Output @ load.go:5-8\n<- func Start(value Input) (Output, error) @ start.go:2-4 call:3 [exact]\n"},
+	} {
+		var output strings.Builder
+		writeCompactDirectionalQuery(func(line string) bool { fmt.Fprintln(&output, line); return true }, Query{Direction: test.direction, Depth: 1, RootIDs: []string{test.rootID}}, declarations, calls)
+		if got := output.String(); got != test.want {
+			t.Fatalf("%s signature output:\n%s\nwant:\n%s", test.direction, got, test.want)
+		}
+	}
+}
+
+func TestCompactCallableLabelKeepsNamesForAnonymousSyntax(t *testing.T) {
+	declaration := parser.NavigationDeclaration{Name: "run", Signature: "(value: number): number =>", Kind: "func", Path: "run.ts", Start: 1, End: 1}
+	if got, want := graphCallableLabel(declaration), "run (value: number): number => @ run.ts:1"; got != want {
+		t.Fatalf("label=%q want=%q", got, want)
+	}
+}
+
 func TestCompactCalleesPreservesAmbiguityAndBoundsCycles(t *testing.T) {
 	declarations := []parser.NavigationDeclaration{
 		{ID: "root", Name: "root", Kind: "func", Language: "go", Path: "root.go", Start: 2, End: 2},

@@ -9,7 +9,7 @@ import (
 
 func TestNavigationCacheProtobufRoundTripsNativeGraph(t *testing.T) {
 	graph := NavigationGraph{
-		Declarations:     []NavigationDeclaration{{ID: "declaration", Name: "Run", Kind: "method", Language: "go", Path: "", Container: "Service", Receiver: "Service", ResultType: "Result", ResultImportPath: "example/result", Package: "sample", PackageID: "example/sample", ModuleID: "example", Scope: "sample", Entrypoint: "process", Visibility: NavigationVisibilityPublic, VisibilityDetail: "exported", Start: 7, End: 12}},
+		Declarations:     []NavigationDeclaration{{ID: "declaration", Name: "Run", Signature: "func (s *Service) Run(value Input) Result", Kind: "method", Language: "go", Path: "", Container: "Service", Receiver: "Service", ResultType: "Result", ResultImportPath: "example/result", Package: "sample", PackageID: "example/sample", ModuleID: "example", Scope: "sample", Entrypoint: "process", Visibility: NavigationVisibilityPublic, VisibilityDetail: "exported", Start: 7, End: 12}},
 		TypeDeclarations: []NavigationTypeDeclaration{{Name: "Service", Kind: "struct", Language: "go", Path: "", Container: "Outer", Package: "sample", PackageID: "example/sample", ModuleID: "example", Start: 2, End: 6}},
 		Imports:          []NavigationImport{{Alias: "result", ImportPath: "example/result", Imported: "Result", Kind: "named", Scope: "sample", VisibilityDetail: "private", TargetPathHint: "result/result.go", Inline: true, Language: "go", Path: "", Line: 1, TargetPaths: []string{"result/result.go", "result/other.go"}}},
 		Calls:            []NavigationCall{{ID: "call", CallerID: "declaration", TargetID: "target", CandidateTargetIDs: []string{"target-a", "target-b"}, Name: "Build", Display: "result.Build", Qualifier: "result", ImportPath: "example/result", ReceiverType: "Factory", ReceiverRootType: "Root", ReceiverRootImport: "example/root", ReceiverMembers: []string{"Factory", "Build"}, ReceiverFactory: "NewFactory", ReceiverFactoryImport: "example/factory", ResolvedName: "Build", Confidence: "import-resolved", Language: "go", Path: "", Line: 9, EnclosingStart: 7, EnclosingEnd: 12}},
@@ -79,7 +79,7 @@ func TestNavigationCacheProtobufCoversNativeFactFields(t *testing.T) {
 		value  any
 		fields int
 	}{
-		{"declaration", NavigationDeclaration{}, 18},
+		{"declaration", NavigationDeclaration{}, 19},
 		{"type declaration", NavigationTypeDeclaration{}, 10},
 		{"import", NavigationImport{}, 12},
 		{"call", NavigationCall{}, 21},

@@ -86,6 +86,21 @@ func (n ViewNode) Kind() string {
 	return n.raw.Kind()
 }
 
+// IsFunctionLike reports whether the node is a function-like syntactic scope
+// in its pinned target grammar. It does not infer calls or runtime behavior.
+func (n ViewNode) IsFunctionLike() bool {
+	if !n.Valid() {
+		return false
+	}
+	adapter := adapterForLanguage(n.Language())
+	if adapter == nil || adapter.Rules() == nil {
+		return false
+	}
+	rules := adapter.Rules()
+	kind := n.Kind()
+	return rules.functionLikeTypes.contains(kind) || rules.functionExpressionTypes.contains(kind)
+}
+
 // IsNamed reports whether the grammar marks the node as named.
 func (n ViewNode) IsNamed() bool { return n.Valid() && n.raw.IsNamed() }
 

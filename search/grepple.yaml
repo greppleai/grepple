@@ -224,9 +224,9 @@ files:
       kind: test
       checksum: e6432a88d1b997462184d32952e2fa4411f3087bd0128132ee738031429944d0
     - path: source_ignore.go
-      description: Combines built-in, configured, gitignore, and production-only source exclusions.
+      description: Defines ignore and production-only source discovery options passed to the shared source catalog.
       kind: production
-      checksum: cf19285cca75dab6706a2719dc07ab5afcba3fd6d4a52c51f4b0175d2c02af0b
+      checksum: e66bd56b7a2d585522d81c66c6eac68ed0dd3746b356016b00fc8301fcc875b5
     - path: source_policy.go
       description: Projects shared source-policy options into search parameters and reports bypasses.
       kind: production

@@ -12,20 +12,30 @@ import (
 	"github.com/greppleai/grepple/api"
 	"github.com/greppleai/grepple/internal/apiclient"
 	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
+	"github.com/greppleai/grepple/internal/directorymeta"
 	rendercommand "github.com/greppleai/grepple/internal/render"
 	sourcedomain "github.com/greppleai/grepple/internal/sources"
 )
 
+// areaFlags consumes one value per --area so a following PATH stays positional.
+type areaFlags []string
+
+func (areas *areaFlags) UnmarshalText(value []byte) error {
+	*areas = append(*areas, string(value))
+	return nil
+}
+
 // Request contains parsed tree command options.
 type Request struct {
 	cliruntime.CommonArgs
-	Depth      int      `arg:"--depth" default:"2" placeholder:"N" help:"levels to descend"`
-	JSON       bool     `arg:"--json" help:"print raw JSON"`
-	Kind       string   `arg:"--kind" placeholder:"KIND" help:"show only locally classified files of this kind (production, test, fixture, generated, vendor, unknown)"`
-	Repository string   `arg:"--repo" placeholder:"OWNER/REPOSITORY[@REF]" help:"show one exact indexed repository instead of the local checkout"`
-	Repo       string   `arg:"-"`
-	Path       string   `arg:"-"`
-	Targets    []string `arg:"positional" placeholder:"PATH" help:"local path (default .); legacy remote syntax also accepts OWNER/REPOSITORY [PATH]"`
+	Depth      int       `arg:"--depth" default:"1" placeholder:"N" help:"levels to descend"`
+	JSON       bool      `arg:"--json" help:"print raw JSON"`
+	Kind       string    `arg:"--kind" placeholder:"KIND" help:"show only locally classified files of this kind (production, test, fixture, generated, vendor, unknown)"`
+	Areas      areaFlags `arg:"--area" placeholder:"AREA" help:"show files tagged with any requested area and their parent directories; repeatable, local only"`
+	Repository string    `arg:"--repo" placeholder:"OWNER/REPOSITORY[@REF]" help:"show one exact indexed repository instead of the local checkout"`
+	Repo       string    `arg:"-"`
+	Path       string    `arg:"-"`
+	Targets    []string  `arg:"positional" placeholder:"PATH" help:"local path (default .); legacy remote syntax also accepts OWNER/REPOSITORY [PATH]"`
 }
 
 // Description returns the command description used by the argument parser.
@@ -63,7 +73,7 @@ func (command *command) Run(args []string) error {
 }
 
 // DefaultArgs returns tree arguments with application defaults.
-func DefaultArgs() Request { return Request{Depth: 2} }
+func DefaultArgs() Request { return Request{Depth: 1} }
 
 // Execute renders a tree from application-parsed arguments.
 func Execute(application cliruntime.Context, values *Request) error {
@@ -93,6 +103,14 @@ func (command *command) execute(values *Request) error {
 			return fmt.Errorf("--kind is only supported for local trees; indexed tree entries have no source-kind metadata")
 		}
 	}
+	for _, area := range values.Areas {
+		if !directorymeta.ValidArea(area) {
+			return fmt.Errorf("invalid --area %q: expected a lowercase name with single interior hyphens", area)
+		}
+	}
+	if remote && len(values.Areas) > 0 {
+		return fmt.Errorf("--area is only supported for local trees; indexed tree entries have no verified area metadata")
+	}
 	var data api.TreeResponse
 	if remote {
 		configuration := application.Configuration()
@@ -102,7 +120,7 @@ func (command *command) execute(values *Request) error {
 		}
 		data, err = application.APIClient().Tree(context.Background(), server, apiclient.TreeRequest{Repo: values.Repo, Path: values.Path, Depth: values.Depth})
 	} else {
-		data, err = command.local(values.Path, values.Depth, kind)
+		data, err = command.local(values.Path, values.Depth, kind, []string(values.Areas))
 	}
 	if err != nil {
 		return err

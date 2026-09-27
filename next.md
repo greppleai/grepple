@@ -126,7 +126,7 @@ The first exact external-resolution matrix covers Go modules, npm lockfiles, Car
 
 ## Success measures
 
-- A new user can discover and run search, graph impact, boundaries, directory architecture, and one GritQL query using recursive CLI help only.
+- A new user can discover and run search, graph callers/callees, boundaries, directory architecture, and one GritQL query using recursive CLI help only.
 - An agent can move from omitted related edges to a complete focused query by copying one suggested command.
 - Every bounded response or spilled artifact descriptor identifies the bound/delivery decision, omitted work, evaluated source universe, and completeness path.
 - Boundary output separates third-party permeability from first-party reuse, standard-library spread, test-only use, and approved internal infrastructure.

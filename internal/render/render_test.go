@@ -133,8 +133,10 @@ func TestSegmentRendererPrintsRelatedGoPoints(t *testing.T) {
 		}
 	}
 	for _, command := range []string{
-		"grepple graph impact --at store.go:12 --depth 2 --json .",
-		"grepple graph impact --at caller.go:1 --depth 2 --json .",
+		"grepple graph callers --at store.go:12 --depth 2 --json .",
+		"grepple graph callees --at store.go:12 --depth 2 --json .",
+		"grepple graph callers --at caller.go:1 --depth 2 --json .",
+		"grepple graph callees --at caller.go:1 --depth 2 --json .",
 	} {
 		if !strings.Contains(output.String(), command) {
 			t.Fatalf("related output missing continuation %q:\n%s", command, output.String())

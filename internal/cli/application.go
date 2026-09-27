@@ -5,15 +5,13 @@ import (
 	anchorscommand "github.com/greppleai/grepple/internal/cli/anchors"
 	architecturecommand "github.com/greppleai/grepple/internal/cli/architecture"
 	artifactscommand "github.com/greppleai/grepple/internal/cli/artifacts"
-	askcommand "github.com/greppleai/grepple/internal/cli/ask"
 	authcommand "github.com/greppleai/grepple/internal/cli/auth"
-	boundariescommand "github.com/greppleai/grepple/internal/cli/boundaries"
 	contextcommand "github.com/greppleai/grepple/internal/cli/context"
 	examplescommand "github.com/greppleai/grepple/internal/cli/examples"
-	extractcommand "github.com/greppleai/grepple/internal/cli/extract"
 	getcommand "github.com/greppleai/grepple/internal/cli/get"
 	graphcommand "github.com/greppleai/grepple/internal/cli/graph"
 	gritcommand "github.com/greppleai/grepple/internal/cli/grit"
+	hookcommand "github.com/greppleai/grepple/internal/cli/hook"
 	initcommand "github.com/greppleai/grepple/internal/cli/init"
 	languagescommand "github.com/greppleai/grepple/internal/cli/languages"
 	metricscommand "github.com/greppleai/grepple/internal/cli/metrics"
@@ -45,13 +43,12 @@ type Arguments struct {
 	Search       *searchcommand.Args         `arg:"subcommand:search" help:"search local or explicitly selected remote code"`
 	Write        *writecommand.Args          `arg:"subcommand:write" help:"apply local transactional anchored writes"`
 	Grit         *gritcommand.Args           `arg:"subcommand:grit" help:"run native structural queries"`
-	Graph        *graphcommand.Args          `arg:"subcommand:graph" help:"build or query navigation graphs"`
+	Hook         *hookcommand.Args           `arg:"subcommand:hook" help:"run repository-owned local GritQL hooks"`
+	Graph        *graphcommand.Args          `arg:"subcommand:graph" help:"query navigation graphs"`
 	Anchors      *anchorscommand.Args        `arg:"subcommand:anchors" help:"diagnose edit-anchor providers"`
-	Boundaries   *boundariescommand.Args     `arg:"subcommand:boundaries" help:"analyze representation and workflow boundaries"`
 	Examples     *examplescommand.Args       `arg:"subcommand:examples" help:"print task-oriented CLI workflows"`
 	Artifacts    *artifactscommand.Args      `arg:"subcommand:artifacts" help:"manage spilled output artifacts"`
 	Context      *contextcommand.Args        `arg:"subcommand:context" help:"manage context deduplication"`
-	Extract      *extractcommand.Args        `arg:"subcommand:extract" help:"generate or check focused Mermaid projections"`
 	Architecture *architecturecommand.Args   `arg:"subcommand:architecture" help:"inspect directory architecture"`
 	Sources      *sourcescommand.Args        `arg:"subcommand:sources" help:"explain source selection"`
 	Init         *initcommand.Args           `arg:"subcommand:init" help:"generate directory metadata"`
@@ -63,7 +60,6 @@ type Arguments struct {
 	Get          *getcommand.Args            `arg:"subcommand:get" help:"read one indexed repository file"`
 	Tree         *treecommand.Request        `arg:"subcommand:tree" help:"show a local or indexed repository tree"`
 	Refs         *refscommand.Args           `arg:"subcommand:refs" help:"list indexed repository refs"`
-	Ask          *askcommand.Args            `arg:"subcommand:ask" help:"delegate bounded code research"`
 	AIProvider   *authcommand.AIProviderArgs `arg:"subcommand:ai-provider" help:"authenticate AI model providers"`
 	Login        *authcommand.LoginArgs      `arg:"subcommand:login" help:"authenticate with the remote service"`
 	Logout       *authcommand.LogoutArgs     `arg:"subcommand:logout" help:"remove remote authentication"`
@@ -91,20 +87,18 @@ func executeArguments(context cliruntime.Context, values *Arguments) error {
 		return writecommand.Execute(context, values.Write)
 	case values.Grit != nil:
 		return gritcommand.Execute(context, values.Grit)
+	case values.Hook != nil:
+		return hookcommand.Execute(context, values.Hook)
 	case values.Graph != nil:
 		return graphcommand.ExecuteWithDaemon(context, values.Graph, values.Daemon)
 	case values.Anchors != nil:
 		return anchorscommand.Execute(context, values.Anchors)
-	case values.Boundaries != nil:
-		return boundariescommand.Execute(context, values.Boundaries)
 	case values.Examples != nil:
 		return examplescommand.Execute(context, values.Examples)
 	case values.Artifacts != nil:
 		return artifactscommand.Execute(context, values.Artifacts)
 	case values.Context != nil:
 		return contextcommand.Execute(context, values.Context)
-	case values.Extract != nil:
-		return extractcommand.Execute(context, values.Extract)
 	case values.Architecture != nil:
 		return architecturecommand.ExecuteWithDaemon(context, values.Architecture, values.Daemon)
 	case values.Sources != nil:
@@ -127,8 +121,6 @@ func executeArguments(context cliruntime.Context, values *Arguments) error {
 		return treecommand.Execute(context, values.Tree)
 	case values.Refs != nil:
 		return refscommand.Execute(context, values.Refs)
-	case values.Ask != nil:
-		return askcommand.Execute(context, values.Ask)
 	case values.AIProvider != nil:
 		return authcommand.ExecuteAIProvider(context, values.AIProvider)
 	case values.Login != nil:

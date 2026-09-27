@@ -1,0 +1,17 @@
+version: 1
+id: go-nested-loops
+event: Stop
+engine: gritql-metric-v1
+include: ["**/*.go"]
+severity: warning
+message: "function {{name}} contains at least two nested for/range loops (nesting score {{score}})"
+query: |
+  language go
+  { metric: {
+    scope: or { function_declaration(), method_declaration() },
+    name: "name", base: 0, above: 1,
+    boundary: func_literal(),
+    rules: [
+      {id: "nested-loop", query: for_statement(), points: 0, depth: 1, opens: true}
+    ]
+  } }

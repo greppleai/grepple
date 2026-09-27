@@ -222,16 +222,6 @@ func (command *command) execute(values *Arguments) error {
 	return runGritLocal(ctx, *values, dependencies)
 }
 
-func (command *command) runExplain(args []string) error {
-	return runGritExplain(args, command.services())
-}
-func (command *command) runRemote(ctx context.Context, values gritArgs) error {
-	return runGritRemote(ctx, values, command.services())
-}
-func (command *command) runLocal(ctx context.Context, values gritArgs) error {
-	return runGritLocal(ctx, values, command.services())
-}
-
 func runGritLocal(ctx context.Context, values gritArgs, supplied ...Dependencies) error {
 	dependencies := Dependencies{}
 	if len(supplied) > 0 {

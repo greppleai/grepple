@@ -66,7 +66,7 @@ func writeCompactDirectionalQuery(write func(string) bool, query Query, declarat
 	}
 	for _, rootID := range query.RootIDs {
 		root, ok := declarations[rootID]
-		if !ok || !write(fmt.Sprintf("%s %s %s %s", root.Language, root.Kind, root.Name, graphDeclarationLocation(root))) {
+		if !ok || !write(fmt.Sprintf("%s %s", root.Language, graphCallableLabel(root))) {
 			return
 		}
 		seen := map[string]bool{rootID: true}
@@ -90,7 +90,7 @@ func writeCompactDirectionalQuery(write func(string) bool, query Query, declarat
 				if caller, ok := declarations[edge.call.CallerID]; !ok || caller.Path != edge.call.Path {
 					callLocation = fmt.Sprintf("%s:%d", edge.call.Path, edge.call.Line)
 				}
-				line := fmt.Sprintf("%s%s%s %s %s %s call:%s [%s]", strings.Repeat("  ", depth), edge.arrow, label, edge.other.Kind, edge.other.Name, graphDeclarationLocation(edge.other), callLocation, edge.call.Confidence)
+				line := fmt.Sprintf("%s%s%s %s call:%s [%s]", strings.Repeat("  ", depth), edge.arrow, label, graphCallableLabel(edge.other), callLocation, edge.call.Confidence)
 				if seen[edge.other.ID] {
 					line += " (already shown)"
 				}
@@ -118,4 +118,19 @@ func writeCompactDirectionalQuery(write func(string) bool, query Query, declarat
 			return
 		}
 	}
+}
+
+func graphCallableLabel(declaration parser.NavigationDeclaration) string {
+	if declaration.Signature != "" {
+		signature := declaration.Signature
+		name := declaration.Name
+		if dot := strings.LastIndexByte(name, '.'); dot >= 0 {
+			name = name[dot+1:]
+		}
+		if name != "" && !strings.Contains(signature, name) {
+			signature = declaration.Name + " " + signature
+		}
+		return signature + " @ " + graphDeclarationLocation(declaration)
+	}
+	return fmt.Sprintf("%s %s %s", declaration.Kind, declaration.Name, graphDeclarationLocation(declaration))
 }

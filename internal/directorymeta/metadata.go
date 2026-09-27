@@ -15,16 +15,25 @@ import (
 const FileName = "grepple.yaml"
 
 type File struct {
-	Path        string `yaml:"path" json:"path"`
-	Description string `yaml:"description" json:"description"`
-	Kind        string `yaml:"kind" json:"kind"`
-	Checksum    string `yaml:"checksum" json:"checksum"`
+	Path        string   `yaml:"path" json:"path"`
+	Description string   `yaml:"description" json:"description"`
+	Kind        string   `yaml:"kind" json:"kind"`
+	Checksum    string   `yaml:"checksum" json:"checksum"`
+	Areas       []string `yaml:"areas,omitempty" json:"areas,omitempty"`
+}
+
+type AreaProposal struct {
+	Path     string `yaml:"path" json:"path"`
+	Area     string `yaml:"area" json:"area"`
+	Action   string `yaml:"action" json:"action"`
+	Evidence string `yaml:"evidence" json:"evidence"`
 }
 
 type Metadata struct {
-	Description      string   `yaml:"description" json:"description"`
-	Responsibilities []string `yaml:"responsibilities" json:"responsibilities"`
-	Files            []File   `yaml:"files" json:"files"`
+	Description      string         `yaml:"description" json:"description"`
+	Responsibilities []string       `yaml:"responsibilities" json:"responsibilities"`
+	Files            []File         `yaml:"files" json:"files"`
+	AreaProposals    []AreaProposal `yaml:"-" json:"-"` // Review-only; never persisted in grepple.yaml.
 }
 
 func Read(directory string) (Metadata, error) {

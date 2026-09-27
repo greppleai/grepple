@@ -22,6 +22,7 @@ const (
 type FileState struct {
 	Description string
 	Kind        string
+	Areas       []string
 	Status      string
 	Issues      []string
 }
@@ -85,11 +86,16 @@ func Inspect(root, directory string, paths []string) Inspection {
 			continue
 		}
 		kind := normalizedSourceKind(entry.Kind)
-		state := FileState{Description: strings.TrimSpace(entry.Description), Kind: kind, Status: StatusCurrent}
+		state := FileState{Description: strings.TrimSpace(entry.Description), Kind: kind, Areas: entry.Areas, Status: StatusCurrent}
 		if state.Description == "" {
 			state.Status = StatusInvalid
 			state.Issues = append(state.Issues, "file description is empty")
 			inspection.addIssue(StatusInvalid, fmt.Sprintf("empty description for %q", name))
+		}
+		for _, issue := range ValidateAreas(entry.Areas) {
+			state.Status = StatusInvalid
+			state.Issues = append(state.Issues, issue)
+			inspection.addIssue(StatusInvalid, fmt.Sprintf("%s for %q", issue, name))
 		}
 		if kind == "invalid" {
 			state.Status = StatusInvalid

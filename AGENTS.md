@@ -23,11 +23,14 @@ Inspect source scope before architecture when exclusions or production/test comp
 
 - `grepple sources explain [PATH]`: config digest, classifications, exclusions, and explicit bypasses
 
+For initial location, run `grepple tree` to inspect top-level files and directories, then narrow to a likely subtree with `grepple tree PATH`. If an area tag is known, use repeatable `grepple tree --area NAME PATH` to show matching files and parent directories; `--kind` can narrow further. Verify metadata freshness and search source when tags are missing, stale, or incomplete. Follow tree leads with exact `--outline`/`--at` and focused graph queries rather than expanding the whole repository tree.
+
 Architecture orientation is generated dynamically across supported languages:
 
-- `grepple architecture directory [PATH]`: bounded directory ownership and relation map
-- `grepple architecture resolve --symbol NAME [PATH]`: exact source-linked declaration lookup
-- `grepple architecture why FROM TO [PATH]`: source-linked call, import, and type-reference evidence
+- `grepple architecture directory [PATH]`: bounded physical directory ownership and relation map
+- `grepple --outline PATH`: declaration discovery for an exact file
+- `grepple graph resolve --symbol NAME [PATH]`: disambiguate callable declarations
+- `grepple graph callers|callees --at PATH:LINE [PATH]`: focused static call relations
 
 Do not infer package semantics from directory ownership. Use `--production-only` only for explicitly production-scoped questions; retain full-universe evidence otherwise. `make schema-generate` and `make schema-check` validate generated parser metadata; architecture views do not require committed package/workspace bundles.
 

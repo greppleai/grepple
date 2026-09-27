@@ -15,14 +15,15 @@ func newKotlinLanguage() languageAdapter {
 	return &kotlinLanguage{
 		grammar: newSyntaxLanguage(kotlin.Language()),
 		rules: structureRules{
-			structuralTypes:       newStringSet("import_header", "class_declaration", "object_declaration", "function_declaration", "property_declaration"),
-			contextTypes:          newStringSet("class_declaration", "object_declaration", "function_declaration", "property_declaration"),
-			containerTypes:        newStringSet("class_declaration", "object_declaration"),
-			classDeclarationTypes: newStringSet("class_declaration", "object_declaration"),
-			classBodyTypes:        newStringSet("class_body"),
-			exportTypes:           newStringSet(),
-			functionLikeTypes:     newStringSet("function_declaration"),
-			nameFieldCandidates:   newStringSet("simple_identifier", "identifier", "type_identifier"),
+			structuralTypes:         newStringSet("import_header", "class_declaration", "object_declaration", "function_declaration", "property_declaration"),
+			contextTypes:            newStringSet("class_declaration", "object_declaration", "function_declaration", "property_declaration"),
+			containerTypes:          newStringSet("class_declaration", "object_declaration"),
+			classDeclarationTypes:   newStringSet("class_declaration", "object_declaration"),
+			classBodyTypes:          newStringSet("class_body"),
+			exportTypes:             newStringSet(),
+			functionLikeTypes:       newStringSet("function_declaration"),
+			functionExpressionTypes: newStringSet("lambda_literal", "anonymous_function"),
+			nameFieldCandidates:     newStringSet("simple_identifier", "identifier", "type_identifier"),
 		},
 	}
 }

@@ -15,10 +15,10 @@ type taskExample struct {
 }
 
 var taskExamples = []taskExample{
-	{Name: "orient", Description: "Inspect source scope, orient by directory, and resolve one declaration", Commands: []string{
-		"grepple sources explain .",
-		"grepple architecture directory --depth 2 .",
-		"grepple architecture resolve --symbol Document .",
+	{Name: "orient", Description: "Inspect a bounded tree, then retrieve one structural outline", Commands: []string{
+		"grepple tree --depth 1 .",
+		"grepple tree --depth 1 parser",
+		"grepple --outline parser/navigation.go",
 	}},
 	{Name: "retrieve", Description: "Find content-matching files, then retrieve an exact declaration range", Commands: []string{
 		"grepple -F 'BuildNavigationGraph' --files-with-matches ./parser",
@@ -33,21 +33,9 @@ var taskExamples = []taskExample{
 		"grepple graph resolve --symbol BuildNavigationGraph .",
 		"grepple graph callers --at parser/navigation.go:113 --depth 2 .",
 	}},
-	{Name: "boundaries", Description: "Triage boundary signals, then request complete evidence", Commands: []string{
-		"grepple boundaries ./parser",
-		"grepple boundaries --json ./parser",
-	}},
 	{Name: "audit", Description: "Run a native read-only structural audit with complete JSON", Commands: []string{
 		"grepple grit explain --json $'language go\n`exec.Command($args)`'",
 		"grepple grit --limit 0 --json $'language go\n`exec.Command($args)`' '**/*.go'",
-	}},
-	{Name: "diagram", Description: "Generate focused source-linked structure and flow diagrams", Commands: []string{
-		"grepple extract structure --entry NavigationGraph --source ./parser",
-		"grepple extract flow --entry BuildNavigationGraph --source ./parser",
-	}},
-	{Name: "architecture", Description: "Explain one relation or diagnose drift between complete directory reports", Commands: []string{
-		"grepple architecture why rulespec search rulespec search",
-		"grepple architecture compare before.json after.json",
 	}},
 }
 

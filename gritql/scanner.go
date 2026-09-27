@@ -777,6 +777,12 @@ func ValidateGlobs(include, exclude []string) error {
 	return nil
 }
 
+// MatchesGlobs reports the same include/exclude decision used by the scanner.
+// Call ValidateGlobs first when patterns come from untrusted configuration.
+func MatchesGlobs(name string, include, exclude []string) bool {
+	return scanPathMatchesAny(name, include) && !scanPathMatchesAnyNonEmpty(name, exclude)
+}
+
 func validScanGlobs(patterns []string) bool {
 	for _, pattern := range patterns {
 		for _, segment := range strings.Split(filepath.ToSlash(pattern), "/") {

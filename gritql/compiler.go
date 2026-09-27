@@ -6,6 +6,8 @@ import (
 	"regexp/syntax"
 	"strconv"
 	"unicode/utf8"
+
+	"github.com/greppleai/grepple/parser"
 )
 
 // Compatibility identifies the unified native GritQL language contract.
@@ -96,10 +98,15 @@ const (
 	KindContains
 	KindWithin
 	KindWhere
+	KindEmpty
+	KindParent
+	KindNodeLike
+	KindNodeCapture
+	KindAs
 )
 
 func (k Kind) String() string {
-	names := [...]string{"", "snippet", "regex", "and", "or", "not", "maybe", "contains", "within", "where"}
+	names := [...]string{"", "snippet", "regex", "and", "or", "not", "maybe", "contains", "within", "where", "empty", "parent", "node", "capture", "as"}
 	if int(k) >= len(names) {
 		return fmt.Sprintf("Kind(%d)", k)
 	}
@@ -121,6 +128,10 @@ const (
 	FeatureWithin
 	FeatureWhere
 	FeatureVariables
+	FeatureEmpty
+	FeatureParent
+	FeatureNodeLike
+	FeatureAs
 )
 
 // Has reports whether every requested feature is present in the set.
@@ -132,6 +143,7 @@ type expression struct {
 	text        string
 	refs        []VariableRef
 	children    []*expression
+	fields      []string // node field names; empty means a positional named child
 	constraints []constraint
 	re          *regexp.Regexp
 	template    Template
@@ -495,7 +507,7 @@ func (c *treeCompiler) compileLanguage(node queryNode) *CompileError {
 	return nil
 }
 
-func (c *treeCompiler) compileExpression(node queryNode, regexAllowed bool) (*expression, *CompileError) {
+func (c *treeCompiler) compileExpression(node queryNode, constraintPredicateAllowed bool) (*expression, *CompileError) {
 	if !node.valid() || !node.named() || node.error() || node.missing() {
 		return nil, c.closedFailure("invalid query node")
 	}
@@ -503,10 +515,27 @@ func (c *treeCompiler) compileExpression(node queryNode, regexAllowed bool) (*ex
 	case "codeSnippet":
 		return c.compileSnippet(node)
 	case "regexPattern":
-		if !regexAllowed {
+		if !constraintPredicateAllowed {
 			return nil, c.failure("PATTERN_INVALID_CONTEXT", "pattern", "regex is valid only as a direct constraint predicate", nil)
 		}
 		return c.compileRegex(node)
+	case "emptyPredicate":
+		if !constraintPredicateAllowed {
+			return nil, c.failure("PATTERN_INVALID_CONTEXT", "pattern", "empty is valid only as a direct constraint predicate", nil)
+		}
+		c.features |= FeatureEmpty
+		return &expression{kind: KindEmpty, rng: publicRange(node.byteRange())}, nil
+	case "nodeLike":
+		return c.compileNodeLike(node)
+	case "patternAs":
+		return c.compileAs(node)
+	case "patternParent":
+		concrete := nonCommentChildren(node)
+		if len(concrete) != 5 || !validCompilerComments(node) || !isCompilerLeaf(concrete[0], "parent", "", false) || !isCompilerLeaf(concrete[1], "kind", "", false) || !isCompilerLeaf(concrete[2], "(", "", false) || !isCompilerLeaf(concrete[3], "\"function\"", "", false) || !isCompilerLeaf(concrete[4], ")", "", false) {
+			return nil, c.closedFailure("unexpected parent category")
+		}
+		c.features |= FeatureParent
+		return &expression{kind: KindParent, rng: publicRange(node.byteRange()), text: "function"}, nil
 	case "patternAnd":
 		return c.compileBlock(node, KindAnd, FeatureAnd, "and")
 	case "patternOr":
@@ -524,6 +553,104 @@ func (c *treeCompiler) compileExpression(node queryNode, regexAllowed bool) (*ex
 	default:
 		return nil, c.closedFailure("unexpected named query node " + node.kind())
 	}
+}
+
+// compileAs binds the exact named root matched by a node-like selector.
+func (c *treeCompiler) compileAs(node queryNode) (*expression, *CompileError) {
+	concrete := nonCommentChildren(node)
+	if !validCompilerComments(node) || len(concrete) != 3 || !isNode(concrete[0], "nodeLike", "pattern", true) ||
+		!isCompilerLeaf(concrete[1], "as", "", false) || !isCompilerLeaf(concrete[2], "variable", "variable", true) {
+		return nil, c.closedFailure("invalid node capture")
+	}
+	child, err := c.compileExpression(concrete[0], false)
+	if err != nil {
+		return nil, err
+	}
+	position := concrete[2].byteRange()
+	ref := c.variable(concrete[2].text(), position.StartByte, position.EndByte)
+	if ref.Anonymous {
+		return nil, c.failure("PATTERN_INVALID_CONTEXT", "pattern", "capture requires a named variable", nil)
+	}
+	c.features |= FeatureAs
+	return &expression{kind: KindAs, rng: publicRange(node.byteRange()), refs: []VariableRef{ref}, children: []*expression{child}}, nil
+}
+
+// compileNodeLike captures direct grammar fields or positional named children.
+func (c *treeCompiler) compileNodeLike(node queryNode) (*expression, *CompileError) {
+	concrete := nonCommentChildren(node)
+	if len(concrete) < 3 || !isNode(concrete[0], "name", "name", true) || !isCompilerLeaf(concrete[1], "(", "", false) || !isCompilerLeaf(concrete[len(concrete)-1], ")", "", false) {
+		return nil, c.closedFailure("invalid node pattern")
+	}
+	if !validNodeSelectorName(concrete[0].text()) {
+		return nil, c.closedFailure("invalid syntax-node kind")
+	}
+	if !parser.GrammarNodeKind(c.adapter.id, concrete[0].text()) {
+		return nil, c.failure("PATTERN_INVALID_SNIPPET", "pattern", "unknown syntax-node kind "+concrete[0].text(), nil)
+	}
+	result := &expression{kind: KindNodeLike, rng: publicRange(node.byteRange()), text: concrete[0].text()}
+	for _, item := range concrete[2 : len(concrete)-1] {
+		if isCompilerLeaf(item, ",", "named_args", false) {
+			continue
+		}
+		if item.kind() != "namedArg" || item.fieldName() != "named_args" {
+			return nil, c.closedFailure("invalid node field pattern")
+		}
+		parts := nonCommentChildren(item)
+		field := ""
+		var pattern queryNode
+		switch {
+		case len(parts) == 1 && parts[0].fieldName() == "variable" && (parts[0].kind() == "variable" || parts[0].kind() == "nodeLike"):
+			pattern = parts[0]
+		case len(parts) == 3 && isNode(parts[0], "name", "name", true) && isCompilerLeaf(parts[1], "=", "", false) && parts[2].fieldName() == "pattern":
+			field = parts[0].text()
+			if !validNodeSelectorName(field) {
+				return nil, c.closedFailure("invalid syntax-node field")
+			}
+			if parser.GrammarFieldCardinality(c.adapter.id, concrete[0].text(), field) == parser.GrammarCardinalityUnknown {
+				return nil, c.failure("PATTERN_INVALID_SNIPPET", "pattern", "unknown syntax-node field "+field+" on "+result.text, nil)
+			}
+			pattern = parts[2]
+		default:
+			return nil, c.closedFailure("invalid node field pattern")
+		}
+		var child *expression
+		if pattern.kind() == "variable" {
+			rng := pattern.byteRange()
+			ref := c.variable(pattern.text(), rng.StartByte, rng.EndByte)
+			child = &expression{kind: KindNodeCapture, rng: publicRange(rng), refs: []VariableRef{ref}}
+			result.refs = append(result.refs, ref)
+		} else if pattern.kind() == "nodeLike" {
+			var err *CompileError
+			child, err = c.compileNodeLike(pattern)
+			if err != nil {
+				return nil, err
+			}
+			result.refs = append(result.refs, child.refs...)
+		} else {
+			return nil, c.failure("PATTERN_INVALID_CONTEXT", "pattern", "node fields support only nested nodes or metavariables", nil)
+		}
+		result.children = append(result.children, child)
+		result.fields = append(result.fields, field)
+	}
+	c.features |= FeatureNodeLike
+	if len(result.refs) > 0 {
+		c.features |= FeatureVariables
+	}
+	return result, nil
+}
+
+func validNodeSelectorName(name string) bool {
+	if len(name) == 0 || len(name) > 128 {
+		return false
+	}
+	for index := 0; index < len(name); index++ {
+		char := name[index]
+		if char == '_' || char >= 'A' && char <= 'Z' || char >= 'a' && char <= 'z' || index > 0 && char >= '0' && char <= '9' {
+			continue
+		}
+		return false
+	}
+	return true
 }
 
 func (c *treeCompiler) compileSnippet(node queryNode) (*expression, *CompileError) {
@@ -927,9 +1054,15 @@ func validatePossibleBindings(e *expression, incoming variableScope) (variableSc
 		return nil, bindingValidationError("invalid compiled expression")
 	}
 	switch e.kind {
-	case KindSnippet:
+	case KindSnippet, KindNodeLike:
 		return validateSnippetBindings(e, incoming), nil
-	case KindRegex:
+	case KindAs:
+		available, err := validateUnaryBindings(e, incoming)
+		if err != nil {
+			return nil, err
+		}
+		return validateSnippetBindings(e, available), nil
+	case KindRegex, KindEmpty, KindParent:
 		return cloneVariableScope(incoming), nil
 	case KindAnd, KindOr:
 		return validateBranchBindings(e, incoming)

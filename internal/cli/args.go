@@ -18,6 +18,11 @@ const DefaultTextOutputBytes = searchcommand.DefaultTextOutputBytes
 // Run parses one complete application argument tree, then executes the selected command.
 func Run(args []string) error {
 	configureProcessDefaults()
+	if len(args) > 2 && args[0] == "help" && args[1] == "graph" {
+		if err := validateCommandAvailability("graph", args[2:]); err != nil {
+			return err
+		}
+	}
 	if command, commandArgs := explicitApplicationCommand(args); command != "" {
 		if err := validateCommandAvailability(command, commandArgs); err != nil {
 			return err
@@ -94,12 +99,6 @@ func normalizedApplicationArgs(args []string) []string {
 	}
 	for index, value := range normalized {
 		switch value {
-		case "graph":
-			next := nextApplicationCommandToken(normalized, index+1)
-			if !map[string]bool{"build": true, "resolve": true, "diff": true, "callers": true, "callees": true, "impact": true, "dependencies": true, "dependents": true}[next] {
-				normalized = insertApplicationArgument(normalized, index+1, "build")
-			}
-			return normalized
 		case "grit":
 			next := nextApplicationCommandToken(normalized, index+1)
 			if next != "run" && next != "explain" {
@@ -133,7 +132,7 @@ func insertApplicationArgument(args []string, index int, value string) []string 
 }
 
 func explicitApplicationCommand(args []string) (string, []string) {
-	commands := map[string]bool{"search": true, "write": true, "grit": true, "graph": true, "anchors": true, "boundaries": true, "examples": true, "artifacts": true, "context": true, "extract": true, "architecture": true, "sources": true, "init": true, "verify": true, "languages": true, "metrics": true, "rules": true, "repos": true, "get": true, "tree": true, "refs": true, "ask": true, "ai-provider": true, "login": true, "logout": true, "version": true}
+	commands := map[string]bool{"search": true, "write": true, "grit": true, "hook": true, "graph": true, "anchors": true, "boundaries": true, "examples": true, "artifacts": true, "context": true, "extract": true, "architecture": true, "sources": true, "area": true, "start": true, "init": true, "verify": true, "languages": true, "metrics": true, "rules": true, "repos": true, "get": true, "tree": true, "refs": true, "ask": true, "ai-provider": true, "login": true, "logout": true, "version": true}
 	for index := 0; index < len(args); index++ {
 		value := args[index]
 		if value == "--artifact-dir" || value == "--spill-threshold-bytes" {
@@ -152,7 +151,7 @@ func explicitApplicationCommand(args []string) (string, []string) {
 }
 
 func hasExplicitApplicationCommand(args []string) bool {
-	commands := map[string]bool{"search": true, "write": true, "grit": true, "graph": true, "anchors": true, "boundaries": true, "examples": true, "artifacts": true, "context": true, "extract": true, "architecture": true, "sources": true, "init": true, "verify": true, "languages": true, "metrics": true, "rules": true, "repos": true, "get": true, "tree": true, "refs": true, "ask": true, "ai-provider": true, "login": true, "logout": true, "version": true}
+	commands := map[string]bool{"search": true, "write": true, "grit": true, "hook": true, "graph": true, "anchors": true, "boundaries": true, "examples": true, "artifacts": true, "context": true, "extract": true, "architecture": true, "sources": true, "area": true, "start": true, "init": true, "verify": true, "languages": true, "metrics": true, "rules": true, "repos": true, "get": true, "tree": true, "refs": true, "ask": true, "ai-provider": true, "login": true, "logout": true, "version": true}
 	for index := 0; index < len(args); index++ {
 		value := args[index]
 		if value == "--help" || value == "-h" || value == "--version" {
@@ -171,9 +170,20 @@ func hasExplicitApplicationCommand(args []string) bool {
 }
 
 func validateCommandAvailability(command string, args []string) error {
+	removed := map[string]bool{"area": true, "start": true, "boundaries": true, "extract": true, "ask": true}
+	if removed[command] {
+		return fmt.Errorf("%s has been removed; use tree, search, or a focused graph query", command)
+	}
+	if command == "graph" || command == "architecture" {
+		subcommand := nextApplicationCommandToken(args, 0)
+		if (command == "graph" && (map[string]bool{"build": true, "diff": true, "impact": true, "dependencies": true, "dependents": true})[subcommand]) ||
+			(command == "architecture" && (map[string]bool{"resolve": true, "why": true, "responsibilities": true, "compare": true})[subcommand]) {
+			return fmt.Errorf("%s %s has been removed", command, subcommand)
+		}
+	}
 	availability := map[string]string{
-		"write": "local-only", "anchors": "local-only", "examples": "source-independent", "artifacts": "local-only", "context": "local-only",
-		"languages": "source-independent", "extract": "local-only", "sources": "local-only", "init": "local-only", "verify": "local-only", "ai-provider": "source-independent", "metrics": "local-only",
+		"write": "local-only", "hook": "local-only", "anchors": "local-only", "examples": "source-independent", "artifacts": "local-only", "context": "local-only",
+		"languages": "source-independent", "sources": "local-only", "init": "local-only", "verify": "local-only", "ai-provider": "source-independent", "metrics": "local-only",
 	}
 	remoteOnly := map[string]bool{"get": true, "repos": true, "refs": true, "rules": true, "login": true, "logout": true}
 	for _, argument := range args {

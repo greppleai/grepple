@@ -14,7 +14,7 @@ message NavigationCacheEntry {
 
 // PackedNavigationGraph is decoded directly into parser.NavigationGraph. Each
 // *_strings column contains indexes into strings. Each *_values column contains
-// ranges, booleans, and variable-column counts in the widths defined by the v26
+// ranges, booleans, and variable-column counts in the widths defined by the v27
 // codec. Separate variable columns preserve source order without nested message
 // allocations.
 message PackedNavigationGraph {

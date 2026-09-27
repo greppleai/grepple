@@ -12,58 +12,97 @@ files:
       description: Provides a subprocess endpoint implementing the configured anchor provider test protocol.
       kind: test
       checksum: c6a8310d512ac97aa1fe641d43c00a79bb3ec3c3f1755de89f12a8b8b64e27bb
+      areas:
+        - anchor-generation
     - path: anchor_search_integration_test.go
       description: Verifies configured anchor providers integrate with line-only search output.
       kind: test
       checksum: 2f4adef26801e4527384e211cfeec79d184e4fa3050b3bbd10df2760f7b06058
+      areas:
+        - anchor-generation
     - path: anchors.go
       description: Selects result lines, validates source content, and generates navigation anchors.
       kind: production
       checksum: c2a1d697c15db9a40b4e0347ce482325b9971ca80bcd0168323a8d10858d4c4d
+      areas:
+        - anchor-generation
     - path: anchors_test.go
       description: Tests anchor selection, related type lines, source validation, and path handling.
       kind: test
       checksum: b8647c321af8d062f9b1273c6e475321943e2d0ce500b8d17fe0c777f4516200
+      areas:
+        - anchor-generation
     - path: api.go
       description: Exposes search argument parsing, request conversion, remote execution, and navigation resolution.
       kind: production
       checksum: 7bbca75c8f9aa7a1c7f8173ea854cc7004f6bb10d19f86bda52fccafb8fc1672
+      areas:
+        - search-cli-parsing
+        - remote-search
+        - navigation-resolution
     - path: args.go
       description: Defines search arguments, defaults, validation rules, output modes, navigation behavior, and API parameter conversion.
       kind: production
-      checksum: fcec031018f7fee5bf3023e7637750b03cff66cfc78387ce0096242015570214
+      checksum: 68557dc50e1c6a25c09a744a4b6c69172a629614970a2a576e5eb41dcebaa843
+      areas:
+        - search-cli-parsing
+        - outline-search
     - path: args_integration_test.go
       description: Tests argument defaults, aliases, validation, navigation, anchors, target selection, and focused locations.
       kind: test
       checksum: f256f48bf618a0dcd5cf3588fa3522069720c80c70e45355c4fa235fee8c759f
+      areas:
+        - search-cli-parsing
+        - anchor-generation
+        - navigation-resolution
     - path: client_range_test.go
       description: Verifies remote line-range errors preserve full-miss outcomes and context statistics.
       kind: test
       checksum: 9e0192c1f9e098847931a0b59f969aa54dfe2e8f24f72ca419a1f699e3d367cc
+      areas:
+        - remote-search
     - path: command.go
       description: Constructs the search command and dispatches parsed arguments to execution.
       kind: production
       checksum: 7aed8fe09f6fea445b443cb80eb558fd4a55facc6c7d7b7fa986561ad2946e92
+      areas:
+        - search-cli-parsing
     - path: command_test.go
       description: Tests search command help handling and local workflow execution.
       kind: test
       checksum: 2be2a7fc0179740b7e588c678037318a10fc8744fb69dec2eafb59d3002e942f
+      areas:
+        - search-cli-parsing
+        - local-search
     - path: count_by_repo_test.go
       description: Tests sorted repository count output, unbounded count requests, and remote truncation guidance.
       kind: test
       checksum: 9d74a6f2fc0b030791ad122321a6124c3b186caee8684aacf1a986ea578af1e5
+      areas:
+        - result-counting
+        - remote-search
     - path: count_test.go
       description: Tests per-file counts, complete summaries, JSON count output, and conflicting count modes.
       kind: test
       checksum: b2c011f595931f34b91cfef9713fc6ffb6ef1186859d74b371f5ac32986810e6
+      areas:
+        - result-counting
     - path: execution.go
       description: Runs local, stdin, and remote searches while merging, sorting, paging, rendering, and setting exit status.
       kind: production
-      checksum: fe92e8b6d370514028259c6527b0dfc2d04d1a662ee7d14a4751e68d3d2272c7
+      checksum: 40b47c9db1ee92d6372a0415ce4dce47bde3461fb49b97dee5ebf969b8ab4c54
+      areas:
+        - local-search
+        - remote-search
+        - result-counting
+        - result-metadata
+        - outline-search
     - path: files_with_matches_test.go
       description: Tests content-based path listing, mode validation, local behavior, query preservation, and result limits.
       kind: test
       checksum: afc4fefdd6a2b1dcee4d9096541a720f823eaa52286c757e13cd493575673d47
+      areas:
+        - local-search
     - path: json_test_helpers_test.go
       description: Provides a helper for writing JSON values in search tests.
       kind: test
@@ -72,46 +111,79 @@ files:
       description: Tests line-only output, generated anchors, enclosing ranges, and nearest body scopes.
       kind: test
       checksum: 20d49d8fa26ac4fd9b84a18eb6bd8d11bc266d83a0c393685683f35903651a26
+      areas:
+        - anchor-generation
+        - local-search
     - path: metadata.go
       description: Builds result scopes, paging metadata, diagnostics, omissions, and continuation commands.
       kind: production
       checksum: 4516dc8bbdb92fbabde9554ee18022f82b8d3c8a83dd0b8d743cb6cfcb6bfacb
+      areas:
+        - result-metadata
     - path: multi_path_test.go
       description: Tests filename listing and content searches across multiple explicit paths.
       kind: test
       checksum: 77615c3eeaf578f24011ade5fb90b362833c7231893bd6be5e7a10846f0ea676
+      areas:
+        - local-search
     - path: navigation_resolve_test.go
       description: Verifies navigation resolution requests use the public API endpoint and expected payload.
       kind: test
       checksum: 2f896e648e8c5c1a6864afc7c676265bef86230ff68ce85db321f0998f5622ac
+      areas:
+        - navigation-resolution
     - path: options.go
       description: Defines parsed search options and execution state for output, anchors, metadata, and stdin.
       kind: production
-      checksum: bd5af5d3ab83e729db6535471f8b8cca887f8882e1c45909c99e7715e1d32f2a
+      checksum: 6685d74b9887d89107efa22646ab09d18715b3ed62e0ffaac74a5d91f3d6e3f1
+      areas:
+        - search-cli-parsing
+        - result-metadata
+    - path: outline_filter_test.go
+      description: Tests local outline kind filters in human and JSON output.
+      kind: test
+      checksum: 5f4569e8f2643ce7c85c5b270238357ea1b2f5465afd282adba3437f0ef86c1e
+      areas:
+        - outline-search
     - path: outline_test.go
       description: Tests outline argument handling, incompatible modes, local rendering, bounds, truncation, and JSON output.
       kind: test
       checksum: cfae7b98612eaa6f60a03bda3229f6ddca08b4f834404ee51e2a2913afc77a8a
+      areas:
+        - outline-search
     - path: remote.go
       description: Executes remote searches, reports partial responses, resolves external navigation, filters exclusions, and fetches repository counts.
       kind: production
       checksum: c9517449eae1dc0e0d7d2af0f14da7a9489931b9defd14efb16aebfd2efcd034
+      areas:
+        - remote-search
+        - navigation-resolution
+        - result-counting
     - path: remote_exclude_test.go
       description: Tests sending repository exclusions and applying them to remote search results.
       kind: test
       checksum: e0bdc56c49e1575846e4ca33fb27a4e10c6ead61175744e830172f7b34fb7ecc
+      areas:
+        - remote-search
     - path: search_json_integration_test.go
       description: Verifies JSON search output includes paging metadata and copyable continuation commands.
       kind: test
       checksum: 1db8f7ad9556ccd7d024cbd3b43c209e5af92b53991045065f4df2ed86b0d53a
+      areas:
+        - result-metadata
     - path: search_target_test.go
       description: Tests configured server handling, local-only behavior, remote opt-in, and current repository exclusion.
       kind: test
       checksum: b4002d97ffdd5134b998374c022e2f568549f49fa3690200a3118b211489b4f1
+      areas:
+        - local-search
+        - remote-search
     - path: stdin_test.go
       description: Tests piped-stdin searches across line, inversion, matching, context, file, count, and glob modes.
       kind: test
       checksum: b19cd24ad8bdf4d91d3d441894da73111901360372c72d409e9d21acdfe21174
+      areas:
+        - local-search
     - path: test_helpers_test.go
       description: Provides shared command contexts, search runners, remote helpers, Git setup, and temporary source utilities.
       kind: test

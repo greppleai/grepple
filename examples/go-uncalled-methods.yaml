@@ -1,0 +1,34 @@
+# Opt-in candidate audit, not proof of dead code. Name-only matching cannot
+# establish Go dispatch, reflection, code generation, external consumers, or
+# whether a selector names a field instead of a method.
+# _test.go files are excluded from both sides: test-only calls do not count.
+version: 1
+id: go-uncalled-methods
+event: Stop
+engine: gritql-relational-v1
+include:
+  - "**/*.go"
+exclude:
+  - "**/vendor/**"
+  - "**/testdata/**"
+  - "**/*_test.go"
+  - "**/node_modules/**"
+  - "**/.*/**"
+  - "**/.*"
+severity: warning
+message: "method {{left.name}} has no matching selector name in this directory; review possible dynamic or external uses"
+relation:
+  left_query: |
+    language go
+    method_declaration(name=$name) where { $name <: r"^[a-z]" }
+  right_query: |
+    language go
+    selector_expression(field=$name) where { $name <: r"^[a-z]" }
+  partition_query: |
+    language go
+    package_clause($package)
+  left_key: {binding: name}
+  right_key: {binding: name}
+  partition_key: {binding: package}
+  scope: directory
+  mode: unmatched_left

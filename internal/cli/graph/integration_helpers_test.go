@@ -20,7 +20,18 @@ func Run(args []string) error {
 	if len(args) >= 2 && args[0] == "help" && args[1] == "graph" {
 		args = append(append([]string(nil), args[2:]...), "--help")
 	}
-	return New(cliruntime.Environment{}).Run(args)
+	// Cover retained graph projections directly without exposing their old CLI modes.
+	if len(args) > 0 {
+		switch args[0] {
+		case "build":
+			return runBuild(cliruntime.Environment{}, args[1:])
+		case "diff":
+			return runDiff(cliruntime.Environment{}, args[1:])
+		case "resolve", "callers", "callees", "impact", "dependencies", "dependents":
+			return New(cliruntime.Environment{}).Run(args)
+		}
+	}
+	return runBuild(cliruntime.Environment{}, args)
 }
 
 func runGraph(args []string) error { return New(cliruntime.Environment{}).Run(args) }

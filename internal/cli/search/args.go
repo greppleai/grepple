@@ -6,6 +6,7 @@ import (
 	"io"
 
 	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
+	rendercommand "github.com/greppleai/grepple/internal/render"
 	"github.com/greppleai/grepple/search"
 
 	"github.com/alexflint/go-arg"
@@ -33,6 +34,7 @@ type Args struct {
 	Files            bool     `arg:"-l,--files" help:"list files by path; unlike grep -l, does not search contents (use --files-with-matches)"`
 	FilesWithMatches bool     `arg:"--files-with-matches" help:"list paths whose contents match (grep -l equivalent); accepts multiple PATHs"`
 	Outline          bool     `arg:"-O,--outline" help:"print each file's structural outline (classes, funcs, interfaces) instead of searching"`
+	Kinds            []string `arg:"--kind,separate" placeholder:"CATEGORY" help:"outline: show only types, functions, or variables; repeat or comma-separate"`
 	Depth            int      `arg:"--depth" placeholder:"N" help:"outline: cap nesting depth for JSON/YAML (0 = unlimited)"`
 	Count            bool     `arg:"-c,--count" help:"print matching-line counts per file"`
 	CountByRepo      bool     `arg:"--count-by-repo" help:"print complete counts grouped by repository (compatibility name for --count-summary)"`
@@ -101,6 +103,10 @@ func optionsFromArgs(application cliruntime.Context, values *Args, usage interfa
 	if err := validateSearchArgs(values); err != nil {
 		return nil, "", false, err
 	}
+	kinds, err := rendercommand.ParseOutlineKinds(values.Kinds, values.Outline)
+	if err != nil {
+		return nil, "", false, err
+	}
 	params, err := buildSearchParams(application, usage, values)
 	if err == nil {
 		if repository := application.Repository(); repository != nil {
@@ -131,6 +137,7 @@ func optionsFromArgs(application cliruntime.Context, values *Args, usage interfa
 		CountSummary:     values.CountSummary,
 		FilesWithMatches: values.FilesWithMatches,
 		Outline:          values.Outline,
+		Kinds:            kinds,
 		Depth:            values.Depth,
 		MaxOutputBytes:   values.MaxOutputBytes,
 		RepeatSource:     values.RepeatSource,

@@ -291,6 +291,21 @@ func matchTemplateWithBudget(t Template, target MatchTarget, incoming BindingSet
 	if !takeMatchStep(budget) || !t.Valid() {
 		return MatchResult{}, false
 	}
+	// Reject incompatible roots before freezing an entire source subtree. A
+	// concrete template can match only a node or sequence with the same kind.
+	if t.root != nil {
+		if target.sequence {
+			if target.kind != t.root.kind {
+				return MatchResult{}, false
+			}
+		} else if target.viewNode.Valid() {
+			if target.viewNode.Kind() != t.root.kind {
+				return MatchResult{}, false
+			}
+		} else if target.node.Valid() && target.node.Kind() != t.root.kind {
+			return MatchResult{}, false
+		}
+	}
 	frozen, ok := freezeMatchTarget(target)
 	if !ok {
 		return MatchResult{}, false

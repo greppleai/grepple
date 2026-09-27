@@ -110,6 +110,17 @@ func TestGritExplainReportsWrappersVariablesAndCompatibility(t *testing.T) {
 	}
 }
 
+func TestGritExplainReportsNodeRootCapture(t *testing.T) {
+	output := explainGritQuery("language go\ntype_identifier() as $name where { $name <: r\"^[A-Z]\" }", gritExplainArgs{})
+	if !output.OK || !slices.Contains(output.Features, "as") || len(output.Variables) != 1 {
+		t.Fatalf("root capture explanation=%#v", output)
+	}
+	variable := output.Variables[0]
+	if variable.Name != "name" || !slices.Contains(variable.BindingKinds, "node") || !slices.Contains(variable.Roles, "expression:as") || !slices.Contains(variable.Roles, "constraint:left") {
+		t.Fatalf("root capture roles=%#v", variable)
+	}
+}
+
 func TestGritExplainReturnsBoundedCompileDiagnostics(t *testing.T) {
 	output := explainGritQuery("language go\n`unterminated", gritExplainArgs{})
 	if output.OK || len(output.Diagnostics) != 1 || output.Diagnostics[0].Code == "" || output.Diagnostics[0].Severity != "error" {

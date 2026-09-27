@@ -96,6 +96,7 @@ type TreeEntry struct {
 	Path           string   `json:"path"`
 	Dir            bool     `json:"dir"`
 	Description    string   `json:"description,omitempty"`
+	Areas          []string `json:"areas,omitempty"`
 	MetadataStatus string   `json:"metadataStatus,omitempty"`
 	MetadataIssues []string `json:"metadataIssues,omitempty"`
 }
@@ -105,6 +106,7 @@ type TreeResponse struct {
 	Repo           string      `json:"repo"`
 	Path           string      `json:"path"`
 	Description    string      `json:"description,omitempty"`
+	Areas          []string    `json:"areas,omitempty"`
 	MetadataStatus string      `json:"metadataStatus,omitempty"`
 	MetadataIssues []string    `json:"metadataIssues,omitempty"`
 	Depth          int         `json:"depth"`

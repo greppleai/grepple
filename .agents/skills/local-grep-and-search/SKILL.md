@@ -15,7 +15,7 @@ Use the smallest result shape that can answer the question. Grepple is determini
 | List matching files | `grepple -F 'Name' --files-with-matches SCOPE` |
 | List files by path/glob | `grepple --files 'src/**/*.go'` |
 | Explain selected/excluded paths | `grepple sources explain SCOPE` |
-| Inventory one file | `grepple --outline path/to/file.go` |
+| Inventory one file's declarations | `grepple --outline path/to/file.go` (`--kind types`, `--kind functions`, or `--kind variables` to filter; repeat/combine) |
 | Retrieve enclosing implementation | `grepple -F 'Name' SCOPE --limit 5` |
 | Locate exact evidence lines | `grepple --line-only -F 'Name' SCOPE` |
 | Find the owner of a body match | `grepple --line-only --enclosing -F 'call()' file.go` |

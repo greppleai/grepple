@@ -60,9 +60,6 @@ func TestGraphDaemonLocalOutputParityAndFlagRestrictions(t *testing.T) {
 		{"graph", "resolve", "--symbol", "Missing", "--json", "main.go"},
 		{"graph", "callers", "--symbol", "Target", "--json", "main.go"},
 		{"graph", "callees", "--symbol", "Target", "--json", "main.go"},
-		{"graph", "impact", "--symbol", "Target", "--json", "main.go"},
-		{"graph", "dependencies", "--symbol", "Target", "--json", "main.go"},
-		{"graph", "dependents", "--symbol", "Target", "--json", "main.go"},
 	} {
 		name := strings.Join(command[1:4], "-")
 		t.Run(name, func(t *testing.T) {
@@ -81,11 +78,7 @@ func TestGraphDaemonLocalOutputParityAndFlagRestrictions(t *testing.T) {
 			}
 		})
 	}
-	for _, command := range [][]string{
-		{"--daemon", "graph", "build", "--json", "main.go"},
-		{"graph", "diff", "--daemon", "--before", "main.go", "--after", "main.go"},
-		{"--daemon", "tree", "."},
-	} {
+	for _, command := range [][]string{{"--daemon", "tree", "."}} {
 		if _, err := run(command...); err == nil || !strings.Contains(err.Error(), "--daemon") {
 			t.Fatalf("unsupported daemon command %v returned %v", command, err)
 		}

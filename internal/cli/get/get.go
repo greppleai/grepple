@@ -17,12 +17,13 @@ import (
 // request contains parsed get command options.
 type Args struct {
 	cliruntime.CommonArgs
-	Lines   string `arg:"--lines" placeholder:"A:B" help:"inclusive 1-based range; ranges that start in-file clamp at EOF"`
-	JSON    bool   `arg:"--json" help:"print repository metadata and content as JSON"`
-	Outline bool   `arg:"-O,--outline" help:"print the file's structural outline (classes, funcs, ...) instead of its contents"`
-	Depth   int    `arg:"--depth" placeholder:"N" help:"outline: cap nesting depth for JSON/YAML (0 = unlimited)"`
-	Repo    string `arg:"positional,required" placeholder:"OWNER/REPOSITORY"`
-	Path    string `arg:"positional,required" placeholder:"PATH"`
+	Lines   string   `arg:"--lines" placeholder:"A:B" help:"inclusive 1-based range; ranges that start in-file clamp at EOF"`
+	JSON    bool     `arg:"--json" help:"print repository metadata and content as JSON"`
+	Outline bool     `arg:"-O,--outline" help:"print the file's structural outline (classes, funcs, ...) instead of its contents"`
+	Kinds   []string `arg:"--kind,separate" placeholder:"CATEGORY" help:"outline: show only types, functions, or variables; repeat or comma-separate"`
+	Depth   int      `arg:"--depth" placeholder:"N" help:"outline: cap nesting depth for JSON/YAML (0 = unlimited)"`
+	Repo    string   `arg:"positional,required" placeholder:"OWNER/REPOSITORY"`
+	Path    string   `arg:"positional,required" placeholder:"PATH"`
 }
 
 // request is retained for package-local compatibility.
@@ -64,6 +65,9 @@ func Execute(application cliruntime.Context, values *Args) error {
 	if application == nil {
 		return fmt.Errorf("get command context is unavailable")
 	}
+	if _, err := rendercommand.ParseOutlineKinds(values.Kinds, values.Outline); err != nil {
+		return err
+	}
 	base := application.Configuration().ServerDefault(values.Server)
 	request := apiclient.RawRequest{Repo: values.Repo, Path: values.Path, FormatJSON: values.JSON && !values.Outline}
 	if values.Lines != "" {
@@ -95,11 +99,19 @@ func render(application cliruntime.Context, values Args, body []byte) error {
 		return cliruntime.NewOutput(application.Stdout()).WriteString(string(body))
 	}
 	outline := parser.OutlineFileDepth(values.Path, string(body), values.Depth)
+	kinds, err := rendercommand.ParseOutlineKinds(values.Kinds, true)
+	if err != nil {
+		return err
+	}
+	outline = rendercommand.FilterOutline(outline, kinds)
 	if values.JSON {
 		return cliruntime.NewOutput(application.Stdout()).WriteJSON(outline)
 	}
 	if len(outline.Symbols) == 0 {
 		application.RequestExit(1)
+	}
+	if len(kinds) > 0 {
+		return cliruntime.NewOutput(application.Stdout()).WriteString(rendercommand.Outline(outline))
 	}
 	return cliruntime.NewOutput(application.Stdout()).WriteString(rendercommand.OutlineOrContent(outline, string(body)))
 }

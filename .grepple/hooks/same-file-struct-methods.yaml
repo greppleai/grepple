@@ -1,0 +1,40 @@
+# Cross-file rules require a complete source snapshot, including unchanged files.
+version: 1
+id: same-file-struct-methods
+event: Stop
+engine: gritql-relational-v1
+include:
+  - "**/*.go"
+exclude:
+  - "**/vendor/**"
+  - "**/examples/**"
+  - "**/testdata/**"
+  - "**/node_modules/**"
+  - "**/.*/**"
+  - "**/.*"
+severity: error
+message: "method {{right.method}} on {{key}} is declared here, but the type lives in {{left.basename}} — keep all methods of a struct in the file that declares the type"
+relation:
+  left_query: |
+    language go
+    and {
+      type_spec(name=$name, type=struct_type()),
+      not within function_declaration(),
+      not within method_declaration(),
+      not within func_literal(),
+    }
+  right_query: |
+    language go
+    method_declaration(name=$method, receiver=parameter_list(parameter_declaration(type=$receiver)))
+  partition_query: |
+    language go
+    package_clause($package)
+  left_key:
+    binding: name
+  right_key:
+    binding: receiver
+    descendant_kind: type_identifier
+  partition_key:
+    binding: package
+  scope: directory
+  unique_left: true

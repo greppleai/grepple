@@ -13,6 +13,7 @@ type treeNode struct {
 	name           string
 	dir            bool
 	description    string
+	areas          []string
 	metadataStatus string
 	metadataIssues []string
 	children       map[string]*treeNode
@@ -32,7 +33,7 @@ func Tree(data api.TreeResponse, destination io.Writer, jsonMode bool) error {
 	if data.Description != "" {
 		header += " — " + data.Description
 	}
-	header += metadataStatusSuffix(data.MetadataStatus)
+	header += areaSuffix(data.Areas) + metadataStatusSuffix(data.MetadataStatus)
 	if err := output.WriteString(header + "\n"); err != nil {
 		return err
 	}
@@ -52,6 +53,7 @@ func buildTree(entries []api.TreeEntry) *treeNode {
 				child = &treeNode{name: part, dir: index < len(parts)-1 || entry.Dir, children: map[string]*treeNode{}}
 				if index == len(parts)-1 {
 					child.description = entry.Description
+					child.areas = append([]string(nil), entry.Areas...)
 					child.metadataStatus = entry.MetadataStatus
 					child.metadataIssues = append([]string(nil), entry.MetadataIssues...)
 				}
@@ -89,7 +91,7 @@ func renderTree(node *treeNode, prefix string, output *cliruntime.Output) error 
 		if child.description != "" {
 			suffix += " — " + child.description
 		}
-		suffix += metadataStatusSuffix(child.metadataStatus)
+		suffix += areaSuffix(child.areas) + metadataStatusSuffix(child.metadataStatus)
 		if err := output.WriteString(prefix + branch + child.name + suffix + "\n"); err != nil {
 			return err
 		}
@@ -102,6 +104,12 @@ func renderTree(node *treeNode, prefix string, output *cliruntime.Output) error 
 	return nil
 }
 
+func areaSuffix(areas []string) string {
+	if len(areas) == 0 {
+		return ""
+	}
+	return " [areas: " + strings.Join(areas, ",") + "]"
+}
 func metadataStatusSuffix(status string) string {
 	switch status {
 	case "missing", "stale", "invalid":

@@ -1,6 +1,6 @@
 # Boundary pattern analysis
 
-`grepple boundaries [PATH...]` reports four complementary boundary signals: repeated owner-file workflows, concrete type spread, externally used owned fields/properties, and policy-backed facade bypasses. Findings remain source-linked review leads rather than violations.
+The internal boundary analyzer (and remote analysis API) reports repeated owner-file workflows, concrete type spread, externally used owned fields/properties, and policy-backed facade bypasses. The standalone `grepple boundaries` command was removed; these findings are source-linked review leads, not violations.
 
 The analyzer consumes `parser.NavigationGraph`, not grammar node names. Consequently the workflow contract is identical across Go, Java, Kotlin, JavaScript/JSX, TypeScript/TSX, Python, C#, C, C++, Rust, and Shell. Type identity is import-qualified where an adapter can resolve an import; otherwise project-owned types require an unambiguous declaration owner. Human and JSON reports include discovered, selected, parsed, skipped, failed, and recovered source counts; `--max-files` omissions remain a separate truncation record.
 

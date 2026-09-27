@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	navigationProtoDeclarationStrings     = 16
+	navigationProtoDeclarationStrings     = 17
 	navigationProtoDeclarationValues      = 2
 	navigationProtoTypeDeclarationStrings = 8
 	navigationProtoTypeDeclarationValues  = 2
@@ -168,7 +168,7 @@ func marshalNavigationProtoGraph(graph NavigationGraph) ([]byte, error) {
 			declaration.ID, declaration.Name, declaration.Kind, declaration.Language, declaration.Path,
 			declaration.Container, declaration.Receiver, declaration.ResultType, declaration.ResultImportPath,
 			declaration.Package, declaration.PackageID, declaration.ModuleID, declaration.Scope,
-			declaration.Entrypoint, string(declaration.Visibility), declaration.VisibilityDetail)
+			declaration.Entrypoint, string(declaration.Visibility), declaration.VisibilityDetail, declaration.Signature)
 		packed.declarationValues = appendNavigationProtoInts(packed.declarationValues, declaration.Start, declaration.End)
 	}
 	for _, declaration := range graph.TypeDeclarations {
@@ -498,7 +498,7 @@ func (decoder navigationProtoDecoder) declarations(graph *NavigationGraph) error
 			return err
 		}
 		v := decoder.packed.declarationValues[index*navigationProtoDeclarationValues:]
-		graph.Declarations[index] = NavigationDeclaration{ID: s[0], Name: s[1], Kind: s[2], Language: s[3], Path: s[4], Container: s[5], Receiver: s[6], ResultType: s[7], ResultImportPath: s[8], Package: s[9], PackageID: s[10], ModuleID: s[11], Scope: s[12], Entrypoint: s[13], Visibility: NavigationVisibility(s[14]), VisibilityDetail: s[15], Start: int(v[0]), End: int(v[1])}
+		graph.Declarations[index] = NavigationDeclaration{ID: s[0], Name: s[1], Kind: s[2], Language: s[3], Path: s[4], Container: s[5], Receiver: s[6], ResultType: s[7], ResultImportPath: s[8], Package: s[9], PackageID: s[10], ModuleID: s[11], Scope: s[12], Entrypoint: s[13], Visibility: NavigationVisibility(s[14]), VisibilityDetail: s[15], Signature: s[16], Start: int(v[0]), End: int(v[1])}
 	}
 	return nil
 }

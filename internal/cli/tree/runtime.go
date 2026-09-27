@@ -7,10 +7,10 @@ import (
 	sourcedomain "github.com/greppleai/grepple/internal/sources"
 )
 
-type localTree func(path string, depth int, kind sourcedomain.Kind) (api.TreeResponse, error)
+type localTree func(path string, depth int, kind sourcedomain.Kind, areas []string) (api.TreeResponse, error)
 
 func newLocal(context cliruntime.Context) localTree {
-	return func(path string, depth int, kind sourcedomain.Kind) (api.TreeResponse, error) {
-		return buildLocal(path, depth, kind, context.Repository())
+	return func(path string, depth int, kind sourcedomain.Kind, areas []string) (api.TreeResponse, error) {
+		return buildLocal(path, depth, kind, areas, context.Repository())
 	}
 }

@@ -12,7 +12,7 @@ import (
 	"github.com/greppleai/grepple/internal/cliruntime"
 )
 
-func TestRemoteCommandsPreserveExactRepository(t *testing.T) {
+func TestRemoteDirectoryPreservesExactRepository(t *testing.T) {
 	var operations []api.AnalysisOperation
 	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		var input api.AnalysisRequest
@@ -23,22 +23,19 @@ func TestRemoteCommandsPreserveExactRepository(t *testing.T) {
 			t.Fatalf("request=%+v", input)
 		}
 		operations = append(operations, input.Operation)
-		schemas := map[api.AnalysisOperation]string{api.AnalysisArchitecture: "grepple-directory-architecture-v5", api.AnalysisResponsibilities: "grepple-directory-responsibilities-v2"}
-		result, _ := json.Marshal(map[string]any{"schema": schemas[input.Operation]})
+		result, _ := json.Marshal(map[string]any{"schema": "grepple-directory-architecture-v5"})
 		_ = json.NewEncoder(writer).Encode(api.AnalysisResponse{Schema: "grepple-remote-analysis-v1", Operation: input.Operation, Repository: input.Repository, Found: true, Complete: true, Result: result})
 	}))
 	defer server.Close()
-	for _, args := range [][]string{{"directory", "--json"}, {"responsibilities", "--json"}} {
-		var output bytes.Buffer
-		args = append(args, "--server", server.URL, "--repo", "owner/repo@tag~v1")
-		if err := New(cliruntime.Environment{Output: &output}).Run(args); err != nil {
-			t.Fatal(err)
-		}
-		if !strings.Contains(output.String(), `"repository": "owner/repo@tag~v1"`) {
-			t.Fatalf("output=%s", output.String())
-		}
+	var output bytes.Buffer
+	command := New(cliruntime.Environment{Output: &output}).(*command)
+	if err := command.Run([]string{"directory", "--json", "--server", server.URL, "--repo", "owner/repo@tag~v1"}); err != nil {
+		t.Fatal(err)
 	}
-	if len(operations) != 2 || operations[0] != api.AnalysisArchitecture || operations[1] != api.AnalysisResponsibilities {
+	if !strings.Contains(output.String(), `"repository": "owner/repo@tag~v1"`) {
+		t.Fatalf("output=%s", output.String())
+	}
+	if len(operations) != 1 || operations[0] != api.AnalysisArchitecture {
 		t.Fatalf("operations=%v", operations)
 	}
 }

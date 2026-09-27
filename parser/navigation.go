@@ -12,6 +12,7 @@ import (
 type NavigationDeclaration struct {
 	ID               string               `json:"id"`
 	Name             string               `json:"name"`
+	Signature        string               `json:"signature,omitempty"`
 	Kind             string               `json:"kind"`
 	Language         string               `json:"language"`
 	Path             string               `json:"path"`
@@ -308,6 +309,20 @@ func cloneNavigationBindings(bindings map[string]navigationBinding) map[string]n
 	return cloned
 }
 
+// navigationCallableSignature keeps the written declaration header, including
+// parameters and return syntax, without confusing a body with a signature.
+func navigationCallableSignature(node *syntaxNode) string {
+	text := node.Text()
+	if body := node.ChildByFieldName("body"); body != nil {
+		end := int(body.StartByte()) - int(node.StartByte())
+		if end <= 0 || end > len(text) {
+			return ""
+		}
+		text = text[:end]
+	}
+	return strings.Join(strings.Fields(text), " ")
+}
+
 func (c *navigationCollector) enterNavigationNode(node *syntaxNode, context navigationWalkContext) navigationWalkContext {
 	current := context
 	if module := c.navigation.NestedModulePath(node, context.modulePath); module != "" {
@@ -335,7 +350,7 @@ func (c *navigationCollector) enterNavigationNode(node *syntaxNode, context navi
 	}
 	result := c.navigation.CallableReturnBinding(node, c.content, current.imports)
 	declaration := NavigationDeclaration{
-		Name: name, Kind: c.navigation.DeclarationKind(node, current.container), Language: c.adapter.ID(), Path: c.path, Container: current.container, Package: c.packageName, Scope: current.modulePath,
+		Name: name, Signature: navigationCallableSignature(node), Kind: c.navigation.DeclarationKind(node, current.container), Language: c.adapter.ID(), Path: c.path, Container: current.container, Package: c.packageName, Scope: current.modulePath,
 		ResultType: result.typeName, ResultImportPath: result.importPath, Visibility: c.navigation.Visibility(node, name, c.content), VisibilityDetail: c.navigation.VisibilityDetail(node, name, c.content), Entrypoint: c.navigation.Entrypoint(navigationEntrypointContext{node: node, name: name, container: current.container, packageName: c.packageName, scope: current.modulePath, path: c.path, content: c.content}), Start: start, End: end,
 	}
 	declaration.ID = navigationDeclarationStableID(declaration)

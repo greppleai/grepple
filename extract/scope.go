@@ -46,13 +46,20 @@ func prepareSourcePaths(analysis *Analysis, sources []Source) {
 	for language, paths := range pathsByLanguage {
 		fallbackRoot := commonDirectory(paths)
 		roots := map[string]bool{}
+		rootsByDirectory := map[string]string{}
 		for _, sourcePath := range paths {
-			if root := nearestSourceRoot(language, filepath.Dir(sourcePath)); root != "" {
+			directory := filepath.Dir(sourcePath)
+			root, ok := rootsByDirectory[directory]
+			if !ok {
+				root = nearestSourceRoot(language, directory)
+				rootsByDirectory[directory] = root
+			}
+			if root != "" {
 				roots[root] = true
 			}
 		}
 		for _, sourcePath := range paths {
-			root := nearestSourceRoot(language, filepath.Dir(sourcePath))
+			root := rootsByDirectory[filepath.Dir(sourcePath)]
 			if root == "" || len(roots) > 1 {
 				root = fallbackRoot
 			}

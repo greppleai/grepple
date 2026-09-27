@@ -31,13 +31,9 @@ func TestApplicationParserOwnsGlobalAndNestedArguments(t *testing.T) {
 		t.Fatalf("graph callers = %#v", query)
 	}
 }
-func TestApplicationParserNormalizesLegacyDefaultModesAndDefaults(t *testing.T) {
-	graphValues, help, err := parseApplicationArgs([]string{"graph", "."})
-	if err != nil || help {
-		t.Fatalf("graph parse: help=%v err=%v", help, err)
-	}
-	if graphValues.Graph == nil || graphValues.Graph.Build == nil || graphValues.Graph.Build.JSON || graphValues.Graph.Build.MaxOutputBytes != 16*1024 {
-		t.Fatalf("graph build arguments = %#v", graphValues.Graph)
+func TestApplicationParserRequiresFocusedGraphSubcommand(t *testing.T) {
+	if _, _, err := parseApplicationArgs([]string{"graph", "."}); err == nil {
+		t.Fatal("graph without a focused subcommand unexpectedly parsed")
 	}
 
 	gritValues, help, err := parseApplicationArgs([]string{"grit", "language go `func $name() {}`"})
@@ -46,6 +42,13 @@ func TestApplicationParserNormalizesLegacyDefaultModesAndDefaults(t *testing.T) 
 	}
 	if gritValues.Grit == nil || gritValues.Grit.Run == nil || gritValues.Grit.Run.Limit != 20 || gritValues.Grit.Run.MaxOutputBytes != 16*1024 {
 		t.Fatalf("grit run arguments = %#v", gritValues.Grit)
+	}
+}
+
+func TestApplicationParserHookFlags(t *testing.T) {
+	values, help, err := parseApplicationArgs([]string{"hook", "--id", "go-empty-if", "--id", "go-direct-dot-import", "--all", "--json"})
+	if err != nil || help || values.Hook == nil || !values.Hook.All || !values.Hook.JSON || len(values.Hook.IDs) != 2 || values.Hook.IDs[0] != "go-empty-if" || values.Hook.IDs[1] != "go-direct-dot-import" {
+		t.Fatalf("hook parse: values=%+v help=%v err=%v", values, help, err)
 	}
 }
 

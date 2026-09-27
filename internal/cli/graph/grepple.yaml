@@ -2,7 +2,7 @@ description: Implements deterministic CLI commands for building, querying, resol
 responsibilities:
     - Dispatch graph build, resolve, diff, and traversal subcommands
     - Build normalized local and exact remote navigation graphs
-    - Traverse callers, callees, impact, dependencies, and dependents
+    - Traverse incoming callers and outgoing callees
     - Select roots by symbols, locations, packages, modules, and paths
     - Filter graph results by languages, confidences, and visibilities
     - Resolve declarations into deterministic matches and follow-up commands
