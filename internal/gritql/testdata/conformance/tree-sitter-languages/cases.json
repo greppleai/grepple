@@ -24,6 +24,14 @@
     "findings": ["void Run() { Target(); }"]
   },
   {
+    "name": "dart-top-level-declaration",
+    "language": "dart",
+    "query": "language dart\n`void run() { target(); }`",
+    "path": "lib/app.dart",
+    "source": "void run() { target(); }\nvoid other() {}\n",
+    "findings": ["void run() { target(); }"]
+  },
+  {
     "name": "java-member-declaration",
     "language": "java",
     "query": "language java\n`void run() { target(); }`",

@@ -32,7 +32,7 @@ func jvmLanguageDefinition(language string, projectRoot func(string) string) *la
 		classIndex:    moduleFocusedClassIndex{},
 		acceptsSource: func(path string) bool { return codeparser.LanguageFor(path) == language },
 		newAnalysis: func(result *Analysis, sources []Source) languageAnalysis {
-			prepareJVMModules(result, sources, language, projectRoot)
+			prepareModulePaths(result, sources, language, projectRoot)
 			return &jvmAnalysis{result: result, language: language}
 		},
 		nearestProjectRoot: projectRoot,
@@ -96,7 +96,7 @@ func nearestJVMRoot(directory string) string {
 	}
 }
 
-func prepareJVMModules(analysis *Analysis, sources []Source, language string, projectRoot func(string) string) {
+func prepareModulePaths(analysis *Analysis, sources []Source, language string, projectRoot func(string) string) {
 	paths := make([]string, 0, len(sources))
 	for _, source := range sources {
 		if codeparser.LanguageFor(source.Path) == language {

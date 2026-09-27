@@ -73,7 +73,7 @@ func nearestRustRoot(directory string) string {
 }
 
 func prepareRustModules(analysis *Analysis, sources []Source) {
-	prepareJVMModules(analysis, sources, "rust", nearestRustRoot)
+	prepareModulePaths(analysis, sources, "rust", nearestRustRoot)
 }
 
 func normalizeRustType(value string) string {

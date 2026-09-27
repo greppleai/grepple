@@ -689,6 +689,7 @@ var v1NodeValidators = map[string]v1NodeValidator{
 	"c":               validAnonymousTerminalNode,
 	"cpp":             validAnonymousTerminalNode,
 	"csharp":          validAnonymousTerminalNode,
+	"dart":            validAnonymousTerminalNode,
 	"go":              validAnonymousTerminalNode,
 	"java":            validAnonymousTerminalNode,
 	"javascript":      validAnonymousTerminalNode,

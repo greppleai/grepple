@@ -43,6 +43,18 @@
       "findings": ["Target(one, two, three)"]
     },
     {
+      "name": "dart-reliability",
+      "language": "dart",
+      "features": ["named-metavariable", "list-metavariable", "ambiguous-snippet-context", "malformed-syntax", "cancellation", "resource-limit"],
+      "query": "language dart\n`target($args)`",
+      "context_query": "language dart\n`void run() { target($args); }`",
+      "min_contexts": 2,
+      "path": "lib/app.dart",
+      "source": "void run() { target(one, two, three); }\n",
+      "malformed_source": "void broken(\n",
+      "findings": ["target(one, two, three)"]
+    },
+    {
       "name": "go-reliability",
       "language": "go",
       "features": ["named-metavariable", "list-metavariable", "ambiguous-snippet-context", "malformed-syntax", "cancellation", "resource-limit"],

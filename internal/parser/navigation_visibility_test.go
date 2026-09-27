@@ -13,6 +13,7 @@ func TestNavigationDeclarationVisibilityAcrossLanguages(t *testing.T) {
 		{language: "rust", content: "pub fn public() {}\nfn private() {}\n", want: map[string]NavigationVisibility{"public": NavigationVisibilityPublic, "private": NavigationVisibilityNonPublic}},
 		{language: "java", content: "class App { public void publicCall() {} private void privateCall() {} }", want: map[string]NavigationVisibility{"App.publicCall": NavigationVisibilityPublic, "App.privateCall": NavigationVisibilityNonPublic}},
 		{language: "kotlin", content: "class App {\n fun publicCall() {}\n private fun privateCall() {}\n}\n", want: map[string]NavigationVisibility{"App.publicCall": NavigationVisibilityPublic, "App.privateCall": NavigationVisibilityNonPublic}},
+		{language: "dart", content: "class App { void publicCall() {} void _privateCall() {} }", want: map[string]NavigationVisibility{"App.publicCall": NavigationVisibilityPublic, "App._privateCall": NavigationVisibilityNonPublic}},
 		{language: "csharp", content: "class App { public void PublicCall() {} private void PrivateCall() {} }", want: map[string]NavigationVisibility{"App.PublicCall": NavigationVisibilityPublic, "App.PrivateCall": NavigationVisibilityNonPublic}},
 		{language: "typescript", content: "export function publicCall() {}\nfunction privateCall() {}\n", want: map[string]NavigationVisibility{"publicCall": NavigationVisibilityPublic, "privateCall": NavigationVisibilityNonPublic}},
 		{language: "c", content: "void call(void) {}\n", want: map[string]NavigationVisibility{"call": NavigationVisibilityUnknown}},

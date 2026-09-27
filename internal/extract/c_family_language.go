@@ -28,7 +28,7 @@ func cFamilyLanguageDefinition(language string, cpp bool) *languageDefinition {
 		classIndex:    moduleFocusedClassIndex{},
 		acceptsSource: func(path string) bool { return codeparser.LanguageFor(path) == language },
 		newAnalysis: func(result *Analysis, sources []Source) languageAnalysis {
-			prepareJVMModules(result, sources, language, noProjectRoot)
+			prepareModulePaths(result, sources, language, noProjectRoot)
 			return &cFamilyAnalysis{result: result, language: language, cpp: cpp}
 		},
 		nearestProjectRoot: noProjectRoot,

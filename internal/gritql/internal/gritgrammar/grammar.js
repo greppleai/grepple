@@ -597,6 +597,7 @@ module.exports = grammar({
         'json',
         'java',
         'csharp',
+        'dart',
         'python',
 'go',
 'javascript',

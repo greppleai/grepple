@@ -122,6 +122,9 @@ var languageNavigationIndexFactories = map[string]languageNavigationIndexFactory
 	"kotlin": func(_ string, base baseLanguageNavigationIndex, _ languageNavigationIndexBuildContext) languageNavigationIndex {
 		return &qualifiedExportNavigationIndex{baseLanguageNavigationIndex: base}
 	},
+	"dart": func(_ string, base baseLanguageNavigationIndex, _ languageNavigationIndexBuildContext) languageNavigationIndex {
+		return &dartNavigationIndex{baseLanguageNavigationIndex: base}
+	},
 	"csharp": func(_ string, base baseLanguageNavigationIndex, _ languageNavigationIndexBuildContext) languageNavigationIndex {
 		return &cSharpNavigationIndex{baseLanguageNavigationIndex: base}
 	},

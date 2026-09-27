@@ -87,6 +87,7 @@ func newTargetLanguageAdapters() map[string]targetLanguageAdapter {
 		"c":      wrappedTargetLanguageAdapter("c", CGrammar, TreeSitterCGrammar, compileCTemplates),
 		"cpp":    wrappedTargetLanguageAdapter("cpp", CPPGrammar, TreeSitterCPPGrammar, compileCPPTemplates),
 		"csharp": wrappedTargetLanguageAdapter("csharp", CSharpGrammar, TreeSitterCSharpGrammar, compileCSharpTemplates),
+		"dart":   wrappedTargetLanguageAdapter("dart", DartGrammar, TreeSitterDartGrammar, compileDartTemplates),
 		defaultTargetLanguage: {
 			id:                   defaultTargetLanguage,
 			grammar:              GoGrammar,

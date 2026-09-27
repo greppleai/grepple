@@ -127,7 +127,7 @@ Default structural output shows complete enclosing functions and methods, retain
 
 ### Source call navigation
 
-Structural search automatically adds bounded navigation hints for local or remotely indexed repositories; use `--no-related` to suppress navigation or `--follow-related N` to select 1-3 call hops. It retains immediate caller links for the matched declaration but expands only outgoing callees (A → B → C, not other callers of B). Depth 1 shows direct calls; depth 2 adds their callees. Human output keeps navigation as a compact call tree with exact `PATH:LINE` selectors instead of rendering source bodies. Exact `--at PATH:LINE` retrieval shows only outgoing calls, including at the root. It supports Go, JavaScript/JSX, TypeScript/TSX, Python, Java, Kotlin, C#, C, C++, Rust, and Shell:
+Structural search automatically adds bounded navigation hints for local or remotely indexed repositories; use `--no-related` to suppress navigation or `--follow-related N` to select 1-3 call hops. It retains immediate caller links for the matched declaration but expands only outgoing callees (A → B → C, not other callers of B). Depth 1 shows direct calls; depth 2 adds their callees. Human output keeps navigation as a compact call tree with exact `PATH:LINE` selectors instead of rendering source bodies. Exact `--at PATH:LINE` retrieval shows only outgoing calls, including at the root. It supports Go, JavaScript/JSX, TypeScript/TSX, Python, Java, Kotlin, Dart, C#, C, C++, Rust, and Shell:
 
 ```bash
 grepple --related -F "g.auditor.Record" examples/advanced-files
@@ -166,7 +166,7 @@ Default structural search classifies every returned file as `structured`, `recov
 Complete search, graph, boundary, and CLI GritQL JSON also share a [result metadata](docs/result-metadata.md) envelope covering normalized scope, paging/completeness, source and byte caps, known omission totals, stable diagnostics, and a copyable continuation command when one is available. Unknown totals are omitted rather than estimated.
 ## Native structural search
 
-`grepple grit` runs the unified native, read-only `gritql-v1` structural-search engine over every Tree-sitter-backed Grepple language: Go, JavaScript/JSX, TypeScript/TSX, Python, Java, Kotlin, C#, C, C++, Rust, and Shell. The target language is declared in the query; no separate compatibility flag is required. The engine is separate from text and regex search and has no external runtime, subprocess, rewrite engine, or fallback interpreter. The supported detection subset includes snippets, metavariables, repeated-binding equality, `where`, `contains`, `within`, `and`, `or`, `not`, `maybe`, and RE2 constraints.
+`grepple grit` runs the unified native, read-only `gritql-v1` structural-search engine over every Tree-sitter-backed Grepple language: Go, JavaScript/JSX, TypeScript/TSX, Python, Java, Kotlin, Dart, C#, C, C++, Rust, and Shell. The target language is declared in the query; no separate compatibility flag is required. The engine is separate from text and regex search and has no external runtime, subprocess, rewrite engine, or fallback interpreter. The supported detection subset includes snippets, metavariables, repeated-binding equality, `where`, `contains`, `within`, `and`, `or`, `not`, `maybe`, and RE2 constraints.
 
 The [`gritql-metric-v1` engine](docs/gritql-compatibility.md#31-source-authored-scoped-metrics) computes bounded per-function scores from **source-authored GritQL metric rules**. This repository enables [McCabe](.grepple/hooks/go-mccabe.yaml) and [nested-loop](.grepple/hooks/go-nested-loops.yaml) warnings; run `grepple hook --id go-mccabe` or `grepple hook --id go-nested-loops`. The nested-loop score is a syntactic heuristic, **not a Big-O proof**. The [cognitive example](examples/go-cognitive.yaml) is still disabled: [Revive parity measurements](docs/gritql-metric-parity.md) show remaining differences, so Revive remains authoritative.
 
@@ -256,7 +256,7 @@ without that container. With a filter, human output never falls back to raw
 source, even for short files. JSON/YAML key trees and Markdown headings do not
 belong to these declaration categories.
 
-The tree-sitter languages (Go, JavaScript/TypeScript, Python, Java, Kotlin, C#,
+The tree-sitter languages (Go, JavaScript/TypeScript, Python, Java, Kotlin, Dart, C#,
 C, C++, Rust, and Shell) get full symbol outlines; Markdown gets a heading outline (`h1`…`h6`, code-fence aware);
 **JSON/YAML** get a key/type tree (`object`/`array`/`string`/`number`/`bool`/`null`)
 with values omitted — arrays show a `[N]` length and recurse only into object/array

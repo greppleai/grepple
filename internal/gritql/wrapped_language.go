@@ -24,6 +24,10 @@ const (
 	JavaGrammar = "java"
 	// TreeSitterJavaGrammar identifies the pinned Java grammar implementation.
 	TreeSitterJavaGrammar = "tree-sitter-java@0.23.5"
+	// DartGrammar identifies the Dart syntax contract.
+	DartGrammar = "dart"
+	// TreeSitterDartGrammar identifies the pinned Dart grammar implementation.
+	TreeSitterDartGrammar = "tree-sitter-dart@0.2.0"
 	// KotlinGrammar identifies the Kotlin syntax contract.
 	KotlinGrammar = "kotlin"
 	// TreeSitterKotlinGrammar identifies the pinned Kotlin grammar implementation.
@@ -138,6 +142,20 @@ func compilePHPTemplates(decoded decodedSnippet, maxDepth int) ([]Template, stri
 	return compileWrappedLanguageTemplates(phpLanguageConfig(), decoded, maxDepth)
 }
 
+func compileDartTemplates(decoded decodedSnippet, maxDepth int) ([]Template, string, error) {
+	return compileWrappedLanguageTemplates(dartLanguageConfig(), decoded, maxDepth)
+}
+
+func dartLanguageConfig() wrappedLanguageConfig {
+	return wrappedLanguageConfig{
+		language: "dart", rootKind: "source_file",
+		expressionPrefix: "void __grit_func(){ final __grit_value = ", expressionSuffix: "; }\n",
+		statementPrefix: "void __grit_func(){\n", statementSuffix: "\n}\n",
+		statementBlocks: stringSet("block"),
+		declarations:    stringSet("class_declaration", "enum_declaration", "extension_declaration", "extension_type_declaration", "function_declaration", "getter_declaration", "import_or_export", "mixin_declaration", "part_directive", "setter_declaration", "top_level_variable_declaration", "type_alias"),
+		memberPrefix:    "class __G {\n", memberSuffix: "\n}\n", memberBlocks: stringSet("class_body"),
+	}
+}
 func compileRustTemplates(decoded decodedSnippet, maxDepth int) ([]Template, string, error) {
 	return compileWrappedLanguageTemplates(rustLanguageConfig(), decoded, maxDepth)
 }

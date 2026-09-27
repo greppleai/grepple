@@ -42,7 +42,7 @@ type languageDefinition struct {
 }
 
 func registeredLanguages() []*languageDefinition {
-	return []*languageDefinition{goLanguageDefinition(), typeScriptLanguageDefinition(), javaScriptLanguageDefinition(), pythonLanguageDefinition(), javaLanguageDefinition(), kotlinLanguageDefinition(), cSharpLanguageDefinition(), rustLanguageDefinition(), cLanguageDefinition(), cppLanguageDefinition(), phpLanguageDefinition()}
+	return []*languageDefinition{goLanguageDefinition(), typeScriptLanguageDefinition(), javaScriptLanguageDefinition(), pythonLanguageDefinition(), javaLanguageDefinition(), kotlinLanguageDefinition(), cSharpLanguageDefinition(), rustLanguageDefinition(), cLanguageDefinition(), cppLanguageDefinition(), phpLanguageDefinition(), dartLanguageDefinition()}
 }
 
 // SupportedLanguages returns stable metadata for all built-in language adapters.

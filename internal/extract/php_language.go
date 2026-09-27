@@ -14,7 +14,7 @@ func phpLanguageDefinition() *languageDefinition {
 		flowIndex: moduleFocusedFlowIndex{}, classIndex: moduleFocusedClassIndex{},
 		acceptsSource: func(path string) bool { return codeparser.LanguageFor(path) == "php" },
 		newAnalysis: func(result *Analysis, sources []Source) languageAnalysis {
-			prepareJVMModules(result, sources, "php", func(string) string { return "" })
+			prepareModulePaths(result, sources, "php", func(string) string { return "" })
 			return &phpAnalysis{result: result}
 		},
 		nearestProjectRoot: func(string) string { return "" },

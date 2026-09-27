@@ -6,7 +6,7 @@ func TestLanguageForMinimumSupportedSet(t *testing.T) {
 	tests := map[string]string{
 		"main.go": "go", "app.js": "javascript", "app.ts": "typescript", "app.mts": "typescript",
 		"app.cts": "typescript", "app.tsx": "tsx", "app.py": "python", "types.pyi": "python",
-		"Main.java": "java", "Main.kt": "kotlin",
+		"Main.java": "java", "Main.kt": "kotlin", "main.dart": "dart",
 		"Program.cs": "csharp", "main.c": "c", "header.h": "c", "main.cpp": "cpp",
 		"header.hpp": "cpp", "main.rs": "rust", "build.sh": "shell", "build.zsh": "shell",
 	}
@@ -104,6 +104,7 @@ func TestNavigationFactCapabilitiesAreAdapterOwned(t *testing.T) {
 		"python":     {Declarations: true, Calls: true, Imports: true, TypeReferences: true, Fields: true, MemberAccess: true, Entrypoints: true},
 		"java":       {Declarations: true, Calls: true, Imports: true, TypeReferences: true, Fields: true, MemberAccess: true, Entrypoints: true},
 		"kotlin":     {Declarations: true, Calls: true, Imports: true, TypeReferences: true, Fields: true, MemberAccess: true, Entrypoints: true},
+		"dart":       {Declarations: true, Calls: true, Imports: true, TypeReferences: true, Fields: true, MemberAccess: true, Entrypoints: true},
 		"csharp":     {Declarations: true, Calls: true, Imports: true, TypeReferences: true, Fields: true, MemberAccess: true, Entrypoints: true},
 		"c":          {Declarations: true, Calls: true, Imports: true, TypeReferences: true, Fields: true, MemberAccess: true, Entrypoints: true},
 		"cpp":        {Declarations: true, Calls: true, Imports: true, TypeReferences: true, Fields: true, MemberAccess: true, Entrypoints: true},
@@ -266,6 +267,7 @@ func TestNewLanguageOutlines(t *testing.T) {
 		kind    string
 		name    string
 	}{
+		{path: "app.dart", content: "class Service { int run() { return 1; } }\n", kind: "method", name: "run"},
 		{path: "app.py", content: "class Service:\n    def run(self):\n        return 1\n", kind: "function", name: "run"},
 		{path: "App.cs", content: "namespace App { public class Service { public int Run() { return 1; } } }", kind: "method", name: "Run"},
 		{path: "app.c", content: "typedef struct Item { int value; } Item;\nint run(int x) { return x; }\n", kind: "function", name: "run"},
@@ -287,6 +289,7 @@ func TestNewLanguagesBuildStructuralSegments(t *testing.T) {
 		content  string
 		hitLine  int
 	}{
+		{language: "dart", content: "void run() {\n print(1);\n}\n", hitLine: 2},
 		{language: "python", content: "def run():\n    return 1\n", hitLine: 2},
 		{language: "csharp", content: "class App { int Run() {\n return 1;\n} }\n", hitLine: 2},
 		{language: "c", content: "int run() {\n return 1;\n}\n", hitLine: 2},

@@ -35,7 +35,7 @@ Live `grepple ask` dogfooding showed two distinct bottlenecks: ordinary local/re
 - [ ] Reduce repeated model-input tokens by activating only the relevant typed-tool subset after initial intent becomes observable, while ensuring local, remote, architecture, and exact-location questions can still reach every required tool.
 - [ ] Add parsed-versus-restored file counts and universe build/restore durations to ask performance logs once parser-document restoration is implemented; keep token chunks omitted.
 - [ ] Add answer-gated ask benchmarks for local ownership, subprocess/security audit, graph impact, structural matching, and exact remote-version research. Gate on answer correctness, citation validity, ref fidelity, completeness disclosure, elapsed time, model steps, tool calls, tool time, and tokens rather than latency alone.
-- [ ] Set regression targets from the live baseline: eliminate full-graph work for invalid navigation locations, avoid repeated identical scans within one ask, and reduce routine source-backed investigations from multi-call discovery chains to one or two evidence calls before synthesis.
+- [ ] Reduce routine source-backed investigations from multi-call discovery chains to one or two evidence calls before synthesis.
 
 ### Navigation and evidence calibration
 
@@ -121,18 +121,14 @@ The first exact external-resolution matrix covers Go modules, npm lockfiles, Car
 ## Language expansion
 
 - Keep Shell focused extraction unsupported unless dogfooding defines a useful command/script projection.
-- [ ] Add new grammars in priority order: Terraform/HCL, Swift, Dart, then PHP. Apply current capability-parity, help-discoverability, malformed-source, and cross-platform determinism gates to each language before treating it as production-ready.
+- [ ] Add the remaining prioritized grammars: Terraform/HCL, Swift, then PHP. Apply capability-parity, help-discoverability, malformed-source, and cross-platform determinism gates before treating each as production-ready.
 - [ ] Prioritize later grammars such as Ruby, Scala, Protocol Buffers, SQL, Lua, and Elixir from measured user demand and repository dogfooding rather than declaration syntax alone.
 
 ## Success measures
 
-- A new user can discover and run search, graph callers/callees, boundaries, directory architecture, and one GritQL query using recursive CLI help only.
-- An agent can move from omitted related edges to a complete focused query by copying one suggested command.
 - Every bounded response or spilled artifact descriptor identifies the bound/delivery decision, omitted work, evaluated source universe, and completeness path.
-- Boundary output separates third-party permeability from first-party reuse, standard-library spread, test-only use, and approved internal infrastructure.
 - Warm repeated graph queries parse or restore every unchanged file at most once and exactly match cold output.
 - Dogfood benchmarks measure answer correctness, false architectural claims, retrieval turns, stdout/context bytes, artifact reads, peak memory, and cold/warm cache behavior as well as runtime and allocations.
-- Per-language capability reports distinguish unsupported analysis from attempted-but-unresolved evidence.
 - The same complete report generated on Linux, macOS, and Windows is normalized-semantically equal; byte differences either fail the gate or have an explicit documented platform reason.
 - Public DTO and CLI JSON changes have consumer compatibility evidence and a declared migration path.
 - Architectural recommendations preserve exact source evidence, confidence, scope, and unresolved alternatives instead of converting heuristics into facts.

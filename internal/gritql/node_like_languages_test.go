@@ -12,10 +12,12 @@ func TestNodeLikeNamedFieldAcrossSupportedLanguages(t *testing.T) {
 	cases := []struct{ language, source string }{
 		{"c", "int value = 1;\n"}, {"cpp", "int value = 1;\n"},
 		{"csharp", "class App { int value = 1; }\n"},
+		{"dart", "void run(int value) {}\n"},
 		{"go", "package demo\nvar value = 1\n"},
 		{"java", "class App { int value = 1; }\n"},
 		{"javascript", "const value = 1;\n"},
 		{"kotlin", "fun run(value: Int): Int = value\n"},
+		{"php", "<?php function run($value) { return $value; }\n"},
 		{"python", "value = 1\n"},
 		{"rust", "fn run() { let value = 1; }\n"},
 		{"shell", "value=1\n"},
