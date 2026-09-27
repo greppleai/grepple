@@ -8,8 +8,8 @@ import (
 	"strings"
 
 	"github.com/alexflint/go-arg"
-	"github.com/greppleai/grepple/gritql"
-	"github.com/greppleai/grepple/parser"
+	"github.com/greppleai/grepple/internal/gritql"
+	"github.com/greppleai/grepple/internal/parser"
 )
 
 const gritExplainSchema = "grepple-grit-explain-v1"

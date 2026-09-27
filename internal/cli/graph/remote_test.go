@@ -8,22 +8,22 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/greppleai/grepple/api"
+	"github.com/greppleai/grepple/internal/wire"
 	"github.com/greppleai/grepple/internal/cliruntime"
-	"github.com/greppleai/grepple/parser"
+	"github.com/greppleai/grepple/internal/parser"
 )
 
 func TestRemoteCommandPreservesExactRepository(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		var input api.AnalysisRequest
+		var input wire.AnalysisRequest
 		if err := json.NewDecoder(request.Body).Decode(&input); err != nil {
 			t.Fatal(err)
 		}
-		if input.Operation != api.AnalysisGraph || input.Repository != "owner/repo@tag~v1" {
+		if input.Operation != wire.AnalysisGraph || input.Repository != "owner/repo@tag~v1" {
 			t.Fatalf("request=%+v", input)
 		}
 		result, _ := json.Marshal(map[string]any{"schema": Schema})
-		_ = json.NewEncoder(writer).Encode(api.AnalysisResponse{Schema: "grepple-remote-analysis-v1", Operation: input.Operation, Repository: input.Repository, Found: true, Complete: true, Result: result})
+		_ = json.NewEncoder(writer).Encode(wire.AnalysisResponse{Schema: "grepple-remote-analysis-v1", Operation: input.Operation, Repository: input.Repository, Found: true, Complete: true, Result: result})
 	}))
 	defer server.Close()
 	var output bytes.Buffer
@@ -46,7 +46,7 @@ func TestRemoteCalleesRendersSignaturesWithoutFetchingSource(t *testing.T) {
 		Calls: []parser.NavigationCall{{ID: "call", CallerID: "root", TargetID: "target", Confidence: "exact", Path: "start.go", Line: 3}},
 	}
 	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		var input api.AnalysisRequest
+		var input wire.AnalysisRequest
 		if err := json.NewDecoder(request.Body).Decode(&input); err != nil || input.Graph == nil || input.Graph.Direction != "callees" {
 			t.Errorf("remote query=%+v err=%v", input, err)
 			return
@@ -56,7 +56,7 @@ func TestRemoteCalleesRendersSignaturesWithoutFetchingSource(t *testing.T) {
 			t.Error(err)
 			return
 		}
-		_ = json.NewEncoder(writer).Encode(api.AnalysisResponse{Schema: "grepple-remote-analysis-v1", Operation: input.Operation, Repository: input.Repository, Found: true, Complete: true, Result: result})
+		_ = json.NewEncoder(writer).Encode(wire.AnalysisResponse{Schema: "grepple-remote-analysis-v1", Operation: input.Operation, Repository: input.Repository, Found: true, Complete: true, Result: result})
 	}))
 	defer server.Close()
 	var output bytes.Buffer

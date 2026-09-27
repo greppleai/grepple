@@ -9,13 +9,13 @@ import (
 	"strings"
 
 	"github.com/alexflint/go-arg"
-	"github.com/greppleai/grepple/analysis"
-	"github.com/greppleai/grepple/api"
+	"github.com/greppleai/grepple/internal/analysis"
+	"github.com/greppleai/grepple/internal/wire"
 	"github.com/greppleai/grepple/internal/archdaemon"
 	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
-	"github.com/greppleai/grepple/navigation"
-	"github.com/greppleai/grepple/parser"
-	"github.com/greppleai/grepple/search"
+	"github.com/greppleai/grepple/internal/navigation"
+	"github.com/greppleai/grepple/internal/parser"
+	"github.com/greppleai/grepple/internal/search"
 )
 
 // NavigationResolveSchema identifies graph symbol-resolution responses.
@@ -39,7 +39,7 @@ func (resolveArgs) Description() string {
 // ResolveOutput is the complete graph symbol-resolution response.
 type ResolveOutput struct {
 	Schema     string              `json:"schema"`
-	Metadata   *api.ResultMetadata `json:"metadata,omitempty"`
+	Metadata   *wire.ResultMetadata `json:"metadata,omitempty"`
 	Symbol     string              `json:"symbol"`
 	Sources    SourceSummary       `json:"sources"`
 	Matches    []ResolveMatch      `json:"matches"`
@@ -204,12 +204,12 @@ func resolveScope(paths []string) string {
 	return strings.Join(quoted, " ")
 }
 
-func resolveMetadata(values resolveArgs, graph Output, returned int, scopeFlags func([]string) []string) *api.ResultMetadata {
+func resolveMetadata(values resolveArgs, graph Output, returned int, scopeFlags func([]string) []string) *wire.ResultMetadata {
 	omitted := 0
 	if graph.Truncation != nil {
 		omitted = graph.Truncation.Skipped
 	}
-	metadata := &api.ResultMetadata{Scope: api.ResultScope{Mode: "local", Paths: normalizedScope(values.Paths, "."), ExcludedPaths: []string{}, Repositories: []string{}, ExcludedRepositories: []string{}, Languages: []string{}}, Order: "source", Page: api.ResultPage{Returned: returned, Complete: omitted == 0 && graph.Sources.Failed == 0 && graph.Sources.Recovered == 0}, Limits: api.ResultLimits{MaxFiles: values.MaxFiles, MaxOutputBytes: values.MaxOutputBytes, JSONByteUncapped: values.JSON}, Omitted: api.ResultOmissions{Sources: omitted}, Diagnostics: sourceDiagnostics(graph.Sources)}
+	metadata := &wire.ResultMetadata{Scope: wire.ResultScope{Mode: "local", Paths: normalizedScope(values.Paths, "."), ExcludedPaths: []string{}, Repositories: []string{}, ExcludedRepositories: []string{}, Languages: []string{}}, Order: "source", Page: wire.ResultPage{Returned: returned, Complete: omitted == 0 && graph.Sources.Failed == 0 && graph.Sources.Recovered == 0}, Limits: wire.ResultLimits{MaxFiles: values.MaxFiles, MaxOutputBytes: values.MaxOutputBytes, JSONByteUncapped: values.JSON}, Omitted: wire.ResultOmissions{Sources: omitted}, Diagnostics: sourceDiagnostics(graph.Sources)}
 	if graph.Truncation != nil {
 		parts := scopeFlags([]string{"grepple", "graph", "resolve", "--symbol", quoteArgument(values.Symbol), "--max-files", "0", "--json"})
 		for _, language := range values.Languages {
@@ -244,16 +244,16 @@ func normalizedScope(values []string, fallback string) []string {
 	sort.Strings(result)
 	return result
 }
-func sourceDiagnostics(sources SourceSummary) []api.ResultDiagnostic {
-	diagnostics := []api.ResultDiagnostic{}
+func sourceDiagnostics(sources SourceSummary) []wire.ResultDiagnostic {
+	diagnostics := []wire.ResultDiagnostic{}
 	if sources.Failed > 0 {
-		diagnostics = append(diagnostics, api.ResultDiagnostic{Code: "source-failed", Message: fmt.Sprintf("%d selected source files failed analysis", sources.Failed)})
+		diagnostics = append(diagnostics, wire.ResultDiagnostic{Code: "source-failed", Message: fmt.Sprintf("%d selected source files failed analysis", sources.Failed)})
 	}
 	if sources.Recovered > 0 {
-		diagnostics = append(diagnostics, api.ResultDiagnostic{Code: "source-recovered", Message: fmt.Sprintf("%d source files required parser recovery", sources.Recovered)})
+		diagnostics = append(diagnostics, wire.ResultDiagnostic{Code: "source-recovered", Message: fmt.Sprintf("%d source files required parser recovery", sources.Recovered)})
 	}
 	if sources.Skipped > 0 {
-		diagnostics = append(diagnostics, api.ResultDiagnostic{Code: "source-skipped", Message: fmt.Sprintf("%d discovered source files were unsupported or binary", sources.Skipped)})
+		diagnostics = append(diagnostics, wire.ResultDiagnostic{Code: "source-skipped", Message: fmt.Sprintf("%d discovered source files were unsupported or binary", sources.Skipped)})
 	}
 	return diagnostics
 }

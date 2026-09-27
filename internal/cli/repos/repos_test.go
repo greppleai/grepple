@@ -2,7 +2,7 @@ package repos
 
 import (
 	"encoding/json"
-	"github.com/greppleai/grepple/api"
+	"github.com/greppleai/grepple/internal/wire"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -14,10 +14,10 @@ func reposTestServer(t *testing.T) (*httptest.Server, *string) {
 	var gotPath string
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		gotPath = r.URL.Path
-		_ = json.NewEncoder(w).Encode(api.ReposResponse{
+		_ = json.NewEncoder(w).Encode(wire.ReposResponse{
 			OK:    true,
 			Count: 4,
-			Repos: []api.RepoListEntry{
+			Repos: []wire.RepoListEntry{
 				{Repo: "acme/api"},
 				{Repo: "acme/api", Selector: "acme/api@tag~v1.0.0", RefKind: "tag", Ref: "v1.0.0"},
 				{Repo: "acme/web"},
@@ -70,7 +70,7 @@ func TestReposJSONMode(t *testing.T) {
 		}
 	})
 
-	var got api.ReposResponse
+	var got wire.ReposResponse
 	if err := json.Unmarshal([]byte(out), &got); err != nil {
 		t.Fatalf("invalid JSON output: %v\n%s", err, out)
 	}

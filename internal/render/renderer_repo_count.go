@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/greppleai/grepple/search"
+	"github.com/greppleai/grepple/internal/search"
 )
 
 // RepoCounts renders repository count output.

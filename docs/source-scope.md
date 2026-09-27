@@ -16,7 +16,7 @@ The `grepple-source-scope-v2` report includes the discovered `grepple.json` path
 - `--production-only` excludes non-production classifications during recursive discovery.
 - Explicit files retain precedence over configured ignores and `--production-only`; the command emits a bypass notice.
 
-These are global flags and may appear with search, graph, boundaries, GritQL, focused extraction, or architecture commands. Artifact reruns and generated continuation commands retain the active scope flags.
+These are global flags and may appear with search, graph, GritQL, ask, or architecture commands. Artifact reruns and generated continuation commands retain the active scope flags.
 
 ## Classifications
 

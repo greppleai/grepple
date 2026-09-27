@@ -12,7 +12,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/greppleai/grepple/analysis"
+	"github.com/greppleai/grepple/internal/analysis"
 )
 
 const maxContextFileBytes = 8 << 20

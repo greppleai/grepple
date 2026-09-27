@@ -9,10 +9,10 @@ import (
 	"strings"
 
 	"github.com/alexflint/go-arg"
-	"github.com/greppleai/grepple/api"
+	"github.com/greppleai/grepple/internal/wire"
 	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
 	"github.com/greppleai/grepple/internal/shellquote"
-	"github.com/greppleai/grepple/parser"
+	"github.com/greppleai/grepple/internal/parser"
 )
 
 type graphArgs struct {
@@ -74,9 +74,9 @@ func executeBuild(application cliruntime.Context, values *BuildArgs) error {
 	return encoder.Encode(output)
 }
 
-func loadGraphCommandOutput(application cliruntime.Context, values graphArgs) (navigationGraphOutput, *api.AnalysisResponse, error) {
+func loadGraphCommandOutput(application cliruntime.Context, values graphArgs) (navigationGraphOutput, *wire.AnalysisResponse, error) {
 	if values.Repository != "" {
-		response, err := requestRemoteAnalysis(application, context.Background(), api.AnalysisRequest{Operation: api.AnalysisGraph, Repository: values.Repository, Paths: values.Paths, MaxFiles: values.MaxFiles}, application.Configuration().ServerDefault(values.Server))
+		response, err := requestRemoteAnalysis(application, context.Background(), wire.AnalysisRequest{Operation: wire.AnalysisGraph, Repository: values.Repository, Paths: values.Paths, MaxFiles: values.MaxFiles}, application.Configuration().ServerDefault(values.Server))
 		if err != nil {
 			return navigationGraphOutput{}, nil, err
 		}

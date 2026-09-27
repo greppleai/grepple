@@ -16,7 +16,7 @@ func TestExamplesCoverTaskOrientedWorkflows(t *testing.T) {
 			t.Fatalf("examples output missing %q:\n%s", expected, output.String())
 		}
 	}
-	for _, removed := range []string{"grepple ask", "grepple boundaries", "grepple extract", "architecture why", "architecture resolve"} {
+	for _, removed := range []string{"grepple boundaries", "grepple extract", "architecture why", "architecture resolve"} {
 		if strings.Contains(output.String(), removed) {
 			t.Fatalf("examples expose removed command %q:\n%s", removed, output.String())
 		}

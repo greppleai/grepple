@@ -9,10 +9,10 @@ import (
 	"strings"
 
 	"github.com/alexflint/go-arg"
-	"github.com/greppleai/grepple/api"
+	"github.com/greppleai/grepple/internal/wire"
 	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
-	"github.com/greppleai/grepple/navigation"
-	"github.com/greppleai/grepple/parser"
+	"github.com/greppleai/grepple/internal/navigation"
+	"github.com/greppleai/grepple/internal/parser"
 )
 
 type graphDiffArgs struct {
@@ -29,7 +29,7 @@ func (graphDiffArgs) Description() string {
 
 // DiffOutput is the complete navigation graph diff projection.
 type DiffOutput struct {
-	Metadata      *api.ResultMetadata     `json:"metadata,omitempty"`
+	Metadata      *wire.ResultMetadata     `json:"metadata,omitempty"`
 	BeforeFiles   int                     `json:"beforeFiles"`
 	BeforeSources navigationSourceSummary `json:"beforeSources"`
 	AfterFiles    int                     `json:"afterFiles"`

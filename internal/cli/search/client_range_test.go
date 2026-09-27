@@ -8,7 +8,7 @@ import (
 
 	"github.com/greppleai/grepple/internal/apiclient"
 	rendercommand "github.com/greppleai/grepple/internal/render"
-	"github.com/greppleai/grepple/linerange"
+	"github.com/greppleai/grepple/internal/linerange"
 )
 
 func TestRemoteSearchPreservesAndCountsFullLineRangeMiss(t *testing.T) {

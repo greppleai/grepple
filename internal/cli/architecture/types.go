@@ -6,11 +6,11 @@ import (
 	"io"
 	"os"
 
-	"github.com/greppleai/grepple/analysis"
-	"github.com/greppleai/grepple/api"
+	"github.com/greppleai/grepple/internal/analysis"
+	"github.com/greppleai/grepple/internal/wire"
 	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
-	"github.com/greppleai/grepple/parser"
-	"github.com/greppleai/grepple/search"
+	"github.com/greppleai/grepple/internal/parser"
+	"github.com/greppleai/grepple/internal/search"
 )
 
 const defaultTextOutputBytes = 16 * 1024
@@ -108,7 +108,7 @@ func FormatCounts(counts []Count) string { return formatArchitectureCounts(count
 // Dependencies supplies parent-owned source configuration, remote transport, and exit state.
 type Dependencies struct {
 	ApplySourceConfig func(*search.Params) error
-	Remote            func(context.Context, api.AnalysisRequest, string) (api.AnalysisResponse, error)
+	Remote            func(context.Context, wire.AnalysisRequest, string) (wire.AnalysisResponse, error)
 	ServerDefault     func(string) string
 	RequestExit       func(int)
 	Stdout            io.Writer
@@ -136,14 +136,14 @@ func (command *command) services() Dependencies {
 	application := command.application
 	return Dependencies{
 		ApplySourceConfig: search.SourcePolicyConfigurer(application.Repository()),
-		Remote: func(ctx context.Context, request api.AnalysisRequest, server string) (api.AnalysisResponse, error) {
+		Remote: func(ctx context.Context, request wire.AnalysisRequest, server string) (wire.AnalysisResponse, error) {
 			invocation := application.Repository().InvocationOptions()
 			request.ProductionOnly = request.ProductionOnly || invocation.ProductionOnly
 			request.NoConfigIgnore = request.NoConfigIgnore || invocation.NoConfigIgnore
 			request.NoRepoConfig = request.NoRepoConfig || invocation.NoRepositoryConfig
 			response, err := application.APIClient().Analysis(ctx, server, request)
 			if err != nil {
-				return api.AnalysisResponse{}, err
+				return wire.AnalysisResponse{}, err
 			}
 			for _, notice := range response.Notices {
 				fmt.Fprintln(application.Stderr(), "analysis notice:", notice)
@@ -165,9 +165,9 @@ func (d Dependencies) applySourceConfig(params *search.Params) error {
 	}
 	return d.ApplySourceConfig(params)
 }
-func (d Dependencies) remote(ctx context.Context, request api.AnalysisRequest, server string) (api.AnalysisResponse, error) {
+func (d Dependencies) remote(ctx context.Context, request wire.AnalysisRequest, server string) (wire.AnalysisResponse, error) {
 	if d.Remote == nil {
-		return api.AnalysisResponse{}, fmt.Errorf("remote architecture is unavailable")
+		return wire.AnalysisResponse{}, fmt.Errorf("remote architecture is unavailable")
 	}
 	return d.Remote(ctx, request, server)
 }

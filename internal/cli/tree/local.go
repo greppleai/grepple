@@ -7,20 +7,20 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/greppleai/grepple/api"
+	"github.com/greppleai/grepple/internal/wire"
 	"github.com/greppleai/grepple/internal/cliruntime"
 	"github.com/greppleai/grepple/internal/directorymeta"
 	sourcedomain "github.com/greppleai/grepple/internal/sources"
 )
 
-func buildLocal(path string, depth int, kind sourcedomain.Kind, selectedAreas []string, repository cliruntime.Repository) (api.TreeResponse, error) {
+func buildLocal(path string, depth int, kind sourcedomain.Kind, selectedAreas []string, repository cliruntime.Repository) (wire.TreeResponse, error) {
 
 	if path == "" {
 		path = "."
 	}
 	info, files, err := localSourcePaths(path, repository)
 	if err != nil {
-		return api.TreeResponse{}, err
+		return wire.TreeResponse{}, err
 	}
 	working := "."
 	if repository != nil {
@@ -28,11 +28,11 @@ func buildLocal(path string, depth int, kind sourcedomain.Kind, selectedAreas []
 	}
 	working, err = filepath.Abs(working)
 	if err != nil {
-		return api.TreeResponse{}, err
+		return wire.TreeResponse{}, err
 	}
 	absolute, err := filepath.Abs(path)
 	if err != nil {
-		return api.TreeResponse{}, err
+		return wire.TreeResponse{}, err
 	}
 	base := absolute
 	metadataFiles := files
@@ -40,7 +40,7 @@ func buildLocal(path string, depth int, kind sourcedomain.Kind, selectedAreas []
 		base = filepath.Dir(absolute)
 		_, metadataFiles, err = localSourcePaths(base, repository)
 		if err != nil {
-			return api.TreeResponse{}, err
+			return wire.TreeResponse{}, err
 		}
 	}
 	inspection := directorymeta.Inspect(working, base, metadataFiles)
@@ -48,10 +48,10 @@ func buildLocal(path string, depth int, kind sourcedomain.Kind, selectedAreas []
 		if repository != nil {
 			policy, err := repository.ScopeOptions()
 			if err != nil {
-				return api.TreeResponse{}, err
+				return wire.TreeResponse{}, err
 			}
 			if policy.ProductionOnly && kind != sourcedomain.Production {
-				return api.TreeResponse{}, fmt.Errorf("--kind %s cannot be combined with --production-only", kind)
+				return wire.TreeResponse{}, fmt.Errorf("--kind %s cannot be combined with --production-only", kind)
 			}
 		}
 		classifier := sourcedomain.NewClassifier(working)
@@ -65,7 +65,7 @@ func buildLocal(path string, depth int, kind sourcedomain.Kind, selectedAreas []
 	}
 	areaReferences, err := directorymeta.AreaIndex(working, files)
 	if err != nil {
-		return api.TreeResponse{}, err
+		return wire.TreeResponse{}, err
 	}
 	if len(selectedAreas) > 0 {
 		files, areaReferences = filterLocalAreas(files, areaReferences, working, selectedAreas)
@@ -74,9 +74,9 @@ func buildLocal(path string, depth int, kind sourcedomain.Kind, selectedAreas []
 	result := localEntries(files, metadataFiles, base, working, depth, areas)
 	display, err := filepath.Rel(working, absolute)
 	if err != nil {
-		return api.TreeResponse{}, fmt.Errorf("display local tree path: %w", err)
+		return wire.TreeResponse{}, fmt.Errorf("display local tree path: %w", err)
 	}
-	response := api.TreeResponse{
+	response := wire.TreeResponse{
 		Repo:           ".",
 		Path:           filepath.ToSlash(display),
 		Areas:          areas["."],
@@ -138,15 +138,15 @@ func filterLocalAreas(files []string, references []directorymeta.AreaReference, 
 	return selected, visible
 }
 
-func localEntries(files, metadataFiles []string, base, working string, depth int, areas map[string][]string) []api.TreeEntry {
+func localEntries(files, metadataFiles []string, base, working string, depth int, areas map[string][]string) []wire.TreeEntry {
 	entries := map[string]bool{}
 	metadataCache := map[string]directorymeta.Inspection{}
 	for _, file := range files {
 		appendLocalPath(entries, file, base, working, depth)
 	}
-	result := make([]api.TreeEntry, 0, len(entries))
+	result := make([]wire.TreeEntry, 0, len(entries))
 	for entryPath, directory := range entries {
-		entry := api.TreeEntry{Path: entryPath, Dir: directory, Areas: areas[entryPath]}
+		entry := wire.TreeEntry{Path: entryPath, Dir: directory, Areas: areas[entryPath]}
 		entry.Description, entry.MetadataStatus, entry.MetadataIssues = localEntryMetadata(base, working, entryPath, directory, metadataFiles, metadataCache)
 		result = append(result, entry)
 	}

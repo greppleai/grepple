@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/greppleai/grepple/api"
+	"github.com/greppleai/grepple/internal/wire"
 	"github.com/greppleai/grepple/internal/cliruntime"
 	"github.com/greppleai/grepple/internal/directorymeta"
 	"github.com/greppleai/grepple/internal/filedigest"
@@ -89,9 +89,9 @@ func TestTreeKindArgumentValidationAndRemoteRejection(t *testing.T) {
 	var output bytes.Buffer
 	calledKind := sourcedomain.Kind("")
 	application := cliruntime.Environment{Output: &output}
-	cmd := &command{context: application, local: func(path string, depth int, kind sourcedomain.Kind, areas []string) (api.TreeResponse, error) {
+	cmd := &command{context: application, local: func(path string, depth int, kind sourcedomain.Kind, areas []string) (wire.TreeResponse, error) {
 		calledKind = kind
-		return api.TreeResponse{Repo: ".", Entries: []api.TreeEntry{{Path: "spec.go"}}}, nil
+		return wire.TreeResponse{Repo: ".", Entries: []wire.TreeEntry{{Path: "spec.go"}}}, nil
 	}}
 	if err := cmd.Run([]string{"--kind", "TEST", "pkg"}); err != nil || calledKind != sourcedomain.Test {
 		t.Fatalf("parsed kind=%q err=%v", calledKind, err)

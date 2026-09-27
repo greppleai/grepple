@@ -7,8 +7,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/greppleai/grepple/navigation"
-	"github.com/greppleai/grepple/search"
+	"github.com/greppleai/grepple/internal/navigation"
+	"github.com/greppleai/grepple/internal/search"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -16,7 +16,7 @@ import (
 	"time"
 
 	"github.com/gofrs/flock"
-	"github.com/greppleai/grepple/linerange"
+	"github.com/greppleai/grepple/internal/linerange"
 )
 
 const (

@@ -15,7 +15,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/greppleai/grepple/api"
+	"github.com/greppleai/grepple/internal/wire"
 	"github.com/greppleai/grepple/internal/aiprovider"
 	"github.com/greppleai/grepple/internal/cliruntime"
 )
@@ -261,17 +261,17 @@ func TestRemoteToolsUseSelectedServer(t *testing.T) {
 }
 
 func TestGraphAndArchitectureSupportRemoteRepository(t *testing.T) {
-	var operations []api.AnalysisOperation
+	var operations []wire.AnalysisOperation
 	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		var input api.AnalysisRequest
+		var input wire.AnalysisRequest
 		_ = json.NewDecoder(request.Body).Decode(&input)
 		operations = append(operations, input.Operation)
-		schemas := map[api.AnalysisOperation]string{
-			api.AnalysisGraph:        "grepple-navigation-graph-v7",
-			api.AnalysisArchitecture: "grepple-directory-architecture-v5",
+		schemas := map[wire.AnalysisOperation]string{
+			wire.AnalysisGraph:        "grepple-navigation-graph-v7",
+			wire.AnalysisArchitecture: "grepple-directory-architecture-v5",
 		}
 		result, _ := json.Marshal(map[string]any{"schema": schemas[input.Operation]})
-		_ = json.NewEncoder(writer).Encode(api.AnalysisResponse{Schema: "grepple-remote-analysis-v1", Operation: input.Operation, Repository: input.Repository, Found: true, Complete: true, Result: result})
+		_ = json.NewEncoder(writer).Encode(wire.AnalysisResponse{Schema: "grepple-remote-analysis-v1", Operation: input.Operation, Repository: input.Repository, Found: true, Complete: true, Result: result})
 	}))
 	defer server.Close()
 	application := cliruntime.Environment{}
@@ -283,7 +283,7 @@ func TestGraphAndArchitectureSupportRemoteRepository(t *testing.T) {
 	if _, err := runAskArchitectureWithSession(session, t.TempDir(), askArchitectureInput{Operation: "directory", Repository: "owner/repo"}); err != nil {
 		t.Fatal(err)
 	}
-	if len(operations) != 2 || operations[0] != api.AnalysisGraph || operations[1] != api.AnalysisArchitecture {
+	if len(operations) != 2 || operations[0] != wire.AnalysisGraph || operations[1] != wire.AnalysisArchitecture {
 		t.Fatalf("operations=%v", operations)
 	}
 }

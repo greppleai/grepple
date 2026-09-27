@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/greppleai/grepple/api"
+	"github.com/greppleai/grepple/internal/wire"
 	"github.com/greppleai/grepple/internal/apiclient"
 	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
 )
@@ -29,12 +29,12 @@ func (dependencies dependencies) serverDefault(value string) string {
 func (dependencies dependencies) client() apiclient.APIClient { return dependencies.APIClient() }
 func (dependencies dependencies) requestExit(code int)        { dependencies.RequestExit(code) }
 func readGritQuery(reader io.Reader) (string, error) {
-	content, err := io.ReadAll(io.LimitReader(reader, api.MaxGritQueryBytes+1))
+	content, err := io.ReadAll(io.LimitReader(reader, wire.MaxGritQueryBytes+1))
 	if err != nil {
 		return "", err
 	}
-	if len(content) > api.MaxGritQueryBytes {
-		return "", fmt.Errorf("structural query exceeds the %d-byte maximum", api.MaxGritQueryBytes)
+	if len(content) > wire.MaxGritQueryBytes {
+		return "", fmt.Errorf("structural query exceeds the %d-byte maximum", wire.MaxGritQueryBytes)
 	}
 	return string(content), nil
 }

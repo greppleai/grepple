@@ -5,23 +5,27 @@ Structure-aware grep for agents, implemented in Go. Search works across text fil
 ## Project layout
 
 ```text
-.grepple/          Canonical machine-generated architecture artifacts
-api/               Dependency-free HTTP request and response contracts
-cmd/grepple/       Minimal executable entry point
-dependency/        Package-manager resolver interfaces, manifest/lock adapters, and source identity
-docs/              User and file-type documentation
-extract/           Tree-sitter Mermaid extraction, validation, and canonical architecture bundles
-gritql/            Native, bounded multi-language Tree-sitter structural detection kernel
-gritqlapi/         Adapters from structural findings to dependency-free API DTOs
-hooks/             Project-local Pi hooks and architecture tooling
-internal/aiprovider/ Provider-neutral AI authentication, credential storage, and model adapters
-internal/cli/      CLI workflows and output rendering
-parser/            Language detection, tree-sitter parsing, segments, and outlines
-rulespec/          Shared validation for text and structural saved rules
-search/            Discovery, matching, filtering, paging, and result construction
+.grepple/                    Machine-generated architecture artifacts and local hooks
+api/                         Public HTTP contracts and backend-facing service facade
+cmd/grepple/                 Minimal executable entry point
+docs/                        User, architecture, and file-type documentation
+hooks/                       Project-local Pi hooks (sibling Go module)
+internal/analysis/           Source-backed graph, boundary, and directory reports
+internal/dependency/         Manifest and lockfile resolution
+internal/extract/            Tree-sitter Mermaid extraction and validation
+internal/gritql/             Bounded structural query engine
+internal/gritqlapi/          Structural finding to API response conversion
+internal/hookruntime/        Bridge for the separately built Pi hooks
+internal/linerange/          Inclusive source-line range handling
+internal/navigation/         Repository navigation and dependency resolution
+internal/parser/             Tree-sitter adapters, segments, outlines, and facts
+internal/rulespec/           Saved-rule normalization and validation
+internal/search/             Discovery, matching, filtering, and result projection
+internal/cli/                CLI workflows and output rendering
+internal/wire/               Shared HTTP transport contracts for internal adapters
 ```
 
-The private distributed service, repository registry, router, shard, and Zoekt integration live in the sibling `grepple-backend` repository. This public module never imports the backend.
+The only supported library import for external Go consumers is `github.com/greppleai/grepple/api`. Its backend-facing search, analysis, navigation-artifact, flow-schema, and line-range services depend on implementations under `internal/`. HTTP wire contracts are owned by `internal/wire` and re-exported as source- and JSON-compatible `api` aliases; internal packages use `internal/wire` directly and never import the outward-facing `api` facade. Execution handles (`IndexedNavigation`, `SearchPlan`, `SearchBatch`, `SearchRepoFilter`, and `BoundaryPolicy`) are interfaces backed by private implementations; request, response, and option DTOs remain concrete values.
 
 All Go source is formatted with `gofmt`. The project requires Go 1.25. Tree-sitter uses CGO, so builds also require a C compiler.
 
@@ -66,6 +70,15 @@ grepple metrics compare --baseline baseline.json --target target.json
 ```
 
 Journal and report inputs are always explicit. This allows two runs from the same coding agent—for example, one without Grepple and one with Grepple—to be compared without reparsing their JSONL during comparison. See [Agent utility metrics](docs/agent-utility-metrics.md) for the strict event and report contracts, privacy rules, bounds, and output formats.
+
+## AI-assisted repository research
+
+```bash
+grepple ask "Where is the navigation artifact decoded?"
+grepple ask --provider codex --timeout-seconds 300 "Trace search result projection"
+```
+
+`ask` uses an authenticated AI provider and read-only, source-backed tools; remote indexed reads require exact repository selectors in tool requests (configure the service with `--server URL`). Ask logs are enabled by default and can contain prompts and tool evidence. See [Ask research](docs/ask.md) for authentication, scope, and logging details.
 
 ## Search
 
@@ -214,7 +227,7 @@ are parsed with yaml.v3.
 
 ```bash
 grepple --outline search/search_engine.go     # one local file
-grepple --outline --kind types parser/language.go  # declarations only (struct/interface/type/etc.)
+grepple --outline --kind types internal/parser/language.go  # declarations only (struct/interface/type/etc.)
 grepple --outline --kind functions --kind variables src/  # combine categories
 grepple --outline "**/*.go"                   # every Go file
 grepple --outline --json src/app.ts            # machine-readable {"files":[...]}
@@ -259,11 +272,11 @@ Focused `grepple graph callers|callees --json [PATH...]` returns the relevant su
 Per-file parser facts are cached as deterministic path-neutral packed-protobuf entries under `~/.grepple/cache/<repository-id>/navigation/` by default. The v27 codec serializes the native graph directly through a shared string table and packed columns, validates a payload checksum, bounds entry and column sizes, and atomically writes immutable content-addressed `.pb` files. Cache failures remain non-authoritative, and cold/warm graph output is identical.
 
 ```bash
-grepple graph callers --at internal/cli/extract.go:32 --depth 2 --language go .
-grepple graph resolve --symbol runExtract ./internal/cli
-grepple graph callees --symbol runExtract --depth 2 --json ./internal/cli
+grepple graph callers --at internal/cli/application.go:79 --depth 2 --language go .
+grepple graph resolve --symbol executeArguments ./internal/cli
+grepple graph callees --at internal/cli/application.go:79 --depth 2 --json ./internal/cli
 grepple graph callees --root-path internal/cli --depth 1 .
-grepple graph callers --symbol runExtract --depth 2 ./internal/cli
+grepple graph callers --symbol executeArguments --depth 2 ./internal/cli
 grepple graph callers --server http://127.0.0.1:8080 --repo OWNER/REPO@tag~v1.2.3 --symbol Run
 ```
 

@@ -14,9 +14,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/greppleai/grepple/api"
+	"github.com/greppleai/grepple/internal/wire"
 	"github.com/greppleai/grepple/internal/authstate"
-	"github.com/greppleai/grepple/linerange"
+	"github.com/greppleai/grepple/internal/linerange"
 )
 
 const (
@@ -27,18 +27,18 @@ const (
 
 // APIClient is the typed boundary for Grepple server operations.
 type APIClient interface {
-	Search(context.Context, string, api.SearchRequest) (api.SearchResponse, error)
-	ResolveNavigation(context.Context, string, api.NavigationResolveRequest) (api.NavigationResolveResponse, error)
-	Grit(context.Context, string, api.GritRequest) (api.GritResponse, error)
-	Analysis(context.Context, string, api.AnalysisRequest) (api.AnalysisResponse, error)
+	Search(context.Context, string, wire.SearchRequest) (wire.SearchResponse, error)
+	ResolveNavigation(context.Context, string, wire.NavigationResolveRequest) (wire.NavigationResolveResponse, error)
+	Grit(context.Context, string, wire.GritRequest) (wire.GritResponse, error)
+	Analysis(context.Context, string, wire.AnalysisRequest) (wire.AnalysisResponse, error)
 	Raw(context.Context, string, RawRequest) (RawResponse, error)
-	Repos(context.Context, string) ([]api.RepoListEntry, error)
-	Tree(context.Context, string, TreeRequest) (api.TreeResponse, error)
-	CreateRule(context.Context, string, api.Rule) (api.Rule, error)
-	Rules(context.Context, string) (api.RuleSet, error)
-	Rule(context.Context, string, string) (api.Rule, error)
+	Repos(context.Context, string) ([]wire.RepoListEntry, error)
+	Tree(context.Context, string, TreeRequest) (wire.TreeResponse, error)
+	CreateRule(context.Context, string, wire.Rule) (wire.Rule, error)
+	Rules(context.Context, string) (wire.RuleSet, error)
+	Rule(context.Context, string, string) (wire.Rule, error)
 	DeleteRule(context.Context, string, string) error
-	RuleResults(context.Context, string, string) (api.RuleResults, error)
+	RuleResults(context.Context, string, string) (wire.RuleResults, error)
 	LoginConfig(context.Context, string) (LoginConfig, error)
 	RequestDeviceCode(context.Context, string, string, string) (DeviceCode, error)
 	PollDeviceToken(context.Context, string, string, DeviceCode, func(time.Duration)) (DeviceToken, error)
@@ -125,42 +125,42 @@ type apiClient struct {
 	now         func() time.Time
 }
 
-func (client *apiClient) Search(ctx context.Context, server string, request api.SearchRequest) (api.SearchResponse, error) {
-	var response api.SearchResponse
+func (client *apiClient) Search(ctx context.Context, server string, request wire.SearchRequest) (wire.SearchResponse, error) {
+	var response wire.SearchResponse
 	err := client.json(ctx, http.MethodPost, endpoint(server, "/public/search"), request, &response, false)
 	return response, err
 }
 
-func (client *apiClient) ResolveNavigation(ctx context.Context, server string, request api.NavigationResolveRequest) (api.NavigationResolveResponse, error) {
-	var response api.NavigationResolveResponse
+func (client *apiClient) ResolveNavigation(ctx context.Context, server string, request wire.NavigationResolveRequest) (wire.NavigationResolveResponse, error) {
+	var response wire.NavigationResolveResponse
 	err := client.json(ctx, http.MethodPost, endpoint(server, "/public/navigation/resolve"), request, &response, false)
 	return response, err
 }
 
-func (client *apiClient) Grit(ctx context.Context, server string, request api.GritRequest) (api.GritResponse, error) {
+func (client *apiClient) Grit(ctx context.Context, server string, request wire.GritRequest) (wire.GritResponse, error) {
 	body, err := json.Marshal(request)
 	if err != nil {
-		return api.GritResponse{}, err
+		return wire.GritResponse{}, err
 	}
-	if len(body) > api.MaxGritRequestBodyBytes {
-		return api.GritResponse{}, fmt.Errorf("structural request exceeds its maximum encoded size")
+	if len(body) > wire.MaxGritRequestBodyBytes {
+		return wire.GritResponse{}, fmt.Errorf("structural request exceeds its maximum encoded size")
 	}
 	payload, err := client.request(ctx, http.MethodPost, endpoint(server, "/public/grit"), "application/json", bytes.NewReader(body), maxResponseBody)
 	if err != nil {
-		return api.GritResponse{}, err
+		return wire.GritResponse{}, err
 	}
-	var response api.GritResponse
+	var response wire.GritResponse
 	if err := decodeStrict(payload, &response, "structural"); err != nil {
-		return api.GritResponse{}, err
+		return wire.GritResponse{}, err
 	}
 	if response.Findings == nil {
-		response.Findings = []api.GritFinding{}
+		response.Findings = []wire.GritFinding{}
 	}
 	if response.Diagnostics == nil {
-		response.Diagnostics = []api.GritDiagnostic{}
+		response.Diagnostics = []wire.GritDiagnostic{}
 	}
 	if response.Truncations == nil {
-		response.Truncations = []api.GritTruncation{}
+		response.Truncations = []wire.GritTruncation{}
 	}
 	if response.ShardErrors == nil {
 		response.ShardErrors = []string{}
@@ -168,21 +168,21 @@ func (client *apiClient) Grit(ctx context.Context, server string, request api.Gr
 	return response, nil
 }
 
-func (client *apiClient) Analysis(ctx context.Context, server string, request api.AnalysisRequest) (api.AnalysisResponse, error) {
+func (client *apiClient) Analysis(ctx context.Context, server string, request wire.AnalysisRequest) (wire.AnalysisResponse, error) {
 	body, err := json.Marshal(request)
 	if err != nil {
-		return api.AnalysisResponse{}, err
+		return wire.AnalysisResponse{}, err
 	}
 	payload, err := client.request(ctx, http.MethodPost, endpoint(server, "/public/analysis"), "application/json", bytes.NewReader(body), maxResponseBody)
 	if err != nil {
-		return api.AnalysisResponse{}, err
+		return wire.AnalysisResponse{}, err
 	}
-	var response api.AnalysisResponse
+	var response wire.AnalysisResponse
 	if err := decodeStrict(payload, &response, "analysis"); err != nil {
-		return api.AnalysisResponse{}, err
+		return wire.AnalysisResponse{}, err
 	}
 	if err := validateAnalysisResponse(request, response); err != nil {
-		return api.AnalysisResponse{}, err
+		return wire.AnalysisResponse{}, err
 	}
 	return response, nil
 }
@@ -216,18 +216,18 @@ func (client *apiClient) Raw(ctx context.Context, server string, request RawRequ
 	}, readErr
 }
 
-func (client *apiClient) Repos(ctx context.Context, server string) ([]api.RepoListEntry, error) {
-	var response api.ReposResponse
+func (client *apiClient) Repos(ctx context.Context, server string) ([]wire.RepoListEntry, error) {
+	var response wire.ReposResponse
 	if err := client.json(ctx, http.MethodGet, endpoint(server, "/public/repos"), nil, &response, false); err != nil {
 		return nil, err
 	}
 	return response.Repos, nil
 }
 
-func (client *apiClient) Tree(ctx context.Context, server string, request TreeRequest) (api.TreeResponse, error) {
+func (client *apiClient) Tree(ctx context.Context, server string, request TreeRequest) (wire.TreeResponse, error) {
 	target, err := url.Parse(endpoint(server, "/public/tree"))
 	if err != nil {
-		return api.TreeResponse{}, err
+		return wire.TreeResponse{}, err
 	}
 	query := target.Query()
 	query.Set("repo", request.Repo)
@@ -236,25 +236,25 @@ func (client *apiClient) Tree(ctx context.Context, server string, request TreeRe
 	}
 	query.Set("depth", fmt.Sprint(request.Depth))
 	target.RawQuery = query.Encode()
-	var response api.TreeResponse
+	var response wire.TreeResponse
 	err = client.json(ctx, http.MethodGet, target.String(), nil, &response, false)
 	return response, err
 }
 
-func (client *apiClient) CreateRule(ctx context.Context, server string, rule api.Rule) (api.Rule, error) {
-	var response api.Rule
+func (client *apiClient) CreateRule(ctx context.Context, server string, rule wire.Rule) (wire.Rule, error) {
+	var response wire.Rule
 	err := client.json(ctx, http.MethodPost, endpoint(server, "/public/rules"), rule, &response, false)
 	return response, err
 }
 
-func (client *apiClient) Rules(ctx context.Context, server string) (api.RuleSet, error) {
-	var response api.RuleSet
+func (client *apiClient) Rules(ctx context.Context, server string) (wire.RuleSet, error) {
+	var response wire.RuleSet
 	err := client.json(ctx, http.MethodGet, endpoint(server, "/public/rules"), nil, &response, false)
 	return response, err
 }
 
-func (client *apiClient) Rule(ctx context.Context, server, id string) (api.Rule, error) {
-	var response api.Rule
+func (client *apiClient) Rule(ctx context.Context, server, id string) (wire.Rule, error) {
+	var response wire.Rule
 	err := client.json(ctx, http.MethodGet, ruleEndpoint(server, id), nil, &response, false)
 	return response, err
 }
@@ -264,8 +264,8 @@ func (client *apiClient) DeleteRule(ctx context.Context, server, id string) erro
 	return err
 }
 
-func (client *apiClient) RuleResults(ctx context.Context, server, id string) (api.RuleResults, error) {
-	var response api.RuleResults
+func (client *apiClient) RuleResults(ctx context.Context, server, id string) (wire.RuleResults, error) {
+	var response wire.RuleResults
 	err := client.json(ctx, http.MethodGet, ruleEndpoint(server, id)+"/results", nil, &response, false)
 	return response, err
 }
@@ -406,7 +406,7 @@ func decodeStrict(payload []byte, output any, label string) error {
 	return nil
 }
 
-func validateAnalysisResponse(request api.AnalysisRequest, response api.AnalysisResponse) error {
+func validateAnalysisResponse(request wire.AnalysisRequest, response wire.AnalysisResponse) error {
 	if response.Schema != "grepple-remote-analysis-v1" {
 		return fmt.Errorf("server analysis schema %q is unsupported", response.Schema)
 	}
@@ -425,9 +425,9 @@ func validateAnalysisResponse(request api.AnalysisRequest, response api.Analysis
 	if err := json.Unmarshal(response.Result, &resultHeader); err != nil {
 		return fmt.Errorf("invalid %s analysis result: %w", request.Operation, err)
 	}
-	expected := map[api.AnalysisOperation]string{
-		api.AnalysisGraph: "grepple-navigation-graph-v7", api.AnalysisArchitecture: "grepple-directory-architecture-v5",
-		api.AnalysisBoundaries: "grepple-boundaries-v3", api.AnalysisResponsibilities: "grepple-directory-responsibilities-v2",
+	expected := map[wire.AnalysisOperation]string{
+		wire.AnalysisGraph: "grepple-navigation-graph-v7", wire.AnalysisArchitecture: "grepple-directory-architecture-v5",
+		wire.AnalysisBoundaries: "grepple-boundaries-v3", wire.AnalysisResponsibilities: "grepple-directory-responsibilities-v2",
 	}[request.Operation]
 	if resultHeader.Schema != expected {
 		return fmt.Errorf("server %s analysis schema %q is unsupported; expected %q", request.Operation, resultHeader.Schema, expected)

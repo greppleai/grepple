@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/greppleai/grepple/search"
+	"github.com/greppleai/grepple/internal/search"
 )
 
 func TestLoadRepositoryConfigFindsAncestorAndKeepsAuthenticationUserOwned(t *testing.T) {

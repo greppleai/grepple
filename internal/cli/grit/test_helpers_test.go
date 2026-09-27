@@ -8,15 +8,15 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/greppleai/grepple/api"
+	"github.com/greppleai/grepple/internal/wire"
 	"github.com/greppleai/grepple/internal/apiclient"
 )
 
 func runGrit(args []string) error { return newWithDependencies(testGritDependencies()).Run(args) }
 func testGritDependencies() Dependencies {
-	return Dependencies{CurrentRepository: testCurrentRepository, ServerDefault: func(value string) string { return value }, RequestRemote: testRequestGritRemote, Metadata: func(values Arguments, response api.GritResponse, _ bool) *api.ResultMetadata {
+	return Dependencies{CurrentRepository: testCurrentRepository, ServerDefault: func(value string) string { return value }, RequestRemote: testRequestGritRemote, Metadata: func(values Arguments, response wire.GritResponse, _ bool) *wire.ResultMetadata {
 		total := response.Total
-		return &api.ResultMetadata{Page: api.ResultPage{Returned: len(response.Findings), Total: &total, Complete: true}, Limits: api.ResultLimits{JSONByteUncapped: values.JSON}}
+		return &wire.ResultMetadata{Page: wire.ResultPage{Returned: len(response.Findings), Total: &total, Complete: true}, Limits: wire.ResultLimits{JSONByteUncapped: values.JSON}}
 	}}
 }
 func testCurrentRepository() string {
@@ -33,7 +33,7 @@ func testCurrentRepository() string {
 	}
 	return value
 }
-func testRequestGritRemote(ctx context.Context, request api.GritRequest, server string) (api.GritResponse, error) {
+func testRequestGritRemote(ctx context.Context, request wire.GritRequest, server string) (wire.GritResponse, error) {
 	return apiclient.New().Grit(ctx, server, request)
 }
 func withStdin(t *testing.T, content string, run func()) {

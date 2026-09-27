@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/greppleai/grepple/api"
+	"github.com/greppleai/grepple/internal/wire"
 )
 
 // RepositoryConfig is repository-owned configuration. Authentication fields are rejected.
@@ -17,7 +17,7 @@ type RepositoryConfig struct {
 	Server        string                    `json:"server,omitempty"`
 	Ignore        RepositoryIgnore          `json:"ignore,omitempty"`
 	Output        RepositoryOutput          `json:"output,omitempty"`
-	Index         api.RepositoryIndexConfig `json:"index,omitempty"`
+	Index         wire.RepositoryIndexConfig `json:"index,omitempty"`
 	Token         string                    `json:"token,omitempty"`
 	RefreshToken  string                    `json:"refresh_token,omitempty"`
 	TokenExpiry   int64                     `json:"token_expiry,omitempty"`
@@ -67,7 +67,7 @@ func LoadRepositoryConfig(start string) (RepositoryConfig, string, error) {
 			return RepositoryConfig{}, path, fmt.Errorf("repository config %s ignore.paths[%d] must be repository-relative", path, index)
 		}
 	}
-	if err := api.ValidateRepositoryIndexConfig(config.Index); err != nil {
+	if err := wire.ValidateRepositoryIndexConfig(config.Index); err != nil {
 		return RepositoryConfig{}, path, fmt.Errorf("invalid repository config %s: %w", path, err)
 	}
 	return config, path, nil

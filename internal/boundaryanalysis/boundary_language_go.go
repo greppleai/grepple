@@ -3,7 +3,7 @@ package boundaryanalysis
 import (
 	"strings"
 
-	"github.com/greppleai/grepple/parser"
+	"github.com/greppleai/grepple/internal/parser"
 )
 
 type goBoundaryLanguagePolicy struct{ baseBoundaryLanguagePolicy }

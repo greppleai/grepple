@@ -2,7 +2,7 @@ package search
 
 import (
 	"encoding/json"
-	"github.com/greppleai/grepple/api"
+	"github.com/greppleai/grepple/internal/wire"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -15,10 +15,10 @@ import (
 func TestCountByRepoRendersSortedTable(t *testing.T) {
 	chdirTemp(t) // empty dir => no local matches, only the remote counts
 
-	var request api.SearchRequest
+	var request wire.SearchRequest
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		_ = json.NewDecoder(r.Body).Decode(&request)
-		_ = json.NewEncoder(w).Encode(api.SearchResponse{RepoCounts: []api.RepoCount{
+		_ = json.NewEncoder(w).Encode(wire.SearchResponse{RepoCounts: []wire.RepoCount{
 			{Repo: "owner/alpha", Files: 2, Matches: 3},
 			{Repo: "owner/beta", Files: 5, Matches: 40},
 		}})
@@ -63,8 +63,8 @@ func TestCountByRepoRendersSortedTable(t *testing.T) {
 func TestRemoteTruncatedPrintsNarrowingHint(t *testing.T) {
 	chdirTemp(t)
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		_ = json.NewEncoder(w).Encode(api.SearchResponse{
-			Results:   []api.FileResult{{Repo: "owner/a", Path: "owner/a/x.go", Matches: []api.ResultMatch{{Line: 1, Text: "ping"}}}},
+		_ = json.NewEncoder(w).Encode(wire.SearchResponse{
+			Results:   []wire.FileResult{{Repo: "owner/a", Path: "owner/a/x.go", Matches: []wire.ResultMatch{{Line: 1, Text: "ping"}}}},
 			Truncated: true,
 		})
 	}))

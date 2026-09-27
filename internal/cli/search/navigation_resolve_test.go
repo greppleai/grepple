@@ -7,7 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/greppleai/grepple/api"
+	"github.com/greppleai/grepple/internal/wire"
 )
 
 func TestRequestNavigationResolveUsesPublicEndpoint(t *testing.T) {
@@ -15,18 +15,18 @@ func TestRequestNavigationResolveUsesPublicEndpoint(t *testing.T) {
 		if request.URL.Path != "/public/navigation/resolve" || request.Method != http.MethodPost {
 			t.Fatalf("request=%s %s", request.Method, request.URL.Path)
 		}
-		var decoded api.NavigationResolveRequest
+		var decoded wire.NavigationResolveRequest
 		if err := json.NewDecoder(request.Body).Decode(&decoded); err != nil {
 			t.Fatal(err)
 		}
 		if len(decoded.References) != 1 || decoded.References[0].Version != "v3.5.0" {
 			t.Fatalf("request=%#v", decoded)
 		}
-		_ = json.NewEncoder(writer).Encode(api.NavigationResolveResponse{Results: []api.NavigationResolveResult{{ID: "ctx", Symbols: []api.RelatedSymbol{{Name: "Ctx", Confidence: "dependency-resolved"}}}}})
+		_ = json.NewEncoder(writer).Encode(wire.NavigationResolveResponse{Results: []wire.NavigationResolveResult{{ID: "ctx", Symbols: []wire.RelatedSymbol{{Name: "Ctx", Confidence: "dependency-resolved"}}}}})
 	}))
 	defer server.Close()
 
-	response, err := requestTestNavigationResolve(context.Background(), api.NavigationResolveRequest{References: []api.ExternalNavigationReference{{ID: "ctx", Version: "v3.5.0"}}}, server.URL)
+	response, err := requestTestNavigationResolve(context.Background(), wire.NavigationResolveRequest{References: []wire.ExternalNavigationReference{{ID: "ctx", Version: "v3.5.0"}}}, server.URL)
 	if err != nil {
 		t.Fatal(err)
 	}

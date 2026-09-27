@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 
 	"github.com/greppleai/grepple/internal/storagepaths"
-	"github.com/greppleai/grepple/parser"
+	"github.com/greppleai/grepple/internal/parser"
 )
 
 // configureProcessDefaults applies CLI-only engine defaults before constructing

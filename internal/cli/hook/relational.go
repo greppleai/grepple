@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/greppleai/grepple/gritql"
+	"github.com/greppleai/grepple/internal/gritql"
 	"github.com/greppleai/grepple/internal/cliruntime"
 	sourcedomain "github.com/greppleai/grepple/internal/sources"
 )

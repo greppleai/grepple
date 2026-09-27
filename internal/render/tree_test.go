@@ -5,14 +5,14 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/greppleai/grepple/api"
+	"github.com/greppleai/grepple/internal/wire"
 )
 
 func TestTreeRendersDirectoryFirstHierarchy(t *testing.T) {
-	data := api.TreeResponse{
+	data := wire.TreeResponse{
 		Repo: "owner/repo",
 		Path: "src",
-		Entries: []api.TreeEntry{
+		Entries: []wire.TreeEntry{
 			{Path: "z.go"},
 			{Path: "pkg/b.go"},
 			{Path: "pkg/a.go"},
@@ -30,12 +30,12 @@ func TestTreeRendersDirectoryFirstHierarchy(t *testing.T) {
 }
 
 func TestTreeRendersJSON(t *testing.T) {
-	data := api.TreeResponse{Repo: "owner/repo", MetadataStatus: "missing", Entries: []api.TreeEntry{{Path: "main.go", MetadataStatus: "stale", MetadataIssues: []string{"checksum mismatch"}}}}
+	data := wire.TreeResponse{Repo: "owner/repo", MetadataStatus: "missing", Entries: []wire.TreeEntry{{Path: "main.go", MetadataStatus: "stale", MetadataIssues: []string{"checksum mismatch"}}}}
 	var output bytes.Buffer
 	if err := Tree(data, &output, true); err != nil {
 		t.Fatal(err)
 	}
-	var decoded api.TreeResponse
+	var decoded wire.TreeResponse
 	if err := json.Unmarshal(output.Bytes(), &decoded); err != nil {
 		t.Fatal(err)
 	}
@@ -45,7 +45,7 @@ func TestTreeRendersJSON(t *testing.T) {
 }
 
 func TestTreeRendersDirectoryDescriptions(t *testing.T) {
-	data := api.TreeResponse{Repo: ".", Description: "Repository root.", Entries: []api.TreeEntry{{Path: "parser", Dir: true, Description: "Parses source."}}}
+	data := wire.TreeResponse{Repo: ".", Description: "Repository root.", Entries: []wire.TreeEntry{{Path: "parser", Dir: true, Description: "Parses source."}}}
 	var output bytes.Buffer
 	if err := Tree(data, &output, false); err != nil {
 		t.Fatal(err)
@@ -57,7 +57,7 @@ func TestTreeRendersDirectoryDescriptions(t *testing.T) {
 }
 
 func TestTreeRendersSortedAreaLabelsAndJSON(t *testing.T) {
-	data := api.TreeResponse{Repo: ".", Areas: []string{"backend", "frontend"}, Entries: []api.TreeEntry{
+	data := wire.TreeResponse{Repo: ".", Areas: []string{"backend", "frontend"}, Entries: []wire.TreeEntry{
 		{Path: "pkg", Dir: true, Description: "Services.", Areas: []string{"backend", "shared"}},
 		{Path: "main.go", Areas: []string{"frontend"}, MetadataStatus: "stale"},
 	}}
@@ -73,14 +73,14 @@ func TestTreeRendersSortedAreaLabelsAndJSON(t *testing.T) {
 	if err := Tree(data, &jsonText, true); err != nil {
 		t.Fatal(err)
 	}
-	var decoded api.TreeResponse
+	var decoded wire.TreeResponse
 	if err := json.Unmarshal(jsonText.Bytes(), &decoded); err != nil || len(decoded.Areas) != 2 || len(decoded.Entries[0].Areas) != 2 {
 		t.Fatalf("JSON areas=%+v err=%v", decoded, err)
 	}
 }
 
 func TestTreeRendersFileDescriptions(t *testing.T) {
-	data := api.TreeResponse{Repo: ".", Entries: []api.TreeEntry{{Path: "main.go", Description: "Starts the application."}}}
+	data := wire.TreeResponse{Repo: ".", Entries: []wire.TreeEntry{{Path: "main.go", Description: "Starts the application."}}}
 	var output bytes.Buffer
 	if err := Tree(data, &output, false); err != nil {
 		t.Fatal(err)
@@ -92,11 +92,11 @@ func TestTreeRendersFileDescriptions(t *testing.T) {
 }
 
 func TestTreeRendersStaleAndMissingMetadataStatuses(t *testing.T) {
-	data := api.TreeResponse{
+	data := wire.TreeResponse{
 		Repo:           ".",
 		Description:    "Repository root.",
 		MetadataStatus: "stale",
-		Entries: []api.TreeEntry{
+		Entries: []wire.TreeEntry{
 			{Path: "pkg", Dir: true, MetadataStatus: "missing"},
 			{Path: "main.go", Description: "Starts the application.", MetadataStatus: "stale"},
 		},

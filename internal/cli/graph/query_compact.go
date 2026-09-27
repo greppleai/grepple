@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/greppleai/grepple/parser"
+	"github.com/greppleai/grepple/internal/parser"
 )
 
 type compactQueryEdge struct {

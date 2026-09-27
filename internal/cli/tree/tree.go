@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/alexflint/go-arg"
-	"github.com/greppleai/grepple/api"
+	"github.com/greppleai/grepple/internal/wire"
 	"github.com/greppleai/grepple/internal/apiclient"
 	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
 	"github.com/greppleai/grepple/internal/directorymeta"
@@ -111,7 +111,7 @@ func (command *command) execute(values *Request) error {
 	if remote && len(values.Areas) > 0 {
 		return fmt.Errorf("--area is only supported for local trees; indexed tree entries have no verified area metadata")
 	}
-	var data api.TreeResponse
+	var data wire.TreeResponse
 	if remote {
 		configuration := application.Configuration()
 		server := values.Server

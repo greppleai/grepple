@@ -7,9 +7,9 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/greppleai/grepple/api"
+	"github.com/greppleai/grepple/internal/wire"
 	"github.com/greppleai/grepple/internal/anchor"
-	searchengine "github.com/greppleai/grepple/search"
+	searchengine "github.com/greppleai/grepple/internal/search"
 )
 
 type anchorFileSelection struct {
@@ -17,7 +17,7 @@ type anchorFileSelection struct {
 	lines       map[int]string
 }
 
-func prepareAnchors(options *Options, results []api.FileResult) (anchor.Lookup, error) {
+func prepareAnchors(options *Options, results []wire.FileResult) (anchor.Lookup, error) {
 	if !options.Anchors {
 		return nil, nil
 	}
@@ -33,7 +33,7 @@ func prepareAnchors(options *Options, results []api.FileResult) (anchor.Lookup, 
 	return anchor.Generate(files)
 }
 
-func collectAnchorSelections(options *Options, results []api.FileResult) []anchorFileSelection {
+func collectAnchorSelections(options *Options, results []wire.FileResult) []anchorFileSelection {
 	byPath := make(map[string]map[int]string)
 	for _, result := range results {
 		lines := anchorSelectionLines(byPath, result.Path)
@@ -61,7 +61,7 @@ func anchorSelectionLines(byPath map[string]map[int]string, path string) map[int
 	return byPath[path]
 }
 
-func collectRelatedTypeAnchorLines(points []api.RelatedSymbol, byPath map[string]map[int]string) {
+func collectRelatedTypeAnchorLines(points []wire.RelatedSymbol, byPath map[string]map[int]string) {
 	for _, point := range points {
 		if point.Direction == "type" && point.Path != "" && point.Artifact == nil {
 			lines := anchorSelectionLines(byPath, point.Path)
@@ -73,7 +73,7 @@ func collectRelatedTypeAnchorLines(points []api.RelatedSymbol, byPath map[string
 	}
 }
 
-func collectAnchorSelectionLines(options *Options, result api.FileResult, lines map[int]string) {
+func collectAnchorSelectionLines(options *Options, result wire.FileResult, lines map[int]string) {
 	if options.Params.BeforeContext > 0 || options.Params.AfterContext > 0 {
 		for _, line := range result.Context {
 			lines[line.Line] = normalizeRenderedAnchorLine(line.Text)
@@ -91,7 +91,7 @@ func collectAnchorSelectionLines(options *Options, result api.FileResult, lines 
 	}
 }
 
-func collectAnchorSegmentLines(lines map[int]string, segment api.ResultSegment) {
+func collectAnchorSegmentLines(lines map[int]string, segment wire.ResultSegment) {
 	if segment.Kind != "lines" {
 		return
 	}

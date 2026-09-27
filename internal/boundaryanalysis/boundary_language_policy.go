@@ -1,6 +1,6 @@
 package boundaryanalysis
 
-import "github.com/greppleai/grepple/parser"
+import "github.com/greppleai/grepple/internal/parser"
 
 type boundaryLanguagePolicy interface {
 	standardLibraryImport(string) bool

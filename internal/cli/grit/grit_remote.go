@@ -3,32 +3,32 @@ package grit
 import (
 	"context"
 
-	"github.com/greppleai/grepple/api"
+	"github.com/greppleai/grepple/internal/wire"
 )
 
-func collectGritRemote(ctx context.Context, request api.GritRequest, server string, required int, supplied ...Dependencies) (api.GritResponse, error) {
+func collectGritRemote(ctx context.Context, request wire.GritRequest, server string, required int, supplied ...Dependencies) (wire.GritResponse, error) {
 	dependencies := Dependencies{}
 	if len(supplied) > 0 {
 		dependencies = supplied[0]
 	}
 	if required <= 0 {
-		required = api.MaxGritPageLimit
+		required = wire.MaxGritPageLimit
 	}
 	collected := emptyGritResponse()
 	offset := 0
 	for len(collected.Findings) < required {
 		if err := ctx.Err(); err != nil {
-			return api.GritResponse{}, err
+			return wire.GritResponse{}, err
 		}
 		pageLimit := required - len(collected.Findings)
-		if pageLimit > api.MaxGritPageLimit {
-			pageLimit = api.MaxGritPageLimit
+		if pageLimit > wire.MaxGritPageLimit {
+			pageLimit = wire.MaxGritPageLimit
 		}
 		request.Skip = intPointer(offset)
 		request.Limit = intPointer(pageLimit)
 		page, err := dependencies.requestRemote(ctx, request, server)
 		if err != nil {
-			return api.GritResponse{}, err
+			return wire.GritResponse{}, err
 		}
 		appendGritRemotePage(&collected, page, offset == 0)
 		offset += len(page.Findings)
@@ -39,14 +39,14 @@ func collectGritRemote(ctx context.Context, request api.GritRequest, server stri
 	return collected, nil
 }
 
-func emptyGritResponse() api.GritResponse {
-	return api.GritResponse{
-		Findings: []api.GritFinding{}, Diagnostics: []api.GritDiagnostic{},
-		Truncations: []api.GritTruncation{}, ShardErrors: []string{},
+func emptyGritResponse() wire.GritResponse {
+	return wire.GritResponse{
+		Findings: []wire.GritFinding{}, Diagnostics: []wire.GritDiagnostic{},
+		Truncations: []wire.GritTruncation{}, ShardErrors: []string{},
 	}
 }
 
-func appendGritRemotePage(collected *api.GritResponse, page api.GritResponse, first bool) {
+func appendGritRemotePage(collected *wire.GritResponse, page wire.GritResponse, first bool) {
 	if first {
 		collected.Metadata = page.Metadata
 	}
@@ -66,7 +66,7 @@ func intPointer(value int) *int {
 
 func requiredGritRemoteFindings(skip, limit int) int {
 	if limit == 0 {
-		return api.MaxGritPageLimit
+		return wire.MaxGritPageLimit
 	}
 	maximum := int(^uint(0) >> 1)
 	if skip > maximum-limit {

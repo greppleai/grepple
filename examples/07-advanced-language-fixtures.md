@@ -99,7 +99,7 @@ The paths passed to the command define the declaration index. Search a directory
 From the repository root:
 
 ```bash
-go test ./parser -run AdvancedExamples
+go test ./internal/parser -run AdvancedExamples
 ```
 
 The tests verify language detection, useful nested outline symbols, leading-document attachment, and structural coverage through a match near the end of each declaration. TSX is allowed to compact setup statements while retaining the component documentation and matched JSX region.

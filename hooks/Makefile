@@ -1,7 +1,7 @@
 PI_HOOK_BINARY := bin/pi-hook
 MODULE_FILES := go.mod go.sum Makefile
-ROOT_EXTRACT_SOURCES := $(shell find ../extract -type f -name '*.go') ../go.mod ../go.sum
-ROOT_RELATION_SOURCES := $(wildcard ../gritql/*.go ../gritql/internal/gritgrammar/*.c ../gritql/internal/gritgrammar/*.js ../hookruntime/*.go ../internal/cli/hook/*.go ../internal/cliruntime/*.go ../internal/sources/*.go ../parser/*.go)
+ROOT_EXTRACT_SOURCES := $(shell find ../internal/extract -type f -name '*.go') ../go.mod ../go.sum
+ROOT_RELATION_SOURCES := $(wildcard ../internal/gritql/*.go ../internal/gritql/internal/gritgrammar/*.c ../internal/gritql/internal/gritgrammar/*.js ../internal/hookruntime/*.go ../internal/cli/hook/*.go ../internal/cliruntime/*.go ../internal/sources/*.go ../internal/parser/*.go ../internal/navigation/*.go ../internal/search/*.go)
 PI_HOOK_SOURCES := $(shell find cmd/pi-hook internal/pihooks -type f -name '*.go') $(ROOT_EXTRACT_SOURCES) $(ROOT_RELATION_SOURCES) $(MODULE_FILES)
 LDFLAGS ?= -s -w
 REVIVE_CONFIG ?= ../revive.toml

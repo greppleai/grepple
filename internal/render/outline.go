@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/greppleai/grepple/parser"
+	"github.com/greppleai/grepple/internal/parser"
 )
 
 // Outline formats an outline as an indented, tab-separated tree.

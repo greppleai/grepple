@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/greppleai/grepple/parser"
+	"github.com/greppleai/grepple/internal/parser"
 )
 
 func TestConfigureProcessDefaultsPreservesOverridesAndExplicitDisable(t *testing.T) {

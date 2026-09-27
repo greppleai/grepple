@@ -1,4 +1,4 @@
-module grepple/hooks
+module github.com/greppleai/grepple/hooks
 
 go 1.25.0
 

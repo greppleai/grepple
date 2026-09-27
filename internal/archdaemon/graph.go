@@ -6,8 +6,8 @@ import (
 	"encoding/json"
 	"os"
 
-	"github.com/greppleai/grepple/analysis"
-	"github.com/greppleai/grepple/parser"
+	"github.com/greppleai/grepple/internal/analysis"
+	"github.com/greppleai/grepple/internal/parser"
 )
 
 // ResolveSelection identifies one symbol preview independent of presentation flags.

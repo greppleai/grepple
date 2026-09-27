@@ -1,10 +1,10 @@
 package search
 
 import (
-	"github.com/greppleai/grepple/api"
+	"github.com/greppleai/grepple/internal/wire"
 	"github.com/greppleai/grepple/internal/anchor"
 	rendercommand "github.com/greppleai/grepple/internal/render"
-	"github.com/greppleai/grepple/search"
+	"github.com/greppleai/grepple/internal/search"
 )
 
 type Options struct {
@@ -23,7 +23,7 @@ type Options struct {
 	RepeatSource     bool
 	Anchors          bool
 	AnchorLines      anchor.Lookup
-	ResultMetadata   *api.ResultMetadata
+	ResultMetadata   *wire.ResultMetadata
 	// Stdin is true when the search reads piped standard input instead of
 	// walking the filesystem (see stdinSearch).
 	Stdin bool

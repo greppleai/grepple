@@ -2,7 +2,7 @@ package rules
 
 import (
 	"encoding/json"
-	"github.com/greppleai/grepple/api"
+	"github.com/greppleai/grepple/internal/wire"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -25,13 +25,13 @@ func TestRulesAddPostsRule(t *testing.T) {
 	var (
 		gotPath   string
 		gotMethod string
-		gotRule   api.Rule
+		gotRule   wire.Rule
 	)
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		gotPath, gotMethod = r.URL.Path, r.Method
 		_ = json.NewDecoder(r.Body).Decode(&gotRule)
 		gotRule.ID = "uses-checkout"
-		gotRule.Mode = api.RuleModeCount
+		gotRule.Mode = wire.RuleModeCount
 		w.WriteHeader(http.StatusCreated)
 		_ = json.NewEncoder(w).Encode(gotRule)
 	}))
@@ -65,7 +65,7 @@ func TestRulesResultsRenders(t *testing.T) {
 			http.Error(w, "unexpected", http.StatusBadRequest)
 			return
 		}
-		_ = json.NewEncoder(w).Encode(api.RuleResults{Rule: "r1", Mode: api.RuleModeCount, Repos: []api.RuleRepoResult{
+		_ = json.NewEncoder(w).Encode(wire.RuleResults{Rule: "r1", Mode: wire.RuleModeCount, Repos: []wire.RuleRepoResult{
 			{Repo: "owner/alpha", Files: 2, Matches: 3},
 			{Repo: "owner/beta", Files: 1, Matches: 1},
 		}})
@@ -86,8 +86,8 @@ func TestRulesResultsRenders(t *testing.T) {
 func TestRulesListRenders(t *testing.T) {
 	isolateCLIAuth(t)
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		_ = json.NewEncoder(w).Encode(api.RuleSet{Generation: 2, Rules: []api.Rule{
-			{ID: "a", Mode: api.RuleModeCount, Name: "Alpha"},
+		_ = json.NewEncoder(w).Encode(wire.RuleSet{Generation: 2, Rules: []wire.Rule{
+			{ID: "a", Mode: wire.RuleModeCount, Name: "Alpha"},
 		}})
 	}))
 	defer server.Close()
@@ -108,13 +108,13 @@ func TestRulesAddPostsStructuralRule(t *testing.T) {
 	if err := os.WriteFile(queryPath, []byte("language go\n`target($x)`"), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	var got api.Rule
+	var got wire.Rule
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, request *http.Request) {
 		if err := json.NewDecoder(request.Body).Decode(&got); err != nil {
 			t.Error(err)
 		}
 		got.ID = "calls"
-		got.Mode = api.RuleModeFiles
+		got.Mode = wire.RuleModeFiles
 		w.WriteHeader(http.StatusCreated)
 		_ = json.NewEncoder(w).Encode(got)
 	}))
@@ -126,10 +126,10 @@ func TestRulesAddPostsStructuralRule(t *testing.T) {
 			t.Fatal(err)
 		}
 	})
-	if got.Engine != api.RuleEngineGritQL || got.Structural == nil {
+	if got.Engine != wire.RuleEngineGritQL || got.Structural == nil {
 		t.Fatalf("structural rule not sent: %#v", got)
 	}
-	if got.Structural.Query != "language go\n`target($x)`" || got.Structural.Compatibility != api.GritCompatibilityV1 {
+	if got.Structural.Query != "language go\n`target($x)`" || got.Structural.Compatibility != wire.GritCompatibilityV1 {
 		t.Fatalf("structural query not sent: %#v", got.Structural)
 	}
 	if len(got.Structural.Repositories) != 1 || got.Structural.Repositories[0] != "owner/*" || len(got.Structural.Globs) != 1 {
@@ -157,7 +157,7 @@ func TestRulesAddRejectsInvalidStructuralQueryBeforeTransport(t *testing.T) {
 func TestRulesListLabelsStructuralRules(t *testing.T) {
 	isolateCLIAuth(t)
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		_ = json.NewEncoder(w).Encode(api.RuleSet{Rules: []api.Rule{{ID: "calls", Mode: api.RuleModeCount, Engine: api.RuleEngineGritQL, Name: "Calls"}}})
+		_ = json.NewEncoder(w).Encode(wire.RuleSet{Rules: []wire.Rule{{ID: "calls", Mode: wire.RuleModeCount, Engine: wire.RuleEngineGritQL, Name: "Calls"}}})
 	}))
 	defer server.Close()
 	out := captureStdout(t, func() {

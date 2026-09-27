@@ -1,16 +1,16 @@
 package render
 
 import (
-	"github.com/greppleai/grepple/api"
+	"github.com/greppleai/grepple/internal/wire"
 	"github.com/greppleai/grepple/internal/resultanalysis"
-	"github.com/greppleai/grepple/navigation"
-	"github.com/greppleai/grepple/search"
+	"github.com/greppleai/grepple/internal/navigation"
+	"github.com/greppleai/grepple/internal/search"
 )
 
 type jsonResultRenderer struct {
 	output       *outputWriter
 	matchesOnly  bool
-	metadata     *api.ResultMetadata
+	metadata     *wire.ResultMetadata
 	contextGuard ContextGuard
 }
 
@@ -25,7 +25,7 @@ func (renderer jsonResultRenderer) Render(results []search.FileResult) error {
 		}
 		return renderer.output.writeJSON(response)
 	}
-	if err := renderer.output.writeJSON(api.SearchResponse{Results: results, Metadata: renderer.metadata, SourceAnalysis: searchSourceAnalysis(results)}); err != nil {
+	if err := renderer.output.writeJSON(wire.SearchResponse{Results: results, Metadata: renderer.metadata, SourceAnalysis: searchSourceAnalysis(results)}); err != nil {
 		return err
 	}
 	recordJSONResultCoverage(renderer.contextGuard, results)
@@ -64,7 +64,7 @@ func recordJSONRelatedCoverage(guard ContextGuard, repository string, points []n
 	}
 }
 
-func searchSourceAnalysis(results []search.FileResult) *api.SourceAnalysis {
+func searchSourceAnalysis(results []search.FileResult) *wire.SourceAnalysis {
 	return resultanalysis.Sources(results)
 }
 

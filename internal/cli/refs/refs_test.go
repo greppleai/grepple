@@ -7,13 +7,13 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/greppleai/grepple/api"
+	"github.com/greppleai/grepple/internal/wire"
 )
 
 func TestRefsListsSelectorsAndResolvedCommits(t *testing.T) {
 	head := "abcdef"
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		_ = json.NewEncoder(w).Encode(api.ReposResponse{OK: true, Count: 2, Repos: []api.RepoListEntry{
+		_ = json.NewEncoder(w).Encode(wire.ReposResponse{OK: true, Count: 2, Repos: []wire.RepoListEntry{
 			{Repo: "owner/repo", Selector: "owner/repo", RefKind: "default", Ref: "main", Head: &head},
 			{Repo: "owner/repo", Selector: "owner/repo@tag~v1.2.3", RefKind: "tag", Ref: "v1.2.3", Head: &head},
 		}})
@@ -30,7 +30,7 @@ func TestRefsListsSelectorsAndResolvedCommits(t *testing.T) {
 }
 
 func TestRefsFiltersBySourceRepository(t *testing.T) {
-	entries := []api.RepoListEntry{{Repo: "owner/repo"}, {Repo: "other/repo"}}
+	entries := []wire.RepoListEntry{{Repo: "owner/repo"}, {Repo: "other/repo"}}
 	filtered := Filter(entries, "owner/repo", "")
 	if len(filtered) != 1 || filtered[0].Repo != "owner/repo" {
 		t.Fatalf("unexpected refs: %#v", filtered)
@@ -38,7 +38,7 @@ func TestRefsFiltersBySourceRepository(t *testing.T) {
 }
 
 func TestRefsFiltersTags(t *testing.T) {
-	entries := []api.RepoListEntry{{Repo: "owner/repo", RefKind: "default"}, {Repo: "owner/repo", RefKind: "tag"}}
+	entries := []wire.RepoListEntry{{Repo: "owner/repo", RefKind: "default"}, {Repo: "owner/repo", RefKind: "tag"}}
 	filtered := Filter(entries, "owner/repo", "tag")
 	if len(filtered) != 1 || filtered[0].RefKind != "tag" {
 		t.Fatalf("unexpected refs: %#v", filtered)

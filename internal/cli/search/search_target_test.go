@@ -2,8 +2,8 @@ package search
 
 import (
 	"encoding/json"
-	"github.com/greppleai/grepple/api"
-	"github.com/greppleai/grepple/search"
+	"github.com/greppleai/grepple/internal/wire"
+	"github.com/greppleai/grepple/internal/search"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -28,7 +28,7 @@ func TestSearchUsesConfiguredRemoteUnlessLocalOnly(t *testing.T) {
 	t.Cleanup(func() { _ = os.Chdir(previous) })
 
 	requests := 0
-	var remoteRequest api.SearchRequest
+	var remoteRequest wire.SearchRequest
 	server := httptest.NewServer(http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
 		requests++
 		if err := json.NewDecoder(request.Body).Decode(&remoteRequest); err != nil {
@@ -37,10 +37,10 @@ func TestSearchUsesConfiguredRemoteUnlessLocalOnly(t *testing.T) {
 		if request.URL.Path != "/public/search" {
 			t.Errorf("unexpected path: %s", request.URL.Path)
 		}
-		_ = json.NewEncoder(response).Encode(api.SearchResponse{Results: []api.FileResult{{
+		_ = json.NewEncoder(response).Encode(wire.SearchResponse{Results: []wire.FileResult{{
 			Repo: "owner/repo",
 			Path: "remote.txt",
-			Matches: []api.ResultMatch{{
+			Matches: []wire.ResultMatch{{
 				Line: 1,
 				Text: "needle",
 			}},
@@ -82,7 +82,7 @@ func TestRemoteRequiresOptIn(t *testing.T) {
 	requests := 0
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		requests++
-		_ = json.NewEncoder(w).Encode(api.SearchResponse{})
+		_ = json.NewEncoder(w).Encode(wire.SearchResponse{})
 	}))
 	defer server.Close()
 	t.Setenv("GREPPLE_SERVER", server.URL)

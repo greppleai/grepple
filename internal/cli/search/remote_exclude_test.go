@@ -6,17 +6,17 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/greppleai/grepple/api"
-	"github.com/greppleai/grepple/search"
+	"github.com/greppleai/grepple/internal/wire"
+	"github.com/greppleai/grepple/internal/search"
 )
 
 func TestSearchRemoteSendsAndAppliesRepoExclusion(t *testing.T) {
-	var received api.SearchRequest
+	var received wire.SearchRequest
 	server := httptest.NewServer(http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
 		if err := json.NewDecoder(request.Body).Decode(&received); err != nil {
 			t.Error(err)
 		}
-		_ = json.NewEncoder(response).Encode(api.SearchResponse{Results: []api.FileResult{
+		_ = json.NewEncoder(response).Encode(wire.SearchResponse{Results: []wire.FileResult{
 			{Repo: "owner/current", Path: "current.go"},
 			{Repo: "owner/other", Path: "other.go"},
 		}})

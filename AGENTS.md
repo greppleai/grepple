@@ -2,18 +2,20 @@
 
 ## Project
 
-Grepple is the public Go code-search engine and CLI. Public packages are importable by the private sibling backend:
+Grepple is the public Go code-search engine and CLI. Only `api` is a supported library import for the private sibling backend; all implementation and shared wire packages live under `internal/`:
 
-- `api`: dependency-free HTTP DTOs
-- `parser`: language detection, tree-sitter parsing, syntax documents, segments, and outlines
-- `search`: discovery, matching, filtering, paging, and result construction
-- `gritql`: native, bounded structural query compilation and evaluation
-- `gritqlapi`: conversion from structural results to API DTOs
-- `rulespec`: shared text and structural saved-rule validation
+- `api`: outward-facing HTTP contract aliases and backend service facade
+- `internal/wire`: shared transport DTOs used by internal CLI and HTTP adapters
+- `internal/parser`: tree-sitter adapters, syntax facts, segments, and outlines
+- `internal/navigation`: source-backed relationship graphs and dependency resolution
+- `internal/search`: discovery, matching, filtering, paging, and result construction
+- `internal/gritql`: native, bounded structural query compilation and evaluation
+- `internal/gritqlapi`: conversion from structural results to internal wire DTOs
+- `internal/rulespec`: shared text and structural saved-rule validation
 - `internal/apiclient`: typed remote API boundary, authentication, HTTP execution, and response decoding
 - `internal/cli`: repository-local CLI workflows and output rendering
 
-Keep dependencies directed toward `api` and `parser`. Distributed router, shard, and repository-management code lives in `../grepple-backend`; this public module must not depend on it.
+Keep dependencies directed from `api` toward `internal/wire` and implementation owners. Internal packages must never import `api`; transport adapters use `internal/wire` and core engines keep transport out where possible. Distributed router, shard, and repository-management code lives in `../grepple-backend`; this public module must not depend on it.
 
 Language-specific parser and navigation syntax belongs behind the owning `languageAdapter`, with parsing entered through `languageAdapter.Parse()` and navigation policy exposed through `languageAdapter.Navigation()`. `syntaxTree` and `syntaxNode` are the private structural boundary; production parser files outside `tree_sitter.go` must not import or name go-tree-sitter types. Shared parser engines must not contain canonical language IDs or grammar node-kind policy. Architecture tests enforce these boundaries.
 

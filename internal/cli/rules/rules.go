@@ -10,9 +10,9 @@ import (
 	"strings"
 
 	"github.com/alexflint/go-arg"
-	"github.com/greppleai/grepple/api"
+	"github.com/greppleai/grepple/internal/wire"
 	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
-	"github.com/greppleai/grepple/rulespec"
+	"github.com/greppleai/grepple/internal/rulespec"
 )
 
 // Run dispatches rules with the common command context.
@@ -91,39 +91,39 @@ func (rulesAddArgs) Description() string {
 	return "Create or replace a predefined grep (rule)."
 }
 
-func buildRule(values rulesAddArgs) (api.Rule, error) {
+func buildRule(values rulesAddArgs) (wire.Rule, error) {
 	engine := strings.TrimSpace(values.Engine)
 	if values.Grit {
-		if engine != "" && engine != api.RuleEngineGritQL {
-			return api.Rule{}, fmt.Errorf("--grit conflicts with --engine %q", engine)
+		if engine != "" && engine != wire.RuleEngineGritQL {
+			return wire.Rule{}, fmt.Errorf("--grit conflicts with --engine %q", engine)
 		}
-		engine = api.RuleEngineGritQL
+		engine = wire.RuleEngineGritQL
 	}
 	mode := values.Mode
 	if mode == "" && values.Files {
-		mode = api.RuleModeFiles
+		mode = wire.RuleModeFiles
 	}
-	rule := api.Rule{ID: values.ID, Name: values.Name, Mode: mode, Engine: engine}
-	if engine == "" || engine == api.RuleEngineText {
+	rule := wire.Rule{ID: values.ID, Name: values.Name, Mode: mode, Engine: engine}
+	if engine == "" || engine == wire.RuleEngineText {
 		if err := setTextRuleRequest(&rule, values); err != nil {
-			return api.Rule{}, err
+			return wire.Rule{}, err
 		}
-	} else if engine == api.RuleEngineGritQL {
+	} else if engine == wire.RuleEngineGritQL {
 		if err := setStructuralRuleRequest(&rule, values); err != nil {
-			return api.Rule{}, err
+			return wire.Rule{}, err
 		}
 	}
 	if _, err := rulespec.Normalize(rule); err != nil {
-		return api.Rule{}, err
+		return wire.Rule{}, err
 	}
 	return rule, nil
 }
 
-func setTextRuleRequest(rule *api.Rule, values rulesAddArgs) error {
+func setTextRuleRequest(rule *wire.Rule, values rulesAddArgs) error {
 	if values.QueryFile != "" {
 		return fmt.Errorf("--query-file requires a structural rule")
 	}
-	request := api.SearchRequest{}
+	request := wire.SearchRequest{}
 	if values.Pattern != "" {
 		request.Query = &values.Pattern
 	}
@@ -140,7 +140,7 @@ func setTextRuleRequest(rule *api.Rule, values rulesAddArgs) error {
 	return nil
 }
 
-func setStructuralRuleRequest(rule *api.Rule, values rulesAddArgs) error {
+func setStructuralRuleRequest(rule *wire.Rule, values rulesAddArgs) error {
 	if values.Regex || values.IgnoreCase {
 		return fmt.Errorf("--regex and --ignore-case are not valid for structural rules")
 	}
@@ -156,8 +156,8 @@ func setStructuralRuleRequest(rule *api.Rule, values rulesAddArgs) error {
 	if err != nil {
 		return err
 	}
-	rule.Structural = &api.GritRequest{
-		Query: query, Compatibility: api.GritCompatibilityV1, Globs: globs,
+	rule.Structural = &wire.GritRequest{
+		Query: query, Compatibility: wire.GritCompatibilityV1, Globs: globs,
 		Repositories: append([]string(nil), values.Repo...), ExcludeRepositories: append([]string(nil), values.ExcludeRepo...),
 	}
 	return nil
@@ -168,8 +168,8 @@ func loadRuleQuery(inline, path string) (string, error) {
 		return "", fmt.Errorf("structural rule accepts query text or --query-file, not both")
 	}
 	if path == "" {
-		if len(inline) > api.MaxGritQueryBytes {
-			return "", fmt.Errorf("structural query exceeds the %d-byte maximum", api.MaxGritQueryBytes)
+		if len(inline) > wire.MaxGritQueryBytes {
+			return "", fmt.Errorf("structural query exceeds the %d-byte maximum", wire.MaxGritQueryBytes)
 		}
 		return inline, nil
 	}
@@ -207,7 +207,7 @@ func executeRulesAdd(values *AddArgs, dependencies dependencies) error {
 	if values.JSON {
 		return cliruntime.NewOutput(dependencies.Stdout()).WriteJSON(created)
 	}
-	if created.Engine == api.RuleEngineGritQL {
+	if created.Engine == wire.RuleEngineGritQL {
 		return cliruntime.NewOutput(dependencies.Stdout()).WriteString(fmt.Sprintf("created structural rule %s (mode=%s, engine=%s)\n", created.ID, created.Mode, created.Engine))
 	}
 	return cliruntime.NewOutput(dependencies.Stdout()).WriteString(fmt.Sprintf("created rule %s (mode=%s)\n", created.ID, created.Mode))
@@ -234,7 +234,7 @@ func executeRulesList(values *ServerArgs, dependencies dependencies) error {
 	}
 	for _, r := range set.Rules {
 		line := fmt.Sprintf("%s\t%s\t%s\n", r.ID, r.Mode, r.Name)
-		if r.Engine == api.RuleEngineGritQL {
+		if r.Engine == wire.RuleEngineGritQL {
 			line = fmt.Sprintf("%s\t%s\t%s\t%s\n", r.ID, r.Mode, r.Engine, r.Name)
 		}
 		if err := cliruntime.NewOutput(dependencies.Stdout()).WriteString(line); err != nil {

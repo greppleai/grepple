@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/greppleai/grepple/parser"
+	"github.com/greppleai/grepple/internal/parser"
 )
 
 func indexBoundaryFields(fields []parser.NavigationField, _ map[string]parser.NavigationDeclaration, owners map[boundaryOwnerKey]*boundaryOwnerAnalysis) {

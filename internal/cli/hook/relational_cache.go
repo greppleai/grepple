@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"reflect"
 
-	"github.com/greppleai/grepple/gritql"
+	"github.com/greppleai/grepple/internal/gritql"
 	"github.com/greppleai/grepple/internal/storagepaths"
 )
 

@@ -10,11 +10,11 @@ import (
 	"text/tabwriter"
 
 	"github.com/alexflint/go-arg"
-	"github.com/greppleai/grepple/api"
-	"github.com/greppleai/grepple/extract"
-	"github.com/greppleai/grepple/gritql"
+	"github.com/greppleai/grepple/internal/wire"
+	"github.com/greppleai/grepple/internal/extract"
+	"github.com/greppleai/grepple/internal/gritql"
 	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
-	"github.com/greppleai/grepple/parser"
+	"github.com/greppleai/grepple/internal/parser"
 )
 
 type Args struct {
@@ -74,7 +74,7 @@ func Execute(application cliruntime.Context, values *Args) error {
 	return renderLanguageCapabilities(capabilities, output)
 }
 
-func languageCapabilityMatrix() []api.LanguageCapabilities {
+func languageCapabilityMatrix() []wire.LanguageCapabilities {
 	extraction := extract.SupportedLanguages()
 	gritLanguages := make(map[string]bool)
 	for _, language := range gritql.SupportedLanguages() {
@@ -85,13 +85,13 @@ func languageCapabilityMatrix() []api.LanguageCapabilities {
 		parserLanguages[language.ID] = language
 	}
 	contentLanguages := parser.SupportedContentLanguages()
-	result := make([]api.LanguageCapabilities, 0, len(contentLanguages))
+	result := make([]wire.LanguageCapabilities, 0, len(contentLanguages))
 	for _, language := range contentLanguages {
 		extractLanguage, hasExtraction := extractionCapabilities(language, extraction)
-		result = append(result, api.LanguageCapabilities{
+		result = append(result, wire.LanguageCapabilities{
 			Language:              language.ID,
 			Extensions:            append([]string{}, language.Extensions...),
-			TextGrep:              api.FeatureProduction,
+			TextGrep:              wire.FeatureProduction,
 			StructuralGrep:        featureSupport(language.StructuralGrep, language.Specialized),
 			Outline:               featureSupport(language.Outline, language.Specialized),
 			Navigation:            featureSupport(language.Navigation, false),
@@ -133,18 +133,18 @@ func extensionsContained(required, available []string) bool {
 	return true
 }
 
-func featureSupport(supported, specialized bool) api.FeatureSupport {
+func featureSupport(supported, specialized bool) wire.FeatureSupport {
 	if !supported {
-		return api.FeatureUnsupported
+		return wire.FeatureUnsupported
 	}
 	if specialized {
-		return api.FeatureSpecialized
+		return wire.FeatureSpecialized
 	}
-	return api.FeatureProduction
+	return wire.FeatureProduction
 }
 
-func navigationFactSupport(facts parser.NavigationFactCapabilities) api.NavigationFactCapabilities {
-	return api.NavigationFactCapabilities{
+func navigationFactSupport(facts parser.NavigationFactCapabilities) wire.NavigationFactCapabilities {
+	return wire.NavigationFactCapabilities{
 		Declarations:   featureSupport(facts.Declarations, false),
 		Calls:          featureSupport(facts.Calls, false),
 		Imports:        featureSupport(facts.Imports, false),
@@ -155,7 +155,7 @@ func navigationFactSupport(facts parser.NavigationFactCapabilities) api.Navigati
 	}
 }
 
-func renderLanguageCapabilities(capabilities []api.LanguageCapabilities, output io.Writer) error {
+func renderLanguageCapabilities(capabilities []wire.LanguageCapabilities, output io.Writer) error {
 	writer := tabwriter.NewWriter(output, 0, 4, 2, ' ', 0)
 	if _, err := fmt.Fprintln(writer, "LANGUAGE\tEXTENSIONS\tTEXT\tSTRUCTURAL\tOUTLINE\tNAV\tSTRUCTURE\tFLOW\tGRITQL\tDIRECTORY\tIMPORT-RELATIONS\tENTRYPOINTS"); err != nil {
 		return err
@@ -189,20 +189,20 @@ func renderLanguageCapabilities(capabilities []api.LanguageCapabilities, output 
 	return writer.Flush()
 }
 
-func supportIcon(support api.FeatureSupport) string {
+func supportIcon(support wire.FeatureSupport) string {
 	switch support {
-	case api.FeatureProduction:
+	case wire.FeatureProduction:
 		return "✓"
-	case api.FeatureSpecialized:
+	case wire.FeatureSpecialized:
 		return "~"
-	case api.FeatureExperimental:
+	case wire.FeatureExperimental:
 		return "!"
 	default:
 		return "-"
 	}
 }
 
-func renderLanguageCapabilitiesMarkdown(capabilities []api.LanguageCapabilities) string {
+func renderLanguageCapabilitiesMarkdown(capabilities []wire.LanguageCapabilities) string {
 	var output strings.Builder
 	output.WriteString("| Language | Extensions | Text grep | Structural grep | Outline | Navigation | Focused structure | Focused flow | GritQL | Directory architecture | Import relations | Entrypoints |\n")
 	output.WriteString("| --- | --- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |\n")
@@ -228,13 +228,13 @@ func renderLanguageCapabilitiesMarkdown(capabilities []api.LanguageCapabilities)
 	return output.String()
 }
 
-func markdownSupportIcon(support api.FeatureSupport) string {
+func markdownSupportIcon(support wire.FeatureSupport) string {
 	switch support {
-	case api.FeatureProduction:
+	case wire.FeatureProduction:
 		return "✅"
-	case api.FeatureSpecialized:
+	case wire.FeatureSpecialized:
 		return "🟡"
-	case api.FeatureExperimental:
+	case wire.FeatureExperimental:
 		return "🧪"
 	default:
 		return "❌"

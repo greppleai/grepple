@@ -10,15 +10,15 @@ import (
 	"strings"
 
 	"github.com/alexflint/go-arg"
-	"github.com/greppleai/grepple/analysis"
-	"github.com/greppleai/grepple/api"
+	"github.com/greppleai/grepple/internal/analysis"
+	"github.com/greppleai/grepple/internal/wire"
 	"github.com/greppleai/grepple/internal/archdaemon"
 	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
 	"github.com/greppleai/grepple/internal/shellquote"
 	"github.com/greppleai/grepple/internal/sourcelocation"
-	"github.com/greppleai/grepple/navigation"
-	"github.com/greppleai/grepple/parser"
-	"github.com/greppleai/grepple/search"
+	"github.com/greppleai/grepple/internal/navigation"
+	"github.com/greppleai/grepple/internal/parser"
+	"github.com/greppleai/grepple/internal/search"
 )
 
 const maxNavigationQueryDepth = 10
@@ -131,9 +131,9 @@ func parseGraphQueryArgs(application cliruntime.Context, direction search.Naviga
 }
 
 func runRemoteGraphQuery(application cliruntime.Context, ctx context.Context, direction search.NavigationQueryDirection, values graphQueryArgs) error {
-	request := api.AnalysisRequest{
-		Operation: api.AnalysisGraph, Repository: values.Repository, Paths: values.Paths, MaxFiles: values.MaxFiles,
-		Graph: &api.GraphQueryRequest{Direction: string(direction), Depth: values.Depth, Symbol: values.Symbol, At: values.At, Package: values.Package, Module: values.Module, RootPath: values.RootPath, Languages: values.Languages, Confidences: values.Confidences, Visibilities: values.Visibilities},
+	request := wire.AnalysisRequest{
+		Operation: wire.AnalysisGraph, Repository: values.Repository, Paths: values.Paths, MaxFiles: values.MaxFiles,
+		Graph: &wire.GraphQueryRequest{Direction: string(direction), Depth: values.Depth, Symbol: values.Symbol, At: values.At, Package: values.Package, Module: values.Module, RootPath: values.RootPath, Languages: values.Languages, Confidences: values.Confidences, Visibilities: values.Visibilities},
 	}
 	response, err := requestRemoteAnalysis(application, ctx, request, application.Configuration().ServerDefault(values.Server))
 	if err != nil {

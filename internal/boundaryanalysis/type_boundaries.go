@@ -6,7 +6,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/greppleai/grepple/parser"
+	"github.com/greppleai/grepple/internal/parser"
 )
 
 // BoundaryTypeOrigin classifies where a reported concrete type is owned.

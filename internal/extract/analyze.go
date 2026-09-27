@@ -1,0 +1,682 @@
+// Package extract validates and generates source-linked Mermaid structure and flow diagrams.
+package extract
+
+import (
+	"fmt"
+	"path/filepath"
+	"sort"
+	"strings"
+
+	"github.com/greppleai/grepple/internal/navigation"
+	codeparser "github.com/greppleai/grepple/internal/parser"
+)
+
+// Source is one source file handled by a registered language adapter.
+type Source struct{ Path, Text string }
+
+// Member describes a class, interface, or function member signature.
+type Member struct {
+	Kind, Name, Visibility, Type, Language, Package, PackageID, ModuleID, File string
+	Static, Async                                                              bool
+	Parameters                                                                 []string
+	Location                                                                   Location
+}
+
+// GoStructTag preserves both a field tag's value and whether a tag was present.
+// Presence is separate because an explicit empty tag (`""`) is meaningful.
+type GoStructTag struct {
+	Value   string
+	Present bool
+}
+
+// Declaration describes a language-neutral type declaration.
+type Declaration struct {
+	Name, Kind, Language, Package, PackageID, ModuleID, File string
+	Underlying                                               string
+	Members                                                  []Member
+	Extends, Implements                                      map[string]bool
+	StructTags                                               map[string]GoStructTag
+	FileLocal                                                bool
+	Location                                                 Location
+}
+
+// Import describes one local import binding.
+type Import struct {
+	Source, Imported, Resolved, ModuleID, ImporterModuleID, File string
+	Default, TypeOnly                                            bool
+	Language, Package, PackageID                                 string
+}
+
+// Location identifies a syntax node in a source file.
+type Location struct {
+	Path               string
+	Line, Column       int
+	EndLine, EndColumn int
+}
+
+func syntaxLocation(path string, node codeparser.ViewNode) Location {
+	rng := node.Range()
+	return Location{Path: path, Line: rng.Start.Line, Column: rng.Start.Column, EndLine: rng.End.Line, EndColumn: rng.End.Column}
+}
+
+// Symbol describes a callable code symbol linked to its parser-owned navigation declaration.
+type Symbol struct {
+	Name, Kind, Language, Package, PackageID, ModuleID, Key string
+	Owner, Receiver, NavigationID                           string
+	// Calls and CallOrder are compatibility projections derived from Navigation.
+	Calls     map[string]bool
+	CallOrder []string
+	Locations []Location
+}
+
+// Analysis contains the structure and call graph extracted from sources.
+type Analysis struct {
+	Declarations                          map[string]*Declaration
+	DeclarationVariants                   map[string]*Declaration
+	Functions                             map[string][]Member
+	Imports                               map[string][]Import
+	Exports, DefaultExports               map[string]bool
+	ExportVariants, DefaultExportVariants map[string]bool
+	Symbols                               map[string]*Symbol
+	SymbolVariants                        map[string]*Symbol
+	ModuleDeclarations                    map[string]*Declaration
+	PackageDeclarations                   map[string]*Declaration
+	TypeReferencesByPackage               map[string][]Location
+	FunctionsByPackage                    map[string][]Member
+	ModuleSymbols                         map[string]*Symbol
+	PackageSymbols                        map[string]*Symbol
+	PackageNames                          map[string]string
+	PackageImports                        map[string]map[string]string
+	ImportPathPackages                    map[string]string
+	PackagePaths                          map[string]string
+	PackageFallbackScopes                 map[string]string
+	ModulePaths, SourcePaths              map[string]string
+	ModuleIndex                           map[string]string
+	ModuleImportBindings                  map[string]map[string]Import
+	ModuleDefaultExports                  map[string]string
+	ModuleExports                         map[string]map[string]bool
+	ModuleExportNames                     map[string]map[string]string
+	Navigation                            codeparser.NavigationGraph
+	navigationSymbols                     map[string]*Symbol
+	navigationCalls                       map[string][]*Symbol
+	duplicateErrors                       []string
+}
+
+type sourceAnalyzer struct {
+	result   *Analysis
+	source   Source
+	text     []byte
+	moduleID string
+	language string
+}
+
+func (analyzer *sourceAnalyzer) location(node codeparser.ViewNode) Location {
+	location := syntaxLocation(analyzer.source.Path, node)
+	location.Path = analyzer.result.SourcePaths[absolutePath(analyzer.source.Path)]
+	return location
+}
+
+func newAnalysis() *Analysis {
+	return &Analysis{
+		Declarations:            map[string]*Declaration{},
+		DeclarationVariants:     map[string]*Declaration{},
+		Functions:               map[string][]Member{},
+		Imports:                 map[string][]Import{},
+		Exports:                 map[string]bool{},
+		DefaultExports:          map[string]bool{},
+		ExportVariants:          map[string]bool{},
+		DefaultExportVariants:   map[string]bool{},
+		Symbols:                 map[string]*Symbol{},
+		SymbolVariants:          map[string]*Symbol{},
+		ModuleDeclarations:      map[string]*Declaration{},
+		PackageDeclarations:     map[string]*Declaration{},
+		TypeReferencesByPackage: map[string][]Location{},
+		FunctionsByPackage:      map[string][]Member{},
+		ModuleSymbols:           map[string]*Symbol{},
+		PackageSymbols:          map[string]*Symbol{},
+		PackageNames:            map[string]string{},
+		PackageImports:          map[string]map[string]string{},
+		ImportPathPackages:      map[string]string{},
+		PackagePaths:            map[string]string{},
+		PackageFallbackScopes:   map[string]string{},
+		ModulePaths:             map[string]string{},
+		SourcePaths:             map[string]string{},
+		ModuleIndex:             map[string]string{},
+		ModuleImportBindings:    map[string]map[string]Import{},
+		ModuleDefaultExports:    map[string]string{},
+		ModuleExports:           map[string]map[string]bool{},
+		ModuleExportNames:       map[string]map[string]string{},
+		navigationSymbols:       map[string]*Symbol{},
+		navigationCalls:         map[string][]*Symbol{},
+	}
+}
+
+func malformedSourceError(path string, document *codeparser.Document) error {
+	diagnostics := document.ParseDiagnostics()
+	if len(diagnostics) == 0 {
+		return fmt.Errorf("parse %s:1:1: malformed syntax", path)
+	}
+	diagnostic := diagnostics[0]
+	position := diagnostic.Range.Start
+	return fmt.Errorf("parse %s:%d:%d: malformed syntax near %s", path, position.Line, position.Column, diagnostic.Kind)
+}
+func nodeText(node codeparser.ViewNode, _ []byte) string {
+	return node.Text()
+}
+
+func hasChildKind(node codeparser.ViewNode, kind string) bool {
+	for _, child := range node.Children() {
+		if child.Kind() == kind {
+			return true
+		}
+	}
+	return false
+}
+
+func cleanType(value string) string {
+	value = strings.TrimSpace(strings.TrimPrefix(strings.TrimSpace(value), ":"))
+	return normalizeType(value)
+}
+
+func nodeType(node codeparser.ViewNode, source []byte) string {
+	typeNode := node.ChildByFieldName("type")
+	if !typeNode.Valid() {
+		typeNode = node.ChildByFieldName("return_type")
+	}
+	if typeNode.Valid() {
+		return cleanType(nodeText(typeNode, source))
+	}
+	return childTypeAnnotation(node, source)
+}
+
+func childTypeAnnotation(node codeparser.ViewNode, source []byte) string {
+	for _, child := range node.NamedChildren() {
+		if child.Kind() == "type_annotation" {
+			return cleanType(nodeText(child, source))
+		}
+	}
+	return ""
+}
+
+func childHasText(node codeparser.ViewNode, source []byte, value string) bool {
+	for _, child := range node.Children() {
+		if nodeText(child, source) == value {
+			return true
+		}
+	}
+	return false
+}
+
+func memberVisibility(node codeparser.ViewNode, source []byte) string {
+	for _, child := range node.Children() {
+		if child.Kind() != "accessibility_modifier" {
+			continue
+		}
+		if value := nodeText(child, source); value == "private" || value == "protected" {
+			return value
+		}
+	}
+	return "public"
+}
+
+func parameterTypes(node codeparser.ViewNode, source []byte) []string {
+	parameters := node.ChildByFieldName("parameters")
+	if !parameters.Valid() {
+		return nil
+	}
+	var result []string
+	for _, parameter := range parameters.NamedChildren() {
+		if parameter.Kind() == "required_parameter" || parameter.Kind() == "optional_parameter" {
+			result = append(result, nodeType(parameter, source))
+		}
+	}
+	return result
+}
+
+func memberFromNode(node codeparser.ViewNode, source []byte, language string) (Member, bool) {
+	kind, ok := memberKind(node.Kind())
+	if !ok {
+		return Member{}, false
+	}
+	nameNode := node.ChildByFieldName("name")
+	name := nodeText(nameNode, source)
+	if name == "" {
+		return Member{}, false
+	}
+	member := Member{
+		Kind:       kind,
+		Language:   language,
+		Name:       name,
+		Visibility: memberVisibility(node, source),
+		Type:       nodeType(node, source),
+		Static:     childHasText(node, source, "static"),
+		Async:      childHasText(node, source, "async"),
+	}
+	if nameNode.Kind() == "private_property_identifier" {
+		member.Visibility = "private"
+	}
+	if kind == "method" {
+		member.Parameters = parameterTypes(node, source)
+	}
+	return member, true
+}
+
+func memberKind(kind string) (string, bool) {
+	switch kind {
+	case "method_definition", "method_signature", "abstract_method_signature":
+		return "method", true
+	case "field_definition", "public_field_definition", "property_signature", "abstract_property_signature":
+		return "property", true
+	default:
+		return "", false
+	}
+}
+
+func (analyzer *sourceAnalyzer) addSymbol(name, kind string, node, _ codeparser.ViewNode, owner string) {
+	key := analyzer.moduleID + ":" + name
+	symbol := analyzer.result.ModuleSymbols[key]
+	if symbol == nil {
+		symbol = &Symbol{Name: name, Kind: kind, Language: analyzer.language, ModuleID: analyzer.moduleID, Key: key, Owner: owner, Calls: map[string]bool{}}
+		analyzer.result.ModuleSymbols[key] = symbol
+	}
+	symbol.Locations = append(symbol.Locations, syntaxLocation(analyzer.source.Path, node))
+}
+
+func (analyzer *sourceAnalyzer) addImport(name, imported, module string, defaultImport, typeOnly bool) {
+	if name == "" {
+		return
+	}
+	item := Import{Source: module, Imported: imported, Default: defaultImport, TypeOnly: typeOnly, Language: analyzer.language, ImporterModuleID: analyzer.moduleID, File: analyzer.result.SourcePaths[absolutePath(analyzer.source.Path)]}
+	analyzer.result.Imports[name] = append(analyzer.result.Imports[name], item)
+	if analyzer.result.ModuleImportBindings[analyzer.moduleID] == nil {
+		analyzer.result.ModuleImportBindings[analyzer.moduleID] = map[string]Import{}
+	}
+	analyzer.result.ModuleImportBindings[analyzer.moduleID][name] = item
+}
+
+func (analyzer *sourceAnalyzer) analyzeImport(statement codeparser.ViewNode) {
+	module := strings.Trim(nodeText(statement.ChildByFieldName("source"), analyzer.text), "'\"")
+	clause := statement.NamedChild(0)
+	if !clause.Valid() || clause.Kind() != "import_clause" {
+		return
+	}
+	typeOnly := hasChildKind(statement, "type") || childHasText(statement, analyzer.text, "type")
+	analyzer.addDefaultImport(clause, module, typeOnly)
+	codeparser.WalkNamedView(clause, func(node codeparser.ViewNode) {
+		analyzer.addStructuredImport(node, module, typeOnly)
+	})
+}
+
+func (analyzer *sourceAnalyzer) addDefaultImport(clause codeparser.ViewNode, module string, typeOnly bool) {
+	for _, child := range clause.NamedChildren() {
+		if child.Kind() == "identifier" {
+			analyzer.addImport(nodeText(child, analyzer.text), "", module, true, typeOnly)
+		}
+	}
+}
+
+func (analyzer *sourceAnalyzer) addStructuredImport(node codeparser.ViewNode, module string, typeOnly bool) {
+	if node.Kind() != "import_specifier" && node.Kind() != "namespace_import" {
+		return
+	}
+	alias := node.ChildByFieldName("alias")
+	importedNode := node.ChildByFieldName("name")
+	nameNode := alias
+	if !nameNode.Valid() {
+		nameNode = importedNode
+	}
+	if !nameNode.Valid() && node.NamedChildCount() > 0 {
+		nameNode = node.NamedChild(node.NamedChildCount() - 1)
+	}
+	elementTypeOnly := hasChildKind(node, "type") || childHasText(node, analyzer.text, "type")
+	analyzer.addImport(nodeText(nameNode, analyzer.text), nodeText(importedNode, analyzer.text), module, false, typeOnly || elementTypeOnly)
+}
+
+func (analyzer *sourceAnalyzer) analyzeExportSpecifiers(statement codeparser.ViewNode) {
+	codeparser.WalkNamedView(statement, func(node codeparser.ViewNode) {
+		if node.Kind() != "export_specifier" {
+			return
+		}
+		local := node.ChildByFieldName("name")
+		exported := node.ChildByFieldName("alias")
+		if !exported.Valid() {
+			exported = local
+		}
+		localName, exportedName := nodeText(local, analyzer.text), nodeText(exported, analyzer.text)
+		if exportedName == "default" {
+			analyzer.result.DefaultExports[localName] = true
+			analyzer.result.DefaultExportVariants[analyzer.language+":"+localName] = true
+			analyzer.result.ModuleDefaultExports[analyzer.moduleID] = localName
+			analyzer.recordTypeScriptExport("default", localName)
+		} else if localName != "" {
+			analyzer.result.Exports[localName] = true
+			analyzer.result.ExportVariants[analyzer.language+":"+localName] = true
+			analyzer.recordTypeScriptExport(exportedName, localName)
+		}
+	})
+}
+
+func declarationKind(kind string) (string, bool) {
+	switch kind {
+	case "class_declaration", "abstract_class_declaration":
+		return "class", true
+	case "interface_declaration":
+		return "interface", true
+	default:
+		return "", false
+	}
+}
+
+func directHeritageName(node codeparser.ViewNode, source []byte) string {
+	candidate := node.ChildByFieldName("value")
+	if !candidate.Valid() {
+		candidate = node.ChildByFieldName("name")
+	}
+	if !candidate.Valid() && node.NamedChildCount() > 0 {
+		candidate = node.NamedChild(0)
+	}
+	if candidate.Valid() && candidate.Kind() == "generic_type" {
+		candidate = candidate.ChildByFieldName("name")
+	}
+	return strings.TrimSpace(nodeText(candidate, source))
+}
+
+func moduleLanguageDisplayName(language string) string {
+	if language == "javascript" {
+		return "JavaScript"
+	}
+	return "TypeScript"
+}
+
+func collectHeritage(node codeparser.ViewNode, source []byte, declaration *Declaration) {
+	codeparser.WalkNamedView(node, func(child codeparser.ViewNode) { processHeritageNode(child, source, declaration) })
+}
+
+func processHeritageNode(node codeparser.ViewNode, source []byte, declaration *Declaration) {
+	switch node.Kind() {
+	case "extends_clause", "extends_type_clause":
+		collectHeritageNames(node, source, declaration.Extends)
+	case "implements_clause":
+		collectHeritageNames(node, source, declaration.Implements)
+	}
+}
+
+func collectHeritageNames(clause codeparser.ViewNode, source []byte, result map[string]bool) {
+	for _, heritageType := range clause.NamedChildren() {
+		name := directHeritageName(heritageType, source)
+		if name == "" {
+			name = strings.TrimSpace(nodeText(heritageType, source))
+		}
+		if name != "" {
+			result[name] = true
+		}
+	}
+}
+
+func (analyzer *sourceAnalyzer) analyzeDeclaration(node codeparser.ViewNode, exported, defaultExport bool) {
+	kind, ok := declarationKind(node.Kind())
+	if !ok {
+		return
+	}
+	name := nodeText(node.ChildByFieldName("name"), analyzer.text)
+	if name == "" {
+		return
+	}
+	declaration := &Declaration{Name: name, Kind: kind, Language: analyzer.language, ModuleID: analyzer.moduleID, File: analyzer.result.SourcePaths[absolutePath(analyzer.source.Path)], Location: analyzer.location(node), Extends: map[string]bool{}, Implements: map[string]bool{}}
+	analyzer.collectMembers(node, declaration)
+	collectHeritage(node, analyzer.text, declaration)
+	key := analyzer.moduleID + ":" + name
+	if existing := analyzer.result.ModuleDeclarations[key]; existing != nil {
+		if existing.Kind == "interface" && declaration.Kind == "interface" {
+			mergeTypeScriptInterfaces(existing, declaration)
+		} else {
+			analyzer.result.duplicateErrors = append(analyzer.result.duplicateErrors, fmt.Sprintf("incompatible %s declarations %s in %s", moduleLanguageDisplayName(analyzer.language), name, analyzer.source.Path))
+		}
+		declaration = existing
+	} else {
+		analyzer.result.ModuleDeclarations[key] = declaration
+	}
+	collectHeritage(node, analyzer.text, declaration)
+	analyzer.result.ModuleDeclarations[analyzer.moduleID+":"+name] = declaration
+	analyzer.addSymbol(name, "class", node, codeparser.ViewNode{}, name)
+	analyzer.recordExport(name, exported, defaultExport)
+}
+
+func (analyzer *sourceAnalyzer) collectMembers(node codeparser.ViewNode, declaration *Declaration) {
+	body := node.ChildByFieldName("body")
+	if !body.Valid() {
+		return
+	}
+	for _, child := range body.NamedChildren() {
+		member, ok := memberFromNode(child, analyzer.text, analyzer.language)
+		if !ok {
+			continue
+		}
+		member.ModuleID = analyzer.moduleID
+		member.File = analyzer.result.SourcePaths[absolutePath(analyzer.source.Path)]
+		member.Location = analyzer.location(child)
+		declaration.Members = append(declaration.Members, member)
+		if member.Kind == "method" {
+			analyzer.addSymbol(declaration.Name+"."+member.Name, "method", child, child.ChildByFieldName("body"), declaration.Name)
+		}
+	}
+}
+
+func (analyzer *sourceAnalyzer) analyzeFunction(node codeparser.ViewNode, exported, defaultExport bool) {
+	if node.Kind() != "function_declaration" && node.Kind() != "function_signature" {
+		return
+	}
+	name := nodeText(node.ChildByFieldName("name"), analyzer.text)
+	if name == "" {
+		return
+	}
+	function := Member{Kind: "method", Name: name, Visibility: "public", Language: analyzer.language, ModuleID: analyzer.moduleID, File: analyzer.result.SourcePaths[absolutePath(analyzer.source.Path)], Location: analyzer.location(node), Async: childHasText(node, analyzer.text, "async"), Parameters: parameterTypes(node, analyzer.text), Type: nodeType(node, analyzer.text)}
+	analyzer.result.Functions[name] = append(analyzer.result.Functions[name], function)
+	analyzer.addSymbol(name, "function", node, node.ChildByFieldName("body"), "")
+	analyzer.recordExport(name, exported, defaultExport)
+}
+
+func (analyzer *sourceAnalyzer) recordExport(name string, exported, defaultExport bool) {
+	if exported {
+		analyzer.result.Exports[name] = true
+		analyzer.result.ExportVariants[analyzer.language+":"+name] = true
+		analyzer.recordTypeScriptExport(name, name)
+	}
+	if defaultExport {
+		analyzer.result.DefaultExports[name] = true
+		analyzer.result.DefaultExportVariants[analyzer.language+":"+name] = true
+		analyzer.result.ModuleDefaultExports[analyzer.moduleID] = name
+		analyzer.recordTypeScriptExport("default", name)
+	}
+}
+
+func (analyzer *sourceAnalyzer) recordTypeScriptExport(exported, local string) {
+	if analyzer.result.ModuleExports[analyzer.moduleID] == nil {
+		analyzer.result.ModuleExports[analyzer.moduleID] = map[string]bool{}
+	}
+	if analyzer.result.ModuleExportNames[analyzer.moduleID] == nil {
+		analyzer.result.ModuleExportNames[analyzer.moduleID] = map[string]string{}
+	}
+	analyzer.result.ModuleExports[analyzer.moduleID][local] = true
+	analyzer.result.ModuleExportNames[analyzer.moduleID][exported] = local
+}
+
+func (analyzer *sourceAnalyzer) analyzeTopLevel(statement codeparser.ViewNode) {
+	if statement.Kind() == "import_statement" {
+		analyzer.analyzeImport(statement)
+		return
+	}
+	exported, defaultExport := false, false
+	if statement.Kind() == "export_statement" {
+		analyzer.analyzeExportSpecifiers(statement)
+		exported = true
+		defaultExport = hasChildKind(statement, "default")
+		statement = statement.ChildByFieldName("declaration")
+		if !statement.Valid() {
+			return
+		}
+	}
+	analyzer.analyzeDeclaration(statement, exported, defaultExport)
+	analyzer.analyzeFunction(statement, exported, defaultExport)
+}
+
+func finalizeTypeScriptIndexes(result *Analysis) {
+	finalizeTypeScriptDeclarations(result)
+	finalizeTypeScriptSymbols(result)
+}
+
+func finalizeTypeScriptDeclarations(result *Analysis) {
+	groups := map[string][]*Declaration{}
+	for _, key := range sortedKeys(result.ModuleDeclarations) {
+		declaration := result.ModuleDeclarations[key]
+		group := declaration.Language + ":" + declaration.Name
+		groups[group] = append(groups[group], declaration)
+	}
+	for _, group := range sortedKeys(groups) {
+		declarations := groups[group]
+		name := declarations[0].Name
+		if len(declarations) == 1 {
+			result.Declarations[name] = declarations[0]
+			result.DeclarationVariants[group] = declarations[0]
+		} else {
+			delete(result.Declarations, name)
+			delete(result.DeclarationVariants, group)
+		}
+	}
+}
+
+func finalizeTypeScriptSymbols(result *Analysis) {
+	groups := map[string][]*Symbol{}
+	for _, key := range sortedKeys(result.ModuleSymbols) {
+		symbol := result.ModuleSymbols[key]
+		group := symbol.Language + ":" + symbol.Name
+		groups[group] = append(groups[group], symbol)
+	}
+	for _, group := range sortedKeys(groups) {
+		symbols := groups[group]
+		name := symbols[0].Name
+		if len(symbols) == 1 {
+			result.Symbols[name] = symbols[0]
+			result.SymbolVariants[group] = symbols[0]
+		} else {
+			delete(result.Symbols, name)
+			delete(result.SymbolVariants, group)
+		}
+	}
+}
+
+func parseSource(source Source) (*codeparser.Document, error) {
+	language := codeparser.LanguageFor(source.Path)
+	document, err := codeparser.ParseDocument(language, source.Text)
+	if err != nil {
+		return nil, fmt.Errorf("parse %s: %w", source.Path, err)
+	}
+	if document.Root().HasError() {
+		err = malformedSourceError(source.Path, document)
+		document.Close()
+		return nil, err
+	}
+	return document, nil
+}
+
+// Analyze parses supported sources with their Tree-sitter language adapters and builds a shared model.
+func Analyze(sources []Source) (*Analysis, error) {
+	result := newAnalysis()
+	definitions := registeredLanguages()
+	sessions := make(map[string]languageAnalysis, len(definitions))
+	for _, definition := range definitions {
+		sessions[definition.info.ID] = definition.newAnalysis(result, sources)
+	}
+	prepareSourcePaths(result, sources)
+	for _, source := range sources {
+		definition, ok := languageDefinitionForPath(source.Path)
+		if !ok || !definition.acceptsSource(source.Path) {
+			return nil, unsupportedLanguageError(source.Path)
+		}
+		if err := sessions[definition.info.ID].Analyze(source); err != nil {
+			return nil, err
+		}
+	}
+	if len(result.duplicateErrors) > 0 {
+		sort.Strings(result.duplicateErrors)
+		return nil, fmt.Errorf("%s", strings.Join(result.duplicateErrors, "; "))
+	}
+	for _, definition := range definitions {
+		if err := sessions[definition.info.ID].Finalize(); err != nil {
+			return nil, err
+		}
+	}
+	removeAmbiguousGenericEntries(result)
+	navigationSources := make([]navigation.TextSource, 0, len(sources))
+	for _, source := range sources {
+		navigationSources = append(navigationSources, navigation.TextSource{Path: source.Path, Text: source.Text})
+	}
+	result.Navigation, _ = navigation.BuildGraphFromTextSources(navigationSources, navigation.BuildOptions{})
+	projectNavigationGraph(result)
+	return result, nil
+}
+
+func removeAmbiguousGenericEntries(result *Analysis) {
+	declarationLanguages := map[string]map[string]bool{}
+	for _, declaration := range result.DeclarationVariants {
+		if declarationLanguages[declaration.Name] == nil {
+			declarationLanguages[declaration.Name] = map[string]bool{}
+		}
+		declarationLanguages[declaration.Name][declaration.Language] = true
+	}
+	for name, languages := range declarationLanguages {
+		if len(languages) > 1 {
+			delete(result.Declarations, name)
+		}
+	}
+	symbolLanguages := map[string]map[string]bool{}
+	for _, symbol := range result.SymbolVariants {
+		if symbolLanguages[symbol.Name] == nil {
+			symbolLanguages[symbol.Name] = map[string]bool{}
+		}
+		symbolLanguages[symbol.Name][symbol.Language] = true
+	}
+	for name, languages := range symbolLanguages {
+		if len(languages) > 1 {
+			delete(result.Symbols, name)
+		}
+	}
+}
+
+func analyzeECMAScriptSource(source Source, result *Analysis) error {
+	document, err := parseSource(source)
+	if err != nil {
+		return err
+	}
+	defer document.Close()
+	language := document.Language()
+	if language == "tsx" {
+		language = "typescript"
+	}
+	analyzer := sourceAnalyzer{result: result, source: source, text: []byte(source.Text), moduleID: absolutePath(source.Path), language: language}
+	if err := document.Read(func(view codeparser.DocumentView) error {
+		for _, statement := range view.Root().NamedChildren() {
+			analyzer.analyzeTopLevel(statement)
+		}
+		return nil
+	}); err != nil {
+		return err
+	}
+	graph, _ := codeparser.CachedNavigationGraphFromDocument(document, source.Path)
+	result.Navigation.Merge(graph)
+	return nil
+}
+
+func sortedKeys[V any](values map[string]V) []string {
+	result := make([]string, 0, len(values))
+	for key := range values {
+		result = append(result, key)
+	}
+	sort.Strings(result)
+	return result
+}
+
+func absolutePath(path string) string {
+	result, _ := filepath.Abs(path)
+	return result
+}

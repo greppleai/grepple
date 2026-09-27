@@ -12,10 +12,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/greppleai/grepple/api"
-	"github.com/greppleai/grepple/gritql"
-	"github.com/greppleai/grepple/gritqlapi"
-	"github.com/greppleai/grepple/search"
+	"github.com/greppleai/grepple/internal/gritql"
+	"github.com/greppleai/grepple/internal/gritqlapi"
+	"github.com/greppleai/grepple/internal/search"
+	"github.com/greppleai/grepple/internal/wire"
 
 	"github.com/alexflint/go-arg"
 )
@@ -112,13 +112,13 @@ func validateGritScope(values gritArgs) error {
 	if len(values.Repositories)+len(values.ExcludeRepositories) > 0 && !values.Remote && values.Server == "" {
 		return fmt.Errorf("structural repository selectors require --remote or --server")
 	}
-	if len(values.Globs)+len(values.ExcludeGlobs) > api.MaxGritGlobs || len(values.Repositories)+len(values.ExcludeRepositories) > api.MaxGritRepositories {
+	if len(values.Globs)+len(values.ExcludeGlobs) > wire.MaxGritGlobs || len(values.Repositories)+len(values.ExcludeRepositories) > wire.MaxGritRepositories {
 		return fmt.Errorf("structural scope contains too many values")
 	}
-	if err := validateGritValueLengths(values.Globs, values.ExcludeGlobs, api.MaxGritGlobBytes, "structural glob exceeds its maximum size"); err != nil {
+	if err := validateGritValueLengths(values.Globs, values.ExcludeGlobs, wire.MaxGritGlobBytes, "structural glob exceeds its maximum size"); err != nil {
 		return err
 	}
-	return validateGritValueLengths(values.Repositories, values.ExcludeRepositories, api.MaxGritRepositoryBytes, "repository identifier exceeds its maximum size")
+	return validateGritValueLengths(values.Repositories, values.ExcludeRepositories, wire.MaxGritRepositoryBytes, "repository identifier exceeds its maximum size")
 }
 
 func validateGritValueLengths(includes, excludes []string, maximum int, message string) error {
@@ -134,8 +134,8 @@ func validateGritLimits(values gritArgs) error {
 	if values.Skip < 0 || values.Limit < 0 {
 		return fmt.Errorf("--skip and --limit must not be negative")
 	}
-	if !values.Local && (values.Remote || values.Server != "") && values.Limit > api.MaxGritPageLimit {
-		return fmt.Errorf("remote structural --limit must not exceed %d", api.MaxGritPageLimit)
+	if !values.Local && (values.Remote || values.Server != "") && values.Limit > wire.MaxGritPageLimit {
+		return fmt.Errorf("remote structural --limit must not exceed %d", wire.MaxGritPageLimit)
 	}
 	if gritHasNegativeLimit(values) {
 		return fmt.Errorf("structural resource limits must not be negative")
@@ -143,7 +143,7 @@ func validateGritLimits(values gritArgs) error {
 	if values.TimeoutMilliseconds > 300_000 || values.MaxFileMilliseconds > 10_000 {
 		return fmt.Errorf("structural time limit exceeds its maximum")
 	}
-	if len(values.PatternID) > api.MaxGritPatternIDBytes || len(values.Message) > api.MaxGritMessageBytes {
+	if len(values.PatternID) > wire.MaxGritPatternIDBytes || len(values.Message) > wire.MaxGritMessageBytes {
 		return fmt.Errorf("structural pattern identifier or message exceeds its maximum size")
 	}
 	return nil
@@ -166,8 +166,8 @@ func gritHasNegativeLimit(values gritArgs) bool {
 
 func loadGritQuery(values gritArgs) (string, error) {
 	if values.QueryFile == "" {
-		if len(values.Query) > api.MaxGritQueryBytes {
-			return "", fmt.Errorf("structural query exceeds the %d-byte maximum", api.MaxGritQueryBytes)
+		if len(values.Query) > wire.MaxGritQueryBytes {
+			return "", fmt.Errorf("structural query exceeds the %d-byte maximum", wire.MaxGritQueryBytes)
 		}
 		return values.Query, nil
 	}
@@ -183,12 +183,12 @@ func loadGritQuery(values gritArgs) (string, error) {
 }
 
 func readGritQuery(reader io.Reader) (string, error) {
-	content, err := io.ReadAll(io.LimitReader(reader, api.MaxGritQueryBytes+1))
+	content, err := io.ReadAll(io.LimitReader(reader, wire.MaxGritQueryBytes+1))
 	if err != nil {
 		return "", err
 	}
-	if len(content) > api.MaxGritQueryBytes {
-		return "", fmt.Errorf("structural query exceeds the %d-byte maximum", api.MaxGritQueryBytes)
+	if len(content) > wire.MaxGritQueryBytes {
+		return "", fmt.Errorf("structural query exceeds the %d-byte maximum", wire.MaxGritQueryBytes)
 	}
 	return string(content), nil
 }
@@ -279,21 +279,21 @@ func compileGritQuery(values gritArgs) (string, *gritql.Program, error) {
 	return query, program, nil
 }
 
-func acquireGritLocal(ctx context.Context, values gritArgs, program *gritql.Program, dependencies Dependencies) (api.GritResponse, error) {
+func acquireGritLocal(ctx context.Context, values gritArgs, program *gritql.Program, dependencies Dependencies) (wire.GritResponse, error) {
 	if err := ctx.Err(); err != nil {
-		return api.GritResponse{}, err
+		return wire.GritResponse{}, err
 	}
 	cwd, err := os.Getwd()
 	if err != nil {
-		return api.GritResponse{}, err
+		return wire.GritResponse{}, err
 	}
 	candidates, err := gritCandidates(ctx, cwd, values.Globs, dependencies)
 	if err != nil {
-		return api.GritResponse{}, err
+		return wire.GritResponse{}, err
 	}
 	result := gritql.ScanFiles(ctx, os.DirFS(cwd), program, candidates, gritScanOptions(values))
 	if err := ctx.Err(); err != nil {
-		return api.GritResponse{}, err
+		return wire.GritResponse{}, err
 	}
 	response := gritResponse(result)
 	response.Total = len(response.Findings)
@@ -321,7 +321,7 @@ func gritCandidates(ctx context.Context, root string, globs []string, supplied .
 	return candidates, nil
 }
 
-func outputGritResponse(values gritArgs, response api.GritResponse, dependencies Dependencies) error {
+func outputGritResponse(values gritArgs, response wire.GritResponse, dependencies Dependencies) error {
 	if values.JSON {
 		if err := stdoutWriter(dependencies).writeJSON(response); err != nil {
 			return err
@@ -335,22 +335,22 @@ func outputGritResponse(values gritArgs, response api.GritResponse, dependencies
 	return nil
 }
 
-func gritRequest(values gritArgs, query string) api.GritRequest {
+func gritRequest(values gritArgs, query string) wire.GritRequest {
 	skip, limit := values.Skip, values.Limit
-	request := api.GritRequest{
-		Query: query, Compatibility: api.GritCompatibilityV1, PatternID: values.PatternID, Message: values.Message,
+	request := wire.GritRequest{
+		Query: query, Compatibility: wire.GritCompatibilityV1, PatternID: values.PatternID, Message: values.Message,
 		Globs: append([]string(nil), values.Globs...), ExcludeGlobs: append([]string(nil), values.ExcludeGlobs...),
 		Repositories: append([]string(nil), values.Repositories...), ExcludeRepositories: append([]string(nil), values.ExcludeRepositories...),
 		Skip: &skip, Limit: &limit,
 	}
-	limits := api.GritLimits{}
+	limits := wire.GritLimits{}
 	setGritIntLimits(&limits, values)
 	setGritInt64Limits(&limits, values)
 	request.Limits = &limits
 	return request
 }
 
-func setGritIntLimits(limits *api.GritLimits, values gritArgs) {
+func setGritIntLimits(limits *wire.GritLimits, values gritArgs) {
 	setPositiveInt(&limits.PatternBytes, values.MaxPatternBytes)
 	setPositiveInt(&limits.RegexBytes, values.MaxRegexBytes)
 	setPositiveInt(&limits.RegexInstructions, values.MaxRegexInstructions)
@@ -363,7 +363,7 @@ func setGritIntLimits(limits *api.GritLimits, values gritArgs) {
 	setPositiveInt(&limits.Workers, values.Workers)
 }
 
-func setGritInt64Limits(limits *api.GritLimits, values gritArgs) {
+func setGritInt64Limits(limits *wire.GritLimits, values gritArgs) {
 	setPositiveInt64(&limits.FileTimeMillis, values.MaxFileMilliseconds)
 	setPositiveInt64(&limits.BatchTimeMillis, values.TimeoutMilliseconds)
 	setPositiveInt64(&limits.TotalBytes, values.MaxTotalBytes)
@@ -422,7 +422,7 @@ func formatGritCompileError(err error) error {
 	return fmt.Errorf("%s at %d:%d: %s", compileError.Code, compileError.Range.Start.Line, compileError.Range.Start.Column, compileError.Message)
 }
 
-func windowGritFindings(findings []api.GritFinding, skip, limit int) []api.GritFinding {
+func windowGritFindings(findings []wire.GritFinding, skip, limit int) []wire.GritFinding {
 	if skip >= len(findings) {
 		return findings[:0]
 	}
@@ -433,7 +433,7 @@ func windowGritFindings(findings []api.GritFinding, skip, limit int) []api.GritF
 	return findings
 }
 
-func renderGritHuman(response api.GritResponse, maxOutputBytes int, supplied ...Dependencies) error {
+func renderGritHuman(response wire.GritResponse, maxOutputBytes int, supplied ...Dependencies) error {
 	dependencies := Dependencies{}
 	if len(supplied) > 0 {
 		dependencies = supplied[0]
@@ -454,7 +454,7 @@ func renderGritHuman(response api.GritResponse, maxOutputBytes int, supplied ...
 	return renderGritDiagnostics(newBoundedOutputWriter(stderr, maxOutputBytes), response)
 }
 
-func renderGritFinding(output *outputWriter, finding api.GritFinding) error {
+func renderGritFinding(output *outputWriter, finding wire.GritFinding) error {
 	rng := finding.Range
 	path := finding.Path
 	if finding.Repo != "" {
@@ -471,7 +471,7 @@ func renderGritFinding(output *outputWriter, finding api.GritFinding) error {
 	return nil
 }
 
-func renderGritDiagnostics(output *outputWriter, response api.GritResponse) error {
+func renderGritDiagnostics(output *outputWriter, response wire.GritResponse) error {
 	for _, diagnostic := range response.Diagnostics {
 		if err := output.writeString(fmt.Sprintf("%s: %s\n", diagnostic.Code, diagnostic.Message)); err != nil {
 			return err
@@ -495,6 +495,6 @@ func renderGritDiagnostics(output *outputWriter, response api.GritResponse) erro
 	return nil
 }
 
-func gritResponse(result gritql.ScanResult) api.GritResponse {
+func gritResponse(result gritql.ScanResult) wire.GritResponse {
 	return gritqlapi.Response(result)
 }

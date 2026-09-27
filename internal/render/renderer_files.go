@@ -1,6 +1,6 @@
 package render
 
-import "github.com/greppleai/grepple/search"
+import "github.com/greppleai/grepple/internal/search"
 
 type filesRenderer struct {
 	output *outputWriter

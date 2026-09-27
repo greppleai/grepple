@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/greppleai/grepple/parser"
+	"github.com/greppleai/grepple/internal/parser"
 )
 
 // BoundaryCandidate describes a workflow implemented by symbols from one owner

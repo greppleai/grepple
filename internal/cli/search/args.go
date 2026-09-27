@@ -7,7 +7,7 @@ import (
 
 	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
 	rendercommand "github.com/greppleai/grepple/internal/render"
-	"github.com/greppleai/grepple/search"
+	"github.com/greppleai/grepple/internal/search"
 
 	"github.com/alexflint/go-arg"
 )

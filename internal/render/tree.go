@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/greppleai/grepple/api"
+	"github.com/greppleai/grepple/internal/wire"
 	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
 )
 
@@ -21,7 +21,7 @@ type treeNode struct {
 
 // Tree renders a tree response as JSON or as a repository header followed by
 // a directory-first, indented tree.
-func Tree(data api.TreeResponse, destination io.Writer, jsonMode bool) error {
+func Tree(data wire.TreeResponse, destination io.Writer, jsonMode bool) error {
 	output := cliruntime.NewOutput(destination)
 	if jsonMode {
 		return output.WriteJSON(data)
@@ -42,7 +42,7 @@ func Tree(data api.TreeResponse, destination io.Writer, jsonMode bool) error {
 
 // buildTree folds the flat entry list into a treeNode hierarchy; intermediate
 // path components become directory nodes.
-func buildTree(entries []api.TreeEntry) *treeNode {
+func buildTree(entries []wire.TreeEntry) *treeNode {
 	root := &treeNode{children: map[string]*treeNode{}}
 	for _, entry := range entries {
 		parts := strings.Split(entry.Path, "/")

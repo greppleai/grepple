@@ -2,7 +2,7 @@ package search
 
 import (
 	"encoding/json"
-	"github.com/greppleai/grepple/api"
+	"github.com/greppleai/grepple/internal/wire"
 	"strings"
 	"testing"
 )
@@ -16,7 +16,7 @@ func TestSearchJSONIncludesStandardPagingMetadata(t *testing.T) {
 			t.Fatal(err)
 		}
 	})
-	var response api.SearchResponse
+	var response wire.SearchResponse
 	if err := json.Unmarshal([]byte(output), &response); err != nil {
 		t.Fatal(err)
 	}

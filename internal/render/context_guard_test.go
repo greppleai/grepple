@@ -11,15 +11,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/greppleai/grepple/api"
-	searchengine "github.com/greppleai/grepple/search"
+	"github.com/greppleai/grepple/internal/wire"
+	searchengine "github.com/greppleai/grepple/internal/search"
 )
 
 func TestSegmentContextGuardOmitsUnchangedCompleteDeclaration(t *testing.T) {
 	directory := t.TempDir()
 	t.Setenv("GREPPLE_CONTEXT_GUARD_DIR", directory)
-	segment := api.ResultSegment{Kind: "lines", Start: 10, End: 12, Text: "type Something struct {\n\tName string // " + strings.Repeat("unchanged declaration detail ", 8) + "\n}"}
-	result := api.FileResult{Path: "model.go", Segments: []api.ResultSegment{segment}}
+	segment := wire.ResultSegment{Kind: "lines", Start: 10, End: 12, Text: "type Something struct {\n\tName string // " + strings.Repeat("unchanged declaration detail ", 8) + "\n}"}
+	result := wire.FileResult{Path: "model.go", Segments: []wire.ResultSegment{segment}}
 	first := renderWithSegmentGuard(t, result)
 	if !strings.Contains(first, "type Something struct") {
 		t.Fatalf("first declaration missing: %q", first)
@@ -50,12 +50,12 @@ func TestSegmentContextGuardOmitsUnchangedCompleteDeclaration(t *testing.T) {
 
 func TestSegmentContextGuardEmitsChangedDeclaration(t *testing.T) {
 	t.Setenv("GREPPLE_CONTEXT_GUARD_DIR", t.TempDir())
-	original := api.FileResult{Path: "service.go", Segments: []api.ResultSegment{{Kind: "function", Start: 4, End: 6, Text: "func Run() {\n\toldCall()\n}"}}}
+	original := wire.FileResult{Path: "service.go", Segments: []wire.ResultSegment{{Kind: "function", Start: 4, End: 6, Text: "func Run() {\n\toldCall()\n}"}}}
 	if output := renderWithSegmentGuard(t, original); !strings.Contains(output, "oldCall") {
 		t.Fatalf("original missing: %q", output)
 	}
 	changed := original
-	changed.Segments = []api.ResultSegment{{Kind: "function", Start: 4, End: 6, Text: "func Run() {\n\tnewCall()\n}"}}
+	changed.Segments = []wire.ResultSegment{{Kind: "function", Start: 4, End: 6, Text: "func Run() {\n\tnewCall()\n}"}}
 	if output := renderWithSegmentGuard(t, changed); !strings.Contains(output, "newCall") || strings.Contains(output, "already emitted") {
 		t.Fatalf("changed declaration was suppressed: %q", output)
 	}
@@ -63,11 +63,11 @@ func TestSegmentContextGuardEmitsChangedDeclaration(t *testing.T) {
 
 func TestSegmentContextGuardOmitsExactExternalTypeBody(t *testing.T) {
 	t.Setenv("GREPPLE_CONTEXT_GUARD_DIR", t.TempDir())
-	artifact := &api.NavigationArtifactIdentity{Module: "client", Version: "1.0.0", Commit: "one", Digest: "artifact-one", Repository: "acme/client@tag~v1.0.0"}
-	segment := api.ResultSegment{Kind: "lines", Start: 20, End: 22, Text: "export interface Client {\n  request(): Promise<Response>\n}"}
-	result := api.FileResult{Path: "consumer.ts", Related: []api.RelatedSymbol{{
+	artifact := &wire.NavigationArtifactIdentity{Module: "client", Version: "1.0.0", Commit: "one", Digest: "artifact-one", Repository: "acme/client@tag~v1.0.0"}
+	segment := wire.ResultSegment{Kind: "lines", Start: 20, End: 22, Text: "export interface Client {\n  request(): Promise<Response>\n}"}
+	result := wire.FileResult{Path: "consumer.ts", Related: []wire.RelatedSymbol{{
 		Name: "Client", Path: "src/client.ts", Direction: "type", Role: "parameter", Start: 20, End: 22,
-		Artifact: artifact, Segments: []api.ResultSegment{segment},
+		Artifact: artifact, Segments: []wire.ResultSegment{segment},
 	}}}
 	first := renderWithSegmentGuard(t, result)
 	if !strings.Contains(first, "export interface Client") {
@@ -84,10 +84,10 @@ func TestSegmentContextGuardOmitsExactExternalTypeBody(t *testing.T) {
 
 func TestSegmentContextGuardUsesExactArtifactIdentity(t *testing.T) {
 	t.Setenv("GREPPLE_CONTEXT_GUARD_DIR", t.TempDir())
-	segment := api.ResultSegment{Kind: "lines", Start: 1, End: 1, Text: "export interface Client {}"}
-	first := &api.NavigationArtifactIdentity{Module: "client", Version: "1.0.0", Commit: "one", Digest: "artifact-one", Source: "https://registry.npmjs.org"}
-	second := &api.NavigationArtifactIdentity{Module: "client", Version: "1.0.0", Commit: "one", Digest: "artifact-one", Source: "https://npm.example.test"}
-	third := &api.NavigationArtifactIdentity{Module: "client", Version: "2.0.0", Commit: "two", Digest: "artifact-two", Source: "https://registry.npmjs.org"}
+	segment := wire.ResultSegment{Kind: "lines", Start: 1, End: 1, Text: "export interface Client {}"}
+	first := &wire.NavigationArtifactIdentity{Module: "client", Version: "1.0.0", Commit: "one", Digest: "artifact-one", Source: "https://registry.npmjs.org"}
+	second := &wire.NavigationArtifactIdentity{Module: "client", Version: "1.0.0", Commit: "one", Digest: "artifact-one", Source: "https://npm.example.test"}
+	third := &wire.NavigationArtifactIdentity{Module: "client", Version: "2.0.0", Commit: "two", Digest: "artifact-two", Source: "https://registry.npmjs.org"}
 	guard, err := openSegmentContextGuard()
 	if err != nil {
 		t.Fatal(err)
@@ -114,7 +114,7 @@ func TestSegmentContextGuardUsesExactArtifactIdentity(t *testing.T) {
 }
 
 func TestSegmentContextGuardRejectsPartialRanges(t *testing.T) {
-	partial := api.ResultSegment{Kind: "lines", Start: 10, End: 20, Text: "only one returned line"}
+	partial := wire.ResultSegment{Kind: "lines", Start: 10, End: 20, Text: "only one returned line"}
 	if completeStructuralSegment(partial) {
 		t.Fatal("partial range treated as a complete declaration")
 	}
@@ -123,7 +123,7 @@ func TestSegmentContextGuardRejectsPartialRanges(t *testing.T) {
 func TestSegmentContextInvalidationRotatesStatsAndRestoresDeclaration(t *testing.T) {
 	directory := t.TempDir()
 	t.Setenv("GREPPLE_CONTEXT_GUARD_DIR", directory)
-	result := api.FileResult{Path: "model.go", Segments: []api.ResultSegment{{Kind: "lines", Start: 1, End: 1, Text: "type Model struct{}"}}}
+	result := wire.FileResult{Path: "model.go", Segments: []wire.ResultSegment{{Kind: "lines", Start: 1, End: 1, Text: "type Model struct{}"}}}
 	renderWithSegmentGuard(t, result)
 	if err := invalidateRenderedContext("compact"); err != nil {
 		t.Fatal(err)
@@ -144,7 +144,7 @@ func TestContextGuardIsDisabledForPotentiallySpilledResult(t *testing.T) {
 	activeInlineOutputThreshold = 1
 	defer func() { activeInlineOutputThreshold = previous }()
 	options := &cliOptions{JSON: "off"}
-	results := []api.FileResult{{Path: "large.go", Segments: []api.ResultSegment{{Kind: "lines", Start: 1, End: 1, Text: "type Large struct{}"}}}}
+	results := []wire.FileResult{{Path: "large.go", Segments: []wire.ResultSegment{{Kind: "lines", Start: 1, End: 1, Text: "type Large struct{}"}}}}
 	guard := contextGuardForResults(options, results)
 	if guard == nil || guard.deduplicate || guard.bypassReason != "potential-spill" {
 		t.Fatalf("potential spill was not tracked as a bypass: %#v", guard)
@@ -165,7 +165,7 @@ func TestContextGuardRecordsNonStructuralSearchCalls(t *testing.T) {
 	previous := activeInlineOutputThreshold
 	activeInlineOutputThreshold = 1024
 	defer func() { activeInlineOutputThreshold = previous }()
-	guard := contextGuardForResults(&cliOptions{JSON: "off", LineOnly: true}, []api.FileResult{{Path: "one.go"}, {Path: "two.go"}})
+	guard := contextGuardForResults(&cliOptions{JSON: "off", LineOnly: true}, []wire.FileResult{{Path: "one.go"}, {Path: "two.go"}})
 	if guard == nil || guard.deduplicate || guard.bypassReason != "non-structural" {
 		t.Fatalf("non-structural call was not tracked: %#v", guard)
 	}
@@ -183,14 +183,14 @@ func TestRepeatSourceBypassesAndRecordsContextCache(t *testing.T) {
 	previous := activeInlineOutputThreshold
 	activeInlineOutputThreshold = 4096
 	defer func() { activeInlineOutputThreshold = previous }()
-	result := api.FileResult{Path: "repeat.go", Segments: []api.ResultSegment{{Kind: "function", Start: 1, End: 1, Text: "func Repeat() {}"}}}
+	result := wire.FileResult{Path: "repeat.go", Segments: []wire.ResultSegment{{Kind: "function", Start: 1, End: 1, Text: "func Repeat() {}"}}}
 	renderWithSegmentGuard(t, result)
-	guard := contextGuardForResults(&cliOptions{JSON: "off", RepeatSource: true}, []api.FileResult{result})
+	guard := contextGuardForResults(&cliOptions{JSON: "off", RepeatSource: true}, []wire.FileResult{result})
 	if guard == nil || guard.deduplicate || !guard.recordSegments || guard.bypassReason != "requested" {
 		t.Fatalf("repeat-source guard = %#v", guard)
 	}
 	var output bytes.Buffer
-	if err := (segmentRenderer{output: newOutputWriter(&output), contextGuard: guard}).Render([]api.FileResult{result}); err != nil {
+	if err := (segmentRenderer{output: newOutputWriter(&output), contextGuard: guard}).Render([]wire.FileResult{result}); err != nil {
 		t.Fatal(err)
 	}
 	guard.returnedBytes = output.Len()
@@ -212,8 +212,8 @@ func TestWriteAnchorsCompletePreviouslyEmittedSegmentCoverage(t *testing.T) {
 	defer func() { activeInlineOutputThreshold = previous }()
 	root := t.TempDir()
 	path := filepath.Join(root, "service.go")
-	oldSegment := api.ResultSegment{Kind: "function", Start: 1, End: 3, Text: "func Run() {\n\toldCall()\n}"}
-	renderWithSegmentGuard(t, api.FileResult{Path: path, Segments: []api.ResultSegment{oldSegment}})
+	oldSegment := wire.ResultSegment{Kind: "function", Start: 1, End: 3, Text: "func Run() {\n\toldCall()\n}"}
+	renderWithSegmentGuard(t, wire.FileResult{Path: path, Segments: []wire.ResultSegment{oldSegment}})
 	RecordWriteResponse(root, []WriteFile{{Path: "service.go", Operation: "edit", Changed: true, Anchors: []WriteAnchor{{Line: 2, Content: "\tnewCall()"}}}}, 100, true, false, true, true, activeInlineOutputThreshold)
 	cacheContent, err := os.ReadFile(filepath.Join(directory, "cache.json"))
 	if err != nil {
@@ -222,7 +222,7 @@ func TestWriteAnchorsCompletePreviouslyEmittedSegmentCoverage(t *testing.T) {
 	if strings.Contains(string(cacheContent), "newCall") {
 		t.Fatalf("write coverage persisted source text: %s", cacheContent)
 	}
-	newSegment := api.ResultSegment{Kind: "function", Start: 1, End: 3, Text: "func Run() {\n\tnewCall()\n}"}
+	newSegment := wire.ResultSegment{Kind: "function", Start: 1, End: 3, Text: "func Run() {\n\tnewCall()\n}"}
 	guard, err := openSegmentContextGuard()
 	if err != nil {
 		t.Fatal(err)
@@ -244,8 +244,8 @@ func TestCompactWriteReceiptsInvalidateOldSourceCoverage(t *testing.T) {
 			t.Setenv("GREPPLE_CONTEXT_GUARD_DIR", t.TempDir())
 			root := t.TempDir()
 			path := filepath.Join(root, "service.go")
-			oldSegment := api.ResultSegment{Kind: "function", Start: 1, End: 3, Text: "func Run() {\n\toldCall()\n}"}
-			renderWithSegmentGuard(t, api.FileResult{Path: path, Segments: []api.ResultSegment{oldSegment}})
+			oldSegment := wire.ResultSegment{Kind: "function", Start: 1, End: 3, Text: "func Run() {\n\toldCall()\n}"}
+			renderWithSegmentGuard(t, wire.FileResult{Path: path, Segments: []wire.ResultSegment{oldSegment}})
 			RecordWriteResponse(root, []WriteFile{{Path: "service.go", Operation: operation, Changed: true}}, 60, true, false, false, true, activeInlineOutputThreshold)
 			guard, err := openSegmentContextGuard()
 			if err != nil {
@@ -255,7 +255,7 @@ func TestCompactWriteReceiptsInvalidateOldSourceCoverage(t *testing.T) {
 			if _, exists := guard.cache.Files[path]; exists {
 				t.Fatalf("stale line coverage survived compact %s receipt", operation)
 			}
-			changedSegment := api.ResultSegment{Kind: "function", Start: 1, End: 3, Text: "func Run() {\n\tnewCall()\n}"}
+			changedSegment := wire.ResultSegment{Kind: "function", Start: 1, End: 3, Text: "func Run() {\n\tnewCall()\n}"}
 			if guard.seen(path, nil, changedSegment) {
 				t.Fatalf("changed source incorrectly covered after compact %s receipt", operation)
 			}
@@ -309,7 +309,7 @@ func TestWriteAnchorsDoNotSuppressPartiallyCoveredSegment(t *testing.T) {
 	}
 	path := filepath.Join(t.TempDir(), "partial.go")
 	guard.recordWriteAnchors(path, []WriteAnchor{{Line: 2, Content: "\tcovered()"}})
-	segment := api.ResultSegment{Kind: "function", Start: 1, End: 3, Text: "func Partial() {\n\tcovered()\n}"}
+	segment := wire.ResultSegment{Kind: "function", Start: 1, End: 3, Text: "func Partial() {\n\tcovered()\n}"}
 	if guard.seen(path, nil, segment) {
 		guard.close()
 		t.Fatal("partial write coverage suppressed a complete declaration")
@@ -325,7 +325,7 @@ func TestCompleteJSONProducesCoverageWithoutChangingOutput(t *testing.T) {
 	defer func() { activeInlineOutputThreshold = previous }()
 	lineResult, segment, _ := focusedLineCoverageFixture(t)
 	result := lineResult
-	result.Segments = []api.ResultSegment{segment}
+	result.Segments = []wire.ResultSegment{segment}
 	first := renderCompleteJSONWithGuard(t, result)
 	second := renderCompleteJSONWithGuard(t, result)
 	if first != second || !strings.Contains(second, "lineThree") || strings.Contains(second, "omitted; unchanged") {
@@ -352,14 +352,14 @@ func TestJSONProducerRequiresCompleteInlineOutput(t *testing.T) {
 	activeInlineOutputThreshold = 4096
 	defer func() { activeInlineOutputThreshold = previous }()
 	result, segment, _ := focusedLineCoverageFixture(t)
-	result.Segments = []api.ResultSegment{segment}
-	matchesOnly := contextGuardForResults(&cliOptions{JSON: "matches"}, []api.FileResult{result})
+	result.Segments = []wire.ResultSegment{segment}
+	matchesOnly := contextGuardForResults(&cliOptions{JSON: "matches"}, []wire.FileResult{result})
 	if matchesOnly == nil || matchesOnly.recordLines || matchesOnly.recordSegments {
 		t.Fatalf("JSON matches unexpectedly produced coverage: %#v", matchesOnly)
 	}
 	matchesOnly.close()
 	activeInlineOutputThreshold = 1
-	complete := contextGuardForResults(&cliOptions{JSON: "full"}, []api.FileResult{result})
+	complete := contextGuardForResults(&cliOptions{JSON: "full"}, []wire.FileResult{result})
 	if complete == nil || complete.recordLines || complete.recordSegments || complete.bypassReason != "potential-spill" {
 		t.Fatalf("spilled complete JSON guard = %#v", complete)
 	}
@@ -405,7 +405,7 @@ func TestEnclosingProducerDoesNotRecordPotentiallySpilledRows(t *testing.T) {
 	result, _, _ := focusedLineCoverageFixture(t)
 	options := &cliOptions{JSON: "off", LineOnly: true}
 	options.Params.EnclosingRanges = true
-	guard := contextGuardForResults(options, []api.FileResult{result})
+	guard := contextGuardForResults(options, []wire.FileResult{result})
 	if guard == nil || guard.recordLines || guard.bypassReason != "potential-spill" {
 		t.Fatalf("enclosing potential-spill guard = %#v", guard)
 	}
@@ -419,11 +419,11 @@ func TestAnchoredContextReadProducesCoverageWithoutChangingOutput(t *testing.T) 
 	activeInlineOutputThreshold = 4096
 	defer func() { activeInlineOutputThreshold = previous }()
 	lineResult, segment, anchors := focusedLineCoverageFixture(t)
-	contextLines := make([]api.ContextLine, len(lineResult.Matches))
+	contextLines := make([]wire.ContextLine, len(lineResult.Matches))
 	for index, match := range lineResult.Matches {
-		contextLines[index] = api.ContextLine{Line: match.Line, Text: match.Text, Match: index == 3}
+		contextLines[index] = wire.ContextLine{Line: match.Line, Text: match.Text, Match: index == 3}
 	}
-	result := api.FileResult{Path: lineResult.Path, Context: contextLines}
+	result := wire.FileResult{Path: lineResult.Path, Context: contextLines}
 	first := renderContextWithGuard(t, result, anchors)
 	second := renderContextWithGuard(t, result, anchors)
 	if first != second || strings.Contains(second, "omitted; unchanged") || !strings.Contains(second, "lineThree") {
@@ -450,10 +450,10 @@ func TestContextProducerDoesNotRecordPotentiallySpilledRows(t *testing.T) {
 	activeInlineOutputThreshold = 1
 	defer func() { activeInlineOutputThreshold = previous }()
 	lineResult, _, anchors := focusedLineCoverageFixture(t)
-	result := api.FileResult{Path: lineResult.Path, Context: []api.ContextLine{{Line: 1, Text: "lineOne", Match: true}}}
+	result := wire.FileResult{Path: lineResult.Path, Context: []wire.ContextLine{{Line: 1, Text: "lineOne", Match: true}}}
 	options := &cliOptions{JSON: "off", AnchorLines: anchors}
 	options.Params.BeforeContext = 1
-	guard := contextGuardForResults(options, []api.FileResult{result})
+	guard := contextGuardForResults(options, []wire.FileResult{result})
 	if guard == nil || guard.recordLines || guard.bypassReason != "potential-spill" {
 		t.Fatalf("context potential-spill guard = %#v", guard)
 	}
@@ -466,7 +466,7 @@ func TestBroadLineProducerDoesNotRecordPotentiallySpilledRows(t *testing.T) {
 	activeInlineOutputThreshold = 1
 	defer func() { activeInlineOutputThreshold = previous }()
 	result, _, anchors := focusedLineCoverageFixture(t)
-	guard := contextGuardForResults(&cliOptions{JSON: "off", LineOnly: true, AnchorLines: anchors}, []api.FileResult{result})
+	guard := contextGuardForResults(&cliOptions{JSON: "off", LineOnly: true, AnchorLines: anchors}, []wire.FileResult{result})
 	if guard == nil || guard.recordLines || guard.bypassReason != "potential-spill" {
 		t.Fatalf("broad potential-spill guard = %#v", guard)
 	}
@@ -556,7 +556,7 @@ func TestStructuralCoverageCollapsesFocusedAtRange(t *testing.T) {
 	activeInlineOutputThreshold = 4096
 	defer func() { activeInlineOutputThreshold = previous }()
 	result, segment, anchors := focusedLineCoverageFixture(t)
-	renderWithSegmentGuard(t, api.FileResult{Path: result.Path, Segments: []api.ResultSegment{segment}})
+	renderWithSegmentGuard(t, wire.FileResult{Path: result.Path, Segments: []wire.ResultSegment{segment}})
 	output := renderFocusedAtWithGuard(t, result, anchors, false)
 	if !strings.Contains(output, "lines 2-7 omitted; unchanged anchored source already exists in context") {
 		t.Fatalf("focused range was not collapsed: %q", output)
@@ -606,12 +606,12 @@ func TestPartialFocusedCoverageCollapsesStructuralRuns(t *testing.T) {
 		guard.recordWriteAnchors(result.Path, []WriteAnchor{{Line: match.Line, Content: match.Text}})
 	}
 	guard.close()
-	guard = contextGuardForResults(&cliOptions{JSON: "off", AnchorLines: anchors}, []api.FileResult{{Path: result.Path, Segments: []api.ResultSegment{segment}}})
+	guard = contextGuardForResults(&cliOptions{JSON: "off", AnchorLines: anchors}, []wire.FileResult{{Path: result.Path, Segments: []wire.ResultSegment{segment}}})
 	if guard == nil {
 		t.Fatal("structural context guard was not enabled")
 	}
 	var output bytes.Buffer
-	if err := (segmentRenderer{output: newOutputWriter(&output), anchors: anchors, contextGuard: guard}).Render([]api.FileResult{{Path: result.Path, Segments: []api.ResultSegment{segment}}}); err != nil {
+	if err := (segmentRenderer{output: newOutputWriter(&output), anchors: anchors, contextGuard: guard}).Render([]wire.FileResult{{Path: result.Path, Segments: []wire.ResultSegment{segment}}}); err != nil {
 		guard.close()
 		t.Fatal(err)
 	}
@@ -628,7 +628,7 @@ func TestRepeatSourceRestoresFocusedAtRange(t *testing.T) {
 	activeInlineOutputThreshold = 4096
 	defer func() { activeInlineOutputThreshold = previous }()
 	result, segment, anchors := focusedLineCoverageFixture(t)
-	renderWithSegmentGuard(t, api.FileResult{Path: result.Path, Segments: []api.ResultSegment{segment}})
+	renderWithSegmentGuard(t, wire.FileResult{Path: result.Path, Segments: []wire.ResultSegment{segment}})
 	output := renderFocusedAtWithGuard(t, result, anchors, true)
 	if strings.Contains(output, "omitted; unchanged") || !strings.Contains(output, "lineThree") {
 		t.Fatalf("--repeat-source did not restore focused lines: %q", output)
@@ -639,30 +639,30 @@ func TestRepeatSourceRestoresFocusedAtRange(t *testing.T) {
 	}
 }
 
-func focusedLineCoverageFixture(t *testing.T) (api.FileResult, api.ResultSegment, AnchorLookup) {
+func focusedLineCoverageFixture(t *testing.T) (wire.FileResult, wire.ResultSegment, AnchorLookup) {
 	t.Helper()
 	path := filepath.Join(t.TempDir(), "focused.go")
 	lines := []string{"lineOne", "lineTwo", "lineThree", "lineFour", "lineFive", "lineSix", "lineSeven", "lineEight"}
-	matches := make([]api.ResultMatch, 0, len(lines))
+	matches := make([]wire.ResultMatch, 0, len(lines))
 	anchors := AnchorLookup{path: map[int]string{}}
 	for index, line := range lines {
 		lineNumber := index + 1
-		matches = append(matches, api.ResultMatch{Line: lineNumber, Text: line})
+		matches = append(matches, wire.ResultMatch{Line: lineNumber, Text: line})
 		anchors[path][lineNumber] = fmt.Sprintf("h%02d", lineNumber)
 	}
-	return api.FileResult{Path: path, Matches: matches}, api.ResultSegment{Kind: "function", Start: 1, End: len(lines), Text: strings.Join(lines, "\n")}, anchors
+	return wire.FileResult{Path: path, Matches: matches}, wire.ResultSegment{Kind: "function", Start: 1, End: len(lines), Text: strings.Join(lines, "\n")}, anchors
 }
 
-func renderCompleteJSONWithGuard(t *testing.T, result api.FileResult) string {
+func renderCompleteJSONWithGuard(t *testing.T, result wire.FileResult) string {
 	t.Helper()
 	options := &cliOptions{JSON: "full"}
-	guard := contextGuardForResults(options, []api.FileResult{result})
+	guard := contextGuardForResults(options, []wire.FileResult{result})
 	if guard == nil || !guard.recordLines || !guard.recordSegments || guard.deduplicate {
 		t.Fatalf("complete JSON producer guard = %#v", guard)
 	}
 	var output bytes.Buffer
 	renderer := jsonResultRenderer{output: newOutputWriter(&output), contextGuard: guard}
-	if err := renderer.Render([]api.FileResult{result}); err != nil {
+	if err := renderer.Render([]wire.FileResult{result}); err != nil {
 		guard.close()
 		t.Fatal(err)
 	}
@@ -671,17 +671,17 @@ func renderCompleteJSONWithGuard(t *testing.T, result api.FileResult) string {
 	return output.String()
 }
 
-func renderEnclosingLinesWithGuard(t *testing.T, result api.FileResult) string {
+func renderEnclosingLinesWithGuard(t *testing.T, result wire.FileResult) string {
 	t.Helper()
 	options := &cliOptions{JSON: "off", LineOnly: true}
 	options.Params.EnclosingRanges = true
-	guard := contextGuardForResults(options, []api.FileResult{result})
+	guard := contextGuardForResults(options, []wire.FileResult{result})
 	if guard == nil || !guard.recordLines || guard.deduplicate {
 		t.Fatalf("enclosing producer guard = %#v", guard)
 	}
 	var output bytes.Buffer
 	renderer := lineRenderer{output: newOutputWriter(&output), contextGuard: guard}
-	if err := renderer.Render([]api.FileResult{result}); err != nil {
+	if err := renderer.Render([]wire.FileResult{result}); err != nil {
 		guard.close()
 		t.Fatal(err)
 	}
@@ -690,17 +690,17 @@ func renderEnclosingLinesWithGuard(t *testing.T, result api.FileResult) string {
 	return output.String()
 }
 
-func renderContextWithGuard(t *testing.T, result api.FileResult, anchors AnchorLookup) string {
+func renderContextWithGuard(t *testing.T, result wire.FileResult, anchors AnchorLookup) string {
 	t.Helper()
 	options := &cliOptions{JSON: "off", AnchorLines: anchors}
 	options.Params.BeforeContext = 1
-	guard := contextGuardForResults(options, []api.FileResult{result})
+	guard := contextGuardForResults(options, []wire.FileResult{result})
 	if guard == nil || !guard.recordLines || guard.deduplicate {
 		t.Fatalf("context producer guard = %#v", guard)
 	}
 	var output bytes.Buffer
 	renderer := contextRenderer{output: newOutputWriter(&output), anchors: anchors, contextGuard: guard}
-	if err := renderer.Render([]api.FileResult{result}); err != nil {
+	if err := renderer.Render([]wire.FileResult{result}); err != nil {
 		guard.close()
 		t.Fatal(err)
 	}
@@ -709,16 +709,16 @@ func renderContextWithGuard(t *testing.T, result api.FileResult, anchors AnchorL
 	return output.String()
 }
 
-func renderBroadLinesWithGuard(t *testing.T, result api.FileResult, anchors AnchorLookup) string {
+func renderBroadLinesWithGuard(t *testing.T, result wire.FileResult, anchors AnchorLookup) string {
 	t.Helper()
 	options := &cliOptions{JSON: "off", LineOnly: true, AnchorLines: anchors}
-	guard := contextGuardForResults(options, []api.FileResult{result})
+	guard := contextGuardForResults(options, []wire.FileResult{result})
 	if guard == nil || !guard.recordLines || guard.deduplicate {
 		t.Fatalf("broad line producer guard = %#v", guard)
 	}
 	var output bytes.Buffer
 	renderer := lineRenderer{output: newOutputWriter(&output), anchors: anchors, contextGuard: guard}
-	if err := renderer.Render([]api.FileResult{result}); err != nil {
+	if err := renderer.Render([]wire.FileResult{result}); err != nil {
 		guard.close()
 		t.Fatal(err)
 	}
@@ -727,17 +727,17 @@ func renderBroadLinesWithGuard(t *testing.T, result api.FileResult, anchors Anch
 	return output.String()
 }
 
-func renderFocusedAtWithGuard(t *testing.T, result api.FileResult, anchors AnchorLookup, repeat bool) string {
+func renderFocusedAtWithGuard(t *testing.T, result wire.FileResult, anchors AnchorLookup, repeat bool) string {
 	t.Helper()
 	options := &cliOptions{JSON: "off", LineOnly: true, RepeatSource: repeat, AnchorLines: anchors}
 	options.Params.At = result.Path + ":1-8"
-	guard := contextGuardForResults(options, []api.FileResult{result})
+	guard := contextGuardForResults(options, []wire.FileResult{result})
 	if guard == nil {
 		t.Fatal("focused line context guard was not enabled")
 	}
 	var output bytes.Buffer
 	renderer := lineRenderer{output: newOutputWriter(&output), anchors: anchors, contextGuard: guard, repeatSource: repeat}
-	if err := renderer.Render([]api.FileResult{result}); err != nil {
+	if err := renderer.Render([]wire.FileResult{result}); err != nil {
 		guard.close()
 		t.Fatal(err)
 	}
@@ -891,17 +891,17 @@ func TestRelatedCallablePreviewDoesNotContributeContextCoverage(t *testing.T) {
 	directory := t.TempDir()
 	t.Setenv("GREPPLE_CONTEXT_GUARD_DIR", directory)
 	path := filepath.Join(t.TempDir(), "callee.go")
-	segment := api.ResultSegment{Kind: "function", Start: 1, End: 3, Text: "func Callee() {\n\twork()\n}"}
+	segment := wire.ResultSegment{Kind: "function", Start: 1, End: 3, Text: "func Callee() {\n\twork()\n}"}
 	guard, err := openSegmentContextGuard()
 	if err != nil {
 		t.Fatal(err)
 	}
 	var output bytes.Buffer
 	renderer := segmentRenderer{output: newOutputWriter(&output), contextGuard: guard}
-	result := api.FileResult{Path: "caller.go", Related: []api.RelatedSymbol{{
-		Name: "Callee", Path: path, Direction: "callee", Start: 1, End: 3, CallLine: 10, Segments: []api.ResultSegment{segment},
+	result := wire.FileResult{Path: "caller.go", Related: []wire.RelatedSymbol{{
+		Name: "Callee", Path: path, Direction: "callee", Start: 1, End: 3, CallLine: 10, Segments: []wire.ResultSegment{segment},
 	}}}
-	if err := renderer.Render([]api.FileResult{result}); err != nil {
+	if err := renderer.Render([]wire.FileResult{result}); err != nil {
 		guard.close()
 		t.Fatal(err)
 	}
@@ -920,12 +920,12 @@ func TestRelatedCallablePreviewDoesNotContributeContextCoverage(t *testing.T) {
 }
 
 func TestCompleteResultSegmentCountMatchesHumanRelatedRendering(t *testing.T) {
-	segment := api.ResultSegment{Kind: "lines", Start: 1, End: 1, Text: "source"}
-	results := []api.FileResult{{
-		Segments: []api.ResultSegment{segment},
-		Related: []api.RelatedSymbol{
-			{Direction: "type", Segments: []api.ResultSegment{segment}},
-			{Direction: "callee", Segments: []api.ResultSegment{segment}, Related: []api.RelatedSymbol{{Direction: "type", Segments: []api.ResultSegment{segment}}}},
+	segment := wire.ResultSegment{Kind: "lines", Start: 1, End: 1, Text: "source"}
+	results := []wire.FileResult{{
+		Segments: []wire.ResultSegment{segment},
+		Related: []wire.RelatedSymbol{
+			{Direction: "type", Segments: []wire.ResultSegment{segment}},
+			{Direction: "callee", Segments: []wire.ResultSegment{segment}, Related: []wire.RelatedSymbol{{Direction: "type", Segments: []wire.ResultSegment{segment}}}},
 		},
 	}}
 	if got := completeResultSegmentCount(results, false); got != 2 {
@@ -939,7 +939,7 @@ func TestCompleteResultSegmentCountMatchesHumanRelatedRendering(t *testing.T) {
 func TestContextGuardScopesCacheAndStatsByPiSession(t *testing.T) {
 	base := t.TempDir()
 	t.Setenv("GREPPLE_CONTEXT_GUARD_DIR", base)
-	result := api.FileResult{Path: "session.go", Segments: []api.ResultSegment{{
+	result := wire.FileResult{Path: "session.go", Segments: []wire.ResultSegment{{
 		Kind: "function", Start: 1, End: 3,
 		Text: "func SessionScoped() {\n\t" + strings.Repeat("work(); ", 24) + "\n}",
 	}}}
@@ -1000,7 +1000,7 @@ func TestContextGuardWithoutPiSessionUsesBaseDirectory(t *testing.T) {
 	}
 }
 
-func renderWithSegmentGuard(t *testing.T, result api.FileResult) string {
+func renderWithSegmentGuard(t *testing.T, result wire.FileResult) string {
 	t.Helper()
 	guard, err := openSegmentContextGuard()
 	if err != nil {
@@ -1008,7 +1008,7 @@ func renderWithSegmentGuard(t *testing.T, result api.FileResult) string {
 	}
 	var output bytes.Buffer
 	renderer := segmentRenderer{output: newOutputWriter(&output), contextGuard: guard}
-	if err := renderer.Render([]api.FileResult{result}); err != nil {
+	if err := renderer.Render([]wire.FileResult{result}); err != nil {
 		guard.close()
 		t.Fatal(err)
 	}

@@ -2,13 +2,13 @@
 package render
 
 import (
-	"github.com/greppleai/grepple/navigation"
+	"github.com/greppleai/grepple/internal/navigation"
 	"io"
 	"strings"
 
-	"github.com/greppleai/grepple/api"
+	"github.com/greppleai/grepple/internal/wire"
 	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
-	"github.com/greppleai/grepple/search"
+	"github.com/greppleai/grepple/internal/search"
 )
 
 const anchorOutputSeparator = "│"
@@ -57,7 +57,7 @@ type Options struct {
 	RepeatSource     bool
 	Stdin            bool
 	Anchors          AnchorLookup
-	Metadata         *api.ResultMetadata
+	Metadata         *wire.ResultMetadata
 }
 
 type resultRenderer interface {

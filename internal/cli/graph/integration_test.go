@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/greppleai/grepple/parser"
-	"github.com/greppleai/grepple/search"
+	"github.com/greppleai/grepple/internal/parser"
+	"github.com/greppleai/grepple/internal/search"
 )
 
 func TestGraphJSONEmitsResolvedDeterministicGraph(t *testing.T) {

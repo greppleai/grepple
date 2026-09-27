@@ -14,7 +14,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/greppleai/grepple/api"
+	"github.com/greppleai/grepple/internal/wire"
 )
 
 func TestParseGritArgsKeepsStructuralFlagsSeparate(t *testing.T) {
@@ -69,7 +69,7 @@ func TestLoadGritQueryFileIsBounded(t *testing.T) {
 	}
 
 	large := filepath.Join(t.TempDir(), "large.grit")
-	if err := os.WriteFile(large, make([]byte, api.MaxGritQueryBytes+1), 0o644); err != nil {
+	if err := os.WriteFile(large, make([]byte, wire.MaxGritQueryBytes+1), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := loadGritQuery(gritArgs{QueryFile: large}); err == nil || !strings.Contains(err.Error(), "maximum") {
@@ -94,7 +94,7 @@ func TestGritExplainReportsWrappersVariablesAndCompatibility(t *testing.T) {
 	if err := json.Unmarshal([]byte(first), &output); err != nil {
 		t.Fatal(err)
 	}
-	if !output.OK || output.Schema != gritExplainSchema || output.Language != "go" || output.Compatibility != api.GritCompatibilityV1 || output.GrammarABI == 0 || output.Grammar == "" {
+	if !output.OK || output.Schema != gritExplainSchema || output.Language != "go" || output.Compatibility != wire.GritCompatibilityV1 || output.GrammarABI == 0 || output.Grammar == "" {
 		t.Fatalf("explain contract=%#v", output)
 	}
 	if len(output.Interpretations) != 1 || output.Interpretations[0].Context != "expression" || output.Interpretations[0].RootKind != "call_expression" {
@@ -166,7 +166,7 @@ func TestRunGritLocalJSONIsDeterministic(t *testing.T) {
 	if first != second {
 		t.Fatalf("JSON output changed between runs:\n%s\n%s", first, second)
 	}
-	var response api.GritResponse
+	var response wire.GritResponse
 	if err := json.Unmarshal([]byte(first), &response); err != nil {
 		t.Fatal(err)
 	}
@@ -198,11 +198,11 @@ func TestRunGritLocalTypeScriptUsesUnifiedContract(t *testing.T) {
 			t.Fatal(err)
 		}
 	})
-	var response api.GritResponse
+	var response wire.GritResponse
 	if err := json.Unmarshal([]byte(output), &response); err != nil {
 		t.Fatal(err)
 	}
-	if response.Metadata.Compatibility != api.GritCompatibilityV1 || response.Metadata.Language != "typescript" || len(response.Findings) != 1 || response.Findings[0].Text != "target(value)" {
+	if response.Metadata.Compatibility != wire.GritCompatibilityV1 || response.Metadata.Language != "typescript" || len(response.Findings) != 1 || response.Findings[0].Text != "target(value)" {
 		t.Fatalf("response=%#v", response)
 	}
 }
@@ -218,11 +218,11 @@ func TestRunGritLocalJavaScriptUsesUnifiedContract(t *testing.T) {
 			t.Fatal(err)
 		}
 	})
-	var response api.GritResponse
+	var response wire.GritResponse
 	if err := json.Unmarshal([]byte(output), &response); err != nil {
 		t.Fatal(err)
 	}
-	if response.Metadata.Compatibility != api.GritCompatibilityV1 || response.Metadata.Language != "javascript" || len(response.Findings) != 1 || response.Findings[0].Text != "target(value)" {
+	if response.Metadata.Compatibility != wire.GritCompatibilityV1 || response.Metadata.Language != "javascript" || len(response.Findings) != 1 || response.Findings[0].Text != "target(value)" {
 		t.Fatalf("response=%#v", response)
 	}
 }
@@ -238,11 +238,11 @@ func TestRunGritLocalPythonUsesUnifiedContract(t *testing.T) {
 			t.Fatal(err)
 		}
 	})
-	var response api.GritResponse
+	var response wire.GritResponse
 	if err := json.Unmarshal([]byte(output), &response); err != nil {
 		t.Fatal(err)
 	}
-	if response.Metadata.Compatibility != api.GritCompatibilityV1 || response.Metadata.Language != "python" || len(response.Findings) != 1 || response.Findings[0].Text != "target(value)" {
+	if response.Metadata.Compatibility != wire.GritCompatibilityV1 || response.Metadata.Language != "python" || len(response.Findings) != 1 || response.Findings[0].Text != "target(value)" {
 		t.Fatalf("response=%#v", response)
 	}
 }
@@ -319,7 +319,7 @@ func TestRunGritLocalAppliesScopePagingAndReportsTruncation(t *testing.T) {
 			t.Fatal(err)
 		}
 	})
-	var response api.GritResponse
+	var response wire.GritResponse
 	if err := json.Unmarshal([]byte(output), &response); err != nil {
 		t.Fatal(err)
 	}
@@ -369,18 +369,18 @@ func TestRunGritRemoteUsesAuthenticatedStructuralEndpoint(t *testing.T) {
 		if request.Header.Get("authorization") != "Bearer structural-token" {
 			t.Errorf("authorization=%q", request.Header.Get("authorization"))
 		}
-		var body api.GritRequest
+		var body wire.GritRequest
 		if err := json.NewDecoder(request.Body).Decode(&body); err != nil {
 			t.Error(err)
 		}
-		if body.Query != "language go\n`target($x)`" || body.Compatibility != api.GritCompatibilityV1 {
+		if body.Query != "language go\n`target($x)`" || body.Compatibility != wire.GritCompatibilityV1 {
 			t.Errorf("body=%#v", body)
 		}
 		response.Header().Set("content-type", "application/json")
-		_ = json.NewEncoder(response).Encode(api.GritResponse{
-			Metadata:    api.GritMetadata{Compatibility: api.GritCompatibilityV1, GoGrammar: "go1.25"},
-			Findings:    []api.GritFinding{{Repo: "acme/one", Path: "a.go", Language: "go", Text: "target(value)", Bindings: []api.GritBinding{}}},
-			Diagnostics: []api.GritDiagnostic{}, Truncations: []api.GritTruncation{}, ShardErrors: []string{}, Total: 1,
+		_ = json.NewEncoder(response).Encode(wire.GritResponse{
+			Metadata:    wire.GritMetadata{Compatibility: wire.GritCompatibilityV1, GoGrammar: "go1.25"},
+			Findings:    []wire.GritFinding{{Repo: "acme/one", Path: "a.go", Language: "go", Text: "target(value)", Bindings: []wire.GritBinding{}}},
+			Diagnostics: []wire.GritDiagnostic{}, Truncations: []wire.GritTruncation{}, ShardErrors: []string{}, Total: 1,
 		})
 	}))
 	defer server.Close()
@@ -390,7 +390,7 @@ func TestRunGritRemoteUsesAuthenticatedStructuralEndpoint(t *testing.T) {
 			t.Fatal(err)
 		}
 	})
-	var response api.GritResponse
+	var response wire.GritResponse
 	if err := json.Unmarshal([]byte(output), &response); err != nil {
 		t.Fatal(err)
 	}
@@ -400,22 +400,22 @@ func TestRunGritRemoteUsesAuthenticatedStructuralEndpoint(t *testing.T) {
 }
 
 func TestMergeGritResponsesNormalizesDeduplicatesAndAggregates(t *testing.T) {
-	metadata := api.GritMetadata{Compatibility: api.GritCompatibilityV1, GoGrammar: "go1.25"}
+	metadata := wire.GritMetadata{Compatibility: wire.GritCompatibilityV1, GoGrammar: "go1.25"}
 	duplicate := gritFindingForTest("acme/remote", "dir/../a.go", 3, "x")
 	distinctBinding := gritFindingForTest("acme/remote", "a.go", 3, "y")
 	currentCheckout := gritFindingForTest("owner/current", "local.go", 1, "x")
 	localFinding := gritFindingForTest("", "z.go", 2, "x")
-	local := api.GritResponse{
-		Metadata: metadata, Findings: []api.GritFinding{localFinding},
-		Diagnostics: []api.GritDiagnostic{}, Truncations: []api.GritTruncation{}, ShardErrors: []string{},
-		Statistics: api.GritStatistics{Candidates: 2, Evaluated: 1, BytesRead: 10, SkippedAnchor: 1}, Total: 1,
+	local := wire.GritResponse{
+		Metadata: metadata, Findings: []wire.GritFinding{localFinding},
+		Diagnostics: []wire.GritDiagnostic{}, Truncations: []wire.GritTruncation{}, ShardErrors: []string{},
+		Statistics: wire.GritStatistics{Candidates: 2, Evaluated: 1, BytesRead: 10, SkippedAnchor: 1}, Total: 1,
 	}
-	remote := api.GritResponse{
-		Metadata: metadata, Findings: []api.GritFinding{duplicate, duplicate, distinctBinding, currentCheckout},
-		Diagnostics: []api.GritDiagnostic{{Code: "REMOTE_WARNING"}},
-		Truncations: []api.GritTruncation{{Reason: "max_files", Limit: 3, Skipped: 1}},
+	remote := wire.GritResponse{
+		Metadata: metadata, Findings: []wire.GritFinding{duplicate, duplicate, distinctBinding, currentCheckout},
+		Diagnostics: []wire.GritDiagnostic{{Code: "REMOTE_WARNING"}},
+		Truncations: []wire.GritTruncation{{Reason: "max_files", Limit: 3, Skipped: 1}},
 		ShardErrors: []string{"shard unavailable"},
-		Statistics:  api.GritStatistics{Candidates: 4, Evaluated: 3, BytesRead: 20, SkippedAnchor: 2}, Total: 4,
+		Statistics:  wire.GritStatistics{Candidates: 4, Evaluated: 3, BytesRead: 20, SkippedAnchor: 2}, Total: 4,
 	}
 
 	merged, err := mergeGritResponses(local, remote, "owner/current")
@@ -440,15 +440,15 @@ func TestMergeGritResponsesNormalizesDeduplicatesAndAggregates(t *testing.T) {
 }
 
 func TestMergeGritResponsesRejectsIncompatibleMetadata(t *testing.T) {
-	local := api.GritResponse{Metadata: api.GritMetadata{Compatibility: api.GritCompatibilityV1, GoGrammar: "go1.25"}}
-	remote := api.GritResponse{Metadata: api.GritMetadata{Compatibility: "other", GoGrammar: "go1.25"}}
+	local := wire.GritResponse{Metadata: wire.GritMetadata{Compatibility: wire.GritCompatibilityV1, GoGrammar: "go1.25"}}
+	remote := wire.GritResponse{Metadata: wire.GritMetadata{Compatibility: "other", GoGrammar: "go1.25"}}
 	if _, err := mergeGritResponses(local, remote, ""); err == nil || !strings.Contains(err.Error(), "compatibility") {
 		t.Fatalf("metadata error=%v", err)
 	}
 }
 func TestMergeGritResponsesRejectsTargetGrammarMismatch(t *testing.T) {
-	local := api.GritResponse{Metadata: api.GritMetadata{Compatibility: api.GritCompatibilityV1, Language: "typescript", Grammar: "typescript"}}
-	remote := api.GritResponse{Metadata: api.GritMetadata{Compatibility: api.GritCompatibilityV1, Language: "tsx", Grammar: "tsx"}}
+	local := wire.GritResponse{Metadata: wire.GritMetadata{Compatibility: wire.GritCompatibilityV1, Language: "typescript", Grammar: "typescript"}}
+	remote := wire.GritResponse{Metadata: wire.GritMetadata{Compatibility: wire.GritCompatibilityV1, Language: "tsx", Grammar: "tsx"}}
 	if _, err := mergeGritResponses(local, remote, ""); err == nil || !strings.Contains(err.Error(), "language") {
 		t.Fatalf("metadata error=%v", err)
 	}
@@ -459,7 +459,7 @@ func TestMergeGritResponsesRejectsTargetGrammarMismatch(t *testing.T) {
 }
 
 func TestWindowGritFindingsAppliesGlobalPage(t *testing.T) {
-	findings := []api.GritFinding{
+	findings := []wire.GritFinding{
 		gritFindingForTest("", "a.go", 1, "x"),
 		gritFindingForTest("acme/one", "b.go", 1, "x"),
 		gritFindingForTest("acme/two", "c.go", 1, "x"),
@@ -470,15 +470,15 @@ func TestWindowGritFindingsAppliesGlobalPage(t *testing.T) {
 	}
 }
 
-func gritFindingForTest(repo, path string, line int, binding string) api.GritFinding {
-	rng := api.GritRange{
+func gritFindingForTest(repo, path string, line int, binding string) wire.GritFinding {
+	rng := wire.GritRange{
 		StartByte: line, EndByte: line + 1,
-		Start: api.GritPosition{Line: line, Column: 1},
-		End:   api.GritPosition{Line: line, Column: 2},
+		Start: wire.GritPosition{Line: line, Column: 1},
+		End:   wire.GritPosition{Line: line, Column: 2},
 	}
-	return api.GritFinding{
+	return wire.GritFinding{
 		Repo: repo, Path: path, Language: "go", Range: rng, Text: "x", PatternID: "rule",
-		Bindings: []api.GritBinding{{Name: binding, Kind: api.GritBindingNode, Range: rng, Structural: []api.GritStructuralNode{}}},
+		Bindings: []wire.GritBinding{{Name: binding, Kind: wire.GritBindingNode, Range: rng, Structural: []wire.GritStructuralNode{}}},
 	}
 }
 
@@ -501,26 +501,26 @@ func TestRunGritRemoteComposesCurrentCheckoutAndGlobalPaging(t *testing.T) {
 			t.Fatal(err)
 		}
 	})
-	var response api.GritResponse
+	var response wire.GritResponse
 	if err := json.Unmarshal([]byte(output), &response); err != nil {
 		t.Fatal(err)
 	}
 	assertGritCompositionResponse(t, requests, response)
 }
 
-func gritCompositionRemoteFindings() []api.GritFinding {
-	findings := []api.GritFinding{gritFindingForTest("acme/current", "local.go", 1, "x")}
+func gritCompositionRemoteFindings() []wire.GritFinding {
+	findings := []wire.GritFinding{gritFindingForTest("acme/current", "local.go", 1, "x")}
 	for index := 0; index < 130; index++ {
 		findings = append(findings, gritFindingForTest("z/remote", fmt.Sprintf("file-%03d.go", index), 1, "x"))
 	}
 	return findings
 }
 
-func gritCompositionHandler(t *testing.T, findings []api.GritFinding, requests *int) http.HandlerFunc {
+func gritCompositionHandler(t *testing.T, findings []wire.GritFinding, requests *int) http.HandlerFunc {
 	t.Helper()
 	return func(response http.ResponseWriter, request *http.Request) {
 		*requests++
-		var body api.GritRequest
+		var body wire.GritRequest
 		if err := json.NewDecoder(request.Body).Decode(&body); err != nil {
 			t.Error(err)
 			return
@@ -531,15 +531,15 @@ func gritCompositionHandler(t *testing.T, findings []api.GritFinding, requests *
 		skip, limit := pointerInt(body.Skip), pointerInt(body.Limit)
 		end := min(skip+limit, len(findings))
 		skip = min(skip, end)
-		_ = json.NewEncoder(response).Encode(api.GritResponse{
-			Metadata: api.GritMetadata{Compatibility: api.GritCompatibilityV1, GoGrammar: "go1.25"},
-			Findings: findings[skip:end], Diagnostics: []api.GritDiagnostic{},
-			Truncations: []api.GritTruncation{}, ShardErrors: []string{"one shard unavailable"}, Total: len(findings),
+		_ = json.NewEncoder(response).Encode(wire.GritResponse{
+			Metadata: wire.GritMetadata{Compatibility: wire.GritCompatibilityV1, GoGrammar: "go1.25"},
+			Findings: findings[skip:end], Diagnostics: []wire.GritDiagnostic{},
+			Truncations: []wire.GritTruncation{}, ShardErrors: []string{"one shard unavailable"}, Total: len(findings),
 		})
 	}
 }
 
-func assertGritCompositionResponse(t *testing.T, requests int, response api.GritResponse) {
+func assertGritCompositionResponse(t *testing.T, requests int, response wire.GritResponse) {
 	t.Helper()
 	if requests != 2 {
 		t.Fatalf("requests=%d, want 2", requests)
@@ -565,7 +565,7 @@ func TestCollectGritRemoteHonorsCancellationBeforeTransport(t *testing.T) {
 	defer server.Close()
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
-	request := api.GritRequest{Query: "language go\n`x`", Compatibility: api.GritCompatibilityV1}
+	request := wire.GritRequest{Query: "language go\n`x`", Compatibility: wire.GritCompatibilityV1}
 	if _, err := collectGritRemote(ctx, request, server.URL, 1); err == nil || !strings.Contains(err.Error(), "canceled") {
 		t.Fatalf("cancellation error=%v", err)
 	}
@@ -586,10 +586,10 @@ func TestRunGritRemoteDoesNotHideTransportFailure(t *testing.T) {
 }
 
 func TestRenderGritHumanBoundsFindings(t *testing.T) {
-	finding := api.GritFinding{Path: "large.go", Text: strings.Repeat("x", 200), Range: api.GritRange{Start: api.GritPosition{Line: 1, Column: 1}, End: api.GritPosition{Line: 1, Column: 201}}}
+	finding := wire.GritFinding{Path: "large.go", Text: strings.Repeat("x", 200), Range: wire.GritRange{Start: wire.GritPosition{Line: 1, Column: 1}, End: wire.GritPosition{Line: 1, Column: 201}}}
 	var renderErr error
 	output := captureStdout(t, func() {
-		renderErr = renderGritHuman(api.GritResponse{Findings: []api.GritFinding{finding}}, 200)
+		renderErr = renderGritHuman(wire.GritResponse{Findings: []wire.GritFinding{finding}}, 200)
 	})
 	if !errors.Is(renderErr, errOutputTruncated) {
 		t.Fatalf("render error=%v", renderErr)

@@ -14,10 +14,10 @@ import (
 	"strings"
 
 	"github.com/alexflint/go-arg"
-	"github.com/greppleai/grepple/analysis"
-	"github.com/greppleai/grepple/api"
+	"github.com/greppleai/grepple/internal/analysis"
+	"github.com/greppleai/grepple/internal/wire"
 	"github.com/greppleai/grepple/internal/archdaemon"
-	"github.com/greppleai/grepple/search"
+	"github.com/greppleai/grepple/internal/search"
 )
 
 const directoryArchitectureSchema = analysis.ArchitectureSchema
@@ -207,7 +207,7 @@ func executeArchitectureWhy(values *WhyArgs, dependencies Dependencies) error {
 	return nil
 }
 
-func writeArchitectureProjection(remote *api.AnalysisResponse, output any, dependencies Dependencies) error {
+func writeArchitectureProjection(remote *wire.AnalysisResponse, output any, dependencies Dependencies) error {
 	if remote == nil {
 		return stdoutWriter(dependencies).writeJSON(output)
 	}
@@ -219,12 +219,12 @@ func writeArchitectureProjection(remote *api.AnalysisResponse, output any, depen
 	return stdoutWriter(dependencies).writeJSON(remote)
 }
 
-func loadDirectoryArchitecture(ctx context.Context, paths []string, maxFiles int, repository, server string, dependencies Dependencies) (Report, *api.AnalysisResponse, error) {
+func loadDirectoryArchitecture(ctx context.Context, paths []string, maxFiles int, repository, server string, dependencies Dependencies) (Report, *wire.AnalysisResponse, error) {
 	if repository == "" {
 		result, err := Build(paths, maxFiles, dependencies)
 		return result, nil, err
 	}
-	response, err := dependencies.remote(ctx, api.AnalysisRequest{Operation: api.AnalysisArchitecture, Repository: repository, Paths: paths, MaxFiles: maxFiles}, dependencies.serverDefault(server))
+	response, err := dependencies.remote(ctx, wire.AnalysisRequest{Operation: wire.AnalysisArchitecture, Repository: repository, Paths: paths, MaxFiles: maxFiles}, dependencies.serverDefault(server))
 	if err != nil {
 		return Report{}, nil, err
 	}

@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/greppleai/grepple/parser"
+	"github.com/greppleai/grepple/internal/parser"
 )
 
 func TestParseOutlineKinds(t *testing.T) {

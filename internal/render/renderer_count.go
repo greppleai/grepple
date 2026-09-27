@@ -2,7 +2,7 @@ package render
 
 import (
 	"fmt"
-	"github.com/greppleai/grepple/search"
+	"github.com/greppleai/grepple/internal/search"
 )
 
 type countRenderer struct {

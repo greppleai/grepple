@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/greppleai/grepple/api"
+	"github.com/greppleai/grepple/internal/wire"
 )
 
 func TestNoAnchorableResultsSkipProvider(t *testing.T) {
@@ -27,9 +27,9 @@ func TestAnchorSelectionIncludesRelatedTypeAppendixLines(t *testing.T) {
 	if err := os.WriteFile("request.go", []byte(content), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	results := []api.FileResult{{Path: "caller.go", Related: []api.RelatedSymbol{{
+	results := []wire.FileResult{{Path: "caller.go", Related: []wire.RelatedSymbol{{
 		Name: "Request", Path: "request.go", Direction: "type", Start: 2, End: 4,
-		Segments: []api.ResultSegment{{Kind: "lines", Start: 2, End: 4, Text: "type Request struct {\n\tName string\n}"}},
+		Segments: []wire.ResultSegment{{Kind: "lines", Start: 2, End: 4, Text: "type Request struct {\n\tName string\n}"}},
 	}}}}
 	selections := collectAnchorSelections(&Options{}, results)
 	if len(selections) != 1 || selections[0].displayPath != "request.go" {

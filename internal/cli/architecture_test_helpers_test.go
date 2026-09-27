@@ -5,7 +5,7 @@ import (
 
 	architecturecommand "github.com/greppleai/grepple/internal/cli/architecture"
 	"github.com/greppleai/grepple/internal/cliruntime"
-	"github.com/greppleai/grepple/search"
+	"github.com/greppleai/grepple/internal/search"
 )
 
 type directoryArchitecture = architecturecommand.Report

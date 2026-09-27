@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
-	"github.com/greppleai/grepple/search"
+	"github.com/greppleai/grepple/internal/search"
 )
 
 type BuildArgs = graphArgs

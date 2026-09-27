@@ -6,7 +6,7 @@ import (
 	"io"
 	"os"
 
-	"grepple/hooks/internal/pihooks"
+	"github.com/greppleai/grepple/hooks/internal/pihooks"
 )
 
 func main() {

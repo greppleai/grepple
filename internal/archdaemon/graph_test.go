@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/greppleai/grepple/analysis"
+	"github.com/greppleai/grepple/internal/analysis"
 )
 
 func TestFocusedGraphAndResolveDaemonVariants(t *testing.T) {

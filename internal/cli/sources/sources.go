@@ -10,7 +10,7 @@ import (
 	"github.com/alexflint/go-arg"
 	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
 	sourcedomain "github.com/greppleai/grepple/internal/sources"
-	"github.com/greppleai/grepple/search"
+	"github.com/greppleai/grepple/internal/search"
 )
 
 const sourceScopeSchema = sourcedomain.Schema

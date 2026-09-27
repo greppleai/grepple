@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/greppleai/grepple/api"
+	"github.com/greppleai/grepple/internal/wire"
 	"github.com/greppleai/grepple/internal/authstate"
 )
 
@@ -74,19 +74,19 @@ func TestFreshTokenFallsBackAfterRefreshFailure(t *testing.T) {
 }
 
 func TestValidateAnalysisResponse(t *testing.T) {
-	request := api.AnalysisRequest{Operation: api.AnalysisGraph, Repository: "owner/repo"}
-	result := analysisResult(api.AnalysisGraph)
-	valid := api.AnalysisResponse{Schema: "grepple-remote-analysis-v1", Operation: api.AnalysisGraph, Repository: "owner/repo", Found: true, Result: result}
+	request := wire.AnalysisRequest{Operation: wire.AnalysisGraph, Repository: "owner/repo"}
+	result := analysisResult(wire.AnalysisGraph)
+	valid := wire.AnalysisResponse{Schema: "grepple-remote-analysis-v1", Operation: wire.AnalysisGraph, Repository: "owner/repo", Found: true, Result: result}
 	if err := validateAnalysisResponse(request, valid); err != nil {
 		t.Fatal(err)
 	}
-	invalid := []api.AnalysisResponse{
-		{Schema: "wrong", Operation: api.AnalysisGraph, Repository: "owner/repo", Found: true, Result: result},
-		{Schema: valid.Schema, Operation: api.AnalysisArchitecture, Repository: "owner/repo", Found: true, Result: result},
-		{Schema: valid.Schema, Operation: api.AnalysisGraph, Repository: "other/repo", Found: true, Result: result},
-		{Schema: valid.Schema, Operation: api.AnalysisGraph, Repository: "owner/repo", Found: false, Result: result},
-		{Schema: valid.Schema, Operation: api.AnalysisGraph, Repository: "owner/repo", Found: true},
-		{Schema: valid.Schema, Operation: api.AnalysisGraph, Repository: "owner/repo", Found: true, Result: analysisResult(api.AnalysisArchitecture)},
+	invalid := []wire.AnalysisResponse{
+		{Schema: "wrong", Operation: wire.AnalysisGraph, Repository: "owner/repo", Found: true, Result: result},
+		{Schema: valid.Schema, Operation: wire.AnalysisArchitecture, Repository: "owner/repo", Found: true, Result: result},
+		{Schema: valid.Schema, Operation: wire.AnalysisGraph, Repository: "other/repo", Found: true, Result: result},
+		{Schema: valid.Schema, Operation: wire.AnalysisGraph, Repository: "owner/repo", Found: false, Result: result},
+		{Schema: valid.Schema, Operation: wire.AnalysisGraph, Repository: "owner/repo", Found: true},
+		{Schema: valid.Schema, Operation: wire.AnalysisGraph, Repository: "owner/repo", Found: true, Result: analysisResult(wire.AnalysisArchitecture)},
 	}
 	for _, response := range invalid {
 		if err := validateAnalysisResponse(request, response); err == nil {
@@ -95,10 +95,10 @@ func TestValidateAnalysisResponse(t *testing.T) {
 	}
 }
 
-func analysisResult(operation api.AnalysisOperation) json.RawMessage {
-	schemas := map[api.AnalysisOperation]string{
-		api.AnalysisGraph: "grepple-navigation-graph-v7", api.AnalysisArchitecture: "grepple-directory-architecture-v5",
-		api.AnalysisBoundaries: "grepple-boundaries-v3", api.AnalysisResponsibilities: "grepple-directory-responsibilities-v2",
+func analysisResult(operation wire.AnalysisOperation) json.RawMessage {
+	schemas := map[wire.AnalysisOperation]string{
+		wire.AnalysisGraph: "grepple-navigation-graph-v7", wire.AnalysisArchitecture: "grepple-directory-architecture-v5",
+		wire.AnalysisBoundaries: "grepple-boundaries-v3", wire.AnalysisResponsibilities: "grepple-directory-responsibilities-v2",
 	}
 	content, _ := json.Marshal(map[string]string{"schema": schemas[operation]})
 	return content

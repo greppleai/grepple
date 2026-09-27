@@ -1,6 +1,6 @@
 package archdaemon
 
-import "github.com/greppleai/grepple/analysis"
+import "github.com/greppleai/grepple/internal/analysis"
 
 // variant revalidates a source snapshot before returning one focused report.
 func (s *service) variant(payload request, kind string) (response, bool) {

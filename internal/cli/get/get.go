@@ -10,8 +10,8 @@ import (
 	"github.com/greppleai/grepple/internal/apiclient"
 	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
 	rendercommand "github.com/greppleai/grepple/internal/render"
-	"github.com/greppleai/grepple/linerange"
-	"github.com/greppleai/grepple/parser"
+	"github.com/greppleai/grepple/internal/linerange"
+	"github.com/greppleai/grepple/internal/parser"
 )
 
 // request contains parsed get command options.

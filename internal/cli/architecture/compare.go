@@ -8,8 +8,8 @@ import (
 	"io"
 	"os"
 
-	"github.com/greppleai/grepple/analysis"
-	"github.com/greppleai/grepple/api"
+	"github.com/greppleai/grepple/internal/analysis"
+	"github.com/greppleai/grepple/internal/wire"
 )
 
 const architectureComparisonSchema = "grepple-directory-architecture-comparison-v1"
@@ -110,15 +110,15 @@ func unwrapRemoteDirectoryArchitecture(content []byte) ([]byte, error) {
 	}
 	decoder := json.NewDecoder(bytes.NewReader(content))
 	decoder.DisallowUnknownFields()
-	var response api.AnalysisResponse
+	var response wire.AnalysisResponse
 	if err := decoder.Decode(&response); err != nil {
 		return nil, err
 	}
 	if err := requireArchitectureJSONEnd(decoder); err != nil {
 		return nil, err
 	}
-	if response.Operation != api.AnalysisArchitecture {
-		return nil, fmt.Errorf("remote analysis operation %q is unsupported; expected %q", response.Operation, api.AnalysisArchitecture)
+	if response.Operation != wire.AnalysisArchitecture {
+		return nil, fmt.Errorf("remote analysis operation %q is unsupported; expected %q", response.Operation, wire.AnalysisArchitecture)
 	}
 	return response.Result, nil
 }

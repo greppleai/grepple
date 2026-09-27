@@ -9,7 +9,7 @@ BUILD_DATE ?= $(shell git show -s --format=%cI HEAD 2>/dev/null || echo unknown)
 VERSION_LDFLAGS := -X github.com/greppleai/grepple/internal/cli/version.Version=$(VERSION) -X github.com/greppleai/grepple/internal/cli/version.Commit=$(COMMIT) -X github.com/greppleai/grepple/internal/cli/version.BuildDate=$(BUILD_DATE)
 
 COMMANDS := grepple greppled
-SOURCES := $(shell find cmd internal api analysis navigation extract gritql gritqlapi parser rulespec search -type f -name '*.go') go.mod go.sum
+SOURCES := $(shell find cmd internal api -type f -name '*.go') go.mod go.sum
 
 .PHONY: build test agent-benchmark architecture-benchmark release-check lint revive-lint hook-build hook-lint hook-test parser-metadata-generate parser-metadata-check schema-generate schema-check docker-smoke install clean
 
@@ -31,7 +31,7 @@ agent-benchmark:
 	go test ./internal/cli -run '^$$' -bench '^BenchmarkAgentWorkflows$$' -benchtime=10x -benchmem
 
 architecture-benchmark:
-	go test ./extract -run '^$$' -bench '^BenchmarkArchitectureWorkflows$$' -benchtime=10x -benchmem
+	go test ./internal/extract -run '^$$' -bench '^BenchmarkArchitectureWorkflows$$' -benchtime=10x -benchmem
 	go test ./internal/cli -run '^$$' -bench '^BenchmarkDirectoryArchitecture$$' -benchtime=10x -benchmem
 
 release-check:
@@ -55,10 +55,10 @@ hook-test:
 	$(MAKE) -C hooks test
 
 parser-metadata-generate:
-	cd parser && go generate
+	cd internal/parser && go generate
 
 parser-metadata-check:
-	cd parser && go run ./internal/generate -check
+	cd internal/parser && go run ./internal/generate -check
 
 schema-generate: parser-metadata-generate
 

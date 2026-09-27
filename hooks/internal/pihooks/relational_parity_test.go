@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/greppleai/grepple/hookruntime"
+	"github.com/greppleai/grepple/internal/hookruntime"
 )
 
 func TestGritQLRelationIntegrationCases(t *testing.T) {

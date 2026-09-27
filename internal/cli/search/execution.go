@@ -7,11 +7,11 @@ import (
 	"os"
 	"sort"
 
-	"github.com/greppleai/grepple/api"
+	"github.com/greppleai/grepple/internal/wire"
 	"github.com/greppleai/grepple/internal/cliruntime"
 	rendercommand "github.com/greppleai/grepple/internal/render"
-	"github.com/greppleai/grepple/linerange"
-	"github.com/greppleai/grepple/search"
+	"github.com/greppleai/grepple/internal/linerange"
+	"github.com/greppleai/grepple/internal/search"
 )
 
 type remoteFullLineRangeMissError struct{ err error }
@@ -110,7 +110,7 @@ func executeSearch(application cliruntime.Context, options *Options, explicitSer
 	return setSearchExit(application, results)
 }
 
-func initialSearchResults(application cliruntime.Context, options *Options, remote bool) ([]api.FileResult, error) {
+func initialSearchResults(application cliruntime.Context, options *Options, remote bool) ([]wire.FileResult, error) {
 	if remote && options.Params.At != "" {
 		return nil, nil
 	}
@@ -126,7 +126,7 @@ func configureStdinSearch(application cliruntime.Context, options *Options) erro
 	return nil
 }
 
-func appendRemoteResults(application cliruntime.Context, results []api.FileResult, options *Options, explicitServer string, remote bool) ([]api.FileResult, error) {
+func appendRemoteResults(application cliruntime.Context, results []wire.FileResult, options *Options, explicitServer string, remote bool) ([]wire.FileResult, error) {
 	if !remote {
 		return results, nil
 	}
@@ -155,7 +155,7 @@ func childWindowParams(params search.Params) search.Params {
 
 // sortResults applies the same deterministic file ranking to merged local and
 // remote results. Match count uses path as a stable tie-breaker.
-func sortResults(results []api.FileResult, strategy string) []api.FileResult {
+func sortResults(results []wire.FileResult, strategy string) []wire.FileResult {
 	sort.SliceStable(results, func(i, j int) bool {
 		if strategy == search.ResultSortMatches && len(results[i].Matches) != len(results[j].Matches) {
 			return len(results[i].Matches) > len(results[j].Matches)
@@ -170,7 +170,7 @@ func sortResults(results []api.FileResult, strategy string) []api.FileResult {
 
 // noteDefaultLimitCap tells the user how to see more when the default --limit
 // is what capped the output (not an explicit --limit or --max-files).
-func noteDefaultLimitCap(application cliruntime.Context, options *Options, results []api.FileResult) {
+func noteDefaultLimitCap(application cliruntime.Context, options *Options, results []wire.FileResult) {
 	if options.Params.Limit == DefaultResultLimit && options.Params.MaxFiles == 0 && len(results) == DefaultResultLimit {
 		fmt.Fprintf(application.Stderr(), "note: showing the first %d files (default --limit); raise with --limit N and page with --skip N (servers cap a page at %d; --limit 0 = all local)\n", DefaultResultLimit, search.MaxPageLimit)
 	}
@@ -178,7 +178,7 @@ func noteDefaultLimitCap(application cliruntime.Context, options *Options, resul
 
 // windowResults drops the first Skip results and caps the remainder to the
 // effective limit (the smaller of Limit and MaxFiles).
-func windowResults(results []api.FileResult, params search.Params) []api.FileResult {
+func windowResults(results []wire.FileResult, params search.Params) []wire.FileResult {
 	if params.Skip > 0 {
 		if params.Skip >= len(results) {
 			return results[:0]
@@ -231,7 +231,7 @@ func searchStdin(application cliruntime.Context, params search.Params) ([]search
 	return []search.FileMatch{*match}, nil
 }
 
-func searchLocal(application cliruntime.Context, options *Options) ([]api.FileResult, error) {
+func searchLocal(application cliruntime.Context, options *Options) ([]wire.FileResult, error) {
 	params := options.Params
 	if params.At != "" {
 		match, err := search.At(params)
@@ -247,12 +247,12 @@ func searchLocal(application cliruntime.Context, options *Options) ([]api.FileRe
 		if err != nil {
 			return nil, err
 		}
-		results := make([]api.FileResult, 0, len(paths))
+		results := make([]wire.FileResult, 0, len(paths))
 		for _, path := range paths {
-			results = append(results, api.FileResult{
+			results = append(results, wire.FileResult{
 				Path:     path,
-				Matches:  []api.ResultMatch{},
-				Segments: []api.ResultSegment{},
+				Matches:  []wire.ResultMatch{},
+				Segments: []wire.ResultSegment{},
 			})
 		}
 		return results, nil
@@ -281,7 +281,7 @@ func appendUnique(values []string, value string) []string {
 	return append(values, value)
 }
 
-func setSearchExit(application cliruntime.Context, results []api.FileResult) error {
+func setSearchExit(application cliruntime.Context, results []wire.FileResult) error {
 	if len(results) == 0 {
 		application.RequestExit(1)
 	}
@@ -334,9 +334,9 @@ func runCountByRepo(application cliruntime.Context, options *Options, explicitSe
 		}
 	}
 
-	out := make([]api.RepoCount, 0, len(repos))
+	out := make([]wire.RepoCount, 0, len(repos))
 	for repo, a := range repos {
-		out = append(out, api.RepoCount{Repo: repo, Files: a.files, Matches: a.matches})
+		out = append(out, wire.RepoCount{Repo: repo, Files: a.files, Matches: a.matches})
 	}
 	maxBytes := 0
 	if options.JSON == "off" {

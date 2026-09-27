@@ -1,6 +1,6 @@
 # Domain and transport boundaries
 
-Core packages own behavior and canonical models. The `api` package owns HTTP wire compatibility: it aliases Search and Navigation domain models where schemas are identical and owns transport-only envelopes and metadata. CLI and HTTP adapters apply transport defaults and translate where representations differ; rendering may consume API responses when it is explicitly rendering transport output.
+Core packages own behavior and canonical models. `internal/wire` owns HTTP transport envelopes and metadata used by CLI and HTTP adapters; `api` re-exports wire contracts and provides the only supported external Go service facade. Compatibility aliases in wire still refer to Search, Navigation, and Rulespec models where schemas are identical. Internal packages must not import `api`, so services can depend inward on implementations without a reverse dependency. Execution handles such as `api.IndexedNavigation` and `api.SearchPlan` are interfaces with private implementations; concrete options and request/response DTOs carry values across the boundary.
 
 ## Package responsibilities
 
@@ -12,16 +12,16 @@ Core packages own behavior and canonical models. The `api` package owns HTTP wir
 - **Sources** (`internal/sources`) owns neutral repository policy, source walking, ignore evaluation, metadata-backed classification, deterministic listing, source-selection decisions, and source-scope inspection reports.
 - **Rules** owns normalized saved-rule semantics, validation, rule models, and structural rule limits; API rule objects are wire-compatible aliases.
 
-## Remaining API dependencies
+## Dependency direction and compatibility
 
-| Dependency | Current classification | Intended boundary |
+| Dependency | Purpose | Boundary |
 | --- | --- | --- |
-| `api/model.go -> search` | Wire-compatible aliases preserve existing `api.SearchRequest`, `api.FileResult`, and related result names | Keep aliases until an explicitly breaking release; transport-only response envelopes remain in API. |
-| `api/model.go -> navigation` | Wire-compatible aliases preserve navigation artifact, relationship, and resolution names | Keep aliases until an explicitly breaking release; algorithms consume Navigation-owned models. |
-| `api/model.go`, `api/grit.go -> rulespec` | Wire-compatible aliases preserve rule and structural-request transport names | Keep aliases until an explicitly breaking release. |
-| `internal/render -> api` | Intentional serialization dependency limited to transport envelopes, metadata, source-analysis summaries, and Tree responses | Search and Navigation result rendering uses canonical domain models. |
+| `api -> internal/wire` | Re-export stable HTTP DTOs and constants | Only the external `api` facade publishes these contracts to backend consumers. |
+| `api -> internal/analysis,search,navigation,...` | Backend-facing services | Services call canonical implementations; implementations never call back into `api`. |
+| `internal/cli,apiclient,render,gritqlapi -> internal/wire` | Construct, decode, and render transport results | Internal adapters consume shared DTOs directly rather than importing the public facade. |
+| `internal/wire -> internal/search,navigation,rulespec` | Preserve existing type identities for compatible wire aliases | These aliases are compatibility debt; new behavior belongs to engine owners and new API services should prefer opaque or facade-owned representations. |
 
-Analysis graph traversal, Search request/result construction, Navigation external dependency resolution, and Rules normalization no longer depend on API DTO declarations. Local callers use domain models; API aliases preserve source and JSON compatibility, while remote adapters retain transport-only envelopes and metadata. These classifications are migration guidance, not permission to add new core-to-API dependencies. The final relation changes are recorded in [Restructure relation review](restructure-relations.md).
+Analysis graph traversal, Search request/result construction, Navigation external dependency resolution, and Rules normalization do not depend on public API DTO declarations. A source-level guard checks every implementation and test import for `api`; backend code has a complementary guard allowing only `api` from this module. The final relation changes are recorded in [Restructure relation review](restructure-relations.md).
 
 ## Cohesive single-consumer packages
 

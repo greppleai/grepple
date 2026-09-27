@@ -4,7 +4,7 @@ import (
 	"container/list"
 	"fmt"
 
-	"github.com/greppleai/grepple/analysis"
+	"github.com/greppleai/grepple/internal/analysis"
 )
 
 const maxCachedRoots = 4

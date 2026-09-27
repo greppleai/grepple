@@ -8,14 +8,14 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/greppleai/grepple/api"
+	"github.com/greppleai/grepple/internal/wire"
 	"github.com/greppleai/grepple/internal/cliruntime"
 )
 
 func TestRemoteDirectoryPreservesExactRepository(t *testing.T) {
-	var operations []api.AnalysisOperation
+	var operations []wire.AnalysisOperation
 	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		var input api.AnalysisRequest
+		var input wire.AnalysisRequest
 		if err := json.NewDecoder(request.Body).Decode(&input); err != nil {
 			t.Fatal(err)
 		}
@@ -24,7 +24,7 @@ func TestRemoteDirectoryPreservesExactRepository(t *testing.T) {
 		}
 		operations = append(operations, input.Operation)
 		result, _ := json.Marshal(map[string]any{"schema": "grepple-directory-architecture-v5"})
-		_ = json.NewEncoder(writer).Encode(api.AnalysisResponse{Schema: "grepple-remote-analysis-v1", Operation: input.Operation, Repository: input.Repository, Found: true, Complete: true, Result: result})
+		_ = json.NewEncoder(writer).Encode(wire.AnalysisResponse{Schema: "grepple-remote-analysis-v1", Operation: input.Operation, Repository: input.Repository, Found: true, Complete: true, Result: result})
 	}))
 	defer server.Close()
 	var output bytes.Buffer
@@ -35,7 +35,7 @@ func TestRemoteDirectoryPreservesExactRepository(t *testing.T) {
 	if !strings.Contains(output.String(), `"repository": "owner/repo@tag~v1"`) {
 		t.Fatalf("output=%s", output.String())
 	}
-	if len(operations) != 1 || operations[0] != api.AnalysisArchitecture {
+	if len(operations) != 1 || operations[0] != wire.AnalysisArchitecture {
 		t.Fatalf("operations=%v", operations)
 	}
 }

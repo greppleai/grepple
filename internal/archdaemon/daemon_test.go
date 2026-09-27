@@ -13,7 +13,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/greppleai/grepple/analysis"
+	"github.com/greppleai/grepple/internal/analysis"
 )
 
 func daemonTestRoot(t *testing.T) string {

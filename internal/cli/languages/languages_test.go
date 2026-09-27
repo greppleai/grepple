@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/greppleai/grepple/api"
+	"github.com/greppleai/grepple/internal/wire"
 )
 
 func TestLanguagesJSONReportsRegisteredFeatureParity(t *testing.T) {
@@ -15,31 +15,31 @@ func TestLanguagesJSONReportsRegisteredFeatureParity(t *testing.T) {
 			t.Fatal(err)
 		}
 	})
-	var capabilities []api.LanguageCapabilities
+	var capabilities []wire.LanguageCapabilities
 	if err := json.Unmarshal([]byte(output), &capabilities); err != nil {
 		t.Fatal(err)
 	}
-	byLanguage := make(map[string]api.LanguageCapabilities, len(capabilities))
+	byLanguage := make(map[string]wire.LanguageCapabilities, len(capabilities))
 	for _, capability := range capabilities {
 		byLanguage[capability.Language] = capability
 	}
 	goLanguage := byLanguage["go"]
-	if goLanguage.GritQL != api.FeatureProduction || goLanguage.FocusedFlow != api.FeatureProduction || goLanguage.DirectoryArchitecture != api.FeatureProduction || goLanguage.ImportRelations != api.FeatureProduction || goLanguage.Entrypoints != api.FeatureProduction {
+	if goLanguage.GritQL != wire.FeatureProduction || goLanguage.FocusedFlow != wire.FeatureProduction || goLanguage.DirectoryArchitecture != wire.FeatureProduction || goLanguage.ImportRelations != wire.FeatureProduction || goLanguage.Entrypoints != wire.FeatureProduction {
 		t.Fatalf("go capabilities=%#v", goLanguage)
 	}
 	tsx := byLanguage["tsx"]
-	if tsx.GritQL != api.FeatureProduction || tsx.FocusedStructure != api.FeatureProduction || tsx.DirectoryArchitecture != api.FeatureProduction || tsx.ImportRelations != api.FeatureProduction || tsx.Entrypoints != api.FeatureProduction {
+	if tsx.GritQL != wire.FeatureProduction || tsx.FocusedStructure != wire.FeatureProduction || tsx.DirectoryArchitecture != wire.FeatureProduction || tsx.ImportRelations != wire.FeatureProduction || tsx.Entrypoints != wire.FeatureProduction {
 		t.Fatalf("tsx capabilities=%#v", tsx)
 	}
 	javascript := byLanguage["javascript"]
-	if javascript.Navigation != api.FeatureProduction || javascript.GritQL != api.FeatureProduction || javascript.FocusedStructure != api.FeatureProduction || javascript.FocusedFlow != api.FeatureProduction || javascript.ImportRelations != api.FeatureProduction || javascript.Entrypoints != api.FeatureProduction {
+	if javascript.Navigation != wire.FeatureProduction || javascript.GritQL != wire.FeatureProduction || javascript.FocusedStructure != wire.FeatureProduction || javascript.FocusedFlow != wire.FeatureProduction || javascript.ImportRelations != wire.FeatureProduction || javascript.Entrypoints != wire.FeatureProduction {
 		t.Fatalf("javascript capabilities=%#v", javascript)
 	}
 	assertImportRelationCapabilities(t, byLanguage, "java", "kotlin", "csharp", "rust")
 	assertEntrypointCapabilities(t, byLanguage, "java", "javascript", "kotlin", "csharp", "rust", "tsx", "typescript")
 	assertRustLanguageCapabilities(t, byLanguage["rust"])
 	markdown := byLanguage["markdown"]
-	if markdown.StructuralGrep != api.FeatureSpecialized || markdown.Outline != api.FeatureSpecialized || markdown.Navigation != api.FeatureUnsupported || markdown.DirectoryArchitecture != api.FeatureUnsupported || markdown.ImportRelations != api.FeatureUnsupported {
+	if markdown.StructuralGrep != wire.FeatureSpecialized || markdown.Outline != wire.FeatureSpecialized || markdown.Navigation != wire.FeatureUnsupported || markdown.DirectoryArchitecture != wire.FeatureUnsupported || markdown.ImportRelations != wire.FeatureUnsupported {
 		t.Fatalf("markdown capabilities=%#v", markdown)
 	}
 	if !strings.Contains(output, `"language": "text"`) || !strings.Contains(output, `"extensions": []`) {
@@ -47,28 +47,28 @@ func TestLanguagesJSONReportsRegisteredFeatureParity(t *testing.T) {
 	}
 }
 
-func assertImportRelationCapabilities(t *testing.T, capabilities map[string]api.LanguageCapabilities, ids ...string) {
+func assertImportRelationCapabilities(t *testing.T, capabilities map[string]wire.LanguageCapabilities, ids ...string) {
 	t.Helper()
 	for _, id := range ids {
 		language := capabilities[id]
-		if language.Navigation != api.FeatureProduction || language.DirectoryArchitecture != api.FeatureProduction || language.ImportRelations != api.FeatureProduction {
+		if language.Navigation != wire.FeatureProduction || language.DirectoryArchitecture != wire.FeatureProduction || language.ImportRelations != wire.FeatureProduction {
 			t.Fatalf("%s capabilities=%#v", id, language)
 		}
 	}
 }
 
-func assertEntrypointCapabilities(t *testing.T, capabilities map[string]api.LanguageCapabilities, ids ...string) {
+func assertEntrypointCapabilities(t *testing.T, capabilities map[string]wire.LanguageCapabilities, ids ...string) {
 	t.Helper()
 	for _, id := range ids {
-		if language := capabilities[id]; language.Entrypoints != api.FeatureProduction {
+		if language := capabilities[id]; language.Entrypoints != wire.FeatureProduction {
 			t.Fatalf("%s entrypoint capability=%#v", id, language)
 		}
 	}
 }
 
-func assertRustLanguageCapabilities(t *testing.T, rust api.LanguageCapabilities) {
+func assertRustLanguageCapabilities(t *testing.T, rust wire.LanguageCapabilities) {
 	t.Helper()
-	if rust.Navigation != api.FeatureProduction || rust.GritQL != api.FeatureProduction || rust.FocusedStructure != api.FeatureProduction || rust.FocusedFlow != api.FeatureProduction || rust.ImportRelations != api.FeatureProduction || rust.Entrypoints != api.FeatureProduction {
+	if rust.Navigation != wire.FeatureProduction || rust.GritQL != wire.FeatureProduction || rust.FocusedStructure != wire.FeatureProduction || rust.FocusedFlow != wire.FeatureProduction || rust.ImportRelations != wire.FeatureProduction || rust.Entrypoints != wire.FeatureProduction {
 		t.Fatalf("rust capabilities=%#v", rust)
 	}
 }
@@ -78,7 +78,7 @@ func TestLanguageCapabilityMatrixReportsPythonStructuralParity(t *testing.T) {
 		if capability.Language != "python" {
 			continue
 		}
-		if capability.Navigation != api.FeatureProduction || capability.GritQL != api.FeatureProduction || capability.FocusedStructure != api.FeatureProduction || capability.FocusedFlow != api.FeatureProduction || capability.ImportRelations != api.FeatureProduction || capability.Entrypoints != api.FeatureProduction {
+		if capability.Navigation != wire.FeatureProduction || capability.GritQL != wire.FeatureProduction || capability.FocusedStructure != wire.FeatureProduction || capability.FocusedFlow != wire.FeatureProduction || capability.ImportRelations != wire.FeatureProduction || capability.Entrypoints != wire.FeatureProduction {
 			t.Fatalf("python capabilities=%#v", capability)
 		}
 		return
@@ -87,12 +87,12 @@ func TestLanguageCapabilityMatrixReportsPythonStructuralParity(t *testing.T) {
 }
 
 func TestLanguageCapabilityMatrixReportsNavigationFacts(t *testing.T) {
-	byLanguage := make(map[string]api.LanguageCapabilities)
+	byLanguage := make(map[string]wire.LanguageCapabilities)
 	for _, capability := range languageCapabilityMatrix() {
 		byLanguage[capability.Language] = capability
 	}
-	production := api.FeatureProduction
-	unsupported := api.FeatureUnsupported
+	production := wire.FeatureProduction
+	unsupported := wire.FeatureUnsupported
 	goFacts := byLanguage["go"].NavigationFacts
 	if goFacts.Declarations != production || goFacts.Calls != production || goFacts.Imports != production || goFacts.TypeReferences != production || goFacts.Fields != production || goFacts.MemberAccess != production || goFacts.Entrypoints != production {
 		t.Fatalf("Go facts=%#v", goFacts)
@@ -117,10 +117,10 @@ func TestLanguageCapabilityMatrixReportsNavigationFacts(t *testing.T) {
 	}
 }
 
-func assertECMANavigationFacts(t *testing.T, byLanguage map[string]api.LanguageCapabilities) {
+func assertECMANavigationFacts(t *testing.T, byLanguage map[string]wire.LanguageCapabilities) {
 	t.Helper()
-	production := api.FeatureProduction
-	unsupported := api.FeatureUnsupported
+	production := wire.FeatureProduction
+	unsupported := wire.FeatureUnsupported
 	javascript := byLanguage["javascript"].NavigationFacts
 	if javascript.TypeReferences != production || javascript.Fields != unsupported || javascript.MemberAccess != production || javascript.Entrypoints != production {
 		t.Fatalf("JavaScript facts=%#v", javascript)
@@ -152,7 +152,7 @@ func TestLanguagesRejectsUnexpectedArguments(t *testing.T) {
 
 func TestLanguageCapabilityMatrixGritQLCoversTreeSitterLanguages(t *testing.T) {
 	for _, capability := range languageCapabilityMatrix() {
-		if capability.StructuralGrep == api.FeatureProduction && capability.Navigation == api.FeatureProduction && capability.GritQL != api.FeatureProduction {
+		if capability.StructuralGrep == wire.FeatureProduction && capability.Navigation == wire.FeatureProduction && capability.GritQL != wire.FeatureProduction {
 			t.Fatalf("Tree-sitter language %q lacks production GritQL: %#v", capability.Language, capability)
 		}
 	}

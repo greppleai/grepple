@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/greppleai/grepple/gritql"
+	"github.com/greppleai/grepple/internal/gritql"
 )
 
 const (

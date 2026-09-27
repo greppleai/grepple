@@ -45,11 +45,11 @@ Every source-reading range uses the same inclusive, 1-based EOF policy. When the
 | Command family | Local checkout | Indexed remote repository | Selection |
 | --- | ---: | ---: | --- |
 | `search`, `grit` | Yes, default | Yes | Add `--remote`; local and remote results are merged. `--local` disables remote execution. |
-| `graph`, `boundaries`, `architecture` | Yes, default | Yes, one exact selector | Use `--repo OWNER/REPO[@REF]` for remote execution; local paths and an exact remote selector are mutually exclusive where applicable. |
-| `extract`, `write`, `sources`, `anchors`, `artifacts`, `context`, `init`, `verify` | Yes | No | These commands are local-only and reject unsupported remote selectors. |
+| `graph`, `architecture` | Yes, default | Yes, one exact selector | Use `--repo OWNER/REPO[@REF]` for remote execution; local paths and an exact remote selector are mutually exclusive where applicable. |
+| `ask` | Yes, default | Yes, via typed tools with exact repository selectors | Authenticate an AI provider; `--server URL` selects a remote Grepple service but does not select a repository on its own. |
+| `write`, `sources`, `anchors`, `artifacts`, `context`, `init`, `verify` | Yes | No | These commands are local-only and reject unsupported remote selectors. |
 | `repos`, `refs`, `get`, `rules`, `login` | No source analysis | Yes | These commands operate on the configured remote service. |
 | `tree` | Yes, default | Yes | A local path is the default; use `--repo OWNER/REPO[@REF]` for an indexed tree. Directory descriptions are available when the tree payload contains them. |
-| `ask` | Yes | Yes when a typed tool receives an exact indexed selector | The answer and tool evidence identify the selected local or remote universe. |
 | `languages`, `examples`, `help`, `version` | Not source-dependent | Not source-dependent | These inspect capabilities or documentation. |
 
 Command-specific `--help` is authoritative at the attempted command. A remote transport failure, unsupported remote operation, absent indexed selector, or unavailable local language capability is reported as a diagnostic or error; it is not silently retried against a different source universe.

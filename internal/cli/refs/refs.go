@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/alexflint/go-arg"
-	"github.com/greppleai/grepple/api"
+	"github.com/greppleai/grepple/internal/wire"
 	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
 	"github.com/greppleai/grepple/internal/repositoryrefs"
 )
@@ -68,12 +68,12 @@ func Execute(application cliruntime.Context, values *Args) error {
 	}
 	entries = repositoryrefs.Filter(entries, values.Repo, values.Kind)
 	if values.JSON {
-		return cliruntime.NewOutput(application.Stdout()).WriteJSON(api.ReposResponse{OK: true, Count: len(entries), Repos: entries})
+		return cliruntime.NewOutput(application.Stdout()).WriteJSON(wire.ReposResponse{OK: true, Count: len(entries), Repos: entries})
 	}
 	return renderRefs(entries, application)
 }
 
-func renderRefs(entries []api.RepoListEntry, application cliruntime.Context) error {
+func renderRefs(entries []wire.RepoListEntry, application cliruntime.Context) error {
 	for _, entry := range entries {
 		head := ""
 		if entry.Head != nil {
@@ -94,6 +94,6 @@ func renderRefs(entries []api.RepoListEntry, application cliruntime.Context) err
 }
 
 // Filter selects references by source repository and reference kind.
-func Filter(entries []api.RepoListEntry, repo, kind string) []api.RepoListEntry {
+func Filter(entries []wire.RepoListEntry, repo, kind string) []wire.RepoListEntry {
 	return repositoryrefs.Filter(entries, repo, kind)
 }

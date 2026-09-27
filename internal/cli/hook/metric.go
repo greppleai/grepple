@@ -13,9 +13,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/greppleai/grepple/gritql"
+	"github.com/greppleai/grepple/internal/gritql"
 	"github.com/greppleai/grepple/internal/storagepaths"
-	"github.com/greppleai/grepple/parser"
+	"github.com/greppleai/grepple/internal/parser"
 )
 
 func validateMetricMessage(message string, query *gritql.MetricQuery) error {

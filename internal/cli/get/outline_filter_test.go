@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/greppleai/grepple/parser"
+	"github.com/greppleai/grepple/internal/parser"
 )
 
 func TestGetOutlineKindFiltersHumanAndJSON(t *testing.T) {

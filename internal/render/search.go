@@ -3,11 +3,11 @@ package render
 import (
 	"bytes"
 	"fmt"
-	"github.com/greppleai/grepple/navigation"
-	"github.com/greppleai/grepple/search"
+	"github.com/greppleai/grepple/internal/navigation"
+	"github.com/greppleai/grepple/internal/search"
 	"io"
 
-	"github.com/greppleai/grepple/linerange"
+	"github.com/greppleai/grepple/internal/linerange"
 )
 
 // SearchOptions supplies result-formatting and output-context settings.

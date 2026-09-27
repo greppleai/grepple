@@ -10,7 +10,7 @@ import (
 
 	"charm.land/fantasy"
 	"github.com/greppleai/grepple/internal/cliruntime"
-	"github.com/greppleai/grepple/search"
+	"github.com/greppleai/grepple/internal/search"
 )
 
 const initToolOutputLimit = 32 << 10

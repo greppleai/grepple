@@ -5,36 +5,36 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/greppleai/grepple/api"
+	"github.com/greppleai/grepple/internal/wire"
 	"github.com/greppleai/grepple/internal/cliruntime"
 	"github.com/greppleai/grepple/internal/shellquote"
 )
 
-func gritResultMetadata(application cliruntime.Context, values gritArgs, response api.GritResponse, remote bool) *api.ResultMetadata {
+func gritResultMetadata(application cliruntime.Context, values gritArgs, response wire.GritResponse, remote bool) *wire.ResultMetadata {
 	total := response.Total
 	pageComplete := values.Skip+len(response.Findings) >= total
 	omittedSources := 0
-	diagnostics := make([]api.ResultDiagnostic, 0, len(response.Diagnostics)+len(response.Truncations)+len(response.ShardErrors))
+	diagnostics := make([]wire.ResultDiagnostic, 0, len(response.Diagnostics)+len(response.Truncations)+len(response.ShardErrors))
 	for _, diagnostic := range response.Diagnostics {
-		diagnostics = append(diagnostics, api.ResultDiagnostic{Code: diagnostic.Code, Message: diagnostic.Message})
+		diagnostics = append(diagnostics, wire.ResultDiagnostic{Code: diagnostic.Code, Message: diagnostic.Message})
 	}
 	for _, truncation := range response.Truncations {
 		omittedSources += truncation.Skipped
-		diagnostics = append(diagnostics, api.ResultDiagnostic{Code: "truncated-" + truncation.Reason, Message: fmt.Sprintf("%d items omitted by %s=%d", truncation.Skipped, truncation.Reason, truncation.Limit)})
+		diagnostics = append(diagnostics, wire.ResultDiagnostic{Code: "truncated-" + truncation.Reason, Message: fmt.Sprintf("%d items omitted by %s=%d", truncation.Skipped, truncation.Reason, truncation.Limit)})
 	}
 	for _, shardError := range response.ShardErrors {
-		diagnostics = append(diagnostics, api.ResultDiagnostic{Code: "shard-error", Message: shardError})
+		diagnostics = append(diagnostics, wire.ResultDiagnostic{Code: "shard-error", Message: shardError})
 	}
 	mode := "local"
 	if remote {
 		mode = "local+remote"
 	}
-	metadata := &api.ResultMetadata{
-		Scope:   api.ResultScope{Mode: mode, Paths: normalizedScope(values.Globs, "."), ExcludedPaths: normalizedScope(values.ExcludeGlobs, ""), Repositories: normalizedScope(values.Repositories, ""), ExcludedRepositories: normalizedScope(values.ExcludeRepositories, ""), Languages: gritResultLanguages(response)},
+	metadata := &wire.ResultMetadata{
+		Scope:   wire.ResultScope{Mode: mode, Paths: normalizedScope(values.Globs, "."), ExcludedPaths: normalizedScope(values.ExcludeGlobs, ""), Repositories: normalizedScope(values.Repositories, ""), ExcludedRepositories: normalizedScope(values.ExcludeRepositories, ""), Languages: gritResultLanguages(response)},
 		Order:   "repository-path-range",
-		Page:    api.ResultPage{Skip: values.Skip, Limit: values.Limit, Returned: len(response.Findings), Total: &total, Complete: pageComplete && len(response.Truncations) == 0 && len(response.ShardErrors) == 0},
-		Limits:  api.ResultLimits{MaxFiles: values.MaxFiles, MaxOutputBytes: values.MaxOutputBytes, MaxSourceBytes: values.MaxSourceBytes, MaxTotalBytes: values.MaxTotalBytes, JSONByteUncapped: values.JSON},
-		Omitted: api.ResultOmissions{Findings: max(0, total-len(response.Findings)), Sources: omittedSources}, Diagnostics: diagnostics,
+		Page:    wire.ResultPage{Skip: values.Skip, Limit: values.Limit, Returned: len(response.Findings), Total: &total, Complete: pageComplete && len(response.Truncations) == 0 && len(response.ShardErrors) == 0},
+		Limits:  wire.ResultLimits{MaxFiles: values.MaxFiles, MaxOutputBytes: values.MaxOutputBytes, MaxSourceBytes: values.MaxSourceBytes, MaxTotalBytes: values.MaxTotalBytes, JSONByteUncapped: values.JSON},
+		Omitted: wire.ResultOmissions{Findings: max(0, total-len(response.Findings)), Sources: omittedSources}, Diagnostics: diagnostics,
 	}
 	if !pageComplete || omittedSources > 0 {
 		metadata.NextCommand = gritContinuationCommand(application, values, values.Skip+len(response.Findings), omittedSources > 0)
@@ -42,7 +42,7 @@ func gritResultMetadata(application cliruntime.Context, values gritArgs, respons
 	return metadata
 }
 
-func gritResultLanguages(response api.GritResponse) []string {
+func gritResultLanguages(response wire.GritResponse) []string {
 	languages := []string{response.Metadata.Language}
 	for _, finding := range response.Findings {
 		languages = append(languages, finding.Language)

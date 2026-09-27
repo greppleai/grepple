@@ -2,7 +2,7 @@ package search
 
 import (
 	"encoding/json"
-	"github.com/greppleai/grepple/api"
+	"github.com/greppleai/grepple/internal/wire"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -112,15 +112,15 @@ func TestFilesWithMatchesPrintsPathsOnly(t *testing.T) {
 	}
 	t.Cleanup(func() { _ = os.Chdir(previous) })
 
-	var request api.SearchRequest
+	var request wire.SearchRequest
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		_ = json.NewDecoder(r.Body).Decode(&request)
-		_ = json.NewEncoder(w).Encode(api.SearchResponse{Results: []api.FileResult{
+		_ = json.NewEncoder(w).Encode(wire.SearchResponse{Results: []wire.FileResult{
 			{Repo: "owner/alpha", Path: "owner/alpha/svc/ping.go",
-				Matches:  []api.ResultMatch{{Line: 3, Text: "func ping() {"}},
-				Segments: []api.ResultSegment{{Kind: "function", Start: 3, End: 5, Text: "func ping() {}"}}},
+				Matches:  []wire.ResultMatch{{Line: 3, Text: "func ping() {"}},
+				Segments: []wire.ResultSegment{{Kind: "function", Start: 3, End: 5, Text: "func ping() {}"}}},
 			{Repo: "owner/beta", Path: "owner/beta/handler.go",
-				Matches: []api.ResultMatch{{Line: 8, Text: "// ping health"}}},
+				Matches: []wire.ResultMatch{{Line: 8, Text: "// ping health"}}},
 		}})
 	}))
 	defer server.Close()
@@ -162,7 +162,7 @@ func assertPathsOnlyOutput(t *testing.T, out string) {
 
 // assertContentSearchRequest checks the outgoing request was a content search
 // with segments skipped (not a filename glob).
-func assertContentSearchRequest(t *testing.T, request api.SearchRequest) {
+func assertContentSearchRequest(t *testing.T, request wire.SearchRequest) {
 	t.Helper()
 	if request.Files {
 		t.Fatal("request.Files should be false (content search, not filename glob)")

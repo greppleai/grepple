@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/greppleai/grepple/parser"
+	"github.com/greppleai/grepple/internal/parser"
 )
 
 func TestOutlineKindArgsValidation(t *testing.T) {

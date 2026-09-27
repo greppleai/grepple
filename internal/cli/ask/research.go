@@ -13,7 +13,7 @@ import (
 	"github.com/greppleai/grepple/internal/agent"
 	"github.com/greppleai/grepple/internal/aiprovider"
 	"github.com/greppleai/grepple/internal/directorymeta"
-	searchengine "github.com/greppleai/grepple/search"
+	searchengine "github.com/greppleai/grepple/internal/search"
 )
 
 const researchToolOutputLimit = 64 << 10

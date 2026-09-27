@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
-	"github.com/greppleai/grepple/search"
+	"github.com/greppleai/grepple/internal/search"
 )
 
 // command owns navigation graph command operations.

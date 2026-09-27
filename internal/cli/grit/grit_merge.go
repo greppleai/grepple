@@ -8,14 +8,14 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/greppleai/grepple/api"
+	"github.com/greppleai/grepple/internal/wire"
 )
 
-func mergeGritResponses(local, remote api.GritResponse, currentRepo string) (api.GritResponse, error) {
+func mergeGritResponses(local, remote wire.GritResponse, currentRepo string) (wire.GritResponse, error) {
 	if err := validateGritResponseMetadata(local.Metadata, remote.Metadata); err != nil {
-		return api.GritResponse{}, err
+		return wire.GritResponse{}, err
 	}
-	findings := make([]api.GritFinding, 0, len(local.Findings)+len(remote.Findings))
+	findings := make([]wire.GritFinding, 0, len(local.Findings)+len(remote.Findings))
 	findings = append(findings, local.Findings...)
 	for _, finding := range remote.Findings {
 		if currentRepo == "" || finding.Repo != currentRepo {
@@ -23,7 +23,7 @@ func mergeGritResponses(local, remote api.GritResponse, currentRepo string) (api
 		}
 	}
 	normalized := normalizeGritFindings(findings)
-	merged := api.GritResponse{
+	merged := wire.GritResponse{
 		Metadata:    local.Metadata,
 		Findings:    normalized,
 		Diagnostics: normalizeGritSlice(appendCopy(local.Diagnostics, remote.Diagnostics...)),
@@ -41,7 +41,7 @@ func mergeGritResponses(local, remote api.GritResponse, currentRepo string) (api
 	return merged, nil
 }
 
-func validateGritResponseMetadata(local, remote api.GritMetadata) error {
+func validateGritResponseMetadata(local, remote wire.GritMetadata) error {
 	if local.Compatibility != remote.Compatibility {
 		return fmt.Errorf("structural response compatibility mismatch: local %q, remote %q", local.Compatibility, remote.Compatibility)
 	}
@@ -57,17 +57,17 @@ func validateGritResponseMetadata(local, remote api.GritMetadata) error {
 	return nil
 }
 
-func normalizeGritFindings(findings []api.GritFinding) []api.GritFinding {
+func normalizeGritFindings(findings []wire.GritFinding) []wire.GritFinding {
 	for index := range findings {
 		findings[index].Path = normalizeGritPath(findings[index].Path)
 		if findings[index].Bindings == nil {
-			findings[index].Bindings = []api.GritBinding{}
+			findings[index].Bindings = []wire.GritBinding{}
 		}
 	}
 	sort.SliceStable(findings, func(left, right int) bool {
 		return compareGritFinding(findings[left], findings[right]) < 0
 	})
-	result := make([]api.GritFinding, 0, len(findings))
+	result := make([]wire.GritFinding, 0, len(findings))
 	previous := ""
 	for _, finding := range findings {
 		key := gritJSONKey(finding)
@@ -87,7 +87,7 @@ func normalizeGritPath(value string) string {
 	return normalized
 }
 
-func compareGritFinding(left, right api.GritFinding) int {
+func compareGritFinding(left, right wire.GritFinding) int {
 	if result := strings.Compare(left.Repo, right.Repo); result != 0 {
 		return result
 	}
@@ -103,7 +103,7 @@ func compareGritFinding(left, right api.GritFinding) int {
 	return strings.Compare(gritJSONKey(left), gritJSONKey(right))
 }
 
-func compareGritRange(left, right api.GritRange) int {
+func compareGritRange(left, right wire.GritRange) int {
 	leftValues := [...]int{left.StartByte, left.EndByte, left.Start.Line, left.Start.Column, left.End.Line, left.End.Column}
 	rightValues := [...]int{right.StartByte, right.EndByte, right.Start.Line, right.Start.Column, right.End.Line, right.End.Column}
 	for index := range leftValues {
@@ -149,8 +149,8 @@ func appendCopy[T any](values []T, additional ...T) []T {
 	return append(result, additional...)
 }
 
-func addGritStatistics(left, right api.GritStatistics) api.GritStatistics {
-	return api.GritStatistics{
+func addGritStatistics(left, right wire.GritStatistics) wire.GritStatistics {
+	return wire.GritStatistics{
 		Candidates:      saturatingAddInt(left.Candidates, right.Candidates),
 		Eligible:        saturatingAddInt(left.Eligible, right.Eligible),
 		Evaluated:       saturatingAddInt(left.Evaluated, right.Evaluated),

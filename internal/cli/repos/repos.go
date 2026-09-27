@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/alexflint/go-arg"
-	"github.com/greppleai/grepple/api"
+	"github.com/greppleai/grepple/internal/wire"
 	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
 )
 
@@ -61,7 +61,7 @@ func Execute(application cliruntime.Context, values *Args) error {
 	}
 	repos = filterRepos(uniqueSourceRepos(repos), values.Filter)
 	if values.JSON {
-		return cliruntime.NewOutput(application.Stdout()).WriteJSON(api.ReposResponse{OK: true, Count: len(repos), Repos: repos})
+		return cliruntime.NewOutput(application.Stdout()).WriteJSON(wire.ReposResponse{OK: true, Count: len(repos), Repos: repos})
 	}
 	output := cliruntime.NewOutput(application.Stdout())
 	for _, entry := range repos {
@@ -75,9 +75,9 @@ func Execute(application cliruntime.Context, values *Args) error {
 	return nil
 }
 
-func uniqueSourceRepos(repos []api.RepoListEntry) []api.RepoListEntry {
+func uniqueSourceRepos(repos []wire.RepoListEntry) []wire.RepoListEntry {
 	seen := map[string]bool{}
-	unique := make([]api.RepoListEntry, 0, len(repos))
+	unique := make([]wire.RepoListEntry, 0, len(repos))
 	for _, entry := range repos {
 		if seen[entry.Repo] {
 			continue
@@ -90,12 +90,12 @@ func uniqueSourceRepos(repos []api.RepoListEntry) []api.RepoListEntry {
 
 // filterRepos keeps only the repos whose name contains the substring filter
 // (case-insensitive); an empty filter keeps everything.
-func filterRepos(repos []api.RepoListEntry, filter string) []api.RepoListEntry {
+func filterRepos(repos []wire.RepoListEntry, filter string) []wire.RepoListEntry {
 	filter = strings.ToLower(strings.TrimSpace(filter))
 	if filter == "" {
 		return repos
 	}
-	kept := make([]api.RepoListEntry, 0, len(repos))
+	kept := make([]wire.RepoListEntry, 0, len(repos))
 	for _, entry := range repos {
 		if strings.Contains(strings.ToLower(entry.Repo), filter) {
 			kept = append(kept, entry)

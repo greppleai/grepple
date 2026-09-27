@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/greppleai/grepple/api"
+	"github.com/greppleai/grepple/internal/wire"
 )
 
 func TestDirectoryArchitectureColdWarmComparisonIsByteIdentical(t *testing.T) {
@@ -186,7 +186,7 @@ func marshalArchitectureFixture(t *testing.T, value directoryArchitecture, inden
 func TestReadDirectoryArchitectureAcceptsRemoteEnvelope(t *testing.T) {
 	architecture := architectureComparisonFixture()
 	result := marshalArchitectureFixture(t, architecture, false)
-	envelope, err := json.Marshal(api.AnalysisResponse{Schema: "grepple-remote-analysis-v1", Operation: api.AnalysisArchitecture, Repository: "owner/repo", Found: true, Complete: true, Result: result})
+	envelope, err := json.Marshal(wire.AnalysisResponse{Schema: "grepple-remote-analysis-v1", Operation: wire.AnalysisArchitecture, Repository: "owner/repo", Found: true, Complete: true, Result: result})
 	if err != nil {
 		t.Fatal(err)
 	}

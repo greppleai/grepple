@@ -8,10 +8,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/greppleai/grepple/api"
+	"github.com/greppleai/grepple/internal/wire"
 	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
-	"github.com/greppleai/grepple/parser"
-	"github.com/greppleai/grepple/search"
+	"github.com/greppleai/grepple/internal/parser"
+	"github.com/greppleai/grepple/internal/search"
 )
 
 func TestNewResultRendererSelectsOutputMode(t *testing.T) {
@@ -42,9 +42,9 @@ func TestNewResultRendererSelectsOutputMode(t *testing.T) {
 func TestLineRendererWritesToInjectedOutput(t *testing.T) {
 	var output bytes.Buffer
 	renderer := lineRenderer{contextGuard: noopContextGuard{}, output: newOutputWriter(&output)}
-	results := []api.FileResult{{
+	results := []wire.FileResult{{
 		Path: "example.go",
-		Matches: []api.ResultMatch{
+		Matches: []wire.ResultMatch{
 			{Line: 7, EndLine: 12, Text: "func needle() {"},
 			{Line: 14, StartLine: 10, EndLine: 16, Text: "needle()"},
 			{Line: 20, Text: "needle"},
@@ -62,9 +62,9 @@ func TestLineRendererWritesToInjectedOutput(t *testing.T) {
 func TestSegmentRendererUsesWhitespaceForShortSpacingSegments(t *testing.T) {
 	var output bytes.Buffer
 	renderer := segmentRenderer{contextGuard: noopContextGuard{}, output: newOutputWriter(&output)}
-	results := []api.FileResult{{
+	results := []wire.FileResult{{
 		Path: "example.go",
-		Segments: []api.ResultSegment{
+		Segments: []wire.ResultSegment{
 			{Kind: "summary", Start: 1, End: 1, Text: "first"},
 			{Kind: "spacing", Start: 2, End: 3, Text: "\n"},
 			{Kind: "lines", Start: 4, End: 4, Text: "fourth"},
@@ -84,17 +84,17 @@ func TestSegmentRendererUsesWhitespaceForShortSpacingSegments(t *testing.T) {
 func TestSegmentRendererPrintsRelatedGoPoints(t *testing.T) {
 	var output bytes.Buffer
 	renderer := segmentRenderer{contextGuard: noopContextGuard{}, output: newOutputWriter(&output)}
-	results := []api.FileResult{{
+	results := []wire.FileResult{{
 		Path: "caller.go",
-		Related: []api.RelatedSymbol{
-			{Name: "Request", Path: "request.go", Kind: "struct", Direction: "type", Role: "parameter", Start: 2, End: 4, CallLine: 7, Confidence: "import-resolved", Segments: []api.ResultSegment{{Kind: "lines", Start: 2, End: 4, Text: "type Request struct {\n\tName string\n}"}}},
+		Related: []wire.RelatedSymbol{
+			{Name: "Request", Path: "request.go", Kind: "struct", Direction: "type", Role: "parameter", Start: 2, End: 4, CallLine: 7, Confidence: "import-resolved", Segments: []wire.ResultSegment{{Kind: "lines", Start: 2, End: 4, Text: "type Request struct {\n\tName string\n}"}}},
 			{
 				Name: "service.Load → (*Store).Load", Path: "store.go", Kind: "method", Direction: "callee",
 				Start: 12, End: 24, CallLine: 8, Confidence: "candidate",
-				Segments: []api.ResultSegment{{Kind: "lines", Start: 12, End: 13, Text: "func (s *Store) Load() {\n}"}},
-				Related: []api.RelatedSymbol{
+				Segments: []wire.ResultSegment{{Kind: "lines", Start: 12, End: 13, Text: "func (s *Store) Load() {\n}"}},
+				Related: []wire.RelatedSymbol{
 					{Name: "validate", Path: "validate.go", Direction: "callee", Start: 3, End: 7, CallLine: 13, Confidence: "unique"},
-					{Name: "Nested", Path: "nested.go", Kind: "struct", Direction: "type", Role: "local", Start: 2, End: 4, CallLine: 14, Confidence: "exact", Segments: []api.ResultSegment{{Kind: "lines", Start: 2, End: 4, Text: "type Nested struct {\n\tValue string\n}"}}},
+					{Name: "Nested", Path: "nested.go", Kind: "struct", Direction: "type", Role: "local", Start: 2, End: 4, CallLine: 14, Confidence: "exact", Segments: []wire.ResultSegment{{Kind: "lines", Start: 2, End: 4, Text: "type Nested struct {\n\tValue string\n}"}}},
 				},
 				OmittedCallers: 2,
 				OmittedCallees: 1,
@@ -150,14 +150,14 @@ func TestSegmentRendererDeduplicatesAnchoredRelatedTypeAppendix(t *testing.T) {
 		output:  newOutputWriter(&output),
 		anchors: AnchorLookup{"request.go": {2: "AAA", 3: "BBB", 4: "CCC"}},
 	}
-	typePoint := api.RelatedSymbol{
+	typePoint := wire.RelatedSymbol{
 		Name: "Request", Path: "request.go", Kind: "struct", Direction: "type", Role: "parameter",
 		Start: 2, End: 4, CallLine: 7, Confidence: "import-resolved",
-		Segments: []api.ResultSegment{{Kind: "lines", Start: 2, End: 4, Text: "type Request struct {\n\tName string\n}"}},
+		Segments: []wire.ResultSegment{{Kind: "lines", Start: 2, End: 4, Text: "type Request struct {\n\tName string\n}"}},
 	}
-	results := []api.FileResult{
-		{Path: "first.go", Related: []api.RelatedSymbol{typePoint}},
-		{Path: "second.go", Related: []api.RelatedSymbol{typePoint}},
+	results := []wire.FileResult{
+		{Path: "first.go", Related: []wire.RelatedSymbol{typePoint}},
+		{Path: "second.go", Related: []wire.RelatedSymbol{typePoint}},
 	}
 	if err := renderer.Render(results); err != nil {
 		t.Fatal(err)
@@ -174,16 +174,16 @@ func TestSegmentRendererDeduplicatesAnchoredRelatedTypeAppendix(t *testing.T) {
 func TestSegmentRendererShowsResolvedExternalTypeDefinition(t *testing.T) {
 	var output bytes.Buffer
 	renderer := segmentRenderer{contextGuard: noopContextGuard{}, output: newOutputWriter(&output)}
-	artifact := &api.NavigationArtifactIdentity{
+	artifact := &wire.NavigationArtifactIdentity{
 		Ecosystem: "go", Module: "github.com/gofiber/fiber/v3", Version: "v3.5.0", Source: "https://proxy.golang.org", Integrity: "h1:exact",
 		Repository: "gofiber/fiber@tag~v3.5.0", Commit: "abcdef", Digest: "artifact-digest",
 	}
-	results := []api.FileResult{{
+	results := []wire.FileResult{{
 		Path: "internal/shard/health_controller.go",
-		Related: []api.RelatedSymbol{{
+		Related: []wire.RelatedSymbol{{
 			Name: "Ctx", Path: "ctx.go", Kind: "interface", Direction: "type", Role: "parameter",
 			Start: 17, End: 20, CallLine: 15, Confidence: "dependency-resolved", Artifact: artifact,
-			Segments: []api.ResultSegment{{Kind: "lines", Start: 17, End: 20, Text: "type Ctx interface {\n\tRequest() *Request\n\tResponse() *Response\n}"}},
+			Segments: []wire.ResultSegment{{Kind: "lines", Start: 17, End: 20, Text: "type Ctx interface {\n\tRequest() *Request\n\tResponse() *Response\n}"}},
 		}},
 	}}
 	if err := renderer.Render(results); err != nil {
@@ -207,7 +207,7 @@ func TestSegmentRendererShowsResolvedExternalTypeDefinition(t *testing.T) {
 func TestSegmentRendererReportsIncompleteSourceAnalysis(t *testing.T) {
 	var output bytes.Buffer
 	renderer := segmentRenderer{contextGuard: noopContextGuard{}, output: newOutputWriter(&output)}
-	results := []api.FileResult{
+	results := []wire.FileResult{
 		{Path: "valid.go", StructureStatus: string(parser.SegmentBuildStructured)},
 		{Path: "recovered.go", StructureStatus: string(parser.SegmentBuildRecovered)},
 		{Path: "plain.txt", StructureStatus: string(parser.SegmentBuildPlain)},
@@ -231,7 +231,7 @@ func TestSegmentRendererReportsIncompleteSourceAnalysis(t *testing.T) {
 	if err := jsonRenderer.Render(results); err != nil {
 		t.Fatal(err)
 	}
-	var response api.SearchResponse
+	var response wire.SearchResponse
 	if err := json.Unmarshal(output.Bytes(), &response); err != nil {
 		t.Fatal(err)
 	}
@@ -261,7 +261,7 @@ func TestBoundedOutputWriterStopsBeforeAgentToolLimit(t *testing.T) {
 func TestAnchoredContextRendererEmitsEditableRows(t *testing.T) {
 	var output bytes.Buffer
 	renderer := contextRenderer{contextGuard: noopContextGuard{}, output: newOutputWriter(&output), anchors: AnchorLookup{"sample.go": {1: "AAA", 2: "BBB", 3: "CCC"}}}
-	results := []api.FileResult{{Path: "sample.go", Context: []api.ContextLine{{Line: 1, Text: "before"}, {Line: 2, Text: "needle", Match: true}, {Line: 3, Text: "after"}}}}
+	results := []wire.FileResult{{Path: "sample.go", Context: []wire.ContextLine{{Line: 1, Text: "before"}, {Line: 2, Text: "needle", Match: true}, {Line: 3, Text: "after"}}}}
 	if err := renderer.Render(results); err != nil {
 		t.Fatal(err)
 	}

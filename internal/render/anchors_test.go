@@ -4,13 +4,13 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/greppleai/grepple/api"
+	"github.com/greppleai/grepple/internal/wire"
 )
 
 func TestSegmentRendererEmitsHashLineContentRows(t *testing.T) {
 	var output strings.Builder
-	result := api.FileResult{Path: "sample.go", Segments: []api.ResultSegment{{Kind: "lines", Start: 1, End: 2, Text: "first\nsecond"}}}
-	_, err := Render(Options{JSON: "off", Anchors: AnchorLookup{"sample.go": {1: "abc", 2: "def"}}}, []api.FileResult{result}, &output, nil)
+	result := wire.FileResult{Path: "sample.go", Segments: []wire.ResultSegment{{Kind: "lines", Start: 1, End: 2, Text: "first\nsecond"}}}
+	_, err := Render(Options{JSON: "off", Anchors: AnchorLookup{"sample.go": {1: "abc", 2: "def"}}}, []wire.FileResult{result}, &output, nil)
 	if err != nil {
 		t.Fatal(err)
 	}

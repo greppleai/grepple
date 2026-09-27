@@ -14,7 +14,7 @@ import (
 	"github.com/greppleai/grepple/internal/anchor"
 	"github.com/greppleai/grepple/internal/cliruntime"
 	"github.com/greppleai/grepple/internal/render"
-	"github.com/greppleai/grepple/linerange"
+	"github.com/greppleai/grepple/internal/linerange"
 )
 
 const (

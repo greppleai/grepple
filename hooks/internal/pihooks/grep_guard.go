@@ -8,7 +8,7 @@ import (
 	"regexp"
 	"strings"
 
-	codeparser "github.com/greppleai/grepple/parser"
+	codeparser "github.com/greppleai/grepple/internal/parser"
 )
 
 // AllowMarker is the explicit escape hatch for commands which genuinely need a

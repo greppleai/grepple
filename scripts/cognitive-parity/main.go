@@ -16,8 +16,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/greppleai/grepple/gritql"
-	"github.com/greppleai/grepple/parser"
+	"github.com/greppleai/grepple/internal/gritql"
+	"github.com/greppleai/grepple/internal/parser"
 	"go.yaml.in/yaml/v3"
 )
 

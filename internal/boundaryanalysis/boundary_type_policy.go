@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/greppleai/grepple/parser"
+	"github.com/greppleai/grepple/internal/parser"
 )
 
 func appendBoundaryFieldTypeUsages(usages []parser.NavigationTypeUsage, fields []parser.NavigationField, declarations map[string]parser.NavigationDeclaration) []parser.NavigationTypeUsage {

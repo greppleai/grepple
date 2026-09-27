@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	sourcedomain "github.com/greppleai/grepple/internal/sources"
-	"github.com/greppleai/grepple/parser"
+	"github.com/greppleai/grepple/internal/parser"
 )
 
 // BoundaryPolicySchema identifies the supported repository policy contract.

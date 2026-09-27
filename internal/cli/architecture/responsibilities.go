@@ -7,8 +7,8 @@ import (
 	"fmt"
 
 	"github.com/alexflint/go-arg"
-	"github.com/greppleai/grepple/analysis"
-	"github.com/greppleai/grepple/api"
+	"github.com/greppleai/grepple/internal/analysis"
+	"github.com/greppleai/grepple/internal/wire"
 )
 
 type architectureResponsibilitiesArgs struct {
@@ -45,7 +45,7 @@ func executeArchitectureResponsibilities(values *ResponsibilitiesArgs, dependenc
 		return err
 	}
 	if values.Repository != "" {
-		response, requestErr := dependencies.remote(context.Background(), api.AnalysisRequest{Operation: api.AnalysisResponsibilities, Repository: values.Repository, Paths: values.Paths, MaxFiles: values.MaxFiles}, dependencies.serverDefault(values.Server))
+		response, requestErr := dependencies.remote(context.Background(), wire.AnalysisRequest{Operation: wire.AnalysisResponsibilities, Repository: values.Repository, Paths: values.Paths, MaxFiles: values.MaxFiles}, dependencies.serverDefault(values.Server))
 		if requestErr != nil {
 			return requestErr
 		}

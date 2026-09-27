@@ -1,10 +1,10 @@
 package graph
 
 import (
-	"github.com/greppleai/grepple/analysis"
-	"github.com/greppleai/grepple/api"
-	"github.com/greppleai/grepple/parser"
-	"github.com/greppleai/grepple/search"
+	"github.com/greppleai/grepple/internal/analysis"
+	"github.com/greppleai/grepple/internal/wire"
+	"github.com/greppleai/grepple/internal/parser"
+	"github.com/greppleai/grepple/internal/search"
 )
 
 // Schema identifies the normalized navigation graph projection.
@@ -15,7 +15,7 @@ const navigationGraphSchema = Schema
 type Output struct {
 	Schema           string                             `json:"schema"`
 	Files            int                                `json:"files"`
-	Metadata         *api.ResultMetadata                `json:"metadata,omitempty"`
+	Metadata         *wire.ResultMetadata                `json:"metadata,omitempty"`
 	Sources          SourceSummary                      `json:"sources"`
 	Declarations     []parser.NavigationDeclaration     `json:"declarations"`
 	TypeDeclarations []parser.NavigationTypeDeclaration `json:"typeDeclarations,omitempty"`

@@ -1,0 +1,224 @@
+package search
+
+import (
+	"os"
+	"path/filepath"
+	"testing"
+
+	"github.com/greppleai/grepple/internal/parser"
+)
+
+func TestJavaImportsResolveTypesStaticMembersAndReceiverCalls(t *testing.T) {
+	root := t.TempDir()
+	service := filepath.Join(root, "app", "Service.java")
+	helper := filepath.Join(root, "lib", "api", "Helper.java")
+	actions := filepath.Join(root, "lib", "tools", "Actions.java")
+	paths := writeJVMNavigationFiles(t, map[string]string{
+		service: `package app;
+import lib.api.Helper;
+import static lib.tools.Actions.run;
+class Service {
+    void use() { Helper.work(); run(); }
+    void typed(Helper value) { value.load(); }
+}
+`,
+		helper:  "package lib.api;\npublic class Helper { public static void work() {} public void load() {} }\n",
+		actions: "package lib.tools;\npublic class Actions { public static void run() {} }\n",
+	})
+	graph, _ := BuildNavigationGraphWithOptions(paths, NavigationBuildOptions{DisableCache: true})
+	assertJVMImportTarget(t, graph.Imports, "Helper", helper)
+	assertJVMImportTarget(t, graph.Imports, "run", actions)
+	assertJVMResolvedCall(t, graph.Calls, service, "Helper.work")
+	assertJVMResolvedCall(t, graph.Calls, service, "run")
+	assertJVMResolvedCall(t, graph.Calls, service, "value.load")
+}
+
+func TestJavaGenericImportedParameterTypeResolvesReceiverCall(t *testing.T) {
+	root := t.TempDir()
+	service := filepath.Join(root, "app", "Service.java")
+	box := filepath.Join(root, "lib", "api", "Box.java")
+	paths := writeJVMNavigationFiles(t, map[string]string{
+		service: "package app; import lib.api.Box; class Service { void use(Box<String> value) { value.load(); } }",
+		box:     "package lib.api; public class Box<T> { public void load() {} }",
+	})
+	graph, _ := BuildNavigationGraphWithOptions(paths, NavigationBuildOptions{DisableCache: true})
+	assertJVMImportTarget(t, graph.Imports, "Box", box)
+	assertJVMResolvedCall(t, graph.Calls, service, "value.load")
+}
+
+func TestJavaOverloadLikeTargetsRemainAmbiguous(t *testing.T) {
+	root := t.TempDir()
+	service := filepath.Join(root, "app", "Service.java")
+	helper := filepath.Join(root, "lib", "api", "Helper.java")
+	paths := writeJVMNavigationFiles(t, map[string]string{
+		service: "package app; import lib.api.Helper; class Service { void use(Helper value) { value.work(1); } }",
+		helper:  "package lib.api; public class Helper { public void work(int value) {} public void work(String value) {} }",
+	})
+	graph, _ := BuildNavigationGraphWithOptions(paths, NavigationBuildOptions{DisableCache: true})
+	for _, call := range graph.Calls {
+		if call.Path == service && call.Display == "value.work" && call.TargetID == "" && len(call.CandidateTargetIDs) == 2 && call.Confidence == "candidate" {
+			return
+		}
+	}
+	t.Fatalf("overload-like call was not preserved as ambiguous: %#v", graph.Calls)
+}
+
+func TestJavaImportedNestedParameterTypeSelectsNestedReceiver(t *testing.T) {
+	root := t.TempDir()
+	service := filepath.Join(root, "app", "Service.java")
+	outer := filepath.Join(root, "lib", "api", "Outer.java")
+	decoy := filepath.Join(root, "other", "Inner.java")
+	paths := writeJVMNavigationFiles(t, map[string]string{
+		service: "package app; import lib.api.Outer; class Service { void use(Outer.Inner value) { value.load(); } }",
+		outer:   "package lib.api; public class Outer { public static class Inner { public void load() {} } }",
+		decoy:   "package other; public class Inner { public void load() {} }",
+	})
+	graph, _ := BuildNavigationGraphWithOptions(paths, NavigationBuildOptions{DisableCache: true})
+	assertJVMImportTarget(t, graph.Imports, "Outer", outer)
+	assertJVMResolvedCallTargetPath(t, graph, service, "value.load", outer)
+}
+
+func TestKotlinImportsResolveAliasesAndTopLevelFunctions(t *testing.T) {
+	root := t.TempDir()
+	service := filepath.Join(root, "app", "Service.kt")
+	helper := filepath.Join(root, "lib", "api", "Declarations.kt")
+	tools := filepath.Join(root, "lib", "tools", "Actions.kt")
+	paths := writeJVMNavigationFiles(t, map[string]string{
+		service: "package app\nimport lib.api.Helper as Renamed\nimport lib.tools.run\nclass Service { fun use() { Renamed.work(); run() }; fun typed(value: Renamed) { value.work() } }\n",
+		helper:  "package lib.api\nobject Helper { fun work() {} }\n",
+		tools:   "package lib.tools\nfun run() {}\n",
+	})
+	graph, _ := BuildNavigationGraphWithOptions(paths, NavigationBuildOptions{DisableCache: true})
+	assertJVMImportTarget(t, graph.Imports, "Renamed", helper)
+	assertJVMImportTarget(t, graph.Imports, "run", tools)
+	assertJVMResolvedCall(t, graph.Calls, service, "Renamed.work")
+	assertJVMResolvedCall(t, graph.Calls, service, "run")
+	assertJVMResolvedCall(t, graph.Calls, service, "value.work")
+}
+
+func TestKotlinGenericImportedParameterTypeResolvesReceiverCall(t *testing.T) {
+	root := t.TempDir()
+	service := filepath.Join(root, "app", "Service.kt")
+	box := filepath.Join(root, "lib", "api", "Box.kt")
+	paths := writeJVMNavigationFiles(t, map[string]string{
+		service: "package app\nimport lib.api.Box\nclass Service { fun use(value: Box<String>) { value.load() } }\n",
+		box:     "package lib.api\nclass Box<T> { fun load() {} }\n",
+	})
+	graph, _ := BuildNavigationGraphWithOptions(paths, NavigationBuildOptions{DisableCache: true})
+	assertJVMImportTarget(t, graph.Imports, "Box", box)
+	assertJVMResolvedCallTargetPath(t, graph, service, "value.load", box)
+}
+
+func TestKotlinOverloadLikeTargetsRemainAmbiguous(t *testing.T) {
+	root := t.TempDir()
+	service := filepath.Join(root, "app", "Service.kt")
+	helper := filepath.Join(root, "lib", "api", "Helper.kt")
+	paths := writeJVMNavigationFiles(t, map[string]string{
+		service: "package app\nimport lib.api.Helper\nclass Service { fun use(value: Helper) { value.work(1) } }\n",
+		helper:  "package lib.api\nclass Helper {\n    fun work(value: Int) {}\n    fun work(value: String) {}\n}\n",
+	})
+	graph, _ := BuildNavigationGraphWithOptions(paths, NavigationBuildOptions{DisableCache: true})
+	for _, call := range graph.Calls {
+		if call.Path == service && call.Display == "value.work" && call.TargetID == "" && len(call.CandidateTargetIDs) == 2 && call.Confidence == "candidate" {
+			return
+		}
+	}
+	t.Fatalf("Kotlin overload-like call was not preserved as ambiguous: %#v", graph.Calls)
+}
+
+func TestJVMImportsPreserveDuplicateQualifiedTargetsAsAmbiguous(t *testing.T) {
+	root := t.TempDir()
+	caller := filepath.Join(root, "app", "Service.java")
+	first := filepath.Join(root, "one", "Helper.java")
+	second := filepath.Join(root, "two", "Helper.java")
+	paths := writeJVMNavigationFiles(t, map[string]string{
+		caller: "package app; import lib.api.Helper; class Service { void use() { Helper.work(); } }",
+		first:  "package lib.api; public class Helper { static void work() {} }",
+		second: "package lib.api; public class Helper { static void work() {} }",
+	})
+	graph, _ := BuildNavigationGraphWithOptions(paths, NavigationBuildOptions{DisableCache: true})
+	for _, item := range graph.Imports {
+		if item.Alias == "Helper" && len(item.TargetPaths) == 2 && item.TargetPaths[0] == first && item.TargetPaths[1] == second {
+			for _, call := range graph.Calls {
+				if call.Path == caller && call.Display == "Helper.work" && call.TargetID == "" && len(call.CandidateTargetIDs) == 2 && call.Confidence == "candidate" {
+					return
+				}
+			}
+		}
+	}
+	t.Fatalf("imports=%#v calls=%#v", graph.Imports, graph.Calls)
+}
+
+func TestJVMExternalTypedReceiverDoesNotResolveLocalTerminal(t *testing.T) {
+	root := t.TempDir()
+	service := filepath.Join(root, "Service.java")
+	paths := writeJVMNavigationFiles(t, map[string]string{
+		service: `package app;
+import external.Client;
+class Decoy { void load() {} }
+class Service { void use(Client value) { value.load(); } }
+`,
+	})
+	graph, _ := BuildNavigationGraphWithOptions(paths, NavigationBuildOptions{DisableCache: true})
+	for _, call := range graph.Calls {
+		if call.Path == service && call.Display == "value.load" {
+			if call.TargetID != "" || len(call.CandidateTargetIDs) != 0 {
+				t.Fatalf("external JVM receiver resolved to local declaration: %#v", call)
+			}
+			return
+		}
+	}
+	t.Fatalf("missing external JVM call: %#v", graph.Calls)
+}
+
+func writeJVMNavigationFiles(t *testing.T, files map[string]string) []string {
+	t.Helper()
+	paths := make([]string, 0, len(files))
+	for path, content := range files {
+		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(path, []byte(content), 0o600); err != nil {
+			t.Fatal(err)
+		}
+		paths = append(paths, path)
+	}
+	return paths
+}
+
+func assertJVMImportTarget(t *testing.T, imports []parser.NavigationImport, alias, target string) {
+	t.Helper()
+	for _, item := range imports {
+		if item.Alias == alias && len(item.TargetPaths) == 1 && item.TargetPaths[0] == target {
+			return
+		}
+	}
+	t.Fatalf("missing import alias=%q target=%q: %#v", alias, target, imports)
+}
+
+func assertJVMResolvedCall(t *testing.T, calls []parser.NavigationCall, source, display string) {
+	t.Helper()
+	for _, call := range calls {
+		strong := call.Confidence == "exact" || call.Confidence == "import-resolved" || call.Confidence == "context-resolved"
+		if call.Path == source && call.Display == display && call.TargetID != "" && strong {
+			return
+		}
+	}
+	t.Fatalf("missing resolved call source=%q display=%q: %#v", source, display, calls)
+}
+
+func assertJVMResolvedCallTargetPath(t *testing.T, graph parser.NavigationGraph, source, display, targetPath string) {
+	t.Helper()
+	for _, call := range graph.Calls {
+		strong := call.Confidence == "exact" || call.Confidence == "import-resolved" || call.Confidence == "context-resolved"
+		if call.Path != source || call.Display != display || call.TargetID == "" || !strong {
+			continue
+		}
+		for _, declaration := range graph.Declarations {
+			if declaration.ID == call.TargetID && declaration.Path == targetPath {
+				return
+			}
+		}
+	}
+	t.Fatalf("missing resolved call source=%q display=%q target=%q: %#v", source, display, targetPath, graph.Calls)
+}

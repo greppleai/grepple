@@ -7,10 +7,10 @@ import (
 	"io"
 	"os"
 
-	"github.com/greppleai/grepple/api"
-	"github.com/greppleai/grepple/gritql"
+	"github.com/greppleai/grepple/internal/wire"
+	"github.com/greppleai/grepple/internal/gritql"
 	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
-	"github.com/greppleai/grepple/search"
+	"github.com/greppleai/grepple/internal/search"
 )
 
 // DefaultTextOutputBytes is the default human-readable GritQL output cap.
@@ -24,14 +24,14 @@ var errOutputTruncated = cliruntime.ErrOutputTruncated
 type Arguments = gritArgs
 
 // MetadataBuilder constructs normalized result metadata.
-type MetadataBuilder func(values Arguments, response api.GritResponse, remote bool) *api.ResultMetadata
+type MetadataBuilder func(values Arguments, response wire.GritResponse, remote bool) *wire.ResultMetadata
 
 // Dependencies supplies repository, transport, metadata, and exit services.
 type Dependencies struct {
 	ApplySourceConfig func(*search.Params) error
 	CurrentRepository func() string
 	ServerDefault     func(string) string
-	RequestRemote     func(context.Context, api.GritRequest, string) (api.GritResponse, error)
+	RequestRemote     func(context.Context, wire.GritRequest, string) (wire.GritResponse, error)
 	Metadata          MetadataBuilder
 	RequestExit       func(int)
 	Stdout            io.Writer
@@ -61,10 +61,10 @@ func (command *command) services() Dependencies {
 		ApplySourceConfig: search.SourcePolicyConfigurer(application.Repository()),
 		CurrentRepository: application.Repository().Current,
 		ServerDefault:     application.Configuration().ServerDefault,
-		RequestRemote: func(ctx context.Context, request api.GritRequest, server string) (api.GritResponse, error) {
+		RequestRemote: func(ctx context.Context, request wire.GritRequest, server string) (wire.GritResponse, error) {
 			return application.APIClient().Grit(ctx, server, request)
 		},
-		Metadata: func(values Arguments, response api.GritResponse, remote bool) *api.ResultMetadata {
+		Metadata: func(values Arguments, response wire.GritResponse, remote bool) *wire.ResultMetadata {
 			return gritResultMetadata(application, values, response, remote)
 		},
 		RequestExit: application.RequestExit,
@@ -91,17 +91,17 @@ func (d Dependencies) serverDefault(value string) string {
 	}
 	return d.ServerDefault(value)
 }
-func (d Dependencies) requestRemote(ctx context.Context, request api.GritRequest, server string) (api.GritResponse, error) {
+func (d Dependencies) requestRemote(ctx context.Context, request wire.GritRequest, server string) (wire.GritResponse, error) {
 	if d.RequestRemote == nil {
-		return api.GritResponse{}, fmt.Errorf("remote grit transport is unavailable")
+		return wire.GritResponse{}, fmt.Errorf("remote grit transport is unavailable")
 	}
 	return d.RequestRemote(ctx, request, server)
 }
-func (d Dependencies) metadata(values gritArgs, response api.GritResponse, remote bool) *api.ResultMetadata {
+func (d Dependencies) metadata(values gritArgs, response wire.GritResponse, remote bool) *wire.ResultMetadata {
 	if d.Metadata == nil {
 		total := response.Total
 		complete := len(response.Truncations) == 0 && len(response.ShardErrors) == 0
-		return &api.ResultMetadata{Page: api.ResultPage{Skip: values.Skip, Limit: values.Limit, Returned: len(response.Findings), Total: &total, Complete: complete}, Limits: api.ResultLimits{MaxFiles: values.MaxFiles, MaxOutputBytes: values.MaxOutputBytes, JSONByteUncapped: values.JSON}}
+		return &wire.ResultMetadata{Page: wire.ResultPage{Skip: values.Skip, Limit: values.Limit, Returned: len(response.Findings), Total: &total, Complete: complete}, Limits: wire.ResultLimits{MaxFiles: values.MaxFiles, MaxOutputBytes: values.MaxOutputBytes, JSONByteUncapped: values.JSON}}
 	}
 	return d.Metadata(values, response, remote)
 }
@@ -143,14 +143,14 @@ func Validate(values Arguments) error { return validateGritArgs(values) }
 func Compile(values Arguments) (string, *gritql.Program, error) { return compileGritQuery(values) }
 
 // Request projects command arguments into a remote request.
-func Request(values Arguments, query string) api.GritRequest { return gritRequest(values, query) }
+func Request(values Arguments, query string) wire.GritRequest { return gritRequest(values, query) }
 
 // AcquireLocal executes a compiled query against the local checkout.
-func AcquireLocal(ctx context.Context, values Arguments, program *gritql.Program, dependencies Dependencies) (api.GritResponse, error) {
+func AcquireLocal(ctx context.Context, values Arguments, program *gritql.Program, dependencies Dependencies) (wire.GritResponse, error) {
 	return acquireGritLocal(ctx, values, program, dependencies)
 }
 
 // WindowFindings applies a deterministic result window.
-func WindowFindings(findings []api.GritFinding, skip, limit int) []api.GritFinding {
+func WindowFindings(findings []wire.GritFinding, skip, limit int) []wire.GritFinding {
 	return windowGritFindings(findings, skip, limit)
 }

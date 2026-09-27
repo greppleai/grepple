@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/greppleai/grepple/internal/directorymeta"
-	"github.com/greppleai/grepple/parser"
+	"github.com/greppleai/grepple/internal/parser"
 )
 
 type InspectionOptions struct {

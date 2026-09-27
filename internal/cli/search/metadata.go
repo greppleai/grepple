@@ -5,15 +5,15 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/greppleai/grepple/api"
+	"github.com/greppleai/grepple/internal/wire"
 	"github.com/greppleai/grepple/internal/cliruntime"
 	"github.com/greppleai/grepple/internal/resultanalysis"
 	"github.com/greppleai/grepple/internal/shellquote"
-	"github.com/greppleai/grepple/search"
+	"github.com/greppleai/grepple/internal/search"
 )
 
-func resultScope(mode string, paths, repositories, languages []string) api.ResultScope {
-	return api.ResultScope{
+func resultScope(mode string, paths, repositories, languages []string) wire.ResultScope {
+	return wire.ResultScope{
 		Mode: mode, Paths: normalizedResultScope(paths, "."), ExcludedPaths: []string{},
 		Repositories: normalizedResultScope(repositories, ""), ExcludedRepositories: []string{}, Languages: normalizedResultScope(languages, ""),
 	}
@@ -40,7 +40,7 @@ func normalizedResultScope(values []string, fallback string) []string {
 	sort.Strings(result)
 	return result
 }
-func searchResultMetadata(application cliruntime.Context, options *Options, total int, totalKnown, remote bool, results []api.FileResult) *api.ResultMetadata {
+func searchResultMetadata(application cliruntime.Context, options *Options, total int, totalKnown, remote bool, results []wire.FileResult) *wire.ResultMetadata {
 	returned := len(results)
 	var totalPointer *int
 	if totalKnown {
@@ -61,12 +61,12 @@ func searchResultMetadata(application cliruntime.Context, options *Options, tota
 	if options.Stdin {
 		scopePaths = []string{"<stdin>"}
 	}
-	metadata := &api.ResultMetadata{
+	metadata := &wire.ResultMetadata{
 		Scope:   resultScope(mode, scopePaths, options.Params.Repo, nil),
 		Order:   options.Params.Sort,
-		Page:    api.ResultPage{Skip: options.Params.Skip, Limit: options.Params.Limit, Returned: returned, Total: totalPointer, Complete: complete},
-		Limits:  api.ResultLimits{MaxFiles: options.Params.MaxFiles, MaxOutputBytes: options.MaxOutputBytes, JSONByteUncapped: options.JSON != "off"},
-		Omitted: api.ResultOmissions{Files: omitted}, Diagnostics: searchResultDiagnostics(options, results),
+		Page:    wire.ResultPage{Skip: options.Params.Skip, Limit: options.Params.Limit, Returned: returned, Total: totalPointer, Complete: complete},
+		Limits:  wire.ResultLimits{MaxFiles: options.Params.MaxFiles, MaxOutputBytes: options.MaxOutputBytes, JSONByteUncapped: options.JSON != "off"},
+		Omitted: wire.ResultOmissions{Files: omitted}, Diagnostics: searchResultDiagnostics(options, results),
 	}
 	metadata.Scope.ExcludedRepositories = normalizedResultScope(options.Params.ExcludeRepo, "")
 	if !pageComplete && returned > 0 && options.Params.Limit > 0 {
@@ -75,26 +75,26 @@ func searchResultMetadata(application cliruntime.Context, options *Options, tota
 	return metadata
 }
 
-func searchResultDiagnostics(options *Options, results []api.FileResult) []api.ResultDiagnostic {
-	diagnostics := []api.ResultDiagnostic{}
+func searchResultDiagnostics(options *Options, results []wire.FileResult) []wire.ResultDiagnostic {
+	diagnostics := []wire.ResultDiagnostic{}
 	if options.Params.MaxFiles > 0 {
-		diagnostics = append(diagnostics, api.ResultDiagnostic{Code: "source-cap", Message: fmt.Sprintf("source selection is capped at %d files", options.Params.MaxFiles)})
+		diagnostics = append(diagnostics, wire.ResultDiagnostic{Code: "source-cap", Message: fmt.Sprintf("source selection is capped at %d files", options.Params.MaxFiles)})
 	}
 	if analysis := resultanalysis.Sources(results); analysis != nil {
 		if analysis.Failed > 0 {
-			diagnostics = append(diagnostics, api.ResultDiagnostic{Code: "source-failed", Message: fmt.Sprintf("%d returned files failed structural analysis", analysis.Failed)})
+			diagnostics = append(diagnostics, wire.ResultDiagnostic{Code: "source-failed", Message: fmt.Sprintf("%d returned files failed structural analysis", analysis.Failed)})
 		}
 		if analysis.Recovered > 0 {
-			diagnostics = append(diagnostics, api.ResultDiagnostic{Code: "source-recovered", Message: fmt.Sprintf("%d returned files required parser recovery", analysis.Recovered)})
+			diagnostics = append(diagnostics, wire.ResultDiagnostic{Code: "source-recovered", Message: fmt.Sprintf("%d returned files required parser recovery", analysis.Recovered)})
 		}
 		if analysis.Unsupported > 0 {
-			diagnostics = append(diagnostics, api.ResultDiagnostic{Code: "source-unsupported", Message: fmt.Sprintf("%d returned files lack structural language support", analysis.Unsupported)})
+			diagnostics = append(diagnostics, wire.ResultDiagnostic{Code: "source-unsupported", Message: fmt.Sprintf("%d returned files lack structural language support", analysis.Unsupported)})
 		}
 	}
 	return diagnostics
 }
 
-func searchAnalysisIncomplete(results []api.FileResult) bool {
+func searchAnalysisIncomplete(results []wire.FileResult) bool {
 	analysis := resultanalysis.Sources(results)
 	return analysis != nil && (analysis.Failed > 0 || analysis.Recovered > 0 || analysis.Unsupported > 0)
 }

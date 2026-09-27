@@ -1,18 +1,18 @@
 package render
 
 import (
-	"github.com/greppleai/grepple/api"
+	"github.com/greppleai/grepple/internal/wire"
 	"testing"
 )
 
 func TestRelatedTypeContextLabelPreservesAllRoles(t *testing.T) {
-	artifact := &api.NavigationArtifactIdentity{Digest: "artifact-one"}
-	segment := api.ResultSegment{Kind: "lines", Start: 1, End: 1, Text: "type Client struct{}"}
-	points := []api.RelatedSymbol{
-		{Name: "Client", Path: "client.go", Direction: "type", Role: "result", Start: 1, End: 1, Artifact: artifact, Segments: []api.ResultSegment{segment}},
-		{Name: "Client", Path: "client.go", Direction: "type", Role: "parameter", Start: 1, End: 1, Artifact: artifact, Segments: []api.ResultSegment{segment}},
+	artifact := &wire.NavigationArtifactIdentity{Digest: "artifact-one"}
+	segment := wire.ResultSegment{Kind: "lines", Start: 1, End: 1, Text: "type Client struct{}"}
+	points := []wire.RelatedSymbol{
+		{Name: "Client", Path: "client.go", Direction: "type", Role: "result", Start: 1, End: 1, Artifact: artifact, Segments: []wire.ResultSegment{segment}},
+		{Name: "Client", Path: "client.go", Direction: "type", Role: "parameter", Start: 1, End: 1, Artifact: artifact, Segments: []wire.ResultSegment{segment}},
 	}
-	definitions := collectRelatedTypeDefinitions([]api.FileResult{{Related: points}})
+	definitions := collectRelatedTypeDefinitions([]wire.FileResult{{Related: points}})
 	if len(definitions) != 1 {
 		t.Fatalf("got %d definitions", len(definitions))
 	}

@@ -170,7 +170,7 @@ func hasExplicitApplicationCommand(args []string) bool {
 }
 
 func validateCommandAvailability(command string, args []string) error {
-	removed := map[string]bool{"area": true, "start": true, "boundaries": true, "extract": true, "ask": true}
+	removed := map[string]bool{"area": true, "start": true, "boundaries": true, "extract": true}
 	if removed[command] {
 		return fmt.Errorf("%s has been removed; use tree, search, or a focused graph query", command)
 	}

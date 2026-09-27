@@ -5,7 +5,7 @@ import (
 	"context"
 	"path/filepath"
 
-	"github.com/greppleai/grepple/hookruntime"
+	"github.com/greppleai/grepple/internal/hookruntime"
 )
 
 const sameFileStructMethodsRule = "same-file-struct-methods"

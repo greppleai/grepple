@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/greppleai/grepple/api"
+	"github.com/greppleai/grepple/internal/wire"
 	"github.com/greppleai/grepple/internal/cliruntime"
 	"github.com/greppleai/grepple/internal/usersettings"
 )
@@ -46,11 +46,11 @@ func Run(args []string) error {
 	return runTestSearch(args)
 }
 
-func runTestRemote(options *cliOptions, server string) ([]api.FileResult, error) {
+func runTestRemote(options *cliOptions, server string) ([]wire.FileResult, error) {
 	return SearchRemote(testCommandContext(), options, server)
 }
 
-func requestTestNavigationResolve(ctx context.Context, request api.NavigationResolveRequest, server string) (api.NavigationResolveResponse, error) {
+func requestTestNavigationResolve(ctx context.Context, request wire.NavigationResolveRequest, server string) (wire.NavigationResolveResponse, error) {
 	return ResolveNavigation(testCommandContext(), ctx, request, server)
 }
 

@@ -10,18 +10,18 @@ import (
 	"strings"
 
 	"charm.land/fantasy"
-	"github.com/greppleai/grepple/analysis"
-	"github.com/greppleai/grepple/api"
-	"github.com/greppleai/grepple/gritql"
-	"github.com/greppleai/grepple/gritqlapi"
+	"github.com/greppleai/grepple/internal/analysis"
 	"github.com/greppleai/grepple/internal/apiclient"
 	"github.com/greppleai/grepple/internal/cliruntime"
+	"github.com/greppleai/grepple/internal/gritql"
+	"github.com/greppleai/grepple/internal/gritqlapi"
+	"github.com/greppleai/grepple/internal/linerange"
+	"github.com/greppleai/grepple/internal/parser"
 	"github.com/greppleai/grepple/internal/render"
 	"github.com/greppleai/grepple/internal/repositoryrefs"
+	"github.com/greppleai/grepple/internal/search"
 	sourcedomain "github.com/greppleai/grepple/internal/sources"
-	"github.com/greppleai/grepple/linerange"
-	"github.com/greppleai/grepple/parser"
-	"github.com/greppleai/grepple/search"
+	"github.com/greppleai/grepple/internal/wire"
 )
 
 type askSearchInput = SearchInput
@@ -78,7 +78,7 @@ func runAskSearch(ctx context.Context, application cliruntime.Context, root, ser
 	return map[string]any{"mode": mode, "repository": input.Repository, "returnedFiles": len(files), "matchingLinesInReturnedFiles": totalLines, "hasMore": hasMore, "files": files}, nil
 }
 
-func askSearchResults(ctx context.Context, application cliruntime.Context, server string, params search.Params, repository string) ([]api.FileResult, error) {
+func askSearchResults(ctx context.Context, application cliruntime.Context, server string, params search.Params, repository string) ([]wire.FileResult, error) {
 	if repository != "" {
 		params.Repo = []string{repository}
 		response, err := application.APIClient().Search(ctx, server, search.RequestFromParams(params))
@@ -146,40 +146,40 @@ func runAskNavigateWithSession(ctx context.Context, session *researchSession, ro
 	return response, nil
 }
 
-func runAskStructural(ctx context.Context, application cliruntime.Context, root, server string, input askStructuralInput) (api.GritResponse, error) {
+func runAskStructural(ctx context.Context, application cliruntime.Context, root, server string, input askStructuralInput) (wire.GritResponse, error) {
 	if input.Repository == "" {
 		if err := validateAskLocalPaths(root, input.Paths); err != nil {
-			return api.GritResponse{}, err
+			return wire.GritResponse{}, err
 		}
 	}
 	limit, err := askBoundedValue(input.Limit, 10, 1, 20, "limit")
 	if err != nil {
-		return api.GritResponse{}, err
+		return wire.GritResponse{}, err
 	}
 	query := strings.TrimSpace(input.Query)
 	if query == "" {
-		return api.GritResponse{}, fmt.Errorf("query is required")
+		return wire.GritResponse{}, fmt.Errorf("query is required")
 	}
 	program, err := gritql.Compile([]byte(query), gritql.CompileOptions{})
 	if err != nil {
-		return api.GritResponse{}, err
+		return wire.GritResponse{}, err
 	}
 	if input.Repository != "" {
 		skip, findings := 0, 100
 		requestLimit := limit
-		return application.APIClient().Grit(ctx, server, api.GritRequest{Query: query, Compatibility: api.GritCompatibilityV1, Globs: append([]string(nil), input.Paths...), Repositories: []string{input.Repository}, Skip: &skip, Limit: &requestLimit, Limits: &api.GritLimits{Findings: &findings}})
+		return application.APIClient().Grit(ctx, server, wire.GritRequest{Query: query, Compatibility: wire.GritCompatibilityV1, Globs: append([]string(nil), input.Paths...), Repositories: []string{input.Repository}, Skip: &skip, Limit: &requestLimit, Limits: &wire.GritLimits{Findings: &findings}})
 	}
 	cwd, err := os.Getwd()
 	if err != nil {
-		return api.GritResponse{}, err
+		return wire.GritResponse{}, err
 	}
 	params := search.Params{Files: true, Globs: input.Paths, Root: cwd}
 	if err := search.ConfigureSourcePolicy(&params, application.Repository()); err != nil {
-		return api.GritResponse{}, err
+		return wire.GritResponse{}, err
 	}
 	paths, err := search.ListFilePathsContext(ctx, params, nil)
 	if err != nil {
-		return api.GritResponse{}, err
+		return wire.GritResponse{}, err
 	}
 	candidates := make([]gritql.ScanCandidate, 0, len(paths))
 	for _, path := range paths {
@@ -238,11 +238,11 @@ func runAskArchitectureWithSession(session *researchSession, root string, input 
 }
 
 func runAskRemoteArchitecture(session *researchSession, input askArchitectureInput) (any, error) {
-	operation := api.AnalysisArchitecture
+	operation := wire.AnalysisArchitecture
 	if input.Operation == "responsibilities" {
-		operation = api.AnalysisResponsibilities
+		operation = wire.AnalysisResponsibilities
 	}
-	response, err := requestBackendAnalysis(session, api.AnalysisRequest{Operation: operation, Repository: input.Repository, Paths: input.Paths, MaxFiles: input.MaxFiles})
+	response, err := requestBackendAnalysis(session, wire.AnalysisRequest{Operation: operation, Repository: input.Repository, Paths: input.Paths, MaxFiles: input.MaxFiles})
 	if err != nil {
 		return nil, err
 	}
@@ -269,7 +269,7 @@ func runAskRemoteArchitecture(session *researchSession, input askArchitectureInp
 }
 
 func runAskRemoteGraph(session *researchSession, input askGraphInput, depth int) (any, error) {
-	request := api.AnalysisRequest{Operation: api.AnalysisGraph, Repository: input.Repository, Paths: input.Paths, Graph: &api.GraphQueryRequest{Direction: input.Direction, Depth: depth, Symbol: input.Symbol, At: input.Location}}
+	request := wire.AnalysisRequest{Operation: wire.AnalysisGraph, Repository: input.Repository, Paths: input.Paths, Graph: &wire.GraphQueryRequest{Direction: input.Direction, Depth: depth, Symbol: input.Symbol, At: input.Location}}
 	if input.Language != "" {
 		request.Graph.Languages = []string{input.Language}
 	}
@@ -336,30 +336,30 @@ func runAskSourceScope(application cliruntime.Context, root string, input askSou
 	return sourcedomain.Build(input.Paths, environment, application.Repository().WorkingDirectory())
 }
 
-func runAskRepositoryRefs(ctx context.Context, application cliruntime.Context, server string, input askRepositoryRefsInput) (api.ReposResponse, error) {
+func runAskRepositoryRefs(ctx context.Context, application cliruntime.Context, server string, input askRepositoryRefsInput) (wire.ReposResponse, error) {
 	repository := strings.TrimSpace(input.Repository)
 	if repository == "" {
-		return api.ReposResponse{}, fmt.Errorf("repository is required")
+		return wire.ReposResponse{}, fmt.Errorf("repository is required")
 	}
 	kind := strings.ToLower(strings.TrimSpace(input.Kind))
 	if kind != "" && kind != "default" && kind != "branch" && kind != "tag" {
-		return api.ReposResponse{}, fmt.Errorf("kind must be default, branch, or tag")
+		return wire.ReposResponse{}, fmt.Errorf("kind must be default, branch, or tag")
 	}
 	entries, err := application.APIClient().Repos(ctx, server)
 	if err != nil {
-		return api.ReposResponse{}, err
+		return wire.ReposResponse{}, err
 	}
 	entries = repositoryrefs.Filter(entries, repository, kind)
-	return api.ReposResponse{OK: true, Count: len(entries), Repos: entries}, nil
+	return wire.ReposResponse{OK: true, Count: len(entries), Repos: entries}, nil
 }
 
-func runAskRepositoryTree(ctx context.Context, application cliruntime.Context, server string, input askRepositoryTreeInput) (api.TreeResponse, error) {
+func runAskRepositoryTree(ctx context.Context, application cliruntime.Context, server string, input askRepositoryTreeInput) (wire.TreeResponse, error) {
 	if strings.TrimSpace(input.Repository) == "" {
-		return api.TreeResponse{}, fmt.Errorf("repository is required")
+		return wire.TreeResponse{}, fmt.Errorf("repository is required")
 	}
 	depth, err := askBoundedValue(input.Depth, 2, 1, 4, "depth")
 	if err != nil {
-		return api.TreeResponse{}, err
+		return wire.TreeResponse{}, err
 	}
 	return application.APIClient().Tree(ctx, server, apiclient.TreeRequest{Repo: input.Repository, Path: input.Path, Depth: depth})
 }
@@ -439,14 +439,14 @@ func runAskLocalReadTool(application cliruntime.Context, root string, input read
 	return backendToolResult(parser.OutlineFileDepth(input.Path, string(content), 0), nil)
 }
 
-func requestBackendAnalysis(session *researchSession, request api.AnalysisRequest) (api.AnalysisResponse, error) {
+func requestBackendAnalysis(session *researchSession, request wire.AnalysisRequest) (wire.AnalysisResponse, error) {
 	invocation := session.application.Repository().InvocationOptions()
 	request.ProductionOnly = request.ProductionOnly || invocation.ProductionOnly
 	request.NoConfigIgnore = request.NoConfigIgnore || invocation.NoConfigIgnore
 	request.NoRepoConfig = request.NoRepoConfig || invocation.NoRepositoryConfig
 	response, err := session.application.APIClient().Analysis(session.ctx, session.application.Configuration().ServerDefault(session.server), request)
 	if err != nil {
-		return api.AnalysisResponse{}, err
+		return wire.AnalysisResponse{}, err
 	}
 	for _, notice := range response.Notices {
 		fmt.Fprintln(session.application.Stderr(), "analysis notice:", notice)

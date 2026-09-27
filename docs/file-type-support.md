@@ -105,7 +105,7 @@ The internal boundary analysis engine uses shared navigation facts for workflow 
 
 - `api` — dependency-free Grepple HTTP contract types and shared wire constants; it contains no validation, transport, persistence, or application logic.
 - `parser/content.go` — language detection and parser-local content helpers.
-- `parser/language.go` — source-language adapter interface, registry, and shared structural rules.
+- `internal/parser/language.go` — source-language adapter interface, registry, and shared structural rules.
 - `parser/language_<name>.go` — grammar selection, structural rules, and outline implementation for one source language.
 - `parser/language_ecmascript.go` — outline helpers shared by JavaScript and TypeScript.
 - `parser/tree_sitter.go` — parser pool and language-independent AST helpers.
@@ -123,7 +123,7 @@ The internal boundary analysis engine uses shared navigation facts for workflow 
 
 1. Add and pin a grammar dependency with Go bindings compatible with `github.com/tree-sitter/go-tree-sitter`.
 2. Add a `languageAdapter` implementation in `parser/language_<name>.go`; keep its grammar, structural rules, and outline logic in that file.
-3. Register the adapter in `parser/language.go` and map the exact supported extensions in `parser.LanguageFor`.
+3. Register the adapter in `internal/parser/language.go` and map the exact supported extensions in `parser.LanguageFor`.
 4. Add representative fixtures under `testdata/<language>/` covering declarations, containers, body matches, unrelated declarations, and language-specific syntax.
 5. Extend `TestTreeSitterLanguageParity` in `parser/tree_sitter_test.go` and add exact segment/outline assertions where appropriate.
 6. Run:

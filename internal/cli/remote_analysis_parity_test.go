@@ -7,7 +7,7 @@ import (
 	"reflect"
 	"testing"
 
-	publicanalysis "github.com/greppleai/grepple/analysis"
+	publicanalysis "github.com/greppleai/grepple/internal/analysis"
 )
 
 func TestPublicAnalysisArchitectureMatchesLocalProjection(t *testing.T) {

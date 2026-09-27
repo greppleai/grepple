@@ -3,7 +3,7 @@ package render
 import (
 	"testing"
 
-	"github.com/greppleai/grepple/parser"
+	"github.com/greppleai/grepple/internal/parser"
 )
 
 func TestOutlineOrContentDumpsTinyFile(t *testing.T) {

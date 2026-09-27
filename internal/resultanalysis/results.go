@@ -2,13 +2,13 @@
 package resultanalysis
 
 import (
-	"github.com/greppleai/grepple/api"
-	"github.com/greppleai/grepple/parser"
+	"github.com/greppleai/grepple/internal/wire"
+	"github.com/greppleai/grepple/internal/parser"
 )
 
 // Sources returns structural source-analysis totals when results contain classifications.
-func Sources(results []api.FileResult) *api.SourceAnalysis {
-	analysis := &api.SourceAnalysis{Returned: len(results)}
+func Sources(results []wire.FileResult) *wire.SourceAnalysis {
+	analysis := &wire.SourceAnalysis{Returned: len(results)}
 	classified := 0
 	for _, result := range results {
 		switch parser.SegmentBuildStatus(result.StructureStatus) {

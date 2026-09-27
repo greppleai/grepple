@@ -11,8 +11,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/greppleai/grepple/analysis"
-	"github.com/greppleai/grepple/api"
+	"github.com/greppleai/grepple/internal/analysis"
+	"github.com/greppleai/grepple/internal/wire"
 	"github.com/greppleai/grepple/internal/archdaemon"
 )
 
@@ -86,17 +86,17 @@ func TestGraphDaemonLocalOutputParityAndFlagRestrictions(t *testing.T) {
 }
 
 func TestGraphDaemonRemoteQueryRemainsRemote(t *testing.T) {
-	requests := make(chan api.AnalysisRequest, 1)
+	requests := make(chan wire.AnalysisRequest, 1)
 	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, httpRequest *http.Request) {
-		var input api.AnalysisRequest
+		var input wire.AnalysisRequest
 		if err := json.NewDecoder(httpRequest.Body).Decode(&input); err != nil {
 			t.Error(err)
 			writer.WriteHeader(http.StatusBadRequest)
 			return
 		}
 		requests <- input
-		_ = json.NewEncoder(writer).Encode(api.AnalysisResponse{
-			Schema: "grepple-remote-analysis-v1", Operation: api.AnalysisGraph, Repository: input.Repository,
+		_ = json.NewEncoder(writer).Encode(wire.AnalysisResponse{
+			Schema: "grepple-remote-analysis-v1", Operation: wire.AnalysisGraph, Repository: input.Repository,
 			Found: true, Complete: true, Result: json.RawMessage(`{"schema":"grepple-navigation-graph-v7"}`),
 		})
 	}))
@@ -110,7 +110,7 @@ func TestGraphDaemonRemoteQueryRemainsRemote(t *testing.T) {
 	}
 	select {
 	case input := <-requests:
-		if input.Operation != api.AnalysisGraph || input.Repository != "owner/repo@main" || input.Graph == nil || input.Graph.Direction != "callers" {
+		if input.Operation != wire.AnalysisGraph || input.Repository != "owner/repo@main" || input.Graph == nil || input.Graph.Direction != "callers" {
 			t.Fatalf("remote request=%+v", input)
 		}
 	default:

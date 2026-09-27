@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/greppleai/grepple/api"
+	"github.com/greppleai/grepple/internal/wire"
 	"github.com/greppleai/grepple/internal/cliruntime"
 	sourcedomain "github.com/greppleai/grepple/internal/sources"
 )
@@ -15,9 +15,9 @@ func TestRunUsesLocalTreeByDefault(t *testing.T) {
 	var stdout bytes.Buffer
 	calledPath, calledDepth := "", 0
 	application := cliruntime.Environment{Output: &stdout}
-	command := &command{context: application, local: func(path string, depth int, kind sourcedomain.Kind, areas []string) (api.TreeResponse, error) {
+	command := &command{context: application, local: func(path string, depth int, kind sourcedomain.Kind, areas []string) (wire.TreeResponse, error) {
 		calledPath, calledDepth = path, depth
-		return api.TreeResponse{Repo: ".", Path: path, Depth: depth, Entries: []api.TreeEntry{{Path: "main.go"}}}, nil
+		return wire.TreeResponse{Repo: ".", Path: path, Depth: depth, Entries: []wire.TreeEntry{{Path: "main.go"}}}, nil
 	}}
 	err := command.Run([]string{"src", "--depth", "3"})
 	if err != nil {
@@ -34,9 +34,9 @@ func TestRunUsesLocalTreeByDefault(t *testing.T) {
 func TestTreeDefaultsToOneLevelAndAllowsExplicitExpansion(t *testing.T) {
 	var stdout bytes.Buffer
 	calledDepth := 0
-	cmd := &command{context: cliruntime.Environment{Output: &stdout}, local: func(path string, depth int, kind sourcedomain.Kind, areas []string) (api.TreeResponse, error) {
+	cmd := &command{context: cliruntime.Environment{Output: &stdout}, local: func(path string, depth int, kind sourcedomain.Kind, areas []string) (wire.TreeResponse, error) {
 		calledDepth = depth
-		return api.TreeResponse{Repo: ".", Depth: depth, Entries: []api.TreeEntry{{Path: "pkg", Dir: true}}}, nil
+		return wire.TreeResponse{Repo: ".", Depth: depth, Entries: []wire.TreeEntry{{Path: "pkg", Dir: true}}}, nil
 	}}
 	if err := cmd.Run([]string{"."}); err != nil || calledDepth != 1 {
 		t.Fatalf("default tree depth=%d err=%v", calledDepth, err)
@@ -49,9 +49,9 @@ func TestTreeDefaultsToOneLevelAndAllowsExplicitExpansion(t *testing.T) {
 func TestTreeAreaFlagsAreRepeatableAndLocalOnly(t *testing.T) {
 	var stdout bytes.Buffer
 	var selected []string
-	cmd := &command{context: cliruntime.Environment{Output: &stdout}, local: func(path string, depth int, kind sourcedomain.Kind, areas []string) (api.TreeResponse, error) {
+	cmd := &command{context: cliruntime.Environment{Output: &stdout}, local: func(path string, depth int, kind sourcedomain.Kind, areas []string) (wire.TreeResponse, error) {
 		selected = append([]string(nil), areas...)
-		return api.TreeResponse{Repo: ".", Entries: []api.TreeEntry{{Path: "pkg", Dir: true}}}, nil
+		return wire.TreeResponse{Repo: ".", Entries: []wire.TreeEntry{{Path: "pkg", Dir: true}}}, nil
 	}}
 	if err := cmd.Run([]string{"--area", "backend", "--area", "tests", "."}); err != nil || !reflect.DeepEqual(selected, []string{"backend", "tests"}) {
 		t.Fatalf("repeatable areas=%v err=%v", selected, err)
