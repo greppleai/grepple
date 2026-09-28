@@ -154,7 +154,7 @@ files:
     - path: related.go
       description: Builds navigation graphs and attaches bounded related declarations and type context.
       kind: production
-      checksum: 635618f496704034c2deadda2e653b9c3754fad18c1516d6979f0a39933f515a
+      checksum: b3a14c0feda715e394a9660222134534243ead630a6671e191d0052218e7a424
     - path: related_go_test.go
       description: Tests Go call, import, and type related-navigation resolution.
       kind: test
@@ -210,7 +210,7 @@ files:
     - path: search_params.go
       description: Resolves defaults, limits, repository patterns, and request validation.
       kind: production
-      checksum: 862c2e8b584ff5480f8a3eb6a4da7e8c39b61bb4cd03243d0555cb053a6248c5
+      checksum: 35a0ddb10a8cc0b447b1f1ac8296346b7b40bd29fa24b3a4840ac316e753b6af
     - path: search_params_test.go
       description: Tests search parameter defaulting, normalization, and validation.
       kind: test

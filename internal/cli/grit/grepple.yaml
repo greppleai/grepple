@@ -45,7 +45,7 @@ files:
     - path: runtime.go
       description: Defines the Grit command runtime, dependency services, output writers, and exported structural search helpers.
       kind: production
-      checksum: 4b01f4e528a4618b3a80470a17a5687f7bf1e79deb2b596f7fbc5a0c14a8f565
+      checksum: c52e3e9f17cf97836d0a24b034dccd70ffce570f716e087a6da86d7cf0503029
     - path: test_helpers_test.go
       description: Provides shared test dependencies, remote transport, filesystem, Git, stdin, and output-capture helpers.
       kind: test

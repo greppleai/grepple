@@ -1,4 +1,4 @@
-description: Provides deterministic source-universe analysis through reusable navigation graphs, directory architecture and responsibility reports, boundary analysis, relationship evidence, projections, and normalized architecture comparison.
+description: Provides deterministic source-universe analysis through reusable navigation graphs, directory architecture and responsibility reports, boundary analysis, relationship evidence, and projections.
 responsibilities:
     - Load and account for selected sources
     - Parse supported sources into reusable documents
@@ -7,7 +7,6 @@ responsibilities:
     - Resolve imports, calls, and type relationships
     - Analyze boundaries, facades, and directory responsibilities
     - Provide deterministic symbol and relation evidence projections
-    - Normalize and compare architecture reports
     - Preserve completeness, failure, and truncation metadata
 files:
     - path: analysis_test.go
@@ -22,14 +21,6 @@ files:
       description: Verifies quoted C-family includes resolve into directory relations with source-backed evidence.
       kind: test
       checksum: d0bd03386bf0e1d5e34357c7bbf69f99c90e462cb9d71fe6e21e95e7182ea7c2
-    - path: compare.go
-      description: Normalizes architecture reports and identifies their first deterministic semantic difference.
-      kind: production
-      checksum: da9cad2dff5ec704d9362c146f40728571a33808594ba481306bab33335f2f65
-    - path: compare_test.go
-      description: Verifies architecture comparison normalizes paths and ordering while reporting source-linked changes.
-      kind: test
-      checksum: da93a54c9628672e42181c67456fa034d14986d701393481fd08978e14e07257
     - path: csharp_import_test.go
       description: Verifies C# namespace imports resolve into directory architecture relations.
       kind: test
@@ -53,7 +44,7 @@ files:
     - path: reports.go
       description: Builds graph-backed boundary reports and deterministic directory responsibility summaries.
       kind: production
-      checksum: 3bf89f13b915695c872c526776184518cd35481397ed4fe0853c68785990f011
+      checksum: db2f7d5471cf1eb7466822b2db56265bc651a33a60ef8d9f1a430218dd01262c
     - path: rust_import_test.go
       description: Verifies Rust module, use, inline, and explicit-path imports resolve into directory relations.
       kind: test

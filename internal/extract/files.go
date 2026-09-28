@@ -206,30 +206,3 @@ func LoadSourcesWithOptions(inputs []string, options DiscoveryOptions) ([]Source
 	}
 	return result, nil
 }
-
-// CheckClassPaths reads a class diagram and recursively discovered sources.
-func CheckClassPaths(diagramPath string, inputs []string) ([]Diagnostic, []string, error) {
-	return checkPaths(diagramPath, inputs, CheckClassDiagram)
-}
-
-// CheckFlowPaths reads a flowchart and recursively discovered sources.
-func CheckFlowPaths(diagramPath string, inputs []string) ([]Diagnostic, []string, error) {
-	return checkPaths(diagramPath, inputs, CheckFlowchart)
-}
-
-func checkPaths(diagramPath string, inputs []string, check func(string, []Source) ([]Diagnostic, error)) ([]Diagnostic, []string, error) {
-	content, err := os.ReadFile(diagramPath)
-	if err != nil {
-		return nil, nil, err
-	}
-	sources, err := LoadSources(inputs)
-	if err != nil {
-		return nil, nil, err
-	}
-	diagnostics, err := check(string(content), sources)
-	paths := make([]string, 0, len(sources))
-	for _, source := range sources {
-		paths = append(paths, source.Path)
-	}
-	return diagnostics, paths, err
-}

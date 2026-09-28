@@ -26,7 +26,7 @@ files:
     - path: write.go
       description: Implements request parsing, validation, confined file preparation, transactional installation, rollback, and response rendering.
       kind: production
-      checksum: 602f31e0f971241954b20465cd12c1a7402d7f8e2877cd1a43032f75d0d48030
+      checksum: 8b5618336c1d0e2cd1bdd8f2aba326fb1c625d0eb99409317d0faf3630701b8a
     - path: write_test.go
       description: Tests transactional edits, creates, deletes, dry runs, rollback, confinement, decoding, and command output.
       kind: test

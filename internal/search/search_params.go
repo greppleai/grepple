@@ -152,14 +152,6 @@ func EnforcePageLimit(p *Params, r Request) {
 	}
 }
 
-// RepoMatches reports whether repo matches any include pattern (no patterns
-// matches everything). Exported so the shard can pre-filter a shard's repos
-// with the exact same semantics the search engine applies per file.
-func RepoMatches(repo string, patterns []string) bool { return repoMatches(repo, patterns) }
-
-// RepoMatchesAny reports whether repo matches any of the (exclude) patterns.
-func RepoMatchesAny(repo string, patterns []string) bool { return repoMatchesAny(repo, patterns) }
-
 func repoPatterns(value any) []string {
 	var patterns []string
 	switch typed := value.(type) {

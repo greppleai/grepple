@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
 	"path/filepath"
 	"strings"
 
@@ -13,11 +12,8 @@ import (
 	"github.com/greppleai/grepple/internal/analysis"
 	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
 	"github.com/greppleai/grepple/internal/daemon"
-	"github.com/greppleai/grepple/internal/navigation"
-	"github.com/greppleai/grepple/internal/parser"
 	"github.com/greppleai/grepple/internal/search"
 	"github.com/greppleai/grepple/internal/shellquote"
-	"github.com/greppleai/grepple/internal/sourcelocation"
 	"github.com/greppleai/grepple/internal/wire"
 )
 
@@ -191,15 +187,6 @@ func validateGraphQueryArgs(values graphQueryArgs) error {
 	return nil
 }
 
-func isGraphQueryDirection(value string) bool {
-	switch search.NavigationQueryDirection(value) {
-	case search.NavigationQueryCallers, search.NavigationQueryCallees, search.NavigationQueryDependencies, search.NavigationQueryDependents, search.NavigationQueryImpact:
-		return true
-	default:
-		return false
-	}
-}
-
 func graphQuerySelectorCount(values graphQueryArgs) int {
 	count := 0
 	for _, value := range []string{values.Symbol, values.At, values.Package, values.Module, values.RootPath} {
@@ -249,165 +236,4 @@ func BuildFromPaths(paths []string, maxFiles int) Output {
 // BuildFromPathsWithOptions builds a graph projection from resolved paths and options.
 func BuildFromPathsWithOptions(paths []string, maxFiles int, options search.NavigationBuildOptions) Output {
 	return BuildOutput(paths, maxFiles, options)
-}
-
-// QuerySelection selects and filters an in-memory graph traversal.
-type QuerySelection struct {
-	Symbol, At string
-	Depth      int
-	Filter     navigation.NavigationGraphFilter
-}
-
-// QueryOutput traverses an existing graph projection.
-func QueryOutput(output Output, direction navigation.NavigationQueryDirection, selection QuerySelection) (Output, error) {
-	filter, err := navigation.NewGraphOperations().NormalizeFilter(selection.Filter)
-	if err != nil {
-		return Output{}, err
-	}
-	graph := parser.NavigationGraph{Declarations: output.Declarations, TypeDeclarations: output.TypeDeclarations, Calls: output.Calls, Imports: output.Imports, Exports: output.Exports, Fields: output.Fields, TypeUsages: output.TypeUsages, MemberAccesses: output.MemberAccesses, RepositoryRoots: output.RepositoryRoots}
-	graph, err = navigation.NewGraphOperations().Filter(graph, filter)
-	if err != nil {
-		return Output{}, err
-	}
-	roots, err := selectNavigationQueryRoots(graph.Declarations, graphQueryArgs{Symbol: selection.Symbol, At: selection.At, Depth: selection.Depth})
-	if err != nil {
-		return Output{}, err
-	}
-	rootIDs := navigationDeclarationIDs(roots)
-	queried, err := navigation.NewGraphOperations().Query(graph, rootIDs, direction, selection.Depth)
-	if err != nil {
-		return Output{}, err
-	}
-	output.Declarations, output.TypeDeclarations, output.Calls, output.Imports = queried.Declarations, queried.TypeDeclarations, queried.Calls, queried.Imports
-	output.Exports, output.Fields, output.TypeUsages = queried.Exports, queried.Fields, queried.TypeUsages
-	output.MemberAccesses, output.RepositoryRoots = queried.MemberAccesses, queried.RepositoryRoots
-	output.Resolution = navigation.NewGraphOperations().ResolutionStats(queried)
-	output.Query = &Query{Direction: string(direction), Depth: selection.Depth, RootIDs: rootIDs, Languages: filter.Languages, Confidences: filter.Confidences}
-	return output, nil
-}
-
-// IsQueryDirection reports whether value names a supported traversal.
-func IsQueryDirection(value string) bool { return isGraphQueryDirection(value) }
-
-func selectNavigationQueryRoots(declarations []parser.NavigationDeclaration, values graphQueryArgs) ([]parser.NavigationDeclaration, error) {
-	if values.Symbol != "" || values.At != "" {
-		root, err := selectNavigationQueryRoot(declarations, values.Symbol, values.At)
-		if err != nil {
-			return nil, err
-		}
-		return []parser.NavigationDeclaration{root}, nil
-	}
-	matches := make([]parser.NavigationDeclaration, 0)
-	for _, declaration := range declarations {
-		if navigationDeclarationMatchesScope(declaration, values) {
-			matches = append(matches, declaration)
-		}
-	}
-	if len(matches) == 0 {
-		return nil, fmt.Errorf("no navigation declarations match %s", graphQueryScopeDescription(values))
-	}
-	return matches, nil
-}
-
-func navigationDeclarationMatchesScope(declaration parser.NavigationDeclaration, values graphQueryArgs) bool {
-	if values.Package != "" {
-		return declaration.Package == values.Package || declaration.PackageID == values.Package
-	}
-	if values.Module != "" {
-		return declaration.ModuleID == values.Module
-	}
-	root := strings.TrimSuffix(navigationQueryDisplayPath(values.RootPath), "/")
-	path := filepath.ToSlash(declaration.Path)
-	return root == "." || path == root || strings.HasPrefix(path, root+"/")
-}
-
-func graphQueryScopeDescription(values graphQueryArgs) string {
-	if values.Package != "" {
-		return fmt.Sprintf("package %q", values.Package)
-	}
-	if values.Module != "" {
-		return fmt.Sprintf("module %q", values.Module)
-	}
-	return fmt.Sprintf("root path %q", values.RootPath)
-}
-
-func navigationDeclarationIDs(declarations []parser.NavigationDeclaration) []string {
-	ids := make([]string, 0, len(declarations))
-	for _, declaration := range declarations {
-		ids = append(ids, declaration.ID)
-	}
-	return ids
-}
-
-func selectNavigationQueryRoot(declarations []parser.NavigationDeclaration, symbol, at string) (parser.NavigationDeclaration, error) {
-	if symbol != "" {
-		matches := make([]parser.NavigationDeclaration, 0, 1)
-		for _, declaration := range declarations {
-			if declaration.Name == symbol {
-				matches = append(matches, declaration)
-			}
-		}
-		return requireUniqueNavigationRoot(matches, "symbol "+fmt.Sprintf("%q", symbol))
-	}
-	path, line, err := sourcelocation.ParseLine(at)
-	if err != nil {
-		return parser.NavigationDeclaration{}, err
-	}
-	path = navigationQueryDisplayPath(path)
-	matches := make([]parser.NavigationDeclaration, 0, 1)
-	for _, declaration := range declarations {
-		if filepath.ToSlash(declaration.Path) == path && line >= declaration.Start && line <= declaration.End {
-			matches = append(matches, declaration)
-		}
-	}
-	if len(matches) > 1 {
-		matches = narrowestNavigationRoots(matches)
-	}
-	return requireUniqueNavigationRoot(matches, "location "+at)
-}
-
-func navigationQueryDisplayPath(path string) string {
-	absolute, err := filepath.Abs(path)
-	if err != nil {
-		return filepath.ToSlash(filepath.Clean(path))
-	}
-	cwd, err := os.Getwd()
-	if err != nil {
-		return filepath.ToSlash(filepath.Clean(path))
-	}
-	relative, err := filepath.Rel(cwd, absolute)
-	if err != nil {
-		return filepath.ToSlash(filepath.Clean(path))
-	}
-	return filepath.ToSlash(relative)
-}
-
-func narrowestNavigationRoots(matches []parser.NavigationDeclaration) []parser.NavigationDeclaration {
-	width := matches[0].End - matches[0].Start
-	for _, match := range matches[1:] {
-		if candidateWidth := match.End - match.Start; candidateWidth < width {
-			width = candidateWidth
-		}
-	}
-	narrowest := matches[:0]
-	for _, match := range matches {
-		if match.End-match.Start == width {
-			narrowest = append(narrowest, match)
-		}
-	}
-	return narrowest
-}
-
-func requireUniqueNavigationRoot(matches []parser.NavigationDeclaration, selector string) (parser.NavigationDeclaration, error) {
-	if len(matches) == 1 {
-		return matches[0], nil
-	}
-	if len(matches) == 0 {
-		return parser.NavigationDeclaration{}, fmt.Errorf("no navigation declaration matches %s", selector)
-	}
-	locations := make([]string, 0, len(matches))
-	for _, match := range matches {
-		locations = append(locations, fmt.Sprintf("--at %s:%d", match.Path, match.Start))
-	}
-	return parser.NavigationDeclaration{}, fmt.Errorf("navigation declaration %s is ambiguous; try %s", selector, strings.Join(locations, " or "))
 }

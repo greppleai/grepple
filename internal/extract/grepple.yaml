@@ -92,7 +92,7 @@ files:
     - path: files.go
       description: Discovers, filters, and loads supported source files under recursive, explicit-file, ignore-path, and production-only policies.
       kind: production
-      checksum: 9ce7d873506f9ba29b55c3f2e4ca98eed3c93cd8f23357f935a0697b35f789af
+      checksum: 4ccf7e412a5c9378fa8cd5e223058110ca194351bb392bcb974c24cb919f813d
     - path: final_reviewer_test.go
       description: Tests package-scoped Go nodes and resolved TypeScript imports, aliases, exports, and module metadata.
       kind: test
@@ -277,10 +277,6 @@ files:
       description: Tests scope-related metadata and visibility validation.
       kind: test
       checksum: b4cf8cab1adc726305c6a72875f8caa7d705ab9692a2661aceab9ca41f355f87
-    - path: source_policy.go
-      description: Applies shared repository source policies to source discovery options.
-      kind: production
-      checksum: a2c30994eb86a7ad4440f93164e630d155beccc78bddb02785f37920f7eecc66
     - path: struct_tag_test.go
       description: Tests exact Go struct-tag requirements in class projections.
       kind: test

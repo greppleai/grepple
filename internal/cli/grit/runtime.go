@@ -7,10 +7,9 @@ import (
 	"io"
 	"os"
 
-	"github.com/greppleai/grepple/internal/wire"
-	"github.com/greppleai/grepple/internal/gritql"
 	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
 	"github.com/greppleai/grepple/internal/search"
+	"github.com/greppleai/grepple/internal/wire"
 )
 
 // DefaultTextOutputBytes is the default human-readable GritQL output cap.
@@ -134,23 +133,4 @@ func appendUnique(values []string, value string) []string {
 		}
 	}
 	return append(values, value)
-}
-
-// Validate validates structural command arguments.
-func Validate(values Arguments) error { return validateGritArgs(values) }
-
-// Compile compiles one structural query using command limits.
-func Compile(values Arguments) (string, *gritql.Program, error) { return compileGritQuery(values) }
-
-// Request projects command arguments into a remote request.
-func Request(values Arguments, query string) wire.GritRequest { return gritRequest(values, query) }
-
-// AcquireLocal executes a compiled query against the local checkout.
-func AcquireLocal(ctx context.Context, values Arguments, program *gritql.Program, dependencies Dependencies) (wire.GritResponse, error) {
-	return acquireGritLocal(ctx, values, program, dependencies)
-}
-
-// WindowFindings applies a deterministic result window.
-func WindowFindings(findings []wire.GritFinding, skip, limit int) []wire.GritFinding {
-	return windowGritFindings(findings, skip, limit)
 }

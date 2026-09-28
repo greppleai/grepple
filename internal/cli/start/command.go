@@ -2,11 +2,9 @@
 package start
 
 import (
-	"errors"
 	"fmt"
 	"path/filepath"
 
-	"github.com/alexflint/go-arg"
 	"github.com/greppleai/grepple/internal/cliruntime"
 	"github.com/greppleai/grepple/internal/directorymeta"
 	sourcedomain "github.com/greppleai/grepple/internal/sources"
@@ -23,26 +21,6 @@ type Report struct {
 	Area       string                        `json:"area"`
 	References []directorymeta.AreaReference `json:"references"`
 	Review     []directorymeta.AreaReference `json:"review"`
-}
-
-type command struct{ context cliruntime.Context }
-
-func New(context cliruntime.Context) cliruntime.Command { return &command{context: context} }
-
-func (command *command) Run(args []string) error {
-	values := Args{}
-	parser, err := arg.NewParser(arg.Config{Program: "grepple start"}, &values)
-	if err != nil {
-		return err
-	}
-	if err := parser.Parse(args); err != nil {
-		if errors.Is(err, arg.ErrHelp) {
-			parser.WriteHelp(command.context.Stdout())
-			return nil
-		}
-		return err
-	}
-	return Execute(command.context, &values)
 }
 
 // Build never invokes a model or guesses membership from text or call edges.

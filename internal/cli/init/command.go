@@ -3,7 +3,6 @@ package initcommand
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -12,7 +11,6 @@ import (
 	"time"
 
 	"charm.land/fantasy"
-	"github.com/alexflint/go-arg"
 	"github.com/greppleai/grepple/internal/agent"
 	"github.com/greppleai/grepple/internal/aiprovider"
 	"github.com/greppleai/grepple/internal/cliruntime"
@@ -27,26 +25,6 @@ type Args struct {
 	Concurrency   int      `arg:"--concurrency" default:"1" placeholder:"N" help:"generate metadata for N directories in parallel (default: 1)"`
 	OnlyDirectory string   `arg:"--only-directory" placeholder:"PATH" help:"generate metadata for exactly one directory without its ancestors"`
 	Paths         []string `arg:"positional" placeholder:"PATH" help:"source path or glob; defaults to the repository"`
-}
-
-type command struct{ context cliruntime.Context }
-
-func New(context cliruntime.Context) cliruntime.Command { return &command{context: context} }
-
-func (command *command) Run(args []string) error {
-	values := Args{}
-	parser, err := arg.NewParser(arg.Config{Program: "grepple init"}, &values)
-	if err != nil {
-		return err
-	}
-	if err := parser.Parse(args); err != nil {
-		if errors.Is(err, arg.ErrHelp) {
-			parser.WriteHelp(command.context.Stdout())
-			return nil
-		}
-		return err
-	}
-	return Execute(command.context, &values)
 }
 
 // Execute generates directory metadata from application-parsed arguments.

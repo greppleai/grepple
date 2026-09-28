@@ -22,11 +22,6 @@ type Args struct {
 	Explain *ExplainArgs `arg:"subcommand:explain"`
 }
 
-// DefaultArgs returns source arguments with compact output defaults.
-func DefaultArgs() Args {
-	return Args{Explain: &ExplainArgs{MaxOutputBytes: 16 * 1024}}
-}
-
 // Config describes the repository configuration applied to source selection.
 type Config = sourcedomain.Config
 

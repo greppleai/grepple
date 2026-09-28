@@ -10,7 +10,7 @@ The Stop hook automatically checks files ending in `.class.mmd`, `.structure.mmd
 
 ```bash
 bin/grepple architecture directory --depth 2 .
-bin/grepple architecture resolve --symbol Service .
+bin/grepple graph resolve --symbol Service .
 bin/grepple extract structure service.go --entry Service --source . --output .grepple/service.structure.mmd
 bin/grepple extract flow service.go --entry Service.Run --source . --output .grepple/service.flow.mmd
 bin/grepple extract check structure .grepple/service.structure.mmd .

@@ -167,8 +167,6 @@ type EditArgs struct {
 	ContentFile string `arg:"--content-file" placeholder:"PATH" help:"replacement content file (default stdin)"`
 }
 
-func DefaultArgs() Args { return Args{Root: "."} }
-
 type writeOptions struct {
 	root        string
 	dryRun      bool
@@ -1484,9 +1482,6 @@ func responseFileAnchors(file writeResponseFile) []writeAnchor {
 	}
 	return anchors
 }
-
-// Digest returns the write protocol's SHA-256 content identity.
-func Digest(content []byte) string { return writeDigest(content) }
 
 func intPointer(value int) *int { return &value }
 func emitWriteAnchors(writer io.Writer, anchors []writeAnchor) error {

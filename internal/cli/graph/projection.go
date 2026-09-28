@@ -65,17 +65,3 @@ func FromAnalysis(report analysis.GraphReport) Output {
 		RepositoryRoots: report.RepositoryRoots, Query: report.Query, Truncation: report.Truncation,
 	}
 }
-
-// SourcePaths retains files whose parser adapter supports navigation facts.
-func SourcePaths(paths []string) []string {
-	parserService := parser.NewParser()
-	sources := make([]string, 0, len(paths))
-	for _, path := range paths {
-		language := parserService.LanguageFor(path)
-		capabilities, ok := parserService.CapabilitiesForLanguage(language)
-		if ok && capabilities.Navigation {
-			sources = append(sources, path)
-		}
-	}
-	return sources
-}

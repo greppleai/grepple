@@ -15,7 +15,7 @@ files:
     - path: command.go
       description: Coordinates initialization parsing, metadata generation, model configuration, validation, persistence, and repository confinement.
       kind: production
-      checksum: 04136f59a0cf4abd42ca5d8b20d0f258be3c719afff8517c2a3e631818a8d7b8
+      checksum: c025979199eecddbba285deb2ea3d6b8391bed0a9f7ab1c7ff080b7365cf5238
     - path: command_test.go
       description: Tests metadata validation, prompt context, confined inspection tools, and exact-directory confinement.
       kind: test

@@ -175,9 +175,6 @@ func BuildNavigationGraphWithOptions(files []string, options NavigationBuildOpti
 // NavigationDocumentSource pairs one caller-owned parsed document with its path.
 type NavigationDocumentSource = navigation.DocumentSource
 
-// NavigationTextSource pairs source text with its repository path.
-type NavigationTextSource = navigation.TextSource
-
 // NavigationAnalysis retains one resolved navigation index for repeated read-only projections.
 // Documents used to build it remain owned by the caller.
 type NavigationAnalysis struct {
@@ -192,16 +189,6 @@ func BuildNavigationAnalysisFromDocuments(sources []NavigationDocumentSource, op
 		if source.Document != nil {
 			contents[source.Path] = source.Document.Source()
 		}
-	}
-	return &NavigationAnalysis{index: newResolvedNavigationIndex(shared.Graph(), contents, stats)}, stats
-}
-
-// BuildNavigationAnalysisFromTextSources builds one reusable analysis from in-memory sources.
-func BuildNavigationAnalysisFromTextSources(sources []NavigationTextSource, options NavigationBuildOptions) (*NavigationAnalysis, NavigationSourceStats) {
-	shared, stats := navigation.NewGraphEngine(options).BuildTextSources(sources)
-	contents := make(map[string]string, len(sources))
-	for _, source := range sources {
-		contents[source.Path] = source.Text
 	}
 	return &NavigationAnalysis{index: newResolvedNavigationIndex(shared.Graph(), contents, stats)}, stats
 }
@@ -234,12 +221,6 @@ func AttachRelatedFromAnalysis(match *FileMatch, analysis *NavigationAnalysis, f
 // BuildNavigationGraphFromDocuments resolves a graph from already parsed documents.
 func BuildNavigationGraphFromDocuments(sources []NavigationDocumentSource, options NavigationBuildOptions) (parser.NavigationGraph, NavigationSourceStats) {
 	analysis, stats := navigation.NewGraphEngine(options).BuildDocuments(sources)
-	return analysis.Graph(), stats
-}
-
-// BuildNavigationGraphFromTextSources resolves a graph from in-memory sources.
-func BuildNavigationGraphFromTextSources(sources []NavigationTextSource, options NavigationBuildOptions) (parser.NavigationGraph, NavigationSourceStats) {
-	analysis, stats := navigation.NewGraphEngine(options).BuildTextSources(sources)
 	return analysis.Graph(), stats
 }
 

@@ -20,11 +20,6 @@ func (result externalDependencyTestResult) ExternalDependencyData() ExternalDepe
 	return ExternalDependencyData{Path: result.Path, Repo: result.Repo, Language: result.Language, Related: result.Related}
 }
 
-func (result externalDependencyTestResult) WithExternalDependencyRelated(related []RelatedSymbol) externalDependencyTestResult {
-	result.Related = related
-	return result
-}
-
 func TestQualifyExternalDependenciesFromGoModule(t *testing.T) {
 	root := t.TempDir()
 	mustWriteDependencyFile(t, filepath.Join(root, "go.mod"), `module example.com/service

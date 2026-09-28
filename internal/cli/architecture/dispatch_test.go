@@ -15,8 +15,10 @@ func TestBuildUsesInjectedSourceConfiguration(t *testing.T) {
 	}
 }
 
-func TestRunRejectsUnknownArchitectureCommand(t *testing.T) {
-	if err := newWithDependencies(Dependencies{}).Run([]string{"unknown"}); err == nil {
-		t.Fatal("unknown command accepted")
+func TestRunRejectsUnregisteredArchitectureCommands(t *testing.T) {
+	for _, name := range []string{"resolve", "why", "responsibilities", "compare", "unknown"} {
+		if err := newWithDependencies(Dependencies{}).Run([]string{name}); err == nil {
+			t.Errorf("unregistered architecture command %q was accepted", name)
+		}
 	}
 }

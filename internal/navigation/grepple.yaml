@@ -46,7 +46,7 @@ files:
     - path: external_dependencies_test.go
       description: Tests external dependency qualification across manifests, lockfiles, aliases, repositories, and artifact responses.
       kind: test
-      checksum: be27d2ae318da4379f58d3ce9c90b08240887a9be8aa6545d27099804c20f38a
+      checksum: 8fc1002b63c85b3e4d61b01564ab61c651675b29bf680fe0c9cbfc78e0d7d19b
       areas:
         - dependency-qualification
     - path: external_manifest_dependencies.go

@@ -9,12 +9,12 @@ import (
 	"strings"
 
 	"github.com/alexflint/go-arg"
-	"github.com/greppleai/grepple/internal/wire"
 	"github.com/greppleai/grepple/internal/apiclient"
 	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
 	"github.com/greppleai/grepple/internal/directorymeta"
 	rendercommand "github.com/greppleai/grepple/internal/render"
 	sourcedomain "github.com/greppleai/grepple/internal/sources"
+	"github.com/greppleai/grepple/internal/wire"
 )
 
 // areaFlags consumes one value per --area so a following PATH stays positional.
@@ -47,11 +47,6 @@ func (Request) Description() string {
 type command struct {
 	context cliruntime.Context
 	local   localTree
-}
-
-// New constructs the tree command from the common command context.
-func New(context cliruntime.Context) cliruntime.Command {
-	return &command{context: context, local: newLocal(context)}
 }
 
 // Run executes the tree command.

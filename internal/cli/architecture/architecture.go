@@ -36,43 +36,6 @@ type architectureArgs struct {
 	Paths          []string `arg:"positional" placeholder:"PATH" help:"file, directory, or glob to include; defaults to the working directory"`
 }
 
-type architectureResolveArgs struct {
-	JSON bool `arg:"--json" help:"emit complete matching declarations as JSON"`
-	commonArgs
-	Repository     string   `arg:"--repo" placeholder:"OWNER/REPO[@REF]" help:"analyze one exact indexed repository"`
-	Symbol         string   `arg:"--symbol,required" placeholder:"NAME" help:"exact or terminal declaration name"`
-	MaxFiles       int      `arg:"--max-files" placeholder:"N" help:"analyze at most N supported files (0 = unlimited)"`
-	MaxOutputBytes int      `arg:"--max-output-bytes" default:"16384" placeholder:"N" help:"cap human-readable output (default 16384; 0 = unlimited)"`
-	Paths          []string `arg:"positional" placeholder:"PATH" help:"source universe; defaults to the working directory"`
-}
-
-type architectureWhyArgs struct {
-	JSON bool `arg:"--json" help:"emit complete source-linked relation evidence as JSON"`
-	commonArgs
-	Repository     string   `arg:"--repo" placeholder:"OWNER/REPO[@REF]" help:"analyze one exact indexed repository"`
-	MaxFiles       int      `arg:"--max-files" placeholder:"N" help:"analyze at most N supported files (0 = unlimited)"`
-	MaxOutputBytes int      `arg:"--max-output-bytes" default:"16384" placeholder:"N" help:"cap human-readable output (default 16384; 0 = unlimited)"`
-	From           string   `arg:"positional,required" placeholder:"FROM"`
-	To             string   `arg:"positional,required" placeholder:"TO"`
-	Paths          []string `arg:"positional" placeholder:"PATH" help:"source universe; defaults to the working directory"`
-}
-
-type architectureResolveOutput struct {
-	Schema  string               `json:"schema"`
-	Symbol  string               `json:"symbol"`
-	Sources SourceSummary        `json:"sources"`
-	Matches []architectureSymbol `json:"matches"`
-}
-
-type architectureWhyOutput struct {
-	Schema   string                         `json:"schema"`
-	From     string                         `json:"from"`
-	To       string                         `json:"to"`
-	Relation string                         `json:"relation"`
-	Sources  SourceSummary                  `json:"sources"`
-	Evidence []architectureRelationEvidence `json:"evidence"`
-}
-
 // Run executes the architecture command family.
 func (command *command) Run(args []string) error {
 	dependencies := command.services()
@@ -139,86 +102,6 @@ func executeArchitectureDirectory(values *DirectoryArgs, dependencies Dependenci
 	return renderDirectoryArchitecture(architecture, *values, dependencies)
 }
 
-func runArchitectureResolve(args []string, dependencies Dependencies) error {
-	values := architectureResolveArgs{MaxOutputBytes: defaultTextOutputBytes}
-	if err := parseArchitectureArgs("grepple architecture resolve", args, &values, dependencies.Stdout); err != nil {
-		if errors.Is(err, errArchitectureHelp) {
-			return nil
-		}
-		return err
-	}
-	return executeArchitectureResolve(&values, dependencies)
-}
-
-func executeArchitectureResolve(values *ResolveArgs, dependencies Dependencies) error {
-	if err := validateArchitectureOutputLimits(values.MaxFiles, values.MaxOutputBytes); err != nil {
-		return err
-	}
-	architecture, remote, err := loadDirectoryArchitecture(context.Background(), values.Paths, values.MaxFiles, values.Repository, values.Server, dependencies)
-	if err != nil {
-		return err
-	}
-	matches := resolveArchitectureSymbols(architecture.Symbols, values.Symbol)
-	output := architectureResolveOutput{Schema: "grepple-architecture-resolve-v1", Symbol: values.Symbol, Sources: architecture.Sources, Matches: matches}
-	if values.JSON {
-		if err := writeArchitectureProjection(remote, output, dependencies); err != nil {
-			return err
-		}
-	} else if err := renderArchitectureResolve(output, values.MaxOutputBytes, dependencies); err != nil {
-		return err
-	}
-	if len(matches) == 0 {
-		dependencies.requestExit(1)
-	}
-	return nil
-}
-
-func runArchitectureWhy(args []string, dependencies Dependencies) error {
-	values := architectureWhyArgs{MaxOutputBytes: defaultTextOutputBytes}
-	if err := parseArchitectureArgs("grepple architecture why", args, &values, dependencies.Stdout); err != nil {
-		if errors.Is(err, errArchitectureHelp) {
-			return nil
-		}
-		return err
-	}
-	return executeArchitectureWhy(&values, dependencies)
-}
-
-func executeArchitectureWhy(values *WhyArgs, dependencies Dependencies) error {
-	if err := validateArchitectureOutputLimits(values.MaxFiles, values.MaxOutputBytes); err != nil {
-		return err
-	}
-	architecture, remote, err := loadDirectoryArchitecture(context.Background(), values.Paths, values.MaxFiles, values.Repository, values.Server, dependencies)
-	if err != nil {
-		return err
-	}
-	evidence := architectureRelationEvidenceFor(architecture.Relations, values.From, values.To)
-	output := architectureWhyOutput{Schema: "grepple-architecture-why-v2", From: cleanArchitectureDirectory(values.From), To: cleanArchitectureDirectory(values.To), Relation: architectureEvidenceRelation(evidence), Sources: architecture.Sources, Evidence: evidence}
-	if values.JSON {
-		if err := writeArchitectureProjection(remote, output, dependencies); err != nil {
-			return err
-		}
-	} else if err := renderArchitectureWhy(output, values.MaxOutputBytes, dependencies); err != nil {
-		return err
-	}
-	if len(evidence) == 0 {
-		dependencies.requestExit(1)
-	}
-	return nil
-}
-
-func writeArchitectureProjection(remote *wire.AnalysisResponse, output any, dependencies Dependencies) error {
-	if remote == nil {
-		return stdoutWriter(dependencies).writeJSON(output)
-	}
-	result, err := json.Marshal(output)
-	if err != nil {
-		return err
-	}
-	remote.Result = result
-	return stdoutWriter(dependencies).writeJSON(remote)
-}
-
 func loadDirectoryArchitecture(ctx context.Context, paths []string, maxFiles int, repository, server string, dependencies Dependencies) (Report, *wire.AnalysisResponse, error) {
 	if repository == "" {
 		result, err := Build(paths, maxFiles, dependencies)
@@ -233,13 +116,6 @@ func loadDirectoryArchitecture(ctx context.Context, paths []string, maxFiles int
 		return Report{}, nil, fmt.Errorf("decode remote architecture: %w", err)
 	}
 	return result, &response, nil
-}
-
-func validateArchitectureOutputLimits(maxFiles, maxOutputBytes int) error {
-	if maxFiles < 0 || maxOutputBytes < 0 {
-		return fmt.Errorf("architecture limits must be non-negative")
-	}
-	return nil
 }
 
 func parseArchitectureArgs(program string, args []string, values any, outputs ...io.Writer) error {
@@ -379,22 +255,6 @@ func projectedArchitectureCounts(values map[string]int) []architectureCount {
 	}
 	sort.Slice(result, func(i, j int) bool { return result[i].Name < result[j].Name })
 	return result
-}
-
-func resolveArchitectureSymbols(symbols []architectureSymbol, query string) []architectureSymbol {
-	return analysis.ResolveArchitectureSymbols(symbols, query)
-}
-
-func architectureRelationEvidenceFor(relations []architectureRelation, from, to string) []architectureRelationEvidence {
-	return analysis.ArchitectureRelationEvidenceFor(relations, from, to)
-}
-
-func architectureEvidenceRelation(evidence []architectureRelationEvidence) string {
-	return analysis.ArchitectureEvidenceRelation(evidence)
-}
-
-func cleanArchitectureDirectory(path string) string {
-	return analysis.CleanArchitectureDirectory(path)
 }
 
 func renderDirectoryArchitecture(architecture directoryArchitecture, values architectureArgs, dependencies Dependencies) error {
@@ -613,42 +473,6 @@ func architectureRelationsMermaid(relations []compressedArchitectureRelation, tr
 		lines = append(lines, fmt.Sprintf("    linkStyle %d stroke:%s,stroke-width:2px", index, colors[relation.From]))
 	}
 	return strings.Join(lines, "\n") + "\n"
-}
-func renderArchitectureResolve(output architectureResolveOutput, maxBytes int, dependencies Dependencies) error {
-	writer := architectureOutputWriter(maxBytes, dependencies)
-	if err := writer.writeString(fmt.Sprintf("architecture resolve symbol=%s matches=%d sources=%s\n", output.Symbol, len(output.Matches), compactNavigationSourceSummary(output.Sources))); err != nil {
-		return nil
-	}
-	for _, match := range output.Matches {
-		visibility := string(match.Visibility)
-		if visibility == "" {
-			visibility = "unknown"
-		}
-		if err := writer.writeString(fmt.Sprintf("S %s %s %s %s visibility=%s entrypoint=%s class=%s directory=%s\n", match.Language, match.Kind, match.Name, architectureSymbolLocation(match), visibility, emptyArchitectureValue(match.Entrypoint), match.Classification, match.Directory)); err != nil {
-			return nil
-		}
-	}
-	return nil
-}
-
-func renderArchitectureWhy(output architectureWhyOutput, maxBytes int, dependencies Dependencies) error {
-	writer := architectureOutputWriter(maxBytes, dependencies)
-	if err := writer.writeString(fmt.Sprintf("architecture why %s -> %s relation=%s evidence=%d sources=%s\n", output.From, output.To, output.Relation, len(output.Evidence), compactNavigationSourceSummary(output.Sources))); err != nil {
-		return nil
-	}
-	for _, evidence := range output.Evidence {
-		if err := writer.writeString(fmt.Sprintf("E %s:%d %s -> %s kind=%s class=%s confidence=%s\n", evidence.Path, evidence.Line, evidence.Caller, evidence.Target, evidence.Kind, evidence.Classification, evidence.Confidence)); err != nil {
-			return nil
-		}
-	}
-	return nil
-}
-
-func emptyArchitectureValue(value string) string {
-	if value == "" {
-		return "none"
-	}
-	return value
 }
 
 func architectureOutputWriter(maxBytes int, dependencies Dependencies) *outputWriter {

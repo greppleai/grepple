@@ -40,11 +40,6 @@ type logEvent struct {
 	Data     any       `json:"data,omitempty"`
 }
 
-// NewLog creates an enabled log with the default retention period.
-func NewLog() (*Log, error) {
-	return NewLogWithOptions(LogOptions{Enabled: true, Retention: 7 * 24 * time.Hour})
-}
-
 // NewLogWithOptions creates a log using the supplied persistence policy.
 func NewLogWithOptions(options LogOptions) (*Log, error) {
 	if options.now == nil {

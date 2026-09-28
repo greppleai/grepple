@@ -22,7 +22,7 @@ files:
     - path: command.go
       description: Defines authentication command constructors and dispatches configured provider, login, and logout operations.
       kind: production
-      checksum: 140edf2887b215040b87af602e102be3b9e148565aa76f8753d1b8a6421b8716
+      checksum: 6cb24eaa4566b961d49fe362f427abd3f820db3f6b532d0761577f525db3ef25
     - path: command_test.go
       description: Verifies authentication commands dispatch their assigned operations.
       kind: test

@@ -19,7 +19,7 @@ files:
     - path: sources.go
       description: Implements source inspection, argument validation, report construction, deterministic count formatting, and human-readable or JSON rendering.
       kind: production
-      checksum: 7d23d379f2bbfba6893c7ddbe22e36d02e46b634556ef53fe399ff001d559d57
+      checksum: 29cb84f850a1855a4a50d338b10403a6b3b3ccc45914a51a3d36f057acceeb85
     - path: sources_test.go
       description: Verifies source reports capture configuration exclusions, production filtering, digests, classifications, and obsolete option rejection.
       kind: test

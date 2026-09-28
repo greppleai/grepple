@@ -15,7 +15,7 @@ files:
     - path: log.go
       description: Implements concurrency-safe JSONL session logging with retention, disabled mode, and private filesystem permissions.
       kind: production
-      checksum: 6e425af11383184753e5d7322d538a5e79bba582a43c8cb15659bc6eefa574f2
+      checksum: 7925567af747d6c12d419a350a8760ad4c6f0633f61a73d318e5c11cd205c261
     - path: log_test.go
       description: Verifies log retention, disabled logging, directory behavior, and private file permissions.
       kind: test

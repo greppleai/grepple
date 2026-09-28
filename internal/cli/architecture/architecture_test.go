@@ -4,14 +4,16 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
+	"github.com/greppleai/grepple/internal/analysis"
 	"github.com/greppleai/grepple/internal/directorymeta"
 	"github.com/greppleai/grepple/internal/filedigest"
 )
 
-func TestArchitectureDirectoryAndResolveAcrossLanguages(t *testing.T) {
+func TestArchitectureDirectoryAcrossLanguages(t *testing.T) {
 	root := t.TempDir()
 	writeArchitectureFixture(t, root, "grepple.json", `{"ignore":{"paths":["sandbox/**"]}}`)
 	writeArchitectureFixture(t, root, "go.mod", "module example.com/project\n")
@@ -43,16 +45,6 @@ func TestArchitectureDirectoryAndResolveAcrossLanguages(t *testing.T) {
 		}
 	}
 
-	resolved := captureStdout(t, func() {
-		if err := runArchitecture([]string{"resolve", "--symbol", "Document", "."}); err != nil {
-			t.Fatal(err)
-		}
-	})
-	if !strings.Contains(resolved, "matches=1") || !strings.Contains(resolved, "parser/document.go:3") || !strings.Contains(resolved, "class=production") {
-		t.Fatalf("resolve output:\n%s", resolved)
-	}
-
-	assertProductionOnlyArchitectureResolve(t)
 }
 
 func TestArchitectureDaemonUnavailableFallsBackToDirect(t *testing.T) {
@@ -107,26 +99,13 @@ func TestArchitectureDirectoryReportsAdapterEvidencedEntrypoints(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	matches := resolveArchitectureSymbols(architecture.Symbols, "main")
+	matches := analysis.ResolveArchitectureSymbols(architecture.Symbols, "main")
 	if len(matches) != 1 || matches[0].Entrypoint != "process" {
 		t.Fatalf("matches=%+v", matches)
 	}
 }
 
-func assertProductionOnlyArchitectureResolve(t *testing.T) {
-	t.Helper()
-	production := captureStdout(t, func() {
-		code, err := runArchitectureWithExit([]string{"resolve", "--symbol", "TestDocument", "."}, true)
-		if err != nil || code != 1 {
-			t.Fatalf("production-only resolve code=%d error=%v", code, err)
-		}
-	})
-	if !strings.Contains(production, "matches=0") {
-		t.Fatalf("production-only resolve output:\n%s", production)
-	}
-}
-
-func TestArchitectureWhyUsesResolvedCrossDirectoryCalls(t *testing.T) {
+func TestArchitectureDirectoryCapturesResolvedCrossDirectoryCalls(t *testing.T) {
 	root := t.TempDir()
 	writeArchitectureFixture(t, root, "go.mod", "module example.com/project\n")
 	writeArchitectureFixture(t, root, "search/request.go", "package search\ntype Request struct{}\nfunc ResolveRequest() {}\n")
@@ -135,50 +114,47 @@ func TestArchitectureWhyUsesResolvedCrossDirectoryCalls(t *testing.T) {
 	chdirForConfigTest(t, root)
 	assertArchitectureRelationCoverage(t)
 
-	output := captureStdout(t, func() {
-		if err := runArchitecture([]string{"why", "rulespec", "search", "."}); err != nil {
-			t.Fatal(err)
-		}
-	})
-	for _, expected := range []string{
-		"relation=import,resolved-call,type-reference evidence=6",
-		"rulespec/rule.go:2 search -> example.com/project/search kind=import class=production confidence=local-import-resolved",
-		"rulespec/rule.go:3 Validate -> ResolveRequest kind=resolved-call class=production confidence=import-resolved",
-		"rulespec/rule.go:3 Validate -> Request kind=type-reference class=production confidence=local-import-resolved",
-		"rulespec/rule_test.go:3 TestValidate -> ResolveRequest kind=resolved-call class=test confidence=import-resolved",
-	} {
-		if !strings.Contains(output, expected) {
-			t.Fatalf("why output missing %q:\n%s", expected, output)
+	architecture, err := buildDirectoryArchitecture([]string{"."}, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	evidence := analysis.ArchitectureRelationEvidenceFor(architecture.Relations, "rulespec", "search")
+	if got := analysis.ArchitectureEvidenceRelation(evidence); got != "import,resolved-call,type-reference" || len(evidence) != 6 {
+		t.Fatalf("relation=%s evidence=%d", got, len(evidence))
+	}
+	for _, kind := range []string{"import", "resolved-call", "type-reference"} {
+		if !slices.ContainsFunc(evidence, func(item analysis.ArchitectureRelationEvidence) bool {
+			return item.Kind == kind && item.Classification == "production" && item.Path == "rulespec/rule.go"
+		}) {
+			t.Fatalf("missing production %s evidence: %+v", kind, evidence)
 		}
 	}
 }
 
-func TestArchitectureWhyReportsImportOnlyRelation(t *testing.T) {
+func TestArchitectureDirectoryCapturesImportOnlyRelation(t *testing.T) {
 	root := t.TempDir()
 	writeArchitectureFixture(t, root, "go.mod", "module example.com/project\n")
 	writeArchitectureFixture(t, root, "target/data.go", "package target\nconst Value = 1\n")
 	writeArchitectureFixture(t, root, "side/effect.go", "package side\nimport _ \"example.com/project/target\"\n")
 	chdirForConfigTest(t, root)
-	output := captureStdout(t, func() {
-		if err := runArchitecture([]string{"why", "side", "target", "."}); err != nil {
-			t.Fatal(err)
-		}
-	})
-	if !strings.Contains(output, "relation=import evidence=1") || !strings.Contains(output, "side/effect.go:2 _ -> example.com/project/target kind=import") {
-		t.Fatalf("import-only why output:\n%s", output)
+	report, err := buildDirectoryArchitecture([]string{"."}, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	evidence := analysis.ArchitectureRelationEvidenceFor(report.Relations, "side", "target")
+	if got := analysis.ArchitectureEvidenceRelation(evidence); got != "import" || len(evidence) != 1 || evidence[0].Path != "side/effect.go" {
+		t.Fatalf("relation=%s evidence=%+v", got, evidence)
 	}
 }
 
 func TestArchitectureHelpStopsBeforeAnalysis(t *testing.T) {
-	for _, command := range []string{"directory", "compare"} {
-		output := captureStdout(t, func() {
-			if err := runArchitecture([]string{command, "--help"}); err != nil {
-				t.Fatal(err)
-			}
-		})
-		if strings.Contains(output, "--compact") || !strings.Contains(output, "--json") {
-			t.Fatalf("%s help output:\n%s", command, output)
+	output := captureStdout(t, func() {
+		if err := runArchitecture([]string{"directory", "--help"}); err != nil {
+			t.Fatal(err)
 		}
+	})
+	if strings.Contains(output, "--compact") || !strings.Contains(output, "--json") {
+		t.Fatalf("directory help output:\n%s", output)
 	}
 }
 

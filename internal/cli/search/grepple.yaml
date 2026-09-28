@@ -35,7 +35,7 @@ files:
     - path: api.go
       description: Exposes search argument parsing, request conversion, remote execution, and navigation resolution.
       kind: production
-      checksum: 7bbca75c8f9aa7a1c7f8173ea854cc7004f6bb10d19f86bda52fccafb8fc1672
+      checksum: 7c8eb9a07642f9477996ee63ee76a1cb505c703b36b3dd120b18521a4e0bd3e6
       areas:
         - search-cli-parsing
         - remote-search

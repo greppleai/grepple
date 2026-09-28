@@ -32,7 +32,7 @@ files:
     - path: architecture_test_helpers_test.go
       description: Provides test helpers for building architecture reports and responsibility outputs.
       kind: test
-      checksum: a863315f1d8f14e4fa19a04158d2d427f12342515479c617bf178f0d576c6df2
+      checksum: 93e91aab5576e5643fa828898d0ca6eff2708aaa64d91655e0199cba9ffb1176
     - path: args.go
       description: Parses application arguments, normalizes commands, validates availability, and runs output spilling.
       kind: production

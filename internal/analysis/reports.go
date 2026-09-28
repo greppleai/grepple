@@ -38,11 +38,6 @@ type BoundaryAnalysis struct {
 	FacadeBypasses []BoundaryFacadeBypass
 }
 
-// ValidateBoundaryPolicy validates repository-owned boundary policy.
-func ValidateBoundaryPolicy(policy BoundaryPolicy) error {
-	return boundaryanalysis.ValidateBoundaryPolicy(policy)
-}
-
 // AnalyzeBoundaries applies repository policy to an existing navigation graph.
 func AnalyzeBoundaries(graph parser.NavigationGraph, minimum int, policy BoundaryPolicy) (BoundaryAnalysis, error) {
 	if minimum < 1 {

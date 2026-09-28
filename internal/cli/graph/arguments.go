@@ -18,10 +18,6 @@ type Args struct {
 	Callees *QueryArgs   `arg:"subcommand:callees"`
 }
 
-func Execute(application cliruntime.Context, values *Args) error {
-	return ExecuteWithDaemon(application, values, false)
-}
-
 // ExecuteWithDaemon opts focused local graph commands into the shared report cache.
 func ExecuteWithDaemon(application cliruntime.Context, values *Args, daemon bool) error {
 	if values == nil {

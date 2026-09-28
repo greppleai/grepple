@@ -26,11 +26,6 @@ func NewAIProvider(application cliruntime.Context) cliruntime.Command {
 	return newCommand(application, operationAIProvider, nil)
 }
 
-// NewLogin constructs the remote-login command from the common command context.
-func NewLogin(application cliruntime.Context) cliruntime.Command {
-	return newCommand(application, operationLogin, nil)
-}
-
 // NewLogout constructs the remote-logout command from the common command context.
 func NewLogout(application cliruntime.Context) cliruntime.Command {
 	return newCommand(application, operationLogout, nil)

@@ -13,7 +13,7 @@ files:
     - path: arguments.go
       description: Defines graph argument aliases and dispatches build, resolve, diff, and traversal operations.
       kind: production
-      checksum: e215b611b49b6336dcae614bc5ab5cfc13eefbbc0990532381b91d14e1cc6767
+      checksum: 144639af8d82b0f62abdab5919a2a0411d07a1aec1d242417ef43cb8a5d680b8
     - path: build.go
       description: Parses build options, loads local or exact remote graphs, and renders complete or bounded compact output.
       kind: production
@@ -53,11 +53,11 @@ files:
     - path: projection.go
       description: Defines normalized graph output structures and converts analysis reports into command projections.
       kind: production
-      checksum: ceeff0f299c4c4ac7e02a11af7fd0c07bcf01cbc80c09e378b6c7317daf589b1
+      checksum: 184daf4d9cdc3baa74a5ff01e4801aeb6cd49b33923156a668afe102060d50d9
     - path: query.go
       description: Parses selectors, resolves source paths, executes filtered local or exact remote traversals, and exposes graph helpers.
       kind: production
-      checksum: d1671c869c4dc04361bcedff526962f079f2868c68d6fc444adb7aee8c9de887
+      checksum: 297897d5f278bc173bf7da6cb6d4cdb94eb98a5890aa291a387e5d590d8a4f2f
     - path: query_compact.go
       description: Renders directional traversal results with grouped edges, ambiguity markers, deterministic ordering, and cycle bounds.
       kind: production

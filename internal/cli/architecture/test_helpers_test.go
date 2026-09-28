@@ -10,12 +10,11 @@ import (
 	"github.com/greppleai/grepple/internal/search"
 )
 
-func testArchitectureDependencies(productionOnly bool, exitCode *int) Dependencies {
+func testArchitectureDependencies() Dependencies {
 	return Dependencies{
 		ApplySourceConfig: func(params *search.Params) error {
 			working, _ := os.Getwd()
 			params.IgnoreRoot = working
-			params.ProductionOnly = productionOnly
 			content, err := os.ReadFile(filepath.Join(working, "grepple.json"))
 			if os.IsNotExist(err) {
 				return nil
@@ -34,39 +33,14 @@ func testArchitectureDependencies(productionOnly bool, exitCode *int) Dependenci
 			params.IgnorePaths = config.Ignore.Paths
 			return nil
 		},
-		RequestExit: func(code int) {
-			if exitCode != nil {
-				*exitCode = code
-			}
-		},
 	}
 }
 
 func runArchitecture(args []string) error {
-	return runArchitectureInternal(args, testArchitectureDependencies(false, nil))
-}
-func runArchitectureWithExit(args []string, productionOnly bool) (int, error) {
-	code := 0
-	err := runArchitectureInternal(args, testArchitectureDependencies(productionOnly, &code))
-	return code, err
-}
-func runArchitectureInternal(args []string, dependencies Dependencies) error {
-	if len(args) > 0 {
-		switch args[0] {
-		case "resolve":
-			return runArchitectureResolve(args[1:], dependencies)
-		case "why":
-			return runArchitectureWhy(args[1:], dependencies)
-		case "responsibilities":
-			return runArchitectureResponsibilities(args[1:], dependencies)
-		case "compare":
-			return runArchitectureCompare(args[1:], dependencies)
-		}
-	}
-	return newWithDependencies(dependencies).Run(args)
+	return newWithDependencies(testArchitectureDependencies()).Run(args)
 }
 func buildDirectoryArchitecture(paths []string, maxFiles int) (Report, error) {
-	return Build(paths, maxFiles, testArchitectureDependencies(false, nil))
+	return Build(paths, maxFiles, testArchitectureDependencies())
 }
 
 func chdirForConfigTest(t testing.TB, directory string) {
