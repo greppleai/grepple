@@ -61,6 +61,7 @@ var grammars = []grammarSpec{
 	{Language: "c", Module: "github.com/tree-sitter/tree-sitter-c"},
 	{Language: "cpp", Module: "github.com/tree-sitter/tree-sitter-cpp"},
 	{Language: "rust", Module: "github.com/tree-sitter/tree-sitter-rust"},
+	{Language: "php", Module: "github.com/tree-sitter/tree-sitter-php", Subdir: "php"},
 	{Language: "shell", Module: "github.com/tree-sitter/tree-sitter-bash"},
 }
 

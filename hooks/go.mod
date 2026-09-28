@@ -16,6 +16,7 @@ require (
 	github.com/tree-sitter/tree-sitter-go v0.25.0 // indirect
 	github.com/tree-sitter/tree-sitter-java v0.23.5 // indirect
 	github.com/tree-sitter/tree-sitter-javascript v0.25.0 // indirect
+	github.com/tree-sitter/tree-sitter-php v0.25.0 // indirect
 	github.com/tree-sitter/tree-sitter-python v0.25.0 // indirect
 	github.com/tree-sitter/tree-sitter-rust v0.24.2 // indirect
 	github.com/tree-sitter/tree-sitter-typescript v0.23.2 // indirect

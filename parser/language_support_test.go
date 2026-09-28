@@ -108,6 +108,7 @@ func TestNavigationFactCapabilitiesAreAdapterOwned(t *testing.T) {
 		"c":          {Declarations: true, Calls: true, Imports: true, TypeReferences: true, Fields: true, MemberAccess: true, Entrypoints: true},
 		"cpp":        {Declarations: true, Calls: true, Imports: true, TypeReferences: true, Fields: true, MemberAccess: true, Entrypoints: true},
 		"rust":       {Declarations: true, Calls: true, Imports: true, TypeReferences: true, Fields: true, MemberAccess: true, Entrypoints: true},
+		"php":        {Declarations: true, Calls: true, Imports: true, TypeReferences: true, Fields: true, MemberAccess: true},
 		"shell":      {Declarations: true, Calls: true},
 	}
 	for _, language := range SupportedLanguages() {
@@ -133,6 +134,7 @@ func TestAdvertisedTypedFieldAndMemberFactsHaveRepresentativeEvidence(t *testing
 		{"c", "struct Foo { int state; };\nint use(struct Foo value){ return value.state; }\n", true, true, true},
 		{"cpp", "struct Foo { int state; };\nint use(Foo value){ return value.state; }\n", true, true, true},
 		{"rust", "struct Foo { state: i32 }\nfn use(value: Foo) -> i32 { value.state }\n", true, true, true},
+		{"php", "<?php class Foo { public int $state; function use(Foo $value): int { return $value->state; } }\n", true, true, true},
 		{"shell", "use() { echo value; }\n", false, false, false},
 	}
 	for _, test := range tests {

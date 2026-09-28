@@ -1267,7 +1267,7 @@ func typedPlaceholderNode(n, parent parser.Node, role placeholderRole) bool {
 
 func ordinaryPlaceholderKind(kind string) bool {
 	switch kind {
-	case "identifier", "simple_identifier", "word", "command_name", "type_identifier", "field_identifier", "package_identifier", "property_identifier", "private_property_identifier", "shorthand_property_identifier", "shorthand_property_identifier_pattern", "jsx_identifier", "namespace_name", "label_name", "expression_statement", "argument", "value_argument", "parameter_declaration", "variadic_parameter_declaration", "field_declaration", "literal_element", "var_spec", "const_spec", "type_spec", "type_elem":
+	case "identifier", "name", "variable_name", "simple_identifier", "word", "command_name", "type_identifier", "field_identifier", "package_identifier", "property_identifier", "private_property_identifier", "shorthand_property_identifier", "shorthand_property_identifier_pattern", "jsx_identifier", "namespace_name", "label_name", "expression_statement", "argument", "value_argument", "parameter_declaration", "variadic_parameter_declaration", "field_declaration", "literal_element", "var_spec", "const_spec", "type_spec", "type_elem":
 		return true
 	default:
 		return false

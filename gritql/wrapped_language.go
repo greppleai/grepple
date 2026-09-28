@@ -2,6 +2,7 @@ package gritql
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/greppleai/grepple/parser"
 )
@@ -31,6 +32,10 @@ const (
 	RustGrammar = "rust"
 	// TreeSitterRustGrammar identifies the pinned Rust grammar implementation.
 	TreeSitterRustGrammar = "tree-sitter-rust@0.24.2"
+	// PHPGrammar identifies the PHP syntax contract.
+	PHPGrammar = "php"
+	// TreeSitterPHPGrammar identifies the pinned PHP grammar implementation.
+	TreeSitterPHPGrammar = "tree-sitter-php@0.25.0"
 	// ShellGrammar identifies the Shell syntax contract.
 	ShellGrammar = "shell"
 	// TreeSitterShellGrammar identifies the pinned Bash grammar implementation.
@@ -118,6 +123,20 @@ func kotlinLanguageConfig() wrappedLanguageConfig {
 		declarations:    stringSet("class_declaration", "companion_object", "function_declaration", "import_header", "object_declaration", "package_header", "property_declaration", "type_alias"),
 	}
 }
+func phpLanguageConfig() wrappedLanguageConfig {
+	return wrappedLanguageConfig{
+		language: "php", rootKind: "program",
+		expressionPrefix: "<?php $__grit_value = ", expressionSuffix: ";\n",
+		statementPrefix: "<?php function __grit_func(){\n", statementSuffix: "\n}\n",
+		statementBlocks: stringSet("compound_statement"),
+		declarations:    stringSet("namespace_definition", "namespace_use_declaration", "function_definition", "class_declaration", "interface_declaration", "trait_declaration", "enum_declaration"),
+		memberPrefix:    "<?php class __G {\n", memberSuffix: "\n}\n", memberBlocks: stringSet("declaration_list"),
+	}
+}
+
+func compilePHPTemplates(decoded decodedSnippet, maxDepth int) ([]Template, string, error) {
+	return compileWrappedLanguageTemplates(phpLanguageConfig(), decoded, maxDepth)
+}
 
 func compileRustTemplates(decoded decodedSnippet, maxDepth int) ([]Template, string, error) {
 	return compileWrappedLanguageTemplates(rustLanguageConfig(), decoded, maxDepth)
@@ -147,6 +166,11 @@ func compileWrappedLanguageTemplates(config wrappedLanguageConfig, decoded decod
 	attempts := wrappedSnippetAttempts(config)
 	var templates []Template
 	for _, attempt := range attempts {
+		// Without an opening tag, PHP parses the entire snippet as inline HTML.
+		// Such a file template would match arbitrary HTML rather than PHP syntax.
+		if config.language == "php" && attempt.context == SnippetContextFile && !strings.Contains(decoded.text, "<?") {
+			continue
+		}
 		candidates, tooDeep := parseInferredTemplates(config.language, decoded, attempt, assignments, maxDepth)
 		if tooDeep {
 			return nil, "LIMIT_PARSE_DEPTH", fmt.Errorf("%s template exceeds effective depth limit", config.language)
@@ -174,9 +198,13 @@ func wrappedSnippetAttempts(config wrappedLanguageConfig) []snippetAttempt {
 			snippetAttempt{SnippetContextStatementList, config.statementPrefix, config.statementSuffix, selectWrappedSequence(config.statementBlocks, "statement_sequence")},
 		)
 	}
+	declarationPrefix := ""
+	if config.language == "php" {
+		declarationPrefix = "<?php\n"
+	}
 	attempts = append(attempts,
-		snippetAttempt{SnippetContextDeclaration, "", "\n", selectExactDeclaration(config.declarations)},
-		snippetAttempt{SnippetContextDeclarationList, "", "\n", selectRootSequence(config.rootKind, "declaration_sequence")},
+		snippetAttempt{SnippetContextDeclaration, declarationPrefix, "\n", selectExactDeclaration(config.declarations)},
+		snippetAttempt{SnippetContextDeclarationList, declarationPrefix, "\n", selectRootSequence(config.rootKind, "declaration_sequence")},
 	)
 	if config.memberPrefix != "" {
 		attempts = append(attempts,
@@ -312,6 +340,8 @@ func wrappedLanguageByID(language string) wrappedLanguageConfig {
 		return rustLanguageConfig()
 	case "shell":
 		return shellLanguageConfig()
+	case "php":
+		return phpLanguageConfig()
 	default:
 		return wrappedLanguageConfig{}
 	}
