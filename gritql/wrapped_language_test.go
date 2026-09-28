@@ -14,6 +14,7 @@ func TestWrappedTreeSitterLanguagesEvaluateCalls(t *testing.T) {
 		{name: "csharp", language: "csharp", snippet: "Target($args)", source: "class App { void Run() { Target(value); } }\n", path: "src/App.cs", want: "Target(value)"},
 		{name: "java", language: "java", snippet: "target($args)", source: "class App { void run() { target(value); } }\n", path: "src/App.java", want: "target(value)"},
 		{name: "kotlin", language: "kotlin", snippet: "target($args)", source: "fun run() { target(value) }\n", path: "src/App.kt", want: "target(value)"},
+		{name: "php", language: "php", snippet: "target($args)", source: "<?php function run() { target($value); }\n", path: "src/app.php", want: "target($value)"},
 		{name: "rust", language: "rust", snippet: "target($args)", source: "fn run() { target(value); }\n", path: "src/app.rs", want: "target(value)"},
 		{name: "shell", language: "shell", snippet: "target $args", source: "run() { target value; }\n", path: "scripts/app.sh", want: "target value"},
 	}
@@ -38,6 +39,7 @@ func TestWrappedTreeSitterLanguagesUseSharedBindingEquality(t *testing.T) {
 		{name: "csharp", language: "csharp", snippet: "Pair($value, $value)", source: "class App { void Run() { Pair(foo, foo); Pair(foo, bar); } }\n", path: "src/App.cs", want: "Pair(foo, foo)"},
 		{name: "java", language: "java", snippet: "pair($value, $value)", source: "class App { void run() { pair(foo, foo); pair(foo, bar); } }\n", path: "src/App.java", want: "pair(foo, foo)"},
 		{name: "kotlin", language: "kotlin", snippet: "pair($value, $value)", source: "fun run() { pair(foo, foo); pair(foo, bar) }\n", path: "src/App.kt", want: "pair(foo, foo)"},
+		{name: "php", language: "php", snippet: "pair($value, $value)", source: "<?php pair($foo, $foo); pair($foo, $bar);\n", path: "src/app.php", want: "pair($foo, $foo)"},
 		{name: "rust", language: "rust", snippet: "pair($value, $value)", source: "fn run() { pair(foo, foo); pair(foo, bar); }\n", path: "src/app.rs", want: "pair(foo, foo)"},
 		{name: "shell", language: "shell", snippet: "pair $value $value", source: "pair foo foo\npair foo bar\n", path: "scripts/app.sh", want: "pair foo foo"},
 	}
@@ -60,6 +62,7 @@ func TestWrappedTreeSitterLanguageScannersAndMalformedSources(t *testing.T) {
 		{"csharp", "src/App.cs", "class App { void Run() { Target(value); } }\n", "class Broken { void Run(\n"},
 		{"java", "src/App.java", "class App { void run() { target(value); } }\n", "class Broken { void run(\n"},
 		{"kotlin", "src/App.kt", "fun run() { target(value) }\n", "fun broken(\n"},
+		{"php", "src/app.php", "<?php target($value);\n", "<?php function broken(\n"},
 		{"rust", "src/app.rs", "fn run() { target(value); }\n", "fn broken(\n"},
 		{"shell", "scripts/app.sh", "target value\n", "if then\n"},
 	}

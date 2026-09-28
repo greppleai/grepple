@@ -676,6 +676,7 @@ var v1NodeValidators = map[string]v1NodeValidator{
 	"java":            validAnonymousTerminalNode,
 	"javascript":      validAnonymousTerminalNode,
 	"kotlin":          validAnonymousTerminalNode,
+	"php":             validAnonymousTerminalNode,
 	"python":          validAnonymousTerminalNode,
 	"rust":            validAnonymousTerminalNode,
 	"shell":           validAnonymousTerminalNode,
