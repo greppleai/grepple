@@ -10,7 +10,7 @@ import (
 	sourcedomain "github.com/greppleai/grepple/internal/sources"
 )
 
-var navigationRootMarkers = []string{"grepple.json", ".git", "go.work"}
+var navigationRootMarkers = []string{filepath.Join(".grepple", "grepple.json"), filepath.Join(".grepple", "grepple.yaml"), ".git", "go.work"}
 
 func collectRelatedRepositoryFiles(ctx context.Context, params Params, matches []FileMatch) ([]string, error) {
 	roots, err := relatedNavigationRoots(params.Root, matches)

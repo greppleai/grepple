@@ -36,7 +36,7 @@ func TestInitPrintsAreaProposalsWithoutPersistingThem(t *testing.T) {
 	if !strings.Contains(output.String(), "area-proposal add outline ./file.go: file.go:1 parser") {
 		t.Fatalf("proposal output=%q", output.String())
 	}
-	content, err := os.ReadFile(filepath.Join(root, directorymeta.FileName))
+	content, err := os.ReadFile(directorymeta.RepositoryPath(root))
 	if err != nil || !strings.Contains(string(content), "areas:") || strings.Contains(string(content), "area_proposals") {
 		t.Fatalf("persisted=%s err=%v", content, err)
 	}

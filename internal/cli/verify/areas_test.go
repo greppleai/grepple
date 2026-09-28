@@ -23,7 +23,7 @@ func TestVerifyAreasReportsStaleAndInvalidMembershipLeads(t *testing.T) {
 		t.Fatal(err)
 	}
 	files[0].Kind, files[0].Description, files[0].Areas = "production", "Source.", []string{"outline"}
-	if err := directorymeta.Write(root, directorymeta.Metadata{Description: "Root.", Responsibilities: []string{"Own code."}, Files: files}); err != nil {
+	if err := directorymeta.Write(root, root, directorymeta.Metadata{Description: "Root.", Responsibilities: []string{"Own code."}, Files: files}); err != nil {
 		t.Fatal(err)
 	}
 	var output bytes.Buffer
@@ -44,7 +44,7 @@ func TestVerifyAreasReportsStaleAndInvalidMembershipLeads(t *testing.T) {
 		t.Fatalf("output=%q code=%d err=%v", output.String(), code, err)
 	}
 	files[0].Areas = []string{"Bad"}
-	if err := directorymeta.Write(root, directorymeta.Metadata{Description: "Root.", Responsibilities: []string{"Own code."}, Files: files}); err != nil {
+	if err := directorymeta.Write(root, root, directorymeta.Metadata{Description: "Root.", Responsibilities: []string{"Own code."}, Files: files}); err != nil {
 		t.Fatal(err)
 	}
 	report, err = BuildWithAreas(application, nil, true)

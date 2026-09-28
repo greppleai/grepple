@@ -7,7 +7,9 @@ grepple sources explain .
 grepple sources explain --json --production-only src services
 ```
 
-The `grepple-source-scope-v2` report includes the discovered `grepple.json` path and SHA-256 digest, whether configured ignores are active, selected and excluded file totals, exclusion counts by reason, metadata-backed source classifications, and deterministic per-path decisions. Infrastructure patterns such as `.git/**`, `.grepple/**`, and `.worktrees/**` are always listed as unconditional exclusions and are not traversed, so cache or artifact presence cannot change reported file totals. Unreadable or symlinked subtrees are reported separately as omissions rather than misrepresented as known file counts.
+The `grepple-source-scope-v2` report includes the discovered `.grepple/grepple.json` path and SHA-256 digest, whether configured ignores are active, selected and excluded file totals, exclusion counts by reason, metadata-backed source classifications, and deterministic per-path decisions. Infrastructure patterns such as `.git/**`, `.grepple/**`, and `.worktrees/**` are always listed as unconditional exclusions and are not traversed, so cache or artifact presence cannot change reported file totals. Unreadable or symlinked subtrees are reported separately as omissions rather than misrepresented as known file counts.
+
+Repository configuration lives at `.grepple/grepple.json`; use [`examples/grepple.json.example`](../examples/grepple.json.example) as a minimal template. The legacy root `grepple.json` is not loaded.
 
 ## Scope controls
 
@@ -20,7 +22,7 @@ These are global flags and may appear with search, graph, GritQL, ask, or archit
 
 ## Classifications
 
-Classification comes from each file's current `grepple.yaml` entry rather than path or filename conventions. `grepple init` asks the configured model to classify every authoritative file from source evidence using exactly:
+Classification comes from each file's current `.grepple/grepple.yaml` entry rather than path or filename conventions. `grepple init` asks the configured model to classify every authoritative file from source evidence using exactly:
 
 - `production`: application or library source used in normal operation;
 - `test`: test implementation or test-only support;

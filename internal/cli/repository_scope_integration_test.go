@@ -20,10 +20,10 @@ func TestRepositoryScopeFlagsBypassOnlyRequestedBehavior(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := directorymeta.Write(root, directorymeta.Metadata{Description: "Scope fixture.", Responsibilities: []string{"Test invocation scope."}, Files: []directorymeta.File{{Path: "main.go", Description: "Production fixture.", Kind: "production", Checksum: digest}}}); err != nil {
+	if err := directorymeta.Write(root, root, directorymeta.Metadata{Description: "Scope fixture.", Responsibilities: []string{"Test invocation scope."}, Files: []directorymeta.File{{Path: "main.go", Description: "Production fixture.", Kind: "production", Checksum: digest}}}); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(root, "grepple.json"), []byte(`{"ignore":{"paths":["sandbox/**"]}}`), 0o600); err != nil {
+	if err := os.WriteFile(filepath.Join(root, ".grepple", "grepple.json"), []byte(`{"ignore":{"paths":["sandbox/**"]}}`), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	t.Chdir(root)

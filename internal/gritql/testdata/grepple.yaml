@@ -1,6 +1,0 @@
-description: Conformance fixtures for validating GritQL parsing, compilation, scanning, matching, API behavior, integration semantics, and language support.
-responsibilities:
-    - Exercise documented GritQL compatibility behavior
-    - Verify matching results and diagnostics across supported languages
-    - Cover malformed input, resource limits, cancellation, and source handling
-files: []

@@ -1,9 +1,0 @@
-description: Pi hook internals block legacy search commands, orchestrate Stop-hook linting, format diagnostic feedback, validate Mermaid schemas, and detect misplaced struct methods.
-responsibilities:
-    - Block legacy search commands
-    - Run Stop-hook lint checks
-    - Format diagnostic remediation feedback
-    - Validate Mermaid schemas against source code
-    - Detect methods separated from struct declarations
-    - Test hook protocols and analyzers
-files: []

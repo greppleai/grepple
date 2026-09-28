@@ -33,7 +33,7 @@ func TestStartAreaUsesOnlyCurrentMetadataAndSeparatesTests(t *testing.T) {
 			files[i].Kind = "test"
 		}
 	}
-	if err := directorymeta.Write(filepath.Join(root, "pkg"), directorymeta.Metadata{Description: "Package.", Responsibilities: []string{"Own source."}, Files: files}); err != nil {
+	if err := directorymeta.Write(root, filepath.Join(root, "pkg"), directorymeta.Metadata{Description: "Package.", Responsibilities: []string{"Own source."}, Files: files}); err != nil {
 		t.Fatal(err)
 	}
 	if err := os.WriteFile(filepath.Join(root, "pkg", "stale.go"), []byte("package pkg\n// newer\n"), 0o600); err != nil {

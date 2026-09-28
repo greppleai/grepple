@@ -60,7 +60,7 @@ func TestAreaPromptsReuseNewTagsOnlyInSequentialMode(t *testing.T) {
 		t.Fatalf("initial prompt=%q err=%v", firstPrompt, err)
 	}
 	firstFiles[0].Description, firstFiles[0].Kind, firstFiles[0].Areas = "Handles checkout.", "production", []string{"checkout"}
-	if err := directorymeta.Write(firstDir, directorymeta.Metadata{Description: "Checkout.", Responsibilities: []string{"Run checkout."}, Files: firstFiles}); err != nil {
+	if err := directorymeta.Write(root, firstDir, directorymeta.Metadata{Description: "Checkout.", Responsibilities: []string{"Run checkout."}, Files: firstFiles}); err != nil {
 		t.Fatal(err)
 	}
 	secondPrompt, err := sequential(context.Background(), secondJob)

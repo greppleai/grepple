@@ -34,7 +34,7 @@ The remaining direct `ViewNode` helpers are deliberately adapter-local: they int
 
 ## Sources
 
-`internal/sources` is the cohesive source-universe boundary. It owns repository policy options, gitignore/configured-ignore discovery, metadata-backed file kinds, production-only filtering, explicit bypass notices, deterministic selection decisions, and source-scope reports. Missing or stale `grepple.yaml` classifications are `unknown`; path names do not infer source purpose. `internal/sourcelocation` separately owns only `PATH:LINE[-END]` syntax and is intentionally not part of source discovery.
+`internal/sources` is the cohesive source-universe boundary. It owns repository policy options, gitignore/configured-ignore discovery, metadata-backed file kinds, production-only filtering, explicit bypass notices, deterministic selection decisions, and source-scope reports. Missing or stale `.grepple/grepple.yaml` classifications are `unknown`; path names do not infer source purpose. `internal/sourcelocation` separately owns only `PATH:LINE[-END]` syntax and is intentionally not part of source discovery.
 
 ## CLI application
 

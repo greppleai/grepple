@@ -20,7 +20,7 @@ func TestLoadRepositoryConfigFindsAncestorAndKeepsAuthenticationUserOwned(t *tes
   "output": {"spillThresholdBytes": 4096}
 }
 `
-	if err := os.WriteFile(filepath.Join(root, "grepple.json"), []byte(content), 0o600); err != nil {
+	if err := writeConfigFixture(root, content); err != nil {
 		t.Fatal(err)
 	}
 	chdirForConfigTest(t, child)
@@ -29,7 +29,7 @@ func TestLoadRepositoryConfigFindsAncestorAndKeepsAuthenticationUserOwned(t *tes
 	if err != nil {
 		t.Fatal(err)
 	}
-	if path != filepath.Join(root, "grepple.json") || config.Server != "https://repo.example" || len(config.Ignore.Paths) != 1 || config.Output.SpillThresholdBytes != 4096 {
+	if path != filepath.Join(root, ".grepple", "grepple.json") || config.Server != "https://repo.example" || len(config.Ignore.Paths) != 1 || config.Output.SpillThresholdBytes != 4096 {
 		t.Fatalf("repository config path=%q config=%+v", path, config)
 	}
 }
@@ -37,7 +37,7 @@ func TestLoadRepositoryConfigFindsAncestorAndKeepsAuthenticationUserOwned(t *tes
 func TestRepositoryConfigLoadsIndexPatterns(t *testing.T) {
 	root := t.TempDir()
 	content := `{"index":{"repositories":[{"repo":"sourcegraph/zoekt","branches":["main","release/*"],"tags":["v0.25.*"]}]}}`
-	if err := os.WriteFile(filepath.Join(root, "grepple.json"), []byte(content), 0o600); err != nil {
+	if err := writeConfigFixture(root, content); err != nil {
 		t.Fatal(err)
 	}
 	chdirForConfigTest(t, root)
@@ -52,7 +52,7 @@ func TestRepositoryConfigLoadsIndexPatterns(t *testing.T) {
 
 func TestRepositoryConfigRejectsAuthenticationFields(t *testing.T) {
 	root := t.TempDir()
-	if err := os.WriteFile(filepath.Join(root, "grepple.json"), []byte(`{"token":"repository-secret"}`), 0o600); err != nil {
+	if err := writeConfigFixture(root, `{"token":"repository-secret"}`); err != nil {
 		t.Fatal(err)
 	}
 	chdirForConfigTest(t, root)
@@ -71,7 +71,7 @@ func TestRepositoryConfigRejectsInvalidSourceAndOutputSettings(t *testing.T) {
 	} {
 		t.Run(content, func(t *testing.T) {
 			root := t.TempDir()
-			if err := os.WriteFile(filepath.Join(root, "grepple.json"), []byte(content), 0o600); err != nil {
+			if err := writeConfigFixture(root, content); err != nil {
 				t.Fatal(err)
 			}
 			chdirForConfigTest(t, root)
@@ -92,7 +92,7 @@ func TestLoadConfigDoesNotOverlayUserTokenFromRepository(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(home, ".grepple", "config.json"), []byte(`{"token":"user-token","server":"https://user.example"}`), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(root, "grepple.json"), []byte(`{"server":"https://repo.example"}`), 0o600); err != nil {
+	if err := writeConfigFixture(root, `{"server":"https://repo.example"}`); err != nil {
 		t.Fatal(err)
 	}
 	chdirForConfigTest(t, root)
@@ -118,7 +118,7 @@ func TestRepositoryIgnoreAppliesToRecursiveDiscoveryAndExplicitFileBypasses(t *t
 	if err := os.WriteFile(filepath.Join(root, "main.go"), []byte("package main\n"), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(root, "grepple.json"), []byte(`{"ignore":{"paths":["sandbox/**"]}}`), 0o600); err != nil {
+	if err := writeConfigFixture(root, `{"ignore":{"paths":["sandbox/**"]}}`); err != nil {
 		t.Fatal(err)
 	}
 	chdirForConfigTest(t, root)
@@ -131,7 +131,7 @@ func TestRepositoryIgnoreAppliesToRecursiveDiscoveryAndExplicitFileBypasses(t *t
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(paths) != 2 || paths[0] != "grepple.json" || paths[1] != "main.go" {
+	if len(paths) != 1 || paths[0] != "main.go" {
 		t.Fatalf("recursive paths = %#v", paths)
 	}
 
@@ -143,6 +143,31 @@ func TestRepositoryIgnoreAppliesToRecursiveDiscoveryAndExplicitFileBypasses(t *t
 	if len(paths) != 1 || paths[0] != "sandbox/ignored.go" {
 		t.Fatalf("explicit paths = %#v", paths)
 	}
+}
+func TestRepositoryConfigIgnoresLegacyRootFile(t *testing.T) {
+	root := t.TempDir()
+	if err := os.WriteFile(filepath.Join(root, "grepple.json"), []byte(`{"server":"https://legacy.example"}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	chdirForConfigTest(t, root)
+	config, path, err := LoadInvocationRepositoryConfig(RepositoryInvocationOptions{})
+	if err != nil || path != "" || config.Server != "" {
+		t.Fatalf("legacy config loaded: %+v %q %v", config, path, err)
+	}
+	if err := writeConfigFixture(root, `{"server":"https://current.example"}`); err != nil {
+		t.Fatal(err)
+	}
+	config, path, err = LoadInvocationRepositoryConfig(RepositoryInvocationOptions{})
+	if err != nil || path != filepath.Join(root, ".grepple", "grepple.json") || config.Server != "https://current.example" {
+		t.Fatalf("relocated config = %+v %q %v", config, path, err)
+	}
+}
+
+func writeConfigFixture(root, content string) error {
+	if err := os.MkdirAll(filepath.Join(root, ".grepple"), 0o755); err != nil {
+		return err
+	}
+	return os.WriteFile(filepath.Join(root, ".grepple", "grepple.json"), []byte(content), 0o600)
 }
 
 func chdirForConfigTest(t *testing.T, directory string) {

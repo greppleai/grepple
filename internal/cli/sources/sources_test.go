@@ -17,11 +17,9 @@ func TestSourcesExplainReportsConfigExclusionsAndClassifications(t *testing.T) {
 	writeSourceFixture(t, root, "main.go", "package sample\nfunc Run() {}\n")
 	writeSourceFixture(t, root, "main_test.go", "package sample\nfunc TestRun() {}\n")
 	writeSourceFixture(t, root, "sandbox/ignored.go", "package sandbox\n")
-	configPath := filepath.Join(root, "grepple.json")
-	if err := os.WriteFile(configPath, []byte(`{"ignore":{"paths":["sandbox/**"]}}`), 0o600); err != nil {
-		t.Fatal(err)
-	}
-	writeSourceKinds(t, root, map[string]string{"main.go": "production", "main_test.go": "test", "grepple.json": "production"})
+	configPath := filepath.Join(root, ".grepple", "grepple.json")
+	writeSourceFixture(t, root, ".grepple/grepple.json", `{"ignore":{"paths":["sandbox/**"]}}`)
+	writeSourceKinds(t, root, map[string]string{"main.go": "production", "main_test.go": "test"})
 	dependencies := Dependencies{Environment: func() (Environment, error) {
 		return Environment{Root: root, ConfigPath: configPath, IgnorePaths: []string{"sandbox/**"}, ProductionOnly: true}, nil
 	}, WorkingDirectory: func() string { return root }}
@@ -34,10 +32,10 @@ func TestSourcesExplainReportsConfigExclusionsAndClassifications(t *testing.T) {
 	if err := json.Unmarshal(output.Bytes(), &report); err != nil {
 		t.Fatal(err)
 	}
-	if !report.Config.Loaded || report.Config.Path != "grepple.json" || !strings.HasPrefix(report.Config.Digest, "sha256:") {
+	if !report.Config.Loaded || report.Config.Path != ".grepple/grepple.json" || !strings.HasPrefix(report.Config.Digest, "sha256:") {
 		t.Fatalf("config=%+v", report.Config)
 	}
-	if !report.ProductionOnly || report.SelectedFiles != 2 || report.ExcludedFiles != 2 {
+	if !report.ProductionOnly || report.SelectedFiles != 1 || report.ExcludedFiles != 2 {
 		t.Fatalf("report=%+v", report)
 	}
 	if FormatCounts(report.Exclusions) != "config-ignore:1,non-production:1" {
@@ -64,7 +62,7 @@ func writeSourceKinds(t *testing.T, root string, kinds map[string]string) {
 		}
 		files = append(files, directorymeta.File{Path: name, Description: "Source fixture.", Kind: kind, Checksum: digest})
 	}
-	if err := directorymeta.Write(root, directorymeta.Metadata{Description: "Source fixtures.", Responsibilities: []string{"Test source reporting."}, Files: files}); err != nil {
+	if err := directorymeta.Write(root, root, directorymeta.Metadata{Description: "Source fixtures.", Responsibilities: []string{"Test source reporting."}, Files: files}); err != nil {
 		t.Fatal(err)
 	}
 }

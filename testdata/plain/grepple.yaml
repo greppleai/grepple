@@ -1,9 +1,0 @@
-description: Plain-text fixture used to verify fallback searching for unparsed files.
-responsibilities:
-    - Exercise plain-text fallback matching.
-    - Document the formatUser search term.
-files:
-    - path: notes.md
-      description: Plain-text notes that verify fallback search finds formatUser.
-      kind: fixture
-      checksum: e20f9cac7662e191c770efb690da1b84c98afb4e808bf761c11a6f6803ead483

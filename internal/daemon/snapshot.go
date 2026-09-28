@@ -87,7 +87,7 @@ func ancestorArchitectureContextPaths(absolute []string) []string {
 	candidates := make(map[string]bool)
 	for _, path := range absolute {
 		for directory := filepath.Dir(path); ; directory = filepath.Dir(directory) {
-			for _, name := range []string{"go.mod", "go.work", "tsconfig.json", "grepple.yaml"} {
+			for _, name := range []string{"go.mod", "go.work", "tsconfig.json", filepath.Join(".grepple", "grepple.json"), filepath.Join(".grepple", "grepple.yaml")} {
 				candidates[filepath.Join(directory, name)] = true
 			}
 			if filepath.Dir(directory) == directory {

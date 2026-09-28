@@ -21,7 +21,7 @@ func TestAreaIndexTracksCurrentStaleAndInvalidMembership(t *testing.T) {
 		t.Fatal(err)
 	}
 	files[0].Description, files[0].Kind, files[0].Areas = "Owns source.", "production", []string{"outline"}
-	if err := Write(filepath.Join(root, "pkg"), Metadata{Description: "Package.", Responsibilities: []string{"Own source."}, Files: files}); err != nil {
+	if err := Write(root, filepath.Join(root, "pkg"), Metadata{Description: "Package.", Responsibilities: []string{"Own source."}, Files: files}); err != nil {
 		t.Fatal(err)
 	}
 	check := func(want string) {
@@ -42,7 +42,7 @@ func TestAreaIndexTracksCurrentStaleAndInvalidMembership(t *testing.T) {
 	}
 	files[0].Checksum = digest
 	files[0].Areas = []string{"outline", "outline"}
-	if err := Write(filepath.Join(root, "pkg"), Metadata{Description: "Package.", Responsibilities: []string{"Own source."}, Files: files}); err != nil {
+	if err := Write(root, filepath.Join(root, "pkg"), Metadata{Description: "Package.", Responsibilities: []string{"Own source."}, Files: files}); err != nil {
 		t.Fatal(err)
 	}
 	refs, err := AreaIndex(root, []string{"pkg/source.go"})
@@ -50,7 +50,7 @@ func TestAreaIndexTracksCurrentStaleAndInvalidMembership(t *testing.T) {
 		t.Fatalf("duplicate refs=%+v err=%v", refs, err)
 	}
 	files[0].Areas = []string{"outline"}
-	if err := Write(filepath.Join(root, "pkg"), Metadata{Description: "Package.", Responsibilities: []string{"Own source."}, Files: files}); err != nil {
+	if err := Write(root, filepath.Join(root, "pkg"), Metadata{Description: "Package.", Responsibilities: []string{"Own source."}, Files: files}); err != nil {
 		t.Fatal(err)
 	}
 	if err := os.Remove(path); err != nil {

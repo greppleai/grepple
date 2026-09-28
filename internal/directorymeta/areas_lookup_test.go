@@ -21,7 +21,7 @@ func TestAreaIndexGroupsMixedPathsWithoutDuplicatingMembership(t *testing.T) {
 			t.Fatal(err)
 		}
 		files[0].Kind, files[0].Description, files[0].Areas = "production", "Example source", []string{"lookup"}
-		if err := Write(filepath.Dir(path), Metadata{Description: "Example directory", Responsibilities: []string{"Example"}, Files: files}); err != nil {
+		if err := Write(root, filepath.Dir(path), Metadata{Description: "Example directory", Responsibilities: []string{"Example"}, Files: files}); err != nil {
 			t.Fatal(err)
 		}
 	}

@@ -35,8 +35,8 @@ type Arguments struct {
 	NoSpill            bool   `arg:"--no-spill" help:"keep complete output on stdout regardless of size"`
 	SpillThreshold     int    `arg:"--spill-threshold-bytes" default:"-1" placeholder:"N" help:"spill output above N bytes"`
 	ArtifactDirectory  string `arg:"--artifact-dir" placeholder:"PATH" help:"store spilled artifacts here"`
-	NoRepositoryConfig bool   `arg:"--no-repo-config" help:"ignore repository-owned grepple.json behavior"`
-	NoConfigIgnore     bool   `arg:"--no-config-ignore" help:"load grepple.json but ignore ignore.paths"`
+	NoRepositoryConfig bool   `arg:"--no-repo-config" help:"ignore repository-owned .grepple/grepple.json behavior"`
+	NoConfigIgnore     bool   `arg:"--no-config-ignore" help:"load .grepple/grepple.json but ignore ignore.paths"`
 	ProductionOnly     bool   `arg:"--production-only" help:"recursively select production-classified sources"`
 	VersionFlag        bool   `arg:"--version" help:"print build and source version information"`
 	Daemon             bool   `arg:"--daemon" help:"use a running greppled for local architecture or focused graph commands (fallback to direct)"`

@@ -9,7 +9,7 @@ import (
 	"github.com/greppleai/grepple/internal/filedigest"
 )
 
-// Kind is a language-neutral repository source classification supplied by grepple.yaml.
+// Kind is a language-neutral repository source classification supplied by .grepple/grepple.yaml.
 type Kind string
 
 const (
@@ -89,7 +89,7 @@ func (classifier *Classifier) entries(directory string) map[string]directorymeta
 	}
 	entries := map[string]directorymeta.File{}
 	duplicates := map[string]bool{}
-	metadata, err := directorymeta.Read(directory)
+	metadata, err := directorymeta.Read(classifier.root, directory)
 	if err == nil {
 		for _, file := range metadata.Files {
 			name := filepath.ToSlash(filepath.Clean(filepath.FromSlash(file.Path)))

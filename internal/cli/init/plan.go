@@ -120,7 +120,7 @@ func runGeneration(ctx context.Context, application cliruntime.Context, root str
 				}
 				metadata, err := generate(ctx, job)
 				if err == nil {
-					err = directorymeta.Write(job.directory, metadata)
+					err = directorymeta.Write(root, job.directory, metadata)
 				}
 				completed <- result{index: index, err: err, proposals: metadata.AreaProposals}
 			}
@@ -143,7 +143,7 @@ func runGeneration(ctx context.Context, application cliruntime.Context, root str
 			} else if err := results[next]; err != nil {
 				failures = append(failures, fmt.Errorf("generate %s: %w", path, err))
 			} else {
-				fmt.Fprintln(application.Stdout(), "write", filepath.ToSlash(filepath.Join(path, directorymeta.FileName)))
+				fmt.Fprintf(application.Stdout(), "write %s (%s)\n", filepath.ToSlash(directorymeta.RepositoryFile), path)
 				for _, proposal := range proposals[next] {
 					evidence := strings.Join(strings.Fields(proposal.Evidence), " ")
 					fmt.Fprintf(application.Stdout(), "area-proposal %s %s %s/%s: %s\n", proposal.Action, proposal.Area, path, proposal.Path, evidence)

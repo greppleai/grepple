@@ -1,9 +1,0 @@
-description: This directory provides source-backed Grepple workflows for repository discovery, architecture analysis, change impact, research delegation, searching, and structural audits.
-responsibilities:
-    - Orient unfamiliar repositories
-    - Analyze architecture and boundaries
-    - Assess change impact
-    - Delegate read-only research
-    - Retrieve local and remote source evidence
-    - Audit syntax-shaped patterns
-files: []

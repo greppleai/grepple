@@ -1,9 +1,0 @@
-description: Vendored Tree-sitter grammar, generated parser artifacts, runtime headers, and Go binding for parsing GritQL source files.
-responsibilities:
-    - Define GritQL syntax and language constructs
-    - Generate Tree-sitter parser tables and syntax metadata
-    - Bind the generated language descriptor to Go
-    - Provide vendored Tree-sitter runtime headers and scanner hooks
-    - Record vendoring provenance and regeneration procedures
-    - Preserve licensing terms for vendored sources
-files: []

@@ -13,13 +13,13 @@ func TestMetadataRoundTripAndTreeSummary(t *testing.T) {
 	if err := os.Mkdir(child, 0o755); err != nil {
 		t.Fatal(err)
 	}
-	if err := Write(root, Metadata{Description: "Repository root.", Responsibilities: []string{"Coordinate packages."}}); err != nil {
+	if err := Write(root, root, Metadata{Description: "Repository root.", Responsibilities: []string{"Coordinate packages."}}); err != nil {
 		t.Fatal(err)
 	}
-	if err := Write(child, Metadata{Description: "Parses source.", Responsibilities: []string{"Parse files."}}); err != nil {
+	if err := Write(root, child, Metadata{Description: "Parses source.", Responsibilities: []string{"Parse files."}}); err != nil {
 		t.Fatal(err)
 	}
-	loaded, err := Read(child)
+	loaded, err := Read(root, child)
 	if err != nil || loaded.Description != "Parses source." {
 		t.Fatalf("metadata=%+v err=%v", loaded, err)
 	}

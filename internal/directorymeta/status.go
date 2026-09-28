@@ -35,20 +35,20 @@ type Inspection struct {
 	Files    map[string]FileState
 }
 
-// Inspect compares grepple.yaml with the currently selected direct files in directory.
+// Inspect compares the consolidated metadata with selected direct files in directory.
 func Inspect(root, directory string, paths []string) Inspection {
 	selected := selectedDirectFiles(root, directory, paths)
 	inspection := Inspection{Status: StatusCurrent, Files: make(map[string]FileState, len(selected))}
-	metadata, err := Read(directory)
+	metadata, err := Read(root, directory)
 	if err != nil {
 		status := StatusInvalid
 		if errors.Is(err, os.ErrNotExist) {
 			status = StatusMissing
 		}
 		inspection.Status = status
-		issue := "grepple.yaml is missing"
+		issue := "directory entry is missing from .grepple/grepple.yaml"
 		if status == StatusInvalid {
-			issue = "grepple.yaml is invalid: " + err.Error()
+			issue = "directory entry is invalid in .grepple/grepple.yaml: " + err.Error()
 		}
 		inspection.Issues = []string{issue}
 		for _, name := range selected {
@@ -81,7 +81,7 @@ func Inspect(root, directory string, paths []string) Inspection {
 		selectedSet[name] = true
 		entry, exists := entries[name]
 		if !exists {
-			inspection.Files[name] = FileState{Status: StatusMissing, Issues: []string{"file entry is missing from grepple.yaml"}}
+			inspection.Files[name] = FileState{Status: StatusMissing, Issues: []string{"file entry is missing from .grepple/grepple.yaml"}}
 			inspection.addIssue(StatusStale, fmt.Sprintf("missing file entry %q", name))
 			continue
 		}

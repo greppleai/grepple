@@ -15,7 +15,7 @@ import (
 
 func TestArchitectureDirectoryAcrossLanguages(t *testing.T) {
 	root := t.TempDir()
-	writeArchitectureFixture(t, root, "grepple.json", `{"ignore":{"paths":["sandbox/**"]}}`)
+	writeArchitectureFixture(t, root, ".grepple/grepple.json", `{"ignore":{"paths":["sandbox/**"]}}`)
 	writeArchitectureFixture(t, root, "go.mod", "module example.com/project\n")
 	writeArchitectureFixture(t, root, "parser/document.go", "package parser\n// Document is public.\ntype Document struct{}\n// Build constructs a document.\nfunc Build() Document { return Document{} }\n")
 	writeArchitectureFixture(t, root, "parser/document_test.go", "package parser\ntype TestDocument struct{}\n")
@@ -192,15 +192,15 @@ func writeArchitectureFixture(t testing.TB, root, relative, content string) {
 	if err := os.WriteFile(path, []byte(content), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	if filepath.Base(path) != directorymeta.FileName {
-		writeArchitectureFixtureMetadata(t, path)
+	if !strings.HasPrefix(relative, ".grepple/") && filepath.Base(path) != directorymeta.FileName {
+		writeArchitectureFixtureMetadata(t, root, path)
 	}
 }
 
-func writeArchitectureFixtureMetadata(t testing.TB, path string) {
+func writeArchitectureFixtureMetadata(t testing.TB, root, path string) {
 	t.Helper()
 	directory, name := filepath.Dir(path), filepath.Base(path)
-	metadata, err := directorymeta.Read(directory)
+	metadata, err := directorymeta.Read(root, directory)
 	if err != nil && !os.IsNotExist(err) {
 		t.Fatal(err)
 	}
@@ -226,7 +226,7 @@ func writeArchitectureFixtureMetadata(t testing.TB, path string) {
 	if !updated {
 		metadata.Files = append(metadata.Files, entry)
 	}
-	if err := directorymeta.Write(directory, metadata); err != nil {
+	if err := directorymeta.Write(root, directory, metadata); err != nil {
 		t.Fatal(err)
 	}
 }

@@ -20,7 +20,7 @@ func TestInspectReportsMissingCurrentAndStaleMetadata(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := Write(root, Metadata{
+	if err := Write(root, root, Metadata{
 		Description:      "Application package.",
 		Responsibilities: []string{"Start the application."},
 		Files:            []File{{Path: "main.go", Description: "Starts the application.", Checksum: checksum}},
@@ -49,7 +49,7 @@ func TestInspectRejectsInvalidSourceKind(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := Write(root, Metadata{Description: "Application.", Responsibilities: []string{"Run."}, Files: []File{{Path: "main.go", Description: "Runs.", Kind: "application", Checksum: checksum}}}); err != nil {
+	if err := Write(root, root, Metadata{Description: "Application.", Responsibilities: []string{"Run."}, Files: []File{{Path: "main.go", Description: "Runs.", Kind: "application", Checksum: checksum}}}); err != nil {
 		t.Fatal(err)
 	}
 	inspection := Inspect(root, root, []string{path})
@@ -64,7 +64,7 @@ func TestInspectReportsMissingFileEntry(t *testing.T) {
 	if err := os.WriteFile(path, []byte("package main\n"), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	if err := Write(root, Metadata{Description: "Application package.", Responsibilities: []string{"Start the application."}}); err != nil {
+	if err := Write(root, root, Metadata{Description: "Application package.", Responsibilities: []string{"Start the application."}}); err != nil {
 		t.Fatal(err)
 	}
 	inspection := Inspect(root, root, []string{path})

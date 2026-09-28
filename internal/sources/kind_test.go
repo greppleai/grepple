@@ -18,7 +18,7 @@ func TestClassifyUsesFreshDirectoryMetadataOnly(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	writeKinds(t, root, map[string]Kind{"service_test.go": Production, "service.go": Test})
+	writeKinds(t, root, root, map[string]Kind{"service_test.go": Production, "service.go": Test})
 	classifier := NewClassifier(root)
 	if got := classifier.Classify(productionPath); got != Production {
 		t.Fatalf("metadata production kind=%q", got)
@@ -48,7 +48,7 @@ func TestClassifyMissingKindInCurrentMetadataIsUnknown(t *testing.T) {
 		t.Fatal(err)
 	}
 	metadata := directorymeta.Metadata{Description: "Legacy metadata.", Responsibilities: []string{"Describe source."}, Files: []directorymeta.File{{Path: "ordinary.go", Description: "Ordinary source.", Checksum: digest}}}
-	if err := directorymeta.Write(root, metadata); err != nil {
+	if err := directorymeta.Write(root, root, metadata); err != nil {
 		t.Fatal(err)
 	}
 	if kind := Classify(path, root); kind != Unknown {
@@ -65,7 +65,7 @@ func TestProductionOnlyWalksUnknownParentDirectories(t *testing.T) {
 	if err := os.WriteFile(path, []byte("package deep\n"), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	writeKinds(t, nested, map[string]Kind{"service.go": Production})
+	writeKinds(t, root, nested, map[string]Kind{"service.go": Production})
 	files, err := Listing(nil, []string{root}, DiscoveryOptions{Root: root, IgnoreRoot: root, ProductionOnly: true})
 	if err != nil || len(files) != 1 || files[0] != path {
 		t.Fatalf("selected=%q err=%v; want %q", files, err, path)
@@ -81,7 +81,7 @@ func TestParseKindDefaultsMissingToUnknownAndRejectsInvalid(t *testing.T) {
 	}
 }
 
-func writeKinds(t *testing.T, directory string, kinds map[string]Kind) {
+func writeKinds(t *testing.T, root, directory string, kinds map[string]Kind) {
 	t.Helper()
 	files := make([]directorymeta.File, 0, len(kinds))
 	for name, kind := range kinds {
@@ -91,7 +91,7 @@ func writeKinds(t *testing.T, directory string, kinds map[string]Kind) {
 		}
 		files = append(files, directorymeta.File{Path: name, Description: "Test fixture.", Kind: string(kind), Checksum: digest})
 	}
-	if err := directorymeta.Write(directory, directorymeta.Metadata{Description: "Test sources.", Responsibilities: []string{"Support tests."}, Files: files}); err != nil {
+	if err := directorymeta.Write(root, directory, directorymeta.Metadata{Description: "Test sources.", Responsibilities: []string{"Support tests."}, Files: files}); err != nil {
 		t.Fatal(err)
 	}
 }

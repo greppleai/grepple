@@ -15,7 +15,7 @@ func testArchitectureDependencies() Dependencies {
 		ApplySourceConfig: func(params *search.Params) error {
 			working, _ := os.Getwd()
 			params.IgnoreRoot = working
-			content, err := os.ReadFile(filepath.Join(working, "grepple.json"))
+			content, err := os.ReadFile(filepath.Join(working, ".grepple", "grepple.json"))
 			if os.IsNotExist(err) {
 				return nil
 			}

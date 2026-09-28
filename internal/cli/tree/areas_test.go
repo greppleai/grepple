@@ -39,14 +39,14 @@ func TestLocalTreeShowsCurrentAreasOnFilesAndAncestors(t *testing.T) {
 		if item.stale {
 			checksum = "outdated"
 		}
-		metadata, err := directorymeta.Read(item.directory)
+		metadata, err := directorymeta.Read(root, item.directory)
 		if os.IsNotExist(err) {
 			metadata = directorymeta.Metadata{Description: "Source directory.", Responsibilities: []string{"Own source."}}
 		} else if err != nil {
 			t.Fatal(err)
 		}
 		metadata.Files = append(metadata.Files, directorymeta.File{Path: item.name, Kind: item.kind, Description: item.name, Checksum: checksum, Areas: item.areas})
-		if err := directorymeta.Write(item.directory, metadata); err != nil {
+		if err := directorymeta.Write(root, item.directory, metadata); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -72,8 +72,8 @@ func TestLocalTreeShowsCurrentAreasOnFilesAndAncestors(t *testing.T) {
 		}
 		entries := map[string][]string{}
 		for _, entry := range response.Entries {
-			if entry.Path == "grepple.yaml" || filepath.Base(entry.Path) == "grepple.yaml" {
-				continue
+			if entry.Path == ".grepple" || entry.Path == directorymeta.RepositoryFile {
+				t.Fatal("internal metadata leaked into tree")
 			}
 			entries[entry.Path] = entry.Areas
 		}

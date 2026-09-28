@@ -61,7 +61,7 @@ func (repository invocationRepository) ScopeOptions() (sourcedomain.Options, err
 		return options, err
 	}
 	if path != "" && !repository.invocation.NoConfigIgnore {
-		options.IgnoreRoot = filepath.Dir(path)
+		options.IgnoreRoot = filepath.Dir(filepath.Dir(path))
 		options.IgnorePaths = append([]string(nil), config.Ignore.Paths...)
 	}
 	return options, nil

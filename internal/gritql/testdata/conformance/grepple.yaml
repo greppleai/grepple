@@ -1,6 +1,0 @@
-description: Conformance case files define expected GritQL parsing, compilation, matching, scanning, API, integration, and language behavior.
-responsibilities:
-    - Define conformance scenarios
-    - Exercise language implementations
-    - Specify expected findings and diagnostics
-files: []

@@ -21,7 +21,7 @@ import (
 )
 
 type Args struct {
-	Force         bool     `arg:"--force" help:"replace all existing grepple.yaml files, including current ones"`
+	Force         bool     `arg:"--force" help:"regenerate all selected directory entries, including current ones"`
 	Concurrency   int      `arg:"--concurrency" default:"1" placeholder:"N" help:"generate metadata for N directories in parallel (default: 1)"`
 	OnlyDirectory string   `arg:"--only-directory" placeholder:"PATH" help:"generate metadata for exactly one directory without its ancestors"`
 	Paths         []string `arg:"positional" placeholder:"PATH" help:"source path or glob; defaults to the repository"`
@@ -65,7 +65,7 @@ func Execute(application cliruntime.Context, values *Args) error {
 
 func generateDirectoryMetadata(ctx context.Context, application cliruntime.Context, model fantasy.LanguageModel, root, directory, prompt string, files []directorymeta.File) (directorymeta.Metadata, error) {
 	var validationErr error
-	existing, _ := directorymeta.Read(directory) // Invalid prior YAML cannot be trusted as membership.
+	existing, _ := directorymeta.Read(root, directory) // Invalid prior YAML cannot be trusted as membership.
 	for attempt := 0; attempt < 2; attempt++ {
 		result, err := agent.Run(ctx, nil, agent.Request{
 			Name:         "directory metadata",
@@ -92,9 +92,13 @@ func generationPrompt(root, directory string, files []directorymeta.File) (strin
 
 func generationPromptWithAreas(root, directory string, files []directorymeta.File, inventory []directorymeta.AreaReference) (string, error) {
 	var prompt strings.Builder
-	fmt.Fprintf(&prompt, "Generate grepple.yaml for directory %q. Inspect the directory with the available Grepple tools before answering. Return YAML only with description, responsibilities, and files. Each description is one concise sentence. Responsibilities are concise action phrases. Classify every file with exactly one kind: production, test, fixture, generated, vendor, or unknown. Use unknown only when source evidence cannot support another classification. Preserve every supplied file path and checksum exactly. Include every supplied file. Independently discover cohesive feature areas from source behavior and tests, especially when the repository inventory is empty: look for concrete capabilities or workflows and propose concise, reusable lowercase-hyphenated area names based on evidence, not a preset vocabulary. Tag the files that implement or test each supported area, not every file in the directory. Reuse an inventory area only when local source evidence supports it; do not invent tags from directory or file names alone. If no meaningful feature area is evidenced, leave areas empty. Retain existing file areas even if no local call edge appears; they are hand-authored semantic hints. For every new area on each file include a matching area_proposals entry (path, area, action: add, evidence with an actual selected filename and positive line number such as example.go:12, plus reason); propose removals with action: remove and evidence instead of deleting tags. Never use the literal placeholder SOURCE:LINE or SOURCE:12 as a citation. Area tags use lowercase letters, digits and hyphens. Never infer an area solely from its name or from missing call edges. area_proposals are printed for review but not written to grepple.yaml.\n\n", displayPath(root, directory))
-	if existing, err := os.ReadFile(filepath.Join(directory, directorymeta.FileName)); err == nil {
-		fmt.Fprintf(&prompt, "Existing grepple.yaml to use as prior context and improve:\n%s\nEND EXISTING METADATA\n\n", existing)
+	fmt.Fprintf(&prompt, "Generate directory metadata for %q. Inspect the directory with the available Grepple tools before answering. Return YAML only with description, responsibilities, and files. Each description is one concise sentence. Responsibilities are concise action phrases. Classify every file with exactly one kind: production, test, fixture, generated, vendor, or unknown. Use unknown only when source evidence cannot support another classification. Preserve every supplied file path and checksum exactly. Include every supplied file. Independently discover cohesive feature areas from source behavior and tests, especially when the repository inventory is empty: look for concrete capabilities or workflows and propose concise, reusable lowercase-hyphenated area names based on evidence, not a preset vocabulary. Tag the files that implement or test each supported area, not every file in the directory. Reuse an inventory area only when local source evidence supports it; do not invent tags from directory or file names alone. If no meaningful feature area is evidenced, leave areas empty. Retain existing file areas even if no local call edge appears; they are hand-authored semantic hints. For every new area on each file include a matching area_proposals entry (path, area, action: add, evidence with an actual selected filename and positive line number such as example.go:12, plus reason); propose removals with action: remove and evidence instead of deleting tags. Never use the literal placeholder SOURCE:LINE or SOURCE:12 as a citation. Area tags use lowercase letters, digits and hyphens. Never infer an area solely from its name or from missing call edges. area_proposals are printed for review but not written to the consolidated repository metadata.\n\n", displayPath(root, directory))
+	if existing, err := directorymeta.Read(root, directory); err == nil {
+		content, marshalErr := yaml.Marshal(existing)
+		if marshalErr != nil {
+			return "", marshalErr
+		}
+		fmt.Fprintf(&prompt, "Existing directory metadata to use as prior context and improve:\n%s\nEND EXISTING METADATA\n\n", content)
 	} else if !os.IsNotExist(err) {
 		return "", err
 	}

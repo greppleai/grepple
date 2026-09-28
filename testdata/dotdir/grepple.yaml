@@ -1,5 +1,0 @@
-description: This directory contains a Dependabot configuration for Docker updates.
-responsibilities:
-    - Configure Dependabot version 2
-    - Define Docker dependency updates
-files: []

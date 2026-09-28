@@ -14,15 +14,15 @@ import (
 
 // RepositoryConfig is repository-owned configuration. Authentication fields are rejected.
 type RepositoryConfig struct {
-	Server        string                    `json:"server,omitempty"`
-	Ignore        RepositoryIgnore          `json:"ignore,omitempty"`
-	Output        RepositoryOutput          `json:"output,omitempty"`
+	Server        string                     `json:"server,omitempty"`
+	Ignore        RepositoryIgnore           `json:"ignore,omitempty"`
+	Output        RepositoryOutput           `json:"output,omitempty"`
 	Index         wire.RepositoryIndexConfig `json:"index,omitempty"`
-	Token         string                    `json:"token,omitempty"`
-	RefreshToken  string                    `json:"refresh_token,omitempty"`
-	TokenExpiry   int64                     `json:"token_expiry,omitempty"`
-	RefreshExpiry int64                     `json:"refresh_expiry,omitempty"`
-	User          string                    `json:"user,omitempty"`
+	Token         string                     `json:"token,omitempty"`
+	RefreshToken  string                     `json:"refresh_token,omitempty"`
+	TokenExpiry   int64                      `json:"token_expiry,omitempty"`
+	RefreshExpiry int64                      `json:"refresh_expiry,omitempty"`
+	User          string                     `json:"user,omitempty"`
 }
 
 // RepositoryIgnore contains repository-relative ignored source patterns.
@@ -73,14 +73,14 @@ func LoadRepositoryConfig(start string) (RepositoryConfig, string, error) {
 	return config, path, nil
 }
 
-// FindRepositoryConfig returns the nearest ancestor grepple.json.
+// FindRepositoryConfig returns the nearest ancestor .grepple/grepple.json.
 func FindRepositoryConfig(start string) (string, bool) {
 	directory, err := filepath.Abs(start)
 	if err != nil {
 		return "", false
 	}
 	for {
-		path := filepath.Join(directory, "grepple.json")
+		path := filepath.Join(directory, ".grepple", "grepple.json")
 		if info, statErr := os.Stat(path); statErr == nil && info.Mode().IsRegular() {
 			return path, true
 		}

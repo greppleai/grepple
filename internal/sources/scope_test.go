@@ -63,7 +63,7 @@ func writeScopeKinds(t *testing.T, root string, kinds map[string]Kind) {
 		}
 		files = append(files, directorymeta.File{Path: name, Description: "Scope fixture.", Kind: string(kind), Checksum: digest})
 	}
-	if err := directorymeta.Write(root, directorymeta.Metadata{Description: "Scope fixtures.", Responsibilities: []string{"Test source scope."}, Files: files}); err != nil {
+	if err := directorymeta.Write(root, root, directorymeta.Metadata{Description: "Scope fixtures.", Responsibilities: []string{"Test source scope."}, Files: files}); err != nil {
 		t.Fatal(err)
 	}
 }

@@ -7,10 +7,10 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/greppleai/grepple/internal/wire"
 	"github.com/greppleai/grepple/internal/cliruntime"
 	"github.com/greppleai/grepple/internal/directorymeta"
 	sourcedomain "github.com/greppleai/grepple/internal/sources"
+	"github.com/greppleai/grepple/internal/wire"
 )
 
 func buildLocal(path string, depth int, kind sourcedomain.Kind, selectedAreas []string, repository cliruntime.Repository) (wire.TreeResponse, error) {
@@ -210,12 +210,9 @@ func localEntryMetadata(base, working, entryPath string, directory bool, files [
 		return inspection.Metadata.Description, inspection.Status, append([]string(nil), inspection.Issues...)
 	}
 	name := filepath.Base(filepath.FromSlash(entryPath))
-	if name == directorymeta.FileName {
-		return "Describes this directory's responsibilities and files for Grepple.", inspection.Status, append([]string(nil), inspection.Issues...)
-	}
 	state, exists := inspection.Files[name]
 	if !exists {
-		return "", directorymeta.StatusMissing, []string{"file entry is missing from grepple.yaml"}
+		return "", directorymeta.StatusMissing, []string{"file entry is missing from .grepple/grepple.yaml"}
 	}
 	return state.Description, state.Status, append([]string(nil), state.Issues...)
 }

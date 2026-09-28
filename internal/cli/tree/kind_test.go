@@ -7,11 +7,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/greppleai/grepple/internal/wire"
 	"github.com/greppleai/grepple/internal/cliruntime"
 	"github.com/greppleai/grepple/internal/directorymeta"
 	"github.com/greppleai/grepple/internal/filedigest"
 	sourcedomain "github.com/greppleai/grepple/internal/sources"
+	"github.com/greppleai/grepple/internal/wire"
 )
 
 func treeKindFixture(t *testing.T) string {
@@ -41,7 +41,7 @@ func treeKindFixture(t *testing.T) string {
 		}
 		files = append(files, directorymeta.File{Path: item.name, Description: item.name + " description.", Kind: item.kind, Checksum: digest})
 	}
-	if err := directorymeta.Write(pkg, directorymeta.Metadata{Description: "Source package.", Responsibilities: []string{"Implement behavior."}, Files: files}); err != nil {
+	if err := directorymeta.Write(root, pkg, directorymeta.Metadata{Description: "Source package.", Responsibilities: []string{"Implement behavior."}, Files: files}); err != nil {
 		t.Fatal(err)
 	}
 	if err := os.WriteFile(filepath.Join(root, "unclassified.txt"), []byte("unclassified"), 0o600); err != nil {

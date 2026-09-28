@@ -12,7 +12,10 @@ import (
 func TestOutputSpillWritesJSONDescriptorAndContentAddressedArtifact(t *testing.T) {
 	root := t.TempDir()
 	t.Setenv("GREPPLE_ARTIFACT_DIR", filepath.Join(root, ".grepple", "output"))
-	if err := os.WriteFile(filepath.Join(root, "grepple.json"), []byte(`{"output":{"spillThresholdBytes":64}}`), 0o600); err != nil {
+	if err := os.MkdirAll(filepath.Join(root, ".grepple"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, ".grepple", "grepple.json"), []byte(`{"output":{"spillThresholdBytes":64}}`), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	t.Chdir(root)

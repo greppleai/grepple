@@ -1,6 +1,6 @@
 # Versioned remote indexing
 
-An indexed repository can declare additional open-source repositories and refs in its root `grepple.json`:
+An indexed repository can declare additional open-source repositories and refs in its `.grepple/grepple.json`:
 
 ```json
 {

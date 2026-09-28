@@ -29,7 +29,7 @@ func TestInitInventoryIncludesOtherDirectoriesForOnlyDirectory(t *testing.T) {
 		t.Fatal(err)
 	}
 	files[0].Description, files[0].Kind, files[0].Areas = "Owns flow.", "production", []string{"outline"}
-	if err := directorymeta.Write(filepath.Join(root, "b"), directorymeta.Metadata{Description: "B.", Responsibilities: []string{"Own flow."}, Files: files}); err != nil {
+	if err := directorymeta.Write(root, filepath.Join(root, "b"), directorymeta.Metadata{Description: "B.", Responsibilities: []string{"Own flow."}, Files: files}); err != nil {
 		t.Fatal(err)
 	}
 	application := cliruntime.NewContext(cliruntime.ContextOptions{Output: &bytes.Buffer{}, ErrorOutput: &bytes.Buffer{}})
@@ -67,10 +67,10 @@ func TestInitKeepsHandAuthoredTagsAndRequiresEvidenceForAdditions(t *testing.T) 
 		t.Fatalf("metadata=%+v err=%v", metadata, err)
 	}
 	root := t.TempDir()
-	if err := directorymeta.Write(root, metadata); err != nil {
+	if err := directorymeta.Write(root, root, metadata); err != nil {
 		t.Fatal(err)
 	}
-	persisted, err := os.ReadFile(filepath.Join(root, directorymeta.FileName))
+	persisted, err := os.ReadFile(directorymeta.RepositoryPath(root))
 	if err != nil || strings.Contains(string(persisted), "area_proposals") {
 		t.Fatalf("persisted=%s err=%v", persisted, err)
 	}

@@ -45,15 +45,15 @@ func TestParseGeneratedMetadataRequiresValidSourceKind(t *testing.T) {
 
 func TestGenerationPromptPrimesAgentWithExistingMetadata(t *testing.T) {
 	directory := t.TempDir()
-	existing := "description: Existing architectural context.\nresponsibilities: [Own behavior.]\nfiles: []\n"
-	if err := os.WriteFile(filepath.Join(directory, directorymeta.FileName), []byte(existing), 0o600); err != nil {
+	existing := directorymeta.Metadata{Description: "Existing architectural context.", Responsibilities: []string{"Own behavior."}, Files: []directorymeta.File{}}
+	if err := directorymeta.Write(directory, directory, existing); err != nil {
 		t.Fatal(err)
 	}
 	prompt, err := generationPrompt(directory, directory, []directorymeta.File{{Path: "file.go", Checksum: "abc"}})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(prompt, existing) || !strings.Contains(prompt, "Authoritative file manifest") {
+	if !strings.Contains(prompt, existing.Description) || !strings.Contains(prompt, "Authoritative file manifest") {
 		t.Fatalf("prompt=%q", prompt)
 	}
 }

@@ -73,7 +73,12 @@ func TestInitRefreshesOnlyMissingStaleAndInvalidDirectories(t *testing.T) {
 		t.Fatalf("no-op Execute output=%q err=%v", output.String(), err)
 	}
 	writeInitSource(t, root, "a/one.go", "package a\n// changed\n")
-	if err := os.Remove(filepath.Join(root, "b", directorymeta.FileName)); err != nil {
+	repository, err := directorymeta.ReadRepository(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	delete(repository.Directories, "b")
+	if err := directorymeta.WriteRepository(root, repository); err != nil {
 		t.Fatal(err)
 	}
 	plan, err = planGeneration(ctx, application, nil, false, "")
@@ -85,10 +90,17 @@ func TestInitRefreshesOnlyMissingStaleAndInvalidDirectories(t *testing.T) {
 	if err := runGeneration(ctx, application, root, plan, 1, generate); err != nil || calls != 2 {
 		t.Fatalf("refresh calls=%d err=%v", calls, err)
 	}
-	if got := output.String(); got != "skip .\nwrite a/grepple.yaml\nwrite b/grepple.yaml\n" {
+	if got := output.String(); got != "skip .\nwrite .grepple/grepple.yaml (a)\nwrite .grepple/grepple.yaml (b)\n" {
 		t.Fatalf("refresh output=%q", got)
 	}
-	if err := os.WriteFile(filepath.Join(root, "a", directorymeta.FileName), []byte("invalid: ["), 0o600); err != nil {
+	repository, err = directorymeta.ReadRepository(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	invalid := repository.Directories["a"]
+	invalid.Description = ""
+	repository.Directories["a"] = invalid
+	if err := directorymeta.WriteRepository(root, repository); err != nil {
 		t.Fatal(err)
 	}
 	plan, err = planGeneration(ctx, application, nil, false, "a")
@@ -155,10 +167,10 @@ func TestInitConcurrencyIsBoundedAndOutputOrdered(t *testing.T) {
 	if got := maxActive.Load(); got != 2 {
 		t.Fatalf("maximum concurrency=%d, want 2", got)
 	}
-	if got := output.String(); got != "write a/grepple.yaml\nwrite b/grepple.yaml\nwrite d/grepple.yaml\n" {
+	if got := output.String(); got != "write .grepple/grepple.yaml (a)\nwrite .grepple/grepple.yaml (b)\nwrite .grepple/grepple.yaml (d)\n" {
 		t.Fatalf("output=%q", got)
 	}
-	if _, err := os.Stat(filepath.Join(root, "c", directorymeta.FileName)); !os.IsNotExist(err) {
+	if _, err := directorymeta.Read(root, filepath.Join(root, "c")); !errors.Is(err, os.ErrNotExist) {
 		t.Fatalf("failed directory unexpectedly written: %v", err)
 	}
 }

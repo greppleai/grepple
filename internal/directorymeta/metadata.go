@@ -1,15 +1,12 @@
-// Package directorymeta owns grepple.yaml directory descriptions.
+// Package directorymeta owns the repository's consolidated directory descriptions.
 package directorymeta
 
 import (
-	"fmt"
-	"os"
 	"path/filepath"
 	"sort"
 	"strings"
 
 	"github.com/greppleai/grepple/internal/filedigest"
-	"go.yaml.in/yaml/v3"
 )
 
 const FileName = "grepple.yaml"
@@ -33,28 +30,7 @@ type Metadata struct {
 	Description      string         `yaml:"description" json:"description"`
 	Responsibilities []string       `yaml:"responsibilities" json:"responsibilities"`
 	Files            []File         `yaml:"files" json:"files"`
-	AreaProposals    []AreaProposal `yaml:"-" json:"-"` // Review-only; never persisted in grepple.yaml.
-}
-
-func Read(directory string) (Metadata, error) {
-	path := filepath.Join(directory, FileName)
-	content, err := os.ReadFile(path)
-	if err != nil {
-		return Metadata{}, err
-	}
-	var metadata Metadata
-	if err := yaml.Unmarshal(content, &metadata); err != nil {
-		return Metadata{}, fmt.Errorf("parse %s: %w", path, err)
-	}
-	return metadata, nil
-}
-
-func Write(directory string, metadata Metadata) error {
-	content, err := yaml.Marshal(metadata)
-	if err != nil {
-		return err
-	}
-	return os.WriteFile(filepath.Join(directory, FileName), content, 0o644)
+	AreaProposals    []AreaProposal `yaml:"-" json:"-"` // Review-only; never persisted in .grepple/grepple.yaml.
 }
 
 // Directories returns the root and every ancestor directory containing selected files.

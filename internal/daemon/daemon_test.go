@@ -74,7 +74,10 @@ func TestSnapshotTracksSourcesContextAndRoot(t *testing.T) {
 	if clientKey, valid := architectureFingerprint(root, paths, 0, sources); !valid || clientKey != key {
 		t.Fatal("client/server fingerprints differ")
 	}
-	for _, name := range []string{"go.mod", "go.work", "tsconfig.json", "grepple.yaml", "main.go"} {
+	if err := os.MkdirAll(filepath.Join(root, ".grepple"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	for _, name := range []string{"go.mod", "go.work", "tsconfig.json", filepath.Join(".grepple", "grepple.yaml"), filepath.Join(".grepple", "grepple.json"), "main.go"} {
 		if err := os.WriteFile(filepath.Join(root, name), []byte(name+" changed"), 0o600); err != nil {
 			t.Fatal(err)
 		}

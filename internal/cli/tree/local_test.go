@@ -14,7 +14,7 @@ func TestLocalEntriesIncludeFileDescriptions(t *testing.T) {
 	if err := os.WriteFile(file, []byte("package main\n"), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	if err := directorymeta.Write(root, directorymeta.Metadata{
+	if err := directorymeta.Write(root, root, directorymeta.Metadata{
 		Description:      "Application entry point.",
 		Responsibilities: []string{"Start the application."},
 		Files: []directorymeta.File{{
@@ -31,10 +31,10 @@ func TestLocalEntriesIncludeFileDescriptions(t *testing.T) {
 	}
 }
 
-func TestLocalEntryMetadataExplainsMissingMetadataFile(t *testing.T) {
+func TestLocalEntryMetadataTreatsLegacyMetadataFileAsOrdinarySource(t *testing.T) {
 	root := t.TempDir()
 	description, status, _ := localEntryMetadata(root, root, directorymeta.FileName, false, nil, map[string]directorymeta.Inspection{})
-	if description == "" || status != directorymeta.StatusMissing {
+	if description != "" || status != directorymeta.StatusMissing {
 		t.Fatalf("description=%q status=%q", description, status)
 	}
 }

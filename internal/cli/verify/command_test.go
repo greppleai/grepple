@@ -35,7 +35,7 @@ func TestBuildReportsMissingAndValidDirectoryMetadata(t *testing.T) {
 		for index := range files {
 			files[index].Description = "Contains package code."
 		}
-		if err := directorymeta.Write(directory, directorymeta.Metadata{Description: "Description.", Responsibilities: []string{"Own code."}, Files: files}); err != nil {
+		if err := directorymeta.Write(root, directory, directorymeta.Metadata{Description: "Description.", Responsibilities: []string{"Own code."}, Files: files}); err != nil {
 			t.Fatal(err)
 		}
 	}
