@@ -15,9 +15,9 @@ import (
 
 	"github.com/alexflint/go-arg"
 	"github.com/greppleai/grepple/internal/analysis"
-	"github.com/greppleai/grepple/internal/wire"
-	"github.com/greppleai/grepple/internal/archdaemon"
+	"github.com/greppleai/grepple/internal/daemon"
 	"github.com/greppleai/grepple/internal/search"
+	"github.com/greppleai/grepple/internal/wire"
 )
 
 const directoryArchitectureSchema = analysis.ArchitectureSchema
@@ -272,14 +272,14 @@ func Build(globs []string, maxFiles int, dependencies Dependencies) (Report, err
 		return Report{}, err
 	}
 	if dependencies.Daemon {
-		if report, ok := archdaemon.Query(paths, maxFiles); ok {
+		if report, ok := daemon.Query(paths, maxFiles); ok {
 			return report, nil
 		}
 	}
 	sources := analysis.ReadSources(paths)
 	key := ""
 	if dependencies.Daemon {
-		key, _ = archdaemon.Key(paths, maxFiles, sources)
+		key, _ = daemon.Key(paths, maxFiles, sources)
 	}
 	universe, err := analysis.NewUniverse(sources, maxFiles)
 	if err != nil {
@@ -288,7 +288,7 @@ func Build(globs []string, maxFiles int, dependencies Dependencies) (Report, err
 	defer universe.Close()
 	report := analysis.BuildArchitecture(universe)
 	if key != "" {
-		_ = archdaemon.Store(paths, maxFiles, key, report)
+		_ = daemon.Store(paths, maxFiles, key, report)
 	}
 	return report, nil
 }

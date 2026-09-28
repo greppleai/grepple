@@ -1,4 +1,4 @@
-description: Provides an authenticated local daemon that validates source snapshots and caches architecture, graph, and symbol-resolution reports.
+description: Runs the authenticated local CLI daemon and caches bounded architecture, graph, and symbol-resolution reports.
 responsibilities:
     - Serve authenticated local report requests
     - Validate repository boundaries and source snapshots
@@ -12,36 +12,36 @@ files:
     - path: cache.go
       description: Implements bounded per-root LRU storage for architecture, graph, and symbol-resolution report variants.
       kind: production
-      checksum: 61bf98fe31ea641937b25127bb5b76ed15928107fadc33ea9a5ea0a0838fa2e2
+      checksum: 966635b311c176b1aa1d821f39b89783f391c7664599513e916daf05f6cad405
     - path: daemon_test.go
       description: Tests source invalidation, repository boundaries, descriptor security, worker behavior, caching, concurrency, and fallback.
       kind: test
-      checksum: 21d2edaa5fbb931f4a1f2e51785df1a08a0dca52888a9b011b1e13738b268a1d
+      checksum: 4143a9e1c19201d8c06cd4e45036fc9ee03d57080479d5a6da026243a8564596
     - path: graph.go
       description: Defines focused graph and symbol-resolution projections with selector-specific keying, querying, and publication.
       kind: production
-      checksum: 96521c6eba2b2e4d030d24795a1c2f1a387603a79a55f23bd47c284b337f3cd0
+      checksum: 90204d48e14df15ae8efa89642c90dce35bf072867827f7bcc59fa5e89138f9d
     - path: graph_test.go
       description: Tests focused graph and symbol-resolution variants, selector isolation, stale-source rejection, and variant eviction.
       kind: test
-      checksum: 59e1d82cf45afc5344369c69affe536ca39df106dc95c3b78022cfa4aaf4c9b5
+      checksum: ba3a31d63886f38b3cbfd27dea7555420ce34b34f3efa6cc2db69b6290205547
     - path: identity.go
       description: Constructs worker identities from protocol, build metadata, VCS state, and the Go runtime version.
       kind: production
-      checksum: fb4256417aa6dc33a13bb5f799104739f5b349436329e0a9abd2ddc0bfa1b4f8
+      checksum: 26322f9f20061d03557fb2c4bed927e8ded641a656be2dfff7430705c7e992a1
     - path: server.go
       description: Runs the authenticated worker, validates requests, serves cached reports, and manages daemon lifecycle.
       kind: production
-      checksum: 93ef0177fb87fec0d9be4168061c921e964ff6cafbf980e23acb31af94a10023
+      checksum: 381a452a5df0b0b74f3e7017576740e8bc6eab6bb6e9f5118e7c7ac6f2f6d0d2
     - path: snapshot.go
       description: Validates repository-contained sources and hashes source bytes, limits, and relevant project context.
       kind: production
-      checksum: ee95b308f68cf045c37baf8839714e51d7de1593bdc4970515cc8e40a972948e
+      checksum: 81517d3da474e0f97eefd44110e9e6805cfe06439691c175ee15b645d13d8848
     - path: transport.go
       description: Defines the daemon protocol and securely discovers, authenticates, queries, and updates local workers.
       kind: production
-      checksum: 698c371ccbcae1d8db925e8d78584793b839a49d6b0d813869c5a65d9cf666ba
+      checksum: 5dd471a6a985b4977f32c9766a53514df6ea2e76375784580784ba45a11a9c71
     - path: variants.go
       description: Revalidates source snapshots and retrieves cached graph or symbol-resolution variants.
       kind: production
-      checksum: 0c56b624a137a13e61ab750b24b7b2edc99a04d0a4cc31200acabaad15ba5801
+      checksum: 9324142f45a133765d31f801546da5bedab15c188664f767c6cbb17d1d3a7054

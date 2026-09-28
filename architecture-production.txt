@@ -1,5 +1,5 @@
 R cmd/grepple -> internal/cli kinds=import,resolved-call
-R cmd/greppled -> internal/archdaemon kinds=import
+R cmd/greppled -> internal/daemon kinds=import
 R internal/anchor -> internal/hashline kinds=import,resolved-call
 R internal/anchor -> internal/usersettings kinds=import,resolved-call,type-reference
 R internal/cli -> internal/cliruntime kinds=import,resolved-call

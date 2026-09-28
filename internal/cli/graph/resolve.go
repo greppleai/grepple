@@ -10,8 +10,8 @@ import (
 
 	"github.com/alexflint/go-arg"
 	"github.com/greppleai/grepple/internal/analysis"
-	"github.com/greppleai/grepple/internal/archdaemon"
 	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
+	"github.com/greppleai/grepple/internal/daemon"
 	"github.com/greppleai/grepple/internal/navigation"
 	"github.com/greppleai/grepple/internal/parser"
 	"github.com/greppleai/grepple/internal/search"
@@ -82,7 +82,7 @@ func executeResolve(application cliruntime.Context, values *ResolveArgs) error {
 	return executeResolveWithDaemon(application, values, false)
 }
 
-func executeResolveWithDaemon(application cliruntime.Context, values *ResolveArgs, daemon bool) error {
+func executeResolveWithDaemon(application cliruntime.Context, values *ResolveArgs, useDaemon bool) error {
 	if err := validateResolveArgs(*values); err != nil {
 		return err
 	}
@@ -94,16 +94,16 @@ func executeResolveWithDaemon(application cliruntime.Context, values *ResolveArg
 	if err != nil {
 		return err
 	}
-	selection := archdaemon.ResolveSelection{Symbol: values.Symbol, Languages: filter.Languages, Visibilities: filter.Visibilities}
-	var projection archdaemon.ResolveProjection
-	if daemon {
-		projection, _ = archdaemon.QueryResolve(paths, values.MaxFiles, selection)
+	selection := daemon.ResolveSelection{Symbol: values.Symbol, Languages: filter.Languages, Visibilities: filter.Visibilities}
+	var projection daemon.ResolveProjection
+	if useDaemon {
+		projection, _ = daemon.QueryResolve(paths, values.MaxFiles, selection)
 	}
 	if projection.Schema == "" {
 		sources := analysis.ReadSources(paths)
 		key := ""
-		if daemon {
-			key, _ = archdaemon.KeyResolve(paths, values.MaxFiles, sources, selection)
+		if useDaemon {
+			key, _ = daemon.KeyResolve(paths, values.MaxFiles, sources, selection)
 		}
 		universe, err := analysis.NewUniverse(sources, values.MaxFiles)
 		if err != nil {
@@ -118,9 +118,9 @@ func executeResolveWithDaemon(application cliruntime.Context, values *ResolveArg
 		if err != nil {
 			return err
 		}
-		projection = archdaemon.ResolveProjection{Schema: archdaemon.ResolveProjectionSchema, Sources: report.Sources, Truncation: report.Truncation, Declarations: matchingDeclarations(filtered.Declarations, values.Symbol)}
+		projection = daemon.ResolveProjection{Schema: daemon.ResolveProjectionSchema, Sources: report.Sources, Truncation: report.Truncation, Declarations: matchingDeclarations(filtered.Declarations, values.Symbol)}
 		if key != "" {
-			_ = archdaemon.StoreResolve(paths, values.MaxFiles, key, selection, projection)
+			_ = daemon.StoreResolve(paths, values.MaxFiles, key, selection, projection)
 		}
 	}
 	matches := resolveMatches(projection.Declarations, values.Symbol, values.Paths)

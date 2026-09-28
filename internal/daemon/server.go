@@ -1,4 +1,4 @@
-package archdaemon
+package daemon
 
 import (
 	"context"

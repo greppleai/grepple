@@ -1,5 +1,5 @@
-// Package archdaemon provides an optional authenticated user-level architecture cache.
-package archdaemon
+// Package daemon runs the optional authenticated local CLI worker and its report cache.
+package daemon
 
 import (
 	"bytes"
@@ -19,7 +19,7 @@ import (
 	"github.com/greppleai/grepple/internal/storagepaths"
 )
 
-const protocol = "grepple-architecture-daemon-v2"
+const protocol = "grepple-daemon-v3"
 const maxDescriptorBytes = 4096
 const maxRequestBytes = 1 << 20
 const maxResponseBytes = 128 << 20

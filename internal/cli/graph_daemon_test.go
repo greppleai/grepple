@@ -12,8 +12,8 @@ import (
 	"time"
 
 	"github.com/greppleai/grepple/internal/analysis"
+	"github.com/greppleai/grepple/internal/daemon"
 	"github.com/greppleai/grepple/internal/wire"
-	"github.com/greppleai/grepple/internal/archdaemon"
 )
 
 func TestGraphDaemonLocalOutputParityAndFlagRestrictions(t *testing.T) {
@@ -34,7 +34,7 @@ func TestGraphDaemonLocalOutputParityAndFlagRestrictions(t *testing.T) {
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 	finished := make(chan error, 1)
-	go func() { finished <- archdaemon.Serve(ctx) }()
+	go func() { finished <- daemon.Serve(ctx) }()
 	defer func() {
 		cancel()
 		if err := <-finished; err != nil {
@@ -46,7 +46,7 @@ func TestGraphDaemonLocalOutputParityAndFlagRestrictions(t *testing.T) {
 	readyQuery := analysis.GraphQuery{Direction: "callers", Depth: 1, Symbol: "Target"}
 	ready := false
 	for deadline := time.Now().Add(5 * time.Second); time.Now().Before(deadline); {
-		if _, ok := archdaemon.KeyGraph(paths, 0, sources, readyQuery); ok {
+		if _, ok := daemon.KeyGraph(paths, 0, sources, readyQuery); ok {
 			ready = true
 			break
 		}
@@ -70,10 +70,10 @@ func TestGraphDaemonLocalOutputParityAndFlagRestrictions(t *testing.T) {
 				t.Fatalf("direct=%v cold=%v warm=%v\ndirect=%s\ncold=%s\nwarm=%s", directErr, coldErr, warmErr, direct, cold, warm)
 			}
 			if command[1] == "resolve" {
-				if _, hit := archdaemon.QueryResolve(paths, 0, archdaemon.ResolveSelection{Symbol: command[3]}); !hit {
+				if _, hit := daemon.QueryResolve(paths, 0, daemon.ResolveSelection{Symbol: command[3]}); !hit {
 					t.Fatal("resolve report not published")
 				}
-			} else if _, hit := archdaemon.QueryGraph(paths, 0, analysis.GraphQuery{Direction: command[1], Depth: 1, Symbol: "Target"}); !hit {
+			} else if _, hit := daemon.QueryGraph(paths, 0, analysis.GraphQuery{Direction: command[1], Depth: 1, Symbol: "Target"}); !hit {
 				t.Fatal("focused graph report not published")
 			}
 		})

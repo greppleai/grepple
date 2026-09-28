@@ -22,7 +22,7 @@ func Execute(application cliruntime.Context, values *Args) error {
 	return ExecuteWithDaemon(application, values, false)
 }
 
-// ExecuteWithDaemon enables the optional local architecture worker for this invocation.
+// ExecuteWithDaemon enables the optional local CLI daemon for architecture reports.
 func ExecuteWithDaemon(application cliruntime.Context, values *Args, daemon bool) error {
 	if values == nil {
 		return fmt.Errorf("architecture requires directory")

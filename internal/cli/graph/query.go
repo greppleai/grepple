@@ -11,8 +11,8 @@ import (
 
 	"github.com/alexflint/go-arg"
 	"github.com/greppleai/grepple/internal/analysis"
-	"github.com/greppleai/grepple/internal/archdaemon"
 	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
+	"github.com/greppleai/grepple/internal/daemon"
 	"github.com/greppleai/grepple/internal/navigation"
 	"github.com/greppleai/grepple/internal/parser"
 	"github.com/greppleai/grepple/internal/search"
@@ -58,7 +58,7 @@ func executeQuery(application cliruntime.Context, direction search.NavigationQue
 	return executeQueryWithDaemon(application, direction, values, false)
 }
 
-func executeQueryWithDaemon(application cliruntime.Context, direction search.NavigationQueryDirection, values *QueryArgs, daemon bool) error {
+func executeQueryWithDaemon(application cliruntime.Context, direction search.NavigationQueryDirection, values *QueryArgs, useDaemon bool) error {
 	if err := validateGraphQueryArgs(*values); err != nil {
 		return err
 	}
@@ -75,16 +75,16 @@ func executeQueryWithDaemon(application cliruntime.Context, direction search.Nav
 		Languages: values.Languages, Confidences: values.Confidences, Visibilities: values.Visibilities,
 	}
 	var report analysis.GraphReport
-	if daemon {
-		if cached, ok := archdaemon.QueryGraph(paths, values.MaxFiles, query); ok {
+	if useDaemon {
+		if cached, ok := daemon.QueryGraph(paths, values.MaxFiles, query); ok {
 			report = cached
 		}
 	}
 	if report.Schema == "" {
 		sources := analysis.ReadSources(paths)
 		key := ""
-		if daemon {
-			key, _ = archdaemon.KeyGraph(paths, values.MaxFiles, sources, query)
+		if useDaemon {
+			key, _ = daemon.KeyGraph(paths, values.MaxFiles, sources, query)
 		}
 		universe, err := analysis.NewUniverse(sources, values.MaxFiles)
 		if err != nil {
@@ -96,7 +96,7 @@ func executeQueryWithDaemon(application cliruntime.Context, direction search.Nav
 			return err
 		}
 		if key != "" {
-			_ = archdaemon.StoreGraph(paths, values.MaxFiles, key, query, report)
+			_ = daemon.StoreGraph(paths, values.MaxFiles, key, query, report)
 		}
 	}
 	output := FromAnalysis(report)
