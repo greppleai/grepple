@@ -5,9 +5,9 @@ import (
 	"strings"
 )
 
-// LanguageFor classifies a path by extension. Unsupported source formats are
+// languageFor classifies a path by extension. Unsupported source formats are
 // classified as text and use the plain-text segment fallback.
-func LanguageFor(path string) string {
+func languageFor(path string) string {
 	extension := strings.ToLower(filepath.Ext(path))
 	for _, capability := range languageCapabilities {
 		for _, candidate := range capability.Extensions {

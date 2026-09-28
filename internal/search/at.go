@@ -43,7 +43,7 @@ func At(params Params) (*FileMatch, error) {
 		return nil, fmt.Errorf("--at %s: %w", path, err)
 	}
 	endLine = resolved.ReturnedEnd
-	language := structure.LanguageFor(path)
+	language := structure.NewParser().LanguageFor(path)
 	match := &FileMatch{
 		File: absolute, DisplayPath: displayPathFrom(absolute, displayBase(params.Root)), Content: content, Language: language,
 		MatchLines: map[int]bool{line: true}, SegmentsReady: true,
@@ -129,7 +129,7 @@ func prepareAtMatch(match *FileMatch, params Params, line, endLine int, document
 			match.CallableDeclaration = true
 			match.Segments = []structure.Segment{{Kind: "lines", Start: start, End: end}}
 		} else {
-			match.Segments, match.StructureStatus = structure.BuildSegmentsFromDocument(document, match.MatchLines)
+			match.Segments, match.StructureStatus = structure.NewParser().Segments(document, match.MatchLines)
 		}
 		return nil
 	}

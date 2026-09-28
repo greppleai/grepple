@@ -103,7 +103,7 @@ func (i *scopeInspector) addFile(path string, explicit bool) {
 	}
 	i.seen[path] = true
 	classification := i.ignore.kind(path)
-	decision := Decision{Language: parser.LanguageFor(path), Classification: string(classification), Selected: true, Reason: "selected", Explicit: explicit}
+	decision := Decision{Language: parser.NewParser().LanguageFor(path), Classification: string(classification), Selected: true, Reason: "selected", Explicit: explicit}
 	if containsGitDirectory(path) || i.ignore.builtIn(path) {
 		decision.Selected, decision.Reason = false, "built-in-subtree"
 	} else if !explicit {

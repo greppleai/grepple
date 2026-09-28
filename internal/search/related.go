@@ -94,7 +94,7 @@ func hasNavigationMatch(matches []FileMatch) bool {
 }
 
 func supportsNavigation(language string) bool {
-	capabilities, supported := parser.CapabilitiesForLanguage(language)
+	capabilities, supported := parser.NewParser().CapabilitiesForLanguage(language)
 	return supported && capabilities.Navigation
 }
 
@@ -155,12 +155,13 @@ type NavigationSourceStats = navigation.SourceStats
 
 // BuildNavigationGraph builds the resolved, deterministic navigation graph for local files.
 func BuildNavigationGraph(files []string) parser.NavigationGraph {
-	return navigation.BuildGraph(files)
+	graph, _ := navigation.NewGraphEngine(navigation.BuildOptions{}).BuildFiles(files)
+	return graph
 }
 
 // BuildNavigationGraphWithStats builds the graph and reports source completeness.
 func BuildNavigationGraphWithStats(files []string) (parser.NavigationGraph, NavigationSourceStats) {
-	return navigation.BuildGraphWithStats(files)
+	return navigation.NewGraphEngine(navigation.BuildOptions{}).BuildFiles(files)
 }
 
 // NavigationBuildOptions controls optional performance behavior without changing graph facts.
@@ -168,7 +169,7 @@ type NavigationBuildOptions = navigation.BuildOptions
 
 // BuildNavigationGraphWithOptions builds the graph with explicit cache behavior.
 func BuildNavigationGraphWithOptions(files []string, options NavigationBuildOptions) (parser.NavigationGraph, NavigationSourceStats) {
-	return navigation.BuildGraphWithOptions(files, options)
+	return navigation.NewGraphEngine(options).BuildFiles(files)
 }
 
 // NavigationDocumentSource pairs one caller-owned parsed document with its path.
@@ -185,7 +186,7 @@ type NavigationAnalysis struct {
 
 // BuildNavigationAnalysisFromDocuments builds one reusable analysis from caller-owned documents.
 func BuildNavigationAnalysisFromDocuments(sources []NavigationDocumentSource, options NavigationBuildOptions) (*NavigationAnalysis, NavigationSourceStats) {
-	shared, stats := navigation.BuildAnalysisFromDocuments(sources, options)
+	shared, stats := navigation.NewGraphEngine(options).BuildDocuments(sources)
 	contents := make(map[string]string, len(sources))
 	for _, source := range sources {
 		if source.Document != nil {
@@ -197,7 +198,7 @@ func BuildNavigationAnalysisFromDocuments(sources []NavigationDocumentSource, op
 
 // BuildNavigationAnalysisFromTextSources builds one reusable analysis from in-memory sources.
 func BuildNavigationAnalysisFromTextSources(sources []NavigationTextSource, options NavigationBuildOptions) (*NavigationAnalysis, NavigationSourceStats) {
-	shared, stats := navigation.BuildAnalysisFromTextSources(sources, options)
+	shared, stats := navigation.NewGraphEngine(options).BuildTextSources(sources)
 	contents := make(map[string]string, len(sources))
 	for _, source := range sources {
 		contents[source.Path] = source.Text
@@ -232,12 +233,14 @@ func AttachRelatedFromAnalysis(match *FileMatch, analysis *NavigationAnalysis, f
 
 // BuildNavigationGraphFromDocuments resolves a graph from already parsed documents.
 func BuildNavigationGraphFromDocuments(sources []NavigationDocumentSource, options NavigationBuildOptions) (parser.NavigationGraph, NavigationSourceStats) {
-	return navigation.BuildGraphFromDocuments(sources, options)
+	analysis, stats := navigation.NewGraphEngine(options).BuildDocuments(sources)
+	return analysis.Graph(), stats
 }
 
 // BuildNavigationGraphFromTextSources resolves a graph from in-memory sources.
 func BuildNavigationGraphFromTextSources(sources []NavigationTextSource, options NavigationBuildOptions) (parser.NavigationGraph, NavigationSourceStats) {
-	return navigation.BuildGraphFromTextSources(sources, options)
+	analysis, stats := navigation.NewGraphEngine(options).BuildTextSources(sources)
+	return analysis.Graph(), stats
 }
 
 func relatedPointsDirection(match FileMatch, navigation *navigationIndex, outgoingOnly bool) ([]RelatedPoint, int, int, int) {

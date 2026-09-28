@@ -11,7 +11,8 @@ func (*qualifiedExportNavigationIndex) filterCandidates(call navigationCall, can
 	return candidates
 }
 
-func (index *qualifiedExportNavigationIndex) importTargets(_, _, importPath, imported, _ string) navigationImportTargets {
+func (index *qualifiedExportNavigationIndex) importTargets(request navigationImportRequest) navigationImportTargets {
+	importPath, imported := request.importPath, request.imported
 	importPath = strings.TrimSpace(importPath)
 	if importPath == "" {
 		return navigationImportTargets{}

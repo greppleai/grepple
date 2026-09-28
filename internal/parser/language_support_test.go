@@ -12,7 +12,7 @@ func TestLanguageForMinimumSupportedSet(t *testing.T) {
 	}
 	for path, want := range tests {
 		t.Run(path, func(t *testing.T) {
-			if got := LanguageFor(path); got != want {
+			if got := NewParser().LanguageFor(path); got != want {
 				t.Fatalf("LanguageFor(%q) = %q, want %q", path, got, want)
 			}
 		})
@@ -20,7 +20,7 @@ func TestLanguageForMinimumSupportedSet(t *testing.T) {
 }
 
 func TestSupportedLanguagesOwnsClassificationMetadata(t *testing.T) {
-	languages := SupportedLanguages()
+	languages := NewParser().SupportedLanguages()
 	if len(languages) != len(languageAdapters) {
 		t.Fatalf("capabilities=%d adapters=%d", len(languages), len(languageAdapters))
 	}
@@ -32,17 +32,17 @@ func TestSupportedLanguagesOwnsClassificationMetadata(t *testing.T) {
 			t.Fatalf("capability %q has incomplete grammar identity: %#v", language.ID, language)
 		}
 		for _, extension := range language.Extensions {
-			if got := LanguageFor("source" + extension); got != language.ID {
+			if got := NewParser().LanguageFor("source" + extension); got != language.ID {
 				t.Fatalf("LanguageFor(%q)=%q, want %q", extension, got, language.ID)
 			}
 		}
 	}
 	languages[0].Extensions[0] = ".changed"
-	fresh, _ := CapabilitiesForLanguage("go")
+	fresh, _ := NewParser().CapabilitiesForLanguage("go")
 	if len(fresh.Extensions) != 1 || fresh.Extensions[0] != ".go" || !fresh.ImportNavigation {
 		t.Fatalf("Go capability metadata=%#v", fresh)
 	}
-	python, _ := CapabilitiesForLanguage("python")
+	python, _ := NewParser().CapabilitiesForLanguage("python")
 	if !python.ImportNavigation {
 		t.Fatalf("Python import navigation missing: %#v", python)
 	}
@@ -53,7 +53,7 @@ func TestSupportedLanguagesOwnsClassificationMetadata(t *testing.T) {
 func assertImportNavigationCapabilities(t *testing.T, ids ...string) {
 	t.Helper()
 	for _, id := range ids {
-		language, _ := CapabilitiesForLanguage(id)
+		language, _ := NewParser().CapabilitiesForLanguage(id)
 		if !language.ImportNavigation {
 			t.Fatalf("%s import navigation missing: %#v", id, language)
 		}
@@ -63,7 +63,7 @@ func assertImportNavigationCapabilities(t *testing.T, ids ...string) {
 func assertEntrypointNavigationCapabilities(t *testing.T, ids ...string) {
 	t.Helper()
 	for _, id := range ids {
-		language, _ := CapabilitiesForLanguage(id)
+		language, _ := NewParser().CapabilitiesForLanguage(id)
 		if !language.EntrypointNavigation {
 			t.Fatalf("%s entrypoint navigation missing: %#v", id, language)
 		}
@@ -71,7 +71,7 @@ func assertEntrypointNavigationCapabilities(t *testing.T, ids ...string) {
 }
 
 func TestSupportedContentLanguagesIncludesSpecializedFormats(t *testing.T) {
-	languages := SupportedContentLanguages()
+	languages := NewParser().SupportedContentLanguages()
 	byID := make(map[string]ContentLanguageCapabilities, len(languages))
 	for _, language := range languages {
 		if _, exists := byID[language.ID]; exists {
@@ -112,7 +112,7 @@ func TestNavigationFactCapabilitiesAreAdapterOwned(t *testing.T) {
 		"php":        {Declarations: true, Calls: true, Imports: true, TypeReferences: true, Fields: true, MemberAccess: true},
 		"shell":      {Declarations: true, Calls: true},
 	}
-	for _, language := range SupportedLanguages() {
+	for _, language := range NewParser().SupportedLanguages() {
 		if language.NavigationFacts != want[language.ID] {
 			t.Fatalf("%s facts=%#v, want %#v", language.ID, language.NavigationFacts, want[language.ID])
 		}
@@ -227,15 +227,16 @@ func TestGrammarCardinalityComesFromGeneratedMetadata(t *testing.T) {
 		{language: "tsx", parent: "jsx_element", field: "open_tag", want: GrammarCardinalityOne},
 	}
 	for _, test := range tests {
-		got := GrammarChildrenCardinality(test.language, test.parent)
+		grammar := NewParser().GetGrammar(test.language)
+		got := grammar.ChildrenCardinality(test.parent)
 		if test.field != "" {
-			got = GrammarFieldCardinality(test.language, test.parent, test.field)
+			got = grammar.FieldCardinality(test.parent, test.field)
 		}
 		if got != test.want {
 			t.Fatalf("cardinality %s/%s/%s=%d, want %d", test.language, test.parent, test.field, got, test.want)
 		}
 	}
-	if got := GrammarFieldCardinality("unknown", "node", "field"); got != GrammarCardinalityUnknown {
+	if got := NewParser().GetGrammar("unknown").FieldCardinality("node", "field"); got != GrammarCardinalityUnknown {
 		t.Fatalf("unknown cardinality=%d", got)
 	}
 }
@@ -254,7 +255,7 @@ func TestGrammarSubtypeComesFromGeneratedMetadata(t *testing.T) {
 		{language: "typescript", supertype: "expression", kind: "interface_declaration", want: false},
 	}
 	for _, test := range tests {
-		if got := GrammarSubtype(test.language, test.supertype, test.kind); got != test.want {
+		if got := NewParser().GetGrammar(test.language).Subtype(test.supertype, test.kind); got != test.want {
 			t.Fatalf("GrammarSubtype(%q, %q, %q)=%v, want %v", test.language, test.supertype, test.kind, got, test.want)
 		}
 	}

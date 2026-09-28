@@ -2,9 +2,9 @@ package graph
 
 import (
 	"github.com/greppleai/grepple/internal/analysis"
-	"github.com/greppleai/grepple/internal/wire"
 	"github.com/greppleai/grepple/internal/parser"
 	"github.com/greppleai/grepple/internal/search"
+	"github.com/greppleai/grepple/internal/wire"
 )
 
 // Schema identifies the normalized navigation graph projection.
@@ -15,7 +15,7 @@ const navigationGraphSchema = Schema
 type Output struct {
 	Schema           string                             `json:"schema"`
 	Files            int                                `json:"files"`
-	Metadata         *wire.ResultMetadata                `json:"metadata,omitempty"`
+	Metadata         *wire.ResultMetadata               `json:"metadata,omitempty"`
 	Sources          SourceSummary                      `json:"sources"`
 	Declarations     []parser.NavigationDeclaration     `json:"declarations"`
 	TypeDeclarations []parser.NavigationTypeDeclaration `json:"typeDeclarations,omitempty"`
@@ -68,10 +68,11 @@ func FromAnalysis(report analysis.GraphReport) Output {
 
 // SourcePaths retains files whose parser adapter supports navigation facts.
 func SourcePaths(paths []string) []string {
+	parserService := parser.NewParser()
 	sources := make([]string, 0, len(paths))
 	for _, path := range paths {
-		language := parser.LanguageFor(path)
-		capabilities, ok := parser.CapabilitiesForLanguage(language)
+		language := parserService.LanguageFor(path)
+		capabilities, ok := parserService.CapabilitiesForLanguage(language)
 		if ok && capabilities.Navigation {
 			sources = append(sources, path)
 		}

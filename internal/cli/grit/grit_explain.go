@@ -145,7 +145,7 @@ func explainGritQuery(query string, values gritExplainArgs) gritExplainOutput {
 	output.OK = true
 	output.Compatibility = program.Compatibility()
 	output.Language = program.Language()
-	if capabilities, ok := parser.CapabilitiesForLanguage(output.Language); ok {
+	if capabilities, ok := parser.NewParser().CapabilitiesForLanguage(output.Language); ok {
 		output.GrammarABI = capabilities.GrammarABI
 		output.Grammar = capabilities.GrammarFingerprint
 	}

@@ -6,9 +6,9 @@ import (
 	"testing"
 )
 
-func TestParseDocumentTraversesGoWithoutExposingTreeSitter(t *testing.T) {
+func TestParserTraversesGoWithoutExposingTreeSitter(t *testing.T) {
 	const source = "package p\n\nfunc Add(a, b int) int { return a + b }\n"
-	doc, err := ParseDocument("go", source)
+	doc, err := NewParser().Parse("go", source)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -82,7 +82,7 @@ func assertFunctionFields(t *testing.T, function Node) {
 
 func TestDocumentRangesUseBytesAndOneBasedUnicodeColumns(t *testing.T) {
 	const source = "package p\r\nvar café = \"λ\"\r\n"
-	doc, err := ParseDocument("go", source)
+	doc, err := NewParser().Parse("go", source)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -105,8 +105,8 @@ func TestDocumentRangesUseBytesAndOneBasedUnicodeColumns(t *testing.T) {
 	}
 }
 
-func TestParseDocumentDiagnosticsAreDeterministic(t *testing.T) {
-	doc, err := ParseDocument("go", "package p\nfunc f( {\n")
+func TestParserDiagnosticsAreDeterministic(t *testing.T) {
+	doc, err := NewParser().Parse("go", "package p\nfunc f( {\n")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -128,22 +128,22 @@ func TestParseDocumentDiagnosticsAreDeterministic(t *testing.T) {
 	}
 }
 
-func TestParseDocumentUnsupportedLanguage(t *testing.T) {
+func TestParserRejectsUnsupportedLanguage(t *testing.T) {
 	parseInvocations.Store(0)
-	doc, err := ParseDocument("not-a-language", "anything")
+	doc, err := NewParser().Parse("not-a-language", "anything")
 	if err == nil || doc != nil {
-		t.Fatalf("ParseDocument = (%v, %v), want nil error result", doc, err)
+		t.Fatalf("Parser.Parse = (%v, %v), want nil error result", doc, err)
 	}
 	if got := parseInvocations.Load(); got != 0 {
 		t.Fatalf("unsupported language invoked parser %d times", got)
 	}
 }
 
-func TestParseDocumentRejectsInvalidUTF8BeforeParsing(t *testing.T) {
+func TestParserRejectsInvalidUTF8BeforeParsing(t *testing.T) {
 	parseInvocations.Store(0)
-	doc, err := ParseDocument("go", string([]byte{'p', 0xff}))
+	doc, err := NewParser().Parse("go", string([]byte{'p', 0xff}))
 	if err == nil || doc != nil || !strings.Contains(err.Error(), "UTF-8") {
-		t.Fatalf("ParseDocument = (%v, %v), want invalid UTF-8 error", doc, err)
+		t.Fatalf("Parser.Parse = (%v, %v), want invalid UTF-8 error", doc, err)
 	}
 	if got := parseInvocations.Load(); got != 0 {
 		t.Fatalf("invalid UTF-8 invoked parser %d times", got)
@@ -151,7 +151,7 @@ func TestParseDocumentRejectsInvalidUTF8BeforeParsing(t *testing.T) {
 }
 
 func TestDocumentCloseIsIdempotentAndInvalidatesNodes(t *testing.T) {
-	doc, err := ParseDocument("go", "package p\n")
+	doc, err := NewParser().Parse("go", "package p\n")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -174,7 +174,7 @@ func TestDocumentCloseIsIdempotentAndInvalidatesNodes(t *testing.T) {
 	}
 }
 
-func TestParseDocumentUsesOneParseAndSupportsConcurrentDocuments(t *testing.T) {
+func TestParserUsesOneParseAndSupportsConcurrentDocuments(t *testing.T) {
 	parseInvocations.Store(0)
 	const count = 16
 	var wg sync.WaitGroup
@@ -183,7 +183,7 @@ func TestParseDocumentUsesOneParseAndSupportsConcurrentDocuments(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			doc, err := ParseDocument("go", "package p\nfunc f() {}\n")
+			doc, err := NewParser().Parse("go", "package p\nfunc f() {}\n")
 			if err != nil {
 				errs <- err
 				return
@@ -205,7 +205,7 @@ func TestParseDocumentUsesOneParseAndSupportsConcurrentDocuments(t *testing.T) {
 }
 
 func TestDocumentConcurrentCloseAndRead(t *testing.T) {
-	doc, err := ParseDocument("go", "package p\nfunc f() {}\n")
+	doc, err := NewParser().Parse("go", "package p\nfunc f() {}\n")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -230,7 +230,7 @@ func TestDocumentConcurrentCloseAndRead(t *testing.T) {
 }
 
 func TestNodeSnapshotSurvivesDocumentClose(t *testing.T) {
-	doc, err := ParseDocument("go", "package p\nvar x = f(a, b)\n")
+	doc, err := NewParser().Parse("go", "package p\nvar x = f(a, b)\n")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -272,13 +272,13 @@ func containsKind(nodes []Node, kind string) bool {
 	return false
 }
 func TestWalkNamedUsesStablePreorder(t *testing.T) {
-	document, err := ParseDocument("go", "package p\nfunc run() { call() }\n")
+	document, err := NewParser().Parse("go", "package p\nfunc run() { call() }\n")
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer document.Close()
 	var kinds []string
-	WalkNamed(document.Root(), func(node Node) { kinds = append(kinds, node.Kind()) })
+	document.WalkNamed(func(node Node) { kinds = append(kinds, node.Kind()) })
 	if len(kinds) < 4 || kinds[0] != "source_file" || kinds[1] != "package_clause" || kinds[2] != "package_identifier" {
 		t.Fatalf("walk order=%v", kinds)
 	}

@@ -17,7 +17,8 @@ func TestDartImportsResolveOnlyExactSelectedRelativeLibraries(t *testing.T) {
 		{Path: helperFile, Text: "void format() {}\n"},
 		{Path: unrelatedFile, Text: "void format() {}\n"},
 	}
-	graph, stats := BuildGraphFromTextSources(sources, BuildOptions{DisableCache: true})
+	analysis, stats := NewGraphEngine(BuildOptions{DisableCache: true}).BuildTextSources(sources)
+	graph := analysis.Graph()
 	if stats.Parsed != 3 || stats.Failed != 0 || stats.Recovered != 0 {
 		t.Fatalf("Dart source stats=%+v", stats)
 	}
@@ -75,7 +76,8 @@ func TestDartUnprefixedImportsDoNotExposeUnrelatedFiles(t *testing.T) {
 		{Path: filepath.Join(root, "lib/src/helper.dart"), Text: "void format() {}\n"},
 		{Path: filepath.Join(root, "lib/other.dart"), Text: "void hidden() {}\n"},
 	}
-	graph, stats := BuildGraphFromTextSources(sources, BuildOptions{DisableCache: true})
+	analysis, stats := NewGraphEngine(BuildOptions{DisableCache: true}).BuildTextSources(sources)
+	graph := analysis.Graph()
 	if stats.Parsed != 3 || stats.Failed != 0 {
 		t.Fatalf("Dart source stats=%+v", stats)
 	}

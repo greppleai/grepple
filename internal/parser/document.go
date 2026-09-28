@@ -137,9 +137,9 @@ func (n Node) snapshotLocked() SyntaxNode {
 	return out
 }
 
-// ParseDocument parses UTF-8 content with a configured language. The returned
+// parseDocument parses UTF-8 content with a configured language. The returned
 // document owns its source and tree independently of the pooled parser.
-func ParseDocument(language string, content string) (*Document, error) {
+func parseDocument(language string, content string) (*Document, error) {
 	if !utf8.ValidString(content) {
 		return nil, fmt.Errorf("source is not valid UTF-8")
 	}
@@ -241,7 +241,7 @@ func (d *Document) Root() Node {
 }
 
 // ParseDiagnostics returns error and missing nodes in deterministic source-tree
-// order. Valid recovery trees are still returned by ParseDocument.
+// order. Valid recovery trees are still returned by Parser.Parse.
 func (d *Document) ParseDiagnostics() []ParseDiagnostic {
 	if d == nil {
 		return nil
@@ -471,10 +471,14 @@ func (n Node) NamedChildren() []Node {
 	return result
 }
 
-// WalkNamed visits root and all named descendants in pre-order. It is iterative
-// so deeply nested source does not consume the Go call stack.
-func WalkNamed(root Node, visit func(Node)) {
-	if !root.Valid() || visit == nil {
+// WalkNamed visits the document root and all named descendants in pre-order.
+// It is iterative so deeply nested source does not consume the Go call stack.
+func (d *Document) WalkNamed(visit func(Node)) {
+	if d == nil || visit == nil {
+		return
+	}
+	root := d.Root()
+	if !root.Valid() {
 		return
 	}
 	stack := []Node{root}

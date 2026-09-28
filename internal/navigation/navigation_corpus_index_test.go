@@ -42,7 +42,7 @@ func TestNavigationCorpusSharesPathLookupAcrossLanguages(t *testing.T) {
 		{"header.h", "include-angle", ""},
 		{"../etc/passwd", "include-quoted", ""},
 	} {
-		got := cIndex.importTargets("src/main.c", "", test.path, "", test.kind).files
+		got := cIndex.importTargets(navigationImportRequest{sourceFile: "src/main.c", importPath: test.path, kind: test.kind}).files
 		if test.want == "" && len(got) == 0 {
 			continue
 		}
@@ -73,7 +73,7 @@ func TestIndexedPythonImportTargetsMatchCorpusScan(t *testing.T) {
 		{filepath.Join(root, "two", "app.py"), "not.present"},
 		{filepath.Join(root, "two", "app.py"), "  pkg.models  "},
 	} {
-		got := index.importTargets(test.source, "", test.imported, "", "").files
+		got := index.importTargets(navigationImportRequest{sourceFile: test.source, importPath: test.imported}).files
 		want := pythonImportTargetFiles(files, test.source, test.imported)
 		if !reflect.DeepEqual(got, want) && !(len(got) == 0 && len(want) == 0) {
 			t.Errorf("Python %s importing %q: got %v want %v", test.source, test.imported, got, want)
@@ -167,9 +167,9 @@ func TestIndexedExportTargetsMatchScan(t *testing.T) {
 		base := baseLanguageNavigationIndex{family: test.family, corpus: corpus}
 		var got []string
 		if test.family == "csharp" {
-			got = (&cSharpNavigationIndex{baseLanguageNavigationIndex: base}).importTargets("", "", test.path, test.imported, "").files
+			got = (&cSharpNavigationIndex{baseLanguageNavigationIndex: base}).importTargets(navigationImportRequest{importPath: test.path, imported: test.imported}).files
 		} else {
-			got = (&qualifiedExportNavigationIndex{baseLanguageNavigationIndex: base}).importTargets("", "", test.path, test.imported, "").files
+			got = (&qualifiedExportNavigationIndex{baseLanguageNavigationIndex: base}).importTargets(navigationImportRequest{importPath: test.path, imported: test.imported}).files
 		}
 		var want []string
 		for _, item := range corpus.graph.Exports {

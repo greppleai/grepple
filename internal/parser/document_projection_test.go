@@ -8,7 +8,7 @@ import (
 func TestDocumentStructuralProjectionsDoNotReparse(t *testing.T) {
 	content := "package sample\n\n// run delegates.\nfunc run() { helper() }\nfunc helper() {}\n"
 	before := parseInvocations.Load()
-	document, err := ParseDocument("go", content)
+	document, err := NewParser().Parse("go", content)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -22,7 +22,7 @@ func TestDocumentStructuralProjectionsDoNotReparse(t *testing.T) {
 	if !ok || start != 3 || end != 4 {
 		t.Fatalf("declaration range=%d-%d ok=%v", start, end, ok)
 	}
-	segments, status := BuildSegmentsFromDocument(document, map[int]bool{4: true})
+	segments, status := NewParser().Segments(document, map[int]bool{4: true})
 	if status != SegmentBuildStructured {
 		t.Fatalf("segment status=%q", status)
 	}

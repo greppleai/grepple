@@ -4,7 +4,8 @@ import "path/filepath"
 
 type cFamilyNavigationIndex struct{ baseLanguageNavigationIndex }
 
-func (index *cFamilyNavigationIndex) importTargets(sourceFile, _, importPath, _, kind string) navigationImportTargets {
+func (index *cFamilyNavigationIndex) importTargets(request navigationImportRequest) navigationImportTargets {
+	sourceFile, importPath, kind := request.sourceFile, request.importPath, request.kind
 	if kind != "include-quoted" || importPath == "" || filepath.IsAbs(importPath) || filepath.VolumeName(importPath) != "" {
 		return navigationImportTargets{}
 	}

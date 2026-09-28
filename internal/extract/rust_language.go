@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/greppleai/grepple/internal/navigation/rustmodule"
 	codeparser "github.com/greppleai/grepple/internal/parser"
 )
 
@@ -41,7 +42,7 @@ func rustLanguageDefinition() *languageDefinition {
 		flowIndex:  moduleFocusedFlowIndex{},
 		classIndex: moduleFocusedClassIndex{},
 		acceptsSource: func(path string) bool {
-			return codeparser.LanguageFor(path) == "rust"
+			return codeparser.NewParser().LanguageFor(path) == "rust"
 		},
 		newAnalysis: func(result *Analysis, sources []Source) languageAnalysis {
 			prepareRustModules(result, sources)
@@ -95,7 +96,7 @@ func (analysis *rustAnalysis) Analyze(source Source) error {
 	}); err != nil {
 		return err
 	}
-	graph, _ := codeparser.CachedNavigationGraphFromDocument(document, source.Path)
+	graph := codeparser.NewParser().NavigationGraph(document, source.Path)
 	addModuleNavigationSymbols(analysis.result, graph, "rust", analyzer.moduleID, source.Path)
 	analysis.result.Navigation.Merge(graph)
 	return nil
@@ -112,7 +113,7 @@ func (analysis *rustAnalysis) attachImplementations() {
 	for _, source := range analysis.sources {
 		paths = append(paths, source.Path)
 	}
-	modules := codeparser.BuildRustModuleIndex(analysis.result.Navigation, paths)
+	modules := rustmodule.BuildRustModuleIndex(analysis.result.Navigation, paths)
 	for _, implementation := range analysis.implementations {
 		declaration := analysis.rustImplementationDeclaration(modules, implementation)
 		if declaration == nil {
@@ -127,7 +128,7 @@ func (analysis *rustAnalysis) attachImplementations() {
 	}
 }
 
-func (analysis *rustAnalysis) rustImplementationDeclaration(modules *codeparser.RustModuleIndex, implementation rustImplementation) *Declaration {
+func (analysis *rustAnalysis) rustImplementationDeclaration(modules *rustmodule.RustModuleIndex, implementation rustImplementation) *Declaration {
 	moduleKeys := analysis.rustImplementationModuleKeys(modules, implementation)
 	if len(moduleKeys) == 0 && (strings.Contains(implementation.targetPath, "::") || analysis.rustImplementationHasImport(implementation)) {
 		return nil
@@ -139,7 +140,7 @@ func (analysis *rustAnalysis) rustImplementationDeclaration(modules *codeparser.
 	return candidates[0]
 }
 
-func (analysis *rustAnalysis) rustImplementationCandidates(modules *codeparser.RustModuleIndex, implementation rustImplementation, moduleKeys []string) []*Declaration {
+func (analysis *rustAnalysis) rustImplementationCandidates(modules *rustmodule.RustModuleIndex, implementation rustImplementation, moduleKeys []string) []*Declaration {
 	candidates := []*Declaration{}
 	for _, reference := range analysis.declarations {
 		if reference.name == implementation.target && rustDeclarationMatchesModules(modules, reference, implementation, moduleKeys) {
@@ -149,7 +150,7 @@ func (analysis *rustAnalysis) rustImplementationCandidates(modules *codeparser.R
 	return candidates
 }
 
-func rustDeclarationMatchesModules(modules *codeparser.RustModuleIndex, reference rustDeclarationRef, implementation rustImplementation, moduleKeys []string) bool {
+func rustDeclarationMatchesModules(modules *rustmodule.RustModuleIndex, reference rustDeclarationRef, implementation rustImplementation, moduleKeys []string) bool {
 	if len(moduleKeys) == 0 {
 		return reference.path == implementation.path && reference.scope == implementation.scope
 	}
@@ -167,10 +168,10 @@ func rustDeclarationMatchesModules(modules *codeparser.RustModuleIndex, referenc
 		}
 		matchedKey = key
 	}
-	return matchedKey != "" && codeparser.RustItemVisibleFrom(matchedKey, sourceKeys[0], reference.visibility)
+	return matchedKey != "" && rustmodule.RustItemVisibleFrom(matchedKey, sourceKeys[0], reference.visibility)
 }
 
-func (analysis *rustAnalysis) rustImplementationModuleKeys(modules *codeparser.RustModuleIndex, implementation rustImplementation) []string {
+func (analysis *rustAnalysis) rustImplementationModuleKeys(modules *rustmodule.RustModuleIndex, implementation rustImplementation) []string {
 	path := implementation.targetPath
 	if strings.HasPrefix(path, "crate::") || strings.HasPrefix(path, "self::") || strings.HasPrefix(path, "super::") {
 		return rustModuleKeys(modules.ResolveItemModulesFrom(implementation.path, implementation.scope, codeparser.RustScopedPath(path, implementation.scope)))
@@ -202,10 +203,10 @@ func (analysis *rustAnalysis) rustImplementationHasImport(implementation rustImp
 	return false
 }
 
-func rustModuleKeys(targets []codeparser.RustModuleTarget) []string {
+func rustModuleKeys(targets []rustmodule.RustModuleTarget) []string {
 	keys := make([]string, 0, len(targets))
 	for _, target := range targets {
-		key := codeparser.RustModuleTargetModuleKey(target)
+		key := rustmodule.RustModuleTargetModuleKey(target)
 		if !rustStringSliceContains(keys, key) {
 			keys = append(keys, key)
 		}

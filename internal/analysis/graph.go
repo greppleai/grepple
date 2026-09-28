@@ -61,11 +61,11 @@ func BuildGraph(universe *Universe, request *GraphQuery) (GraphReport, error) {
 	if err := validateGraphQuery(*request); err != nil {
 		return GraphReport{}, err
 	}
-	filter, err := navigation.NormalizeNavigationGraphFilter(navigation.NavigationGraphFilter{Languages: request.Languages, Confidences: request.Confidences, Visibilities: request.Visibilities})
+	filter, err := navigation.NewGraphOperations().NormalizeFilter(navigation.NavigationGraphFilter{Languages: request.Languages, Confidences: request.Confidences, Visibilities: request.Visibilities})
 	if err != nil {
 		return GraphReport{}, err
 	}
-	filtered, err := navigation.FilterNavigationGraph(graph, filter)
+	filtered, err := navigation.NewGraphOperations().Filter(graph, filter)
 	if err != nil {
 		return GraphReport{}, err
 	}
@@ -77,7 +77,7 @@ func BuildGraph(universe *Universe, request *GraphQuery) (GraphReport, error) {
 	for _, root := range roots {
 		rootIDs = append(rootIDs, root.ID)
 	}
-	queried, err := navigation.QueryNavigationGraph(filtered, rootIDs, navigation.NavigationQueryDirection(request.Direction), request.Depth)
+	queried, err := navigation.NewGraphOperations().Query(filtered, rootIDs, navigation.NavigationQueryDirection(request.Direction), request.Depth)
 	if err != nil {
 		return GraphReport{}, err
 	}
@@ -95,7 +95,7 @@ func graphReport(graph parser.NavigationGraph, universe *Universe) GraphReport {
 	if calls == nil {
 		calls = []parser.NavigationCall{}
 	}
-	return GraphReport{Schema: GraphSchema, Files: universe.summary.Selected, Sources: universe.Summary(), Declarations: declarations, TypeDeclarations: graph.TypeDeclarations, Imports: graph.Imports, Calls: calls, Exports: graph.Exports, Fields: graph.Fields, Resolution: navigation.MeasureNavigationResolution(graph), TypeUsages: graph.TypeUsages, MemberAccesses: graph.MemberAccesses, RepositoryRoots: graph.RepositoryRoots, Truncation: universe.Truncation()}
+	return GraphReport{Schema: GraphSchema, Files: universe.summary.Selected, Sources: universe.Summary(), Declarations: declarations, TypeDeclarations: graph.TypeDeclarations, Imports: graph.Imports, Calls: calls, Exports: graph.Exports, Fields: graph.Fields, Resolution: navigation.NewGraphOperations().ResolutionStats(graph), TypeUsages: graph.TypeUsages, MemberAccesses: graph.MemberAccesses, RepositoryRoots: graph.RepositoryRoots, Truncation: universe.Truncation()}
 }
 
 func validateGraphQuery(request GraphQuery) error {

@@ -12,7 +12,7 @@ func dartLanguageDefinition() *languageDefinition {
 	return &languageDefinition{
 		info:      Language{ID: "dart", Extensions: parserLanguageExtensions("dart"), FocusedStructure: true, FocusedFlow: true},
 		flowIndex: moduleFocusedFlowIndex{}, classIndex: moduleFocusedClassIndex{},
-		acceptsSource: func(path string) bool { return codeparser.LanguageFor(path) == "dart" },
+		acceptsSource: func(path string) bool { return codeparser.NewParser().LanguageFor(path) == "dart" },
 		newAnalysis: func(result *Analysis, sources []Source) languageAnalysis {
 			prepareModulePaths(result, sources, "dart", nearestDartRoot)
 			return &dartAnalysis{result: result}
@@ -50,7 +50,7 @@ func (analysis *dartAnalysis) Analyze(source Source) error {
 	}); err != nil {
 		return err
 	}
-	graph, _ := codeparser.CachedNavigationGraphFromDocument(document, source.Path)
+	graph := codeparser.NewParser().NavigationGraph(document, source.Path)
 	addModuleNavigationSymbols(analysis.result, graph, "dart", moduleID, source.Path)
 	analysis.result.Navigation.Merge(graph)
 	return nil

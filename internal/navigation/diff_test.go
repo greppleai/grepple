@@ -23,7 +23,7 @@ func TestDiffNavigationGraphsClassifiesSemanticChangesAndIgnoresLineShifts(t *te
 		},
 		Calls: []parser.NavigationCall{{ID: "call-new", CallerID: "run-new", TargetID: "added", Name: "helper", Display: "helper", Confidence: "context-resolved", Language: "go", Line: 21}},
 	}
-	diff := DiffNavigationGraphs(before, after)
+	diff := diffNavigationGraphs(before, after)
 	if diff.Schema != NavigationDiffSchema || len(diff.AddedDeclarations) != 1 || len(diff.RemovedDeclarations) != 1 {
 		t.Fatalf("declaration additions/removals=%#v", diff)
 	}
@@ -41,7 +41,7 @@ func TestDiffNavigationGraphsClassifiesSemanticChangesAndIgnoresLineShifts(t *te
 func TestDiffNavigationGraphsIgnoresPositionOnlyChanges(t *testing.T) {
 	before := parser.NavigationGraph{Declarations: []parser.NavigationDeclaration{{ID: "old", Name: "Run", Kind: "func", Language: "go", Path: "run.go", Start: 1, End: 2}}}
 	after := parser.NavigationGraph{Declarations: []parser.NavigationDeclaration{{ID: "new", Name: "Run", Kind: "func", Language: "go", Path: "run.go", Start: 10, End: 11}}}
-	diff := DiffNavigationGraphs(before, after)
+	diff := diffNavigationGraphs(before, after)
 	if len(diff.AddedDeclarations)+len(diff.RemovedDeclarations)+len(diff.MovedDeclarations)+len(diff.ChangedDeclarations) != 0 {
 		t.Fatalf("position-only diff=%#v", diff)
 	}
@@ -50,7 +50,7 @@ func TestDiffNavigationGraphsIgnoresPositionOnlyChanges(t *testing.T) {
 func TestDiffNavigationGraphsTreatsRustModuleScopeAsSemanticIdentity(t *testing.T) {
 	before := parser.NavigationGraph{Declarations: []parser.NavigationDeclaration{{ID: "old", Name: "run", Kind: "function", Language: "rust", Path: "src/lib.rs", Scope: "first", Start: 1, End: 1}}}
 	after := parser.NavigationGraph{Declarations: []parser.NavigationDeclaration{{ID: "new", Name: "run", Kind: "function", Language: "rust", Path: "src/lib.rs", Scope: "second", Start: 1, End: 1}}}
-	diff := DiffNavigationGraphs(before, after)
+	diff := diffNavigationGraphs(before, after)
 	if len(diff.AddedDeclarations) != 1 || len(diff.RemovedDeclarations) != 1 || len(diff.MovedDeclarations) != 0 {
 		t.Fatalf("scoped Rust diff=%#v", diff)
 	}
@@ -59,7 +59,7 @@ func TestDiffNavigationGraphsTreatsRustModuleScopeAsSemanticIdentity(t *testing.
 func TestDiffNavigationGraphsReportsRestrictedRustVisibilityChanges(t *testing.T) {
 	before := parser.NavigationGraph{Declarations: []parser.NavigationDeclaration{{ID: "old", Name: "run", Kind: "function", Language: "rust", Path: "src/lib.rs", Scope: "model", Visibility: parser.NavigationVisibilityNonPublic, VisibilityDetail: "pub(super)", Start: 1, End: 1}}}
 	after := parser.NavigationGraph{Declarations: []parser.NavigationDeclaration{{ID: "new", Name: "run", Kind: "function", Language: "rust", Path: "src/lib.rs", Scope: "model", Visibility: parser.NavigationVisibilityNonPublic, VisibilityDetail: "pub(in crate::model)", Start: 1, End: 1}}}
-	diff := DiffNavigationGraphs(before, after)
+	diff := diffNavigationGraphs(before, after)
 	if len(diff.ChangedDeclarations) != 1 || diff.ChangedDeclarations[0].After.VisibilityDetail != "pub(in crate::model)" {
 		t.Fatalf("restricted visibility diff=%#v", diff)
 	}

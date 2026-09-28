@@ -12,5 +12,5 @@ type NavigationCallDelta = navigation.NavigationCallDelta
 type NavigationGraphDiff = navigation.NavigationGraphDiff
 
 func DiffNavigationGraphs(before, after parser.NavigationGraph) NavigationGraphDiff {
-	return navigation.DiffNavigationGraphs(before, after)
+	return navigation.NewGraphOperations().Diff(before, after)
 }

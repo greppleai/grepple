@@ -23,7 +23,7 @@ func TestSupportedLanguagesReflectTargetAdapters(t *testing.T) {
 }
 
 func TestGritQLCoversEveryTreeSitterLanguage(t *testing.T) {
-	for _, language := range parser.SupportedLanguages() {
+	for _, language := range parser.NewParser().SupportedLanguages() {
 		if !language.Navigation {
 			continue
 		}

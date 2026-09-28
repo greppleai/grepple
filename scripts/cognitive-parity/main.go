@@ -186,7 +186,7 @@ func gritScores(root string, paths []string, metric *gritql.MetricQuery) (map[st
 		if err != nil {
 			return nil, err
 		}
-		document, err := parser.ParseDocument("go", string(content))
+		document, err := parser.NewParser().Parse("go", string(content))
 		if err != nil {
 			return nil, fmt.Errorf("parse %s: %w", path, err)
 		}

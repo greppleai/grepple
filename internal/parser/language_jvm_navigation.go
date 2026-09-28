@@ -61,7 +61,7 @@ func kotlinNavigationAdapter(rules *structureRules) navigationAdapter {
 
 func kotlinNavigationParameterType(node *syntaxNode) *syntaxNode {
 	for _, child := range node.NamedChildren() {
-		if GrammarSubtype("kotlin", "type", child.Kind()) {
+		if NewParser().GetGrammar("kotlin").Subtype("type", child.Kind()) {
 			return child
 		}
 	}

@@ -16,7 +16,8 @@ func (*cSharpNavigationIndex) filterCandidates(call navigationCall, candidates [
 	return candidates
 }
 
-func (index *cSharpNavigationIndex) importTargets(_, _, importPath, imported, _ string) navigationImportTargets {
+func (index *cSharpNavigationIndex) importTargets(request navigationImportRequest) navigationImportTargets {
+	importPath, imported := request.importPath, request.imported
 	importPath = strings.TrimSpace(importPath)
 	if importPath == "" {
 		return navigationImportTargets{}

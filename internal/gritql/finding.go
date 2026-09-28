@@ -322,7 +322,7 @@ func fileInputLanguage(input FileInput) string {
 	if input.Language != "" {
 		return input.Language
 	}
-	if language := parser.LanguageFor(input.Path); language != "" {
+	if language := parser.NewParser().LanguageFor(input.Path); language != "" {
 		if _, supported := targetLanguageByID(language); supported {
 			return language
 		}
@@ -376,7 +376,7 @@ func EvaluateFile(ctx context.Context, program *Program, input FileInput, option
 		result.diagnostics = []Diagnostic{newDiagnostic("SOURCE_INVALID_UTF8", "source", "source is not valid UTF-8", stringPtr(input.PatternID), &normalizedPath, nil)}
 		return result
 	}
-	document, err := parser.ParseDocument(language, string(input.Content))
+	document, err := parser.NewParser().Parse(language, string(input.Content))
 	if err != nil {
 		result.diagnostics = []Diagnostic{newDiagnostic("INTERNAL_ERROR", "internal", "source parser failed", stringPtr(input.PatternID), &normalizedPath, nil)}
 		return result

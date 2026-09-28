@@ -23,7 +23,7 @@ func OutlineFileDepth(path, content string, maxDepth int) FileOutline {
 	if lang := structuredLang(path); lang != "" {
 		return FileOutline{Path: path, Language: lang, Symbols: nonNil(outlineStructured(content, maxDepth))}
 	}
-	lang := LanguageFor(path)
+	lang := languageFor(path)
 	out := FileOutline{Path: path, Language: lang, Symbols: []Symbol{}}
 	adapter := adapterForLanguage(lang)
 	if adapter == nil || !adapter.Grammar().valid() {
@@ -38,8 +38,8 @@ func OutlineFileDepth(path, content string, maxDepth int) FileOutline {
 	return out
 }
 
-// OutlineFromDocument derives a code outline without reparsing the caller-owned document.
-func OutlineFromDocument(path string, document *Document) FileOutline {
+// outlineFromDocument derives a code outline without reparsing the caller-owned document.
+func outlineFromDocument(path string, document *Document) FileOutline {
 	if document == nil {
 		return FileOutline{Path: path, Symbols: []Symbol{}}
 	}

@@ -31,13 +31,13 @@ func assertNavigationFileHasNoLanguageIDs(t *testing.T, path string, languageIDs
 	if err != nil {
 		t.Fatal(err)
 	}
-	document, err := ParseDocument("go", string(content))
+	document, err := NewParser().Parse("go", string(content))
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer document.Close()
 	_ = document.Read(func(view DocumentView) error {
-		WalkNamedView(view.Root(), func(node ViewNode) {
+		view.Root().WalkNamed(func(node ViewNode) {
 			if node.Kind() != "interpreted_string_literal" && node.Kind() != "raw_string_literal" {
 				return
 			}
@@ -55,17 +55,17 @@ func TestNavigationCollectorDependsOnAdaptersNotLanguageStrings(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	document, err := ParseDocument("go", string(content))
+	document, err := NewParser().Parse("go", string(content))
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer document.Close()
 	_ = document.Read(func(view DocumentView) error {
-		WalkNamedView(view.Root(), func(node ViewNode) {
+		view.Root().WalkNamed(func(node ViewNode) {
 			if node.Kind() != "type_spec" || node.ChildByFieldName("name").Text() != "navigationCollector" {
 				return
 			}
-			WalkNamedView(node.ChildByFieldName("type"), func(field ViewNode) {
+			node.ChildByFieldName("type").WalkNamed(func(field ViewNode) {
 				if field.Kind() == "field_identifier" && field.Text() == "language" {
 					t.Error("navigationCollector must depend on adapters, not a language field")
 				}
@@ -135,13 +135,13 @@ func assertFileHasNoGrammarKindLiterals(t *testing.T, path string, grammarKinds 
 	if err != nil {
 		t.Fatal(err)
 	}
-	document, err := ParseDocument("go", string(content))
+	document, err := NewParser().Parse("go", string(content))
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer document.Close()
 	_ = document.Read(func(view DocumentView) error {
-		WalkNamedView(view.Root(), func(node ViewNode) {
+		view.Root().WalkNamed(func(node ViewNode) {
 			if node.Kind() != "interpreted_string_literal" && node.Kind() != "raw_string_literal" {
 				return
 			}

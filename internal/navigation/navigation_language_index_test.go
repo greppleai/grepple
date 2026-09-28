@@ -1,6 +1,8 @@
 package navigation
 
 import (
+	"os"
+	"path/filepath"
 	"reflect"
 	"sort"
 	"testing"
@@ -37,7 +39,7 @@ func sortedNavigationFamilies(indexes map[string]languageNavigationIndex) []stri
 
 func sortedParserNavigationFamilies() []string {
 	seen := make(map[string]bool)
-	for _, capability := range parser.SupportedLanguages() {
+	for _, capability := range parser.NewParser().SupportedLanguages() {
 		if capability.Navigation {
 			seen[navigationLanguageFamily(capability.ID)] = true
 		}
@@ -48,4 +50,37 @@ func sortedParserNavigationFamilies() []string {
 	}
 	sort.Strings(families)
 	return families
+}
+
+// Both crate-module resolution and tsconfig aliases enter through the same
+// languageImportResolver contract; language-specific policy stays in each index.
+func TestLanguageImportResolverRoutesRustAndTypeScriptContext(t *testing.T) {
+	root := t.TempDir()
+	config := `{"compilerOptions":{"baseUrl":".","paths":{"@lib/*":["src/lib/*"]}}}`
+	if err := os.WriteFile(filepath.Join(root, "tsconfig.json"), []byte(config), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	rustFile := filepath.Join(root, "crate", "src", "lib.rs")
+	rustModule := filepath.Join(root, "crate", "src", "helper.rs")
+	tsFile := filepath.Join(root, "src", "main.ts")
+	tsModule := filepath.Join(root, "src", "lib", "util.ts")
+	graph := parser.BuildNavigationGraph("mod helper;\nuse self::helper::run;\n", "rust", rustFile)
+	graph.Merge(parser.BuildNavigationGraph("pub fn run() {}\n", "rust", rustModule))
+	corpus := &navigationCorpus{graph: graph, files: []string{rustFile, rustModule, tsFile, tsModule}}
+	indexes, _ := newLanguageNavigationIndexes(corpus, corpus.files)
+	for _, test := range []struct {
+		family     string
+		request    navigationImportRequest
+		want       string
+		wantScopes bool
+	}{
+		{"rust", navigationImportRequest{sourceFile: rustFile, importPath: "self::helper::run"}, rustModule, true},
+		{"typescript", navigationImportRequest{sourceFile: tsFile, importPath: "@lib/util"}, tsModule, false},
+	} {
+		var resolver languageImportResolver = indexes[test.family]
+		targets := resolver.importTargets(test.request)
+		if !reflect.DeepEqual(targets.files, []string{test.want}) || (len(targets.scopes) > 0) != test.wantScopes {
+			t.Errorf("%s import targets=%+v; want file %q and scopes=%v", test.family, targets, test.want, test.wantScopes)
+		}
+	}
 }

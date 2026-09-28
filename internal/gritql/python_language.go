@@ -108,7 +108,8 @@ func selectPythonFile(root parser.Node, start, end int) (selectedRoot, bool) {
 }
 
 func isPythonStatement(kind string) bool {
-	return parser.GrammarSubtype("python", "_simple_statement", kind) || parser.GrammarSubtype("python", "_compound_statement", kind)
+	grammar := parser.NewParser().GetGrammar("python")
+	return grammar.Subtype("_simple_statement", kind) || grammar.Subtype("_compound_statement", kind)
 }
 
 func allPythonStatements(nodes []parser.Node) bool {
@@ -139,9 +140,10 @@ func allPythonDeclarations(nodes []parser.Node) bool {
 }
 
 func pythonRootCategoryAccepts(context SnippetContext, kind string) bool {
+	grammar := parser.NewParser().GetGrammar("python")
 	switch context {
 	case SnippetContextExpression:
-		return parser.GrammarSubtype("python", "expression", kind) || parser.GrammarSubtype("python", "primary_expression", kind) || parser.GrammarSubtype("python", "pattern", kind)
+		return grammar.Subtype("expression", kind) || grammar.Subtype("primary_expression", kind) || grammar.Subtype("pattern", kind)
 	case SnippetContextStatement, SnippetContextStatementList:
 		return isPythonStatement(kind)
 	case SnippetContextDeclaration, SnippetContextDeclarationList:

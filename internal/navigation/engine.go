@@ -130,28 +130,17 @@ type DocumentSource struct {
 // TextSource pairs source text with its repository path.
 type TextSource struct{ Path, Text string }
 
-// Analysis retains one resolved navigation graph.
-type Analysis struct{ index *navigationIndex }
+// analysis retains one resolved navigation graph.
+type analysis struct{ index *navigationIndex }
 
-// BuildGraph builds the resolved graph for local files.
-func BuildGraph(files []string) parser.NavigationGraph {
-	graph, _ := BuildGraphWithStats(files)
-	return graph
-}
-
-// BuildGraphWithStats builds the resolved graph and reports source completeness.
-func BuildGraphWithStats(files []string) (parser.NavigationGraph, SourceStats) {
-	return BuildGraphWithOptions(files, BuildOptions{})
-}
-
-// BuildGraphWithOptions builds the resolved graph with explicit cache behavior.
-func BuildGraphWithOptions(files []string, options BuildOptions) (parser.NavigationGraph, SourceStats) {
+// buildGraphWithOptions builds the resolved graph with explicit cache behavior.
+func buildGraphWithOptions(files []string, options BuildOptions) (parser.NavigationGraph, SourceStats) {
 	index := buildNavigationIndex(files, !options.DisableCache)
 	return index.graph, index.sourceStats
 }
 
-// BuildAnalysisFromDocuments builds reusable analysis from caller-owned documents.
-func BuildAnalysisFromDocuments(sources []DocumentSource, options BuildOptions) (*Analysis, SourceStats) {
+// buildAnalysisFromDocuments builds reusable analysis from caller-owned documents.
+func buildAnalysisFromDocuments(sources []DocumentSource, options BuildOptions) (*analysis, SourceStats) {
 	ordered := append([]DocumentSource(nil), sources...)
 	sort.Slice(ordered, func(i, j int) bool { return ordered[i].Path < ordered[j].Path })
 	cwd, _ := os.Getwd()
@@ -161,7 +150,7 @@ func BuildAnalysisFromDocuments(sources []DocumentSource, options BuildOptions) 
 			cacheKey = key
 			if graph, hit := readResolvedGraphCache(key); hit {
 				stats := documentSourceStats(ordered)
-				return &Analysis{index: &navigationIndex{graph: graph, sourceStats: stats}}, stats
+				return &analysis{index: &navigationIndex{graph: graph, sourceStats: stats}}, stats
 			}
 		}
 	}
@@ -175,11 +164,11 @@ func BuildAnalysisFromDocuments(sources []DocumentSource, options BuildOptions) 
 	if cacheKey != "" && index.sourceStats.Failed == 0 {
 		writeResolvedGraphCache(cacheKey, index.graph, index.sourceStats.Recovered > 0)
 	}
-	return &Analysis{index: index}, index.sourceStats
+	return &analysis{index: index}, index.sourceStats
 }
 
-// BuildAnalysisFromTextSources builds reusable analysis from in-memory sources.
-func BuildAnalysisFromTextSources(sources []TextSource, options BuildOptions) (*Analysis, SourceStats) {
+// buildAnalysisFromTextSources builds reusable analysis from in-memory sources.
+func buildAnalysisFromTextSources(sources []TextSource, options BuildOptions) (*analysis, SourceStats) {
 	ordered := append([]TextSource(nil), sources...)
 	sort.Slice(ordered, func(i, j int) bool { return ordered[i].Path < ordered[j].Path })
 	index := newNavigationIndex()
@@ -190,27 +179,15 @@ func BuildAnalysisFromTextSources(sources []TextSource, options BuildOptions) (*
 		index.addTextSource(source, cwd, !options.DisableCache)
 	}
 	index.finalize(paths)
-	return &Analysis{index: index}, index.sourceStats
+	return &analysis{index: index}, index.sourceStats
 }
 
 // Graph returns the immutable resolved graph projection.
-func (analysis *Analysis) Graph() parser.NavigationGraph {
+func (analysis *analysis) Graph() parser.NavigationGraph {
 	if analysis == nil || analysis.index == nil {
 		return parser.NavigationGraph{}
 	}
 	return analysis.index.graph
-}
-
-// BuildGraphFromDocuments resolves a graph from caller-owned documents.
-func BuildGraphFromDocuments(sources []DocumentSource, options BuildOptions) (parser.NavigationGraph, SourceStats) {
-	analysis, stats := BuildAnalysisFromDocuments(sources, options)
-	return analysis.Graph(), stats
-}
-
-// BuildGraphFromTextSources resolves a graph from in-memory sources.
-func BuildGraphFromTextSources(sources []TextSource, options BuildOptions) (parser.NavigationGraph, SourceStats) {
-	analysis, stats := BuildAnalysisFromTextSources(sources, options)
-	return analysis.Graph(), stats
 }
 
 func (index *navigationIndex) resolveGraphCalls() {
@@ -237,7 +214,7 @@ func (index *navigationIndex) resolveGraphImports() {
 func (index *navigationIndex) resolveImportTargetPaths(fact parser.NavigationImport, packageFiles map[string][]string) []string {
 	targets := append([]string(nil), packageFiles[fact.ImportPath]...)
 	if languageIndex := index.languageIndex(fact.Language); languageIndex != nil {
-		resolved := languageIndex.importTargets(fact.Path, fact.Scope, fact.ImportPath, fact.Imported, fact.Kind)
+		resolved := languageIndex.importTargets(navigationImportRequest{sourceFile: fact.Path, sourceScope: fact.Scope, importPath: fact.ImportPath, imported: fact.Imported, kind: fact.Kind})
 		targets = append(targets, resolved.files...)
 	}
 	sort.Strings(targets)
@@ -377,7 +354,7 @@ func (index *navigationIndex) resolveGraphCall(call *parser.NavigationCall, call
 }
 func (index *navigationIndex) addFile(path, cwd string, useCache bool) {
 	index.sourceStats.Attempted++
-	language := parser.LanguageFor(path)
+	language := parser.NewParser().LanguageFor(path)
 	if !supportsNavigation(language) {
 		index.sourceStats.Skipped++
 		return
@@ -400,10 +377,11 @@ func (index *navigationIndex) addFile(path, cwd string, useCache bool) {
 		graph, recovered, _, err = parser.CachedNavigationGraph(content, language, displayPath)
 	} else {
 		var document *parser.Document
-		document, err = parser.ParseDocument(language, content)
+		documentParser := parser.NewParser()
+		document, err = documentParser.Parse(language, content)
 		if err == nil {
 			recovered = document.Root().HasError()
-			graph = parser.NavigationGraphFromDocument(document, displayPath)
+			graph = documentParser.NavigationGraph(document, displayPath)
 			document.Close()
 		}
 	}
@@ -423,18 +401,14 @@ func (index *navigationIndex) addDocument(source DocumentSource, cwd string, use
 	cleanPath := filepath.Clean(source.Path)
 	displayPath := displayPathFrom(source.Path, cwd)
 	recovered := source.Document.Root().HasError()
-	var graph parser.NavigationGraph
-	if useCache {
-		graph, _ = parser.CachedNavigationGraphFromDocument(source.Document, displayPath)
-	} else {
-		graph = parser.NavigationGraphFromDocument(source.Document, displayPath)
-	}
+	documentParser := parser.NewParser(parser.ParserOptions{DisableNavigationCache: !useCache})
+	graph := documentParser.NavigationGraph(source.Document, displayPath)
 	index.addParsedGraph(cleanPath, displayPath, source.Document.Language(), source.Document.Source(), graph, recovered)
 }
 
 func (index *navigationIndex) addTextSource(source TextSource, cwd string, useCache bool) {
 	index.sourceStats.Attempted++
-	language := parser.LanguageFor(source.Path)
+	language := parser.NewParser().LanguageFor(source.Path)
 	if !supportsNavigation(language) {
 		index.sourceStats.Skipped++
 		return
@@ -448,10 +422,11 @@ func (index *navigationIndex) addTextSource(source TextSource, cwd string, useCa
 		graph, recovered, _, err = parser.CachedNavigationGraph(source.Text, language, displayPath)
 	} else {
 		var document *parser.Document
-		document, err = parser.ParseDocument(language, source.Text)
+		documentParser := parser.NewParser()
+		document, err = documentParser.Parse(language, source.Text)
 		if err == nil {
 			recovered = document.Root().HasError()
-			graph = parser.NavigationGraphFromDocument(document, displayPath)
+			graph = documentParser.NavigationGraph(document, displayPath)
 			document.Close()
 		}
 	}

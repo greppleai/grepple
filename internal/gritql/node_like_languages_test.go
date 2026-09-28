@@ -41,7 +41,7 @@ func TestNodeLikeNamedFieldAcrossSupportedLanguages(t *testing.T) {
 	}
 	for _, test := range cases {
 		t.Run(test.language, func(t *testing.T) {
-			document, err := parser.ParseDocument(test.language, test.source)
+			document, err := parser.NewParser().Parse(test.language, test.source)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -54,7 +54,7 @@ func TestNodeLikeNamedFieldAcrossSupportedLanguages(t *testing.T) {
 				stack = stack[:len(stack)-1]
 				for _, child := range item.NamedChildren() {
 					candidate := child.FieldName()
-					if !child.IsExtra() && validNodeSelectorName(candidate) && parser.GrammarFieldCardinality(test.language, item.Kind(), candidate) != parser.GrammarCardinalityUnknown {
+					if !child.IsExtra() && validNodeSelectorName(candidate) && parser.NewParser().GetGrammar(test.language).FieldCardinality(item.Kind(), candidate) != parser.GrammarCardinalityUnknown {
 						parent, field = item, candidate
 						break
 					}

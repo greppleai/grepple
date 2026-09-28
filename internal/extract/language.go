@@ -69,7 +69,7 @@ func LanguageForPath(path string) (Language, bool) {
 }
 
 func languageDefinitionForPath(path string) (*languageDefinition, bool) {
-	language := codeparser.LanguageFor(path)
+	language := codeparser.NewParser().LanguageFor(path)
 	if language == "tsx" {
 		language = "typescript"
 	}
@@ -79,7 +79,7 @@ func languageDefinitionForPath(path string) (*languageDefinition, bool) {
 func parserLanguageExtensions(ids ...string) []string {
 	var extensions []string
 	for _, id := range ids {
-		capability, ok := codeparser.CapabilitiesForLanguage(id)
+		capability, ok := codeparser.NewParser().CapabilitiesForLanguage(id)
 		if ok {
 			extensions = append(extensions, capability.Extensions...)
 		}

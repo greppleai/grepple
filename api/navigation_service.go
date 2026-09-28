@@ -1,6 +1,7 @@
 package api
 
 import (
+	"github.com/greppleai/grepple/internal/dependency"
 	"github.com/greppleai/grepple/internal/navigation"
 	"github.com/greppleai/grepple/internal/parser"
 )
@@ -12,7 +13,7 @@ const NavigationArtifactSchema = parser.NavigationFactArtifactSchema
 const NavigationCacheDirectoryEnv = parser.NavigationCacheDirectoryEnv
 
 // NPMRegistrySource identifies verified public-registry npm artifacts.
-const NPMRegistrySource = navigation.NPMRegistrySource
+const NPMRegistrySource = dependency.NPMRegistrySource
 
 // NavigationVisibilityPublic is the source-language public declaration class.
 const NavigationVisibilityPublic = "public"
@@ -43,7 +44,7 @@ func DecodeNavigationArtifact(content []byte) (IndexedNavigation, error) {
 
 // BuildNavigationArtifact parses and resolves a complete set of source paths.
 func BuildNavigationArtifact(paths []string) (IndexedNavigation, NavigationSourceStats) {
-	graph, stats := navigation.BuildGraphWithStats(paths)
+	graph, stats := navigation.NewGraphEngine(navigation.BuildOptions{}).BuildFiles(paths)
 	return indexedNavigation{graph: graph}, NavigationSourceStats{
 		Attempted: stats.Attempted, Parsed: stats.Parsed, Skipped: stats.Skipped,
 		Failed: stats.Failed, Recovered: stats.Recovered,
@@ -100,7 +101,7 @@ type ArtifactModule struct {
 
 // DiscoverArtifactModules reads supported manifests and lockfiles for a repository.
 func DiscoverArtifactModules(root string) ([]ArtifactModule, error) {
-	modules, err := navigation.DiscoverArtifactModules(root)
+	modules, err := dependency.DefaultRegistry().DiscoverArtifactModules(root)
 	if err != nil {
 		return nil, err
 	}
@@ -112,19 +113,19 @@ func DiscoverArtifactModules(root string) ([]ArtifactModule, error) {
 }
 
 // ValidNPMIntegrity checks the supported structural SRI forms.
-func ValidNPMIntegrity(integrity string) bool { return navigation.ValidNPMIntegrity(integrity) }
+func ValidNPMIntegrity(integrity string) bool { return dependency.ValidNPMIntegrity(integrity) }
 
 // QualifyRepositoryDependencies adds manifest evidence to repository results.
 func QualifyRepositoryDependencies(results []FileResult, root string) error {
-	return navigation.QualifyRepositoryExternalDependencies(results, root)
+	return navigation.NewExternalDependencyService[FileResult]().QualifyRepository(results, root)
 }
 
 // QualifyExternalDependencies adds manifest evidence to local search results.
 func QualifyExternalDependencies(results []FileResult, root string) error {
-	return navigation.QualifyExternalDependencies(results, root)
+	return navigation.NewExternalDependencyService[FileResult]().QualifyLocal(results, root)
 }
 
 // ExternalDependencyReferences lists unresolved references in search results.
 func ExternalDependencyReferences(results []FileResult) []ExternalNavigationReference {
-	return navigation.ExternalDependencyReferences(results)
+	return navigation.NewExternalDependencyService[FileResult]().References(results)
 }

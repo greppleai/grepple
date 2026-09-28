@@ -184,13 +184,6 @@ func navigationDeclarationStableID(declaration NavigationDeclaration) string {
 	return navigationStableID(parts...)
 }
 
-// Navigation extracts callable declarations and calls for a structurally supported language.
-// Resolution is intentionally syntax-based; callers decide whether a name is unique.
-func Navigation(content, language string) ([]NavigationDeclaration, []NavigationCall) {
-	graph := BuildNavigationGraph(content, language, "")
-	return graph.Declarations, graph.Calls
-}
-
 // BuildNavigationGraph parses one source into the shared navigation graph.
 func BuildNavigationGraph(content, language, path string) NavigationGraph {
 	adapter := adapterForLanguage(language)
@@ -205,9 +198,9 @@ func BuildNavigationGraph(content, language, path string) NavigationGraph {
 	return navigationGraphFromTree(tree.RootNode(), content, language, path)
 }
 
-// NavigationGraphFromDocument builds a graph from an already parsed document.
+// navigationGraphFromDocument builds a graph from an already parsed document.
 // The document remains owned by the caller and is not reparsed.
-func NavigationGraphFromDocument(document *Document, path string) NavigationGraph {
+func navigationGraphFromDocument(document *Document, path string) NavigationGraph {
 	if document == nil {
 		return NavigationGraph{}
 	}
@@ -236,14 +229,14 @@ func navigationGraphFromTree(root *syntaxNode, content, language, path string) N
 
 // DeclarationRangeAt returns the narrowest callable declaration containing line.
 func DeclarationRangeAt(content, language string, line int) (int, int, bool) {
-	declarations, _ := Navigation(content, language)
-	return narrowestDeclarationRangeAt(declarations, line)
+	graph := BuildNavigationGraph(content, language, "")
+	return narrowestDeclarationRangeAt(graph.Declarations, line)
 }
 
 // DeclarationRangeAtFromDocument returns the narrowest callable declaration containing line
 // without reparsing the caller-owned document.
 func DeclarationRangeAtFromDocument(document *Document, path string, line int) (int, int, bool) {
-	return narrowestDeclarationRangeAt(NavigationGraphFromDocument(document, path).Declarations, line)
+	return narrowestDeclarationRangeAt(navigationGraphFromDocument(document, path).Declarations, line)
 }
 
 func narrowestDeclarationRangeAt(declarations []NavigationDeclaration, line int) (int, int, bool) {

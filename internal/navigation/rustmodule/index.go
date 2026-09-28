@@ -1,9 +1,11 @@
-package parser
+package rustmodule
 
 import (
 	"path/filepath"
 	"sort"
 	"strings"
+
+	"github.com/greppleai/grepple/internal/parser"
 )
 
 // RustModuleTarget identifies one syntax-evidenced module in a selected crate.
@@ -23,11 +25,11 @@ type rustModuleQueueItem = RustModuleTarget
 type RustModuleIndex struct {
 	byFile   map[string][]RustModuleTarget
 	byModule map[string][]RustModuleTarget
-	exports  []NavigationExport
+	exports  []parser.NavigationExport
 }
 
 // BuildRustModuleIndex constructs a reusable module index without reparsing source.
-func BuildRustModuleIndex(graph NavigationGraph, paths []string) *RustModuleIndex {
+func BuildRustModuleIndex(graph parser.NavigationGraph, paths []string) *RustModuleIndex {
 	index := &RustModuleIndex{byFile: make(map[string][]RustModuleTarget), byModule: make(map[string][]RustModuleTarget), exports: graph.Exports}
 	files, queue := rustModuleSourceFiles(paths)
 	moduleFacts := rustModuleFactsByFile(graph.Imports)
@@ -64,7 +66,7 @@ func rustModuleSourceFiles(paths []string) (map[string]string, []rustModuleQueue
 	return files, queue
 }
 
-func rustModuleChildren(current RustModuleTarget, facts []NavigationImport, files map[string]string) []rustModuleQueueItem {
+func rustModuleChildren(current RustModuleTarget, facts []parser.NavigationImport, files map[string]string) []rustModuleQueueItem {
 	children := []rustModuleQueueItem{}
 	for _, fact := range facts {
 		if fact.Scope != current.LocalScope {
@@ -262,8 +264,8 @@ func rustResolveModulePath(source RustModuleTarget, importPath string) ([]string
 	return target, true
 }
 
-func rustModuleFactsByFile(imports []NavigationImport) map[string][]NavigationImport {
-	facts := make(map[string][]NavigationImport)
+func rustModuleFactsByFile(imports []parser.NavigationImport) map[string][]parser.NavigationImport {
+	facts := make(map[string][]parser.NavigationImport)
 	for _, item := range imports {
 		if item.Language != "rust" || item.Kind != "module" || item.Alias == "" {
 			continue
@@ -304,6 +306,18 @@ func rustModuleDirectory(sourceFile string) string {
 	return directory
 }
 
+func rustTargetExports(exports []parser.NavigationExport, target, source RustModuleTarget, name string) bool {
+	declarationModule := RustModuleTargetModuleKey(target)
+	sourceModule := RustModuleTargetModuleKey(source)
+	for _, item := range exports {
+		if item.Language == "rust" && filepath.Clean(item.Path) == filepath.Clean(target.Path) && item.Scope == target.LocalScope && (item.Name == name || item.Name == "*") && RustItemVisibleFrom(declarationModule, sourceModule, item.VisibilityDetail) {
+			return true
+		}
+	}
+	return false
+}
+
+// rustCrateRootPath selects the source files that anchor a local crate's module index.
 func rustCrateRootPath(path string) bool {
 	if strings.ToLower(filepath.Ext(path)) != ".rs" {
 		return false
@@ -317,17 +331,6 @@ func rustCrateRootPath(path string) bool {
 		return true
 	}
 	return base == "main.rs" && filepath.Base(filepath.Dir(filepath.Dir(path))) == "bin" && filepath.Base(filepath.Dir(filepath.Dir(filepath.Dir(path)))) == "src"
-}
-
-func rustTargetExports(exports []NavigationExport, target, source RustModuleTarget, name string) bool {
-	declarationModule := RustModuleTargetModuleKey(target)
-	sourceModule := RustModuleTargetModuleKey(source)
-	for _, item := range exports {
-		if item.Language == "rust" && filepath.Clean(item.Path) == filepath.Clean(target.Path) && item.Scope == target.LocalScope && (item.Name == name || item.Name == "*") && RustItemVisibleFrom(declarationModule, sourceModule, item.VisibilityDetail) {
-			return true
-		}
-	}
-	return false
 }
 
 // RustModuleTargetModuleKey returns a stable selected-crate module identity.

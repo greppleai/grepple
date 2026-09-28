@@ -10,5 +10,5 @@ type NavigationLanguageResolutionStats = navigation.NavigationLanguageResolution
 type NavigationResolutionStats = navigation.NavigationResolutionStats
 
 func MeasureNavigationResolution(graph parser.NavigationGraph) NavigationResolutionStats {
-	return navigation.MeasureNavigationResolution(graph)
+	return navigation.NewGraphOperations().ResolutionStats(graph)
 }

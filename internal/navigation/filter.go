@@ -15,9 +15,9 @@ type NavigationGraphFilter struct {
 	Visibilities []string
 }
 
-// FilterNavigationGraph applies deterministic language and confidence filters
+// filterNavigationGraph applies deterministic language and confidence filters
 // while preserving declaration/call order and referential integrity.
-func FilterNavigationGraph(graph parser.NavigationGraph, filter NavigationGraphFilter) (parser.NavigationGraph, error) {
+func filterNavigationGraph(graph parser.NavigationGraph, filter NavigationGraphFilter) (parser.NavigationGraph, error) {
 	languages, err := navigationLanguageFilter(filter.Languages)
 	if err != nil {
 		return parser.NavigationGraph{}, err
@@ -41,8 +41,8 @@ func FilterNavigationGraph(graph parser.NavigationGraph, filter NavigationGraphF
 	return parser.NavigationGraph{Declarations: declarations, TypeDeclarations: typeDeclarations, Calls: calls, Imports: imports, Exports: exports, Fields: fields, TypeUsages: usages, MemberAccesses: accesses, RepositoryRoots: append([]string(nil), graph.RepositoryRoots...)}, nil
 }
 
-// NormalizeNavigationGraphFilter returns sorted, duplicate-free values after validation.
-func NormalizeNavigationGraphFilter(filter NavigationGraphFilter) (NavigationGraphFilter, error) {
+// normalizeNavigationGraphFilter returns sorted, duplicate-free values after validation.
+func normalizeNavigationGraphFilter(filter NavigationGraphFilter) (NavigationGraphFilter, error) {
 	languages, err := navigationLanguageFilter(filter.Languages)
 	if err != nil {
 		return NavigationGraphFilter{}, err
@@ -61,7 +61,7 @@ func NormalizeNavigationGraphFilter(filter NavigationGraphFilter) (NavigationGra
 func navigationLanguageFilter(values []string) (map[string]bool, error) {
 	filter := make(map[string]bool, len(values))
 	for _, value := range values {
-		capabilities, ok := parser.CapabilitiesForLanguage(value)
+		capabilities, ok := parser.NewParser().CapabilitiesForLanguage(value)
 		if !ok || !capabilities.Navigation {
 			return nil, fmt.Errorf("unsupported navigation language %q", value)
 		}

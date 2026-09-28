@@ -35,7 +35,7 @@ func TestNormalizeEvaluationsAppliesFindingLimitGlobally(t *testing.T) {
 func TestEvaluateDocumentsUsesGlobalCommitPath(t *testing.T) {
 	program := compileFindingPattern(t, "`x`")
 	makeDocument := func(source string) *parser.Document {
-		document, err := parser.ParseDocument("go", source)
+		document, err := parser.NewParser().Parse("go", source)
 		if err != nil {
 			t.Fatal(err)
 		}

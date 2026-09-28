@@ -42,14 +42,14 @@ func syntaxLineRanges(content, language string, lines map[int]bool, enclosing bo
 	if len(lines) == 0 {
 		return nil
 	}
-	document, err := ParseDocument(language, content)
+	document, err := parseDocument(language, content)
 	if err != nil {
 		return nil
 	}
 	defer document.Close()
 	collector := newStructuralLineRangeCollector(lines, enclosing)
 	_ = document.Read(func(view DocumentView) error {
-		WalkNamedViewBounded(view.Root(), WalkOptions{}, collector.visit)
+		walkNamedViewBounded(view.Root(), walkOptions{}, collector.visit)
 		return nil
 	})
 	return collector.result()

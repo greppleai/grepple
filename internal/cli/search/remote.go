@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/greppleai/grepple/internal/wire"
 	"github.com/greppleai/grepple/internal/apiclient"
 	"github.com/greppleai/grepple/internal/cliruntime"
-	"github.com/greppleai/grepple/internal/render"
 	"github.com/greppleai/grepple/internal/linerange"
 	"github.com/greppleai/grepple/internal/navigation"
+	"github.com/greppleai/grepple/internal/render"
 	"github.com/greppleai/grepple/internal/search"
+	"github.com/greppleai/grepple/internal/wire"
 )
 
 func searchRemote(application cliruntime.Context, options *Options, server string) ([]wire.FileResult, error) {
@@ -33,11 +33,11 @@ func searchRemoteContext(application cliruntime.Context, ctx context.Context, op
 
 func resolveLocalExternalNavigation(application cliruntime.Context, results []wire.FileResult, server string) []wire.FileResult {
 	workingDirectory := application.Repository().WorkingDirectory()
-	if err := navigation.QualifyExternalDependencies(results, workingDirectory); err != nil {
+	if err := navigation.NewExternalDependencyService[wire.FileResult]().QualifyLocal(results, workingDirectory); err != nil {
 		fmt.Fprintf(application.Stderr(), "warning: dependency navigation evidence failed: %v\n", err)
 		return results
 	}
-	references := navigation.ExternalDependencyReferences(results)
+	references := navigation.NewExternalDependencyService[wire.FileResult]().References(results)
 	if len(references) == 0 {
 		return results
 	}
@@ -48,7 +48,7 @@ func resolveLocalExternalNavigation(application cliruntime.Context, results []wi
 		fmt.Fprintf(application.Stderr(), "warning: dependency navigation lookup failed: %v\n", err)
 		return results
 	}
-	return navigation.ApplyExternalDependencyResolution(results, response)
+	return navigation.NewExternalResolutionService[wire.FileResult]().Apply(results, response)
 }
 
 func requestNavigationResolve(application cliruntime.Context, ctx context.Context, request wire.NavigationResolveRequest, server string) (wire.NavigationResolveResponse, error) {

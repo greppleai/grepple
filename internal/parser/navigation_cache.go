@@ -64,43 +64,60 @@ func CachedNavigationGraph(content, language, path string) (graph NavigationGrap
 	if cached, ok := readNavigationCache(digest); ok {
 		return navigationGraphAtPath(cached.Graph, path), cached.Recovered, true, nil
 	}
-	document, err := ParseDocument(language, content)
+	document, err := parseDocument(language, content)
 	if err != nil {
 		return NavigationGraph{}, false, false, err
 	}
 	defer document.Close()
 	recovered = document.Root().HasError()
-	neutral := NavigationGraphFromDocument(document, "")
+	neutral := navigationGraphFromDocument(document, "")
 	writeNavigationCache(digest, navigationCacheEntry{Schema: navigationCacheSchema, Digest: digest, Recovered: recovered, Graph: neutral})
 	return navigationGraphAtPath(neutral, path), recovered, false, nil
 }
 
-// CachedNavigationGraphFromDocument reuses or records navigation facts for an
-// already parsed document. It never reparses and leaves ownership with the caller.
-func CachedNavigationGraphFromDocument(document *Document, path string) (NavigationGraph, bool) {
+// cachedNavigationGraphFromDocument reuses or records graph facts for one exact
+// source path. It never reparses and leaves the document owned by its caller.
+// Unlike the content-only cache above, entrypoint facts may depend on path.
+func cachedNavigationGraphFromDocument(document *Document, path string) NavigationGraph {
 	if document == nil {
-		return NavigationGraph{}, false
+		return NavigationGraph{}
 	}
-	content, language := document.Source(), document.Language()
-	digest := navigationCacheDigest(content, language)
+	if os.Getenv(NavigationCacheDirectoryEnv) == "" {
+		return navigationGraphFromDocument(document, path)
+	}
+	document.mu.RLock()
+	defer document.mu.RUnlock()
+	if document.tree == nil {
+		return NavigationGraph{}
+	}
+	digest := navigationPathCacheDigest(document.source, document.language, path)
 	if cached, ok := readNavigationCache(digest); ok {
-		return navigationGraphAtPath(cached.Graph, path), true
+		return cached.Graph
 	}
-	neutral := NavigationGraphFromDocument(document, "")
+	root := document.tree.RootNode()
+	graph := navigationGraphFromTree(root, document.source, document.language, path)
 	writeNavigationCache(digest, navigationCacheEntry{
 		Schema: navigationCacheSchema, Digest: digest,
-		Recovered: document.Root().HasError(), Graph: neutral,
+		Recovered: root.HasError(), Graph: graph,
 	})
-	return navigationGraphAtPath(neutral, path), false
+	return graph
 }
 
+func navigationPathCacheDigest(content, language, path string) string {
+	hash := sha256.New()
+	_, _ = hash.Write([]byte("document-navigation\x00"))
+	_, _ = hash.Write([]byte(navigationCacheDigest(content, language)))
+	_, _ = hash.Write([]byte{0})
+	_, _ = hash.Write([]byte(path))
+	return hex.EncodeToString(hash.Sum(nil))
+}
 func navigationCacheDigest(content, language string) string {
 	hash := sha256.New()
 	_, _ = hash.Write([]byte(navigationCacheSchema))
 	_, _ = hash.Write([]byte{0})
 	_, _ = hash.Write([]byte(language))
 	_, _ = hash.Write([]byte{0})
-	if capabilities, ok := CapabilitiesForLanguage(language); ok {
+	if capabilities, ok := capabilitiesForLanguage(language); ok {
 		_, _ = hash.Write([]byte(strconv.FormatUint(uint64(capabilities.GrammarABI), 10)))
 		_, _ = hash.Write([]byte{0})
 		_, _ = hash.Write([]byte(capabilities.GrammarFingerprint))

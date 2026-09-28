@@ -18,7 +18,7 @@ func TestPHPNamespaceUseResolvesAcrossFiles(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	graph, _ := BuildGraphWithOptions([]string{service, model}, BuildOptions{DisableCache: true})
+	graph, _ := buildGraphWithOptions([]string{service, model}, BuildOptions{DisableCache: true})
 	if len(graph.Imports) != 1 || len(graph.Imports[0].TargetPaths) != 1 || graph.Imports[0].TargetPaths[0] != model {
 		t.Fatalf("PHP import targets=%#v exports=%#v", graph.Imports, graph.Exports)
 	}

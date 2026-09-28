@@ -2,13 +2,14 @@ package parser
 
 import (
 	"errors"
+	"slices"
 	"sync"
 	"testing"
 	"time"
 )
 
 func TestDocumentReadViewIsStableAndCallbackScoped(t *testing.T) {
-	document, err := ParseDocument("go", "package p\nfunc run() { call() }\n")
+	document, err := NewParser().Parse("go", "package p\nfunc run() { call() }\n")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -22,7 +23,7 @@ func TestDocumentReadViewIsStableAndCallbackScoped(t *testing.T) {
 		if view.Language() != "go" || view.Source() == "" || !retainedRoot.Valid() {
 			t.Fatalf("active view is invalid: %#v", view)
 		}
-		WalkNamedView(retainedRoot, func(node ViewNode) { kinds = append(kinds, node.Kind()) })
+		retainedRoot.WalkNamed(func(node ViewNode) { kinds = append(kinds, node.Kind()) })
 		snapshot, ok := retainedRoot.Snapshot()
 		if !ok || !snapshot.Valid() {
 			t.Fatal("root snapshot failed")
@@ -43,22 +44,47 @@ func TestDocumentReadViewIsStableAndCallbackScoped(t *testing.T) {
 	}
 }
 
+func TestDocumentWalkNamedViewOwnsReadScope(t *testing.T) {
+	document, err := NewParser().Parse("go", "package p\nfunc run() { call() }\n")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var nodes []string
+	document.WalkNamed(func(node Node) { nodes = append(nodes, node.Kind()) })
+	var views []string
+	var retained ViewNode
+	if err := document.WalkNamedView(func(node ViewNode) {
+		views = append(views, node.Kind())
+		retained = node
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if !slices.Equal(nodes, views) || len(views) < 4 || retained.Valid() {
+		t.Fatalf("node walk=%v view walk=%v retained=%v", nodes, views, retained.Valid())
+	}
+	document.Close()
+	if err := document.WalkNamedView(func(ViewNode) {}); !errors.Is(err, ErrDocumentClosed) {
+		t.Fatalf("closed document walk error=%v", err)
+	}
+	document.WalkNamed(func(Node) { t.Fatal("closed document yielded a node") })
+}
+
 func TestWalkNamedViewBoundedReportsConfiguredLimits(t *testing.T) {
-	document, err := ParseDocument("go", "package p\nfunc run() { call() }\n")
+	document, err := NewParser().Parse("go", "package p\nfunc run() { call() }\n")
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer document.Close()
 	if err := document.Read(func(view DocumentView) error {
-		byNodes := WalkNamedViewBounded(view.Root(), WalkOptions{MaxNodes: 2}, func(ViewNode, int) bool { return true })
+		byNodes := walkNamedViewBounded(view.Root(), walkOptions{MaxNodes: 2}, func(ViewNode, int) bool { return true })
 		if byNodes.Visited != 2 || !byNodes.Truncated {
 			t.Fatalf("node-bounded walk=%#v", byNodes)
 		}
-		byDepth := WalkNamedViewBounded(view.Root(), WalkOptions{MaxDepth: 1}, func(ViewNode, int) bool { return true })
+		byDepth := walkNamedViewBounded(view.Root(), walkOptions{MaxDepth: 1}, func(ViewNode, int) bool { return true })
 		if byDepth.Visited != 1 || !byDepth.Truncated {
 			t.Fatalf("depth-bounded walk=%#v", byDepth)
 		}
-		pruned := WalkNamedViewBounded(view.Root(), WalkOptions{}, func(ViewNode, int) bool { return false })
+		pruned := walkNamedViewBounded(view.Root(), walkOptions{}, func(ViewNode, int) bool { return false })
 		if pruned.Visited != 1 || pruned.Truncated {
 			t.Fatalf("pruned walk=%#v", pruned)
 		}
@@ -69,7 +95,7 @@ func TestWalkNamedViewBoundedReportsConfiguredLimits(t *testing.T) {
 }
 
 func TestDocumentReadPropagatesErrorAndRejectsClosedDocument(t *testing.T) {
-	document, err := ParseDocument("go", "package p\n")
+	document, err := NewParser().Parse("go", "package p\n")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -84,7 +110,7 @@ func TestDocumentReadPropagatesErrorAndRejectsClosedDocument(t *testing.T) {
 }
 
 func TestDocumentCloseWaitsForReadView(t *testing.T) {
-	document, err := ParseDocument("go", "package p\n")
+	document, err := NewParser().Parse("go", "package p\n")
 	if err != nil {
 		t.Fatal(err)
 	}

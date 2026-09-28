@@ -30,7 +30,7 @@ type goRepositoryInputs struct {
 func collectGoRepositoryInputs(paths []string) goRepositoryInputs {
 	inputs := goRepositoryInputs{configPaths: make(map[string]bool), ownershipRoots: make(map[string]bool), importRoots: make(map[string]bool), packageFiles: make(map[string][]string)}
 	for _, sourcePath := range paths {
-		if parser.LanguageFor(sourcePath) != "go" {
+		if parser.NewParser().LanguageFor(sourcePath) != "go" {
 			continue
 		}
 		inputs.goPaths = append(inputs.goPaths, sourcePath)
@@ -82,11 +82,11 @@ func sortedGoRepositorySet(values map[string]bool) []string {
 	return result
 }
 
-// RepositoryContextFiles returns sorted Go module/workspace files that affect repository identity.
-func RepositoryContextFiles(paths []string) []string {
+// repositoryContextFiles returns sorted Go module/workspace files that affect repository identity.
+func repositoryContextFiles(paths []string) []string {
 	configs := make(map[string]bool)
 	for _, sourcePath := range paths {
-		if parser.LanguageFor(sourcePath) != "go" {
+		if parser.NewParser().LanguageFor(sourcePath) != "go" {
 			continue
 		}
 		if moduleRoot, _, ok := goModuleForFile(sourcePath); ok {
@@ -208,7 +208,7 @@ func goImportDirectory(root, module string, known bool, importPath string) (stri
 // enrichNavigationRepositoryIdentity applies path-dependent Go module and package
 // identity after path-neutral per-file facts have been loaded from cache.
 func enrichNavigationRepositoryIdentity(graph *parser.NavigationGraph, sourcePath string) {
-	if graph == nil || parser.LanguageFor(sourcePath) != "go" {
+	if graph == nil || parser.NewParser().LanguageFor(sourcePath) != "go" {
 		return
 	}
 	moduleRoot, moduleID, ok := goModuleForFile(sourcePath)
@@ -283,7 +283,8 @@ func (index *goNavigationIndex) localImportDirectory(sourceFile, importPath stri
 	return goImportDirectory(module.root, module.name, module.known, importPath)
 }
 
-func (index *goNavigationIndex) importTargets(sourceFile, _, importPath, _, _ string) navigationImportTargets {
+func (index *goNavigationIndex) importTargets(request navigationImportRequest) navigationImportTargets {
+	sourceFile, importPath := request.sourceFile, request.importPath
 	targets := append([]string(nil), index.packages[importPath]...)
 	root, directory := longestGoReplacementPrefix(importPath, index.replacements)
 	if root != "" {

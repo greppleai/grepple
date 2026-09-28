@@ -10,11 +10,11 @@ import (
 	"text/tabwriter"
 
 	"github.com/alexflint/go-arg"
-	"github.com/greppleai/grepple/internal/wire"
+	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
 	"github.com/greppleai/grepple/internal/extract"
 	"github.com/greppleai/grepple/internal/gritql"
-	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
 	"github.com/greppleai/grepple/internal/parser"
+	"github.com/greppleai/grepple/internal/wire"
 )
 
 type Args struct {
@@ -80,11 +80,12 @@ func languageCapabilityMatrix() []wire.LanguageCapabilities {
 	for _, language := range gritql.SupportedLanguages() {
 		gritLanguages[language.ID] = true
 	}
+	parserService := parser.NewParser()
 	parserLanguages := make(map[string]parser.LanguageCapabilities)
-	for _, language := range parser.SupportedLanguages() {
+	for _, language := range parserService.SupportedLanguages() {
 		parserLanguages[language.ID] = language
 	}
-	contentLanguages := parser.SupportedContentLanguages()
+	contentLanguages := parserService.SupportedContentLanguages()
 	result := make([]wire.LanguageCapabilities, 0, len(contentLanguages))
 	for _, language := range contentLanguages {
 		extractLanguage, hasExtraction := extractionCapabilities(language, extraction)

@@ -4,15 +4,15 @@ import "testing"
 
 func TestDartSyntaxOutlineAndNavigation(t *testing.T) {
 	const content = "import 'src/helper.dart' as helpers;\nclass Service {\n final String title;\n Service(this.title);\n String greet(String text) { return helpers.format(text) + title; }\n}\nvoid _hidden() {}\nvoid main() { final service = Service('hi'); service.greet('world'); }\n"
-	document, err := ParseDocument("dart", content)
+	document, err := NewParser().Parse("dart", content)
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer document.Close()
-	outline := OutlineFromDocument("lib/main.dart", document)
+	outline := NewParser().Outline(document, "lib/main.dart")
 	mustFind(t, outline.Symbols, "method", "greet")
 	mustFind(t, outline.Symbols, "class", "Service")
-	graph := NavigationGraphFromDocument(document, "lib/main.dart")
+	graph := NewParser().NavigationGraph(document, "lib/main.dart")
 	if len(graph.Imports) != 1 || graph.Imports[0].ImportPath != "src/helper.dart" || graph.Imports[0].Alias != "helpers" {
 		t.Fatalf("Dart imports: %+v", graph.Imports)
 	}

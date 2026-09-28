@@ -143,8 +143,8 @@ var languageCapabilities = []LanguageCapabilities{
 	{ID: "shell", Extensions: []string{".sh", ".bash", ".zsh"}, Navigation: true},
 }
 
-// SupportedLanguages returns deterministic metadata for parser-backed languages.
-func SupportedLanguages() []LanguageCapabilities {
+// supportedLanguages returns deterministic metadata for parser-backed languages.
+func supportedLanguages() []LanguageCapabilities {
 	result := make([]LanguageCapabilities, len(languageCapabilities))
 	for i, capability := range languageCapabilities {
 		result[i] = enrichLanguageCapabilities(capability)
@@ -152,10 +152,10 @@ func SupportedLanguages() []LanguageCapabilities {
 	return result
 }
 
-// SupportedContentLanguages returns deterministic parser and lightweight content capabilities.
-func SupportedContentLanguages() []ContentLanguageCapabilities {
+// supportedContentLanguages returns deterministic parser and lightweight content capabilities.
+func supportedContentLanguages() []ContentLanguageCapabilities {
 	languages := make([]ContentLanguageCapabilities, 0, len(languageCapabilities)+4)
-	for _, capability := range SupportedLanguages() {
+	for _, capability := range supportedLanguages() {
 		languages = append(languages, ContentLanguageCapabilities{
 			ID: capability.ID, Extensions: capability.Extensions, StructuralGrep: true, Outline: true, Navigation: capability.Navigation,
 		})
@@ -169,8 +169,8 @@ func SupportedContentLanguages() []ContentLanguageCapabilities {
 	return languages
 }
 
-// CapabilitiesForLanguage returns metadata for a canonical language ID.
-func CapabilitiesForLanguage(id string) (LanguageCapabilities, bool) {
+// capabilitiesForLanguage returns metadata for a canonical language ID.
+func capabilitiesForLanguage(id string) (LanguageCapabilities, bool) {
 	for _, capability := range languageCapabilities {
 		if capability.ID == id {
 			return enrichLanguageCapabilities(capability), true
@@ -195,64 +195,6 @@ func enrichLanguageCapabilities(capability LanguageCapabilities) LanguageCapabil
 		}
 	}
 	return capability
-}
-
-// GrammarNodeKind reports whether a named syntax kind belongs to the pinned
-// grammar for language. It does not parse source or infer runtime types.
-func GrammarNodeKind(language, kind string) bool {
-	adapter := adapterForLanguage(language)
-	if adapter == nil || kind == "" {
-		return false
-	}
-	grammar := adapter.Grammar()
-	return grammar.valid() && grammar.raw.IdForNodeKind(kind, true) != 0
-}
-
-// GrammarFieldName reports whether a field name exists anywhere in the pinned
-// grammar. Use GrammarFieldCardinality for a known parent node kind.
-func GrammarFieldName(language, field string) bool {
-	adapter := adapterForLanguage(language)
-	if adapter == nil || field == "" {
-		return false
-	}
-	grammar := adapter.Grammar()
-	return grammar.valid() && grammar.raw.FieldIdForName(field) != 0
-}
-
-// GrammarTokenKind reports whether an anonymous syntax token is present in
-// the pinned target grammar (for example Go's && and || operators).
-func GrammarTokenKind(language, kind string) bool {
-	adapter := adapterForLanguage(language)
-	if adapter == nil || kind == "" {
-		return false
-	}
-	grammar := adapter.Grammar()
-	return grammar.valid() && grammar.raw.IdForNodeKind(kind, false) != 0
-}
-
-// GrammarFieldCardinality returns the cardinality of a named field on a node kind.
-func GrammarFieldCardinality(language, parentKind, field string) GrammarCardinality {
-	metadata, ok := generatedLanguageMetadata[language]
-	if !ok {
-		return GrammarCardinalityUnknown
-	}
-	return metadata.fields[parentKind][field]
-}
-
-// GrammarChildrenCardinality returns the cardinality of an unfielded children position.
-func GrammarChildrenCardinality(language, parentKind string) GrammarCardinality {
-	metadata, ok := generatedLanguageMetadata[language]
-	if !ok {
-		return GrammarCardinalityUnknown
-	}
-	return metadata.children[parentKind]
-}
-
-// GrammarSubtype reports whether kind belongs transitively to the named grammar
-// supertype in the pinned node-types metadata.
-func GrammarSubtype(language, supertype, kind string) bool {
-	metadata, ok := generatedLanguageMetadata[language]
-	return ok && metadata.subtypes[supertype][kind]
 }
 
 func buildLanguageAdapters(adapters ...languageAdapter) map[string]languageAdapter {

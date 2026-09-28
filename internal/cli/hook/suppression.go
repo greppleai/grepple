@@ -65,14 +65,14 @@ func readHookSuppressions(root *os.Root, path string) (hookSuppressions, error) 
 	if !strings.Contains(string(content), "//grepple") {
 		return result, nil
 	}
-	doc, err := parser.ParseDocument(parser.LanguageFor(path), string(content))
+	doc, err := parser.NewParser().Parse(parser.NewParser().LanguageFor(path), string(content))
 	if err != nil {
 		return result, fmt.Errorf("parse hook suppressions in %s: %w", path, err)
 	}
 	defer doc.Close()
 	result.directives = make(map[int]map[string]bool)
 	result.commentOnly = make(map[int]bool)
-	parser.WalkNamed(doc.Root(), func(node parser.Node) {
+	doc.WalkNamed(func(node parser.Node) {
 		if node.Kind() != "comment" && node.Kind() != "line_comment" {
 			return
 		}

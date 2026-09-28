@@ -14,7 +14,7 @@ func BenchmarkSyntaxAccessModes(b *testing.B) {
 	for index := range 100 {
 		fmt.Fprintf(&source, "func Function%d(value int) int { if value > 0 { return value + %d }; return 0 }\n", index, index)
 	}
-	document, err := ParseDocument("go", source.String())
+	document, err := NewParser().Parse("go", source.String())
 	if err != nil {
 		b.Fatal(err)
 	}
@@ -34,7 +34,7 @@ func benchmarkDocumentNode(b *testing.B, document *Document) {
 	b.ReportAllocs()
 	for range b.N {
 		count := 0
-		WalkNamed(document.Root(), func(node Node) {
+		document.WalkNamed(func(node Node) {
 			if node.Kind() != "" {
 				count++
 			}
@@ -48,7 +48,7 @@ func benchmarkDocumentReadView(b *testing.B, document *Document) {
 	for range b.N {
 		count := 0
 		if err := document.Read(func(view DocumentView) error {
-			WalkNamedView(view.Root(), func(node ViewNode) {
+			view.Root().WalkNamed(func(node ViewNode) {
 				if node.Kind() != "" {
 					count++
 				}

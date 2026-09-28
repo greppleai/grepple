@@ -8,13 +8,13 @@ import (
 func TestNavigationGraphFromDocumentDoesNotReparse(t *testing.T) {
 	content := "package sample\nfunc Start() { Finish() }\nfunc Finish() {}\n"
 	before := parseInvocations.Load()
-	document, err := ParseDocument("go", content)
+	document, err := NewParser().Parse("go", content)
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer document.Close()
 	afterParse := parseInvocations.Load()
-	graph := NavigationGraphFromDocument(document, "sample/main.go")
+	graph := NewParser().NavigationGraph(document, "sample/main.go")
 	if got := parseInvocations.Load(); afterParse != before+1 || got != afterParse {
 		t.Fatalf("parse invocations before=%d after-parse=%d after-graph=%d", before, afterParse, got)
 	}
@@ -158,7 +158,9 @@ func TestNavigationGraphCapturesRustProcessEntrypoints(t *testing.T) {
 		{name: "bin file", path: "app/src/bin/server.rs", content: "fn main() {}", want: 1},
 		{name: "bin directory", path: "app/src/bin/server/main.rs", content: "fn main() {}", want: 1},
 		{name: "library", path: "app/src/lib.rs", content: "fn main() {}"},
+		{name: "binary library", path: "app/src/bin/lib.rs", content: "fn main() {}"},
 		{name: "non-root file", path: "app/src/module.rs", content: "fn main() {}"},
+		{name: "non-Rust binary", path: "app/src/bin/server.go", content: "fn main() {}"},
 		{name: "inline module", path: "app/src/main.rs", content: "mod nested { fn main() {} }"},
 	} {
 		t.Run(test.name, func(t *testing.T) {
@@ -285,17 +287,39 @@ func TestCachedNavigationGraphInstantiatesPathsAndInvalidatesContent(t *testing.
 	}
 }
 
-func TestCachedNavigationGraphFromDocumentReusesFacts(t *testing.T) {
+func TestParserNavigationGraphCachesExactPathFacts(t *testing.T) {
 	t.Setenv(NavigationCacheDirectoryEnv, t.TempDir())
-	cold, _, _ := cachedTestNavigationGraph(t, navigationCacheTestContent, "sample/main.go")
-	document, err := ParseDocument("go", navigationCacheTestContent)
+	service := NewParser()
+	content := "fn main() {}\n"
+	document, err := service.Parse("rust", content)
 	if err != nil {
 		t.Fatal(err)
 	}
-	fromDocument, hit := CachedNavigationGraphFromDocument(document, "sample/main.go")
+	mainPath, libPath := "crate/src/main.rs", "crate/src/lib.rs"
+	main := service.NavigationGraph(document, mainPath)
+	library := service.NavigationGraph(document, libPath)
+	if len(main.Declarations) != 1 || main.Declarations[0].Entrypoint != "process" || len(library.Declarations) != 1 || library.Declarations[0].Entrypoint != "" {
+		t.Fatalf("path-specific entrypoints: main=%+v library=%+v", main.Declarations, library.Declarations)
+	}
+	mainDigest := navigationPathCacheDigest(content, "rust", mainPath)
+	if mainDigest == navigationPathCacheDigest(content, "rust", libPath) || mainDigest == navigationPathCacheDigest(content+"\n", "rust", mainPath) {
+		t.Fatal("path or content did not invalidate navigation facts")
+	}
+	cached, hit := readNavigationCache(mainDigest)
+	if !hit || navigationGraphJSON(cached.Graph) != navigationGraphJSON(main) {
+		t.Fatalf("missing path-specific cache entry: hit=%v graph=%s", hit, navigationGraphJSON(cached.Graph))
+	}
+	cached.Graph.RepositoryRoots = []string{"cache-hit"}
+	writeNavigationCache(mainDigest, cached)
+	if graph := service.NavigationGraph(document, mainPath); len(graph.RepositoryRoots) != 1 || graph.RepositoryRoots[0] != "cache-hit" {
+		t.Fatalf("graph did not reuse cache: %+v", graph)
+	}
+	if graph := NewParser(ParserOptions{DisableNavigationCache: true}).NavigationGraph(document, mainPath); len(graph.RepositoryRoots) != 0 || graph.Declarations[0].Entrypoint != "process" {
+		t.Fatalf("disabled cache changed graph: %+v", graph)
+	}
 	document.Close()
-	if !hit || navigationGraphJSON(fromDocument) != navigationGraphJSON(cold) {
-		t.Fatalf("document cache reuse hit=%v graph=%s", hit, navigationGraphJSON(fromDocument))
+	if graph := service.NavigationGraph(document, mainPath); len(graph.Declarations) != 0 {
+		t.Fatalf("closed document reused cached facts: %+v", graph)
 	}
 }
 
@@ -313,12 +337,12 @@ func navigationGraphJSON(graph NavigationGraph) string {
 	return string(encoded)
 }
 
-func TestNavigationCompatibilityUsesNormalizedGraph(t *testing.T) {
+func TestDeclarationRangeAtUsesNormalizedGraph(t *testing.T) {
 	content := "function start(): void { finish() }\nfunction finish(): void {}\n"
 	graph := BuildNavigationGraph(content, "typescript", "")
-	declarations, calls := Navigation(content, "typescript")
-	if len(declarations) != len(graph.Declarations) || len(calls) != len(graph.Calls) {
-		t.Fatalf("compatibility result differs from graph: graph=%+v declarations=%+v calls=%+v", graph, declarations, calls)
+	start, end, ok := DeclarationRangeAt(content, "typescript", 1)
+	if len(graph.Declarations) == 0 || !ok || start != graph.Declarations[0].Start || end != graph.Declarations[0].End {
+		t.Fatalf("range=(%d,%d,%v) graph=%+v", start, end, ok, graph.Declarations)
 	}
 }
 

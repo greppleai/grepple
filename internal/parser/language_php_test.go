@@ -42,7 +42,7 @@ func TestPHPFixtureNavigationAndOutline(t *testing.T) {
 
 func TestPHPMixedHTMLAndMalformedSyntax(t *testing.T) {
 	for _, source := range []string{"<h1>Welcome</h1>\n<?php function greet() { return 1; } ?>\n<footer>ok</footer>", "<?php function broken(\n"} {
-		document, err := ParseDocument("php", source)
+		document, err := NewParser().Parse("php", source)
 		if err != nil {
 			t.Fatal(err)
 		}

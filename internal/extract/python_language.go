@@ -65,7 +65,7 @@ func normalizePythonType(value string) string {
 func preparePythonModules(analysis *Analysis, sources []Source) {
 	paths := make([]string, 0, len(sources))
 	for _, source := range sources {
-		if codeparser.LanguageFor(source.Path) == "python" {
+		if codeparser.NewParser().LanguageFor(source.Path) == "python" {
 			paths = append(paths, absolutePath(source.Path))
 		}
 	}
@@ -102,7 +102,7 @@ func (analysis *pythonAnalysis) Analyze(source Source) error {
 	}); err != nil {
 		return err
 	}
-	graph, _ := codeparser.CachedNavigationGraphFromDocument(document, source.Path)
+	graph := codeparser.NewParser().NavigationGraph(document, source.Path)
 	addModuleNavigationSymbols(analysis.result, graph, "python", analyzer.moduleID, source.Path)
 	analysis.result.Navigation.Merge(graph)
 	return nil
@@ -249,7 +249,7 @@ func pythonNestedFieldText(node codeparser.ViewNode, field string) string {
 }
 
 func (analyzer *pythonSourceAnalyzer) collectPythonInstanceFields(function codeparser.ViewNode, declaration *Declaration) {
-	codeparser.WalkNamedView(function.ChildByFieldName("body"), func(node codeparser.ViewNode) {
+	function.ChildByFieldName("body").WalkNamed(func(node codeparser.ViewNode) {
 		if member, ok := analyzer.pythonAssignmentMember(node, true); ok {
 			declaration.Members = appendPythonMember(declaration.Members, member)
 		}

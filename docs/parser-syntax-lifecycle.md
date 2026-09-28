@@ -12,9 +12,9 @@ Grepple exposes three syntax access modes over one parser-owned `Document`. They
 
 ## Document ownership
 
-`ParseDocument` validates UTF-8, clones the source, parses through the owning `languageAdapter`, and returns a `Document`. The caller should call `Close`; the finalizer is only a safety net. `Close` is idempotent and may run concurrently with ordinary `Document` or `Node` reads. A `Document` contains synchronization state and must not be copied after first use.
+`parser.NewParser().Parse` validates UTF-8, clones the source, parses through the owning `languageAdapter`, and returns a concrete `Document`. The caller should call `Close`; the finalizer is only a safety net. `Close` is idempotent and may run concurrently with ordinary `Document` or `Node` reads. A `Document` contains synchronization state and must not be copied after first use.
 
-High-level consumers should prefer document-backed APIs such as `OutlineFromDocument`, `NavigationGraphFromDocument`, `CachedNavigationGraphFromDocument`, `DeclarationRangeAtFromDocument`, and `BuildSegmentsFromDocument`. These derive facts from the same tree without reparsing and leave ownership with the caller. `search.BuildNavigationAnalysisFromDocuments` can retain one resolved, read-only multi-file analysis for graph and related-navigation projections while the caller keeps those documents open.
+The exported `parser.Parser` interface groups the parse-once, project-many workflow. After `Parse`, use its `NavigationGraph`, `Outline`, or `Segments` method on the caller-owned document; none reparses or closes it. `NavigationGraph` transparently reuses path- and content-keyed facts when `GREPPLE_NAVIGATION_CACHE_DIR` is set; `NewParser(parser.ParserOptions{DisableNavigationCache: true})` bypasses that cache. The separate `parser.CachedNavigationGraph(content, language, path)` entrypoint can skip parsing altogether on a content-cache hit and returns recovery and hit metadata. `DeclarationRangeAtFromDocument` remains a specialized range helper. `search.BuildNavigationAnalysisFromDocuments` can retain one resolved, read-only multi-file analysis for graph and related-navigation projections while the caller keeps those documents open.
 
 ## Stable callback traversal
 
@@ -22,15 +22,16 @@ Use `Document.Read` when several node operations must observe one coherent open 
 
 ```go
 err := document.Read(func(view parser.DocumentView) error {
-    parser.WalkNamedView(view.Root(), func(node parser.ViewNode) {
+    view.Root().WalkNamed(func(node parser.ViewNode) {
         // Inspect node.Kind(), node.Range(), fields, and children here.
     })
     return nil
 })
 ```
 
-The callback must use only its `DocumentView` and `ViewNode` values. It must not call methods on the owning `Document`, wait for code that may close the document, or retain view values after returning. `ViewNode` accessors avoid per-operation document locking because `Document.Read` already holds the read lock; the primary contract is coherent traversal, not a promise that every workload is faster than `Node`.
+For a whole-document walk without an existing `Read` callback, call `document.WalkNamedView(visit)`; it acquires one read lock and reports `ErrDocumentClosed`. `document.WalkNamed(visit)` walks borrowed `Node` handles from the root. Inside an existing `Read` callback, use `ViewNode.WalkNamed(visit)` for root or subtree traversal instead of re-entering a `Document` method.
 
+The callback must use only its `DocumentView` and `ViewNode` values. It must not call methods on the owning `Document`, wait for code that may close the document, or retain view values after returning. `ViewNode` accessors avoid per-operation document locking because `Document.Read` already holds the read lock; the primary contract is coherent traversal, not a promise that every workload is faster than `Node`.
 ## Retaining syntax safely
 
 Call `Node.Snapshot` or `ViewNode.Snapshot` when syntax must outlive its borrowed handle. `SyntaxNode` recursively copies node kind, text, field, flags, ranges, children, and a reference to the immutable source string. It remains valid after `Document.Close` and is safe for concurrent reads. Snapshotting a large subtree allocates proportionally to that subtree, so snapshot the narrowest useful node.
@@ -39,7 +40,7 @@ A retained `Node` is not a snapshot. It remains tied to its document and becomes
 
 ## Invalid and recovery behavior
 
-Zero `Node`, `ViewNode`, and `SyntaxNode` values are invalid. Borrowed-node accessors return zero values after invalidation instead of dereferencing a released tree. `ParseDocument` can return a valid recovery tree; inspect `ParseDiagnostics` or `Root().HasError()` when completeness matters.
+Zero `Node`, `ViewNode`, and `SyntaxNode` values are invalid. Borrowed-node accessors return zero values after invalidation instead of dereferencing a released tree. `Parser.Parse` can return a valid recovery tree; inspect `ParseDiagnostics` or `Root().HasError()` when completeness matters.
 
 All ranges are half-open. Byte offsets are zero-based; line and Unicode-scalar columns are one-based. Grammar node kinds and field names remain language-specific even though the handles are language-neutral.
 

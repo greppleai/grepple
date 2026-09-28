@@ -302,7 +302,7 @@ func (analyzer *sourceAnalyzer) analyzeImport(statement codeparser.ViewNode) {
 	}
 	typeOnly := hasChildKind(statement, "type") || childHasText(statement, analyzer.text, "type")
 	analyzer.addDefaultImport(clause, module, typeOnly)
-	codeparser.WalkNamedView(clause, func(node codeparser.ViewNode) {
+	clause.WalkNamed(func(node codeparser.ViewNode) {
 		analyzer.addStructuredImport(node, module, typeOnly)
 	})
 }
@@ -333,7 +333,7 @@ func (analyzer *sourceAnalyzer) addStructuredImport(node codeparser.ViewNode, mo
 }
 
 func (analyzer *sourceAnalyzer) analyzeExportSpecifiers(statement codeparser.ViewNode) {
-	codeparser.WalkNamedView(statement, func(node codeparser.ViewNode) {
+	statement.WalkNamed(func(node codeparser.ViewNode) {
 		if node.Kind() != "export_specifier" {
 			return
 		}
@@ -389,7 +389,7 @@ func moduleLanguageDisplayName(language string) string {
 }
 
 func collectHeritage(node codeparser.ViewNode, source []byte, declaration *Declaration) {
-	codeparser.WalkNamedView(node, func(child codeparser.ViewNode) { processHeritageNode(child, source, declaration) })
+	node.WalkNamed(func(child codeparser.ViewNode) { processHeritageNode(child, source, declaration) })
 }
 
 func processHeritageNode(node codeparser.ViewNode, source []byte, declaration *Declaration) {
@@ -566,8 +566,8 @@ func finalizeTypeScriptSymbols(result *Analysis) {
 }
 
 func parseSource(source Source) (*codeparser.Document, error) {
-	language := codeparser.LanguageFor(source.Path)
-	document, err := codeparser.ParseDocument(language, source.Text)
+	language := codeparser.NewParser().LanguageFor(source.Path)
+	document, err := codeparser.NewParser().Parse(language, source.Text)
 	if err != nil {
 		return nil, fmt.Errorf("parse %s: %w", source.Path, err)
 	}
@@ -611,7 +611,8 @@ func Analyze(sources []Source) (*Analysis, error) {
 	for _, source := range sources {
 		navigationSources = append(navigationSources, navigation.TextSource{Path: source.Path, Text: source.Text})
 	}
-	result.Navigation, _ = navigation.BuildGraphFromTextSources(navigationSources, navigation.BuildOptions{})
+	navigationAnalysis, _ := navigation.NewGraphEngine(navigation.BuildOptions{}).BuildTextSources(navigationSources)
+	result.Navigation = navigationAnalysis.Graph()
 	projectNavigationGraph(result)
 	return result, nil
 }
@@ -662,7 +663,7 @@ func analyzeECMAScriptSource(source Source, result *Analysis) error {
 	}); err != nil {
 		return err
 	}
-	graph, _ := codeparser.CachedNavigationGraphFromDocument(document, source.Path)
+	graph := codeparser.NewParser().NavigationGraph(document, source.Path)
 	result.Navigation.Merge(graph)
 	return nil
 }

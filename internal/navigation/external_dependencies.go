@@ -17,15 +17,15 @@ type dependencyContext struct {
 	applicable   bool
 }
 
-// QualifyExternalDependencies adds exact local manifest evidence to unresolved
+// qualifyLocalDependencies adds exact local manifest evidence to unresolved
 // dependency references. References without an exact version remain unchanged.
-func QualifyExternalDependencies[T ExternalDependencyResult](results []T, workingDirectory string) error {
+func qualifyLocalDependencies[T ExternalDependencyResult](results []T, workingDirectory string) error {
 	return qualifyExternalDependencies(results, workingDirectory, false)
 }
 
-// QualifyRepositoryExternalDependencies qualifies server-side results whose paths
+// qualifyRepositoryExternalDependencies qualifies server-side results whose paths
 // are relative to an indexed repository root.
-func QualifyRepositoryExternalDependencies[T ExternalDependencyResult](results []T, repositoryRoot string) error {
+func qualifyRepositoryExternalDependencies[T ExternalDependencyResult](results []T, repositoryRoot string) error {
 	return qualifyExternalDependencies(results, repositoryRoot, true)
 }
 
@@ -119,9 +119,9 @@ func applyDependencyMatch(reference *ExternalReference, match dependency.Match) 
 	}
 }
 
-// ExternalDependencyReferences returns deterministic exact references eligible
+// externalDependencyReferences returns deterministic exact references eligible
 // for a server artifact lookup.
-func ExternalDependencyReferences[T ExternalDependencyResult](results []T) []ExternalReference {
+func externalDependencyReferences[T ExternalDependencyResult](results []T) []ExternalReference {
 	byID := make(map[string]ExternalReference)
 	var collect func([]RelatedSymbol)
 	collect = func(symbols []RelatedSymbol) {
@@ -159,9 +159,9 @@ func externalReferenceQualified(reference ExternalReference) bool {
 	return false
 }
 
-// ApplyExternalDependencyResolution replaces unresolved references with exact
+// applyExternalDependencyResolution replaces unresolved references with exact
 // symbols returned by a navigation artifact server.
-func ApplyExternalDependencyResolution[T interface {
+func applyExternalDependencyResolution[T interface {
 	ExternalDependencyResult
 	WithExternalDependencyRelated([]RelatedSymbol) T
 }](results []T, response ResolveResponse) []T {

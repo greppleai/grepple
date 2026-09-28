@@ -17,7 +17,7 @@ func evaluateForTest(t *testing.T, pattern, source string, options EvaluateOptio
 	if err != nil {
 		t.Fatal(err)
 	}
-	document, err := parser.ParseDocument("go", source)
+	document, err := parser.NewParser().Parse("go", source)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -147,7 +147,7 @@ func TestListWithinVisitsSelfLowestCommonParentAndAncestorsNearestFirst(t *testi
 
 func withListCandidateForTest(t *testing.T, source, text string, inspect func(evalCandidate, map[string]evalCandidate)) {
 	t.Helper()
-	doc, err := parser.ParseDocument("go", source)
+	doc, err := parser.NewParser().Parse("go", source)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -202,7 +202,7 @@ func TestEvaluateStatementSequenceCandidates(t *testing.T) {
 func TestTraversalEnumeratesEveryRepeatedGoPositionInCanonicalOrder(t *testing.T) {
 	t.Parallel()
 	source := "package p\ntype I interface { int | string }\ntype S struct { A, B int; C string }\nfunc f(a, b int, c string) { g(x, y,) }\n"
-	doc, err := parser.ParseDocument("go", source)
+	doc, err := parser.NewParser().Parse("go", source)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -222,7 +222,7 @@ func TestTraversalEnumeratesEveryRepeatedGoPositionInCanonicalOrder(t *testing.T
 func TestTopLevelNotAndMaybeUseListCandidatesWithoutSeparatorRanges(t *testing.T) {
 	t.Parallel()
 	source := "package p\nvar _ = f(a, b,)\n"
-	doc, err := parser.ParseDocument("go", source)
+	doc, err := parser.NewParser().Parse("go", source)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -312,7 +312,7 @@ func TestEvaluateLimitsCancellationDeadlineAndParseFailureAreTyped(t *testing.T)
 	if err != nil {
 		t.Fatal(err)
 	}
-	valid, err := parser.ParseDocument("go", "package p\nvar _ = x\n")
+	valid, err := parser.NewParser().Parse("go", "package p\nvar _ = x\n")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -329,7 +329,7 @@ func TestEvaluateLimitsCancellationDeadlineAndParseFailureAreTyped(t *testing.T)
 	_, err = Evaluate(context.Background(), program, valid, EvaluateOptions{MaxSteps: 1})
 	assertEvaluationCode(t, err, "LIMIT_AST_STEPS")
 
-	invalid, err := parser.ParseDocument("go", "package p\nfunc f(\n")
+	invalid, err := parser.NewParser().Parse("go", "package p\nfunc f(\n")
 	if err != nil {
 		t.Fatal(err)
 	}

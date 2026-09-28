@@ -6,8 +6,8 @@ import (
 	"sort"
 	"strings"
 
-	sourcedomain "github.com/greppleai/grepple/internal/sources"
 	"github.com/greppleai/grepple/internal/parser"
+	sourcedomain "github.com/greppleai/grepple/internal/sources"
 )
 
 // ArchitectureSchema identifies the normalized directory architecture contract.
@@ -142,7 +142,7 @@ func BuildArchitecture(universe *Universe) ArchitectureReport {
 	relations, coverage := buildRelations(universe.graph, universe.paths, classifier)
 	files := make([]ArchitectureSourceFile, 0, len(universe.paths))
 	for _, path := range universe.paths {
-		files = append(files, ArchitectureSourceFile{Path: filepath.ToSlash(path), Language: parser.LanguageFor(path), Classification: classify(classifier, path)})
+		files = append(files, ArchitectureSourceFile{Path: filepath.ToSlash(path), Language: parser.NewParser().LanguageFor(path), Classification: classify(classifier, path)})
 	}
 	return ArchitectureReport{Schema: ArchitectureSchema, Root: ".", Files: len(universe.paths), Sources: universe.Summary(), SourceFiles: files, Directories: finalizeDirectories(directories), Symbols: symbols, Relations: relations, RepositoryRoots: universe.graph.RepositoryRoots, RelationCoverage: coverage, Truncation: universe.Truncation()}
 }
@@ -399,8 +399,8 @@ func compactStrings(values []string) []string {
 func unsupportedImportLanguages(paths []string) []string {
 	set := map[string]bool{}
 	for _, path := range paths {
-		language := parser.LanguageFor(path)
-		capability, ok := parser.CapabilitiesForLanguage(language)
+		language := parser.NewParser().LanguageFor(path)
+		capability, ok := parser.NewParser().CapabilitiesForLanguage(language)
 		if ok && capability.Navigation && !capability.ImportNavigation {
 			set[language] = true
 		}

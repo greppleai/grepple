@@ -540,7 +540,7 @@ func prepareScanCandidate(programLanguage string, candidate ScanCandidate, optio
 	}
 	language := candidate.Language
 	if language == "" {
-		language = parser.LanguageFor(normalized)
+		language = parser.NewParser().LanguageFor(normalized)
 	}
 	if language == "" || language != programLanguage {
 		return preparedScanCandidate{}, FileEvaluation{}, scanCandidateSkippedLanguage

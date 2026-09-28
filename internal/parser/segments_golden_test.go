@@ -43,7 +43,7 @@ func TestASTSegmentsGolden(t *testing.T) {
 			}
 		}
 		var got string
-		for _, segment := range BuildSegments(content, LanguageFor(c.path), hits) {
+		for _, segment := range BuildSegments(content, NewParser().LanguageFor(c.path), hits) {
 			got += fmt.Sprintf("[%s:%d-%d:%q]", segment.Kind, segment.Start, segment.End, segment.Text)
 		}
 		if got != c.want {

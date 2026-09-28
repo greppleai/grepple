@@ -22,10 +22,10 @@ const (
 	NavigationQueryImpact NavigationQueryDirection = "impact"
 )
 
-// QueryNavigationGraph returns the bounded directional subgraph reachable from
+// queryNavigationGraph returns the bounded directional subgraph reachable from
 // root declaration IDs. Resolved and candidate targets are retained so callers
 // can distinguish certain edges from ambiguous repository-local possibilities.
-func QueryNavigationGraph(graph parser.NavigationGraph, rootIDs []string, direction NavigationQueryDirection, depth int) (parser.NavigationGraph, error) {
+func queryNavigationGraph(graph parser.NavigationGraph, rootIDs []string, direction NavigationQueryDirection, depth int) (parser.NavigationGraph, error) {
 	if !validNavigationQueryDirection(direction) {
 		return parser.NavigationGraph{}, fmt.Errorf("unsupported navigation query direction %q", direction)
 	}

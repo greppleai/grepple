@@ -164,7 +164,7 @@ func runHookMetricConformance(t *testing.T, test hookEngineCase) {
 	if !ok || len(test.Sources) != 1 {
 		t.Fatal("metric fixture requires exactly one source at metric.path")
 	}
-	document, err := parser.ParseDocument(metric.Spec.Scope.Language(), content)
+	document, err := parser.NewParser().Parse(metric.Spec.Scope.Language(), content)
 	if err != nil {
 		t.Fatal(err)
 	}

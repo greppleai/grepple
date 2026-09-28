@@ -51,7 +51,7 @@ func TestAuthoredGritQLCalculatesMcCabeAndCognitive(t *testing.T) {
 		if compiled.Above != test.above {
 			t.Fatalf("threshold=%d", compiled.Above)
 		}
-		doc, err := parser.ParseDocument("go", "package demo\nfunc f(a,b,c,d bool){if a && b && c || d {}}\n")
+		doc, err := parser.NewParser().Parse("go", "package demo\nfunc f(a,b,c,d bool){if a && b && c || d {}}\n")
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -118,7 +118,7 @@ func throughIf() { for range a { if true { for range b {} } } }
 func closure() { for range a { _ = func() { for range b {} } } }
 func separate() { for range a {}; _ = func() { for range b {} } }
 `
-	doc, err := parser.ParseDocument("go", source)
+	doc, err := parser.NewParser().Parse("go", source)
 	if err != nil {
 		t.Fatal(err)
 	}

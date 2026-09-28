@@ -11,14 +11,14 @@ import (
 
 	"github.com/alexflint/go-arg"
 	"github.com/greppleai/grepple/internal/analysis"
-	"github.com/greppleai/grepple/internal/wire"
 	"github.com/greppleai/grepple/internal/archdaemon"
 	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
-	"github.com/greppleai/grepple/internal/shellquote"
-	"github.com/greppleai/grepple/internal/sourcelocation"
 	"github.com/greppleai/grepple/internal/navigation"
 	"github.com/greppleai/grepple/internal/parser"
 	"github.com/greppleai/grepple/internal/search"
+	"github.com/greppleai/grepple/internal/shellquote"
+	"github.com/greppleai/grepple/internal/sourcelocation"
+	"github.com/greppleai/grepple/internal/wire"
 )
 
 const maxNavigationQueryDepth = 10
@@ -260,12 +260,12 @@ type QuerySelection struct {
 
 // QueryOutput traverses an existing graph projection.
 func QueryOutput(output Output, direction navigation.NavigationQueryDirection, selection QuerySelection) (Output, error) {
-	filter, err := navigation.NormalizeNavigationGraphFilter(selection.Filter)
+	filter, err := navigation.NewGraphOperations().NormalizeFilter(selection.Filter)
 	if err != nil {
 		return Output{}, err
 	}
 	graph := parser.NavigationGraph{Declarations: output.Declarations, TypeDeclarations: output.TypeDeclarations, Calls: output.Calls, Imports: output.Imports, Exports: output.Exports, Fields: output.Fields, TypeUsages: output.TypeUsages, MemberAccesses: output.MemberAccesses, RepositoryRoots: output.RepositoryRoots}
-	graph, err = navigation.FilterNavigationGraph(graph, filter)
+	graph, err = navigation.NewGraphOperations().Filter(graph, filter)
 	if err != nil {
 		return Output{}, err
 	}
@@ -274,14 +274,14 @@ func QueryOutput(output Output, direction navigation.NavigationQueryDirection, s
 		return Output{}, err
 	}
 	rootIDs := navigationDeclarationIDs(roots)
-	queried, err := navigation.QueryNavigationGraph(graph, rootIDs, direction, selection.Depth)
+	queried, err := navigation.NewGraphOperations().Query(graph, rootIDs, direction, selection.Depth)
 	if err != nil {
 		return Output{}, err
 	}
 	output.Declarations, output.TypeDeclarations, output.Calls, output.Imports = queried.Declarations, queried.TypeDeclarations, queried.Calls, queried.Imports
 	output.Exports, output.Fields, output.TypeUsages = queried.Exports, queried.Fields, queried.TypeUsages
 	output.MemberAccesses, output.RepositoryRoots = queried.MemberAccesses, queried.RepositoryRoots
-	output.Resolution = navigation.MeasureNavigationResolution(queried)
+	output.Resolution = navigation.NewGraphOperations().ResolutionStats(queried)
 	output.Query = &Query{Direction: string(direction), Depth: selection.Depth, RootIDs: rootIDs, Languages: filter.Languages, Confidences: filter.Confidences}
 	return output, nil
 }

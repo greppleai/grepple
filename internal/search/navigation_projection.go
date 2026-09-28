@@ -11,7 +11,7 @@ import (
 )
 
 func buildRelatedNavigationIndexFromFiles(files []string, options NavigationBuildOptions) *navigationIndex {
-	graph, stats := navigation.BuildGraphWithOptions(files, options)
+	graph, stats := navigation.NewGraphEngine(options).BuildFiles(files)
 	contents := make(map[string]string, len(files))
 	for _, sourcePath := range files {
 		content, err := os.ReadFile(sourcePath)
@@ -126,5 +126,5 @@ func navigationDeclarationContainer(declaration parser.NavigationDeclaration) st
 
 // NavigationRepositoryContextFiles is a compatibility wrapper for repository metadata discovery.
 func NavigationRepositoryContextFiles(paths []string) []string {
-	return navigation.RepositoryContextFiles(paths)
+	return navigation.NewGraphEngine(navigation.BuildOptions{}).RepositoryContextFiles(paths)
 }

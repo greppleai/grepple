@@ -233,13 +233,13 @@ func tsxRootCategoryAccepts(context SnippetContext, kind string) bool {
 func typeScriptFamilyRootCategoryAccepts(language string, context SnippetContext, kind string) bool {
 	switch context {
 	case SnippetContextExpression:
-		return parser.GrammarSubtype(language, "expression", kind)
+		return parser.NewParser().GetGrammar(language).Subtype("expression", kind)
 	case SnippetContextType:
-		return parser.GrammarSubtype(language, "type", kind)
+		return parser.NewParser().GetGrammar(language).Subtype("type", kind)
 	case SnippetContextStatement, SnippetContextStatementList:
-		return parser.GrammarSubtype(language, "statement", kind)
+		return parser.NewParser().GetGrammar(language).Subtype("statement", kind)
 	case SnippetContextDeclaration, SnippetContextDeclarationList:
-		return isTypeScriptDeclaration(kind) || isTypeScriptMember(kind) || parser.GrammarSubtype(language, "declaration", kind)
+		return isTypeScriptDeclaration(kind) || isTypeScriptMember(kind) || parser.NewParser().GetGrammar(language).Subtype("declaration", kind)
 	case SnippetContextFile:
 		return kind == "program"
 	default:

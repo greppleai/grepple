@@ -23,7 +23,7 @@ func TestFilterNavigationGraphPreservesOnlyEligibleClosedEdges(t *testing.T) {
 		},
 		RepositoryRoots: []string{"example.com/project"},
 	}
-	filtered, err := FilterNavigationGraph(graph, NavigationGraphFilter{Languages: []string{"go"}, Confidences: []string{"candidate"}})
+	filtered, err := filterNavigationGraph(graph, NavigationGraphFilter{Languages: []string{"go"}, Confidences: []string{"candidate"}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -42,7 +42,7 @@ func TestFilterNavigationGraphPreservesOnlyEligibleClosedEdges(t *testing.T) {
 }
 
 func TestNormalizeNavigationGraphFilterValidatesSortsAndDeduplicates(t *testing.T) {
-	filter, err := NormalizeNavigationGraphFilter(NavigationGraphFilter{
+	filter, err := normalizeNavigationGraphFilter(NavigationGraphFilter{
 		Languages:    []string{"python", "go", "python"},
 		Confidences:  []string{"unique-terminal", "exact", "exact"},
 		Visibilities: []string{"unknown", "public", "public"},
@@ -54,7 +54,7 @@ func TestNormalizeNavigationGraphFilterValidatesSortsAndDeduplicates(t *testing.
 		t.Fatalf("filter=%#v", filter)
 	}
 	for _, invalid := range []NavigationGraphFilter{{Languages: []string{"text"}}, {Confidences: []string{"likely"}}, {Visibilities: []string{"maybe"}}} {
-		if _, err := NormalizeNavigationGraphFilter(invalid); err == nil {
+		if _, err := normalizeNavigationGraphFilter(invalid); err == nil {
 			t.Fatalf("filter %#v unexpectedly succeeded", invalid)
 		}
 	}
@@ -68,7 +68,7 @@ func TestFilterNavigationGraphByVisibilityPreservesClosedGraph(t *testing.T) {
 		},
 		Calls: []parser.NavigationCall{{ID: "edge", CallerID: "public", TargetID: "private", Language: "go", Confidence: "exact"}},
 	}
-	filtered, err := FilterNavigationGraph(graph, NavigationGraphFilter{Visibilities: []string{"public"}})
+	filtered, err := filterNavigationGraph(graph, NavigationGraphFilter{Visibilities: []string{"public"}})
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -26,7 +26,7 @@ func cFamilyLanguageDefinition(language string, cpp bool) *languageDefinition {
 		info:          Language{ID: language, Extensions: parserLanguageExtensions(language), FocusedStructure: true, FocusedFlow: true},
 		flowIndex:     moduleFocusedFlowIndex{},
 		classIndex:    moduleFocusedClassIndex{},
-		acceptsSource: func(path string) bool { return codeparser.LanguageFor(path) == language },
+		acceptsSource: func(path string) bool { return codeparser.NewParser().LanguageFor(path) == language },
 		newAnalysis: func(result *Analysis, sources []Source) languageAnalysis {
 			prepareModulePaths(result, sources, language, noProjectRoot)
 			return &cFamilyAnalysis{result: result, language: language, cpp: cpp}
@@ -63,7 +63,7 @@ func (analysis *cFamilyAnalysis) Analyze(source Source) error {
 	}); err != nil {
 		return err
 	}
-	graph, _ := codeparser.CachedNavigationGraphFromDocument(document, source.Path)
+	graph := codeparser.NewParser().NavigationGraph(document, source.Path)
 	addCFamilyNavigationSymbols(analysis.result, graph, analysis.language, analyzer.moduleID, source.Path)
 	analysis.result.Navigation.Merge(graph)
 	return nil

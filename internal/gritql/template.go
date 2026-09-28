@@ -750,7 +750,7 @@ func compileGoTemplate(decoded decodedSnippet, maxDepth int) (Template, string, 
 	for _, attempt := range goSnippetAttempts {
 		baseline, generated := replaceSnippetPlaceholders(decoded, attempt.prefix, nil)
 		source := attempt.prefix + baseline + attempt.suffix
-		doc, err := parser.ParseDocument(defaultTargetLanguage, source)
+		doc, err := parser.NewParser().Parse(defaultTargetLanguage, source)
 		if err != nil {
 			continue
 		}
@@ -805,7 +805,7 @@ func parseInferredTemplates(language string, decoded decodedSnippet, attempt sni
 	evaluate := func(roles []placeholderRole) inferredEvaluation {
 		replaced, generated := replaceSnippetPlaceholders(decoded, attempt.prefix, roles)
 		source := attempt.prefix + replaced + attempt.suffix
-		doc, err := parser.ParseDocument(language, source)
+		doc, err := parser.NewParser().Parse(language, source)
 		if err != nil {
 			return inferredEvaluation{}
 		}
@@ -1339,10 +1339,11 @@ func nodeHasOpenParen(parent parser.Node) bool {
 }
 
 func repeatedGrammarPositionMetadata(language, parentKind, field string, hasOpenParen bool) bool {
+	grammar := parser.NewParser().GetGrammar(language)
 	if field != "" {
-		return parser.GrammarFieldCardinality(language, parentKind, field) == parser.GrammarCardinalityMany
+		return grammar.FieldCardinality(parentKind, field) == parser.GrammarCardinalityMany
 	}
-	if parser.GrammarChildrenCardinality(language, parentKind) != parser.GrammarCardinalityMany {
+	if grammar.ChildrenCardinality(parentKind) != parser.GrammarCardinalityMany {
 		return false
 	}
 	return unfieldedCardinalityAllowed(language, parentKind, hasOpenParen)
@@ -1351,10 +1352,11 @@ func repeatedGrammarPositionMetadata(language, parentKind, field string, hasOpen
 // repeatedGrammarPositionKinds is the snapshot-friendly counterpart used to
 // validate generic traversal list targets against the same pinned metadata.
 func repeatedGrammarPositionKinds(language, parentKind, field string, children []parser.SyntaxNode) bool {
+	grammar := parser.NewParser().GetGrammar(language)
 	if field != "" {
-		return parser.GrammarFieldCardinality(language, parentKind, field) == parser.GrammarCardinalityMany
+		return grammar.FieldCardinality(parentKind, field) == parser.GrammarCardinalityMany
 	}
-	if parser.GrammarChildrenCardinality(language, parentKind) != parser.GrammarCardinalityMany {
+	if grammar.ChildrenCardinality(parentKind) != parser.GrammarCardinalityMany {
 		return false
 	}
 	hasOpenParen := false

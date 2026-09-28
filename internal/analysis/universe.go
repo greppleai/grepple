@@ -73,9 +73,10 @@ func NewUniverseWithOptions(input []Source, maxFiles int, options navigation.Bui
 	ordered := append([]Source(nil), input...)
 	sort.Slice(ordered, func(i, j int) bool { return ordered[i].Path < ordered[j].Path })
 	universe := &Universe{summary: SourceSummary{Discovered: len(ordered)}}
+	parserService := parser.NewParser()
 	eligible := ordered[:0]
 	for _, source := range ordered {
-		capabilities, supported := parser.CapabilitiesForLanguage(parser.LanguageFor(source.Path))
+		capabilities, supported := parserService.CapabilitiesForLanguage(parserService.LanguageFor(source.Path))
 		if !supported || !capabilities.Navigation {
 			universe.summary.Skipped++
 			continue
@@ -97,12 +98,12 @@ func NewUniverseWithOptions(input []Source, maxFiles int, options navigation.Bui
 			universe.summary.Skipped++
 			continue
 		}
-		document, err := parser.ParseDocument(parser.LanguageFor(source.Path), string(source.Content))
+		document, err := parserService.Parse(parserService.LanguageFor(source.Path), string(source.Content))
 		if err != nil {
 			universe.summary.Failed++
 			continue
 		}
-		universe.sources = append(universe.sources, parsedSource{path: source.Path, document: document, outline: parser.OutlineFromDocument(source.Path, document)})
+		universe.sources = append(universe.sources, parsedSource{path: source.Path, document: document, outline: parserService.Outline(document, source.Path)})
 		universe.paths = append(universe.paths, source.Path)
 		documents = append(documents, navigation.DocumentSource{Path: source.Path, Document: document})
 	}

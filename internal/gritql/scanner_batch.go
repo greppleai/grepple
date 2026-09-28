@@ -178,7 +178,7 @@ func commitProgramRead(ctx context.Context, programs []ProgramScan, states []sca
 		appendProgramSourceFailure(programs, states, candidate, read.content, "SOURCE_INVALID_UTF8", "source is not valid UTF-8")
 		return
 	}
-	document, err := parser.ParseDocument(candidate.language, string(read.content))
+	document, err := parser.NewParser().Parse(candidate.language, string(read.content))
 	if err != nil {
 		appendProgramSourceFailure(programs, states, candidate, read.content, "INTERNAL_ERROR", "source parser failed")
 		return

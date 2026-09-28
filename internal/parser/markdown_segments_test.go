@@ -12,7 +12,7 @@ func segmentKinds(segs []Segment) map[int]string {
 
 func TestLanguageForMarkdown(t *testing.T) {
 	for _, ext := range []string{"a.md", "b.markdown", "c.mkd"} {
-		if got := LanguageFor(ext); got != "markdown" {
+		if got := NewParser().LanguageFor(ext); got != "markdown" {
 			t.Fatalf("LanguageFor(%q) = %q, want markdown", ext, got)
 		}
 	}

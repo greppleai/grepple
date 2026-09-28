@@ -202,7 +202,7 @@ func validateRelationSpec(spec RelationSpec) error {
 		if item.program == nil {
 			continue
 		}
-		if item.key.DescendantKind != "" && !parser.GrammarNodeKind(item.program.Language(), item.key.DescendantKind) {
+		if item.key.DescendantKind != "" && !parser.NewParser().GetGrammar(item.program.Language()).NodeKind(item.key.DescendantKind) {
 			return fmt.Errorf("relation descendant kind %q is not in the %s grammar", item.key.DescendantKind, item.program.Language())
 		}
 		valid := false

@@ -12,7 +12,7 @@ func phpLanguageDefinition() *languageDefinition {
 	return &languageDefinition{
 		info:      Language{ID: "php", Extensions: parserLanguageExtensions("php"), FocusedStructure: true, FocusedFlow: true},
 		flowIndex: moduleFocusedFlowIndex{}, classIndex: moduleFocusedClassIndex{},
-		acceptsSource: func(path string) bool { return codeparser.LanguageFor(path) == "php" },
+		acceptsSource: func(path string) bool { return codeparser.NewParser().LanguageFor(path) == "php" },
 		newAnalysis: func(result *Analysis, sources []Source) languageAnalysis {
 			prepareModulePaths(result, sources, "php", func(string) string { return "" })
 			return &phpAnalysis{result: result}
@@ -108,7 +108,7 @@ func (analysis *phpAnalysis) Analyze(source Source) error {
 	}); err != nil {
 		return err
 	}
-	graph, _ := codeparser.CachedNavigationGraphFromDocument(document, source.Path)
+	graph := codeparser.NewParser().NavigationGraph(document, source.Path)
 	addModuleNavigationSymbols(analysis.result, graph, "php", moduleID, source.Path)
 	analysis.result.Navigation.Merge(graph)
 	return nil

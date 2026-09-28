@@ -10,7 +10,7 @@ import (
 
 func parseGoForMatch(t *testing.T, source string) *parser.Document {
 	t.Helper()
-	doc, err := parser.ParseDocument("go", source)
+	doc, err := parser.NewParser().Parse("go", source)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -418,7 +418,7 @@ func TestMatchTemplateImmutableConcurrent(t *testing.T) {
 
 func TestMatchTemplateRejectsRecoveryTree(t *testing.T) {
 	t.Parallel()
-	doc, err := parser.ParseDocument("go", "package p\nvar x = f(\n")
+	doc, err := parser.NewParser().Parse("go", "package p\nvar x = f(\n")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -537,7 +537,7 @@ func TestSequenceTargetValidatesParentAndSpan(t *testing.T) {
 func TestMatchTemplateConcurrentDocumentClose(t *testing.T) {
 	tmpl := compileSnippetForTest(t, "f($args)").Template()
 	for i := 0; i < 100; i++ {
-		doc, err := parser.ParseDocument("go", "package p\nvar _ = f(a,b)\n")
+		doc, err := parser.NewParser().Parse("go", "package p\nvar _ = f(a,b)\n")
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -567,7 +567,7 @@ func FuzzMatchTemplateNoPanicDeterministic(f *testing.F) {
 		f.Fatal(err)
 	}
 	f.Fuzz(func(t *testing.T, expression string) {
-		doc, err := parser.ParseDocument("go", "package p\nvar _ = "+expression+"\n")
+		doc, err := parser.NewParser().Parse("go", "package p\nvar _ = "+expression+"\n")
 		if err != nil {
 			return
 		}

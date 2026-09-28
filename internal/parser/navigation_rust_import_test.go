@@ -179,34 +179,6 @@ func TestRustNavigationScopesInlineModuleImportsAndCalls(t *testing.T) {
 	}
 }
 
-func TestRustItemVisibilityUsesModuleAncestry(t *testing.T) {
-	root := "src/lib.rs"
-	module := func(path string) string { return rustModuleKey(root, rustModuleSegments(path)) }
-	cases := []struct {
-		visibility, declaration, source string
-		visible                         bool
-	}{
-		{visibility: "pub", declaration: "model", source: "other", visible: true},
-		{visibility: "pub(crate)", declaration: "model", source: "other", visible: true},
-		{visibility: "", declaration: "model", source: "model::nested", visible: true},
-		{visibility: "", declaration: "model", source: "other"},
-		{visibility: "pub(super)", declaration: "", source: "other"},
-		{visibility: "pub(super)", declaration: "parent::model", source: "parent::other", visible: true},
-		{visibility: "pub(super)", declaration: "parent::model", source: "outside"},
-		{visibility: "pub(self)", declaration: "model", source: "model::nested", visible: true},
-		{visibility: "pub(self)", declaration: "model", source: "outside"},
-		{visibility: "pub(in super)", declaration: "parent::model", source: "parent::other", visible: true},
-		{visibility: "pub(in crate::allowed)", declaration: "allowed::model", source: "allowed::impls", visible: true},
-		{visibility: "pub(in crate::allowed)", declaration: "allowed::model", source: "outside"},
-		{visibility: "pub(in crate::outside)", declaration: "allowed::model", source: "outside"},
-	}
-	for _, test := range cases {
-		if visible := RustItemVisibleFrom(module(test.declaration), module(test.source), test.visibility); visible != test.visible {
-			t.Fatalf("visibility=%q declaration=%q source=%q visible=%v expected=%v", test.visibility, test.declaration, test.source, visible, test.visible)
-		}
-	}
-}
-
 func assertRustModuleImport(t *testing.T, graph NavigationGraph, alias, scope, hint string, inline bool) {
 	t.Helper()
 	for _, item := range graph.Imports {

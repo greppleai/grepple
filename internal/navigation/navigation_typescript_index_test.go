@@ -35,7 +35,7 @@ func TestECMARelativeImportTargetsMatchCorpusScan(t *testing.T) {
 				want = append(want, file)
 			}
 		}
-		got := index.importTargets(test.source, "", test.imported, "", "").files
+		got := index.importTargets(navigationImportRequest{sourceFile: test.source, importPath: test.imported}).files
 		if !reflect.DeepEqual(got, want) {
 			t.Errorf("%s importing %s: got %v want %v", test.source, test.imported, got, want)
 		}

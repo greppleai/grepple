@@ -23,7 +23,7 @@ type goSourceAnalyzer struct {
 }
 
 func analyzeGoSource(source Source, result *Analysis, methods map[string][]Member) error {
-	document, err := codeparser.ParseDocument("go", source.Text)
+	document, err := codeparser.NewParser().Parse("go", source.Text)
 	if err != nil {
 		return err
 	}
@@ -67,7 +67,7 @@ func analyzeGoSource(source Source, result *Analysis, methods map[string][]Membe
 	}); err != nil {
 		return err
 	}
-	graph, _ := codeparser.CachedNavigationGraphFromDocument(document, source.Path)
+	graph := codeparser.NewParser().NavigationGraph(document, source.Path)
 	result.Navigation.Merge(graph)
 	return nil
 }
@@ -215,7 +215,7 @@ func hasGoFileLocalMarker(source string, declarationRow int) bool {
 
 func (analyzer *goSourceAnalyzer) collectTypeReferencesByPackage(root codeparser.ViewNode) {
 	file := analyzer.result.SourcePaths[absolutePath(analyzer.source.Path)]
-	codeparser.WalkNamedView(root, func(node codeparser.ViewNode) {
+	root.WalkNamed(func(node codeparser.ViewNode) {
 		if node.Kind() == "type_identifier" {
 			analyzer.addGoTypeReference(nodeText(node, analyzer.text), node, file)
 			return
@@ -462,7 +462,7 @@ func (analyzer *goSourceAnalyzer) addGoSymbol(name, kind string, node, _ codepar
 }
 
 func (analyzer *goSourceAnalyzer) analyzeImports(node codeparser.ViewNode) {
-	codeparser.WalkNamedView(node, func(spec codeparser.ViewNode) {
+	node.WalkNamed(func(spec codeparser.ViewNode) {
 		analyzer.analyzeImportSpec(spec)
 	})
 }

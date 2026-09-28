@@ -506,13 +506,14 @@ func rootCategoryAccepts(language string, context SnippetContext, kind string) b
 }
 
 func goRootCategoryAccepts(context SnippetContext, kind string) bool {
+	grammar := parser.NewParser().GetGrammar(defaultTargetLanguage)
 	switch context {
 	case SnippetContextExpression:
-		return parser.GrammarSubtype(defaultTargetLanguage, "_expression", kind)
+		return grammar.Subtype("_expression", kind)
 	case SnippetContextType:
-		return parser.GrammarSubtype(defaultTargetLanguage, "_type", kind)
+		return grammar.Subtype("_type", kind)
 	case SnippetContextStatement, SnippetContextStatementList:
-		return parser.GrammarSubtype(defaultTargetLanguage, "_statement", kind)
+		return grammar.Subtype("_statement", kind)
 	case SnippetContextDeclaration, SnippetContextDeclarationList:
 		_, ok := goDeclarationKinds[kind]
 		return ok

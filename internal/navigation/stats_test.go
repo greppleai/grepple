@@ -15,7 +15,7 @@ func TestMeasureNavigationResolutionIsDeterministicByLanguageAndConfidence(t *te
 		{Language: "go", Confidence: "candidate", CandidateTargetIDs: []string{"one"}},
 		{Language: "typescript", Confidence: "candidate", ImportPath: "external-package"},
 	}}
-	stats := MeasureNavigationResolution(graph)
+	stats := measureNavigationResolution(graph)
 	if stats.Calls != 5 || stats.Resolved != 1 || stats.Ambiguous != 1 || stats.Unresolved != 2 || stats.Candidate != 1 || stats.AmbiguityRate != 0.2 {
 		t.Fatalf("resolution stats=%+v", stats)
 	}

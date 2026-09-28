@@ -14,15 +14,17 @@ func TestTextAndDocumentGraphBuildsMatch(t *testing.T) {
 	}
 	documents := make([]DocumentSource, 0, len(sources))
 	for _, source := range sources {
-		document, err := parser.ParseDocument(parser.LanguageFor(source.Path), source.Text)
+		document, err := parser.NewParser().Parse(parser.NewParser().LanguageFor(source.Path), source.Text)
 		if err != nil {
 			t.Fatal(err)
 		}
 		defer document.Close()
 		documents = append(documents, DocumentSource{Path: source.Path, Document: document})
 	}
-	fromText, textStats := BuildGraphFromTextSources(sources, BuildOptions{DisableCache: true})
-	fromDocuments, documentStats := BuildGraphFromDocuments(documents, BuildOptions{DisableCache: true})
+	builder := NewGraphEngine(BuildOptions{DisableCache: true})
+	textAnalysis, textStats := builder.BuildTextSources(sources)
+	documentAnalysis, documentStats := builder.BuildDocuments(documents)
+	fromText, fromDocuments := textAnalysis.Graph(), documentAnalysis.Graph()
 	textJSON, err := json.Marshal(fromText)
 	if err != nil {
 		t.Fatal(err)
@@ -42,8 +44,10 @@ func TestTextAndDocumentGraphBuildsMatch(t *testing.T) {
 func TestTextGraphBuildIsSourceOrderDeterministic(t *testing.T) {
 	first := TextSource{Path: "src/a.ts", Text: "export function run(): void {}\n"}
 	second := TextSource{Path: "src/b.ts", Text: "import { run } from './a';\nexport function start(): void { run(); }\n"}
-	left, _ := BuildGraphFromTextSources([]TextSource{first, second}, BuildOptions{DisableCache: true})
-	right, _ := BuildGraphFromTextSources([]TextSource{second, first}, BuildOptions{DisableCache: true})
+	builder := NewGraphEngine(BuildOptions{DisableCache: true})
+	leftAnalysis, _ := builder.BuildTextSources([]TextSource{first, second})
+	rightAnalysis, _ := builder.BuildTextSources([]TextSource{second, first})
+	left, right := leftAnalysis.Graph(), rightAnalysis.Graph()
 	leftJSON, _ := json.Marshal(left)
 	rightJSON, _ := json.Marshal(right)
 	if string(leftJSON) != string(rightJSON) {

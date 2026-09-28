@@ -8,9 +8,9 @@ import (
 type NavigationGraphFilter = navigation.NavigationGraphFilter
 
 func FilterNavigationGraph(graph parser.NavigationGraph, filter NavigationGraphFilter) (parser.NavigationGraph, error) {
-	return navigation.FilterNavigationGraph(graph, filter)
+	return navigation.NewGraphOperations().Filter(graph, filter)
 }
 
 func NormalizeNavigationGraphFilter(filter NavigationGraphFilter) (NavigationGraphFilter, error) {
-	return navigation.NormalizeNavigationGraphFilter(filter)
+	return navigation.NewGraphOperations().NormalizeFilter(filter)
 }

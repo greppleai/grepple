@@ -77,8 +77,8 @@ func BuildSegmentsWithStatus(content, language string, hitLines map[int]bool) ([
 	return segments, SegmentBuildStructured
 }
 
-// BuildSegmentsFromDocument constructs structural segments without reparsing the caller-owned document.
-func BuildSegmentsFromDocument(document *Document, hitLines map[int]bool) ([]Segment, SegmentBuildStatus) {
+// buildSegmentsFromDocument constructs structural segments without reparsing the caller-owned document.
+func buildSegmentsFromDocument(document *Document, hitLines map[int]bool) ([]Segment, SegmentBuildStatus) {
 	if document == nil {
 		return buildPlainTextSegments(hitLines), SegmentBuildFailed
 	}

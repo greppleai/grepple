@@ -73,6 +73,7 @@ func (spec MetricSpec) Validate() error {
 	if spec.NameField != "" && (!validNodeSelectorName(spec.NameField) || !metricSelectorHasField(spec.Scope, spec.NameField)) {
 		return fmt.Errorf("invalid metric scope name field %q", spec.NameField)
 	}
+	grammar := parser.NewParser().GetGrammar(language)
 	seen := make(map[string]bool, len(spec.Rules))
 	for _, rule := range spec.Rules {
 		if rule.Query == nil || rule.Query.Language() != language || rule.ID == "" || seen[rule.ID] || rule.Points < 0 || rule.Points > 1000 || rule.NestingWeight < 0 || rule.NestingWeight > 1000 {
@@ -88,11 +89,11 @@ func (spec MetricSpec) Validate() error {
 		if rule.FlatAlternativeField != "" && !metricSelectorHasField(rule.Query, rule.FlatAlternativeField) || rule.SelfCallField != "" && !metricSelectorHasField(rule.Query, rule.SelfCallField) {
 			return fmt.Errorf("metric rule %q uses an unknown grammar field", rule.ID)
 		}
-		if rule.RequireChildKind != "" && !parser.GrammarNodeKind(language, rule.RequireChildKind) {
+		if rule.RequireChildKind != "" && !grammar.NodeKind(rule.RequireChildKind) {
 			return fmt.Errorf("metric rule %q requires an unknown child kind %q", rule.ID, rule.RequireChildKind)
 		}
 		for _, op := range rule.Operators {
-			if !parser.GrammarTokenKind(language, op) {
+			if !grammar.TokenKind(op) {
 				return fmt.Errorf("metric rule %q uses unknown operator %q", rule.ID, op)
 			}
 		}
@@ -101,14 +102,15 @@ func (spec MetricSpec) Validate() error {
 }
 
 func metricSelectorHasField(program *Program, field string) bool {
-	if !parser.GrammarFieldName(program.Language(), field) {
+	grammar := parser.NewParser().GetGrammar(program.Language())
+	if !grammar.FieldName(field) {
 		return false
 	}
 	var check func(*expression) bool
 	check = func(expr *expression) bool {
 		switch expr.kind {
 		case KindNodeLike:
-			return parser.GrammarFieldCardinality(program.Language(), expr.text, field) != parser.GrammarCardinalityUnknown
+			return grammar.FieldCardinality(expr.text, field) != parser.GrammarCardinalityUnknown
 		case KindOr:
 			for _, branch := range expr.children {
 				if !check(branch) {

@@ -81,7 +81,8 @@ func pythonImportModuleMatches(module, target, sourceFile string, relative bool)
 
 type pythonNavigationIndex struct{ baseLanguageNavigationIndex }
 
-func (index *pythonNavigationIndex) importTargets(sourceFile, _, importPath, _, _ string) navigationImportTargets {
+func (index *pythonNavigationIndex) importTargets(request navigationImportRequest) navigationImportTargets {
+	sourceFile, importPath := request.sourceFile, request.importPath
 	target, relative := pythonImportTarget(sourceFile, importPath)
 	if target == "" {
 		return navigationImportTargets{}

@@ -3,18 +3,28 @@ package parser
 import "testing"
 
 func TestGrammarNodeKindValidatesPinnedLanguages(t *testing.T) {
-	for _, language := range SupportedLanguages() {
-		if !GrammarNodeKind(language.ID, "identifier") && !GrammarNodeKind(language.ID, "source_file") && !GrammarNodeKind(language.ID, "program") {
+	service := NewParser()
+	for _, language := range service.SupportedLanguages() {
+		grammar := service.GetGrammar(language.ID)
+		if !grammar.NodeKind("identifier") && !grammar.NodeKind("source_file") && !grammar.NodeKind("program") {
 			t.Fatalf("%s: no known named grammar node", language.ID)
 		}
-		if GrammarNodeKind(language.ID, "not_a_syntax_node_kind") {
+		if grammar.NodeKind("not_a_syntax_node_kind") {
 			t.Fatalf("%s: accepted unknown node", language.ID)
 		}
 	}
-	if GrammarNodeKind("missing-language", "source_file") {
+	if service.GetGrammar("missing-language").NodeKind("source_file") {
 		t.Fatal("unknown language accepted")
 	}
-	if !GrammarFieldName("go", "name") || GrammarFieldName("go", "not_a_go_grammar_field") || GrammarFieldName("missing-language", "name") {
+	grammar := service.GetGrammar("go")
+	if !grammar.FieldName("name") || grammar.FieldName("not_a_go_grammar_field") || service.GetGrammar("missing-language").FieldName("name") {
 		t.Fatal("pinned grammar field check failed")
+	}
+}
+
+func TestParserGetGrammarReturnsUnknownAnswersForUnsupportedLanguage(t *testing.T) {
+	grammar := NewParser().GetGrammar("missing-language")
+	if grammar.NodeKind("source_file") || grammar.FieldName("name") || grammar.TokenKind("&&") || grammar.Subtype("_type", "identifier") || grammar.FieldCardinality("node", "field") != GrammarCardinalityUnknown || grammar.ChildrenCardinality("node") != GrammarCardinalityUnknown {
+		t.Fatalf("unknown language produced grammar facts: %#v", grammar)
 	}
 }

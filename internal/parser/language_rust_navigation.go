@@ -1,6 +1,9 @@
 package parser
 
-import "path/filepath"
+import (
+	"path/filepath"
+	"strings"
+)
 
 func rustNavigationAdapter(rules *structureRules) navigationAdapter {
 	return &navigationAdapterConfig{rules: rules, callTypes: newStringSet("call_expression"), parameterTypes: newStringSet("parameter"), fieldContainerTypes: newStringSet("struct_item"), sourceFacts: rustNavigationSourceFacts, exports: rustNavigationExports, typeReferenceFacts: true, nestedModulePath: func(node *syntaxNode, current string) string {
@@ -25,8 +28,30 @@ func rustNavigationEntrypoint(context navigationEntrypointContext) string {
 		return ""
 	}
 	path := filepath.Clean(context.path)
-	if !rustCrateRootPath(path) || filepath.Base(path) == "lib.rs" {
+	if !rustExecutableCratePath(path) {
 		return ""
 	}
 	return "process"
+}
+
+// rustExecutableCratePath recognizes a process entrypoint, not a crate library.
+func rustExecutableCratePath(path string) bool {
+	if strings.ToLower(filepath.Ext(path)) != ".rs" {
+		return false
+	}
+	base := filepath.Base(path)
+	if base == "lib.rs" {
+		return false
+	}
+	parent := filepath.Base(filepath.Dir(path))
+	if parent == "bin" && filepath.Base(filepath.Dir(filepath.Dir(path))) == "src" {
+		return true
+	}
+	if base != "main.rs" {
+		return false
+	}
+	if parent == "src" {
+		return true
+	}
+	return filepath.Base(filepath.Dir(filepath.Dir(path))) == "bin" && filepath.Base(filepath.Dir(filepath.Dir(filepath.Dir(path)))) == "src"
 }

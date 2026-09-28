@@ -506,7 +506,7 @@ func TestProductionInferenceUsesOnlyGrammarDerivedAssignment(t *testing.T) {
 	t.Parallel()
 	d := decodedSnippet{text: "$decl", placeholders: []snippetPlaceholder{{start: 0, end: 5, ref: VariableRef{ID: 1}}}}
 	source, generated := replaceSnippetPlaceholders(d, "", nil)
-	doc, err := parser.ParseDocument("go", source)
+	doc, err := parser.NewParser().Parse("go", source)
 	if err != nil {
 		t.Fatal(err)
 	}

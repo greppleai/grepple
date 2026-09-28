@@ -3,12 +3,12 @@ package navigation
 import (
 	"sort"
 
-	"github.com/greppleai/grepple/internal/parser"
+	"github.com/greppleai/grepple/internal/navigation/rustmodule"
 )
 
 type rustNavigationIndex struct {
 	baseLanguageNavigationIndex
-	modules *parser.RustModuleIndex
+	modules *rustmodule.RustModuleIndex
 }
 
 func newRustNavigationIndex(corpus *navigationCorpus) *rustNavigationIndex {
@@ -16,11 +16,12 @@ func newRustNavigationIndex(corpus *navigationCorpus) *rustNavigationIndex {
 	sort.Strings(paths)
 	return &rustNavigationIndex{
 		baseLanguageNavigationIndex: baseLanguageNavigationIndex{family: "rust", corpus: corpus},
-		modules:                     parser.BuildRustModuleIndex(corpus.graph, paths),
+		modules:                     rustmodule.BuildRustModuleIndex(corpus.graph, paths),
 	}
 }
 
-func (index *rustNavigationIndex) importTargets(sourceFile, sourceScope, importPath, _, _ string) navigationImportTargets {
+func (index *rustNavigationIndex) importTargets(request navigationImportRequest) navigationImportTargets {
+	sourceFile, sourceScope, importPath := request.sourceFile, request.sourceScope, request.importPath
 	targets := index.modules.ResolveImportFrom(sourceFile, sourceScope, importPath)
 	return navigationImportTargets{files: rustModuleTargetFiles(targets), scopes: rustModuleTargetKeys(targets)}
 }
@@ -46,7 +47,7 @@ func (index *rustNavigationIndex) candidateVisibleFrom(candidate navigationDecla
 	declarationModules := index.modules.ModuleKeys(candidate.file, candidate.moduleScope)
 	for _, declarationModule := range declarationModules {
 		for _, sourceModule := range sourceModules {
-			if parser.RustModulesShareCrate(declarationModule, sourceModule) && parser.RustItemVisibleFrom(declarationModule, sourceModule, candidate.visibilityDetail) {
+			if rustmodule.RustModulesShareCrate(declarationModule, sourceModule) && rustmodule.RustItemVisibleFrom(declarationModule, sourceModule, candidate.visibilityDetail) {
 				return true
 			}
 		}
@@ -59,13 +60,13 @@ func (index *rustNavigationIndex) reExportTargets(sourceFile, sourceScope, impor
 	return navigationImportTargets{files: rustModuleTargetFiles(targets), scopes: rustModuleTargetKeys(targets)}
 }
 
-func (index *rustNavigationIndex) rustReExportTargets(sourceFile, sourceScope, importPath, name string, seen map[string]bool) []parser.RustModuleTarget {
+func (index *rustNavigationIndex) rustReExportTargets(sourceFile, sourceScope, importPath, name string, seen map[string]bool) []rustmodule.RustModuleTarget {
 	if importPath == "" {
 		return nil
 	}
-	result := []parser.RustModuleTarget{}
+	result := []rustmodule.RustModuleTarget{}
 	for _, candidate := range index.modules.ResolveImportFrom(sourceFile, sourceScope, importPath) {
-		key := parser.RustModuleTargetModuleKey(candidate) + "\x00" + name
+		key := rustmodule.RustModuleTargetModuleKey(candidate) + "\x00" + name
 		if seen[key] {
 			continue
 		}
@@ -97,7 +98,7 @@ func (index *rustNavigationIndex) importMatches(call navigationCall, candidate n
 	return false
 }
 
-func rustModuleTargetFiles(targets []parser.RustModuleTarget) []string {
+func rustModuleTargetFiles(targets []rustmodule.RustModuleTarget) []string {
 	files := make([]string, 0, len(targets))
 	for _, target := range targets {
 		files = append(files, target.Path)
@@ -105,22 +106,22 @@ func rustModuleTargetFiles(targets []parser.RustModuleTarget) []string {
 	return compactSortedStrings(files)
 }
 
-func rustModuleTargetKeys(targets []parser.RustModuleTarget) []string {
+func rustModuleTargetKeys(targets []rustmodule.RustModuleTarget) []string {
 	keys := make([]string, 0, len(targets))
 	for _, target := range targets {
-		keys = append(keys, parser.RustModuleTargetModuleKey(target))
+		keys = append(keys, rustmodule.RustModuleTargetModuleKey(target))
 	}
 	return compactSortedStrings(keys)
 }
 
-func compactRustModuleTargets(targets []parser.RustModuleTarget) []parser.RustModuleTarget {
+func compactRustModuleTargets(targets []rustmodule.RustModuleTarget) []rustmodule.RustModuleTarget {
 	sort.Slice(targets, func(i, j int) bool {
-		return parser.RustModuleTargetKey(targets[i]) < parser.RustModuleTargetKey(targets[j])
+		return rustmodule.RustModuleTargetKey(targets[i]) < rustmodule.RustModuleTargetKey(targets[j])
 	})
 	result := targets[:0]
 	last := ""
 	for _, target := range targets {
-		key := parser.RustModuleTargetKey(target)
+		key := rustmodule.RustModuleTargetKey(target)
 		if len(result) == 0 || key != last {
 			result = append(result, target)
 			last = key

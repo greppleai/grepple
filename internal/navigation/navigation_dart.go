@@ -9,7 +9,8 @@ import (
 // package: and dart: schemes need pubspec/SDK ownership evidence and stay unresolved.
 type dartNavigationIndex struct{ baseLanguageNavigationIndex }
 
-func (index *dartNavigationIndex) importTargets(sourceFile, _, importPath, _, _ string) navigationImportTargets {
+func (index *dartNavigationIndex) importTargets(request navigationImportRequest) navigationImportTargets {
+	sourceFile, importPath := request.sourceFile, request.importPath
 	if importPath == "" || strings.Contains(importPath, ":") || filepath.IsAbs(importPath) || filepath.VolumeName(importPath) != "" || !strings.HasSuffix(importPath, ".dart") {
 		return navigationImportTargets{}
 	}
@@ -20,7 +21,7 @@ func (index *dartNavigationIndex) importTargets(sourceFile, _, importPath, _, _ 
 func (index *dartNavigationIndex) filterCandidates(call navigationCall, candidates []navigationDeclaration) []navigationDeclaration {
 	allowed := map[string]bool{}
 	if call.importPath != "" {
-		for _, target := range index.importTargets(call.file, "", call.importPath, "", "").files {
+		for _, target := range index.importTargets(navigationImportRequest{sourceFile: call.file, importPath: call.importPath}).files {
 			allowed[target] = true
 		}
 	} else {
@@ -30,7 +31,7 @@ func (index *dartNavigationIndex) filterCandidates(call navigationCall, candidat
 			if err != nil || fact.Language != "dart" || fact.Alias != "*" || filepath.Clean(absolute) != filepath.Clean(call.file) {
 				continue
 			}
-			for _, target := range index.importTargets(call.file, "", fact.ImportPath, "", "").files {
+			for _, target := range index.importTargets(navigationImportRequest{sourceFile: call.file, importPath: fact.ImportPath}).files {
 				allowed[target] = true
 			}
 		}

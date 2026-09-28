@@ -16,5 +16,5 @@ const (
 )
 
 func QueryNavigationGraph(graph parser.NavigationGraph, rootIDs []string, direction NavigationQueryDirection, depth int) (parser.NavigationGraph, error) {
-	return navigation.QueryNavigationGraph(graph, rootIDs, direction, depth)
+	return navigation.NewGraphOperations().Query(graph, rootIDs, direction, depth)
 }

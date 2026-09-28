@@ -44,7 +44,7 @@ func TestBuildNavigationGraphFromDocumentsMatchesFileBuild(t *testing.T) {
 	expected, expectedStats := BuildNavigationGraphWithOptions([]string{"main.go", "helper/x.go"}, NavigationBuildOptions{DisableCache: true})
 	sources := make([]NavigationDocumentSource, 0, len(contents))
 	for _, path := range []string{"main.go", "helper/x.go"} {
-		document, err := parser.ParseDocument("go", contents[path])
+		document, err := parser.NewParser().Parse("go", contents[path])
 		if err != nil {
 			t.Fatal(err)
 		}

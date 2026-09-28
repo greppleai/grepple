@@ -201,12 +201,12 @@ func TestAtFromDocumentMatchesColdRelatedOutput(t *testing.T) {
 	caller := writeGoFixture(t, directory, "caller.go", "package related\nfunc run() string { return helper() }\n")
 	helper := writeGoFixture(t, directory, "helper.go", "package related\nfunc helper() string { return \"value\" }\n")
 	t.Chdir(directory)
-	callerDocument, err := parser.ParseDocument("go", "package related\nfunc run() string { return helper() }\n")
+	callerDocument, err := parser.NewParser().Parse("go", "package related\nfunc run() string { return helper() }\n")
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer callerDocument.Close()
-	helperDocument, err := parser.ParseDocument("go", "package related\nfunc helper() string { return \"value\" }\n")
+	helperDocument, err := parser.NewParser().Parse("go", "package related\nfunc helper() string { return \"value\" }\n")
 	if err != nil {
 		t.Fatal(err)
 	}

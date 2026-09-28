@@ -11,6 +11,22 @@ type navigationImportTargets struct {
 	scopes []string
 }
 
+// navigationImportRequest carries one parser-derived import and its lexical source
+// context. Each language resolver owns how it maps that request to selected files.
+type navigationImportRequest struct {
+	sourceFile  string
+	sourceScope string
+	importPath  string
+	imported    string
+	kind        string
+}
+
+// languageImportResolver is the shared entrypoint for local source ownership,
+// including Rust crate modules, TypeScript config aliases, and Go modules.
+type languageImportResolver interface {
+	importTargets(navigationImportRequest) navigationImportTargets
+}
+
 type navigationCorpus struct {
 	contents     map[string]string
 	exports      map[string][]navigationExport
@@ -22,7 +38,7 @@ type navigationCorpus struct {
 
 type languageNavigationIndex interface {
 	bind(languageNavigationIndex)
-	importTargets(sourceFile, sourceScope, importPath, imported, kind string) navigationImportTargets
+	languageImportResolver
 	reExportTargets(sourceFile, sourceScope, importPath, name string, seen map[string]bool) navigationImportTargets
 	filterCandidates(navigationCall, []navigationDeclaration) []navigationDeclaration
 	importMatches(navigationCall, navigationDeclaration) bool
@@ -39,7 +55,7 @@ func (index *baseLanguageNavigationIndex) bind(owner languageNavigationIndex) {
 	index.owner = owner
 }
 
-func (index *baseLanguageNavigationIndex) importTargets(_, _, _, _, _ string) navigationImportTargets {
+func (*baseLanguageNavigationIndex) importTargets(_ navigationImportRequest) navigationImportTargets {
 	return navigationImportTargets{}
 }
 
@@ -48,7 +64,7 @@ func (index *baseLanguageNavigationIndex) reExportTargets(sourceFile, sourceScop
 		return navigationImportTargets{}
 	}
 	result := navigationImportTargets{}
-	candidates := index.owner.importTargets(sourceFile, sourceScope, importPath, "", "")
+	candidates := index.owner.importTargets(navigationImportRequest{sourceFile: sourceFile, sourceScope: sourceScope, importPath: importPath})
 	for _, candidateFile := range candidates.files {
 		key := navigationSymbolKey(index.family, candidateFile) + "\x00" + name
 		if seen[key] {
@@ -84,7 +100,7 @@ func (index *baseLanguageNavigationIndex) importMatches(call navigationCall, can
 	if call.importPath == "" {
 		return false
 	}
-	targets := index.owner.importTargets(call.importSourceFile, call.moduleScope, call.importPath, "", "")
+	targets := index.owner.importTargets(navigationImportRequest{sourceFile: call.importSourceFile, sourceScope: call.moduleScope, importPath: call.importPath})
 	return stringSliceContains(targets.files, candidate.file)
 }
 

@@ -30,7 +30,7 @@ func jvmLanguageDefinition(language string, projectRoot func(string) string) *la
 		info:          Language{ID: language, Extensions: parserLanguageExtensions(language), FocusedStructure: true, FocusedFlow: true},
 		flowIndex:     moduleFocusedFlowIndex{},
 		classIndex:    moduleFocusedClassIndex{},
-		acceptsSource: func(path string) bool { return codeparser.LanguageFor(path) == language },
+		acceptsSource: func(path string) bool { return codeparser.NewParser().LanguageFor(path) == language },
 		newAnalysis: func(result *Analysis, sources []Source) languageAnalysis {
 			prepareModulePaths(result, sources, language, projectRoot)
 			return &jvmAnalysis{result: result, language: language}
@@ -99,7 +99,7 @@ func nearestJVMRoot(directory string) string {
 func prepareModulePaths(analysis *Analysis, sources []Source, language string, projectRoot func(string) string) {
 	paths := make([]string, 0, len(sources))
 	for _, source := range sources {
-		if codeparser.LanguageFor(source.Path) == language {
+		if codeparser.NewParser().LanguageFor(source.Path) == language {
 			paths = append(paths, absolutePath(source.Path))
 		}
 	}
@@ -137,7 +137,7 @@ func (analysis *jvmAnalysis) Analyze(source Source) error {
 	}); err != nil {
 		return err
 	}
-	graph, _ := codeparser.CachedNavigationGraphFromDocument(document, source.Path)
+	graph := codeparser.NewParser().NavigationGraph(document, source.Path)
 	addModuleNavigationSymbols(analysis.result, graph, analysis.language, analyzer.moduleID, source.Path)
 	analysis.result.Navigation.Merge(graph)
 	return nil
@@ -264,7 +264,7 @@ func (analyzer *jvmSourceAnalyzer) cSharpFieldMembers(node codeparser.ViewNode, 
 		typeName = normalizeJVMType(firstDescendantText(node, "predefined_type", "identifier", "generic_name"), "csharp")
 	}
 	result := []Member{}
-	codeparser.WalkNamedView(node, func(child codeparser.ViewNode) {
+	node.WalkNamed(func(child codeparser.ViewNode) {
 		if child.Kind() != "variable_declarator" {
 			return
 		}
@@ -495,7 +495,7 @@ func (analyzer *jvmSourceAnalyzer) collectKotlinConstructorProperties(node codep
 		if child.Kind() != "primary_constructor" {
 			continue
 		}
-		codeparser.WalkNamedView(child, func(parameter codeparser.ViewNode) {
+		child.WalkNamed(func(parameter codeparser.ViewNode) {
 			if parameter.Kind() != "class_parameter" || !containsWord(parameter.Text(), "val") && !containsWord(parameter.Text(), "var") {
 				return
 			}

@@ -10,12 +10,12 @@ import (
 
 	"github.com/alexflint/go-arg"
 	"github.com/greppleai/grepple/internal/analysis"
-	"github.com/greppleai/grepple/internal/wire"
 	"github.com/greppleai/grepple/internal/archdaemon"
 	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
 	"github.com/greppleai/grepple/internal/navigation"
 	"github.com/greppleai/grepple/internal/parser"
 	"github.com/greppleai/grepple/internal/search"
+	"github.com/greppleai/grepple/internal/wire"
 )
 
 // NavigationResolveSchema identifies graph symbol-resolution responses.
@@ -38,12 +38,12 @@ func (resolveArgs) Description() string {
 
 // ResolveOutput is the complete graph symbol-resolution response.
 type ResolveOutput struct {
-	Schema     string              `json:"schema"`
+	Schema     string               `json:"schema"`
 	Metadata   *wire.ResultMetadata `json:"metadata,omitempty"`
-	Symbol     string              `json:"symbol"`
-	Sources    SourceSummary       `json:"sources"`
-	Matches    []ResolveMatch      `json:"matches"`
-	Truncation *Truncation         `json:"truncation,omitempty"`
+	Symbol     string               `json:"symbol"`
+	Sources    SourceSummary        `json:"sources"`
+	Matches    []ResolveMatch       `json:"matches"`
+	Truncation *Truncation          `json:"truncation,omitempty"`
 }
 
 // ResolveMatch describes one matching declaration and its follow-up commands.
@@ -86,7 +86,7 @@ func executeResolveWithDaemon(application cliruntime.Context, values *ResolveArg
 	if err := validateResolveArgs(*values); err != nil {
 		return err
 	}
-	filter, err := navigation.NormalizeNavigationGraphFilter(navigation.NavigationGraphFilter{Languages: values.Languages, Visibilities: values.Visibilities})
+	filter, err := navigation.NewGraphOperations().NormalizeFilter(navigation.NavigationGraphFilter{Languages: values.Languages, Visibilities: values.Visibilities})
 	if err != nil {
 		return err
 	}
@@ -114,7 +114,7 @@ func executeResolveWithDaemon(application cliruntime.Context, values *ResolveArg
 		if err != nil {
 			return err
 		}
-		filtered, err := navigation.FilterNavigationGraph(parser.NavigationGraph{Declarations: report.Declarations}, filter)
+		filtered, err := navigation.NewGraphOperations().Filter(parser.NavigationGraph{Declarations: report.Declarations}, filter)
 		if err != nil {
 			return err
 		}

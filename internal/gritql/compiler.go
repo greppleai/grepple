@@ -584,7 +584,7 @@ func (c *treeCompiler) compileNodeLike(node queryNode) (*expression, *CompileErr
 	if !validNodeSelectorName(concrete[0].text()) {
 		return nil, c.closedFailure("invalid syntax-node kind")
 	}
-	if !parser.GrammarNodeKind(c.adapter.id, concrete[0].text()) {
+	if !parser.NewParser().GetGrammar(c.adapter.id).NodeKind(concrete[0].text()) {
 		return nil, c.failure("PATTERN_INVALID_SNIPPET", "pattern", "unknown syntax-node kind "+concrete[0].text(), nil)
 	}
 	result := &expression{kind: KindNodeLike, rng: publicRange(node.byteRange()), text: concrete[0].text()}
@@ -606,7 +606,7 @@ func (c *treeCompiler) compileNodeLike(node queryNode) (*expression, *CompileErr
 			if !validNodeSelectorName(field) {
 				return nil, c.closedFailure("invalid syntax-node field")
 			}
-			if parser.GrammarFieldCardinality(c.adapter.id, concrete[0].text(), field) == parser.GrammarCardinalityUnknown {
+			if parser.NewParser().GetGrammar(c.adapter.id).FieldCardinality(concrete[0].text(), field) == parser.GrammarCardinalityUnknown {
 				return nil, c.failure("PATTERN_INVALID_SNIPPET", "pattern", "unknown syntax-node field "+field+" on "+result.text, nil)
 			}
 			pattern = parts[2]

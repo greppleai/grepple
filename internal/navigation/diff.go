@@ -35,8 +35,8 @@ type NavigationGraphDiff struct {
 	ChangedCalls        []NavigationCallDelta          `json:"changedCalls,omitempty"`
 }
 
-// DiffNavigationGraphs compares normalized graphs while ignoring position-only shifts.
-func DiffNavigationGraphs(before, after parser.NavigationGraph) NavigationGraphDiff {
+// diffNavigationGraphs compares normalized graphs while ignoring position-only shifts.
+func diffNavigationGraphs(before, after parser.NavigationGraph) NavigationGraphDiff {
 	diff := NavigationGraphDiff{Schema: NavigationDiffSchema}
 	beforeKeys := navigationDeclarationSemanticKeys(before.Declarations)
 	afterKeys := navigationDeclarationSemanticKeys(after.Declarations)

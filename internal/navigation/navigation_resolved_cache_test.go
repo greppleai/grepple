@@ -13,7 +13,7 @@ import (
 
 func resolvedCacheTestDocument(t *testing.T, path, language, content string) DocumentSource {
 	t.Helper()
-	document, err := parser.ParseDocument(language, content)
+	document, err := parser.NewParser().Parse(language, content)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -36,12 +36,12 @@ func TestResolvedGraphCacheOptInHitAndDisable(t *testing.T) {
 	sources := []DocumentSource{resolvedCacheTestDocument(t, path, "go", "package sample\nfunc Target() {}\nfunc Caller() { Target() }\n")}
 	cacheDirectory := filepath.Join(t.TempDir(), "navigation")
 	t.Setenv(parser.NavigationCacheDirectoryEnv, "")
-	uncached, _ := BuildAnalysisFromDocuments(sources, BuildOptions{})
+	uncached, _ := buildAnalysisFromDocuments(sources, BuildOptions{})
 	if _, err := os.Stat(cacheDirectory); !os.IsNotExist(err) {
 		t.Fatalf("cache should be opt-in: %v", err)
 	}
 	t.Setenv(parser.NavigationCacheDirectoryEnv, cacheDirectory)
-	cold, coldStats := BuildAnalysisFromDocuments(sources, BuildOptions{})
+	cold, coldStats := buildAnalysisFromDocuments(sources, BuildOptions{})
 	if !bytes.Equal(resolvedCacheGraphJSON(t, uncached.Graph()), resolvedCacheGraphJSON(t, cold.Graph())) {
 		t.Fatal("cold cache changed graph")
 	}
@@ -59,11 +59,11 @@ func TestResolvedGraphCacheOptInHitAndDisable(t *testing.T) {
 	marker := cold.Graph()
 	marker.RepositoryRoots = []string{"cache-hit"}
 	writeResolvedGraphCache(key, marker, false)
-	warm, warmStats := BuildAnalysisFromDocuments(sources, BuildOptions{})
+	warm, warmStats := buildAnalysisFromDocuments(sources, BuildOptions{})
 	if !bytes.Equal(resolvedCacheGraphJSON(t, warm.Graph()), resolvedCacheGraphJSON(t, marker)) || warmStats != coldStats {
 		t.Fatalf("warm cache miss or changed source stats: %+v %+v", coldStats, warmStats)
 	}
-	disabled, _ := BuildAnalysisFromDocuments(sources, BuildOptions{DisableCache: true})
+	disabled, _ := buildAnalysisFromDocuments(sources, BuildOptions{DisableCache: true})
 	if !bytes.Equal(resolvedCacheGraphJSON(t, disabled.Graph()), resolvedCacheGraphJSON(t, uncached.Graph())) {
 		t.Fatal("DisableCache did not bypass resolved graph cache")
 	}
@@ -130,7 +130,7 @@ func TestResolvedGraphCacheCorruptionAndAccounting(t *testing.T) {
 		resolvedCacheTestDocument(t, "broken.go", "go", "package sample\nfunc Broken( {\n"),
 		{Path: "unavailable.go"},
 	}
-	cold, first := BuildAnalysisFromDocuments(sources, BuildOptions{})
+	cold, first := buildAnalysisFromDocuments(sources, BuildOptions{})
 	if first.Attempted != 2 || first.Parsed != 1 || first.Skipped != 1 || first.Recovered != 1 {
 		t.Fatalf("cold stats %+v", first)
 	}
@@ -142,14 +142,14 @@ func TestResolvedGraphCacheCorruptionAndAccounting(t *testing.T) {
 	if !ok {
 		t.Fatal("expected cache key")
 	}
-	warm, second := BuildAnalysisFromDocuments(sources, BuildOptions{})
+	warm, second := buildAnalysisFromDocuments(sources, BuildOptions{})
 	if second != first || !bytes.Equal(resolvedCacheGraphJSON(t, cold.Graph()), resolvedCacheGraphJSON(t, warm.Graph())) {
 		t.Fatalf("cached graph or stats changed: %+v %+v", first, second)
 	}
 	if err := os.WriteFile(resolvedGraphCachePath(key), []byte("corrupt"), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	rebuilt, third := BuildAnalysisFromDocuments(sources, BuildOptions{})
+	rebuilt, third := buildAnalysisFromDocuments(sources, BuildOptions{})
 	if third != first || !bytes.Equal(resolvedCacheGraphJSON(t, cold.Graph()), resolvedCacheGraphJSON(t, rebuilt.Graph())) {
 		t.Fatal("corrupt cache changed results")
 	}

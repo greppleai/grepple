@@ -41,7 +41,7 @@ func findBlockedInvocation(command string, depth int) string {
 	if strings.Contains(command, AllowMarker) || depth > 8 {
 		return ""
 	}
-	document, err := codeparser.ParseDocument("shell", command)
+	document, err := codeparser.NewParser().Parse("shell", command)
 	if err != nil {
 		return "" // The hook must fail open if its parser cannot be initialized.
 	}

@@ -56,8 +56,8 @@ type NavigationResolutionStats struct {
 	Languages            []NavigationLanguageResolutionStats `json:"languages"`
 }
 
-// MeasureNavigationResolution classifies every graph call without changing graph facts.
-func MeasureNavigationResolution(graph parser.NavigationGraph) NavigationResolutionStats {
+// measureNavigationResolution classifies every graph call without changing graph facts.
+func measureNavigationResolution(graph parser.NavigationGraph) NavigationResolutionStats {
 	total := newNavigationResolutionAccumulator()
 	languages := make(map[string]*navigationResolutionAccumulator)
 	for _, call := range graph.Calls {

@@ -9,7 +9,7 @@ import (
 
 func TestQueryNavigationGraphTraversesCalleesByDepthAndStopsCycles(t *testing.T) {
 	graph := navigationQueryFixture()
-	one, err := QueryNavigationGraph(graph, []string{"root"}, NavigationQueryCallees, 1)
+	one, err := queryNavigationGraph(graph, []string{"root"}, NavigationQueryCallees, 1)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -20,7 +20,7 @@ func TestQueryNavigationGraphTraversesCalleesByDepthAndStopsCycles(t *testing.T)
 		t.Fatalf("depth-one calls=%v, want %v", got, want)
 	}
 
-	two, err := QueryNavigationGraph(graph, []string{"root"}, NavigationQueryCallees, 2)
+	two, err := queryNavigationGraph(graph, []string{"root"}, NavigationQueryCallees, 2)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -34,7 +34,7 @@ func TestQueryNavigationGraphTraversesCalleesByDepthAndStopsCycles(t *testing.T)
 
 func TestQueryNavigationGraphTraversesCallersAndRetainsCandidateContext(t *testing.T) {
 	graph := navigationQueryFixture()
-	result, err := QueryNavigationGraph(graph, []string{"root"}, NavigationQueryCallers, 2)
+	result, err := queryNavigationGraph(graph, []string{"root"}, NavigationQueryCallers, 2)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -48,21 +48,21 @@ func TestQueryNavigationGraphTraversesCallersAndRetainsCandidateContext(t *testi
 
 func TestQueryNavigationGraphSupportsScopeAndBidirectionalModes(t *testing.T) {
 	graph := navigationQueryFixture()
-	dependencies, err := QueryNavigationGraph(graph, []string{"root"}, NavigationQueryDependencies, 1)
+	dependencies, err := queryNavigationGraph(graph, []string{"root"}, NavigationQueryDependencies, 1)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if got, want := queryCallIDs(dependencies), []string{"root-a", "root-candidates"}; !reflect.DeepEqual(got, want) {
 		t.Fatalf("dependencies=%v, want %v", got, want)
 	}
-	dependents, err := QueryNavigationGraph(graph, []string{"root"}, NavigationQueryDependents, 1)
+	dependents, err := queryNavigationGraph(graph, []string{"root"}, NavigationQueryDependents, 1)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if got, want := queryCallIDs(dependents), []string{"b-root", "incoming-root", "candidate-root"}; !reflect.DeepEqual(got, want) {
 		t.Fatalf("dependents=%v, want %v", got, want)
 	}
-	impact, err := QueryNavigationGraph(graph, []string{"root"}, NavigationQueryImpact, 1)
+	impact, err := queryNavigationGraph(graph, []string{"root"}, NavigationQueryImpact, 1)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -80,21 +80,21 @@ func TestQueryNavigationGraphScopeModesOmitInternalFirstLevelEdges(t *testing.T)
 			{ID: "incoming", CallerID: "external", TargetID: "two"},
 		},
 	}
-	dependencies, err := QueryNavigationGraph(graph, []string{"one", "two"}, NavigationQueryDependencies, 1)
+	dependencies, err := queryNavigationGraph(graph, []string{"one", "two"}, NavigationQueryDependencies, 1)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if got, want := queryCallIDs(dependencies), []string{"outgoing"}; !reflect.DeepEqual(got, want) {
 		t.Fatalf("dependencies=%v, want %v", got, want)
 	}
-	dependents, err := QueryNavigationGraph(graph, []string{"one", "two"}, NavigationQueryDependents, 1)
+	dependents, err := queryNavigationGraph(graph, []string{"one", "two"}, NavigationQueryDependents, 1)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if got, want := queryCallIDs(dependents), []string{"incoming"}; !reflect.DeepEqual(got, want) {
 		t.Fatalf("dependents=%v, want %v", got, want)
 	}
-	impact, err := QueryNavigationGraph(graph, []string{"one", "two"}, NavigationQueryImpact, 1)
+	impact, err := queryNavigationGraph(graph, []string{"one", "two"}, NavigationQueryImpact, 1)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -114,7 +114,7 @@ func TestQueryNavigationGraphCandidateContextDoesNotStopCallerTraversal(t *testi
 			{ID: "parent-candidate", CallerID: "parent", TargetID: "candidate", Confidence: "exact"},
 		},
 	}
-	result, err := QueryNavigationGraph(graph, []string{"root"}, NavigationQueryCallers, 3)
+	result, err := queryNavigationGraph(graph, []string{"root"}, NavigationQueryCallers, 3)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -138,7 +138,7 @@ func TestQueryNavigationGraphRejectsInvalidQueries(t *testing.T) {
 		{[]string{"root"}, "sideways", 1},
 		{[]string{"root"}, NavigationQueryCallees, 0},
 	} {
-		if _, err := QueryNavigationGraph(graph, test.roots, test.direction, test.depth); err == nil {
+		if _, err := queryNavigationGraph(graph, test.roots, test.direction, test.depth); err == nil {
 			t.Fatalf("query %#v unexpectedly succeeded", test)
 		}
 	}

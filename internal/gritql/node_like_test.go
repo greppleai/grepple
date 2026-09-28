@@ -58,7 +58,7 @@ func TestNodeLikePositionalCaptureAcrossSupportedLanguages(t *testing.T) {
 	}
 	for _, test := range cases {
 		t.Run(test.language, func(t *testing.T) {
-			document, err := parser.ParseDocument(test.language, test.source)
+			document, err := parser.NewParser().Parse(test.language, test.source)
 			if err != nil {
 				t.Fatal(err)
 			}

@@ -241,7 +241,8 @@ func (*ecmaNavigationIndex) filterCandidates(call navigationCall, candidates []n
 	})
 }
 
-func (index *ecmaNavigationIndex) importTargets(sourceFile, _, importPath, _, _ string) navigationImportTargets {
+func (index *ecmaNavigationIndex) importTargets(request navigationImportRequest) navigationImportTargets {
+	sourceFile, importPath := request.sourceFile, request.importPath
 	if strings.HasPrefix(importPath, ".") {
 		imported := filepath.Clean(filepath.Join(filepath.Dir(sourceFile), filepath.FromSlash(importPath)))
 		imported = strings.TrimSuffix(imported, filepath.Ext(imported))

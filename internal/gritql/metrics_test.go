@@ -30,7 +30,7 @@ func TestGoComplexityScores(t *testing.T) {
 	}
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
-			document, err := parser.ParseDocument("go", "package demo\n"+test.source+"\n")
+			document, err := parser.NewParser().Parse("go", "package demo\n"+test.source+"\n")
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -68,7 +68,7 @@ func TestGoComplexityScores(t *testing.T) {
 
 func TestGoComplexityMethodNamesAndIndependentScopes(t *testing.T) {
 	source := "package demo\ntype T struct{}\nfunc (T) M() { if true {} }\nfunc f(){ for {} }\n"
-	doc, err := parser.ParseDocument("go", source)
+	doc, err := parser.NewParser().Parse("go", source)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -129,7 +129,7 @@ func TestMetricsValidateAndFailClosed(t *testing.T) {
 		{"source-bytes", "package demo\nfunc f() {}\n", context.Background(), EvaluateOptions{MaxSourceBytes: 1}, "LIMIT_SOURCE_BYTES"},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			document, err := parser.ParseDocument("go", test.source)
+			document, err := parser.NewParser().Parse("go", test.source)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -141,7 +141,7 @@ func TestMetricsValidateAndFailClosed(t *testing.T) {
 			}
 		})
 	}
-	bad, err := parser.ParseDocument("typescript", "const a=1;\n")
+	bad, err := parser.NewParser().Parse("typescript", "const a=1;\n")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -177,7 +177,7 @@ func TestMetricSelectorsWorkAcrossSupportedLanguages(t *testing.T) {
 	for _, test := range cases {
 		t.Run(test.language, func(t *testing.T) {
 			seen[test.language] = true
-			doc, err := parser.ParseDocument(test.language, test.source)
+			doc, err := parser.NewParser().Parse(test.language, test.source)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -206,7 +206,7 @@ func TestMetricSelectorsWorkAcrossSupportedLanguages(t *testing.T) {
 }
 
 func TestEvaluateProgramsSharesResultsAndCandidateNodes(t *testing.T) {
-	doc, err := parser.ParseDocument("go", "package demo\nfunc f(x bool){if x {}}\n")
+	doc, err := parser.NewParser().Parse("go", "package demo\nfunc f(x bool){if x {}}\n")
 	if err != nil {
 		t.Fatal(err)
 	}

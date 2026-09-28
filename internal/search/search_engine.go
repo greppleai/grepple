@@ -380,7 +380,7 @@ func scanContent(p Params, m func(string) bool, contentBytes []byte, file, displ
 		File:        file,
 		DisplayPath: display,
 		Content:     content,
-		Language:    parser.LanguageFor(file),
+		Language:    parser.NewParser().LanguageFor(file),
 		MatchLines:  hits,
 	}
 }

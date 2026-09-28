@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/greppleai/grepple/internal/dependency"
 )
 
 type externalDependencyTestResult struct {
@@ -32,7 +34,7 @@ require github.com/gofiber/fiber/v3 v3.5.0
 	mustWriteDependencyFile(t, filepath.Join(root, "service.go"), "package service\n")
 	results := []externalDependencyTestResult{{Path: "service.go", Related: []RelatedSymbol{{External: &ExternalReference{ID: "ctx", Language: "go", ImportPath: "github.com/gofiber/fiber/v3", Symbol: "Ctx", Kind: "type"}}}}}
 
-	if err := QualifyExternalDependencies(results, root); err != nil {
+	if err := qualifyLocalDependencies(results, root); err != nil {
 		t.Fatal(err)
 	}
 	reference := results[0].Related[0].External
@@ -50,7 +52,7 @@ replace github.com/gofiber/fiber/v3 => ../fiber
 	mustWriteDependencyFile(t, filepath.Join(root, "service.go"), "package service\n")
 	results := []externalDependencyTestResult{{Path: "service.go", Related: []RelatedSymbol{{External: &ExternalReference{ID: "ctx", Language: "go", ImportPath: "github.com/gofiber/fiber/v3", Symbol: "Ctx", Kind: "type"}}}}}
 
-	if err := QualifyExternalDependencies(results, root); err != nil {
+	if err := qualifyLocalDependencies(results, root); err != nil {
 		t.Fatal(err)
 	}
 	if reference := results[0].Related[0].External; reference.Module != "" || reference.Version != "" {
@@ -94,7 +96,7 @@ func TestQualifyExternalDependenciesHonorsCorepackPackageManager(t *testing.T) {
 			mustWriteDependencyFile(t, filepath.Join(root, "pnpm-lock.yaml"), "lockfileVersion: '9.0'")
 			mustWriteDependencyFile(t, filepath.Join(root, "main.ts"), "export {}")
 			results := npmExternalDependencyResults()
-			if err := QualifyExternalDependencies(results, root); err != nil {
+			if err := qualifyLocalDependencies(results, root); err != nil {
 				t.Fatal(err)
 			}
 			reference := results[0].Related[0].External
@@ -122,11 +124,11 @@ func TestQualifyExternalDependenciesFromNPMLockVersions(t *testing.T) {
 			mustWriteDependencyFile(t, filepath.Join(root, "package-lock.json"), test.lock)
 			mustWriteDependencyFile(t, filepath.Join(root, "main.ts"), "export {}")
 			results := npmExternalDependencyResults()
-			if err := QualifyExternalDependencies(results, root); err != nil {
+			if err := qualifyLocalDependencies(results, root); err != nil {
 				t.Fatal(err)
 			}
 			reference := results[0].Related[0].External
-			if reference.Module != "@acme/widgets" || reference.Package != "@acme/widgets/subpath" || reference.Version != "1.2.3" || reference.Integrity == "" || reference.Source != NPMRegistrySource {
+			if reference.Module != "@acme/widgets" || reference.Package != "@acme/widgets/subpath" || reference.Version != "1.2.3" || reference.Integrity == "" || reference.Source != dependency.NPMRegistrySource {
 				t.Fatalf("npm reference = %#v", reference)
 			}
 		})
@@ -150,11 +152,11 @@ func TestQualifyExternalDependenciesFromNPMShrinkwrapVersions(t *testing.T) {
 			mustWriteDependencyFile(t, filepath.Join(root, "npm-shrinkwrap.json"), test.lock)
 			mustWriteDependencyFile(t, filepath.Join(root, "main.ts"), "export {}")
 			results := npmExternalDependencyResults()
-			if err := QualifyExternalDependencies(results, root); err != nil {
+			if err := qualifyLocalDependencies(results, root); err != nil {
 				t.Fatal(err)
 			}
 			reference := results[0].Related[0].External
-			if reference.Module != "@acme/widgets" || reference.Package != "@acme/widgets/subpath" || reference.Version != "1.2.3" || reference.Integrity == "" || reference.Source != NPMRegistrySource {
+			if reference.Module != "@acme/widgets" || reference.Package != "@acme/widgets/subpath" || reference.Version != "1.2.3" || reference.Integrity == "" || reference.Source != dependency.NPMRegistrySource {
 				t.Fatalf("npm shrinkwrap reference = %#v", reference)
 			}
 		})
@@ -168,10 +170,10 @@ func TestQualifyExternalDependenciesPrefersNPMShrinkwrap(t *testing.T) {
 	mustWriteDependencyFile(t, filepath.Join(root, "npm-shrinkwrap.json"), `{"lockfileVersion":3,"packages":{"node_modules/@acme/widgets":{"version":"2.0.0","resolved":"https://registry.npmjs.org/@acme/widgets/-/widgets-2.0.0.tgz","integrity":"sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="}}}`)
 	mustWriteDependencyFile(t, filepath.Join(root, "main.ts"), "export {}")
 	results := npmExternalDependencyResults()
-	if err := QualifyExternalDependencies(results, root); err != nil {
+	if err := qualifyLocalDependencies(results, root); err != nil {
 		t.Fatal(err)
 	}
-	if reference := results[0].Related[0].External; reference.Version != "2.0.0" || reference.Integrity != "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=" || reference.Source != NPMRegistrySource {
+	if reference := results[0].Related[0].External; reference.Version != "2.0.0" || reference.Integrity != "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=" || reference.Source != dependency.NPMRegistrySource {
 		t.Fatalf("npm shrinkwrap did not take precedence: %#v", reference)
 	}
 }
@@ -183,7 +185,7 @@ func TestQualifyExternalDependenciesDoesNotFallbackFromInvalidNPMShrinkwrap(t *t
 	mustWriteDependencyFile(t, filepath.Join(root, "npm-shrinkwrap.json"), `{"lockfileVersion":3`)
 	mustWriteDependencyFile(t, filepath.Join(root, "main.ts"), "export {}")
 	results := npmExternalDependencyResults()
-	if err := QualifyExternalDependencies(results, root); err != nil {
+	if err := qualifyLocalDependencies(results, root); err != nil {
 		t.Fatal(err)
 	}
 	if reference := results[0].Related[0].External; reference.Module != "" || reference.Version != "" || reference.Integrity != "" {
@@ -216,11 +218,11 @@ func TestQualifyExternalDependenciesFromNPMAliases(t *testing.T) {
 			mustWriteDependencyFile(t, filepath.Join(root, "package-lock.json"), fmt.Sprintf(`{"lockfileVersion":%d,%s}`, test.lockVersion, layout))
 			mustWriteDependencyFile(t, filepath.Join(root, "main.ts"), "export {}")
 			results := npmExternalDependencyResultsFor("widget-alias/subpath")
-			if err := QualifyExternalDependencies(results, root); err != nil {
+			if err := qualifyLocalDependencies(results, root); err != nil {
 				t.Fatal(err)
 			}
 			reference := results[0].Related[0].External
-			if reference.ImportPath != "widget-alias/subpath" || reference.Module != test.module || reference.Version != test.version || reference.Package != test.packageName || reference.Source != NPMRegistrySource {
+			if reference.ImportPath != "widget-alias/subpath" || reference.Module != test.module || reference.Version != test.version || reference.Package != test.packageName || reference.Source != dependency.NPMRegistrySource {
 				t.Fatalf("npm alias reference = %#v", reference)
 			}
 		})
@@ -233,7 +235,7 @@ func TestQualifyExternalDependenciesRejectsMismatchedNPMAliasIdentity(t *testing
 	mustWriteDependencyFile(t, filepath.Join(root, "package-lock.json"), `{"lockfileVersion":3,"packages":{"node_modules/widget-alias":{"name":"@other/widgets","version":"2.1.0","integrity":"sha512-other"}}}`)
 	mustWriteDependencyFile(t, filepath.Join(root, "main.ts"), "export {}")
 	results := npmExternalDependencyResultsFor("widget-alias/subpath")
-	if err := QualifyExternalDependencies(results, root); err != nil {
+	if err := qualifyLocalDependencies(results, root); err != nil {
 		t.Fatal(err)
 	}
 	if reference := results[0].Related[0].External; reference.Module != "" || reference.Version != "" || reference.Package != "" {
@@ -266,9 +268,9 @@ func TestNormalizeNPMRegistryEvidence(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			source, valid := NormalizeNPMRegistryEvidence(test.module, "1.2.3", test.resolved, test.integrity)
-			if valid != test.valid || (valid && source != NPMRegistrySource) || (!valid && source != "") {
-				t.Fatalf("NormalizeNPMRegistryEvidence() = %q, %v", source, valid)
+			source, valid := dependency.NormalizeNPMRegistryEvidence(test.module, "1.2.3", test.resolved, test.integrity)
+			if valid != test.valid || (valid && source != dependency.NPMRegistrySource) || (!valid && source != "") {
+				t.Fatalf("dependency.NormalizeNPMRegistryEvidence() = %q, %v", source, valid)
 			}
 		})
 	}
@@ -297,7 +299,7 @@ func TestQualifyExternalDependenciesRejectsUnsupportedNPMSourceKinds(t *testing.
 			mustWriteDependencyFile(t, filepath.Join(root, "package-lock.json"), `{"lockfileVersion":3,"packages":{"node_modules/widget":{"version":"1.2.3","integrity":"sha512-registry-looking"}}}`)
 			mustWriteDependencyFile(t, filepath.Join(root, "main.ts"), "export {}")
 			results := npmExternalDependencyResultsFor("widget")
-			if err := QualifyExternalDependencies(results, root); err != nil {
+			if err := qualifyLocalDependencies(results, root); err != nil {
 				t.Fatal(err)
 			}
 			if reference := results[0].Related[0].External; reference.Module != "" || reference.Version != "" || reference.Integrity != "" {
@@ -325,7 +327,7 @@ func TestQualifyExternalDependenciesRejectsNonAuthoritativeNPMLocks(t *testing.T
 			mustWriteDependencyFile(t, filepath.Join(root, "package-lock.json"), test.lock)
 			mustWriteDependencyFile(t, filepath.Join(root, "main.ts"), "export {}")
 			results := npmExternalDependencyResults()
-			if err := QualifyExternalDependencies(results, root); err != nil {
+			if err := qualifyLocalDependencies(results, root); err != nil {
 				t.Fatal(err)
 			}
 			reference := results[0].Related[0].External
@@ -350,7 +352,7 @@ func TestQualifyExternalDependenciesFromCargoLock(t *testing.T) {
 	mustWriteDependencyFile(t, filepath.Join(root, "Cargo.lock"), "version = 3\n[[package]]\nname = 'acme-widgets'\nversion = '1.4.0'\nsource = 'registry+https://github.com/rust-lang/crates.io-index'\nchecksum = 'cargo-sum'\n")
 	mustWriteDependencyFile(t, filepath.Join(root, "main.rs"), "fn main() {}")
 	results := []externalDependencyTestResult{{Path: "main.rs", Language: "rust", Related: []RelatedSymbol{{External: &ExternalReference{ID: "widget", Language: "rust", ImportPath: "acme_widgets::Widget", Symbol: "Widget", Kind: "type"}}}}}
-	if err := QualifyExternalDependencies(results, root); err != nil {
+	if err := qualifyLocalDependencies(results, root); err != nil {
 		t.Fatal(err)
 	}
 	reference := results[0].Related[0].External
@@ -364,14 +366,14 @@ func TestQualifyExternalDependenciesPreservesMavenCandidates(t *testing.T) {
 	mustWriteDependencyFile(t, filepath.Join(root, "pom.xml"), `<project><modelVersion>4.0.0</modelVersion><groupId>consumer</groupId><artifactId>app</artifactId><version>1</version><dependencies><dependency><groupId>com.acme</groupId><artifactId>widgets</artifactId><version>2.3.0</version></dependency><dependency><groupId>com.acme</groupId><artifactId>support</artifactId><version>4.0.0</version></dependency></dependencies></project>`)
 	mustWriteDependencyFile(t, filepath.Join(root, "Main.java"), "class Main {}")
 	results := []externalDependencyTestResult{{Path: "Main.java", Language: "java", Related: []RelatedSymbol{{External: &ExternalReference{ID: "widget", Language: "java", ImportPath: "com.acme.widgets.Widget", Symbol: "Widget", Kind: "type"}}}}}
-	if err := QualifyExternalDependencies(results, root); err != nil {
+	if err := qualifyLocalDependencies(results, root); err != nil {
 		t.Fatal(err)
 	}
 	reference := results[0].Related[0].External
 	if reference.Module != "" || len(reference.Candidates) != 2 || reference.Candidates[0].Module != "com.acme:support" || reference.Candidates[1].Version != "2.3.0" {
 		t.Fatalf("maven candidates = %#v", reference)
 	}
-	if got := ExternalDependencyReferences(results); len(got) != 1 || len(got[0].Candidates) != 2 {
+	if got := externalDependencyReferences(results); len(got) != 1 || len(got[0].Candidates) != 2 {
 		t.Fatalf("eligible references = %#v", got)
 	}
 }

@@ -14,8 +14,8 @@ import (
 	"time"
 
 	"github.com/greppleai/grepple/internal/gritql"
-	"github.com/greppleai/grepple/internal/storagepaths"
 	"github.com/greppleai/grepple/internal/parser"
+	"github.com/greppleai/grepple/internal/storagepaths"
 )
 
 func validateMetricMessage(message string, query *gritql.MetricQuery) error {
@@ -56,7 +56,7 @@ func renderMetricMessage(message string, query *gritql.MetricQuery, result gritq
 }
 
 func metricApplies(path string, rule compiledRule) bool {
-	return parser.LanguageFor(path) == rule.metric.Spec.Scope.Language() && gritql.MatchesGlobs(path, rule.Include, rule.Exclude)
+	return parser.NewParser().LanguageFor(path) == rule.metric.Spec.Scope.Language() && gritql.MatchesGlobs(path, rule.Include, rule.Exclude)
 }
 
 // scanMetricRulesCached keeps the same content-validated per-file cache contract
@@ -147,7 +147,7 @@ func scanMetricRules(ctx context.Context, root string, paths []string, rules []c
 		if totalBytes > maxSharedScanBytes {
 			return nil, fmt.Errorf("incomplete metric scan: aggregate byte limit exceeded")
 		}
-		document, err := parser.ParseDocument(parser.LanguageFor(path), string(content))
+		document, err := parser.NewParser().Parse(parser.NewParser().LanguageFor(path), string(content))
 		if err != nil {
 			return nil, fmt.Errorf("incomplete metric scan: parse %s: %w", path, err)
 		}

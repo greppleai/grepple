@@ -295,26 +295,37 @@ func (n ViewNode) snapshot() SyntaxNode {
 	return snapshot
 }
 
-// WalkOptions bounds a syntax walk. Zero limits are unbounded.
-type WalkOptions struct {
+// walkOptions bounds a syntax walk. Zero limits are unbounded.
+type walkOptions struct {
 	MaxDepth int
 	MaxNodes int
 }
 
-// WalkResult reports completed visits and whether a configured bound stopped traversal.
-type WalkResult struct {
+// walkResult reports completed visits and whether a configured bound stopped traversal.
+type walkResult struct {
 	Visited   int
 	Truncated bool
 }
 
-// WalkNamedView visits root and all named descendants in pre-order.
-func WalkNamedView(root ViewNode, visit func(ViewNode)) {
+// WalkNamed visits this active ViewNode and its named descendants in pre-order.
+// Use it inside Document.Read for subtree walks; view nodes expire after the callback.
+func (root ViewNode) WalkNamed(visit func(ViewNode)) {
 	if visit == nil {
 		return
 	}
-	WalkNamedViewBounded(root, WalkOptions{}, func(node ViewNode, _ int) bool {
+	walkNamedViewBounded(root, walkOptions{}, func(node ViewNode, _ int) bool {
 		visit(node)
 		return true
+	})
+}
+
+// WalkNamedView visits the document root and named descendants under one read lock.
+// The callback must not call Document methods or retain the ViewNode after this returns.
+// A nil or closed Document returns ErrDocumentClosed.
+func (d *Document) WalkNamedView(visit func(ViewNode)) error {
+	return d.Read(func(view DocumentView) error {
+		view.Root().WalkNamed(visit)
+		return nil
 	})
 }
 
@@ -323,14 +334,14 @@ type viewWalkItem struct {
 	depth int
 }
 
-// WalkNamedViewBounded visits named nodes in pre-order. Returning false from
+// walkNamedViewBounded visits named nodes in pre-order. Returning false from
 // visit prunes that node's descendants without stopping sibling traversal.
-func WalkNamedViewBounded(root ViewNode, options WalkOptions, visit func(ViewNode, int) bool) WalkResult {
+func walkNamedViewBounded(root ViewNode, options walkOptions, visit func(ViewNode, int) bool) walkResult {
 	if !root.Valid() || visit == nil {
-		return WalkResult{}
+		return walkResult{}
 	}
 	stack := []viewWalkItem{{node: root, depth: 1}}
-	result := WalkResult{}
+	result := walkResult{}
 	for len(stack) > 0 {
 		if options.MaxNodes > 0 && result.Visited >= options.MaxNodes {
 			result.Truncated = true

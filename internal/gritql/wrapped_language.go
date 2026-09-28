@@ -351,12 +351,12 @@ func wrappedRootCategoryAccepts(language string, declarations map[string]bool, c
 // Dart's pinned grammar has no declared expression supertype in node-types.json.
 // Accept grammar-backed expression nodes and literal/instantiation subtypes only.
 func dartExpressionRootCategory(kind string) bool {
-	return kind == "identifier" || kind == "pattern_assignment" || strings.HasSuffix(kind, "_expression") && parser.GrammarNodeKind("dart", kind) || grammarSubtypeAny("dart", kind, "_literal", "_instantiation")
+	return kind == "identifier" || kind == "pattern_assignment" || strings.HasSuffix(kind, "_expression") && parser.NewParser().GetGrammar("dart").NodeKind(kind) || grammarSubtypeAny("dart", kind, "_literal", "_instantiation")
 }
 
 func grammarSubtypeAny(language, kind string, supertypes ...string) bool {
 	for _, supertype := range supertypes {
-		if parser.GrammarSubtype(language, supertype, kind) {
+		if parser.NewParser().GetGrammar(language).Subtype(supertype, kind) {
 			return true
 		}
 	}

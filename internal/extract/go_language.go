@@ -57,7 +57,7 @@ func isGoSourceFile(path string) bool {
 }
 
 func goSourceScope(source Source) (string, error) {
-	document, err := codeparser.ParseDocument("go", source.Text)
+	document, err := codeparser.NewParser().Parse("go", source.Text)
 	if err != nil {
 		return "", err
 	}
