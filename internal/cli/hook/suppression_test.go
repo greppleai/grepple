@@ -96,14 +96,14 @@ func TestHookSuppressionAcrossEnginesAndCachedRuns(t *testing.T) {
 	writeHookTestFile(t, root, ".grepple/hooks/go-mccabe.yaml", authoredMetricHook)
 	writeHookTestFile(t, root, "api/code.go", `package api
 //grepple go-standalone-functions intentional stateless helper
-func suppressed(x bool) int {
+func Suppressed(x bool) int {
   //grepple go-empty-if branch reserved for future use
   if x {}
   return 1
 }
 //grepple go-mccabe measured boundary exception
-func metric(x bool) int { if x {} ; return 2 }
-func retained(x bool) int { if x {} ; return 3 }
+func Metric(x bool) int { if x {} ; return 2 }
+func Retained(x bool) int { if x {} ; return 3 }
 `)
 	for run := 0; run < 2; run++ { // second pass exercises both per-file and relational caches
 		report, status, err := runHookTest(t, "--all", "--id", "go-empty-if", "--id", "go-standalone-functions", "--id", "go-mccabe")

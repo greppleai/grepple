@@ -46,8 +46,10 @@ func (impl) Method() impl { return impl{} }
 	writeHookTestFile(t, root, "api/types.go", "package api\ntype CrossInterface interface { Run() }\n")
 	writeHookTestFile(t, root, "other/types.go", "package other\ntype Service interface { Run() }\n")
 	writeHookTestFile(t, root, "internal/service/helpers.go", `package service
-func internalHelper() {}
-func ExportedHelper() {}
+func navigationFieldKey() {}
+func BuildGraphFromDocuments() {}
+func Éclair() {}
+func échec() {}
 `)
 	writeHookTestFile(t, root, "api/service_test.go", "package api\nfunc TestHelper() {}\n")
 	writeHookTestFile(t, root, "internal/service/testdata/fixture.go", "package service\nfunc Fixture() {}\n")
@@ -69,7 +71,7 @@ func ExportedHelper() {}
 	want := []string{
 		"api/service.go:10", "api/service.go:11", "api/service.go:16",
 		"api/service.go:17", "api/service.go:18", "api/service.go:19",
-		"internal/service/helpers.go:2", "internal/service/helpers.go:3",
+		"internal/service/helpers.go:3", "internal/service/helpers.go:4",
 	}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("findings=%v, want %v", got, want)
@@ -89,10 +91,10 @@ func TestStandaloneFunctionsDefaultReportsOnlyChanged(t *testing.T) {
 	writeHookTestFile(t, root, ".grepple/hooks/go-standalone-functions.yaml", string(config))
 	gitHookTest(t, root, "init", "-q")
 	writeHookTestFile(t, root, "api/types.go", "package api\ntype Service interface { Run() }\n")
-	writeHookTestFile(t, root, "api/old.go", "package api\nfunc Old() int { return 0 }\n")
+	writeHookTestFile(t, root, "api/old.go", "package api\nfunc Old() int { return 0 }\nfunc old() int { return 0 }\n")
 	gitHookTest(t, root, "add", ".")
 	gitHookTest(t, root, "commit", "-qm", "baseline")
-	writeHookTestFile(t, root, "api/new.go", "package api\nfunc New() int { return 1 }\n")
+	writeHookTestFile(t, root, "api/new.go", "package api\nfunc New() int { return 1 }\nfunc new() int { return 1 }\n")
 
 	report, status, err := runHookTest(t, "--id", "go-standalone-functions")
 	if err != nil || status != 1 || len(report.Findings) != 1 || report.Findings[0].Path != "api/new.go" {

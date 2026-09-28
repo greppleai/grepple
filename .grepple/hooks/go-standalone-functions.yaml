@@ -1,4 +1,5 @@
-# Structural package-boundary warning. Methods, init, and main are exempt.
+# Structural package-boundary warning for exported package-level functions.
+# Methods, init, and main are exempt; exported names begin with a Unicode uppercase letter.
 # A standalone function is exempt when any declared result type is an inline,
 # predeclared (error/any), or same-package named interface, even across files.
 # Imported interfaces, indirect aliases, and build-tag selection are not resolved.
@@ -15,7 +16,7 @@ exclude:
   - "**/.*/**"
   - "**/.*"
 severity: warning
-message: "Review this package-level function: no declared result is a known interface in its package. Methods are exempt; justified stateless helpers may remain."
+message: "Review this exported package-level function: no declared result is a known interface in its package. Methods are exempt; justified stateless helpers may remain."
 relation:
   report_changed_only: true
   left_query: |
@@ -25,7 +26,7 @@ relation:
       maybe function_declaration(result=$result),
       not `func init() { $body }`,
       not `func main() { $body }`,
-    }
+    } where { $name <: r"^\\p{Lu}" }
   right_query: |
     language go
     type_spec(name=$type, type=interface_type())
