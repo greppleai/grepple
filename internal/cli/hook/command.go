@@ -157,6 +157,12 @@ func Execute(application cliruntime.Context, values *Args) error {
 				}
 				report.Findings = append(report.Findings, found...)
 			}
+			// Apply source-authored exceptions only after every engine has produced
+			// complete raw findings. Caches must retain unsuppressed results.
+			report.Findings, err = filterSuppressedFindings(root, report.Findings)
+			if err != nil {
+				return err
+			}
 			sort.Slice(report.Findings, func(i, j int) bool {
 				a, b := report.Findings[i], report.Findings[j]
 				if a.Path != b.Path {
