@@ -29,6 +29,39 @@ grepple --at src/server.go:42           # Read a declaration at a known line
 
 Search works on plain text as well as source code. Supported languages get syntax-aware results; other files remain searchable as text. Use `grepple examples` for short, copyable workflows, or browse the [examples](examples/README.md).
 
+### What an agent sees
+
+For example, an agent can locate a declaration, read its anchored source, and follow the suggested next point. These are shortened excerpts from this repository; line numbers and hashes change as code changes:
+
+```text
+$ grepple --outline internal/directorymeta/repository.go
+internal/directorymeta/repository.go  go
+81-91   func  ReadRepository
+93-113  func  loadRepository
+
+$ grepple --at internal/directorymeta/repository.go:81
+internal/directorymeta/repository.go
+rL1│81│func ReadRepository(root string) (Repository, error) {
+buS│82│    repository, err := loadRepository(root)
+...
+Next points (code navigation):
+  → loadRepository  internal/directorymeta/repository.go:93-113  call:82
+```
+
+`HASH│LINE│content` rows identify source for follow-up reads or [anchored edits](docs/write.md); `Next points` link to related declarations. For automation, `grepple -F 'ReadRepository' internal/directorymeta --json --limit 1` returns results **and** a copyable continuation command (abridged fields shown):
+
+```json
+{
+  "results": [{"path": "internal/directorymeta/repository.go", "matches": [{"line": 81, "text": "func ReadRepository(root string) (Repository, error) {"}]}],
+  "metadata": {
+    "page": {"skip": 0, "limit": 1, "returned": 1, "complete": false},
+    "nextCommand": "grepple search -F --skip 1 --limit 1 --json ReadRepository internal/directorymeta"
+  }
+}
+```
+
+Here `complete: false` means more result files are available; the agent can run `nextCommand` rather than assuming the first page is exhaustive.
+
 ## Find and narrow results
 
 ```bash
