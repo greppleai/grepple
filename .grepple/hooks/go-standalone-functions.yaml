@@ -4,7 +4,6 @@
 # Imported interfaces, indirect aliases, and build-tag selection are not resolved.
 version: 1
 id: go-standalone-functions
-event: Stop
 engine: gritql-relational-v1
 include:
   - "**/*.go"

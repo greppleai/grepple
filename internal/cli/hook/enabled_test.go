@@ -111,3 +111,21 @@ func TestHookEnabledMixedSelection(t *testing.T) {
 		t.Fatalf("mixed: report=%+v status=%d err=%v", report, status, err)
 	}
 }
+
+func TestHookEventFieldIsNotSupported(t *testing.T) {
+	root := testHookRepository(t)
+	report, status, err := runHookTest(t, "--all", "--id", "go-empty-if")
+	if err != nil || status != 0 || !reflect.DeepEqual(report.Hooks, []string{"go-empty-if"}) {
+		t.Fatalf("no event required: report=%+v status=%d err=%v", report, status, err)
+	}
+	path := filepath.Join(root, ".grepple/hooks/go-empty-if.yaml")
+	original, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	config := strings.Replace(string(original), "version: 1\n", "version: 1\nevent: Stop\n", 1)
+	writeHookTestFile(t, root, ".grepple/hooks/go-empty-if.yaml", config)
+	if _, _, err := runHookTest(t, "--all", "--id", "go-empty-if"); err == nil || !strings.Contains(err.Error(), "field event not found") {
+		t.Fatalf("obsolete event property: error=%v", err)
+	}
+}

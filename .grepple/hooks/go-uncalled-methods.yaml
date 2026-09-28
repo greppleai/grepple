@@ -4,7 +4,6 @@
 # _test.go files are excluded from both sides: test-only calls do not count.
 version: 1
 id: go-uncalled-methods
-event: Stop
 engine: gritql-relational-v1
 include:
   - "**/*.go"

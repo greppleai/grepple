@@ -9,7 +9,6 @@ import (
 
 const duplicateHookYAML = `version: 1
 id: duplicate-symbol
-event: Stop
 engine: gritql-relational-v1
 include:
   - "**/*.ts"

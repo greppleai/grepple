@@ -1,7 +1,6 @@
 # Retain the original ID for compatibility; this now checks Go empty blocks, not only if bodies.
 version: 1
 id: go-empty-if
-event: Stop
 engine: gritql-v1
 include:
   - "**/*.go"

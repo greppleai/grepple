@@ -2,7 +2,6 @@
 # This matches direct imports only; grouped imports need a separate query capability.
 version: 1
 id: go-direct-dot-import
-event: Stop
 engine: gritql-v1
 include:
   - "**/*.go"

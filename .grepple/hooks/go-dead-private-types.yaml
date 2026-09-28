@@ -1,7 +1,6 @@
 # Source-level candidates only; lexical names do not establish reachability.
 version: 1
 id: go-dead-private-types
-event: Stop
 engine: gritql-relational-v1
 include:
   - "**/*.go"

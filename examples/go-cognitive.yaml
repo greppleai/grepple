@@ -1,6 +1,5 @@
 version: 1
 id: go-cognitive
-event: Stop
 engine: gritql-metric-v1
 include: ["**/*.go"]
 severity: warning

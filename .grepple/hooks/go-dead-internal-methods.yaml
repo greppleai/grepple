@@ -2,7 +2,6 @@
 # reflection, generated code, or source outside this selected repository.
 version: 1
 id: go-dead-internal-methods
-event: Stop
 engine: gritql-relational-v1
 include:
   - "**/*.go"

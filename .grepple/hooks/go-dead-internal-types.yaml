@@ -2,7 +2,6 @@
 # the selected repository (including cmd/ and other allowed importers).
 version: 1
 id: go-dead-internal-types
-event: Stop
 engine: gritql-relational-v1
 include:
   - "**/*.go"

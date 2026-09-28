@@ -1,7 +1,6 @@
 # Cross-file rules require a complete source snapshot, including unchanged files.
 version: 1
 id: same-file-struct-methods
-event: Stop
 engine: gritql-relational-v1
 include:
   - "**/*.go"

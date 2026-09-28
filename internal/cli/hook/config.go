@@ -23,7 +23,6 @@ type rule struct {
 	Version  int             `yaml:"version"`
 	ID       string          `yaml:"id"`
 	Enabled  yaml.Node       `yaml:"enabled" json:"-"`
-	Event    string          `yaml:"event"`
 	Engine   string          `yaml:"engine"`
 	Include  []string        `yaml:"include"`
 	Exclude  []string        `yaml:"exclude"`
@@ -151,8 +150,8 @@ func loadRules(root string, ids []string) ([]compiledRule, error) {
 			}
 		}
 		enabled[config.ID] = isEnabled
-		if config.Version != 1 || config.Event != "Stop" || config.Engine != "gritql-v1" && config.Engine != "gritql-relational-v1" && config.Engine != "gritql-metric-v1" {
-			return nil, fmt.Errorf("hook %s: requires version 1, event Stop, and a supported GritQL engine", path)
+		if config.Version != 1 || config.Engine != "gritql-v1" && config.Engine != "gritql-relational-v1" && config.Engine != "gritql-metric-v1" {
+			return nil, fmt.Errorf("hook %s: requires version 1 and a supported GritQL engine", path)
 		}
 		if config.Severity != "error" && config.Severity != "warning" {
 			return nil, fmt.Errorf("hook %s: severity must be error or warning", path)

@@ -9,7 +9,6 @@ import (
 
 const authoredMetricHook = `version: 1
 id: go-mccabe
-event: Stop
 engine: gritql-metric-v1
 include: ["**/*.go"]
 severity: warning
