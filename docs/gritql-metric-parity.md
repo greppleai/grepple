@@ -9,7 +9,7 @@ go run ./scripts/cognitive-parity -include-generated -show 20
 
 The audit compiles [`examples/go-cognitive.yaml`](../examples/go-cognitive.yaml), selects eligible Go sources with `grepple --files '**/*.go' --limit 0 --max-output-bytes 0`, and has Revive report **every** named function at threshold -1. It joins function declarations by repository-relative path and byte offset and then compares scores and the configured threshold **15**. It does not commit files or modify source. Revive directives still apply; `-include-generated` changes only Revive's generated-file policy.
 
-On this uncommitted checkout (705 eligible Go files), the results were:
+A prior 705-file evaluation produced the following historical baseline (rerun the commands above for current results):
 
 | Revive scope | Paired functions | Different scores | GritQL-only functions | >15 Revive | >15 GritQL | GritQL-only >15 |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |

@@ -21,7 +21,7 @@ Core packages own behavior and canonical models. `internal/wire` owns HTTP trans
 | `internal/cli,apiclient,render,gritqlapi -> internal/wire` | Construct, decode, and render transport results | Internal adapters consume shared DTOs directly rather than importing the public facade. |
 | `internal/wire -> internal/search,navigation,rulespec` | Preserve existing type identities for compatible wire aliases | These aliases are compatibility debt; new behavior belongs to engine owners and new API services should prefer opaque or facade-owned representations. |
 
-Analysis graph traversal, Search request/result construction, Navigation external dependency resolution, and Rules normalization do not depend on public API DTO declarations. A source-level guard checks every implementation and test import for `api`; backend code has a complementary guard allowing only `api` from this module. The final relation changes are recorded in [Restructure relation review](restructure-relations.md).
+Analysis graph traversal, Search request/result construction, Navigation external dependency resolution, and Rules normalization do not depend on public API DTO declarations. A source-level guard checks every implementation and test import for `api`; backend code has a complementary guard allowing only `api` from this module.
 
 ## Cohesive single-consumer packages
 

@@ -53,10 +53,6 @@ files:
       description: Documents CLI search, extraction, repository inspection, authentication, rules, and presentation workflows.
       kind: production
       checksum: 687f358f00db4608c86c011542417761314d54a9948ef45a5a213f5ab4da62dc
-    - path: documentation_consistency_test.go
-      description: Checks roadmap separation and discoverability of current output-contract documentation.
-      kind: test
-      checksum: fe25c62d8097f47ef0db105b3b8d1543f85eab9c4a4ccec09eb99ce791919764
     - path: exit.go
       description: Converts requested non-error command statuses into CLI exit codes.
       kind: production

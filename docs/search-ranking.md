@@ -32,5 +32,3 @@ Parser-backed segments are built in source order. Grepple:
 
 
 This policy prioritizes complete matching callables without injecting nearby imports, top-level declarations, or nonmatching sibling summaries. Use `--line-only`, bounded context, or a narrower path when less source is wanted.
-
-Paired review captures show the same commands [before](matched-scope-rendering-before.md) and [after](matched-scope-rendering-after.md) this policy change across Go, Python, Java, Rust, TSX, Shell, and related navigation.

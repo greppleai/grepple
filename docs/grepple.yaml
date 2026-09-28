@@ -7,6 +7,18 @@ responsibilities:
     - Describe delegated research, provider safety, benchmarks, performance budgets, and release validation.
     - Define anchored transactional editing and source classification workflows.
 files:
+    - path: CHANGELOG.md
+      description: Records released features, fixes, and version history; managed by Release Please.
+      kind: production
+      checksum: 61d49e02991c6186c2bd9ea96f3f1b8f120b4114304fd09d4049f1448d4acdd9
+    - path: README-before-user-guide.md
+      description: Preserves the former long-form root README verbatim for historical reference.
+      kind: production
+      checksum: 1253c689a2c308b5df8fc65ae3f33b080236af9602d2f41059b5044f41330a5b
+    - path: agent-utility-metrics.md
+      description: Defines explicit agent utility journal inputs, report formats, comparisons, and evidence boundaries.
+      kind: production
+      checksum: 7a7111080c219d44b67210e2b2243a932d39cea66997fbb8dcf32e5ada1db112
     - path: agent-workflow-benchmarks.md
       description: Measures deterministic retrieval workflows by correctness, calls, bytes, tokens, latency, and truncation.
       kind: production
@@ -38,31 +50,23 @@ files:
     - path: domain-boundaries.md
       description: Records package ownership, API compatibility boundaries, dependency classifications, and cohesive subsystem guidance.
       kind: production
-      checksum: 2a55c63866f4e8d59603114a3c555c527f7ba56867b0e785ef61f215cbc97495
+      checksum: 248e913303b987a28cf87f3af069099596fbfc4fcdf1ba844f15e12db74a4ee3
     - path: file-type-support.md
       description: Catalogs supported file languages, parser capabilities, navigation facts, extraction paths, and evidence limits.
       kind: generated
       checksum: 4c9c565b21f8e276d1bae92edab10b758aecaffcc61ab43931c4eb1914e0d13f
-    - path: gritql-analysis.md
-      description: Presents historical design analysis for a native read-only GritQL-compatible detection kernel and future integrations.
-      kind: production
-      checksum: 7581abcfdd05f5e2c772c31a61e140e8a3a4b6ea6ca79a63dd47e00b22a1e573
     - path: gritql-compatibility.md
       description: Defines the closed gritql-v1 syntax, parsing, matching, limits, diagnostics, security, and language compatibility contract.
       kind: production
       checksum: c5b2ddc15d2fb76e6ea71cd56bbdf863c2faca322894752ace49ec6f27f6d1e5
+    - path: gritql-metric-parity.md
+      description: Documents reproducible cognitive-complexity parity checks and why Revive remains authoritative.
+      kind: production
+      checksum: 04e896c58eb481fc2fa9cfac7c501bbb7d82aa4950d4ca213f6b9acf3ca30b4c
     - path: implementation-ownership-inventory.md
       description: Records authoritative ownership of parser, navigation, search, extraction, analysis, source, and CLI implementation boundaries.
       kind: production
       checksum: fb38d67ee48abaeaac715165b98e9b49f8a53a01401fbbec5b6fbb952cb7e28b
-    - path: matched-scope-rendering-after.md
-      description: Captures candidate structural-search output that renders complete matching scopes without unrelated sibling summaries.
-      kind: fixture
-      checksum: 628a5f6b0a1f0188e70f15fd58726cb4625d86d2e99820a88f18ce5c9ab46267
-    - path: matched-scope-rendering-before.md
-      description: Captures baseline structural-search output that includes matching scopes alongside neighboring summaries.
-      kind: fixture
-      checksum: 0c24dbe1dd620c5841cd73c0bc927cb93d773813b459e6160e1e4be69e3c0035
     - path: output-contracts.md
       description: Specifies command output modes, completeness, limits, spilling, source availability, and resolution outcomes.
       kind: production
@@ -75,10 +79,6 @@ files:
       description: Describes coordinated release creation, native CGO builds, artifact targets, publishing, validation, and dependencies.
       kind: production
       checksum: 2662af82b1363b0a1b6d8eef5a4aaaeef5754e58f233c4521880e366cd66a6bf
-    - path: restructure-relations.md
-      description: Reviews production dependency restructuring, removed architecture leaks, intentional edges, and DAG containment.
-      kind: production
-      checksum: f9922175e7e0ac62843f46be4cb5e05e01eda4f03fdf3ae57c2e5f21c776de0d
     - path: result-metadata.md
       description: Defines the shared bounded-execution metadata envelope for search, graph, boundary, and GritQL JSON results.
       kind: production
@@ -86,7 +86,7 @@ files:
     - path: search-ranking.md
       description: Specifies deterministic file ordering and parser-backed segment selection for search results.
       kind: production
-      checksum: fb697d4ae036f855cf2e9b2620ef77c0fb9b82a9b6def2afa4c4e57d926bf814
+      checksum: 4fb307362467fecde54860d17a9779de5e6ae1e4b377109d0e6e9a831803ccee
     - path: source-scope.md
       description: Documents observable repository source selection, ignore controls, classifications, exclusions, and completeness.
       kind: production
