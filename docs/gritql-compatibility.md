@@ -175,6 +175,7 @@ For example, `variable_declarator(name=$name)` on both sides with `scope: reposi
 
 ```yaml
 version: 1
+enabled: true
 id: duplicate-symbol
 event: Stop
 engine: gritql-relational-v1
@@ -189,6 +190,8 @@ relation:
   right_key: {binding: name}
   scope: repository
 ```
+
+The optional hook-level `enabled` flag accepts only YAML booleans: omit it or use `true` to run the rule, or use `false` to disable scanning while keeping its configuration validated. Disabled rules are absent from reports even when explicitly selected with `--id`. `event: Stop` is a required schema label, not an automatic Pi event subscription; the CLI runs these checks only when called.
 
 `relation.mode: unmatched_left` reports each **left** finding whose key has no right-side match in the same scope/partition, including the same file. The default mode retains cross-file pair behavior. This is a bounded, source-authored anti-join over the entire selected snapshot; `unique_left` and `{{right.*}}` message placeholders are invalid in unmatched mode. `{{left.*}}` and `{{key}}` describe the reported left finding. Missing sources, parser diagnostics, resource limits, and missing/ambiguous partitions still fail closed; absence in a partial scan is never a clean result.
 

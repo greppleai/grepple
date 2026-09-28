@@ -22,6 +22,7 @@ var hookID = regexp.MustCompile(`^[a-z][a-z0-9-]*$`)
 type rule struct {
 	Version  int             `yaml:"version"`
 	ID       string          `yaml:"id"`
+	Enabled  yaml.Node       `yaml:"enabled" json:"-"`
 	Event    string          `yaml:"event"`
 	Engine   string          `yaml:"engine"`
 	Include  []string        `yaml:"include"`
@@ -101,6 +102,7 @@ func loadRules(root string, ids []string) ([]compiledRule, error) {
 	}
 	rules := make([]compiledRule, 0, len(entries))
 	seen := make(map[string]bool)
+	enabled := make(map[string]bool)
 	for _, entry := range entries {
 		if !strings.HasSuffix(entry.Name(), ".yaml") || !entry.Type().IsRegular() {
 			continue
@@ -139,6 +141,16 @@ func loadRules(root string, ids []string) ([]compiledRule, error) {
 			return nil, fmt.Errorf("hook %s: id must match unique filename", path)
 		}
 		seen[config.ID] = true
+		isEnabled := true
+		if config.Enabled.Kind != 0 {
+			if config.Enabled.Kind != yaml.ScalarNode || config.Enabled.Tag != "!!bool" {
+				return nil, fmt.Errorf("hook %s: enabled must be true or false", path)
+			}
+			if err := config.Enabled.Decode(&isEnabled); err != nil {
+				return nil, fmt.Errorf("hook %s: %w", path, err)
+			}
+		}
+		enabled[config.ID] = isEnabled
 		if config.Version != 1 || config.Event != "Stop" || config.Engine != "gritql-v1" && config.Engine != "gritql-relational-v1" && config.Engine != "gritql-metric-v1" {
 			return nil, fmt.Errorf("hook %s: requires version 1, event Stop, and a supported GritQL engine", path)
 		}
@@ -203,6 +215,14 @@ func loadRules(root string, ids []string) ([]compiledRule, error) {
 			return nil, fmt.Errorf("unknown hook id %q", id)
 		}
 	}
-	sort.Slice(rules, func(i, j int) bool { return rules[i].ID < rules[j].ID })
-	return rules, nil
+	// A selected, disabled rule is still parsed and validated, but does not
+	// enter the execution plan or appear among reported hooks.
+	active := rules[:0]
+	for _, item := range rules {
+		if enabled[item.ID] {
+			active = append(active, item)
+		}
+	}
+	sort.Slice(active, func(i, j int) bool { return active[i].ID < active[j].ID })
+	return active, nil
 }
