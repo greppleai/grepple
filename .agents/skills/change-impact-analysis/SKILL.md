@@ -1,42 +1,22 @@
 ---
 name: change-impact-analysis
-description: Use before renaming, deleting, moving, or changing behavior/signatures of local code, or when asked what calls a symbol, what it calls, or what may break. Uses Grepple navigation and graph queries; text occurrences alone are not impact evidence.
+description: Use before renaming, deleting, moving, or changing behavior/signatures of local code, or when asked what calls a symbol, what it calls, or what may break. Text matches alone are not impact evidence.
 ---
 
 # Change-impact analysis with Grepple
 
-Prevent the two common mistakes: treating every name occurrence as a caller, and treating a bounded navigation preview as a complete call graph.
+## Trace one declaration
 
-## Workflow
+1. Resolve the exact declaration: `grepple graph resolve --symbol Symbol SCOPE` if overloaded, or locate it with `grepple --line-only --enclosing -F 'Symbol' SCOPE`. Verify the chosen `PATH:LINE` with `grepple --at PATH:LINE`.
+2. Preview immediate callers and callees with `grepple --related --at PATH:LINE`.
+3. Choose the direction the change needs, over a universe that includes consumers outside the owning package:
+   - Who calls it? `grepple graph callers --at PATH:LINE --depth 2 SCOPE`
+   - What does it call? `grepple graph callees --at PATH:LINE --depth 2 SCOPE`
+   - Multi-hop change reach? `grepple graph impact --at PATH:LINE --depth 2 SCOPE`
+4. If bounded output omits results or completeness matters, narrow scope or rerun that focused query with `--json`. Follow `nextCommand` for paging; inspect spilled `grepple-artifact-v1` output by relevant range, not a repository-wide dump.
 
-1. Resolve the exact declaration location. Prefer an existing range; otherwise locate it:
-   ```bash
-grepple --line-only --enclosing -F 'Symbol' SCOPE
-grepple graph resolve --symbol Symbol SCOPE
-grepple --at path/to/file.go:LINE
-   ```
-   Use `graph resolve` when a name is overloaded or appears in multiple containers; continue with one emitted `--at` selector rather than guessing.
-2. Preview immediate behavior and consumers:
-   ```bash
-   grepple --related --at path/to/file.go:LINE
-   ```
-3. For a refactor decision, query the needed direction over the relevant source universe:
-   ```bash
-   grepple graph callers --at path/to/file.go:LINE --depth 2 SCOPE
-   grepple graph callees --at path/to/file.go:LINE --depth 2 SCOPE
-   ```
-4. If bounded human output reports omissions or completeness is required, narrow the universe or rerun the focused query with `--json`; do not replace it with a whole-repository graph dump. If JSON spills, inspect the `grepple-artifact-v1` descriptor and read only relevant artifact ranges. Use resolution totals and per-language/confidence ambiguity rates to decide whether candidate inspection is material for this scope.
+## Confidence and handoff
 
-## Confidence rules
+Treat `exact`, `import-resolved`, and safely `context-resolved` edges as static evidence. `unique-terminal` is inference, and `[candidate; try --at PATH:LINE]` requires inspection. Check selected/parsed/skipped/failed/recovered source totals and omissions before asserting “no callers.” Interface dispatch, reflection, generated calls, registration, and string lookup need separate checks when relevant.
 
-- `exact`, `import-resolved`, and safely `context-resolved` edges are evidence.
-- `unique-terminal` is syntax-based inference, not type checking.
-- `[candidate; try --at PATH:LINE]` is a lead. Inspect candidates before choosing one.
-- Paths passed to the command define the graph universe. Include consumers outside the declaration's package when claiming repository impact.
-- Check `metadata.page.complete` plus discovered/selected/parsed/skipped/failed/recovered source totals. Failed, recovered, or truncated source prevents a complete static-impact claim; use `nextCommand` when supplied.
-- Navigation does not prove interface dispatch, reflection, generated calls, runtime registration, data flow, or string-based lookup. Search those mechanisms explicitly when relevant.
-- Directory relation evidence and callable impact differ. Use bounded `architecture directory` for physical ownership, `--outline` for declaration shape, and focused graph traversal for callable impact; inspect architecture coverage before treating absent relations as evidence.
-
-## Decision record
-
-Before changing code, state: exact declaration, graph universe and source totals, direct callers, direct callees, ambiguous candidates, omitted counts, and non-static mechanisms checked. This makes “no callers” a scoped evidence claim instead of a guess.
+Before editing, record the declaration, graph universe and source totals, confirmed direct callers/callees, ambiguous candidates, missing sources or omissions, and non-static mechanisms checked. Use architecture lookup for directory relations; a text occurrence or directory edge is not a callable dependency.

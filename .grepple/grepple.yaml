@@ -24,7 +24,7 @@ directories:
     - path: SKILL.md
       description: Defines the Grepple workflow and interpretation rules for reviewing architecture boundaries and dependency evidence.
       kind: production
-      checksum: 6d1698ab8cf093e2f4669a16173600512df0118a4e37d992e61e87e892041c1d
+      checksum: 87e481e4e9c7837e4f74894a4679747a20786090187e31e143c9a6b2911be537
   .agents/skills/architecture-diagram-workflow:
     description: Defines a source-backed workflow for creating, inspecting, and validating focused Mermaid architecture diagrams with Grepple.
     responsibilities:
@@ -37,7 +37,7 @@ directories:
     - path: SKILL.md
       description: Provides commands, projection guidance, workflow steps, and trust rules for source-backed Mermaid architecture diagrams.
       kind: production
-      checksum: 206b1fc60d82589ce45178ddb6cc401b54f974b44de3a2f1479e3fe5b5b4c8fb
+      checksum: d6fd492aa4c2eba8a1463b78cca90b13c6e2511444b12829e3e66dd4e422e99a
   .agents/skills/architecture-lookup-discovery:
     description: Provides a Grepple workflow for locating source ownership, declarations, entrypoints, and cross-directory relationships while preserving evidence and uncertainty.
     responsibilities:
@@ -52,7 +52,7 @@ directories:
     - path: SKILL.md
       description: Defines evidence-based commands and trust rules for repository architecture discovery with Grepple.
       kind: production
-      checksum: 287a17f073e7f0c0e2165d17b27c383979218718c03c9ffe5b765d7f5ee51183
+      checksum: 6eb057089946ff38c4ecc90cfee58547f3e0b5cdaeffe473502d5b4048155083
   .agents/skills/change-impact-analysis:
     description: Defines a Grepple workflow for resolving symbols and assessing scoped code-change impact.
     responsibilities:
@@ -66,7 +66,7 @@ directories:
     - path: SKILL.md
       description: Documents Grepple commands, confidence rules, completeness checks, and decision records for code-change impact analysis.
       kind: production
-      checksum: b949a1f4c936c356165db4d238c5d0af2c7daca0f5f6509702e614b676d87ddb
+      checksum: 3672f8877f9251a22eb5e5c6ae9a0eddfe27d692a181ecd17a16b555a9c92c2e
   .agents/skills:
     description: This directory provides source-backed Grepple workflows for repository discovery, architecture analysis, change impact, research delegation, searching, and structural audits.
     responsibilities:
@@ -89,7 +89,7 @@ directories:
     - path: SKILL.md
       description: Documents Grepple workflows for local discovery, evidence retrieval, and safe source edits.
       kind: production
-      checksum: 5caf39f876b3a292e795c2ae66c0a28c2b964b2b2d916c3bbde127c4beb30410
+      checksum: a4cf054a0b4fcaaacdb806d644d6f9f4ab001283e9e0f68e5c671ee6d2d6651d
   .agents/skills/remote-grep-and-search:
     description: Guidance for using Grepple to search and navigate indexed remote repositories without cloning them.
     responsibilities:
@@ -101,7 +101,7 @@ directories:
     - path: SKILL.md
       description: Defines procedures and safeguards for inspecting indexed repositories with Remote Grepple.
       kind: production
-      checksum: 2e18c82d66adf9e0d2e994c59cc73eb9ca4f0759e7adc0476106b1e80946c7f2
+      checksum: 42c62c0596c3ef780bca6c5503236295fbce4098936b7629d051b8214f88dc15
   .agents/skills/structural-pattern-audit:
     description: A Grepple skill for performing precise structural pattern audits with GritQL.
     responsibilities:
@@ -113,7 +113,7 @@ directories:
     - path: SKILL.md
       description: Defines the workflow and safety rules for structural pattern audits using Grepple GritQL.
       kind: production
-      checksum: c48b62fa8c5b66d28d0b4a4547b5038389339f3f80037dd28c955e308e5db6a0
+      checksum: bd33460835b17f1776498cbebd632987a151587c94ef5487084dde3f8dd2ff80
   .github:
     description: GitHub configuration for automated dependency updates and release operations.
     responsibilities:
