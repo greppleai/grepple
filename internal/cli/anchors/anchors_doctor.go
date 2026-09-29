@@ -11,8 +11,8 @@ import (
 	"github.com/alexflint/go-arg"
 	"github.com/greppleai/grepple/internal/anchor"
 	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
+	"github.com/greppleai/grepple/internal/config"
 	"github.com/greppleai/grepple/internal/shellquote"
-	"github.com/greppleai/grepple/internal/usersettings"
 )
 
 const anchorDoctorSchema = "grepple-anchor-doctor-v1"
@@ -95,12 +95,13 @@ func diagnoseAnchorProvider(requestedProvider string) anchorDoctorReport {
 		MaxResponseBytes: anchor.MaxResponseBytes, MaxStderrBytes: anchor.MaxStderrBytes,
 		Checks: []anchorDoctorCheck{},
 	}
-	settingsPath, err := usersettings.Path()
+	settings, err := config.LoadConfig("", true)
 	if err != nil {
 		return failAnchorDoctor(report, "settings", err.Error())
 	}
+	settingsPath := settings.SettingsPath
 	report.SettingsPath = settingsPath
-	name, provider, err := usersettings.ResolveProvider(requestedProvider)
+	name, provider, err := settings.ResolveProvider(requestedProvider)
 	if err != nil {
 		return failAnchorDoctor(report, "configuration", err.Error())
 	}
@@ -123,7 +124,7 @@ func diagnoseAnchorProvider(requestedProvider string) anchorDoctorReport {
 	return report
 }
 
-func anchorDoctorRoundTrip(provider usersettings.Provider) (int, error) {
+func anchorDoctorRoundTrip(provider config.Provider) (int, error) {
 	directory, err := os.MkdirTemp("", "grepple-anchor-doctor-")
 	if err != nil {
 		return 0, err
@@ -145,10 +146,17 @@ func sanitizeAnchorDoctorError(err error, temporaryPath string) error {
 	return errors.New(strings.ReplaceAll(err.Error(), temporaryPath, "<temporary-file>"))
 }
 
+func displaySettingsPath(path string) string {
+	if path == "" {
+		return "$GREPPLE_SETTINGS or ~/.grepple/settings.json"
+	}
+	return path
+}
+
 func failAnchorDoctor(report anchorDoctorReport, check, detail string) anchorDoctorReport {
 	report.Checks = append(report.Checks, anchorDoctorCheck{Name: check, Status: "failed", Detail: detail})
 	report.Guidance = []string{
-		"Configure an absolute executable under anchors.providers in " + usersettings.DisplayPath(report.SettingsPath) + ".",
+		"Configure an absolute executable under anchors.providers in " + displaySettingsPath(report.SettingsPath) + ".",
 		"Select it with anchors.default_provider or rerun with --provider NAME.",
 		"See docs/anchor-providers.md for protocol-v1 request and response examples.",
 	}

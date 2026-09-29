@@ -14,7 +14,7 @@ import (
 	"github.com/greppleai/grepple/internal/agent"
 	"github.com/greppleai/grepple/internal/aiprovider"
 	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
-	"github.com/greppleai/grepple/internal/usersettings"
+	"github.com/greppleai/grepple/internal/config"
 )
 
 const defaultTimeout = 10 * time.Minute
@@ -108,7 +108,7 @@ func (command *command) execute(values *Args) error {
 
 type preparedInvocation struct {
 	provider    aiprovider.Provider
-	preferences usersettings.AskPreferences
+	preferences config.AskPreferences
 	question    string
 	model       string
 	root        string
@@ -139,7 +139,7 @@ func prepareInvocation(application cliruntime.Context, values Args) (preparedInv
 	if err != nil {
 		return preparedInvocation{}, err
 	}
-	preferences, err := usersettings.LoadAskPreferences()
+	preferences, err := application.Configuration().AskPreferences()
 	if err != nil {
 		return preparedInvocation{}, err
 	}

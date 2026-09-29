@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/greppleai/grepple/internal/cliruntime"
+	"github.com/greppleai/grepple/internal/config"
 	"github.com/greppleai/grepple/internal/gritql"
 	sourcedomain "github.com/greppleai/grepple/internal/sources"
 )
@@ -192,14 +192,14 @@ func CheckRepositoryRelation(ctx context.Context, start, id string) ([]Finding, 
 	if len(rules) != 1 || rules[0].relation == nil {
 		return nil, fmt.Errorf("hook %s is not relational", id)
 	}
-	config, configPath, err := cliruntime.LoadRepositoryConfig(root)
+	settings, err := config.LoadConfig(root, false)
 	if err != nil {
 		return nil, err
 	}
 	policy := sourcedomain.Options{WorkingDirectory: root, IgnoreRoot: root}
-	if configPath != "" {
-		policy.IgnoreRoot = filepath.Dir(configPath)
-		policy.IgnorePaths = config.Ignore.Paths
+	if settings.RepositoryPath != "" {
+		policy.IgnoreRoot = filepath.Dir(settings.RepositoryPath)
+		policy.IgnorePaths = settings.Repository.Ignore.Paths
 	}
 	paths, err := selectedFiles(ctx, root, true, policy)
 	if err != nil {

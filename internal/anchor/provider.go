@@ -15,8 +15,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/greppleai/grepple/internal/config"
 	"github.com/greppleai/grepple/internal/hashline"
-	"github.com/greppleai/grepple/internal/usersettings"
 )
 
 const (
@@ -75,14 +75,14 @@ func Generate(files []File) (Lookup, error) {
 	if len(request.Files) == 0 {
 		return make(Lookup), nil
 	}
-	native, err := UseNativeProvider()
+	settings, err := config.LoadConfig("", true)
 	if err != nil {
 		return nil, err
 	}
-	if native {
+	if useNativeProvider(settings) {
 		return nativeLookup(request, displayPaths)
 	}
-	_, provider, err := usersettings.ResolveProvider("")
+	_, provider, err := settings.ResolveProvider("")
 	if err != nil {
 		return nil, err
 	}
@@ -100,7 +100,7 @@ func Read(path, content string, lines []int) (map[int]string, bool, error) {
 
 // RoundTrip invokes an explicit provider and validates its response. It returns
 // the encoded response size for provider diagnostics.
-func RoundTrip(provider usersettings.Provider, file File) (int, error) {
+func RoundTrip(provider config.Provider, file File) (int, error) {
 	request, displayPaths, err := buildRequest([]File{file})
 	if err != nil {
 		return 0, err
@@ -121,14 +121,18 @@ func RoundTrip(provider usersettings.Provider, file File) (int, error) {
 
 // UseNativeProvider reports whether native anchors are enabled.
 func UseNativeProvider() (bool, error) {
-	settings, err := usersettings.Load()
+	settings, err := config.LoadConfig("", true)
 	if err != nil {
 		return false, err
 	}
-	if !settings.Anchors.EnabledByDefault {
-		return true, nil
+	return useNativeProvider(settings), nil
+}
+
+func useNativeProvider(settings *config.Config) bool {
+	if !settings.User.Anchors.EnabledByDefault {
+		return true
 	}
-	return settings.Anchors.DefaultProvider == "" || settings.Anchors.DefaultProvider == "native", nil
+	return settings.User.Anchors.DefaultProvider == "" || settings.User.Anchors.DefaultProvider == "native"
 }
 
 // NormalizeContent normalizes source before anchor generation.
@@ -178,7 +182,7 @@ func sortedUniqueLines(lines []int) []int {
 	return result
 }
 
-func generateWithProvider(provider usersettings.Provider, request protocolRequest, displayPaths map[string]string) (Lookup, error) {
+func generateWithProvider(provider config.Provider, request protocolRequest, displayPaths map[string]string) (Lookup, error) {
 	response, err := invokeProvider(provider, request)
 	if err != nil {
 		return nil, err
@@ -207,7 +211,7 @@ func digest(content string) string {
 	return hex.EncodeToString(digest[:])
 }
 
-func invokeProvider(provider usersettings.Provider, request protocolRequest) (protocolResponse, error) {
+func invokeProvider(provider config.Provider, request protocolRequest) (protocolResponse, error) {
 	input, err := json.Marshal(request)
 	if err != nil {
 		return protocolResponse{}, err

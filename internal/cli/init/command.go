@@ -16,7 +16,6 @@ import (
 	"github.com/greppleai/grepple/internal/cliruntime"
 	"github.com/greppleai/grepple/internal/directorymeta"
 	sourcedomain "github.com/greppleai/grepple/internal/sources"
-	"github.com/greppleai/grepple/internal/usersettings"
 	"go.yaml.in/yaml/v3"
 )
 
@@ -45,7 +44,7 @@ func Execute(application cliruntime.Context, values *Args) error {
 	if err != nil {
 		return err
 	}
-	provider, modelID, err := configuredModel(ctx)
+	provider, modelID, err := configuredModel(ctx, application.Configuration())
 	if err != nil {
 		return err
 	}
@@ -199,8 +198,8 @@ func parseGeneratedMetadataWithExisting(value string, files []directorymeta.File
 	return generated, nil
 }
 
-func configuredModel(ctx context.Context) (aiprovider.Provider, string, error) {
-	preferences, err := usersettings.LoadAskPreferences()
+func configuredModel(ctx context.Context, settings cliruntime.Configuration) (aiprovider.Provider, string, error) {
+	preferences, err := settings.AskPreferences()
 	if err != nil {
 		return nil, "", err
 	}

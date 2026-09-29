@@ -26,6 +26,7 @@ import (
 	versioncommand "github.com/greppleai/grepple/internal/cli/version"
 	writecommand "github.com/greppleai/grepple/internal/cli/write"
 	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
+	"github.com/greppleai/grepple/internal/config"
 	"github.com/greppleai/grepple/internal/outputspill"
 )
 
@@ -137,5 +138,9 @@ func executeArguments(context cliruntime.Context, values *Arguments) error {
 }
 
 func newCommandContextWith(repository cliruntime.RepositoryInvocationOptions, threshold int, exit func(int)) cliruntime.Context {
-	return cliruntime.NewContext(cliruntime.ContextOptions{Repository: repository, InlineOutputThreshold: threshold, Exit: exit})
+	return newCommandContextWithConfig(repository, threshold, exit, nil)
+}
+
+func newCommandContextWithConfig(repository cliruntime.RepositoryInvocationOptions, threshold int, exit func(int), settings *config.Config) cliruntime.Context {
+	return cliruntime.NewContext(cliruntime.ContextOptions{Repository: repository, Config: settings, InlineOutputThreshold: threshold, Exit: exit})
 }

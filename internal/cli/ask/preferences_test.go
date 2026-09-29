@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/greppleai/grepple/internal/aiprovider"
-	"github.com/greppleai/grepple/internal/usersettings"
+	"github.com/greppleai/grepple/internal/config"
 )
 
 func TestConfiguredAskPreferencesUsesAskScope(t *testing.T) {
@@ -22,10 +22,11 @@ func TestConfiguredAskPreferencesUsesAskScope(t *testing.T) {
 	if err := os.WriteFile(path, []byte(content), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	preferences, err := usersettings.LoadAskPreferences()
+	settings, err := config.LoadConfig("", true)
 	if err != nil {
 		t.Fatal(err)
 	}
+	preferences := settings.Ask
 	if preferences.Model != "anthropic/claude-sonnet" || preferences.LogsEnabled || preferences.LogRetention != 72*time.Hour {
 		t.Fatalf("preferences=%+v", preferences)
 	}
@@ -36,27 +37,20 @@ func TestConfiguredAskPreferencesUsesAskScope(t *testing.T) {
 	if err := os.WriteFile(path, []byte(`{"ask":{"model":"codex/luna"}} trailing`), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := usersettings.LoadAskPreferences(); err == nil {
+	if _, err := config.LoadConfig("", true); err == nil {
 		t.Fatal("expected malformed user configuration error")
 	}
 }
 
 func TestConfiguredAskPreferencesDefaultsAndValidatesRetention(t *testing.T) {
 	t.Setenv("HOME", t.TempDir())
-	preferences, err := usersettings.LoadAskPreferences()
-	if err != nil || !preferences.LogsEnabled || preferences.LogRetention != 7*24*time.Hour {
+	settings, err := config.LoadConfig("", true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	preferences := settings.Ask
+	if !preferences.LogsEnabled || preferences.LogRetention != 7*24*time.Hour {
 		t.Fatalf("defaults=%+v err=%v", preferences, err)
-	}
-	for value, want := range map[string]time.Duration{"7d": 7 * 24 * time.Hour, "168h": 7 * 24 * time.Hour, "30m": 30 * time.Minute} {
-		got, err := usersettings.ParseLogRetention(value)
-		if err != nil || got != want {
-			t.Fatalf("retention %q=%s err=%v, want %s", value, got, err, want)
-		}
-	}
-	for _, value := range []string{"", "0d", "-1h", "forever"} {
-		if _, err := usersettings.ParseLogRetention(value); err == nil {
-			t.Fatalf("retention %q succeeded", value)
-		}
 	}
 }
 

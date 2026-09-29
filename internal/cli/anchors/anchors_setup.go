@@ -10,8 +10,8 @@ import (
 
 	"github.com/alexflint/go-arg"
 	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
+	"github.com/greppleai/grepple/internal/config"
 	"github.com/greppleai/grepple/internal/shellquote"
-	"github.com/greppleai/grepple/internal/usersettings"
 )
 
 type SetupArgs struct {
@@ -48,48 +48,46 @@ func RunSetup(args []string) error {
 }
 
 func executeSetup(values *SetupArgs) error {
-	settings, settingsPath, _, err := prepareAnchorSetup(*values)
+	loaded, err := config.LoadConfig("", true)
+	if err != nil {
+		return err
+	}
+	settings, settingsPath, _, err := prepareAnchorSetup(*values, loaded)
 	if err != nil {
 		return err
 	}
 	if !values.Write {
 		return renderAnchorSetupPreview(settings, settingsPath, values.Provider)
 	}
-	if err := usersettings.Save(settingsPath, settings); err != nil {
+	if err := loaded.SaveUserSettings(settings); err != nil {
 		return err
 	}
 	message := fmt.Sprintf("anchor setup written settings=%s provider=%s\nnext: grepple anchors doctor --provider %s\n", settingsPath, values.Provider, shellquote.Argument(values.Provider))
 	return cliruntime.NewOutput(os.Stdout).WriteString(message)
 }
 
-func prepareAnchorSetup(values SetupArgs) (usersettings.Config, string, usersettings.Provider, error) {
+func prepareAnchorSetup(values SetupArgs, loaded *config.Config) (config.UserSettings, string, config.Provider, error) {
 	if values.Force && !values.Write {
-		return usersettings.Config{}, "", usersettings.Provider{}, fmt.Errorf("--force requires --write")
+		return config.UserSettings{}, "", config.Provider{}, fmt.Errorf("--force requires --write")
 	}
 	name := strings.TrimSpace(values.Provider)
 	if name == "" || name != values.Provider {
-		return usersettings.Config{}, "", usersettings.Provider{}, fmt.Errorf("--provider must be a non-empty name without surrounding whitespace")
+		return config.UserSettings{}, "", config.Provider{}, fmt.Errorf("--provider must be a non-empty name without surrounding whitespace")
 	}
-	provider := usersettings.Provider{Command: append([]string{values.Command}, values.CommandArgs...), TimeoutMS: values.TimeoutMS}
-	if err := usersettings.ValidateProvider(provider); err != nil {
-		return usersettings.Config{}, "", usersettings.Provider{}, fmt.Errorf("anchor provider %q: %w", name, err)
+	provider := config.Provider{Command: append([]string{values.Command}, values.CommandArgs...), TimeoutMS: values.TimeoutMS}
+	if err := provider.Validate(); err != nil {
+		return config.UserSettings{}, "", config.Provider{}, fmt.Errorf("anchor provider %q: %w", name, err)
 	}
 	if _, err := exec.LookPath(provider.Command[0]); err != nil {
-		return usersettings.Config{}, "", usersettings.Provider{}, fmt.Errorf("anchor provider %q executable: %w", name, err)
+		return config.UserSettings{}, "", config.Provider{}, fmt.Errorf("anchor provider %q executable: %w", name, err)
 	}
-	settingsPath, err := usersettings.Path()
-	if err != nil {
-		return usersettings.Config{}, "", usersettings.Provider{}, err
-	}
-	settings, err := usersettings.Load()
-	if err != nil {
-		return usersettings.Config{}, "", usersettings.Provider{}, err
-	}
+	settingsPath := loaded.SettingsPath
+	settings := loaded.User
 	if settings.Anchors.Providers == nil {
-		settings.Anchors.Providers = map[string]usersettings.Provider{}
+		settings.Anchors.Providers = map[string]config.Provider{}
 	}
 	if existing, found := settings.Anchors.Providers[name]; found && !equalAnchorProviderSettings(existing, provider) && !values.Force {
-		return usersettings.Config{}, "", usersettings.Provider{}, fmt.Errorf("anchor provider %q already has different settings; inspect the preview and pass --write --force to replace it", name)
+		return config.UserSettings{}, "", config.Provider{}, fmt.Errorf("anchor provider %q already has different settings; inspect the preview and pass --write --force to replace it", name)
 	}
 	settings.Anchors.Providers[name] = provider
 	if values.SetDefault {
@@ -97,14 +95,14 @@ func prepareAnchorSetup(values SetupArgs) (usersettings.Config, string, usersett
 	}
 	if values.EnableByDefault {
 		if settings.Anchors.DefaultProvider != name {
-			return usersettings.Config{}, "", usersettings.Provider{}, fmt.Errorf("--enable-by-default requires --set-default or an existing default_provider of %q", name)
+			return config.UserSettings{}, "", config.Provider{}, fmt.Errorf("--enable-by-default requires --set-default or an existing default_provider of %q", name)
 		}
 		settings.Anchors.EnabledByDefault = true
 	}
 	return settings, settingsPath, provider, nil
 }
 
-func equalAnchorProviderSettings(left, right usersettings.Provider) bool {
+func equalAnchorProviderSettings(left, right config.Provider) bool {
 	if left.TimeoutMS != right.TimeoutMS || len(left.Command) != len(right.Command) {
 		return false
 	}
@@ -116,7 +114,7 @@ func equalAnchorProviderSettings(left, right usersettings.Provider) bool {
 	return true
 }
 
-func renderAnchorSetupPreview(settings usersettings.Config, settingsPath, provider string) error {
+func renderAnchorSetupPreview(settings config.UserSettings, settingsPath, provider string) error {
 	encoded, err := json.MarshalIndent(settings, "", "  ")
 	if err != nil {
 		return err
