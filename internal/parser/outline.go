@@ -1,13 +1,12 @@
 package parser
 
 import (
-	"path/filepath"
 	"strings"
 )
 
 // OutlineFile parses content according to the file's language and returns its
 // structural outline. Unsupported languages yield an outline with no symbols
-// (Markdown and JSON/YAML are handled with lightweight scanners rather than
+// (JSON/YAML are handled with lightweight scanners rather than
 // tree-sitter).
 func OutlineFile(path, content string) FileOutline {
 	return OutlineFileDepth(path, content, 0)
@@ -17,9 +16,6 @@ func OutlineFile(path, content string) FileOutline {
 // formats (JSON/YAML): maxDepth <= 0 means unlimited, maxDepth N shows at most N
 // levels of keys. The cap is ignored for code and Markdown outlines.
 func OutlineFileDepth(path, content string, maxDepth int) FileOutline {
-	if isMarkdownPath(path) {
-		return FileOutline{Path: path, Language: "markdown", Symbols: nonNil(outlineMarkdown(content))}
-	}
 	if lang := structuredLang(path); lang != "" {
 		return FileOutline{Path: path, Language: lang, Symbols: nonNil(outlineStructured(content, maxDepth))}
 	}
@@ -62,14 +58,6 @@ func nonNil(s []Symbol) []Symbol {
 		return []Symbol{}
 	}
 	return s
-}
-
-func isMarkdownPath(path string) bool {
-	switch strings.ToLower(filepath.Ext(path)) {
-	case ".md", ".markdown", ".mdown", ".mkd":
-		return true
-	}
-	return false
 }
 
 // symbolFrom builds a Symbol for a node, capturing its line bounds and a compact

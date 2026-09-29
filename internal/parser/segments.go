@@ -57,9 +57,6 @@ func BuildSegmentsWithStatus(content, language string, hitLines map[int]bool) ([
 	if !utf8.ValidString(content) {
 		return buildPlainTextSegments(hitLines), SegmentBuildFailed
 	}
-	if language == "markdown" {
-		return buildMarkdownSegments(content, hitLines), SegmentBuildStructured
-	}
 	if language == "text" {
 		return buildPlainTextSegments(hitLines), SegmentBuildPlain
 	}
@@ -92,7 +89,12 @@ func buildSegmentsFromDocument(document *Document, hitLines map[int]bool) ([]Seg
 		return buildPlainTextSegments(hitLines), SegmentBuildUnsupported
 	}
 	root := document.tree.RootNode()
-	segments := buildASTSegments(root, document.source, newMatchLines(hitLines), adapter.Rules())
+	var segments []Segment
+	if builder, ok := adapter.(segmentBuilder); ok {
+		segments = builder.BuildSegments(root, document.source, hitLines)
+	} else {
+		segments = buildASTSegments(root, document.source, newMatchLines(hitLines), adapter.Rules())
+	}
 	if root.HasError() {
 		return segments, SegmentBuildRecovered
 	}

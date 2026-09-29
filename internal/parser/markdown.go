@@ -12,62 +12,64 @@ type mdHeading struct {
 	title string
 }
 
-// scanMarkdownHeadings returns the ATX headings (# .. ######) in document order,
-// skipping any that appear inside fenced code blocks (``` or ~~~).
-func scanMarkdownHeadings(content string) []mdHeading {
-	var heads []mdHeading
-	var fence fenceTracker
-	for i, raw := range strings.Split(content, "\n") {
-		trimmed := strings.TrimLeft(raw, " ")
-		if fence.skip(trimmed) {
-			continue
+func collectMarkdownHeadings(node *syntaxNode, heads *[]mdHeading) {
+	switch node.Kind() {
+	case "atx_heading":
+		level, title := 0, ""
+		for _, child := range node.Children() {
+			kind := child.Kind()
+			switch {
+			case len(kind) == len("atx_h1_marker") && strings.HasPrefix(kind, "atx_h") && strings.HasSuffix(kind, "_marker"):
+				level = int(kind[5] - '0')
+			case kind == "inline":
+				title = mdATXTitle(child.Text())
+			}
 		}
-		if heading, ok := parseATXHeading(trimmed, i+1); ok {
-			heads = append(heads, heading)
+		if level > 0 {
+			*heads = append(*heads, mdHeading{level: level, line: node.StartLine(), title: title})
 		}
+		return
+	case "setext_heading":
+		level, title := 1, ""
+		for _, child := range node.Children() {
+			switch child.Kind() {
+			case "setext_h2_underline":
+				level = 2
+			case "paragraph":
+				title = mdSetextTitle(child.Text())
+			}
+		}
+		*heads = append(*heads, mdHeading{level: level, line: node.StartLine(), title: title})
+		return
 	}
-	return heads
+	// Only document and section containers hold structural headings; headings
+	// nested in lists, block quotes, code, or HTML are excluded.
+	if kind := node.Kind(); kind != "document" && kind != "section" {
+		return
+	}
+	for _, child := range node.NamedChildren() {
+		collectMarkdownHeadings(child, heads)
+	}
 }
 
-// fenceTracker tracks fenced code blocks (``` or ~~~) while scanning markdown.
-type fenceTracker struct {
-	inside bool
-	marker byte
-}
-
-// skip reports whether the line is a fence delimiter or inside a fenced code
-// block (neither can be a heading), toggling the state on delimiters.
-func (f *fenceTracker) skip(trimmed string) bool {
-	if strings.HasPrefix(trimmed, "```") || strings.HasPrefix(trimmed, "~~~") {
-		if !f.inside {
-			f.inside, f.marker = true, trimmed[0]
-		} else if trimmed[0] == f.marker {
-			f.inside = false
+// mdATXTitle strips an optional closing marker sequence (whitespace followed by
+// trailing '#'s, or '#'s making up the whole content) and normalizes whitespace.
+func mdATXTitle(text string) string {
+	text = strings.TrimSpace(text)
+	trimmed := strings.TrimRight(text, "#")
+	if len(trimmed) < len(text) {
+		if trimmed == "" {
+			text = ""
+		} else if last := trimmed[len(trimmed)-1]; last == ' ' || last == '\t' {
+			text = strings.TrimRight(trimmed, " \t")
 		}
-		return true
 	}
-	return f.inside
+	return strings.Join(strings.Fields(text), " ")
 }
 
-// parseATXHeading parses one line as an ATX heading; ok=false when it is not
-// one (more than six hashes, or no space after the markers — "#hashtag").
-func parseATXHeading(trimmed string, line int) (mdHeading, bool) {
-	if !strings.HasPrefix(trimmed, "#") {
-		return mdHeading{}, false
-	}
-	level := 0
-	for level < len(trimmed) && trimmed[level] == '#' {
-		level++
-	}
-	if level > 6 {
-		return mdHeading{}, false
-	}
-	if level < len(trimmed) && trimmed[level] != ' ' && trimmed[level] != '\t' {
-		return mdHeading{}, false // e.g. "#hashtag", not a heading
-	}
-	title := strings.TrimSpace(strings.TrimRight(strings.TrimSpace(trimmed[level:]), "#"))
-	title = strings.TrimSpace(title)
-	return mdHeading{level: level, line: line, title: title}, true
+// mdSetextTitle joins every content line of a Setext heading.
+func mdSetextTitle(text string) string {
+	return strings.Join(strings.Fields(text), " ")
 }
 
 // markdownHeadingEnds computes the last line each heading's section spans: up to
@@ -88,22 +90,14 @@ func markdownHeadingEnds(heads []mdHeading, lineCount int) []int {
 	return ends
 }
 
-func outlineMarkdown(content string) []Symbol {
-	heads := scanMarkdownHeadings(content)
-	if len(heads) == 0 {
-		return nil
-	}
-	ends := markdownHeadingEnds(heads, strings.Count(content, "\n")+1)
-	return mdTree(heads, ends)
-}
-
 // buildMarkdownSegments renders match context the way the AST path does for code:
 // each matched line is shown, preceded by its enclosing heading chain as
 // "summary" segments (breadcrumb), with everything else collapsed. So a hit deep
 // in a document reads as `# Doc` › `## Section` › `### Subsection` › <line>.
-func buildMarkdownSegments(content string, hits map[int]bool) []Segment {
+func buildMarkdownSegments(root *syntaxNode, content string, hits map[int]bool) []Segment {
 	lines := splitLines(content)
-	heads := scanMarkdownHeadings(content)
+	var heads []mdHeading
+	collectMarkdownHeadings(root, &heads)
 	ends := markdownHeadingEnds(heads, len(lines))
 
 	matched := make([]int, 0, len(hits))

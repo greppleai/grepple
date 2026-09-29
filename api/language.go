@@ -5,6 +5,8 @@ import "github.com/greppleai/grepple/internal/wire"
 const (
 	// FeatureUnsupported is the public alias of the shared wire constant.
 	FeatureUnsupported = wire.FeatureUnsupported
+	// FeatureNotApplicable is the public alias of the shared wire constant.
+	FeatureNotApplicable = wire.FeatureNotApplicable
 	// FeatureProduction is the public alias of the shared wire constant.
 	FeatureProduction = wire.FeatureProduction
 	// FeatureSpecialized is the public alias of the shared wire constant.

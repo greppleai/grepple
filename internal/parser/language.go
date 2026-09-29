@@ -37,6 +37,8 @@ type ContentLanguageCapabilities struct {
 	Outline        bool
 	Navigation     bool
 	Specialized    bool
+	// CodeFeaturesNotApplicable marks code-only features as not applicable.
+	CodeFeaturesNotApplicable bool
 }
 
 // GrammarCardinality describes whether one grammar position accepts one or
@@ -98,6 +100,12 @@ func extractNodeName(node *syntaxNode, _ string, config *structureRules) string 
 	return ""
 }
 
+// segmentBuilder lets an adapter own its segment construction instead of using
+// the shared AST segment engine.
+type segmentBuilder interface {
+	BuildSegments(root *syntaxNode, content string, hits map[int]bool) []Segment
+}
+
 type languageAdapter interface {
 	ID() string
 	Grammar() syntaxLanguage
@@ -123,6 +131,13 @@ var languageAdapters = buildLanguageAdapters(
 	newRustLanguage(),
 	newPHPLanguage(),
 	newShellLanguage(),
+)
+
+// contentAdapters hold parser-backed formats that are not code-navigation
+// languages. They are reachable through adapterForLanguage but are excluded
+// from the application-language registries.
+var contentAdapters = buildLanguageAdapters(
+	newMarkdownLanguage(),
 )
 
 var navigationAdapters = buildNavigationAdapters(languageAdapters)
@@ -163,7 +178,7 @@ func supportedContentLanguages() []ContentLanguageCapabilities {
 		})
 	}
 	languages = append(languages,
-		ContentLanguageCapabilities{ID: "markdown", Extensions: []string{".md", ".markdown", ".mdown", ".mkd"}, StructuralGrep: true, Outline: true, Specialized: true},
+		ContentLanguageCapabilities{ID: "markdown", Extensions: []string{".md", ".markdown", ".mdown", ".mkd"}, StructuralGrep: true, Outline: true, Specialized: true, CodeFeaturesNotApplicable: true},
 		ContentLanguageCapabilities{ID: "json", Extensions: []string{".json"}, Outline: true, Specialized: true},
 		ContentLanguageCapabilities{ID: "yaml", Extensions: []string{".yaml", ".yml"}, Outline: true, Specialized: true},
 		ContentLanguageCapabilities{ID: "text"},
@@ -220,7 +235,10 @@ func navigationAdapterForLanguage(id string) navigationAdapter {
 }
 
 func adapterForLanguage(id string) languageAdapter {
-	return languageAdapters[id]
+	if adapter, ok := languageAdapters[id]; ok {
+		return adapter
+	}
+	return contentAdapters[id]
 }
 
 func descendantName(node *syntaxNode, content string, candidates stringSet) string {

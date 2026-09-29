@@ -84,7 +84,7 @@ func TestSupportedContentLanguagesIncludesSpecializedFormats(t *testing.T) {
 			t.Fatalf("missing content language %q", id)
 		}
 	}
-	if markdown := byID["markdown"]; !markdown.StructuralGrep || !markdown.Outline || !markdown.Specialized {
+	if markdown := byID["markdown"]; !markdown.StructuralGrep || !markdown.Outline || !markdown.Specialized || !markdown.CodeFeaturesNotApplicable {
 		t.Fatalf("markdown capabilities=%#v", markdown)
 	}
 	if json := byID["json"]; json.StructuralGrep || !json.Outline || !json.Specialized {

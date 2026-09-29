@@ -88,6 +88,27 @@ func languageCapabilityMatrix() []wire.LanguageCapabilities {
 	contentLanguages := parserService.SupportedContentLanguages()
 	result := make([]wire.LanguageCapabilities, 0, len(contentLanguages))
 	for _, language := range contentLanguages {
+		if language.CodeFeaturesNotApplicable {
+			na := wire.FeatureNotApplicable
+			result = append(result, wire.LanguageCapabilities{
+				Language:              language.ID,
+				Extensions:            append([]string{}, language.Extensions...),
+				TextGrep:              wire.FeatureProduction,
+				StructuralGrep:        featureSupport(language.StructuralGrep, language.Specialized),
+				Outline:               featureSupport(language.Outline, language.Specialized),
+				Navigation:            na,
+				FocusedStructure:      na,
+				FocusedFlow:           na,
+				GritQL:                na,
+				DirectoryArchitecture: na,
+				ImportRelations:       na,
+				Entrypoints:           na,
+				NavigationFacts: wire.NavigationFactCapabilities{
+					Declarations: na, Calls: na, Imports: na, TypeReferences: na, Fields: na, MemberAccess: na, Entrypoints: na,
+				},
+			})
+			continue
+		}
 		extractLanguage, hasExtraction := extractionCapabilities(language, extraction)
 		result = append(result, wire.LanguageCapabilities{
 			Language:              language.ID,
@@ -184,7 +205,7 @@ func renderLanguageCapabilities(capabilities []wire.LanguageCapabilities, output
 			return err
 		}
 	}
-	if _, err := fmt.Fprintln(writer, "\n✓ production  ~ specialized production  - unsupported  ! experimental\nFact support means the adapter emits that fact kind; individual facts may remain ambiguous or unresolved."); err != nil {
+	if _, err := fmt.Fprintln(writer, "\n✓ production  ~ specialized production  - unsupported  ! experimental  n/a not applicable\nFact support means the adapter emits that fact kind; individual facts may remain ambiguous or unresolved."); err != nil {
 		return err
 	}
 	return writer.Flush()
@@ -198,6 +219,8 @@ func supportIcon(support wire.FeatureSupport) string {
 		return "~"
 	case wire.FeatureExperimental:
 		return "!"
+	case wire.FeatureNotApplicable:
+		return "n/a"
 	default:
 		return "-"
 	}
@@ -237,6 +260,8 @@ func markdownSupportIcon(support wire.FeatureSupport) string {
 		return "🟡"
 	case wire.FeatureExperimental:
 		return "🧪"
+	case wire.FeatureNotApplicable:
+		return "➖"
 	default:
 		return "❌"
 	}
