@@ -1,28 +1,29 @@
 # Language support roadmap
 
-Grepple searches every text file. The items below refer to structural Tree-sitter support: language detection, enclosing-code segments, symbol outlines, exact callable retrieval, and syntax-based call navigation.
+Grepple searches every readable text file. The checked languages below have Tree-sitter-backed segments, outlines, and syntax-based navigation; they do not imply complete type checking or resolution. The generated feature-by-feature matrix and limitations live in [`docs/file-type-support.md`](../docs/file-type-support.md).
 
-## Minimum language set
+## Supported Tree-sitter languages
 
 - [x] Go (`.go`)
 - [x] JavaScript and JSX (`.js`, `.jsx`)
-- [x] TypeScript and TSX (`.ts`, `.tsx`)
+- [x] TypeScript and TSX (`.ts`, `.mts`, `.cts`, `.tsx`)
 - [x] Python (`.py`, `.pyi`, `.pyw`)
 - [x] Java (`.java`)
 - [x] Kotlin (`.kt`, `.kts`)
+- [x] Dart (`.dart`)
+- [x] Swift (`.swift`)
 - [x] C# (`.cs`)
 - [x] C (`.c`, `.h`)
 - [x] C++ (`.cc`, `.cpp`, `.cxx`, `.hpp`, `.hh`, `.hxx`)
 - [x] Rust (`.rs`)
+- [x] PHP (`.php`)
 - [x] Shell (`.sh`, `.bash`, `.zsh`)
 
-Markdown has heading-aware segments and outlines. JSON and YAML have lightweight structural outlines; their search results currently use plain-text segments.
-
-Dependency note: C# is intentionally pinned to `tree-sitter-c-sharp` `v0.23.4`. The `v0.23.5` `bindings/go` nested module declares a mismatched module path and excludes the parent `src/parser.c` from its module archive. Recheck upstream packaging before upgrading.
+Markdown has heading-aware segments and outlines. JSON and YAML have lightweight structural outlines; their search results use plain-text segments.
 
 ## Navigation baseline
 
-All languages in the minimum set support `--at`, bounded callees and potential callers through `--related`, and recursive unique-callee expansion through `--follow-related`. TypeScript and TSX share one declaration namespace. Other language boundaries remain isolated. Generic callable declarations and calls are represented by `parser.NavigationGraph`; search consumes that graph directly, and extraction records the same graph from its already parsed trees for semantic enrichment and flow-parity checks.
+All Tree-sitter-backed languages above support `--at`, bounded callees and potential callers through `--related`, and recursive unique-callee expansion through `--follow-related`. TypeScript and TSX share one declaration namespace. Other language boundaries remain isolated. Generic callable declarations and calls are represented by `parser.NavigationGraph`; search consumes that graph directly, and extraction records the same graph from its already parsed trees for semantic enrichment and flow-parity checks. Resolution remains syntax-based: for example, Swift resolves same-file calls but does not infer SwiftPM/Xcode module ownership.
 
 Go additionally recognizes interface methods and function-valued struct fields. Navigation remains syntax-based; package/import, receiver, and declaration-kind context is used when it can narrow candidates safely, while type-checked dispatch, inheritance-aware overrides, overload selection, dynamic calls, and potential cross-language FFI edges remain future hardening work.
 
@@ -35,7 +36,7 @@ Go additionally recognizes interface methods and function-valued struct fields. 
 - [ ] Add per-language parse and segment benchmarks and record acceptable regression thresholds.
 - [ ] Verify grammar upgrades against language parity, outline golden tests, and the parse-once invariant before updating versions.
 
-## Cross-feature parity before new grammars
+## Cross-feature parity
 
 Language identity, extensions, grammar fingerprints, and parser/navigation capabilities remain canonical in `parser`; extraction and GritQL retain their feature-specific adapters. The current cross-feature matrix and active implementation routes are documented in [`docs/file-type-support.md`](../docs/file-type-support.md). Expose the same facts through one deterministic capability view without creating a second language registry.
 
@@ -56,12 +57,9 @@ Language identity, extensions, grammar fingerprints, and parser/navigation capab
 - [x] Add conservative Rust focused structure/flow for structs, tuple structs, enums, traits, same-file impl blocks, fields, variants, associated types, methods, visibility, trait implementations, Cargo-root discovery, and graph-backed calls without framework semantics.
 - [x] Define and implement conservative C/C++ focused architecture contracts without inferring preprocessor, template, linkage, ABI, or build-system semantics.
 
-## Next languages
+## Next language
 
-1. [ ] Terraform/HCL
-2. [ ] Swift
-3. [ ] Dart
-4. [ ] PHP
+- [ ] Terraform/HCL
 
 Later languages remain demand-driven rather than implicitly ordered:
 
