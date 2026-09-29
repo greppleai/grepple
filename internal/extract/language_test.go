@@ -8,7 +8,7 @@ import (
 
 func TestSupportedLanguagesAreStableAndDefensive(t *testing.T) {
 	languages := SupportedLanguages()
-	if len(languages) != 12 {
+	if len(languages) != 13 {
 		t.Fatalf("SupportedLanguages() = %#v", languages)
 	}
 	if languages[0].ID != "go" || !reflect.DeepEqual(languages[0].Extensions, []string{".go"}) || !languages[0].FocusedStructure || !languages[0].FocusedFlow {
@@ -26,7 +26,7 @@ func TestSupportedLanguagesAreStableAndDefensive(t *testing.T) {
 	for index, expected := range []struct {
 		id         string
 		extensions []string
-	}{{"java", []string{".java"}}, {"kotlin", []string{".kt", ".kts"}}, {"csharp", []string{".cs"}}, {"rust", []string{".rs"}}, {"c", []string{".c", ".h"}}, {"cpp", []string{".cc", ".cpp", ".cxx", ".hpp", ".hh", ".hxx"}}, {"php", []string{".php"}}, {"dart", []string{".dart"}}} {
+	}{{"java", []string{".java"}}, {"kotlin", []string{".kt", ".kts"}}, {"csharp", []string{".cs"}}, {"rust", []string{".rs"}}, {"c", []string{".c", ".h"}}, {"cpp", []string{".cc", ".cpp", ".cxx", ".hpp", ".hh", ".hxx"}}, {"php", []string{".php"}}, {"dart", []string{".dart"}}, {"swift", []string{".swift"}}} {
 		language := languages[index+4]
 		if language.ID != expected.id || !reflect.DeepEqual(language.Extensions, expected.extensions) || !language.FocusedStructure || !language.FocusedFlow {
 			t.Fatalf("class-model adapter metadata = %#v", language)
@@ -62,20 +62,20 @@ func TestLanguageForPathUsesAdapterExtensions(t *testing.T) {
 	for path, expected := range map[string]string{
 		"main.go": "go", "view.ts": "typescript", "view.tsx": "typescript",
 		"module.mts": "typescript", "module.cts": "typescript", "app.js": "javascript", "view.jsx": "javascript",
-		"main.py": "python", "types.pyi": "python", "gui.pyw": "python", "Main.java": "java", "build.kt": "kotlin", "script.kts": "kotlin", "lib/main.dart": "dart", "lib/main.php": "php",
+		"main.py": "python", "types.pyi": "python", "gui.pyw": "python", "Main.java": "java", "build.kt": "kotlin", "script.kts": "kotlin", "lib/main.dart": "dart", "lib/main.php": "php", "Sources/Main.swift": "swift",
 	} {
 		language, ok := LanguageForPath(path)
 		if !ok || language.ID != expected {
 			t.Errorf("LanguageForPath(%q) = %#v, %v", path, language, ok)
 		}
 	}
-	if _, ok := LanguageForPath("main.swift"); ok {
+	if _, ok := LanguageForPath("main.lua"); ok {
 		t.Fatal("unsupported extension was assigned an adapter")
 	}
 }
 
 func TestAnalysisRejectsSourcesWithoutAnAdapter(t *testing.T) {
-	_, err := Analyze([]Source{{Path: "main.swift", Text: "func main() {}"}})
+	_, err := Analyze([]Source{{Path: "main.lua", Text: "function main() end"}})
 	if err == nil || !strings.Contains(err.Error(), "unsupported source language") || !strings.Contains(err.Error(), "rust") {
 		t.Fatalf("unsupported source error = %v", err)
 	}
@@ -97,7 +97,7 @@ func TestLanguageMetadataUsesRegisteredAdapterIDs(t *testing.T) {
 	if _, err := ParseClassDiagram("classDiagram\n class Item\n <<rust>> Item\n"); err != nil {
 		t.Fatalf("registered Rust class language: %v", err)
 	}
-	if _, err := ParseClassDiagram("classDiagram\n class Item\n <<swift>> Item\n"); err == nil || !strings.Contains(err.Error(), "unsupported stereotype") {
+	if _, err := ParseClassDiagram("classDiagram\n class Item\n <<lua>> Item\n"); err == nil || !strings.Contains(err.Error(), "unsupported stereotype") {
 		t.Fatalf("unregistered class language: %v", err)
 	}
 }

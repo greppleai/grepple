@@ -20,6 +20,7 @@ func TestDirectFunctionParentAcrossEverySupportedLanguage(t *testing.T) {
 		{"python", "target($args)", "def run():\n    target(value)\n"},
 		{"rust", "target($args)", "fn run() { target(value); }\n"},
 		{"shell", "target $args", "run() { target value; }\n"},
+		{"swift", "target($args)", "func run() { target(value) }\n"},
 		{"tsx", "target($args)", "function run() { target(value); }\n"},
 		{"typescript", "target($args)", "function run() { target(value); }\n"},
 	}

@@ -64,6 +64,23 @@
     "findings": ["first\nsecond"]
   },
   {
+    "name": "swift-top-level-declaration",
+    "language": "swift",
+    "query": "language swift\n`func run() { target() }`",
+    "path": "Sources/App.swift",
+    "source": "func run() { target() }\nfunc other() {}\n",
+    "findings": ["func run() { target() }"]
+  },
+  {
+    "name": "swift-malformed-source",
+    "language": "swift",
+    "query": "language swift\n`target($value)`",
+    "path": "Sources/Broken.swift",
+    "source": "func broken(\n",
+    "findings": [],
+    "diagnostics": ["SOURCE_PARSE"]
+  },
+  {
     "name": "c-malformed-source",
     "language": "c",
     "query": "language c\n`target($value)`",

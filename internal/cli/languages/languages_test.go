@@ -35,6 +35,10 @@ func TestLanguagesJSONReportsRegisteredFeatureParity(t *testing.T) {
 	if javascript.Navigation != wire.FeatureProduction || javascript.GritQL != wire.FeatureProduction || javascript.FocusedStructure != wire.FeatureProduction || javascript.FocusedFlow != wire.FeatureProduction || javascript.ImportRelations != wire.FeatureProduction || javascript.Entrypoints != wire.FeatureProduction {
 		t.Fatalf("javascript capabilities=%#v", javascript)
 	}
+	swift := byLanguage["swift"]
+	if swift.Navigation != wire.FeatureProduction || swift.GritQL != wire.FeatureProduction || swift.FocusedStructure != wire.FeatureProduction || swift.FocusedFlow != wire.FeatureProduction || swift.DirectoryArchitecture != wire.FeatureProduction || swift.Entrypoints != wire.FeatureUnsupported || swift.NavigationFacts.MemberAccess != wire.FeatureUnsupported {
+		t.Fatalf("Swift capabilities=%#v", swift)
+	}
 	assertImportRelationCapabilities(t, byLanguage, "java", "kotlin", "csharp", "rust")
 	assertEntrypointCapabilities(t, byLanguage, "java", "javascript", "kotlin", "csharp", "rust", "tsx", "typescript")
 	assertRustLanguageCapabilities(t, byLanguage["rust"])

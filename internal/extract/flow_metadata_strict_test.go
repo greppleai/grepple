@@ -19,7 +19,7 @@ func TestFlowParserRejectsUnknownAndMalformedMetadataAnywhere(t *testing.T) {
 		{"unknown before header", "%% grepple:endpoint start\nflowchart LR\n start[Start]\n", "unknown metadata directive"},
 		{"unknown after header", "flowchart LR\n start[Start]\n %% pi:endpoint start\n", "unknown metadata directive"},
 		{"malformed before header", "%% pi:symbol start\nflowchart LR\n start[Start]\n", "malformed symbol directive"},
-		{"malformed after header", "flowchart LR\n start[Start]\n %% grepple:language start swift\n", "malformed language directive"},
+		{"malformed after header", "flowchart LR\n start[Start]\n %% grepple:language start lua\n", "malformed language directive"},
 		{"empty directive", "flowchart LR\n %% grepple:\n", "malformed metadata directive"},
 	}
 	for _, test := range tests {

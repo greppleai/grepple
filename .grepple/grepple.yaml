@@ -292,7 +292,7 @@ directories:
     - path: file-type-support.md
       description: Catalogs supported file languages, parser capabilities, navigation facts, extraction paths, and evidence limits.
       kind: generated
-      checksum: cbbeb07679ba18823a52b152286c188c6b201967367945707bf5d75c972adccd
+      checksum: 553603e18a87750809c1ab22241c856967135ac12b15da2080be9d007d5ec9dd
     - path: gritql-compatibility.md
       description: Defines the closed gritql-v1 syntax, parsing, matching, limits, diagnostics, security, and language compatibility contract.
       kind: production
@@ -563,11 +563,11 @@ directories:
     - path: go.mod
       description: Declares the Go module, toolchain version, and direct and indirect dependencies.
       kind: production
-      checksum: 1a8a776f60012554de432609688ab69c87cc169b4c5ffd14b9ee3a4439bcf787
+      checksum: c94b48b693a8a78ee440d202c74db3e3113bad90749563f24e5cbeb7e418ade8
     - path: go.sum
       description: Records cryptographic checksums for resolved Go module dependencies.
       kind: production
-      checksum: c49a7ba550031c0d987f5638d445583d0203a226f7736c88c3d7c00c81d1a31c
+      checksum: a4d1b7c21bd7e0a11450ecc27b250cde7dd0e927b527aacf7aad5beb6f7f9845
     - path: release-please-config.json
       description: Configures Release Please versioning, changelog generation, and Go package release behavior.
       kind: production
@@ -622,11 +622,11 @@ directories:
     - path: go.mod
       description: Declares the hooks Go module, its Grepple dependency, indirect parser dependencies, and local replacement.
       kind: production
-      checksum: 95e1c234651d6d6462ce89b263dcadb67a5ca84f1cdaf902e3f03a808d3f95ac
+      checksum: c1137ce2a16cfd5165befbadfd7ca0ab9356ea872e169f0e37d5599b038fd575
     - path: go.sum
       description: Records checksums for the hooks module and its transitive dependencies.
       kind: production
-      checksum: d6a27db7070d4466741323be43989ab51a18da8fbc7723bfdf3c436d65c5de6e
+      checksum: babc136b68f47c04d867aa1130b6362f6da5e7e4f0447cf996c2c992ecbfe922
   hooks/guides:
     description: Prescriptive remediation guides for revive diagnostics, Go style, documentation, control flow, project-specific analysis, and Mermaid diagram validation.
     responsibilities:
@@ -1647,7 +1647,7 @@ directories:
     - path: languages_test.go
       description: Verifies capability parity, navigation facts, output formats, argument validation, and generated documentation consistency.
       kind: test
-      checksum: 3c62e5bd5862d59dfa5358dc0f389fb6f68f52838adaaf3e6ba6098d8b05f3c8
+      checksum: 98abd3d25d859c066ead0403b760baeb1d6d0ad30af31ec72268ec93fc5dfaa7
     - path: output.go
       description: Declares the languages package and documents its language-capability reporting purpose.
       kind: production
@@ -2314,7 +2314,7 @@ directories:
     - path: class.go
       description: Parses Mermaid class diagrams and validates members, relations, notes, stereotypes, and Grepple metadata.
       kind: production
-      checksum: 541d6ca91b9b4ed2fc865d46e1217ab03a7f6e0686759f7eeafbabc778211dcf
+      checksum: 3cb9114cea6d61657e87be4f921e277670679af3e719f6513b0dc9a2def1538e
     - path: class_cardinality_test.go
       description: Tests association multiplicity parsing and rejection of unsupported cardinality syntax.
       kind: test
@@ -2322,7 +2322,7 @@ directories:
     - path: class_defaults_test.go
       description: Tests class metadata defaults, strict validation, and order-independent finalization.
       kind: test
-      checksum: a427d14aaf90ab79b70f1ceba589dbc95bcf9ffb16d83905a61836233014293e
+      checksum: 61fa5c7f3680367ec09eb50c748027071c2be99adb6df4c1a06420ed835934b6
     - path: class_metadata_duplicate_test.go
       description: Tests rejection of duplicate singleton class metadata directives.
       kind: test
@@ -2390,7 +2390,7 @@ directories:
     - path: flow_metadata_strict_test.go
       description: Tests strict flow metadata handling, duplicate nodes, conflicts, and ordinary comments.
       kind: test
-      checksum: fca24315dfce2c6c53ad01c526a628202b0ebcea3ed09f61a89a4444991caedb
+      checksum: 091a7f26afd8294a9b85c3ea3b802857532bd2abf072078a10f594cb83283635
     - path: focused_class_index.go
       description: Indexes declarations and members for focused class structure projection.
       kind: production
@@ -2406,7 +2406,7 @@ directories:
     - path: generate.go
       description: Generates and validates Mermaid class diagrams from analyzed source models.
       kind: production
-      checksum: e093fe61cb00478188259f3c6510155b4a93271925c82b0c59933739fb30acbe
+      checksum: d1f15fb325fbd738fba402a6a62b2620ed7550e97c3e00cfc44bc3041cdb0565
     - path: go_analyze.go
       description: Analyzes Go packages, declarations, imports, functions, methods, and package-level semantic relationships.
       kind: production
@@ -2474,7 +2474,7 @@ directories:
     - path: language.go
       description: Defines language registration, adapter lookup, supported extensions, and shared language analysis interfaces.
       kind: production
-      checksum: ff98257310af5e5805caa60e73186b847553b5e8cb9f7b7a78ab7ffd769272e4
+      checksum: 9e9809b5e4211e57ca59761437bfdd5d109fae65b23b0038a6a7bed946917cc6
     - path: language_boundary_test.go
       description: Ensures focused projections remain language-dispatch independent.
       kind: test
@@ -2482,7 +2482,7 @@ directories:
     - path: language_test.go
       description: Tests stable supported languages, complete non-overlapping adapters, extension lookup, and metadata IDs.
       kind: test
-      checksum: 8c9faaeb757995895022e91020dbf12a6fcf190e1738b53ab030687d79e16755
+      checksum: 92f93e2584bb56e7d794b31c6b68b6efe87287d89b3105daedc1877b3942acab
     - path: mermaid_fuzz_test.go
       description: Fuzz-tests Mermaid class and flow parsing for robustness.
       kind: test
@@ -2567,6 +2567,14 @@ directories:
       description: Tests exact Go struct-tag requirements in class projections.
       kind: test
       checksum: 137a4bc46a918f302130049c0c39440cb24abd5f8baa6e437d4083f43d0b8c9b
+    - path: swift_language.go
+      description: Extracts Swift declarations, typed properties, methods, and conservative inheritance for focused structure and flow projections.
+      kind: production
+      checksum: f144d0f5ff83336f15a2be39dbe6f31813bbc61028591d81e5e077d82a499094
+    - path: swift_language_test.go
+      description: Tests focused Swift class, struct, protocol, property, method, and conservative inheritance projections.
+      kind: test
+      checksum: b81fb386ef0880c4a89ded9951dece2b33f51661fc8883bc675981aed5a0d367
     - path: typescript_language.go
       description: Implements TypeScript extraction for declarations, exports, imports, members, heritage, and symbols.
       kind: production
@@ -2714,6 +2722,10 @@ directories:
       description: This file documents the package as an immutable structural-search compiler, matcher, evaluator, and bounded scanner.
       kind: production
       checksum: 815c718a2b6eb0000ca931896031b007eeda445c325edd9f7028656fea9cc21b
+    - path: empty_predicate_test.go
+      description: Tests empty predicate behavior across registered query languages.
+      kind: test
+      checksum: 4bb1b664299284528b94cd743dbc56644ad78833781ddb31f3223356c7aaa773
     - path: evaluator.go
       description: This file evaluates compiled expressions against parsed syntax trees with bindings and resource budgets.
       kind: production
@@ -2753,13 +2765,13 @@ directories:
     - path: language.go
       description: This file registers target-language adapters and exposes deterministic language capabilities.
       kind: production
-      checksum: 1dbac6d20c0e430c60c03bb04c23a2cb321e8ce26f8ce4650a0d6bea2be36f0d
+      checksum: 41dbe3ce14dcd63b2f35ec70610af1685db32f7dbb602dd7b61b6f7ae6137e52
       areas:
       - language-adapters
     - path: language_test.go
       description: This file tests language registration, capability metadata, and adapter selection.
       kind: test
-      checksum: efddafd8df8e221a73856ad8f45c619a6f7e585c83c9d2d1e9a3fa9dea0f6cc6
+      checksum: 94b901a44d74837fb984fe298913bf7413da5eaf19ae13f98dd2dbd35833708b
       areas:
       - language-adapters
     - path: matcher.go
@@ -2774,6 +2786,22 @@ directories:
       checksum: 5315443a7f957ed686c8f0ef594e50ad786ef36a0bd40ad4e65149a9367a1d08
       areas:
       - structural-matching
+    - path: metrics_test.go
+      description: Tests GritQL metric evaluation across supported languages.
+      kind: test
+      checksum: 08a509c8e462a5393469f5bb08d28e49625ac785a8fbed027109195721661c5d
+    - path: node_like_languages_test.go
+      description: Tests node-like matching across supported language syntax trees.
+      kind: test
+      checksum: 78a56267f2efb824982b6a68831a4ca0193625d5dfdb899c93e4fcfbbd6f6672
+    - path: node_like_test.go
+      description: Tests node-like query matches and semantic predicates.
+      kind: test
+      checksum: 8a3e7f4d7d0c33e07ad637919d3137746993118253160e1ebcf63a9d318acd8f
+    - path: parent_predicate_test.go
+      description: Tests parent predicate matching across supported languages.
+      kind: test
+      checksum: 337ad3c4aefe4a2063208978cce98b694e37744f19d99790e45b3ea86979e68a
     - path: python_language.go
       description: This file compiles Python snippets across supported expression, statement, declaration, and file contexts.
       kind: production
@@ -2802,13 +2830,17 @@ directories:
     - path: query_syntax.go
       description: This file owns pinned GritQL parsing, syntax diagnostics, query trees, and compatibility validation.
       kind: production
-      checksum: 99f8f45aadbabfecb433f0746a4a8aaaf3e0da22fb7fbfc7a4e60d603c10f76a
+      checksum: ca1c3343bcc991fddc5fe2946cc19ae99ae8e3408a5e6a2323706d1790084f20
       areas:
       - query-parsing
+    - path: relational_test.go
+      description: Tests relational query behavior and language-specific fixtures.
+      kind: test
+      checksum: 332cb4d7f7c0780a5def6dcbfce4e3a8ae46da45378e7d38855bd0836e112edf
     - path: representative_benchmark_test.go
       description: This file benchmarks representative end-to-end structural-search workloads.
       kind: test
-      checksum: 296767263ef24518ec1dc55bddde5e8d6d579180b6181fc590714bb192cf48ae
+      checksum: 570096c98528ca5e44a8ee4e7315f7da26a519f600399bea52b0b390b97e1835
       areas:
       - performance-benchmarking
     - path: scanner.go
@@ -2867,15 +2899,15 @@ directories:
       areas:
       - language-adapters
     - path: wrapped_language.go
-      description: This file adapts wrapped Tree-sitter languages including C, C++, C#, Java, Kotlin, Rust, and Shell.
+      description: Adapts wrapped Tree-sitter languages including C, C++, C#, Java, Kotlin, Rust, Shell, and Swift.
       kind: production
-      checksum: 0c3bf16ae18a0a91c6282b03fa7c1478083746644852585d900ed254793e3dc7
+      checksum: b94f01bca3eef0708df1196e6dd1161e11a9c3ee4f836ce4e59a88166b41f1b8
       areas:
       - language-adapters
     - path: wrapped_language_test.go
       description: This file tests wrapped-language snippet compilation and grammar-context selection.
       kind: test
-      checksum: 390e5471319a36b3f0aaa2a245263ce23f3cf4bb7fa699171b167f05d24a92ae
+      checksum: 1cd0506b995249b7f1112a96ef75e7bb4507a3608b624f74868155884b5238e6
       areas:
       - language-adapters
   internal/gritql/internal:
@@ -2904,7 +2936,7 @@ directories:
     - path: PROVENANCE.md
       description: Records the upstream origin, Grepple patch, checksums, and verified parser regeneration procedure.
       kind: vendor
-      checksum: 71afe4a3c43c141af608dd0622666807992f507cfbec81f084b7fbac98419f57
+      checksum: 4aa25d1795727d0024f95544f5d8876185c7c86a35ca4fe74798844e27adf880
     - path: binding.go
       description: Provides the Go binding that returns the generated GritQL Tree-sitter language descriptor.
       kind: production
@@ -2912,19 +2944,19 @@ directories:
     - path: grammar.js
       description: Defines the GritQL Tree-sitter grammar, precedence rules, declarations, patterns, expressions, and literals.
       kind: vendor
-      checksum: 4cd04e80b11eb64a191afacc1d35d1db18c3311265417fe7446db4d8999d875b
+      checksum: b8d34e7c9526e063a01cfe9cb7ad8c2e0e2ec2ad89564b0ece618af3be2fc11e
     - path: grammar.json
       description: Contains the generated JSON representation of the patched GritQL grammar.
       kind: generated
-      checksum: 7fccb5ce9c8499bff599a3b146b0197e044b5c21ae8d85f814f5b7b86dd6bfea
+      checksum: 79ccc7e9fbe59c1a216da992c6ec0ae1f2ece4a69991b83137eb174b7e77fc1e
     - path: node-types.json
       description: Lists the generated named GritQL syntax node types and their fields.
       kind: generated
-      checksum: 7f5b2ea5b69bdc7ebdfbe32a019d7a1153006ef6ef5b1e9bcfbcfe9dad0b056a
+      checksum: 575fec3e7565a3c6788ed6629d0c4acff2c848210cdc8a62a0d54c9540f647fa
     - path: parser.c
       description: Implements the generated Tree-sitter C parser for the GritQL grammar.
       kind: generated
-      checksum: 9c2f12ca89c46dfb4d404dd74c08cbbf5fcf3f9ac5e0bddf32f7d1193e4f47a3
+      checksum: ea92d632b2923596c6d0d6321287014d789ea0b313fe6db5ad9d0b3e972cff6e
     - path: scanner.c
       description: Provides the no-op external scanner implementation used by the GritQL Tree-sitter parser.
       kind: vendor
@@ -3011,7 +3043,7 @@ directories:
     - path: cases.json
       description: Defines cross-language gritql-v1 reliability test vectors and expected findings.
       kind: fixture
-      checksum: d93a4f14cb5904a91d54a99c4a413567557b54d33acbf353edd88c0e6ccba18b
+      checksum: 09ef2cdc03c2e4c71406137025eb96eeff0fa77796b56e693756f12f0628cbd8
   internal/gritql/testdata/conformance/matcher:
     description: Matcher conformance fixtures define expected behavior for structural pattern matching.
     responsibilities:
@@ -3066,7 +3098,7 @@ directories:
     - path: cases.json
       description: This file records Tree-sitter language conformance inputs, queries, findings, and parse diagnostics.
       kind: test
-      checksum: 927fc74906bbdca4a3ea7023f048cb5f96899748b321cc88d69365e4dcbbe79f
+      checksum: 778c1e0d5d48bc499d9fe985419a04aae37086e691b303b155f952f8fe6b8b5f
   internal/gritql/testdata/conformance/typescript:
     description: This directory defines TypeScript and TSX conformance cases for query matching and source-parse diagnostics.
     responsibilities:
@@ -3256,7 +3288,7 @@ directories:
     - path: navigation_language_index.go
       description: Defines language navigation index behavior and registers resolvers for supported language families.
       kind: production
-      checksum: 69bd9d12c212d2841cba1590b250d568deb844f9a7e438bed4006bd77f788bae
+      checksum: 35f4705ba26cd76c8469e4a1e5e4bd970f98f4197ba67aeca32a86c0406d11db
       areas:
       - language-resolution
     - path: navigation_language_index_test.go
@@ -3293,6 +3325,18 @@ directories:
       description: Resolves Rust imports and re-exports using crate modules, scopes, visibility, and candidate files.
       kind: production
       checksum: 16be2f5d77169da4db73237bbc618983614780d9116f7c9776913f6a9f6c546e
+      areas:
+      - language-resolution
+    - path: navigation_swift.go
+      description: Resolves Swift declarations and calls within the same source file without assuming module ownership.
+      kind: production
+      checksum: 09cc0f783c134db725165d2f487616ef4eeb80abc38803c2078d723a45660ebe
+      areas:
+      - language-resolution
+    - path: navigation_swift_test.go
+      description: Tests conservative same-file Swift navigation and unresolved cross-module references.
+      kind: test
+      checksum: 33c6a1838e64c5cb27f9de724218ee084450c9751208513c0f7ad955bf5f8b13
       areas:
       - language-resolution
     - path: navigation_typescript.go
@@ -3440,7 +3484,7 @@ directories:
     - path: language.go
       description: Defines language capabilities, registration, and parser selection.
       kind: production
-      checksum: b9cd6ea1d3cb419d1faa0d0336017d1e70cc7439c5a8293cd6b472b34404b1ec
+      checksum: 43c9fd4c10344f23318cab007d85c038e18fd7548290972f8b1ee8a9fd7f9cc5
       areas:
       - language-adapters
     - path: language_c.go
@@ -3530,7 +3574,7 @@ directories:
     - path: language_metadata.go
       description: Provides generated grammar metadata for supported languages.
       kind: generated
-      checksum: 958c3f0c9e57afbc2738a96c398bbed91eb125a3543955d2ed5ca5a4cf7b98a8
+      checksum: ced3358448cd3126a8548c9600a3cc880489fb345d400c0aeab04d2f8efbd476
       areas:
       - language-adapters
     - path: language_navigation.go
@@ -3596,9 +3640,25 @@ directories:
     - path: language_support_test.go
       description: Tests supported language registration and capabilities.
       kind: test
-      checksum: 1faeebb85a99f3f45911474e91aff9d572ba2c806c40994a513d4a9b088d1836
+      checksum: b5bd3a001a283563295b4cb2eec27abc530622796f5034e38220cc3bd1770e74
       areas:
       - language-adapters
+    - path: language_swift.go
+      description: Registers the Swift grammar, parser capabilities, and outline handling.
+      kind: production
+      checksum: 8125aea0cbec626927c253ea84201269397988de988bed6ada621161b5cf59a0
+      areas:
+      - language-adapters
+    - path: language_swift_navigation.go
+      description: Extracts Swift declarations, imports, calls, typed fields, and type references for navigation.
+      kind: production
+      checksum: 226672db6aa63accc073040f6c67084b627752695aa635a6ee9a1a36b68bebef
+      areas:
+      - navigation-graph
+    - path: language_swift_test.go
+      description: Tests Swift parsing, outlines, navigation facts, and conservative capability declarations.
+      kind: test
+      checksum: 58fdf88c9e8b01b7e9affdc990daa3ca1dbd1d5389ab53bd91838acf0b358a75
     - path: language_type_declarations.go
       description: Defines cross-language type declaration extraction.
       kind: production
@@ -3851,7 +3911,7 @@ directories:
     - path: main.go
       description: Implements the command that inspects Tree-sitter grammars and renders parser metadata.
       kind: production
-      checksum: 38a9250449194a248843418f954ebcd61c1830114cd9bb63d22db1252c6f4f77
+      checksum: eb22ffe6b9427ed2f54e54049503345a9d567a3ac9689dcf5b2ba87eea9c5bd0
     - path: main_test.go
       description: Tests grammar fingerprinting, deterministic rendering, and transitive subtype closure.
       kind: test

@@ -29,6 +29,7 @@ func TestCrossFileDuplicatesAcrossAllLanguages(t *testing.T) {
 		{"python", "value = 1\n"},
 		{"rust", "fn run() { let value = 1; }\n"},
 		{"shell", "value=1\n"},
+		{"swift", "func run() {}\n"},
 		{"tsx", "const value = 1;\n"},
 		{"typescript", "const value = 1;\n"},
 	}
@@ -44,7 +45,7 @@ func TestCrossFileDuplicatesAcrossAllLanguages(t *testing.T) {
 				"csharp": "compilation_unit($statement)", "dart": "source_file($statement)", "go": "source_file($statement)",
 				"java": "program($statement)", "javascript": "program($statement)",
 				"kotlin": "source_file($statement)", "php": "program($statement)", "python": "module($statement)",
-				"rust": "source_file($statement)", "shell": "program($statement)",
+				"rust": "source_file($statement)", "shell": "program($statement)", "swift": "source_file($statement)",
 				"tsx": "program($statement)", "typescript": "program($statement)",
 			}[test.language]
 			program := relationProgram(t, query)

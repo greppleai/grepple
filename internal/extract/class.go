@@ -285,6 +285,10 @@ func applyStereotype(class *DiagramClass, stereotype string, line int) error {
 		}
 		class.Kind = "interface"
 	case "struct", "alias", "type":
+		if stereotype == "struct" && class.Language == "swift" && !class.Function && class.Kind != "interface" && !isExplicitDeclarationKind(class.Kind) {
+			class.Kind = "struct"
+			break
+		}
 		language := explicitDeclarationKindLanguage()
 		if class.Language != "" && class.Language != language || class.Kind == "interface" || isExplicitDeclarationKind(class.Kind) && class.Kind != stereotype || class.Function {
 			return stereotypeConflict(class, stereotype, line)

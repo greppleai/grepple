@@ -170,6 +170,7 @@ func TestMetricSelectorsWorkAcrossSupportedLanguages(t *testing.T) {
 		{"python", "value = 1\n"},
 		{"rust", "fn run() { let value = 1; }\n"},
 		{"shell", "value=1\n"},
+		{"swift", "func run() { let value = 1 }\n"},
 		{"tsx", "const value = 1;\n"},
 		{"typescript", "const value = 1;\n"},
 	}

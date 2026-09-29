@@ -6,7 +6,7 @@ func TestLanguageForMinimumSupportedSet(t *testing.T) {
 	tests := map[string]string{
 		"main.go": "go", "app.js": "javascript", "app.ts": "typescript", "app.mts": "typescript",
 		"app.cts": "typescript", "app.tsx": "tsx", "app.py": "python", "types.pyi": "python",
-		"Main.java": "java", "Main.kt": "kotlin", "main.dart": "dart",
+		"Main.java": "java", "Main.kt": "kotlin", "main.dart": "dart", "main.swift": "swift",
 		"Program.cs": "csharp", "main.c": "c", "header.h": "c", "main.cpp": "cpp",
 		"header.hpp": "cpp", "main.rs": "rust", "build.sh": "shell", "build.zsh": "shell",
 	}
@@ -105,6 +105,7 @@ func TestNavigationFactCapabilitiesAreAdapterOwned(t *testing.T) {
 		"java":       {Declarations: true, Calls: true, Imports: true, TypeReferences: true, Fields: true, MemberAccess: true, Entrypoints: true},
 		"kotlin":     {Declarations: true, Calls: true, Imports: true, TypeReferences: true, Fields: true, MemberAccess: true, Entrypoints: true},
 		"dart":       {Declarations: true, Calls: true, Imports: true, TypeReferences: true, Fields: true, MemberAccess: true, Entrypoints: true},
+		"swift":      {Declarations: true, Calls: true, Imports: true, TypeReferences: true, Fields: true},
 		"csharp":     {Declarations: true, Calls: true, Imports: true, TypeReferences: true, Fields: true, MemberAccess: true, Entrypoints: true},
 		"c":          {Declarations: true, Calls: true, Imports: true, TypeReferences: true, Fields: true, MemberAccess: true, Entrypoints: true},
 		"cpp":        {Declarations: true, Calls: true, Imports: true, TypeReferences: true, Fields: true, MemberAccess: true, Entrypoints: true},
@@ -136,6 +137,7 @@ func TestAdvertisedTypedFieldAndMemberFactsHaveRepresentativeEvidence(t *testing
 		{"cpp", "struct Foo { int state; };\nint use(Foo value){ return value.state; }\n", true, true, true},
 		{"rust", "struct Foo { state: i32 }\nfn use(value: Foo) -> i32 { value.state }\n", true, true, true},
 		{"php", "<?php class Foo { public int $state; function use(Foo $value): int { return $value->state; } }\n", true, true, true},
+		{"swift", "struct Foo { let state: Int\nfunc use(value: Foo) -> Int { return value.state } }\n", true, true, false},
 		{"shell", "use() { echo value; }\n", false, false, false},
 	}
 	for _, test := range tests {
