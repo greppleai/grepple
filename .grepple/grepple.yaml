@@ -557,9 +557,9 @@ directories:
       kind: generated
       checksum: 9d50fa37ad3a54838f6820699280c8c1805e96a65d236e0cc2edede85897d194
     - path: architecture.mmd
-      description: Contains a generated Mermaid graph of repository package relationships.
+      description: Contains the generated Mermaid graph of repository directory dependencies.
       kind: generated
-      checksum: 8e261e6ad76ac533f00978fdafadd7828863c464c6ac995bd86641249f97e410
+      checksum: 26f78332fc33bd8b4079bd698225f3f23b01161dbd8c049a31059e83501dd991
     - path: go.mod
       description: Declares the Go module, toolchain version, and direct and indirect dependencies.
       kind: production
