@@ -7,10 +7,9 @@ import (
 	"os"
 	"sync/atomic"
 	"testing"
-	"time"
 
+	"github.com/greppleai/grepple/internal/config"
 	"github.com/greppleai/grepple/internal/wire"
-	"github.com/greppleai/grepple/internal/authstate"
 )
 
 func TestFreshTokenRefreshesExpiring(t *testing.T) {
@@ -33,9 +32,13 @@ func TestFreshTokenRefreshesExpiring(t *testing.T) {
 	if atomic.LoadInt32(&calls) != 1 {
 		t.Fatalf("refresh calls=%d", calls)
 	}
-	config := authstate.Load()
-	if config.Token != "new" || config.RefreshToken != "new-refresh" || config.TokenExpiry == 0 {
-		t.Fatalf("refresh not persisted: %#v", config)
+	settings, err := config.LoadConfig("", true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	credentials := settings.BackendCredentials()
+	if credentials.Token != "new" || credentials.RefreshToken != "new-refresh" || credentials.TokenExpiry == 0 {
+		t.Fatalf("refresh not persisted: %+v", credentials)
 	}
 }
 
@@ -46,7 +49,11 @@ func TestFreshTokenSkipsValidAndHonorsEnvironment(t *testing.T) {
 		t.Error("valid token must not trigger refresh")
 	}))
 	defer server.Close()
-	if err := authstate.StoreLogin("valid", "refresh", 8*3600, 15897600, "user"); err != nil {
+	settings, err := config.LoadConfig("", true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := settings.StoreBackendLogin("valid", "refresh", 8*3600, 15897600, "user"); err != nil {
 		t.Fatal(err)
 	}
 	client := New(WithHTTPClient(server.Client())).(*apiClient)
@@ -73,6 +80,26 @@ func TestFreshTokenFallsBackAfterRefreshFailure(t *testing.T) {
 	}
 }
 
+func TestFreshTokenSurvivesMalformedUserPreferences(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+	t.Setenv("GREPPLE_TOKEN", "")
+	settings, err := config.LoadConfig("", true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := settings.StoreBackendLogin("persisted", "", 0, 0, "user"); err != nil {
+		t.Fatal(err)
+	}
+	path := t.TempDir() + "/settings.json"
+	t.Setenv("GREPPLE_SETTINGS", path)
+	if err := os.WriteFile(path, []byte(`{"anchors":`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	client := New(WithErrorOutput(ioDiscard{})).(*apiClient)
+	if token := client.freshToken("http://127.0.0.1:0/public/search"); token != "persisted" {
+		t.Fatalf("backend token lost to malformed user preferences: %q", token)
+	}
+}
 func TestValidateAnalysisResponse(t *testing.T) {
 	request := wire.AnalysisRequest{Operation: wire.AnalysisGraph, Repository: "owner/repo"}
 	result := analysisResult(wire.AnalysisGraph)
@@ -106,17 +133,12 @@ func analysisResult(operation wire.AnalysisOperation) json.RawMessage {
 
 func writeExpiredToken(t *testing.T, token, refresh string) {
 	t.Helper()
-	if err := authstate.StoreLogin(token, refresh, 0, 0, "user"); err != nil {
-		t.Fatal(err)
-	}
-	path, err := authstate.Path()
+	settings, err := config.LoadConfig("", true)
 	if err != nil {
 		t.Fatal(err)
 	}
-	config := authstate.Load()
-	config.TokenExpiry = time.Now().Add(-time.Minute).Unix()
-	content, _ := json.MarshalIndent(config, "", "  ")
-	if err := os.WriteFile(path, append(content, '\n'), 0o600); err != nil {
+	// An imminent expiry is within the client's refresh skew.
+	if err := settings.StoreBackendLogin(token, refresh, 1, 0, "user"); err != nil {
 		t.Fatal(err)
 	}
 }

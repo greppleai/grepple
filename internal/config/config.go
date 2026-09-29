@@ -1,19 +1,17 @@
-// Package config assembles repository, user, Ask, and protected authentication
-// settings into a single invocation snapshot. Credential persistence remains
-// owned by authstate and never belongs in repository-owned configuration.
+// Package config owns repository, user, Ask, and protected Grepple backend
+// authentication state in one invocation configuration. AI-provider credentials
+// remain separate in aiprovider.
 package config
 
 import (
 	"fmt"
 	"os"
-
-	"github.com/greppleai/grepple/internal/authstate"
 )
 
 // Config contains all configuration read for one invocation. Authentication
 // credentials are private so passing a Config cannot accidentally serialize
-// tokens into output or repository settings. Login and refresh still update
-// authstate independently; a new invocation reads the updated state.
+// tokens into output or repository settings. Login and refresh persist to the
+// protected user-owned backend auth file without changing repository policy.
 type Config struct {
 	Repository     Repository
 	RepositoryPath string
@@ -21,33 +19,35 @@ type Config struct {
 	SettingsPath   string
 	Ask            AskPreferences
 
-	auth authstate.Config
+	auth backendAuthState
 }
 
 // LoadConfig reads every configuration source once, including user settings
-// and legacy Ask preferences, and returns one validated snapshot. Disabling
-// repository configuration does not disable user-owned settings or auth state.
+// and legacy Ask preferences, and returns one validated snapshot. On failure
+// it returns an incomplete snapshot with the protected backend auth state so
+// login, refresh, and logout can still recover from unrelated invalid settings.
+// Disabling repository configuration does not disable user-owned settings.
 func LoadConfig(start string, noRepositoryConfig bool) (*Config, error) {
-	settings := &Config{auth: authstate.Load()}
+	settings := &Config{auth: loadBackendAuthState()}
 	if !noRepositoryConfig {
 		var err error
 		settings.Repository, settings.RepositoryPath, err = loadRepository(start)
 		if err != nil {
-			return nil, err
+			return settings, err
 		}
 	}
 	var err error
 	settings.SettingsPath, err = userSettingsPath()
 	if err != nil {
-		return nil, err
+		return settings, err
 	}
 	settings.User, err = loadUserSettings(settings.SettingsPath)
 	if err != nil {
-		return nil, err
+		return settings, err
 	}
 	settings.Ask, err = loadAskPreferences()
 	if err != nil {
-		return nil, err
+		return settings, err
 	}
 	return settings, nil
 }
@@ -74,8 +74,8 @@ func (settings *Config) ContextGuardEnabled() bool {
 	return settings.User.ContextGuard.Enabled == nil || *settings.User.ContextGuard.Enabled
 }
 
-// AuthToken returns the snapshot token, with an environment override. Token
-// refresh and login still consult authstate directly to avoid stale credentials.
+// AuthToken returns the snapshot token, with an environment override. Backend
+// token refresh re-reads the protected auth file on each HTTP request.
 func (settings *Config) AuthToken() string {
 	if token := os.Getenv("GREPPLE_TOKEN"); token != "" {
 		return token

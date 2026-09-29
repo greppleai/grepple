@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"github.com/greppleai/grepple/internal/apiclient"
-	"github.com/greppleai/grepple/internal/authstate"
 	"github.com/greppleai/grepple/internal/cliruntime"
+	"github.com/greppleai/grepple/internal/config"
 )
 
 func runLogin(args []string) error {
@@ -91,34 +91,44 @@ func runDeviceFlow(t *testing.T, client *http.Client, baseURL string, polls *int
 }
 
 // verifyTokenPersistence saves the token under a fresh HOME and checks it
-// reloads through both config paths with 0600 permissions.
+// reloads through the unified config with private permissions.
 func verifyTokenPersistence(t *testing.T, token string) {
 	t.Helper()
 	t.Setenv("HOME", t.TempDir())
-	if err := authstate.SaveToken(token, "octocat"); err != nil {
-		t.Fatalf("saveToken: %v", err)
+	settings := mustBackendConfig(t)
+	if err := settings.StoreBackendLogin(token, "", 0, 0, "octocat"); err != nil {
+		t.Fatalf("save token: %v", err)
 	}
-	if got := authstate.Token(); got != "gho_test" {
-		t.Fatalf("configuredToken = %q", got)
+	if got := mustBackendConfig(t).BackendCredentials(); got.Token != "gho_test" || got.User != "octocat" {
+		t.Fatalf("reloaded credentials = %+v", got)
 	}
-	if got := authstate.Load(); got.Token != "gho_test" || got.User != "octocat" {
-		t.Fatalf("loadConfig = %+v", got)
+	path, err := settings.BackendAuthPath()
+	if err != nil {
+		t.Fatal(err)
 	}
-	path, _ := authstate.Path()
-	if info, _ := os.Stat(path); info == nil || info.Mode().Perm() != 0o600 {
-		t.Fatalf("config perms = %v", info.Mode().Perm())
+	if info, err := os.Stat(path); err != nil || info.Mode().Perm() != 0o600 {
+		t.Fatalf("backend config permissions = %v, %v", info, err)
 	}
 }
 
-// verifyLogoutClearsToken checks that clearToken empties the stored token.
+// verifyLogoutClearsToken checks that backend logout empties the stored token.
 func verifyLogoutClearsToken(t *testing.T) {
 	t.Helper()
-	if err := authstate.Clear(); err != nil {
-		t.Fatalf("clearToken: %v", err)
+	if err := mustBackendConfig(t).ClearBackendLogin(); err != nil {
+		t.Fatalf("clear token: %v", err)
 	}
-	if got := authstate.Load().Token; got != "" {
+	if got := mustBackendConfig(t).AuthToken(); got != "" {
 		t.Fatalf("token after logout = %q", got)
 	}
+}
+
+func mustBackendConfig(t *testing.T) *config.Config {
+	t.Helper()
+	settings, err := config.LoadConfig("", true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return settings
 }
 
 // TestDeviceFlowDenied verifies access_denied surfaces as an error.
@@ -209,7 +219,7 @@ func TestRunLoginFetchesClientIDFromServer(t *testing.T) {
 	if gotClientID != "Iv1.fromserver" {
 		t.Fatalf("device flow used client_id=%q, want the server-advertised one", gotClientID)
 	}
-	if got := authstate.Token(); got != "gho_srv" {
+	if got := mustBackendConfig(t).AuthToken(); got != "gho_srv" {
 		t.Fatalf("configuredToken = %q", got)
 	}
 }

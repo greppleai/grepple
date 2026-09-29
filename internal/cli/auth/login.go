@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/greppleai/grepple/internal/authstate"
 	"github.com/greppleai/grepple/internal/cliruntime"
+	"github.com/greppleai/grepple/internal/config"
 )
 
 func envDefault(key, fallback string) string {
@@ -93,10 +93,12 @@ func executeLoginArgs(application cliruntime.Context, values *LoginArgs) error {
 		return err
 	}
 	login := client.GitHubLogin(context.Background(), githubAPIHost(), tok.AccessToken)
-	if err := authstate.StoreLogin(tok.AccessToken, tok.RefreshToken, tok.ExpiresIn, tok.RefreshTokenExpiresIn, login); err != nil {
+	// Backend login remains available when unrelated user preferences are invalid.
+	settings, _ := config.LoadConfig("", true)
+	if err := settings.StoreBackendLogin(tok.AccessToken, tok.RefreshToken, tok.ExpiresIn, tok.RefreshTokenExpiresIn, login); err != nil {
 		return fmt.Errorf("store token: %w", err)
 	}
-	path, _ := authstate.Path()
+	path, _ := settings.BackendAuthPath()
 	if login != "" {
 		fmt.Fprintf(application.Stderr(), "Logged in as %s. Token saved to %s\n", login, path)
 	} else {
@@ -110,7 +112,9 @@ func executeLoginArgs(application cliruntime.Context, values *LoginArgs) error {
 
 // runLogout removes the stored token.
 func executeLogout(application cliruntime.Context, _ []string) error {
-	if err := authstate.Clear(); err != nil {
+	// Logout must not be blocked by malformed, unrelated settings.
+	settings, _ := config.LoadConfig("", true)
+	if err := settings.ClearBackendLogin(); err != nil {
 		return err
 	}
 	fmt.Fprintln(application.Stderr(), "Logged out; token removed from config.")

@@ -14,9 +14,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/greppleai/grepple/internal/wire"
-	"github.com/greppleai/grepple/internal/authstate"
+	"github.com/greppleai/grepple/internal/config"
 	"github.com/greppleai/grepple/internal/linerange"
+	"github.com/greppleai/grepple/internal/wire"
 )
 
 const (
@@ -337,23 +337,27 @@ func (client *apiClient) freshToken(target string) string {
 	if token := os.Getenv("GREPPLE_TOKEN"); token != "" {
 		return token
 	}
-	config := authstate.Load()
-	if config.Token == "" {
+	settings, err := config.LoadConfig("", true)
+	if err != nil {
+		fmt.Fprintf(client.errorOutput, "warning: user configuration unavailable (%v); using protected backend credentials\n", err)
+	}
+	credentials := settings.BackendCredentials()
+	if credentials.Token == "" {
 		return ""
 	}
-	if config.RefreshToken == "" || config.TokenExpiry == 0 || client.now().Add(tokenRefreshSkew).Unix() < config.TokenExpiry {
-		return config.Token
+	if credentials.RefreshToken == "" || credentials.TokenExpiry == 0 || client.now().Add(tokenRefreshSkew).Unix() < credentials.TokenExpiry {
+		return credentials.Token
 	}
-	refreshed, err := client.refreshLogin(serverBaseURL(target), config.RefreshToken)
+	refreshed, err := client.refreshLogin(serverBaseURL(target), credentials.RefreshToken)
 	if err != nil {
 		fmt.Fprintf(client.errorOutput, "warning: token refresh failed (%v) - retrying with the stored token\n", err)
-		return config.Token
+		return credentials.Token
 	}
 	nextRefresh := refreshed.RefreshToken
 	if nextRefresh == "" {
-		nextRefresh = config.RefreshToken
+		nextRefresh = credentials.RefreshToken
 	}
-	if err := authstate.StoreLogin(refreshed.AccessToken, nextRefresh, refreshed.ExpiresIn, refreshed.RefreshTokenExpiresIn, ""); err != nil {
+	if err := settings.StoreBackendLogin(refreshed.AccessToken, nextRefresh, refreshed.ExpiresIn, refreshed.RefreshTokenExpiresIn, ""); err != nil {
 		return refreshed.AccessToken
 	}
 	return refreshed.AccessToken

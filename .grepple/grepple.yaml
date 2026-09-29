@@ -940,24 +940,11 @@ directories:
     - path: client.go
       description: This file defines the typed HTTP client, remote API operations, request handling, response validation, and token refresh logic.
       kind: production
-      checksum: e08d156e8b872fd4c2bb4e535b53938bdf9f20f31b918c716b1b496d66c66228
+      checksum: f5bd5bce11397c7248a110d0e8ae2b823971a864ed0aa8a04e899998c9631a0a
     - path: client_test.go
       description: This file tests token selection, token refresh persistence and fallback, and analysis response validation.
       kind: test
-      checksum: 00377f0941eac2377a2c648d6b6359f81732cdf99d82127b8f491e34453e1945
-  internal/authstate:
-    description: The authstate package manages per-user authentication state stored in a protected JSON configuration file.
-    responsibilities:
-    - Resolve the per-user configuration path
-    - Load and persist authentication state
-    - Store access and refresh token expiry timestamps
-    - Apply environment token overrides
-    - Clear credentials while preserving server settings
-    files:
-    - path: state.go
-      description: Defines authentication state, token persistence, expiry handling, and credential clearing.
-      kind: production
-      checksum: 8f20716bc4f9a56cdf0880207f5ae8ebcb87458ac7c1f56e82fc156e28f8c8e2
+      checksum: 5e4c07e119607a4e86294fab7ee63f36227a3b697363e36d9bf81e5748f2b2b7
   internal/boundaryanalysis:
     description: Analyzes repeated cross-file workflows and type usage to identify architectural boundaries, policy effects, and boundary risks.
     responsibilities:
@@ -1242,15 +1229,15 @@ directories:
     - path: context_test.go
       description: Verifies authentication commands use configured output and diagnostic contexts.
       kind: test
-      checksum: a2a22b1b487e3dc9bc833c9959f2722705e159369a358702d632f9b3aa56d1d3
+      checksum: f2afad8ea61b45ad11ad51877b3f1eabc5e715c6c4d9aca84b74e029d65a2dc6
     - path: login.go
       description: Runs GitHub device-flow login and logout while fetching server configuration and managing stored tokens.
       kind: production
-      checksum: ed3717bf6f319a433cbf0f8f09c971b2a5c3943795ead3a99ad5596f6a573672
+      checksum: 34fd9e8a0bffe3ce792aaee340bf713c8ebf9dff898fb0b96e3fc37a744a641c
     - path: login_test.go
       description: Tests device-flow authentication, server login configuration, token persistence, logout, and failure handling.
       kind: test
-      checksum: 4c2a78583371880c71955640e4df1b19d6a495212e19dc9508f42e393c3ab396
+      checksum: 7b91eb913123f7f061cb0945ccd4c277a63bae4d8d55409251af20ef63595023
     - path: provider_integration_test.go
       description: Verifies built-in AI providers are listed with their logged-out status.
       kind: test
@@ -2107,11 +2094,11 @@ directories:
     - path: environment.go
       description: Implements configuration and repository behavior backed by process, user, and repository state.
       kind: production
-      checksum: 437bf4f7d0541ebc30e76afd2781dac90914e53f7127a9bb0b2248494c8c38cc
+      checksum: eb332c5b986411f7cbdaa011e17c25907436af800618e99687a161a7c204ffbf
     - path: environment_test.go
       description: Tests repository configuration discovery, validation, authentication isolation, and ignore policies.
       kind: test
-      checksum: 65e6d37bfb316c7075b530f457449fede1c829add7c7a72e3a8ed3b6b70547c4
+      checksum: 4d0e503561b7e34f4f9e983eb71bafe136b71096b5531cb6da2c9ad01a9b9deb
     - path: exit.go
       description: Records requested command exit statuses and represents intentional exit errors.
       kind: production
@@ -2153,11 +2140,12 @@ directories:
       kind: production
       checksum: 656b82f637129fd57df4c92622452a2f2b6b3c19bd3b686dc7d3b08c7af1f199
   internal/config:
-    description: Loads one complete invocation configuration with repository policy, user settings, Ask preferences, and protected authentication state.
+    description: Owns the unified invocation configuration, including protected Grepple backend credentials, repository policy, user settings, and Ask preferences.
     responsibilities:
     - Load and validate nearest repository-owned configuration files
     - Reject authentication data from shareable repository configuration
-    - Snapshot repository, user, Ask, and auth settings for one invocation
+    - Snapshot repository, user, Ask, and protected backend auth settings
+    - Persist backend login credentials securely without mixing AI-provider credentials
     - Keep credentials private and apply server and token override precedence
     - Persist user-owned settings securely and validate anchor providers
     - Read legacy Ask model and log preferences without changing their file layout
@@ -2166,10 +2154,18 @@ directories:
       description: Loads legacy user-owned Ask model and logging preferences and validates retention durations.
       kind: production
       checksum: d2b92ea9fd75a7c82926680f6146a12567f5ac4e4ed88fd689cfba4e0116c383
-    - path: config.go
-      description: Loads one complete invocation snapshot of repository, user, Ask, and protected auth configuration with safe precedence.
+    - path: backend_auth.go
+      description: Owns protected Grepple backend login state, expiry, secure persistence, and logout without involving AI-provider credentials.
       kind: production
-      checksum: fbdf94802722b851df61bbdd904cc0aeefee42c6cc98e7198f5d7d7f3b1252de
+      checksum: 19d2f6716d61e22866213f5e174064e7bd12c5630cb65507e66aeefe24c99fab
+    - path: backend_auth_test.go
+      description: Tests backend credential storage, private permissions, server preservation, and recovery from unrelated malformed user settings.
+      kind: test
+      checksum: 65be8d0878f872f5bba6258c4059228cd85f854943dcd62b917f94c86d683b6f
+    - path: config.go
+      description: Loads the unified invocation snapshot including protected backend authentication and applies safe settings precedence.
+      kind: production
+      checksum: fb7804962e435c8bbeafd4007579f0b069d74035afd727b510be8e4f4c99dfb7
     - path: config_test.go
       description: Tests eager configuration snapshots, precedence, private credentials, and serialization isolation.
       kind: test

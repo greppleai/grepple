@@ -5,7 +5,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/greppleai/grepple/internal/authstate"
 	"github.com/greppleai/grepple/internal/config"
 	sourcedomain "github.com/greppleai/grepple/internal/sources"
 	"github.com/greppleai/grepple/internal/storagepaths"
@@ -42,10 +41,9 @@ func (configuration invocationConfiguration) ServerDefault(value string) string 
 	if value = os.Getenv("GREPPLE_SERVER"); value != "" {
 		return value
 	}
-	if value = LoadConfig(configuration.invocation).Server; value != "" {
-		return value
-	}
-	return "http://127.0.0.1:8787"
+	settings, _ := config.LoadConfig(WorkingDirectory(), configuration.invocation.NoRepositoryConfig)
+	// Backend server selection remains available if unrelated preferences fail.
+	return settings.ServerDefault("")
 }
 func (configuration invocationConfiguration) ContextGuardEnabled() bool {
 	if configuration.config != nil {
@@ -139,13 +137,4 @@ func LoadInvocationRepositoryConfig(invocation RepositoryInvocationOptions) (Rep
 		return RepositoryConfig{}, "", nil
 	}
 	return LoadRepositoryConfig(WorkingDirectory())
-}
-
-// LoadConfig loads user state and overlays repository-safe server selection.
-func LoadConfig(invocation RepositoryInvocationOptions) authstate.Config {
-	config := authstate.Load()
-	if repository, _, err := LoadInvocationRepositoryConfig(invocation); err == nil && repository.Server != "" {
-		config.Server = repository.Server
-	}
-	return config
 }
