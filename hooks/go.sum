@@ -1,3 +1,5 @@
+github.com/Bitspark/tree-sitter-markdown v0.5.3 h1:HEZL3USqyUG0zWpWSEeUEglNTuAE4I6oJByCmXJVqZw=
+github.com/Bitspark/tree-sitter-markdown v0.5.3/go.mod h1:y1WFlT62R3fxNYav3urvmcVZHXBMotm0AgfArScTvOk=
 github.com/alex-pinkus/tree-sitter-swift v0.0.0-20250623045926-88bfd19a89be h1:QIPtsFeInMluNfcHxv4i+OxsCgtH0Q2a2HJP3fNKmkY=
 github.com/alex-pinkus/tree-sitter-swift v0.0.0-20250623045926-88bfd19a89be/go.mod h1:nMZLtsEtko+0F2g09G5Tm16uRdDoczLZDE5O207ruYQ=
 github.com/alexflint/go-arg v1.6.1 h1:uZogJ6VDBjcuosydKgvYYRhh9sRCusjOvoOLZopBlnA=

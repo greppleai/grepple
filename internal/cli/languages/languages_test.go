@@ -43,7 +43,7 @@ func TestLanguagesJSONReportsRegisteredFeatureParity(t *testing.T) {
 	assertEntrypointCapabilities(t, byLanguage, "java", "javascript", "kotlin", "csharp", "rust", "tsx", "typescript")
 	assertRustLanguageCapabilities(t, byLanguage["rust"])
 	markdown := byLanguage["markdown"]
-	if markdown.StructuralGrep != wire.FeatureSpecialized || markdown.Outline != wire.FeatureSpecialized || markdown.Navigation != wire.FeatureUnsupported || markdown.DirectoryArchitecture != wire.FeatureUnsupported || markdown.ImportRelations != wire.FeatureUnsupported {
+	if markdown.StructuralGrep != wire.FeatureSpecialized || markdown.Outline != wire.FeatureSpecialized || markdown.Navigation != wire.FeatureNotApplicable || markdown.FocusedStructure != wire.FeatureNotApplicable || markdown.FocusedFlow != wire.FeatureNotApplicable || markdown.GritQL != wire.FeatureNotApplicable || markdown.DirectoryArchitecture != wire.FeatureNotApplicable || markdown.ImportRelations != wire.FeatureNotApplicable || markdown.Entrypoints != wire.FeatureNotApplicable || markdown.NavigationFacts.Calls != wire.FeatureNotApplicable {
 		t.Fatalf("markdown capabilities=%#v", markdown)
 	}
 	if !strings.Contains(output, `"language": "text"`) || !strings.Contains(output, `"extensions": []`) {

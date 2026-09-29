@@ -42,6 +42,9 @@ func syntaxLineRanges(content, language string, lines map[int]bool, enclosing bo
 	if len(lines) == 0 {
 		return nil
 	}
+	if _, ok := languageAdapters[language]; !ok {
+		return nil
+	}
 	document, err := parseDocument(language, content)
 	if err != nil {
 		return nil

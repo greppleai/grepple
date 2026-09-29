@@ -11,5 +11,8 @@ func analyzeStructure(adapter languageAdapter, content string, hits map[int]bool
 	}
 	defer tree.Close()
 	root := tree.RootNode()
+	if builder, ok := adapter.(segmentBuilder); ok {
+		return builder.BuildSegments(root, content, hits), true, root.HasError()
+	}
 	return buildASTSegments(root, content, newMatchLines(hits), adapter.Rules()), true, root.HasError()
 }

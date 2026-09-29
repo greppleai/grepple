@@ -7,6 +7,8 @@ type FeatureSupport string
 const (
 	// FeatureUnsupported means the feature is not implemented for the language.
 	FeatureUnsupported FeatureSupport = "unsupported"
+	// FeatureNotApplicable means the feature concerns code and does not apply to the content type.
+	FeatureNotApplicable FeatureSupport = "not_applicable"
 	// FeatureProduction means the feature uses the normal production path.
 	FeatureProduction FeatureSupport = "production"
 	// FeatureSpecialized means the feature uses a production format-specific path.
