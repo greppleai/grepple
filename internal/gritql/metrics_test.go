@@ -162,6 +162,7 @@ func TestMetricSelectorsWorkAcrossSupportedLanguages(t *testing.T) {
 		{"c", "int value = 1;\n"}, {"cpp", "int value = 1;\n"},
 		{"csharp", "class App { int value = 1; }\n"},
 		{"dart", "void run() { final value = 1; }\n"},
+		{"hcl", "locals { value = 1 }\n"},
 		{"go", "package demo\nvar value = 1\n"},
 		{"java", "class App { int value = 1; }\n"},
 		{"javascript", "const value = 1;\n"},

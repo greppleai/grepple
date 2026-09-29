@@ -32,14 +32,15 @@ func TestDirectFunctionParentAcrossEverySupportedLanguage(t *testing.T) {
 		seen[test.language] = true
 	}
 	for _, supported := range SupportedLanguages() {
+		if supported.ID == "hcl" { // HCL has function calls, but no callable declaration bodies.
+			continue
+		}
 		if !seen[supported.ID] {
 			t.Fatalf("missing language %q", supported.ID)
 		}
 	}
-	for _, supported := range SupportedLanguages() {
-		if !seen[supported.ID] || len(seen) != len(SupportedLanguages()) {
-			t.Fatalf("missing/extra function parent test: %s", supported.ID)
-		}
+	if len(seen) != len(SupportedLanguages())-1 {
+		t.Fatalf("function-parent cases=%d, want %d languages with function bodies", len(seen), len(SupportedLanguages())-1)
 	}
 	for _, test := range cases {
 		t.Run(test.language, func(t *testing.T) {

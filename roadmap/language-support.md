@@ -57,9 +57,9 @@ Language identity, extensions, grammar fingerprints, and parser/navigation capab
 - [x] Add conservative Rust focused structure/flow for structs, tuple structs, enums, traits, same-file impl blocks, fields, variants, associated types, methods, visibility, trait implementations, Cargo-root discovery, and graph-backed calls without framework semantics.
 - [x] Define and implement conservative C/C++ focused architecture contracts without inferring preprocessor, template, linkage, ABI, or build-system semantics.
 
-## Next language
+## Recent language addition
 
-- [ ] Terraform/HCL
+- [x] Terraform/HCL (syntax-backed segments and outlines, literal top-level block declarations, function-call facts, and read-only GritQL; reference resolution remains planned below)
 
 Later languages remain demand-driven rather than implicitly ordered:
 
@@ -75,6 +75,15 @@ Later languages remain demand-driven rather than implicitly ordered:
 - [ ] Groovy
 - [ ] Perl
 - [ ] Zig
+
+## Terraform/HCL reference resolution (planned)
+
+HCL navigation currently records literal top-level declarations and function invocations, but traversals such as `aws_instance.web.id`, `var.ami`, `local.name`, and `module.app.output` do not link to declarations. Treat traversals as references, not function calls; do not infer Terraform evaluation semantics.
+
+- [ ] Index literal resource, data, variable, locals, and module declarations across `.tf` files in the same Terraform directory, retaining source locations and preserving duplicate or ambiguous addresses.
+- [ ] Resolve unambiguous static resource/data addresses, `var.<name>`, `local.<name>`, and the `module.<name>` declaration prefix to their local definitions. Leave computed/dynamic traversals and `module.<name>.<output>` target resolution explicitly unresolved rather than guessing.
+- [ ] Add cross-file fixtures and navigation tests for resolved, missing, ambiguous, and unsupported references, including source ranges and separation of references from HCL function calls; document capability limits.
+- [ ] Investigate module-source/output, provider and alias, `count`/`for_each`, and indexed/dynamic-address resolution as separate, evidence-backed follow-ups. Preserve unresolved status when module boundaries, workspace context, or Terraform evaluation are required.
 
 ## Definition of done for a new Tree-sitter language
 
