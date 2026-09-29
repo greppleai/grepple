@@ -40,6 +40,7 @@ var structuralBenchmarkLanguages = []structuralBenchmarkLanguage{
 	{language: "rust", extension: "rs", source: "fn run() { target(one, two); }\n", comment: "// padding\n"},
 	{language: "shell", extension: "sh", source: "run() { target one two; }\n", comment: "# padding\n"},
 	{language: "typescript", extension: "ts", source: "const result = target(one, two);\n", comment: "// padding\n"},
+	{language: "swift", extension: "swift", source: "func run() { target(one, two) }\n", comment: "// padding\n"},
 	{language: "tsx", extension: "tsx", source: "const result = target(one, two);\n", comment: "// padding\n"},
 }
 

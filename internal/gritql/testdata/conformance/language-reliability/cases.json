@@ -151,6 +151,18 @@
       "findings": ["target one two three"]
     },
     {
+      "name": "swift-reliability",
+      "language": "swift",
+      "features": ["named-metavariable", "list-metavariable", "ambiguous-snippet-context", "malformed-syntax", "cancellation", "resource-limit"],
+      "query": "language swift\n`target($args)`",
+      "context_query": "language swift\n`func run() { target($args) }`",
+      "min_contexts": 2,
+      "path": "Sources/App.swift",
+      "source": "func run() { target(one, two, three) }\n",
+      "malformed_source": "func broken(\n",
+      "findings": ["target(one, two, three)"]
+    },
+    {
       "name": "typescript-reliability",
       "language": "typescript",
       "features": ["named-metavariable", "list-metavariable", "ambiguous-snippet-context", "malformed-syntax", "cancellation", "resource-limit"],

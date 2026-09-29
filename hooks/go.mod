@@ -5,6 +5,7 @@ go 1.25.0
 require github.com/greppleai/grepple v0.0.0
 
 require (
+	github.com/alex-pinkus/tree-sitter-swift v0.0.0-20250623045926-88bfd19a89be // indirect
 	github.com/alexflint/go-arg v1.6.1 // indirect
 	github.com/alexflint/go-scalar v1.2.0 // indirect
 	github.com/mattn/go-pointer v0.0.1 // indirect

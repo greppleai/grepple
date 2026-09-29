@@ -4,6 +4,7 @@ go 1.25.0
 
 require (
 	charm.land/fantasy v0.8.0
+	github.com/alex-pinkus/tree-sitter-swift v0.0.0-20250623045926-88bfd19a89be
 	github.com/alexflint/go-arg v1.6.1
 	github.com/aws/aws-sdk-go-v2/config v1.32.7
 	github.com/gofrs/flock v0.12.1

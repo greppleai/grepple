@@ -28,6 +28,10 @@ const (
 	DartGrammar = "dart"
 	// TreeSitterDartGrammar identifies the pinned Dart grammar implementation.
 	TreeSitterDartGrammar = "tree-sitter-dart@0.2.0"
+	// SwiftGrammar identifies the Swift syntax contract.
+	SwiftGrammar = "swift"
+	// TreeSitterSwiftGrammar identifies the pinned Swift grammar implementation.
+	TreeSitterSwiftGrammar = "tree-sitter-swift@88bfd19a89be"
 	// KotlinGrammar identifies the Kotlin syntax contract.
 	KotlinGrammar = "kotlin"
 	// TreeSitterKotlinGrammar identifies the pinned Kotlin grammar implementation.
@@ -163,6 +167,21 @@ func dartLanguageConfig() wrappedLanguageConfig {
 		statementBlocks: stringSet("block"),
 		declarations:    stringSet("class_declaration", "enum_declaration", "extension_declaration", "extension_type_declaration", "function_declaration", "getter_declaration", "import_or_export", "mixin_declaration", "part_directive", "setter_declaration", "top_level_variable_declaration", "type_alias"),
 		memberPrefix:    "class __G {\n", memberSuffix: "\n}\n", memberBlocks: stringSet("class_body"),
+	}
+}
+
+func compileSwiftTemplates(decoded decodedSnippet, maxDepth int) ([]Template, string, error) {
+	return compileWrappedLanguageTemplates(swiftLanguageConfig(), decoded, maxDepth)
+}
+
+func swiftLanguageConfig() wrappedLanguageConfig {
+	return wrappedLanguageConfig{
+		language: "swift", rootKind: "source_file",
+		expressionPrefix: "func __grit_func() { let __grit_value = ", expressionSuffix: "\n}\n",
+		statementPrefix: "func __grit_func() {\n", statementSuffix: "\n}\n",
+		statementBlocks: stringSet("statements", "function_body"),
+		declarations:    stringSet("class_declaration", "protocol_declaration", "function_declaration", "import_declaration", "init_declaration", "property_declaration", "typealias_declaration"),
+		memberPrefix:    "struct __G {\n", memberSuffix: "\n}\n", memberBlocks: stringSet("class_body"),
 	}
 }
 func compileRustTemplates(decoded decodedSnippet, maxDepth int) ([]Template, string, error) {
@@ -336,9 +355,12 @@ func wrappedRootCategoryAccepts(language string, declarations map[string]bool, c
 		if language == "dart" {
 			return dartExpressionRootCategory(kind)
 		}
+		if language == "swift" {
+			return swiftExpressionRootCategory(kind)
+		}
 		return grammarSubtypeAny(language, kind, "expression", "_expression", "primary_expression")
 	case SnippetContextStatement, SnippetContextStatementList:
-		return grammarSubtypeAny(language, kind, "statement", "_statement", "simple_statement", "_simple_statement") || declarations[kind]
+		return language == "swift" && swiftExpressionRootCategory(kind) || grammarSubtypeAny(language, kind, "statement", "_statement", "simple_statement", "_simple_statement") || declarations[kind]
 	case SnippetContextDeclaration, SnippetContextDeclarationList:
 		return declarations[kind]
 	case SnippetContextFile:
@@ -346,6 +368,12 @@ func wrappedRootCategoryAccepts(language string, declarations map[string]bool, c
 	default:
 		return false
 	}
+}
+
+// Swift's pinned grammar declares no expression subtype membership. Limit
+// Swift snippet roots to named expression and identifier kinds in that grammar.
+func swiftExpressionRootCategory(kind string) bool {
+	return kind == "simple_identifier" || kind == "identifier" || kind == "call_expression" || strings.HasSuffix(kind, "_expression") && parser.NewParser().GetGrammar("swift").NodeKind(kind)
 }
 
 // Dart's pinned grammar has no declared expression supertype in node-types.json.
@@ -381,6 +409,8 @@ func wrappedLanguageByID(language string) wrappedLanguageConfig {
 		return rustLanguageConfig()
 	case "shell":
 		return shellLanguageConfig()
+	case "swift":
+		return swiftLanguageConfig()
 	case "php":
 		return phpLanguageConfig()
 	default:

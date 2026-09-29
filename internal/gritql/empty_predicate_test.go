@@ -22,6 +22,7 @@ func TestEmptyConstraintEverySupportedLanguage(t *testing.T) {
 		{"python", "target($args)", "target()\ntarget(value)\n"},
 		{"rust", "target($args)", "fn run() { target(); target(value); }\n"},
 		{"shell", "target $args", "target\ntarget value\n"},
+		{"swift", "target($args)", "func run() { target(); target(value) }\n"},
 		{"tsx", "target($args)", "function run() { target(); target(value); }\n"},
 		{"typescript", "target($args)", "function run() { target(); target(value); }\n"},
 	}

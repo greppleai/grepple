@@ -18,6 +18,7 @@ func TestWrappedTreeSitterLanguagesEvaluateCalls(t *testing.T) {
 		{name: "php", language: "php", snippet: "target($args)", source: "<?php function run() { target($value); }\n", path: "src/app.php", want: "target($value)"},
 		{name: "rust", language: "rust", snippet: "target($args)", source: "fn run() { target(value); }\n", path: "src/app.rs", want: "target(value)"},
 		{name: "shell", language: "shell", snippet: "target $args", source: "run() { target value; }\n", path: "scripts/app.sh", want: "target value"},
+		{name: "swift", language: "swift", snippet: "target($args)", source: "func run() { target(value) }\n", path: "Sources/App.swift", want: "target(value)"},
 	}
 	for _, test := range tests {
 		test := test
@@ -44,6 +45,7 @@ func TestWrappedTreeSitterLanguagesUseSharedBindingEquality(t *testing.T) {
 		{name: "php", language: "php", snippet: "pair($value, $value)", source: "<?php pair($foo, $foo); pair($foo, $bar);\n", path: "src/app.php", want: "pair($foo, $foo)"},
 		{name: "rust", language: "rust", snippet: "pair($value, $value)", source: "fn run() { pair(foo, foo); pair(foo, bar); }\n", path: "src/app.rs", want: "pair(foo, foo)"},
 		{name: "shell", language: "shell", snippet: "pair $value $value", source: "pair foo foo\npair foo bar\n", path: "scripts/app.sh", want: "pair foo foo"},
+		{name: "swift", language: "swift", snippet: "pair($value, $value)", source: "func run() { pair(foo, foo); pair(foo, bar) }\n", path: "Sources/App.swift", want: "pair(foo, foo)"},
 	}
 	for _, test := range tests {
 		test := test
@@ -68,6 +70,7 @@ func TestWrappedTreeSitterLanguageScannersAndMalformedSources(t *testing.T) {
 		{"php", "src/app.php", "<?php target($value);\n", "<?php function broken(\n"},
 		{"rust", "src/app.rs", "fn run() { target(value); }\n", "fn broken(\n"},
 		{"shell", "scripts/app.sh", "target value\n", "if then\n"},
+		{"swift", "Sources/App.swift", "func run() { target(value) }\n", "func broken(\n"},
 	}
 	for _, test := range tests {
 		test := test

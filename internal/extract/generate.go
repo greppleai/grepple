@@ -198,8 +198,13 @@ func renderClass(name string, declaration *Declaration, analysis *Analysis) ([]s
 	if note := declarationLocationNote(declaration); note != "" {
 		lines = append(lines, "    note for "+name+" \""+mermaidNoteText(note)+"\"")
 	}
-	lines = append(lines, renderDeclarationKind(name, declaration)...)
-	lines = append(lines, "    <<"+declaration.Language+">> "+name)
+	if declaration.Language == "swift" && declaration.Kind == "struct" {
+		lines = append(lines, "    <<swift>> "+name)
+		lines = append(lines, renderDeclarationKind(name, declaration)...)
+	} else {
+		lines = append(lines, renderDeclarationKind(name, declaration)...)
+		lines = append(lines, "    <<"+declaration.Language+">> "+name)
+	}
 	lines = append(lines, renderDeclarationMetadata(name, declaration, analysis)...)
 	lines = append(lines, renderDeclarationExports(name, declaration, analysis)...)
 	return append(lines, ""), nil

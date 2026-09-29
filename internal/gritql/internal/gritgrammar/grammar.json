@@ -5897,6 +5897,10 @@
         },
         {
           "type": "STRING",
+          "value": "swift"
+        },
+        {
+          "type": "STRING",
           "value": "python"
         },
         {

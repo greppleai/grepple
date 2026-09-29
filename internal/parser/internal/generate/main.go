@@ -54,6 +54,7 @@ var grammars = []grammarSpec{
 	{Language: "java", Module: "github.com/tree-sitter/tree-sitter-java"},
 	{Language: "kotlin", Module: "github.com/tree-sitter-grammars/tree-sitter-kotlin"},
 	{Language: "dart", Module: "github.com/nielsenko/tree-sitter-dart"},
+	{Language: "swift", Module: "github.com/alex-pinkus/tree-sitter-swift"},
 	{Language: "javascript", Module: "github.com/tree-sitter/tree-sitter-javascript"},
 	{Language: "typescript", Module: "github.com/tree-sitter/tree-sitter-typescript", Subdir: "typescript"},
 	{Language: "tsx", Module: "github.com/tree-sitter/tree-sitter-typescript", Subdir: "tsx"},

@@ -141,6 +141,9 @@ var languageNavigationIndexFactories = map[string]languageNavigationIndexFactory
 	"dart": func(_ string, base baseLanguageNavigationIndex, _ languageNavigationIndexBuildContext) languageNavigationIndex {
 		return &dartNavigationIndex{baseLanguageNavigationIndex: base}
 	},
+	"swift": func(_ string, base baseLanguageNavigationIndex, _ languageNavigationIndexBuildContext) languageNavigationIndex {
+		return &swiftNavigationIndex{baseLanguageNavigationIndex: base}
+	},
 	"csharp": func(_ string, base baseLanguageNavigationIndex, _ languageNavigationIndexBuildContext) languageNavigationIndex {
 		return &cSharpNavigationIndex{baseLanguageNavigationIndex: base}
 	},

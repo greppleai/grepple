@@ -15099,6 +15099,10 @@
     "named": true
   },
   {
+    "type": "swift",
+    "named": false
+  },
+  {
     "type": "toml",
     "named": false
   },
