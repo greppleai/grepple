@@ -31,6 +31,7 @@ var structuralBenchmarkLanguages = []structuralBenchmarkLanguage{
 	{language: "cpp", extension: "cpp", source: "void run() { target(one, two); }\n", comment: "// padding\n"},
 	{language: "csharp", extension: "cs", source: "class App { void Run() { Target(one, two); } }\n", comment: "// padding\n"},
 	{language: "dart", extension: "dart", source: "void run() { target(one, two); }\n", comment: "// padding\n"},
+	{language: "hcl", extension: "tf", source: "locals { value = target(one, two) }\n", comment: "# padding\n"},
 	{language: "go", extension: "go", source: "package sample\nfunc run() { target(one, two) }\n", comment: "// padding\n"},
 	{language: "javascript", extension: "js", source: "const result = target(one, two);\n", comment: "// padding\n"},
 	{language: "java", extension: "java", source: "class App { void run() { target(one, two); } }\n", comment: "// padding\n"},

@@ -32,6 +32,10 @@ const (
 	SwiftGrammar = "swift"
 	// TreeSitterSwiftGrammar identifies the pinned Swift grammar implementation.
 	TreeSitterSwiftGrammar = "tree-sitter-swift@88bfd19a89be"
+	// HCLGrammar identifies the Terraform HCL syntax contract.
+	HCLGrammar = "hcl"
+	// TreeSitterHCLGrammar identifies the pinned HCL grammar implementation.
+	TreeSitterHCLGrammar = "tree-sitter-hcl@64ad62785d44"
 	// KotlinGrammar identifies the Kotlin syntax contract.
 	KotlinGrammar = "kotlin"
 	// TreeSitterKotlinGrammar identifies the pinned Kotlin grammar implementation.
@@ -184,6 +188,22 @@ func swiftLanguageConfig() wrappedLanguageConfig {
 		memberPrefix:    "struct __G {\n", memberSuffix: "\n}\n", memberBlocks: stringSet("class_body"),
 	}
 }
+
+func compileHCLTemplates(decoded decodedSnippet, maxDepth int) ([]Template, string, error) {
+	return compileWrappedLanguageTemplates(hclLanguageConfig(), decoded, maxDepth)
+}
+
+func hclLanguageConfig() wrappedLanguageConfig {
+	return wrappedLanguageConfig{
+		language: "hcl", rootKind: "config_file",
+		expressionPrefix: "locals { __grit_value = ", expressionSuffix: "\n}\n",
+		statementPrefix: "locals {\n", statementSuffix: "\n}\n",
+		statementBlocks: stringSet("body"),
+		declarations:    stringSet("block", "attribute"),
+		memberPrefix:    "locals {\n", memberSuffix: "\n}\n", memberBlocks: stringSet("body"),
+	}
+}
+
 func compileRustTemplates(decoded decodedSnippet, maxDepth int) ([]Template, string, error) {
 	return compileWrappedLanguageTemplates(rustLanguageConfig(), decoded, maxDepth)
 }
@@ -358,6 +378,9 @@ func wrappedRootCategoryAccepts(language string, declarations map[string]bool, c
 		if language == "swift" {
 			return swiftExpressionRootCategory(kind)
 		}
+		if language == "hcl" {
+			return hclExpressionRootCategory(kind)
+		}
 		return grammarSubtypeAny(language, kind, "expression", "_expression", "primary_expression")
 	case SnippetContextStatement, SnippetContextStatementList:
 		return language == "swift" && swiftExpressionRootCategory(kind) || grammarSubtypeAny(language, kind, "statement", "_statement", "simple_statement", "_simple_statement") || declarations[kind]
@@ -382,6 +405,16 @@ func dartExpressionRootCategory(kind string) bool {
 	return kind == "identifier" || kind == "pattern_assignment" || strings.HasSuffix(kind, "_expression") && parser.NewParser().GetGrammar("dart").NodeKind(kind) || grammarSubtypeAny("dart", kind, "_literal", "_instantiation")
 }
 
+// The HCL grammar declares no expression supertype; allow only expression
+// and value nodes in the pinned grammar, never arbitrary block or body nodes.
+func hclExpressionRootCategory(kind string) bool {
+	switch kind {
+	case "expression", "variable_expr", "function_call", "literal_value", "collection_value", "binary_operation", "conditional", "operation", "unary_operation", "for_expr", "for_tuple_expr", "for_object_expr", "template_expr", "identifier", "numeric_lit", "bool_lit", "null_lit", "string_lit", "object", "tuple":
+		return parser.NewParser().GetGrammar("hcl").NodeKind(kind)
+	}
+	return false
+}
+
 func grammarSubtypeAny(language, kind string, supertypes ...string) bool {
 	for _, supertype := range supertypes {
 		if parser.NewParser().GetGrammar(language).Subtype(supertype, kind) {
@@ -401,6 +434,8 @@ func wrappedLanguageByID(language string) wrappedLanguageConfig {
 		return cSharpLanguageConfig()
 	case "dart":
 		return dartLanguageConfig()
+	case "hcl":
+		return hclLanguageConfig()
 	case "java":
 		return javaLanguageConfig()
 	case "kotlin":

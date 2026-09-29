@@ -67,6 +67,18 @@
       "findings": ["target(one, two, three)"]
     },
     {
+      "name": "hcl-reliability",
+      "language": "hcl",
+      "features": ["named-metavariable", "list-metavariable", "ambiguous-snippet-context", "malformed-syntax", "cancellation", "resource-limit"],
+      "query": "language hcl\n`target([$args])`",
+      "context_query": "language hcl\n`value = target([$args])`",
+      "min_contexts": 2,
+      "path": "main.tf",
+      "source": "locals { value = target([one, two, three]) }\n",
+      "malformed_source": "locals { value = (\n",
+      "findings": ["target([one, two, three])"]
+    },
+    {
       "name": "javascript-reliability",
       "language": "javascript",
       "features": ["named-metavariable", "list-metavariable", "ambiguous-snippet-context", "malformed-syntax", "cancellation", "resource-limit"],

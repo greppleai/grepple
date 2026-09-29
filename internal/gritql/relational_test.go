@@ -21,6 +21,7 @@ func TestCrossFileDuplicatesAcrossAllLanguages(t *testing.T) {
 		{"c", "int value = 1;\n"}, {"cpp", "int value = 1;\n"},
 		{"csharp", "class App { int value = 1; }\n"},
 		{"dart", "void run() {}\n"},
+		{"hcl", "locals { value = 1 }\n"},
 		{"go", "package demo\nvar value = 1\n"},
 		{"java", "class App { int value = 1; }\n"},
 		{"javascript", "const value = 1;\n"},
@@ -43,6 +44,7 @@ func TestCrossFileDuplicatesAcrossAllLanguages(t *testing.T) {
 			query := "language " + test.language + "\n" + map[string]string{
 				"c": "translation_unit($statement)", "cpp": "translation_unit($statement)",
 				"csharp": "compilation_unit($statement)", "dart": "source_file($statement)", "go": "source_file($statement)",
+				"hcl":  "config_file($statement)",
 				"java": "program($statement)", "javascript": "program($statement)",
 				"kotlin": "source_file($statement)", "php": "program($statement)", "python": "module($statement)",
 				"rust": "source_file($statement)", "shell": "program($statement)", "swift": "source_file($statement)",

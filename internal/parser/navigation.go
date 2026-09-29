@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-// NavigationDeclaration describes a callable declaration found by a language adapter.
+// NavigationDeclaration describes a navigable callable or named configuration block found by a language adapter.
 type NavigationDeclaration struct {
 	ID               string               `json:"id"`
 	Name             string               `json:"name"`
@@ -227,13 +227,13 @@ func navigationGraphFromTree(root *syntaxNode, content, language, path string) N
 	return NavigationGraph{Declarations: collector.declarations, TypeDeclarations: navigationTypeDeclarations(adapter.Outline(root, content), language, path, packageName), Calls: collector.calls, Imports: navigationImportFacts(imports, language, path), Exports: navigation.Exports(root, content, language, path), Fields: navigationFieldFacts(fields, language, path, packageName), TypeUsages: collector.typeUsages, MemberAccesses: collector.memberAccesses}
 }
 
-// DeclarationRangeAt returns the narrowest callable declaration containing line.
+// DeclarationRangeAt returns the narrowest navigable declaration containing line.
 func DeclarationRangeAt(content, language string, line int) (int, int, bool) {
 	graph := BuildNavigationGraph(content, language, "")
 	return narrowestDeclarationRangeAt(graph.Declarations, line)
 }
 
-// DeclarationRangeAtFromDocument returns the narrowest callable declaration containing line
+// DeclarationRangeAtFromDocument returns the narrowest navigable declaration containing line
 // without reparsing the caller-owned document.
 func DeclarationRangeAtFromDocument(document *Document, path string, line int) (int, int, bool) {
 	return narrowestDeclarationRangeAt(navigationGraphFromDocument(document, path).Declarations, line)

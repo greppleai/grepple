@@ -14,6 +14,7 @@ require (
 	github.com/mattn/go-pointer v0.0.1 // indirect
 	github.com/nielsenko/tree-sitter-dart v0.2.0 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.4 // indirect
+	github.com/tree-sitter-grammars/tree-sitter-hcl v1.2.1-0.20260117144248-64ad62785d44 // indirect
 	github.com/tree-sitter-grammars/tree-sitter-kotlin v1.1.0 // indirect
 	github.com/tree-sitter/go-tree-sitter v0.25.0 // indirect
 	github.com/tree-sitter/tree-sitter-bash v0.25.1 // indirect

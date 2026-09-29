@@ -1133,11 +1133,14 @@ func chooseSlotTarget(language string, n, parent parser.Node, bySpan map[spanKey
 	key := spanKey{r.StartByte, r.EndByte}
 	p, authored := bySpan[key]
 	_, chosen := targets[key]
-	if !authored || chosen || !typedPlaceholderNode(n, parent, p.role) {
+	// An HCL expression containing only a placeholder spans its identifier.
+	// Bind the expression, not the identifier, so traversals and values match.
+	hclValue := language == "hcl" && p.role == roleNode && n.Kind() == "expression"
+	if !authored || chosen || !(hclValue || typedPlaceholderNode(n, parent, p.role)) {
 		return
 	}
 	cardinality := SlotOne
-	if parent.Valid() && repeatedGrammarPosition(language, parent, n) && !repeatedSlotsAreScalar(parent, bySpan) {
+	if parent.Valid() && (hclValue && (parent.Kind() == "function_arguments" || parent.Kind() == "tuple") || !hclValue && repeatedGrammarPosition(language, parent, n) && !repeatedSlotsAreScalar(parent, bySpan)) {
 		cardinality = SlotMany
 	}
 	targets[key] = slotTarget{p: p, cardinality: cardinality, kind: n.Kind()}

@@ -144,6 +144,9 @@ var languageNavigationIndexFactories = map[string]languageNavigationIndexFactory
 	"swift": func(_ string, base baseLanguageNavigationIndex, _ languageNavigationIndexBuildContext) languageNavigationIndex {
 		return &swiftNavigationIndex{baseLanguageNavigationIndex: base}
 	},
+	"hcl": func(_ string, base baseLanguageNavigationIndex, _ languageNavigationIndexBuildContext) languageNavigationIndex {
+		return &base
+	},
 	"csharp": func(_ string, base baseLanguageNavigationIndex, _ languageNavigationIndexBuildContext) languageNavigationIndex {
 		return &cSharpNavigationIndex{baseLanguageNavigationIndex: base}
 	},

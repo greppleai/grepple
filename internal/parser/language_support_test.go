@@ -8,6 +8,7 @@ func TestLanguageForMinimumSupportedSet(t *testing.T) {
 		"app.cts": "typescript", "app.tsx": "tsx", "app.py": "python", "types.pyi": "python",
 		"Main.java": "java", "Main.kt": "kotlin", "main.dart": "dart", "main.swift": "swift",
 		"Program.cs": "csharp", "main.c": "c", "header.h": "c", "main.cpp": "cpp",
+		"main.tf": "hcl", "dev.tfvars": "hcl", "override.hcl": "hcl", "state.tfbackend": "hcl", "main.tf.json": "text",
 		"header.hpp": "cpp", "main.rs": "rust", "build.sh": "shell", "build.zsh": "shell",
 	}
 	for path, want := range tests {
@@ -106,6 +107,7 @@ func TestNavigationFactCapabilitiesAreAdapterOwned(t *testing.T) {
 		"kotlin":     {Declarations: true, Calls: true, Imports: true, TypeReferences: true, Fields: true, MemberAccess: true, Entrypoints: true},
 		"dart":       {Declarations: true, Calls: true, Imports: true, TypeReferences: true, Fields: true, MemberAccess: true, Entrypoints: true},
 		"swift":      {Declarations: true, Calls: true, Imports: true, TypeReferences: true, Fields: true},
+		"hcl":        {Declarations: true, Calls: true},
 		"csharp":     {Declarations: true, Calls: true, Imports: true, TypeReferences: true, Fields: true, MemberAccess: true, Entrypoints: true},
 		"c":          {Declarations: true, Calls: true, Imports: true, TypeReferences: true, Fields: true, MemberAccess: true, Entrypoints: true},
 		"cpp":        {Declarations: true, Calls: true, Imports: true, TypeReferences: true, Fields: true, MemberAccess: true, Entrypoints: true},
