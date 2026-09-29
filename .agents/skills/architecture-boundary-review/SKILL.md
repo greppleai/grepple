@@ -1,28 +1,16 @@
 ---
 name: architecture-boundary-review
-description: Use when deciding whether local code should move, split, merge, or gain a facade. Combines bounded Grepple directory relations, focused source search, and call evidence; findings are hypotheses, not violations.
+description: Use when deciding whether local code should move, split, merge, gain a facade, or when reviewing coupling and package boundaries. Treat directory signals as leads until verified in source.
 ---
 
 # Architecture boundary review with Grepple
 
-A clean directory diagram can hide behavioral coupling; a broad type can be a healthy facade. Review ownership, behavior, and representation separately.
+## Investigate one proposed boundary
 
-## Workflow
+1. Establish the source universe with `grepple sources explain SCOPE`, then inspect bounded physical relations with `grepple architecture directory --relations SCOPE`. Use `grepple architecture directory --json SCOPE` for the full source-linked relation evidence; follow cited ranges with `grepple --at PATH:START-END`. Directory ownership does not establish package intent.
+2. Search relevant files for repeated owner usage and concrete-type references. Inspect exact evidence with `grepple --at PATH:START-END`; verify public signatures before claiming API leakage.
+3. Test the proposed boundary from both sides: `grepple graph callers --at owner/file.go:LINE --depth 2 SCOPE` and `grepple graph callees --at consumer/file.go:LINE --depth 2 SCOPE`. Check candidates and omissions; static edges do not establish runtime behavior.
 
-1. Establish the source universe with `grepple sources explain SCOPE`, then inspect a bounded `grepple architecture directory --relations SCOPE` report.
-2. Search for repeated owner usage and concrete-type references in the relevant source files. Inspect evidence with `grepple --at PATH:LINE`; do not recommend a move from counts alone.
-3. Test the proposed boundary from both sides with focused callers/callees:
-   ```bash
-   grepple graph callers --at owner/file.go:LINE --depth 2 SCOPE
-   grepple graph callees --at consumer/file.go:LINE --depth 2 SCOPE
-   ```
-4. Verify public signatures and relevant directory relations in exact source before claiming API leakage.
+## Decide and report
 
-## Interpretation rules
-
-- Wide use is not automatically bad. Inspect public signatures, ownership, and source-backed call sites before proposing a boundary change.
-- Compare production and test reach; never inflate production risk with test-framework spread. Use `--production-only` only when the question intentionally excludes tests and fixtures.
-
-## Required conclusion shape
-
-Report: current owner, consumers, static package direction, repeated workflow/type evidence, public exposure, likely origin/containment, ambiguities, and one source-backed recommendation. Use “signal” or “lead” until source inspection confirms a violation.
+Wide use is not automatically bad. Compare production and test reach; use `--production-only` only for an explicitly production-scoped decision. Report current owner and consumers, static dependency direction, source-backed workflow/type evidence, public exposure, ambiguities or source gaps, and one recommendation with a cited range. If unresolved, call it a lead and state the next inspection step.
