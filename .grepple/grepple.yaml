@@ -4534,7 +4534,7 @@ directories:
   roadmap:
     description: Tracks the roadmap for structural Tree-sitter language support and related parser capabilities.
     responsibilities:
-    - Define the minimum supported language set
+    - Document the supported Tree-sitter language set
     - Document navigation and cross-feature parity baselines
     - Prioritize language support hardening and future grammars
     - Specify completion criteria for new Tree-sitter languages
@@ -4542,7 +4542,7 @@ directories:
     - path: language-support.md
       description: Documents supported languages, parser navigation capabilities, parity work, future language priorities, and language implementation requirements.
       kind: production
-      checksum: 93bb9edc3f8dd6c5cd878346e0752caf7fb8a82d13f1b066e315c519ec54c25b
+      checksum: 9bef56ca473b276f2fd8547c89ee5d32c2b82d4b9efe93298b4f7ee20ad1aa00
   scripts:
     description: Scripts for benchmarking Grepple across repositories, validating its native Docker image, installing it locally, and testing benchmark behavior.
     responsibilities:
