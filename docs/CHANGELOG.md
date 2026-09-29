@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.0.4](https://github.com/greppleai/grepple/compare/v0.0.3...v0.0.4) (2026-09-29)
+
+
+### Features
+
+* add conservative Swift language support ([6bf5dff](https://github.com/greppleai/grepple/commit/6bf5dffe2dd1c17c8f70d8b7b91444cf0cf4b72d))
+* add conservative Swift language support ([299d5a2](https://github.com/greppleai/grepple/commit/299d5a2cfb8e82e6ae4acde6e275b550699b1851))
+* add Terraform HCL language support ([709b7f3](https://github.com/greppleai/grepple/commit/709b7f3eff7cd7ad37adda1aab6a2f427cb474f0))
+* add Terraform HCL language support ([3333b3f](https://github.com/greppleai/grepple/commit/3333b3f5bc9b2c6e380e4a8a56a6a337e92e12c9))
+* **parser:** parse Markdown headings with Tree-sitter ([1924b4d](https://github.com/greppleai/grepple/commit/1924b4d8c92273f9b2cd5423015596090ff2fb58))
+
 ## [0.0.3](https://github.com/greppleai/grepple/compare/v0.0.2...v0.0.3) (2026-09-28)
 
 
