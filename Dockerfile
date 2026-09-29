@@ -1,4 +1,4 @@
-FROM golang:1.25.13-bookworm@sha256:e401dae1bf814e29204a8cb7915682e1780951e609ca0dd8865ee1937f510c48 AS build
+FROM golang:1.27.1-bookworm@sha256:69a7b9788769bec032d238959b61854e9ae87f57be9029ec04e9885fabf99195 AS build
 ENV GODEBUG=http2client=0
 WORKDIR /src
 COPY go.mod go.sum ./

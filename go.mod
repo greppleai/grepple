@@ -1,6 +1,8 @@
 module github.com/greppleai/grepple
 
-go 1.25.0
+go 1.27.0
+
+toolchain go1.27.1
 
 require (
 	charm.land/fantasy v0.8.0
@@ -8,11 +10,11 @@ require (
 	github.com/alexflint/go-arg v1.6.1
 	github.com/aws/aws-sdk-go-v2/config v1.32.7
 	github.com/gofrs/flock v0.12.1
+	github.com/nielsenko/tree-sitter-dart v0.2.0
 	github.com/openai/openai-go/v2 v2.7.1
 	github.com/pelletier/go-toml/v2 v2.2.4
 	github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10
 	github.com/pmezard/go-difflib v1.0.0
-	github.com/nielsenko/tree-sitter-dart v0.2.0
 	github.com/tree-sitter-grammars/tree-sitter-kotlin v1.1.0
 	github.com/tree-sitter/go-tree-sitter v0.25.0
 	github.com/tree-sitter/tree-sitter-bash v0.25.1
@@ -56,7 +58,7 @@ require (
 	github.com/charmbracelet/x/exp/slice v0.0.0-20250904123553-b4e2667e5ad5 // indirect
 	github.com/charmbracelet/x/json v0.2.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
-	github.com/go-json-experiment/json v0.0.0-20251027170946-4849db3c2f7e // indirect
+	github.com/go-json-experiment/json v0.0.0-20260820222146-c27c302e5fc3 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-viper/mapstructure/v2 v2.5.0 // indirect
