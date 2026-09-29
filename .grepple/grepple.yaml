@@ -24,7 +24,7 @@ directories:
     - path: SKILL.md
       description: Defines the Grepple workflow and interpretation rules for reviewing architecture boundaries and dependency evidence.
       kind: production
-      checksum: 87e481e4e9c7837e4f74894a4679747a20786090187e31e143c9a6b2911be537
+      checksum: ae68218f65038cecb56c04aa823a16d6d5a12c0896d945e63fb4c9a25c1f35f3
   .agents/skills/architecture-diagram-workflow:
     description: Defines a source-backed workflow for creating, inspecting, and validating focused Mermaid architecture diagrams with Grepple.
     responsibilities:
@@ -37,7 +37,7 @@ directories:
     - path: SKILL.md
       description: Provides commands, projection guidance, workflow steps, and trust rules for source-backed Mermaid architecture diagrams.
       kind: production
-      checksum: d6fd492aa4c2eba8a1463b78cca90b13c6e2511444b12829e3e66dd4e422e99a
+      checksum: 5f894b28b61c932482b899866f6a61c8ea4d27ae9340307c2ad81925da915ed3
   .agents/skills/architecture-lookup-discovery:
     description: Provides a Grepple workflow for locating source ownership, declarations, entrypoints, and cross-directory relationships while preserving evidence and uncertainty.
     responsibilities:
@@ -52,7 +52,7 @@ directories:
     - path: SKILL.md
       description: Defines evidence-based commands and trust rules for repository architecture discovery with Grepple.
       kind: production
-      checksum: 6eb057089946ff38c4ecc90cfee58547f3e0b5cdaeffe473502d5b4048155083
+      checksum: 033fe4d79608d8b0613921191143d6bb77c031b1a2f2d9dd2eaef9700a6cc518
   .agents/skills/change-impact-analysis:
     description: Defines a Grepple workflow for resolving symbols and assessing scoped code-change impact.
     responsibilities:
@@ -66,7 +66,7 @@ directories:
     - path: SKILL.md
       description: Documents Grepple commands, confidence rules, completeness checks, and decision records for code-change impact analysis.
       kind: production
-      checksum: 3672f8877f9251a22eb5e5c6ae9a0eddfe27d692a181ecd17a16b555a9c92c2e
+      checksum: 061c1046ffe5cdbc7207650f8caf4080c05969baab6005008496253d4d27fb1b
   .agents/skills:
     description: This directory provides source-backed Grepple workflows for repository discovery, architecture analysis, change impact, research delegation, searching, and structural audits.
     responsibilities:

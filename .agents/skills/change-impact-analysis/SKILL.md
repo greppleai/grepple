@@ -12,7 +12,7 @@ description: Use before renaming, deleting, moving, or changing behavior/signatu
 3. Choose the direction the change needs, over a universe that includes consumers outside the owning package:
    - Who calls it? `grepple graph callers --at PATH:LINE --depth 2 SCOPE`
    - What does it call? `grepple graph callees --at PATH:LINE --depth 2 SCOPE`
-   - Multi-hop change reach? `grepple graph impact --at PATH:LINE --depth 2 SCOPE`
+   - Bounded outgoing expansion from a source location? `grepple --follow-related 2 --at PATH:LINE` (1-3 outgoing call hops with direct callers). For a complete directional traversal, use `graph callers` or `graph callees` with `--depth 2`; `graph impact` is no longer available.
 4. If bounded output omits results or completeness matters, narrow scope or rerun that focused query with `--json`. Follow `nextCommand` for paging; inspect spilled `grepple-artifact-v1` output by relevant range, not a repository-wide dump.
 
 ## Confidence and handoff
