@@ -4,7 +4,7 @@ Grepple helps you find text, inspect code, and follow source relationships in a 
 
 ## Install
 
-Download a `grepple` binary for Linux, macOS, or Windows from [GitHub Releases](https://github.com/greppleai/grepple/releases). To build from source, you need Go 1.25 or later and a C compiler for the bundled Tree-sitter parsers:
+Download a `grepple` binary for Linux, macOS, or Windows from [GitHub Releases](https://github.com/greppleai/grepple/releases). To build from source, you need Go 1.27 or later and a C compiler for the bundled Tree-sitter parsers:
 
 ```bash
 git clone https://github.com/greppleai/grepple.git

@@ -20,7 +20,7 @@ container_script=$(cat <<'EOF'
 set -eu
 
 grepple --help >/dev/null
-cd /workspace
+cd "$(mktemp -d)"
 printf '%s\n' 'package smoke' 'func f() { target(value) }' > smoke.go
 printf '%s\n' 'language go' '`target($x)`' > /tmp/smoke.grit
 result=$(grepple grit --json --query-file /tmp/smoke.grit)

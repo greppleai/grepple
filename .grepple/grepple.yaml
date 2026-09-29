@@ -141,7 +141,7 @@ directories:
     - path: release.yml
       description: This workflow tests, builds, packages, attests, and publishes Grepple binaries across supported platforms.
       kind: production
-      checksum: 0f4c0b02edbec817c30427d19a99f70fd593d8f83c048a66352bb0a69f8be057
+      checksum: 73e6b62d7ae86978139855a7925a139b7636b4c4e1c74d7f95b109efde5785ec
   .pi:
     description: Configures lifecycle hooks for tool-use guards, context invalidation, and lint checks.
     responsibilities:
@@ -523,7 +523,7 @@ directories:
     - path: .go-version
       description: Pins the repository Go toolchain version.
       kind: production
-      checksum: 12d7b149a16b75ddcaf2da98eb9261931a797a798f2b9562b8b6e3b0b8a22fbe
+      checksum: a8844fbc8c3eb51c26ed00aec4cd5a5a9d647f849c6ead07bcc83ed24c4a7718
     - path: .goreleaser.yaml
       description: Configures cross-platform Grepple and greppled builds with release metadata.
       kind: production
@@ -539,7 +539,7 @@ directories:
     - path: Dockerfile
       description: Builds a statically linked Grepple executable and runs it in a minimal non-root image.
       kind: production
-      checksum: c0d17831d95a44c924d5e370655dd86d10077b672c460b620ef4b6e27eebc273
+      checksum: cf2f5003c55b89e94629f814a709847c80682c1e849d610cc74519f754090852
     - path: Makefile
       description: Automates builds, tests, linting, schema checks, benchmarks, installation, smoke tests, and cleanup.
       kind: production
@@ -547,7 +547,7 @@ directories:
     - path: README.md
       description: Introduces Grepple to users with installation, local search, navigation, and guide links.
       kind: production
-      checksum: d38bffc142a54c522205d6a61180f1ccec480c71d727e2b9bc896546a880dbcc
+      checksum: 9bfc0306a1bee0dda65828f66194da3f70d072fd4814916bcfd46d24e4974bfa
     - path: architecture-production.mmd
       description: Contains a generated Mermaid graph of production package relationships.
       kind: generated
@@ -563,11 +563,11 @@ directories:
     - path: go.mod
       description: Declares the Go module, toolchain version, and direct and indirect dependencies.
       kind: production
-      checksum: c94b48b693a8a78ee440d202c74db3e3113bad90749563f24e5cbeb7e418ade8
+      checksum: d377b1184f790b8f6374d640d30a89a30b162c40a7fdc086e15e46d0b46d655e
     - path: go.sum
       description: Records cryptographic checksums for resolved Go module dependencies.
       kind: production
-      checksum: a4d1b7c21bd7e0a11450ecc27b250cde7dd0e927b527aacf7aad5beb6f7f9845
+      checksum: 69b11f317022376547362be213d6e82af3b28fad61814a3f43e2a7f71287d62d
     - path: release-please-config.json
       description: Configures Release Please versioning, changelog generation, and Go package release behavior.
       kind: production
@@ -622,7 +622,7 @@ directories:
     - path: go.mod
       description: Declares the hooks Go module, its Grepple dependency, indirect parser dependencies, and local replacement.
       kind: production
-      checksum: c1137ce2a16cfd5165befbadfd7ca0ab9356ea872e169f0e37d5599b038fd575
+      checksum: e3432cf3fccbe7c055bf5a2647620dd032615bd599a2995729c88737fabcdad1
     - path: go.sum
       description: Records checksums for the hooks module and its transitive dependencies.
       kind: production
@@ -4558,7 +4558,7 @@ directories:
     - path: docker-smoke.sh
       description: Builds the native Docker image and verifies its structural query behavior without prohibited runtimes.
       kind: test
-      checksum: 966a593835de9429b800d039466857af9d10e42b7dacb59fbd82bef80be6709f
+      checksum: 33d709759e459334b924285889a384f20685d80b1da5597648f3a2bb9c30e828
     - path: install-local.sh
       description: Builds and installs a statically linked Grepple executable in the configured local bin directory.
       kind: production
