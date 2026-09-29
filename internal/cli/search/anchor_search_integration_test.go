@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/greppleai/grepple/internal/usersettings"
+	"github.com/greppleai/grepple/internal/config"
 )
 
 func TestAnchorsEnabledBySettingsUseConfiguredProvider(t *testing.T) {
@@ -15,7 +15,7 @@ func TestAnchorsEnabledBySettingsUseConfiguredProvider(t *testing.T) {
 		t.Fatal(err)
 	}
 	settingsPath := filepath.Join(directory, "settings.json")
-	settings := usersettings.Config{Anchors: usersettings.Anchors{EnabledByDefault: true, DefaultProvider: "test", Providers: map[string]usersettings.Provider{"test": {Command: []string{os.Args[0], "-test.run=TestAnchorProviderProcess"}}}}}
+	settings := config.UserSettings{Anchors: config.Anchors{EnabledByDefault: true, DefaultProvider: "test", Providers: map[string]config.Provider{"test": {Command: []string{os.Args[0], "-test.run=TestAnchorProviderProcess"}}}}}
 	writeJSONFile(t, settingsPath, settings)
 	t.Setenv("GREPPLE_SETTINGS", settingsPath)
 	t.Setenv("GREPPLE_TEST_ANCHOR_PROVIDER", "1")

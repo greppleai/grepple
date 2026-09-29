@@ -7,14 +7,22 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/greppleai/grepple/internal/wire"
 	"github.com/greppleai/grepple/internal/cliruntime"
-	"github.com/greppleai/grepple/internal/usersettings"
+	"github.com/greppleai/grepple/internal/config"
+	"github.com/greppleai/grepple/internal/wire"
 )
 
+func loadTestUserSettings() (config.UserSettings, error) {
+	settings, err := config.LoadConfig("", true)
+	if err != nil {
+		return config.UserSettings{}, err
+	}
+	return settings.User, nil
+}
+
 type cliOptions = Options
-type userSettings = usersettings.Config
-type anchorSettings = usersettings.Anchors
+type userSettings = config.UserSettings
+type anchorSettings = config.Anchors
 
 func testCommandContext() cliruntime.Context {
 	contextGuard := func() bool { return os.Getenv("GREPPLE_CONTEXT_GUARD_DIR") != "" }
@@ -27,7 +35,7 @@ func testCommandContext() cliruntime.Context {
 				return os.Getenv("GREPPLE_SERVER")
 			},
 			ContextGuard:     contextGuard,
-			LoadUserSettings: usersettings.Load,
+			LoadUserSettings: loadTestUserSettings,
 		},
 		RepositoryContext: cliruntime.RepositoryServices{CurrentFunc: cliruntime.CurrentRepository},
 	}

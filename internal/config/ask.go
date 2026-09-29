@@ -1,4 +1,4 @@
-package usersettings
+package config
 
 import (
 	"bytes"
@@ -30,8 +30,8 @@ type AskPreferences struct {
 	LogRetention time.Duration
 }
 
-// LoadAskPreferences reads legacy ask defaults from ~/.grepple/grepple.json.
-func LoadAskPreferences() (AskPreferences, error) {
+// loadAskPreferences reads legacy ask defaults from ~/.grepple/grepple.json.
+func loadAskPreferences() (AskPreferences, error) {
 	configured := AskPreferences{LogsEnabled: true, LogRetention: 7 * 24 * time.Hour}
 	home, err := os.UserHomeDir()
 	if err != nil {
@@ -58,7 +58,7 @@ func LoadAskPreferences() (AskPreferences, error) {
 		configured.LogsEnabled = *preferences.Ask.Logs.Enabled
 	}
 	if retention := strings.TrimSpace(preferences.Ask.Logs.RetentionPeriod); retention != "" {
-		configured.LogRetention, err = ParseLogRetention(retention)
+		configured.LogRetention, err = parseLogRetention(retention)
 		if err != nil {
 			return configured, fmt.Errorf("invalid user configuration %s ask.logs.retentionPeriod: %w", path, err)
 		}
@@ -66,8 +66,8 @@ func LoadAskPreferences() (AskPreferences, error) {
 	return configured, nil
 }
 
-// ParseLogRetention parses ask.logs.retentionPeriod.
-func ParseLogRetention(value string) (time.Duration, error) {
+// parseLogRetention parses ask.logs.retentionPeriod.
+func parseLogRetention(value string) (time.Duration, error) {
 	value = strings.TrimSpace(strings.ToLower(value))
 	if strings.HasSuffix(value, "d") {
 		days, err := strconv.Atoi(strings.TrimSuffix(value, "d"))

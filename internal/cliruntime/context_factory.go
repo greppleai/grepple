@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/greppleai/grepple/internal/apiclient"
+	"github.com/greppleai/grepple/internal/config"
 )
 
 // ContextOptions configures the concrete command context.
@@ -14,6 +15,7 @@ type ContextOptions struct {
 	ErrorOutput           io.Writer
 	Client                apiclient.APIClient
 	Repository            RepositoryInvocationOptions
+	Config                *config.Config
 	InlineOutputThreshold int
 	Exit                  func(int)
 }
@@ -30,14 +32,14 @@ func NewContext(options ContextOptions) Context {
 	if diagnostics == nil {
 		diagnostics = os.Stderr
 	}
-	configuration := NewConfiguration(options.Repository, options.InlineOutputThreshold)
+	configuration := newConfigurationWithConfig(options.Repository, options.InlineOutputThreshold, options.Config)
 	return Environment{
 		Input:             input,
 		Output:            output,
 		ErrorOutput:       diagnostics,
 		Client:            options.Client,
 		Config:            configuration,
-		RepositoryContext: NewRepository(options.Repository, diagnostics),
+		RepositoryContext: newRepositoryWithConfig(options.Repository, diagnostics, options.Config),
 		Exit:              options.Exit,
 	}
 }

@@ -557,9 +557,9 @@ directories:
       kind: generated
       checksum: 9d50fa37ad3a54838f6820699280c8c1805e96a65d236e0cc2edede85897d194
     - path: architecture.mmd
-      description: Contains a generated Mermaid graph of repository package relationships.
+      description: Contains the generated Mermaid graph of repository directory dependencies.
       kind: generated
-      checksum: 8e261e6ad76ac533f00978fdafadd7828863c464c6ac995bd86641249f97e410
+      checksum: 26f78332fc33bd8b4079bd698225f3f23b01161dbd8c049a31059e83501dd991
     - path: go.mod
       description: Declares the Go module, toolchain version, and direct and indirect dependencies.
       kind: production
@@ -919,7 +919,7 @@ directories:
     - path: provider.go
       description: Implements content normalization, native and external anchor generation, provider invocation, and response validation.
       kind: production
-      checksum: d29609272bdf5cca491e8a62710f83bcc338a06b6a0c1a8e3e2c60db584e2bdc
+      checksum: b4eb0c1af4d6d5e72cb84b3f152fa9d7389327ab3f82e8f5e22fdd9a96e90e77
     - path: provider_test.go
       description: Tests request encoding, native hashline generation, and rejection of unsafe or duplicate provider anchors.
       kind: test
@@ -940,24 +940,11 @@ directories:
     - path: client.go
       description: This file defines the typed HTTP client, remote API operations, request handling, response validation, and token refresh logic.
       kind: production
-      checksum: e08d156e8b872fd4c2bb4e535b53938bdf9f20f31b918c716b1b496d66c66228
+      checksum: f5bd5bce11397c7248a110d0e8ae2b823971a864ed0aa8a04e899998c9631a0a
     - path: client_test.go
       description: This file tests token selection, token refresh persistence and fallback, and analysis response validation.
       kind: test
-      checksum: 00377f0941eac2377a2c648d6b6359f81732cdf99d82127b8f491e34453e1945
-  internal/authstate:
-    description: The authstate package manages per-user authentication state stored in a protected JSON configuration file.
-    responsibilities:
-    - Resolve the per-user configuration path
-    - Load and persist authentication state
-    - Store access and refresh token expiry timestamps
-    - Apply environment token overrides
-    - Clear credentials while preserving server settings
-    files:
-    - path: state.go
-      description: Defines authentication state, token persistence, expiry handling, and credential clearing.
-      kind: production
-      checksum: 8f20716bc4f9a56cdf0880207f5ae8ebcb87458ac7c1f56e82fc156e28f8c8e2
+      checksum: 5e4c07e119607a4e86294fab7ee63f36227a3b697363e36d9bf81e5748f2b2b7
   internal/boundaryanalysis:
     description: Analyzes repeated cross-file workflows and type usage to identify architectural boundaries, policy effects, and boundary risks.
     responsibilities:
@@ -1022,19 +1009,19 @@ directories:
     - path: anchors_doctor.go
       description: Diagnoses anchor-provider configuration, executable availability, and temporary-file protocol round trips.
       kind: production
-      checksum: 31055c40c1e4dec76ac75ec8ecb6403ae990c3c6493629598e718f7df90521e2
+      checksum: 2dd64f89b4ad2dea77681bfe3eba30d72af148bbb6e5a92137c275014384ca41
     - path: anchors_native_test.go
       description: Verifies built-in hashline generation and native anchors when no provider command is configured.
       kind: test
-      checksum: 9644ed65069c6c64be8f9e061f469e12e5bc3cf05da793b66a9ca024f4dcac2f
+      checksum: 156ddb7d1efca6b41811f6159a72367eb92369928031509fc64381038a7f2bf0
     - path: anchors_setup.go
       description: Previews or atomically writes validated user-owned anchor-provider settings with explicit safety controls.
       kind: production
-      checksum: 6e5efb0a9ba14ffd79497ff1f98b995bc51b33c164ee5db66be7904b4c24ae0d
+      checksum: 130e31531d7736c482d7cfc6e2aa4aa6571ad207196e3c409e9e1bda4dc8ffa4
     - path: anchors_test.go
       description: Tests doctor diagnostics, setup safety, provider protocol behavior, and executable validation.
       kind: test
-      checksum: 68d5eb1cda61433efc6872f64a0eab9159d7dac896217950f187e6d476503a0c
+      checksum: ef459b55e7102fbacc5a914a7e43e57c3fdde9f12d6e964ac59265bff0254f3b
     - path: command.go
       description: Constructs the anchors command and dispatches help, doctor, and setup operations.
       kind: production
@@ -1184,7 +1171,7 @@ directories:
     - path: command.go
       description: This file defines ask argument parsing, invocation preparation, provider selection, deadlines, logging, and output.
       kind: production
-      checksum: 06727886c40aae0bb494b2973cc797a2a1b6c4d319f2a0957ab40b14f29c91fe
+      checksum: 52e2726a89fab98133746e37f485e714a59484a9045b4d616e39325f3362734a
     - path: command_test.go
       description: This file tests command parsing, invocation composition, provider and model precedence, output, and help behavior.
       kind: test
@@ -1192,7 +1179,7 @@ directories:
     - path: preferences_test.go
       description: This file verifies ask preference loading, retention parsing, selection precedence, and malformed configuration handling.
       kind: test
-      checksum: 2f2d1b4a01cc5538d420cedbe938bfd9e260e1d298a0770776aab645a6221e6d
+      checksum: d90128611396fcfa8f62fb0ee959d003249a7a76ec83c0cfb9f1180b9c9f88d5
     - path: research.go
       description: This file defines research inputs, typed agent tools, normalized-input caching, telemetry, output limits, and session execution.
       kind: production
@@ -1242,15 +1229,15 @@ directories:
     - path: context_test.go
       description: Verifies authentication commands use configured output and diagnostic contexts.
       kind: test
-      checksum: a2a22b1b487e3dc9bc833c9959f2722705e159369a358702d632f9b3aa56d1d3
+      checksum: f2afad8ea61b45ad11ad51877b3f1eabc5e715c6c4d9aca84b74e029d65a2dc6
     - path: login.go
       description: Runs GitHub device-flow login and logout while fetching server configuration and managing stored tokens.
       kind: production
-      checksum: ed3717bf6f319a433cbf0f8f09c971b2a5c3943795ead3a99ad5596f6a573672
+      checksum: 34fd9e8a0bffe3ce792aaee340bf713c8ebf9dff898fb0b96e3fc37a744a641c
     - path: login_test.go
       description: Tests device-flow authentication, server login configuration, token persistence, logout, and failure handling.
       kind: test
-      checksum: 4c2a78583371880c71955640e4df1b19d6a495212e19dc9508f42e393c3ab396
+      checksum: 7b91eb913123f7f061cb0945ccd4c277a63bae4d8d55409251af20ef63595023
     - path: provider_integration_test.go
       description: Verifies built-in AI providers are listed with their logged-out status.
       kind: test
@@ -1457,7 +1444,7 @@ directories:
     - path: application.go
       description: Defines global controls and dispatches normalized application commands to their implementations.
       kind: production
-      checksum: 3cc7655066b1d9fd0d1e7973ba821aeb9884e0fa1d78e07a952812df5951c339
+      checksum: 37e1bbdba0a486ea884eb03dc4d3fe7004ccf238bc6984831e1951abb2d0924d
     - path: application_test.go
       description: Tests application command selection, global option ownership, nested normalization, and defaults.
       kind: test
@@ -1469,7 +1456,7 @@ directories:
     - path: args.go
       description: Parses application arguments, normalizes commands, validates availability, and runs output spilling.
       kind: production
-      checksum: 446a727116159bc67b352a566daf480dd15dd9ac4b3c07dd59a0dea423979b0b
+      checksum: 752c217a3585df93af1a8917a04c01d9beccf751c5834689371c562cc2df489d
     - path: args_test.go
       description: Tests top-level help, execution-universe validation, help routing, and default searches.
       kind: test
@@ -1613,7 +1600,7 @@ directories:
     - path: command.go
       description: Coordinates initialization parsing, metadata generation, model configuration, validation, persistence, and repository confinement.
       kind: production
-      checksum: 4e7cf45475a1650d1449ba96e64af3bd00c4ac6da1fa7d6707546796c47f1e13
+      checksum: 829bd14aafd0ef698244efb07c18c61a9ced83f06c0437fe192ad586961e46f4
     - path: command_test.go
       description: Tests metadata validation, prompt context, confined inspection tools, and exact-directory confinement.
       kind: test
@@ -1762,7 +1749,7 @@ directories:
     - path: anchor_search_integration_test.go
       description: Verifies configured anchor providers integrate with line-only search output.
       kind: test
-      checksum: 2f4adef26801e4527384e211cfeec79d184e4fa3050b3bbd10df2760f7b06058
+      checksum: aba313ab699135b03571b93c17d9758782f474794f7826cf3a5734b21fba6b26
       areas:
       - anchor-generation
     - path: anchors.go
@@ -1932,7 +1919,7 @@ directories:
     - path: test_helpers_test.go
       description: Provides shared command contexts, search runners, remote helpers, Git setup, and temporary source utilities.
       kind: test
-      checksum: af750eb8cdfb33982751abfce21a927b4605bd7eb2e0d124709822af3f935362
+      checksum: 603db23ba01731f15c83f422055c933867c1ba1bdc64325360d1a3c9bf832ba6
   internal/cli/sources:
     description: Implements the sources CLI for explaining repository source-selection decisions, configuration effects, production filtering, and deterministic report output.
     responsibilities:
@@ -2069,12 +2056,12 @@ directories:
       kind: test
       checksum: 2b6f73fc63b4acef2d842130fe3bc55c5857a7bd7f1ca6095c514c0c3bd15f0b
   internal/cliruntime:
-    description: Shared CLI runtime primitives for command execution, invocation context, repository configuration, output handling, and exit signaling.
+    description: Shared CLI runtime primitives for command execution, invocation contexts, configuration adapters, output handling, and exit signaling.
     responsibilities:
     - Define shared command and argument interfaces
     - Construct configurable CLI invocation contexts
     - Resolve repository identity and working state
-    - Load and validate repository configuration
+    - Adapt the invocation configuration snapshot and repository policy
     - Apply repository-wide invocation policies
     - Provide bounded and JSON-formatted output
     - Track intentional command exit statuses
@@ -2092,22 +2079,26 @@ directories:
       description: Tests function-backed command execution and argument forwarding.
       kind: test
       checksum: 8a177176e8fc4035dc3209c846c4b18db5030db92218c9993e2d10ae74978f6d
+    - path: config_snapshot_test.go
+      description: Tests shared invocation snapshots across repository scope, server selection, Ask preferences, and path reporting.
+      kind: test
+      checksum: e010dc3b988c96aeedaf8bec141b872b4b9a2b6a5c22a6ced2d01096eaf84ce2
     - path: context.go
       description: Defines configuration, repository, invocation context, and default stream abstractions.
       kind: production
-      checksum: 03ae8c4ff23bc2a18ac378a2b103dd88b20ca2f43a77944ce81e2be62d91bb42
+      checksum: 2350d1d7d7b7345504c9dc1a5356be92b3da3ece95ad47b41ddeb5089c2e0f28
     - path: context_factory.go
       description: Constructs production command contexts with default streams and repository services.
       kind: production
-      checksum: 57778b399b9c85b2d90e3e0cddd062876d6f200ee325e6f427ea4cacea250d32
+      checksum: 54bed9e83e1ad20c5ce2895b441c28aa05e5ef5de374a96e81d6932e30dff565
     - path: environment.go
       description: Implements configuration and repository behavior backed by process, user, and repository state.
       kind: production
-      checksum: b618039fab5a58419582f8932b995cfa8137685c10bcc3363bc698aba3dcd237
+      checksum: eb332c5b986411f7cbdaa011e17c25907436af800618e99687a161a7c204ffbf
     - path: environment_test.go
       description: Tests repository configuration discovery, validation, authentication isolation, and ignore policies.
       kind: test
-      checksum: 65e6d37bfb316c7075b530f457449fede1c829add7c7a72e3a8ed3b6b70547c4
+      checksum: 4d0e503561b7e34f4f9e983eb71bafe136b71096b5531cb6da2c9ad01a9b9deb
     - path: exit.go
       description: Records requested command exit statuses and represents intentional exit errors.
       kind: production
@@ -2141,13 +2132,56 @@ directories:
       kind: test
       checksum: 4be7c28b101b4a4bcfadb7870aea8d8fc4fa9998f6962afa0b5b8593ea0151af
     - path: repository_config.go
-      description: Finds, decodes, and validates nearest-ancestor repository configuration files.
+      description: Provides compatibility aliases and delegation to repository configuration owned by internal/config.
       kind: production
-      checksum: 284b695a0b51b0d32490059a8db680f18ad3ecd60715ed35b730a3b12f29292d
+      checksum: da9c6ee60bb3fd10f74da34034712bc0b84b4b9281ff18abc10cd592875c746f
     - path: services.go
       description: Provides injectable configuration and repository service adapters for tests and embedding.
       kind: production
-      checksum: 2545961622ebb191aff90d74a9834e35b4afb41b04977b317861d6deec84a375
+      checksum: 656b82f637129fd57df4c92622452a2f2b6b3c19bd3b686dc7d3b08c7af1f199
+  internal/config:
+    description: Owns the unified invocation configuration, including protected Grepple backend credentials, repository policy, user settings, and Ask preferences.
+    responsibilities:
+    - Load and validate nearest repository-owned configuration files
+    - Reject authentication data from shareable repository configuration
+    - Snapshot repository, user, Ask, and protected backend auth settings
+    - Persist backend login credentials securely without mixing AI-provider credentials
+    - Keep credentials private and apply server and token override precedence
+    - Persist user-owned settings securely and validate anchor providers
+    - Read legacy Ask model and log preferences without changing their file layout
+    files:
+    - path: ask.go
+      description: Loads legacy user-owned Ask model and logging preferences and validates retention durations.
+      kind: production
+      checksum: d2b92ea9fd75a7c82926680f6146a12567f5ac4e4ed88fd689cfba4e0116c383
+    - path: backend_auth.go
+      description: Owns protected Grepple backend login state, expiry, secure persistence, and logout without involving AI-provider credentials.
+      kind: production
+      checksum: 19d2f6716d61e22866213f5e174064e7bd12c5630cb65507e66aeefe24c99fab
+    - path: backend_auth_test.go
+      description: Tests backend credential storage, private permissions, server preservation, and recovery from unrelated malformed user settings.
+      kind: test
+      checksum: 65be8d0878f872f5bba6258c4059228cd85f854943dcd62b917f94c86d683b6f
+    - path: config.go
+      description: Loads the unified invocation snapshot including protected backend authentication and applies safe settings precedence.
+      kind: production
+      checksum: fb7804962e435c8bbeafd4007579f0b069d74035afd727b510be8e4f4c99dfb7
+    - path: config_test.go
+      description: Tests eager configuration snapshots, precedence, private credentials, and serialization isolation.
+      kind: test
+      checksum: e1663c864742bb85c84ac52a407ccc43088075204de1f1308319c8962e73f4f4
+    - path: repository.go
+      description: Loads and validates the nearest repository-owned Grepple configuration without accepting authentication fields.
+      kind: production
+      checksum: 898008c060494235d6154231d494c2cde8e800b8f543c2b28e4d7514ae4262e5
+    - path: user.go
+      description: Owns user settings schema, secure persistence, path resolution, context guard, and anchor-provider validation.
+      kind: production
+      checksum: af08a030ca8aacb356bb53bb5f43a69367d97f7c811fa9b8904becbeb833fcb1
+    - path: user_test.go
+      description: Tests private user-settings persistence, strict credential rejection, and legacy Ask preferences.
+      kind: test
+      checksum: 7d127232b189af1d20ec6e753b8ef5a52e35852e67942ec78de14849e7f377a8
   internal/daemon:
     description: Runs the authenticated local CLI daemon and caches bounded architecture, graph, and symbol-resolution reports.
     responsibilities:
@@ -4514,23 +4548,7 @@ directories:
       description: Verifies repository cache isolation, directory creation, private shared caches, and absolute or relative cache override handling.
       kind: test
       checksum: 0117411f1036285c90c01ea3c26438cdccd12fc3ce4c7bd1604c2a1b57684ebb
-  internal/usersettings:
-    description: Manages user-owned Grepple settings, anchor providers, context-guard behavior, and legacy Ask preferences.
-    responsibilities:
-    - Load and validate user settings
-    - Resolve settings paths and anchor providers
-    - Report context-guard status
-    - Parse Ask logging preferences and retention periods
-    - Persist settings atomically with private permissions
-    files:
-    - path: ask.go
-      description: Loads legacy Ask model and logging preferences and parses positive log-retention durations.
-      kind: production
-      checksum: 889a2f20fff5053571f279639a0ec7171e40cc8c7a36df2244e5b798c15ce70d
-    - path: settings.go
-      description: Defines user settings models and implements JSON loading, provider validation, path resolution, context-guard status, and secure atomic persistence.
-      kind: production
-      checksum: 55dfcded3f60ce737177772f4c1d9dcb7bb500b9d6057d06d4e6a1985e2caadf
+
   roadmap:
     description: Tracks the roadmap for structural Tree-sitter language support and related parser capabilities.
     responsibilities:

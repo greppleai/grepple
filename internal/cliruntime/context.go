@@ -6,8 +6,8 @@ import (
 	"os"
 
 	"github.com/greppleai/grepple/internal/apiclient"
+	"github.com/greppleai/grepple/internal/config"
 	sourcedomain "github.com/greppleai/grepple/internal/sources"
-	"github.com/greppleai/grepple/internal/usersettings"
 )
 
 // Configuration exposes immutable invocation configuration to commands.
@@ -15,7 +15,8 @@ type Configuration interface {
 	ServerDefault(string) string
 	ContextGuardEnabled() bool
 	InlineOutputThreshold() int
-	UserSettings() (usersettings.Config, error)
+	UserSettings() (config.UserSettings, error)
+	AskPreferences() (config.AskPreferences, error)
 }
 
 // Repository exposes the repository invocation context. Command-specific source

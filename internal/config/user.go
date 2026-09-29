@@ -1,5 +1,4 @@
-// Package usersettings loads user-owned anchor and context settings.
-package usersettings
+package config
 
 import (
 	"encoding/json"
@@ -15,8 +14,8 @@ const (
 	maxProviderTimeoutMS     = 60000
 )
 
-// Config is user-owned Grepple configuration.
-type Config struct {
+// UserSettings is user-owned Grepple configuration.
+type UserSettings struct {
 	Anchors      Anchors      `json:"anchors"`
 	ContextGuard ContextGuard `json:"context_guard,omitempty"`
 }
@@ -39,39 +38,26 @@ type Provider struct {
 	TimeoutMS int      `json:"timeout_ms,omitempty"`
 }
 
-// Load reads user settings.
-func Load() (Config, error) {
-	path, err := Path()
-	if err != nil {
-		return Config{}, err
-	}
+// loadUserSettings reads user settings from the selected path.
+func loadUserSettings(path string) (UserSettings, error) {
 	file, err := os.Open(path)
 	if errors.Is(err, os.ErrNotExist) {
-		return Config{}, nil
+		return UserSettings{}, nil
 	}
 	if err != nil {
-		return Config{}, fmt.Errorf("read Grepple settings: %w", err)
+		return UserSettings{}, fmt.Errorf("read Grepple settings: %w", err)
 	}
 	defer file.Close()
 	decoder := json.NewDecoder(file)
 	decoder.DisallowUnknownFields()
-	var settings Config
+	var settings UserSettings
 	if err := decoder.Decode(&settings); err != nil {
-		return Config{}, fmt.Errorf("parse %s: %w", path, err)
+		return UserSettings{}, fmt.Errorf("parse %s: %w", path, err)
 	}
 	if err := ensureJSONEnd(decoder); err != nil {
-		return Config{}, fmt.Errorf("parse %s: %w", path, err)
+		return UserSettings{}, fmt.Errorf("parse %s: %w", path, err)
 	}
 	return settings, nil
-}
-
-// ContextGuardEnabled reports whether output context tracking is enabled.
-func ContextGuardEnabled() bool {
-	settings, err := Load()
-	if err != nil {
-		return false
-	}
-	return settings.ContextGuard.Enabled == nil || *settings.ContextGuard.Enabled
 }
 
 func ensureJSONEnd(decoder *json.Decoder) error {
@@ -84,8 +70,8 @@ func ensureJSONEnd(decoder *json.Decoder) error {
 	return fmt.Errorf("multiple JSON values")
 }
 
-// Path returns the user settings path.
-func Path() (string, error) {
+// userSettingsPath returns the user settings path.
+func userSettingsPath() (string, error) {
 	if path := os.Getenv("GREPPLE_SETTINGS"); path != "" {
 		return path, nil
 	}
@@ -96,32 +82,28 @@ func Path() (string, error) {
 	return filepath.Join(home, ".grepple", "settings.json"), nil
 }
 
-// DisplayPath returns a user-facing settings path.
-func DisplayPath(path string) string {
+// displayUserSettingsPath returns a user-facing settings path.
+func displayUserSettingsPath(path string) string {
 	if path == "" {
 		return "$GREPPLE_SETTINGS or ~/.grepple/settings.json"
 	}
 	return path
 }
 
-// ResolveProvider resolves and validates an anchor provider.
-func ResolveProvider(name string) (string, Provider, error) {
-	settingsPath, _ := Path()
-	settings, err := Load()
-	if err != nil {
-		return "", Provider{}, err
+// ResolveProvider resolves and validates an anchor provider from this snapshot.
+func (settings *Config) ResolveProvider(name string) (string, Provider, error) {
+	path := settings.SettingsPath
+	if name == "" {
+		name = settings.User.Anchors.DefaultProvider
 	}
 	if name == "" {
-		name = settings.Anchors.DefaultProvider
+		return "", Provider{}, fmt.Errorf("no default anchor provider configured in %s", displayUserSettingsPath(path))
 	}
-	if name == "" {
-		return "", Provider{}, fmt.Errorf("no default anchor provider configured in %s", DisplayPath(settingsPath))
-	}
-	provider, ok := settings.Anchors.Providers[name]
+	provider, ok := settings.User.Anchors.Providers[name]
 	if !ok {
-		return "", Provider{}, fmt.Errorf("anchor provider %q is not configured in %s", name, DisplayPath(settingsPath))
+		return "", Provider{}, fmt.Errorf("anchor provider %q is not configured in %s", name, displayUserSettingsPath(path))
 	}
-	if err := ValidateProvider(provider); err != nil {
+	if err := provider.Validate(); err != nil {
 		return "", Provider{}, fmt.Errorf("anchor provider %q: %w", name, err)
 	}
 	if provider.TimeoutMS == 0 {
@@ -130,8 +112,8 @@ func ResolveProvider(name string) (string, Provider, error) {
 	return name, provider, nil
 }
 
-// ValidateProvider validates an anchor provider.
-func ValidateProvider(provider Provider) error {
+// Validate checks an anchor provider.
+func (provider Provider) Validate() error {
 	if len(provider.Command) == 0 || provider.Command[0] == "" {
 		return fmt.Errorf("command must contain an executable")
 	}
@@ -144,8 +126,9 @@ func ValidateProvider(provider Provider) error {
 	return nil
 }
 
-// Save writes settings atomically with private permissions.
-func Save(path string, settings Config) error {
+// SaveUserSettings writes the new user settings atomically with private permissions.
+func (settings *Config) SaveUserSettings(user UserSettings) error {
+	path := settings.SettingsPath
 	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
 		return err
 	}
@@ -161,7 +144,7 @@ func Save(path string, settings Config) error {
 	}
 	encoder := json.NewEncoder(temporary)
 	encoder.SetIndent("", "  ")
-	if err := encoder.Encode(settings); err != nil {
+	if err := encoder.Encode(user); err != nil {
 		_ = temporary.Close()
 		return err
 	}
@@ -172,5 +155,9 @@ func Save(path string, settings Config) error {
 	if err := temporary.Close(); err != nil {
 		return err
 	}
-	return os.Rename(temporaryPath, path)
+	if err := os.Rename(temporaryPath, path); err != nil {
+		return err
+	}
+	settings.User = user
+	return nil
 }

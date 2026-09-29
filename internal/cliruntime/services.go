@@ -3,16 +3,17 @@ package cliruntime
 import (
 	"os"
 
+	"github.com/greppleai/grepple/internal/config"
 	sourcedomain "github.com/greppleai/grepple/internal/sources"
-	"github.com/greppleai/grepple/internal/usersettings"
 )
 
 // ConfigurationServices adapts command configuration functions for tests and embedding.
 type ConfigurationServices struct {
-	ResolveServer     func(string) string
-	ContextGuard      func() bool
-	InlineOutputBytes func() int
-	LoadUserSettings  func() (usersettings.Config, error)
+	ResolveServer      func(string) string
+	ContextGuard       func() bool
+	InlineOutputBytes  func() int
+	LoadUserSettings   func() (config.UserSettings, error)
+	LoadAskPreferences func() (config.AskPreferences, error)
 }
 
 func (services ConfigurationServices) ServerDefault(value string) string {
@@ -30,11 +31,23 @@ func (services ConfigurationServices) InlineOutputThreshold() int {
 	}
 	return 0
 }
-func (services ConfigurationServices) UserSettings() (usersettings.Config, error) {
+func (services ConfigurationServices) UserSettings() (config.UserSettings, error) {
 	if services.LoadUserSettings != nil {
 		return services.LoadUserSettings()
 	}
-	return usersettings.Config{}, nil
+	return config.UserSettings{}, nil
+}
+
+// AskPreferences returns injected preferences, or the complete user-owned snapshot.
+func (services ConfigurationServices) AskPreferences() (config.AskPreferences, error) {
+	if services.LoadAskPreferences != nil {
+		return services.LoadAskPreferences()
+	}
+	settings, err := config.LoadConfig("", true)
+	if err != nil {
+		return config.AskPreferences{}, err
+	}
+	return settings.Ask, nil
 }
 
 // RepositoryServices adapts command repository functions for tests and embedding.

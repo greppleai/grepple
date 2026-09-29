@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/greppleai/grepple/internal/config"
 	"github.com/greppleai/grepple/internal/search"
 )
 
@@ -96,12 +97,18 @@ func TestLoadConfigDoesNotOverlayUserTokenFromRepository(t *testing.T) {
 		t.Fatal(err)
 	}
 	chdirForConfigTest(t, root)
-	config := LoadConfig(RepositoryInvocationOptions{})
-	if config.Token != "user-token" || config.Server != "https://repo.example" {
-		t.Fatalf("merged config = %+v", config)
+	settings, err := config.LoadConfig(root, false)
+	if err != nil {
+		t.Fatal(err)
 	}
-	bypassed := LoadConfig(RepositoryInvocationOptions{NoRepositoryConfig: true})
-	if bypassed.Token != "user-token" || bypassed.Server != "https://user.example" {
+	if settings.AuthToken() != "user-token" || settings.ServerDefault("") != "https://repo.example" {
+		t.Fatalf("merged config = %+v", settings)
+	}
+	bypassed, err := config.LoadConfig(root, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if bypassed.AuthToken() != "user-token" || bypassed.ServerDefault("") != "https://user.example" {
 		t.Fatalf("bypassed repository config = %+v", bypassed)
 	}
 }

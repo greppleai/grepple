@@ -9,6 +9,7 @@ import (
 	"github.com/alexflint/go-arg"
 	searchcommand "github.com/greppleai/grepple/internal/cli/search"
 	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
+	"github.com/greppleai/grepple/internal/config"
 	"github.com/greppleai/grepple/internal/outputspill"
 )
 
@@ -38,13 +39,13 @@ func Run(args []string) error {
 		spill.Disabled = true
 	}
 	exitState := &cliruntime.ExitState{}
-	repository, _, err := cliruntime.LoadInvocationRepositoryConfig(repositoryOptions)
+	settings, err := config.LoadConfig(cliruntime.WorkingDirectory(), repositoryOptions.NoRepositoryConfig)
 	if err != nil {
 		return err
 	}
 	descriptorArgs := normalizedApplicationArgs(args)
-	err = outputspill.Run(descriptorArgs, spill, repository.Output.SpillThresholdBytes, cliruntime.WorkingDirectory(), func(threshold int) error {
-		context := newCommandContextWith(repositoryOptions, threshold, exitState.Request)
+	err = outputspill.Run(descriptorArgs, spill, settings.Repository.Output.SpillThresholdBytes, cliruntime.WorkingDirectory(), func(threshold int) error {
+		context := newCommandContextWithConfig(repositoryOptions, threshold, exitState.Request, settings)
 		return executeArguments(context, values)
 	})
 	if err != nil {
