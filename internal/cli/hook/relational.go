@@ -5,14 +5,11 @@ import (
 	"fmt"
 	"os"
 	"path"
-	"path/filepath"
 	"regexp"
 	"strings"
 	"time"
 
-	"github.com/greppleai/grepple/internal/config"
 	"github.com/greppleai/grepple/internal/gritql"
-	sourcedomain "github.com/greppleai/grepple/internal/sources"
 )
 
 var relationPlaceholder = regexp.MustCompile(`\{\{([^{}]+)\}\}`)
@@ -52,7 +49,7 @@ func compileRelationConfig(config *relationConfig) (gritql.RelationSpec, error) 
 		LeftKey:      gritql.RelationKey{Binding: config.LeftKey.Binding, DescendantKind: config.LeftKey.DescendantKind, Projection: config.LeftKey.Projection},
 		RightKey:     gritql.RelationKey{Binding: config.RightKey.Binding, DescendantKind: config.RightKey.DescendantKind, Projection: config.RightKey.Projection},
 		PartitionKey: gritql.RelationKey{Binding: config.PartitionKey.Binding, DescendantKind: config.PartitionKey.DescendantKind, Projection: config.PartitionKey.Projection},
-		Scope:        config.Scope, Mode: config.Mode, LeftInclude: config.LeftInclude, UniqueLeft: config.UniqueLeft,
+		GoModule:     config.GoModule, Scope: config.Scope, Mode: config.Mode, LeftInclude: config.LeftInclude, UniqueLeft: config.UniqueLeft,
 	}
 	if err := spec.Validate(); err != nil {
 		return gritql.RelationSpec{}, err
@@ -192,14 +189,9 @@ func CheckRepositoryRelation(ctx context.Context, start, id string) ([]Finding, 
 	if len(rules) != 1 || rules[0].relation == nil {
 		return nil, fmt.Errorf("hook %s is not relational", id)
 	}
-	settings, err := config.LoadConfig(root, false)
+	policy, err := repositorySourcePolicy(root)
 	if err != nil {
 		return nil, err
-	}
-	policy := sourcedomain.Options{WorkingDirectory: root, IgnoreRoot: root}
-	if settings.RepositoryPath != "" {
-		policy.IgnoreRoot = filepath.Dir(settings.RepositoryPath)
-		policy.IgnorePaths = settings.Repository.Ignore.Paths
 	}
 	paths, err := selectedFiles(ctx, root, true, policy)
 	if err != nil {

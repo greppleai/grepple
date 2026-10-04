@@ -159,7 +159,7 @@ func Execute(application cliruntime.Context, values *Args) error {
 			}
 			// Apply source-authored exceptions only after every engine has produced
 			// complete raw findings. Caches must retain unsuppressed results.
-			report.Findings, err = filterSuppressedFindings(root, report.Findings)
+			report.Findings, err = filterSuppressedFindings(root, report.Findings, rules...)
 			if err != nil {
 				return err
 			}
@@ -214,6 +214,7 @@ func scanRulesUncached(ctx context.Context, root string, paths []string, rules [
 	}
 	sort.Strings(keys)
 	found := make([]Finding, 0)
+	var assertionBytes int64
 	for _, key := range keys {
 		group := groups[key]
 		programs := make([]gritql.ProgramScan, 0, len(group))
@@ -244,12 +245,17 @@ func scanRulesUncached(ctx context.Context, root string, paths []string, rules [
 					return nil, fmt.Errorf("hook %s: incomplete scan: %s%s: %s", program.PatternID, location, diagnostic.Code(), diagnostic.Message())
 				}
 				config := byID[item.PatternID]
-				for _, match := range program.Result.Findings() {
-					start := match.Start()
-					found = append(found, Finding{ID: config.ID, Path: match.Path(), Line: start.Line, Column: start.Column, Severity: config.Severity, Message: config.Message})
+				found, err = appendStructuralMatches(found, config, program.Result.Findings(), &assertionBytes)
+				if err != nil {
+					return nil, err
 				}
 			}
 		}
+	}
+	var annotationErr error
+	found, annotationErr = filterAnnotatedFindings(root, found, rules)
+	if annotationErr != nil {
+		return nil, annotationErr
 	}
 	sort.Slice(found, func(i, j int) bool {
 		left, right := found[i], found[j]

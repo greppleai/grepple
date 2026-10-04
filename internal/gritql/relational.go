@@ -34,6 +34,7 @@ type RelationSpec struct {
 	LeftKey, RightKey      RelationKey
 	PartitionKey           RelationKey
 	Scope, Mode            string
+	GoModule               string
 	LeftInclude            []string // optional left-side output scope; right still scans every eligible source
 	UniqueLeft             bool
 }
@@ -110,6 +111,29 @@ func (spec RelationSpec) JoinRows(rows [][]ProgramScanResult) ([]RelationHit, er
 			findings[index] = append(findings[index], program.Result.Findings()...)
 		}
 	}
+	leftFindings := findings[0]
+	if len(spec.LeftInclude) != 0 {
+		leftFindings = make([]Finding, 0, len(findings[0]))
+		for _, finding := range findings[0] {
+			if MatchesGlobs(finding.Path(), spec.LeftInclude, nil) {
+				leftFindings = append(leftFindings, finding)
+			}
+		}
+	}
+	if spec.LeftKey.Projection == "go-method-signatures" {
+		rightIndex := 0
+		if spec.Right != spec.Left {
+			rightIndex = 1
+		}
+		return joinGoMethodSignatures(leftFindings, findings[rightIndex], findings[len(findings)-1], spec)
+	}
+	if spec.LeftKey.Projection == "go-interface-returns" {
+		rightIndex := 0
+		if spec.Right != spec.Left {
+			rightIndex = 1
+		}
+		return joinGoInterfaceReturns(leftFindings, findings[rightIndex], findings[len(findings)-1], spec)
+	}
 	partitions := make(map[string]string)
 	if spec.Partition != nil {
 		for _, finding := range findings[len(findings)-1] {
@@ -121,15 +145,6 @@ func (spec RelationSpec) JoinRows(rows [][]ProgramScanResult) ([]RelationHit, er
 				return nil, fmt.Errorf("ambiguous partition in %s", finding.Path())
 			}
 			partitions[finding.Path()] = value
-		}
-	}
-	leftFindings := findings[0]
-	if len(spec.LeftInclude) != 0 {
-		leftFindings = make([]Finding, 0, len(findings[0]))
-		for _, finding := range findings[0] {
-			if MatchesGlobs(finding.Path(), spec.LeftInclude, nil) {
-				leftFindings = append(leftFindings, finding)
-			}
 		}
 	}
 	left, err := relationFacts(leftFindings, spec.LeftKey, spec.Scope, partitions, spec.Partition != nil)
@@ -166,7 +181,11 @@ func validateRelationSpec(spec RelationSpec) error {
 	if spec.Mode != "" && spec.UniqueLeft {
 		return fmt.Errorf("unique_left is not supported in unmatched mode")
 	}
-	if spec.LeftKey.Projection != "" {
+	if spec.LeftKey.Projection == "go-interface-returns" || spec.LeftKey.Projection == "go-method-signatures" {
+		if err := validateGoInterfaceReturns(spec); err != nil {
+			return err
+		}
+	} else if spec.LeftKey.Projection != "" {
 		if spec.LeftKey.Projection != "go-return-types" || spec.Mode != "unmatched_left_any" || spec.Left.Language() != "go" || spec.LeftKey.DescendantKind != "" || spec.Scope != "directory" || spec.Partition == nil {
 			return fmt.Errorf("go-return-types projection requires directory-scoped Go unmatched_left_any with a package partition and no descendant_kind")
 		}
