@@ -126,6 +126,7 @@ func newTargetLanguageAdapters() map[string]targetLanguageAdapter {
 		"shell":  wrappedTargetLanguageAdapter("shell", ShellGrammar, TreeSitterShellGrammar, compileShellTemplates),
 		"swift":  wrappedTargetLanguageAdapter("swift", SwiftGrammar, TreeSitterSwiftGrammar, compileSwiftTemplates),
 		"svelte": svelteTargetLanguageAdapter(),
+		"css":    cssTargetLanguageAdapter(),
 		"typescript": {
 			id:               "typescript",
 			grammar:          TypeScriptGrammar,

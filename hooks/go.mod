@@ -22,6 +22,7 @@ require (
 	github.com/tree-sitter/tree-sitter-c v0.24.2 // indirect
 	github.com/tree-sitter/tree-sitter-c-sharp v0.23.5 // indirect
 	github.com/tree-sitter/tree-sitter-cpp v0.23.4 // indirect
+	github.com/tree-sitter/tree-sitter-css v0.25.0 // indirect
 	github.com/tree-sitter/tree-sitter-go v0.25.0 // indirect
 	github.com/tree-sitter/tree-sitter-java v0.23.5 // indirect
 	github.com/tree-sitter/tree-sitter-javascript v0.25.0 // indirect

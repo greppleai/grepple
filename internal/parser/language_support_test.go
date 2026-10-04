@@ -109,6 +109,7 @@ func TestNavigationFactCapabilitiesAreAdapterOwned(t *testing.T) {
 		"swift":      {Declarations: true, Calls: true, Imports: true, TypeReferences: true, Fields: true},
 		"hcl":        {Declarations: true, Calls: true},
 		"svelte":     {Declarations: true},
+		"css":        {Declarations: true},
 		"csharp":     {Declarations: true, Calls: true, Imports: true, TypeReferences: true, Fields: true, MemberAccess: true, Entrypoints: true},
 		"c":          {Declarations: true, Calls: true, Imports: true, TypeReferences: true, Fields: true, MemberAccess: true, Entrypoints: true},
 		"cpp":        {Declarations: true, Calls: true, Imports: true, TypeReferences: true, Fields: true, MemberAccess: true, Entrypoints: true},

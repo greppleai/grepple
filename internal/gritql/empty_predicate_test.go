@@ -16,6 +16,7 @@ func TestEmptyConstraintEverySupportedLanguage(t *testing.T) {
 		{"dart", "target($args)", "void run() { target(); target(value); }\n"},
 		{"hcl", "target([$args])", "locals { value = [target([]), target([value])] }\n"},
 		{"svelte", "<target $args />", "<target />\n<target value />\n"},
+		{"css", "target($args)", ".target { color: target(); color: target(red blue); }\n"},
 		{"go", "target($args)", "package demo\nfunc run() { target(); target(value) }\n"},
 		{"java", "target($args)", "class App { void run() { target(); target(value); } }\n"},
 		{"javascript", "target($args)", "function run() { target(); target(value); }\n"},

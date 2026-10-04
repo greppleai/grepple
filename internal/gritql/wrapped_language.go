@@ -446,6 +446,8 @@ func wrappedLanguageByID(language string) wrappedLanguageConfig {
 		return shellLanguageConfig()
 	case "svelte":
 		return svelteLanguageConfig()
+	case "css":
+		return cssLanguageConfig()
 	case "swift":
 		return swiftLanguageConfig()
 	case "php":

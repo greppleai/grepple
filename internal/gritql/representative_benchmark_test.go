@@ -33,6 +33,7 @@ var structuralBenchmarkLanguages = []structuralBenchmarkLanguage{
 	{language: "dart", extension: "dart", source: "void run() { target(one, two); }\n", comment: "// padding\n"},
 	{language: "hcl", extension: "tf", source: "locals { value = target(one, two) }\n", comment: "# padding\n"},
 	{language: "svelte", extension: "svelte", source: "<target one two />\n", comment: "<!-- padding -->\n"},
+	{language: "css", extension: "css", source: ".target { color: target(red blue); }\n", comment: "/* padding */\n"},
 	{language: "go", extension: "go", source: "package sample\nfunc run() { target(one, two) }\n", comment: "// padding\n"},
 	{language: "javascript", extension: "js", source: "const result = target(one, two);\n", comment: "// padding\n"},
 	{language: "java", extension: "java", source: "class App { void run() { target(one, two); } }\n", comment: "// padding\n"},

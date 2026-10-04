@@ -1,6 +1,6 @@
 # `gritql-v1` compatibility contract
 
-`gritql-v1` is Grepple's unified, closed, read-only detection contract for every Tree-sitter-backed language in the capability matrix: `go`, `javascript`, `typescript`, `tsx`, `python`, `java`, `kotlin`, `dart`, `swift`, `svelte`, `hcl`, `csharp`, `c`, `cpp`, `rust`, `php`, and `shell`. Target syntax is supplied by language adapters while query algebra, transactions, limits, ordering, and diagnostics remain shared.
+`gritql-v1` is Grepple's unified, closed, read-only detection contract for every Tree-sitter-backed language in the capability matrix: `go`, `javascript`, `typescript`, `tsx`, `python`, `java`, `kotlin`, `dart`, `swift`, `svelte`, `css`, `hcl`, `csharp`, `c`, `cpp`, `rust`, `php`, and `shell`. Target syntax is supplied by language adapters while query algebra, transactions, limits, ordering, and diagnostics remain shared.
 
 The contract is not an alias for an upstream GritQL release. A conforming implementation accepts exactly the documented syntax and rejects every other construct; it does not invoke an external engine, Node, a shell, or a fallback interpreter.
 
@@ -10,7 +10,7 @@ The grammar is EBNF. Literal words and punctuation are quoted. `EOF` means the e
 
 ```ebnf
 pattern          = spacing, language, line_end, spacing, query, spacing, EOF ;
-language         = "language", hspace1, ( "c" | "cpp" | "csharp" | "dart" | "go" | "hcl" | "java" | "javascript" | "kotlin" | "php" | "python" | "rust" | "shell" | "svelte" | "swift" | "typescript" | "tsx" ) ;
+language         = "language", hspace1, ( "c" | "cpp" | "csharp" | "css" | "dart" | "go" | "hcl" | "java" | "javascript" | "kotlin" | "php" | "python" | "rust" | "shell" | "svelte" | "swift" | "typescript" | "tsx" ) ;
 
 query            = prefix, [ spacing, where_clause ] ;
 prefix           = snippet
