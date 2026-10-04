@@ -15099,6 +15099,10 @@
     "named": true
   },
   {
+    "type": "svelte",
+    "named": false
+  },
+  {
     "type": "swift",
     "named": false
   },

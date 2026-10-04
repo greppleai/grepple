@@ -25,6 +25,8 @@ github.com/tree-sitter-grammars/tree-sitter-hcl v1.2.1-0.20260117144248-64ad6278
 github.com/tree-sitter-grammars/tree-sitter-hcl v1.2.1-0.20260117144248-64ad62785d44/go.mod h1:NzEB+a6rpv14H4tCrCfzhTorCyvYYb3T9+o/e4d0pdU=
 github.com/tree-sitter-grammars/tree-sitter-kotlin v1.1.0 h1:SWIUDASa+WPhDDem1U5IJpYwQEezkqXrUI61OcnORzM=
 github.com/tree-sitter-grammars/tree-sitter-kotlin v1.1.0/go.mod h1:eH+flFf3QOa9c9BY9g3Bz02F7zTq30kGIG3cgB0lSlI=
+github.com/tree-sitter-grammars/tree-sitter-svelte v1.0.2 h1:7rAjefEANjwuheEmbxnFAQh6aB0OQtNb8KhfY+hNEGo=
+github.com/tree-sitter-grammars/tree-sitter-svelte v1.0.2/go.mod h1:1MbScyxKDc43X5uboospfBjXerxJTFR9vJ2QIYXqchY=
 github.com/tree-sitter/go-tree-sitter v0.25.0 h1:sx6kcg8raRFCvc9BnXglke6axya12krCJF5xJ2sftRU=
 github.com/tree-sitter/go-tree-sitter v0.25.0/go.mod h1:r77ig7BikoZhHrrsjAnv8RqGti5rtSyvDHPzgTPsUuU=
 github.com/tree-sitter/tree-sitter-bash v0.25.1 h1:ZD3MK4oDB5lAsFztqbdcyYEd24pxDtx3g9UOWA062rE=

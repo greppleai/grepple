@@ -444,6 +444,8 @@ func wrappedLanguageByID(language string) wrappedLanguageConfig {
 		return rustLanguageConfig()
 	case "shell":
 		return shellLanguageConfig()
+	case "svelte":
+		return svelteLanguageConfig()
 	case "swift":
 		return swiftLanguageConfig()
 	case "php":

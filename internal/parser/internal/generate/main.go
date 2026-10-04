@@ -57,6 +57,7 @@ var grammars = []grammarSpec{
 	{Language: "swift", Module: "github.com/alex-pinkus/tree-sitter-swift"},
 	{Language: "javascript", Module: "github.com/tree-sitter/tree-sitter-javascript"},
 	{Language: "hcl", Module: "github.com/tree-sitter-grammars/tree-sitter-hcl"},
+	{Language: "svelte", Module: "github.com/tree-sitter-grammars/tree-sitter-svelte"},
 	{Language: "typescript", Module: "github.com/tree-sitter/tree-sitter-typescript", Subdir: "typescript"},
 	{Language: "tsx", Module: "github.com/tree-sitter/tree-sitter-typescript", Subdir: "tsx"},
 	{Language: "python", Module: "github.com/tree-sitter/tree-sitter-python"},

@@ -147,6 +147,10 @@ var languageNavigationIndexFactories = map[string]languageNavigationIndexFactory
 	"hcl": func(_ string, base baseLanguageNavigationIndex, _ languageNavigationIndexBuildContext) languageNavigationIndex {
 		return &base
 	},
+	// Svelte snippet declarations have no inferred script/component imports.
+	"svelte": func(_ string, base baseLanguageNavigationIndex, _ languageNavigationIndexBuildContext) languageNavigationIndex {
+		return &base
+	},
 	"csharp": func(_ string, base baseLanguageNavigationIndex, _ languageNavigationIndexBuildContext) languageNavigationIndex {
 		return &cSharpNavigationIndex{baseLanguageNavigationIndex: base}
 	},

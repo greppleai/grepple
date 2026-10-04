@@ -3,6 +3,8 @@ package gritql
 import (
 	"sort"
 	"sync"
+
+	"github.com/greppleai/grepple/internal/parser"
 )
 
 const (
@@ -44,15 +46,16 @@ func SupportedLanguages() []LanguageCapabilities {
 // targetLanguageAdapter owns target-language syntax behavior while the compiler,
 // query algebra, matcher, evaluator, and diagnostics remain language-neutral.
 type targetLanguageAdapter struct {
-	id                   string
-	grammar              string
-	treeSitter           string
-	metadataLanguage     string
-	metadataGrammar      string
-	goGrammar            string
-	compileTemplates     func(decodedSnippet, int) ([]Template, string, error)
-	rootCategory         func(SnippetContext, string) bool
-	unfieldedCardinality func(string, bool) bool
+	id                     string
+	grammar                string
+	treeSitter             string
+	metadataLanguage       string
+	metadataGrammar        string
+	goGrammar              string
+	compileTemplates       func(decodedSnippet, int) ([]Template, string, error)
+	rootCategory           func(SnippetContext, string) bool
+	unfieldedCardinality   func(string, bool) bool
+	placeholderCardinality func(parser.Node, parser.Node) (SlotCardinality, bool)
 }
 
 func compileGoTemplates(decoded decodedSnippet, maxDepth int) ([]Template, string, error) {
@@ -118,10 +121,11 @@ func newTargetLanguageAdapters() map[string]targetLanguageAdapter {
 			compileTemplates: compilePythonTemplates,
 			rootCategory:     pythonRootCategoryAccepts,
 		},
-		"rust":  wrappedTargetLanguageAdapter("rust", RustGrammar, TreeSitterRustGrammar, compileRustTemplates),
-		"php":   wrappedTargetLanguageAdapter("php", PHPGrammar, TreeSitterPHPGrammar, compilePHPTemplates),
-		"shell": wrappedTargetLanguageAdapter("shell", ShellGrammar, TreeSitterShellGrammar, compileShellTemplates),
-		"swift": wrappedTargetLanguageAdapter("swift", SwiftGrammar, TreeSitterSwiftGrammar, compileSwiftTemplates),
+		"rust":   wrappedTargetLanguageAdapter("rust", RustGrammar, TreeSitterRustGrammar, compileRustTemplates),
+		"php":    wrappedTargetLanguageAdapter("php", PHPGrammar, TreeSitterPHPGrammar, compilePHPTemplates),
+		"shell":  wrappedTargetLanguageAdapter("shell", ShellGrammar, TreeSitterShellGrammar, compileShellTemplates),
+		"swift":  wrappedTargetLanguageAdapter("swift", SwiftGrammar, TreeSitterSwiftGrammar, compileSwiftTemplates),
+		"svelte": svelteTargetLanguageAdapter(),
 		"typescript": {
 			id:               "typescript",
 			grammar:          TypeScriptGrammar,

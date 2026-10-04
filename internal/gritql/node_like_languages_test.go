@@ -14,6 +14,7 @@ func TestNodeLikeNamedFieldAcrossSupportedLanguages(t *testing.T) {
 		{"csharp", "class App { int value = 1; }\n"},
 		{"dart", "void run(int value) {}\n"},
 		{"hcl", "locals { value = { name = \"demo\" } }\n"},
+		{"svelte", "{#if ready}<button>value</button>{/if}\n"},
 		{"go", "package demo\nvar value = 1\n"},
 		{"java", "class App { int value = 1; }\n"},
 		{"javascript", "const value = 1;\n"},

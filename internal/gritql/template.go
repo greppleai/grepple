@@ -1133,6 +1133,12 @@ func chooseSlotTarget(language string, n, parent parser.Node, bySpan map[spanKey
 	key := spanKey{r.StartByte, r.EndByte}
 	p, authored := bySpan[key]
 	_, chosen := targets[key]
+	if authored && !chosen {
+		if target, ok := languageSlotTarget(language, n, parent, p); ok {
+			targets[key] = target
+			return
+		}
+	}
 	// An HCL expression containing only a placeholder spans its identifier.
 	// Bind the expression, not the identifier, so traversals and values match.
 	hclValue := language == "hcl" && p.role == roleNode && n.Kind() == "expression"
@@ -1144,6 +1150,15 @@ func chooseSlotTarget(language string, n, parent parser.Node, bySpan map[spanKey
 		cardinality = SlotMany
 	}
 	targets[key] = slotTarget{p: p, cardinality: cardinality, kind: n.Kind()}
+}
+
+func languageSlotTarget(language string, node, parent parser.Node, placeholder generatedPlaceholder) (slotTarget, bool) {
+	adapter, _ := targetLanguageByID(language)
+	if placeholder.role != roleNode || adapter.placeholderCardinality == nil {
+		return slotTarget{}, false
+	}
+	cardinality, ok := adapter.placeholderCardinality(node, parent)
+	return slotTarget{p: placeholder, cardinality: cardinality, kind: node.Kind()}, ok
 }
 
 func appendSlotTargetChildren(walk []slotTargetWalkItem, x slotTargetWalkItem) []slotTargetWalkItem {

@@ -7,6 +7,18 @@
   },
   "cases": [
     {
+      "name": "svelte-reliability",
+      "language": "svelte",
+      "features": ["named-metavariable", "list-metavariable", "ambiguous-snippet-context", "malformed-syntax", "cancellation", "resource-limit"],
+      "query": "language svelte\n`<target $args />`",
+      "context_query": "language svelte\n`<target $args />`",
+      "min_contexts": 2,
+      "path": "src/App.svelte",
+      "source": "<target one two three />\n",
+      "malformed_source": "{#if ready}\n<target />\n",
+      "findings": ["<target one two three />"]
+    },
+    {
       "name": "c-reliability",
       "language": "c",
       "features": ["named-metavariable", "list-metavariable", "ambiguous-snippet-context", "malformed-syntax", "cancellation", "resource-limit"],

@@ -5901,6 +5901,10 @@
         },
         {
           "type": "STRING",
+          "value": "svelte"
+        },
+        {
+          "type": "STRING",
           "value": "python"
         },
         {
