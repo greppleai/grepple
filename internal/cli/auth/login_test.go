@@ -1,126 +1,18 @@
 package auth
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"github.com/greppleai/grepple/internal/apiclient"
+	"github.com/greppleai/grepple/internal/cliruntime"
+	"github.com/greppleai/grepple/internal/config"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"testing"
 	"time"
-
-	"github.com/greppleai/grepple/internal/apiclient"
-	"github.com/greppleai/grepple/internal/cliruntime"
-	"github.com/greppleai/grepple/internal/config"
 )
-
-func runLogin(args []string) error {
-	return executeLogin(cliruntime.Environment{}, args)
-}
-
-// TestDeviceFlowAndTokenStorage runs the full device flow against a mock GitHub
-// (device code → poll with one pending → token → user lookup) and verifies the
-// token is persisted to and reloaded from the user config with 0600 perms.
-func TestDeviceFlowAndTokenStorage(t *testing.T) {
-	polls := 0
-	srv := newDeviceFlowServer(&polls)
-	defer srv.Close()
-	token := runDeviceFlow(t, srv.Client(), srv.URL, &polls)
-	verifyTokenPersistence(t, token)
-	verifyLogoutClearsToken(t)
-}
-
-// newDeviceFlowServer mocks GitHub's device flow: one pending poll, then a
-// token, and a /user lookup guarded by that token. polls counts token polls.
-func newDeviceFlowServer(polls *int) *httptest.Server {
-	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("content-type", "application/json")
-		switch r.URL.Path {
-		case "/login/device/code":
-			_ = json.NewEncoder(w).Encode(map[string]any{
-				"device_code": "DEV", "user_code": "WXYZ-1234",
-				"verification_uri": "https://github.com/login/device",
-				"expires_in":       900, "interval": 1,
-			})
-		case "/login/oauth/access_token":
-			*polls++
-			if *polls < 2 {
-				_ = json.NewEncoder(w).Encode(map[string]any{"error": "authorization_pending"})
-				return
-			}
-			_ = json.NewEncoder(w).Encode(map[string]any{"access_token": "gho_test", "token_type": "bearer", "scope": "read:user"})
-		case "/user":
-			if r.Header.Get("authorization") != "Bearer gho_test" {
-				w.WriteHeader(http.StatusUnauthorized)
-				return
-			}
-			_ = json.NewEncoder(w).Encode(map[string]any{"login": "octocat"})
-		default:
-			w.WriteHeader(http.StatusNotFound)
-		}
-	}))
-}
-
-// runDeviceFlow drives requestDeviceCode -> pollDeviceToken -> login lookup
-// against the mock, asserting each step, and returns the access token.
-func runDeviceFlow(t *testing.T, client *http.Client, baseURL string, polls *int) string {
-	t.Helper()
-	apiClient := apiclient.New(apiclient.WithHTTPClient(client))
-	dc, err := apiClient.RequestDeviceCode(context.Background(), baseURL, "cid", "read:user")
-	if err != nil {
-		t.Fatalf("requestDeviceCode: %v", err)
-	}
-	if dc.UserCode != "WXYZ-1234" {
-		t.Fatalf("user code = %q", dc.UserCode)
-	}
-	tok, err := apiClient.PollDeviceToken(context.Background(), baseURL, "cid", dc, func(time.Duration) {})
-	if err != nil {
-		t.Fatalf("pollDeviceToken: %v", err)
-	}
-	token := tok.AccessToken
-	if token != "gho_test" {
-		t.Fatalf("token = %q", token)
-	}
-	if *polls < 2 {
-		t.Fatalf("expected polling through authorization_pending, polls=%d", *polls)
-	}
-	if login := apiClient.GitHubLogin(context.Background(), baseURL, token); login != "octocat" {
-		t.Fatalf("login = %q", login)
-	}
-	return token
-}
-
-// verifyTokenPersistence saves the token under a fresh HOME and checks it
-// reloads through the unified config with private permissions.
-func verifyTokenPersistence(t *testing.T, token string) {
-	t.Helper()
-	t.Setenv("HOME", t.TempDir())
-	settings := mustBackendConfig(t)
-	if err := settings.StoreBackendLogin(token, "", 0, 0, "octocat"); err != nil {
-		t.Fatalf("save token: %v", err)
-	}
-	if got := mustBackendConfig(t).BackendCredentials(); got.Token != "gho_test" || got.User != "octocat" {
-		t.Fatalf("reloaded credentials = %+v", got)
-	}
-	path, err := settings.BackendAuthPath()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if info, err := os.Stat(path); err != nil || info.Mode().Perm() != 0o600 {
-		t.Fatalf("backend config permissions = %v, %v", info, err)
-	}
-}
-
-// verifyLogoutClearsToken checks that backend logout empties the stored token.
-func verifyLogoutClearsToken(t *testing.T) {
-	t.Helper()
-	if err := mustBackendConfig(t).ClearBackendLogin(); err != nil {
-		t.Fatalf("clear token: %v", err)
-	}
-	if got := mustBackendConfig(t).AuthToken(); got != "" {
-		t.Fatalf("token after logout = %q", got)
-	}
-}
 
 func mustBackendConfig(t *testing.T) *config.Config {
 	t.Helper()
@@ -130,110 +22,102 @@ func mustBackendConfig(t *testing.T) *config.Config {
 	}
 	return settings
 }
-
-// TestDeviceFlowDenied verifies access_denied surfaces as an error.
-func TestDeviceFlowDenied(t *testing.T) {
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		w.Header().Set("content-type", "application/json")
-		_ = json.NewEncoder(w).Encode(map[string]any{"error": "access_denied"})
-	}))
-	defer srv.Close()
-	dc := apiclient.DeviceCode{DeviceCode: "D", UserCode: "U", Interval: 1, ExpiresIn: 900}
-	client := apiclient.New(apiclient.WithHTTPClient(srv.Client()))
-	if _, err := client.PollDeviceToken(context.Background(), srv.URL, "cid", dc, func(time.Duration) {}); err == nil {
-		t.Fatal("expected error for access_denied")
-	}
-}
-
-// TestFetchLoginConfig verifies the client ID is read from the server, and a
-// server without the endpoint yields a clear error.
-func TestFetchLoginConfig(t *testing.T) {
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/auth/config" {
-			w.WriteHeader(http.StatusNotFound)
-			return
-		}
-		w.Header().Set("content-type", "application/json")
-		_ = json.NewEncoder(w).Encode(map[string]any{"clientId": "Iv1.server", "scopes": "read:user repo"})
-	}))
-	defer srv.Close()
-	client := apiclient.New(apiclient.WithHTTPClient(srv.Client()))
-	cfg, err := client.LoginConfig(context.Background(), srv.URL)
-	if err != nil {
-		t.Fatalf("fetchLoginConfig: %v", err)
-	}
-	if cfg.ClientID != "Iv1.server" || cfg.Scopes != "read:user repo" {
-		t.Fatalf("cfg = %+v", cfg)
-	}
-
-	bare := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		w.WriteHeader(http.StatusNotFound)
-	}))
-	defer bare.Close()
-	if _, err := apiclient.New(apiclient.WithHTTPClient(bare.Client())).LoginConfig(context.Background(), bare.URL); err == nil {
-		t.Fatal("expected error when server has no /auth/config")
-	}
-}
-
-// TestRunLoginFetchesClientIDFromServer runs the full login: the client ID is
-// pulled from the grepple server (--url), the device flow runs against a mock
-// GitHub, and the token is persisted. No client ID is configured on the CLI.
-func TestRunLoginFetchesClientIDFromServer(t *testing.T) {
-	var gotClientID string
-	github := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("content-type", "application/json")
+func TestLocalDeviceFlowStoresScopedCredentialsAndRevokesOnLogout(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+	t.Setenv("GREPPLE_TOKEN", "")
+	var server *httptest.Server
+	revoked := false
+	server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
 		switch r.URL.Path {
+		case "/auth/config":
+			json.NewEncoder(w).Encode(map[string]any{"provider": "local", "clientId": "grepple-cli", "signup": true})
 		case "/login/device/code":
-			_ = r.ParseForm()
-			gotClientID = r.FormValue("client_id")
-			_ = json.NewEncoder(w).Encode(map[string]any{
-				"device_code": "DEV", "user_code": "WXYZ-1234",
-				"verification_uri": "https://github.com/login/device",
-				"expires_in":       900, "interval": 1,
-			})
+			r.ParseForm()
+			if r.FormValue("client_id") != "grepple-cli" {
+				t.Errorf("client id=%q", r.FormValue("client_id"))
+			}
+			json.NewEncoder(w).Encode(map[string]any{"device_code": "device", "user_code": "ABCD-EFGH", "verification_uri": server.URL + "/auth/device", "expires_in": 600, "interval": 1})
 		case "/login/oauth/access_token":
-			_ = json.NewEncoder(w).Encode(map[string]any{"access_token": "gho_srv", "token_type": "bearer", "scope": "read:user"})
-		case "/user":
-			_ = json.NewEncoder(w).Encode(map[string]any{"login": "octocat"})
+			json.NewEncoder(w).Encode(map[string]any{"access_token": "our-session", "token_type": "Bearer", "expires_in": 3600, "login": "person@example.test"})
+		case "/auth/logout":
+			if r.Header.Get("Authorization") != "Bearer our-session" {
+				t.Error("logout missing scoped token")
+			}
+			revoked = true
+			w.WriteHeader(204)
 		default:
-			w.WriteHeader(http.StatusNotFound)
+			t.Errorf("unexpected endpoint %s", r.URL.Path)
+			http.NotFound(w, r)
 		}
 	}))
-	defer github.Close()
-	grepple := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/auth/config" {
-			w.WriteHeader(http.StatusNotFound)
+	defer server.Close()
+	var output bytes.Buffer
+	application := cliruntime.Environment{ErrorOutput: &output}
+	if err := executeLogin(application, []string{"--url", server.URL, "--no-browser"}); err != nil {
+		t.Fatal(err)
+	}
+	credentials := mustBackendConfig(t).BackendCredentials()
+	if credentials.Token != "our-session" || credentials.AuthServer != server.URL {
+		t.Fatalf("credentials=%+v", credentials)
+	}
+	verifyPrivateBackendFile(t)
+	if err := executeLogout(application, nil); err != nil {
+		t.Fatal(err)
+	}
+	if !revoked || mustBackendConfig(t).AuthToken() != "" {
+		t.Fatal("logout did not revoke and clear credentials")
+	}
+}
+func TestLoginRejectsProviderAuthAndUntrustedVerificationOrigin(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/auth/config" {
+			json.NewEncoder(w).Encode(map[string]any{"clientId": "github-client"})
 			return
 		}
-		w.Header().Set("content-type", "application/json")
-		_ = json.NewEncoder(w).Encode(map[string]any{"clientId": "Iv1.fromserver", "scopes": "read:user"})
+		json.NewEncoder(w).Encode(map[string]any{"device_code": "device", "user_code": "ABCD-EFGH", "verification_uri": "https://attacker.example/", "expires_in": 600})
 	}))
-	defer grepple.Close()
-
-	t.Setenv("HOME", t.TempDir())
-	t.Setenv("GREPPLE_GITHUB_HOST", github.URL)
-	t.Setenv("GREPPLE_GITHUB_API", github.URL)
-	if err := runLogin([]string{"--url", grepple.URL, "--no-browser"}); err != nil {
-		t.Fatalf("runLogin: %v", err)
+	defer server.Close()
+	if err := executeLogin(cliruntime.Environment{}, []string{"--url", server.URL, "--no-browser"}); err == nil {
+		t.Fatal("legacy provider login accepted")
 	}
-	if gotClientID != "Iv1.fromserver" {
-		t.Fatalf("device flow used client_id=%q, want the server-advertised one", gotClientID)
+	if _, err := apiclient.New().RequestDeviceCode(t.Context(), server.URL, "grepple-cli", ""); err == nil {
+		t.Fatal("untrusted verification origin accepted")
 	}
-	if got := mustBackendConfig(t).AuthToken(); got != "gho_srv" {
-		t.Fatalf("configuredToken = %q", got)
+	if err := executeLogin(cliruntime.Environment{}, []string{"--url", "http://remote.example", "--no-browser"}); err == nil {
+		t.Fatal("insecure remote login accepted")
+	}
+}
+func TestDevicePollingPendingAndCancellation(t *testing.T) {
+	polls := 0
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		polls++
+		if polls == 1 {
+			w.WriteHeader(400)
+			json.NewEncoder(w).Encode(map[string]string{"error": "authorization_pending"})
+			return
+		}
+		json.NewEncoder(w).Encode(map[string]string{"access_token": "opaque-session"})
+	}))
+	defer server.Close()
+	client := apiclient.New()
+	token, err := client.PollDeviceToken(t.Context(), server.URL, "grepple-cli", apiclient.DeviceCode{DeviceCode: "code", ExpiresIn: 600, Interval: 1}, func(time.Duration) {})
+	if err != nil || token.AccessToken != "opaque-session" || polls != 2 {
+		t.Fatalf("token=%+v err=%v polls=%d", token, err, polls)
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	if _, err := client.PollDeviceToken(ctx, server.URL, "grepple-cli", apiclient.DeviceCode{ExpiresIn: 600}, nil); err == nil {
+		t.Fatal("cancellation ignored")
 	}
 }
 
-// TestRunLoginServerWithoutClientIDFails verifies a server that advertises no
-// client ID produces a loud error rather than a broken device flow.
-func TestRunLoginServerWithoutClientIDFails(t *testing.T) {
-	grepple := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		w.Header().Set("content-type", "application/json")
-		_ = json.NewEncoder(w).Encode(map[string]any{"clientId": "", "scopes": "read:user"})
-	}))
-	defer grepple.Close()
-	t.Setenv("HOME", t.TempDir())
-	if err := runLogin([]string{"--url", grepple.URL, "--no-browser"}); err == nil {
-		t.Fatal("expected error when server advertises no client ID")
+func verifyPrivateBackendFile(t *testing.T) {
+	t.Helper()
+	path, _ := mustBackendConfig(t).BackendAuthPath()
+	stat, err := os.Stat(path)
+	if err != nil || stat.Mode().Perm() != 0600 {
+		t.Fatalf("permissions=%v error=%v", stat, err)
 	}
 }

@@ -24,7 +24,7 @@ func TestFreshTokenRefreshesExpiring(t *testing.T) {
 		_, _ = w.Write([]byte(`{"access_token":"new","expires_in":28800,"refresh_token":"new-refresh","refresh_token_expires_in":15897600}`))
 	}))
 	defer server.Close()
-	writeExpiredToken(t, "old", "old-refresh")
+	writeExpiredToken(t, "old", "old-refresh", server.URL)
 	client := New(WithHTTPClient(server.Client())).(*apiClient)
 	if token := client.freshToken(server.URL + "/public/search"); token != "new" {
 		t.Fatalf("token=%q", token)
@@ -53,7 +53,7 @@ func TestFreshTokenSkipsValidAndHonorsEnvironment(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := settings.StoreBackendLogin("valid", "refresh", 8*3600, 15897600, "user"); err != nil {
+	if err := settings.StoreBackendLogin("valid", "refresh", 8*3600, 15897600, "user", server.URL); err != nil {
 		t.Fatal(err)
 	}
 	client := New(WithHTTPClient(server.Client())).(*apiClient)
@@ -73,7 +73,7 @@ func TestFreshTokenFallsBackAfterRefreshFailure(t *testing.T) {
 		http.Error(w, "boom", http.StatusUnauthorized)
 	}))
 	defer server.Close()
-	writeExpiredToken(t, "old", "old-refresh")
+	writeExpiredToken(t, "old", "old-refresh", server.URL)
 	client := New(WithHTTPClient(server.Client()), WithErrorOutput(ioDiscard{})).(*apiClient)
 	if token := client.freshToken(server.URL + "/public/search"); token != "old" {
 		t.Fatalf("token=%q", token)
@@ -87,7 +87,7 @@ func TestFreshTokenSurvivesMalformedUserPreferences(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := settings.StoreBackendLogin("persisted", "", 0, 0, "user"); err != nil {
+	if err := settings.StoreBackendLogin("persisted", "", 0, 0, "user", "http://127.0.0.1:0"); err != nil {
 		t.Fatal(err)
 	}
 	path := t.TempDir() + "/settings.json"
@@ -131,14 +131,14 @@ func analysisResult(operation wire.AnalysisOperation) json.RawMessage {
 	return content
 }
 
-func writeExpiredToken(t *testing.T, token, refresh string) {
+func writeExpiredToken(t *testing.T, token, refresh, server string) {
 	t.Helper()
 	settings, err := config.LoadConfig("", true)
 	if err != nil {
 		t.Fatal(err)
 	}
 	// An imminent expiry is within the client's refresh skew.
-	if err := settings.StoreBackendLogin(token, refresh, 1, 0, "user"); err != nil {
+	if err := settings.StoreBackendLogin(token, refresh, 1, 0, "user", server); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -146,3 +146,28 @@ func writeExpiredToken(t *testing.T, token, refresh string) {
 type ioDiscard struct{}
 
 func (ioDiscard) Write(content []byte) (int, error) { return len(content), nil }
+
+func TestStoredTokensAreBoundToTheirServer(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+	t.Setenv("GREPPLE_TOKEN", "")
+	settings, err := config.LoadConfig("", true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := settings.StoreBackendLogin("token", "", 0, 0, "user", "https://trusted.example"); err != nil {
+		t.Fatal(err)
+	}
+	client := New().(*apiClient)
+	if got := client.freshToken("https://other.example/public/search"); got != "" {
+		t.Fatal("credential crossed server boundary")
+	}
+	if got := client.freshToken("https://trusted.example/public/search"); got != "token" {
+		t.Fatal("bound token missing")
+	}
+	if err := settings.StoreBackendLogin("legacy-github", "", 0, 0, "user", ""); err != nil {
+		t.Fatal(err)
+	}
+	if got := client.freshToken("https://trusted.example/public/search"); got != "" {
+		t.Fatal("unbound legacy credential accepted")
+	}
+}

@@ -11,6 +11,7 @@ import (
 // BackendCredentials are Grepple server credentials, not AI-provider keys.
 // A copy is exposed only to consumers implementing backend token refresh.
 type BackendCredentials struct {
+	AuthServer    string
 	Token         string
 	RefreshToken  string
 	TokenExpiry   int64
@@ -20,6 +21,7 @@ type BackendCredentials struct {
 
 type backendAuthState struct {
 	Server        string `json:"server,omitempty"`
+	AuthServer    string `json:"auth_server,omitempty"`
 	Token         string `json:"token,omitempty"`
 	RefreshToken  string `json:"refresh_token,omitempty"`
 	TokenExpiry   int64  `json:"token_expiry,omitempty"`
@@ -51,7 +53,7 @@ func loadBackendAuthState() backendAuthState {
 // BackendCredentials returns a copy of the credentials loaded for this invocation.
 func (settings *Config) BackendCredentials() BackendCredentials {
 	return BackendCredentials{
-		Token: settings.auth.Token, RefreshToken: settings.auth.RefreshToken,
+		AuthServer: settings.auth.AuthServer, Token: settings.auth.Token, RefreshToken: settings.auth.RefreshToken,
 		TokenExpiry: settings.auth.TokenExpiry, RefreshExpiry: settings.auth.RefreshExpiry,
 		User: settings.auth.User,
 	}
@@ -59,12 +61,13 @@ func (settings *Config) BackendCredentials() BackendCredentials {
 
 // StoreBackendLogin updates backend credentials without altering the server.
 // Re-read the protected file so refreshes preserve changes made after loading.
-func (settings *Config) StoreBackendLogin(token, refreshToken string, expiresIn, refreshExpiresIn int, user string) error {
+func (settings *Config) StoreBackendLogin(token, refreshToken string, expiresIn, refreshExpiresIn int, user string, server string) error {
 	path, err := backendAuthPath()
 	if err != nil {
 		return err
 	}
 	state := loadBackendAuthState()
+	state.AuthServer = server
 	state.Token, state.RefreshToken = token, refreshToken
 	state.TokenExpiry, state.RefreshExpiry = backendExpiryUnix(expiresIn), backendExpiryUnix(refreshExpiresIn)
 	if user != "" {
@@ -93,6 +96,7 @@ func (settings *Config) ClearBackendLogin() error {
 	}
 	var state backendAuthState
 	_ = json.Unmarshal(content, &state)
+	state.AuthServer = ""
 	state.Token, state.RefreshToken, state.User = "", "", ""
 	state.TokenExpiry, state.RefreshExpiry = 0, 0
 	if err := writeBackendAuth(path, state); err != nil {
