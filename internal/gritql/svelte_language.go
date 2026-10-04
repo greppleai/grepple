@@ -1,15 +1,30 @@
 package gritql
 
-import "github.com/greppleai/grepple/internal/parser"
+import (
+	"fmt"
+	"github.com/greppleai/grepple/internal/parser"
+)
 
 // SvelteGrammar identifies the Svelte markup and template syntax contract.
 const SvelteGrammar = "svelte"
 
 // TreeSitterSvelteGrammar identifies the pinned Svelte grammar implementation.
-const TreeSitterSvelteGrammar = "tree-sitter-svelte@1.0.2"
+const TreeSitterSvelteGrammar = "tree-sitter-svelte@1.0.2+javascript@0.25.0+typescript@0.23.2+css@0.25.0"
 
 func compileSvelteTemplates(decoded decodedSnippet, maxDepth int) ([]Template, string, error) {
-	return compileWrappedLanguageTemplates(svelteLanguageConfig(), decoded, maxDepth)
+	var templates []Template
+	for _, config := range svelteSnippetConfigs() {
+		candidates, code, err := compileWrappedLanguageTemplates(config, decoded, maxDepth)
+		if err != nil && code != "PATTERN_INVALID_SNIPPET" {
+			return nil, code, err
+		}
+		templates = append(templates, candidates...)
+	}
+	templates = dedupeTemplates(templates)
+	if len(templates) == 0 {
+		return nil, "PATTERN_INVALID_SNIPPET", fmt.Errorf("snippet is not valid Svelte markup, script or style syntax")
+	}
+	return templates, "", nil
 }
 
 func svelteLanguageConfig() wrappedLanguageConfig {
@@ -26,6 +41,11 @@ func svelteLanguageConfig() wrappedLanguageConfig {
 func svelteTargetLanguageAdapter() targetLanguageAdapter {
 	adapter := wrappedTargetLanguageAdapter("svelte", SvelteGrammar, TreeSitterSvelteGrammar, compileSvelteTemplates)
 	adapter.placeholderCardinality = sveltePlaceholderCardinality
+	adapter.rootCategory = func(context SnippetContext, kind string) bool {
+		return wrappedRootCategoryAccepts("svelte", svelteLanguageConfig().declarations, context, kind) ||
+			typeScriptRootCategoryAccepts(context, kind) || javaScriptRootCategoryAccepts(context, kind) ||
+			wrappedRootCategoryAccepts("css", cssLanguageConfig().declarations, context, kind)
+	}
 	return adapter
 }
 
@@ -39,6 +59,26 @@ func sveltePlaceholderCardinality(node, parent parser.Node) (SlotCardinality, bo
 		}
 		return SlotOne, true
 	default:
-		return SlotOne, false
+		return cssPlaceholderCardinality(node, parent)
 	}
+}
+
+func svelteSnippetConfigs() []wrappedLanguageConfig {
+	configs := []wrappedLanguageConfig{svelteLanguageConfig()}
+	for _, prefix := range []string{"<script>", "<script lang=\"ts\">"} {
+		configs = append(configs, wrappedLanguageConfig{
+			language: "svelte", rootKind: "document",
+			expressionPrefix: prefix + "const __grit_expr = (", expressionSuffix: ");</script>",
+			statementPrefix: prefix, statementSuffix: "</script>",
+			statementBlocks: stringSet("program", "statement_block"),
+			memberPrefix:    prefix, memberSuffix: "</script>", memberBlocks: stringSet("program"),
+			declarations: stringSet("function_declaration", "generator_function_declaration", "class_declaration", "lexical_declaration", "variable_declaration", "interface_declaration", "type_alias_declaration", "enum_declaration", "import_statement", "export_statement"),
+		})
+	}
+	css := cssLanguageConfig()
+	css.language, css.rootKind = "svelte", "document"
+	css.expressionPrefix, css.expressionSuffix = "<style>"+css.expressionPrefix, css.expressionSuffix+"</style>"
+	css.statementPrefix, css.statementSuffix = "<style>"+css.statementPrefix, css.statementSuffix+"</style>"
+	css.memberPrefix, css.memberSuffix, css.memberBlocks = "<style>", "</style>", stringSet("stylesheet")
+	return append(configs, css)
 }

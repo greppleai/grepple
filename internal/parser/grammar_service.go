@@ -1,62 +1,83 @@
 package parser
 
 // Grammar provides read-only, pinned grammar facts for one language.
-// Unsupported languages return false or GrammarCardinalityUnknown.
+// Composite languages include their explicitly supported embedded grammars.
 type Grammar interface {
-	NodeKind(kind string) bool
-	FieldName(field string) bool
-	TokenKind(kind string) bool
-	FieldCardinality(parentKind, field string) GrammarCardinality
-	ChildrenCardinality(parentKind string) GrammarCardinality
-	Subtype(supertype, kind string) bool
+	NodeKind(string) bool
+	FieldName(string) bool
+	TokenKind(string) bool
+	FieldCardinality(string, string) GrammarCardinality
+	ChildrenCardinality(string) GrammarCardinality
+	Subtype(string, string) bool
 }
 
+type grammarComposition interface{ GrammarLanguages() []string }
 type grammarView struct{ language string }
 
+func (view grammarView) languages() []string {
+	if composite, ok := adapterForLanguage(view.language).(grammarComposition); ok {
+		return composite.GrammarLanguages()
+	}
+	return []string{view.language}
+}
 func (view grammarView) NodeKind(kind string) bool {
-	adapter := adapterForLanguage(view.language)
-	if adapter == nil || kind == "" {
-		return false
+	for _, language := range view.languages() {
+		adapter := adapterForLanguage(language)
+		if adapter != nil && kind != "" && adapter.Grammar().valid() && adapter.Grammar().raw.IdForNodeKind(kind, true) != 0 {
+			return true
+		}
 	}
-	grammar := adapter.Grammar()
-	return grammar.valid() && grammar.raw.IdForNodeKind(kind, true) != 0
+	return false
 }
-
 func (view grammarView) FieldName(field string) bool {
-	adapter := adapterForLanguage(view.language)
-	if adapter == nil || field == "" {
-		return false
+	for _, language := range view.languages() {
+		adapter := adapterForLanguage(language)
+		if adapter != nil && field != "" && adapter.Grammar().valid() && adapter.Grammar().raw.FieldIdForName(field) != 0 {
+			return true
+		}
 	}
-	grammar := adapter.Grammar()
-	return grammar.valid() && grammar.raw.FieldIdForName(field) != 0
+	return false
 }
-
 func (view grammarView) TokenKind(kind string) bool {
-	adapter := adapterForLanguage(view.language)
-	if adapter == nil || kind == "" {
-		return false
+	for _, language := range view.languages() {
+		adapter := adapterForLanguage(language)
+		if adapter != nil && kind != "" && adapter.Grammar().valid() && adapter.Grammar().raw.IdForNodeKind(kind, false) != 0 {
+			return true
+		}
 	}
-	grammar := adapter.Grammar()
-	return grammar.valid() && grammar.raw.IdForNodeKind(kind, false) != 0
+	return false
 }
-
-func (view grammarView) FieldCardinality(parentKind, field string) GrammarCardinality {
-	metadata, ok := generatedLanguageMetadata[view.language]
-	if !ok {
-		return GrammarCardinalityUnknown
+func (view grammarView) FieldCardinality(parent, field string) GrammarCardinality {
+	value := GrammarCardinalityUnknown
+	for _, language := range view.languages() {
+		candidate := generatedLanguageMetadata[language].fields[parent][field]
+		if candidate == GrammarCardinalityMany {
+			return candidate
+		}
+		if candidate != GrammarCardinalityUnknown {
+			value = candidate
+		}
 	}
-	return metadata.fields[parentKind][field]
+	return value
 }
-
-func (view grammarView) ChildrenCardinality(parentKind string) GrammarCardinality {
-	metadata, ok := generatedLanguageMetadata[view.language]
-	if !ok {
-		return GrammarCardinalityUnknown
+func (view grammarView) ChildrenCardinality(parent string) GrammarCardinality {
+	value := GrammarCardinalityUnknown
+	for _, language := range view.languages() {
+		candidate := generatedLanguageMetadata[language].children[parent]
+		if candidate == GrammarCardinalityMany {
+			return candidate
+		}
+		if candidate != GrammarCardinalityUnknown {
+			value = candidate
+		}
 	}
-	return metadata.children[parentKind]
+	return value
 }
-
 func (view grammarView) Subtype(supertype, kind string) bool {
-	metadata, ok := generatedLanguageMetadata[view.language]
-	return ok && metadata.subtypes[supertype][kind]
+	for _, language := range view.languages() {
+		if generatedLanguageMetadata[language].subtypes[supertype][kind] {
+			return true
+		}
+	}
+	return false
 }

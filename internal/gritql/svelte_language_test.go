@@ -33,9 +33,9 @@ func TestSvelteTemplateMatchesMarkupNotOpaqueScriptContents(t *testing.T) {
 	assertTargetFindings(t, result, []string{"<button>Real</button>"})
 }
 
-func TestSvelteDoesNotAdvertiseEmbeddedJavaScriptSyntax(t *testing.T) {
-	if _, err := Compile([]byte("language svelte\nfunction_declaration()"), CompileOptions{}); err == nil {
-		t.Fatal("JavaScript selector accepted without an embedded parser")
+func TestSvelteRejectsForeignCSyntax(t *testing.T) {
+	if _, err := Compile([]byte("language svelte\nfunction_definition()"), CompileOptions{}); err == nil {
+		t.Fatal("foreign C selector accepted")
 	}
 }
 

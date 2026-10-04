@@ -457,11 +457,11 @@ func (index *navigationIndex) addParsedGraph(cleanPath, displayPath, language, c
 
 func (index *navigationIndex) addFields(fields []parser.NavigationField, language, sourcePath string) {
 	for _, field := range fields {
-		item := navigationField{ownerType: terminalSymbolName(field.OwnerType), name: field.Name, typeName: field.Type, importPath: field.ImportPath, language: language, packageName: field.Package, file: sourcePath, line: field.Line, embedded: field.Embedded}
-		key := navigationFieldKey(language, item.ownerType, item.name)
+		item := navigationField{ownerType: terminalSymbolName(field.OwnerType), name: field.Name, typeName: field.Type, importPath: field.ImportPath, language: navigationFactLanguage(field.Language, language), packageName: field.Package, file: sourcePath, line: field.Line, embedded: field.Embedded}
+		key := navigationFieldKey(item.language, item.ownerType, item.name)
 		index.fields[key] = append(index.fields[key], item)
 		if item.embedded {
-			ownerKey := navigationSymbolKey(language, item.ownerType)
+			ownerKey := navigationSymbolKey(item.language, item.ownerType)
 			index.embeddedFields[ownerKey] = append(index.embeddedFields[ownerKey], item)
 		}
 	}
@@ -577,10 +577,10 @@ func (index *navigationIndex) addDeclarations(declarations []parser.NavigationDe
 			continue
 		}
 		item := navigationDeclaration{
-			id: declaration.ID, name: declaration.Name, kind: declaration.Kind, terminal: terminal, container: navigationDeclarationContainer(declaration), returnType: declaration.ResultType, returnImportPath: declaration.ResultImportPath, packageName: declaration.Package, moduleScope: declaration.Scope, visibilityDetail: declaration.VisibilityDetail, language: language, file: path,
+			id: declaration.ID, name: declaration.Name, kind: declaration.Kind, terminal: terminal, container: navigationDeclarationContainer(declaration), returnType: declaration.ResultType, returnImportPath: declaration.ResultImportPath, packageName: declaration.Package, moduleScope: declaration.Scope, visibilityDetail: declaration.VisibilityDetail, language: navigationFactLanguage(declaration.Language, language), file: path,
 		}
 		indexed = append(indexed, item)
-		key := navigationSymbolKey(language, terminal)
+		key := navigationSymbolKey(item.language, terminal)
 		index.declarations[key] = append(index.declarations[key], item)
 	}
 	return indexed
@@ -600,7 +600,7 @@ func (index *navigationIndex) addCalls(calls []parser.NavigationCall, declaratio
 		indexedCall := navigationCall{
 			id: call.ID, callerID: call.CallerID, name: call.Name, display: call.Display, resolvedName: call.ResolvedName, qualifier: call.Qualifier, importPath: call.ImportPath, moduleScope: caller.moduleScope, receiverType: call.ReceiverType,
 			rootType: call.ReceiverRootType, rootImport: call.ReceiverRootImport, receiverMembers: append([]string(nil), call.ReceiverMembers...), packageName: caller.packageName,
-			receiverFactory: call.ReceiverFactory, factoryImport: call.ReceiverFactoryImport, file: sourcePath, language: language, importSourceFile: sourcePath, line: call.Line,
+			receiverFactory: call.ReceiverFactory, factoryImport: call.ReceiverFactoryImport, file: sourcePath, language: navigationFactLanguage(call.Language, language), importSourceFile: sourcePath, line: call.Line,
 		}
 		index.calls[location] = append(index.calls[location], indexedCall)
 	}
@@ -816,4 +816,11 @@ func displayPathFrom(file, cwd string) string {
 		return filepath.Base(file)
 	}
 	return filepath.ToSlash(r)
+}
+
+func navigationFactLanguage(fact, source string) string {
+	if fact != "" {
+		return fact
+	}
+	return source
 }

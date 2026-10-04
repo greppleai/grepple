@@ -40,18 +40,18 @@ func TestSvelteSyntaxOutlineAndCapabilities(t *testing.T) {
 		t.Fatalf("self-closing component duplicated in outline: %+v", button)
 	}
 	capability, ok := service.CapabilitiesForLanguage("svelte")
-	if !ok || !capability.NavigationFacts.Declarations || capability.NavigationFacts.Calls || capability.ImportNavigation || capability.EntrypointNavigation {
+	if !ok || !capability.NavigationFacts.Declarations || !capability.NavigationFacts.Calls || !capability.ImportNavigation || capability.EntrypointNavigation {
 		t.Fatalf("unexpected Svelte navigation capabilities: %+v", capability)
 	}
 }
 
-func TestSvelteSnippetNavigationDoesNotInventScriptFacts(t *testing.T) {
+func TestSvelteNavigationIncludesNativeScriptAndStyleFacts(t *testing.T) {
 	graph := BuildNavigationGraph(svelteFixture(t), "svelte", "Counter.svelte")
-	if len(graph.Declarations) != 1 || graph.Declarations[0].Name != "label" || graph.Declarations[0].Kind != "snippet" {
+	if !svelteHasSnippet(graph.Declarations, "label") {
 		t.Fatalf("unexpected snippet declarations: %+v", graph.Declarations)
 	}
-	if len(graph.Calls) != 0 || len(graph.Imports) != 0 || len(graph.TypeDeclarations) != 0 {
-		t.Fatalf("opaque embedded code must not produce inferred facts: %+v", graph)
+	if len(graph.Imports) != 1 || graph.Imports[0].ImportPath != "./Button.svelte" {
+		t.Fatalf("embedded script imports missing: %+v", graph)
 	}
 }
 
@@ -105,4 +105,13 @@ func TestSvelteAwaitKeyAndSpecialElementOutlines(t *testing.T) {
 	await := mustFind(t, key.Children, "block", "await")
 	mustFind(t, await.Children, "block", "then")
 	mustFind(t, await.Children, "block", "catch")
+}
+
+func svelteHasSnippet(declarations []NavigationDeclaration, name string) bool {
+	for _, declaration := range declarations {
+		if declaration.Name == name && declaration.Kind == "snippet" {
+			return true
+		}
+	}
+	return false
 }

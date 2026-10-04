@@ -106,6 +106,10 @@ type segmentBuilder interface {
 	BuildSegments(root *syntaxNode, content string, hits map[int]bool) []Segment
 }
 
+type navigationGraphBuilder interface {
+	BuildNavigationGraph(root *syntaxNode, content, path string) NavigationGraph
+}
+
 type languageAdapter interface {
 	ID() string
 	Grammar() syntaxLanguage
@@ -206,6 +210,9 @@ func enrichLanguageCapabilities(capability LanguageCapabilities) LanguageCapabil
 	capability.Extensions = append([]string(nil), capability.Extensions...)
 	if generated, ok := generatedLanguageMetadata[capability.ID]; ok {
 		capability.GrammarFingerprint = generated.fingerprint
+		if composite, ok := adapterForLanguage(capability.ID).(grammarFingerprintProvider); ok {
+			capability.GrammarFingerprint = composite.GrammarFingerprint()
+		}
 	}
 	if adapter := adapterForLanguage(capability.ID); adapter != nil {
 		if adapter.Grammar().valid() {
@@ -258,3 +265,5 @@ func descendantName(node *syntaxNode, content string, candidates stringSet) stri
 	}
 	return ""
 }
+
+type grammarFingerprintProvider interface{ GrammarFingerprint() string }

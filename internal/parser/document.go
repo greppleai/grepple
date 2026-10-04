@@ -251,7 +251,7 @@ func (d *Document) ParseDiagnostics() []ParseDiagnostic {
 	if d.tree == nil {
 		return nil
 	}
-	var diagnostics []ParseDiagnostic
+	diagnostics := append([]ParseDiagnostic(nil), d.tree.diagnostics...)
 	var walk func(*syntaxNode)
 	walk = func(node *syntaxNode) {
 		if node.IsError() || node.IsMissing() {

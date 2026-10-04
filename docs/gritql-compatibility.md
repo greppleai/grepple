@@ -402,3 +402,18 @@ A conforming implementation must fixture-test every grammar production, supporte
 The `hook-selectors` conformance fixture exercises source-authored `gritql-v1` hooks (node/field selectors, capture, scoped exclusion, immediate-function parent checks, empty lists, and import placeholders), including Dart whole-node bindings. A separate versioned `hook-engines` fixture runs relational joins, unmatched-left and unmatched-left-any modes against complete source snapshots and checks source-authored McCabe and nested-loop metric scores, thresholds, and fail-closed partial scans. These augment, rather than replace, the per-language reliability vectors and focused engine unit tests.
 
 The supported language set remains closed. Additive read-only syntax is documented and fixture-tested within this `gritql-v1` implementation (including structural node patterns); changing established matching, range, ordering, cancellation, or diagnostic behavior requires a new compatibility contract. The separate `gritql-relational-v1` hook engine versions cross-file semantics explicitly. Existing stable codes may not be reassigned.
+
+### Svelte embedded script/style syntax
+
+`language svelte` searches one composite component CST. Script/style bodies are
+parsed by the pinned JavaScript, TypeScript and CSS adapters; markup remains
+Svelte-owned. Native selectors such as `function_declaration(name=$name)` and
+`declaration()` therefore reach real embedded nodes, never matching equivalent
+text in markup, comments or string literals. Snippets such as `fetch($args)` and
+`color: $value;` are inferred in script/style contexts as well as markup contexts.
+All findings and bindings retain original component byte/line ranges, without
+synthetic wrapper coordinates. Named fields are available for JS/TS nodes; CSS
+retains its native unfielded-child contract. Malformed or unsupported embedded
+languages yield source diagnostics rather than an alternate guessed grammar.
+Template-expression internals, preprocessors, external `src` files and compiler-
+generated component bindings are not interpreted.

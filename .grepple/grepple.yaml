@@ -292,11 +292,11 @@ directories:
     - path: file-type-support.md
       description: Catalogs supported file languages, parser capabilities, navigation facts, extraction paths, and evidence limits.
       kind: generated
-      checksum: f8a15d4baa5eef13aa98f0e34fcdb3b834a276d8deabb2c5d0f27b7478f7b9ee
+      checksum: d0e48a5abd2ea0f18abe8f25df8e40f3347513003e89e2c1fa94d824c1955a9b
     - path: gritql-compatibility.md
       description: Defines the closed gritql-v1 syntax, parsing, matching, limits, diagnostics, security, and language compatibility contract.
       kind: production
-      checksum: e96886850254b57faf46cb3ef67634c6f1870d049a39432c641114539ce13fc5
+      checksum: 4a344935f968b7fa4e16e77fd80057115b14e4b6d8f831084e8ab4a4699f07c8
     - path: gritql-metric-parity.md
       description: Documents reproducible cognitive-complexity parity checks and why Revive remains authoritative.
       kind: production
@@ -2953,14 +2953,14 @@ directories:
     - path: svelte_language.go
       description: Defines native Svelte snippet contexts and language-owned placeholder cardinalities.
       kind: production
-      checksum: c86a25dcfe340b8949caea6c4f216afdb64041c1a9007f1d211254679057fa38
+      checksum: b0f02657da2b33b86ec6eef1de3237359e745f91bb6d95b14adf69bdfbd8d817
       areas:
       - query-compilation
       - structural-templates
     - path: svelte_language_test.go
       description: Tests Svelte node queries, source ranges, markup templates and opaque embedded-language boundaries.
       kind: test
-      checksum: a68a959a8f92b96119c3525998147cf7d3db2ee945cd39783a6bda734d7d7551
+      checksum: c91b4b5cae88643214fc386c4e6ecc620b3420cb68a08ccd947f5ab43722f6ce
       areas:
       - conformance-validation
     - path: css_language.go
@@ -2974,6 +2974,12 @@ directories:
       description: Tests CSS node queries, UTF-8 ranges, value captures and unsupported syntax rejection.
       kind: test
       checksum: dfce42e45690edfa8b402381ac079cf440433d7f64e03bda087329bb94f10ffd
+      areas:
+      - conformance-validation
+    - path: svelte_injection_test.go
+      description: Tests embedded JS/TS/CSS selectors and templates with original source ranges.
+      kind: test
+      checksum: c50fcc8ecebcc91ff078de134f86f6ed774bed6e078f96584d1760b0515abb6a
       areas:
       - conformance-validation
   internal/gritql/internal:
@@ -3262,7 +3268,7 @@ directories:
     - path: engine.go
       description: Builds navigation indexes from files, documents, and text sources and resolves graph relationships.
       kind: production
-      checksum: 2cddbd037f3eb8aaa7b1f4f8f50217999d77fd9e8a954880f9a6167bc2b810a4
+      checksum: f014da808b1e66dd2ca7b7cb8a64eb891cf43c27c5fad69530eeb78fae09ddc3
       areas:
       - graph-building
       - language-resolution
@@ -3408,7 +3414,7 @@ directories:
     - path: navigation_typescript.go
       description: Resolves JavaScript and TypeScript module aliases using tsconfig base URLs, paths, and tolerant JSON parsing.
       kind: production
-      checksum: 32b9a152573c34cd957e5f7254714554c2f4ec03fb7e0a5891344a011cb1377a
+      checksum: d0dec3e6c30c81f25bff2bba36c033fb0767dd5e572bf3ca1ffe56f6c8af99f3
       areas:
       - language-resolution
     - path: navigation_typescript_index_test.go
@@ -3442,6 +3448,18 @@ directories:
       checksum: 2fdd54fe19c3c02d3a807d7e09bc09a2b6562c3d3bd3b84e753061f8a70f9e1f
       areas:
       - resolution-statistics
+    - path: navigation_svelte.go
+      description: Prevents implicit lexical call resolution between isolated component script bodies.
+      kind: production
+      checksum: 129304d1fe57d74d8cd90b07f1c6a6f6768ed5c1e40732251fbfc075f1a09bca
+      areas:
+      - language-resolution
+    - path: navigation_svelte_test.go
+      description: Tests same-script calls and exact ordinary TypeScript import resolution from Svelte components.
+      kind: test
+      checksum: b8870ebcd7a6c9b4382e0d4821777922f17020f199e1cf3bd72b79fc7c992b0e
+      areas:
+      - language-resolution
   internal/outputspill:
     description: Captures oversized command output as immutable, content-addressed artifacts and validates spill option parsing.
     responsibilities:
@@ -3532,7 +3550,7 @@ directories:
     - path: document.go
       description: Defines parsed documents, syntax nodes, and source metadata.
       kind: production
-      checksum: 2569dcdec8ece3950b17749f57fb181e19b5054b133635e9f4693481bea74b63
+      checksum: 76f227a2fefc9f4120a704747c004cf825895aa31c75333f4214e410fde2fd63
       areas:
       - document-model
     - path: document_projection_test.go
@@ -3550,7 +3568,7 @@ directories:
     - path: language.go
       description: Defines language capabilities, registration, and parser selection.
       kind: production
-      checksum: f69c5faf34f31f1968b6698ff7b35d8027427a57130e5319a6ff332b290f7346
+      checksum: e4bdd510c58a5bc38552ffb7b4909f8ee38d66122641791a5f230b94f8d5b14c
       areas:
       - language-adapters
     - path: language_c.go
@@ -3724,7 +3742,7 @@ directories:
     - path: language_support_test.go
       description: Tests supported language registration and capabilities.
       kind: test
-      checksum: e2fb0c969cadd51ac268d15e563a71356f63a687b8205e5bc5651f599b8d41f8
+      checksum: 77c835172d949b0dccc1d558063a9ef663b1902a623273714cea5d3335222846
       areas:
       - language-adapters
     - path: language_swift.go
@@ -3788,7 +3806,7 @@ directories:
     - path: navigation.go
       description: Builds declarations, calls, and navigation graphs.
       kind: production
-      checksum: 417abfad2b2f4723ed7cce07c8d7b0543f6423444131ad0ab3863fcf0ba3a7c9
+      checksum: 45a736400888823b7396d9a8b72d9eff270a8ea08df7969e407e48d0a551f4e3
       areas:
       - navigation-graph
     - path: navigation_adapter.go
@@ -3950,7 +3968,7 @@ directories:
     - path: tree_sitter.go
       description: Integrates Tree-sitter parsers and syntax trees.
       kind: production
-      checksum: 3327a75b67bea4429a0460c53b6acb3550121e4f8d62462d080095c8745a7d31
+      checksum: 42b8d1d77f1b3f1df7b372e090517aa363324e303123b454ebc3be8db8d0ecbb
       areas:
       - tree-sitter-integration
     - path: tree_sitter_bench_test.go
@@ -3986,7 +4004,7 @@ directories:
     - path: language_svelte.go
       description: Owns Svelte markup/control-block parsing, structural context, outlines and snippet declarations.
       kind: production
-      checksum: 452eb58dbb20484e606ed36315a4f42fdf5d0ce4ef72e72d185610ea97811044
+      checksum: 04c70b7ee24d62c03d68c85e7293ffaa4d61a2f0224e683c08c877bd6035784b
       areas:
       - language-adapters
       - structural-segments
@@ -3994,7 +4012,7 @@ directories:
     - path: language_svelte_test.go
       description: Tests native Svelte syntax, outlines, snippet-only facts, source context and malformed input.
       kind: test
-      checksum: 015de46cfb6ba5b00dc4dd33cec149918e23f1dd41f07e176d79150a3fc504ea
+      checksum: c74e0e4fe5fe7f516f387f3795f18024dc2b7f39c8ee79b7bd4f95f441283033
       areas:
       - language-adapters
     - path: language_css.go
@@ -4017,6 +4035,31 @@ directories:
       checksum: db577176b16afa4ff1b587cc53bf31d24eb9534e560421a98550f29f2a8975f0
       areas:
       - language-adapters
+    - path: grammar_service.go
+      description: Projects pinned native and composite grammar node, field and cardinality facts.
+      kind: production
+      checksum: 1b42897f00474ea14e5a171c41db242e115a7b74db4b6ce15393784fd578e291
+      areas:
+      - language-adapters
+    - path: language_svelte_injection.go
+      description: Owns bounded native script/style body selection, source-coordinate projection, diagnostics and structural context.
+      kind: production
+      checksum: eb5bdd7e27458ee8cb3359fb542b31b3e62360e34275a01c2c6b4286ab7cfcac
+      areas:
+      - language-adapters
+      - structural-segments
+    - path: language_svelte_injection_test.go
+      description: Tests original UTF-8/CRLF coordinates, embedded outlines/diagnostics, context, lifetime, concurrency and cache identity.
+      kind: test
+      checksum: 03d248de1f0fec45927dbf814c245a186a40a6547b977816ffa758502b885234
+      areas:
+      - language-adapters
+    - path: language_svelte_navigation.go
+      description: Composes conservative native embedded facts with isolated script scopes and no guessed component exports.
+      kind: production
+      checksum: 8b92b9aed5d90c0ea8bd8fc558ace6a90e9305993ee5928efd1dd738be437654
+      areas:
+      - navigation-graph
   internal/parser/internal/generate:
     description: Generates deterministic parser language metadata from Tree-sitter grammar modules.
     responsibilities:
