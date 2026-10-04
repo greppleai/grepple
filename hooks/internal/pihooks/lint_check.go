@@ -110,7 +110,9 @@ func isDirectory(path string) bool {
 }
 
 func handleGoLintHook(cwd, hookRoot string) []byte {
-	autoFixed := gofmtAutofix(cwd)
+	if feedback := checkGoFormatting(cwd); len(feedback) != 0 {
+		return feedback
+	}
 	revive, ok := resolveRevive(cwd)
 	if !ok {
 		return marshalStopFeedback("revive is not installed and could not be resolved via `go run`. Install it with:\n\n  go install github.com/mgechev/revive@latest\n\n(no network fetch is needed once the module cache is warm).", nil)
@@ -124,7 +126,7 @@ func handleGoLintHook(cwd, hookRoot string) []byte {
 	}
 	args := append(append([]string{}, revive.args...), "-formatter", "json", "-config", filepath.Join(cwd, "revive.toml"))
 	result := runCommand(commandSpec{command: revive.command, args: append(args, packages...)}, cwd)
-	return evaluateLintResult(result, cwd, hookRoot, autoFixed)
+	return evaluateLintResult(result, cwd, hookRoot, nil)
 }
 
 func handleMermaidOnlyHook(cwd, hookRoot string) []byte {
@@ -235,20 +237,17 @@ func marshalStopFeedback(additionalContext string, progress *int) []byte {
 	return encoded
 }
 
-func gofmtAutofix(cwd string) []string {
+func checkGoFormatting(cwd string) []byte {
 	listed := runCommand(commandSpec{command: "gofmt", args: []string{"-l", "."}}, cwd)
-	if listed.spawnErr != nil || listed.code != 0 {
-		return nil
+	if listed.spawnErr != nil || listed.code != 0 || listed.overflow {
+		return marshalStopFeedback(withStderr("The read-only gofmt check could not complete. No source files were changed.", listed.stderr), nil)
 	}
 	files := nonEmptyLines(listed.stdout)
 	if len(files) == 0 {
 		return nil
 	}
-	written := runCommand(commandSpec{command: "gofmt", args: append([]string{"-w"}, files...)}, cwd)
-	if written.spawnErr != nil || written.code != 0 {
-		return nil
-	}
-	return files
+	progress := len(files)
+	return marshalStopFeedback("These files require formatting; no source files were changed:\n- "+strings.Join(files, "\n- ")+"\n\nFormat them explicitly, then rerun verification.", &progress)
 }
 
 func goPackages(cwd string) ([]string, error) {

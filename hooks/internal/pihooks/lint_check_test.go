@@ -1,8 +1,10 @@
 package pihooks
 
 import (
+	"bytes"
 	"encoding/json"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"unicode/utf8"
@@ -68,5 +70,26 @@ func TestGoPackagesReportsGoListFailure(t *testing.T) {
 	}
 	if _, err := goPackages(root); err == nil || !strings.Contains(err.Error(), "go list ./... failed") {
 		t.Fatalf("goPackages error = %v", err)
+	}
+}
+
+func TestStopFormattingCheckNeverModifiesSource(t *testing.T) {
+	root := t.TempDir()
+	if err := os.WriteFile(filepath.Join(root, "go.mod"), []byte("module fixture\n\ngo 1.24\n"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	source := []byte("package fixture\n//grepple: entity\ntype X struct{Value string}\n")
+	path := filepath.Join(root, "fixture.go")
+	if err := os.WriteFile(path, source, 0600); err != nil {
+		t.Fatal(err)
+	}
+	event, _ := json.Marshal(map[string]string{"hook_event_name": "Stop", "cwd": root})
+	output := HandleLintHook(event, ".")
+	if !strings.Contains(string(output), "require formatting") || !strings.Contains(string(output), "no source files were changed") {
+		t.Fatalf("missing read-only feedback: %s", output)
+	}
+	after, err := os.ReadFile(path)
+	if err != nil || !bytes.Equal(source, after) {
+		t.Fatalf("verifier changed source: %q, %v", after, err)
 	}
 }

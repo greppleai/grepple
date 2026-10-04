@@ -14,8 +14,9 @@ Context cache and statistics updates use one cross-process advisory lock. Operat
 - `../extract` — shared Tree-sitter Mermaid generation and validation engine.
 - `guides` — remediation text returned by the Stop hook.
 
-Pi invokes `make -C hooks run-…` from `.pi/settings.json`. In Go modules the Stop lint hook runs formatting and Revive, then adapts the repository-owned GritQL `same-file-struct-methods` relation into the same diagnostic feedback, before Mermaid validation. Without `go.mod`, it skips Go tooling but still validates Mermaid schemas; a schema-free project returns no output and does not require Revive.
-schemas; a schema-free project returns no output and does not require revive.
+Pi invokes `make -C hooks run-…` from `.pi/settings.json`. In Go modules the Stop lint hook checks formatting with read-only `gofmt -l` and runs Revive, then adapts the repository-owned GritQL `same-file-struct-methods` relation into diagnostic feedback before Mermaid validation. It never formats source or inserts annotations. Without `go.mod`, the hook skips Go tooling but still validates Mermaid schemas; a schema-free project returns no output and does not require Revive.
+
+Hexagonal policy belongs to `grepple-backend/.grepple/hooks/`, not the CLI repository.
 The hook cheaply scans for Mermaid schema files and only loads Go/TypeScript
 sources when one of these suffixes exists:
 
