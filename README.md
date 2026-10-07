@@ -11,19 +11,21 @@ GitHub release, verifies its SHA-256 checksum, and installs `grepple` into
 `~/.local/bin`. It needs `curl`, `tar`, and `sha256sum` (Linux) or `shasum` (macOS);
 no Go toolchain, C compiler, or `sudo` is needed.
 
+Copy and run this one-liner:
+
 ```sh
-installer="$(mktemp)"
-curl -fsSL https://raw.githubusercontent.com/greppleai/grepple/main/install.sh -o "$installer" &&
-  sh "$installer"
-rm -f "$installer"
-export PATH="$HOME/.local/bin:$PATH"
-grepple --version
+(installer="$(mktemp)" && trap 'rm -f "$installer"' 0 && curl -fsSL --proto '=https' --proto-redir '=https' https://raw.githubusercontent.com/greppleai/grepple/main/install.sh -o "$installer" && sh "$installer") && export PATH="$HOME/.local/bin:$PATH"
 ```
 
-You can inspect the downloaded script before running it. Add the `export PATH`
-line to your shell profile (`~/.bashrc` or `~/.zshrc`) to make it persistent. The
-installer does not change shell profiles or saved login settings. Rerun it to
-upgrade; it replaces the CLI only after the archive passes verification.
+It downloads the complete script before executing it, cleans up afterward, and
+adds `~/.local/bin` to PATH for your current shell. To inspect the script first,
+download [install.sh](https://raw.githubusercontent.com/greppleai/grepple/main/install.sh)
+and review it before running `sh install.sh`.
+
+Add `export PATH="$HOME/.local/bin:$PATH"` to your shell profile (`~/.bashrc` or
+`~/.zshrc`) to make PATH persistent. The installer does not change shell profiles
+or saved login settings. Rerun the one-liner to upgrade; it replaces the CLI only
+after the archive passes verification. Run `grepple --version` to check the install.
 
 From a checkout, run `sh install.sh`. To use another writable directory already
 on PATH, run `sh install.sh --bin-dir /your/bin` (or set `GREPPLE_BIN_DIR`). If a

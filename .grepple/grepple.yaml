@@ -575,7 +575,7 @@ directories:
     - path: README.md
       description: Introduces Grepple to users with installation, local search, navigation, and guide links.
       kind: production
-      checksum: 4ee0f9621215bc004cb7252c47e846ee78cc141c92ad9c5623b483678047fd8c
+      checksum: d2107981fa0ae36f949e74f283ca4c6d977e1dafccacf3767fd5a27b81b9cd30
     - path: architecture-production.mmd
       description: Contains a generated Mermaid graph of production package relationships.
       kind: generated
