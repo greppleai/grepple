@@ -222,12 +222,17 @@ func attachSearchNavigation(params Params, matches []FileMatch, files []string, 
 		return nil
 	}
 	relatedCandidates := files
-	if !suppliedCandidates {
+	if !suppliedCandidates || params.RelatedRepositoryContext {
 		var err error
 		relatedCandidates, err = collectRelatedRepositoryFiles(context.Background(), params, matches)
 		if err != nil {
 			return err
 		}
+	}
+	// Text-index globs/candidates bound matching, not navigation context. Complete
+	// repository discovery already applied ignores and stays inside params.Root.
+	if params.RelatedRepositoryContext {
+		scan.fromIndex = false
 	}
 	attachRelated(matches, scan.relatedFiles(relatedCandidates), params.FollowRelated)
 	return nil

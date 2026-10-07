@@ -42,13 +42,16 @@ type SearchPlanOptions struct {
 	EnclosingRanges bool
 	Related         bool
 	FollowRelated   int
-	NoRelated       bool
-	At              string
-	Root            string
-	IgnorePaths     []string
-	IgnoreRoot      string
-	ProductionOnly  bool
-	CountByRepo     bool
+	// RelatedRepositoryContext obtains complete matched-repository navigation
+	// when the supplied file candidates contain only text-index matches.
+	RelatedRepositoryContext bool
+	NoRelated                bool
+	At                       string
+	Root                     string
+	IgnorePaths              []string
+	IgnoreRoot               string
+	ProductionOnly           bool
+	CountByRepo              bool
 }
 
 // NewSearchPlan creates a plan from explicit value options without sharing slices.
