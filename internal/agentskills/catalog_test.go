@@ -37,12 +37,14 @@ func TestCatalogMatchesRepositoryAndAllSkillDirectories(t *testing.T) {
 			t.Errorf("uncatalogued skill: %s", entry.Name())
 		}
 	}
-	documentation, err := os.ReadFile(filepath.Join("..", "..", "docs", "write.md"))
-	if err != nil {
-		t.Fatal(err)
+	documentation := string(bundle.files["grepple-write"]["SKILL.md"])
+	for _, alternative := range []string{"grepple write edit", "content_lines", "request.json", "references/write.md"} {
+		if strings.Contains(documentation, alternative) {
+			t.Errorf("write skill documents an alternative to heredoc transactions: %s", alternative)
+		}
 	}
-	if !reflect.DeepEqual(documentation, bundle.files["grepple-write"]["references/write.md"]) {
-		t.Fatal("bundled write reference is stale")
+	if len(bundle.files["grepple-write"]) != 1 {
+		t.Fatal("write skill must be self-contained")
 	}
 }
 func TestReleaseTagNeverFallsBackToMovingRefs(t *testing.T) {
@@ -130,7 +132,7 @@ func TestLoadRejectsTamperingAndIncompleteBundle(t *testing.T) {
 		})
 	}
 	source := testSource(t)
-	delete(source, ".agents/skills/grepple-write/references/write.md")
+	delete(source, ".agents/skills/grepple-write/SKILL.md")
 	if _, err := Load(context.Background(), source); err == nil {
 		t.Fatal("missing resource accepted")
 	}

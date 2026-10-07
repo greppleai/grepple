@@ -69,11 +69,7 @@
       "files": [
         {
           "path": "SKILL.md",
-          "sha256": "902dd088479facc736d6e5990dfe68bd2ee2b4f4a59fbdd00d889334aa14de74"
-        },
-        {
-          "path": "references/write.md",
-          "sha256": "897c0e7057aefe379ce7fd71fdba9924ab589443437355a1350e15f2db54d4eb"
+          "sha256": "d140c2ca5b2003f7655d3df8a48cbc9a35d8113ce408759286e7365a095d72d8"
         }
       ]
     }

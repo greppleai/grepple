@@ -88,7 +88,7 @@ directories:
     - path: SKILL.md
       description: Defines anchored writes, literal transactions, dry runs, newline handling and safe retries.
       kind: production
-      checksum: 902dd088479facc736d6e5990dfe68bd2ee2b4f4a59fbdd00d889334aa14de74
+      checksum: d140c2ca5b2003f7655d3df8a48cbc9a35d8113ce408759286e7365a095d72d8
   .agents/skills/grepple-local-grep-and-search:
     description: Provides deterministic guidance for local file discovery, text and declaration search, evidence retrieval, and edit-safe writes with Grepple.
     responsibilities:
@@ -364,7 +364,7 @@ directories:
     - path: agent-setup.md
       description: Owns version-pinned Grepple agent setup, skill discovery, ownership or supporting resources.
       kind: production
-      checksum: 1c5f7183155f0be8fa249d518b20fab6651af4f999d7fc6feb00c818385a8bb8
+      checksum: 62b92af9e4c18d5f59042708be2c30f00d07a984330115c0ba62fba479e046d4
   examples/advanced-files:
     description: Advanced examples implement typed cataloging, dependency-aware scheduling, generic search, workflow execution, caching, deployment polling, audited delivery, revision indexing, asynchronous pipelines, and retryable workers.
     responsibilities:
@@ -5305,16 +5305,6 @@ directories:
       checksum: 1c9e7255053db5fc77f0fc1006563fee3d1a706d34df53609054f7a89f6bf91d
       areas:
       - performance-benchmarking
-  .agents/skills/grepple-write/references:
-    description: Owns version-pinned Grepple skills and safe agent harness setup.
-    responsibilities:
-    - Maintain exact source-version compatibility
-    - Preserve ownership history and unrelated user files
-    files:
-    - path: write.md
-      description: Owns version-pinned Grepple agent setup, skill discovery, ownership or supporting resources.
-      kind: production
-      checksum: 897c0e7057aefe379ce7fd71fdba9924ab589443437355a1350e15f2db54d4eb
   internal/agentskills:
     description: Owns version-pinned Grepple skills and safe agent harness setup.
     responsibilities:
@@ -5328,11 +5318,11 @@ directories:
     - path: catalog.json
       description: Owns version-pinned Grepple agent setup, skill discovery, ownership or supporting resources.
       kind: production
-      checksum: ba0d7fb468ba67bb610a3cfc92d91e89dcdbaeda7fe354444703f8b4755a3508
+      checksum: 021a28333c41e83baaf480956916753f2c5f75c836ec99fd091261956e8030eb
     - path: catalog_test.go
       description: Tests bounded source retrieval, version compatibility, ownership migration and safe installation.
       kind: test
-      checksum: b3488355b72e1bce7a3c868b95311fd1f23922d4d3bf7ee4b3e5f28210a7dfab
+      checksum: c269aff8092e20387ea3ab2a1f18a4390d78ee0e670048e03d0f5d37f48cdaea
     - path: install.go
       description: Owns version-pinned Grepple agent setup, skill discovery, ownership or supporting resources.
       kind: production

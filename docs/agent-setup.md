@@ -91,8 +91,8 @@ different command contract.
    or reuse any historical entry. Keep retired entries forever.
 2. Keep active skills in `.agents/skills/<grepple-name>/` with matching frontmatter.
    Bundle referenced supporting files beneath the skill directory so installation
-   does not leave checkout-relative links broken. The write skill's reference is
-   a copy of `docs/write.md`; keep them byte-identical.
+   does not leave checkout-relative links broken. The write skill is self-contained
+   and documents only quoted `::grepple` heredoc transactions.
 3. Update `internal/agentskills/catalog.json`: current skills and relative files
    with SHA-256 digests. Remove retired skills only from this active catalog.
    Preserve historical legacy fingerprints for recognizing pre-marker installs.

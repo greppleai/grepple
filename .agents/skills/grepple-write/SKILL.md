@@ -29,7 +29,7 @@ Pq2│42│}
 - After a write, formatter, generator, or any other mutation, retrieve fresh anchors before another edit. Do not reuse stale hashes, including hashes predicted by a dry run.
 - If source is elided by session coverage, use `--repeat-source` on the focused `--at` read when you need the full replacement context. Truncated or spilled output is not a complete source read.
 
-## 2. Prefer literal, quoted-heredoc transactions
+## 2. Write literal, quoted-heredoc transactions
 
 ```sh
 grepple write --root . --dry-run <<'GREPPLE_WRITE_example'
@@ -50,18 +50,24 @@ Multiple `replace` blocks can follow one `file` directive; add another `file` di
 
 There is no need to invent an insertion anchor: replace an existing anchored line with that original line plus the new lines before or after it.
 
-```text
+```sh
+grepple write --root . <<'GREPPLE_INSERT_example'
+::grepple file path/to/file.go
 ::grepple replace K9x K9x
     oldCall()
     addedCall()
 ::grepple end
+GREPPLE_INSERT_example
 ```
 
 An empty replacement body deletes an inclusive range:
 
-```text
+```sh
+grepple write --root . <<'GREPPLE_DELETE_LINES_example'
+::grepple file path/to/file.go
 ::grepple replace START END
 ::grepple end
+GREPPLE_DELETE_LINES_example
 ```
 
 Replace `START` and `END` with actual fresh hashes. A single anchor is allowed when both endpoints are the same line.
@@ -90,51 +96,42 @@ sha256sum path/to/obsolete.go
 
 After inspecting the file and confirming deletion is intended, copy that exact digest into a transaction:
 
-```text
+```sh
+grepple write --root . <<'GREPPLE_DELETE_FILE_example'
 ::grepple file path/to/obsolete.go
 ::grepple delete CURRENT_64_CHARACTER_SHA256
+GREPPLE_DELETE_FILE_example
 ```
-
 Edits, creates, and digest-guarded deletes can share one transaction. A stale digest rejects the transaction.
 
 ### Escape a body terminator collision
 
 If the content itself has an exact `::grepple end` line, choose a collision-free marker:
 
-```text
+```sh
+grepple write --root . <<'GREPPLE_CREATE_DOC_example'
 ::grepple file docs/example.md
 ::grepple create --end-marker DOC_BODY
 Literal documentation containing this line:
 ::grepple end
 
 ::grepple end DOC_BODY
+GREPPLE_CREATE_DOC_example
 ```
-
 The marker option also works on `replace`. Only the selected exact terminator closes that body; other directive-looking lines inside it are literal content. Keep the shell heredoc delimiter distinct from the body marker and absent from the content.
 
 ## 4. Interpret receipts and retry safely
 
 - Default success output is compact: `PATH:START-END|FIRST-LAST`, plus deletion/creation markers. It is not the complete resulting source. Do not reread merely to confirm text you supplied.
 - Use `--return` when an immediate follow-up edit needs resulting `HASH│LINE│content` rows and nearby anchors. Otherwise retrieve only the changed range with `grepple --line-only --at PATH:START-END` when needed.
-- Use `--json` for complete structured responses, including before/after digests and resulting anchors; handle artifact descriptors if output spills.
 - On stale-anchor, overlap, path, or concurrent-mutation rejection, do not force the write or fall back to a blind overwrite. Read current source, reconsider the edit, and rebuild the transaction with fresh anchors. Error output may include fresh nearby anchors.
 - Rejection changes no requested file. Installation uses staging and best-effort rollback; this is **not** a crash-proof filesystem journal. Do not claim power-loss atomicity.
 - Run the applicable formatter, focused tests, and `git diff --check`. Refresh anchors after formatting. Update repository metadata/checksums and generated documentation when required. Do not commit or push without authorization.
 
-## Alternatives and limits
+## Safety and limits
 
-For a single literal edit:
+The short `grepple write --help` synopsis may show only `edit`; the heredoc's `replace`, `create`, and digest-guarded `delete` directives are supported. Verify uncertain transactions with `--dry-run`, rather than assuming an operation is unavailable.
 
-```sh
-grepple write edit --root . --path path/to/file.go --start START --end END <<'REPLACEMENT'
-literal replacement text
-REPLACEMENT
-```
+Writes are confined to `--root`; absolute paths, escapes, non-regular targets, and symlink escapes are refused. Requests are bounded to 16 MiB, source/result files to 16 MiB, and transactions to 128 files and 4,096 operations/changes. Existing mixed or bare-CR line endings and NUL bytes are rejected. Created files use mode `0644` and automatically created directories use mode `0755`, subject to umask and platform support.
 
-Strict JSON transactions use schema `grepple-write-v1`, a `files` array, and `changes` containing `hash_range_inclusive: ["START", "END"]` and literal `content_lines`. Use `[]` to delete a range. Each content entry is one logical line, without embedded newline characters.
-
-The short `grepple write --help` synopsis may show only `edit`; stdin `replace`, `create`, and digest-guarded `delete` operations are supported. Verify uncertain transactions with `--dry-run`, rather than assuming an operation is unavailable.
-
-Writes are confined to `--root`; absolute paths, escapes, non-regular targets, and symlink escapes are refused. Requests are bounded to 16 MiB, source/result files to 16 MiB, and transactions to 128 files and 4,096 operations/changes. Never use a remote search result or an unrelated anchor provider's hashes as local write authority. Use generic file-edit tools only if Grepple is unavailable or cannot represent the operation, then return to the Grepple workflow.
-
-The detailed contract and JSON examples live at `references/write.md` relative to this skill directory. Read that document when implementing automation or investigating newline, validation, rollback, or output behavior.
+Never use a remote search result or an unrelated anchor provider's hashes as local write authority. Use generic file-edit tools only if Grepple is unavailable or cannot represent the operation, then return to quoted-heredoc transactions.
