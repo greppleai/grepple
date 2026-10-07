@@ -1,0 +1,587 @@
+{
+  "methodology": "fresh processes with warm filesystem page cache; immutable graph snapshots; one DB thread; GOMAXPROCS=4",
+  "datasets": {
+    "base": {
+      "info": {
+        "files": 598,
+        "source_stats": {
+          "attempted": 598,
+          "parsed": 598,
+          "skipped": 0,
+          "failed": 0,
+          "recovered": 0
+        },
+        "build_ns": 9290755320,
+        "replicas": 1,
+        "declarations": 5310,
+        "calls": 24388
+      },
+      "backends": {
+        "scan-pb": {
+          "resident": {
+            "samples": 84,
+            "load_ns": {
+              "p50": 43108934.0,
+              "p95": 43108934
+            },
+            "query_ns": {
+              "p50": 5891171.5,
+              "p95": 12332563
+            },
+            "encode_ns": {
+              "p50": 232866.0,
+              "p95": 14850032
+            },
+            "rss_kb": 83704
+          },
+          "resident_load_ns": 43108934,
+          "cli": {
+            "samples": 24,
+            "wall_ns": {
+              "p50": 77028561.0,
+              "p95": 96558851
+            },
+            "load_ns": {
+              "p50": 45017744.5,
+              "p95": 50975065
+            },
+            "query_ns": {
+              "p50": 7571701.0,
+              "p95": 13559027
+            },
+            "encode_ns": {
+              "p50": 639754.5,
+              "p95": 16396769
+            },
+            "rss_kb": 75872
+          },
+          "daemon": {
+            "samples": 24,
+            "wall_ns": {
+              "p50": 13476375.5,
+              "p95": 58540827
+            },
+            "load_ns": {
+              "p50": 43045222.0,
+              "p95": 43045222
+            },
+            "query_ns": {
+              "p50": 5447933.5,
+              "p95": 9183342
+            },
+            "encode_ns": {
+              "p50": 221903.5,
+              "p95": 14545069
+            },
+            "rss_kb": 81448
+          },
+          "daemon_startup": {
+            "load_ns": 43045222,
+            "rss_kb": 57308
+          }
+        },
+        "adj-pb": {
+          "resident": {
+            "samples": 84,
+            "load_ns": {
+              "p50": 58769043.0,
+              "p95": 58769043
+            },
+            "query_ns": {
+              "p50": 198547.5,
+              "p95": 9495516
+            },
+            "encode_ns": {
+              "p50": 199451.0,
+              "p95": 13751649
+            },
+            "rss_kb": 89572
+          },
+          "resident_load_ns": 58769043,
+          "cli": {
+            "samples": 24,
+            "wall_ns": {
+              "p50": 80625839.5,
+              "p95": 118347764
+            },
+            "load_ns": {
+              "p50": 55923972.0,
+              "p95": 59955068
+            },
+            "query_ns": {
+              "p50": 516541.0,
+              "p95": 10709045
+            },
+            "encode_ns": {
+              "p50": 668215.5,
+              "p95": 15419771
+            },
+            "rss_kb": 87648
+          },
+          "daemon": {
+            "samples": 24,
+            "wall_ns": {
+              "p50": 7483442.5,
+              "p95": 56884752
+            },
+            "load_ns": {
+              "p50": 52709966.0,
+              "p95": 52709966
+            },
+            "query_ns": {
+              "p50": 248131.5,
+              "p95": 6458923
+            },
+            "encode_ns": {
+              "p50": 207338.5,
+              "p95": 14092796
+            },
+            "rss_kb": 90476
+          },
+          "daemon_startup": {
+            "load_ns": 52709966,
+            "rss_kb": 58892
+          }
+        },
+        "duckdb": {
+          "resident": {
+            "samples": 84,
+            "load_ns": {
+              "p50": 42151248.0,
+              "p95": 42151248
+            },
+            "query_ns": {
+              "p50": 11173561.0,
+              "p95": 114111413
+            },
+            "encode_ns": {
+              "p50": 257825.5,
+              "p95": 16332610
+            },
+            "rss_kb": 174088
+          },
+          "resident_load_ns": 42151248,
+          "cli": {
+            "samples": 24,
+            "wall_ns": {
+              "p50": 120757644.5,
+              "p95": 269590339
+            },
+            "load_ns": {
+              "p50": 42031232.0,
+              "p95": 49888089
+            },
+            "query_ns": {
+              "p50": 42469617.5,
+              "p95": 160578150
+            },
+            "encode_ns": {
+              "p50": 509503.0,
+              "p95": 14318717
+            },
+            "rss_kb": 128732
+          },
+          "daemon": {
+            "samples": 24,
+            "wall_ns": {
+              "p50": 34836227.5,
+              "p95": 167240696
+            },
+            "load_ns": {
+              "p50": 38581788.0,
+              "p95": 38581788
+            },
+            "query_ns": {
+              "p50": 14623721.5,
+              "p95": 105423829
+            },
+            "encode_ns": {
+              "p50": 292588.0,
+              "p95": 15157864
+            },
+            "rss_kb": 164040
+          },
+          "daemon_startup": {
+            "load_ns": 38581788,
+            "rss_kb": 41396
+          }
+        },
+        "duckdb-col": {
+          "resident": {
+            "samples": 84,
+            "load_ns": {
+              "p50": 45513496.0,
+              "p95": 45513496
+            },
+            "query_ns": {
+              "p50": 15448381.5,
+              "p95": 85617777
+            },
+            "encode_ns": {
+              "p50": 248936.0,
+              "p95": 15179166
+            },
+            "rss_kb": 176496
+          },
+          "resident_load_ns": 45513496,
+          "cli": {
+            "samples": 24,
+            "wall_ns": {
+              "p50": 151704257.0,
+              "p95": 244764304
+            },
+            "load_ns": {
+              "p50": 53513600.0,
+              "p95": 58633398
+            },
+            "query_ns": {
+              "p50": 52995720.5,
+              "p95": 122754353
+            },
+            "encode_ns": {
+              "p50": 605152.0,
+              "p95": 16711558
+            },
+            "rss_kb": 118748
+          },
+          "daemon": {
+            "samples": 24,
+            "wall_ns": {
+              "p50": 48315833.5,
+              "p95": 150157392
+            },
+            "load_ns": {
+              "p50": 53567685.0,
+              "p95": 53567685
+            },
+            "query_ns": {
+              "p50": 15928399.5,
+              "p95": 85325053
+            },
+            "encode_ns": {
+              "p50": 264358.5,
+              "p95": 15382944
+            },
+            "rss_kb": 164492
+          },
+          "daemon_startup": {
+            "load_ns": 53567685,
+            "rss_kb": 43032
+          }
+        }
+      },
+      "sizes": {
+        "json": 26198423,
+        "pb": 5919152,
+        "duckdb": 24915968,
+        "column.duckdb": 17575936
+      }
+    },
+    "scale10": {
+      "info": {
+        "files": 598,
+        "source_stats": {
+          "attempted": 598,
+          "parsed": 598,
+          "skipped": 0,
+          "failed": 0,
+          "recovered": 0
+        },
+        "build_ns": 9592008445,
+        "replicas": 10,
+        "declarations": 53100,
+        "calls": 243880
+      },
+      "backends": {
+        "scan-pb": {
+          "resident": {
+            "samples": 84,
+            "load_ns": {
+              "p50": 444062074.0,
+              "p95": 444062074
+            },
+            "query_ns": {
+              "p50": 70571829.5,
+              "p95": 97318278
+            },
+            "encode_ns": {
+              "p50": 275925.5,
+              "p95": 10943133
+            },
+            "rss_kb": 464056
+          },
+          "resident_load_ns": 444062074,
+          "cli": {
+            "samples": 24,
+            "wall_ns": {
+              "p50": 572660411.5,
+              "p95": 609295917
+            },
+            "load_ns": {
+              "p50": 448383762.5,
+              "p95": 474325986
+            },
+            "query_ns": {
+              "p50": 75987355.5,
+              "p95": 93107692
+            },
+            "encode_ns": {
+              "p50": 568167.5,
+              "p95": 9775950
+            },
+            "rss_kb": 456552
+          },
+          "daemon": {
+            "samples": 24,
+            "wall_ns": {
+              "p50": 74164408.0,
+              "p95": 144171794
+            },
+            "load_ns": {
+              "p50": 432167995.0,
+              "p95": 432167995
+            },
+            "query_ns": {
+              "p50": 61972081.5,
+              "p95": 97433230
+            },
+            "encode_ns": {
+              "p50": 281888.0,
+              "p95": 10677840
+            },
+            "rss_kb": 512424
+          },
+          "daemon_startup": {
+            "load_ns": 432167995,
+            "rss_kb": 439476
+          }
+        },
+        "adj-pb": {
+          "resident": {
+            "samples": 84,
+            "load_ns": {
+              "p50": 536199002.0,
+              "p95": 536199002
+            },
+            "query_ns": {
+              "p50": 256659.5,
+              "p95": 8397456
+            },
+            "encode_ns": {
+              "p50": 218567.5,
+              "p95": 11094242
+            },
+            "rss_kb": 546584
+          },
+          "resident_load_ns": 536199002,
+          "cli": {
+            "samples": 24,
+            "wall_ns": {
+              "p50": 593824549.0,
+              "p95": 614451096
+            },
+            "load_ns": {
+              "p50": 541574998.5,
+              "p95": 553116433
+            },
+            "query_ns": {
+              "p50": 749721.0,
+              "p95": 7128738
+            },
+            "encode_ns": {
+              "p50": 543380.5,
+              "p95": 9063357
+            },
+            "rss_kb": 494940
+          },
+          "daemon": {
+            "samples": 24,
+            "wall_ns": {
+              "p50": 8320740.0,
+              "p95": 57587123
+            },
+            "load_ns": {
+              "p50": 528255175.0,
+              "p95": 528255175
+            },
+            "query_ns": {
+              "p50": 388623.5,
+              "p95": 9024836
+            },
+            "encode_ns": {
+              "p50": 248786.5,
+              "p95": 12545337
+            },
+            "rss_kb": 541480
+          },
+          "daemon_startup": {
+            "load_ns": 528255175,
+            "rss_kb": 441224
+          }
+        },
+        "duckdb": {
+          "resident": {
+            "samples": 84,
+            "load_ns": {
+              "p50": 38830209.0,
+              "p95": 38830209
+            },
+            "query_ns": {
+              "p50": 11910551.0,
+              "p95": 130089854
+            },
+            "encode_ns": {
+              "p50": 269990.0,
+              "p95": 15904937
+            },
+            "rss_kb": 187784
+          },
+          "resident_load_ns": 38830209,
+          "cli": {
+            "samples": 24,
+            "wall_ns": {
+              "p50": 145339849.5,
+              "p95": 305124538
+            },
+            "load_ns": {
+              "p50": 41083170.0,
+              "p95": 46037173
+            },
+            "query_ns": {
+              "p50": 59593256.5,
+              "p95": 195471451
+            },
+            "encode_ns": {
+              "p50": 496785.0,
+              "p95": 14688895
+            },
+            "rss_kb": 144964
+          },
+          "daemon": {
+            "samples": 24,
+            "wall_ns": {
+              "p50": 32013803.0,
+              "p95": 162920591
+            },
+            "load_ns": {
+              "p50": 36060629.0,
+              "p95": 36060629
+            },
+            "query_ns": {
+              "p50": 13274002.5,
+              "p95": 105705934
+            },
+            "encode_ns": {
+              "p50": 235124.5,
+              "p95": 13153334
+            },
+            "rss_kb": 181860
+          },
+          "daemon_startup": {
+            "load_ns": 36060629,
+            "rss_kb": 41668
+          }
+        },
+        "duckdb-col": {
+          "resident": {
+            "samples": 84,
+            "load_ns": {
+              "p50": 49405149.0,
+              "p95": 49405149
+            },
+            "query_ns": {
+              "p50": 15456777.0,
+              "p95": 91504012
+            },
+            "encode_ns": {
+              "p50": 242782.0,
+              "p95": 15300400
+            },
+            "rss_kb": 198408
+          },
+          "resident_load_ns": 49405149,
+          "cli": {
+            "samples": 24,
+            "wall_ns": {
+              "p50": 167540733.5,
+              "p95": 287604343
+            },
+            "load_ns": {
+              "p50": 45057363.5,
+              "p95": 49202533
+            },
+            "query_ns": {
+              "p50": 77708550.0,
+              "p95": 178332272
+            },
+            "encode_ns": {
+              "p50": 595909.5,
+              "p95": 15556185
+            },
+            "rss_kb": 141540
+          },
+          "daemon": {
+            "samples": 24,
+            "wall_ns": {
+              "p50": 37553684.5,
+              "p95": 148764592
+            },
+            "load_ns": {
+              "p50": 47810878.0,
+              "p95": 47810878
+            },
+            "query_ns": {
+              "p50": 17399825.0,
+              "p95": 93293097
+            },
+            "encode_ns": {
+              "p50": 267827.5,
+              "p95": 14516706
+            },
+            "rss_kb": 182096
+          },
+          "daemon_startup": {
+            "load_ns": 47810878,
+            "rss_kb": 42292
+          }
+        }
+      },
+      "sizes": {
+        "json": 261983267,
+        "pb": 54493635,
+        "duckdb": 216543232,
+        "column.duckdb": 120336384
+      }
+    }
+  },
+  "environment": {
+    "date": "2026-10-04T15:13:12.101649+00:00",
+    "platform": "Linux-7.0.0-34-generic-x86_64-with-glibc2.43",
+    "duckdb_go": "v2.10505.0",
+    "duckdb": "v1.5.5",
+    "commit": "bc369f29bc0f6e387126fabfc1c8be0c359e18d6",
+    "backend_commit": "90985c3843ae13129a92c3caf7273d22bd264c65",
+    "meminfo": {
+      "MemTotal": "3997800 kB",
+      "MemAvailable": "2653116 kB"
+    },
+    "cpu": "Intel(R) Core(TM) Ultra 7 165H",
+    "binary_bytes": {
+      "go-index": 40823648,
+      "duck-index": 109350888
+    },
+    "host_go": "go version go1.27.1 linux/amd64",
+    "benchmark_go": "go1.27.0"
+  },
+  "builds": {
+    "base": {
+      "build_ns": 1119219063,
+      "rss_kb": 192284
+    },
+    "scale10": {
+      "build_ns": 7074744029,
+      "rss_kb": 1476780
+    }
+  },
+  "note": "Columnar rerun on the original immutable source snapshots; both DuckDB variants and both native Go controls rebuilt together."
+}

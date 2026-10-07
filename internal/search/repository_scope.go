@@ -43,7 +43,27 @@ func relatedNavigationRoots(explicitRoot string, matches []FileMatch) ([]string,
 		if err != nil {
 			return nil, err
 		}
-		return []string{filepath.Clean(root)}, nil
+		root = filepath.Clean(root)
+		seen := make(map[string]bool)
+		var roots []string
+		for _, match := range matches {
+			if match.File == "" || !withinRoot(match.File, root) {
+				continue
+			}
+			selected, found := nearestNavigationRoot(filepath.Dir(match.File))
+			if !found || !withinRoot(selected, root) {
+				selected = root
+			}
+			if !seen[selected] {
+				seen[selected] = true
+				roots = append(roots, selected)
+			}
+		}
+		if len(roots) == 0 {
+			roots = append(roots, root)
+		}
+		sort.Strings(roots)
+		return roots, nil
 	}
 	cwd, err := os.Getwd()
 	if err != nil {

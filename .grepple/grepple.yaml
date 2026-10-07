@@ -4846,3 +4846,374 @@ directories:
       description: Stylesheet fixture covering declarations, modern nesting and rule hierarchy.
       kind: fixture
       checksum: 3c5e1548a71621128d8ab4cbb5554ee654cd9fc726461f6bb68bf7bd104e9eda
+  experiments:
+    description: Isolated opt-in prototypes and benchmarks, separate from production modules.
+    responsibilities:
+    - Test proposed changes without production migration
+    files: []
+  experiments/navigation-duckdb:
+    description: Isolated navigation storage/query benchmark comparing native protobuf, Go adjacency and DuckDB with no production migration.
+    responsibilities:
+    - Export source-backed graph fixtures
+    - Verify semantic query parity
+    - Measure process, storage and daemon costs
+    - Report reproducible bounded conclusions
+    files:
+    - path: COLUMNAR.md
+      description: Reports typed-column DuckDB storage/tail improvements, median-latency regressions and reproduction steps.
+      kind: production
+      checksum: e2f5208d5e06661d851274e8b681291235636ab682aae61fc77901f78a82d527
+      areas:
+      - performance-benchmarking
+    - path: README.md
+      description: Documents reproducible DuckDB versus native protobuf/Go-adjacency navigation measurements and explicit limitations.
+      kind: production
+      checksum: d71867b6fb314220c8db6e886599b8e7704b40de2169400fa95efd8cc988e7f7
+      areas:
+      - performance-benchmarking
+    - path: dataset.go
+      description: Exports resolved tracked-source graphs, native protobuf snapshots and isolated scaling fixtures.
+      kind: production
+      checksum: 61b531515260874e5b5eaaa2217def08181a7683ae97e15f3e54d6b0c7373a49
+      areas:
+      - performance-benchmarking
+    - path: duckdb.go
+      description: Implements experimental indexed DuckDB storage with appenders, prepared queries and native result projection.
+      kind: production
+      checksum: f869b06caa38a6d5f3500152b9dc6ef27b8f3da90e9c2d04197f6f2ba799a7c1
+      areas:
+      - performance-benchmarking
+    - path: duckdb_columnar.go
+      description: Stores every navigation fact field in native DuckDB columns, uses skinny edge traversal and preserves production query projection.
+      kind: production
+      checksum: 48b4b5d62765b7feb5669089e53014aebb857415bdc6f7a00f3c4626ebf665ba
+      areas:
+      - performance-benchmarking
+    - path: duckdb_columnar_test.go
+      description: Verifies every native fact field including list nullability, Unicode and concurrent query parity.
+      kind: test
+      checksum: 47bb09df425b455183cd03035d62ea6cf7dee4b2f3618b68e33ab05092fea822
+      areas:
+      - performance-benchmarking
+    - path: duckdb_stub.go
+      description: Owns build-tag-independent DuckDB dispatch and explicit unavailable defaults without linking native DuckDB libraries.
+      kind: production
+      checksum: ed5bd82406b8e9dd78a22fd1aab9994f49bacc47e57a6a47eefa81d0592e9c7f
+      areas:
+      - performance-benchmarking
+    - path: go.mod
+      description: Pins the isolated experiment module and DuckDB driver without changing production dependencies.
+      kind: production
+      checksum: f6c8fa01c8b6ce26012f59b6e7824956b8e801877c9e48d90cb7a0de14aa4838
+      areas:
+      - performance-benchmarking
+    - path: go.sum
+      description: Verifies isolated experiment dependencies.
+      kind: production
+      checksum: 76448b3778371ff2800a46a84abaa8086b4e136a5748c3b9b90ceb64c2ccbe28
+      areas:
+      - performance-benchmarking
+    - path: index.go
+      description: Compares production graph traversal with a semantically equivalent preselected Go adjacency index.
+      kind: production
+      checksum: e5eb3952bacf37a984516e75cef1b5bfb745f19cecb3d669a9e9b0be487cf720
+      areas:
+      - performance-benchmarking
+    - path: index_test.go
+      description: Checks whole-result parity for all traversal directions, depths, candidates, cycles and context facts.
+      kind: test
+      checksum: 53f5ec31a65cd72474711ef8695ef43c605b662e5cedcd7d4140c9208ea69528
+      areas:
+      - performance-benchmarking
+    - path: main.go
+      description: Owns benchmark CLI composition, measurements and private immutable-snapshot Unix daemon transport.
+      kind: production
+      checksum: cfe63daf1ff2022c22e7e4efb4135583dfb13c7e9422b01da3ed42fb9af11340
+      areas:
+      - performance-benchmarking
+    - path: prepare.sh
+      description: Builds both benchmark binaries, produces private snapshots and runs reproducible comparisons.
+      kind: production
+      checksum: 90d865898a7f04d1ade6f038394844197e59916748c020ae784df7d6321ec0c7
+      areas:
+      - performance-benchmarking
+    - path: run.py
+      description: Verifies result digests and measures fresh CLI, resident-query and daemon-client workloads.
+      kind: production
+      checksum: 267edc28b3e08ddc4c98bb998ed7d42065239f89d691d9e863781a13ea624808
+      areas:
+      - performance-benchmarking
+  experiments/navigation-duckdb/results:
+    description: Raw measured navigation prototype latencies, memory peaks, identities and corpus sizes; no source snapshots or credentials.
+    responsibilities:
+    - Retain benchmark evidence
+    files:
+    - path: base.adj-pb.cli.json
+      description: Measured immutable-snapshot navigation benchmark evidence.
+      kind: generated
+      checksum: fc3c9b671e4a4411c0df1a9d5240d9a3f10e4094a14f757bbf78e007ae360a8b
+      areas:
+      - performance-benchmarking
+    - path: base.adj-pb.daemon.json
+      description: Measured immutable-snapshot navigation benchmark evidence.
+      kind: generated
+      checksum: 6abfe30010425545dd9c9d82499d8a82b55e89781330468176e03451253391f2
+      areas:
+      - performance-benchmarking
+    - path: base.adj-pb.resident.json
+      description: Measured immutable-snapshot navigation benchmark evidence.
+      kind: generated
+      checksum: 8cd50786c8fd1b62e6679d2fc5449a4bb5414e10bc0b4217864297c903971971
+      areas:
+      - performance-benchmarking
+    - path: base.duckdb.cli.json
+      description: Measured immutable-snapshot navigation benchmark evidence.
+      kind: generated
+      checksum: ca1047a7170e81bb972baf7256ebdd031eecaef2296ce35bcc735969e5b30e0b
+      areas:
+      - performance-benchmarking
+    - path: base.duckdb.daemon.json
+      description: Measured immutable-snapshot navigation benchmark evidence.
+      kind: generated
+      checksum: cc5b848922011a6fb84622decc983b9db67a27e08770f8c1a400f3c84c35ee34
+      areas:
+      - performance-benchmarking
+    - path: base.duckdb.resident.json
+      description: Measured immutable-snapshot navigation benchmark evidence.
+      kind: generated
+      checksum: 6c5bbc07d87df57583ac3108213f2e9fe72a8994d0dcdfff69b7bb0d4d276cea
+      areas:
+      - performance-benchmarking
+    - path: base.scan-pb.cli.json
+      description: Measured immutable-snapshot navigation benchmark evidence.
+      kind: generated
+      checksum: ccf91693f8a1a2b1ae892582ab0eb0c9707b96145f329672094fa7c965235dd8
+      areas:
+      - performance-benchmarking
+    - path: base.scan-pb.daemon.json
+      description: Measured immutable-snapshot navigation benchmark evidence.
+      kind: generated
+      checksum: 05272353298a91a3dcbf291a6af90fab3b8df2a11d2bafd33d48d6705395d043
+      areas:
+      - performance-benchmarking
+    - path: base.scan-pb.resident.json
+      description: Measured immutable-snapshot navigation benchmark evidence.
+      kind: generated
+      checksum: ab478bb4431d94bae2666b452bafb201f6a99278440df5e0704d2274263ca673
+      areas:
+      - performance-benchmarking
+    - path: scale10.adj-pb.cli.json
+      description: Measured immutable-snapshot navigation benchmark evidence.
+      kind: generated
+      checksum: 1d9393442d23c3ffe0b47e55cb82e6f0f90ac6f1013410d6ab86df45c26c36ca
+      areas:
+      - performance-benchmarking
+    - path: scale10.adj-pb.daemon.json
+      description: Measured immutable-snapshot navigation benchmark evidence.
+      kind: generated
+      checksum: 03551497c2d5bb9a25a856d9435e5dad5178771d1edcf62316275b7276f8951d
+      areas:
+      - performance-benchmarking
+    - path: scale10.adj-pb.resident.json
+      description: Measured immutable-snapshot navigation benchmark evidence.
+      kind: generated
+      checksum: 013767df6401d320468bb3d072158b055fbda001326300e01bb5d0c21e28962a
+      areas:
+      - performance-benchmarking
+    - path: scale10.duckdb.cli.json
+      description: Measured immutable-snapshot navigation benchmark evidence.
+      kind: generated
+      checksum: 7c077f2421499c3c23e6295e8e411d497677f7f0bddeb4423a4a689125f6382b
+      areas:
+      - performance-benchmarking
+    - path: scale10.duckdb.daemon.json
+      description: Measured immutable-snapshot navigation benchmark evidence.
+      kind: generated
+      checksum: 84027cf468c84164e7a9b738e5bf2d5249dd81e2a59a2e58aa5c1199062cc49e
+      areas:
+      - performance-benchmarking
+    - path: scale10.duckdb.resident.json
+      description: Measured immutable-snapshot navigation benchmark evidence.
+      kind: generated
+      checksum: af8abcf343e0abd46cefb63085560317fb6b4c0e87cee2f2db6c888aa726a710
+      areas:
+      - performance-benchmarking
+    - path: scale10.scan-pb.cli.json
+      description: Measured immutable-snapshot navigation benchmark evidence.
+      kind: generated
+      checksum: c85279b636048e17f56a55cce127757afbfbb16e684e7fdd9d7858b66b11106f
+      areas:
+      - performance-benchmarking
+    - path: scale10.scan-pb.daemon.json
+      description: Measured immutable-snapshot navigation benchmark evidence.
+      kind: generated
+      checksum: 4d9ae2f339a19610c83da4be316326a66cd058ca1ad40649643589d9835c9198
+      areas:
+      - performance-benchmarking
+    - path: scale10.scan-pb.resident.json
+      description: Measured immutable-snapshot navigation benchmark evidence.
+      kind: generated
+      checksum: 2ecfb386a13d939ffcba81394904654656afb3ded3b01647f6d39d47111ce1f3
+      areas:
+      - performance-benchmarking
+    - path: summary.json
+      description: Measured immutable-snapshot navigation benchmark evidence.
+      kind: generated
+      checksum: c8f268624e0da7315b5c8fd01e648dd34125f904c16478947cfb870998b0e0a2
+      areas:
+      - performance-benchmarking
+  experiments/navigation-duckdb/results/columnar:
+    description: Fresh comparison of both DuckDB designs and both native Go controls on identical immutable source snapshots.
+    responsibilities:
+    - Retain typed-column benchmark evidence and controls
+    files:
+    - path: base.adj-pb.cli.json
+      description: Measured native-column DuckDB rerun evidence with exact-result digests.
+      kind: generated
+      checksum: 3ea999b26dab20e2cc3ee559801a14d284e871b0888974f5809981858efaa98f
+      areas:
+      - performance-benchmarking
+    - path: base.adj-pb.daemon.json
+      description: Measured native-column DuckDB rerun evidence with exact-result digests.
+      kind: generated
+      checksum: 09dd6c0727e4c6609e53eeba083cdbcf0240892e3dc686d775c72fc2174e6ef1
+      areas:
+      - performance-benchmarking
+    - path: base.adj-pb.resident.json
+      description: Measured native-column DuckDB rerun evidence with exact-result digests.
+      kind: generated
+      checksum: fe43093da9381d7a396477939921622b8fb4b38e5744aa53ea9ea9b898f7ba37
+      areas:
+      - performance-benchmarking
+    - path: base.duckdb-col.cli.json
+      description: Measured native-column DuckDB rerun evidence with exact-result digests.
+      kind: generated
+      checksum: d15fe491b905b49324864b265b5d0d10631adba2611f3b52117ef3d23215193f
+      areas:
+      - performance-benchmarking
+    - path: base.duckdb-col.daemon.json
+      description: Measured native-column DuckDB rerun evidence with exact-result digests.
+      kind: generated
+      checksum: 02ddf27060e45102b01528d142c35033a34bff55fec26613f02891d281b074d1
+      areas:
+      - performance-benchmarking
+    - path: base.duckdb-col.resident.json
+      description: Measured native-column DuckDB rerun evidence with exact-result digests.
+      kind: generated
+      checksum: e594aac3e0136bd43fc261c22a7e5e02e8a500b44c8d08ad389d624e36f5f04e
+      areas:
+      - performance-benchmarking
+    - path: base.duckdb.cli.json
+      description: Measured native-column DuckDB rerun evidence with exact-result digests.
+      kind: generated
+      checksum: e5d7592806717d0f17c813ddcfc66518efba5a2e9fd5fb1c41457176f3bfb8e8
+      areas:
+      - performance-benchmarking
+    - path: base.duckdb.daemon.json
+      description: Measured native-column DuckDB rerun evidence with exact-result digests.
+      kind: generated
+      checksum: edbfdd6ce01ecb42d65144dc123fa1b39acd36b3aa49c99c9ea631caedcc95a4
+      areas:
+      - performance-benchmarking
+    - path: base.duckdb.resident.json
+      description: Measured native-column DuckDB rerun evidence with exact-result digests.
+      kind: generated
+      checksum: 80768fc47bd41cad13af17837cb17f6b32e98debee417911bdd0feff36e23ef2
+      areas:
+      - performance-benchmarking
+    - path: base.scan-pb.cli.json
+      description: Measured native-column DuckDB rerun evidence with exact-result digests.
+      kind: generated
+      checksum: c510bb0520708280be45bc7bbdf69fea3be7eab056563c88031a9636512cd7c3
+      areas:
+      - performance-benchmarking
+    - path: base.scan-pb.daemon.json
+      description: Measured native-column DuckDB rerun evidence with exact-result digests.
+      kind: generated
+      checksum: 922a3174955f0505e2a5c8da0bb36d71d4b5f97d5a0b11be7974ef4ae33616cf
+      areas:
+      - performance-benchmarking
+    - path: base.scan-pb.resident.json
+      description: Measured native-column DuckDB rerun evidence with exact-result digests.
+      kind: generated
+      checksum: 847defe09103b8e778127751e0e18d3485a32f7a55529c079f3fe2e741dfa463
+      areas:
+      - performance-benchmarking
+    - path: scale10.adj-pb.cli.json
+      description: Measured native-column DuckDB rerun evidence with exact-result digests.
+      kind: generated
+      checksum: 00915186aaa67fd4c3d2a537193ec8c0f5f51278a18c07f3f0800e75d3841171
+      areas:
+      - performance-benchmarking
+    - path: scale10.adj-pb.daemon.json
+      description: Measured native-column DuckDB rerun evidence with exact-result digests.
+      kind: generated
+      checksum: c6c7936199f9fe4c65b117b528372cb8d36608fb75fa000809771c14fad60767
+      areas:
+      - performance-benchmarking
+    - path: scale10.adj-pb.resident.json
+      description: Measured native-column DuckDB rerun evidence with exact-result digests.
+      kind: generated
+      checksum: 8b4a19e711bc195af63e11e9a97915e2bc89ebfa8c1d306350a2e7f105d084ed
+      areas:
+      - performance-benchmarking
+    - path: scale10.duckdb-col.cli.json
+      description: Measured native-column DuckDB rerun evidence with exact-result digests.
+      kind: generated
+      checksum: e8fe22756d2852a310c7fd671cd2eb24c483dba9308eabfa93a5552d24fd0369
+      areas:
+      - performance-benchmarking
+    - path: scale10.duckdb-col.daemon.json
+      description: Measured native-column DuckDB rerun evidence with exact-result digests.
+      kind: generated
+      checksum: fecf3c940f0f895ea811085f4c332950f14625a5e292515981d2d0a25d316c97
+      areas:
+      - performance-benchmarking
+    - path: scale10.duckdb-col.resident.json
+      description: Measured native-column DuckDB rerun evidence with exact-result digests.
+      kind: generated
+      checksum: 110ea5f39e2301fda4a1b664a6451d315d106a37f19e67cc592e1bac6c7439da
+      areas:
+      - performance-benchmarking
+    - path: scale10.duckdb.cli.json
+      description: Measured native-column DuckDB rerun evidence with exact-result digests.
+      kind: generated
+      checksum: e241fdee8229f494ce81a6590c50a5fab57839ff5fce12dd1dbc2dfcbc7a8be6
+      areas:
+      - performance-benchmarking
+    - path: scale10.duckdb.daemon.json
+      description: Measured native-column DuckDB rerun evidence with exact-result digests.
+      kind: generated
+      checksum: 67c1b7915449eeaff2d1c6c3f2b758c638c19b28c591235eacfe7f74a9c37090
+      areas:
+      - performance-benchmarking
+    - path: scale10.duckdb.resident.json
+      description: Measured native-column DuckDB rerun evidence with exact-result digests.
+      kind: generated
+      checksum: 19673ef6cd090a1209c3dbfdd280e4dcbc0fdecea5dade99cba5cb8f7dff6cd3
+      areas:
+      - performance-benchmarking
+    - path: scale10.scan-pb.cli.json
+      description: Measured native-column DuckDB rerun evidence with exact-result digests.
+      kind: generated
+      checksum: 62f3e157a7979de90eae216b95e9db94984563ca905bc53ef81870a5dae43510
+      areas:
+      - performance-benchmarking
+    - path: scale10.scan-pb.daemon.json
+      description: Measured native-column DuckDB rerun evidence with exact-result digests.
+      kind: generated
+      checksum: 219a75da09e499a48f57fdf0d513b8abcf04870ff2cdd68afd6c1cb47ed61e4f
+      areas:
+      - performance-benchmarking
+    - path: scale10.scan-pb.resident.json
+      description: Measured native-column DuckDB rerun evidence with exact-result digests.
+      kind: generated
+      checksum: 75afd22a4dfa4608b356f707e7a8cde38dacc1de0c27770b9a418d7d7bfe6c54
+      areas:
+      - performance-benchmarking
+    - path: summary.json
+      description: Measured native-column DuckDB rerun evidence with exact-result digests.
+      kind: generated
+      checksum: 1c9e7255053db5fc77f0fc1006563fee3d1a706d34df53609054f7a89f6bf91d
+      areas:
+      - performance-benchmarking
