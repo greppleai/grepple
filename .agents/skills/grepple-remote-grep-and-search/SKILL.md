@@ -1,5 +1,5 @@
 ---
-name: remote-grep-and-search
+name: grepple-remote-grep-and-search
 description: Use for indexed repositories, remote files/ranges, trees, or recurring questions across approved repositories outside the current checkout. Query explicit repositories; do not clone just to inspect code.
 ---
 
@@ -16,4 +16,4 @@ description: Use for indexed repositories, remote files/ranges, trees, or recurr
    - File map: `grepple get OWNER/REPO PATH --outline`
 3. For a source-linked relation, use an exact repository selector and location: `grepple --server URL --repo OWNER/REPO --related --at path/file.go:40`. Treat candidate edges as leads and retain the repository/ref selector in the answer.
 
-Search is local unless `-R` or `--server` enables remote search; `get`, `tree`, `repos`, and `rules` are remote commands. Remote pages cap at 100: use `--skip` or narrow the query, not a first page as complete evidence. For recurring searches across an approved set, use scoped saved rules. Use `local-grep-and-search` for this checkout and its evidence/completeness rules.
+Search is local unless `-R` or `--server` enables remote search; `get`, `tree`, `repos`, and `rules` are remote commands. Remote pages cap at 100: use `--skip` or narrow the query, not a first page as complete evidence. For recurring searches across an approved set, use scoped saved rules. Use `grepple-local-grep-and-search` for this checkout and its evidence/completeness rules.

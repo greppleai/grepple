@@ -20,6 +20,7 @@ import (
 	reposcommand "github.com/greppleai/grepple/internal/cli/repos"
 	rulescommand "github.com/greppleai/grepple/internal/cli/rules"
 	searchcommand "github.com/greppleai/grepple/internal/cli/search"
+	setupcommand "github.com/greppleai/grepple/internal/cli/setup"
 	sourcescommand "github.com/greppleai/grepple/internal/cli/sources"
 	treecommand "github.com/greppleai/grepple/internal/cli/tree"
 	verifycommand "github.com/greppleai/grepple/internal/cli/verify"
@@ -49,6 +50,7 @@ type Arguments struct {
 	Graph        *graphcommand.Args          `arg:"subcommand:graph" help:"query navigation graphs"`
 	Ask          *askcommand.Args            `arg:"subcommand:ask" help:"research local and indexed repositories with an AI provider"`
 	Anchors      *anchorscommand.Args        `arg:"subcommand:anchors" help:"diagnose edit-anchor providers"`
+	Setup        *setupcommand.Args          `arg:"subcommand:setup" help:"install version-matched skills for pi, claude, opencode, or codex"`
 	Examples     *examplescommand.Args       `arg:"subcommand:examples" help:"print task-oriented CLI workflows"`
 	Artifacts    *artifactscommand.Args      `arg:"subcommand:artifacts" help:"manage spilled output artifacts"`
 	Context      *contextcommand.Args        `arg:"subcommand:context" help:"manage context deduplication"`
@@ -84,6 +86,8 @@ func executeArguments(context cliruntime.Context, values *Arguments) error {
 	switch {
 	case values.VersionFlag || values.Version != nil:
 		return versioncommand.Execute(context, &versioncommand.Args{})
+	case values.Setup != nil:
+		return setupcommand.Execute(context, values.Setup, versioncommand.BuildVersion())
 	case values.Search != nil:
 		return searchcommand.Execute(context, values.Search)
 	case values.Write != nil:

@@ -1,0 +1,17 @@
+# Append-only ownership history. Never remove, reorder, or reuse a name.
+architecture-boundary-review
+architecture-diagram-workflow
+architecture-lookup-discovery
+change-impact-analysis
+local-grep-and-search
+remote-grep-and-search
+structural-pattern-audit
+delegated-research-with-ask
+grepple-architecture-boundary-review
+grepple-architecture-diagram-workflow
+grepple-architecture-lookup-discovery
+grepple-change-impact-analysis
+grepple-local-grep-and-search
+grepple-remote-grep-and-search
+grepple-structural-pattern-audit
+grepple-write

@@ -9,7 +9,7 @@ BUILD_DATE ?= $(shell git show -s --format=%cI HEAD 2>/dev/null || echo unknown)
 VERSION_LDFLAGS := -X github.com/greppleai/grepple/internal/cli/version.Version=$(VERSION) -X github.com/greppleai/grepple/internal/cli/version.Commit=$(COMMIT) -X github.com/greppleai/grepple/internal/cli/version.BuildDate=$(BUILD_DATE)
 
 COMMANDS := grepple greppled
-SOURCES := $(shell find cmd internal api -type f -name '*.go') go.mod go.sum
+SOURCES := $(shell find cmd internal api -type f -name '*.go') go.mod go.sum internal/agentskills/catalog.json internal/agentskills/owned-skills.txt
 
 .PHONY: build test agent-benchmark architecture-benchmark release-check lint revive-lint hook-build hook-lint hook-test parser-metadata-generate parser-metadata-check schema-generate schema-check docker-smoke install clean
 
