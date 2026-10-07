@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.0.5](https://github.com/greppleai/grepple/compare/v0.0.4...v0.0.5) (2026-10-07)
+
+
+### Features
+
+* add native CSS language support ([43e8d7e](https://github.com/greppleai/grepple/commit/43e8d7e4030aa919947894cdc7292960c03765fd))
+* add native Svelte language support ([8f94fc6](https://github.com/greppleai/grepple/commit/8f94fc6ed0b1e529b2bd9272e880b59f8579bf8b))
+* **auth:** use server-owned local CLI sessions ([49dcda2](https://github.com/greppleai/grepple/commit/49dcda221ac8cca043e65f0ff6ea3e8b567c9b72))
+* **hooks:** support bounded backend architecture policies ([b3bdc45](https://github.com/greppleai/grepple/commit/b3bdc458d048ca0156e6123f5ec79bd84d09b48a))
+* parse embedded CSS and JS/TS in Svelte components ([bc369f2](https://github.com/greppleai/grepple/commit/bc369f29bc0f6e387126fabfc1c8be0c359e18d6))
+* scope related search navigation and add isolated DuckDB benchmarks ([c3be707](https://github.com/greppleai/grepple/commit/c3be707327965f07aa180d94668f18469a03dcc6))
+* scope related search navigation and add isolated DuckDB benchmarks ([6838336](https://github.com/greppleai/grepple/commit/683833641a033a05ee427264a8046b2302d613a0))
+
+
+### Bug Fixes
+
+* **hooks:** keep stop-time formatting checks read-only ([897e11a](https://github.com/greppleai/grepple/commit/897e11a5c9d146281ca3ca61b3a7787c73fc3955))
+
 ## [0.0.4](https://github.com/greppleai/grepple/compare/v0.0.3...v0.0.4) (2026-09-29)
 
 
