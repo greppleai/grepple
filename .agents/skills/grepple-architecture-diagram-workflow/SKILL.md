@@ -1,5 +1,5 @@
 ---
-name: architecture-diagram-workflow
+name: grepple-architecture-diagram-workflow
 description: Use for source-linked directory dependency Mermaid diagrams. For type shapes and call flow, use exact source and graph navigation rather than removed focused extraction commands.
 ---
 

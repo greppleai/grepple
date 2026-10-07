@@ -1,5 +1,5 @@
 ---
-name: architecture-boundary-review
+name: grepple-architecture-boundary-review
 description: Use when deciding whether local code should move, split, merge, gain a facade, or when reviewing coupling and package boundaries. Treat directory signals as leads until verified in source.
 ---
 

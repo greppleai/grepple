@@ -42,12 +42,20 @@ func Execute(application cliruntime.Context, _ *Args) error {
 
 // String returns reproducible version and runtime metadata.
 func String() string {
+	version, commit, buildDate := buildMetadata()
+	return fmt.Sprintf("grepple %s (commit %s, source-date %s, %s, %s/%s)", version, commit, buildDate, runtime.Version(), runtime.GOOS, runtime.GOARCH)
+}
+
+// BuildVersion returns the effective version, including dirty/source-build markers.
+func BuildVersion() string { value, _, _ := buildMetadata(); return value }
+
+func buildMetadata() (string, string, string) {
 	version, commit, buildDate := Version, Commit, BuildDate
 	if info, ok := debug.ReadBuildInfo(); ok {
 		version = preferModuleVersion(version, info.Main.Version)
 		version, commit, buildDate = applyBuildSettings(version, commit, buildDate, info.Settings)
 	}
-	return fmt.Sprintf("grepple %s (commit %s, source-date %s, %s, %s/%s)", version, commit, buildDate, runtime.Version(), runtime.GOOS, runtime.GOARCH)
+	return version, commit, buildDate
 }
 
 func preferModuleVersion(version, moduleVersion string) string {

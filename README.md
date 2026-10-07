@@ -4,7 +4,38 @@ Grepple helps you find text, inspect code, and follow source relationships in a 
 
 ## Install
 
-Download a `grepple` binary for Linux, macOS, or Windows from [GitHub Releases](https://github.com/greppleai/grepple/releases). To build from source, you need Go 1.27 or later and a C compiler for the bundled Tree-sitter parsers:
+### Download the latest release (Linux and macOS)
+
+The installer selects your OS and CPU architecture, downloads the latest published
+GitHub release, verifies its SHA-256 checksum, and installs `grepple` into
+`~/.local/bin`. It needs `curl`, `tar`, and `sha256sum` (Linux) or `shasum` (macOS);
+no Go toolchain, C compiler, or `sudo` is needed.
+
+```sh
+installer="$(mktemp)"
+curl -fsSL https://raw.githubusercontent.com/greppleai/grepple/main/install.sh -o "$installer" &&
+  sh "$installer"
+rm -f "$installer"
+export PATH="$HOME/.local/bin:$PATH"
+grepple --version
+```
+
+You can inspect the downloaded script before running it. Add the `export PATH`
+line to your shell profile (`~/.bashrc` or `~/.zshrc`) to make it persistent. The
+installer does not change shell profiles or saved login settings. Rerun it to
+upgrade; it replaces the CLI only after the archive passes verification.
+
+From a checkout, run `sh install.sh`. To use another writable directory already
+on PATH, run `sh install.sh --bin-dir /your/bin` (or set `GREPPLE_BIN_DIR`). If a
+different `grepple` appears first on PATH, adjust PATH order; `command -v grepple`
+shows which executable your shell selects. Supported platforms are Linux/macOS
+on amd64 and arm64. Windows users can download the `.zip` from
+[GitHub Releases](https://github.com/greppleai/grepple/releases) and put
+`grepple.exe` in a directory on PATH.
+
+### Build from source
+
+You need Go 1.27 or later and a C compiler for the bundled Tree-sitter parsers:
 
 ```bash
 git clone https://github.com/greppleai/grepple.git
@@ -14,6 +45,28 @@ make build
 ```
 
 Use `make install` to install the locally built CLI. Run `grepple --help` for the current command and flag list.
+
+## Set up your coding agent
+
+Install Grepple's skills for your chosen harness:
+
+```sh
+grepple setup pi
+grepple setup claude
+grepple setup opencode
+grepple setup codex
+```
+
+Run the command for the agent you use. Skills are downloaded from the **same
+release tag as your binary**, never `main` or `latest`. Setup replaces managed
+Grepple skills and removes recognized retired copies, while preserving unrelated
+skills, agent settings, and credentials. Restart/reload your agent afterward.
+
+Use `--dry-run` to preview, `--project` for the current project instead of user
+skills, or `grepple setup --list` to see current and historical owned names.
+Source/development builds require an explicit matching checkout, for example
+`grepple setup pi --source-dir /path/to/grepple`. See [agent setup](docs/agent-setup.md)
+for install locations, compatibility checks, cleanup and ownership rules.
 
 ## Explore a repository
 

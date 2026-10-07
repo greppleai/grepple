@@ -11,7 +11,7 @@ directories:
     - Provide local and remote search guidance
     - Audit syntax-shaped source patterns
     files: []
-  .agents/skills/architecture-boundary-review:
+  .agents/skills/grepple-architecture-boundary-review:
     description: Provides a source-backed workflow for evaluating architecture boundaries, ownership, coupling, dependency leakage, and facade integrity.
     responsibilities:
     - Establish source and ownership context
@@ -24,8 +24,8 @@ directories:
     - path: SKILL.md
       description: Defines the Grepple workflow and interpretation rules for reviewing architecture boundaries and dependency evidence.
       kind: production
-      checksum: ae68218f65038cecb56c04aa823a16d6d5a12c0896d945e63fb4c9a25c1f35f3
-  .agents/skills/architecture-diagram-workflow:
+      checksum: 7ff1b53617c0d62cf3a2ec36adce70bf0fe4ad31dd60c41d81bb86c7ab06b806
+  .agents/skills/grepple-architecture-diagram-workflow:
     description: Defines a source-backed workflow for creating, inspecting, and validating focused Mermaid architecture diagrams with Grepple.
     responsibilities:
     - Select diagram projections based on architectural questions
@@ -37,8 +37,8 @@ directories:
     - path: SKILL.md
       description: Provides commands, projection guidance, workflow steps, and trust rules for source-backed Mermaid architecture diagrams.
       kind: production
-      checksum: 5f894b28b61c932482b899866f6a61c8ea4d27ae9340307c2ad81925da915ed3
-  .agents/skills/architecture-lookup-discovery:
+      checksum: 0be60bc1336860acf81bb1a6137090826760dd56501b6ea09ec70e5621b8fbd7
+  .agents/skills/grepple-architecture-lookup-discovery:
     description: Provides a Grepple workflow for locating source ownership, declarations, entrypoints, and cross-directory relationships while preserving evidence and uncertainty.
     responsibilities:
     - Map bounded repository architecture
@@ -52,8 +52,8 @@ directories:
     - path: SKILL.md
       description: Defines evidence-based commands and trust rules for repository architecture discovery with Grepple.
       kind: production
-      checksum: 033fe4d79608d8b0613921191143d6bb77c031b1a2f2d9dd2eaef9700a6cc518
-  .agents/skills/change-impact-analysis:
+      checksum: c316af1b2c918b0361e48a37c14704b64d5db50b418fac68f05a12aa388fb205
+  .agents/skills/grepple-change-impact-analysis:
     description: Defines a Grepple workflow for resolving symbols and assessing scoped code-change impact.
     responsibilities:
     - Resolve exact symbol declarations
@@ -66,7 +66,7 @@ directories:
     - path: SKILL.md
       description: Documents Grepple commands, confidence rules, completeness checks, and decision records for code-change impact analysis.
       kind: production
-      checksum: 061c1046ffe5cdbc7207650f8caf4080c05969baab6005008496253d4d27fb1b
+      checksum: ad6866ff059d56cb6f1548078ab9366e0c4506cdf35d4859e5e743d012a80cb7
   .agents/skills:
     description: This directory provides source-backed Grepple workflows for repository discovery, architecture analysis, change impact, research delegation, searching, and structural audits.
     responsibilities:
@@ -77,7 +77,19 @@ directories:
     - Retrieve local and remote source evidence
     - Audit syntax-shaped patterns
     files: []
-  .agents/skills/local-grep-and-search:
+  .agents/skills/grepple-write:
+    description: Guides local transactional edits, file creation and deletion with native Grepple hashline anchors.
+    responsibilities:
+    - Retrieve and refresh edit anchors
+    - Apply inclusive nonoverlapping replacements
+    - Create and delete files safely
+    - Validate transactions and handle stale source
+    files:
+    - path: SKILL.md
+      description: Defines anchored writes, literal transactions, dry runs, newline handling and safe retries.
+      kind: production
+      checksum: 902dd088479facc736d6e5990dfe68bd2ee2b4f4a59fbdd00d889334aa14de74
+  .agents/skills/grepple-local-grep-and-search:
     description: Provides deterministic guidance for local file discovery, text and declaration search, evidence retrieval, and edit-safe writes with Grepple.
     responsibilities:
     - Select appropriate local search intents
@@ -89,8 +101,8 @@ directories:
     - path: SKILL.md
       description: Documents Grepple workflows for local discovery, evidence retrieval, and safe source edits.
       kind: production
-      checksum: a4cf054a0b4fcaaacdb806d644d6f9f4ab001283e9e0f68e5c671ee6d2d6651d
-  .agents/skills/remote-grep-and-search:
+      checksum: a0bb59cd8d4f0bd06fe439ee909f898e6861b60dd158921d5786167e9f69a65e
+  .agents/skills/grepple-remote-grep-and-search:
     description: Guidance for using Grepple to search and navigate indexed remote repositories without cloning them.
     responsibilities:
     - Select the appropriate remote inspection command
@@ -101,8 +113,8 @@ directories:
     - path: SKILL.md
       description: Defines procedures and safeguards for inspecting indexed repositories with Remote Grepple.
       kind: production
-      checksum: 42c62c0596c3ef780bca6c5503236295fbce4098936b7629d051b8214f88dc15
-  .agents/skills/structural-pattern-audit:
+      checksum: 9cc02c3a9d219c4f9707021ed4244bbefdf2c590d937305d27cd0094942619f9
+  .agents/skills/grepple-structural-pattern-audit:
     description: A Grepple skill for performing precise structural pattern audits with GritQL.
     responsibilities:
     - Identify syntax-shaped audit targets
@@ -113,7 +125,7 @@ directories:
     - path: SKILL.md
       description: Defines the workflow and safety rules for structural pattern audits using Grepple GritQL.
       kind: production
-      checksum: bd33460835b17f1776498cbebd632987a151587c94ef5487084dde3f8dd2ff80
+      checksum: 9c55098da6d07311c763791325d1d6168a2827d834fd215036df83ddf93a625b
   .github:
     description: GitHub configuration for automated dependency updates and release operations.
     responsibilities:
@@ -349,6 +361,10 @@ directories:
       description: Owns authenticated snapshot cursor search, bounded pages and compatible legacy modes.
       kind: production
       checksum: 5624f7ff0521077eb306ad7883739c511dfc4728a369c1fc6da7e940fb70b93d
+    - path: agent-setup.md
+      description: Owns version-pinned Grepple agent setup, skill discovery, ownership or supporting resources.
+      kind: production
+      checksum: 1c5f7183155f0be8fa249d518b20fab6651af4f999d7fc6feb00c818385a8bb8
   examples/advanced-files:
     description: Advanced examples implement typed cataloging, dependency-aware scheduling, generic search, workflow execution, caching, deployment polling, audited delivery, revision indexing, asynchronous pipelines, and retryable workers.
     responsibilities:
@@ -555,11 +571,11 @@ directories:
     - path: Makefile
       description: Automates builds, tests, linting, schema checks, benchmarks, installation, smoke tests, and cleanup.
       kind: production
-      checksum: 870eaf9ab44fbb5b4c2203922be3557f13b11ba84df65c9ba9a01984357f19ab
+      checksum: e6224f153483549960a124a1bb584d9588f5fa2d23bd4bfe4bc4ba756202ef0f
     - path: README.md
       description: Introduces Grepple to users with installation, local search, navigation, and guide links.
       kind: production
-      checksum: 9bfc0306a1bee0dda65828f66194da3f70d072fd4814916bcfd46d24e4974bfa
+      checksum: 4ee0f9621215bc004cb7252c47e846ee78cc141c92ad9c5623b483678047fd8c
     - path: architecture-production.mmd
       description: Contains a generated Mermaid graph of production package relationships.
       kind: generated
@@ -588,6 +604,10 @@ directories:
       description: Pins Revive lint rules, severity, confidence, and cognitive-complexity thresholds.
       kind: production
       checksum: 448ce82f48e47e43e625ade1c99991725b72cc9b4e4002759240cdc8763dc6a7
+    - path: install.sh
+      description: Downloads and checksum-verifies the latest release, then installs the CLI without changing shell profiles.
+      kind: production
+      checksum: b43b4327e969622d42fc467ac35e53cf860518fbfd126bf99721287201243d15
   hooks/cmd:
     description: The hooks command directory contains the Go executable that validates and dispatches pi hook commands.
     responsibilities:
@@ -1464,7 +1484,7 @@ directories:
     - path: application.go
       description: Defines global controls and dispatches normalized application commands to their implementations.
       kind: production
-      checksum: 37e1bbdba0a486ea884eb03dc4d3fe7004ccf238bc6984831e1951abb2d0924d
+      checksum: b7d3f5b6079b68633c2b722870e0c83ff0ed56d433acbcb19509e244e58fd285
     - path: application_test.go
       description: Tests application command selection, global option ownership, nested normalization, and defaults.
       kind: test
@@ -1476,7 +1496,7 @@ directories:
     - path: args.go
       description: Parses application arguments, normalizes commands, validates availability, and runs output spilling.
       kind: production
-      checksum: 752c217a3585df93af1a8917a04c01d9beccf751c5834689371c562cc2df489d
+      checksum: 14eaa70a2ffc54a9ba1c73c4a922cac2b6e0ccca6994ebca2b7d36fc6aeb770c
     - path: args_test.go
       description: Tests top-level help, execution-universe validation, help routing, and default searches.
       kind: test
@@ -1549,6 +1569,10 @@ directories:
       description: Verifies consistent navigation facts across graph, flow, related, and architecture projections.
       kind: test
       checksum: 001e6d7a2047a2884e8efdc20dbe286c4b4e4659bfe9d2f449d3722f5952dd0e
+    - path: setup_integration_test.go
+      description: Tests bounded source retrieval, version compatibility, ownership migration and safe installation.
+      kind: test
+      checksum: 3b0351b91db156a8156527315f8db4d31cf1c3852246ec3486dfb0a42549f1b9
   internal/cli/grit:
     description: Implements the GritQL structural search command for bounded local scanning, paginated remote querying, query explanation, deterministic result processing, metadata generation, and runtime integration.
     responsibilities:
@@ -2052,7 +2076,7 @@ directories:
     - path: version.go
       description: This file defines build metadata, reproducible version formatting, VCS setting handling, and the version command.
       kind: production
-      checksum: bc4682b350dcbcd1a402ff2e02e33bf06fb4ad4cb13cf426bd3748fb00b2a8f1
+      checksum: da774bd7bddd34cb4f2341470da732dfe086a23ebbd1f2f8a2da786cc8dde6ae
     - path: version_test.go
       description: This file tests reproducible metadata formatting and version command output.
       kind: test
@@ -4772,6 +4796,10 @@ directories:
       description: Tests repository benchmark selection, parsing, caching, timeout handling, and checkout integrity.
       kind: test
       checksum: e365e179a7bd4a1898b8757f5ec6feb367add6591aa52bbd80b8e2f7867a3bee
+    - path: test_install.py
+      description: Tests installer platform selection, checksum verification, failures, symlinks and PATH guidance offline.
+      kind: test
+      checksum: 5b82b997f48319bf052a6eb3f85ce35e03820dca432de512d0179459b76453c8
   testdata/dotdir/.github:
     description: Repository dependency update configuration for Docker-based dependencies.
     responsibilities:
@@ -5277,3 +5305,69 @@ directories:
       checksum: 1c9e7255053db5fc77f0fc1006563fee3d1a706d34df53609054f7a89f6bf91d
       areas:
       - performance-benchmarking
+  .agents/skills/grepple-write/references:
+    description: Owns version-pinned Grepple skills and safe agent harness setup.
+    responsibilities:
+    - Maintain exact source-version compatibility
+    - Preserve ownership history and unrelated user files
+    files:
+    - path: write.md
+      description: Owns version-pinned Grepple agent setup, skill discovery, ownership or supporting resources.
+      kind: production
+      checksum: 897c0e7057aefe379ce7fd71fdba9924ab589443437355a1350e15f2db54d4eb
+  internal/agentskills:
+    description: Owns version-pinned Grepple skills and safe agent harness setup.
+    responsibilities:
+    - Maintain exact source-version compatibility
+    - Preserve ownership history and unrelated user files
+    files:
+    - path: catalog.go
+      description: Owns version-pinned Grepple agent setup, skill discovery, ownership or supporting resources.
+      kind: production
+      checksum: 708119a6671ea86d0bfc5a95cf783365948b891ca2a6249b08348d673cfdeed5
+    - path: catalog.json
+      description: Owns version-pinned Grepple agent setup, skill discovery, ownership or supporting resources.
+      kind: production
+      checksum: ba0d7fb468ba67bb610a3cfc92d91e89dcdbaeda7fe354444703f8b4755a3508
+    - path: catalog_test.go
+      description: Tests bounded source retrieval, version compatibility, ownership migration and safe installation.
+      kind: test
+      checksum: b3488355b72e1bce7a3c868b95311fd1f23922d4d3bf7ee4b3e5f28210a7dfab
+    - path: install.go
+      description: Owns version-pinned Grepple agent setup, skill discovery, ownership or supporting resources.
+      kind: production
+      checksum: 24db092e2798b37bebcac92683067b3c80c0696164a7295db2bddaa51409dd7a
+    - path: install_test.go
+      description: Tests bounded source retrieval, version compatibility, ownership migration and safe installation.
+      kind: test
+      checksum: 6970d659d4c0702e4377b4ecb29af511cfa3003f7c6bb79a51c560062521ac74
+    - path: local_file.go
+      description: Owns version-pinned Grepple agent setup, skill discovery, ownership or supporting resources.
+      kind: production
+      checksum: a4ba01783b30565dc6e22becbd0fa7b8d78c4e474d39c696fac423564a63658b
+    - path: owned-skills.txt
+      description: Owns version-pinned Grepple agent setup, skill discovery, ownership or supporting resources.
+      kind: production
+      checksum: b6238873718a8e2d506c695bf3262d385a2c7fcd0530424690ee4ef8bdbea948
+    - path: source.go
+      description: Owns version-pinned Grepple agent setup, skill discovery, ownership or supporting resources.
+      kind: production
+      checksum: 32b3729a736c6505d6a7f1258e5bb9a19251f3a816e89fc3eefa0f3df40f7fd8
+    - path: source_test.go
+      description: Tests bounded source retrieval, version compatibility, ownership migration and safe installation.
+      kind: test
+      checksum: 6af162c677fc70e232b81f89808c6f9fe93e78580398c517e2dd86eecc9c4545
+  internal/cli/setup:
+    description: Owns version-pinned Grepple skills and safe agent harness setup.
+    responsibilities:
+    - Maintain exact source-version compatibility
+    - Preserve ownership history and unrelated user files
+    files:
+    - path: command.go
+      description: Owns version-pinned Grepple agent setup, skill discovery, ownership or supporting resources.
+      kind: production
+      checksum: d50e30ab1bcb43497a6dbd0e9d24b9eb004a3e045302c523082e498a85e80f84
+    - path: command_test.go
+      description: Tests bounded source retrieval, version compatibility, ownership migration and safe installation.
+      kind: test
+      checksum: fa15ca83c9fe9acd856f4a470080dc2395b7a3b45320d73539d5e46bc8286e4e

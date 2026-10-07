@@ -1,5 +1,5 @@
 ---
-name: architecture-lookup-discovery
+name: grepple-architecture-lookup-discovery
 description: Use to orient in an unfamiliar local repository or answer directory ownership, declaration location, entrypoint, and source-linked cross-directory relation questions. Switch skills for call impact or proposed boundary changes.
 ---
 
@@ -17,4 +17,4 @@ Follow one emitted `PATH:START-END` with `grepple --at PATH:START-END` to verify
 
 Check coverage, exclusions, and truncation before claiming absence; unresolved/ambiguous or adapter-unsupported relations are not evidence of no dependency. Visibility and entrypoint semantics may be unsupported by a language adapter. Use `--production-only` only when tests are deliberately excluded. If JSON spills, inspect the `grepple-artifact-v1` descriptor or narrow the query.
 
-Use `change-impact-analysis` for callers or refactor impact; use `architecture-boundary-review` before recommending a move or facade. For drift between saved architecture reports, compare their JSON outputs with a JSON diff tool after checking they used the same source universe; `grepple architecture compare` is no longer available.
+Use `grepple-change-impact-analysis` for callers or refactor impact; use `grepple-architecture-boundary-review` before recommending a move or facade. For drift between saved architecture reports, compare their JSON outputs with a JSON diff tool after checking they used the same source universe; `grepple architecture compare` is no longer available.

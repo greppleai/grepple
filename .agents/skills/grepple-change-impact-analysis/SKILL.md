@@ -1,5 +1,5 @@
 ---
-name: change-impact-analysis
+name: grepple-change-impact-analysis
 description: Use before renaming, deleting, moving, or changing behavior/signatures of local code, or when asked what calls a symbol, what it calls, or what may break. Text matches alone are not impact evidence.
 ---
 
