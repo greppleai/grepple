@@ -13,7 +13,16 @@ import (
 var navigationRootMarkers = []string{filepath.Join(".grepple", "grepple.json"), filepath.Join(".grepple", "grepple.yaml"), ".git", "go.work"}
 
 func collectRelatedRepositoryFiles(ctx context.Context, params Params, matches []FileMatch) ([]string, error) {
-	roots, err := relatedNavigationRoots(params.Root, matches)
+	var navigable []FileMatch
+	for _, match := range matches {
+		if supportsNavigation(match.Language) {
+			navigable = append(navigable, match)
+		}
+	}
+	if len(navigable) == 0 {
+		return nil, nil
+	}
+	roots, err := relatedNavigationRoots(params.Root, navigable)
 	if err != nil {
 		return nil, err
 	}

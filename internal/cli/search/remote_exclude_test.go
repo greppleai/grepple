@@ -2,21 +2,29 @@ package search
 
 import (
 	"encoding/json"
+	"github.com/greppleai/grepple/internal/apiclient"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
+	"time"
 
-	"github.com/greppleai/grepple/internal/wire"
 	"github.com/greppleai/grepple/internal/search"
+	"github.com/greppleai/grepple/internal/wire"
 )
 
 func TestSearchRemoteSendsAndAppliesRepoExclusion(t *testing.T) {
 	var received wire.SearchRequest
 	server := httptest.NewServer(http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
-		if err := json.NewDecoder(request.Body).Decode(&received); err != nil {
+		if request.URL.Path != "/public/search/pages" {
+			t.Errorf("unexpected endpoint %s", request.URL.Path)
+		}
+		var body apiclient.SearchPageRequest
+		if err := json.NewDecoder(request.Body).Decode(&body); err != nil {
 			t.Error(err)
 		}
-		_ = json.NewEncoder(response).Encode(wire.SearchResponse{Results: []wire.FileResult{
+		received = *body.Search
+		_ = json.NewEncoder(response).Encode(apiclient.SearchPage{Complete: true, PageID: strings.Repeat("A", 43) + "." + strings.Repeat("B", 43), ExpiresAt: time.Now().Add(time.Minute), Results: []wire.FileResult{
 			{Repo: "owner/current", Path: "current.go"},
 			{Repo: "owner/other", Path: "other.go"},
 		}})

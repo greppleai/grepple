@@ -1,14 +1,20 @@
 package search
 
 import (
-	"github.com/greppleai/grepple/internal/wire"
 	"github.com/greppleai/grepple/internal/anchor"
+	"github.com/greppleai/grepple/internal/apiclient"
 	rendercommand "github.com/greppleai/grepple/internal/render"
 	"github.com/greppleai/grepple/internal/search"
+	"github.com/greppleai/grepple/internal/wire"
 )
 
 type Options struct {
 	Params           search.Params
+	RemoteOnly       bool
+	Cursor           string
+	CursorPage       *apiclient.SearchPage
+	MixedRemote      bool
+	RemoteServer     string
 	LineOnly         bool
 	OnlyMatching     bool
 	JSON             string
