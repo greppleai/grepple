@@ -14,6 +14,8 @@ func TestNodeLikeNamedFieldAcrossSupportedLanguages(t *testing.T) {
 		{"csharp", "class App { int value = 1; }\n"},
 		{"dart", "void run(int value) {}\n"},
 		{"hcl", "locals { value = { name = \"demo\" } }\n"},
+		{"svelte", "{#if ready}<button>value</button>{/if}\n"},
+		{"css", ".target { color: red; }\n"},
 		{"go", "package demo\nvar value = 1\n"},
 		{"java", "class App { int value = 1; }\n"},
 		{"javascript", "const value = 1;\n"},
@@ -64,6 +66,13 @@ func TestNodeLikeNamedFieldAcrossSupportedLanguages(t *testing.T) {
 				}
 			}
 			if field == "" {
+				if test.language == "css" {
+					// The pinned CSS grammar has only unfielded children.
+					if _, err := Compile([]byte("language css\nrule_set(name=$name)"), CompileOptions{}); err == nil {
+						t.Fatal("invented CSS named field accepted")
+					}
+					return
+				}
 				t.Fatalf("%s: no declared named grammar field", test.language)
 			}
 			query := fmt.Sprintf("language %s\n%s(%s=$captured)", test.language, parent.Kind(), field)

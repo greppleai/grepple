@@ -1,6 +1,6 @@
 # `gritql-v1` compatibility contract
 
-`gritql-v1` is Grepple's unified, closed, read-only detection contract for every Tree-sitter-backed language in the capability matrix: `go`, `javascript`, `typescript`, `tsx`, `python`, `java`, `kotlin`, `dart`, `swift`, `hcl`, `csharp`, `c`, `cpp`, `rust`, `php`, and `shell`. Target syntax is supplied by language adapters while query algebra, transactions, limits, ordering, and diagnostics remain shared.
+`gritql-v1` is Grepple's unified, closed, read-only detection contract for every Tree-sitter-backed language in the capability matrix: `go`, `javascript`, `typescript`, `tsx`, `python`, `java`, `kotlin`, `dart`, `swift`, `svelte`, `css`, `hcl`, `csharp`, `c`, `cpp`, `rust`, `php`, and `shell`. Target syntax is supplied by language adapters while query algebra, transactions, limits, ordering, and diagnostics remain shared.
 
 The contract is not an alias for an upstream GritQL release. A conforming implementation accepts exactly the documented syntax and rejects every other construct; it does not invoke an external engine, Node, a shell, or a fallback interpreter.
 
@@ -10,7 +10,7 @@ The grammar is EBNF. Literal words and punctuation are quoted. `EOF` means the e
 
 ```ebnf
 pattern          = spacing, language, line_end, spacing, query, spacing, EOF ;
-language         = "language", hspace1, ( "c" | "cpp" | "csharp" | "dart" | "go" | "hcl" | "java" | "javascript" | "kotlin" | "php" | "python" | "rust" | "shell" | "swift" | "typescript" | "tsx" ) ;
+language         = "language", hspace1, ( "c" | "cpp" | "csharp" | "css" | "dart" | "go" | "hcl" | "java" | "javascript" | "kotlin" | "php" | "python" | "rust" | "shell" | "svelte" | "swift" | "typescript" | "tsx" ) ;
 
 query            = prefix, [ spacing, where_clause ] ;
 prefix           = snippet
@@ -192,7 +192,11 @@ relation:
 
 The optional hook-level `enabled` flag accepts only YAML booleans: omit it or use `true` to run the rule, or use `false` to disable scanning while keeping its configuration validated. Disabled rules are absent from reports even when explicitly selected with `--id`. Hooks run only when `grepple hook` is invoked.
 
+File-local `gritql-v1` hooks also support bounded, language-independent [string assertions](hook-string-assertions.md): `assert.equals` compares captured source text with expressions over literals and repository-relative paths. The YAML supplies all naming policy; this does not extend the GritQL grammar. Invalid configuration, missing captures and expression/scan limits fail closed. Assertions cannot be combined with annotation or relational/metric engines.
+
 `relation.mode: unmatched_left` reports each **left** finding whose key has no right-side match in the same scope/partition, including the same file. The default mode retains cross-file pair behavior. This is a bounded, source-authored anti-join over the entire selected snapshot; `unique_left` and `{{right.*}}` message placeholders are invalid in unmatched mode. `{{left.*}}` and `{{key}}` describe the reported left finding. Missing sources, parser diagnostics, resource limits, and missing/ambiguous partitions still fail closed; absence in a partial scan is never a clean result.
+
+The stricter optional [Go interface projections](go-interface-projections.md) resolve source-declared module interfaces for constructor results and compare exported method signatures with interface contracts. They do not change the existing standalone-function warning.
 
 `relation.mode: unmatched_left_any` with `left_key: {binding: result, projection: go-return-types}` evaluates **all top-level declared Go result types** of each left finding. It reports the left finding only when none match a right-side named interface declaration in the same directory and `package_clause` partition. A missing optional result binding (for a function with no result) also reports it; direct inline interfaces and predeclared `error`/`any` satisfy the check. The projection accepts direct named and generic named results, not pointers, slices or qualified imported results. It does not type-check aliases, shadowed predeclared identifiers, imported interfaces, or build-tag configurations; unresolved names remain warnings. Use `maybe function_declaration(result=$result)` to capture optional returns. See [the standalone Go function warning hook](../.grepple/hooks/go-standalone-functions.yaml). The installed rule checks only exported package-level Go functions (Unicode uppercase initial rune), not unexported helpers or methods. Relational hooks scan the complete selected snapshot even without `--all`; `relation.report_changed_only: true` limits **reported** findings to Git-changed paths by default while still resolving against all eligible files. `--all` reports every finding.
 
@@ -398,3 +402,18 @@ A conforming implementation must fixture-test every grammar production, supporte
 The `hook-selectors` conformance fixture exercises source-authored `gritql-v1` hooks (node/field selectors, capture, scoped exclusion, immediate-function parent checks, empty lists, and import placeholders), including Dart whole-node bindings. A separate versioned `hook-engines` fixture runs relational joins, unmatched-left and unmatched-left-any modes against complete source snapshots and checks source-authored McCabe and nested-loop metric scores, thresholds, and fail-closed partial scans. These augment, rather than replace, the per-language reliability vectors and focused engine unit tests.
 
 The supported language set remains closed. Additive read-only syntax is documented and fixture-tested within this `gritql-v1` implementation (including structural node patterns); changing established matching, range, ordering, cancellation, or diagnostic behavior requires a new compatibility contract. The separate `gritql-relational-v1` hook engine versions cross-file semantics explicitly. Existing stable codes may not be reassigned.
+
+### Svelte embedded script/style syntax
+
+`language svelte` searches one composite component CST. Script/style bodies are
+parsed by the pinned JavaScript, TypeScript and CSS adapters; markup remains
+Svelte-owned. Native selectors such as `function_declaration(name=$name)` and
+`declaration()` therefore reach real embedded nodes, never matching equivalent
+text in markup, comments or string literals. Snippets such as `fetch($args)` and
+`color: $value;` are inferred in script/style contexts as well as markup contexts.
+All findings and bindings retain original component byte/line ranges, without
+synthetic wrapper coordinates. Named fields are available for JS/TS nodes; CSS
+retains its native unfielded-child contract. Malformed or unsupported embedded
+languages yield source diagnostics rather than an alternate guessed grammar.
+Template-expression internals, preprocessors, external `src` files and compiler-
+generated component bindings are not interpreted.

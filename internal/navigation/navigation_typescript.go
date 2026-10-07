@@ -230,6 +230,7 @@ func newECMANavigationIndex(base baseLanguageNavigationIndex) *ecmaNavigationInd
 }
 
 func (*ecmaNavigationIndex) filterCandidates(call navigationCall, candidates []navigationDeclaration) []navigationDeclaration {
+	candidates = filterSvelteScriptCandidates(call, candidates)
 	if call.importPath != "" && len(call.importTargetFiles) == 0 && !strings.HasPrefix(call.importPath, ".") {
 		return nil
 	}
@@ -237,7 +238,7 @@ func (*ecmaNavigationIndex) filterCandidates(call navigationCall, candidates []n
 		return candidates
 	}
 	return filterNavigationCandidates(candidates, func(candidate navigationDeclaration) bool {
-		return candidate.file == call.file
+		return candidate.file == call.file && svelteScriptScopesMatch(call.moduleScope, candidate.moduleScope)
 	})
 }
 

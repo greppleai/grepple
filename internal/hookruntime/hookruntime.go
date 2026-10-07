@@ -1,5 +1,5 @@
 // Package hookruntime bridges separately built Pi integrations to the
-// repository-owned, read-only relational GritQL hook runner.
+// repository-owned, read-only GritQL hook runner.
 package hookruntime
 
 import (
@@ -15,6 +15,11 @@ type Finding = hook.Finding
 // repository snapshot, including unchanged files needed for cross-file joins.
 func CheckRelation(ctx context.Context, root, id string) ([]Finding, error) {
 	return hook.CheckRepositoryRelation(ctx, root, id)
+}
+
+// CheckFileRule runs one configured file-local GritQL hook over the full scope.
+func CheckFileRule(ctx context.Context, root, id string) ([]Finding, error) {
+	return hook.CheckRepositoryFileRule(ctx, root, id)
 }
 
 // RepositoryRoot resolves the hook configuration ancestor for relative findings.

@@ -24,7 +24,7 @@ func TestAIProviderCommandUsesCommandContextOutput(t *testing.T) {
 
 func TestLogoutCommandUsesApplicationDiagnostics(t *testing.T) {
 	t.Setenv("HOME", t.TempDir())
-	if err := mustBackendConfig(t).StoreBackendLogin("token", "", 0, 0, "user"); err != nil {
+	if err := mustBackendConfig(t).StoreBackendLogin("token", "", 0, 0, "user", ""); err != nil {
 		t.Fatal(err)
 	}
 	var diagnostics bytes.Buffer
@@ -38,7 +38,7 @@ func TestLogoutCommandUsesApplicationDiagnostics(t *testing.T) {
 
 func TestLogoutSurvivesMalformedUserPreferences(t *testing.T) {
 	t.Setenv("HOME", t.TempDir())
-	if err := mustBackendConfig(t).StoreBackendLogin("token", "", 0, 0, "user"); err != nil {
+	if err := mustBackendConfig(t).StoreBackendLogin("token", "", 0, 0, "user", ""); err != nil {
 		t.Fatal(err)
 	}
 	path := filepath.Join(t.TempDir(), "settings.json")

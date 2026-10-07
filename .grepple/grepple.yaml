@@ -292,11 +292,11 @@ directories:
     - path: file-type-support.md
       description: Catalogs supported file languages, parser capabilities, navigation facts, extraction paths, and evidence limits.
       kind: generated
-      checksum: 3a863754818aed84cd2a3bea14770f91c383a36c34ef8e4611fa486f405ecf56
+      checksum: d0e48a5abd2ea0f18abe8f25df8e40f3347513003e89e2c1fa94d824c1955a9b
     - path: gritql-compatibility.md
       description: Defines the closed gritql-v1 syntax, parsing, matching, limits, diagnostics, security, and language compatibility contract.
       kind: production
-      checksum: 9e4ea8d0dbbbdf174be28c457d18fa071cf053886261c4e6127f92ea1fd059d8
+      checksum: 4a344935f968b7fa4e16e77fd80057115b14e4b6d8f831084e8ab4a4699f07c8
     - path: gritql-metric-parity.md
       description: Documents reproducible cognitive-complexity parity checks and why Revive remains authoritative.
       kind: production
@@ -563,11 +563,11 @@ directories:
     - path: go.mod
       description: Declares the Go module, toolchain version, and direct and indirect dependencies.
       kind: production
-      checksum: ef7586b4b8832eae5dbf525491cd9b7f68d77f7106d954bb96916c6f64b2e0e5
+      checksum: a6fa858fde18d4cca5c97b3fe9da2d3daf1449fce2c39efdcae7346e61e11cc5
     - path: go.sum
       description: Records cryptographic checksums for resolved Go module dependencies.
       kind: production
-      checksum: 11664f600aea393f6709188c202a211b0d997e423b7a7f2121f3013f29e02214
+      checksum: 84d148f3eb40c4d9a4a46900d25d753e676cecb4dee43418e628d427197b9266
     - path: release-please-config.json
       description: Configures Release Please versioning, changelog generation, and Go package release behavior.
       kind: production
@@ -622,11 +622,11 @@ directories:
     - path: go.mod
       description: Declares the hooks Go module, its Grepple dependency, indirect parser dependencies, and local replacement.
       kind: production
-      checksum: 055a5ca8d0b2beadca4030f3c1d01af98cb487b454e66ace67de742053360320
+      checksum: 8971f03ea2d743d3dc1fc28da793d85181b6b60c5be8b512d05e1a5666b191ad
     - path: go.sum
       description: Records checksums for the hooks module and its transitive dependencies.
       kind: production
-      checksum: 8c85c0884d9c5acf770fb483d1e8bd0ec9b18cc7ce9f3ef5d177dafd19d4ed9a
+      checksum: 0836cf050f73d7a7a61c0ef88668b76774f7b057b1f103f56813fb5d56684b32
   hooks/guides:
     description: Prescriptive remediation guides for revive diagnostics, Go style, documentation, control flow, project-specific analysis, and Mermaid diagram validation.
     responsibilities:
@@ -2759,7 +2759,7 @@ directories:
     - path: empty_predicate_test.go
       description: Tests empty predicate behavior across registered query languages.
       kind: test
-      checksum: 9bbd690a2add0b9485dc252e92f3205b3bc9aa5b32707adc1b9751ed834de3ab
+      checksum: 5652a7e717d33065444b5ae2ed628638abc47a9c59263c92b92655b7911fb399
     - path: evaluator.go
       description: This file evaluates compiled expressions against parsed syntax trees with bindings and resource budgets.
       kind: production
@@ -2805,13 +2805,13 @@ directories:
     - path: language.go
       description: This file registers target-language adapters and exposes deterministic language capabilities.
       kind: production
-      checksum: 6dd1881e989fbdab282048db53972c56a1accb6bdbfe138d5cd021ce81764dfb
+      checksum: f5b5a1459fd75799922224195896f4177aee0d63bb6f1d97084ec320a08451c4
       areas:
       - language-adapters
     - path: language_test.go
       description: This file tests language registration, capability metadata, and adapter selection.
       kind: test
-      checksum: 2fdda51dad4ad6279f0456f972eea0e63b1dc8a166c9585500da17c4ebd3c3d8
+      checksum: 865b047eed67dcba3f4556ec0c725c8fb3822823d0a849c2827287adab8bc0a8
       areas:
       - language-adapters
     - path: matcher.go
@@ -2829,19 +2829,19 @@ directories:
     - path: metrics_test.go
       description: Tests GritQL metric evaluation across supported languages.
       kind: test
-      checksum: 86b7ed44975ce6fd2fcb87e90eb9d3cfbfb3fab95e97f79cff11381220f6610f
+      checksum: 0496a4e30d2d791541e83465d8e6046f667fb9ad5d4a43457b496f5fcfb9c3a4
     - path: node_like_languages_test.go
       description: Tests node-like matching across supported language syntax trees.
       kind: test
-      checksum: b0d7935579ad2ed76405322c4947d09c5e4f4ab706149be2b7a0f1ce69d73b06
+      checksum: a9a23a86c5d312849c96400010a05c474043db0928739016a1941b97eb8ee00e
     - path: node_like_test.go
       description: Tests node-like query matches and semantic predicates.
       kind: test
-      checksum: 843e6d24450ba368e04bf01a6898b1727fc9b85f271591b85b40236173840e08
+      checksum: 3dfd16cc971acd27068bde47d26658b896bcb1891b7c20c21a0d1d59e777bc83
     - path: parent_predicate_test.go
       description: Tests parent predicate matching across supported languages.
       kind: test
-      checksum: 10a0a731246129135d538b7cc9c0004ba7ca962f28a9dc3c4bc7835adf71c1fb
+      checksum: 36f6c4c7090d7512fb81e9ac39cb5601fd9418f4c80c5cdf7240595dfb1a4f49
     - path: python_language.go
       description: This file compiles Python snippets across supported expression, statement, declaration, and file contexts.
       kind: production
@@ -2870,17 +2870,17 @@ directories:
     - path: query_syntax.go
       description: This file owns pinned GritQL parsing, syntax diagnostics, query trees, and compatibility validation.
       kind: production
-      checksum: 753b3551b641e5bd88bf215f134dcf408464c7d8faa454538d1997024a51e79d
+      checksum: ad0073cdee1fc7ff3487442ac0098d990daecb6005aec9a97d4f7a75b6d1e384
       areas:
       - query-parsing
     - path: relational_test.go
       description: Tests relational query behavior and language-specific fixtures.
       kind: test
-      checksum: 144202700d87882e2e7036f7cd8debe9af3339e1bf81cb65856d310856129675
+      checksum: 4a01cb0d8383139f94f159a7ddc0b9abf7289d8740de72a9bf610c3ce02a1db7
     - path: representative_benchmark_test.go
       description: This file benchmarks representative end-to-end structural-search workloads.
       kind: test
-      checksum: 4438828ea2bfcbf890918085804a97645b18380ef56c752eebfff14ebd1f8e9e
+      checksum: 302f86062249b0fdce8cfe659580bb2917150687bc05b6ddb51afdc3eac747b9
       areas:
       - performance-benchmarking
     - path: scanner.go
@@ -2917,7 +2917,7 @@ directories:
     - path: template.go
       description: This file defines immutable structural templates, snippet contexts, slots, nodes, and accessors.
       kind: production
-      checksum: 0290f2b11e677683be0231bc545593e2f201b617281131aa561067530196a297
+      checksum: 1d054f01e2ee15a9d08f2ec14fca159899be36f9bfe92661897fe8337aaa5b1b
       areas:
       - structural-templates
     - path: template_test.go
@@ -2941,7 +2941,7 @@ directories:
     - path: wrapped_language.go
       description: Adapts wrapped Tree-sitter languages including C, C++, C#, Java, Kotlin, Rust, Shell, and Swift.
       kind: production
-      checksum: 4302e1ce8114313855fa30547646ebd07ffe3167a89f3df70b50472e8c89fa97
+      checksum: f41b2ad6416529917fffa329700cd12c1ad2e6a6ce3b4b8155f924592e280b21
       areas:
       - language-adapters
     - path: wrapped_language_test.go
@@ -2950,6 +2950,38 @@ directories:
       checksum: 1cd0506b995249b7f1112a96ef75e7bb4507a3608b624f74868155884b5238e6
       areas:
       - language-adapters
+    - path: svelte_language.go
+      description: Defines native Svelte snippet contexts and language-owned placeholder cardinalities.
+      kind: production
+      checksum: b0f02657da2b33b86ec6eef1de3237359e745f91bb6d95b14adf69bdfbd8d817
+      areas:
+      - query-compilation
+      - structural-templates
+    - path: svelte_language_test.go
+      description: Tests Svelte node queries, source ranges, markup templates and opaque embedded-language boundaries.
+      kind: test
+      checksum: c91b4b5cae88643214fc386c4e6ecc620b3420cb68a08ccd947f5ab43722f6ce
+      areas:
+      - conformance-validation
+    - path: css_language.go
+      description: Defines native CSS snippet contexts and placeholder cardinalities for unfielded grammar nodes.
+      kind: production
+      checksum: e47ffebed74aaf2d13fdde594ba90550ee4b525c03659289ec21edb8714d2e2e
+      areas:
+      - language-adapters
+      - structural-templates
+    - path: css_language_test.go
+      description: Tests CSS node queries, UTF-8 ranges, value captures and unsupported syntax rejection.
+      kind: test
+      checksum: dfce42e45690edfa8b402381ac079cf440433d7f64e03bda087329bb94f10ffd
+      areas:
+      - conformance-validation
+    - path: svelte_injection_test.go
+      description: Tests embedded JS/TS/CSS selectors and templates with original source ranges.
+      kind: test
+      checksum: c50fcc8ecebcc91ff078de134f86f6ed774bed6e078f96584d1760b0515abb6a
+      areas:
+      - conformance-validation
   internal/gritql/internal:
     description: Vendored Tree-sitter grammar, generated parser artifacts, runtime headers, and Go binding for parsing GritQL source files.
     responsibilities:
@@ -2976,7 +3008,7 @@ directories:
     - path: PROVENANCE.md
       description: Records the upstream origin, Grepple patch, checksums, and verified parser regeneration procedure.
       kind: vendor
-      checksum: 4aa25d1795727d0024f95544f5d8876185c7c86a35ca4fe74798844e27adf880
+      checksum: 946156aa6d1d8a8435ca1e7e2b0385e53c79343480b192ece985a9a6836f9eb5
     - path: binding.go
       description: Provides the Go binding that returns the generated GritQL Tree-sitter language descriptor.
       kind: production
@@ -2984,19 +3016,19 @@ directories:
     - path: grammar.js
       description: Defines the GritQL Tree-sitter grammar, precedence rules, declarations, patterns, expressions, and literals.
       kind: vendor
-      checksum: b8d34e7c9526e063a01cfe9cb7ad8c2e0e2ec2ad89564b0ece618af3be2fc11e
+      checksum: ffb946e4461845fcb774f0a240c34ffe5dd02b74ca228c91afd29460d63c5378
     - path: grammar.json
       description: Contains the generated JSON representation of the patched GritQL grammar.
       kind: generated
-      checksum: 79ccc7e9fbe59c1a216da992c6ec0ae1f2ece4a69991b83137eb174b7e77fc1e
+      checksum: 5c28096821ccd984be27b157af5e7127a623d004128142059914314d6810bdcb
     - path: node-types.json
       description: Lists the generated named GritQL syntax node types and their fields.
       kind: generated
-      checksum: 575fec3e7565a3c6788ed6629d0c4acff2c848210cdc8a62a0d54c9540f647fa
+      checksum: d0d46fb6463e5be6cbb9404680d57e23e12585f67225cc49945b70a41916df37
     - path: parser.c
       description: Implements the generated Tree-sitter C parser for the GritQL grammar.
       kind: generated
-      checksum: ea92d632b2923596c6d0d6321287014d789ea0b313fe6db5ad9d0b3e972cff6e
+      checksum: 30a928a38e41c0380bc7185f048f4aad76275f554916fa24cd9201017c2f8262
     - path: scanner.c
       description: Provides the no-op external scanner implementation used by the GritQL Tree-sitter parser.
       kind: vendor
@@ -3083,7 +3115,7 @@ directories:
     - path: cases.json
       description: Defines cross-language gritql-v1 reliability test vectors and expected findings.
       kind: fixture
-      checksum: c9799a6dc9b2aa7070664470a75be3e02742f085fd361ec1e38c20c895b01ba3
+      checksum: a71e595cdb43b21ec712372ceedd64b87e01f84f5f1650748dfe5d3cf05f617f
   internal/gritql/testdata/conformance/matcher:
     description: Matcher conformance fixtures define expected behavior for structural pattern matching.
     responsibilities:
@@ -3236,7 +3268,7 @@ directories:
     - path: engine.go
       description: Builds navigation indexes from files, documents, and text sources and resolves graph relationships.
       kind: production
-      checksum: 2cddbd037f3eb8aaa7b1f4f8f50217999d77fd9e8a954880f9a6167bc2b810a4
+      checksum: f014da808b1e66dd2ca7b7cb8a64eb891cf43c27c5fad69530eeb78fae09ddc3
       areas:
       - graph-building
       - language-resolution
@@ -3328,7 +3360,7 @@ directories:
     - path: navigation_language_index.go
       description: Defines language navigation index behavior and registers resolvers for supported language families.
       kind: production
-      checksum: 49a465967ec9ae8bdde6bc717f019e9418278eedd3c5e7d928b6029931a9e022
+      checksum: 5a0c1099cc7960075d8e092b6db034dc91bc8ee5ebbd4f680966bbdbf1eca1d1
       areas:
       - language-resolution
     - path: navigation_language_index_test.go
@@ -3382,7 +3414,7 @@ directories:
     - path: navigation_typescript.go
       description: Resolves JavaScript and TypeScript module aliases using tsconfig base URLs, paths, and tolerant JSON parsing.
       kind: production
-      checksum: 32b9a152573c34cd957e5f7254714554c2f4ec03fb7e0a5891344a011cb1377a
+      checksum: d0dec3e6c30c81f25bff2bba36c033fb0767dd5e572bf3ca1ffe56f6c8af99f3
       areas:
       - language-resolution
     - path: navigation_typescript_index_test.go
@@ -3416,6 +3448,18 @@ directories:
       checksum: 2fdd54fe19c3c02d3a807d7e09bc09a2b6562c3d3bd3b84e753061f8a70f9e1f
       areas:
       - resolution-statistics
+    - path: navigation_svelte.go
+      description: Prevents implicit lexical call resolution between isolated component script bodies.
+      kind: production
+      checksum: 129304d1fe57d74d8cd90b07f1c6a6f6768ed5c1e40732251fbfc075f1a09bca
+      areas:
+      - language-resolution
+    - path: navigation_svelte_test.go
+      description: Tests same-script calls and exact ordinary TypeScript import resolution from Svelte components.
+      kind: test
+      checksum: b8870ebcd7a6c9b4382e0d4821777922f17020f199e1cf3bd72b79fc7c992b0e
+      areas:
+      - language-resolution
   internal/outputspill:
     description: Captures oversized command output as immutable, content-addressed artifacts and validates spill option parsing.
     responsibilities:
@@ -3506,7 +3550,7 @@ directories:
     - path: document.go
       description: Defines parsed documents, syntax nodes, and source metadata.
       kind: production
-      checksum: 2569dcdec8ece3950b17749f57fb181e19b5054b133635e9f4693481bea74b63
+      checksum: 76f227a2fefc9f4120a704747c004cf825895aa31c75333f4214e410fde2fd63
       areas:
       - document-model
     - path: document_projection_test.go
@@ -3524,7 +3568,7 @@ directories:
     - path: language.go
       description: Defines language capabilities, registration, and parser selection.
       kind: production
-      checksum: d26c4c6ed6fd79a222fb82ae430cec52cc06e760abbaff661dd85a12579c013c
+      checksum: e4bdd510c58a5bc38552ffb7b4909f8ee38d66122641791a5f230b94f8d5b14c
       areas:
       - language-adapters
     - path: language_c.go
@@ -3632,7 +3676,7 @@ directories:
     - path: language_metadata.go
       description: Provides generated grammar metadata for supported languages.
       kind: generated
-      checksum: 22f9f7c6a84663e20511b48e15cfd7600e7702f57321683faf7d44da629058b1
+      checksum: 057d53d94d872fc9ea23411ee442e203d0717b9caf4056b0e9d3849061a94c04
       areas:
       - language-adapters
     - path: language_navigation.go
@@ -3698,7 +3742,7 @@ directories:
     - path: language_support_test.go
       description: Tests supported language registration and capabilities.
       kind: test
-      checksum: 8c27a34b9230dab9593e54e5280e38344aded30ddf46ef1f35eaa4bbf8d187cb
+      checksum: 77c835172d949b0dccc1d558063a9ef663b1902a623273714cea5d3335222846
       areas:
       - language-adapters
     - path: language_swift.go
@@ -3762,7 +3806,7 @@ directories:
     - path: navigation.go
       description: Builds declarations, calls, and navigation graphs.
       kind: production
-      checksum: 417abfad2b2f4723ed7cce07c8d7b0543f6423444131ad0ab3863fcf0ba3a7c9
+      checksum: 45a736400888823b7396d9a8b72d9eff270a8ea08df7969e407e48d0a551f4e3
       areas:
       - navigation-graph
     - path: navigation_adapter.go
@@ -3924,7 +3968,7 @@ directories:
     - path: tree_sitter.go
       description: Integrates Tree-sitter parsers and syntax trees.
       kind: production
-      checksum: 3327a75b67bea4429a0460c53b6acb3550121e4f8d62462d080095c8745a7d31
+      checksum: 42b8d1d77f1b3f1df7b372e090517aa363324e303123b454ebc3be8db8d0ecbb
       areas:
       - tree-sitter-integration
     - path: tree_sitter_bench_test.go
@@ -3957,6 +4001,65 @@ directories:
       checksum: 1facebe3b7eb93a4cdfc43e40a851f7554ec8ef299b34f765cf05d7489ca2e8d
       areas:
       - document-model
+    - path: language_svelte.go
+      description: Owns Svelte markup/control-block parsing, structural context, outlines and snippet declarations.
+      kind: production
+      checksum: 04c70b7ee24d62c03d68c85e7293ffaa4d61a2f0224e683c08c877bd6035784b
+      areas:
+      - language-adapters
+      - structural-segments
+      - outline-generation
+    - path: language_svelte_test.go
+      description: Tests native Svelte syntax, outlines, snippet-only facts, source context and malformed input.
+      kind: test
+      checksum: c74e0e4fe5fe7f516f387f3795f18024dc2b7f39c8ee79b7bd4f95f441283033
+      areas:
+      - language-adapters
+    - path: language_css.go
+      description: Owns CSS parsing, structural context, nested outlines and conservative configuration declarations.
+      kind: production
+      checksum: 93fef452febb0a0c7aec1a33e27d9d958f2b5c993c75c1b8be6e33ce3a0b9878
+      areas:
+      - language-adapters
+      - outline-generation
+      - structural-segments
+    - path: language_css_test.go
+      description: Tests CSS syntax, classification, nesting, declaration-only navigation and malformed recovery.
+      kind: test
+      checksum: 38dbf90241e92341e20899929e1395b95c4fb0db4afcd07b1d6e3c3c9eaddeaa
+      areas:
+      - language-adapters
+    - path: grammar_kind_test.go
+      description: Tests grammar node/field validation and conservative unknown-language behavior across registered adapters.
+      kind: test
+      checksum: db577176b16afa4ff1b587cc53bf31d24eb9534e560421a98550f29f2a8975f0
+      areas:
+      - language-adapters
+    - path: grammar_service.go
+      description: Projects pinned native and composite grammar node, field and cardinality facts.
+      kind: production
+      checksum: 1b42897f00474ea14e5a171c41db242e115a7b74db4b6ce15393784fd578e291
+      areas:
+      - language-adapters
+    - path: language_svelte_injection.go
+      description: Owns bounded native script/style body selection, source-coordinate projection, diagnostics and structural context.
+      kind: production
+      checksum: eb5bdd7e27458ee8cb3359fb542b31b3e62360e34275a01c2c6b4286ab7cfcac
+      areas:
+      - language-adapters
+      - structural-segments
+    - path: language_svelte_injection_test.go
+      description: Tests original UTF-8/CRLF coordinates, embedded outlines/diagnostics, context, lifetime, concurrency and cache identity.
+      kind: test
+      checksum: 03d248de1f0fec45927dbf814c245a186a40a6547b977816ffa758502b885234
+      areas:
+      - language-adapters
+    - path: language_svelte_navigation.go
+      description: Composes conservative native embedded facts with isolated script scopes and no guessed component exports.
+      kind: production
+      checksum: 8b92b9aed5d90c0ea8bd8fc558ace6a90e9305993ee5928efd1dd738be437654
+      areas:
+      - navigation-graph
   internal/parser/internal/generate:
     description: Generates deterministic parser language metadata from Tree-sitter grammar modules.
     responsibilities:
@@ -3969,7 +4072,7 @@ directories:
     - path: main.go
       description: Implements the command that inspects Tree-sitter grammars and renders parser metadata.
       kind: production
-      checksum: 7ce035d1d7d1427d65e157bab3aaa8e6bf4240b2a5cf9259b0ac226fc2ed3475
+      checksum: 88d137f2880ea63c3a7e466d70c27438d523381552cf71bc5429bdcdfa3f9f35
     - path: main_test.go
       description: Tests grammar fingerprinting, deterministic rendering, and transitive subtype closure.
       kind: test
@@ -4725,3 +4828,21 @@ directories:
       description: Configures the repository server, ignored paths, output spilling, and indexed repositories.
       kind: production
       checksum: 25a2020335d44bd617c25fe251e0cedb8f99e6fc18d15bb6767332f3cd786edb
+  testdata/svelte:
+    description: Svelte component fixtures for native markup, template blocks, snippets and opaque embedded code.
+    responsibilities:
+    - Exercise native Svelte parser and structural query behavior
+    files:
+    - path: Counter.svelte
+      description: Svelte 5 counter fixture with TypeScript script, snippets, control blocks, a component and CSS.
+      kind: fixture
+      checksum: b9811d961b819945c0d1e119b81a194bb615f6b202fe6a843747391e6fe14489
+  testdata/css:
+    description: Native CSS fixtures with nested selectors, custom properties, at-rules, keyframes and Unicode text.
+    responsibilities:
+    - Exercise CSS structural parsing and query semantics
+    files:
+    - path: styles.css
+      description: Stylesheet fixture covering declarations, modern nesting and rule hierarchy.
+      kind: fixture
+      checksum: 3c5e1548a71621128d8ab4cbb5554ee654cd9fc726461f6bb68bf7bd104e9eda

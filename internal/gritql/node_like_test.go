@@ -43,6 +43,8 @@ func TestNodeLikePositionalCaptureAcrossSupportedLanguages(t *testing.T) {
 		{"csharp", "class App { int value = 1; }\n"},
 		{"dart", "void run(int value) {}\n"},
 		{"hcl", "locals { value = 1 }\n"},
+		{"svelte", "<button>value</button>\n"},
+		{"css", ".target { color: red; }\n"},
 		{"go", "package demo\nvar value = 1\n"},
 		{"java", "class App { int value = 1; }\n"},
 		{"javascript", "const value = 1;\n"},

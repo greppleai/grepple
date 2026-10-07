@@ -4,21 +4,25 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
+
+	"github.com/greppleai/grepple/internal/config"
 )
 
 const deviceGrantType = "urn:ietf:params:oauth:grant-type:device_code"
 
-// LoginConfig is the router-advertised GitHub device-flow configuration.
+// LoginConfig advertises the server-owned device login protocol.
 type LoginConfig struct {
+	Provider string `json:"provider"`
 	ClientID string `json:"clientId"`
 	Scopes   string `json:"scopes"`
 }
 
-// DeviceCode starts a GitHub OAuth device flow.
+// DeviceCode starts a server-owned device flow.
 type DeviceCode struct {
 	DeviceCode       string `json:"device_code"`
 	UserCode         string `json:"user_code"`
@@ -29,8 +33,9 @@ type DeviceCode struct {
 	ErrorDescription string `json:"error_description"`
 }
 
-// DeviceToken is the result of a GitHub OAuth device flow.
+// DeviceToken is the result of a server-owned device flow.
 type DeviceToken struct {
+	Login                 string `json:"login"`
 	AccessToken           string `json:"access_token"`
 	TokenType             string `json:"token_type"`
 	Scope                 string `json:"scope"`
@@ -48,7 +53,7 @@ func (client *apiClient) LoginConfig(ctx context.Context, server string) (LoginC
 		return LoginConfig{}, err
 	}
 	request.Header.Set("accept", "application/json")
-	response, err := client.httpClient.Do(request)
+	response, err := client.authDo(request)
 	if err != nil {
 		return LoginConfig{}, fmt.Errorf("fetch login config from %s: %w", server, err)
 	}
@@ -60,7 +65,7 @@ func (client *apiClient) LoginConfig(ctx context.Context, server string) (LoginC
 		return LoginConfig{}, fmt.Errorf("fetch login config from %s failed (%d)", server, response.StatusCode)
 	}
 	var config LoginConfig
-	if err := json.NewDecoder(response.Body).Decode(&config); err != nil {
+	if err := json.NewDecoder(io.LimitReader(response.Body, 1<<20)).Decode(&config); err != nil {
 		return LoginConfig{}, fmt.Errorf("decode login config: %w", err)
 	}
 	return config, nil
@@ -72,43 +77,43 @@ func (client *apiClient) RequestDeviceCode(ctx context.Context, host, clientID, 
 	if err != nil {
 		return DeviceCode{}, err
 	}
-	response, err := client.httpClient.Do(request)
+	response, err := client.authDo(request)
 	if err != nil {
 		return DeviceCode{}, err
 	}
 	defer response.Body.Close()
 	var code DeviceCode
-	if err := json.NewDecoder(response.Body).Decode(&code); err != nil {
+	if err := json.NewDecoder(io.LimitReader(response.Body, 1<<20)).Decode(&code); err != nil {
 		return code, err
 	}
 	if code.Error != "" {
 		return code, fmt.Errorf("device code request failed: %s", firstNonEmpty(code.ErrorDescription, code.Error))
 	}
-	if code.DeviceCode == "" || code.UserCode == "" {
-		return code, fmt.Errorf("device code request returned no code (is the client ID a device-flow-enabled GitHub App/OAuth App?)")
+	if response.StatusCode < 200 || response.StatusCode >= 300 || code.DeviceCode == "" || code.UserCode == "" || code.ExpiresIn <= 0 || code.ExpiresIn > 3600 {
+		return code, fmt.Errorf("device code request returned incomplete authorization data")
 	}
 	if code.Interval <= 0 {
 		code.Interval = 5
+	}
+	verification, err := url.Parse(code.VerificationURI)
+	origin, originErr := url.Parse(host)
+	if err != nil || originErr != nil || verification.Scheme != origin.Scheme || verification.Host != origin.Host || verification.User != nil {
+		return code, fmt.Errorf("server returned a verification URL outside its origin")
 	}
 	return code, nil
 }
 
 func (client *apiClient) PollDeviceToken(ctx context.Context, host, clientID string, code DeviceCode, sleep func(time.Duration)) (DeviceToken, error) {
 	interval := time.Duration(code.Interval) * time.Second
-	deadline := client.now().Add(time.Duration(max(code.ExpiresIn, 60)) * time.Second)
+	deadline := client.now().Add(time.Duration(code.ExpiresIn) * time.Second)
 	for client.now().Before(deadline) {
-		form := url.Values{"client_id": {clientID}, "device_code": {code.DeviceCode}, "grant_type": {deviceGrantType}}
-		request, err := formRequest(ctx, endpoint(host, "/login/oauth/access_token"), form)
+		if err := ctx.Err(); err != nil {
+			return DeviceToken{}, err
+		}
+		token, err := client.pollDevice(ctx, host, clientID, code.DeviceCode)
 		if err != nil {
 			return DeviceToken{}, err
 		}
-		response, err := client.httpClient.Do(request)
-		if err != nil {
-			return DeviceToken{}, err
-		}
-		var token DeviceToken
-		_ = json.NewDecoder(response.Body).Decode(&token)
-		response.Body.Close()
 		if token.AccessToken != "" {
 			return token, nil
 		}
@@ -136,23 +141,27 @@ func (client *apiClient) PollDeviceToken(ctx context.Context, host, clientID str
 	return DeviceToken{}, fmt.Errorf("timed out waiting for authorization")
 }
 
-func (client *apiClient) GitHubLogin(ctx context.Context, apiHost, token string) string {
-	request, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint(apiHost, "/user"), nil)
-	if err != nil {
-		return ""
+// RevokeLogin invalidates the saved session, not a GREPPLE_TOKEN override.
+func (client *apiClient) RevokeLogin(ctx context.Context, server string) error {
+	settings, _ := config.LoadConfig("", true)
+	credentials := settings.BackendCredentials()
+	if credentials.Token == "" || credentials.AuthServer != serverBaseURL(server) {
+		return fmt.Errorf("no saved session for authentication server")
 	}
-	request.Header.Set("authorization", "Bearer "+token)
-	request.Header.Set("accept", "application/vnd.github+json")
-	response, err := client.httpClient.Do(request)
+	request, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint(server, "/auth/logout"), nil)
 	if err != nil {
-		return ""
+		return err
+	}
+	request.Header.Set("Authorization", "Bearer "+credentials.Token)
+	response, err := client.authDo(request)
+	if err != nil {
+		return err
 	}
 	defer response.Body.Close()
-	var user struct {
-		Login string `json:"login"`
+	if response.StatusCode < 200 || response.StatusCode >= 300 {
+		return fmt.Errorf("session revocation failed (HTTP %d)", response.StatusCode)
 	}
-	_ = json.NewDecoder(response.Body).Decode(&user)
-	return user.Login
+	return nil
 }
 
 func formRequest(ctx context.Context, target string, values url.Values) (*http.Request, error) {
@@ -170,4 +179,37 @@ func firstNonEmpty(first, second string) string {
 		return first
 	}
 	return second
+}
+
+func (client *apiClient) authDo(request *http.Request) (*http.Response, error) {
+	transport := *client.httpClient
+	transport.CheckRedirect = func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }
+	if transport.Timeout == 0 {
+		transport.Timeout = 30 * time.Second
+	}
+	return transport.Do(request)
+}
+
+func (client *apiClient) pollDevice(ctx context.Context, host, clientID, code string) (DeviceToken, error) {
+	form := url.Values{"client_id": {clientID}, "device_code": {code}, "grant_type": {deviceGrantType}}
+	request, err := formRequest(ctx, endpoint(host, "/login/oauth/access_token"), form)
+	if err != nil {
+		return DeviceToken{}, err
+	}
+	response, err := client.authDo(request)
+	if err != nil {
+		return DeviceToken{}, err
+	}
+	defer response.Body.Close()
+	var token DeviceToken
+	if err := json.NewDecoder(io.LimitReader(response.Body, 1<<20)).Decode(&token); err != nil {
+		return DeviceToken{}, fmt.Errorf("decode device token: %w", err)
+	}
+	if response.StatusCode < 200 || response.StatusCode >= 300 {
+		if token.Error == "" {
+			return DeviceToken{}, fmt.Errorf("device token endpoint returned status %d", response.StatusCode)
+		}
+		token.AccessToken = ""
+	}
+	return token, nil
 }

@@ -1,0 +1,30 @@
+@import "./tokens.css";
+
+:root {
+  --accent: #abcdef;
+}
+
+.button, .card:hover {
+  color: var(--accent);
+  content: "héllo";
+  & > span {
+    display: inline-block;
+  }
+}
+
+@media (min-width: 40rem) {
+  .button { padding: 1rem 2rem; }
+}
+
+@supports (display: grid) {
+  .grid { display: grid; }
+}
+
+@layer components {
+  #app { margin: 0; }
+}
+
+@keyframes fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}

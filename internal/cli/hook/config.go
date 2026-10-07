@@ -20,16 +20,19 @@ const maxHookConfigBytes = 64 << 10
 var hookID = regexp.MustCompile(`^[a-z][a-z0-9-]*$`)
 
 type rule struct {
-	Version  int             `yaml:"version"`
-	ID       string          `yaml:"id"`
-	Enabled  yaml.Node       `yaml:"enabled" json:"-"`
-	Engine   string          `yaml:"engine"`
-	Include  []string        `yaml:"include"`
-	Exclude  []string        `yaml:"exclude"`
-	Severity string          `yaml:"severity"`
-	Message  string          `yaml:"message"`
-	Query    string          `yaml:"query"`
-	Relation *relationConfig `yaml:"relation"`
+	Version        int               `yaml:"version"`
+	ID             string            `yaml:"id"`
+	Enabled        yaml.Node         `yaml:"enabled" json:"-"`
+	Engine         string            `yaml:"engine"`
+	Include        []string          `yaml:"include"`
+	Exclude        []string          `yaml:"exclude"`
+	Severity       string            `yaml:"severity"`
+	Message        string            `yaml:"message"`
+	Query          string            `yaml:"query"`
+	Relation       *relationConfig   `yaml:"relation"`
+	Annotation     *annotationConfig `yaml:"annotation"`
+	Assert         *assertionConfig  `yaml:"assert"`
+	Unsuppressible bool              `yaml:"unsuppressible"`
 }
 
 type relationKeyConfig struct {
@@ -46,6 +49,7 @@ type relationConfig struct {
 	RightKey          relationKeyConfig `yaml:"right_key"`
 	PartitionKey      relationKeyConfig `yaml:"partition_key"`
 	Scope             string            `yaml:"scope"`
+	GoModule          string            `yaml:"go_module"`
 	Mode              string            `yaml:"mode"`
 	LeftInclude       []string          `yaml:"left_include"`
 	MaxFindings       int               `yaml:"max_findings"`
@@ -169,7 +173,7 @@ func loadRules(root string, ids []string) ([]compiledRule, error) {
 				}
 			}
 		}
-		if err := gritql.ValidateGlobs(config.Include, config.Exclude); err != nil {
+		if err := validateRuleSourceConstraints(config); err != nil {
 			return nil, fmt.Errorf("hook %s: %w", path, err)
 		}
 		if config.Engine == "gritql-relational-v1" {
@@ -203,7 +207,7 @@ func loadRules(root string, ids []string) ([]compiledRule, error) {
 		if config.Relation != nil || strings.TrimSpace(config.Query) == "" {
 			return nil, fmt.Errorf("hook %s: file-local engine requires query and no relation", path)
 		}
-		program, err := gritql.Compile([]byte(config.Query), gritql.CompileOptions{})
+		program, err := compileFileProgram(config)
 		if err != nil {
 			return nil, fmt.Errorf("hook %s: %w", path, err)
 		}

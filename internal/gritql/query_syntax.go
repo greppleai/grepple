@@ -700,6 +700,8 @@ var v1NodeValidators = map[string]v1NodeValidator{
 	"rust":            validAnonymousTerminalNode,
 	"shell":           validAnonymousTerminalNode,
 	"swift":           validAnonymousTerminalNode,
+	"svelte":          validAnonymousTerminalNode,
+	"css":             validAnonymousTerminalNode,
 	"typescript":      validAnonymousTerminalNode,
 	"tsx":             validAnonymousTerminalNode,
 	"and":             validAnonymousTerminalNode,

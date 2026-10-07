@@ -117,6 +117,10 @@ type languageNavigationIndexBuildContext struct {
 type languageNavigationIndexFactory func(string, baseLanguageNavigationIndex, languageNavigationIndexBuildContext) languageNavigationIndex
 
 var languageNavigationIndexFactories = map[string]languageNavigationIndexFactory{
+	// CSS emits configuration declarations, without cascade/import inference.
+	"css": func(_ string, base baseLanguageNavigationIndex, _ languageNavigationIndexBuildContext) languageNavigationIndex {
+		return &base
+	},
 	"go": func(_ string, base baseLanguageNavigationIndex, context languageNavigationIndexBuildContext) languageNavigationIndex {
 		return &goNavigationIndex{baseLanguageNavigationIndex: base, replacements: context.replacements, packages: context.packages}
 	},
@@ -145,6 +149,10 @@ var languageNavigationIndexFactories = map[string]languageNavigationIndexFactory
 		return &swiftNavigationIndex{baseLanguageNavigationIndex: base}
 	},
 	"hcl": func(_ string, base baseLanguageNavigationIndex, _ languageNavigationIndexBuildContext) languageNavigationIndex {
+		return &base
+	},
+	// Svelte snippet declarations have no inferred script/component imports.
+	"svelte": func(_ string, base baseLanguageNavigationIndex, _ languageNavigationIndexBuildContext) languageNavigationIndex {
 		return &base
 	},
 	"csharp": func(_ string, base baseLanguageNavigationIndex, _ languageNavigationIndexBuildContext) languageNavigationIndex {

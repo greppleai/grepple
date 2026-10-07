@@ -17,7 +17,7 @@ type hookSuppressions struct {
 	commentOnly map[int]bool
 }
 
-func filterSuppressedFindings(root string, findings []Finding) ([]Finding, error) {
+func filterSuppressedFindings(root string, findings []Finding, rules ...compiledRule) ([]Finding, error) {
 	if len(findings) == 0 {
 		return findings, nil
 	}
@@ -27,9 +27,17 @@ func filterSuppressedFindings(root string, findings []Finding) ([]Finding, error
 	}
 	defer repository.Close()
 
+	protected := make(map[string]bool)
+	for _, rule := range rules {
+		protected[rule.ID] = rule.Unsuppressible
+	}
 	byPath := make(map[string]hookSuppressions)
 	filtered := make([]Finding, 0, len(findings))
 	for _, finding := range findings {
+		if protected[finding.ID] {
+			filtered = append(filtered, finding)
+			continue
+		}
 		suppressions, ok := byPath[finding.Path]
 		if !ok {
 			suppressions, err = readHookSuppressions(repository, finding.Path)

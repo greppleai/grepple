@@ -106,6 +106,10 @@ type segmentBuilder interface {
 	BuildSegments(root *syntaxNode, content string, hits map[int]bool) []Segment
 }
 
+type navigationGraphBuilder interface {
+	BuildNavigationGraph(root *syntaxNode, content, path string) NavigationGraph
+}
+
 type languageAdapter interface {
 	ID() string
 	Grammar() syntaxLanguage
@@ -122,6 +126,8 @@ var languageAdapters = buildLanguageAdapters(
 	newDartLanguage(),
 	newSwiftLanguage(),
 	newHCLLanguage(),
+	newSvelteLanguage(),
+	newCSSLanguage(),
 	newJavaScriptLanguage(),
 	newTypeScriptLanguage("typescript", false),
 	newTypeScriptLanguage("tsx", true),
@@ -150,6 +156,8 @@ var languageCapabilities = []LanguageCapabilities{
 	{ID: "dart", Extensions: []string{".dart"}, Navigation: true},
 	{ID: "swift", Extensions: []string{".swift"}, Navigation: true},
 	{ID: "hcl", Extensions: []string{".tf", ".tfvars", ".hcl", ".tfbackend"}, Navigation: true},
+	{ID: "svelte", Extensions: []string{".svelte"}, Navigation: true},
+	{ID: "css", Extensions: []string{".css"}, Navigation: true},
 	{ID: "javascript", Extensions: []string{".js", ".jsx"}, Navigation: true},
 	{ID: "typescript", Extensions: []string{".ts", ".mts", ".cts"}, Navigation: true},
 	{ID: "tsx", Extensions: []string{".tsx"}, Navigation: true},
@@ -202,6 +210,9 @@ func enrichLanguageCapabilities(capability LanguageCapabilities) LanguageCapabil
 	capability.Extensions = append([]string(nil), capability.Extensions...)
 	if generated, ok := generatedLanguageMetadata[capability.ID]; ok {
 		capability.GrammarFingerprint = generated.fingerprint
+		if composite, ok := adapterForLanguage(capability.ID).(grammarFingerprintProvider); ok {
+			capability.GrammarFingerprint = composite.GrammarFingerprint()
+		}
 	}
 	if adapter := adapterForLanguage(capability.ID); adapter != nil {
 		if adapter.Grammar().valid() {
@@ -254,3 +265,5 @@ func descendantName(node *syntaxNode, content string, candidates stringSet) stri
 	}
 	return ""
 }
+
+type grammarFingerprintProvider interface{ GrammarFingerprint() string }

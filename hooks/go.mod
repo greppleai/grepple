@@ -16,11 +16,13 @@ require (
 	github.com/pelletier/go-toml/v2 v2.2.4 // indirect
 	github.com/tree-sitter-grammars/tree-sitter-hcl v1.2.1-0.20260117144248-64ad62785d44 // indirect
 	github.com/tree-sitter-grammars/tree-sitter-kotlin v1.1.0 // indirect
+	github.com/tree-sitter-grammars/tree-sitter-svelte v1.0.2 // indirect
 	github.com/tree-sitter/go-tree-sitter v0.25.0 // indirect
 	github.com/tree-sitter/tree-sitter-bash v0.25.1 // indirect
 	github.com/tree-sitter/tree-sitter-c v0.24.2 // indirect
 	github.com/tree-sitter/tree-sitter-c-sharp v0.23.5 // indirect
 	github.com/tree-sitter/tree-sitter-cpp v0.23.4 // indirect
+	github.com/tree-sitter/tree-sitter-css v0.25.0 // indirect
 	github.com/tree-sitter/tree-sitter-go v0.25.0 // indirect
 	github.com/tree-sitter/tree-sitter-java v0.23.5 // indirect
 	github.com/tree-sitter/tree-sitter-javascript v0.25.0 // indirect

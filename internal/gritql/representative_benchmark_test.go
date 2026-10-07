@@ -32,6 +32,8 @@ var structuralBenchmarkLanguages = []structuralBenchmarkLanguage{
 	{language: "csharp", extension: "cs", source: "class App { void Run() { Target(one, two); } }\n", comment: "// padding\n"},
 	{language: "dart", extension: "dart", source: "void run() { target(one, two); }\n", comment: "// padding\n"},
 	{language: "hcl", extension: "tf", source: "locals { value = target(one, two) }\n", comment: "# padding\n"},
+	{language: "svelte", extension: "svelte", source: "<target one two />\n", comment: "<!-- padding -->\n"},
+	{language: "css", extension: "css", source: ".target { color: target(red blue); }\n", comment: "/* padding */\n"},
 	{language: "go", extension: "go", source: "package sample\nfunc run() { target(one, two) }\n", comment: "// padding\n"},
 	{language: "javascript", extension: "js", source: "const result = target(one, two);\n", comment: "// padding\n"},
 	{language: "java", extension: "java", source: "class App { void run() { target(one, two); } }\n", comment: "// padding\n"},
@@ -169,6 +171,9 @@ func benchmarkStructuralPrograms(b *testing.B) []ProgramScan {
 		if language.language == "shell" {
 			separator = " "
 			suffix = ""
+		}
+		if language.language == "svelte" {
+			callee, separator, suffix = "<target", " ", "/>"
 		}
 		query := fmt.Sprintf("language %s\n`%s%s$args%s`", language.language, callee, separator, suffix)
 		program, err := Compile([]byte(query), CompileOptions{})

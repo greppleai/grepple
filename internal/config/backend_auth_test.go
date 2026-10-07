@@ -24,7 +24,7 @@ func TestBackendLoginPreservesServerAndUsesPrivateFile(t *testing.T) {
 	if got, err := settings.BackendAuthPath(); err != nil || got != path {
 		t.Fatalf("backend auth path = %q, %v", got, err)
 	}
-	if err := settings.StoreBackendLogin("token", "refresh", 3600, 7200, "user"); err != nil {
+	if err := settings.StoreBackendLogin("token", "refresh", 3600, 7200, "user", ""); err != nil {
 		t.Fatal(err)
 	}
 	if got := settings.BackendCredentials(); got.Token != "token" || got.RefreshToken != "refresh" || got.TokenExpiry == 0 || got.RefreshExpiry == 0 || got.User != "user" {
@@ -61,7 +61,7 @@ func TestMalformedUserSettingsDoNotBlockBackendLogout(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := settings.StoreBackendLogin("token", "", 0, 0, "user"); err != nil {
+	if err := settings.StoreBackendLogin("token", "", 0, 0, "user", ""); err != nil {
 		t.Fatal(err)
 	}
 	path := filepath.Join(t.TempDir(), "settings.json")

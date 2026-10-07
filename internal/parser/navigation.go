@@ -215,6 +215,14 @@ func navigationGraphFromDocument(document *Document, path string) NavigationGrap
 // navigationGraphFromTree builds a graph from an already parsed compatible tree.
 // It allows analyzers to share navigation extraction without parsing source twice.
 func navigationGraphFromTree(root *syntaxNode, content, language, path string) NavigationGraph {
+	if builder, ok := adapterForLanguage(language).(navigationGraphBuilder); ok {
+		return builder.BuildNavigationGraph(root, content, path)
+	}
+	return collectNavigationGraph(root, content, language, path)
+}
+
+// collectNavigationGraph executes one adapter's native semantics without redispatch.
+func collectNavigationGraph(root *syntaxNode, content, language, path string) NavigationGraph {
 	adapter := adapterForLanguage(language)
 	navigation := navigationAdapterForLanguage(language)
 	if adapter == nil || navigation == nil || root == nil {

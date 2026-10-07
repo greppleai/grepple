@@ -6,7 +6,7 @@ func TestGrammarNodeKindValidatesPinnedLanguages(t *testing.T) {
 	service := NewParser()
 	for _, language := range service.SupportedLanguages() {
 		grammar := service.GetGrammar(language.ID)
-		if !grammar.NodeKind("identifier") && !grammar.NodeKind("source_file") && !grammar.NodeKind("program") {
+		if !grammar.NodeKind("identifier") && !grammar.NodeKind("source_file") && !grammar.NodeKind("program") && !grammar.NodeKind("document") && !grammar.NodeKind("stylesheet") {
 			t.Fatalf("%s: no known named grammar node", language.ID)
 		}
 		if grammar.NodeKind("not_a_syntax_node_kind") {

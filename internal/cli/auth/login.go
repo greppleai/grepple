@@ -4,10 +4,13 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"net/url"
 	"os"
 	"os/exec"
+	"os/signal"
 	"runtime"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/greppleai/grepple/internal/cliruntime"
@@ -28,11 +31,6 @@ func firstNonEmpty(first, second string) string {
 	return second
 }
 
-// githubWebHost / githubAPIHost are overridable (GHE, or tests pointing at a
-// mock server).
-func githubWebHost() string { return envDefault("GREPPLE_GITHUB_HOST", "https://github.com") }
-func githubAPIHost() string { return envDefault("GREPPLE_GITHUB_API", "https://api.github.com") }
-
 func openBrowser(target string) error {
 	var cmd string
 	var args []string
@@ -47,15 +45,12 @@ func openBrowser(target string) error {
 	return exec.Command(cmd, args...).Start()
 }
 
-// runLogin performs the GitHub device-flow login and stores the token in
-// ~/.grepple/config.json. The GitHub client ID is fetched from the grepple server
-// (--url), so it is configured only server-side.
+// executeLogin performs server-owned device authorization and stores a scoped local session.
 func executeLogin(application cliruntime.Context, args []string) error {
 	values := &LoginArgs{URL: application.Configuration().ServerDefault("")}
 	fs := flag.NewFlagSet("login", flag.ContinueOnError)
 	fs.SetOutput(application.Stderr())
-	fs.StringVar(&values.URL, "url", values.URL, "grepple server URL to fetch the login client ID from")
-	fs.StringVar(&values.Scope, "scope", "", "OAuth scopes, space-separated (overrides the server's advertised scopes)")
+	fs.StringVar(&values.URL, "url", values.URL, "grepple authentication server URL")
 	fs.BoolVar(&values.NoBrowser, "no-browser", false, "do not attempt to open a browser")
 	if err := fs.Parse(args); err != nil {
 		return err
@@ -68,17 +63,22 @@ func executeLoginArgs(application cliruntime.Context, values *LoginArgs) error {
 	if serverURL == "" {
 		serverURL = application.Configuration().ServerDefault("")
 	}
-	client := application.APIClient()
-	cfg, err := client.LoginConfig(context.Background(), serverURL)
+	serverURL, err := loginServerURL(serverURL)
 	if err != nil {
 		return err
 	}
-	if strings.TrimSpace(cfg.ClientID) == "" {
-		return fmt.Errorf("server %s did not advertise a GitHub client ID (set GITHUB_CLIENT_ID on the router)", serverURL)
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+	client := application.APIClient()
+	cfg, err := client.LoginConfig(ctx, serverURL)
+	if err != nil {
+		return err
 	}
-	scopes := firstNonEmpty(strings.TrimSpace(values.Scope), firstNonEmpty(strings.TrimSpace(cfg.Scopes), "read:user"))
+	if cfg.Provider != "local" || strings.TrimSpace(cfg.ClientID) == "" {
+		return fmt.Errorf("server %s does not advertise local device authentication", serverURL)
+	}
 
-	dc, err := client.RequestDeviceCode(context.Background(), githubWebHost(), cfg.ClientID, scopes)
+	dc, err := client.RequestDeviceCode(ctx, serverURL, cfg.ClientID, "")
 	if err != nil {
 		return err
 	}
@@ -88,14 +88,21 @@ func executeLoginArgs(application cliruntime.Context, values *LoginArgs) error {
 	}
 	fmt.Fprintln(application.Stderr(), "Waiting for authorization…")
 
-	tok, err := client.PollDeviceToken(context.Background(), githubWebHost(), cfg.ClientID, dc, time.Sleep)
+	tok, err := client.PollDeviceToken(ctx, serverURL, cfg.ClientID, dc, func(delay time.Duration) {
+		timer := time.NewTimer(delay)
+		defer timer.Stop()
+		select {
+		case <-ctx.Done():
+		case <-timer.C:
+		}
+	})
 	if err != nil {
 		return err
 	}
-	login := client.GitHubLogin(context.Background(), githubAPIHost(), tok.AccessToken)
+	login := tok.Login
 	// Backend login remains available when unrelated user preferences are invalid.
 	settings, _ := config.LoadConfig("", true)
-	if err := settings.StoreBackendLogin(tok.AccessToken, tok.RefreshToken, tok.ExpiresIn, tok.RefreshTokenExpiresIn, login); err != nil {
+	if err := settings.StoreBackendLogin(tok.AccessToken, tok.RefreshToken, tok.ExpiresIn, tok.RefreshTokenExpiresIn, login, serverURL); err != nil {
 		return fmt.Errorf("store token: %w", err)
 	}
 	path, _ := settings.BackendAuthPath()
@@ -114,9 +121,28 @@ func executeLoginArgs(application cliruntime.Context, values *LoginArgs) error {
 func executeLogout(application cliruntime.Context, _ []string) error {
 	// Logout must not be blocked by malformed, unrelated settings.
 	settings, _ := config.LoadConfig("", true)
+	credentials := settings.BackendCredentials()
+	if credentials.Token != "" && credentials.AuthServer != "" {
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		if err := application.APIClient().RevokeLogin(ctx, credentials.AuthServer); err != nil {
+			fmt.Fprintln(application.Stderr(), "Warning: server-side session revocation failed; removing local credentials.")
+		}
+	}
 	if err := settings.ClearBackendLogin(); err != nil {
 		return err
 	}
 	fmt.Fprintln(application.Stderr(), "Logged out; token removed from config.")
 	return nil
+}
+
+func loginServerURL(server string) (string, error) {
+	target, err := url.Parse(server)
+	if err != nil || target.Host == "" || target.User != nil || target.RawQuery != "" || target.Fragment != "" {
+		return "", fmt.Errorf("invalid authentication server URL")
+	}
+	if target.Scheme != "https" && !(target.Scheme == "http" && (target.Hostname() == "localhost" || target.Hostname() == "127.0.0.1" || target.Hostname() == "::1")) {
+		return "", fmt.Errorf("login requires HTTPS except on loopback")
+	}
+	return strings.TrimRight(server, "/"), nil
 }

@@ -19,9 +19,9 @@ type AIProviderArgs struct {
 	List   *EmptyArgs         `arg:"subcommand:list"`
 }
 
+// LoginArgs selects the local authentication server and browser behavior.
 type LoginArgs struct {
-	URL       string `arg:"--url" placeholder:"URL" help:"grepple server URL to fetch the login client ID from"`
-	Scope     string `arg:"--scope" placeholder:"SCOPES" help:"OAuth scopes, space-separated"`
+	URL       string `arg:"--url" placeholder:"URL" help:"grepple authentication server URL"`
 	NoBrowser bool   `arg:"--no-browser" help:"do not attempt to open a browser"`
 }
 
@@ -48,9 +48,12 @@ func ExecuteAIProvider(application cliruntime.Context, values *AIProviderArgs) e
 	}
 }
 
+// ExecuteLogin performs server-owned browser/device authorization.
 func ExecuteLogin(application cliruntime.Context, values *LoginArgs) error {
 	return executeLoginArgs(application, values)
 }
+
+// ExecuteLogout revokes the stored server session and removes local credentials.
 func ExecuteLogout(application cliruntime.Context, _ *LogoutArgs) error {
 	return executeLogout(application, nil)
 }

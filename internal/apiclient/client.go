@@ -42,7 +42,7 @@ type APIClient interface {
 	LoginConfig(context.Context, string) (LoginConfig, error)
 	RequestDeviceCode(context.Context, string, string, string) (DeviceCode, error)
 	PollDeviceToken(context.Context, string, string, DeviceCode, func(time.Duration)) (DeviceToken, error)
-	GitHubLogin(context.Context, string, string) string
+	RevokeLogin(context.Context, string) error
 }
 
 // RawRequest identifies source content and optional line-range/JSON projection.
@@ -321,7 +321,7 @@ func (client *apiClient) do(ctx context.Context, method, target, contentType str
 	if token := client.freshToken(target); token != "" {
 		request.Header.Set("authorization", "Bearer "+token)
 	}
-	response, err := client.httpClient.Do(request)
+	response, err := client.doRequest(request)
 	if err != nil {
 		return nil, err
 	}
@@ -342,6 +342,9 @@ func (client *apiClient) freshToken(target string) string {
 		fmt.Fprintf(client.errorOutput, "warning: user configuration unavailable (%v); using protected backend credentials\n", err)
 	}
 	credentials := settings.BackendCredentials()
+	if credentials.AuthServer == "" || credentials.AuthServer != serverBaseURL(target) {
+		return ""
+	}
 	if credentials.Token == "" {
 		return ""
 	}
@@ -357,7 +360,7 @@ func (client *apiClient) freshToken(target string) string {
 	if nextRefresh == "" {
 		nextRefresh = credentials.RefreshToken
 	}
-	if err := settings.StoreBackendLogin(refreshed.AccessToken, nextRefresh, refreshed.ExpiresIn, refreshed.RefreshTokenExpiresIn, ""); err != nil {
+	if err := settings.StoreBackendLogin(refreshed.AccessToken, nextRefresh, refreshed.ExpiresIn, refreshed.RefreshTokenExpiresIn, "", credentials.AuthServer); err != nil {
 		return refreshed.AccessToken
 	}
 	return refreshed.AccessToken
@@ -380,7 +383,7 @@ func (client *apiClient) refreshLogin(server, refreshToken string) (refreshToken
 	}
 	request.Header.Set("content-type", "application/json")
 	request.Header.Set("accept", "application/json")
-	response, err := client.httpClient.Do(request)
+	response, err := client.authDo(request)
 	if err != nil {
 		return refreshTokenResponse{}, err
 	}
@@ -389,7 +392,7 @@ func (client *apiClient) refreshLogin(server, refreshToken string) (refreshToken
 		return refreshTokenResponse{}, fmt.Errorf("refresh failed: HTTP %d", response.StatusCode)
 	}
 	var result refreshTokenResponse
-	if err := json.NewDecoder(response.Body).Decode(&result); err != nil {
+	if err := json.NewDecoder(io.LimitReader(response.Body, 1<<20)).Decode(&result); err != nil {
 		return refreshTokenResponse{}, err
 	}
 	if result.AccessToken == "" {
