@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.0.6](https://github.com/greppleai/grepple/compare/v0.0.5...v0.0.6) (2026-10-07)
+
+
+### Features
+
+* add remote cursor search and immutable navigation caching ([3f469c8](https://github.com/greppleai/grepple/commit/3f469c802ac5f9b3ca2fec5858d89adbdde1107f))
+* add remote cursor search and immutable navigation caching ([7b6c73c](https://github.com/greppleai/grepple/commit/7b6c73c2c5c8a561a8b42f56da378694a847d366))
+* add version-pinned coding agent skill setup ([630739d](https://github.com/greppleai/grepple/commit/630739db57d612cc2d53132f3fae8bd46c7acdff))
+* add version-pinned coding agent skill setup ([71eb927](https://github.com/greppleai/grepple/commit/71eb927179981e3c56494ef8055249a9633a0a95))
+
 ## [0.0.5](https://github.com/greppleai/grepple/compare/v0.0.4...v0.0.5) (2026-10-07)
 
 
