@@ -19,6 +19,23 @@ func searchRemote(application cliruntime.Context, options *Options, server strin
 }
 
 func searchRemoteContext(application cliruntime.Context, ctx context.Context, options *Options, server string) ([]wire.FileResult, error) {
+	options.RemoteServer = server
+	if options.Cursor != "" && !cursorSearchEligible(options) {
+		return nil, fmt.Errorf("--cursor cannot resume a legacy search mode")
+	}
+	if pager, ok := application.APIClient().(apiclient.SearchPager); ok && cursorSearchEligible(options) {
+		request := searchRequestFromParams(options.Params)
+		pageRequest := apiclient.SearchPageRequest{Search: &request}
+		if options.Cursor != "" {
+			pageRequest = apiclient.SearchPageRequest{Cursor: options.Cursor}
+		}
+		page, err := pager.SearchPage(ctx, server, pageRequest)
+		if err != nil {
+			return nil, err
+		}
+		options.CursorPage = &page
+		return dropExcludedRepos(page.Results, options.Params.ExcludeRepo), nil
+	}
 	result, err := application.APIClient().Search(ctx, server, searchRequestFromParams(options.Params))
 	if err != nil {
 		if apiclient.RangeOutcome(err) == linerange.OutcomeFullMiss {

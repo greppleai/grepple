@@ -115,7 +115,11 @@ func attachRelatedDirection(matches []FileMatch, candidates []string, followDept
 		return
 	}
 	relatedBuildInvocations.Add(1)
-	navigation := buildNavigationIndex(candidates, true)
+	attachRelatedNavigation(matches, buildNavigationIndex(candidates, true), followDepth, outgoingOnly)
+}
+
+// attachRelatedNavigation reads a fully resolved index without modifying it.
+func attachRelatedNavigation(matches []FileMatch, navigation *navigationIndex, followDepth int, outgoingOnly bool) {
 	if len(navigation.declarations) == 0 {
 		return
 	}

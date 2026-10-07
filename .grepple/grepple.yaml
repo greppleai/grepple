@@ -201,6 +201,14 @@ directories:
       description: Defines the shared result envelope for scope, ordering, pagination, limits, omissions, and diagnostics.
       kind: production
       checksum: 30b444e939b26fed543e8f9e16a81fafdd68d0219ee6ba52b21f5327d9ceeb2b
+    - path: search_context_test.go
+      description: Verifies cancellable search API compatibility and early cancellation.
+      kind: test
+      checksum: 86e5cea8fb9808bb8a180bb53dcc8b1ed07f1f221502bc68d54ff878b0d82514
+    - path: search_service.go
+      description: Owns immutable portable search plans, projection and cancellable content execution.
+      kind: production
+      checksum: 83bfcaf2d61db856e4f75387bf5e824ee6d2dcf1ef687995177a8d28d0742432
   cmd:
     description: Entry point for the Grepple command-line application that executes CLI requests and translates failures into process behavior.
     responsibilities:
@@ -337,6 +345,10 @@ directories:
       description: Defines transactional hashline edits, creations, deletions, validation, dry runs, output, and coverage tracking.
       kind: production
       checksum: 9f3af1ee709980d196383dbb715e29fc7b410630766da1882631f1e551e6615d
+    - path: cli-cursor-search.md
+      description: Owns authenticated snapshot cursor search, bounded pages and compatible legacy modes.
+      kind: production
+      checksum: 5624f7ff0521077eb306ad7883739c511dfc4728a369c1fc6da7e940fb70b93d
   examples/advanced-files:
     description: Advanced examples implement typed cataloging, dependency-aware scheduling, generic search, workflow execution, caching, deployment polling, audited delivery, revision indexing, asynchronous pipelines, and retryable workers.
     responsibilities:
@@ -945,6 +957,14 @@ directories:
       description: This file tests token selection, token refresh persistence and fallback, and analysis response validation.
       kind: test
       checksum: 5e4c07e119607a4e86294fab7ee63f36227a3b697363e36d9bf81e5748f2b2b7
+    - path: search_pages.go
+      description: Owns authenticated snapshot cursor search, bounded pages and compatible legacy modes.
+      kind: production
+      checksum: 5fc55c836579b32ca798799354b97d4da01c743e7794db6cb8d5d03e046bb5f4
+    - path: search_pages_test.go
+      description: Tests cursor transport, remote-only continuation, replay and legacy compatibility.
+      kind: test
+      checksum: 835bb158b1247237e2c3af15650b2d7b2e14815b52f2cb8f5627b89a2dd8b73b
   internal/boundaryanalysis:
     description: Analyzes repeated cross-file workflows and type usage to identify architectural boundaries, policy effects, and boundary risks.
     responsibilities:
@@ -1775,7 +1795,7 @@ directories:
     - path: args.go
       description: Defines search arguments, defaults, validation rules, output modes, navigation behavior, and API parameter conversion.
       kind: production
-      checksum: 68557dc50e1c6a25c09a744a4b6c69172a629614970a2a576e5eb41dcebaa843
+      checksum: 7f7fb30c986a18030304e4f160680d8bbb507a4679377c5a5472193dafaf6a3e
       areas:
       - search-cli-parsing
       - outline-search
@@ -1822,7 +1842,7 @@ directories:
     - path: execution.go
       description: Runs local, stdin, and remote searches while merging, sorting, paging, rendering, and setting exit status.
       kind: production
-      checksum: 40b47c9db1ee92d6372a0415ce4dce47bde3461fb49b97dee5ebf969b8ab4c54
+      checksum: edb89afa640849086c9cae7af7d040eb1e571bf9d9516b8a9791ba41e76d63b8
       areas:
       - local-search
       - remote-search
@@ -1849,7 +1869,7 @@ directories:
     - path: metadata.go
       description: Builds result scopes, paging metadata, diagnostics, omissions, and continuation commands.
       kind: production
-      checksum: 4516dc8bbdb92fbabde9554ee18022f82b8d3c8a83dd0b8d743cb6cfcb6bfacb
+      checksum: 1fb97e55dceae404d4cd2e76b7def750f126ec5b21a902ffb5712120231a0229
       areas:
       - result-metadata
     - path: multi_path_test.go
@@ -1867,7 +1887,7 @@ directories:
     - path: options.go
       description: Defines parsed search options and execution state for output, anchors, metadata, and stdin.
       kind: production
-      checksum: 6685d74b9887d89107efa22646ab09d18715b3ed62e0ffaac74a5d91f3d6e3f1
+      checksum: 5a7f47d17b4b7db4d3e4332e3fe892460e95c528c6b83deec46dd2cc5b0ebd6d
       areas:
       - search-cli-parsing
       - result-metadata
@@ -1886,7 +1906,7 @@ directories:
     - path: remote.go
       description: Executes remote searches, reports partial responses, resolves external navigation, filters exclusions, and fetches repository counts.
       kind: production
-      checksum: c9517449eae1dc0e0d7d2af0f14da7a9489931b9defd14efb16aebfd2efcd034
+      checksum: e0634840ac56ca0dcd119e1f049cad327e2f031be8aa916b09351744de4e611d
       areas:
       - remote-search
       - navigation-resolution
@@ -1894,7 +1914,7 @@ directories:
     - path: remote_exclude_test.go
       description: Tests sending repository exclusions and applying them to remote search results.
       kind: test
-      checksum: e0bdc56c49e1575846e4ca33fb27a4e10c6ead61175744e830172f7b34fb7ecc
+      checksum: 2ecfe37e60119d22fae36c7ce09ff50d21b62fbc68b04b32783bf09e7c97ea9c
       areas:
       - remote-search
     - path: search_json_integration_test.go
@@ -1920,6 +1940,22 @@ directories:
       description: Provides shared command contexts, search runners, remote helpers, Git setup, and temporary source utilities.
       kind: test
       checksum: 603db23ba01731f15c83f422055c933867c1ba1bdc64325360d1a3c9bf832ba6
+    - path: cursor.go
+      description: Owns authenticated snapshot cursor search, bounded pages and compatible legacy modes.
+      kind: production
+      checksum: 699651bf895d2e2fa8311ca336a42c1e6a76c1f6c8701e874a6ae9daff0bdd2e
+    - path: cursor_window.go
+      description: Owns authenticated snapshot cursor search, bounded pages and compatible legacy modes.
+      kind: production
+      checksum: bde24a554d7cfa296d5abb4967adcb0a362491a6cc46a8dce421cf2a7d2e75b1
+    - path: cursor_integration_test.go
+      description: Tests cursor transport, remote-only continuation, replay and legacy compatibility.
+      kind: test
+      checksum: b4e481cdc397625bb7acf0d233aa1ea9275893abed62c30d1ce09ea187b0c973
+    - path: cursor_assertions_test.go
+      description: Tests cursor transport, remote-only continuation, replay and legacy compatibility.
+      kind: test
+      checksum: 3f642ae58e8b2c7f45e1d36fe11eac4c890f73e263f8051d93bdea7da88eb6ab
   internal/cli/sources:
     description: Implements the sources CLI for explaining repository source-selection decisions, configuration effects, production filtering, and deterministic report output.
     responsibilities:
@@ -4397,7 +4433,7 @@ directories:
     - path: model.go
       description: Defines resolved search parameters, matches, and related navigation previews.
       kind: production
-      checksum: 98c9d0fa1268c9ffcb93a45fda9d59374c3c9758a486ebf9811dda07e4a46a98
+      checksum: edee90af501be201c41f5669cf9fb2c360e6c49704f2da4af511e42627069d2b
     - path: navigation_architecture_test.go
       description: Tests separation of search orchestration from language navigation resolvers.
       kind: test
@@ -4485,7 +4521,7 @@ directories:
     - path: related.go
       description: Builds navigation graphs and attaches bounded related declarations and type context.
       kind: production
-      checksum: b3a14c0feda715e394a9660222134534243ead630a6671e191d0052218e7a424
+      checksum: 8c1de33263791215592e7f1645be9ea2ab7a735f5b2c92d533b76dc47af6af63
     - path: related_go_test.go
       description: Tests Go call, import, and type related-navigation resolution.
       kind: test
@@ -4509,7 +4545,7 @@ directories:
     - path: repository_scope.go
       description: Discovers repository roots and files for related navigation.
       kind: production
-      checksum: 6ca99c03a29f9b5d42f3885f15dc5501db602843e9dabcdb953dfa7c254e18d4
+      checksum: 51274d009fd1af8efcf114109129197e85eac9d80c8c9d305a72e30e32d04aa6
     - path: repository_scope_test.go
       description: Tests repository-root discovery and related-file collection.
       kind: test
@@ -4529,7 +4565,7 @@ directories:
     - path: search_engine.go
       description: Executes candidate scanning, matching, filtering, ranking, paging, and structural analysis.
       kind: production
-      checksum: a642df440e75557311fdc46f3ec20edc42e0ab87a4ab59ecd4b95d7b73645691
+      checksum: 4c4b0dffdd05bd3ed3c58d967c7de1fe5c4621e7d99bc318edcc7b149d5c524f
     - path: search_glob.go
       description: Discovers candidate and listing files through configured glob and source scopes.
       kind: production
@@ -4582,6 +4618,30 @@ directories:
       description: Provides bounded parallel execution helpers for searching and result processing.
       kind: production
       checksum: 9c5f0e770d29f74b54dd0df5d7a6cb3b1ac9e434277802ae597cc7ab7e2b2d40
+    - path: immutable_navigation_cache.go
+      description: Owns bounded immutable navigation lookup reuse without stale mutable checkout results.
+      kind: production
+      checksum: 6d7f53f368d5b3fa86f4b126e7d7e748fcc65809772c8090f43013e3fdf6c3c9
+    - path: immutable_navigation_cache_test.go
+      description: Tests immutable navigation lookup reuse, isolation and bounds.
+      kind: test
+      checksum: f79a511f5af8be61518f5bd42e6a450b8b520dad7cb8b7636c5080483c74e660
+    - path: immutable_navigation_errors_test.go
+      description: Tests immutable navigation lookup reuse, isolation and bounds.
+      kind: test
+      checksum: 0726c0a69d84e3fb696611f7e54919a824e042f2e3a04c1a69ef259febc64942
+    - path: immutable_navigation_bench_test.go
+      description: Tests immutable navigation lookup reuse, isolation and bounds.
+      kind: test
+      checksum: 52999935c1e0f6858b73767340500e78aa90b979504396c427c55b4fc24060f8
+    - path: immutable_repository_navigation.go
+      description: Owns bounded immutable navigation lookup reuse without stale mutable checkout results.
+      kind: production
+      checksum: 2f4aad11b3e487d10f044d98b0b22ad52a7769f9104f34e619492d66801c5f65
+    - path: immutable_navigation_scope_test.go
+      description: Tests that doc-only matches cannot create spurious cross-repository navigation.
+      kind: test
+      checksum: 55abe5061f6e8a29c5c21386d7d1057aebb13a706c2d640437e43ea2f22b15c1
   internal/shellquote:
     description: Formats individual shell command arguments for safe use in continuation commands.
     responsibilities:

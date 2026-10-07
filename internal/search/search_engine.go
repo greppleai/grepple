@@ -181,13 +181,21 @@ func repoMatchesAny(repo string, patterns []string) bool {
 // when candidates is nil): matches every candidate against the pattern and repo
 // filters, in deterministic display-path order, windowed by p.Skip/p.Limit.
 func Files(p Params, candidates []string) ([]FileMatch, error) {
+	return FilesContext(context.Background(), p, candidates)
+}
+
+// FilesContext retains Files semantics while honoring request cancellation.
+func FilesContext(ctx context.Context, p Params, candidates []string) ([]FileMatch, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
 	m, e := matcher(p)
 	if e != nil {
 		return nil, e
 	}
 	files := candidates
 	if files == nil {
-		files, e = collectCandidateFilesConfiguredContext(context.Background(), p.Globs, p.Root, sourceIgnoreConfig{root: p.IgnoreRoot, patterns: p.IgnorePaths, productionOnly: p.ProductionOnly})
+		files, e = collectCandidateFilesConfiguredContext(ctx, p.Globs, p.Root, sourceIgnoreConfig{root: p.IgnoreRoot, patterns: p.IgnorePaths, productionOnly: p.ProductionOnly})
 		if e != nil {
 			return nil, e
 		}
@@ -196,12 +204,15 @@ func Files(p Params, candidates []string) ([]FileMatch, error) {
 	// ordering must scan every candidate before ranking; it is explicitly opt-in
 	// because a broad indexed universe can otherwise contain a long unread tail.
 	limit := resultLimit(p)
-	scan := candidateScan{p: p, m: m, repoFilter: NewRepoFilter(p.Repo, p.ExcludeRepo), fromIndex: candidates != nil}
+	scan := candidateScan{ctx: ctx, p: p, m: m, repoFilter: NewRepoFilter(p.Repo, p.ExcludeRepo), fromIndex: candidates != nil}
 	var out []FileMatch
 	if limit <= 0 || p.Sort == ResultSortMatches {
 		out = scan.scanAll(files)
 	} else {
 		out = scan.scanWindowed(files, p.Skip+limit)
+	}
+	if err := ctx.Err(); err != nil {
+		return nil, err
 	}
 	out = applyResultWindow(out, p)
 	if err := attachSearchNavigation(p, out, files, candidates != nil, scan); err != nil {
@@ -211,8 +222,13 @@ func Files(p Params, candidates []string) ([]FileMatch, error) {
 	// multi-line construct ranges for matching lines.
 	if !p.SkipSegments || p.LineRanges || p.EnclosingRanges {
 		runParallel(len(out), func(index int) {
-			analyzeMatchStructure(&out[index], p)
+			if ctx.Err() == nil {
+				analyzeMatchStructure(&out[index], p)
+			}
 		})
+	}
+	if err := ctx.Err(); err != nil {
+		return nil, err
 	}
 	return out, nil
 }
@@ -221,10 +237,20 @@ func attachSearchNavigation(params Params, matches []FileMatch, files []string, 
 	if !params.Related || !hasNavigationMatch(matches) {
 		return nil
 	}
+	ctx := scan.ctx
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	if params.ImmutableNavigationRevision != "" && (!suppliedCandidates || params.RelatedRepositoryContext) {
+		return attachImmutableRepositoryNavigation(ctx, params, matches, scan)
+	}
 	relatedCandidates := files
 	if !suppliedCandidates || params.RelatedRepositoryContext {
 		var err error
-		relatedCandidates, err = collectRelatedRepositoryFiles(context.Background(), params, matches)
+		relatedCandidates, err = collectRelatedRepositoryFiles(ctx, params, matches)
 		if err != nil {
 			return err
 		}
@@ -234,7 +260,18 @@ func attachSearchNavigation(params Params, matches []FileMatch, files []string, 
 	if params.RelatedRepositoryContext {
 		scan.fromIndex = false
 	}
-	attachRelated(matches, scan.relatedFiles(relatedCandidates), params.FollowRelated)
+	return attachCandidateNavigation(ctx, params, matches, scan.relatedFiles(relatedCandidates))
+}
+func attachCandidateNavigation(ctx context.Context, params Params, matches []FileMatch, candidates []string) error {
+	if params.ImmutableNavigationRevision != "" {
+		navigation, err := immutableRelatedLookups.resolve(ctx, immutableNavigationKey(params.ImmutableNavigationRevision, candidates), func() (*navigationIndex, error) { return buildNavigationIndex(candidates, true), nil })
+		if err != nil {
+			return err
+		}
+		attachRelatedNavigation(matches, navigation, params.FollowRelated, false)
+	} else {
+		attachRelated(matches, candidates, params.FollowRelated)
+	}
 	return nil
 }
 
@@ -242,6 +279,7 @@ func attachSearchNavigation(params Params, matches []FileMatch, files []string, 
 // filter, and whether candidates came from the index) shared by both scan
 // strategies below.
 type candidateScan struct {
+	ctx        context.Context
 	p          Params
 	m          func(string) bool
 	repoFilter *RepoFilter
@@ -277,7 +315,9 @@ func (s candidateScan) scanAll(files []string) []FileMatch {
 	base := displayBase(s.p.Root)
 	results := make([]*FileMatch, len(files))
 	runParallel(len(files), func(index int) {
-		results[index] = scanCandidate(s.p, s.m, files[index], displayPathFrom(files[index], base), s.repoFilter, s.fromIndex)
+		if s.ctx == nil || s.ctx.Err() == nil {
+			results[index] = scanCandidate(s.p, s.m, files[index], displayPathFrom(files[index], base), s.repoFilter, s.fromIndex)
+		}
 	})
 	out := collectMatches(results)
 	sortMatches(out, s.p.Sort)
@@ -301,11 +341,16 @@ func (s candidateScan) scanWindowed(files []string, target int) []FileMatch {
 		batch = 1
 	}
 	for start := 0; start < len(cands) && len(out) < target; start += batch {
+		if s.ctx != nil && s.ctx.Err() != nil {
+			break
+		}
 		end := min(start+batch, len(cands))
 		results := make([]*FileMatch, end-start)
 		runParallel(end-start, func(k int) {
 			c := cands[start+k]
-			results[k] = scanCandidate(s.p, s.m, c.file, c.display, s.repoFilter, s.fromIndex)
+			if s.ctx == nil || s.ctx.Err() == nil {
+				results[k] = scanCandidate(s.p, s.m, c.file, c.display, s.repoFilter, s.fromIndex)
+			}
 		})
 		out = append(out, collectMatches(results)...)
 	}

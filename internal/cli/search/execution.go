@@ -7,11 +7,11 @@ import (
 	"os"
 	"sort"
 
-	"github.com/greppleai/grepple/internal/wire"
 	"github.com/greppleai/grepple/internal/cliruntime"
-	rendercommand "github.com/greppleai/grepple/internal/render"
 	"github.com/greppleai/grepple/internal/linerange"
+	rendercommand "github.com/greppleai/grepple/internal/render"
 	"github.com/greppleai/grepple/internal/search"
+	"github.com/greppleai/grepple/internal/wire"
 )
 
 type remoteFullLineRangeMissError struct{ err error }
@@ -78,6 +78,7 @@ func executeSearch(application cliruntime.Context, options *Options, explicitSer
 	// window the merged set below.
 	child := *options
 	child.Params = childWindowParams(options.Params)
+	child.MixedRemote = options.Params.Skip != 0
 
 	results, err := initialSearchResults(application, &child, remote)
 	if err != nil {
@@ -91,11 +92,14 @@ func executeSearch(application cliruntime.Context, options *Options, explicitSer
 	}
 	results = resolveLocalExternalNavigation(application, results, explicitServer)
 
+	options.CursorPage = child.CursorPage
+	options.RemoteServer = child.RemoteServer
 	results = sortResults(results, options.Params.Sort)
 	fetched := len(results)
 	totalKnown := !remote && (child.Params.Limit == 0 || fetched < child.Params.Limit)
-	results = windowResults(results, options.Params)
+	results = selectedSearchWindow(options, results)
 	options.ResultMetadata = searchResultMetadata(application, options, fetched, totalKnown, remote, results)
+	cursorResultMetadata(application, options, options.ResultMetadata)
 	noteDefaultLimitCap(application, options, results)
 	anchorLines, err := prepareAnchors(options, results)
 	if err != nil {
@@ -107,17 +111,20 @@ func executeSearch(application cliruntime.Context, options *Options, explicitSer
 	if err := rendercommand.Search(rendercommand.SearchOptions{Options: renderOptions, Output: application.Stdout(), ErrorOutput: application.Stderr(), ContextEnabled: application.Configuration().ContextGuardEnabled(), InlineThreshold: application.Configuration().InlineOutputThreshold()}, results); err != nil {
 		return err
 	}
-	return setSearchExit(application, results)
+	return finishSearchExit(application, options, results)
 }
 
 func initialSearchResults(application cliruntime.Context, options *Options, remote bool) ([]wire.FileResult, error) {
-	if remote && options.Params.At != "" {
+	if options.RemoteOnly || (remote && options.Params.At != "") {
 		return nil, nil
 	}
 	return searchLocal(application, options)
 }
 
 func configureStdinSearch(application cliruntime.Context, options *Options) error {
+	if options.RemoteOnly {
+		return nil
+	}
 	// Piped stdin has no stable path, so automatic anchors are disabled.
 	options.Stdin = stdinSearch(application, options)
 	if options.Stdin {
@@ -131,9 +138,10 @@ func appendRemoteResults(application cliruntime.Context, results []wire.FileResu
 		return results, nil
 	}
 	server := application.Configuration().ServerDefault(explicitServer)
-	if repo := application.Repository().Current(); repo != "" {
+	if repo := application.Repository().Current(); repo != "" && !options.RemoteOnly {
 		options.Params.ExcludeRepo = appendUnique(options.Params.ExcludeRepo, repo)
 	}
+	options.MixedRemote = options.MixedRemote || len(results) > 0
 	remoteResults, err := searchRemote(application, options, server)
 	if err != nil {
 		return nil, err
@@ -171,6 +179,12 @@ func sortResults(results []wire.FileResult, strategy string) []wire.FileResult {
 // noteDefaultLimitCap tells the user how to see more when the default --limit
 // is what capped the output (not an explicit --limit or --max-files).
 func noteDefaultLimitCap(application cliruntime.Context, options *Options, results []wire.FileResult) {
+	if options.CursorPage != nil {
+		if !options.CursorPage.Complete {
+			fmt.Fprintln(application.Stderr(), "Next remote page: "+options.ResultMetadata.NextCommand)
+		}
+		return
+	}
 	if options.Params.Limit == DefaultResultLimit && options.Params.MaxFiles == 0 && len(results) == DefaultResultLimit {
 		fmt.Fprintf(application.Stderr(), "note: showing the first %d files (default --limit); raise with --limit N and page with --skip N (servers cap a page at %d; --limit 0 = all local)\n", DefaultResultLimit, search.MaxPageLimit)
 	}
@@ -310,7 +324,9 @@ func runCountByRepo(application cliruntime.Context, options *Options, explicitSe
 	local.CountByRepo = false
 	var matches []search.FileMatch
 	var err error
-	if options.Stdin {
+	if options.RemoteOnly {
+		matches = nil
+	} else if options.Stdin {
 		matches, err = searchStdin(application, local)
 	} else {
 		matches, err = search.Files(local, nil)

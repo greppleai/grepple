@@ -45,13 +45,17 @@ type SearchPlanOptions struct {
 	// RelatedRepositoryContext obtains complete matched-repository navigation
 	// when the supplied file candidates contain only text-index matches.
 	RelatedRepositoryContext bool
-	NoRelated                bool
-	At                       string
-	Root                     string
-	IgnorePaths              []string
-	IgnoreRoot               string
-	ProductionOnly           bool
-	CountByRepo              bool
+	// ImmutableNavigationRevision permits bounded resolved-lookup reuse only when
+	// the caller guarantees all candidate and repository-context files are immutable.
+	// Mutable checkouts must leave this empty. It is not a wire-request option.
+	ImmutableNavigationRevision string
+	NoRelated                   bool
+	At                          string
+	Root                        string
+	IgnorePaths                 []string
+	IgnoreRoot                  string
+	ProductionOnly              bool
+	CountByRepo                 bool
 }
 
 // NewSearchPlan creates a plan from explicit value options without sharing slices.
@@ -109,7 +113,13 @@ func (batch searchBatch) RepoCounts() []RepoCount {
 
 // SearchFiles scans selected candidate paths, or all eligible sources if nil.
 func SearchFiles(plan SearchPlan, candidates []string) (SearchBatch, error) {
-	matches, err := search.Files(searchParamsFor(plan), candidates)
+	return SearchFilesContext(context.Background(), plan, candidates)
+}
+
+// SearchFilesContext stops discovery and scheduling when the request is canceled.
+// Native per-file parsing and an in-progress navigation build finish before returning.
+func SearchFilesContext(ctx context.Context, plan SearchPlan, candidates []string) (SearchBatch, error) {
+	matches, err := search.FilesContext(ctx, searchParamsFor(plan), candidates)
 	return searchBatch{matches: matches}, err
 }
 

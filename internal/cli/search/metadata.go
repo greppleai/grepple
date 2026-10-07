@@ -5,11 +5,11 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/greppleai/grepple/internal/wire"
 	"github.com/greppleai/grepple/internal/cliruntime"
 	"github.com/greppleai/grepple/internal/resultanalysis"
-	"github.com/greppleai/grepple/internal/shellquote"
 	"github.com/greppleai/grepple/internal/search"
+	"github.com/greppleai/grepple/internal/shellquote"
+	"github.com/greppleai/grepple/internal/wire"
 )
 
 func resultScope(mode string, paths, repositories, languages []string) wire.ResultScope {
@@ -48,6 +48,9 @@ func searchResultMetadata(application cliruntime.Context, options *Options, tota
 		totalPointer = &totalCopy
 	}
 	pageComplete := totalKnown && options.Params.Skip+returned >= total
+	if options.CursorPage != nil {
+		pageComplete = options.CursorPage.Complete
+	}
 	complete := pageComplete && !searchAnalysisIncomplete(results)
 	omitted := 0
 	if totalKnown && total > returned {
@@ -101,7 +104,9 @@ func searchAnalysisIncomplete(results []wire.FileResult) bool {
 
 func searchNextCommand(application cliruntime.Context, options *Options, skip int, remote bool) string {
 	parts := application.Repository().AppendScopeFlags([]string{"grepple", "search"})
-	if remote {
+	if options.CursorPage != nil {
+		parts = append(parts, "--remote-only", "--cursor", shellquote.Argument(options.CursorPage.Cursor), "--server", shellquote.Argument(options.RemoteServer))
+	} else if remote {
 		parts = append(parts, "--remote")
 	}
 	if !options.Params.Regex {
@@ -129,7 +134,10 @@ func searchNextCommand(application cliruntime.Context, options *Options, skip in
 	for _, repository := range options.Params.ExcludeRepo {
 		parts = append(parts, "--exclude-repo", shellquote.Argument(repository))
 	}
-	parts = append(parts, "--skip", fmt.Sprint(skip), "--limit", fmt.Sprint(options.Params.Limit), "--json", shellquote.Argument(options.Params.Query))
+	if options.CursorPage == nil {
+		parts = append(parts, "--skip", fmt.Sprint(skip))
+	}
+	parts = append(parts, "--limit", fmt.Sprint(options.Params.Limit), "--json", shellquote.Argument(options.Params.Query))
 	for _, path := range options.Params.Globs {
 		parts = append(parts, shellquote.Argument(path))
 	}

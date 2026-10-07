@@ -38,14 +38,16 @@ type Params struct {
 	FollowRelated   int      `json:"followRelated,omitempty"`
 	// RelatedRepositoryContext expands text-index candidates to complete matched
 	// repositories for navigation. Candidate-only callers retain their universe.
-	RelatedRepositoryContext bool     `json:"-"`
-	NoRelated                bool     `json:"-"`
-	At                       string   `json:"-"`
-	Root                     string   `json:"-"`
-	IgnorePaths              []string `json:"-"`
-	IgnoreRoot               string   `json:"-"`
-	ProductionOnly           bool     `json:"-"`
-	CountByRepo              bool     `json:"-"`
+	RelatedRepositoryContext bool `json:"-"`
+	// ImmutableNavigationRevision is a trusted caller's immutable source identity.
+	ImmutableNavigationRevision string   `json:"-"`
+	NoRelated                   bool     `json:"-"`
+	At                          string   `json:"-"`
+	Root                        string   `json:"-"`
+	IgnorePaths                 []string `json:"-"`
+	IgnoreRoot                  string   `json:"-"`
+	ProductionOnly              bool     `json:"-"`
+	CountByRepo                 bool     `json:"-"`
 }
 
 // RelatedPreview is an optionally expanded declaration and its next navigation

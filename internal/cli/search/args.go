@@ -23,9 +23,11 @@ const DefaultResultLimit = search.DefaultPageLimit
 const DefaultTextOutputBytes = 16 * 1024
 
 type Args struct {
-	Local     bool `arg:"--local" help:"search only the local working directory (this is the default)"`
-	Remote    bool `arg:"-R,--remote" help:"also query the remote shard/router (default: local only)"`
-	Recursive bool `arg:"-r,--recursive" help:"search directories recursively (compatibility alias; already the default)"`
+	Local      bool   `arg:"--local" help:"search only the local working directory (this is the default)"`
+	Remote     bool   `arg:"-R,--remote" help:"also query the remote shard/router (default: local only)"`
+	RemoteOnly bool   `arg:"--remote-only" help:"search only the remote corpus; use snapshot cursor pages for content searches"`
+	Cursor     string `arg:"--cursor" placeholder:"TOKEN" help:"resume an account-bound remote content-search page; no local search"`
+	Recursive  bool   `arg:"-r,--recursive" help:"search directories recursively (compatibility alias; already the default)"`
 	cliruntime.CommonArgs
 	LineNumber       bool     `arg:"-n,--line-number" help:"include line numbers (enabled by default)"`
 	LineOnly         bool     `arg:"--line-only" help:"print only matching lines; include construct end lines when available"`
@@ -126,9 +128,11 @@ func optionsFromArgs(application cliruntime.Context, values *Args, usage interfa
 	// Local-first: only reach out to the shard/router when the user explicitly opts
 	// in with --remote or by passing a --server URL. A configured GREPPLE_SERVER / config
 	// server just supplies the URL; it no longer forces every search to hit remote.
-	remoteEnabled := !values.Local && (values.Remote || values.Server != "")
+	remoteEnabled := !values.Local && (values.Remote || values.RemoteOnly || values.Cursor != "" || values.Server != "")
 	return &Options{
 		Params:           params,
+		RemoteOnly:       values.RemoteOnly || values.Cursor != "",
+		Cursor:           values.Cursor,
 		LineOnly:         values.LineOnly,
 		OnlyMatching:     values.OnlyMatching,
 		JSON:             jsonModeFor(*values),
@@ -245,6 +249,9 @@ func validateEnclosingArgs(values *searchArgs) error {
 // validateSearchArgs rejects contradictory or out-of-range flag combinations
 // before any searching starts.
 func validateSearchArgs(values *searchArgs) error {
+	if err := validateCursorArguments(values); err != nil {
+		return err
+	}
 	if err := validateSearchBounds(values); err != nil {
 		return err
 	}
