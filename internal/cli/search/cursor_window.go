@@ -5,7 +5,7 @@ import (
 	"github.com/greppleai/grepple/internal/wire"
 )
 
-// A frozen page is indivisible: reducing --limit on replay must not discard files.
+// The server already applies the cursor's global offset and page window.
 func selectedSearchWindow(options *Options, results []wire.FileResult) []wire.FileResult {
 	if options.CursorPage == nil {
 		return windowResults(results, options.Params)

@@ -8,11 +8,10 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
-	"time"
 )
 
 func fixtureCursor(letter string) string {
-	return strings.Repeat("S", 43) + "." + strings.Repeat(letter, 43)
+	return strings.Repeat("S", 43) + "." + map[string]string{"A": "0", "B": "20"}[letter]
 }
 func TestCursorRemoteOnlyPagesReplayAndNoLocalMixing(t *testing.T) {
 	chdirTemp(t)
@@ -27,7 +26,7 @@ func TestCursorRemoteOnlyPagesReplayAndNoLocalMixing(t *testing.T) {
 			t.Error(err)
 		}
 		bodies = append(bodies, body)
-		page := apiclient.SearchPage{Results: []wire.FileResult{}, PageID: fixtureCursor("A"), Cursor: fixtureCursor("B"), ExpiresAt: time.Now().Add(time.Minute)}
+		page := apiclient.SearchPage{Results: []wire.FileResult{}, PageID: fixtureCursor("A"), Cursor: fixtureCursor("B")}
 		if body.Cursor != "" {
 			page.PageID = fixtureCursor("B")
 			page.Cursor = ""
@@ -46,12 +45,12 @@ func TestCursorRemoteOnlyPagesReplayAndNoLocalMixing(t *testing.T) {
 	})
 	assertCursorCommand(t, first, server.URL)
 	second := captureStdout(t, func() {
-		if err := runTestSearch([]string{"--cursor", fixtureCursor("B"), "--server", server.URL, "--limit", "1", "--json", "Needle"}); err != nil {
+		if err := runTestSearch([]string{"--cursor", fixtureCursor("B"), "--server", server.URL, "--json", "Needle"}); err != nil {
 			t.Fatal(err)
 		}
 	})
 	assertCursorReplayFiles(t, second)
-	if len(bodies) != 2 || bodies[0].Search == nil || bodies[1].Search != nil || bodies[1].Cursor != fixtureCursor("B") {
+	if len(bodies) != 2 || bodies[0].Search == nil || bodies[1].Search == nil || bodies[1].Cursor != fixtureCursor("B") {
 		t.Fatalf("invalid start/continuation protocol: %#v", bodies)
 	}
 }
