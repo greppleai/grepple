@@ -39,19 +39,7 @@ func newResolvedNavigationIndex(graph parser.NavigationGraph, contents map[strin
 	sort.Strings(paths)
 	indexRelatedDeclarations(index, graph.Declarations, graphPaths)
 	indexRelatedTypeFacts(index, graph, graphPaths)
-	for _, call := range graph.Calls {
-		caller, ok := index.byID[call.CallerID]
-		if !ok {
-			continue
-		}
-		indexed := navigationCall{
-			id: call.ID, callerID: call.CallerID, name: call.Name, display: call.Display, resolvedName: call.ResolvedName, qualifier: call.Qualifier, importPath: call.ImportPath, moduleScope: caller.moduleScope, receiverType: call.ReceiverType, rootType: call.ReceiverRootType, rootImport: call.ReceiverRootImport, receiverMembers: append([]string(nil), call.ReceiverMembers...), receiverFactory: call.ReceiverFactory, factoryImport: call.ReceiverFactoryImport, file: caller.file, language: call.Language, importSourceFile: caller.file, packageName: caller.packageName, targetID: call.TargetID, candidateTargetIDs: append([]string(nil), call.CandidateTargetIDs...), confidence: call.Confidence, line: call.Line,
-		}
-		index.calls[relatedLocationKey(caller.point)] = append(index.calls[relatedLocationKey(caller.point)], indexed)
-		if call.TargetID != "" {
-			index.callersByTargetID[call.TargetID] = append(index.callersByTargetID[call.TargetID], navigationCaller{declaration: caller, call: indexed})
-		}
-	}
+	indexStoredCalls(index, graph.Calls)
 	return index
 }
 

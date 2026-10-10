@@ -5,29 +5,34 @@ import "github.com/greppleai/grepple/internal/navigation"
 // Request is the unresolved search input shared by local and transport adapters.
 // Nil pointer fields preserve the distinction between unset and explicit zero values.
 type Request struct {
-	Query           *string  `json:"query,omitempty"`
-	Globs           []string `json:"globs,omitempty"`
-	Regex           *bool    `json:"regex,omitempty"`
-	IgnoreCase      *bool    `json:"ignoreCase,omitempty"`
-	InvertMatch     *bool    `json:"invertMatch,omitempty"`
-	MaxFiles        *int     `json:"maxFiles,omitempty"`
-	Skip            *int     `json:"skip,omitempty"`
-	Limit           *int     `json:"limit,omitempty"`
-	Sort            string   `json:"sort,omitempty"`
-	Repo            any      `json:"repo,omitempty"`
-	ExcludeRepo     any      `json:"excludeRepo,omitempty"`
-	Files           bool     `json:"files,omitempty"`
-	Context         any      `json:"context,omitempty"`
-	BeforeContext   *int     `json:"beforeContext,omitempty"`
-	AfterContext    *int     `json:"afterContext,omitempty"`
-	SkipSegments    bool     `json:"skipSegments,omitempty"`
-	LineRanges      bool     `json:"matchLineRanges,omitempty"`
-	EnclosingRanges bool     `json:"enclosingLineRanges,omitempty"`
-	Related         bool     `json:"related,omitempty"`
-	NoRelated       bool     `json:"noRelated,omitempty"`
-	At              string   `json:"at,omitempty"`
-	FollowRelated   int      `json:"followRelated,omitempty"`
-	CountByRepo     bool     `json:"countByRepo,omitempty"`
+	Query                 *string               `json:"query,omitempty"`
+	Globs                 []string              `json:"globs,omitempty"`
+	Regex                 *bool                 `json:"regex,omitempty"`
+	IgnoreCase            *bool                 `json:"ignoreCase,omitempty"`
+	InvertMatch           *bool                 `json:"invertMatch,omitempty"`
+	MaxFiles              *int                  `json:"maxFiles,omitempty"`
+	Skip                  *int                  `json:"skip,omitempty"`
+	Limit                 *int                  `json:"limit,omitempty"`
+	Sort                  string                `json:"sort,omitempty"`
+	Repo                  any                   `json:"repo,omitempty"`
+	ExcludeRepo           any                   `json:"excludeRepo,omitempty"`
+	Files                 bool                  `json:"files,omitempty"`
+	Context               any                   `json:"context,omitempty"`
+	BeforeContext         *int                  `json:"beforeContext,omitempty"`
+	AfterContext          *int                  `json:"afterContext,omitempty"`
+	SkipSegments          bool                  `json:"skipSegments,omitempty"`
+	LineRanges            bool                  `json:"matchLineRanges,omitempty"`
+	EnclosingRanges       bool                  `json:"enclosingLineRanges,omitempty"`
+	Related               bool                  `json:"related,omitempty"`
+	NoRelated             bool                  `json:"noRelated,omitempty"`
+	At                    string                `json:"at,omitempty"`
+	FollowRelated         int                   `json:"followRelated,omitempty"`
+	CountByRepo           bool                  `json:"countByRepo,omitempty"`
+	CaptureNavigation     bool                  `json:"captureNavigation,omitempty"`
+	DiscoverOnly          bool                  `json:"discoverOnly,omitempty"`
+	DiscoveryAfter        string                `json:"discoveryAfter,omitempty"`
+	MaterializeSelections bool                  `json:"materializeSelections,omitempty"`
+	NavigationSelections  []NavigationSelection `json:"navigationSelections,omitempty"`
 }
 
 // ResultMatch is one matching line inside a file.

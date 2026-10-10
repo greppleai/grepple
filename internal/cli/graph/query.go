@@ -82,12 +82,7 @@ func executeQueryWithDaemon(application cliruntime.Context, direction search.Nav
 		if useDaemon {
 			key, _ = daemon.KeyGraph(paths, values.MaxFiles, sources, query)
 		}
-		universe, err := analysis.NewUniverse(sources, values.MaxFiles)
-		if err != nil {
-			return err
-		}
-		defer universe.Close()
-		report, err = analysis.BuildGraph(universe, &query)
+		report, err = analysis.BuildStoredGraph(sources, values.MaxFiles, query)
 		if err != nil {
 			return err
 		}

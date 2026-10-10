@@ -51,12 +51,14 @@ type RepoCount = searchdomain.RepoCount
 
 // SearchResponse is the on-the-wire search response.
 type SearchResponse struct {
-	Results        []FileResult    `json:"results"`
-	Metadata       *ResultMetadata `json:"metadata,omitempty"`
-	SourceAnalysis *SourceAnalysis `json:"sourceAnalysis,omitempty"`
-	RepoCounts     []RepoCount     `json:"repoCounts,omitempty"`
-	ShardErrors    []string        `json:"shardErrors,omitempty"`
-	Truncated      bool            `json:"truncated,omitempty"`
+	Results              []FileResult                       `json:"results"`
+	Metadata             *ResultMetadata                    `json:"metadata,omitempty"`
+	SourceAnalysis       *SourceAnalysis                    `json:"sourceAnalysis,omitempty"`
+	RepoCounts           []RepoCount                        `json:"repoCounts,omitempty"`
+	ShardErrors          []string                           `json:"shardErrors,omitempty"`
+	Truncated            bool                               `json:"truncated,omitempty"`
+	NavigationSelections []searchdomain.NavigationSelection `json:"navigationSelections,omitempty"`
+	DiscoveryComplete    bool                               `json:"discoveryComplete,omitempty"`
 }
 
 // SourceAnalysis summarizes structural parsing for returned search results.

@@ -33,7 +33,7 @@ func TestNavigationPackageExportsOnlyServiceConstructors(t *testing.T) {
 		}
 	}
 	sort.Strings(exported)
-	want := []string{"NewExternalDependencyService", "NewExternalResolutionService", "NewGraphEngine", "NewGraphOperations"}
+	want := []string{"NewExternalDependencyService", "NewExternalResolutionService", "NewGraphEngine", "NewGraphOperations", "NewObservedSnapshotStore"}
 	if !reflect.DeepEqual(exported, want) {
 		t.Fatalf("package-level functions=%v; want only interface constructors %v", exported, want)
 	}

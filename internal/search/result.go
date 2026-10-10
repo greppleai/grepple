@@ -96,7 +96,9 @@ func relatedSymbols(points []RelatedPoint) []navigation.RelatedSymbol {
 			Start: point.Start, End: point.End, CallLine: point.CallLine, Confidence: point.Confidence, Role: point.Role, External: point.External,
 		}
 		if point.Preview != nil {
-			symbol.Segments = resultSegments(point.Preview.Content, []parser.Segment{{Kind: "lines", Start: point.Preview.Start, End: point.Preview.End}})
+			if preview := point.Preview; preview.Content != "" && preview.Start >= 1 && preview.End >= preview.Start && preview.End <= len(SplitLines(preview.Content)) {
+				symbol.Segments = resultSegments(preview.Content, []parser.Segment{{Kind: "lines", Start: preview.Start, End: preview.End}})
+			}
 			symbol.Related = relatedSymbols(point.Preview.Related)
 			symbol.OmittedCallers = point.Preview.OmittedCallers
 			symbol.OmittedCallees = point.Preview.OmittedCallees

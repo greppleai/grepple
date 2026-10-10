@@ -1,6 +1,9 @@
 package navigation
 
-import "github.com/greppleai/grepple/internal/parser"
+import (
+	"github.com/greppleai/grepple/internal/parser"
+	"os"
+)
 
 // GraphAnalysis is the reusable, caller-owned projection of one resolved graph.
 type GraphAnalysis interface {
@@ -11,6 +14,7 @@ type GraphAnalysis interface {
 // Documents remain owned by the caller; options apply consistently to every build.
 type GraphEngine interface {
 	BuildFiles([]string) (parser.NavigationGraph, SourceStats)
+	BuildQueryFiles([]string) (QuerySnapshot, SourceStats, error)
 	BuildDocuments([]DocumentSource) (GraphAnalysis, SourceStats)
 	BuildTextSources([]TextSource) (GraphAnalysis, SourceStats)
 	RepositoryContextFiles([]string) []string
@@ -20,6 +24,12 @@ type graphEngine struct{ options BuildOptions }
 
 // NewGraphEngine returns the graph-building capability for the requested options.
 func NewGraphEngine(options BuildOptions) GraphEngine { return graphEngine{options: options} }
+
+func (engine graphEngine) BuildQueryFiles(files []string) (QuerySnapshot, SourceStats, error) {
+	graph, stats := buildGraphWithOptions(files, engine.options)
+	snapshot, err := newQuerySnapshot(graph)
+	return snapshot, stats, err
+}
 
 func (engine graphEngine) BuildFiles(files []string) (parser.NavigationGraph, SourceStats) {
 	return buildGraphWithOptions(files, engine.options)
@@ -44,10 +54,20 @@ type GraphOperations interface {
 	NormalizeFilter(NavigationGraphFilter) (NavigationGraphFilter, error)
 	Filter(parser.NavigationGraph, NavigationGraphFilter) (parser.NavigationGraph, error)
 	Query(parser.NavigationGraph, []string, NavigationQueryDirection, int) (parser.NavigationGraph, error)
+	PrepareQuery(parser.NavigationGraph) (QuerySnapshot, error)
 	ResolutionStats(parser.NavigationGraph) NavigationResolutionStats
+	SnapshotStore() SnapshotStore
+	PartitionLanguages(parser.NavigationGraph) []LanguagePartition
 }
 
 type graphOperations struct{}
+
+func (graphOperations) PartitionLanguages(graph parser.NavigationGraph) []LanguagePartition {
+	return partitionNavigationLanguages(graph)
+}
+func (graphOperations) PrepareQuery(graph parser.NavigationGraph) (QuerySnapshot, error) {
+	return newQuerySnapshot(graph)
+}
 
 // NewGraphOperations returns read-only graph projection capabilities.
 func NewGraphOperations() GraphOperations { return graphOperations{} }
@@ -65,6 +85,14 @@ func (graphOperations) Filter(graph parser.NavigationGraph, filter NavigationGra
 }
 
 func (graphOperations) Query(graph parser.NavigationGraph, roots []string, direction NavigationQueryDirection, depth int) (parser.NavigationGraph, error) {
+	// Development opt-in: do not impose conversion peak memory on normal callers.
+	if os.Getenv("GREPPLE_EXPERIMENTAL_COMPACT_NAVIGATION") == "1" {
+		snapshot, err := newQuerySnapshot(graph)
+		if err != nil {
+			return parser.NavigationGraph{}, err
+		}
+		return snapshot.Query(roots, direction, depth)
+	}
 	return queryNavigationGraph(graph, roots, direction, depth)
 }
 

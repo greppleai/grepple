@@ -221,6 +221,50 @@ directories:
       description: Owns immutable portable search plans, projection and cancellable content execution.
       kind: production
       checksum: 83bfcaf2d61db856e4f75387bf5e824ee6d2dcf1ef687995177a8d28d0742432
+    - path: navigation_service.go
+      description: Implements or verifies bounded immutable navigation readers and exact workspace version evidence.
+      kind: production
+      checksum: 75455e65ba8b76ec9e440f2e9c29ff9d92e07162dbdfd8deff3938973112c76d
+    - path: navigation_snapshot.go
+      description: Implements or verifies bounded immutable navigation readers and exact workspace version evidence.
+      kind: production
+      checksum: f0ee79ab7b33946ba1cca013683820021fc2e47c8d6bca4a2a3d692eb5d57d27
+    - path: navigation_snapshot_search.go
+      description: Implements or verifies bounded immutable navigation readers and exact workspace version evidence.
+      kind: production
+      checksum: f83b769ad0e31bd150d9b8eeba82e150f268a1f9050845f50fe927309ec50954
+    - path: navigation_snapshot_test.go
+      description: Implements or verifies bounded immutable navigation readers and exact workspace version evidence.
+      kind: test
+      checksum: f7a9e3db8d331cc71817ee53152dd81c75b7df09602ea9e95541b0b9c2b8a7b9
+    - path: navigation_snapshot_measure_test.go
+      description: Implements or verifies bounded immutable navigation readers and exact workspace version evidence.
+      kind: test
+      checksum: 1055796ccf80a45a573a70fa71f45f2c0dc1a58f934e301b2fccb740e7efebfc
+    - path: navigation_partition.go
+      description: Publishes, queries or verifies coherent language-connected immutable navigation pages and active-generation migration.
+      kind: production
+      checksum: 80e64114ff5833a6baec5acf375b59c34f18ecd952befb4f2223826179890f13
+    - path: navigation_snapshot_artifact.go
+      description: Publishes, queries or verifies coherent language-connected immutable navigation pages and active-generation migration.
+      kind: production
+      checksum: b93c238393a982cea7e4171cfc9380a47179c88c4fb1cc2dea04138b015b2ef4
+    - path: navigation_snapshot_artifact_test.go
+      description: Publishes, queries or verifies coherent language-connected immutable navigation pages and active-generation migration.
+      kind: test
+      checksum: c4df8972dd49e0fbeff643141f5e644ae08afee3f72f557a9264dc9f5a1d28e7
+    - path: navigation_snapshot_languages.go
+      description: Publishes, queries or verifies coherent language-connected immutable navigation pages and active-generation migration.
+      kind: production
+      checksum: 6e579e32c8638e77db672627ae7211f3d632d9d1a39291bc97fd45f59211ac9b
+    - path: navigation_snapshot_paged_test.go
+      description: Publishes, queries or verifies coherent language-connected immutable navigation pages and active-generation migration.
+      kind: test
+      checksum: 0ef89f0814b07727d5fb2fd9bce5af20e13fbab97951916356adabc8ea6849a8
+    - path: navigation_codex_scoped_measure_test.go
+      description: Publishes, queries or verifies coherent language-connected immutable navigation pages and active-generation migration.
+      kind: test
+      checksum: b383640e2655506ecd7ec2a8638975c0cab814d5ea461f1c88a9c82718774e6b
   cmd:
     description: Entry point for the Grepple command-line application that executes CLI requests and translates failures into process behavior.
     responsibilities:
@@ -273,6 +317,10 @@ directories:
       description: Preserves the former long-form root README verbatim for historical reference.
       kind: production
       checksum: 1253c689a2c308b5df8fc65ae3f33b080236af9602d2f41059b5044f41330a5b
+    - path: agent-setup.md
+      description: Owns version-pinned Grepple agent setup, skill discovery, ownership or supporting resources.
+      kind: production
+      checksum: 62b92af9e4c18d5f59042708be2c30f00d07a984330115c0ba62fba479e046d4
     - path: agent-utility-metrics.md
       description: Defines explicit agent utility journal inputs, report formats, comparisons, and evidence boundaries.
       kind: production
@@ -297,6 +345,14 @@ directories:
       description: Describes source-linked workflow and type boundary signals, policy interpretation, evidence, risk, and caching.
       kind: production
       checksum: d2ebd5ce2155b221e5b9e0e5f604dade28c73186396a737ecc2e2eb3ef64543e
+    - path: cli-cursor-search.md
+      description: Owns authenticated snapshot cursor search, bounded pages and compatible legacy modes.
+      kind: production
+      checksum: 5624f7ff0521077eb306ad7883739c511dfc4728a369c1fc6da7e940fb70b93d
+    - path: compact-navigation-index.md
+      description: Owns compact immutable navigation query indexes, native detail hydration or measured rollout documentation.
+      kind: production
+      checksum: 5e306a0dcdd7d7270e04785e63051bcfe87122809ecb6d0f9c2f866378f99f84
     - path: directory-architecture.md
       description: Specifies language-neutral directory orientation, declaration resolution, relation evidence, responsibilities, and determinism diagnostics.
       kind: production
@@ -325,6 +381,18 @@ directories:
       description: Records authoritative ownership of parser, navigation, search, extraction, analysis, source, and CLI implementation boundaries.
       kind: production
       checksum: 3c6d50125a1613d1b5c663651f2fc59abe6ee665ec0fdc7af1cb25c15256fcc9
+    - path: navigation-cli-rollout.md
+      description: Records current-checkout CLI measurements, persistence groundwork and remaining rollout gates.
+      kind: production
+      checksum: ad70fb4ad752336695c952ee8c13c5e1e9839f69099e0fdd248db9fc86611aa1
+    - path: navigation-latency-diagnosis.md
+      description: Measures or reduces navigation source-fence, path-selection and query-stage latency while retaining output parity.
+      kind: production
+      checksum: 8eeea80104b2f9a453d04e49d1bf68528915c63e010dcdbae9835165a342d60f
+    - path: navigation-snapshot-storage.md
+      description: Documents measured ReadAt navigation detail storage and a query-ready immutable section layout.
+      kind: production
+      checksum: af825a6c1514466163cdd0cb526eba4771ed15b12c1da72594118f43879aedaa
     - path: output-contracts.md
       description: Specifies command output modes, completeness, limits, spilling, source availability, and resolution outcomes.
       kind: production
@@ -357,14 +425,18 @@ directories:
       description: Defines transactional hashline edits, creations, deletions, validation, dry runs, output, and coverage tracking.
       kind: production
       checksum: 9f3af1ee709980d196383dbb715e29fc7b410630766da1882631f1e551e6615d
-    - path: cli-cursor-search.md
-      description: Owns authenticated snapshot cursor search, bounded pages and compatible legacy modes.
+    - path: navigation-language-partitions.md
+      description: Builds, publishes, queries or verifies coherent language-owned navigation partitions and source-fenced root lookup.
       kind: production
-      checksum: 5624f7ff0521077eb306ad7883739c511dfc4728a369c1fc6da7e940fb70b93d
-    - path: agent-setup.md
-      description: Owns version-pinned Grepple agent setup, skill discovery, ownership or supporting resources.
+      checksum: f91f51662719984dd417f6c6ae8e83adca9ca65c22f59316bbf711891316aa33
+    - path: navigation-scoped-pages.md
+      description: Stores, selectively queries or verifies checked immutable navigation pages and exact root catalog metadata.
       kind: production
-      checksum: 62b92af9e4c18d5f59042708be2c30f00d07a984330115c0ba62fba479e046d4
+      checksum: fe004ef6c8d91fc8e14b49728e0315706853777d4b52d94d6bf3d0e3c017f19d
+    - path: backend-scoped-navigation.md
+      description: Publishes, queries or verifies coherent language-connected immutable navigation pages and active-generation migration.
+      kind: production
+      checksum: cc0e4f1d86b1cc3e0f991119a41d2bedd25d8a86025818a84a9ac2a801710791
   examples/advanced-files:
     description: Advanced examples implement typed cataloging, dependency-aware scheduling, generic search, workflow execution, caching, deployment polling, audited delivery, revision indexing, asynchronous pipelines, and retryable workers.
     responsibilities:
@@ -911,7 +983,39 @@ directories:
     - path: graph.go
       description: Constructs complete or queried navigation graph reports with validated filters, traversal, and root selection.
       kind: production
-      checksum: 333a0d0109649647ee8df1d4011e396869ec1b35b0f14d2857c1c985f6a8b907
+      checksum: d737413db3ec8b23648ed22a93b46c5b4fd8e4b88fc60efa57103c21889a9381
+    - path: graph_latency_diagnostic_test.go
+      description: Measures or reduces navigation source-fence, path-selection and query-stage latency while retaining output parity.
+      kind: test
+      checksum: 758a69dba5323ac41c4ad3be627ae288b4241c2205829b4f1eac9d84375329e4
+    - path: graph_path_normalizer.go
+      description: Measures or reduces navigation source-fence, path-selection and query-stage latency while retaining output parity.
+      kind: production
+      checksum: d279af7f473de45b1884e466dcc4b5e453994053f79c913af440c32d09aa0175
+    - path: graph_path_normalizer_test.go
+      description: Measures or reduces navigation source-fence, path-selection and query-stage latency while retaining output parity.
+      kind: test
+      checksum: 77d375c158e9d4cb3e2689aa9412e148fb84c0e7bb7e2b4c24a6853159c65208
+    - path: graph_stored.go
+      description: Persists, reopens or verifies source-fenced compact navigation query views with selective detail reads.
+      kind: production
+      checksum: b7832bc67ffe806564d529a8ee196d25bf00ca1bd0dc29090d7f86e15f2e0bc0
+    - path: graph_stored_context.go
+      description: Persists, reopens or verifies source-fenced compact navigation query views with selective detail reads.
+      kind: production
+      checksum: c787eaa3fb175c2cb30b657be01b18b267345c0b70e343461491d525967bfcf0
+    - path: graph_stored_context_test.go
+      description: Persists, reopens or verifies source-fenced compact navigation query views with selective detail reads.
+      kind: test
+      checksum: 29e15ab08050b5be81268a60caa9ea811bfeb91989ed5c1f4e40af114c958193
+    - path: graph_stored_test.go
+      description: Persists, reopens or verifies source-fenced compact navigation query views with selective detail reads.
+      kind: test
+      checksum: 3ae57b42361b3b3c38978f554629b195ccd36fdf2d0f43f56d831dfa2194e74b
+    - path: graph_traversal_diagnostic_test.go
+      description: Measures or reduces navigation source-fence, path-selection and query-stage latency while retaining output parity.
+      kind: test
+      checksum: 4d25f4aead72edf3355b707a8863ada707b380a528e341c8e191dcb247647156
     - path: jvm_import_test.go
       description: Verifies Java and Kotlin imports resolve into directory architecture relations.
       kind: test
@@ -940,6 +1044,42 @@ directories:
       description: Owns parsed source documents, completeness accounting, reusable navigation analysis, and immutable graph access.
       kind: production
       checksum: dceea48caeb331a5b4e611988f1b7b00eb75fa13baa2aba36a0869c2ded41ca8
+    - path: graph_languages.go
+      description: Builds, publishes, queries or verifies coherent language-owned navigation partitions and source-fenced root lookup.
+      kind: production
+      checksum: b9a7b1cbe447f6d8e220c622365bd0fbd4721de6237f940373d5628f2240680f
+    - path: graph_languages_test.go
+      description: Builds, publishes, queries or verifies coherent language-owned navigation partitions and source-fenced root lookup.
+      kind: test
+      checksum: 32f1bc32d2400708fdd28341806b371f2fbc8f6b3bc695df13c297b9ad0ca5f2
+    - path: graph_language_store.go
+      description: Builds, publishes, queries or verifies coherent language-owned navigation partitions and source-fenced root lookup.
+      kind: production
+      checksum: f870511bf184e6e06e6f6da9c53f3c8f4b9e8ce46d27d60c6f525e70aabdbb1d
+    - path: graph_language_roots.go
+      description: Builds, publishes, queries or verifies coherent language-owned navigation partitions and source-fenced root lookup.
+      kind: production
+      checksum: 6c3d359cf82c2b7286dc7fca4b873dac2b29d03e85a3b2886947e7fe84a4e696
+    - path: graph_language_measure_test.go
+      description: Builds, publishes, queries or verifies coherent language-owned navigation partitions and source-fenced root lookup.
+      kind: test
+      checksum: af461bca80676cc7f201359dcb9d1f8422f47bbaf8a8a295d3171df10109f80f
+    - path: graph_language_measure_reader_test.go
+      description: Builds, publishes, queries or verifies coherent language-owned navigation partitions and source-fenced root lookup.
+      kind: test
+      checksum: bc4e2bc39f9048895d6835080a4f18db111e1b7199f880b5b2f615e41e6da7ce
+    - path: graph_language_concurrency_test.go
+      description: Builds, publishes, queries or verifies coherent language-owned navigation partitions and source-fenced root lookup.
+      kind: test
+      checksum: d876cb3072be5ff308da218552c9cc8cd5c6bb621d5eec10c3a4657838eaad9f
+    - path: graph_language_root_codec.go
+      description: Stores, selectively queries or verifies checked immutable navigation pages and exact root catalog metadata.
+      kind: production
+      checksum: 681e210db0aaf916da01bbf78cf5ae551feab84ddd134577d1660011990c8fa1
+    - path: graph_language_root_codec_test.go
+      description: Stores, selectively queries or verifies checked immutable navigation pages and exact root catalog metadata.
+      kind: test
+      checksum: 0d2f9278d30372ce3bd86bbe1accdc7de43d4ca927b810d9959e8b4bfc0b5883
   internal/anchor:
     description: The anchor package produces stable line anchors using native hashline generation or validated external providers.
     responsibilities:
@@ -1425,6 +1565,10 @@ directories:
       description: Validates deterministic graph construction, traversal, filtering, truncation, metadata, and output behavior.
       kind: test
       checksum: 347df859da16199dd477631e5a6c3e7d8fe4257123bb88f7c44bcd4b93a6218e
+    - path: latency_diagnostic_test.go
+      description: Measures or reduces navigation source-fence, path-selection and query-stage latency while retaining output parity.
+      kind: test
+      checksum: 0ff68cea5aef1d6e982c5eb92409445417421823f15c2062f3d11e3a475adb9d
     - path: projection.go
       description: Defines normalized graph output structures and converts analysis reports into command projections.
       kind: production
@@ -1432,7 +1576,7 @@ directories:
     - path: query.go
       description: Parses selectors, resolves source paths, executes filtered local or exact remote traversals, and exposes graph helpers.
       kind: production
-      checksum: 297897d5f278bc173bf7da6cb6d4cdb94eb98a5890aa291a387e5d590d8a4f2f
+      checksum: 7d54af3a2b87121d1d395183181ffa4a28ae358529dc4bd50226201c834bdbec
     - path: query_compact.go
       description: Renders directional traversal results with grouped edges, ambiguity markers, deterministic ordering, and cycle bounds.
       kind: production
@@ -2303,7 +2447,7 @@ directories:
     - path: cargo.go
       description: Resolves Cargo manifests and lockfiles, matches Rust imports, and discovers Cargo artifact modules.
       kind: production
-      checksum: c0a18be7a8abffc803cce09a23b563889d5beba759dfbf78059899fac91ef31e
+      checksum: 7a2369abe173fca4a0fa165011a7ab678de12daba27b49b229c82ad58ccd6b00
       areas:
       - cargo-resolution
     - path: gomod.go
@@ -2337,6 +2481,14 @@ directories:
       areas:
       - npm-resolution
       - resolver-registry
+    - path: cargo_workspace.go
+      description: Implements or verifies bounded immutable navigation readers and exact workspace version evidence.
+      kind: production
+      checksum: f33fd7b90ced8cf468453594ecf84b13616f7954aa574f4d01e79072df29a332
+    - path: cargo_workspace_test.go
+      description: Implements or verifies bounded immutable navigation readers and exact workspace version evidence.
+      kind: test
+      checksum: 34d27abee6a4f62aeb0fcdabdf2c9c7e978771222e8fcf44f5cf4094dc90b85d
   internal/directorymeta:
     description: Manages YAML directory metadata, selected-file coverage, checksum freshness, validation, and bounded directory summaries.
     responsibilities:
@@ -3299,7 +3451,7 @@ directories:
       kind: test
       checksum: 96dcf339e2ee2d827a98aeef0e34c244b0cc001cde6c26d20ca24326b7eb1c9b
   internal/navigation:
-    description: The navigation package builds deterministic multilingual repository graphs, resolves local and external relationships, caches analyses, and supports filtering, traversal, diffing, and resolution statistics.
+    description: Builds deterministic multilingual repository graphs, resolves evidence-backed relationships, and offers experimental compact immutable query snapshots with indexed traversal and lazy native detail hydration.
     responsibilities:
     - Build deterministic navigation graphs from files, documents, and text sources
     - Index corpus paths, modules, exports, and language-specific lookup data
@@ -3328,7 +3480,7 @@ directories:
     - path: engine.go
       description: Builds navigation indexes from files, documents, and text sources and resolves graph relationships.
       kind: production
-      checksum: f014da808b1e66dd2ca7b7cb8a64eb891cf43c27c5fad69530eeb78fae09ddc3
+      checksum: 2801dc5e33d7e74ee8d8a611c86aa66705ce9dc1403bdb94c7191668105c61bf
       areas:
       - graph-building
       - language-resolution
@@ -3459,6 +3611,18 @@ directories:
       checksum: 16be2f5d77169da4db73237bbc618983614780d9116f7c9776913f6a9f6c546e
       areas:
       - language-resolution
+    - path: navigation_svelte.go
+      description: Prevents implicit lexical call resolution between isolated component script bodies.
+      kind: production
+      checksum: 129304d1fe57d74d8cd90b07f1c6a6f6768ed5c1e40732251fbfc075f1a09bca
+      areas:
+      - language-resolution
+    - path: navigation_svelte_test.go
+      description: Tests same-script calls and exact ordinary TypeScript import resolution from Svelte components.
+      kind: test
+      checksum: b8870ebcd7a6c9b4382e0d4821777922f17020f199e1cf3bd72b79fc7c992b0e
+      areas:
+      - language-resolution
     - path: navigation_swift.go
       description: Resolves Swift declarations and calls within the same source file without assuming module ownership.
       kind: production
@@ -3496,6 +3660,122 @@ directories:
       checksum: b7ad0744dda2e9eca022de8fc8cf6361b034ad7e26b3dfe25876780190ab9849
       areas:
       - graph-querying
+    - path: services.go
+      description: Owns compact immutable navigation query indexes, native detail hydration or measured rollout documentation.
+      kind: production
+      areas:
+      - graph-building
+      checksum: 9f8b2a2942ea1d2ebf837743054a4881db86cdef87e91bca32ff6f64deec9fd7
+    - path: snapshot.go
+      description: Owns compact immutable navigation query indexes, native detail hydration or measured rollout documentation.
+      kind: production
+      areas:
+      - graph-building
+      checksum: 7b145f0739c8dce0f55844a4a781409b62f62bae0e3b75c2b5d4aa86de10018a
+    - path: snapshot_artifact_test.go
+      description: Tests compact navigation snapshot parity, lifetime, codec safety or measured resource behavior.
+      kind: test
+      areas:
+      - graph-building
+      checksum: 6e08fbd11fcb1dc97e077d1d779952689e900fcdc6c0018918adfbd9e2887736
+    - path: snapshot_block.go
+      description: Owns compact immutable navigation query indexes, native detail hydration or measured rollout documentation.
+      kind: production
+      areas:
+      - graph-building
+      checksum: 5aa7d50443c1e041950e201d56923dda2422ba4475d23dc06be6b51e4a32c87c
+    - path: snapshot_block_test.go
+      description: Tests compact navigation snapshot parity, lifetime, codec safety or measured resource behavior.
+      kind: test
+      areas:
+      - graph-building
+      checksum: db1ccaeba748d4b017fa4d98d5f31e7da8f16e07de7cd2b7c1042f4b5dfd7d85
+    - path: snapshot_call_details.go
+      description: Owns compact immutable navigation query indexes, native detail hydration or measured rollout documentation.
+      kind: production
+      areas:
+      - graph-building
+      checksum: 6a8ede56858521742c762448c2b5a2bbbdeefbd1c1a0f65259a9f48d2cd7f1d7
+    - path: snapshot_compatibility_test.go
+      description: Tests compact navigation snapshot parity, lifetime, codec safety or measured resource behavior.
+      kind: test
+      areas:
+      - graph-building
+      checksum: 73fbae5818cd30224b89362936fea27cecec0c9c965003c887d56833da3e1845
+    - path: snapshot_core_codec.go
+      description: Encodes deterministic little-endian navigation core arrays and indexes with bounded decoding.
+      kind: production
+      checksum: 9c2efed37f191e56afb68bf520867226f3fe901fc193810e9e8c23e3ad3d41db
+      areas:
+      - graph-building
+    - path: snapshot_core_codec_test.go
+      description: Tests deterministic core bytes, query parity, truncation and count guards.
+      kind: test
+      checksum: a5abc8b2b1b4e793ebfe9cc3c04087a7a82fc79c63f3e69e2ca1f816f6e20723
+      areas:
+      - graph-building
+    - path: snapshot_core_validation.go
+      description: Validates numeric call, adjacency, ownership and duplicate references before traversal.
+      kind: production
+      checksum: 8e1db21bc3d0497370ba296a1febde46a9607468385e2db03a5374b22e39244c
+      areas:
+      - graph-building
+    - path: snapshot_detail_readat.go
+      description: Reads only selected immutable navigation detail blocks with checked offsets, lengths and SHA-256 digests.
+      kind: production
+      areas:
+      - graph-building
+      checksum: a511fa7b4e3e1d428b235ab72fb81a182b0b4365db010fc90f587bbfdf619e9c
+    - path: snapshot_details.go
+      description: Owns compact immutable navigation query indexes, native detail hydration or measured rollout documentation.
+      kind: production
+      areas:
+      - graph-building
+      checksum: a3eea5de2744468cd3535989ced03e484b3a0ed520193c77d41d01a190086094
+    - path: snapshot_keys.go
+      description: Owns compact immutable navigation query indexes, native detail hydration or measured rollout documentation.
+      kind: production
+      areas:
+      - graph-building
+      checksum: a20c5c1be234f781c65a6a5fc63b9a78c367ea7f0e4b4feea64856872d06e4c3
+    - path: snapshot_languages_test.go
+      description: Tests compact navigation snapshot parity, lifetime, codec safety or measured resource behavior.
+      kind: test
+      areas:
+      - graph-building
+      checksum: bc015d2ab8548799d976b6879bab0ed302921a3b050bdcb25e836220cbaa9419
+    - path: snapshot_latency_test.go
+      description: Tests compact navigation snapshot parity, lifetime, codec safety or measured resource behavior.
+      kind: test
+      areas:
+      - graph-building
+      checksum: 1b90de8c69124b1bc631dd641a1e361916881407de9ae1275aee4c8380803d31
+    - path: snapshot_memory_test.go
+      description: Tests compact navigation snapshot parity, lifetime, codec safety or measured resource behavior.
+      kind: test
+      areas:
+      - graph-building
+      checksum: 946e3046b8823a868fc7526a5fc0c31b60ddea1029a9b9d8371e7add4788fb06
+    - path: snapshot_readat_test.go
+      description: Tests selective disk detail hydration, corruption, generation pinning, parity and parallel reads.
+      kind: test
+      areas:
+      - graph-building
+      checksum: d68182b7b101a818fa25f00baecbfa15b2c3355ed10f2cdfb5d1041a2c87c4ca
+    - path: snapshot_store.go
+      description: Persists, reopens or verifies source-fenced compact navigation query views with selective detail reads.
+      kind: production
+      checksum: 361b02a69172b0b6431e1e22a8b5122e950a135fc3c942e94cd1da4f9458282a
+    - path: snapshot_store_test.go
+      description: Persists, reopens or verifies source-fenced compact navigation query views with selective detail reads.
+      kind: test
+      checksum: acc10482359b7eff66c0240f3bc94fcde668bbd792002c0581c7ccae9ada89a4
+    - path: snapshot_test.go
+      description: Tests compact navigation snapshot parity, lifetime, codec safety or measured resource behavior.
+      kind: test
+      areas:
+      - graph-building
+      checksum: 5cb0315a2834556f130210f5d44d606c3fa5e7e325fb141d4deb5ca5f2cd9ec3
     - path: stats.go
       description: Measures deterministic navigation resolution outcomes, confidence counts, rates, and language-specific statistics.
       kind: production
@@ -3508,18 +3788,78 @@ directories:
       checksum: 2fdd54fe19c3c02d3a807d7e09bc09a2b6562c3d3bd3b84e753061f8a70f9e1f
       areas:
       - resolution-statistics
-    - path: navigation_svelte.go
-      description: Prevents implicit lexical call resolution between isolated component script bodies.
+    - path: snapshot_related.go
+      description: Implements or verifies bounded immutable navigation readers and exact workspace version evidence.
       kind: production
-      checksum: 129304d1fe57d74d8cd90b07f1c6a6f6768ed5c1e40732251fbfc075f1a09bca
-      areas:
-      - language-resolution
-    - path: navigation_svelte_test.go
-      description: Tests same-script calls and exact ordinary TypeScript import resolution from Svelte components.
+      checksum: bee8d790803f428b02a99013099eab90f5acc1bc729f88b5bd1324faa0f8aabd
+    - path: snapshot_declaration_lease_test.go
+      description: Implements or verifies bounded immutable navigation readers and exact workspace version evidence.
       kind: test
-      checksum: b8870ebcd7a6c9b4382e0d4821777922f17020f199e1cf3bd72b79fc7c992b0e
-      areas:
-      - language-resolution
+      checksum: 20678ba0dc984a1edac2c439794b082acac0fe08844520d0e90fdd5eb3c167a4
+    - path: language_partitions.go
+      description: Builds, publishes, queries or verifies coherent language-owned navigation partitions and source-fenced root lookup.
+      kind: production
+      checksum: 3d067e25f0cfe8ae49c74eb172f96c78432e641fdad60bdd350b2e10ae3a52c0
+    - path: language_partitions_test.go
+      description: Builds, publishes, queries or verifies coherent language-owned navigation partitions and source-fenced root lookup.
+      kind: test
+      checksum: 4526ac8aa232dffb372863119061b34c3c1eec4f8e4e012ed748a7885dd6399c
+    - path: snapshot_paged_manifest.go
+      description: Stores, selectively queries or verifies checked immutable navigation pages and exact root catalog metadata.
+      kind: production
+      checksum: f3a060419049a3737308c6590e95b97df36b1d1dc1abd6bdedfc1c02185254eb
+    - path: snapshot_paged_test.go
+      description: Stores, selectively queries or verifies checked immutable navigation pages and exact root catalog metadata.
+      kind: test
+      checksum: 0b844cc62d18c51d9060367131c1aae7eb862bcf2ef079d70f5880a6f220ffa4
+    - path: snapshot_paged_budget.go
+      description: Stores, selectively queries or verifies checked immutable navigation pages and exact root catalog metadata.
+      kind: production
+      checksum: d266fc0c99948b266c1d4ed5af647e24f16945375b918215664c191c60c00d04
+    - path: snapshot_paged_measure_test.go
+      description: Stores, selectively queries or verifies checked immutable navigation pages and exact root catalog metadata.
+      kind: test
+      checksum: f9a4ef503c3493f1ec644d247b1511f2911a96075a5ab0d3ff5f15ad5b99b504
+    - path: snapshot_paged_reader.go
+      description: Stores, selectively queries or verifies checked immutable navigation pages and exact root catalog metadata.
+      kind: production
+      checksum: 144ff24ed7697b4bd0e31b57d55971bc59b5759208cac340745a4861d19eeb33
+    - path: snapshot_paged_stats.go
+      description: Stores, selectively queries or verifies checked immutable navigation pages and exact root catalog metadata.
+      kind: production
+      checksum: 05b5c5a0550849a65a26a993105a1bf0e127105d673bb1ce42a8fd6e870c2547
+    - path: snapshot_paged_query.go
+      description: Stores, selectively queries or verifies checked immutable navigation pages and exact root catalog metadata.
+      kind: production
+      checksum: 1c0dda05a9fd94715499321d460377042f481a7492869eadd52aeffb247c3e3a
+    - path: snapshot_paged_store.go
+      description: Stores, selectively queries or verifies checked immutable navigation pages and exact root catalog metadata.
+      kind: production
+      checksum: 6142539ad2facf955e94085cf6c39c7e4ba34cb9e9b757d6a4e578ca36e5c81b
+    - path: snapshot_paged_budget_test.go
+      description: Stores, selectively queries or verifies checked immutable navigation pages and exact root catalog metadata.
+      kind: test
+      checksum: b70f15f645d99918d66206ba35235873c16516f9f322097cd87a688eb51ed73b
+    - path: snapshot_paged_codec.go
+      description: Stores, selectively queries or verifies checked immutable navigation pages and exact root catalog metadata.
+      kind: production
+      checksum: 598ad56355de8b784f4b2319c991b4c38e601a890ad7f60af9069d5ec0975510
+    - path: snapshot_paged_manifest_test.go
+      description: Stores, selectively queries or verifies checked immutable navigation pages and exact root catalog metadata.
+      kind: test
+      checksum: 1a83bb68fb0d18817bdfe188b8477b3372de0672b421e21434c93ca7ca203575
+    - path: snapshot_paged_ranges.go
+      description: Stores, selectively queries or verifies checked immutable navigation pages and exact root catalog metadata.
+      kind: production
+      checksum: 16f8e553920f5887e3d93916ec4a4bff0a4cbb8948bf88fa03bac1bb93a1e881
+    - path: snapshot_paged_related.go
+      description: Publishes, queries or verifies coherent language-connected immutable navigation pages and active-generation migration.
+      kind: production
+      checksum: 69fddb1b1e428e43a56b910f4866922547e76391f25372879b888ee53abca80c
+    - path: snapshot_paged_root_rows.go
+      description: Publishes, queries or verifies coherent language-connected immutable navigation pages and active-generation migration.
+      kind: production
+      checksum: ad55909a8b4222308b0d29d850b384d0fd2ad38d28058ff22b02a134264fb426
   internal/outputspill:
     description: Captures oversized command output as immutable, content-addressed artifacts and validates spill option parsing.
     responsibilities:
@@ -4505,7 +4845,7 @@ directories:
     - path: navigation_projection.go
       description: Projects navigation graphs into related declaration and relationship indexes.
       kind: production
-      checksum: b918b7a4e57faece6a5f4d9cb263523acf48c8a922d9fcf7beb92951b09bbb36
+      checksum: bd3e5248889d44f82924cc5e7d7ba66192ee857fa1b735463e9e4c3ac59ae615
     - path: navigation_python_test.go
       description: Tests Python imported-type and receiver-call navigation.
       kind: test
@@ -4581,7 +4921,7 @@ directories:
     - path: result.go
       description: Converts internal matches into sorted API results with context and related symbols.
       kind: production
-      checksum: 4d1623003434398aec28d58242da9633b85159eb51950e33a0764a79a884005b
+      checksum: 5f274e3897c89d594f982b6cdef68123340c96a1409c2d2f6701c35894d60d43
     - path: result_test.go
       description: Tests conversion of internal matches into API results.
       kind: test
@@ -4666,6 +5006,14 @@ directories:
       description: Tests that doc-only matches cannot create spurious cross-repository navigation.
       kind: test
       checksum: 55abe5061f6e8a29c5c21386d7d1057aebb13a706c2d640437e43ea2f22b15c1
+    - path: related_projection_stored.go
+      description: Implements or verifies bounded immutable navigation readers and exact workspace version evidence.
+      kind: production
+      checksum: f1c0de126f0499d346d2de545ba5420efee844e01f9652c45ff073d6f84a3a30
+    - path: related_preview_unavailable_test.go
+      description: Publishes, queries or verifies coherent language-connected immutable navigation pages and active-generation migration.
+      kind: test
+      checksum: dc3d276d22552ad3eee2d49bf50cae67f59ab289d1c46b90dd045ec8e7271202
   internal/shellquote:
     description: Formats individual shell command arguments for safe use in continuation commands.
     responsibilities:

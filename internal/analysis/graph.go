@@ -129,6 +129,8 @@ func selectGraphRoots(declarations []parser.NavigationDeclaration, request Graph
 		return []parser.NavigationDeclaration{root}, nil
 	}
 	matches := make([]parser.NavigationDeclaration, 0)
+	normalizePath := graphPathNormalizer()
+	rootPath := normalizePath(request.RootPath)
 	for _, declaration := range declarations {
 		matched := false
 		switch {
@@ -137,8 +139,8 @@ func selectGraphRoots(declarations []parser.NavigationDeclaration, request Graph
 		case request.Module != "":
 			matched = declaration.ModuleID == request.Module
 		default:
-			root := cleanPath(request.RootPath)
-			path := cleanPath(declaration.Path)
+			root := rootPath
+			path := normalizePath(declaration.Path)
 			matched = root == "." || path == root || strings.HasPrefix(path, root+"/")
 		}
 		if matched {
@@ -167,8 +169,10 @@ func selectSingleGraphRoot(declarations []parser.NavigationDeclaration, symbol, 
 			return parser.NavigationDeclaration{}, err
 		}
 		selector = "location " + at
+		normalizePath := graphPathNormalizer()
+		selectedPath := normalizePath(path)
 		for _, declaration := range declarations {
-			if cleanPath(declaration.Path) == cleanPath(path) && line >= declaration.Start && line <= declaration.End {
+			if normalizePath(declaration.Path) == selectedPath && line >= declaration.Start && line <= declaration.End {
 				matches = append(matches, declaration)
 			}
 		}
