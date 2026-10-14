@@ -137,6 +137,11 @@ func searchNextCommand(application cliruntime.Context, options *Options, skip in
 	if options.CursorPage == nil {
 		parts = append(parts, "--skip", fmt.Sprint(skip))
 	}
+	if options.Params.AnnotateScopes {
+		parts = append(parts, "--line-only")
+	} else if options.Params.LineRanges && !options.Params.EnclosingRanges {
+		parts = append(parts, "--line-only", "--no-annotate-scopes")
+	}
 	parts = append(parts, "--limit", fmt.Sprint(options.Params.Limit), "--json", shellquote.Argument(options.Params.Query))
 	for _, path := range options.Params.Globs {
 		parts = append(parts, shellquote.Argument(path))

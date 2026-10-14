@@ -137,7 +137,20 @@ grepple -F 'handleRequest' --json .      # Structured output
 ```
 
 A directory search is recursive. File globs can include `**`. Local results include source locations; eligible source lines carry `HASH│LINE│content` anchors for [safe, transactional edits](docs/write.md). Large human-readable results are bounded, while complete JSON is available for automation. See [output contracts](docs/output-contracts.md) for paging, limits, completeness, and JSON details.
+A directory search is recursive. File globs can include `**`. Local results include source locations; eligible source lines carry `HASH│LINE│content` anchors for [safe, transactional edits](docs/write.md). Large human-readable results are bounded, while complete JSON is available for automation. See [output contracts](docs/output-contracts.md) for paging, limits, completeness, and JSON details.
 
+### Line-only scope annotations
+
+```bash
+grepple -F 'runtime.Start' --line-only '**/*.go'
+grepple -F 'color:' --line-only '**/*.css'  # @property, @rule
+grepple -F 'TODO' --line-only '**/*.md'     # @section
+grepple -F 'name' --line-only '*.json' '*.yaml' # @object/@array or @mapping/@sequence
+grepple -F 'runtime.Start' --line-only --json-matches '**/*.go'
+grepple -F 'runtime.Start' --line-only --no-annotate-scopes '**/*.go' # plain rows
+```
+
+For a Go function containing a hit, a row may look like `HASH│3│ runtime.Start() @func:2-5`. Only matching lines are printed: the declaration does not appear unless it also matches. Up to two parser-verified kinds and inclusive ranges may appear (e.g. `@if:3-5 @func:2-9`); absent or uncertain scopes are omitted. `--line-only` content searches show annotations by default; `--no-annotate-scopes` restores plain rows. Human suffixes are **display-only**: source itself may end in ` @func:2-5`, so the boundary is not machine-decodable, and decorated rows are **not edit-ready** despite their hashes. For edits, reread clean `grepple --line-only --at PATH:LINE[-END]` source. `--json`/`--json-matches` with `--line-only` carry optional typed `nearest` and `scope` objects, leaving `text` literal. `--enclosing`, `--at`, context, outline, substring-only and count/list modes retain their own unchanged behavior; remote line-only annotated searches fail explicitly until both router and shards advertise scope-annotation capability. Use `--no-annotate-scopes` with old remote servers. See the [scope annotation contract](docs/line-only-scope-annotations.md) for content fallbacks, output limits and compatibility.
 ## Follow code relationships
 
 ```bash

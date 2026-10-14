@@ -30,8 +30,9 @@ type Args struct {
 	Recursive  bool   `arg:"-r,--recursive" help:"search directories recursively (compatibility alias; already the default)"`
 	cliruntime.CommonArgs
 	LineNumber       bool     `arg:"-n,--line-number" help:"include line numbers (enabled by default)"`
-	LineOnly         bool     `arg:"--line-only" help:"print only matching lines; include construct end lines when available"`
+	LineOnly         bool     `arg:"--line-only" help:"print only matching lines with parser-verified nearest construct and containing scope when available"`
 	Enclosing        bool     `arg:"--enclosing" help:"line-only: annotate body matches with the nearest enclosing multi-line syntax range"`
+	NoAnnotateScopes bool     `arg:"--no-annotate-scopes" help:"line-only: omit nearest/scope annotations and keep plain source rows"`
 	OnlyMatching     bool     `arg:"-o,--only-matching" help:"print each matched substring"`
 	Files            bool     `arg:"-l,--files" help:"list files by path; unlike grep -l, does not search contents (use --files-with-matches)"`
 	FilesWithMatches bool     `arg:"--files-with-matches" help:"list paths whose contents match (grep -l equivalent); accepts multiple PATHs"`
@@ -123,6 +124,7 @@ func optionsFromArgs(application cliruntime.Context, values *Args, usage interfa
 	params.SkipSegments = values.Files || values.FilesWithMatches || values.Count || values.CountByRepo || values.LineOnly || values.OnlyMatching || values.JSONMatches || params.BeforeContext > 0 || params.AfterContext > 0
 	params.LineRanges = values.LineOnly
 	params.EnclosingRanges = values.Enclosing
+	params.AnnotateScopes = defaultScopeAnnotations(values)
 
 	// Local-first: only reach out to the shard/router when the user explicitly opts
 	// in with --remote or by passing a --server URL. A configured GREPPLE_SERVER / config
@@ -145,6 +147,15 @@ func optionsFromArgs(application cliruntime.Context, values *Args, usage interfa
 		MaxOutputBytes:   values.MaxOutputBytes,
 		Anchors:          anchorsEnabled,
 	}, values.Server, remoteEnabled, nil
+}
+
+// defaultScopeAnnotations applies only to matched source lines. Existing
+// --at, --enclosing, context, count, and file-list modes retain their output.
+func defaultScopeAnnotations(values *searchArgs) bool {
+	if !values.LineOnly || values.NoAnnotateScopes || values.Enclosing || values.At != "" {
+		return false
+	}
+	return !values.Files && !values.FilesWithMatches && !values.Outline && !values.Count && !values.CountByRepo && !values.OnlyMatching && values.Context <= 0 && values.BeforeContext <= 0 && values.AfterContext <= 0
 }
 
 func applyCountSummaryAlias(values *searchArgs) {
@@ -264,6 +275,7 @@ func validateSearchArgs(values *searchArgs) error {
 	}
 	return validateSearchCombinations(values)
 }
+
 func validateSearchCombinations(values *searchArgs) error {
 	if values.Regex && values.Fixed {
 		return fmt.Errorf("--regex and --fixed-strings cannot be used together")

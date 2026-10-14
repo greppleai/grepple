@@ -1,6 +1,9 @@
 package search
 
-import "github.com/greppleai/grepple/internal/navigation"
+import (
+	"github.com/greppleai/grepple/internal/navigation"
+	"github.com/greppleai/grepple/internal/parser"
+)
 
 // Request is the unresolved search input shared by local and transport adapters.
 // Nil pointer fields preserve the distinction between unset and explicit zero values.
@@ -23,6 +26,7 @@ type Request struct {
 	SkipSegments          bool                  `json:"skipSegments,omitempty"`
 	LineRanges            bool                  `json:"matchLineRanges,omitempty"`
 	EnclosingRanges       bool                  `json:"enclosingLineRanges,omitempty"`
+	AnnotateScopes        bool                  `json:"annotateScopes,omitempty"`
 	Related               bool                  `json:"related,omitempty"`
 	NoRelated             bool                  `json:"noRelated,omitempty"`
 	At                    string                `json:"at,omitempty"`
@@ -37,10 +41,12 @@ type Request struct {
 
 // ResultMatch is one matching line inside a file.
 type ResultMatch struct {
-	Line      int    `json:"line"`
-	StartLine int    `json:"startLine,omitempty"`
-	EndLine   int    `json:"endLine,omitempty"`
-	Text      string `json:"text"`
+	Line      int                    `json:"line"`
+	StartLine int                    `json:"startLine,omitempty"`
+	EndLine   int                    `json:"endLine,omitempty"`
+	Text      string                 `json:"text"`
+	Nearest   *parser.ScopeLineRange `json:"nearest,omitempty"`
+	Scope     *parser.ScopeLineRange `json:"scope,omitempty"`
 }
 
 type ResultSegment = navigation.ResultSegment

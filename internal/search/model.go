@@ -34,6 +34,7 @@ type Params struct {
 	SkipSegments    bool     `json:"-"`
 	LineRanges      bool     `json:"matchLineRanges,omitempty"`
 	EnclosingRanges bool     `json:"enclosingLineRanges,omitempty"`
+	AnnotateScopes  bool     `json:"annotateScopes,omitempty"`
 	Related         bool     `json:"related,omitempty"`
 	FollowRelated   int      `json:"followRelated,omitempty"`
 	// RelatedRepositoryContext expands text-index candidates to complete matched
@@ -73,6 +74,7 @@ type FileMatch struct {
 	File, DisplayPath, Content, Language                              string
 	MatchLines                                                        map[int]bool
 	MatchRanges                                                       map[int]parser.StructuralLineRange
+	ScopeAnnotations                                                  map[int]parser.LineScopeAnnotation
 	Segments                                                          []parser.Segment
 	Related                                                           []RelatedPoint
 	LineRange                                                         *linerange.Result

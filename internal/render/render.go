@@ -85,13 +85,13 @@ func newResultRenderer(options Options, output *outputWriter) resultRenderer {
 	case options.Count:
 		return countRenderer{output: output, json: options.JSON != "off"}
 	case options.JSON != "off":
-		return jsonResultRenderer{output: output, matchesOnly: options.JSON == "matches" || options.LineOnly, metadata: options.Metadata}
+		return jsonResultRenderer{output: output, matchesOnly: options.JSON == "matches" || options.LineOnly, metadata: options.Metadata, annotateScopes: options.Params.AnnotateScopes}
 	case options.Params.BeforeContext > 0 || options.Params.AfterContext > 0:
 		return contextRenderer{output: output, anchors: options.Anchors}
 	case options.OnlyMatching:
 		return onlyMatchingRenderer{output: output, matcher: compileOnlyMatcher(&options)}
 	case options.LineOnly:
-		return lineRenderer{output: output, anchors: options.Anchors}
+		return lineRenderer{output: output, anchors: options.Anchors, annotateScopes: options.Params.AnnotateScopes}
 	default:
 		return segmentRenderer{output: output, anchors: options.Anchors}
 	}

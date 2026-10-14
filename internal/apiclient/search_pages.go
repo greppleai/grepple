@@ -24,10 +24,11 @@ type SearchPageRequest struct {
 
 // SearchPage contains current-index results and a query-bound offset cursor.
 type SearchPage struct {
-	Results  []wire.FileResult `json:"results"`
-	Cursor   string            `json:"cursor"`
-	Complete bool              `json:"complete"`
-	PageID   string            `json:"pageId"`
+	Results                 []wire.FileResult `json:"results"`
+	Cursor                  string            `json:"cursor"`
+	Complete                bool              `json:"complete"`
+	PageID                  string            `json:"pageId"`
+	ScopeAnnotationsVersion int               `json:"scopeAnnotationsVersion,omitempty"`
 }
 
 var searchCursorPattern = regexp.MustCompile(`^[A-Za-z0-9_-]{43}\.(0|[1-9][0-9]{0,4})$`)

@@ -32,6 +32,9 @@ func searchRemoteContext(application cliruntime.Context, ctx context.Context, op
 		if err != nil {
 			return nil, err
 		}
+		if err := requireRemoteScopeAnnotations(options, page.ScopeAnnotationsVersion); err != nil {
+			return nil, err
+		}
 		options.CursorPage = &page
 		return dropExcludedRepos(page.Results, options.Params.ExcludeRepo), nil
 	}
@@ -42,10 +45,21 @@ func searchRemoteContext(application cliruntime.Context, ctx context.Context, op
 		}
 		return nil, err
 	}
+	if err := requireRemoteScopeAnnotations(options, result.ScopeAnnotationsVersion); err != nil {
+		return nil, err
+	}
 	warnPartialResults(application, result)
 	return dropExcludedRepos(result.Results, options.Params.ExcludeRepo), nil
 }
 
+// Never treat missing roles from a pre-capability router or cursor page as a
+// source file without syntax. Check before merging/rendering any remote row.
+func requireRemoteScopeAnnotations(options *Options, version int) error {
+	if options.Params.AnnotateScopes && version != wire.ScopeAnnotationsVersion {
+		return fmt.Errorf("remote scope annotations unsupported: router/page did not acknowledge scopeAnnotationsVersion %d (got %d)", wire.ScopeAnnotationsVersion, version)
+	}
+	return nil
+}
 func resolveLocalExternalNavigation(application cliruntime.Context, results []wire.FileResult, server string) []wire.FileResult {
 	workingDirectory := application.Repository().WorkingDirectory()
 	if err := navigation.NewExternalDependencyService[wire.FileResult]().QualifyLocal(results, workingDirectory); err != nil {

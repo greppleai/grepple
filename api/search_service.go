@@ -40,6 +40,7 @@ type SearchPlanOptions struct {
 	SkipSegments    bool
 	LineRanges      bool
 	EnclosingRanges bool
+	AnnotateScopes  bool
 	Related         bool
 	FollowRelated   int
 	// RelatedRepositoryContext obtains complete matched-repository navigation

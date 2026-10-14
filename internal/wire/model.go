@@ -3,12 +3,17 @@ package wire
 
 import (
 	"github.com/greppleai/grepple/internal/navigation"
+	"github.com/greppleai/grepple/internal/parser"
 	"github.com/greppleai/grepple/internal/rulespec"
 	searchdomain "github.com/greppleai/grepple/internal/search"
 )
 
 // SearchRequest is retained as a wire-compatible alias of the Search domain request.
 type SearchRequest = searchdomain.Request
+
+// ScopeLineRange is the shared typed structural span, not a replacement for
+// ResultMatch's pre-existing start/end fields.
+type ScopeLineRange = parser.ScopeLineRange
 
 // ResultMatch is retained as a wire-compatible alias of the Search domain model.
 type ResultMatch = searchdomain.ResultMatch
@@ -49,16 +54,21 @@ type FileResult = searchdomain.FileResult
 // RepoCount is a per-repository tally of matching files and lines.
 type RepoCount = searchdomain.RepoCount
 
+// ScopeAnnotationsVersion is the capability acknowledged by every supporting
+// remote response, even an empty one. Missing or different is unsupported.
+const ScopeAnnotationsVersion = 1
+
 // SearchResponse is the on-the-wire search response.
 type SearchResponse struct {
-	Results              []FileResult                       `json:"results"`
-	Metadata             *ResultMetadata                    `json:"metadata,omitempty"`
-	SourceAnalysis       *SourceAnalysis                    `json:"sourceAnalysis,omitempty"`
-	RepoCounts           []RepoCount                        `json:"repoCounts,omitempty"`
-	ShardErrors          []string                           `json:"shardErrors,omitempty"`
-	Truncated            bool                               `json:"truncated,omitempty"`
-	NavigationSelections []searchdomain.NavigationSelection `json:"navigationSelections,omitempty"`
-	DiscoveryComplete    bool                               `json:"discoveryComplete,omitempty"`
+	Results                 []FileResult                       `json:"results"`
+	Metadata                *ResultMetadata                    `json:"metadata,omitempty"`
+	SourceAnalysis          *SourceAnalysis                    `json:"sourceAnalysis,omitempty"`
+	RepoCounts              []RepoCount                        `json:"repoCounts,omitempty"`
+	ShardErrors             []string                           `json:"shardErrors,omitempty"`
+	Truncated               bool                               `json:"truncated,omitempty"`
+	ScopeAnnotationsVersion int                                `json:"scopeAnnotationsVersion,omitempty"`
+	NavigationSelections    []searchdomain.NavigationSelection `json:"navigationSelections,omitempty"`
+	DiscoveryComplete       bool                               `json:"discoveryComplete,omitempty"`
 }
 
 // SourceAnalysis summarizes structural parsing for returned search results.
