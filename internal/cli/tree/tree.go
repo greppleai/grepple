@@ -1,7 +1,6 @@
 package tree
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -113,7 +112,7 @@ func (command *command) execute(values *Request) error {
 		if configuration != nil {
 			server = configuration.ServerDefault(server)
 		}
-		data, err = application.APIClient().Tree(context.Background(), server, apiclient.TreeRequest{Repo: values.Repo, Path: values.Path, Depth: values.Depth})
+		data, err = application.APIClient().Tree(application.Invocation(), server, apiclient.TreeRequest{Repo: values.Repo, Path: values.Path, Depth: values.Depth})
 	} else {
 		data, err = command.local(values.Path, values.Depth, kind, []string(values.Areas))
 	}

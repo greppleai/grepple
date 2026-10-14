@@ -1,7 +1,6 @@
 package get
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"strings"
@@ -77,7 +76,7 @@ func Execute(application cliruntime.Context, values *Args) error {
 			request.End = lineRange[1]
 		}
 	}
-	response, err := application.APIClient().Raw(context.Background(), base, request)
+	response, err := application.APIClient().Raw(application.Invocation(), base, request)
 	if err != nil {
 		if apiclient.RangeOutcome(err) == linerange.OutcomeFullMiss {
 			return reportRangeError(application, err, true)

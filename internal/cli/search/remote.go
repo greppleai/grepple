@@ -14,7 +14,7 @@ import (
 )
 
 func searchRemote(application cliruntime.Context, options *Options, server string) ([]wire.FileResult, error) {
-	return searchRemoteContext(application, context.Background(), options, server)
+	return searchRemoteContext(application, application.Invocation(), options, server)
 }
 
 func searchRemoteContext(application cliruntime.Context, ctx context.Context, options *Options, server string) ([]wire.FileResult, error) {
@@ -56,7 +56,7 @@ func resolveLocalExternalNavigation(application cliruntime.Context, results []wi
 	if len(references) == 0 {
 		return results
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(application.Invocation(), 30*time.Second)
 	defer cancel()
 	response, err := requestNavigationResolve(application, ctx, wire.NavigationResolveRequest{References: references}, application.Configuration().ServerDefault(server))
 	if err != nil {
@@ -121,7 +121,7 @@ func countRemote(application cliruntime.Context, options *Options, server string
 	if len(params.ExcludeRepo) > 0 {
 		request.ExcludeRepo = params.ExcludeRepo
 	}
-	result, err := application.APIClient().Search(context.Background(), server, request)
+	result, err := application.APIClient().Search(application.Invocation(), server, request)
 	if err != nil {
 		return nil, err
 	}

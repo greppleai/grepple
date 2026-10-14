@@ -67,7 +67,7 @@ func executeLoginArgs(application cliruntime.Context, values *LoginArgs) error {
 	if err != nil {
 		return err
 	}
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	ctx, stop := signal.NotifyContext(application.Invocation(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 	client := application.APIClient()
 	cfg, err := client.LoginConfig(ctx, serverURL)
@@ -123,7 +123,7 @@ func executeLogout(application cliruntime.Context, _ []string) error {
 	settings, _ := config.LoadConfig("", true)
 	credentials := settings.BackendCredentials()
 	if credentials.Token != "" && credentials.AuthServer != "" {
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		ctx, cancel := context.WithTimeout(application.Invocation(), 10*time.Second)
 		defer cancel()
 		if err := application.APIClient().RevokeLogin(ctx, credentials.AuthServer); err != nil {
 			fmt.Fprintln(application.Stderr(), "Warning: server-side session revocation failed; removing local credentials.")

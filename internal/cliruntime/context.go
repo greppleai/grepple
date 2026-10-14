@@ -2,6 +2,7 @@
 package cliruntime
 
 import (
+	"context"
 	"io"
 	"os"
 
@@ -42,6 +43,7 @@ type Context interface {
 	Stdout() io.Writer
 	Stderr() io.Writer
 	APIClient() apiclient.APIClient
+	Invocation() context.Context
 	Configuration() Configuration
 	Repository() Repository
 	RequestExit(int)
@@ -53,6 +55,7 @@ type Environment struct {
 	Output            io.Writer
 	ErrorOutput       io.Writer
 	Client            apiclient.APIClient
+	InvocationScope   context.Context
 	Config            Configuration
 	RepositoryContext Repository
 	Exit              func(int)
@@ -86,6 +89,13 @@ func (context Environment) APIClient() apiclient.APIClient {
 	return apiclient.New(apiclient.WithErrorOutput(context.Stderr()))
 }
 
+// Invocation is the explicit command scope; embedding contexts default to no trace.
+func (environment Environment) Invocation() context.Context {
+	if environment.InvocationScope != nil {
+		return environment.InvocationScope
+	}
+	return context.Background()
+}
 func (context Environment) Configuration() Configuration {
 	if context.Config != nil {
 		return context.Config

@@ -187,7 +187,14 @@ func (client *apiClient) authDo(request *http.Request) (*http.Response, error) {
 	if transport.Timeout == 0 {
 		transport.Timeout = 30 * time.Second
 	}
-	return transport.Do(request)
+	category := ""
+	if request.URL != nil && (request.URL.Path == "/auth/config" || request.URL.Path == "/auth/logout") {
+		category = "auth"
+	}
+	request, finish := traceRequest(request, category, false)
+	response, err := transport.Do(request)
+	finish(response, err)
+	return response, err
 }
 
 func (client *apiClient) pollDevice(ctx context.Context, host, clientID, code string) (DeviceToken, error) {

@@ -1,13 +1,12 @@
 package repos
 
 import (
-	"context"
 	"errors"
 	"strings"
 
 	"github.com/alexflint/go-arg"
-	"github.com/greppleai/grepple/internal/wire"
 	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
+	"github.com/greppleai/grepple/internal/wire"
 )
 
 type Args struct {
@@ -55,7 +54,7 @@ func Execute(application cliruntime.Context, values *Args) error {
 	if configuration := application.Configuration(); configuration != nil {
 		server = configuration.ServerDefault(server)
 	}
-	repos, err := application.APIClient().Repos(context.Background(), server)
+	repos, err := application.APIClient().Repos(application.Invocation(), server)
 	if err != nil {
 		return err
 	}

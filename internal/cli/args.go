@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -9,8 +10,10 @@ import (
 	"github.com/alexflint/go-arg"
 	searchcommand "github.com/greppleai/grepple/internal/cli/search"
 	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
+	"github.com/greppleai/grepple/internal/clitelemetry"
 	"github.com/greppleai/grepple/internal/config"
 	"github.com/greppleai/grepple/internal/outputspill"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 const DefaultResultLimit = searchcommand.DefaultResultLimit
@@ -46,10 +49,27 @@ func Run(args []string) error {
 	if err != nil {
 		return err
 	}
+	tracing, err := clitelemetry.New(settings.User.Telemetry)
+	if err != nil {
+		return err
+	}
+	invocation, root := tracing.Start(context.Background(), "cli.invocation")
+	defer func() { root.End(); tracing.Close() }()
 	descriptorArgs := normalizedApplicationArgs(args)
-	err = outputspill.Run(descriptorArgs, spill, settings.Repository.Output.SpillThresholdBytes, cliruntime.WorkingDirectory(), func(_ int) error {
-		context := newCommandContextWithConfig(repositoryOptions, exitState.Request, settings)
-		return executeArguments(context, values)
+	err = outputspill.RunWithFinalizer(descriptorArgs, spill, settings.Repository.Output.SpillThresholdBytes, cliruntime.WorkingDirectory(), func(_ int) error {
+		commandContext, commandSpan := tracing.Start(invocation, "cli.command")
+		defer commandSpan.End()
+		if commandSpan.IsRecording() {
+			commandSpan.SetAttributes(attribute.String("cli.command.name", values.traceCommandName()))
+		}
+		command := newCommandContextWithInvocation(repositoryOptions, exitState.Request, settings, commandContext)
+		return executeArguments(command, values)
+	}, func(finish func() error) error {
+		_, finalizeSpan := tracing.Start(invocation, "cli.output_spill")
+		defer finalizeSpan.End()
+		// The returned error can include a command error even when the output
+		// copy succeeded. Do not label finalization with that ambiguous outcome.
+		return finish()
 	})
 	if err != nil {
 		return err

@@ -125,6 +125,12 @@ func parseSpillThreshold(args []string, index int) (threshold, consumed int, mat
 
 // Run captures command output and spills oversized results to an immutable artifact.
 func Run(args []string, options Options, defaultThreshold int, workingDirectory string, run func(int) error) error {
+	return RunWithFinalizer(args, options, defaultThreshold, workingDirectory, run, nil)
+}
+
+// RunWithFinalizer optionally observes only output copying/spilling after the
+// command callback returns. A nil finalizer preserves the ordinary Run behavior.
+func RunWithFinalizer(args []string, options Options, defaultThreshold int, workingDirectory string, run func(int) error, finalizer func(func() error) error) error {
 	if options.Disabled && len(args) >= 2 && args[0] == "artifacts" && args[1] == "clean" {
 		return run(int(^uint(0) >> 1))
 	}
@@ -164,7 +170,13 @@ func Run(args []string, options Options, defaultThreshold int, workingDirectory 
 	os.Stdout = temporary
 	commandErr := run(threshold)
 	os.Stdout = originalStdout
-	return finishOutputSpill(temporary, temporaryPath, outputDirectory, workingDirectory, threshold, args, originalStdout, commandErr)
+	finish := func() error {
+		return finishOutputSpill(temporary, temporaryPath, outputDirectory, workingDirectory, threshold, args, originalStdout, commandErr)
+	}
+	if finalizer != nil {
+		return finalizer(finish)
+	}
+	return finish()
 }
 
 func resolveOutputArtifactDirectory(configured, workingDirectory string) (string, error) {

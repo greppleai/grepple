@@ -321,7 +321,10 @@ func (client *apiClient) do(ctx context.Context, method, target, contentType str
 	if token := client.freshToken(target); token != "" {
 		request.Header.Set("authorization", "Bearer "+token)
 	}
+	category := backendCategory(request.URL)
+	request, finish := traceRequest(request, category, true)
 	response, err := client.doRequest(request)
+	finish(response, err)
 	if err != nil {
 		return nil, err
 	}

@@ -2,7 +2,6 @@
 package rules
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -10,9 +9,9 @@ import (
 	"strings"
 
 	"github.com/alexflint/go-arg"
-	"github.com/greppleai/grepple/internal/wire"
 	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
 	"github.com/greppleai/grepple/internal/rulespec"
+	"github.com/greppleai/grepple/internal/wire"
 )
 
 // Run dispatches rules with the common command context.
@@ -200,7 +199,7 @@ func executeRulesAdd(values *AddArgs, dependencies dependencies) error {
 		return err
 	}
 	base := dependencies.serverDefault(values.Server)
-	created, err := dependencies.client().CreateRule(context.Background(), base, rule)
+	created, err := dependencies.client().CreateRule(dependencies.Invocation(), base, rule)
 	if err != nil {
 		return err
 	}
@@ -222,7 +221,7 @@ func runRulesList(args []string, dependencies dependencies) error {
 }
 
 func executeRulesList(values *ServerArgs, dependencies dependencies) error {
-	set, err := dependencies.client().Rules(context.Background(), dependencies.serverDefault(values.Server))
+	set, err := dependencies.client().Rules(dependencies.Invocation(), dependencies.serverDefault(values.Server))
 	if err != nil {
 		return err
 	}
@@ -254,7 +253,7 @@ func runRulesGet(args []string, dependencies dependencies) error {
 
 func executeRulesGet(values *IDArgs, dependencies dependencies) error {
 	id, server, jsonOut := values.ID, values.Server, values.JSON
-	rule, err := dependencies.client().Rule(context.Background(), dependencies.serverDefault(server), id)
+	rule, err := dependencies.client().Rule(dependencies.Invocation(), dependencies.serverDefault(server), id)
 	if err != nil {
 		return err
 	}
@@ -274,7 +273,7 @@ func runRulesDelete(args []string, dependencies dependencies) error {
 
 func executeRulesDelete(values *IDArgs, dependencies dependencies) error {
 	id, server := values.ID, values.Server
-	if err := dependencies.client().DeleteRule(context.Background(), dependencies.serverDefault(server), id); err != nil {
+	if err := dependencies.client().DeleteRule(dependencies.Invocation(), dependencies.serverDefault(server), id); err != nil {
 		return err
 	}
 	return cliruntime.NewOutput(dependencies.Stdout()).WriteString(fmt.Sprintf("deleted rule %s\n", id))
@@ -290,7 +289,7 @@ func runRulesResults(args []string, dependencies dependencies) error {
 
 func executeRulesResults(values *IDArgs, dependencies dependencies) error {
 	id, server, jsonOut := values.ID, values.Server, values.JSON
-	results, err := dependencies.client().RuleResults(context.Background(), dependencies.serverDefault(server), id)
+	results, err := dependencies.client().RuleResults(dependencies.Invocation(), dependencies.serverDefault(server), id)
 	if err != nil {
 		return err
 	}

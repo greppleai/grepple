@@ -11,10 +11,10 @@ import (
 	"github.com/alexflint/go-arg"
 	"github.com/greppleai/grepple/internal/analysis"
 	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
+	"github.com/greppleai/grepple/internal/clitelemetry"
 	"github.com/greppleai/grepple/internal/daemon"
 	"github.com/greppleai/grepple/internal/navigation"
 	"github.com/greppleai/grepple/internal/parser"
-	"github.com/greppleai/grepple/internal/search"
 	"github.com/greppleai/grepple/internal/wire"
 )
 
@@ -82,7 +82,7 @@ func executeResolve(application cliruntime.Context, values *ResolveArgs) error {
 	return executeResolveWithDaemon(application, values, false)
 }
 
-func executeResolveWithDaemon(application cliruntime.Context, values *ResolveArgs, useDaemon bool) error {
+func executeResolveWithDaemon(application cliruntime.Context, values *ResolveArgs, useDaemon bool) (resultErr error) {
 	if err := validateResolveArgs(*values); err != nil {
 		return err
 	}
@@ -90,14 +90,20 @@ func executeResolveWithDaemon(application cliruntime.Context, values *ResolveArg
 	if err != nil {
 		return err
 	}
-	paths, err := ResolveInputPaths(values.Paths, search.SourcePolicyConfigurer(application.Repository()))
+	paths, err := resolveCLIPaths(application, values.Paths)
 	if err != nil {
 		return err
 	}
+	navCtx, phase := clitelemetry.StartPhase(application.Invocation(), "cli.navigation.execute")
+	defer func() { clitelemetry.EndPhase(phase, navCtx, resultErr) }()
 	selection := daemon.ResolveSelection{Symbol: values.Symbol, Languages: filter.Languages, Visibilities: filter.Visibilities}
 	var projection daemon.ResolveProjection
 	if useDaemon {
-		projection, _ = daemon.QueryResolve(paths, values.MaxFiles, selection)
+		lookupDaemon(navCtx, func() bool {
+			var ok bool
+			projection, ok = daemon.QueryResolve(paths, values.MaxFiles, selection)
+			return ok && projection.Schema != ""
+		})
 	}
 	if projection.Schema == "" {
 		sources := analysis.ReadSources(paths)
@@ -127,11 +133,16 @@ func executeResolveWithDaemon(application cliruntime.Context, values *ResolveArg
 	output := ResolveOutput{Schema: NavigationResolveSchema, Symbol: values.Symbol, Sources: projection.Sources, Matches: matches, Truncation: projection.Truncation}
 	output.Metadata = resolveMetadata(*values, Output{Sources: projection.Sources, Truncation: projection.Truncation}, len(matches), application.Repository().AppendScopeFlags)
 	output.Metadata.Scope.Languages = normalizedScope(filter.Languages, "")
-	if !values.JSON {
-		err = renderCompactResolve(application.Stdout(), output, values.MaxOutputBytes)
-	} else {
-		err = writeResolveJSON(application.Stdout(), output)
+	format := "compact"
+	if values.JSON {
+		format = "json"
 	}
+	err = clitelemetry.RenderPhase(navCtx, format, func() error {
+		if !values.JSON {
+			return renderCompactResolve(application.Stdout(), output, values.MaxOutputBytes)
+		}
+		return writeResolveJSON(application.Stdout(), output)
+	})
 	if err != nil {
 		return err
 	}

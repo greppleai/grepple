@@ -95,7 +95,7 @@ func (command *command) execute(values *Args) error {
 	if log.Path() != "" {
 		fmt.Fprintln(stderr, "Ask log:", log.Path())
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(values.Timeout)*time.Second)
+	ctx, cancel := context.WithTimeout(command.application.Invocation(), time.Duration(values.Timeout)*time.Second)
 	defer cancel()
 	answer, runErr := command.runSession(ctx, log, invocation.provider, SessionRequest{
 		Question: invocation.question, Root: invocation.root, Server: values.Server, Model: invocation.model, Timeout: values.Timeout,
