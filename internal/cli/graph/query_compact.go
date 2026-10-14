@@ -15,6 +15,20 @@ type compactQueryEdge struct {
 	targetID string
 }
 
+// compactQueryEvidence identifies a visible relationship, not an opaque call ID.
+// Separate calls on the same line may have identical compact evidence. JSON
+// retains their individual IDs. Impact uses an empty arrow to show each
+// relationship once even when it is traversed in both directions.
+type compactQueryEvidence struct {
+	callerID   string
+	targetID   string
+	path       string
+	line       int
+	confidence string
+	candidate  bool
+	arrow      string
+}
+
 // writeCompactDirectionalQuery groups each call under its selected root, walking
 // incoming, outgoing, or both directions. Confidence belongs to the edge, not
 // the declaration; candidate targets remain marked as ambiguous.
@@ -70,7 +84,7 @@ func writeCompactDirectionalQuery(write func(string) bool, query Query, declarat
 			return
 		}
 		seen := map[string]bool{rootID: true}
-		shownEdges := make(map[string]bool)
+		shownEvidence := make(map[compactQueryEvidence]bool)
 		var walk func(string, int) bool
 		walk = func(id string, depth int) bool {
 			if depth >= query.Depth {
@@ -78,8 +92,16 @@ func writeCompactDirectionalQuery(write func(string) bool, query Query, declarat
 			}
 			next := make([]string, 0)
 			for _, edge := range adjacent[id] {
-				edgeID := edge.call.ID + ":" + edge.targetID
-				if query.Direction == "impact" && shownEdges[edgeID] {
+				key := compactQueryEvidence{
+					callerID: edge.call.CallerID, targetID: edge.targetID,
+					path: edge.call.Path, line: edge.call.Line,
+					confidence: edge.call.Confidence, candidate: edge.call.TargetID == "",
+					arrow: edge.arrow,
+				}
+				if query.Direction == "impact" {
+					key.arrow = ""
+				}
+				if shownEvidence[key] {
 					continue
 				}
 				label := ""
@@ -91,13 +113,10 @@ func writeCompactDirectionalQuery(write func(string) bool, query Query, declarat
 					callLocation = fmt.Sprintf("%s:%d", edge.call.Path, edge.call.Line)
 				}
 				line := fmt.Sprintf("%s%s%s %s call:%s [%s]", strings.Repeat("  ", depth), edge.arrow, label, graphCallableLabel(edge.other), callLocation, edge.call.Confidence)
-				if seen[edge.other.ID] {
-					line += " (already shown)"
-				}
 				if !write(line) {
 					return false
 				}
-				shownEdges[edgeID] = true
+				shownEvidence[key] = true
 				if !seen[edge.other.ID] {
 					seen[edge.other.ID] = true
 					if query.Direction == "impact" {

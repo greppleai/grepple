@@ -72,7 +72,7 @@ func TestCompactCalleesPreservesAmbiguityAndBoundsCycles(t *testing.T) {
 	for _, want := range []string{
 		"go func root root.go:2\n",
 		"-> ? func one one.go:2 call:2 [candidate]\n",
-		"  -> func root root.go:2 call:2 [exact] (already shown)\n",
+		"  -> func root root.go:2 call:2 [exact]\n",
 		"-> ? func two two.go:2 call:2 [candidate]\n",
 	} {
 		if !strings.Contains(got, want) {
@@ -135,7 +135,7 @@ func TestCompactImpactDoesNotRepeatCallWhenTraversedBothWays(t *testing.T) {
 	var output strings.Builder
 	writeCompactDirectionalQuery(func(line string) bool { fmt.Fprintln(&output, line); return true }, Query{Direction: "impact", Depth: 3, RootIDs: []string{"root"}}, declarations, calls)
 	got := output.String()
-	for _, want := range []string{"<- func Other flow.go:2 call:2 [candidate]", "-> func Other flow.go:2 call:1 [exact] (already shown)"} {
+	for _, want := range []string{"<- func Other flow.go:2 call:2 [candidate]", "-> func Other flow.go:2 call:1 [exact]"} {
 		if !strings.Contains(got, want) {
 			t.Fatalf("impact missing %q:\n%s", want, got)
 		}
