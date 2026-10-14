@@ -34,20 +34,23 @@ type Params struct {
 	SkipSegments    bool     `json:"-"`
 	LineRanges      bool     `json:"matchLineRanges,omitempty"`
 	EnclosingRanges bool     `json:"enclosingLineRanges,omitempty"`
+	AnnotateScopes  bool     `json:"annotateScopes,omitempty"`
 	Related         bool     `json:"related,omitempty"`
 	FollowRelated   int      `json:"followRelated,omitempty"`
 	// RelatedRepositoryContext expands text-index candidates to complete matched
 	// repositories for navigation. Candidate-only callers retain their universe.
 	RelatedRepositoryContext bool `json:"-"`
 	// ImmutableNavigationRevision is a trusted caller's immutable source identity.
-	ImmutableNavigationRevision string   `json:"-"`
-	NoRelated                   bool     `json:"-"`
-	At                          string   `json:"-"`
-	Root                        string   `json:"-"`
-	IgnorePaths                 []string `json:"-"`
-	IgnoreRoot                  string   `json:"-"`
-	ProductionOnly              bool     `json:"-"`
-	CountByRepo                 bool     `json:"-"`
+	ImmutableNavigationRevision string `json:"-"`
+	NoRelated                   bool   `json:"-"`
+	At                          string `json:"-"`
+	// AtScope is local-only; RequestFromParams never serializes it to a router.
+	AtScope        *parser.ScopeSelector `json:"-"`
+	Root           string                `json:"-"`
+	IgnorePaths    []string              `json:"-"`
+	IgnoreRoot     string                `json:"-"`
+	ProductionOnly bool                  `json:"-"`
+	CountByRepo    bool                  `json:"-"`
 }
 
 // RelatedPreview is an optionally expanded declaration and its next navigation
@@ -73,6 +76,7 @@ type FileMatch struct {
 	File, DisplayPath, Content, Language                              string
 	MatchLines                                                        map[int]bool
 	MatchRanges                                                       map[int]parser.StructuralLineRange
+	ScopeAnnotations                                                  map[int]parser.LineScopeAnnotation
 	Segments                                                          []parser.Segment
 	Related                                                           []RelatedPoint
 	LineRange                                                         *linerange.Result

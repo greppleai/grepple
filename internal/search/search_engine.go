@@ -224,7 +224,7 @@ func FilesContext(ctx context.Context, p Params, candidates []string) ([]FileMat
 	}
 	// Parse returned files only when the caller needs structural segments or
 	// multi-line construct ranges for matching lines.
-	if !p.SkipSegments || p.LineRanges || p.EnclosingRanges {
+	if !p.SkipSegments || p.LineRanges || p.EnclosingRanges || p.AnnotateScopes {
 		runParallel(len(out), func(index int) {
 			if ctx.Err() == nil {
 				analyzeMatchStructure(&out[index], p)
@@ -378,7 +378,7 @@ func Content(p Params, name string, content []byte) (*FileMatch, error) {
 		return nil, e
 	}
 	fm := scanContent(p, m, content, name, name)
-	if fm != nil && (!p.SkipSegments || p.LineRanges || p.EnclosingRanges) {
+	if fm != nil && (!p.SkipSegments || p.LineRanges || p.EnclosingRanges || p.AnnotateScopes) {
 		analyzeMatchStructure(fm, p)
 	}
 	return fm, nil
@@ -430,11 +430,15 @@ func scanContent(p Params, m func(string) bool, contentBytes []byte, file, displ
 	if len(hits) == 0 {
 		return nil
 	}
+	language := parser.NewParser().LanguageFor(file)
+	if p.AnnotateScopes {
+		language = parser.ScopeContentLanguageFor(file)
+	}
 	return &FileMatch{
 		File:        file,
 		DisplayPath: display,
 		Content:     content,
-		Language:    parser.NewParser().LanguageFor(file),
+		Language:    language,
 		MatchLines:  hits,
 	}
 }
@@ -554,7 +558,9 @@ func analyzeMatchStructure(fm *FileMatch, p Params) {
 		fm.Segments, fm.StructureStatus = parser.BuildSegmentsWithStatus(fm.Content, fm.Language, fm.MatchLines)
 		fm.SegmentsReady = true
 	}
-	if p.EnclosingRanges {
+	if p.AnnotateScopes {
+		fm.ScopeAnnotations, fm.MatchRanges = parser.LineScopeAnnotationsWithRanges(fm.Content, fm.Language, fm.MatchLines, p.LineRanges || p.EnclosingRanges, p.EnclosingRanges)
+	} else if p.EnclosingRanges {
 		fm.MatchRanges = parser.EnclosingLineRanges(fm.Content, fm.Language, fm.MatchLines)
 	} else if p.LineRanges {
 		fm.MatchRanges = parser.StructuralLineRanges(fm.Content, fm.Language, fm.MatchLines)

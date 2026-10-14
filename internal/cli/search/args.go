@@ -4,8 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"strings"
 
 	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
+	"github.com/greppleai/grepple/internal/parser"
 	rendercommand "github.com/greppleai/grepple/internal/render"
 	"github.com/greppleai/grepple/internal/search"
 
@@ -30,8 +32,9 @@ type Args struct {
 	Recursive  bool   `arg:"-r,--recursive" help:"search directories recursively (compatibility alias; already the default)"`
 	cliruntime.CommonArgs
 	LineNumber       bool     `arg:"-n,--line-number" help:"include line numbers (enabled by default)"`
-	LineOnly         bool     `arg:"--line-only" help:"print only matching lines; include construct end lines when available"`
+	LineOnly         bool     `arg:"--line-only" help:"print only matching lines with parser-verified nearest construct and containing scope when available"`
 	Enclosing        bool     `arg:"--enclosing" help:"line-only: annotate body matches with the nearest enclosing multi-line syntax range"`
+	NoAnnotateScopes bool     `arg:"--no-annotate-scopes" help:"line-only: omit nearest/scope annotations and keep plain source rows"`
 	OnlyMatching     bool     `arg:"-o,--only-matching" help:"print each matched substring"`
 	Files            bool     `arg:"-l,--files" help:"list files by path; unlike grep -l, does not search contents (use --files-with-matches)"`
 	FilesWithMatches bool     `arg:"--files-with-matches" help:"list paths whose contents match (grep -l equivalent); accepts multiple PATHs"`
@@ -55,7 +58,7 @@ type Args struct {
 	Related          bool     `arg:"--related" help:"show repository-local types, callees, and callers (default for structural search)"`
 	NoRelated        bool     `arg:"--no-related" help:"disable automatic code navigation"`
 	FollowRelated    int      `arg:"--follow-related" placeholder:"N" help:"follow 1-3 outgoing call hops; search also shows direct callers of matches"`
-	At               string   `arg:"--at" placeholder:"PATH:LINE[-END]" help:"retrieve a declaration at PATH:LINE or exact lines for PATH:START-END; ranges that start in-file clamp at EOF"`
+	At               string   `arg:"--at" placeholder:"PATH:LINE[-END]" help:"retrieve a declaration at PATH:LINE, exact legacy lines at PATH:START-END, or a verified local scope with --at PATH @KIND:LINE[-END]"`
 	Skip             int      `arg:"--skip" placeholder:"N" help:"skip the first N ranked result files"`
 	Limit            int      `arg:"--limit" default:"20" placeholder:"N" help:"return at most N ranked result files (default 20; 0 = all local; servers cap a page at 100 — page further with --skip)"`
 	Sort             string   `arg:"--sort" default:"path" placeholder:"ORDER" help:"order result files by path (default) or matching-line count (matches)"`
@@ -109,6 +112,14 @@ func optionsFromArgs(application cliruntime.Context, values *Args, usage interfa
 		return nil, "", false, err
 	}
 	params, err := buildSearchParams(application, usage, values)
+	if err == nil && values.At != "" && values.Query != "" {
+		var selector *parser.ScopeSelector
+		selector, err = scopeSelectorFromArgs(values)
+		if err == nil && selector != nil {
+			params.AtScope = selector
+			params.Query = ""
+		}
+	}
 	if err == nil {
 		if repository := application.Repository(); repository != nil {
 			err = search.ConfigureSourcePolicy(&params, repository)
@@ -123,6 +134,7 @@ func optionsFromArgs(application cliruntime.Context, values *Args, usage interfa
 	params.SkipSegments = values.Files || values.FilesWithMatches || values.Count || values.CountByRepo || values.LineOnly || values.OnlyMatching || values.JSONMatches || params.BeforeContext > 0 || params.AfterContext > 0
 	params.LineRanges = values.LineOnly
 	params.EnclosingRanges = values.Enclosing
+	params.AnnotateScopes = defaultScopeAnnotations(values)
 
 	// Local-first: only reach out to the shard/router when the user explicitly opts
 	// in with --remote or by passing a --server URL. A configured GREPPLE_SERVER / config
@@ -147,6 +159,15 @@ func optionsFromArgs(application cliruntime.Context, values *Args, usage interfa
 	}, values.Server, remoteEnabled, nil
 }
 
+// defaultScopeAnnotations applies only to matched source lines. Existing
+// --at, --enclosing, context, count, and file-list modes retain their output.
+func defaultScopeAnnotations(values *searchArgs) bool {
+	if !values.LineOnly || values.NoAnnotateScopes || values.Enclosing || values.At != "" {
+		return false
+	}
+	return !values.Files && !values.FilesWithMatches && !values.Outline && !values.Count && !values.CountByRepo && !values.OnlyMatching && values.Context <= 0 && values.BeforeContext <= 0 && values.AfterContext <= 0
+}
+
 func applyCountSummaryAlias(values *searchArgs) {
 	if values.CountSummary {
 		values.CountByRepo = true
@@ -165,7 +186,7 @@ func defaultAnchorsEnabled(application cliruntime.Context, values *searchArgs) (
 }
 
 func supportsDefaultAnchors(values *searchArgs) bool {
-	if values.Remote || values.Server != "" || values.JSON || values.JSONMatches {
+	if !values.Local && (values.Remote || values.Server != "") || values.JSON || values.JSONMatches {
 		return false
 	}
 	unsupportedCompact := values.Files || values.FilesWithMatches || values.Outline || values.Count || values.CountByRepo || values.OnlyMatching || values.Enclosing
@@ -216,10 +237,17 @@ func validateAtArgs(values *searchArgs) error {
 	if values.At == "" {
 		return nil
 	}
+	selector, err := scopeSelectorFromArgs(values)
+	if err != nil {
+		return err
+	}
+	if selector != nil && !values.Local && (values.Remote || values.RemoteOnly || values.Server != "" || values.Cursor != "") {
+		return fmt.Errorf("--at scope selectors require local source and cannot be used with remote search; use --local with --server")
+	}
 	if !values.Local && (values.Remote || values.Server != "") && len(values.Repos) != 1 {
 		return fmt.Errorf("remote --at requires exactly one --repo OWNER/REPO[@REF]")
 	}
-	if values.Query != "" || len(values.Globs) > 0 {
+	if selector == nil && (values.Query != "" || len(values.Globs) > 0) {
 		return fmt.Errorf("--at cannot be combined with a search pattern or path")
 	}
 	incompatibleOutput := values.Files || values.FilesWithMatches || values.Outline || values.Count || values.CountByRepo || values.OnlyMatching || values.Enclosing || values.JSONMatches
@@ -247,6 +275,12 @@ func validateEnclosingArgs(values *searchArgs) error {
 // validateSearchArgs rejects contradictory or out-of-range flag combinations
 // before any searching starts.
 func validateSearchArgs(values *searchArgs) error {
+	// Selectors must fail locally before cursor validation or a router request.
+	if values.At != "" && strings.HasPrefix(values.Query, "@") {
+		if err := validateAtArgs(values); err != nil {
+			return err
+		}
+	}
 	if err := validateCursorArguments(values); err != nil {
 		return err
 	}
@@ -264,6 +298,7 @@ func validateSearchArgs(values *searchArgs) error {
 	}
 	return validateSearchCombinations(values)
 }
+
 func validateSearchCombinations(values *searchArgs) error {
 	if values.Regex && values.Fixed {
 		return fmt.Errorf("--regex and --fixed-strings cannot be used together")

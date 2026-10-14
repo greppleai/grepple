@@ -8,11 +8,17 @@ import (
 )
 
 type lineRenderer struct {
-	output  *outputWriter
-	anchors AnchorLookup
+	output         *outputWriter
+	anchors        AnchorLookup
+	annotateScopes bool
 }
 
 func (renderer lineRenderer) Render(results []search.FileResult) error {
+	if renderer.annotateScopes {
+		if err := validateAnnotatedSourceLines(results); err != nil {
+			return err
+		}
+	}
 	if renderer.anchors != nil {
 		return renderer.renderAnchored(results)
 	}
@@ -24,7 +30,11 @@ func (renderer lineRenderer) Render(results []search.FileResult) error {
 			} else if match.EndLine > match.Line {
 				location = fmt.Sprintf("%d-%d", match.Line, match.EndLine)
 			}
-			if err := renderer.output.writeString(fmt.Sprintf("%s:%s:%s\n", result.Path, location, match.Text)); err != nil {
+			text := match.Text
+			if renderer.annotateScopes {
+				text = decoratedMatchSource(match)
+			}
+			if err := renderer.output.writeString(fmt.Sprintf("%s:%s:%s\n", result.Path, location, text)); err != nil {
 				return err
 			}
 		}
@@ -66,7 +76,11 @@ func (renderer lineRenderer) renderAnchoredMatch(result search.FileResult, match
 
 func (renderer lineRenderer) anchoredMatchRow(result search.FileResult, match search.ResultMatch) string {
 	anchor := renderer.anchors.Line(result.Path, match.Line)
-	return fmt.Sprintf("%s%s%d%s%s\n", anchor, anchorOutputSeparator, match.Line, anchorOutputSeparator, normalizeRenderedAnchorLine(match.Text))
+	text := normalizeRenderedAnchorLine(match.Text)
+	if renderer.annotateScopes {
+		text = decoratedMatchSource(match)
+	}
+	return fmt.Sprintf("%s%s%d%s%s\n", anchor, anchorOutputSeparator, match.Line, anchorOutputSeparator, text)
 }
 
 type onlyMatchingRenderer struct {

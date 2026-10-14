@@ -12,10 +12,10 @@ import (
 	structure "github.com/greppleai/grepple/internal/parser"
 )
 
-// At retrieves structural context for one local path and 1-based source line.
-// Callable declarations are returned exactly for every structurally supported language.
+// At retrieves local structural context by legacy PATH:LINE[-END] or a typed,
+// current-file verified scope selector. Legacy callable navigation is unchanged.
 func At(params Params) (*FileMatch, error) {
-	path, line, endLine, err := parseAtRange(params.At)
+	path, line, endLine, err := atReference(params)
 	if err != nil {
 		return nil, err
 	}
@@ -38,17 +38,25 @@ func At(params Params) (*FileMatch, error) {
 	}
 	content := strings.ToValidUTF8(string(contentBytes), "\uFFFD")
 	lines := SplitLines(content)
-	resolved, err := linerange.Resolve(line, endLine, len(lines))
-	if err != nil {
-		return nil, fmt.Errorf("--at %s: %w", path, err)
-	}
-	endLine = resolved.ReturnedEnd
 	language := structure.NewParser().LanguageFor(path)
+	var resolved linerange.Result
+	if params.AtScope != nil {
+		line, endLine, err = verifiedAtScope(params, path, content, structure.ScopeContentLanguageFor(path), nil, len(lines))
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		resolved, err = linerange.Resolve(line, endLine, len(lines))
+		if err != nil {
+			return nil, fmt.Errorf("--at %s: %w", path, err)
+		}
+		endLine = resolved.ReturnedEnd
+	}
 	match := &FileMatch{
 		File: absolute, DisplayPath: displayPathFrom(absolute, displayBase(params.Root)), Content: content, Language: language,
 		MatchLines: map[int]bool{line: true}, SegmentsReady: true,
 	}
-	if resolved.Outcome != linerange.OutcomeExact {
+	if params.AtScope == nil && resolved.Outcome != linerange.OutcomeExact {
 		match.LineRange = &resolved
 	}
 	if err := prepareAtMatch(match, params, line, endLine, nil); err != nil {
@@ -72,7 +80,7 @@ func At(params Params) (*FileMatch, error) {
 // AtFromDocument retrieves local structural context from a caller-owned document
 // and attaches related evidence from an already resolved navigation analysis.
 func AtFromDocument(params Params, document *structure.Document, analysis *NavigationAnalysis) (*FileMatch, error) {
-	path, line, endLine, err := parseAtRange(params.At)
+	path, line, endLine, err := atReference(params)
 	if err != nil {
 		return nil, err
 	}
@@ -91,17 +99,28 @@ func AtFromDocument(params Params, document *structure.Document, analysis *Navig
 	}
 	content := document.Source()
 	lines := SplitLines(content)
-	resolved, err := linerange.Resolve(line, endLine, len(lines))
-	if err != nil {
-		return nil, fmt.Errorf("--at %s: %w", path, err)
-	}
-	endLine = resolved.ReturnedEnd
 	language := document.Language()
+	var resolved linerange.Result
+	if params.AtScope != nil {
+		if language != structure.ScopeContentLanguageFor(path) {
+			return nil, fmt.Errorf("--at selector document language %q disagrees with path %q", language, path)
+		}
+		line, endLine, err = verifiedAtScope(params, path, content, language, document, len(lines))
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		resolved, err = linerange.Resolve(line, endLine, len(lines))
+		if err != nil {
+			return nil, fmt.Errorf("--at %s: %w", path, err)
+		}
+		endLine = resolved.ReturnedEnd
+	}
 	match := &FileMatch{
 		File: absolute, DisplayPath: displayPathFrom(absolute, displayBase(params.Root)), Content: content, Language: language,
 		MatchLines: map[int]bool{line: true}, SegmentsReady: true,
 	}
-	if resolved.Outcome != linerange.OutcomeExact {
+	if params.AtScope == nil && resolved.Outcome != linerange.OutcomeExact {
 		match.LineRange = &resolved
 	}
 	if err := prepareAtMatch(match, params, line, endLine, document); err != nil {
@@ -118,6 +137,10 @@ func prepareAtMatch(match *FileMatch, params Params, line, endLine int, document
 		match.MatchLines[selected] = true
 	}
 	if params.LineRanges || params.BeforeContext > 0 || params.AfterContext > 0 {
+		return nil
+	}
+	if params.AtScope != nil || endLine > line {
+		match.Segments = []structure.Segment{{Kind: "lines", Start: line, End: endLine}}
 		return nil
 	}
 	if endLine > line {
@@ -140,6 +163,44 @@ func prepareAtMatch(match *FileMatch, params Params, line, endLine int, document
 		match.Segments = structure.BuildSegments(match.Content, match.Language, match.MatchLines)
 	}
 	return nil
+}
+
+// atReference keeps the old PATH:LINE grammar independent of local scope
+// requests, which carry the path and selector in separate typed fields.
+func atReference(params Params) (string, int, int, error) {
+	if params.AtScope == nil {
+		return parseAtRange(params.At)
+	}
+	s := params.AtScope
+	if params.At == "" {
+		return "", 0, 0, fmt.Errorf("--at scope selector requires a path")
+	}
+	if !structure.PublicScopeKind(s.Kind) {
+		return "", 0, 0, fmt.Errorf("--at selector has unknown scope kind %q", s.Kind)
+	}
+	if s.StartLine < 1 || s.EndLine < s.StartLine || !s.Exact && s.StartLine != s.EndLine {
+		return "", 0, 0, fmt.Errorf("--at selector requires a positive ascending @KIND:LINE or @KIND:START-END")
+	}
+	return params.At, s.StartLine, s.EndLine, nil
+}
+
+func verifiedAtScope(params Params, path, content, language string, document *structure.Document, lineCount int) (int, int, error) {
+	s := *params.AtScope
+	if s.EndLine > lineCount {
+		return 0, 0, fmt.Errorf("--at selector %s:%d-%d exceeds %s (%d lines); scope bounds may be stale", s.Kind, s.StartLine, s.EndLine, path, lineCount)
+	}
+	if language == "text" {
+		return 0, 0, fmt.Errorf("--at selector unsupported for plain or unclassified source %s", path)
+	}
+	span, outcome := structure.ResolveScopeSelector(content, language, s, document)
+	switch outcome {
+	case structure.ScopeVerified:
+		return span.StartLine, span.EndLine, nil
+	case structure.ScopeAmbiguous:
+		return 0, 0, fmt.Errorf("--at selector @%s:%d is ambiguous in %s; specify an exact @%s:START-END span", s.Kind, s.StartLine, path, s.Kind)
+	default:
+		return 0, 0, fmt.Errorf("--at selector @%s:%d-%d has no verified current scope in %s (unsupported syntax, missing scope or stale bounds)", s.Kind, s.StartLine, s.EndLine, path)
+	}
 }
 
 func parseAtRange(reference string) (string, int, int, error) {

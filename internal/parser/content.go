@@ -24,6 +24,26 @@ func languageFor(path string) string {
 	}
 }
 
+// ScopeContentLanguageFor enables structured-content annotations without
+// changing legacy search, navigation, or outline path classification. Terraform
+// JSON configuration remains plain text, as documented by languageFor tests.
+func ScopeContentLanguageFor(path string) string {
+	if language := languageFor(path); language != "text" {
+		return language
+	}
+	lower := strings.ToLower(path)
+	if strings.HasSuffix(lower, ".tf.json") {
+		return "text"
+	}
+	switch filepath.Ext(lower) {
+	case ".json":
+		return "json"
+	case ".yaml", ".yml":
+		return "yaml"
+	}
+	return "text"
+}
+
 func splitLines(content string) []string {
 	lines := strings.Split(content, "\n")
 	if len(lines) > 0 && lines[len(lines)-1] == "" {

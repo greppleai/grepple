@@ -27,6 +27,9 @@ func ToResult(m FileMatch, segs []parser.Segment, beforeContext, afterContext in
 			}
 			match.EndLine = structuralRange.EndLine
 		}
+		if annotation, ok := m.ScopeAnnotations[n]; ok {
+			match.Nearest, match.Scope = annotation.Nearest, annotation.Scope
+		}
 		matches = append(matches, match)
 	}
 	rs := resultSegments(m.Content, segs)

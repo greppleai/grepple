@@ -2,8 +2,8 @@ package search
 
 import (
 	"encoding/json"
-	"github.com/greppleai/grepple/internal/wire"
 	"github.com/greppleai/grepple/internal/search"
+	"github.com/greppleai/grepple/internal/wire"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -48,7 +48,7 @@ func TestSearchUsesConfiguredRemoteUnlessLocalOnly(t *testing.T) {
 	}))
 	defer server.Close()
 
-	if err := runTestSearch([]string{"--server", server.URL, "--line-only", "needle"}); err != nil {
+	if err := runTestSearch([]string{"--server", server.URL, "--line-only", "--no-annotate-scopes", "needle"}); err != nil {
 		t.Fatal(err)
 	}
 	params, err := search.ResolveRequest(remoteRequest)
@@ -99,7 +99,7 @@ func TestRemoteRequiresOptIn(t *testing.T) {
 
 	// --remote opts in and uses the configured server.
 	_ = captureStdout(t, func() {
-		if err := runTestSearch([]string{"--remote", "--line-only", "needle"}); err != nil {
+		if err := runTestSearch([]string{"--remote", "--line-only", "--no-annotate-scopes", "needle"}); err != nil {
 			t.Fatal(err)
 		}
 	})

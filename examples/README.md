@@ -1,8 +1,9 @@
 # grepple examples
 
 Runnable examples that show what `grepple` prints for different **file types** and
-**options**. Every command below is run from **this `examples/` directory** against
-[`sample-files/`](./sample-files) or [`advanced-files/`](./advanced-files), so you can reproduce each block exactly.
+Runnable examples that show what `grepple` prints for different **file types** and
+**options**. Unless a guide says otherwise, run commands from **this `examples/` directory** against
+[`sample-files/`](./sample-files) or [`advanced-files/`](./advanced-files), so you can reproduce each block exactly. The verified-scope guide also uses the repository's `testdata/typescript/sample.ts` fixture from its root.
 
 All output samples are kept inside fenced code blocks so they stay visually separated
 from the surrounding prose.
@@ -42,6 +43,7 @@ cd examples
 5. [Matching options & flags](./05-options-and-flags.md)
 6. [JSON output & paging](./06-json-and-paging.md)
 7. [Advanced language fixtures and regression tests](./07-advanced-language-fixtures.md)
+8. [Verified scope navigation for TypeScript, TSX, JSON, YAML and Markdown](./08-verified-scope-navigation.md)
 
 > Line numbers, timestamps, and paths in the samples come straight from the fixtures.
 > If you edit a fixture, re-run the command to refresh the block.

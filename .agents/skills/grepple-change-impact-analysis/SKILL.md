@@ -7,7 +7,7 @@ description: Use before renaming, deleting, moving, or changing behavior/signatu
 
 ## Trace one declaration
 
-1. Resolve the exact declaration: `grepple graph resolve --symbol Symbol SCOPE` if overloaded, or locate it with `grepple --line-only --enclosing -F 'Symbol' SCOPE`. Verify the chosen `PATH:LINE` with `grepple --at PATH:LINE`.
+1. Resolve the exact declaration: `grepple graph resolve --symbol Symbol SCOPE` if overloaded, or locate it with `grepple --line-only --enclosing -F 'Symbol' SCOPE`. Verify the chosen `PATH:LINE` with `grepple --at PATH:LINE`. If an annotated local `--line-only` hit shows `@func:START-END`, `grepple --at PATH @func:START-END` re-verifies that current source span and reads it cleanly. Neither a copied suffix nor this exact source read proves caller/callee edges; the typed `nearest`/`scope` JSON fields separate evidence from literal text. Verified kind selectors are local-only; graph selectors keep the legacy `PATH:LINE` form.
 2. Preview immediate callers and callees with `grepple --related --at PATH:LINE`.
 3. Choose the direction the change needs, over a universe that includes consumers outside the owning package:
    - Who calls it? `grepple graph callers --at PATH:LINE --depth 2 SCOPE`
@@ -17,6 +17,6 @@ description: Use before renaming, deleting, moving, or changing behavior/signatu
 
 ## Confidence and handoff
 
-Treat `exact`, `import-resolved`, and safely `context-resolved` edges as static evidence. `unique-terminal` is inference, and `[candidate; try --at PATH:LINE]` requires inspection. Check selected/parsed/skipped/failed/recovered source totals and omissions before asserting “no callers.” Interface dispatch, reflection, generated calls, registration, and string lookup need separate checks when relevant.
+Treat `exact`, `import-resolved`, and safely `context-resolved` edges as static evidence. `unique-terminal` is inference, and `[candidate; try --at PATH:LINE]` requires inspection. Check selected/parsed/skipped/failed/recovered source totals and omissions before asserting “no callers.” `@KIND:START-END` only verifies **current local syntax bounds** for a clean read; it cannot certify runtime dispatch, a prior copy's bytes, or an exhaustive impact graph. Interface dispatch, reflection, generated calls, registration, and string lookup need separate checks when relevant.
 
 Before editing, record the declaration, graph universe and source totals, confirmed direct callers/callees, ambiguous candidates, missing sources or omissions, and non-static mechanisms checked. Use architecture lookup for directory relations; a text occurrence or directory edge is not a callable dependency.

@@ -7,12 +7,14 @@ import (
 )
 
 type jsonResultRenderer struct {
-	output      *outputWriter
-	matchesOnly bool
-	metadata    *wire.ResultMetadata
+	output         *outputWriter
+	matchesOnly    bool
+	metadata       *wire.ResultMetadata
+	annotateScopes bool
 }
 
 func (renderer jsonResultRenderer) Render(results []search.FileResult) error {
+	results = scopeDisplayResults(results, renderer.annotateScopes)
 	if renderer.matchesOnly {
 		response := map[string]any{"matches": flatMatches(results), "metadata": renderer.metadata}
 		if ranges := resultLineRanges(results); len(ranges) > 0 {
@@ -31,6 +33,12 @@ func flatMatches(results []search.FileResult) []map[string]any {
 	for _, result := range results {
 		for _, match := range result.Matches {
 			item := map[string]any{"path": result.Path, "line": match.Line, "text": match.Text}
+			if match.Nearest != nil {
+				item["nearest"] = match.Nearest
+			}
+			if match.Scope != nil {
+				item["scope"] = match.Scope
+			}
 			if match.StartLine > 0 {
 				item["startLine"] = match.StartLine
 			}

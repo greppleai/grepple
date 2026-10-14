@@ -30,8 +30,12 @@ func ResolveRequest(r Request) (Params, error) {
 	p.SkipSegments = r.SkipSegments
 	p.LineRanges = r.LineRanges
 	p.EnclosingRanges = r.EnclosingRanges
+	p.AnnotateScopes = r.AnnotateScopes
 	if p.EnclosingRanges {
 		p.LineRanges = true
+	}
+	if p.AnnotateScopes && (!p.LineRanges || p.EnclosingRanges || p.At != "" || p.Files || r.CountByRepo || p.Context > 0 || p.BeforeContext > 0 || p.AfterContext > 0) {
+		return p, fmt.Errorf("annotateScopes requires matchLineRanges content search without enclosingLineRanges, at, context or listing/count modes")
 	}
 	applyDefaultNavigation(&p, r)
 	if r.CountByRepo {
