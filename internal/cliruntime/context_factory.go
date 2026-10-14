@@ -1,6 +1,7 @@
 package cliruntime
 
 import (
+	"context"
 	"io"
 	"os"
 
@@ -14,6 +15,7 @@ type ContextOptions struct {
 	Output      io.Writer
 	ErrorOutput io.Writer
 	Client      apiclient.APIClient
+	Invocation  context.Context
 	Repository  RepositoryInvocationOptions
 	Config      *config.Config
 	Exit        func(int)
@@ -37,6 +39,7 @@ func NewContext(options ContextOptions) Context {
 		Output:            output,
 		ErrorOutput:       diagnostics,
 		Client:            options.Client,
+		InvocationScope:   options.Invocation,
 		Config:            configuration,
 		RepositoryContext: newRepositoryWithConfig(options.Repository, diagnostics, options.Config),
 		Exit:              options.Exit,

@@ -1,7 +1,6 @@
 package graph
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -10,6 +9,7 @@ import (
 
 	"github.com/alexflint/go-arg"
 	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
+	"github.com/greppleai/grepple/internal/clitelemetry"
 	"github.com/greppleai/grepple/internal/parser"
 	"github.com/greppleai/grepple/internal/shellquote"
 	"github.com/greppleai/grepple/internal/wire"
@@ -62,21 +62,27 @@ func executeBuild(application cliruntime.Context, values *BuildArgs) error {
 	if err != nil {
 		return err
 	}
-	if values.JSON && remote != nil {
-		return cliruntime.NewOutput(application.Stdout()).WriteJSON(remote)
+	format := "compact"
+	if values.JSON {
+		format = "json"
 	}
-	if !values.JSON {
-		return renderCompactNavigationGraph(application.Stdout(), output, values.MaxOutputBytes)
-	}
-	encoder := json.NewEncoder(application.Stdout())
-	encoder.SetEscapeHTML(false)
-	encoder.SetIndent("", "  ")
-	return encoder.Encode(output)
+	return clitelemetry.RenderPhase(application.Invocation(), format, func() error {
+		if values.JSON && remote != nil {
+			return cliruntime.NewOutput(application.Stdout()).WriteJSON(remote)
+		}
+		if !values.JSON {
+			return renderCompactNavigationGraph(application.Stdout(), output, values.MaxOutputBytes)
+		}
+		encoder := json.NewEncoder(application.Stdout())
+		encoder.SetEscapeHTML(false)
+		encoder.SetIndent("", "  ")
+		return encoder.Encode(output)
+	})
 }
 
 func loadGraphCommandOutput(application cliruntime.Context, values graphArgs) (navigationGraphOutput, *wire.AnalysisResponse, error) {
 	if values.Repository != "" {
-		response, err := requestRemoteAnalysis(application, context.Background(), wire.AnalysisRequest{Operation: wire.AnalysisGraph, Repository: values.Repository, Paths: values.Paths, MaxFiles: values.MaxFiles}, application.Configuration().ServerDefault(values.Server))
+		response, err := requestRemoteAnalysis(application, application.Invocation(), wire.AnalysisRequest{Operation: wire.AnalysisGraph, Repository: values.Repository, Paths: values.Paths, MaxFiles: values.MaxFiles}, application.Configuration().ServerDefault(values.Server))
 		if err != nil {
 			return navigationGraphOutput{}, nil, err
 		}

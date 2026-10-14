@@ -5,6 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
+	"net"
+	"net/url"
 	"os"
 	"path/filepath"
 )
@@ -16,7 +19,45 @@ const (
 
 // UserSettings is user-owned Grepple configuration.
 type UserSettings struct {
-	Anchors Anchors `json:"anchors"`
+	Anchors   Anchors    `json:"anchors"`
+	Telemetry *Telemetry `json:"telemetry,omitempty"`
+}
+
+// Telemetry controls user-owned, opt-in CLI traces; it cannot be set by repository config.
+type Telemetry struct {
+	Enabled          bool     `json:"enabled"`
+	TraceEndpoint    string   `json:"trace_endpoint,omitempty"`
+	TraceSampleRatio *float64 `json:"trace_sample_ratio,omitempty"`
+}
+
+// SampleRatio defaults to full sampling for an explicitly enabled local diagnostic session.
+func (settings Telemetry) SampleRatio() float64 {
+	if settings.TraceSampleRatio == nil {
+		return 1
+	}
+	return *settings.TraceSampleRatio
+}
+
+// Validate rejects remote plaintext exporters and URLs capable of carrying credentials.
+func (settings Telemetry) Validate() error {
+	if ratio := settings.SampleRatio(); math.IsNaN(ratio) || math.IsInf(ratio, 0) || ratio < 0 || ratio > 1 {
+		return fmt.Errorf("telemetry trace_sample_ratio must be between 0 and 1")
+	}
+	if !settings.Enabled && settings.TraceEndpoint == "" {
+		return nil
+	}
+	endpoint, err := url.Parse(settings.TraceEndpoint)
+	if err != nil || endpoint.Host == "" || endpoint.User != nil || endpoint.RawQuery != "" || endpoint.ForceQuery || endpoint.Fragment != "" || endpoint.RawFragment != "" || endpoint.Path != "/v1/traces" || endpoint.RawPath != "" {
+		return fmt.Errorf("telemetry trace_endpoint requires an exact /v1/traces URL without credentials, query or fragment")
+	}
+	if endpoint.Scheme != "https" && endpoint.Scheme != "http" {
+		return fmt.Errorf("telemetry trace_endpoint requires HTTPS or explicit loopback HTTP")
+	}
+	host := endpoint.Hostname()
+	if host == "" || (endpoint.Scheme == "http" && host != "localhost" && (net.ParseIP(host) == nil || !net.ParseIP(host).IsLoopback())) {
+		return fmt.Errorf("telemetry trace_endpoint requires HTTPS or explicit loopback HTTP")
+	}
+	return nil
 }
 
 // Anchors configures edit-anchor providers.
@@ -50,6 +91,11 @@ func loadUserSettings(path string) (UserSettings, error) {
 	}
 	if err := ensureJSONEnd(decoder); err != nil {
 		return UserSettings{}, fmt.Errorf("parse %s: %w", path, err)
+	}
+	if settings.Telemetry != nil {
+		if err := settings.Telemetry.Validate(); err != nil {
+			return UserSettings{}, err
+		}
 	}
 	return settings, nil
 }
@@ -122,6 +168,11 @@ func (provider Provider) Validate() error {
 
 // SaveUserSettings writes the new user settings atomically with private permissions.
 func (settings *Config) SaveUserSettings(user UserSettings) error {
+	if user.Telemetry != nil {
+		if err := user.Telemetry.Validate(); err != nil {
+			return err
+		}
+	}
 	path := settings.SettingsPath
 	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
 		return err

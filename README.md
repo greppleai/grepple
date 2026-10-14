@@ -48,6 +48,14 @@ make build
 
 Use `make install` to install the locally built CLI. Run `grepple --help` for the current command and flag list.
 
+## Optional CLI traces
+
+Grepple does not export traces unless you opt in via **user-owned** settings.
+For exact JSON, local OTLP/HTTP setup, sampling and rollback see
+[CLI telemetry](docs/cli-telemetry.md). A backend joins those traces only when its
+operator separately enables the restricted, authenticated direct-loopback ingress;
+remote and Docker-forwarded routers normally remain separate traces.
+
 ## Set up your coding agent
 
 Install Grepple's skills for your chosen harness:

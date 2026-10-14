@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"context"
 	"fmt"
 	anchorscommand "github.com/greppleai/grepple/internal/cli/anchors"
 	architecturecommand "github.com/greppleai/grepple/internal/cli/architecture"
@@ -77,6 +78,72 @@ func (values *Arguments) spillOptions() outputspill.Options {
 	return outputspill.Options{Disabled: values.NoSpill, Threshold: values.SpillThreshold, Directory: values.ArtifactDirectory}
 }
 
+// traceCommandName derives a fixed category from the parsed dispatch tree.
+// Version wins over any other pointer, exactly as executeArguments does.
+func (values *Arguments) traceCommandName() string {
+	switch {
+	case values.VersionFlag || values.Version != nil:
+		return "version"
+	case values.Search != nil:
+		return "search"
+	case values.Write != nil:
+		return "write"
+	case values.Grit != nil:
+		return "grit"
+	case values.Hook != nil:
+		return "hook"
+	case values.Graph != nil:
+		switch {
+		case values.Graph.Resolve != nil:
+			return "graph.resolve"
+		case values.Graph.Callers != nil:
+			return "graph.callers"
+		case values.Graph.Callees != nil:
+			return "graph.callees"
+		default:
+			return "graph"
+		}
+	case values.Ask != nil:
+		return "ask"
+	case values.Anchors != nil:
+		return "anchors"
+	case values.Examples != nil:
+		return "examples"
+	case values.Artifacts != nil:
+		return "artifacts"
+	case values.Architecture != nil:
+		return "architecture"
+	case values.Sources != nil:
+		return "sources"
+	case values.Init != nil:
+		return "init"
+	case values.Verify != nil:
+		return "verify"
+	case values.Languages != nil:
+		return "languages"
+	case values.Metrics != nil:
+		return "metrics"
+	case values.Rules != nil:
+		return "rules"
+	case values.Repos != nil:
+		return "repos"
+	case values.Get != nil:
+		return "get"
+	case values.Tree != nil:
+		return "tree"
+	case values.Refs != nil:
+		return "refs"
+	case values.AIProvider != nil:
+		return "ai-provider"
+	case values.Login != nil:
+		return "login"
+	case values.Logout != nil:
+		return "logout"
+	default:
+		return "search"
+	}
+}
+
 func executeArguments(context cliruntime.Context, values *Arguments) error {
 	if values.Daemon && values.Architecture == nil && values.Graph == nil {
 		return fmt.Errorf("--daemon supports only architecture and focused graph commands")
@@ -142,5 +209,9 @@ func newCommandContextWith(repository cliruntime.RepositoryInvocationOptions, ex
 }
 
 func newCommandContextWithConfig(repository cliruntime.RepositoryInvocationOptions, exit func(int), settings *config.Config) cliruntime.Context {
-	return cliruntime.NewContext(cliruntime.ContextOptions{Repository: repository, Config: settings, Exit: exit})
+	return newCommandContextWithInvocation(repository, exit, settings, nil)
+}
+
+func newCommandContextWithInvocation(repository cliruntime.RepositoryInvocationOptions, exit func(int), settings *config.Config, invocation context.Context) cliruntime.Context {
+	return cliruntime.NewContext(cliruntime.ContextOptions{Repository: repository, Config: settings, Exit: exit, Invocation: invocation})
 }

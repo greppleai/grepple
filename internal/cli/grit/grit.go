@@ -214,7 +214,11 @@ func (command *command) execute(values *Arguments) error {
 	if err := validateGritArgs(*values); err != nil {
 		return err
 	}
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	invocation := context.Background()
+	if command.application != nil {
+		invocation = command.application.Invocation()
+	}
+	ctx, stop := signal.NotifyContext(invocation, os.Interrupt, syscall.SIGTERM)
 	defer stop()
 	if !values.Local && (values.Remote || values.Server != "") {
 		return runGritRemote(ctx, *values, dependencies)

@@ -53,6 +53,7 @@ type RelationEvidence = architectureRelationEvidence
 type Dependencies struct {
 	ApplySourceConfig func(*search.Params) error
 	Remote            func(context.Context, wire.AnalysisRequest, string) (wire.AnalysisResponse, error)
+	Invocation        context.Context
 	ServerDefault     func(string) string
 	Stdout            io.Writer
 	Daemon            bool
@@ -96,6 +97,7 @@ func (command *command) services() Dependencies {
 			}
 			return response, nil
 		},
+		Invocation:    application.Invocation(),
 		ServerDefault: application.Configuration().ServerDefault,
 		Stdout:        application.Stdout(),
 	}

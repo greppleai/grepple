@@ -83,7 +83,11 @@ func executeArchitectureDirectory(values *DirectoryArgs, dependencies Dependenci
 	if values.Depth < 0 || values.MaxNodes < 0 || values.MaxFiles < 0 || values.MaxOutputBytes < 0 {
 		return fmt.Errorf("architecture limits must be non-negative")
 	}
-	architecture, remote, err := loadDirectoryArchitecture(context.Background(), values.Paths, values.MaxFiles, values.Repository, values.Server, dependencies)
+	invocation := dependencies.Invocation
+	if invocation == nil {
+		invocation = context.Background()
+	}
+	architecture, remote, err := loadDirectoryArchitecture(invocation, values.Paths, values.MaxFiles, values.Repository, values.Server, dependencies)
 	if err != nil {
 		return err
 	}

@@ -1,6 +1,7 @@
 package search
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -8,10 +9,13 @@ import (
 	"sort"
 
 	"github.com/greppleai/grepple/internal/cliruntime"
+	"github.com/greppleai/grepple/internal/clitelemetry"
 	"github.com/greppleai/grepple/internal/linerange"
 	rendercommand "github.com/greppleai/grepple/internal/render"
 	"github.com/greppleai/grepple/internal/search"
 	"github.com/greppleai/grepple/internal/wire"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type remoteFullLineRangeMissError struct{ err error }
@@ -52,7 +56,16 @@ func executeSearch(application cliruntime.Context, options *Options, explicitSer
 		return err
 	}
 	if options.Outline {
-		printed, outlineErr := rendercommand.Outlines(rendercommand.OutlineOptions{Params: options.Params, Depth: options.Depth, Kinds: options.Kinds, JSON: options.JSON != "off", MaxOutputBytes: options.MaxOutputBytes, DefaultLimit: DefaultResultLimit, Output: application.Stdout(), ErrorOutput: application.Stderr()})
+		format := "text"
+		if options.JSON != "off" {
+			format = "json"
+		}
+		var printed bool
+		outlineErr := clitelemetry.RenderPhase(application.Invocation(), format, func() error {
+			var err error
+			printed, err = rendercommand.Outlines(rendercommand.OutlineOptions{Params: options.Params, Depth: options.Depth, Kinds: options.Kinds, JSON: options.JSON != "off", MaxOutputBytes: options.MaxOutputBytes, DefaultLimit: DefaultResultLimit, Output: application.Stdout(), ErrorOutput: application.Stderr()})
+			return err
+		})
 		if outlineErr == nil && !printed {
 			application.RequestExit(1)
 		}
@@ -106,7 +119,13 @@ func executeSearch(application cliruntime.Context, options *Options, explicitSer
 	options.AnchorLines = anchorLines
 	// Group the selected page by repo/path for readable output.
 	renderOptions := rendercommand.Options{Params: options.Params, LineOnly: options.LineOnly, OnlyMatching: options.OnlyMatching, JSON: options.JSON, Count: options.Count, FilesWithMatches: options.FilesWithMatches, MaxOutputBytes: options.MaxOutputBytes, Stdin: options.Stdin, Anchors: rendercommand.AnchorLookup(options.AnchorLines), Metadata: options.ResultMetadata}
-	if err := rendercommand.Search(rendercommand.SearchOptions{Options: renderOptions, Output: application.Stdout(), ErrorOutput: application.Stderr()}, results); err != nil {
+	format := "text"
+	if options.JSON != "off" {
+		format = "json"
+	}
+	if err := clitelemetry.RenderPhase(application.Invocation(), format, func() error {
+		return rendercommand.Search(rendercommand.SearchOptions{Options: renderOptions, Output: application.Stdout(), ErrorOutput: application.Stderr()}, results)
+	}); err != nil {
 		return err
 	}
 	return finishSearchExit(application, options, results)
@@ -243,8 +262,44 @@ func searchStdin(application cliruntime.Context, params search.Params) ([]search
 	return []search.FileMatch{*match}, nil
 }
 
-func searchLocal(application cliruntime.Context, options *Options) ([]wire.FileResult, error) {
+// beginLocalSearch observes one whole local operation and one candidate-discovery
+// stage. Neither phase is started inside a glob, result or worker loop.
+func beginLocalSearch(application cliruntime.Context, mode string) (context.Context, trace.Span) {
+	ctx, span := clitelemetry.StartPhase(application.Invocation(), "cli.search.local")
+	if span.IsRecording() {
+		span.SetAttributes(attribute.String("cli.search.mode", mode))
+		ctx = search.WithCandidateDiscoveryObserver(ctx, func(kind string) func(int, error) {
+			_, discovery := clitelemetry.StartPhase(ctx, "cli.sources.discover")
+			discovery.SetAttributes(attribute.String("cli.sources.mode", kind))
+			return func(count int, err error) {
+				if err == nil {
+					discovery.SetAttributes(attribute.Int("cli.sources.count", count))
+				}
+				clitelemetry.EndPhase(discovery, ctx, err)
+			}
+		})
+	}
+	return ctx, span
+}
+
+func searchLocal(application cliruntime.Context, options *Options) (results []wire.FileResult, err error) {
 	params := options.Params
+	mode := "content"
+	switch {
+	case params.At != "":
+		mode = "at"
+	case params.Files:
+		mode = "files"
+	case options.Stdin:
+		mode = "stdin"
+	}
+	ctx, span := beginLocalSearch(application, mode)
+	defer func() {
+		if span.IsRecording() && err == nil {
+			span.SetAttributes(attribute.Int("cli.results.count", len(results)))
+		}
+		clitelemetry.EndPhase(span, ctx, err)
+	}()
 	if params.At != "" {
 		match, err := search.At(params)
 		if err != nil {
@@ -255,7 +310,7 @@ func searchLocal(application cliruntime.Context, options *Options) ([]wire.FileR
 	if params.Files {
 		// Filename glob listing only. --files-with-matches is a content search, so
 		// it falls through to Files below and renders paths from the matches.
-		paths, err := search.ListFilePaths(params, nil)
+		paths, err := search.ListFilePathsContext(ctx, params, nil)
 		if err != nil {
 			return nil, err
 		}
@@ -277,7 +332,7 @@ func searchLocal(application cliruntime.Context, options *Options) ([]wire.FileR
 		}
 		return search.BuildResults(matches, params.BeforeContext, params.AfterContext, !params.SkipSegments), nil
 	}
-	matches, err := search.Files(params, nil)
+	matches, err := search.FilesContext(ctx, params, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -298,6 +353,21 @@ func setSearchExit(application cliruntime.Context, results []wire.FileResult) er
 		application.RequestExit(1)
 	}
 	return nil
+}
+
+// countLocalMatches owns one aggregate phase even when it scans every match.
+func countLocalMatches(application cliruntime.Context, options *Options, params search.Params) (matches []search.FileMatch, err error) {
+	ctx, span := beginLocalSearch(application, "count_summary")
+	defer func() {
+		if span.IsRecording() && err == nil {
+			span.SetAttributes(attribute.Int("cli.results.count", len(matches)))
+		}
+		clitelemetry.EndPhase(span, ctx, err)
+	}()
+	if options.Stdin {
+		return searchStdin(application, params)
+	}
+	return search.FilesContext(ctx, params, nil)
 }
 
 // runCountByRepo produces per-repository match tallies. Counts must be complete, so
@@ -321,16 +391,12 @@ func runCountByRepo(application cliruntime.Context, options *Options, explicitSe
 	local.Skip, local.Limit, local.MaxFiles = 0, 0, 0
 	local.CountByRepo = false
 	var matches []search.FileMatch
-	var err error
-	if options.RemoteOnly {
-		matches = nil
-	} else if options.Stdin {
-		matches, err = searchStdin(application, local)
-	} else {
-		matches, err = search.Files(local, nil)
-	}
-	if err != nil {
-		return err
+	if !options.RemoteOnly {
+		var err error
+		matches, err = countLocalMatches(application, options, local)
+		if err != nil {
+			return err
+		}
 	}
 	for _, m := range matches {
 		add(search.RepoID(m.DisplayPath), 1, len(m.MatchLines))
@@ -356,7 +422,13 @@ func runCountByRepo(application cliruntime.Context, options *Options, explicitSe
 	if options.JSON == "off" {
 		maxBytes = options.MaxOutputBytes
 	}
-	if err := rendercommand.RepoCounts(out, application.Stdout(), options.JSON != "off", options.CountSummary, maxBytes); err != nil {
+	format := "compact"
+	if options.JSON != "off" {
+		format = "json"
+	}
+	if err := clitelemetry.RenderPhase(application.Invocation(), format, func() error {
+		return rendercommand.RepoCounts(out, application.Stdout(), options.JSON != "off", options.CountSummary, maxBytes)
+	}); err != nil {
 		return err
 	}
 	if len(out) == 0 {

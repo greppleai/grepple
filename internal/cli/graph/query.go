@@ -11,6 +11,7 @@ import (
 	"github.com/alexflint/go-arg"
 	"github.com/greppleai/grepple/internal/analysis"
 	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
+	"github.com/greppleai/grepple/internal/clitelemetry"
 	"github.com/greppleai/grepple/internal/daemon"
 	"github.com/greppleai/grepple/internal/search"
 	"github.com/greppleai/grepple/internal/shellquote"
@@ -54,17 +55,19 @@ func executeQuery(application cliruntime.Context, direction search.NavigationQue
 	return executeQueryWithDaemon(application, direction, values, false)
 }
 
-func executeQueryWithDaemon(application cliruntime.Context, direction search.NavigationQueryDirection, values *QueryArgs, useDaemon bool) error {
+func executeQueryWithDaemon(application cliruntime.Context, direction search.NavigationQueryDirection, values *QueryArgs, useDaemon bool) (resultErr error) {
 	if err := validateGraphQueryArgs(*values); err != nil {
 		return err
 	}
 	if values.Repository != "" {
-		return runRemoteGraphQuery(application, context.Background(), direction, *values)
+		return runRemoteGraphQuery(application, application.Invocation(), direction, *values)
 	}
-	paths, err := ResolveInputPaths(values.Paths, search.SourcePolicyConfigurer(application.Repository()))
+	paths, err := resolveCLIPaths(application, values.Paths)
 	if err != nil {
 		return err
 	}
+	navCtx, phase := clitelemetry.StartPhase(application.Invocation(), "cli.navigation.execute")
+	defer func() { clitelemetry.EndPhase(phase, navCtx, resultErr) }()
 	query := analysis.GraphQuery{
 		Direction: string(direction), Depth: values.Depth,
 		Symbol: values.Symbol, At: values.At, Package: values.Package, Module: values.Module, RootPath: values.RootPath,
@@ -72,9 +75,11 @@ func executeQueryWithDaemon(application cliruntime.Context, direction search.Nav
 	}
 	var report analysis.GraphReport
 	if useDaemon {
-		if cached, ok := daemon.QueryGraph(paths, values.MaxFiles, query); ok {
-			report = cached
-		}
+		lookupDaemon(navCtx, func() bool {
+			var ok bool
+			report, ok = daemon.QueryGraph(paths, values.MaxFiles, query)
+			return ok && report.Schema != ""
+		})
 	}
 	if report.Schema == "" {
 		sources := analysis.ReadSources(paths)
@@ -93,13 +98,19 @@ func executeQueryWithDaemon(application cliruntime.Context, direction search.Nav
 	output := FromAnalysis(report)
 	output.Metadata = graphResultMetadata(metadataInput{Paths: values.Paths, Returned: len(output.Declarations), MaxFiles: values.MaxFiles, MaxOutputBytes: values.MaxOutputBytes, JSON: values.JSON, Sources: output.Sources, Truncation: output.Truncation, NextCommand: graphQueryContinuationCommand(application, direction, *values, output.Truncation)})
 	output.Metadata.Scope.Languages = normalizedScope(output.Query.Languages, "")
-	if !values.JSON {
-		return renderCompactNavigationGraph(application.Stdout(), output, values.MaxOutputBytes)
+	format := "compact"
+	if values.JSON {
+		format = "json"
 	}
-	encoder := json.NewEncoder(application.Stdout())
-	encoder.SetEscapeHTML(false)
-	encoder.SetIndent("", "  ")
-	return encoder.Encode(output)
+	return clitelemetry.RenderPhase(navCtx, format, func() error {
+		if !values.JSON {
+			return renderCompactNavigationGraph(application.Stdout(), output, values.MaxOutputBytes)
+		}
+		encoder := json.NewEncoder(application.Stdout())
+		encoder.SetEscapeHTML(false)
+		encoder.SetIndent("", "  ")
+		return encoder.Encode(output)
+	})
 }
 func parseGraphQueryArgs(application cliruntime.Context, direction search.NavigationQueryDirection, args []string) (graphQueryArgs, bool, error) {
 	values := graphQueryArgs{MaxOutputBytes: defaultTextOutputBytes, Depth: 1}
@@ -131,13 +142,17 @@ func runRemoteGraphQuery(application cliruntime.Context, ctx context.Context, di
 		return err
 	}
 	if values.JSON {
-		return cliruntime.NewOutput(application.Stdout()).WriteJSON(response)
+		return clitelemetry.RenderPhase(ctx, "json", func() error {
+			return cliruntime.NewOutput(application.Stdout()).WriteJSON(response)
+		})
 	}
 	var output navigationGraphOutput
 	if err := json.Unmarshal(response.Result, &output); err != nil {
 		return fmt.Errorf("decode remote graph query: %w", err)
 	}
-	return renderCompactNavigationGraph(application.Stdout(), output, values.MaxOutputBytes)
+	return clitelemetry.RenderPhase(ctx, "compact", func() error {
+		return renderCompactNavigationGraph(application.Stdout(), output, values.MaxOutputBytes)
+	})
 }
 
 func graphQueryContinuationCommand(application cliruntime.Context, direction search.NavigationQueryDirection, values graphQueryArgs, truncation *navigationGraphTruncation) string {
@@ -202,13 +217,17 @@ func buildNavigationGraphOutput(application cliruntime.Context, globs []string, 
 
 // ResolveInputPaths applies repository source policy and resolves local graph paths.
 func ResolveInputPaths(globs []string, applySourceConfig func(*search.Params) error) ([]string, error) {
+	return resolveInputPathsContext(context.Background(), globs, applySourceConfig)
+}
+
+func resolveInputPathsContext(ctx context.Context, globs []string, applySourceConfig func(*search.Params) error) ([]string, error) {
 	params := search.Params{Files: true, Globs: globs}
 	if applySourceConfig != nil {
 		if err := applySourceConfig(&params); err != nil {
 			return nil, err
 		}
 	}
-	paths, err := search.ListFilePathsContext(context.Background(), params, nil)
+	paths, err := search.ListFilePathsContext(ctx, params, nil)
 	if err != nil {
 		return nil, err
 	}
