@@ -24,7 +24,7 @@ func TestGraphDaemonLocalOutputParityAndFlagRestrictions(t *testing.T) {
 	}
 	t.Setenv("GREPPLE_CACHE_DIR", cache)
 	t.Setenv("GREPPLE_NAVIGATION_CACHE_DIR", "")
-	if err := os.WriteFile("main.go", []byte("package sample\nfunc Target() {}\nfunc Caller() { Target() }\n"), 0o600); err != nil {
+	if err := os.WriteFile("main.go", []byte("package sample\nfunc Target() {}\nfunc Caller() { Target(); Target() }\n"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	run := func(args ...string) (string, error) {
@@ -60,6 +60,7 @@ func TestGraphDaemonLocalOutputParityAndFlagRestrictions(t *testing.T) {
 		{"graph", "resolve", "--symbol", "Missing", "--json", "main.go"},
 		{"graph", "callers", "--symbol", "Target", "--json", "main.go"},
 		{"graph", "callees", "--symbol", "Target", "--json", "main.go"},
+		{"graph", "callers", "--symbol", "Target", "main.go"},
 	} {
 		name := strings.Join(command[1:4], "-")
 		t.Run(name, func(t *testing.T) {
@@ -68,6 +69,22 @@ func TestGraphDaemonLocalOutputParityAndFlagRestrictions(t *testing.T) {
 			warm, warmErr := run(append([]string{command[0], "--daemon"}, command[1:]...)...)
 			if direct != cold || direct != warm || (directErr == nil) != (coldErr == nil) || (directErr == nil) != (warmErr == nil) {
 				t.Fatalf("direct=%v cold=%v warm=%v\ndirect=%s\ncold=%s\nwarm=%s", directErr, coldErr, warmErr, direct, cold, warm)
+			}
+			if directErr != nil && command[3] != "Missing" {
+				t.Fatal(directErr)
+			}
+			if command[1] == "callers" {
+				if command[4] == "--json" {
+					var result struct{ Calls []struct{ ID string } }
+					if err := json.Unmarshal([]byte(direct), &result); err != nil {
+						t.Fatal(err)
+					}
+					if len(result.Calls) != 2 || result.Calls[0].ID == result.Calls[1].ID {
+						t.Fatalf("JSON lost distinct call IDs: %s", direct)
+					}
+				} else if strings.Count(direct, "call:3 [") != 1 || strings.Contains(direct, "already shown") {
+					t.Fatalf("compact duplicate evidence: %s", direct)
+				}
 			}
 			if command[1] == "resolve" {
 				if _, hit := daemon.QueryResolve(paths, 0, daemon.ResolveSelection{Symbol: command[3]}); !hit {
