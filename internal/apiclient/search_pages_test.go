@@ -9,11 +9,10 @@ import (
 	"reflect"
 	"strings"
 	"testing"
-	"time"
 )
 
 func pageToken(letter string) string {
-	return strings.Repeat("S", 43) + "." + strings.Repeat(letter, 43)
+	return strings.Repeat("S", 43) + "." + map[string]string{"A": "0", "B": "20"}[letter]
 }
 func TestSearchPageWireContinuationReplay(t *testing.T) {
 	var requests []SearchPageRequest
@@ -26,7 +25,7 @@ func TestSearchPageWireContinuationReplay(t *testing.T) {
 			t.Error(err)
 		}
 		requests = append(requests, body)
-		_ = json.NewEncoder(w).Encode(SearchPage{Results: []wire.FileResult{{Repo: "owner/repo", Path: "owner/repo/source.go"}}, PageID: pageToken("A"), Cursor: pageToken("B"), ExpiresAt: time.Date(2030, 1, 1, 0, 0, 0, 0, time.UTC)})
+		_ = json.NewEncoder(w).Encode(SearchPage{Results: []wire.FileResult{{Repo: "owner/repo", Path: "owner/repo/source.go"}}, PageID: pageToken("A"), Cursor: pageToken("B")})
 	}))
 	defer server.Close()
 	pager := New().(SearchPager)
@@ -35,12 +34,12 @@ func TestSearchPageWireContinuationReplay(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	replay, err := pager.SearchPage(context.Background(), server.URL, SearchPageRequest{Cursor: first.PageID})
+	replay, err := pager.SearchPage(context.Background(), server.URL, SearchPageRequest{Search: &wire.SearchRequest{Query: &query}, Cursor: first.PageID})
 	if err != nil || !reflect.DeepEqual(first, replay) {
 		t.Fatal("replay changed")
 	}
-	if requests[1].Search != nil || requests[1].Cursor != first.PageID {
-		t.Fatal("query was resent with continuation")
+	if requests[1].Search == nil || requests[1].Cursor != first.PageID {
+		t.Fatal("query/options were not resent with continuation")
 	}
 }
 func TestSearchPageDoesNotFallbackOnErrorsOrMalformedResponses(t *testing.T) {

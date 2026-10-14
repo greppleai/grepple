@@ -80,6 +80,7 @@ type navigationIndex struct {
 	byLocation        map[string]navigationDeclaration
 	byID              map[string]navigationDeclaration
 	contents          map[string]string
+	sourceContent     func(string) string
 	graph             parser.NavigationGraph
 	sourceStats       NavigationSourceStats
 }
@@ -265,7 +266,7 @@ func relatedTypesForDeclaration(declaration navigationDeclaration, navigation *n
 			point.CallLine, point.Confidence = usage.line, confidence
 			lines := point.End - point.Start + 1
 			if lines > 0 && lines <= *lineBudget {
-				point.Preview = &RelatedPreview{Content: navigation.contents[candidate.file], Start: point.Start, End: point.End}
+				point.Preview = &RelatedPreview{Content: navigation.relatedContent(candidate.file), Start: point.Start, End: point.End}
 				*lineBudget -= lines
 			}
 			related = append(related, point)
@@ -576,7 +577,7 @@ func expandRelated(points []RelatedPoint, navigation *navigationIndex, depth int
 		}
 		*lineBudget -= lines
 		seen[key] = true
-		content := navigation.contents[declaration.file]
+		content := navigation.relatedContent(declaration.file)
 		match := FileMatch{
 			File: declaration.file, DisplayPath: point.Path, Content: content, Language: declaration.language,
 			MatchLines: map[int]bool{point.Start: true},

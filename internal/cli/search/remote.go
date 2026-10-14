@@ -27,7 +27,7 @@ func searchRemoteContext(application cliruntime.Context, ctx context.Context, op
 		request := searchRequestFromParams(options.Params)
 		pageRequest := apiclient.SearchPageRequest{Search: &request}
 		if options.Cursor != "" {
-			pageRequest = apiclient.SearchPageRequest{Cursor: options.Cursor}
+			pageRequest.Cursor = options.Cursor
 		}
 		page, err := pager.SearchPage(ctx, server, pageRequest)
 		if err != nil {

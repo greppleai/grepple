@@ -25,6 +25,9 @@ func validateCursorArguments(values *Args) error {
 	if !apiclient.ValidSearchCursor(values.Cursor) {
 		return fmt.Errorf("invalid --cursor token")
 	}
+	if values.Query == "" {
+		return fmt.Errorf("--cursor requires the original query and search options")
+	}
 	if values.Local || values.Skip != 0 || values.At != "" || values.Files || values.Count || values.CountByRepo || values.CountSummary || values.MaxFiles != 0 || values.Outline || values.Sort != search.ResultSortPath {
 		return fmt.Errorf("--cursor is only supported for remote content search without offsets, counts, listing or match sorting")
 	}
@@ -36,7 +39,7 @@ func cursorResultMetadata(application cliruntime.Context, options *Options, meta
 		return
 	}
 	metadata.Scope.Mode = "remote"
-	metadata.Order = "snapshot-traversal"
+	metadata.Order = "path"
 	metadata.Page.Total = nil
 	metadata.Page.Complete = page.Complete && metadata.Page.Complete
 	metadata.Omitted.Files = 0

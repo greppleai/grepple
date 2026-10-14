@@ -31,7 +31,10 @@ type IndexedNavigation interface {
 	VisitTypeDeclarations(func(ArtifactTypeDeclaration))
 }
 
-type indexedNavigation struct{ graph parser.NavigationGraph }
+type indexedNavigation struct {
+	graph    parser.NavigationGraph
+	complete bool
+}
 
 // DecodeNavigationArtifact validates and loads one portable navigation artifact.
 func DecodeNavigationArtifact(content []byte) (IndexedNavigation, error) {
@@ -39,13 +42,13 @@ func DecodeNavigationArtifact(content []byte) (IndexedNavigation, error) {
 	if err != nil {
 		return nil, err
 	}
-	return indexedNavigation{graph: artifact.Graph}, nil
+	return indexedNavigation{graph: artifact.Graph, complete: true}, nil
 }
 
 // BuildNavigationArtifact parses and resolves a complete set of source paths.
 func BuildNavigationArtifact(paths []string) (IndexedNavigation, NavigationSourceStats) {
 	graph, stats := navigation.NewGraphEngine(navigation.BuildOptions{}).BuildFiles(paths)
-	return indexedNavigation{graph: graph}, NavigationSourceStats{
+	return indexedNavigation{graph: graph, complete: true}, NavigationSourceStats{
 		Attempted: stats.Attempted, Parsed: stats.Parsed, Skipped: stats.Skipped,
 		Failed: stats.Failed, Recovered: stats.Recovered,
 	}

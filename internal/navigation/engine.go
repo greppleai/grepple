@@ -131,7 +131,7 @@ type DocumentSource struct {
 type TextSource struct{ Path, Text string }
 
 // analysis retains one resolved navigation graph.
-type analysis struct{ index *navigationIndex }
+type analysis struct{ graph parser.NavigationGraph }
 
 // buildGraphWithOptions builds the resolved graph with explicit cache behavior.
 func buildGraphWithOptions(files []string, options BuildOptions) (parser.NavigationGraph, SourceStats) {
@@ -150,7 +150,7 @@ func buildAnalysisFromDocuments(sources []DocumentSource, options BuildOptions) 
 			cacheKey = key
 			if graph, hit := readResolvedGraphCache(key); hit {
 				stats := documentSourceStats(ordered)
-				return &analysis{index: &navigationIndex{graph: graph, sourceStats: stats}}, stats
+				return &analysis{graph: graph}, stats
 			}
 		}
 	}
@@ -164,7 +164,7 @@ func buildAnalysisFromDocuments(sources []DocumentSource, options BuildOptions) 
 	if cacheKey != "" && index.sourceStats.Failed == 0 {
 		writeResolvedGraphCache(cacheKey, index.graph, index.sourceStats.Recovered > 0)
 	}
-	return &analysis{index: index}, index.sourceStats
+	return &analysis{graph: index.graph}, index.sourceStats
 }
 
 // buildAnalysisFromTextSources builds reusable analysis from in-memory sources.
@@ -179,15 +179,15 @@ func buildAnalysisFromTextSources(sources []TextSource, options BuildOptions) (*
 		index.addTextSource(source, cwd, !options.DisableCache)
 	}
 	index.finalize(paths)
-	return &analysis{index: index}, index.sourceStats
+	return &analysis{graph: index.graph}, index.sourceStats
 }
 
 // Graph returns the immutable resolved graph projection.
 func (analysis *analysis) Graph() parser.NavigationGraph {
-	if analysis == nil || analysis.index == nil {
+	if analysis == nil {
 		return parser.NavigationGraph{}
 	}
-	return analysis.index.graph
+	return analysis.graph
 }
 
 func (index *navigationIndex) resolveGraphCalls() {

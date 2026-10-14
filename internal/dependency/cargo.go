@@ -66,18 +66,24 @@ func (cargoDependencyResolver) DiscoverModule(manifestPath, relativeRoot string)
 	if err := toml.Unmarshal(content, &manifest); err != nil {
 		return nil, err
 	}
-	if manifest.Package.Name == "" || manifest.Package.Version == "" {
+	version, err := cargoArtifactVersion(manifest, manifestPath, relativeRoot)
+	if err != nil {
+		return nil, err
+	}
+	if manifest.Package.Name == "" || version == "" {
 		return nil, nil
 	}
-	return &ArtifactModule{Ecosystem: "cargo", Module: manifest.Package.Name, Version: manifest.Package.Version, Root: relativeRoot}, nil
+	return &ArtifactModule{Ecosystem: "cargo", Module: manifest.Package.Name, Version: version, Root: relativeRoot}, nil
 }
 
 type cargoManifest struct {
 	Package struct {
-		Name    string `toml:"name"`
-		Version string `toml:"version"`
+		Name      string `toml:"name"`
+		Version   any    `toml:"version"`
+		Workspace string `toml:"workspace"`
 	} `toml:"package"`
 	Dependencies map[string]any `toml:"dependencies"`
+	Workspace    map[string]any `toml:"workspace"`
 }
 
 type cargoLock struct {

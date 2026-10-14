@@ -7,7 +7,6 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/greppleai/grepple/internal/search"
 	"github.com/greppleai/grepple/internal/wire"
@@ -24,7 +23,7 @@ func TestSearchRemoteSendsAndAppliesRepoExclusion(t *testing.T) {
 			t.Error(err)
 		}
 		received = *body.Search
-		_ = json.NewEncoder(response).Encode(apiclient.SearchPage{Complete: true, PageID: strings.Repeat("A", 43) + "." + strings.Repeat("B", 43), ExpiresAt: time.Now().Add(time.Minute), Results: []wire.FileResult{
+		_ = json.NewEncoder(response).Encode(apiclient.SearchPage{Complete: true, PageID: strings.Repeat("A", 43) + ".0", Results: []wire.FileResult{
 			{Repo: "owner/current", Path: "current.go"},
 			{Repo: "owner/other", Path: "other.go"},
 		}})

@@ -1,25 +1,22 @@
-# CLI snapshot cursor search
+# CLI stateless cursor search
 
-Use `grepple --remote-only -F Connect --related` for snapshot-bound Public content
-search without local results. JSON metadata and stderr provide a copyable next
-command containing `--cursor` and the same server. Repeat that command to advance;
-rerunning an identical cursor command replays the same page. Only completion—not
-an empty result page—means exhaustion. Cursors require the same fresh account
-and expire with the search session. An error never silently falls back to legacy.
+Use `grepple --remote-only -F Connect --no-related` for Public content search
+without local results. JSON metadata and stderr provide a copyable next command
+containing `--cursor`, the same server, query, filters and page size. Every page
+resends those options. Changing them invalidates the cursor: start a new search.
 
-`--remote` / `--server` still preserve local-plus-remote behavior. Content searches
-use cursor pages when there are no local matches. Mixed local/remote windows,
-offset links, exact-source lookup, file listing, counts, match sorting and
-`--max-files` retain the legacy endpoint for compatibility. `--remote-only` is the
-explicit way to guarantee cursor traversal. Local search is unchanged.
+Tokens contain a query/options digest and global skip offset, not credentials,
+account identity, expiry or snapshot references. Fresh authorization applies on
+every request. Any router replica can execute a continuation without disk state
+or affinity. Index changes may repeat or omit files. Replaying a command searches
+the current index at that offset; it does not return a frozen saved page.
 
-Snapshot traversal is unordered globally; the CLI sorts within each returned
-page for presentation. No complete result count is claimed. Pages are at most
-100 files and a replay is indivisible: lowering `--limit` on continuation does
-not drop files already selected into that frozen page. Change page size or query
-by starting a fresh search instead. Match lines and related context remain pinned
-to the source snapshot; navigation hints are not resolved against mutable files.
+`--remote` / `--server` retain local-plus-remote behavior. Mixed local/remote,
+explicit offsets, exact-source, listings, counts, match sorting and `--max-files`
+retain legacy endpoints. Local search is unchanged. Cursor pages use global path
+ordering and do not claim a complete result count. Normal page limits apply;
+offsets are bounded at 10,000 files and deep pages can be slower. A full page can
+have an empty final continuation. Errors never silently fall back to legacy.
 
-The existing authenticated, bounded, nonredirecting HTTP transport is reused.
-Page requests have a 40-second deadline, and the server continues checking fresh
-Public authority on every initial request, continuation and replay.
+The authenticated, bounded, nonredirecting HTTP transport is reused with a
+40-second deadline. Old opaque session cursors are invalid; submit a new search.
