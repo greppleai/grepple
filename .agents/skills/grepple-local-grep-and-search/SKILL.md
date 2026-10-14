@@ -39,6 +39,6 @@ replacement text
 GREPPLE_WRITE_example
 ```
 
-Use the `HASH│LINE│content` anchors returned by local Grepple; they become stale after an edit. Replace inclusive ranges (include a closing brace when replacing its block). The write receipt gives the changed range; retrieve fresh anchors before another edit or use `--return`. For create/delete, multi-file transactions, or marker escaping, follow the repository's Grepple write instructions and verify with `--dry-run`; the short `grepple write --help` synopsis does not document every transaction operation. Do not read an entire large file when an exact construct range is available.
+Use the `HASH│LINE│content` anchors returned by local Grepple; they become stale after an edit. Replace inclusive ranges (include a closing brace when replacing its block). The write receipt gives the changed range; retrieve fresh anchors before another edit or use `--return`. For create/delete, multi-file transactions, or marker escaping, follow the repository's Grepple write instructions and review the requested transaction before applying it; the short `grepple write --help` synopsis does not document every transaction operation. Do not read an entire large file when an exact construct range is available.
 
 Use `grepple-architecture-lookup-discovery` for ownership, `grepple-architecture-boundary-review` for proposed moves, `grepple-structural-pattern-audit` for syntax shapes, and `grepple-remote-grep-and-search` for indexed code outside this checkout.

@@ -7,7 +7,6 @@ import (
 	artifactscommand "github.com/greppleai/grepple/internal/cli/artifacts"
 	askcommand "github.com/greppleai/grepple/internal/cli/ask"
 	authcommand "github.com/greppleai/grepple/internal/cli/auth"
-	contextcommand "github.com/greppleai/grepple/internal/cli/context"
 	examplescommand "github.com/greppleai/grepple/internal/cli/examples"
 	getcommand "github.com/greppleai/grepple/internal/cli/get"
 	graphcommand "github.com/greppleai/grepple/internal/cli/graph"
@@ -53,7 +52,6 @@ type Arguments struct {
 	Setup        *setupcommand.Args          `arg:"subcommand:setup" help:"install version-matched skills for pi, claude, opencode, or codex"`
 	Examples     *examplescommand.Args       `arg:"subcommand:examples" help:"print task-oriented CLI workflows"`
 	Artifacts    *artifactscommand.Args      `arg:"subcommand:artifacts" help:"manage spilled output artifacts"`
-	Context      *contextcommand.Args        `arg:"subcommand:context" help:"manage context deduplication"`
 	Architecture *architecturecommand.Args   `arg:"subcommand:architecture" help:"inspect directory architecture"`
 	Sources      *sourcescommand.Args        `arg:"subcommand:sources" help:"explain source selection"`
 	Init         *initcommand.Args           `arg:"subcommand:init" help:"generate directory metadata"`
@@ -106,8 +104,6 @@ func executeArguments(context cliruntime.Context, values *Arguments) error {
 		return examplescommand.Execute(context, values.Examples)
 	case values.Artifacts != nil:
 		return artifactscommand.Execute(context, values.Artifacts)
-	case values.Context != nil:
-		return contextcommand.Execute(context, values.Context)
 	case values.Architecture != nil:
 		return architecturecommand.ExecuteWithDaemon(context, values.Architecture, values.Daemon)
 	case values.Sources != nil:
@@ -141,10 +137,10 @@ func executeArguments(context cliruntime.Context, values *Arguments) error {
 	}
 }
 
-func newCommandContextWith(repository cliruntime.RepositoryInvocationOptions, threshold int, exit func(int)) cliruntime.Context {
-	return newCommandContextWithConfig(repository, threshold, exit, nil)
+func newCommandContextWith(repository cliruntime.RepositoryInvocationOptions, exit func(int)) cliruntime.Context {
+	return newCommandContextWithConfig(repository, exit, nil)
 }
 
-func newCommandContextWithConfig(repository cliruntime.RepositoryInvocationOptions, threshold int, exit func(int), settings *config.Config) cliruntime.Context {
-	return cliruntime.NewContext(cliruntime.ContextOptions{Repository: repository, Config: settings, InlineOutputThreshold: threshold, Exit: exit})
+func newCommandContextWithConfig(repository cliruntime.RepositoryInvocationOptions, exit func(int), settings *config.Config) cliruntime.Context {
+	return cliruntime.NewContext(cliruntime.ContextOptions{Repository: repository, Config: settings, Exit: exit})
 }

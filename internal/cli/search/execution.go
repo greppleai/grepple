@@ -82,12 +82,10 @@ func executeSearch(application cliruntime.Context, options *Options, explicitSer
 
 	results, err := initialSearchResults(application, &child, remote)
 	if err != nil {
-		rendercommand.RecordLineRangeError(err, application.Configuration().ContextGuardEnabled())
 		return reportLineRangeCommandError(application, err)
 	}
 	results, err = appendRemoteResults(application, results, &child, explicitServer, remote)
 	if err != nil {
-		rendercommand.RecordLineRangeError(err, application.Configuration().ContextGuardEnabled())
 		return reportLineRangeCommandError(application, err)
 	}
 	results = resolveLocalExternalNavigation(application, results, explicitServer)
@@ -107,8 +105,8 @@ func executeSearch(application cliruntime.Context, options *Options, explicitSer
 	}
 	options.AnchorLines = anchorLines
 	// Group the selected page by repo/path for readable output.
-	renderOptions := rendercommand.Options{Params: options.Params, LineOnly: options.LineOnly, OnlyMatching: options.OnlyMatching, JSON: options.JSON, Count: options.Count, FilesWithMatches: options.FilesWithMatches, MaxOutputBytes: options.MaxOutputBytes, RepeatSource: options.RepeatSource, Stdin: options.Stdin, Anchors: rendercommand.AnchorLookup(options.AnchorLines), Metadata: options.ResultMetadata}
-	if err := rendercommand.Search(rendercommand.SearchOptions{Options: renderOptions, Output: application.Stdout(), ErrorOutput: application.Stderr(), ContextEnabled: application.Configuration().ContextGuardEnabled(), InlineThreshold: application.Configuration().InlineOutputThreshold()}, results); err != nil {
+	renderOptions := rendercommand.Options{Params: options.Params, LineOnly: options.LineOnly, OnlyMatching: options.OnlyMatching, JSON: options.JSON, Count: options.Count, FilesWithMatches: options.FilesWithMatches, MaxOutputBytes: options.MaxOutputBytes, Stdin: options.Stdin, Anchors: rendercommand.AnchorLookup(options.AnchorLines), Metadata: options.ResultMetadata}
+	if err := rendercommand.Search(rendercommand.SearchOptions{Options: renderOptions, Output: application.Stdout(), ErrorOutput: application.Stderr()}, results); err != nil {
 		return err
 	}
 	return finishSearchExit(application, options, results)

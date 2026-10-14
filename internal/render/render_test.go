@@ -8,10 +8,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/greppleai/grepple/internal/wire"
 	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
 	"github.com/greppleai/grepple/internal/parser"
 	"github.com/greppleai/grepple/internal/search"
+	"github.com/greppleai/grepple/internal/wire"
 )
 
 func TestNewResultRendererSelectsOutputMode(t *testing.T) {
@@ -31,7 +31,7 @@ func TestNewResultRendererSelectsOutputMode(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			renderer := newResultRenderer(test.options, newOutputWriter(&bytes.Buffer{}), nil)
+			renderer := newResultRenderer(test.options, newOutputWriter(&bytes.Buffer{}))
 			if got := reflect.TypeOf(renderer).Name(); got != test.want {
 				t.Fatalf("expected %s, got %s", test.want, got)
 			}
@@ -41,7 +41,7 @@ func TestNewResultRendererSelectsOutputMode(t *testing.T) {
 
 func TestLineRendererWritesToInjectedOutput(t *testing.T) {
 	var output bytes.Buffer
-	renderer := lineRenderer{contextGuard: noopContextGuard{}, output: newOutputWriter(&output)}
+	renderer := lineRenderer{output: newOutputWriter(&output)}
 	results := []wire.FileResult{{
 		Path: "example.go",
 		Matches: []wire.ResultMatch{
@@ -61,7 +61,7 @@ func TestLineRendererWritesToInjectedOutput(t *testing.T) {
 
 func TestSegmentRendererUsesWhitespaceForShortSpacingSegments(t *testing.T) {
 	var output bytes.Buffer
-	renderer := segmentRenderer{contextGuard: noopContextGuard{}, output: newOutputWriter(&output)}
+	renderer := segmentRenderer{output: newOutputWriter(&output)}
 	results := []wire.FileResult{{
 		Path: "example.go",
 		Segments: []wire.ResultSegment{
@@ -83,7 +83,7 @@ func TestSegmentRendererUsesWhitespaceForShortSpacingSegments(t *testing.T) {
 
 func TestSegmentRendererPrintsRelatedGoPoints(t *testing.T) {
 	var output bytes.Buffer
-	renderer := segmentRenderer{contextGuard: noopContextGuard{}, output: newOutputWriter(&output)}
+	renderer := segmentRenderer{output: newOutputWriter(&output)}
 	results := []wire.FileResult{{
 		Path: "caller.go",
 		Related: []wire.RelatedSymbol{
@@ -173,7 +173,7 @@ func TestSegmentRendererDeduplicatesAnchoredRelatedTypeAppendix(t *testing.T) {
 
 func TestSegmentRendererShowsResolvedExternalTypeDefinition(t *testing.T) {
 	var output bytes.Buffer
-	renderer := segmentRenderer{contextGuard: noopContextGuard{}, output: newOutputWriter(&output)}
+	renderer := segmentRenderer{output: newOutputWriter(&output)}
 	artifact := &wire.NavigationArtifactIdentity{
 		Ecosystem: "go", Module: "github.com/gofiber/fiber/v3", Version: "v3.5.0", Source: "https://proxy.golang.org", Integrity: "h1:exact",
 		Repository: "gofiber/fiber@tag~v3.5.0", Commit: "abcdef", Digest: "artifact-digest",
@@ -206,7 +206,7 @@ func TestSegmentRendererShowsResolvedExternalTypeDefinition(t *testing.T) {
 
 func TestSegmentRendererReportsIncompleteSourceAnalysis(t *testing.T) {
 	var output bytes.Buffer
-	renderer := segmentRenderer{contextGuard: noopContextGuard{}, output: newOutputWriter(&output)}
+	renderer := segmentRenderer{output: newOutputWriter(&output)}
 	results := []wire.FileResult{
 		{Path: "valid.go", StructureStatus: string(parser.SegmentBuildStructured)},
 		{Path: "recovered.go", StructureStatus: string(parser.SegmentBuildRecovered)},
@@ -227,7 +227,7 @@ func TestSegmentRendererReportsIncompleteSourceAnalysis(t *testing.T) {
 	}
 
 	output.Reset()
-	jsonRenderer := jsonResultRenderer{contextGuard: noopContextGuard{}, output: newOutputWriter(&output)}
+	jsonRenderer := jsonResultRenderer{output: newOutputWriter(&output)}
 	if err := jsonRenderer.Render(results); err != nil {
 		t.Fatal(err)
 	}
@@ -260,7 +260,7 @@ func TestBoundedOutputWriterStopsBeforeAgentToolLimit(t *testing.T) {
 
 func TestAnchoredContextRendererEmitsEditableRows(t *testing.T) {
 	var output bytes.Buffer
-	renderer := contextRenderer{contextGuard: noopContextGuard{}, output: newOutputWriter(&output), anchors: AnchorLookup{"sample.go": {1: "AAA", 2: "BBB", 3: "CCC"}}}
+	renderer := contextRenderer{output: newOutputWriter(&output), anchors: AnchorLookup{"sample.go": {1: "AAA", 2: "BBB", 3: "CCC"}}}
 	results := []wire.FileResult{{Path: "sample.go", Context: []wire.ContextLine{{Line: 1, Text: "before"}, {Line: 2, Text: "needle", Match: true}, {Line: 3, Text: "after"}}}}
 	if err := renderer.Render(results); err != nil {
 		t.Fatal(err)

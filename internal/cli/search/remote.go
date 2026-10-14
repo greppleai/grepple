@@ -9,7 +9,6 @@ import (
 	"github.com/greppleai/grepple/internal/cliruntime"
 	"github.com/greppleai/grepple/internal/linerange"
 	"github.com/greppleai/grepple/internal/navigation"
-	"github.com/greppleai/grepple/internal/render"
 	"github.com/greppleai/grepple/internal/search"
 	"github.com/greppleai/grepple/internal/wire"
 )
@@ -39,7 +38,6 @@ func searchRemoteContext(application cliruntime.Context, ctx context.Context, op
 	result, err := application.APIClient().Search(ctx, server, searchRequestFromParams(options.Params))
 	if err != nil {
 		if apiclient.RangeOutcome(err) == linerange.OutcomeFullMiss {
-			render.RecordStandaloneLineRangeOutcome(linerange.OutcomeFullMiss, application.Configuration().ContextGuardEnabled())
 			return nil, remoteFullLineRangeMissError{err: err}
 		}
 		return nil, err

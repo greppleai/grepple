@@ -10,8 +10,6 @@ import (
 // ConfigurationServices adapts command configuration functions for tests and embedding.
 type ConfigurationServices struct {
 	ResolveServer      func(string) string
-	ContextGuard       func() bool
-	InlineOutputBytes  func() int
 	LoadUserSettings   func() (config.UserSettings, error)
 	LoadAskPreferences func() (config.AskPreferences, error)
 }
@@ -21,15 +19,6 @@ func (services ConfigurationServices) ServerDefault(value string) string {
 		return services.ResolveServer(value)
 	}
 	return value
-}
-func (services ConfigurationServices) ContextGuardEnabled() bool {
-	return services.ContextGuard != nil && services.ContextGuard()
-}
-func (services ConfigurationServices) InlineOutputThreshold() int {
-	if services.InlineOutputBytes != nil {
-		return services.InlineOutputBytes()
-	}
-	return 0
 }
 func (services ConfigurationServices) UserSettings() (config.UserSettings, error) {
 	if services.LoadUserSettings != nil {

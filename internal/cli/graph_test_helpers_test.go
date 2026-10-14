@@ -17,7 +17,7 @@ func buildNavigationGraphOutputFromPaths(paths []string, maxFiles int) navigatio
 	return graphcommand.BuildFromPaths(paths, maxFiles)
 }
 func graphContinuationCommandWithOptions(options cliruntime.RepositoryInvocationOptions, mode string, paths []string, truncation *navigationGraphTruncation) string {
-	return graphcommand.ContinuationCommand(newCommandContextWith(options, 0, nil), mode, paths, truncation)
+	return graphcommand.ContinuationCommand(newCommandContextWith(options, nil), mode, paths, truncation)
 }
 
 func writeGraphSource(t *testing.T, root, path, content string) string {

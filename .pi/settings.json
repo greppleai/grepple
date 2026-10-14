@@ -13,30 +13,6 @@
         ]
       }
     ],
-    "PostCompact": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "sh",
-            "args": ["-c", "if [ -d grepple ]; then root=grepple; else root=.; fi; make --no-print-directory -C \"$root\" bin/grepple >/dev/null && \"$root/bin/grepple\" context invalidate --reason compact"],
-            "timeout": 30
-          }
-        ]
-      }
-    ],
-    "SessionStart": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "sh",
-            "args": ["-c", "if [ -d grepple ]; then root=grepple; else root=.; fi; make --no-print-directory -C \"$root\" bin/grepple >/dev/null && \"$root/bin/grepple\" context invalidate --reason session-start"],
-            "timeout": 30
-          }
-        ]
-      }
-    ],
     "Stop": [
       {
         "hooks": [

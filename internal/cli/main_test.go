@@ -14,12 +14,6 @@ func TestMain(m *testing.M) {
 	if err := os.Setenv("GREPPLE_SETTINGS", filepath.Join(directory, "settings.json")); err != nil {
 		panic(err)
 	}
-	if err := os.Setenv("GREPPLE_CONTEXT_GUARD_DIR", filepath.Join(directory, "context-guard")); err != nil {
-		panic(err)
-	}
-	if err := os.Unsetenv("PI_SESSION_ID"); err != nil {
-		panic(err)
-	}
 	status := m.Run()
 	_ = os.RemoveAll(directory)
 	os.Exit(status)

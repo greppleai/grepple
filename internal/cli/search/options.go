@@ -26,7 +26,6 @@ type Options struct {
 	Kinds            rendercommand.OutlineKinds
 	Depth            int
 	MaxOutputBytes   int
-	RepeatSource     bool
 	Anchors          bool
 	AnchorLines      anchor.Lookup
 	ResultMetadata   *wire.ResultMetadata

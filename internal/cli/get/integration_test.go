@@ -2,15 +2,12 @@ package get
 
 import (
 	"bytes"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/greppleai/grepple/internal/cliruntime"
-	rendercommand "github.com/greppleai/grepple/internal/render"
 	"github.com/greppleai/grepple/internal/linerange"
 )
 
@@ -19,16 +16,10 @@ func getTestApplication(output, diagnostics *bytes.Buffer, exit *int) cliruntime
 		Output:      output,
 		ErrorOutput: diagnostics,
 		Exit:        func(code int) { *exit = code },
-		Config: cliruntime.ConfigurationServices{
-			ContextGuard: func() bool { return true },
-		},
 	}
 }
 
 func TestRemoteRangeOutcomesUseCommandRenderingAndExit(t *testing.T) {
-	directory := t.TempDir()
-	t.Setenv("GREPPLE_CONTEXT_GUARD_DIR", directory)
-	t.Setenv("PI_SESSION_ID", "")
 	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		if request.URL.Query().Get("start") == "29" {
 			writer.Header().Set(linerange.HeaderOutcome, string(linerange.OutcomeFullMiss))
@@ -59,12 +50,7 @@ func TestRemoteRangeOutcomesUseCommandRenderingAndExit(t *testing.T) {
 	if exit != 1 || !strings.Contains(diagnostics.String(), "outside file") {
 		t.Fatalf("exit=%d diagnostics=%q", exit, diagnostics.String())
 	}
-	stats := rendercommand.ReadContextStatistics(filepath.Join(directory, "stats-0.json"), 0)
-	if stats.Details.PartialLineRangeMisses != 1 || stats.Details.FullLineRangeMisses != 1 {
-		t.Fatalf("range stats=%s", fmt.Sprintf("%#v", stats.Details))
-	}
 }
-
 func TestRemoteOutlineFetchesRawContentAndRendersLocally(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		if request.URL.Query().Get("format") == "json" {

@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	"github.com/greppleai/grepple/internal/cliruntime"
-	rendercommand "github.com/greppleai/grepple/internal/render"
 	"github.com/greppleai/grepple/internal/linerange"
 )
 
@@ -15,7 +14,6 @@ func reportRangeError(application cliruntime.Context, err error, remoteFullMiss 
 	if !remoteFullMiss && !errors.As(err, &outside) {
 		return err
 	}
-	rendercommand.RecordLineRangeError(err, application.Configuration().ContextGuardEnabled())
 	fmt.Fprintln(application.Stderr(), "error:", err)
 	application.RequestExit(1)
 	return nil

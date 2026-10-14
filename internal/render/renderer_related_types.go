@@ -5,7 +5,6 @@ import (
 	"github.com/greppleai/grepple/internal/navigation"
 	"github.com/greppleai/grepple/internal/search"
 	"sort"
-	"strings"
 )
 
 type relatedTypeDefinition struct {
@@ -13,7 +12,6 @@ type relatedTypeDefinition struct {
 	artifact   *navigation.ArtifactIdentity
 	start, end int
 	segments   []search.ResultSegment
-	roles      []string
 }
 
 func collectRelatedTypeDefinitions(results []search.FileResult) []relatedTypeDefinition {
@@ -68,7 +66,6 @@ func collectRelatedTypePoints(points []navigation.RelatedSymbol, definitions map
 				segments: append([]search.ResultSegment(nil), point.Segments...),
 			}
 		}
-		definition.roles = appendUniqueRelatedTypeRole(definition.roles, point.Role)
 		definitions[key] = definition
 	}
 }
@@ -92,36 +89,10 @@ func (renderer segmentRenderer) renderRelatedTypeDefinitions(definitions []relat
 		}
 		width := segmentLineWidth(definition.segments)
 		for _, segment := range definition.segments {
-			if err := renderer.renderSegment(definition.path, path, definition.artifact, segment, width, "", relatedTypeContextLabel(definition)); err != nil {
+			if err := renderer.renderSegment(path, segment, width, ""); err != nil {
 				return err
 			}
 		}
 	}
 	return nil
-}
-
-func appendUniqueRelatedTypeRole(roles []string, role string) []string {
-	role = strings.TrimSpace(role)
-	if role == "" {
-		return roles
-	}
-	for _, existing := range roles {
-		if existing == role {
-			return roles
-		}
-	}
-	return append(roles, role)
-}
-
-func relatedTypeContextLabel(definition relatedTypeDefinition) string {
-	roles := append([]string(nil), definition.roles...)
-	sort.Strings(roles)
-	qualifier := ""
-	if definition.artifact != nil {
-		qualifier = "remote "
-	}
-	if len(roles) == 0 {
-		return qualifier + "type " + definition.name
-	}
-	return qualifier + strings.Join(roles, "/") + " type " + definition.name
 }

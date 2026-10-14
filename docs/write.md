@@ -67,7 +67,7 @@ GREPPLE_WRITE_ab12
 
 The default body terminator is an exact `::grepple end` line. When source itself contains that line, select a collision-free terminator with `--end-marker TOKEN` and close the body with `::grepple end TOKEN`. While a body is open, every other line—including `::grepple file`, quotes, backticks, and dollar signs—is literal source. Blank lines outside bodies are ignored. One body line maps to one `content_lines` entry; include a blank line before a create terminator to preserve a final newline in the new file.
 
-The heredoc envelope and strict JSON both compile to the same in-memory `grepple-write-v1` request. File/change order, original-snapshot anchors, empty deletion content, size limits, confinement, stale checks, overlap rejection, mixed edit/create/delete atomicity, dry runs, output modes, staging, concurrent-mutation checks, and rollback are identical.
+The heredoc envelope and strict JSON both compile to the same in-memory `grepple-write-v1` request. File/change order, original-snapshot anchors, empty deletion content, size limits, confinement, stale checks, overlap rejection, mixed edit/create/delete prevalidation and installation, output modes, staging, concurrent-mutation checks, and rollback are identical.
 
 ## Literal single-edit input
 
@@ -81,7 +81,7 @@ EOF
 
 `--end` defaults to the `--start` anchor for a one-line replacement. Use `--content-file PATH` to read the replacement from a file, or `--content-file -` (the default) to read stdin. One terminal LF or CRLF terminates the final replacement line and does not create an extra blank line; use two terminal newlines to retain one blank line. Empty input deletes the anchored range.
 
-Literal single-edit mode builds the same in-memory `grepple-write-v1` edit and uses the same confinement, stale-anchor, size, newline, transactional installation, output, and dry-run behavior. Use either the literal multi-file envelope or strict JSON when multiple edits or files must be committed atomically.
+Literal single-edit mode builds the same in-memory `grepple-write-v1` edit and uses the same confinement, stale-anchor, size, newline, transactional installation, and output behavior. Use either the literal multi-file envelope or strict JSON when multiple edits or files must be committed atomically.
 
 A successful human response reports each changed post-write line range with its first and last fresh hashes, without echoing source content:
 
@@ -104,24 +104,17 @@ applied 1 files, 1 changes
 
 Fresh hashes are recomputed against the complete resulting file. Compact receipts use `PATH:START-END|FIRST-LAST` for replacements and creates, `PATH:deleted at LINE (near LINE|HASH)` for range deletions with surviving context (or just the insertion point when the file becomes empty), and `PATH:deleted`, `PATH:created empty`, or `PATH:unchanged` for whole-file operations and no-op edits. Each change gets its own line. Use `grepple --line-only --at PATH:START-END` to retrieve content when needed. With `--return`, replacement rows include neighboring anchors for orientation, and deletions return surviving neighbors. The complete structured `--json` response still includes content-bearing anchors and `after_sha256`.
 
-Successful, non-dry-run human writes with `--return` add their exact post-write rows to Grepple's shared session coverage. Compact receipts do not claim source coverage; changed files instead invalidate stale coverage. Structural output, focused local anchored `--at --line-only` reads, broad anchored line-only searches, anchored context output, local `--line-only --enclosing` output, and complete inline JSON contribute to the same line ledger. Broad searches, context output, enclosing output, and JSON remain producer-only and always retain their complete format; enclosing annotations cover only the matching lines actually printed, not the rest of the annotated range. If prior output plus line or write coverage covers current declaration lines, later structural or focused `--at` output may preserve boundary rows while replacing covered interior runs with explicit range markers; complete declarations may use one declaration marker. Changed and unseen lines always render, and partial coverage is never represented as complete coverage. Compact, truncated, or potentially spilled JSON, predicted dry-run anchors, failed writes, ordinary unanchored or only-matching searches, and output that spills are not recorded as coverage. Context statistics still count human and JSON write attempts, successful and applied writes, failed decode or transaction attempts, returned response bytes, and anchors recorded from eligible successful writes. Use `--repeat-source` on default structural output or focused `--at --line-only` output to force complete source.
+Each source retrieval independently renders its selected complete anchored rows; earlier searches and `write --return` responses do not suppress later source. Explicit output-size, spill, and paging limits still apply. Compact write receipts intentionally contain no source; use `--return`, a focused `grepple --line-only --at PATH:START-END` read, or structured `--json` when source is needed.
 
-## Dry runs and structured output
-
-`--dry-run` performs all validation without mutation. Human output includes deterministic unified diffs followed by predicted ranges; add `--return` to see predicted anchor rows:
-
-```text
-grepple write --root . --dry-run < request.json
-```
+## Structured output
 
 Use `--json` when a script needs the complete `grepple-write-v1` response:
 
-```text
+```sh
 grepple write --root . --json < request.json
-grepple write --root . --dry-run --json < request.json
 ```
 
-JSON includes operation, before/after SHA-256 digests, unified diffs for dry-run inspection, request-ordered change details, resulting line ranges, deletion markers, and anchors. Automation needing this complete response must pass `--json` explicitly; ordinary writes print compact human receipts, with edit-ready rows opt-in via `--return`. Large complete responses use the normal content-addressed spill mechanism unless `--no-spill` is requested.
+JSON includes operation, before/after SHA-256 digests, request-ordered change details, resulting line ranges, deletion markers, and actual post-write anchors. Automation needing this response must pass `--json` explicitly; ordinary writes print compact human receipts, with edit-ready rows opt-in via `--return`. Large complete responses use the normal content-addressed spill mechanism unless `--no-spill` is requested. Writes have no preview mode: inspect anchors and content first, then submit one prevalidated transaction. A rejected request changes no requested files; installation failures receive best-effort rollback.
 
 ## Creating files
 

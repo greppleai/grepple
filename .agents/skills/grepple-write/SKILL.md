@@ -1,6 +1,6 @@
 ---
 name: grepple-write
-description: Use when editing, creating, or deleting local source and documentation files with Grepple. Covers fresh hashline anchors, inclusive replacements, literal multi-file transactions, dry runs, and safe retry after stale-anchor rejection. Use separate skills for discovery, change impact, and architectural decisions.
+description: Use when editing, creating, or deleting local source and documentation files with Grepple. Covers fresh hashline anchors, inclusive replacements, literal multi-file transactions, prevalidation, and safe retry after stale-anchor rejection. Use separate skills for discovery, change impact, and architectural decisions.
 ---
 
 # Edit and write files with Grepple
@@ -26,13 +26,13 @@ Pq2│42│}
 - Line numbers locate source; they are not write anchors. Paths in a transaction must be repository-relative beneath `--root`.
 - Replacement ranges are **inclusive**. Replacing this whole function requires both its opening line and closing brace; replacing only its body uses the body's anchors.
 - All changes to one file in a transaction refer to the **same original snapshot**. Ranges must not overlap. Do not adjust later ranges for earlier replacements in that transaction.
-- After a write, formatter, generator, or any other mutation, retrieve fresh anchors before another edit. Do not reuse stale hashes, including hashes predicted by a dry run.
-- If source is elided by session coverage, use `--repeat-source` on the focused `--at` read when you need the full replacement context. Truncated or spilled output is not a complete source read.
+- After a write, formatter, generator, or any other mutation, retrieve fresh anchors before another edit; do not reuse stale hashes.
+- Focused `--at` and eligible local source reads return the complete selected source on every call, subject to explicit output, spill, and paging limits. A truncated or spilled output is not a complete inline source read.
 
 ## 2. Write literal, quoted-heredoc transactions
 
 ```sh
-grepple write --root . --dry-run <<'GREPPLE_WRITE_example'
+grepple write --root . <<'GREPPLE_WRITE_example'
 ::grepple file path/to/file.go
 ::grepple replace Ab3 Pq2
 func newName() {
@@ -42,7 +42,7 @@ func newName() {
 GREPPLE_WRITE_example
 ```
 
-Inspect the dry-run diff, then apply the **same transaction** without `--dry-run` if its source is still current. Quoting the shell heredoc delimiter preserves quotes, backticks, and dollar signs literally. Replacement bodies contain source only, without anchor prefixes.
+The quoted shell heredoc delimiter preserves quotes, backticks, and dollar signs literally. Replacement bodies contain source only, without anchor prefixes. Review the edit-ready source and request before submitting; the transaction prevalidates all requested changes before applying any file changes.
 
 Multiple `replace` blocks can follow one `file` directive; add another `file` directive for another path. Keep related edits in one transaction so every operation is validated before any requested file changes.
 
@@ -130,7 +130,7 @@ The marker option also works on `replace`. Only the selected exact terminator cl
 
 ## Safety and limits
 
-The short `grepple write --help` synopsis may show only `edit`; the heredoc's `replace`, `create`, and digest-guarded `delete` directives are supported. Verify uncertain transactions with `--dry-run`, rather than assuming an operation is unavailable.
+The short `grepple write --help` synopsis may show only `edit`; the heredoc's `replace`, `create`, and digest-guarded `delete` directives are supported. Read the transaction examples and validate anchors and request shape before submitting: writes have no preview mode.
 
 Writes are confined to `--root`; absolute paths, escapes, non-regular targets, and symlink escapes are refused. Requests are bounded to 16 MiB, source/result files to 16 MiB, and transactions to 128 files and 4,096 operations/changes. Existing mixed or bare-CR line endings and NUL bytes are rejected. Created files use mode `0644` and automatically created directories use mode `0755`, subject to umask and platform support.
 

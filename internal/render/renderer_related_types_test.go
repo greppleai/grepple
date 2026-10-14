@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func TestRelatedTypeContextLabelPreservesAllRoles(t *testing.T) {
+func TestRelatedTypeDefinitionsDeduplicateSameSource(t *testing.T) {
 	artifact := &wire.NavigationArtifactIdentity{Digest: "artifact-one"}
 	segment := wire.ResultSegment{Kind: "lines", Start: 1, End: 1, Text: "type Client struct{}"}
 	points := []wire.RelatedSymbol{
@@ -15,8 +15,5 @@ func TestRelatedTypeContextLabelPreservesAllRoles(t *testing.T) {
 	definitions := collectRelatedTypeDefinitions([]wire.FileResult{{Related: points}})
 	if len(definitions) != 1 {
 		t.Fatalf("got %d definitions", len(definitions))
-	}
-	if label := relatedTypeContextLabel(definitions[0]); label != "remote parameter/result type Client" {
-		t.Fatalf("unexpected label %q", label)
 	}
 }

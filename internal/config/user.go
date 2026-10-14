@@ -16,13 +16,7 @@ const (
 
 // UserSettings is user-owned Grepple configuration.
 type UserSettings struct {
-	Anchors      Anchors      `json:"anchors"`
-	ContextGuard ContextGuard `json:"context_guard,omitempty"`
-}
-
-// ContextGuard controls rendered source deduplication.
-type ContextGuard struct {
-	Enabled *bool `json:"enabled,omitempty"`
+	Anchors Anchors `json:"anchors"`
 }
 
 // Anchors configures edit-anchor providers.
