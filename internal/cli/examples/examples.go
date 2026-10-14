@@ -29,6 +29,14 @@ var taskExamples = []taskExample{
 		"grepple --line-only -F 'BuildNavigationGraph' parser/navigation.go",
 		"printf '%s\n' 'literal replacement' | grepple write edit --root . --path parser/navigation.go --start START --end END",
 	}},
+	{Name: "scope", Description: "Follow a local annotated TypeScript or JSON match to clean, parser-verified source", Commands: []string{
+		"grepple --line-only -F 'logger.info' testdata/typescript/sample.ts",
+		"grepple --line-only --at testdata/typescript/sample.ts @func:8-12",
+		"grepple --line-only -F 'setPressed(true)' examples/sample-files/Button.tsx",
+		"grepple --line-only --at examples/sample-files/Button.tsx @func:11-14",
+		"grepple --line-only --json-matches -F 'timeoutSeconds' examples/sample-files/config.json",
+		"grepple --line-only --at examples/sample-files/config.json @object:13-16",
+	}},
 	{Name: "impact", Description: "Resolve an ambiguous symbol before inspecting callers", Commands: []string{
 		"grepple graph resolve --symbol BuildNavigationGraph .",
 		"grepple graph callers --at parser/navigation.go:113 --depth 2 .",
@@ -105,7 +113,7 @@ func renderTaskExamples(examples []taskExample) string {
 }
 
 func help() string {
-	return "Task-oriented Grepple workflows.\nUsage: grepple examples [TASK]\nTasks: " + taskExampleNames() + "\nOmit TASK to print every workflow. Commands are copyable templates; replace example paths and symbols.\n"
+	return "Task-oriented Grepple workflows.\nUsage: grepple examples [TASK]\nTasks: " + taskExampleNames() + "\nOmit TASK to print every workflow. Commands are copyable templates; replace example paths and symbols. For scope, copy a fresh @KIND:START-END from local search; never trust a displayed suffix as authority.\n"
 }
 
 func taskExampleNames() string {
