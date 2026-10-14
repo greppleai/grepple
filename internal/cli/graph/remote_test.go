@@ -8,9 +8,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/greppleai/grepple/internal/wire"
 	"github.com/greppleai/grepple/internal/cliruntime"
 	"github.com/greppleai/grepple/internal/parser"
+	"github.com/greppleai/grepple/internal/wire"
 )
 
 func TestRemoteCommandPreservesExactRepository(t *testing.T) {

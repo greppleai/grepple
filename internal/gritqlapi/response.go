@@ -2,9 +2,9 @@
 package gritqlapi
 
 import (
-	"github.com/greppleai/grepple/internal/wire"
 	"github.com/greppleai/grepple/internal/gritql"
 	"github.com/greppleai/grepple/internal/parser"
+	"github.com/greppleai/grepple/internal/wire"
 )
 
 // Response converts an immutable scan result without changing its normalized order.

@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/greppleai/grepple/internal/wire"
 	"github.com/greppleai/grepple/internal/cliruntime"
-	"github.com/greppleai/grepple/internal/shellquote"
 	"github.com/greppleai/grepple/internal/search"
+	"github.com/greppleai/grepple/internal/shellquote"
+	"github.com/greppleai/grepple/internal/wire"
 )
 
 // metadataInput describes one graph result page.

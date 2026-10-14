@@ -15,9 +15,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/greppleai/grepple/internal/wire"
 	"github.com/greppleai/grepple/internal/aiprovider"
 	"github.com/greppleai/grepple/internal/cliruntime"
+	"github.com/greppleai/grepple/internal/wire"
 )
 
 func TestCommandUsesProviderReadToolAndWritesLog(t *testing.T) {

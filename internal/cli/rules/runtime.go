@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/greppleai/grepple/internal/wire"
 	"github.com/greppleai/grepple/internal/apiclient"
 	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
+	"github.com/greppleai/grepple/internal/wire"
 )
 
 type commonArgs = cliruntime.CommonArgs

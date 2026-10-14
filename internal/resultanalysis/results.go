@@ -2,8 +2,8 @@
 package resultanalysis
 
 import (
-	"github.com/greppleai/grepple/internal/wire"
 	"github.com/greppleai/grepple/internal/parser"
+	"github.com/greppleai/grepple/internal/wire"
 )
 
 // Sources returns structural source-analysis totals when results contain classifications.

@@ -2,9 +2,9 @@
 package tree
 
 import (
-	"github.com/greppleai/grepple/internal/wire"
 	"github.com/greppleai/grepple/internal/cliruntime"
 	sourcedomain "github.com/greppleai/grepple/internal/sources"
+	"github.com/greppleai/grepple/internal/wire"
 )
 
 type localTree func(path string, depth int, kind sourcedomain.Kind, areas []string) (wire.TreeResponse, error)
