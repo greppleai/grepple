@@ -23,7 +23,7 @@ type Config struct {
 }
 
 // LoadConfig reads every configuration source once, including user settings
-// and legacy Ask preferences, and returns one validated snapshot. On failure
+// and Ask preferences, and returns one validated snapshot. On failure
 // it returns an incomplete snapshot with the protected backend auth state so
 // login, refresh, and logout can still recover from unrelated invalid settings.
 // Disabling repository configuration does not disable user-owned settings.
@@ -45,9 +45,9 @@ func LoadConfig(start string, noRepositoryConfig bool) (*Config, error) {
 	if err != nil {
 		return settings, err
 	}
-	settings.Ask, err = loadAskPreferences()
+	settings.Ask, err = resolveAskPreferences(settings.User.Ask)
 	if err != nil {
-		return settings, err
+		return settings, fmt.Errorf("parse %s: %w", settings.SettingsPath, err)
 	}
 	return settings, nil
 }

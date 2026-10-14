@@ -1,26 +1,22 @@
 package config
 
 import (
-	"bytes"
-	"encoding/json"
-	"errors"
 	"fmt"
-	"io"
-	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
 )
 
-type askFile struct {
-	Ask struct {
-		Model string `json:"model,omitempty"`
-		Logs  struct {
-			Enabled         *bool  `json:"enabled,omitempty"`
-			RetentionPeriod string `json:"retentionPeriod,omitempty"`
-		} `json:"logs,omitempty"`
-	} `json:"ask,omitempty"`
+// AskSettings stores user-owned Ask and Init defaults in settings.json.
+type AskSettings struct {
+	Model string  `json:"model,omitempty"`
+	Logs  AskLogs `json:"logs,omitempty"`
+}
+
+// AskLogs stores logging overrides; absent Enabled defaults to true.
+type AskLogs struct {
+	Enabled         *bool  `json:"enabled,omitempty"`
+	RetentionPeriod string `json:"retentionPeriod,omitempty"`
 }
 
 // AskPreferences are shared model and logging defaults consumed by Ask and Init.
@@ -30,37 +26,17 @@ type AskPreferences struct {
 	LogRetention time.Duration
 }
 
-// loadAskPreferences reads legacy ask defaults from ~/.grepple/grepple.json.
-func loadAskPreferences() (AskPreferences, error) {
-	configured := AskPreferences{LogsEnabled: true, LogRetention: 7 * 24 * time.Hour}
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return configured, err
+// resolveAskPreferences validates settings and applies Ask defaults.
+func resolveAskPreferences(preferences AskSettings) (AskPreferences, error) {
+	configured := AskPreferences{Model: strings.TrimSpace(preferences.Model), LogsEnabled: true, LogRetention: 7 * 24 * time.Hour}
+	if preferences.Logs.Enabled != nil {
+		configured.LogsEnabled = *preferences.Logs.Enabled
 	}
-	path := filepath.Join(home, ".grepple", "grepple.json")
-	content, err := os.ReadFile(path)
-	if errors.Is(err, os.ErrNotExist) {
-		return configured, nil
-	}
-	if err != nil {
-		return configured, fmt.Errorf("read user configuration %s: %w", path, err)
-	}
-	decoder := json.NewDecoder(bytes.NewReader(content))
-	var preferences askFile
-	if err := decoder.Decode(&preferences); err != nil {
-		return configured, fmt.Errorf("invalid user configuration %s: %w", path, err)
-	}
-	if err := decoder.Decode(&struct{}{}); err != io.EOF {
-		return configured, fmt.Errorf("invalid user configuration %s: trailing JSON content", path)
-	}
-	configured.Model = strings.TrimSpace(preferences.Ask.Model)
-	if preferences.Ask.Logs.Enabled != nil {
-		configured.LogsEnabled = *preferences.Ask.Logs.Enabled
-	}
-	if retention := strings.TrimSpace(preferences.Ask.Logs.RetentionPeriod); retention != "" {
+	if retention := strings.TrimSpace(preferences.Logs.RetentionPeriod); retention != "" {
+		var err error
 		configured.LogRetention, err = parseLogRetention(retention)
 		if err != nil {
-			return configured, fmt.Errorf("invalid user configuration %s ask.logs.retentionPeriod: %w", path, err)
+			return configured, fmt.Errorf("ask.logs.retentionPeriod: %w", err)
 		}
 	}
 	return configured, nil

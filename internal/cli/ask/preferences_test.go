@@ -17,8 +17,9 @@ func TestConfiguredAskPreferencesUsesAskScope(t *testing.T) {
 	if err := os.MkdirAll(directory, 0o700); err != nil {
 		t.Fatal(err)
 	}
-	path := filepath.Join(directory, "grepple.json")
-	content := `{"ask":{"model":" anthropic/claude-sonnet ","logs":{"enabled":false,"retentionPeriod":"3d"}},"ai":{"model":"codex/ignored"},"future":true}`
+	path := filepath.Join(directory, "settings.json")
+	t.Setenv("GREPPLE_SETTINGS", path)
+	content := `{"ask":{"model":" anthropic/claude-sonnet ","logs":{"enabled":false,"retentionPeriod":"3d"}}}`
 	if err := os.WriteFile(path, []byte(content), 0o600); err != nil {
 		t.Fatal(err)
 	}
@@ -44,6 +45,7 @@ func TestConfiguredAskPreferencesUsesAskScope(t *testing.T) {
 
 func TestConfiguredAskPreferencesDefaultsAndValidatesRetention(t *testing.T) {
 	t.Setenv("HOME", t.TempDir())
+	t.Setenv("GREPPLE_SETTINGS", filepath.Join(t.TempDir(), "settings.json"))
 	settings, err := config.LoadConfig("", true)
 	if err != nil {
 		t.Fatal(err)

@@ -19,7 +19,8 @@ func TestNewContextSharesInvocationConfigSnapshot(t *testing.T) {
 	}
 	home := t.TempDir()
 	t.Setenv("HOME", home)
-	askPath := filepath.Join(home, ".grepple", "grepple.json")
+	askPath := filepath.Join(home, ".grepple", "settings.json")
+	t.Setenv("GREPPLE_SETTINGS", askPath)
 	if err := os.MkdirAll(filepath.Dir(askPath), 0o700); err != nil {
 		t.Fatal(err)
 	}
