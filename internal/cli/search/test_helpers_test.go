@@ -25,7 +25,6 @@ type userSettings = config.UserSettings
 type anchorSettings = config.Anchors
 
 func testCommandContext() cliruntime.Context {
-	contextGuard := func() bool { return os.Getenv("GREPPLE_CONTEXT_GUARD_DIR") != "" }
 	return cliruntime.Environment{
 		Config: cliruntime.ConfigurationServices{
 			ResolveServer: func(value string) string {
@@ -34,7 +33,6 @@ func testCommandContext() cliruntime.Context {
 				}
 				return os.Getenv("GREPPLE_SERVER")
 			},
-			ContextGuard:     contextGuard,
 			LoadUserSettings: loadTestUserSettings,
 		},
 		RepositoryContext: cliruntime.RepositoryServices{CurrentFunc: cliruntime.CurrentRepository},

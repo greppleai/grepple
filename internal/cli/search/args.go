@@ -54,7 +54,6 @@ type Args struct {
 	MaxOutputBytes   int      `arg:"--max-output-bytes" default:"16384" placeholder:"N" help:"cap human-readable output (default 16384; 0 = unlimited; JSON is uncapped)"`
 	Related          bool     `arg:"--related" help:"show repository-local types, callees, and callers (default for structural search)"`
 	NoRelated        bool     `arg:"--no-related" help:"disable automatic code navigation"`
-	RepeatSource     bool     `arg:"--repeat-source" help:"bypass session source deduplication and emit complete focused source again"`
 	FollowRelated    int      `arg:"--follow-related" placeholder:"N" help:"follow 1-3 outgoing call hops; search also shows direct callers of matches"`
 	At               string   `arg:"--at" placeholder:"PATH:LINE[-END]" help:"retrieve a declaration at PATH:LINE or exact lines for PATH:START-END; ranges that start in-file clamp at EOF"`
 	Skip             int      `arg:"--skip" placeholder:"N" help:"skip the first N ranked result files"`
@@ -144,7 +143,6 @@ func optionsFromArgs(application cliruntime.Context, values *Args, usage interfa
 		Kinds:            kinds,
 		Depth:            values.Depth,
 		MaxOutputBytes:   values.MaxOutputBytes,
-		RepeatSource:     values.RepeatSource,
 		Anchors:          anchorsEnabled,
 	}, values.Server, remoteEnabled, nil
 }
@@ -263,12 +261,6 @@ func validateSearchArgs(values *searchArgs) error {
 	}
 	if err := validateAtArgs(values); err != nil {
 		return err
-	}
-	contextOutput := values.Context > 0 || values.BeforeContext > 0 || values.AfterContext > 0
-	focusedLineOutput := values.LineOnly && values.At != ""
-	unsupportedRepeatOutput := (!focusedLineOutput && usesCompactSearchOutput(values)) || contextOutput || values.JSON
-	if values.RepeatSource && unsupportedRepeatOutput {
-		return fmt.Errorf("--repeat-source requires default structural human output or focused --at --line-only output")
 	}
 	return validateSearchCombinations(values)
 }

@@ -10,14 +10,13 @@ import (
 
 // ContextOptions configures the concrete command context.
 type ContextOptions struct {
-	Input                 io.Reader
-	Output                io.Writer
-	ErrorOutput           io.Writer
-	Client                apiclient.APIClient
-	Repository            RepositoryInvocationOptions
-	Config                *config.Config
-	InlineOutputThreshold int
-	Exit                  func(int)
+	Input       io.Reader
+	Output      io.Writer
+	ErrorOutput io.Writer
+	Client      apiclient.APIClient
+	Repository  RepositoryInvocationOptions
+	Config      *config.Config
+	Exit        func(int)
 }
 
 // NewContext creates the production context for one CLI invocation.
@@ -32,7 +31,7 @@ func NewContext(options ContextOptions) Context {
 	if diagnostics == nil {
 		diagnostics = os.Stderr
 	}
-	configuration := newConfigurationWithConfig(options.Repository, options.InlineOutputThreshold, options.Config)
+	configuration := newConfigurationWithConfig(options.Repository, options.Config)
 	return Environment{
 		Input:             input,
 		Output:            output,

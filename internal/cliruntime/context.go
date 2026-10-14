@@ -13,8 +13,6 @@ import (
 // Configuration exposes immutable invocation configuration to commands.
 type Configuration interface {
 	ServerDefault(string) string
-	ContextGuardEnabled() bool
-	InlineOutputThreshold() int
 	UserSettings() (config.UserSettings, error)
 	AskPreferences() (config.AskPreferences, error)
 }

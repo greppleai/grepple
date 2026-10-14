@@ -103,21 +103,9 @@ func TestParseSearchArgsDefaultsToOneLevelRelatedNavigation(t *testing.T) {
 	}
 }
 
-func TestParseSearchArgsSupportsRepeatSource(t *testing.T) {
-	options, _, _, err := parseTestSearchArgs([]string{"--repeat-source", "needle"})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !options.RepeatSource {
-		t.Fatal("--repeat-source was not retained")
-	}
-	for _, args := range [][]string{{"--repeat-source", "--line-only", "needle"}, {"--repeat-source", "--json", "needle"}, {"--repeat-source", "-C", "2", "needle"}} {
-		if _, _, _, err := parseTestSearchArgs(args); err == nil {
-			t.Fatalf("--repeat-source accepted unsupported output: %v", args)
-		}
-	}
-	if _, _, _, err := parseTestSearchArgs([]string{"--repeat-source", "--at", "sample.go:1-3", "--line-only"}); err != nil {
-		t.Fatalf("--repeat-source rejected focused line output: %v", err)
+func TestParseSearchArgsRejectsRemovedRepeatSource(t *testing.T) {
+	if _, _, _, err := parseTestSearchArgs([]string{"--repeat-source", "needle"}); err == nil {
+		t.Fatal("obsolete --repeat-source flag was accepted")
 	}
 }
 

@@ -13,7 +13,6 @@ import (
 	"github.com/greppleai/grepple/internal/aiprovider"
 	"github.com/greppleai/grepple/internal/anchor"
 	"github.com/greppleai/grepple/internal/cliruntime"
-	"github.com/greppleai/grepple/internal/render"
 	"github.com/greppleai/grepple/internal/linerange"
 )
 
@@ -33,7 +32,7 @@ func runAskSession(application cliruntime.Context, ctx context.Context, log *int
 	return RunResearch(ctx, log, provider, request, backend)
 }
 
-func runSimpleReadTool(application cliruntime.Context, root string, input readToolInput) (fantasy.ToolResponse, error) {
+func runSimpleReadTool(_ cliruntime.Context, root string, input readToolInput) (fantasy.ToolResponse, error) {
 	path, err := confinedReadPath(root, input.Path)
 	if err != nil {
 		return fantasy.NewTextErrorResponse(err.Error()), nil
@@ -52,11 +51,7 @@ func runSimpleReadTool(application cliruntime.Context, root string, input readTo
 	lines := linerange.SplitLines(normalizedContent)
 	start, end, resolved, explicitEnd, rangeErr := resolveReadToolRange(input, len(lines))
 	if rangeErr != nil {
-		render.RecordLineRangeError(rangeErr, application.Configuration().ContextGuardEnabled())
 		return fantasy.NewTextErrorResponse(rangeErr.Error()), nil
-	}
-	if explicitEnd && resolved.Outcome == linerange.OutcomePartialMiss {
-		render.RecordStandaloneLineRangeOutcome(resolved.Outcome, application.Configuration().ContextGuardEnabled())
 	}
 	lineNumbers := make([]int, 0, end-start+1)
 	for line := start; line <= end; line++ {

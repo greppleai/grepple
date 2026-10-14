@@ -69,11 +69,6 @@ func (settings *Config) UserSettings() (UserSettings, error) {
 	return settings.User, nil
 }
 
-// ContextGuardEnabled reports the loaded context guard preference.
-func (settings *Config) ContextGuardEnabled() bool {
-	return settings.User.ContextGuard.Enabled == nil || *settings.User.ContextGuard.Enabled
-}
-
 // AuthToken returns the snapshot token, with an environment override. Backend
 // token refresh re-reads the protected auth file on each HTTP request.
 func (settings *Config) AuthToken() string {

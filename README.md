@@ -103,7 +103,7 @@ Next points (code navigation):
   → loadRepository  internal/directorymeta/repository.go:93-113  call:82
 ```
 
-`HASH│LINE│content` rows identify source for follow-up reads or [anchored edits](docs/write.md); `Next points` link to related declarations. For automation, `grepple -F 'ReadRepository' internal/directorymeta --json --limit 1` returns results **and** a copyable continuation command (abridged fields shown):
+`HASH│LINE│content` rows identify source for follow-up reads or [anchored edits](docs/write.md). Repeating a focused or structural read returns the selected source again with fresh anchors, subject to explicit output, spill, and paging limits; `grepple write` prevalidates and applies one transaction without a preview flag. `Next points` link to related declarations. For automation, `grepple -F 'ReadRepository' internal/directorymeta --json --limit 1` returns results **and** a copyable continuation command (abridged fields shown):
 
 ```json
 {

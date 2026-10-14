@@ -87,18 +87,24 @@ func TestLoadConfigEagerlySnapshotsUserSettings(t *testing.T) {
 	if _, err := LoadConfig(t.TempDir(), true); err == nil {
 		t.Fatal("malformed user settings did not fail the complete load")
 	}
-	if err := os.WriteFile(path, []byte(`{"anchors":{},"context_guard":{"enabled":true}}`), 0o600); err != nil {
+	if err := os.WriteFile(path, []byte(`{"anchors":{"enabled_by_default":true}}`), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	settings, err := LoadConfig(t.TempDir(), true)
-	if err != nil || !settings.ContextGuardEnabled() {
+	if err != nil || !settings.User.Anchors.EnabledByDefault {
 		t.Fatalf("user settings were not eagerly loaded: %v", err)
+	}
+	if err := os.WriteFile(path, []byte(`{"anchors":{"enabled_by_default":false}}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if !settings.User.Anchors.EnabledByDefault {
+		t.Fatal("configuration snapshot changed after file update")
 	}
 	if err := os.WriteFile(path, []byte(`{"anchors":{},"context_guard":{"enabled":false}}`), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	if !settings.ContextGuardEnabled() {
-		t.Fatal("configuration snapshot changed after file update")
+	if _, err := LoadConfig(t.TempDir(), true); err == nil || !strings.Contains(err.Error(), "context_guard") {
+		t.Fatalf("retired context_guard setting accepted or not identified: %v", err)
 	}
 }
 
@@ -106,6 +112,7 @@ func TestLoadConfigIncludesAllSourcesWithoutLeakingCredentials(t *testing.T) {
 	root := t.TempDir()
 	home := t.TempDir()
 	t.Setenv("HOME", home)
+	t.Setenv("GREPPLE_SETTINGS", "")
 	t.Setenv("GREPPLE_TOKEN", "")
 	for _, dir := range []string{filepath.Join(root, ".grepple"), filepath.Join(home, ".grepple")} {
 		if err := os.MkdirAll(dir, 0o700); err != nil {

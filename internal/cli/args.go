@@ -47,8 +47,8 @@ func Run(args []string) error {
 		return err
 	}
 	descriptorArgs := normalizedApplicationArgs(args)
-	err = outputspill.Run(descriptorArgs, spill, settings.Repository.Output.SpillThresholdBytes, cliruntime.WorkingDirectory(), func(threshold int) error {
-		context := newCommandContextWithConfig(repositoryOptions, threshold, exitState.Request, settings)
+	err = outputspill.Run(descriptorArgs, spill, settings.Repository.Output.SpillThresholdBytes, cliruntime.WorkingDirectory(), func(_ int) error {
+		context := newCommandContextWithConfig(repositoryOptions, exitState.Request, settings)
 		return executeArguments(context, values)
 	})
 	if err != nil {

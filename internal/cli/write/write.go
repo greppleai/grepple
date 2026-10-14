@@ -15,8 +15,6 @@ import (
 
 	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
 	"github.com/greppleai/grepple/internal/hashline"
-	"github.com/greppleai/grepple/internal/render"
-	"github.com/pmezard/go-difflib/difflib"
 )
 
 const (
@@ -29,24 +27,8 @@ const (
 	maxWriteDiagnosticBytes = 240
 )
 
-func recordWriteResponse(application cliruntime.Context, root string, response writeResponse, returnedBytes int, applied, failed, recordAnchors bool) {
-	files := make([]render.WriteFile, 0, len(response.Files))
-	for _, file := range response.Files {
-		var converted []render.WriteAnchor
-		if recordAnchors {
-			anchors := responseFileAnchors(file)
-			converted = make([]render.WriteAnchor, 0, len(anchors))
-			for _, anchor := range anchors {
-				converted = append(converted, render.WriteAnchor{Line: anchor.Line, Content: anchor.Content})
-			}
-		}
-		files = append(files, render.WriteFile{Path: file.Path, Operation: file.Operation, Changed: file.Changed, Anchors: converted})
-	}
-	render.RecordWriteResponse(root, files, returnedBytes, applied, failed, recordAnchors, application.Configuration().ContextGuardEnabled(), application.Configuration().InlineOutputThreshold())
-}
-
 const writeHelp = `Apply one validated, hash-anchored transaction across multiple files.
-Usage: grepple write [--root PATH] [--dry-run] [--return] [--json]
+Usage: grepple write [--root PATH] [--return] [--json]
        grepple write edit --path PATH --start HASH [--end HASH] [--content-file PATH|-] [OPTIONS]
 
 The default mode auto-detects either one strict grepple-write-v1 JSON value or a
@@ -87,7 +69,6 @@ permissions and rolls back normal installation failures.
 Default human output reports changed line ranges and their first/last fresh hashes,
 without source content. Use --return to include edit-ready HASH│LINE│content
 rows (including neighboring rows); --json returns the complete structured response.
-Dry runs still show unified diffs and mark any returned anchors as predicted.
 `
 
 type writeRequest struct {
@@ -111,7 +92,6 @@ type writeChange struct {
 type writeResponse struct {
 	Schema  string              `json:"schema"`
 	Applied bool                `json:"applied"`
-	DryRun  bool                `json:"dry_run"`
 	Files   []writeResponseFile `json:"files,omitempty"`
 	Error   *writeResponseError `json:"error,omitempty"`
 }
@@ -124,7 +104,6 @@ type writeResponseFile struct {
 	BeforeSHA256  string                `json:"before_sha256,omitempty"`
 	AfterSHA256   string                `json:"after_sha256,omitempty"`
 	ChangeDetails []writeResponseChange `json:"change_details,omitempty"`
-	Diff          string                `json:"diff,omitempty"`
 }
 
 type writeResponseChange struct {
@@ -132,7 +111,6 @@ type writeResponseChange struct {
 	AfterStartLine int           `json:"after_start_line,omitempty"`
 	AfterEndLine   int           `json:"after_end_line,omitempty"`
 	Deleted        bool          `json:"deleted,omitempty"`
-	Predicted      bool          `json:"predicted,omitempty"`
 	Anchors        []writeAnchor `json:"anchors,omitempty"`
 }
 
@@ -153,7 +131,6 @@ type writeAnchor struct {
 // Args contains transactional write arguments.
 type Args struct {
 	Root   string    `arg:"--root" default:"." placeholder:"PATH" help:"repository root (default .)"`
-	DryRun bool      `arg:"--dry-run" help:"validate and report without applying changes"`
 	Return bool      `arg:"--return" help:"include resulting source rows with fresh anchors in human output"`
 	JSON   bool      `arg:"--json" help:"emit the write response as JSON"`
 	Edit   *EditArgs `arg:"subcommand:edit"`
@@ -169,7 +146,6 @@ type EditArgs struct {
 
 type writeOptions struct {
 	root        string
-	dryRun      bool
 	returnRows  bool
 	json        bool
 	help        bool
@@ -208,17 +184,6 @@ type writeFailure struct {
 	anchors     []writeAnchor
 }
 
-type writeResponseCounter struct {
-	writer  io.Writer
-	written int
-}
-
-func (counter *writeResponseCounter) Write(content []byte) (int, error) {
-	written, err := counter.writer.Write(content)
-	counter.written += written
-	return written, err
-}
-
 // command owns transactional write behavior.
 type command struct{ context cliruntime.Context }
 
@@ -242,7 +207,7 @@ func Execute(application cliruntime.Context, values *Args) error {
 	if application == nil {
 		return fmt.Errorf("write command context is unavailable")
 	}
-	options := writeOptions{root: values.Root, dryRun: values.DryRun, returnRows: values.Return, json: values.JSON, contentFile: "-"}
+	options := writeOptions{root: values.Root, returnRows: values.Return, json: values.JSON, contentFile: "-"}
 	if options.root == "" {
 		options.root = "."
 	}
@@ -267,7 +232,7 @@ func (command *command) execute(options writeOptions) error {
 	if options.help {
 		return cliruntime.NewOutput(application.Stdout()).WriteString(writeHelp)
 	}
-	output := &writeResponseCounter{writer: application.Stdout()}
+	output := application.Stdout()
 	var request writeRequest
 	var failure *writeFailure
 	if options.literalEdit {
@@ -276,23 +241,20 @@ func (command *command) execute(options writeOptions) error {
 		request, failure = decodeWriteRequest(application.Stdin())
 	}
 	if failure != nil {
-		response := failedWriteResponse(options.dryRun, failure)
+		response := failedWriteResponse(failure)
 		if err := emitWriteResponse(output, response, options.json, options.returnRows); err != nil {
 			return err
 		}
-		recordWriteResponse(application, options.root, response, output.written, false, true, false)
 		application.RequestExit(1)
 		return nil
 	}
-	response, failure := executeWriteRequest(options.root, options.dryRun, request)
+	response, failure := executeWriteRequest(options.root, request)
 	if failure != nil {
-		response = failedWriteResponse(options.dryRun, failure)
+		response = failedWriteResponse(failure)
 	}
 	if err := emitWriteResponse(output, response, options.json, options.returnRows); err != nil {
 		return err
 	}
-	recordAnchors := failure == nil && response.Applied && !options.dryRun && !options.json && options.returnRows
-	recordWriteResponse(application, options.root, response, output.written, response.Applied, failure != nil, recordAnchors)
 	if failure != nil {
 		application.RequestExit(1)
 	}
@@ -314,8 +276,6 @@ func parseWriteOptions(args []string) (writeOptions, error) {
 			options.json = true
 		case "--return":
 			options.returnRows = true
-		case "--dry-run":
-			options.dryRun = true
 		default:
 			if !writeOptionTakesValue(argument) {
 				return options, fmt.Errorf("unknown write option %q", argument)
@@ -450,8 +410,8 @@ func decodeWriteRequest(reader io.Reader) (writeRequest, *writeFailure) {
 	return request, nil
 }
 
-func executeWriteRequest(root string, dryRun bool, request writeRequest) (writeResponse, *writeFailure) {
-	response := writeResponse{Schema: writeSchema, DryRun: dryRun}
+func executeWriteRequest(root string, request writeRequest) (writeResponse, *writeFailure) {
+	response := writeResponse{Schema: writeSchema}
 	if request.Schema != writeSchema {
 		return response, newWriteFailure("invalid_schema", fmt.Sprintf("schema must be %q", writeSchema), "", nil)
 	}
@@ -467,10 +427,6 @@ func executeWriteRequest(root string, dryRun bool, request writeRequest) (writeR
 		return response, failure
 	}
 	response.Files = summaries
-	if dryRun {
-		markWriteResponsePredicted(&response)
-		return response, nil
-	}
 	if failure := commitWriteFiles(prepared); failure != nil {
 		return response, failure
 	}
@@ -572,7 +528,7 @@ func prepareExistingWriteFile(root string, request writeRequestFile, operation s
 		if request.BeforeSHA256 != before {
 			return preparedWriteFile{}, writeResponseFile{}, newWriteFailure("stale_file", "before_sha256 does not match the current file", request.Path, nil)
 		}
-		summary := writeResponseFile{Path: item.requestPath, Operation: operation, Changed: true, Changes: 1, BeforeSHA256: before, Diff: writeUnifiedDiff(item.requestPath, operation, content, nil)}
+		summary := writeResponseFile{Path: item.requestPath, Operation: operation, Changed: true, Changes: 1, BeforeSHA256: before}
 		return item, summary, nil
 	}
 	if request.ContentLines != nil || request.BeforeSHA256 != "" || len(request.Changes) == 0 {
@@ -593,7 +549,7 @@ func prepareExistingWriteFile(root string, request writeRequestFile, operation s
 	}
 	item.updated = updated
 	item.changes = changes
-	summary := writeResponseFile{Path: item.requestPath, Operation: operation, Changed: !bytes.Equal(content, updated), Changes: len(changes), BeforeSHA256: writeDigest(content), AfterSHA256: writeDigest(updated), ChangeDetails: writeChangeDetails(updated, updatedLines, changes), Diff: writeUnifiedDiff(item.requestPath, operation, content, updated)}
+	summary := writeResponseFile{Path: item.requestPath, Operation: operation, Changed: !bytes.Equal(content, updated), Changes: len(changes), BeforeSHA256: writeDigest(content), AfterSHA256: writeDigest(updated), ChangeDetails: writeChangeDetails(updated, updatedLines, changes)}
 	return item, summary, nil
 }
 
@@ -619,7 +575,7 @@ func prepareCreatedWriteFile(root string, request writeRequestFile) (preparedWri
 	if len(request.ContentLines) == 0 {
 		details[0].AfterStartLine, details[0].AfterEndLine = 0, 0
 	}
-	summary := writeResponseFile{Path: requestPath, Operation: "create", Changed: true, Changes: 1, AfterSHA256: writeDigest(updated), ChangeDetails: details, Diff: writeUnifiedDiff(requestPath, "create", nil, updated)}
+	summary := writeResponseFile{Path: requestPath, Operation: "create", Changed: true, Changes: 1, AfterSHA256: writeDigest(updated), ChangeDetails: details}
 	return item, summary, nil
 }
 
@@ -933,31 +889,6 @@ func boundedWriteAnchors(lines, hashes []string, first, last int) []writeAnchor 
 	return anchors
 }
 
-func writeUnifiedDiff(path, operation string, before, after []byte) string {
-	from, to := "a/"+path, "b/"+path
-	if operation == "create" {
-		from = "/dev/null"
-	}
-	if operation == "delete" {
-		to = "/dev/null"
-	}
-	a, b := writeDiffLines(before), writeDiffLines(after)
-	if len(a) == 0 && len(b) == 0 && operation != "edit" {
-		return fmt.Sprintf("--- %s\n+++ %s\n", from, to)
-	}
-	diff, _ := difflib.GetUnifiedDiffString(difflib.UnifiedDiff{
-		A: a, B: b, FromFile: from, ToFile: to, Context: 3,
-	})
-	return diff
-}
-
-func writeDiffLines(content []byte) []string {
-	if len(content) == 0 {
-		return nil
-	}
-	return difflib.SplitLines(strings.ReplaceAll(string(content), "\r\n", "\n"))
-}
-
 func commitWriteFiles(files []preparedWriteFile) *writeFailure {
 	changed := make([]*preparedWriteFile, 0, len(files))
 	for index := range files {
@@ -1269,16 +1200,8 @@ func newWriteFailure(code, message, path string, changeIndex *int) *writeFailure
 	return &writeFailure{code: code, message: message, path: path, changeIndex: changeIndex}
 }
 
-func failedWriteResponse(dryRun bool, failure *writeFailure) writeResponse {
-	return writeResponse{Schema: writeSchema, DryRun: dryRun, Error: &writeResponseError{Code: failure.code, Message: failure.message, Path: failure.path, ChangeIndex: failure.changeIndex, Anchors: failure.anchors}}
-}
-
-func markWriteResponsePredicted(response *writeResponse) {
-	for fileIndex := range response.Files {
-		for changeIndex := range response.Files[fileIndex].ChangeDetails {
-			response.Files[fileIndex].ChangeDetails[changeIndex].Predicted = true
-		}
-	}
+func failedWriteResponse(failure *writeFailure) writeResponse {
+	return writeResponse{Schema: writeSchema, Error: &writeResponseError{Code: failure.code, Message: failure.message, Path: failure.path, ChangeIndex: failure.changeIndex, Anchors: failure.anchors}}
 }
 
 func emitWriteResponse(writer io.Writer, response writeResponse, jsonMode, returnRows bool) error {
@@ -1290,16 +1213,11 @@ func emitWriteResponse(writer io.Writer, response writeResponse, jsonMode, retur
 	if response.Error != nil {
 		return emitWriteError(writer, response.Error)
 	}
-	if response.DryRun {
-		if err := emitWriteDiffs(writer, response.Files); err != nil {
-			return err
-		}
-	}
 	if returnRows {
 		if err := emitWriteResponseFiles(writer, response); err != nil {
 			return err
 		}
-	} else if err := emitWriteCompactFiles(writer, response.Files, response.DryRun); err != nil {
+	} else if err := emitWriteCompactFiles(writer, response.Files); err != nil {
 		return err
 	}
 	return emitWriteSummary(writer, response)
@@ -1322,27 +1240,7 @@ func emitWriteError(writer io.Writer, response *writeResponseError) error {
 	return emitWriteAnchors(writer, response.Anchors)
 }
 
-func emitWriteDiffs(writer io.Writer, files []writeResponseFile) error {
-	if _, err := io.WriteString(writer, "dry-run: no files changed\n\n"); err != nil {
-		return err
-	}
-	for _, file := range files {
-		if file.Diff == "" {
-			continue
-		}
-		if _, err := io.WriteString(writer, file.Diff); err != nil {
-			return err
-		}
-		if !strings.HasSuffix(file.Diff, "\n") {
-			if _, err := io.WriteString(writer, "\n"); err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
-
-func emitWriteCompactFiles(writer io.Writer, files []writeResponseFile, predicted bool) error {
+func emitWriteCompactFiles(writer io.Writer, files []writeResponseFile) error {
 	for _, file := range files {
 		if !file.Changed {
 			if _, err := fmt.Fprintf(writer, "%s:unchanged\n", file.Path); err != nil {
@@ -1357,7 +1255,7 @@ func emitWriteCompactFiles(writer io.Writer, files []writeResponseFile, predicte
 			}
 		case "create", "edit":
 			for _, detail := range file.ChangeDetails {
-				if err := emitWriteCompactChange(writer, file.Path, detail, predicted); err != nil {
+				if err := emitWriteCompactChange(writer, file.Path, detail); err != nil {
 					return err
 				}
 			}
@@ -1366,11 +1264,7 @@ func emitWriteCompactFiles(writer io.Writer, files []writeResponseFile, predicte
 	return nil
 }
 
-func emitWriteCompactChange(writer io.Writer, path string, detail writeResponseChange, predicted bool) error {
-	suffix := ""
-	if predicted {
-		suffix = " (predicted)"
-	}
+func emitWriteCompactChange(writer io.Writer, path string, detail writeResponseChange) error {
 	if detail.Deleted {
 		near := ""
 		if len(detail.Anchors) > 0 {
@@ -1383,11 +1277,11 @@ func emitWriteCompactChange(writer io.Writer, path string, detail writeResponseC
 			}
 			near = fmt.Sprintf(" (near %d|%s)", anchor.Line, anchor.Hash)
 		}
-		_, err := fmt.Fprintf(writer, "%s:deleted at %d%s%s\n", path, detail.AfterStartLine, near, suffix)
+		_, err := fmt.Fprintf(writer, "%s:deleted at %d%s\n", path, detail.AfterStartLine, near)
 		return err
 	}
 	if detail.AfterStartLine == 0 {
-		_, err := fmt.Fprintf(writer, "%s:created empty%s\n", path, suffix)
+		_, err := fmt.Fprintf(writer, "%s:created empty\n", path)
 		return err
 	}
 	var firstHash, lastHash string
@@ -1399,7 +1293,7 @@ func emitWriteCompactChange(writer io.Writer, path string, detail writeResponseC
 			lastHash = anchor.Hash
 		}
 	}
-	_, err := fmt.Fprintf(writer, "%s:%d-%d|%s-%s%s\n", path, detail.AfterStartLine, detail.AfterEndLine, firstHash, lastHash, suffix)
+	_, err := fmt.Fprintf(writer, "%s:%d-%d|%s-%s\n", path, detail.AfterStartLine, detail.AfterEndLine, firstHash, lastHash)
 	return err
 }
 
@@ -1410,7 +1304,7 @@ func emitWriteResponseFiles(writer io.Writer, response writeResponse) error {
 		if len(anchors) == 0 && file.Operation == "edit" {
 			continue
 		}
-		if err := emitWriteResponseFile(writer, file, anchors, printed || response.DryRun, response.DryRun); err != nil {
+		if err := emitWriteResponseFile(writer, file, anchors, printed); err != nil {
 			return err
 		}
 		printed = true
@@ -1418,7 +1312,7 @@ func emitWriteResponseFiles(writer io.Writer, response writeResponse) error {
 	return nil
 }
 
-func emitWriteResponseFile(writer io.Writer, file writeResponseFile, anchors []writeAnchor, leading, predicted bool) error {
+func emitWriteResponseFile(writer io.Writer, file writeResponseFile, anchors []writeAnchor, leading bool) error {
 	if leading {
 		if _, err := io.WriteString(writer, "\n"); err != nil {
 			return err
@@ -1426,11 +1320,6 @@ func emitWriteResponseFile(writer io.Writer, file writeResponseFile, anchors []w
 	}
 	if _, err := fmt.Fprintf(writer, "%s\n\n", file.Path); err != nil {
 		return err
-	}
-	if predicted && len(anchors) > 0 {
-		if _, err := fmt.Fprintf(writer, "predicted anchors for sha256:%s\n\n", file.AfterSHA256); err != nil {
-			return err
-		}
 	}
 	return emitWriteFileBody(writer, file.Operation, anchors)
 }
@@ -1456,11 +1345,7 @@ func emitWriteSummary(writer io.Writer, response writeResponse) error {
 		}
 		changes += file.Changes
 	}
-	verb := "applied"
-	if response.DryRun {
-		verb = "validated"
-	}
-	_, err := fmt.Fprintf(writer, "\n%s %d files, %d changes\n", verb, files, changes)
+	_, err := fmt.Fprintf(writer, "\napplied %d files, %d changes\n", files, changes)
 	return err
 }
 

@@ -9,15 +9,11 @@ import (
 )
 
 type segmentRenderer struct {
-	output       *outputWriter
-	anchors      AnchorLookup
-	contextGuard ContextGuard
+	output  *outputWriter
+	anchors AnchorLookup
 }
 
 func (renderer segmentRenderer) Render(results []search.FileResult) error {
-	if renderer.contextGuard == nil {
-		renderer.contextGuard = noopContextGuard{}
-	}
 	if analysis := searchSourceAnalysis(results); analysis != nil && analysis.Unsupported+analysis.Failed+analysis.Recovered > 0 {
 		message := fmt.Sprintf("! incomplete source analysis returned=%d structured=%d plain=%d unsupported=%d failed=%d recovered=%d\n\n", analysis.Returned, analysis.Structured, analysis.Plain, analysis.Unsupported, analysis.Failed, analysis.Recovered)
 		if err := renderer.output.writeString(message); err != nil {
@@ -52,7 +48,7 @@ func (renderer segmentRenderer) renderFile(result search.FileResult) error {
 				return err
 			}
 		}
-		if err := renderer.renderSegment(resultSourceIdentity(result), result.Path, nil, segment, width, "", ""); err != nil {
+		if err := renderer.renderSegment(result.Path, segment, width, ""); err != nil {
 			return err
 		}
 		cursor = segment.End + 1
@@ -247,83 +243,21 @@ func pluralizeRelated(noun string, count int) string {
 	return noun + "s"
 }
 
-func (renderer segmentRenderer) renderSegment(source, path string, artifact *navigation.ArtifactIdentity, segment search.ResultSegment, width int, prefix, contextLabel string) error {
+func (renderer segmentRenderer) renderSegment(path string, segment search.ResultSegment, width int, prefix string) error {
 	if segment.Kind == "spacing" {
 		return renderer.output.writeString(strings.Repeat("\n", segment.End-segment.Start+1))
 	}
 	if segment.Kind == "summary" {
 		return renderer.output.writeString(fmt.Sprintf("%s%*d   %s\n", prefix, width, segment.Start, segment.Text))
 	}
-	if renderer.contextGuard.Seen(source, artifact, segment) {
-		marker := prefix + segmentContextMarker(source, segment, contextLabel)
-		renderer.contextGuard.RecordMarker(len(marker))
-		return renderer.output.writeString(marker)
-	}
-	if err := renderer.renderSegmentLines(source, path, artifact, segment, width, prefix); err != nil {
-		return err
-	}
-	renderer.contextGuard.Record(source, artifact, segment)
-	return nil
-}
-
-func (renderer segmentRenderer) renderSegmentLines(source, path string, artifact *navigation.ArtifactIdentity, segment search.ResultSegment, width int, prefix string) error {
 	texts := strings.Split(segment.Text, "\n")
-	lines := make([]contextSourceLine, len(texts))
 	for index, text := range texts {
-		lines[index] = contextSourceLine{number: segment.Start + index, text: text}
-	}
-	if artifact != nil {
-		return renderer.renderExpandedSegmentLines(path, lines, width, prefix)
-	}
-	for _, run := range contextLineRuns(renderer.contextGuard, source, lines) {
-		if err := renderer.renderSegmentRun(path, lines, run, width, prefix); err != nil {
+		line := segment.Start + index
+		if err := renderer.output.writeString(renderer.segmentLineRow(path, line, text, width, prefix)); err != nil {
 			return err
 		}
 	}
 	return nil
-}
-
-func (renderer segmentRenderer) renderSegmentRun(path string, lines []contextSourceLine, run contextLineRun, width int, prefix string) error {
-	if !run.omit {
-		return renderer.renderExpandedSegmentLines(path, lines[run.start:run.end], width, prefix)
-	}
-	if err := renderer.output.writeString(renderer.segmentLineRow(path, lines[run.start].number, lines[run.start].text, width, prefix)); err != nil {
-		return err
-	}
-	omitted := lines[run.start+1 : run.end-1]
-	marker := fmt.Sprintf("%s… lines %d-%d omitted; unchanged anchored source already exists in context …\n", prefix, omitted[0].number, omitted[len(omitted)-1].number)
-	if err := renderer.output.writeString(marker); err != nil {
-		return err
-	}
-	sourceBytes, renderedBytes := renderer.segmentRunBytes(path, omitted, width, prefix)
-	renderer.contextGuard.RecordLineRangeOmission(len(omitted), sourceBytes, renderedBytes, len(marker))
-	last := lines[run.end-1]
-	return renderer.output.writeString(renderer.segmentLineRow(path, last.number, last.text, width, prefix))
-}
-
-func (renderer segmentRenderer) renderExpandedSegmentLines(path string, lines []contextSourceLine, width int, prefix string) error {
-	for _, line := range lines {
-		if err := renderer.output.writeString(renderer.segmentLineRow(path, line.number, line.text, width, prefix)); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (renderer segmentRenderer) segmentRunBytes(path string, lines []contextSourceLine, width int, prefix string) (int, int) {
-	sourceBytes, renderedBytes := 0, 0
-	for _, line := range lines {
-		sourceBytes += len(line.text)
-		renderedBytes += len(renderer.segmentLineRow(path, line.number, line.text, width, prefix))
-	}
-	return sourceBytes, renderedBytes
-}
-
-func resultSourceIdentity(result search.FileResult) string {
-	if result.Repo == "" {
-		return result.Path
-	}
-	return result.Repo + "\x00" + result.Path
 }
 
 func (renderer segmentRenderer) segmentLineRow(path string, line int, content string, width int, prefix string) string {
@@ -356,11 +290,4 @@ func collapsedLines(count int) string {
 		word = "line"
 	}
 	return fmt.Sprintf("\n// … %d %s collapsed …\n\n", count, word)
-}
-
-func segmentContextMarker(source string, segment search.ResultSegment, contextLabel string) string {
-	if contextLabel != "" {
-		return fmt.Sprintf("// … unchanged %s already emitted at %s:%d-%d (%d source bytes) …\n", contextLabel, source, segment.Start, segment.End, len(segment.Text))
-	}
-	return fmt.Sprintf("// … unchanged segment already emitted: %s:%d-%d (%d source bytes) …\n", source, segment.Start, segment.End, len(segment.Text))
 }

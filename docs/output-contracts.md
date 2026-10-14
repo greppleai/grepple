@@ -38,7 +38,7 @@ Zero means unlimited only where the command help explicitly says so. Remote serv
 
 ## Line-range bounds
 
-Every source-reading range uses the same inclusive, 1-based EOF policy. When the requested start exists but the end exceeds the file, Grepple clamps the end to the final line, returns the available source, emits an explicit EOF warning, and succeeds. When the requested start is beyond the final line, the whole range is outside the file and the command fails. Complete search JSON carries `lineRange`; JSON-matches carries `lineRanges`; remote raw JSON carries `lineRange` and `warnings`; plain remote reads carry the same classification in `X-Grepple-Line-Range-Outcome` and `X-Grepple-Line-Range-Warning` headers. Context statistics schema `grepple-context-stats-v7` counts these as `details.partialLineRangeMisses` and `details.fullLineRangeMisses`.
+Every source-reading range uses the same inclusive, 1-based EOF policy. When the requested start exists but the end exceeds the file, Grepple clamps the end to the final line, returns the available source, emits an explicit EOF warning, and succeeds. When the requested start is beyond the final line, the whole range is outside the file and the command fails. Complete search JSON carries `lineRange`; JSON-matches carries `lineRanges`; remote raw JSON carries `lineRange` and `warnings`; plain remote reads carry the same classification in `X-Grepple-Line-Range-Outcome` and `X-Grepple-Line-Range-Warning` headers. Each repeat of a valid range returns the selected available source with the same warning; no context statistics or cache is maintained.
 
 ## Local and remote availability
 
@@ -47,7 +47,7 @@ Every source-reading range uses the same inclusive, 1-based EOF policy. When the
 | `search`, `grit` | Yes, default | Yes | Add `--remote`; local and remote results are merged. `--local` disables remote execution. |
 | `graph`, `architecture` | Yes, default | Yes, one exact selector | Use `--repo OWNER/REPO[@REF]` for remote execution; local paths and an exact remote selector are mutually exclusive where applicable. |
 | `ask` | Yes, default | Yes, via typed tools with exact repository selectors | Authenticate an AI provider; `--server URL` selects a remote Grepple service but does not select a repository on its own. |
-| `write`, `sources`, `anchors`, `artifacts`, `context`, `init`, `verify` | Yes | No | These commands are local-only and reject unsupported remote selectors. |
+| `write`, `sources`, `anchors`, `artifacts`, `init`, `verify` | Yes | No | These commands are local-only and reject unsupported remote selectors. |
 | `repos`, `refs`, `get`, `rules`, `login` | No source analysis | Yes | These commands operate on the configured remote service. |
 | `tree` | Yes, default | Yes | A local path is the default; use `--repo OWNER/REPO[@REF]` for an indexed tree. Directory descriptions are available when the tree payload contains them. |
 | `languages`, `examples`, `help`, `version` | Not source-dependent | Not source-dependent | These inspect capabilities or documentation. |

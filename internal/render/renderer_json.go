@@ -1,23 +1,18 @@
 package render
 
 import (
-	"github.com/greppleai/grepple/internal/wire"
 	"github.com/greppleai/grepple/internal/resultanalysis"
-	"github.com/greppleai/grepple/internal/navigation"
 	"github.com/greppleai/grepple/internal/search"
+	"github.com/greppleai/grepple/internal/wire"
 )
 
 type jsonResultRenderer struct {
-	output       *outputWriter
-	matchesOnly  bool
-	metadata     *wire.ResultMetadata
-	contextGuard ContextGuard
+	output      *outputWriter
+	matchesOnly bool
+	metadata    *wire.ResultMetadata
 }
 
 func (renderer jsonResultRenderer) Render(results []search.FileResult) error {
-	if renderer.contextGuard == nil {
-		renderer.contextGuard = noopContextGuard{}
-	}
 	if renderer.matchesOnly {
 		response := map[string]any{"matches": flatMatches(results), "metadata": renderer.metadata}
 		if ranges := resultLineRanges(results); len(ranges) > 0 {
@@ -25,45 +20,8 @@ func (renderer jsonResultRenderer) Render(results []search.FileResult) error {
 		}
 		return renderer.output.writeJSON(response)
 	}
-	if err := renderer.output.writeJSON(wire.SearchResponse{Results: results, Metadata: renderer.metadata, SourceAnalysis: searchSourceAnalysis(results)}); err != nil {
-		return err
-	}
-	recordJSONResultCoverage(renderer.contextGuard, results)
-	return nil
+	return renderer.output.writeJSON(wire.SearchResponse{Results: results, Metadata: renderer.metadata, SourceAnalysis: searchSourceAnalysis(results)})
 }
-
-func recordJSONResultCoverage(guard ContextGuard, results []search.FileResult) {
-	if guard == nil {
-		return
-	}
-	for _, result := range results {
-		source := resultSourceIdentity(result)
-		for _, segment := range result.Segments {
-			guard.Record(source, nil, segment)
-		}
-		for _, match := range result.Matches {
-			guard.RecordSearchLine(source, match.Line, match.Text)
-		}
-		for _, line := range result.Context {
-			guard.RecordSearchLine(source, line.Line, line.Text)
-		}
-		recordJSONRelatedCoverage(guard, result.Repo, result.Related)
-	}
-}
-
-func recordJSONRelatedCoverage(guard ContextGuard, repository string, points []navigation.RelatedSymbol) {
-	for _, point := range points {
-		source := point.Path
-		if point.Artifact == nil && repository != "" {
-			source = repository + "\x00" + point.Path
-		}
-		for _, segment := range point.Segments {
-			guard.Record(source, point.Artifact, segment)
-		}
-		recordJSONRelatedCoverage(guard, repository, point.Related)
-	}
-}
-
 func searchSourceAnalysis(results []search.FileResult) *wire.SourceAnalysis {
 	return resultanalysis.Sources(results)
 }

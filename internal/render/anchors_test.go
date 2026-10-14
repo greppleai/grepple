@@ -10,7 +10,7 @@ import (
 func TestSegmentRendererEmitsHashLineContentRows(t *testing.T) {
 	var output strings.Builder
 	result := wire.FileResult{Path: "sample.go", Segments: []wire.ResultSegment{{Kind: "lines", Start: 1, End: 2, Text: "first\nsecond"}}}
-	_, err := Render(Options{JSON: "off", Anchors: AnchorLookup{"sample.go": {1: "abc", 2: "def"}}}, []wire.FileResult{result}, &output, nil)
+	_, err := Render(Options{JSON: "off", Anchors: AnchorLookup{"sample.go": {1: "abc", 2: "def"}}}, []wire.FileResult{result}, &output)
 	if err != nil {
 		t.Fatal(err)
 	}

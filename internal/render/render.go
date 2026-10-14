@@ -2,13 +2,12 @@
 package render
 
 import (
-	"github.com/greppleai/grepple/internal/navigation"
 	"io"
 	"strings"
 
-	"github.com/greppleai/grepple/internal/wire"
 	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
 	"github.com/greppleai/grepple/internal/search"
+	"github.com/greppleai/grepple/internal/wire"
 )
 
 const anchorOutputSeparator = "│"
@@ -24,27 +23,6 @@ func (lookup AnchorLookup) Line(path string, line int) string {
 	return ""
 }
 
-// ContextGuard records and suppresses source already returned in the active context.
-type ContextGuard interface {
-	Seen(string, *navigation.ArtifactIdentity, search.ResultSegment) bool
-	Record(string, *navigation.ArtifactIdentity, search.ResultSegment)
-	RecordMarker(int)
-	RecordSearchLine(string, int, string)
-	RecordLineRangeOmission(int, int, int, int)
-	LineCovered(string, int, string) bool
-}
-
-type noopContextGuard struct{}
-
-func (noopContextGuard) Seen(string, *navigation.ArtifactIdentity, search.ResultSegment) bool {
-	return false
-}
-func (noopContextGuard) Record(string, *navigation.ArtifactIdentity, search.ResultSegment) {}
-func (noopContextGuard) RecordMarker(int)                                                  {}
-func (noopContextGuard) RecordSearchLine(string, int, string)                              {}
-func (noopContextGuard) RecordLineRangeOmission(int, int, int, int)                        {}
-func (noopContextGuard) LineCovered(string, int, string) bool                              { return false }
-
 // Options contains renderer-specific search options.
 type Options struct {
 	Params           search.Params
@@ -54,7 +32,6 @@ type Options struct {
 	Count            bool
 	FilesWithMatches bool
 	MaxOutputBytes   int
-	RepeatSource     bool
 	Stdin            bool
 	Anchors          AnchorLookup
 	Metadata         *wire.ResultMetadata
@@ -87,16 +64,13 @@ func (output *outputWriter) writeJSON(value any) error      { return output.outp
 func (output *outputWriter) written() int                   { return output.output.Written() }
 
 // Render formats results and returns the emitted byte count.
-func Render(options Options, results []search.FileResult, destination io.Writer, guard ContextGuard) (int, error) {
-	if guard == nil {
-		guard = noopContextGuard{}
-	}
+func Render(options Options, results []search.FileResult, destination io.Writer) (int, error) {
 	maxBytes := 0
 	if options.JSON == "off" {
 		maxBytes = options.MaxOutputBytes
 	}
 	output := newOutputWriter(destination, maxBytes)
-	renderer := newResultRenderer(options, output, guard)
+	renderer := newResultRenderer(options, output)
 	err := renderer.Render(results)
 	if err == cliruntime.ErrOutputTruncated {
 		err = nil
@@ -104,22 +78,22 @@ func Render(options Options, results []search.FileResult, destination io.Writer,
 	return output.written(), err
 }
 
-func newResultRenderer(options Options, output *outputWriter, guard ContextGuard) resultRenderer {
+func newResultRenderer(options Options, output *outputWriter) resultRenderer {
 	switch {
 	case options.Params.Files || options.FilesWithMatches:
 		return filesRenderer{output: output, json: options.JSON != "off"}
 	case options.Count:
 		return countRenderer{output: output, json: options.JSON != "off"}
 	case options.JSON != "off":
-		return jsonResultRenderer{output: output, matchesOnly: options.JSON == "matches" || options.LineOnly, metadata: options.Metadata, contextGuard: guard}
+		return jsonResultRenderer{output: output, matchesOnly: options.JSON == "matches" || options.LineOnly, metadata: options.Metadata}
 	case options.Params.BeforeContext > 0 || options.Params.AfterContext > 0:
-		return contextRenderer{output: output, anchors: options.Anchors, contextGuard: guard}
+		return contextRenderer{output: output, anchors: options.Anchors}
 	case options.OnlyMatching:
 		return onlyMatchingRenderer{output: output, matcher: compileOnlyMatcher(&options)}
 	case options.LineOnly:
-		return lineRenderer{output: output, anchors: options.Anchors, contextGuard: guard, repeatSource: options.RepeatSource}
+		return lineRenderer{output: output, anchors: options.Anchors}
 	default:
-		return segmentRenderer{output: output, anchors: options.Anchors, contextGuard: guard}
+		return segmentRenderer{output: output, anchors: options.Anchors}
 	}
 }
 

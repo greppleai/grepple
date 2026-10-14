@@ -11,9 +11,8 @@ import (
 )
 
 type invocationConfiguration struct {
-	invocation            RepositoryInvocationOptions
-	inlineOutputThreshold int
-	config                *config.Config
+	invocation RepositoryInvocationOptions
+	config     *config.Config
 }
 
 type invocationRepository struct {
@@ -23,12 +22,12 @@ type invocationRepository struct {
 }
 
 // NewConfiguration creates configuration backed by user and repository settings.
-func NewConfiguration(invocation RepositoryInvocationOptions, inlineOutputThreshold int) Configuration {
-	return newConfigurationWithConfig(invocation, inlineOutputThreshold, nil)
+func NewConfiguration(invocation RepositoryInvocationOptions) Configuration {
+	return newConfigurationWithConfig(invocation, nil)
 }
 
-func newConfigurationWithConfig(invocation RepositoryInvocationOptions, threshold int, settings *config.Config) Configuration {
-	return invocationConfiguration{invocation: invocation, inlineOutputThreshold: threshold, config: settings}
+func newConfigurationWithConfig(invocation RepositoryInvocationOptions, settings *config.Config) Configuration {
+	return invocationConfiguration{invocation: invocation, config: settings}
 }
 
 func (configuration invocationConfiguration) ServerDefault(value string) string {
@@ -44,16 +43,6 @@ func (configuration invocationConfiguration) ServerDefault(value string) string 
 	settings, _ := config.LoadConfig(WorkingDirectory(), configuration.invocation.NoRepositoryConfig)
 	// Backend server selection remains available if unrelated preferences fail.
 	return settings.ServerDefault("")
-}
-func (configuration invocationConfiguration) ContextGuardEnabled() bool {
-	if configuration.config != nil {
-		return configuration.config.ContextGuardEnabled()
-	}
-	settings, err := config.LoadConfig(WorkingDirectory(), configuration.invocation.NoRepositoryConfig)
-	return err == nil && settings.ContextGuardEnabled()
-}
-func (configuration invocationConfiguration) InlineOutputThreshold() int {
-	return configuration.inlineOutputThreshold
 }
 func (configuration invocationConfiguration) UserSettings() (config.UserSettings, error) {
 	if configuration.config != nil {

@@ -17,7 +17,6 @@ import (
 	"github.com/greppleai/grepple/internal/gritqlapi"
 	"github.com/greppleai/grepple/internal/linerange"
 	"github.com/greppleai/grepple/internal/parser"
-	"github.com/greppleai/grepple/internal/render"
 	"github.com/greppleai/grepple/internal/repositoryrefs"
 	"github.com/greppleai/grepple/internal/search"
 	sourcedomain "github.com/greppleai/grepple/internal/sources"
@@ -471,9 +470,6 @@ func runAskRemoteReadTool(ctx context.Context, application cliruntime.Context, s
 	}
 	response, err := application.APIClient().Raw(ctx, server, request)
 	if err != nil {
-		if apiclient.RangeOutcome(err) == linerange.OutcomeFullMiss {
-			render.RecordStandaloneLineRangeOutcome(linerange.OutcomeFullMiss, application.Configuration().ContextGuardEnabled())
-		}
 		return fantasy.NewTextErrorResponse(err.Error()), nil
 	}
 	content := response.Body
@@ -491,7 +487,6 @@ func runAskRemoteReadTool(ctx context.Context, application cliruntime.Context, s
 		fmt.Fprintf(&output, "%d│%s\n", start+index, line)
 	}
 	if input.EndLine > 0 && response.RangeWarning != "" {
-		render.RecordStandaloneLineRangeOutcome(response.RangeOutcome, application.Configuration().ContextGuardEnabled())
 		fmt.Fprintf(&output, "warning: %s\n", response.RangeWarning)
 	}
 	return fantasy.NewTextResponse(output.String()), nil

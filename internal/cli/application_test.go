@@ -89,3 +89,22 @@ func TestApplicationParserDaemonGlobalAroundArchitecture(t *testing.T) {
 		}
 	}
 }
+
+func TestApplicationParserRejectsRetiredContextCommandAndRepeatSource(t *testing.T) {
+	for _, args := range [][]string{{"context", "invalidate"}, {"search", "--repeat-source", "needle"}} {
+		if _, _, err := parseApplicationArgs(args); err == nil {
+			t.Fatalf("retired command/flag accepted: %v", args)
+		}
+	}
+}
+
+func TestApplicationParserRejectsWriteDryRunButKeepsSetupDryRun(t *testing.T) {
+	for _, args := range [][]string{{"write", "--dry-run"}, {"write", "edit", "--dry-run", "--path", "file.go", "--start", "abc"}} {
+		if _, _, err := parseApplicationArgs(args); err == nil {
+			t.Fatalf("obsolete write preview accepted: %v", args)
+		}
+	}
+	if values, help, err := parseApplicationArgs([]string{"setup", "pi", "--dry-run", "--project"}); err != nil || help || values.Setup == nil || !values.Setup.DryRun {
+		t.Fatalf("setup preview was removed: values=%+v help=%v err=%v", values, help, err)
+	}
+}

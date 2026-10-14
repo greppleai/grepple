@@ -9,9 +9,9 @@ import (
 	"github.com/alexflint/go-arg"
 	"github.com/greppleai/grepple/internal/apiclient"
 	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
-	rendercommand "github.com/greppleai/grepple/internal/render"
 	"github.com/greppleai/grepple/internal/linerange"
 	"github.com/greppleai/grepple/internal/parser"
+	rendercommand "github.com/greppleai/grepple/internal/render"
 )
 
 // request contains parsed get command options.
@@ -80,16 +80,12 @@ func Execute(application cliruntime.Context, values *Args) error {
 	response, err := application.APIClient().Raw(context.Background(), base, request)
 	if err != nil {
 		if apiclient.RangeOutcome(err) == linerange.OutcomeFullMiss {
-			rendercommand.RecordStandaloneLineRangeOutcome(linerange.OutcomeFullMiss, application.Configuration().ContextGuardEnabled())
 			return reportRangeError(application, err, true)
 		}
 		return reportRangeError(application, err, false)
 	}
 	if response.RangeWarning != "" {
 		fmt.Fprintln(application.Stderr(), "warning:", response.RangeWarning)
-	}
-	if response.RangeOutcome == linerange.OutcomePartialMiss {
-		rendercommand.RecordStandaloneLineRangeOutcome(response.RangeOutcome, application.Configuration().ContextGuardEnabled())
 	}
 	return render(application, *values, response.Body)
 }
