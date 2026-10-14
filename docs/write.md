@@ -9,9 +9,10 @@ Retrieve an exact range or bounded context:
 ```text
 grepple --line-only --at path/to/file.go:40-65
 grepple --line-only -C 2 -F 'old value' path/to/file.go
+grepple --line-only --at path/to/file.go @func:40-65 # Verify current kind/bounds before rereading clean source
 ```
 
-Anchor rows are always exactly:
+An annotated `--line-only` **search** may append display-only `@KIND:START-END` suffixes after literal source. Those decorated rows are not edit-ready even if they show hashes. For a parser-verified local scope, `grepple --line-only --at PATH @KIND:START-END` rechecks the current file and returns clean source; missing, stale, ambiguous or uncertain scopes fail. For literal bounds without scope validation, use `grepple --line-only --at PATH:START-END` instead. Only write from fresh, clean, complete local source rows; a truncated/spilled response is not an inline source read. Anchor rows are exactly:
 
 ```text
 HASH│LINE│content

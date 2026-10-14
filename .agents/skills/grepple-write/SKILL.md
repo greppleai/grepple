@@ -12,6 +12,7 @@ Use `grepple write` for local repository changes. Retrieve source with Grepple f
 ```sh
 grepple --line-only -F 'targetName' path/to/package
 grepple --line-only --at path/to/file.go:40-65
+grepple --line-only --at path/to/file.go @func:40-65 # only if current parser verifies kind and bounds
 ```
 
 Eligible local output contains native `hashline-v1` rows:
@@ -27,6 +28,7 @@ Pq2│42│}
 - Replacement ranges are **inclusive**. Replacing this whole function requires both its opening line and closing brace; replacing only its body uses the body's anchors.
 - All changes to one file in a transaction refer to the **same original snapshot**. Ranges must not overlap. Do not adjust later ranges for earlier replacements in that transaction.
 - After a write, formatter, generator, or any other mutation, retrieve fresh anchors before another edit; do not reuse stale hashes.
+- Annotated `--line-only` **search** rows may append display-only `@KIND:START-END` after source. They are not edit-ready even with hashes; literal source can itself end with that text. Use local `grepple --line-only --at PATH @KIND:START-END` to re-verify current syntax and obtain clean source, or `--at PATH:START-END` for literal legacy bounds. Reject stale, missing or ambiguous selectors; do not parse a human suffix as authority. Typed JSON separates `text` from `nearest` and `scope`.
 - Focused `--at` and eligible local source reads return the complete selected source on every call, subject to explicit output, spill, and paging limits. A truncated or spilled output is not a complete inline source read.
 
 ## 2. Write literal, quoted-heredoc transactions

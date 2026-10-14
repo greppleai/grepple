@@ -113,6 +113,9 @@ func scopeKindForNode(node ViewNode) string {
 		language = node.raw.tree.language
 	}
 	kind := codeScopeKinds[language][node.Kind()]
+	if incompleteGoFunctionPrefix(node, language) {
+		return ""
+	}
 	if kind != "func" || language == "go" || language == "shell" || !memberFunctionDeclaration(language, node.Kind()) {
 		return kind
 	}
@@ -131,6 +134,18 @@ func scopeKindForNode(node ViewNode) string {
 		}
 	}
 	return kind
+}
+
+// Go permits bodyless declarations (for external/assembly functions). On
+// incomplete input, tree-sitter may parse "func run()" as such a declaration
+// and place the dangling "{" in an immediately following ERROR sibling on the
+// same line. That prefix is not a verified function boundary.
+func incompleteGoFunctionPrefix(node ViewNode, language string) bool {
+	if language != "go" || node.raw == nil || node.raw.raw == nil || node.Kind() != "function_declaration" && node.Kind() != "method_declaration" {
+		return false
+	}
+	next := node.raw.raw.NextNamedSibling()
+	return next != nil && next.IsError() && next.StartPosition().Row == node.raw.raw.EndPosition().Row
 }
 
 // memberFunctionDeclaration is deliberately narrower than all callable kinds:

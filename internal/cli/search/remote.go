@@ -18,6 +18,9 @@ func searchRemote(application cliruntime.Context, options *Options, server strin
 }
 
 func searchRemoteContext(application cliruntime.Context, ctx context.Context, options *Options, server string) ([]wire.FileResult, error) {
+	if options.Params.AtScope != nil {
+		return nil, fmt.Errorf("--at scope selectors require local source; remote search cannot verify them")
+	}
 	options.RemoteServer = server
 	if options.Cursor != "" && !cursorSearchEligible(options) {
 		return nil, fmt.Errorf("--cursor cannot resume a legacy search mode")

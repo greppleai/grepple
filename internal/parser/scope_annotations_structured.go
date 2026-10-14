@@ -25,26 +25,42 @@ type structuredProjection struct {
 	ends          map[*yaml.Node]structuredEnd
 	content       []string
 	format        string
+	// Exact selectors share the ordinary full-stream validation and container
+	// bounds, but need not allocate a hit for every line of a large scope.
+	target          *ScopeLineRange
+	found, conflict bool
+	column, depth   int
 }
 
 func structuredLineScopeAnnotations(content, language string, hits map[int]bool) map[int]LineScopeAnnotation {
+	result, _, _ := projectStructuredScopes(content, language, hits, nil)
+	return result
+}
+
+func structuredExactScope(content, language string, selector ScopeSelector) (ScopeLineRange, bool, bool) {
+	target := ScopeLineRange{Kind: selector.Kind, StartLine: selector.StartLine, EndLine: selector.EndLine}
+	_, found, conflict := projectStructuredScopes(content, language, map[int]bool{selector.StartLine: true}, &target)
+	return target, found, conflict
+}
+
+func projectStructuredScopes(content, language string, hits map[int]bool, target *ScopeLineRange) (map[int]LineScopeAnnotation, bool, bool) {
 	if language == "json" && !json.Valid([]byte(content)) {
-		return nil
+		return nil, false, false
 	}
-	p := &structuredProjection{first: make(map[int]scopeCandidate), second: make(map[int]scopeCandidate), ambiguous: make(map[int]bool), ends: make(map[*yaml.Node]structuredEnd), content: splitLines(content), format: language}
+	p := &structuredProjection{first: make(map[int]scopeCandidate), second: make(map[int]scopeCandidate), ambiguous: make(map[int]bool), ends: make(map[*yaml.Node]structuredEnd), content: splitLines(content), format: language, target: target}
 	for line := range hits {
 		if line >= 1 && line <= len(p.content) && structuredPayloadLine(p.content[line-1], language) {
 			p.lines = append(p.lines, line)
 		}
 	}
-	if len(p.lines) == 0 {
-		return nil
+	if len(p.lines) == 0 && target == nil {
+		return nil, false, false
 	}
 	sort.Ints(p.lines)
 	if language == "json" {
 		p.bounds = jsonContainerEnds(content)
 		if p.bounds == nil {
-			return nil
+			return nil, false, false
 		}
 	}
 	// Decode the whole stream before annotating; malformed later documents invalidate all.
@@ -57,14 +73,14 @@ func structuredLineScopeAnnotations(content, language string, hits map[int]bool)
 			break
 		}
 		if err != nil {
-			return nil
+			return nil, false, false
 		}
 		if root := documentRoot(&doc); root != nil {
 			roots = append(roots, root)
 		}
 	}
 	if len(roots) == 0 || language == "json" && len(roots) != 1 {
-		return nil
+		return nil, false, false
 	}
 	for _, root := range roots {
 		end, ok := p.containerEnd(root)
@@ -87,7 +103,7 @@ func structuredLineScopeAnnotations(content, language string, hits map[int]bool)
 		}
 		result[line] = LineScopeAnnotation{Nearest: &nearest, Scope: &scope}
 	}
-	return result
+	return result, p.found, p.conflict
 }
 
 func structuredPayloadLine(line, language string) bool {
@@ -183,6 +199,12 @@ func (p *structuredProjection) uncachedContainerEnd(node *yaml.Node) (int, bool)
 
 func (p *structuredProjection) add(container structuredContainer) {
 	candidate := scopeCandidate{span: container.span, depth: container.depth, column: container.column}
+	if p.target != nil && *p.target == candidate.span {
+		if p.found && p.depth == candidate.depth && p.column != candidate.column {
+			p.conflict = true
+		}
+		p.found, p.column, p.depth = true, candidate.column, candidate.depth
+	}
 	for index := sort.SearchInts(p.lines, container.span.StartLine); index < len(p.lines) && p.lines[index] <= container.span.EndLine; index++ {
 		line := p.lines[index]
 		first, hasFirst := p.first[line]

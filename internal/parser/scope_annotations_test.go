@@ -144,4 +144,16 @@ func TestCodeLineScopeAnnotationsErrorsAndBounds(t *testing.T) {
 	if got := CodeLineScopeAnnotations(strings.Repeat(" ", 4), "go", nil); len(got) != 0 {
 		t.Fatalf("empty hit set: %#v", got)
 	}
+	// Go accepts a bodyless declaration, so incomplete input can be parsed as
+	// a valid one-line declaration plus an adjacent ERROR for the dangling body.
+	// That prefix is not a verified function boundary in this source.
+	incomplete := "func run() {\n if true {\n"
+	if got := CodeLineScopeAnnotations(incomplete, "go", map[int]bool{1: true, 2: true}); len(got) != 0 {
+		t.Fatalf("incomplete Go advertised a recovered boundary: %+v", got)
+	}
+	for _, selector := range []ScopeSelector{{Kind: "func", StartLine: 1, EndLine: 1, Exact: true}, {Kind: "func", StartLine: 1, EndLine: 1}} {
+		if span, status := ResolveScopeSelector(incomplete, "go", selector, nil); status != ScopeMissing {
+			t.Fatalf("incomplete Go selected %+v with %q", span, status)
+		}
+	}
 }

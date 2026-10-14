@@ -4,8 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"strings"
 
 	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
+	"github.com/greppleai/grepple/internal/parser"
 	rendercommand "github.com/greppleai/grepple/internal/render"
 	"github.com/greppleai/grepple/internal/search"
 
@@ -56,7 +58,7 @@ type Args struct {
 	Related          bool     `arg:"--related" help:"show repository-local types, callees, and callers (default for structural search)"`
 	NoRelated        bool     `arg:"--no-related" help:"disable automatic code navigation"`
 	FollowRelated    int      `arg:"--follow-related" placeholder:"N" help:"follow 1-3 outgoing call hops; search also shows direct callers of matches"`
-	At               string   `arg:"--at" placeholder:"PATH:LINE[-END]" help:"retrieve a declaration at PATH:LINE or exact lines for PATH:START-END; ranges that start in-file clamp at EOF"`
+	At               string   `arg:"--at" placeholder:"PATH:LINE[-END]" help:"retrieve a declaration at PATH:LINE, exact legacy lines at PATH:START-END, or a verified local scope with --at PATH @KIND:LINE[-END]"`
 	Skip             int      `arg:"--skip" placeholder:"N" help:"skip the first N ranked result files"`
 	Limit            int      `arg:"--limit" default:"20" placeholder:"N" help:"return at most N ranked result files (default 20; 0 = all local; servers cap a page at 100 — page further with --skip)"`
 	Sort             string   `arg:"--sort" default:"path" placeholder:"ORDER" help:"order result files by path (default) or matching-line count (matches)"`
@@ -110,6 +112,14 @@ func optionsFromArgs(application cliruntime.Context, values *Args, usage interfa
 		return nil, "", false, err
 	}
 	params, err := buildSearchParams(application, usage, values)
+	if err == nil && values.At != "" && values.Query != "" {
+		var selector *parser.ScopeSelector
+		selector, err = scopeSelectorFromArgs(values)
+		if err == nil && selector != nil {
+			params.AtScope = selector
+			params.Query = ""
+		}
+	}
 	if err == nil {
 		if repository := application.Repository(); repository != nil {
 			err = search.ConfigureSourcePolicy(&params, repository)
@@ -176,7 +186,7 @@ func defaultAnchorsEnabled(application cliruntime.Context, values *searchArgs) (
 }
 
 func supportsDefaultAnchors(values *searchArgs) bool {
-	if values.Remote || values.Server != "" || values.JSON || values.JSONMatches {
+	if !values.Local && (values.Remote || values.Server != "") || values.JSON || values.JSONMatches {
 		return false
 	}
 	unsupportedCompact := values.Files || values.FilesWithMatches || values.Outline || values.Count || values.CountByRepo || values.OnlyMatching || values.Enclosing
@@ -227,10 +237,17 @@ func validateAtArgs(values *searchArgs) error {
 	if values.At == "" {
 		return nil
 	}
+	selector, err := scopeSelectorFromArgs(values)
+	if err != nil {
+		return err
+	}
+	if selector != nil && !values.Local && (values.Remote || values.RemoteOnly || values.Server != "" || values.Cursor != "") {
+		return fmt.Errorf("--at scope selectors require local source and cannot be used with remote search; use --local with --server")
+	}
 	if !values.Local && (values.Remote || values.Server != "") && len(values.Repos) != 1 {
 		return fmt.Errorf("remote --at requires exactly one --repo OWNER/REPO[@REF]")
 	}
-	if values.Query != "" || len(values.Globs) > 0 {
+	if selector == nil && (values.Query != "" || len(values.Globs) > 0) {
 		return fmt.Errorf("--at cannot be combined with a search pattern or path")
 	}
 	incompatibleOutput := values.Files || values.FilesWithMatches || values.Outline || values.Count || values.CountByRepo || values.OnlyMatching || values.Enclosing || values.JSONMatches
@@ -258,6 +275,12 @@ func validateEnclosingArgs(values *searchArgs) error {
 // validateSearchArgs rejects contradictory or out-of-range flag combinations
 // before any searching starts.
 func validateSearchArgs(values *searchArgs) error {
+	// Selectors must fail locally before cursor validation or a router request.
+	if values.At != "" && strings.HasPrefix(values.Query, "@") {
+		if err := validateAtArgs(values); err != nil {
+			return err
+		}
+	}
 	if err := validateCursorArguments(values); err != nil {
 		return err
 	}

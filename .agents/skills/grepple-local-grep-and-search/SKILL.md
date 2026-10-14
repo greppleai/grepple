@@ -17,10 +17,11 @@ description: Use for locating local files, text, declarations, exact ranges, or 
 | Retrieve enclosing implementation | `grepple -F 'Name' SCOPE --limit 5` |
 | Locate exact evidence lines | `grepple --line-only -F 'Name' SCOPE` |
 | Find the owner of a body match | `grepple --line-only --enclosing -F 'call()' file.go` |
-| Retrieve a known range | `grepple --at path/to/file.go:START-END` |
+| Retrieve a known literal range | `grepple --at path/to/file.go:START-END` |
+| Verify an annotated scope, then read clean source | `grepple --at path/to/file.go @KIND:START-END` (local only) |
 | Edit anchors | Eligible local source output uses native anchors; named compatibility providers come only from user settings |
 
-Use `-F` for literal names: default patterns are JavaScript regex. Default search returns enclosing functions/methods, not just matched lines; use `--line-only` when lines suffice. `--files` lists paths, while `--files-with-matches` lists content hits (`-l` means file listing). Results are in path order, not relevance order: an early page is not proof of completeness.
+Use `-F` for literal names: default patterns are JavaScript regex. Default search returns enclosing functions/methods, not just matched lines; use `--line-only` when lines suffice. Line-only search may append `@if:3-5 @func:2-9` display hints to matching lines; a human suffix can also occur in literal source and is **not** an authoritative boundary or edit-ready row. To follow one, pass the kind token as a separate argument to local `grepple --at PATH @KIND:START-END` (or `@KIND:LINE` if unambiguous): it verifies current source and returns clean inclusive lines, or fails for stale/missing/uncertain bounds. Typed `--line-only --json-matches` keeps literal `text` separate from `nearest` and `scope`. For a literal range without parser verification use legacy `--at PATH:START-END`. `--files` lists paths, while `--files-with-matches` lists content hits (`-l` means file listing). Results are in path order, not relevance order: an early page is not proof of completeness.
 
 ## Before a completeness claim
 
@@ -30,7 +31,8 @@ Start with `--count-summary` when scope is unknown. Check selected paths and exc
 
 ```sh
 grepple --line-only --enclosing -F 'targetCall(' path/to/package
-grepple --at path/to/file.go:40-65
+grepple --at path/to/file.go:40-65 # literal bounds (legacy)
+grepple --at path/to/file.go @func:40-65 # only when parser verifies current function bounds
 grepple write --root . <<'GREPPLE_WRITE_example'
 ::grepple file path/to/file.go
 ::grepple replace START END
@@ -39,6 +41,6 @@ replacement text
 GREPPLE_WRITE_example
 ```
 
-Use the `HASH│LINE│content` anchors returned by local Grepple; they become stale after an edit. Replace inclusive ranges (include a closing brace when replacing its block). The write receipt gives the changed range; retrieve fresh anchors before another edit or use `--return`. For create/delete, multi-file transactions, or marker escaping, follow the repository's Grepple write instructions and review the requested transaction before applying it; the short `grepple write --help` synopsis does not document every transaction operation. Do not read an entire large file when an exact construct range is available.
+Use the `HASH│LINE│content` anchors returned by **clean local source** reads; they become stale after an edit. Decorated line-only search rows are not edit-ready even when they display hashes: reread with a verified selector or a literal `--at` range first. Replace inclusive ranges (include a closing brace when replacing its block). The write receipt gives the changed range; retrieve fresh anchors before another edit or use `--return`. For create/delete, multi-file transactions, or marker escaping, follow the repository's Grepple write instructions and review the requested transaction before applying it; the short `grepple write --help` synopsis does not document every transaction operation. Do not read an entire large file when an exact construct range is available.
 
 Use `grepple-architecture-lookup-discovery` for ownership, `grepple-architecture-boundary-review` for proposed moves, `grepple-structural-pattern-audit` for syntax shapes, and `grepple-remote-grep-and-search` for indexed code outside this checkout.

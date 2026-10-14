@@ -3,8 +3,15 @@ package api
 import (
 	"context"
 
+	"github.com/greppleai/grepple/internal/parser"
 	"github.com/greppleai/grepple/internal/search"
 )
+
+// ScopeSelector is the local, parser-verified kind and inclusive source span
+// used by SearchPlanOptions.AtScope. Exact=false selects one containing scope
+// at StartLine (set EndLine=StartLine); Exact=true checks both supplied bounds.
+// This selector is never serialized into SearchRequest or sent to a router.
+type ScopeSelector = parser.ScopeSelector
 
 // SearchPlan is an immutable resolved execution plan. Engine parameters stay
 // private; callers can inspect or derive a new plan using value options.
@@ -52,11 +59,14 @@ type SearchPlanOptions struct {
 	ImmutableNavigationRevision string
 	NoRelated                   bool
 	At                          string
-	Root                        string
-	IgnorePaths                 []string
-	IgnoreRoot                  string
-	ProductionOnly              bool
-	CountByRepo                 bool
+	// AtScope is local-only and requires At to contain a bare path (no :LINE).
+	// Use SearchAt; remote wire requests cannot verify scope selectors.
+	AtScope        *ScopeSelector
+	Root           string
+	IgnorePaths    []string
+	IgnoreRoot     string
+	ProductionOnly bool
+	CountByRepo    bool
 }
 
 // NewSearchPlan creates a plan from explicit value options without sharing slices.
@@ -69,6 +79,10 @@ func cloneSearchParams(params search.Params) search.Params {
 	params.Repo = append([]string(nil), params.Repo...)
 	params.ExcludeRepo = append([]string(nil), params.ExcludeRepo...)
 	params.IgnorePaths = append([]string(nil), params.IgnorePaths...)
+	if params.AtScope != nil {
+		selectorCopy := *params.AtScope
+		params.AtScope = &selectorCopy
+	}
 	return params
 }
 
@@ -124,7 +138,8 @@ func SearchFilesContext(ctx context.Context, plan SearchPlan, candidates []strin
 	return searchBatch{matches: matches}, err
 }
 
-// SearchAt resolves one exact source range with the same result projection.
+// SearchAt resolves one local source location or exact verified scope range
+// with the same result projection. Verified selectors never clamp at EOF.
 func SearchAt(plan SearchPlan) (SearchBatch, error) {
 	match, err := search.At(searchParamsFor(plan))
 	if err != nil {

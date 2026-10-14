@@ -49,6 +49,14 @@ func codeLineScopeAndRanges(content, language string, lines map[int]bool, includ
 		return nil, nil
 	}
 	defer document.Close()
+	return codeLineScopeAndRangesFromDocument(document, lines, includeRanges, enclosing)
+}
+
+func codeLineScopeAndRangesFromDocument(document *Document, lines map[int]bool, includeRanges, enclosing bool) (map[int]LineScopeAnnotation, map[int]StructuralLineRange) {
+	if document == nil || len(lines) == 0 || languageAdapters[document.Language()] == nil {
+		return nil, nil
+	}
+	content := document.Source()
 	collector := &scopeCollector{
 		maxLine: len(splitLines(content)),
 		nearest: make(map[int]scopeCandidate, len(lines)),

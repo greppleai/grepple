@@ -10,17 +10,11 @@ import (
 
 // Validated spans, not wire-provided labels, control what becomes a public
 // annotation. In particular a capable remote peer cannot print arbitrary names.
-var scopeAnnotationKinds = map[string]bool{
-	"func": true, "method": true, "class": true, "interface": true,
-	"struct": true, "enum": true, "if": true, "while": true, "for": true,
-	"switch": true, "case": true, "try": true, "catch": true,
-	"block": true, "rule": true, "property": true, "snippet": true,
-	"section": true, "object": true, "array": true, "mapping": true,
-	"sequence": true, "document": true,
-}
+// The parser owns the fixed public vocabulary used by both line search and
+// local --at selection. Remote labels are checked against that same allowlist.
 
 func validatedScopeRange(span *parser.ScopeLineRange, line int) *parser.ScopeLineRange {
-	if span == nil || !scopeAnnotationKinds[span.Kind] || span.StartLine < 1 || span.EndLine < span.StartLine || line < span.StartLine || line > span.EndLine {
+	if span == nil || !parser.PublicScopeKind(span.Kind) || span.StartLine < 1 || span.EndLine < span.StartLine || line < span.StartLine || line > span.EndLine {
 		return nil
 	}
 	return span
