@@ -8,9 +8,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/greppleai/grepple/internal/wire"
 	"github.com/greppleai/grepple/internal/cliruntime"
 	"github.com/greppleai/grepple/internal/parser"
+	"github.com/greppleai/grepple/internal/wire"
 )
 
 func TestRemoteCommandPreservesExactRepository(t *testing.T) {
@@ -43,7 +43,10 @@ func TestRemoteCalleesRendersSignaturesWithoutFetchingSource(t *testing.T) {
 			{ID: "root", Name: "Start", Kind: "func", Language: "go", Path: "start.go", Start: 2, End: 4, Signature: "func Start(input Input) Output"},
 			{ID: "target", Name: "Load", Kind: "func", Language: "go", Path: "load.go", Start: 5, End: 8, Signature: "func Load(input Input) Output"},
 		},
-		Calls: []parser.NavigationCall{{ID: "call", CallerID: "root", TargetID: "target", Confidence: "exact", Path: "start.go", Line: 3}},
+		Calls: []parser.NavigationCall{
+			{ID: "call", CallerID: "root", TargetID: "target", Confidence: "exact", Path: "start.go", Line: 3},
+			{ID: "second", CallerID: "root", TargetID: "target", Confidence: "exact", Path: "start.go", Line: 3},
+		},
 	}
 	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		var input wire.AnalysisRequest
@@ -68,5 +71,23 @@ func TestRemoteCalleesRendersSignaturesWithoutFetchingSource(t *testing.T) {
 		if !strings.Contains(output.String(), want) {
 			t.Fatalf("remote signature output missing %q:\n%s", want, output.String())
 		}
+	}
+	if strings.Count(output.String(), "call:3 [exact]") != 1 {
+		t.Fatalf("remote duplicate evidence: %s", output.String())
+	}
+	output.Reset()
+	if err := command.Run([]string{"callees", "--json", "--symbol", "Start", "--server", server.URL, "--repo", "owner/repo"}); err != nil {
+		t.Fatal(err)
+	}
+	var response wire.AnalysisResponse
+	if err := json.Unmarshal(output.Bytes(), &response); err != nil {
+		t.Fatal(err)
+	}
+	var result Output
+	if err := json.Unmarshal(response.Result, &result); err != nil {
+		t.Fatal(err)
+	}
+	if len(result.Calls) != 2 || result.Calls[0].ID == result.Calls[1].ID {
+		t.Fatalf("remote JSON lost calls: %+v", result.Calls)
 	}
 }

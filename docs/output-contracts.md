@@ -17,6 +17,12 @@ Grepple keeps complete machine output available while bounding agent-facing text
 
 Global delivery spilling is not semantic truncation. Output larger than `--spill-threshold-bytes` is written to a mode-0600 content-addressed artifact and stdout receives a `grepple-artifact-v1` descriptor. `--no-spill` keeps the same complete output on stdout. Human `--max-output-bytes` caps remain active unless explicitly set to zero.
 
+## Compact navigation evidence
+
+Compact callers and callees show each distinct relationship evidence once per selected root section. Separate call IDs with the same caller, target, source path/line, confidence, ambiguity status, and direction share one compact row. Distinct locations, targets, confidence levels, and candidate relationships remain visible, including unique cycle/back edges; declaration expansion is cycle-safe and does not add an `(already shown)` suffix. Independent roots retain their own evidence. Duplicate rows are suppressed before consuming the human-output byte budget.
+
+This is presentation-only deduplication, shared by local, daemon, and remote rendering. Graph JSON retains individual call-site IDs and facts, including separate calls on the same source line. Parser facts and the graph schema are unchanged; compact output is not a lossless enumeration of call occurrences.
+
 ## Limit units
 
 | Option or concept | Unit |

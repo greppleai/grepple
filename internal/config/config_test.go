@@ -121,8 +121,7 @@ func TestLoadConfigIncludesAllSourcesWithoutLeakingCredentials(t *testing.T) {
 	}
 	files := map[string]string{
 		filepath.Join(root, ".grepple", "grepple.json"):  `{"server":"https://repository.example"}`,
-		filepath.Join(home, ".grepple", "settings.json"): `{"anchors":{"default_provider":"native"}}`,
-		filepath.Join(home, ".grepple", "grepple.json"):  `{"ask":{"model":"anthropic/claude","logs":{"retentionPeriod":"2d"}}}`,
+		filepath.Join(home, ".grepple", "settings.json"): `{"anchors":{"default_provider":"native"},"ask":{"model":"anthropic/claude","logs":{"retentionPeriod":"2d"}}}`,
 		filepath.Join(home, ".grepple", "config.json"):   `{"server":"https://user.example","token":"sensitive-token"}`,
 	}
 	for path, content := range files {

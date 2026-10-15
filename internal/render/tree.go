@@ -5,8 +5,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/greppleai/grepple/internal/wire"
 	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
+	"github.com/greppleai/grepple/internal/wire"
 )
 
 type treeNode struct {

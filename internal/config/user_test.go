@@ -33,10 +33,11 @@ func TestUserSettingsFileRemainsPrivateAndStrict(t *testing.T) {
 	}
 }
 
-func TestAskPreferencesKeepLegacyUserFile(t *testing.T) {
+func TestAskPreferencesUseSettingsFile(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("HOME", home)
-	path := filepath.Join(home, ".grepple", "grepple.json")
+	path := filepath.Join(home, ".grepple", "settings.json")
+	t.Setenv("GREPPLE_SETTINGS", path)
 	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
 		t.Fatal(err)
 	}
@@ -45,7 +46,14 @@ func TestAskPreferencesKeepLegacyUserFile(t *testing.T) {
 	}
 	settings, err := LoadConfig("", true)
 	if err != nil || settings.Ask.Model != "example-model" || settings.Ask.LogsEnabled || settings.Ask.LogRetention.Hours() != 48 {
-		t.Fatalf("legacy Ask settings: %+v, %v", settings, err)
+		t.Fatalf("Ask settings: %+v, %v", settings, err)
+	}
+	if err := settings.SaveUserSettings(settings.User); err != nil {
+		t.Fatal(err)
+	}
+	loaded, err := LoadConfig("", true)
+	if err != nil || loaded.Ask != settings.Ask {
+		t.Fatalf("Ask round trip: %+v, %v", loaded, err)
 	}
 }
 

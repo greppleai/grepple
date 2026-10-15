@@ -52,7 +52,15 @@ To select a different named provider, change `anchors.default_provider` in user 
 
 The command is executed directly, never through a shell. Its executable must be an absolute path. Grepple applies a timeout, caps provider stdout and stderr, rejects malformed/duplicate/missing anchors, and validates source digests before rendering. A provider is trusted user code with the same filesystem permissions as Grepple.
 
-`GREPPLE_SETTINGS=/path/to/settings.json` overrides the settings path for isolated environments and tests.
+`GREPPLE_SETTINGS=/path/to/settings.json` overrides the settings path for isolated environments and tests, including Ask preferences.
+
+Ask and Init defaults also live in this user-owned file:
+
+```json
+{"ask":{"model":"anthropic-subscription/claude-haiku-4-5","logs":{"enabled":true,"retentionPeriod":"7d"}}}
+```
+
+Logging defaults to enabled with seven-day retention. Retention accepts positive durations such as `7d`, `168h`, or `30m`. Move any `ask` object from the retired user `~/.grepple/grepple.json` into `settings.json`; the legacy user file is no longer read. Repository `.grepple/grepple.json` remains separate and unchanged. Unknown settings fields are rejected.
 
 ## Setup
 

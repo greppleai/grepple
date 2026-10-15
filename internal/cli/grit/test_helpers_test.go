@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/greppleai/grepple/internal/wire"
 	"github.com/greppleai/grepple/internal/apiclient"
+	"github.com/greppleai/grepple/internal/wire"
 )
 
 func runGrit(args []string) error { return newWithDependencies(testGritDependencies()).Run(args) }

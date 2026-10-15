@@ -7,9 +7,9 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/greppleai/grepple/internal/wire"
 	"github.com/greppleai/grepple/internal/anchor"
 	searchengine "github.com/greppleai/grepple/internal/search"
+	"github.com/greppleai/grepple/internal/wire"
 )
 
 type anchorFileSelection struct {

@@ -5,9 +5,9 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/greppleai/grepple/internal/wire"
 	"github.com/greppleai/grepple/internal/cliruntime"
 	"github.com/greppleai/grepple/internal/shellquote"
+	"github.com/greppleai/grepple/internal/wire"
 )
 
 func gritResultMetadata(application cliruntime.Context, values gritArgs, response wire.GritResponse, remote bool) *wire.ResultMetadata {
