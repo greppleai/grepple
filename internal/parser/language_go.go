@@ -123,3 +123,31 @@ func goValues(decl *syntaxNode, content string, label string) []Symbol {
 	}
 	return out
 }
+
+func (*goLanguage) ScopeKind(nodeType string) string {
+	switch nodeType {
+	case "if_statement":
+		return "if"
+	case "while_statement":
+		return "while"
+	case "for_statement", "range_clause":
+		return "for"
+	case "switch_statement":
+		return "switch"
+	case "try_statement":
+		return "try"
+	case "catch_clause":
+		return "catch"
+	case "expression_case", "type_case", "default_case":
+		return "case"
+	case "function_declaration", "func_literal":
+		return "func"
+	case "method_declaration":
+		return "method"
+	case "struct_type":
+		return "struct"
+	case "interface_type":
+		return "interface"
+	}
+	return ""
+}

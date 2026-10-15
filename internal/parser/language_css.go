@@ -102,3 +102,13 @@ func cssBlockHeader(node *syntaxNode) string {
 	}
 	return strings.TrimSpace(node.Text())
 }
+
+func (*cssLanguage) ScopeKind(nodeType string) string {
+	switch nodeType {
+	case "rule_set", "media_statement", "supports_statement", "scope_statement", "keyframes_statement", "keyframe_block":
+		return "rule"
+	case "declaration":
+		return "property"
+	}
+	return ""
+}

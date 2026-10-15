@@ -31,9 +31,9 @@ var taskExamples = []taskExample{
 	}},
 	{Name: "scope", Description: "Follow a local annotated TypeScript or JSON match to clean, parser-verified source", Commands: []string{
 		"grepple --line-only -F 'logger.info' testdata/typescript/sample.ts",
-		"grepple --line-only --at testdata/typescript/sample.ts @func:8-12",
+		"grepple --line-only --at testdata/typescript/sample.ts @function:8-12",
 		"grepple --line-only -F 'setPressed(true)' examples/sample-files/Button.tsx",
-		"grepple --line-only --at examples/sample-files/Button.tsx @func:11-14",
+		"grepple --line-only --at examples/sample-files/Button.tsx @function:11-14",
 		"grepple --line-only --json-matches -F 'timeoutSeconds' examples/sample-files/config.json",
 		"grepple --line-only --at examples/sample-files/config.json @object:13-16",
 	}},

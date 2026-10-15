@@ -58,3 +58,21 @@ func pythonDeclarations(nodes []*syntaxNode, content string, rules *structureRul
 	}
 	return symbols
 }
+
+func (*pythonLanguage) ScopeKind(nodeType string) string {
+	switch nodeType {
+	case "if_statement":
+		return "if"
+	case "while_statement":
+		return "while"
+	case "for_statement", "for_in_statement":
+		return "for"
+	case "switch_statement":
+		return "switch"
+	case "function_definition", "lambda":
+		return "func"
+	case "class_definition":
+		return "class"
+	}
+	return ""
+}

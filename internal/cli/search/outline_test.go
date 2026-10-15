@@ -92,3 +92,32 @@ func TestOutlineLocalJSON(t *testing.T) {
 		t.Fatalf("unexpected json payload: %#v", payload)
 	}
 }
+
+func TestOutlineSelectorsAreOptInAndRemainLocalHumanOutput(t *testing.T) {
+	dir := chdirTemp(t)
+	src := "// doc\nfunc Run() {}\ntype Name string\n"
+	if err := os.WriteFile(filepath.Join(dir, "sample.go"), []byte(src), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	out := captureStdout(t, func() {
+		if err := runTestSearch([]string{"--outline", "--outline-selectors", "sample.go"}); err != nil {
+			t.Fatal(err)
+		}
+	})
+	if !strings.Contains(out, "Run @func:2-2\n") || !strings.Contains(out, "3-3\ttype\tName") || strings.Contains(out, "@type:") {
+		t.Fatalf("selector outline=%q", out)
+	}
+	plain := captureStdout(t, func() {
+		if err := runTestSearch([]string{"--outline", "sample.go"}); err != nil {
+			t.Fatal(err)
+		}
+	})
+	if strings.Contains(plain, "@func:") {
+		t.Fatalf("default outline changed: %q", plain)
+	}
+	for _, args := range [][]string{{"--outline-selectors", "sample.go"}, {"--outline", "--outline-selectors", "--json", "sample.go"}} {
+		if _, _, _, err := parseTestSearchArgs(args); err == nil {
+			t.Fatalf("expected rejection for %v", args)
+		}
+	}
+}

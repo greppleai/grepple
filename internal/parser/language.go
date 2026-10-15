@@ -117,6 +117,8 @@ type languageAdapter interface {
 	Rules() *structureRules
 	Navigation() navigationAdapter
 	Outline(root *syntaxNode, content string) []Symbol
+	// ScopeKind maps a grammar node type to a normalized scope role; unknown types return "".
+	ScopeKind(nodeType string) string
 }
 
 var languageAdapters = buildLanguageAdapters(

@@ -104,3 +104,10 @@ func hclBlockName(block *syntaxNode) string {
 	}
 	return ""
 }
+
+func (*hclLanguage) ScopeKind(nodeType string) string {
+	if nodeType == "block" {
+		return "block"
+	}
+	return ""
+}

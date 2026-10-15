@@ -39,6 +39,7 @@ type Args struct {
 	Files            bool     `arg:"-l,--files" help:"list files by path; unlike grep -l, does not search contents (use --files-with-matches)"`
 	FilesWithMatches bool     `arg:"--files-with-matches" help:"list paths whose contents match (grep -l equivalent); accepts multiple PATHs"`
 	Outline          bool     `arg:"-O,--outline" help:"print each file's structural outline (classes, funcs, interfaces) instead of searching"`
+	OutlineSelectors bool     `arg:"--outline-selectors" help:"outline: emit parser-verified local @KIND:START-END selectors"`
 	Kinds            []string `arg:"--kind,separate" placeholder:"CATEGORY" help:"outline: show only types, functions, or variables; repeat or comma-separate"`
 	Depth            int      `arg:"--depth" placeholder:"N" help:"outline: cap nesting depth for JSON/YAML (0 = unlimited)"`
 	Count            bool     `arg:"-c,--count" help:"print matching-line counts per file"`
@@ -152,6 +153,7 @@ func optionsFromArgs(application cliruntime.Context, values *Args, usage interfa
 		CountSummary:     values.CountSummary,
 		FilesWithMatches: values.FilesWithMatches,
 		Outline:          values.Outline,
+		OutlineSelectors: values.OutlineSelectors,
 		Kinds:            kinds,
 		Depth:            values.Depth,
 		MaxOutputBytes:   values.MaxOutputBytes,
@@ -295,6 +297,9 @@ func validateSearchArgs(values *searchArgs) error {
 	}
 	if err := validateAtArgs(values); err != nil {
 		return err
+	}
+	if values.OutlineSelectors && (!values.Outline || values.JSON) {
+		return fmt.Errorf("--outline-selectors requires human --outline output")
 	}
 	return validateSearchCombinations(values)
 }

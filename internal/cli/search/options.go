@@ -23,6 +23,7 @@ type Options struct {
 	CountSummary     bool
 	FilesWithMatches bool
 	Outline          bool
+	OutlineSelectors bool
 	Kinds            rendercommand.OutlineKinds
 	Depth            int
 	MaxOutputBytes   int

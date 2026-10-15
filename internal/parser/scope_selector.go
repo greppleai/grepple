@@ -22,7 +22,8 @@ const (
 )
 
 var publicScopeKinds = map[string]bool{
-	"func": true, "method": true, "class": true, "interface": true,
+	"func": true, "function": true, "def": true, "fun": true, "fn": true,
+	"method": true, "class": true, "interface": true, "trait": true,
 	"struct": true, "enum": true, "if": true, "while": true, "for": true,
 	"switch": true, "case": true, "try": true, "catch": true,
 	"block": true, "rule": true, "property": true, "snippet": true,
@@ -56,7 +57,7 @@ func ResolveScopeSelector(content, language string, selector ScopeSelector, docu
 			return codeExactScope(document, selector)
 		}
 		roles, _ := codeLineScopeAndRangesFromDocument(document, map[int]bool{selector.StartLine: true}, false, false)
-		return selectScopeRole(roles[selector.StartLine], selector)
+		return selectScopeRole(language, roles[selector.StartLine], selector)
 	}
 	if document != nil && language != "markdown" {
 		return ScopeLineRange{}, ScopeMissing
@@ -75,15 +76,15 @@ func ResolveScopeSelector(content, language string, selector ScopeSelector, docu
 			}
 			return ScopeLineRange{}, ScopeMissing
 		}
-		return selectScopeRole(structuredLineScopeAnnotations(content, language, map[int]bool{selector.StartLine: true})[selector.StartLine], selector)
+		return selectScopeRole(language, structuredLineScopeAnnotations(content, language, map[int]bool{selector.StartLine: true})[selector.StartLine], selector)
 	}
 	return ScopeLineRange{}, ScopeMissing
 }
 
-func selectScopeRole(annotation LineScopeAnnotation, selector ScopeSelector) (ScopeLineRange, ScopeSelectionStatus) {
+func selectScopeRole(language string, annotation LineScopeAnnotation, selector ScopeSelector) (ScopeLineRange, ScopeSelectionStatus) {
 	var selected *ScopeLineRange
 	for _, span := range []*ScopeLineRange{annotation.Nearest, annotation.Scope} {
-		if span == nil || span.Kind != selector.Kind || selector.StartLine < span.StartLine || selector.StartLine > span.EndLine {
+		if span == nil || !scopeSelectorKindMatches(language, nativeScopeKind(language, span.Kind), selector.Kind) || selector.StartLine < span.StartLine || selector.StartLine > span.EndLine {
 			continue
 		}
 		if selector.Exact && (span.StartLine != selector.StartLine || span.EndLine != selector.EndLine) {
@@ -97,6 +98,7 @@ func selectScopeRole(annotation LineScopeAnnotation, selector ScopeSelector) (Sc
 	if selected == nil {
 		return ScopeLineRange{}, ScopeMissing
 	}
+	selected.Kind = nativeScopeKind(language, selected.Kind)
 	return *selected, ScopeVerified
 }
 
@@ -104,7 +106,7 @@ func selectScopeRole(annotation LineScopeAnnotation, selector ScopeSelector) (Sc
 // line; walk only nodes containing that span using the same kind/error rules
 // as the line-only collector. Never choose a raw tree-sitter kind as a label.
 func codeExactScope(document *Document, selector ScopeSelector) (ScopeLineRange, ScopeSelectionStatus) {
-	requested := ScopeLineRange{Kind: selector.Kind, StartLine: selector.StartLine, EndLine: selector.EndLine}
+	var result ScopeLineRange
 	found, ambiguous, column, depth := false, false, 0, 0
 	err := document.Read(func(view DocumentView) error {
 		stack := []scopeWalkItem{{viewWalkItem: viewWalkItem{node: view.Root(), depth: 1}}}
@@ -120,11 +122,14 @@ func codeExactScope(document *Document, selector ScopeSelector) (ScopeLineRange,
 			if r.Start.Line > selector.StartLine || end < selector.EndLine {
 				continue
 			}
-			if current.depth > 1 && !node.IsError() && !node.IsMissing() && !node.HasError() && r.Start.Line == selector.StartLine && end == selector.EndLine && scopeKindForNode(node) == selector.Kind {
+			kind := scopeKindForNode(node)
+			language := effectiveScopeLanguage(node)
+			if current.depth > 1 && !node.IsError() && !node.IsMissing() && !node.HasError() && r.Start.Line == selector.StartLine && end == selector.EndLine && scopeSelectorKindMatches(language, nativeScopeKind(language, kind), selector.Kind) {
 				if found && depth == current.depth && column != r.Start.Column {
 					ambiguous = true
 				}
 				found, column, depth = true, r.Start.Column, current.depth
+				result = ScopeLineRange{Kind: nativeScopeKind(language, kind), StartLine: selector.StartLine, EndLine: selector.EndLine}
 			}
 			if injected := node.raw.injectionRoot(); injected != nil {
 				stack = append(stack, scopeWalkItem{viewWalkItem: viewWalkItem{node: ViewNode{view: node.view, raw: injected}, depth: current.depth + 1}, injected: true})
@@ -142,5 +147,5 @@ func codeExactScope(document *Document, selector ScopeSelector) (ScopeLineRange,
 	if ambiguous {
 		return ScopeLineRange{}, ScopeAmbiguous
 	}
-	return requested, ScopeVerified
+	return result, ScopeVerified
 }

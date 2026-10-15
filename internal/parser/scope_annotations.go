@@ -3,7 +3,8 @@ package parser
 import "sort"
 
 // ScopeLineRange is a parser-established, one-based inclusive structural span.
-// Kind belongs to the fixed public vocabulary in language_scope_kinds.go.
+// Kind is a normalized parser-owned role; each language adapter selects its
+// supported grammar nodes through ScopeKind.
 type ScopeLineRange struct {
 	Kind      string `json:"kind"`
 	StartLine int    `json:"startLine"`

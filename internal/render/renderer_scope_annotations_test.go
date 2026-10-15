@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"os"
+	"path/filepath"
 	"reflect"
 	"strings"
 	"testing"
@@ -74,6 +76,19 @@ func TestAnnotatedHumanIsDisplayOnlyWhenSourceLooksLikeASuffix(t *testing.T) {
 	}
 	if err := json.Unmarshal(structured.Bytes(), &data); err != nil || len(data.Matches) != 1 || data.Matches[0].Text != literal || data.Matches[0].Nearest != nil {
 		t.Fatalf("JSON must disambiguate fake suffix: %s (%v)", structured.String(), err)
+	}
+}
+
+func TestVerifiedRelatedSelectorRequiresCurrentExactScope(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "sample.go")
+	if err := os.WriteFile(path, []byte("// doc\nfunc Run() {}\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if got := verifiedRelatedSelector(path, 1, 2); got != "" {
+		t.Fatalf("comment-inclusive graph span got %q", got)
+	}
+	if got := verifiedRelatedSelector(path, 2, 2); got != " @func:2-2" {
+		t.Fatalf("verified local selector got %q", got)
 	}
 }
 

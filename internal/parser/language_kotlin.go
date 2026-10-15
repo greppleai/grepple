@@ -102,3 +102,19 @@ func kotlinPropertyName(node *syntaxNode, content string, config *structureRules
 	}
 	return ""
 }
+
+func (*kotlinLanguage) ScopeKind(nodeType string) string {
+	switch nodeType {
+	case "function_declaration", "anonymous_function", "lambda_literal":
+		return "func"
+	case "class_declaration", "object_declaration":
+		return "class"
+	case "if_expression":
+		return "if"
+	case "while_statement":
+		return "while"
+	case "for_statement":
+		return "for"
+	}
+	return ""
+}

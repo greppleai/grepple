@@ -63,7 +63,7 @@ func executeSearch(application cliruntime.Context, options *Options, explicitSer
 		var printed bool
 		outlineErr := clitelemetry.RenderPhase(application.Invocation(), format, func() error {
 			var err error
-			printed, err = rendercommand.Outlines(rendercommand.OutlineOptions{Params: options.Params, Depth: options.Depth, Kinds: options.Kinds, JSON: options.JSON != "off", MaxOutputBytes: options.MaxOutputBytes, DefaultLimit: DefaultResultLimit, Output: application.Stdout(), ErrorOutput: application.Stderr()})
+			printed, err = rendercommand.Outlines(rendercommand.OutlineOptions{Params: options.Params, Depth: options.Depth, Kinds: options.Kinds, JSON: options.JSON != "off", Selectors: options.OutlineSelectors, MaxOutputBytes: options.MaxOutputBytes, DefaultLimit: DefaultResultLimit, Output: application.Stdout(), ErrorOutput: application.Stderr()})
 			return err
 		})
 		if outlineErr == nil && !printed {

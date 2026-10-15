@@ -56,3 +56,33 @@ func (language *typeScriptLanguage) Navigation() navigationAdapter {
 func (language *typeScriptLanguage) Outline(root *syntaxNode, content string) []Symbol {
 	return outlineTSJS(root, content, &language.rules)
 }
+
+func (*typeScriptLanguage) ScopeKind(nodeType string) string {
+	switch nodeType {
+	case "interface_declaration":
+		return "interface"
+	case "enum_declaration":
+		return "enum"
+	case "if_statement":
+		return "if"
+	case "while_statement":
+		return "while"
+	case "for_statement", "for_in_statement", "for_of_statement":
+		return "for"
+	case "switch_statement":
+		return "switch"
+	case "try_statement":
+		return "try"
+	case "catch_clause":
+		return "catch"
+	case "case_statement", "switch_case":
+		return "case"
+	case "function_declaration", "generator_function_declaration", "arrow_function", "function":
+		return "func"
+	case "method_definition":
+		return "method"
+	case "class_declaration", "class":
+		return "class"
+	}
+	return ""
+}

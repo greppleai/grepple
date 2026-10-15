@@ -94,3 +94,29 @@ func javaMembers(node *syntaxNode, content string, config *structureRules) []Sym
 	}
 	return out
 }
+
+func (*javaLanguage) ScopeKind(nodeType string) string {
+	switch nodeType {
+	case "if_statement":
+		return "if"
+	case "while_statement":
+		return "while"
+	case "for_statement":
+		return "for"
+	case "switch_statement":
+		return "switch"
+	case "try_statement":
+		return "try"
+	case "catch_clause":
+		return "catch"
+	case "class_declaration", "record_declaration":
+		return "class"
+	case "interface_declaration":
+		return "interface"
+	case "enum_declaration":
+		return "enum"
+	case "method_declaration", "constructor_declaration":
+		return "method"
+	}
+	return ""
+}

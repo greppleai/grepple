@@ -27,6 +27,34 @@ func TestResolveScopeSelectorSharesVerifiedCodeKindsAndRoles(t *testing.T) {
 	}
 }
 
+func TestResolveScopeSelectorNativeFunctionShorthand(t *testing.T) {
+	for _, tc := range []struct {
+		language, content, kind string
+	}{
+		{"python", "def run():\n  return 1\n", "def"},
+		{"rust", "fn run() {}\n", "fn"},
+	} {
+		got, status := ResolveScopeSelector(tc.content, tc.language, ScopeSelector{Kind: tc.kind, StartLine: 1, EndLine: 1}, nil)
+		if status != ScopeVerified || got.Kind != tc.kind || got.StartLine != 1 {
+			t.Fatalf("%s: span=%+v status=%q", tc.language, got, status)
+		}
+	}
+}
+
+func TestResolveScopeSelectorAcceptsNativeKindsAndLegacyFunctionAlias(t *testing.T) {
+	content := "function run() {}\n"
+	for _, kind := range []string{"function", "func"} {
+		got, status := ResolveScopeSelector(content, "typescript", ScopeSelector{Kind: kind, StartLine: 1, EndLine: 1, Exact: true}, nil)
+		want := ScopeLineRange{Kind: "function", StartLine: 1, EndLine: 1}
+		if status != ScopeVerified || got != want {
+			t.Fatalf("%s: span=%+v status=%q; want %+v", kind, got, status, want)
+		}
+	}
+	if _, status := ResolveScopeSelector(content, "typescript", ScopeSelector{Kind: "def", StartLine: 1, EndLine: 1, Exact: true}, nil); status != ScopeMissing {
+		t.Fatalf("wrong native kind status=%q", status)
+	}
+}
+
 func TestResolveScopeSelectorStructuredMarkdownAndUncertainty(t *testing.T) {
 	for _, tc := range []struct {
 		name, lang, content string

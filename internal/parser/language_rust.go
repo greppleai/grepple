@@ -101,3 +101,25 @@ func rustSymbolKind(kind string) string {
 	}
 	return ""
 }
+
+func (*rustLanguage) ScopeKind(nodeType string) string {
+	switch nodeType {
+	case "function_item", "closure_expression":
+		return "func"
+	case "struct_item":
+		return "struct"
+	case "trait_item":
+		return "interface"
+	case "enum_item":
+		return "enum"
+	case "if_expression", "if_let_expression":
+		return "if"
+	case "while_expression", "while_let_expression":
+		return "while"
+	case "for_expression":
+		return "for"
+	case "match_arm":
+		return "case"
+	}
+	return ""
+}
