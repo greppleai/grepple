@@ -76,3 +76,15 @@ func (*pythonLanguage) ScopeKind(nodeType string) string {
 	}
 	return ""
 }
+
+func (language *pythonLanguage) ScopeClassification(node ViewNode) ScopeClassification {
+	kind := language.ScopeKind(node.Kind())
+	if node.Kind() == "function_definition" && scopeMemberAncestor(node, language.ScopeKind) {
+		kind = "method"
+	}
+	return standardScopeClassification(kind)
+}
+
+func (*pythonLanguage) ScopeSelectorKind(role string) string {
+	return functionSelectorKind(role, "def", false)
+}

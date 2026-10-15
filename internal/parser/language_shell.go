@@ -61,3 +61,11 @@ func (*shellLanguage) ScopeKind(nodeType string) string {
 	}
 	return ""
 }
+
+func (language *shellLanguage) ScopeClassification(node ViewNode) ScopeClassification {
+	return standardScopeClassification(language.ScopeKind(node.Kind()))
+}
+
+func (*shellLanguage) ScopeSelectorKind(role string) string {
+	return functionSelectorKind(role, "function", false)
+}

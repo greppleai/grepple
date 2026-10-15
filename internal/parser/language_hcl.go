@@ -111,3 +111,10 @@ func (*hclLanguage) ScopeKind(nodeType string) string {
 	}
 	return ""
 }
+
+func (language *hclLanguage) ScopeClassification(node ViewNode) ScopeClassification {
+	kind := language.ScopeKind(node.Kind())
+	return ScopeClassification{Kind: kind, Navigable: kind == "block"}
+}
+
+func (*hclLanguage) ScopeSelectorKind(role string) string { return role }

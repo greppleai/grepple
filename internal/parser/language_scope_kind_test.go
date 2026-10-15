@@ -98,3 +98,16 @@ func TestAdapterScopeKindVocabulary(t *testing.T) {
 		t.Fatalf("markdown code kind: %q", got)
 	}
 }
+
+func TestAdapterScopeSelectorKinds(t *testing.T) {
+	for _, test := range []struct {
+		language, role, want string
+	}{
+		{"go", "func", "func"}, {"javascript", "func", "function"}, {"typescript", "func", "function"}, {"tsx", "func", "function"}, {"python", "func", "def"}, {"kotlin", "func", "fun"}, {"rust", "func", "fn"}, {"rust", "interface", "trait"}, {"swift", "func", "func"}, {"c", "func", "function"}, {"cpp", "func", "function"}, {"php", "func", "function"}, {"dart", "func", "function"}, {"shell", "func", "function"}, {"markdown", "section", "section"},
+	} {
+		adapter := adapterForLanguage(test.language)
+		if got := adapter.ScopeSelectorKind(test.role); got != test.want {
+			t.Errorf("%s %s: got %q, want %q", test.language, test.role, got, test.want)
+		}
+	}
+}

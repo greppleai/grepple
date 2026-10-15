@@ -172,3 +172,9 @@ func (*svelteLanguage) ScopeKind(nodeType string) string {
 	}
 	return ""
 }
+
+func (language *svelteLanguage) ScopeClassification(node ViewNode) ScopeClassification {
+	return standardScopeClassification(language.ScopeKind(node.Kind()))
+}
+
+func (*svelteLanguage) ScopeSelectorKind(role string) string { return role }

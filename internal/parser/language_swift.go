@@ -147,3 +147,13 @@ func (*swiftLanguage) ScopeKind(nodeType string) string {
 	}
 	return ""
 }
+
+func (language *swiftLanguage) ScopeClassification(node ViewNode) ScopeClassification {
+	kind := language.ScopeKind(node.Kind())
+	if (node.Kind() == "function_declaration" || node.Kind() == "protocol_function_declaration") && scopeMemberAncestor(node, language.ScopeKind) {
+		kind = "method"
+	}
+	return standardScopeClassification(kind)
+}
+
+func (*swiftLanguage) ScopeSelectorKind(role string) string { return role }

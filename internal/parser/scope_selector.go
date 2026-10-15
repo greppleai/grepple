@@ -57,7 +57,7 @@ func ResolveScopeSelector(content, language string, selector ScopeSelector, docu
 			return codeExactScope(document, selector)
 		}
 		roles, _ := codeLineScopeAndRangesFromDocument(document, map[int]bool{selector.StartLine: true}, false, false)
-		return selectScopeRole(language, roles[selector.StartLine], selector)
+		return selectScopeRole(languageAdapters[language], roles[selector.StartLine], selector)
 	}
 	if document != nil && language != "markdown" {
 		return ScopeLineRange{}, ScopeMissing
@@ -76,15 +76,15 @@ func ResolveScopeSelector(content, language string, selector ScopeSelector, docu
 			}
 			return ScopeLineRange{}, ScopeMissing
 		}
-		return selectScopeRole(language, structuredLineScopeAnnotations(content, language, map[int]bool{selector.StartLine: true})[selector.StartLine], selector)
+		return selectScopeRole(nil, structuredLineScopeAnnotations(content, language, map[int]bool{selector.StartLine: true})[selector.StartLine], selector)
 	}
 	return ScopeLineRange{}, ScopeMissing
 }
 
-func selectScopeRole(language string, annotation LineScopeAnnotation, selector ScopeSelector) (ScopeLineRange, ScopeSelectionStatus) {
+func selectScopeRole(adapter languageAdapter, annotation LineScopeAnnotation, selector ScopeSelector) (ScopeLineRange, ScopeSelectionStatus) {
 	var selected *ScopeLineRange
 	for _, span := range []*ScopeLineRange{annotation.Nearest, annotation.Scope} {
-		if span == nil || !scopeSelectorKindMatches(language, nativeScopeKind(language, span.Kind), selector.Kind) || selector.StartLine < span.StartLine || selector.StartLine > span.EndLine {
+		if span == nil || !scopeSelectorMatches(adapter, span.Kind, selector.Kind) || selector.StartLine < span.StartLine || selector.StartLine > span.EndLine {
 			continue
 		}
 		if selector.Exact && (span.StartLine != selector.StartLine || span.EndLine != selector.EndLine) {
@@ -98,7 +98,9 @@ func selectScopeRole(language string, annotation LineScopeAnnotation, selector S
 	if selected == nil {
 		return ScopeLineRange{}, ScopeMissing
 	}
-	selected.Kind = nativeScopeKind(language, selected.Kind)
+	if adapter != nil {
+		selected.Kind = adapter.ScopeSelectorKind(selected.Kind)
+	}
 	return *selected, ScopeVerified
 }
 
@@ -122,14 +124,14 @@ func codeExactScope(document *Document, selector ScopeSelector) (ScopeLineRange,
 			if r.Start.Line > selector.StartLine || end < selector.EndLine {
 				continue
 			}
-			kind := scopeKindForNode(node)
-			language := effectiveScopeLanguage(node)
-			if current.depth > 1 && !node.IsError() && !node.IsMissing() && !node.HasError() && r.Start.Line == selector.StartLine && end == selector.EndLine && scopeSelectorKindMatches(language, nativeScopeKind(language, kind), selector.Kind) {
+			classification := scopeClassificationForNode(node)
+			adapter := scopeAdapterForNode(node)
+			if current.depth > 1 && !node.IsError() && !node.IsMissing() && !node.HasError() && r.Start.Line == selector.StartLine && end == selector.EndLine && classification.Kind != "" && scopeSelectorMatches(adapter, classification.Kind, selector.Kind) {
 				if found && depth == current.depth && column != r.Start.Column {
 					ambiguous = true
 				}
 				found, column, depth = true, r.Start.Column, current.depth
-				result = ScopeLineRange{Kind: nativeScopeKind(language, kind), StartLine: selector.StartLine, EndLine: selector.EndLine}
+				result = ScopeLineRange{Kind: adapter.ScopeSelectorKind(classification.Kind), StartLine: selector.StartLine, EndLine: selector.EndLine}
 			}
 			if injected := node.raw.injectionRoot(); injected != nil {
 				stack = append(stack, scopeWalkItem{viewWalkItem: viewWalkItem{node: ViewNode{view: node.view, raw: injected}, depth: current.depth + 1}, injected: true})

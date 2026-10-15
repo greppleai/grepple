@@ -56,3 +56,15 @@ func (*cppLanguage) ScopeKind(nodeType string) string {
 	}
 	return ""
 }
+
+func (language *cppLanguage) ScopeClassification(node ViewNode) ScopeClassification {
+	kind := language.ScopeKind(node.Kind())
+	if node.Kind() == "function_definition" && scopeMemberAncestor(node, language.ScopeKind) {
+		kind = "method"
+	}
+	return standardScopeClassification(kind)
+}
+
+func (*cppLanguage) ScopeSelectorKind(role string) string {
+	return functionSelectorKind(role, "function", false)
+}

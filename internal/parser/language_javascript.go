@@ -74,3 +74,15 @@ func (*javaScriptLanguage) ScopeKind(nodeType string) string {
 	}
 	return ""
 }
+
+func (language *javaScriptLanguage) ScopeClassification(node ViewNode) ScopeClassification {
+	kind := language.ScopeKind(node.Kind())
+	if node.Kind() == "function_declaration" && scopeMemberAncestor(node, language.ScopeKind) {
+		kind = "method"
+	}
+	return standardScopeClassification(kind)
+}
+
+func (*javaScriptLanguage) ScopeSelectorKind(role string) string {
+	return functionSelectorKind(role, "function", false)
+}

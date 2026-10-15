@@ -112,3 +112,10 @@ func (*cssLanguage) ScopeKind(nodeType string) string {
 	}
 	return ""
 }
+
+func (language *cssLanguage) ScopeClassification(node ViewNode) ScopeClassification {
+	kind := language.ScopeKind(node.Kind())
+	return ScopeClassification{Kind: kind, Navigable: kind == "rule"}
+}
+
+func (*cssLanguage) ScopeSelectorKind(role string) string { return role }

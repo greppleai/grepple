@@ -123,3 +123,23 @@ func (*rustLanguage) ScopeKind(nodeType string) string {
 	}
 	return ""
 }
+
+func (language *rustLanguage) ScopeClassification(node ViewNode) ScopeClassification {
+	kind := language.ScopeKind(node.Kind())
+	if node.Kind() == "function_item" {
+		for parent := node.Parent(); parent.Valid(); parent = parent.Parent() {
+			if parent.Kind() == "impl_item" {
+				kind = "method"
+				break
+			}
+			if parent.Kind() == "function_item" {
+				break
+			}
+		}
+	}
+	return standardScopeClassification(kind)
+}
+
+func (*rustLanguage) ScopeSelectorKind(role string) string {
+	return functionSelectorKind(role, "fn", true)
+}

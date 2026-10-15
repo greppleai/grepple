@@ -119,6 +119,73 @@ type languageAdapter interface {
 	Outline(root *syntaxNode, content string) []Symbol
 	// ScopeKind maps a grammar node type to a normalized scope role; unknown types return "".
 	ScopeKind(nodeType string) string
+	// ScopeClassification applies this adapter's node-context scope policy.
+	ScopeClassification(node ViewNode) ScopeClassification
+	// ScopeSelectorKind maps a normalized role to its stable local selector spelling.
+	ScopeSelectorKind(role string) string
+}
+
+// ScopeClassification preserves normalized annotation roles while recording
+// whether an adapter exposes the node as a navigable scope.
+type ScopeClassification struct {
+	Kind      string
+	Navigable bool
+}
+
+func standardScopeClassification(kind string) ScopeClassification {
+	return ScopeClassification{Kind: kind, Navigable: kind == "func" || kind == "method" || kind == "class" || kind == "struct" || kind == "interface" || kind == "enum" || kind == "snippet"}
+}
+
+func functionSelectorKind(role, function string, trait bool) string {
+	if role == "func" {
+		return function
+	}
+	if trait && role == "interface" {
+		return "trait"
+	}
+	return role
+}
+
+// scopeMemberAncestor is grammar-neutral traversal. The owning adapter chooses
+// which declarations call it and supplies its own grammar vocabulary.
+func scopeMemberAncestor(node ViewNode, scopeKind func(string) string) bool {
+	for parent := node.Parent(); parent.Valid(); parent = parent.Parent() {
+		kind := scopeKind(parent.Kind())
+		if kind == "func" || kind == "method" {
+			return false
+		}
+		if kind == "class" || kind == "struct" || kind == "interface" {
+			return true
+		}
+	}
+	return false
+}
+
+func effectiveScopeLanguage(node ViewNode) string {
+	if node.raw != nil && node.raw.tree != nil && node.raw.tree.language != "" {
+		return node.raw.tree.language
+	}
+	return node.Language()
+}
+
+func scopeAdapterForNode(node ViewNode) languageAdapter {
+	return languageAdapters[effectiveScopeLanguage(node)]
+}
+
+func scopeClassificationForNode(node ViewNode) ScopeClassification {
+	adapter := scopeAdapterForNode(node)
+	if adapter == nil {
+		return ScopeClassification{}
+	}
+	return adapter.ScopeClassification(node)
+}
+
+func scopeSelectorMatches(adapter languageAdapter, role, requested string) bool {
+	actual := role
+	if adapter != nil {
+		actual = adapter.ScopeSelectorKind(role)
+	}
+	return actual == requested || requested == "func" && role == "func"
 }
 
 var languageAdapters = buildLanguageAdapters(

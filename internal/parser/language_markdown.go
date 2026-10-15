@@ -50,3 +50,8 @@ func (language *markdownLanguage) Outline(root *syntaxNode, content string) []Sy
 
 // Markdown headings use the content scope collector, not code scope kinds.
 func (*markdownLanguage) ScopeKind(string) string { return "" }
+func (*markdownLanguage) ScopeClassification(ViewNode) ScopeClassification {
+	return ScopeClassification{}
+}
+
+func (*markdownLanguage) ScopeSelectorKind(role string) string { return role }

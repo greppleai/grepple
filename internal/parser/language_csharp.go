@@ -128,3 +128,9 @@ func (*cSharpLanguage) ScopeKind(nodeType string) string {
 	}
 	return ""
 }
+
+func (language *cSharpLanguage) ScopeClassification(node ViewNode) ScopeClassification {
+	return standardScopeClassification(language.ScopeKind(node.Kind()))
+}
+
+func (*cSharpLanguage) ScopeSelectorKind(role string) string { return role }

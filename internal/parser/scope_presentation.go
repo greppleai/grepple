@@ -64,8 +64,10 @@ func verifiedCodeScopeSelectors(document *Document, wanted map[ScopeCandidate]bo
 			r := node.Range()
 			candidate := ScopeCandidate{StartLine: r.Start.Line, EndLine: inclusiveEndLine(r)}
 			if wanted[candidate] && current.depth > 1 && !node.IsError() && !node.IsMissing() && !node.HasError() {
-				if kind := scopeKindForNode(node); kind != "" {
-					span := ScopeLineRange{Kind: nativeScopeKind(effectiveScopeLanguage(node), kind), StartLine: candidate.StartLine, EndLine: candidate.EndLine}
+				classification := scopeClassificationForNode(node)
+				if classification.Kind != "" {
+					adapter := scopeAdapterForNode(node)
+					span := ScopeLineRange{Kind: adapter.ScopeSelectorKind(classification.Kind), StartLine: candidate.StartLine, EndLine: candidate.EndLine}
 					if prior, found := result[candidate]; found && prior != span {
 						ambiguous[candidate] = true
 					} else {

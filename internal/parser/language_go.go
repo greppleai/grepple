@@ -151,3 +151,16 @@ func (*goLanguage) ScopeKind(nodeType string) string {
 	}
 	return ""
 }
+
+func (language *goLanguage) ScopeClassification(node ViewNode) ScopeClassification {
+	kind := language.ScopeKind(node.Kind())
+	if (node.Kind() == "function_declaration" || node.Kind() == "method_declaration") && node.raw != nil && node.raw.raw != nil {
+		next := node.raw.raw.NextNamedSibling()
+		if next != nil && next.IsError() && next.StartPosition().Row == node.raw.raw.EndPosition().Row {
+			return ScopeClassification{}
+		}
+	}
+	return standardScopeClassification(kind)
+}
+
+func (*goLanguage) ScopeSelectorKind(role string) string { return role }

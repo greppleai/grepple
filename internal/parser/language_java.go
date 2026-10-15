@@ -120,3 +120,9 @@ func (*javaLanguage) ScopeKind(nodeType string) string {
 	}
 	return ""
 }
+
+func (language *javaLanguage) ScopeClassification(node ViewNode) ScopeClassification {
+	return standardScopeClassification(language.ScopeKind(node.Kind()))
+}
+
+func (*javaLanguage) ScopeSelectorKind(role string) string { return role }
