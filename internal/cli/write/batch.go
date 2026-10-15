@@ -7,19 +7,20 @@ import (
 
 const writeHeredocDirective = "::grepple"
 
-func decodeHeredocWriteRequest(content []byte) (writeRequest, *writeFailure) {
+func decodeHeredocWriteRequest(content []byte, inferEnds bool) (writeRequest, *writeFailure) {
 	lines, _, err := writeLogicalLines(content)
 	if err != nil {
 		return writeRequest{}, newWriteFailure("invalid_request", fmt.Sprintf("decode heredoc request: %v", err), "", nil)
 	}
-	decoder := writeHeredocDecoder{lines: lines, request: writeRequest{Schema: writeSchema, Files: []writeRequestFile{}}, current: -1}
+	decoder := writeHeredocDecoder{lines: lines, inferEnds: inferEnds, request: writeRequest{Schema: writeSchema, Files: []writeRequestFile{}}, current: -1}
 	return decoder.decode()
 }
 
 type writeHeredocDecoder struct {
-	lines   []string
-	request writeRequest
-	current int
+	lines     []string
+	inferEnds bool
+	request   writeRequest
+	current   int
 }
 
 func (decoder *writeHeredocDecoder) decode() (writeRequest, *writeFailure) {
@@ -83,9 +84,12 @@ func (decoder *writeHeredocDecoder) addReplace(index int, arguments string) (int
 	if err != nil {
 		return 0, decoder.failure(index+1, err.Error())
 	}
-	body, next, failure := readWriteHeredocBody(decoder.lines, index+1, marker, file.Path)
+	body, next, warning, failure := readWriteHeredocBody(decoder.lines, index+1, marker, file.Path, decoder.inferEnds)
 	if failure != nil {
 		return 0, failure
+	}
+	if warning != nil {
+		decoder.request.warnings = append(decoder.request.warnings, *warning)
 	}
 	file.Changes = append(file.Changes, writeChange{HashRangeInclusive: []string{start, end}, ContentLines: body})
 	return next, nil
@@ -103,9 +107,12 @@ func (decoder *writeHeredocDecoder) addCreate(index int, arguments string) (int,
 	if err != nil {
 		return 0, decoder.failure(index+1, err.Error())
 	}
-	body, next, failure := readWriteHeredocBody(decoder.lines, index+1, marker, file.Path)
+	body, next, warning, failure := readWriteHeredocBody(decoder.lines, index+1, marker, file.Path, decoder.inferEnds)
 	if failure != nil {
 		return 0, failure
+	}
+	if warning != nil {
+		decoder.request.warnings = append(decoder.request.warnings, *warning)
 	}
 	file.Operation = "create"
 	file.ContentLines = body
@@ -198,19 +205,53 @@ func parseWriteHeredocMarkerFields(fields []string) (string, error) {
 	return fields[1], nil
 }
 
-func readWriteHeredocBody(lines []string, start int, marker, path string) ([]string, int, *writeFailure) {
+func readWriteHeredocBody(lines []string, start int, marker, path string, inferEnds bool) ([]string, int, *writeWarning, *writeFailure) {
 	terminator := writeHeredocDirective + " end"
 	if marker != "" {
 		terminator += " " + marker
 	}
 	for index := start; index < len(lines); index++ {
-		if lines[index] != terminator {
-			continue
+		if lines[index] == terminator {
+			body := append([]string{}, lines[start:index]...)
+			return body, index + 1, nil, nil
 		}
-		body := append([]string{}, lines[start:index]...)
-		return body, index + 1, nil
+		if marker == "" && inferEnds && recoverableWriteHeredocDirective(lines[index]) {
+			body := append([]string{}, lines[start:index]...)
+			return body, index, &writeWarning{Code: "inferred_heredoc_end", Message: fmt.Sprintf("inferred missing ::grepple end before heredoc line %d", index+1), Path: path, Line: index + 1}, nil
+		}
 	}
-	return nil, 0, writeHeredocFailure(start+1, path, fmt.Sprintf("literal body is missing terminator %q", terminator))
+	if marker == "" {
+		end := len(lines)
+		if end > start && lines[end-1] == "" {
+			end--
+		}
+		body := append([]string{}, lines[start:end]...)
+		return body, len(lines), &writeWarning{Code: "inferred_heredoc_end", Message: "inferred missing ::grepple end at end of input", Path: path, Line: end + 1}, nil
+	}
+	return nil, 0, nil, writeHeredocFailure(start+1, path, fmt.Sprintf("literal body is missing terminator %q", terminator))
+}
+
+func recoverableWriteHeredocDirective(line string) bool {
+	command, arguments, ok := parseWriteHeredocDirective(line)
+	if !ok {
+		return false
+	}
+	switch command {
+	case "file":
+		return arguments != ""
+	case "replace":
+		_, _, _, err := parseWriteHeredocReplace(arguments)
+		return err == nil
+	case "create":
+		_, err := parseWriteHeredocMarker(arguments)
+		return err == nil
+	case "delete":
+		return len(strings.Fields(arguments)) == 1
+	case "end":
+		return arguments == ""
+	default:
+		return false
+	}
 }
 
 func currentWriteHeredocPath(request writeRequest, current int) string {
