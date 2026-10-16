@@ -1,9 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
 import { chmod, mkdtemp, mkdir, readFile, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
-import { assetFor, expectedDigest, install } from './install-cli.mjs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { assetFor, expectedDigest, install, readinessMessage } from './install-cli.mjs';
+
+const startup = join(dirname(fileURLToPath(import.meta.url)), 'install-cli.mjs');
+const stubCLI = active => `#!/bin/sh\ncase "$1" in\n  --version) echo "grepple 0.0.6" ;;\n  claude-grep-guard) ${active ? `echo '{"hookSpecificOutput":{"permissionDecision":"deny"}}'` : 'exit 2'} ;;\n  *) exit 2 ;;\nesac\n`;
 
 test('release asset names match supported platforms only', () => {
   for (const [platform, arch, expected] of [
@@ -42,13 +47,58 @@ test('existing plugin-private CLI persists PATH without a download', async t => 
     const env = join(root, 'session.env');
     await writeFile(env, 'export TEST=one\n');
     process.env.CLAUDE_ENV_FILE = env;
-    await install(root);
+    const status = await install(root);
+    assert.deepEqual(status, { cliSource: 'plugin data', guardSource: 'plugin data' });
     const text = await readFile(env, 'utf8');
     assert.match(text, /^export TEST=one\nexport PATH=".*\/bin:\$PATH"\n$/);
   } finally {
     process.env.PATH = previousPath;
     if (previous === undefined) delete process.env.CLAUDE_ENV_FILE;
     else process.env.CLAUDE_ENV_FILE = previous;
+    await rm(root, { recursive: true, force: true });
+  }
+});
+test('startup reports active, inactive, and plugin-private fallback without replacing PATH CLI', async t => {
+  if (process.platform === 'win32') { t.skip('shell stubs are Unix-only'); return; }
+  const root = await mkdtemp(join(tmpdir(), 'grepple-claude-status-'));
+  const previousPath = process.env.PATH;
+  const system = join(root, 'system');
+  const privateBin = join(root, 'bin');
+  try {
+    await mkdir(system);
+    await mkdir(privateBin);
+    const pathCLI = join(system, 'grepple');
+    const privateCLI = join(privateBin, 'grepple');
+    process.env.PATH = `${system}:/usr/bin:/bin`;
+    await writeFile(pathCLI, stubCLI(false));
+    await chmod(pathCLI, 0o755);
+
+    const inactive = await install(root);
+    assert.deepEqual(inactive, { cliSource: 'PATH', guardSource: null });
+    assert.match(readinessMessage(inactive), /grep guard OFF.*update the CLI/);
+
+    await writeFile(privateCLI, stubCLI(true));
+    await chmod(privateCLI, 0o755);
+    const fallback = await install(root);
+    assert.deepEqual(fallback, { cliSource: 'PATH', guardSource: 'plugin data' });
+    assert.match(readinessMessage(fallback), /active via plugin data.*update it/);
+    assert.equal(await readFile(pathCLI, 'utf8'), stubCLI(false));
+
+    await writeFile(pathCLI, stubCLI(true));
+    const active = await install(root);
+    assert.deepEqual(active, { cliSource: 'PATH', guardSource: 'PATH' });
+    assert.match(readinessMessage(active), /grep guard active.*grepple tree --depth 1/);
+    const session = spawnSync(process.execPath, [startup, root], { encoding: 'utf8', env: { ...process.env, CLAUDE_PLUGIN_DATA: root } });
+    assert.equal(session.status, 0);
+    assert.equal(session.stdout.trim().split('\n').length, 1);
+    assert.match(session.stdout, /grep guard active/);
+
+    const failure = spawnSync(process.execPath, [startup, 'relative'], { encoding: 'utf8', env: { ...process.env, CLAUDE_PLUGIN_DATA: '' } });
+    assert.equal(failure.status, 0); // Startup failure must still reach Claude as context.
+    assert.match(failure.stdout, /CLI setup failed; grep guard readiness unknown/);
+    assert.match(failure.stderr, /absolute plugin data directory/);
+  } finally {
+    process.env.PATH = previousPath;
     await rm(root, { recursive: true, force: true });
   }
 });

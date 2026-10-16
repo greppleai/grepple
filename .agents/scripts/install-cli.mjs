@@ -94,17 +94,29 @@ async function persistPath(binDir) {
   await appendFile(process.env.CLAUDE_ENV_FILE, `export PATH="${escaped}:$PATH"\n`);
 }
 
+export function readinessMessage({ cliSource, guardSource }) {
+  let guard = 'grep guard active';
+  if (!guardSource) guard = 'grep guard OFF (no available CLI supports claude-grep-guard; update the CLI)';
+  else if (cliSource === 'PATH' && guardSource === 'plugin data') {
+    guard = 'grep guard active via plugin data; the PATH CLI lacks guard support, so update it';
+  }
+  return `Grepple: CLI ready (${cliSource}); ${guard}. For local repository discovery start with grepple tree --depth 1, then focused Grepple search (-F for literals; --line-only for matching lines).`;
+}
+
 export async function install(dataDir) {
   if (!dataDir || !isAbsolute(dataDir)) throw new Error('an absolute plugin data directory is required');
   const binDir = join(dataDir, 'bin');
   const binary = join(binDir, process.platform === 'win32' ? 'grepple.exe' : 'grepple');
-  if (workingCLI('grepple')) return; // Never override a working user-managed CLI.
+  if (workingCLI('grepple')) { // Never replace a working user-managed CLI.
+    const guardSource = supportsGuard('grepple') ? 'PATH' : (existsSync(binary) && supportsGuard(binary) ? 'plugin data' : null);
+    return { cliSource: 'PATH', guardSource };
+  }
   if (existsSync(binDir) && !(await lstat(binDir)).isDirectory()) throw new Error('plugin bin directory is not a regular directory');
   if (existsSync(binary)) {
     if (!(await lstat(binary)).isFile()) throw new Error('plugin CLI is not a regular file');
     if (!workingCLI(binary)) throw new Error('existing plugin CLI cannot start; remove its bin directory to reinstall');
     await persistPath(binDir);
-    return;
+    return { cliSource: 'plugin data', guardSource: supportsGuard(binary) ? 'plugin data' : null };
   }
   const platform = process.platform, arch = process.arch;
   assetFor(platform, arch, 'v0.0.0'); // Fail unsupported platforms before network access.
@@ -125,9 +137,14 @@ export async function install(dataDir) {
     if (!existsSync(binary)) await rename(stagedBinary, binary);
   } finally { await rm(stage, { recursive: true, force: true }); }
   await persistPath(binDir);
-  if (!supportsGuard(binary)) console.error('Grepple CLI installed; grep guard needs the next release with claude-grep-guard support.');
+  return { cliSource: 'plugin data', guardSource: supportsGuard(binary) ? 'plugin data' : null };
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
-  install(process.env.CLAUDE_PLUGIN_DATA || process.argv[2]).catch(error => { console.error(`Grepple plugin setup: ${error.message}`); process.exitCode = 1; });
+  install(process.env.CLAUDE_PLUGIN_DATA || process.argv[2])
+    .then(status => { console.log(readinessMessage(status)); })
+    .catch(error => {
+      console.error(`Grepple plugin setup: ${error.message}`);
+      console.log('Grepple: CLI setup failed; grep guard readiness unknown (hook fails open). Check Grepple installation before relying on the guard.');
+    });
 }
