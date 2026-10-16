@@ -7,20 +7,20 @@ import (
 
 const writeHeredocDirective = "::grepple"
 
-func decodeHeredocWriteRequest(content []byte, inferEnds bool) (writeRequest, *writeFailure) {
+func decodeHeredocWriteRequest(content []byte) (writeRequest, *writeFailure) {
 	lines, _, err := writeLogicalLines(content)
 	if err != nil {
 		return writeRequest{}, newWriteFailure("invalid_request", fmt.Sprintf("decode heredoc request: %v", err), "", nil)
 	}
-	decoder := writeHeredocDecoder{lines: lines, inferEnds: inferEnds, request: writeRequest{Schema: writeSchema, Files: []writeRequestFile{}}, current: -1}
+	decoder := writeHeredocDecoder{lines: lines, request: writeRequest{Schema: writeSchema, Files: []writeRequestFile{}}, current: -1}
+	return decoder.decode()
 	return decoder.decode()
 }
 
 type writeHeredocDecoder struct {
-	lines     []string
-	inferEnds bool
-	request   writeRequest
-	current   int
+	lines   []string
+	request writeRequest
+	current int
 }
 
 func (decoder *writeHeredocDecoder) decode() (writeRequest, *writeFailure) {
@@ -84,7 +84,7 @@ func (decoder *writeHeredocDecoder) addReplace(index int, arguments string) (int
 	if err != nil {
 		return 0, decoder.failure(index+1, err.Error())
 	}
-	body, next, warning, failure := readWriteHeredocBody(decoder.lines, index+1, marker, file.Path, decoder.inferEnds)
+	body, next, warning, failure := readWriteHeredocBody(decoder.lines, index+1, marker, file.Path)
 	if failure != nil {
 		return 0, failure
 	}
@@ -107,7 +107,7 @@ func (decoder *writeHeredocDecoder) addCreate(index int, arguments string) (int,
 	if err != nil {
 		return 0, decoder.failure(index+1, err.Error())
 	}
-	body, next, warning, failure := readWriteHeredocBody(decoder.lines, index+1, marker, file.Path, decoder.inferEnds)
+	body, next, warning, failure := readWriteHeredocBody(decoder.lines, index+1, marker, file.Path)
 	if failure != nil {
 		return 0, failure
 	}
@@ -205,7 +205,7 @@ func parseWriteHeredocMarkerFields(fields []string) (string, error) {
 	return fields[1], nil
 }
 
-func readWriteHeredocBody(lines []string, start int, marker, path string, inferEnds bool) ([]string, int, *writeWarning, *writeFailure) {
+func readWriteHeredocBody(lines []string, start int, marker, path string) ([]string, int, *writeWarning, *writeFailure) {
 	terminator := writeHeredocDirective + " end"
 	if marker != "" {
 		terminator += " " + marker
@@ -215,7 +215,7 @@ func readWriteHeredocBody(lines []string, start int, marker, path string, inferE
 			body := append([]string{}, lines[start:index]...)
 			return body, index + 1, nil, nil
 		}
-		if marker == "" && inferEnds && recoverableWriteHeredocDirective(lines[index]) {
+		if marker == "" && recoverableWriteHeredocDirective(lines[index]) {
 			body := append([]string{}, lines[start:index]...)
 			return body, index, &writeWarning{Code: "inferred_heredoc_end", Message: fmt.Sprintf("inferred missing ::grepple end before heredoc line %d", index+1), Path: path, Line: index + 1}, nil
 		}
