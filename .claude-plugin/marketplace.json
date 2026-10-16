@@ -1,0 +1,14 @@
+{
+  "name": "grepple",
+  "description": "Grepple skills for Claude Code",
+  "owner": {
+    "name": "Grepple"
+  },
+  "plugins": [
+    {
+      "name": "grepple",
+      "source": "./.agents",
+      "description": "Grepple skills, first-session CLI download, and grep guard hooks"
+    }
+  ]
+}

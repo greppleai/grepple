@@ -4,7 +4,7 @@ Machine-readable output for tooling, plus how to page through large result sets.
 
 ## Compact JSON matches (`--json-matches`)
 
-`--json-matches` returns just the matching lines as structured data:
+`--json-matches` returns matching lines plus scope, paging, limits, omissions, and diagnostics as structured data:
 
 ```bash
 grepple --json-matches "ERROR" sample-files/server.log
@@ -18,7 +18,42 @@ grepple --json-matches "ERROR" sample-files/server.log
       "path": "sample-files/server.log",
       "text": "2026-08-31T09:16:03Z ERROR upstream timeout path=/index status=504"
     }
-  ]
+  ],
+  "metadata": {
+    "scope": {
+      "mode": "local",
+      "paths": [
+        "sample-files/server.log"
+      ],
+      "excludedPaths": [],
+      "repositories": [],
+      "excludedRepositories": [],
+      "languages": []
+    },
+    "order": "path",
+    "page": {
+      "skip": 0,
+      "limit": 20,
+      "returned": 1,
+      "total": 1,
+      "complete": true
+    },
+    "limits": {
+      "maxFiles": 0,
+      "maxOutputBytes": 16384,
+      "maxSourceBytes": 0,
+      "maxTotalBytes": 0,
+      "jsonByteUncapped": true
+    },
+    "omitted": {
+      "files": 0,
+      "segments": 0,
+      "sources": 0,
+      "findings": 0,
+      "bytes": 0
+    },
+    "diagnostics": []
+  }
 }
 ```
 

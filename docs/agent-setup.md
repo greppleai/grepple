@@ -6,6 +6,9 @@ name. Grepple must be on the agent's PATH; this command installs instructions an
 supporting documents, not the agent itself, hooks, extensions, or MCP servers.
 It never edits agent settings, tools, instructions files, or credentials.
 
+Claude Code users can alternatively install the [Grepple plugin](#claude-code-plugin)
+from its marketplace; it uses the same source-owned skills, without running `grepple setup`.
+
 ## Locations
 
 | Agent | Default user skills | `--project` skills under the current directory |
@@ -28,6 +31,71 @@ grepple setup codex --dry-run
 grepple setup --agent claude --project
 grepple setup --list
 ```
+
+## Claude Code plugin
+
+The plugin provides eight skills and two hooks. It requires Node.js 18+ on Claude
+Code's PATH (including native Claude Code installations) to run the hooks.
+In Claude Code 2.1.275 or later, one command in a Claude Code session registers
+this repository's marketplace and installs its `grepple` plugin:
+
+```text
+/plugin install grepple --marketplace greppleai/grepple
+```
+
+For older Claude Code versions, register the marketplace and install separately
+from a shell (or use the equivalent `/plugin marketplace add` and `/plugin install`
+commands inside Claude Code):
+
+```sh
+claude plugin marketplace add greppleai/grepple
+claude plugin install grepple@grepple
+```
+
+After installation, start or reload a Claude Code session. The `SessionStart`
+hook checks for a working `grepple` on PATH. If absent, it downloads the **latest
+published release** for Linux/macOS amd64 or arm64, or Windows amd64. It selects
+the platform archive, checks SHA-256 against `checksums.txt`, rejects unexpected
+archive members, and installs into `${CLAUDE_PLUGIN_DATA}/bin` without replacing
+your existing binary, changing shell profiles, or requiring sudo. On Unix and
+Windows Git Bash, it adds that directory to Claude's Bash-tool PATH via
+`CLAUDE_ENV_FILE`. It does not install the CLI during `claude plugin install`:
+SessionStart is the earliest supported automatic hook. Windows PowerShell tool
+sessions do not inherit this Bash PATH adjustment; add the installed directory
+to your PATH separately. Windows extraction uses PowerShell; Git Bash's
+`cygpath` is needed for the Bash PATH adjustment. Unsupported platforms or
+failed downloads leave the session unchanged and report an error. Run
+`grepple --version` in Claude's shell to check readiness.
+
+A `PreToolUse` hook denies the built-in Grep/Glob tools and shell invocations of
+`grep`, `rg`, `find`, `fd`, `ag`, `ack`, `locate`, and their variants. It returns
+Grepple alternatives; ordinary shell arguments and quoted data are not blocked.
+For a genuinely necessary shell exception append `# grep-guard:allow` to the
+command. The guard fails open if its CLI cannot run. **The published CLI must
+include `claude-grep-guard`** for this hook to enforce anything: older binaries
+will leave the guard inactive until a new release is published. Plugin updates
+do not silently upgrade an existing working CLI; keep CLI and plugin versions
+aligned. If you prefer no automatic executable download or command blocking,
+use `grepple setup claude` instead of the plugin.
+
+Check `/plugin` and try `/grepple:grepple-local-grep-and-search`. Claude can
+also select skills automatically. The marketplace lives at
+`.claude-plugin/marketplace.json`; its source is `./.agents`, whose manifest is
+`.agents/.claude-plugin/plugin.json`. All eight canonical
+`.agents/skills/grepple-*/SKILL.md` files are discovered without duplicate skill
+copies. To test a local checkout without registering a marketplace, run
+`claude --plugin-dir /path/to/grepple/.agents`. Maintainers can run
+`claude plugin validate .` and `claude plugin validate .agents` from the checkout.
+
+Use either the plugin **or** `grepple setup claude`, not both: they expose the same
+skills through different installation paths and can duplicate names. The plugin
+follows the marketplace revision; `grepple setup claude` pins skills to the exact
+CLI release and validates the checksums. Update the CLI and plugin together when
+commands change. The plugin manifest intentionally omits a fixed version so
+Claude Code uses the marketplace Git revision for updates (its validator notes
+the missing version as a warning). To try an unpublished local marketplace, use
+`claude plugin marketplace add /path/to/grepple` before
+`claude plugin install grepple@grepple`; this affects your Claude Code settings.
 
 ## Version compatibility
 
@@ -102,6 +170,11 @@ different command contract.
    migration, retirement, conflict preservation, cancellation and rollback.
 5. Publish the catalog, ownership registry and skills in the **same immutable tag**
    as the binary. Never publish a binary that points to a different skill revision.
+6. Before publishing plugin hooks that depend on new CLI commands, ship a CLI
+   release with those commands. Plugin users with an older working CLI must
+   upgrade it explicitly; otherwise the guard fails open. `make test` runs
+   both Go and Node.js hook tests, and `claude plugin validate .agents` checks
+   the Claude plugin manifest and hook metadata.
 
 Harness discovery references: [Pi skills](https://github.com/badlogic/pi-mono/blob/main/packages/coding-agent/docs/skills.md),
 [Claude Code skills](https://code.claude.com/docs/en/skills),

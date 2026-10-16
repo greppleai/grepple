@@ -1,0 +1,8 @@
+{
+  "name": "grepple",
+  "description": "Grepple skills with a verified CLI download on first session and grep guard hooks for Claude Code.",
+  "author": {
+    "name": "Grepple"
+  },
+  "repository": "https://github.com/greppleai/grepple"
+}

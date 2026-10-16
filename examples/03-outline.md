@@ -1,8 +1,6 @@
 # Outlines (`--outline` / `-O`)
 
-`--outline` prints a file's structure instead of searching it. Output is
-`START-END<TAB>KIND<TAB>NAME`, with nested members indented under their container.
-It is a cheap way to orient in an unfamiliar or large file.
+`--outline` prints a file's declaration hierarchy. Parser-verified local rows have a reusable `NAME @KIND:START-END` selector; other rows keep `START-END<TAB>KIND<TAB>NAME`. Nested members are indented. JSON outlines remain structured and do not include these human selectors.
 
 ## Go symbols
 
@@ -12,11 +10,11 @@ grepple -O sample-files/server.go
 
 ```text
 sample-files/server.go	go
-9-12	struct	Config
-15-18	struct	Server
-21-23	func	NewServer
-26-28	method	(*Server).Handle
-31-38	method	(*Server).ListenAndServe
+Config @struct:9-12
+Server @struct:15-18
+NewServer @func:21-23
+(*Server).Handle @method:26-28
+(*Server).ListenAndServe @method:31-38
 ```
 
 Go methods appear at top level as `(*Type).Method`, in source order.
@@ -30,7 +28,7 @@ grepple -O sample-files/Button.tsx
 ```text
 sample-files/Button.tsx	tsx
 3-6	type	ButtonProps
-8-21	function	Button
+Button @function:8-21
 ```
 
 ## Java symbols
@@ -44,13 +42,13 @@ grepple -O sample-files/Order.java
 
 ```text
 sample-files/Order.java	java
-5-25	class	Order
+Order @class:5-25
   6-6	record	LineItem
   8-8	field	id
   9-9	field	items
-  11-14	constructor	Order
-  16-20	method	total
-  22-24	method	describe
+  Order @method:11-14
+  total @method:16-20
+  describe @method:22-24
 ```
 
 ## Kotlin symbols
@@ -64,17 +62,16 @@ grepple -O sample-files/Inventory.kt
 
 ```text
 sample-files/Inventory.kt	kotlin
-3-3	class	Product
-5-19	class	Inventory
-  6-7	fun	find
-  9-15	fun	restock
-  17-18	fun	lowStock
+Product @class:3-3
+Inventory @class:5-19
+  find @method:6-7
+  restock @method:9-15
+  lowStock @method:17-18
 ```
 
 ## JSON key/type tree
 
-For JSON and YAML the outline is a key skeleton with **values omitted** — only keys and
-types. Arrays show their length as `[N]`.
+For JSON and YAML the outline is a key skeleton with **values omitted** — only keys and types. Arrays show their length as `[N]`; verified objects, arrays, mappings, and sequences can also have selectors.
 
 ```bash
 grepple -O sample-files/config.json
@@ -90,7 +87,7 @@ sample-files/config.json	json
   7-9	object	tls
     8-8	bool	enabled
     9-9	string	minVersion
-12-12	array	features [3]
+features [3] @array:12-12
 13-15	object	limits
   14-14	number	maxFiles
   15-15	number	timeoutSeconds
@@ -109,7 +106,7 @@ sample-files/config.json	json
 2-2	string	name
 3-3	string	version
 4-9	object	server
-12-12	array	features [3]
+features [3] @array:12-12
 13-15	object	limits
 ```
 
@@ -124,57 +121,51 @@ grepple -O sample-files/values.yaml
 
 ```text
 sample-files/values.yaml	yaml
-3-9	object	image
+image @mapping:3-9
   4-4	string	repository
   5-5	string	tag
   6-6	string	pullPolicy
-  7-9	array	pullSecrets [2]
-    8-8	object	[0]
-      8-8	string	name
-    9-9	object	[1]
-      9-9	string	name
-10-16	object	service
+  pullSecrets [2] @sequence:7-9
+    [0] @mapping:8-8
+      name @mapping:8-8
+    [1] @mapping:9-9
+      name @mapping:9-9
+service @mapping:10-16
   11-11	string	type
   12-12	number	port
-  13-16	object	annotations
+  annotations @mapping:13-16
     14-14	string	prometheus.io/scrape
     15-15	string	prometheus.io/path
     16-16	string	prometheus.io/port
-17-23	object	resources
-  18-20	object	requests
+resources @mapping:17-23
+  requests @mapping:18-20
     19-19	string	cpu
     20-20	string	memory
-  21-23	object	limits
+  limits @mapping:21-23
     22-22	string	cpu
     23-23	string	memory
-24-28	object	autoscaling
+autoscaling @mapping:24-28
   25-25	bool	enabled
   26-26	number	minReplicas
   27-27	number	maxReplicas
   28-28	number	targetCPUUtilizationPercentage
-29-33	object	persistence
+persistence @mapping:29-33
   30-30	bool	enabled
   31-31	string	storageClass
   32-32	string	size
   33-33	string	mountPath
-34-37	object	env
+env @mapping:34-37
   35-35	string	logLevel
   36-36	string	cacheDir
   37-37	string	extraFlags
-38-40	object	nodeSelector
+nodeSelector @mapping:38-40
   39-39	string	kubernetes.io/os
   40-40	string	node.example.com/pool
 ```
 
-## Tiny files are dumped whole
+## Deployment YAML outline
 
-For a very small file the structural outline can be *larger* than the file
-itself (more line-range/kind/name rows than there are source lines). In that case
-`--outline` skips the map and prints the raw file — same `path\tlanguage` header,
-then the contents — so you never pay more tokens than just reading the file.
-
-`deployment.yaml` is small enough to trigger this (its 24 lines outline to ~30
-rows), so `grepple -O` returns the file as-is:
+The 46-line deployment fixture has nested metadata and security settings. Its outline includes verified mapping and sequence selectors along with ordinary scalar rows:
 
 ```bash
 grepple -O sample-files/deployment.yaml
@@ -182,35 +173,57 @@ grepple -O sample-files/deployment.yaml
 
 ```text
 sample-files/deployment.yaml	yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: grepple-shard
-  labels:
-    app: grepple
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: grepple
-  template:
-    metadata:
-      labels:
-        app: grepple
-    spec:
-      containers:
-        - name: shard
-          image: grepple/shard:1.4.0
-          ports:
-            - containerPort: 8080
-          env:
-            - name: LOG_LEVEL
-              value: info
+1-1	string	apiVersion
+2-2	string	kind
+metadata @mapping:3-6
+  4-4	string	name
+  labels @mapping:5-6
+    6-6	string	app
+spec @mapping:7-46
+  8-8	number	replicas
+  selector @mapping:9-11
+    matchLabels @mapping:10-11
+      11-11	string	app
+  template @mapping:12-46
+    metadata @mapping:13-15
+      labels @mapping:14-15
+        15-15	string	app
+    spec @mapping:16-46
+      securityContext @mapping:17-25
+        18-18	bool	runAsNonRoot
+        19-19	number	runAsUser
+        20-20	number	runAsGroup
+        21-21	number	fsGroup
+        seccompProfile @mapping:22-23
+          23-23	string	type
+        appArmorProfile @mapping:24-25
+          25-25	string	type
+      containers [1] @sequence:26-46
+        [0] @mapping:27-46
+          27-27	string	name
+          28-28	string	image
+          ports [1] @sequence:29-30
+            [0] @mapping:30-30
+              containerPort @mapping:30-30
+          env [1] @sequence:31-33
+            [0] @mapping:32-33
+              32-32	string	name
+              33-33	string	value
+          securityContext @mapping:34-46
+            35-35	bool	runAsNonRoot
+            36-36	number	runAsUser
+            37-37	bool	allowPrivilegeEscalation
+            38-38	bool	readOnlyRootFilesystem
+            39-39	bool	privileged
+            capabilities @mapping:40-42
+              drop [1] @sequence:41-42
+            seccompProfile @mapping:43-44
+              44-44	string	type
+            appArmorProfile @mapping:45-46
+              46-46	string	type
 ```
 
-> The comparison is per file and byte-based, so in a multi-file `--outline` run
-> some files come back as compact maps and tiny ones come back whole. `--json`
-> output is unaffected — it always returns the structured symbols.
+> Human `--outline` retains selectable rows instead of falling back to raw file content, even for a small file. `--json` always returns structured symbols without human selector strings.
 
 ## Markdown heading outline
 
@@ -223,8 +236,8 @@ grepple -O sample-files/guide.md
 ```text
 sample-files/guide.md	markdown
 1-20	h1	Search Guide
-  5-12	h2	Configuration
-    9-12	h3	TLS
+  Configuration @section:5-12
+    TLS @section:9-12
   13-20	h2	Querying
     17-20	h3	Limits
 ```

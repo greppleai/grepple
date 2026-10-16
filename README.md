@@ -42,21 +42,17 @@ The verified form checks the current kind and both bounds; `--at FILE:START-END`
 
 ### Published CLI (Linux/macOS)
 
-The command below downloads and runs the [installer](install.sh); inspect the script separately first if you prefer:
+Install the latest published CLI with one command (review [the script](install.sh) first if you prefer):
 
 ```sh
-(
-  installer="$(mktemp)" || exit
-  trap 'rm -f "$installer"' EXIT
-  curl -fsSL --proto '=https' --proto-redir '=https' \
-    https://raw.githubusercontent.com/greppleai/grepple/main/install.sh -o "$installer" &&
-  sh "$installer"
-) &&
-export PATH="$HOME/.local/bin:$PATH" &&
-grepple --version
+curl -fsSL https://raw.githubusercontent.com/greppleai/grepple/main/install.sh | sh
 ```
 
-The [installer](install.sh) chooses Linux/macOS amd64 or arm64, verifies the release archive against its published SHA-256 checksum, and places the binary in `~/.local/bin`. It needs `curl`, `tar`, and `sha256sum` or `shasum`; it does not edit your shell profile. Add the PATH line above to your profile for future shells. Use `sh install.sh --bin-dir /your/bin` to choose another destination. Windows binaries are available from [GitHub Releases](https://github.com/greppleai/grepple/releases).
+Verify it directly at its installation path with `$HOME/.local/bin/grepple --version`.
+
+The [installer](install.sh) chooses Linux/macOS amd64 or arm64, checks the release archive's SHA-256, and installs to `~/.local/bin`. It needs `curl`, `tar`, and `sha256sum` or `shasum`. It never changes your shell profile; add `~/.local/bin` to your PATH for future shells. Windows binaries are on [GitHub Releases](https://github.com/greppleai/grepple/releases).
+
+For a custom destination, append `-s -- --bin-dir /your/bin` after `sh`. A `curl | sh` pipeline can mask download errors; if you need a reliable exit status, run `bash -o pipefail -c 'curl -fsSL https://raw.githubusercontent.com/greppleai/grepple/main/install.sh | sh'` instead.
 
 ### Build from source
 
@@ -73,12 +69,22 @@ make build
 
 ## For coding agents
 
+Claude Code users: install [Node.js 18+](https://nodejs.org/) for plugin hooks, then in a Claude Code session run:
+
+```text
+/plugin install grepple --marketplace greppleai/grepple
+```
+
+This adds the Grepple marketplace and eight source-owned skills (Claude Code 2.1.275+). On the next session start, a hook uses an existing working CLI or downloads a checksum-verified release for Linux/macOS (amd64/arm64) or Windows (amd64) into Claude's plugin data; it never replaces a user-managed binary. A grep guard redirects Bash `grep`/`rg`/`find` and built-in Grep/Glob to Grepple once the CLI supports it. Try `/grepple:grepple-local-grep-and-search`. [Installation, security, and compatibility details](docs/agent-setup.md#claude-code-plugin).
+
+For Pi, OpenCode, Codex, or a binary-version-pinned Claude Code skill installation instead:
+
 ```sh
 grepple setup pi       # Or: claude, opencode, codex
 grepple setup --list   # Show owned skill names
 ```
 
-Setup installs skills matched to the **binary's release**, not the moving `main` branch. Use `--dry-run` to inspect changes and `--project` for project-local skills; a development binary needs `--source-dir /path/to/grepple`. Restart your agent after installing. [Setup and ownership details](docs/agent-setup.md).
+`grepple setup` installs skills matched to the **binary's release**, not the moving `main` branch. Use `--dry-run` to inspect changes and `--project` for project-local skills; a development binary needs `--source-dir /path/to/grepple`. Restart your agent after installing. For Claude Code, choose **either** the plugin or `grepple setup claude` to avoid duplicate skills. [Setup and ownership details](docs/agent-setup.md).
 
 A reliable agent loop: **tree → narrow search/outline → verify with `--at` → inspect callers if changing behavior → edit with fresh anchors**. Local clean source reads return `HASH│LINE│content` rows for `grepple write`; search annotations and remote source are not local edit authority. Human output can be capped or spilled; search JSON reports paging/completeness and a continuation command when available. Check those before claiming absence. [Output contracts](docs/output-contracts.md) · [Source selection](docs/source-scope.md) · [Write guide](docs/write.md).
 
