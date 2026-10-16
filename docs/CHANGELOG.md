@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.0.7](https://github.com/greppleai/grepple/compare/v0.0.6...v0.0.7) (2026-10-16)
+
+
+### Features
+
+* **cli:** add bounded opt-in tracing phases ([65d717a](https://github.com/greppleai/grepple/commit/65d717af05986cdd98f8f8c68e7b55ad36c5b9cb))
+* **cli:** add bounded opt-in tracing phases ([4749276](https://github.com/greppleai/grepple/commit/47492769902e6dee3537b04fc8f5eb9535952cbc))
+* **outline:** make verified selectors the default human output ([0f10c22](https://github.com/greppleai/grepple/commit/0f10c22317e45be13a0c2d6e7269a9e0fbd8f44a))
+* **parser:** verify native scope selectors via language adapters ([2a419d5](https://github.com/greppleai/grepple/commit/2a419d55d5efd87d224ee625594ca9efb0df88ac))
+* **search:** add default line-only scope annotations ([47de97f](https://github.com/greppleai/grepple/commit/47de97f4b9852fea84e38958132e5f0ff13d328f))
+* **search:** verify local --at scope selectors ([96c5c43](https://github.com/greppleai/grepple/commit/96c5c431970b74f70a69a142cddf8183803b0551))
+* **write:** recover omitted heredoc terminators ([63f258e](https://github.com/greppleai/grepple/commit/63f258e3c60b4851b8c9b656ca8573d274f592b2))
+
+
+### Bug Fixes
+
+* **config:** issue-41-and-ask-settings - load Ask preferences from settings.json ([d717d2b](https://github.com/greppleai/grepple/commit/d717d2bcdfce4b5a888b4de9c881229393f1a488))
+* **graph:** issue-41-and-ask-settings - deduplicate compact relationship evidence ([9a8a611](https://github.com/greppleai/grepple/commit/9a8a6110f5843d8e0373055783c7c16de43e5006))
+
 ## [0.0.6](https://github.com/greppleai/grepple/compare/v0.0.5...v0.0.6) (2026-10-07)
 
 
