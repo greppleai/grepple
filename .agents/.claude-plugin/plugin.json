@@ -1,6 +1,6 @@
 {
   "name": "grepple",
-  "description": "Source-backed Grepple search, navigation, architecture, and safe write workflows for Claude Code.",
+  "description": "Grepple skills with a verified CLI download on first session and grep guard hooks for Claude Code.",
   "author": {
     "name": "Grepple"
   },

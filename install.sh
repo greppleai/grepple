@@ -4,7 +4,9 @@ set -eu
 
 fail() { printf 'grepple install: %s\n' "$*" >&2; exit 1; }
 usage() {
-    printf '%s\n' 'Usage: sh install.sh [--bin-dir DIRECTORY]' \
+    printf '%s\n' 'Usage: curl -fsSL https://raw.githubusercontent.com/greppleai/grepple/main/install.sh | sh' \
+        '       curl -fsSL https://raw.githubusercontent.com/greppleai/grepple/main/install.sh | sh -s -- --bin-dir DIRECTORY' \
+        '       sh install.sh [--bin-dir DIRECTORY]' \
         'Installs the latest GitHub release on Linux/macOS (amd64/arm64).' \
         'Default: GREPPLE_BIN_DIR, or $HOME/.local/bin. No sudo or profile edits.'
 }

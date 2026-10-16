@@ -11,7 +11,7 @@ VERSION_LDFLAGS := -X github.com/greppleai/grepple/internal/cli/version.Version=
 COMMANDS := grepple greppled
 SOURCES := $(shell find cmd internal api -type f -name '*.go') go.mod go.sum internal/agentskills/catalog.json internal/agentskills/owned-skills.txt
 
-.PHONY: build test agent-benchmark architecture-benchmark release-check lint revive-lint hook-build hook-lint hook-test parser-metadata-generate parser-metadata-check schema-generate schema-check docker-smoke install clean
+.PHONY: build test install-test claude-plugin-test agent-benchmark architecture-benchmark release-check lint revive-lint hook-build hook-lint hook-test parser-metadata-generate parser-metadata-check schema-generate schema-check docker-smoke install clean
 
 build: $(addprefix $(BIN_DIR)/,$(COMMANDS)) hook-build
 
@@ -26,6 +26,8 @@ $(BIN_DIR)/greppled: $(SOURCES) | $(BIN_DIR)
 test: schema-check
 	go test ./...
 	$(MAKE) hook-test
+	$(MAKE) claude-plugin-test
+	$(MAKE) install-test
 
 agent-benchmark:
 	go test ./internal/cli -run '^$$' -bench '^BenchmarkAgentWorkflows$$' -benchtime=10x -benchmem
@@ -53,6 +55,12 @@ hook-lint:
 
 hook-test:
 	$(MAKE) -C hooks test
+
+claude-plugin-test:
+	node --test .agents/scripts/*.test.mjs
+
+install-test:
+	bash scripts/test-install-stream.sh
 
 parser-metadata-generate:
 	cd internal/parser && go generate

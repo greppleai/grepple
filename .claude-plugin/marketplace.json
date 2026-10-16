@@ -8,7 +8,7 @@
     {
       "name": "grepple",
       "source": "./.agents",
-      "description": "Source-backed code search, navigation, architecture, and safe writes with Grepple"
+      "description": "Grepple skills, first-session CLI download, and grep guard hooks"
     }
   ]
 }

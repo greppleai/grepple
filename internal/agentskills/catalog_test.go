@@ -83,6 +83,35 @@ func TestClaudePluginUsesCanonicalSkills(t *testing.T) {
 	}
 }
 
+func TestClaudePluginHooksAreBundled(t *testing.T) {
+	root := filepath.Join("..", "..", ".agents")
+	data, err := os.ReadFile(filepath.Join(root, "hooks", "hooks.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var config struct {
+		Hooks map[string][]struct {
+			Hooks []struct {
+				Args []string `json:"args"`
+			} `json:"hooks"`
+		} `json:"hooks"`
+	}
+	if err := json.Unmarshal(data, &config); err != nil {
+		t.Fatal(err)
+	}
+	for event, script := range map[string]string{
+		"SessionStart": "install-cli.mjs", "PreToolUse": "grep-guard.mjs",
+	} {
+		handlers := config.Hooks[event]
+		if len(handlers) != 1 || len(handlers[0].Hooks) != 1 || len(handlers[0].Hooks[0].Args) != 2 || handlers[0].Hooks[0].Args[0] != "${CLAUDE_PLUGIN_ROOT}/scripts/"+script {
+			t.Fatalf("%s must run bundled %s: %+v", event, script, handlers)
+		}
+		if _, err := os.Stat(filepath.Join(root, "scripts", script)); err != nil {
+			t.Fatal(err)
+		}
+	}
+}
+
 func TestReleaseTagNeverFallsBackToMovingRefs(t *testing.T) {
 	for _, version := range []string{"dev", "unknown", "main", "latest", "v0.0.5-dirty", "v0.0.5-3-gabcdef", "0.0.5-3-gabcdef-dirty", "v0.0.5/../main", "v01.2.3"} {
 		if _, err := ReleaseTag(version); err == nil {
