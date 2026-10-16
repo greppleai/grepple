@@ -47,6 +47,42 @@ func TestCatalogMatchesRepositoryAndAllSkillDirectories(t *testing.T) {
 		t.Fatal("write skill must be self-contained")
 	}
 }
+
+func TestClaudePluginUsesCanonicalSkills(t *testing.T) {
+	root := filepath.Join("..", "..")
+	marketplaceData, err := os.ReadFile(filepath.Join(root, ".claude-plugin", "marketplace.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var marketplace struct {
+		Name    string `json:"name"`
+		Plugins []struct {
+			Name   string `json:"name"`
+			Source string `json:"source"`
+		} `json:"plugins"`
+	}
+	if err := json.Unmarshal(marketplaceData, &marketplace); err != nil {
+		t.Fatal(err)
+	}
+	if marketplace.Name != "grepple" || len(marketplace.Plugins) != 1 || marketplace.Plugins[0].Name != "grepple" || marketplace.Plugins[0].Source != "./.agents" {
+		t.Fatalf("marketplace must point to the canonical skills root: %+v", marketplace)
+	}
+	pluginData, err := os.ReadFile(filepath.Join(root, ".agents", ".claude-plugin", "plugin.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var plugin struct {
+		Name   string          `json:"name"`
+		Skills json.RawMessage `json:"skills"`
+	}
+	if err := json.Unmarshal(pluginData, &plugin); err != nil {
+		t.Fatal(err)
+	}
+	if plugin.Name != marketplace.Plugins[0].Name || len(plugin.Skills) != 0 {
+		t.Fatalf("plugin must use the default .agents/skills directory: %+v", plugin)
+	}
+}
+
 func TestReleaseTagNeverFallsBackToMovingRefs(t *testing.T) {
 	for _, version := range []string{"dev", "unknown", "main", "latest", "v0.0.5-dirty", "v0.0.5-3-gabcdef", "0.0.5-3-gabcdef-dirty", "v0.0.5/../main", "v01.2.3"} {
 		if _, err := ReleaseTag(version); err == nil {

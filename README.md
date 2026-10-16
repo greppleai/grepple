@@ -73,12 +73,22 @@ make build
 
 ## For coding agents
 
+Claude Code users: [install the CLI](#install) first, then in a Claude Code session run:
+
+```text
+/plugin install grepple --marketplace greppleai/grepple
+```
+
+This adds the Grepple marketplace and installs all eight source-owned skills (Claude Code 2.1.275+). Try `/grepple:grepple-local-grep-and-search` or let Claude select a skill by task. The plugin supplies instructions, **not** the `grepple` executable; confirm `grepple --version` is on Claude's PATH. [Plugin details and older-version installation](docs/agent-setup.md#claude-code-plugin).
+
+For Pi, OpenCode, Codex, or a binary-version-pinned Claude Code skill installation instead:
+
 ```sh
 grepple setup pi       # Or: claude, opencode, codex
 grepple setup --list   # Show owned skill names
 ```
 
-Setup installs skills matched to the **binary's release**, not the moving `main` branch. Use `--dry-run` to inspect changes and `--project` for project-local skills; a development binary needs `--source-dir /path/to/grepple`. Restart your agent after installing. [Setup and ownership details](docs/agent-setup.md).
+`grepple setup` installs skills matched to the **binary's release**, not the moving `main` branch. Use `--dry-run` to inspect changes and `--project` for project-local skills; a development binary needs `--source-dir /path/to/grepple`. Restart your agent after installing. For Claude Code, choose **either** the plugin or `grepple setup claude` to avoid duplicate skills. [Setup and ownership details](docs/agent-setup.md).
 
 A reliable agent loop: **tree → narrow search/outline → verify with `--at` → inspect callers if changing behavior → edit with fresh anchors**. Local clean source reads return `HASH│LINE│content` rows for `grepple write`; search annotations and remote source are not local edit authority. Human output can be capped or spilled; search JSON reports paging/completeness and a continuation command when available. Check those before claiming absence. [Output contracts](docs/output-contracts.md) · [Source selection](docs/source-scope.md) · [Write guide](docs/write.md).
 

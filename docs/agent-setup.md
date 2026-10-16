@@ -6,6 +6,9 @@ name. Grepple must be on the agent's PATH; this command installs instructions an
 supporting documents, not the agent itself, hooks, extensions, or MCP servers.
 It never edits agent settings, tools, instructions files, or credentials.
 
+Claude Code users can alternatively install the [Grepple plugin](#claude-code-plugin)
+from its marketplace; it uses the same source-owned skills, without running `grepple setup`.
+
 ## Locations
 
 | Agent | Default user skills | `--project` skills under the current directory |
@@ -28,6 +31,47 @@ grepple setup codex --dry-run
 grepple setup --agent claude --project
 grepple setup --list
 ```
+
+## Claude Code plugin
+
+Install the [Grepple CLI](../README.md#install) and make sure `grepple --version` works
+in the environment where Claude Code runs. The plugin supplies **skills only**:
+it does not install the CLI or bundle hooks, MCP servers, or credentials. Claude
+Code records the marketplace and plugin in its settings when you install them.
+In Claude Code 2.1.275 or later, one command in a Claude Code session registers
+this repository's marketplace and installs its `grepple` plugin:
+
+```text
+/plugin install grepple --marketplace greppleai/grepple
+```
+
+For older Claude Code versions, register the marketplace and install separately
+from a shell (or use the equivalent `/plugin marketplace add` and `/plugin install`
+commands inside Claude Code):
+
+```sh
+claude plugin marketplace add greppleai/grepple
+claude plugin install grepple@grepple
+```
+
+After installation, check `/plugin` and try `/grepple:grepple-local-grep-and-search`.
+Claude can also select the skills automatically by task. The marketplace lives at
+`.claude-plugin/marketplace.json`; its plugin source is `./.agents`, whose manifest
+is `.agents/.claude-plugin/plugin.json`. Claude Code discovers all eight canonical
+`.agents/skills/grepple-*/SKILL.md` files there. Nothing is copied into a second
+plugin skill tree. To test a local checkout without registering a marketplace, run
+`claude --plugin-dir /path/to/grepple/.agents`. Maintainers can run
+`claude plugin validate .` and `claude plugin validate .agents` from the checkout.
+
+Use either the plugin **or** `grepple setup claude`, not both: they expose the same
+skills through different installation paths and can duplicate names. The plugin
+follows the marketplace revision; `grepple setup claude` pins skills to the exact
+CLI release and validates the checksums. Update the CLI and plugin together when
+commands change. The plugin manifest intentionally omits a fixed version so
+Claude Code uses the marketplace Git revision for updates (its validator notes
+the missing version as a warning). To try an unpublished local marketplace, use
+`claude plugin marketplace add /path/to/grepple` before
+`claude plugin install grepple@grepple`; this affects your Claude Code settings.
 
 ## Version compatibility
 
