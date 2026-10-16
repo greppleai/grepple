@@ -1,188 +1,90 @@
 # Grepple
 
-Grepple helps you find text, inspect code, and follow source relationships in a repository. It runs locally without a server. Searches return results in deterministic path order; narrow the files or query when you need a smaller answer.
+**Find code, read exact source, and follow relationships—locally, without a server.** Grepple searches text and supported syntax in a checkout. An indexed service is optional for remote repositories.
+
+[Get started](#get-started) · [Install](#install) · [For coding agents](#for-coding-agents) · [Documentation](docs/README.md)
+
+## Get started
+
+Run these from a repository root (the example paths below are in this checkout):
+
+```sh
+grepple tree                             # Small top-level map
+grepple tree internal/render             # Expand only a likely directory
+grepple -F 'OutlineWithSelectors' internal/render  # Literal search
+grepple --outline internal/render/outline.go       # Declarations
+grepple --at internal/render/outline.go:58-69        # Read exact lines
+```
+
+`-F` searches literal text; without it, search patterns are regular expressions. Text files remain searchable even without a parser. Results are in deterministic path order, not relevance order. Narrow your path or use `--count-summary` before interpreting a short page as complete.
+
+| Need | Start with |
+| --- | --- |
+| Find matching lines | `grepple -F 'Name' --line-only PATH` |
+| List matching files / count matches | `grepple -F 'Name' --files-with-matches PATH` / `--count-summary` |
+| Find a declaration | `grepple --outline FILE` or `grepple graph resolve --symbol NAME PATH` |
+| Follow calls | `grepple graph callers --at FILE:LINE PATH` or `graph callees` |
+| Map directory relations | `grepple architecture directory PATH` |
+| Find syntax shapes | `grepple grit --query-file checks.grit PATH` |
+| Learn by example | `grepple examples` or [worked examples](examples/README.md) |
+
+### From an outline to verified source
+
+Human `--outline` includes local parser-verified selectors where available. An illustrative row looks like `OutlineWithSelectors @func:58-69`; copy its **current** token as a separate argument:
+
+```sh
+grepple --at internal/render/outline.go @func:58-69
+```
+
+The verified form checks the current kind and both bounds; `--at FILE:START-END` reads literal inclusive lines instead. Unverified outline rows retain `START-END<TAB>KIND<TAB>NAME`. `--outline --json` keeps structured output without selector decoration. For matched lines, `--line-only` may show scope hints, but its decorated human rows are **not edit-ready**: re-read clean source with `--at` before editing. See [verified selectors](docs/at-verified-scope-selectors.md) and [transactional writes](docs/write.md).
 
 ## Install
 
-### Download the latest release (Linux and macOS)
+### Published CLI (Linux/macOS)
 
-The installer selects your OS and CPU architecture, downloads the latest published
-GitHub release, verifies its SHA-256 checksum, and installs `grepple` into
-`~/.local/bin`. It needs `curl`, `tar`, and `sha256sum` (Linux) or `shasum` (macOS);
-no Go toolchain, C compiler, or `sudo` is needed.
-
-Copy and run this one-liner:
+The command below downloads and runs the [installer](install.sh); inspect the script separately first if you prefer:
 
 ```sh
-(installer="$(mktemp)" && trap 'rm -f "$installer"' 0 && curl -fsSL --proto '=https' --proto-redir '=https' https://raw.githubusercontent.com/greppleai/grepple/main/install.sh -o "$installer" && sh "$installer") && export PATH="$HOME/.local/bin:$PATH"
+(
+  installer="$(mktemp)" || exit
+  trap 'rm -f "$installer"' EXIT
+  curl -fsSL --proto '=https' --proto-redir '=https' \
+    https://raw.githubusercontent.com/greppleai/grepple/main/install.sh -o "$installer" &&
+  sh "$installer"
+) &&
+export PATH="$HOME/.local/bin:$PATH" &&
+grepple --version
 ```
 
-It downloads the complete script before executing it, cleans up afterward, and
-adds `~/.local/bin` to PATH for your current shell. To inspect the script first,
-download [install.sh](https://raw.githubusercontent.com/greppleai/grepple/main/install.sh)
-and review it before running `sh install.sh`.
-
-Add `export PATH="$HOME/.local/bin:$PATH"` to your shell profile (`~/.bashrc` or
-`~/.zshrc`) to make PATH persistent. The installer does not change shell profiles
-or saved login settings. Rerun the one-liner to upgrade; it replaces the CLI only
-after the archive passes verification. Run `grepple --version` to check the install.
-
-From a checkout, run `sh install.sh`. To use another writable directory already
-on PATH, run `sh install.sh --bin-dir /your/bin` (or set `GREPPLE_BIN_DIR`). If a
-different `grepple` appears first on PATH, adjust PATH order; `command -v grepple`
-shows which executable your shell selects. Supported platforms are Linux/macOS
-on amd64 and arm64. Windows users can download the `.zip` from
-[GitHub Releases](https://github.com/greppleai/grepple/releases) and put
-`grepple.exe` in a directory on PATH.
+The [installer](install.sh) chooses Linux/macOS amd64 or arm64, verifies the release archive against its published SHA-256 checksum, and places the binary in `~/.local/bin`. It needs `curl`, `tar`, and `sha256sum` or `shasum`; it does not edit your shell profile. Add the PATH line above to your profile for future shells. Use `sh install.sh --bin-dir /your/bin` to choose another destination. Windows binaries are available from [GitHub Releases](https://github.com/greppleai/grepple/releases).
 
 ### Build from source
 
-You need Go 1.27 or later and a C compiler for the bundled Tree-sitter parsers:
+Requires Go 1.27+ and a C compiler for the bundled Tree-sitter parsers:
 
-```bash
+```sh
 git clone https://github.com/greppleai/grepple.git
 cd grepple
 make build
 ./bin/grepple --version
 ```
 
-Use `make install` to install the locally built CLI. Run `grepple --help` for the current command and flag list.
+`make install` installs the locally built CLI. Check `command -v grepple` if a different version appears first on PATH; `grepple --help` lists current commands.
 
-## Optional CLI traces
-
-Grepple does not export traces unless you opt in via **user-owned** settings.
-For exact JSON, local OTLP/HTTP setup, sampling and rollback see
-[CLI telemetry](docs/cli-telemetry.md). A backend joins those traces only when its
-operator separately enables the restricted, authenticated direct-loopback ingress;
-remote and Docker-forwarded routers normally remain separate traces.
-
-## Set up your coding agent
-
-Install Grepple's skills for your chosen harness:
+## For coding agents
 
 ```sh
-grepple setup pi
-grepple setup claude
-grepple setup opencode
-grepple setup codex
+grepple setup pi       # Or: claude, opencode, codex
+grepple setup --list   # Show owned skill names
 ```
 
-Run the command for the agent you use. Skills are downloaded from the **same
-release tag as your binary**, never `main` or `latest`. Setup replaces managed
-Grepple skills and removes recognized retired copies, while preserving unrelated
-skills, agent settings, and credentials. Restart/reload your agent afterward.
+Setup installs skills matched to the **binary's release**, not the moving `main` branch. Use `--dry-run` to inspect changes and `--project` for project-local skills; a development binary needs `--source-dir /path/to/grepple`. Restart your agent after installing. [Setup and ownership details](docs/agent-setup.md).
 
-Use `--dry-run` to preview, `--project` for the current project instead of user
-skills, or `grepple setup --list` to see current and historical owned names.
-Source/development builds require an explicit matching checkout, for example
-`grepple setup pi --source-dir /path/to/grepple`. See [agent setup](docs/agent-setup.md)
-for install locations, compatibility checks, cleanup and ownership rules.
+A reliable agent loop: **tree → narrow search/outline → verify with `--at` → inspect callers if changing behavior → edit with fresh anchors**. Local clean source reads return `HASH│LINE│content` rows for `grepple write`; search annotations and remote source are not local edit authority. Human output can be capped or spilled; search JSON reports paging/completeness and a continuation command when available. Check those before claiming absence. [Output contracts](docs/output-contracts.md) · [Source selection](docs/source-scope.md) · [Write guide](docs/write.md).
 
-## Explore a repository
+## Optional and advanced
 
-Run these commands from the repository you want to inspect (replace example paths and symbols with your own):
-
-```bash
-grepple tree --depth 1                  # See the top-level files and directories
-grepple tree src/                       # Expand one directory
-grepple -F 'handleRequest' src/          # Search for literal text
-grepple --outline src/server.go         # List declarations in a file
-grepple --at src/server.go:42           # Read a declaration at a known line
-```
-
-Search works on plain text as well as source code. Supported languages get syntax-aware results; other files remain searchable as text. Use `grepple examples` for short, copyable workflows, or browse the [examples](examples/README.md).
-
-### What an agent sees
-
-For example, an agent can locate a declaration, read its anchored source, and follow the suggested next point. These are shortened excerpts from this repository; line numbers and hashes change as code changes:
-
-```text
-$ grepple --outline internal/directorymeta/repository.go
-internal/directorymeta/repository.go  go
-ReadRepository @func:81-91
-loadRepository @func:93-113
-
-$ grepple --at internal/directorymeta/repository.go:81
-internal/directorymeta/repository.go
-rL1│81│func ReadRepository(root string) (Repository, error) {
-buS│82│    repository, err := loadRepository(root)
-...
-Next points (code navigation):
-  → loadRepository  internal/directorymeta/repository.go:93-113  call:82
-```
-
-`HASH│LINE│content` rows identify source for follow-up reads or [anchored edits](docs/write.md). Repeating a focused or structural read returns the selected source again with fresh anchors, subject to explicit output, spill, and paging limits; `grepple write` prevalidates and applies one transaction without a preview flag. `Next points` link to related declarations. For automation, `grepple -F 'ReadRepository' internal/directorymeta --json --limit 1` returns results **and** a copyable continuation command (abridged fields shown):
-
-```json
-{
-  "results": [{"path": "internal/directorymeta/repository.go", "matches": [{"line": 81, "text": "func ReadRepository(root string) (Repository, error) {"}]}],
-  "metadata": {
-    "page": {"skip": 0, "limit": 1, "returned": 1, "complete": false},
-    "nextCommand": "grepple search -F --skip 1 --limit 1 --json ReadRepository internal/directorymeta"
-  }
-}
-```
-
-Here `complete: false` means more result files are available; the agent can run `nextCommand` rather than assuming the first page is exhaustive.
-
-## Find and narrow results
-
-```bash
-grepple 'handle(Request|Response)' src/  # Regular expressions are the default
-grepple -F 'TODO' --files-with-matches .  # Only matching file paths
-grepple --files '**/*.go'                # Files selected by path, not contents
-grepple -F 'TODO' --count-summary .       # Complete match totals
-grepple -F 'handleRequest' --line-only . # Matching lines with edit anchors
-grepple -F 'handleRequest' --json .      # Structured output
-```
-
-A directory search is recursive. File globs can include `**`. Local results include source locations; eligible source lines carry `HASH│LINE│content` anchors for [safe, transactional edits](docs/write.md). Large human-readable results are bounded, while complete JSON is available for automation. See [output contracts](docs/output-contracts.md) for paging, limits, completeness, and JSON details.
-A directory search is recursive. File globs can include `**`. Local results include source locations; eligible source lines carry `HASH│LINE│content` anchors for [safe, transactional edits](docs/write.md). Large human-readable results are bounded, while complete JSON is available for automation. See [output contracts](docs/output-contracts.md) for paging, limits, completeness, and JSON details.
-
-### Line-only scope annotations
-
-```bash
-grepple -F 'runtime.Start' --line-only '**/*.go'
-grepple -F 'color:' --line-only '**/*.css'  # @property, @rule
-grepple -F 'TODO' --line-only '**/*.md'     # @section
-grepple --at internal/cli/search/execution.go @if:83-86 # Verify current scope and read exact clean lines
-grepple -F 'name' --line-only '*.json' '*.yaml' # @object/@array or @mapping/@sequence
-grepple -F 'runtime.Start' --line-only --json-matches '**/*.go'
-grepple -F 'runtime.Start' --line-only --no-annotate-scopes '**/*.go' # plain rows
-```
-
-For a Go function containing a hit, a row may look like `HASH│3│ runtime.Start() @func:2-5`. Only matching lines are printed: the declaration does not appear unless it also matches. Up to two parser-verified kinds and inclusive ranges may appear (e.g. `@if:3-5 @func:2-9`); absent or uncertain scopes are omitted. `--line-only` content searches show annotations by default; `--no-annotate-scopes` restores plain rows. Human suffixes are **display-only**: source itself may end in ` @func:2-5`, so the boundary is not machine-decodable, and decorated rows are **not edit-ready** despite their hashes. For local navigation, `grepple --at PATH @KIND:START-END` re-parses the current file and returns only clean, exact inclusive lines if it verifies the kind and both bounds; `@KIND:LINE` finds an unambiguous scope containing that line. Missing, stale, unsupported or ambiguous scopes fail instead of guessing. For an ordinary exact read use `grepple --line-only --at PATH:START-END`; legacy `--at PATH:LINE` can expand to a declaration, and legacy ranges can clamp at EOF. `--json`/`--json-matches` with line-only *search* carry typed `nearest` and `scope` objects, leaving `text` literal; selector reads also return literal source. Scope selectors are **local-only** and reject effective remote requests; legacy remote `--at PATH:LINE[-END]` remains available. Remote line-only annotated *searches* separately require backend capability; use `--no-annotate-scopes` with old remote servers. See [scope annotations](docs/line-only-scope-annotations.md), the [verified selector contract](docs/at-verified-scope-selectors.md), and [runnable multi-language examples](examples/08-verified-scope-navigation.md).
-
-This also works for TypeScript (`.ts`, `.mts`, `.cts`) and TSX (`.tsx`), not just Go. From this repository's root, the `.ts` fixture emits `@func:8-12` for `logger.info`; the second command re-verifies that scope before returning only lines 8–12, without a display suffix:
-
-```bash
-grepple --line-only -F 'logger.info' testdata/typescript/sample.ts
-grepple --line-only --at testdata/typescript/sample.ts @func:8-12
-```
-
-Copy the **current** annotation rather than assuming example line numbers still match after edits. Run `grepple examples scope` for short TypeScript/TSX/JSON workflows; use `graph resolve` and `graph callers` separately for call relationships (a source span alone is not a caller edge).
-## Follow code relationships
-
-```bash
-grepple graph resolve --symbol handleRequest .
-grepple graph callers --at src/server.go:42 --depth 2 .
-grepple graph callees --symbol handleRequest .
-grepple architecture directory .
-```
-
-Graph results use source evidence and may report multiple candidates rather than guessing a runtime target. `architecture directory` gives you a source-linked map of the repository; see the [directory architecture guide](docs/directory-architecture.md). For an explicit syntax pattern, run `grepple grit --query-file checks.grit '**/*.go'`; the supported query language is described in [GritQL compatibility](docs/gritql-compatibility.md).
-
-## Optional services
-
-A compatible indexed server enables remote queries with `--server URL --repo OWNER/REPO`; local searching needs no server. See [versioned indexing](docs/versioned-indexing.md) for exact repository selectors. `grepple ask` offers optional AI-assisted, read-only repository research once a provider is configured; see [Ask research](docs/ask.md).
-
-For repeated local directory or focused graph requests, start `greppled` in another terminal and add `--daemon` to the command. If the daemon is unavailable, Grepple performs the work locally.
-
-## More guides
-
-- [Supported file types and language features](docs/file-type-support.md)
-- [Source selection and ignore rules](docs/source-scope.md)
-- [Release history](docs/CHANGELOG.md)
-- [Full documentation](docs/) and [worked examples](examples/README.md)
-
-The previous long-form README is [archived verbatim](docs/README-before-user-guide.md).
+- **Remote indexed repositories:** use a compatible service and an explicit `OWNER/REPO[@REF]` selector. Local search requires no service. [Remote indexing](docs/versioned-indexing.md).
+- **AI-assisted research:** `grepple ask` needs a configured provider; it is read-only. [Ask setup](docs/ask.md).
+- **CLI traces:** opt in through user-owned settings. [Telemetry](docs/cli-telemetry.md).
+- **Reference and design notes:** browse the [documentation index](docs/README.md) and [supported file types](docs/file-type-support.md).
