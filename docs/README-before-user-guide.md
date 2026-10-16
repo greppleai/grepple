@@ -240,14 +240,16 @@ grepple get OWNER/REPO path/to/File.java -O    # a remote indexed file
 grepple get OWNER/REPO path/to/File.java -O --kind functions  # methods/constructors
 ```
 
-Output is `START-END<TAB>KIND<TAB>NAME`, with members indented under their
+Human `--outline` rows with a verified local scope are `NAME @KIND:START-END`,
+copyable into `grepple --at PATH @KIND:START-END`. Rows without a verified
+scope retain `START-END<TAB>KIND<TAB>NAME`. Members are indented under their
 container:
 
 ```
 search/search_engine.go	go
-229-234	struct	candidateScan
-240-249	method	(candidateScan).scanAll
-254-277	method	(candidateScan).scanWindowed
+candidateScan @struct:229-234
+(candidateScan).scanAll @method:240-249
+(candidateScan).scanWindowed @method:254-277
 ```
 
 `--kind types|functions|variables` filters code declarations in both local and

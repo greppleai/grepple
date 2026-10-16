@@ -84,7 +84,11 @@ func (renderer segmentRenderer) renderRelatedTypeDefinitions(definitions []relat
 			path = definition.artifact.Repository + ":" + path
 			suffix = " [" + navigationArtifactProvenance(definition.artifact) + "]"
 		}
-		if err := renderer.output.writeString(fmt.Sprintf("\n%s:%d-%d  %s%s\n", path, definition.start, definition.end, definition.name, suffix)); err != nil {
+		selector := ""
+		if renderer.annotateScopes && definition.artifact == nil {
+			selector = verifiedRelatedSelector(definition.path, definition.start, definition.end)
+		}
+		if err := renderer.output.writeString(fmt.Sprintf("\n%s:%d-%d%s  %s%s\n", path, definition.start, definition.end, selector, definition.name, suffix)); err != nil {
 			return err
 		}
 		width := segmentLineWidth(definition.segments)

@@ -38,7 +38,7 @@ type Args struct {
 	OnlyMatching     bool     `arg:"-o,--only-matching" help:"print each matched substring"`
 	Files            bool     `arg:"-l,--files" help:"list files by path; unlike grep -l, does not search contents (use --files-with-matches)"`
 	FilesWithMatches bool     `arg:"--files-with-matches" help:"list paths whose contents match (grep -l equivalent); accepts multiple PATHs"`
-	Outline          bool     `arg:"-O,--outline" help:"print each file's structural outline (classes, funcs, interfaces) instead of searching"`
+	Outline          bool     `arg:"-O,--outline" help:"print each file's structural outline with verified local scope selectors"`
 	Kinds            []string `arg:"--kind,separate" placeholder:"CATEGORY" help:"outline: show only types, functions, or variables; repeat or comma-separate"`
 	Depth            int      `arg:"--depth" placeholder:"N" help:"outline: cap nesting depth for JSON/YAML (0 = unlimited)"`
 	Count            bool     `arg:"-c,--count" help:"print matching-line counts per file"`

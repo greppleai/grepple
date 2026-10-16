@@ -73,7 +73,8 @@ func outlineFiles(depth int, kinds OutlineKinds, paths []string, jsonMode bool, 
 				return nil, false, err
 			}
 		}
-		if err := output.WriteString(outlineOutput(outline, string(data), len(kinds) > 0)); err != nil {
+		text := OutlineWithSelectors(outline, string(data))
+		if err := output.WriteString(text); err != nil {
 			return nil, false, err
 		}
 		printed = true

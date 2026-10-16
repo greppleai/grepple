@@ -8,10 +8,10 @@ description: Use to orient in an unfamiliar local repository or answer directory
 ## Choose the question
 
 - **Owner unknown:** `grepple sources explain .`, then `grepple architecture directory --depth 2 --max-nodes 80 .`.
-- **Symbol known:** `grepple --outline PATH` for a known file, or `grepple graph resolve --symbol NAME SCOPE` for an ambiguous callable. Verify the emitted location with `grepple --at PATH:LINE`.
+- **Symbol known:** `grepple --outline PATH`; follow a verified token with `grepple --at PATH @KIND:START-END`. For ambiguous callables, use `grepple graph resolve --symbol NAME SCOPE`.
 - **Why directories relate:** `grepple architecture directory --relations SCOPE` for a compact map; use `grepple architecture directory --json SCOPE` for source-linked relation evidence, then inspect cited ranges with `grepple --at PATH:START-END`.
 
-Follow one emitted `PATH:START-END` with `grepple --at PATH:START-END` to verify the declaration or relation. Report the owning directory, declaration kind/range, evidence confidence, and inspected source universe. Directory names indicate physical ownership, not package or runtime semantics.
+For rows without a token or for relation evidence, verify literal `PATH:START-END` with `grepple --at PATH:START-END`. Report the owning directory, declaration kind/range, evidence confidence, and inspected source universe. Directory names indicate physical ownership, not package or runtime semantics.
 
 ## Stop or switch
 

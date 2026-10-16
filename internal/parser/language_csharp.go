@@ -98,3 +98,39 @@ func cSharpSymbolKind(kind string) string {
 	}
 	return ""
 }
+
+func (*cSharpLanguage) ScopeKind(nodeType string) string {
+	switch nodeType {
+	case "if_statement":
+		return "if"
+	case "while_statement":
+		return "while"
+	case "for_statement":
+		return "for"
+	case "switch_statement":
+		return "switch"
+	case "try_statement":
+		return "try"
+	case "catch_clause":
+		return "catch"
+	case "class_declaration":
+		return "class"
+	case "interface_declaration":
+		return "interface"
+	case "enum_declaration":
+		return "enum"
+	case "method_declaration", "constructor_declaration":
+		return "method"
+	case "struct_declaration", "record_declaration":
+		return "struct"
+	case "local_function_statement", "lambda_expression":
+		return "func"
+	}
+	return ""
+}
+
+func (language *cSharpLanguage) ScopeClassification(node ViewNode) ScopeClassification {
+	return standardScopeClassification(language.ScopeKind(node.Kind()))
+}
+
+func (*cSharpLanguage) ScopeSelectorKind(role string) string { return role }

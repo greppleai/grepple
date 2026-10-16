@@ -102,3 +102,31 @@ func kotlinPropertyName(node *syntaxNode, content string, config *structureRules
 	}
 	return ""
 }
+
+func (*kotlinLanguage) ScopeKind(nodeType string) string {
+	switch nodeType {
+	case "function_declaration", "anonymous_function", "lambda_literal":
+		return "func"
+	case "class_declaration", "object_declaration":
+		return "class"
+	case "if_expression":
+		return "if"
+	case "while_statement":
+		return "while"
+	case "for_statement":
+		return "for"
+	}
+	return ""
+}
+
+func (language *kotlinLanguage) ScopeClassification(node ViewNode) ScopeClassification {
+	kind := language.ScopeKind(node.Kind())
+	if node.Kind() == "function_declaration" && scopeMemberAncestor(node, language.ScopeKind) {
+		kind = "method"
+	}
+	return standardScopeClassification(kind)
+}
+
+func (*kotlinLanguage) ScopeSelectorKind(role string) string {
+	return functionSelectorKind(role, "fun", false)
+}

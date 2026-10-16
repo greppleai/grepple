@@ -48,3 +48,41 @@ func (language *javaScriptLanguage) Navigation() navigationAdapter {
 func (language *javaScriptLanguage) Outline(root *syntaxNode, content string) []Symbol {
 	return outlineTSJS(root, content, &language.rules)
 }
+
+func (*javaScriptLanguage) ScopeKind(nodeType string) string {
+	switch nodeType {
+	case "if_statement":
+		return "if"
+	case "while_statement":
+		return "while"
+	case "for_statement", "for_in_statement", "for_of_statement":
+		return "for"
+	case "switch_statement":
+		return "switch"
+	case "try_statement":
+		return "try"
+	case "catch_clause":
+		return "catch"
+	case "case_statement", "switch_case":
+		return "case"
+	case "function_declaration", "generator_function_declaration", "arrow_function", "function":
+		return "func"
+	case "method_definition":
+		return "method"
+	case "class_declaration", "class":
+		return "class"
+	}
+	return ""
+}
+
+func (language *javaScriptLanguage) ScopeClassification(node ViewNode) ScopeClassification {
+	kind := language.ScopeKind(node.Kind())
+	if node.Kind() == "function_declaration" && scopeMemberAncestor(node, language.ScopeKind) {
+		kind = "method"
+	}
+	return standardScopeClassification(kind)
+}
+
+func (*javaScriptLanguage) ScopeSelectorKind(role string) string {
+	return functionSelectorKind(role, "function", false)
+}

@@ -47,3 +47,11 @@ func (language *markdownLanguage) Outline(root *syntaxNode, content string) []Sy
 	}
 	return mdTree(heads, markdownHeadingEnds(heads, strings.Count(content, "\n")+1))
 }
+
+// Markdown headings use the content scope collector, not code scope kinds.
+func (*markdownLanguage) ScopeKind(string) string { return "" }
+func (*markdownLanguage) ScopeClassification(ViewNode) ScopeClassification {
+	return ScopeClassification{}
+}
+
+func (*markdownLanguage) ScopeSelectorKind(role string) string { return role }

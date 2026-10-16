@@ -93,7 +93,7 @@ func newResultRenderer(options Options, output *outputWriter) resultRenderer {
 	case options.LineOnly:
 		return lineRenderer{output: output, anchors: options.Anchors, annotateScopes: options.Params.AnnotateScopes}
 	default:
-		return segmentRenderer{output: output, anchors: options.Anchors}
+		return segmentRenderer{output: output, anchors: options.Anchors, annotateScopes: options.Params.AnnotateScopes}
 	}
 }
 

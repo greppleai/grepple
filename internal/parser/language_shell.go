@@ -43,3 +43,29 @@ func (language *shellLanguage) Outline(root *syntaxNode, content string) []Symbo
 	}
 	return symbols
 }
+
+func (*shellLanguage) ScopeKind(nodeType string) string {
+	switch nodeType {
+	case "if_statement":
+		return "if"
+	case "while_statement":
+		return "while"
+	case "for_statement":
+		return "for"
+	case "switch_statement":
+		return "switch"
+	case "function_definition":
+		return "func"
+	case "case_statement":
+		return "case"
+	}
+	return ""
+}
+
+func (language *shellLanguage) ScopeClassification(node ViewNode) ScopeClassification {
+	return standardScopeClassification(language.ScopeKind(node.Kind()))
+}
+
+func (*shellLanguage) ScopeSelectorKind(role string) string {
+	return functionSelectorKind(role, "function", false)
+}

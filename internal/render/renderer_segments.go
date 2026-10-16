@@ -2,15 +2,19 @@ package render
 
 import (
 	"fmt"
-	"github.com/greppleai/grepple/internal/navigation"
-	"github.com/greppleai/grepple/internal/search"
+	"os"
 	"sort"
 	"strings"
+
+	"github.com/greppleai/grepple/internal/navigation"
+	"github.com/greppleai/grepple/internal/parser"
+	"github.com/greppleai/grepple/internal/search"
 )
 
 type segmentRenderer struct {
-	output  *outputWriter
-	anchors AnchorLookup
+	output         *outputWriter
+	anchors        AnchorLookup
+	annotateScopes bool
 }
 
 func (renderer segmentRenderer) Render(results []search.FileResult) error {
@@ -104,7 +108,11 @@ func (renderer segmentRenderer) renderRelatedPoint(point navigation.RelatedSymbo
 		arrow = "←"
 	}
 	locationPath, label, suffix := relatedPointPresentation(point)
-	location := fmt.Sprintf("%s:%d-%d", locationPath, point.Start, point.End)
+	token := ""
+	if renderer.annotateScopes && point.Artifact == nil && point.Confidence != "candidate" && point.Confidence != "dependency-unresolved" {
+		token = verifiedRelatedSelector(point.Path, point.Start, point.End)
+	}
+	location := fmt.Sprintf("%s:%d-%d%s", locationPath, point.Start, point.End, token)
 	if point.Confidence == "dependency-unresolved" && point.Artifact == nil {
 		location = locationPath
 	}
@@ -126,6 +134,21 @@ func (renderer segmentRenderer) renderRelatedPoint(point navigation.RelatedSymbo
 		return renderer.renderRelatedOmissions(point.OmittedCallers, point.OmittedCallees, 0, point.Path, point.Start, depth+2)
 	}
 	return nil
+}
+
+// verifiedRelatedSelector loads only the current local file and independently
+// verifies the presented span. Navigation metadata is never treated as proof.
+func verifiedRelatedSelector(path string, start, end int) string {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return ""
+	}
+	outline := parser.OutlineFile(path, string(data))
+	candidate := parser.ScopeCandidate{StartLine: start, EndLine: end}
+	if selector, found := parser.VerifiedScopeSelectors(string(data), outline.Language, []parser.ScopeCandidate{candidate})[candidate]; found {
+		return fmt.Sprintf(" @%s:%d-%d", selector.Kind, selector.StartLine, selector.EndLine)
+	}
+	return ""
 }
 
 func relatedCallPoints(points []navigation.RelatedSymbol) []navigation.RelatedSymbol {

@@ -33,9 +33,9 @@ func TestOutlineKindsFilterHumanAndJSON(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, test := range []struct{ kind, want, excluded string }{
-		{"types", "interface\tWidget", "method\tRun"},
-		{"functions", "method\tRun", "interface\tWidget"},
-		{"variables", "var\tCount", "func\tBuild"},
+		{"types", "Widget @interface:3-3", "method\tRun"},
+		{"functions", "3-3\tmethod\tRun", "Widget @interface"},
+		{"variables", "var\tCount", "Build @func"},
 	} {
 		t.Run(test.kind, func(t *testing.T) {
 			out := captureStdout(t, func() {

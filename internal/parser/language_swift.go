@@ -121,3 +121,39 @@ func swiftDeclarationName(node *syntaxNode) string {
 	}
 	return name.Text()
 }
+
+func (*swiftLanguage) ScopeKind(nodeType string) string {
+	switch nodeType {
+	case "if_statement":
+		return "if"
+	case "while_statement":
+		return "while"
+	case "for_statement":
+		return "for"
+	case "switch_statement":
+		return "switch"
+	case "try_statement":
+		return "try"
+	case "catch_clause":
+		return "catch"
+	case "function_declaration", "protocol_function_declaration":
+		return "func"
+	case "init_declaration":
+		return "method"
+	case "class_declaration":
+		return "class"
+	case "protocol_declaration":
+		return "interface"
+	}
+	return ""
+}
+
+func (language *swiftLanguage) ScopeClassification(node ViewNode) ScopeClassification {
+	kind := language.ScopeKind(node.Kind())
+	if (node.Kind() == "function_declaration" || node.Kind() == "protocol_function_declaration") && scopeMemberAncestor(node, language.ScopeKind) {
+		kind = "method"
+	}
+	return standardScopeClassification(kind)
+}
+
+func (*swiftLanguage) ScopeSelectorKind(role string) string { return role }

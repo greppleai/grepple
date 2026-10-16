@@ -51,3 +51,49 @@ func renderSymbols(output *strings.Builder, symbols []parser.Symbol, depth int) 
 		}
 	}
 }
+
+// OutlineWithSelectors preserves outline names and kinds while adding only
+// parser-verified local scope tokens. Unlike OutlineOrContent, it never falls
+// back to raw content because that would remove the presentation destinations.
+func OutlineWithSelectors(outline parser.FileOutline, content string) string {
+	var candidates []parser.ScopeCandidate
+	collectOutlineCandidates(outline.Symbols, &candidates)
+	selectors := parser.VerifiedScopeSelectors(content, outline.Language, candidates)
+	var output strings.Builder
+	output.WriteString(outline.Path)
+	output.WriteByte('\t')
+	output.WriteString(outline.Language)
+	output.WriteByte('\n')
+	renderSymbolsWithSelectors(&output, outline.Symbols, selectors, 0)
+	return output.String()
+}
+
+func collectOutlineCandidates(symbols []parser.Symbol, candidates *[]parser.ScopeCandidate) {
+	for _, symbol := range symbols {
+		*candidates = append(*candidates, parser.ScopeCandidate{StartLine: symbol.Start, EndLine: symbol.End})
+		collectOutlineCandidates(symbol.Children, candidates)
+	}
+}
+
+func renderSymbolsWithSelectors(output *strings.Builder, symbols []parser.Symbol, selectors map[parser.ScopeCandidate]parser.ScopeLineRange, depth int) {
+	indent := strings.Repeat("  ", depth)
+	for _, symbol := range symbols {
+		if selector, found := selectors[parser.ScopeCandidate{StartLine: symbol.Start, EndLine: symbol.End}]; found && outlineSelectorMatchesSymbol(symbol, selector) {
+			fmt.Fprintf(output, "%s%s @%s:%d-%d\n", indent, symbol.Name, selector.Kind, selector.StartLine, selector.EndLine)
+		} else {
+			fmt.Fprintf(output, "%s%d-%d\t%s\t%s\n", indent, symbol.Start, symbol.End, symbol.Kind, symbol.Name)
+		}
+		renderSymbolsWithSelectors(output, symbol.Children, selectors, depth+1)
+	}
+}
+
+// A shared line range can describe an enclosing type rather than its child.
+// Never attach that type's selector to a different outlined declaration.
+func outlineSelectorMatchesSymbol(symbol parser.Symbol, selector parser.ScopeLineRange) bool {
+	switch selector.Kind {
+	case "class", "interface", "trait", "struct", "enum":
+		return symbol.Kind == selector.Kind
+	default:
+		return true
+	}
+}

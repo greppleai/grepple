@@ -28,7 +28,7 @@ const (
 )
 
 const writeHelp = `Apply one validated, hash-anchored transaction across multiple files.
-Usage: grepple write [--root PATH] [--return] [--json]
+Usage: grepple write [--root PATH] [--return] [--json] [--infer-ends]
        grepple write edit --path PATH --start HASH [--end HASH] [--content-file PATH|-] [OPTIONS]
 
 The default mode auto-detects either one strict grepple-write-v1 JSON value or a
@@ -55,6 +55,7 @@ Literal heredoc transactions support the same edits, creates, and deletes:
   ::grepple file old.go
   ::grepple delete 64-lowercase-hex-digest
 
+An unmarked replace or create body may omit ::grepple end at end of input; Grepple applies it with an inferred_heredoc_end warning. --infer-ends additionally permits an omitted end immediately before a syntactically valid following ::grepple file, replace, create, or delete directive. Without that opt-in, directive-looking lines stay literal source. --end-marker TOKEN bodies always require their exact terminator. --infer-ends only accepts literal heredoc transactions.
 Create and delete are also explicit JSON file operations:
   {"path":"new.go","operation":"create","content_lines":["package sample",""]}
   {"path":"old.go","operation":"delete","before_sha256":"64-lowercase-hex-digest"}
@@ -72,8 +73,9 @@ rows (including neighboring rows); --json returns the complete structured respon
 `
 
 type writeRequest struct {
-	Schema string             `json:"schema"`
-	Files  []writeRequestFile `json:"files"`
+	Schema   string             `json:"schema"`
+	Files    []writeRequestFile `json:"files"`
+	warnings []writeWarning
 }
 
 type writeRequestFile struct {
@@ -90,10 +92,11 @@ type writeChange struct {
 }
 
 type writeResponse struct {
-	Schema  string              `json:"schema"`
-	Applied bool                `json:"applied"`
-	Files   []writeResponseFile `json:"files,omitempty"`
-	Error   *writeResponseError `json:"error,omitempty"`
+	Schema   string              `json:"schema"`
+	Applied  bool                `json:"applied"`
+	Files    []writeResponseFile `json:"files,omitempty"`
+	Warnings []writeWarning      `json:"warnings,omitempty"`
+	Error    *writeResponseError `json:"error,omitempty"`
 }
 
 type writeResponseFile struct {
@@ -114,6 +117,13 @@ type writeResponseChange struct {
 	Anchors        []writeAnchor `json:"anchors,omitempty"`
 }
 
+type writeWarning struct {
+	Code    string `json:"code"`
+	Message string `json:"message"`
+	Path    string `json:"path,omitempty"`
+	Line    int    `json:"line,omitempty"`
+}
+
 type writeResponseError struct {
 	Code        string        `json:"code"`
 	Message     string        `json:"message"`
@@ -130,10 +140,11 @@ type writeAnchor struct {
 
 // Args contains transactional write arguments.
 type Args struct {
-	Root   string    `arg:"--root" default:"." placeholder:"PATH" help:"repository root (default .)"`
-	Return bool      `arg:"--return" help:"include resulting source rows with fresh anchors in human output"`
-	JSON   bool      `arg:"--json" help:"emit the write response as JSON"`
-	Edit   *EditArgs `arg:"subcommand:edit"`
+	Root      string    `arg:"--root" default:"." placeholder:"PATH" help:"repository root (default .)"`
+	Return    bool      `arg:"--return" help:"include resulting source rows with fresh anchors in human output"`
+	JSON      bool      `arg:"--json" help:"emit the write response as JSON"`
+	InferEnds bool      `arg:"--infer-ends" help:"allow heredoc bodies without an end before a following directive"`
+	Edit      *EditArgs `arg:"subcommand:edit"`
 }
 
 // EditArgs contains literal single-edit arguments.
@@ -148,6 +159,7 @@ type writeOptions struct {
 	root        string
 	returnRows  bool
 	json        bool
+	inferEnds   bool
 	help        bool
 	literalEdit bool
 	path        string
@@ -207,7 +219,7 @@ func Execute(application cliruntime.Context, values *Args) error {
 	if application == nil {
 		return fmt.Errorf("write command context is unavailable")
 	}
-	options := writeOptions{root: values.Root, returnRows: values.Return, json: values.JSON, contentFile: "-"}
+	options := writeOptions{root: values.Root, returnRows: values.Return, json: values.JSON, inferEnds: values.InferEnds, contentFile: "-"}
 	if options.root == "" {
 		options.root = "."
 	}
@@ -238,7 +250,7 @@ func (command *command) execute(options writeOptions) error {
 	if options.literalEdit {
 		request, failure = decodeLiteralWriteRequest(options, application.Stdin())
 	} else {
-		request, failure = decodeWriteRequest(application.Stdin())
+		request, failure = decodeWriteRequestWithOptions(application.Stdin(), options.inferEnds)
 	}
 	if failure != nil {
 		response := failedWriteResponse(failure)
@@ -276,6 +288,8 @@ func parseWriteOptions(args []string) (writeOptions, error) {
 			options.json = true
 		case "--return":
 			options.returnRows = true
+		case "--infer-ends":
+			options.inferEnds = true
 		default:
 			if !writeOptionTakesValue(argument) {
 				return options, fmt.Errorf("unknown write option %q", argument)
@@ -323,6 +337,9 @@ func validateWriteOptions(options writeOptions) (writeOptions, error) {
 	}
 	if !options.literalEdit {
 		return options, nil
+	}
+	if options.inferEnds {
+		return options, fmt.Errorf("--infer-ends is only available for literal heredoc transactions")
 	}
 	if options.path == "" {
 		return options, fmt.Errorf("write edit requires --path")
@@ -386,6 +403,10 @@ func literalWriteLines(content []byte) ([]string, error) {
 }
 
 func decodeWriteRequest(reader io.Reader) (writeRequest, *writeFailure) {
+	return decodeWriteRequestWithOptions(reader, false)
+}
+
+func decodeWriteRequestWithOptions(reader io.Reader, inferEnds bool) (writeRequest, *writeFailure) {
 	content, err := io.ReadAll(io.LimitReader(reader, maxWriteRequestBytes+1))
 	if err != nil {
 		return writeRequest{}, newWriteFailure("invalid_request", fmt.Sprintf("read request: %v", err), "", nil)
@@ -395,7 +416,10 @@ func decodeWriteRequest(reader io.Reader) (writeRequest, *writeFailure) {
 	}
 	trimmed := bytes.TrimSpace(content)
 	if bytes.HasPrefix(trimmed, []byte(writeHeredocDirective)) {
-		return decodeHeredocWriteRequest(content)
+		return decodeHeredocWriteRequest(content, inferEnds)
+	}
+	if inferEnds {
+		return writeRequest{}, newWriteFailure("invalid_request", "--infer-ends requires a literal ::grepple heredoc transaction", "", nil)
 	}
 	decoder := json.NewDecoder(bytes.NewReader(content))
 	decoder.DisallowUnknownFields()
@@ -411,7 +435,7 @@ func decodeWriteRequest(reader io.Reader) (writeRequest, *writeFailure) {
 }
 
 func executeWriteRequest(root string, request writeRequest) (writeResponse, *writeFailure) {
-	response := writeResponse{Schema: writeSchema}
+	response := writeResponse{Schema: writeSchema, Warnings: request.warnings}
 	if request.Schema != writeSchema {
 		return response, newWriteFailure("invalid_schema", fmt.Sprintf("schema must be %q", writeSchema), "", nil)
 	}
@@ -1213,6 +1237,11 @@ func emitWriteResponse(writer io.Writer, response writeResponse, jsonMode, retur
 	if response.Error != nil {
 		return emitWriteError(writer, response.Error)
 	}
+	if len(response.Warnings) != 0 {
+		if err := emitWriteWarnings(writer, response.Warnings); err != nil {
+			return err
+		}
+	}
 	if returnRows {
 		if err := emitWriteResponseFiles(writer, response); err != nil {
 			return err
@@ -1221,6 +1250,15 @@ func emitWriteResponse(writer io.Writer, response writeResponse, jsonMode, retur
 		return err
 	}
 	return emitWriteSummary(writer, response)
+}
+
+func emitWriteWarnings(writer io.Writer, warnings []writeWarning) error {
+	for _, warning := range warnings {
+		if _, err := fmt.Fprintf(writer, "warning: %s: %s\n", warning.Code, warning.Message); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func emitWriteError(writer io.Writer, response *writeResponseError) error {

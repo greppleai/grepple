@@ -3,7 +3,8 @@ package parser
 import "sort"
 
 // ScopeLineRange is a parser-established, one-based inclusive structural span.
-// Kind belongs to the fixed public vocabulary in language_scope_kinds.go.
+// Kind is a normalized parser-owned role; each language adapter selects its
+// supported grammar nodes through ScopeKind.
 type ScopeLineRange struct {
 	Kind      string `json:"kind"`
 	StartLine int    `json:"startLine"`
@@ -129,8 +130,8 @@ func (collector *scopeCollector) walk(root ViewNode, oldRanges *structuralLineRa
 			oldRanges.visit(node, current.depth)
 		}
 		if current.depth > 1 && !node.IsError() && !node.IsMissing() && !node.HasError() {
-			if kind := scopeKindForNode(node); kind != "" {
-				collector.add(node, kind, r.Start.Line, end, r.Start.Column, current.depth)
+			if classification := scopeClassificationForNode(node); classification.Kind != "" {
+				collector.add(node, classification, r.Start.Line, end, r.Start.Column, current.depth)
 			}
 		}
 		// Include a Svelte injection exactly once and preserve source bounds.
@@ -144,13 +145,9 @@ func (collector *scopeCollector) walk(root ViewNode, oldRanges *structuralLineRa
 	}
 }
 
-func (collector *scopeCollector) add(node ViewNode, kind string, start, end, column, depth int) {
-	span := ScopeLineRange{Kind: kind, StartLine: start, EndLine: end}
-	language := node.Language()
-	if node.raw.tree != nil && node.raw.tree.language != "" {
-		language = node.raw.tree.language
-	}
-	isScope := navigableScopeKind(language, kind)
+func (collector *scopeCollector) add(node ViewNode, classification ScopeClassification, start, end, column, depth int) {
+	span := ScopeLineRange{Kind: classification.Kind, StartLine: start, EndLine: end}
+	isScope := classification.Navigable
 	index := sort.SearchInts(collector.lines, start)
 	for index < len(collector.lines) && collector.lines[index] <= end {
 		line := collector.lines[index]

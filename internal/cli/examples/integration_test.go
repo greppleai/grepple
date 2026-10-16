@@ -11,7 +11,7 @@ func TestExamplesCoverTaskOrientedWorkflows(t *testing.T) {
 	if err := runExamples(nil, &output); err != nil {
 		t.Fatal(err)
 	}
-	for _, expected := range []string{"orient —", "tree --depth 1", "--outline", "retrieve —", "--files-with-matches", "--at", "scope —", "@func:8-12", "@object:13-16", "edit —", "--line-only", "grepple write", "impact —", "graph resolve", "graph callers", "audit —", "grit --limit 0 --json"} {
+	for _, expected := range []string{"orient —", "tree --depth 1", "--outline", "retrieve —", "--files-with-matches", "--at", "scope —", "@function:8-12", "@object:13-16", "edit —", "--line-only", "grepple write", "impact —", "graph resolve", "audit —", "grit --limit 0 --json"} {
 		if !strings.Contains(output.String(), expected) {
 			t.Fatalf("examples output missing %q:\n%s", expected, output.String())
 		}

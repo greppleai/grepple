@@ -16,8 +16,8 @@ func TestVerifiedScopeExamplesMatchFixtures(t *testing.T) {
 		path, needle, kind string
 		match, start, end  int
 	}{
-		{"testdata/typescript/sample.ts", "logger.info", "func", 10, 8, 12},
-		{"examples/sample-files/Button.tsx", "setPressed(true)", "func", 12, 11, 14},
+		{"testdata/typescript/sample.ts", "logger.info", "function", 10, 8, 12},
+		{"examples/sample-files/Button.tsx", "setPressed(true)", "function", 12, 11, 14},
 		{"examples/sample-files/config.json", "timeoutSeconds", "object", 15, 13, 16},
 		{"examples/sample-files/values.yaml", "extraFlags", "mapping", 37, 34, 37},
 		{"examples/sample-files/guide.md", "minVersion", "section", 11, 9, 12},
@@ -32,10 +32,10 @@ func TestVerifiedScopeExamplesMatchFixtures(t *testing.T) {
 				t.Fatalf("fixture line %d no longer matches %q", fixture.match, fixture.needle)
 			}
 			language := parser.ScopeContentLanguageFor(fixture.path)
-			roles := parser.LineScopeAnnotations(string(content), language, map[int]bool{fixture.match: true})[fixture.match]
+			candidate := parser.ScopeCandidate{StartLine: fixture.start, EndLine: fixture.end}
 			want := parser.ScopeLineRange{Kind: fixture.kind, StartLine: fixture.start, EndLine: fixture.end}
-			if roles.Nearest == nil || *roles.Nearest != want {
-				t.Fatalf("current %s projection=%+v; update example @%s:%d-%d", language, roles, fixture.kind, fixture.start, fixture.end)
+			if got := parser.VerifiedScopeSelectors(string(content), language, []parser.ScopeCandidate{candidate})[candidate]; got != want {
+				t.Fatalf("current %s selector=%+v; update example @%s:%d-%d", language, got, fixture.kind, fixture.start, fixture.end)
 			}
 			selector := parser.ScopeSelector{Kind: fixture.kind, StartLine: fixture.start, EndLine: fixture.end, Exact: true}
 			if got, status := parser.ResolveScopeSelector(string(content), language, selector, nil); status != parser.ScopeVerified || got != want {

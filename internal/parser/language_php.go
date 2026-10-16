@@ -81,3 +81,45 @@ func phpSymbolKind(kind string) string {
 	}
 	return ""
 }
+
+func (*phpLanguage) ScopeKind(nodeType string) string {
+	switch nodeType {
+	case "if_statement":
+		return "if"
+	case "while_statement":
+		return "while"
+	case "for_statement", "for_of_statement", "foreach_statement":
+		return "for"
+	case "switch_statement":
+		return "switch"
+	case "try_statement":
+		return "try"
+	case "catch_clause":
+		return "catch"
+	case "switch_case":
+		return "case"
+	case "class_declaration", "trait_declaration":
+		return "class"
+	case "interface_declaration":
+		return "interface"
+	case "enum_declaration":
+		return "enum"
+	case "method_declaration", "constructor_declaration":
+		return "method"
+	case "function_definition", "anonymous_function_creation_expression", "arrow_function":
+		return "func"
+	}
+	return ""
+}
+
+func (language *phpLanguage) ScopeClassification(node ViewNode) ScopeClassification {
+	kind := language.ScopeKind(node.Kind())
+	if node.Kind() == "function_definition" && scopeMemberAncestor(node, language.ScopeKind) {
+		kind = "method"
+	}
+	return standardScopeClassification(kind)
+}
+
+func (*phpLanguage) ScopeSelectorKind(role string) string {
+	return functionSelectorKind(role, "function", false)
+}

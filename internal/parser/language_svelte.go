@@ -160,3 +160,21 @@ func (language *svelteLanguage) GrammarFingerprint() string {
 	}
 	return fmt.Sprintf("sha256:%x", sha256.Sum256([]byte(identity)))
 }
+
+func (*svelteLanguage) ScopeKind(nodeType string) string {
+	switch nodeType {
+	case "if_statement", "else_if_block":
+		return "if"
+	case "each_statement":
+		return "for"
+	case "snippet_statement":
+		return "snippet"
+	}
+	return ""
+}
+
+func (language *svelteLanguage) ScopeClassification(node ViewNode) ScopeClassification {
+	return standardScopeClassification(language.ScopeKind(node.Kind()))
+}
+
+func (*svelteLanguage) ScopeSelectorKind(role string) string { return role }
