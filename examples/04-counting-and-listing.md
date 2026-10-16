@@ -5,28 +5,36 @@ and *which* files match. These skip tree-sitter parsing and return far fewer tok
 
 ## Count (`-c` / `--count`)
 
-A per-directory tally of files and matches, hottest first, ending in a `total` row:
+`-c` reports matching-line counts per file in path order (not a directory summary):
 
 ```bash
 grepple -c "grepple" sample-files
 ```
 
 ```text
-sample-files/deployment.yaml	1 files	5 matches
-sample-files/values.yaml	1 files	4 matches
-sample-files/config.json	1 files	1 matches
-total	3 files	10 matches
+sample-files/config.json	1
+sample-files/deployment.yaml	5
+sample-files/values.yaml	4
 ```
 
-Count composes with a glob, so you can scope it to one file type:
+For a complete, paging-independent total, use `--count-summary` instead:
+
+```bash
+grepple --count-summary "grepple" sample-files
+```
+
+```text
+3 files	10 matches
+```
+
+Count also composes with a glob, so you can scope it to one file type:
 
 ```bash
 grepple -F "app" "sample-files/*.yaml" --count
 ```
 
 ```text
-sample-files/deployment.yaml	1 files	4 matches
-total	1 files	4 matches
+sample-files/deployment.yaml	6
 ```
 
 ## List files whose contents match (`--files-with-matches`)
@@ -67,6 +75,7 @@ grepple -l "**/*.tsx"
 ```
 
 ```text
+advanced-files/SearchPanel.tsx
 sample-files/Button.tsx
 sample-files/pkg/widget.tsx
 ```

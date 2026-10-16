@@ -25,9 +25,7 @@ sample-files/guide.md
 
  9   ### TLS
 
-// … 1 line collapsed …
-
-11   Enable TLS in production. The `minVersion` should be at least 1.2.
+p4Q│11│Enable TLS in production. The `minVersion` should be at least 1.2.
 ```
 
 ## Plain text / logs
@@ -45,35 +43,38 @@ sample-files/server.log
 
 // … 3 lines collapsed …
 
-4   2026-08-31T09:16:03Z ERROR upstream timeout path=/index status=504
+epv│4│2026-08-31T09:16:03Z ERROR upstream timeout path=/index status=504
 ```
 
 ### Context lines (`-C`)
 
-Use `-C N` for grep-style context. This switches to the `path:line:` / `path-line-`
-prefix format (`:` marks the match, `-` marks context):
+Use `-C N` for N source lines on each side of a match. The output keeps a file header and native `HASH│LINE│content` rows for both the match and its context:
 
 ```bash
 grepple -C 1 "ERROR" sample-files/server.log
 ```
 
 ```text
-sample-files/server.log-3-2026-08-31T09:15:42Z WARN  slow request path=/search duration=812ms
-sample-files/server.log:4:2026-08-31T09:16:03Z ERROR upstream timeout path=/index status=504
-sample-files/server.log-5-2026-08-31T09:16:03Z INFO  retrying request path=/index attempt=2
+sample-files/server.log
+
+WZL│3│2026-08-31T09:15:42Z WARN  slow request path=/search duration=812ms
+epv│4│2026-08-31T09:16:03Z ERROR upstream timeout path=/index status=504
+d0d│5│2026-08-31T09:16:03Z INFO  retrying request path=/index attempt=2
 ```
 
 ### Just the matching lines (`--line-only`)
 
-Skip structural rendering entirely and print `path:line:text`:
+Skip enclosing-body rendering and print only matching anchored lines under the file header. Parser-backed files may also show verified scope hints:
 
 ```bash
 grepple --line-only "INFO" sample-files/server.log
 ```
 
 ```text
-sample-files/server.log:1:2026-08-31T09:15:01Z INFO  server starting addr=0.0.0.0:8080
-sample-files/server.log:2:2026-08-31T09:15:01Z INFO  loaded 12 routes
-sample-files/server.log:5:2026-08-31T09:16:03Z INFO  retrying request path=/index attempt=2
-sample-files/server.log:6:2026-08-31T09:16:04Z INFO  request ok path=/index status=200
+sample-files/server.log
+
+eAL│1│2026-08-31T09:15:01Z INFO  server starting addr=0.0.0.0:8080
+tqp│2│2026-08-31T09:15:01Z INFO  loaded 12 routes
+d0d│5│2026-08-31T09:16:03Z INFO  retrying request path=/index attempt=2
+GXn│6│2026-08-31T09:16:04Z INFO  request ok path=/index status=200
 ```

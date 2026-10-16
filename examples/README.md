@@ -1,7 +1,6 @@
 # grepple examples
 
 Runnable examples that show what `grepple` prints for different **file types** and
-Runnable examples that show what `grepple` prints for different **file types** and
 **options**. Unless a guide says otherwise, run commands from **this `examples/` directory** against
 [`sample-files/`](./sample-files) or [`advanced-files/`](./advanced-files), so you can reproduce each block exactly. The verified-scope guide also uses the repository's `testdata/typescript/sample.ts` fixture from its root.
 
@@ -29,7 +28,7 @@ cd examples
 | [`sample-files/Inventory.kt`](./sample-files/Inventory.kt) | Kotlin | tree-sitter (classes, functions) |
 | [`sample-files/config.json`](./sample-files/config.json) | JSON | outline key/type tree |
 | [`sample-files/values.yaml`](./sample-files/values.yaml) | YAML (larger) | outline key/type tree |
-| [`sample-files/deployment.yaml`](./sample-files/deployment.yaml) | YAML (tiny) | dumped whole (outline > file) |
+| [`sample-files/deployment.yaml`](./sample-files/deployment.yaml) | YAML (nested deployment) | mapping/sequence outline with verified selectors |
 | [`sample-files/guide.md`](./sample-files/guide.md) | Markdown | heading-chain context |
 | [`sample-files/server.log`](./sample-files/server.log) | Log / plain text | plain-line fallback |
 | [`advanced-files/`](./advanced-files) | All baseline code languages | complex, executable parser regression fixtures |
@@ -45,5 +44,4 @@ cd examples
 7. [Advanced language fixtures and regression tests](./07-advanced-language-fixtures.md)
 8. [Verified scope navigation for TypeScript, TSX, JSON, YAML and Markdown](./08-verified-scope-navigation.md)
 
-> Line numbers, timestamps, and paths in the samples come straight from the fixtures.
-> If you edit a fixture, re-run the command to refresh the block.
+> Line numbers, timestamps, paths, and native hashline anchors in the samples come from the fixtures. If you edit a fixture, re-run the commands to refresh their output blocks and selector ranges.
