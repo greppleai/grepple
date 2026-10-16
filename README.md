@@ -99,8 +99,8 @@ For example, an agent can locate a declaration, read its anchored source, and fo
 ```text
 $ grepple --outline internal/directorymeta/repository.go
 internal/directorymeta/repository.go  go
-81-91   func  ReadRepository
-93-113  func  loadRepository
+ReadRepository @func:81-91
+loadRepository @func:93-113
 
 $ grepple --at internal/directorymeta/repository.go:81
 internal/directorymeta/repository.go

@@ -13,7 +13,7 @@ description: Use for locating local files, text, declarations, exact ranges, or 
 | List matching files | `grepple -F 'Name' --files-with-matches SCOPE` |
 | List paths by glob | `grepple --files 'src/**/*.go'` |
 | Explain selected/excluded paths | `grepple sources explain SCOPE` |
-| Inventory declarations | `grepple --outline path/to/file.go` |
+| Inventory declarations | `grepple --outline PATH` (verified local `@KIND:START-END` when available) |
 | Retrieve enclosing implementation | `grepple -F 'Name' SCOPE --limit 5` |
 | Locate exact evidence lines | `grepple --line-only -F 'Name' SCOPE` |
 | Find the owner of a body match | `grepple --line-only --enclosing -F 'call()' file.go` |

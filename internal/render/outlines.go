@@ -18,7 +18,6 @@ type OutlineOptions struct {
 	Depth          int
 	Kinds          OutlineKinds
 	JSON           bool
-	Selectors      bool
 	MaxOutputBytes int
 	DefaultLimit   int
 	Output         io.Writer
@@ -43,7 +42,7 @@ func Outlines(options OutlineOptions) (bool, error) {
 	if maxBytes > 0 {
 		output = cliruntime.NewBoundedOutput(options.Output, maxBytes)
 	}
-	outlines, printed, err := outlineFiles(options.Depth, options.Kinds, paths, options.JSON, options.Selectors, output)
+	outlines, printed, err := outlineFiles(options.Depth, options.Kinds, paths, options.JSON, output)
 	if err != nil && !errors.Is(err, cliruntime.ErrOutputTruncated) {
 		return false, err
 	}
@@ -53,7 +52,7 @@ func Outlines(options OutlineOptions) (bool, error) {
 	return printed, nil
 }
 
-func outlineFiles(depth int, kinds OutlineKinds, paths []string, jsonMode, selectorsMode bool, output *cliruntime.Output) ([]parser.FileOutline, bool, error) {
+func outlineFiles(depth int, kinds OutlineKinds, paths []string, jsonMode bool, output *cliruntime.Output) ([]parser.FileOutline, bool, error) {
 	outlines := make([]parser.FileOutline, 0, len(paths))
 	printed := false
 	for _, path := range paths {
@@ -74,10 +73,7 @@ func outlineFiles(depth int, kinds OutlineKinds, paths []string, jsonMode, selec
 				return nil, false, err
 			}
 		}
-		text := outlineOutput(outline, string(data), len(kinds) > 0)
-		if selectorsMode {
-			text = OutlineWithSelectors(outline, string(data))
-		}
+		text := OutlineWithSelectors(outline, string(data))
 		if err := output.WriteString(text); err != nil {
 			return nil, false, err
 		}

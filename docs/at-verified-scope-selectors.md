@@ -19,15 +19,15 @@ grepple --at internal/cli/search/execution.go @if:83
 - Initial support is **local only**. A configured server does not by itself cause remote search; reject a selector before network access if the effective request would be remote (`--remote`, `--remote-only`, `--server`, or a remote cursor), while retaining existing `--local` override behavior. Do not serialize selector text to `Request.At`: the current backend does not validate it. Keep legacy remote `--at PATH:LINE[-END]` behavior untouched. A future remote selector needs its own end-to-end capability contract, not a router-only acknowledgement.
 # SearchArgs @struct:25-79
 
-Use `--outline-selectors` for local human outlines when a copyable declaration destination is useful:
+`--outline` prints parser-verified local declaration destinations by default:
 
 ```sh
-grepple --outline --outline-selectors internal/cli/search/args.go
+grepple --outline internal/cli/search/args.go
 # SearchArgs @struct:25-79
 grepple --at internal/cli/search/args.go @struct:25-79
 ```
 
-An outline selector uses the effective parser language's stable public declaration word, not the outline display kind and not a raw tree-sitter node name: TypeScript/JavaScript `function`, Python `def`, Kotlin `fun`, Rust `fn`, and Go/Swift `func`. For example, a TypeScript row is `formatUser @function:8-12`, while a Go row is `Run @func:2-5`. Rows without a verified scope retain their native legacy `START-END\tkind\tname` form. Default outlines and `--outline --json` are unchanged; selector presentation is rejected for JSON. Small files do not fall back to raw content in selector mode. Tokens are local-only and must not be inferred from graph ranges, remote artifacts, or architecture import/call evidence.
+An outline selector uses the effective parser language's stable public declaration word, not the outline display kind and not a raw tree-sitter node name: TypeScript/JavaScript `function`, Python `def`, Kotlin `fun`, Rust `fn`, and Go/Swift `func`. For example, a TypeScript row is `formatUser @function:8-12`, while a Go row is `Run @func:2-5`. Rows without a verified scope retain their native legacy `START-END\tKIND\tNAME` form. `--outline --json` remains structured data without selector decoration. Small files do not fall back to raw content in human outline mode. Tokens are local-only and must not be inferred from graph ranges, remote artifacts, or architecture import/call evidence.
 
 For compatibility, the previous normalized `@func` is accepted as local input for a native function scope, but newly verified local presentation emits its native token. It is not an alias for arbitrary scope kinds, and a wrong native kind still fails verification.
 

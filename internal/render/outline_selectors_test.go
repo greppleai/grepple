@@ -18,3 +18,12 @@ func TestOutlineWithSelectorsKeepsNativeKindsAndOmitsUnverifiedRanges(t *testing
 		t.Fatalf("invented selector: %q", got)
 	}
 }
+func TestOutlineWithSelectorsDoesNotAttributeEnclosingInterfaceToMethod(t *testing.T) {
+	content := "package p\ntype Widget interface { Run() }\n"
+	outline := parser.OutlineFile("widget.go", content)
+	functions := FilterOutline(outline, OutlineKinds{"functions": true})
+	got := OutlineWithSelectors(functions, content)
+	if !strings.Contains(got, "2-2\tmethod\tRun") || strings.Contains(got, "Run @interface:") {
+		t.Fatalf("inline interface member inherited wrong selector: %q", got)
+	}
+}

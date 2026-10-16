@@ -49,8 +49,8 @@ func TestOutlineLocalRenders(t *testing.T) {
 	if !strings.Contains(out, "rule.go\tgo") {
 		t.Fatalf("missing header: %q", out)
 	}
-	if !strings.Contains(out, "struct\tRule") || !strings.Contains(out, "func\tNew") {
-		t.Fatalf("missing symbols: %q", out)
+	if !strings.Contains(out, "Rule @struct:3-5") || !strings.Contains(out, "New @func:7-7") {
+		t.Fatalf("missing verified declarations: %q", out)
 	}
 }
 
@@ -93,31 +93,21 @@ func TestOutlineLocalJSON(t *testing.T) {
 	}
 }
 
-func TestOutlineSelectorsAreOptInAndRemainLocalHumanOutput(t *testing.T) {
+func TestOutlineUsesVerifiedSelectorsByDefault(t *testing.T) {
 	dir := chdirTemp(t)
 	src := "// doc\nfunc Run() {}\ntype Name string\n"
 	if err := os.WriteFile(filepath.Join(dir, "sample.go"), []byte(src), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	out := captureStdout(t, func() {
-		if err := runTestSearch([]string{"--outline", "--outline-selectors", "sample.go"}); err != nil {
+		if err := runTestSearch([]string{"--outline", "sample.go"}); err != nil {
 			t.Fatal(err)
 		}
 	})
 	if !strings.Contains(out, "Run @func:2-2\n") || !strings.Contains(out, "3-3\ttype\tName") || strings.Contains(out, "@type:") {
 		t.Fatalf("selector outline=%q", out)
 	}
-	plain := captureStdout(t, func() {
-		if err := runTestSearch([]string{"--outline", "sample.go"}); err != nil {
-			t.Fatal(err)
-		}
-	})
-	if strings.Contains(plain, "@func:") {
-		t.Fatalf("default outline changed: %q", plain)
-	}
-	for _, args := range [][]string{{"--outline-selectors", "sample.go"}, {"--outline", "--outline-selectors", "--json", "sample.go"}} {
-		if _, _, _, err := parseTestSearchArgs(args); err == nil {
-			t.Fatalf("expected rejection for %v", args)
-		}
+	if _, _, _, err := parseTestSearchArgs([]string{"--outline", "--outline-selectors", "sample.go"}); err == nil {
+		t.Fatal("removed --outline-selectors flag was accepted")
 	}
 }

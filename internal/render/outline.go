@@ -78,11 +78,22 @@ func collectOutlineCandidates(symbols []parser.Symbol, candidates *[]parser.Scop
 func renderSymbolsWithSelectors(output *strings.Builder, symbols []parser.Symbol, selectors map[parser.ScopeCandidate]parser.ScopeLineRange, depth int) {
 	indent := strings.Repeat("  ", depth)
 	for _, symbol := range symbols {
-		if selector, found := selectors[parser.ScopeCandidate{StartLine: symbol.Start, EndLine: symbol.End}]; found {
+		if selector, found := selectors[parser.ScopeCandidate{StartLine: symbol.Start, EndLine: symbol.End}]; found && outlineSelectorMatchesSymbol(symbol, selector) {
 			fmt.Fprintf(output, "%s%s @%s:%d-%d\n", indent, symbol.Name, selector.Kind, selector.StartLine, selector.EndLine)
 		} else {
 			fmt.Fprintf(output, "%s%d-%d\t%s\t%s\n", indent, symbol.Start, symbol.End, symbol.Kind, symbol.Name)
 		}
 		renderSymbolsWithSelectors(output, symbol.Children, selectors, depth+1)
+	}
+}
+
+// A shared line range can describe an enclosing type rather than its child.
+// Never attach that type's selector to a different outlined declaration.
+func outlineSelectorMatchesSymbol(symbol parser.Symbol, selector parser.ScopeLineRange) bool {
+	switch selector.Kind {
+	case "class", "interface", "trait", "struct", "enum":
+		return symbol.Kind == selector.Kind
+	default:
+		return true
 	}
 }
